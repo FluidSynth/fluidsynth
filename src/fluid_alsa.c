@@ -236,14 +236,16 @@ new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
       continue;
     }
 
-    if (snd_pcm_hw_params_set_channels(dev->pcm, hwparams, 2) != 0) {
-      FLUID_LOG(FLUID_ERR, "Failed to set the channels");
+    if ((err = snd_pcm_hw_params_set_channels(dev->pcm, hwparams, 2)) != 0) {
+      FLUID_LOG(FLUID_ERR, "Failed to set the channels: %s",
+		snd_strerror (err));
       goto error_recovery;    
     }
 
     tmp = (unsigned int) sample_rate;
-    if (snd_pcm_hw_params_set_rate_near(dev->pcm, hwparams, &tmp, &dir) != 0) {
-      FLUID_LOG(FLUID_ERR, "Failed to set the sample rate");
+    if ((err = snd_pcm_hw_params_set_rate_near(dev->pcm, hwparams, &tmp, &dir)) != 0) {
+      FLUID_LOG(FLUID_ERR, "Failed to set the sample rate: %s",
+		snd_strerror (err));
       goto error_recovery;    
     }
     if (dir != 0) {

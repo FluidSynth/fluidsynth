@@ -41,7 +41,7 @@ sse_t* interp_coeff_sse;
 
 /* used for filter turn off optimization - if filter cutoff is above the
    specified value and filter q is below the other value, turn filter off */
-#define FLUID_MAX_AUDIBLE_FILTER_FC 16000.0f
+#define FLUID_MAX_AUDIBLE_FILTER_FC 19000.0f
 #define FLUID_MIN_AUDIBLE_FILTER_Q 1.2f
  
 /* Smallest amplitude that can be perceived (full scale is +/- 0.5)
@@ -53,6 +53,9 @@ sse_t* interp_coeff_sse;
 /* these should be the absolute minimum that FluidSynth can deal with */
 #define FLUID_MIN_LOOP_SIZE 2
 #define FLUID_MIN_LOOP_PAD 1
+
+/* min vol envelope release (to stop clicks) in SoundFont timecents */
+#define FLUID_MIN_VOLENVRELEASE -7200.0f /* ~16ms */
 
 fluid_interp_coeff_t interp_coeff[FLUID_INTERP_MAX];
 fluid_interp_coeff_t interp_coeff_linear[FLUID_INTERP_MAX];
@@ -1377,7 +1380,7 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
 
   case GEN_VOLENVRELEASE:             /* SF2.01 section 8.1.3 # 38 */
     x = _GEN(voice, GEN_VOLENVRELEASE);
-    fluid_clip(x, -12000.0f, 8000.0f);
+    fluid_clip(x, FLUID_MIN_VOLENVRELEASE, 8000.0f);
     count = 1 + NUM_BUFFERS_RELEASE(x);
     voice->volenv_data[FLUID_VOICE_ENVRELEASE].count = count;
     voice->volenv_data[FLUID_VOICE_ENVRELEASE].coeff = 1.0f;
