@@ -26,6 +26,10 @@
 #include "config.h"
 #endif
 
+#if defined(__POWERPC__) && !(defined(__APPLE__) && defined(__MACH__))
+#include "config_maxmsp43.h"
+#endif
+
 #if defined(WIN32) && !defined(MINGW32)
 #include "config_win32.h"
 #endif
