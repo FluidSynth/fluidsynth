@@ -1,3 +1,12 @@
+2004-07-29    <peter@hanappe.com>
+
+	* src/fluid_jack.c (fluid_jack_audio_driver_settings): Applied Rui
+	Nuno Capela's patch
+
+2004-05-14    <peter@hanappe.com>
+
+	* doc/fluidsynth.1 (option): Fixed typo noted by Gerald Pye.
+
 2004-05-14    Peter Hanappe <peter@hanappe.com>
 
 	* src/fluid_dsound.c (fluid_dsound_enum_callback): Applied Sergey
