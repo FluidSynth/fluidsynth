@@ -6,6 +6,9 @@
 /* whether or not we are supporting CoreAudio */
 #undef COREAUDIO_SUPPORT
 
+/* Define if building for Mac OS X Darwin */
+#undef DARWIN
+
 /* Define to activate debugging message */
 #undef DEBUG
 
@@ -120,6 +123,9 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
+/* Define to 1 if you have the <windows.h> header file. */
+#undef HAVE_WINDOWS_H
+
 /* Define to enable JACK driver */
 #undef JACK_SUPPORT
 
@@ -128,6 +134,9 @@
 
 /* Define to enable MidiShare driver */
 #undef MIDISHARE_SUPPORT
+
+/* Define if using the MinGW32 environment */
+#undef MINGW32
 
 /* Define to enable OSS driver */
 #undef OSS_SUPPORT

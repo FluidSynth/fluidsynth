@@ -34,12 +34,12 @@
 
 #include "fluidsynth.h"
 
-#ifdef WIN32
-#include "config_win32.h"
-#endif
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
+
+#if defined(WIN32) && !defined(MINGW32)
+#include "config_win32.h"
 #endif
 
 #ifdef HAVE_SIGNAL_H

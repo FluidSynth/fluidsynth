@@ -1,12 +1,25 @@
 ## Process this file with automake to produce Makefile.in
 
+# Tests for optional drivers
+if COREAUDIO_SUPPORT
+fluid_coreaudio = fluid_coreaudio.c
+endif
+
+if MINGW32_SUPPORT
+fluid_windows = fluid_dll.c fluid_dsound.c fluid_winmidi.c
+endif
+
+# Extra files and optional drivers
 EXTRA_DIST = fluid_dll.c fluid_dsound.c fluid_winmidi.c fluid_portaudio.c \
-	fluid_dsp_core.c fluid_coreaudio.c fluid_sndmgr.c
+	fluid_coreaudio.c fluid_dsp_core.c fluid_sndmgr.c \
+	config_macos.h config_macosx.h config.macosx_pb.h config_win32.h
 
 lib_LTLIBRARIES = libfluidsynth.la
 bin_PROGRAMS = fluidsynth 
 
 libfluidsynth_la_SOURCES = \
+	$(fluid_coreaudio) \
+	$(fluid_windows) \
 	fluid_adriver.c \
 	fluid_adriver.h \
 	fluid_alsa.c \
@@ -65,14 +78,15 @@ libfluidsynth_la_SOURCES = \
 	fluid_voice.c \
 	fluid_voice.h
 
-INCLUDES = -I$(srcdir)/../include $(LADCCA_CFLAGS)
+INCLUDES = -I$(srcdir)/../include $(LADCCA_CFLAGS) $(READLINE_CFLAGS)
 
-libfluidsynth_la_LIBADD = -lm  @LIBREADLINE@ $(LADCCA_LIBS)
+libfluidsynth_la_LIBADD = $(LIBFLUID_LIBS) $(LADCCA_LIBS) $(READLINE_LIBS)
 libfluidsynth_la_LDFLAGS = \
 	-version-info @LIBFLUIDSYNTH_MAJ@:@LIBFLUIDSYNTH_MIN@:0 \
-	-export-dynamic @FCLDFLAGS@
+	-export-dynamic @FCLDFLAGS@ $(LIBFLUID_LDFLAGS)
+libfluidsynth_la_CPPFLAGS = $(LIBFLUID_CPPFLAGS)
 
 fluidsynth_SOURCES = fluidsynth.c
 fluidsynth_LDADD = libfluidsynth.la
 fluidsynth_LDFLAGS = @FCLDFLAGS@
-
+fluidsynth_CPPFLAGS = $(FLUIDSYNTH_CPPFLAGS)
