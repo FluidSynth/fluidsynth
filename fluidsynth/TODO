@@ -1,6 +1,13 @@
 This file needs some re-structuring. Please remove anything that has
 already been done.  - Josh Green 2003-08-25
 
+- Add "unselect" command to shell to set a MIDI channel to not sound.
+- MIDI file player commands (load/play/stop)
+- Add API to manipulate and query MIDI file list
+- Get TCP server working for windows
+- When specifying -i -s (no console and TCP server) log to TCP clients
+  with easier parsable messages ("warning:", "error:", etc)
+
 
 Synthesis related
 -----------------
@@ -23,7 +30,7 @@ Drivers
 Fluid 1.0:
 --------------------------------------------
 
-- deb and rpm package
+- deb package
 - Mac and Windows binaries
 - Xtra binaries
 

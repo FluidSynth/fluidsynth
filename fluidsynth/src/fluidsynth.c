@@ -449,12 +449,16 @@ int main(int argc, char** argv)
 
       flags = CCA_Config_Data_Set | CCA_Terminal;
 
+      /*  Removed from LADCCA? It is sufficient to just set the ALSA id or
+	  Jack client name - JG
+
       if (fluid_settings_str_equal(settings, "audio.driver", "jack")) {
 	flags |= CCA_Use_Jack;
       }
       if (fluid_settings_str_equal(settings, "midi.driver", "alsa_seq")) {
 	flags |= CCA_Use_Alsa;
       }
+      */
 
       fluid_cca_client = cca_init (cca_args, "FluidSynth", flags, CCA_PROTOCOL (1,1));
 
