@@ -1,0 +1,41 @@
+Compiling fluidsynth-1.0.4-2 on Mac OS X.3.4
+--------------------------------------------
+1. Install Apple's Developer Tools.
+ 
+2. Install the Fink Project's Package manager, fink, obtainable at http://fink.sourceforge.net
+
+3. Compile and install gnugetopt, readline, ladspa and ladspa-cmt from fink: e.g.
+	fink install gnugetopt
+
+4. Install MidiShare-1.87 for Mac OS X available from
+	http://www.grame.fr/MidiShare/
+ 
+5. cd to the fluidsynth directory and in the configure script, substitute "-lmidishare" with 
+	"-framework MidiShare".
+
+6. Run configure with the following options (all on one line in a text editor, then copy and paste into Terminal):
+--enable-midishare --enable-ladspa --enable-functioncheck --enable-debug --enable-profiling CPPFLAGS="-I/usr/local/include -I/sw/include -I/usr/include -I/System/Library/Frameworks/MidiShare.framework/Versions/A/Headers" LDFLAGS="-L/usr/local/lib -L/sw/lib -L/usr/lib -framework MidiShare -framework CoreAudio" --disable-jack-support
+
+This should result in
+**************************************************************
+Summary:
+ALSA:                  no
+OSS:                   no
+MidiShare:             yes
+JACK:                  no
+CoreAudio:             yes
+Readline:              yes
+LADCCA support:        no
+Debug:                 yes
+Profiling:             yes
+LADSPA support:        yes
+use long long:         no
+Pentium 3+ SSE:        no
+**************************************************************
+
+7. make
+
+8. make install as root. 
+
+Ebrahim Mayat <ebmayat at mac dot com>
+17th July 2004
