@@ -75,6 +75,9 @@ iiwu_chan.c, iiwu_voice.c, iiwu_alsa.c
 
 * Bob Ham added LADCCA support.
 
+* Ebrahim Mayat made big efforts for compiling and running FluidSynth
+  on MacOS X. He also wrote the README-OSX file.
+
 * I used Martin Uddén's midi package. His files are integrated into
   the iiwu_midi file. Martin Uddén <nanook@lysator.liu.se> file:
   iiwu_midi.c
