@@ -25,6 +25,12 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public 
 You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 _____________________________________________________________________
+SYSTEM REQUIREMENTS
+
+This version of fluidsynth~ was created and tested with Max/MSP 4.3 on Mac OS X (10.3) Panther.
+The Mac OS 9 version of the external was not tested.
+
+_____________________________________________________________________
 RELASE NOTES of version 04/2004 (release 6)
 
  - fixed several bugs of the initial release (especially related to the translation of paths
