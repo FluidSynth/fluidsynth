@@ -407,6 +407,11 @@ static void* fluid_alsa_audio_run_float(void* d)
   handle[0] = left;
   handle[1] = right;
 
+  if (snd_pcm_nonblock(dev->pcm, 0) != 0) { /* double negation */
+    FLUID_LOG(FLUID_ERR, "Failed to set the audio device to blocking mode");
+    goto error_recovery;    
+  }
+
   if (snd_pcm_prepare(dev->pcm) != 0) {
     FLUID_LOG(FLUID_ERR, "Failed to prepare the audio device");
     goto error_recovery;    
@@ -485,6 +490,11 @@ static void* fluid_alsa_audio_run_s16(void* d)
 
   handle[0] = left;
   handle[1] = right;
+
+  if (snd_pcm_nonblock(dev->pcm, 0) != 0) { /* double negation */
+    FLUID_LOG(FLUID_ERR, "Failed to set the audio device to blocking mode");
+    goto error_recovery;    
+  }
 
   if (snd_pcm_prepare(dev->pcm) != 0) {
     FLUID_LOG(FLUID_ERR, "Failed to prepare the audio device");

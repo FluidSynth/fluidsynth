@@ -55,8 +55,16 @@ AC_DEFUN(AC_JACK,
 
     if test "${ac_cv_header_jack_jack_h}" = "yes"; then
 
+    dnl jack-0.6.? and above are dependent on librt.
+    rt_lib_arg=-lrt
+ 	AC_CHECK_LIB([rt], [shm_open],, [rt_lib_arg=])
+
+ 	if test "x$rt_lib_arg" = "x" ; then
+       	    AC_MSG_WARN([ *** Could not find the required rt library.  Newer versions of JACK depend on it])
+ 	fi
+ 
 	jack_found=yes
- 	AC_CHECK_LIB([jack], [jack_client_new],, [jack_found=no])
+ 	AC_CHECK_LIB([jack], [jack_client_new],, [jack_found=no], $rt_lib_arg)
  
  	if test "x$jack_found" = "xyes" ; then
  	    JACK_SUPPORT=1
