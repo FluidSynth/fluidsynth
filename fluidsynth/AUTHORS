@@ -44,16 +44,17 @@ author. Below you'll find a summery of contributions.
   to define the synth's ALSA sequencer client name. files:
   iiwu_midi.c, iiwu_alsa.c, iiwusynth.c, iiwusynth.h.
 
-* Tim Goetze sent many patches and implemented the all_notes_off.
-  files: iiwu_synth.c, iiwu_chan.c, iiwu_voice.c
+* Tim Goetze sent many patches and implemented the all_notes_off. He
+  also sent his code for the new ALSA driver. files: iiwu_synth.c,
+iiwu_chan.c, iiwu_voice.c, iiwu_alsa.c
 
 * Norbert Schnell from Ircam's jMax Team wrote most of the jMax/FTS
   interface in a record time. He also pointed me to the technique of
   using a lookup table for the interpolation coefficients.  file:
   iiwu_fts.c, iiwu_synth.c
 
-* The alsa driver was based on the jMax alsa driver by Francois
-  Dechelle and his Real-time Team at Ircam
+* The initial alsa driver was based on the jMax alsa driver by
+  Francois Dechelle and his Real-time Team at Ircam
   (http://www.ircam.fr/jmax). The jMax code was based upon Ardour's
   alsa_device.cc by Paul Barton-Davis.  file: iiwu_alsa.c
 

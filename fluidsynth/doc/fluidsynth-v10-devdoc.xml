@@ -2,6 +2,24 @@
 <!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
                   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
+<!--
+
+  I am currently using 'xsltproc' to generate the HTML files. I use a
+  stylesheet contained in the docbook-xsl-stylesheets Debian package:
+
+  $ xsltproc /usr/share/sgml/docbook/stylesheet/xsl/nwalsh/html/xtchunk.xsl \
+    fluidsynth-v10-devdoc.xml
+
+  An alternative would be to use the Linux Documentation Project's
+  style sheets. See
+  http://www.tldp.org/LDP/LDP-Author-Guide/usingldpxsl.html.
+
+  Suggestions are welcome!
+
+  [PH]
+
+-->
+
 <article>
   <articleinfo>
     <title>
@@ -11,15 +29,46 @@
     <author>
       <firstname>Peter</firstname>
       <surname>Hanappe</surname>
-      <!-- affiliation>
-        <address><email>peter-REMOVE-THIS-@hanappe.com</email></address>
-      </affiliation -->
     </author>
+
+    <revhistory>
+      <revision>
+        <revnumber>1.0</revnumber>
+        <date>2003-12-11</date>
+        <authorinitials>hanappe</authorinitials>
+        <revremark>First attempt.</revremark>
+      </revision>
+    </revhistory>
 
     <copyright>
       <year>2003</year>
       <holder>Copyright Peter Hanappe</holder>
     </copyright>
+
+    <legalnotice>
+      <para>All the source code examples in this document are in the
+      public domain; you can use them as you please. This document is
+      licensed under the Creative Commons Attribution License. To view
+      a copy of this license, visit
+      http://creativecommons.org/licenses/by/1.0/ or send a letter to
+      Creative Commons, 559 Nathan Abbott Way, Stanford, California
+      94305, USA. The FluidSynth library is distributed under the GNU
+      Library General Public License. A copy of the GNU Library
+      General Public License is contained in the FluidSynth package;
+      if not, write to the Free Foundation, Inc., 59 Temple Place,
+      Suite 330, Boston, MA 02111-1307 USA.</para> </legalnotice>
+
+    <keywordset>
+      <keyword>FluidSynth</keyword>
+      <keyword>software</keyword>
+      <keyword>synthesizer</keyword>
+      <keyword>SoundFont</keyword>
+      <keyword>Linux</keyword>
+      <keyword>audio</keyword>
+      <keyword>development</keyword>
+      <keyword>documentation</keyword>
+      <keyword>HOWTO</keyword>
+    </keywordset>
 
     <abstract>
 
@@ -35,36 +84,30 @@
   </articleinfo> 
 
   <sect1>
-    <title>Using the synthesizer as a plugin</title>
+    <title>Disclaimer</title>
+
+    <para>This documentation, in its current version, is probably
+    outdated and most certainly incomplete. As always, the source code
+    is the final reference.</para>
+
+    <para>SoundFont(R) is a registered trademark of E-mu Systems, Inc.</para>
+
+  </sect1>
+
+  <sect1>
+    <title>Introduction</title>
 
     <para>FluidSynth can easily be embedded in an application. It has
     a main header file, fluidsynth.h, and one dynamically linkable
     library. FluidSynth runs on Linux, MacOS 9, MacOS X, and the Win32
     platforms. It has audio and midi drivers for all mentioned
     platforms but you can use it with your own drivers if your
-    application already handles audio and MIDI IO. This document
-    explains the basic usage of FluidSynth and provides and example
-    that you can reuse. </para>
+    application already handles audio and MIDI input/output. This
+    document explains the basic usage of FluidSynth and provides
+    examples that you can reuse. </para>
 
   </sect1>
 
-
-  <sect1>
-    <title>License</title>
-
-    <para>All the source code examples in this document are in the
-    public domain; you can use it as you please. This document is
-    licensed under the Creative Commons Attribution License. To view a
-    copy of this license, visit
-    http://creativecommons.org/licenses/by/1.0/ or send a letter to
-    Creative Commons, 559 Nathan Abbott Way, Stanford, California
-    94305, USA. FluidSynth is distributed under the GNU Library
-    General Public License. A copy of the GNU Library General Public
-    License is contained in the FluidSynth package; if not, write to
-    the Free Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-    02111-1307 USA. </para>
-
-  </sect1>
 
   <sect1>
     <title>Creating and changing the settings</title>
