@@ -210,7 +210,7 @@ new_fluid_dsound_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
   memset(buf1, 0, bytes1);
 
   /* Unlock */
-  IDirectSoundCaptureBuffer_Unlock(dev->sec_buffer, buf1, bytes1, 0, 0);
+  IDirectSoundBuffer_Unlock(dev->sec_buffer, buf1, bytes1, 0, 0);
 
 
   /* start the audio thread */
