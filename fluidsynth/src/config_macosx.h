@@ -17,3 +17,5 @@
 
 /* define to support DARWIN */
 #define DARWIN
+
+typedef int socklen_t

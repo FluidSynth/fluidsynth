@@ -62,6 +62,20 @@ typedef struct {
   DWORD frame_size;
 } fluid_dsound_audio_driver_t;
 
+static BOOL 
+fluid_dsound_enum_callback(LPGUID guid, LPCSTR description, LPCSTR module, LPVOID context)
+{
+  fluid_settings_t* settings = (fluid_settings_t*) context;
+  fluid_settings_add_option(settings, "audio.dsound.device", description);  
+}
+
+void fluid_dsound_audio_driver_settings(fluid_settings_t* settings)
+{
+  fluid_settings_register_str(settings, "audio.dsound.device", "default", 0, NULL, NULL);
+  fluid_settings_add_option(settings, "audio.dsound.device", "default");
+  DirectSoundEnumerate((LPDSENUMCALLBACK) fluid_dsound_enum_callback, settings);
+}
+
 
 /*
  * new_fluid_dsound_audio_driver
@@ -377,7 +391,7 @@ int fluid_win32_create_window(void)
   myClass.hCursor = LoadCursor( NULL, IDC_ARROW );
   myClass.hIcon = NULL; 
   myClass.lpszMenuName = (LPSTR) NULL;
-  myClass.lpszClassName = (LPSTR) "FLUIDSynth";
+  myClass.lpszClassName = (LPSTR) "FluidSynth";
   myClass.hbrBackground = (HBRUSH)(COLOR_WINDOW);
   myClass.hInstance = FLUID_HINSTANCE;
   myClass.style = CS_GLOBALCLASS;
@@ -387,7 +401,7 @@ int fluid_win32_create_window(void)
   if (!RegisterClass(&myClass)) {
     return -100;
   }
-  fluid_wnd = CreateWindow((LPSTR) "FLUIDSynth", (LPSTR) "FLUIDSynth", WS_OVERLAPPEDWINDOW,
+  fluid_wnd = CreateWindow((LPSTR) "FluidSynth", (LPSTR) "FluidSynth", WS_OVERLAPPEDWINDOW,
 			  CW_USEDEFAULT, CW_USEDEFAULT, 400, 300, (HWND) NULL, (HMENU) NULL, 
 			  FLUID_HINSTANCE, (LPSTR) NULL);  
   if (fluid_wnd == NULL) {
@@ -402,8 +416,7 @@ int fluid_win32_destroy_window(void)
   if (fluid_wnd != NULL) {
     DestroyWindow(fluid_wnd);
     fluid_wnd = NULL;
-
-	UnregisterClass((LPSTR) "FLUIDSynth",FLUID_HINSTANCE);
+    UnregisterClass((LPSTR) "FluidSynth", FLUID_HINSTANCE);
   }
   return 0;
 }
