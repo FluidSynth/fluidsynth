@@ -1,6 +1,10 @@
 This file needs some re-structuring. Please remove anything that has
 already been done.  - Josh Green 2003-08-25
 
+- Add support for "loop till release" instruments (currently broken)
+- Add compatibility for EMU8k volume attenuation parameter which
+  doesn't follow SoundFont specifications
+- MIDI tempo is incorrect (too slow?)
 - Add "unselect" command to shell to set a MIDI channel to not sound.
 - MIDI file player commands (load/play/stop)
 - Add API to manipulate and query MIDI file list
