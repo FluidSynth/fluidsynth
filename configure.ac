@@ -226,7 +226,7 @@ AC_ARG_ENABLE(coreaudio,
   enable_coreaudio=$enableval, enable_coreaudio="yes")
 
 COREAUDIO_SUPPORT=0
-if test "$fluid_enable_coreaudio" = "yes" -a "$COREAUDIO_FOUND" = "yes"; then
+if test "$enable_coreaudio" = "yes" -a "$COREAUDIO_FOUND" = "yes"; then
   AC_DEFINE(COREAUDIO_SUPPORT, 1, [whether or not we are supporting CoreAudio])
   COREAUDIO_SUPPORT=1
   COREAUDIO_LIBS="-Wl,-framework,CoreAudio"
