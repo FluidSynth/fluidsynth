@@ -647,7 +647,7 @@ fluid_defpreset_noteon(fluid_defpreset_t* preset, fluid_synth_t* synth, int chan
 	    if (inst_zone->gen[i].flags){
 	      fluid_voice_gen_set(voice, i, inst_zone->gen[i].val);
 
-	    } else if (global_inst_zone != NULL && global_inst_zone->gen[i].flags){
+	    } else if ((global_inst_zone != NULL) && (global_inst_zone->gen[i].flags)) {
 	      fluid_voice_gen_set(voice, i, global_inst_zone->gen[i].val);		  
 
 	    } else {
@@ -733,9 +733,9 @@ fluid_defpreset_noteon(fluid_defpreset_t* preset, fluid_synth_t* synth, int chan
 	       * generator.  The effect is -added- to the destination
 	       * summing node -> voice_gen_incr */
 
-	      if (preset_zone->gen[i].flags){
+	      if (preset_zone->gen[i].flags) {
 		fluid_voice_gen_incr(voice, i, preset_zone->gen[i].val);
-	      } else if ((global_preset_zone != NULL) && global_preset_zone->gen[i].flags){
+	      } else if ((global_preset_zone != NULL) && global_preset_zone->gen[i].flags) {
 		fluid_voice_gen_incr(voice, i, global_preset_zone->gen[i].val);		  
 	      } else {
 		/* The generator has not been defined in this preset

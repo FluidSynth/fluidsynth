@@ -47,6 +47,10 @@ fluid_sfont_t* fluid_synth_get_sfont_by_name(fluid_synth_t* synth, char *name);
 
 int fluid_synth_get_pitch_wheel_sens(fluid_synth_t* synth, int chan, int* pval);
 
+int fluid_synth_set_gen2(fluid_synth_t* synth, int chan, 
+			 int param, float value, 
+			 int absolute, int normalized);
+
  
 /***************************************************************
  *
@@ -2739,12 +2743,67 @@ fluid_synth_set_gen(fluid_synth_t* synth, int chan, int param, float value)
     return FLUID_FAILED;     
   }
 
-  fluid_channel_set_gen(synth->channel[chan], param, value);
+  fluid_channel_set_gen(synth->channel[chan], param, value, 0);
 
   for (i = 0; i < synth->nvoice; i++) {
     voice = synth->voice[i];
     if (voice->chan == chan) {
-      fluid_voice_set_param(voice, param, value);
+      fluid_voice_set_param(voice, param, value, 0);
+    }
+  }
+
+  return FLUID_OK;  
+}
+
+/** Change the value of a generator. This function allows to control
+    all synthesis parameters in real-time. The changes are additive,
+    i.e. they add up to the existing parameter value. This function is
+    similar to sending an NRPN message to the synthesizer. The
+    function accepts a float as the value of the parameter. The
+    parameter numbers and ranges are described in the SoundFont 2.01
+    specification, paragraph 8.1.3, page 48. See also
+    'fluid_gen_type'.
+ 
+    Using the fluid_synth_set_gen2() function, it is possible to set
+    the absolute value of a generator. This is an extension to the
+    SoundFont standard. If 'absolute' is non-zero, the value of the
+    generator specified in the SoundFont is completely ignored and the
+    generator is fixed to the value passed as argument. To undo this
+    behavior, you must call fluid_synth_set_gen2 again, with
+    'absolute' set to 0 (and possibly 'value' set to zero).
+ 
+    If 'normalized' is non-zero, the value is supposed to be
+    normalized between 0 and 1. Before applying the value, it will be
+    scaled and shifted to the range defined in the SoundFont
+    specifications.
+
+ */
+int 
+fluid_synth_set_gen2(fluid_synth_t* synth, int chan, int param, 
+		     float value, int absolute, int normalized)
+{
+  int i;
+  fluid_voice_t* voice;
+  float v;
+
+  if ((chan < 0) || (chan >= synth->midi_channels)) {
+    FLUID_LOG(FLUID_WARN, "Channel out of range");
+    return FLUID_FAILED;     
+  }
+
+  if ((param < 0) || (param >= GEN_LAST)) {
+    FLUID_LOG(FLUID_WARN, "Parameter number out of range");
+    return FLUID_FAILED;     
+  }
+
+  v = (normalized)? fluid_gen_scale(param, value) : value;
+
+  fluid_channel_set_gen(synth->channel[chan], param, v, absolute);
+
+  for (i = 0; i < synth->nvoice; i++) {
+    voice = synth->voice[i];
+    if (voice->chan == chan) {
+      fluid_voice_set_param(voice, param, v, absolute);
     }
   }
 
