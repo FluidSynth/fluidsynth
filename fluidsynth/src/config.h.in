@@ -30,9 +30,6 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
-/* Define to 1 if you have the <jack/jack.h> header file. */
-#undef HAVE_JACK_JACK_H
-
 /* whether or not we are supporting ladcca */
 #undef HAVE_LADCCA
 
@@ -42,17 +39,11 @@
 /* Define to 1 if you have the `dl' library (-ldl). */
 #undef HAVE_LIBDL
 
-/* Define to 1 if you have the `jack' library (-ljack). */
-#undef HAVE_LIBJACK
-
 /* Define to 1 if you have the `MidiShare' library (-lMidiShare). */
 #undef HAVE_LIBMIDISHARE
 
 /* Define to 1 if you have the `pthread' library (-lpthread). */
 #undef HAVE_LIBPTHREAD
-
-/* Define to 1 if you have the `rt' library (-lrt). */
-#undef HAVE_LIBRT
 
 /* Define to 1 if you have the <limits.h> header file. */
 #undef HAVE_LIMITS_H

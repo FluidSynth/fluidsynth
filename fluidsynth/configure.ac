@@ -6,7 +6,7 @@ AC_INIT(src/fluidsynth.c)
 
 FLUIDSYNTH_VERSION_MAJOR=1
 FLUIDSYNTH_VERSION_MINOR=0
-FLUIDSYNTH_VERSION_MICRO=1
+FLUIDSYNTH_VERSION_MICRO=2
 FLUIDSYNTH_VERSION=$FLUIDSYNTH_VERSION_MAJOR.$FLUIDSYNTH_VERSION_MINOR.$FLUIDSYNTH_VERSION_MICRO
 
 AC_SUBST(FLUIDSYNTH_VERSION_MAJOR)
@@ -74,7 +74,7 @@ AM_CONDITIONAL(MINGW32_SUPPORT, test "$mingw32_support" == "yes")
 
 ENABLE_FLOAT_SAMPLES=yes
 AC_ARG_ENABLE(double,
-  [  --enable-double         double floating point for dsp [default=float]],
+  [  --enable-double         double floating point for dsp (default=float)],
   ENABLE_FLOAT_SAMPLES=no,
   ENABLE_FLOAT_SAMPLES=yes)
 if test "x$ENABLE_FLOAT_SAMPLES" = "xyes" ; then 
@@ -83,7 +83,7 @@ fi
 
 profiling_flag=no
 AC_ARG_ENABLE(profiling,
-  [  --enable-profiling      profile the dsp code [default=no]],
+  [  --enable-profiling      profile the dsp code (default=no)],
   profiling_flag=yes,
   profiling_flag=no)
 if test "x$profiling_flag" = "xyes" ; then 
@@ -92,7 +92,7 @@ fi
 
 longlong=no
 AC_ARG_ENABLE(longlong,
-  [  --enable-longlong       use long long integers, where appropriate [default=yes]],
+  [  --enable-longlong       use long long integers, where appropriate (default=yes)],
   longlong=yes,
   longlong=no)
 if test "x$longlong" = "xyes" ; then 
@@ -101,7 +101,7 @@ fi
 
 SSE=no
 AC_ARG_ENABLE(SSE,
-  [  --enable-SSE            Use the SSE instructions of Pentium3+     [default=no]],
+  [  --enable-SSE            Use the SSE instructions of Pentium3+ (default=no)],
   SSE=yes,
   SSE=no)
 if test "x$SSE" = "xyes" ; then 
@@ -110,7 +110,7 @@ fi
 
 ENABLE_LADSPA=no
 AC_ARG_ENABLE(ladspa,
-  [  --enable-ladspa         Include LADSPA effect unit [default=no]],
+  [  --enable-ladspa         Include LADSPA effect unit (default=no)],
   ENABLE_LADSPA=yes,
   ENABLE_LADSPA=no)
 if test "x$ENABLE_LADSPA" = "xyes" ; then 
@@ -123,7 +123,7 @@ fi
 
 ENABLE_FUNCTIONCHECK=no
 AC_ARG_ENABLE(functioncheck,
-  [  --enable-functioncheck  enable profiling using FunctionCheck. Turns on debugging. [default=no]],
+  [  --enable-functioncheck  enable profiling using FunctionCheck. Turns on debugging. (default=no)],
   ENABLE_FUNCTIONCHECK=yes,
   ENABLE_FUNCTIONCHECK=no)
 
@@ -144,7 +144,7 @@ else
 fi
 
 AC_ARG_ENABLE(debug,
-  [  --enable-debug          enable debugging [default=no]],
+  [  --enable-debug          enable debugging (default=no)],
   ENABLE_DEBUG=yes)
 
 
@@ -198,67 +198,53 @@ AC_MIDISHARE
 
 
 dnl - Check support for JACK
+AC_ARG_ENABLE(jack-support,
+  [  --disable-jack-support  disable JACK support (default=auto)],
+  [enable_jack=$enableval], enable_jack="yes")
 
-dnl PKG_CHECK_MODULES(JACK, jack, HAVE_JACK=true, HAVE_JACK=false)
-dnl 
-dnl AC_SUBST(JACK_CFLAGS)
-dnl AC_SUBST(JACK_LIBS)
+if test "x$enable_jack" != "xno"; then
+  PKG_CHECK_MODULES(JACK, jack, JACK_SUPPORT=1, JACK_SUPPORT=0)
+else
+  JACK_SUPPORT=0
+fi
 
-
-dnl - Check support for JACK
-AC_JACK
+if test "$JACK_SUPPORT" = "1"; then
+  AC_DEFINE(JACK_SUPPORT, 1, [Define to enable JACK driver])
+fi
+AM_CONDITIONAL(JACK_SUPPORT, test "$JACK_SUPPORT" = "1")
+AC_SUBST(JACK_CFLAGS)
+AC_SUBST(JACK_LIBS)
 
 
 dnl
 dnl - Check support for CoreAudio
 dnl
-fluid_enable_coreaudio="no"
+AC_CHECK_HEADER(CoreAudio/AudioHardware.h, COREAUDIO_FOUND="yes",
+                COREAUDIO_FOUND="no")
 AC_ARG_ENABLE(coreaudio,
-[  --enable-coreaudio        enable CoreAudio support],[
-  case "$enableval" in
-    "yes")
-      fluid_enable_coreaudio="yes"
-      ;;
-    "no")
-      fluid_enable_coreaudio="no"
-      ;;
-    *)
-      AC_MSG_ERROR([must use --enable-coreaudio(=yes/no) or --disable-coreaudio])
-      ;;
-  esac
-])
+  [  --disable-coreaudio     disable CoreAudio support (default=auto)],
+  enable_coreaudio=$enableval, enable_coreaudio="yes")
 
 COREAUDIO_SUPPORT=0
-if test "$fluid_enable_coreaudio" = "yes"; then
-  AC_CHECK_HEADER(CoreAudio/AudioHardware.h, COREAUDIO_FOUND="yes",
-                  COREAUDIO_FOUND="no")
-  if test "$COREAUDIO_FOUND" = "yes"; then
-     AC_DEFINE(COREAUDIO_SUPPORT, 1, [whether or not we are supporting CoreAudio])
-     COREAUDIO_SUPPORT=1 
-     COREAUDIO_LIBS=-Wl,-framework,CoreAudio
-  fi
+if test "$fluid_enable_coreaudio" = "yes" -a "$COREAUDIO_FOUND" = "yes"; then
+  AC_DEFINE(COREAUDIO_SUPPORT, 1, [whether or not we are supporting CoreAudio])
+  COREAUDIO_SUPPORT=1
+  COREAUDIO_LIBS="-Wl,-framework,CoreAudio"
 fi
 
 AM_CONDITIONAL(COREAUDIO_SUPPORT, test "$COREAUDIO_SUPPORT" = "1")
 AC_SUBST(COREAUDIO_LIBS)
-AC_SUBST(COREAUDIO_CFLAGS)
 
+dnl
 dnl Check for readline support (Josh Green 2003-06-10)
-
-AM_PATH_READLINE(HAVE_READLINE=1, HAVE_READLINE=0)
-
-if test $HAVE_READLINE -ne 1 ; then
-  WITH_READLINE=no
-else
-  WITH_READLINE=yes
-fi
-
+dnl
 AC_ARG_WITH(readline,
-[  --with-readline         Use the readline library for line editing [default=yes]],[
-  if test "$withval" = "no"; then
-    WITH_READLINE=no
-  fi
-])
+  [  --without-readline      disable readline lib line editing (default=auto)],
+  with_readline=$withval, with_readline="yes")
+
+if test "$with_readline" != "no"; then
+  AM_PATH_READLINE(FOUND_READLINE=1, FOUND_READLINE=0)
+fi
 
 dnl
 dnl The following script checks for ncurses support.
@@ -274,8 +260,9 @@ dnl
 dnl On Linux ELF systems, `-lncurses' is preferred to `-ltermcap'.
 dnl Reported by jdassen@wi.leidenuniv.nl (J.H.M. Dassen)
 dnl
+WITH_READLINE=0
 have_termcap=false
-if test "x${WITH_READLINE}" = "xyes"; then
+if test "${FOUND_READLINE}" = "1"; then
   _termlib="mytinfo ncurses curses termcap terminfo termlib"
   for termlib in ${_termlib}; do
     AC_CHECK_LIB(${termlib}, tgetent,
@@ -285,8 +272,8 @@ fi
 
 if test "x${have_termcap}" = "xtrue"; then
   AC_DEFINE(WITH_READLINE, 1, [Define to use the readline library for line editing])
+  WITH_READLINE=1
 fi
-
 
 dnl
 dnl ladcca stuff
@@ -323,8 +310,20 @@ AM_CONDITIONAL(LADCCA, test "$LADCCA_FOUND" = "yes")
 
 
 
-AC_OUTPUT(Makefile src/Makefile doc/Makefile include/Makefile include/fluidsynth/Makefile include/fluidsynth/version.h fluidsynth.pc)
-
+AC_OUTPUT([
+	Makefile
+	src/Makefile
+	doc/Makefile
+	include/Makefile
+	include/fluidsynth/Makefile
+	include/fluidsynth/version.h
+	fluidsynth.pc
+	macbuild/Makefile
+	sf2/Makefile
+	winbuild/Makefile
+	winbuild/fluidsynth/Makefile
+	winbuild/fluidsynth_dll/Makefile
+	winbuild/fluidsynth_lib/Makefile])
 
 echo
 echo "**************************************************************"
@@ -366,7 +365,7 @@ dnl else
 dnl   echo "Sound file:            no"
 dnl fi
 
-if test "x${WITH_READLINE}" = "xyes"; then
+if test "$WITH_READLINE" = "1"; then
   echo "Readline:              yes"
 else
   echo "Readline:              no"
