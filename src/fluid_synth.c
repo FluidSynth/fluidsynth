@@ -1018,6 +1018,31 @@ fluid_synth_pitch_wheel_sens(fluid_synth_t* synth, int chan, int val)
 }
 
 /*
+ * fluid_synth_get_pitch_wheel_sens
+ *
+ * Note : this function was added after version 1.0 API freeze.
+ * So its API is not in the synth.h file. It should be added in some later
+ * version of fluidsynth. Maybe v2.0 ? -- Antoine Schmitt May 2003
+ */
+/*******************
+int 
+fluid_synth_get_pitch_wheel_sens(fluid_synth_t* synth, int chan, int* pval)
+{
+
+  // check the ranges of the arguments
+  if ((chan < 0) || (chan >= synth->midi_channels)) {
+    FLUID_LOG(FLUID_WARN, "Channel out of range");
+    return FLUID_FAILED;     
+  }
+
+  // get the pitch-bend value in the channel
+  *pval = synth->channel[chan]->pitch_wheel_sensitivity;
+
+  return FLUID_OK;
+}
+************/
+
+/*
  * fluid_synth_get_preset
  */
 fluid_preset_t*
