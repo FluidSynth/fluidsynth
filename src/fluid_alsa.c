@@ -28,10 +28,11 @@
 #include "fluid_midi.h"
 #include "fluid_adriver.h"
 #include "fluid_mdriver.h"
-//#include "fluid_midi_router.h"
 #include "fluid_settings.h"
 
 #if ALSA_SUPPORT
+
+#define ALSA_PCM_NEW_HW_PARAMS_API
 #include <alsa/asoundlib.h>
 #include <pthread.h>
 #include <fcntl.h>
@@ -53,6 +54,53 @@ extern cca_client_t * fluid_cca_client;
 
 #define BUFFER_LENGTH 512
 
+/** fluid_oss_audio_driver_t
+ * 
+ * This structure should not be accessed directly. Use audio port
+ * functions instead.  
+ */
+typedef struct {
+  fluid_audio_driver_t driver;
+  snd_pcm_t* pcm;
+  fluid_audio_func_t callback;
+  void* data;
+  int buffer_size;
+  pthread_t thread;
+  int cont;
+} fluid_alsa_audio_driver_t;
+
+
+fluid_audio_driver_t* new_fluid_alsa_audio_driver(fluid_settings_t* settings,
+						  fluid_synth_t* synth);
+fluid_audio_driver_t* new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
+						   fluid_audio_func_t func, void* data);
+
+int delete_fluid_alsa_audio_driver(fluid_audio_driver_t* p);
+void fluid_alsa_audio_driver_settings(fluid_settings_t* settings);
+static void* fluid_alsa_audio_run_float(void* d);
+static void* fluid_alsa_audio_run_s16(void* d);
+
+
+struct fluid_alsa_formats_t {
+  char* name;
+  snd_pcm_format_t format;
+  snd_pcm_access_t access;
+  void* (*run)(void* d);
+};
+
+struct fluid_alsa_formats_t fluid_alsa_formats[] = {
+  { "float, rw, non interleaved", 
+    SND_PCM_FORMAT_FLOAT, 
+    SND_PCM_ACCESS_RW_NONINTERLEAVED, 
+    fluid_alsa_audio_run_float },
+  { "s16, rw, interleaved", 
+    SND_PCM_FORMAT_S16, 
+    SND_PCM_ACCESS_RW_INTERLEAVED, 
+    fluid_alsa_audio_run_s16 },
+  { NULL, 0, 0, NULL }
+};
+
+
 
 /*
  * fluid_alsa_rawmidi_driver_t
@@ -71,8 +119,8 @@ typedef struct {
 
 
 fluid_midi_driver_t* new_fluid_alsa_rawmidi_driver(fluid_settings_t* settings, 
-						 handle_midi_event_func_t handler, 
-						 void* event_handler_data);
+						   handle_midi_event_func_t handler, 
+						   void* event_handler_data);
 
 int delete_fluid_alsa_rawmidi_driver(fluid_midi_driver_t* p);
 static void* fluid_alsa_midi_run(void* d);
@@ -98,6 +146,411 @@ fluid_midi_driver_t* new_fluid_alsa_seq_driver(fluid_settings_t* settings,
 int delete_fluid_alsa_seq_driver(fluid_midi_driver_t* p);
 static void* fluid_alsa_seq_run(void* d);
 
+
+/**************************************************************
+ *
+ *        Alsa audio driver
+ *
+ */
+
+void fluid_alsa_audio_driver_settings(fluid_settings_t* settings)
+{
+  fluid_settings_register_str(settings, "audio.alsa.device", "default", 0, NULL, NULL);
+}
+
+
+fluid_audio_driver_t* 
+new_fluid_alsa_audio_driver(fluid_settings_t* settings,
+			    fluid_synth_t* synth)
+{
+  return new_fluid_alsa_audio_driver2(settings, 
+				      (fluid_audio_func_t) fluid_synth_process, 
+				      synth);
+}
+
+fluid_audio_driver_t* 
+new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
+			     fluid_audio_func_t func, void* data)
+{
+  fluid_alsa_audio_driver_t* dev;
+  double sample_rate;
+  int periods, period_size;
+  char* device;
+  pthread_attr_t attr;
+  int sched = SCHED_FIFO;
+  int i, err, dir = 0;
+  snd_pcm_hw_params_t* hwparams;
+  snd_pcm_sw_params_t* swparams = NULL;
+  snd_pcm_uframes_t uframes;
+  unsigned int tmp;
+
+  dev = FLUID_NEW(fluid_alsa_audio_driver_t);
+  if (dev == NULL) {
+    FLUID_LOG(FLUID_ERR, "Out of memory");
+    return NULL;    
+  }
+  FLUID_MEMSET(dev, 0, sizeof(fluid_alsa_audio_driver_t));
+
+  fluid_settings_getint(settings, "audio.periods", &periods);
+  fluid_settings_getint(settings, "audio.period-size", &period_size);
+  fluid_settings_getnum(settings, "synth.sample-rate", &sample_rate);
+  fluid_settings_getstr(settings, "audio.alsa.device", &device);
+
+  dev->data = data;
+  dev->callback = func;
+  dev->cont = 1;
+  dev->buffer_size = period_size;
+  uframes = period_size;
+
+  /* Open the PCM device */
+  if ((err = snd_pcm_open(&dev->pcm, device, SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK)) != 0) {
+    if (err == -EBUSY) {
+      FLUID_LOG(FLUID_ERR, "The \"%s\" audio device is used by another application", device);
+      goto error_recovery;
+    }
+  }
+
+  snd_pcm_hw_params_alloca(&hwparams);
+  snd_pcm_sw_params_alloca(&swparams);
+
+  /* Set hardware parameters. We continue trying access methods and
+     sample formats until we have one that works. For example, if
+     memory mapped access fails we try regular IO methods. (not
+     finished, yet). */
+
+  for (i = 0; fluid_alsa_formats[i].name != NULL; i++) {
+
+    snd_pcm_hw_params_any(dev->pcm, hwparams);
+
+    if (snd_pcm_hw_params_set_access(dev->pcm, hwparams, fluid_alsa_formats[i].access) != 0) {
+      continue;
+    }
+
+    if (snd_pcm_hw_params_set_format(dev->pcm, hwparams, fluid_alsa_formats[i].format) != 0) {
+      continue;
+    }
+
+    if (snd_pcm_hw_params_set_channels(dev->pcm, hwparams, 2) != 0) {
+      FLUID_LOG(FLUID_ERR, "Failed to set the channels");
+      goto error_recovery;    
+    }
+
+    tmp = (unsigned int) sample_rate;
+    if (snd_pcm_hw_params_set_rate_near(dev->pcm, hwparams, &tmp, &dir) != 0) {
+      FLUID_LOG(FLUID_ERR, "Failed to set the sample rate");
+      goto error_recovery;    
+    }
+    if (dir != 0) {
+      /* There's currently no way to change the sampling rate of the
+	 synthesizer after it's been created. */
+      FLUID_LOG(FLUID_WARN, "The sample rate is set to %d, "
+		"the synthesizer may be out of tune", tmp);
+    }
+
+    if (snd_pcm_hw_params_set_period_size_near(dev->pcm, hwparams, &uframes, &dir) != 0) {
+      FLUID_LOG(FLUID_ERR, "Failed to set the period size");
+      goto error_recovery;          
+    }
+    if (uframes != (unsigned long) period_size) {
+      FLUID_LOG(FLUID_WARN, "Requested a period size of %d, got %d instead", 
+		period_size, (int) uframes);
+      dev->buffer_size = (int) uframes;
+    }
+
+    tmp = periods;
+    if (snd_pcm_hw_params_set_periods_near(dev->pcm, hwparams, &tmp, &dir) != 0) {
+      FLUID_LOG(FLUID_ERR, "Failed to set the number of periods");
+      goto error_recovery;          
+    }
+    if (tmp != (unsigned int) periods) {
+      FLUID_LOG(FLUID_WARN, "Requested %d periods, got %d instead", 
+		periods, (int) tmp);
+    }
+    
+    if (snd_pcm_hw_params(dev->pcm, hwparams) != 0) {
+      FLUID_LOG(FLUID_WARN, "Audio device hardware configuration failed");
+      continue;
+    }
+
+    break;
+  }
+
+  if (fluid_alsa_formats[i].name == NULL) {
+    FLUID_LOG(FLUID_ERR, "Failed to find a workable audio format");
+    goto error_recovery;    
+  }
+
+  printf("** Using format %s\n", fluid_alsa_formats[i].name);
+
+  /* Set the software params */
+  snd_pcm_sw_params_current(dev->pcm, swparams);
+	
+  if (snd_pcm_sw_params_set_start_threshold(dev->pcm, swparams, period_size) != 0) {
+    FLUID_LOG(FLUID_ERR, "Cannot turn off start threshold.");
+  }
+  
+  if (snd_pcm_sw_params_set_stop_threshold(dev->pcm, swparams, ~0u) != 0) {
+    FLUID_LOG(FLUID_ERR, "Cannot turn off stop threshold.");
+  }
+  
+  if (snd_pcm_sw_params_set_silence_threshold(dev->pcm, swparams, 0) != 0) {
+    FLUID_LOG(FLUID_ERR, "Cannot set 0 silence threshold.");
+  }
+  
+  if (snd_pcm_sw_params_set_silence_size(dev->pcm, swparams, 0) != 0) {
+    FLUID_LOG(FLUID_ERR, "Cannot set 0 silence size.");
+  }
+  
+  if (snd_pcm_sw_params_set_avail_min(dev->pcm, swparams, period_size / 2) != 0) {
+    FLUID_LOG(FLUID_ERR, "Software setup for minimum available frames failed.");
+  }
+  
+  if (snd_pcm_sw_params(dev->pcm, swparams) != 0) {
+    FLUID_LOG(FLUID_ERR, "Software setup failed.");
+  }
+
+
+  /* Create the audio thread */
+  
+  if (pthread_attr_init(&attr)) {
+    FLUID_LOG(FLUID_ERR, "Couldn't initialize audio thread attributes");
+    goto error_recovery;
+  }
+
+  /* The pthread_create man page explains that
+     pthread_attr_setschedpolicy returns an error if the user is not
+     permitted the set SCHED_FIFO. It seems however that no error is
+     returned but pthread_create fails instead. That's why I try to
+     create the thread twice in a while loop. */
+  while (1) {
+    err = pthread_attr_setschedpolicy(&attr, sched);
+    if (err) {
+      FLUID_LOG(FLUID_WARN, "Couldn't set high priority scheduling for the audio output");
+      if (sched == SCHED_FIFO) {
+	sched = SCHED_OTHER;
+	continue;
+      } else {
+	FLUID_LOG(FLUID_ERR, "Couldn't set scheduling policy.");
+	goto error_recovery;
+      }
+    }
+
+    err = pthread_create(&dev->thread, &attr, fluid_alsa_formats[i].run, (void*) dev);
+    if (err) {
+      FLUID_LOG(FLUID_WARN, "Couldn't set high priority scheduling for the audio output");
+      if (sched == SCHED_FIFO) {
+	sched = SCHED_OTHER;
+	continue;
+      } else {
+	FLUID_LOG(FLUID_PANIC, "Couldn't create the audio thread.");
+	goto error_recovery;
+      }
+    }
+    break;
+  }
+
+  return (fluid_audio_driver_t*) dev;
+
+ error_recovery:
+  delete_fluid_alsa_audio_driver((fluid_audio_driver_t*) dev);
+  return NULL;
+}
+
+int delete_fluid_alsa_audio_driver(fluid_audio_driver_t* p)
+{
+  fluid_alsa_audio_driver_t* dev = (fluid_alsa_audio_driver_t*) p;
+  
+  if (dev == NULL) {
+    return FLUID_OK;
+  }
+
+  dev->cont = 0;
+
+  if (dev->thread) {
+    if (pthread_join(dev->thread, NULL)) {
+      FLUID_LOG(FLUID_ERR, "Failed to join the audio thread");
+      return FLUID_FAILED;
+    }
+  }
+
+  if (dev->pcm) {
+    snd_pcm_state_t state = snd_pcm_state(dev->pcm);
+    if ((state == SND_PCM_STATE_RUNNING)
+	|| (state == SND_PCM_STATE_XRUN)
+	|| (state == SND_PCM_STATE_SUSPENDED)
+	|| (state == SND_PCM_STATE_PAUSED)) {
+      snd_pcm_drop(dev->pcm);
+    }
+  }
+
+  return FLUID_OK;
+}
+
+static void* fluid_alsa_audio_run_float(void* d)
+{
+  fluid_alsa_audio_driver_t* dev = (fluid_alsa_audio_driver_t*) d;
+  float* left;
+  float* right;
+  float* handle[2];
+  int n, buffer_size, offset;
+
+  buffer_size = dev->buffer_size;
+
+  left = FLUID_ARRAY(float, buffer_size);
+  right = FLUID_ARRAY(float, buffer_size);
+
+  if ((left == NULL) || (right == NULL)) {
+    FLUID_LOG(FLUID_ERR, "Out of memory.");
+    return NULL;
+  }
+
+  handle[0] = left;
+  handle[1] = right;
+
+  if (snd_pcm_prepare(dev->pcm) != 0) {
+    FLUID_LOG(FLUID_ERR, "Failed to prepare the audio device");
+    goto error_recovery;    
+  }
+
+  while (dev->cont) {
+
+    handle[0] = left;
+    handle[1] = right;
+
+    (*dev->callback)(dev->data, buffer_size, 0, NULL, 2, handle);
+    
+    offset = 0;
+
+    while (offset < buffer_size) {
+
+      handle[0] = left + offset;
+      handle[1] = right + offset;
+
+      n = snd_pcm_writen(dev->pcm, (void**) handle, buffer_size - offset);
+    
+      if (n == -EAGAIN) {
+	snd_pcm_wait(dev->pcm, 1);
+
+      } else if ((n == -EPIPE) || (n == -EBADFD)) {
+	if (snd_pcm_prepare(dev->pcm) != 0) {
+	  FLUID_LOG(FLUID_ERR, "Failed to prepare the audio device");
+	  goto error_recovery;    
+	}
+
+      } else if (n == -ESTRPIPE) {
+	if ((snd_pcm_resume(dev->pcm) != 0) 
+	    && (snd_pcm_prepare(dev->pcm) != 0)) {
+	  FLUID_LOG(FLUID_ERR, "Failed to resume the audio device");
+	  goto error_recovery;    
+	}
+
+      } else if (n < 0) {
+	  FLUID_LOG(FLUID_ERR, "The audio device error: %s", snd_strerror(n));
+	  goto error_recovery;    	
+
+      } else {
+	offset += n;
+      }
+    }  
+  }
+  
+ error_recovery:
+  
+  FLUID_FREE(left);
+  FLUID_FREE(right);
+
+  return NULL;
+}
+
+static void* fluid_alsa_audio_run_s16(void* d)
+{
+  fluid_alsa_audio_driver_t* dev = (fluid_alsa_audio_driver_t*) d;
+  float* left;
+  float* right;
+  short* buf;
+  float* handle[2];
+  int i, k, n, buffer_size, offset;
+  float s;
+
+  buffer_size = dev->buffer_size;
+
+  left = FLUID_ARRAY(float, buffer_size);
+  right = FLUID_ARRAY(float, buffer_size);
+  buf = FLUID_ARRAY(short, 2 * buffer_size);
+
+  if ((left == NULL) || (right == NULL) || (buf == NULL)) {
+    FLUID_LOG(FLUID_ERR, "Out of memory.");
+    return NULL;
+  }
+
+  handle[0] = left;
+  handle[1] = right;
+
+  if (snd_pcm_prepare(dev->pcm) != 0) {
+    FLUID_LOG(FLUID_ERR, "Failed to prepare the audio device");
+    goto error_recovery;    
+  }
+
+  while (dev->cont) {
+
+    handle[0] = left;
+    handle[1] = right;
+
+    (*dev->callback)(dev->data, buffer_size, 0, NULL, 2, handle);
+
+    for (i = 0, k = 0; i < buffer_size; i++, k += 2) {
+      s = 32768.0 * left[i];
+      fluid_clip(s, -32768.0, 32767.0);
+      buf[k] = (short) s;
+    }
+
+    for (i = 0, k = 1; i < buffer_size; i++, k += 2) {
+      s = 32768.0 * right[i];
+      fluid_clip(s, -32768.0, 32767.0);
+      buf[k] = (short) s;
+    }
+    
+    offset = 0;
+
+    while (offset < buffer_size) {
+
+      n = snd_pcm_writei(dev->pcm, (void*) (buf + 2 * offset), buffer_size - offset);
+
+      if (n == -EAGAIN) {
+	snd_pcm_wait(dev->pcm, 1);
+
+      } else if ((n == -EPIPE) || (n == -EBADFD)) {
+	if (snd_pcm_prepare(dev->pcm) != 0) {
+	  FLUID_LOG(FLUID_ERR, "Failed to prepare the audio device");
+	  goto error_recovery;    
+	}
+
+      } else if (n == -ESTRPIPE) {
+	if ((snd_pcm_resume(dev->pcm) != 0) 
+	    && (snd_pcm_prepare(dev->pcm) != 0)) {
+	  FLUID_LOG(FLUID_ERR, "Failed to resume the audio device");
+	  goto error_recovery;    
+	}
+
+      } else if (n < 0) {
+	  FLUID_LOG(FLUID_ERR, "The audio device error: %s", snd_strerror(n));
+	  goto error_recovery;    	
+
+      } else {
+	offset += n;
+      }
+    }  
+
+  }
+  
+ error_recovery:
+  
+  FLUID_FREE(left);
+  FLUID_FREE(right);
+  FLUID_FREE(buf);
+
+  return NULL;
+}
 
 
 /**************************************************************

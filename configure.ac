@@ -38,7 +38,7 @@ AC_CHECK_LIB(pthread, pthread_create)
 
 dnl Check for header files
 AC_HEADER_STDC
-AC_CHECK_HEADERS(string.h stdlib.h stdio.h math.h errno.h stdarg.h unistd.h sys/mman.h sys/types.h sys/time.h sys/stat.h fcntl.h sys/socket.h netinet/in.h netinet/tcp.h arpa/inet.h limits.h pthread.h)
+AC_CHECK_HEADERS(string.h stdlib.h stdio.h math.h errno.h stdarg.h unistd.h sys/mman.h sys/types.h sys/time.h sys/stat.h fcntl.h sys/socket.h netinet/in.h netinet/tcp.h arpa/inet.h limits.h pthread.h signal.h)
 
 dnl Compiler and machine specs
 AC_C_INLINE 
