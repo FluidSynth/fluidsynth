@@ -81,6 +81,7 @@ cca_client_t * fluid_cca_client;
  *               INITIALIZATION & UTILITIES
  */
 
+
 void fluid_synth_settings(fluid_settings_t* settings)
 {
   fluid_settings_register_str(settings, "synth.verbose", "no", 0, NULL, NULL);
@@ -342,6 +343,11 @@ new_fluid_synth(fluid_settings_t *settings)
   fluid_settings_getint(settings, "synth.audio-groups", &synth->audio_groups);
   fluid_settings_getint(settings, "synth.effects-channels", &synth->effects_channels);
   fluid_settings_getnum(settings, "synth.gain", &synth->gain);
+
+  /* register the callbacks */
+  fluid_settings_register_num(settings, "synth.gain", 
+			      0.2f, 0.0f, 10.0f, 0, 
+			      (fluid_num_update_t) fluid_synth_update_gain, synth);
 
   /* do some basic sanity checking on the settings */
   if (synth->midi_channels < 16) {
@@ -807,6 +813,10 @@ fluid_synth_cc(fluid_synth_t* synth, int chan, int num, int val)
     return FLUID_FAILED;     
   }
 
+  if (synth->verbose) {
+    FLUID_LOG(FLUID_INFO, "cc\t%d\t%d\t%d", chan, num, val);
+  }
+
   /* set the controller value in the channel */
   fluid_channel_cc(synth->channel[chan], num, val);
 
@@ -958,6 +968,10 @@ fluid_synth_pitch_bend(fluid_synth_t* synth, int chan, int val)
     return FLUID_FAILED;     
   }
 
+  if (synth->verbose) {
+    FLUID_LOG(FLUID_INFO, "pitchb\t%d\t%d", chan, val);
+  }
+
   /* set the pitch-bend value in the channel */
   fluid_channel_pitch_bend(synth->channel[chan], val);
 
@@ -991,6 +1005,10 @@ fluid_synth_pitch_wheel_sens(fluid_synth_t* synth, int chan, int val)
   if ((chan < 0) || (chan >= synth->midi_channels)) {
     FLUID_LOG(FLUID_WARN, "Channel out of range");
     return FLUID_FAILED;     
+  }
+
+  if (synth->verbose) {
+    FLUID_LOG(FLUID_INFO, "pitchsens\t%d\t%d", chan, val);
   }
 
   /* set the pitch-bend value in the channel */
@@ -1071,7 +1089,7 @@ fluid_synth_program_change(fluid_synth_t* synth, int chan, int prognum)
     }
 
     /* special handling of channel 10 (or 9 counting from 0). channel
-       10 is the percussion chnnel.  */
+       10 is the percussion channel.  */
     if (channel->channum == 9) {
 
       /* try to search the drum instrument first */
@@ -1192,6 +1210,16 @@ void fluid_synth_update_presets(fluid_synth_t* synth)
 						  fluid_channel_get_banknum(channel), 
 						  fluid_channel_get_prognum(channel)));
   }
+}
+
+
+/*
+ * fluid_synth_update_gain
+ */
+int fluid_synth_update_gain(fluid_synth_t* synth, char* name, double value) 
+{
+  fluid_synth_set_gain(synth, (float) value);
+  return 0;
 }
 
 /*

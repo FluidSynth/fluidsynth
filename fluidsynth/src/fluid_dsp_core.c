@@ -84,10 +84,11 @@
  */
 
 # if defined(WITH_FLOAT)
-# define zap_almost_zero(sample) (((*(unsigned int*)&(sample))&0x7f800000) < 0x08000000)?0.0f:(sample)
+# define zap_almost_zero(_sample) \
+  ((((*(unsigned int*)&(_sample))&0x7f800000) < 0x08000000)? 0.0f : (_sample))
 # else
 /* 1e-20 was chosen as an arbitrary (small) threshold. */
-#define zap_almost_zero(sample) abs(sample)<1e-20?0:sample;
+#define zap_almost_zero(_sample) ((abs(_sample) < 1e-20)? 0.0f : (_sample))
 #endif
 
 /* Interpolation (find a value between two samples of the original waveform) */
@@ -333,7 +334,7 @@ if ((fluid_phase_fract(dsp_phase) == 0)
 
   case FLUID_INTERP_7THORDER:
     for (dsp_i = dsp_start; dsp_i < dsp_end; dsp_i++) {
-      int fract=fluid_phase_fract_to_tablerow(dsp_phase);
+      int fract = fluid_phase_fract_to_tablerow(dsp_phase);
       dsp_phase_index = fluid_phase_index(dsp_phase);
       dsp_buf[dsp_i] = (dsp_amp * 
 			(sinc_table7[0][fract] * (fluid_real_t) dsp_data[dsp_phase_index] 
@@ -353,7 +354,6 @@ if ((fluid_phase_fract(dsp_phase) == 0)
   } /* switch interpolation method */
 } /* If interpolation is needed */
 
-
 /* filter (implement the voice filter according to Soundfont standard) */ 
 if (dsp_use_filter_flag) {
   
@@ -370,11 +370,7 @@ if (dsp_use_filter_flag) {
   if (dsp_filter_coeff_incr_count > 0) {
     /* The increment is added to each filter coefficient
        filter_coeff_incr_count times. */
-    dsp_a1_incr = voice->a1_incr;
-    dsp_a2_incr = voice->a2_incr;
-    dsp_b02_incr = voice->b02_incr;
-    dsp_b1_incr = voice->b1_incr;
-    
+
     for (dsp_i = dsp_start; dsp_i < dsp_end; dsp_i++) {
       /* The filter is implemented in Direct-II form. */ 
       dsp_centernode = dsp_buf[dsp_i] - dsp_a1 * dsp_hist1 - dsp_a2 * dsp_hist2;
@@ -389,11 +385,6 @@ if (dsp_use_filter_flag) {
 	dsp_b1 += dsp_b1_incr;
       }
     } /* for dsp_i */
-    voice->a1 = dsp_a1;
-    voice->a2 = dsp_a2;
-    voice->b02 = dsp_b02;
-    voice->b1 = dsp_b1;
-    voice->filter_coeff_incr_count = dsp_filter_coeff_incr_count;
 
   } else {
 
@@ -510,7 +501,7 @@ if ((FLUID_BUFSIZE % 4 == 0)
    */
 
 
-  if ((voice->pan < 0.5) && (voice->pan > -0.5)) {
+  if ((-0.5 < voice->pan) && (voice->pan < 0.5)) {
     
     /* The voice is centered. Use voice->amp_left twice. */ 
     for (dsp_i = dsp_start; dsp_i < dsp_end; dsp_i++) {
@@ -554,6 +545,7 @@ if ((FLUID_BUFSIZE % 4 == 0)
 #endif
 
 
+
 #if 0
 /* Nonoptimized DSP loop */
 #error "This code is meant for experiments only. Probably unmaintained.";
@@ -582,56 +574,9 @@ for (dsp_i = dsp_start; dsp_i < dsp_end; dsp_i++) {
   dsp_right_buf[dsp_i] += voice->amp_right * dsp_sample;
   if (dsp_reverb_buf){
     dsp_reverb_buf[dsp_i] += voice->amp_reverb * dsp_sample;
-  };
+  }
   if (dsp_chorus_buf){
     dsp_chorus_buf[dsp_i] += voice->amp_chorus * dsp_sample;
-  };
-};
-#endif
-
-/* Some older stuff, obsolete, 'archived' */
-#if 0
-
-#define fix1616tof(_v) ((float)((_v >> 16) + (_v & 0xffff) * .0000152587890625f))
-
-/*
- * fluid_voice_run_dsp
- */
-#define fluid_voice_run_dsp(_start,_len)                    \
-{                                                          \
-  /* wave table interpolation */                           \
-  for (i = _start; i < _len; i++) {                        \
-    coeff = &interp_coeff[fluid_phase_fract_to_tablerow(phase)]; \
-    index = fluid_phase_index(phase);                       \
-    z = (int) (coeff->c0 * data[index] + coeff->c1 * data[index+1] + coeff->c2 * data[index+2] + coeff->c3 * data[index+3]); \
-    z = ((z >> 16) * a) + ((z * a) >> 16);                 \
-    buf[i] = fix1616tof(z) / 32768.0f;                     \
-    fluid_phase_incr(phase, phase_incr);                    \
-    amp += amp_incr;                                       \
-  }                                                        \
-                                                           \
-  /* filter */                                             \
-  if (b1 || b2) {                                          \
-    for (i = _start; i < _len; i++) {                      \
-      w = gain * buf[i] - b1 * w1 - b2 * w2;               \
-      buf[i] = w + w1 + w1 + w2;                           \
-      w2 = w1;                                             \
-      w1 = w;                                              \
-    }                                                      \
-  }                                                        \
-                                                           \
-  /* pan */                                                \
-  for (i = _start; i < _len; i++) {                        \
-    left[i] += amp_left * buf[i];                          \
-    right[i] += amp_right * buf[i];                        \
-  }                                                        \
-                                                           \
-  /* reverb */                                             \
-  if (reverb_send) {                                       \
-    for (i = _start; i < _len; i++) {                      \
-      reverb_buf[i] += reverb_send * buf[i];               \
-    }                                                      \
-  }                                                        \
+  }
 }
-
 #endif

@@ -89,14 +89,14 @@ struct fluid_alsa_formats_t {
 };
 
 struct fluid_alsa_formats_t fluid_alsa_formats[] = {
-  { "float, rw, non interleaved", 
-    SND_PCM_FORMAT_FLOAT, 
-    SND_PCM_ACCESS_RW_NONINTERLEAVED, 
-    fluid_alsa_audio_run_float },
   { "s16, rw, interleaved", 
     SND_PCM_FORMAT_S16, 
     SND_PCM_ACCESS_RW_INTERLEAVED, 
     fluid_alsa_audio_run_s16 },
+  { "float, rw, non interleaved", 
+    SND_PCM_FORMAT_FLOAT, 
+    SND_PCM_ACCESS_RW_NONINTERLEAVED, 
+    fluid_alsa_audio_run_float },
   { NULL, 0, 0, NULL }
 };
 

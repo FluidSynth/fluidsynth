@@ -620,7 +620,8 @@ int fluid_midi_file_read_event(fluid_midi_file* mf, fluid_track_t* track)
 	  FLUID_LOG(FLUID_ERR, "Unexpected end of file");
 	  return FLUID_FAILED;
 	}
-	param1 = ((param1 & 0x7f) << 7) | (param2 & 0x7f);
+
+	param1 = ((param2 & 0x7f) << 7) | (param1 & 0x7f);
 	param2 = 0;
 	break;
 

@@ -138,20 +138,20 @@ struct _fluid_voice_t
   fluid_real_t modlfo_to_vol; 
 
   /* vib lfo */
-  fluid_real_t viblfo_val;          /* the value of the vibrato LFO */
-  unsigned int viblfo_delay;       /* the delay of the lfo in samples */
-  fluid_real_t viblfo_incr;         /* the lfo frequency is converted to a per-buffer increment */ 
+  fluid_real_t viblfo_val;        /* the value of the vibrato LFO */
+  unsigned int viblfo_delay;      /* the delay of the lfo in samples */
+  fluid_real_t viblfo_incr;       /* the lfo frequency is converted to a per-buffer increment */ 
   fluid_real_t viblfo_to_pitch; 
 
   /* resonant filter */
-  fluid_real_t fres;                /* the resonance frequency, in cents (not absolute cents) */
-  fluid_real_t last_fres;           /* Current resonance frequency of the IIR filter */
-                                   /* Serves as a flag: A deviation between fres and last_fres */
-                                   /* indicates, that the filter has to be recalculated. */
-  fluid_real_t q_lin;               /* the q-factor on a linear scale */
-  fluid_real_t filter_gain;         /* Gain correction factor, depends on q */
-  fluid_real_t hist1, hist2;        /* Sample history for the IIR filter */
-  int filter_startup;              /* Flag: If set, the filter will be set directly. 
+  fluid_real_t fres;              /* the resonance frequency, in cents (not absolute cents) */
+  fluid_real_t last_fres;         /* Current resonance frequency of the IIR filter */
+                                  /* Serves as a flag: A deviation between fres and last_fres */
+                                  /* indicates, that the filter has to be recalculated. */
+  fluid_real_t q_lin;             /* the q-factor on a linear scale */
+  fluid_real_t filter_gain;       /* Gain correction factor, depends on q */
+  fluid_real_t hist1, hist2;      /* Sample history for the IIR filter */
+  int filter_startup;             /* Flag: If set, the filter will be set directly. 
 				      Else it changes smoothly. */
 
   /* filter coefficients */
