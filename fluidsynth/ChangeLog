@@ -1,5 +1,12 @@
 2003-08-25  Josh Green  <jgreen@users.sourceforge.net>
 
+	* src/fluidsynth.c: MIDI channels switch should be -K not -L as was
+	listed in "Usage" output, also -K was setting audio.channels for
+	non getopt case statement - changed to midi.channels. Added a new
+	option "-l, --disable-ladcca" to disable LADCCA server connection.
+
+2003-08-25  Josh Green  <jgreen@users.sourceforge.net>
+
 	Release version 1.0.3
 
 	* doc/fluidsynth.1: Applied typo patch from Eric Van Buggenhaut.
