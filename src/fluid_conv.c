@@ -154,11 +154,18 @@ fluid_tc2sec_delay(fluid_real_t tc)
 {
   /* SF2.01 section 8.1.2 items 21, 23, 25, 33
    * SF2.01 section 8.1.3 items 21, 23, 25, 33
-   * The most negative number indicates a delay of 0
-   * Range is limited from -12000 to 5000 */
-  if (tc<=-32768.){return (fluid_real_t) 0.0;};
-  if (tc<-12000.){tc=(fluid_real_t) -12000.0;};
-  if (tc>12000.){tc=(fluid_real_t) 12000.0;};
+   *
+   * The most negative number indicates a delay of 0. Range is limited
+   * from -12000 to 5000 */
+  if (tc <= -32768.0f) {
+	  return (fluid_real_t) 0.0f;
+  };
+  if (tc < -12000.) {
+	  tc = (fluid_real_t) -12000.0f;
+  }
+  if (tc > 5000.0f) {
+	  tc = (fluid_real_t) 5000.0f;
+  }
   return (fluid_real_t) pow(2.0, (double) tc / 1200.0);
 }
 

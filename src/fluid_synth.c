@@ -45,8 +45,6 @@ int fluid_synth_program_select2(fluid_synth_t* synth,
 
 fluid_sfont_t* fluid_synth_get_sfont_by_name(fluid_synth_t* synth, char *name);
 
-int fluid_synth_get_pitch_wheel_sens(fluid_synth_t* synth, int chan, int* pval);
-
 int fluid_synth_set_gen2(fluid_synth_t* synth, int chan, 
 			 int param, float value, 
 			 int absolute, int normalized);
@@ -747,6 +745,10 @@ fluid_synth_noteon(fluid_synth_t* synth, int chan, int key, int vel)
     return FLUID_FAILED;
   } 
 
+  /* If there is another voice process on the same channel and key,
+     advance it to the release phase. */
+  fluid_synth_release_voice_on_same_note(synth, chan, key);
+
   return fluid_synth_start(synth, synth->noteid++, channel->preset, 0, chan, key, vel);
 }
 
@@ -1024,7 +1026,7 @@ fluid_synth_get_pitch_bend(fluid_synth_t* synth, int chan, int* ppitch_bend)
 }
 
 /*
- * fluid_synth_pitch_wheel_sens
+ * Fluid_synth_pitch_wheel_sens
  */
 int 
 fluid_synth_pitch_wheel_sens(fluid_synth_t* synth, int chan, int val)
@@ -1927,10 +1929,6 @@ fluid_synth_alloc_voice(fluid_synth_t* synth, fluid_sample_t* sample, int chan, 
 
 /*   fluid_mutex_lock(synth->busy); /\* Don't interfere with the audio thread *\/ */
 /*   fluid_mutex_unlock(synth->busy); */
-
-  /* If there is another voice process on the same channel and key,
-     advance it to the release phase. */
-  fluid_synth_release_voice_on_same_note(synth, chan, key);
 
   /* check if there's an available synthesis process */
   for (i = 0; i < synth->nvoice; i++) {
