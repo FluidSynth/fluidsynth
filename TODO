@@ -47,6 +47,24 @@ JG:
 - Remove dependency of settings on audio driver and other (see
   fluid_settings_init())
 
+- MIDI tempo
+  fluidsynth: real    2m23.312s
+  timidity:   real    2m04.304s
+
+
+- Validation tests
+- Validate reverb
+- Validate chorus
+- Documentation
+- Web site
+- Linux + Win + MacOS X + fluid~ + fluidsynth~ + old distributions
+- Documentation and announcement Virtools and Director
+
+- Component for MacOS X (Core Audio?)
+- Component for DirectMusic
+- Multi-channel output
+- DirectSound 3D and EAX
+
 
 Synthesis related
 -----------------

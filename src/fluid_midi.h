@@ -243,8 +243,7 @@ struct _fluid_player_t {
   fluid_list_t* playlist;
   char* current_file;
   char send_program_change; /* should we ignore the program changes? */
-  int ticks_passed;         /* number of midi ticks that have passed */
-  int msec_passed;          /* number of milliseconds that have passed */
+  int start_msec;           /* the start of the file */
   int miditempo;            /* as indicated by MIDI SetTempo: n 24th of a usec per midi-clock. bravo! */
   double deltatime;         /* milliseconds per midi tick. depends on set-tempo */
   unsigned int division;
