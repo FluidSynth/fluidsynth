@@ -3,14 +3,6 @@ Well, this is fluidsynth~ for Max/MSP...
 Take a look here:
   http://www.ircam.fr/equipes/temps-reel/maxmsp/fluidsynth.html
 
-In order to build the fluidmax.mcp CodeWarrior (8) project the following lines have to be added to the fluidsynth_priv.h file:
-
-/* begin fluidsynth_priv.h */
-#if defined(__POWERPC__) && !(defined(__APPLE__) && defined(__MACH__))
-#include "config_maxmsp43.h"
-#endif
-/* end fluidsynth_priv.h */
-
 The fluidsynth directory in this directory contains only a version.h which is just added for the case that the version.h file in the fluidsynth checkout is not (auto-)"maked" or generated otherwise.
 
 For now the file fluid_sys.c is not included to the CW project. Instead there (here) is a file called fluidmax_fakefuns.c implementing some necessary functions.
