@@ -127,6 +127,7 @@ fluid_defsfont_sfont_get_preset(fluid_sfont_t* sfont, unsigned int bank, unsigne
     return NULL;
   }
 
+  preset->sfont = sfont;
   preset->data = defpreset;
   preset->free = fluid_defpreset_preset_delete;
   preset->get_name = fluid_defpreset_preset_get_name;

@@ -704,7 +704,7 @@ double fluid_utime(void)
   return (rdtsc() / fluid_cpu_frequency);
 }
 
-#if defined(DARWIN)
+#if !defined(__i386__)
 
 double rdtsc(void)
 {

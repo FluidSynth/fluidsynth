@@ -73,7 +73,7 @@ fluid_cmd_t fluid_commands[] = {
   { "inst", "general", (fluid_cmd_func_t) fluid_handle_inst, NULL,
     "inst font                  Print out the available instruments for the font" },
   { "channels", "general", (fluid_cmd_func_t) fluid_handle_channels, NULL,
-    "channels                   Print out preset of all channels" },
+    "channels [-verbose]        Print out preset of all channels" },
   { "interp", "general", (fluid_cmd_func_t) fluid_handle_interp, NULL,
     "interp num                 Choose interpolation method for all channels" },
   { "interpc", "general", (fluid_cmd_func_t) fluid_handle_interpc, NULL,
@@ -480,15 +480,19 @@ fluid_handle_channels(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t o
 {
   int i;
   fluid_preset_t* preset;
-
+  int verbose = 0;
+  
+  if (ac > 0 && strcmp( av[0], "-verbose") == 0) verbose = 1;
+  
   for (i = 0; i < fluid_synth_count_midi_channels(synth); i++) {
     preset = fluid_synth_get_channel_preset(synth, i);
-    if (preset != NULL) {
-      fluid_ostream_printf(out, "chan %d, %s\n", 
-			  i, fluid_preset_get_name(preset));
-    } else {
-      fluid_ostream_printf(out, "chan %d, no preset\n", i);
-    }
+    if (preset == NULL) fluid_ostream_printf(out, "chan %d, no preset\n", i);
+    else if (!verbose) fluid_ostream_printf(out, "chan %d, %s\n", i, fluid_preset_get_name(preset));
+    else fluid_ostream_printf(out, "chan %d, sfont %d, bank %d, preset %d, %s\n", i,
+                              fluid_sfont_get_id( preset->sfont),
+                              fluid_preset_get_banknum(preset),
+                              fluid_preset_get_num(preset),
+                              fluid_preset_get_name(preset));
   }
   return 0;
 }
@@ -1180,7 +1184,7 @@ fluid_handle_get(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out)
   case FLUID_NUM_TYPE: {
     double value;
     fluid_synth_getnum(synth, av[0], &value);
-    fluid_ostream_printf(out, "%f", value);
+    fluid_ostream_printf(out, "%.3f", value);
     break;
   }
 
@@ -1237,7 +1241,7 @@ static void fluid_handle_settings_iter2(void* data, char* name, int type)
   case FLUID_NUM_TYPE: {
     double value;
     fluid_synth_getnum(d->synth, name, &value);
-    fluid_ostream_printf(d->out, "%f\n", value);
+    fluid_ostream_printf(d->out, "%.3f\n", value);
     break;
   }
     
@@ -1311,7 +1315,7 @@ fluid_handle_info(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out)
     fluid_settings_getnum(settings, av[0], &value);
     fluid_ostream_printf(out, "%s:\n", av[0]);
     fluid_ostream_printf(out, "Type:          number\n");
-    fluid_ostream_printf(out, "Value:         %f\n", value);
+    fluid_ostream_printf(out, "Value:         %.3f\n", value);
     fluid_ostream_printf(out, "Minimum value: %.3f\n", min);
     fluid_ostream_printf(out, "Maximum value: %.3f\n", max);
     fluid_ostream_printf(out, "Default value: %.3f\n", 

@@ -1,3 +1,21 @@
+2003-08-29  Josh Green  <jgreen@users.sourceforge.net>
+
+	* src/fluid_sys.c: Patch from Eric Van Buggenhaut to make i386 asm
+	code not compile for all non-i386 archs rather than just DARWIN.
+	* src/fluidsynth_priv.h: Patch from Sergey Pavlishin to fix
+	FLUID_REALLOC macro.
+	* src/fluid_cmd.c: Ken Ellinwood's patch to add -verbose to "channels"
+	command, and print settings values with 3 decimal places.
+	* src/fluid_defsfont.c (fluid_defsfont_sfont_get_preset): Ken
+	Ellinwood's patch to initialize sfont field of preset.
+	* src/fluid_ramsfont.c (fluid_ramsfont_sfont_get_preset): Ken
+	Ellinwood's patch to initialize sfont field of preset.
+	* src/fluid_midi.c (fluid_midi_file_read_event): Fixed a crash bug with
+	zero length MIDI meta events that was pointed out by Sergey Pavlishin.
+	(delete_fluid_midi_event): Fixed a stack overflow problem pointed out
+	by Sergey Pavlishin that was caused by recursively deleting MIDI
+	event linked list, now just using a while loop.
+
 2003-08-25  Josh Green  <jgreen@users.sourceforge.net>
 
 	* src/fluidsynth.c: MIDI channels switch should be -K not -L as was

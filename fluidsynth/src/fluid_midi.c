@@ -442,28 +442,28 @@ int fluid_midi_file_read_event(fluid_midi_file* mf, fluid_track_t* track)
 	return FLUID_FAILED;
       }
 
-      if (mf->varlen) {
-
-	if (mf->varlen < 255) {
-	  metadata = &static_buf[0];
-	} else {
-	  FLUID_LOG(FLUID_DBG, "%s: %d: alloc metadata, len = %d", __FILE__, __LINE__, mf->varlen);
-	  dyn_buf = FLUID_MALLOC(mf->varlen + 1);
-	  if (dyn_buf == NULL) {
-	    FLUID_LOG(FLUID_PANIC, "Out of memory");
-	    return FLUID_FAILED;
-	  }
-	  metadata = dyn_buf;
-	}
-
-	/* read the data */
-	if (fluid_midi_file_read(mf, metadata, mf->varlen) != FLUID_OK) {
-	  if (dyn_buf) {
-	    FLUID_FREE(dyn_buf);
-	  }
+      if (mf->varlen < 255) {
+	metadata = &static_buf[0];
+      } else {
+	FLUID_LOG(FLUID_DBG, "%s: %d: alloc metadata, len = %d", __FILE__, __LINE__, mf->varlen);
+	dyn_buf = FLUID_MALLOC(mf->varlen + 1);
+	if (dyn_buf == NULL) {
+	  FLUID_LOG(FLUID_PANIC, "Out of memory");
 	  return FLUID_FAILED;
 	}
+	metadata = dyn_buf;
       }
+
+      /* read the data */
+      if (mf->varlen)
+	{
+	  if (fluid_midi_file_read(mf, metadata, mf->varlen) != FLUID_OK) {
+	    if (dyn_buf) {
+	      FLUID_FREE(dyn_buf);
+	    }
+	    return FLUID_FAILED;
+	  }
+	}
 
       /* handle meta data */
       switch (type) {
@@ -684,10 +684,14 @@ fluid_midi_event_t* new_fluid_midi_event()
  */
 int delete_fluid_midi_event(fluid_midi_event_t* evt)
 {
-  if (evt->next != NULL) {
-    delete_fluid_midi_event(evt->next);
-  }
-  FLUID_FREE(evt);
+  fluid_midi_event_t *temp;
+
+  while (evt)
+    {
+      temp = evt->next;
+      FLUID_FREE(evt);
+      evt = temp;
+    }
   return FLUID_OK;
 }
 
