@@ -1,3 +1,7 @@
+2004-11-11    <jgreen@users.sourceforge.net>
+
+	* README-OSX: Update from Ebrahim Mayat.
+
 2004-08-18    <peter@hanappe.com>
 
 	* src/fluid_synth.c (fluid_synth_set_bank_offset): 

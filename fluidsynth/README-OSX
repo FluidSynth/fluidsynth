@@ -1,4 +1,4 @@
-Compiling fluidsynth-1.0.4-2 on Mac OS X.3.4
+Compiling fluidsynth-1.0.5 on Mac OS X.3.5
 --------------------------------------------
 1. Install Apple's Developer Tools.
  
@@ -10,11 +10,17 @@ Compiling fluidsynth-1.0.4-2 on Mac OS X.3.4
 4. Install MidiShare-1.87 for Mac OS X available from
 	http://www.grame.fr/MidiShare/
  
-5. cd to the fluidsynth directory and in the configure script, substitute "-lmidishare" with 
+5. Install Jack-0.51 for Mac OS X obtainable from  
+	http://www.jackosx.com
+	
+6. Edit the "/usr/local/lib/pkgconfig/jack.pc" file using your favorite Unix editor:
+	In the "Libs" line, replace "ljack" with "-framework Jack"
+	
+7. cd to the fluidsynth directory and in the configure script, substitute "-lmidishare" with 
 	"-framework MidiShare".
 
-6. Run configure with the following options (all on one line in a text editor, then copy and paste into Terminal):
---enable-midishare --enable-ladspa --enable-functioncheck --enable-debug --enable-profiling CPPFLAGS="-I/usr/local/include -I/sw/include -I/usr/include -I/System/Library/Frameworks/MidiShare.framework/Versions/A/Headers" LDFLAGS="-L/usr/local/lib -L/sw/lib -L/usr/lib -framework MidiShare -framework CoreAudio" --disable-jack-support
+8. Run configure with the following options (all on one line in a text editor, then copy and paste into Terminal):
+./configure --enable-midishare --enable-ladspa --enable-functioncheck --enable-debug --enable-profiling --enable-jack-support "CPPFLAGS=-I/usr/local/include -I/sw/include -I/sw/include/liboss -I/System/Library/Frameworks/MidiShare.framework/Versions/A/Headers -I/System/Library/Frameworks/CoreAudio.framework/Versions/A/Headers -I/Library/Frameworks/Jack.framework/Headers" "LDFLAGS=-L/usr/local/lib -L/sw/lib -framework MidiShare -framework CoreAudio -framework Jack"
 
 This should result in
 **************************************************************
@@ -22,7 +28,7 @@ Summary:
 ALSA:                  no
 OSS:                   no
 MidiShare:             yes
-JACK:                  no
+JACK:                  yes
 CoreAudio:             yes
 Readline:              yes
 LADCCA support:        no
@@ -37,5 +43,6 @@ Pentium 3+ SSE:        no
 
 8. make install as root. 
 
-Ebrahim Mayat <ebmayat at mac dot com>
-17th July 2004
+Ebrahim Mayat <ebmayat@mac.com>
+4th November 2004
+
