@@ -33,8 +33,8 @@
 #include "config.h"
 
 #if COREAUDIO_SUPPORT
-#include <AudioHardware.h>
-#include <CoreAudioTypes.h>
+#include <CoreAudio/AudioHardware.h>
+#include <CoreAudio/CoreAudioTypes.h>
 
 /*
  * fluid_core_audio_driver_t
@@ -58,12 +58,12 @@ fluid_audio_driver_t* new_fluid_core_audio_driver2(fluid_settings_t* settings,
 						      void* data);
 
 OSStatus fluid_core_audio_callback(AudioDeviceID dev, 
-				       const AudioTimeStamp* now,
-				       const AudioBufferList* in, 
-				       const AudioTimeStamp* intime,
-				       const AudioBufferList* out, 
-				       const AudioTimeStamp* outtime,
-				       void* data);
+				   const AudioTimeStamp* now,
+				   const AudioBufferList* in, 
+				   const AudioTimeStamp* intime,
+				   AudioBufferList* out, 
+				   const AudioTimeStamp* outtime,
+				   void* data);
 
 int delete_fluid_core_audio_driver(fluid_audio_driver_t* p);
 
@@ -206,12 +206,12 @@ delete_fluid_core_audio_driver(fluid_audio_driver_t* p)
 
 OSStatus 
 fluid_core_audio_callback(AudioDeviceID id, 
-			      const AudioTimeStamp* now,
-			      const AudioBufferList* in, 
-			      const AudioTimeStamp* intime,
-			      const AudioBufferList* out, 
-			      const AudioTimeStamp* outtime,
-			      void* data)
+			  const AudioTimeStamp* now,
+			  const AudioBufferList* in, 
+			  const AudioTimeStamp* intime,
+			  AudioBufferList* out, 
+			  const AudioTimeStamp* outtime,
+			  void* data)
 {
   int i, k;
   fluid_core_audio_driver_t* dev = (fluid_core_audio_driver_t*) data;

@@ -78,9 +78,11 @@ libfluidsynth_la_SOURCES = \
 	fluid_voice.c \
 	fluid_voice.h
 
-INCLUDES = -I$(srcdir)/../include $(LADCCA_CFLAGS) $(READLINE_CFLAGS)
+INCLUDES = -I$(srcdir)/../include $(LADCCA_CFLAGS) $(READLINE_CFLAGS) \
+  $(COREAUDIO_CFLAGS)
 
-libfluidsynth_la_LIBADD = $(LIBFLUID_LIBS) $(LADCCA_LIBS) $(READLINE_LIBS)
+libfluidsynth_la_LIBADD = $(LIBFLUID_LIBS) $(LADCCA_LIBS) $(READLINE_LIBS) \
+  $(COREAUDIO_LIBS)
 libfluidsynth_la_LDFLAGS = \
 	-version-info @LIBFLUIDSYNTH_MAJ@:@LIBFLUIDSYNTH_MIN@:0 \
 	-export-dynamic @FCLDFLAGS@ $(LIBFLUID_LDFLAGS)

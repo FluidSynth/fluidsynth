@@ -130,6 +130,7 @@
 #ifdef DARWIN
 #define MACINTOSH
 #define __Types__
+#define WITHOUT_SERVER 1
 #endif
 
 

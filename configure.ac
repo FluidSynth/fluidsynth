@@ -26,6 +26,8 @@ AC_SUBST(LIBFLUIDSYNTH_MIN)
 
 AM_CONFIG_HEADER(src/config.h)
 
+CFLAGS="$CFLAGS -Wall"
+
 dnl Check for programs
 AC_PROG_CC
 AC_PROG_INSTALL
@@ -169,8 +171,6 @@ yes)
 esac
 
 
-
-
 dnl 
 dnl Check support for all the drivers
 dnl
@@ -209,7 +209,6 @@ dnl - Check support for JACK
 AC_JACK
 
 
-
 dnl
 dnl - Check support for CoreAudio
 dnl
@@ -231,17 +230,18 @@ AC_ARG_ENABLE(coreaudio,
 
 COREAUDIO_SUPPORT=0
 if test "$fluid_enable_coreaudio" = "yes"; then
-  AC_CHECK_HEADER(AudioHardware.h, COREAUDIO_FOUND="yes", COREAUDIO_FOUND="no")
+  AC_CHECK_HEADER(CoreAudio/AudioHardware.h, COREAUDIO_FOUND="yes",
+                  COREAUDIO_FOUND="no")
   if test "$COREAUDIO_FOUND" = "yes"; then
      AC_DEFINE(COREAUDIO_SUPPORT, 1, [whether or not we are supporting CoreAudio])
      COREAUDIO_SUPPORT=1 
+     COREAUDIO_LIBS=-Wl,-framework,CoreAudio
   fi
-else
-  COREAUDIO_FOUND="no"
 fi
 
 AM_CONDITIONAL(COREAUDIO_SUPPORT, test "$COREAUDIO_SUPPORT" = "1")
-
+AC_SUBST(COREAUDIO_LIBS)
+AC_SUBST(COREAUDIO_CFLAGS)
 
 dnl Check for readline support (Josh Green 2003-06-10)
 
