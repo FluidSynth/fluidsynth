@@ -63,9 +63,9 @@ fluid_cmd_t fluid_commands[] = {
   { "select", "event", (fluid_cmd_func_t) fluid_handle_select, NULL,
     "select chan sfont bank prog  Combination of bank-select and program-change" },
   { "load", "general", (fluid_cmd_func_t) fluid_handle_load, NULL,
-    "load file [reset]          Load a SoundFont (reset=0|1, optional, default=1)" },
+    "load file [reset] [bank_offset]   Load a SoundFont (reset=0|1, default 1; bank_offset=n, default 0)" },
   { "unload", "general", (fluid_cmd_func_t) fluid_handle_unload, NULL,
-    "unload id [reset]          Unload the SoundFont with the specified ID (reset=0|1, def=1)"},
+    "unload id [reset]          Unload the SoundFont with the specified ID (reset=0|1, default 1)"},
   { "reload", "general", (fluid_cmd_func_t) fluid_handle_reload, NULL,
     "reload id                  Reload the SoundFont with the specified ID" },
   { "fonts", "general", (fluid_cmd_func_t) fluid_handle_fonts, NULL,
@@ -430,6 +430,11 @@ fluid_handle_prog(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out)
 int 
 fluid_handle_select(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out)
 {
+  int sfont_id;
+  int chan;
+  int bank;
+  int prog;
+
   if (ac < 4) {
     fluid_ostream_printf(out, "preset: too few arguments\n");
     return -1;
@@ -439,7 +444,20 @@ fluid_handle_select(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out
     fluid_ostream_printf(out, "preset: invalid argument\n");
     return -1;
   }
-  return fluid_synth_program_select(synth, atoi(av[0]), atoi(av[1]), atoi(av[2]), atoi(av[3]));  
+  
+  chan = atoi(av[0]);
+  sfont_id = atoi(av[1]);
+  bank = atoi(av[2]);
+  prog = atoi(av[3]);
+
+  if (sfont_id != 0) {
+    return fluid_synth_program_select(synth, chan, sfont_id, bank, prog);
+  } else { 
+    if (fluid_synth_bank_select(synth, chan, bank) == FLUID_OK) {
+      return fluid_synth_program_change(synth, chan, prog);
+    }
+    return FLUID_FAILED;
+  }
 }
 
 int 
@@ -448,6 +466,7 @@ fluid_handle_inst(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out)
   int font;
   fluid_sfont_t* sfont;
   fluid_preset_t preset;
+  int offset;
 
   if (ac < 1) {
     fluid_ostream_printf(out, "inst: too few arguments\n");
@@ -462,6 +481,7 @@ fluid_handle_inst(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out)
   font = atoi(av[0]);
 
   sfont = fluid_synth_get_sfont_by_id(synth, font);
+  offset = fluid_synth_get_bank_offset(synth, font);
   
   if (sfont == NULL) {
     fluid_ostream_printf(out, "inst: invalid font number\n");    
@@ -472,7 +492,7 @@ fluid_handle_inst(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out)
 
   while (fluid_sfont_iteration_next(sfont, &preset)) {
     fluid_ostream_printf(out, "%03d-%03d %s\n", 
-			fluid_preset_get_banknum(&preset), 
+			fluid_preset_get_banknum(&preset) + offset, 
 			fluid_preset_get_num(&preset), 
 			fluid_preset_get_name(&preset));
   }
@@ -509,6 +529,8 @@ fluid_handle_load(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out)
   char buf[1024];
   int id;
   int reset = 1;
+  int offset = 0;
+
   if (ac < 1) {
     fluid_ostream_printf(out, "load: too few arguments\n");
     return -1;
@@ -516,13 +538,30 @@ fluid_handle_load(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out)
   if (ac == 2) {
     reset = atoi(av[1]);
   }
-  id = fluid_synth_sfload(synth, fluid_expand_path(av[0], buf, 1024), reset);
+  if (ac == 3) {
+    offset = atoi(av[2]);
+  }
+
+  /* Load the SoundFont without resetting the programs. The reset will
+   * be done later (if requested). */
+  id = fluid_synth_sfload(synth, fluid_expand_path(av[0], buf, 1024), 0);
+
   if (id == -1) {
     fluid_ostream_printf(out, "failed to load the SoundFont\n");
     return -1;
   } else {
     fluid_ostream_printf(out, "loaded SoundFont has ID %d\n", id);
   }
+
+  if (offset) {
+    fluid_synth_set_bank_offset(synth, id, offset);
+  }
+
+  /* The reset should be done after the offset is set. */
+  if (reset) {
+    fluid_synth_program_reset(synth);
+  }
+
   return 0;
 }
 

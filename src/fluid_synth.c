@@ -589,6 +589,7 @@ delete_fluid_synth(fluid_synth_t* synth)
   int i, k;
   fluid_list_t *list;
   fluid_sfont_t* sfont;
+  fluid_bank_offset_t* bank_offset;
   fluid_sfloader_t* loader;
 
   if (synth == NULL) {
@@ -600,13 +601,21 @@ delete_fluid_synth(fluid_synth_t* synth)
   synth->state = FLUID_SYNTH_STOPPED;
 
   /* delete all the SoundFonts */
-  
   for (list = synth->sfont; list; list = fluid_list_next(list)) {
     sfont = (fluid_sfont_t*) fluid_list_get(list);
     delete_fluid_sfont(sfont);
   }
 
   delete_fluid_list(synth->sfont);
+ 
+  /* and the SoundFont offsets */
+  for (list = synth->bank_offsets; list; list = fluid_list_next(list)) {
+    bank_offset = (fluid_bank_offset_t*) fluid_list_get(list);
+    FLUID_FREE(bank_offset);
+  }
+
+  delete_fluid_list(synth->bank_offsets);
+ 
   
   /* delete all the SoundFont loaders */
   
@@ -626,6 +635,7 @@ delete_fluid_synth(fluid_synth_t* synth)
     }
     FLUID_FREE(synth->channel);
   }
+
   if (synth->voice != NULL) {
     for (i = 0; i < synth->nvoice; i++) {
       if (synth->voice[i] != NULL) {
@@ -644,6 +654,7 @@ delete_fluid_synth(fluid_synth_t* synth)
     }
     FLUID_FREE(synth->left_ubuf);
   }
+
   if (synth->right_ubuf != NULL) {
     for (i = 0; i < synth->nbuf; i++) {
       if (synth->right_ubuf[i] != NULL) {
@@ -652,6 +663,7 @@ delete_fluid_synth(fluid_synth_t* synth)
     }
     FLUID_FREE(synth->right_ubuf);
   }
+
   if (synth->fx_left_ubuf != NULL) {
     for (i = 0; i < 2; i++) {
       if (synth->fx_left_ubuf[i] != NULL) {
@@ -1082,11 +1094,13 @@ fluid_synth_get_preset(fluid_synth_t* synth, unsigned int sfontnum,
   fluid_preset_t* preset = NULL;
   fluid_sfont_t* sfont = NULL;
   fluid_list_t* list = synth->sfont;
+  int offset;
 
   sfont = fluid_synth_get_sfont_by_id(synth, sfontnum);
   
   if (sfont != NULL) {
-    preset = fluid_sfont_get_preset(sfont, banknum, prognum);
+    offset = fluid_synth_get_bank_offset(synth, sfontnum);
+    preset = fluid_sfont_get_preset(sfont, banknum - offset, prognum);
     if (preset != NULL) {
       return preset;
     }
@@ -1103,11 +1117,13 @@ fluid_synth_get_preset2(fluid_synth_t* synth, char* sfont_name,
 {
   fluid_preset_t* preset = NULL;
   fluid_sfont_t* sfont = NULL;
+  int offset;
 
   sfont = fluid_synth_get_sfont_by_name(synth, sfont_name);
   
   if (sfont != NULL) {
-    preset = fluid_sfont_get_preset(sfont, banknum, prognum);
+    offset = fluid_synth_get_bank_offset(synth, fluid_sfont_get_id(sfont));
+    preset = fluid_sfont_get_preset(sfont, banknum - offset, prognum);
     if (preset != NULL) {
       return preset;
     }
@@ -1122,11 +1138,13 @@ fluid_preset_t* fluid_synth_find_preset(fluid_synth_t* synth,
   fluid_preset_t* preset = NULL;
   fluid_sfont_t* sfont = NULL;
   fluid_list_t* list = synth->sfont;
+  int offset;
 
   while (list) {
 
     sfont = (fluid_sfont_t*) fluid_list_get(list);
-    preset = fluid_sfont_get_preset(sfont, banknum, prognum);
+    offset = fluid_synth_get_bank_offset(synth, fluid_sfont_get_id(sfont));
+    preset = fluid_sfont_get_preset(sfont, banknum - offset, prognum);
 
     if (preset != NULL) {
       preset->sfont = sfont; /* FIXME */
@@ -1285,6 +1303,7 @@ int fluid_synth_program_select2(fluid_synth_t* synth,
   fluid_preset_t* preset = NULL;
   fluid_channel_t* channel;
   fluid_sfont_t* sfont = NULL;
+  int offset;
 
   if ((chan < 0) || (chan >= synth->midi_channels)) {
     FLUID_LOG(FLUID_ERR, "Channel number out of range (chan=%d)", chan);
@@ -1298,7 +1317,8 @@ int fluid_synth_program_select2(fluid_synth_t* synth,
     return FLUID_FAILED;
   }
 
-  preset = fluid_sfont_get_preset(sfont, bank_num, preset_num);
+  offset = fluid_synth_get_bank_offset(synth, fluid_sfont_get_id(sfont));
+  preset = fluid_sfont_get_preset(sfont, bank_num - offset, preset_num);
   if (preset == NULL) {
     FLUID_LOG(FLUID_ERR, 
 	      "There is no preset with bank number %d and preset number %d in SoundFont %s", 
@@ -2104,7 +2124,7 @@ fluid_synth_sfload(fluid_synth_t* synth, const char* filename, int reset_presets
 
     if (sfont != NULL) {
 
-      sfont->id = synth->sfont_id++;
+      sfont->id = ++synth->sfont_id;
 
       /* insert the sfont as the first one on the list */
       synth->sfont = fluid_list_prepend(synth->sfont, sfont);
@@ -2259,7 +2279,7 @@ int fluid_synth_sfreload(fluid_synth_t* synth, unsigned int id)
  */
 int fluid_synth_add_sfont(fluid_synth_t* synth, fluid_sfont_t* sfont)
 {
-	sfont->id = synth->sfont_id++;
+	sfont->id = ++synth->sfont_id;
 
 	/* insert the sfont as the first one on the list */
 	synth->sfont = fluid_list_prepend(synth->sfont, sfont);
@@ -2276,7 +2296,12 @@ int fluid_synth_add_sfont(fluid_synth_t* synth, fluid_sfont_t* sfont)
  */
 void fluid_synth_remove_sfont(fluid_synth_t* synth, fluid_sfont_t* sfont)
 {
+	int sfont_id = fluid_sfont_get_id(sfont);
+
 	synth->sfont = fluid_list_remove(synth->sfont, sfont);
+
+	/* remove a possible bank offset */
+	fluid_synth_remove_bank_offset(synth, sfont_id);
 	
 	/* reset the presets for all channels */
 	fluid_synth_program_reset(synth);
@@ -2953,4 +2978,65 @@ int fluid_synth_stop(fluid_synth_t* synth, unsigned int id)
   }
 
   return status;
+}
+
+fluid_bank_offset_t* 
+fluid_synth_get_bank_offset0(fluid_synth_t* synth, int sfont_id)
+{
+	fluid_list_t* list = synth->bank_offsets;
+	fluid_bank_offset_t* offset;
+ 
+	while (list) {
+
+		offset = (fluid_bank_offset_t*) fluid_list_get(list);
+		if (offset->sfont_id == sfont_id) {
+			return offset;
+		}
+
+		list = fluid_list_next(list);
+	}
+	
+	return NULL;
+}
+
+int 
+fluid_synth_set_bank_offset(fluid_synth_t* synth, int sfont_id, int offset)
+{
+	fluid_bank_offset_t* bank_offset;
+
+	bank_offset = fluid_synth_get_bank_offset0(synth, sfont_id);
+
+	if (bank_offset == NULL) {
+		bank_offset = FLUID_NEW(fluid_bank_offset_t);
+		if (bank_offset == NULL) {
+			return -1;
+		}
+		bank_offset->sfont_id = sfont_id;
+		bank_offset->offset = offset;
+		synth->bank_offsets = fluid_list_prepend(synth->bank_offsets, bank_offset);
+	} else {
+		bank_offset->offset = offset;
+	}
+
+	return 0;
+}
+
+int 
+fluid_synth_get_bank_offset(fluid_synth_t* synth, int sfont_id)
+{
+	fluid_bank_offset_t* bank_offset;
+
+	bank_offset = fluid_synth_get_bank_offset0(synth, sfont_id);
+	return (bank_offset == NULL)? 0 : bank_offset->offset;
+}
+
+void 
+fluid_synth_remove_bank_offset(fluid_synth_t* synth, int sfont_id)
+{
+	fluid_bank_offset_t* bank_offset;
+
+	bank_offset = fluid_synth_get_bank_offset0(synth, sfont_id);
+	if (bank_offset != NULL) {
+		synth->bank_offsets = fluid_list_remove(synth->bank_offsets, bank_offset);
+	}
 }

@@ -258,6 +258,12 @@ FLUIDSYNTH_API fluid_sfont_t* fluid_synth_get_sfont_by_id(fluid_synth_t* synth, 
   /** Get the preset of a channel */
 FLUIDSYNTH_API fluid_preset_t* fluid_synth_get_channel_preset(fluid_synth_t* synth, int chan);
 
+  /** Offset the bank numbers in a SoundFont. Returns -1 if an error
+   * occured (out of memory or negative offset) */ 
+FLUIDSYNTH_API int fluid_synth_set_bank_offset(fluid_synth_t* synth, int sfont_id, int offset);
+
+  /** Get the offset of the bank numbers in a SoundFont. */ 
+FLUIDSYNTH_API int fluid_synth_get_bank_offset(fluid_synth_t* synth, int sfont_id);
 
 
 
