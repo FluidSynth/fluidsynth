@@ -12,6 +12,14 @@ already been done.  - Josh Green 2003-08-25
 - When specifying -i -s (no console and TCP server) log to TCP clients
   with easier parsable messages ("warning:", "error:", etc)
 
+JG:
+> Well actually, it almost seems like every instrument is kind of flat. It
+> just doesn't sound real nice. 
+
+JG:
+> Its often hard to get the right Reverb/Chorus/Gain settings as
+> well, so often I end up turning off Reverb and Chorus which can help.
+
 - GM soundfont? 
 - MacOS X MidiCore component
 - Windows DirectMusic component

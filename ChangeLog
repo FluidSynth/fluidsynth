@@ -1,4 +1,9 @@
+2004-03-19  Peter Hanappe <peter@hanappe.com>
 
+	* src/fluid_midishare.c: Applied Stephane Letz patch: MidiShare is
+	now connected to fluidsynth by default so that received MIDI
+	events directly trigger the synth
+	
 2004-02-28  Peter Hanappe <peter@hanappe.com>
 
 	* src/fluid_synth.c: Added fluid_synth_program_select2() and

@@ -100,11 +100,15 @@ Turn the chorus on or off [0|1|yes|no, default = on]
 .B \-g, \-\-gain
 Set the master gain [0 < gain < 10, default = 0.2]
 .TP
-.B \-s, \-\-server
-Start a TCP/IP server for remote shells [default=no, port=9800]
+.B \-o setting=value
+Set the value of the setting. Can be used any number of times.
+Ex. -o midi.oss.device=/dev/midi00
 .TP
 .B \-i, \-\-no-shell
 Don't read commands from the shell [default = yes]
+.TP
+.B \-s, \-\-server
+Start a TCP/IP server for remote shells [default=no, port=9800]
 .TP
 .B \-v, \-\-verbose
 Print out verbose messages about midi events
