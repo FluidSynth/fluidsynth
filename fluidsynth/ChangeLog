@@ -1,3 +1,10 @@
+2004-08-06    <peter@hanappe.com>
+
+	* src/fluid_synth.c (fluid_synth_noteon):
+	fluid_synth_release_voice_on_same_note() is now called in the
+	noteon() function instead of in fluid_synth_start(). This fixes
+	the silent note problem!
+
 2004-07-29    <peter@hanappe.com>
 
 	* src/fluid_chan.c (fluid_channel_cc): Applied Ken Ellinwood's
