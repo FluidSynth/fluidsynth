@@ -1,3 +1,13 @@
+2003-06-28  Josh Green  <jgreen@users.sourceforge.net>
+
+	* src/fluid_defsfont.c: Moved call to fluid_voice_optimize_sample
+	from fluid_inst_zone_import_sfont to fluid_defsfont_load. Also
+	reduced minimum sample size before rejection from 48 to 8 (could
+	be lower?).
+	* src/fluid_voice.c (fluid_voice_optimize_sample): Added a check
+	for sample->valid to ignore ROM samples which was causing a crash
+	with Vintage Dreams and other SoundFont files with ROM samples.
+
 2003-06-17  Josh Green  <jgreen@users.sourceforge.net>
 
 	Release version 1.0.2
