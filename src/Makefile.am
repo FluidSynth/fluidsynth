@@ -1,34 +1,43 @@
 ## Process this file with automake to produce Makefile.in
 
 # Tests for optional drivers
-if COREAUDIO_SUPPORT
-fluid_coreaudio = fluid_coreaudio.c
+if ALSA_SUPPORT
+fluid_alsa = fluid_alsa.c
 endif
 
-if MINGW32_SUPPORT
-fluid_windows = fluid_dll.c fluid_dsound.c fluid_winmidi.c
+if COREAUDIO_SUPPORT
+fluid_coreaudio = fluid_coreaudio.c
 endif
 
 if JACK_SUPPORT
 fluid_jack = fluid_jack.c
 endif
 
+if MINGW32_SUPPORT
+fluid_windows = fluid_dll.c fluid_dsound.c fluid_winmidi.c
+endif
+
+if OSS_SUPPORT
+fluid_oss = fluid_oss.c
+endif
+
 # Extra files and optional drivers
 EXTRA_DIST = fluid_dll.c fluid_dsound.c fluid_winmidi.c fluid_portaudio.c \
-	fluid_coreaudio.c fluid_dsp_core.c fluid_sndmgr.c \
-	config_macos.h config_macosx.h config_macosx_pb.h config_win32.h \
-	fluid_sse.h
+	fluid_coreaudio.c fluid_alsa.c fluid_oss.c fluid_dsp_core.c \
+	fluid_sndmgr.c config_macos.h config_macosx.h config_macosx_pb.h \
+	config_win32.h fluid_sse.h
 
 lib_LTLIBRARIES = libfluidsynth.la
 bin_PROGRAMS = fluidsynth 
 
 libfluidsynth_la_SOURCES = \
+	$(fluid_alsa) \
 	$(fluid_coreaudio) \
-	$(fluid_windows) \
 	$(fluid_jack) \
+	$(fluid_oss) \
+	$(fluid_windows) \
 	fluid_adriver.c \
 	fluid_adriver.h \
-	fluid_alsa.c \
 	fluid_chan.c \
 	fluid_chan.h \
 	fluid_chorus.c \
@@ -60,7 +69,6 @@ libfluidsynth_la_SOURCES = \
 	fluid_midishare.c \
 	fluid_mod.c \
 	fluid_mod.h \
-	fluid_oss.c \
 	fluid_phase.h \
 	fluid_ramsfont.c \
 	fluid_ramsfont.h \
@@ -84,10 +92,10 @@ libfluidsynth_la_SOURCES = \
 	fluid_voice.h
 
 INCLUDES = -I$(srcdir)/../include $(LADCCA_CFLAGS) $(READLINE_CFLAGS) \
-  $(JACK_CFLAGS)
+  $(JACK_CFLAGS) $(ALSA_CFLAGS)
 
 libfluidsynth_la_LIBADD = $(LIBFLUID_LIBS) $(LADCCA_LIBS) $(READLINE_LIBS) \
-  $(COREAUDIO_LIBS) $(JACK_LIBS)
+  $(COREAUDIO_LIBS) $(JACK_LIBS) $(ALSA_LIBS)
 libfluidsynth_la_LDFLAGS = \
 	-version-info @LIBFLUIDSYNTH_MAJ@:@LIBFLUIDSYNTH_MIN@:0 \
 	-export-dynamic @FCLDFLAGS@ $(LIBFLUID_LDFLAGS)

@@ -1,3 +1,16 @@
+2003-08-31  Josh Green  <jgreen@users.sourceforge.net>
+
+	* acinclude.m4: Renamed AC_SOUND macro to AC_OSS_AUDIO and removed
+	the ALSA check from it since pkg-config is now being used to check
+	for ALSA. Also fixed --enable-alsa-support and --enable-oss-support
+	which were disabling support instead (reported by Bart Massey).
+	* configure.ac: pkg-config is now being used to check for ALSA.
+	ALSA and OSS now use automake conditionals to conditionally compile
+	source files.
+	* Makefile.am: Re-arranged SUBDIRS so build output looks nicer.
+	* src/Makefile.am: ALSA and OSS are now conditionally compiled using
+	automake conditionals.
+
 2003-08-29  Josh Green  <jgreen@users.sourceforge.net>
 
 	* src/fluid_sys.c: Patch from Eric Van Buggenhaut to make i386 asm
