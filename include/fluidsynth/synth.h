@@ -218,6 +218,15 @@ FLUIDSYNTH_API int fluid_synth_sfunload(fluid_synth_t* synth, unsigned int id, i
   */
 FLUIDSYNTH_API int fluid_synth_add_sfont(fluid_synth_t* synth, fluid_sfont_t* sfont);
 
+  /** Remove a SoundFont that was previously added using
+   *  fluid_synth_add_sfont(). The synthesizer does not delete the
+   *  SoundFont; this is responsability of the caller.
+
+      \param synth The synthesizer object
+      \param sfont The SoundFont
+  */
+FLUIDSYNTH_API void fluid_synth_remove_sfont(fluid_synth_t* synth, fluid_sfont_t* sfont);
+
   /** Count the number of loaded SoundFonts.
 
       \param synth The synthesizer object

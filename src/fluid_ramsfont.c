@@ -20,7 +20,7 @@
 
 #include "fluid_ramsfont.h"
 #include "fluid_sys.h"
-#include "fluid_synth.h"	// for fluid_synth_add_sfont
+#include "fluid_synth.h"
  
 /* thenumber of samples before the start and after the end */
 #define SAMPLE_LOOP_MARGIN 8
@@ -63,23 +63,6 @@ fluid_ramsfont_create_sfont()
 
 }
 
-/*
- * fluid_synth_add_sfont
- */
-/* Could be in fluid_synth.c */
-int fluid_synth_add_sfont(fluid_synth_t* synth, fluid_sfont_t* sfont)
-{
-	sfont->id = synth->sfont_id++;
-
-	/* insert the sfont as the first one on the list */
-	synth->sfont = fluid_list_prepend(synth->sfont, sfont);
-	
-	/* reset the presets for all channels */
-	fluid_synth_program_reset(synth);
-	
-	return sfont->id;
-}
- 
 /***************************************************************
  *
  *                           PUBLIC INTERFACE

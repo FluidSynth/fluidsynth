@@ -2256,6 +2256,35 @@ int fluid_synth_sfreload(fluid_synth_t* synth, unsigned int id)
 }
 
 
+/*
+ * fluid_synth_add_sfont
+ */
+int fluid_synth_add_sfont(fluid_synth_t* synth, fluid_sfont_t* sfont)
+{
+	sfont->id = synth->sfont_id++;
+
+	/* insert the sfont as the first one on the list */
+	synth->sfont = fluid_list_prepend(synth->sfont, sfont);
+	
+	/* reset the presets for all channels */
+	fluid_synth_program_reset(synth);
+	
+	return sfont->id;
+}
+
+
+/*
+ * fluid_synth_remove_sfont
+ */
+void fluid_synth_remove_sfont(fluid_synth_t* synth, fluid_sfont_t* sfont)
+{
+	synth->sfont = fluid_list_remove(synth->sfont, sfont);
+	
+	/* reset the presets for all channels */
+	fluid_synth_program_reset(synth);
+}
+
+
 /* fluid_synth_sfcount
  *
  * Returns the number of loaded SoundFonts 
