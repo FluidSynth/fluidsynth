@@ -1,0 +1,90 @@
+
+[:Idea:]
+
+* Samuel Bianchini, Peter Hanappe and Johnathan Lee
+
+
+[:Development:]
+
+Many people contributed to FluidSynth, send suggestions or bug
+fixes. The project was started by Peter Hanappe who is the main
+author. Below you'll find a summery of contributions.
+
+
+* Peter Hanappe. files: sticked it's hand in all files.
+
+* Josh Green contributed a lot of code directly or indirectly through
+  the Swami and Smurf code base. The soundfont loader is
+  completely based on his code. He also wrote the alsa sequencer
+  driver. He made many changes and bug fixes, but above all, he's one
+  of the driver forces behind the synthesizer. files:
+  iiwu_defsfont.{c,h}, iiwu_alsa{c,h}.
+
+* Stephane Letz from Grame wrote most of the MidiShare driver, all of
+  the PortAudio driver, ported iiwusynth to MacOS X, and sent in many
+  fixes. files: iiwu_midishare.c, iiwu_portaudio.c
+
+* Markus Nentwig (re-)designed the resonant filter, the chorus, the
+  LADSPA subsystem, the MIDI router, optimized for SSE, made many
+  changes and bug fixes and got the synthesizer to actually work. Most
+  importantly, he used it on stage to make music.  files:
+  iiwu_ladspa.{c,h}, iiwu_cmd.{c,h}, iiwu_voice.{c,h}, iiwu_synth.c,
+  iiwu_sse.h, iiwu_dsp_core.h, iiwu_rev.{c,h}, and basically all the
+  other files.
+
+* Antoine Schmitt added the sequencer support, support for sample
+  loading (RAM Sfont), developed the
+  MacroMedia Director Xtra, and send in many many bug reports. Thanks
+  to Antoine, the synthesizer finds its way to multi-media
+  developers. files: in bindings/director/ and iiwu_seq.{c,h},
+  iiwu_event.{c,h}, iiwu_event_priv.h, iiwu_seqbind.{c,h},
+  iiwu_ramsfont.{c,h}
+
+* Bob Ham added the code for "bank select" MIDI messages and send code
+  to define the synth's ALSA sequencer client name. files:
+  iiwu_midi.c, iiwu_alsa.c, iiwusynth.c, iiwusynth.h.
+
+* Tim Goetze sent many patches and implemented the all_notes_off.
+  files: iiwu_synth.c, iiwu_chan.c, iiwu_voice.c
+
+* Norbert Schnell from Ircam's jMax Team wrote most of the jMax/FTS
+  interface in a record time. He also pointed me to the technique of
+  using a lookup table for the interpolation coefficients.  file:
+  iiwu_fts.c, iiwu_synth.c
+
+* The alsa driver was based on the jMax alsa driver by Francois
+  Dechelle and his Real-time Team at Ircam
+  (http://www.ircam.fr/jmax). The jMax code was based upon Ardour's
+  alsa_device.cc by Paul Barton-Davis.  file: iiwu_alsa.c
+
+* I copied code from the glib library to the smurf files. The goal was
+  to make iiwusynth independent from any library for maximum
+  portability.
+
+* The midi device uses code from jMax's alsarawmidi.c file and from
+  Smurf's midi_alsaraw.c by Josh Green. Josh also added support for
+  the alsa sequencer interface. file: iiwu_alsa.c
+
+* The reverb algorithm was written by Jezar
+  (http://www.dreampoint.co.uk). His code is public domain. The code
+  was translated to C by Peter Hanappe.  file: iiwu_synth.c
+
+* The original code for the chorus effect was written by Juergen
+  Mueller and sundry contributors.
+
+* I used Martin Uddén's midi package. His files are integrated into
+  the iiwu_midi file. Martin Uddén <nanook@lysator.liu.se> file:
+  iiwu_midi.c
+
+* I copied some interpolation algorihms that I found in the music-dsp
+  archives (http://www.smartelectronix.com/musicdsp). They were
+  written by Joshua Scholar and others.  file: iiwu_synth.c
+
+* Bug fixes where sent in by: Werner Schweer, Josh Green, Anthony
+  Green, Jake Commander, Fernando Pablo Lopez-Lezcano, and Raoul
+  Bonisch.
+
+* I copied the macros to {increment,decrement} the 64-bit fixed point
+  phase from Mozilla's macros to handle the Long-long type (64-bit
+  signed integer type). Mozilla NSPR library, www.mozilla.org.  file:
+  iiwu_phase.h

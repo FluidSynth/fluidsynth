@@ -1,0 +1,159 @@
+
+
+IIWU Synth Final (0.3?):
+--------------------------------------------
+
+SoundFont Specs:
+- pitch control on stereo samples not managed as should
+
+DSP
+- problems with chorus (test on VintageDreamWaves + LoveVigilants.mid)
+- some bad tuning problems (test on VintageDreamWaves + EnolaGay.mid)
+- Check changes w.r.t. noise floor in iiwu_voice
+
+Misc
+- Make Vintage Dreams the default soundfont
+- segfault with 'iiwusynth -i -n ~/projects/iiwusynth-perso/sf2/VintageDreamsWaves-v2.sf2 ~/cap-mts'
+- Add compilation date
+
+API & design
+- preset notify for sample load/unload
+- Remove iiwu_list from iiwusynth.h
+- organization headers: make a header directory containing all headers
+   /usr/include/fluid/synth.h
+   $SRCDIR/priv/synth.h
+   /usr/include/fluid/voice.h
+   /usr/include/fluid/channel.h
+   /usr/include/fluid/ ...
+   /usr/include/fluid/synth.h
+
+Drivers
+- Add flag to dsound driver to not use LOCHWARE
+- Update PortAudio and Midishare driver
+
+Documentation
+- User manual (DocBook?)
+
+Testing:
+- test SSE & long long
+- Test sequencer
+- test on AMD processors
+- test reverb
+- test filter 
+- test existing midi controllers
+- comparison tests with sblive
+- test audio drivers (dsound, oss, alsa, audioport (win,mac,linux), sndman)
+- test midi drivers (alsa, alsa_seq, oss, winmidi, midishare (win,mac,linux))
+
+
+Fluid 1.0:
+--------------------------------------------
+
+- move to LGPL
+- web site
+- name change to Fluid
+- deb and rpm package
+- Mac and Windows binaries
+- Xtra binaries
+
+Web site: add:
+  - link to pd-iiwu
+  - how to create soundfonts on linux, macintosh, windows
+  - where to find soundfonts
+  - where to find documentation on soundfonts
+  - using fluid in PD, jMax
+
+Fluid 1.1:
+--------------------------------------------
+
+- handle tuning sysex messages
+- OMNI
+- server sur windows
+- sample dump
+- midi router
+- change sample rate dynamically after jack driver instantiation, or
+  create audio driver before initiating the synth
+- sample streaming
+- load/unload sample on demand 
+- include readline in project
+- additional aux buses
+- rewrite midi file using new sequencer
+- move to c++
+- "interface" API
+- load drivers, plugins, and soundfont loaders from shared libraries
+- write a Max external
+- java bindings
+- direct access to audio buffer
+- soft clipping, compressor, limitor, or automatic gain control
+- register shell commands dynamically, no dependancy on iiwu_synth object
+- load wave files (ramsfont)
+- ASIO driver
+- DirectSound3D driver
+- evolve ladspa effects unit to a "audio rack"
+- add aditional synthesizers?
+
+
+OLD STUFF, NEEDS TO BE FILTERED ------------------
+
+
+Design
+------
+- determine and protect critical regions
+- check out atomic_inc and atomic_dec for flagging on/off of sp
+- check out lock-free lifo for synchronization
+- test for maximum cpu usage, and limit
+- watchdog
+- better debugging features and monitoring
+  - MIDI events (driver status, received, errors)
+  - Audio out (driver status, time, errors)
+  - Debug message ()
+  - CPU, memory usage
+- better synth settings: iiwu_synth_attr or iiwu_synth_params
+  o allow for optimization settings
+    no key to filter modulator
+    sample truncation, linear interpolation, 8 point interpolation, ...
+    hardware acceleration
+  o polyphony, buffer and queue size, ...
+- load, reload, replace, and print info about soundfonts the way creative does it
+
+
+Drivers
+-------
+- OMS on macintosh
+- DirectSound 3D
+
+DSP
+---
+- soft clipping, compressor, limitor, or automatic gain control
+- improved float to int conversion
+- 96kHz/24bits
+
+Control
+-------
+- handle all continuous controllers
+- more testing on voice stealing algorithm
+- handles RPN and NRPN messages
+- OpenSoundControl
+
+Testing
+-------
+- create soundfont with basic wave forms [sine, square, triangle];
+  make test midi file; compare with SBLive output; "regression" test
+- compare performance with timidity
+
+Availability
+------------
+- create a libiiwusynth library that doesn't necessarily depend on OSS
+  or ALSA.
+- make an fts package that links (statically?) with libiiwusynth
+- ladspa plugin
+- alsa module
+- language bindings (Java, Python, Perl, Guile, ...)
+- QuickTime Component
+- make netscape and ie plugin
+
+Hardware
+--------
+- study ALSA interface, SBLive interface (OSS, win32)
+- hardware detection
+- specify hardware or software synth
