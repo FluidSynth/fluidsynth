@@ -1,0 +1,502 @@
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook V4.1//EN">
+<article>
+  <articleinfo>
+    <title>
+    FluidSynth
+    Developer Documentation
+    </title>
+
+    <author>
+      <firstname>Peter</firstname>
+      <surname>Hanappe</surname>
+      <!-- affiliation>
+        <address><email>peter-REMOVE-THIS-@hanappe.com</email></address>
+      </affiliation -->
+    </author>
+
+    <copyright>
+      <year>2003</year>
+      <holder>Copyright Peter Hanappe</holder>
+    </copyright>
+
+    <abstract>
+
+      <para>FluidSynth is a software synthesizer based on the
+      SoundFont 2 specifications. The synthesizer is available as a
+      shared object that can easily be reused in any application that
+      wants to use wavetable synthesis. This documents explains the
+      nitty-gritty.</para>
+
+    </abstract>
+  </articleinfo>
+
+  <sect1>
+    <title>Using the synthesizer as a plugin</title>
+
+    <para>FluidSynth can easily be embedded in an application.</para>
+
+  </sect1>
+
+  <sect1>
+    <title>Creating and changing the settings</title>
+
+    <para>
+    Before you can use the synthesizer, you have to create a settings
+    object. The settings objects is used by all components of the
+    FluidSynth library. It gives a unified API to set the parameters
+    of the audio drivers, the midi drivers, the synthesizer,
+    andsoforth. A number of default settings are defined by the
+    current implementation. In future versions the use of the settings
+    will probably be generalized and used also for LADSPA plugins.
+    </para>
+ 
+    <para>
+    All settings have a name that follows the "dotted-name"
+    notation. For example, "synth.polyphony" refers to the number of
+    voices (polyphony) preallocated by the synthesizer. The settings
+    also have a type. There are currently three types: strings,
+    numbers (double floats), and integers. You can change the values
+    of a setting using the <function>fluid_settings_setstr</function>,
+    <function>fluid_settings_setnum</function>, and
+    <function>fluid_synth_setint</function> functions. For example:
+
+<programlisting>
+void init() 
+{
+  fluid_settings_t* settings;
+  
+  settings = new_fluid_settings();
+  fluid_synth_setint(settings, "synth.polyphony", 128);
+}
+</programlisting>
+
+    </para>
+
+    <para>
+    The API contains the functions to query the type, the current
+    value, the default value, the range and and the "hints" of a
+    setting. The range is the minumum and maximum value of the
+    setting. The hints gives additional information about a
+    setting. For example, whether a string represents a filename. Or
+    whether a number should be interpreted on on a logarithmic
+    scale. Check the API documentation for a description of all
+    functions.
+    </para>
+
+  </sect1>
+
+  <sect1>
+    <title>Creating the synthesizer</title>
+
+    <para>
+    To create the synthesizer, you pass it the settings object, like
+    in the following example:
+
+<programlisting>
+void init() 
+{
+  fluid_settings_t* settings;
+  fluid_synth_t* synth;
+  
+  settings = new_fluid_settings();
+  
+  /* Set the settings, if necessary */
+
+  synth = new_fluid_synth(settings);
+}
+</programlisting>
+    </para>
+
+    <para>
+    The default settings should be fine for most uses. A detailed
+    description of all the settings used by the synthesizer described
+    below.
+    </para>
+
+
+  <sect1>
+    <title>Creating the audio driver</title>
+
+    <para>
+    The synthesizer itself does not send any audio to the audio
+    output. This allows application developers who want to integrate
+    the synthesizer in their application to manage the audio output
+    themselves. The following sections describes the use of the
+    synthesizer without an audio driver in more detail.
+    </para>
+
+    <para>
+    Creating the audio driver is straightforward: set the appropriate
+    settings and create the driver object. Because the FluidSynth has
+    support for several audio libraries, you may want to change what
+    audio subsystem you want to use. Currently the following audio
+    systems are supported:
+    </para>
+
+    <para>
+    <itemizedlist>
+      <listitem><para>Linux: OSS, ALSA, Jack, PortAudio (not tested)</para></listitem>
+      <listitem><para>MacOS Classic: SoundManager, PortAudio</para></listitem>
+      <listitem><para>MacOS X: PortAudio, CoreAudio (experimental)</para></listitem>
+      <listitem><para>Windows: DirectSound, PortAudio (not tested)</para></listitem>
+    </itemizedlist>
+    </para>
+
+    <para>
+    The default audio driver depends on the settings with which
+    FluidSynth was compiled. You can get the default driver with
+    fluid_settings_getstr_default(settings, "audio.driver").  To get
+    the list of available drivers use the
+    <function>fluid_settings_foreach_option</function>
+    function. Finally, you can set the driver with
+    <function>fluid_settings_setstr</function>. In most cases, the
+    default driver should work out of the box.  </para>
+
+    <para>
+    Additional options that define the audio quality and latency are
+    "audio.sample-format", "audio.period-size", and
+    "audio.periods". The details are described later.
+    </para>
+
+    <para>
+    You create the audio driver with the
+    <function>new_fluid_audio_driver</function> function. This
+    function takes the settings and synthesizer object as
+    arguments. For example:
+
+<programlisting>
+void init() 
+{
+  fluid_settings_t* settings;
+  fluid_synth_t* synth;
+  fluid_audio_driver_t* adriver;
+
+  settings = new_fluid_settings();
+  
+  /* Set the synthesizer settings, if necessary */
+
+  synth = new_fluid_synth(settings);
+
+  fluid_settings_setstr(settings, "audio.driver", "jack");
+  adriver = new_fluid_audio_driver(settings, synth);
+}
+</programlisting>
+    </para>
+
+    <para>
+    As soon as the audio driver is created, it will start playing. The
+    audio driver creates a separate thread that runs in real-time mode
+    (is the application has sufficient privileges) and call the
+    synthesizer object to generate the audio.
+    </para>
+
+  </sect1>
+
+  <sect1>
+    <title>Using the synthesizer without an audio driver</title>
+
+    <para>
+    It is possible to use the synthesizer object without creating an
+    audio driver. This is desirable if the application using
+    FluidSynth manages the audio output itself. The synthesizer has
+    several API functions that can be used to obtain the audio output:
+    </para>
+
+    <para>
+    <function>fluid_synth_write_s16</function> fills two buffers (left
+    and right channel) with samples coded as signed 16 bits (the
+    endian-ness is machine
+    dependent). <function>fluid_synth_write_float</function> fills a
+    left and right audio buffer with 32 bits floating point
+    samples. For multi channel audio output, the function
+    <function>fluid_synth_nwrite_float</function> has to be used.
+    </para>
+
+    <para>
+    The function <function>fluid_synth_process</function> is still
+    experimental and its use is therefore not recommended but it will
+    probably become the generic interface in future versions.  
+    </para>
+
+  </sect1>
+
+  <sect1>
+    <title>Loading and managing SoundFonts</title>
+
+    <para>
+    Before any sound can be produced, the synthesizer needs a
+    SoundFont. For a discussion on SoundFont please refer to some
+    other, not yet existing, therefore virtual document.
+    </para>
+
+    <para>
+    SoundFonts are loaded with the
+    <function>fluid_synth_sfload</function> function. The function
+    takes the path to a SoundFont file as argument and a boolean to
+    indicate whether the presets of the MIDI channels should be
+    updated after the SoundFont is loaded. More on the preset updates
+    below.
+    </para>
+
+    <para>
+    The synthesizer can load any number of SoundFonts. This is an
+    advantage, of course, but there are some issues that you must be
+    aware of. The presets in a SoundFont are identified by their bank
+    and preset number. The MIDI specifications allows the change of a
+    preset on a MIDI channel using the combination of "bank select"
+    and the "program change" messages. An ambiguity arrizes when a
+    preset with a specific bank and preset number is defined in
+    multiple loaded SoundFonts. This is solved by searching the
+    SoundFonts in the inverse order they were loaded, i.e. the lastly
+    loaded SoundFont is searched first for the request preset
+    (identified by bank and preset number) then the on but last loaded
+    SoundFont, and so on until. The first preset found is then
+    used. You can somehow consider the SoundFonts placed on a
+    stack. The SoundFont on top of the stack is inspected first,
+    followed by the SoundFont down on the stack. Newly loaded
+    SoundFonts are always placed on top of the stack. This is how
+    commercial, hardware synthesizers work. The inconvenience is that
+    a preset in a SoundFont at the bottom end of the stack may be
+    masked by a preset in a SoundFont at the top of the stack. Using
+    the standard MIDI messages, bank select and program change, there
+    is no way to select a masked preset. However, FluidSynth has an
+    API function to unambiguously select a preset
+    (<function>fluid_synth_program_select</function>). This function
+    is not invokeable through MIDI messages, though.  
+    </para>
+
+    <para>
+    The <function>fluid_synth_sfload</function> function returns the
+    unique identifier of the loaded SoundFont, or -1 in case of an
+    error. This identifier is used in subsequent management functions:
+    <function>fluid_synth_sfunload</function> removes the SoundFont,
+    <function>fluid_synth_sfreload</function> reloads the
+    SoundFont. When a SoundFont is reloaded, it retains it's ID and
+    position on the SoundFont stack.  
+    </para>
+
+    <para>
+    Additional API functions are provided to get the number of loaded
+    SoundFonts ot to get a pointer to the SoundFont.
+    </para>
+
+    <para>
+    Another issue that needs some explanation is the reprogramming of
+    the presets after a SoundFont load or unload. The default behavior
+    of commercial synthesizers is to reset all the preset that are
+    programmed on the MIDI channels when a SoundFont is loaded or
+    unloaded. Consider the case where MIDI channel 1 uses preset (0,
+    0) (the couple indicates the bank and program number). This preset
+    was found in the SoundFont with ID 3, for example. When a new
+    SoundFont is loaded that also contains a preset with bank number 0
+    and program number 0, then the newly loaded preset will be used on
+    channel 1 for future events. This behavior is as if a bank select
+    and program change message is send to all channels after a
+    load/unload using the channel's bank and program number. This may
+    be sometimes confusing or unwanted. A user may not want to loose
+    its preset setup when a new SoundFont is loaded. To avoid the
+    reprogramming of the presets, the third parameter to the
+    <function>fluid_synth_sfload</function> and
+    <function>fluid_synth_sfunload</function> functions should be set
+    to zero.  
+    </para>
+
+  </sect1>
+
+  <sect1>
+    <title>Sending MIDI events</title>
+
+    <para>
+    Once the synthesizer is up and running and a SoundFont is loaded,
+    most people will want to do something usefull with it. Make noise,
+    for example. The synthesizer aims to be compatible with the MIDI
+    standard, so it accepts almost all MIDI messages (details on the
+    MIDI compatibility elsewhere). The MIDI channel messages can be
+    send using the <function>fluid_synth_noteon</function>,
+    <function>fluid_synth_noteoff</function>,
+    <function>fluid_synth_cc</function>,
+    <function>fluid_synth_pitch_bend</function>,
+    <function>fluid_synth_pitch_wheel_sens</function>, and
+    <function>fluid_synth_program_change</function> functions. For
+    convenience, there's also a
+    <function>fluid_synth_bank_select</function> function (the bank
+    select message is normally sent using a control change message).
+    </para>
+
+    <para>
+    The following example show a generic graphical button that plays a
+    not when clicked:
+
+<programlisting>
+class SoundButton : public SomeButton
+{
+public:	
+  
+  SoundButton() : SomeButton() {
+    if (!_synth) {
+       initSynth();
+    }
+  }
+
+  static void initSynth() {
+    _settings = new_fluid_settings();
+    _synth = new_fluid_synth(_settings);
+    _adriver = new_fluid_audio_driver(_settings, _synth);
+  }
+
+  /* ... */
+
+  virtual int handleMouseDown(int x, int y) {
+    /* Play a note on key 60 with velocity 100 on MIDI channel 0 */
+    fluid_synth_noteon(_synth, 0, 60, 100);
+  }
+
+  virtual int handleMouseUp(int x, int y) {
+    /* Release the note on key 60 */
+    fluid_synth_noteoff(_synth, 0, 60);
+  }
+
+
+protected:
+
+  static fluid_settings_t* _settings;
+  static fluid_synth_t* _synth;
+  static fluid_audio_driver_t* _adriver;
+};
+</programlisting>
+    </para>
+
+
+  </sect1>
+
+  <sect1>
+    <title>Advanced control features</title>
+    <para></para>
+  </sect1>
+
+  <sect1>
+    <title>MIDI tunings</title>
+    <para></para>
+  </sect1>
+
+  <sect1>
+    <title>Multi channel audio output</title>
+    <para></para>
+  </sect1>
+
+  <sect1>
+    <title>Overview of all settings</title>
+
+    <para>
+    The settings for the synthesizer
+    </para>
+
+    <para>
+synth.verbose: type string, default "no"
+
+When set to "yes" the synthesizer will print out information about the
+received MIDI events to the stdout. This can be helpful for
+debugging. This setting can not be changed after the synthesizer has
+started.
+
+synth.dump: type string, default "no"
+
+???
+
+
+synth.reverb.active: type string, default "yes"
+
+When set to "yes" the reverb effects module is activated. Otherwise,
+no reverb will be added to the output signal. Note that when the
+reverb module is active, the amount of signal send to the reverb
+module depends on the "reverb send" generator defined in the
+SoundFont.
+
+synth.chorus.active: type string, default "yes"
+
+When set to "yes" the chorus effects module is activated. Otherwise,
+no chorus will be added to the output signal. Note that when the
+reverb module is active, the amount of signal send to the chorus
+module depends on the "chorus send" generator defined in the
+SoundFont.
+
+
+synth.ladspa.active: type string, default no
+
+When set to "yes" the LADSPA subsystem will be called. This subsystem
+allows to load and interconnect LADSPA plugins. The output of the
+synthesizer is processed by the LADSPA subsystem. Note that the
+synthesizer has to be compiled with LADSPA support. More information
+about the LADSPA subsystem later.
+
+
+synth.polyphony: type integer, default 256, min. 16, max. 4096
+
+The polyphony defines how many voices can be played in parallel. The
+number of voices is not necessarily equivalent to the number of notes
+played simultaniously. Indeed, when a note is struck on a specific
+MIDI channel, the preset on that channel may created several voices,
+for example, one for the left audio channel and one for the right
+audio channels. The number of voices activated depends on the number
+of instrument zones that fall in the correspond to the velocity and
+key of the played note.
+
+synth.midi-channels: type integer, default 16, min. 16, max. 256
+
+This setting defines the number of MIDI channels of the
+synthesizer. The MIDI standard defines 16 channels, so most hardware
+keyboards are limited to 16. If you plan to use the synthesizer as a
+plugin in an application, it might be interesting to set the number of
+channels to a larger value. In this case you can program a greater
+number of presets.
+
+synth.gain: type number, default 0.2, min. 0.0, max. 10.0
+
+The gain is applied to the final or master output of the
+synthesizer. It is set to a low value by default to avoid the
+saturation of the output when random MIDI files are played. 
+
+synth.audio-channels: type integer, default 1, min. 1, max. 128
+
+By default, the synthesizer outputs a single stereo signal. Using this
+option, the synthesizer can output multichannel audio.
+
+synth.audio-groups", 1, 1, 128, 0, NULL, NULL);
+synth.effects-channels", 2, 2, 2, 0, NULL, NULL);
+synth.sample-rate", 44100.0f, 22050.0f, 96000.0f, 
+
+
+The settings for the audio driver
+
+audio.sample-format: type string, default "16bits", options ("16bits", "float")
+
+audio.period-size: type integer, default 512, min. 64, max. 8192
+
+audio.periods: type integer, default 8, min. 2, max. 64
+
+audio.output-channels: type integer, default 2, min. 2, max. 32
+
+audio.input-channels: type integer, default 0, min. 0, max. 2
+
+audio.driver: type string, default platform and compilation dependent
+
+
+
+SoundFont:
+
+Preset:
+
+Preset Zone:
+
+Instrument:
+
+Instrument Zone:
+
+Program:
+
+MIDI Channel:
+
+    </para>
+
+  </sect1>
+</article>
