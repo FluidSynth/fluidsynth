@@ -1,0 +1,907 @@
+Xtra iiwu
+Version 2.7
+October 2002
+
+
+--- Introduction
+The iiwu Xtra integrates the iiwusynth synthesizer into Director.
+
+The iiwusynth software synthesizer has been designed by Peter Hanappe,
+and is available under the LGPL licence.  It emulates in software the
+SoundFont 2.01 Specifications (http://www.soundfont.com) designed by
+Creative Labs (SoundBlaster maker).  It is basically a small, fast and
+robust wavetable synthesizer, with a MIDI-like interface and
+integrated sequencer.  For more information on the iiwu synthesizer :
+http://www.iiwu.org/iiwusynth
+
+The iiwu Xtra has been developped as part of the "infiniteCD Author"
+project managed by Antoine Schmitt and Hyptique, with support from the
+PRIAM funds from the French government.
+
+For more information on the infiniteCD Author project :
+http://www.infiniteCD.org/
+http://www.hyptique.com/
+http://www.gratin.org/as/
+
+
+--- Licencing
+
+The Version 2.7 of the iiwu Xtra is beta. Do not distribute without
+permission.  Eventually, the Xtra will be part of the iiwu project,
+and thus will conform to the LGPL licence.
+
+
+--- Release notes
+Version 2.0.1 : first beta version - October 2002
+Version 2.0.1 : first beta version - October 2002
+Version 2.5 : second beta - November 2002
+Version 2.6 : third beta - November 2002
+Version 2.7 : fourth beta - November 2002
+
+
+--- Technical Requirements
+OS:
+- Macintosh >= MacOS8.6.1 < MacOSX
+- Windows >= 95
+Director 8.5.1
+Sound Card
+
+
+--- Installation
+Drop the folder "iiwuXtraFolder" into the Xtras folder of Director.
+
+
+-----------------
+--- Documentation
+-----------------
+
+- Calls
+
+All function calls are done using lingo's call syntax:
+
+object.func(args...)
+or
+func(object, args...)
+
+Where object is the instance of the Xtra created with the 'new'
+method.  All functions return either a value, which can be 0 (zero),
+meaning that the function executed without errors, either a negative
+number, meaning that an error occurred. If an error occured, the
+function 'getError' returns a human-readable string describing the
+error.
+
+- Instances
+
+Many instances of the Xtra may coexist at the same time.
+Instances are created with the 'new' function, and deleted by assigning
+the lingo variable to VOID, as usual for Xtra instances.
+
+- SoundFont file, stack, presets
+
+A SoundFont bank is typically stored in a file, called a SoundFont
+file, of extension .sf2. In the following documentation, we will refer
+to the SoundFont file or SoundFont bank by the term
+'SoundFont'. Please note that the term 'bank' will always refer to a
+MIDI bank, not a SoundFont bank.
+
+A SoundFont has a name and contains 'presets'. A preset represents a
+way to play a sound, as a combination of sample data and parameters on
+how to play it. The preset is the fundamental sound object of the
+SoundFont format.
+
+A preset has a name, and is defined uniquely by a MIDI bank number and
+a preset number in the bank. The MIDI bank number ranges from 0 to
+16383 and the preset number from 0 to 127. Thus a SoundFont file may
+contain up to 128x16384=2097152 presets.
+
+SoundFont files may be loaded in the synthesizer, using the
+'loadSoundFont' function, thus making its presets available for
+playing. A SoundFont may be unloaded using the 'unloadSoundFont'
+function.
+
+If more than one SoundFont file is loaded, the SoundFonts are stacked
+in the synthesizer : when a preset is requested by the 'programChange'
+function, it is looked up in all succcessive SoundFonts, from first to
+last, until the preset with the right preset number and bank number is
+found. The SoundFont stack may be examined but not changed : the
+SoundFonts are stacked in inverse loading order: the last loaded
+SoundFont is the first searched.
+
+A special SoundFont is maintained by the synthesizer, corresponding to
+user-defined presets, built from user-provided samples. These presets
+are defined using the 'loadSample' and 'loadSoundMember'
+functions. This user SoundFont is inserted in the SoundFont stack at
+the first call of one of these functions. All subsequent calls to one
+of these functions will insert the created preset in the same user
+SoundFont.
+
+- Channels
+
+According to the MIDI format and protocol, the synthesizer has a fixed
+number of channels. This is the maximum number of presets that may be
+playing at the same time. At all times, one given channel plays at
+most one preset (but can play many notes from this preset). A preset
+is associated to a channel using the 'programChange' function. The
+number of channels of the synthesizer is defined at init time using
+the 'new' function. A given preset may be associated to many
+channels.
+
+
+-----------------
+-- Initialization
+-----------------
+
+new(Xtra"iiwusynth")
+new(Xtra"iiwusynth", plist initParams)
+-----------------
+
+ex : iiwuObj = new(Xtra "iiwusynth", [#channels: 32])
+
+Creates a new instance of the iiwu Xtra.
+The optional initParams argument is a propert-list
+of key-value paris defining initialization parameters.
+
+Only one key is currently defined: 
+
+- #channels : int > 0 : the number of channels allocated by the
+synthesizer. If omitted, the default number of channels is set to 64.
+Version 2.0.1 : This is not implemented yet : the number of channels is always 64.
+
+To destroy the synthesizer, simply set its variable to VOID.
+
+Returns an error code (unable to create, hardware error, bad arguments).
+
+
+getChannelsCount(object me)
+-----------------
+
+ex : nbchan = getChannelsCount(iiwuObj)
+
+Returns the number of channels of the synthesizer. By default, there are 64 channels.
+
+Returns an error code (no synth).
+
+
+getMasterGain(object me)
+-----------------
+
+ex : gain = getMasterGain(iiwuObj)
+
+Returns the master gain of the synthesizer. By default the gain is 1.0 (full volume).
+The gain is between 0.0 and 2.0.
+Returns an error code (no synth).
+
+
+setMasterGain(object me, float gain)
+-----------------
+
+ex : setMasterGain(iiwuObj, 0.5)
+
+Sets the master gain of the synthesizer. By default the gain is 1.0.
+The gain should between 0.0 and 2.0. 
+Gains superior to 1.0 (full volume, no attenuation) should be handled
+carefully, as distortion may happen.
+Returns an error code (no synth).
+
+
+-----------------
+-- Reverb/Chorus
+-----------------
+
+setReverb(object me)
+setReverb(object me, int onOrOff)
+-----------------
+
+ex : setReverb(iiwuObj)
+ex : setReverb(iiwuObj, FALSE)
+
+Sets the reverb module of the synthesizer on or off.
+
+Returns an error code (no synth, bad arguments).
+
+
+getReverb(object me)
+-----------------
+
+ex : revOn = getReverb(iiwuObj)
+
+Return 1 of the reverb module is on (default), 0 if it is off.
+
+Returns an error code (no synth, bad arguments).
+
+
+setReverbProp(object me, symbol prop, float value)
+-----------------
+
+ex : setReverbProp(iiwuObj, #roomsize, 0.9)
+ex : setReverbProp(iiwuObj, #level, 0.2)
+
+Sets the value of a property of the reverb module.
+Accepted properties are:
+- #level : the level of the reverb (0.0 = no reverb, 1.0 = full reverb).
+- #roomsize : the size of the room. 0.0 means a very small room, 1.0 means outerspace.
+- #width : the spatial width of the reverb. 0.0 means a very narrow reverb, 1.0 a wide one.
+- #damping : how much power is lost at each reverberation. 1.0 : mostly lost, 0.0 : full reverberation.
+
+All values are between 0.0 and 1.0.
+
+Returns an error code (no synth, bad arguments).
+
+
+getReverbProp(object me, symbol prop)
+-----------------
+
+ex : roomsiz = getReverbProp(iiwuObj, #roomsize)
+ex : damping = getReverbProp(iiwuObj, #damping)
+
+Returns the float value of the given property of the reverb module. Accepted properties are listed above.
+Returns an error code (no synth, bad arguments).
+
+
+setChorus(object me)
+setChorus(object me, int onOrOff)
+-----------------
+
+ex : setChorus(iiwuObj)
+ex : setChorus(iiwuObj, FALSE)
+
+Sets the chorus module of the synthesizer on or off.
+
+Returns an error code (no synth, bad arguments).
+
+
+getChorus(object me)
+-----------------
+
+ex : chorusOn = getChorus(iiwuObj)
+
+Return 1 of the chorus module is on (default), 0 if it is off.
+
+Returns an error code (no synth, bad arguments).
+
+
+setChorusProp(object me, symbol prop, float value)
+-----------------
+
+ex : setChorusProp(iiwuObj, #number, 3)
+ex : setChorusProp(iiwuObj, #level, 0.2)
+
+Sets the value of a property of the chorus module.
+Accepted properties are:
+- #level : the level of the chorus. Min is 0.0, maximum accepted is 10.0.
+- #number : the number of secondary voices. Maximum is 99.
+- #modulation : the amplitude of the frequency modulation, in Hz. Min is 0.29, max is 5.0.
+- #delay : the maximum delay between secondary voices, in ms. Min is 0, maximum is 100.0.
+
+Returns an error code (no synth, bad arguments).
+
+
+getChorusProp(object me, symbol prop)
+-----------------
+
+ex : number = getChorusProp(iiwuObj, #number)
+ex : modulation = getChorusProp(iiwuObj, #modulation)
+
+Returns the float value of the given property of the chorus module. Accepted properties are listed above.
+Returns an error code (no synth, bad arguments).
+
+-----------------
+-- Sound Data
+-----------------
+
+loadSoundFont(object me, string filePath)
+-----------------
+
+ex : soundFontID = loadSoundFont(iiwuObj, the moviePath & "MySoundFonts.sf2")
+
+Loads a SoundFonts file in the synthesizer and places it at the top of
+the SoundFont stack : it will be the first searched when looking for a
+preset.
+
+The path is absolute, and should be expressed with the local file
+system conventions.
+
+The loaded soundFont will be of type #file.
+
+Returns an ID, an interger uniquely idenfiying the SoundFont in the stack, or an error
+code (no synth, no file, bad file format, not enough
+memory).
+
+
+createSoundFont(object me)
+createSoundFont(object me, string name)
+-----------------
+
+ex : soundFontID = createSoundFont(iiwuObj)
+ex : soundFontID = createSoundFont(iiwuObj, "mysoundfont in memory")
+
+Creates an empty SoundFont in memory (type #ram) and places it at the top of
+the SoundFont stack : it will be the first searched when looking for a
+preset.
+
+The returned soundFontID can be used in the #soundFont property of the loadSampleFile or
+loadSampleMember functions.
+
+The created soundFont can be removed from memory, using the unloadSoundFont function.
+
+The 'name' argument is optional and defaults to EMPTY (the empty string).
+
+Returns an ID, an interger uniquely idenfiying the SoundFont in the stack, or an error
+code (no synth, no file, bad file format, not enough
+memory).
+
+
+unloadSoundFont(object me)
+unloadSoundFont(object me, int soundFontID)
+-----------------
+
+ex : unloadSoundFont(iiwuObj, 1)
+ex : unloadSoundFont(iiwuObj)
+
+Unloads the SoundFont of the given ID of the SoundFont stack.
+The soundFontID argument is optional, and defaults to the first searched
+SoundFont (the last loaded).
+
+All types of soundFonts can be unloaded from memory.
+
+Returns an error code (no synth, bad ID).
+
+
+reloadSoundFont(object me)
+reloadSoundFont(object me, int soundFontID)
+-----------------
+
+ex : reloadSoundFont(iiwuObj, 1)
+ex : reloadSoundFont(iiwuObj)
+
+Version 2.0.1 : Not Yet Implemented.
+
+Reloads the SoundFont of the given ID of the SoundFont stack.
+The soundFontID argument is optional, and defaults to the first searched
+SoundFont (the last loaded).
+This is useful when a soundFont is known to have changed outside
+the synthesizer.
+Only SoundFonts of type #file can be reloaded.
+
+Returns an error code (no synth, bad ID).
+
+
+getSoundFontsStack(object me)
+-----------------
+
+ex : aList = getSoundFontsStack(iiwuObj)
+
+Returns a lingo list containing all the IDs of the SoundFonts in the stack, sorted from first searched to last searched (last loded to first loaded).
+May return an error code (no synth).
+
+
+getSoundFontInfo(object me)
+getSoundFontInfo(object me, int soundFontID)
+-----------------
+
+ex : nam = getSoundFontInfo(iiwuObj)
+
+Returns information about the SoundFont of the given soundFontID of the SoundFont stack.
+The soundFontID argument is optional, and defaults to the first searched
+SoundFont (the last loaded).
+
+The information is returned in the form of a lingo property-list,
+containing key-value pairs describing the SoundFont: its name, and
+info about its presets (name, preset number and bank number):
+
+[
+    #name:"SoundFontName",
+   	#type:#file or #ram,
+    #presets:
+    [
+        [#name:"preset1Name", #bank:preset1bankNb, #number:preset1Number],
+        [#name:"preset2Name", #bank:preset2bankNb, #number:preset2Number],
+        ...
+    ]
+]
+(More information may be added in future versions of the Xtra)
+
+Can return an error code (no synth, bad soundFontID).
+
+
+loadSampleFile(object me, string filePath, plist presetInfo)
+loadSampleFile(object me, string filePath, int number)
+-----------------
+
+Version 2.0.1 : Not Yet Implemented.
+
+ex : loadSampleFile(iiwuObj, the moviePath&"MidPiano.aiff",
+[#name:"piano", #bank:0, #number:1, #rootKey:60, #keyrange:[50, 70]])
+
+ex : loadSampleFile(iiwuObj, the moviePath&"Piano.aiff", [#number:2])
+ex : loadSampleFile(iiwuObj, the moviePath&"Piano.aiff", 2)
+
+Loads a sample file from filePath and creates a preset from it. This
+is a simple way of creating a preset from a specific sample.
+
+The 'filePath' is absolute, and should be expressed with the local
+file system conventions. Accepted sample formats are : wav, and aiff.
+
+The preset is added to a ram (memory) SoundFont (type #ram).
+This SoundFont is either specified using the #soundFont property (see below),
+either the highest soundfont in the stack is used if it is a ram soundfont,
+either it is created on the fly in memory, in which case it is placed at the top
+of the SoundFont stack of the synthesizer.
+
+The preset is created according to the 'presetInfo'
+lingo property-list. This plist is a combination of key-value pairs
+describing the preset. The following keys are taken into account:
+
+- #number : integer, mandatory. Between 0 and 127 : the preset number in the bank
+  If this preset number (and bank if set) was already in use, the sample is added
+  to the already preset samples of this preset. This is a handy way to define
+  a keyRange for a preset.
+
+- #bank : integer, optional (default = 0). Between 0 and 16383: the number
+  of the MIDI bank that will be assigned to the preset.
+
+- #soundFont : integer, optional. Specifies the soundFontID of the SoundFont
+   in which the preset will be created. If specified, it should be a
+   soundFont of type #ram. If not specified, the first soundfont on the stack
+   will be used if it is of type #ram. If not, a new SoundFont 
+   is created on the fly. 
+
+- #name : string : the name of the preset - optional
+
+- #rootKey : int between 0 and 127 : the key at which the sample will
+   be played 'as is' - optional : if omitted, 60 (middle-C) is used.
+
+- #keyRangeStart : integer, optional (default = 0).
+   Defines the first of two keys between which the sample should be
+   played (the comparison is inclusive).
+   If a noteon asks for a key outside this range, the sample is not
+   played. If omitted, the whole range [0, 127] is used.
+
+- #keyRangeEnd : integer, optional (default = 127). See keyRangeStart.
+
+- #loop : boolean, optional. Specifies that the sample should be played
+as a loop. Default is FALSE.
+
+- #attack : float, optional (default = 0.0). Duration, in milliseconds of
+the attack phase of the sound, i.e. the time for the sample to reach peak volume
+after a noteon is issued.
+
+- #decay : float, optional (default = 0.0). Duration, in milliseconds of
+the decay phase of the sound, i.e. the time for the sample to reach sustain volume
+after the attack.
+
+- #sustainlevel : float, optional (default = 0.0). Level, in dB relative to the
+peak level, of the sustain level. A sustainlevel of 0 means the same level than
+the peak level. A sustainlevel of 10 mean peak-10dB, which is very low.
+A sustainlevel of 100dB conventionnaly means full attenuation.
+
+- #release : float, optional (default = 0.0). Duration, in milliseconds of
+the release phase of the sound, i.e. the time for the sample to reach silence
+after a noteoff.
+
+Note that in one preset, two different samples may be used for two
+different key ranges.
+
+example :
+
+loadSampleFile(iiwuObj, the moviePath&"PianoLo.aiff", [#name:"piano",
+#bank:0, #number:1, #rootKey:30, #keyrange:[0, 60]])
+
+loadSampleFile(iiwuObj, the moviePath&"PianoHi.aiff", [#name:"piano",
+#bank:0, #number:1, #rootKey:90, #keyrange:[61, 127]])
+
+This example defines two samples for two ranges of the same preset.
+
+A preset may not be unloaded ; only the whole user SoundFont may be
+unloaded from the SoundFont stack, using the 'unloadSoundFont'
+function.
+
+Returns the soundFontID of the SoundFont to which the sample has been added,
+or an error code (no synth, no file, bad file format, not enough
+memory, bad bank number, bad preset number, bad key).
+
+
+loadSampleMember(object me, obj member, plist presetInfo)
+-----------------
+ex : loadSampleMember(iiwuObj, member(3), [#name:"piano", #bank:0, #number:1])
+
+Version 2.0.1 : Not Yet Implemented.
+
+Loads a sample from the given Director sound cast member and creates a
+preset from it.
+
+The preset is created according to the 'presetInfo' lingo
+property-list. (see above for details on the presetInfo format).
+
+Returns the soundFontID of the SoundFont to which the sample has been added,
+or an error code (no synth, no member, bad member format, not enough memory,
+bad bank number, bad preset number, bad key, not a user soundFont).
+
+
+
+-----------------
+-- Event sequencer
+-----------------
+
+Introduction
+-----------------
+
+- Sequencer
+
+The API functions for playing music is derived from the MIDI
+protocol. This protocol defines the use of a number of presets for
+every synthesizer object. Application communicate with a preset in a
+synthesizer over a channel. The communication is event based (MIDI
+events). The API of the music functions (discussed below) can be
+thought of as sending an event over a channel to a preset. 
+
+The music API functions includes the optional use of a sequencer. A
+sequencer is an object that assures the delivery of an event at a
+future time. To use the sequencer object, the events have to specify a
+time property. Two property key values can be used:
+
+- #date: specifies the time on an absolute time axis (the creation
+   time of the synthesizer is used as time zero),
+
+- #delay: specifies the time relative to the sequencer's current time.
+
+The time is measured in 'ticks'. A 'tick' is an arbitrary unit that
+can be set by the application. See the sequencer API below.
+
+- Event destinations
+
+The API includes the use of several synthesizer objects. The property
+key '#dest' indicates the destination of the event. The destination
+value is the name of the synthesizer object. If no destination is
+specified, the event will be sent to the first known destination which
+is the default synthesizer.
+
+- Event sources
+
+Events can also specify an event source. This is useful when the
+sender of an event wants to cancel some time the event later. To use
+this feature, the event simply contains the key '#source' with a string
+as value.
+
+- Callbacks
+
+Lingo objects can ask the sequencer to schedule a callback function at
+a precise time. The callback is the name of a Lingo handler. The movie
+will have to call the poll function of the xtra regularly to receive
+the callbacks.
+
+
+- Sequencer API
+
+The following functions address the sequencer directly.
+
+setTimeUnit(object me, float ticksPerSecond)
+-----------------
+ex. setTimeUnit(iiwuObj, 10.0) -- 1 tick equals 100 millisecond
+
+Sets the tick unit of the sequencer.
+ticksPerSecond is a float > 0.
+
+Returns a error indication (bad initialization).
+
+
+getTimeUnit(object me)
+-----------------
+ex. getTimeUnit(iiwuObj)
+
+Returns the tick unit of the sequencer or an error indication (bad
+initialization).
+By default, the tick value is 1000.0 (1 tick = 1 millisecond).
+
+
+getTime(object me)
+-----------------
+ex. getTime(iiwuObj)
+
+Returns the time in tick from the start of the synthesizer, in tick units
+of the sequencer or an error indication (bad initialization).
+
+
+getDestinations(object me)
+-----------------
+ex. getDestinations(iiwuObj)
+
+Returns a list with all the names of possible event destinations.
+
+
+removeEvents(object me, plist filter)
+-----------------
+ex. removeEvents(iiwuObj, [#dest: "iiwusynth", #source: "DrumMachine"])
+ex. removeEvents(iiwuObj, [#source: "DrumMachine", #type: #note])
+
+Removes events that are queued for sending in the sequencer. The
+function takes property list as argument. The property list defines
+the events that should be filtered. Currently, any of the three
+following keys can be used:
+
+- #source: remove the events for the specified source (if not specified,
+removes all source)
+- #dest: remove the events sent by the specified destination (if not
+specified, removes all destination)
+- #type: remove the events according to this event type (if not
+specified, removes all events)
+
+Possible event types are:
+
+- #note
+- #noteon
+- #noteoff
+- #allsoundsoff
+- #allnotesoff
+- #programchange
+- #controlchange: includes all controlChange events (pitchbend, modulation,
+  sustain, pan, volume, reverbsend, chorussend)
+- #pitchbend
+- #modulation
+- #sustain
+- #pan
+- #volume
+- #reverbsend
+- #chorussend
+- #callback
+
+Returns an error code (no sequencer, invalid argument).
+
+
+
+scheduleCallback(object me, plist callbackInfo)
+-----------------
+ex. scheduleCallback(iiwuObj, [#delay: 1200, #handler:"updateDrumMachine", #args: [1,2,3]])
+ex. scheduleCallback(iiwuObj, [#delay: 1200, #source:"drumMachine", #handler:"updateDrumMachine"])
+
+Schedules a callback event. When the event is reached, the lingo handler defined in
+the 'callbackInfo' propertylist is called back. Note that the callback happens during
+idle time.
+
+The 'callbackInfo' propertylist has the following possible properties:
+
+- #handler, string, mandatory. It is the lingo handler that will be called.
+- #args, a lingo list, optional. This list contains the arguments of the handler.
+The scheduleCallback function retains a pointer to this list but does not copy it,
+according to the lingo tradition. The lingo eventually executed is equivalent
+to "handler(args[1], args[2], ...)". If the first argument is a child object,
+the corresponding handler will be called on that object.
+- #delay/#date : integer, optional. Specifies the time of the callback. Defaults to #delay:0
+- #source : optional. Specifies the source. Useful for removing callbacks.
+- #dest : optional. Specifies the destination.
+
+To remove a scheduled callback, use removeEvents:
+ex : removeEvents(iiwuObj, [#source: "drumMachine", #type: #callback])
+ex : removeEvents(iiwuObj, [#type: #callback])
+
+Returns an error code (no sequencer, invalid argument).
+
+
+
+
+
+-----------------
+-- Playing music
+-----------------
+
+Most event functions accept an optional property list that describes
+the sequencing of the event. This is indicated by the 'seq' argument
+in the functions below. The following properties are recognized:
+
+- #date: the absolute time of the event
+- #delay: the time of the event relative to current time
+- #source: the event source
+- #dest: the event destination
+
+#date and #delay should not be specified together.
+
+
+programChange(object me, int channel, plist presetInfo, plist seq)
+programChange(object me, int channel, int presetNumber, plist seq)
+-----------------
+
+ex : programChange(iiwuObj, 1, [#bank:1, #number:3])
+ex : programChange(iiwuObj, 1, 3)
+
+Assigns the given preset of the SoundFont stack to the given channel
+of the synthethizer.
+
+The preset may be defined using a property-list defining its MIDI bank
+number and its preset number, using specific keys:
+
+- #bank : int between 0 and 16383: the number of the MIDI bank of the
+   preset - optional : if #bank is not present, 0 is the default.
+
+- #number : int between 0 and 127 : the preset number in the bank -
+  mandatory.
+
+The preset may also be defined by a unique int, wich is treated as
+the preset number, assuming that the MIDI bank is 0 (zero).
+
+In all cases, the preset is looked up in the SoundFont stack, starting
+from the first SoundFont up the stack, until a corresponding preset is
+found. The found preset is assigned to the channel.  The maximum
+number of channels are defined using the 'new' method.
+
+If a preset was previoulsy assigned to that channel, it is forgotten,
+but all noteon finish normally.
+
+Returns an error code (no synth, no SoundFonts, bad
+channel, bad preset definition).
+
+
+getProgram(object me, int channel)
+-----------------
+
+ex : getProgram(iiwuObj, 0)
+
+Returns information about the preset assigned to the channel.  The
+information is of the form : [#name:"presetName", #bank:presetBankNb,
+#number:presetNumber] The maximum number of channels are defined using
+the 'new' method.
+
+May return an error code (no synth, no preset
+assigned, bad channel number)
+
+
+note(object me, int channel, int key, float vel, int dur, plist seq)
+-----------------
+
+ex : note(iiwuObj, 1, 38, 1.0, 1000) 
+
+Plays a note, using the specified 'channel' and 'key', with the
+specified velocity (strength). The duration 'dur' of the note is
+specified in ticks.
+
+0.0 <= vel <= 1.0 (automatically limited if smaller or greater)
+0 <= key <= 127
+
+The maximum number of channels are defined using the 'new' method.
+
+Returns an error code (no synth, no SoundFonts, bad
+channel, no preset assigned, bad key, bad vel).
+
+
+noteon(object me, int channel, int key, float vel, plist seq)
+-----------------
+
+ex : noteon(iiwuObj, 1, 38, 1.0)
+
+Starts a note, using the specified 'channel' and 'key', with the
+specified velocity (strength).
+
+0.0 <= vel <= 1.0 (automatically limited if smaller or greater)
+0 <= key <= 127
+
+The maximum number of channels are defined using the 'new' method.
+
+Returns an error code (no synth, no SoundFonts, bad
+channel, no preset assigned, bad key, bad vel).
+
+
+noteoff(object me, int channel, int key, plist seq)
+-----------------
+ex : noteoff(iiwuObj, 1)
+
+Stops all playing notes on the given 'channel' and the given 'key'.
+
+The maximum number of channels are defined using the 'new' method.
+
+Returns an error code (no synth, no SoundFonts, bad
+channel, no preset assigned).
+
+
+controlChange(object me, int channel, plist controlParams, plist seq)
+-----------------
+ex:
+controlChange(obj, 1, [#pitchbend: 1.0, #sustain:1])
+controlChange(obj, 1, [#pan: -0.2, #sustain:1, #volume:0.5, #reverbsend:1.0]) 
+
+This function allow to change some control parameters of the given
+channel. The effect is immediate and allows for continuous
+modification of a sound.
+
+The 'controlParams' is a lingo property-list of key-value pairs, with
+the key describing the control parameter to affect, and the value
+specifying the amount of the change. For some keys, the value is not
+taken into account. The list of currently implemented keys is the
+following :
+
+- #pitchbend: float between -1.0 an 1.0: sets the pitchbend level
+  0.0 means no pitchbend.
+  The pitchrange may be configured in the preset (for
+  loaded SoundFonts), but the default range corresponds to 4 steps
+  (one step = one semi-tone), so a value of -1.0 means two steps down,
+  and a value of 1.0 means two steps up.
+
+- #pan: float between -1.0 an 1.0: sets the pan level.
+   -1.0 is all sound on left channel, 1.0 is all sound on right channel
+   0.0 is sound in center.
+
+- #volume: float between 0.0 an 1.0: sets the volume level.
+   0.0 is silence, 1.0 is full volume.
+
+- #reverbsend: float between 0.0 an 1.0. Sets the volume of the auxiliary
+   output send to the reverb module. 0.0 is no signal, 1.0 is full
+   volume.
+
+- #chorussend: float between 0.0 an 1.0. Sets the volume of the auxiliary
+   output send to the chorus module. 0.0 is no signal, 1.0 is full
+   volume.
+
+- #sustain: int = 0 or 1: sets or removes the sustain from the
+   channel.
+
+- #modulation: float between 0.0 an 1.0. Amplitude modulation.
+   Vibrato.
+
+Returns an error code (no synth, no SoundFonts, bad
+channel, no preset assigned, unknown controlKey, bad controlValue).
+
+
+getControl(object me, int channel, symbol ctrl)
+-----------------
+ex. getControl(iiwuObj, 1, #volume)
+
+Returns the value of a controller.
+
+
+getControls(object me, int channel)
+-----------------
+ex. getControls(iiwuObj, 1)
+
+Returns a property list with the values of all controllers in the
+form: [#pan: 0.4, #sustain:1, #volume:0.8, #reverbsend:1.0, ...]
+
+
+allsoundsoff(object me, int channel, plist seq)
+-----------------
+
+Instantly stops all sound on the channel. The optional argument is
+the sequencer information. Returns an error code (no sequencer).
+
+
+allnotesoff(object me, int channel, plist seq)
+-----------------
+
+Sends a noteoff to all currently playing notes on the channel.  The
+optional argument is the sequencer information. Returns an error code
+(no sequencer).
+
+
+
+---------------------------
+-- Debug and maintenance
+---------------------------
+
+debug(object me, string logFile)
+-----------------
+
+ex : debug(iiwuObj, the moviePath&"logfile")
+
+Sets the debug mode of the Xtra.
+If a logFile is provided, debug is set.
+If VOID is provided, debug is turned off.
+If debug is on, a log of all actions and errors is written in the logFile.
+
+Returns an error code (cannot open/create log file).
+
+
+getError(object me)
+-----------------
+ex : lastError = getError(iiwuObj)
+
+returns a human readable string describing the last error that occured
+in the Xtra.
+
+
+getCPUUsage(object me)
+-----------------
+ex : aPercent = getCPUusage(iiwuObj)
+
+returns a float representing the estimation of the percentage of CPU
+used by the synthesizer, or an error code (no synth).
+
+-------------------------------
+-------------------------------
+-------------------------------
