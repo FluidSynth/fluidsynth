@@ -23,13 +23,14 @@
 #include "fluid_synth.h"	// for fluid_synth_add_sfont
  
 /* thenumber of samples before the start and after the end */
-#define SAMPLE_MARGIN 8
+#define SAMPLE_LOOP_MARGIN 8
 
 /* Prototypes */
 int fluid_rampreset_add_sample(fluid_rampreset_t* preset, fluid_sample_t* sample, int lokey, int hikey);
 int fluid_rampreset_izone_set_gen(fluid_rampreset_t* preset, fluid_sample_t* sample, int gen_type, float value);
 int fluid_rampreset_izone_set_loop(fluid_rampreset_t* preset, fluid_sample_t* sample, int on, float loopstart, float loopend);
 int fluid_rampreset_remove_izone(fluid_rampreset_t* preset, fluid_sample_t* sample);
+void fluid_rampreset_updatevoices(fluid_rampreset_t* preset, int gen_type, float val);
 
 /*
  * fluid_ramsfont_create_sfont
@@ -248,7 +249,7 @@ char* fluid_ramsfont_get_name(fluid_ramsfont_t* sfont)
 int
 fluid_ramsfont_set_name(fluid_ramsfont_t* sfont, char * name)
 {
-  FLUID_STRCPY(sfont->name, name);
+  FLUID_MEMCPY(sfont->name, name, 20);
   return FLUID_OK;
 }
 
@@ -343,6 +344,7 @@ int fluid_ramsfont_remove_izone(fluid_ramsfont_t* sfont,
 }
 
 
+/* Note for version 2.0 : missing API fluid_ramsfont_izone_get_gen - Antoine Schmitt May 2003 */
 int fluid_ramsfont_izone_set_gen(fluid_ramsfont_t* sfont,
 				unsigned int bank, unsigned int num, fluid_sample_t* sample,
 				int gen_type, float value) {
@@ -355,6 +357,7 @@ int fluid_ramsfont_izone_set_gen(fluid_ramsfont_t* sfont,
 	return fluid_rampreset_izone_set_gen(preset, sample, gen_type, value);
 }
 
+/* Note for version 2.0 : missing API fluid_ramsfont_izone_get_loop - Antoine Schmitt May 2003 */
 int fluid_ramsfont_izone_set_loop(fluid_ramsfont_t* sfont,
 				unsigned int bank, unsigned int num, fluid_sample_t* sample,
 				int on, float loopstart, float loopend) {
@@ -408,6 +411,12 @@ int fluid_ramsfont_iteration_next(fluid_ramsfont_t* sfont, fluid_preset_t* prese
  *                           PRESET
  */
 
+typedef struct _fluid_rampreset_voice_t fluid_rampreset_voice_t;
+struct _fluid_rampreset_voice_t {
+	fluid_voice_t *voice;
+	unsigned int voiceID;
+};
+
 /*
  * new_fluid_rampreset
  */
@@ -426,6 +435,7 @@ new_fluid_rampreset(fluid_ramsfont_t* sfont)
   preset->num = 0;
   preset->global_zone = NULL;
   preset->zone = NULL;
+  preset->presetvoices = NULL;
   return preset;
 }
 
@@ -437,6 +447,8 @@ delete_fluid_rampreset(fluid_rampreset_t* preset)
 {
   int err = FLUID_OK;
   fluid_preset_zone_t* zone;
+  fluid_rampreset_voice_t *data;
+  
   if (preset->global_zone != NULL) {
     if (delete_fluid_preset_zone(preset->global_zone) != FLUID_OK) {
       err = FLUID_FAILED;
@@ -451,6 +463,20 @@ delete_fluid_rampreset(fluid_rampreset_t* preset)
     }
     zone = preset->zone;
   }
+  
+  if (preset->presetvoices != NULL) {
+  	fluid_list_t *tmp = preset->presetvoices, *next;
+  	while (tmp) {
+  		data = (fluid_rampreset_voice_t *)(tmp->data);
+  		FLUID_FREE(data);
+  		
+  		next = tmp->next;
+  		FLUID_FREE(tmp);
+  		tmp = next;
+  	}
+  }
+  preset->presetvoices = NULL;
+  
   FLUID_FREE(preset);
   return err;
 }
@@ -541,7 +567,9 @@ int fluid_rampreset_add_sample(fluid_rampreset_t* preset, fluid_sample_t* sample
 		izone->sample = sample;
 		izone->keylo = lokey;
 		izone->keyhi = hikey;
-		FLUID_STRCPY(preset->name, sample->name);
+		
+		// give the preset the name of the sample
+		FLUID_MEMCPY(preset->name, sample->name, 20);
 	}
 	
 	return FLUID_OK;
@@ -575,50 +603,58 @@ int fluid_rampreset_izone_set_loop(fluid_rampreset_t* preset, fluid_sample_t* sa
 	if (!on) {
 		izone->gen[GEN_SAMPLEMODE].flags = GEN_SET;
 		izone->gen[GEN_SAMPLEMODE].val = FLUID_UNLOOPED;
+		fluid_rampreset_updatevoices(preset, GEN_SAMPLEMODE, FLUID_UNLOOPED);
 		return FLUID_OK;
 }
-	
-	izone->gen[GEN_SAMPLEMODE].flags = GEN_SET;
-	izone->gen[GEN_SAMPLEMODE].val = FLUID_LOOP_DURING_RELEASE;
-	
+		
+	/* NOTE : We should check that (sample->startloop + loopStart <= sample->endloop - loopend - 32) */
+
 	/* loopstart */
 	if (loopstart > 32767. || loopstart < -32767.) {
-		coarse = (short)(loopend/32767.);
-		fine = (short)(loopend - (float)(coarse)*32767.);
+		coarse = (short)(loopstart/32768.);
+		fine = (short)(loopstart - (float)(coarse)*32768.);
 	} else {
 		coarse = 0;
 		fine = (short)loopstart;
 	}
 	izone->gen[GEN_STARTLOOPADDROFS].flags = GEN_SET;
 	izone->gen[GEN_STARTLOOPADDROFS].val = fine;
+	fluid_rampreset_updatevoices(preset, GEN_STARTLOOPADDROFS, fine);
 	if (coarse) {
 		izone->gen[GEN_STARTLOOPADDRCOARSEOFS].flags = GEN_SET;
 		izone->gen[GEN_STARTLOOPADDRCOARSEOFS].val = coarse;
 	} else {
 		izone->gen[GEN_STARTLOOPADDRCOARSEOFS].flags = GEN_UNUSED;
 	}
+	fluid_rampreset_updatevoices(preset, GEN_STARTLOOPADDRCOARSEOFS, coarse);
 
 	/* loopend */
 	if (loopend > 32767. || loopend < -32767.) {
-		coarse = (short)(loopend/32767.);
-		fine = (short)(loopend - (float)(coarse)*32767.);
+		coarse = (short)(loopend/32768.);
+		fine = (short)(loopend - (float)(coarse)*32768.);
 	} else {
 		coarse = 0;
 		fine = (short)loopend;
 	}
 	izone->gen[GEN_ENDLOOPADDROFS].flags = GEN_SET;
 	izone->gen[GEN_ENDLOOPADDROFS].val = fine;
+	fluid_rampreset_updatevoices(preset, GEN_ENDLOOPADDROFS, fine);
 	if (coarse) {
 		izone->gen[GEN_ENDLOOPADDRCOARSEOFS].flags = GEN_SET;
 		izone->gen[GEN_ENDLOOPADDRCOARSEOFS].val = coarse;
 	} else {
 		izone->gen[GEN_ENDLOOPADDRCOARSEOFS].flags = GEN_UNUSED;
 	}
-	
+	fluid_rampreset_updatevoices(preset, GEN_ENDLOOPADDRCOARSEOFS, coarse);
+
+	izone->gen[GEN_SAMPLEMODE].flags = GEN_SET;
+	izone->gen[GEN_SAMPLEMODE].val = FLUID_LOOP_DURING_RELEASE;
+	fluid_rampreset_updatevoices(preset, GEN_SAMPLEMODE, FLUID_LOOP_DURING_RELEASE);
+		
 	/* If the loop points are the whole samples, we are supposed to
 	   copy the frames around in the margins (the start to the end margin and
 	   the end to the start margin), but it works fine without this. Maybe some time
-	   it will be needed */
+	   it will be needed (see SAMPLE_LOOP_MARGIN) -- Antoie Schmitt May 2003 */
 	
 	return FLUID_OK;
 }
@@ -631,18 +667,22 @@ int fluid_rampreset_izone_set_gen(fluid_rampreset_t* preset, fluid_sample_t* sam
 		
 	izone->gen[gen_type].flags = GEN_SET;
 	izone->gen[gen_type].val = value;
+	
+	fluid_rampreset_updatevoices(preset, gen_type, value);
+	
 	return FLUID_OK;
 }
 
 int fluid_rampreset_remove_izone(fluid_rampreset_t* preset, fluid_sample_t* sample) {
 	fluid_inst_t* inst;
-	fluid_inst_zone_t* izone, * prev;;
+	fluid_inst_zone_t* izone, * prev;
+	int found = 0;
 	
 	if (preset->zone == NULL) return FLUID_FAILED;
 	inst = fluid_preset_zone_get_inst(preset->zone);
 	izone = inst->zone;
 	prev = NULL;
-	while (izone) {
+	while (izone && !found) {
 		if (izone->sample == sample) {
 			if (prev == NULL) {
 				inst->zone = izone->next;
@@ -651,40 +691,99 @@ int fluid_rampreset_remove_izone(fluid_rampreset_t* preset, fluid_sample_t* samp
 			}
 			izone->next = NULL;
 			delete_fluid_inst_zone(izone);
-			return FLUID_OK;
+			found = 1;
+		} else {
+			prev = izone;
+			izone = izone->next;
 		}
-		prev = izone;
-		izone = izone->next;
 	}
-	return FLUID_FAILED;
+	if (!found)
+		return FLUID_FAILED;
+	
+	// stop all the voices that use this sample, so that
+	// the sample can be cleared up
+	{
+		fluid_list_t *tmp = preset->presetvoices;
+		while (tmp) {
+			fluid_rampreset_voice_t *presetvoice = (fluid_rampreset_voice_t *)(tmp->data);
+			fluid_voice_t *voice = presetvoice->voice;
+			if (fluid_voice_is_playing(voice) && (fluid_voice_get_id(voice) == presetvoice->voiceID)) {
+				// still belongs to the preset
+				if (voice->sample == sample) {
+					// uses this sample : turn it off.
+					// our presetvoices struct will be cleaneup at the next update
+					fluid_voice_off(voice);
+				}
+			}
+			tmp = tmp->next;
+		}
+	}
+	return FLUID_OK;
 }
 
-/* these conversions taken from SF2.0 specs
-#ifdef WIN32
-#define log2(x) (log(x)/log(2.0))
-#endif
-		if (loop) {
-			izone->gen[Gen_SampleModes].flags = GEN_SET;
-			izone->gen[Gen_SampleModes].val = FLUID_LOOP_DURING_RELEASE;
+/*
+ * fluid_rampreset_remembervoice
+ */
+int 
+fluid_rampreset_remembervoice(fluid_rampreset_t* preset, fluid_voice_t* voice) {
+	/* stores the voice and the its ID in the preset for later update on gen_set */
+	fluid_rampreset_voice_t *presetvoice = FLUID_NEW(fluid_rampreset_voice_t);
+	if (presetvoice == NULL) {
+    FLUID_LOG(FLUID_ERR, "Out of memory");     
+    return FLUID_FAILED;
+  }
+  
+  presetvoice->voice = voice;
+  presetvoice->voiceID = fluid_voice_get_id(voice);
+  
+  preset->presetvoices = fluid_list_append(preset->presetvoices, (void *)presetvoice);
+  if (preset->presetvoices == NULL) {
+  	FLUID_FREE(presetvoice);
+    FLUID_LOG(FLUID_ERR, "Out of memory");     
+    return FLUID_FAILED;  	
+  }
+  return FLUID_OK;
+}
+
+/*
+ * fluid_rampreset_updatevoice
+ */
+void 
+fluid_rampreset_updatevoices(fluid_rampreset_t* preset, int gen_type, float val) {
+	fluid_list_t *tmp = preset->presetvoices, *prev = NULL, *next;
+	
+	/* walk the presetvoice to update them if they are still active and ours.
+	   If their ID has changed or their state is not playing, they are not ours, so we forget them
+	*/
+	while (tmp) {
+		fluid_rampreset_voice_t *presetvoice = (fluid_rampreset_voice_t *)(tmp->data);
+		fluid_voice_t *voice = presetvoice->voice;
+		if (!fluid_voice_is_playing(voice) || (fluid_voice_get_id(voice) != presetvoice->voiceID)) {
+			/* forget it */
+  		FLUID_FREE(presetvoice);
+			
+			/* unlink it */
+			next = tmp->next;
+  		FLUID_FREE(tmp);
+			if (prev) {
+				prev->next = next;
+			} else {
+				preset->presetvoices = next;
+			}  		
+  		tmp = next;
+  		
+		} else {
+		
+			/* update */
+			fluid_voice_gen_set(voice, gen_type, val);
+			fluid_voice_update_param(voice, gen_type); 
+			
+			/* next */
+			prev = tmp;
+			tmp = tmp->next;
 		}
-		if (attack != 0.0) {
-			izone->gen[Gen_VolEnvAttack].flags = GEN_SET;
-			izone->gen[Gen_VolEnvAttack].val = 1200.0*log2(attack/1000.0);
-		}
-		if (decay != 0.0) {
-			izone->gen[Gen_VolEnvDecay].flags = GEN_SET;
-			izone->gen[Gen_VolEnvDecay].val = 1200.0*log2(decay/1000.0);
-		}		
-		if (sustain != 0.0) {
-			int sustainInt = sustain;
-			izone->gen[Gen_VolEnvSustain].flags = GEN_SET;
-			izone->gen[Gen_VolEnvSustain].val = sustainInt*10;
-		}
-		if (release != 0.0) {
-			izone->gen[Gen_VolEnvRelease].flags = GEN_SET;
-			izone->gen[Gen_VolEnvRelease].val = 1200.0*log2(release/1000.0);
-		}
-*/			
+	}
+}
 
 
 /*
@@ -738,6 +837,9 @@ fluid_rampreset_noteon(fluid_rampreset_t* preset, fluid_synth_t* synth, int chan
 	    return FLUID_FAILED; 
 	  }
 	  
+	  if (fluid_rampreset_remembervoice(preset, voice) != FLUID_OK) {
+	    return FLUID_FAILED; 
+	  }
 	  
 	  z = inst_zone;
 	  
@@ -919,7 +1021,7 @@ fluid_rampreset_noteon(fluid_rampreset_t* preset, fluid_synth_t* synth, int chan
 int
 fluid_sample_set_name(fluid_sample_t* sample, char * name)
 {
-  FLUID_STRCPY(sample->name, name);
+  FLUID_MEMCPY(sample->name, name, 20);
   return FLUID_OK;
 }
 
@@ -931,7 +1033,7 @@ fluid_sample_set_sound_data(fluid_sample_t* sample, short *data, unsigned int nb
 {
 	/* 16 bit mono 44.1KHz data in */
 	/* in all cases, the sample has ownership of the data : it will release it in the end */
-	int firstReal, lastreal;
+	unsigned int storedNbFrames;
 	
 	/* in case we already have some data */
   if (sample->data != NULL) {
@@ -939,29 +1041,39 @@ fluid_sample_set_sound_data(fluid_sample_t* sample, short *data, unsigned int nb
   }
 	
 	if (copy_data) {
-	  sample->data = FLUID_MALLOC(nbframes*2 + 4*SAMPLE_MARGIN);
+		
+		/* nbframes should be >= 48 (SoundFont specs) */
+		storedNbFrames = nbframes;
+		if (storedNbFrames < 48) storedNbFrames = 48;
+		
+	  sample->data = FLUID_MALLOC(storedNbFrames*2 + 4*SAMPLE_LOOP_MARGIN);
 	  if (sample->data == NULL) {
 	    FLUID_LOG(FLUID_ERR, "Out of memory");
 	    return FLUID_FAILED;
 	  }
-	  FLUID_MEMSET(sample->data, 0, nbframes*2 + 4*SAMPLE_MARGIN);
-	  FLUID_MEMCPY((sample->data) + 2*SAMPLE_MARGIN, data, nbframes*2);
+	  FLUID_MEMSET(sample->data, 0, storedNbFrames*2 + 4*SAMPLE_LOOP_MARGIN);
+	  FLUID_MEMCPY((char*)(sample->data) + 2*SAMPLE_LOOP_MARGIN, data, nbframes*2);
+
+#if 0
+	  /* this would do the fill of the margins */
+	  FLUID_MEMCPY((char*)(sample->data) + 2*SAMPLE_LOOP_MARGIN + storedNbFrames*2, (char*)data, 2*SAMPLE_LOOP_MARGIN);
+	  FLUID_MEMCPY((char*)(sample->data), (char*)data + nbframes*2 - 2*SAMPLE_LOOP_MARGIN, 2*SAMPLE_LOOP_MARGIN);
+#endif
+	  
+	  /* pointers */
+	  /* all from the start of data */
+	  sample->start = SAMPLE_LOOP_MARGIN;
+	  sample->end = SAMPLE_LOOP_MARGIN + storedNbFrames;
   } else {
+  	/* we cannot assure the SAMPLE_LOOP_MARGIN */
   	sample->data = data;
+	  sample->start = 0;
+	  sample->end = nbframes;
   }
   
-  /* pointers */
-  /* all from the start of data */
-  firstReal = SAMPLE_MARGIN;
-  lastreal = SAMPLE_MARGIN + nbframes;
-  
-  /* one frame before first, to leave room for loopstart */
-  sample->start = firstReal - 1;
-  /* 2 frames after last, to leave room for loopend */
-  sample->end = lastreal + 2;
   /* only used as markers for the LOOP generators : set them on the first real frame */
-  sample->loopstart = firstReal;
-  sample->loopend = lastreal + 1;
+  sample->loopstart = sample->start;
+  sample->loopend = sample->end;
   
   sample->samplerate = 44100;
   sample->origpitch = rootkey;
