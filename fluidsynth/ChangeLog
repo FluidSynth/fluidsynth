@@ -1,3 +1,9 @@
+2004-08-18    <peter@hanappe.com>
+
+	* src/fluid_synth.c (fluid_synth_set_bank_offset): 
+	(fluid_synth_get_bank_offset): New API to set
+	a bank offset in a SoundFont (proposition made by Ken Ellinwood).
+
 2004-08-06    <peter@hanappe.com>
 
 	* src/fluid_synth.c (fluid_synth_noteon):
@@ -9,7 +15,7 @@
 
 	* src/fluid_chan.c (fluid_channel_cc): Applied Ken Ellinwood's
 	fix for the bank select (MSB) message.
-
+ 
 	* src/fluid_jack.c (fluid_jack_audio_driver_settings): Applied Rui
 	Nuno Capela's patch
 

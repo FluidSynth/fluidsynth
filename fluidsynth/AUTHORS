@@ -11,7 +11,8 @@ fixes. The project was started by Peter Hanappe who is the main
 author. Below you'll find a summery of contributions.
 
 
-* Peter Hanappe. files: sticked it's hand in all files.
+* Peter Hanappe. Initiated the project. files: sticked his nose in all
+  files.
 
 * Josh Green contributed a lot of code directly or indirectly through
   the Swami and Smurf code base. The soundfont loader is
@@ -46,7 +47,7 @@ author. Below you'll find a summery of contributions.
 
 * Tim Goetze sent many patches and implemented the all_notes_off. He
   also sent his code for the new ALSA driver. files: iiwu_synth.c,
-iiwu_chan.c, iiwu_voice.c, iiwu_alsa.c
+  iiwu_chan.c, iiwu_voice.c, iiwu_alsa.c
 
 * Norbert Schnell from Ircam's jMax Team wrote most of the jMax/FTS
   interface in a record time. He also pointed me to the technique of
@@ -81,6 +82,10 @@ iiwu_chan.c, iiwu_voice.c, iiwu_alsa.c
 * I used Martin Uddén's midi package. His files are integrated into
   the iiwu_midi file. Martin Uddén <nanook@lysator.liu.se> file:
   iiwu_midi.c
+
+* Ken Ellinwood send in a patch to add bank offsets to SoundFonts. An
+  adapted version was integrated in the source code. files:
+  fluid_cmd.c, fluidsynth/synth.h, fluid_synth.c.
 
 * I copied some interpolation algorihms that I found in the music-dsp
   archives (http://www.smartelectronix.com/musicdsp). They were

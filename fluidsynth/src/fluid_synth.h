@@ -73,6 +73,15 @@ enum fluid_synth_status
   FLUID_SYNTH_STOPPED
 };
 
+
+typedef struct _fluid_bank_offset_t fluid_bank_offset_t;
+
+struct _fluid_bank_offset_t {
+	int sfont_id;
+	int offset;
+};
+
+
 /*
  * fluid_synth_t
  */
@@ -99,6 +108,8 @@ struct _fluid_synth_t
   fluid_list_t *loaders;              /** the soundfont loaders */
   fluid_list_t* sfont;                /** the loaded soundfont */
   unsigned int sfont_id;
+  fluid_list_t* bank_offsets;       /** the offsets of the soundfont banks */
+
 #if defined(MACOS9)
   fluid_list_t* unloading;            /** the soundfonts that need to be unloaded */
 #endif
@@ -194,6 +205,11 @@ void fluid_synth_update_presets(fluid_synth_t* synth);
 
 
 int fluid_synth_update_gain(fluid_synth_t* synth, char* name, double value);
+
+fluid_bank_offset_t* fluid_synth_get_bank_offset0(fluid_synth_t* synth, int sfont_id);
+void fluid_synth_remove_bank_offset(fluid_synth_t* synth, int sfont_id);
+
+
 
 /*
  * misc
