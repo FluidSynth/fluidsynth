@@ -1,3 +1,9 @@
+2004-03-30    Peter Hanappe <peter@hanappe.com>
+
+	* src/fluid_dsp_core.c: I've split up the dsp core file in three
+	files: fluid_dsp_simple.c, fluid_dsp_float.c, and
+	fluid_dsp_sse.c. This improves the readability.
+
 2004-03-29    Peter Hanappe <peter@hanappe.com>
 
 	* src/fluid_jack.c (new_fluid_jack_audio_driver2): Testing the
