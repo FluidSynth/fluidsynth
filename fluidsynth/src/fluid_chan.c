@@ -73,6 +73,7 @@ fluid_channel_init_ctrl(fluid_channel_t* chan)
 
   for (i = 0; i < GEN_LAST; i++) {
     chan->gen[i] = 0.0f;
+    chan->gen_abs[i] = 0;
   }
 
   for (i = 0; i < 128; i++) {
@@ -226,7 +227,7 @@ fluid_channel_cc(fluid_channel_t* chan, int num, int value)
 
       /* SontFont 2.01 NRPN Message (Sect. 9.6, p. 74)  */
       if ((chan->cc[NRPN_MSB] == 120) && (chan->cc[NRPN_LSB] < 100)) {
-	float val = fluid_gen_map_nrpn(chan->nrpn_select, data);
+	float val = fluid_gen_scale_nrpn(chan->nrpn_select, data);
 	FLUID_LOG(FLUID_WARN, "%s: %d: Data = %d, value = %f", __FILE__, __LINE__, data, val);
 	fluid_synth_set_gen(chan->synth, chan->channum, chan->nrpn_select, val);	
       }

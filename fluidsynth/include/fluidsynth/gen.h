@@ -113,7 +113,8 @@ typedef struct _fluid_gen_t
 enum fluid_gen_flags
 {
   GEN_UNUSED,
-  GEN_SET
+  GEN_SET,
+  GEN_ABS_NRPN
 };
 
   /** Reset an array of generators to the SF2.01 default values */

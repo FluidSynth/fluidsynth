@@ -208,7 +208,7 @@ int fluid_voice_modulate(fluid_voice_t* voice, int cc, int ctrl);
 int fluid_voice_modulate_all(fluid_voice_t* voice);
 
 /** Set the NRPN value of a generator. */
-int fluid_voice_set_param(fluid_voice_t* voice, int gen, fluid_real_t value);
+int fluid_voice_set_param(fluid_voice_t* voice, int gen, fluid_real_t value, int abs);
 
 
 /** Set the gain. */
@@ -239,12 +239,17 @@ void fluid_voice_check_sample_sanity(fluid_voice_t* voice);
 
 #define _PLAYING(voice)  (((voice)->status == FLUID_VOICE_ON) || ((voice)->status == FLUID_VOICE_SUSTAINED))
 
-/* A voice is 'ON', if it has not yet received a noteoff event. Sending a noteoff event will advance the envelopes to section 5 (release). */
+/* A voice is 'ON', if it has not yet received a noteoff
+ * event. Sending a noteoff event will advance the envelopes to
+ * section 5 (release). */
 #define _ON(voice)  ((voice)->status == FLUID_VOICE_ON && (voice)->volenv_section < FLUID_VOICE_ENVRELEASE)
 #define _SUSTAINED(voice)  ((voice)->status == FLUID_VOICE_SUSTAINED)
 #define _AVAILABLE(voice)  (((voice)->status == FLUID_VOICE_CLEAN) || ((voice)->status == FLUID_VOICE_OFF))
 #define _RELEASED(voice)  ((voice)->chan == NO_CHANNEL)
 #define _SAMPLEMODE(voice) ((int)(voice)->gen[GEN_SAMPLEMODE].val)
+
+
+fluid_real_t fluid_voice_gen_value(fluid_voice_t* voice, int num);
 
 #define _GEN(_voice, _n) \
   ((fluid_real_t)(_voice)->gen[_n].val \
