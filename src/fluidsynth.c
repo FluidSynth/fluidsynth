@@ -180,14 +180,15 @@ int main(int argc, char** argv)
   int audio_channels = 0;
   int with_server = 0;
   int dump = 0;
-  appname = argv[0];
+  int ladcca_connect = 1;
 #ifdef HAVE_LADCCA
   cca_args_t * cca_args;
   pthread_t cca_thread;
-  
+
   cca_args = cca_extract_args (&argc, &argv);
 #endif
 
+  appname = argv[0];
   settings = new_fluid_settings();
 
 #if !defined(WIN32) && !defined(MACINTOSH)
@@ -209,6 +210,7 @@ int main(int argc, char** argv)
       {"audio-bufsize", 1, 0, 'z'},
       {"audio-bufcount", 1, 0, 'c'},
       {"sample-rate", 1, 0, 'r'},
+      {"disable-ladcca", 0, 0, 'l'},
       {"verbose", 0, 0, 'v'},
       {"reverb", 1, 0, 'R'},
       {"chorus", 1, 0, 'C'},
@@ -222,7 +224,7 @@ int main(int argc, char** argv)
       {0, 0, 0, 0}
     };
 
-    c = getopt_long(argc, argv, "vnixdhVspm:K:L:M:a:A:s:z:c:R:C:r:G:o:g:j", 
+    c = getopt_long(argc, argv, "vnixdhVsplm:K:L:M:a:A:s:z:c:R:C:r:G:o:g:j", 
 		    long_options, &option_index);
     if (c == -1) {
       break;
@@ -256,6 +258,9 @@ int main(int argc, char** argv)
       break;
     case 'r':
       fluid_settings_setnum(settings, "synth.sample-rate", atof(optarg));
+      break;
+    case 'l':			/* disable LADCCA */
+      ladcca_connect = 0;
       break;
     case 'L':
       audio_channels = atoi(optarg);
@@ -368,6 +373,9 @@ int main(int argc, char** argv)
 	  printf ("Option -r requires an argument\n");	  
 	}
 	break;
+      case 'l':			/* disable LADCCA */
+	ladcca_connect = 0;
+	break;
       case 'L':
 	if (++i < argc) {
 	  audio_channels = atoi(argv[i]);
@@ -381,7 +389,7 @@ int main(int argc, char** argv)
 	break;
       case 'K':
 	if (++i < argc) {
-	  fluid_settings_setint(settings, "synth.audio-channels", atoi(argv[i]));
+	  fluid_settings_setint(settings, "synth.midi-channels", atoi(argv[i]));
 	} else {
 	  printf ("Option -K requires an argument\n");	  
 	}
@@ -434,23 +442,25 @@ int main(int argc, char** argv)
 
   /* connect to the ladcca server */
 #ifdef HAVE_LADCCA
-  {
-    int flags;
-    char * str;
-    
-    flags = CCA_Config_Data_Set | CCA_Terminal;
+  if (ladcca_connect)
+    {
+      int flags;
+      char * str;
 
-    if (fluid_settings_str_equal(settings, "audio.driver", "jack")) {
-      flags |= CCA_Use_Jack;
+      flags = CCA_Config_Data_Set | CCA_Terminal;
+
+      if (fluid_settings_str_equal(settings, "audio.driver", "jack")) {
+	flags |= CCA_Use_Jack;
+      }
+      if (fluid_settings_str_equal(settings, "midi.driver", "alsa_seq")) {
+	flags |= CCA_Use_Alsa;
+      }
+
+      fluid_cca_client = cca_init (cca_args, "FluidSynth", flags, CCA_PROTOCOL (1,1));
+
+      if (fluid_cca_client)
+	fluid_settings_setint (settings, "ladcca.enable", cca_enabled (fluid_cca_client) ? 1 : 0);
     }
-    if (fluid_settings_str_equal(settings, "midi.driver", "alsa_seq")) {
-      flags |= CCA_Use_Alsa;
-    }
-    
-    fluid_cca_client = cca_init (cca_args, "FluidSynth", flags, CCA_PROTOCOL (1,1));
-    
-    fluid_settings_setint (settings, "ladcca.enable", cca_enabled (fluid_cca_client) ? 1 : 0);
-  }
 #endif /* HAVE_LADCCA */
 
 
@@ -570,7 +580,7 @@ int main(int argc, char** argv)
 
 
 #ifdef HAVE_LADCCA
-  if (cca_enabled (fluid_cca_client))
+  if (ladcca_connect && cca_enabled (fluid_cca_client))
     pthread_create (&cca_thread, NULL, cca_run, synth);
 #endif /* HAVE_LADCCA */
 
@@ -694,7 +704,7 @@ print_help()
 	 "    Don't create a midi driver to read MIDI input events [default = yes]\n\n");
   printf(" -m, --midi-driver=[label]\n"
 	 "    The name of the midi driver to use [oss,alsa,alsa_seq,...]\n\n");
-  printf(" -L, --midi-channels=[num]\n"
+  printf(" -K, --midi-channels=[num]\n"
 	 "    The number of midi channels [default = 16]\n\n");
   printf(" -a, --audio-driver=[label]\n"
 	 "    The audio driver [alsa,jack,oss,dsound,...]\n\n");
@@ -714,6 +724,10 @@ print_help()
 	 "    Turn the chorus on or off [0|1|yes|no, default = on]\n\n");
   printf(" -g, --gain\n"
 	 "    Set the master gain [0 < gain < 10, default = 0.2]\n\n");
+#ifdef HAVE_LADCCA
+  printf(" -l, --disable-ladcca\n"
+	 "    Don't connect to LADCCA server");
+#endif
   printf(" -o\n"
 	 "    Define a setting, -o name=value\n\n");
   printf(" -i, --no-shell\n"
