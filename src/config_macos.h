@@ -1,4 +1,4 @@
-#define VERSION "0.2.4"
+#define VERSION FLUIDSYNTH_VERSION
 
 #define MACOS9
 #define MACINTOSH
