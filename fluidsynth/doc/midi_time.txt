@@ -1,0 +1,48 @@
+
+
+I use this document as a memo to understand timing in MIDI files. [PH]
+
+- MIDI Quarter Note: There is the MIDI quarter note. For those of you
+  who are interested in the music notation of a MIDI file, beware, a
+  MIDI quarter note in NOT necessarily equal to a notated quarter
+  note.
+
+- MIDI Clock: There are *24* MIDI clocks in a MIDI quarter note (this
+  is forced upon you)
+
+- MIDI Tempo: There are miditempo x 24th of a micro-second in a MIDI
+  clock. The value of miditempo is given by the SetTempo meta-event. 
+
+- Division: A MIDI quarter note is split into N divisions. The value
+  of divisions can be found in the midifile header (MThd chunk).
+
+- Delta-time: The time between one event and the next is called
+  delta-time. The MIDI event delta-times are specified in divisions.
+
+
+* How long is a MIDI Clock?
+
+  midi-clock = miditempo * 1e-6 / 24 sec
+
+* How long is a MIDI Quarter Note?
+
+  quarter-note = 24 midi-clocks
+               = 24 * miditempo * 1e-6 / 24 sec
+               = miditempo * 1e-6 sec
+
+* How long is a Division (a "tick" or "delta-time")?
+
+  1 delta-time = 1 tick = quarter-note / divisions
+                        = miditempo / divisions / 1e6 sec
+                        = miditempo / divisions / 1000 msec
+
+
+To handle music notation, two more concepts are introduced:
+
+- There are *Nm* MIDI clocks in a metronome ticks
+- There are *N32* notated 32nd notes in a MIDI quarter note
+
+Nm and N32 can be found in the TimeSignature meta event 
+
+ 
+  
