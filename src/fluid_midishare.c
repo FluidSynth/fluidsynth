@@ -29,6 +29,8 @@
  * 03/06/03 : Adapdation for FluidSynth API
  */
 
+#include "config.h"
+
 #if MIDISHARE_SUPPORT
 
 #include "fluid_midi.h"
