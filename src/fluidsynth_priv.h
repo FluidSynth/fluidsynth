@@ -26,7 +26,7 @@
 #include "config.h"
 #endif
 
-#ifdef WIN32
+#if defined(WIN32) && !defined(MINGW32)
 #include "config_win32.h"
 #endif
 
@@ -102,7 +102,6 @@
 #include <pthread.h>
 #endif
 
-
 #if HAVE_IO_H
 #include <io.h>
 #endif
@@ -110,6 +109,29 @@
 #if HAVE_WINDOWS_H
 #include <windows.h>
 #endif
+
+/* MinGW32 special defines */
+#ifdef MINGW32
+
+#include <stdint.h>
+#define snprintf _snprintf
+#define vsnprintf _vsnprintf
+
+#define DSOUND_SUPPORT 1
+#define WINMIDI_SUPPORT 1
+#define STDIN_FILENO 0
+#define STDOUT_FILENO 1
+#define STDERR_FILENO 2
+#define WITHOUT_SERVER 1
+
+#endif
+
+/* Darwin special defines (taken from config_macosx.h) */
+#ifdef DARWIN
+#define MACINTOSH
+#define __Types__
+#endif
+
 
 #include "fluidsynth.h"
 
@@ -142,7 +164,19 @@ typedef int fluid_socket_t;
 
 /** Integer types  */
 
-#if defined(_WIN32)
+#if defined(MINGW32)
+
+/* Windows using MinGW32 */
+typedef int8_t             sint8;
+typedef uint8_t            uint8;
+typedef int16_t            sint16;
+typedef uint16_t           uint16;
+typedef int32_t            sint32;
+typedef uint32_t           uint32;
+typedef int64_t            sint64;
+typedef uint64_t           uint64;
+
+#elif defined(_WIN32)
 
 /* Windows */
 typedef signed __int8      sint8;

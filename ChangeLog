@@ -1,3 +1,18 @@
+2003-06-12  Josh Green  <jgreen@users.sourceforge.net>
+	* Makefile.am: Added autogen.sh to EXTRA_DIST
+	* acinclude.m4: Added AM_PATH_READLINE macro for readline detection
+	and prefix configuration.
+	* configure.ac: Support for MinGW32 build, Darwin build fixes,
+	configure CFLAGS input value now honored, fixes to CoreAudio support,
+	and better readline detection and config.
+	* src/Makefile.am: Now conditionally compiling CoreAudio and Windows
+	sources, added config_*.h files to EXTRA_DIST, some stuff for MinGW32
+	build, READLINE_LIBS and READLINE_CFLAGS now used.
+	* src/fluid_dsound.c: Fixed some warnings by adding "void" for
+	empty parameter procedure declarations.
+	* src/fluidsynth.c: Don't include config_win32.h if MinGW32.
+	* src/fluidsynth_priv.h: Stuff for MinGW32 and Darwin builds.
+
 2003-06-09  Josh Green  <jgreen@users.sourceforge.net>
 
 	* src/fluid_alsa.c: Added calls to pthread_attr_setschedparam to

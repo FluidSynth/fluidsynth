@@ -264,3 +264,72 @@ dnl That should be it.  Now just export out symbols:
 AC_SUBST(ALSA_CFLAGS)
 AC_SUBST(ALSA_LIBS)
 ])
+
+
+dnl Configure Paths for readline (Josh Green 2003-06-10)
+dnl
+dnl AM_PATH_READLINE([ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]])
+dnl Test for readline, and define READLINE_CFLAGS and
+dnl READLINE_LIBS as appropriate.
+dnl enables arguments --with-readline-prefix=
+
+AC_DEFUN(AM_PATH_READLINE,
+[dnl Save the original CFLAGS, and LIBS
+save_CFLAGS="$CFLAGS"
+save_LIBS="$LIBS"
+readline_found=yes
+
+dnl
+dnl Setup configure options
+dnl
+AC_ARG_WITH(readline-prefix,
+  [  --with-readline-prefix=PATH  Path where readline is (optional)],
+  [readline_prefix="$withval"], [readline_prefix=""])
+
+AC_MSG_CHECKING(for readline)
+
+dnl Add readline to the LIBS path
+READLINE_LIBS="-lreadline"
+
+if test "${readline_prefix}" != "" ; then
+  READLINE_LIBS="-L${readline_prefix}/lib $READLINE_LIBS"
+  READLINE_CFLAGS="-I${readline_prefix}/include"
+else
+  READLINE_CFLAGS=""
+fi
+
+LIBS="$READLINE_LIBS $LIBS"
+CFLAGS="$READLINE_CFLAGS $CFLAGS"
+
+AC_TRY_COMPILE([
+#include <readline/readline.h>
+], [
+void main(void)
+{
+#ifndef readline
+   return (1);
+#else
+   return (0);
+#endif
+}
+],
+  [AC_MSG_RESULT(found.)],
+  [AC_MSG_RESULT(not present.)
+   readline_found=no]
+)
+
+CFLAGS="$save_CFLAGS"
+LIBS="$save_LIBS"
+
+if test "x$readline_found" = "xyes" ; then
+   ifelse([$1], , :, [$1])
+else
+   READLINE_CFLAGS=""
+   READLINE_LIBS=""
+   ifelse([$2], , :, [$2])
+fi
+
+dnl That should be it.  Now just export out symbols:
+AC_SUBST(READLINE_CFLAGS)
+AC_SUBST(READLINE_LIBS)
+])

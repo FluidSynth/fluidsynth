@@ -38,8 +38,8 @@ new_fluid_dsound_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth);
 int delete_fluid_dsound_audio_driver(fluid_audio_driver_t* data);
 DWORD WINAPI fluid_dsound_audio_run(LPVOID lpParameter);
 
-int fluid_win32_create_window();
-int fluid_win32_destroy_window();
+int fluid_win32_create_window(void);
+int fluid_win32_destroy_window(void);
 long FAR PASCAL fluid_win32_wndproc(HWND hWnd, unsigned message, WPARAM wParam, LPARAM lParam);
 char* fluid_win32_error(HRESULT hr);
 
@@ -371,7 +371,7 @@ long FAR PASCAL fluid_win32_wndproc(HWND hWnd, unsigned message, WPARAM wParam, 
   return(0L);
 }
 
-int fluid_win32_create_window() 
+int fluid_win32_create_window(void)
 {
   WNDCLASS myClass;
   myClass.hCursor = LoadCursor( NULL, IDC_ARROW );
@@ -397,7 +397,7 @@ int fluid_win32_create_window()
   return 0;
 }
 
-int fluid_win32_destroy_window() 
+int fluid_win32_destroy_window(void)
 {
   if (fluid_wnd != NULL) {
     DestroyWindow(fluid_wnd);
