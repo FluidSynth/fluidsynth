@@ -33,9 +33,6 @@
 /* whether or not we are supporting ladcca */
 #undef HAVE_LADCCA
 
-/* Define to 1 if you have the `asound' library (-lasound). */
-#undef HAVE_LIBASOUND
-
 /* Define to 1 if you have the `dl' library (-ldl). */
 #undef HAVE_LIBDL
 

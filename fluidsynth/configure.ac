@@ -189,8 +189,29 @@ dnl   AC_DEFINE(AUFILE_SUPPORT, 1, [Define to activate sound output to files])
 dnl fi
 
 
-dnl - Sound support check (ALSA/OSS)
-AC_SOUND
+dnl - Check support for ALSA
+
+AC_ARG_ENABLE(alsa-support,
+  [  --disable-alsa-support  Do not compile ALSA support (default=auto)],
+  [enable_alsa_support=$enableval], enable_alsa_support="yes")
+
+if test "x$enable_alsa_support" != "xno"; then
+  PKG_CHECK_MODULES(ALSA, alsa >= 0.9.1, ALSA_SUPPORT=1, ALSA_SUPPORT=0)
+else
+  ALSA_SUPPORT=0
+fi
+
+if test "$ALSA_SUPPORT" = "1"; then
+  AC_DEFINE(ALSA_SUPPORT, 1, [Define to enable ALSA driver])
+fi
+AM_CONDITIONAL(ALSA_SUPPORT, test "$ALSA_SUPPORT" = "1")
+AC_SUBST(ALSA_CFLAGS)
+AC_SUBST(ALSA_LIBS)
+
+
+dnl - Check support for OSS audio
+AC_OSS_AUDIO
+AM_CONDITIONAL(OSS_SUPPORT, test "$OSS_SUPPORT" = "1")
 
 
 dnl - Check support for MidiShare
@@ -312,19 +333,19 @@ AM_CONDITIONAL(LADCCA, test "$LADCCA_FOUND" = "yes")
 
 AC_OUTPUT([
 	Makefile
+	macbuild/Makefile
+	sf2/Makefile
+	winbuild/Makefile
+	winbuild/fluidsynth/Makefile
+	winbuild/fluidsynth_dll/Makefile
+	winbuild/fluidsynth_lib/Makefile
 	src/Makefile
 	doc/Makefile
 	include/Makefile
 	include/fluidsynth/Makefile
 	include/fluidsynth/version.h
 	fluidsynth.pc
-	fluidsynth.spec
-	macbuild/Makefile
-	sf2/Makefile
-	winbuild/Makefile
-	winbuild/fluidsynth/Makefile
-	winbuild/fluidsynth_dll/Makefile
-	winbuild/fluidsynth_lib/Makefile])
+	fluidsynth.spec])
 
 echo
 echo "**************************************************************"
