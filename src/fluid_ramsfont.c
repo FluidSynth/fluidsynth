@@ -115,6 +115,7 @@ fluid_preset_t* fluid_ramsfont_sfont_get_preset(fluid_sfont_t* sfont, unsigned i
     return NULL;
   }
 
+  preset->sfont = sfont;
   preset->data = rampreset;
   preset->free = fluid_rampreset_preset_delete;
   preset->get_name = fluid_rampreset_preset_get_name;
