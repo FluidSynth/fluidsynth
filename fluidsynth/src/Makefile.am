@@ -1,0 +1,78 @@
+## Process this file with automake to produce Makefile.in
+
+EXTRA_DIST = fluid_dll.c fluid_dsound.c fluid_winmidi.c fluid_portaudio.c \
+	fluid_dsp_core.c fluid_coreaudio.c fluid_sndmgr.c
+
+lib_LTLIBRARIES = libfluidsynth.la
+bin_PROGRAMS = fluidsynth 
+
+libfluidsynth_la_SOURCES = \
+	fluid_adriver.c \
+	fluid_adriver.h \
+	fluid_alsa.c \
+	fluid_chan.c \
+	fluid_chan.h \
+	fluid_chorus.c \
+	fluid_chorus.h \
+	fluid_cmd.c \
+	fluid_cmd.h \
+	fluid_conv.c \
+	fluid_conv.h \
+	fluid_defsfont.c \
+	fluid_defsfont.h \
+	fluid_event.c \
+	fluid_event_priv.h \
+	fluid_gen.c \
+	fluid_gen.h \
+	fluid_hash.c \
+	fluid_hash.h \
+	fluid_io.c \
+	fluid_io.h \
+	fluid_jack.c \
+	fluid_ladspa.c \
+	fluid_ladspa.h \
+	fluid_list.c \
+	fluid_list.h \
+	fluid_mdriver.c \
+	fluid_mdriver.h \
+	fluid_midi.c \
+	fluid_midi.h \
+	fluid_midi_router.c \
+	fluid_midi_router.h \
+	fluid_midishare.c \
+	fluid_mod.c \
+	fluid_mod.h \
+	fluid_oss.c \
+	fluid_phase.h \
+	fluid_ramsfont.c \
+	fluid_ramsfont.h \
+	fluid_rev.c \
+	fluid_rev.h \
+	fluid_seqbind.c \
+	fluid_seq.c \
+	fluid_settings.c \
+	fluid_settings.h \
+	fluid_sfont.h \
+	fluid_strtok.c \
+	fluid_strtok.h \
+	fluid_synth.c \
+	fluid_synth.h \
+	fluidsynth_priv.h \
+	fluid_sys.c \
+	fluid_sys.h \
+	fluid_tuning.c \
+	fluid_tuning.h \
+	fluid_voice.c \
+	fluid_voice.h
+
+INCLUDES = -I$(srcdir)/../include $(LADCCA_CFLAGS)
+
+libfluidsynth_la_LIBADD = -lm  @LIBREADLINE@ $(LADCCA_LIBS)
+libfluidsynth_la_LDFLAGS = \
+	-version-info @LIBFLUIDSYNTH_MAJ@:@LIBFLUIDSYNTH_MIN@:0 \
+	-export-dynamic @FCLDFLAGS@
+
+fluidsynth_SOURCES = fluidsynth.c
+fluidsynth_LDADD = libfluidsynth.la
+fluidsynth_LDFLAGS = @FCLDFLAGS@
+

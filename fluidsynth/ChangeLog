@@ -1,0 +1,867 @@
+2003-02-27  Josh Green  <jgreen@users.sourceforge.net>
+
+	Updated automake files (automake 1.6).
+
+	* configure.ac: New version autoconf variables which get substituted
+	into include/iiwusynth/version.h.in.
+	* include/iiwusynth/version.h.in: Version defines that are filled in
+	by autoconf.
+	* src/Makefile.am: Fixed SOURCES including removing headers that are
+	now in include/iiwusynth/, added missing sources (iiwu_ramsfont.[ch],
+	iiwu_sfont.h) and added iiwu_dsp_core.c to EXTRA_DIST.
+	* doc/Makefile.am: Added iiwusynth.1 to EXTRA_DIST.
+	* include/iiwusynth.h: Added version.h.
+	* iiwusynth/Makefile.am: Added version.h to the installed headers.
+
+2003-02-08  Markus Nentwig <nentwig@users.sourceforge.net>
+
+	* src/iiwu_ladspa.c: Added a very small signal at Nyquist
+	frequency. This fixes denormal number problems in some
+	plugins.
+	* src/iiwu_cmd.c (iiwu_shell_run): Now also invalid input lines
+	are added to the command line history. So the user can just scroll
+	up and fix them.
+	* src/iiwu_ladspa.c: Cleaned up error messages
+	* src/iiwu_dsp_core.c: Disabled SSE interpolation, because it is
+	slower than the normal code
+	* autogen.sh: Added a line, that checks for the presence of pkg-config in
+	autogen.sh.
+	Motivation: It took me some time to figure out what was wrong...
+	It produces some error message instead of an obscure error later
+	during ./configure, if pkg-config is not installed.
+		
+2003-02-07  Josh Green <jgreen@users.sourceforge.net>
+
+	Applied another Bob Ham LADCCA patch.
+
+	* src/iiwu_alsa.c: LADCCA patch: Now using a ladcca.enable setting.
+	* src/iiwu_jack.c: LADCCA patch: ladcca.enable setting and jack ports
+	are no longer auto connected unless audio.jack.autoconnect is set.
+	* src/iiwusynth.c: LADCCA patch: ladcca.enable and command line options
+	-j and --connect-jack-outputs to enable Jack autoconnect.
+
+2003-02-05  Josh Green <jgreen@users.sourceforge.net>
+
+	Applied Bob Ham's LADCCA and pkgconfig patches.
+
+	* Makefile.am: pkgconfig patch.
+	* configure.ac: Renamed from configure.in as per new autoconf
+	standards. LADCCA configure switch and detection. FluidSynth.pc
+	pkgconfig file output.
+	* src/Makefile.am: LADCCA patch.
+	* src/iiwu_alsa.c [HAVE_LADCCA]: LADCCA patch: reports ALSA
+	sequencer client ID.
+	* src/iiwu_jack.c [HAVE_LADCCA]: LADCCA patch: reports JACK
+	client name.
+	* src/iiwusynth.c [HAVE_LADCCA]: LADCCA patch: connects to LADCCA
+	server, creates client thread, saves/restores SoundFont file state.
+	Used iiwu_sfont_get_name macro to get SoundFont file names contrary
+	to the patch. Should these macros be public? Included unistd.h
+	for usleep call (within HAVE_LADCCA).
+
+2003-01-23  Josh Green <jgreen@users.sourceforge.net>
+
+	* src/iiwu_jack.c: Fixed a segfault bug caused by freeing jack
+	port names, when really only the port array should be freed,
+	jack reference docs are confusing on this matter!
+	* src/iiwu_voice.c (iiwu_voice_check_sample_sanity): Min loop size
+	and padding now set via constants IIWU_MIN_LOOP_SIZE and
+	IIWU_MIN_LOOP_PAD defined at top of iiwu_voice.c, and the values
+	were lowered to exceed SF spec requirements rather then just meet.
+	(iiwu_voice_write): Now using a constant IIWU_MAX_AUDIBLE_FILTER_FC
+	defined at the top of iiwu_voice.c to control the filter
+	cutoff optimization. Also added IIWU_MIN_AUDIBLE_FILTER_Q so
+	filter will only turn off if both cutoff and q are determined to be
+	inaudible. Filter optimization is much less noticeable when modulating.
+
+2003-01-14  Markus Nentwig <nentwig@users.sourceforge.net>
+
+	* src/iiwu_ladspa.c: Adapted new command handler
+	* src/iiwu_midi_router.c (midi_dump_prerouter): Added forgotten
+	'flush' for event dump 'fprintf's
+
+2003-01-01  Markus Nentwig <nentwig@users.sourceforge.net>
+
+	* src/iiwu_oss.c (new_iiwu_oss_audio_driver): Changed to callback function
+	* src/iiwu_alsa.c (new_iiwu_alsa_midi_driver): Changed to callback function
+	* src/iiwu_midishare.c (iiwu_midishare_midi_driver_receive): Partly done the same
+	* src/iiwu_winmidi.c (new_iiwu_winmidi_driver): To be done...
+	* src/iiwu_midi_router.c: Added
+	* src/iiwu_ladspa.c: Adapted to new settings system
+	* src/iiwu_adriver.c (iiwu_audio_driver_settings): Uses getint
+	instead of getnum for audio.period-size and audio.periods settings.
+	* src/iiwu_voice.c (iiwu_voice_write): 
+	Ignore the valid flag for samples. Otherwise no sound is produced.
+	* src/iiwu_chan.c (iiwu_channel_cc): Fixed bank select (7-bit
+	instead of 8 bit) 
+	
+2002-12-23  Peter Hanappe  <peter@hanappe.com>
+
+	* src/iiwu_io.c (iiwu_istream_readline): new file (iiwu_io.c and
+	iiwu_io.c) to handle IO in the shell.
+	
+	* src/iiwusynth.c (main): options to start TCP server.
+
+	* src/iiwu_cmd.c (new_iiwu_server): New structure and functions
+	(new_iiwu_shell): New structure and functions to improve command
+	interface.
+	(new_iiwu_cmd_handler): New structure and functions to improve command
+	interface.
+
+	* src/iiwu_sys.c (new_iiwu_server_socket): New structure and
+	functions
+	(new_iiwu_thread): New structure and
+	functions
+
+2002-12-14  Peter Hanappe  <peter@hanappe.com>
+
+	* src/iiwu_chan.c (iiwu_channel_cc): Handling NRPN messages (NRPN
+	system).
+
+	* src/iiwu_voice.c (iiwu_voice_update_param): Does more extensive
+	range checking because the NPRN system may produce out-of-range
+	values (NRPN system).
+	(iiwu_voice_set_param): New function to change
+	generator values (NRPN system).
+
+	* src/iiwusynth_priv.h (iiwu_clip): New macro
+
+	* src/iiwu_synth.c (iiwu_synth_set_gen): New function to change
+	generator values (NRPN system).
+
+	* src/iiwu_gen.c (iiwu_gen_map_nrpn): New function to map the NRPN
+	data input to the parameter range (NRPN system).
+
+	* src/iiwu_midi.c (iiwu_midi_file_read_event): Fixed metadata
+	buffer bug (alloc size 1 too small).
+
+2002-12-10  Peter Hanappe  <peter@hanappe.com>
+
+	* src/iiwu_dsound.c (iiwu_win32_destroy_window): Filled in the
+	empty lines...
+
+	* src/iiwusynth.h: Changes in the definition for iiwu_synth_sfload
+	and iiwu_synth_sfunload, New functions: iiwu_synth_sfreload,
+	iiwu_synth_get_sfont_by_id, and iiwu_list_insert_at. New 'id'
+	field in iiwu_font_t.
+
+2002-12-08  Markus Nentwig  <nentwig@users.sourceforge.net>
+
+	* src/Makefile.am: added iiwu_hash.c and iiwu_strtok.c to libiiwusynth_la_SOURCES
+	* src/iiwu_settings.c (iiwu_settings_init): Removed
+	multi_channel from the settings (replaced with audio_channels > 1)
+	* src/iiwu_settings.c (iiwu_settings_init): added audio_groups
+	setting. This is the number of individual channels generated from
+	the synth, and always equal to audio_channels, as long as the
+	LADSPA Fx unit is disabled. Otherwise it can be used (for
+	example) to separate even and odd MIDI channels, apply different Fx
+	and mix together to one stereo output.  
+	src/iiwu_ladspa.c: Extended Fx unit to multigroup input, fx sends
+	and multiple audio output channels
+	
+2002-12-04  Peter Hanappe  <peter@hanappe.com>
+
+	* src/iiwu_midi.c (iiwu_midi_file_read_event): the metadata buffer
+	is now dynamically allocated. What! Dynamic memory management
+	already existed in the sixties!
+
+	* src/iiwu_cmd.c (iiwu_handle_reset): New shell command. Sends
+	system reset.
+
+	* src/iiwu_cmd.c (iiwu_expand_path): New function to handle
+	filenames starting with '~'.
+
+	* src/iiwu_cmd.c: Added commands for working with tunings. Added
+	'source' command.
+
+	* src/iiwu_chan.h (struct _iiwu_channel_t): added tuning
+
+	* src/iiwusynth.h: new tuning functions
+
+	* src/iiwu_synth.c (iiwu_synth_reset_tuning): new tuning functions
+
+	* src/iiwu_voice.c: Added tuning
+
+2002-12-03  Peter Hanappe  <peter@hanappe.com>
+
+	* doc/iiwusynth.1: new man page
+
+	* src/iiwu_midi.c (iiwu_player_load): the player now handles a
+	playlist.
+
+	* src/iiwusynth.h: 'iiwu_player_add' replaces 'iiwu_player_load'
+
+	* src/iiwusynth.c (main): iiwusynth can now play midifiles.
+
+2002-12-02  Peter Hanappe  <peter@hanappe.com>
+
+	* src/iiwu_sys.c (new_iiwu_timer): New argument 'auto_destroy' to
+	specify whether the timer should delete it's structure when the
+	timer is finished.
+
+	* src/iiwu_synth.c (iiwu_synth_sfunload): If the soundfont can not
+	be unloaded immediately, a timer thread is spinned of to unload it
+	later. On MacOS 9, the unload is tried at a subsequent 'load' or
+	'unload' request.
+
+	* src/iiwusynth.h (struct _iiwu_sample_t): Added 'refcount' field
+	to test when a soundfont can be unloaded.
+
+	* src/iiwu_synth.c (iiwu_synth_nwrite_float): New function
+	allowing multi-channel audio output.
+	(iiwu_synth_init): Fixed 'amount' for pan. Now set to 500.
+
+	* src/iiwu_cmd.c (iiwu_synth_cmdshell): Added little prompt.
+
+	* src/iiwusynth.c (print_welcome): iiwusynth prints out a welcome
+	message as an well-behaved, interactive application should.
+
+	* src/iiwu_synth.c (iiwu_synth_all_sounds_off): New function to
+	implement the 'All Sound Off' MIDI messages (CC 120).
+	(iiwu_synth_system_reset): This function now also resets the
+	default controller values on the MIDI channels, and clears the
+	reverb and chorus delay lines.
+	(iiwu_synth_count_midi_channels): New function to retreive the
+	number of available midi channels.
+	(iiwu_synth_count_audio_channels): New function to retreive the
+	number of available midi channels.
+	(iiwu_synth_count_effects_channels): New function to retreive the
+	number of available effects channels.
+	(iiwu_synth_get_cpu_load): New function to retreive an estimation
+	of the CPU load.
+
+	* src/iiwusynth.h: Added fields to handle multi-channel audio and
+	a variable number of midi-channels. The 'flags' has been
+	expanded/replaced with several variables.
+
+	* src/iiwu_chan.c (iiwu_channel_cc): Implemented the 'All Control
+	Off' MIDI message (CC 121).
+
+	* src/iiwu_chorus.c (iiwu_chorus_update): iiwu_chorus_update
+	(called after the iiwu_chorus_set_xxx function) no longer returns
+	an error of out-of-range values. It clips the value the the
+	[min-max] range.
+
+2002-11-22  Markus Nentwig  <nentwig@users.sourceforge.net>
+	* src/iiwu_voice.c (iiwu_voice_write): Fixed compilation problem 
+	without --enable-SSE (Pentium II and Mac)
+
+2002-11-17  Markus Nentwig  <nentwig@users.sourceforge.net>
+	
+	* src/iiwu_voice.c (iiwu_voice_write): Fixed nonlooped samples-bug.
+	* TODO (TODO): Updated
+	* src/iiwu_cmd.c (iiwu_handle_reverbsetlevel): Changed command
+	line command 'rev_setwet' to 'rev_setlevel'. Replaced the word 'wet' by
+	'level' in most places.
+	 Added a command line option --dump, which provides
+	 'machine-readable' output from stdout to hook up a user interface.
+	* src/iiwusynth.h: Moved the default values for gain, chorus and
+	reverb here. Might be useful as an example...
+	* src/iiwu_voice.c (iiwu_voice_calculate_runtime_synthesis_parameters): 
+	Added 'scale tuning' modulator, centered around C3.
+	* src/iiwusynth.h: Added API functions to read the reverb state
+	Moved iiwu_synth_system_reset to the API
+
+2002-11-08  Markus Nentwig  <nentwig@users.sourceforge.net>
+	
+	* src/iiwu_voice.c (iiwu_voice_write): Fixed Volume envelope delay bug
+	* src/iiwu_voice.c (FILTER_TRANSITION_SAMPLES): Doubled filter
+	fading time
+	* src/iiwu_mod.c (iiwu_mod_get_value): Changed convex unipolar
+	negative definition
+	* src/iiwu_voice.c (iiwu_voice_off): Cleaned up a bit, uses now
+	calls to iiwu_voice_off, when a voice is finished.
+	* src/iiwu_midi.c (iiwu_midi_parser_parse): Reimplemented
+	New parser should be able to cope with realtime, system common
+	and resynchronize.
+
+2002-10-31  Markus Nentwig  <nentwig@users.sourceforge.net>
+
+	* src/iiwu_alsa.c (iiwu_alsa_midi_run): Increased MIDI timeout
+	from 1 to 100 ms
+	* src/iiwu_dsp_core.c: Merged identical filter coefficients b0 and
+	b2 into b02
+	Implemented smooth filter transitions
+	* src/iiwu_sys.c (iiwu_check_fpe): Added verbose FPE reporting and
+	systematic FPE checks.	
+	* src/iiwu_rev.c: Added a constant DC offset to avoid slowdown
+	caused by denormal numbers
+	* src/iiwu_synth.c (delete_iiwu_synth): Fixed segv during shutdown 
+	* src/iiwu_dsp_core.c: Fixed buffer bug (aligned-unaligned)
+	* src/iiwu_synth.c (iiwu_synth_damp_voices): Commented out unused code
+	* src/iiwu_dsp_core.c: Optimized, added SSE code, which is
+	this time actually faster than the default code. Well. Part of it.
+	* src/iiwu_voice.c: Minor clean-up
+	* configure.in: Added switch --enable-longlong
+	* configure.in: Added switch --enable-SSE
+	* src/iiwu_phase.h: Added 64 bit operations, documented
+	* src/iiwu_sse.h: Check to avoid #including the file more than once
+
+2002-10-29  Markus Nentwig <nentwig@users.sourceforge.net>
+
+	* src/iiwu_voice.c: Added experimental SSE support for Pentium
+	III. Comment out #define SSE from iiwu_voice.c to get back to the standard version.
+
+2002-10-26  Markus Nentwig  <nentwig@users.sourceforge.net>
+
+	* src/iiwu_seq.c: Fixed a couple of warnings
+	* src/iiwu_voice.c (new_iiwu_voice): Removed iiwu_voice_init.
+	* src/iiwu_dsp_core.c: New 7th order interpolation.
+
+2002-10-24  Markus Nentwig  <nentwig@users.sourceforge.net>
+
+	* src/iiwu_voice.c(iiwu_voice_determine_amplitude_that_reaches_noise_floor_for_sample): 
+	Added checking for invalid sample.
+	* src/iiwu_voice.c (iiwu_voice_write): 
+	Moved the DSP core functions into iiwu_dsp_core.c.
+	Optimized, cleaned up, documented.
+	Amplitude scaling short => floating point is now done as the last
+	operation in the DSP loop (voice->amp does not include the scaling
+	factor anymore).	
+	* src/iiwu_synth.c (iiwu_synth_one_block): Saved a couple of
+	multiplications per sample by moving the master gain into iiwu_voice_write
+	* src/iiwu_synth.c (iiwu_synth_free_voice_by_kill): Modified the algorithm
+	* src/iiwu_synth.c (iiwu_synth_alloc_voice): Noteon algorithm will
+	now turn off retriggered running voices ('sustain pedal problem')
+	
+2002-10-18  Markus Nentwig  <nentwig@users.sourceforge.net>
+
+	* src/iiwu_alsa.c (new_iiwu_alsa_midi_driver): Disabled
+	high-priority scheduling for the MIDI thread to get rid of audio dropouts.
+	* src/iiwu_synth.c (iiwu_synth_free_voice_by_kill): Modified voice
+	killing algorithm, so that recently started voices are not killed
+	* src/iiwu_voice.c (iiwu_voice_run_dsp): Changed some variable
+	names. Extensive loop point checking, when loop points are modulated.
+	* src/iiwusynth.h: Added functions to read the state of the
+	chorus. 
+	* src/iiwu_chorus.c: Rewrote chorus setup logic (if a parameter is
+	out-of-range, all other parameter changes are discarded).
+	* src/iiwu_voice.c: Added caching for loop peak detection: The
+	amplitude of the loop is only detected once for each
+	sample. Exception only, if the resulting loop differs from the
+	original loop settings of the sample (in this case, the peak
+	detection is still run for each noteon event).
+	* src/iiwusynth.h (struct _iiwu_sample_t): Added 'amplitude_that_reaches_noise_floor_is_valid'
+	and 'amplitude_that_reaches_noise_floor'
+	* src/iiwu_voice.c(iiwu_voice_calculate_runtime_synthesis_parameters):
+	Renamed 'iiwu_voice_optimize'
+	
+2002-07-21  Peter Hanappe  <peter@hanappe.com>
+
+	* src/Makefile.am (libiiwusynth_la_SOURCES): Followed Bob Ham's
+	suggestion for the Makefile.am to fix the problems with automake
+	1.6
+
+2002-07-13 Tim Goetze <tim@quitte.de>
+	* src/iiwu_synth.c (iiwu_synth_alloc_voice): New algorithm for
+	voice allocation, when all voice processes are in use
+
+2002-07-13 Markus Nentwig <nentwig@users.sourceforge.net>
+	* src/iiwu_synth.c (iiwu_synth_alloc_voice): Applied above patch,
+	
+2002-07-08  Markus Nentwig <nentwig@users.sourceforge.net>
+
+	* src/iiwu_synth.c (iiwu_synth_noteoff): Changed noteoff strategy:
+	Noteoff now turns off all voice processes with the same channel /
+	key, regardless of the voice ID (avoids stuck notes).
+
+2002-07-13  Peter Hanappe  <peter@hanappe.com>
+	* src/Makefile.am (EXTRA_libiiwusynth_la_SOURCES): Applied Takashi
+	Iwai's patch. The configure stuff in iiwusynth-0.2 cannot be
+	rebuilt with the latest automake 1.6.  You cannot use substitution
+	for *_SOURCES in Makefile.am. This fixes this problem.
+
+2002-06-29 Markus Nentwig  <nentwig@users.sourceforge.net> 
+
+	* src/iiwusynth.h: Added documentation, removed GEN_CHANGED (it
+	was unused).
+
+	* src/iiwu_mod.c (iiwu_dump_modulator): Cleaned up
+
+	* src/iiwu_cmd.c (iiwu_handle_help): Restructured command line
+	help system
+
+2002-06-14  Markus Nentwig  <nentwig@users.sourceforge.net>
+
+	* src/iiwu_chorus.c (iiwu_chorus_processmix): Turning off chorus now, when parameters are wrong (avoid FPE)
+	* src/iiwu_voice.c (iiwu_voice_write): Optimized turnoff condition for voice
+
+2002-06-11  Markus Nentwig  <nentwig@users.sourceforge.net>
+
+	* src/iiwu_voice.c (iiwu_voice_add_mod): Fixed bug that prevented non-default modulators from being added.
+	(iiwu_voice_config): Added peak detection for the sample loop, and a condition turning off the voice,
+	if loop peak volume and amplitude envelope combined fall below the noise floor.
+
+2002-06-06  Peter Hanappe  <peter@hanappe.com>
+
+	* acinclude.m4: Fixed problems with enable/disable jack and
+	midishare
+
+2002-06-06  Tim Goetze  <tim@quitte.de>
+
+	* src/iiwu_synth.c (iiwu_synth_all_notes_off): Added handling of
+	all-notes-off midi message
+
+2002-06-03  Markus Nentwig <nentwig@users.sourceforge.net>
+	*  src/iiwu_chorus.c: Fixed bug in initial phase calculation
+
+2002-06-02  Peter Hanappe  <peter@hanappe.com>
+
+	* src/iiwu_jack.c: updated for new JACK types.
+
+2002-06-02  Bob Ham  <node@users.sourceforge.net>
+
+	* acinclude.m4: Changed acinclude.m4 for configure to ignore jack.
+
+2002-06-02  Markus Nentwig <nentwig@users.sourceforge.net>
+	* autogen.sh: Added libtoolize -f to prevent error message 'libtool: ltconfig version does not match ltmain.sh version ...'
+        * src/iiwusynth.h: Changed iiwu_voice_add_mod_t to iiwu_voice_add_mod
+	* src/iiwu_synth.c: Added NULL termination to list returned by iiwu_synth_get_voicelist
+	* src/iiwusynth.h: Added iiwu_synth_set_chorus (API function)
+	* src/iiwu_synth.c: Added iiwu_synth_set_(reverb|chorus)_on (API functions)
+	* src/iiwu_cmd.c: Added control commands for chorus (see help)
+	
+2002-05-26  Tim Goetze <tim@quitte.de>
+        * src/iiwu_voice.c (iiwu_voice_noteoff): Fixed conversion between
+	volenv-values from attack segment to later envelope segments
+
+2002-05-22  Markus Nentwig <nentwig@users.sourceforge.net>
+
+	* src/iiwu_voice.c (iiwu_voice_query_ID): Added, API function
+
+	(iiwu_voice_query_playing): Added, API function 
+
+	(iiwu_voice_write): Fixed problem with filter caused 05-18 
+
+	* src/iiwusynth.h: Moved iiwu_voice_update_param into the API 
+
+
+2002-05-19  Markus Nentwig <nentwig@users.sourceforge.net>
+
+	* src/iiwusynth.h (iiwu_synth_get_voicelist): Added. 
+
+	* src/iiwu_voice.c (iiwu_voice_noteoff): Added a conversion for linear to cB amplitude, when a note is turned off 
+	during the attack phase of the volume envelope
+
+	* src/iiwu_gen.h: Moved the generator definition to API. Changed the fields to 'double'.
+
+	* src/iiwu_mod.c: Moved the modulator definitions to API. Changed the data type of amount to 'double'.
+
+	* src/iiwu_voice.c (iiwu_voice_write): The condition, that quits a voice, when the amplitude
+	falls below a threshold now uses only the volume envelope instead of the voice amplitude.
+	Previously, turning a volume pedal briefly to 0 would quit all voices playing.
+
+	* src/iiwu_rev.c (iiwu_revmodel_processreplace): Removed 'dry' path from reverb unit 
+	Motivation: This saves a couple of multiplications, the dry signal goes through the ordinary output
+	anyway.
+
+	* src/iiwusynth.h (iiwu_synth_kill_by_exclusive_class): added to API
+	* src/iiwu_synth.c (iiwu_synth_kill_by_exclusive_class): Extended the exclusive class function to
+	work with stereo samples
+	(iiwu_synth_set_reverb): Renamed iwu_synth_set_reverb to iiwu_synth_set_reverb_preset
+	iiwu_synth_set_reverb is now an API function, that allows to set all reverb parameters.
+
+2002-05-18  Markus Nentwig  <nentwig@users.sourceforge.net>
+
+	* src/iiwu_chorus.c: Implemented variable delay line with bandlimited interpolation. Documentation, error handling. 
+	Removed unneeded and broken features
+	* src/iiwusynth_priv.h: Moved typedef struct iiwu_mod_t iiwu_mod_t into iiwusynth.h
+	* src/iiwusynth.h: Moved iiwu_voice_add_mod from iiwu_voice.h into iiwusynth.h (now API function).
+	* src/iiwu_voice.c (iiwu_voice_update_param): Inserted chorus send into DSP loop
+	(iiwu_voice_write): Added flag 'voice->update_filter'. Now Q can be modulated.
+
+2002-05-12  Markus Nentwig  <nentwig@users.sourceforge.net>
+
+	* src/iiwu_synth.c (iiwu_synth_pitch_wheel_sens): added
+	* src/iiwu_chan.c (iiwu_channel_pitch_wheel_sens): added 
+	* src/iiwu_cmd.c (iiwu_handle_reverbsetwidth): changed 'wet' to
+	* 'width'
+
+2002-05-11  Markus Nentwig  <nentwig@users.sourceforge.net>
+
+	* src/iiwu_conv.c (iiwu_tc2sec): 
+	Added more conversion functions with range check for different ranges:
+	(iiwu_tc2sec_attack): 
+	(iiwu_tc2sec_hold): 
+	(iiwu_tc2sec_release): 
+	
+	* src/iiwu_voice.c (iiwu_voice_add_mod):
+	implemented modulator src 0 (constant mod offset) 
+	* src/iiwu_voice.c (iiwu_voice_update_param):
+	sample-and envelope related voice parameters 
+	are now handled together with other voice parameters.
+	Implemented generators:	 
+	GEN_KEYTOVOLENVDECAY
+	GEN_KEYTOVOLENVHOLD
+	GEN_KEYTOMODENVDECAY
+	GEN_KEYTOMODENVHOLD
+	
+2002-05-10  Peter Hanappe  <peter@hanappe.com>
+
+	* src/iiwu_synth.c (iiwu_synth_start_voice): added
+	iiwu_synth_start_voice() to handle exclusive classes.
+
+2002-05-09  Peter Hanappe  <peter@hanappe.com>
+
+	* src/iiwu_conv.h: removed velocity to cB conversion. No longer
+	used.
+
+	* src/iiwu_synth.c (iiwu_synth_write_float): removed limiter
+
+	* src/iiwu_synth.h (IIWU_NUM_CHANNELS): set the number of channels
+	to 64.
+
+	* src/iiwu_synth.c (iiwu_synth_get_internal_bufsize): added
+
+	* src/iiwu_ladspa.h: lower-cased ladspa files 
+
+	* src/iiwusynth.h: prefixed log levels with IIWU_... Updated all
+	references.
+
+	* src/iiwu_cmd.c (iiwu_handle_reverb): renamed 'rev_enable' to
+	'reverb' in correspondance with the long command line arguments
+
+	* src/iiwusynth.c (main): checking if files on command line are valid
+
+	* src/iiwuplay.c (main): checking if files on command line are valid
+
+	* src/iiwusynth.h: New log level for verbose messages: IIWU_INFO
+
+2002-04-30  Markus Nentwig  <nentwig@users.sourceforge.net>
+
+	* src: Added iiwu_LADSPA.c, iiwu_LADSPA.h (support for LADSPA effect plugins).
+	
+	* src/iiwusynth.c (main): Changed default gain to 0.2.
+
+	* src/iiwu_voice.c: Restructured the voice initialization as follows:
+	(iiwu_voice_init): sample position, IIR filter history, envelopes etc. are reset.
+	(iiwu_voice_optimize): The generators (nominal value) have been set by the sound font.
+	Now each modulator is calculated once to obtain the 'final' initial value for each
+	generator, which consists of nominal value and modulator-contributed part.
+	(iiwu_voice_update_param): Calculates all voice parameters, which depend on one
+	particular generator. This is called once for each voice parameter during 
+	voice_optimize and further each time, when a modulator changes a generator.
+	(iiwu_voice_update_param): Added a voice parameter filter_gain to avoid
+	recalculating the filter gain each time the center frequency changes (it depends
+	only on Q)
+	(iiwu_voice_write): Voice is now turned off, when the amplitude falls below -100 dB,
+	even during the sustain phase (happens, when holding a piano key for a very long time)
+
+	* src/iiwu_voice.c (iiwu_voice_noteoff): Moved voice->chan = NO_CHANNEL into iiwu_voice_off.
+	Previously a released note was not modulated anymore, for example pitch bend stopped working as soon
+	as the key was released.
+
+	* src/iiwu_voice.h: Changed _ON macro to figure out the state of a key from the position in
+	the envelope, instead of using a cleared channel number as indicator.
+
+	* src/iiwu_synth.c: Implemented all default modulators
+	Added LADSPA support.
+	Added digital clipping.
+	Moved master gain factor ahead of LADSPA Fx.
+
+	* src/iiwu_mod.c: 'Hardcoded' GM default modulator vel => filter.
+	Replaced 128 with 127 in (127-x)
+
+	* src/iiwu_midi.c: Fixed sysex for realtime MIDI. Fixed pitch bend bug.
+
+	* src/iiwu_gen.c (iiwu_gen_set_default_values): Using float instead of int for default values.
+	Added references to specifications (doc). Changed 'init array' function name to 'set_default' .
+
+	* src/iiwu_defsfont.c (iiwu_preset_zone_import_sfont): Import of modulators
+	(iiwu_inst_zone_import_sfont): Import of modulators
+	(iiwu_defpreset_noteon): Added modulators, fixed generator problem (local zone overwrites global zone, previously it added)
+
+	* src/iiwu_conv.c: Using now oncave / convex equation from SF specs.
+	Removed ct2hz functions and tables.
+	(iiwu_ct2hz): Limit checking
+	(iiwu_cb2amp): Removed 'magic number'
+	(iiwu_tc2sec): Avoided == for iiwu_real_t
+	
+	* src/iiwu_cmd.c: Increased number of tokens. Using WORKLINELENGTH constant.
+	Changed max. gain to 5.
+	Added LADSPA commands.
+	Renamed misleading rev_bypass command to rev_enable
+
+	* src/iiwu_chan.c: Centered pitch wheel. Added 'expression' modulator (CC 11).
+	* configure.in: Added LADSPA support
+
+2002-04-03  Peter Hanappe  <peter@hanappe.com>
+
+	* src/iiwu_voice.c (iiwu_voice_run_dsp): Integrated Markus
+	Nentwig's new filter design
+
+
+2002-03-12  Peter Hanappe  <peter@hanappe.com>
+
+	* src/iiwusynth.h: the preset iteration in a soundfont now takes a
+	pointer to a preset structure
+
+	* src/iiwu_sys.c (iiwu_profile_data): added support for profiling
+
+	* src/iiwu_voice.c (iiwu_voice_write): turns off voice if
+	amplitude < -100 dB in release phase. Set filter gain back to old
+	value (0.25f * ...)
+
+	* src/iiwuplay.c (main): added gain, interactive, and reverb options
+
+	* src/iiwusynth.c (main): added gain and reverb options
+
+	* src/iiwu_synth.c (iiwu_synth_write_s16): added brickwall limiter for s16 samples
+
+2002-01-29  Stephane Letz  <letz@grame.fr>
+
+	* src/iiwu_midishare.c : Compilation on MacOSX, use a task for typeNote management
+	* src/iiwu_sys.c : Compilation on MacOSX
+	* src/iiwu_sys.h : Compilation on MacOSX
+	* src/iiwu_sfont.c : Use the flag MACINTOSH instead of MACOS
+	* config_macos.h : Cleanup
+	* config_macosx.h : New file, compilation on MacOSX
+
+
+2002-01-21  Stephane Letz  <letz@grame.fr>
+
+	* src/iiwu_midi.c (delete_iiwu_midi_handler): Desallocation of heap allocated strings
+	* src/iiwusynth_priv.h : Definition of strdup if not available (Macintosh)
+
+
+2002-01-16  Peter Hanappe  <peter@hanappe.com>
+
+	* src/iiwu_alsa.c (new_iiwu_alsa_seq_driver): Applied and adjusted
+	Bob Ham's patch: support for configurable ALSA sequencer client
+	name.
+
+	* src/iiwu_chan.c (iiwu_channel_cc): Applied Bob Ham's patch:
+	added bank select midi message.
+
+	
+2001-12-31  Peter Hanappe  <peter@hanappe.com>
+
+	* src/iiwu_synth.c (iiwu_synth_damp_voices): Sustain messages are
+	now handled. Updated iiwu_channel and iiwu_voice.
+	(delete_iiwu_synth): SoundFonts are deleted.
+
+2001-12-21  Stephane Letz  <letz@grame.fr>
+
+	* src/iiwu_midishare.c (new_iiwu_midishare_midi_driver, 
+		delete_iiwu_midishare_midi_driver):
+	 Updated to be compiled either in driver or application mode
+	 with the flag MIDISHARE_DRIVER.
+
+2001-12-20  Stephane Letz  <letz@grame.fr>
+
+	* src/iiwu_portaudio.c (iiwu_portaudio_run , new_iiwu_portaudio_driver):
+	 Adaptation for new audio drivers
+
+	* src/iiwu_synth.c (audio driver definition): 
+	Adaptation for PortAudio driver
+
+	* src/iiwu_sys.c (header): Adaptation for compilation on MacOS9
+		
+	* src/iiwu_sys.h (header): Adaptation for compilation on MacOS9
+
+2001-12-16  Peter Hanappe  <peter@hanappe.com>
+
+	* src/iiwuplay.c (main): The .iiwusynth file is loaded *before*
+	the soundfonts on the command lines are loaded
+
+	* src/iiwusynth.c (main): idem.
+
+2001-12-16  Peter Hanappe  <peter@hanappe.com>
+
+	* src/iiwu_midi.c (iiwu_player_callback): Fixed error in midi
+	timing after a tempo change
+
+	* src/iiwu_jack.c (new_iiwu_jack_audio_driver): Added first
+	version of JACK driver
+
+2001-12-14  Peter Hanappe  <peter@hanappe.com>
+
+	* src/iiwu_synth.c (iiwu_synth_noteoff): noteon/notoff events can
+	print a clear message, useful for debugging.
+
+	* src/iiwu_sys.c (struct _iiwu_timer_t ): timer moved from
+	iiwu_midi.c to iiwu_sys.c
+
+	* src/iiwusynth.h: New organization of settings; using bit flags;
+	added verbose option
+
+	* src/iiwusynth.c (main): Added the verbose option
+
+	* src/iiwuplay.c (main): Added the verbose option
+
+2001-10-05  Stephane Letz  <letz@grame.fr>
+
+	* src/iiwu_portaudio.c (new_iiwu_portaudio_driver): imported new
+	driver for the PortAudio library.
+
+2001-10-04  Stephane Letz  <letz@grame.fr>
+
+	* src/iiwu_synth.c (new_iiwu_synth):  Fixed bug in synth initialisation
+
+2001-10-02  Peter Hanappe  <peter@hanappe.com>
+
+	* src/iiwu_cmd.c (iiwu_get_userconf): returns default user
+	configuration
+	(iiwu_get_sysconf): returns default system configuration
+	(iiwu_synth_cmdline): Fixed bug with argument offset. Empty lines
+	are skipped correctly.
+	
+	* src/iiwusynth.c (main): loads the user or system config
+
+	* src/iiwuplay.c (main): loads the user or system config
+
+	* src/iiwu_synth.c (iiwu_sp_write): Using new envelope model for
+	modulation envelope
+
+2001-09-29  Peter Hanappe  <peter@hanappe.com>
+
+	* src/iiwu_synth.c (iiwu_sp_write): redesigned the envelopes.
+
+2001-09-20  Peter Hanappe  <peter@hanappe.com>
+
+	* src/iiwu_synth.c (iiwu_sp_write): redesigned the dsp loop. it's
+	faster and it sounds better (!)
+
+2001-09-19  Peter Hanappe  <peter@hanappe.com>
+
+	* src/iiwu_sfont.c (iiwu_sample_import_sfont): better checking for
+	minimum sample size, loop start and loop end offsets.
+
+2001-09-17  Peter Hanappe  <peter@hanappe.com>
+
+	* src/iiwu_synth.c (iiwu_sp_write): improved calculation of filter
+	coefficients
+	(new_iiwu_synth): using settings structure
+
+2001-09-09  Peter Hanappe  <peter@hanappe.com>
+
+	* src/iiwu_synth.h (iiwu_phase_decr): fixed bug 
+
+	* src/iiwu_synth.c (iiwu_synth_noteoff): noteoff now turns off the
+	oldest note only (instead of all notes with the given channel and
+	key)
+
+2001-07-10  Peter Hanappe  <peter@hanappe.com>
+
+	* src/iiwu_midi.h: removed midi driver join function. updated all
+	structures, implementations and callers.
+
+2001-07-04  Peter Hanappe  <peter@hanappe.com>
+
+	* src/iiwuplay.c (print_help): corrected errors in the help and
+	usage display.
+
+2001-06-29  Peter Hanappe  <peter@hanappe.com>
+
+	* src/iiwu_synth.c (iiwu_synth_one_block): new function. fills the
+	buffer with fresh samples.
+	(iiwu_synth_write_lr): now calls iiwu_synth_one_block. the
+	synthesizer uses fixed synthesis buffer size, independent of the
+	requested buffer length passed to iiwu_synth_write_lr.
+	(iiwu_revmodel_processreplace): new uses fixed IIWU_BUFSIZE value
+	for buffer length.
+	(iiwu_revmodel_processmix): uses fixed IIWU_BUFSIZE value
+
+2001-06-22  Peter Hanappe  <peter@hanappe.com>
+
+	* src/iiwusynth.c (iiwu_handle_fonts): new shell command to list
+	the loaded fonts.
+	(iiwu_handle_mstat): new shell command to list the statistics of
+	the midi driver.
+
+2001-06-19  Peter Hanappe  <peter@hanappe.com>
+
+	* src/iiwusynth.c (main): Several command line options are
+	available to select the midi and audio driver and device. Using
+	the getopt function on posix machines.
+
+2001-06-16  Peter Hanappe  <peter@hanappe.com>
+
+	* src/iiwu_synth.h: new iiwu_revmodel_presets_t structure to store
+	reverb presets (concert hall, room, ...)
+
+	* src/iiwu_synth.c (iiwu_synth_write_lr): now using 1 reverb for
+	all synthesis processes. the synthesis processes now receive a
+	left and right buffer, a reverb buffer, a chorus buffer, and a
+	monobuffer for their temporarry storage. reverb now always on.
+	
+	(new_iiwu_sp): no longer allocating a reverb module nor a
+	monobuf. only one reverb model and monobuffer allocated by the
+	synth object (read: much less memory usage).
+
+	* src/iiwu_midi.c (iiwu_player_callback): fixed timing
+	errors. midi should play correctly now.
+
+2001-06-09  Peter Hanappe  <peter@hanappe.com>
+
+	* src/iiwu_synth.c (iiwu_sp_write_lr): now using a 64-bits
+	fixed-point number to calculate the phase of the
+	wavetable. because of rounding erros, the float value I used
+	before gave terrible tuning problems. I updated all the
+	intepolation macros.
+
+	* src/iiwusynth_priv.h: included the iiwu_phase_t data type. This
+	type represents a 64-bits fixed-point number. It's used to hold
+	the phase in the wavetable.
+
+2001-06-08  Peter Hanappe  <peter@hanappe.com>
+
+	* src/iiwu_midi.c (new_iiwu_midi_handler): Better support for
+	runtime selection of the MIDI driver (using the
+	iiwu_mdriver_definition_t structure)
+
+	* src/iiwu_auport.c (new_iiwu_auport): Better support for runtime
+	selection of the audio driver (using the iiwu_adriver_definition_t
+	structure)
+
+2001-06-07  Peter Hanappe  <peter@hanappe.com>
+
+	* src/iiwu_synth.c (iiwu_sp_write_lr): rewrote the dsp function to
+	accept a seperate left and right channel buffer.
+	(iiwu_sp_write_lr): using cubic hermite interpolation by default.
+	(iiwu_synth_write_lr): added a dsp function to accept a seperate
+	left and right channel buffer.
+
+2001-05-26  Peter Hanappe  <peter@hanappe.com>
+
+	* src/iiwu_midi.c (iiwu_midi_parser_parse): Fixed a bug in the
+	midi parser (running status should not be split in a status and
+	channel part for system messages).
+	(iiwu_midi_send_event): pitch bend events are now handled
+
+2001-05-25  Peter Hanappe  <peter@hanappe.com>
+
+	* src/iiwu_midi.c (iiwu_midi_file_getc): Fixed bug when pushed
+	back byte equals zero (mf->c >= 0)
+
+	* src/iiwu_midi.c (iiwu_midi_file_getc): Fixed bug when pushed
+	back byte equals zero (mf->c >= 0)
+
+2001-05-24  Peter Hanappe  <peter@hanappe.com>
+
+	* src/iiwusynth.c: added the stupidly simple interpreter
+
+	* src/iiwu_synth.c: removed all param strcutures. 
+
+	* src/iiwu_synth.c (iiwu_channel_get_banknum): new function
+
+2001-05-23  Peter Hanappe  <peter@hanappe.com>
+
+	* src/iiwu_synth.c (iiwu_sp_write): Fixed devide by zero in filter
+
+	* src/smurf.c (gerr): applied Josh's patch: using va_list now (as
+	it should).
+
+2001-05-22  Peter Hanappe  <peter@hanappe.com>
+
+	* src/iiwu_midi.c: the midi handler is now devided in a dummy
+	iiwu_midi_handler_t and a "low level" driver. This allows for
+	multiple midi drivers to be compiled in.
+
+	* src/iiwusynth.h: renamed iiwu_midi_driver_t to iiwu_midi_handler_t
+
+	* src/iiwu_auport.c (new_iiwu_auport): new "driver" argument to
+	select between alsa, oss, midishare, directx, ...
+
+	* configure.in: preparing for the first pre-release, version 0.0.1
+
