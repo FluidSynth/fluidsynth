@@ -30,13 +30,14 @@
 /************************************************************************
  *
  *  versions:
+ *    (9): bug fix: now polyphony ans # of midi channel arguments take effect
  *    (8): added message resample permitting to chose resampling interpolation method
  *    (7): added names for soundfonts (== file name without path and postfix)
  *    (6): added message 'info'
  *    (5): fixed bogus path translation at file loading
  * 
  */
-#define VERSION "06/2004 (8)"
+#define VERSION "09/2004 (9)"
 
 #include "ftmax.h"
 #include "fluidsynth.h"
@@ -1473,8 +1474,8 @@ fluidmax_new(Symbol *s, short ac, Atom *at)
   
   if(self->settings != NULL)
   {
-    fluid_settings_setnum(self->settings, "synth.midi-channels", midi_channels);
-    fluid_settings_setnum(self->settings, "synth.polyphony", polyphony);
+    fluid_settings_setint(self->settings, "synth.midi-channels", midi_channels);
+    fluid_settings_setint(self->settings, "synth.polyphony", polyphony);
     fluid_settings_setnum(self->settings, "synth.gain", 0.600000);
     fluid_settings_setnum(self->settings, "synth.sample-rate", sys_getsr());
   
