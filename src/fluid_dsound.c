@@ -324,7 +324,7 @@ DWORD WINAPI fluid_dsound_audio_run(LPVOID lpParameter)
       }
 
       /* Unlock */
-      IDirectSoundCaptureBuffer_Unlock(dev->sec_buffer, buf1, bytes1, buf2, bytes2);
+      IDirectSoundBuffer_Unlock(dev->sec_buffer, buf1, bytes1, buf2, bytes2);
             
       if (cur_position >= dev->queue_byte_size) {
 	cur_position -= dev->queue_byte_size;
