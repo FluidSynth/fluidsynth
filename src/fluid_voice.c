@@ -1978,7 +1978,10 @@ int fluid_voice_optimize_sample(fluid_sample_t* s)
   signed short peak;
   double result;
   int i;
-  
+
+  /* ignore ROM and other(?) invalid samples */
+  if (!s->valid) return (FLUID_OK);
+
   if (!s->amplitude_that_reaches_noise_floor_is_valid){ /* Only once */
     /* Scan the loop */
     for (i = (int)s->loopstart; i < (int) s->loopend; i ++){

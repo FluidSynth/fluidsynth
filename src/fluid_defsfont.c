@@ -313,6 +313,7 @@ int fluid_defsfont_load(fluid_defsfont_t* sfont, const char* file)
       return FLUID_FAILED;
     }
     fluid_defsfont_add_sample(sfont, sample);
+    fluid_voice_optimize_sample(sample);
     p = fluid_list_next(p);
   }
 
@@ -1384,7 +1385,6 @@ fluid_inst_zone_import_sfont(fluid_inst_zone_t* zone, SFZone *sfzone, fluid_defs
       FLUID_LOG(FLUID_ERR, "Couldn't find sample name");
       return FLUID_FAILED;
     }
-    fluid_voice_optimize_sample(zone->sample);
   }
 
   /* Import the modulators (only SF2.1 and higher) */
@@ -1606,7 +1606,7 @@ fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defs
     sample->valid = 0;
     FLUID_LOG(FLUID_WARN, "Ignoring sample %s: can't use ROM samples", sample->name);
   }
-  if (sample->end - sample->start < 48) {
+  if (sample->end - sample->start < 8) {
     sample->valid = 0;
     FLUID_LOG(FLUID_WARN, "Ignoring sample %s: too few sample data points", sample->name);
   } else {
