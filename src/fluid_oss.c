@@ -45,6 +45,10 @@
 
 #define BUFFER_LENGTH 512
 
+/* SCHED_FIFO priorities for OSS threads (see pthread_attr_setschedparam) */
+#define OSS_PCM_SCHED_PRIORITY 90
+#define OSS_MIDI_SCHED_PRIORITY 90
+
 /** fluid_oss_audio_driver_t
  * 
  * This structure should not be accessed directly. Use audio port
@@ -119,6 +123,7 @@ new_fluid_oss_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
   pthread_attr_t attr;
   int err;
   int sched = SCHED_FIFO;
+  struct sched_param priority;
 
   dev = FLUID_NEW(fluid_oss_audio_driver_t);
   if (dev == NULL) {
@@ -241,6 +246,11 @@ new_fluid_oss_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
 	goto error_recovery;
       }
     }
+
+    /* SCHED_FIFO will not be active without setting the priority */
+    priority.sched_priority = (sched == SCHED_FIFO) ? OSS_PCM_SCHED_PRIORITY : 0;
+    pthread_attr_setschedparam (&attr, &priority);
+
     err = pthread_create(&dev->thread, &attr, fluid_oss_audio_run, (void*) dev);
     if (err) {
       FLUID_LOG(FLUID_WARN, "Couldn't set high priority scheduling for the audio output");
@@ -276,6 +286,7 @@ new_fluid_oss_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func,
   pthread_attr_t attr;
   int err;
   int sched = SCHED_FIFO;
+  struct sched_param priority;
 
   dev = FLUID_NEW(fluid_oss_audio_driver_t);
   if (dev == NULL) {
@@ -386,6 +397,11 @@ new_fluid_oss_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func,
 	goto error_recovery;
       }
     }
+
+    /* SCHED_FIFO will not be active without setting the priority */
+    priority.sched_priority = (sched == SCHED_FIFO) ? OSS_PCM_SCHED_PRIORITY : 0;
+    pthread_attr_setschedparam (&attr, &priority);
+
     err = pthread_create(&dev->thread, &attr, fluid_oss_audio_run2, (void*) dev);
     if (err) {
       FLUID_LOG(FLUID_WARN, "Couldn't set high priority scheduling for the audio output");
@@ -642,6 +658,7 @@ new_fluid_oss_midi_driver(fluid_settings_t* settings,
   fluid_oss_midi_driver_t* dev;
   pthread_attr_t attr;
   int sched = SCHED_FIFO;
+  struct sched_param priority;
   char* device;
   
   /* not much use doing anything */
@@ -702,6 +719,11 @@ new_fluid_oss_midi_driver(fluid_settings_t* settings,
 	goto error_recovery;
       }
     }
+
+    /* SCHED_FIFO will not be active without setting the priority */
+    priority.sched_priority = (sched == SCHED_FIFO) ? OSS_MIDI_SCHED_PRIORITY : 0;
+    pthread_attr_setschedparam (&attr, &priority);
+
     err = pthread_create(&dev->thread, &attr, fluid_oss_midi_run, (void*) dev);
     if (err) {
       FLUID_LOG(FLUID_WARN, "Couldn't set high priority scheduling for the MIDI input");

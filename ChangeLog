@@ -1,3 +1,10 @@
+2003-06-09  Josh Green  <jgreen@users.sourceforge.net>
+
+	* src/fluid_alsa.c: Added calls to pthread_attr_setschedparam to
+	properly create SCHED_FIFO threads.
+	* src/fluid_oss.c: pthread_attr_setschedparam calls added.
+	* src/fluid_midishare.c: Patch update from Stephane Letz.
+
 2003-05-29  root  <mn@bongo>
 
 	* src/fluid_synth.c (fluid_synth_one_block): Added a mutex that provides a small degree of 

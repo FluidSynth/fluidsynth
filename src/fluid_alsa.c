@@ -54,6 +54,11 @@ extern cca_client_t * fluid_cca_client;
 
 #define BUFFER_LENGTH 512
 
+/* SCHED_FIFO priorities for ALSA threads (see pthread_attr_setschedparam) */
+#define ALSA_PCM_SCHED_PRIORITY 90
+#define ALSA_RAWMIDI_SCHED_PRIORITY 90
+#define ALSA_SEQ_SCHED_PRIORITY 90
+
 /** fluid_oss_audio_driver_t
  * 
  * This structure should not be accessed directly. Use audio port
@@ -178,6 +183,7 @@ new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
   char* device;
   pthread_attr_t attr;
   int sched = SCHED_FIFO;
+  struct sched_param priority;
   int i, err, dir = 0;
   snd_pcm_hw_params_t* hwparams;
   snd_pcm_sw_params_t* swparams = NULL;
@@ -334,6 +340,10 @@ new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
 	goto error_recovery;
       }
     }
+
+    /* SCHED_FIFO will not be active without setting the priority */
+    priority.sched_priority = (sched == SCHED_FIFO) ? ALSA_PCM_SCHED_PRIORITY : 0;
+    pthread_attr_setschedparam (&attr, &priority);
 
     err = pthread_create(&dev->thread, &attr, fluid_alsa_formats[i].run, (void*) dev);
     if (err) {
@@ -587,6 +597,7 @@ new_fluid_alsa_rawmidi_driver(fluid_settings_t* settings,
   fluid_alsa_rawmidi_driver_t* dev;
   pthread_attr_t attr;
   int sched = SCHED_FIFO;
+  struct sched_param priority;
   int count;
   struct pollfd *pfd = NULL;
   char* device = NULL;
@@ -683,6 +694,11 @@ new_fluid_alsa_rawmidi_driver(fluid_settings_t* settings,
 	goto error_recovery;
       }
     }
+
+    /* SCHED_FIFO will not be active without setting the priority */
+    priority.sched_priority = (sched == SCHED_FIFO) ? ALSA_RAWMIDI_SCHED_PRIORITY : 0;
+    pthread_attr_setschedparam (&attr, &priority);
+
     err = pthread_create(&dev->thread, &attr, fluid_alsa_midi_run, (void*) dev);
     if (err) {
       FLUID_LOG(FLUID_WARN, "Couldn't set high priority scheduling for the MIDI input");
@@ -813,6 +829,7 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
   fluid_alsa_seq_driver_t* dev;
   pthread_attr_t attr;
   int sched = SCHED_FIFO;
+  struct sched_param priority;
   int count;
   struct pollfd *pfd = NULL;
   char* device = NULL;
@@ -928,6 +945,11 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
 	goto error_recovery;
       }
     }
+
+    /* SCHED_FIFO will not be active without setting the priority */
+    priority.sched_priority = (sched == SCHED_FIFO) ? ALSA_SEQ_SCHED_PRIORITY : 0;
+    pthread_attr_setschedparam (&attr, &priority);
+
     err = pthread_create(&dev->thread, &attr, fluid_alsa_seq_run, (void*) dev);
     if (err) {
       FLUID_LOG(FLUID_WARN, "Couldn't set high priority scheduling for the MIDI input");
@@ -946,7 +968,6 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
  error_recovery:
   delete_fluid_alsa_seq_driver((fluid_midi_driver_t*) dev);
   return NULL;
-  
 }
 
 /*

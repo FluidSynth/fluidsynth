@@ -193,6 +193,7 @@ AC_ARG_ENABLE(coreaudio,
 [  --enable-coreaudio        enable CoreAudio support],[
   case "$enableval" in
     "yes")
+      fluid_enable_coreaudio="yes"
       ;;
     "no")
       fluid_enable_coreaudio="no"
