@@ -39,12 +39,12 @@ typedef struct _fluid_audriver_definition_t
 
 
 #if ALSA_SUPPORT
-/* fluid_audio_driver_t* new_fluid_alsa_audio_driver(fluid_settings_t* settings,  */
-/* 						  fluid_synth_t* synth); */
-/* fluid_audio_driver_t* new_fluid_alsa_audio_driver2(fluid_settings_t* settings,  */
-/* 						 fluid_audio_func_t func, void* data); */
-/* int delete_fluid_alsa_audio_driver(fluid_audio_driver_t* p); */
-/* void fluid_alsa_audio_driver_settings(fluid_settings_t* settings); */
+fluid_audio_driver_t* new_fluid_alsa_audio_driver(fluid_settings_t* settings,
+						  fluid_synth_t* synth);
+fluid_audio_driver_t* new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
+						 fluid_audio_func_t func, void* data);
+int delete_fluid_alsa_audio_driver(fluid_audio_driver_t* p);
+void fluid_alsa_audio_driver_settings(fluid_settings_t* settings);
 #endif
 
 #if OSS_SUPPORT
@@ -110,11 +110,11 @@ fluid_audriver_definition_t fluid_audio_drivers[] = {
     fluid_oss_audio_driver_settings },
 #endif
 #if ALSA_SUPPORT
-/*   { "alsa",  */
-/*     new_fluid_alsa_audio_driver,  */
-/*     new_fluid_alsa_audio_driver2, */
-/*     delete_fluid_alsa_audio_driver,  */
-/*     fluid_alsa_audio_driver_settings }, */
+  { "alsa",
+    new_fluid_alsa_audio_driver,
+    new_fluid_alsa_audio_driver2,
+    delete_fluid_alsa_audio_driver,
+    fluid_alsa_audio_driver_settings },
 #endif
 #if COREAUDIO_SUPPORT
   { "coreaudio", 
