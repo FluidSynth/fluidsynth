@@ -628,18 +628,21 @@ fluid_voice_write(fluid_voice_t* voice,
    * drops down, when moving the pitch bend wheel only slightly. */
   //fres=440;voice->q_lin=100;
 
-  if (fres < 5) {
-      fres = 5;
-  } else if ((fres > FLUID_MAX_AUDIBLE_FILTER_FC)
-	     && (voice->q_lin < FLUID_MIN_AUDIBLE_FILTER_Q)) {
-    /* Beyond a certain point the filter does not change the sound
-     * much.  Turn it off to save CPU cycles. */
-    /* Fixme: When the filter has been on once for a voice, keep it on forever. */
+
+  /* FIXME - Still potential for a click during turn on, can we interpolate
+     between 20khz cutoff and 0 Q? */
+
+  /* if filter has not yet started and filter cutoff and Q don't
+     exceed "audible" thresholds, then don't turn on the filter.
+     Once the filter is turned on, it remains on. */
+  if (voice->filter_startup && fres > FLUID_MAX_AUDIBLE_FILTER_FC
+      && voice->q_lin < FLUID_MIN_AUDIBLE_FILTER_Q)
     dsp_use_filter_flag = 0;
-  }
-   
-   if (dsp_use_filter_flag && (abs(fres - voice->last_fres) > 0.01)) {
-     
+  else if (fres < 5) fres = 5;
+
+  /* if filter enabled and there is a significant frequency change.. */
+  if (dsp_use_filter_flag && (abs(fres - voice->last_fres) > 0.01)) {
+
      /* The filter coefficients have to be recalculated (filter
       * parameters have changed). Recalculation for various reasons is
       * forced by setting last_fres to -1.  The flag filter_startup

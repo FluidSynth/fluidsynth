@@ -1,3 +1,10 @@
+2004-03-30    Josh Green <jgreen@users.sourceforge.net>
+
+	* src/fluid_voice.c (fluid_voice_write): Altered filter turn-off
+	optimization to not turn filter off once it has been
+	enabled. There is still a potential for a click when it gets
+	turned on though, which needs to be dealt with.
+
 2004-03-30    Peter Hanappe <peter@hanappe.com>
 
 	* src/fluid_dsp_core.c: I've split up the dsp core file in three
