@@ -91,6 +91,7 @@ struct _fluid_rampreset_t
   unsigned int num;                     /* the preset number */
   fluid_preset_zone_t* global_zone;        /* the global zone of the preset */
   fluid_preset_zone_t* zone;               /* the chained list of preset zones */
+  fluid_list_t *presetvoices;									/* chained list of used voices */
 };
 
 /* interface */
