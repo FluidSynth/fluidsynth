@@ -12,6 +12,8 @@
 	empty parameter procedure declarations.
 	* src/fluidsynth.c: Don't include config_win32.h if MinGW32.
 	* src/fluidsynth_priv.h: Stuff for MinGW32 and Darwin builds.
+	* doc/fluidsynth-v10-devdoc.xml: Applied a diff from
+	Alexandre Prokoudine.
 
 2003-06-09  Josh Green  <jgreen@users.sourceforge.net>
 
