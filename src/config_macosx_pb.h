@@ -1,5 +1,5 @@
 
-#define VERSION  "0.2.4"
+#define VERSION  "1.0.x"
 
 #define MACINTOSH
 
@@ -33,3 +33,5 @@
 #define PORTAUDIO_SUPPORT 1
 #define __Types__
 */
+
+typedef int socklen_t

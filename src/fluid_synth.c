@@ -1540,21 +1540,21 @@ fluid_synth_nwrite_float(fluid_synth_t* synth, int len,
 
   /* Then, run one_block() and copy till we have 'len' samples  */
   while (count < len) {
-      fluid_synth_one_block(synth, 1);
+    fluid_synth_one_block(synth, 1);
 
-      num = (FLUID_BUFSIZE > len - count)? len - count : FLUID_BUFSIZE;
-      bytes = num * sizeof(float);
-      
-      for (i = 0; i < synth->audio_channels; i++) {
-	FLUID_MEMCPY(left[i] + count, left_in[i], bytes);
-	FLUID_MEMCPY(right[i] + count, right_in[i], bytes);
-      }
-      for (i = 0; i < synth->effects_channels; i++) {
-	FLUID_MEMCPY(fx_left[i] + count, fx_left_in[i], bytes);
-	FLUID_MEMCPY(fx_right[i] + count, fx_right_in[i], bytes);
-      }
-
-      count += num;
+    num = (FLUID_BUFSIZE > len - count)? len - count : FLUID_BUFSIZE;
+    bytes = num * sizeof(float);
+    
+    for (i = 0; i < synth->audio_channels; i++) {
+      FLUID_MEMCPY(left[i] + count, left_in[i], bytes);
+      FLUID_MEMCPY(right[i] + count, right_in[i], bytes);
+    }
+    for (i = 0; i < synth->effects_channels; i++) {
+      FLUID_MEMCPY(fx_left[i] + count, fx_left_in[i], bytes);
+      FLUID_MEMCPY(fx_right[i] + count, fx_right_in[i], bytes);
+    }
+    
+    count += num;
   }
 
   synth->cur = num;
@@ -1747,15 +1747,17 @@ fluid_synth_one_block(fluid_synth_t* synth, int do_not_mix_fx_to_out)
     if (_PLAYING(voice)) {
       double prof_ref_voice = fluid_profile_ref();
 
-      /* The output associated with a MIDI channel is wrapped around using the number of 
-       * audio groups as modulo divider.
-       * This is typically the number of output channels on the 'sound card', as long as the
-       * LADSPA Fx unit is not used. In case of LADSPA unit, think of it as subgroups on a mixer.
+      /* The output associated with a MIDI channel is wrapped around
+       * using the number of audio groups as modulo divider.  This is
+       * typically the number of output channels on the 'sound card',
+       * as long as the LADSPA Fx unit is not used. In case of LADSPA
+       * unit, think of it as subgroups on a mixer.
+       *
        * For example: Assume that the number of groups is set to 2.
-       * Then MIDI channel 1, 3, 5, 7 etc. go to output 1, channels 2, 4, 6, 8 etc to output 2. 
-       * Or assume 3 groups:
-       * Then MIDI channels 1, 4, 7, 10 etc go to output 1;  2, 5, 8, 11 etc to output 2,
-       * 3, 6, 9, 12 etc to output 3.
+       * Then MIDI channel 1, 3, 5, 7 etc. go to output 1, channels 2,
+       * 4, 6, 8 etc to output 2.  Or assume 3 groups: Then MIDI
+       * channels 1, 4, 7, 10 etc go to output 1; 2, 5, 8, 11 etc to
+       * output 2, 3, 6, 9, 12 etc to output 3.
        */
       auchan = fluid_channel_get_num(fluid_voice_get_channel(voice));
       auchan %= synth->audio_groups;

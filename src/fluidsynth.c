@@ -682,7 +682,6 @@ print_welcome()
 	 "under certain conditions; see the COPYING file for details.\n"
 	 "SoundFont(R) is a registered trademark of E-mu Systems, Inc.\n\n"
 	 "Type 'help' to get information on the shell commands.\n\n", FLUIDSYNTH_VERSION);
-
 }
 
 /*

@@ -508,7 +508,7 @@ static void* fluid_alsa_audio_run_s16(void* d)
 
   if (snd_pcm_nonblock(dev->pcm, 0) != 0) { /* double negation */
     FLUID_LOG(FLUID_ERR, "Failed to set the audio device to blocking mode");
-    goto error_recovery;    
+    goto error_recovery;
   }
 
   if (snd_pcm_prepare(dev->pcm) != 0) {

@@ -27,6 +27,7 @@
  * 21/12/01 : Add a compilation flag (MIDISHARE_DRIVER) for driver or application mode
  * 29/01/02 : Compilation on MacOSX, use a task for typeNote management
  * 03/06/03 : Adapdation for FluidSynth API
+ * 18/03/04 : In appplication mode, connect MidiShare to the fluidsynth client (fluid_midishare_open_appl)
  */
 
 #include "config.h"
@@ -139,7 +140,6 @@ new_fluid_midishare_midi_driver(fluid_settings_t* settings,
   MidiSetFilter(dev->refnum, dev->filter);
   
   dev->status = FLUID_MIDI_READY;
-
   return (fluid_midi_driver_t*) dev;
 
  error_recovery:
@@ -393,6 +393,7 @@ static int fluid_midishare_open_appl (fluid_midishare_midi_driver_t* dev)
 			return 0;
 		}
 		MidiSetRcvAlarm(dev->refnum, fluid_midishare_midi_driver_receive);
+		MidiConnect(0,dev->refnum,true);
 	#endif
   	return 1;
 }
