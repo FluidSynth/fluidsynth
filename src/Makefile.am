@@ -26,7 +26,7 @@ EXTRA_DIST = fluid_dll.c fluid_dsound.c fluid_winmidi.c fluid_portaudio.c \
 	fluid_coreaudio.c fluid_alsa.c fluid_oss.c fluid_dsp_core.c \
 	fluid_dsp_float.c fluid_dsp_sse.c fluid_dsp_simple.c \
 	fluid_sndmgr.c config_macos.h config_macosx.h config_macosx_pb.h \
-	config_win32.h fluid_sse.h
+	config_win32.h fluid_sse.h fluid_jack.c
 
 lib_LTLIBRARIES = libfluidsynth.la
 bin_PROGRAMS = fluidsynth 
