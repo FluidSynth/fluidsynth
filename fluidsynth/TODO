@@ -12,6 +12,30 @@ already been done.  - Josh Green 2003-08-25
 - When specifying -i -s (no console and TCP server) log to TCP clients
   with easier parsable messages ("warning:", "error:", etc)
 
+- GM soundfont? 
+- MacOS X MidiCore component
+- Windows DirectMusic component
+- Multi-channel audio output
+
+- fluid_synth_program_select() with name of soundfont instead of font_id
+- set loop on/off on a sample (1 - with name sample, 2 - name sf and name preset)
+- add function to get initial soundfont generator value
+- add function to set generator value in absolute value (offset with
+  initial soundfont generator value)
+- add function to set absolute and relative generator value on a scale
+  of 0 to 1
+
+
+
+
+inst zone
+- attack (set to 
+- scale tune
+- modLfoToPitch
+
+- Write documention on tuning
+
+
 
 Synthesis related
 -----------------

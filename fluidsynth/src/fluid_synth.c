@@ -29,6 +29,25 @@
 
 fluid_sfloader_t* new_fluid_defsfloader(void);
 
+/************************************************************************
+ *
+ * These functions were added after the v1.0 API freeze. They are not
+ * in synth.h. They should be added as soon as a new development
+ * version is started.
+ *
+ ************************************************************************/
+
+int fluid_synth_program_select2(fluid_synth_t* synth, 
+				int chan, 
+				char* sfont_name, 
+				unsigned int bank_num, 
+				unsigned int preset_num);
+
+fluid_sfont_t* fluid_synth_get_sfont_by_name(fluid_synth_t* synth, char *name);
+
+int fluid_synth_get_pitch_wheel_sens(fluid_synth_t* synth, int chan, int* pval);
+
+ 
 /***************************************************************
  *
  *                         GLOBAL
@@ -1041,7 +1060,7 @@ fluid_synth_pitch_wheel_sens(fluid_synth_t* synth, int chan, int val)
  * So its API is not in the synth.h file. It should be added in some later
  * version of fluidsynth. Maybe v2.0 ? -- Antoine Schmitt May 2003
  */
-/*******************
+
 int 
 fluid_synth_get_pitch_wheel_sens(fluid_synth_t* synth, int chan, int* pval)
 {
@@ -1057,7 +1076,6 @@ fluid_synth_get_pitch_wheel_sens(fluid_synth_t* synth, int chan, int* pval)
 
   return FLUID_OK;
 }
-************/
 
 /*
  * fluid_synth_get_preset
@@ -1071,6 +1089,27 @@ fluid_synth_get_preset(fluid_synth_t* synth, unsigned int sfontnum,
   fluid_list_t* list = synth->sfont;
 
   sfont = fluid_synth_get_sfont_by_id(synth, sfontnum);
+  
+  if (sfont != NULL) {
+    preset = fluid_sfont_get_preset(sfont, banknum, prognum);
+    if (preset != NULL) {
+      return preset;
+    }
+  }
+  return NULL;
+}
+
+/*
+ * fluid_synth_get_preset2
+ */
+fluid_preset_t*
+fluid_synth_get_preset2(fluid_synth_t* synth, char* sfont_name, 
+			unsigned int banknum, unsigned int prognum)
+{
+  fluid_preset_t* preset = NULL;
+  fluid_sfont_t* sfont = NULL;
+
+  sfont = fluid_synth_get_sfont_by_name(synth, sfont_name);
   
   if (sfont != NULL) {
     preset = fluid_sfont_get_preset(sfont, banknum, prognum);
@@ -1230,6 +1269,49 @@ int fluid_synth_program_select(fluid_synth_t* synth,
   
   /* inform the channel of the new bank and program number */
   fluid_channel_set_sfontnum(channel, sfont_id);
+  fluid_channel_set_banknum(channel, bank_num);
+  fluid_channel_set_prognum(channel, preset_num);
+
+  fluid_channel_set_preset(channel, preset);
+
+  return FLUID_OK;
+}
+
+/*
+ * fluid_synth_program_select2
+ */
+int fluid_synth_program_select2(fluid_synth_t* synth, 
+				int chan, 
+				char* sfont_name, 
+				unsigned int bank_num, 
+				unsigned int preset_num)
+{
+  fluid_preset_t* preset = NULL;
+  fluid_channel_t* channel;
+  fluid_sfont_t* sfont = NULL;
+
+  if ((chan < 0) || (chan >= synth->midi_channels)) {
+    FLUID_LOG(FLUID_ERR, "Channel number out of range (chan=%d)", chan);
+    return FLUID_FAILED;
+  }
+  channel = synth->channel[chan];
+
+  sfont = fluid_synth_get_sfont_by_name(synth, sfont_name);
+  if (sfont == NULL) {
+    FLUID_LOG(FLUID_ERR, "Could not find SoundFont %s", sfont_name);
+    return FLUID_FAILED;
+  }
+
+  preset = fluid_sfont_get_preset(sfont, bank_num, preset_num);
+  if (preset == NULL) {
+    FLUID_LOG(FLUID_ERR, 
+	      "There is no preset with bank number %d and preset number %d in SoundFont %s", 
+	      bank_num, preset_num, sfont_name);
+    return FLUID_FAILED;
+  }
+
+  /* inform the channel of the new bank and program number */
+  fluid_channel_set_sfontnum(channel, fluid_sfont_get_id(sfont));
   fluid_channel_set_banknum(channel, bank_num);
   fluid_channel_set_prognum(channel, preset_num);
 
@@ -2195,6 +2277,24 @@ fluid_sfont_t* fluid_synth_get_sfont_by_id(fluid_synth_t* synth, unsigned int id
   while (list) {
     sfont = (fluid_sfont_t*) fluid_list_get(list);
     if (fluid_sfont_get_id(sfont) == id) {
+      return sfont;
+    }
+    list = fluid_list_next(list);
+  }
+  return NULL;  
+}
+
+/* fluid_synth_get_sfont_by_name
+ *
+ */
+fluid_sfont_t* fluid_synth_get_sfont_by_name(fluid_synth_t* synth, char *name)
+{
+  fluid_list_t* list = synth->sfont;
+  fluid_sfont_t* sfont;
+
+  while (list) {
+    sfont = (fluid_sfont_t*) fluid_list_get(list);
+    if (FLUID_STRCMP(fluid_sfont_get_name(sfont), name) == 0) {
       return sfont;
     }
     list = fluid_list_next(list);
