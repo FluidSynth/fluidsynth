@@ -354,10 +354,16 @@ new_fluid_revmodel()
   fluid_allpass_setfeedback(&rev->allpassR[2], 0.5f);
   fluid_allpass_setfeedback(&rev->allpassL[3], 0.5f);
   fluid_allpass_setfeedback(&rev->allpassR[3], 0.5f);
-  fluid_revmodel_setlevel(rev, initialwet);
-  fluid_revmodel_setroomsize(rev, initialroom);
-  fluid_revmodel_setdamp(rev, initialdamp);
-  fluid_revmodel_setwidth(rev, initialwidth);
+
+  /* set values manually, since calling set functions causes update
+     and all values should be initialized for an update */
+  rev->roomsize = initialroom * scaleroom + offsetroom;
+  rev->damp = initialdamp * scaledamp;
+  rev->wet = initialwet * scalewet;
+  rev->width = initialwidth;
+
+  /* now its okay to update reverb */
+  fluid_revmodel_update (rev);
 
   /* Clear all buffers */
   fluid_revmodel_init(rev);

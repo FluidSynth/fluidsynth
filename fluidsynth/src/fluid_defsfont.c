@@ -2,6 +2,9 @@
  *
  * Copyright (C) 2003  Peter Hanappe and others.
  *
+ * SoundFont file loading code borrowed from Smurf SoundFont Editor
+ * Copyright (C) 1999-2001 Josh Green
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public License
  * as published by the Free Software Foundation; either version 2 of
@@ -1632,7 +1635,9 @@ fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defs
 
 
 
-/*=================================sfload.c========================*/
+/*=================================sfload.c========================
+  Borrowed from Smurf SoundFont Editor by Josh Green
+  =================================================================*/
 
 /*
    functions for loading data from sfont files, with appropriate byte swapping
@@ -2967,7 +2972,9 @@ fixup_sample (SFData * sf)
   return (OK);
 }
 
-/*=================================sfont.c========================*/
+/*=================================sfont.c========================
+  Smurf SoundFont Editor
+  ================================================================*/
 
 
 /* optimum chunk area sizes (could be more optimum) */

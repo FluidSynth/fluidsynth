@@ -1,3 +1,17 @@
+2003-08-19  Josh Green  <jgreen@users.sourceforge.net>
+
+	* src/fluid_alsa.c: Added some calls to snd_strerror() to print out
+	details of ALSA routine failures.
+	* src/fluid_defsfont.c: Put a message about SoundFont loading code
+	being borrowed from Smurf SoundFont Editor.
+	* src/fluid_rev.c: Valgrind found that some values were being used
+	uninitialized because fluid_revmodel_update() was being called before
+	all reverb parameters were set, now setting manually and then calling
+	update routine.
+	* src/fluid_voice.c: Increased FLUID_MAX_AUDIBLE_FILTER_FC to minimize
+	clicks from filter toggling. Added a FLUID_MIN_VOLENVRELEASE constant
+	to set the minimum volume envelope release to minimize clicks.
+
 2003-07-22  Josh Green  <jgreen@users.sourceforge.net>
 
 	* src/fluid_midishare.c: Added include of header "config.h" as
