@@ -168,7 +168,7 @@ int main(int argc, char** argv)
   int audio_groups = 0;
   int audio_channels = 0;
   int with_server = 0;
-  int dump=0;
+  int dump = 0;
   appname = argv[0];
 #ifdef HAVE_LADCCA
   cca_args_t * cca_args;
@@ -261,7 +261,7 @@ int main(int argc, char** argv)
       break;
     case 'd':
       fluid_settings_setstr(settings, "synth.dump", "yes");
-      dump=1;
+      dump = 1;
       break;
     case 'R':
       if ((optarg != NULL) && ((strcmp(optarg, "0") == 0) || (strcmp(optarg, "no") == 0))) {
@@ -500,6 +500,7 @@ int main(int argc, char** argv)
     /* In dump mode, text output is generated for events going into and out of the router.
      * The example dump functions are put into the chain before and after the router..
      */
+
     router = new_fluid_midi_router(
       settings, 
       dump ? fluid_midi_dump_postrouter : fluid_synth_handle_midi_event, 

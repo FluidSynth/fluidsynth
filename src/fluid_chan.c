@@ -52,7 +52,7 @@ void
 fluid_channel_init(fluid_channel_t* chan)
 {
   chan->prognum = (chan->channum == 9)? 0 : chan->channum;
-  chan->banknum = (chan->channum == 9)? chan->channum : 0;
+  chan->banknum = (chan->channum == 9)? 128 : 0;
   chan->sfontnum = 0;
   chan->preset = fluid_synth_find_preset(chan->synth, chan->banknum, chan->prognum);
   chan->interp_method = FLUID_INTERP_DEFAULT;

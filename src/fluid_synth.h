@@ -186,6 +186,9 @@ void fluid_synth_print_voice(fluid_synth_t* synth);
  *  unloaded or reloaded. */
 void fluid_synth_update_presets(fluid_synth_t* synth);
 
+
+int fluid_synth_update_gain(fluid_synth_t* synth, char* name, double value);
+
 /*
  * misc
  */

@@ -1,3 +1,20 @@
+2003-04-03  Peter Hanappe  <peter@hanappe.com>
+
+	* src/fluid_rev.c: reverb parameters are clipped to their valid
+	range.
+
+	* src/fluid_alsa.c: using fluid_alsa_audio_run_s16 as default
+	function. This reduces the high CPU usage.
+
+	* src/fluid_voice.c (fluid_voice_write): filter interpolation done
+	over only 1 buffer to avoid filter instability
+
+	* src/fluid_chan.c (fluid_channel_init): bank number set to 128
+	for the drum channel
+
+	* src/fluid_midi.c (fluid_midi_file_read_event): Correctly reading
+	pitchbend value
+
 2003-02-27  Josh Green  <jgreen@users.sourceforge.net>
 
 	Updated automake files (automake 1.6).
