@@ -119,18 +119,27 @@ void process_o_cmd_line_option(fluid_settings_t* settings, char* optarg){
     }
   }
   
-  /* Don't know the type of the setting in question. So try
-   * all types. The wrong types will fail. 
+  /* At this point:
+   * optarg => "synth.polyphony"
+   * val => "16"
    */
-  if (fluid_settings_setnum(settings, optarg, atof(val))){
-    printf("set %s to %s (float type)\n", optarg, val);
-  } else if (fluid_settings_setint(settings, optarg, atoi(val))){
-    printf("set %s to %s (int type)\n", optarg, val);
-  } else if (fluid_settings_setstr(settings, optarg, val)){
-    printf("set %s to %s (string type)\n", optarg, val);
-  } else {
-    printf("Failed to set %s to %s\n", optarg, val);
-  };
+  switch(fluid_settings_get_type(settings, optarg)){
+  case FLUID_NUM_TYPE:
+    if (fluid_settings_setnum(settings, optarg, atof(val))){
+      break;
+    };
+  case FLUID_INT_TYPE:
+    if (fluid_settings_setint(settings, optarg, atoi(val))){
+      break;
+    };
+  case FLUID_STR_TYPE:
+    if (fluid_settings_setstr(settings, optarg, val)){
+      break;
+    };
+  default:
+    fprintf (stderr, "Settings argument on command line: Failed to set \"%s\" to \"%s\".\n"
+	      "Most likely the parameter \"%s\" does not exist.\n", optarg, val, optarg);
+  }  
 }
 
 

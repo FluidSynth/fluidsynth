@@ -54,6 +54,8 @@ FLUIDSYNTH_API void fluid_voice_gen_set(fluid_voice_t* voice, int gen, float val
   /** Get the value of a generator */
 FLUIDSYNTH_API float fluid_voice_gen_get(fluid_voice_t* voice, int gen);
 
+  /** Modify the value of a generator by val */
+FLUIDSYNTH_API void fluid_voice_gen_incr(fluid_voice_t* voice, int gen, float val);
 
 
   /** Return the unique ID of the noteon-event. A sound font loader
@@ -72,6 +74,20 @@ FLUIDSYNTH_API unsigned int fluid_voice_get_id(fluid_voice_t* voice);
 
 FLUIDSYNTH_API int fluid_voice_is_playing(fluid_voice_t* voice);
 
+  /** If the peak volume during the loop is known, then the voice can
+   * be released earlier during the release phase. Otherwise, the
+   * voice will operate (inaudibly), until the envelope is at the
+   * nominal turnoff point. In many cases the loop volume is many dB
+   * below the maximum volume.  For example, the loop volume for a
+   * typical acoustic piano is 20 dB below max.  Taking that into
+   * account in the turn-off algorithm we can save 20 dB / 100 dB =>
+   * 1/5 of the total release time.
+   * So it's a good idea to call fluid_voice_optimize_sample
+   * on each sample once.
+   */
+  
+FLUIDSYNTH_API int fluid_voice_optimize_sample(fluid_sample_t* s);
+       
     
 
 #ifdef __cplusplus

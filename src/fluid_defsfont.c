@@ -20,9 +20,9 @@
 
 
 #include "fluid_defsfont.h"
+/* Todo: Get rid of that 'include' */
 #include "fluid_sys.h"
-#include "fluid_voice.h"
- 
+
 /***************************************************************
  *
  *                           SFONT LOADER
@@ -1381,9 +1381,10 @@ fluid_inst_zone_import_sfont(fluid_inst_zone_t* zone, SFZone *sfzone, fluid_defs
   if ((sfzone->instsamp != NULL) && (sfzone->instsamp->data != NULL)) {
     zone->sample = fluid_defsfont_get_sample(sfont, ((SFSample *) sfzone->instsamp->data)->name);
     if (zone->sample == NULL) {
-      FLUID_LOG(FLUID_ERR, "Couldnt fins sample name");
+      FLUID_LOG(FLUID_ERR, "Couldn't find sample name");
       return FLUID_FAILED;
     }
+    fluid_voice_optimize_sample(zone->sample);
   }
 
   /* Import the modulators (only SF2.1 and higher) */
