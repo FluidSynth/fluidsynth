@@ -1976,6 +1976,7 @@ int fluid_voice_optimize_sample(fluid_sample_t* s)
   signed short peak_max = 0;
   signed short peak_min = 0;
   signed short peak;
+  fluid_real_t normalized_amplitude_during_loop;
   double result;
   int i;
 
@@ -2012,7 +2013,7 @@ int fluid_voice_optimize_sample(fluid_sample_t* s)
      */
     
     /* 16 bits => 96+4=100 dB dynamic range => 0.00001 */
-    fluid_real_t normalized_amplitude_during_loop=((fluid_real_t)peak)/32768.;
+    normalized_amplitude_during_loop = ((fluid_real_t)peak)/32768.;
     result = FLUID_NOISE_FLOOR / normalized_amplitude_during_loop;
     
     /* Store in sample */

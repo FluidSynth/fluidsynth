@@ -1,3 +1,11 @@
+2003-07-22  Josh Green  <jgreen@users.sourceforge.net>
+
+	* src/fluid_midishare.c: Added include of header "config.h" as
+	per Albert Graef's request.
+	* src/fluid_voice.c (fluid_voice_optimize_sample): Moved a
+	variable declaration to the beginning of function, it was
+	causing problems with at least one user.
+
 2003-06-28  Josh Green  <jgreen@users.sourceforge.net>
 
 	* src/fluid_defsfont.c: Moved call to fluid_voice_optimize_sample
