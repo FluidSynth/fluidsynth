@@ -328,7 +328,6 @@ fluid_source(fluid_cmd_handler_t* handler, char* filename)
   if (file < 0) {
     return file;
   }
-
   fluid_shell_init(&shell, NULL, handler, file, fluid_get_stdout());
   return fluid_shell_run(&shell);
 }

@@ -960,7 +960,7 @@ fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t* voice)
    * example, the pitch depends on GEN_COARSETUNE, GEN_FINETUNE and
    * GEN_PITCH.  voice->pitch.  Unnecessary recalculation is avoided
    * by removing all but one generator from the list of voice
-   * parameters.  Same with GEN_XXX and GEN_XXXCOARSE: the
+  * parameters.  Same with GEN_XXX and GEN_XXXCOARSE: the
    * initialisation list contains only GEN_XXX.
    */
   
@@ -1338,7 +1338,8 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
   case GEN_VOLENVDELAY:                /* SF2.01 section 8.1.3 # 33 */
     x = _GEN(voice, GEN_VOLENVDELAY);
     fluid_clip(x, -12000.0f, 5000.0f);
-    voice->volenv_data[FLUID_VOICE_ENVDELAY].count = NUM_BUFFERS_DELAY(x);
+    count = NUM_BUFFERS_DELAY(x);
+    voice->volenv_data[FLUID_VOICE_ENVDELAY].count = count;
     voice->volenv_data[FLUID_VOICE_ENVDELAY].coeff = 0.0f;
     voice->volenv_data[FLUID_VOICE_ENVDELAY].incr = 0.0f;
     voice->volenv_data[FLUID_VOICE_ENVDELAY].min = -1.0f;
@@ -1369,12 +1370,13 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
   case GEN_VOLENVDECAY:               /* SF2.01 section 8.1.3 # 36 */
   case GEN_VOLENVSUSTAIN:             /* SF2.01 section 8.1.3 # 37 */
   case GEN_KEYTOVOLENVDECAY:          /* SF2.01 section 8.1.3 # 40 */
+    y = 1.0f - 0.001f * _GEN(voice, GEN_VOLENVSUSTAIN);
+    fluid_clip(y, 0.0f, 1.0f);
     count = calculate_hold_decay_buffers(voice, GEN_VOLENVDECAY, GEN_KEYTOVOLENVDECAY, 1); /* 1 for decay */
     voice->volenv_data[FLUID_VOICE_ENVDECAY].count = count;
     voice->volenv_data[FLUID_VOICE_ENVDECAY].coeff = 1.0f;
     voice->volenv_data[FLUID_VOICE_ENVDECAY].incr = count ? -1.0f / count : 0.0f;
-    /* fluid_cb2amp checks the range */
-    voice->volenv_data[FLUID_VOICE_ENVDECAY].min = fluid_cb2amp(_GEN(voice, GEN_VOLENVSUSTAIN)); 
+    voice->volenv_data[FLUID_VOICE_ENVDECAY].min = y;
     voice->volenv_data[FLUID_VOICE_ENVDECAY].max = 2.0f;
     break;
 
