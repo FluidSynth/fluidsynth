@@ -23,6 +23,7 @@
 #define _FLUID_EVENT_PRIV_H
 
 #include "fluidsynth.h"
+#include "fluid_sys.h"
 
 /* Private data for event */
 /* ?? should be optimized in size, using unions */
@@ -39,6 +40,7 @@ struct _fluid_event_t {
 	short id; //?? unused ?
 	int pitch;
 	unsigned int duration;
+	void* data;
 };
 
 unsigned int fluid_event_get_time(fluid_event_t* evt);
@@ -57,10 +59,18 @@ struct _fluid_evt_entry {
 	fluid_event_t evt;
 };
 
+#define HEAP_WITH_DYNALLOC 1
+/* #undef HEAP_WITH_DYNALLOC */
+
 typedef struct _fluid_evt_heap_t {
+#ifdef HEAP_WITH_DYNALLOC
+  fluid_evt_entry* freelist;
+  fluid_mutex_t mutex;
+#else
 	fluid_evt_entry* head;
 	fluid_evt_entry* tail;
 	fluid_evt_entry pool;
+#endif
 } fluid_evt_heap_t;
 
 fluid_evt_heap_t* _fluid_evt_heap_init(int nbEvents);

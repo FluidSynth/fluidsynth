@@ -94,7 +94,7 @@ void
 fluid_event_timer(fluid_event_t* evt, void* data)
 {
 	evt->type = FLUID_SEQ_TIMER;
-	evt->duration = (unsigned int)data;
+	evt->data = data;
 }
 
 
@@ -310,7 +310,7 @@ short fluid_event_get_value(fluid_event_t* evt)
 
 void* fluid_event_get_data(fluid_event_t* evt)
 {
-	return (void *)(evt->duration);
+	return evt->data;
 }
 
 unsigned int fluid_event_get_duration(fluid_event_t* evt)
@@ -345,6 +345,36 @@ fluid_event_get_sfont_id(fluid_event_t* evt)
 fluid_evt_heap_t*
 _fluid_evt_heap_init(int nbEvents)
 {
+#ifdef HEAP_WITH_DYNALLOC
+
+  int i;
+  fluid_evt_heap_t* heap;
+  fluid_evt_entry *tmp;
+
+  heap = FLUID_NEW(fluid_evt_heap_t);
+  if (heap == NULL) {
+    fluid_log(FLUID_PANIC, "sequencer: Out of memory\n");
+    return NULL;
+  }
+
+  heap->freelist = NULL;
+  fluid_mutex_init(heap->mutex);
+
+  /* LOCK */
+  fluid_mutex_lock(heap->mutex);
+
+  /* Allocate the event entries */
+  for (i = 0; i < nbEvents; i++) {
+    tmp = FLUID_NEW(fluid_evt_entry);
+    tmp->next = heap->freelist;
+    heap->freelist = tmp;
+  }
+
+  /* UNLOCK */
+  fluid_mutex_unlock(heap->mutex);
+
+
+#else
 	int i;
 	fluid_evt_heap_t* heap;
 	int siz = 2*sizeof(fluid_evt_entry *) + sizeof(fluid_evt_entry)*nbEvents;
@@ -367,18 +397,68 @@ _fluid_evt_heap_init(int nbEvents)
  	 	heap->tail = &(tmp[nbEvents-1]);
   	heap->head = &(heap->pool);
   }
+#endif
   return (heap);
 }
 
 void
 _fluid_evt_heap_free(fluid_evt_heap_t* heap)
 {
+#ifdef HEAP_WITH_DYNALLOC
+  fluid_evt_entry *tmp, *next;
+
+  /* LOCK */
+  fluid_mutex_lock(heap->mutex);
+
+  tmp = heap->freelist;
+  while (tmp) {
+    next = tmp->next;
+    FLUID_FREE(tmp);
+    tmp = next;
+  }
+
+  /* UNLOCK */
+  fluid_mutex_unlock(heap->mutex);
+  fluid_mutex_destroy(heap->mutex);
+
+  FLUID_FREE(heap);
+  
+#else
 	FLUID_FREE(heap);
+#endif
 }
 
 fluid_evt_entry*
 _fluid_seq_heap_get_free(fluid_evt_heap_t* heap)
 {
+#ifdef HEAP_WITH_DYNALLOC
+  fluid_evt_entry* evt = NULL;
+
+  /* LOCK */
+  fluid_mutex_lock(heap->mutex);
+
+#if !defined(MACOS9)
+  if (heap->freelist == NULL) {
+    heap->freelist = FLUID_NEW(fluid_evt_entry);
+    if (heap->freelist != NULL) {
+      heap->freelist->next = NULL;
+    }
+  }
+#endif
+
+  evt = heap->freelist;
+
+  if (evt != NULL) {
+    heap->freelist = heap->freelist->next;
+    evt->next = NULL;
+  }
+
+  /* UNLOCK */
+  fluid_mutex_unlock(heap->mutex);
+
+  return evt;
+
+#else
 	fluid_evt_entry* evt;
 	if (heap->head == NULL) return NULL;
 	
@@ -388,14 +468,28 @@ _fluid_seq_heap_get_free(fluid_evt_heap_t* heap)
 	heap->head = heap->head->next;
 	
 	return evt;
+#endif
 }
 
 void
 _fluid_seq_heap_set_free(fluid_evt_heap_t* heap, fluid_evt_entry* evt)
 {
+#ifdef HEAP_WITH_DYNALLOC
+
+  /* LOCK */
+  fluid_mutex_lock(heap->mutex);
+
+  evt->next = heap->freelist;
+  heap->freelist = evt;
+
+  /* UNLOCK */
+  fluid_mutex_unlock(heap->mutex);
+
+#else
 	/* append to the end of the heap */
 	/* critical - should threadlock ? */
 	heap->tail->next = evt;
 	heap->tail = evt;
 	evt->next = NULL;
+#endif
 }
