@@ -377,6 +377,7 @@ int main(int argc, char** argv)
 	  audio_channels = atoi(argv[i]);
 	  fluid_settings_setint(settings, "synth.audio-channels", audio_channels);
 	} else {
+
 	  printf ("Option -L requires an argument\n");	  
 	}
 	break;
