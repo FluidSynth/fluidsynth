@@ -92,20 +92,6 @@ extern int optind, opterr, optopt;
 #endif
 
 
-/* is_number
- *
- * don't shoot me 
- */
-int is_number(char *a)
-{
-  for (; *a != 0; a++) {
-    if (((*a < '0') || (*a > '9')) && (*a != '-') && (*a != '+') && (*a != '.')) {
-      return 0;
-    }
-  }
-  return 1;
-}
-
 /* process_o_cmd_line_option
  *
  * Purpose:

@@ -36,10 +36,10 @@ extern "C" {
    *    with callback functions): fluid_sfloader_t, fluid_sfont_t, and
    *    fluid_preset_t. 
    *
-   *    To add a new SoundFont loader to the synthesizer, you call
+   *    To add a new SoundFont loader to the synthesizer, call
    *    fluid_synth_add_sfloader() and pass a pointer to an
    *    fluid_sfloader_t structure. The important callback function in
-   *    this structure os "load", which should try to load a file and
+   *    this structure is "load", which should try to load a file and
    *    returns a fluid_sfont_t structure, or NULL if it fails.
    *
    *    The fluid_sfont_t structure contains a callback to obtain the
@@ -72,8 +72,15 @@ extern "C" {
  */
 
 struct _fluid_sfloader_t {
+  /** Private data */
   void* data;
+
+  /** The free must free the memory allocated for the loader in
+   * addition to any private data. It should return 0 if no error
+   * occured, non-zero otherwise.*/
   int (*free)(fluid_sfloader_t* loader);
+
+  /** Load a file. Returns NULL if an error occured. */
   fluid_sfont_t* (*load)(fluid_sfloader_t* loader, const char* filename);
 };
 
@@ -91,8 +98,14 @@ struct _fluid_sfont_t {
       the samples could not be freed because they are still in use. */
   int (*free)(fluid_sfont_t* sfont);
 
+  /** Return the name of the sfont */
   char* (*get_name)(fluid_sfont_t* sfont);
+
+  /** Return the preset with the specified bank and preset number. All
+   *  the fields, including the 'sfont' field, should * be filled
+   *  in. If the preset cannot be found, the function returns NULL. */
   fluid_preset_t* (*get_preset)(fluid_sfont_t* sfont, unsigned int bank, unsigned int prenum);
+
   void (*iteration_start)(fluid_sfont_t* sfont);
 
   /* return 0 when no more presets are available, 1 otherwise */
@@ -114,7 +127,7 @@ struct _fluid_preset_t {
   int (*get_banknum)(fluid_preset_t* preset);
   int (*get_num)(fluid_preset_t* preset);
 
-  /** handle a noteon event. */
+  /** handle a noteon event. Returns 0 if no error occured. */
   int (*noteon)(fluid_preset_t* preset, fluid_synth_t* synth, int chan, int key, int vel);
 
   /** Implement this function if the preset needs to be notified about
@@ -142,7 +155,7 @@ struct _fluid_sample_t
   short* data;
 
   /** The amplitude, that will lower the level of the sample's loop to
-      the noise floor Needed for note turnoff optimization, will be
+      the noise floor. Needed for note turnoff optimization, will be
       filled out automatically */
   /* Set this to zero, when submitting a new sample. */
   int amplitude_that_reaches_noise_floor_is_valid; 
