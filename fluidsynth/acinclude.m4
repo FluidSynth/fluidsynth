@@ -202,7 +202,7 @@ AC_LANG_C
 AC_TRY_COMPILE([
 #include <alsa/asoundlib.h>
 ], [
-void main(void)
+int main(void)
 {
 /* ensure backward compatibility */
 #if !defined(SND_LIB_MAJOR) && defined(SOUNDLIB_VERSION_MAJOR)
@@ -302,9 +302,10 @@ LIBS="$READLINE_LIBS $LIBS"
 CFLAGS="$READLINE_CFLAGS $CFLAGS"
 
 AC_TRY_COMPILE([
+#include <stdio.h>
 #include <readline/readline.h>
 ], [
-void main(void)
+int main(void)
 {
 #ifndef readline
    return (1);

@@ -1,3 +1,15 @@
+2003-06-15  Josh Green  <jgreen@users.sourceforge.net>
+	* configure.ac: Fixed detection of CoreAudio by looking for
+	CoreAudio/AudioHardware.h.
+	* src/Makefile.am: Added COREAUDIO_CFLAGS and COREAUDIO_LIBS.
+	* src/fluid_coreaudio.c: Added CoreAudio prefix to #include headers
+	(fluid_core_audio_callback): Fixed declarition to match that of the
+	typedef in CoreAudio header to stop warnings.
+	* fluidsynth.c: Now including fluidsynth_priv.h to include the arch
+	specific definitions in there (perhaps should be done in configure
+	script though).
+	* fluidsynth_priv.h: Added "#define WITHOUT_SERVER 1" to Darwin build.
+
 2003-06-12  Josh Green  <jgreen@users.sourceforge.net>
 	* Makefile.am: Added autogen.sh to EXTRA_DIST
 	* acinclude.m4: Added AM_PATH_READLINE macro for readline detection
