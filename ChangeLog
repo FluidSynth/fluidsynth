@@ -1,3 +1,19 @@
+2004-02-25  Peter Hanappe <peter@hanappe.com>
+
+	* src/fluid_voice.c: Fixed bug in volume envelope (in
+	fluid_voice_update_param(), case GEN_VOLENVDECAY): the minimum
+	value was converted to linear amplitude instead of a normalized
+	value of the cB (1-cB/1000). Because of that, the decay section
+	went on for too long.
+
+2004-12-xx  Peter Hanappe <peter@hanappe.com>
+
+	* src/fluid_seq.c: Inserting events in the queueLater list was
+	incomplete. It didn't check if the event was the last in the list,
+	and the looping through the list didn't update the prev pointer. I
+	added muteces to the sequencer. Events are dynamically allocated
+	if no free events are available. 
+ 
 2003-11-14  Josh Green  <jgreen@users.sourceforge.net>
 	* src/fluidsynth.c: Removed CCA_Use_Jack and CCA_Use_Alsa flags
 	since LADCCA no longer uses them.
