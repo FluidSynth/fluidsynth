@@ -17,7 +17,7 @@
 #include <fluidsynth.h>
 
 
-/* The structure with the effects data. This example simple applies a
+/* The structure with the effects data. This example simply applies a
  * linear gain the to synthesizer output. */
 struct fx_data_t {
 	fluid_synth_t* synth;
