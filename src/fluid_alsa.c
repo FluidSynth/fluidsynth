@@ -213,6 +213,9 @@ new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
     if (err == -EBUSY) {
       FLUID_LOG(FLUID_ERR, "The \"%s\" audio device is used by another application", device);
       goto error_recovery;
+    } else {
+      FLUID_LOG(FLUID_ERR, "Failed to open the \"%s\" audio device", device);
+      goto error_recovery;
     }
   }
 
