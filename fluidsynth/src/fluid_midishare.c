@@ -26,13 +26,13 @@
  * Interface to Grame's MidiShare drivers (www.grame.fr/MidiShare)
  * 21/12/01 : Add a compilation flag (MIDISHARE_DRIVER) for driver or application mode
  * 29/01/02 : Compilation on MacOSX, use a task for typeNote management
+ * 03/06/03 : Adapdation for FluidSynth API
  */
-
-#include "fluidsynth_priv.h"
 
 #if MIDISHARE_SUPPORT
 
 #include "fluid_midi.h"
+#include "fluid_mdriver.h"
 #include <MidiShare.h>
 
 /* constants definitions    */
@@ -79,14 +79,14 @@ static void fluid_midishare_close_appl (fluid_midishare_midi_driver_t* dev);
  */
 fluid_midi_driver_t* 
 new_fluid_midishare_midi_driver(fluid_settings_t* settings, 
-			       handle_midi_event_func_t handler, 
-			       void* data);
+				handle_midi_event_func_t handler, 
+				void* data)
 {
   fluid_midishare_midi_driver_t* dev;
   int i;
   
   /* not much use doing anything */
-  if (router == NULL) {
+  if (handler == NULL) {
     FLUID_LOG(FLUID_ERR, "Invalid argument");
     return NULL;
   }
@@ -200,8 +200,8 @@ static void fluid_midishare_keyoff_task (long date, short ref, long a1, long a2,
 
 	fluid_midi_event_set_type(&new_event, NOTE_OFF);
 	fluid_midi_event_set_channel(&new_event, Chan(e));
-	fluid_midi_event_set_param1(&new_event, Pitch(e));
-	fluid_midi_event_set_param2(&new_event, Vel(e)); /* release vel */
+	fluid_midi_event_set_pitch(&new_event, Pitch(e));
+	fluid_midi_event_set_velocity(&new_event, Vel(e)); /* release vel */
 
 	/* and send it on its way to the router */	
 	(*dev->driver.handler)(dev->driver.data, &new_event);
@@ -216,19 +216,19 @@ static void fluid_midishare_keyoff_task (long date, short ref, long a1, long a2,
 static void fluid_midishare_midi_driver_receive(short ref)
 {
 	fluid_midishare_midi_driver_t* dev = (fluid_midishare_midi_driver_t*)MidiGetInfo(ref);
-  	MidiEvPtr e, e1;
 	fluid_midi_event_t new_event;
-
+	MidiEvPtr e;
 	
 	while ((e = MidiGetEv(ref))){
 
 	    switch (EvType (e)){
+
 		case typeNote:
 		      /* Copy the data to fluid_midi_event_t */
 		      fluid_midi_event_set_type(&new_event, NOTE_ON);
 		      fluid_midi_event_set_channel(&new_event, Chan(e));
-		      fluid_midi_event_set_param1(&new_event, Pitch(e));
-		      fluid_midi_event_set_param2(&new_event, Vel(e));
+		      fluid_midi_event_set_pitch(&new_event, Pitch(e));
+		      fluid_midi_event_set_velocity(&new_event, Vel(e));
 
 		      /* and send it on its way to the router */
 		      (*dev->driver.handler)(dev->driver.data, &new_event);
@@ -244,8 +244,8 @@ static void fluid_midishare_midi_driver_receive(short ref)
 		      /* Copy the data to fluid_midi_event_t */
 		      fluid_midi_event_set_type(&new_event, NOTE_ON);
 		      fluid_midi_event_set_channel(&new_event, Chan(e));
-		      fluid_midi_event_set_param1(&new_event, Pitch(e));
-		      fluid_midi_event_set_param2(&new_event, Vel(e));
+		      fluid_midi_event_set_pitch(&new_event, Pitch(e));
+		      fluid_midi_event_set_velocity(&new_event, Vel(e));
 
 		      /* and send it on its way to the router */
 		      (*dev->driver.handler)(dev->driver.data, &new_event);
@@ -257,8 +257,8 @@ static void fluid_midishare_midi_driver_receive(short ref)
 		      /* Copy the data to fluid_midi_event_t */
 		      fluid_midi_event_set_type(&new_event, NOTE_OFF);
 		      fluid_midi_event_set_channel(&new_event, Chan(e));
-		      fluid_midi_event_set_param1(&new_event, Pitch(e));
-		      fluid_midi_event_set_param2(&new_event, Vel(e)); /* release vel */
+		      fluid_midi_event_set_pitch(&new_event, Pitch(e));
+		      fluid_midi_event_set_velocity(&new_event, Vel(e)); /* release vel */
 
 		      /* and send it on its way to the router */	
 		      (*dev->driver.handler)(dev->driver.data, &new_event);
@@ -270,8 +270,8 @@ static void fluid_midishare_midi_driver_receive(short ref)
 		      /* Copy the data to fluid_midi_event_t */
 		      fluid_midi_event_set_type(&new_event, CONTROL_CHANGE);
 		      fluid_midi_event_set_channel(&new_event, Chan(e));
-		      fluid_midi_event_set_param1(&new_event, MidiGetField(e,0));
-		      fluid_midi_event_set_param2(&new_event, MidiGetField(e,1)); 
+		      fluid_midi_event_set_control(&new_event, MidiGetField(e,0));
+		      fluid_midi_event_set_value(&new_event, MidiGetField(e,1));
 
 		      /* and send it on its way to the router */	
 		      (*dev->driver.handler)(dev->driver.data, &new_event);
@@ -283,7 +283,7 @@ static void fluid_midishare_midi_driver_receive(short ref)
 		      /* Copy the data to fluid_midi_event_t */
 		      fluid_midi_event_set_type(&new_event, PROGRAM_CHANGE);
 		      fluid_midi_event_set_channel(&new_event, Chan(e));
-		      fluid_midi_event_set_param1(&new_event, MidiGetField(e,0));
+		      fluid_midi_event_set_program(&new_event, MidiGetField(e,0));
 
 		      /* and send it on its way to the router */	
 		      (*dev->driver.handler)(dev->driver.data, &new_event);
@@ -295,8 +295,8 @@ static void fluid_midishare_midi_driver_receive(short ref)
 		      /* Copy the data to fluid_midi_event_t */
 		      fluid_midi_event_set_type(&new_event, PITCH_BEND);
 		      fluid_midi_event_set_channel(&new_event, Chan(e));
-		      fluid_midi_event_set_param1(&new_event, ((MidiGetField(e,0) 
-							      + (MidiGetField(e,1) << 7)) 
+		      fluid_midi_event_set_value(&new_event, ((MidiGetField(e,0)
+							      + (MidiGetField(e,1) << 7))
 							      - 8192));
 
 		      /* and send it on its way to the router */	
