@@ -1,5 +1,8 @@
 2004-07-29    <peter@hanappe.com>
 
+	* src/fluid_chan.c (fluid_channel_cc): Applied Ken Ellinwood's
+	fix for the bank select (MSB) message.
+
 	* src/fluid_jack.c (fluid_jack_audio_driver_settings): Applied Rui
 	Nuno Capela's patch
 
