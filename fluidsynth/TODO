@@ -5,10 +5,10 @@ Bugs, errors, and incomplete code
 
 - Add support for "loop till release" instruments (currently broken)
 - Get TCP server working for windows
-- Remove dependency of settings on audio driver and other (see
-  fluid_settings_init())
-- The consumes too much CPU when no voices are playing. 
+- The synth consumes too much CPU when no voices are playing. 
 - Multi-channel audio output
+- Filter on/off optimization causes clicks 
+- Phase sync'ed samples should start simultaneously.
 
 Validation
 ----------
@@ -24,16 +24,9 @@ JG:
 > Its often hard to get the right Reverb/Chorus/Gain settings as
 > well, so often I end up turning off Reverb and Chorus which can help.
 
-
 JG:
 > Well actually, it almost seems like every instrument is kind of flat. It
 > just doesn't sound real nice. 
-
-Bindings
---------
-
-- Integrate Java code
-- Integrate fluidsynth~
 
 
 Documentation
@@ -66,6 +59,8 @@ Requests
 
 - Add compatibility for EMU8k volume attenuation parameter which
   doesn't follow SoundFont specifications
+- Remove dependency of settings on audio driver and other (see
+  fluid_settings_init())
 - Add "unselect" command to shell to set a MIDI channel to not sound.
 - When specifying -i -s (no console and TCP server) log to TCP clients
   with easier parsable messages ("warning:", "error:", etc)
