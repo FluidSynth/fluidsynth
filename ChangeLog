@@ -1,3 +1,7 @@
+2003-11-14  Josh Green  <jgreen@users.sourceforge.net>
+	* src/fluidsynth.c: Removed CCA_Use_Jack and CCA_Use_Alsa flags
+	since LADCCA no longer uses them.
+
 2003-08-31  Josh Green  <jgreen@users.sourceforge.net>
 
 	* acinclude.m4: Renamed AC_SOUND macro to AC_OSS_AUDIO and removed
