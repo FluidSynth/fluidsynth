@@ -1,16 +1,16 @@
 ******************************************************************
 *
 *  This is fluidsynth~,
-*  a derivative of the Fluid Synth soundfont synthesizer for Max/MSP.
-* 
-*  Take a look here:
-*    http://www.ircam.fr/equipes/temps-reel/maxmsp/fluidsynth.html
+*  a derivative for Max/MSP of the Fluid Synth soundfont synthesizer.
 * 
 *  Fluid Synth is written by Peter Hanappe et al.
 *  See http://www.fluidsynth.org/.
 * 
 *  Max/MSP integration by Norbert Schnell, IRCAM - Centre Pompidou
 *  Norbert.Schnell@ircam.fr
+*
+*  Take a look here:
+*    http://www.ircam.fr/equipes/temps-reel/maxmsp/fluidsynth.html
 *
 _____________________________________________________________________
 LICENSE
@@ -31,6 +31,12 @@ This version of fluidsynth~ was created and tested with Max/MSP 4.3 on Mac OS X 
 The Mac OS 9 version of the external was not tested.
 
 _____________________________________________________________________
+RELASE NOTES of version 05/2004 (release 7)
+
+ - fixed bug of crash for "info channels" in case of channel(s) without defined preset
+ - rebuilt Mac OS 9 version
+ - extended help patch
+_____________________________________________________________________
 RELASE NOTES of version 04/2004 (release 6)
 
  - fixed several bugs of the initial release (especially related to the translation of paths
@@ -38,18 +44,14 @@ RELASE NOTES of version 04/2004 (release 6)
  - introduced a message "info" in order to query the current state of fluidsynth~
 
 _____________________________________________________________________
-THIS CVS DIRECTORY
+CVS DIRECTORY
 
-The fluidsynth directory in this directory contains only a version.h which is just added for the case that the version.h file in the fluidsynth checkout is not (auto-)"maked" or generated otherwise.
+cvs repository: savannah.nongnu.org:/cvsroot/fluid
+Max/MSP implementation directory: bindings/fluidmax
 
-For now the file fluid_sys.c is not included to the CW project. Instead there (here) is a file called fluidmax_fakefuns.c implementing some necessary functions.
+The fluidsynth directory in the fluidmax directory contains only a version.h which is just added for the case that the version.h file in the fluidsynth checkout is not (auto-)"maked" or generated otherwise.
 
-Using fluid_sys.c with the macro MACOS 9 defined almost works. Its only the prototype of the function NewTimerProc() causing a compilation error (no prototype) and I didn't find any good include to fix this...
-
-The following three functions used in fluid_settings are missing:
-  fluid_shell_settings()
-  fluid_audio_driver_settings()
-  fluid_midi_driver_settings()
+For now the file fluid_sys.c is not included to the CW project. Instead there is a file called fluidmax_fakefuns.c implementing some necessary functions.
 
 _____________________________________________________________________
 KNOWN BUGS:

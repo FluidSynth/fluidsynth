@@ -70,8 +70,8 @@ fluid_log(int level, char* fmt, ...)
   vsprintf(buf, fmt, args); 
   va_end (args); 
 
-  if ((level >= 0) && (level < LAST_LOG_LEVEL)) 
-    post("fluidsynth~: %s", buf);
+  if ((level > 0) && (level < LAST_LOG_LEVEL)) 
+    post("fluidsynth~ core (level %d): %s", level, buf);
 
   return -1; 
 }
