@@ -202,7 +202,7 @@ new_fluid_dsound_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
   hr = IDirectSoundBuffer_Lock(dev->sec_buffer, 0, 0, (void*) &buf1, &bytes1, 0, 0, DSBLOCK_ENTIREBUFFER);
 
   if ((hr != DS_OK) || (buf1 == NULL)) {
-    FLUID_LOG(FLUID_PANIC, "Failed to lock the audio buffer. System lockup might follow. Exiting.\n");
+    FLUID_LOG(FLUID_PANIC, "Failed to lock the audio buffer. Exiting.\n");
     goto error_recovery;
   }
 

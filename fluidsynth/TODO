@@ -3,29 +3,14 @@
 IIWU Synth Final (0.3?):
 --------------------------------------------
 
-SoundFont Specs:
-- pitch control on stereo samples not managed as should
-
 DSP
 - problems with chorus (test on VintageDreamWaves + LoveVigilants.mid)
-- some bad tuning problems (test on VintageDreamWaves + EnolaGay.mid)
 - Check changes w.r.t. noise floor in iiwu_voice
 
 Misc
 - Make Vintage Dreams the default soundfont
 - segfault with 'iiwusynth -i -n ~/projects/iiwusynth-perso/sf2/VintageDreamsWaves-v2.sf2 ~/cap-mts'
 - Add compilation date
-
-API & design
-- preset notify for sample load/unload
-- Remove iiwu_list from iiwusynth.h
-- organization headers: make a header directory containing all headers
-   /usr/include/fluid/synth.h
-   $SRCDIR/priv/synth.h
-   /usr/include/fluid/voice.h
-   /usr/include/fluid/channel.h
-   /usr/include/fluid/ ...
-   /usr/include/fluid/synth.h
 
 Drivers
 - Add flag to dsound driver to not use LOCHWARE
@@ -38,8 +23,6 @@ Testing:
 - test SSE & long long
 - Test sequencer
 - test on AMD processors
-- test reverb
-- test filter 
 - test existing midi controllers
 - comparison tests with sblive
 - test audio drivers (dsound, oss, alsa, audioport (win,mac,linux), sndman)
@@ -66,31 +49,42 @@ Web site: add:
 Fluid 1.1:
 --------------------------------------------
 
+SFLoader API:
+- "interface" api
+- redo sfloader api using "interface" api
+
+Sample streaming
+- sample streaming, load/unload sample on demand 
+
+Design
+- turn ladspa fx unit and router in indepedent 
+  objects, remove their dependencies from the synth object
+- generalize use of fluid_event_t, remove fluid_midi_event_t
+
+SoundFont Specs:
+- pitch control on stereo samples not managed as should
+
+MIDI Specs
 - handle tuning sysex messages
 - OMNI
-- server sur windows
 - sample dump
-- midi router
+
+Unsorted
+- server sur windows
 - change sample rate dynamically after jack driver instantiation, or
   create audio driver before initiating the synth
-- sample streaming
-- load/unload sample on demand 
 - include readline in project
 - additional aux buses
 - rewrite midi file using new sequencer
-- move to c++
-- "interface" API
 - load drivers, plugins, and soundfont loaders from shared libraries
-- write a Max external
-- java bindings
 - direct access to audio buffer
 - soft clipping, compressor, limitor, or automatic gain control
 - register shell commands dynamically, no dependancy on iiwu_synth object
 - load wave files (ramsfont)
 - ASIO driver
 - DirectSound3D driver
-- evolve ladspa effects unit to a "audio rack"
-- add aditional synthesizers?
+- write a Max external
+- java bindings
 
 
 OLD STUFF, NEEDS TO BE FILTERED ------------------
