@@ -1,3 +1,10 @@
+
+2004-02-28  Peter Hanappe <peter@hanappe.com>
+
+	* src/fluid_synth.c: Added fluid_synth_program_select2() and
+	fluid_synth_get_sfont_by_name() in fluid_synth.c. These functions
+	are not in the public API, yet.
+
 2004-02-25  Peter Hanappe <peter@hanappe.com>
 
 	* src/fluid_voice.c: Fixed bug in volume envelope (in
@@ -177,7 +184,7 @@
 	is responsible to call fluid_voice_optimize_sample (if it doesn't, the turnoff optimization is 
 	simply disabled).
 	
-2003-04-029  Antoine Schmitt  <as@gratin.org>
+1999-11-30  Antoine Schmitt  <as@gratin.org>
 
 	* src/fluid_defsfont.c: inst_zone lokey is now properly inialized to 0
 	(it was not, leading to random lost noteons depending on memory
@@ -554,11 +561,11 @@
 	suggestion for the Makefile.am to fix the problems with automake
 	1.6
 
-2002-07-13 Tim Goetze <tim@quitte.de>
+1999-11-30  Tim Goetze <tim@quitte.de>
 	* src/iiwu_synth.c (iiwu_synth_alloc_voice): New algorithm for
 	voice allocation, when all voice processes are in use
 
-2002-07-13 Markus Nentwig <nentwig@users.sourceforge.net>
+1999-11-30  Markus Nentwig <nentwig@users.sourceforge.net>
 	* src/iiwu_synth.c (iiwu_synth_alloc_voice): Applied above patch,
 	
 2002-07-08  Markus Nentwig <nentwig@users.sourceforge.net>
@@ -573,7 +580,7 @@
 	rebuilt with the latest automake 1.6.  You cannot use substitution
 	for *_SOURCES in Makefile.am. This fixes this problem.
 
-2002-06-29 Markus Nentwig  <nentwig@users.sourceforge.net> 
+1999-11-30  Markus Nentwig  <nentwig@users.sourceforge.net> 
 
 	* src/iiwusynth.h: Added documentation, removed GEN_CHANGED (it
 	was unused).
