@@ -486,7 +486,7 @@ fluid_revmodel_update(fluid_revmodel_t* rev)
 void 
 fluid_revmodel_setroomsize(fluid_revmodel_t* rev, fluid_real_t value)
 {
-  fluid_clip(value, 0.0f, 1.0f);
+/*   fluid_clip(value, 0.0f, 1.0f); */
   rev->roomsize = (value * scaleroom) + offsetroom;
   fluid_revmodel_update(rev);
 }
@@ -500,7 +500,7 @@ fluid_revmodel_getroomsize(fluid_revmodel_t* rev)
 void 
 fluid_revmodel_setdamp(fluid_revmodel_t* rev, fluid_real_t value)
 {
-  fluid_clip(value, 0.0f, 1.0f);
+/*   fluid_clip(value, 0.0f, 1.0f); */
   rev->damp = value * scaledamp;
   fluid_revmodel_update(rev);
 }
@@ -514,7 +514,7 @@ fluid_revmodel_getdamp(fluid_revmodel_t* rev)
 void 
 fluid_revmodel_setlevel(fluid_revmodel_t* rev, fluid_real_t value)
 {
-  fluid_clip(value, 0.0f, 1.0f);
+/*   fluid_clip(value, 0.0f, 1.0f); */
   rev->wet = value * scalewet;
   fluid_revmodel_update(rev);
 }
@@ -528,7 +528,7 @@ fluid_revmodel_getlevel(fluid_revmodel_t* rev)
 void 
 fluid_revmodel_setwidth(fluid_revmodel_t* rev, fluid_real_t value)
 {
-  fluid_clip(value, 0.0f, 1.0f);
+/*   fluid_clip(value, 0.0f, 1.0f); */
   rev->width = value;
   fluid_revmodel_update(rev);
 }
