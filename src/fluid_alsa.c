@@ -290,7 +290,7 @@ new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
     goto error_recovery;    
   }
 
-  printf("** Using format %s\n", fluid_alsa_formats[i].name);
+  FLUID_LOG(FLUID_INFO, "ALSA driver: Using format %s\n", fluid_alsa_formats[i].name);
 
   /* Set the software params */
   snd_pcm_sw_params_current(dev->pcm, swparams);

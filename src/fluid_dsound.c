@@ -62,11 +62,13 @@ typedef struct {
   DWORD frame_size;
 } fluid_dsound_audio_driver_t;
 
-static BOOL 
-fluid_dsound_enum_callback(LPGUID guid, LPCSTR description, LPCSTR module, LPVOID context)
+BOOL CALLBACK 
+fluid_dsound_enum_callback(LPGUID guid, LPCTSTR description, LPCTSTR module, LPVOID context)
 {
   fluid_settings_t* settings = (fluid_settings_t*) context;
   fluid_settings_add_option(settings, "audio.dsound.device", description);  
+
+  return TRUE;
 }
 
 void fluid_dsound_audio_driver_settings(fluid_settings_t* settings)

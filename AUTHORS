@@ -73,6 +73,8 @@ iiwu_chan.c, iiwu_voice.c, iiwu_alsa.c
 * The original code for the chorus effect was written by Juergen
   Mueller and sundry contributors.
 
+* Bob Ham added LADCCA support.
+
 * I used Martin Uddén's midi package. His files are integrated into
   the iiwu_midi file. Martin Uddén <nanook@lysator.liu.se> file:
   iiwu_midi.c
@@ -82,10 +84,13 @@ iiwu_chan.c, iiwu_voice.c, iiwu_alsa.c
   written by Joshua Scholar and others.  file: iiwu_synth.c
 
 * Bug fixes where sent in by: Werner Schweer, Dave Philips, Anthony
-  Green, Jake Commander, Fernando Pablo Lopez-Lezcano, and Raoul
-  Bonisch.
+  Green, Jake Commander, Fernando Pablo Lopez-Lezcano, Raoul
+  Bonisch, Sergey Pavlishin, Eric Van Buggenhaut, Ken Ellinwood,
+  Takashi Iwai, Bob Ham
 
 * I copied the macros to {increment,decrement} the 64-bit fixed point
   phase from Mozilla's macros to handle the Long-long type (64-bit
   signed integer type). Mozilla NSPR library, www.mozilla.org.  file:
   iiwu_phase.h
+
+* Patches from: 

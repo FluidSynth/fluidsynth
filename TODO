@@ -2,11 +2,9 @@
 Bugs and incomplete code
 ------------------------
 
-- Filter on/off optimization causes clicks 
 - Get TCP server working for windows
 - The synth consumes too much CPU when no voices are playing. 
-- Add fluid_synth_remove_sfont()
-
+- Add daemon mode
 
 Validation
 ----------
@@ -108,8 +106,13 @@ SoundFont Specs:
 
 MIDI Specs
 - handle tuning sysex messages
-- OMNI
+- Omni and poly modes
 - sample dump
+- MIDI thru
+- Scalable Polyphony MIDI (SP-MIDI)
+- Downloadable Sounds ("DLS")
+- RMID (SMF w/DLS) File Format Specification
+
 
 Unsorted
 - Analyse/improve voice stealing algorithm (soft and hard limits?)
