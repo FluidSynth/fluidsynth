@@ -208,6 +208,7 @@ fluid_voice_init(fluid_voice_t* voice, fluid_sample_t* sample,
    * the 'working memory' of the voice (position in envelopes, history
    * of IIR filters, position in sample etc) is initialized. */
   
+
   voice->id = id;
   voice->chan = fluid_channel_get_num(channel);
   voice->key = (unsigned char) key;
@@ -1641,6 +1642,7 @@ fluid_voice_noteoff(fluid_voice_t* voice)
     voice->modenv_section = FLUID_VOICE_ENVRELEASE;
     voice->modenv_count = 0;
   }
+
   return FLUID_OK;
 }
 

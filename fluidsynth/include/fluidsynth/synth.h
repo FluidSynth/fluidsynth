@@ -79,36 +79,39 @@ FLUIDSYNTH_API fluid_settings_t* fluid_synth_get_settings(fluid_synth_t* synth);
    *
    */
 
-  /** Send a noteon message */
+  /** Send a noteon message. Returns 0 if no error occurred, -1 otherwise. */
 FLUIDSYNTH_API int fluid_synth_noteon(fluid_synth_t* synth, int chan, int key, int vel);
 
-  /** Send a noteoff message */
+  /** Send a noteoff message. Returns 0 if no error occurred, -1 otherwise.  */
 FLUIDSYNTH_API int fluid_synth_noteoff(fluid_synth_t* synth, int chan, int key);
 
-  /** Send a control change message */
+  /** Send a control change message. Returns 0 if no error occurred, -1 otherwise.  */
 FLUIDSYNTH_API int fluid_synth_cc(fluid_synth_t* synth, int chan, int ctrl, int val);
 
-  /** Get a control value */
+  /** Get a control value. Returns 0 if no error occurred, -1 otherwise.  */
 FLUIDSYNTH_API int fluid_synth_get_cc(fluid_synth_t* synth, int chan, int ctrl, int* pval);
 
-  /** Send a pitch bend message */
+  /** Send a pitch bend message. Returns 0 if no error occurred, -1 otherwise.  */
 FLUIDSYNTH_API int fluid_synth_pitch_bend(fluid_synth_t* synth, int chan, int val);
 
-  /** Get the pitch bend value */
+  /** Get the pitch bend value. Returns 0 if no error occurred, -1 otherwise. */
 FLUIDSYNTH_API 
 int fluid_synth_get_pitch_bend(fluid_synth_t* synth, int chan, int* ppitch_bend);
 
-  /** Set the pitch wheel sensitivity */
+  /** Set the pitch wheel sensitivity. Returns 0 if no error occurred, -1 otherwise. */
 FLUIDSYNTH_API int fluid_synth_pitch_wheel_sens(fluid_synth_t* synth, int chan, int val);
 
-  /** Send a program change message */
+  /** Get the pitch wheel sensitivity. Returns 0 if no error occurred, -1 otherwise. */
+FLUIDSYNTH_API int fluid_synth_get_pitch_wheel_sens(fluid_synth_t* synth, int chan, int* pval);
+
+  /** Send a program change message. Returns 0 if no error occurred, -1 otherwise. */
 FLUIDSYNTH_API int fluid_synth_program_change(fluid_synth_t* synth, int chan, int program);
 
-  /** Select a bank */
+  /** Select a bank. Returns 0 if no error occurred, -1 otherwise. */
 FLUIDSYNTH_API 
 int fluid_synth_bank_select(fluid_synth_t* synth, int chan, unsigned int bank);
 
-  /** Select a sfont */
+  /** Select a sfont. Returns 0 if no error occurred, -1 otherwise. */
 FLUIDSYNTH_API 
 int fluid_synth_sfont_select(fluid_synth_t* synth, int chan, unsigned int sfont_id);
 
@@ -131,7 +134,7 @@ int fluid_synth_program_select(fluid_synth_t* synth, int chan,
 			      unsigned int preset_num);
 
   /** Returns the program, bank, and SoundFont number of the preset on
-      a given channel. */
+      a given channel. Returns 0 if no error occurred, -1 otherwise. */
 FLUIDSYNTH_API 
 int fluid_synth_get_program(fluid_synth_t* synth, int chan, 
 			   unsigned int* sfont_id, 
@@ -141,7 +144,7 @@ int fluid_synth_get_program(fluid_synth_t* synth, int chan,
   /** Send a bank select and a program change to every channel to
    *  reinitialize the preset of the channel. This function is useful
    *  mainly after a SoundFont has been loaded, unloaded or
-   *  reloaded. */
+   *  reloaded. . Returns 0 if no error occurred, -1 otherwise. */
 FLUIDSYNTH_API int fluid_synth_program_reset(fluid_synth_t* synth);
 
   /** Send a reset. A reset turns all the notes off and resets the

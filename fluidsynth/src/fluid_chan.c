@@ -195,7 +195,15 @@ fluid_channel_cc(fluid_channel_t* chan, int num, int value)
     {
       chan->bank_msb = (unsigned char) (value & 0x7f);
 /*      printf("** bank select msb recieved: %d\n", value); */
-      /* FIXME: is this correct? */
+
+      /* I fixed the handling of a MIDI bank select controller 0,
+	 e.g., bank select MSB (or "coarse" bank select according to
+	 my spec).  Prior to this fix a channel's bank number was only
+	 changed upon reception of MIDI bank select controller 32,
+	 e.g, bank select LSB (or "fine" bank-select according to my
+	 spec). [KLE]
+
+	 FIXME: is this correct? [PH] */
       fluid_channel_set_banknum(chan, (unsigned int)(value & 0x7f));  /* KLE */
     }
     break;

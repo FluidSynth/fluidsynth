@@ -478,13 +478,13 @@ int main(int argc, char** argv)
   /* create the synthesizer */
   synth = new_fluid_synth(settings);
   if (synth == NULL) {
-    printf("Failed to create the synthesizer\n");
+    fprintf(stderr, "Failed to create the synthesizer\n");
     exit(-1);
   }
   
   cmd_handler = new_fluid_cmd_handler(synth);
   if (cmd_handler == NULL) {
-    printf("Failed to create the command handler\n");
+    fprintf(stderr, "Failed to create the command handler\n");
     goto cleanup;
   }
 
@@ -501,7 +501,7 @@ int main(int argc, char** argv)
   for (i = arg1; i < argc; i++) {
     if ((argv[i][0] != '-') && fluid_is_soundfont(argv[i])) {
       if (fluid_synth_sfload(synth, argv[i], 1) == -1) {
-	printf("Failed to load the SoundFont %s\n", argv[i]);
+	fprintf(stderr, "Failed to load the SoundFont %s\n", argv[i]);
       }
     }
   }
@@ -513,7 +513,7 @@ int main(int argc, char** argv)
   /* start the synthesis thread */
   adriver = new_fluid_audio_driver(settings, synth);
   if (adriver == NULL) {
-    printf("Failed to create the audio driver\n");
+    fprintf(stderr, "Failed to create the audio driver\n");
     goto cleanup;
   }
 
@@ -531,9 +531,9 @@ int main(int argc, char** argv)
       (void*)synth);
     
     if (router == NULL) {
-      printf("Failed to create the MIDI input router; no MIDI input\n"
-	     "will be available. You can access the synthesizer \n"
-	     "through the console.\n");
+      fprintf(stderr, "Failed to create the MIDI input router; no MIDI input\n"
+	      "will be available. You can access the synthesizer \n"
+	      "through the console.\n");
     } else {
       fluid_synth_set_midi_router(synth, router); /* Fixme, needed for command handler */
       mdriver = new_fluid_midi_driver(
@@ -541,9 +541,9 @@ int main(int argc, char** argv)
 	dump ? fluid_midi_dump_prerouter : fluid_midi_router_handle_midi_event,
 	(void*) router);
       if (mdriver == NULL) {
-	printf("Failed to create the MIDI thread; no MIDI input\n"
-	       "will be available. You can access the synthesizer \n"
-	       "through the console.\n");
+	fprintf(stderr, "Failed to create the MIDI thread; no MIDI input\n"
+		"will be available. You can access the synthesizer \n"
+		"through the console.\n");
       }
     }
   }
@@ -556,8 +556,8 @@ int main(int argc, char** argv)
       if (player == NULL) {
 	player = new_fluid_player(synth);
 	if (player == NULL) {
-	  printf("Failed to create the midifile player.\n"
-		 "Continuing without a player.\n");
+	  fprintf(stderr, "Failed to create the midifile player.\n"
+		  "Continuing without a player.\n");
 	  break;
 	}
       }
@@ -575,7 +575,7 @@ int main(int argc, char** argv)
   if (with_server) {
     server = new_fluid_server(settings, newclient, synth);
     if (server == NULL) {
-      printf("Failed to create the server.\n"
+      fprintf(stderr, "Failed to create the server.\n"
 	     "Continuing without it.\n");
     }
   }
@@ -663,8 +663,8 @@ static fluid_cmd_handler_t* newclient(void* data, char* addr)
 void 
 print_usage() 
 {
-  printf("Usage: %s [options] [soundfonts]\n", appname);
-  printf("Try -h for help.\n");
+  fprintf(stderr, "Usage: %s [options] [soundfonts]\n", appname);
+  fprintf(stderr, "Try -h for help.\n");
   exit(0);
 }
 

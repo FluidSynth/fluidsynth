@@ -45,7 +45,7 @@ struct _fluid_hashnode_t {
   fluid_hashnode_t *next;
 };
 
-static fluid_hashnode_t*	new_fluid_hashnode(char* key, void* value, int type);
+static fluid_hashnode_t* new_fluid_hashnode(char* key, void* value, int type);
 static void delete_fluid_hashnode(fluid_hashnode_t *hash_node, fluid_hash_delete_t del);
 static void delete_fluid_hashnodes(fluid_hashnode_t *hash_node, fluid_hash_delete_t del);
 
