@@ -1,3 +1,21 @@
+2003-05-29  root  <mn@bongo>
+
+	* src/fluid_synth.c (fluid_synth_one_block): Added a mutex that provides a small degree of 
+	protection against noteons / noteoffs, when the audio thread is working.
+
+	* src/fluid_synth.h (struct _fluid_synth_t): 
+
+	* src/fluid_voice.c (fluid_voice_optimize_sample): 
+
+2003-05-29  Markus Nentwig  <nentwig@users.sourceforge.net>
+
+	* include/fluidsynth/voice.h: added fluid_voice_gen_incr to api
+	* src/fluidsynth.c: Added error message for command line parameter handling
+	* src/fluid_voice.c (fluid_voice_optimize_sample): Removed loop peak detection 
+	at run time, because it caused dropouts. Now the sound font loader or application 
+	is responsible to call fluid_voice_optimize_sample (if it doesn't, the turnoff optimization is 
+	simply disabled).
+	
 2003-04-029  Antoine Schmitt  <as@gratin.org>
 
 	* src/fluid_defsfont.c: inst_zone lokey is now properly inialized to 0
