@@ -1,0 +1,11 @@
+
+This directory contains the projects that bind FluidSynth to a
+language or host application. The following projects are currently
+available:
+
+fluidmax: Provides the fluidsynth~ external object for
+  Max/MSP. Written by Norbert Schnell.
+
+fluidsynth_jni: Provides a native interface for the Java
+  language. Written by Peter Hanappe.
+

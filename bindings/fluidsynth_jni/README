@@ -1,0 +1,10 @@
+
+FluidSynth_JNI
+--------------
+
+This directory contains a VC++ project, Java classes, and some C++
+files to use FluidSynth from within Java. This project was written
+rather quickly and for a specific use. Is not intended to be complete
+but may be useful as a starting point for complete Java interface.
+
+[Peter Hanappe]
