@@ -1,6 +1,6 @@
 .\"                              hey, Emacs:   -*- nroff -*-
 .\" iiwusynth is free software; you can redistribute it and/or modify
-.\" it under the terms of the GNU General Public License as published by
+.\" it under the terms of the GNU Library General Public License as published by
 .\" the Free Software Foundation; either version 2 of the License, or
 .\" (at your option) any later version.
 .\"
@@ -9,11 +9,11 @@
 .\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 .\" GNU General Public License for more details.
 .\"
-.\" You should have received a copy of the GNU General Public License
+.\" You should have received a copy of the GNU Library General Public License
 .\" along with this program; see the file COPYING.  If not, write to
 .\" the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 .\"
-.TH iiwusynth 0.2.4 "December 3, 2002"
+.TH fluidsynth 1.0 "March 12, 2003"
 .\" Please update the above date whenever this man page is modified.
 .\"
 .\" Some roff macros, for reference:
@@ -27,36 +27,36 @@
 .\" .sp <n>    insert n+1 empty lines
 .\" for manpage-specific macros, see man(7)
 .SH NAME
-iiwusynth \- a SoundFont synthesizer
+fluidsynth \- a SoundFont synthesizer
 .SH SYNOPSIS
-.B iiwusynth
+.B fluidsynth
 .RI [ options ] 
 [ soundfonts ] 
 [ midifiles ] 
 .SH DESCRIPTION
-\fBiiwusynth\fP is a real-time MIDI synthesizer based on the
+\fBfluidsynth\fP is a real-time MIDI synthesizer based on the
 SoundFont(R) 2 specifications. It can be used to render MIDI input or
 MIDI files to audio.  The MIDI events are read from a MIDI device. The
 sound is rendered in real-time to the sound output device.
 .PP
 The easiest way to start the synthesizer is to give it a SoundFont on
-the command line: 'iiwusynth soundfont.sf2'. iiwusynth will load the
+the command line: 'fluidsynth soundfont.sf2'. fluidsynth will load the
 SoundFont and read MIDI events from the default MIDI device using the
-default MIDI driver.  Once iiwusynth is running, it reads commands
+default MIDI driver.  Once fluidsynth is running, it reads commands
 from the stdin. There are commands to send MIDI events manually, to
 load or unload SoundFonts, andsoforth. All the available commands are
 discussed below.
 .PP
-iiwusynth can also be used to play a list of MIDI files. Simply run
-iiwusynth with the SoundFont and the list of MIDI files to play. In
+fluidsynth can also be used to play a list of MIDI files. Simply run
+fluidsynth with the SoundFont and the list of MIDI files to play. In
 this case you might not want to open the MIDI device to read external
 events. Use the -n option for to deactivate MIDI input. If you also
-want to deactivate the use of the shell, start iiwusynth with the -i
-option: 'iiwusynth -ni soundfont.sf2 midifile1.mid midifile2.mid'.
+want to deactivate the use of the shell, start fluidsynth with the -i
+option: 'fluidsynth -ni soundfont.sf2 midifile1.mid midifile2.mid'.
 .PP
-Run iiwusynth with the --help option to check for changes in the list of options.
+Run fluidsynth with the --help option to check for changes in the list of options.
 .SH OPTIONS
-\fBiiwusynth\fP accepts the following options:
+\fBfluidsynth\fP accepts the following options:
 .TP
 .B \-h, \-\-help
 Show summary of options.
@@ -70,20 +70,17 @@ Don't create a midi driver to read MIDI input events [default = yes]
 .B \-m, \-\-midi-driver=[label]
 The name of the midi driver to use [oss,alsa,alsa_seq,winmidi,...]
 .TP
-.B \-M, \-\-midi-device=[device]
-The name of the midi device to use
-.TP
 .B \-L, \-\-midi-channels=[num]
 The number of midi channels [default = 16]
 .TP
 .B \-a, \-\-audio-driver=[label]
 The audio driver [alsa,jack,oss,dsound,...]
 .TP
-.B \-A, \-\-audio-device=[device]
-The audio device
-.TP
 .B \-L, \-\-audio-channels=[num]
 The number of audio channels [default = 1]
+.TP
+.B \-G, \-\-audio-groups=[num]
+The number of audio groups
 .TP
 .B \-z, \-\-audio-bufsize=[size]
 Size of each audio buffer [default = %d]
@@ -94,12 +91,6 @@ Number of audio buffers [default = %d]
 .B \-r, \-\-sample-rate
 Set the sample rate
 .TP
-.B \-s, \-\-synth-name=[name]
-A name to append to the alsa synth name (-p takes precedence)
-.TP
-.B \-p, \-\-pid-synth-name
-Append the pid to the alsa synth name
-.TP
 .B \-R, \-\-reverb
 Turn the reverb on or off [0|1|yes|no, default = on]
 .TP
@@ -108,6 +99,9 @@ Turn the chorus on or off [0|1|yes|no, default = on]
 .TP
 .B \-g, \-\-gain
 Set the master gain [0 < gain < 10, default = 0.2]
+.TP
+.B \-s, \-\-server
+Start a TCP/IP server for remote shells [default=no, port=9800]
 .TP
 .B \-i, \-\-no-shell
 Don't read commands from the shell [default = yes]
@@ -155,7 +149,7 @@ Send a control change event
 .B prog chan num
 Send program-change message
 .TP
-.B select chan bank prog
+.B select chan sfont bank prog
 Combination of bank-select and program-change
 .TP
 .B channels
