@@ -2,8 +2,7 @@
 <article>
   <articleinfo>
     <title>
-    FluidSynth
-    Developer Documentation
+    FluidSynth 1.0 - Developer Documentation
     </title>
 
     <author>
@@ -25,15 +24,42 @@
       SoundFont 2 specifications. The synthesizer is available as a
       shared object that can easily be reused in any application that
       wants to use wavetable synthesis. This documents explains the
-      nitty-gritty.</para>
+      basic usage of FluidSynth. Some of the more advanced features
+      are not yet discussed but will be added in future
+      versions.</para>
 
     </abstract>
-  </articleinfo>
+  </articleinfo> 
 
   <sect1>
     <title>Using the synthesizer as a plugin</title>
 
-    <para>FluidSynth can easily be embedded in an application.</para>
+    <para>FluidSynth can easily be embedded in an application. It has
+    a main header file, fluidsynth.h, and one dynamically linkable
+    library. FluidSynth runs on Linux, MacOS 9, MacOS X, and the Win32
+    platforms. It has audio and midi drivers for all mentioned
+    platforms but you can use it with your own drivers if your
+    application already handles audio and MIDI IO. This document
+    explains the basic usage of FluidSynth and provides and example
+    that you can reuse. </para>
+
+  </sect1>
+
+
+  <sect1>
+    <title>License</title>
+
+    <para>All the source code examples in this document are in the
+    public domain; you can use it as you please. This document is
+    licensed under the Creative Commons Attribution License. To view a
+    copy of this license, visit
+    http://creativecommons.org/licenses/by/1.0/ or send a letter to
+    Creative Commons, 559 Nathan Abbott Way, Stanford, California
+    94305, USA. FluidSynth is distributed under the GNU Library
+    General Public License. A copy of the GNU Library General Public
+    License is contained in the FluidSynth package; if not, write to
+    the Free Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+    02111-1307 USA. </para>
 
   </sect1>
 
@@ -46,9 +72,8 @@
     FluidSynth library. It gives a unified API to set the parameters
     of the audio drivers, the midi drivers, the synthesizer,
     andsoforth. A number of default settings are defined by the
-    current implementation. In future versions the use of the settings
-    will probably be generalized and used also for LADSPA plugins.
-    </para>
+    current implementation. In future versions, the use of the
+    settings will probably be generalized.</para>
  
     <para>
     All settings have a name that follows the "dotted-name"
@@ -61,12 +86,16 @@
     <function>fluid_synth_setint</function> functions. For example:
 
 <programlisting>
-void init() 
+#include &lt;fluidsynth.h&gt;
+
+int main(int argc, char** argv) 
 {
-  fluid_settings_t* settings;
-  
-  settings = new_fluid_settings();
+  fluid_settings_t* settings = new_fluid_settings();
+
   fluid_synth_setint(settings, "synth.polyphony", 128);
+
+  delete_fluid_settings(settings);
+  return 0;
 }
 </programlisting>
 
@@ -74,7 +103,7 @@ void init()
 
     <para>
     The API contains the functions to query the type, the current
-    value, the default value, the range and and the "hints" of a
+    value, the default value, the range and the "hints" of a
     setting. The range is the minumum and maximum value of the
     setting. The hints gives additional information about a
     setting. For example, whether a string represents a filename. Or
@@ -89,20 +118,26 @@ void init()
     <title>Creating the synthesizer</title>
 
     <para>
-    To create the synthesizer, you pass it the settings object, like
+    To create the synthesizer, you pass it the settings object, as
     in the following example:
 
 <programlisting>
-void init() 
+#include &lt;fluidsynth.h&gt;
+
+int main(int argc, char** argv) 
 {
   fluid_settings_t* settings;
   fluid_synth_t* synth;
-  
-  settings = new_fluid_settings();
-  
-  /* Set the settings, if necessary */
+
+  fluid_settings_t* settings = new_fluid_settings();
 
   synth = new_fluid_synth(settings);
+
+  /* Do useful things here */
+
+  delete_fluid_synth(synth);
+  delete_fluid_settings(settings);
+  return 0;
 }
 </programlisting>
     </para>
@@ -111,34 +146,294 @@ void init()
     The default settings should be fine for most uses. A detailed
     description of all the settings used by the synthesizer described
     below.
-    </para>
 
+<table frame=all><title>Synthesizer settings</title>
+<tgroup cols=3 align=left colsep=0 rowsep=0>
+<tbody>
+
+<!-- ---------------------------- -->
+<row>
+  <entry>synth.gain</entry>
+  <entry>Type</entry>
+  <entry>number</entry>
+</row>
+<row>
+  <entry></entry>
+  <entry>Default</entry>
+  <entry>0.2</entry>
+</row>
+<row>
+  <entry></entry>
+  <entry>Min-Max</entry>
+  <entry>0.0-10.0</entry>
+</row>
+<row>
+  <entry></entry>
+  <entry>Description</entry>
+  <entry>The gain is applied to the final or master output of the
+synthesizer. It is set to a low value by default to avoid the
+saturation of the output when random MIDI files are played.</entry>
+</row>
+
+<!-- ---------------------------- -->
+<row>
+  <entry>synth.sample-rate</entry>
+  <entry>Type</entry>
+  <entry>number</entry>
+</row>
+<row>
+  <entry></entry>
+  <entry>Default</entry>
+  <entry>44100</entry>
+</row>
+<row>
+  <entry></entry>
+  <entry>Min-Max</entry>
+  <entry>22050-96000</entry>
+</row>
+<row>
+  <entry></entry>
+  <entry>Description</entry>
+  <entry>The sample rate of the audio generated by the synthesizer.</entry>
+</row>
+
+<!-- ---------------------------- -->
+<row>
+  <entry>synth.polyphony</entry>
+  <entry>Type</entry>
+  <entry>integer</entry>
+</row>
+<row>
+  <entry></entry>
+  <entry>Default</entry>
+  <entry>256</entry>
+</row>
+<row>
+  <entry></entry>
+  <entry>Min-Max</entry>
+  <entry>16-4096</entry>
+</row>
+<row>
+  <entry></entry>
+  <entry>Description</entry>
+  <entry>The polyphony defines how many voices can be played in parallel. The
+number of voices is not necessarily equivalent to the number of notes
+played simultaniously. Indeed, when a note is struck on a specific
+MIDI channel, the preset on that channel may created several voices,
+for example, one for the left audio channel and one for the right
+audio channels. The number of voices activated depends on the number
+of instrument zones that fall in the correspond to the velocity and
+key of the played note.</entry>
+</row>
+
+<!-- ---------------------------- -->
+<row>
+  <entry>synth.midi-channels</entry>
+  <entry>Type</entry>
+  <entry>integer</entry>
+</row>
+<row>
+  <entry></entry>
+  <entry>Default</entry>
+  <entry>16</entry>
+</row>
+<row>
+  <entry></entry>
+  <entry>Min-Max</entry>
+  <entry>16-256</entry>
+</row>
+<row>
+  <entry></entry>
+  <entry>Description</entry>
+  <entry>This setting defines the number of MIDI channels of the
+synthesizer. The MIDI standard defines 16 channels, so most hardware
+keyboards are limited to 16. If you plan to use the synthesizer as a
+plugin in an application, it might be interesting to set the number of
+channels to a larger value. In this case you can program a greater
+number of presets.</entry>
+</row>
+
+<!-- ---------------------------- -->
+<row>
+  <entry>synth.reverb.active</entry>
+  <entry>Type</entry>
+  <entry>string</entry>
+</row>
+<row>
+  <entry></entry>
+  <entry>Default</entry>
+  <entry>"yes"</entry>
+</row>
+<row>
+  <entry></entry>
+  <entry>Description</entry>
+  <entry>When set to "yes" the reverb effects module is activated. Otherwise,
+no reverb will be added to the output signal. Note that when the
+reverb module is active, the amount of signal send to the reverb
+module depends on the "reverb send" generator defined in the
+SoundFont.</entry>
+</row>
+
+<!-- ---------------------------- -->
+<row>
+  <entry>synth.chorus.active</entry>
+  <entry>Type</entry>
+  <entry>string</entry>
+</row>
+<row>
+  <entry></entry>
+  <entry>Default</entry>
+  <entry>"yes"</entry>
+</row>
+<row>
+  <entry></entry>
+  <entry>Description</entry>
+  <entry>When set to "yes" the chorus effects module is activated. Otherwise,
+no chorus will be added to the output signal. Note that when the
+reverb module is active, the amount of signal send to the chorus
+module depends on the "chorus send" generator defined in the
+SoundFont.</entry>
+</row>
+
+<!-- ---------------------------- -->
+<row>
+  <entry>synth.ladspa.active</entry>
+  <entry>Type</entry>
+  <entry>string</entry>
+</row>
+<row>
+  <entry></entry>
+  <entry>Default</entry>
+  <entry>"no"</entry>
+</row>
+<row>
+  <entry></entry>
+  <entry>Description</entry>
+  <entry>When set to "yes" the LADSPA subsystem will be called. This subsystem
+allows to load and interconnect LADSPA plugins. The output of the
+synthesizer is processed by the LADSPA subsystem. Note that the
+synthesizer has to be compiled with LADSPA support. More information
+about the LADSPA subsystem later.</entry>
+</row>
+
+<!-- ---------------------------- -->
+<row>
+  <entry>synth.audio-groups</entry>
+  <entry>Type</entry>
+  <entry>integer</entry>
+</row>
+<row>
+  <entry></entry>
+  <entry>Default</entry>
+  <entry>1</entry>
+</row>
+<row>
+  <entry></entry>
+  <entry>Min-Max</entry>
+  <entry>1-128</entry>
+</row>
+<row>
+  <entry></entry>
+  <entry>Description</entry>
+  <entry>By default, the synthesizer outputs a single stereo signal. Using this
+option, the synthesizer can output multichannel audio.</entry>
+</row>
+
+<!-- ---------------------------- -->
+<row>
+  <entry>synth.effects-channels</entry>
+  <entry>Type</entry>
+  <entry>integer</entry>
+</row>
+<row>
+  <entry></entry>
+  <entry>Default</entry>
+  <entry>2</entry>
+</row>
+<row>
+  <entry></entry>
+  <entry>Min-Max</entry>
+  <entry>2-2</entry>
+</row>
+<row>
+  <entry></entry>
+  <entry>Description</entry>
+  <entry></entry>
+</row>
+
+<!-- ---------------------------- -->
+<row>
+  <entry>synth.verbose</entry>
+  <entry>Type</entry>
+  <entry>string</entry>
+</row>
+<row>
+  <entry></entry>
+  <entry>Default</entry>
+  <entry>"no"</entry>
+</row>
+<row>
+  <entry></entry>
+  <entry>Description</entry>
+
+  <entry>When set to "yes" the synthesizer will print out information
+  about the received MIDI events to the stdout. This can be helpful
+  for debugging. This setting can not be changed after the synthesizer
+  has started.</entry>
+
+</row>
+
+<!-- ---------------------------- -->
+<row>
+  <entry>synth.dump</entry>
+  <entry>Type</entry>
+  <entry>string</entry>
+</row>
+<row>
+  <entry></entry>
+  <entry>Default</entry>
+  <entry>"no"</entry>
+</row>
+<row>
+  <entry></entry>
+  <entry>Description</entry>
+  <entry></entry>
+</row>
+
+</tbody>
+</tgroup>
+</table>
+
+
+    </para>
 
   <sect1>
     <title>Creating the audio driver</title>
 
     <para>
-    The synthesizer itself does not send any audio to the audio
-    output. This allows application developers who want to integrate
-    the synthesizer in their application to manage the audio output
-    themselves. The following sections describes the use of the
-    synthesizer without an audio driver in more detail.
+    The synthesizer itself does not write any audio to the audio
+    output. This allows application developers to manage the audio
+    output themselves if they wish. The next section describes the use
+    of the synthesizer without an audio driver in more detail.
     </para>
 
     <para>
     Creating the audio driver is straightforward: set the appropriate
     settings and create the driver object. Because the FluidSynth has
-    support for several audio libraries, you may want to change what
-    audio subsystem you want to use. Currently the following audio
-    systems are supported:
-    </para>
+    support for several audio systems, you may want to change which
+    one you want to use. The list below shows theaudio systems that
+    are currently supported. It displays the name, as used by the
+    fluidsynth library, and a description. </para>
 
     <para>
     <itemizedlist>
-      <listitem><para>Linux: OSS, ALSA, Jack, PortAudio (not tested)</para></listitem>
-      <listitem><para>MacOS Classic: SoundManager, PortAudio</para></listitem>
-      <listitem><para>MacOS X: PortAudio, CoreAudio (experimental)</para></listitem>
-      <listitem><para>Windows: DirectSound, PortAudio (not tested)</para></listitem>
+      <listitem><para>alsa: Advanced Linux Sound Architecture</para></listitem>
+      <listitem><para>oss: Open Sound System (Linux)</para></listitem>
+      <listitem><para>jack: JACK Audio Connection Kit (Linux, Mac OS X)</para></listitem>
+      <listitem><para>portaudio: Portaudio Library (MacOS 9 &amp; X, Windows, Linux)</para></listitem>
+      <listitem><para>sndmgr: Apple SoundManager (Mac OS Classic)</para></listitem>
+      <listitem><para>coreaudio: Apple CoreAudio (MacOS X, experimental)</para></listitem>
+      <listitem><para>dsound: Microsoft DirectSound (Windows)</para></listitem>
     </itemizedlist>
     </para>
 
@@ -189,6 +484,120 @@ void init()
     (is the application has sufficient privileges) and call the
     synthesizer object to generate the audio.
     </para>
+
+
+    <para>
+    There are a number of general audio driver settings. The
+    audio.driver settings defines the audio subsystem that will be
+    used. The audio.periods and audio.period-size settings define the
+    latency and robustness against scheduling delays. There are
+    additional settings for the audio subsystems used. They will be
+    documented later.  
+    </para>
+
+<table frame=all><title>General audio driver settings</title>
+<tgroup cols=3 align=left colsep=0 rowsep=0>
+<tbody>
+
+<!-- ---------------------------- -->
+<row>
+  <entry>audio.driver</entry>
+  <entry>Type</entry>
+  <entry>string</entry>
+</row>
+<row>
+  <entry></entry>
+  <entry>Default</entry>
+  <entry>alsa (Linux), dsound (Windows), sndman (MacOS9), coreaudio (MacOS X)</entry>
+</row>
+<row>
+  <entry></entry>
+  <entry>Options</entry>
+  <entry>alsa, oss, jack, dsound, sndman, coreaudio, portaudio</entry>
+</row>
+<row>
+  <entry></entry>
+  <entry>Description</entry>
+  <entry>The audio system to be used.</entry>
+</row>
+
+<!-- ---------------------------- -->
+<row>
+  <entry>audio.periods</entry>
+  <entry>Type</entry>
+  <entry>int</entry>
+</row>
+<row>
+  <entry></entry>
+  <entry>Default</entry>
+  <entry>16 (Linux, MacOS X), 8 (Windows)</entry>
+</row>
+<row>
+  <entry></entry>
+  <entry>Min-Max</entry>
+  <entry>2-64</entry>
+</row>
+<row>
+  <entry></entry>
+  <entry>Description</entry>
+  <entry>The number of the audio buffers used by the driver. This
+  number of buffers, multiplied by the buffer size (see setting
+  audio.period-size), determines the maximum latency of the audio
+  driver.</entry>
+</row>
+
+<!-- ---------------------------- -->
+<row>
+  <entry>audio.period-size</entry>
+  <entry>Type</entry>
+  <entry>int</entry>
+</row>
+<row>
+  <entry></entry>
+  <entry>Default</entry>
+  <entry>64 (Linux, MacOS X), 512 (Windows)</entry>
+</row>
+<row>
+  <entry></entry>
+  <entry>Min-Max</entry>
+  <entry>64-8192</entry>
+</row>
+<row>
+  <entry></entry>
+  <entry>Description</entry>
+  <entry>The size of the audio buffers (in frames).</entry>
+</row>
+
+<!-- ---------------------------- -->
+<row>
+  <entry>audio.sample-format</entry>
+  <entry>Type</entry>
+  <entry>string</entry>
+</row>
+<row>
+  <entry></entry>
+  <entry>Default</entry>
+  <entry>"16bits"</entry>
+</row>
+<row>
+  <entry></entry>
+  <entry>Options</entry>
+  <entry>"16bits", "float"</entry>
+</row>
+<row>
+  <entry></entry>
+  <entry>Description</entry>
+
+  <entry>The format of the audio samples. This is currently only an
+  indication; the audio driver may ignore this setting if it can't
+  handle the specified format.</entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+
 
   </sect1>
 
@@ -370,133 +779,21 @@ protected:
   </sect1>
 
   <sect1>
-    <title>Advanced control features</title>
-    <para></para>
-  </sect1>
+    <title>Advanced features, not yet documented</title>
 
-  <sect1>
-    <title>MIDI tunings</title>
-    <para></para>
-  </sect1>
-
-  <sect1>
-    <title>Multi channel audio output</title>
-    <para></para>
-  </sect1>
-
-  <sect1>
-    <title>Overview of all settings</title>
-
-    <para>
-    The settings for the synthesizer
-    </para>
-
-    <para>
-synth.verbose: type string, default "no"
-
-When set to "yes" the synthesizer will print out information about the
-received MIDI events to the stdout. This can be helpful for
-debugging. This setting can not be changed after the synthesizer has
-started.
-
-synth.dump: type string, default "no"
-
-???
-
-
-synth.reverb.active: type string, default "yes"
-
-When set to "yes" the reverb effects module is activated. Otherwise,
-no reverb will be added to the output signal. Note that when the
-reverb module is active, the amount of signal send to the reverb
-module depends on the "reverb send" generator defined in the
-SoundFont.
-
-synth.chorus.active: type string, default "yes"
-
-When set to "yes" the chorus effects module is activated. Otherwise,
-no chorus will be added to the output signal. Note that when the
-reverb module is active, the amount of signal send to the chorus
-module depends on the "chorus send" generator defined in the
-SoundFont.
-
-
-synth.ladspa.active: type string, default no
-
-When set to "yes" the LADSPA subsystem will be called. This subsystem
-allows to load and interconnect LADSPA plugins. The output of the
-synthesizer is processed by the LADSPA subsystem. Note that the
-synthesizer has to be compiled with LADSPA support. More information
-about the LADSPA subsystem later.
-
-
-synth.polyphony: type integer, default 256, min. 16, max. 4096
-
-The polyphony defines how many voices can be played in parallel. The
-number of voices is not necessarily equivalent to the number of notes
-played simultaniously. Indeed, when a note is struck on a specific
-MIDI channel, the preset on that channel may created several voices,
-for example, one for the left audio channel and one for the right
-audio channels. The number of voices activated depends on the number
-of instrument zones that fall in the correspond to the velocity and
-key of the played note.
-
-synth.midi-channels: type integer, default 16, min. 16, max. 256
-
-This setting defines the number of MIDI channels of the
-synthesizer. The MIDI standard defines 16 channels, so most hardware
-keyboards are limited to 16. If you plan to use the synthesizer as a
-plugin in an application, it might be interesting to set the number of
-channels to a larger value. In this case you can program a greater
-number of presets.
-
-synth.gain: type number, default 0.2, min. 0.0, max. 10.0
-
-The gain is applied to the final or master output of the
-synthesizer. It is set to a low value by default to avoid the
-saturation of the output when random MIDI files are played. 
-
-synth.audio-channels: type integer, default 1, min. 1, max. 128
-
-By default, the synthesizer outputs a single stereo signal. Using this
-option, the synthesizer can output multichannel audio.
-
-synth.audio-groups", 1, 1, 128, 0, NULL, NULL);
-synth.effects-channels", 2, 2, 2, 0, NULL, NULL);
-synth.sample-rate", 44100.0f, 22050.0f, 96000.0f, 
-
-
-The settings for the audio driver
-
-audio.sample-format: type string, default "16bits", options ("16bits", "float")
-
-audio.period-size: type integer, default 512, min. 64, max. 8192
-
-audio.periods: type integer, default 8, min. 2, max. 64
-
-audio.output-channels: type integer, default 2, min. 2, max. 32
-
-audio.input-channels: type integer, default 0, min. 0, max. 2
-
-audio.driver: type string, default platform and compilation dependent
-
-
-
-SoundFont:
-
-Preset:
-
-Preset Zone:
-
-Instrument:
-
-Instrument Zone:
-
-Program:
-
-MIDI Channel:
-
-    </para>
+<itemizedlist mark=opencircle>
+<listitem><para>Accessing low-level voice parameters</para></listitem>
+<listitem><para>Reverb settings</para></listitem>
+<listitem><para>Chorus settings</para></listitem>
+<listitem><para>Interpolation settings (set_gen, get_gen, NRPN)</para></listitem>
+<listitem><para>Sequencer</para></listitem>
+<listitem><para>LADSPA effects unit</para></listitem>
+<listitem><para>MIDI router</para></listitem>
+<listitem><para>Multi-channel audio</para></listitem>
+<listitem><para>MIDI tunings</para></listitem>
+<listitem><para>MIDI file player</para></listitem>
+<listitem><para>SoundFont loader</para></listitem>
+</itemizedlist>
 
   </sect1>
 </article>
