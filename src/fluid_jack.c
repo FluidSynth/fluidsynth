@@ -35,8 +35,6 @@
 #include "fluid_mdriver.h"
 #include "fluid_settings.h"
 
-#if JACK_SUPPORT
-
 #include <jack/jack.h>
 
 #include "config.h"
@@ -563,5 +561,3 @@ fluid_jack_audio_driver_shutdown(void *arg)
   FLUID_LOG(FLUID_ERR, "Help! Lost the connection to the JACK server");
 /*   exit (1); */
 }
-
-#endif

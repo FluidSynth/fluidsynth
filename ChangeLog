@@ -1,4 +1,22 @@
+2003-06-17  Josh Green  <jgreen@users.sourceforge.net>
+
+	Release version 1.0.2
+	Added Makefile.am files where lacking.
+
+	* Makefile.am: Fixes to "make dist" target by adding macbuild, sf2
+	and winbuild to SUBDIRS also removed acconfig.h from EXTRA_DIST.
+	* acinclude.m4: Removed AC_JACK, now using pkgconfig.
+	* configure.ac: Updated to version 1.0.2, Jack test now using
+	pkgconfig and built by default if found, coreaudio driver now built
+	by default if found.
+	* doc/Makefile.am: Added Doxyfile, example.c, example.sf2, fluidsynth.1
+	and fluidsynth-v10-devdoc.xml to EXTRA_DIST.
+	* src/Makefile.am: fluid_jack.c now conditionally built, fluid_sse.h
+	added to EXTRA_DIST.
+	* src/fluid_jack.c: #if JACK_SUPPORT removed as its not needed.
+
 2003-06-15  Josh Green  <jgreen@users.sourceforge.net>
+
 	* configure.ac: Fixed detection of CoreAudio by looking for
 	CoreAudio/AudioHardware.h.
 	* src/Makefile.am: Added COREAUDIO_CFLAGS and COREAUDIO_LIBS.
@@ -11,6 +29,7 @@
 	* fluidsynth_priv.h: Added "#define WITHOUT_SERVER 1" to Darwin build.
 
 2003-06-12  Josh Green  <jgreen@users.sourceforge.net>
+
 	* Makefile.am: Added autogen.sh to EXTRA_DIST
 	* acinclude.m4: Added AM_PATH_READLINE macro for readline detection
 	and prefix configuration.

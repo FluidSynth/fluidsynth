@@ -37,51 +37,6 @@ AC_DEFUN(AC_MIDISHARE,
 ])
 
 
-AC_DEFUN(AC_JACK,
-[
-
-  jack_support=no
-
-  AC_ARG_ENABLE(jack-support,
-    [  --enable-jack-support   Compile JACK support],
-    [jack_support=$enableval])
-
-
-  JACK_SUPPORT=0 
-
-  if test "x$jack_support" != "xno"; then
-
-    AC_CHECK_HEADERS(jack/jack.h)
-
-    if test "${ac_cv_header_jack_jack_h}" = "yes"; then
-
-    dnl jack-0.6.? and above are dependent on librt.
-    rt_lib_arg=-lrt
- 	AC_CHECK_LIB([rt], [shm_open],, [rt_lib_arg=])
-
- 	if test "x$rt_lib_arg" = "x" ; then
-       	    AC_MSG_WARN([ *** Could not find the required rt library.  Newer versions of JACK depend on it])
- 	fi
- 
-	jack_found=yes
- 	AC_CHECK_LIB([jack], [jack_client_new],, [jack_found=no], $rt_lib_arg)
- 
- 	if test "x$jack_found" = "xyes" ; then
- 	    JACK_SUPPORT=1
- 	    AC_DEFINE(JACK_SUPPORT, 1, [Define to enable JACK driver])
-	fi
- 
- 	if test "x$jack_found" = "xno" ; then
-       	    AC_MSG_WARN([ *** Could not find the required JACK library])
- 	fi dnl  jack_found = yes test
- 
-     else
-         AC_MSG_WARN([ *** Could not find jack.h, disabling JACK driver])
-     fi	dnl  jack.h header test
-   fi	dnl  enable_jack_support != no?
-])
-
-
 dnl Copied from Josh Green's Smurf SoundFont Editor
 dnl   Peter Hanappe, 21/05/2001
 dnl
