@@ -1178,8 +1178,6 @@ int fluid_player_load(fluid_player_t* player, char *filename)
 int fluid_player_callback(void* data, unsigned int msec)
 {
 	int i;
-	unsigned int ticks;
-	unsigned int delta_ticks;
 	int status = FLUID_PLAYER_DONE;
 	fluid_player_t* player;
 	fluid_synth_t* synth;
@@ -1202,7 +1200,10 @@ int fluid_player_callback(void* data, unsigned int msec)
 
 		if (fluid_player_load(player, player->current_file) == FLUID_OK) {
 
+			player->begin_msec = msec;
 			player->start_msec = msec;
+			player->start_ticks = 0;
+			player->cur_ticks = 0;
 
 			for (i = 0; i < player->ntracks; i++) {
 				if (player->track[i] != NULL) {
@@ -1215,12 +1216,14 @@ int fluid_player_callback(void* data, unsigned int msec)
 		}
 	}
 
-	ticks = (unsigned int) (((double) msec - (double) player->start_msec) / player->deltatime);
+	player->cur_msec = msec;
+	player->cur_ticks = (player->start_ticks + 
+			     (int) ((double) (player->cur_msec - player->start_msec) / player->deltatime));
 	
 	for (i = 0; i < player->ntracks; i++) {
 		if (!fluid_track_eot(player->track[i])) {
 			status = FLUID_PLAYER_PLAYING;
-			if (fluid_track_send_events(player->track[i], synth, player, ticks) != FLUID_OK) {
+			if (fluid_track_send_events(player->track[i], synth, player, player->cur_ticks) != FLUID_OK) {
 				/* */
 			}
 		}
@@ -1230,7 +1233,7 @@ int fluid_player_callback(void* data, unsigned int msec)
 
 	if (player->status == FLUID_PLAYER_DONE) {
 		FLUID_LOG(FLUID_DBG, "%s: %d: Duration=%.3f sec", 
-			  __FILE__, __LINE__, (msec - player->start_msec) / 1000.0);
+			  __FILE__, __LINE__, (msec - player->begin_msec) / 1000.0);
 		player->current_file = NULL;    
 	}
 
@@ -1289,9 +1292,11 @@ int fluid_player_set_midi_tempo(fluid_player_t* player, int tempo)
 {
 	player->miditempo = tempo;
 	player->deltatime = (double) tempo / player->division / 1000.0; /* in milliseconds */
-
-	FLUID_LOG(FLUID_DBG,"tempo=%d", tempo);
-	FLUID_LOG(FLUID_DBG,"tick time=%f msec", player->deltatime);
+	player->start_msec = player->cur_msec;
+	player->start_ticks = player->cur_ticks;
+	
+	FLUID_LOG(FLUID_DBG,"tempo=%d, tick time=%f msec, cur time=%d msec, cur tick=%d", 
+		  tempo, player->deltatime, player->cur_msec, player->cur_ticks);
 
 	return FLUID_OK;
 }

@@ -62,12 +62,12 @@ int fluid_istream_readline(fluid_istream_t in, char* prompt, char* buf, int len)
     buf[len - 1] = 0;
     
     free(line);
-    return 0;
+    return 1;
   } else {
     return fluid_istream_gets(in, buf, len);
   }
 #else
-    return fluid_istream_gets(in, buf, len);
+  return fluid_istream_gets(in, buf, len);
 #endif
 }
 
@@ -90,7 +90,7 @@ int fluid_istream_gets(fluid_istream_t in, char* buf, int len)
     }
     if ((c == '\n') || (c == '\r')) {
       *buf++ = 0;
-      return 0;      
+      return 1;      
     }
     *buf++ = c;
   }

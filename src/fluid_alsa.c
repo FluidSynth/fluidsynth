@@ -59,7 +59,7 @@ extern cca_client_t * fluid_cca_client;
 #define ALSA_RAWMIDI_SCHED_PRIORITY 90
 #define ALSA_SEQ_SCHED_PRIORITY 90
 
-/** fluid_oss_audio_driver_t
+/** fluid_alsa_audio_driver_t
  * 
  * This structure should not be accessed directly. Use audio port
  * functions instead.  
@@ -348,7 +348,7 @@ new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
 
     /* SCHED_FIFO will not be active without setting the priority */
     priority.sched_priority = (sched == SCHED_FIFO) ? ALSA_PCM_SCHED_PRIORITY : 0;
-    pthread_attr_setschedparam (&attr, &priority);
+    pthread_attr_setschedparam(&attr, &priority);
 
     err = pthread_create(&dev->thread, &attr, fluid_alsa_formats[i].run, (void*) dev);
     if (err) {
@@ -397,6 +397,8 @@ int delete_fluid_alsa_audio_driver(fluid_audio_driver_t* p)
       snd_pcm_drop(dev->pcm);
     }
   }
+
+  FLUID_FREE(dev);
 
   return FLUID_OK;
 }
@@ -524,14 +526,14 @@ static void* fluid_alsa_audio_run_s16(void* d)
     (*dev->callback)(dev->data, buffer_size, 0, NULL, 2, handle);
 
     for (i = 0, k = 0; i < buffer_size; i++, k += 2) {
-      s = 32768.0 * left[i];
-      fluid_clip(s, -32768.0, 32767.0);
+      s = 32768.0f * left[i];
+      fluid_clip(s, -32768.0f, 32767.0f);
       buf[k] = (short) s;
     }
 
     for (i = 0, k = 1; i < buffer_size; i++, k += 2) {
-      s = 32768.0 * right[i];
-      fluid_clip(s, -32768.0, 32767.0);
+      s = 32768.0f * right[i];
+      fluid_clip(s, -32768.0f, 32767.0f);
       buf[k] = (short) s;
     }
     

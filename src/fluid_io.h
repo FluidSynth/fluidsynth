@@ -25,7 +25,7 @@
 
 /** Read a line from the input stream. 
     
-   \returns 0 if no error, non zero otherwise 
+   \returns 0 if end-of-stream, -1 if error, non zero otherwise 
 */
 int fluid_istream_readline(fluid_istream_t in, char* prompt, char* buf, int len);
 

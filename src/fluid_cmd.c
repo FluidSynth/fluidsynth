@@ -267,6 +267,7 @@ int fluid_shell_run(fluid_shell_t* shell)
   char* prompt = "";
   int cont = 1;
   int errors = 0;
+  int n;
 
   if (shell->settings) {
     fluid_settings_getstr(shell->settings, "shell.prompt", &prompt);
@@ -275,7 +276,9 @@ int fluid_shell_run(fluid_shell_t* shell)
   /* handle user input */
   while (cont) {
     
-    if (fluid_istream_readline(shell->in, prompt, workline, FLUID_WORKLINELENGTH) != 0) {
+    n = fluid_istream_readline(shell->in, prompt, workline, FLUID_WORKLINELENGTH);
+
+    if (n < 0) {
       break;
     }
 
@@ -300,6 +303,10 @@ int fluid_shell_run(fluid_shell_t* shell)
       cont = 0;
       break;
     }
+
+    if (n == 0) {
+       break;
+    }
   }
 
   return errors;
@@ -321,9 +328,9 @@ fluid_source(fluid_cmd_handler_t* handler, char* filename)
   fluid_shell_t shell;
 
 #ifdef WIN32 
-  file = _open(filename, _O_WRONLY);
+  file = _open(filename, _O_RDONLY);
 #else
-  file = open(filename, O_WRONLY);
+  file = open(filename, O_RDONLY);
 #endif
   if (file < 0) {
     return file;

@@ -159,7 +159,7 @@ int fluid_defsfont_sfont_iteration_next(fluid_sfont_t* sfont, fluid_preset_t* pr
 int fluid_defpreset_preset_delete(fluid_preset_t* preset)
 {
   FLUID_FREE(preset);
-  printf("TODO: free modulators\n"); 
+/*   printf("TODO: free modulators\n");  */
   return 0;
 }
 

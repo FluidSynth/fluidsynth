@@ -30,7 +30,7 @@ fluid_strtok_t* new_fluid_strtok(char* s, char* d)
   fluid_strtok_t* st;
   st = FLUID_NEW(fluid_strtok_t);
   if (st == NULL) {
-    printf("Out of memory");
+    FLUID_LOG(FLUID_ERR, "Out of memory");
     return NULL;
   }
   /* Careful! the strings are not copied for speed */
@@ -44,7 +44,7 @@ fluid_strtok_t* new_fluid_strtok(char* s, char* d)
 int delete_fluid_strtok(fluid_strtok_t* st) 
 {
   if (st == NULL) {
-    printf("Null pointer");
+    FLUID_LOG(FLUID_ERR, "Null pointer");
     return 0;
   }
   free(st);
@@ -66,7 +66,7 @@ char* fluid_strtok_next_token(fluid_strtok_t* st)
   int start = st->offset;
   int end;
   if ((st == NULL) || (st->string == NULL) || (st->delimiters == NULL)) {
-    printf("Null pointer");
+    FLUID_LOG(FLUID_ERR, "Null pointer");
     return NULL;
   }
   if (start >= st->len) {
@@ -94,7 +94,7 @@ int fluid_strtok_has_more(fluid_strtok_t* st)
 {
   int cur = st->offset;
   if ((st == NULL) || (st->string == NULL) || (st->delimiters == NULL)) {
-    printf("Null pointer");
+    FLUID_LOG(FLUID_ERR, "Null pointer");
     return -1;
   }
   while (cur < st->len) {
@@ -110,7 +110,7 @@ int fluid_strtok_char_index(char c, char* s)
 {
   int i;
   if (s == NULL) {
-    printf("Null pointer");
+    FLUID_LOG(FLUID_ERR, "Null pointer");
     return -1;
   }
   for (i = 0; s[i] != 0; i++) {

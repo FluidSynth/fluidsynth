@@ -30,7 +30,7 @@
  * is close enough to denormal level, the macro forces the number to
  * 0.0f.  The original macro is:
  *
- * # define undenormalise(sample) if(((*(unsigned int*)&sample)&0x7f800000)==0) sample=0.0f
+ * #define undenormalise(sample) if(((*(unsigned int*)&sample)&0x7f800000)==0) sample=0.0f
  *
  * This will zero out a number when it reaches the denormal level.
  * Advantage: Maximum dynamic range Disadvantage: We'll have to check
@@ -58,8 +58,9 @@
  */
 
 
-//#define DC_OFFSET 1e-6
-#define DC_OFFSET 0.001f
+//#define DC_OFFSET 0
+#define DC_OFFSET 1e-8
+//#define DC_OFFSET 0.001f
 typedef struct _fluid_allpass fluid_allpass;
 typedef struct _fluid_comb fluid_comb;
 
@@ -206,10 +207,11 @@ fluid_comb_getfeedback(fluid_comb* comb)
   _output += _tmp; \
 }
 
-/*  fluid_real_t fluid_comb_process(fluid_comb* comb, fluid_real_t input) */
-/*  { */
+/* fluid_real_t fluid_comb_process(fluid_comb* comb, fluid_real_t input) */
+/* { */
 /*    fluid_real_t output; */
-/*    fluid_real_t output = comb->buffer[comb->bufidx]; */
+
+/*    output = comb->buffer[comb->bufidx]; */
 /*    undenormalise(output); */
 /*    comb->filterstore = (output * comb->damp2) + (comb->filterstore * comb->damp1); */
 /*    undenormalise(comb->filterstore); */
@@ -217,18 +219,20 @@ fluid_comb_getfeedback(fluid_comb* comb)
 /*    if (++comb->bufidx >= comb->bufsize) { */
 /*      comb->bufidx = 0; */
 /*    } */
+
 /*    return output; */
-/*  } */
+/* } */
 
 #define numcombs 8
 #define numallpasses 4
-#define scalewet 0.06f
+#define	fixedgain 0.015f
+#define scalewet 3.0f
 #define scaledamp 0.4f
 #define scaleroom 0.28f
 #define offsetroom 0.7f
 #define initialroom 0.5f
 #define initialdamp 0.5f
-#define initialwet 1 / scalewet
+#define initialwet 1
 #define initialdry 0
 #define initialwidth 1
 #define stereospread 23
@@ -265,10 +269,11 @@ fluid_comb_getfeedback(fluid_comb* comb)
 #define allpasstuningR4 225 + stereospread
 
 struct _fluid_revmodel_t {
-  fluid_real_t roomsize,roomsize1;
-  fluid_real_t damp,damp1;
+  fluid_real_t roomsize;
+  fluid_real_t damp;
   fluid_real_t wet, wet1, wet2;
   fluid_real_t width;
+  fluid_real_t gain;
   /*
    The following are all declared inline 
    to remove the need for dynamic allocation
@@ -361,9 +366,10 @@ new_fluid_revmodel()
   rev->damp = initialdamp * scaledamp;
   rev->wet = initialwet * scalewet;
   rev->width = initialwidth;
+  rev->gain = fixedgain;
 
   /* now its okay to update reverb */
-  fluid_revmodel_update (rev);
+  fluid_revmodel_update(rev);
 
   /* Clear all buffers */
   fluid_revmodel_init(rev);
@@ -406,7 +412,12 @@ fluid_revmodel_processreplace(fluid_revmodel_t* rev, fluid_real_t *in,
   for (k = 0; k < FLUID_BUFSIZE; k++) {
 
     outL = outR = 0;
-    input = in[k] + DC_OFFSET;
+    
+    /* The original Freeverb code expects a stereo signal and 'input'
+     * is set to the sum of the left and right input sample. Since
+     * this code works on a mono signal, 'input' is set to twice the
+     * input sample. */
+    input = (2 * in[k] + DC_OFFSET) * rev->gain;
 
     /* Accumulate comb filters in parallel */
     for (i = 0; i < numcombs; i++) {
@@ -439,12 +450,17 @@ fluid_revmodel_processmix(fluid_revmodel_t* rev, fluid_real_t *in,
   for (k = 0; k < FLUID_BUFSIZE; k++) {
 
     outL = outR = 0;
-    input = in[k] + DC_OFFSET;
+    
+    /* The original Freeverb code expects a stereo signal and 'input'
+     * is set to the sum of the left and right input sample. Since
+     * this code works on a mono signal, 'input' is set to twice the
+     * input sample. */
+    input = (2 * in[k] + DC_OFFSET) * rev->gain;
 
     /* Accumulate comb filters in parallel */
     for (i = 0; i < numcombs; i++) {
-      fluid_comb_process(rev->combL[i], input, outL);
-      fluid_comb_process(rev->combR[i], input, outR);
+	    fluid_comb_process(rev->combL[i], input, outL);
+	    fluid_comb_process(rev->combR[i], input, outR);
     }
     /* Feed through allpasses in series */
     for (i = 0; i < numallpasses; i++) {
@@ -467,19 +483,17 @@ fluid_revmodel_update(fluid_revmodel_t* rev)
 {
   /* Recalculate internal values after parameter change */
   int i;
+
   rev->wet1 = rev->wet * (rev->width / 2 + 0.5f);
   rev->wet2 = rev->wet * ((1 - rev->width) / 2);
 
-  rev->roomsize1 = rev->roomsize;
-  rev->damp1 = rev->damp;
-
   for (i = 0; i < numcombs; i++) {
-    fluid_comb_setfeedback(&rev->combL[i], rev->roomsize1);
-    fluid_comb_setfeedback(&rev->combR[i], rev->roomsize1);
+    fluid_comb_setfeedback(&rev->combL[i], rev->roomsize);
+    fluid_comb_setfeedback(&rev->combR[i], rev->roomsize);
   }
   for (i = 0; i < numcombs; i++) {
-    fluid_comb_setdamp(&rev->combL[i], rev->damp1);
-    fluid_comb_setdamp(&rev->combR[i], rev->damp1);
+    fluid_comb_setdamp(&rev->combL[i], rev->damp);
+    fluid_comb_setdamp(&rev->combR[i], rev->damp);
   }
 }
 
@@ -521,8 +535,8 @@ void
 fluid_revmodel_setlevel(fluid_revmodel_t* rev, fluid_real_t value)
 {
 /*   fluid_clip(value, 0.0f, 1.0f); */
-  rev->wet = value * scalewet;
-  fluid_revmodel_update(rev);
+/*   rev->wet = value * scalewet; */
+/*   fluid_revmodel_update(rev); */
 }
 
 fluid_real_t 

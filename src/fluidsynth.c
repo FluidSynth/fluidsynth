@@ -162,6 +162,7 @@ int main(int argc, char** argv)
   char* midi_id = NULL;
   char* midi_driver = NULL;
   char* midi_device = NULL;
+  char* file = NULL;
   int audio_groups = 0;
   int audio_channels = 0;
   int with_server = 0;
@@ -196,6 +197,7 @@ int main(int argc, char** argv)
       {"audio-bufsize", 1, 0, 'z'},
       {"audio-bufcount", 1, 0, 'c'},
       {"sample-rate", 1, 0, 'r'},
+      {"disable-ladcca", 1, 0, 'f'},
       {"disable-ladcca", 0, 0, 'l'},
       {"verbose", 0, 0, 'v'},
       {"reverb", 1, 0, 'R'},
@@ -210,7 +212,7 @@ int main(int argc, char** argv)
       {0, 0, 0, 0}
     };
 
-    c = getopt_long(argc, argv, "vnixdhVsplm:K:L:M:a:A:s:z:c:R:C:r:G:o:g:j", 
+    c = getopt_long(argc, argv, "vnixdhVsplf:m:K:L:M:a:A:s:z:c:R:C:r:G:o:g:j", 
 		    long_options, &option_index);
     if (c == -1) {
       break;
@@ -244,6 +246,9 @@ int main(int argc, char** argv)
       break;
     case 'r':
       fluid_settings_setnum(settings, "synth.sample-rate", atof(optarg));
+      break;
+    case 'f':
+      file = optarg;
       break;
     case 'l':			/* disable LADCCA */
       ladcca_connect = 0;
@@ -357,6 +362,11 @@ int main(int argc, char** argv)
 	  fluid_settings_setnum(settings, "synth.sample-rate", atof(argv[i]));
 	} else {
 	  printf ("Option -r requires an argument\n");	  
+	}
+	break;
+      case 'f':
+	if (++i < argc) {
+	  file = argv[i];
 	}
 	break;
       case 'l':			/* disable LADCCA */
@@ -478,7 +488,9 @@ int main(int argc, char** argv)
   }
 
   /* try to load the user or system configuration */
-  if (fluid_get_userconf(buf, 512) != NULL) {
+  if (file != NULL) {
+    fluid_source(cmd_handler, file);
+  } else if (fluid_get_userconf(buf, 512) != NULL) {
     fluid_source(cmd_handler, buf);
   } else if (fluid_get_sysconf(buf, 512) != NULL) {
     fluid_source(cmd_handler, buf);

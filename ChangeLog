@@ -1,4 +1,61 @@
+2004-03-29    Peter Hanappe <peter@hanappe.com>
+
+	* src/fluid_jack.c (new_fluid_jack_audio_driver2): Testing the
+	number of ports before allocating them.
+	(fluid_jack_audio_driver_settings): Registering
+	the "audio.jack.autoconnect" setting.
+
+	* src/fluid_midi.c (fluid_player_set_midi_tempo): Tempo changes
+	handled correctly. Was broken after fix on [2004-03-22] (see
+	below).
+
+	* src/fluid_strtok.c (fluid_strtok_char_index): Removed printf's
+	from fluid_strtok.c
+
+2004-03-26    Peter Hanappe <peter@hanappe.com>
+
+	* bindings/README: Imported the fluidsynth_jni and fluidmax
+	projects.
+	
+2004-03-25    Peter Hanappe <peter@hanappe.com>
+
+	* src/fluid_rev.c (new_fluid_revmodel): Added 'gain', similar as
+	in Freeverb 3. Using same 'wetscale' as Freeverb 3, but fixing
+	'wet' to 3. fluid_revmodel_setlevel() does not change the value of
+	'wet': The 'wet' level can be controlled with the 'reverb send'.
+	(fluid_revmodel_processreplace): The input is multiplied by 2 and
+	by the gain. This corresponds to the channel mixing and scaling
+	that Freeverb 3 does.
+
+2004-03-24    Peter Hanappe <peter@hanappe.com>
+
+	* src/fluidsynth.c (main): Added the -f switch. Passing "-f file"
+	on the command line tells fluidsynth to read parse the file and
+	execute and commands.  
+	(main): User config and system config file are now loaded correctly
+
+	* src/fluid_cmd.c (fluid_shell_run): the shell doesn't get stuck
+	and loop on an emtpy string when the end of the stream is reached.
+
+	* src/fluid_io.c (fluid_istream_gets): fluid_istream_gets()
+	returns 0 if the end of the stream was reached and -1 on error.
+
+	* src/fluid_cmd.c (fluid_source): Fixed bug in "file =
+	open(filename, FLAGS);" (I shouldn't pass O_WRONLY when what I
+	want is O_RDONLY!)
+
+2004-03-23    Peter Hanappe <peter@hanappe.com>
+
+	* src/fluid_aufile.c (new_fluid_file_audio_driver): Added
+	fluid_aufile.c. This file implements a audio driver that writes
+	the audio output to a file. This driver is NOT real-time and is
+	currently useful for testing purposes only (not even useful to
+	play MIDI files).
+
 2004-03-22  Peter Hanappe <peter@hanappe.com>
+
+	* src/fluid_synth.c (new_fluid_synth): Removed the synth->busy
+	mutex. I don't think it is necessary; to be discussed.
 
 	* src/fluid_midi.c (fluid_player_callback): Fixed the timing in
 	the MIDI playback. The current MIDI tick in every timer callback
@@ -40,7 +97,8 @@
 	incomplete. It didn't check if the event was the last in the list,
 	and the looping through the list didn't update the prev pointer. I
 	added muteces to the sequencer. Events are dynamically allocated
-	if no free events are available. 
+	if no free events are available. The sequencer is protected by a
+	mutex.
  
 2003-11-14  Josh Green  <jgreen@users.sourceforge.net>
 	* src/fluidsynth.c: Removed CCA_Use_Jack and CCA_Use_Alsa flags
@@ -189,8 +247,9 @@
 
 2003-05-29  root  <mn@bongo>
 
-	* src/fluid_synth.c (fluid_synth_one_block): Added a mutex that provides a small degree of 
-	protection against noteons / noteoffs, when the audio thread is working.
+	* src/fluid_synth.c (fluid_synth_one_block): Added a mutex that
+	provides a small degree of protection against noteons / noteoffs,
+	when the audio thread is working.
 
 	* src/fluid_synth.h (struct _fluid_synth_t): 
 

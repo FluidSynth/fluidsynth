@@ -71,7 +71,7 @@ void fluid_voice_config()
 
 #ifdef ENABLE_SSE
   sse_t* sse_a;
-  interp_coeff_sse=(sse_t*)FLUID_ALIGN16BYTE(&interp_coeff_sse_mem);
+  interp_coeff_sse = (sse_t*)FLUID_ALIGN16BYTE(&interp_coeff_sse_mem);
 #endif
 
   /* Initialize the coefficients for the interpolation. The math comes
@@ -133,7 +133,7 @@ void fluid_voice_config()
  * new_fluid_voice
  */ 
 fluid_voice_t* 
-new_fluid_voice(fluid_real_t sample_rate)
+new_fluid_voice(fluid_real_t output_rate)
 {
   fluid_voice_t* voice;
   voice = FLUID_NEW(fluid_voice_t);
@@ -147,7 +147,7 @@ new_fluid_voice(fluid_real_t sample_rate)
   voice->vel = 0;
   voice->channel = NULL;
   voice->sample = NULL;
-  voice->sample_rate = sample_rate;
+  voice->output_rate = output_rate;
 
   /* The 'sustain' and 'finished' segments of the volume / modulation
    * envelope are constant. They are never affected by any modulator 
@@ -201,7 +201,7 @@ delete_fluid_voice(fluid_voice_t* voice)
 int 
 fluid_voice_init(fluid_voice_t* voice, fluid_sample_t* sample, 
 		fluid_channel_t* channel, int key, int vel, 
-		unsigned int id, unsigned int start,fluid_real_t gain)
+		unsigned int id, unsigned int start_time, fluid_real_t gain)
 {
   /* Note: The voice parameters will be initialized later, when the
    * generators have been retrieved from the sound font. Here, only
@@ -216,7 +216,7 @@ fluid_voice_init(fluid_voice_t* voice, fluid_sample_t* sample,
   voice->preset = fluid_channel_get_preset(channel);
   voice->mod_count = 0;
   voice->sample = sample;
-  voice->start = start;
+  voice->start_time = start_time;
   voice->ticks = 0;
   voice->debug = 0;
   voice->has_looped = 0; /* Will be set during voice_write when the 2nd loop point is reached */
@@ -523,7 +523,7 @@ fluid_voice_write(fluid_voice_t* voice,
      * the sample loop
      */
 #if 0
-    printf("%i %i %i %i %i %i\n", voice->has_looped, voice->sample->amplitude_that_reaches_noise_floor_is_valid, voice->loop_start, voice->loop_end, voice->sample->loopstart, voice->sample->loopend  );
+    printf("%i %i %i %i %i %i\n", voice->has_looped, voice->sample->amplitude_that_reaches_noise_floor_is_valid, voice->loopstart, voice->loopend, voice->sample->loopstart, voice->sample->loopend  );
 #endif
     
     /* Is the playing pointer already in the loop? */
@@ -595,22 +595,33 @@ fluid_voice_write(fluid_voice_t* voice,
   /* Convert the 'speed' through the original waveform to a
    * representation 'integer part' and 'fractional part' */
   fluid_phase_set_float(dsp_phase_incr, incr);
-  incr *= 1.00000000000001; /* gcc optimization problem. Quick fix. */
+  /* incr *= 1.00000000000001;  FIXME: gcc optimization problem. Quick fix. [Commented out. Don't understand the problem, PH]  */
   fluid_check_fpe("voice_write phase calculation");
 
   /* Check, if we are really making progress through the original
    * sample.  If the step size is rounded to 0, the DSP loop would get
    * stuck. */
-  if (fluid_phase_index(dsp_phase) == 0 && fluid_phase_fract(dsp_phase) == 0){
-      fluid_phase_fract(dsp_phase)=1;
+  /* [PH] I commented this out. The first time a voice is called, dsp_phase
+   * will be zero. Settings the fractionnal part of the phase to
+   * non-zero, causes the sample to be interpolated even if it is
+   * played a the root key (cfr. fluid_dsp_float.c:96: 
+   *  if ((fluid_phase_fract(dsp_phase) == 0))) 
+   *
+   * I replaced it with a check on the phase increment.
+   */
+/*   if ((fluid_phase_index(dsp_phase) == 0) && (fluid_phase_fract(dsp_phase) == 0)) { */
+/*       fluid_phase_fract(dsp_phase) = 1; */
+/*   } */
+  if ((fluid_phase_index(dsp_phase_incr) == 0) && (fluid_phase_fract(dsp_phase_incr) == 0)) {
+      fluid_phase_fract(dsp_phase_incr) = 1;
   }
 
   /*************** resonant filter ******************/
 
   /* calculate the frequency of the resonant filter in Hz */
   fres = fluid_ct2hz(voice->fres 
-		    + voice->modlfo_val * voice->modlfo_to_fc 
-		    + voice->modenv_val * voice->modenv_to_fc);
+		     + voice->modlfo_val * voice->modlfo_to_fc 
+		     + voice->modenv_val * voice->modenv_to_fc);
 
   /* Testcase for filter resonance: Use the following line, and press
    * A3. There should be a _very_ pronounced resonant peak, which
@@ -665,7 +676,7 @@ fluid_voice_write(fluid_voice_t* voice,
      /* both b0 -and- b2 */
      fluid_real_t b02_temp = b1_temp * 0.5f;
 
-     if (voice->filter_startup){
+     if (voice->filter_startup) {
        /* The filter is calculated, because the voice was started up.
 	* In this case set the filter coefficients without delay.
 	*/
@@ -736,7 +747,7 @@ fluid_voice_write(fluid_voice_t* voice,
     /* At which index does the loop point occur in the output buffer?
      * This calculates the first index in the buffer, which uses
      * sample data taken after the looparound. */
-    end_in_buffer = fluid_phase_steps(dsp_phase, voice->loop_end, incr);
+    end_in_buffer = fluid_phase_steps(dsp_phase, voice->loopend, incr);
     
     if (end_in_buffer >= FLUID_BUFSIZE) {
       /* The loop occurs after the end of the buffer. 
@@ -762,9 +773,9 @@ fluid_voice_write(fluid_voice_t* voice,
 #include "fluid_dsp_core.c"
       
 	/* loop */
-	fluid_phase_sub_int(dsp_phase, voice->loop_end - voice->loop_start); 
+	fluid_phase_sub_int(dsp_phase, voice->loopend - voice->loopstart); 
 	start = end_in_buffer;
-	end_in_buffer += fluid_phase_steps(dsp_phase, voice->loop_end, incr);
+	end_in_buffer += fluid_phase_steps(dsp_phase, voice->loopend, incr);
       }
       voice->has_looped=1;
       dsp_start = start;
@@ -776,7 +787,7 @@ fluid_voice_write(fluid_voice_t* voice,
     /* Not looping right now. */
     
     dsp_start = 0;
-    end_in_buffer = fluid_phase_steps(dsp_phase, voice->sample_end, incr);
+    end_in_buffer = fluid_phase_steps(dsp_phase, voice->end, incr);
 
     if (end_in_buffer >= FLUID_BUFSIZE) {
       /* Run the whole buffer at once */
@@ -1042,7 +1053,7 @@ int calculate_hold_decay_buffers(fluid_voice_t* voice, int gen_base,
   /* Each DSP loop processes FLUID_BUFSIZE samples. */
  
   /* round to next full number of buffers */
-  buffers = (int)(((fluid_real_t)voice->sample_rate * seconds) 
+  buffers = (int)(((fluid_real_t)voice->output_rate * seconds) 
 		  / (fluid_real_t)FLUID_BUFSIZE
 		  +0.5);
 
@@ -1130,7 +1141,7 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
     }
     voice->root_pitch = fluid_ct2hz(voice->root_pitch);
     if (voice->sample != NULL) {
-      voice->root_pitch *= (fluid_real_t) voice->sample_rate / voice->sample->samplerate;
+      voice->root_pitch *= (fluid_real_t) voice->output_rate / voice->sample->samplerate;
     }
     break;
 
@@ -1208,7 +1219,7 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
   case GEN_MODLFODELAY:
     x = _GEN(voice, GEN_MODLFODELAY);
     fluid_clip(x, -12000.0f, 5000.0f);
-    voice->modlfo_delay = (unsigned int) (voice->sample_rate * fluid_tc2sec_delay(x));
+    voice->modlfo_delay = (unsigned int) (voice->output_rate * fluid_tc2sec_delay(x));
     break;
 
   case GEN_MODLFOFREQ:
@@ -1217,7 +1228,7 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
      */
     x = _GEN(voice, GEN_MODLFOFREQ);
     fluid_clip(x, -16000.0f, 4500.0f);
-    voice->modlfo_incr = (4.0f * FLUID_BUFSIZE * fluid_act2hz(x) / voice->sample_rate);
+    voice->modlfo_incr = (4.0f * FLUID_BUFSIZE * fluid_act2hz(x) / voice->output_rate);
     break;
 
   case GEN_VIBLFOFREQ:
@@ -1228,13 +1239,13 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
      */
     x = _GEN(voice, GEN_VIBLFOFREQ);
     fluid_clip(x, -16000.0f, 4500.0f);
-    voice->viblfo_incr = (4.0f * FLUID_BUFSIZE * fluid_act2hz(x) / voice->sample_rate);
+    voice->viblfo_incr = (4.0f * FLUID_BUFSIZE * fluid_act2hz(x) / voice->output_rate);
     break;
 		
   case GEN_VIBLFODELAY:
     x = _GEN(voice,GEN_VIBLFODELAY);
     fluid_clip(x, -12000.0f, 5000.0f);
-    voice->viblfo_delay = (unsigned int) (voice->sample_rate * fluid_tc2sec_delay(x));
+    voice->viblfo_delay = (unsigned int) (voice->output_rate * fluid_tc2sec_delay(x));
     break;
 			
   case GEN_VIBLFOTOPITCH:
@@ -1301,7 +1312,7 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
   case GEN_STARTADDROFS:              /* SF2.01 section 8.1.3 # 0 */
   case GEN_STARTADDRCOARSEOFS:        /* SF2.01 section 8.1.3 # 4 */
     if (voice->sample != NULL) {
-      voice->sample_start = (voice->sample->start
+      voice->start = (voice->sample->start
 			     + (int) _GEN(voice, GEN_STARTADDROFS)
 			     + 32768 * (int) _GEN(voice, GEN_STARTADDRCOARSEOFS));
       voice->check_sample_sanity_flag = FLUID_SAMPLESANITY_CHECK;
@@ -1310,7 +1321,7 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
   case GEN_ENDADDROFS:                 /* SF2.01 section 8.1.3 # 1 */
   case GEN_ENDADDRCOARSEOFS:           /* SF2.01 section 8.1.3 # 12 */
     if (voice->sample != NULL) { 
-      voice->sample_end = (voice->sample->end
+      voice->end = (voice->sample->end
 			   + (int) _GEN(voice, GEN_ENDADDROFS)
 			   + 32768 * (int) _GEN(voice, GEN_ENDADDRCOARSEOFS));
       voice->check_sample_sanity_flag = FLUID_SAMPLESANITY_CHECK;
@@ -1319,7 +1330,7 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
   case GEN_STARTLOOPADDROFS:           /* SF2.01 section 8.1.3 # 2 */
   case GEN_STARTLOOPADDRCOARSEOFS:     /* SF2.01 section 8.1.3 # 45 */
     if (voice->sample != NULL) {
-      voice->loop_start = (voice->sample->loopstart
+      voice->loopstart = (voice->sample->loopstart
 				  + (int) _GEN(voice, GEN_STARTLOOPADDROFS)
 				  + 32768 * (int) _GEN(voice, GEN_STARTLOOPADDRCOARSEOFS));
       voice->check_sample_sanity_flag = FLUID_SAMPLESANITY_CHECK;
@@ -1329,7 +1340,7 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
   case GEN_ENDLOOPADDROFS:             /* SF2.01 section 8.1.3 # 3 */
   case GEN_ENDLOOPADDRCOARSEOFS:       /* SF2.01 section 8.1.3 # 50 */
     if (voice->sample != NULL) {
-      voice->loop_end = (voice->sample->loopend
+      voice->loopend = (voice->sample->loopend
 				+ (int) _GEN(voice, GEN_ENDLOOPADDROFS)
 				+ 32768 * (int) _GEN(voice, GEN_ENDLOOPADDRCOARSEOFS));
       voice->check_sample_sanity_flag = FLUID_SAMPLESANITY_CHECK;
@@ -1337,9 +1348,9 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
     break;
 
     /* Conversion functions differ in range limit */
-#define NUM_BUFFERS_DELAY(_v)   (unsigned int) (voice->sample_rate * fluid_tc2sec_delay(_v) / FLUID_BUFSIZE)
-#define NUM_BUFFERS_ATTACK(_v)  (unsigned int) (voice->sample_rate * fluid_tc2sec_attack(_v) / FLUID_BUFSIZE)
-#define NUM_BUFFERS_RELEASE(_v) (unsigned int) (voice->sample_rate * fluid_tc2sec_release(_v) / FLUID_BUFSIZE)
+#define NUM_BUFFERS_DELAY(_v)   (unsigned int) (voice->output_rate * fluid_tc2sec_delay(_v) / FLUID_BUFSIZE)
+#define NUM_BUFFERS_ATTACK(_v)  (unsigned int) (voice->output_rate * fluid_tc2sec_attack(_v) / FLUID_BUFSIZE)
+#define NUM_BUFFERS_RELEASE(_v) (unsigned int) (voice->output_rate * fluid_tc2sec_release(_v) / FLUID_BUFSIZE)
 
     /* volume envelope
      *
@@ -1836,34 +1847,34 @@ void fluid_voice_check_sample_sanity(fluid_voice_t* voice)
 #if 0
     printf("Sample from %i to %i\n",voice->sample->start, voice->sample->end);
     printf("Sample loop from %i %i\n",voice->sample->loopstart, voice->sample->loopend);
-    printf("Playback from %i to %i\n", voice->sample_start, voice->sample_end);
-    printf("Playback loop from %i to %i\n",voice->loop_start, voice->loop_end);
+    printf("Playback from %i to %i\n", voice->start, voice->end);
+    printf("Playback loop from %i to %i\n",voice->loopstart, voice->loopend);
 #endif
 
     /* Keep the start point within the sample data */
-    if (voice->sample_start < min_index_nonloop){
-	voice->sample_start = min_index_nonloop;
-    } else if (voice->sample_start > max_index_nonloop){
-	voice->sample_start = max_index_nonloop;
+    if (voice->start < min_index_nonloop){
+	voice->start = min_index_nonloop;
+    } else if (voice->start > max_index_nonloop){
+	voice->start = max_index_nonloop;
     }
 
     /* Keep the end point within the sample data */
-    if (voice->sample_end < min_index_nonloop){
-      voice->sample_end = min_index_nonloop;
-    } else if (voice->sample_end > max_index_nonloop){
-      voice->sample_end = max_index_nonloop;
+    if (voice->end < min_index_nonloop){
+      voice->end = min_index_nonloop;
+    } else if (voice->end > max_index_nonloop){
+      voice->end = max_index_nonloop;
     }
     
     /* Keep start and end point in the right order */
-    if (voice->sample_start > voice->sample_end){
-	int temp = voice->sample_start;
-	voice->sample_start = voice->sample_end;
-	voice->sample_end = temp;
+    if (voice->start > voice->end){
+	int temp = voice->start;
+	voice->start = voice->end;
+	voice->end = temp;
 	/*FLUID_LOG(FLUID_DBG, "Loop / sample sanity check: Changing order of start / end points!"); */
     }
     
     /* Zero length? */
-    if (voice->sample_start == voice->sample_end){
+    if (voice->start == voice->end){
 	fluid_voice_off(voice);
 	return;
     }
@@ -1871,36 +1882,36 @@ void fluid_voice_check_sample_sanity(fluid_voice_t* voice)
     if ((_SAMPLEMODE(voice) == FLUID_LOOP) 
 	|| (_SAMPLEMODE(voice) == FLUID_LOOP_DURING_RELEASE)) {
 	/* Keep the loop start point within the sample data */
-	if (voice->loop_start < min_index_loop){
-	    voice->loop_start = min_index_loop;
-      } else if (voice->loop_start > max_index_loop){
-	voice->loop_start = max_index_loop;
+	if (voice->loopstart < min_index_loop){
+	    voice->loopstart = min_index_loop;
+      } else if (voice->loopstart > max_index_loop){
+	voice->loopstart = max_index_loop;
       }
       
       /* Keep the loop end point within the sample data */
-      if (voice->loop_end < min_index_loop){
-	voice->loop_end = min_index_loop;
-      } else if (voice->loop_end > max_index_loop){
-	voice->loop_end = max_index_loop;
+      if (voice->loopend < min_index_loop){
+	voice->loopend = min_index_loop;
+      } else if (voice->loopend > max_index_loop){
+	voice->loopend = max_index_loop;
       }
       
       /* Keep loop start and end point in the right order */
-      if (voice->loop_start > voice->loop_end){
-	int temp=voice->loop_start;
-	voice->loop_start=voice->loop_end;
-	voice->loop_end=temp;
+      if (voice->loopstart > voice->loopend){
+	int temp = voice->loopstart;
+	voice->loopstart = voice->loopend;
+	voice->loopend = temp;
 	/*FLUID_LOG(FLUID_DBG, "Loop / sample sanity check: Changing order of loop points!"); */
       }
       
       /* Loop too short? Then don't loop. */
-      if (voice->loop_end < voice->loop_start + FLUID_MIN_LOOP_SIZE){
-	  voice->gen[GEN_SAMPLEMODE].val=FLUID_UNLOOPED;      
+      if (voice->loopend < voice->loopstart + FLUID_MIN_LOOP_SIZE){
+	  voice->gen[GEN_SAMPLEMODE].val = FLUID_UNLOOPED;      
       }      
 
       /* The loop points may have changed. Obtain a new estimate for the loop volume. */
       /* Is the voice loop within the sample loop? */
-      if ((int)voice->loop_start >= (int)voice->sample->loopstart 
-	  && (int)voice->loop_end <= (int)voice->sample->loopend){
+      if ((int)voice->loopstart >= (int)voice->sample->loopstart 
+	  && (int)voice->loopend <= (int)voice->sample->loopend){
 	/* Is there a valid peak amplitude available for the loop? */
 	if (voice->sample->amplitude_that_reaches_noise_floor_is_valid){
 	  voice->amplitude_that_reaches_noise_floor_loop=voice->sample->amplitude_that_reaches_noise_floor / voice->synth_gain;
@@ -1923,7 +1934,7 @@ void fluid_voice_check_sample_sanity(fluid_voice_t* voice)
       
       /* Set the initial phase of the voice (using the result from the
 	 start offset modulators). */
-      fluid_phase_set_int(voice->phase, voice->sample_start);
+      fluid_phase_set_int(voice->phase, voice->start);
     } /* if startup */
     
     /* Is this voice run in loop mode, or does it run straight to the
@@ -1943,18 +1954,18 @@ void fluid_voice_check_sample_sanity(fluid_voice_t* voice)
        * actions required.
        */
       int index_in_sample = fluid_phase_index(voice->phase);
-      if (index_in_sample >= voice->loop_end){
+      if (index_in_sample >= voice->loopend){
 	/* FLUID_LOG(FLUID_DBG, "Loop / sample sanity check: Phase after 2nd loop point!"); */
-	fluid_phase_set_int(voice->phase,voice->loop_start);
+	fluid_phase_set_int(voice->phase,voice->loopstart);
       }
     }
-/*    FLUID_LOG(FLUID_DBG, "Loop / sample sanity check: Sample from %i to %i, loop from %i to %i", voice->sample_start, voice->sample_end, voice->loop_start, voice->loop_end); */
+/*    FLUID_LOG(FLUID_DBG, "Loop / sample sanity check: Sample from %i to %i, loop from %i to %i", voice->start, voice->end, voice->loopstart, voice->loopend); */
    
     /* Sample sanity has been assured. Don't check again, until some
        sample parameter is changed by modulation. */
     voice->check_sample_sanity_flag=0;
 #if 0
-    printf("Sane? playback loop from %i to %i\n",voice->loop_start, voice->loop_end);
+    printf("Sane? playback loop from %i to %i\n", voice->loopstart, voice->loopend);
 #endif
     fluid_check_fpe("voice_check_sample_sanity");
 }
