@@ -30,11 +30,13 @@
 /************************************************************************
  *
  *  versions:
- *    (6): introduced message 'info'
+ *    (8): added message resample permitting to chose resampling interpolation method
+ *    (7): added names for soundfonts (== file name without path and postfix)
+ *    (6): added message 'info'
  *    (5): fixed bogus path translation at file loading
  * 
  */
-#define VERSION "05/2004 (7)"
+#define VERSION "06/2004 (8)"
 
 #include "ftmax.h"
 #include "fluidsynth.h"
@@ -68,6 +70,10 @@ static ftmax_symbol_t sym_presets = NULL;
 static ftmax_symbol_t sym_preset = NULL;
 static ftmax_symbol_t sym_reverb = NULL;
 static ftmax_symbol_t sym_chorus = NULL;
+static ftmax_symbol_t sym_nearest = NULL;
+static ftmax_symbol_t sym_linear = NULL;
+static ftmax_symbol_t sym_cubic = NULL;
+static ftmax_symbol_t sym_sinc = NULL;
 
 /***************************************************************
  *
@@ -681,6 +687,9 @@ fluidmax_bank_select(t_object *o, Symbol *s, short ac, Atom *at)
   if(ac > 0 && ftmax_is_number(at))
   {
     int channel = 1;
+    unsigned int sf_id;
+    unsigned int bank_num;
+    unsigned int prog_num;
     
     if(ac > 1 && ftmax_is_number(at + 1))
     {
@@ -693,6 +702,8 @@ fluidmax_bank_select(t_object *o, Symbol *s, short ac, Atom *at)
     }
       
     fluid_synth_bank_select(self->synth, channel - 1, ftmax_get_number_int(at));
+    fluid_synth_get_program(self->synth, channel - 1, &sf_id, &bank_num, &prog_num);
+    fluid_synth_program_change(self->synth, channel - 1, prog_num);
   }
 }
 
@@ -858,15 +869,53 @@ fluidmax_chorus(t_object *o, Symbol *s, short ac, Atom *at)
 }
 
 static void 
-fluidmax_gain(t_object *o, Symbol *s, short ac, Atom *at)
+fluidmax_set_gain(t_object *o, Symbol *s, short ac, Atom *at)
 {
   fluidmax_t *self = (fluidmax_t *)o;
   
-  if(ac >0 && ftmax_is_number(at))
+  if(ac > 0 && ftmax_is_number(at))
   {
     float gain = ftmax_get_number_float(at);
     
     fluid_synth_set_gain(self->synth, gain);
+  }
+}
+
+static void 
+fluidmax_set_resampling_method(t_object *o, Symbol *s, short ac, Atom *at)
+{
+  fluidmax_t *self = (fluidmax_t *)o;
+  
+  if(ac > 0)
+  {
+    if(ftmax_is_number(at))
+    {
+      int ip = ftmax_get_int(at);
+      
+      if(ip == 0)
+        fluid_synth_set_interp_method(self->synth, -1, FLUID_INTERP_NONE);
+      else if(ip < 3)
+        fluid_synth_set_interp_method(self->synth, -1, FLUID_INTERP_LINEAR);
+      else if(ip < 6)
+        fluid_synth_set_interp_method(self->synth, -1, FLUID_INTERP_4THORDER);
+      else
+        fluid_synth_set_interp_method(self->synth, -1, FLUID_INTERP_7THORDER);
+    }
+    else if(ftmax_is_symbol(at))
+    {
+      ftmax_symbol_t sym = ftmax_get_symbol(at);
+      
+      if(sym == sym_nearest)
+        fluid_synth_set_interp_method(self->synth, -1, FLUID_INTERP_NONE);
+      else if(sym == sym_linear)
+        fluid_synth_set_interp_method(self->synth, -1, FLUID_INTERP_LINEAR);
+      else if(sym == sym_cubic)
+        fluid_synth_set_interp_method(self->synth, -1, FLUID_INTERP_4THORDER);
+      else if(sym == sym_sinc)
+        fluid_synth_set_interp_method(self->synth, -1, FLUID_INTERP_7THORDER);      
+      else
+        error("fluidsynth~: undefined resampling method: %s", ftmax_symbol_name(sym));
+    }
   }
 }
 
@@ -1008,9 +1057,9 @@ fluidmax_print(t_object *o, Symbol *s, short ac, Atom *at)
                 char *preset_str = fluid_preset_get_name(&preset);
                 ftmax_symbol_t preset_name = ftmax_new_symbol(preset_str);
                 int bank_num = fluid_preset_get_banknum(&preset);
-                int preset_num = fluid_preset_get_num(&preset);
+                int prog_num = fluid_preset_get_num(&preset);
                 
-                post("  '%s': bank %d, program %d", ftmax_symbol_name(preset_name), bank_num, preset_num);
+                post("  '%s': bank %d, program %d", ftmax_symbol_name(preset_name), bank_num, prog_num);
               }
             }
           }
@@ -1072,14 +1121,14 @@ fluidmax_print(t_object *o, Symbol *s, short ac, Atom *at)
             ftmax_symbol_t preset_name = ftmax_new_symbol(preset_str);
             unsigned int sf_id;
             unsigned int bank_num;
-            unsigned int preset_num;
+            unsigned int prog_num;
             fluid_sfont_t *sf;
             
-            fluid_synth_get_program(self->synth, i, &sf_id, &bank_num, &preset_num);
+            fluid_synth_get_program(self->synth, i, &sf_id, &bank_num, &prog_num);
             sf = fluid_synth_get_sfont_by_id(self->synth, sf_id);
             
             post("  %d: soundfont '%s', bank %d, program %d: '%s'", 
-              i + 1, ftmax_symbol_name(fluidmax_sfont_get_name(sf)), bank_num, preset_num, ftmax_symbol_name(preset_name));
+              i + 1, ftmax_symbol_name(fluidmax_sfont_get_name(sf)), bank_num, prog_num, ftmax_symbol_name(preset_name));
           }
           else
             post("  channel %d: no preset", i + 1);
@@ -1224,13 +1273,13 @@ fluidmax_info(t_object *o, Symbol *s, short ac, Atom *at)
                 char *preset_str = fluid_preset_get_name(&preset);
                 ftmax_symbol_t preset_name = ftmax_new_symbol(preset_str);
                 int bank_num = fluid_preset_get_banknum(&preset);
-                int preset_num = fluid_preset_get_num(&preset);
+                int prog_num = fluid_preset_get_num(&preset);
                 ftmax_atom_t a[4];
                 
                 ftmax_set_symbol(a , preset_name);
                 ftmax_set_symbol(a + 1, sf_name);
                 ftmax_set_int(a + 2, bank_num);
-                ftmax_set_int(a + 3, preset_num);
+                ftmax_set_int(a + 3, prog_num);
                 outlet_anything(self->outlet, sym_preset, 4, a);
               }
             }
@@ -1291,17 +1340,17 @@ fluidmax_info(t_object *o, Symbol *s, short ac, Atom *at)
           {
             char *preset_str = fluid_preset_get_name(preset);
             ftmax_symbol_t preset_name = ftmax_new_symbol(preset_str);
-            unsigned int sf_id, bank_num, preset_num;
+            unsigned int sf_id, bank_num, prog_num;
             fluid_sfont_t *sf;
             ftmax_atom_t a[5];
             
-            fluid_synth_get_program(self->synth, i, &sf_id, &bank_num, &preset_num);
+            fluid_synth_get_program(self->synth, i, &sf_id, &bank_num, &prog_num);
             sf = fluid_synth_get_sfont_by_id(self->synth, sf_id);
 
             ftmax_set_int(a, i + 1);
             ftmax_set_symbol(a + 1, fluidmax_sfont_get_name(sf));
             ftmax_set_int(a + 2, bank_num);
-            ftmax_set_int(a + 3, preset_num);
+            ftmax_set_int(a + 3, prog_num);
             ftmax_set_symbol(a + 4, preset_name);
             outlet_anything(self->outlet, sym_channel, 5, a);
           }
@@ -1487,7 +1536,8 @@ main(void)
 
   addmess((method)fluidmax_reverb, "reverb", A_GIMME, 0);
   addmess((method)fluidmax_chorus, "chorus", A_GIMME, 0);  
-  addmess((method)fluidmax_gain, "gain", A_GIMME, 0);  
+  addmess((method)fluidmax_set_gain, "gain", A_GIMME, 0);  
+  addmess((method)fluidmax_set_resampling_method, "resample", A_GIMME, 0);  
     
   addmess((method)fluidmax_note, "note", A_GIMME, 0);
   addmess((method)fluidmax_list, "list", A_GIMME, 0);
@@ -1514,6 +1564,11 @@ main(void)
   sym_preset = ftmax_new_symbol("preset");
   sym_reverb = ftmax_new_symbol("reverb");
   sym_chorus = ftmax_new_symbol("chorus");
+  sym_nearest = ftmax_new_symbol("nearest");
+  sym_linear = ftmax_new_symbol("linear");
+  sym_cubic = ftmax_new_symbol("cubic");
+  sym_sinc = ftmax_new_symbol("sinc");
+
   
   fluidmax_version(NULL);
 }
