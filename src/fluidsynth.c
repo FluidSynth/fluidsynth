@@ -235,10 +235,10 @@ int main(int argc, char** argv)
       fluid_settings_setint(settings, "audio.jack.autoconnect", 1);
       break;
     case 'z':
-      fluid_settings_setint(settings, "audio.period-size", atof(optarg));
+      fluid_settings_setint(settings, "audio.period-size", atoi(optarg));
       break;
     case 'c':
-      fluid_settings_setint(settings, "audio.periods", atof(optarg));
+      fluid_settings_setint(settings, "audio.periods", atoi(optarg));
       break;
     case 'g':
       fluid_settings_setnum(settings, "synth.gain", atof(optarg));
@@ -429,17 +429,12 @@ int main(int argc, char** argv)
     
     flags = CCA_Config_Data_Set | CCA_Terminal;
 
-#ifdef JACK_SUPPORT    
-    fluid_settings_getstr (settings, "audio.driver", &str);
-    if (str && strcmp (str, "jack") == 0)
+    if (fluid_settings_str_equal(settings, "audio.driver", "jack")) {
       flags |= CCA_Use_Jack;
-#endif /* JACK_SUPPORT */
-
-#ifdef ALSA_SUPPORT
-    fluid_settings_getstr (settings, "midi.driver", &str);
-    if (str && strcmp (str, "alsa_seq") == 0)
+    }
+    if (fluid_settings_str_equal(settings, "midi.driver", "alsa_seq")) {
       flags |= CCA_Use_Alsa;
-#endif /* ALSA_SUPPORT */
+    }
     
     fluid_cca_client = cca_init (cca_args, "FluidSynth", flags, CCA_PROTOCOL (1,1));
     
