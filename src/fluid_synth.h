@@ -59,10 +59,10 @@
  *                         ENUM
  */
 enum fluid_loop {
-  FLUID_UNLOOPED,
-  FLUID_LOOP_DURING_RELEASE,
-  FLUID_NOTUSED,
-  FLUID_LOOP
+  FLUID_UNLOOPED = 0,
+  FLUID_LOOP_DURING_RELEASE = 1,
+  FLUID_NOTUSED = 2,
+  FLUID_LOOP_UNTIL_RELEASE = 3
 };
 
 enum fluid_synth_status
@@ -103,13 +103,14 @@ struct _fluid_synth_t
   fluid_list_t* unloading;            /** the soundfonts that need to be unloaded */
 #endif
 
-  double gain;                       /** master gain */
+  double gain;                        /** master gain */
   fluid_channel_t** channel;          /** the channels */
-  int num_channels;                  /** the number of channels */
-  int nvoice;                        /** the length of the synthesis process array */
+  int num_channels;                   /** the number of channels */
+  int nvoice;                         /** the length of the synthesis process array */
   fluid_voice_t** voice;              /** the synthesis processes */
-  unsigned int noteid;               /** the id is incremented for every new note. it's used for noteoff's  */
-  int nbuf;                          /** How many audio buffers are used? (depends on nr of audio channels / groups)*/
+  unsigned int noteid;                /** the id is incremented for every new note. it's used for noteoff's  */
+  unsigned int storeid;               
+  int nbuf;                           /** How many audio buffers are used? (depends on nr of audio channels / groups)*/
 
   fluid_real_t** left_buf;
   fluid_real_t** right_buf;
@@ -132,7 +133,7 @@ struct _fluid_synth_t
   fluid_tuning_t* cur_tuning;         /** current tuning in the iteration */ 
 
   fluid_midi_router_t* midi_router;     /* The midi router. Could be done nicer. */
-	/*fluid_mutex_t busy;*/                   /* Indicates, whether the audio thread is currently running. 
+  fluid_mutex_t busy;                   /* Indicates, whether the audio thread is currently running. 
 					 * Note: This simple scheme does -not- provide 100 % protection against
 					 * thread problems, for example from MIDI thread and shell thread
 					 */

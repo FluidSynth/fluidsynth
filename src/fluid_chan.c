@@ -318,8 +318,8 @@ fluid_channel_get_num(fluid_channel_t* chan)
  */
 void fluid_channel_set_interp_method(fluid_channel_t* chan, int new_method)
 {
-  chan->interp_method=new_method;
-};
+  chan->interp_method = new_method;
+}
 
 /* Purpose:
  * Returns the index of the interpolation method used on this channel,
@@ -328,7 +328,7 @@ void fluid_channel_set_interp_method(fluid_channel_t* chan, int new_method)
 int fluid_channel_get_interp_method(fluid_channel_t* chan)
 {
   return chan->interp_method;
-};
+}
 
 unsigned int fluid_channel_get_sfontnum(fluid_channel_t* chan)
 {

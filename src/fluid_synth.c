@@ -352,7 +352,7 @@ new_fluid_synth(fluid_settings_t *settings)
   }
   FLUID_MEMSET(synth, 0, sizeof(fluid_synth_t));
   
-/*   fluid_mutex_init(synth->busy); */
+  fluid_mutex_init(synth->busy);
 
   synth->settings = settings;
 
@@ -375,14 +375,13 @@ new_fluid_synth(fluid_settings_t *settings)
 			      (fluid_num_update_t) fluid_synth_update_gain, synth);
 
   /* do some basic sanity checking on the settings */
-  if (synth->midi_channels < 16) {
-    FLUID_LOG(FLUID_WARN, "Requested number of MIDI channels is smaller than 16. " 
-	     "Changing this setting to 16."); 
-    synth->midi_channels = 16;
-  } else if (synth->midi_channels > 1024) {
-    FLUID_LOG(FLUID_WARN, "Requested number of MIDI channels is too big (%d). " 
-	     "Limiting this setting to 1024.", synth->midi_channels); 
-    synth->midi_channels = 1024;
+
+  if (synth->midi_channels % 16 != 0) {
+    int n = synth->midi_channels / 16;
+    synth->midi_channels = (n + 1) * 16;
+    fluid_settings_setint(settings, "synth.midi-channels", synth->midi_channels);
+    FLUID_LOG(FLUID_WARN, "Requested number of MIDI channels is not a multiple of 16. " 
+	     "I'll increase the number of channels to the next multiple."); 
   }
 
   if (synth->audio_channels < 1) {
@@ -695,7 +694,8 @@ delete_fluid_synth(fluid_synth_t* synth)
   FLUID_FREE(synth->LADSPA_FxUnit);
 #endif
   
-/*   fluid_mutex_destroy(synth->busy);   */
+  fluid_mutex_destroy(synth->busy);
+
   FLUID_FREE(synth);
 
   return FLUID_OK;
@@ -720,32 +720,18 @@ int
 fluid_synth_noteon(fluid_synth_t* synth, int chan, int key, int vel) 
 {
   fluid_channel_t* channel;
-  int r;
-/*   fluid_mutex_lock(synth->busy); /\* Don't interfere with the audio thread *\/ */
-/*   fluid_mutex_unlock(synth->busy); */
+  int r = FLUID_FAILED;
 
   /* check the ranges of the arguments */
   if ((chan < 0) || (chan >= synth->midi_channels)) {
     FLUID_LOG(FLUID_WARN, "Channel out of range");
-    return FLUID_FAILED;     
-  }
-
-  if ((key < 0) || (key >= 128)) {
-    FLUID_LOG(FLUID_WARN, "Key out of range");
-    return FLUID_FAILED;     
-  }
-
-  if ((vel < 0) || (vel >= 128)) {
-    FLUID_LOG(FLUID_WARN, "Velocity out of range");
-    return FLUID_FAILED;     
+    return FLUID_FAILED;
   }
 
   /* notes with velocity zero go to noteoff  */
   if (vel == 0) {
     return fluid_synth_noteoff(synth, chan, key);
   }
-
-  synth->noteid++;
 
   channel = synth->channel[chan];
 
@@ -758,12 +744,10 @@ fluid_synth_noteon(fluid_synth_t* synth, int chan, int key, int vel)
 	       (fluid_curtime() - synth->start) / 1000.0f,
 	       0.0f, 0, "channel has no preset");
     }
-    return FLUID_FAILED; 
+    return FLUID_FAILED;
   } 
 
-  r = fluid_preset_noteon(channel->preset, synth, chan, key, vel);
-
-  return r;
+  return fluid_synth_start(synth, synth->noteid++, channel->preset, 0, chan, key, vel);
 }
 
 /*
@@ -1852,10 +1836,10 @@ fluid_synth_one_block(fluid_synth_t* synth, int do_not_mix_fx_to_out)
  * of the algorithm previously in fluid_synth_alloc_voice.
  */
 fluid_voice_t*
-fluid_synth_free_voice_by_kill (fluid_synth_t* synth)
+fluid_synth_free_voice_by_kill(fluid_synth_t* synth)
 {
   int i;
-  fluid_real_t best_prio=999999.;
+  fluid_real_t best_prio = 999999.;
   fluid_real_t this_voice_prio;
   fluid_voice_t* voice;
   int best_voice_index=-1;
@@ -1868,12 +1852,13 @@ fluid_synth_free_voice_by_kill (fluid_synth_t* synth)
     voice = synth->voice[i];
     
     /* safeguard against an available voice. */
-    if (_AVAILABLE(voice))
+    if (_AVAILABLE(voice)) {
       return voice;
-    
+    }
+
     /* Determine, how 'important' a voice is.
      * Start with an arbitrary number */
-    this_voice_prio=10000.; 
+    this_voice_prio = 10000.; 
     
     /* Is this voice on the drum channel? 
      * Then it is very important.
@@ -1882,13 +1867,15 @@ fluid_synth_free_voice_by_kill (fluid_synth_t* synth)
      * of the time in release phase.
      */
     if (voice->chan == 9){
-      this_voice_prio+=4000;
+      this_voice_prio += 4000;
+
     } else if (_RELEASED(voice)){
       /* The key for this voice has been released. Consider it much less important
        * than a voice, which is still held.
        */
-      this_voice_prio-=2000.;
-    };
+      this_voice_prio -= 2000.;
+    }
+
     if (_SUSTAINED(voice)){
       /* The sustain pedal is held down on this channel.
        * Consider it less important than non-sustained channels.
@@ -1896,8 +1883,8 @@ fluid_synth_free_voice_by_kill (fluid_synth_t* synth)
        * is used to play 'more-voices-than-fingers', so it shouldn't hurt
        * if we kill one voice.
        */
-      this_voice_prio-=1000;
-    };
+      this_voice_prio -= 1000;
+    }
         
     /* We are not enthusiastic about releasing voices, which have just been started.
      * Otherwise hitting a chord may result in killing notes belonging to that very same
@@ -1905,12 +1892,12 @@ fluid_synth_free_voice_by_kill (fluid_synth_t* synth)
      * So subtract the age of the voice from the priority - an older voice is just a little
      * bit less important than a younger voice. 
      * This is a number between roughly 0 and 100.*/
-    this_voice_prio -= (synth->noteid-fluid_voice_get_id(voice));
+    this_voice_prio -= (synth->noteid - fluid_voice_get_id(voice));
     
     /* take a rough estimate of loudness into account. Louder voices are more important. */
     if (voice->volenv_section != FLUID_VOICE_ENVATTACK){
-      this_voice_prio += voice->volenv_val*1000.;
-    };
+      this_voice_prio += voice->volenv_val * 1000.;
+    }
 
     /* check if this voice has less priority than the previous candidate. */
     if (this_voice_prio < best_prio)
@@ -1918,11 +1905,13 @@ fluid_synth_free_voice_by_kill (fluid_synth_t* synth)
       best_prio = this_voice_prio;
   }
 
-  if (best_voice_index < 0)
+  if (best_voice_index < 0) {
     return NULL;
-  
+  }
+
   voice = synth->voice[best_voice_index];
-  fluid_voice_off (voice);
+  fluid_voice_off(voice);
+
   return voice;
 }
 
@@ -1934,6 +1923,7 @@ fluid_synth_alloc_voice(fluid_synth_t* synth, fluid_sample_t* sample, int chan, 
 {
   int i, k;
   fluid_voice_t* voice = NULL;
+  fluid_channel_t* channel = NULL;
 
 /*   fluid_mutex_lock(synth->busy); /\* Don't interfere with the audio thread *\/ */
 /*   fluid_mutex_unlock(synth->busy); */
@@ -1952,7 +1942,7 @@ fluid_synth_alloc_voice(fluid_synth_t* synth, fluid_sample_t* sample, int chan, 
 
   /* No success yet? Then stop a running voice. */
   if (voice == NULL) {
-    voice = fluid_synth_free_voice_by_kill (synth);
+    voice = fluid_synth_free_voice_by_kill(synth);
   }
 
   if (voice == NULL) {
@@ -1969,15 +1959,19 @@ fluid_synth_alloc_voice(fluid_synth_t* synth, fluid_sample_t* sample, int chan, 
     }
 
     FLUID_LOG(FLUID_INFO, "noteon\t%d\t%d\t%d\t%05d\t%.3f\t%.3f\t%.3f\t%d", 
-	     chan, key, vel, synth->noteid, 
+	     chan, key, vel, synth->storeid, 
 	     (float) synth->ticks / 44100.0f, 
 	     (fluid_curtime() - synth->start) / 1000.0f,
 	     0.0f,
 	     k);
   }
 
-  if (fluid_voice_init(voice, sample, synth->channel[chan], key, vel, 
-		      synth->noteid, synth->ticks, synth->gain) != FLUID_OK) {
+  if (chan >= 0) {
+	  channel = synth->channel[chan];
+  }
+
+  if (fluid_voice_init(voice, sample, channel, key, vel, 
+		       synth->storeid, synth->ticks, synth->gain) != FLUID_OK) {
     FLUID_LOG(FLUID_WARN, "Failed to initialize voice");
     return NULL;
   }
@@ -2881,3 +2875,55 @@ int fluid_synth_handle_midi_event(void* data, fluid_midi_event_t* event)
   return FLUID_FAILED;
 }
 
+
+int fluid_synth_start(fluid_synth_t* synth, unsigned int id, fluid_preset_t* preset, 
+		      int audio_chan, int midi_chan, int key, int vel)
+{
+  int r;
+
+  /* check the ranges of the arguments */
+  if ((midi_chan < 0) || (midi_chan >= synth->midi_channels)) {
+    FLUID_LOG(FLUID_WARN, "Channel out of range");
+    return FLUID_FAILED;
+  }
+
+  if ((key < 0) || (key >= 128)) {
+    FLUID_LOG(FLUID_WARN, "Key out of range");
+    return FLUID_FAILED;
+  }
+
+  if ((vel <= 0) || (vel >= 128)) {
+    FLUID_LOG(FLUID_WARN, "Velocity out of range");
+    return FLUID_FAILED;
+  }
+
+  fluid_mutex_lock(synth->busy); /* One at a time, please */
+
+  synth->storeid = id;
+  r = fluid_preset_noteon(preset, synth, midi_chan, key, vel);
+
+  fluid_mutex_unlock(synth->busy);
+
+  return r;
+}
+
+int fluid_synth_stop(fluid_synth_t* synth, unsigned int id)
+{
+  int i;
+  fluid_voice_t* voice;
+  int status = FLUID_FAILED;
+  int count = 0;
+  
+  for (i = 0; i < synth->nvoice; i++) {
+
+    voice = synth->voice[i];
+
+    if (_ON(voice) && (fluid_voice_get_id(voice) == id)) {
+	    count++;
+      fluid_voice_noteoff(voice);
+      status = FLUID_OK;
+    }
+  }
+
+  return status;
+}

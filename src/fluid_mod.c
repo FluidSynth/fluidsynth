@@ -113,6 +113,10 @@ fluid_mod_get_value(fluid_mod_t* mod, fluid_channel_t* chan, fluid_voice_t* voic
 {
   fluid_real_t v1 = 0.0, v2 = 1.0;
   fluid_real_t range1 = 127.0, range2 = 127.0;
+
+  if (chan == NULL) {
+    return 0.0f;
+  }
   
   /* 'special treatment' for default controller
    * 
