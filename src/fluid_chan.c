@@ -195,6 +195,8 @@ fluid_channel_cc(fluid_channel_t* chan, int num, int value)
     {
       chan->bank_msb = (unsigned char) (value & 0x7f);
 /*      printf("** bank select msb recieved: %d\n", value); */
+      /* FIXME: is this correct? */
+      fluid_channel_set_banknum(chan, (unsigned int)(value & 0x7f));  /* KLE */
     }
     break;
   
