@@ -108,6 +108,25 @@ void fluid_synth_settings(fluid_settings_t* settings)
 }
 
 /*
+ * fluid_version
+ */
+void fluid_version(int *major, int *minor, int *micro)
+{
+  *major = FLUIDSYNTH_VERSION_MAJOR;
+  *minor = FLUIDSYNTH_VERSION_MINOR;
+  *micro = FLUIDSYNTH_VERSION_MICRO;
+}
+
+/*
+ * fluid_version_str
+ */
+char* fluid_version_str(void)
+{
+  return FLUIDSYNTH_VERSION;
+}
+
+
+/*
  * void fluid_synth_init
  *
  * Does all the initialization for this module.
