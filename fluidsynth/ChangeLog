@@ -1,3 +1,21 @@
+2004-05-05    Peter Hanappe <peter@hanappe.com>
+
+	* src/fluid_alsa.c (new_fluid_alsa_seq_driver): The alsa driver
+	now opens several ports if the synthesizer is configured for more
+	than 16 MIDI channels.
+
+	* src/fluid_voice.c (fluid_voice_write): I removed the filter
+	on/off optimization. The filter is always on and serves as an
+	anti-aliasing filter.
+
+2004-05-04    Peter Hanappe <peter@hanappe.com>
+
+	* src/fluid_synth.c (new_fluid_synth): The number of MIDI channels
+	now has to be a multiple of 16. The synth checks that this is the
+	case and changes the settings accordingly. I removed the sanity
+	checks for the min/max value of the number of MIDI channels since
+	this is already done by the settings object.
+
 2004-03-30    Josh Green <jgreen@users.sourceforge.net>
 
 	* src/fluid_voice.c (fluid_voice_write): Altered filter turn-off

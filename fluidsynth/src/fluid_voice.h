@@ -80,7 +80,6 @@ struct _fluid_voice_t
 	unsigned char key;              /* the key, quick acces for noteoff */
 	unsigned char vel;              /* the velocity */
 	fluid_channel_t* channel;
-	fluid_preset_t* preset;
 	fluid_gen_t gen[GEN_LAST];
 	fluid_mod_t mod[FLUID_NUM_MOD];
 	int mod_count;
@@ -260,7 +259,6 @@ void fluid_voice_check_sample_sanity(fluid_voice_t* voice);
 
 #define fluid_voice_set_id(_voice, _id)  { (_voice)->id = (_id); }
 #define fluid_voice_get_chan(_voice)     (_voice)->chan
-#define fluid_voice_get_preset(_voice)   (_voice)->preset
 
 
 #define _PLAYING(voice)  (((voice)->status == FLUID_VOICE_ON) || ((voice)->status == FLUID_VOICE_SUSTAINED))

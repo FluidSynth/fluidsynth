@@ -1,14 +1,12 @@
 
+Bugs and incomplete code
+------------------------
 
-Bugs, errors, and incomplete code
----------------------------------
-
-- Add support for "loop till release" instruments (currently broken)
+- Filter on/off optimization causes clicks 
 - Get TCP server working for windows
 - The synth consumes too much CPU when no voices are playing. 
-- Multi-channel audio output
-- Filter on/off optimization causes clicks 
-- Phase sync'ed samples should start simultaneously.
+- Add fluid_synth_remove_sfont()
+
 
 Validation
 ----------
@@ -16,23 +14,12 @@ Validation
 - Validation tests: create soundfont with basic wave forms [sine,
   square, triangle]; make test midi file; compare with SBLive output;
   "regression" test
-- Validate reverb
 - Validate chorus
-- compare performance with timidity
-
-JG:
-> Its often hard to get the right Reverb/Chorus/Gain settings as
-> well, so often I end up turning off Reverb and Chorus which can help.
-
-JG:
-> Well actually, it almost seems like every instrument is kind of flat. It
-> just doesn't sound real nice. 
-
+- Analyse performance
 
 Documentation
 -------------
 
-- Multi-channel audio output
 - Write documention on tuning
 - fluid_synth_program_select2() with name of soundfont instead of font_id
 - fluid_synth_set_gen2()
@@ -72,7 +59,9 @@ Requests
 - DirectSound 3D and EAX
 - Pause and resume the synthesizer/audio thread (run synthesizer as a daemon)
 
-- set loop on/off on a sample (1 - with name sample, 2 - name sf and name preset)     Use set_gen?
+- set loop on/off on a sample (1 - with name sample, 2 - name sf and name preset)     
+
+  Use set_gen?
 
   set_gen: GEN_SAMPLEMODE (54): 
        Loop during release: 1,
@@ -86,8 +75,15 @@ Requests
 Fluid 1.1:
 --------------------------------------------
 
+Top of the list
+- Use FIFOs to send events to the audio thread
+- Redo sfloader api using "interface" api
+- Clean multi-channel audio implementation
+- 3D audio output
+- Sample streaming, load/unload sample on demand 
+
+
 SFLoader API:
-- "interface" api
 - redo sfloader api using "interface" api
 
 Sample streaming

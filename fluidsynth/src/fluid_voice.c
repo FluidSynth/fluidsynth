@@ -200,8 +200,8 @@ delete_fluid_voice(fluid_voice_t* voice)
  */
 int 
 fluid_voice_init(fluid_voice_t* voice, fluid_sample_t* sample, 
-		fluid_channel_t* channel, int key, int vel, 
-		unsigned int id, unsigned int start_time, fluid_real_t gain)
+		 fluid_channel_t* channel, int key, int vel, unsigned int id, 
+		 unsigned int start_time, fluid_real_t gain)
 {
   /* Note: The voice parameters will be initialized later, when the
    * generators have been retrieved from the sound font. Here, only
@@ -213,7 +213,6 @@ fluid_voice_init(fluid_voice_t* voice, fluid_sample_t* sample,
   voice->key = (unsigned char) key;
   voice->vel = (unsigned char) vel;
   voice->channel = channel;
-  voice->preset = fluid_channel_get_preset(channel);
   voice->mod_count = 0;
   voice->sample = sample;
   voice->start_time = start_time;
@@ -635,13 +634,33 @@ fluid_voice_write(fluid_voice_t* voice,
   /* if filter has not yet started and filter cutoff and Q don't
      exceed "audible" thresholds, then don't turn on the filter.
      Once the filter is turned on, it remains on. */
-  if (voice->filter_startup && fres > FLUID_MAX_AUDIBLE_FILTER_FC
-      && voice->q_lin < FLUID_MIN_AUDIBLE_FILTER_Q)
-    dsp_use_filter_flag = 0;
-  else if (fres < 5) fres = 5;
+/*   if (voice->filter_startup */
+/*       && (fres > FLUID_MAX_AUDIBLE_FILTER_FC) */
+/*       && (voice->q_lin < FLUID_MIN_AUDIBLE_FILTER_Q)) { */
+/*     dsp_use_filter_flag = 0; */
+/*   } else if (fres < 5) { */
+/*     fres = 5; */
+/*   } */
+
+  /* I removed the optimization of turning the filter off when the
+   * resonance frequence is above the maximum frequency. Instead, the
+   * filter frequence is set to a maximum of 0.45 times the sampling
+   * rate. For a 44100 kHz sampling rate, this amounts to 19845
+   * Hz. The reasing is that were problems with anti-aliasing when the
+   * synthesizer was run at lower sampling rates. Thanks to Stephan
+   * Tassart for pointing me to this bug. By turning the filter on and
+   * clipping the maximum filter frequency at 0.45*srate, the filter
+   * is used as an anti-aliasing filter. */
+
+  if (fres > 0.45f * voice->output_rate) {
+    fres = 0.45f * voice->output_rate;	  
+  } else if (fres < 5) {
+    fres = 5;
+  }
+
 
   /* if filter enabled and there is a significant frequency change.. */
-  if (dsp_use_filter_flag && (abs(fres - voice->last_fres) > 0.01)) {
+  if (/*dsp_use_filter_flag &&*/ (abs(fres - voice->last_fres) > 0.01)) {
 
      /* The filter coefficients have to be recalculated (filter
       * parameters have changed). Recalculation for various reasons is
@@ -744,7 +763,7 @@ fluid_voice_write(fluid_voice_t* voice,
    * may require several runs. */
   fluid_check_fpe("voice_write DSP processing");
 
-  if (((_SAMPLEMODE(voice) == FLUID_LOOP) && (voice->volenv_section < FLUID_VOICE_ENVRELEASE)) 
+  if (((_SAMPLEMODE(voice) == FLUID_LOOP_UNTIL_RELEASE) && (voice->volenv_section < FLUID_VOICE_ENVRELEASE)) 
       || (_SAMPLEMODE(voice) == FLUID_LOOP_DURING_RELEASE)) {
 
     /* At which index does the loop point occur in the output buffer?
@@ -1149,18 +1168,21 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
     break;
 
   case GEN_FILTERFC:
-    /* The resonance frequency is converted from absolute cents to midicents
-     * .val and .mod are both used, this permits real-time modulation.
-     * The allowed range is tested in the 'fluid_ct2hz' function [PH,20021214] 
+    /* The resonance frequency is converted from absolute cents to
+     * midicents .val and .mod are both used, this permits real-time
+     * modulation.  The allowed range is tested in the 'fluid_ct2hz'
+     * function [PH,20021214]
      */
     voice->fres = _GEN(voice, GEN_FILTERFC);
 
-    /* The synthesis loop will have to recalculate the filter coefficients. */
+    /* The synthesis loop will have to recalculate the filter
+     * coefficients. */
     voice->last_fres = -1.0f;
     break;
 
   case GEN_FILTERQ:
-    /* The generator contains 'centibels' (1/10 dB) => divide by 10 to obtain dB */
+    /* The generator contains 'centibels' (1/10 dB) => divide by 10 to
+     * obtain dB */
     q_dB = _GEN(voice, GEN_FILTERQ) / 10.0f;
 	    
     /* Range: SF2.01 section 8.1.3 # 8 (convert from cB to dB => /10) */
@@ -1611,7 +1633,7 @@ fluid_voice_noteoff(fluid_voice_t* voice)
         fluid_real_t env_value = - ((-200. * log (amp) / log (10.) - attn_and_lfo) / 960.0 - 1);
         env_value = (env_value < 0.0 ? 0.0 : env_value);
         env_value = (env_value > 1.0 ? 1.0 : env_value);
-        voice->volenv_val=env_value;
+        voice->volenv_val = env_value;
       }
     }
     voice->volenv_section = FLUID_VOICE_ENVRELEASE;
@@ -1793,8 +1815,8 @@ fluid_real_t fluid_voice_get_lower_boundary_for_attenuation(fluid_voice_t* voice
     if ((mod->dest == GEN_ATTENUATION)  
 	&& ((mod->flags1 & FLUID_MOD_CC) || (mod->flags2 & FLUID_MOD_CC))) {
       
-      fluid_real_t current_val=fluid_mod_get_value(mod, voice->channel, voice);
-      fluid_real_t v=fabs(mod->amount);
+      fluid_real_t current_val = fluid_mod_get_value(mod, voice->channel, voice);
+      fluid_real_t v = fabs(mod->amount);
 
       if ((mod->src1 == FLUID_MOD_PITCHWHEEL) 
 	  || (mod->flags1 & FLUID_MOD_BIPOLAR) 
@@ -1882,7 +1904,7 @@ void fluid_voice_check_sample_sanity(fluid_voice_t* voice)
 	return;
     }
 
-    if ((_SAMPLEMODE(voice) == FLUID_LOOP) 
+    if ((_SAMPLEMODE(voice) == FLUID_LOOP_UNTIL_RELEASE) 
 	|| (_SAMPLEMODE(voice) == FLUID_LOOP_DURING_RELEASE)) {
 	/* Keep the loop start point within the sample data */
 	if (voice->loopstart < min_index_loop){
@@ -1928,10 +1950,10 @@ void fluid_voice_check_sample_sanity(fluid_voice_t* voice)
     
     /* Run startup specific code (only once, when the voice is started) */
     if (voice->check_sample_sanity_flag & FLUID_SAMPLESANITY_STARTUP){
-      if (max_index_loop-min_index_loop < FLUID_MIN_LOOP_SIZE){
-	if (_SAMPLEMODE(voice) == FLUID_LOOP 
+      if (max_index_loop - min_index_loop < FLUID_MIN_LOOP_SIZE){
+        if ((_SAMPLEMODE(voice) == FLUID_LOOP_UNTIL_RELEASE)
 	    || (_SAMPLEMODE(voice) == FLUID_LOOP_DURING_RELEASE)){
-	  voice->gen[GEN_SAMPLEMODE].val=FLUID_UNLOOPED;
+	  voice->gen[GEN_SAMPLEMODE].val = FLUID_UNLOOPED;
 	}
       }
       
@@ -1942,8 +1964,7 @@ void fluid_voice_check_sample_sanity(fluid_voice_t* voice)
     
     /* Is this voice run in loop mode, or does it run straight to the
        end of the waveform data? */
-    if (((_SAMPLEMODE(voice) == FLUID_LOOP) 
-	 && (voice->volenv_section < FLUID_VOICE_ENVRELEASE)) 
+    if (((_SAMPLEMODE(voice) == FLUID_LOOP_UNTIL_RELEASE) && (voice->volenv_section < FLUID_VOICE_ENVRELEASE)) 
 	|| (_SAMPLEMODE(voice) == FLUID_LOOP_DURING_RELEASE)) {
       /* Yes, it will loop as soon as it reaches the loop point.  In
        * this case we must prevent, that the playback pointer (phase)
@@ -1959,7 +1980,7 @@ void fluid_voice_check_sample_sanity(fluid_voice_t* voice)
       int index_in_sample = fluid_phase_index(voice->phase);
       if (index_in_sample >= voice->loopend){
 	/* FLUID_LOG(FLUID_DBG, "Loop / sample sanity check: Phase after 2nd loop point!"); */
-	fluid_phase_set_int(voice->phase,voice->loopstart);
+	fluid_phase_set_int(voice->phase, voice->loopstart);
       }
     }
 /*    FLUID_LOG(FLUID_DBG, "Loop / sample sanity check: Sample from %i to %i, loop from %i to %i", voice->start, voice->end, voice->loopstart, voice->loopend); */

@@ -138,11 +138,11 @@ static void* fluid_alsa_midi_run(void* d);
 typedef struct {
   fluid_midi_driver_t driver;
   snd_seq_t *seq_handle;
-  int seq_port;
   struct pollfd *pfd;
   int npfd;
   pthread_t thread;
   int status;
+  int port_count;  
 } fluid_alsa_seq_driver_t;
 
 fluid_midi_driver_t* new_fluid_alsa_seq_driver(fluid_settings_t* settings, 
@@ -150,7 +150,6 @@ fluid_midi_driver_t* new_fluid_alsa_seq_driver(fluid_settings_t* settings,
 					     void* data);
 int delete_fluid_alsa_seq_driver(fluid_midi_driver_t* p);
 static void* fluid_alsa_seq_run(void* d);
-
 
 /**************************************************************
  *
@@ -825,6 +824,37 @@ void fluid_alsa_seq_driver_settings(fluid_settings_t* settings)
   fluid_settings_register_str(settings, "midi.alsa_seq.id", "pid", 0, NULL, NULL);
 }
 
+
+static char* fluid_alsa_seq_full_id(char* id, char* buf, int len)
+{
+  if (id != NULL) {
+    if (FLUID_STRCMP(id, "pid") == 0) {
+      snprintf(buf, len, "FLUID Synth (%d)", getpid());
+    } else {
+      snprintf(buf, len, "FLUID Synth (%s)", id);
+    }
+  } else {
+    snprintf(buf, len, "FLUID Synth");
+  }
+
+  return buf;
+}
+
+static char* fluid_alsa_seq_full_name(char* id, int port, char* buf, int len)
+{  
+  if (id != NULL) {
+    if (FLUID_STRCMP(id, "pid") == 0) {
+      snprintf(buf, len, "Synth input port (%d:%d)", getpid(), port);
+    } else {
+      snprintf(buf, len, "Synth input port (%s:%d)", id, port);
+    }
+  } else {
+    snprintf(buf, len, "Synth input port");
+  }
+  return buf;
+}
+
+
 /*
  * new_fluid_alsa_seq_driver
  */
@@ -843,6 +873,9 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
   char* id;
   char full_id[64];
   char full_name[64];
+  char id_pid[16];
+  snd_seq_port_info_t *port_info = NULL;
+  int midi_channels;
 
   /* not much use doing anything */
   if (handler == NULL) {
@@ -857,9 +890,9 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
     return NULL;
   }
   FLUID_MEMSET(dev, 0, sizeof(fluid_alsa_seq_driver_t));
-  dev->seq_port = -1;
   dev->driver.data = data;
   dev->driver.handler = handler;
+
 
   /* get the device name. if none is specified, use the default device. */
   fluid_settings_getstr(settings, "midi.alsa_seq.device", &device);
@@ -867,22 +900,18 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
     device = "default";
   }
 
+  fluid_settings_getstr(settings, "midi.alsa_seq.id", &id);
+  if (id == NULL) {
+    sprintf(id_pid, "%d", getpid());
+    id = id_pid;
+  }
+
   /* open the sequencer INPUT only, non-blocking */
-  if ((err = snd_seq_open(&dev->seq_handle, device, SND_SEQ_OPEN_INPUT,
-			  SND_SEQ_NONBLOCK)) < 0) {
+  err = snd_seq_open(&dev->seq_handle, device, SND_SEQ_OPEN_INPUT, SND_SEQ_NONBLOCK);
+  if (err < 0) {
     FLUID_LOG(FLUID_ERR, "Error opening ALSA sequencer");
     goto error_recovery;
   }
-
-  /* tell the ladcca server our client id */
-#ifdef HAVE_LADCCA
-  {
-    int enable_ladcca = 0;
-    fluid_settings_getint (settings, "ladcca.enable", &enable_ladcca);
-    if (enable_ladcca)
-      cca_alsa_client_id (fluid_cca_client, snd_seq_client_id (dev->seq_handle));
-  }
-#endif /* HAVE_LADCCA */
 
   /* get # of MIDI file descriptors */
   count = snd_seq_poll_descriptors_count(dev->seq_handle, POLLIN);
@@ -903,34 +932,49 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
     }
   }
   FLUID_FREE(pfd);
-
-  fluid_settings_getstr(settings, "midi.alsa_seq.id", &id);
-  
-  if (id != NULL) {
-    if (FLUID_STRCMP(id, "pid") == 0) {
-      snprintf(full_id, 64, "FLUID Synth (%d)", getpid());
-      snprintf(full_name, 64, "Synth input port (%d)", getpid());
-    } else {
-      snprintf(full_id, 64, "FLUID Synth (%s)", id);
-      snprintf(full_name, 64, "Synth input port (%s)", id);
-    }
-  } else {
-    snprintf(full_id, 64, "FLUID Synth");
-    snprintf(full_name, 64, "Synth input port");
-  }
   
   /* set the client name */
-  snd_seq_set_client_name (dev->seq_handle, full_id);
+  snd_seq_set_client_name(dev->seq_handle, fluid_alsa_seq_full_id(id, full_id, 64));
 
-  if ((dev->seq_port = snd_seq_create_simple_port (dev->seq_handle,
-	full_name,
-	SND_SEQ_PORT_CAP_WRITE | SND_SEQ_PORT_CAP_SUBS_WRITE,
-	SND_SEQ_PORT_TYPE_APPLICATION)) < 0)
-    {
+
+  /* create the ports */
+  snd_seq_port_info_alloca(&port_info);
+  FLUID_MEMSET(port_info, 0, snd_seq_port_info_sizeof());
+
+  fluid_settings_getint(settings, "synth.midi-channels", &midi_channels);
+  dev->port_count = midi_channels / 16;
+
+  snd_seq_port_info_set_capability(port_info, 
+				   SND_SEQ_PORT_CAP_WRITE | 
+				   SND_SEQ_PORT_CAP_SUBS_WRITE);
+  snd_seq_port_info_set_type(port_info, 
+			     SND_SEQ_PORT_TYPE_APPLICATION);
+  snd_seq_port_info_set_midi_channels(port_info, 16);
+  snd_seq_port_info_set_port_specified(port_info, 1);
+
+  for (i = 0; i < dev->port_count; i++) {
+
+    snd_seq_port_info_set_name(port_info, fluid_alsa_seq_full_name(id, i, full_name, 64));
+    snd_seq_port_info_set_port(port_info, i);
+
+    err = snd_seq_create_port(dev->seq_handle, port_info);
+    if (err  < 0) {
       FLUID_LOG(FLUID_ERR, "Error creating ALSA sequencer port");
       goto error_recovery;
     }
-  
+  }
+
+
+  /* tell the ladcca server our client id */
+#ifdef HAVE_LADCCA
+  {
+    int enable_ladcca = 0;
+    fluid_settings_getint (settings, "ladcca.enable", &enable_ladcca);
+    if (enable_ladcca)
+      cca_alsa_client_id (fluid_cca_client, snd_seq_client_id (dev->seq_handle));
+  }
+#endif /* HAVE_LADCCA */
+
 
   dev->status = FLUID_MIDI_READY;
 
@@ -1003,9 +1047,6 @@ delete_fluid_alsa_seq_driver(fluid_midi_driver_t* p)
       return FLUID_FAILED;
     }
   }
-  if (dev->seq_port >= 0) {
-    snd_seq_delete_simple_port (dev->seq_handle, dev->seq_port);
-  }
   if (dev->seq_handle) {
     snd_seq_close(dev->seq_handle);
   }
@@ -1023,6 +1064,7 @@ fluid_alsa_seq_run(void* d)
   snd_seq_event_t *seq_ev;
   fluid_midi_event_t evt;
   fluid_alsa_seq_driver_t* dev = (fluid_alsa_seq_driver_t*) d;
+  int channel;
 
   /* make sure the other threads can cancel this thread any time */
   if (pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL)) {
@@ -1051,43 +1093,43 @@ fluid_alsa_seq_run(void* d)
 	    {
 	    case SND_SEQ_EVENT_NOTEON:
 	      evt.type = NOTE_ON;
-	      evt.channel = seq_ev->data.note.channel;
+	      evt.channel = seq_ev->dest.port * 16 + seq_ev->data.note.channel;
 	      evt.param1 = seq_ev->data.note.note;
 	      evt.param2 = seq_ev->data.note.velocity;
 	      break;
 	    case SND_SEQ_EVENT_NOTEOFF:
 	      evt.type = NOTE_OFF;
-	      evt.channel = seq_ev->data.note.channel;
+	      evt.channel = seq_ev->dest.port * 16 + seq_ev->data.note.channel;
 	      evt.param1 = seq_ev->data.note.note;
 	      evt.param2 = seq_ev->data.note.velocity;
 	      break;
 	    case SND_SEQ_EVENT_KEYPRESS:
 	      evt.type = KEY_PRESSURE;
-	      evt.channel = seq_ev->data.note.channel;
+	      evt.channel = seq_ev->dest.port * 16 + seq_ev->data.note.channel;
 	      evt.param1 = seq_ev->data.note.note;
 	      evt.param2 = seq_ev->data.note.velocity;
 	      break;
 	    case SND_SEQ_EVENT_CONTROLLER:
 	      evt.type = CONTROL_CHANGE;
-	      evt.channel = seq_ev->data.control.channel;
+	      evt.channel = seq_ev->dest.port * 16 + seq_ev->data.control.channel;
 	      evt.param1 = seq_ev->data.control.param;
 	      evt.param2 = seq_ev->data.control.value;
 	      break;
 	    case SND_SEQ_EVENT_PITCHBEND:
 	      evt.type = PITCH_BEND;
-	      evt.channel = seq_ev->data.control.channel;
+	      evt.channel = seq_ev->dest.port * 16 + seq_ev->data.control.channel;
 
 	      /* ALSA pitch bend is -8192 - 8191, we adjust it here */
 	      evt.param1 = seq_ev->data.control.value + 8192;
 	      break;
 	    case SND_SEQ_EVENT_PGMCHANGE:
 	      evt.type = PROGRAM_CHANGE;
-	      evt.channel = seq_ev->data.control.channel;
+	      evt.channel = seq_ev->dest.port * 16 + seq_ev->data.control.channel;
 	      evt.param1 = seq_ev->data.control.value;
 	      break;
 	    case SND_SEQ_EVENT_CHANPRESS:
 	      evt.type = CHANNEL_PRESSURE;
-	      evt.channel = seq_ev->data.control.channel;
+	      evt.channel = seq_ev->dest.port * 16 + seq_ev->data.control.channel;
 	      evt.param1 = seq_ev->data.control.value;
 	      break;
 	    default:
