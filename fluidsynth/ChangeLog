@@ -1,3 +1,9 @@
+2003-04-029  Antoine Schmitt  <as@gratin.org>
+
+	* src/fluid_defsfont.c: inst_zone lokey is now properly inialized to 0
+	(it was not, leading to random lost noteons depending on memory
+	initialization)
+
 2003-04-03  Peter Hanappe  <peter@hanappe.com>
 
 	* src/fluid_rev.c: reverb parameters are clipped to their valid

@@ -604,7 +604,7 @@ fluid_defpreset_noteon(fluid_defpreset_t* preset, fluid_synth_t* synth, int chan
       
       /* run thru all the zones of this instrument */
       inst_zone = fluid_inst_get_zone(inst);
-      while (inst_zone != NULL) {
+	  while (inst_zone != NULL) {
 	
 	/* make sure this instrument zone has a valid sample */
 	sample = fluid_inst_zone_get_sample(inst_zone);
@@ -794,7 +794,7 @@ fluid_defpreset_noteon(fluid_defpreset_t* preset, fluid_synth_t* synth, int chan
 
 	inst_zone = fluid_inst_zone_next(inst_zone);
       }
-    }
+	}
     preset_zone = fluid_preset_zone_next(preset_zone);
   }
 
@@ -1311,6 +1311,7 @@ new_fluid_inst_zone(char* name)
   }
   FLUID_STRCPY(zone->name, name);
   zone->sample = NULL;
+  zone->keylo = 0;
   zone->keyhi = 128;
   zone->vello = 0;
   zone->velhi = 128;
