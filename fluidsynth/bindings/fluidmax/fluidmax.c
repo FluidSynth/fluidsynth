@@ -48,7 +48,7 @@ int fluid_synth_program_select2(fluid_synth_t* synth,
 				unsigned int preset_num);
 
 
-#define VERSION "02/2004 (3)"
+#define VERSION "02/2004 (4)"
 
 typedef struct
 {
@@ -105,6 +105,41 @@ fluidmax_dsp(fluidmax_t *self, t_signal **sp, short *count)
  *  load utlilities
  *
  */
+static char *
+fluidmax_translate_fullpath(char *maxpath, char *fullpath)
+{
+	int i;
+
+  strcpy(fullpath, "/Volumes/");
+  
+	for(i=0; maxpath[i] != ':'; i++)
+	  fullpath[i + 9] = maxpath[i];
+	  
+	/* skip ':' */
+	i++;
+	  
+  strcpy(fullpath + i + 8, maxpath + i);
+	
+	return fullpath;
+}
+  	
+static const char *
+fluidmax_strip_path(const char *fullpath)
+{
+	int i;
+  
+	for(i=strlen(fullpath)-1; i>=0; i--)
+	{
+	  if(fullpath[i] == '/')
+      break;
+  }
+  
+  if(i != 0)
+    i++;	  
+	
+	return fullpath + i;
+}
+  	
 static void 
 fluidmax_do_load(t_object *o, Symbol *s, short ac, Atom *at)
 {
@@ -116,43 +151,23 @@ fluidmax_do_load(t_object *o, Symbol *s, short ac, Atom *at)
 		
   	if(fluid_synth_sfload(self->synth, filename, 0) >= 0)
   	{
-  		post("fluidsynth~: loaded soundfont: %s", filename);
+  		post("fluidsynth~: loaded soundfont '%s'", fluidmax_strip_path(filename));
 
   	  fluid_synth_program_reset(self->synth);
   	  
   	  outlet_bang(self->outlet);
     }
     else
-  		error("fluidsynth~: cannot load soundfont from file: %s", filename);
+  		error("fluidsynth~: cannot load soundfont from file '%s'", filename);
   }
 }
 
-static char *
-fluidmax_translate_fullpath(char *fullpath)
-{
-	char last = '/';
-	int i;
-  
-	for(i=0; fullpath[i] != '\0'; i++)
-	{
-	  char c = fullpath[i];
-	  
-	  fullpath[i] = last;
-	  
-	  if(c == ':')
-	    break;
-	  
-	  last = c;
-	}
-	
-	return fullpath;
-}
-  	
 static void
 fluidmax_load_with_dialog(t_object *o, t_symbol *s, short argc, t_atom *argv)
 {
 	char filename[256];
-	char fullname[1024];
+	char maxpath[1024];
+	char fullpath[1024];
   long type;
 	short path;
 	
@@ -161,11 +176,11 @@ fluidmax_load_with_dialog(t_object *o, t_symbol *s, short argc, t_atom *argv)
 	if(open_dialog(filename, &path, &type, 0, 0))
 		return;
 		
-	if(path_topotentialname(path, filename, fullname, 0) == 0)
+	if(path_topotentialname(path, filename, maxpath, 0) == 0)
 	{
     ftmax_atom_t a;
     
-  	ftmax_set_symbol(&a, ftmax_new_symbol(fluidmax_translate_fullpath(fullname)));
+  	ftmax_set_symbol(&a, ftmax_new_symbol(fluidmax_translate_fullpath(maxpath, fullpath)));
     fluidmax_do_load(o, NULL, 1, &a);
   }
 }	
@@ -193,18 +208,19 @@ fluidmax_load(t_object *o, Symbol *s, short ac, Atom *at)
         fluidmax_do_load(o, NULL, ac, at); 
       else
 	    {
-      	char fullname[1024];
+      	char maxpath[1024];
+      	char fullpath[1024];
 	      short path;
       	long type;
         ftmax_atom_t a;
         
-        if(locatefile_extended(string, &path, &type, 0, 0) || path_topotentialname(path, string, fullname, 0) != 0)
+        if(locatefile_extended(string, &path, &type, 0, 0) || path_topotentialname(path, string, maxpath, 0) != 0)
       	{
-      	  error("fluidmax~: cannot find file '%s'", string);
+      	  error("fluidsynth~: cannot find file '%s'", string);
       	  return;
       	}
       	
-	      ftmax_set_symbol(&a, ftmax_new_symbol(fluidmax_translate_fullpath(fullname)));
+	      ftmax_set_symbol(&a, ftmax_new_symbol(fluidmax_translate_fullpath(maxpath, fullpath)));
         fluidmax_do_load(o, NULL, 1, &a); 
 	    }
     }
@@ -478,67 +494,35 @@ fluidmax_select(t_object *o, Symbol *s, short ac, Atom *at)
   unsigned int preset = 0;  
   int channel = 1;
   
-  if (ac == 0) 
+  switch(ac)
   {
-    return; // Someone is wasting our time
-  }
-  
-  if(ftmax_is_number(at))
-  {
-    switch(ac)
-    {
-      default:
-      case 4:
-        if(ftmax_is_number(at + 3))
-          channel = ftmax_get_number_int(at + 3);
+    default:
+    case 4:
+      if(ftmax_is_number(at + 3))
+        channel = ftmax_get_number_int(at + 3);
 
-        if(channel < 1)
-          channel = 1;
-        else if(channel > fluid_synth_count_midi_channels(self->synth))
-          channel = fluid_synth_count_midi_channels(self->synth);
-          
-      case 3:
-        if(ftmax_is_number(at + 2))
-          preset = ftmax_get_number_int(at + 2);
-      case 2:
-        if(ftmax_is_number(at + 1))
-          bank = ftmax_get_number_int(at + 1);
-      case 1:
+      if(channel < 1)
+        channel = 1;
+      else if(channel > fluid_synth_count_midi_channels(self->synth))
+        channel = fluid_synth_count_midi_channels(self->synth);
+        
+    case 3:
+      if(ftmax_is_number(at + 2))
+        preset = ftmax_get_number_int(at + 2);
+        
+    case 2:
+      if(ftmax_is_number(at + 1))
+        bank = ftmax_get_number_int(at + 1);
+        
+    case 1:
+      if(ftmax_is_number(at))
     		fluid_synth_program_select(self->synth, channel - 1, ftmax_get_number_int(at), bank, preset);
-  		case 0:
-  		  break;
-    }
-  } else if(ftmax_is_symbol(at)) {
-
-	ftmax_symbol_t tmp = ftmax_get_symbol(at);
-	char *name = (char *)ftmax_symbol_name(tmp);
-  
-    // FIXME: this is silly code duplication
-    switch(ac)
-    {
-      default:
-      case 4:
-        if(ftmax_is_number(at + 3))
-          channel = ftmax_get_number_int(at + 3);
-
-        if(channel < 1)
-          channel = 1;
-        else if(channel > fluid_synth_count_midi_channels(self->synth))
-          channel = fluid_synth_count_midi_channels(self->synth);
-          
-      case 3:
-        if(ftmax_is_number(at + 2))
-          preset = ftmax_get_number_int(at + 2);
-      case 2:
-        if(ftmax_is_number(at + 1))
-          bank = ftmax_get_number_int(at + 1);
-      case 1:
-    		fluid_synth_program_select2(self->synth, channel - 1, name, bank, preset);
-  		case 0:
-  		  break;
-    }
-  
-  }
+      else if(ftmax_is_symbol(at))
+    		fluid_synth_program_select2(self->synth, channel - 1, ftmax_symbol_name(ftmax_get_symbol(at)), bank, preset);
+    		
+		case 0:
+		  break;
+	}
 }
 
 static void 
@@ -840,8 +824,6 @@ fluidmax_new(Symbol *s, short ac, Atom *at)
   fluidmax_t *self = (fluidmax_t *)newobject(fluidmax_class);
   int polyphony = 256;
   int midi_channels = 16;
-
-  		post("fluidsynth~: DEBUG VERSION [PH]");
 
   self->outlet = outlet_new(self, "bang");
 
