@@ -96,10 +96,12 @@ fluid_audio_driver_t* new_fluid_sndmgr_audio_driver2(fluid_settings_t* settings,
 int delete_fluid_sndmgr_audio_driver(fluid_audio_driver_t* p);
 #endif
 
+#define AUFILE_SUPPORT 1
 #if AUFILE_SUPPORT
 fluid_audio_driver_t* new_fluid_file_audio_driver(fluid_settings_t* settings, 
 						  fluid_synth_t* synth);
 int delete_fluid_file_audio_driver(fluid_audio_driver_t* p);
+void fluid_file_audio_driver_settings(fluid_settings_t* settings);
 #endif
 
 fluid_audriver_definition_t fluid_audio_drivers[] = {
@@ -157,7 +159,7 @@ fluid_audriver_definition_t fluid_audio_drivers[] = {
     new_fluid_file_audio_driver, 
     NULL,
     delete_fluid_file_audio_driver, 
-    NULL },
+    fluid_file_audio_driver_settings },
 #endif
   { NULL, NULL, NULL, NULL, NULL }
 };

@@ -89,7 +89,8 @@ libfluidsynth_la_SOURCES = \
 	fluid_tuning.c \
 	fluid_tuning.h \
 	fluid_voice.c \
-	fluid_voice.h
+	fluid_voice.h \
+	fluid_aufile.c 
 
 INCLUDES = -I$(srcdir)/../include $(LADCCA_CFLAGS) $(READLINE_CFLAGS) \
   $(JACK_CFLAGS) $(ALSA_CFLAGS)

@@ -1,31 +1,82 @@
-This file needs some re-structuring. Please remove anything that has
-already been done.  - Josh Green 2003-08-25
+
+
+Bugs, errors, and incomplete code
+---------------------------------
 
 - Add support for "loop till release" instruments (currently broken)
-- Add compatibility for EMU8k volume attenuation parameter which
-  doesn't follow SoundFont specifications
-- MIDI tempo is incorrect (too slow?)
-- Add "unselect" command to shell to set a MIDI channel to not sound.
-- MIDI file player commands (load/play/stop)
-- Add API to manipulate and query MIDI file list
 - Get TCP server working for windows
-- When specifying -i -s (no console and TCP server) log to TCP clients
-  with easier parsable messages ("warning:", "error:", etc)
+- Remove dependency of settings on audio driver and other (see
+  fluid_settings_init())
+- The consumes too much CPU when no voices are playing. 
+- Multi-channel audio output
 
-JG:
-> Well actually, it almost seems like every instrument is kind of flat. It
-> just doesn't sound real nice. 
+Validation
+----------
+
+- Validation tests: create soundfont with basic wave forms [sine,
+  square, triangle]; make test midi file; compare with SBLive output;
+  "regression" test
+- Validate reverb
+- Validate chorus
+- compare performance with timidity
 
 JG:
 > Its often hard to get the right Reverb/Chorus/Gain settings as
 > well, so often I end up turning off Reverb and Chorus which can help.
 
+
+JG:
+> Well actually, it almost seems like every instrument is kind of flat. It
+> just doesn't sound real nice. 
+
+Bindings
+--------
+
+- Integrate Java code
+- Integrate fluidsynth~
+
+
+Documentation
+-------------
+
+- Multi-channel audio output
+- Write documention on tuning
+- fluid_synth_program_select2() with name of soundfont instead of font_id
+- fluid_synth_set_gen2()
+- Web site
+- Documentation and announcement Virtools and Director
+- Add usage scenarios in the documentation
+- User and system configuration file
+
+Binaries
+--------
+
+- FluidSynth 
+  * Linux 
+  * Win
+  * MacOS X
+- fluid~  (Pd/Linux, MaxMSP/MacOSX, MaxMSP/Windows)
+- fluidsynth~ (MaxMSP/MacOSX, MaxMSP/Windows)
+- FluidXtra
+
+- old distributions
+
+Requests
+--------
+
+- Add compatibility for EMU8k volume attenuation parameter which
+  doesn't follow SoundFont specifications
+- Add "unselect" command to shell to set a MIDI channel to not sound.
+- When specifying -i -s (no console and TCP server) log to TCP clients
+  with easier parsable messages ("warning:", "error:", etc)
 - GM soundfont? 
 - MacOS X MidiCore component
 - Windows DirectMusic component
-- Multi-channel audio output
+- add function to get initial soundfont generator value
+- ASIO driver
+- DirectSound 3D and EAX
+- Pause and resume the synthesizer/audio thread (run synthesizer as a daemon)
 
-- fluid_synth_program_select() with name of soundfont instead of font_id              OK
 - set loop on/off on a sample (1 - with name sample, 2 - name sf and name preset)     Use set_gen?
 
   set_gen: GEN_SAMPLEMODE (54): 
@@ -33,69 +84,9 @@ JG:
        Loop: 3
        No loop: 0 and all other values,
 
-- add function to get initial soundfont generator value
-
-  
-
-- add function to set generator value in absolute value (offset with                  testing
-  initial soundfont generator value)
-- add function to set absolute and relative generator value on a scale                testing
-  of 0 to 1
-
-- Write documention on tuning
-
-- Remove dependency of settings on audio driver and other (see
-  fluid_settings_init())
-
-- MIDI tempo
-  fluidsynth: real    2m23.312s
-  timidity:   real    2m04.304s
-
-
-- Validation tests
-- Validate reverb
-- Validate chorus
-- Documentation
-- Web site
-- Linux + Win + MacOS X + fluid~ + fluidsynth~ + old distributions
-- Documentation and announcement Virtools and Director
-
-- Component for MacOS X (Core Audio?)
-- Component for DirectMusic
-- Multi-channel output
-- DirectSound 3D and EAX
-
-
-Synthesis related
------------------
-- problems with chorus (test on VintageDreamWaves + LoveVigilants.mid)
-- Compatibility with SB Live vol attenuation (Live doesn't follow specs?)
-- Filter should stay on for a voice once it has been activated
-- Improve voice stealing algorithm (soft and hard limits?)
-- soft clipping, compressor, limitor, or automatic gain control
-
-
-Drivers
--------
-- ASIO driver
-- DirectSound3D driver
-- OMS on macintosh
-- load drivers, plugins, and soundfont loaders from shared libraries
 
 
 
-Fluid 1.0:
---------------------------------------------
-
-- Mac and Windows binaries
-- Xtra binaries
-
-Web site: add:
-  - link to pd-iiwu
-  - how to create soundfonts on linux, macintosh, windows
-  - where to find soundfonts
-  - where to find documentation on soundfonts
-  - using fluid in PD, jMax
 
 Fluid 1.1:
 --------------------------------------------
@@ -110,7 +101,16 @@ Sample streaming
 Design
 - turn ladspa fx unit and router in indepedent 
   objects, remove their dependencies from the synth object
+
+MIDI player
+- Add API to manipulate and query MIDI file list
 - generalize use of fluid_event_t, remove fluid_midi_event_t
+
+Shell & command handler
+- Add "note" command that plays a note with a duration (sequencer)
+- MIDI file player commands (load/play/stop)
+- Relax dependency of the command handler on the synthesizer
+- Allow settings to be loaded before the synthesizer is created
 
 SoundFont Specs:
 - pitch control on stereo samples not managed as should
@@ -121,7 +121,7 @@ MIDI Specs
 - sample dump
 
 Unsorted
-- server sur windows
+- Analyse/improve voice stealing algorithm (soft and hard limits?)
 - change sample rate dynamically after jack driver instantiation, or
   create audio driver before initiating the synth
 - include readline in project
@@ -129,59 +129,5 @@ Unsorted
 - rewrite midi file using new sequencer
 - direct access to audio buffer
 - soft clipping, compressor, limitor, or automatic gain control
-- register shell commands dynamically, no dependancy on iiwu_synth object
-- load wave files (ramsfont)
-- write a Max external
-
-
-OLD STUFF, NEEDS TO BE FILTERED ------------------
-
-
-Design
-------
-- determine and protect critical regions
-- check out atomic_inc and atomic_dec for flagging on/off of sp
-- check out lock-free lifo for synchronization
-- test for maximum cpu usage, and limit
-- watchdog
-- better debugging features and monitoring
-  - MIDI events (driver status, received, errors)
-  - Audio out (driver status, time, errors)
-  - Debug message ()
-  - CPU, memory usage
-- load, reload, replace, and print info about soundfonts the way creative does it
-
-
-DSP
----
-- improved float to int conversion
 - 96kHz/24bits
-
-Control
--------
-- handle all continuous controllers
-- handles RPN and NRPN messages
 - OpenSoundControl
-
-Testing
--------
-- create soundfont with basic wave forms [sine, square, triangle];
-  make test midi file; compare with SBLive output; "regression" test
-- compare performance with timidity
-
-Availability
-------------
-- create a libiiwusynth library that doesn't necessarily depend on OSS
-  or ALSA.
-- make an fts package that links (statically?) with libiiwusynth
-- ladspa plugin
-- alsa module
-- language bindings (Java, Python, Perl, Guile, ...)
-- QuickTime Component
-- make netscape and ie plugin
-
-Hardware
---------
-- study ALSA interface, SBLive interface (OSS, win32)
-- hardware detection
-- specify hardware or software synth

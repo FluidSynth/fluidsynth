@@ -88,6 +88,7 @@ fluid_jack_audio_driver_settings(fluid_settings_t* settings)
 {
   fluid_settings_register_str(settings, "audio.jack.id", "fluidsynth", 0, NULL, NULL);
   fluid_settings_register_str(settings, "audio.jack.multi", "no", 0, NULL, NULL);
+  fluid_settings_register_int(settings, "audio.jack.autoconnect", 0, 1, 0, FLUID_HINT_TOGGLED, NULL, NULL);
 }
 
 
@@ -330,43 +331,47 @@ new_fluid_jack_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func
   fluid_settings_getint(settings, "audio.input-channels", &dev->num_input_ports);
 
   /* create output ports */
-  dev->output_ports = FLUID_ARRAY(jack_port_t*, dev->num_output_ports);
-  if (dev->output_ports == NULL) {
-    FLUID_LOG(FLUID_PANIC, "Out of memory");
-    goto error_recovery;
-  }
-
-  dev->output_bufs = FLUID_ARRAY(float*, dev->num_output_ports);
-  if (dev->output_bufs == NULL) {
-    FLUID_LOG(FLUID_PANIC, "Out of memory");
-    goto error_recovery;
-  }
-
-  for (i = 0; i < dev->num_output_ports; i++) {
-    sprintf(name, "out_%02d", i);
-    dev->output_ports[i] = jack_port_register(dev->client, name, 
-					      JACK_DEFAULT_AUDIO_TYPE, 
-					      JackPortIsOutput, 0);
+  if (dev->num_output_ports > 0) {
+	  dev->output_ports = FLUID_ARRAY(jack_port_t*, dev->num_output_ports);
+	  if (dev->output_ports == NULL) {
+		  FLUID_LOG(FLUID_PANIC, "Out of memory");
+		  goto error_recovery;
+	  }
+	  
+	  dev->output_bufs = FLUID_ARRAY(float*, dev->num_output_ports);
+	  if (dev->output_bufs == NULL) {
+		  FLUID_LOG(FLUID_PANIC, "Out of memory");
+		  goto error_recovery;
+	  }
+	  
+	  for (i = 0; i < dev->num_output_ports; i++) {
+		  sprintf(name, "out_%02d", i);
+		  dev->output_ports[i] = jack_port_register(dev->client, name, 
+							    JACK_DEFAULT_AUDIO_TYPE, 
+							    JackPortIsOutput, 0);
+	  }
   }
 
   /* create input ports */
-  dev->input_ports = FLUID_ARRAY(jack_port_t*, dev->num_input_ports);
-  if (dev->input_ports == NULL) {
-    FLUID_LOG(FLUID_PANIC, "Out of memory");
-    goto error_recovery;
-  }
-
-  dev->input_bufs = FLUID_ARRAY(float*, dev->num_input_ports);
-  if (dev->input_bufs == NULL) {
-    FLUID_LOG(FLUID_PANIC, "Out of memory");
-    goto error_recovery;
-  }
-
-  for (i = 0; i < dev->num_input_ports; i++) {
-    sprintf(name, "in_%02d", i);
-    dev->input_ports[i] = jack_port_register(dev->client, name, 
-					     JACK_DEFAULT_AUDIO_TYPE, 
-					     JackPortIsInput, 0);
+  if (dev->num_input_ports > 0) {
+	  dev->input_ports = FLUID_ARRAY(jack_port_t*, dev->num_input_ports);
+	  if (dev->input_ports == NULL) {
+		  FLUID_LOG(FLUID_PANIC, "Out of memory");
+		  goto error_recovery;
+	  }
+	  
+	  dev->input_bufs = FLUID_ARRAY(float*, dev->num_input_ports);
+	  if (dev->input_bufs == NULL) {
+		  FLUID_LOG(FLUID_PANIC, "Out of memory");
+		  goto error_recovery;
+	  }
+	  
+	  for (i = 0; i < dev->num_input_ports; i++) {
+		  sprintf(name, "in_%02d", i);
+		  dev->input_ports[i] = jack_port_register(dev->client, name, 
+							   JACK_DEFAULT_AUDIO_TYPE, 
+							   JackPortIsInput, 0);
+	  }
   }
 
   /* effects are not used */

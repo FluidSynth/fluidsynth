@@ -76,6 +76,9 @@ fluid_cmd_handler_t* new_fluid_cmd_handler(fluid_synth_t* synth);
 FLUIDSYNTH_API 
 void delete_fluid_cmd_handler(fluid_cmd_handler_t* handler);
 
+FLUIDSYNTH_API 
+void fluid_cmd_handler_set_synth(fluid_cmd_handler_t* handler, fluid_synth_t* synth);
+
 /**
     Register a new command to the handler. The handler makes a private
     copy of the 'cmd' structure passed as argument.

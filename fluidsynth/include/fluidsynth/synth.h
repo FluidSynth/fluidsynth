@@ -155,10 +155,11 @@ FLUIDSYNTH_API int fluid_synth_system_reset(fluid_synth_t* synth);
    *
    */
 
-  /** Load a SoundFont. The newly loaded SoundFont will be put on top of
-      the SoundFont stack. Presets are searched starting from the
-      SoundFont on the top of the stack, working the way down the stack
-      until a preset is found.  
+  /** Loads a SoundFont file and creates a new SoundFont. The newly
+      loaded SoundFont will be put on top of the SoundFont
+      stack. Presets are searched starting from the SoundFont on the
+      top of the stack, working the way down the stack until a preset
+      is found.
 
       \param synth The synthesizer object
       \param filename The file name
@@ -177,7 +178,7 @@ int fluid_synth_sfload(fluid_synth_t* synth, const char* filename, int reset_pre
   */
 FLUIDSYNTH_API int fluid_synth_sfreload(fluid_synth_t* synth, unsigned int id);
 
-  /** Remove a SoundFont from the stack.
+  /** Removes a SoundFont from the stack and deallocates it.
 
       \param synth The synthesizer object
       \param id The id of the SoundFont

@@ -628,6 +628,12 @@ fluid_timer_t*
 new_fluid_timer(int msec, fluid_timer_callback_t callback, void* data, 
 	       int new_thread, int auto_destroy)
 {
+  pthread_attr_t *attr = NULL;
+  pthread_attr_t rt_attr;
+  int sched = SCHED_FIFO;
+  struct sched_param priority;
+  int err;
+
   fluid_timer_t* timer = FLUID_NEW(fluid_timer_t);
   if (timer == NULL) {
     FLUID_LOG(FLUID_ERR, "Out of memory");     
@@ -640,12 +646,33 @@ new_fluid_timer(int msec, fluid_timer_callback_t callback, void* data,
   timer->thread = 0;
   timer->auto_destroy = auto_destroy;
 
+  err = pthread_attr_init(&rt_attr); 
+  if (err == 0) {
+	  err = pthread_attr_setschedpolicy(&rt_attr, SCHED_FIFO);
+	  if (err == 0) {
+		  priority.sched_priority = 10;
+		  err = pthread_attr_setschedparam(&rt_attr, &priority);
+		  if (err == 0) {
+			  attr = &rt_attr;
+		  } 
+	  }
+  }
+
   if (new_thread) {
-    if (pthread_create(&timer->thread, NULL, fluid_timer_start, (void*) timer)) {
-      FLUID_LOG(FLUID_ERR, "Failed to create the timer thread");
-      FLUID_FREE(timer);
-      return NULL;
-    }
+	  err = pthread_create(&timer->thread, attr, fluid_timer_start, (void*) timer);
+	  if (err == 0) {
+		  FLUID_LOG(FLUID_DBG, "The timer thread was created with real-time priority");     		  
+	  } else {
+		  /* Create the thread with default attributes */
+		  err = pthread_create(&timer->thread, NULL, fluid_timer_start, (void*) timer);
+		  if (err != 0) {
+			  FLUID_LOG(FLUID_ERR, "Failed to create the timer thread");
+			  FLUID_FREE(timer);
+			  return NULL;
+		  } else {
+			  FLUID_LOG(FLUID_DBG, "The timer thread does not have real-time priority");
+		  }
+	  }
   } else {
     fluid_timer_start((void*) timer);
   }
