@@ -83,14 +83,13 @@ iiwu_chan.c, iiwu_voice.c, iiwu_alsa.c
   archives (http://www.smartelectronix.com/musicdsp). They were
   written by Joshua Scholar and others.  file: iiwu_synth.c
 
-* Bug fixes where sent in by: Werner Schweer, Dave Philips, Anthony
+* Bug fixes and corrections where sent in by: Werner Schweer, Dave
+  Philips, Anthony
   Green, Jake Commander, Fernando Pablo Lopez-Lezcano, Raoul
   Bonisch, Sergey Pavlishin, Eric Van Buggenhaut, Ken Ellinwood,
-  Takashi Iwai, Bob Ham
+  Takashi Iwai, Bob Ham, Gerald Pye, Rui Nuno Capela
 
 * I copied the macros to {increment,decrement} the 64-bit fixed point
   phase from Mozilla's macros to handle the Long-long type (64-bit
   signed integer type). Mozilla NSPR library, www.mozilla.org.  file:
   iiwu_phase.h
-
-* Patches from: 
