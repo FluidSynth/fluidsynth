@@ -181,6 +181,7 @@ FLUIDSYNTH_API int fluid_synth_sfreload(fluid_synth_t* synth, unsigned int id);
 
       \param synth The synthesizer object
       \param id The id of the SoundFont
+      \param reset_presets If TRUE then presets will be reset for all channels
       \returns 0 if no error, -1 otherwise
   */
 FLUIDSYNTH_API int fluid_synth_sfunload(fluid_synth_t* synth, unsigned int id, int reset_presets);
@@ -189,7 +190,7 @@ FLUIDSYNTH_API int fluid_synth_sfunload(fluid_synth_t* synth, unsigned int id, i
       the SoundFont stack.
 
       \param synth The synthesizer object
-      \param sfont The SounfFont
+      \param sfont The SoundFont
       \returns The ID of the loaded SoundFont, or -1 in case of error
   */
 FLUIDSYNTH_API int fluid_synth_add_sfont(fluid_synth_t* synth, fluid_sfont_t* sfont);
@@ -442,7 +443,7 @@ int fluid_synth_create_octave_tuning(fluid_synth_t* synth, int tuning_bank, int 
       \param tuning_bank The tuning bank number [0-127]
       \param tuning_prog The tuning program number [0-127]
       \param len The length of the keys and pitch arrays
-      \param pitch The array of keys values.
+      \param keys The array of keys values.
       \param pitch The array of pitch values.
       \param apply Flag to indicate whether to changes should be applied in real-time.    
   */

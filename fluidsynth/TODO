@@ -1,40 +1,28 @@
+This file needs some re-structuring. Please remove anything that has
+already been done.  - Josh Green 2003-08-25
 
 
-IIWU Synth Final (0.3?):
---------------------------------------------
-
-DSP
+Synthesis related
+-----------------
 - problems with chorus (test on VintageDreamWaves + LoveVigilants.mid)
-- Check changes w.r.t. noise floor in iiwu_voice
+- Compatibility with SB Live vol attenuation (Live doesn't follow specs?)
+- Filter should stay on for a voice once it has been activated
+- Improve voice stealing algorithm (soft and hard limits?)
+- soft clipping, compressor, limitor, or automatic gain control
 
-Misc
-- Make Vintage Dreams the default soundfont
-- segfault with 'iiwusynth -i -n ~/projects/iiwusynth-perso/sf2/VintageDreamsWaves-v2.sf2 ~/cap-mts'
-- Add compilation date
 
 Drivers
-- Add flag to dsound driver to not use LOCHWARE
-- Update PortAudio and Midishare driver
+-------
+- ASIO driver
+- DirectSound3D driver
+- OMS on macintosh
+- load drivers, plugins, and soundfont loaders from shared libraries
 
-Documentation
-- User manual (DocBook?)
-
-Testing:
-- test SSE & long long
-- Test sequencer
-- test on AMD processors
-- test existing midi controllers
-- comparison tests with sblive
-- test audio drivers (dsound, oss, alsa, audioport (win,mac,linux), sndman)
-- test midi drivers (alsa, alsa_seq, oss, winmidi, midishare (win,mac,linux))
 
 
 Fluid 1.0:
 --------------------------------------------
 
-- move to LGPL
-- web site
-- name change to Fluid
 - deb and rpm package
 - Mac and Windows binaries
 - Xtra binaries
@@ -76,15 +64,11 @@ Unsorted
 - include readline in project
 - additional aux buses
 - rewrite midi file using new sequencer
-- load drivers, plugins, and soundfont loaders from shared libraries
 - direct access to audio buffer
 - soft clipping, compressor, limitor, or automatic gain control
 - register shell commands dynamically, no dependancy on iiwu_synth object
 - load wave files (ramsfont)
-- ASIO driver
-- DirectSound3D driver
 - write a Max external
-- java bindings
 
 
 OLD STUFF, NEEDS TO BE FILTERED ------------------
@@ -102,30 +86,17 @@ Design
   - Audio out (driver status, time, errors)
   - Debug message ()
   - CPU, memory usage
-- better synth settings: iiwu_synth_attr or iiwu_synth_params
-  o allow for optimization settings
-    no key to filter modulator
-    sample truncation, linear interpolation, 8 point interpolation, ...
-    hardware acceleration
-  o polyphony, buffer and queue size, ...
 - load, reload, replace, and print info about soundfonts the way creative does it
 
 
-Drivers
--------
-- OMS on macintosh
-- DirectSound 3D
-
 DSP
 ---
-- soft clipping, compressor, limitor, or automatic gain control
 - improved float to int conversion
 - 96kHz/24bits
 
 Control
 -------
 - handle all continuous controllers
-- more testing on voice stealing algorithm
 - handles RPN and NRPN messages
 - OpenSoundControl
 

@@ -6,7 +6,7 @@ AC_INIT(src/fluidsynth.c)
 
 FLUIDSYNTH_VERSION_MAJOR=1
 FLUIDSYNTH_VERSION_MINOR=0
-FLUIDSYNTH_VERSION_MICRO=2
+FLUIDSYNTH_VERSION_MICRO=3
 FLUIDSYNTH_VERSION=$FLUIDSYNTH_VERSION_MAJOR.$FLUIDSYNTH_VERSION_MINOR.$FLUIDSYNTH_VERSION_MICRO
 
 AC_SUBST(FLUIDSYNTH_VERSION_MAJOR)
@@ -318,6 +318,7 @@ AC_OUTPUT([
 	include/fluidsynth/Makefile
 	include/fluidsynth/version.h
 	fluidsynth.pc
+	fluidsynth.spec
 	macbuild/Makefile
 	sf2/Makefile
 	winbuild/Makefile
