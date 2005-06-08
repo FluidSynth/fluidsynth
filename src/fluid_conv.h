@@ -28,6 +28,11 @@
 #define FLUID_CB_AMP_SIZE       961
 #define FLUID_PAN_SIZE          1002
 
+/* EMU 8k/10k don't follow spec in regards to volume attenuation in centibels.
+ * This factor is used in the equation pow (10.0, cb / FLUID_CB_AMP_POWER_FACTOR).
+ * By the standard this should be -200.0.  */
+#define FLUID_CB_POWER_FACTOR	(-531.509)
+
 void fluid_conversion_config(void);
 
 fluid_real_t fluid_ct2hz(fluid_real_t cents);

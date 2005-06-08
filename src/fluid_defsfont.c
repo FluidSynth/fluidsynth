@@ -2347,13 +2347,7 @@ load_pgen (int size, SFData * sf, FILE * fd)
 		{		/* inst is last gen */
 		  level = 3;
 		  READW (genval.uword, fd);
-#ifndef MACINTOSH
-		  GPOINTER_TO_INT (((SFZone *) (p2->data))->instsamp) = genval.uword + 1;
-#else
-          /* the codewarrior compiler doesn't seem to accepts the construct
-             above (not an lvalue), so i do it the other way around */
-		  ((SFZone *) (p2->data))->instsamp = (fluid_list_t *) (genval.uword + 1);
-#endif
+		  ((SFZone *) (p2->data))->instsamp = GINT_TO_POINTER (genval.uword + 1);
 		  break;	/* break out of generator loop */
 		}
 	      else
@@ -2703,13 +2697,7 @@ load_igen (int size, SFData * sf, FILE * fd)
 		{		/* sample is last gen */
 		  level = 3;
 		  READW (genval.uword, fd);
-#ifndef MACINTOSH
-		  GPOINTER_TO_INT (((SFZone *) (p2->data))->instsamp) = genval.uword + 1;
-#else
-          /* the codewarrior compiler doesn't seem to accepts the construct
-             above (not an lvalue), so i do it the other way around */
-		  ((SFZone *) (p2->data))->instsamp = (fluid_list_t *) (genval.uword + 1);
-#endif
+		  ((SFZone *) (p2->data))->instsamp = GINT_TO_POINTER (genval.uword + 1);
 		  break;	/* break out of generator loop */
 		}
 	      else
@@ -3201,5 +3189,3 @@ safe_malloc (size_t size)
     FLUID_LOG (FLUID_ERR, _("Attempted to allocate %d bytes"), (int) size);
   return (ptr);
 }
-
-

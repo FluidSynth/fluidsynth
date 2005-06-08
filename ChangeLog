@@ -1,3 +1,34 @@
+2005-06-07    <jgreen@users.sourceforge.net>
+
+        * Applied Sean Bolton's DSSI patch (SB patch) which adds the ability to
+	  change polyphony at runtime and fixes a bug (see below).
+	* README-OSX: Update from Ebrahim Mayat for OSX Panther.
+	* include/fluidsynth/synth.h: Sean Bolton's DSSI patch adds two new
+	  functions fluid_synth_set_polyphony and fluid_synth_get_polyphony.
+	* src/fluid_conv.c: Centibel to amplitude conversion now follows
+	  EMU 8k/10k which is contrary to SoundFont specification (TiMidity++
+	  used as an example).
+	* src/fluid_conv.h: FLUID_CB_POWER_FACTOR defined for the centibel->amp
+	  conversion table equation.
+	* src/fluid_defsfont.c (load_pgen): Fixed 'use of cast expressions as
+	  lvalues is deprecated' warning by casting the value being assigned
+	  instead of the variable assigned to and removed code warrior
+	  specific code to work around this.
+	  (load_igen): Same as for load_pgen.
+	* src/fluid_synth.c: SB patch - uses synth->polyphony instead of
+	  synth->nvoice when iterating over the synth's voices.
+	  (fluid_synth_update_polyphony): SB patch (new) - runtime update
+	  (fluid_synth_set_polyphony): SB patch (new)
+	  (fluid_synth_get_polyphony): SB patch (new)
+	  (fluid_synth_nwrite_float): SB patch - fixes bug where the use of
+	  arbitrary values of the 'len' parameter was broken.
+	* src/fluid_voice.c (fluid_voice_write): modlfo_to_vol (modulation LFO
+	  to volume) was being calculated inverted (should be negative
+	  attenuation, gain, for a positive rise in LFO).
+	  (fluid_voice_noteoff): Updated centibel to amplitude conversion
+	  used when voice off during attack to use the new
+	  FLUID_CB_POWER_FACTOR.
+
 2004-11-11    <jgreen@users.sourceforge.net>
 
 	* README-OSX: Update from Ebrahim Mayat.
@@ -1223,4 +1254,3 @@
 	select between alsa, oss, midishare, directx, ...
 
 	* configure.in: preparing for the first pre-release, version 0.0.1
-
