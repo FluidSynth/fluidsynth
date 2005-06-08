@@ -492,15 +492,17 @@ fluid_voice_write(fluid_voice_t* voice,
     /* The volume amplitude is in hold phase. No sound is produced. */
     goto post_process;
   } else if (voice->volenv_section == FLUID_VOICE_ENVATTACK) {
-    /* the envelope is in the attack section: ramp linearly to max value. */
-    dsp_amp = (fluid_cb2amp(voice->attenuation + voice->modlfo_val * voice->modlfo_to_vol) 
+    /* the envelope is in the attack section: ramp linearly to max value.
+	 * A positive modlfo_to_vol should increase volume (negative attenuation).
+	 */
+	dsp_amp = (fluid_cb2amp(voice->attenuation + voice->modlfo_val * -voice->modlfo_to_vol) 
 	       * voice->volenv_val);
   } else {
     fluid_real_t amplitude_that_reaches_noise_floor;
     fluid_real_t amp_max;
     dsp_amp = fluid_cb2amp(voice->attenuation
 			  + 960.0f * (1.0f - voice->volenv_val)
-			  + voice->modlfo_val * voice->modlfo_to_vol);
+			  + voice->modlfo_val * -voice->modlfo_to_vol);
     
     /* Here we are trying to turn off a voice, if the volume has dropped 
      * low enough.
@@ -1629,11 +1631,10 @@ fluid_voice_noteoff(fluid_voice_t* voice)
        * convert from linear amplitude to cb.
        */
       if (voice->volenv_val > 0){
-	fluid_real_t attn_and_lfo = voice->attenuation + voice->modlfo_val * voice->modlfo_to_vol;
-        fluid_real_t amp = voice->volenv_val * pow (10.0, attn_and_lfo / -200.0);
-        fluid_real_t env_value = - ((-200. * log (amp) / log (10.) - attn_and_lfo) / 960.0 - 1);
-        env_value = (env_value < 0.0 ? 0.0 : env_value);
-        env_value = (env_value > 1.0 ? 1.0 : env_value);
+	fluid_real_t attn_and_lfo = voice->attenuation + voice->modlfo_val * -voice->modlfo_to_vol;
+        fluid_real_t amp = voice->volenv_val * pow (10.0, attn_and_lfo / FLUID_CB_POWER_FACTOR);
+        fluid_real_t env_value = - ((FLUID_CB_POWER_FACTOR * log (amp) / log (10.) - attn_and_lfo) / 960.0 - 1);
+	fluid_clip (env_value, 0.0, 1.0);
         voice->volenv_val = env_value;
       }
     }
@@ -2080,5 +2081,3 @@ int fluid_voice_optimize_sample(fluid_sample_t* s)
   };
   return FLUID_OK;
 }
-
-

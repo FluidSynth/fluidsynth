@@ -371,6 +371,10 @@ new_fluid_synth(fluid_settings_t *settings)
   fluid_settings_register_num(settings, "synth.gain", 
 			      0.2f, 0.0f, 10.0f, 0, 
 			      (fluid_num_update_t) fluid_synth_update_gain, synth);
+  fluid_settings_register_int(settings, "synth.polyphony", 
+			      synth->polyphony, 16, 4096, 0,
+			      (fluid_int_update_t) fluid_synth_update_polyphony,
+                              synth);
 
   /* do some basic sanity checking on the settings */
 
@@ -776,13 +780,13 @@ fluid_synth_noteoff(fluid_synth_t* synth, int chan, int key)
 /*   fluid_mutex_lock(synth->busy); /\* Don't interfere with the audio thread *\/ */
 /*   fluid_mutex_unlock(synth->busy); */
   
-  for (i = 0; i < synth->nvoice; i++) {
+  for (i = 0; i < synth->polyphony; i++) {
     voice = synth->voice[i];
     if (_ON(voice) && (voice->chan == chan) && (voice->key == key)) {
       if (synth->verbose) {
 	int used_voices = 0;
 	int k;
-	for (k = 0; k < synth->nvoice; k++) {
+	for (k = 0; k < synth->polyphony; k++) {
 	  if (!_AVAILABLE(synth->voice[k])) {
 	    used_voices++;
 	  }
@@ -813,7 +817,7 @@ fluid_synth_damp_voices(fluid_synth_t* synth, int chan)
 /*   fluid_mutex_lock(synth->busy); /\* Don't interfere with the audio thread *\/ */
 /*   fluid_mutex_unlock(synth->busy); */
 
-  for (i = 0; i < synth->nvoice; i++) {
+  for (i = 0; i < synth->polyphony; i++) {
     voice = synth->voice[i];
     if ((voice->chan == chan) && _SUSTAINED(voice)) {
 /*        printf("turned off sustained note: chan=%d, key=%d, vel=%d\n", voice->chan, voice->key, voice->vel); */
@@ -888,7 +892,7 @@ fluid_synth_all_notes_off(fluid_synth_t* synth, int chan)
   int i;
   fluid_voice_t* voice;
 
-  for (i = 0; i < synth->nvoice; i++) {
+  for (i = 0; i < synth->polyphony; i++) {
     voice = synth->voice[i];
     if (_PLAYING(voice) && (voice->chan == chan)) {
       fluid_voice_noteoff(voice);
@@ -900,7 +904,7 @@ fluid_synth_all_notes_off(fluid_synth_t* synth, int chan)
 /*
  * fluid_synth_all_sounds_off
  *
- * put all notes on this channel into released state.
+ * immediately stop all notes on this channel.
  */
 int
 fluid_synth_all_sounds_off(fluid_synth_t* synth, int chan)
@@ -908,7 +912,7 @@ fluid_synth_all_sounds_off(fluid_synth_t* synth, int chan)
   int i;
   fluid_voice_t* voice;
 
-  for (i = 0; i < synth->nvoice; i++) {
+  for (i = 0; i < synth->polyphony; i++) {
     voice = synth->voice[i];
     if (_PLAYING(voice) && (voice->chan == chan)) {
       fluid_voice_off(voice);
@@ -929,7 +933,7 @@ fluid_synth_system_reset(fluid_synth_t* synth)
   int i;
   fluid_voice_t* voice;
 
-  for (i = 0; i < synth->nvoice; i++) {
+  for (i = 0; i < synth->polyphony; i++) {
     voice = synth->voice[i];
     if (_PLAYING(voice)) {
       fluid_voice_off(voice);
@@ -961,7 +965,7 @@ fluid_synth_modulate_voices(fluid_synth_t* synth, int chan, int is_cc, int ctrl)
 /*   fluid_mutex_lock(synth->busy); /\* Don't interfere with the audio thread *\/ */
 /*   fluid_mutex_unlock(synth->busy); */
 
-  for (i = 0; i < synth->nvoice; i++) {
+  for (i = 0; i < synth->polyphony; i++) {
     voice = synth->voice[i];
     if (voice->chan == chan) {
       fluid_voice_modulate(voice, is_cc, ctrl);
@@ -986,7 +990,7 @@ fluid_synth_modulate_voices_all(fluid_synth_t* synth, int chan)
 /*   fluid_mutex_lock(synth->busy); /\* Don't interfere with the audio thread *\/ */
 /*   fluid_mutex_unlock(synth->busy); */
 
-  for (i = 0; i < synth->nvoice; i++) {
+  for (i = 0; i < synth->polyphony; i++) {
     voice = synth->voice[i];
     if (voice->chan == chan) {
       fluid_voice_modulate_all(voice);
@@ -1374,7 +1378,7 @@ void fluid_synth_set_gain(fluid_synth_t* synth, float gain)
   fluid_clip(gain, 0.0f, 10.0f);
   synth->gain = gain;
 
-  for (i = 0; i < synth->nvoice; i++) {
+  for (i = 0; i < synth->polyphony; i++) {
     fluid_voice_t* voice = synth->voice[i];    
     if (_PLAYING(voice)) {
       fluid_voice_set_gain(voice, gain);
@@ -1388,6 +1392,47 @@ void fluid_synth_set_gain(fluid_synth_t* synth, float gain)
 float fluid_synth_get_gain(fluid_synth_t* synth)
 {
   return synth->gain;
+}
+
+/*
+ * fluid_synth_update_polyphony
+ */
+int fluid_synth_update_polyphony(fluid_synth_t* synth, char* name, int value)
+{
+  fluid_synth_set_polyphony(synth, value);
+  return 0;
+}
+
+/*
+ * fluid_synth_set_polyphony
+ */
+int fluid_synth_set_polyphony(fluid_synth_t* synth, int polyphony)
+{
+  int i;
+
+  if (polyphony < 1 || polyphony > synth->nvoice) {
+    return FLUID_FAILED;
+  }
+
+  /* turn off any voices above the new limit */
+  for (i = polyphony; i < synth->nvoice; i++) {
+    fluid_voice_t* voice = synth->voice[i];    
+    if (_PLAYING(voice)) {
+      fluid_voice_off(voice);
+    }
+  }
+
+  synth->polyphony = polyphony;
+
+  return FLUID_OK;
+}
+
+/*
+ * fluid_synth_get_polyphony
+ */
+int fluid_synth_get_polyphony(fluid_synth_t* synth)
+{
+  return synth->polyphony;
 }
 
 /*
@@ -1537,20 +1582,24 @@ fluid_synth_nwrite_float(fluid_synth_t* synth, int len,
 
   /* First, take what's still available in the buffer */
   count = 0;
-  available = FLUID_BUFSIZE - synth->cur;
+  num = synth->cur;
+  if (synth->cur < FLUID_BUFSIZE) {
+    available = FLUID_BUFSIZE - synth->cur;
 
-  num = (available > len)? len : available;
-  bytes = num * sizeof(float);
+    num = (available > len)? len : available;
+    bytes = num * sizeof(float);
 
-  for (i = 0; i < synth->audio_channels; i++) {
-    FLUID_MEMCPY(left[i], left_in[i] + synth->cur, bytes);
-    FLUID_MEMCPY(right[i], right_in[i] + synth->cur, bytes);
+    for (i = 0; i < synth->audio_channels; i++) {
+      FLUID_MEMCPY(left[i], left_in[i] + synth->cur, bytes);
+      FLUID_MEMCPY(right[i], right_in[i] + synth->cur, bytes);
+    }
+    for (i = 0; i < synth->effects_channels; i++) {
+      FLUID_MEMCPY(fx_left[i], fx_left_in[i] + synth->cur, bytes);
+      FLUID_MEMCPY(fx_right[i], fx_right_in[i] + synth->cur, bytes);
+    }
+    count += num;
+    num += synth->cur; /* if we're now done, num becomes the new synth->cur below */
   }
-  for (i = 0; i < synth->effects_channels; i++) {
-    FLUID_MEMCPY(fx_left[i], fx_left_in[i] + synth->cur, bytes);
-    FLUID_MEMCPY(fx_right[i], fx_right_in[i] + synth->cur, bytes);
-  }
-  count += num;
 
   /* Then, run one_block() and copy till we have 'len' samples  */
   while (count < len) {
@@ -1756,7 +1805,7 @@ fluid_synth_one_block(fluid_synth_t* synth, int do_not_mix_fx_to_out)
   fluid_profile(FLUID_PROF_ONE_BLOCK_CLEAR, prof_ref);
 
   /* call all playing synthesis processes */
-  for (i = 0; i < synth->nvoice; i++) {
+  for (i = 0; i < synth->polyphony; i++) {
     voice = synth->voice[i];
     
     if (_PLAYING(voice)) {
@@ -1869,7 +1918,7 @@ fluid_synth_free_voice_by_kill(fluid_synth_t* synth)
 /*   fluid_mutex_lock(synth->busy); /\* Don't interfere with the audio thread *\/ */
 /*   fluid_mutex_unlock(synth->busy); */
 
-  for (i = 0; i < synth->nvoice; i++) {
+  for (i = 0; i < synth->polyphony; i++) {
     
     voice = synth->voice[i];
     
@@ -1951,7 +2000,7 @@ fluid_synth_alloc_voice(fluid_synth_t* synth, fluid_sample_t* sample, int chan, 
 /*   fluid_mutex_unlock(synth->busy); */
 
   /* check if there's an available synthesis process */
-  for (i = 0; i < synth->nvoice; i++) {
+  for (i = 0; i < synth->polyphony; i++) {
     if (_AVAILABLE(synth->voice[i])) {
       voice = synth->voice[i];
       break;
@@ -1970,7 +2019,7 @@ fluid_synth_alloc_voice(fluid_synth_t* synth, fluid_sample_t* sample, int chan, 
 
   if (synth->verbose) {
     k = 0;
-    for (i = 0; i < synth->nvoice; i++) {
+    for (i = 0; i < synth->polyphony; i++) {
       if (!_AVAILABLE(synth->voice[i])) {
 	k++;
       }
@@ -2039,7 +2088,7 @@ void fluid_synth_kill_by_exclusive_class(fluid_synth_t* synth, fluid_voice_t* ne
   
     /* Kill all notes on the same channel with the same exclusive class */
   
-  for (i = 0; i < synth->nvoice; i++) {
+  for (i = 0; i < synth->polyphony; i++) {
     fluid_voice_t* existing_voice = synth->voice[i];
     
     /* Existing voice does not play? Leave it alone. */
@@ -2385,7 +2434,7 @@ fluid_synth_get_voicelist(fluid_synth_t* synth, fluid_voice_t* buf[], int bufsiz
 {
   int i;
   int count = 0;
-  for (i = 0; i < synth->nvoice; i++) {
+  for (i = 0; i < synth->polyphony; i++) {
     fluid_voice_t* voice = synth->voice[i];
     if (count >= bufsize) {
       return;
@@ -2481,7 +2530,7 @@ void fluid_synth_release_voice_on_same_note(fluid_synth_t* synth, int chan, int 
 /*   fluid_mutex_lock(synth->busy); /\* Don't interfere with the audio thread *\/ */
 /*   fluid_mutex_unlock(synth->busy); */
 
-  for (i = 0; i < synth->nvoice; i++) {
+  for (i = 0; i < synth->polyphony; i++) {
     voice = synth->voice[i];
     if (_PLAYING(voice) 
 	&& (voice->chan == chan) 
@@ -2804,7 +2853,7 @@ fluid_synth_set_gen(fluid_synth_t* synth, int chan, int param, float value)
 
   fluid_channel_set_gen(synth->channel[chan], param, value, 0);
 
-  for (i = 0; i < synth->nvoice; i++) {
+  for (i = 0; i < synth->polyphony; i++) {
     voice = synth->voice[i];
     if (voice->chan == chan) {
       fluid_voice_set_param(voice, param, value, 0);
@@ -2859,7 +2908,7 @@ fluid_synth_set_gen2(fluid_synth_t* synth, int chan, int param,
 
   fluid_channel_set_gen(synth->channel[chan], param, v, absolute);
 
-  for (i = 0; i < synth->nvoice; i++) {
+  for (i = 0; i < synth->polyphony; i++) {
     voice = synth->voice[i];
     if (voice->chan == chan) {
       fluid_voice_set_param(voice, param, v, absolute);
@@ -2966,7 +3015,7 @@ int fluid_synth_stop(fluid_synth_t* synth, unsigned int id)
   int status = FLUID_FAILED;
   int count = 0;
   
-  for (i = 0; i < synth->nvoice; i++) {
+  for (i = 0; i < synth->polyphony; i++) {
 
     voice = synth->voice[i];
 
