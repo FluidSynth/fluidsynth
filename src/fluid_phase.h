@@ -22,6 +22,9 @@
 #ifndef _FLUID_PHASE_H
 #define _FLUID_PHASE_H
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 /*
  *  phase
@@ -51,8 +54,13 @@
 typedef union {
     struct{
 	/* Note, that the two 32-bit ints form a 64-bit int! */
+#ifdef WORDS_BIGENDIAN
+	sint32 index;
+	uint32 fract;
+#else
 	uint32 fract;
 	sint32 index;
+#endif
     } b32;
 #ifdef USE_LONGLONG
     long long b64;

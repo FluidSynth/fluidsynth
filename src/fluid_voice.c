@@ -1158,11 +1158,16 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
 
   case GEN_OVERRIDEROOTKEY:
     /* This is a non-realtime parameter. Therefore the .mod part of the generator
-     * can be neglected. */
+     * can be neglected.
+     * NOTE: origpitch sets MIDI root note while pitchadj is a fine tuning amount
+     * which offsets the original rate.  This means that the fine tuning is
+     * inverted with respect to the root note (so subtract it, not add).
+     */
     if (voice->gen[GEN_OVERRIDEROOTKEY].val > -1) {   //FIXME: use flag instead of -1
-      voice->root_pitch = 100.0f * voice->gen[GEN_OVERRIDEROOTKEY].val;
+      voice->root_pitch = voice->gen[GEN_OVERRIDEROOTKEY].val * 100.0f
+	- voice->sample->pitchadj;
     } else {
-      voice->root_pitch = voice->sample->origpitch * 100.0f + voice->sample->pitchadj;
+      voice->root_pitch = voice->sample->origpitch * 100.0f - voice->sample->pitchadj;
     }
     voice->root_pitch = fluid_ct2hz(voice->root_pitch);
     if (voice->sample != NULL) {

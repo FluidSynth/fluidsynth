@@ -1,3 +1,11 @@
+2005-06-10    <jgreen@users.sourceforge.net>
+
+	* src/fluid_phase.h: Patch from Sean Bolton to fix big endian long long
+	  phase combined 64 bit value type fluid_phase_t
+        * src/fluid_voice.c (fluid_voice_update_param): case GEN_OVERRIDEROOTKEY
+	  was incorrectly adding pitchadj fine tune amount instead of subtracting
+	  it.  Also, fine tuning should be applied to root key override as well.
+
 2005-06-07    <jgreen@users.sourceforge.net>
 
         * Applied Sean Bolton's DSSI patch (SB patch) which adds the ability to
