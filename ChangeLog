@@ -1,3 +1,15 @@
+2005-06-11    <jgreen@users.sourceforge.net>
+
+	* fluidsynth.prj: Added Anjuta project file.
+	* src/fluid_conv.c: fluid_cb2amp conversion set back to real centibels
+	  and added a new fluid_atten2amp table conversion for non-standard
+	  EMU 8k/10k attenuation.
+	* src/fluid_voice.c (fluid_voice_write): Updated volume calculations to
+	  use fluid_cb2amp for envelope and LFO, but use fluid_atten2amp for
+	  initial attenuation.
+	  (fluid_voice_noteoff): Re-coded volenv_val attack conversion and
+	  verified.
+
 2005-06-10    <jgreen@users.sourceforge.net>
 
 	* src/fluid_phase.h: Patch from Sean Bolton to fix big endian long long
