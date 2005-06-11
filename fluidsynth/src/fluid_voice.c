@@ -493,17 +493,19 @@ fluid_voice_write(fluid_voice_t* voice,
     goto post_process;
   } else if (voice->volenv_section == FLUID_VOICE_ENVATTACK) {
     /* the envelope is in the attack section: ramp linearly to max value.
-	 * A positive modlfo_to_vol should increase volume (negative attenuation).
-	 */
-	dsp_amp = (fluid_cb2amp(voice->attenuation + voice->modlfo_val * -voice->modlfo_to_vol) 
-	       * voice->volenv_val);
+     * A positive modlfo_to_vol should increase volume (negative attenuation).
+     */
+    dsp_amp = fluid_atten2amp(voice->attenuation)
+      * fluid_cb2amp (voice->modlfo_val * -voice->modlfo_to_vol)
+      * voice->volenv_val;
   } else {
     fluid_real_t amplitude_that_reaches_noise_floor;
     fluid_real_t amp_max;
-    dsp_amp = fluid_cb2amp(voice->attenuation
-			  + 960.0f * (1.0f - voice->volenv_val)
-			  + voice->modlfo_val * -voice->modlfo_to_vol);
-    
+
+    dsp_amp = fluid_atten2amp(voice->attenuation)
+      * fluid_cb2amp (960.0f * (1.0f - voice->volenv_val)
+		      + voice->modlfo_val * -voice->modlfo_to_vol);
+
     /* Here we are trying to turn off a voice, if the volume has dropped 
      * low enough.
      * Motivation:
@@ -543,8 +545,8 @@ fluid_voice_write(fluid_voice_t* voice,
      * amplitude of sample and volenv cannot exceed amp_max (since
      * volenv_val can only drop):
      */
-    amp_max = fluid_cb2amp(voice->min_attenuation_cB
-			  + 960.0f * (1.0f - voice->volenv_val));
+
+    amp_max = fluid_atten2amp(voice->min_attenuation_cB) * voice->volenv_val;
 
     /*    printf("Att min: %f Amp max: %f Limit: %f\n",voice->min_attenuation_cB,amp_max, amplitude_that_reaches_noise_floor); */
     
@@ -1632,13 +1634,14 @@ fluid_voice_noteoff(fluid_voice_t* voice)
     if (voice->volenv_section == FLUID_VOICE_ENVATTACK) {
       /* A voice is turned off during the attack section of the volume
        * envelope.  The attack section ramps up linearly with
-       * amplitude. The other sections use logarithmic scaling.  So
-       * convert from linear amplitude to cb.
+       * amplitude. The other sections use logarithmic scaling. Calculate new
+       * volenv_val to achieve equievalent amplitude during the release phase
+       * for seamless volume transition.
        */
       if (voice->volenv_val > 0){
-	fluid_real_t attn_and_lfo = voice->attenuation + voice->modlfo_val * -voice->modlfo_to_vol;
-        fluid_real_t amp = voice->volenv_val * pow (10.0, attn_and_lfo / FLUID_CB_POWER_FACTOR);
-        fluid_real_t env_value = - ((FLUID_CB_POWER_FACTOR * log (amp) / log (10.) - attn_and_lfo) / 960.0 - 1);
+	fluid_real_t lfo = voice->modlfo_val * -voice->modlfo_to_vol;
+        fluid_real_t amp = voice->volenv_val * pow (10.0, lfo / -200);
+        fluid_real_t env_value = - ((-200 * log (amp) / log (10.0) - lfo) / 960.0 - 1);
 	fluid_clip (env_value, 0.0, 1.0);
         voice->volenv_val = env_value;
       }
