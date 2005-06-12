@@ -99,7 +99,7 @@ INCLUDES = -I$(srcdir)/../include $(LADCCA_CFLAGS) $(READLINE_CFLAGS) \
 libfluidsynth_la_LIBADD = $(LIBFLUID_LIBS) $(LADCCA_LIBS) $(READLINE_LIBS) \
   $(COREAUDIO_LIBS) $(JACK_LIBS) $(ALSA_LIBS)
 libfluidsynth_la_LDFLAGS = \
-	-version-info @LIBFLUIDSYNTH_MAJ@:@LIBFLUIDSYNTH_MIN@:0 \
+	-version-info @LT_VERSION_INFO@ \
 	-export-dynamic @FCLDFLAGS@ $(LIBFLUID_LDFLAGS)
 libfluidsynth_la_CPPFLAGS = $(LIBFLUID_CPPFLAGS)
 

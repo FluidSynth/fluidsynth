@@ -2,9 +2,9 @@ dnl Some additional autoconf macros
 
 AC_DEFUN(AC_MIDISHARE,
 [
-  AC_ARG_ENABLE(midishare,
-    [  --enable-midishare      Compile MIDISHARE support (default=no)],
-     midishare=$enableval, midishare=no)
+  AC_ARG_ENABLE(midishare, AS_HELP_STRING([--enable-midishare],
+	  [Compile MIDISHARE support (default=auto)]),
+     midishare=$enableval, midishare=yes)
 
   MIDISHARE_SUPPORT=0 
 

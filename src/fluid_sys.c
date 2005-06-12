@@ -51,7 +51,7 @@ int fluid_debug(int level, char * fmt, ...)
     va_list args; 
 
     va_start (args, fmt); 
-    vsprintf(fluid_errbuf, fmt, args); 
+    vsnprintf(fluid_errbuf, sizeof (fluid_errbuf), fmt, args);
     va_end (args); 
 
     fun = fluid_log_function[FLUID_DBG];
@@ -164,7 +164,7 @@ fluid_log(int level, char* fmt, ...)
 
   va_list args; 
   va_start (args, fmt); 
-  vsprintf(fluid_errbuf, fmt, args); 
+  vsnprintf(fluid_errbuf, sizeof (fluid_errbuf), fmt, args);
   va_end (args); 
 
   if ((level >= 0) && (level < LAST_LOG_LEVEL)) {
@@ -1236,4 +1236,3 @@ int fluid_server_socket_join(fluid_server_socket_t* server_socket)
 }
 
 #endif
-

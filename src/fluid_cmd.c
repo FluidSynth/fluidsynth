@@ -1624,8 +1624,12 @@ int fluid_cmd_handler_unregister(fluid_cmd_handler_t* handler, char* cmd)
 
 int fluid_cmd_handler_handle(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out)
 {
-  fluid_cmd_t* cmd;  
-  if (fluid_hashtable_lookup(handler, av[0], (void**) &cmd, NULL) && cmd->handler) {
+  void *vp;	/* use a void pointer to avoid GCC "type-punned pointer" warning */
+  fluid_cmd_t* cmd;
+
+  if (fluid_hashtable_lookup(handler, av[0], &vp, NULL)
+      && ((fluid_cmd_t *)vp)->handler) {
+    cmd = vp;
     return (*cmd->handler)(cmd->data, ac - 1, av + 1, out);
   } else {
     fluid_ostream_printf(out, "unknown command: %s (try help)\n", av[0]);
