@@ -1,6 +1,6 @@
 Compiling fluidsynth-1.0.5 on Mac OS X.4 (Tiger)
 --------------------------------------------
-1. Install Apple's Developer Tools.
+1. Install the XcodeTools.mpkg and the DevSDK.pkg packages from the Tiger Install DVD.
  
 2. Install the Fink Project's Package manager, fink, obtainable at http://fink.sourceforge.net
 
@@ -19,7 +19,10 @@ Compiling fluidsynth-1.0.5 on Mac OS X.4 (Tiger)
 7. cd to the fluidsynth directory and in the configure script, substitute "-lmidishare" with "-framework MidiShare".
 
 8. Run configure with the following options (all on one line in a text editor, then copy and paste into Terminal):
-./configure --enable-midishare --enable-ladspa --enable-functioncheck --enable-debug --enable-profiling --enable-jack-support "CPPFLAGS=-I/usr/local/include -I/sw/include -I/sw/include/liboss -I/System/Library/Frameworks/MidiShare.framework/Versions/A/Headers -I/System/Library/Frameworks/CoreAudio.framework/Versions/A/Headers -I/Library/Frameworks/Jack.framework/Headers" "LDFLAGS=-L/usr/local/lib -L/sw/lib -framework MidiShare -framework CoreAudio -framework Jack"
+./configure --enable-midishare --enable-ladspa --enable-functioncheck --enable-debug --enable-profiling --enable-jack-support "CPPFLAGS=-I/usr/local/include  
+-I/sw/include -I/System/Library/Frameworks/MidiShare.framework/Versions/A/Headers 
+-I/System/Library/Frameworks/CoreAudio.framework/Versions/A/Headers -I/Library/Frameworks/Jack.framework/Headers" 
+"LDFLAGS=-L/usr/local/lib -L/sw/lib -framework MidiShare -framework CoreAudio -framework Jack"
 
 This should result in
 **************************************************************
@@ -43,5 +46,5 @@ Pentium 3+ SSE:        no
 8. make install as root. 
 
 Ebrahim Mayat <emayat@users.sourceforge.net>
-19th May 2005
+11th June 2005
 

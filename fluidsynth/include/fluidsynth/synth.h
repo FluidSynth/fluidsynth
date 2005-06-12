@@ -368,10 +368,10 @@ FLUIDSYNTH_API void fluid_synth_set_gain(fluid_synth_t* synth, float gain);
   /** Get the master gain */
 FLUIDSYNTH_API float fluid_synth_get_gain(fluid_synth_t* synth);
 
-  /** Set the polyphony limit */
+  /** Set the polyphony limit (FluidSynth >= 1.0.6) */
 FLUIDSYNTH_API int fluid_synth_set_polyphony(fluid_synth_t* synth, int polyphony);
 
-  /** Get the polyphony limit */
+  /** Get the polyphony limit (FluidSynth >= 1.0.6) */
 FLUIDSYNTH_API int fluid_synth_get_polyphony(fluid_synth_t* synth);
 
   /** Get the internal buffer size. The internal buffer size if not the

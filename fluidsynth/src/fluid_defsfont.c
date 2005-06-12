@@ -1054,30 +1054,27 @@ fluid_preset_zone_import_sfont(fluid_preset_zone_t* zone, SFZone *sfzone, fluid_
             
     /* *** Amount source *** */
     mod_dest->src2 = mod_src->amtsrc & 127; /* index of source 2, seven-bit value, SF2.01 section 8.2, p.50 */ 
-    type = (mod_src->amtsrc) >> 10;
-    type &= 63; /* type is a 6-bit value */
-      
     mod_dest->flags2 = 0;
-      
+
     /* Bit 7: CC flag SF 2.01 section 8.2.1 page 50*/
     if (mod_src->amtsrc & (1<<7)){
-      mod_dest->flags1 |= FLUID_MOD_CC;
+      mod_dest->flags2 |= FLUID_MOD_CC;
     } else {
-      mod_dest->flags1 |= FLUID_MOD_GC;
+      mod_dest->flags2 |= FLUID_MOD_GC;
     }
 
     /* Bit 8: D flag SF 2.01 section 8.2.2 page 51*/
     if (mod_src->amtsrc & (1<<8)){
-      mod_dest->flags1 |= FLUID_MOD_NEGATIVE;
+      mod_dest->flags2 |= FLUID_MOD_NEGATIVE;
     } else {
-      mod_dest->flags1 |= FLUID_MOD_POSITIVE;
+      mod_dest->flags2 |= FLUID_MOD_POSITIVE;
     }
     
     /* Bit 9: P flag SF 2.01 section 8.2.3 page 51*/
     if (mod_src->amtsrc & (1<<9)){
-      mod_dest->flags1 |= FLUID_MOD_BIPOLAR;
+      mod_dest->flags2 |= FLUID_MOD_BIPOLAR;
     } else {
-      mod_dest->flags1 |= FLUID_MOD_UNIPOLAR;
+      mod_dest->flags2 |= FLUID_MOD_UNIPOLAR;
     }
       
     /* modulator source types: SF2.01 section 8.2.1 page 52 */
@@ -1454,30 +1451,27 @@ fluid_inst_zone_import_sfont(fluid_inst_zone_t* zone, SFZone *sfzone, fluid_defs
             
     /* *** Amount source *** */
     mod_dest->src2=mod_src->amtsrc & 127; /* index of source 2, seven-bit value, SF2.01 section 8.2, page 50 */ 
-    type = (mod_src->amtsrc) >> 10;
-    type &= 63; /* type is a 6-bit value */
-      
     mod_dest->flags2 = 0;
       
     /* Bit 7: CC flag SF 2.01 section 8.2.1 page 50*/
     if (mod_src->amtsrc & (1<<7)){
-      mod_dest->flags1 |= FLUID_MOD_CC;
+      mod_dest->flags2 |= FLUID_MOD_CC;
     } else {
-      mod_dest->flags1 |= FLUID_MOD_GC;
+      mod_dest->flags2 |= FLUID_MOD_GC;
     }
 
     /* Bit 8: D flag SF 2.01 section 8.2.2 page 51*/
     if (mod_src->amtsrc & (1<<8)){
-      mod_dest->flags1 |= FLUID_MOD_NEGATIVE;
+      mod_dest->flags2 |= FLUID_MOD_NEGATIVE;
     } else {
-      mod_dest->flags1 |= FLUID_MOD_POSITIVE;
+      mod_dest->flags2 |= FLUID_MOD_POSITIVE;
     }
     
     /* Bit 9: P flag SF 2.01 section 8.2.3 page 51*/
     if (mod_src->amtsrc & (1<<9)){
-      mod_dest->flags1 |= FLUID_MOD_BIPOLAR;
+      mod_dest->flags2 |= FLUID_MOD_BIPOLAR;
     } else {
-      mod_dest->flags1 |= FLUID_MOD_UNIPOLAR;
+      mod_dest->flags2 |= FLUID_MOD_UNIPOLAR;
     }
       
     /* modulator source types: SF2.01 section 8.2.1 page 52 */

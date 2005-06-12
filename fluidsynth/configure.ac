@@ -1,12 +1,14 @@
 dnl --------------------------------------------------
-dnl configure.in for the If I Were U Synthesizer
+dnl configure.in for FluidSynth
 dnl --------------------------------------------------
 
 AC_INIT(src/fluidsynth.c)
 
+dnl *** NOTE *** Don't forget to update library version below also
+
 FLUIDSYNTH_VERSION_MAJOR=1
 FLUIDSYNTH_VERSION_MINOR=0
-FLUIDSYNTH_VERSION_MICRO=5
+FLUIDSYNTH_VERSION_MICRO=6
 FLUIDSYNTH_VERSION=$FLUIDSYNTH_VERSION_MAJOR.$FLUIDSYNTH_VERSION_MINOR.$FLUIDSYNTH_VERSION_MICRO
 
 AC_SUBST(FLUIDSYNTH_VERSION_MAJOR)
@@ -19,10 +21,19 @@ AM_INIT_AUTOMAKE(fluidsynth, $FLUIDSYNTH_VERSION)
 dnl Convert to quoted string for version.h substitution
 FLUIDSYNTH_VERSION="\"$VERSION\""
 
-LIBFLUIDSYNTH_MAJ=1
-LIBFLUIDSYNTH_MIN=0
-AC_SUBST(LIBFLUIDSYNTH_MAJ)
-AC_SUBST(LIBFLUIDSYNTH_MIN)
+dnl *** NOTICE ***
+dnl Update library version upon each release (follow these steps in order)
+dnl if any source code changes: LT_REVISION++
+dnl if any interfaces added/removed/changed: LT_CURRENT++ and LT_REVISION=0
+dnl if any interfaces have been added: LT_AGE++
+dnl if any interfaces have been removed/changed (compatibility broken): LT_AGE=0
+
+LT_CURRENT=2
+LT_REVISION=0
+LT_AGE=1
+
+LT_VERSION_INFO="${LT_CURRENT}:${LT_REVISION}:${LT_AGE}"
+AC_SUBST(LT_VERSION_INFO)
 
 AM_CONFIG_HEADER(src/config.h)
 
@@ -72,46 +83,41 @@ AC_SUBST(FLUID_CPPFLAGS)
 
 AM_CONDITIONAL(MINGW32_SUPPORT, test "$mingw32_support" == "yes")
 
-ENABLE_FLOAT_SAMPLES=yes
-AC_ARG_ENABLE(double,
-  [  --enable-double         double floating point for dsp (default=float)],
-  ENABLE_FLOAT_SAMPLES=no,
+AC_ARG_ENABLE(double, AS_HELP_STRING([--enable-double],
+	[double floating point for dsp (default=float)]),
+  ENABLE_FLOAT_SAMPLES=$enableval,
   ENABLE_FLOAT_SAMPLES=yes)
 if test "x$ENABLE_FLOAT_SAMPLES" = "xyes" ; then 
   AC_DEFINE(WITH_FLOAT, 1, [Define to do all DSP in single floating point precision])
 fi
 
-profiling_flag=no
-AC_ARG_ENABLE(profiling,
-  [  --enable-profiling      profile the dsp code (default=no)],
-  profiling_flag=yes,
+AC_ARG_ENABLE(profiling, AS_HELP_STRING([--enable-profiling],
+	[profile the dsp code (default=no)]),
+  profiling_flag=$enableval,
   profiling_flag=no)
 if test "x$profiling_flag" = "xyes" ; then 
   AC_DEFINE(WITH_PROFILING, 1, [Define to profile the DSP code])
 fi
 
-longlong=no
-AC_ARG_ENABLE(longlong,
-  [  --enable-longlong       use long long integers, where appropriate (default=yes)],
-  longlong=yes,
+AC_ARG_ENABLE(longlong, AS_HELP_STRING([--enable-longlong],
+	[use long long integers, where appropriate (default=no)]),
+  longlong=$enableval,
   longlong=no)
 if test "x$longlong" = "xyes" ; then 
   AC_DEFINE(USE_LONGLONG, 1, [Define to use long long type, where appropriate])
 fi
 
-SSE=no
-AC_ARG_ENABLE(SSE,
-  [  --enable-SSE            Use the SSE instructions of Pentium3+ (default=no)],
-  SSE=yes,
+AC_ARG_ENABLE(SSE, AS_HELP_STRING([--enable-SSE],
+	[Use SSE instructions of Pentium3+ (not recommended)]),
+  SSE=$enableval,
   SSE=no)
 if test "x$SSE" = "xyes" ; then 
-  AC_DEFINE(ENABLE_SSE, 1, [Use the SSE instructions of Pentium 3 and higher])
+  AC_DEFINE(ENABLE_SSE, 1, [Use the SSE instructions of Pentium3+ (not recommended)])
 fi
 
-ENABLE_LADSPA=no
-AC_ARG_ENABLE(ladspa,
-  [  --enable-ladspa         Include LADSPA effect unit (default=no)],
-  ENABLE_LADSPA=yes,
+AC_ARG_ENABLE(ladspa, AS_HELP_STRING([--enable-ladspa],
+	[Include LADSPA effect unit (default=no)]),
+  ENABLE_LADSPA=$enableval,
   ENABLE_LADSPA=no)
 if test "x$ENABLE_LADSPA" = "xyes" ; then 
    AC_DEFINE(LADSPA, 1, [Include the LADSPA Fx unit])
@@ -121,10 +127,9 @@ if test "x$ENABLE_LADSPA" = "xyes" ; then
 fi
 
 
-ENABLE_FUNCTIONCHECK=no
-AC_ARG_ENABLE(functioncheck,
-  [  --enable-functioncheck  enable profiling using FunctionCheck. Turns on debugging. (default=no)],
-  ENABLE_FUNCTIONCHECK=yes,
+AC_ARG_ENABLE(functioncheck, AS_HELP_STRING([--enable-functioncheck],
+	[profiling using FunctionCheck, turns on debugging (default=no)]),
+  ENABLE_FUNCTIONCHECK=$enableval,
   ENABLE_FUNCTIONCHECK=no)
 
 FCLDFLAGS=""
@@ -143,32 +148,21 @@ else
   ENABLE_DEBUG=no
 fi
 
-AC_ARG_ENABLE(debug,
-  [  --enable-debug          enable debugging (default=no)],
-  ENABLE_DEBUG=yes)
+AC_ARG_ENABLE(debug, AS_HELP_STRING([--enable-debug],
+	[enable debugging (default=no)]),
+  ENABLE_DEBUG=$enableval)
 
-
-case "$ENABLE_DEBUG" in
-no) 
-  CFLAGS="${CFLAGS} ${FCCFLAGS} -O2 -fomit-frame-pointer -funroll-all-loops -finline-functions -Wall -W -Wpointer-arith -Wbad-function-cast -Wcast-qual -Wcast-align -Wstrict-prototypes -Wno-unused -Winline"
-  AC_DEFINE(DEBUG, 0, [Define to activate debugging message])
-  ;;
-
-yes)
+if test "$ENABLE_DEBUG" = "yes"; then
   if test "${ENABLE_FUNCTIONCHECK}" = "yes"; then
     CFLAGS="${CFLAGS} ${FCCFLAGS} -Wall -W -Wpointer-arith -Wbad-function-cast -Wcast-qual -Wcast-align -Wstrict-prototypes -Wno-unused"
   else
     CFLAGS="${CFLAGS} ${FCCFLAGS} -g -Wall -W -Wpointer-arith -Wbad-function-cast -Wcast-qual -Wcast-align -Wstrict-prototypes -Wno-unused"
   fi 
   AC_DEFINE(DEBUG, 1, [Define to activate debugging message]) 
-  ;;
-
-*)
+else
   CFLAGS="${CFLAGS} ${FCCFLAGS} -O2 -fomit-frame-pointer -funroll-all-loops -finline-functions -Wall -W -Wpointer-arith -Wbad-function-cast -Wcast-qual -Wcast-align -Wstrict-prototypes -Wno-unused -Winline"
   AC_DEFINE(DEBUG, 0, [Define to activate debugging message])
-  ;;
-
-esac
+fi
 
 
 dnl 
@@ -191,9 +185,9 @@ dnl fi
 
 dnl - Check support for ALSA
 
-AC_ARG_ENABLE(alsa-support,
-  [  --disable-alsa-support  Do not compile ALSA support (default=auto)],
-  [enable_alsa_support=$enableval], enable_alsa_support="yes")
+AC_ARG_ENABLE(alsa-support, AS_HELP_STRING([--disable-alsa-support],
+      [Do not compile ALSA support (default=auto)]),
+  enable_alsa_support=$enableval, enable_alsa_support="yes")
 
 if test "x$enable_alsa_support" != "xno"; then
   PKG_CHECK_MODULES(ALSA, alsa >= 0.9.1, ALSA_SUPPORT=1, ALSA_SUPPORT=0)
@@ -219,9 +213,9 @@ AC_MIDISHARE
 
 
 dnl - Check support for JACK
-AC_ARG_ENABLE(jack-support,
-  [  --disable-jack-support  disable JACK support (default=auto)],
-  [enable_jack=$enableval], enable_jack="yes")
+AC_ARG_ENABLE(jack-support, AS_HELP_STRING([--disable-jack-support],
+	[disable JACK support (default=auto)]),
+  enable_jack=$enableval, enable_jack="yes")
 
 if test "x$enable_jack" != "xno"; then
   PKG_CHECK_MODULES(JACK, jack, JACK_SUPPORT=1, JACK_SUPPORT=0)
@@ -242,8 +236,8 @@ dnl - Check support for CoreAudio
 dnl
 AC_CHECK_HEADER(CoreAudio/AudioHardware.h, COREAUDIO_FOUND="yes",
                 COREAUDIO_FOUND="no")
-AC_ARG_ENABLE(coreaudio,
-  [  --disable-coreaudio     disable CoreAudio support (default=auto)],
+AC_ARG_ENABLE(coreaudio, AS_HELP_STRING([--disable-coreaudio],
+	[disable CoreAudio support (default=auto)]),
   enable_coreaudio=$enableval, enable_coreaudio="yes")
 
 COREAUDIO_SUPPORT=0
@@ -299,20 +293,10 @@ fi
 dnl
 dnl ladcca stuff
 dnl
-fluid_enable_ladcca="yes"
-AC_ARG_ENABLE(ladcca,
-[  --disable-ladcca        disable LADCCA support],[
-  case "$enableval" in
-    "yes")
-      ;;
-    "no")
-      fluid_enable_ladcca="no"
-      ;;
-    *)
-      AC_MSG_ERROR([must use --enable-ladcca(=yes/no) or --disable-ladcca])
-      ;;
-  esac
-])
+AC_ARG_ENABLE(ladcca, AS_HELP_STRING([--disable-ladcca],
+	[disable LADCCA support (default=auto)]),
+    fluid_enable_ladcca=$enableval,
+    fluid_enable_ladcca="yes")
 
 if test "$fluid_enable_ladcca" = "yes"; then
   PKG_CHECK_MODULES(LADCCA, ladcca-1.0 >= 0.3, LADCCA_FOUND="yes", LADCCA_FOUND="no")
@@ -381,6 +365,18 @@ else
   echo "CoreAudio:             no"
 fi
 
+if test "${ENABLE_LADSPA}" = "yes"; then
+  echo "LADSPA support:        yes"
+else
+  echo "LADSPA support:        no"
+fi
+
+if test "${LADCCA_FOUND}" = "yes"; then
+  echo "LADCCA support:        yes"
+else
+  echo "LADCCA support:        no"
+fi
+
 dnl if test "${AUFILE_SUPPORT}" = "1"; then
 dnl   echo "Sound file:            yes"
 dnl else
@@ -391,12 +387,6 @@ if test "$WITH_READLINE" = "1"; then
   echo "Readline:              yes"
 else
   echo "Readline:              no"
-fi
-
-if test "${LADCCA_FOUND}" = "yes"; then
-  echo "LADCCA support:        yes"
-else
-  echo "LADCCA support:        no"
 fi
 
 if test "${ENABLE_DEBUG}" = "yes"; then
@@ -417,12 +407,6 @@ dnl else
 dnl   echo "FunctionCheck:         no"
 dnl fi
 
-if test "${ENABLE_LADSPA}" = "yes"; then
-  echo "LADSPA support:        yes"
-else
-  echo "LADSPA support:        no"
-fi
-
 if test "${longlong}" = "yes"; then
   echo "use long long:         yes"
 else
@@ -430,7 +414,7 @@ else
 fi
 
 if test "${SSE}" = "yes"; then
-  echo "Pentium 3+ SSE:        yes"
+  echo "Pentium 3+ SSE:        yes (experimental and may actually decrease performance!)"
 else
   echo "Pentium 3+ SSE:        no"
 fi

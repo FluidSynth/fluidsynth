@@ -1,5 +1,30 @@
 2005-06-11    <jgreen@users.sourceforge.net>
 
+	* Released FluidSynth 1.0.6 "Music to my ears"
+
+	* README-OSX: Update from Ebrahim Mayat.
+	* acinclude.m4: Midishare support now defaults to auto.
+	* configure.ac: Added LT_CURRENT, LT_REVISION and LT_AGE in place of
+	  LIBFLUIDSYNTH_MAJ and LIBFLUIDSYNTH_MIN to make better use of
+	  libtool library versioning.  Fixed use of AC_ARG_ENABLE (was setting
+	  variables to yes even when disable was specified), fixes --disable-SSE
+	  which was reported by Mikhail Yakshin, added warning when SSE is
+	  enabled to let users know that this feature isn't really desirable
+	  currently.
+	* src/Makefile.am: Now using LT_VERSION_INFO to substitute the libtool
+	  version.
+	* src/fluid_cmd.c (fluid_cmd_handler_handle): Modified to avoid GCC
+	  "type-punned" cast warning.
+	* src/fluid_defsfont.c (fluid_preset_zone_import_sfont): Fixed
+	  assignment of modulator amtsrc flags (should be assigned to flags2
+	  not flags1), thanks to Stephan Tassart for reporting this.
+	  (fluid_inst_zone_import_sfont): Same fixes as for above.
+	* src/fluid_sys.c (fluid_log): Now using vsnprintf for formatting
+	  error messages to fix buffer overflow as reported by Axioplase.
+	  (fluid_debug): Same as above.
+
+2005-06-11    <jgreen@users.sourceforge.net>
+
 	* fluidsynth.prj: Added Anjuta project file.
 	* src/fluid_conv.c: fluid_cb2amp conversion set back to real centibels
 	  and added a new fluid_atten2amp table conversion for non-standard

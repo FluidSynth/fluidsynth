@@ -2,7 +2,7 @@
 
 SUBDIRS = macbuild sf2 winbuild src doc include
 EXTRA_DIST = TODO acinclude.m4 autogen.sh fluidsynth.pc.in \
-  fluidsynth.spec.in fluidsynth.spec
+  fluidsynth.spec.in fluidsynth.spec fluidsynth.prj
 DISTCLEANFILES = fluidsynth.pc
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = fluidsynth.pc

@@ -12,7 +12,7 @@
 /* Define to activate debugging message */
 #undef DEBUG
 
-/* Use the SSE instructions of Pentium 3 and higher */
+/* Use the SSE instructions of Pentium3+ (not recommended) */
 #undef ENABLE_SSE
 
 /* Define to 1 if you have the <arpa/inet.h> header file. */
