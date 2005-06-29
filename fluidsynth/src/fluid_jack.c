@@ -131,16 +131,6 @@ new_fluid_jack_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
     goto error_recovery;
   }
 
-  /* tell the ladcca server our client name */
-#ifdef HAVE_LADCCA
-  {
-    int enable_ladcca = 0;
-    fluid_settings_getint (settings, "ladcca.enable", &enable_ladcca);
-    if (enable_ladcca)
-      cca_jack_client_name (fluid_cca_client, name);
-  }
-#endif /* HAVE_LADCCA */
-
   /* set callbacks */
   jack_set_process_callback(dev->client, fluid_jack_audio_driver_process, (void*) dev);
   jack_set_buffer_size_callback(dev->client, fluid_jack_audio_driver_bufsize, (void*) dev);
@@ -237,6 +227,17 @@ new_fluid_jack_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
     FLUID_LOG(FLUID_ERR, "Cannot activate the fluidsynth as a JACK client");
     goto error_recovery;
   }
+
+  /* tell the ladcca server our client name */
+#ifdef HAVE_LADCCA
+  {
+    int enable_ladcca = 0;
+    fluid_settings_getint (settings, "ladcca.enable", &enable_ladcca);
+    if (enable_ladcca)
+      cca_jack_client_name (fluid_cca_client, name);
+  }
+#endif /* HAVE_LADCCA */
+
 
   /* connect the ports. */
 
