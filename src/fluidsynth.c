@@ -18,6 +18,7 @@
  * 02111-1307, USA
  */
 
+#include "config.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -77,6 +78,7 @@ static fluid_cmd_handler_t* newclient(void* data, char* addr);
  * the globals
  */
 char* appname = NULL;
+fluid_cmd_handler_t* cmd_handler = NULL;
 
 /*
  * macros to wrap readline functions
@@ -158,7 +160,6 @@ int main(int argc, char** argv)
   fluid_audio_driver_t* adriver = NULL;
   fluid_synth_t* synth = NULL;
   fluid_server_t* server = NULL;
-  fluid_cmd_handler_t* cmd_handler = NULL;
   char* midi_id = NULL;
   char* midi_driver = NULL;
   char* midi_device = NULL;
@@ -441,23 +442,7 @@ int main(int argc, char** argv)
 #ifdef HAVE_LADCCA
   if (ladcca_connect)
     {
-      int flags;
-      char * str;
-
-      flags = CCA_Config_Data_Set | CCA_Terminal;
-
-      /*  Removed from LADCCA? It is sufficient to just set the ALSA id or
-	  Jack client name - JG
-
-      if (fluid_settings_str_equal(settings, "audio.driver", "jack")) {
-	flags |= CCA_Use_Jack;
-      }
-      if (fluid_settings_str_equal(settings, "midi.driver", "alsa_seq")) {
-	flags |= CCA_Use_Alsa;
-      }
-      */
-
-      fluid_cca_client = cca_init (cca_args, "FluidSynth", flags, CCA_PROTOCOL (1,1));
+      fluid_cca_client = cca_init (cca_args, PACKAGE, CCA_Config_Data_Set | CCA_Terminal, CCA_PROTOCOL (2,0));
 
       if (fluid_cca_client)
 	fluid_settings_setint (settings, "ladcca.enable", cca_enabled (fluid_cca_client) ? 1 : 0);
@@ -746,6 +731,10 @@ print_help()
 #ifdef HAVE_LADCCA
 #include <unistd.h>		/* for usleep() */
 #include "fluid_synth.h"	/* JG - until fluid_sfont_get_name is public */
+#include <sys/types.h>
+#include <signal.h>
+#include <string.h>
+#include <errno.h>
 
 static void
 cca_save (fluid_synth_t * synth)
@@ -757,6 +746,12 @@ cca_save (fluid_synth_t * synth)
   char num[32];
   
   sfcount = fluid_synth_sfcount (synth);
+
+  config = cca_config_new ();
+  cca_config_set_key (config, "soundfont count");
+  cca_config_set_value_int (config, sfcount);
+  cca_send_config (fluid_cca_client, config);
+
   for (i = sfcount - 1; i >= 0; i--)
     {
       sfont = fluid_synth_get_sfont (synth, i);
@@ -783,10 +778,13 @@ cca_run (void * data)
   cca_event_t * event;
   cca_config_t * config;
   fluid_synth_t * synth;
+  int done = 0;
+  int err;
+  int pending_restores = 0;
   
   synth = (fluid_synth_t *) data;
   
-  while (cca_enabled (fluid_cca_client))
+  while (!done)
     {
   
       while ( (event = cca_get_event (fluid_cca_client)) )
@@ -798,21 +796,43 @@ cca_run (void * data)
               cca_send_event (fluid_cca_client, event);
               break;
             case CCA_Restore_Data_Set:
-              cca_send_event (fluid_cca_client, event);
+              cca_event_destroy (event);
               break;
             case CCA_Quit:
-              exit (0);
+	      err = kill (getpid(), SIGQUIT);
+	      if (err)
+		fprintf (stderr, "%s: error sending signal: %s",
+			 __FUNCTION__, strerror (errno));
+	      cca_event_destroy (event);
+	      done = 1;
+	      break;
+	    case CCA_Server_Lost:
+	      cca_event_destroy (event);
+	      done = 1;
+	      break;
             default:
               fprintf (stderr, "Recieved unknown LADCCA event of type %d\n", cca_event_get_type (event));
-               cca_event_destroy (event);
-               break;
+	      cca_event_destroy (event);
+	      break;
             }
         }
   
       while ( (config = cca_get_config (fluid_cca_client)) )
         {
-          cca_load (synth, cca_config_get_value_string (config));
+	  if (strcmp (cca_config_get_key (config), "soundfont count") == 0)
+	      pending_restores = cca_config_get_value_int (config);
+	  else
+	    {
+              cca_load (synth, cca_config_get_value_string (config));
+	      pending_restores--;
+	    }
           cca_config_destroy (config);
+
+	  if (!pending_restores)
+	    {
+	      event = cca_event_new_with_type (CCA_Restore_Data_Set);
+	      cca_send_event (fluid_cca_client, event);
+	    }
         }
       
       usleep (10000);

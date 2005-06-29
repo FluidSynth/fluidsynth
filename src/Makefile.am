@@ -93,7 +93,7 @@ libfluidsynth_la_SOURCES = \
 	fluid_voice.h \
 	fluid_aufile.c 
 
-INCLUDES = -I$(srcdir)/../include $(LADCCA_CFLAGS) $(READLINE_CFLAGS) \
+INCLUDES = -I$(top_srcdir)/include $(LADCCA_CFLAGS) $(READLINE_CFLAGS) \
   $(JACK_CFLAGS) $(ALSA_CFLAGS)
 
 libfluidsynth_la_LIBADD = $(LIBFLUID_LIBS) $(LADCCA_LIBS) $(READLINE_LIBS) \
