@@ -1,3 +1,9 @@
+2005-07-05    Josh Green <jgreen@users.sourceforge.net>
+
+	* src/fluidsynth_priv.h: FLUID_ALIGN16BYTE is broken on AMD64 so now
+	only enabled if SSE is being used. If SSE code becomes more useful in
+	the future this should be fixed.
+
 2005-06-29    Josh Green <jgreen@users.sourceforge.net>
 
 	* Applied LASH patch that is included with ladcca-0.4.0.
