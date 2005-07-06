@@ -285,7 +285,12 @@ typedef FILE*  fluid_file;
  * As soon as proper alignment is supported by the compiler, this
  * can be removed.
  */
+#ifdef ENABLE_SSE
+/* FIXME - This is broken on AMD 64 - only used if SSE enabled */
 #define FLUID_ALIGN16BYTE(ptr)(((int)(ptr)+15) & (~0xFL))
+#else
+#define FLUID_ALIGN16BYTE(ptr) ptr
+#endif
 
 #if WITH_FTS
 #define FLUID_PRINTF                 post
