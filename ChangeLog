@@ -1,3 +1,8 @@
+2005-09-04    Josh Green <jgreen@users.sourceforge.net>
+
+	* src/fluid_ramsfont.c (fluid_ramsfont_remove_izone): Applied crash bug
+	fix from Antoine Schmitt.
+
 2005-07-05    Josh Green <jgreen@users.sourceforge.net>
 
 	* src/fluidsynth_priv.h: FLUID_ALIGN16BYTE is broken on AMD64 so now

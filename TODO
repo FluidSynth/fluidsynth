@@ -1,3 +1,5 @@
+- Build win32 package
+- Investigate why MIDI rendering causes burst of notes at start
 
 Bugs and incomplete code
 ------------------------
@@ -42,8 +44,7 @@ Binaries
 Requests
 --------
 
-- Add compatibility for EMU8k volume attenuation parameter which
-  doesn't follow SoundFont specifications
+- Improve non-realtime rendering of MIDI to WAV files
 - Remove dependency of settings on audio driver and other (see
   fluid_settings_init())
 - Add "unselect" command to shell to set a MIDI channel to not sound.
