@@ -27,21 +27,30 @@ You should have received a copy of the GNU General Public License along with thi
 _____________________________________________________________________
 SYSTEM REQUIREMENTS
 
-This version of fluidsynth~ was created and tested with Max/MSP 4.3 on Mac OS X (10.3) Panther.
-The Mac OS 9 version of the external was not tested.
+This version of fluidsynth~ was initially created and tested using Max/MSP 4.3 on Mac 10.3 and should work on all following versions of Max/MSP and Mac OS.
 
 _____________________________________________________________________
-RELASE NOTES of version 05/2004 (release 7)
+RELASE NOTES up to version 10/2005 (release 10 and 11)
 
+ - added micro-tuning methods (to be added to help patch)
+ - fixed bug restricting argument of tuning-octave message to int (11)
+
+_____________________________________________________________________
+RELASE NOTES up to version 09/2004 (release 7 to 9)
+
+ - bug fix: now polyphony and # of midi channel arguments take effect (release 9)
+ - added message resample permitting to chose resampling interpolation method (release 8)
+ - added names (= file name without path and postfix) for soundfonts (7)
  - fixed bug of crash for "info channels" in case of channel(s) without defined preset
- - rebuilt Mac OS 9 version
+ - dropped Mac OS 9 version
  - extended help patch
+
 _____________________________________________________________________
 RELASE NOTES of version 04/2004 (release 6)
 
  - fixed several bugs of the initial release (especially related to the translation of paths
  - introduced names for soundfonts (without path and .sf2 postfix)
- - introduced a message "info" in order to query the current state of fluidsynth~
+ - introduced a message "info" in order to query the current state of tuning-octave
 
 _____________________________________________________________________
 CVS DIRECTORY

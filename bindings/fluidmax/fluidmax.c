@@ -30,14 +30,16 @@
 /************************************************************************
  *
  *  versions:
- *    (9): bug fix: now polyphony ans # of midi channel arguments take effect
+ *   (11): fixed arguments of fluidmax_tuning_octave() (third has to be float)
+ *   (10): added micro-tuning methods
+ *    (9): bug fix: now polyphony and # of midi channel arguments take effect
  *    (8): added message resample permitting to chose resampling interpolation method
  *    (7): added names for soundfonts (== file name without path and postfix)
  *    (6): added message 'info'
  *    (5): fixed bogus path translation at file loading
  * 
  */
-#define VERSION "09/2004 (9)"
+#define VERSION "10/2005 (11)"
 
 #include "ftmax.h"
 #include "fluidsynth.h"
@@ -970,12 +972,92 @@ int fluid_synth_count_audio_groups (fluid_synth_t *synth)
 int fluid_synth_count_effects_channels (fluid_synth_t *synth)
 */
 
-/* tuning
+static void 
+fluidmax_tuning_octave(t_object *o, Symbol *s, short ac, Atom *at)
+{
+  fluidmax_t *self = (fluidmax_t *)o;
+  ftmax_symbol_t name;
+  int tuning_bank = 0;
+  int tuning_prog = 0;
+  double pitch[12];
+  int i, n;
+  
+  if(ac > 0 && ftmax_is_symbol(at))
+  {
+    name = ftmax_get_symbol(at);
+    at++;
+    ac--;
+  }
+  
+  n = ac - 2;
+  if(n > 12)
+    n = 12;
+
+  if(ac > 0 && ftmax_is_number(at))
+    tuning_bank = ftmax_get_number_int(at) % 128;
+  
+  if(ac > 1 && ftmax_is_number(at + 1))
+    tuning_prog = ftmax_get_number_int(at) % 128;
+    
+  for(i=0; i<n; i++)
+  {
+    if(ftmax_is_number(at + i + 2))
+      pitch[i] = ftmax_get_number_float(at + i + 2);
+    else
+      pitch[i] = 0.0;
+  }
+  
+  for(; i<12; n++)
+    pitch[i] = 0.0;
+
+  fluid_synth_create_octave_tuning(self->synth, tuning_bank, tuning_prog, ftmax_symbol_name(name), pitch);
+}
+
+static void 
+fluidmax_tuning_select(t_object *o, Symbol *s, short ac, Atom *at)
+{
+  fluidmax_t *self = (fluidmax_t *)o;
+  int tuning_bank = 0;
+  int tuning_prog = 0;
+  int channel = 1;
+  
+  if(ac > 0 && ftmax_is_number(at))
+    tuning_bank = ftmax_get_number_int(at) % 128;
+    
+  if(ac > 1 && ftmax_is_number(at + 1))
+    tuning_prog = ftmax_get_number_int(at + 1) % 128;
+  
+  if(ac > 2 && ftmax_is_number(at + 2))
+    channel = ftmax_get_number_int(at + 2);
+    
+  if(channel < 1)
+    channel = 1;
+  else if(channel > fluid_synth_count_midi_channels(self->synth))
+    channel = fluid_synth_count_midi_channels(self->synth);
+    
+  fluid_synth_select_tuning(self->synth, channel - 1, tuning_bank, tuning_prog);
+}
+
+static void 
+fluidmax_tuning_reset(t_object *o, Symbol *s, short ac, Atom *at)
+{
+  fluidmax_t *self = (fluidmax_t *)o;
+  int channel = 0;
+  
+  if(ac > 0 && ftmax_is_number(at))
+    channel = ftmax_get_number_int(at);
+
+  if(channel < 1)
+    channel = 1;
+  else if(channel > fluid_synth_count_midi_channels(self->synth))
+    channel = fluid_synth_count_midi_channels(self->synth);
+    
+  fluid_synth_reset_tuning(self->synth, channel - 1);
+}
+
+/* more tuning ??
 fluid_synth_create_key_tuning (fluid_synth_t *synth, int tuning_bank, int tuning_prog, char *name, double *pitch)
-fluid_synth_create_octave_tuning (fluid_synth_t *synth, int tuning_bank, int tuning_prog, char *name, double *pitch)
 fluid_synth_tune_notes (fluid_synth_t *synth, int tuning_bank, int tuning_prog, int len, int *keys, double *pitch, int apply)
-fluid_synth_select_tuning (fluid_synth_t *synth, int chan, int tuning_bank, int tuning_prog)
-fluid_synth_reset_tuning (fluid_synth_t *synth, int chan)
 fluid_synth_tuning_iteration_start (fluid_synth_t *synth)
 fluid_synth_tuning_iteration_next (fluid_synth_t *synth, int *bank, int *prog)
 fluid_synth_tuning_dump (fluid_synth_t *synth, int bank, int prog, char *name, int len, double *pitch)
@@ -1534,6 +1616,11 @@ main(void)
   addmess((method)fluidmax_reset, "reset", A_GIMME, 0);
   addmess((method)fluidmax_mute, "mute", A_GIMME, 0);
   addmess((method)fluidmax_unmute, "unmute", 0);
+
+  /*addmess((method)fluidmax_tuning_keys, "tuning-keys", A_GIMME, 0);*/
+  addmess((method)fluidmax_tuning_octave, "tuning-octave", A_GIMME, 0);
+  addmess((method)fluidmax_tuning_select, "tuning-select", A_GIMME, 0);
+  addmess((method)fluidmax_tuning_reset, "tuning-reset", A_GIMME, 0);
 
   addmess((method)fluidmax_reverb, "reverb", A_GIMME, 0);
   addmess((method)fluidmax_chorus, "chorus", A_GIMME, 0);  
