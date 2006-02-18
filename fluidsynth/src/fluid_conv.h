@@ -36,6 +36,7 @@
 
 void fluid_conversion_config(void);
 
+fluid_real_t fluid_ct2hz_real(fluid_real_t cents);
 fluid_real_t fluid_ct2hz(fluid_real_t cents);
 fluid_real_t fluid_cb2amp(fluid_real_t cb);
 fluid_real_t fluid_atten2amp(fluid_real_t atten);
