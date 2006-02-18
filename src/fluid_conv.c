@@ -96,6 +96,43 @@ fluid_conversion_config(void)
  * fluid_ct2hz
  */
 fluid_real_t 
+fluid_ct2hz_real(fluid_real_t cents) 
+{
+  if (cents < 0)
+    return (fluid_real_t) 1.0; 
+  else if (cents < 900) {
+    return (fluid_real_t) 6.875 * fluid_ct2hz_tab[(int) (cents + 300)];
+  } else if (cents < 2100) {
+    return (fluid_real_t) 13.75 * fluid_ct2hz_tab[(int) (cents - 900)];
+  } else if (cents < 3300) {
+    return (fluid_real_t) 27.5 * fluid_ct2hz_tab[(int) (cents - 2100)];
+  } else if (cents < 4500) {
+    return (fluid_real_t) 55.0 * fluid_ct2hz_tab[(int) (cents - 3300)];
+  } else if (cents < 5700) {
+    return (fluid_real_t) 110.0 * fluid_ct2hz_tab[(int) (cents - 4500)];
+  } else if (cents < 6900) {
+    return (fluid_real_t) 220.0 * fluid_ct2hz_tab[(int) (cents - 5700)];
+  } else if (cents < 8100) {
+    return (fluid_real_t) 440.0 * fluid_ct2hz_tab[(int) (cents - 6900)];
+  } else if (cents < 9300) {
+    return (fluid_real_t) 880.0 * fluid_ct2hz_tab[(int) (cents - 8100)];
+  } else if (cents < 10500) {
+    return (fluid_real_t) 1760.0 * fluid_ct2hz_tab[(int) (cents - 9300)];
+  } else if (cents < 11700) {
+    return (fluid_real_t) 3520.0 * fluid_ct2hz_tab[(int) (cents - 10500)];
+  } else if (cents < 12900) {
+    return (fluid_real_t) 7040.0 * fluid_ct2hz_tab[(int) (cents - 11700)];
+  } else if (cents < 14100) {
+    return (fluid_real_t) 14080.0 * fluid_ct2hz_tab[(int) (cents - 12900)];
+  } else {
+    return (fluid_real_t) 1.0; /* some loony trying to make you deaf */
+  }
+}
+
+/*
+ * fluid_ct2hz
+ */
+fluid_real_t 
 fluid_ct2hz(fluid_real_t cents) 
 {
   /* Filter fc limit: SF2.01 page 48 # 8 */
@@ -103,32 +140,8 @@ fluid_ct2hz(fluid_real_t cents)
     cents = 13500;             /* 20 kHz */
   } else if (cents < 1500){
     cents = 1500;              /* 20 Hz */
-  };
-  if ((cents >= 6900) && (cents < 8100)) {
-    return (fluid_real_t) 440.0 * fluid_ct2hz_tab[(int) (cents - 6900)];
-  } else if ((cents >= 8100) && (cents < 9300)) {
-    return (fluid_real_t) 880.0 * fluid_ct2hz_tab[(int) (cents - 8100)];
-  } else if ((cents >= 5700) && (cents < 6900)) {
-    return (fluid_real_t) 220.0 * fluid_ct2hz_tab[(int) (cents - 5700)];
-  } else if ((cents >= 9300) && (cents < 10500)) {
-    return (fluid_real_t) 1760.0 * fluid_ct2hz_tab[(int) (cents - 9300)];
-  } else if ((cents >= 4500) && (cents < 5700)) {
-    return (fluid_real_t) 110.0 * fluid_ct2hz_tab[(int) (cents - 4500)];
-  } else if ((cents >= 10500) && (cents < 11700)) {
-    return (fluid_real_t) 3520.0 * fluid_ct2hz_tab[(int) (cents - 10500)];
-  } else if ((cents >= 3300) && (cents < 4500)) {
-    return (fluid_real_t) 55.0 * fluid_ct2hz_tab[(int) (cents - 3300)];
-  } else if ((cents >= 11700) && (cents < 12900)) {
-    return (fluid_real_t) 7040.0 * fluid_ct2hz_tab[(int) (cents - 11700)];
-  } else if ((cents >= 2100) && (cents < 3300)) {
-    return (fluid_real_t) 27.5 * fluid_ct2hz_tab[(int) (cents - 2100)];
-  } else if ((cents >= 12900) && (cents < 14100)) {
-    return (fluid_real_t) 14080.0 * fluid_ct2hz_tab[(int) (cents - 12900)];
-  } else if ((cents >= 900) && (cents < 2100)) {
-    return (fluid_real_t) 13.75 * fluid_ct2hz_tab[(int) (cents - 900)];
-  } else {
-    return (fluid_real_t) 1.0; /* some loony trying to make you deaf */
   }
+  return fluid_ct2hz_real(cents);
 }
 
 /*

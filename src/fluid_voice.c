@@ -587,7 +587,7 @@ fluid_voice_write(fluid_voice_t* voice,
    * through the original waveform with each step in the output
    * buffer. It is the ratio between the frequencies of original
    * waveform and output waveform.*/
-  incr = fluid_ct2hz(voice->pitch
+  incr = fluid_ct2hz_real(voice->pitch
 		    + voice->modlfo_val * voice->modlfo_to_pitch
 		    + voice->viblfo_val * voice->viblfo_to_pitch
 		    + voice->modenv_val * voice->modenv_to_pitch) / voice->root_pitch;
