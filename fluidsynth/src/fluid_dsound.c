@@ -30,17 +30,13 @@
 #include <mmsystem.h> 
 #include <dsound.h>
 
-static HWND fluid_wnd = NULL;
-
 fluid_audio_driver_t* 
 new_fluid_dsound_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth);
 
 int delete_fluid_dsound_audio_driver(fluid_audio_driver_t* data);
 DWORD WINAPI fluid_dsound_audio_run(LPVOID lpParameter);
 
-int fluid_win32_create_window(void);
-int fluid_win32_destroy_window(void);
-long FAR PASCAL fluid_win32_wndproc(HWND hWnd, unsigned message, WPARAM wParam, LPARAM lParam);
+HWND fluid_win32_get_window(void);
 char* fluid_win32_error(HRESULT hr);
 
 
@@ -100,13 +96,14 @@ new_fluid_dsound_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
     return NULL;
   }
 
+/*
   if (fluid_wnd == NULL) {
     if (fluid_win32_create_window() != 0) {
       FLUID_LOG(FLUID_ERR, "Couldn't create window needed for DirectSound");
       return NULL;
     }
   }
-
+*/
   /* create and clear the driver data */
   dev = FLUID_NEW(fluid_dsound_audio_driver_t);
   if (dev == NULL) {
@@ -156,7 +153,7 @@ new_fluid_dsound_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
     goto error_recovery;
   }
 
-  hr = IDirectSound_SetCooperativeLevel(dev->direct_sound, fluid_wnd, DSSCL_PRIORITY);
+  hr = IDirectSound_SetCooperativeLevel(dev->direct_sound, fluid_win32_get_window(), DSSCL_PRIORITY);
   if (hr != DS_OK) {
     FLUID_LOG(FLUID_ERR, "Failed to set the cooperative level");
     goto error_recovery;
@@ -282,7 +279,7 @@ int delete_fluid_dsound_audio_driver(fluid_audio_driver_t* d)
 
   FLUID_FREE(dev);
 
-  fluid_win32_destroy_window();
+//  fluid_win32_destroy_window();
 
   return 0;
 }
@@ -370,55 +367,4 @@ char* fluid_win32_error(HRESULT hr) {
   case DSERR_UNSUPPORTED: s = "Function not supported"; break;
   }
   return s;
-}
-
-
-long FAR PASCAL fluid_win32_wndproc(HWND hWnd, unsigned message, WPARAM wParam, LPARAM lParam)
-{
-  switch (message) {
-  case WM_CREATE:
-    break;
-  case WM_DESTROY:
-    break;
-  default:
-    return DefWindowProc(hWnd, message, wParam, lParam);
-    break;
-  } 
-  return(0L);
-}
-
-int fluid_win32_create_window(void)
-{
-  WNDCLASS myClass;
-  myClass.hCursor = LoadCursor( NULL, IDC_ARROW );
-  myClass.hIcon = NULL; 
-  myClass.lpszMenuName = (LPSTR) NULL;
-  myClass.lpszClassName = (LPSTR) "FluidSynth";
-  myClass.hbrBackground = (HBRUSH)(COLOR_WINDOW);
-  myClass.hInstance = FLUID_HINSTANCE;
-  myClass.style = CS_GLOBALCLASS;
-  myClass.lpfnWndProc = fluid_win32_wndproc;
-  myClass.cbClsExtra = 0;
-  myClass.cbWndExtra = 0;
-  if (!RegisterClass(&myClass)) {
-    return -100;
-  }
-  fluid_wnd = CreateWindow((LPSTR) "FluidSynth", (LPSTR) "FluidSynth", WS_OVERLAPPEDWINDOW,
-			  CW_USEDEFAULT, CW_USEDEFAULT, 400, 300, (HWND) NULL, (HMENU) NULL, 
-			  FLUID_HINSTANCE, (LPSTR) NULL);  
-  if (fluid_wnd == NULL) {
-    FLUID_LOG(FLUID_ERR, "Can't create window");
-    return -101;
-  }
-  return 0;
-}
-
-int fluid_win32_destroy_window(void)
-{
-  if (fluid_wnd != NULL) {
-    DestroyWindow(fluid_wnd);
-    fluid_wnd = NULL;
-    UnregisterClass((LPSTR) "FluidSynth", FLUID_HINSTANCE);
-  }
-  return 0;
 }
