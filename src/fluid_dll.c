@@ -23,13 +23,17 @@
 #include "fluidsynth_priv.h"
 #include "fluid_sys.h"
 
-HINSTANCE fluid_hinstance = NULL;
+static HINSTANCE fluid_hinstance = NULL;
+static HWND fluid_wnd = NULL;
+
+int fluid_win32_create_window(void);
 
 #ifndef FLUIDSYNTH_NOT_A_DLL
 BOOL WINAPI DllMain(HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
   FLUID_LOG(FLUID_DBG, "DllMain\n");
   fluid_set_hinstance((void*) hModule);
+  fluid_win32_create_window();
   return TRUE;
 }
 #endif
@@ -45,6 +49,51 @@ void fluid_set_hinstance(void* hinstance)
 void* fluid_get_hinstance(void)
 {
   return (void*) fluid_hinstance;
+}
+
+static long FAR PASCAL fluid_win32_wndproc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+  switch (message) {
+  case WM_CREATE:
+    break;
+  case WM_DESTROY:
+    break;
+  default:
+    return DefWindowProc(hWnd, message, wParam, lParam);
+    break;
+  } 
+  return(0L);
+}
+
+int fluid_win32_create_window(void)
+{
+  WNDCLASS myClass;
+  myClass.hCursor = LoadCursor( NULL, IDC_ARROW );
+  myClass.hIcon = NULL; 
+  myClass.lpszMenuName = (LPSTR) NULL;
+  myClass.lpszClassName = (LPSTR) "FluidSynth";
+  myClass.hbrBackground = (HBRUSH)(COLOR_WINDOW);
+  myClass.hInstance = fluid_hinstance;
+  myClass.style = CS_GLOBALCLASS;
+  myClass.lpfnWndProc = fluid_win32_wndproc;
+  myClass.cbClsExtra = 0;
+  myClass.cbWndExtra = 0;
+  if (!RegisterClass(&myClass)) {
+    return -100;
+  }
+  fluid_wnd = CreateWindow((LPSTR) "FluidSynth", (LPSTR) "FluidSynth", WS_OVERLAPPEDWINDOW,
+			  CW_USEDEFAULT, CW_USEDEFAULT, 400, 300, (HWND) NULL, (HMENU) NULL, 
+			  fluid_hinstance, (LPSTR) NULL);  
+  if (fluid_wnd == NULL) {
+    FLUID_LOG(FLUID_ERR, "Can't create window");
+    return -101;
+  }
+  return 0;
+}
+
+HWND fluid_win32_get_window(void)
+{
+	return fluid_wnd;
 }
 #endif
 
