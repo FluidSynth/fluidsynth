@@ -88,14 +88,6 @@ static fluid_revmodel_presets_t revmodel_preset[] = {
   { NULL, 0.0f, 0.0f, 0.0f, 0.0f }
 };
 
-/*
- * ladcca client - this symbol needs to be in the library else
- * all clients would need a fluid_cca_client symbol.
- */
-#ifdef HAVE_LADCCA
-cca_client_t * fluid_cca_client;
-#endif
-
 
 /***************************************************************
  *
@@ -2084,7 +2076,7 @@ void fluid_synth_kill_by_exclusive_class(fluid_synth_t* synth, fluid_voice_t* ne
     return; 
   }
   
-  //  FLUID_LOG(FLUID_INFO, "Voice belongs to exclusive class (class=%d, ignore_id=%d)\n", excl_class, ignore_ID);
+  //  FLUID_LOG(FLUID_INFO, "Voice belongs to exclusive class (class=%d, ignore_id=%d)", excl_class, ignore_ID);
   
     /* Kill all notes on the same channel with the same exclusive class */
   
@@ -2113,7 +2105,7 @@ void fluid_synth_kill_by_exclusive_class(fluid_synth_t* synth, fluid_voice_t* ne
       continue;
     }
     
-    //    FLUID_LOG(FLUID_INFO, "Releasing previous voice of exclusive class (class=%d, id=%d)\n", 
+    //    FLUID_LOG(FLUID_INFO, "Releasing previous voice of exclusive class (class=%d, id=%d)", 
     //     (int)_GEN(existing_voice, GEN_EXCLUSIVECLASS), (int)fluid_voice_get_id(existing_voice));
     
     fluid_voice_kill_excl(existing_voice);
@@ -2162,7 +2154,7 @@ fluid_synth_sfload(fluid_synth_t* synth, const char* filename, int reset_presets
 #endif
 
   if (filename == NULL) {
-    FLUID_LOG(FLUID_ERR, "Invalid filename\n"); 
+    FLUID_LOG(FLUID_ERR, "Invalid filename"); 
     return FLUID_FAILED;
   }
 
@@ -2187,7 +2179,7 @@ fluid_synth_sfload(fluid_synth_t* synth, const char* filename, int reset_presets
     }
   }
 
-  FLUID_LOG(FLUID_ERR, "Failed to load SoundFont \"%s\"\n", filename); 
+  FLUID_LOG(FLUID_ERR, "Failed to load SoundFont \"%s\"", filename); 
   return -1;
 }
 
@@ -2199,7 +2191,7 @@ static int fluid_synth_sfunload_callback(void* data, unsigned int msec)
   fluid_sfont_t* sfont = (fluid_sfont_t*) data;
   int r = delete_fluid_sfont(sfont);
   if (r == 0) {
-    printf("%s: %d: Deleted SoundFont\n", __FILE__, __LINE__);
+    FLUID_LOG(FLUID_DBG,"Unloaded SoundFont");
   }
   return r != 0;
 }
@@ -2238,7 +2230,7 @@ fluid_synth_sfunload(fluid_synth_t* synth, unsigned int id, int reset_presets)
 #endif
 
   if (!sfont) {
-    FLUID_LOG(FLUID_ERR, "No SoundFont with id = %d\n", id); 
+    FLUID_LOG(FLUID_ERR, "No SoundFont with id = %d", id); 
     return FLUID_FAILED;
   }
 
@@ -2278,7 +2270,7 @@ int fluid_synth_sfreload(fluid_synth_t* synth, unsigned int id)
 
   sfont = fluid_synth_get_sfont_by_id(synth, id);
   if (!sfont) {
-    FLUID_LOG(FLUID_ERR, "No SoundFont with id = %d\n", id); 
+    FLUID_LOG(FLUID_ERR, "No SoundFont with id = %d", id); 
     return FLUID_FAILED;
   }
 
@@ -2318,7 +2310,7 @@ int fluid_synth_sfreload(fluid_synth_t* synth, unsigned int id)
     }
   }
 
-  FLUID_LOG(FLUID_ERR, "Failed to load SoundFont \"%s\"\n", filename); 
+  FLUID_LOG(FLUID_ERR, "Failed to load SoundFont \"%s\"", filename); 
   return -1;
 }
 

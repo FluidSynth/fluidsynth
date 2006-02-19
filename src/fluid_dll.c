@@ -31,7 +31,7 @@ int fluid_win32_create_window(void);
 #ifndef FLUIDSYNTH_NOT_A_DLL
 BOOL WINAPI DllMain(HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
-  FLUID_LOG(FLUID_DBG, "DllMain\n");
+  FLUID_LOG(FLUID_DBG, "DllMain");
   fluid_set_hinstance((void*) hModule);
   fluid_win32_create_window();
   return TRUE;
@@ -42,7 +42,7 @@ void fluid_set_hinstance(void* hinstance)
 {
   if (fluid_hinstance == NULL) {
     fluid_hinstance = (HINSTANCE) hinstance;
-    FLUID_LOG(FLUID_DBG, "DLL instance = %d\n", (int) fluid_hinstance);
+    FLUID_LOG(FLUID_DBG, "DLL instance = %d", (int) fluid_hinstance);
   }	
 }
 
@@ -96,4 +96,3 @@ HWND fluid_win32_get_window(void)
 	return fluid_wnd;
 }
 #endif
-

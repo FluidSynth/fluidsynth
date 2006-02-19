@@ -33,6 +33,9 @@
 /* whether or not we are supporting ladcca */
 #undef HAVE_LADCCA
 
+/* whether or not we are supporting lash */
+#undef HAVE_LASH
+
 /* Define to 1 if you have the `dl' library (-ldl). */
 #undef HAVE_LIBDL
 

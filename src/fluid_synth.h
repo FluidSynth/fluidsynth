@@ -219,11 +219,3 @@ void fluid_synth_remove_bank_offset(fluid_synth_t* synth, int sfont_id);
 void fluid_synth_settings(fluid_settings_t* settings);
 
 #endif  /* _FLUID_SYNTH_H */
-
-/*
- * ladcca stuff
- */
-#ifdef HAVE_LADCCA
-#include <ladcca/ladcca.h>
-extern cca_client_t * cca_client;
-#endif

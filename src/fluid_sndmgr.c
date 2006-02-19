@@ -76,7 +76,7 @@ start_fluid_sndmgr_audio_driver(fluid_settings_t* settings,
   dev->doubleCallbackProc = NewSndDoubleBackProc(fluid_sndmgr_callback);
 
   /* the channel */
-  FLUID_LOG(FLUID_DBG, "FLUID-SndManager@2\n");
+  FLUID_LOG(FLUID_DBG, "FLUID-SndManager@2");
   err = SndNewChannel(&channel, sampledSynth, initStereo, NULL);
   if ((err != noErr) || (channel == NULL)) {
     FLUID_LOG(FLUID_ERR, "Failed to allocate a sound channel (error %i)", err);
@@ -84,7 +84,7 @@ start_fluid_sndmgr_audio_driver(fluid_settings_t* settings,
   }
 
   /* the double buffer struct */
-  FLUID_LOG(FLUID_DBG, "FLUID-SndManager@3\n");
+  FLUID_LOG(FLUID_DBG, "FLUID-SndManager@3");
   doubleHeader = FLUID_NEW(SndDoubleBufferHeader2);
   if (doubleHeader == NULL) {
     FLUID_LOG(FLUID_PANIC, "Out of memory");
@@ -101,14 +101,14 @@ start_fluid_sndmgr_audio_driver(fluid_settings_t* settings,
   doubleHeader->dbhFormat = 0;
 
   /* prepare dev */
-  FLUID_LOG(FLUID_DBG, "FLUID-SndManager@4\n");
+  FLUID_LOG(FLUID_DBG, "FLUID-SndManager@4");
   dev->doubleHeader = doubleHeader;
   dev->channel = channel;
   dev->bufferFrameSize = buffer_size;
   dev->bufferByteSize = buffer_size * 2 * 2;
 
   /* the 2 doublebuffers */
-  FLUID_LOG(FLUID_DBG, "FLUID-SndManager@5\n");
+  FLUID_LOG(FLUID_DBG, "FLUID-SndManager@5");
   for (i = 0; i < 2; i++) {
     doubleBuffer = (SndDoubleBufferPtr) FLUID_MALLOC(sizeof(SndDoubleBuffer) 
 						     + dev->bufferByteSize);		
@@ -124,7 +124,7 @@ start_fluid_sndmgr_audio_driver(fluid_settings_t* settings,
   }
 
   /* start */
-  FLUID_LOG(FLUID_DBG, "FLUID-SndManager@6\n");
+  FLUID_LOG(FLUID_DBG, "FLUID-SndManager@6");
   
   err = SndPlayDoubleBuffer(channel, (SndDoubleBufferHeader *)doubleHeader);
   if (err != noErr) {
@@ -132,7 +132,7 @@ start_fluid_sndmgr_audio_driver(fluid_settings_t* settings,
     return err;
   }
 
-  FLUID_LOG(FLUID_DBG, "FLUID-SndManager@7\n");  
+  FLUID_LOG(FLUID_DBG, "FLUID-SndManager@7");  
   return 0;
 }
 

@@ -104,7 +104,7 @@ new_fluid_file_audio_driver(fluid_settings_t* settings,
 
 	dev->file = fopen(filename, "wb");
 	if (dev->file == NULL) {
-		FLUID_LOG(FLUID_ERR, "Failed to open the file '%s'\n", filename);
+		FLUID_LOG(FLUID_ERR, "Failed to open the file '%s'", filename);
 		goto error_recovery;
 	}
 

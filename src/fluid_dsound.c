@@ -186,7 +186,7 @@ new_fluid_dsound_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
      print a warning. */
   hr = IDirectSoundBuffer_SetFormat(dev->prim_buffer, dev->format);
   if (hr != DS_OK) {
-    FLUID_LOG(FLUID_WARN, "Can't set format of primary sound buffer\n", fluid_win32_error(hr));
+    FLUID_LOG(FLUID_WARN, "Can't set format of primary sound buffer", fluid_win32_error(hr));
   }
 
   /* initialize the buffer description */
@@ -215,7 +215,7 @@ new_fluid_dsound_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
   hr = IDirectSoundBuffer_Lock(dev->sec_buffer, 0, 0, (void*) &buf1, &bytes1, 0, 0, DSBLOCK_ENTIREBUFFER);
 
   if ((hr != DS_OK) || (buf1 == NULL)) {
-    FLUID_LOG(FLUID_PANIC, "Failed to lock the audio buffer. Exiting.\n");
+    FLUID_LOG(FLUID_PANIC, "Failed to lock the audio buffer. Exiting.");
     goto error_recovery;
   }
 
@@ -318,7 +318,7 @@ DWORD WINAPI fluid_dsound_audio_run(LPVOID lpParameter)
       res = IDirectSoundBuffer_Lock(dev->sec_buffer, cur_position, bytes, (void*) &buf1, &bytes1, (void*) &buf2, &bytes2, 0);
 
       if ((res != DS_OK) || (buf1 == NULL)) {
-	FLUID_LOG(FLUID_PANIC, "Failed to lock the audio buffer. System lockup might follow. Exiting.\n");
+	FLUID_LOG(FLUID_PANIC, "Failed to lock the audio buffer. System lockup might follow. Exiting.");
 	ExitProcess(0);
       }
 

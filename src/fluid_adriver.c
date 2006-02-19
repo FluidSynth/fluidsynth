@@ -256,7 +256,7 @@ new_fluid_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
 
   for (i = 0; fluid_audio_drivers[i].name != NULL; i++) {
     if (fluid_settings_str_equal(settings, "audio.driver", fluid_audio_drivers[i].name)) {
-      FLUID_LOG(FLUID_DBG, "Using '%s' audio driver\n", fluid_audio_drivers[i].name);
+      FLUID_LOG(FLUID_DBG, "Using '%s' audio driver", fluid_audio_drivers[i].name);
       driver = (*fluid_audio_drivers[i].new)(settings, synth);
       if (driver) {
 	driver->name = fluid_audio_drivers[i].name;
@@ -281,7 +281,7 @@ new_fluid_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func, voi
   for (i = 0; fluid_audio_drivers[i].name != NULL; i++) {
     if (fluid_settings_str_equal(settings, "audio.driver", fluid_audio_drivers[i].name) &&
 	(fluid_audio_drivers[i].new2 != NULL)) {
-      FLUID_LOG(FLUID_DBG, "Using '%s' audio driver\n", fluid_audio_drivers[i].name);
+      FLUID_LOG(FLUID_DBG, "Using '%s' audio driver", fluid_audio_drivers[i].name);
       driver = (*fluid_audio_drivers[i].new2)(settings, func, data);
       if (driver) {
 	driver->name = fluid_audio_drivers[i].name;

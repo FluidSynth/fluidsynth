@@ -8,7 +8,7 @@ dnl *** NOTE *** Don't forget to update library version below also
 
 FLUIDSYNTH_VERSION_MAJOR=1
 FLUIDSYNTH_VERSION_MINOR=0
-FLUIDSYNTH_VERSION_MICRO=6
+FLUIDSYNTH_VERSION_MICRO=7
 FLUIDSYNTH_VERSION=$FLUIDSYNTH_VERSION_MAJOR.$FLUIDSYNTH_VERSION_MINOR.$FLUIDSYNTH_VERSION_MICRO
 
 AC_SUBST(FLUIDSYNTH_VERSION_MAJOR)
@@ -29,7 +29,7 @@ dnl if any interfaces have been added: LT_AGE++
 dnl if any interfaces have been removed/changed (compatibility broken): LT_AGE=0
 
 LT_CURRENT=2
-LT_REVISION=0
+LT_REVISION=1
 LT_AGE=1
 
 LT_VERSION_INFO="${LT_CURRENT}:${LT_REVISION}:${LT_AGE}"
@@ -107,13 +107,18 @@ if test "x$longlong" = "xyes" ; then
   AC_DEFINE(USE_LONGLONG, 1, [Define to use long long type, where appropriate])
 fi
 
-AC_ARG_ENABLE(SSE, AS_HELP_STRING([--enable-SSE],
-	[Use SSE instructions of Pentium3+ (not recommended)]),
+AC_ARG_ENABLE(broken-SSE, AS_HELP_STRING([--enable-broken-SSE],
+	[Use SSE instructions (not recommended and probably broken)]),
   SSE=$enableval,
   SSE=no)
 if test "x$SSE" = "xyes" ; then 
   AC_DEFINE(ENABLE_SSE, 1, [Use the SSE instructions of Pentium3+ (not recommended)])
 fi
+
+AC_ARG_ENABLE(SSE, AS_HELP_STRING([--enable-SSE],
+	[Does nothing currently but tell you that this option is no more.]),
+  DUMMY_SSE=$enableval,
+  DUMMY_SSE=no)
 
 AC_ARG_ENABLE(ladspa, AS_HELP_STRING([--enable-ladspa],
 	[Include LADSPA effect unit (default=no)]),
@@ -291,14 +296,35 @@ if test "x${have_termcap}" = "xtrue"; then
 fi
 
 dnl
-dnl ladcca stuff
+dnl lash stuff
+dnl
+AC_ARG_ENABLE(lash, AS_HELP_STRING([--disable-lash],
+	[disable LASH support (default=auto)]),
+    fluid_enable_lash=$enableval,
+    fluid_enable_lash="yes")
+
+if test "$fluid_enable_lash" = "yes"; then
+  PKG_CHECK_MODULES(LASH, lash-1.0 >= 0.3, LASH_FOUND="yes", LASH_FOUND="no")
+  AC_SUBST(LASH_CFLAGS)
+  AC_SUBST(LASH_LIBS)
+
+  if test "$LASH_FOUND" = "yes"; then
+     AC_DEFINE(HAVE_LASH, 1, [whether or not we are supporting lash])
+  fi
+else
+  LASH_FOUND="no"
+fi
+AM_CONDITIONAL(LASH_SUPPORT, test "$LASH_FOUND" = "yes")
+
+dnl
+dnl ladcca stuff (depricated by lash and will be removed in the future)
 dnl
 AC_ARG_ENABLE(ladcca, AS_HELP_STRING([--disable-ladcca],
 	[disable LADCCA support (default=auto)]),
     fluid_enable_ladcca=$enableval,
     fluid_enable_ladcca="yes")
 
-if test "$fluid_enable_ladcca" = "yes"; then
+if test "$fluid_enable_ladcca" = "yes" -a "$LASH_FOUND" = "no"; then
   PKG_CHECK_MODULES(LADCCA, ladcca-1.0 >= 0.3, LADCCA_FOUND="yes", LADCCA_FOUND="no")
   AC_SUBST(LADCCA_CFLAGS)
   AC_SUBST(LADCCA_LIBS)
@@ -309,9 +335,7 @@ if test "$fluid_enable_ladcca" = "yes"; then
 else
   LADCCA_FOUND="no"
 fi
-AM_CONDITIONAL(LADCCA, test "$LADCCA_FOUND" = "yes")
-
-
+AM_CONDITIONAL(LADCCA_SUPPORT, test "$LADCCA_FOUND" = "yes")
 
 
 
@@ -371,6 +395,12 @@ else
   echo "LADSPA support:        no"
 fi
 
+if test "${LASH_FOUND}" = "yes"; then
+  echo "LASH support:          yes"
+else
+  echo "LASH support:          no"
+fi
+
 if test "${LADCCA_FOUND}" = "yes"; then
   echo "LADCCA support:        yes"
 else
@@ -414,9 +444,14 @@ else
 fi
 
 if test "${SSE}" = "yes"; then
-  echo "Pentium 3+ SSE:        yes (experimental and may actually decrease performance!)"
-else
-  echo "Pentium 3+ SSE:        no"
+  echo "Pentium 3+ SSE:        yes (broken and may actually DECREASE performance!)"
+fi
+
+if test "${DUMMY_SSE}" = "yes"; then
+  echo "!!! --enable-SSE is no longer valid since the SSE implementation in !!!"
+  echo "!!! FluidSynth is currently rather broken.  If you are a package    !!!"
+  echo "!!! maintainer, please remove this switch! (Use --enable-broken-SSE !!!"
+  echo "!!! if you really want to end up with a broken FluidSynth :)        !!!"
 fi
 
 echo "**************************************************************"

@@ -21,6 +21,16 @@ if OSS_SUPPORT
 fluid_oss = fluid_oss.c
 endif
 
+# if LASH_SUPPORT || LADCCA_SUPPORT (Makefile supports OR?)
+if LASH_SUPPORT
+fluid_lash = fluid_lash.c
+else
+if LADCCA_SUPPORT
+fluid_lash = fluid_lash.c
+endif
+endif
+
+
 # Extra files and optional drivers
 EXTRA_DIST = fluid_dll.c fluid_dsound.c fluid_winmidi.c fluid_portaudio.c \
 	fluid_coreaudio.c fluid_alsa.c fluid_oss.c fluid_dsp_core.c \
@@ -35,6 +45,7 @@ libfluidsynth_la_SOURCES = \
 	$(fluid_alsa) \
 	$(fluid_coreaudio) \
 	$(fluid_jack) \
+	$(fluid_lash) \
 	$(fluid_oss) \
 	$(fluid_windows) \
 	fluid_adriver.c \
@@ -59,6 +70,7 @@ libfluidsynth_la_SOURCES = \
 	fluid_io.h \
 	fluid_ladspa.c \
 	fluid_ladspa.h \
+	fluid_lash.h \
 	fluid_list.c \
 	fluid_list.h \
 	fluid_mdriver.c \
@@ -93,11 +105,11 @@ libfluidsynth_la_SOURCES = \
 	fluid_voice.h \
 	fluid_aufile.c 
 
-INCLUDES = -I$(top_srcdir)/include $(LADCCA_CFLAGS) $(READLINE_CFLAGS) \
-  $(JACK_CFLAGS) $(ALSA_CFLAGS)
+INCLUDES = -I$(top_srcdir)/include $(LASH_CFLAGS) $(LADCCA_CFLAGS) \
+  $(READLINE_CFLAGS) $(JACK_CFLAGS) $(ALSA_CFLAGS)
 
-libfluidsynth_la_LIBADD = $(LIBFLUID_LIBS) $(LADCCA_LIBS) $(READLINE_LIBS) \
-  $(COREAUDIO_LIBS) $(JACK_LIBS) $(ALSA_LIBS)
+libfluidsynth_la_LIBADD = $(LIBFLUID_LIBS) $(LASH_LIBS) $(LADCCA_LIBS) \
+  $(READLINE_LIBS) $(COREAUDIO_LIBS) $(JACK_LIBS) $(ALSA_LIBS)
 libfluidsynth_la_LDFLAGS = \
 	-version-info @LT_VERSION_INFO@ \
 	-export-dynamic @FCLDFLAGS@ $(LIBFLUID_LDFLAGS)
