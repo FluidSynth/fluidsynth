@@ -870,18 +870,18 @@ void fluid_profiling_print(void)
 
   printf("fluid_profiling_print\n");
   
-  FLUID_LOG(FLUID_INFO, "Estimated CPU frequency: %.0f MHz\n", fluid_cpu_frequency); 
-  FLUID_LOG(FLUID_INFO, "Estimated times: min/avg/max (micro seconds)\n"); 
+  FLUID_LOG(FLUID_INFO, "Estimated CPU frequency: %.0f MHz", fluid_cpu_frequency); 
+  FLUID_LOG(FLUID_INFO, "Estimated times: min/avg/max (micro seconds)"); 
 
   for (i = 0; i < FLUID_PROF_LAST; i++) {
     if (fluid_profile_data[i].count > 0) {
-      FLUID_LOG(FLUID_INFO, "%s: %.3f/%.3f/%.3f\n", 
+      FLUID_LOG(FLUID_INFO, "%s: %.3f/%.3f/%.3f", 
 	       fluid_profile_data[i].description, 
 	       fluid_profile_data[i].min, 
 	       fluid_profile_data[i].total / fluid_profile_data[i].count, 
 	       fluid_profile_data[i].max);
     } else {
-      FLUID_LOG(FLUID_DBG, "%s: no profiling available\n", fluid_profile_data[i].description);
+      FLUID_LOG(FLUID_DBG, "%s: no profiling available", fluid_profile_data[i].description);
     }
   }
 }

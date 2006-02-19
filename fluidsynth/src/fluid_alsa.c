@@ -42,12 +42,7 @@
 
 #include "config.h"
 
-#ifdef HAVE_LADCCA
-#include <ladcca/ladcca.h>
-extern cca_client_t * fluid_cca_client;
-#endif /* HAVE_LADCCA */
-
-
+#include "fluid_lash.h"
 
 #define FLUID_ALSA_DEFAULT_MIDI_DEVICE  "default"
 #define FLUID_ALSA_DEFAULT_SEQ_DEVICE   "default"
@@ -290,7 +285,7 @@ new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
     goto error_recovery;    
   }
 
-  FLUID_LOG(FLUID_INFO, "ALSA driver: Using format %s\n", fluid_alsa_formats[i].name);
+  FLUID_LOG(FLUID_INFO, "ALSA driver: Using format %s", fluid_alsa_formats[i].name);
 
   /* Set the software params */
   snd_pcm_sw_params_current(dev->pcm, swparams);
@@ -964,17 +959,15 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
     }
   }
 
-
-  /* tell the ladcca server our client id */
-#ifdef HAVE_LADCCA
+  /* tell the lash server our client id */
+#ifdef LASH_ENABLED
   {
-    int enable_ladcca = 0;
-    fluid_settings_getint (settings, "ladcca.enable", &enable_ladcca);
-    if (enable_ladcca)
-      cca_alsa_client_id (fluid_cca_client, snd_seq_client_id (dev->seq_handle));
+    int enable_lash = 0;
+    fluid_settings_getint (settings, "lash.enable", &enable_lash);
+    if (enable_lash)
+      fluid_lash_alsa_client_id (fluid_lash_client, snd_seq_client_id (dev->seq_handle));
   }
-#endif /* HAVE_LADCCA */
-
+#endif /* LASH_ENABLED */
 
   dev->status = FLUID_MIDI_READY;
 
@@ -1141,9 +1134,17 @@ fluid_alsa_seq_run(void* d)
 	}
     }
 
-    if ((n < 0) && (n != -EAGAIN)) {
-      FLUID_LOG(FLUID_ERR, "Error occured while reading ALSA sequencer events");
-      dev->status = FLUID_MIDI_DONE;
+    if (n < 0)		/* Negative value indicates an error */
+    {
+      if (n == -EPERM)		/* interrupted system call? */
+	;
+      else if (n != -ENOSPC)	/* input event buffer overrun? */
+	FLUID_LOG(FLUID_WARN, "ALSA sequencer buffer overrun, lost events");
+      else
+      {
+	FLUID_LOG(FLUID_ERR, "Error occured while reading ALSA sequencer events (code=%d)", n);
+	dev->status = FLUID_MIDI_DONE;
+      }
     }
   }
   pthread_exit(NULL);

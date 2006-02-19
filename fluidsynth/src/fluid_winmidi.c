@@ -104,13 +104,13 @@ new_fluid_winmidi_driver(fluid_settings_t* settings,
 		   (DWORD) fluid_winmidi_callback, 
 		   (DWORD) dev, CALLBACK_FUNCTION);
   if (err != MMSYSERR_NOERROR) {
-    FLUID_LOG(FLUID_WARN, "Couldn't open MIDI input: %s (error %d)\n", 
+    FLUID_LOG(FLUID_WARN, "Couldn't open MIDI input: %s (error %d)", 
 	     fluid_winmidi_input_error(err), err);
     goto error_recovery;
   }
 
   if (midiInStart(dev->hmidiin) != MMSYSERR_NOERROR) {
-    FLUID_LOG(FLUID_ERR, "Failed to start the MIDI input. MIDI input not available.\n");
+    FLUID_LOG(FLUID_ERR, "Failed to start the MIDI input. MIDI input not available.");
     goto error_recovery;
   }
 

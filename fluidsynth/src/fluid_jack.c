@@ -38,12 +38,7 @@
 #include <jack/jack.h>
 
 #include "config.h"
-
-#ifdef HAVE_LADCCA
-#include <ladcca/ladcca.h>
-extern cca_client_t * fluid_cca_client;
-#endif /* HAVE_LADCCA */
-
+#include "fluid_lash.h"
 
 
 /**************************************************************
@@ -105,8 +100,9 @@ new_fluid_jack_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
   const char ** jack_ports;
   char* client_name;
   int autoconnect = 0;
-
-
+  int jack_srate;
+  double sample_rate;
+  
   dev = FLUID_NEW(fluid_jack_audio_driver_t);
   if (dev == NULL) {
     FLUID_LOG(FLUID_ERR, "Out of memory");
@@ -141,7 +137,17 @@ new_fluid_jack_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
      (see below), you should rely on your own sample rate
      callback (see above) for this value.
   */
-  FLUID_LOG(FLUID_DBG, "Jack engine sample rate: %lu\n", jack_get_sample_rate(dev->client));
+  jack_srate = jack_get_sample_rate(dev->client);
+  FLUID_LOG(FLUID_DBG, "Jack engine sample rate: %lu", jack_srate);
+
+  fluid_settings_getnum(settings, "synth.sample-rate", &sample_rate);
+
+  if ((int)sample_rate != jack_srate) {
+    /* There's currently no way to change the sampling rate of the
+       synthesizer after it's been created. */
+    FLUID_LOG(FLUID_WARN, "Jack sample rate mismatch, expect tuning issues"
+	      " (synth.sample-rate=%lu, jackd=%lu)", (int)sample_rate, jack_srate);
+  }
 
   if (!fluid_settings_str_equal(settings, "audio.jack.multi", "yes")) {
 
@@ -228,15 +234,15 @@ new_fluid_jack_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
     goto error_recovery;
   }
 
-  /* tell the ladcca server our client name */
-#ifdef HAVE_LADCCA
+  /* tell the lash server our client name */
+#ifdef LASH_ENABLED
   {
-    int enable_ladcca = 0;
-    fluid_settings_getint (settings, "ladcca.enable", &enable_ladcca);
-    if (enable_ladcca)
-      cca_jack_client_name (fluid_cca_client, name);
+    int enable_lash = 0;
+    fluid_settings_getint (settings, "lash.enable", &enable_lash);
+    if (enable_lash)
+      fluid_lash_jack_client_name (fluid_lash_client, name);
   }
-#endif /* HAVE_LADCCA */
+#endif /* LASH_ENABLED */
 
 
   /* connect the ports. */
@@ -326,7 +332,7 @@ new_fluid_jack_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func
      (see below), you should rely on your own sample rate
      callback (see above) for this value.
   */
-  FLUID_LOG(FLUID_DBG, "Jack engine sample rate: %lu\n", jack_get_sample_rate(dev->client));
+  FLUID_LOG(FLUID_DBG, "Jack engine sample rate: %lu", jack_get_sample_rate(dev->client));
 
   fluid_settings_getint(settings, "audio.output-channels", &dev->num_output_ports);
   fluid_settings_getint(settings, "audio.input-channels", &dev->num_input_ports);

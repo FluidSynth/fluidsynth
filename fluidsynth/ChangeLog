@@ -1,3 +1,30 @@
+2006-02-18    Josh Green <jgreen@users.sourceforge.net>
+	* FluidSynth release 1.0.7 "Increasing Fluidity.."
+
+	* Removed spurious newlines from FLUID_LOG statements throughout.
+	* AUTHORS: Some cleanup and additions.
+	* src/fluid_lash.[ch]: Moved LADCCA related code from fluidsynth.c here
+	  and added new LASH support (both old LADCCA and LASH are supported
+	  exclusively). Used patches sent by Frieder Bürzele as a guide.
+	* src/fluidsynth.c: Removed LADCCA code (now in fluid_lash.c),
+	  re-organized command line parsing and removed duplicate WIN32 switch
+	  statement, re-organized help output and added missing entries, added
+	  "-o help" switch for listing settings, welcome message now printed
+	  whenever FluidSynth is run and simplified,
+	  (print_usage): hard coded application name as "fluidsynth".
+	* src/configure.ac: Changed --enable-SSE option to --enable-broken-SSE
+	  and --enable-SSE now just displays a fat warning about not using it.
+	* src/fluid_jack.c: Warning is now displayed if synth sample rate
+	  doesn't match jackd.
+	* src/fluid_alsa.c: Added detection for ALSA sequencer buffer overrun
+	  (-ENOSPC) and interrupted poll() call (-1??).
+	* src/fluid_voice.c: Applied patch from Henri Manson which adds a
+	  fluid_ct2hz_real() function which does not have the filter cutoff
+	  limits that fluid_ct2hz() does, new function being used for
+	  calculations that may include non-audible frequencies.
+	* src/fluid_dsound.c: Applied patch from Henri Manson which
+	  only creates the directsound window once.
+
 2005-09-04    Josh Green <jgreen@users.sourceforge.net>
 
 	* src/fluid_ramsfont.c (fluid_ramsfont_remove_izone): Applied crash bug

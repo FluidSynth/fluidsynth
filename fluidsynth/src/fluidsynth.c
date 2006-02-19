@@ -49,12 +49,7 @@
 #include "signal.h"
 #endif
 
-#ifdef HAVE_LADCCA
-#include <pthread.h>
-#include <ladcca/ladcca.h>
-static void * cca_run (void * data);
-extern cca_client_t * fluid_cca_client;
-#endif /* HAVE_LADCCA */
+#include "fluid_lash.h"
 
 #ifndef WITH_MIDI
 #define WITH_MIDI 1
@@ -70,24 +65,20 @@ extern cca_client_t * fluid_cca_client;
 void print_usage(void);
 void print_help(void);
 void print_welcome(void);
-void print_version(void);
 
 static fluid_cmd_handler_t* newclient(void* data, char* addr);
 
 /*
  * the globals
  */
-char* appname = NULL;
 fluid_cmd_handler_t* cmd_handler = NULL;
-
-/*
- * macros to wrap readline functions
- */
+int option_help = 0;		/* set to 1 if "-o help" is specified */
 
 /*
  * support for the getopt function
  */
 #if !defined(WIN32) && !defined(MACINTOSH)
+#define GETOPT_SUPPORT 1
 int getopt(int argc, char * const argv[], const char *optstring);
 extern char *optarg;
 extern int optind, opterr, optopt;
@@ -108,7 +99,14 @@ void process_o_cmd_line_option(fluid_settings_t* settings, char* optarg){
       break;
     }
   }
-  
+
+  /* did user request list of settings */
+  if (strcmp (optarg, "help") == 0)
+  {
+    option_help = 1;
+    return;
+  }
+
   /* At this point:
    * optarg => "synth.polyphony"
    * val => "16"
@@ -130,6 +128,54 @@ void process_o_cmd_line_option(fluid_settings_t* settings, char* optarg){
     fprintf (stderr, "Settings argument on command line: Failed to set \"%s\" to \"%s\".\n"
 	      "Most likely the parameter \"%s\" does not exist.\n", optarg, val, optarg);
   }  
+}
+
+static void
+print_pretty_int (int i)
+{
+  if (i == INT_MAX) printf ("MAXINT");
+  else if (i == INT_MIN) printf ("MININT");
+  else printf ("%d", i);
+}
+
+/* fluid_settings_foreach function for displaying option help  "-o help" */
+static void
+settings_foreach_func (void *data, char *name, int type)
+{
+  fluid_settings_t *settings = (fluid_settings_t *)data;
+  double dmin, dmax, ddef;
+  int imin, imax, idef;
+  char *defstr;
+
+  switch (type)
+  {
+  case FLUID_NUM_TYPE:
+    fluid_settings_getnum_range (settings, name, &dmin, &dmax);
+    ddef = fluid_settings_getnum_default (settings, name);
+    printf ("%-24s FLOAT [min=%0.3f, max=%0.3f, def=%0.3f]\n",
+	    name, dmin, dmax, ddef);
+    break;
+  case FLUID_INT_TYPE:
+    fluid_settings_getint_range (settings, name, &imin, &imax);
+    idef = fluid_settings_getint_default (settings, name);
+    printf ("%-24s INT   [min=", name);
+    print_pretty_int (imin);
+    printf (", max=");
+    print_pretty_int (imax);
+    printf (", def=");
+    print_pretty_int (idef);
+    printf ("]\n");
+    break;
+  case FLUID_STR_TYPE:
+    defstr = fluid_settings_getstr_default (settings, name);
+    printf ("%-24s STR", name);
+    if (defstr) printf ("   [def='%s']\n", defstr);
+    else printf ("\n");
+    break;
+  case FLUID_SET_TYPE:
+    printf ("%-24s SET\n", name);
+    break;
+  }
 }
 
 
@@ -163,120 +209,102 @@ int main(int argc, char** argv)
   char* midi_id = NULL;
   char* midi_driver = NULL;
   char* midi_device = NULL;
-  char* file = NULL;
+  char* config_file = NULL;
   int audio_groups = 0;
   int audio_channels = 0;
   int with_server = 0;
   int dump = 0;
-  int ladcca_connect = 1;
-#ifdef HAVE_LADCCA
-  cca_args_t * cca_args;
-  pthread_t cca_thread;
+  int connect_lash = 1;
+  char *optchars = "a:C:c:df:G:g:hijK:L:lm:no:R:r:sVvz:";
+#ifdef LASH_ENABLED
+  int enabled_lash = 0;		/* set to TRUE if lash gets enabled */
+  fluid_lash_args_t *lash_args;
 
-  cca_args = cca_extract_args (&argc, &argv);
+  lash_args = fluid_lash_extract_args (&argc, &argv);
 #endif
 
-  appname = argv[0];
   settings = new_fluid_settings();
 
-#if !defined(WIN32) && !defined(MACINTOSH)
-
-  /* handle command options. on posix machines only */
+#ifdef GETOPT_SUPPORT	/* pre section of GETOPT supported argument handling */
   opterr = 0;
 
   while (1) {
     int option_index = 0;
 
     static struct option long_options[] = {
-      {"no-midi-in", 0, 0, 'n'},
-      {"midi-driver", 1, 0, 'm'},
-      {"midi-channels", 1, 0, 'K'},
-      {"audio-driver", 1, 0, 'a'},
-      {"connect-jack-outputs", 0, 0, 'j'},
-      {"audio-channels", 1, 0, 'L'},
-      {"audio-groups", 1, 0, 'G'},
-      {"audio-bufsize", 1, 0, 'z'},
       {"audio-bufcount", 1, 0, 'c'},
-      {"sample-rate", 1, 0, 'r'},
-      {"disable-ladcca", 1, 0, 'f'},
-      {"disable-ladcca", 0, 0, 'l'},
-      {"verbose", 0, 0, 'v'},
-      {"reverb", 1, 0, 'R'},
+      {"audio-bufsize", 1, 0, 'z'},
+      {"audio-channels", 1, 0, 'L'},
+      {"audio-driver", 1, 0, 'a'},
+      {"audio-groups", 1, 0, 'G'},
       {"chorus", 1, 0, 'C'},
-      {"gain", 1, 0, 'g'},
-      {"server", 0, 0, 's'},
-      {"help", 0, 0, 'h'},
+      {"connect-jack-outputs", 0, 0, 'j'},
+      {"disable-lash", 0, 0, 'l'},
       {"dump", 0, 0, 'd'},
+      {"gain", 1, 0, 'g'},
+      {"help", 0, 0, 'h'},
+      {"load-config", 1, 0, 'f'},
+      {"midi-channels", 1, 0, 'K'},
+      {"midi-driver", 1, 0, 'm'},
+      {"no-midi-in", 0, 0, 'n'},
       {"no-shell", 0, 0, 'i'},
-      {"version", 0, 0, 'V'},
       {"option", 1, 0, 'o'},
+      {"reverb", 1, 0, 'R'},
+      {"sample-rate", 1, 0, 'r'},
+      {"server", 0, 0, 's'},
+      {"verbose", 0, 0, 'v'},
+      {"version", 0, 0, 'V'},
       {0, 0, 0, 0}
     };
 
-    c = getopt_long(argc, argv, "vnixdhVsplf:m:K:L:M:a:A:s:z:c:R:C:r:G:o:g:j", 
-		    long_options, &option_index);
+    c = getopt_long(argc, argv, optchars, long_options, &option_index);
     if (c == -1) {
       break;
     }
+#else	/* "pre" section to non getopt argument handling */
+  for (i = 1; i < argc; i++) {
+    char *optarg;
+
+    /* Skip non switch arguments (assume they are file names) */
+    if ((argv[i][0] != '-') || (argv[i][1] == '\0')) continue;
+
+    c = argv[i][1];
+
+    optarg = strchr (optchars, c);	/* find the option character in optchars */
+    if (optarg && optarg[1] == ':')	/* colon follows if switch argument expected */
+    {
+      if (++i >= argc)
+      {
+	printf ("Option -%c requires an argument\n", c);
+	print_usage();
+	exit(0);
+      }
+      else
+      {
+	optarg = argv[i];
+	if (optarg[0] == '-')
+	{
+	  printf ("Expected argument to option -%c found switch instead\n", c);
+	  print_usage();
+	  exit(0);
+	}
+      }
+    }
+    else optarg = "";
+#endif
 
     switch (c) {
-    case 0:
+#ifdef GETOPT_SUPPORT
+    case 0:	/* shouldn't normally happen, a long option's flag is set to NULL */
       printf ("option %s", long_options[option_index].name);
       if (optarg) {
 	printf (" with arg %s", optarg);
       }
       printf ("\n");
       break;
-    case 'm':
-      fluid_settings_setstr(settings, "midi.driver", optarg);
-      break;
+#endif
     case 'a':
       fluid_settings_setstr(settings, "audio.driver", optarg);
-      break;
-    case 'j':
-      fluid_settings_setint(settings, "audio.jack.autoconnect", 1);
-      break;
-    case 'z':
-      fluid_settings_setint(settings, "audio.period-size", atoi(optarg));
-      break;
-    case 'c':
-      fluid_settings_setint(settings, "audio.periods", atoi(optarg));
-      break;
-    case 'g':
-      fluid_settings_setnum(settings, "synth.gain", atof(optarg));
-      break;
-    case 'r':
-      fluid_settings_setnum(settings, "synth.sample-rate", atof(optarg));
-      break;
-    case 'f':
-      file = optarg;
-      break;
-    case 'l':			/* disable LADCCA */
-      ladcca_connect = 0;
-      break;
-    case 'L':
-      audio_channels = atoi(optarg);
-      fluid_settings_setint(settings, "synth.audio-channels", audio_channels);
-      break;
-    case 'G':
-      audio_groups = atoi(optarg);
-      break;
-    case 'K':
-      fluid_settings_setint(settings, "synth.midi-channels", atoi(optarg));
-      break;
-    case 'v':
-      fluid_settings_setstr(settings, "synth.verbose", "yes");
-      break;
-    case 'd':
-      fluid_settings_setstr(settings, "synth.dump", "yes");
-      dump = 1;
-      break;
-    case 'R':
-      if ((optarg != NULL) && ((strcmp(optarg, "0") == 0) || (strcmp(optarg, "no") == 0))) {
-	fluid_settings_setstr(settings, "synth.reverb.active", "no");
-      } else {
-	fluid_settings_setstr(settings, "synth.reverb.active", "yes");
-      }
       break;
     case 'C':
       if ((optarg != NULL) && ((strcmp(optarg, "0") == 0) || (strcmp(optarg, "no") == 0))) {
@@ -285,24 +313,74 @@ int main(int argc, char** argv)
 	fluid_settings_setstr(settings, "synth.chorus.active", "yes");
       }
       break;
-    case 'o': 
-      process_o_cmd_line_option(settings, optarg);
+    case 'c':
+      fluid_settings_setint(settings, "audio.periods", atoi(optarg));
+      break;
+    case 'd':
+      fluid_settings_setstr(settings, "synth.dump", "yes");
+      dump = 1;
+      break;
+    case 'f':
+      config_file = optarg;
+      break;
+    case 'G':
+      audio_groups = atoi(optarg);
+      break;
+    case 'g':
+      fluid_settings_setnum(settings, "synth.gain", atof(optarg));
+      break;
+    case 'h':
+      print_help();
+      break;
+    case 'i':
+      interactive = 0;
+      break;
+    case 'j':
+      fluid_settings_setint(settings, "audio.jack.autoconnect", 1);
+      break;
+    case 'K':
+      fluid_settings_setint(settings, "synth.midi-channels", atoi(optarg));
+      break;
+    case 'L':
+      audio_channels = atoi(optarg);
+      fluid_settings_setint(settings, "synth.audio-channels", audio_channels);
+      break;
+    case 'l':			/* disable LASH */
+      connect_lash = 0;
+      break;
+    case 'm':
+      fluid_settings_setstr(settings, "midi.driver", optarg);
       break;
     case 'n':
       midi_in = 0;
       break;
-    case 'i':
-      interactive = 0;
+    case 'o': 
+      process_o_cmd_line_option(settings, optarg);
+      break;
+    case 'R':
+      if ((optarg != NULL) && ((strcmp(optarg, "0") == 0) || (strcmp(optarg, "no") == 0))) {
+	fluid_settings_setstr(settings, "synth.reverb.active", "no");
+      } else {
+	fluid_settings_setstr(settings, "synth.reverb.active", "yes");
+      }
+      break;
+    case 'r':
+      fluid_settings_setnum(settings, "synth.sample-rate", atof(optarg));
       break;
     case 's':
       with_server = 1;
       break;
     case 'V':
-      print_version(); /* and don't come back */
+      printf("FluidSynth %s\n", VERSION);
+      exit (0);
       break;
-    case 'h':
-      print_help();
+    case 'v':
+      fluid_settings_setstr(settings, "synth.verbose", "yes");
       break;
+    case 'z':
+      fluid_settings_setint(settings, "audio.period-size", atoi(optarg));
+      break;
+#ifdef GETOPT_SUPPORT
     case '?':
       printf ("Unknown option %c\n", optopt);
       print_usage();
@@ -310,147 +388,43 @@ int main(int argc, char** argv)
       break;
     default:
       printf ("?? getopt returned character code 0%o ??\n", c);
-    }
-  }
+      break;
+#else			/* Non getopt default case */
+    default:
+      printf ("Unknown switch '%c'\n", c);
+      print_usage();
+      exit(0);
+      break;
+#endif
+    }	/* end of switch statement */
+  }	/* end of loop */
 
+#ifdef GETOPT_SUPPORT
   arg1 = optind;
 #else
-  for (i = 1; i < argc; i++) {
-    char *optarg;
-
-    if ((argv[i][0] == '-') && (argv[i][1] != '\0')) {
-      switch (argv[i][1]) {
-      case 'm':
-	if (++i < argc) {
-	  fluid_settings_setstr(settings, "midi.driver", argv[i]);
-	} else {
-	  printf ("Option -m requires an argument\n");	  
-	}
-	break;
-      case 'a':
-	if (++i < argc) {
-	  fluid_settings_setstr(settings, "audio.driver", argv[i]);
-	} else {
-	  printf ("Option -a requires an argument\n");	  
-	}
-	break;
-      case 'j':
-        fluid_settings_setint(settings, "audio.jack.autoconnect", 1);
-        break;
-      case 'z':
-	if (++i < argc) {
-	  fluid_settings_setnum(settings, "audio.period-size", atof(argv[i]));
-	} else {
-	  printf ("Option -z requires an argument\n");	  
-	}
-	break;
-      case 'c':
-	if (++i < argc) {
-	  fluid_settings_setnum(settings, "audio.periods", atof(argv[i]));
-	} else {
-	  printf ("Option -c requires an argument\n");	  
-	}
-	break;
-      case 'g':
-	if (++i < argc) {
-	  fluid_settings_setnum(settings, "synth.gain", atof(argv[i]));
-	} else {
-	  printf ("Option -g requires an argument\n");	  
-	}
-	break;
-      case 'r':
-	if (++i < argc) {
-	  fluid_settings_setnum(settings, "synth.sample-rate", atof(argv[i]));
-	} else {
-	  printf ("Option -r requires an argument\n");	  
-	}
-	break;
-      case 'f':
-	if (++i < argc) {
-	  file = argv[i];
-	}
-	break;
-      case 'l':			/* disable LADCCA */
-	ladcca_connect = 0;
-	break;
-      case 'L':
-	if (++i < argc) {
-	  audio_channels = atoi(argv[i]);
-	  fluid_settings_setint(settings, "synth.audio-channels", audio_channels);
-	} else {
-
-	  printf ("Option -L requires an argument\n");	  
-	}
-	break;
-      case 'G':
-	audio_groups = atoi(optarg);
-	break;
-      case 'K':
-	if (++i < argc) {
-	  fluid_settings_setint(settings, "synth.midi-channels", atoi(argv[i]));
-	} else {
-	  printf ("Option -K requires an argument\n");	  
-	}
-	break;
-      case 'v':
-	fluid_settings_setstr(settings, "synth.verbose", "yes");
-	break;
-      case 'R':
-	optarg = (++i < argc)? argv[i] : NULL;
-	if ((optarg != NULL) && ((strcmp(optarg, "0") == 0) || (strcmp(optarg, "no") == 0))) {
-	  fluid_settings_setstr(settings, "synth.reverb.active", "no");
-	} else {
-	  fluid_settings_setstr(settings, "synth.reverb.active", "yes");
-	}
-	break;
-      case 'C':
-	optarg = (++i < argc)? argv[i] : NULL;
-	if ((optarg != NULL) && ((strcmp(optarg, "0") == 0) || (strcmp(optarg, "no") == 0))) {
-	  fluid_settings_setstr(settings, "synth.chorus.active", "no");
-	} else {
-	  fluid_settings_setstr(settings, "synth.chorus.active", "yes");
-	}
-	break;
-      case 'o': 
-	process_o_cmd_line_option(settings, optarg);
-	break;
-      case 'n':
-	midi_in = 0;
-	break;
-      case 'i':
-	interactive = 0;
-	break;
-      case 'V':
-	print_version(); 
-	break;
-      case 'h':
-	print_help();
-	break;
-      }
-    }
-  }
-
-    arg1 = 1;
+  arg1 = i;
 #endif
+
+  /* option help requested?  "-o help" */
+  if (option_help)
+  {
+    print_welcome ();
+    printf ("FluidSynth settings:\n");
+    fluid_settings_foreach (settings, settings, settings_foreach_func);
+    exit (0);
+  }
 
 #ifdef WIN32
   SetPriorityClass(GetCurrentProcess(), REALTIME_PRIORITY_CLASS);
 #endif
 
-
-  /* connect to the ladcca server */
-#ifdef HAVE_LADCCA
-  if (ladcca_connect)
+  /* connect to the lash server */
+  if (connect_lash)
     {
-      fluid_cca_client = cca_init (cca_args, PACKAGE, CCA_Config_Data_Set | CCA_Terminal, CCA_PROTOCOL (2,0));
-
-      if (fluid_cca_client)
-	fluid_settings_setint (settings, "ladcca.enable", cca_enabled (fluid_cca_client) ? 1 : 0);
+      enabled_lash = fluid_lash_connect (lash_args);
+      fluid_settings_setint (settings, "lash.enable", enabled_lash ? 1 : 0);
     }
-#endif /* HAVE_LADCCA */
-
-
-
+  
   /* The 'groups' setting is only relevant for LADSPA operation
    * If not given, set number groups to number of audio channels, because
    * they are the same (there is nothing between synth output and 'sound card')
@@ -474,8 +448,8 @@ int main(int argc, char** argv)
   }
 
   /* try to load the user or system configuration */
-  if (file != NULL) {
-    fluid_source(cmd_handler, file);
+  if (config_file != NULL) {
+    fluid_source(cmd_handler, config_file);
   } else if (fluid_get_userconf(buf, 512) != NULL) {
     fluid_source(cmd_handler, buf);
   } else if (fluid_get_sysconf(buf, 512) != NULL) {
@@ -567,14 +541,16 @@ int main(int argc, char** argv)
 #endif
 
 
-#ifdef HAVE_LADCCA
-  if (ladcca_connect && cca_enabled (fluid_cca_client))
-    pthread_create (&cca_thread, NULL, cca_run, synth);
-#endif /* HAVE_LADCCA */
+#ifdef LASH_ENABLED
+  if (enabled_lash)
+    fluid_lash_create_thread (synth);
+#endif
 
   /* run the shell */
   if (interactive) {
     print_welcome();
+
+    printf ("Type 'help' for information on commands and 'help help' for help topics.\n\n");
 
     /* In dump mode we set the prompt to "". The UI cannot easily
      * handle lines, which don't end with CR.  Changing the prompt
@@ -648,7 +624,8 @@ static fluid_cmd_handler_t* newclient(void* data, char* addr)
 void 
 print_usage() 
 {
-  fprintf(stderr, "Usage: %s [options] [soundfonts]\n", appname);
+  print_welcome ();
+  fprintf(stderr, "Usage: fluidsynth [options] [soundfonts]\n");
   fprintf(stderr, "Try -h for help.\n");
   exit(0);
 }
@@ -659,23 +636,11 @@ print_usage()
 void 
 print_welcome() 
 {
-  printf("fluidsynth version %s\n"
-	 "Copyright (C) 2000-2002 Peter Hanappe and others.\n"
-	 "FLUID Synth comes with ABSOLUTELY NO WARRANTY.\n"
-	 "This is free software, and you are welcome to redistribute it\n"
-	 "under certain conditions; see the COPYING file for details.\n"
-	 "SoundFont(R) is a registered trademark of E-mu Systems, Inc.\n\n"
-	 "Type 'help' to get information on the shell commands.\n\n", FLUIDSYNTH_VERSION);
-}
-
-/*
- * print_version
- */
-void 
-print_version()
-{
-  printf("fluidsynth %s\n", VERSION);
-  exit(0);
+  printf("FluidSynth version %s\n"
+	 "Copyright (C) 2000-2006 Peter Hanappe and others.\n"
+	 "Distributed under the LGPL license.\n"
+	 "SoundFont(R) is a registered trademark of E-mu Systems, Inc.\n\n",
+	 FLUIDSYNTH_VERSION);
 }
 
 /*
@@ -684,163 +649,55 @@ print_version()
 void 
 print_help() 
 {
+  print_welcome ();
   printf("Usage: \n");
   printf("  fluidsynth [options] [soundfonts] [midifiles]\n");
   printf("Possible options:\n");
-  printf(" -n, --no-midi-in\n"
-	 "    Don't create a midi driver to read MIDI input events [default = yes]\n\n");
-  printf(" -m, --midi-driver=[label]\n"
-	 "    The name of the midi driver to use [oss,alsa,alsa_seq,...]\n\n");
-  printf(" -K, --midi-channels=[num]\n"
-	 "    The number of midi channels [default = 16]\n\n");
   printf(" -a, --audio-driver=[label]\n"
-	 "    The audio driver [alsa,jack,oss,dsound,...]\n\n");
-  printf(" -j, --connect-jack-outputs\n"
-	 "    Attempt to connect the jack outputs to the physical ports\n\n");
-  printf(" -L, --audio-channels=[num]\n"
-	 "    The number of stereo audio channels [default = 1]\n\n");
-  printf(" -z, --audio-bufsize=[size]\n"
-	 "    Size of each audio buffer\n\n");
-  printf(" -c, --audio-bufcount=[count]\n"
-	 "    Number of audio buffers\n\n");
-  printf(" -r, --sample-rate\n"
-	 "    Set the sample rate\n\n");
-  printf(" -R, --reverb\n"
-	 "    Turn the reverb on or off [0|1|yes|no, default = on]\n\n");
+	 "    The audio driver [alsa,jack,oss,dsound,...]\n");
   printf(" -C, --chorus\n"
-	 "    Turn the chorus on or off [0|1|yes|no, default = on]\n\n");
+	 "    Turn the chorus on or off [0|1|yes|no, default = on]\n");
+  printf(" -c, --audio-bufcount=[count]\n"
+	 "    Number of audio buffers\n");
+  printf(" -d, --dump\n"
+	 "    Dump incoming and outgoing MIDI events to stdout\n");
+  printf(" -f, --load-config\n"
+	 "    Load command configuration file (shell commands)\n");
+  printf(" -G, --audio-groups\n"
+	 "    Defines the number of LADSPA audio nodes\n");
   printf(" -g, --gain\n"
-	 "    Set the master gain [0 < gain < 10, default = 0.2]\n\n");
-#ifdef HAVE_LADCCA
-  printf(" -l, --disable-ladcca\n"
-	 "    Don't connect to LADCCA server");
-#endif
-  printf(" -o\n"
-	 "    Define a setting, -o name=value\n\n");
-  printf(" -i, --no-shell\n"
-	 "    Don't read commands from the shell [default = yes]\n\n");
-  printf(" -v, --verbose\n"
-	 "    Print out verbose messages about midi events\n\n");
+	 "    Set the master gain [0 < gain < 10, default = 0.2]\n");
   printf(" -h, --help\n"
-	 "    Print out this help summary\n\n");
+	 "    Print out this help summary\n");
+  printf(" -i, --no-shell\n"
+	 "    Don't read commands from the shell [default = yes]\n");
+  printf(" -j, --connect-jack-outputs\n"
+	 "    Attempt to connect the jack outputs to the physical ports\n");
+  printf(" -K, --midi-channels=[num]\n"
+	 "    The number of midi channels [default = 16]\n");
+  printf(" -L, --audio-channels=[num]\n"
+	 "    The number of stereo audio channels [default = 1]\n");
+#ifdef LASH_ENABLED
+  printf(" -l, --disable-lash\n"
+	 "    Don't connect to LASH server\n");
+#endif
+  printf(" -m, --midi-driver=[label]\n"
+	 "    The name of the midi driver to use [oss,alsa,alsa_seq,...]\n");
+  printf(" -n, --no-midi-in\n"
+	 "    Don't create a midi driver to read MIDI input events [default = yes]\n");
+  printf(" -o\n"
+	 "    Define a setting, -o name=value (\"-o help\" to dump current values)\n");
+  printf(" -R, --reverb\n"
+	 "    Turn the reverb on or off [0|1|yes|no, default = on]\n");
+  printf(" -r, --sample-rate\n"
+	 "    Set the sample rate\n");
+  printf(" -s, --server\n"
+	 "    Start FluidSynth as a server process\n");
   printf(" -V, --version\n"
-	 "    Show version of program\n\n");
+	 "    Show version of program\n");
+  printf(" -v, --verbose\n"
+	 "    Print out verbose messages about midi events\n");
+  printf(" -z, --audio-bufsize=[size]\n"
+	 "    Size of each audio buffer\n");
   exit(0);
 }
-
-#ifdef HAVE_LADCCA
-#include <unistd.h>		/* for usleep() */
-#include "fluid_synth.h"	/* JG - until fluid_sfont_get_name is public */
-#include <sys/types.h>
-#include <signal.h>
-#include <string.h>
-#include <errno.h>
-
-static void
-cca_save (fluid_synth_t * synth)
-{
-  int i;
-  int sfcount;
-  fluid_sfont_t * sfont;
-  cca_config_t * config;
-  char num[32];
-  
-  sfcount = fluid_synth_sfcount (synth);
-
-  config = cca_config_new ();
-  cca_config_set_key (config, "soundfont count");
-  cca_config_set_value_int (config, sfcount);
-  cca_send_config (fluid_cca_client, config);
-
-  for (i = sfcount - 1; i >= 0; i--)
-    {
-      sfont = fluid_synth_get_sfont (synth, i);
-      config = cca_config_new ();
-      
-      sprintf (num, "%d", i);
-      
-      cca_config_set_key (config, num);
-      cca_config_set_value_string (config, sfont->get_name (sfont));
-      
-      cca_send_config (fluid_cca_client, config);
-    }
-}
-
-static void
-cca_load (fluid_synth_t * synth, const char * filename)
-{
-  fluid_synth_sfload (synth, filename, 1);
-}
-
-static void *
-cca_run (void * data)
-{
-  cca_event_t * event;
-  cca_config_t * config;
-  fluid_synth_t * synth;
-  int done = 0;
-  int err;
-  int pending_restores = 0;
-  
-  synth = (fluid_synth_t *) data;
-  
-  while (!done)
-    {
-  
-      while ( (event = cca_get_event (fluid_cca_client)) )
-        {
-          switch (cca_event_get_type (event))
-            {
-            case CCA_Save_Data_Set:
-              cca_save (synth);
-              cca_send_event (fluid_cca_client, event);
-              break;
-            case CCA_Restore_Data_Set:
-              cca_event_destroy (event);
-              break;
-            case CCA_Quit:
-	      err = kill (getpid(), SIGQUIT);
-	      if (err)
-		fprintf (stderr, "%s: error sending signal: %s",
-			 __FUNCTION__, strerror (errno));
-	      cca_event_destroy (event);
-	      done = 1;
-	      break;
-	    case CCA_Server_Lost:
-	      cca_event_destroy (event);
-	      done = 1;
-	      break;
-            default:
-              fprintf (stderr, "Recieved unknown LADCCA event of type %d\n", cca_event_get_type (event));
-	      cca_event_destroy (event);
-	      break;
-            }
-        }
-  
-      while ( (config = cca_get_config (fluid_cca_client)) )
-        {
-	  if (strcmp (cca_config_get_key (config), "soundfont count") == 0)
-	      pending_restores = cca_config_get_value_int (config);
-	  else
-	    {
-              cca_load (synth, cca_config_get_value_string (config));
-	      pending_restores--;
-	    }
-          cca_config_destroy (config);
-
-	  if (!pending_restores)
-	    {
-	      event = cca_event_new_with_type (CCA_Restore_Data_Set);
-	      cca_send_event (fluid_cca_client, event);
-	    }
-        }
-      
-      usleep (10000);
-    }
-  
-  return NULL;
-}
-
-#endif /* HAVE_LADCCA */
-
-
