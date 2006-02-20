@@ -418,13 +418,15 @@ int main(int argc, char** argv)
   SetPriorityClass(GetCurrentProcess(), REALTIME_PRIORITY_CLASS);
 #endif
 
+#ifdef LASH_ENABLED
   /* connect to the lash server */
   if (connect_lash)
     {
       enabled_lash = fluid_lash_connect (lash_args);
       fluid_settings_setint (settings, "lash.enable", enabled_lash ? 1 : 0);
     }
-  
+#endif
+
   /* The 'groups' setting is only relevant for LADSPA operation
    * If not given, set number groups to number of audio channels, because
    * they are the same (there is nothing between synth output and 'sound card')
