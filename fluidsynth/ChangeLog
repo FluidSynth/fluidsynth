@@ -1,3 +1,8 @@
+2006-02-20    Josh Green <jgreen@users.sourceforge.net>
+
+	* Fixed build error that occured when neither LASH or LADCCA are
+	  present.
+
 2006-02-18    Josh Green <jgreen@users.sourceforge.net>
 	* FluidSynth release 1.0.7 "Increasing Fluidity.."
 
