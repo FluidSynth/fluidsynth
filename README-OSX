@@ -1,28 +1,23 @@
-Compiling fluidsynth-1.0.5 on Mac OS X.4 (Tiger)
+Compiling fluidsynth-1.0.7 on Mac OS X.4 (Tiger)
 --------------------------------------------
-1. Install the XcodeTools.mpkg and the DevSDK.pkg packages from the Tiger Install DVD.
- 
-2. Install the Fink Project's Package manager, fink, obtainable at http://fink.sourceforge.net
+Requirements:
+- "XcodeTools.mpkg","DevSDK.pkg", "CoreAudioSDK.pkg" packages (The Tiger Install DVD).
 
-3. Compile and install libgnugetopt-1.2, readline-4.3, ladspa-1.12 and ladspa-cmt-1.15 from fink: e.g.
-	fink install libgnugetopt
+- Fink installation <http://fink.sourceforge.net>
 
-4. Install MidiShare-1.87 for Mac OS X available from
-	http://www.grame.fr/MidiShare/
- 
-5. Install Jack-0.51 for Mac OS X obtainable from  
-	http://www.jackosx.com
+- libgnugetopt-1.2, readline-4.3, ladspa-1.12 and ladspa-cmt-1.15 from fink: e.g. "fink install libgnugetopt"
+
+- MidiShare-1.87 for Mac OS X <http://www.grame.fr/MidiShare/>
+
+ - Jack-0.51 for Mac OS X <http://www.jackosx.com>
 	
-6. Edit the "/usr/local/lib/pkgconfig/jack.pc" file using your favorite Unix editor:
+1. Edit the "/usr/local/lib/pkgconfig/jack.pc" file using your favorite Unix editor:
 	In the "Libs" line, replace "ljack" with "-framework Jack"
 	
-7. cd to the fluidsynth directory and in the configure script, substitute "-lmidishare" with "-framework MidiShare".
+2. cd to the fluidsynth directory and in the configure script, substitute "-lmidishare" with "-framework MidiShare".
 
-8. Run configure with the following options (all on one line in a text editor, then copy and paste into Terminal):
-./configure --enable-midishare --enable-ladspa --enable-functioncheck --enable-debug --enable-profiling --enable-jack-support "CPPFLAGS=-I/usr/local/include  
--I/sw/include -I/System/Library/Frameworks/MidiShare.framework/Versions/A/Headers 
--I/System/Library/Frameworks/CoreAudio.framework/Versions/A/Headers -I/Library/Frameworks/Jack.framework/Headers" 
-"LDFLAGS=-L/usr/local/lib -L/sw/lib -framework MidiShare -framework CoreAudio -framework Jack"
+3. Run configure with the following options (all on one line in a text editor, then copy and paste into Terminal):
+PKG_CONFIG_PATH=/usr/local/lib/pkgconfig ./configure --enable-midishare --enable-ladspa --enable-functioncheck --enable-debug --enable-profiling --enable-jack-support --enable-longlong --disable-lash "CPPFLAGS=-I/usr/local/include -I/sw/include -I/System/Library/Frameworks/MidiShare.framework/Versions/A/Headers -I/System/Library/Frameworks/CoreAudio.framework/Versions/A/Headers -I/Library/Frameworks/Jack.framework/Headers" "LDFLAGS=-L/usr/local/lib -L/sw/lib -framework MidiShare -framework CoreAudio -framework Jack"
 
 This should result in
 **************************************************************
@@ -32,19 +27,17 @@ OSS:                   no
 MidiShare:             yes
 JACK:                  yes
 CoreAudio:             yes
-Readline:              yes
+LADSPA support:        yes
+LASH support:          no
 LADCCA support:        no
+Readline:              yes
 Debug:                 yes
 Profiling:             yes
-LADSPA support:        yes
-use long long:         no
-Pentium 3+ SSE:        no
+use long long:         yes
 **************************************************************
 
-7. make
-
-8. make install as root. 
-
+4. make && make install as root
+ 
 Ebrahim Mayat <emayat@users.sourceforge.net>
-11th June 2005
+20th February 2006
 

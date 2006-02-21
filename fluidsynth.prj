@@ -1,4 +1,4 @@
-# Anjuta Version 1.2.2 
+# Anjuta Version 1.2.4 
 Compatibility Level: 1 
 
 <PROJECT_DESCRIPTION_START>
@@ -22,7 +22,7 @@ A SoundFont based software synthesizer.<PROJECT_DESCRIPTION_END>
 
 props.file.type=project
 
-anjuta.version=1.2.2
+anjuta.version=1.2.4
 anjuta.compatibility.level=1
 
 project.name=fluidsynth
@@ -124,7 +124,8 @@ module.include.files=\
 	include/fluidsynth/audio.h\
 	include/fluidsynth/seqbind.h\
 	include/fluidsynth/version.h\
-	include/fluidsynth.h
+	include/fluidsynth.h\
+	src/fluid_lash.h
 
 module.source.name=.
 module.source.type=
@@ -184,7 +185,8 @@ module.source.files=\
 	bindings/fluidsynth_jni/java/fluidsynth/FluidException.java\
 	bindings/fluidmax/fluidmax.c\
 	bindings/fluidmax/fluidmax_fakefuns.c\
-	fluidsynth.pc
+	fluidsynth.pc\
+	src/fluid_lash.c
 
 module.pixmap.name=.
 module.pixmap.type=
