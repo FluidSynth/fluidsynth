@@ -1,5 +1,8 @@
+- Fix warnings on 64 bit platforms and type-puned pointer warning
+- Add byte swapping support (on synthesis or sample load?)
 - Build win32 package
 - Investigate why MIDI rendering causes burst of notes at start
+- libao audio output driver
 
 Bugs and incomplete code
 ------------------------
