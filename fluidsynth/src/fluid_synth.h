@@ -136,6 +136,7 @@ struct _fluid_synth_t
   fluid_revmodel_t* reverb;
   fluid_chorus_t* chorus;
   int cur;                           /** the current sample in the audio buffers to be output */
+  int dither_index;		/* current index in random dither value buffer: fluid_synth_(write_s16|dither_s16) */
 
   char outbuf[256];                  /** buffer for message output */
   double cpu_load;
@@ -210,8 +211,10 @@ int fluid_synth_update_polyphony(fluid_synth_t* synth, char* name, int value);
 fluid_bank_offset_t* fluid_synth_get_bank_offset0(fluid_synth_t* synth, int sfont_id);
 void fluid_synth_remove_bank_offset(fluid_synth_t* synth, int sfont_id);
 
-
-
+/* FIXME: Might be useful in public API */
+void fluid_synth_dither_s16(fluid_synth_t* synth, int len, float* lin, float* rin,
+			    void* lout, int loff, int lincr,
+			    void* rout, int roff, int rincr);
 /*
  * misc
  */

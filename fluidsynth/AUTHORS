@@ -6,10 +6,10 @@
 
 [:Development:]
 
-Many people contributed to FluidSynth, send suggestions or bug
+Many people contributed to FluidSynth, sent suggestions or bug
 fixes. The project was started by Peter Hanappe who is the main
 author. Josh Green is the current maintainer. Below you'll find a
-summery of contributions.
+summary of contributions.
 
 
 * Peter Hanappe. Initiated the project. files: sticked his nose in all
@@ -24,10 +24,6 @@ summery of contributions.
   (the blue waves with FluidSynth letters partially submerged).
   files: iiwu_defsfont.{c,h}, iiwu_alsa{c,h} and others.
 
-* Stephane Letz from Grame wrote most of the MidiShare driver, all of
-  the PortAudio driver, ported iiwusynth to MacOS X, and sent in many
-  fixes. files: iiwu_midishare.c, iiwu_portaudio.c
-
 * Markus Nentwig (re-)designed the resonant filter, the chorus, the
   LADSPA subsystem, the MIDI router, optimized for SSE, made many
   changes and bug fixes and got the synthesizer to actually work. Most
@@ -35,6 +31,10 @@ summery of contributions.
   iiwu_ladspa.{c,h}, iiwu_cmd.{c,h}, iiwu_voice.{c,h}, iiwu_synth.c,
   iiwu_sse.h, iiwu_dsp_core.h, iiwu_rev.{c,h}, and basically all the
   other files.
+
+* Stephane Letz from Grame wrote most of the MidiShare driver, all of
+  the PortAudio driver, ported iiwusynth to MacOS X, and sent in many
+  fixes. files: iiwu_midishare.c, iiwu_portaudio.c
 
 * Antoine Schmitt added the sequencer support, support for sample
   loading (RAM Sfont), developed the
@@ -67,8 +67,7 @@ summery of contributions.
   portability.
 
 * The midi device uses code from jMax's alsarawmidi.c file and from
-  Smurf's midi_alsaraw.c by Josh Green. Josh also added support for
-  the alsa sequencer interface. file: iiwu_alsa.c
+  Smurf's midi_alsaraw.c by Josh Green.  file: iiwu_alsa.c
 
 * The reverb algorithm was written by Jezar
   (http://www.dreampoint.co.uk). His code is public domain. The code
@@ -115,3 +114,4 @@ Gerald Pye
 Rui Nuno Capela
 Frieder Bürzele
 Henri Manson
+Mihail Zenkov (Audio bit depth conversion dithering patch)

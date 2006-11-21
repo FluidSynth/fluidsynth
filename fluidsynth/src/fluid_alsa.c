@@ -200,7 +200,6 @@ new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
   dev->callback = func;
   dev->cont = 1;
   dev->buffer_size = period_size;
-  uframes = period_size;
 
   /* Open the PCM device */
   if ((err = snd_pcm_open(&dev->pcm, device, SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK)) != 0) {
@@ -225,34 +224,36 @@ new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
 
     snd_pcm_hw_params_any(dev->pcm, hwparams);
 
-    if (snd_pcm_hw_params_set_access(dev->pcm, hwparams, fluid_alsa_formats[i].access) != 0) {
+    if (snd_pcm_hw_params_set_access(dev->pcm, hwparams, fluid_alsa_formats[i].access) < 0) {
       continue;
     }
 
-    if (snd_pcm_hw_params_set_format(dev->pcm, hwparams, fluid_alsa_formats[i].format) != 0) {
+    if (snd_pcm_hw_params_set_format(dev->pcm, hwparams, fluid_alsa_formats[i].format) < 0) {
       continue;
     }
 
-    if ((err = snd_pcm_hw_params_set_channels(dev->pcm, hwparams, 2)) != 0) {
+    if ((err = snd_pcm_hw_params_set_channels(dev->pcm, hwparams, 2)) < 0) {
       FLUID_LOG(FLUID_ERR, "Failed to set the channels: %s",
 		snd_strerror (err));
       goto error_recovery;    
     }
 
     tmp = (unsigned int) sample_rate;
-    if ((err = snd_pcm_hw_params_set_rate_near(dev->pcm, hwparams, &tmp, &dir)) != 0) {
+    if ((err = snd_pcm_hw_params_set_rate_near(dev->pcm, hwparams, &tmp, NULL)) < 0) {
       FLUID_LOG(FLUID_ERR, "Failed to set the sample rate: %s",
 		snd_strerror (err));
-      goto error_recovery;    
-    }
-    if (dir != 0) {
-      /* There's currently no way to change the sampling rate of the
-	 synthesizer after it's been created. */
-      FLUID_LOG(FLUID_WARN, "The sample rate is set to %d, "
-		"the synthesizer may be out of tune", tmp);
+      goto error_recovery;
     }
 
-    if (snd_pcm_hw_params_set_period_size_near(dev->pcm, hwparams, &uframes, &dir) != 0) {
+    if (tmp != sample_rate) {
+      /* There's currently no way to change the sampling rate of the
+	 synthesizer after it's been created. */
+      FLUID_LOG(FLUID_WARN, "Requested sample rate of %d, got %d instead, "
+		"synthesizer likely out of tune!", sample_rate, tmp);
+    }
+
+    uframes = period_size;
+    if (snd_pcm_hw_params_set_period_size_near(dev->pcm, hwparams, &uframes, &dir) < 0) {
       FLUID_LOG(FLUID_ERR, "Failed to set the period size");
       goto error_recovery;          
     }
@@ -260,10 +261,11 @@ new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
       FLUID_LOG(FLUID_WARN, "Requested a period size of %d, got %d instead", 
 		period_size, (int) uframes);
       dev->buffer_size = (int) uframes;
+      period_size = uframes;	/* period size is used below, so set it to the real value */
     }
 
     tmp = periods;
-    if (snd_pcm_hw_params_set_periods_near(dev->pcm, hwparams, &tmp, &dir) != 0) {
+    if (snd_pcm_hw_params_set_periods_near(dev->pcm, hwparams, &tmp, &dir) < 0) {
       FLUID_LOG(FLUID_ERR, "Failed to set the number of periods");
       goto error_recovery;          
     }
@@ -272,7 +274,7 @@ new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
 		periods, (int) tmp);
     }
     
-    if (snd_pcm_hw_params(dev->pcm, hwparams) != 0) {
+    if (snd_pcm_hw_params(dev->pcm, hwparams) < 0) {
       FLUID_LOG(FLUID_WARN, "Audio device hardware configuration failed");
       continue;
     }
@@ -289,27 +291,27 @@ new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
 
   /* Set the software params */
   snd_pcm_sw_params_current(dev->pcm, swparams);
-	
+
   if (snd_pcm_sw_params_set_start_threshold(dev->pcm, swparams, period_size) != 0) {
-    FLUID_LOG(FLUID_ERR, "Cannot turn off start threshold.");
+    FLUID_LOG(FLUID_ERR, "Failed to set start threshold.");
   }
-  
+
   if (snd_pcm_sw_params_set_stop_threshold(dev->pcm, swparams, ~0u) != 0) {
     FLUID_LOG(FLUID_ERR, "Cannot turn off stop threshold.");
   }
-  
+
   if (snd_pcm_sw_params_set_silence_threshold(dev->pcm, swparams, 0) != 0) {
     FLUID_LOG(FLUID_ERR, "Cannot set 0 silence threshold.");
   }
-  
+
   if (snd_pcm_sw_params_set_silence_size(dev->pcm, swparams, 0) != 0) {
     FLUID_LOG(FLUID_ERR, "Cannot set 0 silence size.");
   }
-  
+
   if (snd_pcm_sw_params_set_avail_min(dev->pcm, swparams, period_size / 2) != 0) {
     FLUID_LOG(FLUID_ERR, "Software setup for minimum available frames failed.");
   }
-  
+
   if (snd_pcm_sw_params(dev->pcm, swparams) != 0) {
     FLUID_LOG(FLUID_ERR, "Software setup failed.");
   }
@@ -390,6 +392,7 @@ int delete_fluid_alsa_audio_driver(fluid_audio_driver_t* p)
 	|| (state == SND_PCM_STATE_PAUSED)) {
       snd_pcm_drop(dev->pcm);
     }
+    snd_pcm_close (dev->pcm);
   }
 
   FLUID_FREE(dev);
@@ -400,6 +403,7 @@ int delete_fluid_alsa_audio_driver(fluid_audio_driver_t* p)
 static void* fluid_alsa_audio_run_float(void* d)
 {
   fluid_alsa_audio_driver_t* dev = (fluid_alsa_audio_driver_t*) d;
+  fluid_synth_t *synth = (fluid_synth_t *)(dev->data);
   float* left;
   float* right;
   float* handle[2];
@@ -414,9 +418,6 @@ static void* fluid_alsa_audio_run_float(void* d)
     FLUID_LOG(FLUID_ERR, "Out of memory.");
     return NULL;
   }
-
-  handle[0] = left;
-  handle[1] = right;
 
   if (snd_pcm_nonblock(dev->pcm, 0) != 0) { /* double negation */
     FLUID_LOG(FLUID_ERR, "Failed to set the audio device to blocking mode");
@@ -433,8 +434,8 @@ static void* fluid_alsa_audio_run_float(void* d)
     handle[0] = left;
     handle[1] = right;
 
-    (*dev->callback)(dev->data, buffer_size, 0, NULL, 2, handle);
-    
+    (*dev->callback)(synth, buffer_size, 0, NULL, 2, handle);
+
     offset = 0;
 
     while (offset < buffer_size) {
@@ -442,32 +443,38 @@ static void* fluid_alsa_audio_run_float(void* d)
       handle[0] = left + offset;
       handle[1] = right + offset;
 
-      n = snd_pcm_writen(dev->pcm, (void**) handle, buffer_size - offset);
-    
-      if (n == -EAGAIN) {
-	snd_pcm_wait(dev->pcm, 1);
+      n = snd_pcm_writen(dev->pcm, (void *)handle, buffer_size - offset);
 
-      } else if ((n == -EPIPE) || (n == -EBADFD)) {
-	if (snd_pcm_prepare(dev->pcm) != 0) {
-	  FLUID_LOG(FLUID_ERR, "Failed to prepare the audio device");
-	  goto error_recovery;    
-	}
-
-      } else if (n == -ESTRPIPE) {
-	if ((snd_pcm_resume(dev->pcm) != 0) 
-	    && (snd_pcm_prepare(dev->pcm) != 0)) {
-	  FLUID_LOG(FLUID_ERR, "Failed to resume the audio device");
-	  goto error_recovery;    
-	}
-
-      } else if (n < 0) {
+      if (n < 0)	/* error occurred? */
+      {
+	switch (n)
+	{
+	case -EAGAIN:
+	  snd_pcm_wait(dev->pcm, 1);
+	  break;
+	case -EPIPE:
+	case -EBADFD:
+	  if (snd_pcm_prepare(dev->pcm) != 0) {
+	    FLUID_LOG(FLUID_ERR, "Failed to prepare the audio device");
+	    goto error_recovery;
+	  }
+	  break;
+	case -ESTRPIPE:
+	  if ((snd_pcm_resume(dev->pcm) != 0)
+	      && (snd_pcm_prepare(dev->pcm) != 0)) {
+	    FLUID_LOG(FLUID_ERR, "Failed to resume the audio device");
+	    goto error_recovery;
+	  }
+	  break;
+	default:
 	  FLUID_LOG(FLUID_ERR, "The audio device error: %s", snd_strerror(n));
-	  goto error_recovery;    	
-
-      } else {
+	  goto error_recovery;
+	  break;
+	}
+      } else {	/* no error occurred */
 	offset += n;
       }
-    }  
+    }
   }
   
  error_recovery:
@@ -481,6 +488,7 @@ static void* fluid_alsa_audio_run_float(void* d)
 static void* fluid_alsa_audio_run_s16(void* d)
 {
   fluid_alsa_audio_driver_t* dev = (fluid_alsa_audio_driver_t*) d;
+  fluid_synth_t* synth = (fluid_synth_t *)(dev->data);
   float* left;
   float* right;
   short* buf;
@@ -517,53 +525,49 @@ static void* fluid_alsa_audio_run_s16(void* d)
     handle[0] = left;
     handle[1] = right;
 
-    (*dev->callback)(dev->data, buffer_size, 0, NULL, 2, handle);
+    (*dev->callback)(synth, buffer_size, 0, NULL, 2, handle);
 
-    for (i = 0, k = 0; i < buffer_size; i++, k += 2) {
-      s = 32768.0f * left[i];
-      fluid_clip(s, -32768.0f, 32767.0f);
-      buf[k] = (short) s;
-    }
+    /* convert floating point data to 16 bit (with dithering) */
+    fluid_synth_dither_s16 (synth, buffer_size, left, right, buf, 0, 2, buf, 1, 2);
 
-    for (i = 0, k = 1; i < buffer_size; i++, k += 2) {
-      s = 32768.0f * right[i];
-      fluid_clip(s, -32768.0f, 32767.0f);
-      buf[k] = (short) s;
-    }
-    
     offset = 0;
 
     while (offset < buffer_size) {
 
       n = snd_pcm_writei(dev->pcm, (void*) (buf + 2 * offset), buffer_size - offset);
 
-      if (n == -EAGAIN) {
-	snd_pcm_wait(dev->pcm, 1);
-
-      } else if ((n == -EPIPE) || (n == -EBADFD)) {
-	if (snd_pcm_prepare(dev->pcm) != 0) {
-	  FLUID_LOG(FLUID_ERR, "Failed to prepare the audio device");
-	  goto error_recovery;    
-	}
-
-      } else if (n == -ESTRPIPE) {
-	if ((snd_pcm_resume(dev->pcm) != 0) 
-	    && (snd_pcm_prepare(dev->pcm) != 0)) {
-	  FLUID_LOG(FLUID_ERR, "Failed to resume the audio device");
-	  goto error_recovery;    
-	}
-
-      } else if (n < 0) {
+      if (n < 0)	/* error occurred? */
+      {
+	switch (n)
+	{
+	case -EAGAIN:
+	  snd_pcm_wait(dev->pcm, 1);
+	  break;
+	case -EPIPE:
+	case -EBADFD:
+	  if (snd_pcm_prepare(dev->pcm) != 0) {
+	    FLUID_LOG(FLUID_ERR, "Failed to prepare the audio device");
+	    goto error_recovery;
+	  }
+	  break;
+	case -ESTRPIPE:
+	  if ((snd_pcm_resume(dev->pcm) != 0)
+	      && (snd_pcm_prepare(dev->pcm) != 0)) {
+	    FLUID_LOG(FLUID_ERR, "Failed to resume the audio device");
+	    goto error_recovery;
+	  }
+	  break;
+	default:
 	  FLUID_LOG(FLUID_ERR, "The audio device error: %s", snd_strerror(n));
-	  goto error_recovery;    	
-
-      } else {
+	  goto error_recovery;
+	  break;
+	}
+      } else {	/* no error occurred */
 	offset += n;
       }
-    }  
-
+    }
   }
-  
+
  error_recovery:
   
   FLUID_FREE(left);
@@ -801,7 +805,7 @@ fluid_alsa_midi_run(void* d)
 	  (*dev->driver.handler)(dev->driver.data, evt);
 	}
       }
-    };
+    }
   }
   pthread_exit(NULL);
 }
@@ -901,8 +905,8 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
     id = id_pid;
   }
 
-  /* open the sequencer INPUT only, non-blocking */
-  err = snd_seq_open(&dev->seq_handle, device, SND_SEQ_OPEN_INPUT, SND_SEQ_NONBLOCK);
+  /* open the sequencer INPUT only */
+  err = snd_seq_open(&dev->seq_handle, device, SND_SEQ_OPEN_INPUT, 0);
   if (err < 0) {
     FLUID_LOG(FLUID_ERR, "Error opening ALSA sequencer");
     goto error_recovery;
@@ -1074,14 +1078,23 @@ fluid_alsa_seq_run(void* d)
   while (dev->status == FLUID_MIDI_LISTENING) {
 
     /* is there something to read? */
-    n = poll(dev->pfd, dev->npfd, 1); /* use a 1 milliseconds timeout */
+    n = poll(dev->pfd, dev->npfd, 100); /* use a 100 milliseconds timeout */
     if (n < 0) {
       perror("poll");
-    } else if (n > 0) {
-
-      /* read new events */
-      while ((n = snd_seq_event_input(dev->seq_handle, &seq_ev)) >= 0)
+    } else if (n > 0) {      /* check for pending events */
+      while (snd_seq_event_input_pending (dev->seq_handle, 0))
 	{
+	  n = snd_seq_event_input(dev->seq_handle, &seq_ev);	/* read the events */
+
+	  /* Negative value indicates an error, ignore interrupted system call
+	   * (-EPERM) and input event buffer overrun (-ENOSPC) */
+	  if (n < 0 && n != -EPERM && n != -ENOSPC)	/* FIXME - report buffer overrun? */
+	  {
+	      FLUID_LOG(FLUID_ERR, "Error while reading ALSA sequencer (code=%d)", n);
+	      dev->status = FLUID_MIDI_DONE;
+	      break;
+	  }
+
 	  switch (seq_ev->type)
 	    {
 	    case SND_SEQ_EVENT_NOTEON:
@@ -1132,21 +1145,8 @@ fluid_alsa_seq_run(void* d)
 	  /* send the events to the next link in the chain */
 	  (*dev->driver.handler)(dev->driver.data, &evt);
 	}
-    }
-
-    if (n < 0)		/* Negative value indicates an error */
-    {
-      if (n == -EPERM)		/* interrupted system call? */
-	;
-      else if (n != -ENOSPC)	/* input event buffer overrun? */
-	FLUID_LOG(FLUID_WARN, "ALSA sequencer buffer overrun, lost events");
-      else
-      {
-	FLUID_LOG(FLUID_ERR, "Error occured while reading ALSA sequencer events (code=%d)", n);
-	dev->status = FLUID_MIDI_DONE;
-      }
-    }
-  }
+    }	/* if poll() > 0 */
+  }	/* while (dev->status == FLUID_MIDI_LISTENING) */
   pthread_exit(NULL);
 }
 
