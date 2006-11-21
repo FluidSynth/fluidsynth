@@ -1,3 +1,43 @@
+2006-11-21    Josh Green <jgreen@users.sourceforge.net>
+
+	* src/fluid_alsa.c (new_fluid_alsa_audio_driver2): Modified all ALSA
+	  calls to check return code error as "< 0" as per ALSA examples, sample
+	  rate is now compared with what was expected and warning message displays
+	  both values, if target sample rate wasn't set update the local
+	  period_size variable (was causing 100% CPU consumption by ALSA, from
+	  the resultant erroneous sw_params calls).
+	  (fluid_alsa_audio_run_float): Using case statement for
+	  error codes from snd_pcm_writen() for the sake of tidiness.
+	  (fluid_alsa_audio_run_s16): Using case statement for error codes
+	  from snd_pcm_writei() for the sake of tidiness, re-instated call
+	  of device callback function that was broken with the dither patch
+	  (don't want to break the API), now using new fluid_synth_dither_s16()
+	  to convert floating point sample data to 16 bit with dithering.
+	  (fluid_alsa_seq_run): Timeout in poll() call set to 100ms (from 1ms!),
+	  snd_seq_event_input_pending is used to check if events are available
+	  before calling snd_seq_event_input to prevent blocking, check of
+	  snd_seq_event_input error code moved to the right location (bug fix).
+	* src/fluid_synth.h: Added dither_index parameter to fluid_synth_t
+	  structure to allow for per synth dithering continuity.
+	* src/fluid_synth.c: Modified dithering to use new dither_index field
+	  for per synth dithering continuity, fixed off by 1 error with
+	  dithering index comparison, removed usage of roundf in dithering (is
+	  it sufficient to just integer truncate?).
+	  (fluid_synth_dither_s16): New function to perform dithering on
+	  buffers of floating point sample data.
+
+2006-11-20    Josh Green <jgreen@users.sourceforge.net>
+
+	* src/fluid_alsa.c: Applied dithering patch from Mihail Zenkov.
+	* src/fluid_synth.c: Applied dithering patch from Mihail Zenkov.
+
+2006-03-04    Josh Green <jgreen@users.sourceforge.net>
+
+	* src/fluid_alsa.c (delete_fluid_alsa_audio_driver): Now calling
+	snd_pcm_close() to close the ALSA audio driver handle.
+	(fluid_alsa_seq_run): Check for -ENOSPC error was logicly inverted.
+	(new_fluid_alsa_seq_driver): Sequencer is now opened in blocking mode.
+
 2006-02-20    Josh Green <jgreen@users.sourceforge.net>
 
 	* Fixed build error that occured when neither LASH or LADCCA are
@@ -18,7 +58,7 @@
 	  "-o help" switch for listing settings, welcome message now printed
 	  whenever FluidSynth is run and simplified,
 	  (print_usage): hard coded application name as "fluidsynth".
-	* src/configure.ac: Changed --enable-SSE option to --enable-broken-SSE
+	* configure.ac: Changed --enable-SSE option to --enable-broken-SSE
 	  and --enable-SSE now just displays a fat warning about not using it.
 	* src/fluid_jack.c: Warning is now displayed if synth sample rate
 	  doesn't match jackd.

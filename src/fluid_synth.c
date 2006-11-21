@@ -18,6 +18,7 @@
  * 02111-1307, USA
  */
 
+#include <math.h>
 
 #include "fluid_synth.h"
 #include "fluid_sys.h"
@@ -58,6 +59,7 @@ int fluid_synth_set_gen2(fluid_synth_t* synth, int chan,
 /* has the synth module been initialized? */
 static int fluid_synth_initialized = 0;        
 static void fluid_synth_init(void);
+static void init_dither(void);
 
 /* default modulators
  * SF2.01 page 52 ff:
@@ -155,6 +157,8 @@ fluid_synth_init()
   fluid_voice_config();
 
   fluid_sys_config();
+
+   init_dither();
 
 
   /* SF2.01 page 53 section 8.4.1: MIDI Note-On Velocity to Initial Attenuation */
@@ -545,6 +549,7 @@ new_fluid_synth(fluid_settings_t *settings)
 
 
   synth->cur = FLUID_BUFSIZE;
+  synth->dither_index = 0;
 
   /* allocate the reverb module */
   synth->reverb = new_fluid_revmodel();
@@ -1675,6 +1680,27 @@ fluid_synth_write_float(fluid_synth_t* synth, int len,
   return 0;
 }
 
+#define DITHER_SIZE 48000
+#define DITHER_CHANNELS 2
+
+static float rand_table[DITHER_CHANNELS][DITHER_SIZE];
+
+static void init_dither(void)
+{
+  float d, dp;
+  int c, i;
+
+  for (c = 0; c < DITHER_CHANNELS; c++) {
+    dp = 0;
+    for (i = 0; i < DITHER_SIZE-1; i++) {
+      d = rand() / (float)RAND_MAX - 0.5f;
+      rand_table[c][i] = d - dp;
+      dp = d;
+    }
+    rand_table[c][DITHER_SIZE-1] = 0 - dp;
+  }
+}
+
 /* 
  *  fluid_synth_write_s16
  */
@@ -1692,6 +1718,7 @@ fluid_synth_write_s16(fluid_synth_t* synth, int len,
   fluid_real_t left_sample;
   fluid_real_t right_sample;
   double time = fluid_utime();
+  int di = synth->dither_index;
 
   /* make sure we're playing */
   if (synth->state != FLUID_SYNTH_PLAYING) {
@@ -1713,27 +1740,24 @@ fluid_synth_write_s16(fluid_synth_t* synth, int len,
       fluid_profile(FLUID_PROF_ONE_BLOCK, prof_ref_on_block);
     }
 
-    left_sample=left_in[cur]* 32767.0f;
-    right_sample=right_in[cur] * 32767.0f;
-    
+    left_sample = left_in[cur] * 32767.0f + rand_table[0][di];
+    right_sample = right_in[cur] * 32767.0f + rand_table[1][di];
+
+    di++;
+    if (di >= DITHER_SIZE) di = 0;
+
     /* digital clipping */
-    if (left_sample > 32767.0f) {
-      left_sample = 32767;
-    } 
-    if (left_sample < -32768.0f) {
-      left_sample = -32768;
-    }
-    if (right_sample > 32767.0f) {
-      right_sample = 32767;
-    } 
-    if (right_sample < -32768.0f) {
-      right_sample = -32768;
-    } 
+    if (left_sample > 32767.0f) left_sample = 32767.0f;
+    if (left_sample < -32768.0f) left_sample = -32768.0f;
+    if (right_sample > 32767.0f) right_sample = 32767.0f;
+    if (right_sample < -32768.0f) right_sample = -32768.0f;
+
     left_out[j] = (signed short) left_sample;
     right_out[k] = (signed short) right_sample;
   }
   
   synth->cur = cur;
+  synth->dither_index = di;	/* keep dither buffer continous */
 
   fluid_profile(FLUID_PROF_WRITE_S16, prof_ref);
 
@@ -1747,6 +1771,55 @@ fluid_synth_write_s16(fluid_synth_t* synth, int len,
   return 0;
 }
 
+/*
+ * fluid_synth_dither_s16
+ * Converts stereo floating point sample data to signed 16 bit data with
+ * dithering.  This function and fluid_synth_write_s16 should not be used
+ * on the same synth instance (dithering is per synth).
+ * Only used internally currently.
+ */
+void
+fluid_synth_dither_s16(fluid_synth_t* synth, int len, float* lin, float* rin,
+		       void* lout, int loff, int lincr,
+		       void* rout, int roff, int rincr)
+{
+  int i, j, k;
+  signed short* left_out = (signed short*) lout;
+  signed short* right_out = (signed short*) rout;
+  double prof_ref = fluid_profile_ref();
+  fluid_real_t left_sample;
+  fluid_real_t right_sample;
+/*  double time = fluid_utime(); */
+  int di = synth->dither_index;
+
+  for (i = 0, j = loff, k = roff; i < len; i++, j += lincr, k += rincr) {
+
+    left_sample = lin[i] * 32767.0f + rand_table[0][di];
+    right_sample = rin[i] * 32767.0f + rand_table[1][di];
+
+    di++;
+    if (di >= DITHER_SIZE) di = 0;
+
+    /* digital clipping */
+    if (left_sample > 32767.0f) left_sample = 32767.0f;
+    if (left_sample < -32768.0f) left_sample = -32768.0f;
+    if (right_sample > 32767.0f) right_sample = 32767.0f;
+    if (right_sample < -32768.0f) right_sample = -32768.0f;
+
+    left_out[j] = (signed short) left_sample;
+    right_out[k] = (signed short) right_sample;
+  }
+  
+  synth->dither_index = di;	/* keep dither buffer continous */
+
+  fluid_profile(FLUID_PROF_WRITE_S16, prof_ref);
+
+  /* FIXME - Should cpu_load be processed here?
+  time = fluid_utime() - time;
+  synth->cpu_load = 0.5 * (synth->cpu_load +
+			   time * synth->sample_rate / len / 10000.0);
+  */
+}
 
 /* 
  *  fluid_synth_one_block
