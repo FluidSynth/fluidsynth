@@ -66,6 +66,13 @@ static void delete_fluid_str_setting(fluid_str_setting_t* str)
       FLUID_FREE(str->def);      
     }
     if (str->options) {
+      fluid_list_t* list = str->options;
+
+      while (list) {
+	FLUID_FREE (list->data);
+	list = fluid_list_next(list);
+      }
+
       delete_fluid_list(str->options);      
     }
     FLUID_FREE(str);
@@ -600,6 +607,7 @@ int fluid_settings_remove_option(fluid_settings_t* settings, char* name, char* s
     while (list) {
       char* option = (char*) fluid_list_get(list);
       if (FLUID_STRCMP(s, option) == 0) {
+	FLUID_FREE (option);
 	setting->options = fluid_list_remove_link(setting->options, list);
 	return 1;
       }

@@ -655,6 +655,7 @@ delete_fluid_synth(fluid_synth_t* synth)
     }
     FLUID_FREE(synth->left_ubuf);
   }
+  FLUID_FREE(synth->left_buf);
 
   if (synth->right_ubuf != NULL) {
     for (i = 0; i < synth->nbuf; i++) {
@@ -664,6 +665,7 @@ delete_fluid_synth(fluid_synth_t* synth)
     }
     FLUID_FREE(synth->right_ubuf);
   }
+  FLUID_FREE(synth->right_buf);
 
   if (synth->fx_left_ubuf != NULL) {
     for (i = 0; i < 2; i++) {
@@ -673,6 +675,17 @@ delete_fluid_synth(fluid_synth_t* synth)
     }
     FLUID_FREE(synth->fx_left_ubuf);
   }
+  FLUID_FREE(synth->fx_left_buf);
+
+  if (synth->fx_right_ubuf != NULL) {
+    for (i = 0; i < 2; i++) {
+      if (synth->fx_right_ubuf[i] != NULL) {
+	FLUID_FREE(synth->fx_right_ubuf[i]);
+      }
+    }
+    FLUID_FREE(synth->fx_right_ubuf);
+  }
+  FLUID_FREE(synth->fx_right_buf);
 
   /* release the reverb module */
   if (synth->reverb != NULL) {

@@ -949,6 +949,18 @@ new_fluid_preset_zone(char *name)
 int 
 delete_fluid_preset_zone(fluid_preset_zone_t* zone)
 {
+  fluid_mod_t *mod, *tmp;
+
+  mod = zone->mod;
+  while (mod)	/* delete the modulators */
+    {
+      tmp = mod;
+      mod = mod->next;
+      fluid_mod_delete (tmp);
+    }
+
+  if (zone->name) FLUID_FREE (zone->name);
+  if (zone->inst) delete_fluid_inst (zone->inst);
   FLUID_FREE(zone);
   return FLUID_OK;
 }
@@ -1331,6 +1343,17 @@ new_fluid_inst_zone(char* name)
 int 
 delete_fluid_inst_zone(fluid_inst_zone_t* zone)
 {
+  fluid_mod_t *mod, *tmp;
+
+  mod = zone->mod;
+  while (mod)	/* delete the modulators */
+    {
+      tmp = mod;
+      mod = mod->next;
+      fluid_mod_delete (tmp);
+    }
+
+  if (zone->name) FLUID_FREE (zone->name);
   FLUID_FREE(zone);
   return FLUID_OK;
 }
@@ -1770,8 +1793,12 @@ sfload_file (const char * fname)
       return (NULL);
     }
 
-  if (!(sf = safe_malloc (sizeof (SFData))))
-    err = TRUE;
+  if (!(sf = FLUID_NEW (SFData)))
+    {
+      FLUID_LOG(FLUID_ERR, "Out of memory");
+      err = TRUE;
+    }
+
   if (!err)
     {
       memset (sf, 0, sizeof (SFData));	/* zero sfdata */
@@ -1942,8 +1969,11 @@ process_info (int size, SFData * sf, FILE * fd)
 		  " of %d bytes"), &chunk.id, chunk.size));
 
 	  /* alloc for chunk id and da chunk */
-	  if (!(item = safe_malloc (chunk.size + 1)))
-	    return (FAIL);
+	  if (!(item = FLUID_MALLOC (chunk.size + 1)))
+	    {
+	      FLUID_LOG(FLUID_ERR, "Out of memory");
+	      return (FAIL);
+	    }
 
 	  /* attach to INFO list, sfont_close will cleanup if FAIL occurs */
 	  sf->info = fluid_list_append (sf->info, item);
@@ -3035,8 +3065,19 @@ sfont_free_data (SFData * sf)
       FLUID_FREE (p->data);
       p = fluid_list_next (p);
     }
+  delete_fluid_list (sf->inst);
+  sf->inst = NULL;
+
+  p = sf->sample;
+  while (p)
+    {
+      FLUID_FREE (p->data);
+      p = fluid_list_next (p);
+    }
   delete_fluid_list (sf->sample);
   sf->sample = NULL;
+
+  FLUID_FREE (sf);
 }
 
 /* free all elements of a zone (Preset or Instrument) */
@@ -3172,14 +3213,4 @@ safe_fseek (FILE * fd, long ofs, int whence)
     return (FAIL);
   }
   return (OK);
-}
-
-void *
-safe_malloc (size_t size)
-{
-  void *ptr;
-
-  if (!(ptr = malloc (size)))
-    FLUID_LOG (FLUID_ERR, _("Attempted to allocate %d bytes"), (int) size);
-  return (ptr);
 }

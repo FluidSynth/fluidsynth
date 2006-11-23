@@ -296,19 +296,20 @@ new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
     FLUID_LOG(FLUID_ERR, "Failed to set start threshold.");
   }
 
-  if (snd_pcm_sw_params_set_stop_threshold(dev->pcm, swparams, ~0u) != 0) {
-    FLUID_LOG(FLUID_ERR, "Cannot turn off stop threshold.");
-  }
+//  if (snd_pcm_sw_params_set_stop_threshold(dev->pcm, swparams, ~0u) != 0) {
+//    FLUID_LOG(FLUID_ERR, "Cannot turn off stop threshold.");
+//  }
 
-  if (snd_pcm_sw_params_set_silence_threshold(dev->pcm, swparams, 0) != 0) {
-    FLUID_LOG(FLUID_ERR, "Cannot set 0 silence threshold.");
-  }
+//  if (snd_pcm_sw_params_set_silence_threshold(dev->pcm, swparams, 0) != 0) {
+//    FLUID_LOG(FLUID_ERR, "Cannot set 0 silence threshold.");
+//  }
 
-  if (snd_pcm_sw_params_set_silence_size(dev->pcm, swparams, 0) != 0) {
-    FLUID_LOG(FLUID_ERR, "Cannot set 0 silence size.");
-  }
+//  if (snd_pcm_sw_params_set_silence_size(dev->pcm, swparams, 0) != 0) {
+//    FLUID_LOG(FLUID_ERR, "Cannot set 0 silence size.");
+//  }
 
-  if (snd_pcm_sw_params_set_avail_min(dev->pcm, swparams, period_size / 2) != 0) {
+//  if (snd_pcm_sw_params_set_avail_min(dev->pcm, swparams, period_size / 2) != 0) {
+  if (snd_pcm_sw_params_set_avail_min(dev->pcm, swparams, period_size) != 0) {
     FLUID_LOG(FLUID_ERR, "Software setup for minimum available frames failed.");
   }
 
@@ -1047,6 +1048,9 @@ delete_fluid_alsa_seq_driver(fluid_midi_driver_t* p)
   if (dev->seq_handle) {
     snd_seq_close(dev->seq_handle);
   }
+
+  if (dev->pfd) FLUID_FREE (dev->pfd);
+
   FLUID_FREE(dev);
   return FLUID_OK;
 }
@@ -1057,7 +1061,7 @@ delete_fluid_alsa_seq_driver(fluid_midi_driver_t* p)
 void* 
 fluid_alsa_seq_run(void* d)
 {
-  int n, i;
+  int n, ev;
   snd_seq_event_t *seq_ev;
   fluid_midi_event_t evt;
   fluid_alsa_seq_driver_t* dev = (fluid_alsa_seq_driver_t*) d;
@@ -1082,20 +1086,24 @@ fluid_alsa_seq_run(void* d)
     if (n < 0) {
       perror("poll");
     } else if (n > 0) {      /* check for pending events */
-      while (snd_seq_event_input_pending (dev->seq_handle, 0))
+//      while (snd_seq_event_input_pending (dev->seq_handle, 0))
+      do
 	{
-	  n = snd_seq_event_input(dev->seq_handle, &seq_ev);	/* read the events */
+	    ev = snd_seq_event_input(dev->seq_handle, &seq_ev);	/* read the events */
 
-	  /* Negative value indicates an error, ignore interrupted system call
-	   * (-EPERM) and input event buffer overrun (-ENOSPC) */
-	  if (n < 0 && n != -EPERM && n != -ENOSPC)	/* FIXME - report buffer overrun? */
-	  {
-	      FLUID_LOG(FLUID_ERR, "Error while reading ALSA sequencer (code=%d)", n);
-	      dev->status = FLUID_MIDI_DONE;
-	      break;
-	  }
+	    /* Negative value indicates an error, ignore interrupted system call
+	     * (-EPERM) and input event buffer overrun (-ENOSPC) */
+	    if (ev < 0)
+	    {	/* FIXME - report buffer overrun? */
+		if (ev != -EPERM && ev != -ENOSPC)
+		{
+		  FLUID_LOG(FLUID_ERR, "Error while reading ALSA sequencer (code=%d)", ev);
+		  dev->status = FLUID_MIDI_DONE;
+		}
+		break;
+	    }
 
-	  switch (seq_ev->type)
+	    switch (seq_ev->type)
 	    {
 	    case SND_SEQ_EVENT_NOTEON:
 	      evt.type = NOTE_ON;
@@ -1142,9 +1150,10 @@ fluid_alsa_seq_run(void* d)
 	      continue;		/* unhandled event, next loop iteration */
 	    }
 
-	  /* send the events to the next link in the chain */
-	  (*dev->driver.handler)(dev->driver.data, &evt);
+	    /* send the events to the next link in the chain */
+	    (*dev->driver.handler)(dev->driver.data, &evt);
 	}
+	while (ev > 0);
     }	/* if poll() > 0 */
   }	/* while (dev->status == FLUID_MIDI_LISTENING) */
   pthread_exit(NULL);

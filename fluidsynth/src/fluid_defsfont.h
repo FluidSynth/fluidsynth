@@ -427,7 +427,6 @@ enum
 #define ErrnoEnd	ErrWrite
 
 int gerr (int ev, char * fmt, ...);
-void *safe_malloc (size_t size);
 int safe_fread (void *buf, int count, FILE * fd);
 int safe_fwrite (void *buf, int count, FILE * fd);
 int safe_fseek (FILE * fd, long ofs, int whence);

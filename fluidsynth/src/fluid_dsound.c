@@ -92,7 +92,7 @@ new_fluid_dsound_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
 
   /* check if the globals are initialized */
   if (FLUID_HINSTANCE == NULL) {
-    FLUID_LOG(FLUID_ERR, "No hinstance needed for DirectSound");
+    FLUID_LOG(FLUID_ERR, "FluidSynth hinstance not set, which is needed for DirectSound");
     return NULL;
   }
 
