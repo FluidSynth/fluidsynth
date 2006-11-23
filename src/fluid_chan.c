@@ -41,6 +41,7 @@ new_fluid_channel(fluid_synth_t* synth, int num)
 
   chan->synth = synth;
   chan->channum = num;
+  chan->preset = NULL;
 
   fluid_channel_init(chan);
   fluid_channel_init_ctrl(chan);
@@ -54,7 +55,10 @@ fluid_channel_init(fluid_channel_t* chan)
   chan->prognum = (chan->channum == 9)? 0 : chan->channum;
   chan->banknum = (chan->channum == 9)? 128 : 0;
   chan->sfontnum = 0;
+
+  if (chan->preset) delete_fluid_preset (chan->preset);
   chan->preset = fluid_synth_find_preset(chan->synth, chan->banknum, chan->prognum);
+
   chan->interp_method = FLUID_INTERP_DEFAULT;
   chan->tuning = NULL;
   chan->nrpn_select = 0;
@@ -106,6 +110,7 @@ fluid_channel_reset(fluid_channel_t* chan)
 int 
 delete_fluid_channel(fluid_channel_t* chan)
 {
+  if (chan->preset) delete_fluid_preset (chan->preset);
   FLUID_FREE(chan);
   return FLUID_OK;
 }
@@ -119,6 +124,7 @@ fluid_channel_set_preset(fluid_channel_t* chan, fluid_preset_t* preset)
   fluid_preset_notify(chan->preset, FLUID_PRESET_UNSELECTED, chan->channum);
   fluid_preset_notify(preset, FLUID_PRESET_SELECTED, chan->channum);
 
+  if (chan->preset) delete_fluid_preset (chan->preset);
   chan->preset = preset;
   return FLUID_OK;
 }

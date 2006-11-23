@@ -1,3 +1,27 @@
+2006-11-22    Josh Green <jgreen@users.sourceforge.net>
+
+	* src/fluid_alsa.c (new_fluid_alsa_audio_driver2): Removed some ALSA
+	  lib calls to set software parameters, which was likely causing the
+	  100% CPU usage problem (not actually fixed in last update, not sure
+	  which one is the culprit).
+	  (fluid_alsa_seq_run): More changes in ALSA sequencer code, hopefully
+	  it is right this time!
+	  (delete_fluid_alsa_seq_driver): Memory leak fixed - wasn't freeing
+	  array of sequencer file descriptors.
+	* src/fluid_chan.c: Memory leak fixes: Now deleting preset from channel
+	  when channel is destroyed.
+	* src/fluid_cmd.c: Memory leak fix: strtok being deleted from command
+	  shell when shell is destroyed.
+	* src/fluid_defsfont.c: Memory leak fixes: Freeing modulator lists in
+	  preset and instrument zones, freeing zone names, freeing instruments
+	  linked from preset zones, replaced use of "safe_malloc" with FLUID_MALLOC
+	  macro, deleting instrument list in SFData, deleting samples in SFData,
+	  freeing SFData structure.
+	* src/fluid_settings.c: Memory leak fix: freeing options in option
+	  type settings.
+	* src/fluid_synth.c: Memory leak fixes: Freeing FX buffers and
+	  right/left_buf.
+
 2006-11-21    Josh Green <jgreen@users.sourceforge.net>
 
 	* src/fluid_alsa.c (new_fluid_alsa_audio_driver2): Modified all ALSA

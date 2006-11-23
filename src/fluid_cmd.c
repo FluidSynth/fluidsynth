@@ -257,6 +257,9 @@ void delete_fluid_shell(fluid_shell_t* shell)
   if (shell->thread != NULL) {
     delete_fluid_thread(shell->thread);
   }
+
+  if (shell->st) delete_fluid_strtok (shell->st);
+
   FLUID_FREE(shell);
 }
 
