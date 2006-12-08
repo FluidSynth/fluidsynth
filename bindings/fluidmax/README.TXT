@@ -30,10 +30,11 @@ SYSTEM REQUIREMENTS
 This version of fluidsynth~ was initially created and tested using Max/MSP 4.3 on Mac 10.3 and should work on all following versions of Max/MSP and Mac OS.
 
 _____________________________________________________________________
-RELASE NOTES up to version 10/2005 (release 10 and 11)
+RELASE NOTES up to version 10/2005 (release 10, 11 and 12)
 
  - added micro-tuning methods (to be added to help patch)
  - fixed bug restricting argument of tuning-octave message to int (11)
+ - fixed voice stealing (12)
 
 _____________________________________________________________________
 RELASE NOTES up to version 09/2004 (release 7 to 9)

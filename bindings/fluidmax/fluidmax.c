@@ -30,6 +30,7 @@
 /************************************************************************
  *
  *  versions:
+ *   (12): fixed voice stealing
  *   (11): fixed arguments of fluidmax_tuning_octave() (third has to be float)
  *   (10): added micro-tuning methods
  *    (9): bug fix: now polyphony and # of midi channel arguments take effect
@@ -39,7 +40,7 @@
  *    (5): fixed bogus path translation at file loading
  * 
  */
-#define VERSION "10/2005 (11)"
+#define VERSION "10/2005 (12)"
 
 #include "ftmax.h"
 #include "fluidsynth.h"
@@ -73,6 +74,7 @@ static ftmax_symbol_t sym_presets = NULL;
 static ftmax_symbol_t sym_preset = NULL;
 static ftmax_symbol_t sym_reverb = NULL;
 static ftmax_symbol_t sym_chorus = NULL;
+static ftmax_symbol_t sym_polyphony = NULL;
 static ftmax_symbol_t sym_nearest = NULL;
 static ftmax_symbol_t sym_linear = NULL;
 static ftmax_symbol_t sym_cubic = NULL;
@@ -1505,6 +1507,14 @@ fluidmax_info(t_object *o, Symbol *s, short ac, Atom *at)
           outlet_anything(self->outlet, sym_chorus, 1, &a);
         }
       }
+      else if(sym == sym_polyphony)
+      {
+        int polyphony = fluid_synth_get_polyphony(self->synth);
+        ftmax_atom_t a;
+        
+        ftmax_set_int(&a, polyphony);
+        outlet_anything(self->outlet, sym_polyphony, 1, &a);
+      }
     }
   }
 }
@@ -1652,6 +1662,7 @@ main(void)
   sym_preset = ftmax_new_symbol("preset");
   sym_reverb = ftmax_new_symbol("reverb");
   sym_chorus = ftmax_new_symbol("chorus");
+  sym_polyphony = ftmax_new_symbol("polyphony");
   sym_nearest = ftmax_new_symbol("nearest");
   sym_linear = ftmax_new_symbol("linear");
   sym_cubic = ftmax_new_symbol("cubic");
