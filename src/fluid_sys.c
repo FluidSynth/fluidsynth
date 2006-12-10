@@ -63,8 +63,12 @@ int fluid_debug(int level, char * fmt, ...)
 }
 #endif
 
-/*
- * fluid_set_log_function
+/**
+ * Installs a new log function for a specified log level.
+ * @param level Log level to install handler for.
+ * @param fun Callback function handler to call for logged messages
+ * @param data User supplied data pointer to pass to log function
+ * @return The previously installed function.
  */
 fluid_log_function_t 
 fluid_set_log_function(int level, fluid_log_function_t fun, void* data)
@@ -79,8 +83,11 @@ fluid_set_log_function(int level, fluid_log_function_t fun, void* data)
   return old;
 }
 
-/*
- * fluid_default_log_function
+/**
+ * Default log function which prints to the stderr.
+ * @param level Log level
+ * @param message Log message
+ * @param data User supplied data (not used)
  */
 void 
 fluid_default_log_function(int level, char* message, void* data)
@@ -154,8 +161,12 @@ fluid_log_config(void)
   }
 }
 
-/*
- * fluid_log
+/**
+ * Print a message to the log.
+ * @param level Log level (#fluid_log_level).
+ * @param fmt Printf style format string for log message
+ * @param ... Arguments for printf 'fmt' message string
+ * @return Always returns -1
  */
 int 
 fluid_log(int level, char* fmt, ...)
@@ -176,6 +187,75 @@ fluid_log(int level, char* fmt, ...)
   return FLUID_FAILED; 
 }
 
+/**
+ * An improved strtok, still trashes the input string, but is portable and
+ * thread safe.  Also skips token chars at beginning of token string and never
+ * returns an empty token (will return NULL if source ends in token chars though).
+ * NOTE: NOT part of public API
+ * @internal
+ * @param str Pointer to a string pointer of source to tokenize.  Pointer gets
+ *   updated on each invocation to point to beginning of next token.  Note that
+ *   token char get's overwritten with a 0 byte.  String pointer is set to NULL
+ *   when final token is returned.
+ * @param delim String of delimiter chars.
+ * @return Pointer to the next token or NULL if no more tokens.
+ */
+char *fluid_strtok (char **str, char *delim)
+{
+  char *s, *d, *token;
+  char c;
+
+  if (str == NULL || delim == NULL || !*delim)
+  {
+    FLUID_LOG(FLUID_ERR, "Null pointer");
+    return NULL;
+  }
+
+  s = *str;
+  if (!s) return NULL;	/* str points to a NULL pointer? (tokenize already ended) */
+
+  /* skip delimiter chars at beginning of token */
+  do
+  {
+    c = *s;
+    if (!c)	/* end of source string? */
+    {
+      *str = NULL;
+      return NULL;
+    }
+
+    for (d = delim; *d; d++)	/* is source char a token char? */
+    {
+      if (c == *d)	/* token char match? */
+      {
+	s++;		/* advance to next source char */
+	break;
+      }
+    }
+  } while (*d);		/* while token char match */
+
+  token = s;		/* start of token found */
+
+  /* search for next token char or end of source string */
+  for (s = s+1; *s; s++)
+  {
+    c = *s;
+
+    for (d = delim; *d; d++)	/* is source char a token char? */
+    {
+      if (c == *d)	/* token char match? */
+      {
+	*s = '\0';	/* overwrite token char with zero byte to terminate token */
+	*str = s+1;	/* update str to point to beginning of next token */
+	return token;
+      }
+    }
+  }
+
+  /* we get here only if source string ended */
+  *str = NULL;
+  return token;
+}
 
 /*
  * fluid_error

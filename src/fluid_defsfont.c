@@ -301,21 +301,20 @@ int fluid_defsfont_load(fluid_defsfont_t* sfont, const char* file)
   sfont->samplesize = sfdata->samplesize;
 
   /* load sample data in one block */
-  if (fluid_defsfont_load_sampledata(sfont) != FLUID_OK) {
-    return FLUID_FAILED;
-  }
+  if (fluid_defsfont_load_sampledata(sfont) != FLUID_OK)
+    goto err_exit;
 
   /* Create all the sample headers */
   p = sfdata->sample;
   while (p != NULL) {
     sfsample = (SFSample *) p->data;
+
     sample = new_fluid_sample();
-    if (sample == NULL) {
-      return FLUID_FAILED;
-    }
-    if (fluid_sample_import_sfont(sample, sfsample, sfont) != FLUID_OK) {
-      return FLUID_FAILED;
-    }
+    if (sample == NULL) goto err_exit;
+
+    if (fluid_sample_import_sfont(sample, sfsample, sfont) != FLUID_OK)
+      goto err_exit;
+
     fluid_defsfont_add_sample(sfont, sample);
     fluid_voice_optimize_sample(sample);
     p = fluid_list_next(p);
@@ -326,18 +325,21 @@ int fluid_defsfont_load(fluid_defsfont_t* sfont, const char* file)
   while (p != NULL) {
     sfpreset = (SFPreset *) p->data;
     preset = new_fluid_defpreset(sfont);
-    if (preset == NULL) {
-      return FLUID_FAILED;
-    }
-    if (fluid_defpreset_import_sfont(preset, sfpreset, sfont) != FLUID_OK) {
-      return FLUID_FAILED;
-    }
+    if (preset == NULL) goto err_exit;
+
+    if (fluid_defpreset_import_sfont(preset, sfpreset, sfont) != FLUID_OK)
+      goto err_exit;
+
     fluid_defsfont_add_preset(sfont, preset);
     p = fluid_list_next(p);
   }
-  sfont_free_data(sfdata);
+  sfont_close (sfdata);
 
   return FLUID_OK;
+
+err_exit:
+  sfont_close (sfdata);
+  return FLUID_FAILED;
 }
 
 /* fluid_defsfont_add_sample
@@ -3009,20 +3011,14 @@ unsigned short badpgen[] = { Gen_StartAddrOfs, Gen_EndAddrOfs, Gen_StartLoopAddr
   Gen_OverrideRootKey, 0
 };
 
+/* close SoundFont file and delete a SoundFont structure */
 void
 sfont_close (SFData * sf)
 {
+  fluid_list_t *p, *p2;
+
   if (sf->sffd)
     fclose (sf->sffd);
-
-  sfont_free_data (sf);
-}
-
-/* delete a sound font structure */
-void
-sfont_free_data (SFData * sf)
-{
-  fluid_list_t *p, *p2;
 
   if (sf->fname)
     free (sf->fname);

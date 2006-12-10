@@ -151,7 +151,14 @@ void fluid_midi_driver_settings(fluid_settings_t* settings)
 }
 
 
-
+/**
+ * Create a new MIDI driver instance.
+ * @param settings Settings used to configure new MIDI driver.
+ * @param handler MIDI handler callback (for example: fluid_midi_router_handle_midi_event()
+ *   for MIDI router)
+ * @param event_handler_data Caller defined data to pass to 'handler'
+ * @return New MIDI driver instance or NULL on error
+ */
 fluid_midi_driver_t* new_fluid_midi_driver(fluid_settings_t* settings, handle_midi_event_func_t handler, void* event_handler_data)
 {
   int i;
@@ -171,6 +178,10 @@ fluid_midi_driver_t* new_fluid_midi_driver(fluid_settings_t* settings, handle_mi
   return NULL;
 }
 
+/**
+ * Delete a MIDI driver instance.
+ * @param driver MIDI driver to delete
+ */
 void delete_fluid_midi_driver(fluid_midi_driver_t* driver)
 {
   int i;

@@ -601,6 +601,14 @@ delete_fluid_synth(fluid_synth_t* synth)
 
   synth->state = FLUID_SYNTH_STOPPED;
 
+  /* turn off all voices, needed to unload SoundFont data */
+  if (synth->voice != NULL) {
+    for (i = 0; i < synth->nvoice; i++) {
+      if (synth->voice[i] && fluid_voice_is_playing (synth->voice[i]))
+	fluid_voice_off (synth->voice[i]);
+    }
+  }
+
   /* delete all the SoundFonts */
   for (list = synth->sfont; list; list = fluid_list_next(list)) {
     sfont = (fluid_sfont_t*) fluid_list_get(list);

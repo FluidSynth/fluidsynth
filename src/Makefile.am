@@ -92,8 +92,6 @@ libfluidsynth_la_SOURCES = \
 	fluid_settings.c \
 	fluid_settings.h \
 	fluid_sfont.h \
-	fluid_strtok.c \
-	fluid_strtok.h \
 	fluid_synth.c \
 	fluid_synth.h \
 	fluidsynth_priv.h \

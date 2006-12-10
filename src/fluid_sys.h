@@ -43,6 +43,13 @@ void fluid_sys_config(void);
 void fluid_log_config(void);
 void fluid_time_config(void);
 
+
+/*
+ * Utility functions
+ */
+char *fluid_strtok (char **str, char *delim);
+
+
 /**
   
   Additional debugging system, separate from the log system. This
@@ -288,4 +295,3 @@ extern fluid_profile_data_t fluid_profile_data[];
 unsigned int fluid_check_fpe_i386(char * explanation_in_case_of_fpe);
 
 #endif /* _FLUID_SYS_H */
-

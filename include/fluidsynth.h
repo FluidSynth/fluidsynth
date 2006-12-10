@@ -44,40 +44,37 @@ extern "C" {
 #endif
 
 
-  /**
-
-     \file fluidsynth.h
-
-     \brief fluidsynth is a real-time SoundFont(R) synthesizer. This is
-     the header of the fluidsynth library and contains the
-     synthesizer's public API.
-
-     Depending on how you want to use or extend the synthesizer you
-     will need different API functions. You probably do not need all
-     of them. Here is what you might want to do:
-     
-     o Embedded synthesizer: create a new synthesizer and send MIDI
-       events to it. The sound goes directly to the audio output of
-       your system.
-     
-     o Plugin synthesizer: create a synthesizer and send MIDI events
-       but pull the audio back into your application.
-     
-     o SoundFont plugin: create a new type of "SoundFont" and allow
-       the synthesizer to load your type of SoundFonts.
-     
-     o MIDI input: Create a MIDI handler to read the MIDI input on your
-       machine and send the MIDI events directly to the synthesizer.
-     
-     o MIDI files: Open MIDI files and send the MIDI events to the
-       synthesizer.
-     
-     o Command lines: You can send textual commands to the synthesizer.
-
-
-     SoundFont(R) is a registered trademark of E-mu Systems, Inc. 
-							    
-  */
+/**
+ * @file fluidsynth.h
+ * @brief FluidSynth is a real-time synthesizer designed for SoundFont(R) files.
+ *
+ * This is the header of the fluidsynth library and contains the
+ * synthesizer's public API.
+ *
+ * Depending on how you want to use or extend the synthesizer you
+ * will need different API functions. You probably do not need all
+ * of them. Here is what you might want to do:
+ *
+ * o Embedded synthesizer: create a new synthesizer and send MIDI
+ *   events to it. The sound goes directly to the audio output of
+ *   your system.
+ *
+ * o Plugin synthesizer: create a synthesizer and send MIDI events
+ *   but pull the audio back into your application.
+ *
+ * o SoundFont plugin: create a new type of "SoundFont" and allow
+ *   the synthesizer to load your type of SoundFonts.
+ *
+ * o MIDI input: Create a MIDI handler to read the MIDI input on your
+ *   machine and send the MIDI events directly to the synthesizer.
+ *
+ * o MIDI files: Open MIDI files and send the MIDI events to the
+ *   synthesizer.
+ *
+ * o Command lines: You can send textual commands to the synthesizer.
+ *
+ * SoundFont(R) is a registered trademark of E-mu Systems, Inc.
+ */
 
 #include "fluidsynth/types.h"
 #include "fluidsynth/settings.h"

@@ -624,12 +624,8 @@ fluid_oss_audio_run2(void* d)
 
     (*dev->callback)(dev->data, buffer_size, 0, NULL, 2, dev->buffers);
 
-    for (i = 0, k = 0; i < buffer_size; i++) {
-/*       fluid_clip(left[i], -1.0f, 1.0f); */
-/*       fluid_clip(right[i], -1.0f, 1.0f); */
-      buffer[k++] = (short) (left[i] * 32767.0f);
-      buffer[k++] = (short) (right[i] * 32767.0f);
-    }
+    fluid_synth_dither_s16 (dev->data, buffer_size, left, right,
+			    buffer, 0, 2, buffer, 1, 2);
 
     write(dev->dspfd, buffer, dev->buffer_byte_size);
   }

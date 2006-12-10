@@ -157,43 +157,26 @@ int delete_fluid_file_audio_driver(fluid_audio_driver_t* p)
 static int fluid_file_audio_run_s16(void* d, unsigned int clock_time)
 {
 	fluid_file_audio_driver_t* dev = (fluid_file_audio_driver_t*) d;
-	float* handle[2];
-	int i, k, n, offset;
-	float s;
+	int n, offset;
 	unsigned int sample_time;
-
-	handle[0] = dev->left;
-	handle[1] = dev->right;
-
 
 	sample_time = (unsigned int) (dev->samples / dev->sample_rate * 1000.0);
 	if (sample_time > clock_time) {
 		return 1;
 	}
 
-	(*dev->callback)(dev->data, dev->period_size, 0, NULL, 2, handle);
-	
-	for (i = 0, k = 0; i < dev->period_size; i++, k += 2) {
-		s = 32768.0f * dev->left[i];
-		fluid_clip(s, -32768.0f, 32767.0f);
-		dev->buf[k] = (short) s;
-	}
-	
-	for (i = 0, k = 1; i < dev->period_size; i++, k += 2) {
-		s = 32768.0f * dev->right[i];
-		fluid_clip(s, -32768.0f, 32767.0f);
-		dev->buf[k] = (short) s;
-	}
-	
+	fluid_synth_write_s16(dev->data, dev->period_size, dev->buf, 0, 2, dev->buf, 1, 2);
+
 	for (offset = 0; offset < dev->buf_size; offset += n) {
 		
 		n = fwrite((char*) dev->buf + offset, 1, dev->buf_size - offset, dev->file);
 		if (n < 0) {
-			FLUID_LOG(FLUID_ERR, "Audio file error");
-			return 0;    	
-		} 
+			FLUID_LOG(FLUID_ERR, "Audio output file write error: %s",
+				  strerror (errno));
+			return 0;
+		}
 	}
-	
+
 	dev->samples += dev->period_size;
 
 	return 1;

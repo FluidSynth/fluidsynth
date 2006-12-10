@@ -215,36 +215,23 @@ fluid_core_audio_callback(AudioDeviceID id,
 {
   int i, k;
   fluid_core_audio_driver_t* dev = (fluid_core_audio_driver_t*) data;
-/*   int len = out->mBuffers[0].mDataByteSize / dev->format.mBytesPerFrame; */
   int len = dev->buffer_size / dev->format.mBytesPerFrame;
   float* buffer = out->mBuffers[0].mData;
-  float* left = dev->buffers[0];
-  float* right = dev->buffers[1];
 
-#if 0
-  double incr = 220.0 * 2. * 3.14159265359 / dev->format.mSampleRate;
+  if (dev->callback)
+  {
+    float* left = dev->buffers[0];
+    float* right = dev->buffers[1];
 
-  for (i = 0, k = 0; i < len; i++) {
-    float s = 0.2 * sin(dev->phase);
-    dev->phase += incr;
-    buffer[k++] = s;
-    buffer[k++] = s;
+    (*dev->callback)(dev->data, len, 0, NULL, 2, dev->buffers);
+
+    for (i = 0, k = 0; i < len; i++) {
+      buffer[k++] = left[i];
+      buffer[k++] = right[i];
+    }
   }
-
-#else
-
-#if 0
-  (*dev->callback)(dev->data, len, 0, NULL, 2, dev->buffers);
-#else
-  fluid_synth_write_float((fluid_synth_t*) dev->data, len, dev->buffers[0], 0, 1, dev->buffers[1], 0, 1);
-#endif
-  
-  for (i = 0, k = 0; i < len; i++) {
-    buffer[k++] = left[i];
-    buffer[k++] = right[i];
-  }
-#endif
-
+  else fluid_synth_write_float((fluid_synth_t*) dev->data, len, buffer, 0, 2,
+			       buffer, 1, 2);
   return noErr;
 }
 

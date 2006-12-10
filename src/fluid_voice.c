@@ -1718,9 +1718,10 @@ fluid_voice_off(fluid_voice_t* voice)
   voice->status = FLUID_VOICE_OFF;
 
   /* Decrement the reference count of the sample. */
-  fluid_sample_decr_ref(voice->sample);
-
-  voice->sample = NULL;
+  if (voice->sample) {
+    fluid_sample_decr_ref(voice->sample);
+    voice->sample = NULL;
+  }
 
   return FLUID_OK;
 }
