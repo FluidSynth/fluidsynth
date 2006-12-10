@@ -21,7 +21,6 @@
 #include "fluidsynth_priv.h"
 #include "fluid_cmd.h"
 #include "fluid_synth.h"
-#include "fluid_strtok.h"
 #include "fluid_settings.h"
 #include "fluid_io.h"
 #include "fluid_hash.h"
@@ -36,6 +35,7 @@
 #endif
 
 #define MAX_TOKENS 100 /* LADSPA plugins need lots of parameters */
+#define MAX_COMMAND_LEN 1024	/* max command length accepted by fluid_command() */
 #define FLUID_WORKLINELENGTH 1024 /* LADSPA plugins use long command lines */
 
 void fluid_shell_settings(fluid_settings_t* settings)
@@ -157,43 +157,42 @@ fluid_cmd_t fluid_commands[] = {
   { NULL, NULL, NULL, NULL, NULL }
 };
 
-int fluid_command2(fluid_strtok_t* strtok, fluid_cmd_handler_t* handler, 
-		  char* cmd, fluid_ostream_t out);
-
+/**
+ * Process a string command.
+ * NOTE: FluidSynth 1.0.8+ no longer modifies the 'cmd' string.
+ * @param handle FluidSynth command handler
+ * @param cmd Command string (NOTE: Gets modified by FluidSynth prior to 1.0.8)
+ * @param out Output stream to display command response to
+ * @return Integer value corresponding to: -1 on command error, 0 on success,
+ *   1 if 'cmd' is a comment or is empty and -2 if quit was issued
+ */
 int 
 fluid_command(fluid_cmd_handler_t* handler, char* cmd, fluid_ostream_t out)
 {
-  int ret;
-
-  fluid_strtok_t* st = new_fluid_strtok(cmd, " \t\n\r");
-  if (st == NULL) {
-    return -1;
-  }
-
-  ret = fluid_command2(st, handler, cmd, out);
-  delete_fluid_strtok(st);
-  return ret;
-}
-
-int 
-fluid_command2(fluid_strtok_t* st, fluid_cmd_handler_t* handler, char* cmd, fluid_ostream_t out)
-{
   char* token[MAX_TOKENS];
+  char buf[MAX_COMMAND_LEN+1];
+  char *strtok, *tok;
   int num_tokens = 0;
 
   if (cmd[0] == '#') {
     return 1;
   }
 
-  /* tokenize the input line */
-  fluid_strtok_set(st, cmd, " \t\n\r");
-  while (fluid_strtok_has_more(st)) {
-    token[num_tokens++] = fluid_strtok_next_token(st);
-  } 
-  
-  if (num_tokens == 0) {
-    return 1;
+  if (strlen (cmd) > MAX_COMMAND_LEN)
+  {
+    fluid_ostream_printf(out, "Command exceeded max length of %d chars\n",
+			 MAX_COMMAND_LEN);
+    return -1;
   }
+
+  FLUID_STRCPY(buf, cmd);	/* copy - since fluid_strtok thrashes it */
+  strtok = buf;
+
+  /* tokenize the input line */
+  while ((tok = fluid_strtok (&strtok, " \t\n\r")))
+    token[num_tokens++] = tok;
+  
+  if (num_tokens == 0) return 1;
 
   /* handle the command */
   return fluid_cmd_handler_handle(handler, num_tokens, &token[0], out);
@@ -203,7 +202,6 @@ struct _fluid_shell_t {
   fluid_settings_t* settings;
   fluid_cmd_handler_t* handler;
   fluid_thread_t* thread;
-  fluid_strtok_t* st;
   fluid_istream_t in;
   fluid_ostream_t out;
 };
@@ -247,7 +245,6 @@ void fluid_shell_init(fluid_shell_t* shell,
 {
   shell->settings = settings;
   shell->handler = handler;
-  shell->st = new_fluid_strtok(NULL, NULL);
   shell->in = in;
   shell->out = out;
 }
@@ -257,8 +254,6 @@ void delete_fluid_shell(fluid_shell_t* shell)
   if (shell->thread != NULL) {
     delete_fluid_thread(shell->thread);
   }
-
-  if (shell->st) delete_fluid_strtok (shell->st);
 
   FLUID_FREE(shell);
 }
@@ -292,7 +287,7 @@ int fluid_shell_run(fluid_shell_t* shell)
 #endif
     
     /* handle the command */
-    switch (fluid_command2(shell->st, shell->handler, workline, shell->out)) {
+    switch (fluid_command(shell->handler, workline, shell->out)) {
       
     case 1: /* empty line or comment */
       break;

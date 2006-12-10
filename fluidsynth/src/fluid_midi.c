@@ -55,8 +55,12 @@ static int remains_80e0[] = {
  *
  *                      MIDIFILE
  */
-/*
- * new_fluid_midi_file
+
+/**
+ * Open a MIDI file and return a new MIDI file handle.
+ * @internal
+ * @param filename Path of file to open.
+ * @return New MIDI file handle or NULL on error.
  */
 fluid_midi_file* new_fluid_midi_file(char* filename)
 {
@@ -86,8 +90,10 @@ fluid_midi_file* new_fluid_midi_file(char* filename)
 	return mf;
 }
 
-/*
- * delete_fluid_midi_file
+/**
+ * Delete a MIDI file handle.
+ * @internal
+ * @param mf MIDI file handle to close and free.
  */
 void delete_fluid_midi_file(fluid_midi_file* mf)
 {
@@ -102,7 +108,7 @@ void delete_fluid_midi_file(fluid_midi_file* mf)
 }
 
 /*
- * fluid_midi_file_getc
+ * Get the next byte in a MIDI file.
  */
 int fluid_midi_file_getc(fluid_midi_file* mf)
 {
@@ -660,8 +666,9 @@ int fluid_midi_file_get_division(fluid_midi_file* midifile)
  *     fluid_track_t
  */
 
-/*
- * new_fluid_midi_event
+/**
+ * Create a MIDI event structure.
+ * @return New MIDI event structure or NULL when out of memory.
  */
 fluid_midi_event_t* new_fluid_midi_event()
 {
@@ -680,8 +687,10 @@ fluid_midi_event_t* new_fluid_midi_event()
 	return evt;
 }
 
-/*
- * delete_fluid_midi_event
+/**
+ * Delete MIDI event structure.
+ * @param evt MIDI event structure
+ * @return Always returns 0
  */
 int delete_fluid_midi_event(fluid_midi_event_t* evt)
 {
@@ -696,16 +705,23 @@ int delete_fluid_midi_event(fluid_midi_event_t* evt)
 	return FLUID_OK;
 }
 
-/*
- * fluid_midi_event_get_type
+/**
+ * Get the event type field of a MIDI event structure.
+ * DOCME - Event type enum appears to be internal (fluid_midi.h)
+ * @param evt MIDI event structure
+ * @return Event type field
  */
 int fluid_midi_event_get_type(fluid_midi_event_t* evt)
 {
 	return evt->type;
 }
 
-/*
- * fluid_midi_event_set_type
+/**
+ * Set the event type field of a MIDI event structure.
+ * DOCME - Event type enum appears to be internal (fluid_midi.h)
+ * @param evt MIDI event structure
+ * @param type Event type field
+ * @return Always returns 0
  */
 int fluid_midi_event_set_type(fluid_midi_event_t* evt, int type)
 {
@@ -713,16 +729,21 @@ int fluid_midi_event_set_type(fluid_midi_event_t* evt, int type)
 	return FLUID_OK;
 }
 
-/*
- * fluid_midi_event_get_channel
+/**
+ * Get the channel field of a MIDI event structure.
+ * @param evt MIDI event structure
+ * @return Channel field
  */
 int fluid_midi_event_get_channel(fluid_midi_event_t* evt)
 {
 	return evt->channel;
 }
 
-/*
- * fluid_midi_event_set_channel
+/**
+ * Set the channel field of a MIDI event structure.
+ * @param evt MIDI event structure
+ * @param chan MIDI channel field
+ * @return Always returns 0
  */
 int fluid_midi_event_set_channel(fluid_midi_event_t* evt, int chan)
 {
@@ -730,16 +751,21 @@ int fluid_midi_event_set_channel(fluid_midi_event_t* evt, int chan)
 	return FLUID_OK;
 }
 
-/*
- * fluid_midi_event_get_key
+/**
+ * Get the key field of a MIDI event structure.
+ * @param evt MIDI event structure
+ * @return MIDI note number (0-127)
  */
 int fluid_midi_event_get_key(fluid_midi_event_t* evt)
 {
 	return evt->param1;
 }
 
-/*
- * fluid_midi_event_set_key
+/**
+ * Set the key field of a MIDI event structure.
+ * @param evt MIDI event structure
+ * @param v MIDI note number (0-127)
+ * @return Always returns 0
  */
 int fluid_midi_event_set_key(fluid_midi_event_t* evt, int v)
 {
@@ -747,16 +773,21 @@ int fluid_midi_event_set_key(fluid_midi_event_t* evt, int v)
 	return FLUID_OK;
 }
 
-/*
- * fluid_midi_event_get_velocity
+/**
+ * Get the velocity field of a MIDI event structure.
+ * @param evt MIDI event structure
+ * @return MIDI velocity number (0-127)
  */
 int fluid_midi_event_get_velocity(fluid_midi_event_t* evt)
 {
 	return evt->param2;
 }
 
-/*
- * fluid_midi_event_set_velocity
+/**
+ * Set the velocity field of a MIDI event structure.
+ * @param evt MIDI event structure
+ * @param v MIDI velocity value
+ * @return Always returns 0
  */
 int fluid_midi_event_set_velocity(fluid_midi_event_t* evt, int v)
 {
@@ -764,16 +795,21 @@ int fluid_midi_event_set_velocity(fluid_midi_event_t* evt, int v)
 	return FLUID_OK;
 }
 
-/*
- * fluid_midi_event_get_control
+/**
+ * Get the control number of a MIDI event structure.
+ * @param evt MIDI event structure
+ * @return MIDI control number
  */
 int fluid_midi_event_get_control(fluid_midi_event_t* evt)
 {
 	return evt->param1;
 }
 
-/*
- * fluid_midi_event_set_control
+/**
+ * Set the control field of a MIDI event structure.
+ * @param evt MIDI event structure
+ * @param v MIDI control number
+ * @return Always returns 0
  */
 int fluid_midi_event_set_control(fluid_midi_event_t* evt, int v)
 {
@@ -781,16 +817,21 @@ int fluid_midi_event_set_control(fluid_midi_event_t* evt, int v)
 	return FLUID_OK;
 }
 
-/*
- * fluid_midi_event_get_value
+/**
+ * Get the value field from a MIDI event structure.
+ * @param evt MIDI event structure
+ * @return Value field
  */
 int fluid_midi_event_get_value(fluid_midi_event_t* evt)
 {
 	return evt->param2;
 }
 
-/*
- * fluid_midi_event_set_value
+/**
+ * Set the value field of a MIDI event structure.
+ * @param evt MIDI event structure
+ * @param v Value to assign
+ * @return Always returns 0
  */
 int fluid_midi_event_set_value(fluid_midi_event_t* evt, int v)
 {
@@ -798,22 +839,44 @@ int fluid_midi_event_set_value(fluid_midi_event_t* evt, int v)
 	return FLUID_OK;
 }
 
+/**
+ * Get the program field of a MIDI event structure.
+ * @param evt MIDI event structure
+ * @return MIDI program number (0-127)
+ */
 int fluid_midi_event_get_program(fluid_midi_event_t* evt)
 {
 	return evt->param1;
 }
 
+/**
+ * Set the program field of a MIDI event structure.
+ * @param evt MIDI event structure
+ * @param val MIDI program number (0-127)
+ * @return Always returns 0
+ */
 int fluid_midi_event_set_program(fluid_midi_event_t* evt, int val)
 {
 	evt->param1 = val;
 	return FLUID_OK;
 }
 
+/**
+ * Get the pitch field of a MIDI event structure.
+ * @param evt MIDI event structure
+ * @return Pitch value (DOCME units?)
+ */
 int fluid_midi_event_get_pitch(fluid_midi_event_t* evt)
 {
 	return evt->param1;
 }
 
+/**
+ * Set the pitch field of a MIDI event structure.
+ * @param evt MIDI event structure
+ * @param val Pitch value (DOCME units?)
+ * @return Always returns 0
+ */
 int fluid_midi_event_set_pitch(fluid_midi_event_t* evt, int val)
 {
 	evt->param1 = val;
@@ -1046,8 +1109,11 @@ fluid_track_send_events(fluid_track_t* track,
  *
  *     fluid_player
  */
-/*
- * new_fluid_player
+
+/**
+ * Create a new MIDI player.
+ * @param synth Fluid synthesizer instance to create player for
+ * @return New MIDI player instance or NULL on error (out of memory)
  */
 fluid_player_t* new_fluid_player(fluid_synth_t* synth)
 {
@@ -1075,8 +1141,10 @@ fluid_player_t* new_fluid_player(fluid_synth_t* synth)
 	return player;
 }
 
-/*
- * delete_fluid_player
+/**
+ * Delete a MIDI player instance.
+ * @param player MIDI player instance
+ * @return Always returns 0
  */
 int delete_fluid_player(fluid_player_t* player)
 {
@@ -1240,8 +1308,10 @@ int fluid_player_callback(void* data, unsigned int msec)
 	return 1;
 }
 
-/*
- * fluid_player_play
+/**
+ * Activates play mode for a MIDI player if not already playing.
+ * @param player MIDI player instance
+ * @return 0 on success, -1 on failure
  */
 int fluid_player_play(fluid_player_t* player)
 {
@@ -1263,8 +1333,10 @@ int fluid_player_play(fluid_player_t* player)
 	return FLUID_OK;
 }
 
-/*
- * fluid_player_stop
+/**
+ * Stops a MIDI player.
+ * @param player MIDI player instance
+ * @return Always returns 0
  */
 int fluid_player_stop(fluid_player_t* player)
 {
@@ -1276,8 +1348,13 @@ int fluid_player_stop(fluid_player_t* player)
 	return FLUID_OK;
 }
 
-/*
- * fluid_player_set_loop
+/* FIXME - Looping seems to not actually be implemented? */
+
+/**
+ * Enable looping of a MIDI player (DOCME - Does this actually work?)
+ * @param player MIDI player instance
+ * @param loop Value for looping (DOCME - What would this value be, boolean/time index?)
+ * @return Always returns 0
  */
 int fluid_player_set_loop(fluid_player_t* player, int loop)
 {
@@ -1285,8 +1362,12 @@ int fluid_player_set_loop(fluid_player_t* player, int loop)
 	return FLUID_OK;
 }
 
-/*
- *  fluid_player_set_midi_tempo
+/**
+ * Set the tempo of a MIDI player.
+ * @param player MIDI player instance
+ * @param tempo Tempo to set playback speed to (DOCME - Units?)
+ * @return Always returns 0
+ *
  */
 int fluid_player_set_midi_tempo(fluid_player_t* player, int tempo)
 {
@@ -1301,16 +1382,22 @@ int fluid_player_set_midi_tempo(fluid_player_t* player, int tempo)
 	return FLUID_OK;
 }
 
-/*
- *  fluid_player_set_bpm
+/**
+ * Set the tempo of a MIDI player in beats per minute.
+ * @param player MIDI player instance
+ * @param bpm Tempo in beats per minute
+ * @return Always returns 0
  */
 int fluid_player_set_bpm(fluid_player_t* player, int bpm)
 {
 	return fluid_player_set_midi_tempo(player, (int)((double) 60 * 1e6 / bpm));
 }
 
-/*
- *  fluid_player_join
+/**
+ * Wait for a MIDI player to terminate (when done playing).
+ * @param player MIDI player instance
+ * @return 0 on success, -1 otherwise
+ *
  */
 int fluid_player_join(fluid_player_t* player)
 {
@@ -1525,5 +1612,3 @@ int fluid_midi_send_event(fluid_synth_t* synth, fluid_player_t* player, fluid_mi
 	}
 	return FLUID_OK;
 }
-
-

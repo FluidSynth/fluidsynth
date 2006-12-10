@@ -1,3 +1,35 @@
+2006-12-10    Josh Green <jgreen@users.sourceforge.net>
+
+	Lots of documentation updates.
+	* doc/Doxyfile: No longer including functions by default, only those
+	  listed in the listed header files.
+	* src/fluid_strtok.[ch]: Removed, since it was crap.  Replaced with
+	  fluid_strtok() in fluid_sys.c which doesn't require an allocated
+	  tokenizing instance.
+	* src/fluid_alsa.c: Audio processing is more optimized in the case where
+	  no user defined audio callback is used (removal of unneeded buffer copy),
+	  fluid_alsa_handle_write_error() added for centralized ALSA audio error
+	  handling,
+	* src/fluid_aufile.c: Now also doing 16 bit dithering.
+	* src/fluid_cmd.c: Removed use of old tokenizer instance.
+	* src/fluid_coreaudio.c: User defined callback function is now honored.
+	* src/fluid_defsfont.c: More leaks plugged (thanks to Paul Miller for
+	  the patch), removed sfont_free_data() since sfont_close() should be
+	  used instead (don't want to leak a file handle).
+	* src/fluid_midi_router.c: Took out uses of fflush() since sending a
+	  line of text (with newline) should display it.
+	* src/fluid_oss.c: Using fluid_synth_dither_s16() in place of old
+	  16 bit conversion code.
+	* src/fluid_settings.c: Replaced strtok stuff with new function, some
+	  other improvements.
+	* src/fluid_synth.c (delete_fluid_synth): Turning off all voices so that
+	  SoundFont data will be freed correctly (thanks to patch from
+	  Paul Miller).
+	* src/fluid_sys.c (fluid_strtok): New function to replace old tokenizing
+	  functions which required a token instance.
+	* src/fluidsynth.c: Warning message printed if a non option is not a
+	  valid SoundFont or MIDI file (thanks to Nick Daly for the patch).
+
 2006-11-22    Josh Green <jgreen@users.sourceforge.net>
 
 	* src/fluid_alsa.c (new_fluid_alsa_audio_driver2): Removed some ALSA

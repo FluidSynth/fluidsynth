@@ -1,39 +1,53 @@
+New features
+------------
+- 24 bit sample support
+- Non-realtime MIDI file rendering
+- Sample streaming, load/unload sample on demand
+- Synth sample rate change after initial creation
+- handle tuning sysex messages
+- Audio level metering
+- Active voice count monitoring
+
+Synthesis
+---------
+- Improve voice stealing algorithm
+- Dynamic voice killing (based on CPU usage)
+- Batch voice activation (stereo synch. as per SoundFont spec)
+- Pitch control on stereo samples not managed as should
+- soft clipping, compressor, limitor, or automatic gain control
+
+Drivers
+-------
+- libao audio output driver
+- MacOS X MidiCore component
+- Windows DirectMusic component
+- ASIO driver
+- DirectSound 3D and EAX
+
+Bugs to mash
+------------
 - Fix warnings on 64 bit platforms and type-puned pointer warning
 - Add byte swapping support (on synthesis or sample load?)
-- Build win32 package
 - Investigate why MIDI rendering causes burst of notes at start
-- libao audio output driver
-
-Bugs and incomplete code
-------------------------
-
-- Get TCP server working for windows
-- The synth consumes too much CPU when no voices are playing. 
-- Add daemon mode
 
 Validation
 ----------
-
 - Validation tests: create soundfont with basic wave forms [sine,
   square, triangle]; make test midi file; compare with SBLive output;
   "regression" test
-- Validate chorus
+- Validate chorus (often sounds rather crappy)
 - Analyse performance
 
 Documentation
 -------------
-
 - Write documention on tuning
 - fluid_synth_program_select2() with name of soundfont instead of font_id
 - fluid_synth_set_gen2()
-- Web site
-- Documentation and announcement Virtools and Director
 - Add usage scenarios in the documentation
 - User and system configuration file
 
 Binaries
 --------
-
 - FluidSynth 
   * Linux 
   * Win
@@ -42,54 +56,25 @@ Binaries
 - fluidsynth~ (MaxMSP/MacOSX, MaxMSP/Windows)
 - FluidXtra
 
-- old distributions
-
-Requests
---------
-
-- Improve non-realtime rendering of MIDI to WAV files
+Misc
+----
 - Remove dependency of settings on audio driver and other (see
   fluid_settings_init())
 - Add "unselect" command to shell to set a MIDI channel to not sound.
 - When specifying -i -s (no console and TCP server) log to TCP clients
   with easier parsable messages ("warning:", "error:", etc)
-- GM soundfont? 
-- MacOS X MidiCore component
-- Windows DirectMusic component
 - add function to get initial soundfont generator value
-- ASIO driver
-- DirectSound 3D and EAX
 - Pause and resume the synthesizer/audio thread (run synthesizer as a daemon)
-
-- set loop on/off on a sample (1 - with name sample, 2 - name sf and name preset)     
-
-  Use set_gen?
-
-  set_gen: GEN_SAMPLEMODE (54): 
-       Loop during release: 1,
-       Loop: 3
-       No loop: 0 and all other values,
+- set loop on/off on a sample (set_gen GEN_SAMPLEMODE?)
 
 
-
-
-
-Fluid 1.1:
+FluidSynth Next Generation
 --------------------------------------------
 
 Top of the list
 - Use FIFOs to send events to the audio thread
 - Redo sfloader api using "interface" api
-- Clean multi-channel audio implementation
 - 3D audio output
-- Sample streaming, load/unload sample on demand 
-
-
-SFLoader API:
-- redo sfloader api using "interface" api
-
-Sample streaming
-- sample streaming, load/unload sample on demand 
 
 Design
 - turn ladspa fx unit and router in indepedent 
@@ -106,26 +91,16 @@ Shell & command handler
 - Allow settings to be loaded before the synthesizer is created
 
 SoundFont Specs:
-- pitch control on stereo samples not managed as should
 
 MIDI Specs
-- handle tuning sysex messages
 - Omni and poly modes
 - sample dump
 - MIDI thru
 - Scalable Polyphony MIDI (SP-MIDI)
-- Downloadable Sounds ("DLS")
-- RMID (SMF w/DLS) File Format Specification
 
 
 Unsorted
-- Analyse/improve voice stealing algorithm (soft and hard limits?)
-- change sample rate dynamically after jack driver instantiation, or
-  create audio driver before initiating the synth
 - include readline in project
 - additional aux buses
 - rewrite midi file using new sequencer
 - direct access to audio buffer
-- soft clipping, compressor, limitor, or automatic gain control
-- 96kHz/24bits
-- OpenSoundControl

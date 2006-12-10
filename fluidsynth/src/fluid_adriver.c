@@ -241,10 +241,20 @@ void fluid_audio_driver_settings(fluid_settings_t* settings)
     if (fluid_audio_drivers[i].settings != NULL) {
       fluid_audio_drivers[i].settings(settings);
     }
-  }  
+  }
 }
 
 
+/**
+ * Create a new audio driver.
+ * @param settings Configuration settings used to select and create the audio
+ *   driver.
+ * @param synth Synthesizer instance for which the audio driver is created for.
+ * @return The new audio driver instance.
+ *
+ * Creates a new audio driver for a given 'synth' instance with a defined set
+ * of configuration 'settings'.
+ */
 fluid_audio_driver_t* 
 new_fluid_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
 {
@@ -269,6 +279,19 @@ new_fluid_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
   return NULL;
 }
 
+/**
+ * Create a new audio driver.
+ * @param settings Configuration settings used to select and create the audio
+ *   driver.
+ * @param func Function called to fill audio buffers for audio playback
+ * @param data User defined data pointer to pass to 'func'
+ * @return The new audio driver instance.
+ *
+ * Like new_fluid_audio_driver() but allows for custom audio processing before
+ * audio is sent to audio driver.  It is the responsibility of the callback
+ * 'func' to render the audio into the buffers.
+ * NOTE: Not as efficient as new_fluid_audio_driver().
+ */
 fluid_audio_driver_t* 
 new_fluid_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func, void* data)
 {
@@ -294,6 +317,12 @@ new_fluid_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func, voi
   return NULL;
 }
 
+/**
+ * Deletes an audio driver instance.
+ * @param driver Audio driver instance to delete
+ *
+ * Shuts down an audio driver and deletes its instance.
+ */
 void 
 delete_fluid_audio_driver(fluid_audio_driver_t* driver)
 {

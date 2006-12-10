@@ -162,9 +162,7 @@ fluid_audio_driver_t*
 new_fluid_alsa_audio_driver(fluid_settings_t* settings,
 			    fluid_synth_t* synth)
 {
-  return new_fluid_alsa_audio_driver2(settings, 
-				      (fluid_audio_func_t) fluid_synth_process, 
-				      synth);
+  return new_fluid_alsa_audio_driver2(settings, NULL, synth);
 }
 
 fluid_audio_driver_t* 
@@ -296,6 +294,9 @@ new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
     FLUID_LOG(FLUID_ERR, "Failed to set start threshold.");
   }
 
+  /* FIXME - Any of these calls important?  One of them was causing massive
+     ALSA CPU consumption! */
+
 //  if (snd_pcm_sw_params_set_stop_threshold(dev->pcm, swparams, ~0u) != 0) {
 //    FLUID_LOG(FLUID_ERR, "Cannot turn off stop threshold.");
 //  }
@@ -401,6 +402,35 @@ int delete_fluid_alsa_audio_driver(fluid_audio_driver_t* p)
   return FLUID_OK;
 }
 
+/* handle error after an ALSA write call */
+static int fluid_alsa_handle_write_error (snd_pcm_t *pcm, int errval)
+{
+  switch (errval)
+  {
+  case -EAGAIN:
+    snd_pcm_wait(pcm, 1);
+    break;
+  case -EPIPE:
+  case -EBADFD:
+    if (snd_pcm_prepare(pcm) != 0) {
+      FLUID_LOG(FLUID_ERR, "Failed to prepare the audio device");
+      return FLUID_FAILED;
+    }
+    break;
+  case -ESTRPIPE:
+    if ((snd_pcm_resume(pcm) != 0) && (snd_pcm_prepare(pcm) != 0)) {
+      FLUID_LOG(FLUID_ERR, "Failed to resume the audio device");
+      return FLUID_FAILED;
+    }
+    break;
+  default:
+    FLUID_LOG(FLUID_ERR, "The audio device error: %s", snd_strerror(errval));
+    return FLUID_FAILED;
+  }
+
+  return FLUID_OK;
+}
+
 static void* fluid_alsa_audio_run_float(void* d)
 {
   fluid_alsa_audio_driver_t* dev = (fluid_alsa_audio_driver_t*) d;
@@ -430,54 +460,51 @@ static void* fluid_alsa_audio_run_float(void* d)
     goto error_recovery;    
   }
 
-  while (dev->cont) {
+  /* use separate loops depending on if callback supplied or not (overkill?) */
+  if (dev->callback)
+  {
+    while (dev->cont) {
+      handle[0] = left;
+      handle[1] = right;
 
-    handle[0] = left;
-    handle[1] = right;
+      (*dev->callback)(synth, buffer_size, 0, NULL, 2, handle);
 
-    (*dev->callback)(synth, buffer_size, 0, NULL, 2, handle);
+      offset = 0;
+      while (offset < buffer_size) {
+	handle[0] = left + offset;
+	handle[1] = right + offset;
 
-    offset = 0;
+	n = snd_pcm_writen(dev->pcm, (void *)handle, buffer_size - offset);
 
-    while (offset < buffer_size) {
-
-      handle[0] = left + offset;
-      handle[1] = right + offset;
-
-      n = snd_pcm_writen(dev->pcm, (void *)handle, buffer_size - offset);
-
-      if (n < 0)	/* error occurred? */
-      {
-	switch (n)
+	if (n < 0)	/* error occurred? */
 	{
-	case -EAGAIN:
-	  snd_pcm_wait(dev->pcm, 1);
-	  break;
-	case -EPIPE:
-	case -EBADFD:
-	  if (snd_pcm_prepare(dev->pcm) != 0) {
-	    FLUID_LOG(FLUID_ERR, "Failed to prepare the audio device");
+	  if (!fluid_alsa_handle_write_error (dev->pcm, n))
 	    goto error_recovery;
-	  }
-	  break;
-	case -ESTRPIPE:
-	  if ((snd_pcm_resume(dev->pcm) != 0)
-	      && (snd_pcm_prepare(dev->pcm) != 0)) {
-	    FLUID_LOG(FLUID_ERR, "Failed to resume the audio device");
-	    goto error_recovery;
-	  }
-	  break;
-	default:
-	  FLUID_LOG(FLUID_ERR, "The audio device error: %s", snd_strerror(n));
-	  goto error_recovery;
-	  break;
-	}
-      } else {	/* no error occurred */
-	offset += n;
-      }
-    }
+	} else offset += n;	/* no error occurred */
+      }	/* while (offset < buffer_size) */
+    }	/* while (dev->cont) */
   }
-  
+  else	/* no user audio callback (faster) */
+  {
+    while (dev->cont) {
+      fluid_synth_write_float(dev->data, buffer_size, left, 0, 1, right, 0, 1);
+
+      offset = 0;
+      while (offset < buffer_size) {
+	handle[0] = left + offset;
+	handle[1] = right + offset;
+
+	n = snd_pcm_writen(dev->pcm, (void *)handle, buffer_size - offset);
+
+	if (n < 0)	/* error occurred? */
+	{
+	  if (!fluid_alsa_handle_write_error (dev->pcm, n))
+	    goto error_recovery;
+	} else offset += n;	/* no error occurred */
+      }	/* while (offset < buffer_size) */
+    }	/* while (dev->cont) */
+  }
+
  error_recovery:
   
   FLUID_FREE(left);
@@ -521,52 +548,43 @@ static void* fluid_alsa_audio_run_s16(void* d)
     goto error_recovery;    
   }
 
-  while (dev->cont) {
+  /* use separate loops depending on if callback supplied or not (overkill?) */
+  if (dev->callback)
+  {
+    while (dev->cont) {
+      (*dev->callback)(synth, buffer_size, 0, NULL, 2, handle);
 
-    handle[0] = left;
-    handle[1] = right;
+      /* convert floating point data to 16 bit (with dithering) */
+      fluid_synth_dither_s16 (synth, buffer_size, left, right, buf, 0, 2, buf, 1, 2);
 
-    (*dev->callback)(synth, buffer_size, 0, NULL, 2, handle);
+      offset = 0;
+      while (offset < buffer_size) {
+	n = snd_pcm_writei(dev->pcm, (void*) (buf + 2 * offset), buffer_size - offset);
 
-    /* convert floating point data to 16 bit (with dithering) */
-    fluid_synth_dither_s16 (synth, buffer_size, left, right, buf, 0, 2, buf, 1, 2);
-
-    offset = 0;
-
-    while (offset < buffer_size) {
-
-      n = snd_pcm_writei(dev->pcm, (void*) (buf + 2 * offset), buffer_size - offset);
-
-      if (n < 0)	/* error occurred? */
-      {
-	switch (n)
+	if (n < 0)	/* error occurred? */
 	{
-	case -EAGAIN:
-	  snd_pcm_wait(dev->pcm, 1);
-	  break;
-	case -EPIPE:
-	case -EBADFD:
-	  if (snd_pcm_prepare(dev->pcm) != 0) {
-	    FLUID_LOG(FLUID_ERR, "Failed to prepare the audio device");
+	  if (!fluid_alsa_handle_write_error (dev->pcm, n))
 	    goto error_recovery;
-	  }
-	  break;
-	case -ESTRPIPE:
-	  if ((snd_pcm_resume(dev->pcm) != 0)
-	      && (snd_pcm_prepare(dev->pcm) != 0)) {
-	    FLUID_LOG(FLUID_ERR, "Failed to resume the audio device");
+	} else offset += n;	/* no error occurred */
+      }	/* while (offset < buffer_size) */
+    }	/* while (dev->cont) */
+  }
+  else	/* no user audio callback (faster) */
+  {
+    while (dev->cont) {
+      fluid_synth_write_s16(dev->data, buffer_size, buf, 0, 2, buf, 1, 2);
+
+      offset = 0;
+      while (offset < buffer_size) {
+	n = snd_pcm_writei(dev->pcm, (void*) (buf + 2 * offset), buffer_size - offset);
+
+	if (n < 0)	/* error occurred? */
+	{
+	  if (!fluid_alsa_handle_write_error (dev->pcm, n))
 	    goto error_recovery;
-	  }
-	  break;
-	default:
-	  FLUID_LOG(FLUID_ERR, "The audio device error: %s", snd_strerror(n));
-	  goto error_recovery;
-	  break;
-	}
-      } else {	/* no error occurred */
-	offset += n;
-      }
-    }
+	} else offset += n;	/* no error occurred */
+      }	/* while (offset < buffer_size) */
+    }	/* while (dev->cont) */
   }
 
  error_recovery:
@@ -1086,7 +1104,6 @@ fluid_alsa_seq_run(void* d)
     if (n < 0) {
       perror("poll");
     } else if (n > 0) {      /* check for pending events */
-//      while (snd_seq_event_input_pending (dev->seq_handle, 0))
       do
 	{
 	    ev = snd_seq_event_input(dev->seq_handle, &seq_ev);	/* read the events */

@@ -25,7 +25,10 @@
 extern "C" {
 #endif
 
-
+/**
+ * @file midi.h
+ * @brief Functions for MIDI events, drivers and MIDI file playback.
+ */
 
 FLUIDSYNTH_API fluid_midi_event_t* new_fluid_midi_event(void);
 FLUIDSYNTH_API int delete_fluid_midi_event(fluid_midi_event_t* event);
@@ -48,57 +51,40 @@ FLUIDSYNTH_API int fluid_midi_event_get_pitch(fluid_midi_event_t* evt);
 FLUIDSYNTH_API int fluid_midi_event_set_pitch(fluid_midi_event_t* evt, int val);
 
 
-  /* Generic callback function for MIDI events.
-   * Will be used between
-   * - MIDI driver and MIDI router
-   * - MIDI router and synth
-   * to communicate events.
-   * In the not-so-far future...
-   */
+/**
+ * Generic callback function for MIDI events.
+ * @param data User defined data pointer
+ * @param event The MIDI event
+ * @return DOCME
+ *
+ * Will be used between
+ * - MIDI driver and MIDI router
+ * - MIDI router and synth
+ * to communicate events.
+ * In the not-so-far future...
+ */
 typedef int (*handle_midi_event_func_t)(void* data, fluid_midi_event_t* event);
 
-  /*
-   *
-   *  MIDI router
-   *
-   *  The MIDI handler forwards incoming MIDI events to the synthesizer
-   *
-   */
+/*
+ *  MIDI router
+ *
+ *  The MIDI handler forwards incoming MIDI events to the synthesizer
+ */
 
-  /** Create a new midi router. A midi handler connects to a midi input
-   *  device and forwards incoming midi events to the synthesizer. 
-   */
 FLUIDSYNTH_API fluid_midi_router_t* new_fluid_midi_router(fluid_settings_t* settings,
 						       handle_midi_event_func_t handler, 
 						       void* event_handler_data); 
 
-  /** Delete the midi router.  
-   *
-   * \param handler a pointer to the midi handler
-   * \return 0 if no error occured, -1 otherwise 
-   */
 FLUIDSYNTH_API int delete_fluid_midi_router(fluid_midi_router_t* handler); 
-
-  /** The standard handler function. Every MIDI event goes through
-      this. */
 FLUIDSYNTH_API int fluid_midi_router_handle_midi_event(void* data, fluid_midi_event_t* event);
-
-  /** An optional link in the MIDI chain to dump MIDI data between MIDI
-      driver and router */
 FLUIDSYNTH_API int fluid_midi_dump_prerouter(void* data, fluid_midi_event_t* event); 
-
-  /** An optional link in the MIDI chain to dump MIDI data between MIDI
-      router and the synthesizer */
 FLUIDSYNTH_API int fluid_midi_dump_postrouter(void* data, fluid_midi_event_t* event); 
 
 /*
- *
  *  MIDI driver
  *
  *  The MIDI handler forwards incoming MIDI events to the synthesizer
- *
  */
-
 
 FLUIDSYNTH_API 
 fluid_midi_driver_t* new_fluid_midi_driver(fluid_settings_t* settings, 
@@ -110,11 +96,9 @@ FLUIDSYNTH_API void delete_fluid_midi_driver(fluid_midi_driver_t* driver);
 
 
 /*
- *
  *  MIDI file player
  *
  *  The MIDI player allows you to play MIDI files with the FLUID Synth
- *
  */
 
 FLUIDSYNTH_API fluid_player_t* new_fluid_player(fluid_synth_t* synth);

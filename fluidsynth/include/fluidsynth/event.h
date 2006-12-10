@@ -25,28 +25,37 @@
 extern "C" {
 #endif
 
+/**
+ * @file event.h
+ * @brief Sequencer event functions and defines.
+ *
+ * Functions and constants for creating/processing sequencer events.
+ */
 
+/**
+ * Sequencer event type enumeration.
+ */
 enum fluid_seq_event_type {
-  FLUID_SEQ_NOTE = 0,
-  FLUID_SEQ_NOTEON,
-  FLUID_SEQ_NOTEOFF,
-  FLUID_SEQ_ALLSOUNDSOFF,
-  FLUID_SEQ_ALLNOTESOFF,
-  FLUID_SEQ_BANKSELECT,
-  FLUID_SEQ_PROGRAMCHANGE,
-  FLUID_SEQ_PROGRAMSELECT,
-  FLUID_SEQ_PITCHBEND,
-  FLUID_SEQ_PITCHWHHELSENS,
-  FLUID_SEQ_MODULATION,
-  FLUID_SEQ_SUSTAIN,
-  FLUID_SEQ_CONTROLCHANGE,
-  FLUID_SEQ_PAN,
-  FLUID_SEQ_VOLUME,
-  FLUID_SEQ_REVERBSEND,
-  FLUID_SEQ_CHORUSSEND,
-  FLUID_SEQ_TIMER,
-  FLUID_SEQ_ANYCONTROLCHANGE,	// used for remove_events only
-  FLUID_SEQ_LASTEVENT  
+  FLUID_SEQ_NOTE = 0,		/**< Note event (DOCME) */
+  FLUID_SEQ_NOTEON,		/**< Note on event */
+  FLUID_SEQ_NOTEOFF,		/**< Note off event */
+  FLUID_SEQ_ALLSOUNDSOFF,	/**< All sounds off event */
+  FLUID_SEQ_ALLNOTESOFF,	/**< All notes off event */
+  FLUID_SEQ_BANKSELECT,		/**< Bank select message */
+  FLUID_SEQ_PROGRAMCHANGE,	/**< Program change message */
+  FLUID_SEQ_PROGRAMSELECT,	/**< Program select message (DOCME) */
+  FLUID_SEQ_PITCHBEND,		/**< Pitch bend message */
+  FLUID_SEQ_PITCHWHHELSENS,	/**< Pitch wheel sensitivity set message */
+  FLUID_SEQ_MODULATION,		/**< Modulation controller event */
+  FLUID_SEQ_SUSTAIN,		/**< Sustain controller event */
+  FLUID_SEQ_CONTROLCHANGE,	/**< MIDI control change event */
+  FLUID_SEQ_PAN,		/**< Stereo pan set event */
+  FLUID_SEQ_VOLUME,		/**< Volume set event */
+  FLUID_SEQ_REVERBSEND,		/**< Reverb send set event */
+  FLUID_SEQ_CHORUSSEND,		/**< Chorus send set event */
+  FLUID_SEQ_TIMER,		/**< Timer event (DOCME) */
+  FLUID_SEQ_ANYCONTROLCHANGE,	/**< DOCME (used for remove_events only) */
+  FLUID_SEQ_LASTEVENT		/**< Defines the count of event enums */
 };
 
 /* Event alloc/free */

@@ -26,14 +26,22 @@
 #include "fluid_synth.h"
 #include "fluid_io.h"
 
-/*
- * new_fluid_midi_router
+/**
+ * Create a new midi router.
+ * @param settings Settings used to configure MIDI router
+ * @param handler MIDI event callback
+ * @param event_handler_data Caller defined data pointer which gets passed to 'handler'
+ * @return New MIDI router instance or NULL on error
+ *
+ * A midi handler connects to a midi input
+ * device and forwards incoming midi events to the synthesizer. 
  */
 fluid_midi_router_t* 
 new_fluid_midi_router(fluid_settings_t* settings, handle_midi_event_func_t handler, void* event_handler_data)
 {
   fluid_midi_router_t* router=NULL;
-  fluid_midi_router_rule_t* rule=NULL;;
+  fluid_midi_router_rule_t* rule=NULL;
+  
   /* create the router */
   router = FLUID_NEW(fluid_midi_router_t); if (router == NULL){
     FLUID_LOG(FLUID_ERR, "Out of memory");
@@ -68,8 +76,10 @@ new_fluid_midi_router(fluid_settings_t* settings, handle_midi_event_func_t handl
   return NULL;
 }
 
-/*
- * delete_fluid_midi_router
+/**
+ * Delete a MIDI router instance.
+ * @param router MIDI router to delete
+ * @return Always returns 0
  */
 int 
 delete_fluid_midi_router(fluid_midi_router_t* router)
@@ -239,8 +249,12 @@ int fluid_midi_router_end(fluid_midi_router_t* router){
   return FLUID_FAILED;
 };
   
-/*
- * fluid_midi_router_send_event
+/**
+ * Handle a MIDI event through a MIDI router instance.
+ * @param data MIDI router instance #fluid_midi_router_t (DOCME why is it a void *?)
+ * @param event MIDI event to handle
+ * @return 0 on success, -1 otherwise
+ *
  * Purpose: The midi router is called for each event, that is received
  * via the 'physical' midi input. Each event can trigger an arbitrary number
  * of generated events.
@@ -786,11 +800,15 @@ void fluid_midi_router_free_unused_rules(fluid_midi_router_t* router)
   };
 };
   
-/* Purpose:
- * This function demonstrates, how to access incoming MIDI messages.
- * It prints a message to stdout (which can be used to hook up an external user interface),
- * and hands the event on to the MIDI router.
- * It is not a part of the MIDI router, but an added link in the MIDI chain.
+/**
+ * MIDI event callback function to display event information to stdout
+ * @param data MIDI router instance
+ * @param event MIDI event data
+ * @return 0 on success, -1 otherwise
+ *
+ * An implementation of the #handle_midi_event_func_t function type, used for
+ * displaying MIDI event information between the MIDI driver and router to
+ * stdout.  Useful for adding into a MIDI router chain for debugging MIDI events.
  */
 int fluid_midi_dump_prerouter(void* data, fluid_midi_event_t* event)
 {  
@@ -798,35 +816,27 @@ int fluid_midi_dump_prerouter(void* data, fluid_midi_event_t* event)
       case NOTE_ON:
 	fprintf(stdout, "event_pre_noteon %i %i %i\n", 
 		event->channel, event->param1, event->param2);
-	fflush(stdout);
 	break;
       case NOTE_OFF:
 	fprintf(stdout, "event_pre_noteoff %i %i %i\n", 
 		event->channel, event->param1, event->param2);
-	fflush(stdout);
-	break;
 	break;
       case CONTROL_CHANGE:
 	fprintf(stdout, "event_pre_cc %i %i %i\n", 
 		event->channel, event->param1, event->param2);
-	fflush(stdout);
 	break;
       case PROGRAM_CHANGE:
 	fprintf(stdout, "event_pre_prog %i %i\n", event->channel, event->param1);	
-	fflush(stdout);
 	break;
       case PITCH_BEND:
         fprintf(stdout, "event_pre_pitch %i %i\n", event->channel, event->param1);	
-        fflush(stdout);
 	break;
       case CHANNEL_PRESSURE:
 	fprintf(stdout, "event_pre_cpress %i %i\n", event->channel, event->param1);
-	fflush(stdout);
 	break;
       case KEY_PRESSURE:
 	fprintf(stdout, "event_pre_kpress %i %i %i\n", 
 		event->channel, event->param1, event->param2);
-	fflush(stdout);
 	break;
       default:
 	break;
@@ -834,11 +844,15 @@ int fluid_midi_dump_prerouter(void* data, fluid_midi_event_t* event)
   return fluid_midi_router_handle_midi_event((fluid_midi_router_t*) data, event);
 };
 
-/* Purpose:
- * This function demonstrates, how to access MIDI messages going from the MIDI
- * router to the synth.
- * Again, it prints a message to stdout and hands the event on to the synth.
- * It is not a part of the MIDI router, but an added link in the MIDI chain.
+/**
+ * MIDI event callback function to display event information to stdout
+ * @param data MIDI router instance
+ * @param event MIDI event data
+ * @return 0 on success, -1 otherwise
+ *
+ * An implementation of the #handle_midi_event_func_t function type, used for
+ * displaying MIDI event information between the MIDI driver and router to
+ * stdout.  Useful for adding into a MIDI router chain for debugging MIDI events.
  */
 int fluid_midi_dump_postrouter(void* data, fluid_midi_event_t* event)
 {
@@ -846,18 +860,14 @@ int fluid_midi_dump_postrouter(void* data, fluid_midi_event_t* event)
       case NOTE_ON:
 	fprintf(stdout, "event_post_noteon %i %i %i\n", 
 		event->channel, event->param1, event->param2);
-	fflush(stdout);
 	break;
       case NOTE_OFF:
 	fprintf(stdout, "event_post_noteoff %i %i %i\n", 
 		event->channel, event->param1, event->param2);
-	fflush(stdout);
-	break;
 	break;
       case CONTROL_CHANGE:
 	fprintf(stdout, "event_post_cc %i %i %i\n", 
 		event->channel, event->param1, event->param2);
-	fflush(stdout);
 	break;
       case PROGRAM_CHANGE:
 	fprintf(stdout, "event_post_prog %i %i\n", event->channel, event->param1);

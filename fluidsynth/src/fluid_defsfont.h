@@ -218,7 +218,6 @@ extern unsigned short badpgen[]; 	/* list of bad preset generators */
 void sfont_init_chunks (void);
 
 void sfont_close (SFData * sf);
-void sfont_free_data (SFData * sf);
 void sfont_free_zone (SFZone * zone);
 int sfont_preset_compare_func (void* a, void* b);
 

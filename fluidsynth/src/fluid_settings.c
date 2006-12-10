@@ -19,18 +19,21 @@
  */
 
 #include "fluidsynth_priv.h"
-#include "fluid_settings.h"
+#include "fluid_sys.h"
 #include "fluid_hash.h"
-#include "fluid_strtok.h"
 #include "fluid_synth.h"
 #include "fluid_cmd.h"
 #include "fluid_adriver.h"
 #include "fluid_mdriver.h"
+#include "fluid_settings.h"
 
+/* maximum allowed components of a settings variable (separated by '.') */
+#define MAX_SETTINGS_TOKENS	8	/* currently only a max of 3 are used */
+#define MAX_SETTINGS_LABEL	256	/* max length of a settings variable label */
 
 static void fluid_settings_init(fluid_settings_t* settings);
 static void fluid_settings_hash_delete(void* value, int type);
-static int fluid_settings_tokenize(char* s, char* buf, char** ptr);
+static int fluid_settings_tokenize(char* s, char *buf, char** ptr);
 
 
 typedef struct {
@@ -196,22 +199,31 @@ void fluid_settings_init(fluid_settings_t* settings)
   fluid_midi_driver_settings(settings);
 }
 
-static fluid_strtok_t* fluid_settings_strtok = NULL;
-
-int fluid_settings_tokenize(char* s, char* buf, char** ptr)
+static int fluid_settings_tokenize(char* s, char *buf, char** ptr)
 {
+  char *tokstr, *tok;
   int n = 0;
 
-  FLUID_STRCPY(buf, s);
-
-  if (fluid_settings_strtok == NULL) {
-    fluid_settings_strtok = new_fluid_strtok(buf, ".");
-  } else {
-    fluid_strtok_set(fluid_settings_strtok, buf, ".");
+  if (strlen (s) > MAX_SETTINGS_LABEL)
+  {
+    FLUID_LOG(FLUID_ERR, "Setting variable name exceeded max length of %d chars",
+	      MAX_SETTINGS_LABEL);
+    return 0;
   }
 
-  while (fluid_strtok_has_more(fluid_settings_strtok)) {
-    ptr[n++] = fluid_strtok_next_token(fluid_settings_strtok);
+  FLUID_STRCPY(buf, s);	/* copy string to buffer, since it gets modified */
+  tokstr = buf;
+
+  while ((tok = fluid_strtok (&tokstr, ".")))
+  {
+    if (n > MAX_SETTINGS_TOKENS)
+    {
+      FLUID_LOG(FLUID_ERR, "Setting variable name exceeded max token count of %d",
+		MAX_SETTINGS_TOKENS);
+      return 0;
+    }
+
+    ptr[n++] = tok;
   }
 
   return n;
@@ -251,7 +263,6 @@ static int fluid_settings_get(fluid_settings_t* settings,
   return 1;
 }
 
-
 /** returns 1 if the value has been set, zero otherwise */
 static int fluid_settings_set(fluid_settings_t* settings, 
 			     char** name, int len, 
@@ -288,15 +299,15 @@ static int fluid_settings_set(fluid_settings_t* settings,
   return 1;
 }
 
-/** returns 1 if the value has been resgister correctly, 0
+/** returns 1 if the value has been registered correctly, 0
     otherwise */
 int fluid_settings_register_str(fluid_settings_t* settings, char* name, char* def, int hints,
 			       fluid_str_update_t fun, void* data)
 {
   int type;
   void* value;
-  char buf[1024];
-  char* tokens[16];
+  char* tokens[MAX_SETTINGS_TOKENS];
+  char buf[MAX_SETTINGS_LABEL+1];
   int ntokens;
   fluid_str_setting_t* setting;
 
@@ -330,8 +341,8 @@ int fluid_settings_register_num(fluid_settings_t* settings, char* name, double d
 {
   int type;
   void* value;
-  char buf[1024];
-  char* tokens[16];
+  char* tokens[MAX_SETTINGS_TOKENS];
+  char buf[MAX_SETTINGS_LABEL+1];
   int ntokens;
 
   ntokens = fluid_settings_tokenize(name, buf, tokens);
@@ -370,8 +381,8 @@ int fluid_settings_register_int(fluid_settings_t* settings, char* name, int def,
 {
   int type;
   void* value;
-  char buf[1024];
-  char* tokens[16];
+  char* tokens[MAX_SETTINGS_TOKENS];
+  char buf[MAX_SETTINGS_LABEL+1];
   int ntokens;
 
   ntokens = fluid_settings_tokenize(name, buf, tokens);
@@ -402,13 +413,12 @@ int fluid_settings_register_int(fluid_settings_t* settings, char* name, int def,
   }
 }
 
-
 int fluid_settings_get_type(fluid_settings_t* settings, char* name)
 {
   int type;
   void* value;
-  char buf[1024];
-  char* tokens[16];
+  char* tokens[MAX_SETTINGS_TOKENS];
+  char buf[MAX_SETTINGS_LABEL+1];
   int ntokens;
 
   ntokens = fluid_settings_tokenize(name, buf, tokens);
@@ -416,13 +426,12 @@ int fluid_settings_get_type(fluid_settings_t* settings, char* name)
   return (fluid_settings_get(settings, tokens, ntokens, &value, &type))? type : FLUID_NO_TYPE;
 }
 
-
 int fluid_settings_get_hints(fluid_settings_t* settings, char* name)
 {
   int type;
   void* value;
-  char buf[1024];
-  char* tokens[16];
+  char* tokens[MAX_SETTINGS_TOKENS];
+  char buf[MAX_SETTINGS_LABEL+1];
   int ntokens;
 
   ntokens = fluid_settings_tokenize(name, buf, tokens);
@@ -446,8 +455,8 @@ int fluid_settings_is_realtime(fluid_settings_t* settings, char* name)
 {
   int type;
   void* value;
-  char buf[1024];
-  char* tokens[16];
+  char* tokens[MAX_SETTINGS_TOKENS];
+  char buf[MAX_SETTINGS_LABEL+1];
   int ntokens;
 
   ntokens = fluid_settings_tokenize(name, buf, tokens);
@@ -468,11 +477,10 @@ int fluid_settings_is_realtime(fluid_settings_t* settings, char* name)
   }
 }
 
-
 int fluid_settings_setstr(fluid_settings_t* settings, char* name, char* str)
 {
-  char buf[1024];
-  char* tokens[16];
+  char* tokens[MAX_SETTINGS_TOKENS];
+  char buf[MAX_SETTINGS_LABEL+1];
   int ntokens;
   int type;
   void* value;
@@ -511,8 +519,8 @@ int fluid_settings_getstr(fluid_settings_t* settings, char* name, char** str)
 {
   int type;
   void* value;
-  char buf[1024];
-  char* tokens[16];
+  char* tokens[MAX_SETTINGS_TOKENS];
+  char buf[MAX_SETTINGS_LABEL+1];
   int ntokens;
 
   ntokens = fluid_settings_tokenize(name, buf, tokens);
@@ -527,13 +535,12 @@ int fluid_settings_getstr(fluid_settings_t* settings, char* name, char** str)
   return 0;
 }
 
-
 int fluid_settings_str_equal(fluid_settings_t* settings, char* name, char* s)
 {
   int type;
   void* value;
-  char buf[1024];
-  char* tokens[16];
+  char* tokens[MAX_SETTINGS_TOKENS];
+  char buf[MAX_SETTINGS_LABEL+1];
   int ntokens;
 
   ntokens = fluid_settings_tokenize(name, buf, tokens);
@@ -546,14 +553,13 @@ int fluid_settings_str_equal(fluid_settings_t* settings, char* name, char* s)
   return 0;
 }
 
-
 char* 
 fluid_settings_getstr_default(fluid_settings_t* settings, char* name)
 {
   int type;
   void* value;
-  char buf[1024];
-  char* tokens[16];
+  char* tokens[MAX_SETTINGS_TOKENS];
+  char buf[MAX_SETTINGS_LABEL+1];
   int ntokens;
 
   ntokens = fluid_settings_tokenize(name, buf, tokens);
@@ -571,8 +577,8 @@ int fluid_settings_add_option(fluid_settings_t* settings, char* name, char* s)
 {
   int type;
   void* value;
-  char buf[1024];
-  char* tokens[16];
+  char* tokens[MAX_SETTINGS_TOKENS];
+  char buf[MAX_SETTINGS_LABEL+1];
   int ntokens;
 
   ntokens = fluid_settings_tokenize(name, buf, tokens);
@@ -592,8 +598,8 @@ int fluid_settings_remove_option(fluid_settings_t* settings, char* name, char* s
 {
   int type;
   void* value;
-  char buf[1024];
-  char* tokens[16];
+  char* tokens[MAX_SETTINGS_TOKENS];
+  char buf[MAX_SETTINGS_LABEL+1];
   int ntokens;
 
   ntokens = fluid_settings_tokenize(name, buf, tokens);
@@ -620,14 +626,13 @@ int fluid_settings_remove_option(fluid_settings_t* settings, char* name, char* s
   }  
 }
 
-
 int fluid_settings_setnum(fluid_settings_t* settings, char* name, double val)
 {
   int type;
   void* value;
   fluid_num_setting_t* setting;
-  char buf[1024];
-  char* tokens[16];
+  char* tokens[MAX_SETTINGS_TOKENS];
+  char buf[MAX_SETTINGS_LABEL+1];
   int ntokens;
 
   ntokens = fluid_settings_tokenize(name, buf, tokens);
@@ -667,8 +672,8 @@ int fluid_settings_getnum(fluid_settings_t* settings, char* name, double* val)
 {
   int type;
   void* value;
-  char buf[1024];
-  char* tokens[16];
+  char* tokens[MAX_SETTINGS_TOKENS];
+  char buf[MAX_SETTINGS_LABEL+1];
   int ntokens;
 
   ntokens = fluid_settings_tokenize(name, buf, tokens);
@@ -687,8 +692,8 @@ void fluid_settings_getnum_range(fluid_settings_t* settings, char* name, double*
 {
   int type;
   void* value;
-  char buf[1024];
-  char* tokens[16];
+  char* tokens[MAX_SETTINGS_TOKENS];
+  char buf[MAX_SETTINGS_LABEL+1];
   int ntokens;
 
   ntokens = fluid_settings_tokenize(name, buf, tokens);
@@ -706,8 +711,8 @@ fluid_settings_getnum_default(fluid_settings_t* settings, char* name)
 {
   int type;
   void* value;
-  char buf[1024];
-  char* tokens[16];
+  char* tokens[MAX_SETTINGS_TOKENS];
+  char buf[MAX_SETTINGS_LABEL+1];
   int ntokens;
 
   ntokens = fluid_settings_tokenize(name, buf, tokens);
@@ -727,8 +732,8 @@ int fluid_settings_setint(fluid_settings_t* settings, char* name, int val)
   int type;
   void* value;
   fluid_int_setting_t* setting;
-  char buf[1024];
-  char* tokens[16];
+  char* tokens[MAX_SETTINGS_TOKENS];
+  char buf[MAX_SETTINGS_LABEL+1];
   int ntokens;
 
   ntokens = fluid_settings_tokenize(name, buf, tokens);
@@ -768,8 +773,8 @@ int fluid_settings_getint(fluid_settings_t* settings, char* name, int* val)
 {
   int type;
   void* value;
-  char buf[1024];
-  char* tokens[16];
+  char* tokens[MAX_SETTINGS_TOKENS];
+  char buf[MAX_SETTINGS_LABEL+1];
   int ntokens;
 
   ntokens = fluid_settings_tokenize(name, buf, tokens);
@@ -788,8 +793,8 @@ void fluid_settings_getint_range(fluid_settings_t* settings, char* name, int* mi
 {
   int type;
   void* value;
-  char buf[1024];
-  char* tokens[16];
+  char* tokens[MAX_SETTINGS_TOKENS];
+  char buf[MAX_SETTINGS_LABEL+1];
   int ntokens;
 
   ntokens = fluid_settings_tokenize(name, buf, tokens);
@@ -807,8 +812,8 @@ fluid_settings_getint_default(fluid_settings_t* settings, char* name)
 {
   int type;
   void* value;
-  char buf[1024];
-  char* tokens[16];
+  char* tokens[MAX_SETTINGS_TOKENS];
+  char buf[MAX_SETTINGS_LABEL+1];
   int ntokens;
 
   ntokens = fluid_settings_tokenize(name, buf, tokens);
@@ -830,8 +835,8 @@ void fluid_settings_foreach_option(fluid_settings_t* settings, char* name, void*
 {
   int type;
   void* value;
-  char buf[1024];
-  char* tokens[16];
+  char* tokens[MAX_SETTINGS_TOKENS];
+  char buf[MAX_SETTINGS_LABEL+1];
   int ntokens;
 
   if (!func) {
