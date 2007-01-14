@@ -478,7 +478,7 @@ static void* fluid_alsa_audio_run_float(void* d)
 
 	if (n < 0)	/* error occurred? */
 	{
-	  if (!fluid_alsa_handle_write_error (dev->pcm, n))
+	  if (fluid_alsa_handle_write_error (dev->pcm, n) != FLUID_OK)
 	    goto error_recovery;
 	} else offset += n;	/* no error occurred */
       }	/* while (offset < buffer_size) */
@@ -498,7 +498,7 @@ static void* fluid_alsa_audio_run_float(void* d)
 
 	if (n < 0)	/* error occurred? */
 	{
-	  if (!fluid_alsa_handle_write_error (dev->pcm, n))
+	  if (fluid_alsa_handle_write_error (dev->pcm, n) != FLUID_OK)
 	    goto error_recovery;
 	} else offset += n;	/* no error occurred */
       }	/* while (offset < buffer_size) */
@@ -563,7 +563,7 @@ static void* fluid_alsa_audio_run_s16(void* d)
 
 	if (n < 0)	/* error occurred? */
 	{
-	  if (!fluid_alsa_handle_write_error (dev->pcm, n))
+	  if (fluid_alsa_handle_write_error (dev->pcm, n) != FLUID_OK)
 	    goto error_recovery;
 	} else offset += n;	/* no error occurred */
       }	/* while (offset < buffer_size) */
@@ -580,7 +580,7 @@ static void* fluid_alsa_audio_run_s16(void* d)
 
 	if (n < 0)	/* error occurred? */
 	{
-	  if (!fluid_alsa_handle_write_error (dev->pcm, n))
+	  if (fluid_alsa_handle_write_error (dev->pcm, n) != FLUID_OK)
 	    goto error_recovery;
 	} else offset += n;	/* no error occurred */
       }	/* while (offset < buffer_size) */

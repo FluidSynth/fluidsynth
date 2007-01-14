@@ -95,4 +95,5 @@ HWND fluid_win32_get_window(void)
 {
 	return fluid_wnd;
 }
-#endif
+
+#endif	// #ifdef WIN32

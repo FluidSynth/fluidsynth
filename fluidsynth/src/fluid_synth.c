@@ -1722,6 +1722,16 @@ static void init_dither(void)
   }
 }
 
+/* A portable replacement for roundf(), seems it may actually be faster too! */
+static inline int
+roundi (float x)
+{
+  if (x >= 0.0f)
+    return (int)(x+0.5f);
+  else
+    return (int)(x-0.5f);
+}
+
 /* 
  *  fluid_synth_write_s16
  */
@@ -1740,6 +1750,7 @@ fluid_synth_write_s16(fluid_synth_t* synth, int len,
   fluid_real_t right_sample;
   double time = fluid_utime();
   int di = synth->dither_index;
+  double prof_ref_on_block;
 
   /* make sure we're playing */
   if (synth->state != FLUID_SYNTH_PLAYING) {
@@ -1752,8 +1763,7 @@ fluid_synth_write_s16(fluid_synth_t* synth, int len,
 
     /* fill up the buffers as needed */
     if (cur == FLUID_BUFSIZE) {
-
-      double prof_ref_on_block = fluid_profile_ref();
+      prof_ref_on_block = fluid_profile_ref();
 
       fluid_synth_one_block(synth, 0);
       cur = 0;
@@ -1761,8 +1771,8 @@ fluid_synth_write_s16(fluid_synth_t* synth, int len,
       fluid_profile(FLUID_PROF_ONE_BLOCK, prof_ref_on_block);
     }
 
-    left_sample = left_in[cur] * 32767.0f + rand_table[0][di];
-    right_sample = right_in[cur] * 32767.0f + rand_table[1][di];
+    left_sample = roundi (left_in[cur] * 32766.0f + rand_table[0][di]);
+    right_sample = roundi (right_in[cur] * 32766.0f + rand_table[1][di]);
 
     di++;
     if (di >= DITHER_SIZE) di = 0;
@@ -1815,8 +1825,8 @@ fluid_synth_dither_s16(fluid_synth_t* synth, int len, float* lin, float* rin,
 
   for (i = 0, j = loff, k = roff; i < len; i++, j += lincr, k += rincr) {
 
-    left_sample = lin[i] * 32767.0f + rand_table[0][di];
-    right_sample = rin[i] * 32767.0f + rand_table[1][di];
+    left_sample = roundi (lin[i] * 32766.0f + rand_table[0][di]);
+    right_sample = roundi (rin[i] * 32766.0f + rand_table[1][di]);
 
     di++;
     if (di >= DITHER_SIZE) di = 0;
