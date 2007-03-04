@@ -11,7 +11,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Library General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the Free
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
@@ -47,12 +47,12 @@ static char fluid_winmidi_error_buffer[256];
 #define msg_p1(_m)    ((_m >> 8) & 0x7f)
 #define msg_p2(_m)    ((_m >> 16) & 0x7f)
 
-fluid_midi_driver_t* new_fluid_winmidi_driver(fluid_settings_t* settings, 
+fluid_midi_driver_t* new_fluid_winmidi_driver(fluid_settings_t* settings,
 					    handle_midi_event_func_t handler, void* data);
 
 int delete_fluid_winmidi_driver(fluid_midi_driver_t* p);
 
-void CALLBACK fluid_winmidi_callback(HMIDIIN hmi, UINT wMsg, DWORD dwInstance, 
+void CALLBACK fluid_winmidi_callback(HMIDIIN hmi, UINT wMsg, DWORD dwInstance,
 				    DWORD msg, DWORD extra);
 static char* fluid_winmidi_input_error(int no);
 int fluid_winmidi_driver_status(fluid_midi_driver_t* p);
@@ -60,8 +60,8 @@ int fluid_winmidi_driver_status(fluid_midi_driver_t* p);
 /*
  * new_fluid_winmidi_driver
  */
-fluid_midi_driver_t* 
-new_fluid_winmidi_driver(fluid_settings_t* settings, 
+fluid_midi_driver_t*
+new_fluid_winmidi_driver(fluid_settings_t* settings,
 			handle_midi_event_func_t handler, void* data)
 {
   fluid_winmidi_driver_t* dev;
@@ -69,7 +69,7 @@ new_fluid_winmidi_driver(fluid_settings_t* settings,
   UINT i, err, num;
   MIDIINCAPS in_caps;
   int midi_num = 0;
-  
+
   /* not much use doing anything */
   if (handler == NULL) {
     FLUID_LOG(FLUID_ERR, "Invalid argument");
@@ -86,7 +86,7 @@ new_fluid_winmidi_driver(fluid_settings_t* settings,
   dev->driver.data = data;
 
   /* check if there any midi devices installed */
-  num = midiInGetNumDevs(); 
+  num = midiInGetNumDevs();
   if (num == 0) {
     FLUID_LOG(FLUID_ERR, "no MIDI in devices found");
     goto error_recovery;
@@ -100,11 +100,11 @@ new_fluid_winmidi_driver(fluid_settings_t* settings,
   }
 
   /* try opening the device */
-  err = midiInOpen(&dev->hmidiin, midi_num, 
-		   (DWORD) fluid_winmidi_callback, 
+  err = midiInOpen(&dev->hmidiin, midi_num,
+		   (DWORD) fluid_winmidi_callback,
 		   (DWORD) dev, CALLBACK_FUNCTION);
   if (err != MMSYSERR_NOERROR) {
-    FLUID_LOG(FLUID_WARN, "Couldn't open MIDI input: %s (error %d)", 
+    FLUID_LOG(FLUID_WARN, "Couldn't open MIDI input: %s (error %d)",
 	     fluid_winmidi_input_error(err), err);
     goto error_recovery;
   }
@@ -124,7 +124,7 @@ new_fluid_winmidi_driver(fluid_settings_t* settings,
 /*
  * delete_fluid_winmidi_driver
  */
-int 
+int
 delete_fluid_winmidi_driver(fluid_midi_driver_t* p)
 {
   fluid_winmidi_driver_t* dev = (fluid_winmidi_driver_t*) p;
@@ -137,18 +137,18 @@ delete_fluid_winmidi_driver(fluid_midi_driver_t* p)
   return 0;
 }
 
-void CALLBACK 
+void CALLBACK
 fluid_winmidi_callback(HMIDIIN hmi, UINT wMsg, DWORD dwInstance, DWORD msg, DWORD extra)
 {
   fluid_winmidi_driver_t* dev = (fluid_winmidi_driver_t *) dwInstance;
-  
+
   switch (wMsg) {
-  case MIM_OPEN: 
+  case MIM_OPEN:
     break;
-    
+
   case MIM_CLOSE:
     break;
-    
+
   case MIM_DATA:
     {
       fluid_midi_event_t event;
@@ -160,28 +160,28 @@ fluid_winmidi_callback(HMIDIIN hmi, UINT wMsg, DWORD dwInstance, DWORD msg, DWOR
       (*dev->driver.handler)(dev->driver.data, &event);
     }
     break;
-    
+
   case MIM_LONGDATA:
     break;
-    
+
   case MIM_ERROR:
     break;
-    
+
   case MIM_LONGERROR:
     break;
-    
+
   case MIM_MOREDATA:
     break;
   }
 }
 
-int 
+int
 fluid_winmidi_driver_status(fluid_midi_driver_t* p)
 {
   return 0;
 }
 
-static char* 
+static char*
 fluid_winmidi_input_error(int no)
 {
   midiInGetErrorText(no, fluid_winmidi_error_buffer, 256);

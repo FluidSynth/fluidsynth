@@ -11,7 +11,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Library General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the Free
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
@@ -19,7 +19,7 @@
  */
 
 
-/* Purpose: 
+/* Purpose:
  * Low-level voice processing:
  *
  * - interpolates (obtains values between the samples of the original waveform data)
@@ -60,7 +60,7 @@
  * - dsp_phase_incr: For each output sample, the position in the original
  *              waveform advances by dsp_phase_incr. This also has an integer
  *              part and a fractional part.
- *              If a sample is played at root pitch (no pitch change), 
+ *              If a sample is played at root pitch (no pitch change),
  *              dsp_phase_incr is integer=1 and fractional=0.
  * - dsp_amp: The current amplitude envelope value.
  * - dsp_amp_incr: The changing rate of the amplitude envelope.
@@ -74,10 +74,10 @@
  * - dsp_centernode: delay line for the IIR filter
  * - dsp_hist1: same
  * - dsp_hist2: same
- * 
+ *
  */
 
-/* Purpose: 
+/* Purpose:
  * zap_almost_zero will return a number, as long as its
  * absolute value is over a certain threshold.  Otherwise 0.  See
  * fluid_rev.c for documentation (denormal numbers)
@@ -93,8 +93,8 @@
 
 /* Interpolation (find a value between two samples of the original waveform) */
 
-if ((fluid_phase_fract(dsp_phase) == 0) 
-    && (fluid_phase_fract(dsp_phase_incr) == 0) 
+if ((fluid_phase_fract(dsp_phase) == 0)
+    && (fluid_phase_fract(dsp_phase_incr) == 0)
     && (fluid_phase_index(dsp_phase_incr) == 1)) {
 
 	/* Check for a special case: The current phase falls directly on an
@@ -103,7 +103,7 @@ if ((fluid_phase_fract(dsp_phase) == 0)
 	 * played back at normal phase and root pitch.  => No interpolation
 	 * needed.
 	 */
-	for (dsp_i = dsp_start; dsp_i < dsp_end; dsp_i++) {  
+	for (dsp_i = dsp_start; dsp_i < dsp_end; dsp_i++) {
 		/* Mix to the buffer and advance the phase by one sample */
 		dsp_buf[dsp_i] = dsp_amp * dsp_data[fluid_phase_index_plusplus(dsp_phase)];
 		dsp_amp += dsp_amp_incr;
@@ -111,35 +111,35 @@ if ((fluid_phase_fract(dsp_phase) == 0)
 
 } else {
 
-	/* wave table interpolation: Choose the interpolation method */ 
-    
+	/* wave table interpolation: Choose the interpolation method */
+
 	switch(dsp_interp_method){
 	case FLUID_INTERP_NONE:
 		/* No interpolation. Just take the sample, which is closest to
 		 * the playback pointer.  Questionable quality, but very
 		 * efficient. */
-    
-		for (dsp_i = dsp_start; dsp_i < dsp_end; dsp_i++) {  
-			dsp_phase_index = fluid_phase_index(dsp_phase); 
+
+		for (dsp_i = dsp_start; dsp_i < dsp_end; dsp_i++) {
+			dsp_phase_index = fluid_phase_index(dsp_phase);
 			dsp_buf[dsp_i] = dsp_amp * dsp_data[dsp_phase_index];
-      
-			/* increment phase and amplitude */ 
-			fluid_phase_incr(dsp_phase, dsp_phase_incr); 
+
+			/* increment phase and amplitude */
+			fluid_phase_incr(dsp_phase, dsp_phase_incr);
 			dsp_amp += dsp_amp_incr;
 		};
 		break;
 
 	case FLUID_INTERP_LINEAR:
 		/* Straight line interpolation. */
-		for (dsp_i = dsp_start; dsp_i < dsp_end; dsp_i++) {  
-			dsp_coeff = &interp_coeff_linear[fluid_phase_fract_to_tablerow(dsp_phase)];  
-			dsp_phase_index = fluid_phase_index(dsp_phase); 
-			dsp_buf[dsp_i] = (dsp_amp * 
-					  (dsp_coeff->a0 * dsp_data[dsp_phase_index] 
+		for (dsp_i = dsp_start; dsp_i < dsp_end; dsp_i++) {
+			dsp_coeff = &interp_coeff_linear[fluid_phase_fract_to_tablerow(dsp_phase)];
+			dsp_phase_index = fluid_phase_index(dsp_phase);
+			dsp_buf[dsp_i] = (dsp_amp *
+					  (dsp_coeff->a0 * dsp_data[dsp_phase_index]
 					   + dsp_coeff->a1 * dsp_data[dsp_phase_index+1]));
-      
-			/* increment phase and amplitude */ 
-			fluid_phase_incr(dsp_phase, dsp_phase_incr); 
+
+			/* increment phase and amplitude */
+			fluid_phase_incr(dsp_phase, dsp_phase_incr);
 			dsp_amp += dsp_amp_incr;
 		};
 		break;
@@ -147,19 +147,19 @@ if ((fluid_phase_fract(dsp_phase) == 0)
 	case FLUID_INTERP_4THORDER:
 	default:
 		/* Default interpolation loop using floats */
-      
-		for (dsp_i = dsp_start; dsp_i < dsp_end; dsp_i++) {  
-			dsp_coeff = &interp_coeff[fluid_phase_fract_to_tablerow(dsp_phase)];  
-	
-			dsp_phase_index = fluid_phase_index(dsp_phase); 
-			dsp_buf[dsp_i] = (dsp_amp * 
-					  (dsp_coeff->a0 * dsp_data[dsp_phase_index] 
-					   + dsp_coeff->a1 * dsp_data[dsp_phase_index+1] 
-					   + dsp_coeff->a2 * dsp_data[dsp_phase_index+2] 
+
+		for (dsp_i = dsp_start; dsp_i < dsp_end; dsp_i++) {
+			dsp_coeff = &interp_coeff[fluid_phase_fract_to_tablerow(dsp_phase)];
+
+			dsp_phase_index = fluid_phase_index(dsp_phase);
+			dsp_buf[dsp_i] = (dsp_amp *
+					  (dsp_coeff->a0 * dsp_data[dsp_phase_index]
+					   + dsp_coeff->a1 * dsp_data[dsp_phase_index+1]
+					   + dsp_coeff->a2 * dsp_data[dsp_phase_index+2]
 					   + dsp_coeff->a3 * dsp_data[dsp_phase_index+3]));
-	
-			/* increment phase and amplitude */ 
-			fluid_phase_incr(dsp_phase, dsp_phase_incr); 
+
+			/* increment phase and amplitude */
+			fluid_phase_incr(dsp_phase, dsp_phase_incr);
 			dsp_amp += dsp_amp_incr;
 		}
 		break;
@@ -169,17 +169,17 @@ if ((fluid_phase_fract(dsp_phase) == 0)
 		for (dsp_i = dsp_start; dsp_i < dsp_end; dsp_i++) {
 			int fract = fluid_phase_fract_to_tablerow(dsp_phase);
 			dsp_phase_index = fluid_phase_index(dsp_phase);
-			dsp_buf[dsp_i] = (dsp_amp * 
-					  (sinc_table7[0][fract] * (fluid_real_t) dsp_data[dsp_phase_index] 
+			dsp_buf[dsp_i] = (dsp_amp *
+					  (sinc_table7[0][fract] * (fluid_real_t) dsp_data[dsp_phase_index]
 					   + sinc_table7[1][fract] * (fluid_real_t) dsp_data[dsp_phase_index+1]
 					   + sinc_table7[2][fract] * (fluid_real_t) dsp_data[dsp_phase_index+2]
 					   + sinc_table7[3][fract] * (fluid_real_t) dsp_data[dsp_phase_index+3]
 					   + sinc_table7[4][fract] * (fluid_real_t) dsp_data[dsp_phase_index+4]
 					   + sinc_table7[5][fract] * (fluid_real_t) dsp_data[dsp_phase_index+5]
 					   + sinc_table7[6][fract] * (fluid_real_t) dsp_data[dsp_phase_index+6]));
-      
-			/* increment phase and amplitude */ 
-			fluid_phase_incr(dsp_phase, dsp_phase_incr); 
+
+			/* increment phase and amplitude */
+			fluid_phase_incr(dsp_phase, dsp_phase_incr);
 			dsp_amp += dsp_amp_incr;
 		}
 		break;
@@ -187,30 +187,30 @@ if ((fluid_phase_fract(dsp_phase) == 0)
 	} /* switch interpolation method */
 } /* If interpolation is needed */
 
-/* filter (implement the voice filter according to Soundfont standard) */ 
+/* filter (implement the voice filter according to Soundfont standard) */
 if (dsp_use_filter_flag) {
 
 	/* Check for denormal number (too close to zero) once in a
 	 * while. This is not a big concern here - why would someone play a
 	 * sample with an empty tail? */
 	dsp_hist1 = zap_almost_zero(dsp_hist1);
-  
+
 	/* Two versions of the filter loop. One, while the filter is
 	 * changing towards its new setting. The other, if the filter
 	 * doesn't change.
 	 */
-  
+
 	if (dsp_filter_coeff_incr_count > 0) {
 		/* The increment is added to each filter coefficient
 		   filter_coeff_incr_count times. */
 
 		for (dsp_i = dsp_start; dsp_i < dsp_end; dsp_i++) {
-			/* The filter is implemented in Direct-II form. */ 
+			/* The filter is implemented in Direct-II form. */
 			dsp_centernode = dsp_buf[dsp_i] - dsp_a1 * dsp_hist1 - dsp_a2 * dsp_hist2;
 			dsp_buf[dsp_i] = dsp_b02 * (dsp_centernode + dsp_hist2) + dsp_b1 * dsp_hist1;
-			dsp_hist2 = dsp_hist1;  
-			dsp_hist1 = dsp_centernode;  
-      
+			dsp_hist2 = dsp_hist1;
+			dsp_hist1 = dsp_centernode;
+
 			if (dsp_filter_coeff_incr_count-- > 0){
 				dsp_a1 += dsp_a1_incr;
 				dsp_a2 += dsp_a2_incr;
@@ -223,13 +223,13 @@ if (dsp_use_filter_flag) {
 
 		/* The filter parameters are constant.  This is duplicated to save
 		 * time. */
-    
+
 		for (dsp_i = dsp_start; dsp_i < dsp_end; dsp_i++) {
-			/* The filter is implemented in Direct-II form. */ 
+			/* The filter is implemented in Direct-II form. */
 			dsp_centernode = dsp_buf[dsp_i] - dsp_a1 * dsp_hist1 - dsp_a2 * dsp_hist2;
 			dsp_buf[dsp_i] = dsp_b02 * (dsp_centernode + dsp_hist2) + dsp_b1 * dsp_hist1;
-			dsp_hist2 = dsp_hist1;  
-			dsp_hist1 = dsp_centernode;  
+			dsp_hist2 = dsp_hist1;
+			dsp_hist1 = dsp_centernode;
 		}
 	} /* if filter is fixed */
 } /* if filter is enabled */
@@ -242,8 +242,8 @@ if (dsp_use_filter_flag) {
  * same, and we can save one multiplication per voice and sample.
    */
 if ((-0.5 < voice->pan) && (voice->pan < 0.5)) {
-    
-	/* The voice is centered. Use voice->amp_left twice. */ 
+
+	/* The voice is centered. Use voice->amp_left twice. */
 	for (dsp_i = dsp_start; dsp_i < dsp_end; dsp_i++) {
 		float v = voice->amp_left * dsp_buf[dsp_i];
 		dsp_left_buf[dsp_i] += v;
@@ -266,14 +266,14 @@ if ((-0.5 < voice->pan) && (voice->pan < 0.5)) {
 	}
 }
 
-/* reverb send. Buffer may be NULL. */ 
+/* reverb send. Buffer may be NULL. */
 if ((dsp_reverb_buf != NULL) && (voice->amp_reverb != 0.0)) {
 	for (dsp_i = dsp_start; dsp_i < dsp_end; dsp_i++) {
 		dsp_reverb_buf[dsp_i] += voice->amp_reverb * dsp_buf[dsp_i];
 	}
 }
 
-/* chorus send. Buffer may be NULL. */ 
+/* chorus send. Buffer may be NULL. */
 if ((dsp_chorus_buf != NULL) && (voice->amp_chorus != 0)) {
 	for (dsp_i = dsp_start; dsp_i < dsp_end; dsp_i++) {
 		dsp_chorus_buf[dsp_i] += voice->amp_chorus * dsp_buf[dsp_i];

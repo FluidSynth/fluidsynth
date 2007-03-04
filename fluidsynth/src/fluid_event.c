@@ -11,14 +11,14 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Library General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the Free
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307, USA
  */
 
- 
+
 /*
  2002 : API design by Peter Hanappe and Antoine Schmitt
  August 2002 : Implementation by Antoine Schmitt as@gratin.org
@@ -27,7 +27,7 @@
  Oct4.2002 : AS : corrected bug in heap allocation, that caused a crash during sequencer free.
 */
 
- 
+
 #include "fluid_event_priv.h"
 #include "fluidsynth_priv.h"
 
@@ -42,11 +42,11 @@
  * Create a new sequencer event structure.
  * @return New sequencer event structure or NULL if out of memory
  */
-fluid_event_t* 
+fluid_event_t*
 new_fluid_event()
 {
   fluid_event_t* evt;
-  
+
   evt = FLUID_NEW(fluid_event_t);
   if (evt == NULL) {
     fluid_log(FLUID_PANIC, "event: Out of memory\n");
@@ -54,12 +54,12 @@ new_fluid_event()
   }
 
   FLUID_MEMSET(evt, 0, sizeof(fluid_event_t));
-  
+
   // by default, no type
   evt->dest = -1;
   evt->src = -1;
   evt->type = -1;
-  
+
   return(evt);
 }
 
@@ -67,14 +67,14 @@ new_fluid_event()
  * Delete a sequencer event structure.
  * @param evt Sequencer event structure created by new_fluid_event().
  */
-void 
+void
 delete_fluid_event(fluid_event_t* evt)
 {
 
   if (evt == NULL) {
     return;
   }
-  
+
   FLUID_FREE(evt);
 }
 
@@ -557,7 +557,7 @@ int fluid_event_get_pitch(fluid_event_t* evt)
  * Used by the #FLUID_SEQ_PROGRAMCHANGE and #FLUID_SEQ_PROGRAMSELECT
  * event types.
  */
-short 
+short
 fluid_event_get_program(fluid_event_t* evt)
 {
 	return evt->value;
@@ -570,7 +570,7 @@ fluid_event_get_program(fluid_event_t* evt)
  *
  * Used by the #FLUID_SEQ_PROGRAMSELECT event type.
  */
-unsigned int 
+unsigned int
 fluid_event_get_sfont_id(fluid_event_t* evt)
 {
 	return evt->duration;
@@ -618,21 +618,21 @@ _fluid_evt_heap_init(int nbEvents)
 	int i;
 	fluid_evt_heap_t* heap;
 	int siz = 2*sizeof(fluid_evt_entry *) + sizeof(fluid_evt_entry)*nbEvents;
-	
+
 	heap = (fluid_evt_heap_t *)FLUID_MALLOC(siz);
   if (heap == NULL) {
     fluid_log(FLUID_PANIC, "sequencer: Out of memory\n");
     return NULL;
   }
   FLUID_MEMSET(heap, 0, siz);
-  
+
   /* link all heap events */
   {
   	fluid_evt_entry *tmp = &(heap->pool);
 	  for (i = 0 ; i < nbEvents - 1 ; i++)
  		 	tmp[i].next = &(tmp[i+1]);
  	 	tmp[nbEvents-1].next = NULL;
- 	 	
+
  	 	/* set head & tail */
  	 	heap->tail = &(tmp[nbEvents-1]);
   	heap->head = &(heap->pool);
@@ -662,7 +662,7 @@ _fluid_evt_heap_free(fluid_evt_heap_t* heap)
   fluid_mutex_destroy(heap->mutex);
 
   FLUID_FREE(heap);
-  
+
 #else
 	FLUID_FREE(heap);
 #endif
@@ -701,12 +701,12 @@ _fluid_seq_heap_get_free(fluid_evt_heap_t* heap)
 #else
 	fluid_evt_entry* evt;
 	if (heap->head == NULL) return NULL;
-	
+
 	/* take from head of the heap */
 	/* critical - should threadlock ? */
 	evt = heap->head;
 	heap->head = heap->head->next;
-	
+
 	return evt;
 #endif
 }

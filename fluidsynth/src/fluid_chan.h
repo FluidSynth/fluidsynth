@@ -11,7 +11,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Library General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the Free
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
@@ -64,7 +64,7 @@ struct _fluid_channel_t
    * generators set in the SoundFont. For example, if the NRPN
    * specifies an attack of 100 msec then 100 msec will be added to the
    * combined attack time of the sound font and the modulators.
-   * 
+   *
    * However, it is useful to be able to specify the generator value
    * absolutely, completely ignoring the generators of the sound font
    * and the values of modulators. The gen_abs field, is a boolean

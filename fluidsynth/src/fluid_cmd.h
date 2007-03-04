@@ -11,7 +11,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Library General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the Free
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
@@ -80,8 +80,8 @@ int fluid_handle_settings(fluid_synth_t* synth, int ac, char** av, fluid_ostream
 fluid_cmd_t* fluid_cmd_copy(fluid_cmd_t* cmd);
 void delete_fluid_cmd(fluid_cmd_t* cmd);
 
-int fluid_cmd_handler_handle(fluid_cmd_handler_t* handler, 
-			    int ac, char** av, 
+int fluid_cmd_handler_handle(fluid_cmd_handler_t* handler,
+			    int ac, char** av,
 			    fluid_ostream_t out);
 
 
@@ -90,9 +90,9 @@ void fluid_server_remove_client(fluid_server_t* server, fluid_client_t* client);
 void fluid_server_add_client(fluid_server_t* server, fluid_client_t* client);
 
 
-fluid_client_t* new_fluid_client(fluid_server_t* server, 
-			       fluid_settings_t* settings, 
-			       fluid_cmd_handler_t* handler, 
+fluid_client_t* new_fluid_client(fluid_server_t* server,
+			       fluid_settings_t* settings,
+			       fluid_cmd_handler_t* handler,
 			       fluid_socket_t sock);
 
 void delete_fluid_client(fluid_client_t* client);

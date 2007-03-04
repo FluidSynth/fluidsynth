@@ -11,7 +11,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Library General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the Free
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
@@ -21,7 +21,7 @@
 #include "fluid_ramsfont.h"
 #include "fluid_sys.h"
 #include "fluid_synth.h"
- 
+
 /* thenumber of samples before the start and after the end */
 #define SAMPLE_LOOP_MARGIN 8
 
@@ -40,12 +40,12 @@ fluid_ramsfont_create_sfont()
 {
 	fluid_sfont_t* sfont;
 	fluid_ramsfont_t* ramsfont;
-	
+
 	ramsfont = new_fluid_ramsfont();
 	if (ramsfont == NULL) {
     return NULL;
   }
-  
+
   sfont = FLUID_NEW(fluid_sfont_t);
   if (sfont == NULL) {
     FLUID_LOG(FLUID_ERR, "Out of memory");
@@ -130,33 +130,33 @@ int fluid_ramsfont_sfont_iteration_next(fluid_sfont_t* sfont, fluid_preset_t* pr
 int fluid_rampreset_preset_delete(fluid_preset_t* preset)
 {
   FLUID_FREE(preset);
-  printf("TODO: free modulators\n"); 
+  printf("TODO: free modulators\n");
   return 0;
 }
 
 char* fluid_rampreset_preset_get_name(fluid_preset_t* preset)
 {
-  return fluid_rampreset_get_name((fluid_rampreset_t*) preset->data);  
+  return fluid_rampreset_get_name((fluid_rampreset_t*) preset->data);
 }
 
 int fluid_rampreset_preset_get_banknum(fluid_preset_t* preset)
 {
-  return fluid_rampreset_get_banknum((fluid_rampreset_t*) preset->data);  
+  return fluid_rampreset_get_banknum((fluid_rampreset_t*) preset->data);
 }
 
 int fluid_rampreset_preset_get_num(fluid_preset_t* preset)
 {
-  return fluid_rampreset_get_num((fluid_rampreset_t*) preset->data);  
+  return fluid_rampreset_get_num((fluid_rampreset_t*) preset->data);
 }
 
 int fluid_rampreset_preset_noteon(fluid_preset_t* preset, fluid_synth_t* synth, int chan, int key, int vel)
 {
-  return fluid_rampreset_noteon((fluid_rampreset_t*) preset->data, synth, chan, key, vel);  
+  return fluid_rampreset_noteon((fluid_rampreset_t*) preset->data, synth, chan, key, vel);
 }
 
 
 
- 
+
 /***************************************************************
  *
  *                           SFONT
@@ -214,7 +214,7 @@ int delete_fluid_ramsfont(fluid_ramsfont_t* sfont)
     delete_fluid_rampreset(preset);
     preset = sfont->preset;
   }
-  
+
   FLUID_FREE(sfont);
   return FLUID_OK;
 }
@@ -242,7 +242,7 @@ fluid_ramsfont_set_name(fluid_ramsfont_t* sfont, char * name)
  *
  * Add a preset to the SoundFont
  */
-int fluid_ramsfont_add_preset(fluid_ramsfont_t* sfont, fluid_rampreset_t* preset) 
+int fluid_ramsfont_add_preset(fluid_ramsfont_t* sfont, fluid_rampreset_t* preset)
 {
   fluid_rampreset_t *cur, *prev;
   if (sfont->preset == NULL) {
@@ -253,7 +253,7 @@ int fluid_ramsfont_add_preset(fluid_ramsfont_t* sfont, fluid_rampreset_t* preset
     cur = sfont->preset;
     prev = NULL;
     while (cur != NULL) {
-      if ((preset->bank < cur->bank) 
+      if ((preset->bank < cur->bank)
 	  || ((preset->bank == cur->bank) && (preset->num < cur->num))) {
 	if (prev == NULL) {
 	  preset->next = cur;
@@ -285,7 +285,7 @@ int fluid_ramsfont_add_izone(fluid_ramsfont_t* sfont,
 		- add the sample to the list of samples
 	*/
 	int err;
-	
+
 	fluid_rampreset_t* preset = fluid_ramsfont_get_preset(sfont, bank, num);
 	if (preset == NULL) {
 		// Create it
@@ -293,27 +293,27 @@ int fluid_ramsfont_add_izone(fluid_ramsfont_t* sfont,
 		if (preset == NULL) {
 			return FLUID_FAILED;
 		}
-		
+
 		preset->bank = bank;
 		preset->num = num;
-		
+
 		err = fluid_rampreset_add_sample(preset, sample, lokey, hikey);
 		if (err != FLUID_OK) {
 			return FLUID_FAILED;
 		}
-		
+
 		// sort the preset
 		fluid_ramsfont_add_preset(sfont, preset);
-		
+
 	} else {
-	
+
 		// just add it
 		err = fluid_rampreset_add_sample(preset, sample, lokey, hikey);
 		if (err != FLUID_OK) {
 			return FLUID_FAILED;
-		}	
+		}
 	}
-	
+
   sfont->sample = fluid_list_append(sfont->sample, sample);
   return FLUID_OK;
 }
@@ -343,12 +343,12 @@ int fluid_ramsfont_remove_izone(fluid_ramsfont_t* sfont,
 int fluid_ramsfont_izone_set_gen(fluid_ramsfont_t* sfont,
 				unsigned int bank, unsigned int num, fluid_sample_t* sample,
 				int gen_type, float value) {
-				
+
 	fluid_rampreset_t* preset = fluid_ramsfont_get_preset(sfont, bank, num);
 	if (preset == NULL) {
 			return FLUID_FAILED;
 	}
-	
+
 	return fluid_rampreset_izone_set_gen(preset, sample, gen_type, value);
 }
 
@@ -360,14 +360,14 @@ int fluid_ramsfont_izone_set_loop(fluid_ramsfont_t* sfont,
 	if (preset == NULL) {
 			return FLUID_FAILED;
 	}
-	
+
 	return fluid_rampreset_izone_set_loop(preset, sample, on, loopstart, loopend);
 }
 
 /*
  * fluid_ramsfont_get_preset
  */
-fluid_rampreset_t* fluid_ramsfont_get_preset(fluid_ramsfont_t* sfont, unsigned int bank, unsigned int num) 
+fluid_rampreset_t* fluid_ramsfont_get_preset(fluid_ramsfont_t* sfont, unsigned int bank, unsigned int num)
 {
   fluid_rampreset_t* preset = sfont->preset;
   while (preset != NULL) {
@@ -415,12 +415,12 @@ struct _fluid_rampreset_voice_t {
 /*
  * new_fluid_rampreset
  */
-fluid_rampreset_t* 
+fluid_rampreset_t*
 new_fluid_rampreset(fluid_ramsfont_t* sfont)
 {
   fluid_rampreset_t* preset = FLUID_NEW(fluid_rampreset_t);
   if (preset == NULL) {
-    FLUID_LOG(FLUID_ERR, "Out of memory");     
+    FLUID_LOG(FLUID_ERR, "Out of memory");
     return NULL;
   }
   preset->next = NULL;
@@ -437,13 +437,13 @@ new_fluid_rampreset(fluid_ramsfont_t* sfont)
 /*
  * delete_fluid_rampreset
  */
-int 
+int
 delete_fluid_rampreset(fluid_rampreset_t* preset)
 {
   int err = FLUID_OK;
   fluid_preset_zone_t* zone;
   fluid_rampreset_voice_t *data;
-  
+
   if (preset->global_zone != NULL) {
     if (delete_fluid_preset_zone(preset->global_zone) != FLUID_OK) {
       err = FLUID_FAILED;
@@ -458,37 +458,37 @@ delete_fluid_rampreset(fluid_rampreset_t* preset)
     }
     zone = preset->zone;
   }
-  
+
   if (preset->presetvoices != NULL) {
   	fluid_list_t *tmp = preset->presetvoices, *next;
   	while (tmp) {
   		data = (fluid_rampreset_voice_t *)(tmp->data);
   		FLUID_FREE(data);
-  		
+
   		next = tmp->next;
   		FLUID_FREE(tmp);
   		tmp = next;
   	}
   }
   preset->presetvoices = NULL;
-  
+
   FLUID_FREE(preset);
   return err;
 }
 
-int 
+int
 fluid_rampreset_get_banknum(fluid_rampreset_t* preset)
 {
   return preset->bank;
 }
 
-int 
+int
 fluid_rampreset_get_num(fluid_rampreset_t* preset)
 {
   return preset->num;
 }
 
-char* 
+char*
 fluid_rampreset_get_name(fluid_rampreset_t* preset)
 {
   return preset->name;
@@ -497,7 +497,7 @@ fluid_rampreset_get_name(fluid_rampreset_t* preset)
 /*
  * fluid_rampreset_next
  */
-fluid_rampreset_t* 
+fluid_rampreset_t*
 fluid_rampreset_next(fluid_rampreset_t* preset)
 {
   return preset->next;
@@ -507,7 +507,7 @@ fluid_rampreset_next(fluid_rampreset_t* preset)
 /*
  * fluid_rampreset_add_zone
  */
-int 
+int
 fluid_rampreset_add_zone(fluid_rampreset_t* preset, fluid_preset_zone_t* zone)
 {
   if (preset->zone == NULL) {
@@ -527,7 +527,7 @@ fluid_rampreset_add_zone(fluid_rampreset_t* preset, fluid_preset_zone_t* zone)
 int fluid_rampreset_add_sample(fluid_rampreset_t* preset, fluid_sample_t* sample, int lokey, int hikey)
 {
 	/* create a new instrument zone, with the given sample */
-		
+
 	/* one preset zone */
 	if (preset->zone == NULL) {
 		fluid_preset_zone_t* zone;
@@ -535,17 +535,17 @@ int fluid_rampreset_add_sample(fluid_rampreset_t* preset, fluid_sample_t* sample
 		if (zone == NULL) {
 			return FLUID_FAILED;
 		}
-		
+
 		/* its instrument */
 		zone->inst = (fluid_inst_t*) new_fluid_inst();
     if (zone->inst == NULL) {
       delete_fluid_preset_zone(zone);
       return FLUID_FAILED;
     }
-    
+
 		fluid_rampreset_add_zone(preset, zone);
 	}
-	
+
 	/* add an instrument zone for each sample */
 	{
 		fluid_inst_t* inst = fluid_preset_zone_get_inst(preset->zone);
@@ -553,20 +553,20 @@ int fluid_rampreset_add_sample(fluid_rampreset_t* preset, fluid_sample_t* sample
 		if (izone == NULL) {
 			return FLUID_FAILED;
 		}
-	
+
 		if (fluid_inst_add_zone(inst, izone) != FLUID_OK) {
 			delete_fluid_inst_zone(izone);
 			return FLUID_FAILED;
 		}
-		
+
 		izone->sample = sample;
 		izone->keylo = lokey;
 		izone->keyhi = hikey;
-		
+
 		// give the preset the name of the sample
 		FLUID_MEMCPY(preset->name, sample->name, 20);
 	}
-	
+
 	return FLUID_OK;
 }
 
@@ -574,9 +574,9 @@ fluid_inst_zone_t* fluid_rampreset_izoneforsample(fluid_rampreset_t* preset, flu
 {
 	fluid_inst_t* inst;
 	fluid_inst_zone_t* izone;
-	
+
 	if (preset->zone == NULL) return NULL;
-	
+
 	inst = fluid_preset_zone_get_inst(preset->zone);
 	izone = inst->zone;
 	while (izone) {
@@ -591,17 +591,17 @@ int fluid_rampreset_izone_set_loop(fluid_rampreset_t* preset, fluid_sample_t* sa
        int on, float loopstart, float loopend) {
 	fluid_inst_zone_t* izone = fluid_rampreset_izoneforsample(preset, sample);
 	short coarse, fine;
-	
+
 	if (izone == NULL)
 			return FLUID_FAILED;
-	
+
 	if (!on) {
 		izone->gen[GEN_SAMPLEMODE].flags = GEN_SET;
 		izone->gen[GEN_SAMPLEMODE].val = FLUID_UNLOOPED;
 		fluid_rampreset_updatevoices(preset, GEN_SAMPLEMODE, FLUID_UNLOOPED);
 		return FLUID_OK;
 }
-		
+
 	/* NOTE : We should check that (sample->startloop + loopStart <= sample->endloop - loopend - 32) */
 
 	/* loopstart */
@@ -645,12 +645,12 @@ int fluid_rampreset_izone_set_loop(fluid_rampreset_t* preset, fluid_sample_t* sa
 	izone->gen[GEN_SAMPLEMODE].flags = GEN_SET;
 	izone->gen[GEN_SAMPLEMODE].val = FLUID_LOOP_DURING_RELEASE;
 	fluid_rampreset_updatevoices(preset, GEN_SAMPLEMODE, FLUID_LOOP_DURING_RELEASE);
-		
+
 	/* If the loop points are the whole samples, we are supposed to
 	   copy the frames around in the margins (the start to the end margin and
 	   the end to the start margin), but it works fine without this. Maybe some time
 	   it will be needed (see SAMPLE_LOOP_MARGIN) -- Antoie Schmitt May 2003 */
-	
+
 	return FLUID_OK;
 }
 
@@ -659,12 +659,12 @@ int fluid_rampreset_izone_set_gen(fluid_rampreset_t* preset, fluid_sample_t* sam
 	fluid_inst_zone_t* izone = fluid_rampreset_izoneforsample(preset, sample);
 	if (izone == NULL)
 			return FLUID_FAILED;
-		
+
 	izone->gen[gen_type].flags = GEN_SET;
 	izone->gen[gen_type].val = value;
-	
+
 	fluid_rampreset_updatevoices(preset, gen_type, value);
-	
+
 	return FLUID_OK;
 }
 
@@ -672,7 +672,7 @@ int fluid_rampreset_remove_izone(fluid_rampreset_t* preset, fluid_sample_t* samp
 	fluid_inst_t* inst;
 	fluid_inst_zone_t* izone, * prev;
 	int found = 0;
-	
+
 	if (preset->zone == NULL) return FLUID_FAILED;
 	inst = fluid_preset_zone_get_inst(preset->zone);
 	izone = inst->zone;
@@ -694,7 +694,7 @@ int fluid_rampreset_remove_izone(fluid_rampreset_t* preset, fluid_sample_t* samp
 	}
 	if (!found)
 		return FLUID_FAILED;
-	
+
 	// stop all the voices that use this sample, so that
 	// the sample can be cleared up
 	{
@@ -719,23 +719,23 @@ int fluid_rampreset_remove_izone(fluid_rampreset_t* preset, fluid_sample_t* samp
 /*
  * fluid_rampreset_remembervoice
  */
-int 
+int
 fluid_rampreset_remembervoice(fluid_rampreset_t* preset, fluid_voice_t* voice) {
 	/* stores the voice and the its ID in the preset for later update on gen_set */
 	fluid_rampreset_voice_t *presetvoice = FLUID_NEW(fluid_rampreset_voice_t);
 	if (presetvoice == NULL) {
-    FLUID_LOG(FLUID_ERR, "Out of memory");     
+    FLUID_LOG(FLUID_ERR, "Out of memory");
     return FLUID_FAILED;
   }
-  
+
   presetvoice->voice = voice;
   presetvoice->voiceID = fluid_voice_get_id(voice);
-  
+
   preset->presetvoices = fluid_list_append(preset->presetvoices, (void *)presetvoice);
   if (preset->presetvoices == NULL) {
   	FLUID_FREE(presetvoice);
-    FLUID_LOG(FLUID_ERR, "Out of memory");     
-    return FLUID_FAILED;  	
+    FLUID_LOG(FLUID_ERR, "Out of memory");
+    return FLUID_FAILED;
   }
   return FLUID_OK;
 }
@@ -743,10 +743,10 @@ fluid_rampreset_remembervoice(fluid_rampreset_t* preset, fluid_voice_t* voice) {
 /*
  * fluid_rampreset_updatevoice
  */
-void 
+void
 fluid_rampreset_updatevoices(fluid_rampreset_t* preset, int gen_type, float val) {
 	fluid_list_t *tmp = preset->presetvoices, *prev = NULL, *next;
-	
+
 	/* walk the presetvoice to update them if they are still active and ours.
 	   If their ID has changed or their state is not playing, they are not ours, so we forget them
 	*/
@@ -756,7 +756,7 @@ fluid_rampreset_updatevoices(fluid_rampreset_t* preset, int gen_type, float val)
 		if (!fluid_voice_is_playing(voice) || (fluid_voice_get_id(voice) != presetvoice->voiceID)) {
 			/* forget it */
   		FLUID_FREE(presetvoice);
-			
+
 			/* unlink it */
 			next = tmp->next;
   		FLUID_FREE(tmp);
@@ -764,15 +764,15 @@ fluid_rampreset_updatevoices(fluid_rampreset_t* preset, int gen_type, float val)
 				prev->next = next;
 			} else {
 				preset->presetvoices = next;
-			}  		
+			}
   		tmp = next;
-  		
+
 		} else {
-		
+
 			/* update */
 			fluid_voice_gen_set(voice, gen_type, val);
-			fluid_voice_update_param(voice, gen_type); 
-			
+			fluid_voice_update_param(voice, gen_type);
+
 			/* next */
 			prev = tmp;
 			tmp = tmp->next;
@@ -784,8 +784,8 @@ fluid_rampreset_updatevoices(fluid_rampreset_t* preset, int gen_type, float val)
 /*
  * fluid_rampreset_noteon
  */
-int 
-fluid_rampreset_noteon(fluid_rampreset_t* preset, fluid_synth_t* synth, int chan, int key, int vel) 
+int
+fluid_rampreset_noteon(fluid_rampreset_t* preset, fluid_synth_t* synth, int chan, int key, int vel)
 {
   fluid_preset_zone_t *preset_zone;
   fluid_inst_t* inst;
@@ -796,7 +796,7 @@ fluid_rampreset_noteon(fluid_rampreset_t* preset, fluid_synth_t* synth, int chan
   fluid_mod_t * mod_list[FLUID_NUM_MOD]; /* list for 'sorting' preset modulators */
   int mod_list_count;
   int i;
-  
+
   /* run thru all the zones of this preset */
   preset_zone = preset->zone;
   while (preset_zone != NULL) {
@@ -804,45 +804,45 @@ fluid_rampreset_noteon(fluid_rampreset_t* preset, fluid_synth_t* synth, int chan
     /* check if the note falls into the key and velocity range of this
        preset */
     if (fluid_preset_zone_inside_range(preset_zone, key, vel)) {
-      
+
       inst = fluid_preset_zone_get_inst(preset_zone);
       global_inst_zone = fluid_inst_get_global_zone(inst);
-      
+
       /* run thru all the zones of this instrument */
       inst_zone = fluid_inst_get_zone(inst);
       while (inst_zone != NULL) {
-	
+
 	/* make sure this instrument zone has a valid sample */
 	sample = fluid_inst_zone_get_sample(inst_zone);
 	if (fluid_sample_in_rom(sample) || (sample == NULL)) {
 	  inst_zone = fluid_inst_zone_next(inst_zone);
 	  continue;
 	}
-	
+
 	/* check if the note falls into the key and velocity range of this
 	   instrument */
 
 	if (fluid_inst_zone_inside_range(inst_zone, key, vel) && (sample != NULL)) {
-	  
+
 	  /* this is a good zone. allocate a new synthesis process and
              initialize it */
 
 	  voice = fluid_synth_alloc_voice(synth, sample, chan, key, vel);
 	  if (voice == NULL) {
-	    return FLUID_FAILED; 
+	    return FLUID_FAILED;
 	  }
-	  
+
 	  if (fluid_rampreset_remembervoice(preset, voice) != FLUID_OK) {
-	    return FLUID_FAILED; 
+	    return FLUID_FAILED;
 	  }
-	  
+
 	  z = inst_zone;
-	  
+
 	  /* Instrument level, generators */
-	  
+
 	  for (i = 0; i < GEN_LAST; i++) {
 
-	    /* SF 2.01 section 9.4 'bullet' 4: 
+	    /* SF 2.01 section 9.4 'bullet' 4:
 	     *
 	     * A generator in a local instrument zone supersedes a
 	     * global instrument zone generator.  Both cases supersede
@@ -852,7 +852,7 @@ fluid_rampreset_noteon(fluid_rampreset_t* preset, fluid_synth_t* synth, int chan
 	      fluid_voice_gen_set(voice, i, inst_zone->gen[i].val);
 
 	    } else if (global_inst_zone != NULL && global_inst_zone->gen[i].flags){
-	      fluid_voice_gen_set(voice, i, global_inst_zone->gen[i].val);		  
+	      fluid_voice_gen_set(voice, i, global_inst_zone->gen[i].val);
 
 	    } else {
 	      /* The generator has not been defined in this instrument.
@@ -861,7 +861,7 @@ fluid_rampreset_noteon(fluid_rampreset_t* preset, fluid_synth_t* synth, int chan
 	    };
 
 	  }; /* for all generators */
-	  
+
 	  /* global instrument zone, modulators: Put them all into a
 	   * list. */
 
@@ -874,7 +874,7 @@ fluid_rampreset_noteon(fluid_rampreset_t* preset, fluid_synth_t* synth, int chan
 	      mod = mod->next;
 	    };
 	  };
-	  
+
 	  /* local instrument zone, modulators.
 	   * Replace modulators with the same definition in the list:
 	   * SF 2.01 page 69, 'bullet' 8
@@ -893,7 +893,7 @@ fluid_rampreset_noteon(fluid_rampreset_t* preset, fluid_synth_t* synth, int chan
 		mod_list[i] = NULL;
 	      };
 	    };
-	      
+
 	    /* Finally add the new modulator to to the list. */
 	    mod_list[mod_list_count++] = mod;
 	    mod = mod->next;
@@ -918,12 +918,12 @@ fluid_rampreset_noteon(fluid_rampreset_t* preset, fluid_synth_t* synth, int chan
 
 	    /* SF 2.01 section 8.5 page 58: If some generators are
 	     * encountered at preset level, they should be ignored */
-	    if ((i != GEN_STARTADDROFS) 
-		&& (i != GEN_ENDADDROFS) 
-		&& (i != GEN_STARTLOOPADDROFS) 
-		&& (i != GEN_ENDLOOPADDROFS) 
-		&& (i != GEN_STARTADDRCOARSEOFS) 
-		&& (i != GEN_ENDADDRCOARSEOFS) 
+	    if ((i != GEN_STARTADDROFS)
+		&& (i != GEN_ENDADDROFS)
+		&& (i != GEN_STARTLOOPADDROFS)
+		&& (i != GEN_ENDLOOPADDROFS)
+		&& (i != GEN_STARTADDRCOARSEOFS)
+		&& (i != GEN_ENDADDRCOARSEOFS)
 		&& (i != GEN_STARTLOOPADDRCOARSEOFS)
 		&& (i != GEN_KEYNUM)
 		&& (i != GEN_VELOCITY)
@@ -946,8 +946,8 @@ fluid_rampreset_noteon(fluid_rampreset_t* preset, fluid_synth_t* synth, int chan
 	      };
 	    }; /* if available at preset level */
 	  }; /* for all generators */
-	  
-	  
+
+
 	  /* Global preset zone, modulators: put them all into a
 	   * list. */
 	  mod_list_count = 0;
@@ -963,12 +963,12 @@ fluid_rampreset_noteon(fluid_rampreset_t* preset, fluid_synth_t* synth, int chan
 		mod_list[i] = NULL;
 	      };
 	    };
-	      
+
 	    /* Finally add the new modulator to the list. */
 	    mod_list[mod_list_count++] = mod;
 	    mod = mod->next;
 	  };
-	  
+
 	  /* Add preset modulators (global / local) to the voice. */
 	  for (i = 0; i < mod_list_count; i++){
 	    mod = mod_list[i];
@@ -979,7 +979,7 @@ fluid_rampreset_noteon(fluid_rampreset_t* preset, fluid_synth_t* synth, int chan
 	       * page */
 	      fluid_voice_add_mod(voice, mod, FLUID_VOICE_ADD);
 	    };
-	  };	  
+	  };
 
 	  /* add the synthesis process to the synthesis loop. */
 	  fluid_synth_start_voice(synth, voice);
@@ -1029,18 +1029,18 @@ fluid_sample_set_sound_data(fluid_sample_t* sample, short *data, unsigned int nb
 	/* 16 bit mono 44.1KHz data in */
 	/* in all cases, the sample has ownership of the data : it will release it in the end */
 	unsigned int storedNbFrames;
-	
+
 	/* in case we already have some data */
   if (sample->data != NULL) {
   	FLUID_FREE(sample->data);
   }
-	
+
 	if (copy_data) {
-		
+
 		/* nbframes should be >= 48 (SoundFont specs) */
 		storedNbFrames = nbframes;
 		if (storedNbFrames < 48) storedNbFrames = 48;
-		
+
 	  sample->data = FLUID_MALLOC(storedNbFrames*2 + 4*SAMPLE_LOOP_MARGIN);
 	  if (sample->data == NULL) {
 	    FLUID_LOG(FLUID_ERR, "Out of memory");
@@ -1054,7 +1054,7 @@ fluid_sample_set_sound_data(fluid_sample_t* sample, short *data, unsigned int nb
 	  FLUID_MEMCPY((char*)(sample->data) + 2*SAMPLE_LOOP_MARGIN + storedNbFrames*2, (char*)data, 2*SAMPLE_LOOP_MARGIN);
 	  FLUID_MEMCPY((char*)(sample->data), (char*)data + nbframes*2 - 2*SAMPLE_LOOP_MARGIN, 2*SAMPLE_LOOP_MARGIN);
 #endif
-	  
+
 	  /* pointers */
 	  /* all from the start of data */
 	  sample->start = SAMPLE_LOOP_MARGIN;
@@ -1065,11 +1065,11 @@ fluid_sample_set_sound_data(fluid_sample_t* sample, short *data, unsigned int nb
 	  sample->start = 0;
 	  sample->end = nbframes;
   }
-  
+
   /* only used as markers for the LOOP generators : set them on the first real frame */
   sample->loopstart = sample->start;
   sample->loopend = sample->end;
-  
+
   sample->samplerate = 44100;
   sample->origpitch = rootkey;
   sample->pitchadj = 0;
@@ -1082,7 +1082,7 @@ fluid_sample_set_sound_data(fluid_sample_t* sample, short *data, unsigned int nb
 /*
  * new_fluid_ramsample
  */
-fluid_sample_t* 
+fluid_sample_t*
 new_fluid_ramsample()
 {
 	/* same as new_fluid_sample. Only here so that it is exported */
@@ -1090,7 +1090,7 @@ new_fluid_ramsample()
 
   sample = FLUID_NEW(fluid_sample_t);
   if (sample == NULL) {
-    FLUID_LOG(FLUID_ERR, "Out of memory");     
+    FLUID_LOG(FLUID_ERR, "Out of memory");
     return NULL;
   }
 

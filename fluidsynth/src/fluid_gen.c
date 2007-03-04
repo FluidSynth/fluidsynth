@@ -11,7 +11,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Library General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the Free
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
@@ -94,7 +94,7 @@ fluid_gen_info_t fluid_gen_info[] = {
  * @param gen Array of generators (should be #GEN_LAST in size).
  * @return Always returns 0
  */
-int 
+int
 fluid_gen_set_default_values(fluid_gen_t* gen)
 {
 	int i;
@@ -112,9 +112,9 @@ fluid_gen_set_default_values(fluid_gen_t* gen)
 
 /* fluid_gen_init
  *
- * Set an array of generators to their initial value 
+ * Set an array of generators to their initial value
  */
-int 
+int
 fluid_gen_init(fluid_gen_t* gen, fluid_channel_t* channel)
 {
 	int i;
@@ -136,8 +136,8 @@ fluid_gen_init(fluid_gen_t* gen, fluid_channel_t* channel)
 }
 
 fluid_real_t fluid_gen_scale(int gen, float value)
-{ 
-	return (fluid_gen_info[gen].min 
+{
+	return (fluid_gen_info[gen].min
 		+ value * (fluid_gen_info[gen].max - fluid_gen_info[gen].min));
 }
 

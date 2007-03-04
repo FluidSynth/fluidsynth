@@ -11,7 +11,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Library General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the Free
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
@@ -53,15 +53,15 @@ typedef struct {
 
 fluid_audio_driver_t* new_fluid_core_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth);
 
-fluid_audio_driver_t* new_fluid_core_audio_driver2(fluid_settings_t* settings, 
-						      fluid_audio_func_t func, 
+fluid_audio_driver_t* new_fluid_core_audio_driver2(fluid_settings_t* settings,
+						      fluid_audio_func_t func,
 						      void* data);
 
-OSStatus fluid_core_audio_callback(AudioDeviceID dev, 
+OSStatus fluid_core_audio_callback(AudioDeviceID dev,
 				   const AudioTimeStamp* now,
-				   const AudioBufferList* in, 
+				   const AudioBufferList* in,
 				   const AudioTimeStamp* intime,
-				   AudioBufferList* out, 
+				   AudioBufferList* out,
 				   const AudioTimeStamp* outtime,
 				   void* data);
 
@@ -83,18 +83,18 @@ fluid_core_audio_driver_settings(fluid_settings_t* settings)
 /*
  * new_fluid_core_audio_driver
  */
-fluid_audio_driver_t* 
+fluid_audio_driver_t*
 new_fluid_core_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
 {
-  return new_fluid_core_audio_driver2(settings, 
-					  (fluid_audio_func_t) fluid_synth_process, 
+  return new_fluid_core_audio_driver2(settings,
+					  (fluid_audio_func_t) fluid_synth_process,
 					  (void*) synth);
 }
 
 /*
  * new_fluid_core_audio_driver2
  */
-fluid_audio_driver_t* 
+fluid_audio_driver_t*
 new_fluid_core_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func, void* data)
 {
   fluid_core_audio_driver_t* dev = NULL;
@@ -104,7 +104,7 @@ new_fluid_core_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func
   dev = FLUID_NEW(fluid_core_audio_driver_t);
   if (dev == NULL) {
     FLUID_LOG(FLUID_ERR, "Out of memory");
-    return NULL;    
+    return NULL;
   }
   FLUID_MEMSET(dev, 0, sizeof(fluid_core_audio_driver_t));
 
@@ -119,8 +119,8 @@ new_fluid_core_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func
   }
 
   size = sizeof(UInt32);
-  status = AudioDeviceGetProperty(dev->id, 0, false, 
-				  kAudioDevicePropertyBufferSize, 
+  status = AudioDeviceGetProperty(dev->id, 0, false,
+				  kAudioDevicePropertyBufferSize,
 				  &size, &dev->buffer_size);
   if (status != noErr) {
     FLUID_LOG(FLUID_ERR, "Failed to get the default buffer size");
@@ -128,8 +128,8 @@ new_fluid_core_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func
   }
 
   size = sizeof(AudioStreamBasicDescription);
-  status = AudioDeviceGetProperty(dev->id, 0, false, 
-				  kAudioDevicePropertyStreamFormat, 
+  status = AudioDeviceGetProperty(dev->id, 0, false,
+				  kAudioDevicePropertyStreamFormat,
 				  &size, &dev->format);
   if (status != noErr) {
     FLUID_LOG(FLUID_ERR, "Failed to get the default audio format");
@@ -162,7 +162,7 @@ new_fluid_core_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func
     goto error_recovery;
   }
 
-  status = AudioDeviceStart(dev->id, fluid_core_audio_callback);			
+  status = AudioDeviceStart(dev->id, fluid_core_audio_callback);
   if (status != noErr) {
     FLUID_LOG(FLUID_ERR, "The default audio format is not PCM");
     goto error_recovery;
@@ -173,23 +173,23 @@ new_fluid_core_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func
 error_recovery:
 
   delete_fluid_core_audio_driver((fluid_audio_driver_t*) dev);
-  return NULL;  
+  return NULL;
 }
 
 /*
  * delete_fluid_core_audio_driver
  */
-int 
-delete_fluid_core_audio_driver(fluid_audio_driver_t* p) 
+int
+delete_fluid_core_audio_driver(fluid_audio_driver_t* p)
 {
-  fluid_core_audio_driver_t* dev = (fluid_core_audio_driver_t*) p;  
+  fluid_core_audio_driver_t* dev = (fluid_core_audio_driver_t*) p;
 
   if (dev == NULL) {
     return FLUID_OK;
   }
 
   if (AudioDeviceStop(dev->id, fluid_core_audio_callback) == noErr) {
-    AudioDeviceRemoveIOProc(dev->id, fluid_core_audio_callback);	
+    AudioDeviceRemoveIOProc(dev->id, fluid_core_audio_callback);
   }
 
   if (dev->buffers[0]) {
@@ -204,12 +204,12 @@ delete_fluid_core_audio_driver(fluid_audio_driver_t* p)
   return FLUID_OK;
 }
 
-OSStatus 
-fluid_core_audio_callback(AudioDeviceID id, 
+OSStatus
+fluid_core_audio_callback(AudioDeviceID id,
 			  const AudioTimeStamp* now,
-			  const AudioBufferList* in, 
+			  const AudioBufferList* in,
 			  const AudioTimeStamp* intime,
-			  AudioBufferList* out, 
+			  AudioBufferList* out,
 			  const AudioTimeStamp* outtime,
 			  void* data)
 {

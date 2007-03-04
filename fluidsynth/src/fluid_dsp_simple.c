@@ -11,7 +11,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Library General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the Free
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
@@ -19,7 +19,7 @@
  */
 
 
-/* Purpose: 
+/* Purpose:
  * Low-level voice processing:
  *
  * - interpolates (obtains values between the samples of the original waveform data)
@@ -60,7 +60,7 @@
  * - dsp_phase_incr: For each output sample, the position in the original
  *              waveform advances by dsp_phase_incr. This also has an integer
  *              part and a fractional part.
- *              If a sample is played at root pitch (no pitch change), 
+ *              If a sample is played at root pitch (no pitch change),
  *              dsp_phase_incr is integer=1 and fractional=0.
  * - dsp_amp: The current amplitude envelope value.
  * - dsp_amp_incr: The changing rate of the amplitude envelope.
@@ -74,37 +74,37 @@
  * - dsp_centernode: delay line for the IIR filter
  * - dsp_hist1: same
  * - dsp_hist2: same
- * 
+ *
  */
 
 
 /* Nonoptimized DSP loop */
 #warning "This code is meant for experiments only.";
 
-/* wave table interpolation */ 
-for (dsp_i = dsp_start; dsp_i < dsp_end; dsp_i++) {  
+/* wave table interpolation */
+for (dsp_i = dsp_start; dsp_i < dsp_end; dsp_i++) {
 
-	dsp_coeff = &interp_coeff[fluid_phase_fract_to_tablerow(dsp_phase)];  
-	dsp_phase_index = fluid_phase_index(dsp_phase); 
-	dsp_sample = (dsp_amp * 
-		      (dsp_coeff->a0 * dsp_data[dsp_phase_index] 
-		       + dsp_coeff->a1 * dsp_data[dsp_phase_index+1] 
-		       + dsp_coeff->a2 * dsp_data[dsp_phase_index+2] 
+	dsp_coeff = &interp_coeff[fluid_phase_fract_to_tablerow(dsp_phase)];
+	dsp_phase_index = fluid_phase_index(dsp_phase);
+	dsp_sample = (dsp_amp *
+		      (dsp_coeff->a0 * dsp_data[dsp_phase_index]
+		       + dsp_coeff->a1 * dsp_data[dsp_phase_index+1]
+		       + dsp_coeff->a2 * dsp_data[dsp_phase_index+2]
 		       + dsp_coeff->a3 * dsp_data[dsp_phase_index+3]));
-  
-	/* increment phase and amplitude */ 
-	fluid_phase_incr(dsp_phase, dsp_phase_incr); 
+
+	/* increment phase and amplitude */
+	fluid_phase_incr(dsp_phase, dsp_phase_incr);
 	dsp_amp += dsp_amp_incr;
 
-	/* filter */ 
-	/* The filter is implemented in Direct-II form. */ 
+	/* filter */
+	/* The filter is implemented in Direct-II form. */
 	dsp_centernode = dsp_sample - dsp_a1 * dsp_hist1 - dsp_a2 * dsp_hist2;
 	dsp_sample = dsp_b0 * dsp_centernode + dsp_b1 * dsp_hist1 + dsp_b2 * dsp_hist2;
-	dsp_hist2 = dsp_hist1;  
-	dsp_hist1 = dsp_centernode;  
+	dsp_hist2 = dsp_hist1;
+	dsp_hist1 = dsp_centernode;
 
 	/* pan */
-	dsp_left_buf[dsp_i] += voice->amp_left * dsp_sample;  
+	dsp_left_buf[dsp_i] += voice->amp_left * dsp_sample;
 	dsp_right_buf[dsp_i] += voice->amp_right * dsp_sample;
 
 	/* reverb */

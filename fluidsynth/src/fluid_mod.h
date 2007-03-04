@@ -11,7 +11,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Library General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the Free
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
@@ -25,7 +25,7 @@
 #include "fluid_conv.h"
 
 void fluid_mod_clone(fluid_mod_t* mod, fluid_mod_t* src);
-fluid_real_t fluid_mod_get_value(fluid_mod_t* mod, fluid_channel_t* chan, fluid_voice_t* voice); 
+fluid_real_t fluid_mod_get_value(fluid_mod_t* mod, fluid_channel_t* chan, fluid_voice_t* voice);
 void fluid_dump_modulator(fluid_mod_t * mod);
 
 #define fluid_mod_has_source(mod,cc,ctrl)  \

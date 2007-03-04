@@ -11,7 +11,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Library General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the Free
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
@@ -61,7 +61,7 @@
 #define fluid_sample_decr_ref(_sample) \
   (_sample)->refcount--; \
   if (((_sample)->refcount == 0) && ((_sample)->notify)) \
-    (*(_sample)->notify)(_sample, FLUID_SAMPLE_DONE); 
+    (*(_sample)->notify)(_sample, FLUID_SAMPLE_DONE);
 
 
 

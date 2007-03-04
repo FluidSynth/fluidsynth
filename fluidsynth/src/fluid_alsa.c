@@ -11,7 +11,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Library General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the Free
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
@@ -55,9 +55,9 @@
 #define ALSA_SEQ_SCHED_PRIORITY 90
 
 /** fluid_alsa_audio_driver_t
- * 
+ *
  * This structure should not be accessed directly. Use audio port
- * functions instead.  
+ * functions instead.
  */
 typedef struct {
   fluid_audio_driver_t driver;
@@ -89,13 +89,13 @@ struct fluid_alsa_formats_t {
 };
 
 struct fluid_alsa_formats_t fluid_alsa_formats[] = {
-  { "s16, rw, interleaved", 
-    SND_PCM_FORMAT_S16, 
-    SND_PCM_ACCESS_RW_INTERLEAVED, 
+  { "s16, rw, interleaved",
+    SND_PCM_FORMAT_S16,
+    SND_PCM_ACCESS_RW_INTERLEAVED,
     fluid_alsa_audio_run_s16 },
-  { "float, rw, non interleaved", 
-    SND_PCM_FORMAT_FLOAT, 
-    SND_PCM_ACCESS_RW_NONINTERLEAVED, 
+  { "float, rw, non interleaved",
+    SND_PCM_FORMAT_FLOAT,
+    SND_PCM_ACCESS_RW_NONINTERLEAVED,
     fluid_alsa_audio_run_float },
   { NULL, 0, 0, NULL }
 };
@@ -118,8 +118,8 @@ typedef struct {
 } fluid_alsa_rawmidi_driver_t;
 
 
-fluid_midi_driver_t* new_fluid_alsa_rawmidi_driver(fluid_settings_t* settings, 
-						   handle_midi_event_func_t handler, 
+fluid_midi_driver_t* new_fluid_alsa_rawmidi_driver(fluid_settings_t* settings,
+						   handle_midi_event_func_t handler,
 						   void* event_handler_data);
 
 int delete_fluid_alsa_rawmidi_driver(fluid_midi_driver_t* p);
@@ -137,11 +137,11 @@ typedef struct {
   int npfd;
   pthread_t thread;
   int status;
-  int port_count;  
+  int port_count;
 } fluid_alsa_seq_driver_t;
 
-fluid_midi_driver_t* new_fluid_alsa_seq_driver(fluid_settings_t* settings, 
-					     handle_midi_event_func_t handler, 
+fluid_midi_driver_t* new_fluid_alsa_seq_driver(fluid_settings_t* settings,
+					     handle_midi_event_func_t handler,
 					     void* data);
 int delete_fluid_alsa_seq_driver(fluid_midi_driver_t* p);
 static void* fluid_alsa_seq_run(void* d);
@@ -158,14 +158,14 @@ void fluid_alsa_audio_driver_settings(fluid_settings_t* settings)
 }
 
 
-fluid_audio_driver_t* 
+fluid_audio_driver_t*
 new_fluid_alsa_audio_driver(fluid_settings_t* settings,
 			    fluid_synth_t* synth)
 {
   return new_fluid_alsa_audio_driver2(settings, NULL, synth);
 }
 
-fluid_audio_driver_t* 
+fluid_audio_driver_t*
 new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
 			     fluid_audio_func_t func, void* data)
 {
@@ -185,7 +185,7 @@ new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
   dev = FLUID_NEW(fluid_alsa_audio_driver_t);
   if (dev == NULL) {
     FLUID_LOG(FLUID_ERR, "Out of memory");
-    return NULL;    
+    return NULL;
   }
   FLUID_MEMSET(dev, 0, sizeof(fluid_alsa_audio_driver_t));
 
@@ -233,7 +233,7 @@ new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
     if ((err = snd_pcm_hw_params_set_channels(dev->pcm, hwparams, 2)) < 0) {
       FLUID_LOG(FLUID_ERR, "Failed to set the channels: %s",
 		snd_strerror (err));
-      goto error_recovery;    
+      goto error_recovery;
     }
 
     tmp = (unsigned int) sample_rate;
@@ -253,10 +253,10 @@ new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
     uframes = period_size;
     if (snd_pcm_hw_params_set_period_size_near(dev->pcm, hwparams, &uframes, &dir) < 0) {
       FLUID_LOG(FLUID_ERR, "Failed to set the period size");
-      goto error_recovery;          
+      goto error_recovery;
     }
     if (uframes != (unsigned long) period_size) {
-      FLUID_LOG(FLUID_WARN, "Requested a period size of %d, got %d instead", 
+      FLUID_LOG(FLUID_WARN, "Requested a period size of %d, got %d instead",
 		period_size, (int) uframes);
       dev->buffer_size = (int) uframes;
       period_size = uframes;	/* period size is used below, so set it to the real value */
@@ -265,13 +265,13 @@ new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
     tmp = periods;
     if (snd_pcm_hw_params_set_periods_near(dev->pcm, hwparams, &tmp, &dir) < 0) {
       FLUID_LOG(FLUID_ERR, "Failed to set the number of periods");
-      goto error_recovery;          
+      goto error_recovery;
     }
     if (tmp != (unsigned int) periods) {
-      FLUID_LOG(FLUID_WARN, "Requested %d periods, got %d instead", 
+      FLUID_LOG(FLUID_WARN, "Requested %d periods, got %d instead",
 		periods, (int) tmp);
     }
-    
+
     if (snd_pcm_hw_params(dev->pcm, hwparams) < 0) {
       FLUID_LOG(FLUID_WARN, "Audio device hardware configuration failed");
       continue;
@@ -282,7 +282,7 @@ new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
 
   if (fluid_alsa_formats[i].name == NULL) {
     FLUID_LOG(FLUID_ERR, "Failed to find a workable audio format");
-    goto error_recovery;    
+    goto error_recovery;
   }
 
   FLUID_LOG(FLUID_INFO, "ALSA driver: Using format %s", fluid_alsa_formats[i].name);
@@ -320,7 +320,7 @@ new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
 
 
   /* Create the audio thread */
-  
+
   if (pthread_attr_init(&attr)) {
     FLUID_LOG(FLUID_ERR, "Couldn't initialize audio thread attributes");
     goto error_recovery;
@@ -372,7 +372,7 @@ new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
 int delete_fluid_alsa_audio_driver(fluid_audio_driver_t* p)
 {
   fluid_alsa_audio_driver_t* dev = (fluid_alsa_audio_driver_t*) p;
-  
+
   if (dev == NULL) {
     return FLUID_OK;
   }
@@ -452,12 +452,12 @@ static void* fluid_alsa_audio_run_float(void* d)
 
   if (snd_pcm_nonblock(dev->pcm, 0) != 0) { /* double negation */
     FLUID_LOG(FLUID_ERR, "Failed to set the audio device to blocking mode");
-    goto error_recovery;    
+    goto error_recovery;
   }
 
   if (snd_pcm_prepare(dev->pcm) != 0) {
     FLUID_LOG(FLUID_ERR, "Failed to prepare the audio device");
-    goto error_recovery;    
+    goto error_recovery;
   }
 
   /* use separate loops depending on if callback supplied or not (overkill?) */
@@ -506,7 +506,7 @@ static void* fluid_alsa_audio_run_float(void* d)
   }
 
  error_recovery:
-  
+
   FLUID_FREE(left);
   FLUID_FREE(right);
 
@@ -545,7 +545,7 @@ static void* fluid_alsa_audio_run_s16(void* d)
 
   if (snd_pcm_prepare(dev->pcm) != 0) {
     FLUID_LOG(FLUID_ERR, "Failed to prepare the audio device");
-    goto error_recovery;    
+    goto error_recovery;
   }
 
   /* use separate loops depending on if callback supplied or not (overkill?) */
@@ -588,7 +588,7 @@ static void* fluid_alsa_audio_run_s16(void* d)
   }
 
  error_recovery:
-  
+
   FLUID_FREE(left);
   FLUID_FREE(right);
   FLUID_FREE(buf);
@@ -612,9 +612,9 @@ void fluid_alsa_rawmidi_driver_settings(fluid_settings_t* settings)
 /*
  * new_fluid_alsa_rawmidi_driver
  */
-fluid_midi_driver_t* 
-new_fluid_alsa_rawmidi_driver(fluid_settings_t* settings, 
-			     handle_midi_event_func_t handler, 
+fluid_midi_driver_t*
+new_fluid_alsa_rawmidi_driver(fluid_settings_t* settings,
+			     handle_midi_event_func_t handler,
 			     void* data)
 {
   int i, err;
@@ -675,8 +675,8 @@ new_fluid_alsa_rawmidi_driver(fluid_settings_t* settings,
   for (i = 0; i < count; i++) {		/* loop over file descriptors */
     if (pfd[i].events & POLLIN) { /* use only the input FDs */
       dev->pfd[dev->npfd].fd = pfd[i].fd;
-      dev->pfd[dev->npfd].events = POLLIN; 
-      dev->pfd[dev->npfd].revents = 0; 
+      dev->pfd[dev->npfd].events = POLLIN;
+      dev->pfd[dev->npfd].revents = 0;
       dev->npfd++;
     }
   }
@@ -692,14 +692,14 @@ new_fluid_alsa_rawmidi_driver(fluid_settings_t* settings,
 
   /* Was: "use fifo scheduling. if it fails, use default scheduling." */
   /* Now normal scheduling is used by default for the MIDI thread. The reason is,
-   * that fluidsynth works better with low latencies under heavy load, if only the 
+   * that fluidsynth works better with low latencies under heavy load, if only the
    * audio thread is prioritized.
    * With MIDI at ordinary priority, that could result in individual notes being played
    * a bit late. On the other hand, if the audio thread is delayed, an audible dropout
    * is the result.
    * To reproduce this: Edirol UA-1 USB-MIDI interface, four buffers
    * with 45 samples each (roughly 4 ms latency), ravewave soundfont. -MN
-   */ 
+   */
 
   /* Not so sure anymore. We're losing MIDI data, if we can't keep up with
    * the speed it is generated. */
@@ -735,19 +735,19 @@ new_fluid_alsa_rawmidi_driver(fluid_settings_t* settings,
       }
     }
     break;
-  }  
+  }
   return (fluid_midi_driver_t*) dev;
-  
+
  error_recovery:
   delete_fluid_alsa_rawmidi_driver((fluid_midi_driver_t*) dev);
   return NULL;
-  
+
 }
 
 /*
  * delete_fluid_alsa_rawmidi_driver
  */
-int 
+int
 delete_fluid_alsa_rawmidi_driver(fluid_midi_driver_t* p)
 {
   fluid_alsa_rawmidi_driver_t* dev;
@@ -783,7 +783,7 @@ delete_fluid_alsa_rawmidi_driver(fluid_midi_driver_t* p)
 /*
  * fluid_alsa_midi_run
  */
-void* 
+void*
 fluid_alsa_midi_run(void* d)
 {
   int n, i;
@@ -859,7 +859,7 @@ static char* fluid_alsa_seq_full_id(char* id, char* buf, int len)
 }
 
 static char* fluid_alsa_seq_full_name(char* id, int port, char* buf, int len)
-{  
+{
   if (id != NULL) {
     if (FLUID_STRCMP(id, "pid") == 0) {
       snprintf(buf, len, "Synth input port (%d:%d)", getpid(), port);
@@ -876,8 +876,8 @@ static char* fluid_alsa_seq_full_name(char* id, int port, char* buf, int len)
 /*
  * new_fluid_alsa_seq_driver
  */
-fluid_midi_driver_t* 
-new_fluid_alsa_seq_driver(fluid_settings_t* settings, 
+fluid_midi_driver_t*
+new_fluid_alsa_seq_driver(fluid_settings_t* settings,
 			 handle_midi_event_func_t handler, void* data)
 {
   int i, err;
@@ -944,13 +944,13 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
   for (i = 0; i < count; i++) {		/* loop over file descriptors */
     if (pfd[i].events & POLLIN) { /* use only the input FDs */
       dev->pfd[dev->npfd].fd = pfd[i].fd;
-      dev->pfd[dev->npfd].events = POLLIN; 
-      dev->pfd[dev->npfd].revents = 0; 
+      dev->pfd[dev->npfd].events = POLLIN;
+      dev->pfd[dev->npfd].revents = 0;
       dev->npfd++;
     }
   }
   FLUID_FREE(pfd);
-  
+
   /* set the client name */
   snd_seq_set_client_name(dev->seq_handle, fluid_alsa_seq_full_id(id, full_id, 64));
 
@@ -962,10 +962,10 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
   fluid_settings_getint(settings, "synth.midi-channels", &midi_channels);
   dev->port_count = midi_channels / 16;
 
-  snd_seq_port_info_set_capability(port_info, 
-				   SND_SEQ_PORT_CAP_WRITE | 
+  snd_seq_port_info_set_capability(port_info,
+				   SND_SEQ_PORT_CAP_WRITE |
 				   SND_SEQ_PORT_CAP_SUBS_WRITE);
-  snd_seq_port_info_set_type(port_info, 
+  snd_seq_port_info_set_type(port_info,
 			     SND_SEQ_PORT_TYPE_APPLICATION);
   snd_seq_port_info_set_midi_channels(port_info, 16);
   snd_seq_port_info_set_port_specified(port_info, 1);
@@ -1029,7 +1029,7 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
       }
     }
     break;
-  }  
+  }
   return (fluid_midi_driver_t*) dev;
 
  error_recovery:
@@ -1040,7 +1040,7 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
 /*
  * delete_fluid_alsa_seq_driver
  */
-int 
+int
 delete_fluid_alsa_seq_driver(fluid_midi_driver_t* p)
 {
   fluid_alsa_seq_driver_t* dev;
@@ -1076,7 +1076,7 @@ delete_fluid_alsa_seq_driver(fluid_midi_driver_t* p)
 /*
  * fluid_alsa_seq_run
  */
-void* 
+void*
 fluid_alsa_seq_run(void* d)
 {
   int n, ev;
