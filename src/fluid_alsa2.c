@@ -11,7 +11,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Library General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the Free
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
@@ -30,11 +30,11 @@ typedef struct {
   float* buffers[2];
 } fluid_alsa_audio_driver_t;
 
-fluid_audio_driver_t* new_fluid_alsa_audio_driver(fluid_settings_t* settings, 
+fluid_audio_driver_t* new_fluid_alsa_audio_driver(fluid_settings_t* settings,
 						fluid_synth_t* synth);
 
-fluid_audio_driver_t* new_fluid_alsa_audio_driver2(fluid_settings_t* settings, 
-						 fluid_audio_func_t func, 
+fluid_audio_driver_t* new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
+						 fluid_audio_func_t func,
 						 void* data)
 
 void fluid_alsa_audio_driver_settings(fluid_settings_t* settings);
@@ -45,7 +45,7 @@ static int fluid_alsa_audio_set_hwparams(snd_pcm_t *handle,
 					snd_pcm_hw_params_t *params,
 					snd_pcm_access_t access);
 
-static int fluid_alsa_audio_set_swparams(snd_pcm_t *handle, 
+static int fluid_alsa_audio_set_swparams(snd_pcm_t *handle,
 					snd_pcm_sw_params_t *swparams);
 
 static int fluid_alsa_xrun_recovery(fluid_alsa_audio_driver_t *dev, int err)
@@ -57,16 +57,16 @@ fluid_alsa_audio_driver_settings(fluid_settings_t* settings)
   fluid_settings_register_str(settings, "audio.alsa.device", "default", 0, NULL, NULL);
 }
 
-fluid_audio_driver_t* 
+fluid_audio_driver_t*
 new_fluid_alsa_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
 {
-  return new_fluid_alsa_audio_driver2(settings, 
-				     (fluid_audio_func_t) fluid_synth_process, 
+  return new_fluid_alsa_audio_driver2(settings,
+				     (fluid_audio_func_t) fluid_synth_process,
 				     (void*) synth);
 }
 
 
-fluid_audio_driver_t* 
+fluid_audio_driver_t*
 new_fluid_alsa_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func, void* data)
 {
   fluid_alsa_audio_driver_t* dev = NULL;
@@ -79,7 +79,7 @@ new_fluid_alsa_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func
   dev = FLUID_NEW(fluid_alsa_audio_driver_t);
   if (dev == NULL) {
     FLUID_LOG(FLUID_ERR, "Out of memory");
-    return NULL;    
+    return NULL;
   }
   FLUID_MEMSET(dev, 0, sizeof(fluid_alsa_audio_driver_t));
 
@@ -120,9 +120,9 @@ new_fluid_alsa_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func
   }
 
  error_recovery:
-  
+
   delete_fluid_alsa_audio_driver((fluid_audio_driver_t*) dev);
-  return NULL; 
+  return NULL;
 }
 
 
@@ -139,7 +139,7 @@ static int set_hwparams(snd_pcm_t *handle,
   /* choose all parameters */
   err = snd_pcm_hw_params_any(handle, params);
   if (err < 0) {
-    printf("Broken configuration for playback: no configurations available: %s", 
+    printf("Broken configuration for playback: no configurations available: %s",
 	   snd_strerror(err));
     return err;
   }
@@ -161,7 +161,7 @@ static int set_hwparams(snd_pcm_t *handle,
   /* set the count of channels */
   err = snd_pcm_hw_params_set_channels(handle, params, channels);
   if (err < 0) {
-    printf("Channels count (%i) not available for playbacks: %s", 
+    printf("Channels count (%i) not available for playbacks: %s",
 	   channels, snd_strerror(err));
     return err;
   }
@@ -169,7 +169,7 @@ static int set_hwparams(snd_pcm_t *handle,
   /* set the stream rate */
   err = snd_pcm_hw_params_set_rate_near(handle, params, rate, 0);
   if (err < 0) {
-    printf("Rate %iHz not available for playback: %s", 
+    printf("Rate %iHz not available for playback: %s",
 	   rate, snd_strerror(err));
     return err;
   }
@@ -181,7 +181,7 @@ static int set_hwparams(snd_pcm_t *handle,
   /* set the buffer time */
   err = snd_pcm_hw_params_set_buffer_time_near(handle, params, buffer_time, &dir);
   if (err < 0) {
-    printf("Unable to set buffer time %i for playback: %s", 
+    printf("Unable to set buffer time %i for playback: %s",
 	   buffer_time, snd_strerror(err));
     return err;
   }
@@ -190,7 +190,7 @@ static int set_hwparams(snd_pcm_t *handle,
   /* set the period time */
   err = snd_pcm_hw_params_set_period_time_near(handle, params, period_time, &dir);
   if (err < 0) {
-    printf("Unable to set period time %i for playback: %s", 
+    printf("Unable to set period time %i for playback: %s",
 	   period_time, snd_strerror(err));
     return err;
   }
@@ -212,7 +212,7 @@ static int set_swparams(snd_pcm_t *handle, snd_pcm_sw_params_t *swparams)
   /* get the current swparams */
   err = snd_pcm_sw_params_current(handle, swparams);
   if (err < 0) {
-    printf("Unable to determine current swparams for playback: %s", 
+    printf("Unable to determine current swparams for playback: %s",
 	   snd_strerror(err));
     return err;
   }
@@ -220,7 +220,7 @@ static int set_swparams(snd_pcm_t *handle, snd_pcm_sw_params_t *swparams)
   /* start the transfer when the buffer is full */
   err = snd_pcm_sw_params_set_start_threshold(handle, swparams, buffer_size);
   if (err < 0) {
-    printf("Unable to set start threshold mode for playback: %s", 
+    printf("Unable to set start threshold mode for playback: %s",
 	   snd_strerror(err));
     return err;
   }
@@ -258,7 +258,7 @@ static void* fluid_alsa_audio_run(void* d)
   snd_pcm_sframes_t avail, commitres;
   snd_pcm_state_t state;
   int err, first = 1;
-  
+
   while (dev->cont) {
 
     state = snd_pcm_state(dev->handle);

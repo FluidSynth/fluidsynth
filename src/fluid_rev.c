@@ -16,7 +16,7 @@
  *                           REVERB
  */
 
-/* Denormalising: 
+/* Denormalising:
  *
  * According to music-dsp thread 'Denormalise', Pentium processors
  * have a hardware 'feature', that is of interest here, related to
@@ -76,15 +76,15 @@ void fluid_allpass_init(fluid_allpass* allpass);
 void fluid_allpass_setfeedback(fluid_allpass* allpass, fluid_real_t val);
 fluid_real_t fluid_allpass_getfeedback(fluid_allpass* allpass);
 
-void 
+void
 fluid_allpass_setbuffer(fluid_allpass* allpass, fluid_real_t *buf, int size)
 {
   allpass->bufidx = 0;
-  allpass->buffer = buf; 
+  allpass->buffer = buf;
   allpass->bufsize = size;
 }
 
-void 
+void
 fluid_allpass_init(fluid_allpass* allpass)
 {
   int i;
@@ -95,13 +95,13 @@ fluid_allpass_init(fluid_allpass* allpass)
   }
 }
 
-void 
+void
 fluid_allpass_setfeedback(fluid_allpass* allpass, fluid_real_t val)
 {
   allpass->feedback = val;
 }
 
-fluid_real_t 
+fluid_real_t
 fluid_allpass_getfeedback(fluid_allpass* allpass)
 {
   return allpass->feedback;
@@ -151,16 +151,16 @@ fluid_real_t fluid_comb_getdamp(fluid_comb* comb);
 void fluid_comb_setfeedback(fluid_comb* comb, fluid_real_t val);
 fluid_real_t fluid_comb_getfeedback(fluid_comb* comb);
 
-void 
-fluid_comb_setbuffer(fluid_comb* comb, fluid_real_t *buf, int size) 
+void
+fluid_comb_setbuffer(fluid_comb* comb, fluid_real_t *buf, int size)
 {
   comb->filterstore = 0;
   comb->bufidx = 0;
-  comb->buffer = buf; 
+  comb->buffer = buf;
   comb->bufsize = size;
 }
 
-void 
+void
 fluid_comb_init(fluid_comb* comb)
 {
   int i;
@@ -171,27 +171,27 @@ fluid_comb_init(fluid_comb* comb)
   }
 }
 
-void 
-fluid_comb_setdamp(fluid_comb* comb, fluid_real_t val) 
+void
+fluid_comb_setdamp(fluid_comb* comb, fluid_real_t val)
 {
-  comb->damp1 = val; 
+  comb->damp1 = val;
   comb->damp2 = 1 - val;
 }
 
-fluid_real_t 
-fluid_comb_getdamp(fluid_comb* comb) 
+fluid_real_t
+fluid_comb_getdamp(fluid_comb* comb)
 {
   return comb->damp1;
 }
 
-void 
-fluid_comb_setfeedback(fluid_comb* comb, fluid_real_t val) 
+void
+fluid_comb_setfeedback(fluid_comb* comb, fluid_real_t val)
 {
   comb->feedback = val;
 }
 
-fluid_real_t 
-fluid_comb_getfeedback(fluid_comb* comb) 
+fluid_real_t
+fluid_comb_getfeedback(fluid_comb* comb)
 {
   return comb->feedback;
 }
@@ -275,7 +275,7 @@ struct _fluid_revmodel_t {
   fluid_real_t width;
   fluid_real_t gain;
   /*
-   The following are all declared inline 
+   The following are all declared inline
    to remove the need for dynamic allocation
    with its subsequent error-checking messiness
   */
@@ -316,7 +316,7 @@ struct _fluid_revmodel_t {
 void fluid_revmodel_update(fluid_revmodel_t* rev);
 void fluid_revmodel_init(fluid_revmodel_t* rev);
 
-fluid_revmodel_t* 
+fluid_revmodel_t*
 new_fluid_revmodel()
 {
   fluid_revmodel_t* rev;
@@ -376,13 +376,13 @@ new_fluid_revmodel()
   return rev;
 }
 
-void 
+void
 delete_fluid_revmodel(fluid_revmodel_t* rev)
 {
   FLUID_FREE(rev);
 }
 
-void 
+void
 fluid_revmodel_init(fluid_revmodel_t* rev)
 {
   int i;
@@ -396,14 +396,14 @@ fluid_revmodel_init(fluid_revmodel_t* rev)
   }
 }
 
-void 
+void
 fluid_revmodel_reset(fluid_revmodel_t* rev)
 {
   fluid_revmodel_init(rev);
 }
 
-void 
-fluid_revmodel_processreplace(fluid_revmodel_t* rev, fluid_real_t *in, 
+void
+fluid_revmodel_processreplace(fluid_revmodel_t* rev, fluid_real_t *in,
 			     fluid_real_t *left_out, fluid_real_t *right_out)
 {
   int i, k = 0;
@@ -412,7 +412,7 @@ fluid_revmodel_processreplace(fluid_revmodel_t* rev, fluid_real_t *in,
   for (k = 0; k < FLUID_BUFSIZE; k++) {
 
     outL = outR = 0;
-    
+
     /* The original Freeverb code expects a stereo signal and 'input'
      * is set to the sum of the left and right input sample. Since
      * this code works on a mono signal, 'input' is set to twice the
@@ -438,10 +438,10 @@ fluid_revmodel_processreplace(fluid_revmodel_t* rev, fluid_real_t *in,
     left_out[k] = outL * rev->wet1 + outR * rev->wet2;
     right_out[k] = outR * rev->wet1 + outL * rev->wet2;
   }
-}  
+}
 
-void 
-fluid_revmodel_processmix(fluid_revmodel_t* rev, fluid_real_t *in, 
+void
+fluid_revmodel_processmix(fluid_revmodel_t* rev, fluid_real_t *in,
 			 fluid_real_t *left_out, fluid_real_t *right_out)
 {
   int i, k = 0;
@@ -450,7 +450,7 @@ fluid_revmodel_processmix(fluid_revmodel_t* rev, fluid_real_t *in,
   for (k = 0; k < FLUID_BUFSIZE; k++) {
 
     outL = outR = 0;
-    
+
     /* The original Freeverb code expects a stereo signal and 'input'
      * is set to the sum of the left and right input sample. Since
      * this code works on a mono signal, 'input' is set to twice the
@@ -478,7 +478,7 @@ fluid_revmodel_processmix(fluid_revmodel_t* rev, fluid_real_t *in,
   }
 }
 
-void 
+void
 fluid_revmodel_update(fluid_revmodel_t* rev)
 {
   /* Recalculate internal values after parameter change */
@@ -503,7 +503,7 @@ fluid_revmodel_update(fluid_revmodel_t* rev)
  because as you develop the reverb model, you may
  wish to take dynamic action when they are called.
 */
-void 
+void
 fluid_revmodel_setroomsize(fluid_revmodel_t* rev, fluid_real_t value)
 {
 /*   fluid_clip(value, 0.0f, 1.0f); */
@@ -511,13 +511,13 @@ fluid_revmodel_setroomsize(fluid_revmodel_t* rev, fluid_real_t value)
   fluid_revmodel_update(rev);
 }
 
-fluid_real_t 
+fluid_real_t
 fluid_revmodel_getroomsize(fluid_revmodel_t* rev)
 {
   return (rev->roomsize - offsetroom) / scaleroom;
 }
 
-void 
+void
 fluid_revmodel_setdamp(fluid_revmodel_t* rev, fluid_real_t value)
 {
 /*   fluid_clip(value, 0.0f, 1.0f); */
@@ -525,13 +525,13 @@ fluid_revmodel_setdamp(fluid_revmodel_t* rev, fluid_real_t value)
   fluid_revmodel_update(rev);
 }
 
-fluid_real_t 
+fluid_real_t
 fluid_revmodel_getdamp(fluid_revmodel_t* rev)
 {
   return rev->damp / scaledamp;
 }
 
-void 
+void
 fluid_revmodel_setlevel(fluid_revmodel_t* rev, fluid_real_t value)
 {
 /*   fluid_clip(value, 0.0f, 1.0f); */
@@ -539,13 +539,13 @@ fluid_revmodel_setlevel(fluid_revmodel_t* rev, fluid_real_t value)
 /*   fluid_revmodel_update(rev); */
 }
 
-fluid_real_t 
+fluid_real_t
 fluid_revmodel_getlevel(fluid_revmodel_t* rev)
 {
   return rev->wet / scalewet;
 }
 
-void 
+void
 fluid_revmodel_setwidth(fluid_revmodel_t* rev, fluid_real_t value)
 {
 /*   fluid_clip(value, 0.0f, 1.0f); */
@@ -553,7 +553,7 @@ fluid_revmodel_setwidth(fluid_revmodel_t* rev, fluid_real_t value)
   fluid_revmodel_update(rev);
 }
 
-fluid_real_t 
+fluid_real_t
 fluid_revmodel_getwidth(fluid_revmodel_t* rev)
 {
   return rev->width;

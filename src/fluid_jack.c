@@ -11,7 +11,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Library General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the Free
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
@@ -90,7 +90,7 @@ fluid_jack_audio_driver_settings(fluid_settings_t* settings)
 /*
  * new_fluid_alsa_audio_driver
  */
-fluid_audio_driver_t* 
+fluid_audio_driver_t*
 new_fluid_jack_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
 {
   fluid_jack_audio_driver_t* dev = NULL;
@@ -102,11 +102,11 @@ new_fluid_jack_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
   int autoconnect = 0;
   int jack_srate;
   double sample_rate;
-  
+
   dev = FLUID_NEW(fluid_jack_audio_driver_t);
   if (dev == NULL) {
     FLUID_LOG(FLUID_ERR, "Out of memory");
-    return NULL;    
+    return NULL;
   }
   FLUID_MEMSET(dev, 0, sizeof(fluid_jack_audio_driver_t));
 
@@ -115,7 +115,7 @@ new_fluid_jack_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
   /* try to become a client of the JACK server */
 
   if (fluid_settings_getstr(settings, "audio.jack.id", &client_name)
-      && (client_name != NULL) 
+      && (client_name != NULL)
       && (strlen(client_name) > 0)) {
     snprintf(name, 64, "%s", client_name);
   } else {
@@ -133,7 +133,7 @@ new_fluid_jack_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
   jack_set_sample_rate_callback(dev->client, fluid_jack_audio_driver_srate, (void*) dev);
   jack_on_shutdown(dev->client, fluid_jack_audio_driver_shutdown, (void*) dev);
 
-  /* display the current sample rate. once the client is activated 
+  /* display the current sample rate. once the client is activated
      (see below), you should rely on your own sample rate
      callback (see above) for this value.
   */
@@ -162,12 +162,12 @@ new_fluid_jack_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
 
     FLUID_MEMSET(dev->output_ports, 0, dev->num_output_ports * sizeof(jack_port_t*));
 
-    dev->output_ports[0] = jack_port_register(dev->client, "left", 
-					     JACK_DEFAULT_AUDIO_TYPE, 
+    dev->output_ports[0] = jack_port_register(dev->client, "left",
+					     JACK_DEFAULT_AUDIO_TYPE,
 					     JackPortIsOutput, 0);
-    
-    dev->output_ports[1] = jack_port_register(dev->client, "right", 
-					     JACK_DEFAULT_AUDIO_TYPE, 
+
+    dev->output_ports[1] = jack_port_register(dev->client, "right",
+					     JACK_DEFAULT_AUDIO_TYPE,
 					     JackPortIsOutput, 0);
   } else {
 
@@ -189,13 +189,13 @@ new_fluid_jack_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
 
     for (i = 0; i < dev->num_output_ports; i++) {
       sprintf(name, "l_%02d", i);
-      dev->output_ports[2 * i] = jack_port_register(dev->client, name, 
-						   JACK_DEFAULT_AUDIO_TYPE, 
+      dev->output_ports[2 * i] = jack_port_register(dev->client, name,
+						   JACK_DEFAULT_AUDIO_TYPE,
 						   JackPortIsOutput, 0);
 
       sprintf(name, "r_%02d", i);
-      dev->output_ports[2 * i + 1] = jack_port_register(dev->client, name, 
-						       JACK_DEFAULT_AUDIO_TYPE, 
+      dev->output_ports[2 * i + 1] = jack_port_register(dev->client, name,
+						       JACK_DEFAULT_AUDIO_TYPE,
 						       JackPortIsOutput, 0);
     }
 
@@ -217,13 +217,13 @@ new_fluid_jack_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
 
     for (i = 0; i < dev->num_fx_ports; i++) {
       sprintf(name, "fxl_%02d", i);
-      dev->fx_ports[2 * i] = jack_port_register(dev->client, name, 
-						JACK_DEFAULT_AUDIO_TYPE, 
+      dev->fx_ports[2 * i] = jack_port_register(dev->client, name,
+						JACK_DEFAULT_AUDIO_TYPE,
 						JackPortIsOutput, 0);
 
       sprintf(name, "fxr_%02d", i);
-      dev->fx_ports[2 * i + 1] = jack_port_register(dev->client, name, 
-						    JACK_DEFAULT_AUDIO_TYPE, 
+      dev->fx_ports[2 * i + 1] = jack_port_register(dev->client, name,
+						    JACK_DEFAULT_AUDIO_TYPE,
 						    JackPortIsOutput, 0);
     }
   }
@@ -249,7 +249,7 @@ new_fluid_jack_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
 
 
   /* FIXME: should be done by a patchbay application */
-  
+
   /* find some physical ports and connect to them */
   fluid_settings_getint (settings, "audio.jack.autoconnect", &autoconnect);
   if (autoconnect) {
@@ -257,10 +257,10 @@ new_fluid_jack_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
     if (jack_ports) {
       int err;
       int connected = 0;
-      
+
       for (i = 0; jack_ports[i] && (connected < 2); ++i) {
         err = jack_connect (dev->client, jack_port_name
-			    (connected == 0 ? dev->output_ports[0] 
+			    (connected == 0 ? dev->output_ports[0]
 			     : dev->output_ports[1]), jack_ports[i]);
         if (err) {
           FLUID_LOG(FLUID_ERR, "Error connecting jack port");
@@ -278,12 +278,12 @@ new_fluid_jack_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
   return (fluid_audio_driver_t*) dev;
 
  error_recovery:
-  
+
   delete_fluid_jack_audio_driver((fluid_audio_driver_t*) dev);
   return NULL;
 }
 
-fluid_audio_driver_t* 
+fluid_audio_driver_t*
 new_fluid_jack_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func, void* data)
 {
   fluid_jack_audio_driver_t* dev = NULL;
@@ -299,7 +299,7 @@ new_fluid_jack_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func
   dev = FLUID_NEW(fluid_jack_audio_driver_t);
   if (dev == NULL) {
     FLUID_LOG(FLUID_ERR, "Out of memory");
-    return NULL;    
+    return NULL;
   }
   FLUID_MEMSET(dev, 0, sizeof(fluid_jack_audio_driver_t));
 
@@ -310,7 +310,7 @@ new_fluid_jack_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func
   /* try to become a client of the JACK server */
 
   if (fluid_settings_getstr(settings, "audio.jack.id", &client_name)
-      && (client_name != NULL) 
+      && (client_name != NULL)
       && (strlen(client_name) > 0)) {
     snprintf(name, 64, "%s", client_name);
   } else {
@@ -328,7 +328,7 @@ new_fluid_jack_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func
   jack_set_sample_rate_callback(dev->client, fluid_jack_audio_driver_srate, (void*) dev);
   jack_on_shutdown(dev->client, fluid_jack_audio_driver_shutdown, (void*) dev);
 
-  /* display the current sample rate. once the client is activated 
+  /* display the current sample rate. once the client is activated
      (see below), you should rely on your own sample rate
      callback (see above) for this value.
   */
@@ -344,17 +344,17 @@ new_fluid_jack_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func
 		  FLUID_LOG(FLUID_PANIC, "Out of memory");
 		  goto error_recovery;
 	  }
-	  
+
 	  dev->output_bufs = FLUID_ARRAY(float*, dev->num_output_ports);
 	  if (dev->output_bufs == NULL) {
 		  FLUID_LOG(FLUID_PANIC, "Out of memory");
 		  goto error_recovery;
 	  }
-	  
+
 	  for (i = 0; i < dev->num_output_ports; i++) {
 		  sprintf(name, "out_%02d", i);
-		  dev->output_ports[i] = jack_port_register(dev->client, name, 
-							    JACK_DEFAULT_AUDIO_TYPE, 
+		  dev->output_ports[i] = jack_port_register(dev->client, name,
+							    JACK_DEFAULT_AUDIO_TYPE,
 							    JackPortIsOutput, 0);
 	  }
   }
@@ -366,17 +366,17 @@ new_fluid_jack_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func
 		  FLUID_LOG(FLUID_PANIC, "Out of memory");
 		  goto error_recovery;
 	  }
-	  
+
 	  dev->input_bufs = FLUID_ARRAY(float*, dev->num_input_ports);
 	  if (dev->input_bufs == NULL) {
 		  FLUID_LOG(FLUID_PANIC, "Out of memory");
 		  goto error_recovery;
 	  }
-	  
+
 	  for (i = 0; i < dev->num_input_ports; i++) {
 		  sprintf(name, "in_%02d", i);
-		  dev->input_ports[i] = jack_port_register(dev->client, name, 
-							   JACK_DEFAULT_AUDIO_TYPE, 
+		  dev->input_ports[i] = jack_port_register(dev->client, name,
+							   JACK_DEFAULT_AUDIO_TYPE,
 							   JackPortIsInput, 0);
 	  }
   }
@@ -396,7 +396,7 @@ new_fluid_jack_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func
 
 
   /* FIXME: should be done by a patchbay application */
-  
+
   /* find some physical ports and connect to them */
   fluid_settings_getint (settings, "audio.jack.autoconnect", &autoconnect);
   if (autoconnect) {
@@ -405,7 +405,7 @@ new_fluid_jack_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func
       if (jack_ports) {
         int err;
         int connected = 0;
-      
+
         for (i = 0; jack_ports[i] && (connected < dev->num_output_ports); ++i) {
   	  err = jack_connect (dev->client,
 	  		      jack_port_name(dev->output_ports[i]),
@@ -416,7 +416,7 @@ new_fluid_jack_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func
 	    connected++;
 	  }
         }
-    
+
         free (jack_ports);	/* free the jack port array */
       } else {
         FLUID_LOG(FLUID_WARN, "Could not connect to any physical jack ports; "
@@ -429,7 +429,7 @@ new_fluid_jack_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func
       if (jack_ports) {
         int err;
         int connected = 0;
-      
+
         for (i = 0; jack_ports[i] && (connected < dev->num_input_ports); ++i) {
 	  err = jack_connect (dev->client,
 	 		      jack_ports[i],
@@ -453,7 +453,7 @@ new_fluid_jack_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func
   return (fluid_audio_driver_t*) dev;
 
  error_recovery:
-  
+
   delete_fluid_jack_audio_driver((fluid_audio_driver_t*) dev);
   return NULL;
 }
@@ -461,10 +461,10 @@ new_fluid_jack_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func
 /*
  * delete_fluid_jack_audio_driver
  */
-int 
-delete_fluid_jack_audio_driver(fluid_audio_driver_t* p) 
+int
+delete_fluid_jack_audio_driver(fluid_audio_driver_t* p)
 {
-  fluid_jack_audio_driver_t* dev = (fluid_jack_audio_driver_t*) p;  
+  fluid_jack_audio_driver_t* dev = (fluid_jack_audio_driver_t*) p;
   int i;
 
   if (dev == NULL) {
@@ -499,7 +499,7 @@ delete_fluid_jack_audio_driver(fluid_audio_driver_t* p)
 int
 fluid_jack_audio_driver_process(jack_nframes_t nframes, void *arg)
 {
-  fluid_jack_audio_driver_t* dev = (fluid_jack_audio_driver_t*) arg;  
+  fluid_jack_audio_driver_t* dev = (fluid_jack_audio_driver_t*) arg;
 
   if (dev->fx_ports == NULL) {
     float *left;
@@ -523,22 +523,22 @@ fluid_jack_audio_driver_process(jack_nframes_t nframes, void *arg)
       dev->fx_bufs[k] = (float*) jack_port_get_buffer(dev->fx_ports[2*i+1], nframes);
     }
 
-    fluid_synth_nwrite_float(dev->synth, nframes, 
+    fluid_synth_nwrite_float(dev->synth, nframes,
 			    dev->output_bufs,
 			    dev->output_bufs + dev->num_output_ports,
 			    dev->fx_bufs,
 			    dev->fx_bufs + dev->num_fx_ports);
   }
 
-  return 0;      
+  return 0;
 }
 
 int
 fluid_jack_audio_driver_process2(jack_nframes_t nframes, void *arg)
 {
-  fluid_jack_audio_driver_t* dev = (fluid_jack_audio_driver_t*) arg;  
+  fluid_jack_audio_driver_t* dev = (fluid_jack_audio_driver_t*) arg;
   int i;
-  
+
   for (i = 0; i < dev->num_output_ports; i++) {
     dev->output_bufs[i] = (float*) jack_port_get_buffer(dev->output_ports[i], nframes);
   }
@@ -569,7 +569,7 @@ fluid_jack_audio_driver_srate(jack_nframes_t nframes, void *arg)
 void
 fluid_jack_audio_driver_shutdown(void *arg)
 {
-  fluid_jack_audio_driver_t* dev = (fluid_jack_audio_driver_t*) arg;  
+  fluid_jack_audio_driver_t* dev = (fluid_jack_audio_driver_t*) arg;
   FLUID_LOG(FLUID_ERR, "Help! Lost the connection to the JACK server");
 /*   exit (1); */
 }

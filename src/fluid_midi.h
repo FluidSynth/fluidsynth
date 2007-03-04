@@ -11,7 +11,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Library General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the Free
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
@@ -161,14 +161,14 @@ enum midi_meta_event {
   MIDI_SEQUENCER_EVENT = 0x7f
 };
 
-enum fluid_player_status 
+enum fluid_player_status
 {
   FLUID_PLAYER_READY,
   FLUID_PLAYER_PLAYING,
   FLUID_PLAYER_DONE
 };
 
-enum fluid_driver_status 
+enum fluid_driver_status
 {
   FLUID_MIDI_READY,
   FLUID_MIDI_LISTENING,
@@ -181,7 +181,7 @@ enum fluid_driver_status
  */
 
 /* From ctype.h */
-#define fluid_isascii(c)    (((c) & ~0x7f) == 0)  
+#define fluid_isascii(c)    (((c) & ~0x7f) == 0)
 
 
 
@@ -222,7 +222,7 @@ fluid_midi_event_t* fluid_track_next_event(fluid_track_t* track);
 int fluid_track_get_duration(fluid_track_t* track);
 int fluid_track_reset(fluid_track_t* track);
 
-int fluid_track_send_events(fluid_track_t* track, 
+int fluid_track_send_events(fluid_track_t* track,
 			   fluid_synth_t* synth,
 			   fluid_player_t* player,
 			   unsigned int ticks);
@@ -273,7 +273,7 @@ typedef struct {
   int uses_smpte;
   unsigned int smpte_fps;
   unsigned int smpte_res;
-  unsigned int division;       /* If uses_SMPTE == 0 then division is 
+  unsigned int division;       /* If uses_SMPTE == 0 then division is
 				  ticks per beat (quarter-note) */
   double tempo;                /* Beats per second (SI rules =) */
   int tracklen;

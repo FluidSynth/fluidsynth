@@ -11,7 +11,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Library General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the Free
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
@@ -20,7 +20,7 @@
 
 /* fluid_aufile.c
  *
- * Audio driver, outputs the audio to a file (non real-time) 
+ * Audio driver, outputs the audio to a file (non real-time)
  *
  */
 
@@ -31,9 +31,9 @@
 
 
 /** fluid_file_audio_driver_t
- * 
+ *
  * This structure should not be accessed directly. Use audio port
- * functions instead.  
+ * functions instead.
  */
 typedef struct {
 	fluid_audio_driver_t driver;
@@ -70,7 +70,7 @@ void fluid_file_audio_driver_settings(fluid_settings_t* settings)
 }
 
 
-fluid_audio_driver_t* 
+fluid_audio_driver_t*
 new_fluid_file_audio_driver(fluid_settings_t* settings,
 			    fluid_synth_t* synth)
 {
@@ -82,7 +82,7 @@ new_fluid_file_audio_driver(fluid_settings_t* settings,
 	dev = FLUID_NEW(fluid_file_audio_driver_t);
 	if (dev == NULL) {
 		FLUID_LOG(FLUID_ERR, "Out of memory");
-		return NULL;    
+		return NULL;
 	}
 	FLUID_MEMSET(dev, 0, sizeof(fluid_file_audio_driver_t));
 
@@ -125,7 +125,7 @@ new_fluid_file_audio_driver(fluid_settings_t* settings,
 int delete_fluid_file_audio_driver(fluid_audio_driver_t* p)
 {
 	fluid_file_audio_driver_t* dev = (fluid_file_audio_driver_t*) p;
-  
+
 	if (dev == NULL) {
 		return FLUID_OK;
 	}
@@ -168,7 +168,7 @@ static int fluid_file_audio_run_s16(void* d, unsigned int clock_time)
 	fluid_synth_write_s16(dev->data, dev->period_size, dev->buf, 0, 2, dev->buf, 1, 2);
 
 	for (offset = 0; offset < dev->buf_size; offset += n) {
-		
+
 		n = fwrite((char*) dev->buf + offset, 1, dev->buf_size - offset, dev->file);
 		if (n < 0) {
 			FLUID_LOG(FLUID_ERR, "Audio output file write error: %s",
@@ -182,6 +182,6 @@ static int fluid_file_audio_run_s16(void* d, unsigned int clock_time)
 	return 1;
 
  error_recovery:
-  
+
 	return 0;
 }

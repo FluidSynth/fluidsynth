@@ -11,7 +11,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Library General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the Free
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
@@ -52,15 +52,15 @@ int fluid_istream_readline(fluid_istream_t in, char* prompt, char* buf, int len)
 #if WITH_READLINE
   if (in == fluid_get_stdin()) {
     char* line;
-    
+
     line = readline(prompt);
     if (line == NULL) {
       return -1;
     }
-    
+
     snprintf(buf, len, "%s", line);
     buf[len - 1] = 0;
-    
+
     free(line);
     return 1;
   } else {
@@ -78,19 +78,19 @@ int fluid_istream_gets(fluid_istream_t in, char* buf, int len)
   int n;
 
   buf[len - 1] = 0;
-  
+
   while (--len > 0) {
     n = read(in, &c, 1);
     if (n == 0) {
       *buf++ = 0;
       return 0;
-    } 
+    }
     if (n < 0) {
       return n;
     }
     if ((c == '\n') || (c == '\r')) {
       *buf++ = 0;
-      return 1;      
+      return 1;
     }
     *buf++ = c;
   }
@@ -102,12 +102,12 @@ int fluid_istream_gets(fluid_istream_t in, char* buf, int len)
 int fluid_ostream_printf(fluid_ostream_t out, char* format, ...)
 {
   char buf[4096];
-  va_list args; 
+  va_list args;
   int len;
 
-  va_start(args, format); 
-  len = vsnprintf(buf, 4095, format, args); 
-  va_end(args); 
+  va_start(args, format);
+  len = vsnprintf(buf, 4095, format, args);
+  va_end(args);
 
   if (len <= 0) {
     printf("fluid_ostream_printf: buffer overflow");

@@ -11,7 +11,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Library General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the Free
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
@@ -30,7 +30,7 @@ void fluid_midi_driver_settings(fluid_settings_t* settings);
  * fluid_midi_driver_t
  */
 
-struct _fluid_midi_driver_t 
+struct _fluid_midi_driver_t
 {
   char* name;
   handle_midi_event_func_t handler;

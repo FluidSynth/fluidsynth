@@ -21,7 +21,7 @@
 
 #define DEBUG 1
 
-#undef WITH_PROFILING 
+#undef WITH_PROFILING
 
 #define WITHOUT_SERVER 1
 #define COREAUDIO_SUPPORT 1

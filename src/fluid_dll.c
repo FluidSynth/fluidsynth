@@ -11,7 +11,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Library General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the Free
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
@@ -43,7 +43,7 @@ void fluid_set_hinstance(void* hinstance)
   if (fluid_hinstance == NULL) {
     fluid_hinstance = (HINSTANCE) hinstance;
     FLUID_LOG(FLUID_DBG, "DLL instance = %d", (int) fluid_hinstance);
-  }	
+  }
 }
 
 void* fluid_get_hinstance(void)
@@ -61,7 +61,7 @@ static long FAR PASCAL fluid_win32_wndproc(HWND hWnd, UINT message, WPARAM wPara
   default:
     return DefWindowProc(hWnd, message, wParam, lParam);
     break;
-  } 
+  }
   return(0L);
 }
 
@@ -69,7 +69,7 @@ int fluid_win32_create_window(void)
 {
   WNDCLASS myClass;
   myClass.hCursor = LoadCursor( NULL, IDC_ARROW );
-  myClass.hIcon = NULL; 
+  myClass.hIcon = NULL;
   myClass.lpszMenuName = (LPSTR) NULL;
   myClass.lpszClassName = (LPSTR) "FluidSynth";
   myClass.hbrBackground = (HBRUSH)(COLOR_WINDOW);
@@ -82,8 +82,8 @@ int fluid_win32_create_window(void)
     return -100;
   }
   fluid_wnd = CreateWindow((LPSTR) "FluidSynth", (LPSTR) "FluidSynth", WS_OVERLAPPEDWINDOW,
-			  CW_USEDEFAULT, CW_USEDEFAULT, 400, 300, (HWND) NULL, (HMENU) NULL, 
-			  fluid_hinstance, (LPSTR) NULL);  
+			  CW_USEDEFAULT, CW_USEDEFAULT, 400, 300, (HWND) NULL, (HMENU) NULL,
+			  fluid_hinstance, (LPSTR) NULL);
   if (fluid_wnd == NULL) {
     FLUID_LOG(FLUID_ERR, "Can't create window");
     return -101;

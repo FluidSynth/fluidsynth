@@ -7,7 +7,7 @@
 #define HAVE_STDARG_H 1
 #define WORDS_BIGENDIAN 1
 
-#undef WITH_PROFILING 
+#undef WITH_PROFILING
 
 /* define to support the MidiShare driver */
 #define MIDISHARE_SUPPORT 1

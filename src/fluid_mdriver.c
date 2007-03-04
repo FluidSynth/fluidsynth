@@ -11,7 +11,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Library General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the Free
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
@@ -25,13 +25,13 @@
 /* ALSA */
 #if ALSA_SUPPORT
 fluid_midi_driver_t* new_fluid_alsa_rawmidi_driver(fluid_settings_t* settings,
-						 handle_midi_event_func_t handler, 
+						 handle_midi_event_func_t handler,
 						 void* event_handler_data);
 int delete_fluid_alsa_rawmidi_driver(fluid_midi_driver_t* p);
 void fluid_alsa_rawmidi_driver_settings(fluid_settings_t* settings);
 
 fluid_midi_driver_t* new_fluid_alsa_seq_driver(fluid_settings_t* settings,
-					     handle_midi_event_func_t handler, 
+					     handle_midi_event_func_t handler,
 					     void* event_handler_data);
 int delete_fluid_alsa_seq_driver(fluid_midi_driver_t* p);
 void fluid_alsa_seq_driver_settings(fluid_settings_t* settings);
@@ -40,7 +40,7 @@ void fluid_alsa_seq_driver_settings(fluid_settings_t* settings);
 /* OSS */
 #if OSS_SUPPORT
 fluid_midi_driver_t* new_fluid_oss_midi_driver(fluid_settings_t* settings,
-					     handle_midi_event_func_t handler, 
+					     handle_midi_event_func_t handler,
 					     void* event_handler_data);
 int delete_fluid_oss_midi_driver(fluid_midi_driver_t* p);
 void fluid_oss_midi_driver_settings(fluid_settings_t* settings);
@@ -49,7 +49,7 @@ void fluid_oss_midi_driver_settings(fluid_settings_t* settings);
 /* Windows MIDI service */
 #if WINMIDI_SUPPORT
 fluid_midi_driver_t* new_fluid_winmidi_driver(fluid_settings_t* settings,
-					    handle_midi_event_func_t handler, 
+					    handle_midi_event_func_t handler,
 					    void* event_handler_data);
 int delete_fluid_winmidi_driver(fluid_midi_driver_t* p);
 #endif
@@ -57,7 +57,7 @@ int delete_fluid_winmidi_driver(fluid_midi_driver_t* p);
 /* definitions for the MidiShare driver */
 #if MIDISHARE_SUPPORT
 fluid_midi_driver_t* new_fluid_midishare_midi_driver(fluid_settings_t* settings,
-						   void* event_handler_data, 
+						   void* event_handler_data,
 						   handle_midi_event_func_t handler);
 int delete_fluid_midishare_midi_driver(fluid_midi_driver_t* p);
 #endif
@@ -69,8 +69,8 @@ int delete_fluid_midishare_midi_driver(fluid_midi_driver_t* p);
  */
 struct fluid_mdriver_definition_t {
   char* name;
-  fluid_midi_driver_t* (*new)(fluid_settings_t* settings, 
-			     handle_midi_event_func_t event_handler, 
+  fluid_midi_driver_t* (*new)(fluid_settings_t* settings,
+			     handle_midi_event_func_t event_handler,
 			     void* event_handler_data);
   int (*free)(fluid_midi_driver_t* p);
   void (*settings)(fluid_settings_t* settings);
@@ -79,31 +79,31 @@ struct fluid_mdriver_definition_t {
 
 struct fluid_mdriver_definition_t fluid_midi_drivers[] = {
 #if OSS_SUPPORT
-  { "oss", 
-    new_fluid_oss_midi_driver, 
-    delete_fluid_oss_midi_driver, 
+  { "oss",
+    new_fluid_oss_midi_driver,
+    delete_fluid_oss_midi_driver,
     fluid_oss_midi_driver_settings },
 #endif
 #if ALSA_SUPPORT
-  { "alsa_raw", 
-    new_fluid_alsa_rawmidi_driver, 
-    delete_fluid_alsa_rawmidi_driver, 
+  { "alsa_raw",
+    new_fluid_alsa_rawmidi_driver,
+    delete_fluid_alsa_rawmidi_driver,
     fluid_alsa_rawmidi_driver_settings },
-  { "alsa_seq", 
-    new_fluid_alsa_seq_driver, 
-    delete_fluid_alsa_seq_driver, 
+  { "alsa_seq",
+    new_fluid_alsa_seq_driver,
+    delete_fluid_alsa_seq_driver,
     fluid_alsa_seq_driver_settings },
 #endif
 #if WINMIDI_SUPPORT
-  { "winmidi", 
-    new_fluid_winmidi_driver, 
-    delete_fluid_winmidi_driver, 
+  { "winmidi",
+    new_fluid_winmidi_driver,
+    delete_fluid_winmidi_driver,
     NULL },
 #endif
 #if MIDISHARE_SUPPORT
-  { "midishare", 
-    new_fluid_midishare_midi_driver, 
-    delete_fluid_midishare_midi_driver, 
+  { "midishare",
+    new_fluid_midishare_midi_driver,
+    delete_fluid_midishare_midi_driver,
     NULL },
 #endif
   { NULL, NULL, NULL, NULL }
@@ -112,7 +112,7 @@ struct fluid_mdriver_definition_t fluid_midi_drivers[] = {
 
 
 void fluid_midi_driver_settings(fluid_settings_t* settings)
-{  
+{
   int i;
 
   /* Set the default driver */
@@ -147,7 +147,7 @@ void fluid_midi_driver_settings(fluid_settings_t* settings)
     if (fluid_midi_drivers[i].settings != NULL) {
       fluid_midi_drivers[i].settings(settings);
     }
-  }  
+  }
 }
 
 
@@ -191,5 +191,5 @@ void delete_fluid_midi_driver(fluid_midi_driver_t* driver)
       fluid_midi_drivers[i].free(driver);
       return;
     }
-  }  
+  }
 }

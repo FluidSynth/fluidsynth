@@ -21,10 +21,10 @@
  * Modified by the GLib Team and others 1997-2000.  See the AUTHORS
  * file for a list of people on the GLib Team.  See the ChangeLog
  * files for a list of changes.  These files are distributed with
- * GLib at ftp://ftp.gtk.org/pub/gtk/. 
+ * GLib at ftp://ftp.gtk.org/pub/gtk/.
  */
 
-/* 
+/*
  * MT safe
  */
 
@@ -60,7 +60,7 @@ struct _fluid_hashtable_t {
    if ((3 * hash_table->size <= hash_table->nnodes) 	        \
        && (hash_table->size < HASH_TABLE_MAX_SIZE)) {		\
 	   fluid_hashtable_resize(hash_table);			\
-   } 
+   }
 
 static void fluid_hashtable_resize(fluid_hashtable_t *hash_table);
 static fluid_hashnode_t** fluid_hashtable_lookup_node(fluid_hashtable_t *hash_table, char* key);
@@ -69,7 +69,7 @@ static fluid_hashnode_t** fluid_hashtable_lookup_node(fluid_hashtable_t *hash_ta
  * new_fluid_hashtable:
  *
  * Creates a new #fluid_hashtable_t.
- * 
+ *
  * Return value: a new #fluid_hashtable_t.
  **/
 fluid_hashtable_t*
@@ -94,22 +94,22 @@ new_fluid_hashtable(fluid_hash_delete_t del)
 /**
  * delete_fluid_hashtable:
  * @hash_table: a #fluid_hashtable_t.
- * 
- * Destroys the #fluid_hashtable_t. If keys and/or values are dynamically 
+ *
+ * Destroys the #fluid_hashtable_t. If keys and/or values are dynamically
  * allocated, you should either free them first or create the #fluid_hashtable_t
- * using fluid_hashtable_new_full(). In the latter case the destroy functions 
- * you supplied will be called on all keys and values before destroying 
+ * using fluid_hashtable_new_full(). In the latter case the destroy functions
+ * you supplied will be called on all keys and values before destroying
  * the #fluid_hashtable_t.
  **/
 void
 delete_fluid_hashtable(fluid_hashtable_t *hash_table)
 {
   unsigned int i;
-  
+
   if (hash_table == NULL) {
     return;
   }
-  
+
   for (i = 0; i < hash_table->size; i++) {
     delete_fluid_hashnodes(hash_table->nodes[i], hash_table->del);
   }
@@ -123,13 +123,13 @@ static /*inline*/ fluid_hashnode_t**
 fluid_hashtable_lookup_node (fluid_hashtable_t* hash_table, char* key)
 {
   fluid_hashnode_t **node;
-  
+
   node = &hash_table->nodes[fluid_str_hash(key) % hash_table->size];
-  
+
   while (*node && (FLUID_STRCMP((*node)->key, key) != 0)) {
     node = &(*node)->next;
   }
-  
+
   return node;
 }
 
@@ -137,16 +137,16 @@ fluid_hashtable_lookup_node (fluid_hashtable_t* hash_table, char* key)
  * fluid_hashtable_lookup:
  * @hash_table: a #fluid_hashtable_t.
  * @key: the key to look up.
- * 
+ *
  * Looks up a key in a #fluid_hashtable_t.
- * 
+ *
  * Return value: the associated value, or %NULL if the key is not found.
  **/
 int
 fluid_hashtable_lookup(fluid_hashtable_t *hash_table, char* key, void** value, int* type)
 {
   fluid_hashnode_t *node;
-  
+
   node = *fluid_hashtable_lookup_node(hash_table, key);
 
   if (node) {
@@ -167,22 +167,22 @@ fluid_hashtable_lookup(fluid_hashtable_t *hash_table, char* key, void** value, i
  * @hash_table: a #fluid_hashtable_t.
  * @key: a key to insert.
  * @value: the value to associate with the key.
- * 
+ *
  * Inserts a new key and value into a #fluid_hashtable_t.
- * 
+ *
  * If the key already exists in the #fluid_hashtable_t its current value is replaced
- * with the new value. If you supplied a @value_destroy_func when creating the 
+ * with the new value. If you supplied a @value_destroy_func when creating the
  * #fluid_hashtable_t, the old value is freed using that function. If you supplied
- * a @key_destroy_func when creating the #fluid_hashtable_t, the passed key is freed 
+ * a @key_destroy_func when creating the #fluid_hashtable_t, the passed key is freed
  * using that function.
  **/
 void
 fluid_hashtable_insert(fluid_hashtable_t *hash_table, char* key, void* value, int type)
 {
   fluid_hashnode_t **node;
-  
+
   node = fluid_hashtable_lookup_node(hash_table, key);
-  
+
   if (*node) {
     (*node)->value = value;
     (*node)->type = type;
@@ -199,21 +199,21 @@ fluid_hashtable_insert(fluid_hashtable_t *hash_table, char* key, void* value, in
  * @hash_table: a #GHashTable.
  * @key: a key to insert.
  * @value: the value to associate with the key.
- * 
- * Inserts a new key and value into a #GHashTable similar to 
- * fluid_hashtable_insert(). The difference is that if the key already exists 
- * in the #GHashTable, it gets replaced by the new key. If you supplied a 
- * @value_destroy_func when creating the #GHashTable, the old value is freed 
- * using that function. If you supplied a @key_destroy_func when creating the 
- * #GHashTable, the old key is freed using that function. 
+ *
+ * Inserts a new key and value into a #GHashTable similar to
+ * fluid_hashtable_insert(). The difference is that if the key already exists
+ * in the #GHashTable, it gets replaced by the new key. If you supplied a
+ * @value_destroy_func when creating the #GHashTable, the old value is freed
+ * using that function. If you supplied a @key_destroy_func when creating the
+ * #GHashTable, the old key is freed using that function.
  **/
 void
 fluid_hashtable_replace(fluid_hashtable_t *hash_table, char* key, void* value, int type)
 {
   fluid_hashnode_t **node;
-  
+
   node = fluid_hashtable_lookup_node(hash_table, key);
-  
+
   if (*node) {
     if (hash_table->del) {
       hash_table->del((*node)->value, (*node)->type);
@@ -231,30 +231,30 @@ fluid_hashtable_replace(fluid_hashtable_t *hash_table, char* key, void* value, i
  * fluid_hashtable_remove:
  * @hash_table: a #fluid_hashtable_t.
  * @key: the key to remove.
- * 
+ *
  * Removes a key and its associated value from a #fluid_hashtable_t.
  *
  * If the #fluid_hashtable_t was created using fluid_hashtable_new_full(), the
  * key and value are freed using the supplied destroy functions, otherwise
- * you have to make sure that any dynamically allocated values are freed 
+ * you have to make sure that any dynamically allocated values are freed
  * yourself.
- * 
+ *
  * Return value: %TRUE if the key was found and removed from the #fluid_hashtable_t.
  **/
 int
 fluid_hashtable_remove (fluid_hashtable_t *hash_table, char* key)
 {
   fluid_hashnode_t **node, *dest;
-  
+
   node = fluid_hashtable_lookup_node(hash_table, key);
   if (*node) {
     dest = *node;
     (*node) = dest->next;
     delete_fluid_hashnode(dest, hash_table->del);
     hash_table->nnodes--;
-    
+
     FLUID_HASHTABLE_RESIZE (hash_table);
-    
+
     return 1;
   }
 
@@ -266,7 +266,7 @@ fluid_hashtable_remove (fluid_hashtable_t *hash_table, char* key)
  * @hash_table: a #fluid_hashtable_t.
  * @func: the function to call for each key/value pair.
  * @user_data: user data to pass to the function.
- * 
+ *
  * Calls the given function for each of the key/value pairs in the
  * #fluid_hashtable_t.  The function is passed the key and value of each
  * pair, and the given @user_data parameter.  The hash table may not
@@ -290,9 +290,9 @@ fluid_hashtable_foreach(fluid_hashtable_t *hash_table, fluid_hash_iter_t func, v
 /**
  * fluid_hashtable_size:
  * @hash_table: a #fluid_hashtable_t.
- * 
+ *
  * Returns the number of elements contained in the #fluid_hashtable_t.
- * 
+ *
  * Return value: the number of key/value pairs in the #fluid_hashtable_t.
  **/
 unsigned int
@@ -315,14 +315,14 @@ fluid_hashtable_resize(fluid_hashtable_t *hash_table)
   new_size = (new_size > HASH_TABLE_MAX_SIZE)? HASH_TABLE_MAX_SIZE : new_size;
 
 /*   printf("%s: %d: resizing, new size = %d\n", __FILE__, __LINE__, new_size); */
- 
+
   new_nodes = FLUID_ARRAY(fluid_hashnode_t*, new_size);
   FLUID_MEMSET(new_nodes, 0, new_size * sizeof(fluid_hashnode_t*));
 
   for (i = 0; i < hash_table->size; i++) {
     for (node = hash_table->nodes[i]; node; node = next) {
       next = node->next;
-      hash_val = fluid_str_hash(node->key) % new_size;      
+      hash_val = fluid_str_hash(node->key) % new_size;
       node->next = new_nodes[hash_val];
       new_nodes[hash_val] = node;
     }
@@ -337,14 +337,14 @@ static fluid_hashnode_t*
 new_fluid_hashnode(char* key, void* value, int type)
 {
   fluid_hashnode_t *hash_node;
-  
+
   hash_node = FLUID_NEW(fluid_hashnode_t);
-  
+
   hash_node->key = FLUID_STRDUP(key);
   hash_node->value = value;
   hash_node->type = type;
   hash_node->next = NULL;
-  
+
   return hash_node;
 }
 
@@ -367,7 +367,7 @@ delete_fluid_hashnodes(fluid_hashnode_t *hash_node, fluid_hash_delete_t del)
     fluid_hashnode_t *next = hash_node->next;
     delete_fluid_hashnode(hash_node, del);
     hash_node = next;
-  }  
+  }
 }
 
 

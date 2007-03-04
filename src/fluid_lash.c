@@ -11,7 +11,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Library General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the Free
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
@@ -73,7 +73,7 @@ fluid_lash_save (fluid_synth_t * synth)
   fluid_sfont_t * sfont;
   lash_config_t * config;
   char num[32];
-  
+
   sfcount = fluid_synth_sfcount (synth);
 
   config = lash_config_new ();
@@ -85,12 +85,12 @@ fluid_lash_save (fluid_synth_t * synth)
     {
       sfont = fluid_synth_get_sfont (synth, i);
       config = lash_config_new ();
-      
+
       sprintf (num, "%d", i);
-      
+
       lash_config_set_key (config, num);
       lash_config_set_value_string (config, sfont->get_name (sfont));
-      
+
       lash_send_config (fluid_lash_client, config);
     }
 }
@@ -110,11 +110,11 @@ fluid_lash_run (void * data)
   int done = 0;
   int err;
   int pending_restores = 0;
-  
+
   synth = (fluid_synth_t *) data;
-  
+
   while (!done)
-    {  
+    {
       while ( (event = lash_get_event (fluid_lash_client)) )
         {
           switch (lash_event_get_type (event))
@@ -144,7 +144,7 @@ fluid_lash_run (void * data)
 	      break;
             }
         }
-  
+
       while ( (config = lash_get_config (fluid_lash_client)) )
         {
 	  if (strcmp (lash_config_get_key (config), "soundfont count") == 0)
@@ -162,10 +162,10 @@ fluid_lash_run (void * data)
 	      lash_send_event (fluid_lash_client, event);
 	    }
         }
-      
+
       usleep (10000);
     }
-  
+
   return NULL;
 }
 
@@ -200,7 +200,7 @@ fluid_lash_save (fluid_synth_t * synth)
   fluid_sfont_t * sfont;
   cca_config_t * config;
   char num[32];
-  
+
   sfcount = fluid_synth_sfcount (synth);
 
   config = cca_config_new ();
@@ -212,12 +212,12 @@ fluid_lash_save (fluid_synth_t * synth)
     {
       sfont = fluid_synth_get_sfont (synth, i);
       config = cca_config_new ();
-      
+
       sprintf (num, "%d", i);
-      
+
       cca_config_set_key (config, num);
       cca_config_set_value_string (config, sfont->get_name (sfont));
-      
+
       cca_send_config (fluid_lash_client, config);
     }
 }
@@ -238,9 +238,9 @@ fluid_lash_run (void * data)
   int done = 0;
   int err;
   int pending_restores = 0;
-  
+
   synth = (fluid_synth_t *) data;
-  
+
   while (!done)
     {
       while ( (event = cca_get_event (fluid_lash_client)) )
@@ -272,7 +272,7 @@ fluid_lash_run (void * data)
 	      break;
             }
         }
-  
+
       while ( (config = cca_get_config (fluid_lash_client)) )
         {
 	  if (strcmp (cca_config_get_key (config), "soundfont count") == 0)
@@ -290,10 +290,10 @@ fluid_lash_run (void * data)
 	      cca_send_event (fluid_lash_client, event);
 	    }
         }
-      
+
       usleep (10000);
     }
-  
+
   return NULL;
 }
 

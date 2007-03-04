@@ -11,7 +11,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Library General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the Free
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
@@ -27,10 +27,10 @@
 #include "fluid_adriver.h"
 #include "fluid_settings.h"
 #include <windows.h>
-#include <mmsystem.h> 
+#include <mmsystem.h>
 #include <dsound.h>
 
-fluid_audio_driver_t* 
+fluid_audio_driver_t*
 new_fluid_dsound_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth);
 
 int delete_fluid_dsound_audio_driver(fluid_audio_driver_t* data);
@@ -58,11 +58,11 @@ typedef struct {
   DWORD frame_size;
 } fluid_dsound_audio_driver_t;
 
-BOOL CALLBACK 
+BOOL CALLBACK
 fluid_dsound_enum_callback(LPGUID guid, LPCTSTR description, LPCTSTR module, LPVOID context)
 {
   fluid_settings_t* settings = (fluid_settings_t*) context;
-  fluid_settings_add_option(settings, "audio.dsound.device", description);  
+  fluid_settings_add_option(settings, "audio.dsound.device", description);
 
   return TRUE;
 }
@@ -78,7 +78,7 @@ void fluid_dsound_audio_driver_settings(fluid_settings_t* settings)
 /*
  * new_fluid_dsound_audio_driver
  */
-fluid_audio_driver_t* 
+fluid_audio_driver_t*
 new_fluid_dsound_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
 {
   HRESULT hr;
@@ -86,7 +86,7 @@ new_fluid_dsound_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
   fluid_dsound_audio_driver_t* dev = NULL;
   DSCAPS caps;
   char *buf1;
-  DWORD bytes1;    
+  DWORD bytes1;
   double sample_rate;
   int periods, period_size;
 
@@ -108,7 +108,7 @@ new_fluid_dsound_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
   dev = FLUID_NEW(fluid_dsound_audio_driver_t);
   if (dev == NULL) {
     FLUID_LOG(FLUID_ERR, "Out of memory");
-    return NULL;    
+    return NULL;
   }
   FLUID_MEMSET(dev, 0, sizeof(fluid_dsound_audio_driver_t));
 
@@ -140,11 +140,11 @@ new_fluid_dsound_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
 
   dev->format->wFormatTag = WAVE_FORMAT_PCM;
   dev->format->nChannels = 2;
-  dev->format->wBitsPerSample = 16; 
+  dev->format->wBitsPerSample = 16;
   dev->format->nSamplesPerSec = (DWORD) sample_rate;
   dev->format->nBlockAlign = (WORD) dev->frame_size;
   dev->format->nAvgBytesPerSec = dev->format->nSamplesPerSec * dev->frame_size;
-  dev->format->cbSize = 0; 
+  dev->format->cbSize = 0;
 
   /* open DirectSound */
   hr = DirectSoundCreate(NULL, &dev->direct_sound, NULL);
@@ -159,7 +159,7 @@ new_fluid_dsound_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
     goto error_recovery;
   }
 
-  caps.dwSize = sizeof(caps); 
+  caps.dwSize = sizeof(caps);
   hr = IDirectSound_GetCaps(dev->direct_sound, &caps);
   if (hr != DS_OK)  {
     FLUID_LOG(FLUID_ERR, "Failed to query the device capacities");
@@ -195,8 +195,8 @@ new_fluid_dsound_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
   desc.dwSize = sizeof(DSBUFFERDESC);
   desc.dwFlags = DSBCAPS_GLOBALFOCUS | DSBCAPS_GETCURRENTPOSITION2;
   desc.lpwfxFormat = dev->format;
-  desc.dwBufferBytes = dev->queue_byte_size;  
-  desc.dwReserved = 0; 
+  desc.dwBufferBytes = dev->queue_byte_size;
+  desc.dwReserved = 0;
 
   if (caps.dwFreeHwMixingStreamingBuffers > 0) {
     desc.dwFlags |= DSBCAPS_LOCHARDWARE;
@@ -210,7 +210,7 @@ new_fluid_dsound_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
     goto error_recovery;
   }
 
-	
+
   /* Lock */
   hr = IDirectSoundBuffer_Lock(dev->sec_buffer, 0, 0, (void*) &buf1, &bytes1, 0, 0, DSBLOCK_ENTIREBUFFER);
 
@@ -253,7 +253,7 @@ int delete_fluid_dsound_audio_driver(fluid_audio_driver_t* d)
 
   /* wait till the audio thread exits */
   if (dev->thread != 0) {
-    if (WaitForSingleObject(dev->thread, 2000) != WAIT_OBJECT_0) { 
+    if (WaitForSingleObject(dev->thread, 2000) != WAIT_OBJECT_0) {
       /* on error kill the thread mercilessly */
       FLUID_LOG(FLUID_DBG, "Couldn't join the audio thread. killing it.");
       TerminateThread(dev->thread, 0);
@@ -271,10 +271,10 @@ int delete_fluid_dsound_audio_driver(fluid_audio_driver_t* d)
     IDirectSoundBuffer_Release(dev->sec_buffer);
   }
   if (dev->prim_buffer != NULL) {
-    IDirectSoundBuffer_Release(dev->prim_buffer); 
+    IDirectSoundBuffer_Release(dev->prim_buffer);
   }
   if (dev->direct_sound != NULL) {
-    IDirectSound_Release(dev->direct_sound); 
+    IDirectSound_Release(dev->direct_sound);
   }
 
   FLUID_FREE(dev);
@@ -288,7 +288,7 @@ DWORD WINAPI fluid_dsound_audio_run(LPVOID lpParameter)
 {
   fluid_dsound_audio_driver_t* dev = (fluid_dsound_audio_driver_t*) lpParameter;
   short *buf1, *buf2;
-  DWORD bytes1, bytes2;    
+  DWORD bytes1, bytes2;
   DWORD offset = 0;
   DWORD cur_position, frames, play_position, write_position, bytes;
   HRESULT res;
@@ -303,17 +303,17 @@ DWORD WINAPI fluid_dsound_audio_run(LPVOID lpParameter)
   while (dev->cont) {
 
     IDirectSoundBuffer_GetCurrentPosition(dev->sec_buffer, &play_position, &write_position);
-    
+
     if (cur_position <= play_position) {
       bytes = play_position - cur_position;
     } else if ((play_position < cur_position) && (write_position <= cur_position)) {
-      bytes = dev->queue_byte_size + play_position - cur_position;      
+      bytes = dev->queue_byte_size + play_position - cur_position;
     } else {
       bytes = 0;
     }
 
     if (bytes >= dev->buffer_byte_size) {
-	
+
       /* Lock */
       res = IDirectSoundBuffer_Lock(dev->sec_buffer, cur_position, bytes, (void*) &buf1, &bytes1, (void*) &buf2, &bytes2, 0);
 
@@ -328,17 +328,17 @@ DWORD WINAPI fluid_dsound_audio_run(LPVOID lpParameter)
 	dev->write(dev->synth, frames, buf1, 0, 2, buf1, 1, 2);
 	cur_position += frames * dev->frame_size;
       }
-      
+
       /* fill the second part of the buffer */
       if ((buf2 != NULL) && (bytes2 > 0)) {
 	frames = bytes2 / dev->frame_size;
 	dev->write(dev->synth, frames, buf2, 0, 2, buf2, 1, 2);
-	cur_position += frames * dev->frame_size;	
+	cur_position += frames * dev->frame_size;
       }
 
       /* Unlock */
       IDirectSoundBuffer_Unlock(dev->sec_buffer, buf1, bytes1, buf2, bytes2);
-            
+
       if (cur_position >= dev->queue_byte_size) {
 	cur_position -= dev->queue_byte_size;
       }

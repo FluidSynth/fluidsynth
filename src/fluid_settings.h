@@ -11,7 +11,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Library General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the Free
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
@@ -42,13 +42,13 @@ int fluid_settings_register_str(fluid_settings_t* settings, char* name, char* de
 
 /** returns 0 if the value has been resgister correctly, non-zero
     otherwise */
-int fluid_settings_register_num(fluid_settings_t* settings, char* name, double min, double max, 
+int fluid_settings_register_num(fluid_settings_t* settings, char* name, double min, double max,
 			       double def, int hints, fluid_num_update_t fun, void* data);
 
 
 /** returns 0 if the value has been resgister correctly, non-zero
     otherwise */
-int fluid_settings_register_int(fluid_settings_t* settings, char* name, int min, int max, 
+int fluid_settings_register_int(fluid_settings_t* settings, char* name, int min, int max,
 			       int def, int hints, fluid_int_update_t fun, void* data);
 
 

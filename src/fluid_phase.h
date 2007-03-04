@@ -11,7 +11,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Library General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the Free
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
@@ -37,16 +37,16 @@
 
 #define FLUID_FRACT_MAX ((double)4294967296.0)
 
-/* fluid_phase_t 
+/* fluid_phase_t
 * Purpose:
 * Playing pointer for voice playback
-* 
+*
 * When a sample is played back at a different pitch, the playing pointer in the
 * source sample will not advance exactly one sample per output sample.
 * This playing pointer is implemented using fluid_phase_t.
-* It is a 64 bit number. The higher 32 bits contain the 'index' (number of 
+* It is a 64 bit number. The higher 32 bits contain the 'index' (number of
 * the current sample), the lower 32 bits the fractional part.
-* Access is possible in two ways: 
+* Access is possible in two ways:
 * -through the 64 bit part 'b64', if the architecture supports 64 bit integers
 * -through 'index' and 'fract'
 * Note: b64 and index / fract share the same memory location!
@@ -106,7 +106,7 @@ typedef union {
  * Takes the fractional part of the argument phase and
  * calculates the corresponding position in the interpolation table.
  * The fractional position of the playing pointer is calculated with a quite high
- * resolution (32 bits). It would be unpractical to keep a set of interpolation 
+ * resolution (32 bits). It would be unpractical to keep a set of interpolation
  * coefficients for each possible fractional part...
  */
 #define fluid_phase_fract_to_tablerow(_x) \
@@ -164,7 +164,7 @@ typedef union {
 
 /* Purpose:
  * The playing pointer is _phase. How many output samples are produced, until the point _p1 in the sample is reached,
- * if _phase advances in steps of _incr? 
+ * if _phase advances in steps of _incr?
  */
 #define fluid_phase_steps(_phase,_index,_incr) \
   (int)(((double)(_index) - fluid_phase_double(_phase)) / (double)_incr)

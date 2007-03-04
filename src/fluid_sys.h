@@ -11,7 +11,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Library General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the Free
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
@@ -51,7 +51,7 @@ char *fluid_strtok (char **str, char *delim);
 
 
 /**
-  
+
   Additional debugging system, separate from the log system. This
   allows to print selected debug messages of a specific subsystem.
 
@@ -68,7 +68,7 @@ enum fluid_debug_level {
 int fluid_debug(int level, char * fmt, ...);
 
 #else
-#define fluid_debug   
+#define fluid_debug
 #endif
 
 
@@ -99,7 +99,7 @@ double fluid_utime(void);
 
 
 
-/** 
+/**
     Timers
 
  */
@@ -110,25 +110,25 @@ typedef int (*fluid_timer_callback_t)(void* data, unsigned int msec);
 
 typedef struct _fluid_timer_t fluid_timer_t;
 
-fluid_timer_t* new_fluid_timer(int msec, fluid_timer_callback_t callback, 
+fluid_timer_t* new_fluid_timer(int msec, fluid_timer_callback_t callback,
 					    void* data, int new_thread, int auto_destroy);
 
 int delete_fluid_timer(fluid_timer_t* timer);
 int fluid_timer_join(fluid_timer_t* timer);
 int fluid_timer_stop(fluid_timer_t* timer);
 
-/** 
+/**
 
-    Muteces 
+    Muteces
 
 */
 
 #if defined(MACOS9)
 typedef int fluid_mutex_t;
 #define fluid_mutex_init(_m)      { (_m) = 0; }
-#define fluid_mutex_destroy(_m) 
-#define fluid_mutex_lock(_m) 
-#define fluid_mutex_unlock(_m) 
+#define fluid_mutex_destroy(_m)
+#define fluid_mutex_lock(_m)
+#define fluid_mutex_unlock(_m)
 
 #elif defined(WIN32)
 typedef HANDLE fluid_mutex_t;
@@ -192,13 +192,13 @@ fluid_ostream_t fluid_socket_get_ostream(fluid_socket_t sock);
 
 
 
-/** 
+/**
 
-    Profiling 
+    Profiling
  */
 
 
-/** 
+/**
     Profile numbers. List all the pieces of code you want to profile
     here. Be sure to add an entry in the fluid_profile_data table in
     fluid_sys.c
@@ -260,9 +260,9 @@ extern fluid_profile_data_t fluid_profile_data[];
 
 
 
-/** 
+/**
 
-    Memory locking 
+    Memory locking
 
     Memory locking is used to avoid swapping of the large block of
     sample data.
@@ -273,13 +273,13 @@ extern fluid_profile_data_t fluid_profile_data[];
 #define fluid_munlock(_p,_n)    munlock(_p,_n)
 #else
 #define fluid_mlock(_p,_n)      0
-#define fluid_munlock(_p,_n)    
+#define fluid_munlock(_p,_n)
 #endif
 
 
-/** 
+/**
 
-    Floating point exceptions 
+    Floating point exceptions
 
     fluid_check_fpe() checks for "unnormalized numbers" and other
     exceptions of the floating point processsor.

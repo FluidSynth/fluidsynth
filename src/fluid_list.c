@@ -21,7 +21,7 @@
  * Modified by the GLib Team and others 1997-1999.  See the AUTHORS
  * file for a list of people on the GLib Team.  See the ChangeLog
  * files for a list of changes.  These files are distributed with
- * GLib at ftp://ftp.gtk.org/pub/gtk/. 
+ * GLib at ftp://ftp.gtk.org/pub/gtk/.
  */
 
 
@@ -120,10 +120,10 @@ fluid_list_remove(fluid_list_t *list, void* data)
       }
       tmp->next = NULL;
       delete_fluid_list(tmp);
-      
+
       break;
     }
-    
+
     prev = tmp;
     tmp = tmp->next;
   }
@@ -151,15 +151,15 @@ fluid_list_remove_link(fluid_list_t *list, fluid_list_t *link)
       tmp->next = NULL;
       break;
     }
-    
+
     prev = tmp;
     tmp = tmp->next;
   }
-  
+
   return list;
 }
 
-static fluid_list_t* 
+static fluid_list_t*
 fluid_list_sort_merge(fluid_list_t *l1, fluid_list_t *l2, fluid_compare_func_t compare_func)
 {
   fluid_list_t list, *l;
@@ -176,11 +176,11 @@ fluid_list_sort_merge(fluid_list_t *l1, fluid_list_t *l2, fluid_compare_func_t c
     }
   }
   l->next= l1 ? l1 : l2;
-  
+
   return list.next;
 }
 
-fluid_list_t* 
+fluid_list_t*
 fluid_list_sort(fluid_list_t *list, fluid_compare_func_t compare_func)
 {
   fluid_list_t *l1, *l2;
@@ -192,15 +192,15 @@ fluid_list_sort(fluid_list_t *list, fluid_compare_func_t compare_func)
     return list;
   }
 
-  l1 = list; 
+  l1 = list;
   l2 = list->next;
 
   while ((l2 = l2->next) != NULL) {
-    if ((l2 = l2->next) == NULL) 
+    if ((l2 = l2->next) == NULL)
       break;
     l1=l1->next;
   }
-  l2 = l1->next; 
+  l2 = l1->next;
   l1->next = NULL;
 
   return fluid_list_sort_merge(fluid_list_sort(list, compare_func),
@@ -220,7 +220,7 @@ fluid_list_last(fluid_list_t *list)
   return list;
 }
 
-int 
+int
 fluid_list_size(fluid_list_t *list)
 {
   int n = 0;
@@ -249,7 +249,7 @@ fluid_list_t* fluid_list_insert_at(fluid_list_t *list, int n, void* data)
   new_list->next = cur;
 
   if (prev) {
-    prev->next = new_list;    
+    prev->next = new_list;
     return list;
   } else {
     return new_list;

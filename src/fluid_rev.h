@@ -11,7 +11,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Library General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the Free
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
@@ -33,10 +33,10 @@ typedef struct _fluid_revmodel_t fluid_revmodel_t;
 fluid_revmodel_t* new_fluid_revmodel(void);
 void delete_fluid_revmodel(fluid_revmodel_t* rev);
 
-void fluid_revmodel_processmix(fluid_revmodel_t* rev, fluid_real_t *in, 
+void fluid_revmodel_processmix(fluid_revmodel_t* rev, fluid_real_t *in,
 			      fluid_real_t *left_out, fluid_real_t *right_out);
 
-void fluid_revmodel_processreplace(fluid_revmodel_t* rev, fluid_real_t *in, 
+void fluid_revmodel_processreplace(fluid_revmodel_t* rev, fluid_real_t *in,
 				  fluid_real_t *left_out, fluid_real_t *right_out);
 
 void fluid_revmodel_reset(fluid_revmodel_t* rev);

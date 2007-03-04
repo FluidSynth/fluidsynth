@@ -11,7 +11,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Library General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the Free
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
@@ -35,7 +35,7 @@ fluid_real_t fluid_pan_tab[FLUID_PAN_SIZE];
  *
  * Does all the initialization for this module.
  */
-void 
+void
 fluid_conversion_config(void)
 {
   int i;
@@ -44,7 +44,7 @@ fluid_conversion_config(void)
   for (i = 0; i < FLUID_CENTS_HZ_SIZE; i++) {
     fluid_ct2hz_tab[i] = (fluid_real_t) pow(2.0, (double) i / 1200.0);
   }
-  
+
   /* centibels to amplitude conversion
    * Note: SF2.01 section 8.1.3: Initial attenuation range is
    * between 0 and 144 dB. Therefore a negative attenuation is
@@ -75,7 +75,7 @@ fluid_conversion_config(void)
   fluid_convex_tab[0] = 0;
   fluid_convex_tab[127] = 1.0;
   x = log10(128.0 / 127.0);
-  
+
   /* There seems to be an error in the specs. The equations are
      implemented according to the pictures on SF2.01 page 73. */
 
@@ -95,11 +95,11 @@ fluid_conversion_config(void)
 /*
  * fluid_ct2hz
  */
-fluid_real_t 
-fluid_ct2hz_real(fluid_real_t cents) 
+fluid_real_t
+fluid_ct2hz_real(fluid_real_t cents)
 {
   if (cents < 0)
-    return (fluid_real_t) 1.0; 
+    return (fluid_real_t) 1.0;
   else if (cents < 900) {
     return (fluid_real_t) 6.875 * fluid_ct2hz_tab[(int) (cents + 300)];
   } else if (cents < 2100) {
@@ -132,8 +132,8 @@ fluid_ct2hz_real(fluid_real_t cents)
 /*
  * fluid_ct2hz
  */
-fluid_real_t 
-fluid_ct2hz(fluid_real_t cents) 
+fluid_real_t
+fluid_ct2hz(fluid_real_t cents)
 {
   /* Filter fc limit: SF2.01 page 48 # 8 */
   if (cents >= 13500){
@@ -150,15 +150,15 @@ fluid_ct2hz(fluid_real_t cents)
  * in: a value between 0 and 960, 0 is no attenuation
  * out: a value between 1 and 0
  */
-fluid_real_t 
+fluid_real_t
 fluid_cb2amp(fluid_real_t cb)
 {
-  /* 
+  /*
    * cb: an attenuation in 'centibels' (1/10 dB)
    * SF2.01 page 49 # 48 limits it to 144 dB.
    * 96 dB is reasonable for 16 bit systems, 144 would make sense for 24 bit.
    */
-  
+
   /* minimum attenuation: 0 dB */
   if (cb < 0) {
     return 1.0;
@@ -166,7 +166,7 @@ fluid_cb2amp(fluid_real_t cb)
   if (cb >= FLUID_CB_AMP_SIZE) {
     return 0.0;
   }
-  return fluid_cb2amp_tab[(int) cb]; 
+  return fluid_cb2amp_tab[(int) cb];
 }
 
 /*
@@ -178,7 +178,7 @@ fluid_cb2amp(fluid_real_t cb)
  * Note: Volume attenuation is supposed to be centibels but EMU8k/10k don't
  * follow this.  Thats the reason for separate fluid_cb2amp and fluid_atten2amp.
  */
-fluid_real_t 
+fluid_real_t
 fluid_atten2amp(fluid_real_t atten)
 {
   if (atten < 0) return 1.0;
@@ -189,7 +189,7 @@ fluid_atten2amp(fluid_real_t atten)
 /*
  * fluid_tc2sec_delay
  */
-fluid_real_t 
+fluid_real_t
 fluid_tc2sec_delay(fluid_real_t tc)
 {
   /* SF2.01 section 8.1.2 items 21, 23, 25, 33
@@ -212,7 +212,7 @@ fluid_tc2sec_delay(fluid_real_t tc)
 /*
  * fluid_tc2sec_attack
  */
-fluid_real_t 
+fluid_real_t
 fluid_tc2sec_attack(fluid_real_t tc)
 {
   /* SF2.01 section 8.1.2 items 26, 34
@@ -228,7 +228,7 @@ fluid_tc2sec_attack(fluid_real_t tc)
 /*
  * fluid_tc2sec
  */
-fluid_real_t 
+fluid_real_t
 fluid_tc2sec(fluid_real_t tc)
 {
   /* No range checking here! */
@@ -238,7 +238,7 @@ fluid_tc2sec(fluid_real_t tc)
 /*
  * fluid_tc2sec_release
  */
-fluid_real_t 
+fluid_real_t
 fluid_tc2sec_release(fluid_real_t tc)
 {
   /* SF2.01 section 8.1.2 items 30, 38
@@ -256,7 +256,7 @@ fluid_tc2sec_release(fluid_real_t tc)
  *
  * Convert from absolute cents to Hertz
  */
-fluid_real_t 
+fluid_real_t
 fluid_act2hz(fluid_real_t c)
 {
   return (fluid_real_t) (8.176 * pow(2.0, (double) c / 1200.0));
@@ -267,7 +267,7 @@ fluid_act2hz(fluid_real_t c)
  *
  * Convert from Hertz to cents
  */
-fluid_real_t 
+fluid_real_t
 fluid_hz2ct(fluid_real_t f)
 {
   return (fluid_real_t) (6900 + 1200 * log(f / 440.0) / log(2.0));
@@ -276,7 +276,7 @@ fluid_hz2ct(fluid_real_t f)
 /*
  * fluid_pan
  */
-fluid_real_t 
+fluid_real_t
 fluid_pan(fluid_real_t c, int left)
 {
   if (left) {
@@ -294,7 +294,7 @@ fluid_pan(fluid_real_t c, int left)
 /*
  * fluid_concave
  */
-fluid_real_t 
+fluid_real_t
 fluid_concave(fluid_real_t val)
 {
   if (val < 0) {
@@ -308,7 +308,7 @@ fluid_concave(fluid_real_t val)
 /*
  * fluid_convex
  */
-fluid_real_t 
+fluid_real_t
 fluid_convex(fluid_real_t val)
 {
   if (val < 0) {

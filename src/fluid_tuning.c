@@ -11,7 +11,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Library General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the Free
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
@@ -38,7 +38,7 @@ fluid_tuning_t* new_fluid_tuning(char* name, int bank, int prog)
 
   if (name != NULL) {
     tuning->name = FLUID_STRDUP(name);
-  } 
+  }
 
   tuning->bank = bank;
   tuning->prog = prog;
@@ -69,7 +69,7 @@ void fluid_tuning_set_name(fluid_tuning_t* tuning, char* name)
   }
   if (name != NULL) {
     tuning->name = FLUID_STRDUP(name);
-  }   
+  }
 }
 
 char* fluid_tuning_get_name(fluid_tuning_t* tuning)

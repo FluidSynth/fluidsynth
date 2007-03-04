@@ -11,7 +11,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Library General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the Free
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
@@ -32,9 +32,9 @@ typedef struct _fluid_chorus_t fluid_chorus_t;
  */
 fluid_chorus_t* new_fluid_chorus(fluid_real_t sample_rate);
 void delete_fluid_chorus(fluid_chorus_t* chorus);
-void fluid_chorus_processmix(fluid_chorus_t* chorus, fluid_real_t *in, 
+void fluid_chorus_processmix(fluid_chorus_t* chorus, fluid_real_t *in,
 			    fluid_real_t *left_out, fluid_real_t *right_out);
-void fluid_chorus_processreplace(fluid_chorus_t* chorus, fluid_real_t *in, 
+void fluid_chorus_processreplace(fluid_chorus_t* chorus, fluid_real_t *in,
 				fluid_real_t *left_out, fluid_real_t *right_out);
 
 int fluid_chorus_init(fluid_chorus_t* chorus);

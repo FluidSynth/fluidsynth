@@ -11,7 +11,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Library General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the Free
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
@@ -79,7 +79,7 @@ struct _fluid_midi_router_t {
   void* event_handler_data;                  /* One arg for the callback */
 
   int nr_midi_channels;                      /* For clipping the midi channel */
-  fluid_mutex_t ruletables_mutex; 
+  fluid_mutex_t ruletables_mutex;
 };
 
 struct _fluid_midi_router_rule_t {
