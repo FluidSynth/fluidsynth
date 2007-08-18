@@ -1,3 +1,9 @@
+2007-08-18    Josh Green <jgreen@users.sourceforge.net>
+
+	* src/fluid_alsa.c: Added SND_SEQ_PORT_TYPE_MIDI_GENERIC back into the
+	  ALSA sequencer port registration as it broke the use of playmidi
+	  (thanks to Dave Serls for providing a patch and pointing this out).
+
 2007-01-14    Josh Green <jgreen@users.sourceforge.net>
 
 	* src/fluid_alsa.c: Fixed evil bugs in ALSA driver where return value

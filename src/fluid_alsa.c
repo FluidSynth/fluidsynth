@@ -966,7 +966,7 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
 				   SND_SEQ_PORT_CAP_WRITE |
 				   SND_SEQ_PORT_CAP_SUBS_WRITE);
   snd_seq_port_info_set_type(port_info,
-			     SND_SEQ_PORT_TYPE_APPLICATION);
+			     SND_SEQ_PORT_TYPE_MIDI_GENERIC | SND_SEQ_PORT_TYPE_APPLICATION);
   snd_seq_port_info_set_midi_channels(port_info, 16);
   snd_seq_port_info_set_port_specified(port_info, 1);
 
