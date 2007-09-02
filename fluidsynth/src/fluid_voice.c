@@ -27,18 +27,6 @@
 #include "fluid_sys.h"
 #include "fluid_sfont.h"
 
-#ifndef WITH_FLOAT
-#ifdef ENABLE_SSE
-#error "Can't use SSE extensions with other than float type!"
-#endif
-#endif
-
-#ifdef ENABLE_SSE
-#include "fluid_sse.h"
-float interp_coeff_sse_mem[FLUID_INTERP_MAX*4+4];
-sse_t* interp_coeff_sse;
-#endif
-
 /* used for filter turn off optimization - if filter cutoff is above the
    specified value and filter q is below the other value, turn filter off */
 #define FLUID_MAX_AUDIBLE_FILTER_FC 19000.0f
@@ -52,83 +40,32 @@ sse_t* interp_coeff_sse;
 
 /* these should be the absolute minimum that FluidSynth can deal with */
 #define FLUID_MIN_LOOP_SIZE 2
-#define FLUID_MIN_LOOP_PAD 1
+#define FLUID_MIN_LOOP_PAD 0
 
 /* min vol envelope release (to stop clicks) in SoundFont timecents */
 #define FLUID_MIN_VOLENVRELEASE -7200.0f /* ~16ms */
 
-fluid_interp_coeff_t interp_coeff[FLUID_INTERP_MAX];
-fluid_interp_coeff_t interp_coeff_linear[FLUID_INTERP_MAX];
-fluid_real_t sinc_table7[7][FLUID_INTERP_MAX];
 
-/*
- * fluid_voice_config
+/* Purpose:
+ * zap_almost_zero will return a number, as long as its
+ * absolute value is over a certain threshold.  Otherwise 0.  See
+ * fluid_rev.c for documentation (denormal numbers)
  */
-void fluid_voice_config()
-{
-  int i;
-  double x;
 
-#ifdef ENABLE_SSE
-  sse_t* sse_a;
-  interp_coeff_sse = (sse_t*)FLUID_ALIGN16BYTE(&interp_coeff_sse_mem);
+# if defined(WITH_FLOAT)
+# define zap_almost_zero(_sample) \
+  ((((*(unsigned int*)&(_sample))&0x7f800000) < 0x08000000)? 0.0f : (_sample))
+# else
+/* 1e-20 was chosen as an arbitrary (small) threshold. */
+#define zap_almost_zero(_sample) ((abs(_sample) < 1e-20)? 0.0f : (_sample))
 #endif
 
-  /* Initialize the coefficients for the interpolation. The math comes
-   * from a mail, posted by Olli Niemitalo to the music-dsp mailing
-   * list (I found it in the music-dsp archives
-   * http://www.smartelectronix.com/musicdsp/).  */
 
-  for (i = 0; i < FLUID_INTERP_MAX; i++) {
-
-    x = (double) i / (double) FLUID_INTERP_MAX;
-
-    interp_coeff[i].a0 = (fluid_real_t) (x * (-0.5 + x * (1 - 0.5 * x)));
-    interp_coeff[i].a1 = (fluid_real_t) (1.0 + x * x * (1.5 * x - 2.5));
-    interp_coeff[i].a2 = (fluid_real_t) (x * (0.5 + x * (2.0 - 1.5 * x)));
-    interp_coeff[i].a3 = (fluid_real_t) (0.5 * x * x * (x - 1.0));
-
-    interp_coeff_linear[i].a0 = (fluid_real_t) (1. -x);
-    interp_coeff_linear[i].a1 = (fluid_real_t) x;
-
-#if 0
-    interp_coeff[i].c0 = (signed int) (65536.0 * x * (-0.5 + x * (1 - 0.5 * x)));
-    interp_coeff[i].c1 = (signed int) (65536.0 * (1.0 + x * x * (1.5 * x - 2.5)));
-    interp_coeff[i].c2 = (signed int) (65536.0 * x * (0.5 + x * (2.0 - 1.5 * x)));
-    interp_coeff[i].c3 = (signed int) (65536.0 * 0.5 * x * x * (x - 1.0));
-#endif
-#ifdef ENABLE_SSE
-    sse_a=&interp_coeff_sse[i];
-    sse_a->sf[0]=interp_coeff[i].a0;
-    sse_a->sf[1]=interp_coeff[i].a1;
-    sse_a->sf[2]=interp_coeff[i].a2;
-    sse_a->sf[3]=interp_coeff[i].a3;
-#endif
-}
-
-#define sinc_interp_order 7
-  /* i: Offset in terms of whole samples */
-  for (i = 0; i < sinc_interp_order; i++){
-      int ii;
-      /* ii: Offset in terms of fractional samples ('subsamples') */
-      for (ii = 0; ii < FLUID_INTERP_MAX; ii++){
-	  /* Move the origin into the center of the table */
-      double i_shifted=(double)i-((double)sinc_interp_order)/2.
-	+ (double)ii/(double)FLUID_INTERP_MAX;
-      double v=1.;
-
-	/* sinc(0) cannot be calculated straightforward (limit needed for 0/0) */
-      if (fabs(i_shifted) > 0.000001) {
-	v = (fluid_real_t)sin(i_shifted * M_PI) / (M_PI * i_shifted);
-	/* Hamming window */
-	v *= (fluid_real_t)0.5 * (1.0 + cos(2.0 * M_PI * i_shifted / (fluid_real_t)sinc_interp_order));
-      }
-      sinc_table7[i][FLUID_INTERP_MAX-ii-1]=v;
-    }
-  }
-  fluid_check_fpe("interpolation table calculation");
-}
-
+static inline void fluid_voice_effects (fluid_voice_t *voice, int count,
+				        fluid_real_t* dsp_left_buf,
+				        fluid_real_t* dsp_right_buf,
+				        fluid_real_t* dsp_reverb_buf,
+				        fluid_real_t* dsp_chorus_buf);
 /*
  * new_fluid_voice
  */
@@ -324,50 +261,17 @@ fluid_voice_write(fluid_voice_t* voice,
 		 fluid_real_t* dsp_left_buf, fluid_real_t* dsp_right_buf,
 		 fluid_real_t* dsp_reverb_buf, fluid_real_t* dsp_chorus_buf)
 {
-  unsigned int i, start, end_in_buffer;
+  unsigned int i;
   fluid_real_t incr;
   fluid_real_t fres;
+  fluid_real_t target_amp;	/* target amplitude */
+  int count;
 
   /* All variables starting with dsp_ are used by the DSP
      loop. Documented in fluid_dsp_core.c */
 
-  int dsp_phase_index;
-  unsigned int dsp_i;
-  fluid_phase_t dsp_phase, dsp_phase_incr;
-  fluid_real_t dsp_incr;
-  fluid_real_t dsp_amp, dsp_amp_incr, dsp_centernode, dsp_hist1, dsp_hist2;
-  fluid_real_t dsp_b02, dsp_b1, dsp_a1, dsp_a2;
-  fluid_real_t dsp_a1_incr;
-  fluid_real_t dsp_a2_incr;
-  fluid_real_t dsp_b02_incr;
-  fluid_real_t dsp_b1_incr;
-  fluid_interp_coeff_t* dsp_coeff;
-  unsigned int dsp_start, dsp_end;
-  int dsp_filter_coeff_incr_count;
-  int dsp_use_filter_flag = 1;
-  short* dsp_data;
+
   int dsp_interp_method = voice->interp_method;
-
-
-#ifdef ENABLE_SSE
-  float mem_for_sse_interface[5*4+4];             /* Reserve memory */
-                                                  /* +4: add four floats for 16 added bytes */
-
-  /* Align the first element */
-  sse_t* sse_n = (sse_t*) FLUID_ALIGN16BYTE(&mem_for_sse_interface);
-  sse_t* sse_a = sse_n++;                         /* The ++ operator increases
-						   * by the size of the structure! */
-  sse_t* sse_b = sse_n++;
-  sse_t* sse_c = sse_n++;
-  sse_t* sse_d = sse_n++;
-  sse_t* sse_e = sse_n++;
-  sse_t* sse_coeff;
-
-  sse_t* sse_src;
-  sse_t* sse_dest_left;
-  sse_t* sse_dest_right;
-  sse_t* sse_dest;
-#endif
 
   /* +4: add four floats for 16 added bytes */
   fluid_real_t dsp_buf_unaligned[FLUID_BUFSIZE+4];
@@ -377,40 +281,43 @@ fluid_voice_write(fluid_voice_t* voice,
 
 
   /* make sure we're playing and that we have sample data */
-  if (!_PLAYING(voice)) {
-    return FLUID_OK;
-  }
+  if (!_PLAYING(voice)) return FLUID_OK;
 
   /******************* sample **********************/
 
-  if (voice->sample == NULL) {
+  if (voice->sample == NULL)
+  {
     fluid_voice_off(voice);
     return FLUID_OK;
   }
 
-  fluid_check_fpe("voice_write startup");
+  fluid_check_fpe ("voice_write startup");
 
   /* Range checking for sample- and loop-related parameters
    * Initial phase is calculated here*/
-  fluid_voice_check_sample_sanity(voice);
+  fluid_voice_check_sample_sanity (voice);
 
   /******************* vol env **********************/
 
   env_data = &voice->volenv_data[voice->volenv_section];
 
   /* skip to the next section of the envelope if necessary */
-  while (voice->volenv_count >= env_data->count) {
+  while (voice->volenv_count >= env_data->count)
+  {
     env_data = &voice->volenv_data[++voice->volenv_section];
     voice->volenv_count = 0;
   }
 
   /* calculate the envelope value and check for valid range */
   x = env_data->coeff * voice->volenv_val + env_data->incr;
-  if (x < env_data->min) {
+  if (x < env_data->min)
+  {
     x = env_data->min;
     voice->volenv_section++;
     voice->volenv_count = 0;
-  } else if (x > env_data->max) {
+  }
+  else if (x > env_data->max)
+  {
     x = env_data->max;
     voice->volenv_section++;
     voice->volenv_count = 0;
@@ -419,19 +326,22 @@ fluid_voice_write(fluid_voice_t* voice,
   voice->volenv_val = x;
   voice->volenv_count++;
 
-  if (voice->volenv_section == FLUID_VOICE_ENVFINISHED) {
-    fluid_profile(FLUID_PROF_VOICE_RELEASE, voice->ref);
-    fluid_voice_off(voice);
+  if (voice->volenv_section == FLUID_VOICE_ENVFINISHED)
+  {
+    fluid_profile (FLUID_PROF_VOICE_RELEASE, voice->ref);
+    fluid_voice_off (voice);
     return FLUID_OK;
   }
-  fluid_check_fpe("voice_write vol env");
+
+  fluid_check_fpe ("voice_write vol env");
 
   /******************* mod env **********************/
 
   env_data = &voice->modenv_data[voice->modenv_section];
 
   /* skip to the next section of the envelope if necessary */
-  while (voice->modenv_count >= env_data->count) {
+  while (voice->modenv_count >= env_data->count)
+  {
     env_data = &voice->modenv_data[++voice->modenv_section];
     voice->modenv_count = 0;
   }
@@ -439,11 +349,14 @@ fluid_voice_write(fluid_voice_t* voice,
   /* calculate the envelope value and check for valid range */
   x = env_data->coeff * voice->modenv_val + env_data->incr;
 
-  if (x < env_data->min) {
+  if (x < env_data->min)
+  {
     x = env_data->min;
     voice->modenv_section++;
     voice->modenv_count = 0;
-  } else if (x > env_data->max) {
+  }
+  else if (x > env_data->max)
+  {
     x = env_data->max;
     voice->modenv_section++;
     voice->modenv_count = 0;
@@ -451,35 +364,47 @@ fluid_voice_write(fluid_voice_t* voice,
 
   voice->modenv_val = x;
   voice->modenv_count++;
-  fluid_check_fpe("voice_write mod env");
+  fluid_check_fpe ("voice_write mod env");
 
   /******************* mod lfo **********************/
 
-  if (voice->ticks >= voice->modlfo_delay) {
+  if (voice->ticks >= voice->modlfo_delay)
+  {
     voice->modlfo_val += voice->modlfo_incr;
-    if (voice->modlfo_val > 1.0) {
+  
+    if (voice->modlfo_val > 1.0)
+    {
       voice->modlfo_incr = -voice->modlfo_incr;
       voice->modlfo_val = (fluid_real_t) 2.0 - voice->modlfo_val;
-    } else if (voice->modlfo_val < -1.0) {
+    }
+    else if (voice->modlfo_val < -1.0)
+    {
       voice->modlfo_incr = -voice->modlfo_incr;
       voice->modlfo_val = (fluid_real_t) -2.0 - voice->modlfo_val;
     }
   }
-  fluid_check_fpe("voice_write mod LFO");
+  
+  fluid_check_fpe ("voice_write mod LFO");
 
   /******************* vib lfo **********************/
 
-  if (voice->ticks >= voice->viblfo_delay) {
+  if (voice->ticks >= voice->viblfo_delay)
+  {
     voice->viblfo_val += voice->viblfo_incr;
-    if (voice->viblfo_val > (fluid_real_t) 1.0) {
+
+    if (voice->viblfo_val > (fluid_real_t) 1.0)
+    {
       voice->viblfo_incr = -voice->viblfo_incr;
       voice->viblfo_val = (fluid_real_t) 2.0 - voice->viblfo_val;
-    } else if (voice->viblfo_val < -1.0) {
+    }
+    else if (voice->viblfo_val < -1.0)
+    {
       voice->viblfo_incr = -voice->viblfo_incr;
       voice->viblfo_val = (fluid_real_t) -2.0 - voice->viblfo_val;
     }
   }
-  fluid_check_fpe("voice_write Vib LFO");
+
+  fluid_check_fpe ("voice_write Vib LFO");
 
   /******************* amplitude **********************/
 
@@ -488,35 +413,28 @@ fluid_voice_write(fluid_voice_t* voice,
    * - amplitude envelope
    */
 
-  if (voice->volenv_section == FLUID_VOICE_ENVDELAY) {
-    /* The volume amplitude is in hold phase. No sound is produced. */
-    goto post_process;
-  } else if (voice->volenv_section == FLUID_VOICE_ENVATTACK) {
+  if (voice->volenv_section == FLUID_VOICE_ENVDELAY)
+    goto post_process;	/* The volume amplitude is in hold phase. No sound is produced. */
+
+  if (voice->volenv_section == FLUID_VOICE_ENVATTACK)
+  {
     /* the envelope is in the attack section: ramp linearly to max value.
      * A positive modlfo_to_vol should increase volume (negative attenuation).
      */
-    dsp_amp = fluid_atten2amp(voice->attenuation)
+    target_amp = fluid_atten2amp (voice->attenuation)
       * fluid_cb2amp (voice->modlfo_val * -voice->modlfo_to_vol)
       * voice->volenv_val;
-  } else {
+  }
+  else
+  {
     fluid_real_t amplitude_that_reaches_noise_floor;
     fluid_real_t amp_max;
 
-    dsp_amp = fluid_atten2amp(voice->attenuation)
+    target_amp = fluid_atten2amp (voice->attenuation)
       * fluid_cb2amp (960.0f * (1.0f - voice->volenv_val)
 		      + voice->modlfo_val * -voice->modlfo_to_vol);
 
-    /* Here we are trying to turn off a voice, if the volume has dropped
-     * low enough.
-     * Motivation:
-     *   If voices are not turned off as soon as possible, the
-     *   DSP loop burns a lot of CPU time producing sounds that no one
-     *   can hear
-     * Problem:
-     *   It would be tempting to just look at the attenuation, but then
-     *   a voice terminates as soon as it is brought to 0 with a volume
-     *   pedal (MIDI CC 7 or 11).
-     */
+    /* We turn off a voice, if the volume has dropped low enough. */
 
     /* A voice can be turned off, when an estimate for the volume
      * (upper bound) falls below that volume, that will drop the
@@ -526,19 +444,12 @@ fluid_voice_write(fluid_voice_t* voice,
     /* If the loop amplitude is known, we can use it if the voice loop is within
      * the sample loop
      */
-#if 0
-    printf("%i %i %i %i %i %i\n", voice->has_looped, voice->sample->amplitude_that_reaches_noise_floor_is_valid, voice->loopstart, voice->loopend, voice->sample->loopstart, voice->sample->loopend  );
-#endif
 
     /* Is the playing pointer already in the loop? */
-    if (voice->has_looped){
+    if (voice->has_looped)
       amplitude_that_reaches_noise_floor = voice->amplitude_that_reaches_noise_floor_loop;
-    } else {
+    else
       amplitude_that_reaches_noise_floor = voice->amplitude_that_reaches_noise_floor_nonloop;
-    };
-#if 0
-    printf("Retrieving %f\n", amplitude_that_reaches_noise_floor);
-#endif
 
     /* voice->attenuation_min is a lower boundary for the attenuation
      * now and in the future (possibly 0 in the worst case).  Now the
@@ -546,79 +457,41 @@ fluid_voice_write(fluid_voice_t* voice,
      * volenv_val can only drop):
      */
 
-    amp_max = fluid_atten2amp(voice->min_attenuation_cB) * voice->volenv_val;
-
-    /*    printf("Att min: %f Amp max: %f Limit: %f\n",voice->min_attenuation_cB,amp_max, amplitude_that_reaches_noise_floor); */
-
-//    printf("Amp max: %f\n",amp_max);
+    amp_max = fluid_atten2amp (voice->min_attenuation_cB) * voice->volenv_val;
 
     /* And if amp_max is already smaller than the known amplitude,
      * which will attenuate the sample below the noise floor, then we
      * can safely turn off the voice. Duh. */
-    if (amp_max < amplitude_that_reaches_noise_floor){
-      fluid_profile(FLUID_PROF_VOICE_RELEASE, voice->ref);
-#if 0
-      printf("Voice turned off! Amp is %f\n", amp_max);
-#endif
-      fluid_voice_off(voice);
+    if (amp_max < amplitude_that_reaches_noise_floor)
+    {
+      fluid_profile (FLUID_PROF_VOICE_RELEASE, voice->ref);
+      fluid_voice_off (voice);
       goto post_process;
     }
   }
 
-  /* At this point, dsp_amp is the desired amplitude for the voice.
-   * This value will be reached at the end of the next buffer.  So we
-   * raise the amplitude smoothly from the current voice amplitude
-   * (voice->amp) to the wanted amplitude dsp_amp.
-   *
-   * By how much do we have to increase voice->amp, so that it reaches
-   * dsp_amp, when the increment is added FLUID_BUFSIZE times? */
-  dsp_amp_incr = (dsp_amp - voice->amp) / FLUID_BUFSIZE;
+  /* Volume increment to go from voice->amp to target_amp in FLUID_BUFSIZE steps */
+  voice->amp_incr = (target_amp - voice->amp) / FLUID_BUFSIZE;
 
-  /* dsp_amp will now be fed into the DSP loop.  Use the amplitude,
-   * that came out of the last DSP loop run. */
-  dsp_amp = voice->amp;
+  fluid_check_fpe ("voice_write amplitude calculation");
 
-  fluid_check_fpe("voice_write amplitude calculation");
-  if ((dsp_amp == 0.0f) && (dsp_amp_incr == 0.0f)) {
+  /* no volume and not changing? - No need to process */
+  if ((voice->amp == 0.0f) && (voice->amp_incr == 0.0f))
     goto post_process;
-  }
 
   /* Calculate the number of samples, that the DSP loop advances
    * through the original waveform with each step in the output
    * buffer. It is the ratio between the frequencies of original
    * waveform and output waveform.*/
-  incr = fluid_ct2hz_real(voice->pitch
-		    + voice->modlfo_val * voice->modlfo_to_pitch
-		    + voice->viblfo_val * voice->viblfo_to_pitch
-		    + voice->modenv_val * voice->modenv_to_pitch) / voice->root_pitch;
+  voice->phase_incr = fluid_ct2hz_real
+    (voice->pitch + voice->modlfo_val * voice->modlfo_to_pitch
+     + voice->viblfo_val * voice->viblfo_to_pitch
+     + voice->modenv_val * voice->modenv_to_pitch) / voice->root_pitch;
 
-  /* Transfer the phase from the voice into the dsp loop parameter
-     dsp_phase */
-  fluid_phase_set(dsp_phase, voice->phase);
+  fluid_check_fpe ("voice_write phase calculation");
 
-  /* Convert the 'speed' through the original waveform to a
-   * representation 'integer part' and 'fractional part' */
-  fluid_phase_set_float(dsp_phase_incr, incr);
-  /* incr *= 1.00000000000001;  FIXME: gcc optimization problem. Quick fix. [Commented out. Don't understand the problem, PH]  */
-  fluid_check_fpe("voice_write phase calculation");
-
-  /* Check, if we are really making progress through the original
-   * sample.  If the step size is rounded to 0, the DSP loop would get
-   * stuck. */
-  /* [PH] I commented this out. The first time a voice is called, dsp_phase
-   * will be zero. Settings the fractionnal part of the phase to
-   * non-zero, causes the sample to be interpolated even if it is
-   * played a the root key (cfr. fluid_dsp_float.c:96:
-   *  if ((fluid_phase_fract(dsp_phase) == 0)))
-   *
-   * I replaced it with a check on the phase increment.
-   */
-/*   if ((fluid_phase_index(dsp_phase) == 0) && (fluid_phase_fract(dsp_phase) == 0)) { */
-/*       fluid_phase_fract(dsp_phase) = 1; */
-/*   } */
-  if ((fluid_phase_index(dsp_phase_incr) == 0) && (fluid_phase_fract(dsp_phase_incr) == 0)) {
-      fluid_phase_fract(dsp_phase_incr) = 1;
-  }
+  /* if phase_incr is not advancing, set it to the minimum fraction value (prevent stuckage) */
+  if (voice->phase_incr == 0) voice->phase_incr = 1;
 
   /*************** resonant filter ******************/
 
@@ -627,233 +500,298 @@ fluid_voice_write(fluid_voice_t* voice,
 		     + voice->modlfo_val * voice->modlfo_to_fc
 		     + voice->modenv_val * voice->modenv_to_fc);
 
-  /* Testcase for filter resonance: Use the following line, and press
-   * A3. There should be a _very_ pronounced resonant peak, which
-   * drops down, when moving the pitch bend wheel only slightly. */
-  //fres=440;voice->q_lin=100;
-
-
   /* FIXME - Still potential for a click during turn on, can we interpolate
      between 20khz cutoff and 0 Q? */
 
-  /* if filter has not yet started and filter cutoff and Q don't
-     exceed "audible" thresholds, then don't turn on the filter.
-     Once the filter is turned on, it remains on. */
-/*   if (voice->filter_startup */
-/*       && (fres > FLUID_MAX_AUDIBLE_FILTER_FC) */
-/*       && (voice->q_lin < FLUID_MIN_AUDIBLE_FILTER_Q)) { */
-/*     dsp_use_filter_flag = 0; */
-/*   } else if (fres < 5) { */
-/*     fres = 5; */
-/*   } */
-
   /* I removed the optimization of turning the filter off when the
    * resonance frequence is above the maximum frequency. Instead, the
-   * filter frequence is set to a maximum of 0.45 times the sampling
+   * filter frequency is set to a maximum of 0.45 times the sampling
    * rate. For a 44100 kHz sampling rate, this amounts to 19845
-   * Hz. The reasing is that were problems with anti-aliasing when the
+   * Hz. The reason is that there were problems with anti-aliasing when the
    * synthesizer was run at lower sampling rates. Thanks to Stephan
    * Tassart for pointing me to this bug. By turning the filter on and
    * clipping the maximum filter frequency at 0.45*srate, the filter
    * is used as an anti-aliasing filter. */
 
-  if (fres > 0.45f * voice->output_rate) {
+  if (fres > 0.45f * voice->output_rate)
     fres = 0.45f * voice->output_rate;
-  } else if (fres < 5) {
+  else if (fres < 5)
     fres = 5;
-  }
-
 
   /* if filter enabled and there is a significant frequency change.. */
-  if (/*dsp_use_filter_flag &&*/ (abs(fres - voice->last_fres) > 0.01)) {
+  if ((abs (fres - voice->last_fres) > 0.01))
+  {
+    /* The filter coefficients have to be recalculated (filter
+    * parameters have changed). Recalculation for various reasons is
+    * forced by setting last_fres to -1.  The flag filter_startup
+    * indicates, that the DSP loop runs for the first time, in this
+    * case, the filter is set directly, instead of smoothly fading
+    * between old and new settings.
+    *
+    * Those equations from Robert Bristow-Johnson's `Cookbook
+    * formulae for audio EQ biquad filter coefficients', obtained
+    * from Harmony-central.com / Computer / Programming. They are
+    * the result of the bilinear transform on an analogue filter
+    * prototype. To quote, `BLT frequency warping has been taken
+    * into account for both significant frequency relocation and for
+    * bandwidth readjustment'. */
 
-     /* The filter coefficients have to be recalculated (filter
-      * parameters have changed). Recalculation for various reasons is
-      * forced by setting last_fres to -1.  The flag filter_startup
-      * indicates, that the DSP loop runs for the first time, in this
-      * case, the filter is set directly, instead of smoothly fading
-      * between old and new settings.
-      *
-      * Those equations from Robert Bristow-Johnson's `Cookbook
-      * formulae for audio EQ biquad filter coefficients', obtained
-      * from Harmony-central.com / Computer / Programming. They are
-      * the result of the bilinear transform on an analogue filter
-      * prototype. To quote, `BLT frequency warping has been taken
-      * into account for both significant frequency relocation and for
-      * bandwidth readjustment'. */
+   fluid_real_t omega = (fluid_real_t) (2.0 * M_PI * (fres / 44100.0f));
+   fluid_real_t sin_coeff = (fluid_real_t) sin(omega);
+   fluid_real_t cos_coeff = (fluid_real_t) cos(omega);
+   fluid_real_t alpha_coeff = sin_coeff / (2.0f * voice->q_lin);
+   fluid_real_t a0_inv = 1.0f / (1.0f + alpha_coeff);
 
-     fluid_real_t omega = (fluid_real_t) (2.0 * M_PI * (fres / 44100.0f));
-     fluid_real_t sin_coeff = (fluid_real_t) sin(omega);
-     fluid_real_t cos_coeff = (fluid_real_t) cos(omega);
-     fluid_real_t alpha_coeff = sin_coeff / (2.0f * voice->q_lin);
-     fluid_real_t a0_inv = 1.0f / (1.0f + alpha_coeff);
+   /* Calculate the filter coefficients. All coefficients are
+    * normalized by a0. Think of `a1' as `a1/a0'.
+    *
+    * Here a couple of multiplications are saved by reusing common expressions.
+    * The original equations should be:
+    *  voice->b0=(1.-cos_coeff)*a0_inv*0.5*voice->filter_gain;
+    *  voice->b1=(1.-cos_coeff)*a0_inv*voice->filter_gain;
+    *  voice->b2=(1.-cos_coeff)*a0_inv*0.5*voice->filter_gain; */
 
-     /* Calculate the filter coefficients. All coefficients are
-      * normalized by a0. Think of `a1' as `a1/a0'.
-      *
-      * Here a couple of multiplications are saved by reusing common expressions.
-      * The original equations should be:
-      *  voice->b0=(1.-cos_coeff)*a0_inv*0.5*voice->filter_gain;
-      *  voice->b1=(1.-cos_coeff)*a0_inv*voice->filter_gain;
-      *  voice->b2=(1.-cos_coeff)*a0_inv*0.5*voice->filter_gain; */
+   fluid_real_t a1_temp = -2.0f * cos_coeff * a0_inv;
+   fluid_real_t a2_temp = (1.0f - alpha_coeff) * a0_inv;
+   fluid_real_t b1_temp = (1.0f - cos_coeff) * a0_inv * voice->filter_gain;
+   /* both b0 -and- b2 */
+   fluid_real_t b02_temp = b1_temp * 0.5f;
 
-     fluid_real_t a1_temp = -2.0f * cos_coeff * a0_inv;
-     fluid_real_t a2_temp = (1.0f - alpha_coeff) * a0_inv;
-     fluid_real_t b1_temp = (1.0f - cos_coeff) * a0_inv * voice->filter_gain;
-     /* both b0 -and- b2 */
-     fluid_real_t b02_temp = b1_temp * 0.5f;
-
-     if (voice->filter_startup) {
-       /* The filter is calculated, because the voice was started up.
-	* In this case set the filter coefficients without delay.
-	*/
-       voice->a1 = a1_temp;
-       voice->a2 = a2_temp;
-       voice->b02 = b02_temp;
-       voice->b1 = b1_temp;
-       voice->filter_coeff_incr_count = 0;
-       voice->filter_startup = 0;
+   if (voice->filter_startup)
+   {
+     /* The filter is calculated, because the voice was started up.
+      * In this case set the filter coefficients without delay.
+      */
+     voice->a1 = a1_temp;
+     voice->a2 = a2_temp;
+     voice->b02 = b02_temp;
+     voice->b1 = b1_temp;
+     voice->filter_coeff_incr_count = 0;
+     voice->filter_startup = 0;
 //       printf("Setting initial filter coefficients.\n");
-     } else {
+   }
+   else
+   {
 
-       /* The filter frequency is changed.  Calculate an increment
-	* factor, so that the new setting is reached after one buffer
-	* length. x_incr is added to the current value FLUID_BUFSIZE
-	* times. The length is arbitrarily chosen. Longer than one
-	* buffer will sacrifice some performance, though.  Note: If
-	* the filter is still too 'grainy', then increase this number
-	* at will.
-	*/
+      /* The filter frequency is changed.  Calculate an increment
+       * factor, so that the new setting is reached after one buffer
+       * length. x_incr is added to the current value FLUID_BUFSIZE
+       * times. The length is arbitrarily chosen. Longer than one
+       * buffer will sacrifice some performance, though.  Note: If
+       * the filter is still too 'grainy', then increase this number
+       * at will.
+       */
 
 #define FILTER_TRANSITION_SAMPLES (FLUID_BUFSIZE)
 
-       voice->a1_incr = (a1_temp - voice->a1) / FILTER_TRANSITION_SAMPLES;
-       voice->a2_incr = (a2_temp - voice->a2) / FILTER_TRANSITION_SAMPLES;
-       voice->b02_incr = (b02_temp - voice->b02) / FILTER_TRANSITION_SAMPLES;
-       voice->b1_incr = (b1_temp - voice->b1) / FILTER_TRANSITION_SAMPLES;
-       /* Have to add the increments filter_coeff_incr_count times. */
-       voice->filter_coeff_incr_count = FILTER_TRANSITION_SAMPLES;
-     }
-     voice->last_fres = fres;
-     fluid_check_fpe("voice_write filter calculation");
-   }
+      voice->a1_incr = (a1_temp - voice->a1) / FILTER_TRANSITION_SAMPLES;
+      voice->a2_incr = (a2_temp - voice->a2) / FILTER_TRANSITION_SAMPLES;
+      voice->b02_incr = (b02_temp - voice->b02) / FILTER_TRANSITION_SAMPLES;
+      voice->b1_incr = (b1_temp - voice->b1) / FILTER_TRANSITION_SAMPLES;
+      /* Have to add the increments filter_coeff_incr_count times. */
+      voice->filter_coeff_incr_count = FILTER_TRANSITION_SAMPLES;
+    }
+    voice->last_fres = fres;
+    fluid_check_fpe ("voice_write filter calculation");
+  }
 
-   /* Now we set up the variables, that go into the DSP routine. For documentation,
-    * see fluid_dsp_core.c
-    */
-   /* Sample waveform data */
-   dsp_data = voice->sample->data;
 
-   /* IIR filter sample history */
-   dsp_hist1 = voice->hist1;
-   dsp_hist2 = voice->hist2;
-
-   /* IIR filter coefficients */
-   dsp_a1 = voice->a1;
-   dsp_a2 = voice->a2;
-   dsp_b02 = voice->b02;
-   dsp_b1 = voice->b1;
-   dsp_a1_incr = voice->a1_incr;
-   dsp_a2_incr = voice->a2_incr;
-   dsp_b02_incr = voice->b02_incr;
-   dsp_b1_incr = voice->b1_incr;
-   dsp_filter_coeff_incr_count = voice->filter_coeff_incr_count;
-
-   fluid_check_fpe("voice_write DSP coefficients");
+  fluid_check_fpe ("voice_write DSP coefficients");
 
   /*********************** run the dsp chain ************************
    * The sample is mixed with the output buffer.
    * The buffer has to be filled from 0 to FLUID_BUFSIZE-1.
    * Depending on the position in the loop and the loop size, this
    * may require several runs. */
-  fluid_check_fpe("voice_write DSP processing");
+  fluid_check_fpe ("voice_write DSP processing");
 
-  if (((_SAMPLEMODE(voice) == FLUID_LOOP_UNTIL_RELEASE) && (voice->volenv_section < FLUID_VOICE_ENVRELEASE))
-      || (_SAMPLEMODE(voice) == FLUID_LOOP_DURING_RELEASE)) {
+  voice->dsp_buf = dsp_buf;
 
-    /* At which index does the loop point occur in the output buffer?
-     * This calculates the first index in the buffer, which uses
-     * sample data taken after the looparound. */
-    end_in_buffer = fluid_phase_steps(dsp_phase, voice->loopend, incr);
+  switch (voice->interp_method)
+  {
+    case FLUID_INTERP_NONE:
+      count = fluid_dsp_float_interpolate_none (voice);
+      break;
+    case FLUID_INTERP_LINEAR:
+      count = fluid_dsp_float_interpolate_linear (voice);
+      break;
+    case FLUID_INTERP_4THORDER:
+    default:
+      count = fluid_dsp_float_interpolate_4th_order (voice);
+      break;
+    case FLUID_INTERP_7THORDER:
+      count = fluid_dsp_float_interpolate_7th_order (voice);
+      break;
+  }
 
-    if (end_in_buffer >= FLUID_BUFSIZE) {
-      /* The loop occurs after the end of the buffer.
-       * Process the whole buffer in one run. */
-      dsp_start = 0;
-      dsp_end = FLUID_BUFSIZE;
-#include "fluid_dsp_core.c"
+  if (count > 0)
+    fluid_voice_effects (voice, count, dsp_left_buf, dsp_right_buf,
+			 dsp_reverb_buf, dsp_chorus_buf);
 
-    } else {
-      /* The loop occurs during the current buffer length. Note, that
-       * this method is unable to cope with a 'skipped' loop point.  *
-       * If, by means of witchcraft, evil magic or modulators, we end
-       * up beyond * the loop point, a SEGV is unavoidable.  * We
-       * can't even detect this here, because the calculations are
-       * done using * unsigned ints (only positive), and end_in_buffer
-       * would be negative * for a skipped loop point...*/
-      start = 0;
-
-      while (end_in_buffer < FLUID_BUFSIZE) {
-
-	dsp_start = start;
-	dsp_end = end_in_buffer;
-#include "fluid_dsp_core.c"
-
-	/* loop */
-	fluid_phase_sub_int(dsp_phase, voice->loopend - voice->loopstart);
-	start = end_in_buffer;
-	end_in_buffer += fluid_phase_steps(dsp_phase, voice->loopend, incr);
-      }
-      voice->has_looped=1;
-      dsp_start = start;
-      dsp_end = FLUID_BUFSIZE;
-#include "fluid_dsp_core.c"
-    }
-
-  } else {
-    /* Not looping right now. */
-
-    dsp_start = 0;
-    end_in_buffer = fluid_phase_steps(dsp_phase, voice->end, incr);
-
-    if (end_in_buffer >= FLUID_BUFSIZE) {
-      /* Run the whole buffer at once */
-      dsp_end = FLUID_BUFSIZE;
-#include "fluid_dsp_core.c"
-    } else {
-      /* The sample ends in the middle of the buffer length.
-       * Process that far, and turn the voice off.
-       */
-      dsp_end = end_in_buffer;
-#include "fluid_dsp_core.c"
+  /* turn off voice if short count (sample ended and not looping) */
+  if (count < FLUID_BUFSIZE)
+  {
       fluid_profile(FLUID_PROF_VOICE_RELEASE, voice->ref);
       fluid_voice_off(voice);
-      goto post_process;
+  }
+
+ post_process:
+  voice->ticks += FLUID_BUFSIZE;
+  fluid_check_fpe ("voice_write postprocess");
+  return FLUID_OK;
+}
+
+
+/* Purpose:
+ *
+ * - filters (applies a lowpass filter with variable cutoff frequency and quality factor)
+ * - mixes the processed sample to left and right output using the pan setting
+ * - sends the processed sample to chorus and reverb
+ *
+ * Variable description:
+ * - dsp_data: Pointer to the original waveform data
+ * - dsp_left_buf: The generated signal goes here, left channel
+ * - dsp_right_buf: right channel
+ * - dsp_reverb_buf: Send to reverb unit
+ * - dsp_chorus_buf: Send to chorus unit
+ * - dsp_a1: Coefficient for the filter
+ * - dsp_a2: same
+ * - dsp_b0: same
+ * - dsp_b1: same
+ * - dsp_b2: same
+ * - voice holds the voice structure
+ *
+ * A couple of variables are used internally, their results are discarded:
+ * - dsp_i: Index through the output buffer
+ * - dsp_phase_fractional: The fractional part of dsp_phase
+ * - dsp_coeff: A table of four coefficients, depending on the fractional phase.
+ *              Used to interpolate between samples.
+ * - dsp_process_buffer: Holds the processed signal between stages
+ * - dsp_centernode: delay line for the IIR filter
+ * - dsp_hist1: same
+ * - dsp_hist2: same
+ *
+ */
+static inline void
+fluid_voice_effects (fluid_voice_t *voice, int count,
+		     fluid_real_t* dsp_left_buf, fluid_real_t* dsp_right_buf,
+		     fluid_real_t* dsp_reverb_buf, fluid_real_t* dsp_chorus_buf)
+{
+  /* IIR filter sample history */
+  fluid_real_t dsp_hist1 = voice->hist1;
+  fluid_real_t dsp_hist2 = voice->hist2;
+
+  /* IIR filter coefficients */
+  fluid_real_t dsp_a1 = voice->a1;
+  fluid_real_t dsp_a2 = voice->a2;
+  fluid_real_t dsp_b02 = voice->b02;
+  fluid_real_t dsp_b1 = voice->b1;
+  fluid_real_t dsp_a1_incr = voice->a1_incr;
+  fluid_real_t dsp_a2_incr = voice->a2_incr;
+  fluid_real_t dsp_b02_incr = voice->b02_incr;
+  fluid_real_t dsp_b1_incr = voice->b1_incr;
+  int dsp_filter_coeff_incr_count = voice->filter_coeff_incr_count;
+
+  fluid_real_t *dsp_buf = voice->dsp_buf;
+
+  fluid_real_t dsp_centernode;
+  int dsp_i;
+
+
+  /* filter (implement the voice filter according to Soundfont standard) */
+
+  /* Check for denormal number (too close to zero) once in a
+  * while. This is not a big concern here - why would someone play a
+  * sample with an empty tail? */
+  dsp_hist1 = zap_almost_zero(dsp_hist1);
+
+  /* Two versions of the filter loop. One, while the filter is
+  * changing towards its new setting. The other, if the filter
+  * doesn't change.
+  */
+
+  if (dsp_filter_coeff_incr_count > 0)
+  {
+    /* Increment is added to each filter coefficient filter_coeff_incr_count times. */
+    for (dsp_i = 0; dsp_i < count; dsp_i++)
+    {
+      /* The filter is implemented in Direct-II form. */
+      dsp_centernode = dsp_buf[dsp_i] - dsp_a1 * dsp_hist1 - dsp_a2 * dsp_hist2;
+      dsp_buf[dsp_i] = dsp_b02 * (dsp_centernode + dsp_hist2) + dsp_b1 * dsp_hist1;
+      dsp_hist2 = dsp_hist1;
+      dsp_hist1 = dsp_centernode;
+
+      if (dsp_filter_coeff_incr_count-- > 0)
+      {
+	dsp_a1 += dsp_a1_incr;
+	dsp_a2 += dsp_a2_incr;
+	dsp_b02 += dsp_b02_incr;
+	dsp_b1 += dsp_b1_incr;
+      }
+    } /* for dsp_i */
+  }
+  else /* The filter parameters are constant.  This is duplicated to save time. */
+  {
+    for (dsp_i = 0; dsp_i < count; dsp_i++)
+    { /* The filter is implemented in Direct-II form. */
+      dsp_centernode = dsp_buf[dsp_i] - dsp_a1 * dsp_hist1 - dsp_a2 * dsp_hist2;
+      dsp_buf[dsp_i] = dsp_b02 * (dsp_centernode + dsp_hist2) + dsp_b1 * dsp_hist1;
+      dsp_hist2 = dsp_hist1;
+      dsp_hist1 = dsp_centernode;
     }
   }
 
-  /*************** finishing ******************/
-  /* copy back the state for the next cycle */
+  /* pan (Copy the signal to the left and right output buffer) The voice
+  * panning generator has a range of -500 .. 500.  If it is centered,
+  * it's close to 0.  voice->amp_left and voice->amp_right are then the
+  * same, and we can save one multiplication per voice and sample.
+  */
+  if ((-0.5 < voice->pan) && (voice->pan < 0.5))
+  {
+    /* The voice is centered. Use voice->amp_left twice. */
+    for (dsp_i = 0; dsp_i < count; dsp_i++)
+    {
+      float v = voice->amp_left * dsp_buf[dsp_i];
+      dsp_left_buf[dsp_i] += v;
+      dsp_right_buf[dsp_i] += v;
+    }
+  }
+  else	/* The voice is not centered. Stereo samples have one side zero. */
+  {
+    if (voice->amp_left != 0.0)
+    {
+      for (dsp_i = 0; dsp_i < count; dsp_i++)
+	dsp_left_buf[dsp_i] += voice->amp_left * dsp_buf[dsp_i];
+    }
+
+    if (voice->amp_right != 0.0)
+    {
+      for (dsp_i = 0; dsp_i < count; dsp_i++)
+	dsp_right_buf[dsp_i] += voice->amp_right * dsp_buf[dsp_i];
+    }
+  }
+
+  /* reverb send. Buffer may be NULL. */
+  if ((dsp_reverb_buf != NULL) && (voice->amp_reverb != 0.0))
+  {
+    for (dsp_i = 0; dsp_i < count; dsp_i++)
+      dsp_reverb_buf[dsp_i] += voice->amp_reverb * dsp_buf[dsp_i];
+  }
+
+  /* chorus send. Buffer may be NULL. */
+  if ((dsp_chorus_buf != NULL) && (voice->amp_chorus != 0))
+  {
+    for (dsp_i = 0; dsp_i < count; dsp_i++)
+      dsp_chorus_buf[dsp_i] += voice->amp_chorus * dsp_buf[dsp_i];
+  }
 
   voice->hist1 = dsp_hist1;
   voice->hist2 = dsp_hist2;
-  voice->phase = dsp_phase;
-  voice->amp = dsp_amp;
   voice->a1 = dsp_a1;
   voice->a2 = dsp_a2;
   voice->b02 = dsp_b02;
   voice->b1 = dsp_b1;
   voice->filter_coeff_incr_count = dsp_filter_coeff_incr_count;
-
-/*   if (dsp_filter_coeff_incr_count) { */
-/*     printf("ticks = %d, dsp_filter_coeff_incr_count = %d\n",  */
-/* 	   voice->ticks, dsp_filter_coeff_incr_count); */
-/*   } */
-
- post_process:
-  voice->ticks += FLUID_BUFSIZE;
-  fluid_check_fpe("voice_write postprocess");
-  return FLUID_OK;
 }
 
 /*
@@ -1874,7 +1812,7 @@ void fluid_voice_check_sample_sanity(fluid_voice_t* voice)
 
     /* make sure we have enough samples surrounding the loop */
     int min_index_loop=(int) voice->sample->start + FLUID_MIN_LOOP_PAD;
-    int max_index_loop=(int) voice->sample->end - FLUID_MIN_LOOP_PAD;
+    int max_index_loop=(int) voice->sample->end - FLUID_MIN_LOOP_PAD + 1;	/* 'end' is last valid sample, loopend can be + 1 */
     fluid_check_fpe("voice_check_sample_sanity start");
 
     if (!voice->check_sample_sanity_flag){

@@ -227,11 +227,11 @@ fluid_comb_getfeedback(fluid_comb* comb)
 #define numallpasses 4
 #define	fixedgain 0.015f
 #define scalewet 3.0f
-#define scaledamp 0.4f
+#define scaledamp 1.0f
 #define scaleroom 0.28f
 #define offsetroom 0.7f
 #define initialroom 0.5f
-#define initialdamp 0.5f
+#define initialdamp 0.2f
 #define initialwet 1
 #define initialdry 0
 #define initialwidth 1
@@ -272,6 +272,7 @@ struct _fluid_revmodel_t {
   fluid_real_t roomsize;
   fluid_real_t damp;
   fluid_real_t wet, wet1, wet2;
+  fluid_real_t level;
   fluid_real_t width;
   fluid_real_t gain;
   /*
@@ -534,15 +535,13 @@ fluid_revmodel_getdamp(fluid_revmodel_t* rev)
 void
 fluid_revmodel_setlevel(fluid_revmodel_t* rev, fluid_real_t value)
 {
-/*   fluid_clip(value, 0.0f, 1.0f); */
-/*   rev->wet = value * scalewet; */
-/*   fluid_revmodel_update(rev); */
+  rev->level = value;
 }
 
 fluid_real_t
 fluid_revmodel_getlevel(fluid_revmodel_t* rev)
 {
-  return rev->wet / scalewet;
+  return rev->level;
 }
 
 void

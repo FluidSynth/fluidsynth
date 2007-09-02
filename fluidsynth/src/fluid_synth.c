@@ -154,7 +154,7 @@ fluid_synth_init()
 
   fluid_conversion_config();
 
-  fluid_voice_config();
+  fluid_dsp_float_config();
 
   fluid_sys_config();
 
@@ -1866,6 +1866,8 @@ fluid_synth_one_block(fluid_synth_t* synth, int do_not_mix_fx_to_out)
   fluid_real_t* chorus_buf;
   int byte_size = FLUID_BUFSIZE * sizeof(fluid_real_t);
   double prof_ref = fluid_profile_ref();
+  fluid_real_t chorus_level = fluid_chorus_get_level(synth->chorus);
+  fluid_real_t reverb_level = fluid_revmodel_getlevel(synth->reverb);
 
 /*   fluid_mutex_lock(synth->busy); /\* Here comes the audio thread. Lock the synth. *\/ */
 
@@ -1924,11 +1926,20 @@ fluid_synth_one_block(fluid_synth_t* synth, int do_not_mix_fx_to_out)
       left_buf = synth->left_buf[auchan];
       right_buf = synth->right_buf[auchan];
 
+      fluid_voice_set_param(voice, GEN_CHORUSSEND,
+                            1000.0
+                          * (chorus_level - FLUID_CHORUS_DEFAULT_LEVEL) 
+                          / FLUID_CHORUS_DEFAULT_LEVEL, 1 /* ? */);
+      fluid_voice_set_param(voice, GEN_REVERBSEND,
+                            1000.0
+                          * (reverb_level - FLUID_REVERB_DEFAULT_LEVEL) 
+                          / FLUID_REVERB_DEFAULT_LEVEL, 1 /* ? */);
       fluid_voice_write(voice, left_buf, right_buf, reverb_buf, chorus_buf);
 
       fluid_profile(FLUID_PROF_ONE_BLOCK_VOICE, prof_ref_voice);
     }
   }
+
   fluid_check_fpe("Synthesis processes");
 
   fluid_profile(FLUID_PROF_ONE_BLOCK_VOICES, prof_ref);

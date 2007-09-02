@@ -99,27 +99,6 @@ if test "x$profiling_flag" = "xyes" ; then
   AC_DEFINE(WITH_PROFILING, 1, [Define to profile the DSP code])
 fi
 
-AC_ARG_ENABLE(longlong, AS_HELP_STRING([--enable-longlong],
-	[use long long integers, where appropriate (default=no)]),
-  longlong=$enableval,
-  longlong=no)
-if test "x$longlong" = "xyes" ; then 
-  AC_DEFINE(USE_LONGLONG, 1, [Define to use long long type, where appropriate])
-fi
-
-AC_ARG_ENABLE(broken-SSE, AS_HELP_STRING([--enable-broken-SSE],
-	[Use SSE instructions (not recommended and probably broken)]),
-  SSE=$enableval,
-  SSE=no)
-if test "x$SSE" = "xyes" ; then 
-  AC_DEFINE(ENABLE_SSE, 1, [Use the SSE instructions of Pentium3+ (not recommended)])
-fi
-
-AC_ARG_ENABLE(SSE, AS_HELP_STRING([--enable-SSE],
-	[Does nothing currently but tell you that this option is no more.]),
-  DUMMY_SSE=$enableval,
-  DUMMY_SSE=no)
-
 AC_ARG_ENABLE(ladspa, AS_HELP_STRING([--enable-ladspa],
 	[Include LADSPA effect unit (default=no)]),
   ENABLE_LADSPA=$enableval,
@@ -436,23 +415,6 @@ dnl   echo "FunctionCheck:         yes"
 dnl else
 dnl   echo "FunctionCheck:         no"
 dnl fi
-
-if test "${longlong}" = "yes"; then
-  echo "use long long:         yes"
-else
-  echo "use long long:         no"
-fi
-
-if test "${SSE}" = "yes"; then
-  echo "Pentium 3+ SSE:        yes (broken and may actually DECREASE performance!)"
-fi
-
-if test "${DUMMY_SSE}" = "yes"; then
-  echo "!!! --enable-SSE is no longer valid since the SSE implementation in !!!"
-  echo "!!! FluidSynth is currently rather broken.  If you are a package    !!!"
-  echo "!!! maintainer, please remove this switch! (Use --enable-broken-SSE !!!"
-  echo "!!! if you really want to end up with a broken FluidSynth :)        !!!"
-fi
 
 echo "**************************************************************"
 echo

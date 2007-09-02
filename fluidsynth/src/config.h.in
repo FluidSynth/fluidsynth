@@ -12,9 +12,6 @@
 /* Define to activate debugging message */
 #undef DEBUG
 
-/* Use the SSE instructions of Pentium3+ (not recommended) */
-#undef ENABLE_SSE
-
 /* Define to 1 if you have the <arpa/inet.h> header file. */
 #undef HAVE_ARPA_INET_H
 
@@ -152,9 +149,6 @@
 
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
-
-/* Define to use long long type, where appropriate */
-#undef USE_LONGLONG
 
 /* Version number of package */
 #undef VERSION

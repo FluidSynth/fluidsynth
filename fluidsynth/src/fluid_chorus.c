@@ -467,8 +467,8 @@ void fluid_chorus_processmix(fluid_chorus_t* chorus, fluid_real_t *in,
 
 	/* The & in chorusbuf[...] is equivalent to a division modulo
 	   MAX_SAMPLES, only faster. */
-	d_out += (chorus->chorusbuf[pos_samples & MAX_SAMPLES_ANDMASK]
-		  * chorus->sinc_table[ii][pos_subsamples]);
+	d_out += chorus->chorusbuf[pos_samples & MAX_SAMPLES_ANDMASK]
+	  * chorus->sinc_table[ii][pos_subsamples];
 
 	pos_samples--;
       };
@@ -477,7 +477,9 @@ void fluid_chorus_processmix(fluid_chorus_t* chorus, fluid_real_t *in,
       chorus->phase[i] %= (chorus->modulation_period_samples);
     } /* foreach chorus block */
 
-    d_out *= chorus->level;
+    /* average values based on number of chorus stages */
+    if (chorus->number_blocks)
+      d_out /= chorus->number_blocks;
 
     /* Add the chorus sum d_out to output */
     left_out[sample_index] += d_out;
@@ -490,7 +492,7 @@ void fluid_chorus_processmix(fluid_chorus_t* chorus, fluid_real_t *in,
   } /* foreach sample */
 }
 
-/* Duplication of code ... */
+/* Duplication of code ... (replaces sample data instead of mixing) */
 void fluid_chorus_processreplace(fluid_chorus_t* chorus, fluid_real_t *in,
 				fluid_real_t *left_out, fluid_real_t *right_out)
 {
@@ -535,7 +537,8 @@ void fluid_chorus_processreplace(fluid_chorus_t* chorus, fluid_real_t *in,
 
 	/* The & in chorusbuf[...] is equivalent to a division modulo
 	   MAX_SAMPLES, only faster. */
-	d_out += chorus->chorusbuf[pos_samples & MAX_SAMPLES_ANDMASK] * chorus->sinc_table[ii][pos_subsamples];
+	d_out += chorus->chorusbuf[pos_samples & MAX_SAMPLES_ANDMASK]
+	  * chorus->sinc_table[ii][pos_subsamples];
 
 	pos_samples--;
       };
@@ -544,9 +547,11 @@ void fluid_chorus_processreplace(fluid_chorus_t* chorus, fluid_real_t *in,
       chorus->phase[i] %= (chorus->modulation_period_samples);
     } /* foreach chorus block */
 
-    d_out *= chorus->level;
+    /* average values based on number of chorus stages */
+    if (chorus->number_blocks)
+      d_out /= chorus->number_blocks;
 
-    /* Add the chorus sum d_out to output */
+    /* Store the chorus sum d_out to output */
     left_out[sample_index] = d_out;
     right_out[sample_index] = d_out;
 

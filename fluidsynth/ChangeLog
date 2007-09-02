@@ -1,3 +1,24 @@
+2008-09-02    Josh Green <jgreen@users.sourceforge.net>
+
+	* configure.ac: Removed SSE and longlong related switches (SSE support
+	  removed for now and longlong is now always used).
+	* : Applied effect level clip patch from David Hilvert
+	  see http://fluidsynth.resonance.org/trac/ticket/2.
+	* : Applied reverb damp scaling patch from David Hilvert
+	  see http://fluidsynth.resonance.org/trac/ticket/3.
+	* src/fluid_dsp_float.c: No longer being #include'd and all interpolation
+	  functionality has been re-written as separate functions, interpolating
+	  around loops is now supported, effect (reverb/chorus/pan/filter) stuff
+	  moved to fluid_voice.c.
+	* src/fluid_phase.h: 64 bit unsigned integers are now used for phase
+	  index/fraction sample pointers, modified macros accordingly.
+	* src/fluid_voice.c: Removed SSE code, fluid_voice_init() renamed to
+	  fluid_dsp_float_init() and moved to fluid_dsp_float.c.  Effect related
+	  functionality (reverb/chorus/pan/filter) moved from fluid_dsp_float.c
+	  to fluid_voice.c.  Some code re-formatting and comment cleanup.  Loop
+	  no longer requires padding surrounding it (fixes bug related to loop
+	  point right on the end of the sample).
+
 2007-08-18    Josh Green <jgreen@users.sourceforge.net>
 
 	* src/fluid_alsa.c: Added SND_SEQ_PORT_TYPE_MIDI_GENERIC back into the
