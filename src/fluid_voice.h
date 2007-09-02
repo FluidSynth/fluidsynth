@@ -61,14 +61,6 @@ enum fluid_voice_envelope_index_t{
 };
 
 /*
- * interpolation data
- */
-typedef struct {
-	fluid_real_t a0, a1, a2, a3;
-/*  signed int c0, c1, c2, c3; */
-} fluid_interp_coeff_t;
-
-/*
  * fluid_voice_t
  */
 struct _fluid_voice_t
@@ -116,12 +108,16 @@ struct _fluid_voice_t
 	unsigned int start_time;
 	unsigned int ticks;
 
-	fluid_real_t amp;                /* the linear amplitude */
+	fluid_real_t amp;                /* current linear amplitude */
 	fluid_phase_t phase;             /* the phase of the sample wave */
 
-#if 0
-	fluid_real_t incr;               /* the phase increment for the next 64 samples [NEW, PH] */
-#endif
+	/* Temporary variables used in fluid_voice_write() */
+
+	fluid_real_t phase_incr;	/* the phase increment for the next 64 samples */
+	fluid_real_t amp_incr;		/* amplitude increment value */
+	fluid_real_t *dsp_buf;		/* buffer to store interpolated sample data to */
+
+	/* End temporary variables */
 
 	/* basic parameters */
 	fluid_real_t pitch;              /* the pitch in midicents */
@@ -134,7 +130,7 @@ struct _fluid_voice_t
 	int start;
 	int end;
 	int loopstart;
-	int loopend;
+	int loopend;	/* Note: first point following the loop (superimposed on loopstart) */
 
 	/* master gain */
 	fluid_real_t synth_gain;
@@ -282,7 +278,14 @@ fluid_real_t fluid_voice_gen_value(fluid_voice_t* voice, int num);
 
 #define FLUID_SAMPLESANITY_CHECK (1 << 0)
 #define FLUID_SAMPLESANITY_STARTUP (1 << 1)
-void fluid_voice_config(void);
 
+
+/* defined in fluid_dsp_float.c */
+
+void fluid_dsp_float_config (void);
+int fluid_dsp_float_interpolate_none (fluid_voice_t *voice);
+int fluid_dsp_float_interpolate_linear (fluid_voice_t *voice);
+int fluid_dsp_float_interpolate_4th_order (fluid_voice_t *voice);
+int fluid_dsp_float_interpolate_7th_order (fluid_voice_t *voice);
 
 #endif /* _FLUID_VOICE_H */

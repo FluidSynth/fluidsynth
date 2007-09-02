@@ -130,7 +130,9 @@ int fluid_ramsfont_sfont_iteration_next(fluid_sfont_t* sfont, fluid_preset_t* pr
 int fluid_rampreset_preset_delete(fluid_preset_t* preset)
 {
   FLUID_FREE(preset);
-  printf("TODO: free modulators\n");
+
+/* TODO: free modulators */
+
   return 0;
 }
 

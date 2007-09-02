@@ -144,9 +144,9 @@ struct _fluid_sample_t
 {
   char name[21];
   unsigned int start;
-  unsigned int end;
+  unsigned int end;	/* Note: Index of last valid sample point (contrary to SF spec) */
   unsigned int loopstart;
-  unsigned int loopend;
+  unsigned int loopend;	/* Note: first point following the loop (superimposed on loopstart) */
   unsigned int samplerate;
   int origpitch;
   int pitchadj;
