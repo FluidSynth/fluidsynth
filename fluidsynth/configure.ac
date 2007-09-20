@@ -327,6 +327,7 @@ AC_OUTPUT([
 	winbuild/fluidsynth_dll/Makefile
 	winbuild/fluidsynth_lib/Makefile
 	src/Makefile
+	src/config_win32.h
 	doc/Makefile
 	include/Makefile
 	include/fluidsynth/Makefile

@@ -17,8 +17,8 @@ CFG=fluidsynth - Win32 Debug
 !MESSAGE 
 !MESSAGE Possible choices for configuration are:
 !MESSAGE 
-!MESSAGE "fluidsynth - Win32 Release" (based on "Win32 (x86) Console Application")
 !MESSAGE "fluidsynth - Win32 Debug" (based on "Win32 (x86) Console Application")
+!MESSAGE "fluidsynth - Win32 Release" (based on "Win32 (x86) Console Application")
 !MESSAGE 
 
 # Begin Project
@@ -26,65 +26,65 @@ CFG=fluidsynth - Win32 Debug
 # PROP Scc_ProjName ""
 # PROP Scc_LocalPath ""
 CPP=cl.exe
+MTL=midl.exe
 RSC=rc.exe
 
-!IF  "$(CFG)" == "fluidsynth - Win32 Release"
-
-# PROP BASE Use_MFC 0
-# PROP BASE Use_Debug_Libraries 0
-# PROP BASE Output_Dir "Release"
-# PROP BASE Intermediate_Dir "Release"
-# PROP BASE Target_Dir ""
-# PROP Use_MFC 0
-# PROP Use_Debug_Libraries 0
-# PROP Output_Dir "Release"
-# PROP Intermediate_Dir "Release"
-# PROP Ignore_Export_Lib 0
-# PROP Target_Dir ""
-# ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
-# ADD CPP /nologo /MD /W3 /GX /O2 /I "..\..\include" /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
-# ADD BASE RSC /l 0x409 /d "NDEBUG"
-# ADD RSC /l 0x409 /d "NDEBUG"
-BSC32=bscmake.exe
-# ADD BASE BSC32 /nologo
-# ADD BSC32 /nologo
-LINK32=link.exe
-# ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /machine:I386
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib dsound.lib /nologo /subsystem:console /machine:I386 /out:"../fluidsynth.exe"
-
-!ELSEIF  "$(CFG)" == "fluidsynth - Win32 Debug"
+!IF  "$(CFG)" == "fluidsynth - Win32 Debug"
 
 # PROP BASE Use_MFC 0
 # PROP BASE Use_Debug_Libraries 1
-# PROP BASE Output_Dir "Debug"
-# PROP BASE Intermediate_Dir "Debug"
+# PROP BASE Output_Dir ".\Debug"
+# PROP BASE Intermediate_Dir ".\Debug"
 # PROP BASE Target_Dir ""
 # PROP Use_MFC 0
 # PROP Use_Debug_Libraries 1
-# PROP Output_Dir "Debug"
-# PROP Intermediate_Dir "Debug"
-# PROP Ignore_Export_Lib 0
+# PROP Output_Dir ".\Debug"
+# PROP Intermediate_Dir ".\Debug"
 # PROP Target_Dir ""
-# ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ /c
-# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "..\..\include" /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ /c
-# ADD BASE RSC /l 0x409 /d "_DEBUG"
-# ADD RSC /l 0x409 /d "_DEBUG"
+# ADD BASE CPP /nologo /MDd /I "..\..\include" /Zi /W3 /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /Fp".\Debug\fluidsynth.pch" /Fo".\Debug\" /Fd".\Debug\" /GZ /c 
+# ADD CPP /nologo /MDd /I "..\..\include" /Zi /W3 /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /Fp".\Debug\fluidsynth.pch" /Fo".\Debug\" /Fd".\Debug\" /GZ /c 
+# ADD BASE MTL /tlb ".\Debug/fluidsynth.tlb" /win32 
+# ADD MTL /tlb ".\Debug/fluidsynth.tlb" /win32 
+# ADD BASE RSC /l 1033 /d "_DEBUG" 
+# ADD RSC /l 1033 /d "_DEBUG" 
 BSC32=bscmake.exe
-# ADD BASE BSC32 /nologo
-# ADD BSC32 /nologo
+# ADD BASE BSC32 
+# ADD BSC32 
 LINK32=link.exe
-# ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib dsound.lib winmm.lib /nologo /subsystem:console /debug /machine:I386 /out:"../fluidsynth_debug.exe" /pdbtype:sept
+# ADD BASE LINK32 odbc32.lib odbccp32.lib dsound.lib winmm.lib /nologo /out:"../fluidsynth_debug.exe" /incremental:no /debug /pdb:".\Debug/fluidsynth_debug.pdb" /pdbtype:sept /subsystem:console /machine:ix86 
+# ADD LINK32 odbc32.lib odbccp32.lib dsound.lib winmm.lib /nologo /out:"../fluidsynth_debug.exe" /incremental:no /debug /pdb:".\Debug/fluidsynth_debug.pdb" /pdbtype:sept /subsystem:console /machine:ix86 
 
-!ENDIF 
+!ELSEIF  "$(CFG)" == "fluidsynth - Win32 Release"
+
+# PROP BASE Use_MFC 0
+# PROP BASE Use_Debug_Libraries 0
+# PROP BASE Output_Dir ".\Release"
+# PROP BASE Intermediate_Dir ".\Release"
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 0
+# PROP Use_Debug_Libraries 0
+# PROP Output_Dir ".\Release"
+# PROP Intermediate_Dir ".\Release"
+# PROP Target_Dir ""
+# ADD BASE CPP /nologo /MD /I "..\..\include" /W3 /O2 /Ob1 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /GF /Gy /YX /Fo".\Release\" /Fd".\Release\" /c 
+# ADD CPP /nologo /MD /I "..\..\include" /W3 /O2 /Ob1 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /GF /Gy /YX /Fo".\Release\" /Fd".\Release\" /c 
+# ADD BASE MTL /tlb ".\Release/fluidsynth.tlb" /win32 
+# ADD MTL /tlb ".\Release/fluidsynth.tlb" /win32 
+# ADD BASE RSC /l 1033 /d "NDEBUG" 
+# ADD RSC /l 1033 /d "NDEBUG" 
+BSC32=bscmake.exe
+# ADD BASE BSC32 
+# ADD BSC32 
+LINK32=link.exe
+# ADD BASE LINK32 odbc32.lib odbccp32.lib dsound.lib /nologo /out:"../fluidsynth.exe" /incremental:no /pdb:".\Release/fluidsynth.pdb" /pdbtype:sept /subsystem:console /machine:ix86 
+# ADD LINK32 odbc32.lib odbccp32.lib dsound.lib /nologo /out:"../fluidsynth.exe" /incremental:no /pdb:".\Release/fluidsynth.pdb" /pdbtype:sept /subsystem:console /machine:ix86 
+
+!ENDIF
 
 # Begin Target
 
-# Name "fluidsynth - Win32 Release"
 # Name "fluidsynth - Win32 Debug"
-# Begin Source File
-
-SOURCE=..\..\src\fluidsynth.c
-# End Source File
+# Name "fluidsynth - Win32 Release"
 # End Target
 # End Project
+

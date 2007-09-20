@@ -180,8 +180,4 @@ static int fluid_file_audio_run_s16(void* d, unsigned int clock_time)
 	dev->samples += dev->period_size;
 
 	return 1;
-
- error_recovery:
-
-	return 0;
 }

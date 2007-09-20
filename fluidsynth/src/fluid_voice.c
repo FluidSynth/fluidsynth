@@ -696,7 +696,7 @@ fluid_voice_effects (fluid_voice_t *voice, int count,
 
   fluid_real_t dsp_centernode;
   int dsp_i;
-
+  float v;
 
   /* filter (implement the voice filter according to Soundfont standard) */
 
@@ -751,7 +751,7 @@ fluid_voice_effects (fluid_voice_t *voice, int count,
     /* The voice is centered. Use voice->amp_left twice. */
     for (dsp_i = 0; dsp_i < count; dsp_i++)
     {
-      float v = voice->amp_left * dsp_buf[dsp_i];
+      v = voice->amp_left * dsp_buf[dsp_i];
       dsp_left_buf[dsp_i] += v;
       dsp_right_buf[dsp_i] += v;
     }

@@ -18,7 +18,9 @@
  * 02111-1307, USA
  */
 
+#if HAVE_CONFIG_H
 #include "config.h"
+#endif
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -36,10 +38,6 @@
 #endif
 
 #include "fluidsynth.h"
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 #if defined(WIN32) && !defined(MINGW32)
 #include "config_win32.h"

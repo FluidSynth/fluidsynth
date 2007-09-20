@@ -272,7 +272,6 @@ struct _fluid_revmodel_t {
   fluid_real_t roomsize;
   fluid_real_t damp;
   fluid_real_t wet, wet1, wet2;
-  fluid_real_t level;
   fluid_real_t width;
   fluid_real_t gain;
   /*
@@ -492,6 +491,7 @@ fluid_revmodel_update(fluid_revmodel_t* rev)
     fluid_comb_setfeedback(&rev->combL[i], rev->roomsize);
     fluid_comb_setfeedback(&rev->combR[i], rev->roomsize);
   }
+
   for (i = 0; i < numcombs; i++) {
     fluid_comb_setdamp(&rev->combL[i], rev->damp);
     fluid_comb_setdamp(&rev->combR[i], rev->damp);
@@ -535,13 +535,15 @@ fluid_revmodel_getdamp(fluid_revmodel_t* rev)
 void
 fluid_revmodel_setlevel(fluid_revmodel_t* rev, fluid_real_t value)
 {
-  rev->level = value;
+	fluid_clip(value, 0.0f, 1.0f);
+	rev->wet = value * scalewet;
+	fluid_revmodel_update(rev);
 }
 
 fluid_real_t
 fluid_revmodel_getlevel(fluid_revmodel_t* rev)
 {
-  return rev->level;
+  return rev->wet / scalewet;
 }
 
 void

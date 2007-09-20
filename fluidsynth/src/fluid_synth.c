@@ -1805,12 +1805,13 @@ fluid_synth_write_s16(fluid_synth_t* synth, int len,
 /*
  * fluid_synth_dither_s16
  * Converts stereo floating point sample data to signed 16 bit data with
- * dithering.  This function and fluid_synth_write_s16 should not be used
- * on the same synth instance (dithering is per synth).
+ * dithering.  'dither_index' parameter is a caller supplied pointer to an
+ * integer which should be initialized to 0 before the first call and passed
+ * unmodified to additional calls which are part of the same synthesis output.
  * Only used internally currently.
  */
 void
-fluid_synth_dither_s16(fluid_synth_t* synth, int len, float* lin, float* rin,
+fluid_synth_dither_s16(int *dither_index, int len, float* lin, float* rin,
 		       void* lout, int loff, int lincr,
 		       void* rout, int roff, int rincr)
 {
@@ -1820,8 +1821,7 @@ fluid_synth_dither_s16(fluid_synth_t* synth, int len, float* lin, float* rin,
   double prof_ref = fluid_profile_ref();
   fluid_real_t left_sample;
   fluid_real_t right_sample;
-/*  double time = fluid_utime(); */
-  int di = synth->dither_index;
+  int di = *dither_index;
 
   for (i = 0, j = loff, k = roff; i < len; i++, j += lincr, k += rincr) {
 
@@ -1841,15 +1841,9 @@ fluid_synth_dither_s16(fluid_synth_t* synth, int len, float* lin, float* rin,
     right_out[k] = (signed short) right_sample;
   }
 
-  synth->dither_index = di;	/* keep dither buffer continous */
+  *dither_index = di;	/* keep dither buffer continous */
 
   fluid_profile(FLUID_PROF_WRITE_S16, prof_ref);
-
-  /* FIXME - Should cpu_load be processed here?
-  time = fluid_utime() - time;
-  synth->cpu_load = 0.5 * (synth->cpu_load +
-			   time * synth->sample_rate / len / 10000.0);
-  */
 }
 
 /*
@@ -1866,8 +1860,6 @@ fluid_synth_one_block(fluid_synth_t* synth, int do_not_mix_fx_to_out)
   fluid_real_t* chorus_buf;
   int byte_size = FLUID_BUFSIZE * sizeof(fluid_real_t);
   double prof_ref = fluid_profile_ref();
-  fluid_real_t chorus_level = fluid_chorus_get_level(synth->chorus);
-  fluid_real_t reverb_level = fluid_revmodel_getlevel(synth->reverb);
 
 /*   fluid_mutex_lock(synth->busy); /\* Here comes the audio thread. Lock the synth. *\/ */
 
@@ -1878,6 +1870,7 @@ fluid_synth_one_block(fluid_synth_t* synth, int do_not_mix_fx_to_out)
     FLUID_MEMSET(synth->left_buf[i], 0, byte_size);
     FLUID_MEMSET(synth->right_buf[i], 0, byte_size);
   }
+
   for (i = 0; i < synth->effects_channels; i++) {
     FLUID_MEMSET(synth->fx_left_buf[i], 0, byte_size);
     FLUID_MEMSET(synth->fx_right_buf[i], 0, byte_size);
@@ -1887,18 +1880,8 @@ fluid_synth_one_block(fluid_synth_t* synth, int do_not_mix_fx_to_out)
    * enabled on synth level.  Nonexisting buffers are detected in the
    * DSP loop. Not sending the reverb / chorus signal saves some time
    * in that case. */
-  if (synth->with_reverb) {
-    reverb_buf = synth->fx_left_buf[0];
-  } else {
-    reverb_buf = NULL;
-  }
-
-  if (synth->with_chorus) {
-    chorus_buf = synth->fx_left_buf[1];
-  } else {
-    chorus_buf = NULL;
-  }
-
+  reverb_buf = synth->with_reverb ? synth->fx_left_buf[0] : NULL;
+  chorus_buf = synth->with_chorus ? synth->fx_left_buf[1] : NULL;
 
   fluid_profile(FLUID_PROF_ONE_BLOCK_CLEAR, prof_ref);
 
@@ -1926,14 +1909,6 @@ fluid_synth_one_block(fluid_synth_t* synth, int do_not_mix_fx_to_out)
       left_buf = synth->left_buf[auchan];
       right_buf = synth->right_buf[auchan];
 
-      fluid_voice_set_param(voice, GEN_CHORUSSEND,
-                            1000.0
-                          * (chorus_level - FLUID_CHORUS_DEFAULT_LEVEL) 
-                          / FLUID_CHORUS_DEFAULT_LEVEL, 1 /* ? */);
-      fluid_voice_set_param(voice, GEN_REVERBSEND,
-                            1000.0
-                          * (reverb_level - FLUID_REVERB_DEFAULT_LEVEL) 
-                          / FLUID_REVERB_DEFAULT_LEVEL, 1 /* ? */);
       fluid_voice_write(voice, left_buf, right_buf, reverb_buf, chorus_buf);
 
       fluid_profile(FLUID_PROF_ONE_BLOCK_VOICE, prof_ref_voice);
