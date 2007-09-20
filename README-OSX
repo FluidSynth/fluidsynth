@@ -1,5 +1,5 @@
-Compiling fluidsynth-1.0.7 on Mac OS X.4 (Tiger)
---------------------------------------------
+Compiling fluidsynth-1.0.8 on Mac OS X.4.10 (Tiger)
+-----------------------------------------------------------------------
 Requirements:
 - "XcodeTools.mpkg","DevSDK.pkg", "CoreAudioSDK.pkg" packages (The Tiger Install DVD).
 
@@ -7,17 +7,17 @@ Requirements:
 
 - libgnugetopt-1.2, readline-4.3, ladspa-1.12 and ladspa-cmt-1.15 from fink: e.g. "fink install libgnugetopt"
 
-- MidiShare-1.87 for Mac OS X <http://www.grame.fr/MidiShare/>
+- midishare-1.92-macosx <http://midishare.sourceforge.net>
 
- - Jack-0.51 for Mac OS X <http://www.jackosx.com>
-	
+- Jack OSX version 0.74  <http://www.jackosx.com>
+        
 1. Edit the "/usr/local/lib/pkgconfig/jack.pc" file using your favorite Unix editor:
-	In the "Libs" line, replace "ljack" with "-framework Jack"
-	
+        In the "Libs" line, replace "ljack" with "-framework Jack"
+        
 2. cd to the fluidsynth directory and in the configure script, substitute "-lmidishare" with "-framework MidiShare".
 
 3. Run configure with the following options (all on one line in a text editor, then copy and paste into Terminal):
-PKG_CONFIG_PATH=/usr/local/lib/pkgconfig ./configure --enable-midishare --enable-ladspa --enable-functioncheck --enable-debug --enable-profiling --enable-jack-support --enable-longlong --disable-lash "CPPFLAGS=-I/usr/local/include -I/sw/include -I/System/Library/Frameworks/MidiShare.framework/Versions/A/Headers -I/System/Library/Frameworks/CoreAudio.framework/Versions/A/Headers -I/Library/Frameworks/Jack.framework/Headers" "LDFLAGS=-L/usr/local/lib -L/sw/lib -framework MidiShare -framework CoreAudio -framework Jack"
+PKG_CONFIG_PATH=/usr/local/lib/pkgconfig ./configure --enable-midishare --disable-lash
 
 This should result in
 **************************************************************
@@ -27,17 +27,15 @@ OSS:                   no
 MidiShare:             yes
 JACK:                  yes
 CoreAudio:             yes
-LADSPA support:        yes
+LADSPA support:        no
 LASH support:          no
 LADCCA support:        no
-Readline:              yes
+Readline:              no
 Debug:                 yes
-Profiling:             yes
-use long long:         yes
+Profiling:             no
 **************************************************************
 
 4. make && make install as root
  
 Ebrahim Mayat <emayat@users.sourceforge.net>
-20th February 2006
-
+4th September 2007

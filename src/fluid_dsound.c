@@ -62,7 +62,7 @@ BOOL CALLBACK
 fluid_dsound_enum_callback(LPGUID guid, LPCTSTR description, LPCTSTR module, LPVOID context)
 {
   fluid_settings_t* settings = (fluid_settings_t*) context;
-  fluid_settings_add_option(settings, "audio.dsound.device", description);
+  fluid_settings_add_option(settings, "audio.dsound.device", (char *)description);
 
   return TRUE;
 }

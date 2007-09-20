@@ -590,9 +590,10 @@ fluid_oss_audio_run(void* d)
   int len = dev->buffer_size;
 
   /* it's as simple as that: */
-  while (dev->cont) {
-    dev->read(synth, len, buffer, 0, 2, buffer, 1, 2);
-    write(dev->dspfd, buffer, dev->buffer_byte_size);
+  while (dev->cont)
+  {
+    dev->read (synth, len, buffer, 0, 2, buffer, 1, 2);
+    write (dev->dspfd, buffer, dev->buffer_byte_size);
   }
 
   FLUID_LOG(FLUID_DBG, "Audio thread finished");
@@ -615,19 +616,20 @@ fluid_oss_audio_run2(void* d)
   float* right = dev->buffers[1];
   int buffer_size = dev->buffer_size;
   int len = dev->buffer_size;
+  int dither_index = 0;
   int i, k;
 
   FLUID_LOG(FLUID_DBG, "Audio thread running");
 
   /* it's as simple as that: */
-  while (dev->cont) {
-
+  while (dev->cont)
+  {
     (*dev->callback)(dev->data, buffer_size, 0, NULL, 2, dev->buffers);
 
-    fluid_synth_dither_s16 (dev->data, buffer_size, left, right,
+    fluid_synth_dither_s16 (&dither_index, buffer_size, left, right,
 			    buffer, 0, 2, buffer, 1, 2);
 
-    write(dev->dspfd, buffer, dev->buffer_byte_size);
+    write (dev->dspfd, buffer, dev->buffer_byte_size);
   }
 
   FLUID_LOG(FLUID_DBG, "Audio thread finished");

@@ -516,7 +516,6 @@ static void* fluid_alsa_audio_run_float(void* d)
 static void* fluid_alsa_audio_run_s16(void* d)
 {
   fluid_alsa_audio_driver_t* dev = (fluid_alsa_audio_driver_t*) d;
-  fluid_synth_t* synth = (fluid_synth_t *)(dev->data);
   float* left;
   float* right;
   short* buf;
@@ -548,41 +547,52 @@ static void* fluid_alsa_audio_run_s16(void* d)
     goto error_recovery;
   }
 
-  /* use separate loops depending on if callback supplied or not (overkill?) */
+  /* use separate loops depending on if callback supplied or not */
   if (dev->callback)
   {
-    while (dev->cont) {
-      (*dev->callback)(synth, buffer_size, 0, NULL, 2, handle);
+    int dither_index = 0;
+
+    while (dev->cont)
+    {
+      (*dev->callback)(dev->data, buffer_size, 0, NULL, 2, handle);
 
       /* convert floating point data to 16 bit (with dithering) */
-      fluid_synth_dither_s16 (synth, buffer_size, left, right, buf, 0, 2, buf, 1, 2);
-
+      fluid_synth_dither_s16 (&dither_index, buffer_size, left, right,
+			      buf, 0, 2, buf, 1, 2);
       offset = 0;
-      while (offset < buffer_size) {
-	n = snd_pcm_writei(dev->pcm, (void*) (buf + 2 * offset), buffer_size - offset);
-
+      while (offset < buffer_size)
+      {
+	n = snd_pcm_writei (dev->pcm, (void*) (buf + 2 * offset),
+			    buffer_size - offset);
 	if (n < 0)	/* error occurred? */
 	{
 	  if (fluid_alsa_handle_write_error (dev->pcm, n) != FLUID_OK)
 	    goto error_recovery;
-	} else offset += n;	/* no error occurred */
+	}
+	else offset += n;	/* no error occurred */
       }	/* while (offset < buffer_size) */
     }	/* while (dev->cont) */
   }
-  else	/* no user audio callback (faster) */
+  else	/* no user audio callback, dev->data is the synth instance */
   {
-    while (dev->cont) {
-      fluid_synth_write_s16(dev->data, buffer_size, buf, 0, 2, buf, 1, 2);
+    fluid_synth_t* synth = (fluid_synth_t *)(dev->data);
+
+    while (dev->cont)
+    {
+      fluid_synth_write_s16 (synth, buffer_size, buf, 0, 2, buf, 1, 2);
 
       offset = 0;
-      while (offset < buffer_size) {
-	n = snd_pcm_writei(dev->pcm, (void*) (buf + 2 * offset), buffer_size - offset);
+      while (offset < buffer_size)
+      {
+	n = snd_pcm_writei (dev->pcm, (void*) (buf + 2 * offset),
+			    buffer_size - offset);
 
 	if (n < 0)	/* error occurred? */
 	{
 	  if (fluid_alsa_handle_write_error (dev->pcm, n) != FLUID_OK)
 	    goto error_recovery;
-	} else offset += n;	/* no error occurred */
+	}
+	else offset += n;	/* no error occurred */
       }	/* while (offset < buffer_size) */
     }	/* while (dev->cont) */
   }

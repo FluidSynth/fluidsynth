@@ -1,4 +1,28 @@
-2008-09-02    Josh Green <jgreen@users.sourceforge.net>
+2007-09-20    Josh Green <jgreen@users.sourceforge.net>
+
+	* Doc updates to AUTHORS and latest README-OSX from Ebrahim Mayat.
+	* src/config_win32.h.in: VERSION is now filled in at configure time.
+	* src/fluid_alsa.c (fluid_alsa_audio_run_s16): Fixed bug which was
+	  causing weird crashes with QSynth when new_fluid_audio_driver2() when
+	  audio meters were enabled (user data parameter was being used as a
+	  fluid_synth_t instance).  Synth instance is now no longer used in
+	  this case (it was only used for 16 bit dithering before).
+	* src/fluid_oss.c: Fixed the same bug that was affecting ALSA driver.
+	* src/fluid_rev.c: Reverted to old commented out code in regards to
+	  reverb level.
+	* src/fluid_synth.c (fluid_synth_dither_s16): Now no longer uses
+	  fluid_synth_t instance, but accepts a pointer to an integer instead
+	  for keeping track of dithering buffer index (all that the synth instance
+	  was being used for).
+	* src/fluid_synth.c (fluid_synth_one_block): Reverted patch which
+	  performs assignment of chorus and reverb levels in synthesis loop,
+	  until a better scheme is devised (unnecessary CPU consumption).
+	* Added Visual Studio .sln and .vcproj files and some minor source
+	  changes to get FluidSynth to build with it.
+	* Back-converted Visual Studio project to VC++ 6 project for users
+	  using that build platform (not tested).
+
+2007-09-02    Josh Green <jgreen@users.sourceforge.net>
 
 	* configure.ac: Removed SSE and longlong related switches (SSE support
 	  removed for now and longlong is now always used).

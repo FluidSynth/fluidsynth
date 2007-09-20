@@ -1,0 +1,38 @@
+Microsoft Visual Studio Solution File, Format Version 8.00
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "fluidsynth", "fluidsynth\fluidsynth.vcproj", "{8150EAA4-CF92-448B-972A-01A423B3A23D}"
+	ProjectSection(ProjectDependencies) = postProject
+		{A52C4164-8C82-4E38-A70B-6D0E836D6644} = {A52C4164-8C82-4E38-A70B-6D0E836D6644}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "fluidsynth_dll", "fluidsynth_dll\fluidsynth_dll.vcproj", "{A52C4164-8C82-4E38-A70B-6D0E836D6644}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "fluidsynth_lib", "fluidsynth_lib\fluidsynth_lib.vcproj", "{CD7D1A45-9970-4958-BD8F-7F42B083093C}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfiguration) = preSolution
+		Debug = Debug
+		Release = Release
+	EndGlobalSection
+	GlobalSection(ProjectConfiguration) = postSolution
+		{8150EAA4-CF92-448B-972A-01A423B3A23D}.Debug.ActiveCfg = Debug|Win32
+		{8150EAA4-CF92-448B-972A-01A423B3A23D}.Debug.Build.0 = Debug|Win32
+		{8150EAA4-CF92-448B-972A-01A423B3A23D}.Release.ActiveCfg = Release|Win32
+		{8150EAA4-CF92-448B-972A-01A423B3A23D}.Release.Build.0 = Release|Win32
+		{A52C4164-8C82-4E38-A70B-6D0E836D6644}.Debug.ActiveCfg = Debug|Win32
+		{A52C4164-8C82-4E38-A70B-6D0E836D6644}.Debug.Build.0 = Debug|Win32
+		{A52C4164-8C82-4E38-A70B-6D0E836D6644}.Release.ActiveCfg = Release|Win32
+		{A52C4164-8C82-4E38-A70B-6D0E836D6644}.Release.Build.0 = Release|Win32
+		{CD7D1A45-9970-4958-BD8F-7F42B083093C}.Debug.ActiveCfg = Debug|Win32
+		{CD7D1A45-9970-4958-BD8F-7F42B083093C}.Debug.Build.0 = Debug|Win32
+		{CD7D1A45-9970-4958-BD8F-7F42B083093C}.Release.ActiveCfg = Release|Win32
+		{CD7D1A45-9970-4958-BD8F-7F42B083093C}.Release.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+	EndGlobalSection
+	GlobalSection(ExtensibilityAddIns) = postSolution
+	EndGlobalSection
+EndGlobal
