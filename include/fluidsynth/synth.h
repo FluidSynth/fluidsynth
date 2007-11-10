@@ -291,7 +291,7 @@ FLUIDSYNTH_API double fluid_synth_get_reverb_width(fluid_synth_t* synth);
 #define FLUID_REVERB_DEFAULT_ROOMSIZE 0.2f
 #define FLUID_REVERB_DEFAULT_DAMP 0.0f
 #define FLUID_REVERB_DEFAULT_WIDTH 0.5f
-#define FLUID_REVERB_DEFAULT_LEVEL 0.5f
+#define FLUID_REVERB_DEFAULT_LEVEL 0.9f
 
 
 
@@ -325,7 +325,7 @@ FLUIDSYNTH_API int fluid_synth_get_chorus_type(fluid_synth_t* synth); /* see flu
 
   /* Those are the default settings for the chorus. */
 #define FLUID_CHORUS_DEFAULT_N 3
-#define FLUID_CHORUS_DEFAULT_LEVEL 6.25f
+#define FLUID_CHORUS_DEFAULT_LEVEL 2.0f
 #define FLUID_CHORUS_DEFAULT_SPEED 0.3f
 #define FLUID_CHORUS_DEFAULT_DEPTH 8.0f
 #define FLUID_CHORUS_DEFAULT_TYPE FLUID_CHORUS_MOD_SINE 

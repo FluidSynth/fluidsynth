@@ -1,5 +1,5 @@
 .\"                              hey, Emacs:   -*- nroff -*-
-.\" iiwusynth is free software; you can redistribute it and/or modify
+.\" FluidSynth is free software; you can redistribute it and/or modify
 .\" it under the terms of the GNU Library General Public License as published by
 .\" the Free Software Foundation; either version 2 of the License, or
 .\" (at your option) any later version.
@@ -13,7 +13,7 @@
 .\" along with this program; see the file COPYING.  If not, write to
 .\" the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 .\"
-.TH fluidsynth 1.0 "March 12, 2003"
+.TH FluidSynth 2.8 "November 10, 2007"
 .\" Please update the above date whenever this man page is modified.
 .\"
 .\" Some roff macros, for reference:
@@ -27,14 +27,14 @@
 .\" .sp <n>    insert n+1 empty lines
 .\" for manpage-specific macros, see man(7)
 .SH NAME
-fluidsynth \- a SoundFont synthesizer
+FluidSynth \- a SoundFont synthesizer
 .SH SYNOPSIS
 .B fluidsynth
 .RI [ options ] 
-[ soundfonts ] 
+[ SoundFonts ] 
 [ midifiles ] 
 .SH DESCRIPTION
-\fBfluidsynth\fP is a real-time MIDI synthesizer based on the
+\fBFluidSynth\fP is a real-time MIDI synthesizer based on the
 SoundFont(R) 2 specifications. It can be used to render MIDI input or
 MIDI files to audio.  The MIDI events are read from a MIDI device. The
 sound is rendered in real-time to the sound output device.
@@ -42,85 +42,97 @@ sound is rendered in real-time to the sound output device.
 The easiest way to start the synthesizer is to give it a SoundFont on
 the command line: 'fluidsynth soundfont.sf2'. fluidsynth will load the
 SoundFont and read MIDI events from the default MIDI device using the
-default MIDI driver.  Once fluidsynth is running, it reads commands
+default MIDI driver.  Once FluidSynth is running, it reads commands
 from the stdin. There are commands to send MIDI events manually, to
-load or unload SoundFonts, andsoforth. All the available commands are
+load or unload SoundFonts, and so forth. All the available commands are
 discussed below.
 .PP
-fluidsynth can also be used to play a list of MIDI files. Simply run
-fluidsynth with the SoundFont and the list of MIDI files to play. In
+FluidSynth can also be used to play a list of MIDI files. Simply run
+FluidSynth with the SoundFont and the list of MIDI files to play. In
 this case you might not want to open the MIDI device to read external
 events. Use the -n option to deactivate MIDI input. If you also
-want to deactivate the use of the shell, start fluidsynth with the -i
+want to deactivate the use of the shell, start FluidSynth with the -i
 option: 'fluidsynth -ni soundfont.sf2 midifile1.mid midifile2.mid'.
 .PP
 Run fluidsynth with the --help option to check for changes in the list of options.
 .SH OPTIONS
 \fBfluidsynth\fP accepts the following options:
-.TP
-.B \-h, \-\-help
-Show summary of options.
-.TP
-.B \-V, \-\-version
-Show version of program.
-.TP
-.B \-n, \-\-no-midi-in
-Don't create a midi driver to read MIDI input events [default = yes]
-.TP
-.B \-m, \-\-midi-driver=[label]
-The name of the midi driver to use [oss,alsa,alsa_seq,winmidi,...]
-.TP
-.B \-K, \-\-midi-channels=[num]
-The number of midi channels [default = 16]
-.TP
-.B \-a, \-\-audio-driver=[label]
+
+.B \-a, \-\-audio\-driver=[label]
 The audio driver [alsa,jack,oss,dsound,...]
-.TP
-.B \-L, \-\-audio-channels=[num]
-The number of audio channels [default = 1]
-.TP
-.B \-G, \-\-audio-groups=[num]
-The number of audio groups
-.TP
-.B \-z, \-\-audio-bufsize=[size]
-Size of each audio buffer [default = %d]
-.TP
-.B \-c, \-\-audio-bufcount=[count]
-Number of audio buffers [default = %d]
-.TP
-.B \-r, \-\-sample-rate
-Set the sample rate
-.TP
-.B \-R, \-\-reverb
-Turn the reverb on or off [0|1|yes|no, default = on]
 .TP
 .B \-C, \-\-chorus
 Turn the chorus on or off [0|1|yes|no, default = on]
 .TP
+.B \-c, \-\-audio\-bufcount=[count]
+Number of audio buffers
+.TP
+.B \-d, \-\-dump
+Dump incoming and outgoing MIDI events to stdout
+.TP
+.B \-f, \-\-load\-config
+Load command configuration file (shell commands)
+.TP
+.B \-G, \-\-audio\-groups
+Defines the number of LADSPA audio nodes
+.TP
 .B \-g, \-\-gain
 Set the master gain [0 < gain < 10, default = 0.2]
 .TP
-.B \-o setting=value
-Set the value of the setting. Can be used any number of times.
-Ex. -o midi.oss.device=/dev/midi00
+.B \-h, \-\-help
+Print out this help summary
 .TP
-.B \-i, \-\-no-shell
+.B \-i, \-\-no\-shell
 Don't read commands from the shell [default = yes]
 .TP
+.B \-j, \-\-connect\-jack\-outputs
+Attempt to connect the jack outputs to the physical ports
+.TP
+.B \-K, \-\-midi\-channels=[num]
+The number of midi channels [default = 16]
+.TP
+.B \-L, \-\-audio\-channels=[num]
+The number of stereo audio channels [default = 1]
+.TP
+.B \-l, \-\-disable\-lash
+Don't connect to LASH server
+.TP
+.B \-m, \-\-midi\-driver=[label]
+The name of the midi driver to use [oss,alsa,alsa_seq,...]
+.TP
+.B \-n, \-\-no\-midi\-in
+Don't create a midi driver to read MIDI input events [default = yes]
+.TP
+.B \-o
+Define a setting, \-o name=value ("\-o help" to dump current values)
+.TP
+.B \-R, \-\-reverb
+Turn the reverb on or off [0|1|yes|no, default = on]
+.TP
+.B \-r, \-\-sample\-rate
+Set the sample rate
+.TP
 .B \-s, \-\-server
-Start a TCP/IP server for remote shells [default=no, port=9800]
+Start FluidSynth as a server process
+.TP
+.B \-V, \-\-version
+Show version of program
 .TP
 .B \-v, \-\-verbose
 Print out verbose messages about midi events
-.\" .SH "SEE ALSO"
-.\" .BR foo (1), 
-.\" .BR bar (1).
+.TP
+.B \-z, \-\-audio\-bufsize=[size]
+Size of each audio buffer
+
 .SH SHELL COMMANDS
 .TP
 .B GENERAL
 .TP
 .B help
 Prints out a summary of the main commands
+.TP
+.B help help
+Prints out list of other help topics (type "help <topic>")
 .TP
 .B quit
 Quit the synthesizer

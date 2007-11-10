@@ -1,3 +1,9 @@
+2007-11-10    Josh Green <jgreen@users.sourceforge.net>
+
+	* doc/fluidsynth.1: Updated man page with current command line options and other changes (minor).
+	* include/fluidsynth/synth.h: Reverted "Effect level clip" patch as it seems to cause chorus
+	  count to have a much lessor effect.
+
 2007-09-20    Josh Green <jgreen@users.sourceforge.net>
 
 	* Doc updates to AUTHORS and latest README-OSX from Ebrahim Mayat.
