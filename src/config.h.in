@@ -12,6 +12,9 @@
 /* Define to activate debugging message */
 #undef DEBUG
 
+/* Define to enable FPE checks */
+#undef FPE_CHECK
+
 /* Define to 1 if you have the <arpa/inet.h> header file. */
 #undef HAVE_ARPA_INET_H
 
@@ -149,6 +152,9 @@
 
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
+
+/* Define to enable SIGFPE assertions */
+#undef TRAP_ON_FPE
 
 /* Version number of package */
 #undef VERSION

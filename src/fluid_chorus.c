@@ -477,9 +477,7 @@ void fluid_chorus_processmix(fluid_chorus_t* chorus, fluid_real_t *in,
       chorus->phase[i] %= (chorus->modulation_period_samples);
     } /* foreach chorus block */
 
-    /* average values based on number of chorus stages */
-    if (chorus->number_blocks)
-      d_out /= chorus->number_blocks;
+    d_out *= chorus->level;
 
     /* Add the chorus sum d_out to output */
     left_out[sample_index] += d_out;
@@ -547,9 +545,7 @@ void fluid_chorus_processreplace(fluid_chorus_t* chorus, fluid_real_t *in,
       chorus->phase[i] %= (chorus->modulation_period_samples);
     } /* foreach chorus block */
 
-    /* average values based on number of chorus stages */
-    if (chorus->number_blocks)
-      d_out /= chorus->number_blocks;
+    d_out *= chorus->level;
 
     /* Store the chorus sum d_out to output */
     left_out[sample_index] = d_out;

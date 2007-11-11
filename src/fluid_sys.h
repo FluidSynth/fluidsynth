@@ -284,14 +284,15 @@ extern fluid_profile_data_t fluid_profile_data[];
     fluid_check_fpe() checks for "unnormalized numbers" and other
     exceptions of the floating point processsor.
 */
-#if 0
-/* Enable FPE exception check */
+#ifdef FPE_CHECK
 #define fluid_check_fpe(expl) fluid_check_fpe_i386(expl)
+#define fluid_clear_fpe() fluid_clear_fpe_i386()
 #else
-/* Disable FPE exception check */
 #define fluid_check_fpe(expl)
+#define fluid_clear_fpe()
 #endif
 
 unsigned int fluid_check_fpe_i386(char * explanation_in_case_of_fpe);
+void fluid_clear_fpe_i386(void);
 
 #endif /* _FLUID_SYS_H */

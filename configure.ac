@@ -111,25 +111,20 @@ if test "x$ENABLE_LADSPA" = "xyes" ; then
 fi
 
 
-AC_ARG_ENABLE(functioncheck, AS_HELP_STRING([--enable-functioncheck],
-	[profiling using FunctionCheck, turns on debugging (default=no)]),
-  ENABLE_FUNCTIONCHECK=$enableval,
-  ENABLE_FUNCTIONCHECK=no)
+AC_ARG_ENABLE(trap-on-fpe, AS_HELP_STRING([--enable-trap-on-fpe],
+	[Enable SIGFPE trap on Floating Point Exceptions (debugging)]),
+	ENABLE_TRAPONFPE=$enableval, ENABLE_TRAPONFPE=no)
 
-FCLDFLAGS=""
-FCCFLAGS=""
-if test "${ENABLE_FUNCTIONCHECK}" = "yes"; then
-  FCCFLAGS=`fc-config --cflags`
-  FCLDFLAGS=`fc-config --libs`
+if test "$ENABLE_TRAPONFPE" = "yes"; then
+  AC_DEFINE(TRAP_ON_FPE, 1, [Define to enable SIGFPE assertions])
 fi
 
-AC_SUBST(FCLDFLAGS)
+AC_ARG_ENABLE(fpe-check, AS_HELP_STRING([--enable-fpe-check],
+	[Enable Floating Point Exception checks and debug messages]),
+	ENABLE_FPECHECK=$enableval, ENABLE_FPECHECK=no)
 
-
-if test "${ENABLE_FUNCTIONCHECK}" = "yes"; then
-  ENABLE_DEBUG=yes
-else
-  ENABLE_DEBUG=no
+if test "$ENABLE_FPECHECK" = "yes"; then
+  AC_DEFINE(FPE_CHECK, 1, [Define to enable FPE checks])
 fi
 
 AC_ARG_ENABLE(debug, AS_HELP_STRING([--enable-debug],
@@ -137,11 +132,7 @@ AC_ARG_ENABLE(debug, AS_HELP_STRING([--enable-debug],
   ENABLE_DEBUG=$enableval)
 
 if test "$ENABLE_DEBUG" = "yes"; then
-  if test "${ENABLE_FUNCTIONCHECK}" = "yes"; then
-    CFLAGS="${CFLAGS} ${FCCFLAGS} -Wall -W -Wpointer-arith -Wbad-function-cast -Wcast-qual -Wcast-align -Wstrict-prototypes -Wno-unused"
-  else
-    CFLAGS="${CFLAGS} ${FCCFLAGS} -g -Wall -W -Wpointer-arith -Wbad-function-cast -Wcast-qual -Wcast-align -Wstrict-prototypes -Wno-unused"
-  fi 
+  CFLAGS="${CFLAGS} ${FCCFLAGS} -g -Wall -W -Wpointer-arith -Wbad-function-cast -Wcast-qual -Wcast-align -Wstrict-prototypes -Wno-unused"
   AC_DEFINE(DEBUG, 1, [Define to activate debugging message]) 
 else
   CFLAGS="${CFLAGS} ${FCCFLAGS} -O2 -fomit-frame-pointer -funroll-all-loops -finline-functions -Wall -W -Wpointer-arith -Wbad-function-cast -Wcast-qual -Wcast-align -Wstrict-prototypes -Wno-unused -Winline"
@@ -399,23 +390,29 @@ else
   echo "Readline:              no"
 fi
 
-if test "${ENABLE_DEBUG}" = "yes"; then
-  echo "Debug:                 yes"
-else
-  echo "Debug:                 no"
-fi
-
 if test "${profiling_flag}" = "yes"; then
   echo "Profiling:             yes"
 else
   echo "Profiling:             no"
 fi
 
-dnl if test "${ENABLE_FUNCTIONCHECK}" = "yes"; then
-dnl   echo "FunctionCheck:         yes"
-dnl else
-dnl   echo "FunctionCheck:         no"
-dnl fi
+if test "${ENABLE_DEBUG}" = "yes"; then
+  echo "Debug:                 yes"
+else
+  echo "Debug:                 no"
+fi
+
+if test "${ENABLE_TRAPONFPE}" = "yes"; then
+  echo "Trap on FPE (debug):   yes"
+else
+  echo "Trap on FPE (debug):   no"
+fi
+
+if test "${ENABLE_FPECHECK}" = "yes"; then
+  echo "Check FPE (debug):     yes"
+else
+  echo "Check FPE (debug):     no"
+fi
 
 echo "**************************************************************"
 echo

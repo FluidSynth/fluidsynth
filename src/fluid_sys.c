@@ -20,7 +20,6 @@
 
 
 #include "fluid_sys.h"
-//#include <fpu_control.h>
 
 static char fluid_errbuf[512];  /* buffer for error message */
 
@@ -796,6 +795,7 @@ void fluid_time_config(void)
 {
   if (fluid_cpu_frequency < 0.0) {
     fluid_cpu_frequency = fluid_estimate_cpu_frequency() / 1000000.0;
+    if (fluid_cpu_frequency == 0.0) fluid_cpu_frequency = 1.0;
   }
 }
 
@@ -856,7 +856,7 @@ double fluid_estimate_cpu_frequency(void)
 #endif
 
 
-#if 0
+#ifdef FPE_CHECK
 
 /***************************************************************
  *
@@ -890,7 +890,8 @@ double fluid_estimate_cpu_frequency(void)
 #define _FPU_CLR_SW() __asm__ ("fnclex" : : )
 
 /* Purpose:
- * Checks, if the floating point unit has produced an exception in the meantime.
+ * Checks, if the floating point unit has produced an exception, print a message
+ * if so and clear the exception.
  */
 unsigned int fluid_check_fpe_i386(char* explanation)
 {
@@ -899,11 +900,10 @@ unsigned int fluid_check_fpe_i386(char* explanation)
   _FPU_GET_SW(s);
   _FPU_CLR_SW();
 
-  if ((s & _FPU_STATUS_IE)
-      || (s & _FPU_STATUS_DE)
-      || (s & _FPU_STATUS_ZE)
-      || (s & _FPU_STATUS_OE)
-      || (s & _FPU_STATUS_UE)) {
+  s &= _FPU_STATUS_IE | _FPU_STATUS_DE | _FPU_STATUS_ZE | _FPU_STATUS_OE | _FPU_STATUS_UE;
+
+  if (s)
+  {
       FLUID_LOG(FLUID_WARN, "FPE exception (before or in %s): %s%s%s%s%s", explanation,
 	       (s & _FPU_STATUS_IE) ? "Invalid operation " : "",
 	       (s & _FPU_STATUS_DE) ? "Denormal number " : "",
@@ -915,10 +915,18 @@ unsigned int fluid_check_fpe_i386(char* explanation)
   return s;
 }
 
-#endif
+/* Purpose:
+ * Clear floating point exception.
+ */
+void fluid_clear_fpe_i386 (void)
+{
+  _FPU_CLR_SW();
+}
+
+#endif	// ifdef FPE_CHECK
 
 
-#endif
+#endif	// #else    (its POSIX)
 
 
 /***************************************************************

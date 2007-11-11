@@ -128,11 +128,6 @@ struct _fluid_synth_t
   fluid_real_t** fx_left_buf;
   fluid_real_t** fx_right_buf;
 
-  fluid_real_t** left_ubuf;       /* Stores the unaligned buffers (see new_fluid_synth) */
-  fluid_real_t** right_ubuf;      /* Stores the unaligned buffers (see new_fluid_synth) */
-  fluid_real_t** fx_left_ubuf;    /* Stores the unaligned buffers (see new_fluid_synth) */
-  fluid_real_t** fx_right_ubuf;   /* Stores the unaligned buffers (see new_fluid_synth) */
-
   fluid_revmodel_t* reverb;
   fluid_chorus_t* chorus;
   int cur;                           /** the current sample in the audio buffers to be output */
@@ -153,7 +148,6 @@ struct _fluid_synth_t
   fluid_LADSPA_FxUnit_t* LADSPA_FxUnit; /** Effects unit for LADSPA support */
 #endif
 };
-
 
 /** returns 1 if the value has been set, 0 otherwise */
 int fluid_synth_setstr(fluid_synth_t* synth, char* name, char* str);
