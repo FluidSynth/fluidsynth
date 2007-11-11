@@ -27,6 +27,14 @@
 #include "fluid_settings.h"
 #include "fluid_sfont.h"
 
+#ifdef TRAP_ON_FPE
+#define _GNU_SOURCE
+#include <fenv.h>
+
+/* seems to not be declared in fenv.h */
+extern int feenableexcept (int excepts);
+#endif
+
 
 fluid_sfloader_t* new_fluid_defsfloader(void);
 
@@ -152,13 +160,18 @@ fluid_synth_init()
 {
   fluid_synth_initialized++;
 
+#ifdef TRAP_ON_FPE
+  /* Turn on floating point exception traps */
+  feenableexcept (FE_DIVBYZERO | FE_UNDERFLOW | FE_OVERFLOW | FE_INVALID);
+#endif
+
   fluid_conversion_config();
 
   fluid_dsp_float_config();
 
   fluid_sys_config();
 
-   init_dither();
+  init_dither();
 
 
   /* SF2.01 page 53 section 8.4.1: MIDI Note-On Velocity to Initial Attenuation */
@@ -464,87 +477,57 @@ new_fluid_synth(fluid_settings_t *settings)
     }
   }
 
-  /* Allocate the sample buffers
-   *
-   * GCC seems to have a bug with alignment (address must be multiple
-   * of 16 bytes.  So we have to align for ourselves...  As soon as
-   * GCC aligns reliably, this mess can be cleaned up.
-   */
-
+  /* Allocate the sample buffers */
   synth->left_buf = NULL;
   synth->right_buf = NULL;
-  synth->left_ubuf = NULL;
-  synth->right_ubuf = NULL;
   synth->fx_left_buf = NULL;
   synth->fx_right_buf = NULL;
-  synth->fx_left_ubuf = NULL;
-  synth->fx_right_ubuf = NULL;
 
   /* Left and right audio buffers */
 
   synth->left_buf = FLUID_ARRAY(fluid_real_t*, synth->nbuf);
   synth->right_buf = FLUID_ARRAY(fluid_real_t*, synth->nbuf);
-  synth->left_ubuf = FLUID_ARRAY(fluid_real_t*, synth->nbuf);
-  synth->right_ubuf = FLUID_ARRAY(fluid_real_t*, synth->nbuf);
 
-  if ((synth->left_buf == NULL) || (synth->right_buf == NULL) ||
-      (synth->left_ubuf == NULL) || (synth->right_ubuf == NULL)) {
+  if ((synth->left_buf == NULL) || (synth->right_buf == NULL)) {
     FLUID_LOG(FLUID_ERR, "Out of memory");
     goto error_recovery;
   }
 
   FLUID_MEMSET(synth->left_buf, 0, synth->nbuf * sizeof(fluid_real_t*));
   FLUID_MEMSET(synth->right_buf, 0, synth->nbuf * sizeof(fluid_real_t*));
-  FLUID_MEMSET(synth->left_ubuf, 0, synth->nbuf * sizeof(fluid_real_t*));
-  FLUID_MEMSET(synth->right_ubuf, 0, synth->nbuf * sizeof(fluid_real_t*));
 
   for (i = 0; i < synth->nbuf; i++) {
 
-    /* +4: add four floats for 16 added bytes */
+    synth->left_buf[i] = FLUID_ARRAY(fluid_real_t, FLUID_BUFSIZE);
+    synth->right_buf[i] = FLUID_ARRAY(fluid_real_t, FLUID_BUFSIZE);
 
-    synth->left_ubuf[i] = FLUID_ARRAY(fluid_real_t, FLUID_BUFSIZE + 4);
-    synth->right_ubuf[i] = FLUID_ARRAY(fluid_real_t, FLUID_BUFSIZE + 4);
-
-    if ((synth->left_ubuf[i] == NULL) || (synth->right_ubuf[i] == NULL)) {
+    if ((synth->left_buf[i] == NULL) || (synth->right_buf[i] == NULL)) {
       FLUID_LOG(FLUID_ERR, "Out of memory");
       goto error_recovery;
     }
-
-    synth->left_buf[i] = (fluid_real_t*) FLUID_ALIGN16BYTE(synth->left_ubuf[i]);
-    synth->right_buf[i] = (fluid_real_t*) FLUID_ALIGN16BYTE(synth->right_ubuf[i]);
   }
 
   /* Effects audio buffers */
 
   synth->fx_left_buf = FLUID_ARRAY(fluid_real_t*, synth->effects_channels);
   synth->fx_right_buf = FLUID_ARRAY(fluid_real_t*, synth->effects_channels);
-  synth->fx_left_ubuf = FLUID_ARRAY(fluid_real_t*, synth->effects_channels);
-  synth->fx_right_ubuf = FLUID_ARRAY(fluid_real_t*, synth->effects_channels);
 
-  if ((synth->fx_left_buf == NULL) || (synth->fx_left_ubuf == NULL) ||
-      (synth->fx_right_buf == NULL) || (synth->fx_right_ubuf == NULL)) {
+  if ((synth->fx_left_buf == NULL) || (synth->fx_right_buf == NULL)) {
     FLUID_LOG(FLUID_ERR, "Out of memory");
     goto error_recovery;
   }
 
-  FLUID_MEMSET(synth->fx_left_ubuf, 0, 2 * sizeof(fluid_real_t*));
   FLUID_MEMSET(synth->fx_left_buf, 0, 2 * sizeof(fluid_real_t*));
-  FLUID_MEMSET(synth->fx_right_ubuf, 0, 2 * sizeof(fluid_real_t*));
   FLUID_MEMSET(synth->fx_right_buf, 0, 2 * sizeof(fluid_real_t*));
 
   for (i = 0; i < synth->effects_channels; i++) {
+    synth->fx_left_buf[i] = FLUID_ARRAY(fluid_real_t, FLUID_BUFSIZE);
+    synth->fx_right_buf[i] = FLUID_ARRAY(fluid_real_t, FLUID_BUFSIZE);
 
-    /* +4: add four floats for 16 added bytes */
-    synth->fx_left_ubuf[i] = FLUID_ARRAY(fluid_real_t, FLUID_BUFSIZE + 4);
-    synth->fx_right_ubuf[i] = FLUID_ARRAY(fluid_real_t, FLUID_BUFSIZE + 4);
-
-    if ((synth->fx_left_ubuf[i] == NULL) || (synth->fx_right_ubuf[i] == NULL)) {
+    if ((synth->fx_left_buf[i] == NULL) || (synth->fx_right_buf[i] == NULL)) {
       FLUID_LOG(FLUID_ERR, "Out of memory");
       goto error_recovery;
     }
-
-    synth->fx_left_buf[i] = (fluid_real_t*) FLUID_ALIGN16BYTE(synth->fx_left_ubuf[i]);
-    synth->fx_right_buf[i] = (fluid_real_t*) FLUID_ALIGN16BYTE(synth->fx_right_ubuf[i]);
   }
 
 
@@ -655,45 +638,41 @@ delete_fluid_synth(fluid_synth_t* synth)
   }
 
   /* free all the sample buffers */
-  if (synth->left_ubuf != NULL) {
+  if (synth->left_buf != NULL) {
     for (i = 0; i < synth->nbuf; i++) {
-      if (synth->left_ubuf[i] != NULL) {
-	FLUID_FREE(synth->left_ubuf[i]);
+      if (synth->left_buf[i] != NULL) {
+	FLUID_FREE(synth->left_buf[i]);
       }
     }
-    FLUID_FREE(synth->left_ubuf);
+    FLUID_FREE(synth->left_buf);
   }
-  FLUID_FREE(synth->left_buf);
 
-  if (synth->right_ubuf != NULL) {
+  if (synth->right_buf != NULL) {
     for (i = 0; i < synth->nbuf; i++) {
-      if (synth->right_ubuf[i] != NULL) {
-	FLUID_FREE(synth->right_ubuf[i]);
+      if (synth->right_buf[i] != NULL) {
+	FLUID_FREE(synth->right_buf[i]);
       }
     }
-    FLUID_FREE(synth->right_ubuf);
+    FLUID_FREE(synth->right_buf);
   }
-  FLUID_FREE(synth->right_buf);
 
-  if (synth->fx_left_ubuf != NULL) {
+  if (synth->fx_left_buf != NULL) {
     for (i = 0; i < 2; i++) {
-      if (synth->fx_left_ubuf[i] != NULL) {
-	FLUID_FREE(synth->fx_left_ubuf[i]);
+      if (synth->fx_left_buf[i] != NULL) {
+	FLUID_FREE(synth->fx_left_buf[i]);
       }
     }
-    FLUID_FREE(synth->fx_left_ubuf);
+    FLUID_FREE(synth->fx_left_buf);
   }
-  FLUID_FREE(synth->fx_left_buf);
 
-  if (synth->fx_right_ubuf != NULL) {
+  if (synth->fx_right_buf != NULL) {
     for (i = 0; i < 2; i++) {
-      if (synth->fx_right_ubuf[i] != NULL) {
-	FLUID_FREE(synth->fx_right_ubuf[i]);
+      if (synth->fx_right_buf[i] != NULL) {
+	FLUID_FREE(synth->fx_right_buf[i]);
       }
     }
-    FLUID_FREE(synth->fx_right_ubuf);
+    FLUID_FREE(synth->fx_right_buf);
   }
-  FLUID_FREE(synth->fx_right_buf);
 
   /* release the reverb module */
   if (synth->reverb != NULL) {

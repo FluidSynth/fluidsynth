@@ -46,21 +46,6 @@
 #define FLUID_MIN_VOLENVRELEASE -7200.0f /* ~16ms */
 
 
-/* Purpose:
- * zap_almost_zero will return a number, as long as its
- * absolute value is over a certain threshold.  Otherwise 0.  See
- * fluid_rev.c for documentation (denormal numbers)
- */
-
-# if defined(WITH_FLOAT)
-# define zap_almost_zero(_sample) \
-  ((((*(unsigned int*)&(_sample))&0x7f800000) < 0x08000000)? 0.0f : (_sample))
-# else
-/* 1e-20 was chosen as an arbitrary (small) threshold. */
-#define zap_almost_zero(_sample) ((abs(_sample) < 1e-20)? 0.0f : (_sample))
-#endif
-
-
 static inline void fluid_voice_effects (fluid_voice_t *voice, int count,
 				        fluid_real_t* dsp_left_buf,
 				        fluid_real_t* dsp_right_buf,
@@ -267,15 +252,9 @@ fluid_voice_write(fluid_voice_t* voice,
   fluid_real_t target_amp;	/* target amplitude */
   int count;
 
-  /* All variables starting with dsp_ are used by the DSP
-     loop. Documented in fluid_dsp_core.c */
-
-
   int dsp_interp_method = voice->interp_method;
 
-  /* +4: add four floats for 16 added bytes */
-  fluid_real_t dsp_buf_unaligned[FLUID_BUFSIZE+4];
-  fluid_real_t* dsp_buf = (fluid_real_t*) FLUID_ALIGN16BYTE(&dsp_buf_unaligned);
+  fluid_real_t dsp_buf[FLUID_BUFSIZE];
   fluid_env_data_t* env_data;
   fluid_real_t x;
 
@@ -603,7 +582,6 @@ fluid_voice_write(fluid_voice_t* voice,
    * The buffer has to be filled from 0 to FLUID_BUFSIZE-1.
    * Depending on the position in the loop and the loop size, this
    * may require several runs. */
-  fluid_check_fpe ("voice_write DSP processing");
 
   voice->dsp_buf = dsp_buf;
 
@@ -623,6 +601,8 @@ fluid_voice_write(fluid_voice_t* voice,
       count = fluid_dsp_float_interpolate_7th_order (voice);
       break;
   }
+
+  fluid_check_fpe ("voice_write interpolation");
 
   if (count > 0)
     fluid_voice_effects (voice, count, dsp_left_buf, dsp_right_buf,
@@ -698,12 +678,10 @@ fluid_voice_effects (fluid_voice_t *voice, int count,
   int dsp_i;
   float v;
 
-  /* filter (implement the voice filter according to Soundfont standard) */
+  /* filter (implement the voice filter according to SoundFont standard) */
 
-  /* Check for denormal number (too close to zero) once in a
-  * while. This is not a big concern here - why would someone play a
-  * sample with an empty tail? */
-  dsp_hist1 = zap_almost_zero(dsp_hist1);
+  /* Check for denormal number (too close to zero). */
+  if (fabs (dsp_hist1) < 1e-20) dsp_hist1 = 0.0f;  /* FIXME JMG - Is this even needed? */
 
   /* Two versions of the filter loop. One, while the filter is
   * changing towards its new setting. The other, if the filter
@@ -792,6 +770,8 @@ fluid_voice_effects (fluid_voice_t *voice, int count,
   voice->b02 = dsp_b02;
   voice->b1 = dsp_b1;
   voice->filter_coeff_incr_count = dsp_filter_coeff_incr_count;
+
+  fluid_check_fpe ("voice_effects");
 }
 
 /*

@@ -111,10 +111,9 @@ libfluidsynth_la_LIBADD = $(LIBFLUID_LIBS) $(LASH_LIBS) $(LADCCA_LIBS) \
   $(READLINE_LIBS) $(COREAUDIO_LIBS) $(JACK_LIBS) $(ALSA_LIBS)
 libfluidsynth_la_LDFLAGS = \
 	-version-info @LT_VERSION_INFO@ \
-	-export-dynamic @FCLDFLAGS@ $(LIBFLUID_LDFLAGS)
+	-export-dynamic $(LIBFLUID_LDFLAGS)
 libfluidsynth_la_CPPFLAGS = $(LIBFLUID_CPPFLAGS)
 
 fluidsynth_SOURCES = fluidsynth.c
 fluidsynth_LDADD = libfluidsynth.la
-fluidsynth_LDFLAGS = @FCLDFLAGS@
 fluidsynth_CPPFLAGS = $(FLUIDSYNTH_CPPFLAGS)

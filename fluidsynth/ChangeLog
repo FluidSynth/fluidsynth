@@ -1,3 +1,28 @@
+2007-11-11    Josh Green <jgreen@users.sourceforge.net>
+
+	* configure.ac: Added --enable-trap-on-fpe and --enable-fpe-check to
+	  assist with Floating Point Exception debugging.
+	* src/fluid_chorus.c: Reverted the rest of the chorus "Effect level clip"
+	  patch, until something better is devised.
+	* src/fluid_synth.c: Added support for trapping on Floating Point
+	  Exceptions on GLIBC systems, to aid developers in tracking down FPEs
+	  with gdb, removed buffer alignment hacks since they are no longer
+	  needed (not using SSE currently).
+	* src/fluid_sys.c (fluid_time_config): Added check for a CPU freq
+	  calculation of 0.0, since this test is inadequate to begin with and
+	  was coming up as 0.0 on my laptop, causing a FPE.  Will replace with
+	  real timer functions, in the future.
+	* src/fluid_voice.c: Removed zap_almost_zero macro as it was buggy and
+	  had issues which went away when gcc optimization was turned off and in
+	  the case of !WITH_FLOAT was using abs() which is integer based and
+	  would cause FPEs.
+	  (fluid_voice_write): Removed a memory alignment hack and moved a call
+	  to fluid_fpe_check() to a better location.
+	  (fluid_voice_effects): Replaced zap_almost_zero with a call to fabs(),
+	  added fluid_fpe_check() call.
+	* src/fluidsynth_priv.h: Removed FLUID_ALIGN16BYTE hack, as it is no
+	  longer needed.
+
 2007-11-10    Josh Green <jgreen@users.sourceforge.net>
 
 	* doc/fluidsynth.1: Updated man page with current command line options and other changes (minor).
