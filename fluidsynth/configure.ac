@@ -29,7 +29,7 @@ dnl if any interfaces have been added: LT_AGE++
 dnl if any interfaces have been removed/changed (compatibility broken): LT_AGE=0
 
 LT_CURRENT=2
-LT_REVISION=1
+LT_REVISION=2
 LT_AGE=1
 
 LT_VERSION_INFO="${LT_CURRENT}:${LT_REVISION}:${LT_AGE}"
