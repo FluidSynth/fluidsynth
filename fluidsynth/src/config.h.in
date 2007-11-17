@@ -129,6 +129,9 @@
 /* Define if using the MinGW32 environment */
 #undef MINGW32
 
+/* Define to 1 if your C compiler doesn't accept -c and -o together. */
+#undef NO_MINUS_C_MINUS_O
+
 /* Define to enable OSS driver */
 #undef OSS_SUPPORT
 
