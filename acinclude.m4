@@ -1,6 +1,6 @@
 dnl Some additional autoconf macros
 
-AC_DEFUN(AC_MIDISHARE,
+AC_DEFUN([AC_MIDISHARE],
 [
   AC_ARG_ENABLE(midishare, AS_HELP_STRING([--enable-midishare],
 	  [Compile MIDISHARE support (default=auto)]),
@@ -34,7 +34,7 @@ AC_DEFUN(AC_MIDISHARE,
    fi	dnl  enable_midishare != no?
 ])
 
-AC_DEFUN(AC_OSS_AUDIO,
+AC_DEFUN([AC_OSS_AUDIO],
 [
   AC_ARG_ENABLE(oss-support,
     [  --disable-oss-support   Do not compile OSS support (default=auto)],
@@ -66,7 +66,7 @@ dnl Test for readline, and define READLINE_CFLAGS and
 dnl READLINE_LIBS as appropriate.
 dnl enables arguments --with-readline-prefix=
 
-AC_DEFUN(AM_PATH_READLINE,
+AC_DEFUN([AM_PATH_READLINE],
 [dnl Save the original CFLAGS, and LIBS
 save_CFLAGS="$CFLAGS"
 save_LIBS="$LIBS"
@@ -98,14 +98,11 @@ AC_TRY_COMPILE([
 #include <stdio.h>
 #include <readline/readline.h>
 ], [
-int main(void)
-{
 #ifndef readline
    return (1);
 #else
    return (0);
 #endif
-}
 ],
   [AC_MSG_RESULT(found.)],
   [AC_MSG_RESULT(not present.)

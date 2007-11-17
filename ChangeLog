@@ -1,7 +1,10 @@
 2007-11-17    Josh Green <jgreen@users.sourceforge.net>
 
 	* FluidSynth release 1.0.8 "Its about funky time!"
-	* configure.ac: Bumped LT_REVISION.
+	* configure.ac: Bumped LT_REVISION and added call to AM_PROG_CC_C_O macro.
+	* Makefile: Updated fluidsynth.prj to fluidsynth.anjuta
+	* README-OSX: Update from Ebrahim Mayat for OS X Leopard
+	* acinclude.m4: Fixed embedded main function in AM_PATH_READLINE macro.
 
 2007-11-11    Josh Green <jgreen@users.sourceforge.net>
 

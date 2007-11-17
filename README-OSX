@@ -1,11 +1,11 @@
-Compiling fluidsynth-1.0.8 on Mac OS X.4.10 (Tiger)
+Compiling fluidsynth-1.0.8 on Mac OS X.5 (Leopard)
 -----------------------------------------------------------------------
 Requirements:
-- "XcodeTools.mpkg","DevSDK.pkg", "CoreAudioSDK.pkg" packages (The Tiger Install DVD).
+- "XcodeTools.mpkg","DevSDK.pkg", "CoreAudioSDK.pkg" packages (The Leopard Install DVD).
 
 - Fink installation <http://fink.sourceforge.net>
 
-- libgnugetopt-1.2, readline-4.3, ladspa-1.12 and ladspa-cmt-1.15 from fink: e.g. "fink install libgnugetopt"
+- libgnugetopt and readline from fink: e.g. "fink install libgnugetopt"
 
 - midishare-1.92-macosx <http://midishare.sourceforge.net>
 
@@ -30,12 +30,15 @@ CoreAudio:             yes
 LADSPA support:        no
 LASH support:          no
 LADCCA support:        no
-Readline:              no
-Debug:                 yes
+Readline:              yes
 Profiling:             no
+Debug:                 no
+Trap on FPE (debug):   no
+Check FPE (debug):     no
 **************************************************************
 
 4. make && make install as root
  
 Ebrahim Mayat <emayat@users.sourceforge.net>
-4th September 2007
+12th November 2007
+
