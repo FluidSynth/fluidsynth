@@ -146,12 +146,17 @@ fluid_mod_get_value(fluid_mod_t* mod, fluid_channel_t* chan, fluid_voice_t* voic
       (mod->flags2 == (FLUID_MOD_GC | FLUID_MOD_UNIPOLAR
 		       | FLUID_MOD_POSITIVE | FLUID_MOD_SWITCH)) &&
       (mod->dest == GEN_FILTERFC)) {
+// S. Christian Collins' mod, to stop forcing velocity based filtering
+/*
     if (voice->vel < 64){
       return (fluid_real_t) mod->amount / 2.0;
     } else {
       return (fluid_real_t) mod->amount * (127 - voice->vel) / 127;
     }
+*/
+     return 0; // (fluid_real_t) mod->amount / 2.0;
   }
+// end S. Christian Collins' mod
 
   /* get the initial value of the first source */
   if (mod->src1 > 0) {
@@ -198,7 +203,7 @@ fluid_mod_get_value(fluid_mod_t* mod, fluid_channel_t* chan, fluid_voice_t* voic
       v1 = -1.0f + 2.0f * v1 / range1;
       break;
     case 3: /* linear, bipolar, negative */
-      v1 = -1.0f + 2.0f * v1 / range1;
+      v1 = 1.0f - 2.0f * v1 / range1;
       break;
     case 4: /* concave, unipolar, positive */
       v1 = fluid_concave(v1);
@@ -219,7 +224,7 @@ fluid_mod_get_value(fluid_mod_t* mod, fluid_channel_t* chan, fluid_voice_t* voic
       v1 = fluid_convex(127 - v1);
       break;
     case 10: /* convex, bipolar, positive */
-      v1 = (v1 > 64)? -fluid_convex(2 * (v1 - 64)) : fluid_convex(2 * (64 - v1));
+      v1 = (v1 > 64)? fluid_convex(2 * (v1 - 64)) : -fluid_convex(2 * (64 - v1));
       break;
     case 11: /* convex, bipolar, negative */
       v1 = (v1 > 64)? -fluid_convex(2 * (v1 - 64)) : fluid_convex(2 * (64 - v1));

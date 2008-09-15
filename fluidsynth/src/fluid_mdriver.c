@@ -52,6 +52,7 @@ fluid_midi_driver_t* new_fluid_winmidi_driver(fluid_settings_t* settings,
 					    handle_midi_event_func_t handler,
 					    void* event_handler_data);
 int delete_fluid_winmidi_driver(fluid_midi_driver_t* p);
+void fluid_winmidi_midi_driver_settings(fluid_settings_t* settings);
 #endif
 
 /* definitions for the MidiShare driver */
@@ -98,7 +99,7 @@ struct fluid_mdriver_definition_t fluid_midi_drivers[] = {
   { "winmidi",
     new_fluid_winmidi_driver,
     delete_fluid_winmidi_driver,
-    NULL },
+    fluid_winmidi_midi_driver_settings },
 #endif
 #if MIDISHARE_SUPPORT
   { "midishare",
