@@ -213,7 +213,7 @@ int main(int argc, char** argv)
   int with_server = 0;
   int dump = 0;
   int connect_lash = 1;
-  char *optchars = "a:C:c:df:G:g:hijK:L:lm:no:R:r:sVvz:";
+  char *optchars = "a:C:c:df:G:g:hijK:L:lm:no:p:R:r:sVvz:";
 #ifdef LASH_ENABLED
   int enabled_lash = 0;		/* set to TRUE if lash gets enabled */
   fluid_lash_args_t *lash_args;
@@ -247,6 +247,7 @@ int main(int argc, char** argv)
       {"no-midi-in", 0, 0, 'n'},
       {"no-shell", 0, 0, 'i'},
       {"option", 1, 0, 'o'},
+      {"portname", 1, 0, 'p'},
       {"reverb", 1, 0, 'R'},
       {"sample-rate", 1, 0, 'r'},
       {"server", 0, 0, 's'},
@@ -264,7 +265,7 @@ int main(int argc, char** argv)
     char *optarg;
 
     /* Skip non switch arguments (assume they are file names) */
-    if ((argv[i][0] != '-') || (argv[i][1] == '\0')) continue;
+    if ((argv[i][0] != '-') || (argv[i][1] == '\0')) break;
 
     c = argv[i][1];
 
@@ -354,6 +355,9 @@ int main(int argc, char** argv)
       break;
     case 'o':
       process_o_cmd_line_option(settings, optarg);
+      break;
+    case 'p' :
+      fluid_settings_setstr(settings, "midi.portname", optarg);
       break;
     case 'R':
       if ((optarg != NULL) && ((strcmp(optarg, "0") == 0) || (strcmp(optarg, "no") == 0))) {
@@ -688,6 +692,8 @@ print_help()
 	 "    The name of the midi driver to use [oss,alsa,alsa_seq,...]\n");
   printf(" -n, --no-midi-in\n"
 	 "    Don't create a midi driver to read MIDI input events [default = yes]\n");
+  printf(" -p, --portname=[label]\n"
+	 "    Set alsa midi port name\n");
   printf(" -o\n"
 	 "    Define a setting, -o name=value (\"-o help\" to dump current values)\n");
   printf(" -R, --reverb\n"

@@ -57,6 +57,24 @@ void CALLBACK fluid_winmidi_callback(HMIDIIN hmi, UINT wMsg, DWORD dwInstance,
 static char* fluid_winmidi_input_error(int no);
 int fluid_winmidi_driver_status(fluid_midi_driver_t* p);
 
+void fluid_winmidi_midi_driver_settings(fluid_settings_t* settings)
+{
+  MMRESULT res;
+  MIDIINCAPS in_caps;
+  UINT i, num;	
+  fluid_settings_register_str(settings, "midi.winmidi.device", "default", 0, NULL, NULL);
+  num = midiInGetNumDevs();
+  if (num > 0) {
+    fluid_settings_add_option(settings, "midi.winmidi.device", "default");
+    for (i = 0; i < num; i++) {
+      res = midiInGetDevCaps(i, &in_caps, sizeof(MIDIINCAPS));
+      if (res == MMSYSERR_NOERROR) {
+        fluid_settings_add_option(settings, "midi.winmidi.device", in_caps.szPname);
+      }
+    }
+  }
+}
+
 /*
  * new_fluid_winmidi_driver
  */
@@ -69,6 +87,7 @@ new_fluid_winmidi_driver(fluid_settings_t* settings,
   UINT i, err, num;
   MIDIINCAPS in_caps;
   int midi_num = 0;
+  char* devname = NULL;
 
   /* not much use doing anything */
   if (handler == NULL) {
@@ -85,6 +104,11 @@ new_fluid_winmidi_driver(fluid_settings_t* settings,
   dev->driver.handler = handler;
   dev->driver.data = data;
 
+  /* get the device name. if none is specified, use the default device. */
+  if(!fluid_settings_getstr(settings, "midi.winmidi.device", &devname)) {
+    devname = "default";
+  }
+  
   /* check if there any midi devices installed */
   num = midiInGetNumDevs();
   if (num == 0) {
@@ -93,9 +117,21 @@ new_fluid_winmidi_driver(fluid_settings_t* settings,
   }
 
   /* find the device */
-  for (i = 0; i < num; i++) {
-    res = midiInGetDevCaps(i, &in_caps, sizeof(LPMIDIINCAPS));
-    if (res == MMSYSERR_NOERROR) {
+  if (strcasecmp("default", devname) != 0) {
+    for (i = 0; i < num; i++) {
+      res = midiInGetDevCaps(i, &in_caps, sizeof(MIDIINCAPS));
+      if (res == MMSYSERR_NOERROR) {
+        FLUID_LOG(FLUID_DBG, "Testing midi device: %s\n", in_caps.szPname);
+        if (strcasecmp(devname, in_caps.szPname) == 0) {
+          FLUID_LOG(FLUID_DBG, "Selected midi device number: %d\n", i);
+          midi_num = i;
+          break;
+        }
+      }
+    }
+    if (midi_num != i) {
+      FLUID_LOG(FLUID_ERR, "Device <%s> does not exists", devname);
+      goto error_recovery;
     }
   }
 

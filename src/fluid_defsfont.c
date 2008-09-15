@@ -689,7 +689,7 @@ fluid_defpreset_noteon(fluid_defpreset_t* preset, fluid_synth_t* synth, int chan
 	     *  page 69, 'bullet' 3 defines 'identical'.  */
 
 	    for (i = 0; i < mod_list_count; i++){
-	      if (fluid_mod_test_identity(mod,mod_list[i])){
+	      if (mod_list[i] && fluid_mod_test_identity(mod,mod_list[i])){
 		mod_list[i] = NULL;
 	      }
 	    }
@@ -768,7 +768,7 @@ fluid_defpreset_noteon(fluid_defpreset_t* preset, fluid_synth_t* synth, int chan
 	  mod = preset_zone->mod;
 	  while (mod){
 	    for (i = 0; i < mod_list_count; i++){
-	      if (fluid_mod_test_identity(mod,mod_list[i])){
+	      if (mod_list[i] && fluid_mod_test_identity(mod,mod_list[i])){
 		mod_list[i] = NULL;
 	      }
 	    }

@@ -1,3 +1,34 @@
+2008-09-07    Josh Green <jgreen@users.sourceforge.net>
+
+	* src/fluid_alsa.c (new_fluid_alsa_seq_driver): Patch from
+	  Nicolas Boulicault to add ALSA sequencer midi.portname setting.
+	* src/fluid_conv.h: S. Christian Collins' patch - changed
+	  FLUID_ATTEN_POWER_FACTOR from -531.509 to -200.0.
+	* src/fluid_defsfont.c (fluid_defpreset_noteon): S. Christian Collins'
+	  patch - crash bug fix related to using certain modulators in a preset.
+	* src/fluid_mdriver.c: Pedro Lopez-Cabanillas' patch which adds a
+	  midi.winmidi.device setting.
+	* src/fluid_mod.c: S. Christian Collins' patch - Stop forcing velocity
+          based filtering and a couple of calculation fixes to transform functions.
+	* src/fluid_synth.c: Nicolas Boulicault's patch to add midi.portname
+	  setting.
+	  (fluid_synth_program_change): added fix to properly search for a
+	  percussion instrument 
+	* src/fluid_synth.h: Changed FLUID_NUM_PROGRAMS to 128 and set
+	  DRUM_INST_BANK to 128.
+	* src/fluid_voice.c (fluid_voice_write): S. Christian Collins' patch -
+	  force velocity envelope value to be that of the previous stage when
+	  switching from decay to sustain and filter calculation now uses
+	  synthesizer baud rate rather than fixed at 44100.
+	  (fluid_voice_update_param): S. Christian Collins' patch - Use multiplier
+	  for GEN_ATTENUATION to be compatible with EMU10K1 cards.
+	* src/fluid_winmidi.c: Pedro Lopez-Cabanillas' patch which adds a
+	  midi.winmidi.device option.
+	* src/fluidsynth.c: Nicolas Boulicault's patch which adds midi.portname
+	  setting.  Pedro Lopez-Cabanillas' patch which breaks out of argument
+	  processing loop for non getopt option argument handling when a non
+	  option is encountered.
+
 2007-11-17    Josh Green <jgreen@users.sourceforge.net>
 
 	* FluidSynth release 1.0.8 "Its about funky time!"

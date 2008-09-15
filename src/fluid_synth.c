@@ -112,6 +112,7 @@ void fluid_synth_settings(fluid_settings_t* settings)
   fluid_settings_register_str(settings, "synth.reverb.active", "yes", 0, NULL, NULL);
   fluid_settings_register_str(settings, "synth.chorus.active", "yes", 0, NULL, NULL);
   fluid_settings_register_str(settings, "synth.ladspa.active", "no", 0, NULL, NULL);
+  fluid_settings_register_str(settings, "midi.portname", "", 0, NULL, NULL);
 
   fluid_settings_register_int(settings, "synth.polyphony",
 			     256, 16, 4096, 0, NULL, NULL);
@@ -1170,9 +1171,6 @@ fluid_synth_program_change(fluid_synth_t* synth, int chan, int prognum)
   unsigned int banknum;
   unsigned int sfont_id;
 
-/*   fluid_mutex_lock(synth->busy); /\* Don't interfere with the audio thread *\/ */
-/*   fluid_mutex_unlock(synth->busy); */
-
   if ((prognum >= 0) && (prognum < FLUID_NUM_PROGRAMS) &&
       (chan >= 0) && (chan < synth->midi_channels)) {
 
@@ -1190,8 +1188,8 @@ fluid_synth_program_change(fluid_synth_t* synth, int chan, int prognum)
        10 is the percussion channel.  */
     if (channel->channum == 9) {
 
-      /* try to search the drum instrument first */
-      preset = fluid_synth_find_preset(synth, banknum | DRUM_INST_MASK, prognum);
+      /* try to search the drum bank first for the given program # */
+      preset = fluid_synth_find_preset(synth, DRUM_INST_BANK, prognum);
 
       /* if that fails try to search the melodic instrument */
       if (preset == NULL) {

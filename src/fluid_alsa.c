@@ -897,8 +897,9 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
   struct sched_param priority;
   int count;
   struct pollfd *pfd = NULL;
-  char* device = NULL;
-  char* id;
+  char * device = NULL;
+  char * id;
+  char * portname;
   char full_id[64];
   char full_name[64];
   char id_pid[16];
@@ -934,6 +935,11 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
     id = id_pid;
   }
 
+  /* get the midi portname */
+  fluid_settings_getstr(settings, "midi.portname", &portname);
+  if (!strcmp(portname, ""))
+      portname = NULL;
+
   /* open the sequencer INPUT only */
   err = snd_seq_open(&dev->seq_handle, device, SND_SEQ_OPEN_INPUT, 0);
   if (err < 0) {
@@ -962,7 +968,12 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
   FLUID_FREE(pfd);
 
   /* set the client name */
-  snd_seq_set_client_name(dev->seq_handle, fluid_alsa_seq_full_id(id, full_id, 64));
+  if (!portname) {
+    snd_seq_set_client_name(dev->seq_handle, fluid_alsa_seq_full_id(id, full_id, 64));
+  }
+  else {
+    snd_seq_set_client_name(dev->seq_handle, portname);
+  }
 
 
   /* create the ports */
@@ -982,7 +993,12 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
 
   for (i = 0; i < dev->port_count; i++) {
 
-    snd_seq_port_info_set_name(port_info, fluid_alsa_seq_full_name(id, i, full_name, 64));
+    if (!portname) {
+      snd_seq_port_info_set_name(port_info, fluid_alsa_seq_full_name(id, i, full_name, 64));
+    }
+    else {
+      snd_seq_port_info_set_name(port_info, portname);
+    }
     snd_seq_port_info_set_port(port_info, i);
 
     err = snd_seq_create_port(dev->seq_handle, port_info);

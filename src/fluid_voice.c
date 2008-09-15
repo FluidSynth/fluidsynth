@@ -283,6 +283,10 @@ fluid_voice_write(fluid_voice_t* voice,
   /* skip to the next section of the envelope if necessary */
   while (voice->volenv_count >= env_data->count)
   {
+    // If we're switching envelope stages from decay to sustain, force the value to be the end value of the previous stage
+    if (env_data && voice->volenv_section == FLUID_VOICE_ENVDECAY)
+      voice->volenv_val = env_data->min * env_data->coeff;
+
     env_data = &voice->volenv_data[++voice->volenv_section];
     voice->volenv_count = 0;
   }
@@ -515,7 +519,7 @@ fluid_voice_write(fluid_voice_t* voice,
     * into account for both significant frequency relocation and for
     * bandwidth readjustment'. */
 
-   fluid_real_t omega = (fluid_real_t) (2.0 * M_PI * (fres / 44100.0f));
+   fluid_real_t omega = (fluid_real_t) (2.0 * M_PI * (fres / ((float) voice->output_rate)));
    fluid_real_t sin_coeff = (fluid_real_t) sin(omega);
    fluid_real_t cos_coeff = (fluid_real_t) cos(omega);
    fluid_real_t alpha_coeff = sin_coeff / (2.0f * voice->q_lin);
@@ -1031,6 +1035,8 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
   fluid_real_t x;
   fluid_real_t y;
   unsigned int count;
+  // Alternate attenuation scale used by EMU10K1 cards when setting the attenuation at the preset or instrument level within the SoundFont bank.
+  static const float ALT_ATTENUATION_SCALE = 0.4;
 
   switch (gen) {
 
@@ -1042,7 +1048,8 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
     break;
 
   case GEN_ATTENUATION:
-    voice->attenuation = _GEN(voice, GEN_ATTENUATION);
+    voice->attenuation = ((fluid_real_t)(voice)->gen[GEN_ATTENUATION].val*ALT_ATTENUATION_SCALE) +
+    (fluid_real_t)(voice)->gen[GEN_ATTENUATION].mod + (fluid_real_t)(voice)->gen[GEN_ATTENUATION].nrpn;
 
     /* Range: SF2.01 section 8.1.3 # 48
      * Motivation for range checking:

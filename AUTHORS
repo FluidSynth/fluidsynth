@@ -12,25 +12,24 @@ author. Josh Green is the current maintainer. Below you'll find a
 summary of contributions.
 
 
-* Peter Hanappe. Initiated the project. files: sticked his nose in all
+* Peter Hanappe. Initiated the project. files: stuck his nose in all
   files.
 
 * Josh Green is the current maintainer and contributed a lot of code
   directly or indirectly through the Swami and Smurf code base.
   The SoundFont loader is completely based on his code. He also wrote
   the alsa sequencer driver. He made many changes and bug fixes,
-  but above all, he's one of the driver forces behind the synthesizer.
+  but above all, he's one of the driving forces behind the synthesizer.
   He also created the current FluidSynth graphic logo with Blender
   (the blue waves with FluidSynth letters partially submerged).
-  files: iiwu_defsfont.{c,h}, iiwu_alsa{c,h} and others.
 
 * Markus Nentwig (re-)designed the resonant filter, the chorus, the
   LADSPA subsystem, the MIDI router, optimized for SSE, made many
   changes and bug fixes and got the synthesizer to actually work. Most
-  importantly, he used it on stage to make music.  files:
-  iiwu_ladspa.{c,h}, iiwu_cmd.{c,h}, iiwu_voice.{c,h}, iiwu_synth.c,
-  iiwu_sse.h, iiwu_dsp_core.h, iiwu_rev.{c,h}, and basically all the
-  other files.
+  importantly, he used it on stage to make music.
+
+* S. Christian Collins did much testing of FluidSynth in regards to
+  EMU10K1 compatibility and provided many synthesis fixes in that regard.
 
 * Stephane Letz from Grame wrote most of the MidiShare driver, all of
   the PortAudio driver, ported iiwusynth to MacOS X, and sent in many
@@ -98,7 +97,9 @@ summary of contributions.
   signed integer type). Mozilla NSPR library, www.mozilla.org.  file:
   iiwu_phase.h
 
-* Growing list of individuals who contributed bug fixes and corrections:
+* Growing list of individuals who contributed bug fixes, corrections and minor features:
+Pedro Lopez-Cabanillas for midi.winmidi.device setting.
+Nicolas Boulicault for ALSA sequencer midi.portname setting.
 Werner Schweer
 Dave Philips
 Anthony Green
