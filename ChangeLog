@@ -27,7 +27,7 @@
 	* src/fluidsynth.c: Nicolas Boulicault's patch which adds midi.portname
 	  setting.  Pedro Lopez-Cabanillas' patch which breaks out of argument
 	  processing loop for non getopt option argument handling when a non
-	  option is encountered.
+	  option is encountered and not using Readline.
 
 2007-11-17    Josh Green <jgreen@users.sourceforge.net>
 
