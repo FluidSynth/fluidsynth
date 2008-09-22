@@ -58,12 +58,32 @@ typedef struct {
   DWORD frame_size;
 } fluid_dsound_audio_driver_t;
 
+typedef struct {
+  LPGUID devGUID;
+  char* devname;
+} fluid_dsound_devsel_t;
+
 BOOL CALLBACK
 fluid_dsound_enum_callback(LPGUID guid, LPCTSTR description, LPCTSTR module, LPVOID context)
 {
   fluid_settings_t* settings = (fluid_settings_t*) context;
   fluid_settings_add_option(settings, "audio.dsound.device", (char *)description);
 
+  return TRUE;
+}
+
+BOOL CALLBACK
+fluid_dsound_enum_callback2(LPGUID guid, LPCTSTR description, LPCTSTR module, LPVOID context)
+{
+  fluid_dsound_devsel_t* devsel = (fluid_dsound_devsel_t*) context;
+  FLUID_LOG(FLUID_DBG, "Testing audio device: %s", description);
+  if (strcasecmp(devsel->devname, description) == 0) {
+    devsel->devGUID = FLUID_NEW(GUID);
+    if(devsel->devGUID) {
+      memcpy(devsel->devGUID, guid, sizeof(GUID));
+      FLUID_LOG(FLUID_DBG, "Selected audio device GUID: %p", devsel->devGUID);
+    }
+  }
   return TRUE;
 }
 
@@ -89,6 +109,7 @@ new_fluid_dsound_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
   DWORD bytes1;
   double sample_rate;
   int periods, period_size;
+  fluid_dsound_devsel_t devsel;
 
   /* check if the globals are initialized */
   if (FLUID_HINSTANCE == NULL) {
@@ -146,8 +167,15 @@ new_fluid_dsound_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
   dev->format->nAvgBytesPerSec = dev->format->nSamplesPerSec * dev->frame_size;
   dev->format->cbSize = 0;
 
+  devsel.devGUID = NULL;
+  /* get the selected device name. if none is specified, use NULL for the default device. */
+  if(fluid_settings_getstr(settings, "audio.dsound.device", &devsel.devname)) {
+    /* look for the GUID of the selected device */
+    DirectSoundEnumerate((LPDSENUMCALLBACK) fluid_dsound_enum_callback2, (void *)&devsel);  
+  }
+  
   /* open DirectSound */
-  hr = DirectSoundCreate(NULL, &dev->direct_sound, NULL);
+  hr = DirectSoundCreate(devsel.devGUID, &dev->direct_sound, NULL);
   if (hr != DS_OK) {
     FLUID_LOG(FLUID_ERR, "Failed to create the DirectSound object");
     goto error_recovery;
