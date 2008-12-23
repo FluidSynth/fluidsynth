@@ -997,8 +997,15 @@ fluid_synth_modulate_voices_all(fluid_synth_t* synth, int chan)
   return FLUID_OK;
 }
 
-/*
- * fluid_synth_pitch_bend
+/**
+ * Set the MIDI pitch bend controller value.
+ * @param synth FluidSynth instance
+ * @param chan MIDI channel number
+ * @param val MIDI pitch bend value (14 bit, 0-16383 with 8192 being center)
+ * @return FLUID_OK on success
+ *
+ * Assign to the MIDI pitch bend controller value on a specific MIDI channel
+ * in real time.
  */
 int
 fluid_synth_pitch_bend(fluid_synth_t* synth, int chan, int val)

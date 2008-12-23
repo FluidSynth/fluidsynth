@@ -37,6 +37,14 @@ typedef struct _fluid_audriver_definition_t
 } fluid_audriver_definition_t;
 
 
+#if PULSE_SUPPORT
+fluid_audio_driver_t* new_fluid_pulse_audio_driver(fluid_settings_t* settings,
+						   fluid_synth_t* synth);
+fluid_audio_driver_t* new_fluid_pulse_audio_driver2(fluid_settings_t* settings,
+						    fluid_audio_func_t func, void* data);
+int delete_fluid_pulse_audio_driver(fluid_audio_driver_t* p);
+void fluid_pulse_audio_driver_settings(fluid_settings_t* settings);
+#endif
 
 #if ALSA_SUPPORT
 fluid_audio_driver_t* new_fluid_alsa_audio_driver(fluid_settings_t* settings,
@@ -104,13 +112,21 @@ int delete_fluid_file_audio_driver(fluid_audio_driver_t* p);
 void fluid_file_audio_driver_settings(fluid_settings_t* settings);
 #endif
 
+/* Available audio drivers, listed in order of preference */
 fluid_audriver_definition_t fluid_audio_drivers[] = {
-#if OSS_SUPPORT
-  { "oss",
-    new_fluid_oss_audio_driver,
-    new_fluid_oss_audio_driver2,
-    delete_fluid_oss_audio_driver,
-    fluid_oss_audio_driver_settings },
+#if JACK_SUPPORT
+  { "jack",
+    new_fluid_jack_audio_driver,
+    new_fluid_jack_audio_driver2,
+    delete_fluid_jack_audio_driver,
+    fluid_jack_audio_driver_settings },
+#endif
+#if PULSE_SUPPORT
+  { "pulseaudio",
+    new_fluid_pulse_audio_driver,
+    new_fluid_pulse_audio_driver2,
+    delete_fluid_pulse_audio_driver,
+    fluid_pulse_audio_driver_settings },
 #endif
 #if ALSA_SUPPORT
   { "alsa",
@@ -118,6 +134,13 @@ fluid_audriver_definition_t fluid_audio_drivers[] = {
     new_fluid_alsa_audio_driver2,
     delete_fluid_alsa_audio_driver,
     fluid_alsa_audio_driver_settings },
+#endif
+#if OSS_SUPPORT
+  { "oss",
+    new_fluid_oss_audio_driver,
+    new_fluid_oss_audio_driver2,
+    delete_fluid_oss_audio_driver,
+    fluid_oss_audio_driver_settings },
 #endif
 #if COREAUDIO_SUPPORT
   { "coreaudio",
@@ -146,13 +169,6 @@ fluid_audriver_definition_t fluid_audio_drivers[] = {
     new_fluid_sndmgr_audio_driver2,
     delete_fluid_sndmgr_audio_driver,
     NULL },
-#endif
-#if JACK_SUPPORT
-  { "jack",
-    new_fluid_jack_audio_driver,
-    new_fluid_jack_audio_driver2,
-    delete_fluid_jack_audio_driver,
-    fluid_jack_audio_driver_settings },
 #endif
 #if AUFILE_SUPPORT
   { "file",
@@ -191,7 +207,9 @@ void fluid_audio_driver_settings(fluid_settings_t* settings)
 #endif
 
   /* Set the default driver */
-#if ALSA_SUPPORT
+#if PULSE_SUPPORT
+  fluid_settings_register_str(settings, "audio.driver", "pulseaudio", 0, NULL, NULL);
+#elif ALSA_SUPPORT
   fluid_settings_register_str(settings, "audio.driver", "alsa", 0, NULL, NULL);
 #elif OSS_SUPPORT
   fluid_settings_register_str(settings, "audio.driver", "oss", 0, NULL, NULL);
@@ -212,6 +230,9 @@ void fluid_audio_driver_settings(fluid_settings_t* settings)
 #endif
 
   /* Add all drivers to the list of options */
+#if PULSE_SUPPORT
+  fluid_settings_add_option(settings, "audio.driver", "pulseaudio");
+#endif
 #if ALSA_SUPPORT
   fluid_settings_add_option(settings, "audio.driver", "alsa");
 #endif

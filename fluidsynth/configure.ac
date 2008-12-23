@@ -158,6 +158,25 @@ dnl   AUFILE_SUPPORT=1
 dnl   AC_DEFINE(AUFILE_SUPPORT, 1, [Define to activate sound output to files])
 dnl fi
 
+dnl - Check for PulseAudio support
+
+AC_ARG_ENABLE(pulse-support, AS_HELP_STRING([--disable-pulse-support],
+      [Do not compile PulseAudio support (default=auto)]),
+  enable_pulse_support=$enableval, enable_pulse_support="yes")
+
+if test "x$enable_pulse_support" != "xno"; then
+  PKG_CHECK_MODULES(PULSE, libpulse-simple >= 0.9.8, PULSE_SUPPORT=1, PULSE_SUPPORT=0)
+else
+  PULSE_SUPPORT=0
+fi
+
+if test "$PULSE_SUPPORT" = "1"; then
+  AC_DEFINE(PULSE_SUPPORT, 1, [Define to enable PulseAudio driver])
+fi
+AM_CONDITIONAL(PULSE_SUPPORT, test "$PULSE_SUPPORT" = "1")
+AC_SUBST(PULSE_CFLAGS)
+AC_SUBST(PULSE_LIBS)
+
 
 dnl - Check support for ALSA
 
@@ -331,6 +350,18 @@ echo
 echo "**************************************************************"
 echo "Summary:"
 
+if test "${PULSE_SUPPORT}" = "1"; then
+  echo "PulseAudio:            yes"
+else 
+  echo "PulseAudio:            no"
+fi
+
+if test "${JACK_SUPPORT}" = "1"; then
+  echo "JACK:                  yes"
+else
+  echo "JACK:                  no"
+fi
+
 if test "${ALSA_SUPPORT}" = "1"; then
   echo "ALSA:                  yes"
 else 
@@ -347,12 +378,6 @@ if test "${MIDISHARE_SUPPORT}" = "1"; then
   echo "MidiShare:             yes"
 else
   echo "MidiShare:             no"
-fi
-
-if test "${JACK_SUPPORT}" = "1"; then
-  echo "JACK:                  yes"
-else
-  echo "JACK:                  no"
 fi
 
 if test "${COREAUDIO_SUPPORT}" = "1"; then
