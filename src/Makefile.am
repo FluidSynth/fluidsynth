@@ -1,5 +1,9 @@
 ## Process this file with automake to produce Makefile.in
 
+if PULSE_SUPPORT
+fluid_pulse = fluid_pulse.c
+endif
+
 # Tests for optional drivers
 if ALSA_SUPPORT
 fluid_alsa = fluid_alsa.c
@@ -47,6 +51,7 @@ libfluidsynth_la_SOURCES = \
 	$(fluid_jack) \
 	$(fluid_lash) \
 	$(fluid_oss) \
+	$(fluid_pulse) \
 	$(fluid_windows) \
 	fluid_adriver.c \
 	fluid_adriver.h \
@@ -105,10 +110,10 @@ libfluidsynth_la_SOURCES = \
 	fluid_aufile.c 
 
 INCLUDES = -I$(top_srcdir)/include $(LASH_CFLAGS) $(LADCCA_CFLAGS) \
-  $(READLINE_CFLAGS) $(JACK_CFLAGS) $(ALSA_CFLAGS)
+  $(READLINE_CFLAGS) $(JACK_CFLAGS) $(ALSA_CFLAGS) $(PULSE_CFLAGS)
 
 libfluidsynth_la_LIBADD = $(LIBFLUID_LIBS) $(LASH_LIBS) $(LADCCA_LIBS) \
-  $(READLINE_LIBS) $(COREAUDIO_LIBS) $(JACK_LIBS) $(ALSA_LIBS)
+  $(READLINE_LIBS) $(COREAUDIO_LIBS) $(JACK_LIBS) $(ALSA_LIBS) $(PULSE_LIBS)
 libfluidsynth_la_LDFLAGS = \
 	-version-info @LT_VERSION_INFO@ \
 	-export-dynamic $(LIBFLUID_LDFLAGS)

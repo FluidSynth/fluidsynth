@@ -62,6 +62,7 @@ fluid_channel_init(fluid_channel_t* chan)
   chan->interp_method = FLUID_INTERP_DEFAULT;
   chan->tuning = NULL;
   chan->nrpn_select = 0;
+  chan->nrpn_active = 0;
 }
 
 void
@@ -85,16 +86,20 @@ fluid_channel_init_ctrl(fluid_channel_t* chan)
   }
 
   /* Volume / initial attenuation (MSB & LSB) */
-  SETCC(chan, 7, 127);
-  SETCC(chan, 39, 0);
+  SETCC(chan, VOLUME_MSB, 127);
+  SETCC(chan, VOLUME_LSB, 0);
 
   /* Pan (MSB & LSB) */
-  SETCC(chan, 10, 64);
-  SETCC(chan, 10, 64);
+  SETCC(chan, PAN_MSB, 64);
+  SETCC(chan, PAN_LSB, 0);
 
   /* Expression (MSB & LSB) */
-  SETCC(chan, 11, 127);
-  SETCC(chan, 43, 127);
+  SETCC(chan, EXPRESSION_MSB, 127);
+  SETCC(chan, EXPRESSION_LSB, 127);
+
+  /* Set RPN controllers to NULL state */
+  SETCC(chan, RPN_LSB, 127);
+  SETCC(chan, RPN_MSB, 127);
 }
 
 void
@@ -241,18 +246,52 @@ fluid_channel_cc(fluid_channel_t* chan, int num, int value)
     {
       int data = (value << 7) + chan->cc[DATA_ENTRY_LSB];
 
-      /* SontFont 2.01 NRPN Message (Sect. 9.6, p. 74)  */
-      if ((chan->cc[NRPN_MSB] == 120) && (chan->cc[NRPN_LSB] < 100)) {
-	float val = fluid_gen_scale_nrpn(chan->nrpn_select, data);
-	FLUID_LOG(FLUID_WARN, "%s: %d: Data = %d, value = %f", __FILE__, __LINE__, data, val);
-	fluid_synth_set_gen(chan->synth, chan->channum, chan->nrpn_select, val);
+      if (chan->nrpn_active)  /* NRPN is active? */
+      {
+	/* SontFont 2.01 NRPN Message (Sect. 9.6, p. 74)  */
+	if ((chan->cc[NRPN_MSB] == 120) && (chan->cc[NRPN_LSB] < 100))
+	{
+	  if (chan->nrpn_select < GEN_LAST)
+	  {
+	    float val = fluid_gen_scale_nrpn(chan->nrpn_select, data);
+	    fluid_synth_set_gen(chan->synth, chan->channum, chan->nrpn_select, val);
+	  }
+
+	  chan->nrpn_select = 0;  /* Reset to 0 */
+	}
       }
+      else if (chan->cc[RPN_MSB] == 0)    /* RPN is active: MSB = 0? */
+      {
+	switch (chan->cc[RPN_LSB])
+	{
+	  case RPN_PITCH_BEND_RANGE:
+	    fluid_channel_pitch_wheel_sens (chan, value);   /* Set bend range in semitones */
+	    /* FIXME - Handle LSB? (Fine bend range in cents) */
+	    break;
+	  case RPN_CHANNEL_FINE_TUNE:   /* Fine tune is 14 bit over 1 semitone (+/- 50 cents, 8192 = center) */
+	    fluid_synth_set_gen(chan->synth, chan->channum, GEN_FINETUNE,
+				(data - 8192) / 8192.0 * 50.0);
+	    break;
+	  case RPN_CHANNEL_COARSE_TUNE: /* Coarse tune is 7 bit and in semitones (64 is center) */
+	    fluid_synth_set_gen(chan->synth, chan->channum, GEN_COARSETUNE,
+				value - 64);
+	    break;
+	  case RPN_TUNING_PROGRAM_CHANGE:
+	    break;
+	  case RPN_TUNING_BANK_SELECT:
+	    break;
+	  case RPN_MODULATION_DEPTH_RANGE:
+	    break;
+	}
+      }
+
       break;
     }
 
   case NRPN_MSB:
     chan->cc[NRPN_LSB] = 0;
     chan->nrpn_select = 0;
+    chan->nrpn_active = 1;
     break;
 
   case NRPN_LSB:
@@ -266,19 +305,15 @@ fluid_channel_cc(fluid_channel_t* chan, int num, int value)
 	chan->nrpn_select += 10000;
       } else if (value < 100) {
 	chan->nrpn_select += value;
-	FLUID_LOG(FLUID_WARN, "%s: %d: NRPN Select = %d", __FILE__, __LINE__, chan->nrpn_select);
       }
     }
+
+    chan->nrpn_active = 1;
     break;
 
   case RPN_MSB:
-    break;
-
   case RPN_LSB:
-    /* erase any previously received NRPN message  */
-    chan->cc[NRPN_MSB] = 0;
-    chan->cc[NRPN_LSB] = 0;
-    chan->nrpn_select = 0;
+    chan->nrpn_active = 0;
     break;
 
   default:

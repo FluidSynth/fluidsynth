@@ -146,6 +146,16 @@ enum fluid_midi_control_change {
   POLY_ON = 0x7F
 };
 
+/* General MIDI RPN event numbers (LSB, MSB = 0) */
+enum midi_rpn_event {
+  RPN_PITCH_BEND_RANGE = 0x00,
+  RPN_CHANNEL_FINE_TUNE = 0x01,
+  RPN_CHANNEL_COARSE_TUNE = 0x02,
+  RPN_TUNING_PROGRAM_CHANGE = 0x03,
+  RPN_TUNING_BANK_SELECT = 0x04,
+  RPN_MODULATION_DEPTH_RANGE = 0x05
+};
+
 enum midi_meta_event {
   MIDI_COPYRIGHT = 0x02,
   MIDI_TRACK_NAME = 0x03,

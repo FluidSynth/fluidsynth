@@ -123,6 +123,10 @@
 /* Include the LADSPA Fx unit */
 #undef LADSPA
 
+/* Define to the sub-directory in which libtool stores uninstalled libraries.
+   */
+#undef LT_OBJDIR
+
 /* Define to enable MidiShare driver */
 #undef MIDISHARE_SUPPORT
 
@@ -152,6 +156,9 @@
 
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
+
+/* Define to enable PulseAudio driver */
+#undef PULSE_SUPPORT
 
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS

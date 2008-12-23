@@ -1,3 +1,14 @@
+2008-12-23    Josh Green <jgreen@users.sourceforge.net>
+	* configure.ac: Added detection of PulseAudio driver.
+	* src/Makefile.am: Added conditional build of PulseAudio driver.
+	* src/fluid_adriver.c: Added PulseAudio driver and re-sorted drivers
+	  by use preference.
+	* src/fluid_chan.c: Using MIDI enums for initializing channel CC values,
+	  added supported for RPN GM MIDI messages Bend Range, Fine Tune and
+	  Coarse Tune, added check for out of range NRPN parameters.
+	* src/fluid_midi.h: Added RPN enum midi_rpn_event.
+	* src/fluid_pulse.c: New PulseAudio driver.
+
 2008-09-07    Josh Green <jgreen@users.sourceforge.net>
 
 	* src/fluid_alsa.c (new_fluid_alsa_seq_driver): Patch from

@@ -53,6 +53,7 @@ struct _fluid_channel_t
 
   /* NRPN system */
   short nrpn_select;
+  short nrpn_active;    /* 1 if data entry CCs are for NRPN, 0 if RPN */
 
   /* The values of the generators, set by NRPN messages, or by
    * fluid_synth_set_gen(), are cached in the channel so they can be
