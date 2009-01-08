@@ -113,16 +113,16 @@ delete_fluid_coremidi_driver(fluid_midi_driver_t* p)
     MIDIClientDispose(dev->client);
   }
   if (dev->endpoint != NULL) {
-  	MIDIEndpointDispose(dev->endpoint);
+    MIDIEndpointDispose(dev->endpoint);
   }
   if (dev->parser != NULL) {
     delete_fluid_midi_parser(dev->parser);
-  }  
+  }
   FLUID_FREE(dev);
   return 0;
 }
 
-void 
+void
 fluid_coremidi_callback(const MIDIPacketList *list, void *p, void *src)
 {
   unsigned int i, j;
@@ -133,10 +133,10 @@ fluid_coremidi_callback(const MIDIPacketList *list, void *p, void *src)
     for ( j = 0; j < packet->length; ++j ) {
       event = fluid_midi_parser_parse(dev->parser, packet->data[j]);
       if (event != NULL) {
-		(*dev->driver.handler)(dev->driver.data, event);
-  	  }
-  	}
-  	packet = MIDIPacketNext(packet);
+        (*dev->driver.handler)(dev->driver.data, event);
+      }
+    }
+    packet = MIDIPacketNext(packet);
   }
 }
 
