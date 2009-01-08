@@ -246,6 +246,24 @@ AM_CONDITIONAL(COREAUDIO_SUPPORT, test "$COREAUDIO_SUPPORT" = "1")
 AC_SUBST(COREAUDIO_LIBS)
 
 dnl
+dnl - Check support for CoreMIDI
+dnl
+AC_CHECK_HEADER(CoreMIDI/MIDIServices.h, COREMIDI_FOUND="yes",
+                COREMIDI_FOUND="no")
+AC_ARG_ENABLE(coremidi, AS_HELP_STRING([--disable-coremidi],
+	[disable CoreMIDI support (default=auto)]),
+  enable_coremidi=$enableval, enable_coremidi="yes")
+
+COREMIDI_SUPPORT=0
+if test "$enable_coremidi" = "yes" -a "$COREMIDI_FOUND" = "yes"; then
+  AC_DEFINE(COREMIDI_SUPPORT, 1, [whether or not we are supporting CoreMIDI])
+  COREMIDI_SUPPORT=1
+  COREMIDI_LIBS="-Wl,-framework,CoreMIDI"
+fi
+AM_CONDITIONAL(COREMIDI_SUPPORT, test "$COREMIDI_SUPPORT" = "1")
+AC_SUBST(COREMIDI_LIBS)
+
+dnl
 dnl Check for readline support (Josh Green 2003-06-10)
 dnl
 AC_ARG_WITH(readline,
@@ -384,6 +402,12 @@ if test "${COREAUDIO_SUPPORT}" = "1"; then
   echo "CoreAudio:             yes"
 else
   echo "CoreAudio:             no"
+fi
+
+if test "${COREMIDI_SUPPORT}" = "1"; then
+  echo "CoreMIDI:              yes"
+else
+  echo "CoreMIDI:              no"
 fi
 
 if test "${ENABLE_LADSPA}" = "yes"; then

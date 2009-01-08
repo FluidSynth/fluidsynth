@@ -25,6 +25,7 @@
 
 #define WITHOUT_SERVER 1
 #define COREAUDIO_SUPPORT 1
+#define COREMIDI_SUPPORT 1
 
 /* define to support the MidiShare driver */
 /*
