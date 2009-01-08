@@ -6,6 +6,9 @@
 /* whether or not we are supporting CoreAudio */
 #undef COREAUDIO_SUPPORT
 
+/* whether or not we are supporting CoreMIDI */
+#undef COREMIDI_SUPPORT
+
 /* Define if building for Mac OS X Darwin */
 #undef DARWIN
 
@@ -122,10 +125,6 @@
 
 /* Include the LADSPA Fx unit */
 #undef LADSPA
-
-/* Define to the sub-directory in which libtool stores uninstalled libraries.
-   */
-#undef LT_OBJDIR
 
 /* Define to enable MidiShare driver */
 #undef MIDISHARE_SUPPORT
