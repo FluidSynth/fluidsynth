@@ -13,6 +13,7 @@
 #define MIDISHARE_SUPPORT 1
 #define MIDISHARE_DRIVER 1
 #define PORTAUDIO_SUPPORT 1
+#define PORTMIDI_SUPPORT 1
 #define __Types__
 
 /* define to support DARWIN */

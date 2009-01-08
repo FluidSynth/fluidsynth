@@ -13,6 +13,10 @@ if COREAUDIO_SUPPORT
 fluid_coreaudio = fluid_coreaudio.c
 endif
 
+if COREMIDI_SUPPORT
+fluid_coremidi = fluid_coremidi.c
+endif
+
 if JACK_SUPPORT
 fluid_jack = fluid_jack.c
 endif
@@ -48,6 +52,7 @@ bin_PROGRAMS = fluidsynth
 libfluidsynth_la_SOURCES = \
 	$(fluid_alsa) \
 	$(fluid_coreaudio) \
+	$(fluid_coremidi) \
 	$(fluid_jack) \
 	$(fluid_lash) \
 	$(fluid_oss) \
@@ -113,7 +118,8 @@ INCLUDES = -I$(top_srcdir)/include $(LASH_CFLAGS) $(LADCCA_CFLAGS) \
   $(READLINE_CFLAGS) $(JACK_CFLAGS) $(ALSA_CFLAGS) $(PULSE_CFLAGS)
 
 libfluidsynth_la_LIBADD = $(LIBFLUID_LIBS) $(LASH_LIBS) $(LADCCA_LIBS) \
-  $(READLINE_LIBS) $(COREAUDIO_LIBS) $(JACK_LIBS) $(ALSA_LIBS) $(PULSE_LIBS)
+  $(READLINE_LIBS) $(COREAUDIO_LIBS) $(COREMIDI_LIBS) $(JACK_LIBS) \
+  $(ALSA_LIBS) $(PULSE_LIBS)
 libfluidsynth_la_LDFLAGS = \
 	-version-info @LT_VERSION_INFO@ \
 	-export-dynamic $(LIBFLUID_LDFLAGS)
