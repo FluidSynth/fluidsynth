@@ -80,14 +80,14 @@ new_fluid_coremidi_driver(fluid_settings_t* settings, handle_midi_event_func_t h
     goto error_recovery;
   }
 
-  OSStatus result = MIDIClientCreate( CFSTR("Fluidsynth"), NULL, NULL, &client );
+  OSStatus result = MIDIClientCreate( CFSTR("FluidSynth"), NULL, NULL, &client );
   if ( result != noErr ) {
     FLUID_LOG(FLUID_ERR, "Failed to create the MIDI input client");
     goto error_recovery;
   }
   dev->client = client;
 
-  result = MIDIDestinationCreate( client, CFSTR("Fluidsynth virtual port"),
+  result = MIDIDestinationCreate( client, CFSTR("FluidSynth virtual port"),
                                   fluid_coremidi_callback, (void *)dev, &endpoint );
   if ( result != noErr ) {
     FLUID_LOG(FLUID_ERR, "Failed to create the MIDI input port. MIDI input not available.");
@@ -141,3 +141,4 @@ fluid_coremidi_callback(const MIDIPacketList *list, void *p, void *src)
 }
 
 #endif /* COREMIDI_SUPPORT */
+
