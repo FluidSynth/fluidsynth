@@ -23,19 +23,20 @@ FLUIDSYNTH_VERSION="\"$VERSION\""
 
 dnl *** NOTICE ***
 dnl Update library version upon each release (follow these steps in order)
-dnl if any source code changes: LT_REVISION++
-dnl if any interfaces added/removed/changed: LT_CURRENT++ and LT_REVISION=0
-dnl if any interfaces have been added: LT_AGE++
-dnl if any interfaces have been removed/changed (compatibility broken): LT_AGE=0
+dnl if any source code changes: lt_revision++
+dnl if any interfaces added/removed/changed: lt_current++ and lt_revision=0
+dnl if any interfaces have been added: lt_age++
+dnl if any interfaces have been removed/changed (compatibility broken): lt_age=0
 
-LT_CURRENT=2
-LT_REVISION=2
-LT_AGE=1
+m4_define([lt_current], [2])
+m4_define([lt_revision], [2])
+m4_define([lt_age], [1])
 
-LT_VERSION_INFO="${LT_CURRENT}:${LT_REVISION}:${LT_AGE}"
+LT_VERSION_INFO="lt_current:lt_revision:lt_age"
 AC_SUBST(LT_VERSION_INFO)
 
 AM_CONFIG_HEADER(src/config.h)
+AC_CONFIG_MACRO_DIR([m4])
 
 CFLAGS="$CFLAGS -Wall"
 
