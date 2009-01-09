@@ -126,6 +126,10 @@
 /* Include the LADSPA Fx unit */
 #undef LADSPA
 
+/* Define to the sub-directory in which libtool stores uninstalled libraries.
+   */
+#undef LT_OBJDIR
+
 /* Define to enable MidiShare driver */
 #undef MIDISHARE_SUPPORT
 

@@ -1,3 +1,10 @@
+2009-01-08    Josh Green <jgreen@users.sourceforge.net>
+	* configure.ac: Followed GTK's lead for some unexplained magic for
+	  stupid libtool version parameters (fixes autogen.sh bomb on
+	  undefined macro LT_REVISION/LT_CURRENT/LT_AGE).  Added
+	  AC_CONFIG_MACRO_DIR([m4]) as suggested by libtoolize.
+	* Makefile.am: Added ACLOCAL_AMFLAGS=-I m4 as suggested by libtoolize.
+
 2008-12-23    Josh Green <jgreen@users.sourceforge.net>
 	* configure.ac: Added detection of PulseAudio driver.
 	* src/Makefile.am: Added conditional build of PulseAudio driver.
