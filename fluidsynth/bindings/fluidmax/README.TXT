@@ -54,9 +54,9 @@ RELASE NOTES of version 04/2004 (release 6)
  - introduced a message "info" in order to query the current state of tuning-octave
 
 _____________________________________________________________________
-CVS DIRECTORY
+SVN DIRECTORY
 
-cvs repository: savannah.nongnu.org:/cvsroot/fluid
+svn repository: https://resonance.org/svn/fluidsynth/trunk/fluidsynth
 Max/MSP implementation directory: bindings/fluidmax
 
 The fluidsynth directory in the fluidmax directory contains only a version.h which is just added for the case that the version.h file in the fluidsynth checkout is not (auto-)"maked" or generated otherwise.
