@@ -1,0 +1,6 @@
+;fluidsynth.def
+
+LIBRARY fluidsynth~.mxe
+EXPORTS
+
+	main
