@@ -42,7 +42,7 @@
 #define restrict
 
 #define M_TWOPI 6.283185308
-#define M_PI 3.141592654
+//#define M_PI 3.141592654
 
 #define ftmax_object_t t_object
 #define ftmax_dsp_object_t t_pxobject
