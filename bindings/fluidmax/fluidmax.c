@@ -30,6 +30,8 @@
 /************************************************************************
  *
  *  versions:
+ *   (14): adapted to latest code base
+ *   (13): ???
  *   (12): fixed voice stealing
  *   (11): fixed arguments of fluidmax_tuning_octave() (third has to be float)
  *   (10): added micro-tuning methods
@@ -40,7 +42,7 @@
  *    (5): fixed bogus path translation at file loading
  * 
  */
-#define FLUIDMAX_VERSION "01/2009 (13)"
+#define FLUIDMAX_VERSION "01/2009 (14)"
 
 #include "ftmax.h"
 #include "fluidsynth.h"
