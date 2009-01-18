@@ -40,13 +40,14 @@
  *    (5): fixed bogus path translation at file loading
  * 
  */
-#define VERSION "10/2005 (12)"
+#define FLUIDMAX_VERSION "01/2009 (13)"
 
 #include "ftmax.h"
 #include "fluidsynth.h"
 #include "fluid_synth.h"
 #include "fluid_sfont.h"
 #include "fluid_chan.h"
+#include "fluidsynth/version.h"
 
 typedef struct
 {
@@ -189,7 +190,6 @@ fluidmax_perform(t_int *w)
 static void 
 fluidmax_dsp(fluidmax_t *self, t_signal **sp, short *count)
 {
-  double sr = sp[0]->s_sr;
   int n_tick = sp[0]->s_n;
         
   dsp_add(fluidmax_perform, 4, self, sp[0]->s_vec, sp[1]->s_vec, n_tick);
@@ -337,9 +337,7 @@ fluidmax_load_with_dialog(t_object *o, t_symbol *s, short argc, t_atom *argv)
  */
 static void 
 fluidmax_load(t_object *o, Symbol *s, short ac, Atom *at)
-{
-  fluidmax_t *self = (fluidmax_t *)o;
-  
+{ 
   if(ac == 0)
     defer(o, (method)fluidmax_load_with_dialog, NULL, 0, 0);
   else
@@ -404,7 +402,6 @@ fluidmax_unload(t_object *o, Symbol *s, short ac, Atom *at)
       if(sym == ftmax_new_symbol("all"))
       {
         fluid_sfont_t *sf = fluid_synth_get_sfont(self->synth, 0);
-        int i;
         
         fluid_synth_system_reset(self->synth);
 
@@ -449,8 +446,6 @@ fluidmax_reload(t_object *o, Symbol *s, short ac, Atom *at)
   
   if(ac > 0)
   {
-    int id;
-  
     if(ftmax_is_number(at))  
     {
       int id = ftmax_get_number_int(at);
@@ -458,8 +453,6 @@ fluidmax_reload(t_object *o, Symbol *s, short ac, Atom *at)
       
       if(sf != NULL)
       {
-        ftmax_symbol_t name = fluidmax_sfont_get_name(sf);
-      
         if (fluid_synth_sfreload(self->synth, id) >= 0)
         {
           post("fluidsynth~: reloaded soundfont '%s' (id %d)", id);
@@ -716,7 +709,6 @@ static void
 fluidmax_select(t_object *o, Symbol *s, short ac, Atom *at)
 {
   fluidmax_t *self = (fluidmax_t *)o;
-  unsigned int sfont = 0;
   unsigned int bank = 0;
   unsigned int preset = 0;  
   int channel = 1;
@@ -948,7 +940,6 @@ fluidmax_mute(t_object *o, Symbol *s, short ac, Atom *at)
 {
   fluidmax_t *self = (fluidmax_t *)o;
   int mute = 1;
-  int i;
   
   if(ac > 0 && ftmax_is_number(at))
     mute = (ftmax_get_number_int(at) != 0);
@@ -961,7 +952,6 @@ fluidmax_mute(t_object *o, Symbol *s, short ac, Atom *at)
 static void 
 fluidmax_unmute(t_object *o)
 {
-  fluidmax_t *self = (fluidmax_t *)o;
   ftmax_atom_t a;
   
   ftmax_set_int(&a, 0);  
@@ -1068,9 +1058,9 @@ fluid_synth_tuning_dump (fluid_synth_t *synth, int bank, int prog, char *name, i
 static void
 fluidmax_version(t_object *o)
 {
-  post("fluidsynth~ (Fluid Synth soundfont synthesizer for Max/MSP), version  %s", VERSION);
-  post("  Fluid Synth is written by Peter Hanappe et al. (see http://www.fluidsynth.org/)");
-  post("  Max/MSP integration by Norbert Schnell ATR IRCAM - Centre Pompidou");
+  post("fluidsynth~, version %s (based on FluidSynth %s)", FLUIDMAX_VERSION, FLUIDSYNTH_VERSION);
+  post("  FluidSynth is written by Peter Hanappe et al. (see fluidsynth.org)");
+  post("  Max/MSP integration by Norbert Schnell IMTR IRCAM - Centre Pompidou");
 }
 
 extern fluid_gen_info_t fluid_gen_info[];
@@ -1313,7 +1303,6 @@ fluidmax_info(t_object *o, Symbol *s, short ac, Atom *at)
         for(i=0; i<n; i++)
         {
           fluid_sfont_t *sf = fluid_synth_get_sfont(self->synth, i);
-          ftmax_symbol_t name = fluidmax_sfont_get_name(sf);
           unsigned int id = fluid_sfont_get_id(sf);
           ftmax_atom_t a[2];
           
@@ -1559,8 +1548,6 @@ fluidmax_new(Symbol *s, short ac, Atom *at)
   
   if(ac > 0 && ftmax_is_symbol(at))
   {
-    ftmax_symbol_t name = ftmax_get_symbol(at);
-
     fluidmax_load((t_object *)self, NULL, 1, at);
   }
   
@@ -1606,7 +1593,7 @@ fluidmax_free(t_pxobject *o)
   dsp_free(o);
 }
 
-void 
+int 
 main(void)
 {
   setup(&fluidmax_class, (method)fluidmax_new, (method)fluidmax_free, (short)sizeof(fluidmax_t), 0, A_GIMME, 0);
@@ -1670,4 +1657,6 @@ main(void)
 
   
   fluidmax_version(NULL);
+  
+  return 0;
 }
