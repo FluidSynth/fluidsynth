@@ -30,6 +30,12 @@ SYSTEM REQUIREMENTS
 This version of fluidsynth~ was initially created and tested using Max/MSP 4.3 on Mac 10.3 and should work on all following versions of Max/MSP and Mac OS.
 
 _____________________________________________________________________
+RELASE NOTES for version 01/2009 (release 13)
+
+ - adapted to current FluidSynth code base (after years without activity)
+ - no new features or relevant changes!
+
+_____________________________________________________________________
 RELASE NOTES up to version 10/2005 (release 10, 11 and 12)
 
  - added micro-tuning methods (to be added to help patch)
@@ -68,5 +74,4 @@ KNOWN BUGS:
 
 _____________________________________________________________________
 TODO
- - get rid of fluidmax_fakefuns.c
  - implement log function properly
