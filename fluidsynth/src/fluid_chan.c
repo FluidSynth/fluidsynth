@@ -333,6 +333,17 @@ fluid_channel_get_cc(fluid_channel_t* chan, int num)
 }
 
 /*
+ * fluid_channel_pressure
+ */
+int
+fluid_channel_pressure(fluid_channel_t* chan, int val)
+{
+  chan->channel_pressure = val;
+  fluid_synth_modulate_voices(chan->synth, chan->channum, 0, FLUID_MOD_CHANNELPRESSURE);
+  return FLUID_OK;
+}
+
+/*
  * fluid_channel_pitch_bend
  */
 int
