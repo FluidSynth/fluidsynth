@@ -998,6 +998,39 @@ fluid_synth_modulate_voices_all(fluid_synth_t* synth, int chan)
 }
 
 /**
+ * Set the MIDI channel pressure controller value.
+ * @param synth FluidSynth instance
+ * @param chan MIDI channel number
+ * @param val MIDI channel pressure value (7 bit, 0-127)
+ * @return FLUID_OK on success
+ *
+ * Assign to the MIDI channel pressure controller value on a specific MIDI channel
+ * in real time.
+ */
+int
+fluid_synth_channel_pressure(fluid_synth_t* synth, int chan, int val)
+{
+
+/*   fluid_mutex_lock(synth->busy); /\* Don't interfere with the audio thread *\/ */
+/*   fluid_mutex_unlock(synth->busy); */
+
+  /* check the ranges of the arguments */
+  if ((chan < 0) || (chan >= synth->midi_channels)) {
+    FLUID_LOG(FLUID_WARN, "Channel out of range");
+    return FLUID_FAILED;
+  }
+
+  if (synth->verbose) {
+    FLUID_LOG(FLUID_INFO, "channelpressure\t%d\t%d", chan, val);
+  }
+
+  /* set the channel pressure value in the channel */
+  fluid_channel_pressure(synth->channel[chan], val);
+
+  return FLUID_OK;
+}
+
+/**
  * Set the MIDI pitch bend controller value.
  * @param synth FluidSynth instance
  * @param chan MIDI channel number
@@ -3032,6 +3065,9 @@ int fluid_synth_handle_midi_event(void* data, fluid_midi_event_t* event)
 
       case PROGRAM_CHANGE:
 	return fluid_synth_program_change(synth, chan, fluid_midi_event_get_program(event));
+
+      case CHANNEL_PRESSURE:
+      return fluid_synth_channel_pressure(synth, chan, fluid_midi_event_get_program(event));
 
       case PITCH_BEND:
 	return fluid_synth_pitch_bend(synth, chan, fluid_midi_event_get_pitch(event));

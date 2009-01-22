@@ -88,6 +88,7 @@ int fluid_channel_set_banknum(fluid_channel_t* chan, unsigned int bank);
 int fluid_channel_set_prognum(fluid_channel_t* chan, int prognum);
 int fluid_channel_get_prognum(fluid_channel_t* chan);
 int fluid_channel_cc(fluid_channel_t* chan, int ctrl, int val);
+int fluid_channel_pressure(fluid_channel_t* chan, int val);
 int fluid_channel_pitch_bend(fluid_channel_t* chan, int val);
 int fluid_channel_pitch_wheel_sens(fluid_channel_t* chan, int val);
 int fluid_channel_get_cc(fluid_channel_t* chan, int num);
