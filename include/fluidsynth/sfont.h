@@ -143,6 +143,7 @@ struct _fluid_preset_t {
 struct _fluid_sample_t
 {
   char name[21];
+  unsigned int version; /* Sound font version in the form 0xMMmm */
   unsigned int start;
   unsigned int end;	/* Note: Index of last valid sample point (contrary to SF spec) */
   unsigned int loopstart;

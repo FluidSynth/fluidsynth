@@ -118,46 +118,6 @@ fluid_mod_get_value(fluid_mod_t* mod, fluid_channel_t* chan, fluid_voice_t* voic
     return 0.0f;
   }
 
-  /* 'special treatment' for default controller
-   *
-   *  Reference: SF2.01 section 8.4.2
-   *
-   * The GM default controller 'vel-to-filter cut off' is not clearly
-   * defined: If implemented according to the specs, the filter
-   * frequency jumps between vel=63 and vel=64.  To maintain
-   * compatibility with existing sound fonts, the implementation is
-   * 'hardcoded', it is impossible to implement using only one
-   * modulator otherwise.
-   *
-   * I assume here, that the 'intention' of the paragraph is one
-   * octave (1200 cents) filter frequency shift between vel=127 and
-   * vel=64.  'amount' is (-2400), at least as long as the controller
-   * is set to default.
-   *
-   * Further, the 'appearance' of the modulator (source enumerator,
-   * destination enumerator, flags etc) is different from that
-   * described in section 8.4.2, but it matches the definition used in
-   * several SF2.1 sound fonts (where it is used only to turn it off).
-   * */
-  if ((mod->src2 == FLUID_MOD_VELOCITY) &&
-      (mod->src1 == FLUID_MOD_VELOCITY) &&
-      (mod->flags1 == (FLUID_MOD_GC | FLUID_MOD_UNIPOLAR
-		       | FLUID_MOD_NEGATIVE | FLUID_MOD_LINEAR)) &&
-      (mod->flags2 == (FLUID_MOD_GC | FLUID_MOD_UNIPOLAR
-		       | FLUID_MOD_POSITIVE | FLUID_MOD_SWITCH)) &&
-      (mod->dest == GEN_FILTERFC)) {
-// S. Christian Collins' mod, to stop forcing velocity based filtering
-/*
-    if (voice->vel < 64){
-      return (fluid_real_t) mod->amount / 2.0;
-    } else {
-      return (fluid_real_t) mod->amount * (127 - voice->vel) / 127;
-    }
-*/
-     return 0; // (fluid_real_t) mod->amount / 2.0;
-  }
-// end S. Christian Collins' mod
-
   /* get the initial value of the first source */
   if (mod->src1 > 0) {
     if (mod->flags1 & FLUID_MOD_CC) {
