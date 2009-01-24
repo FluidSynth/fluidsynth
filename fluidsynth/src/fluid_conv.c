@@ -136,7 +136,7 @@ fluid_real_t
 fluid_ct2hz(fluid_real_t cents)
 {
   /* Filter fc limit: SF2.01 page 48 # 8 */
-  if (cents >= 13500){
+  if (cents > 13500){
     cents = 13500;             /* 20 kHz */
   } else if (cents < 1500){
     cents = 1500;              /* 20 Hz */

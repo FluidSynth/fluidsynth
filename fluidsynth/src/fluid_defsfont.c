@@ -270,7 +270,6 @@ char* fluid_defsfont_get_name(fluid_defsfont_t* sfont)
   return sfont->filename;
 }
 
-
 /*
  * fluid_defsfont_load
  */
@@ -282,6 +281,7 @@ int fluid_defsfont_load(fluid_defsfont_t* sfont, const char* file)
   SFSample* sfsample;
   fluid_sample_t* sample;
   fluid_defpreset_t* preset;
+  unsigned int sample_version;
 
   sfont->filename = FLUID_MALLOC(1 + FLUID_STRLEN(file));
   if (sfont->filename == NULL) {
@@ -297,6 +297,9 @@ int fluid_defsfont_load(fluid_defsfont_t* sfont, const char* file)
     return FLUID_FAILED;
   }
 
+  /* Calculate sound font version for samples, it's used later */
+  sample_version = 0x100*sfdata->version.major + sfdata->version.minor;
+  
   /* Keep track of the position and size of the sample data because
      it's loaded separately (and might be unoaded/reloaded in future) */
   sfont->samplepos = sfdata->samplepos;
@@ -313,6 +316,8 @@ int fluid_defsfont_load(fluid_defsfont_t* sfont, const char* file)
 
     sample = new_fluid_sample();
     if (sample == NULL) goto err_exit;
+
+    sample->version = sample_version;
 
     if (fluid_sample_import_sfont(sample, sfsample, sfont) != FLUID_OK)
       goto err_exit;
