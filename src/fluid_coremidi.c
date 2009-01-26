@@ -30,7 +30,9 @@
 
 #include "fluid_midi.h"
 #include "fluid_mdriver.h"
+#include "fluid_settings.h"
 
+#include <unistd.h>
 #include <CoreServices/CoreServices.h>
 #include <CoreMIDI/MIDIServices.h>
 
@@ -46,6 +48,11 @@ fluid_midi_driver_t* new_fluid_coremidi_driver(fluid_settings_t* settings,
 int delete_fluid_coremidi_driver(fluid_midi_driver_t* p);
 void fluid_coremidi_callback(const MIDIPacketList *list, void *p, void *src);
 
+void fluid_coremidi_driver_settings(fluid_settings_t* settings)
+{
+  fluid_settings_register_str(settings, "midi.coremidi.id", "pid", 0, NULL, NULL);
+}
+
 /*
  * new_fluid_coremidi_driver
  */
@@ -55,6 +62,10 @@ new_fluid_coremidi_driver(fluid_settings_t* settings, handle_midi_event_func_t h
   fluid_coremidi_driver_t* dev;
   MIDIClientRef client;
   MIDIEndpointRef endpoint;
+  char * portname;
+  char * id;
+  CFStringRef str_portname;
+  CFStringRef str_clientname;
 
   /* not much use doing anything */
   if (handler == NULL) {
@@ -80,15 +91,34 @@ new_fluid_coremidi_driver(fluid_settings_t* settings, handle_midi_event_func_t h
     goto error_recovery;
   }
 
-  OSStatus result = MIDIClientCreate( CFSTR("FluidSynth"), NULL, NULL, &client );
+  fluid_settings_getstr(settings, "midi.coremidi.id", &id);
+  if (FLUID_STRCMP(id, "pid") == 0)
+    str_clientname = CFStringCreateWithFormat(NULL, NULL,
+                                              CFSTR("FluidSynth %qi"),
+                                              (long long) getpid());
+  else
+    str_clientname = CFStringCreateWithFormat(NULL, NULL,
+                                              CFSTR("FluidSynth %s"), id);
+
+  fluid_settings_getstr(settings, "midi.portname", &portname);
+  if (strlen(portname) == 0)
+    str_portname = CFStringCreateWithFormat(NULL, NULL,
+                                            CFSTR("FluidSynth virtual port %qi"),
+                                            (long long) getpid());
+  else
+    str_portname = CFStringCreateWithCString(NULL, portname,
+                                             kCFStringEncodingASCII);
+
+  OSStatus result = MIDIClientCreate( str_clientname, NULL, NULL, &client );
   if ( result != noErr ) {
     FLUID_LOG(FLUID_ERR, "Failed to create the MIDI input client");
     goto error_recovery;
   }
   dev->client = client;
 
-  result = MIDIDestinationCreate( client, CFSTR("FluidSynth virtual port"),
-                                  fluid_coremidi_callback, (void *)dev, &endpoint );
+  result = MIDIDestinationCreate( client, str_portname,
+                                  fluid_coremidi_callback,
+                                  (void *)dev, &endpoint );
   if ( result != noErr ) {
     FLUID_LOG(FLUID_ERR, "Failed to create the MIDI input port. MIDI input not available.");
     goto error_recovery;
