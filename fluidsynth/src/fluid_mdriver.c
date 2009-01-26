@@ -69,6 +69,7 @@ fluid_midi_driver_t* new_fluid_coremidi_driver(fluid_settings_t* settings,
 						   void* event_handler_data,
 						   handle_midi_event_func_t handler);
 int delete_fluid_coremidi_driver(fluid_midi_driver_t* p);
+void fluid_coremidi_driver_settings(fluid_settings_t* settings);
 #endif
 
 
@@ -118,7 +119,7 @@ struct fluid_mdriver_definition_t fluid_midi_drivers[] = {
   { "coremidi",
     new_fluid_coremidi_driver,
     delete_fluid_coremidi_driver,
-    NULL },
+    fluid_coremidi_driver_settings },
 #endif
   { NULL, NULL, NULL, NULL }
 };
