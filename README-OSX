@@ -7,38 +7,27 @@ Requirements:
 
 - libgnugetopt and readline from fink: e.g. "fink install libgnugetopt"
 
-- midishare-1.92-macosx <http://midishare.sourceforge.net>
+- JackOSX.0.80.pkg.zip  <http://www.jackosx.com>
 
-- Jack OSX version 0.74  <http://www.jackosx.com>
-        
-1. Edit the "/usr/local/lib/pkgconfig/jack.pc" file using your favorite Unix editor:
-        In the "Libs" line, replace "ljack" with "-framework Jack"
-        
-2. cd to the fluidsynth directory and in the configure script, substitute "-lmidishare" with "-framework MidiShare".
+- MIDI Patchbay 1.0.3 <http://www.apple.com/downloads/macosx/audio/index6.html>
 
-3. Run configure with the following options (all on one line in a text editor, then copy and paste into Terminal):
-PKG_CONFIG_PATH=/usr/local/lib/pkgconfig ./configure --enable-midishare --disable-lash
+1. Run configure && make:
 
-This should result in
-**************************************************************
-Summary:
-ALSA:                  no
-OSS:                   no
-MidiShare:             yes
-JACK:                  yes
-CoreAudio:             yes
-LADSPA support:        no
-LASH support:          no
-LADCCA support:        no
-Readline:              yes
-Profiling:             no
-Debug:                 no
-Trap on FPE (debug):   no
-Check FPE (debug):     no
-**************************************************************
+$ PKG_CONFIG_PATH=/usr/local/lib/pkgconfig ./configure && make
 
-4. make && make install as root
- 
+2. make install as superuser
+
+Running fluidsynth:
+
+$ fluidsynth -a jack -m coremidi -j (it also possible to run the coreaudio sound driver simply by omitting the "-a jack" option)
+
+In order to run another instance of fluidsynth, open a second terminal window:
+
+$ fluidsynth -a jack -m coremidi -o audio.jack.id=name_of_instance -p name_of_instance -j
+
+Connect MIDI I/O devices using MIDI Patchbay 
+
 Ebrahim Mayat <emayat@users.sourceforge.net>
-12th November 2007
+28th January 2009
+
 
