@@ -1,3 +1,9 @@
+2009-01-29    Josh Green <jgreen@users.sourceforge.net>
+	* src/Makefile.am: Added PortAudio driver conditional build.
+	* src/fluid_adriver.c: Registered fluid_portaudio_driver_settings.
+	* src/fluid_portaudio.c: Completely overhauled for Portaudio 19.
+	  This driver appears to have been unbuildable before.
+
 2009-01-08    Pedro Lopez-Cabanillas <plcl@users.sourceforge.net>
 	* configure.ac: detection of CoreMIDI support. Ticket #18.
 	* src/Makefile.am: conditional build of CoreMIDI driver.

@@ -199,6 +199,27 @@ AC_SUBST(ALSA_CFLAGS)
 AC_SUBST(ALSA_LIBS)
 
 
+dnl - Check support for PortAudio
+
+AC_ARG_ENABLE(portaudio-support, AS_HELP_STRING([--disable-portaudio-support],
+      [Do not compile PortAudio support (default=auto)]),
+  enable_portaudio_support=$enableval, enable_portaudio_support="yes")
+
+if test "x$enable_portaudio_support" != "xno"; then
+  PKG_CHECK_MODULES(PORTAUDIO, portaudio-2.0 >= 19, PORTAUDIO_SUPPORT=1,
+                    PORTAUDIO_SUPPORT=0)
+else
+  PORTAUDIO_SUPPORT=0
+fi
+
+if test "$PORTAUDIO_SUPPORT" = "1"; then
+  AC_DEFINE(PORTAUDIO_SUPPORT, 1, [Define to enable PortAudio driver])
+fi
+AM_CONDITIONAL(PORTAUDIO_SUPPORT, test "$PORTAUDIO_SUPPORT" = "1")
+AC_SUBST(PORTAUDIO_CFLAGS)
+AC_SUBST(PORTAUDIO_LIBS)
+
+
 dnl - Check support for OSS audio
 AC_OSS_AUDIO
 AM_CONDITIONAL(OSS_SUPPORT, test "$OSS_SUPPORT" = "1")
@@ -385,6 +406,12 @@ if test "${ALSA_SUPPORT}" = "1"; then
   echo "ALSA:                  yes"
 else 
   echo "ALSA:                  no"
+fi
+
+if test "${PORTAUDIO_SUPPORT}" = "1"; then
+  echo "PortAudio:             yes"
+else 
+  echo "PortAudio:             no"
 fi
 
 if test "${OSS_SUPPORT}" = "1"; then
