@@ -77,8 +77,7 @@ static void init_dither(void);
  */
 
 fluid_mod_t default_vel2att_mod;        /* SF2.01 section 8.4.1  */
-fluid_mod_t default_vel2filter_mod_v201;/* SF2.01 section 8.4.2  */
-fluid_mod_t default_vel2filter_mod_v204;/* SF2.04 section 8.4.2  */
+fluid_mod_t default_vel2filter_mod;     /* SF2.01 section 8.4.2  */
 fluid_mod_t default_at2viblfo_mod;      /* SF2.01 section 8.4.3  */
 fluid_mod_t default_mod2viblfo_mod;     /* SF2.01 section 8.4.4  */
 fluid_mod_t default_att_mod;            /* SF2.01 section 8.4.5  */
@@ -190,34 +189,28 @@ fluid_synth_init()
 
 
 
-  /* SF2.01 page 53 section 8.4.2: MIDI Note-On Velocity to Filter Cutoff */
-  fluid_mod_set_source1(&default_vel2filter_mod_v201, FLUID_MOD_VELOCITY, /* Index=2 */
+  /* SF2.01 page 53 section 8.4.2: MIDI Note-On Velocity to Filter Cutoff
+   * Have to make a design decision here. The specs don't make any sense this way or another.
+   * One sound font, 'Kingston Piano', which has been praised for its quality, tries to
+   * override this modulator with an amount of 0 and positive polarity (instead of what
+   * the specs say, D=1) for the secondary source.
+   * So if we change the polarity to 'positive', one of the best free sound fonts works...
+   */
+  fluid_mod_set_source1(&default_vel2filter_mod, FLUID_MOD_VELOCITY, /* Index=2 */
 		       FLUID_MOD_GC                        /* CC=0 */
 		       | FLUID_MOD_LINEAR                  /* type=0 */
 		       | FLUID_MOD_UNIPOLAR                /* P=0 */
-           | FLUID_MOD_NEGATIVE                /* D=1 */
+                       | FLUID_MOD_NEGATIVE                /* D=1 */
 		       );
-  fluid_mod_set_source2(&default_vel2filter_mod_v201, FLUID_MOD_VELOCITY, /* Index=2 */
+  fluid_mod_set_source2(&default_vel2filter_mod, FLUID_MOD_VELOCITY, /* Index=2 */
 		       FLUID_MOD_GC                                 /* CC=0 */
 		       | FLUID_MOD_SWITCH                           /* type=3 */
 		       | FLUID_MOD_UNIPOLAR                         /* P=0 */
-           | FLUID_MOD_NEGATIVE                         /* D=1 */
+		       // do not remove       | FLUID_MOD_NEGATIVE                         /* D=1 */
+		       | FLUID_MOD_POSITIVE                         /* D=0 */
 		       );
-  fluid_mod_set_dest(&default_vel2filter_mod_v201, GEN_FILTERFC);        /* Target: Initial filter cutoff */
-  fluid_mod_set_amount(&default_vel2filter_mod_v201, -2400);
-
-
-
-  /* SF2.04 page 42 section 8.4.2: MIDI Note-On Velocity to Filter Cutoff */
-  fluid_mod_set_source1(&default_vel2filter_mod_v204, FLUID_MOD_VELOCITY, /* Index=2 */
-		       FLUID_MOD_GC                        /* CC=0 */
-		       | FLUID_MOD_LINEAR                  /* type=0 */
-		       | FLUID_MOD_UNIPOLAR                /* P=0 */
-           | FLUID_MOD_NEGATIVE                /* D=1 */
-		       );
-  fluid_mod_set_source2(&default_vel2filter_mod_v204, 0, 0); /* No 2nd source */
-  fluid_mod_set_dest(&default_vel2filter_mod_v204, GEN_FILTERFC);        /* Target: Initial filter cutoff */
-  fluid_mod_set_amount(&default_vel2filter_mod_v204, -2400);
+  fluid_mod_set_dest(&default_vel2filter_mod, GEN_FILTERFC);        /* Target: Initial filter cutoff */
+  fluid_mod_set_amount(&default_vel2filter_mod, -2400);
 
 
 
@@ -2151,14 +2144,7 @@ fluid_synth_alloc_voice(fluid_synth_t* synth, fluid_sample_t* sample, int chan, 
 
   /* add the default modulators to the synthesis process. */
   fluid_voice_add_mod(voice, &default_vel2att_mod, FLUID_VOICE_DEFAULT);    /* SF2.01 $8.4.1  */
-  if (sample->version>0x201)
-  {
-    fluid_voice_add_mod(voice, &default_vel2filter_mod_v204, FLUID_VOICE_DEFAULT); /* SF2.04 $8.4.2  */
-  }
-  else
-  {
-    fluid_voice_add_mod(voice, &default_vel2filter_mod_v201, FLUID_VOICE_DEFAULT); /* SF2.01 $8.4.2  */
-  }
+  fluid_voice_add_mod(voice, &default_vel2filter_mod, FLUID_VOICE_DEFAULT); /* SF2.01 $8.4.2  */
   fluid_voice_add_mod(voice, &default_at2viblfo_mod, FLUID_VOICE_DEFAULT);  /* SF2.01 $8.4.3  */
   fluid_voice_add_mod(voice, &default_mod2viblfo_mod, FLUID_VOICE_DEFAULT); /* SF2.01 $8.4.4  */
   fluid_voice_add_mod(voice, &default_att_mod, FLUID_VOICE_DEFAULT);        /* SF2.01 $8.4.5  */
