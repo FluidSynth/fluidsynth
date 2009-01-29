@@ -21,6 +21,10 @@ if JACK_SUPPORT
 fluid_jack = fluid_jack.c
 endif
 
+if PORTAUDIO_SUPPORT
+fluid_portaudio = fluid_portaudio.c
+endif
+
 if MINGW32_SUPPORT
 fluid_windows = fluid_dll.c fluid_dsound.c fluid_winmidi.c
 endif
@@ -56,6 +60,7 @@ libfluidsynth_la_SOURCES = \
 	$(fluid_jack) \
 	$(fluid_lash) \
 	$(fluid_oss) \
+	$(fluid_portaudio) \
 	$(fluid_pulse) \
 	$(fluid_windows) \
 	fluid_adriver.c \
@@ -115,11 +120,11 @@ libfluidsynth_la_SOURCES = \
 	fluid_aufile.c 
 
 INCLUDES = -I$(top_srcdir)/include $(LASH_CFLAGS) $(LADCCA_CFLAGS) \
-  $(READLINE_CFLAGS) $(JACK_CFLAGS) $(ALSA_CFLAGS) $(PULSE_CFLAGS)
+  $(READLINE_CFLAGS) $(JACK_CFLAGS) $(ALSA_CFLAGS) $(PULSE_CFLAGS) $(PORTAUDIO_CFLAGS)
 
 libfluidsynth_la_LIBADD = $(LIBFLUID_LIBS) $(LASH_LIBS) $(LADCCA_LIBS) \
   $(READLINE_LIBS) $(COREAUDIO_LIBS) $(COREMIDI_LIBS) $(JACK_LIBS) \
-  $(ALSA_LIBS) $(PULSE_LIBS)
+  $(ALSA_LIBS) $(PULSE_LIBS) $(PORTAUDIO_LIBS)
 libfluidsynth_la_LDFLAGS = \
 	-version-info @LT_VERSION_INFO@ \
 	-export-dynamic $(LIBFLUID_LDFLAGS)
