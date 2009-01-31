@@ -27,7 +27,7 @@
  * 12/20/01 Adapdation for new audio drivers
  *
  * Josh Green <jgreen@users.sourceforge.net>
- * 2009-01-28 Overhauled for Portaudio 19 API and current FluidSynth API (was broken)
+ * 2009-01-28 Overhauled for PortAudio 19 API and current FluidSynth API (was broken)
  */
 
 #include "fluid_synth.h"
@@ -62,6 +62,7 @@ fluid_portaudio_run (const void *input, void *output, unsigned long frameCount,
                      PaStreamCallbackFlags statusFlags, void *userData);
 int delete_fluid_portaudio_driver (fluid_audio_driver_t *p);
 
+#define PORTAUDIO_DEFAULT_DEVICE "PortAudio Default"
 
 void
 fluid_portaudio_driver_settings (fluid_settings_t *settings)
@@ -71,14 +72,14 @@ fluid_portaudio_driver_settings (fluid_settings_t *settings)
   PaError err;
   int i;
 
-  fluid_settings_register_str (settings, "audio.portaudio.device", "default", 0, NULL, NULL);
-  fluid_settings_add_option (settings, "audio.portaudio.device", "default");
+  fluid_settings_register_str (settings, "audio.portaudio.device", PORTAUDIO_DEFAULT_DEVICE, 0, NULL, NULL);
+  fluid_settings_add_option (settings, "audio.portaudio.device", PORTAUDIO_DEFAULT_DEVICE);
 
   err = Pa_Initialize();
 
   if (err != paNoError)
   {
-    FLUID_LOG (FLUID_ERR, "Error initializing Portaudio driver: %s",
+    FLUID_LOG (FLUID_ERR, "Error initializing PortAudio driver: %s",
                Pa_GetErrorText (err));
     return;
   }
@@ -94,8 +95,9 @@ fluid_portaudio_driver_settings (fluid_settings_t *settings)
   for (i = 0; i < numDevices; i++)
   {
     deviceInfo = Pa_GetDeviceInfo (i);
-    fluid_settings_add_option (settings, "audio.portaudio.device",
-                               (char *)(deviceInfo->name));
+    if ( deviceInfo->maxOutputChannels >= 2 )
+      fluid_settings_add_option (settings, "audio.portaudio.device",
+                                 (char *)(deviceInfo->name));
   }
 }
 
@@ -130,7 +132,7 @@ new_fluid_portaudio_driver (fluid_settings_t *settings, fluid_synth_t *synth)
   outputParams.suggestedLatency = (PaTime)period_size / sample_rate;
 
   /* Locate the device if specified */
-  if (strcmp (device, "default") != 0)
+  if (strcmp (device, PORTAUDIO_DEFAULT_DEVICE) != 0)
   {
     const PaDeviceInfo *deviceInfo;
     int numDevices;
@@ -148,7 +150,11 @@ new_fluid_portaudio_driver (fluid_settings_t *settings, fluid_synth_t *synth)
     {
       deviceInfo = Pa_GetDeviceInfo (i);
 
-      if (strcmp (device, deviceInfo->name) == 0) break;
+      if (strcmp (device, deviceInfo->name) == 0)
+      {
+        outputParams.device = i;
+        break;
+      }
     }
 
     if (i == numDevices)
@@ -157,7 +163,7 @@ new_fluid_portaudio_driver (fluid_settings_t *settings, fluid_synth_t *synth)
       goto error_recovery;
     }
   }
-  else outputParams.device = 0;
+  else outputParams.device = Pa_GetDefaultOutputDevice();
 
   if (fluid_settings_str_equal (settings, "audio.sample-format", "16bits"))
   {
@@ -189,7 +195,7 @@ new_fluid_portaudio_driver (fluid_settings_t *settings, fluid_synth_t *synth)
 
   if (err != paNoError)
   {
-    FLUID_LOG (FLUID_ERR, "Error opening Portaudio stream: %s",
+    FLUID_LOG (FLUID_ERR, "Error opening PortAudio stream: %s",
                Pa_GetErrorText (err));
     goto error_recovery;
   }
@@ -198,7 +204,7 @@ new_fluid_portaudio_driver (fluid_settings_t *settings, fluid_synth_t *synth)
 
   if (err != paNoError)
   {
-    FLUID_LOG (FLUID_ERR, "Error starting Portaudio stream: %s",
+    FLUID_LOG (FLUID_ERR, "Error starting PortAudio stream: %s",
                Pa_GetErrorText (err));
     goto error_recovery;
   }
