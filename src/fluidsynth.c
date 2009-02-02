@@ -693,7 +693,7 @@ print_help()
   printf(" -n, --no-midi-in\n"
 	 "    Don't create a midi driver to read MIDI input events [default = yes]\n");
   printf(" -p, --portname=[label]\n"
-	 "    Set alsa midi port name\n");
+	 "    Set MIDI port name (alsa_seq, coremidi drivers)\n");
   printf(" -o\n"
 	 "    Define a setting, -o name=value (\"-o help\" to dump current values)\n");
   printf(" -R, --reverb\n"
