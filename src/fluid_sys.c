@@ -636,6 +636,186 @@ unsigned int fluid_curtime()
 
 
 
+#elif defined(__OS2__)
+/*=============================================================*/
+/*                                                             */
+/*                           OS2                               */
+/*                                                             */
+/*=============================================================*/
+
+/***************************************************************
+ *
+ *               Timer
+ *
+ */
+
+struct _fluid_timer_t
+{
+  long msec;
+  fluid_timer_callback_t callback;
+  void* data;
+  int thread_id;
+  int cont;
+  int auto_destroy;
+};
+
+static int fluid_timer_count = 0;
+void fluid_timer_run(void *data);
+
+fluid_timer_t*
+new_fluid_timer(int msec, fluid_timer_callback_t callback, void* data,
+           int new_thread, int auto_destroy)
+{
+  fluid_timer_t* timer = FLUID_NEW(fluid_timer_t);
+  if (timer == NULL) {
+    FLUID_LOG(FLUID_ERR, "Out of memory");
+    return NULL;
+  }
+
+  timer->cont = 1;
+  timer->msec = msec;
+  timer->callback = callback;
+  timer->data = data;
+  timer->thread_id =-1;
+  timer->auto_destroy = auto_destroy;
+
+  if (new_thread) {
+    timer->thread_id = _beginthread( fluid_timer_run, NULL, 256 * 1024, ( void * )timer );
+    if (timer->thread_id == -1) {
+      FLUID_LOG(FLUID_ERR, "Couldn't create timer thread");
+      FLUID_FREE(timer);
+      return NULL;
+    }
+    DosSetPriority(PRTYS_THREAD, PRTYC_TIMECRITICAL, PRTYD_MAXIMUM, timer->thread_id);
+  } else {
+    fluid_timer_run(( void * )timer);
+  }
+  return timer;
+}
+
+void
+fluid_timer_run(void *data)
+{
+  int count = 0;
+  int cont = 1;
+  long start;
+  long delay;
+  fluid_timer_t* timer;
+  timer = (fluid_timer_t*) data;
+
+  if ((timer == NULL) || (timer->callback == NULL)) {
+    return;
+  }
+
+  DosSetPriority( PRTYS_THREAD, PRTYC_REGULAR, PRTYD_MAXIMUM, 0 );
+
+  /* keep track of the start time for absolute positioning */
+  start = fluid_curtime();
+
+  while (cont) {
+
+    /* do whatever we have to do */
+    cont = (*timer->callback)(timer->data, fluid_curtime() - start);
+
+    count++;
+
+    /* to avoid incremental time errors, I calculate the delay between
+       two callbacks bringing in the "absolute" time (count *
+       timer->msec) */
+    delay = (count * timer->msec) - (fluid_curtime() - start);
+    if (delay > 0) {
+      DosSleep(delay);
+    }
+
+    cont &= timer->cont;
+  }
+
+  FLUID_LOG(FLUID_DBG, "Timer thread finished");
+
+  if (timer->auto_destroy) {
+    FLUID_FREE(timer);
+  }
+
+  return;
+}
+
+int
+delete_fluid_timer(fluid_timer_t* timer)
+{
+  timer->cont = 0;
+  fluid_timer_join(timer);
+  FLUID_FREE(timer);
+  return FLUID_OK;
+}
+
+int
+fluid_timer_join(fluid_timer_t* timer)
+{
+  ULONG wait_result;
+  if (timer->thread_id == -1) {
+    return FLUID_OK;
+  }
+  wait_result = DosWaitThread(&timer->thread_id, DCWW_WAIT);
+  return (wait_result == 0)? FLUID_OK : FLUID_FAILED;
+}
+
+
+/***************************************************************
+ *
+ *               Time
+ */
+
+double rdtsc(void);
+double fluid_estimate_cpu_frequency(void);
+
+static double fluid_cpu_frequency = -1.0;
+
+void fluid_time_config(void)
+{
+  if (fluid_cpu_frequency < 0.0) {
+    fluid_cpu_frequency = fluid_estimate_cpu_frequency() / 1000000.0;
+  }
+}
+
+unsigned int fluid_curtime(void)
+{
+  ULONG ulMS;
+  DosQuerySysInfo( QSV_MS_COUNT, QSV_MS_COUNT, &ulMS, sizeof( ULONG ));
+  return ulMS;
+}
+
+double fluid_utime(void)
+{
+  return (rdtsc() / fluid_cpu_frequency);
+}
+
+#define Q2ULL( q ) (*(unsigned long long *)&q)
+
+double rdtsc(void)
+{
+  QWORD t;
+  DosTmrQueryTime(&t);
+  return (double)Q2ULL(t);
+}
+
+double fluid_estimate_cpu_frequency(void)
+{
+  unsigned int before, after;
+  QWORD start, stop;
+
+  before = fluid_curtime();
+  DosTmrQueryTime(&start);
+
+  DosSleep(1000);
+
+  after = fluid_curtime();
+  DosTmrQueryTime(&stop);
+
+  return (double) 1000 * (Q2ULL(stop) - Q2ULL(start)) / (after - before);
+}
+
+
+
 #else
 
 /*=============================================================*/
@@ -1060,6 +1240,75 @@ int fluid_thread_join(fluid_thread_t* thread)
   }
   wait_result = WaitForSingleObject(thread->thread, INFINITE);
   return (wait_result == WAIT_OBJECT_0)? FLUID_OK : FLUID_FAILED;
+}
+
+#elif defined(__OS2__)
+
+struct _fluid_thread_t {
+  int thread_id;
+  fluid_thread_func_t func;
+  void* data;
+  int detached;
+};
+
+static void fluid_thread_start(void *data)
+{
+  fluid_thread_t* thread = (fluid_thread_t*) data;
+
+  thread->func(thread->data);
+
+  if (thread->detached) {
+    FLUID_FREE(thread);
+  }
+
+  return 0;
+}
+
+
+fluid_thread_t* new_fluid_thread(fluid_thread_func_t func, void* data, int detach)
+{
+  fluid_thread_t* thread;
+
+  if (func == NULL) {
+    FLUID_LOG(FLUID_ERR, "Invalid thread function");
+    return NULL;
+  }
+
+  thread = FLUID_NEW(fluid_thread_t);
+  if (thread == NULL) {
+    FLUID_LOG(FLUID_ERR, "Out of memory");
+    return NULL;
+  }
+
+  thread->data = data;
+  thread->func = func;
+  thread->detached = detach;
+
+  thread->thread_id = _beginthread(fluid_thread_start, NULL, 256 * 1024, (void *) thread);
+  if (thread->thread_id == -1) {
+    FLUID_LOG(FLUID_ERR, "Couldn't create the thread");
+    FLUID_FREE(thread);
+    return NULL;
+  }
+
+  return thread;
+}
+
+int delete_fluid_thread(fluid_thread_t* thread)
+{
+  FLUID_FREE(thread);
+  return FLUID_OK;
+}
+
+
+int fluid_thread_join(fluid_thread_t* thread)
+{
+  ULONG wait_result;
+  if (thread->thread_id == -1) {
+    return FLUID_OK;
+  }
+  wait_result = DosWaitThread(&thread->thread_id, DCWW_WAIT);
+  return (wait_result == 0)? FLUID_OK : FLUID_FAILED;
 }
 
 #else

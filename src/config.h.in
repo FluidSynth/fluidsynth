@@ -9,6 +9,9 @@
 /* whether or not we are supporting CoreMIDI */
 #undef COREMIDI_SUPPORT
 
+/* whether or not we are supporting DART */
+#undef DART_SUPPORT
+
 /* Define if building for Mac OS X Darwin */
 #undef DARWIN
 

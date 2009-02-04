@@ -1,3 +1,7 @@
+2009-02-03    Josh Green <jgreen@users.sourceforge.net>
+        * Applied patch from KO Myung-Hun for OS/2 support including Dart audio
+          driver.
+
 2009-01-29    Josh Green <jgreen@users.sourceforge.net>
 	* src/Makefile.am: Added PortAudio driver conditional build.
 	* src/fluid_adriver.c: Registered fluid_portaudio_driver_settings.
