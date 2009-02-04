@@ -76,6 +76,10 @@ mingw*)
   LIBFLUID_LDFLAGS="-no-undefined"
   FLUID_CPPFLAGS="-DFLUIDSYNTH_NOT_A_DLL"
   ;;
+os2*)
+  LDFLAGS="$LDFLAGS -Zbin-files"
+  LIBFLUID_LDFLAGS="-no-undefined"
+  ;;
 esac
 
 AC_SUBST(LIBFLUID_LIBS)
@@ -286,6 +290,24 @@ AM_CONDITIONAL(COREMIDI_SUPPORT, test "$COREMIDI_SUPPORT" = "1")
 AC_SUBST(COREMIDI_LIBS)
 
 dnl
+dnl - Check support for DART
+dnl
+AC_CHECK_HEADER(os2me.h, DART_FOUND="yes", DART_FOUND="no")
+AC_ARG_ENABLE(dart, AS_HELP_STRING([--disable-dart],
+    [disable DART support (default=auto)]),
+  enable_dart=$enableval, enable_dart="yes")
+
+DART_SUPPORT=0
+if test "$enable_dart" = "yes" -a "$DART_FOUND" = "yes"; then
+  AC_DEFINE(DART_SUPPORT, 1, [whether or not we are supporting DART])
+  DART_SUPPORT=1
+fi
+
+AM_CONDITIONAL(DART_SUPPORT, test "$DART_SUPPORT" = "1")
+AC_SUBST(DART_CFLAGS)
+AC_SUBST(DART_LIBS)
+
+dnl
 dnl Check for readline support (Josh Green 2003-06-10)
 dnl
 AC_ARG_WITH(readline,
@@ -454,6 +476,12 @@ if test "${LADCCA_FOUND}" = "yes"; then
   echo "LADCCA support:        yes"
 else
   echo "LADCCA support:        no"
+fi
+
+if test "${DART_SUPPORT}" = "1"; then
+  echo "OS/2 DART support:     yes"
+else
+  echo "OS/2 DART support:     no"
 fi
 
 dnl if test "${AUFILE_SUPPORT}" = "1"; then

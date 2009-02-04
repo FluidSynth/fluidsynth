@@ -42,13 +42,16 @@ fluid_lash = fluid_lash.c
 endif
 endif
 
+if DART_SUPPORT
+fluid_dart = fluid_dart.c
+endif
 
 # Extra files and optional drivers
 EXTRA_DIST = fluid_dll.c fluid_dsound.c fluid_winmidi.c fluid_portaudio.c \
-	fluid_coreaudio.c fluid_alsa.c fluid_oss.c \
+	fluid_coreaudio.c fluid_alsa.c fluid_oss.c fluid_pulse.c \
 	fluid_dsp_simple.c \
 	fluid_sndmgr.c config_macos.h config_macosx.h config_macosx_pb.h \
-	config_win32.h fluid_jack.c
+	config_win32.h fluid_jack.c fluid_dart.c
 
 lib_LTLIBRARIES = libfluidsynth.la
 bin_PROGRAMS = fluidsynth 
@@ -63,6 +66,7 @@ libfluidsynth_la_SOURCES = \
 	$(fluid_portaudio) \
 	$(fluid_pulse) \
 	$(fluid_windows) \
+	$(fluid_dart) \
 	fluid_adriver.c \
 	fluid_adriver.h \
 	fluid_chan.c \
@@ -120,16 +124,20 @@ libfluidsynth_la_SOURCES = \
 	fluid_aufile.c 
 
 INCLUDES = -I$(top_srcdir)/include $(LASH_CFLAGS) $(LADCCA_CFLAGS) \
-  $(READLINE_CFLAGS) $(JACK_CFLAGS) $(ALSA_CFLAGS) $(PULSE_CFLAGS) $(PORTAUDIO_CFLAGS)
+  $(READLINE_CFLAGS) $(JACK_CFLAGS) $(ALSA_CFLAGS) $(PULSE_CFLAGS) \
+  $(PORTAUDIO_CFLAGS) $(DART_CFLAGS)
 
 libfluidsynth_la_LIBADD = $(LIBFLUID_LIBS) $(LASH_LIBS) $(LADCCA_LIBS) \
   $(READLINE_LIBS) $(COREAUDIO_LIBS) $(COREMIDI_LIBS) $(JACK_LIBS) \
-  $(ALSA_LIBS) $(PULSE_LIBS) $(PORTAUDIO_LIBS)
+  $(ALSA_LIBS) $(PULSE_LIBS) $(PORTAUDIO_LIBS) $(DART_LIBS)
+
 libfluidsynth_la_LDFLAGS = \
 	-version-info @LT_VERSION_INFO@ \
 	-export-dynamic $(LIBFLUID_LDFLAGS)
+
 libfluidsynth_la_CPPFLAGS = $(LIBFLUID_CPPFLAGS)
 
 fluidsynth_SOURCES = fluidsynth.c
 fluidsynth_LDADD = libfluidsynth.la
 fluidsynth_CPPFLAGS = $(FLUIDSYNTH_CPPFLAGS)
+

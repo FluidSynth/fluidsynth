@@ -1,3 +1,10 @@
+[:Team:]
+Current development team
+
+Josh Green
+Bernat Arlandis i Mañó
+Pedro Lopez-Cabanillas
+
 
 [:Idea:]
 
@@ -96,6 +103,8 @@ summary of contributions.
   borrowed from Mozilla's macros to handle the Long-long type (64-bit
   signed integer type). Mozilla NSPR library, www.mozilla.org.  file:
   iiwu_phase.h
+
+* KO Myung-Hun for OS/2 support with Dart audio driver.
 
 * Growing list of individuals who contributed bug fixes, corrections and minor features:
 Pedro Lopez-Cabanillas for midi.winmidi.device setting.

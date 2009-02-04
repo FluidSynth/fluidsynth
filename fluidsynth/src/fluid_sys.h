@@ -90,6 +90,15 @@ double fluid_utime(void);
 unsigned int fluid_curtime();
 #define fluid_utime()  0.0
 
+#elif defined(__OS2__)
+#define INCL_DOS
+#include <os2.h>
+
+typedef int socklen_t;
+
+unsigned int fluid_curtime(void);
+double fluid_utime(void);
+
 #else
 
 unsigned int fluid_curtime(void);
@@ -136,6 +145,13 @@ typedef HANDLE fluid_mutex_t;
 #define fluid_mutex_destroy(_m)   if (_m) { CloseHandle(_m); }
 #define fluid_mutex_lock(_m)      WaitForSingleObject(_m, INFINITE)
 #define fluid_mutex_unlock(_m)    ReleaseMutex(_m)
+
+#elif defined(__OS2__)
+typedef HMTX fluid_mutex_t;
+#define fluid_mutex_init(_m)      { (_m) = 0; DosCreateMutexSem( NULL, &(_m), 0, FALSE ); }
+#define fluid_mutex_destroy(_m)   if (_m) { DosCloseMutexSem(_m); }
+#define fluid_mutex_lock(_m)      DosRequestMutexSem(_m, -1L)
+#define fluid_mutex_unlock(_m)    DosReleaseMutexSem(_m)
 
 #else
 typedef pthread_mutex_t fluid_mutex_t;
@@ -268,7 +284,7 @@ extern fluid_profile_data_t fluid_profile_data[];
     sample data.
  */
 
-#if HAVE_SYS_MMAN_H
+#if defined(HAVE_SYS_MMAN_H) && !defined(__OS2__)
 #define fluid_mlock(_p,_n)      mlock(_p, _n)
 #define fluid_munlock(_p,_n)    munlock(_p,_n)
 #else
