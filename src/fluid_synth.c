@@ -1600,13 +1600,11 @@ void fluid_synth_set_chorus(fluid_synth_t* synth, int nr, double level,
  */
 int
 fluid_synth_nwrite_float(fluid_synth_t* synth, int len,
-			float** left, float** right,
-			float** fx_left, float** fx_right)
+			 float** left, float** right,
+       float** fx_left, float** fx_right)
 {
   fluid_real_t** left_in = synth->left_buf;
   fluid_real_t** right_in = synth->right_buf;
-  fluid_real_t** fx_left_in = synth->fx_left_buf;
-  fluid_real_t** fx_right_in = synth->fx_right_buf;
   double time = fluid_utime();
   int i, num, available, count, bytes;
 
@@ -1628,10 +1626,6 @@ fluid_synth_nwrite_float(fluid_synth_t* synth, int len,
       FLUID_MEMCPY(left[i], left_in[i] + synth->cur, bytes);
       FLUID_MEMCPY(right[i], right_in[i] + synth->cur, bytes);
     }
-    for (i = 0; i < synth->effects_channels; i++) {
-      FLUID_MEMCPY(fx_left[i], fx_left_in[i] + synth->cur, bytes);
-      FLUID_MEMCPY(fx_right[i], fx_right_in[i] + synth->cur, bytes);
-    }
     count += num;
     num += synth->cur; /* if we're now done, num becomes the new synth->cur below */
   }
@@ -1646,10 +1640,6 @@ fluid_synth_nwrite_float(fluid_synth_t* synth, int len,
     for (i = 0; i < synth->audio_channels; i++) {
       FLUID_MEMCPY(left[i] + count, left_in[i], bytes);
       FLUID_MEMCPY(right[i] + count, right_in[i], bytes);
-    }
-    for (i = 0; i < synth->effects_channels; i++) {
-      FLUID_MEMCPY(fx_left[i] + count, fx_left_in[i], bytes);
-      FLUID_MEMCPY(fx_right[i] + count, fx_right_in[i], bytes);
     }
 
     count += num;
@@ -1666,11 +1656,28 @@ fluid_synth_nwrite_float(fluid_synth_t* synth, int len,
   return 0;
 }
 
+
 int fluid_synth_process(fluid_synth_t* synth, int len,
 		       int nin, float** in,
 		       int nout, float** out)
 {
-  return fluid_synth_write_float(synth, len, out[0], 0, 1, out[1], 0, 1);
+  if (nout==2) {
+    return fluid_synth_write_float(synth, len, out[0], 0, 1, out[1], 0, 1);
+  }
+  else {
+    float **left, **right;
+    int i;
+    left = FLUID_ARRAY(float*, nout/2);
+    right = FLUID_ARRAY(float*, nout/2);
+    for(i=0; i<nout/2; i++) {
+      left[i] = out[2*i];
+      right[i] = out[2*i+1];
+    }
+    fluid_synth_nwrite_float(synth, len, left, right, NULL, NULL);
+    FLUID_FREE(left);
+    FLUID_FREE(right);
+    return 0;
+  }
 }
 
 
