@@ -290,6 +290,7 @@ typedef struct {
   int trackpos;
   int eot;
   int varlen;
+  int dtime;
 } fluid_midi_file;
 
 fluid_midi_file* new_fluid_midi_file(char* filename);

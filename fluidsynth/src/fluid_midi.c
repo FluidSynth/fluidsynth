@@ -272,6 +272,7 @@ int fluid_midi_file_read_track(fluid_midi_file* mf, fluid_player_t* player, int 
 		return FLUID_FAILED;
 	}
 	id[4]='\0';
+	mf->dtime = 0;
 
 	while (!found_track){
 
@@ -354,7 +355,6 @@ int fluid_midi_file_read_varlen(fluid_midi_file* mf)
  */
 int fluid_midi_file_read_event(fluid_midi_file* mf, fluid_track_t* track)
 {
-	int dtime;
 	int status;
 	int type;
 	int tempo;
@@ -371,7 +371,7 @@ int fluid_midi_file_read_event(fluid_midi_file* mf, fluid_track_t* track)
 	if (fluid_midi_file_read_varlen(mf) != FLUID_OK) {
 		return FLUID_FAILED;
 	}
-	dtime = mf->varlen;
+	mf->dtime += mf->varlen;
 
 	/* read the status byte */
 	status = fluid_midi_file_getc(mf);
@@ -519,12 +519,13 @@ int fluid_midi_file_read_event(fluid_midi_file* mf, fluid_track_t* track)
 					result = FLUID_FAILED;
 					break;
 				}
-				evt->dtime = dtime;
+				evt->dtime = mf->dtime;
 				evt->type = MIDI_SET_TEMPO;
 				evt->channel = 0;
 				evt->param1 = tempo;
 				evt->param2 = 0;
 				fluid_track_add_event(track, evt);
+				mf->dtime = 0;
 				break;
 
 			case MIDI_SMPTE_OFFSET:
@@ -642,12 +643,13 @@ int fluid_midi_file_read_event(fluid_midi_file* mf, fluid_track_t* track)
 				FLUID_LOG(FLUID_ERR, "Out of memory");
 				return FLUID_FAILED;
 			}
-			evt->dtime = dtime;
+			evt->dtime = mf->dtime;
 			evt->type = type;
 			evt->channel = channel;
 			evt->param1 = param1;
 			evt->param2 = param2;
 			fluid_track_add_event(track, evt);
+			mf->dtime = 0;
 		}
 	}
 	return FLUID_OK;
