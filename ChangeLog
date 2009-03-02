@@ -1,3 +1,7 @@
+2009-02-28    Pedro Lopez-Cabanillas <plcl@users.sourceforge.net>
+        * src/fluid_midi.c: Fix for ticket #22 (Wrong tempo changes)
+        * src/fluid_midi.h: delta-time accumulator moved to fluid_midi_file struct.
+
 2009-02-03    Josh Green <jgreen@users.sourceforge.net>
         * Applied patch from KO Myung-Hun for OS/2 support including Dart audio
           driver.
