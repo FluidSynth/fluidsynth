@@ -1,3 +1,8 @@
+2009-03-08    Josh Green <jgreen@users.sourceforge.net>
+	* src/fluid_jack.c: Added support for Jack MIDI.
+	* src/fluid_mdriver.c: Registered Jack MIDI driver.
+	* README-OSX: Update from Ebrahim Mayat.
+
 2009-02-28    Pedro Lopez-Cabanillas <plcl@users.sourceforge.net>
         * src/fluid_midi.c: Fix for ticket #22 (Wrong tempo changes)
         * src/fluid_midi.h: delta-time accumulator moved to fluid_midi_file struct.

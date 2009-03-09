@@ -36,6 +36,7 @@
 #include "fluid_settings.h"
 
 #include <jack/jack.h>
+#include <jack/midiport.h>
 
 #include "config.h"
 #include "fluid_lash.h"
@@ -63,6 +64,15 @@ typedef struct {
 } fluid_jack_audio_driver_t;
 
 
+/* Jack MIDI driver instance */
+typedef struct {
+  fluid_midi_driver_t driver;
+  jack_client_t *client;
+  jack_port_t *midi_port;
+  fluid_midi_parser_t *parser;
+} fluid_jack_midi_driver_t;
+
+
 fluid_audio_driver_t*
 new_fluid_jack_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func, void* data);
 int delete_fluid_jack_audio_driver(fluid_audio_driver_t* p);
@@ -71,6 +81,9 @@ int fluid_jack_audio_driver_srate(jack_nframes_t nframes, void *arg);
 int fluid_jack_audio_driver_bufsize(jack_nframes_t nframes, void *arg);
 int fluid_jack_audio_driver_process(jack_nframes_t nframes, void *arg);
 int fluid_jack_audio_driver_process2(jack_nframes_t nframes, void *arg);
+int delete_fluid_jack_midi_driver(fluid_midi_driver_t *p);
+static int fluid_jack_midi_driver_process (jack_nframes_t nframes, void *arg);
+
 
 void
 fluid_jack_audio_driver_settings(fluid_settings_t* settings)
@@ -121,6 +134,8 @@ new_fluid_jack_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func
   } else {
     snprintf(name, 64, "fluidsynth");
   }
+
+  name[63] = '\0';
 
   if ((dev->client = jack_client_new(name)) == 0) {
     FLUID_LOG(FLUID_ERR, "Jack server not running?");
@@ -347,4 +362,152 @@ fluid_jack_audio_driver_shutdown(void *arg)
   fluid_jack_audio_driver_t* dev = (fluid_jack_audio_driver_t*) arg;
   FLUID_LOG(FLUID_ERR, "Help! Lost the connection to the JACK server");
 /*   exit (1); */
+}
+
+
+void fluid_jack_midi_driver_settings (fluid_settings_t *settings)
+{
+  fluid_settings_register_str (settings, "midi.jack.id", "fluidsynth-midi", 0, NULL, NULL);
+}
+
+/*
+ * new_fluid_jack_midi_driver
+ */
+fluid_midi_driver_t *
+new_fluid_jack_midi_driver (fluid_settings_t *settings,
+			    handle_midi_event_func_t handler, void *data)
+{
+  fluid_jack_midi_driver_t* dev;
+  char *client_name;
+  char name[64];
+  int err;
+
+  /* not much use doing anything */
+  if (handler == NULL)
+  {
+    FLUID_LOG(FLUID_ERR, "Invalid argument");
+    return NULL;
+  }
+
+  /* allocate the device */
+  dev = FLUID_NEW(fluid_jack_midi_driver_t);
+
+  if (dev == NULL)
+  {
+    FLUID_LOG(FLUID_ERR, "Out of memory");
+    return NULL;
+  }
+
+  FLUID_MEMSET(dev, 0, sizeof(fluid_jack_midi_driver_t));
+
+  dev->driver.handler = handler;
+  dev->driver.data = data;
+
+  /* allocate one event to store the input data */
+  dev->parser = new_fluid_midi_parser ();
+
+  if (dev->parser == NULL)
+  {
+    FLUID_LOG(FLUID_ERR, "Out of memory");
+    goto error_recovery;
+  }
+
+  /* try to become a client of the JACK server */
+
+  if (fluid_settings_getstr(settings, "midi.jack.id", &client_name)
+      && (client_name != NULL)
+      && (strlen(client_name) > 0))
+    snprintf(name, 64, "%s", client_name);
+  else snprintf(name, 64, "fluidsynth-midi");
+
+  name[63] = '\0';
+
+  if ((dev->client = jack_client_new (name)) == 0)
+  {
+    FLUID_LOG (FLUID_ERR, "Jack server not running?");
+    goto error_recovery;
+  }
+
+  jack_set_process_callback (dev->client, fluid_jack_midi_driver_process, dev);
+
+  dev->midi_port = jack_port_register (dev->client, "midi",
+				       JACK_DEFAULT_MIDI_TYPE,
+				       JackPortIsInput | JackPortIsTerminal, 0);
+  if (!dev->midi_port)
+  {
+    FLUID_LOG (FLUID_ERR, "Failed to create Jack MIDI port");
+    goto error_recovery;
+  }
+
+  /* tell the JACK server that we are ready to roll */
+  if (jack_activate (dev->client) != 0)
+  {
+    FLUID_LOG (FLUID_ERR, "Failed to activate FluidSynth Jack MIDI driver");
+    goto error_recovery;
+  }
+
+  return (fluid_midi_driver_t *)dev;
+
+error_recovery:
+  delete_fluid_jack_midi_driver((fluid_midi_driver_t *)dev);
+  return NULL;
+}
+
+/*
+ * delete_fluid_jack_midi_driver
+ */
+int
+delete_fluid_jack_midi_driver(fluid_midi_driver_t *p)
+{
+  fluid_jack_midi_driver_t* dev;
+  int err;
+
+  dev = (fluid_jack_midi_driver_t *)p;
+
+  if (dev == NULL)
+    return FLUID_OK;
+
+  if (dev->client != NULL)
+    jack_client_close (dev->client);
+
+  if (dev->parser != NULL)
+    delete_fluid_midi_parser (dev->parser);
+
+  FLUID_FREE (dev);
+
+  return FLUID_OK;
+}
+
+/*
+ * fluid_jack_midi_driver_process
+ */
+static int
+fluid_jack_midi_driver_process (jack_nframes_t nframes, void *arg)
+{
+  fluid_jack_midi_driver_t *dev = (fluid_jack_midi_driver_t *)arg;
+  jack_midi_event_t midi_event;
+  fluid_midi_event_t *evt;
+  void *midi_buffer;
+  jack_nframes_t event_count;
+  jack_nframes_t event_index;
+  unsigned int i;
+
+  midi_buffer = jack_port_get_buffer (dev->midi_port, 0);
+  event_count = jack_midi_get_event_count (midi_buffer);
+
+  for (event_index = 0; event_index < event_count; event_index++)
+  {
+    jack_midi_event_get (&midi_event, midi_buffer, event_index);
+
+    /* let the parser convert the data into events */
+    for (i = 0; i < midi_event.size; i++)
+    {
+      evt = fluid_midi_parser_parse (dev->parser, midi_event.buffer[i]);
+
+      /* send the event to the next link in the chain */
+      if (evt != NULL) dev->driver.handler (dev->driver.data, evt);
+    }
+  }
+
+  return 0;
 }

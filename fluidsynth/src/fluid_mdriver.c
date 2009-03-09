@@ -37,6 +37,15 @@ int delete_fluid_alsa_seq_driver(fluid_midi_driver_t* p);
 void fluid_alsa_seq_driver_settings(fluid_settings_t* settings);
 #endif
 
+/* JACK */
+#if JACK_SUPPORT
+void fluid_jack_midi_driver_settings (fluid_settings_t *settings);
+fluid_midi_driver_t *new_fluid_jack_midi_driver (fluid_settings_t *settings,
+						 handle_midi_event_func_t handler,
+						 void *data);
+int delete_fluid_jack_midi_driver(fluid_midi_driver_t *p);
+#endif
+
 /* OSS */
 #if OSS_SUPPORT
 fluid_midi_driver_t* new_fluid_oss_midi_driver(fluid_settings_t* settings,
@@ -87,6 +96,12 @@ struct fluid_mdriver_definition_t {
 
 
 struct fluid_mdriver_definition_t fluid_midi_drivers[] = {
+#if JACK_SUPPORT
+  { "jack",
+    new_fluid_jack_midi_driver,
+    delete_fluid_jack_midi_driver,
+    fluid_jack_midi_driver_settings },
+#endif
 #if OSS_SUPPORT
   { "oss",
     new_fluid_oss_midi_driver,
@@ -133,6 +148,8 @@ void fluid_midi_driver_settings(fluid_settings_t* settings)
   /* Set the default driver */
 #if ALSA_SUPPORT
   fluid_settings_register_str(settings, "midi.driver", "alsa_seq", 0, NULL, NULL);
+#elif JACK_SUPPORT
+  fluid_settings_register_str(settings, "midi.driver", "jack", 0, NULL, NULL);
 #elif OSS_SUPPORT
   fluid_settings_register_str(settings, "midi.driver", "oss", 0, NULL, NULL);
 #elif WINMIDI_SUPPORT
@@ -149,6 +166,9 @@ void fluid_midi_driver_settings(fluid_settings_t* settings)
 #if ALSA_SUPPORT
   fluid_settings_add_option(settings, "midi.driver", "alsa_seq");
   fluid_settings_add_option(settings, "midi.driver", "alsa_raw");
+#endif
+#if JACK_SUPPORT
+  fluid_settings_add_option(settings, "midi.driver", "jack");
 #endif
 #if OSS_SUPPORT
   fluid_settings_add_option(settings, "midi.driver", "oss");
