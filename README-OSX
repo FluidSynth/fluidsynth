@@ -1,13 +1,18 @@
-Compiling fluidsynth-1.0.8 on Mac OS X.5 (Leopard)
+fluidsynth-1.0.9 on Mac OS X.5 (Leopard)
 -----------------------------------------------------------------------
+
+fluidsynth-1.0.9 can be installed in two ways on your Apple computer:
+
+A. Compilation and installation by hand
+---------------------------------------
 Requirements:
-- "XcodeTools.mpkg","DevSDK.pkg", "CoreAudioSDK.pkg" packages (The Leopard Install DVD).
+- "XcodeTools.mpkg","DevSDK.pkg", "CoreAudioSDK.pkg" packages (The Leopard Install DVD)
 
 - Fink installation <http://fink.sourceforge.net>
 
 - libgnugetopt and readline from fink: e.g. "fink install libgnugetopt"
 
-- JackOSX.0.80.pkg.zip  <http://www.jackosx.com>
+- JackOSX.0.81.pkg.zip  <http://www.jackosx.com>
 
 - MIDI Patchbay 1.0.3 <http://www.apple.com/downloads/macosx/audio/index6.html>
 
@@ -17,17 +22,38 @@ $ PKG_CONFIG_PATH=/usr/local/lib/pkgconfig ./configure && make
 
 2. make install as superuser
 
+B. Compilation and installation of the fink fluidsynth package
+--------------------------------------------------------------
+Requirements:
+
+- "XcodeTools.mpkg","DevSDK.pkg", "CoreAudioSDK.pkg" packages (The Leopard Install DVD)
+
+- Fink installation <http://fink.sourceforge.net>
+
+- MIDI Patchbay 1.0.3 <http://www.apple.com/downloads/macosx/audio/index6.html>
+
+In Terminal.app simply type $ fink install fluidsynth
+
+and the fink fluidsynth package automatically installs dependencies like libgnugetopt, readline and jack. 
+
+
 Running fluidsynth:
 
-$ fluidsynth -a jack -m coremidi -j (it also possible to run the coreaudio sound driver simply by omitting the "-a jack" option)
+In order to run fluidsynth via the jack sound server either launch JackPilot.app if you have installed the JackOSX package or, if you have installed the fink package, start jack from Terminal.app
 
-In order to run another instance of fluidsynth, open a second terminal window:
+$ jackd -R -p 512 -d coreaudio -i 2 -o 2
+
+then start fluidsynth
+
+$ fluidsynth -a jack -m coremidi -j (it also possible to run the coreaudio sound driver simply by omitting the "-a jack -j" options)
+
+In order to run another instance of fluidsynth, open another terminal window:
 
 $ fluidsynth -a jack -m coremidi -o audio.jack.id=name_of_instance -p name_of_instance -j
 
 Connect MIDI I/O devices using MIDI Patchbay 
 
 Ebrahim Mayat <emayat@users.sourceforge.net>
-28th January 2009
+8th March 2009
 
 
