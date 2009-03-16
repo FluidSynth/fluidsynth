@@ -1210,45 +1210,72 @@ fluid_synth_program_change(fluid_synth_t* synth, int chan, int prognum)
   fluid_channel_t* channel;
   unsigned int banknum;
   unsigned int sfont_id;
+  int subst_bank, subst_prog;
 
-  if ((prognum >= 0) && (prognum < FLUID_NUM_PROGRAMS) &&
-      (chan >= 0) && (chan < synth->midi_channels)) {
-
-    channel = synth->channel[chan];
-    banknum = fluid_channel_get_banknum(channel);
-
-    /* inform the channel of the new program number */
-    fluid_channel_set_prognum(channel, prognum);
-
-    if (synth->verbose) {
-      FLUID_LOG(FLUID_INFO, "prog\t%d\t%d\t%d", chan, banknum, prognum);
-    }
-
-    /* special handling of channel 10 (or 9 counting from 0). channel
-       10 is the percussion channel.  */
-    if (channel->channum == 9) {
-
-      /* try to search the drum bank first for the given program # */
-      preset = fluid_synth_find_preset(synth, DRUM_INST_BANK, prognum);
-
-      /* if that fails try to search the melodic instrument */
-      if (preset == NULL) {
-	preset = fluid_synth_find_preset(synth, banknum, prognum);
-      }
-
-    } else {
-      preset = fluid_synth_find_preset(synth, banknum, prognum);
-    }
-
-    sfont_id = preset? fluid_sfont_get_id(preset->sfont) : 0;
-    fluid_channel_set_sfontnum(channel, sfont_id);
-    fluid_channel_set_preset(channel, preset);
-
-    return FLUID_OK;
+  if ((prognum < 0) || (prognum >= FLUID_NUM_PROGRAMS) ||
+      (chan < 0) || (chan >= synth->midi_channels))
+  {
+    FLUID_LOG(FLUID_ERR, "Index out of range (chan=%d, prog=%d)", chan, prognum);
+    return FLUID_FAILED;
   }
 
-  FLUID_LOG(FLUID_ERR, "Index out of range (chan=%d, prog=%d)", chan, prognum);
-  return FLUID_FAILED;
+  channel = synth->channel[chan];
+  banknum = fluid_channel_get_banknum(channel);
+
+  /* inform the channel of the new program number */
+  fluid_channel_set_prognum(channel, prognum);
+
+  if (synth->verbose)
+    FLUID_LOG(FLUID_INFO, "prog\t%d\t%d\t%d", chan, banknum, prognum);
+
+  /* Special handling of channel 10 (or 9 counting from 0). channel
+   * 10 is the percussion channel.
+   *
+   * FIXME - Shouldn't hard code bank selection for channel 10.  I think this
+   * is a hack for MIDI files that do bank changes in GM mode.  Proper way to
+   * handle this would probably be to ignore bank changes when in GM mode.
+   */
+  if (channel->channum == 9)
+    preset = fluid_synth_find_preset(synth, DRUM_INST_BANK, prognum);
+  else preset = fluid_synth_find_preset(synth, banknum, prognum);
+
+  /* Fallback to another preset if not found */
+  if (!preset)
+  {
+    subst_bank = banknum;
+    subst_prog = prognum;
+
+    /* Melodic instrument? */
+    if (channel->channum != 9 && banknum != DRUM_INST_BANK)
+    {
+      subst_bank = 0;
+
+      /* Fallback first to bank 0:prognum */
+      preset = fluid_synth_find_preset(synth, 0, prognum);
+
+      /* Fallback to first preset in bank 0 */
+      if (!preset && prognum != 0)
+      {
+	preset = fluid_synth_find_preset(synth, 0, 0);
+	subst_prog = 0;
+      }
+    }
+    else /* Percussion: Fallback to preset 0 in percussion bank */
+    {
+      preset = fluid_synth_find_preset(synth, DRUM_INST_BANK, 0);
+      subst_prog = 0;
+    }
+
+    if (preset)
+      FLUID_LOG(FLUID_WARN, "Instrument not found [bank=%d prog=%d], substituted [bank=%d prog=%d]",
+		banknum, prognum, subst_bank, subst_prog); 
+  }
+
+  sfont_id = preset? fluid_sfont_get_id(preset->sfont) : 0;
+  fluid_channel_set_sfontnum(channel, sfont_id);
+  fluid_channel_set_preset(channel, preset);
+
+  return FLUID_OK;
 }
 
 /*

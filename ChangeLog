@@ -1,3 +1,12 @@
+2009-03-15    Josh Green <jgreen@users.sourceforge.net>
+	* ltconfig: Removed obsolete ltconfig script by suggestion of
+	  Sven Hoexter.
+	* doc/fluidsynth.1: Some fixes from Sven Hoexter.
+	* src/fluid_adriver.c: Re-order of default drivers to jack, alsa, pulse.
+	* src/fluidsynth.c (fluid_synth_program_change): Added preset selection
+	  fallback logic: Melodic - Fallback to Bank0:prognum followed by
+	  Bank0:Program0, Percussion - Fallback to 128:0, code re-organization.
+
 2009-03-08    Josh Green <jgreen@users.sourceforge.net>
 	* src/fluid_jack.c: Added support for Jack MIDI.
 	* src/fluid_mdriver.c: Registered Jack MIDI driver.
