@@ -56,10 +56,6 @@ void print_usage(void);
 void print_help(fluid_settings_t *settings);
 void print_welcome(void);
 
-#if !defined(MACINTOSH)
-static fluid_cmd_handler_t* newclient(void* data, char* addr);
-#endif
-
 /*
  * the globals
  */
@@ -614,12 +610,6 @@ int main(int argc, char** argv)
     exit(-1);
   }
 
-  cmd_handler = new_fluid_cmd_handler(synth);
-  if (cmd_handler == NULL) {
-    fprintf(stderr, "Failed to create the command handler\n");
-    goto cleanup;
-  }
-
   /* load the soundfonts (check that all non options are SoundFont or MIDI files) */
   for (i = arg1; i < argc; i++) {
     if (fluid_is_soundfont(argv[i]))
@@ -664,8 +654,6 @@ int main(int argc, char** argv)
 	      "will be available. You can access the synthesizer \n"
 	      "through the console.\n");
     } else {
-      fluid_synth_set_midi_router(synth, router); /* Fixme, needed for command handler */
-//      fluid_sequencer_register_fluidsynth(sequencer, synth);
       mdriver = new_fluid_midi_driver(
 	settings,
 	dump ? fluid_midi_dump_prerouter : fluid_midi_router_handle_midi_event,
@@ -678,17 +666,6 @@ int main(int argc, char** argv)
     }
   }
 #endif
-
-  /* run commands specified in config file */
-  if (config_file != NULL) {
-    fluid_source(cmd_handler, config_file);
-  } else if (fluid_get_userconf(buf, 512) != NULL) {
-    fluid_source(cmd_handler, buf);
-  } else if (fluid_get_sysconf(buf, 512) != NULL) {
-    fluid_source(cmd_handler, buf);
-  }
-
-
 
   /* play the midi files, if any */
   for (i = arg1; i < argc; i++) {
@@ -723,17 +700,31 @@ int main(int argc, char** argv)
     fluid_player_play(player);
   }
 
+  cmd_handler = new_fluid_cmd_handler(synth, router);
+  if (cmd_handler == NULL) {
+    fprintf(stderr, "Failed to create the command handler\n");
+    goto cleanup;
+  }
+  
+  /* try to load the user or system configuration */
+  if (config_file != NULL) {
+    fluid_source(cmd_handler, config_file);
+  } else if (fluid_get_userconf(buf, 512) != NULL) {
+    fluid_source(cmd_handler, buf);
+  } else if (fluid_get_sysconf(buf, 512) != NULL) {
+    fluid_source(cmd_handler, buf);
+  }
+  
   /* run the server, if requested */
 #if !defined(MACINTOSH)
   if (with_server) {
-    server = new_fluid_server(settings, newclient, synth);
+    server = new_fluid_server(settings, cmd_handler);
     if (server == NULL) {
       fprintf(stderr, "Failed to create the server.\n"
 	     "Continuing without it.\n");
     }
   }
 #endif
-
 
 #ifdef LASH_ENABLED
   if (enabled_lash)
@@ -823,14 +814,6 @@ int main(int argc, char** argv)
 
   return 0;
 }
-
-#if !defined(MACINTOSH)
-static fluid_cmd_handler_t* newclient(void* data, char* addr)
-{
-  fluid_synth_t* synth = (fluid_synth_t*) data;
-  return new_fluid_cmd_handler(synth);
-}
-#endif
 
 /*
  * print_usage
