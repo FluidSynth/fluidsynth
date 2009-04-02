@@ -1,3 +1,6 @@
+2009-04-02    Pedro Lopez-Cabanillas <plcl@users.sourceforge.net>
+    * src/config_win32.h: fix compilation under MSVC 2008 and older
+
 2009-03-15    Josh Green <jgreen@users.sourceforge.net>
 	* ltconfig: Removed obsolete ltconfig script by suggestion of
 	  Sven Hoexter.
