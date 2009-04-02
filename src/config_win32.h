@@ -15,7 +15,12 @@
 #define WITH_FLOAT 1
 
 #define snprintf _snprintf
+#define strcasecmp _stricmp
+
+#if _MSC_VER < 1500
 #define vsnprintf _vsnprintf
+#endif
+
 #define STDIN_FILENO 0
 #define STDOUT_FILENO 1
 #define STDERR_FILENO 2
@@ -26,6 +31,7 @@
 #pragma warning(disable : 4244)
 #pragma warning(disable : 4101)
 #pragma warning(disable : 4305)
+#pragma warning(disable : 4996)
 
 #define WITHOUT_SERVER 1
 
