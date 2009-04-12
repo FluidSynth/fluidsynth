@@ -1,4 +1,4 @@
-#define VERSION "1.0.8"
+#define VERSION "1.0.9"
 
 #define HAVE_STRING_H 1
 #define HAVE_STDLIB_H 1
