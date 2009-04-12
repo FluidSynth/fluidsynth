@@ -1,5 +1,12 @@
+2009-04-11    Josh Green <jgreen@users.sourceforge.net>
+	* FluidSynth release 1.0.9 "A Sound Future"
+	* configure.ac: Bumped version, no library interfaces added, removed or changed.
+	* doc/Makefile.am: Removed html and api folders from EXTRA_DIST.
+	* src/fluid_synth.c (fluid_synth_program_change): Preset substitute warning
+	  now outputs MIDI channel.
+
 2009-04-02    Pedro Lopez-Cabanillas <plcl@users.sourceforge.net>
-    * src/config_win32.h: fix compilation under MSVC 2008 and older
+	* src/config_win32.h: fix compilation under MSVC 2008 and older
 
 2009-03-15    Josh Green <jgreen@users.sourceforge.net>
 	* ltconfig: Removed obsolete ltconfig script by suggestion of
