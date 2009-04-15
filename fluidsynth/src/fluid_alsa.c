@@ -247,7 +247,7 @@ new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
       /* There's currently no way to change the sampling rate of the
 	 synthesizer after it's been created. */
       FLUID_LOG(FLUID_WARN, "Requested sample rate of %d, got %d instead, "
-		"synthesizer likely out of tune!", sample_rate, tmp);
+		"synthesizer likely out of tune!", (unsigned int) sample_rate, tmp);
     }
 
     uframes = period_size;
