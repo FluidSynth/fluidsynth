@@ -44,8 +44,6 @@ struct _fluid_channel_t
   /* controller values */
   short cc[128];
 
-  /* cached values of last MSB values of MSB/LSB controllers */
-  unsigned char bank_msb;
   int interp_method;
 
   /* the micro-tuning */

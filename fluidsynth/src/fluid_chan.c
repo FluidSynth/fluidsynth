@@ -74,7 +74,6 @@ fluid_channel_init_ctrl(fluid_channel_t* chan)
   chan->channel_pressure = 0;
   chan->pitch_bend = 0x2000; /* Range is 0x4000, pitch bend wheel starts in centered position */
   chan->pitch_wheel_sensitivity = 2; /* two semi-tones */
-  chan->bank_msb = 0;
 
   for (i = 0; i < GEN_LAST; i++) {
     chan->gen[i] = 0.0f;
@@ -204,18 +203,8 @@ fluid_channel_cc(fluid_channel_t* chan, int num, int value)
 
   case BANK_SELECT_MSB:
     {
-      chan->bank_msb = (unsigned char) (value & 0x7f);
-/*      printf("** bank select msb recieved: %d\n", value); */
-
-      /* I fixed the handling of a MIDI bank select controller 0,
-	 e.g., bank select MSB (or "coarse" bank select according to
-	 my spec).  Prior to this fix a channel's bank number was only
-	 changed upon reception of MIDI bank select controller 32,
-	 e.g, bank select LSB (or "fine" bank-select according to my
-	 spec). [KLE]
-
-	 FIXME: is this correct? [PH] */
-      fluid_channel_set_banknum(chan, (unsigned int)(value & 0x7f));  /* KLE */
+      fluid_channel_set_banknum(chan, (((unsigned int) value & 0x7F) << 7) +
+				(chan->banknum & 0x7F));  
     }
     break;
 
@@ -224,8 +213,8 @@ fluid_channel_cc(fluid_channel_t* chan, int num, int value)
       /* FIXME: according to the Downloadable Sounds II specification,
          bit 31 should be set when we receive the message on channel
          10 (drum channel) */
-	fluid_channel_set_banknum(chan, (((unsigned int) value & 0x7f)
-					+ ((unsigned int) chan->bank_msb << 7)));
+	fluid_channel_set_banknum(chan, ((unsigned int) value & 0x7F)
+					+ (chan->banknum & ~0x7F));
     }
     break;
 
