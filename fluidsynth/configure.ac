@@ -394,7 +394,6 @@ AM_CONDITIONAL(LADCCA_SUPPORT, test "$LADCCA_FOUND" = "yes")
 AC_OUTPUT([
 	Makefile
 	macbuild/Makefile
-	sf2/Makefile
 	winbuild/Makefile
 	winbuild/fluidsynth/Makefile
 	winbuild/fluidsynth_dll/Makefile
