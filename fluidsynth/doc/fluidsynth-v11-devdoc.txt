@@ -1,0 +1,842 @@
+/*! 
+\mainpage FluidSynth 1.1 Developer Documentation 
+\author Peter Hanappe
+\author Conrad Berhörster
+\author Antoine Schmitt
+\author Pedro López-Cabanillas
+\author Copyright &copy; 2003-2009 Peter Hanappe, Conrad Berhörster, Antoine Schmitt, Pedro López-Cabanillas
+\version Revision 1.1.0
+\date 2009-mm-dd
+
+All the source code examples in this document are in the public domain; you can use them as you please. This document is licensed under the Creative Commons Attribution License. To view a copy of this license, visit http://creativecommons.org/licenses/by/1.0/ or send a letter to Creative Commons, 559 Nathan Abbott Way, Stanford, California 94305, USA. The FluidSynth library is distributed under the GNU Library General Public License. A copy of the GNU Library General Public License is contained in the FluidSynth package; if not, visit http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt or write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+\section Abstract
+
+<a href="http://www.fluidsynth.org">FluidSynth</a> is a software synthesizer based on the <a href="http://en.wikipedia.org/wiki/SoundFont">SoundFont 2</a> specifications. The synthesizer is available as a shared object that can easily be reused in any application that wants to use wave-table synthesis. This document explains the basic usage of FluidSynth. Some of the more advanced features are not yet discussed but will be added in future versions.
+
+\section Contents Table of Contents
+
+- \ref Disclaimer 
+- \ref Introduction 
+- \ref CreatingSettings 
+- \ref CreatingSynth 
+- \ref CreatingAudioDriver 
+- \ref UsingSynth 
+- \ref LoadingSoundfonts 
+- \ref SendingMIDI
+- \ref RealtimeMIDI
+- \ref MIDIPlayer
+- \ref MIDIRouter 
+- \ref Sequencer
+- \ref Shell
+- \ref Advanced 
+
+\section Disclaimer
+
+This documentation, in its current version, is probably outdated and most certainly incomplete. As always, the source code is the final reference.
+
+SoundFont(R) is a registered trademark of E-mu Systems, Inc.
+
+\section Introduction
+
+What is FluidSynth?
+
+- FluidSynth is a software synthesizer based on the SoundFont 2 specifications. The synthesizer is available as a shared object (a concept also named Dynamic Linking Library, or DLL) that can be easily reused in any application for wave-table synthesis. This document explains the basic usage of FluidSynth.
+
+- FluidSynth provides a Command Line Interface program ready to be used from the console terminal, offering most of the library functionalities to end users, among them the ability of render and play Standard MIDI Files, receive real-time MIDI events from external hardware ports and other applications, perform advanced routing of such events, enabling at the same time a local shell as well as a remote server commands interface.
+
+- FluidSynth is an API (Application Programming Interface) relieving programmers from a lot of details of reading SoundFont and MIDI events and files, and sending the digital audio output to a Sound Card. These tasks can be accomplished using a small set of functions. This document explains most of the API functions and gives short examples about them.
+
+- FluidSynth uses instrument samples contained in standard SF2 (SoundFont 2) files, having a file structure based on the RIFF format. The specification can be obtained here: http://connect.creativelabs.com/developer/SoundFont/Forms/AllItems.aspx but most users don't need to know any details of the format.
+
+- FluidSynth can easily be embedded in an application. It has a main header file, fluidsynth.h, and one dynamically linkable library. FluidSynth runs on Linux, Mac OS 9, Mac OS X, and the Win32 platforms. It has audio and midi drivers for all mentioned platforms but you can use it with your own drivers if your application already handles MIDI and audio input/output. This document explains the basic usage of FluidSynth and provides examples that you can reuse. 
+
+- FluidSynth is open source, in active development. For more details, take a look at http://www.fluidsynth.org
+
+What it is not:
+
+- Fluidsynth its not yet a complete synthesizer API, but it is improving day after day.
+
+\section CreatingSettings Creating and changing the settings
+
+Before you can use the synthesizer, you have to create a settings object. The settings objects is used by all components of the FluidSynth library. It gives a unified API to set the parameters of the audio drivers, the midi drivers, the synthesizer, and so forth. A number of default settings are defined by the current implementation. In future versions, the use of the settings will probably be generalized.
+
+All settings have a name that follows the "dotted-name" notation. For example, "synth.polyphony" refers to the number of voices (polyphony) preallocated by the synthesizer. The settings also have a type. There are currently three types: strings, numbers (double floats), and integers. You can change the values of a setting using the fluid_settings_setstr(), fluid_settings_setnum(), and fluid_synth_setint() functions. For example: 
+
+\code
+#include <fluidsynth.h>
+
+int main(int argc, char** argv) 
+{
+    fluid_settings_t* settings = new_fluid_settings();
+    fluid_synth_setint(settings, "synth.polyphony", 128);
+    /* ... */
+    delete_fluid_settings(settings);
+    return 0;
+}
+\endcode
+
+The API contains the functions to query the type, the current value, the default value, the range and the "hints" of a setting. The range is the minimum and maximum value of the setting. The hints gives additional information about a setting. For example, whether a string represents a filename. Or whether a number should be interpreted on on a logarithmic scale. Check the API documentation for a description of all functions. 
+
+\section CreatingSynth Creating the synthesizer
+
+To create the synthesizer, you pass it the settings object, as in the following example: 
+
+\code
+#include <fluidsynth.h>
+
+int main(int argc, char** argv) 
+{
+    fluid_settings_t* settings;
+    fluid_synth_t* synth;
+    settings = new_fluid_settings();
+    synth = new_fluid_synth(settings);
+
+    /* Do useful things here */
+
+    delete_fluid_synth(synth);
+    delete_fluid_settings(settings);
+    return 0;
+}
+\endcode
+
+The default settings should be fine for most uses. A detailed description of all the settings used by the synthesizer described below. 
+
+<table border="1" cellspacing="0">
+  <caption>Table 1. Synthesizer settings</caption>
+  <tr>
+    <td>synth.gain</td>
+    <td>Type</td>
+    <td>number</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Default</td>
+    <td>0.2</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Min-Max</td>
+    <td>0.0-10.0</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Description</td>
+    <td>The gain is applied to the final or master output of the
+    synthesizer. It is set to a low value by default to avoid the
+    saturation of the output when random MIDI files are
+    played.</td>
+  </tr>
+  <tr>
+    <td>synth.sample-rate</td>
+    <td>Type</td>
+    <td>number</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Default</td>
+    <td>44100</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Min-Max</td>
+    <td>22050-96000</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Description</td>
+    <td>The sample rate of the audio generated by the
+    synthesizer.</td>
+  </tr>
+  <tr>
+    <td>synth.polyphony</td>
+    <td>Type</td>
+    <td>integer</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Default</td>
+    <td>256</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Min-Max</td>
+    <td>16-4096</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Description</td>
+    <td>The polyphony defines how many voices can be played in
+    parallel. The number of voices is not necessarily equivalent to
+    the number of notes played simultaneously. Indeed, when a note
+    is struck on a specific MIDI channel, the preset on that
+    channel may created several voices, for example, one for the
+    left audio channel and one for the right audio channels. The
+    number of voices activated depends on the number of instrument
+    zones that fall in the correspond to the velocity and key of
+    the played note.</td>
+  </tr>
+  <tr>
+    <td>synth.midi-channels</td>
+    <td>Type</td>
+    <td>integer</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Default</td>
+    <td>16</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Min-Max</td>
+    <td>16-256</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Description</td>
+    <td>This setting defines the number of MIDI channels of the
+    synthesizer. The MIDI standard defines 16 channels, so most
+    hardware keyboards are limited to 16. If you plan to use the
+    synthesizer as a plug-in in an application, it might be
+    interesting to set the number of channels to a larger value. In
+    this case you can program a greater number of presets.</td>
+  </tr>
+  <tr>
+    <td>synth.reverb.active</td>
+    <td>Type</td>
+    <td>string</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Default</td>
+    <td>"yes"</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Description</td>
+    <td>When set to "yes" the reverb effects module is activated.
+    Otherwise, no reverb will be added to the output signal. Note
+    that when the reverb module is active, the amount of signal
+    send to the reverb module depends on the "reverb send"
+    generator defined in the SoundFont.</td>
+  </tr>
+  <tr>
+    <td>synth.chorus.active</td>
+    <td>Type</td>
+    <td>string</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Default</td>
+    <td>"yes"</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Description</td>
+    <td>When set to "yes" the chorus effects module is activated.
+    Otherwise, no chorus will be added to the output signal. Note
+    that when the reverb module is active, the amount of signal
+    send to the chorus module depends on the "chorus send"
+    generator defined in the SoundFont.</td>
+  </tr>
+  <tr>
+    <td>synth.ladspa.active</td>
+    <td>Type</td>
+    <td>string</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Default</td>
+    <td>"no"</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Description</td>
+    <td>When set to "yes" the LADSPA subsystem will be called. This
+    subsystem allows to load and interconnect LADSPA plug-ins. The
+    output of the synthesizer is processed by the LADSPA subsystem.
+    Note that the synthesizer has to be compiled with LADSPA
+    support. More information about the LADSPA subsystem
+    later.</td>
+  </tr>
+  <tr>
+    <td>synth.audio-groups</td>
+    <td>Type</td>
+    <td>integer</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Default</td>
+    <td>1</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Min-Max</td>
+    <td>1-128</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Description</td>
+    <td>By default, the synthesizer outputs a single stereo signal.
+    Using this option, the synthesizer can output multichannel
+    audio.</td>
+  </tr>
+  <tr>
+    <td>synth.effects-channels</td>
+    <td>Type</td>
+    <td>integer</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Default</td>
+    <td>2</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Min-Max</td>
+    <td>2-2</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Description</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>synth.verbose</td>
+    <td>Type</td>
+    <td>string</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Default</td>
+    <td>"no"</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Description</td>
+    <td>When set to "yes" the synthesizer will print out
+    information about the received MIDI events to the stdout. This
+    can be helpful for debugging. This setting can not be changed
+    after the synthesizer has started.</td>
+  </tr>
+  <tr>
+    <td>synth.dump</td>
+    <td>Type</td>
+    <td>string</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Default</td>
+    <td>"no"</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Description</td>
+    <td></td>
+  </tr>
+</table>
+
+\section CreatingAudioDriver Creating the Audio Driver
+
+The synthesizer itself does not write any audio to the audio output. This allows application developers to manage the audio output themselves if they wish. The next section describes the use of the synthesizer without an audio driver in more detail.
+
+Creating the audio driver is straightforward: set the appropriate settings and create the driver object. Because the FluidSynth has support for several audio systems, you may want to change which one you want to use. The list below shows the audio systems that are currently supported. It displays the name, as used by the fluidsynth library, and a description. 
+
+- jack: JACK Audio Connection Kit (Linux, Mac OS X, Windows)
+- alsa: Advanced Linux Sound Architecture (Linux)
+- oss: Open Sound System (Linux, Unix)
+- pulseaudio: PulseAudio (Linux, Mac OS X, Windows)
+- coreaudio: Apple CoreAudio (Mac OS X)
+- dsound: Microsoft DirectSound (Windows)
+- portaudio: PortAudio Library (Mac OS 9 & X, Windows, Linux)
+- sndman: Apple SoundManager (Mac OS Classic)
+- dart: DART sound driver (OS/2)
+- file: Raw output file driver
+
+The default audio driver depends on the settings with which FluidSynth was compiled. You can get the default driver with fluid_settings_getstr_default(). To get the list of available drivers use the fluid_settings_foreach_option() function. Finally, you can set the driver with fluid_settings_setstr(). In most cases, the default driver should work out of the box. 
+
+Additional options that define the audio quality and latency are "audio.sample-format", "audio.period-size", and "audio.periods". The details are described later. 
+
+You create the audio driver with the new_fluid_audio_driver() function. This function takes the settings and synthesizer object as arguments. For example: 
+
+\code
+void init() 
+{
+    fluid_settings_t* settings;
+    fluid_synth_t* synth;
+    fluid_audio_driver_t* adriver;
+    settings = new_fluid_settings();
+
+    /* Set the synthesizer settings, if necessary */
+    synth = new_fluid_synth(settings);
+
+    fluid_settings_setstr(settings, "audio.driver", "jack");
+    adriver = new_fluid_audio_driver(settings, synth);
+}
+\endcode
+
+As soon as the audio driver is created, it will start playing. The audio driver creates a separate thread that runs in real-time mode (is the application has sufficient privileges) and call the synthesizer object to generate the audio.
+ 
+There are a number of general audio driver settings. The audio.driver settings defines the audio subsystem that will be used. The audio.periods and audio.period-size settings define the latency and robustness against scheduling delays. There are additional settings for the audio subsystems used. They will be documented later. 
+
+<table border="1" cellspacing="0">
+  <caption>Table 2. General audio driver
+  settings</caption>
+  <tr>
+    <td>audio.driver</td>
+    <td>Type</td>
+    <td>string</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Default</td>
+    <td>jack (Linux), dsound (Windows), sndman (MacOS9), coreaudio
+    (Mac OS X), dart (OS/2)</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Options</td>
+    <td>jack, alsa, oss, pulseaudio, coreaudio, dsound, portaudio, sndman, dart, file</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Description</td>
+    <td>The audio system to be used.</td>
+  </tr>
+  <tr>
+    <td>audio.periods</td>
+    <td>Type</td>
+    <td>int</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Default</td>
+    <td>16 (Linux, Mac OS X), 8 (Windows)</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Min-Max</td>
+    <td>2-64</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Description</td>
+    <td>The number of the audio buffers used by the driver. This
+    number of buffers, multiplied by the buffer size (see setting
+    audio.period-size), determines the maximum latency of the audio
+    driver.</td>
+  </tr>
+  <tr>
+    <td>audio.period-size</td>
+    <td>Type</td>
+    <td>int</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Default</td>
+    <td>64 (Linux, Mac OS X), 512 (Windows)</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Min-Max</td>
+    <td>64-8192</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Description</td>
+    <td>The size of the audio buffers (in frames).</td>
+  </tr>
+  <tr>
+    <td>audio.sample-format</td>
+    <td>Type</td>
+    <td>string</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Default</td>
+    <td>"16bits"</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Options</td>
+    <td>"16bits", "float"</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Description</td>
+    <td>The format of the audio samples. This is currently only an
+    indication; the audio driver may ignore this setting if it
+    can't handle the specified format.</td>
+  </tr>
+</table>
+
+\section UsingSynth Using the synthesizer without an audio driver
+
+It is possible to use the synthesizer object without creating an audio driver. This is desirable if the application using FluidSynth manages the audio output itself. The synthesizer has several API functions that can be used to obtain the audio output: 
+
+fluid_synth_write_s16() fills two buffers (left and right channel) with samples coded as signed 16 bits (the endian-ness is machine dependent). fluid_synth_write_float() fills a left and right audio buffer with 32 bits floating point samples. For multi channel audio output, the function fluid_synth_nwrite_float() has to be used.
+
+The function fluid_synth_process() is still experimental and its use is therefore not recommended but it will probably become the generic interface in future versions. 
+
+\section LoadingSoundfonts Loading and managing SoundFonts
+
+Before any sound can be produced, the synthesizer needs a SoundFont. For a discussion on SoundFont please refer to some other, not yet existing, therefore virtual document.
+
+SoundFonts are loaded with the fluid_synth_sfload() function. The function takes the path to a SoundFont file as argument and a boolean to indicate whether the presets of the MIDI channels should be updated after the SoundFont is loaded. More on the preset updates below.
+ 
+The synthesizer can load any number of SoundFonts. This is an advantage, of course, but there are some issues that you must be aware of. The presets in a SoundFont are identified by their bank and preset number. The MIDI specifications allows the change of a preset on a MIDI channel using the combination of "bank select" and the "program change" messages. An ambiguity arises when a preset with a specific bank and preset number is defined in multiple loaded SoundFonts. This is solved by searching the SoundFonts in the inverse order they were loaded, i.e. the lastly loaded SoundFont is searched first for the request preset (identified by bank and preset number) then the on but last loaded SoundFont, and so on until. The first preset found is then used. You can somehow consider the SoundFonts placed on a stack. The SoundFont on top of the stack is inspected first, followed by the SoundFont down on the stack. Newly loaded SoundFonts are always placed on top of the stack. This is how commercial, hardware synthesizers work. The inconvenience is that a preset in a SoundFont at the bottom end of the stack may be masked by a preset in a SoundFont at the top of the stack. Using the standard MIDI messages, bank select and program change, there is no way to select a masked preset. However, FluidSynth has an API function to unambiguously select a preset: fluid_synth_program_select(). This function is not invocable through MIDI messages, though. 
+
+The fluid_synth_sfload() function returns the unique identifier of the loaded SoundFont, or -1 in case of an error. This identifier is used in subsequent management functions: fluid_synth_sfunload() removes the SoundFont, fluid_synth_sfreload() reloads the SoundFont. When a SoundFont is reloaded, it retains it's ID and position on 
+the SoundFont stack.
+ 
+Additional API functions are provided to get the number of loaded SoundFonts and to get a pointer to the SoundFont. 
+
+Another issue that needs some explanation is the reprogramming of the presets after a SoundFont load or unload. The default behavior of commercial synthesizers is to reset all the preset that are programmed on the MIDI channels when a SoundFont is loaded or unloaded. Consider the case where MIDI channel 1 uses preset (0, 0) (the couple indicates the bank and program number). This preset was found in the SoundFont with ID 3, for example. When a new SoundFont is loaded that also contains a preset with bank number 0 and program number 0, then the newly loaded preset will be used on channel 1 for future events. This behavior is as if a bank select and program change message is send to all channels after a load/unload using the channel's bank and program number. This may be sometimes confusing or unwanted. A user may not want to loose its preset setup when a new SoundFont is loaded. To avoid the reprogramming of the presets, the third parameter to the fluid_synth_sfload() and fluid_synth_sfunload() functions should be set to zero. 
+
+\section SendingMIDI Sending MIDI Events
+
+Once the synthesizer is up and running and a SoundFont is loaded, most people will want to do something useful with it. Make noise, for example. The synthesizer aims to be compatible with the MIDI standard, so it accepts almost all MIDI messages (details on the MIDI compatibility elsewhere). The MIDI channel messages can be send using the fluid_synth_noteon(), fluid_synth_noteoff(), fluid_synth_cc(), fluid_synth_pitch_bend(), fluid_synth_pitch_wheel_sens(), and fluid_synth_program_change() functions. For convenience, there's also a fluid_synth_bank_select() function (the bank select message is normally sent using a control change message). 
+
+The following example show a generic graphical button that plays a note when clicked: 
+
+\code
+class SoundButton : public SomeButton
+{
+public:	
+
+    SoundButton() : SomeButton() {
+        if (!_synth) {
+            initSynth();
+        }
+    }
+
+    static void initSynth() {
+        _settings = new_fluid_settings();
+        _synth = new_fluid_synth(_settings);
+        _adriver = new_fluid_audio_driver(_settings, _synth);
+    }
+
+    /* ... */
+
+    virtual int handleMouseDown(int x, int y) {
+        /* Play a note on key 60 with velocity 100 on MIDI channel 0 */
+        fluid_synth_noteon(_synth, 0, 60, 100);
+    }
+
+    virtual int handleMouseUp(int x, int y) {
+        /* Release the note on key 60 */
+        fluid_synth_noteoff(_synth, 0, 60);
+    }
+
+protected:
+
+    static fluid_settings_t* _settings;
+    static fluid_synth_t* _synth;
+    static fluid_audio_driver_t* _adriver;
+};
+\endcode
+
+\section RealtimeMIDI Creating the Real-time MIDI Driver
+
+FluidSynth can process real-time MIDI events received from hardware MIDI ports or other applications. To do so, the client must create a MIDI input driver. It is a very similar process to the creation of the audio driver: you initialize some properties in a settings instance and call the new_fluid_midi_driver() function providing a callback function that will be invoked when a MIDI event is received. The following MIDI drivers are currently supported:
+
+- jack: JACK Audio Connection Kit MIDI driver (Linux, Mac OS X)
+- oss: Open Sound System raw MIDI (Linux, Unix)
+- alsa_raw: ALSA raw MIDI interface (Linux)
+- alsa_seq: ALSA sequencer MIDI interface (Linux)
+- winmidi: Microsoft Windows MM System (Windows)
+- midishare: MIDI Share (Linux, Mac OS X)
+- coremidi: Apple CoreMIDI (Mac OS X)
+
+\code
+#include <fluidsynth.h>
+
+int handle_midi_event(void* data, fluid_midi_event_t* event)
+{
+    printf("event type: %d\n", fluid_midi_event_get_type(event));
+}
+
+int main(int argc, char** argv)
+{
+    fluid_settings_t* settings;
+    fluid_midi_driver_t* mdriver;
+    settings = new_fluid_settings();
+    mdriver = new_fluid_midi_driver(settings, handle_midi_event, NULL);
+    /* ... */    
+    delete_fluid_midi_driver(mdriver);
+    return 0;
+}
+\endcode
+
+\section MIDIPlayer Loading and Playing a MIDI file
+
+FluidSynth can be used to play MIDI files, using the MIDI File Player interface. It follows a high level implementation, though its implementation is currently incomplete. After initializing the synthesizer, create the player passing the synth instance to new_fluid_player(). Then, you can add some SMF names to the player using fluid_player_add(), and finally call fluid_player_play() to start the playback. You can wait for the player to terminate, using fluid_player_join().
+
+\code
+#include <fluidsynth.h>
+
+int main(int argc, char** argv) 
+{
+	int i;
+    fluid_settings_t* settings;
+    fluid_synth_t* synth;
+    fluid_player_t* player;
+    fluid_audio_driver_t* adriver;
+    settings = new_fluid_settings();
+    synth = new_fluid_synth(settings);
+    player = new_fluid_player(synth);
+    adriver = new_fluid_audio_driver(settings, synth);
+    /* process command line arguments */
+    for (i = 1; i < argc; i++) {
+        if (fluid_is_soundfont(argv[i])) {
+           fluid_synth_sfload(synth, argv[1], 1);
+        }
+        if (fluid_is_midifile(argv[i])) {
+            fluid_player_add(player, argv[i]);
+        }
+    }
+    /* play the midi files, if any */
+    fluid_player_play(player);
+    /* wait for playback termination */
+    fluid_player_join(player);
+    /* cleanup */
+    delete_fluid_audio_driver(adriver);
+    delete_fluid_player(player);
+    delete_fluid_synth(synth);
+    delete_fluid_settings(settings);
+    return 0;
+}
+\endcode
+
+\section MIDIRouter Real-time MIDI router
+
+The MIDI routing is completely transparent in 'default' mode: When a new synth is started, the MIDI router does not do anything. The user won't even notice that it exists. If a user doesn't need the router, he doesn't have to know about it.
+
+The router makes sense when Fluidsynth is used as 'a virtual 19'' rack' - MIDI input from a keyboard on one side, audio output to the speakers on the other side. It's probably not too useful when using the synth as a library.
+
+The scheme is similar to the MIDI router in any multi-timbral synth, just much more general.
+
+The MIDI router is one more processing layer directly behind the MIDI input. It processes incoming MIDI events and generates control events for the synth.
+
+The user can specify 'windows', in which MIDI data is routed. Here is an example (in human-readable form, those are no commands). It splits the keyboard and routes CC 7 (vol) to one part, and CC 11 (expr) to the other.
+
+- route MIDI note events from MIDI-in channel 1 to synth channel 1, when 60 <= key <= 72
+- route MIDI note events from MIDI-in channel 1 to synth channel 2, when 73 <= key <= 127
+- route MIDI CC events from MIDI-in channel 1 to synth channel 1, when 7 <= CC <= 7 (CC=7)
+- route MIDI CC events from MIDI-in channel 1 to synth channel 2, when 11 <= CC =< 11
+- route MIDI CC events from MIDI-in channel 1 to synth channel 1, when 7 <= CC =< 7
+- route MIDI CC events from MIDI-in channel 1 to synth channel 2, when 11 <= CC <=11
+- route MIDI aftertouch events from MIDI-in channel 1 to synth channel 1
+
+Another way to use this feature is to implement OMNI mode: incoming MIDI input on all input channels is treated equally and routed to one particular synth channel. With the MIDI router it will also be possible to set up arbitrary layered sounds and process the parts with separate effects.
+
+The midi driver API has a clean separation between the midi thread and the synthesizer. That opens the door to add a midi router module.
+
+The general work will be done as the following :
+
+-# The MIDI driver waits for a MIDI event (for example: fluid_alsa.c in fluid_alsa_midi_run(), or OSS or MIDIShare). Each received byte goes through the midi parser (fluid_midi_parser_t in fluid_midi.c)
+-# The Parser collects bytes until a full MIDI message is recognized. The MIDI event is returned to the fluid_midi_driver_t, which calls a handler function. Typically fluid_midi_router_handle_midi_event(), but one can insert arbitrary code here to filter MIDI events or react to them. For example: depress a key on an on-screen keyboard.
+-# fluid_midi_router_handle_midi_event() generates an arbitrary number of MIDI events in reaction to one received event (typically the received event is just left as it is). For each created event, a handler function is called. Again, one can insert arbitrary code here that tracks any event that goes actually to the synth (For example: flash a light on the synth channel, indicating that it received data). Typically fluid_synth_handle_midi_event().
+-# fluid_synth_t fluid_synth_handle_midi_event() calls the appropriate synth routine (noteon, pitch bend etc). Let's assume noteon The synth finds the correct preset and calls its noteon handler. The default handler is SoundFont standard. One received call can result in any number of layered notes.
+-# For each tone, one voice is allocated, via fluid_synth_alloc_voice().
+-# The voice parameters are set via so-called 'generators': fluid_voice_gen_set() (see sound font standard for more confusion).
+-# There can also be modulators: fluid_voice_add_mod(), see sound font standard.
+-# Finally, the voice is turned on: fluid_synth_start_voice(). The MIDI thread ends here and the Audio thread takes over the next time it runs.
+
+\section Sequencer
+
+FluidSynth' sequencer can be used to play MIDI events in a more flexible way than using the MIDI file player, which expects the events to be stored as Standard MIDI Files. Using the sequencer, you can provide the events one by one, with an optional timestamp for scheduling. 
+
+The client program should first initialize the sequencer instance using the function new_fluid_sequencer(). There is a complementary function delete_fluid_sequencer() to delete it. After creating the sequencer instance, the destinations can be registered using fluid_sequencer_register_fluidsynth() for the synthesizer destination, and optionally using fluid_sequencer_register_client() for the client destination providing a suitable callback function. It can be unregistered using fluid_sequencer_unregister_client(). After the initialization, events can be sent with fluid_sequencer_send_now() and scheduled to the future with fluid_sequencer_send_at(). The registration functions return identifiers, that can be used as destinations of an event using fluid_event_set_dest().
+
+The function fluid_sequencer_get_tick() returns the current playing position. A program may choose a new timescale in milliseconds using fluid_sequencer_set_time_scale().
+
+The following example uses the fluidsynth sequencer to implement a sort of music box. FluidSynth internal clock is used to schedule repetitive sequences of notes. The next sequence is scheduled on advance before the end of the current one, using a timer event that triggers a callback function. The scheduling times are always absolute values, to avoid slippage.
+
+\code
+#include "fluidsynth.h"
+
+fluid_synth_t* synth;
+fluid_audio_driver_t* adriver;
+fluid_sequencer_t* sequencer;
+short synthSeqID, mySeqID;
+unsigned int now;
+unsigned int seqduration;
+
+// prototype
+void seq_callback(unsigned int time, fluid_event_t* event, fluid_sequencer_t* seq, void* data);
+
+void createsynth() 
+{
+    fluid_settings_t* settings;
+    settings = new_fluid_settings();
+    fluid_settings_setstr(settings, "synth.reverb.active", "yes");
+    fluid_settings_setstr(settings, "synth.chorus.active", "no");
+    synth = new_fluid_synth(settings);
+    adriver = new_fluid_audio_driver(settings, synth);
+    sequencer = new_fluid_sequencer();
+
+    // register synth as first destination
+    synthSeqID = fluid_sequencer_register_fluidsynth(sequencer, synth);
+
+    // register myself as second destination
+    mySeqID = fluid_sequencer_register_client(sequencer, "me", seq_callback, NULL);
+
+    // the sequence duration, in ms
+    seqduration = 1000;
+}
+
+void deletesynth() 
+{
+    delete_fluid_sequencer(sequencer);
+    delete_fluid_audio_driver(adriver);
+    delete_fluid_synth(synth);
+}
+
+void loadsoundfont() 
+{
+    int fluid_res;
+    // put your own path here
+    fluid_res = fluid_synth_sfload(synth, "Inside:VintageDreamsWaves-v2.sf2", 1);
+}
+
+void sendnoteon(int chan, short key, unsigned int date) 
+{
+    int fluid_res;
+    fluid_event_t *evt = new_fluid_event();
+    fluid_event_set_source(evt, -1);
+    fluid_event_set_dest(evt, synthSeqID);
+    fluid_event_noteon(evt, chan, key, 127);
+    fluid_res = fluid_sequencer_send_at(sequencer, evt, date, 1);
+    delete_fluid_event(evt);
+}
+
+void schedule_next_callback() 
+{
+    int fluid_res;
+    // I want to be called back before the end of the next sequence
+    unsigned int callbackdate = now + seqduration/2;
+    fluid_event_t *evt = new_fluid_event();
+    fluid_event_set_source(evt, -1);
+    fluid_event_set_dest(evt, mySeqID);
+    fluid_event_timer(evt, NULL);
+    fluid_res = fluid_sequencer_send_at(sequencer, evt, callbackdate, 1);
+    delete_fluid_event(evt);
+}
+
+void schedule_next_sequence() {
+    // Called more or less before each sequence start
+    // the next sequence start date
+    now = now + seqduration;
+
+    // the sequence to play
+
+    // the beat : 2 beats per sequence
+    sendnoteon(0, 60, now + seqduration/2);
+    sendnoteon(0, 60, now + seqduration);
+
+    // melody
+    sendnoteon(1, 45, now + seqduration/10);
+    sendnoteon(1, 50, now + 4*seqduration/10);
+    sendnoteon(1, 55, now + 8*seqduration/10);
+
+    // so that we are called back early enough to schedule the next sequence
+    schedule_next_callback();
+}
+
+/* sequencer callback */
+void seq_callback(unsigned int time, fluid_event_t* event, fluid_sequencer_t* seq, void* data) {
+    schedule_next_sequence();
+}
+
+int main(void) {
+    createsynth();
+    loadsoundfont();
+
+    // initialize our absolute date
+    now = fluid_sequencer_get_tick(sequencer);
+    schedule_next_sequence();
+
+    sleep(100000);
+    deletesynth();
+    return 0;
+}
+\endcode
+
+\section Shell Shell interface
+
+The shell interface allows you to send simple textual commands to the synthesizer, to parse a command file, or to read commands from the stdin or other input streams. To find the list of currently supported commands, please check the fluid_cmd.c file.
+
+<table border="1" cellspacing="0">
+  <tr>
+    <td>shell.prompt</td>
+    <td>type</td>
+    <td>string</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>default</td>
+    <td>""</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>min-max</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>description</td>
+    <td>in dump mode we set the prompt to "". the ui cannot easily
+    handle lines, which don't end with cr. changing the prompt
+    cannot be done through a command, because the current shell
+    does not handle empty arguments.</td>
+  </tr>
+  <tr>
+    <td>shell.port</td>
+    <td>type</td>
+    <td>number</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>default</td>
+    <td>9800</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>min-max</td>
+    <td>1-65535</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>description</td>
+    <td>the shell can be used in a client server mode. the
+        portnumber can be set to obtain the fluid server process
+        through other programs at a free specified port.</td>
+  </tr>
+</table>
+
+\section Advanced Advanced features, not yet documented
+
+- Accessing low-level voice parameters
+- Reverb settings
+- Chorus settings
+- Interpolation settings (set_gen, get_gen, NRPN)
+- LADSPA effects unit
+- Multi-channel audio
+- MIDI tunings
+*/
+
+/*!
+\example example.c
+Example producing short random music with FluidSynth
+*/
+
+/*!
+\example fluidsynth_simple.c
+A basic example of using fluidsynth to play a single note
+*/
+
+/*!
+\example fluidsynth_fx.c
+Example of using effects with fluidsynth
+*/

@@ -1,113 +1,162 @@
-# Doxyfile 1.2.13-20020210
+# Doxyfile 1.5.6
 
 #---------------------------------------------------------------------------
-# General configuration options
+# Project related configuration options
 #---------------------------------------------------------------------------
+DOXYFILE_ENCODING      = UTF-8
 PROJECT_NAME           = libfluidsynth
-PROJECT_NUMBER         = 
+PROJECT_NUMBER         = 1.1.0
 OUTPUT_DIRECTORY       = api
+CREATE_SUBDIRS         = NO
 OUTPUT_LANGUAGE        = English
-EXTRACT_ALL            = NO
+BRIEF_MEMBER_DESC      = YES
+REPEAT_BRIEF           = YES
+ABBREVIATE_BRIEF       = "The $name class" \
+                         "The $name widget" \
+                         "The $name file" \
+                         is \
+                         provides \
+                         specifies \
+                         contains \
+                         represents \
+                         a \
+                         an \
+                         the
+ALWAYS_DETAILED_SEC    = NO
+INLINE_INHERITED_MEMB  = NO
+FULL_PATH_NAMES        = NO
+STRIP_FROM_PATH        = ../
+STRIP_FROM_INC_PATH    = 
+SHORT_NAMES            = NO
+JAVADOC_AUTOBRIEF      = YES
+QT_AUTOBRIEF           = NO
+MULTILINE_CPP_IS_BRIEF = NO
+DETAILS_AT_TOP         = NO
+INHERIT_DOCS           = YES
+SEPARATE_MEMBER_PAGES  = NO
+TAB_SIZE               = 8
+ALIASES                = 
+OPTIMIZE_OUTPUT_FOR_C  = YES
+OPTIMIZE_OUTPUT_JAVA   = NO
+OPTIMIZE_FOR_FORTRAN   = NO
+OPTIMIZE_OUTPUT_VHDL   = NO
+BUILTIN_STL_SUPPORT    = NO
+CPP_CLI_SUPPORT        = NO
+SIP_SUPPORT            = NO
+IDL_PROPERTY_SUPPORT   = YES
+DISTRIBUTE_GROUP_DOC   = NO
+SUBGROUPING            = NO
+TYPEDEF_HIDES_STRUCT   = NO
+#---------------------------------------------------------------------------
+# Build related configuration options
+#---------------------------------------------------------------------------
+EXTRACT_ALL            = YES
 EXTRACT_PRIVATE        = NO
 EXTRACT_STATIC         = YES
 EXTRACT_LOCAL_CLASSES  = NO
+EXTRACT_LOCAL_METHODS  = NO
+EXTRACT_ANON_NSPACES   = NO
 HIDE_UNDOC_MEMBERS     = YES
 HIDE_UNDOC_CLASSES     = YES
-BRIEF_MEMBER_DESC      = YES
-REPEAT_BRIEF           = YES
-ALWAYS_DETAILED_SEC    = NO
-INLINE_INHERITED_MEMB  = NO
-FULL_PATH_NAMES        = YES
-STRIP_FROM_PATH        = ../
+HIDE_FRIEND_COMPOUNDS  = NO
+HIDE_IN_BODY_DOCS      = NO
 INTERNAL_DOCS          = NO
-STRIP_CODE_COMMENTS    = YES
 CASE_SENSE_NAMES       = YES
-SHORT_NAMES            = NO
 HIDE_SCOPE_NAMES       = NO
-VERBATIM_HEADERS       = YES
 SHOW_INCLUDE_FILES     = NO
-JAVADOC_AUTOBRIEF      = YES
-INHERIT_DOCS           = YES
 INLINE_INFO            = YES
 SORT_MEMBER_DOCS       = NO
-DISTRIBUTE_GROUP_DOC   = NO
-TAB_SIZE               = 8
+SORT_BRIEF_DOCS        = NO
+SORT_GROUP_NAMES       = NO
+SORT_BY_SCOPE_NAME     = NO
 GENERATE_TODOLIST      = NO
 GENERATE_TESTLIST      = NO
 GENERATE_BUGLIST       = NO
-ALIASES                = 
+GENERATE_DEPRECATEDLIST= YES
 ENABLED_SECTIONS       = 
 MAX_INITIALIZER_LINES  = 30
-OPTIMIZE_OUTPUT_FOR_C  = YES
-OPTIMIZE_OUTPUT_JAVA   = NO
 SHOW_USED_FILES        = YES
+SHOW_DIRECTORIES       = NO
+SHOW_FILES             = YES
+SHOW_NAMESPACES        = YES
+FILE_VERSION_FILTER    = 
 #---------------------------------------------------------------------------
 # configuration options related to warning and progress messages
 #---------------------------------------------------------------------------
 QUIET                  = NO
 WARNINGS               = YES
 WARN_IF_UNDOCUMENTED   = YES
+WARN_IF_DOC_ERROR      = YES
+WARN_NO_PARAMDOC       = YES
 WARN_FORMAT            = "$file:$line: $text"
 WARN_LOGFILE           = 
 #---------------------------------------------------------------------------
 # configuration options related to the input files
 #---------------------------------------------------------------------------
-INPUT                  = \
-	../include/fluidsynth.h \
-        ../include/fluidsynth/audio.h \
-        ../include/fluidsynth/event.h \
-        ../include/fluidsynth/gen.h \
-        ../include/fluidsynth/log.h \
-        ../include/fluidsynth/midi.h \
-        ../include/fluidsynth/misc.h \
-        ../include/fluidsynth/mod.h \
-        ../include/fluidsynth/ramsfont.h \
-        ../include/fluidsynth/seq.h \
-        ../include/fluidsynth/seqbind.h \
-        ../include/fluidsynth/settings.h \
-        ../include/fluidsynth/sfont.h \
-        ../include/fluidsynth/shell.h \
-        ../include/fluidsynth/synth.h \
-        ../include/fluidsynth/types.h \
-        ../include/fluidsynth/version.h \
-        ../include/fluidsynth/voice.h \
-        ../src/fluid_adriver.c \
-        ../src/fluid_event.c \
-        ../src/fluid_gen.c \
-        ../src/fluid_sys.c \
-        ../src/fluid_mdriver.c \
-        ../src/fluid_midi.c \
-        ../src/fluid_midi_router.c \
-        ../src/fluid_mod.c \
-        ../src/fluid_ramsfont.c \
-        ../src/fluid_seq.c \
-        ../src/fluid_seqbind.c \
-        ../src/fluid_settings.c \
-        ../src/fluid_synth.c \
-        ../src/fluid_voice.c
-
-FILE_PATTERNS          =
-RECURSIVE              = NO
-EXCLUDE                =
+INPUT                  = fluidsynth-v11-devdoc.txt \
+                         ../include \
+                         ../src
+INPUT_ENCODING         = UTF-8
+FILE_PATTERNS          = fluidsynth.h \
+                        audio.h \
+                        event.h \
+                        gen.h \
+                        log.h \
+                        midi.h \
+                        misc.h \
+                        mod.h \
+                        ramsfont.h \
+                        seq.h \
+                        seqbind.h \
+                        settings.h \
+                        sfont.h \
+                        shell.h \
+                        synth.h \
+                        types.h \
+                        version.h \
+                        voice.h \
+                        fluid_adriver.c \
+                        fluid_cmd.c \
+                        fluid_event.c \
+                        fluid_gen.c \
+                        fluid_sys.c \
+                        fluid_mdriver.c \
+                        fluid_midi.* \
+                        fluid_midi_router.* \
+                        fluid_mod.c \
+                        fluid_ramsfont.c \
+                        fluid_seq.c \
+                        fluid_seqbind.c \
+                        fluid_settings.c \
+                        fluid_synth.c \
+                        fluid_voice.c
+RECURSIVE              = YES
+EXCLUDE                = 
 EXCLUDE_SYMLINKS       = NO
 EXCLUDE_PATTERNS       = 
-EXAMPLE_PATH           = 
-EXAMPLE_PATTERNS       = 
+EXCLUDE_SYMBOLS        = 
+EXAMPLE_PATH           = .
+EXAMPLE_PATTERNS       = *.c
 EXAMPLE_RECURSIVE      = NO
 IMAGE_PATH             = 
-INPUT_FILTER           =
+INPUT_FILTER           = 
+FILTER_PATTERNS        = 
 FILTER_SOURCE_FILES    = NO
 #---------------------------------------------------------------------------
 # configuration options related to source browsing
 #---------------------------------------------------------------------------
 SOURCE_BROWSER         = YES
 INLINE_SOURCES         = NO
-REFERENCED_BY_RELATION = YES
-REFERENCES_RELATION    = YES
+STRIP_CODE_COMMENTS    = YES
+REFERENCED_BY_RELATION = NO
+REFERENCES_RELATION    = NO
+REFERENCES_LINK_SOURCE = YES
+USE_HTAGS              = NO
+VERBATIM_HEADERS       = YES
 #---------------------------------------------------------------------------
 # configuration options related to the alphabetical class index
 #---------------------------------------------------------------------------
-ALPHABETICAL_INDEX     = NO
+ALPHABETICAL_INDEX     = YES
 COLS_IN_ALPHA_INDEX    = 5
 IGNORE_PREFIX          = 
 #---------------------------------------------------------------------------
@@ -121,13 +170,21 @@ HTML_FOOTER            =
 HTML_STYLESHEET        = 
 HTML_ALIGN_MEMBERS     = YES
 GENERATE_HTMLHELP      = NO
+GENERATE_DOCSET        = NO
+DOCSET_FEEDNAME        = "Doxygen generated docs"
+DOCSET_BUNDLE_ID       = org.doxygen.Project
+HTML_DYNAMIC_SECTIONS  = NO
+CHM_FILE               = 
+HHC_LOCATION           = 
 GENERATE_CHI           = NO
+CHM_INDEX_ENCODING     = 
 BINARY_TOC             = NO
 TOC_EXPAND             = NO
 DISABLE_INDEX          = NO
 ENUM_VALUES_PER_LINE   = 4
 GENERATE_TREEVIEW      = NO
 TREEVIEW_WIDTH         = 250
+FORMULA_FONTSIZE       = 10
 #---------------------------------------------------------------------------
 # configuration options related to the LaTeX output
 #---------------------------------------------------------------------------
@@ -142,6 +199,7 @@ LATEX_HEADER           =
 PDF_HYPERLINKS         = YES
 USE_PDFLATEX           = YES
 LATEX_BATCHMODE        = NO
+LATEX_HIDE_INDICES     = NO
 #---------------------------------------------------------------------------
 # configuration options related to the RTF output
 #---------------------------------------------------------------------------
@@ -162,10 +220,21 @@ MAN_LINKS              = NO
 # configuration options related to the XML output
 #---------------------------------------------------------------------------
 GENERATE_XML           = NO
+XML_OUTPUT             = xml
+XML_SCHEMA             = 
+XML_DTD                = 
+XML_PROGRAMLISTING     = YES
 #---------------------------------------------------------------------------
 # configuration options for the AutoGen Definitions output
 #---------------------------------------------------------------------------
 GENERATE_AUTOGEN_DEF   = NO
+#---------------------------------------------------------------------------
+# configuration options related to the Perl module output
+#---------------------------------------------------------------------------
+GENERATE_PERLMOD       = NO
+PERLMOD_LATEX          = NO
+PERLMOD_PRETTY         = YES
+PERLMOD_MAKEVAR_PREFIX = 
 #---------------------------------------------------------------------------
 # Configuration options related to the preprocessor   
 #---------------------------------------------------------------------------
@@ -179,7 +248,7 @@ PREDEFINED             =
 EXPAND_AS_DEFINED      = 
 SKIP_FUNCTION_MACROS   = YES
 #---------------------------------------------------------------------------
-# Configuration::addtions related to external references   
+# Configuration::additions related to external references   
 #---------------------------------------------------------------------------
 TAGFILES               = 
 GENERATE_TAGFILE       = 
@@ -190,28 +259,32 @@ PERL_PATH              = /usr/bin/perl
 # Configuration options related to the dot tool   
 #---------------------------------------------------------------------------
 CLASS_DIAGRAMS         = YES
+MSCGEN_PATH            = 
+HIDE_UNDOC_RELATIONS   = YES
 HAVE_DOT               = NO
+DOT_FONTNAME           = FreeSans
+DOT_FONTPATH           = 
 CLASS_GRAPH            = YES
 COLLABORATION_GRAPH    = YES
+GROUP_GRAPHS           = YES
+UML_LOOK               = NO
 TEMPLATE_RELATIONS     = YES
-HIDE_UNDOC_RELATIONS   = YES
 INCLUDE_GRAPH          = YES
 INCLUDED_BY_GRAPH      = YES
+CALL_GRAPH             = NO
+CALLER_GRAPH           = NO
 GRAPHICAL_HIERARCHY    = YES
+DIRECTORY_GRAPH        = YES
 DOT_IMAGE_FORMAT       = png
 DOT_PATH               = 
 DOTFILE_DIRS           = 
-MAX_DOT_GRAPH_WIDTH    = 1024
-MAX_DOT_GRAPH_HEIGHT   = 1024
+DOT_GRAPH_MAX_NODES    = 50
+MAX_DOT_GRAPH_DEPTH    = 1000
+DOT_TRANSPARENT        = YES
+DOT_MULTI_TARGETS      = NO
 GENERATE_LEGEND        = YES
 DOT_CLEANUP            = YES
 #---------------------------------------------------------------------------
-# Configuration::addtions related to the search engine   
+# Configuration::additions related to the search engine   
 #---------------------------------------------------------------------------
 SEARCHENGINE           = NO
-CGI_NAME               = search.cgi
-CGI_URL                = 
-DOC_URL                = 
-DOC_ABSPATH            = 
-BIN_ABSPATH            = /usr/local/bin/
-EXT_DOC_PATHS          = 
