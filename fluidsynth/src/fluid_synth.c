@@ -331,6 +331,73 @@ int fluid_synth_verify_settings(fluid_settings_t *settings)
 }
 
 /***************************************************************
+ *                    FLUID SAMPLE TIMERS 
+ *    Timers that use written audio data as timing reference       
+ */
+struct _fluid_sample_timer_t
+{
+	fluid_sample_timer_t* next; /* Single linked list of timers */
+	unsigned long starttick;
+	fluid_timer_callback_t callback;
+	void* data;
+	int isfinished;
+};
+
+/*
+ * fluid_sample_timer_process - called when synth->ticks is updated
+ */
+void fluid_sample_timer_process(fluid_synth_t* synth)
+{
+	fluid_sample_timer_t* st;
+	long msec;
+	int cont;
+
+	for (st=synth->sample_timers; st; st=st->next) {
+		if (st->isfinished) {
+			continue;
+		}
+
+		msec = (long) (1000.0*((double) (synth->ticks - st->starttick))/synth->sample_rate);
+		cont = (*st->callback)(st->data, msec);
+		if (cont == 0) {
+			st->isfinished = 1;
+		}
+	}
+}
+
+fluid_sample_timer_t* new_fluid_sample_timer(fluid_synth_t* synth, fluid_timer_callback_t callback, void* data)
+{
+	fluid_sample_timer_t* result = FLUID_NEW(fluid_sample_timer_t);
+	if (result == NULL) {
+		FLUID_LOG(FLUID_ERR, "Out of memory");
+		return NULL;
+	}
+	result->starttick = synth->ticks;
+	result->isfinished = 0;
+	result->data = data;
+	result->callback = callback;
+	result->next = synth->sample_timers;
+	synth->sample_timers = result;
+	return result;		
+}
+
+int delete_fluid_sample_timer(fluid_synth_t* synth, fluid_sample_timer_t* timer)
+{
+	fluid_sample_timer_t** ptr = &synth->sample_timers;
+	while (*ptr) {
+		if (*ptr == timer) {
+			*ptr = timer->next; 
+			FLUID_FREE(timer);
+			return FLUID_OK;
+		}
+		ptr = &((*ptr)->next);
+	}
+	FLUID_LOG(FLUID_ERR,"delete_fluid_sample_timer failed, no timer found");
+	return FLUID_FAILED;
+}
+
+
+/***************************************************************
  *
  *                      FLUID SYNTH
  */
@@ -2028,6 +2095,10 @@ fluid_synth_one_block(fluid_synth_t* synth, int do_not_mix_fx_to_out)
   fluid_check_fpe("??? Remainder of synth_one_block ???");
 
 /*   fluid_mutex_unlock(synth->busy); /\* Allow other threads to touch the synth *\/ */
+
+  fluid_sample_timer_process(synth);
+
+  fluid_check_fpe("fluid_sample_timer_process");
 
   return 0;
 }

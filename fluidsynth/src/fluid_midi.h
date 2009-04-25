@@ -171,13 +171,6 @@ enum midi_meta_event {
   MIDI_SEQUENCER_EVENT = 0x7f
 };
 
-enum fluid_player_status
-{
-  FLUID_PLAYER_READY,
-  FLUID_PLAYER_PLAYING,
-  FLUID_PLAYER_DONE
-};
-
 enum fluid_driver_status
 {
   FLUID_MIDI_READY,
@@ -249,10 +242,12 @@ struct _fluid_player_t {
   int ntracks;
   fluid_track_t *track[MAX_NUMBER_OF_TRACKS];
   fluid_synth_t* synth;
-  fluid_timer_t* timer;
+  fluid_timer_t* system_timer;
+  fluid_sample_timer_t* sample_timer;
   fluid_list_t* playlist;
   char* current_file;
   char send_program_change; /* should we ignore the program changes? */
+  char use_system_timer;   /* if zero, use sample timers, otherwise use system clock timer */
   int start_ticks;          /* the number of tempo ticks passed at the last tempo change */
   int cur_ticks;            /* the number of tempo ticks passed */
   int begin_msec;           /* the time (msec) of the beginning of the file */
@@ -269,6 +264,8 @@ int fluid_player_count_tracks(fluid_player_t* player);
 fluid_track_t* fluid_player_get_track(fluid_player_t* player, int i);
 int fluid_player_reset(fluid_player_t* player);
 int fluid_player_load(fluid_player_t* player, char *filename);
+
+void fluid_player_settings(fluid_settings_t* settings);
 
 
 /*

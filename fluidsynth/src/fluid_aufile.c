@@ -39,14 +39,10 @@ typedef struct {
 	fluid_audio_driver_t driver;
 	fluid_audio_func_t callback;
 	void* data;
+	fluid_file_renderer_t* renderer;
 	int period_size;
 	double sample_rate;
-	FILE* file;
 	fluid_timer_t* timer;
-	float* left;
-	float* right;
-	short* buf;
-	int buf_size;
 	unsigned int samples;
 } fluid_file_audio_driver_t;
 
@@ -61,7 +57,7 @@ static int fluid_file_audio_run_s16(void* d, unsigned int msec);
 /**************************************************************
  *
  *        'file' audio driver
- *
+ * 
  */
 
 void fluid_file_audio_driver_settings(fluid_settings_t* settings)
@@ -92,21 +88,17 @@ new_fluid_file_audio_driver(fluid_settings_t* settings,
 	dev->data = synth;
 	dev->callback = (fluid_audio_func_t) fluid_synth_process;
 	dev->samples = 0;
-	dev->left = FLUID_ARRAY(float, dev->period_size);
-	dev->right = FLUID_ARRAY(float, dev->period_size);
-	dev->buf = FLUID_ARRAY(short, 2 * dev->period_size);
-	dev->buf_size = 2 * dev->period_size * sizeof(short);
 
 	if (fluid_settings_getstr(settings, "audio.file.name", &filename) == 0) {
 		FLUID_LOG(FLUID_ERR, "No file name specified");
 		goto error_recovery;
 	}
 
-	dev->file = fopen(filename, "wb");
-	if (dev->file == NULL) {
-		FLUID_LOG(FLUID_ERR, "Failed to open the file '%s'", filename);
+	dev->renderer = new_fluid_file_renderer(synth, filename, dev->period_size);
+	if (dev->renderer == NULL) {
 		goto error_recovery;
 	}
+
 
 	msec = (int) (0.5 + dev->period_size / dev->sample_rate * 1000.0);
 	dev->timer = new_fluid_timer(msec, fluid_file_audio_run_s16, (void*) dev, 1, 0);
@@ -133,21 +125,9 @@ int delete_fluid_file_audio_driver(fluid_audio_driver_t* p)
 	if (dev->timer != NULL) {
 		delete_fluid_timer(dev->timer);
 	}
-
-	if (dev->file != NULL) {
-		fclose(dev->file);
-	}
-
-	if (dev->left != NULL) {
-		FLUID_FREE(dev->left);
-	}
-
-	if (dev->right != NULL) {
-		FLUID_FREE(dev->right);
-	}
-
-	if (dev->buf != NULL) {
-		FLUID_FREE(dev->buf);
+	
+	if (dev->renderer != NULL) {
+		delete_fluid_file_renderer(dev->renderer);
 	}
 
 	FLUID_FREE(dev);
@@ -157,7 +137,6 @@ int delete_fluid_file_audio_driver(fluid_audio_driver_t* p)
 static int fluid_file_audio_run_s16(void* d, unsigned int clock_time)
 {
 	fluid_file_audio_driver_t* dev = (fluid_file_audio_driver_t*) d;
-	int n, offset;
 	unsigned int sample_time;
 
 	sample_time = (unsigned int) (dev->samples / dev->sample_rate * 1000.0);
@@ -165,19 +144,7 @@ static int fluid_file_audio_run_s16(void* d, unsigned int clock_time)
 		return 1;
 	}
 
-	fluid_synth_write_s16(dev->data, dev->period_size, dev->buf, 0, 2, dev->buf, 1, 2);
-
-	for (offset = 0; offset < dev->buf_size; offset += n) {
-
-		n = fwrite((char*) dev->buf + offset, 1, dev->buf_size - offset, dev->file);
-		if (n < 0) {
-			FLUID_LOG(FLUID_ERR, "Audio output file write error: %s",
-				  strerror (errno));
-			return 0;
-		}
-	}
-
 	dev->samples += dev->period_size;
 
-	return 1;
+	return fluid_file_renderer_process_block(dev->renderer) == FLUID_OK ? 1 : 0;
 }

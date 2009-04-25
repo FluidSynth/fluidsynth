@@ -176,6 +176,31 @@ settings_foreach_func (void *data, char *name, int type)
   }
 }
 
+void fast_render_loop(fluid_settings_t* settings, fluid_synth_t* synth, fluid_player_t* player)
+{
+  fluid_file_renderer_t* renderer;
+  char* filename = NULL;
+  int period_size = 0;
+
+  fluid_settings_getint(settings, "audio.period-size", &period_size);
+  fluid_settings_getstr(settings, "audio.file.name", &filename);
+
+  if (filename == NULL || period_size <= 0) {
+    fprintf(stderr, "Failed to fetch parameters for file renderer\n");
+  }
+
+  renderer = new_fluid_file_renderer(synth, filename, period_size);
+  if (!renderer) {
+  return;
+  }
+
+  while (fluid_player_get_status(player) == FLUID_PLAYER_PLAYING) {
+    if (fluid_file_renderer_process_block(renderer) != FLUID_OK) {
+      break;
+    }
+  }
+  delete_fluid_file_renderer(renderer);
+}
 
 #ifdef HAVE_SIGNAL_H
 /*
@@ -212,8 +237,9 @@ int main(int argc, char** argv)
   int audio_channels = 0;
   int with_server = 0;
   int dump = 0;
+  int fast_render = 0;
   int connect_lash = 1;
-  char *optchars = "a:C:c:df:G:g:hijK:L:lm:no:p:R:r:sVvz:";
+  char *optchars = "a:C:c:df:F:G:g:hijK:L:lm:no:p:R:r:sVvz:";
 #ifdef LASH_ENABLED
   int enabled_lash = 0;		/* set to TRUE if lash gets enabled */
   fluid_lash_args_t *lash_args;
@@ -239,6 +265,7 @@ int main(int argc, char** argv)
       {"connect-jack-outputs", 0, 0, 'j'},
       {"disable-lash", 0, 0, 'l'},
       {"dump", 0, 0, 'd'},
+      {"fast-render", 1, 0, 'F'},
       {"gain", 1, 0, 'g'},
       {"help", 0, 0, 'h'},
       {"load-config", 1, 0, 'f'},
@@ -321,6 +348,10 @@ int main(int argc, char** argv)
       break;
     case 'f':
       config_file = optarg;
+      break;
+    case 'F':
+      fluid_settings_setstr(settings, "audio.file.name", optarg);
+      fast_render = 1;
       break;
     case 'G':
       audio_groups = atoi(optarg);
@@ -476,11 +507,20 @@ int main(int argc, char** argv)
 /*   signal(SIGINT, handle_signal); */
 #endif
 
+  if (fast_render) {
+    midi_in = 0;
+    interactive = 0;
+    with_server = 0;
+    fluid_settings_setstr(settings, "player.timing-source", "sample");    
+  }
+
   /* start the synthesis thread */
-  adriver = new_fluid_audio_driver(settings, synth);
-  if (adriver == NULL) {
-    fprintf(stderr, "Failed to create the audio driver\n");
-    goto cleanup;
+  if (!fast_render) {
+    adriver = new_fluid_audio_driver(settings, synth);
+    if (adriver == NULL) {
+      fprintf(stderr, "Failed to create the audio driver\n");
+      goto cleanup;
+    }
   }
 
 
@@ -569,6 +609,10 @@ int main(int argc, char** argv)
     fluid_usershell(settings, cmd_handler);
   }
 
+  if (fast_render) {
+    fast_render_loop(settings, synth, player);
+  }
+
  cleanup:
 
 #if !defined(MACINTOSH) && !defined(WIN32)
@@ -644,7 +688,7 @@ void
 print_welcome()
 {
   printf("FluidSynth version %s\n"
-	 "Copyright (C) 2000-2006 Peter Hanappe and others.\n"
+	 "Copyright (C) 2000-2009 Peter Hanappe and others.\n"
 	 "Distributed under the LGPL license.\n"
 	 "SoundFont(R) is a registered trademark of E-mu Systems, Inc.\n\n",
 	 FLUIDSYNTH_VERSION);
@@ -668,6 +712,8 @@ print_help()
 	 "    Number of audio buffers\n");
   printf(" -d, --dump\n"
 	 "    Dump incoming and outgoing MIDI events to stdout\n");
+  printf(" -F, --fast-render=[file]\n"
+	 "    Render MIDI file to raw audio data and store in [file]\n");
   printf(" -f, --load-config\n"
 	 "    Load command configuration file (shell commands)\n");
   printf(" -G, --audio-groups\n"

@@ -101,6 +101,13 @@ FLUIDSYNTH_API void delete_fluid_midi_driver(fluid_midi_driver_t* driver);
  *  The MIDI player allows you to play MIDI files with the FLUID Synth
  */
 
+enum fluid_player_status
+{
+  FLUID_PLAYER_READY,
+  FLUID_PLAYER_PLAYING,
+  FLUID_PLAYER_DONE
+};
+
 FLUIDSYNTH_API fluid_player_t* new_fluid_player(fluid_synth_t* synth);
 FLUIDSYNTH_API int delete_fluid_player(fluid_player_t* player);
 FLUIDSYNTH_API int fluid_player_add(fluid_player_t* player, char* midifile);
@@ -110,6 +117,7 @@ FLUIDSYNTH_API int fluid_player_join(fluid_player_t* player);
 FLUIDSYNTH_API int fluid_player_set_loop(fluid_player_t* player, int loop);
 FLUIDSYNTH_API int fluid_player_set_midi_tempo(fluid_player_t* player, int tempo);
 FLUIDSYNTH_API int fluid_player_set_bpm(fluid_player_t* player, int bpm);
+FLUIDSYNTH_API int fluid_player_get_status(fluid_player_t* player);
 
 #ifdef __cplusplus
 }

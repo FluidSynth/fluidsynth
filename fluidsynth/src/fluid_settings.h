@@ -35,18 +35,18 @@ typedef int (*fluid_num_update_t)(void* data, char* name, double value);
 typedef int (*fluid_str_update_t)(void* data, char* name, char* value);
 typedef int (*fluid_int_update_t)(void* data, char* name, int value);
 
-/** returns 0 if the value has been resgister correctly, non-zero
+/** returns 0 if the value has been registered correctly, non-zero
     otherwise */
 int fluid_settings_register_str(fluid_settings_t* settings, char* name, char* def, int hints,
 			       fluid_str_update_t fun, void* data);
 
-/** returns 0 if the value has been resgister correctly, non-zero
+/** returns 0 if the value has been registered correctly, non-zero
     otherwise */
 int fluid_settings_register_num(fluid_settings_t* settings, char* name, double min, double max,
 			       double def, int hints, fluid_num_update_t fun, void* data);
 
 
-/** returns 0 if the value has been resgister correctly, non-zero
+/** returns 0 if the value has been registered correctly, non-zero
     otherwise */
 int fluid_settings_register_int(fluid_settings_t* settings, char* name, int min, int max,
 			       int def, int hints, fluid_int_update_t fun, void* data);

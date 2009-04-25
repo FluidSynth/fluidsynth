@@ -81,7 +81,6 @@ struct _fluid_bank_offset_t {
 	int offset;
 };
 
-
 /*
  * fluid_synth_t
  */
@@ -144,6 +143,8 @@ struct _fluid_synth_t
 					 * Note: This simple scheme does -not- provide 100 % protection against
 					 * thread problems, for example from MIDI thread and shell thread
 					 */
+  fluid_sample_timer_t* sample_timers; /* List of timers triggered after a block has been processed */
+
 #ifdef LADSPA
   fluid_LADSPA_FxUnit_t* LADSPA_FxUnit; /** Effects unit for LADSPA support */
 #endif
@@ -208,6 +209,10 @@ void fluid_synth_remove_bank_offset(fluid_synth_t* synth, int sfont_id);
 void fluid_synth_dither_s16(int *dither_index, int len, float* lin, float* rin,
 			    void* lout, int loff, int lincr,
 			    void* rout, int roff, int rincr);
+
+fluid_sample_timer_t* new_fluid_sample_timer(fluid_synth_t* synth, fluid_timer_callback_t callback, void* data);
+int delete_fluid_sample_timer(fluid_synth_t* synth, fluid_sample_timer_t* timer);
+
 /*
  * misc
  */

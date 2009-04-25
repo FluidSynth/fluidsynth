@@ -42,6 +42,7 @@ typedef struct _fluid_preset_t fluid_preset_t;
 typedef struct _fluid_sample_t fluid_sample_t;
 typedef struct _fluid_mod_t fluid_mod_t;
 typedef struct _fluid_audio_driver_t fluid_audio_driver_t;
+typedef struct _fluid_file_renderer_t fluid_file_renderer_t;
 typedef struct _fluid_player_t fluid_player_t;
 typedef struct _fluid_midi_event_t fluid_midi_event_t;
 typedef struct _fluid_midi_driver_t fluid_midi_driver_t;

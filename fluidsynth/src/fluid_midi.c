@@ -1120,6 +1120,7 @@ fluid_track_send_events(fluid_track_t* track,
 fluid_player_t* new_fluid_player(fluid_synth_t* synth)
 {
 	int i;
+	char* timing_source;
 	fluid_player_t* player;
 	player = FLUID_NEW(fluid_player_t);
 	if (player == NULL) {
@@ -1133,13 +1134,22 @@ fluid_player_t* new_fluid_player(fluid_synth_t* synth)
 		player->track[i] = NULL;
 	}
 	player->synth = synth;
-	player->timer = NULL;
+	player->system_timer = NULL;
+	player->sample_timer = NULL;
 	player->playlist = NULL;
 	player->current_file = NULL;
 	player->division = 0;
 	player->send_program_change = 1;
 	player->miditempo = 480000;
 	player->deltatime = 4.0;
+
+	player->use_system_timer = 0;
+	if (fluid_settings_getstr(synth->settings, "player.timing-source", &timing_source) != 0) {
+		if (strcmp(timing_source, "system") == 0) {
+			player->use_system_timer = 1;
+		}
+	}
+
 	return player;
 }
 
@@ -1158,6 +1168,17 @@ int delete_fluid_player(fluid_player_t* player)
 	FLUID_FREE(player);
 	return FLUID_OK;
 }
+
+/**
+ * Registers settings related to the MIDI player
+ */
+void fluid_player_settings(fluid_settings_t* settings)
+{
+	/* player.timing-source can be either "system" (use system timer) 
+	or "sample" (use timer based on number of written samples) */
+	fluid_settings_register_str(settings, "player.timing-source", "sample", 0, NULL, NULL);
+}
+
 
 int fluid_player_reset(fluid_player_t* player)
 {
@@ -1327,10 +1348,20 @@ int fluid_player_play(fluid_player_t* player)
 
 	player->status = FLUID_PLAYER_PLAYING;
 
-	player->timer = new_fluid_timer((int) player->deltatime, fluid_player_callback,
+	if (player->use_system_timer) {
+		player->system_timer = new_fluid_timer((int) player->deltatime, fluid_player_callback,
 					(void*) player, 1, 0);
-	if (player->timer == NULL) {
-		return FLUID_FAILED;
+		if (player->system_timer == NULL) {
+			return FLUID_FAILED;
+		}
+	} else {
+		player->sample_timer = new_fluid_sample_timer(player->synth, fluid_player_callback,
+					(void*) player);
+		
+		if (player->sample_timer == NULL) {
+			return FLUID_FAILED;
+		}
+		fluid_player_callback(player, 0); /* Process the first events before the first block */
 	}
 	return FLUID_OK;
 }
@@ -1342,12 +1373,22 @@ int fluid_player_play(fluid_player_t* player)
  */
 int fluid_player_stop(fluid_player_t* player)
 {
-	if (player->timer != NULL) {
-		delete_fluid_timer(player->timer);
+	if (player->system_timer != NULL) {
+		delete_fluid_timer(player->system_timer);
+	}
+	if (player->sample_timer != NULL) {
+		delete_fluid_sample_timer(player->synth, player->sample_timer);
 	}
 	player->status = FLUID_PLAYER_DONE;
-	player->timer = NULL;
+	player->sample_timer = NULL;
+	player->system_timer = NULL;
 	return FLUID_OK;
+}
+
+
+int fluid_player_get_status(fluid_player_t* player)
+{
+	return player->status;
 }
 
 /* FIXME - Looping seems to not actually be implemented? */
@@ -1403,7 +1444,21 @@ int fluid_player_set_bpm(fluid_player_t* player, int bpm)
  */
 int fluid_player_join(fluid_player_t* player)
 {
-	return player->timer? fluid_timer_join(player->timer) : FLUID_OK;
+	if (player->system_timer) {
+		return fluid_timer_join(player->system_timer);
+	} else if (player->sample_timer) {
+		/* Busy-wait loop, since there's no thread to wait for... */
+		while (player->status == FLUID_PLAYER_PLAYING) {
+#if defined(WIN32)
+			Sleep(10);
+#elif defined(MACOS9)
+			/* FIXME: How do we sleep in Macos9? */
+#else
+			usleep(10000);
+#endif
+		}
+	}
+	return FLUID_OK;
 }
 
 /************************************************************************
