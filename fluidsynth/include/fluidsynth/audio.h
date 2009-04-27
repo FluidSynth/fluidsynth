@@ -61,26 +61,9 @@ FLUIDSYNTH_API fluid_audio_driver_t* new_fluid_audio_driver2(fluid_settings_t* s
 
 FLUIDSYNTH_API void delete_fluid_audio_driver(fluid_audio_driver_t* driver);
 
-/**
- * Create a new file renderer and open the file.
- * @param synth The synth that creates audio data.
- * @param filename Output filename 
- * @param period_size Sample count, amount of samples to write to the file at 
- * every call to fluid_file_renderer_process_block().
- * @return the new object, or NULL on failure
- */
 FLUIDSYNTH_API fluid_file_renderer_t* new_fluid_file_renderer(fluid_synth_t* synth, 
 							char* filename, int period_size);
-
-/**
- * Write period_size samples to file.
- * @return FLUID_OK or FLUID_FAILED if an error occurred
- */
 FLUIDSYNTH_API int fluid_file_renderer_process_block(fluid_file_renderer_t* dev);
-
-/**
- * Close file and destroy the file renderer object. 
- */
 FLUIDSYNTH_API void delete_fluid_file_renderer(fluid_file_renderer_t* dev);
 
 #ifdef __cplusplus

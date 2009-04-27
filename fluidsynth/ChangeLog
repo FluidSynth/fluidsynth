@@ -1,3 +1,11 @@
+2009-04-27    Josh Green <jgreen@users.sourceforge.net>
+	* include/fluidsynth/audio.h: Moved new filerenderer documentation to source file.
+	* src/config_win32.h.in: Added 'typedef int socklen_t;' to the correct place.
+	* src/fluid_filerenderer.c: Removed 2 extra pasted duplicates of the file, moved
+	  Doxygen documentation from header file and added "API 1.1.0" designators.
+	* src/config_win32.h: Removed from subversion, since it is generated from
+	  config_win32.h.in.
+
 2009-04-26    Josh Green <jgreen@users.sourceforge.net>
         * configure.ac: Added glib 2.10 as a dependency, added notes in output
           for LASH, LADCCA and READLINE that they are GPL.
