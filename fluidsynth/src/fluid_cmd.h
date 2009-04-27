@@ -22,7 +22,6 @@
 #define _FLUID_CMD_H
 
 #include "fluidsynth_priv.h"
-#include "fluid_io.h"
 
 void fluid_shell_settings(fluid_settings_t* settings);
 

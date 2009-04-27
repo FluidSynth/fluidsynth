@@ -22,6 +22,8 @@
 #ifndef _FLUIDSYNTH_PRIV_H
 #define _FLUIDSYNTH_PRIV_H
 
+#include <glib.h>
+
 #if HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -168,57 +170,14 @@ typedef int fluid_socket_t;
 
 
 /** Integer types  */
-
-#if defined(MINGW32)
-
-/* Windows using MinGW32 */
-typedef int8_t             sint8;
-typedef uint8_t            uint8;
-typedef int16_t            sint16;
-typedef uint16_t           uint16;
-typedef int32_t            sint32;
-typedef uint32_t           uint32;
-typedef int64_t            sint64;
-typedef uint64_t           uint64;
-
-#elif defined(_WIN32)
-
-/* Windows */
-typedef signed __int8      sint8;
-typedef unsigned __int8    uint8;
-typedef signed __int16     sint16;
-typedef unsigned __int16   uint16;
-typedef signed __int32     sint32;
-typedef unsigned __int32   uint32;
-typedef signed __int64     sint64;
-typedef unsigned __int64   uint64;
-
-#elif defined(MACOS9)
-
-/* Macintosh */
-typedef signed char        sint8;
-typedef unsigned char      uint8;
-typedef signed short       sint16;
-typedef unsigned short     uint16;
-typedef signed int         sint32;
-typedef unsigned int       uint32;
-/* FIXME: needs to be verified */
-typedef long long          sint64;
-typedef unsigned long long uint64;
-
-#else
-
-/* Linux & Darwin */
-typedef int8_t             sint8;
-typedef u_int8_t           uint8;
-typedef int16_t            sint16;
-typedef u_int16_t          uint16;
-typedef int32_t            sint32;
-typedef u_int32_t          uint32;
-typedef int64_t            sint64;
-typedef u_int64_t          uint64;
-
-#endif
+typedef gint8              sint8;
+typedef guint8             uint8;
+typedef gint16             sint16;
+typedef guint16            uint16;
+typedef gint32             sint32;
+typedef guint32            uint32;
+typedef gint64             sint64;
+typedef guint64            uint64;
 
 
 /***************************************************************

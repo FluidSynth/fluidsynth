@@ -24,7 +24,6 @@
 #include "fluid_midi_router.h"
 #include "fluid_midi.h"
 #include "fluid_synth.h"
-#include "fluid_io.h"
 
 /**
  * Create a new midi router.

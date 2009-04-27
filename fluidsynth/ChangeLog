@@ -1,3 +1,24 @@
+2009-04-26    Josh Green <jgreen@users.sourceforge.net>
+        * configure.ac: Added glib 2.10 as a dependency, added notes in output
+          for LASH, LADCCA and READLINE that they are GPL.
+        * src/fluid_io.c: Moved code to fluid_sys.c and removed.
+        * src/config_win32.h: Added "typedef int socklen_t" definition.
+        * src/fluid_defsfont.h: Removed glib ripped code.
+        * src/fluid_oss.c: Fixed warnings where return value of write() was
+          being ignored.
+        * src/fluid_sys.c: Re-organized, implemented portable fluid_curtime() and
+          fluid_utime() using glib functions and removed old platform specific
+          code, implemented fluid_thread functionality using glib and removed
+          old platform specific code, fluid_istream_readline(), fluid_istream_gets()
+          and fluid_ostream_printf() should now work on WIN32 also, added code
+          for WIN32 for TCP sockets (not yet tested).
+        * src/fluid_sys.h: Added fluid_gerror_message() macro to extract message
+          safely from GError structures, replaced fluid_mutex macros with
+          portable implementations using glib, removed new_fluid_client_socket()
+          and delete_fluid_client_socket() which were never implemented or used.
+        * src/fluidsynth.c: Added call to g_thread_init().
+        * src/fluidsynth_priv.h: Integer types now use glib integer types.
+
 2009-04-11    Josh Green <jgreen@users.sourceforge.net>
 	* FluidSynth release 1.0.9 "A Sound Future"
 	* configure.ac: Bumped version, no library interfaces added, removed or changed.

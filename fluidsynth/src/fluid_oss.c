@@ -593,7 +593,13 @@ fluid_oss_audio_run(void* d)
   while (dev->cont)
   {
     dev->read (synth, len, buffer, 0, 2, buffer, 1, 2);
-    write (dev->dspfd, buffer, dev->buffer_byte_size);
+
+    if (write (dev->dspfd, buffer, dev->buffer_byte_size) < 0)
+    {
+      FLUID_LOG(FLUID_ERR, "Error writing to OSS sound device: %s",
+                g_strerror (errno));
+      break;
+    }
   }
 
   FLUID_LOG(FLUID_DBG, "Audio thread finished");
@@ -629,7 +635,12 @@ fluid_oss_audio_run2(void* d)
     fluid_synth_dither_s16 (&dither_index, buffer_size, left, right,
 			    buffer, 0, 2, buffer, 1, 2);
 
-    write (dev->dspfd, buffer, dev->buffer_byte_size);
+    if (write (dev->dspfd, buffer, dev->buffer_byte_size) < 0)
+    {
+      FLUID_LOG(FLUID_ERR, "Error writing to OSS sound device: %s",
+                g_strerror (errno));
+      break;
+    }
   }
 
   FLUID_LOG(FLUID_DBG, "Audio thread finished");

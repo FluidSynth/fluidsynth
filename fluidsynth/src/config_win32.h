@@ -38,3 +38,5 @@
 #ifndef inline
 #define inline __inline
 #endif
+
+typedef int socklen_t;

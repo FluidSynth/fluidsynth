@@ -7,8 +7,8 @@ AC_INIT(src/fluidsynth.c)
 dnl *** NOTE *** Don't forget to update library version below also
 
 FLUIDSYNTH_VERSION_MAJOR=1
-FLUIDSYNTH_VERSION_MINOR=0
-FLUIDSYNTH_VERSION_MICRO=9
+FLUIDSYNTH_VERSION_MINOR=1
+FLUIDSYNTH_VERSION_MICRO=0
 FLUIDSYNTH_VERSION=$FLUIDSYNTH_VERSION_MAJOR.$FLUIDSYNTH_VERSION_MINOR.$FLUIDSYNTH_VERSION_MICRO
 
 AC_SUBST(FLUIDSYNTH_VERSION_MAJOR)
@@ -144,6 +144,11 @@ else
   CFLAGS="${CFLAGS} ${FCCFLAGS} -O2 -fomit-frame-pointer -funroll-all-loops -finline-functions -Wall -W -Wpointer-arith -Wbad-function-cast -Wcast-qual -Wcast-align -Wstrict-prototypes -Wno-unused -Winline"
   AC_DEFINE(DEBUG, 0, [Define to activate debugging message])
 fi
+
+dnl Assert that glib and gthread are available
+PKG_CHECK_MODULES(GLIB, glib-2.0 >= 2.10 gthread-2.0 >= 2.10)
+AC_SUBST(GLIB_CFLAGS)
+AC_SUBST(GLIB_LIBS)
 
 
 dnl 
@@ -466,13 +471,13 @@ else
 fi
 
 if test "${LASH_FOUND}" = "yes"; then
-  echo "LASH support:          yes"
+  echo "LASH support:          yes (NOTE: GPL library)"
 else
   echo "LASH support:          no"
 fi
 
 if test "${LADCCA_FOUND}" = "yes"; then
-  echo "LADCCA support:        yes"
+  echo "LADCCA support:        yes (NOTE: GPL library)"
 else
   echo "LADCCA support:        no"
 fi
@@ -490,7 +495,7 @@ dnl   echo "Sound file:            no"
 dnl fi
 
 if test "$WITH_READLINE" = "1"; then
-  echo "Readline:              yes"
+  echo "Readline:              yes (NOTE: GPL library)"
 else
   echo "Readline:              no"
 fi

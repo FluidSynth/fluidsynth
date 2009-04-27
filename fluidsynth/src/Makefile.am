@@ -86,8 +86,6 @@ libfluidsynth_la_SOURCES = \
 	fluid_gen.h \
 	fluid_hash.c \
 	fluid_hash.h \
-	fluid_io.c \
-	fluid_io.h \
 	fluid_ladspa.c \
 	fluid_ladspa.h \
 	fluid_lash.h \
@@ -126,11 +124,12 @@ libfluidsynth_la_SOURCES = \
 
 INCLUDES = -I$(top_srcdir)/include $(LASH_CFLAGS) $(LADCCA_CFLAGS) \
   $(READLINE_CFLAGS) $(JACK_CFLAGS) $(ALSA_CFLAGS) $(PULSE_CFLAGS) \
-  $(PORTAUDIO_CFLAGS) $(DART_CFLAGS)
+  $(PORTAUDIO_CFLAGS) $(DART_CFLAGS) $(GLIB_CFLAGS)
 
 libfluidsynth_la_LIBADD = $(LIBFLUID_LIBS) $(LASH_LIBS) $(LADCCA_LIBS) \
   $(READLINE_LIBS) $(COREAUDIO_LIBS) $(COREMIDI_LIBS) $(JACK_LIBS) \
-  $(ALSA_LIBS) $(PULSE_LIBS) $(PORTAUDIO_LIBS) $(DART_LIBS)
+  $(ALSA_LIBS) $(PULSE_LIBS) $(PORTAUDIO_LIBS) $(DART_LIBS)  \
+  $(GLIB_LIBS)
 
 libfluidsynth_la_LDFLAGS = \
 	-version-info @LT_VERSION_INFO@ \

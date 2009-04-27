@@ -36,7 +36,17 @@
 #ifndef _FLUID_SYS_H
 #define _FLUID_SYS_H
 
+#include <glib.h>
 #include "fluidsynth_priv.h"
+
+
+/**
+ * Macro used for safely accessing a message from a GError and using a default
+ * message if it is NULL.
+ * @param err Pointer to a GError to access the message field of.
+ * @return Message string
+ */
+#define fluid_gerror_message(err)  ((err) ? err->message : "No error details")
 
 
 void fluid_sys_config(void);
@@ -72,40 +82,15 @@ int fluid_debug(int level, char * fmt, ...);
 #endif
 
 
-/** fluid_curtime() returns the current time in milliseconds. This time
-    should only be used in relative time measurements.  */
-
-/** fluid_utime() returns the time in micro seconds. this time should
-    only be used to measure duration (relative times). */
-
-#if defined(WIN32)
-#define fluid_curtime()   GetTickCount()
-
-double fluid_utime(void);
-
-#elif defined(MACOS9)
-#include <OSUtils.h>
-#include <Timer.h>
-
-unsigned int fluid_curtime();
-#define fluid_utime()  0.0
-
-#elif defined(__OS2__)
+#if defined(__OS2__)
 #define INCL_DOS
 #include <os2.h>
 
 typedef int socklen_t;
-
-unsigned int fluid_curtime(void);
-double fluid_utime(void);
-
-#else
-
-unsigned int fluid_curtime(void);
-double fluid_utime(void);
-
 #endif
 
+unsigned int fluid_curtime(void);
+double fluid_utime(void);
 
 
 /**
@@ -120,7 +105,7 @@ typedef int (*fluid_timer_callback_t)(void* data, unsigned int msec);
 typedef struct _fluid_timer_t fluid_timer_t;
 
 fluid_timer_t* new_fluid_timer(int msec, fluid_timer_callback_t callback,
-					    void* data, int new_thread, int auto_destroy);
+                               void* data, int new_thread, int auto_destroy);
 
 int delete_fluid_timer(fluid_timer_t* timer);
 int fluid_timer_join(fluid_timer_t* timer);
@@ -132,34 +117,11 @@ int fluid_timer_stop(fluid_timer_t* timer);
 
 */
 
-#if defined(MACOS9)
-typedef int fluid_mutex_t;
-#define fluid_mutex_init(_m)      { (_m) = 0; }
-#define fluid_mutex_destroy(_m)
-#define fluid_mutex_lock(_m)
-#define fluid_mutex_unlock(_m)
-
-#elif defined(WIN32)
-typedef HANDLE fluid_mutex_t;
-#define fluid_mutex_init(_m)      { (_m) = CreateMutex(NULL, 0, NULL); }
-#define fluid_mutex_destroy(_m)   if (_m) { CloseHandle(_m); }
-#define fluid_mutex_lock(_m)      WaitForSingleObject(_m, INFINITE)
-#define fluid_mutex_unlock(_m)    ReleaseMutex(_m)
-
-#elif defined(__OS2__)
-typedef HMTX fluid_mutex_t;
-#define fluid_mutex_init(_m)      { (_m) = 0; DosCreateMutexSem( NULL, &(_m), 0, FALSE ); }
-#define fluid_mutex_destroy(_m)   if (_m) { DosCloseMutexSem(_m); }
-#define fluid_mutex_lock(_m)      DosRequestMutexSem(_m, -1L)
-#define fluid_mutex_unlock(_m)    DosReleaseMutexSem(_m)
-
-#else
-typedef pthread_mutex_t fluid_mutex_t;
-#define fluid_mutex_init(_m)      pthread_mutex_init(&(_m), NULL)
-#define fluid_mutex_destroy(_m)   pthread_mutex_destroy(&(_m))
-#define fluid_mutex_lock(_m)      pthread_mutex_lock(&(_m))
-#define fluid_mutex_unlock(_m)    pthread_mutex_unlock(&(_m))
-#endif
+typedef GStaticMutex fluid_mutex_t;
+#define fluid_mutex_init(_m)      g_static_mutex_init(&(_m))
+#define fluid_mutex_destroy(_m)   g_static_mutex_free(&(_m))
+#define fluid_mutex_lock(_m)      g_static_mutex_lock(&(_m))
+#define fluid_mutex_unlock(_m)    g_static_mutex_unlock(&(_m))
 
 
 /**
@@ -167,7 +129,7 @@ typedef pthread_mutex_t fluid_mutex_t;
 
 */
 
-typedef struct _fluid_thread_t fluid_thread_t;
+typedef GThread fluid_thread_t;
 typedef void (*fluid_thread_func_t)(void* data);
 
 /** When detached, 'join' does not work and the thread destroys itself
@@ -176,32 +138,24 @@ fluid_thread_t* new_fluid_thread(fluid_thread_func_t func, void* data, int detac
 int delete_fluid_thread(fluid_thread_t* thread);
 int fluid_thread_join(fluid_thread_t* thread);
 
-
 /**
-     Sockets
+     Sockets and I/O
 
 */
 
+fluid_istream_t fluid_get_stdin (void);
+fluid_ostream_t fluid_get_stdout (void);
+int fluid_istream_readline(fluid_istream_t in, char* prompt, char* buf, int len);
+int fluid_ostream_printf (fluid_ostream_t out, char* format, ...);
 
 /** The function should return 0 if no error occured, non-zero
     otherwise. If the function return non-zero, the socket will be
     closed by the server. */
 typedef int (*fluid_server_func_t)(void* data, fluid_socket_t client_socket, char* addr);
 
-
 fluid_server_socket_t* new_fluid_server_socket(int port, fluid_server_func_t func, void* data);
 int delete_fluid_server_socket(fluid_server_socket_t* sock);
 int fluid_server_socket_join(fluid_server_socket_t* sock);
-
-
-/** Create a new client socket. */
-fluid_socket_t new_fluid_client_socket(char* host, int port);
-
-/** Delete the client socket. This function should only be called on
-    sockets create with 'new_fluid_client_socket'. */
-void delete_fluid_client_socket(fluid_socket_t sock);
-
-
 void fluid_socket_close(fluid_socket_t sock);
 fluid_istream_t fluid_socket_get_istream(fluid_socket_t sock);
 fluid_ostream_t fluid_socket_get_ostream(fluid_socket_t sock);
