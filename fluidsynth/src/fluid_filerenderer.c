@@ -36,8 +36,7 @@ struct _fluid_file_renderer_t {
 /**
  * Close file and destroy a file renderer object.
  * @param dev File renderer object.
- *
- * API: 1.1.0
+ * @since: 1.1.0
  */
 void delete_fluid_file_renderer(fluid_file_renderer_t* dev)
 {
@@ -64,8 +63,7 @@ void delete_fluid_file_renderer(fluid_file_renderer_t* dev)
  * @param period_size Sample count, amount of samples to write to the file at 
  * every call to fluid_file_renderer_process_block().
  * @return the new object, or NULL on failure
- *
- * API: 1.1.0
+ * @since: 1.1.0
  */
 fluid_file_renderer_t* new_fluid_file_renderer(fluid_synth_t* synth, char* filename, int period_size)
 {
@@ -111,8 +109,7 @@ fluid_file_renderer_t* new_fluid_file_renderer(fluid_synth_t* synth, char* filen
  * Write period_size samples to file.
  * @param dev File renderer instance
  * @return FLUID_OK or FLUID_FAILED if an error occurred
- *
- * API: 1.1.0
+ * @since: 1.1.0
  */
 int fluid_file_renderer_process_block(fluid_file_renderer_t* dev)
 {
