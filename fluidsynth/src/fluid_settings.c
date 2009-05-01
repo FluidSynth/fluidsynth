@@ -158,7 +158,10 @@ static void delete_fluid_int_setting(fluid_int_setting_t* setting)
 }
 
 
-
+/**
+ * Create a new settings object
+ * @return the pointer to the setting object
+ */
 fluid_settings_t* new_fluid_settings()
 {
   fluid_settings_t* settings = new_fluid_hashtable(fluid_settings_hash_delete);
@@ -169,6 +172,10 @@ fluid_settings_t* new_fluid_settings()
   return settings;
 }
 
+/**
+ * Delete the provided settings object
+ * @param settings a settings object
+ */
 void delete_fluid_settings(fluid_settings_t* settings)
 {
   delete_fluid_hashtable(settings);
@@ -231,7 +238,16 @@ static int fluid_settings_tokenize(char* s, char *buf, char** ptr)
   return n;
 }
 
-/** returns 1 if the value exists, 0 otherwise */
+/**
+ * Get a setting name, value and type
+ *
+ * @param settings a settings object
+ * @param name a setting's name
+ * @param len
+ * @param value
+ * @param type
+ * @return 1 if the value exists, 0 otherwise
+ */
 static int fluid_settings_get(fluid_settings_t* settings,
 			     char** name, int len,
 			     void** value, int* type)
@@ -265,7 +281,16 @@ static int fluid_settings_get(fluid_settings_t* settings,
   return 1;
 }
 
-/** returns 1 if the value has been set, zero otherwise */
+/**
+ * Set a setting name, value and type, replacing it if already exists
+ *
+ * @param settings a settings object
+ * @param name a setting's name
+ * @param len
+ * @param value
+ * @param type
+ * @return 1 if the value has been set, zero otherwise
+ */
 static int fluid_settings_set(fluid_settings_t* settings,
 			     char** name, int len,
 			     void* value, int type)
@@ -415,7 +440,15 @@ int fluid_settings_register_int(fluid_settings_t* settings, char* name, int def,
   }
 }
 
-int fluid_settings_get_type(fluid_settings_t* settings, char* name)
+/**
+ * Get the type of the setting with the given name
+ *
+ * @param settings a settings object
+ * @param name a setting's name
+ * @return the type for the named setting, or FLUID_NO_TYPE when it does not exists
+ */
+int
+fluid_settings_get_type(fluid_settings_t* settings, char* name)
 {
   int type;
   void* value;
@@ -428,7 +461,15 @@ int fluid_settings_get_type(fluid_settings_t* settings, char* name)
   return (fluid_settings_get(settings, tokens, ntokens, &value, &type))? type : FLUID_NO_TYPE;
 }
 
-int fluid_settings_get_hints(fluid_settings_t* settings, char* name)
+/**
+ * Get the hints for the named setting as an integer bitmap
+ *
+ * @param settings a settings object
+ * @param name a setting's name
+ * @return the hints associated to the named setting if it exists, zero otherwise
+ */
+int
+fluid_settings_get_hints(fluid_settings_t* settings, char* name)
 {
   int type;
   void* value;
@@ -453,7 +494,15 @@ int fluid_settings_get_hints(fluid_settings_t* settings, char* name)
   }
 }
 
-int fluid_settings_is_realtime(fluid_settings_t* settings, char* name)
+/**
+ * Ask whether the setting is changeable in real-time.
+ *
+ * @param settings a settings object
+ * @param name a setting's name
+ * @return non zero if the setting is changeable in real-time
+ */
+int
+fluid_settings_is_realtime(fluid_settings_t* settings, char* name)
 {
   int type;
   void* value;
@@ -479,6 +528,14 @@ int fluid_settings_is_realtime(fluid_settings_t* settings, char* name)
   }
 }
 
+/**
+ * Set a string value for a named setting
+ *
+ * @param settings a settings object
+ * @param name a setting's name
+ * @param str new string value
+ * @return 1 if the value has been set, 0 otherwise
+ */
 int fluid_settings_setstr(fluid_settings_t* settings, char* name, char* str)
 {
   char* tokens[MAX_SETTINGS_TOKENS];
@@ -517,7 +574,20 @@ int fluid_settings_setstr(fluid_settings_t* settings, char* name, char* str)
   }
 }
 
-int fluid_settings_getstr(fluid_settings_t* settings, char* name, char** str)
+/**
+ * Get the value of a string setting.
+ *
+ * If the value does not exists, 'str' is set to NULL. Otherwise, 'str' will
+ * point to the value. The application does not own the returned value. Instead,
+ * the application should make a copy of the value if it needs it later.
+ *
+ * @param settings a settings object
+ * @param name a setting's name
+ * @param str pointer to the string containing the setting's value
+ * @return 1 if the value exists, 0 otherwise
+ */
+int
+fluid_settings_getstr(fluid_settings_t* settings, char* name, char** str)
 {
   int type;
   void* value;
@@ -537,6 +607,14 @@ int fluid_settings_getstr(fluid_settings_t* settings, char* name, char** str)
   return 0;
 }
 
+/**
+ * Test a string setting for some value.
+ *
+ * @param settings a settings object
+ * @param name a setting's name
+ * @param s a string to be tested
+ * @return 1 if the value exists and is equal to 's', 0 otherwise
+ */
 int fluid_settings_str_equal(fluid_settings_t* settings, char* name, char* s)
 {
   int type;
@@ -555,6 +633,13 @@ int fluid_settings_str_equal(fluid_settings_t* settings, char* name, char* s)
   return 0;
 }
 
+/**
+ * Get the default value of a string setting.
+ *
+ * @param settings a settings object
+ * @param name a setting's name
+ * @return the default string value of the setting if it exists, NULL otherwise
+ */
 char*
 fluid_settings_getstr_default(fluid_settings_t* settings, char* name)
 {
@@ -628,6 +713,14 @@ int fluid_settings_remove_option(fluid_settings_t* settings, char* name, char* s
   }
 }
 
+/**
+ * Set a numeric value for a named setting.
+ *
+ * @param settings a settings object
+ * @param name a setting's name
+ * @param val new setting's value
+ * @return 1 if the value has been set, 0 otherwise
+ */
 int fluid_settings_setnum(fluid_settings_t* settings, char* name, double val)
 {
   int type;
@@ -670,6 +763,14 @@ int fluid_settings_setnum(fluid_settings_t* settings, char* name, double val)
   }
 }
 
+/**
+ * Get the numeric value of a named setting
+ *
+ * @param settings a settings object
+ * @param name a setting's name
+ * @param val variable pointer to receive the setting's numeric value
+ * @return 1 if the value exists, 0 otherwise
+ */
 int fluid_settings_getnum(fluid_settings_t* settings, char* name, double* val)
 {
   int type;
@@ -689,8 +790,16 @@ int fluid_settings_getnum(fluid_settings_t* settings, char* name, double* val)
   return 0;
 }
 
-
-void fluid_settings_getnum_range(fluid_settings_t* settings, char* name, double* min, double* max)
+/**
+ * Get the range of values of a numeric setting
+ *
+ * @param settings a settings object
+ * @param name a setting's name
+ * @param min setting's range lower limit
+ * @param max setting's range upper limit
+ */
+void
+fluid_settings_getnum_range(fluid_settings_t* settings, char* name, double* min, double* max)
 {
   int type;
   void* value;
@@ -708,6 +817,13 @@ void fluid_settings_getnum_range(fluid_settings_t* settings, char* name, double*
   }
 }
 
+/**
+ * Get the default value of a named numeric (double) setting
+ *
+ * @param settings a settings object
+ * @param name a setting's name
+ * @return the default value if the named setting exists, 0.0f otherwise
+ */
 double
 fluid_settings_getnum_default(fluid_settings_t* settings, char* name)
 {
@@ -728,7 +844,14 @@ fluid_settings_getnum_default(fluid_settings_t* settings, char* name)
   }
 }
 
-
+/**
+ * Set an integer value for a setting
+ *
+ * @param settings a settings object
+ * @param name a setting's name
+ * @param val new setting's integer value
+ * @return 1 if the value has been set, 0 otherwise
+ */
 int fluid_settings_setint(fluid_settings_t* settings, char* name, int val)
 {
   int type;
@@ -771,6 +894,14 @@ int fluid_settings_setint(fluid_settings_t* settings, char* name, int val)
   }
 }
 
+/**
+ * Get an integer value setting.
+ *
+ * @param settings a settings object
+ * @param name a setting's name
+ * @param val pointer to a variable to receive the setting's integer value
+ * @return 1 if the value exists, 0 otherwise
+ */
 int fluid_settings_getint(fluid_settings_t* settings, char* name, int* val)
 {
   int type;
@@ -790,7 +921,13 @@ int fluid_settings_getint(fluid_settings_t* settings, char* name, int* val)
   return 0;
 }
 
-
+/**
+ * Get the range of values of an integer setting
+ * @param settings a settings object
+ * @param name a setting's name
+ * @param min setting's range lower limit
+ * @param max setting's range upper limit
+ */
 void fluid_settings_getint_range(fluid_settings_t* settings, char* name, int* min, int* max)
 {
   int type;
@@ -809,6 +946,13 @@ void fluid_settings_getint_range(fluid_settings_t* settings, char* name, int* mi
   }
 }
 
+/**
+ * Get the default value of an integer setting.
+ *
+ * @param settings a settings object
+ * @param name a setting's name
+ * @return the setting's default integer value it it exists, zero otherwise
+ */
 int
 fluid_settings_getint_default(fluid_settings_t* settings, char* name)
 {
@@ -825,15 +969,22 @@ fluid_settings_getint_default(fluid_settings_t* settings, char* name)
     fluid_int_setting_t* setting = (fluid_int_setting_t*) value;
     return setting->def;
   } else {
-    return 0.0f;
+    return 0;
   }
 }
 
-
-
-
-void fluid_settings_foreach_option(fluid_settings_t* settings, char* name, void* data,
-				  fluid_settings_foreach_option_t func)
+/**
+ * Iterate the available options for a named setting, calling the provided
+ * callback function for each existing option.
+ *
+ * @param settings a settings object
+ * @param name a setting's name
+ * @param data any user provided pointer
+ * @param func callback function to be called on each iteration
+ */
+void
+fluid_settings_foreach_option (fluid_settings_t* settings, char* name, void* data,
+				               fluid_settings_foreach_option_t func)
 {
   int type;
   void* value;
@@ -890,7 +1041,16 @@ int fluid_settings_foreach_iter(char* key, void* value, int type, void* data)
   return 0;
 }
 
-void fluid_settings_foreach(fluid_settings_t* settings, void* data, fluid_settings_foreach_t func)
+/**
+ * Iterate the existing settings defined in a settings object, calling the
+ * provided callback function for each setting.
+ *
+ * @param settings a settings object
+ * @param data any user provided pointer
+ * @param func callback function to be called on each iteration
+ */
+void
+fluid_settings_foreach(fluid_settings_t* settings, void* data, fluid_settings_foreach_t func)
 {
   fluid_settings_foreach_func = func;
   fluid_settings_foreach_data = data;

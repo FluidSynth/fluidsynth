@@ -118,6 +118,7 @@ FILE_PATTERNS          = fluidsynth.h \
                         fluid_adriver.c \
                         fluid_cmd.c \
                         fluid_event.c \
+                        fluid_filerenderer.c \
                         fluid_gen.c \
                         fluid_sys.c \
                         fluid_mdriver.c \

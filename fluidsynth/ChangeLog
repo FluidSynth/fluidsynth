@@ -1,3 +1,12 @@
+2009-05-01    Pedro Lopez-Cabanillas <plcl@users.sourceforge.net>
+    * doc/Doxyfile: added fluid_filerenderer.c to Doxygen documentation.
+    * doc/fluidsynth-v11-devdoc.txt: license changed to CC-BY-SA 3.0
+    * doc/fluidsynth_arpeggio.c: new example added.
+    * doc/fluidsynth_metronome.c: new example added.
+    * include/fluidsynth.h, include/fluidsynth/audio.h, 
+      include/fluidsynth/settings.h: Doxygen documentation.
+    * src/fluid_settings.c: Doxygen documentation.
+
 2009-04-27    Josh Green <jgreen@users.sourceforge.net>
 	* include/fluidsynth/audio.h: Moved new filerenderer documentation to source file.
 	* src/config_win32.h.in: Added 'typedef int socklen_t;' to the correct place.
@@ -7,25 +16,25 @@
 	  config_win32.h.in.
 
 2009-04-26    Josh Green <jgreen@users.sourceforge.net>
-        * configure.ac: Added glib 2.10 as a dependency, added notes in output
-          for LASH, LADCCA and READLINE that they are GPL.
-        * src/fluid_io.c: Moved code to fluid_sys.c and removed.
-        * src/config_win32.h: Added "typedef int socklen_t" definition.
-        * src/fluid_defsfont.h: Removed glib ripped code.
-        * src/fluid_oss.c: Fixed warnings where return value of write() was
-          being ignored.
-        * src/fluid_sys.c: Re-organized, implemented portable fluid_curtime() and
-          fluid_utime() using glib functions and removed old platform specific
-          code, implemented fluid_thread functionality using glib and removed
-          old platform specific code, fluid_istream_readline(), fluid_istream_gets()
-          and fluid_ostream_printf() should now work on WIN32 also, added code
-          for WIN32 for TCP sockets (not yet tested).
-        * src/fluid_sys.h: Added fluid_gerror_message() macro to extract message
-          safely from GError structures, replaced fluid_mutex macros with
-          portable implementations using glib, removed new_fluid_client_socket()
-          and delete_fluid_client_socket() which were never implemented or used.
-        * src/fluidsynth.c: Added call to g_thread_init().
-        * src/fluidsynth_priv.h: Integer types now use glib integer types.
+    * configure.ac: Added glib 2.10 as a dependency, added notes in output
+      for LASH, LADCCA and READLINE that they are GPL.
+    * src/fluid_io.c: Moved code to fluid_sys.c and removed.
+    * src/config_win32.h: Added "typedef int socklen_t" definition.
+    * src/fluid_defsfont.h: Removed glib ripped code.
+    * src/fluid_oss.c: Fixed warnings where return value of write() was
+      being ignored.
+    * src/fluid_sys.c: Re-organized, implemented portable fluid_curtime() and
+      fluid_utime() using glib functions and removed old platform specific
+      code, implemented fluid_thread functionality using glib and removed
+      old platform specific code, fluid_istream_readline(), fluid_istream_gets()
+      and fluid_ostream_printf() should now work on WIN32 also, added code
+      for WIN32 for TCP sockets (not yet tested).
+    * src/fluid_sys.h: Added fluid_gerror_message() macro to extract message
+      safely from GError structures, replaced fluid_mutex macros with
+      portable implementations using glib, removed new_fluid_client_socket()
+      and delete_fluid_client_socket() which were never implemented or used.
+    * src/fluidsynth.c: Added call to g_thread_init().
+    * src/fluidsynth_priv.h: Integer types now use glib integer types.
 
 2009-04-11    Josh Green <jgreen@users.sourceforge.net>
 	* FluidSynth release 1.0.9 "A Sound Future"
@@ -52,12 +61,12 @@
 	* README-OSX: Update from Ebrahim Mayat.
 
 2009-02-28    Pedro Lopez-Cabanillas <plcl@users.sourceforge.net>
-        * src/fluid_midi.c: Fix for ticket #22 (Wrong tempo changes)
-        * src/fluid_midi.h: delta-time accumulator moved to fluid_midi_file struct.
+    * src/fluid_midi.c: Fix for ticket #22 (Wrong tempo changes)
+    * src/fluid_midi.h: delta-time accumulator moved to fluid_midi_file struct.
 
 2009-02-03    Josh Green <jgreen@users.sourceforge.net>
-        * Applied patch from KO Myung-Hun for OS/2 support including Dart audio
-          driver.
+    * Applied patch from KO Myung-Hun for OS/2 support including Dart audio
+      driver.
 
 2009-01-29    Josh Green <jgreen@users.sourceforge.net>
 	* src/Makefile.am: Added PortAudio driver conditional build.
