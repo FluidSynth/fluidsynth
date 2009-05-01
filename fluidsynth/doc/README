@@ -1,0 +1,7 @@
+To build FluidSynth API reference documentation, make sure you have Doxygen
+installed and execute the following command in the doc/ directory:
+make doxygen
+
+The latest generated API HTML docs can also be found, along with other
+information, on the Wiki documentation page:
+http://fluidsynth.resonance.org/trac/wiki/Documentation
