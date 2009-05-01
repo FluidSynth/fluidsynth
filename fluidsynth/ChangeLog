@@ -1,4 +1,7 @@
 2009-05-01    Pedro Lopez-Cabanillas <plcl@users.sourceforge.net>
+    * configure.ac: fix for win32 build.
+
+2009-05-01    Pedro Lopez-Cabanillas <plcl@users.sourceforge.net>
     * doc/Doxyfile: added fluid_filerenderer.c to Doxygen documentation.
     * doc/fluidsynth-v11-devdoc.txt: license changed to CC-BY-SA 3.0
     * doc/fluidsynth_arpeggio.c: new example added.

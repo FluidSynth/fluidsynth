@@ -71,7 +71,7 @@ mingw*)
   mingw32_support="yes"
   CFLAGS="$CFLAGS -mms-bitfields"
   AC_DEFINE(MINGW32, 1, [Define if using the MinGW32 environment])
-  LIBFLUID_LIBS="-ldsound -lwinmm"
+  LIBFLUID_LIBS="-ldsound -lwinmm -lws2_32"
   LIBFLUID_CPPFLAGS="-DFLUIDSYNTH_DLL_EXPORTS"
   LIBFLUID_LDFLAGS="-no-undefined"
   FLUID_CPPFLAGS="-DFLUIDSYNTH_NOT_A_DLL"
