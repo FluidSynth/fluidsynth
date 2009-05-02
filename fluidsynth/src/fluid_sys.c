@@ -979,13 +979,8 @@ fluid_istream_gets (fluid_istream_t in, char* buf, int len)
 
   while (--len > 0)
   {
-#ifndef WIN32
     n = read(in, &c, 1);
     if (n == -1) return -1;
-#else
-    n = recv (in, &c, 1, 0);
-    if (n == SOCKET_ERROR) return -1;
-#endif
 
     if (n == 0)
     {
