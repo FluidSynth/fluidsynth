@@ -42,6 +42,8 @@
 /* Private data for SEQUENCER */
 struct _fluid_sequencer_t {
 	unsigned int startMs;
+	unsigned int currentMs;
+	gboolean useSystemTimer;
 	double scale; // ticks per second
 	fluid_list_t* clients;
 	short clientsID;
@@ -82,8 +84,26 @@ int _fluid_seq_queue_process(void* data, unsigned int msec); // callback from ti
 
 /* API implementation */
 
+/**
+ * Legacy call to new_fluid_sequencer to provide backwards compatibility.
+ * Please use new_fluid_sequencer2 instead.
+ * @deprecated
+ */
 fluid_sequencer_t*
 new_fluid_sequencer()
+{
+	return new_fluid_sequencer2(1);
+}
+
+/**
+ * Create a new sequencer object.
+ * @param useSystemTimer if this parameter is non-zero, sequencer will advance 
+ * at the rate of the computer's system clock. If zero, call fluid_sequencer_process 
+ * to advance the sequencer.
+ * @since 1.1.0
+ */
+fluid_sequencer_t*
+new_fluid_sequencer2(int useSystemTimer)
 {
 	fluid_sequencer_t* seq;
 
@@ -96,7 +116,8 @@ new_fluid_sequencer()
 	FLUID_MEMSET(seq, 0, sizeof(fluid_sequencer_t));
 
 	seq->scale = 1000;	// default value
-	seq->startMs = fluid_curtime();
+	seq->useSystemTimer = useSystemTimer ? TRUE : FALSE;
+	seq->startMs = seq->useSystemTimer ? fluid_curtime() : 0;
 	seq->clients = NULL;
 	seq->clientsID = 0;
 
@@ -129,10 +150,15 @@ delete_fluid_sequencer(fluid_sequencer_t* seq)
 		return;
 	}
 
+	/* cleanup clients */
+	while (seq->clients) {
+		fluid_sequencer_client_t *client = (fluid_sequencer_client_t*)seq->clients->data;
+		fluid_sequencer_unregister_client(seq, client->id);
+	}
+
 	_fluid_seq_queue_end(seq);
 
-	/* cleanup clients */
-	if (seq->clients) {
+/*	if (seq->clients) {
 		fluid_list_t *tmp = seq->clients;
 		while (tmp != NULL) {
 			fluid_sequencer_client_t *client = (fluid_sequencer_client_t*)tmp->data;
@@ -141,7 +167,7 @@ delete_fluid_sequencer(fluid_sequencer_t* seq)
 		}
 		delete_fluid_list(seq->clients);
 		seq->clients = NULL;
-	}
+	}*/
 
 #if FLUID_SEQ_WITH_TRACE
 	if (seq->tracebuf != NULL)
@@ -151,6 +177,17 @@ delete_fluid_sequencer(fluid_sequencer_t* seq)
 
 	FLUID_FREE(seq);
 }
+
+/**
+ * @return 1 if system timers are enabled, or 0 if system timers are disabled.
+ * @since 1.1.0
+ */
+int 
+fluid_sequencer_get_useSystemTimer(fluid_sequencer_t* seq)
+{
+	return seq->useSystemTimer ? 1 : 0;
+}
+
 
 #if FLUID_SEQ_WITH_TRACE
 
@@ -232,22 +269,35 @@ short fluid_sequencer_register_client(fluid_sequencer_t* seq, char* name,
 void fluid_sequencer_unregister_client(fluid_sequencer_t* seq, short id)
 {
 	fluid_list_t *tmp;
+	fluid_event_t* evt;
 
 	if (seq->clients == NULL) return;
+
+	evt = new_fluid_event();
+	if (evt != NULL) {
+		fluid_event_unregistering(evt);
+		fluid_event_set_dest(evt, id);
+	}
 
 	tmp = seq->clients;
 	while (tmp) {
   		fluid_sequencer_client_t *client = (fluid_sequencer_client_t*)tmp->data;
 
   		if (client->id == id) {
+			/* What should we really do if evt is null due to out-of-memory? */
+			if (client->callback != NULL && evt != NULL)
+				(client->callback)(fluid_sequencer_get_tick(seq),
+						 evt, seq, client->data);
    			if (client->name)
 				FLUID_FREE(client->name);
 			seq->clients = fluid_list_remove_link(seq->clients, tmp);
 			delete1_fluid_list(tmp);
+			delete_fluid_event(evt);
 			return;
   		}
    		tmp = tmp->next;
 	}
+	delete_fluid_event(evt);
 	return;
 }
 
@@ -368,7 +418,7 @@ fluid_sequencer_remove_events(fluid_sequencer_t* seq, short source, short dest, 
 **************************************/
 unsigned int fluid_sequencer_get_tick(fluid_sequencer_t* seq)
 {
-	unsigned int absMs = fluid_curtime();
+	unsigned int absMs = seq->useSystemTimer ? fluid_curtime() : seq->currentMs;
 	double nowFloat;
 	unsigned int now;
 	nowFloat = ((double)(absMs - seq->startMs))*seq->scale/1000.0f;
@@ -414,7 +464,9 @@ void fluid_sequencer_set_time_scale(fluid_sequencer_t* seq, double scale)
 		}
 
 		/* re-start timer */
-		seq->timer = new_fluid_timer((int)(1000/seq->scale), _fluid_seq_queue_process, (void *)seq, 1, 0);
+		if (seq->useSystemTimer) {
+			seq->timer = new_fluid_timer((int)(1000/seq->scale), _fluid_seq_queue_process, (void *)seq, 1, 0);
+		}
 	}
 }
 
@@ -534,8 +586,10 @@ _fluid_seq_queue_init(fluid_sequencer_t* seq, int maxEvents)
 	fluid_mutex_init(seq->mutex);
 
 	/* start timer */
-	seq->timer = new_fluid_timer((int)(1000/seq->scale), _fluid_seq_queue_process,
-				     (void *)seq, 1, 0);
+	if (seq->useSystemTimer) {
+		seq->timer = new_fluid_timer((int)(1000/seq->scale), _fluid_seq_queue_process,
+					     (void *)seq, 1, 0);
+	}
 	return (0);
 }
 
@@ -638,6 +692,19 @@ int
 _fluid_seq_queue_process(void* data, unsigned int msec)
 {
 	fluid_sequencer_t* seq = (fluid_sequencer_t *)data;
+	fluid_sequencer_process(seq, msec);
+	/* continue timer */
+	return 1;
+}
+
+/** 
+ * Advance sequencer. Do not use if you created the sequencer with useSystemTimer enabled. 
+ * @param msec the number of milliseconds (compared to when the sequencer was created).
+ * @since 1.1.0
+ */
+void
+fluid_sequencer_process(fluid_sequencer_t* seq, unsigned int msec)
+{
 
 	/* process prequeue */
 	fluid_evt_entry* tmp;
@@ -666,10 +733,9 @@ _fluid_seq_queue_process(void* data, unsigned int msec)
 	}
 
 	/* send queued events */
+	seq->currentMs = msec;
 	_fluid_seq_queue_send_queued_events(seq);
 
-	/* continue timer */
-	return 1;
 }
 
 

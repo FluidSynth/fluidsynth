@@ -55,6 +55,7 @@ enum fluid_seq_event_type {
   FLUID_SEQ_CHORUSSEND,		/**< Chorus send set event */
   FLUID_SEQ_TIMER,		/**< Timer event (DOCME) */
   FLUID_SEQ_ANYCONTROLCHANGE,	/**< DOCME (used for remove_events only) */
+  FLUID_SEQ_UNREGISTERING,      /**< Called when a sequencer client is being unregistered. @since 1.1.0 */
   FLUID_SEQ_LASTEVENT		/**< Defines the count of event enums */
 };
 
@@ -100,6 +101,9 @@ FLUIDSYNTH_API void fluid_event_chorus_send(fluid_event_t* evt, int channel, sho
 
 /* Only for removing events */
 FLUIDSYNTH_API void fluid_event_any_control_change(fluid_event_t* evt, int channel);
+
+/* Only when unregistering clients */
+FLUIDSYNTH_API void fluid_event_unregistering(fluid_event_t* evt);
 
 /* Accessing event data */
 FLUIDSYNTH_API int fluid_event_get_type(fluid_event_t* evt);

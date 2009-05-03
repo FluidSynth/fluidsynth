@@ -399,6 +399,18 @@ fluid_event_chorus_send(fluid_event_t* evt, int channel, short val)
 }
 
 
+/**
+ * Set a sequencer event to be an unregistering event.
+ * @param evt Sequencer event structure
+ */
+void
+fluid_event_unregistering(fluid_event_t* evt)
+{
+	evt->type = FLUID_SEQ_UNREGISTERING;
+}
+
+
+
 /*
  * Accessing event data
  */

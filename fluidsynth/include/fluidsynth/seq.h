@@ -32,9 +32,13 @@ typedef void (*fluid_event_callback_t)(unsigned int time, fluid_event_t* event,
 
 /** Allocate a new sequencer structure */
 FLUIDSYNTH_API fluid_sequencer_t* new_fluid_sequencer(void);
+FLUIDSYNTH_API fluid_sequencer_t* new_fluid_sequencer2(int useSystemTimer);
 
 /** Free the sequencer structure */
 FLUIDSYNTH_API void delete_fluid_sequencer(fluid_sequencer_t* seq);
+
+
+FLUIDSYNTH_API int fluid_sequencer_get_useSystemTimer(fluid_sequencer_t* seq);
 
 /** clients can be sources or destinations of events. These functions ensure a unique ID for any
 source or dest, for filtering purposes.
@@ -61,7 +65,8 @@ FLUIDSYNTH_API char* fluid_sequencer_get_client_name(fluid_sequencer_t* seq, int
 /** Returns 1 if client is a destination (has a callback) */
 FLUIDSYNTH_API int fluid_sequencer_client_is_dest(fluid_sequencer_t* seq, int id);
 
-
+/** Advance sequencer. Do not use if you created the sequencer with useSystemTimer enabled. */
+FLUIDSYNTH_API void fluid_sequencer_process(fluid_sequencer_t* seq, unsigned int msec);
 
 /** Sending an event immediately. */
 FLUIDSYNTH_API void fluid_sequencer_send_now(fluid_sequencer_t* seq, fluid_event_t* evt);
