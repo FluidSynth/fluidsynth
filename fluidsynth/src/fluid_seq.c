@@ -292,6 +292,7 @@ void fluid_sequencer_unregister_client(fluid_sequencer_t* seq, short id)
 				FLUID_FREE(client->name);
 			seq->clients = fluid_list_remove_link(seq->clients, tmp);
 			delete1_fluid_list(tmp);
+			FLUID_FREE(client);
 			delete_fluid_event(evt);
 			return;
   		}
@@ -556,6 +557,7 @@ double fluid_sequencer_get_time_scale(fluid_sequencer_t* seq)
 void _fluid_seq_queue_insert_entry(fluid_sequencer_t* seq, fluid_evt_entry * evtentry);
 void _fluid_seq_queue_remove_entries_matching(fluid_sequencer_t* seq, fluid_evt_entry* temp);
 void _fluid_seq_queue_send_queued_events(fluid_sequencer_t* seq);
+void _fluid_free_evt_queue(fluid_evt_entry** first, fluid_evt_entry** last);
 
 
 /********************/
@@ -596,6 +598,17 @@ _fluid_seq_queue_init(fluid_sequencer_t* seq, int maxEvents)
 void
 _fluid_seq_queue_end(fluid_sequencer_t* seq)
 {
+	int i;
+
+	/* free all remaining events */
+	_fluid_free_evt_queue(&seq->preQueue, &seq->preQueueLast);
+	for (i = 0; i < 256; i++) 
+		_fluid_free_evt_queue(&(seq->queue0[i][0]), &(seq->queue0[i][1]));
+	for (i = 0; i < 255; i++) 
+		_fluid_free_evt_queue(&(seq->queue1[i][0]), &(seq->queue1[i][1]));
+	_fluid_free_evt_queue(&seq->queueLater, NULL);
+
+
 	if (seq->timer) {
 		delete_fluid_timer(seq->timer);
 		seq->timer = NULL;
@@ -605,6 +618,7 @@ _fluid_seq_queue_end(fluid_sequencer_t* seq)
 		_fluid_evt_heap_free(seq->heap);
 		seq->heap = NULL;
 	}
+
 	fluid_mutex_destroy(seq->mutex);
 }
 
@@ -681,6 +695,22 @@ _fluid_seq_queue_pre_remove(fluid_sequencer_t* seq, short src, short dest, int t
 
 	fluid_mutex_unlock(seq->mutex);
 	return;
+}
+
+void
+_fluid_free_evt_queue(fluid_evt_entry** first, fluid_evt_entry** last)
+{
+	fluid_evt_entry* tmp2;
+	fluid_evt_entry* tmp = *first;
+	while (tmp != NULL) {
+		tmp2 = tmp->next;
+		FLUID_FREE(tmp);
+		tmp = tmp2;
+	}
+	*first = NULL;
+	if (last != NULL) {
+		*last = NULL;
+	}
 }
 
 /***********************
