@@ -702,12 +702,15 @@ print_welcome()
 void
 print_help()
 {
+  char allnames[256];
   print_welcome ();
   printf("Usage: \n");
   printf("  fluidsynth [options] [soundfonts] [midifiles]\n");
   printf("Possible options:\n");
+  fluid_audio_driver_get_names(allnames, sizeof(allnames), ", ");
   printf(" -a, --audio-driver=[label]\n"
-	 "    The audio driver [alsa,jack,oss,dsound,...]\n");
+	 "    The name of the audio driver to use.\n"
+	 "    Valid values: %s\n", allnames);
   printf(" -C, --chorus\n"
 	 "    Turn the chorus on or off [0|1|yes|no, default = on]\n");
   printf(" -c, --audio-bufcount=[count]\n"
@@ -736,8 +739,10 @@ print_help()
   printf(" -l, --disable-lash\n"
 	 "    Don't connect to LASH server\n");
 #endif
+  fluid_midi_driver_get_names(allnames, sizeof(allnames), ", ");
   printf(" -m, --midi-driver=[label]\n"
-	 "    The name of the midi driver to use [oss,alsa,alsa_seq,...]\n");
+	 "    The name of the midi driver to use.\n"
+	 "    Valid values: %s\n", allnames);
   printf(" -n, --no-midi-in\n"
 	 "    Don't create a midi driver to read MIDI input events [default = yes]\n");
   printf(" -p, --portname=[label]\n"

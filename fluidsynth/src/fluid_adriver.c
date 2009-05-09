@@ -285,6 +285,34 @@ void fluid_audio_driver_settings(fluid_settings_t* settings)
   }
 }
 
+/**
+ * Write a list of audio driver names into a buffer.
+ * (A buffer length of 256 characters should be more than enough.)
+ * @param buf buffert to write names into
+ * @param buflen maximum amount of characters in buf.
+ * @param separator separator string, written between names.
+ * @since 1.1.0
+ */
+void
+fluid_audio_driver_get_names(char* buf, size_t buflen, const char* separator)
+{
+  int i;
+
+  if (buflen <= 0) {
+    return;
+  }
+  buf[0] = '\0';
+  buflen--;
+
+  for (i = 0; fluid_audio_drivers[i].name != NULL; i++) {
+    if (i > 0) {
+      strncat(buf, separator, buflen - strlen(buf));
+    }
+    strncat(buf, fluid_audio_drivers[i].name, buflen - strlen(buf));
+  }
+  buf[buflen] = '\0';
+}
+
 
 /**
  * Create a new audio driver.
@@ -302,6 +330,7 @@ new_fluid_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
   int i;
   fluid_audio_driver_t* driver = NULL;
   char* name;
+  char allnames[256];
 
   fluid_settings_getstr(settings, "audio.driver", &name);
 
@@ -316,7 +345,8 @@ new_fluid_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
     }
   }
 
-  FLUID_LOG(FLUID_ERR, "Couldn't find the requested audio driver: %s", name);
+  fluid_audio_driver_get_names(allnames, sizeof(allnames), ", ");
+  FLUID_LOG(FLUID_ERR, "Couldn't find the requested audio driver %s. Valid drivers are: %s.", name, allnames);
   return NULL;
 }
 
