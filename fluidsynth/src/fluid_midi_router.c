@@ -522,6 +522,12 @@ fluid_midi_router_handle_midi_event(void* data, fluid_midi_event_t* event)
   return ret_val;
 }
 
+#define CHECK_VALID_ROUTER(_router, _out)                                                \
+  if (router == NULL) {                                                                  \
+    fluid_ostream_printf(out, "cannot execute router command without a midi router.\n"); \
+    goto error_recovery;                                                                 \
+  }
+
 int fluid_midi_router_handle_clear(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out)
 {
   fluid_midi_router_t* router=synth->midi_router;
@@ -530,6 +536,7 @@ int fluid_midi_router_handle_clear(fluid_synth_t* synth, int ac, char** av, flui
     fluid_ostream_printf(out, "router_clear needs no arguments.\n");
     goto error_recovery;
   }
+  CHECK_VALID_ROUTER(router, out);
 
   /* Disable rules and mark for destruction */
   fluid_midi_router_disable_all_rules(router);
@@ -550,6 +557,7 @@ int fluid_midi_router_handle_default(fluid_synth_t* synth, int ac, char** av, fl
     fluid_ostream_printf(out, "router_default needs no arguments.\n");
     return -1;
   }
+  CHECK_VALID_ROUTER(router, out);
 
   /* Disable rules and mark for destruction */
   fluid_midi_router_disable_all_rules(router);
@@ -577,6 +585,7 @@ int fluid_midi_router_handle_begin(fluid_synth_t* synth, int ac, char** av, flui
     fluid_ostream_printf(out, "router_begin needs no arguments.\n");
       goto error_recovery;
   }
+  CHECK_VALID_ROUTER(router, out);
 
   if (FLUID_STRCMP(av[0],"note") == 0){
     dest=& router->note_rules;
@@ -618,6 +627,7 @@ int fluid_midi_router_handle_end(fluid_synth_t* synth, int ac, char** av, fluid_
     fluid_ostream_printf(out, "router_end needs no arguments.");
     goto error_recovery;
   }
+  CHECK_VALID_ROUTER(router, out);
 
   if (fluid_midi_router_end(router) != FLUID_OK){
     FLUID_LOG(FLUID_ERR, "midi_router_end failed");
@@ -641,6 +651,7 @@ int fluid_midi_router_handle_chan(fluid_synth_t* synth, int ac, char** av, fluid
     fluid_ostream_printf(out, "router_chan needs four args: min, max, mul, add.");
     goto error_recovery;
   }
+  CHECK_VALID_ROUTER(router, out);
 
   router->new_rule_chan_min=atoi(av[0]);
   router->new_rule_chan_max=atoi(av[1]);
@@ -664,6 +675,7 @@ int fluid_midi_router_handle_par1(fluid_synth_t* synth, int ac, char** av, fluid
     fluid_ostream_printf(out, "router_par1 needs four args: min, max, mul, add.");
     goto error_recovery;
   }
+  CHECK_VALID_ROUTER(router, out);
 
   router->new_rule_par1_min=atoi(av[0]);
   router->new_rule_par1_max=atoi(av[1]);
@@ -687,6 +699,7 @@ int fluid_midi_router_handle_par2(fluid_synth_t* synth, int ac, char** av, fluid
     fluid_ostream_printf(out, "router_par2 needs four args: min, max, mul, add.");
     goto error_recovery;
   }
+  CHECK_VALID_ROUTER(router, out);
 
   router->new_rule_par2_min=atoi(av[0]);
   router->new_rule_par2_max=atoi(av[1]);

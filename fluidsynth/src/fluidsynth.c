@@ -484,15 +484,6 @@ int main(int argc, char** argv)
     goto cleanup;
   }
 
-  /* try to load the user or system configuration */
-  if (config_file != NULL) {
-    fluid_source(cmd_handler, config_file);
-  } else if (fluid_get_userconf(buf, 512) != NULL) {
-    fluid_source(cmd_handler, buf);
-  } else if (fluid_get_sysconf(buf, 512) != NULL) {
-    fluid_source(cmd_handler, buf);
-  }
-
   /* load the soundfonts (check that all non options are SoundFont or MIDI files) */
   for (i = arg1; i < argc; i++) {
     if (fluid_is_soundfont(argv[i]))
@@ -556,6 +547,17 @@ int main(int argc, char** argv)
     }
   }
 #endif
+
+  /* run commands specified in config file */
+  if (config_file != NULL) {
+    fluid_source(cmd_handler, config_file);
+  } else if (fluid_get_userconf(buf, 512) != NULL) {
+    fluid_source(cmd_handler, buf);
+  } else if (fluid_get_sysconf(buf, 512) != NULL) {
+    fluid_source(cmd_handler, buf);
+  }
+
+
 
   /* play the midi files, if any */
   for (i = arg1; i < argc; i++) {
