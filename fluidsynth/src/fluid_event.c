@@ -38,6 +38,17 @@
 
 /* Event alloc/free */
 
+void
+fluid_event_clear(fluid_event_t* evt)
+{
+  FLUID_MEMSET(evt, 0, sizeof(fluid_event_t));
+
+  // by default, no type
+  evt->dest = -1;
+  evt->src = -1;
+  evt->type = -1;
+}
+
 /**
  * Create a new sequencer event structure.
  * @return New sequencer event structure or NULL if out of memory
@@ -52,13 +63,7 @@ new_fluid_event()
     fluid_log(FLUID_PANIC, "event: Out of memory\n");
     return NULL;
   }
-
-  FLUID_MEMSET(evt, 0, sizeof(fluid_event_t));
-
-  // by default, no type
-  evt->dest = -1;
-  evt->src = -1;
-  evt->type = -1;
+  fluid_event_clear(evt);
 
   return(evt);
 }
@@ -402,11 +407,40 @@ fluid_event_chorus_send(fluid_event_t* evt, int channel, short val)
 /**
  * Set a sequencer event to be an unregistering event.
  * @param evt Sequencer event structure
+ * @since 1.1.0
  */
 void
 fluid_event_unregistering(fluid_event_t* evt)
 {
 	evt->type = FLUID_SEQ_UNREGISTERING;
+}
+
+/**
+ * Set a sequencer event to be a channel-wide aftertouch event.
+ * @param evt Sequencer event structure
+ * @param channel MIDI channel number
+ * @param val Aftertouch amount (0-127)
+ * @since 1.1.0
+ */
+void 
+fluid_event_channel_pressure(fluid_event_t* evt, int channel, short val)
+{
+	evt->type = FLUID_SEQ_CHANNELPRESSURE;
+	evt->channel = channel;
+	if (val < 0) val = 0;
+	if (val > 127) val = 127;
+	evt->value = val;
+}
+
+/**
+ * Set a sequencer event to be a midi system reset event.
+ * @param evt Sequencer event structure
+ * @since 1.1.0
+ */
+void 
+fluid_event_system_reset(fluid_event_t* evt)
+{
+	evt->type = FLUID_SEQ_SYSTEMRESET;
 }
 
 

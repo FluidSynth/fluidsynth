@@ -29,6 +29,8 @@
 
 #include "fluidsynth_priv.h"
 #include "fluid_synth.h"
+#include "fluid_midi.h"
+#include "fluid_event_priv.h"
 
  /***************************************************************
  *
@@ -229,6 +231,18 @@ fluid_seq_fluidsynth_callback(unsigned int time, fluid_event_t* evt, fluid_seque
 	  }
   	break;
 
+  case FLUID_SEQ_CHANNELPRESSURE: 
+	  {
+		fluid_synth_channel_pressure(synth, fluid_event_get_channel(evt), fluid_event_get_value(evt));
+	  }
+	break;
+
+  case FLUID_SEQ_SYSTEMRESET: 
+	  {
+		fluid_synth_system_reset(synth);
+	  }
+	break;
+
   case FLUID_SEQ_UNREGISTERING: /* free ourselves */
 	  {
 		seqbind->client_id = -1; /* avoid recursive call to fluid_sequencer_unregister_client */
@@ -243,6 +257,72 @@ fluid_seq_fluidsynth_callback(unsigned int time, fluid_event_t* evt, fluid_seque
 	default:
   	break;
 	}
+}
+
+static int get_fluidsynth_dest(fluid_sequencer_t* seq) 
+{
+	int i, id;
+	char* name;
+	int j = fluid_sequencer_count_clients(seq);
+	for (i = 0; i < j; i++) {
+		id = fluid_sequencer_get_client_id(seq, i);
+		name = fluid_sequencer_get_client_name(seq, id);
+		if (strcmp(name, "fluidsynth") == 0) {
+			return id;
+		}
+	}
+	return -1;
+}
+
+/**
+ * Transforms an incoming midi event (from a midi driver or midi router) to a 
+ * sequencer event and adds it to the sequencer queue for sending as soon as possible.
+ * @param data the sequencer, must be a valid fluid_sequencer_t
+ * @param event midi event
+ * @return FLUID_OK or FLUID_FAILED
+ * @since 1.1.0
+ */
+int
+fluid_sequencer_add_midi_event_to_buffer(void* data, fluid_midi_event_t* event)
+{
+	fluid_event_t evt;
+	fluid_sequencer_t* seq = (fluid_sequencer_t*) data;
+	int chan = fluid_midi_event_get_channel(event);
+
+	fluid_event_clear(&evt);
+	fluid_event_set_time(&evt, fluid_sequencer_get_tick(seq));
+	fluid_event_set_dest(&evt, get_fluidsynth_dest(seq));
+
+	switch (fluid_midi_event_get_type(event)) {
+	case NOTE_OFF:
+		fluid_event_noteoff(&evt, chan, fluid_midi_event_get_key(event));	
+		break;  
+	case NOTE_ON:
+		fluid_event_noteon(&evt, fluid_midi_event_get_channel(event),
+		                   fluid_midi_event_get_key(event), fluid_midi_event_get_velocity(event));	
+		break;  
+	case CONTROL_CHANGE:
+		fluid_event_control_change(&evt, chan, fluid_midi_event_get_control(event),
+		                           fluid_midi_event_get_value(event));
+		break;
+	case PROGRAM_CHANGE:
+		fluid_event_program_change(&evt, chan, fluid_midi_event_get_program(event));
+		break;
+	case PITCH_BEND:
+		fluid_event_pitch_bend(&evt, chan, fluid_midi_event_get_pitch(event));
+		break;
+	case CHANNEL_PRESSURE:
+		fluid_event_channel_pressure(&evt, chan, fluid_midi_event_get_program(event));
+		break;
+	case MIDI_SYSTEM_RESET:
+		fluid_event_system_reset(&evt);
+		break;
+	default:  /* Not yet implemented */
+		return FLUID_FAILED; 
+	}
+
+	/* Schedule for sending at next call to fluid_sequencer_process */
+	return fluid_sequencer_send_at(seq, &evt, 0, 0);
 }
 
 

@@ -107,6 +107,9 @@ FLUIDSYNTH_API int fluid_synth_get_pitch_wheel_sens(fluid_synth_t* synth, int ch
   /** Send a program change message. Returns 0 if no error occurred, -1 otherwise. */
 FLUIDSYNTH_API int fluid_synth_program_change(fluid_synth_t* synth, int chan, int program);
 
+  /** Send a channel aftertouch message. Returns 0 if no error occurred, -1 otherwise. */
+FLUIDSYNTH_API int fluid_synth_channel_pressure(fluid_synth_t* synth, int chan, int val);
+
   /** Select a bank. Returns 0 if no error occurred, -1 otherwise. */
 FLUIDSYNTH_API 
 int fluid_synth_bank_select(fluid_synth_t* synth, int chan, unsigned int bank);

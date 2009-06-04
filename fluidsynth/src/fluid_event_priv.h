@@ -46,6 +46,8 @@ struct _fluid_event_t {
 unsigned int fluid_event_get_time(fluid_event_t* evt);
 void fluid_event_set_time(fluid_event_t* evt, unsigned int time);
 
+void fluid_event_clear(fluid_event_t* evt);
+
 /* private data for sorter + heap */
 enum fluid_evt_entry_type {
   FLUID_EVT_ENTRY_INSERT = 0,

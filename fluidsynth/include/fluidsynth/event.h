@@ -45,7 +45,7 @@ enum fluid_seq_event_type {
   FLUID_SEQ_PROGRAMCHANGE,	/**< Program change message */
   FLUID_SEQ_PROGRAMSELECT,	/**< Program select message (DOCME) */
   FLUID_SEQ_PITCHBEND,		/**< Pitch bend message */
-  FLUID_SEQ_PITCHWHHELSENS,	/**< Pitch wheel sensitivity set message */
+  FLUID_SEQ_PITCHWHHELSENS,	/**< Pitch wheel sensitivity set message TODO: Correct spelling of this event? */
   FLUID_SEQ_MODULATION,		/**< Modulation controller event */
   FLUID_SEQ_SUSTAIN,		/**< Sustain controller event */
   FLUID_SEQ_CONTROLCHANGE,	/**< MIDI control change event */
@@ -55,6 +55,8 @@ enum fluid_seq_event_type {
   FLUID_SEQ_CHORUSSEND,		/**< Chorus send set event */
   FLUID_SEQ_TIMER,		/**< Timer event (DOCME) */
   FLUID_SEQ_ANYCONTROLCHANGE,	/**< DOCME (used for remove_events only) */
+  FLUID_SEQ_CHANNELPRESSURE,    /**< Channel aftertouch event @since 1.1.0 */
+  FLUID_SEQ_SYSTEMRESET,        /**< System reset event @since 1.1.0 */
   FLUID_SEQ_UNREGISTERING,      /**< Called when a sequencer client is being unregistered. @since 1.1.0 */
   FLUID_SEQ_LASTEVENT		/**< Defines the count of event enums */
 };
@@ -71,7 +73,7 @@ FLUIDSYNTH_API void fluid_event_set_dest(fluid_event_t* evt, short dest);
 FLUIDSYNTH_API void fluid_event_timer(fluid_event_t* evt, void* data);
 
 /* Note events */
-FLUIDSYNTH_API void fluid_event_note(fluid_event_t* evt, int channel, 
+FLUIDSYNTH_API void fluid_event_nfluid_event_set_timeote(fluid_event_t* evt, int channel, 
 				   short key, short vel, 
 				   unsigned int duration);
 
@@ -98,6 +100,10 @@ FLUIDSYNTH_API void fluid_event_pan(fluid_event_t* evt, int channel, short val);
 FLUIDSYNTH_API void fluid_event_volume(fluid_event_t* evt, int channel, short val);
 FLUIDSYNTH_API void fluid_event_reverb_send(fluid_event_t* evt, int channel, short val);
 FLUIDSYNTH_API void fluid_event_chorus_send(fluid_event_t* evt, int channel, short val);
+
+FLUIDSYNTH_API void fluid_event_channel_pressure(fluid_event_t* evt, int channel, short val);
+FLUIDSYNTH_API void fluid_event_system_reset(fluid_event_t* evt);
+
 
 /* Only for removing events */
 FLUIDSYNTH_API void fluid_event_any_control_change(fluid_event_t* evt, int channel);

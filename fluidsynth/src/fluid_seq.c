@@ -42,7 +42,7 @@
 /* Private data for SEQUENCER */
 struct _fluid_sequencer_t {
 	unsigned int startMs;
-	unsigned int currentMs;
+	gint currentMs;
 	gboolean useSystemTimer;
 	double scale; // ticks per second
 	fluid_list_t* clients;
@@ -379,6 +379,7 @@ void fluid_sequencer_send_now(fluid_sequencer_t* seq, fluid_event_t* evt)
 	}
 }
 
+
 int
 fluid_sequencer_send_at(fluid_sequencer_t* seq, fluid_event_t* evt, unsigned int time, int absolute)
 {
@@ -392,16 +393,17 @@ fluid_sequencer_send_at(fluid_sequencer_t* seq, fluid_event_t* evt, unsigned int
 	fluid_event_set_time(evt, time);
 
 	/* process late */
-	if (time < now) {
+/* Commented out for thread safety - send_at must go via the queue */
+/*	if (time < now) {
 		fluid_sequencer_send_now(seq, evt);
 		return 0;
-	}
+	}*/
 
 	/* process now */
-	if (time == now) {
+/*	if (time == now) {
 		fluid_sequencer_send_now(seq, evt);
 		return 0;
-	}
+	}*/
 
 	/* queue for processing later */
 	return _fluid_seq_queue_pre_insert(seq, evt);
@@ -419,7 +421,7 @@ fluid_sequencer_remove_events(fluid_sequencer_t* seq, short source, short dest, 
 **************************************/
 unsigned int fluid_sequencer_get_tick(fluid_sequencer_t* seq)
 {
-	unsigned int absMs = seq->useSystemTimer ? fluid_curtime() : seq->currentMs;
+	unsigned int absMs = seq->useSystemTimer ? (int) fluid_curtime() : g_atomic_int_get(&seq->currentMs);
 	double nowFloat;
 	unsigned int now;
 	nowFloat = ((double)(absMs - seq->startMs))*seq->scale/1000.0f;
@@ -763,7 +765,7 @@ fluid_sequencer_process(fluid_sequencer_t* seq, unsigned int msec)
 	}
 
 	/* send queued events */
-	seq->currentMs = msec;
+	g_atomic_int_set(&seq->currentMs, msec);
 	_fluid_seq_queue_send_queued_events(seq);
 
 }
