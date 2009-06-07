@@ -2012,6 +2012,10 @@ fluid_synth_one_block(fluid_synth_t* synth, int do_not_mix_fx_to_out)
 
   fluid_check_fpe("??? Just starting up ???");
 
+  fluid_sample_timer_process(synth);
+
+  fluid_check_fpe("fluid_sample_timer_process");
+
   /* clean the audio buffers */
   for (i = 0; i < synth->nbuf; i++) {
     FLUID_MEMSET(synth->left_buf[i], 0, byte_size);
@@ -2124,10 +2128,6 @@ fluid_synth_one_block(fluid_synth_t* synth, int do_not_mix_fx_to_out)
   fluid_check_fpe("??? Remainder of synth_one_block ???");
 
 /*   fluid_mutex_unlock(synth->busy); /\* Allow other threads to touch the synth *\/ */
-
-  fluid_sample_timer_process(synth);
-
-  fluid_check_fpe("fluid_sample_timer_process");
 
   return 0;
 }

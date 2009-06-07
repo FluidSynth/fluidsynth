@@ -1361,7 +1361,6 @@ int fluid_player_play(fluid_player_t* player)
 		if (player->sample_timer == NULL) {
 			return FLUID_FAILED;
 		}
-		fluid_player_callback(player, 0); /* Process the first events before the first block */
 	}
 	return FLUID_OK;
 }
