@@ -244,14 +244,8 @@ void fluid_voice_update_param(fluid_voice_t* voice, int gen);
 
 int fluid_voice_noteoff(fluid_voice_t* voice);
 int fluid_voice_off(fluid_voice_t* voice);
-int fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t* voice);
 fluid_channel_t* fluid_voice_get_channel(fluid_voice_t* voice);
-int calculate_hold_decay_buffers(fluid_voice_t* voice, int gen_base,
-				 int gen_key2base, int is_decay);
 int fluid_voice_kill_excl(fluid_voice_t* voice);
-fluid_real_t fluid_voice_get_lower_boundary_for_attenuation(fluid_voice_t* voice);
-fluid_real_t fluid_voice_determine_amplitude_that_reaches_noise_floor_for_sample(fluid_voice_t* voice);
-void fluid_voice_check_sample_sanity(fluid_voice_t* voice);
 
 #define fluid_voice_set_id(_voice, _id)  { (_voice)->id = (_id); }
 #define fluid_voice_get_chan(_voice)     (_voice)->chan
@@ -269,6 +263,7 @@ void fluid_voice_check_sample_sanity(fluid_voice_t* voice);
 #define _SAMPLEMODE(voice) ((int)(voice)->gen[GEN_SAMPLEMODE].val)
 
 
+/* FIXME - Josh Green - This doesn't seem to be used anywhere */
 fluid_real_t fluid_voice_gen_value(fluid_voice_t* voice, int num);
 
 #define _GEN(_voice, _n) \

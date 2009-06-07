@@ -171,13 +171,6 @@ int fluid_synth_getint(fluid_synth_t* synth, char* name, int* val);
 
 int fluid_synth_set_reverb_preset(fluid_synth_t* synth, int num);
 
-int fluid_synth_one_block(fluid_synth_t* synth, int do_not_mix_fx_to_out);
-
-fluid_preset_t* fluid_synth_get_preset(fluid_synth_t* synth,
-				     unsigned int sfontnum,
-				     unsigned int banknum,
-				     unsigned int prognum);
-
 fluid_preset_t* fluid_synth_find_preset(fluid_synth_t* synth,
 				      unsigned int banknum,
 				      unsigned int prognum);
@@ -188,23 +181,8 @@ int fluid_synth_modulate_voices(fluid_synth_t* synth, int chan, int is_cc, int c
 int fluid_synth_modulate_voices_all(fluid_synth_t* synth, int chan);
 int fluid_synth_damp_voices(fluid_synth_t* synth, int chan);
 int fluid_synth_kill_voice(fluid_synth_t* synth, fluid_voice_t * voice);
-void fluid_synth_kill_by_exclusive_class(fluid_synth_t* synth, fluid_voice_t* voice);
-void fluid_synth_release_voice_on_same_note(fluid_synth_t* synth, int chan, int key);
-void fluid_synth_sfunload_macos9(fluid_synth_t* synth);
 
 void fluid_synth_print_voice(fluid_synth_t* synth);
-
-/** This function assures that every MIDI channels has a valid preset
- *  (NULL is okay). This function is called after a SoundFont is
- *  unloaded or reloaded. */
-void fluid_synth_update_presets(fluid_synth_t* synth);
-
-
-int fluid_synth_update_gain(fluid_synth_t* synth, char* name, double value);
-int fluid_synth_update_polyphony(fluid_synth_t* synth, char* name, int value);
-
-fluid_bank_offset_t* fluid_synth_get_bank_offset0(fluid_synth_t* synth, int sfont_id);
-void fluid_synth_remove_bank_offset(fluid_synth_t* synth, int sfont_id);
 
 void fluid_synth_dither_s16(int *dither_index, int len, float* lin, float* rin,
 			    void* lout, int loff, int lincr,

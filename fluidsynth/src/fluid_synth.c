@@ -35,6 +35,36 @@
 extern int feenableexcept (int excepts);
 #endif
 
+static void fluid_synth_init(void);
+static fluid_preset_t*
+fluid_synth_get_preset(fluid_synth_t* synth, unsigned int sfontnum,
+		      unsigned int banknum, unsigned int prognum);
+static fluid_preset_t*
+fluid_synth_get_preset2(fluid_synth_t* synth, char* sfont_name,
+			unsigned int banknum, unsigned int prognum);
+static void fluid_synth_update_presets(fluid_synth_t* synth);
+static int fluid_synth_update_gain(fluid_synth_t* synth,
+                                   char* name, double value);
+static int fluid_synth_update_polyphony(fluid_synth_t* synth,
+                                        char* name, int value);
+static void init_dither(void);
+static inline int roundi (float x);
+static int fluid_synth_one_block(fluid_synth_t* synth, int do_not_mix_fx_to_out);
+static fluid_voice_t* fluid_synth_free_voice_by_kill(fluid_synth_t* synth);
+static void fluid_synth_kill_by_exclusive_class(fluid_synth_t* synth,
+                                                fluid_voice_t* new_voice);
+static int fluid_synth_sfunload_callback(void* data, unsigned int msec);
+static void fluid_synth_sfunload_macos9(fluid_synth_t* synth);
+static void fluid_synth_release_voice_on_same_note(fluid_synth_t* synth,
+                                                   int chan, int key);
+static fluid_tuning_t* fluid_synth_get_tuning(fluid_synth_t* synth,
+                                              int bank, int prog);
+static fluid_tuning_t* fluid_synth_create_tuning(fluid_synth_t* synth, int bank,
+                                                 int prog, char* name);
+static fluid_bank_offset_t* fluid_synth_get_bank_offset0(fluid_synth_t* synth,
+                                                         int sfont_id);
+static void fluid_synth_remove_bank_offset(fluid_synth_t* synth, int sfont_id);
+
 
 fluid_sfloader_t* new_fluid_defsfloader(void);
 
@@ -157,7 +187,7 @@ char* fluid_version_str(void)
  * Does all the initialization for this module.
  */
 static void
-fluid_synth_init()
+fluid_synth_init(void)
 {
   fluid_synth_initialized++;
 
@@ -325,11 +355,6 @@ fluid_synth_init()
 }
 
 
-int fluid_synth_verify_settings(fluid_settings_t *settings)
-{
-  return 0;
-}
-
 /***************************************************************
  *                    FLUID SAMPLE TIMERS 
  *    Timers that use written audio data as timing reference       
@@ -416,8 +441,6 @@ new_fluid_synth(fluid_settings_t *settings)
   if (fluid_synth_initialized == 0) {
     fluid_synth_init();
   }
-
-  fluid_synth_verify_settings(settings);
 
   /* allocate a new synthesizer object */
   synth = FLUID_NEW(fluid_synth_t);
@@ -1196,7 +1219,7 @@ fluid_synth_get_pitch_wheel_sens(fluid_synth_t* synth, int chan, int* pval)
 /*
  * fluid_synth_get_preset
  */
-fluid_preset_t*
+static fluid_preset_t*
 fluid_synth_get_preset(fluid_synth_t* synth, unsigned int sfontnum,
 		      unsigned int banknum, unsigned int prognum)
 {
@@ -1220,7 +1243,7 @@ fluid_synth_get_preset(fluid_synth_t* synth, unsigned int sfontnum,
 /*
  * fluid_synth_get_preset2
  */
-fluid_preset_t*
+static fluid_preset_t*
 fluid_synth_get_preset2(fluid_synth_t* synth, char* sfont_name,
 			unsigned int banknum, unsigned int prognum)
 {
@@ -1470,9 +1493,12 @@ int fluid_synth_program_select2(fluid_synth_t* synth,
 }
 
 /*
- * fluid_synth_update_presets
+ * This function assures that every MIDI channels has a valid preset
+ * (NULL is okay). This function is called after a SoundFont is
+ * unloaded or reloaded.
  */
-void fluid_synth_update_presets(fluid_synth_t* synth)
+static void
+fluid_synth_update_presets(fluid_synth_t* synth)
 {
   int chan;
   fluid_channel_t* channel;
@@ -1491,7 +1517,8 @@ void fluid_synth_update_presets(fluid_synth_t* synth)
 /*
  * fluid_synth_update_gain
  */
-int fluid_synth_update_gain(fluid_synth_t* synth, char* name, double value)
+static int
+fluid_synth_update_gain(fluid_synth_t* synth, char* name, double value)
 {
   fluid_synth_set_gain(synth, (float) value);
   return 0;
@@ -1526,7 +1553,8 @@ float fluid_synth_get_gain(fluid_synth_t* synth)
 /*
  * fluid_synth_update_polyphony
  */
-int fluid_synth_update_polyphony(fluid_synth_t* synth, char* name, int value)
+static int
+fluid_synth_update_polyphony(fluid_synth_t* synth, char* name, int value)
 {
   fluid_synth_set_polyphony(synth, value);
   return 0;
@@ -1824,7 +1852,8 @@ fluid_synth_write_float(fluid_synth_t* synth, int len,
 
 static float rand_table[DITHER_CHANNELS][DITHER_SIZE];
 
-static void init_dither(void)
+static void 
+init_dither(void)
 {
   float d, dp;
   int c, i;
@@ -1967,7 +1996,7 @@ fluid_synth_dither_s16(int *dither_index, int len, float* lin, float* rin,
 /*
  *  fluid_synth_one_block
  */
-int
+static int
 fluid_synth_one_block(fluid_synth_t* synth, int do_not_mix_fx_to_out)
 {
   int i, auchan;
@@ -2110,7 +2139,7 @@ fluid_synth_one_block(fluid_synth_t* synth, int do_not_mix_fx_to_out)
  * selects a voice for killing. the selection algorithm is a refinement
  * of the algorithm previously in fluid_synth_alloc_voice.
  */
-fluid_voice_t*
+static fluid_voice_t*
 fluid_synth_free_voice_by_kill(fluid_synth_t* synth)
 {
   int i;
@@ -2265,7 +2294,8 @@ fluid_synth_alloc_voice(fluid_synth_t* synth, fluid_sample_t* sample, int chan, 
 /*
  * fluid_synth_kill_by_exclusive_class
  */
-void fluid_synth_kill_by_exclusive_class(fluid_synth_t* synth, fluid_voice_t* new_voice)
+static void
+fluid_synth_kill_by_exclusive_class(fluid_synth_t* synth, fluid_voice_t* new_voice)
 {
   /** Kill all voices on a given channel, which belong into
       excl_class.  This function is called by a SoundFont's preset in
@@ -2398,7 +2428,8 @@ fluid_synth_sfload(fluid_synth_t* synth, const char* filename, int reset_presets
 /*
  * fluid_synth_sfunload_callback
  */
-static int fluid_synth_sfunload_callback(void* data, unsigned int msec)
+static int
+fluid_synth_sfunload_callback(void* data, unsigned int msec)
 {
   fluid_sfont_t* sfont = (fluid_sfont_t*) data;
   int r = delete_fluid_sfont(sfont);
@@ -2411,7 +2442,8 @@ static int fluid_synth_sfunload_callback(void* data, unsigned int msec)
 /*
  * fluid_synth_sfunload_macos9
  */
-void fluid_synth_sfunload_macos9(fluid_synth_t* synth)
+static void
+fluid_synth_sfunload_macos9(fluid_synth_t* synth)
 {
 #if defined(MACOS9)
   fluid_list_t *list, *next;
@@ -2727,7 +2759,9 @@ double fluid_synth_get_reverb_width(fluid_synth_t* synth)
  * several voice processes, for example a stereo sample.  Don't
  * release those...
  */
-void fluid_synth_release_voice_on_same_note(fluid_synth_t* synth, int chan, int key){
+static void
+fluid_synth_release_voice_on_same_note(fluid_synth_t* synth, int chan, int key)
+{
   int i;
   fluid_voice_t* voice;
 
@@ -3236,7 +3270,7 @@ int fluid_synth_stop(fluid_synth_t* synth, unsigned int id)
   return status;
 }
 
-fluid_bank_offset_t*
+static fluid_bank_offset_t*
 fluid_synth_get_bank_offset0(fluid_synth_t* synth, int sfont_id)
 {
 	fluid_list_t* list = synth->bank_offsets;
@@ -3286,7 +3320,7 @@ fluid_synth_get_bank_offset(fluid_synth_t* synth, int sfont_id)
 	return (bank_offset == NULL)? 0 : bank_offset->offset;
 }
 
-void
+static void
 fluid_synth_remove_bank_offset(fluid_synth_t* synth, int sfont_id)
 {
 	fluid_bank_offset_t* bank_offset;

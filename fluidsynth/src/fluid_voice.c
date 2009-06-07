@@ -45,12 +45,18 @@
 /* min vol envelope release (to stop clicks) in SoundFont timecents */
 #define FLUID_MIN_VOLENVRELEASE -7200.0f /* ~16ms */
 
-
+static int fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t* voice);
+static int calculate_hold_decay_buffers(fluid_voice_t* voice, int gen_base,
+                                        int gen_key2base, int is_decay);
 static inline void fluid_voice_effects (fluid_voice_t *voice, int count,
 				        fluid_real_t* dsp_left_buf,
 				        fluid_real_t* dsp_right_buf,
 				        fluid_real_t* dsp_reverb_buf,
 				        fluid_real_t* dsp_chorus_buf);
+static fluid_real_t
+fluid_voice_get_lower_boundary_for_attenuation(fluid_voice_t* voice);
+static void fluid_voice_check_sample_sanity(fluid_voice_t* voice);
+
 /*
  * new_fluid_voice
  */
@@ -817,7 +823,7 @@ void fluid_voice_start(fluid_voice_t* voice)
  * conversion will be done in the DSP function. This is the case, for
  * example, for the pitch since it is modulated by the controllers in
  * cents. */
-int
+static int
 fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t* voice)
 {
   fluid_real_t x;
@@ -950,8 +956,9 @@ fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t* voice)
 /*
  * calculate_hold_decay_buffers
  */
-int calculate_hold_decay_buffers(fluid_voice_t* voice, int gen_base,
-				 int gen_key2base, int is_decay)
+static int
+calculate_hold_decay_buffers(fluid_voice_t* voice, int gen_base,
+                             int gen_key2base, int is_decay)
 {
   /* Purpose:
    *
@@ -1738,7 +1745,8 @@ int fluid_voice_is_playing(fluid_voice_t* voice)
  * all modulators have been run on the voice once.  Also,
  * voice->attenuation has to be initialized.
  */
-fluid_real_t fluid_voice_get_lower_boundary_for_attenuation(fluid_voice_t* voice)
+static fluid_real_t
+fluid_voice_get_lower_boundary_for_attenuation(fluid_voice_t* voice)
 {
   int i;
   fluid_mod_t* mod;
@@ -1792,7 +1800,8 @@ fluid_real_t fluid_voice_get_lower_boundary_for_attenuation(fluid_voice_t* voice
  * Make sure, that sample start / end point and loop points are in
  * proper order. When starting up, calculate the initial phase.
  */
-void fluid_voice_check_sample_sanity(fluid_voice_t* voice)
+static void
+fluid_voice_check_sample_sanity(fluid_voice_t* voice)
 {
     int min_index_nonloop=(int) voice->sample->start;
     int max_index_nonloop=(int) voice->sample->end;
