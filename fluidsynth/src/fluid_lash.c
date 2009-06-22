@@ -139,7 +139,7 @@ fluid_lash_run (void * data)
 	      done = 1;
 	      break;
             default:
-              fprintf (stderr, "Recieved unknown LASH event of type %d\n", lash_event_get_type (event));
+              fprintf (stderr, "Received unknown LASH event of type %d\n", lash_event_get_type (event));
 	      lash_event_destroy (event);
 	      break;
             }
@@ -170,7 +170,7 @@ fluid_lash_run (void * data)
 }
 
 
-#else		/* depricated LADCCA support, will remove someday */
+#else		/* deprecated LADCCA support, will remove someday */
 
 
 fluid_lash_args_t *
@@ -267,7 +267,7 @@ fluid_lash_run (void * data)
 	      done = 1;
 	      break;
             default:
-              fprintf (stderr, "Recieved unknown LADCCA event of type %d\n", cca_event_get_type (event));
+              fprintf (stderr, "Received unknown LADCCA event of type %d\n", cca_event_get_type (event));
 	      cca_event_destroy (event);
 	      break;
             }
