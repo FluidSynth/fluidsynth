@@ -75,7 +75,7 @@ struct _fluid_channel_t
 fluid_channel_t* new_fluid_channel(fluid_synth_t* synth, int num);
 int delete_fluid_channel(fluid_channel_t* chan);
 void fluid_channel_init(fluid_channel_t* chan);
-void fluid_channel_init_ctrl(fluid_channel_t* chan);
+void fluid_channel_init_ctrl(fluid_channel_t* chan, int is_all_ctrl_off);
 void fluid_channel_reset(fluid_channel_t* chan);
 int fluid_channel_set_preset(fluid_channel_t* chan, fluid_preset_t* preset);
 fluid_preset_t* fluid_channel_get_preset(fluid_channel_t* chan);

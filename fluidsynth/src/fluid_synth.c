@@ -324,7 +324,7 @@ fluid_synth_init(void)
 
 
 
-  /* SF2.01 page 55 section 8.4.9: MIDI continuous controller 93 to Reverb send */
+  /* SF2.01 page 55 section 8.4.9: MIDI continuous controller 93 to Chorus send */
   fluid_mod_set_source1(&default_chorus_mod, 93,                 /* index=93 */
 		       FLUID_MOD_CC                              /* CC=1 */
 		       | FLUID_MOD_LINEAR                        /* type=0 */

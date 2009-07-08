@@ -44,7 +44,7 @@ new_fluid_channel(fluid_synth_t* synth, int num)
   chan->preset = NULL;
 
   fluid_channel_init(chan);
-  fluid_channel_init_ctrl(chan);
+  fluid_channel_init_ctrl(chan, 0);
 
   return chan;
 }
@@ -52,8 +52,8 @@ new_fluid_channel(fluid_synth_t* synth, int num)
 void
 fluid_channel_init(fluid_channel_t* chan)
 {
-  chan->prognum = (chan->channum == 9)? 0 : chan->channum;
-  chan->banknum = (chan->channum == 9)? 128 : 0;
+  chan->prognum = 0;
+  chan->banknum = (chan->channum == 9)? 128 : 0; /* ?? */
   chan->sfontnum = 0;
 
   if (chan->preset) delete_fluid_preset (chan->preset);
@@ -65,47 +65,85 @@ fluid_channel_init(fluid_channel_t* chan)
   chan->nrpn_active = 0;
 }
 
+/*
+  @param is_all_ctrl_off if nonzero, only resets some controllers, according to 
+  http://www.midi.org/techspecs/rp15.php 
+*/
 void
-fluid_channel_init_ctrl(fluid_channel_t* chan)
+fluid_channel_init_ctrl(fluid_channel_t* chan, int is_all_ctrl_off)
 {
   int i;
 
   chan->key_pressure = 0;
   chan->channel_pressure = 0;
   chan->pitch_bend = 0x2000; /* Range is 0x4000, pitch bend wheel starts in centered position */
-  chan->pitch_wheel_sensitivity = 2; /* two semi-tones */
 
   for (i = 0; i < GEN_LAST; i++) {
     chan->gen[i] = 0.0f;
     chan->gen_abs[i] = 0;
   }
 
-  for (i = 0; i < 128; i++) {
-    SETCC(chan, i, 0);
+  if (is_all_ctrl_off) {
+    for (i = 0; i < ALL_SOUND_OFF; i++) {
+      if (i >= EFFECTS_DEPTH1 && i <= EFFECTS_DEPTH5) {
+        continue;
+      }
+      if (i >= SOUND_CTRL1 && i <= SOUND_CTRL10) {
+        continue;
+      }
+      if (i == BANK_SELECT_MSB || i == BANK_SELECT_LSB || i == VOLUME_MSB || 
+          i == VOLUME_LSB || i == PAN_MSB || i == PAN_LSB) {
+        continue;
+      }
+
+      SETCC(chan, i, 0);
+    }
+  }
+  else {
+    for (i = 0; i < 128; i++) {
+      SETCC(chan, i, 0);
+    }
   }
 
-  /* Volume / initial attenuation (MSB & LSB) */
-  SETCC(chan, VOLUME_MSB, 127);
-  SETCC(chan, VOLUME_LSB, 0);
+  /* Set RPN controllers to NULL state */
+  SETCC(chan, RPN_LSB, 127);
+  SETCC(chan, RPN_MSB, 127);
 
-  /* Pan (MSB & LSB) */
-  SETCC(chan, PAN_MSB, 64);
-  SETCC(chan, PAN_LSB, 0);
+  /* Set NRPN controllers to NULL state */
+  SETCC(chan, NRPN_LSB, 127);
+  SETCC(chan, NRPN_MSB, 127);
 
   /* Expression (MSB & LSB) */
   SETCC(chan, EXPRESSION_MSB, 127);
   SETCC(chan, EXPRESSION_LSB, 127);
 
-  /* Set RPN controllers to NULL state */
-  SETCC(chan, RPN_LSB, 127);
-  SETCC(chan, RPN_MSB, 127);
+  if (!is_all_ctrl_off) {
+
+    chan->pitch_wheel_sensitivity = 2; /* two semi-tones */
+
+    /* Just like panning, a value of 64 indicates no change for sound ctrls */
+    for (i = SOUND_CTRL1; i <= SOUND_CTRL10; i++) {
+      SETCC(chan, i, 64);
+    }
+
+    /* Volume / initial attenuation (MSB & LSB) */
+    SETCC(chan, VOLUME_MSB, 100);
+    SETCC(chan, VOLUME_LSB, 0);
+
+    /* Pan (MSB & LSB) */
+    SETCC(chan, PAN_MSB, 64);
+    SETCC(chan, PAN_LSB, 0);
+
+    /* Reverb */
+    SETCC(chan, EFFECTS_DEPTH1, 40);
+  }
 }
 
 void
 fluid_channel_reset(fluid_channel_t* chan)
 {
   fluid_channel_init(chan);
-  fluid_channel_init_ctrl(chan);
+  fluid_channel_init_ctrl(chan, 0);
 }
 
 /*
@@ -227,7 +265,7 @@ fluid_channel_cc(fluid_channel_t* chan, int num, int value)
     break;
 
   case ALL_CTRL_OFF:
-    fluid_channel_init_ctrl(chan);
+    fluid_channel_init_ctrl(chan, 1);
     fluid_synth_modulate_voices_all(chan->synth, chan->channum);
     break;
 
