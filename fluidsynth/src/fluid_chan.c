@@ -135,7 +135,10 @@ fluid_channel_init_ctrl(fluid_channel_t* chan, int is_all_ctrl_off)
     SETCC(chan, PAN_LSB, 0);
 
     /* Reverb */
-    SETCC(chan, EFFECTS_DEPTH1, 40);
+    /* SETCC(chan, EFFECTS_DEPTH1, 40); */
+    /* Note: although XG standard specifies the default amount of reverb to 
+       be 40, most people preferred having it at zero.
+       See http://lists.gnu.org/archive/html/fluid-dev/2009-07/msg00016.html */
   }
 }
 
