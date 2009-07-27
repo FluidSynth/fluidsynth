@@ -73,6 +73,8 @@ enum fluid_synth_status
   FLUID_SYNTH_STOPPED
 };
 
+#define SYNTH_REVERB_CHANNEL 0
+#define SYNTH_CHORUS_CHANNEL 1
 
 typedef struct _fluid_bank_offset_t fluid_bank_offset_t;
 
@@ -99,7 +101,7 @@ struct _fluid_synth_t
   int audio_channels;                /** the number of audio channels (1 channel=left+right) */
   int audio_groups;                  /** the number of (stereo) 'sub'groups from the synth.
 					 Typically equal to audio_channels. */
-  int effects_channels;              /** the number of effects channels (= 2) */
+  int effects_channels;              /** the number of effects channels (>= 2) */
   unsigned int state;                /** the synthesizer state */
   unsigned int ticks;                /** the number of audio samples since the start */
   unsigned int start;                /** the start in msec, as returned by system clock */

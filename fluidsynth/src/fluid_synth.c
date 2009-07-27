@@ -506,7 +506,7 @@ new_fluid_synth(fluid_settings_t *settings)
     synth->audio_groups = 128;
   }
 
-  if (synth->effects_channels != 2) {
+  if (synth->effects_channels < 2) {
     FLUID_LOG(FLUID_WARN, "Invalid number of effects channels (%d)."
 	     "Setting effects channels to 2.", synth->effects_channels);
     synth->effects_channels = 2;
@@ -608,8 +608,8 @@ new_fluid_synth(fluid_settings_t *settings)
     goto error_recovery;
   }
 
-  FLUID_MEMSET(synth->fx_left_buf, 0, 2 * sizeof(fluid_real_t*));
-  FLUID_MEMSET(synth->fx_right_buf, 0, 2 * sizeof(fluid_real_t*));
+  FLUID_MEMSET(synth->fx_left_buf, 0, synth->effects_channels * sizeof(fluid_real_t*));
+  FLUID_MEMSET(synth->fx_right_buf, 0, synth->effects_channels * sizeof(fluid_real_t*));
 
   for (i = 0; i < synth->effects_channels; i++) {
     synth->fx_left_buf[i] = FLUID_ARRAY(fluid_real_t, FLUID_BUFSIZE);
@@ -748,7 +748,7 @@ delete_fluid_synth(fluid_synth_t* synth)
   }
 
   if (synth->fx_left_buf != NULL) {
-    for (i = 0; i < 2; i++) {
+    for (i = 0; i < synth->effects_channels; i++) {
       if (synth->fx_left_buf[i] != NULL) {
 	FLUID_FREE(synth->fx_left_buf[i]);
       }
@@ -757,7 +757,7 @@ delete_fluid_synth(fluid_synth_t* synth)
   }
 
   if (synth->fx_right_buf != NULL) {
-    for (i = 0; i < 2; i++) {
+    for (i = 0; i < synth->effects_channels; i++) {
       if (synth->fx_right_buf[i] != NULL) {
 	FLUID_FREE(synth->fx_right_buf[i]);
       }
@@ -2031,8 +2031,8 @@ fluid_synth_one_block(fluid_synth_t* synth, int do_not_mix_fx_to_out)
    * enabled on synth level.  Nonexisting buffers are detected in the
    * DSP loop. Not sending the reverb / chorus signal saves some time
    * in that case. */
-  reverb_buf = synth->with_reverb ? synth->fx_left_buf[0] : NULL;
-  chorus_buf = synth->with_chorus ? synth->fx_left_buf[1] : NULL;
+  reverb_buf = synth->with_reverb ? synth->fx_left_buf[SYNTH_REVERB_CHANNEL] : NULL;
+  chorus_buf = synth->with_chorus ? synth->fx_left_buf[SYNTH_CHORUS_CHANNEL] : NULL;
 
   fluid_profile(FLUID_PROF_ONE_BLOCK_CLEAR, prof_ref);
 
@@ -2079,7 +2079,8 @@ fluid_synth_one_block(fluid_synth_t* synth, int do_not_mix_fx_to_out)
     /* send to reverb */
     if (reverb_buf) {
       fluid_revmodel_processreplace(synth->reverb, reverb_buf,
-				   synth->fx_left_buf[0], synth->fx_right_buf[0]);
+				   synth->fx_left_buf[SYNTH_REVERB_CHANNEL],
+				   synth->fx_right_buf[SYNTH_REVERB_CHANNEL]);
       fluid_check_fpe("Reverb");
     }
 
@@ -2088,7 +2089,8 @@ fluid_synth_one_block(fluid_synth_t* synth, int do_not_mix_fx_to_out)
     /* send to chorus */
     if (chorus_buf) {
       fluid_chorus_processreplace(synth->chorus, chorus_buf,
-				 synth->fx_left_buf[1], synth->fx_right_buf[1]);
+				 synth->fx_left_buf[SYNTH_CHORUS_CHANNEL],
+			         synth->fx_right_buf[SYNTH_CHORUS_CHANNEL]);
       fluid_check_fpe("Chorus");
     }
 
