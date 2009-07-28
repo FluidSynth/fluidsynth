@@ -28,28 +28,6 @@
 char midi_message_buffer[MIDI_MESSAGE_LENGTH];
 
 
-/* Taken from Nagano Daisuke's USB-MIDI driver */
-
-static int remains_f0f6[] = {
-	0,	/** 0xF0 **/
-	2,	/** 0XF1 **/
-	3,	/** 0XF2 **/
-	2,	/** 0XF3 **/
-	2,	/** 0XF4 (Undefined by MIDI Spec, and subject to change) **/
-	2,	/** 0XF5 (Undefined by MIDI Spec, and subject to change) **/
-	1	/** 0XF6 **/
-};
-
-static int remains_80e0[] = {
-	3,	/** 0x8X Note Off **/
-	3,	/** 0x9X Note On **/
-	3,	/** 0xAX Poly-key pressure **/
-	3,	/** 0xBX Control Change **/
-	2,	/** 0xCX Program Change **/
-	2,	/** 0xDX Channel pressure **/
-	3 	/** 0xEX PitchBend Change **/
-};
-
 
 /***************************************************************
  *
@@ -1610,17 +1588,35 @@ fluid_midi_event_t* fluid_midi_parser_parse(fluid_midi_parser_t* parser, unsigne
 };
 
 /* Purpose:
- * Returns the length of the MIDI message starting with c.
- * Taken from Nagano Daisuke's USB-MIDI driver */
+ * Returns the length of the MIDI message. */
 int fluid_midi_event_length(unsigned char event){
-	if ( event < 0xf0 ) {
-		return remains_80e0[((event-0x80)>>4)&0x0f];
-	} else if ( event < 0xf7 ) {
-		return remains_f0f6[event-0xf0];
-	} else {
-		return 1;
+	switch (event && 0xF0) {
+		case NOTE_OFF: 
+		case NOTE_ON:
+		case KEY_PRESSURE:
+		case CONTROL_CHANGE:
+		case PITCH_BEND: 
+			return 3;
+		case PROGRAM_CHANGE:
+		case CHANNEL_PRESSURE: 
+			return 2;
 	}
+	switch (event) {
+		case MIDI_SYSEX: 
+			return 0;
+		case MIDI_TIME_CODE:
+		case MIDI_SONG_SELECT:
+		case 0xF4:
+		case 0xF5:
+			return 2;
+		case MIDI_TUNE_REQUEST:
+			return 1;
+		case MIDI_SONG_POSITION: 
+			return 3;
+	}
+	return 1;
 }
+
 
 /************************************************************************
  *       fluid_midi_send_event
