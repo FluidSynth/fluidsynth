@@ -1106,7 +1106,7 @@ fluid_player_t* new_fluid_player(fluid_synth_t* synth)
 		return NULL;
 	}
 	player->status = FLUID_PLAYER_READY;
-	player->loop = 0;
+	player->loop = 1;
 	player->ntracks = 0;
 	for (i = 0; i < MAX_NUMBER_OF_TRACKS; i++) {
 		player->track[i] = NULL;
@@ -1115,7 +1115,7 @@ fluid_player_t* new_fluid_player(fluid_synth_t* synth)
 	player->system_timer = NULL;
 	player->sample_timer = NULL;
 	player->playlist = NULL;
-	player->current_file = NULL;
+	player->currentfile = NULL;
 	player->division = 0;
 	player->send_program_change = 1;
 	player->miditempo = 480000;
@@ -1138,11 +1138,21 @@ fluid_player_t* new_fluid_player(fluid_synth_t* synth)
  */
 int delete_fluid_player(fluid_player_t* player)
 {
+	fluid_list_t* q;	
+
 	if (player == NULL) {
 		return FLUID_OK;
 	}
 	fluid_player_stop(player);
 	fluid_player_reset(player);
+	
+	while (player->playlist != NULL) {
+		q = player->playlist->next;
+		FLUID_FREE(player->playlist->data);
+		delete1_fluid_list(player->playlist);
+		player->playlist = q;
+	}
+
 	FLUID_FREE(player);
 	return FLUID_OK;
 }
@@ -1168,9 +1178,9 @@ int fluid_player_reset(fluid_player_t* player)
 			player->track[i] = NULL;
 		}
 	}
-	player->current_file = NULL;
+/*	player->current_file = NULL; */
 	player->status = FLUID_PLAYER_READY;
-	player->loop = 0;
+/*	player->loop = 1; */
 	player->ntracks = 0;
 	player->division = 0;
 	player->send_program_change = 1;
@@ -1241,70 +1251,102 @@ int fluid_player_load(fluid_player_t* player, char *filename)
 	return FLUID_OK;
 }
 
+void fluid_player_advancefile(fluid_player_t* player)
+{
+	if (player->playlist == NULL) {
+		return; /* No files to play */
+	}
+	if (player->currentfile != NULL) {
+		player->currentfile = fluid_list_next(player->currentfile);
+	}
+	if (player->currentfile == NULL) {
+		if (player->loop == 0) {
+			return; /* We're done playing */ 
+		}
+		if (player->loop > 0) {	
+			player->loop--;
+		} 
+		player->currentfile = player->playlist;
+	} 
+}
+
+void fluid_player_playlist_load(fluid_player_t* player, unsigned int msec)
+{
+	char* current_filename;
+	int i;
+
+	do {
+		fluid_player_advancefile(player);
+		if (player->currentfile == NULL) { 
+			/* Failed to find next song, probably since we're finished */
+			player->status = FLUID_PLAYER_DONE;
+			return;
+		}
+
+		fluid_player_reset(player);
+		current_filename = (char*) player->currentfile->data;
+		FLUID_LOG(FLUID_DBG, "%s: %d: Loading midifile %s", __FILE__, __LINE__, current_filename);
+	} while (fluid_player_load(player, current_filename) != FLUID_OK);
+
+	/* Successfully loaded midi file */
+
+	player->begin_msec = msec;
+	player->start_msec = msec;
+	player->start_ticks = 0;
+	player->cur_ticks = 0;
+
+	for (i = 0; i < player->ntracks; i++) {
+		if (player->track[i] != NULL) {
+			fluid_track_reset(player->track[i]);
+		}
+	}
+}
+
+
 /*
  * fluid_player_callback
  */
 int fluid_player_callback(void* data, unsigned int msec)
 {
 	int i;
+	int loadnextfile;
 	int status = FLUID_PLAYER_DONE;
 	fluid_player_t* player;
 	fluid_synth_t* synth;
 	player = (fluid_player_t*) data;
 	synth = player->synth;
 
-	/* Load the next file if necessary */
-	while (player->current_file == NULL) {
-
-		if (player->playlist == NULL) {
-			return 0;
+	loadnextfile = player->currentfile == NULL ? 1 : 0; 
+	do {
+		if (loadnextfile) {
+			loadnextfile = 0;
+			fluid_player_playlist_load(player, msec);
+			if (player->currentfile == NULL) {
+				return 0;
+			}
 		}
 
-		fluid_player_reset(player);
+		player->cur_msec = msec;
+		player->cur_ticks = (player->start_ticks +
+			(int) ((double) (player->cur_msec - player->start_msec) / player->deltatime));
 
-		player->current_file = fluid_list_get(player->playlist);
-		player->playlist = fluid_list_next(player->playlist);
-
-		FLUID_LOG(FLUID_DBG, "%s: %d: Loading midifile %s", __FILE__, __LINE__, player->current_file);
-
-		if (fluid_player_load(player, player->current_file) == FLUID_OK) {
-
-			player->begin_msec = msec;
-			player->start_msec = msec;
-			player->start_ticks = 0;
-			player->cur_ticks = 0;
-
-			for (i = 0; i < player->ntracks; i++) {
-				if (player->track[i] != NULL) {
-					fluid_track_reset(player->track[i]);
+		for (i = 0; i < player->ntracks; i++) {
+			if (!fluid_track_eot(player->track[i])) {
+				status = FLUID_PLAYER_PLAYING;
+				if (fluid_track_send_events(player->track[i], synth, player, player->cur_ticks) != FLUID_OK) {
+				/* */
 				}
 			}
-
-		} else {
-			player->current_file = NULL;
 		}
-	}
 
-	player->cur_msec = msec;
-	player->cur_ticks = (player->start_ticks +
-			     (int) ((double) (player->cur_msec - player->start_msec) / player->deltatime));
-
-	for (i = 0; i < player->ntracks; i++) {
-		if (!fluid_track_eot(player->track[i])) {
-			status = FLUID_PLAYER_PLAYING;
-			if (fluid_track_send_events(player->track[i], synth, player, player->cur_ticks) != FLUID_OK) {
-				/* */
-			}
+		if (status == FLUID_PLAYER_DONE) {
+			FLUID_LOG(FLUID_DBG, "%s: %d: Duration=%.3f sec",
+				  __FILE__, __LINE__, (msec - player->begin_msec) / 1000.0);
+			loadnextfile = 1;
 		}
-	}
+	} while (loadnextfile);
 
 	player->status = status;
-
-	if (player->status == FLUID_PLAYER_DONE) {
-		FLUID_LOG(FLUID_DBG, "%s: %d: Duration=%.3f sec",
-			  __FILE__, __LINE__, (msec - player->begin_msec) / 1000.0);
-		player->current_file = NULL;
-	}
 
 	return 1;
 }
@@ -1368,13 +1410,14 @@ int fluid_player_get_status(fluid_player_t* player)
 	return player->status;
 }
 
-/* FIXME - Looping seems to not actually be implemented? */
-
 /**
- * Enable looping of a MIDI player (DOCME - Does this actually work?)
+ * Enable looping of a MIDI player 
  * @param player MIDI player instance
- * @param loop Value for looping (DOCME - What would this value be, boolean/time index?)
+ * @param loop times left to loop the playlist. -1 means loop infinitely.
  * @return Always returns 0
+ * @since 1.1.0
+ * For example, if you want to loop the playlist twice, set loop to 2 
+ * and call this function before you start the player.
  */
 int fluid_player_set_loop(fluid_player_t* player, int loop)
 {

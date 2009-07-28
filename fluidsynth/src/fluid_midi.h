@@ -238,14 +238,16 @@ int fluid_track_send_events(fluid_track_t* track,
  */
 struct _fluid_player_t {
   int status;
-  int loop;
   int ntracks;
   fluid_track_t *track[MAX_NUMBER_OF_TRACKS];
   fluid_synth_t* synth;
   fluid_timer_t* system_timer;
   fluid_sample_timer_t* sample_timer;
-  fluid_list_t* playlist;
-  char* current_file;
+
+  int loop; /* -1 = loop infinitely, otherwise times left to loop the playlist */
+  fluid_list_t* playlist; /* List of file names */
+  fluid_list_t* currentfile; /* points to an item in files, or NULL if not playing */
+
   char send_program_change; /* should we ignore the program changes? */
   char use_system_timer;   /* if zero, use sample timers, otherwise use system clock timer */
   int start_ticks;          /* the number of tempo ticks passed at the last tempo change */
