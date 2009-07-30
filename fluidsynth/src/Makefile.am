@@ -139,6 +139,9 @@ libfluidsynth_la_CPPFLAGS = $(LIBFLUID_CPPFLAGS)
 
 fluidsynth_SOURCES = fluidsynth.c
 fluidsynth_LDADD = libfluidsynth.la
-fluidsynth_LDFLAGS = -Wl,--as-needed
 fluidsynth_CPPFLAGS = $(FLUIDSYNTH_CPPFLAGS)
+
+if GNU_LD_SUPPORT
+fluidsynth_LDFLAGS = -Wl,--as-needed
+endif
 

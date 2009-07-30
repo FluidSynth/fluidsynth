@@ -80,12 +80,19 @@ os2*)
   LDFLAGS="$LDFLAGS -Zbin-files"
   LIBFLUID_LDFLAGS="-no-undefined"
   ;;
+solaris*) 
+  LDFLAGS="$LDFLAGS -lnsl -lsocket" 
+  ;; 
 esac
 
 AC_SUBST(LIBFLUID_LIBS)
 AC_SUBST(LIBFLUID_CPPFLAGS)
 AC_SUBST(LIBFLUID_LDFLAGS)
 AC_SUBST(FLUID_CPPFLAGS)
+
+dnl Check for GNU LD
+AC_LIB_PROG_LD_GNU
+AM_CONDITIONAL(GNU_LD_SUPPORT, test "x$with_gnu_ld" = "xyes")
 
 AM_CONDITIONAL(MINGW32_SUPPORT, test "$mingw32_support" == "yes")
 
