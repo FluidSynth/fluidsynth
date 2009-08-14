@@ -124,7 +124,8 @@ struct _fluid_voice_t
 	fluid_real_t attenuation;        /* the attenuation in centibels */
 	fluid_real_t min_attenuation_cB; /* Estimate on the smallest possible attenuation
 					  * during the lifetime of the voice */
-	fluid_real_t root_pitch;
+	fluid_real_t root_pitch, root_pitch_hz;
+	
 
 	/* sample and loop start and end points (offset in sample memory).  */
 	int start;

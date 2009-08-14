@@ -250,6 +250,7 @@ struct _fluid_player_t {
 
   char send_program_change; /* should we ignore the program changes? */
   char use_system_timer;   /* if zero, use sample timers, otherwise use system clock timer */
+  char reset_synth_between_songs; /* 1 if system reset should be sent to the synth between songs. */
   int start_ticks;          /* the number of tempo ticks passed at the last tempo change */
   int cur_ticks;            /* the number of tempo ticks passed */
   int begin_msec;           /* the time (msec) of the beginning of the file */

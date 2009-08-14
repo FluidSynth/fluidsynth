@@ -475,7 +475,7 @@ fluid_voice_write(fluid_voice_t* voice,
   voice->phase_incr = fluid_ct2hz_real
     (voice->pitch + voice->modlfo_val * voice->modlfo_to_pitch
      + voice->viblfo_val * voice->viblfo_to_pitch
-     + voice->modenv_val * voice->modenv_to_pitch) / voice->root_pitch;
+     + voice->modenv_val * voice->modenv_to_pitch) / voice->root_pitch_hz;
 
   fluid_check_fpe ("voice_write phase calculation");
 
@@ -813,6 +813,33 @@ void fluid_voice_start(fluid_voice_t* voice)
   voice->status = FLUID_VOICE_ON;
 }
 
+static void 
+fluid_voice_calculate_gen_pitch(fluid_voice_t* voice)
+{
+  fluid_real_t x;
+
+  /* The GEN_PITCH is a hack to fit the pitch bend controller into the
+   * modulator paradigm.  Now the nominal pitch of the key is set.
+   * Note about SCALETUNE: SF2.01 8.1.3 says, that this generator is a
+   * non-realtime parameter. So we don't allow modulation (as opposed
+   * to _GEN(voice, GEN_SCALETUNE) When the scale tuning is varied,
+   * one key remains fixed. Here C3 (MIDI number 60) is used.
+   */
+  if (fluid_channel_has_tuning(voice->channel)) {
+    /* pitch(scalekey) + scale * (pitch(key) - pitch(scalekey)) */
+    #define __pitch(_k) fluid_tuning_get_pitch(tuning, _k)
+    fluid_tuning_t* tuning = fluid_channel_get_tuning(voice->channel);
+    x = __pitch((int) (voice->root_pitch / 100.0f));
+    voice->gen[GEN_PITCH].val = (x + (voice->gen[GEN_SCALETUNE].val / 100.0f *
+					   (__pitch(voice->key) - x)));
+  } else {
+    voice->gen[GEN_PITCH].val = (voice->gen[GEN_SCALETUNE].val * (voice->key - voice->root_pitch / 100.0f)
+				 + voice->root_pitch);
+  }
+  fprintf(stderr, "%d: %f %f\n", voice->id, voice->gen[GEN_PITCH].val,  voice->root_pitch);
+
+}
+
 /*
  * fluid_voice_calculate_runtime_synthesis_parameters
  *
@@ -909,24 +936,6 @@ fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t* voice)
     fluid_gen_t* dest_gen = &voice->gen[dest_gen_index];
     dest_gen->mod += modval;
     /*      fluid_dump_modulator(mod); */
-  }
-
-  /* The GEN_PITCH is a hack to fit the pitch bend controller into the
-   * modulator paradigm.  Now the nominal pitch of the key is set.
-   * Note about SCALETUNE: SF2.01 8.1.3 says, that this generator is a
-   * non-realtime parameter. So we don't allow modulation (as opposed
-   * to _GEN(voice, GEN_SCALETUNE) When the scale tuning is varied,
-   * one key remains fixed. Here C3 (MIDI number 60) is used.
-   */
-  if (fluid_channel_has_tuning(voice->channel)) {
-    /* pitch(60) + scale * (pitch(key) - pitch(60)) */
-    #define __pitch(_k) fluid_tuning_get_pitch(tuning, _k)
-    fluid_tuning_t* tuning = fluid_channel_get_tuning(voice->channel);
-    voice->gen[GEN_PITCH].val = (__pitch(60) + (voice->gen[GEN_SCALETUNE].val / 100.0f *
-					   (__pitch(voice->key) - __pitch(60))));
-  } else {
-    voice->gen[GEN_PITCH].val = (voice->gen[GEN_SCALETUNE].val * (voice->key - 60.0f)
-				 + 100.0f * 60.0f);
   }
 
   /* Now the generators are initialized, nominal and modulation value.
@@ -1103,10 +1112,13 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
     } else {
       voice->root_pitch = voice->sample->origpitch * 100.0f - voice->sample->pitchadj;
     }
-    voice->root_pitch = fluid_ct2hz(voice->root_pitch);
+    fprintf(stderr, "%d: %f\n", voice->id, voice->root_pitch);
+    voice->root_pitch_hz = fluid_ct2hz(voice->root_pitch);
     if (voice->sample != NULL) {
-      voice->root_pitch *= (fluid_real_t) voice->output_rate / voice->sample->samplerate;
+      voice->root_pitch_hz *= (fluid_real_t) voice->output_rate / voice->sample->samplerate;
     }
+    /* voice->pitch depends on voice->root_pitch, so calculate voice->pitch now */
+    fluid_voice_calculate_gen_pitch(voice);
     break;
 
   case GEN_FILTERFC:

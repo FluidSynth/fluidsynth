@@ -1098,7 +1098,6 @@ fluid_track_send_events(fluid_track_t* track,
 fluid_player_t* new_fluid_player(fluid_synth_t* synth)
 {
 	int i;
-	char* timing_source;
 	fluid_player_t* player;
 	player = FLUID_NEW(fluid_player_t);
 	if (player == NULL) {
@@ -1121,12 +1120,10 @@ fluid_player_t* new_fluid_player(fluid_synth_t* synth)
 	player->miditempo = 480000;
 	player->deltatime = 4.0;
 
-	player->use_system_timer = 0;
-	if (fluid_settings_getstr(synth->settings, "player.timing-source", &timing_source) != 0) {
-		if (strcmp(timing_source, "system") == 0) {
-			player->use_system_timer = 1;
-		}
-	}
+	player->use_system_timer = 
+		fluid_settings_str_equal(synth->settings, "player.timing-source", "system");
+	player->reset_synth_between_songs =
+		fluid_settings_str_equal(synth->settings, "player.reset-synth", "yes");
 
 	return player;
 }
@@ -1165,6 +1162,9 @@ void fluid_player_settings(fluid_settings_t* settings)
 	/* player.timing-source can be either "system" (use system timer) 
 	or "sample" (use timer based on number of written samples) */
 	fluid_settings_register_str(settings, "player.timing-source", "sample", 0, NULL, NULL);
+	/* Selects whether the player should reset the synth between 
+           songs, or not. */
+	fluid_settings_register_str(settings, "player.reset-synth", "yes", 0, NULL, NULL);
 }
 
 
@@ -1294,6 +1294,10 @@ void fluid_player_playlist_load(fluid_player_t* player, unsigned int msec)
 	player->start_msec = msec;
 	player->start_ticks = 0;
 	player->cur_ticks = 0;
+
+	if (player->reset_synth_between_songs) {
+		fluid_synth_system_reset(player->synth);
+	}
 
 	for (i = 0; i < player->ntracks; i++) {
 		if (player->track[i] != NULL) {
