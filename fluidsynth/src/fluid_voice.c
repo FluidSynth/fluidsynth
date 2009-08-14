@@ -836,7 +836,6 @@ fluid_voice_calculate_gen_pitch(fluid_voice_t* voice)
     voice->gen[GEN_PITCH].val = (voice->gen[GEN_SCALETUNE].val * (voice->key - voice->root_pitch / 100.0f)
 				 + voice->root_pitch);
   }
-  fprintf(stderr, "%d: %f %f\n", voice->id, voice->gen[GEN_PITCH].val,  voice->root_pitch);
 
 }
 
@@ -1112,7 +1111,6 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
     } else {
       voice->root_pitch = voice->sample->origpitch * 100.0f - voice->sample->pitchadj;
     }
-    fprintf(stderr, "%d: %f\n", voice->id, voice->root_pitch);
     voice->root_pitch_hz = fluid_ct2hz(voice->root_pitch);
     if (voice->sample != NULL) {
       voice->root_pitch_hz *= (fluid_real_t) voice->output_rate / voice->sample->samplerate;
