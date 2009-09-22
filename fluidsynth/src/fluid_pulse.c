@@ -86,8 +86,8 @@ new_fluid_pulse_audio_driver2(fluid_settings_t* settings,
   pa_buffer_attr bufattr;
   double sample_rate;
   int period_size, period_bytes;
-  char *server;
-  char *device;
+  char *server = NULL;
+  char *device = NULL;
   pthread_attr_t attr;
   int sched = SCHED_FIFO;
   struct sched_param priority;
@@ -104,11 +104,20 @@ new_fluid_pulse_audio_driver2(fluid_settings_t* settings,
 //  fluid_settings_getint(settings, "audio.periods", &periods);
   fluid_settings_getint(settings, "audio.period-size", &period_size);
   fluid_settings_getnum(settings, "synth.sample-rate", &sample_rate);
-  fluid_settings_getstr(settings, "audio.pulseaudio.server", &server);
-  fluid_settings_getstr(settings, "audio.pulseaudio.device", &device);
+  fluid_settings_dupstr(settings, "audio.pulseaudio.server", &server);  /* ++ alloc server string */
+  fluid_settings_dupstr(settings, "audio.pulseaudio.device", &device);  /* ++ alloc device string */
 
-  if (strcmp (server, "default") == 0) server = NULL;
-  if (strcmp (device, "default") == 0) device = NULL;
+  if (server && strcmp (server, "default") == 0)
+  {
+    FLUID_FREE (server);        /* -- free server string */
+    server = NULL;
+  }
+
+  if (device && strcmp (device, "default") == 0)
+  {
+    FLUID_FREE (device);        /* -- free device string */
+    device = NULL;
+  }
 
   dev->data = data;
   dev->callback = func;
@@ -184,9 +193,14 @@ new_fluid_pulse_audio_driver2(fluid_settings_t* settings,
     break;
   }
 
+  if (server) FLUID_FREE (server);      /* -- free server string */
+  if (device) FLUID_FREE (device);      /* -- free device string */
+
   return (fluid_audio_driver_t*) dev;
 
  error_recovery:
+  if (server) FLUID_FREE (server);      /* -- free server string */
+  if (device) FLUID_FREE (device);      /* -- free device string */
   delete_fluid_pulse_audio_driver((fluid_audio_driver_t*) dev);
   return NULL;
 }

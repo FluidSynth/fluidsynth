@@ -313,8 +313,8 @@ struct _fluid_revmodel_t {
   fluid_real_t bufallpassR4[allpasstuningR4];
 };
 
-void fluid_revmodel_update(fluid_revmodel_t* rev);
-void fluid_revmodel_init(fluid_revmodel_t* rev);
+static void fluid_revmodel_update(fluid_revmodel_t* rev);
+static void fluid_revmodel_init(fluid_revmodel_t* rev);
 
 fluid_revmodel_t*
 new_fluid_revmodel()
@@ -382,7 +382,7 @@ delete_fluid_revmodel(fluid_revmodel_t* rev)
   FLUID_FREE(rev);
 }
 
-void
+static void
 fluid_revmodel_init(fluid_revmodel_t* rev)
 {
   int i;
@@ -478,7 +478,7 @@ fluid_revmodel_processmix(fluid_revmodel_t* rev, fluid_real_t *in,
   }
 }
 
-void
+static void
 fluid_revmodel_update(fluid_revmodel_t* rev)
 {
   /* Recalculate internal values after parameter change */
@@ -498,64 +498,34 @@ fluid_revmodel_update(fluid_revmodel_t* rev)
   }
 }
 
-/*
- The following get/set functions are not inlined, because
- speed is never an issue when calling them, and also
- because as you develop the reverb model, you may
- wish to take dynamic action when they are called.
-*/
+/**
+ * Set one or more reverb parameters.
+ * @param rev Reverb instance
+ * @param set One or more flags from #fluid_revmodel_set_t indicating what
+ *   parameters to set (#FLUID_REVMODEL_SET_ALL to set all parameters)
+ * @param roomsize Reverb room size
+ * @param damping Reverb damping
+ * @param width Reverb width
+ * @param level Reverb level
+ */
 void
-fluid_revmodel_setroomsize(fluid_revmodel_t* rev, fluid_real_t value)
+fluid_revmodel_set(fluid_revmodel_t* rev, int set, float roomsize,
+                   float damping, float width, float level)
 {
-/*   fluid_clip(value, 0.0f, 1.0f); */
-  rev->roomsize = (value * scaleroom) + offsetroom;
-  fluid_revmodel_update(rev);
-}
+  if (set & FLUID_REVMODEL_SET_ROOMSIZE)
+    rev->roomsize = (roomsize * scaleroom) + offsetroom;
 
-fluid_real_t
-fluid_revmodel_getroomsize(fluid_revmodel_t* rev)
-{
-  return (rev->roomsize - offsetroom) / scaleroom;
-}
+  if (set & FLUID_REVMODEL_SET_DAMPING)
+    rev->damp = damping * scaledamp;
 
-void
-fluid_revmodel_setdamp(fluid_revmodel_t* rev, fluid_real_t value)
-{
-/*   fluid_clip(value, 0.0f, 1.0f); */
-  rev->damp = value * scaledamp;
-  fluid_revmodel_update(rev);
-}
+  if (set & FLUID_REVMODEL_SET_WIDTH)
+    rev->width = width;
 
-fluid_real_t
-fluid_revmodel_getdamp(fluid_revmodel_t* rev)
-{
-  return rev->damp / scaledamp;
-}
+  if (set & FLUID_REVMODEL_SET_LEVEL)
+  {
+    fluid_clip(level, 0.0f, 1.0f);
+    rev->wet = level * scalewet;
+  }
 
-void
-fluid_revmodel_setlevel(fluid_revmodel_t* rev, fluid_real_t value)
-{
-	fluid_clip(value, 0.0f, 1.0f);
-	rev->wet = value * scalewet;
-	fluid_revmodel_update(rev);
-}
-
-fluid_real_t
-fluid_revmodel_getlevel(fluid_revmodel_t* rev)
-{
-  return rev->wet / scalewet;
-}
-
-void
-fluid_revmodel_setwidth(fluid_revmodel_t* rev, fluid_real_t value)
-{
-/*   fluid_clip(value, 0.0f, 1.0f); */
-  rev->width = value;
-  fluid_revmodel_update(rev);
-}
-
-fluid_real_t
-fluid_revmodel_getwidth(fluid_revmodel_t* rev)
-{
-  return rev->width;
+  fluid_revmodel_update (rev);
 }

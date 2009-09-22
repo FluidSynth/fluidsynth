@@ -332,8 +332,6 @@ new_fluid_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
   char* name;
   char allnames[256];
 
-  fluid_settings_getstr(settings, "audio.driver", &name);
-
   for (i = 0; fluid_audio_drivers[i].name != NULL; i++) {
     if (fluid_settings_str_equal(settings, "audio.driver", fluid_audio_drivers[i].name)) {
       FLUID_LOG(FLUID_DBG, "Using '%s' audio driver", fluid_audio_drivers[i].name);
@@ -346,7 +344,10 @@ new_fluid_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
   }
 
   fluid_audio_driver_get_names(allnames, sizeof(allnames), ", ");
-  FLUID_LOG(FLUID_ERR, "Couldn't find the requested audio driver %s. Valid drivers are: %s.", name, allnames);
+  fluid_settings_dupstr(settings, "audio.driver", &name);       /* ++ alloc name */
+  FLUID_LOG(FLUID_ERR, "Couldn't find the requested audio driver %s. Valid drivers are: %s.",
+            name ? name : "NULL", allnames);
+  if (name) FLUID_FREE (name);
   return NULL;
 }
 
@@ -370,8 +371,6 @@ new_fluid_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func, voi
   fluid_audio_driver_t* driver = NULL;
   char* name;
 
-  fluid_settings_getstr(settings, "audio.driver", &name);
-
   for (i = 0; fluid_audio_drivers[i].name != NULL; i++) {
     if (fluid_settings_str_equal(settings, "audio.driver", fluid_audio_drivers[i].name) &&
 	(fluid_audio_drivers[i].new2 != NULL)) {
@@ -384,7 +383,10 @@ new_fluid_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func, voi
     }
   }
 
-  FLUID_LOG(FLUID_ERR, "Couldn't find the requested audio driver: %s", name);
+  fluid_settings_dupstr(settings, "audio.driver", &name);       /* ++ alloc name */
+  FLUID_LOG(FLUID_ERR, "Couldn't find the requested audio driver: %s",
+            name ? name : "NULL");
+  if (name) FLUID_FREE (name);
   return NULL;
 }
 

@@ -278,6 +278,10 @@ int fluid_midi_file_read_track(fluid_midi_file* mf, fluid_player_t* player, int 
 				}
 			}
 
+			/* Skip remaining track data, if any */
+			if (mf->trackpos < mf->tracklen)
+				fluid_midi_file_skip (mf, mf->tracklen - mf->trackpos);
+
 			fluid_player_add_track(player, track);
 
 		} else {
@@ -1374,7 +1378,7 @@ int fluid_player_play(fluid_player_t* player)
 
 	if (player->use_system_timer) {
 		player->system_timer = new_fluid_timer((int) player->deltatime, fluid_player_callback,
-					(void*) player, 1, 0);
+					(void*) player, TRUE, FALSE, TRUE);
 		if (player->system_timer == NULL) {
 			return FLUID_FAILED;
 		}
@@ -1637,7 +1641,7 @@ fluid_midi_event_t* fluid_midi_parser_parse(fluid_midi_parser_t* parser, unsigne
 /* Purpose:
  * Returns the length of the MIDI message. */
 int fluid_midi_event_length(unsigned char event){
-	switch (event && 0xF0) {
+	switch (event & 0xF0) {
 		case NOTE_OFF: 
 		case NOTE_ON:
 		case KEY_PRESSURE:

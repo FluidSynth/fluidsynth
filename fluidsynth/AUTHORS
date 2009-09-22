@@ -4,6 +4,7 @@ Current development team
 Josh Green
 Bernat Arlandis i Mañó
 Pedro Lopez-Cabanillas
+David Henningsson
 
 
 [:Idea:]
@@ -71,6 +72,9 @@ summary of contributions.
 * Code was borrowed from the glib library to the smurf files. The goal was
   to make iiwusynth independent from any library for maximum
   portability.
+
+* David Henningsson added code for fast rendering of MIDI files and 
+  fixed many bugs.
 
 * The midi device uses code from jMax's alsarawmidi.c file and from
   Smurf's midi_alsaraw.c by Josh Green.  file: iiwu_alsa.c

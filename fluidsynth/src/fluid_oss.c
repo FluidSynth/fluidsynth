@@ -118,7 +118,7 @@ new_fluid_oss_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
   int queuesize;
   double sample_rate;
   int periods, period_size;
-  char* devname;
+  char* devname = NULL;
   int format;
   pthread_attr_t attr;
   int err;
@@ -167,8 +167,13 @@ new_fluid_oss_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
     goto error_recovery;
   }
 
-  if (!fluid_settings_getstr(settings, "audio.oss.device", &devname)) {
-    devname = "/dev/dsp";
+  if (!fluid_settings_dupstr(settings, "audio.oss.device", &devname) || !devname) {         /* ++ alloc device name */
+    devname = FLUID_STRDUP ("/dev/dsp");
+
+    if (devname == NULL) {
+      FLUID_LOG(FLUID_ERR, "Out of memory");
+      goto error_recovery;
+    }
   }
 
   if (stat(devname, &devstat) == -1) {
@@ -265,9 +270,12 @@ new_fluid_oss_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
     break;
   }
 
+  if (devname) FLUID_FREE (devname);    /* -- free device name */
+
   return (fluid_audio_driver_t*) dev;
 
 error_recovery:
+  if (devname) FLUID_FREE (devname);    /* -- free device name */
   delete_fluid_oss_audio_driver((fluid_audio_driver_t*) dev);
   return NULL;
 }
@@ -281,7 +289,7 @@ new_fluid_oss_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func,
   int queuesize;
   double sample_rate;
   int periods, period_size;
-  char* devname;
+  char* devname = NULL;
   int format;
   pthread_attr_t attr;
   int err;
@@ -310,9 +318,16 @@ new_fluid_oss_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func,
   dev->buffer_byte_size = dev->buffer_size * 2 * 2; /* 2 channels * 16 bits audio */
 
 
-  if (!fluid_settings_getstr(settings, "audio.oss.device", &devname)) {
-    devname = "/dev/dsp";
+  if (!fluid_settings_dupstr(settings, "audio.oss.device", &devname) || !devname) {
+    devname = FLUID_STRDUP ("/dev/dsp");
+
+    if (!devname)
+    {
+      FLUID_LOG(FLUID_ERR, "Out of memory");
+      goto error_recovery;
+    }
   }
+
   if (stat(devname, &devstat) == -1) {
     FLUID_LOG(FLUID_ERR, "Device <%s> does not exists", devname);
     goto error_recovery;
@@ -416,9 +431,12 @@ new_fluid_oss_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func,
     break;
   }
 
+  if (devname) FLUID_FREE (devname);    /* -- free device name */
+
   return (fluid_audio_driver_t*) dev;
 
 error_recovery:
+  if (devname) FLUID_FREE (devname);    /* -- free device name */
   delete_fluid_oss_audio_driver((fluid_audio_driver_t*) dev);
   return NULL;
 }
@@ -668,7 +686,7 @@ new_fluid_oss_midi_driver(fluid_settings_t* settings,
   pthread_attr_t attr;
   int sched = SCHED_FIFO;
   struct sched_param priority;
-  char* device;
+  char* device = NULL;
 
   /* not much use doing anything */
   if (handler == NULL) {
@@ -696,9 +714,16 @@ new_fluid_oss_midi_driver(fluid_settings_t* settings,
   }
 
   /* get the device name. if none is specified, use the default device. */
-  fluid_settings_getstr(settings, "midi.oss.device", &device);
+  fluid_settings_dupstr(settings, "midi.oss.device", &device);  /* ++ alloc device name */
+
   if (device == NULL) {
-    device = "/dev/midi";
+    device = FLUID_STRDUP ("/dev/midi");
+
+    if (!device)
+    {
+      FLUID_LOG(FLUID_ERR, "Out of memory");
+      goto error_recovery;
+    }
   }
 
   /* open the default hardware device. only use midi in. */
@@ -746,9 +771,13 @@ new_fluid_oss_midi_driver(fluid_settings_t* settings,
     }
     break;
   }
+
+  if (device) FLUID_FREE (device);      /* ++ free device */
+
   return (fluid_midi_driver_t*) dev;
 
  error_recovery:
+  if (device) FLUID_FREE (device);      /* ++ free device */
   delete_fluid_oss_midi_driver((fluid_midi_driver_t*) dev);
   return NULL;
 }

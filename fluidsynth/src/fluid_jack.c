@@ -127,7 +127,7 @@ new_fluid_jack_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func
 
   /* try to become a client of the JACK server */
 
-  if (fluid_settings_getstr(settings, "audio.jack.id", &client_name)
+  if (fluid_settings_dupstr(settings, "audio.jack.id", &client_name)    /* ++ alloc client name */
       && (client_name != NULL)
       && (strlen(client_name) > 0)) {
     snprintf(name, 64, "%s", client_name);
@@ -136,6 +136,8 @@ new_fluid_jack_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func
   }
 
   name[63] = '\0';
+
+  if (client_name) FLUID_FREE (client_name);    /* -- free client name */
 
   if ((dev->client = jack_client_new(name)) == 0) {
     FLUID_LOG(FLUID_ERR, "Jack server not running?");
@@ -414,13 +416,15 @@ new_fluid_jack_midi_driver (fluid_settings_t *settings,
 
   /* try to become a client of the JACK server */
 
-  if (fluid_settings_getstr(settings, "midi.jack.id", &client_name)
+  if (fluid_settings_dupstr(settings, "midi.jack.id", &client_name)     /* ++ alloc client name */
       && (client_name != NULL)
       && (strlen(client_name) > 0))
     snprintf(name, 64, "%s", client_name);
   else snprintf(name, 64, "fluidsynth-midi");
 
   name[63] = '\0';
+
+  if (client_name) FLUID_FREE (client_name);    /* -- free client name */
 
   if ((dev->client = jack_client_new (name)) == 0)
   {

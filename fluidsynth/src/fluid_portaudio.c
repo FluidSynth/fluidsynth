@@ -106,7 +106,7 @@ new_fluid_portaudio_driver (fluid_settings_t *settings, fluid_synth_t *synth)
 {
   fluid_portaudio_driver_t *dev = NULL;
   PaStreamParameters outputParams;
-  char *device;
+  char *device = NULL;
   double sample_rate;
   int period_size;
   PaError err;
@@ -125,7 +125,7 @@ new_fluid_portaudio_driver (fluid_settings_t *settings, fluid_synth_t *synth)
 
   fluid_settings_getint (settings, "audio.period-size", &period_size);
   fluid_settings_getnum (settings, "synth.sample-rate", &sample_rate);
-  fluid_settings_getstr(settings, "audio.portaudio.device", &device);
+  fluid_settings_dupstr(settings, "audio.portaudio.device", &device);   /* ++ alloc device name */
 
   bzero (&outputParams, sizeof (outputParams));
   outputParams.channelCount = 2;
@@ -209,9 +209,12 @@ new_fluid_portaudio_driver (fluid_settings_t *settings, fluid_synth_t *synth)
     goto error_recovery;
   }
 
+  if (device) FLUID_FREE (device);      /* -- free device name */
+  
   return (fluid_audio_driver_t *)dev;
 
 error_recovery:
+  if (device) FLUID_FREE (device);      /* -- free device name */
   delete_fluid_portaudio_driver ((fluid_audio_driver_t *)dev);
   return NULL;
 }

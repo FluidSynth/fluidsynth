@@ -198,7 +198,10 @@ typedef struct _fluid_sample_timer_t fluid_sample_timer_t;
  *                      CONSTANTS
  */
 
-#define FLUID_BUFSIZE                64
+#define FLUID_BUFSIZE                64         /**< FluidSynth internal buffer size (in samples) */
+#define FLUID_MAX_EVENTS_PER_BUFSIZE 1024       /**< Maximum queued MIDI events per #FLUID_BUFSIZE */
+#define FLUID_MAX_RETURN_EVENTS      1024       /**< Maximum queued synthesis thread return events */
+#define FLUID_MAX_EVENT_QUEUES       16         /**< Maximum number of unique threads queuing events */
 
 #ifndef PI
 #define PI                          3.141592654
@@ -225,6 +228,7 @@ typedef FILE*  fluid_file;
 #define FLUID_STRCMP(_s,_t)          strcmp(_s,_t)
 #define FLUID_STRNCMP(_s,_t,_n)      strncmp(_s,_t,_n)
 #define FLUID_STRCPY(_dst,_src)      strcpy(_dst,_src)
+#define FLUID_STRNCPY(_dst,_src,_n)  strncpy(_dst,_src,_n)
 #define FLUID_STRCHR(_s,_c)          strchr(_s,_c)
 #ifdef strdup
 #define FLUID_STRDUP(s)              strdup(s)

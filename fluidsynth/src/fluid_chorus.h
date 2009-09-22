@@ -27,30 +27,35 @@
 
 typedef struct _fluid_chorus_t fluid_chorus_t;
 
+/** Flags for fluid_chorus_set() */
+typedef enum
+{
+  FLUID_CHORUS_SET_NR    = 1 << 0,
+  FLUID_CHORUS_SET_LEVEL = 1 << 1,
+  FLUID_CHORUS_SET_SPEED = 1 << 2,
+  FLUID_CHORUS_SET_DEPTH = 1 << 3,
+  FLUID_CHORUS_SET_TYPE  = 1 << 4,
+} fluid_chorus_set_t;
+
+/** Value for fluid_chorus_set() which sets all chorus parameters. */
+#define FLUID_CHORUS_SET_ALL    0x1F
+
 /*
  * chorus
  */
 fluid_chorus_t* new_fluid_chorus(fluid_real_t sample_rate);
 void delete_fluid_chorus(fluid_chorus_t* chorus);
+int fluid_chorus_init(fluid_chorus_t* chorus);
+void fluid_chorus_reset(fluid_chorus_t* chorus);
+
+void fluid_chorus_set(fluid_chorus_t* chorus, int set, int nr, float level,
+                      float speed, float depth_ms, int type);
+
 void fluid_chorus_processmix(fluid_chorus_t* chorus, fluid_real_t *in,
 			    fluid_real_t *left_out, fluid_real_t *right_out);
 void fluid_chorus_processreplace(fluid_chorus_t* chorus, fluid_real_t *in,
 				fluid_real_t *left_out, fluid_real_t *right_out);
 
-int fluid_chorus_init(fluid_chorus_t* chorus);
-void fluid_chorus_reset(fluid_chorus_t* chorus);
-
-void fluid_chorus_set_nr(fluid_chorus_t* chorus, int nr);
-void fluid_chorus_set_level(fluid_chorus_t* chorus, fluid_real_t level);
-void fluid_chorus_set_speed_Hz(fluid_chorus_t* chorus, fluid_real_t speed_Hz);
-void fluid_chorus_set_depth_ms(fluid_chorus_t* chorus, fluid_real_t depth_ms);
-void fluid_chorus_set_type(fluid_chorus_t* chorus, int type);
-int fluid_chorus_update(fluid_chorus_t* chorus);
-int fluid_chorus_get_nr(fluid_chorus_t* chorus);
-fluid_real_t fluid_chorus_get_level(fluid_chorus_t* chorus);
-fluid_real_t fluid_chorus_get_speed_Hz(fluid_chorus_t* chorus);
-fluid_real_t fluid_chorus_get_depth_ms(fluid_chorus_t* chorus);
-int fluid_chorus_get_type(fluid_chorus_t* chorus);
 
 
 #endif /* _FLUID_CHORUS_H */

@@ -172,7 +172,7 @@ new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
   fluid_alsa_audio_driver_t* dev;
   double sample_rate;
   int periods, period_size;
-  char* device;
+  char* device = NULL;
   pthread_attr_t attr;
   int sched = SCHED_FIFO;
   struct sched_param priority;
@@ -192,7 +192,7 @@ new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
   fluid_settings_getint(settings, "audio.periods", &periods);
   fluid_settings_getint(settings, "audio.period-size", &period_size);
   fluid_settings_getnum(settings, "synth.sample-rate", &sample_rate);
-  fluid_settings_getstr(settings, "audio.alsa.device", &device);
+  fluid_settings_dupstr(settings, "audio.alsa.device", &device);        /* ++ dup device name */
 
   dev->data = data;
   dev->callback = func;
@@ -200,12 +200,15 @@ new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
   dev->buffer_size = period_size;
 
   /* Open the PCM device */
-  if ((err = snd_pcm_open(&dev->pcm, device, SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK)) != 0) {
+  if ((err = snd_pcm_open(&dev->pcm, device ? device : "default",
+                          SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK)) != 0) {
     if (err == -EBUSY) {
-      FLUID_LOG(FLUID_ERR, "The \"%s\" audio device is used by another application", device);
+      FLUID_LOG(FLUID_ERR, "The \"%s\" audio device is used by another application",
+                device ? device : "default");
       goto error_recovery;
     } else {
-      FLUID_LOG(FLUID_ERR, "Failed to open the \"%s\" audio device", device);
+      FLUID_LOG(FLUID_ERR, "Failed to open the \"%s\" audio device",
+                device ? device : "default");
       goto error_recovery;
     }
   }
@@ -362,9 +365,12 @@ new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
     break;
   }
 
+  if (device) FLUID_FREE (device);      /* -- free device name */
+
   return (fluid_audio_driver_t*) dev;
 
  error_recovery:
+  if (device) FLUID_FREE (device);      /* -- free device name */
   delete_fluid_alsa_audio_driver((fluid_audio_driver_t*) dev);
   return NULL;
 }
@@ -661,13 +667,11 @@ new_fluid_alsa_rawmidi_driver(fluid_settings_t* settings,
   }
 
   /* get the device name. if none is specified, use the default device. */
-  fluid_settings_getstr(settings, "midi.alsa.device", &device);
-  if (device == NULL) {
-    device = "default";
-  }
+  fluid_settings_dupstr(settings, "midi.alsa.device", &device);         /* ++ alloc device name */
 
   /* open the hardware device. only use midi in. */
-  if ((err = snd_rawmidi_open(&dev->rawmidi_in, NULL, device, SND_RAWMIDI_NONBLOCK)) < 0) {
+  if ((err = snd_rawmidi_open(&dev->rawmidi_in, NULL, device ? device : "default",
+                              SND_RAWMIDI_NONBLOCK)) < 0) {
     FLUID_LOG(FLUID_ERR, "Error opening ALSA raw MIDI port");
     goto error_recovery;
   }
@@ -746,9 +750,13 @@ new_fluid_alsa_rawmidi_driver(fluid_settings_t* settings,
     }
     break;
   }
+
+  if (device) FLUID_FREE (device);      /* -- free device name */
+
   return (fluid_midi_driver_t*) dev;
 
  error_recovery:
+  if (device) FLUID_FREE (device);      /* -- free device name */
   delete_fluid_alsa_rawmidi_driver((fluid_midi_driver_t*) dev);
   return NULL;
 
@@ -897,12 +905,11 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
   struct sched_param priority;
   int count;
   struct pollfd *pfd = NULL;
-  char * device = NULL;
-  char * id;
-  char * portname;
+  char *device = NULL;
+  char *id = NULL;
+  char *portname = NULL;
   char full_id[64];
   char full_name[64];
-  char id_pid[16];
   snd_seq_port_info_t *port_info = NULL;
   int midi_channels;
 
@@ -924,24 +931,33 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
 
 
   /* get the device name. if none is specified, use the default device. */
-  fluid_settings_getstr(settings, "midi.alsa_seq.device", &device);
-  if (device == NULL) {
-    device = "default";
-  }
+  if (fluid_settings_dupstr(settings, "midi.alsa_seq.device", &device) == 0)    /* ++ alloc device name */
+    goto error_recovery;
 
-  fluid_settings_getstr(settings, "midi.alsa_seq.id", &id);
+  if (fluid_settings_dupstr(settings, "midi.alsa_seq.id", &id) == 0)    /* ++ alloc id string */
+    goto error_recovery;
+
   if (id == NULL) {
-    sprintf(id_pid, "%d", getpid());
-    id = id_pid;
+    id = FLUID_MALLOC (32);
+    if (!id)
+    {
+      FLUID_LOG(FLUID_ERR, "Out of memory");
+      goto error_recovery;
+    }
+
+    sprintf(id, "%d", getpid());
   }
 
   /* get the midi portname */
-  fluid_settings_getstr(settings, "midi.portname", &portname);
-  if (!strcmp(portname, ""))
-      portname = NULL;
+  fluid_settings_dupstr(settings, "midi.portname", &portname);
+  if (portname && FLUID_STRLEN (portname) == 0)
+  {
+    FLUID_FREE (portname);      /* -- free port name */
+    portname = NULL;
+  }
 
   /* open the sequencer INPUT only */
-  err = snd_seq_open(&dev->seq_handle, device, SND_SEQ_OPEN_INPUT, 0);
+  err = snd_seq_open(&dev->seq_handle, device ? device : "default", SND_SEQ_OPEN_INPUT, 0);
   if (err < 0) {
     FLUID_LOG(FLUID_ERR, "Error opening ALSA sequencer");
     goto error_recovery;
@@ -1056,10 +1072,21 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
     }
     break;
   }
+
+  if (portname) FLUID_FREE (portname);
+  if (id) FLUID_FREE (id);
+  if (device) FLUID_FREE (device);
+
   return (fluid_midi_driver_t*) dev;
 
  error_recovery:
+
+  if (portname) FLUID_FREE (portname);
+  if (id) FLUID_FREE (id);
+  if (device) FLUID_FREE (device);
+
   delete_fluid_alsa_seq_driver((fluid_midi_driver_t*) dev);
+
   return NULL;
 }
 

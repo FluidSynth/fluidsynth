@@ -468,7 +468,7 @@ void fluid_sequencer_set_time_scale(fluid_sequencer_t* seq, double scale)
 
 		/* re-start timer */
 		if (seq->useSystemTimer) {
-			seq->timer = new_fluid_timer((int)(1000/seq->scale), _fluid_seq_queue_process, (void *)seq, 1, 0);
+			seq->timer = new_fluid_timer((int)(1000/seq->scale), _fluid_seq_queue_process, (void *)seq, TRUE, FALSE, TRUE);
 		}
 	}
 }
@@ -592,7 +592,7 @@ _fluid_seq_queue_init(fluid_sequencer_t* seq, int maxEvents)
 	/* start timer */
 	if (seq->useSystemTimer) {
 		seq->timer = new_fluid_timer((int)(1000/seq->scale), _fluid_seq_queue_process,
-					     (void *)seq, 1, 0);
+					     (void *)seq, TRUE, FALSE, TRUE);
 	}
 	return (0);
 }

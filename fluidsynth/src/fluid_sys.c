@@ -386,7 +386,7 @@ DWORD WINAPI fluid_timer_run(LPVOID data);
 
 fluid_timer_t*
 new_fluid_timer(int msec, fluid_timer_callback_t callback, void* data,
-	       int new_thread, int auto_destroy)
+	       int new_thread, int auto_destroy, int high_priority)
 {
   fluid_timer_t* timer = FLUID_NEW(fluid_timer_t);
   if (timer == NULL) {
@@ -408,7 +408,8 @@ new_fluid_timer(int msec, fluid_timer_callback_t callback, void* data,
       FLUID_FREE(timer);
       return NULL;
     }
-    SetThreadPriority(timer->thread, THREAD_PRIORITY_TIME_CRITICAL);
+    if (high_priority)
+      SetThreadPriority(timer->thread, THREAD_PRIORITY_TIME_CRITICAL);
   } else {
     fluid_timer_run((LPVOID) timer);
   }
@@ -419,7 +420,7 @@ DWORD WINAPI
 fluid_timer_run(LPVOID data)
 {
   int count = 0;
-  int cont = 1;
+  int cont;
   long start;
   long delay;
   fluid_timer_t* timer;
@@ -434,22 +435,19 @@ fluid_timer_run(LPVOID data)
   /* keep track of the start time for absolute positioning */
   start = fluid_curtime();
 
-  while (cont) {
+  while (timer->cont) {
 
     /* do whatever we have to do */
     cont = (*timer->callback)(timer->data, fluid_curtime() - start);
 
     count++;
+    if (!cont) break;
 
     /* to avoid incremental time errors, I calculate the delay between
        two callbacks bringing in the "absolute" time (count *
        timer->msec) */
     delay = (count * timer->msec) - (fluid_curtime() - start);
-    if (delay > 0) {
-      Sleep(delay);
-    }
-
-    cont &= timer->cont;
+    if (delay > 0) Sleep (delay);
   }
 
   FLUID_LOG(FLUID_DBG, "Timer thread finished");
@@ -511,7 +509,7 @@ void fluid_timer_run(void *data);
 
 fluid_timer_t*
 new_fluid_timer(int msec, fluid_timer_callback_t callback, void* data,
-           int new_thread, int auto_destroy)
+           int new_thread, int auto_destroy, int high_priority)
 {
   fluid_timer_t* timer = FLUID_NEW(fluid_timer_t);
   if (timer == NULL) {
@@ -533,7 +531,8 @@ new_fluid_timer(int msec, fluid_timer_callback_t callback, void* data,
       FLUID_FREE(timer);
       return NULL;
     }
-    DosSetPriority(PRTYS_THREAD, PRTYC_TIMECRITICAL, PRTYD_MAXIMUM, timer->thread_id);
+    if (high_priority)
+      DosSetPriority(PRTYS_THREAD, PRTYC_TIMECRITICAL, PRTYD_MAXIMUM, timer->thread_id);
   } else {
     fluid_timer_run(( void * )timer);
   }
@@ -544,7 +543,7 @@ void
 fluid_timer_run(void *data)
 {
   int count = 0;
-  int cont = 1;
+  int cont;
   long start;
   long delay;
   fluid_timer_t* timer;
@@ -559,22 +558,19 @@ fluid_timer_run(void *data)
   /* keep track of the start time for absolute positioning */
   start = fluid_curtime();
 
-  while (cont) {
+  while (timer->cont) {
 
     /* do whatever we have to do */
     cont = (*timer->callback)(timer->data, fluid_curtime() - start);
 
     count++;
+    if (!cont) break;
 
     /* to avoid incremental time errors, I calculate the delay between
        two callbacks bringing in the "absolute" time (count *
        timer->msec) */
     delay = (count * timer->msec) - (fluid_curtime() - start);
-    if (delay > 0) {
-      DosSleep(delay);
-    }
-
-    cont &= timer->cont;
+    if (delay > 0) DosSleep (delay);
   }
 
   FLUID_LOG(FLUID_DBG, "Timer thread finished");
@@ -631,10 +627,10 @@ struct _fluid_timer_t
 };
 
 void*
-fluid_timer_start(void *data)
+fluid_timer_run(void *data)
 {
   int count = 0;
-  int cont = 1;
+  int cont;
   long start;
   long delay;
   fluid_timer_t* timer;
@@ -643,22 +639,19 @@ fluid_timer_start(void *data)
   /* keep track of the start time for absolute positioning */
   start = fluid_curtime();
 
-  while (cont) {
+  while (timer->cont) {
 
     /* do whatever we have to do */
     cont = (*timer->callback)(timer->data, fluid_curtime() - start);
 
     count++;
+    if (!cont) break;
 
     /* to avoid incremental time errors, calculate the delay between
        two callbacks bringing in the "absolute" time (count *
        timer->msec) */
     delay = (count * timer->msec) - (fluid_curtime() - start);
-    if (delay > 0) {
-      usleep(delay * 1000);
-    }
-
-    cont &= timer->cont;
+    if (delay > 0) usleep (delay * 1000);
   }
 
   FLUID_LOG(FLUID_DBG, "Timer thread finished");
@@ -675,7 +668,7 @@ fluid_timer_start(void *data)
 
 fluid_timer_t*
 new_fluid_timer(int msec, fluid_timer_callback_t callback, void* data,
-	       int new_thread, int auto_destroy)
+	        int new_thread, int auto_destroy, int high_priority)
 {
   pthread_attr_t *attr = NULL;
   pthread_attr_t rt_attr;
@@ -695,35 +688,33 @@ new_fluid_timer(int msec, fluid_timer_callback_t callback, void* data,
   timer->thread = 0;
   timer->auto_destroy = auto_destroy;
 
-  err = pthread_attr_init(&rt_attr);
-  if (err == 0) {
-	  err = pthread_attr_setschedpolicy(&rt_attr, SCHED_FIFO);
-	  if (err == 0) {
-		  priority.sched_priority = 10;
-		  err = pthread_attr_setschedparam(&rt_attr, &priority);
-		  if (err == 0) {
-			  attr = &rt_attr;
-		  }
-	  }
+  if (high_priority) {
+    priority.sched_priority = 10;
+
+    if (pthread_attr_init (&rt_attr) == 0
+        && pthread_attr_setschedpolicy (&rt_attr, SCHED_FIFO) == 0
+        && pthread_attr_setschedparam (&rt_attr, &priority) == 0)
+      attr = &rt_attr;
   }
 
   if (new_thread) {
-	  err = pthread_create(&timer->thread, attr, fluid_timer_start, (void*) timer);
-	  if (err == 0) {
-		  FLUID_LOG(FLUID_DBG, "The timer thread was created with real-time priority");
-	  } else {
-		  /* Create the thread with default attributes */
-		  err = pthread_create(&timer->thread, NULL, fluid_timer_start, (void*) timer);
-		  if (err != 0) {
-			  FLUID_LOG(FLUID_ERR, "Failed to create the timer thread");
-			  FLUID_FREE(timer);
-			  return NULL;
-		  } else {
-			  FLUID_LOG(FLUID_DBG, "The timer thread does not have real-time priority");
-		  }
-	  }
+    err = pthread_create(&timer->thread, attr, fluid_timer_run, (void*) timer);
+
+    if (err == 0) {
+      if (attr) FLUID_LOG(FLUID_DBG, "Timer thread created with real-time priority");
+      else FLUID_LOG(FLUID_DBG, "Timer thread created with normal priority");
+    } else {
+      if (attr == NULL
+          || pthread_create (&timer->thread, NULL, fluid_timer_run, (void*) timer) != 0) {
+        FLUID_LOG(FLUID_ERR, "Failed to create timer thread");
+        FLUID_FREE(timer);
+        return NULL;
+      } else {
+        FLUID_LOG(FLUID_DBG, "Timer thread created, but not with real-time priority");
+      }
+    }
   } else {
-    fluid_timer_start((void*) timer);
+    fluid_timer_run((void*) timer);
   }
   return timer;
 }

@@ -105,8 +105,14 @@ new_fluid_winmidi_driver(fluid_settings_t* settings,
   dev->driver.data = data;
 
   /* get the device name. if none is specified, use the default device. */
-  if(!fluid_settings_getstr(settings, "midi.winmidi.device", &devname)) {
-    devname = "default";
+  if(!fluid_settings_getstr(settings, "midi.winmidi.device", &devname) || !devname) {
+    devname = FLUID_DUPSTR ("default");
+
+    if (!devname)
+    {
+      FLUID_LOG(FLUID_ERR, "Out of memory");
+      goto error_recovery;
+    }
   }
   
   /* check if there any midi devices installed */
@@ -150,9 +156,12 @@ new_fluid_winmidi_driver(fluid_settings_t* settings,
     goto error_recovery;
   }
 
+  if (devname) FLUID_FREE (devname);    /* -- free device name */
+
   return (fluid_midi_driver_t*) dev;
 
  error_recovery:
+  if (devname) FLUID_FREE (devname);    /* -- free device name */
   delete_fluid_winmidi_driver((fluid_midi_driver_t*) dev);
   return NULL;
 }
@@ -193,6 +202,10 @@ fluid_winmidi_callback(HMIDIIN hmi, UINT wMsg, DWORD dwInstance, DWORD msg, DWOR
       event.channel = msg_chan(msg);
       event.param1 = msg_p1(msg);
       event.param2 = msg_p2(msg);
+      if(event.type==PITCH_BEND){
+        event.param1 = ((event.param2 & 0x7f) << 7) | (event.param1 & 0x7f);
+        event.param2 = 0;
+      }
       (*dev->driver.handler)(dev->driver.data, &event);
     }
     break;

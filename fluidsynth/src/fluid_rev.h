@@ -27,6 +27,30 @@
 typedef struct _fluid_revmodel_t fluid_revmodel_t;
 
 
+/** Flags for fluid_revmodel_set() */
+typedef enum
+{
+  FLUID_REVMODEL_SET_ROOMSIZE       = 1 << 0,
+  FLUID_REVMODEL_SET_DAMPING        = 1 << 1,
+  FLUID_REVMODEL_SET_WIDTH          = 1 << 2,
+  FLUID_REVMODEL_SET_LEVEL          = 1 << 3
+} fluid_revmodel_set_t;
+
+/** Value for fluid_revmodel_set() which sets all reverb parameters. */
+#define FLUID_REVMODEL_SET_ALL      0x0F
+
+/*
+ * reverb preset
+ */
+typedef struct _fluid_revmodel_presets_t {
+  char* name;
+  fluid_real_t roomsize;
+  fluid_real_t damp;
+  fluid_real_t width;
+  fluid_real_t level;
+} fluid_revmodel_presets_t;
+
+
 /*
  * reverb
  */
@@ -41,27 +65,7 @@ void fluid_revmodel_processreplace(fluid_revmodel_t* rev, fluid_real_t *in,
 
 void fluid_revmodel_reset(fluid_revmodel_t* rev);
 
-void fluid_revmodel_setroomsize(fluid_revmodel_t* rev, fluid_real_t value);
-void fluid_revmodel_setdamp(fluid_revmodel_t* rev, fluid_real_t value);
-void fluid_revmodel_setlevel(fluid_revmodel_t* rev, fluid_real_t value);
-void fluid_revmodel_setwidth(fluid_revmodel_t* rev, fluid_real_t value);
-void fluid_revmodel_setmode(fluid_revmodel_t* rev, fluid_real_t value);
-
-fluid_real_t fluid_revmodel_getroomsize(fluid_revmodel_t* rev);
-fluid_real_t fluid_revmodel_getdamp(fluid_revmodel_t* rev);
-fluid_real_t fluid_revmodel_getlevel(fluid_revmodel_t* rev);
-fluid_real_t fluid_revmodel_getwidth(fluid_revmodel_t* rev);
-
-/*
- * reverb preset
- */
-typedef struct _fluid_revmodel_presets_t {
-  char* name;
-  fluid_real_t roomsize;
-  fluid_real_t damp;
-  fluid_real_t width;
-  fluid_real_t level;
-} fluid_revmodel_presets_t;
-
+void fluid_revmodel_set(fluid_revmodel_t* rev, int set, float roomsize,
+                        float damping, float width, float level);
 
 #endif /* _FLUID_REV_H */

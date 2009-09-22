@@ -91,8 +91,8 @@ new_fluid_coremidi_driver(fluid_settings_t* settings, handle_midi_event_func_t h
     goto error_recovery;
   }
 
-  fluid_settings_getstr(settings, "midi.coremidi.id", &id);
-  if (FLUID_STRCMP(id, "pid") == 0)
+  fluid_settings_dupstr(settings, "midi.coremidi.id", &id);     /* ++ alloc id string */
+  if (!id || FLUID_STRCMP(id, "pid") == 0)
     str_clientname = CFStringCreateWithFormat(NULL, NULL,
                                               CFSTR("FluidSynth %qi"),
                                               (long long) getpid());
@@ -100,14 +100,18 @@ new_fluid_coremidi_driver(fluid_settings_t* settings, handle_midi_event_func_t h
     str_clientname = CFStringCreateWithFormat(NULL, NULL,
                                               CFSTR("FluidSynth %s"), id);
 
-  fluid_settings_getstr(settings, "midi.portname", &portname);
-  if (strlen(portname) == 0)
+  if (id) FLUID_FREE (id);      /* -- free id string */
+
+  fluid_settings_dupstr(settings, "midi.portname", &portname);  /* ++ alloc port name */
+  if (!portname || strlen(portname) == 0)
     str_portname = CFStringCreateWithFormat(NULL, NULL,
                                             CFSTR("FluidSynth virtual port %qi"),
                                             (long long) getpid());
   else
     str_portname = CFStringCreateWithCString(NULL, portname,
                                              kCFStringEncodingASCII);
+
+  if (portname) FLUID_FREE (portname);  /* -- free port name */
 
   OSStatus result = MIDIClientCreate( str_clientname, NULL, NULL, &client );
   if ( result != noErr ) {

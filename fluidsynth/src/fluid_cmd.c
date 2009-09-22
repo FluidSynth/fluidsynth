@@ -260,19 +260,18 @@ void delete_fluid_shell(fluid_shell_t* shell)
 int fluid_shell_run(fluid_shell_t* shell)
 {
   char workline[FLUID_WORKLINELENGTH];
-  char* prompt = "";
+  char* prompt = NULL;
   int cont = 1;
   int errors = 0;
   int n;
 
-  if (shell->settings) {
-    fluid_settings_getstr(shell->settings, "shell.prompt", &prompt);
-  }
+  if (shell->settings)
+    fluid_settings_dupstr(shell->settings, "shell.prompt", &prompt);    /* ++ alloc prompt */
 
   /* handle user input */
   while (cont) {
 
-    n = fluid_istream_readline(shell->in, prompt, workline, FLUID_WORKLINELENGTH);
+    n = fluid_istream_readline(shell->in, prompt ? prompt : "", workline, FLUID_WORKLINELENGTH);
 
     if (n < 0) {
       break;
@@ -304,6 +303,8 @@ int fluid_shell_run(fluid_shell_t* shell)
        break;
     }
   }
+
+  if (prompt) FLUID_FREE (prompt);      /* -- free prompt */
 
   return errors;
 }
@@ -684,7 +685,8 @@ fluid_handle_reverbsetroomsize(fluid_synth_t* synth, int ac, char** av, fluid_os
     fluid_ostream_printf(out, "rev_setroomsize: Room size too big!\n");
     return -1;
   }
-  fluid_revmodel_setroomsize(synth->reverb, room_size);
+  fluid_synth_set_reverb_full (synth, FLUID_REVMODEL_SET_ROOMSIZE,
+                               room_size, 0.0, 0.0, 0.0);
   return 0;
 }
 
@@ -704,7 +706,8 @@ fluid_handle_reverbsetdamp(fluid_synth_t* synth, int ac, char** av, fluid_ostrea
     fluid_ostream_printf(out, "rev_setdamp: damp must be between 0 and 1!\n");
     return -1;
   }
-  fluid_revmodel_setdamp(synth->reverb, damp);
+  fluid_synth_set_reverb_full (synth, FLUID_REVMODEL_SET_DAMPING,
+                               0.0, damp, 0.0, 0.0);
   return 0;
 }
 
@@ -724,7 +727,8 @@ fluid_handle_reverbsetwidth(fluid_synth_t* synth, int ac, char** av, fluid_ostre
     fluid_ostream_printf(out, "rev_setroomsize: Too wide! (0..100)\n");
     return 0;
   }
-  fluid_revmodel_setwidth(synth->reverb, width);
+  fluid_synth_set_reverb_full (synth, FLUID_REVMODEL_SET_WIDTH,
+                               0.0, 0.0, width, 0.0);
   return 0;
 }
 
@@ -744,7 +748,8 @@ fluid_handle_reverbsetlevel(fluid_synth_t* synth, int ac, char** av, fluid_ostre
     fluid_ostream_printf(out, "rev_setlevel: Value too high! (Value of 10 =+20 dB)\n");
     return 0;
   }
-  fluid_revmodel_setlevel(synth->reverb, level);
+  fluid_synth_set_reverb_full (synth, FLUID_REVMODEL_SET_LEVEL,
+                               0.0, 0.0, 0.0, level);
   return 0;
 }
 
@@ -783,8 +788,7 @@ fluid_handle_chorusnr(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t o
     return -1;
   }
   nr = atoi(av[0]);
-  fluid_chorus_set_nr(synth->chorus, nr);
-  return fluid_chorus_update(synth->chorus);
+  return fluid_synth_set_chorus_full (synth, FLUID_CHORUS_SET_NR, nr, 0.0, 0.0, 0.0, 0);
 }
 
 /* Purpose:
@@ -798,9 +802,7 @@ fluid_handle_choruslevel(fluid_synth_t* synth, int ac, char** av, fluid_ostream_
     return -1;
   }
   level = atof(av[0]);
-  fluid_chorus_set_level(synth->chorus, level);
-  return fluid_chorus_update(synth->chorus);
-
+  return fluid_synth_set_chorus_full (synth, FLUID_CHORUS_SET_LEVEL, 0, level, 0.0, 0.0, 0);
 }
 
 /* Purpose:
@@ -814,8 +816,7 @@ fluid_handle_chorusspeed(fluid_synth_t* synth, int ac, char** av, fluid_ostream_
     return -1;
   }
   speed = atof(av[0]);
-  fluid_chorus_set_speed_Hz(synth->chorus, speed);
-  return fluid_chorus_update(synth->chorus);
+  return fluid_synth_set_chorus_full (synth, FLUID_CHORUS_SET_SPEED, 0, 0.0, speed, 0.0, 0);
 }
 
 /* Purpose:
@@ -829,8 +830,7 @@ fluid_handle_chorusdepth(fluid_synth_t* synth, int ac, char** av, fluid_ostream_
     return -1;
   }
   depth = atof(av[0]);
-  fluid_chorus_set_depth_ms(synth->chorus, depth);
-  return fluid_chorus_update(synth->chorus);
+  return fluid_synth_set_chorus_full (synth, FLUID_CHORUS_SET_DEPTH, 0, 0.0, 0.0, depth, 0);
 }
 
 int
@@ -1238,8 +1238,9 @@ fluid_handle_get(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out)
 
   case FLUID_STR_TYPE: {
     char* s;
-    fluid_synth_getstr(synth, av[0], &s);
-    fluid_ostream_printf(out, "%s", s);
+    fluid_synth_dupstr(synth, av[0], &s);       /* ++ alloc string */
+    fluid_ostream_printf(out, "%s", s ? s : "NULL");
+    if (s) FLUID_FREE (s);      /* -- free string */
     break;
   }
 
@@ -1295,8 +1296,9 @@ static void fluid_handle_settings_iter2(void* data, char* name, int type)
 
   case FLUID_STR_TYPE: {
     char* s;
-    fluid_synth_getstr(d->synth, name, &s);
-    fluid_ostream_printf(d->out, "%s\n", s);
+    fluid_synth_dupstr(d->synth, name, &s);     /* ++ alloc string */
+    fluid_ostream_printf(d->out, "%s\n", s ? s : "NULL");
+    if (s) FLUID_FREE (s);      /* -- free string */
     break;
   }
   }
@@ -1384,12 +1386,14 @@ fluid_handle_info(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out)
 
   case FLUID_STR_TYPE: {
     char *s;
-    fluid_settings_getstr(settings, av[0], &s);
+    fluid_settings_dupstr(settings, av[0], &s);         /* ++ alloc string */
     fluid_ostream_printf(out, "%s:\n", av[0]);
     fluid_ostream_printf(out, "Type:          string\n");
-    fluid_ostream_printf(out, "Value:         %s\n", s);
+    fluid_ostream_printf(out, "Value:         %s\n", s ? s : "NULL");
     fluid_ostream_printf(out, "Default value: %s\n",
 			fluid_settings_getstr_default(settings, av[0]));
+
+    if (s) FLUID_FREE (s);
 
     data.out = out;
     data.first = 1;
@@ -1567,9 +1571,10 @@ void delete_fluid_cmd(fluid_cmd_t* cmd)
  * Command handler
  */
 
-void fluid_cmd_handler_delete(void* value, int type)
+static void
+fluid_cmd_handler_destroy_hash_value (void *value)
 {
-  delete_fluid_cmd((fluid_cmd_t*) value);
+  delete_fluid_cmd ((fluid_cmd_t *)value);
 }
 
 fluid_cmd_handler_t* new_fluid_cmd_handler(fluid_synth_t* synth)
@@ -1582,7 +1587,8 @@ fluid_cmd_handler_t* new_fluid_cmd_handler(fluid_synth_t* synth)
     "source filename            Load a file and parse every line as a command"
   };
 
-  handler = new_fluid_hashtable(fluid_cmd_handler_delete);
+  handler = new_fluid_hashtable_full (fluid_str_hash, fluid_str_equal,
+                                      NULL, fluid_cmd_handler_destroy_hash_value);
   if (handler == NULL) {
     return NULL;
   }
@@ -1603,13 +1609,13 @@ fluid_cmd_handler_t* new_fluid_cmd_handler(fluid_synth_t* synth)
 
 void delete_fluid_cmd_handler(fluid_cmd_handler_t* handler)
 {
-  delete_fluid_hashtable(handler);
+  delete_fluid_hashtable (handler);
 }
 
 int fluid_cmd_handler_register(fluid_cmd_handler_t* handler, fluid_cmd_t* cmd)
 {
   fluid_cmd_t* copy = fluid_cmd_copy(cmd);
-  fluid_hashtable_insert(handler, copy->name, copy, 0);
+  fluid_hashtable_insert(handler, copy->name, copy);
   return 0;
 }
 
@@ -1620,17 +1626,15 @@ int fluid_cmd_handler_unregister(fluid_cmd_handler_t* handler, char* cmd)
 
 int fluid_cmd_handler_handle(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out)
 {
-  void *vp;	/* use a void pointer to avoid GCC "type-punned pointer" warning */
   fluid_cmd_t* cmd;
 
-  if (fluid_hashtable_lookup(handler, av[0], &vp, NULL)
-      && ((fluid_cmd_t *)vp)->handler) {
-    cmd = vp;
+  cmd = fluid_hashtable_lookup(handler, av[0]);
+
+  if (cmd && cmd->handler)
     return (*cmd->handler)(cmd->data, ac - 1, av + 1, out);
-  } else {
-    fluid_ostream_printf(out, "unknown command: %s (try help)\n", av[0]);
-    return -1;
-  }
+
+  fluid_ostream_printf(out, "unknown command: %s (try help)\n", av[0]);
+  return -1;
 }
 
 

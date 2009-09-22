@@ -134,8 +134,10 @@ struct _fluid_chorus_t {
   fluid_real_t sinc_table[INTERPOLATION_SAMPLES][INTERPOLATION_SUBSAMPLES];
 };
 
-void fluid_chorus_triangle(int *buf, int len, int depth);
-void fluid_chorus_sine(int *buf, int len, int depth);
+static void fluid_chorus_update(fluid_chorus_t* chorus);
+static void fluid_chorus_triangle(int *buf, int len, int depth);
+static void fluid_chorus_sine(int *buf, int len, int depth);
+
 
 fluid_chorus_t*
 new_fluid_chorus(fluid_real_t sample_rate)
@@ -202,110 +204,6 @@ new_fluid_chorus(fluid_real_t sample_rate)
   return NULL;
 }
 
-
-int
-fluid_chorus_init(fluid_chorus_t* chorus)
-{
-  int i;
-
-  for (i = 0; i < MAX_SAMPLES; i++) {
-    chorus->chorusbuf[i] = 0.0;
-  }
-
-  /* initialize the chorus with the default settings */
-  fluid_chorus_set_nr(chorus, FLUID_CHORUS_DEFAULT_N);
-  fluid_chorus_set_level(chorus, FLUID_CHORUS_DEFAULT_LEVEL);
-  fluid_chorus_set_speed_Hz(chorus, FLUID_CHORUS_DEFAULT_SPEED);
-  fluid_chorus_set_depth_ms(chorus, FLUID_CHORUS_DEFAULT_DEPTH);
-  fluid_chorus_set_type(chorus, FLUID_CHORUS_MOD_SINE);
-
-  return fluid_chorus_update(chorus);
-}
-
-/* Purpose:
- * Sets the number of stages.
- * Requires call to fluid_chorus_update afterwards.
- * Range checking is performed there.*/
-void fluid_chorus_set_nr(fluid_chorus_t* chorus, int nr)
-{
-  chorus->new_number_blocks = nr;
-}
-
-/* Purpose:
- * API function, read the current state of the chorus
- */
-int fluid_chorus_get_nr(fluid_chorus_t* chorus)
-{
-    return chorus->number_blocks;
-};
-
-/* Purpose:
- * Sets the mixing level of the signal from each delay line (linear).
- * Requires calling fluid_chorus_update afterwards.*/
-void fluid_chorus_set_level(fluid_chorus_t* chorus, fluid_real_t level)
-{
-  chorus->new_level = level;
-}
-
-/* Purpose:
- * API function, read the current state of the chorus
- */
-fluid_real_t fluid_chorus_get_level(fluid_chorus_t* chorus)
-{
-    return chorus->level;
-};
-
-/* Purpose:
- * Sets the modulation frequency.
- * Requires call to fluid_chorus_update afterwards.
- * Range checking is performed there.*/
-void fluid_chorus_set_speed_Hz(fluid_chorus_t* chorus, fluid_real_t speed_Hz)
-{
-  chorus->new_speed_Hz = speed_Hz;
-}
-
-/* Purpose:
- * API function, read the current state of the chorus
- */
-fluid_real_t fluid_chorus_get_speed_Hz(fluid_chorus_t* chorus)
-{
-    return chorus->speed_Hz;
-};
-
-/* Purpose:
- * Sets the modulation depth in ms.
- * Requires call to fluid_chorus_update afterwards.
- * Range checking is performed there.*/
-void fluid_chorus_set_depth_ms(fluid_chorus_t* chorus, fluid_real_t depth_ms)
-{
-  chorus->new_depth_ms=depth_ms;
-}
-
-/* Purpose:
- * API function, read the current state of the chorus
- */
-fluid_real_t fluid_chorus_get_depth_ms(fluid_chorus_t* chorus)
-{
-    return chorus->depth_ms;
-};
-
-/* Purpose:
- * Sets the type of the modulation waveform.
- * Requires call to fluid_chorus_update afterwards.
- * Check for meaningful values is performed there.*/
-void fluid_chorus_set_type(fluid_chorus_t* chorus, int type)
-{
-  chorus->new_type=type;
-}
-
-/* Purpose:
- * API function, read the current state of the chorus
- */
-int fluid_chorus_get_type(fluid_chorus_t* chorus)
-{
-    return chorus->type;
-};
-
 void
 delete_fluid_chorus(fluid_chorus_t* chorus)
 {
@@ -324,11 +222,56 @@ delete_fluid_chorus(fluid_chorus_t* chorus)
   FLUID_FREE(chorus);
 }
 
+int
+fluid_chorus_init(fluid_chorus_t* chorus)
+{
+  int i;
+
+  for (i = 0; i < MAX_SAMPLES; i++) {
+    chorus->chorusbuf[i] = 0.0;
+  }
+
+  /* initialize the chorus with the default settings */
+  fluid_chorus_set (chorus, FLUID_CHORUS_SET_ALL, FLUID_CHORUS_DEFAULT_N,
+                    FLUID_CHORUS_DEFAULT_LEVEL, FLUID_CHORUS_DEFAULT_SPEED,
+                    FLUID_CHORUS_DEFAULT_DEPTH, FLUID_CHORUS_MOD_SINE);
+  return FLUID_OK;
+}
+
+void
+fluid_chorus_reset(fluid_chorus_t* chorus)
+{
+  fluid_chorus_init(chorus);
+}
+
+/**
+ * Set one or more chorus parameters.
+ * @param chorus Chorus instance
+ * @param set Flags indicating which chorus parameters to set (#fluid_chorus_set_t)
+ * @param nr Chorus voice count (0-99, CPU time consumption proportional to
+ *   this value)
+ * @param level Chorus level (0.0-1.0)
+ * @param speed Chorus speed in Hz (0.29-5.0)
+ * @param depth_ms Chorus depth (max value depends on synth sample rate,
+ *   0.0-21.0 is safe for sample rate values up to 96KHz)
+ * @param type Chorus waveform type (#fluid_chorus_mod)
+ */
+void
+fluid_chorus_set(fluid_chorus_t* chorus, int set, int nr, float level,
+                 float speed, float depth_ms, int type)
+{
+  if (set & FLUID_CHORUS_SET_NR) chorus->new_number_blocks = nr;
+  if (set & FLUID_CHORUS_SET_LEVEL) chorus->new_level = level;    
+  if (set & FLUID_CHORUS_SET_SPEED) chorus->new_speed_Hz = speed;
+  if (set & FLUID_CHORUS_SET_DEPTH) chorus->new_depth_ms = depth_ms;
+  if (set & FLUID_CHORUS_SET_TYPE) chorus->new_type = type;
+
+  return fluid_chorus_update (chorus);
+}
 
 /* Purpose:
- * Calculates the internal chorus parameters using the settings from
- * fluid_chorus_set_xxx. */
-int
+ * Calculates the internal chorus parameters. */
+static void
 fluid_chorus_update(fluid_chorus_t* chorus)
 {
   int i;
@@ -408,18 +351,6 @@ fluid_chorus_update(fluid_chorus_t* chorus)
   chorus->level = chorus->new_level;
   chorus->speed_Hz = chorus->new_speed_Hz;
   chorus->number_blocks = chorus->new_number_blocks;
-  return FLUID_OK;
-
-/*  failure: */
-  /* Note: This lives on the assumption, that the last chorus values were correct.
-   * If not, this will loop forever and a day. */
-/*   fluid_log(FLUID_WARN, "chorus: Restoring last good settings"); */
-/*   chorus->new_type = chorus->type; */
-/*   chorus->new_depth_ms = chorus->depth_ms; */
-/*   chorus->new_level = chorus->level; */
-/*   chorus->new_speed_Hz = chorus->speed_Hz; */
-/*   chorus->new_number_blocks = chorus->number_blocks; */
-/*   return FLUID_FAILED; */
 }
 
 
@@ -567,7 +498,8 @@ void fluid_chorus_processreplace(fluid_chorus_t* chorus, fluid_real_t *in,
  * a couple of times here, the resulting (current position in
  * buffer)-(waveform sample) will always be positive.
  */
-void fluid_chorus_sine(int *buf, int len, int depth)
+static void
+fluid_chorus_sine(int *buf, int len, int depth)
 {
   int i;
   double val;
@@ -584,7 +516,8 @@ void fluid_chorus_sine(int *buf, int len, int depth)
  * Calculates a modulation waveform (triangle)
  * See fluid_chorus_sine for comments.
  */
-void fluid_chorus_triangle(int *buf, int len, int depth)
+static void
+fluid_chorus_triangle(int *buf, int len, int depth)
 {
   int i=0;
   int ii=len-1;
@@ -597,10 +530,4 @@ void fluid_chorus_triangle(int *buf, int len, int depth)
     buf[i++] = (int) val2;
     buf[ii--] = (int) val2;
   }
-}
-
-void
-fluid_chorus_reset(fluid_chorus_t* chorus)
-{
-  fluid_chorus_init(chorus);
 }

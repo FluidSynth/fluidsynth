@@ -82,6 +82,8 @@ libfluidsynth_la_SOURCES = \
 	fluid_dsp_float.c \
 	fluid_event.c \
 	fluid_event_priv.h \
+	fluid_event_queue.c \
+	fluid_event_queue.h \
 	fluid_gen.c \
 	fluid_gen.h \
 	fluid_hash.c \
