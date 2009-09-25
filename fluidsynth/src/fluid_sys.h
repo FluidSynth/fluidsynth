@@ -60,6 +60,9 @@ void fluid_time_config(void);
 #define fluid_return_if_fail      g_return_if_fail
 #define FLUID_INLINE              inline
 #define FLUID_POINTER_TO_UINT     GPOINTER_TO_UINT
+#define FLUID_UINT_TO_POINTER     GUINT_TO_POINTER
+#define FLUID_POINTER_TO_INT      GPOINTER_TO_INT
+#define FLUID_INT_TO_POINTER      GINT_TO_POINTER
 
 
 /*
@@ -148,6 +151,24 @@ typedef GStaticRecMutex fluid_mutex_t;
 #define fluid_atomic_pointer_get(_pp)    g_atomic_pointer_get(_pp)
 #define fluid_atomic_pointer_compare_and_exchange(_pp, _old, _new) \
   g_atomic_pointer_compare_and_exchange(_pp, _old, _new)
+
+static FLUID_INLINE void
+fluid_atomic_float_set(volatile float *fptr, float val)
+{
+  sint32 ival;
+  memcpy (&ival, &val, 4);
+  fluid_atomic_int_set ((volatile int *)fptr, ival);
+}
+
+static FLUID_INLINE float
+fluid_atomic_float_get(volatile float *fptr)
+{
+  sint32 ival;
+  float fval;
+  ival = fluid_atomic_int_get ((volatile int *)fptr);
+  memcpy (&fval, &ival, 4);
+  return fval;
+}
 
 
 /* Thread private data */

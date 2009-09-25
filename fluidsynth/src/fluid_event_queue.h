@@ -37,7 +37,10 @@ enum fluid_event_queue_elem
   FLUID_EVENT_QUEUE_ELEM_STOP_VOICES,   /**< Stop voices event. Uses ival field of event value */
   FLUID_EVENT_QUEUE_ELEM_REVERB,        /**< Reverb set or return event. Uses reverb field of event value */
   FLUID_EVENT_QUEUE_ELEM_CHORUS,        /**< Chorus set or return event. Uses chorus field of event value */
-  FLUID_EVENT_QUEUE_ELEM_FREE_PRESET    /**< Free a preset return event.  Uses pval field of event value */
+  FLUID_EVENT_QUEUE_ELEM_FREE_PRESET,   /**< Free preset return event. Uses pval field of event value */
+  FLUID_EVENT_QUEUE_ELEM_SET_TUNING,    /**< Set tuning event. Uses set_tuning field of event value */
+  FLUID_EVENT_QUEUE_ELEM_REPL_TUNING,   /**< Replace tuning event. Uses repl_tuning field of event value */
+  FLUID_EVENT_QUEUE_ELEM_UNREF_TUNING,  /**< Unref tuning return event. Uses unref_tuning field of event value */
 };
 
 /**
@@ -85,6 +88,35 @@ typedef struct
   float depth;
 } fluid_event_chorus_t;
 
+/**
+ * Tuning assignment event structure.
+ */
+typedef struct
+{
+  char apply;                   /**< TRUE to set tuning in realtime */
+  int channel;                  /**< MIDI channel number */
+  fluid_tuning_t *tuning;       /**< Tuning to assign */
+} fluid_event_set_tuning_t;
+
+/**
+ * Tuning replacement event structure.
+ */
+typedef struct
+{
+  char apply;                       /**< TRUE if tuning change should be applied in realtime */
+  fluid_tuning_t *old_tuning;       /**< Old tuning pointer to replace */
+  fluid_tuning_t *new_tuning;       /**< New tuning to assign */
+} fluid_event_repl_tuning_t;
+
+/**
+ * Tuning unref event structure.
+ */
+typedef struct
+{
+  fluid_tuning_t *tuning;           /**< Tuning to unref */
+  int count;                        /**< Number of times to unref */
+} fluid_event_unref_tuning_t;
+
 
 /**
  * Event queue element structure.
@@ -100,6 +132,9 @@ typedef struct
     fluid_event_preset_t preset;        /**< If type == #FLUID_EVENT_QUEUE_ELEM_PRESET */
     fluid_event_reverb_t reverb;        /**< If type == #FLUID_EVENT_QUEUE_ELEM_REVERB */
     fluid_event_chorus_t chorus;        /**< If type == #FLUID_EVENT_QUEUE_ELEM_CHORUS */
+    fluid_event_set_tuning_t set_tuning;        /**< If type == #FLUID_EVENT_QUEUE_ELEM_SET_TUNING */
+    fluid_event_repl_tuning_t repl_tuning;      /**< If type == #FLUID_EVENT_QUEUE_ELEM_REPL_TUNING */
+    fluid_event_unref_tuning_t unref_tuning;    /**< If type == #FLUID_EVENT_QUEUE_ELEM_UNREF_TUNING */
     double dval;                /**< A floating point payload value */
     int ival;                   /**< An integer payload value */
     void *pval;                 /**< A pointer payload value */

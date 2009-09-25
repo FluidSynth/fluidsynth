@@ -55,21 +55,21 @@ struct _fluid_channel_t
 {
   fluid_mutex_t mutex;                  /* Lock for thread sensitive parameters */
 
-  fluid_synth_t* synth;                 /**> Parent synthesizer instance */
-  int channum;                          /**> MIDI channel number */
+  fluid_synth_t* synth;                 /**< Parent synthesizer instance */
+  int channum;                          /**< MIDI channel number */
 
-  int sfont_bank_prog;                  /**> SoundFont ID (bit 21-31), bank (bit 7-20), program (bit 0-6) */
-  fluid_preset_t* preset;               /**> Selected preset */
+  int sfont_bank_prog;                  /**< SoundFont ID (bit 21-31), bank (bit 7-20), program (bit 0-6) */
+  fluid_preset_t* preset;               /**< Selected preset */
 
-  int key_pressure;                     /**> MIDI key pressure */
-  int channel_pressure;                 /**> MIDI channel pressure */
-  int pitch_bend;                       /**> Current pitch bend value */
-  int pitch_wheel_sensitivity;          /**> Current pitch wheel sensitivity */
+  int key_pressure;                     /**< MIDI key pressure */
+  int channel_pressure;                 /**< MIDI channel pressure */
+  int pitch_bend;                       /**< Current pitch bend value */
+  int pitch_wheel_sensitivity;          /**< Current pitch wheel sensitivity */
 
-  int cc[128];                          /**> MIDI controller values */
+  int cc[128];                          /**< MIDI controller values */
 
-  int interp_method;                    /**> Interpolation method (enum fluid_interp) */
-  fluid_tuning_t* tuning;               /**> Micro tuning */
+  int interp_method;                    /**< Interpolation method (enum fluid_interp) */
+  fluid_tuning_t* tuning;               /**< Micro tuning */
 
   /* NRPN system */
   int nrpn_select;      /* Generator ID of SoundFont NRPN message */
@@ -87,7 +87,7 @@ struct _fluid_channel_t
    * combined attack time of the sound font and the modulators.
    *
    * However, it is useful to be able to specify the generator value
-   * absolutely, completely ignoring the generators of the sound font
+   * absolutely, completely ignoring the generators of the SoundFont
    * and the values of modulators. The gen_abs field, is a boolean
    * flag indicating whether the NRPN value is absolute or not.
    */

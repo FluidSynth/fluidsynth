@@ -21,6 +21,7 @@
 
 #include "fluid_tuning.h"
 #include "fluidsynth_priv.h"
+#include "fluid_sys.h"
 
 
 fluid_tuning_t* new_fluid_tuning(char* name, int bank, int prog)
@@ -47,18 +48,83 @@ fluid_tuning_t* new_fluid_tuning(char* name, int bank, int prog)
     tuning->pitch[i] = i * 100.0;
   }
 
+  tuning->refcount = 1;         /* Start with a refcount of 1 */
+
   return tuning;
 }
 
-void delete_fluid_tuning(fluid_tuning_t* tuning)
+/* Duplicate a tuning */
+fluid_tuning_t *
+fluid_tuning_duplicate (fluid_tuning_t *tuning)
 {
-  if (tuning == NULL) {
-    return;
+  fluid_tuning_t *new_tuning;
+  int i;
+
+  new_tuning = FLUID_NEW (fluid_tuning_t);
+
+  if (!new_tuning) {
+    FLUID_LOG (FLUID_PANIC, "Out of memory");
+    return NULL;
   }
-  if (tuning->name != NULL) {
-    FLUID_FREE(tuning->name);
+
+  if (tuning->name)
+  {
+    new_tuning->name = FLUID_STRDUP (tuning->name);
+
+    if (!new_tuning->name)
+    {
+      FLUID_FREE (new_tuning);
+      FLUID_LOG (FLUID_PANIC, "Out of memory");
+      return NULL;
+    }
   }
-  FLUID_FREE(tuning);
+  else new_tuning->name = NULL;
+
+  new_tuning->bank = tuning->bank;
+  new_tuning->prog = tuning->prog;
+
+  for (i = 0; i < 128; i++)
+    new_tuning->pitch[i] = tuning->pitch[i];
+
+  new_tuning->refcount = 1;     /* Start with a refcount of 1 */
+
+  return new_tuning;
+}
+
+void
+delete_fluid_tuning (fluid_tuning_t *tuning)
+{
+  if (tuning->name) FLUID_FREE (tuning->name);
+  FLUID_FREE (tuning);
+}
+
+/* Add a reference to a tuning object */
+void
+fluid_tuning_ref (fluid_tuning_t *tuning)
+{
+  fluid_return_if_fail (tuning != NULL);
+
+  fluid_atomic_int_inc (&tuning->refcount);
+}
+
+/* Unref a tuning object, when it reaches 0 it is deleted, returns TRUE if deleted */
+int
+fluid_tuning_unref (fluid_tuning_t *tuning, int count)
+{
+  fluid_return_val_if_fail (tuning != NULL, FALSE);
+
+  /* Add and compare are separate, but that is OK, since refcount will only
+   * reach 0 when there are no references and therefore no possibility of
+   * another thread adding a reference in between */
+  fluid_atomic_int_add (&tuning->refcount, -count);
+
+  /* Delete when refcount reaches 0 */
+  if (!fluid_atomic_int_get (&tuning->refcount))
+  {
+    delete_fluid_tuning (tuning);
+    return TRUE;
+  }
+  else return FALSE;
 }
 
 void fluid_tuning_set_name(fluid_tuning_t* tuning, char* name)

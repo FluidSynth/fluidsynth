@@ -108,8 +108,17 @@ static void fluid_synth_release_voice_on_same_note_LOCAL(fluid_synth_t* synth,
                                                             int chan, int key);
 static fluid_tuning_t* fluid_synth_get_tuning(fluid_synth_t* synth,
                                               int bank, int prog);
-static fluid_tuning_t* fluid_synth_create_tuning(fluid_synth_t* synth, int bank,
-                                                 int prog, char* name);
+static int fluid_synth_replace_tuning_LOCK (fluid_synth_t* synth,
+                                            fluid_tuning_t *tuning,
+                                            int bank, int prog, int apply);
+static void fluid_synth_replace_tuning_LOCAL (fluid_synth_t *synth,
+                                              fluid_tuning_t *old_tuning,
+                                              fluid_tuning_t *new_tuning,
+                                              int apply, int unref_new);
+static void fluid_synth_update_voice_tuning_LOCAL (fluid_synth_t *synth,
+                                                   fluid_channel_t *channel);
+static int fluid_synth_set_tuning_LOCAL (fluid_synth_t *synth, int chan,
+                                         fluid_tuning_t *tuning, int apply);
 static void fluid_synth_set_gen_LOCAL (fluid_synth_t* synth, int chan,
                                        int param, float value, int absolute);
 static void fluid_synth_stop_LOCAL (fluid_synth_t *synth, unsigned int id);
@@ -595,6 +604,7 @@ new_fluid_synth(fluid_settings_t *settings)
   synth->noteid = 0;
   synth->ticks = 0;
   synth->tuning = NULL;
+  fluid_private_init(synth->tuning_iter);
 
   /* allocate and add the default sfont loader */
   loader = new_fluid_defsfloader();
@@ -917,6 +927,8 @@ delete_fluid_synth(fluid_synth_t* synth)
     FLUID_FREE(synth->tuning);
   }
 
+  fluid_private_free (synth->tuning_iter);
+
 #ifdef LADSPA
   /* Release the LADSPA Fx unit */
   fluid_LADSPA_shutdown(synth->LADSPA_FxUnit);
@@ -936,8 +948,8 @@ delete_fluid_synth(fluid_synth_t* synth)
   for (i = 0; i < FLUID_MAX_EVENT_QUEUES; i++)
     if (synth->queues[i]) fluid_event_queue_free (synth->queues[i]);
 
-
   delete_fluid_list (synth->queue_pool);
+  fluid_private_free (synth->thread_queues);
 
   fluid_mutex_destroy(synth->mutex);
 
@@ -1020,6 +1032,29 @@ fluid_synth_get_event_queue (fluid_synth_t* synth)
   return queue;
 }
 
+/* Get available event for sending to synthesis thread.  Returns NULL on error.
+ * queue is an output parameter. */
+static fluid_event_queue_elem_t *
+fluid_synth_get_event_elem (fluid_synth_t* synth, fluid_event_queue_t **queue)
+{
+  fluid_event_queue_t *q;
+  fluid_event_queue_elem_t *event;
+
+  q = fluid_synth_get_event_queue (synth);
+  if (!q) return NULL;
+
+  event = fluid_event_queue_get_inptr (q);
+  if (!event)
+  {
+    FLUID_LOG (FLUID_ERR, "Synthesis event queue full");
+    return NULL;
+  }
+
+  *queue = q;
+
+  return event;
+}
+
 /**
  * Queues a MIDI event to the FluidSynth synthesis thread.
  * @param synth FluidSynth instance
@@ -1036,15 +1071,8 @@ fluid_synth_queue_midi_event (fluid_synth_t* synth, int type, int chan,
   fluid_event_queue_t *queue;
   fluid_event_queue_elem_t *event;
 
-  queue = fluid_synth_get_event_queue (synth);
-  if (!queue) return FLUID_FAILED;
-
-  event = fluid_event_queue_get_inptr (queue);
-  if (!event)
-  {
-    FLUID_LOG (FLUID_ERR, "Synthesis event queue full");
-    return FLUID_FAILED;
-  }
+  event = fluid_synth_get_event_elem (synth, &queue);
+  if (!event) return FLUID_FAILED;
 
   event->type = FLUID_EVENT_QUEUE_ELEM_MIDI;
   event->midi.type = type;
@@ -1073,15 +1101,8 @@ fluid_synth_queue_gen_event (fluid_synth_t* synth, int chan,
   fluid_event_queue_t *queue;
   fluid_event_queue_elem_t *event;
 
-  queue = fluid_synth_get_event_queue (synth);
-  if (!queue) return FLUID_FAILED;
-
-  event = fluid_event_queue_get_inptr (queue);
-  if (!event)
-  {
-    FLUID_LOG (FLUID_ERR, "Synthesis event queue full");
-    return FLUID_FAILED;
-  }
+  event = fluid_synth_get_event_elem (synth, &queue);
+  if (!event) return FLUID_FAILED;
 
   event->type = FLUID_EVENT_QUEUE_ELEM_GEN;
   event->gen.channel = chan;
@@ -1107,15 +1128,8 @@ fluid_synth_queue_float_event (fluid_synth_t* synth, int type, float val)
   fluid_event_queue_t *queue;
   fluid_event_queue_elem_t *event;
 
-  queue = fluid_synth_get_event_queue (synth);
-  if (!queue) return FLUID_FAILED;
-
-  event = fluid_event_queue_get_inptr (queue);
-  if (!event)
-  {
-    FLUID_LOG (FLUID_ERR, "Synthesis event queue full");
-    return FLUID_FAILED;
-  }
+  event = fluid_synth_get_event_elem (synth, &queue);
+  if (!event) return FLUID_FAILED;
 
   event->type = type;
   event->dval = val;
@@ -1138,15 +1152,8 @@ fluid_synth_queue_int_event (fluid_synth_t* synth, int type, int val)
   fluid_event_queue_t *queue;
   fluid_event_queue_elem_t *event;
 
-  queue = fluid_synth_get_event_queue (synth);
-  if (!queue) return FLUID_FAILED;
-
-  event = fluid_event_queue_get_inptr (queue);
-  if (!event)
-  {
-    FLUID_LOG (FLUID_ERR, "Synthesis event queue full");
-    return FLUID_FAILED;
-  }
+  event = fluid_synth_get_event_elem (synth, &queue);
+  if (!event) return FLUID_FAILED;
 
   event->type = type;
   event->ival = val;
@@ -1749,15 +1756,8 @@ fluid_synth_set_preset (fluid_synth_t *synth, int chan, fluid_preset_t *preset)
 
   if (fluid_synth_should_queue (synth))
   {
-    queue = fluid_synth_get_event_queue (synth);
-    if (!queue) return FLUID_FAILED;
-
-    event = fluid_event_queue_get_inptr (queue);
-    if (!event)
-    {
-      FLUID_LOG (FLUID_ERR, "Synthesis event queue full");
-      return FLUID_FAILED;
-    }
+    event = fluid_synth_get_event_elem (synth, &queue);
+    if (!event) return FLUID_FAILED;
 
     event->type = FLUID_EVENT_QUEUE_ELEM_PRESET;
     event->preset.channel = chan;
@@ -2299,6 +2299,7 @@ fluid_synth_nwrite_float(fluid_synth_t* synth, int len,
   fluid_real_t** right_in = synth->right_buf;
   double time = fluid_utime();
   int i, num, available, count, bytes;
+  float cpu_load;
 
   /* make sure we're playing */
   if (synth->state != FLUID_SYNTH_PLAYING)
@@ -2339,10 +2340,8 @@ fluid_synth_nwrite_float(fluid_synth_t* synth, int len,
   synth->cur = num;
 
   time = fluid_utime() - time;
-  synth->cpu_load = 0.5 * (synth->cpu_load +
-			   time * synth->sample_rate / len / 10000.0);
-
-/*   printf("CPU: %.2f\n", synth->cpu_load); */
+  cpu_load = 0.5 * (synth->cpu_load + time * synth->sample_rate / len / 10000.0);
+  fluid_atomic_float_set (&synth->cpu_load, cpu_load);
 
   return FLUID_OK;
 }
@@ -2414,6 +2413,7 @@ fluid_synth_write_float(fluid_synth_t* synth, int len,
   fluid_real_t* left_in = synth->left_buf[0];
   fluid_real_t* right_in = synth->right_buf[0];
   double time = fluid_utime();
+  float cpu_load;
 
   /* make sure we're playing */
   if (synth->state != FLUID_SYNTH_PLAYING)
@@ -2435,10 +2435,8 @@ fluid_synth_write_float(fluid_synth_t* synth, int len,
   synth->cur = l;
 
   time = fluid_utime() - time;
-  synth->cpu_load = 0.5 * (synth->cpu_load +
-			   time * synth->sample_rate / len / 10000.0);
-
-/*   printf("CPU: %.2f\n", synth->cpu_load); */
+  cpu_load = 0.5 * (synth->cpu_load + time * synth->sample_rate / len / 10000.0);
+  fluid_atomic_float_set (&synth->cpu_load, cpu_load);
 
   return FLUID_OK;
 }
@@ -2511,6 +2509,7 @@ fluid_synth_write_s16(fluid_synth_t* synth, int len,
   double time = fluid_utime();
   int di = synth->dither_index;
   double prof_ref_on_block;
+  float cpu_load;
 
   /* make sure we're playing */
   if (synth->state != FLUID_SYNTH_PLAYING) {
@@ -2552,12 +2551,9 @@ fluid_synth_write_s16(fluid_synth_t* synth, int len,
 
   fluid_profile(FLUID_PROF_WRITE_S16, prof_ref);
 
-
   time = fluid_utime() - time;
-  synth->cpu_load = 0.5 * (synth->cpu_load +
-			   time * synth->sample_rate / len / 10000.0);
-
-/*   printf("CPU: %.2f\n", synth->cpu_load); */
+  cpu_load = 0.5 * (synth->cpu_load + time * synth->sample_rate / len / 10000.0);
+  fluid_atomic_float_set (&synth->cpu_load, cpu_load);
 
   return 0;
 }
@@ -2773,8 +2769,9 @@ fluid_synth_process_event_queue_LOCAL (fluid_synth_t *synth,
 
   while ((event = fluid_event_queue_get_outptr (queue)))
   {
-    if (event->type == FLUID_EVENT_QUEUE_ELEM_MIDI)
+    switch (event->type)
     {
+    case FLUID_EVENT_QUEUE_ELEM_MIDI:
       switch (event->midi.type)
       {
         case NOTE_ON:
@@ -2810,27 +2807,44 @@ fluid_synth_process_event_queue_LOCAL (fluid_synth_t *synth,
           }
           break;
       }
-    }
-    else if (event->type == FLUID_EVENT_QUEUE_ELEM_GAIN)
+      break;
+    case FLUID_EVENT_QUEUE_ELEM_GAIN:
       fluid_synth_set_gain_LOCAL (synth, event->dval);
-    else if (event->type == FLUID_EVENT_QUEUE_ELEM_POLYPHONY)
+      break;
+    case FLUID_EVENT_QUEUE_ELEM_POLYPHONY:
       fluid_synth_set_polyphony_LOCAL (synth, event->ival);
-    else if (event->type == FLUID_EVENT_QUEUE_ELEM_GEN)
+      break;
+    case FLUID_EVENT_QUEUE_ELEM_GEN:
       fluid_synth_set_gen_LOCAL (synth, event->gen.channel, event->gen.param,
                                  event->gen.value, event->gen.absolute);
-    else if (event->type == FLUID_EVENT_QUEUE_ELEM_PRESET)
+      break;
+    case FLUID_EVENT_QUEUE_ELEM_PRESET:
       fluid_synth_set_preset_LOCAL (synth, event->preset.channel,
                                     event->preset.preset);
-    else if (event->type == FLUID_EVENT_QUEUE_ELEM_STOP_VOICES)
+      break;
+    case FLUID_EVENT_QUEUE_ELEM_STOP_VOICES:
       fluid_synth_stop_LOCAL (synth, event->ival);
-    else if (event->type == FLUID_EVENT_QUEUE_ELEM_REVERB)
+      break;
+    case FLUID_EVENT_QUEUE_ELEM_REVERB:
       fluid_synth_set_reverb_LOCAL (synth, event->reverb.set, event->reverb.roomsize,
                                     event->reverb.damping, event->reverb.width,
                                     event->reverb.level);
-    else if (event->type == FLUID_EVENT_QUEUE_ELEM_CHORUS)
+      break;
+    case FLUID_EVENT_QUEUE_ELEM_CHORUS:
       fluid_synth_set_chorus_LOCAL (synth, event->chorus.set, event->chorus.nr,
                                     event->chorus.type, event->chorus.level,
                                     event->chorus.speed, event->chorus.depth);
+      break;
+    case FLUID_EVENT_QUEUE_ELEM_SET_TUNING:
+      fluid_synth_set_tuning_LOCAL (synth, event->set_tuning.channel,
+                                    event->set_tuning.tuning, event->set_tuning.apply);
+      break;
+    case FLUID_EVENT_QUEUE_ELEM_REPL_TUNING:
+      fluid_synth_replace_tuning_LOCAL (synth, event->repl_tuning.old_tuning,
+                                        event->repl_tuning.new_tuning,
+                                        event->repl_tuning.apply, TRUE);
+      break;
+    }
 
     fluid_event_queue_next_outptr (queue);
   }
@@ -3636,15 +3650,8 @@ fluid_synth_set_reverb_full(fluid_synth_t* synth, int set, double roomsize,
 
   if (fluid_synth_should_queue (synth))
   {
-    queue = fluid_synth_get_event_queue (synth);
-    if (!queue) return FLUID_FAILED;
-
-    event = fluid_event_queue_get_inptr (queue);
-    if (!event)
-    {
-      FLUID_LOG (FLUID_ERR, "Synthesis event queue full");
-      return FLUID_FAILED;
-    }
+    event = fluid_synth_get_event_elem (synth, &queue);
+    if (!event) return FLUID_FAILED;
 
     event->type = FLUID_EVENT_QUEUE_ELEM_REVERB;
     event->reverb.set = set;
@@ -3823,15 +3830,8 @@ fluid_synth_set_chorus_full(fluid_synth_t* synth, int set, int nr, double level,
 
   if (fluid_synth_should_queue (synth))
   {
-    queue = fluid_synth_get_event_queue (synth);
-    if (!queue) return FLUID_FAILED;
-
-    event = fluid_event_queue_get_inptr (queue);
-    if (!event)
-    {
-      FLUID_LOG (FLUID_ERR, "Synthesis event queue full");
-      return FLUID_FAILED;
-    }
+    event = fluid_synth_get_event_elem (synth, &queue);
+    if (!event) return FLUID_FAILED;
 
     event->type = FLUID_EVENT_QUEUE_ELEM_CHORUS;
     event->chorus.set = set;
@@ -4091,40 +4091,36 @@ fluid_synth_get_cpu_load(fluid_synth_t* synth)
 {
   fluid_return_val_if_fail (synth != NULL, 0);
 
-  return synth->cpu_load;
+  return fluid_atomic_float_get (&synth->cpu_load);
 }
 
 /* Get tuning for a given bank:program */
 static fluid_tuning_t *
 fluid_synth_get_tuning(fluid_synth_t* synth, int bank, int prog)
 {
-  fluid_return_val_if_fail (synth != NULL, NULL);
-  fluid_return_val_if_fail (bank >= 0 && bank < 128, NULL);
-  fluid_return_val_if_fail (prog >= 0 && prog < 128, NULL);
-
   if ((synth->tuning == NULL) ||
       (synth->tuning[bank] == NULL) ||
-      (synth->tuning[bank][prog] == NULL)) {
-    FLUID_LOG(FLUID_WARN, "No tuning at bank %d, prog %d", bank, prog);
+      (synth->tuning[bank][prog] == NULL))
     return NULL;
-  }
 
   return synth->tuning[bank][prog];
 }
 
-/* Create tuning for a given bank:program */
-static fluid_tuning_t*
-fluid_synth_create_tuning(fluid_synth_t* synth, int bank, int prog, char* name)
+/* Replace tuning on a given bank:program (need not already exist).
+ * Synth mutex should already be locked by caller. */
+static int
+fluid_synth_replace_tuning_LOCK (fluid_synth_t* synth, fluid_tuning_t *tuning,
+                                 int bank, int prog, int apply)
 {
-  fluid_return_val_if_fail (synth != NULL, NULL);
-  fluid_return_val_if_fail (bank >= 0 && bank < 128, NULL);
-  fluid_return_val_if_fail (prog >= 0 && prog < 128, NULL);
+  fluid_tuning_t *old_tuning;
+  fluid_event_queue_t *queue;
+  fluid_event_queue_elem_t *event;
 
   if (synth->tuning == NULL) {
     synth->tuning = FLUID_ARRAY(fluid_tuning_t**, 128);
     if (synth->tuning == NULL) {
       FLUID_LOG(FLUID_PANIC, "Out of memory");
-      return NULL;
+      return FLUID_FAILED;
     }
     FLUID_MEMSET(synth->tuning, 0, 128 * sizeof(fluid_tuning_t**));
   }
@@ -4133,31 +4129,126 @@ fluid_synth_create_tuning(fluid_synth_t* synth, int bank, int prog, char* name)
     synth->tuning[bank] = FLUID_ARRAY(fluid_tuning_t*, 128);
     if (synth->tuning[bank] == NULL) {
       FLUID_LOG(FLUID_PANIC, "Out of memory");
-      return NULL;
+      return FLUID_FAILED;
     }
     FLUID_MEMSET(synth->tuning[bank], 0, 128 * sizeof(fluid_tuning_t*));
   }
 
-  if (synth->tuning[bank][prog] == NULL) {
-    synth->tuning[bank][prog] = new_fluid_tuning(name, bank, prog);
-    if (synth->tuning[bank][prog] == NULL) {
-      return NULL;
+  old_tuning = synth->tuning[bank][prog];
+  synth->tuning[bank][prog] = tuning;
+
+  if (old_tuning) {
+    if (!fluid_tuning_unref (old_tuning, 1))     /* -- unref old tuning */
+    { /* Replace old tuning if present */
+      if (fluid_synth_should_queue (synth))
+      {
+        event = fluid_synth_get_event_elem (synth, &queue);
+
+        if (event)
+        {
+          fluid_tuning_ref (tuning);    /* ++ ref new tuning for event */
+
+          event->type = FLUID_EVENT_QUEUE_ELEM_REPL_TUNING;
+          event->repl_tuning.apply = apply;
+          event->repl_tuning.old_tuning = old_tuning;
+          event->repl_tuning.new_tuning = tuning;
+          fluid_event_queue_next_inptr (queue);
+        }
+      }
+      else fluid_synth_replace_tuning_LOCAL (synth, old_tuning, tuning, apply, FALSE);
     }
   }
 
-  if ((fluid_tuning_get_name(synth->tuning[bank][prog]) == NULL)
-      || (FLUID_STRCMP(fluid_tuning_get_name(synth->tuning[bank][prog]), name) != 0)) {
-    fluid_tuning_set_name(synth->tuning[bank][prog], name);
+  return FLUID_OK;
+}
+
+/* Replace a tuning with a new one in all MIDI channels.  new_tuning can be
+ * NULL, in which case channels are reset to default equal tempered scale. */
+static void
+fluid_synth_replace_tuning_LOCAL (fluid_synth_t *synth, fluid_tuning_t *old_tuning,
+                                  fluid_tuning_t *new_tuning, int apply, int unref_new)
+{
+  fluid_event_queue_elem_t *event;
+  fluid_channel_t *channel;
+  int old_tuning_unref = 0;
+  int i;
+
+  for (i = 0; i < synth->midi_channels; i++)
+  {
+    channel = synth->channel[i];
+
+    if (fluid_channel_get_tuning (channel) == old_tuning)
+    {
+      old_tuning_unref++;
+      if (new_tuning) fluid_tuning_ref (new_tuning);    /* ++ ref new tuning for channel */
+      fluid_channel_set_tuning (channel, new_tuning);
+
+      if (apply) fluid_synth_update_voice_tuning_LOCAL (synth, channel);
+    }
   }
 
-  return synth->tuning[bank][prog];
+  /* Send unref old tuning event if any unrefs */
+  if (old_tuning_unref > 0)
+  {
+    event = fluid_event_queue_get_inptr (synth->return_queue);
+
+    if (event)
+    {
+      event->type = FLUID_EVENT_QUEUE_ELEM_UNREF_TUNING;
+      event->unref_tuning.tuning = old_tuning;
+      event->unref_tuning.count = old_tuning_unref;
+      fluid_event_queue_next_inptr (synth->return_queue);
+    }
+    else
+    { /* Just unref it in synthesis thread if queue is full */
+      fluid_tuning_unref (old_tuning, old_tuning_unref);
+      FLUID_LOG (FLUID_ERR, "Synth return event queue full");
+    }
+  }
+
+  if (!unref_new || !new_tuning) return;
+
+  /* Send new tuning unref if requested (for replace queue event for example) */
+  event = fluid_event_queue_get_inptr (synth->return_queue);
+
+  if (event)
+  {
+    event->type = FLUID_EVENT_QUEUE_ELEM_UNREF_TUNING;
+    event->unref_tuning.tuning = new_tuning;
+    event->unref_tuning.count = 1;
+    fluid_event_queue_next_inptr (synth->return_queue);
+  }
+  else
+  { /* Just unref it in synthesis thread if queue is full */
+    fluid_tuning_unref (new_tuning, 1);
+    FLUID_LOG (FLUID_ERR, "Synth return event queue full");
+  }
+}
+
+/* Update voice tunings in realtime */
+static void
+fluid_synth_update_voice_tuning_LOCAL (fluid_synth_t *synth, fluid_channel_t *channel)
+{
+  fluid_voice_t *voice;
+  int i;
+
+  for (i = 0; i < synth->polyphony; i++)
+  {
+    voice = synth->voice[i];
+
+    if (_ON (voice) && (voice->channel == channel))
+    {
+      fluid_voice_calculate_gen_pitch (voice);
+      fluid_voice_update_param (voice, GEN_PITCH);
+    }
+  }
 }
 
 /**
  * Set the tuning of the entire MIDI note scale.
  * @param synth FluidSynth instance
- * @param bank MIDI bank number for this tuning (0-16383)
- * @param prog MIDI program number for this tuning (0-127)
+ * @param bank Tuning bank number (0-127), not related to MIDI instrument bank
+ * @param prog Tuning preset number (0-127), not related to MIDI instrument program
  * @param name Label name for this tuning
  * @param pitch Array of pitch values (length of 128, each value is number of
  *   cents, for example normally note 0 is 0.0, 1 is 100.0, 60 is 6000.0, etc).
@@ -4168,19 +4259,36 @@ int
 fluid_synth_create_key_tuning(fluid_synth_t* synth, int bank, int prog,
                               char* name, double* pitch)
 {
-  fluid_tuning_t* tuning = fluid_synth_create_tuning(synth, bank, prog, name);
+  fluid_tuning_t* tuning;
+  int retval = FLUID_OK;
 
-  if (tuning == NULL) return FLUID_FAILED;
-  if (pitch) fluid_tuning_set_all(tuning, pitch);
+  fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
+  fluid_return_val_if_fail (bank >= 0 && bank < 128, FLUID_FAILED);
+  fluid_return_val_if_fail (prog >= 0 && prog < 128, FLUID_FAILED);
+  fluid_return_val_if_fail (name != NULL, FLUID_FAILED);
 
-  return FLUID_OK;
+  fluid_mutex_lock (synth->mutex);      /* ++ Lock tunings */
+
+  tuning = new_fluid_tuning (name, bank, prog);
+
+  if (tuning)
+  {
+    if (pitch) fluid_tuning_set_all (tuning, pitch);
+    retval = fluid_synth_replace_tuning_LOCK (synth, tuning, bank, prog, FALSE);
+    if (retval == FLUID_FAILED) fluid_tuning_unref (tuning, 1);
+  }
+  else retval = FLUID_FAILED;
+
+  fluid_mutex_unlock (synth->mutex);    /* -- Unlock tunings */
+
+  return retval;
 }
 
 /**
  * Apply an octave tuning to every octave in the MIDI note scale.
  * @param synth FluidSynth instance
- * @param bank MIDI bank number for this tuning (0-16383)
- * @param prog MIDI program number for this tuning (0-127)
+ * @param bank Tuning bank number (0-127), not related to MIDI instrument bank
+ * @param prog Tuning preset number (0-127), not related to MIDI instrument program
  * @param name Label name for this tuning
  * @param pitch Array of pitch values (length of 12 for each note of an octave
  *   starting at note C, values are number of offset cents to add to the normal
@@ -4191,19 +4299,37 @@ int
 fluid_synth_create_octave_tuning(fluid_synth_t* synth, int bank, int prog,
                                  char* name, double* pitch)
 {
-  fluid_tuning_t* tuning = fluid_synth_create_tuning(synth, bank, prog, name);
+  fluid_tuning_t* tuning;
+  int retval = FLUID_OK;
 
-  if (tuning == NULL) return FLUID_FAILED;
-  fluid_tuning_set_octave(tuning, pitch);
+  fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
+  fluid_return_val_if_fail (bank >= 0 && bank < 128, FLUID_FAILED);
+  fluid_return_val_if_fail (prog >= 0 && prog < 128, FLUID_FAILED);
+  fluid_return_val_if_fail (name != NULL, FLUID_FAILED);
+  fluid_return_val_if_fail (pitch != NULL, FLUID_FAILED);
 
-  return FLUID_OK;
+  fluid_mutex_lock (synth->mutex);      /* ++ Lock tunings */
+
+  tuning = new_fluid_tuning (name, bank, prog);
+
+  if (tuning)
+  {
+    fluid_tuning_set_octave (tuning, pitch);
+    retval = fluid_synth_replace_tuning_LOCK (synth, tuning, bank, prog, TRUE);
+    if (retval == FLUID_FAILED) fluid_tuning_unref (tuning, 1);
+  }
+  else retval = FLUID_FAILED;
+
+  fluid_mutex_unlock (synth->mutex);    /* -- Unlock tunings */
+
+  return retval;
 }
 
 /**
  * Set tuning values for one or more MIDI notes for an existing tuning.
  * @param synth FluidSynth instance
- * @param bank MIDI bank number for this tuning (0-16383)
- * @param prog MIDI program number for this tuning (0-127)
+ * @param bank Tuning bank number (0-127), not related to MIDI instrument bank
+ * @param prog Tuning preset number (0-127), not related to MIDI instrument program
  * @param len Number of MIDI notes to assign
  * @param key Array of MIDI key numbers (length of 'len', values 0-127)
  * @param pitch Array of pitch values (length of 'len', values are number of
@@ -4211,40 +4337,155 @@ fluid_synth_create_octave_tuning(fluid_synth_t* synth, int bank, int prog,
  * @param apply Not used currently, may be used in the future to apply tuning
  *   change in realtime.
  * @return FLUID_OK on success, FLUID_FAILED otherwise
+ *
+ * NOTE: Prior to version 1.1.0 it was an error to specify a tuning that didn't
+ * already exist.  Starting with 1.1.0, the default equal tempered scale will be
+ * used as a basis, if no tuning exists for the given bank and prog.
  */
 int
 fluid_synth_tune_notes(fluid_synth_t* synth, int bank, int prog,
                        int len, int *key, double* pitch, int apply)
 {
-  fluid_tuning_t* tuning = fluid_synth_get_tuning(synth, bank, prog);
+  fluid_tuning_t* old_tuning, *new_tuning;
+  int retval = FLUID_OK;
   int i;
 
-  if (tuning == NULL) return FLUID_FAILED;
+  fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
+  fluid_return_val_if_fail (bank >= 0 && bank < 128, FLUID_FAILED);
+  fluid_return_val_if_fail (prog >= 0 && prog < 128, FLUID_FAILED);
+  fluid_return_val_if_fail (len > 0, FLUID_FAILED);
+  fluid_return_val_if_fail (key != NULL, FLUID_FAILED);
+  fluid_return_val_if_fail (pitch != NULL, FLUID_FAILED);
 
-  for (i = 0; i < len; i++)
-    fluid_tuning_set_pitch(tuning, key[i], pitch[i]);
+  fluid_mutex_lock (synth->mutex);      /* ++ Lock tunings */
 
-  return FLUID_OK;
+  old_tuning = fluid_synth_get_tuning (synth, bank, prog);
+
+  if (old_tuning)
+    new_tuning = fluid_tuning_duplicate (old_tuning);
+  else new_tuning = new_fluid_tuning ("Unnamed", bank, prog);
+
+  if (new_tuning)
+  {
+    for (i = 0; i < len; i++)
+      fluid_tuning_set_pitch (new_tuning, key[i], pitch[i]);
+
+    retval = fluid_synth_replace_tuning_LOCK (synth, new_tuning, bank, prog, apply);
+    if (retval == FLUID_FAILED) fluid_tuning_unref (new_tuning, 1);
+  }
+  else retval = FLUID_FAILED;
+
+  fluid_mutex_unlock (synth->mutex);    /* -- Unlock tunings */
+
+  return retval;
 }
 
 /**
- * Activate an existing tuning scale on a MIDI channel.
+ * Activate a tuning scale on a MIDI channel.
  * @param synth FluidSynth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
- * @param bank MIDI bank number of tuning
- * @param prog MIDI program number of tuning
+ * @param bank Tuning bank number (0-127), not related to MIDI instrument bank
+ * @param prog Tuning preset number (0-127), not related to MIDI instrument program
  * @return FLUID_OK on success, FLUID_FAILED otherwise
+ *
+ * NOTE: Prior to version 1.1.0 it was an error to select a tuning that didn't
+ * already exist.  Starting with 1.1.0, the default equal tempered scale will be
+ * used, if no tuning exists for the given bank and prog.
  */
 int
 fluid_synth_select_tuning(fluid_synth_t* synth, int chan, int bank, int prog)
 {
-  fluid_tuning_t* tuning = fluid_synth_get_tuning(synth, bank, prog);
+  fluid_event_queue_elem_t *event;
+  fluid_event_queue_t *queue;
+  fluid_tuning_t* tuning;
+  int retval = FLUID_OK;
 
-  if (tuning == NULL) return FLUID_FAILED;
-
+  fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
   fluid_return_val_if_fail (chan >= 0 && chan < synth->midi_channels, FLUID_FAILED);
+  fluid_return_val_if_fail (bank >= 0 && bank < 128, FLUID_FAILED);
+  fluid_return_val_if_fail (prog >= 0 && prog < 128, FLUID_FAILED);
 
-  fluid_channel_set_tuning(synth->channel[chan], synth->tuning[bank][prog]);
+  fluid_mutex_lock (synth->mutex);      /* ++ Lock tunings */
+
+  tuning = fluid_synth_get_tuning (synth, bank, prog);
+
+ /* If no tuning exists, create a new default tuning.  We do this, so that
+  * it can be replaced later, if any changes are made. */
+  if (!tuning)
+  {
+    tuning = new_fluid_tuning ("Unnamed", bank, prog);
+    if (tuning) fluid_synth_replace_tuning_LOCK (synth, tuning, bank, prog, FALSE);
+  }
+
+  if (tuning) fluid_tuning_ref (tuning);  /* ++ ref for outside of lock */
+
+  fluid_mutex_unlock (synth->mutex);      /* -- Unlock tunings */
+
+  if (!tuning) return (FLUID_FAILED);
+
+  /* NOTE: tuning can be NULL, to use default equal tempered scale */
+
+  if (fluid_synth_should_queue (synth))
+  {
+    event = fluid_synth_get_event_elem (synth, &queue);
+
+    if (event)
+    {
+      fluid_tuning_ref (tuning);    /* ++ ref new tuning for event */
+
+      event->type = FLUID_EVENT_QUEUE_ELEM_SET_TUNING;
+      event->set_tuning.apply = TRUE;
+      event->set_tuning.channel = chan;
+      event->set_tuning.tuning = tuning;
+      fluid_event_queue_next_inptr (queue);
+    }
+    else retval = FLUID_FAILED;
+  }
+  else
+  {
+    fluid_tuning_ref (tuning);    /* ++ ref new tuning for following function */
+    retval = fluid_synth_set_tuning_LOCAL (synth, chan, tuning, TRUE);
+  }
+
+  fluid_tuning_unref (tuning, 1);   /* -- unref for outside of lock */
+
+  return retval;
+}
+
+/* Local synthesis thread set tuning function (takes over tuning reference) */
+static int
+fluid_synth_set_tuning_LOCAL (fluid_synth_t *synth, int chan,
+                              fluid_tuning_t *tuning, int apply)
+{
+  fluid_event_queue_elem_t *event;
+  fluid_tuning_t *old_tuning;
+  fluid_channel_t *channel;
+
+  channel = synth->channel[chan];
+
+  old_tuning = fluid_channel_get_tuning (channel);
+  fluid_channel_set_tuning (channel, tuning);   /* !! Takes over callers reference */
+
+  if (apply) fluid_synth_update_voice_tuning_LOCAL (synth, channel);
+
+  /* Send unref old tuning event */
+  if (old_tuning)
+  {
+    event = fluid_event_queue_get_inptr (synth->return_queue);
+
+    if (event)
+    {
+      event->type = FLUID_EVENT_QUEUE_ELEM_UNREF_TUNING;
+      event->unref_tuning.tuning = old_tuning;
+      event->unref_tuning.count = 1;
+      fluid_event_queue_next_inptr (synth->return_queue);
+    }
+    else
+    { /* Just unref it in synthesis thread if queue is full */
+      fluid_tuning_unref (old_tuning, 1);
+      FLUID_LOG (FLUID_ERR, "Synth return event queue full");
+    }
+  }
 
   return FLUID_OK;
 }
@@ -4258,12 +4499,30 @@ fluid_synth_select_tuning(fluid_synth_t* synth, int chan, int bank, int prog)
 int
 fluid_synth_reset_tuning(fluid_synth_t* synth, int chan)
 {
+  fluid_event_queue_elem_t *event;
+  fluid_event_queue_t *queue;
+  int retval = FLUID_OK;
+
   fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
   fluid_return_val_if_fail (chan >= 0 && chan < synth->midi_channels, FLUID_FAILED);
 
-  fluid_channel_set_tuning(synth->channel[chan], NULL);
+  if (fluid_synth_should_queue (synth))
+  {
+    event = fluid_synth_get_event_elem (synth, &queue);
 
-  return FLUID_OK;
+    if (event)
+    {
+      event->type = FLUID_EVENT_QUEUE_ELEM_SET_TUNING;
+      event->set_tuning.apply = TRUE;
+      event->set_tuning.channel = chan;
+      event->set_tuning.tuning = NULL;
+      fluid_event_queue_next_inptr (queue);
+    }
+    else retval = FLUID_FAILED;
+  }
+  else retval = fluid_synth_set_tuning_LOCAL (synth, chan, NULL, TRUE);
+
+  return retval;
 }
 
 /**
@@ -4275,7 +4534,7 @@ fluid_synth_tuning_iteration_start(fluid_synth_t* synth)
 {
   fluid_return_if_fail (synth != NULL);
 
-  synth->cur_tuning = NULL;
+  fluid_private_set (synth->tuning_iter, FLUID_INT_TO_POINTER (0), NULL);
 }
 
 /**
@@ -4288,39 +4547,49 @@ fluid_synth_tuning_iteration_start(fluid_synth_t* synth)
 int
 fluid_synth_tuning_iteration_next(fluid_synth_t* synth, int* bank, int* prog)
 {
+  void *pval;
   int b = 0, p = 0;
 
   fluid_return_val_if_fail (synth != NULL, 0);
   fluid_return_val_if_fail (bank != NULL, 0);
   fluid_return_val_if_fail (prog != NULL, 0);
 
-  if (synth->tuning == NULL) return 0;
+  /* Current tuning iteration stored as: bank << 8 | program */
+  pval = fluid_private_get (synth->tuning_iter);
+  p = FLUID_POINTER_TO_INT (pval);
+  b = (p >> 8) & 0xFF;
+  p &= 0xFF;
 
-  if (synth->cur_tuning != NULL) {
-    /* get the next program number */
-    b = fluid_tuning_get_bank(synth->cur_tuning);
-    p = 1 + fluid_tuning_get_prog(synth->cur_tuning);
-    if (p >= 128) {
-      p = 0;
-      b++;
+  fluid_mutex_lock (synth->mutex);      /* ++ lock tunings */
+
+  if (!synth->tuning)
+  {
+    fluid_mutex_unlock (synth->mutex);    /* -- unlock tunings */
+    return 0;
+  }
+
+  for (; b < 128; b++, p = 0)
+  {
+    if (synth->tuning[b] == NULL) continue;
+
+    for (; p < 128; p++)
+    {
+      if (synth->tuning[b][p] == NULL) continue;
+
+      *bank = b;
+      *prog = p;
+
+      if (p < 127) fluid_private_set (synth->tuning_iter,
+                                      FLUID_INT_TO_POINTER (b << 8 | (p + 1)), NULL);
+      else fluid_private_set (synth->tuning_iter,
+                              FLUID_INT_TO_POINTER ((b + 1) << 8), NULL);
+
+      fluid_mutex_unlock (synth->mutex);    /* -- unlock tunings */
+      return 1;
     }
   }
 
-  while (b < 128) {
-    if (synth->tuning[b] != NULL) {
-      while (p < 128) {
-	if (synth->tuning[b][p] != NULL) {
-	  synth->cur_tuning = synth->tuning[b][p];
-	  *bank = b;
-	  *prog = p;
-	  return 1;
-	}
-	p++;
-      }
-    }
-    p = 0;
-    b++;
-  }
+  fluid_mutex_unlock (synth->mutex);    /* -- unlock tunings */
 
   return 0;
 }
@@ -4333,25 +4602,33 @@ fluid_synth_tuning_iteration_next(fluid_synth_t* synth, int* bank, int* prog)
  * @param name Location to store tuning name or NULL to ignore
  * @param len Maximum number of chars to store to 'name' (including NULL byte)
  * @param pitch Array to store tuning scale to or NULL to ignore (len of 128)
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return FLUID_OK if matching tuning was found, FLUID_FAILED otherwise
  */
 int
 fluid_synth_tuning_dump(fluid_synth_t* synth, int bank, int prog,
                         char* name, int len, double* pitch)
 {
-  fluid_tuning_t* tuning = fluid_synth_get_tuning(synth, bank, prog);
+  fluid_tuning_t* tuning;
 
-  if (tuning == NULL) return FLUID_FAILED;
+  fluid_mutex_lock (synth->mutex);      /* ++ lock tunings */
 
-  if (name) {
-    snprintf(name, len - 1, "%s", fluid_tuning_get_name(tuning));
-    name[len - 1] = 0;  /* make sure the string is null terminated */
+  tuning = fluid_synth_get_tuning (synth, bank, prog);
+
+  if (tuning)
+  {
+    if (name)
+    {
+      snprintf (name, len - 1, "%s", fluid_tuning_get_name (tuning));
+      name[len - 1] = 0;  /* make sure the string is null terminated */
+    }
+
+    if (pitch)
+      FLUID_MEMCPY (pitch, fluid_tuning_get_all (tuning), 128 * sizeof (double));
   }
 
-  if (pitch)
-    FLUID_MEMCPY(pitch, fluid_tuning_get_all(tuning), 128 * sizeof(double));
+  fluid_mutex_unlock (synth->mutex);    /* unlock tunings */
 
-  return FLUID_OK;
+  return tuning ? FLUID_OK : FLUID_FAILED;
 }
 
 /**
@@ -4486,7 +4763,7 @@ fluid_synth_set_gen(fluid_synth_t* synth, int chan, int param, float value)
   fluid_return_val_if_fail (param >= 0 && param < GEN_LAST, FLUID_FAILED);
 
   if (fluid_synth_should_queue (synth))
-    return (fluid_synth_queue_gen_event (synth, chan, param, value, FALSE));
+    return fluid_synth_queue_gen_event (synth, chan, param, value, FALSE);
   else fluid_synth_set_gen_LOCAL (synth, chan, param, value, FALSE);
 
   return FLUID_OK;

@@ -39,7 +39,7 @@ static int fluid_settings_tokenize(char* s, char *buf, char** ptr);
 
 /* Common structure to all settings nodes */
 typedef struct {
-  int type;             /**> fluid_types_enum */
+  int type;             /**< fluid_types_enum */
 } fluid_setting_node_t; 
 
 typedef struct {

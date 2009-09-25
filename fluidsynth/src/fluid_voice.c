@@ -813,9 +813,10 @@ void fluid_voice_start(fluid_voice_t* voice)
   voice->status = FLUID_VOICE_ON;
 }
 
-static void 
+void 
 fluid_voice_calculate_gen_pitch(fluid_voice_t* voice)
 {
+  fluid_tuning_t* tuning;
   fluid_real_t x;
 
   /* The GEN_PITCH is a hack to fit the pitch bend controller into the
@@ -826,17 +827,14 @@ fluid_voice_calculate_gen_pitch(fluid_voice_t* voice)
    * one key remains fixed. Here C3 (MIDI number 60) is used.
    */
   if (fluid_channel_has_tuning(voice->channel)) {
-    /* pitch(scalekey) + scale * (pitch(key) - pitch(scalekey)) */
-    #define __pitch(_k) fluid_tuning_get_pitch(tuning, _k)
-    fluid_tuning_t* tuning = fluid_channel_get_tuning(voice->channel);
-    x = __pitch((int) (voice->root_pitch / 100.0f));
-    voice->gen[GEN_PITCH].val = (x + (voice->gen[GEN_SCALETUNE].val / 100.0f *
-					   (__pitch(voice->key) - x)));
+    tuning = fluid_channel_get_tuning (voice->channel);
+    x = fluid_tuning_get_pitch (tuning, (int)(voice->root_pitch / 100.0f));
+    voice->gen[GEN_PITCH].val = voice->gen[GEN_SCALETUNE].val / 100.0f *
+      (fluid_tuning_get_pitch (tuning, voice->key) - x) + x;
   } else {
-    voice->gen[GEN_PITCH].val = (voice->gen[GEN_SCALETUNE].val * (voice->key - voice->root_pitch / 100.0f)
-				 + voice->root_pitch);
+    voice->gen[GEN_PITCH].val = voice->gen[GEN_SCALETUNE].val
+      * (voice->key - voice->root_pitch / 100.0f) + voice->root_pitch;
   }
-
 }
 
 /*

@@ -39,10 +39,14 @@ struct _fluid_tuning_t {
   int bank;
   int prog;
   double pitch[128];  /* the pitch of every key, in cents */
+  int refcount;         /* Tuning reference count */
 };
 
 fluid_tuning_t* new_fluid_tuning(char* name, int bank, int prog);
-void delete_fluid_tuning(fluid_tuning_t* tuning);
+void delete_fluid_tuning (fluid_tuning_t *tuning);
+fluid_tuning_t *fluid_tuning_duplicate (fluid_tuning_t *tuning);
+void fluid_tuning_ref (fluid_tuning_t *tuning);
+int fluid_tuning_unref (fluid_tuning_t *tuning, int count);
 
 void fluid_tuning_set_name(fluid_tuning_t* tuning, char* name);
 char* fluid_tuning_get_name(fluid_tuning_t* tuning);
