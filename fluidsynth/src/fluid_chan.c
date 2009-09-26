@@ -65,6 +65,7 @@ new_fluid_channel(fluid_synth_t* synth, int num)
 static void
 fluid_channel_init(fluid_channel_t* chan)
 {
+  fluid_event_queue_elem_t *event;
   fluid_preset_t *newpreset;
   int prognum, banknum;
 
@@ -78,9 +79,30 @@ fluid_channel_init(fluid_channel_t* chan)
   fluid_channel_set_preset(chan, newpreset);
 
   chan->interp_method = FLUID_INTERP_DEFAULT;
-  chan->tuning = NULL;
+  chan->tuning_bank = 0;
+  chan->tuning_prog = 0;
   chan->nrpn_select = 0;
   chan->nrpn_active = 0;
+
+  if (chan->tuning)
+  {
+    event = fluid_event_queue_get_inptr (chan->synth->return_queue);
+
+    if (event)
+    {
+      event->type = FLUID_EVENT_QUEUE_ELEM_UNREF_TUNING;
+      event->unref_tuning.tuning = chan->tuning;
+      event->unref_tuning.count = 1;
+      fluid_event_queue_next_inptr (chan->synth->return_queue);
+    }
+    else
+    { /* Just unref it in synthesis thread if queue is full */
+      fluid_tuning_unref (chan->tuning, 1);
+      FLUID_LOG (FLUID_ERR, "Synth return event queue full");
+    }
+
+    chan->tuning = NULL;
+  }
 }
 
 /*
@@ -205,12 +227,6 @@ fluid_channel_set_preset(fluid_channel_t* chan, fluid_preset_t* preset)
   return FLUID_OK;
 }
 
-fluid_preset_t*
-fluid_channel_get_preset(fluid_channel_t* chan)
-{
-  return chan->preset;
-}
-
 /* Set SoundFont ID, MIDI bank and/or program.  Use -1 to use current value. */
 void
 fluid_channel_set_sfont_bank_prog(fluid_channel_t* chan, int sfontnum,
@@ -283,44 +299,4 @@ fluid_channel_get_sfont_bank_prog(fluid_channel_t* chan, int *sfont,
   if (sfont) *sfont = (sfont_bank_prog & SFONT_MASKVAL) >> SFONT_SHIFTVAL;
   if (bank) *bank = (sfont_bank_prog & BANK_MASKVAL) >> BANK_SHIFTVAL;
   if (prog) *prog = (sfont_bank_prog & PROG_MASKVAL) >> PROG_SHIFTVAL;
-}
-
-/* Set MIDI custom controller value for a channel */
-void
-fluid_channel_set_cc(fluid_channel_t* chan, int num, int val)
-{
-  if (num >= 0 && num < 128)
-    fluid_atomic_int_set (&chan->cc[num], val);
-}
-
-/* Get MIDI custom controller value for a channel */
-int
-fluid_channel_get_cc(fluid_channel_t* chan, int num)
-{
-  return ((num >= 0) && (num < 128)) ? fluid_atomic_int_get (&chan->cc[num]) : 0;
-}
-
-/* Get MIDI channel number */
-int
-fluid_channel_get_num(fluid_channel_t* chan)
-{
-  return chan->channum;         /* Set only once on channel init */
-}
-
-/*
- * Sets the index of the interpolation method used on this channel,
- * as in fluid_interp in fluidsynth.h
- */
-void fluid_channel_set_interp_method(fluid_channel_t* chan, int new_method)
-{
-  fluid_atomic_int_set (&chan->interp_method, new_method);
-}
-
-/*
- * Returns the index of the interpolation method used on this channel,
- * as in fluid_interp in fluidsynth.h
- */
-int fluid_channel_get_interp_method(fluid_channel_t* chan)
-{
-  return fluid_atomic_int_get (&chan->interp_method);
 }

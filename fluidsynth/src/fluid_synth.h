@@ -158,6 +158,7 @@ struct _fluid_synth_t
   fluid_timer_t *return_queue_timer; /**< Timer thread to process return event queue */
 
   fluid_settings_t* settings;        /**< the synthesizer settings */
+  int device_id;                     /**< Device ID used for SYSEX messages */
   int polyphony;                     /**< maximum polyphony */
   char with_reverb;                  /**< Should the synth use the built-in reverb unit? */
   char with_chorus;                  /**< Should the synth use the built-in chorus unit? */

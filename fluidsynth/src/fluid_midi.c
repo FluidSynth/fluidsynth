@@ -373,266 +373,264 @@ int fluid_midi_file_read_event(fluid_midi_file* mf, fluid_track_t* track)
 	}
 
 	/* check what message we have */
-	if (status & 0x80) {
-		mf->running_status = status;
 
-		if ((status == MIDI_SYSEX) || (status == MIDI_EOX)) {     /* system exclusif */
-			/*
-			 * Sysex messages are not handled yet
-			 */
-			/* read the length of the message */
-			if (fluid_midi_file_read_varlen(mf) != FLUID_OK) {
+	mf->running_status = status;
+
+	if ((status == MIDI_SYSEX)) {     /* system exclusif */
+		/* read the length of the message */
+		if (fluid_midi_file_read_varlen(mf) != FLUID_OK) {
+			return FLUID_FAILED;
+		}
+
+		if (mf->varlen) {
+			FLUID_LOG(FLUID_DBG, "%s: %d: alloc metadata, len = %d", __FILE__, __LINE__, mf->varlen);
+			metadata = FLUID_MALLOC(mf->varlen + 1);
+
+			if (metadata == NULL) {
+				FLUID_LOG(FLUID_PANIC, "Out of memory");
 				return FLUID_FAILED;
 			}
 
-			if (mf->varlen) {
-
-				if (mf->varlen < 255) {
-					metadata = &static_buf[0];
-				} else {
-					FLUID_LOG(FLUID_DBG, "%s: %d: alloc metadata, len = %d", __FILE__, __LINE__, mf->varlen);
-					dyn_buf = FLUID_MALLOC(mf->varlen + 1);
-					if (dyn_buf == NULL) {
-						FLUID_LOG(FLUID_PANIC, "Out of memory");
-						return FLUID_FAILED;
-					}
-					metadata = dyn_buf;
-				}
-
-				/* read the data of the message */
-				if (fluid_midi_file_read(mf, metadata, mf->varlen) != FLUID_OK) {
-					if (dyn_buf) {
-						FLUID_FREE(dyn_buf);
-					}
-					return FLUID_FAILED;
-				}
-
-				if (dyn_buf) {
-					FLUID_LOG(FLUID_DBG, "%s: %d: free metadata", __FILE__, __LINE__);
-					FLUID_FREE(dyn_buf);
-				}
-			}
-
-			return FLUID_OK;
-
-		} else if (status == MIDI_META_EVENT) {             /* meta events */
-
-			int result = FLUID_OK;
-
-			/* get the type of the meta message */
-			type = fluid_midi_file_getc(mf);
-			if (type < 0) {
-				FLUID_LOG(FLUID_ERR, "Unexpected end of file");
+			/* read the data of the message */
+			if (fluid_midi_file_read(mf, metadata, mf->varlen) != FLUID_OK) {
+				FLUID_FREE (metadata);
 				return FLUID_FAILED;
 			}
 
-			/* get the length of the data part */
-			if (fluid_midi_file_read_varlen(mf) != FLUID_OK) {
-				return FLUID_FAILED;
-			}
-
-			if (mf->varlen < 255) {
-				metadata = &static_buf[0];
-			} else {
-				FLUID_LOG(FLUID_DBG, "%s: %d: alloc metadata, len = %d", __FILE__, __LINE__, mf->varlen);
-				dyn_buf = FLUID_MALLOC(mf->varlen + 1);
-				if (dyn_buf == NULL) {
-					FLUID_LOG(FLUID_PANIC, "Out of memory");
-					return FLUID_FAILED;
-				}
-				metadata = dyn_buf;
-			}
-
-			/* read the data */
-			if (mf->varlen)
-			{
-				if (fluid_midi_file_read(mf, metadata, mf->varlen) != FLUID_OK) {
-					if (dyn_buf) {
-						FLUID_FREE(dyn_buf);
-					}
-					return FLUID_FAILED;
-				}
-			}
-
-			/* handle meta data */
-			switch (type) {
-
-			case MIDI_COPYRIGHT:
-				metadata[mf->varlen] = 0;
-				break;
-
-			case MIDI_TRACK_NAME:
-				metadata[mf->varlen] = 0;
-				fluid_track_set_name(track, (char*) metadata);
-				break;
-
-			case MIDI_INST_NAME:
-				metadata[mf->varlen] = 0;
-				break;
-
-			case MIDI_LYRIC:
-				break;
-
-			case MIDI_MARKER:
-				break;
-
-			case MIDI_CUE_POINT:
-				break; /* don't care much for text events */
-
-			case MIDI_EOT:
-				if (mf->varlen != 0) {
-					FLUID_LOG(FLUID_ERR, "Invalid length for EndOfTrack event");
-					result = FLUID_FAILED;
-					break;
-				}
-				mf->eot = 1;
-				break;
-
-			case MIDI_SET_TEMPO:
-				if (mf->varlen != 3) {
-					FLUID_LOG(FLUID_ERR, "Invalid length for SetTempo meta event");
-					result = FLUID_FAILED;
-					break;
-				}
-				tempo = (metadata[0] << 16) + (metadata[1] << 8) + metadata[2];
-				evt = new_fluid_midi_event();
-				if (evt == NULL) {
-					FLUID_LOG(FLUID_ERR, "Out of memory");
-					result = FLUID_FAILED;
-					break;
-				}
-				evt->dtime = mf->dtime;
-				evt->type = MIDI_SET_TEMPO;
-				evt->channel = 0;
-				evt->param1 = tempo;
-				evt->param2 = 0;
-				fluid_track_add_event(track, evt);
-				mf->dtime = 0;
-				break;
-
-			case MIDI_SMPTE_OFFSET:
-				if (mf->varlen != 5) {
-					FLUID_LOG(FLUID_ERR, "Invalid length for SMPTE Offset meta event");
-					result = FLUID_FAILED;
-					break;
-				}
-				break; /* we don't use smtp */
-
-			case MIDI_TIME_SIGNATURE:
-				if (mf->varlen != 4) {
-					FLUID_LOG(FLUID_ERR, "Invalid length for TimeSignature meta event");
-					result = FLUID_FAILED;
-					break;
-				}
-				nominator = metadata[0];
-				denominator = pow(2.0, (double) metadata[1]);
-				clocks = metadata[2];
-				notes = metadata[3];
-
-				FLUID_LOG(FLUID_DBG, "signature=%d/%d, metronome=%d, 32nd-notes=%d",
-					  nominator, denominator, clocks, notes);
-
-				break;
-
-			case MIDI_KEY_SIGNATURE:
-				if (mf->varlen != 2) {
-					FLUID_LOG(FLUID_ERR, "Invalid length for KeySignature meta event");
-					result = FLUID_FAILED;
-					break;
-				}
-				sf = metadata[0];
-				mi = metadata[1];
-				break;
-
-			case MIDI_SEQUENCER_EVENT:
-				break;
-
-			default:
-				break;
-			}
-
-			if (dyn_buf) {
-				FLUID_LOG(FLUID_DBG, "%s: %d: free metadata", __FILE__, __LINE__);
-				FLUID_FREE(dyn_buf);
-			}
-
-			return result;
-
-		} else {                /* channel messages */
-
-			type = status & 0xf0;
-			channel = status & 0x0f;
-
-			/* all channel message have at least 1 byte of associated data */
-			if ((param1 = fluid_midi_file_getc(mf)) < 0) {
-				FLUID_LOG(FLUID_ERR, "Unexpected end of file");
-				return FLUID_FAILED;
-			}
-
-			switch (type) {
-
-			case NOTE_ON:
-				if ((param2 = fluid_midi_file_getc(mf)) < 0) {
-					FLUID_LOG(FLUID_ERR, "Unexpected end of file");
-					return FLUID_FAILED;
-				}
-				break;
-
-			case NOTE_OFF:
-				if ((param2 = fluid_midi_file_getc(mf)) < 0) {
-					FLUID_LOG(FLUID_ERR, "Unexpected end of file");
-					return FLUID_FAILED;
-				}
-				break;
-
-			case KEY_PRESSURE:
-				if ((param2 = fluid_midi_file_getc(mf)) < 0) {
-					FLUID_LOG(FLUID_ERR, "Unexpected end of file");
-					return FLUID_FAILED;
-				}
-				break;
-
-			case CONTROL_CHANGE:
-				if ((param2 = fluid_midi_file_getc(mf)) < 0) {
-					FLUID_LOG(FLUID_ERR, "Unexpected end of file");
-					return FLUID_FAILED;
-				}
-				break;
-
-			case PROGRAM_CHANGE:
-				break;
-
-			case CHANNEL_PRESSURE:
-				break;
-
-			case PITCH_BEND:
-				if ((param2 = fluid_midi_file_getc(mf)) < 0) {
-					FLUID_LOG(FLUID_ERR, "Unexpected end of file");
-					return FLUID_FAILED;
-				}
-
-				param1 = ((param2 & 0x7f) << 7) | (param1 & 0x7f);
-				param2 = 0;
-				break;
-
-			default:
-				/* Can't possibly happen !? */
-				FLUID_LOG(FLUID_ERR, "Unrecognized MIDI event");
-				return FLUID_FAILED;
-			}
 			evt = new_fluid_midi_event();
 			if (evt == NULL) {
 				FLUID_LOG(FLUID_ERR, "Out of memory");
+				FLUID_FREE (metadata);
 				return FLUID_FAILED;
 			}
+
 			evt->dtime = mf->dtime;
-			evt->type = type;
-			evt->channel = channel;
-			evt->param1 = param1;
-			evt->param2 = param2;
-			fluid_track_add_event(track, evt);
+			evt->type = MIDI_SYSEX;
+			evt->paramptr = metadata;
+			evt->param1 = metadata[mf->varlen - 1] == MIDI_EOX ? mf->varlen - 1 : mf->varlen;
+			fluid_track_add_event (track, evt);
 			mf->dtime = 0;
 		}
+
+		return FLUID_OK;
+
+	} else if (status == MIDI_META_EVENT) {             /* meta events */
+
+		int result = FLUID_OK;
+
+		/* get the type of the meta message */
+		type = fluid_midi_file_getc(mf);
+		if (type < 0) {
+			FLUID_LOG(FLUID_ERR, "Unexpected end of file");
+			return FLUID_FAILED;
+		}
+
+		/* get the length of the data part */
+		if (fluid_midi_file_read_varlen(mf) != FLUID_OK) {
+			return FLUID_FAILED;
+		}
+
+		if (mf->varlen < 255) {
+			metadata = &static_buf[0];
+		} else {
+			FLUID_LOG(FLUID_DBG, "%s: %d: alloc metadata, len = %d", __FILE__, __LINE__, mf->varlen);
+			dyn_buf = FLUID_MALLOC(mf->varlen + 1);
+			if (dyn_buf == NULL) {
+				FLUID_LOG(FLUID_PANIC, "Out of memory");
+				return FLUID_FAILED;
+			}
+			metadata = dyn_buf;
+		}
+
+		/* read the data */
+		if (mf->varlen)
+		{
+			if (fluid_midi_file_read(mf, metadata, mf->varlen) != FLUID_OK) {
+				if (dyn_buf) {
+					FLUID_FREE(dyn_buf);
+				}
+				return FLUID_FAILED;
+			}
+		}
+
+		/* handle meta data */
+		switch (type) {
+
+		case MIDI_COPYRIGHT:
+			metadata[mf->varlen] = 0;
+			break;
+
+		case MIDI_TRACK_NAME:
+			metadata[mf->varlen] = 0;
+			fluid_track_set_name(track, (char*) metadata);
+			break;
+
+		case MIDI_INST_NAME:
+			metadata[mf->varlen] = 0;
+			break;
+
+		case MIDI_LYRIC:
+			break;
+
+		case MIDI_MARKER:
+			break;
+
+		case MIDI_CUE_POINT:
+			break; /* don't care much for text events */
+
+		case MIDI_EOT:
+			if (mf->varlen != 0) {
+				FLUID_LOG(FLUID_ERR, "Invalid length for EndOfTrack event");
+				result = FLUID_FAILED;
+				break;
+			}
+			mf->eot = 1;
+			break;
+
+		case MIDI_SET_TEMPO:
+			if (mf->varlen != 3) {
+				FLUID_LOG(FLUID_ERR, "Invalid length for SetTempo meta event");
+				result = FLUID_FAILED;
+				break;
+			}
+			tempo = (metadata[0] << 16) + (metadata[1] << 8) + metadata[2];
+			evt = new_fluid_midi_event();
+			if (evt == NULL) {
+				FLUID_LOG(FLUID_ERR, "Out of memory");
+				result = FLUID_FAILED;
+				break;
+			}
+			evt->dtime = mf->dtime;
+			evt->type = MIDI_SET_TEMPO;
+			evt->channel = 0;
+			evt->param1 = tempo;
+			evt->param2 = 0;
+			fluid_track_add_event(track, evt);
+			mf->dtime = 0;
+			break;
+
+		case MIDI_SMPTE_OFFSET:
+			if (mf->varlen != 5) {
+				FLUID_LOG(FLUID_ERR, "Invalid length for SMPTE Offset meta event");
+				result = FLUID_FAILED;
+				break;
+			}
+			break; /* we don't use smtp */
+
+		case MIDI_TIME_SIGNATURE:
+			if (mf->varlen != 4) {
+				FLUID_LOG(FLUID_ERR, "Invalid length for TimeSignature meta event");
+				result = FLUID_FAILED;
+				break;
+			}
+			nominator = metadata[0];
+			denominator = pow(2.0, (double) metadata[1]);
+			clocks = metadata[2];
+			notes = metadata[3];
+
+			FLUID_LOG(FLUID_DBG, "signature=%d/%d, metronome=%d, 32nd-notes=%d",
+				  nominator, denominator, clocks, notes);
+
+			break;
+
+		case MIDI_KEY_SIGNATURE:
+			if (mf->varlen != 2) {
+				FLUID_LOG(FLUID_ERR, "Invalid length for KeySignature meta event");
+				result = FLUID_FAILED;
+				break;
+			}
+			sf = metadata[0];
+			mi = metadata[1];
+			break;
+
+		case MIDI_SEQUENCER_EVENT:
+			break;
+
+		default:
+			break;
+		}
+
+		if (dyn_buf) {
+			FLUID_LOG(FLUID_DBG, "%s: %d: free metadata", __FILE__, __LINE__);
+			FLUID_FREE(dyn_buf);
+		}
+
+		return result;
+
+	} else {                /* channel messages */
+
+		type = status & 0xf0;
+		channel = status & 0x0f;
+
+		/* all channel message have at least 1 byte of associated data */
+		if ((param1 = fluid_midi_file_getc(mf)) < 0) {
+			FLUID_LOG(FLUID_ERR, "Unexpected end of file");
+			return FLUID_FAILED;
+		}
+
+		switch (type) {
+
+		case NOTE_ON:
+			if ((param2 = fluid_midi_file_getc(mf)) < 0) {
+				FLUID_LOG(FLUID_ERR, "Unexpected end of file");
+				return FLUID_FAILED;
+			}
+			break;
+
+		case NOTE_OFF:
+			if ((param2 = fluid_midi_file_getc(mf)) < 0) {
+				FLUID_LOG(FLUID_ERR, "Unexpected end of file");
+				return FLUID_FAILED;
+			}
+			break;
+
+		case KEY_PRESSURE:
+			if ((param2 = fluid_midi_file_getc(mf)) < 0) {
+				FLUID_LOG(FLUID_ERR, "Unexpected end of file");
+				return FLUID_FAILED;
+			}
+			break;
+
+		case CONTROL_CHANGE:
+			if ((param2 = fluid_midi_file_getc(mf)) < 0) {
+				FLUID_LOG(FLUID_ERR, "Unexpected end of file");
+				return FLUID_FAILED;
+			}
+			break;
+
+		case PROGRAM_CHANGE:
+			break;
+
+		case CHANNEL_PRESSURE:
+			break;
+
+		case PITCH_BEND:
+			if ((param2 = fluid_midi_file_getc(mf)) < 0) {
+				FLUID_LOG(FLUID_ERR, "Unexpected end of file");
+				return FLUID_FAILED;
+			}
+
+			param1 = ((param2 & 0x7f) << 7) | (param1 & 0x7f);
+			param2 = 0;
+			break;
+
+		default:
+			/* Can't possibly happen !? */
+			FLUID_LOG(FLUID_ERR, "Unrecognized MIDI event");
+			return FLUID_FAILED;
+		}
+		evt = new_fluid_midi_event();
+		if (evt == NULL) {
+			FLUID_LOG(FLUID_ERR, "Out of memory");
+			return FLUID_FAILED;
+		}
+		evt->dtime = mf->dtime;
+		evt->type = type;
+		evt->channel = channel;
+		evt->param1 = param1;
+		evt->param2 = param2;
+		fluid_track_add_event(track, evt);
+		mf->dtime = 0;
 	}
 	return FLUID_OK;
 }
@@ -668,6 +666,7 @@ fluid_midi_event_t* new_fluid_midi_event()
 	evt->param1 = 0;
 	evt->param2 = 0;
 	evt->next = NULL;
+	evt->paramptr = NULL;
 	return evt;
 }
 
@@ -683,6 +682,10 @@ int delete_fluid_midi_event(fluid_midi_event_t* evt)
 	while (evt)
 	{
 		temp = evt->next;
+
+		if (evt->type == MIDI_SYSEX && evt->paramptr)
+			FLUID_FREE (evt->paramptr);
+
 		FLUID_FREE(evt);
 		evt = temp;
 	}
@@ -867,40 +870,6 @@ int fluid_midi_event_set_pitch(fluid_midi_event_t* evt, int val)
 	return FLUID_OK;
 }
 
-/*
- * fluid_midi_event_get_param1
- */
-/* int fluid_midi_event_get_param1(fluid_midi_event_t* evt) */
-/* { */
-/*   return evt->param1; */
-/* } */
-
-/*
- * fluid_midi_event_set_param1
- */
-/* int fluid_midi_event_set_param1(fluid_midi_event_t* evt, int v) */
-/* { */
-/*   evt->param1 = v; */
-/*   return FLUID_OK; */
-/* } */
-
-/*
- * fluid_midi_event_get_param2
- */
-/* int fluid_midi_event_get_param2(fluid_midi_event_t* evt) */
-/* { */
-/*   return evt->param2; */
-/* } */
-
-/*
- * fluid_midi_event_set_param2
- */
-/* int fluid_midi_event_set_param2(fluid_midi_event_t* evt, int v) */
-/* { */
-/*   evt->param2 = v; */
-/*   return FLUID_OK; */
-/* } */
-
 /******************************************************
  *
  *     fluid_track_t
@@ -1082,7 +1051,11 @@ fluid_track_send_events(fluid_track_t* track,
 
 
 		track->ticks += event->dtime;
-		status = fluid_midi_send_event(synth, player, event);
+
+		if (event->type != MIDI_SET_TEMPO)
+			fluid_synth_handle_midi_event (synth, event);
+		else if (player) fluid_player_set_midi_tempo (player, event->param1);
+
 		fluid_track_next_event(track);
 
 	}
@@ -1666,52 +1639,4 @@ int fluid_midi_event_length(unsigned char event){
 			return 3;
 	}
 	return 1;
-}
-
-
-/************************************************************************
- *       fluid_midi_send_event
- *
- * This is a utility function that doesn't really belong to any class
- * or structure. It is called by fluid_midi_track and fluid_midi_device.
- */
-int fluid_midi_send_event(fluid_synth_t* synth, fluid_player_t* player, fluid_midi_event_t* event)
-{
-	switch (event->type) {
-	case NOTE_ON:
-		if (fluid_synth_noteon(synth, event->channel, event->param1, event->param2) != FLUID_OK) {
-			return FLUID_FAILED;
-		}
-		break;
-	case NOTE_OFF:
-		if (fluid_synth_noteoff(synth, event->channel, event->param1) != FLUID_OK) {
-			return FLUID_FAILED;
-		}
-		break;
-	case CONTROL_CHANGE:
-		if (fluid_synth_cc(synth, event->channel, event->param1, event->param2) != FLUID_OK) {
-			return FLUID_FAILED;
-		}
-		break;
-	case MIDI_SET_TEMPO:
-		if (player != NULL) {
-			if (fluid_player_set_midi_tempo(player, event->param1) != FLUID_OK) {
-				return FLUID_FAILED;
-			}
-		}
-		break;
-	case PROGRAM_CHANGE:
-		if (fluid_synth_program_change(synth, event->channel, event->param1) != FLUID_OK) {
-			return FLUID_FAILED;
-		}
-		break;
-	case PITCH_BEND:
-		if (fluid_synth_pitch_bend(synth, event->channel, event->param1) != FLUID_OK) {
-			return FLUID_FAILED;
-		}
-		break;
-	default:
-		break;
-	}
-	return FLUID_OK;
 }

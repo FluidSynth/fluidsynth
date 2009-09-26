@@ -70,6 +70,8 @@ struct _fluid_channel_t
 
   int interp_method;                    /**< Interpolation method (enum fluid_interp) */
   fluid_tuning_t* tuning;               /**< Micro tuning */
+  int tuning_bank;                      /**< Current tuning bank number */
+  int tuning_prog;                      /**< Current tuning program number */
 
   /* NRPN system */
   int nrpn_select;      /* Generator ID of SoundFont NRPN message */
@@ -112,9 +114,27 @@ int fluid_channel_get_num(fluid_channel_t* chan);
 void fluid_channel_set_interp_method(fluid_channel_t* chan, int new_method);
 int fluid_channel_get_interp_method(fluid_channel_t* chan);
 
+#define fluid_channel_get_preset(chan)          ((chan)->preset)
+#define fluid_channel_set_cc(chan, num, val) \
+  fluid_atomic_int_set (&(chan)->cc[num], val)
+#define fluid_channel_get_cc(chan, num) \
+  fluid_atomic_int_get (&(chan)->cc[num])
+#define fluid_channel_get_num(chan)             ((chan)->channum)
+#define fluid_channel_set_interp_method(chan, new_method) \
+  fluid_atomic_int_set (&(chan)->interp_method, new_method)
+#define fluid_channel_get_interp_method(chan) \
+  fluid_atomic_int_get (&(chan)->interp_method);
 #define fluid_channel_set_tuning(_c, _t)        { (_c)->tuning = _t; }
 #define fluid_channel_has_tuning(_c)            ((_c)->tuning != NULL)
 #define fluid_channel_get_tuning(_c)            ((_c)->tuning)
+#define fluid_channel_get_tuning_bank(chan)     \
+  fluid_atomic_int_get (&(chan)->tuning_bank)
+#define fluid_channel_set_tuning_bank(chan, bank) \
+  fluid_atomic_int_set (&(chan)->tuning_bank, bank)
+#define fluid_channel_get_tuning_prog(chan)     \
+  fluid_atomic_int_get (&(chan)->tuning_prog)
+#define fluid_channel_set_tuning_prog(chan, prog) \
+  fluid_atomic_int_set (&(chan)->tuning_prog, prog)
 #define fluid_channel_sustained(_c)             ((_c)->cc[SUSTAIN_SWITCH] >= 64)
 #define fluid_channel_set_gen(_c, _n, _v, _a)   { (_c)->gen[_n] = _v; (_c)->gen_abs[_n] = _a; }
 #define fluid_channel_get_gen(_c, _n)           ((_c)->gen[_n])
