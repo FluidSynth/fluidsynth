@@ -48,11 +48,7 @@
 static int fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t* voice);
 static int calculate_hold_decay_buffers(fluid_voice_t* voice, int gen_base,
                                         int gen_key2base, int is_decay);
-static inline void fluid_voice_effects (fluid_voice_t *voice, int count,
-				        fluid_real_t* dsp_left_buf,
-				        fluid_real_t* dsp_right_buf,
-				        fluid_real_t* dsp_reverb_buf,
-				        fluid_real_t* dsp_chorus_buf);
+static inline void fluid_voice_filter (fluid_voice_t *voice);
 static fluid_real_t
 fluid_voice_get_lower_boundary_for_attenuation(fluid_voice_t* voice);
 static void fluid_voice_check_sample_sanity(fluid_voice_t* voice);
@@ -236,44 +232,38 @@ fluid_real_t fluid_voice_gen_value(fluid_voice_t* voice, int num)
 }
 
 
-/*
- * fluid_voice_write
+/**
+ * Synthesize a voice to a buffer.
  *
- * This is where it all happens. This function is called by the
- * synthesizer to generate the sound samples. The synthesizer passes
- * four audio buffers: left, right, reverb out, and chorus out.
+ * @param voice Voice to synthesize
+ * @param dsp_buf Audio buffer to synthesize to (#FLUID_BUFSIZE in length)
+ * @return Count of samples written to dsp_buf (can be 0)
  *
- * The biggest part of this function sets the correct values for all
- * the dsp parameters (all the control data boil down to only a few
- * dsp parameters). The dsp routine is #included in several places (fluid_dsp_core.c).
+ * Panning, reverb and chorus are processed separately. The dsp interpolation
+ * routine is in (fluid_dsp_float.c).
  */
 int
-fluid_voice_write(fluid_voice_t* voice,
-		 fluid_real_t* dsp_left_buf, fluid_real_t* dsp_right_buf,
-		 fluid_real_t* dsp_reverb_buf, fluid_real_t* dsp_chorus_buf)
+fluid_voice_write (fluid_voice_t* voice, fluid_real_t *dsp_buf)
 {
   unsigned int i;
   fluid_real_t incr;
   fluid_real_t fres;
   fluid_real_t target_amp;	/* target amplitude */
-  int count;
-
   int dsp_interp_method = voice->interp_method;
-
-  fluid_real_t dsp_buf[FLUID_BUFSIZE];
   fluid_env_data_t* env_data;
   fluid_real_t x;
+  int count = 0;
 
-
-  /* make sure we're playing and that we have sample data */
-  if (!_PLAYING(voice)) return FLUID_OK;
+  /* Other routines (such as fluid_voice_effects) use the last dsp_buf assigned */
+  voice->dsp_buf = dsp_buf;
+  voice->dsp_buf_count = 0;
 
   /******************* sample **********************/
 
   if (voice->sample == NULL)
   {
     fluid_voice_off(voice);
-    return FLUID_OK;
+    return 0;
   }
 
   fluid_check_fpe ("voice_write startup");
@@ -319,7 +309,7 @@ fluid_voice_write(fluid_voice_t* voice,
   {
     fluid_profile (FLUID_PROF_VOICE_RELEASE, voice->ref);
     fluid_voice_off (voice);
-    return FLUID_OK;
+    return 0;
   }
 
   fluid_check_fpe ("voice_write vol env");
@@ -593,8 +583,6 @@ fluid_voice_write(fluid_voice_t* voice,
    * Depending on the position in the loop and the loop size, this
    * may require several runs. */
 
-  voice->dsp_buf = dsp_buf;
-
   switch (voice->interp_method)
   {
     case FLUID_INTERP_NONE:
@@ -614,9 +602,10 @@ fluid_voice_write(fluid_voice_t* voice,
 
   fluid_check_fpe ("voice_write interpolation");
 
-  if (count > 0)
-    fluid_voice_effects (voice, count, dsp_left_buf, dsp_right_buf,
-			 dsp_reverb_buf, dsp_chorus_buf);
+  voice->dsp_buf_count = count;
+
+  /* Apply filter */
+  if (count > 0) fluid_voice_filter (voice);
 
   /* turn off voice if short count (sample ended and not looping) */
   if (count < FLUID_BUFSIZE)
@@ -628,27 +617,19 @@ fluid_voice_write(fluid_voice_t* voice,
  post_process:
   voice->ticks += FLUID_BUFSIZE;
   fluid_check_fpe ("voice_write postprocess");
-  return FLUID_OK;
+  return count;
 }
 
 
-/* Purpose:
- *
- * - filters (applies a lowpass filter with variable cutoff frequency and quality factor)
- * - mixes the processed sample to left and right output using the pan setting
- * - sends the processed sample to chorus and reverb
- *
+/**
+ * Applies a lowpass filter with variable cutoff frequency and quality factor.
+ * @param voice Voice to apply filter to
+ * @param count Count of samples in voice->dsp_buf
+ */
+/*
  * Variable description:
- * - dsp_data: Pointer to the original waveform data
- * - dsp_left_buf: The generated signal goes here, left channel
- * - dsp_right_buf: right channel
- * - dsp_reverb_buf: Send to reverb unit
- * - dsp_chorus_buf: Send to chorus unit
- * - dsp_a1: Coefficient for the filter
- * - dsp_a2: same
- * - dsp_b0: same
- * - dsp_b1: same
- * - dsp_b2: same
+ * - dsp_buf: Pointer to the synthesized audio data
+ * - dsp_a1, dsp_a2, dsp_b0, dsp_b1, dsp_b2: Filter coefficients
  * - voice holds the voice structure
  *
  * A couple of variables are used internally, their results are discarded:
@@ -660,12 +641,9 @@ fluid_voice_write(fluid_voice_t* voice,
  * - dsp_centernode: delay line for the IIR filter
  * - dsp_hist1: same
  * - dsp_hist2: same
- *
  */
 static inline void
-fluid_voice_effects (fluid_voice_t *voice, int count,
-		     fluid_real_t* dsp_left_buf, fluid_real_t* dsp_right_buf,
-		     fluid_real_t* dsp_reverb_buf, fluid_real_t* dsp_chorus_buf)
+fluid_voice_filter (fluid_voice_t *voice)
 {
   /* IIR filter sample history */
   fluid_real_t dsp_hist1 = voice->hist1;
@@ -685,6 +663,7 @@ fluid_voice_effects (fluid_voice_t *voice, int count,
   fluid_real_t *dsp_buf = voice->dsp_buf;
 
   fluid_real_t dsp_centernode;
+  int count = voice->dsp_buf_count;
   int dsp_i;
   float v;
 
@@ -729,50 +708,6 @@ fluid_voice_effects (fluid_voice_t *voice, int count,
     }
   }
 
-  /* pan (Copy the signal to the left and right output buffer) The voice
-  * panning generator has a range of -500 .. 500.  If it is centered,
-  * it's close to 0.  voice->amp_left and voice->amp_right are then the
-  * same, and we can save one multiplication per voice and sample.
-  */
-  if ((-0.5 < voice->pan) && (voice->pan < 0.5))
-  {
-    /* The voice is centered. Use voice->amp_left twice. */
-    for (dsp_i = 0; dsp_i < count; dsp_i++)
-    {
-      v = voice->amp_left * dsp_buf[dsp_i];
-      dsp_left_buf[dsp_i] += v;
-      dsp_right_buf[dsp_i] += v;
-    }
-  }
-  else	/* The voice is not centered. Stereo samples have one side zero. */
-  {
-    if (voice->amp_left != 0.0)
-    {
-      for (dsp_i = 0; dsp_i < count; dsp_i++)
-	dsp_left_buf[dsp_i] += voice->amp_left * dsp_buf[dsp_i];
-    }
-
-    if (voice->amp_right != 0.0)
-    {
-      for (dsp_i = 0; dsp_i < count; dsp_i++)
-	dsp_right_buf[dsp_i] += voice->amp_right * dsp_buf[dsp_i];
-    }
-  }
-
-  /* reverb send. Buffer may be NULL. */
-  if ((dsp_reverb_buf != NULL) && (voice->amp_reverb != 0.0))
-  {
-    for (dsp_i = 0; dsp_i < count; dsp_i++)
-      dsp_reverb_buf[dsp_i] += voice->amp_reverb * dsp_buf[dsp_i];
-  }
-
-  /* chorus send. Buffer may be NULL. */
-  if ((dsp_chorus_buf != NULL) && (voice->amp_chorus != 0))
-  {
-    for (dsp_i = 0; dsp_i < count; dsp_i++)
-      dsp_chorus_buf[dsp_i] += voice->amp_chorus * dsp_buf[dsp_i];
-  }
-
   voice->hist1 = dsp_hist1;
   voice->hist2 = dsp_hist2;
   voice->a1 = dsp_a1;
@@ -781,16 +716,76 @@ fluid_voice_effects (fluid_voice_t *voice, int count,
   voice->b1 = dsp_b1;
   voice->filter_coeff_incr_count = dsp_filter_coeff_incr_count;
 
-  fluid_check_fpe ("voice_effects");
+  fluid_check_fpe ("voice_filter");
 }
 
-/*
- * fluid_voice_get_channel
+/**
+ * Mix voice data to left/right (panning), reverb and chorus buffers.
+ * @param voice Voice to mix
+ * @param left_buf Left audio buffer
+ * @param right_buf Right audio buffer
+ * @param reverb_buf Reverb buffer
+ * @param chorus_buf Chorus buffer
+ *
+ * NOTE: Uses voice->dsp_buf and voice->dsp_buf_count which were assigned
+ * by fluid_voice_write().  This is therefore meant to be called only after
+ * that function.
  */
-fluid_channel_t*
-fluid_voice_get_channel(fluid_voice_t* voice)
+void
+fluid_voice_mix (fluid_voice_t *voice,
+		 fluid_real_t* left_buf, fluid_real_t* right_buf,
+		 fluid_real_t* reverb_buf, fluid_real_t* chorus_buf)
 {
-  return voice->channel;
+  fluid_real_t *dsp_buf = voice->dsp_buf;
+  int count = voice->dsp_buf_count;
+  int dsp_i;
+  float v;
+
+  /* pan (Copy the signal to the left and right output buffer) The voice
+   * panning generator has a range of -500 .. 500.  If it is centered,
+   * it's close to 0.  voice->amp_left and voice->amp_right are then the
+   * same, and we can save one multiplication per voice and sample.
+   */
+  if ((-0.5 < voice->pan) && (voice->pan < 0.5))
+  {
+    /* The voice is centered. Use voice->amp_left twice. */
+    for (dsp_i = 0; dsp_i < count; dsp_i++)
+    {
+      v = voice->amp_left * dsp_buf[dsp_i];
+      left_buf[dsp_i] += v;
+      right_buf[dsp_i] += v;
+    }
+  }
+  else	/* The voice is not centered. Stereo samples have one side zero. */
+  {
+    if (voice->amp_left != 0.0)
+    {
+      for (dsp_i = 0; dsp_i < count; dsp_i++)
+	left_buf[dsp_i] += voice->amp_left * dsp_buf[dsp_i];
+    }
+
+    if (voice->amp_right != 0.0)
+    {
+      for (dsp_i = 0; dsp_i < count; dsp_i++)
+	right_buf[dsp_i] += voice->amp_right * dsp_buf[dsp_i];
+    }
+  }
+
+  /* reverb send. Buffer may be NULL. */
+  if ((reverb_buf != NULL) && (voice->amp_reverb != 0.0))
+  {
+    for (dsp_i = 0; dsp_i < count; dsp_i++)
+      reverb_buf[dsp_i] += voice->amp_reverb * dsp_buf[dsp_i];
+  }
+
+  /* chorus send. Buffer may be NULL. */
+  if ((chorus_buf != NULL) && (voice->amp_chorus != 0))
+  {
+    for (dsp_i = 0; dsp_i < count; dsp_i++)
+      chorus_buf[dsp_i] += voice->amp_chorus * dsp_buf[dsp_i];
+  }
+
+  fluid_check_fpe ("voice_mix");
 }
 
 /*

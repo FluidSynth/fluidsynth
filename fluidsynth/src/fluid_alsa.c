@@ -49,11 +49,6 @@
 
 #define BUFFER_LENGTH 512
 
-/* SCHED_FIFO priorities for ALSA threads (see pthread_attr_setschedparam) */
-#define ALSA_PCM_SCHED_PRIORITY 90
-#define ALSA_RAWMIDI_SCHED_PRIORITY 90
-#define ALSA_SEQ_SCHED_PRIORITY 90
-
 /** fluid_alsa_audio_driver_t
  *
  * This structure should not be accessed directly. Use audio port
@@ -174,8 +169,9 @@ new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
   int periods, period_size;
   char* device = NULL;
   pthread_attr_t attr;
-  int sched = SCHED_FIFO;
+  int sched;
   struct sched_param priority;
+  int realtime_prio = 0;
   int i, err, dir = 0;
   snd_pcm_hw_params_t* hwparams;
   snd_pcm_sw_params_t* swparams = NULL;
@@ -192,7 +188,12 @@ new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
   fluid_settings_getint(settings, "audio.periods", &periods);
   fluid_settings_getint(settings, "audio.period-size", &period_size);
   fluid_settings_getnum(settings, "synth.sample-rate", &sample_rate);
-  fluid_settings_dupstr(settings, "audio.alsa.device", &device);        /* ++ dup device name */
+  fluid_settings_dupstr(settings, "audio.alsa.device", &device);   /* ++ dup device name */
+  fluid_settings_getint (settings, "audio.realtime-prio", &realtime_prio);
+
+  if (fluid_settings_str_equal (settings, "audio.realtime", "yes"))
+    sched = SCHED_FIFO;
+  else sched = SCHED_OTHER;
 
   dev->data = data;
   dev->callback = func;
@@ -297,22 +298,6 @@ new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
     FLUID_LOG(FLUID_ERR, "Failed to set start threshold.");
   }
 
-  /* FIXME - Any of these calls important?  One of them was causing massive
-     ALSA CPU consumption! */
-
-//  if (snd_pcm_sw_params_set_stop_threshold(dev->pcm, swparams, ~0u) != 0) {
-//    FLUID_LOG(FLUID_ERR, "Cannot turn off stop threshold.");
-//  }
-
-//  if (snd_pcm_sw_params_set_silence_threshold(dev->pcm, swparams, 0) != 0) {
-//    FLUID_LOG(FLUID_ERR, "Cannot set 0 silence threshold.");
-//  }
-
-//  if (snd_pcm_sw_params_set_silence_size(dev->pcm, swparams, 0) != 0) {
-//    FLUID_LOG(FLUID_ERR, "Cannot set 0 silence size.");
-//  }
-
-//  if (snd_pcm_sw_params_set_avail_min(dev->pcm, swparams, period_size / 2) != 0) {
   if (snd_pcm_sw_params_set_avail_min(dev->pcm, swparams, period_size) != 0) {
     FLUID_LOG(FLUID_ERR, "Software setup for minimum available frames failed.");
   }
@@ -348,7 +333,7 @@ new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
     }
 
     /* SCHED_FIFO will not be active without setting the priority */
-    priority.sched_priority = (sched == SCHED_FIFO) ? ALSA_PCM_SCHED_PRIORITY : 0;
+    priority.sched_priority = (sched == SCHED_FIFO) ? realtime_prio : 0;
     pthread_attr_setschedparam(&attr, &priority);
 
     err = pthread_create(&dev->thread, &attr, fluid_alsa_formats[i].run, (void*) dev);
@@ -636,8 +621,9 @@ new_fluid_alsa_rawmidi_driver(fluid_settings_t* settings,
   int i, err;
   fluid_alsa_rawmidi_driver_t* dev;
   pthread_attr_t attr;
-  int sched = SCHED_FIFO;
+  int sched;
   struct sched_param priority;
+  int realtime_prio = 0;
   int count;
   struct pollfd *pfd = NULL;
   char* device = NULL;
@@ -665,6 +651,12 @@ new_fluid_alsa_rawmidi_driver(fluid_settings_t* settings,
     FLUID_LOG(FLUID_ERR, "Out of memory");
     goto error_recovery;
   }
+
+  fluid_settings_getint (settings, "midi.realtime-prio", &realtime_prio);
+
+  if (fluid_settings_str_equal (settings, "midi.realtime", "yes"))
+    sched = SCHED_FIFO;
+  else sched = SCHED_OTHER;
 
   /* get the device name. if none is specified, use the default device. */
   fluid_settings_dupstr(settings, "midi.alsa.device", &device);         /* ++ alloc device name */
@@ -734,7 +726,7 @@ new_fluid_alsa_rawmidi_driver(fluid_settings_t* settings,
     }
 
     /* SCHED_FIFO will not be active without setting the priority */
-    priority.sched_priority = (sched == SCHED_FIFO) ? ALSA_RAWMIDI_SCHED_PRIORITY : 0;
+    priority.sched_priority = (sched == SCHED_FIFO) ? realtime_prio : 0;
     pthread_attr_setschedparam (&attr, &priority);
 
     err = pthread_create(&dev->thread, &attr, fluid_alsa_midi_run, (void*) dev);
@@ -901,8 +893,9 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
   int i, err;
   fluid_alsa_seq_driver_t* dev;
   pthread_attr_t attr;
-  int sched = SCHED_FIFO;
+  int sched;
   struct sched_param priority;
+  int realtime_prio = 0;
   int count;
   struct pollfd *pfd = NULL;
   char *device = NULL;
@@ -929,6 +922,11 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
   dev->driver.data = data;
   dev->driver.handler = handler;
 
+  fluid_settings_getint (settings, "midi.realtime-prio", &realtime_prio);
+
+  if (fluid_settings_str_equal (settings, "midi.realtime", "yes"))
+    sched = SCHED_FIFO;
+  else sched = SCHED_OTHER;
 
   /* get the device name. if none is specified, use the default device. */
   if (fluid_settings_dupstr(settings, "midi.alsa_seq.device", &device) == 0)    /* ++ alloc device name */
@@ -1056,7 +1054,7 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
     }
 
     /* SCHED_FIFO will not be active without setting the priority */
-    priority.sched_priority = (sched == SCHED_FIFO) ? ALSA_SEQ_SCHED_PRIORITY : 0;
+    priority.sched_priority = (sched == SCHED_FIFO) ? realtime_prio : 0;
     pthread_attr_setschedparam (&attr, &priority);
 
     err = pthread_create(&dev->thread, &attr, fluid_alsa_seq_run, (void*) dev);

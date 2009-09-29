@@ -42,14 +42,15 @@ int fluid_settings_register_str(fluid_settings_t* settings, char* name, char* de
 
 /** returns 0 if the value has been registered correctly, non-zero
     otherwise */
-int fluid_settings_register_num(fluid_settings_t* settings, char* name, double min, double max,
-			       double def, int hints, fluid_num_update_t fun, void* data);
-
+int fluid_settings_register_num(fluid_settings_t* settings, char* name, double def,
+                                double min, double max, int hints,
+                                fluid_num_update_t fun, void* data);
 
 /** returns 0 if the value has been registered correctly, non-zero
     otherwise */
-int fluid_settings_register_int(fluid_settings_t* settings, char* name, int min, int max,
-			       int def, int hints, fluid_int_update_t fun, void* data);
+int fluid_settings_register_int(fluid_settings_t* settings, char* name, int def,
+                                int min, int max, int hints,
+                                fluid_int_update_t fun, void* data);
 
 
 #endif /* _FLUID_SETTINGS_H */

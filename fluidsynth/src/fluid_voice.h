@@ -116,6 +116,7 @@ struct _fluid_voice_t
 	fluid_real_t phase_incr;	/* the phase increment for the next 64 samples */
 	fluid_real_t amp_incr;		/* amplitude increment value */
 	fluid_real_t *dsp_buf;		/* buffer to store interpolated sample data to */
+	int dsp_buf_count;              /* Number of audio samples in dsp_buf */
 
 	/* End temporary variables */
 
@@ -219,9 +220,7 @@ int delete_fluid_voice(fluid_voice_t* voice);
 void fluid_voice_start(fluid_voice_t* voice);
 void  fluid_voice_calculate_gen_pitch(fluid_voice_t* voice);
 
-int fluid_voice_write(fluid_voice_t* voice,
-		      fluid_real_t* left, fluid_real_t* right,
-		      fluid_real_t* reverb_buf, fluid_real_t* chorus_buf);
+int fluid_voice_write (fluid_voice_t* voice, fluid_real_t *dsp_buf);
 
 int fluid_voice_init(fluid_voice_t* voice, fluid_sample_t* sample,
 		     fluid_channel_t* channel, int key, int vel,
@@ -246,8 +245,13 @@ void fluid_voice_update_param(fluid_voice_t* voice, int gen);
 
 int fluid_voice_noteoff(fluid_voice_t* voice);
 int fluid_voice_off(fluid_voice_t* voice);
-fluid_channel_t* fluid_voice_get_channel(fluid_voice_t* voice);
+void fluid_voice_mix (fluid_voice_t *voice,
+                      fluid_real_t* left_buf, fluid_real_t* right_buf,
+                      fluid_real_t* reverb_buf, fluid_real_t* chorus_buf);
 int fluid_voice_kill_excl(fluid_voice_t* voice);
+
+#define fluid_voice_get_channel(voice)  ((voice)->channel)
+
 
 #define fluid_voice_set_id(_voice, _id)  { (_voice)->id = (_id); }
 #define fluid_voice_get_chan(_voice)     (_voice)->chan
@@ -265,7 +269,7 @@ int fluid_voice_kill_excl(fluid_voice_t* voice);
 #define _SAMPLEMODE(voice) ((int)(voice)->gen[GEN_SAMPLEMODE].val)
 
 
-/* FIXME - Josh Green - This doesn't seem to be used anywhere */
+/* FIXME - This doesn't seem to be used anywhere - JG */
 fluid_real_t fluid_voice_gen_value(fluid_voice_t* voice, int num);
 
 #define _GEN(_voice, _n) \

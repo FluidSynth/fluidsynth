@@ -68,7 +68,7 @@ struct _fluid_hashtable_t
   volatile int ref_count;
   fluid_destroy_notify_t key_destroy_func;
   fluid_destroy_notify_t value_destroy_func;
-  fluid_mutex_t mutex;          // Optionally used in other modules (fluid_settings.c for example)
+  fluid_rec_mutex_t mutex;          // Optionally used in other modules (fluid_settings.c for example)
 };
 
 struct _fluid_hashtable_iter_t

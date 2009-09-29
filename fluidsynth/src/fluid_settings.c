@@ -238,7 +238,7 @@ new_fluid_settings(void)
                                       fluid_settings_value_destroy_func);
   if (settings == NULL) return NULL;
 
-  fluid_mutex_init (settings->mutex);
+  fluid_rec_mutex_init (settings->mutex);
   fluid_settings_init(settings);
   return settings;
 }
@@ -252,7 +252,7 @@ delete_fluid_settings(fluid_settings_t* settings)
 {
   fluid_return_if_fail (settings != NULL);
 
-  fluid_mutex_destroy (settings->mutex);
+  fluid_rec_mutex_destroy (settings->mutex);
   delete_fluid_hashtable(settings);
 }
 
@@ -342,7 +342,7 @@ fluid_settings_get(fluid_settings_t* settings, char** name, int len,
                    fluid_setting_node_t **value)
 {
   fluid_hashtable_t* table = settings;
-  fluid_setting_node_t *node;
+  fluid_setting_node_t *node = NULL;
   int n;
 
   for (n = 0; n < len; n++) {
@@ -445,7 +445,7 @@ fluid_settings_register_str(fluid_settings_t* settings, char* name, char* def, i
 
   ntokens = fluid_settings_tokenize(name, buf, tokens);
 
-  fluid_mutex_lock (settings->mutex);
+  fluid_rec_mutex_lock (settings->mutex);
 
   if (!fluid_settings_get(settings, tokens, ntokens, &node)) {
     setting = new_fluid_str_setting(def, def, hints, fun, data);
@@ -466,7 +466,7 @@ fluid_settings_register_str(fluid_settings_t* settings, char* name, char* def, i
     }
   }
 
-  fluid_mutex_unlock (settings->mutex);
+  fluid_rec_mutex_unlock (settings->mutex);
 
   return retval;
 }
@@ -489,7 +489,7 @@ fluid_settings_register_num(fluid_settings_t* settings, char* name, double def,
 
   ntokens = fluid_settings_tokenize(name, buf, tokens);
 
-  fluid_mutex_lock (settings->mutex);
+  fluid_rec_mutex_lock (settings->mutex);
 
   if (!fluid_settings_get(settings, tokens, ntokens, &node)) {
     /* insert a new setting */
@@ -515,7 +515,7 @@ fluid_settings_register_num(fluid_settings_t* settings, char* name, double def,
     }
   }
 
-  fluid_mutex_unlock (settings->mutex);
+  fluid_rec_mutex_unlock (settings->mutex);
 
   return retval;
 }
@@ -538,7 +538,7 @@ fluid_settings_register_int(fluid_settings_t* settings, char* name, int def,
 
   ntokens = fluid_settings_tokenize(name, buf, tokens);
 
-  fluid_mutex_lock (settings->mutex);
+  fluid_rec_mutex_lock (settings->mutex);
 
   if (!fluid_settings_get(settings, tokens, ntokens, &node)) {
     /* insert a new setting */
@@ -564,7 +564,7 @@ fluid_settings_register_int(fluid_settings_t* settings, char* name, int def,
     }
   }
 
-  fluid_mutex_unlock (settings->mutex);
+  fluid_rec_mutex_unlock (settings->mutex);
 
   return retval;
 }
@@ -590,9 +590,9 @@ fluid_settings_get_type(fluid_settings_t* settings, char* name)
 
   ntokens = fluid_settings_tokenize(name, buf, tokens);
 
-  fluid_mutex_lock (settings->mutex);
+  fluid_rec_mutex_lock (settings->mutex);
   type = fluid_settings_get (settings, tokens, ntokens, &node) ? node->type : FLUID_NO_TYPE;
-  fluid_mutex_unlock (settings->mutex);
+  fluid_rec_mutex_unlock (settings->mutex);
 
   return (type);
 }
@@ -618,7 +618,7 @@ fluid_settings_get_hints(fluid_settings_t* settings, char* name)
 
   ntokens = fluid_settings_tokenize(name, buf, tokens);
 
-  fluid_mutex_lock (settings->mutex);
+  fluid_rec_mutex_lock (settings->mutex);
 
   if (fluid_settings_get(settings, tokens, ntokens, &node)) {
     if (node->type == FLUID_NUM_TYPE) {
@@ -630,7 +630,7 @@ fluid_settings_get_hints(fluid_settings_t* settings, char* name)
     }
   }
 
-  fluid_mutex_unlock (settings->mutex);
+  fluid_rec_mutex_unlock (settings->mutex);
 
   return hints;
 }
@@ -656,7 +656,7 @@ fluid_settings_is_realtime(fluid_settings_t* settings, char* name)
 
   ntokens = fluid_settings_tokenize(name, buf, tokens);
 
-  fluid_mutex_lock (settings->mutex);
+  fluid_rec_mutex_lock (settings->mutex);
 
   if (fluid_settings_get(settings, tokens, ntokens, &node)) {
     if (node->type == FLUID_NUM_TYPE) {
@@ -668,7 +668,7 @@ fluid_settings_is_realtime(fluid_settings_t* settings, char* name)
     }
   }
 
-  fluid_mutex_unlock (settings->mutex);
+  fluid_rec_mutex_unlock (settings->mutex);
 
   return isrealtime;
 }
@@ -696,7 +696,7 @@ fluid_settings_setstr(fluid_settings_t* settings, char* name, char* str)
 
   ntokens = fluid_settings_tokenize (name, buf, tokens);
 
-  fluid_mutex_lock (settings->mutex);
+  fluid_rec_mutex_lock (settings->mutex);
 
   if (fluid_settings_get (settings, tokens, ntokens, &node)) {
     if (node->type == FLUID_STR_TYPE) {
@@ -717,7 +717,7 @@ fluid_settings_setstr(fluid_settings_t* settings, char* name, char* str)
     if (retval != 1) delete_fluid_str_setting (setting);
   }
 
-  fluid_mutex_unlock (settings->mutex);
+  fluid_rec_mutex_unlock (settings->mutex);
 
   return retval;
 }
@@ -753,7 +753,7 @@ fluid_settings_copystr(fluid_settings_t* settings, char* name, char* str, int le
 
   ntokens = fluid_settings_tokenize(name, buf, tokens);
 
-  fluid_mutex_lock (settings->mutex);
+  fluid_rec_mutex_lock (settings->mutex);
 
   if (fluid_settings_get(settings, tokens, ntokens, &node)
       && (node->type == FLUID_STR_TYPE)) {
@@ -768,7 +768,7 @@ fluid_settings_copystr(fluid_settings_t* settings, char* name, char* str, int le
     retval = 1;
   }
 
-  fluid_mutex_unlock (settings->mutex);
+  fluid_rec_mutex_unlock (settings->mutex);
 
   return retval;
 }
@@ -799,7 +799,7 @@ fluid_settings_dupstr(fluid_settings_t* settings, char* name, char** str)
 
   ntokens = fluid_settings_tokenize(name, buf, tokens);
 
-  fluid_mutex_lock (settings->mutex);
+  fluid_rec_mutex_lock (settings->mutex);
 
   if (fluid_settings_get(settings, tokens, ntokens, &node)
       && (node->type == FLUID_STR_TYPE)) {
@@ -814,7 +814,7 @@ fluid_settings_dupstr(fluid_settings_t* settings, char* name, char** str)
     if (!setting->value || *str) retval = 1;    /* Don't set to 1 if out of memory */
   }
 
-  fluid_mutex_unlock (settings->mutex);
+  fluid_rec_mutex_unlock (settings->mutex);
 
   return retval;
 }
@@ -850,7 +850,7 @@ fluid_settings_getstr(fluid_settings_t* settings, char* name, char** str)
 
   ntokens = fluid_settings_tokenize(name, buf, tokens);
 
-  fluid_mutex_lock (settings->mutex);
+  fluid_rec_mutex_lock (settings->mutex);
 
   if (fluid_settings_get(settings, tokens, ntokens, &node)
       && (node->type == FLUID_STR_TYPE)) {
@@ -860,7 +860,7 @@ fluid_settings_getstr(fluid_settings_t* settings, char* name, char** str)
   }
   else *str = NULL;
 
-  fluid_mutex_unlock (settings->mutex);
+  fluid_rec_mutex_unlock (settings->mutex);
 
   return retval;
 }
@@ -888,7 +888,7 @@ fluid_settings_str_equal(fluid_settings_t* settings, char* name, char* s)
 
   ntokens = fluid_settings_tokenize(name, buf, tokens);
 
-  fluid_mutex_lock (settings->mutex);
+  fluid_rec_mutex_lock (settings->mutex);
 
   if (fluid_settings_get(settings, tokens, ntokens, &node)
       && (node->type == FLUID_STR_TYPE)) {
@@ -896,7 +896,7 @@ fluid_settings_str_equal(fluid_settings_t* settings, char* name, char* s)
     if (setting->value) retval = FLUID_STRCMP (setting->value, s) == 0;
   }
 
-  fluid_mutex_unlock (settings->mutex);
+  fluid_rec_mutex_unlock (settings->mutex);
 
   return retval;
 }
@@ -923,7 +923,7 @@ fluid_settings_getstr_default(fluid_settings_t* settings, char* name)
 
   ntokens = fluid_settings_tokenize(name, buf, tokens);
 
-  fluid_mutex_lock (settings->mutex);
+  fluid_rec_mutex_lock (settings->mutex);
 
   if (fluid_settings_get(settings, tokens, ntokens, &node)
       && (node->type == FLUID_STR_TYPE)) {
@@ -931,7 +931,7 @@ fluid_settings_getstr_default(fluid_settings_t* settings, char* name)
     retval = setting->def;
   }
 
-  fluid_mutex_unlock (settings->mutex);
+  fluid_rec_mutex_unlock (settings->mutex);
 
   return retval;
 }
@@ -958,7 +958,7 @@ fluid_settings_add_option(fluid_settings_t* settings, char* name, char* s)
 
   ntokens = fluid_settings_tokenize(name, buf, tokens);
 
-  fluid_mutex_lock (settings->mutex);
+  fluid_rec_mutex_lock (settings->mutex);
 
   if (fluid_settings_get(settings, tokens, ntokens, &node)
       && (node->type == FLUID_STR_TYPE)) {
@@ -968,7 +968,7 @@ fluid_settings_add_option(fluid_settings_t* settings, char* name, char* s)
     retval = 1;
   }
 
-  fluid_mutex_unlock (settings->mutex);
+  fluid_rec_mutex_unlock (settings->mutex);
 
   return retval;
 }
@@ -995,7 +995,7 @@ fluid_settings_remove_option(fluid_settings_t* settings, char* name, char* s)
 
   ntokens = fluid_settings_tokenize(name, buf, tokens);
 
-  fluid_mutex_lock (settings->mutex);
+  fluid_rec_mutex_lock (settings->mutex);
 
   if (fluid_settings_get(settings, tokens, ntokens, &node)
       && (node->type == FLUID_STR_TYPE)) {
@@ -1015,7 +1015,7 @@ fluid_settings_remove_option(fluid_settings_t* settings, char* name, char* s)
     }
   }
 
-  fluid_mutex_unlock (settings->mutex);
+  fluid_rec_mutex_unlock (settings->mutex);
 
   return retval;
 }
@@ -1043,7 +1043,7 @@ fluid_settings_setnum(fluid_settings_t* settings, char* name, double val)
 
   ntokens = fluid_settings_tokenize(name, buf, tokens);
 
-  fluid_mutex_lock (settings->mutex);
+  fluid_rec_mutex_lock (settings->mutex);
 
   if (fluid_settings_get(settings, tokens, ntokens, &node)) {
     if (node->type == FLUID_NUM_TYPE) {
@@ -1067,7 +1067,7 @@ fluid_settings_setnum(fluid_settings_t* settings, char* name, double val)
     if (retval != 1) delete_fluid_num_setting (setting);
   }
 
-  fluid_mutex_unlock (settings->mutex);
+  fluid_rec_mutex_unlock (settings->mutex);
 
   return retval;
 }
@@ -1095,7 +1095,7 @@ fluid_settings_getnum(fluid_settings_t* settings, char* name, double* val)
 
   ntokens = fluid_settings_tokenize(name, buf, tokens);
 
-  fluid_mutex_lock (settings->mutex);
+  fluid_rec_mutex_lock (settings->mutex);
 
   if (fluid_settings_get(settings, tokens, ntokens, &node)
       && (node->type == FLUID_NUM_TYPE)) {
@@ -1104,7 +1104,7 @@ fluid_settings_getnum(fluid_settings_t* settings, char* name, double* val)
     retval = 1;
   }
 
-  fluid_mutex_unlock (settings->mutex);
+  fluid_rec_mutex_unlock (settings->mutex);
 
   return retval;
 }
@@ -1132,7 +1132,7 @@ fluid_settings_getnum_range(fluid_settings_t* settings, char* name, double* min,
 
   ntokens = fluid_settings_tokenize(name, buf, tokens);
 
-  fluid_mutex_lock (settings->mutex);
+  fluid_rec_mutex_lock (settings->mutex);
 
   if (fluid_settings_get(settings, tokens, ntokens, &node)
       && (node->type == FLUID_NUM_TYPE)) {
@@ -1141,7 +1141,7 @@ fluid_settings_getnum_range(fluid_settings_t* settings, char* name, double* min,
     *max = setting->max;
   }
 
-  fluid_mutex_unlock (settings->mutex);
+  fluid_rec_mutex_unlock (settings->mutex);
 }
 
 /**
@@ -1165,7 +1165,7 @@ fluid_settings_getnum_default(fluid_settings_t* settings, char* name)
 
   ntokens = fluid_settings_tokenize(name, buf, tokens);
 
-  fluid_mutex_lock (settings->mutex);
+  fluid_rec_mutex_lock (settings->mutex);
 
   if (fluid_settings_get(settings, tokens, ntokens, &node)
       && (node->type == FLUID_NUM_TYPE)) {
@@ -1173,7 +1173,7 @@ fluid_settings_getnum_default(fluid_settings_t* settings, char* name)
     retval = setting->def;
   }
 
-  fluid_mutex_unlock (settings->mutex);
+  fluid_rec_mutex_unlock (settings->mutex);
 
   return retval;
 }
@@ -1201,7 +1201,7 @@ fluid_settings_setint(fluid_settings_t* settings, char* name, int val)
 
   ntokens = fluid_settings_tokenize(name, buf, tokens);
 
-  fluid_mutex_lock (settings->mutex);
+  fluid_rec_mutex_lock (settings->mutex);
 
   if (fluid_settings_get(settings, tokens, ntokens, &node)) {
     if (node->type == FLUID_INT_TYPE) {
@@ -1225,7 +1225,7 @@ fluid_settings_setint(fluid_settings_t* settings, char* name, int val)
     if (retval != 1) delete_fluid_int_setting (setting);
   }
 
-  fluid_mutex_unlock (settings->mutex);
+  fluid_rec_mutex_unlock (settings->mutex);
 
   return retval;
 }
@@ -1253,7 +1253,7 @@ fluid_settings_getint(fluid_settings_t* settings, char* name, int* val)
 
   ntokens = fluid_settings_tokenize(name, buf, tokens);
 
-  fluid_mutex_lock (settings->mutex);
+  fluid_rec_mutex_lock (settings->mutex);
 
   if (fluid_settings_get(settings, tokens, ntokens, &node)
       && (node->type == FLUID_INT_TYPE)) {
@@ -1262,7 +1262,7 @@ fluid_settings_getint(fluid_settings_t* settings, char* name, int* val)
     retval = 1;
   }
 
-  fluid_mutex_unlock (settings->mutex);
+  fluid_rec_mutex_unlock (settings->mutex);
 
   return retval;
 }
@@ -1289,7 +1289,7 @@ fluid_settings_getint_range(fluid_settings_t* settings, char* name, int* min, in
 
   ntokens = fluid_settings_tokenize(name, buf, tokens);
 
-  fluid_mutex_lock (settings->mutex);
+  fluid_rec_mutex_lock (settings->mutex);
 
   if (fluid_settings_get(settings, tokens, ntokens, &node)
       && (node->type == FLUID_INT_TYPE)) {
@@ -1298,7 +1298,7 @@ fluid_settings_getint_range(fluid_settings_t* settings, char* name, int* min, in
     *max = setting->max;
   }
 
-  fluid_mutex_unlock (settings->mutex);
+  fluid_rec_mutex_unlock (settings->mutex);
 }
 
 /**
@@ -1322,7 +1322,7 @@ fluid_settings_getint_default(fluid_settings_t* settings, char* name)
 
   ntokens = fluid_settings_tokenize(name, buf, tokens);
 
-  fluid_mutex_lock (settings->mutex);
+  fluid_rec_mutex_lock (settings->mutex);
 
   if (fluid_settings_get(settings, tokens, ntokens, &node)
       && (node->type == FLUID_INT_TYPE)) {
@@ -1330,7 +1330,7 @@ fluid_settings_getint_default(fluid_settings_t* settings, char* name)
     retval = setting->def;
   }
 
-  fluid_mutex_unlock (settings->mutex);
+  fluid_rec_mutex_unlock (settings->mutex);
 
   return retval;
 }
@@ -1359,7 +1359,7 @@ fluid_settings_foreach_option (fluid_settings_t* settings, char* name, void* dat
 
   ntokens = fluid_settings_tokenize(name, buf, tokens);
 
-  fluid_mutex_lock (settings->mutex);
+  fluid_rec_mutex_lock (settings->mutex);
 
   if (fluid_settings_get(settings, tokens, ntokens, &node)
       && (node->type == FLUID_STR_TYPE)) {
@@ -1374,7 +1374,7 @@ fluid_settings_foreach_option (fluid_settings_t* settings, char* name, void* dat
     }
   }
 
-  fluid_mutex_unlock (settings->mutex);
+  fluid_rec_mutex_unlock (settings->mutex);
 }
 
 /* Structure passed to fluid_settings_foreach_iter recursive function */
@@ -1440,7 +1440,7 @@ fluid_settings_foreach(fluid_settings_t* settings, void* data, fluid_settings_fo
   bag.data = data;
   bag.path[0] = 0;
 
-  fluid_mutex_lock (settings->mutex);
+  fluid_rec_mutex_lock (settings->mutex);
   fluid_hashtable_foreach(settings, fluid_settings_foreach_iter, &bag);
-  fluid_mutex_unlock (settings->mutex);
+  fluid_rec_mutex_unlock (settings->mutex);
 }

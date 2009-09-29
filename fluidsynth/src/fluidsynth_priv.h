@@ -202,6 +202,8 @@ typedef struct _fluid_sample_timer_t fluid_sample_timer_t;
 #define FLUID_MAX_EVENTS_PER_BUFSIZE 1024       /**< Maximum queued MIDI events per #FLUID_BUFSIZE */
 #define FLUID_MAX_RETURN_EVENTS      1024       /**< Maximum queued synthesis thread return events */
 #define FLUID_MAX_EVENT_QUEUES       16         /**< Maximum number of unique threads queuing events */
+#define FLUID_DEFAULT_AUDIO_RT_PRIO  90         /**< Default setting for audio.realtime-prio */
+#define FLUID_DEFAULT_MIDI_RT_PRIO   80         /**< Default setting for midi.realtime-prio */
 
 #ifndef PI
 #define PI                          3.141592654

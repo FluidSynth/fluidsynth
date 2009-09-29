@@ -122,18 +122,38 @@ int delete_fluid_timer(fluid_timer_t* timer);
 int fluid_timer_join(fluid_timer_t* timer);
 int fluid_timer_stop(fluid_timer_t* timer);
 
-/**
+/* Muteces */
 
- Muteces 
+/* Regular mutex */
+typedef GStaticMutex fluid_mutex_t;
+#define fluid_mutex_init(_m)      g_static_mutex_init(&(_m))
+#define fluid_mutex_destroy(_m)   g_static_mutex_free(&(_m))
+#define fluid_mutex_lock(_m)      g_static_mutex_lock(&(_m))
+#define fluid_mutex_unlock(_m)    g_static_mutex_unlock(&(_m))
 
-*/
+/* Recursive lock capable mutex */
+typedef GStaticRecMutex fluid_rec_mutex_t;
+#define fluid_rec_mutex_init(_m)      g_static_rec_mutex_init(&(_m))
+#define fluid_rec_mutex_destroy(_m)   g_static_rec_mutex_free(&(_m))
+#define fluid_rec_mutex_lock(_m)      g_static_rec_mutex_lock(&(_m))
+#define fluid_rec_mutex_unlock(_m)    g_static_rec_mutex_unlock(&(_m))
 
-/* Recursive locks allowed */
-typedef GStaticRecMutex fluid_mutex_t;
-#define fluid_mutex_init(_m)      g_static_rec_mutex_init(&(_m))
-#define fluid_mutex_destroy(_m)   g_static_rec_mutex_free(&(_m))
-#define fluid_mutex_lock(_m)      g_static_rec_mutex_lock(&(_m))
-#define fluid_mutex_unlock(_m)    g_static_rec_mutex_unlock(&(_m))
+/* Dynamically allocated mutex suitable for fluid_cond_t use */
+typedef GMutex    fluid_cond_mutex_t;
+#define new_fluid_cond_mutex            g_mutex_new
+#define delete_fluid_cond_mutex         g_mutex_free
+#define fluid_cond_mutex_lock           g_mutex_lock
+#define fluid_cond_mutex_unlock         g_mutex_unlock
+
+
+/* Thread condition signaling */
+
+typedef GCond fluid_cond_t;
+#define new_fluid_cond                  g_cond_new
+#define delete_fluid_cond               g_cond_free
+#define fluid_cond_signal               g_cond_signal
+#define fluid_cond_broadcast            g_cond_broadcast
+#define fluid_cond_wait                 g_cond_wait
 
 
 /* Atomic operations */
@@ -148,7 +168,8 @@ typedef GStaticRecMutex fluid_mutex_t;
 #define fluid_atomic_int_exchange_and_add(_pi, _add) \
   g_atomic_int_exchange_and_add(_pi, _add)
 
-#define fluid_atomic_pointer_get(_pp)    g_atomic_pointer_get(_pp)
+#define fluid_atomic_pointer_get(_pp)           g_atomic_pointer_get(_pp)
+#define fluid_atomic_pointer_set(_pp, val)      g_atomic_pointer_set(_pp, val)
 #define fluid_atomic_pointer_compare_and_exchange(_pp, _old, _new) \
   g_atomic_pointer_compare_and_exchange(_pp, _old, _new)
 
@@ -180,37 +201,40 @@ typedef GStaticPrivate fluid_private_t;
 #define fluid_private_free(_priv)                  g_static_private_free(&(_priv))
 
 
-/**
- Threads
-
- */
+/* Threads */
 
 typedef GThread fluid_thread_t;
 typedef void (*fluid_thread_func_t)(void* data);
 
-/** When detached, 'join' does not work and the thread destroys itself
-    when finished. */
-fluid_thread_t* new_fluid_thread(fluid_thread_func_t func, void* data, int detach);
-int delete_fluid_thread(fluid_thread_t* thread);
-int fluid_thread_join(fluid_thread_t* thread);
+/**
+ * Thread priorities.
+ */
+typedef enum
+{
+  FLUID_THREAD_PRIO_NORMAL,     /**< Normal thread priority */
+  FLUID_THREAD_PRIO_HIGH        /**< High priority thread */
+} fluid_thread_prio_t;
 
 #define FLUID_THREAD_ID_NULL            NULL                    /* A NULL "ID" value */
 #define fluid_thread_id_t               GThread *               /* Data type for a thread ID */
 #define fluid_thread_get_id()           g_thread_self()         /* Get unique "ID" for current thread */
 
-/**
-      Sockets and I/O
+fluid_thread_t* new_fluid_thread(fluid_thread_func_t func, void *data,
+                                 fluid_thread_prio_t prio, int prio_level, int detach);
+void delete_fluid_thread(fluid_thread_t* thread);
+void fluid_thread_self_set_prio (fluid_thread_prio_t prio, int prio_level);
+int fluid_thread_join(fluid_thread_t* thread);
 
- */
+/* Sockets and I/O */
 
 fluid_istream_t fluid_get_stdin (void);
 fluid_ostream_t fluid_get_stdout (void);
 int fluid_istream_readline(fluid_istream_t in, char* prompt, char* buf, int len);
 int fluid_ostream_printf (fluid_ostream_t out, char* format, ...);
 
-/** The function should return 0 if no error occured, non-zero
-    otherwise. If the function return non-zero, the socket will be
-    closed by the server. */
+/* The function should return 0 if no error occured, non-zero
+   otherwise. If the function return non-zero, the socket will be
+   closed by the server. */
 typedef int (*fluid_server_func_t)(void* data, fluid_socket_t client_socket, char* addr);
 
 fluid_server_socket_t* new_fluid_server_socket(int port, fluid_server_func_t func, void* data);
@@ -222,17 +246,14 @@ fluid_ostream_t fluid_socket_get_ostream(fluid_socket_t sock);
 
 
 
-/**
+/* Profiling */
 
-    Profiling
+
+/**
+ * Profile numbers. List all the pieces of code you want to profile
+ * here. Be sure to add an entry in the fluid_profile_data table in
+ * fluid_sys.c
  */
-
-
-/**
-    Profile numbers. List all the pieces of code you want to profile
-    here. Be sure to add an entry in the fluid_profile_data table in
-    fluid_sys.c
-*/
 enum {
   FLUID_PROF_WRITE_S16,
   FLUID_PROF_ONE_BLOCK,

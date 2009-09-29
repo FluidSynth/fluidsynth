@@ -56,6 +56,8 @@ FLUIDSYNTH_API int fluid_synth_noteon(fluid_synth_t* synth, int chan, int key, i
 FLUIDSYNTH_API int fluid_synth_noteoff(fluid_synth_t* synth, int chan, int key);
 FLUIDSYNTH_API int fluid_synth_cc(fluid_synth_t* synth, int chan, int ctrl, int val);
 FLUIDSYNTH_API int fluid_synth_get_cc(fluid_synth_t* synth, int chan, int ctrl, int* pval);
+FLUIDSYNTH_API int fluid_synth_sysex(fluid_synth_t *synth, char *data, int len,
+                                     char *response, int *response_len, int *handled, int dryrun);
 FLUIDSYNTH_API int fluid_synth_pitch_bend(fluid_synth_t* synth, int chan, int val);
 FLUIDSYNTH_API int fluid_synth_get_pitch_bend(fluid_synth_t* synth, int chan, int* ppitch_bend);
 FLUIDSYNTH_API int fluid_synth_pitch_wheel_sens(fluid_synth_t* synth, int chan, int val);
@@ -187,22 +189,33 @@ FLUIDSYNTH_API float fluid_synth_get_gen(fluid_synth_t* synth, int chan, int par
 /* Tuning */
 
 FLUIDSYNTH_API 
-int fluid_synth_create_key_tuning(fluid_synth_t* synth, int tuning_bank, int tuning_prog,
-				 char* name, double* pitch);
+int fluid_synth_create_key_tuning(fluid_synth_t* synth, int bank, int prog,
+				  char* name, double* pitch);
+FLUIDSYNTH_API
+int fluid_synth_activate_key_tuning(fluid_synth_t* synth, int bank, int prog,
+                                    char* name, double* pitch, int apply);
 FLUIDSYNTH_API 
-int fluid_synth_create_octave_tuning(fluid_synth_t* synth, int tuning_bank, int tuning_prog,
-				    char* name, double* pitch);
+int fluid_synth_create_octave_tuning(fluid_synth_t* synth, int bank, int prog,
+                                     char* name, double* pitch);
+FLUIDSYNTH_API
+int fluid_synth_activate_octave_tuning(fluid_synth_t* synth, int bank, int prog,
+                                       char* name, double* pitch, int apply);
 FLUIDSYNTH_API 
-int fluid_synth_tune_notes(fluid_synth_t* synth, int tuning_bank, int tuning_prog,
-			  int len, int *keys, double* pitch, int apply);
+int fluid_synth_tune_notes(fluid_synth_t* synth, int bank, int prog,
+			   int len, int *keys, double* pitch, int apply);
 FLUIDSYNTH_API 
-int fluid_synth_select_tuning(fluid_synth_t* synth, int chan, int tuning_bank, int tuning_prog);
+int fluid_synth_select_tuning(fluid_synth_t* synth, int chan, int bank, int prog);
+FLUIDSYNTH_API
+int fluid_synth_activate_tuning(fluid_synth_t* synth, int chan, int bank, int prog,
+                                int apply);
 FLUIDSYNTH_API int fluid_synth_reset_tuning(fluid_synth_t* synth, int chan);
+FLUIDSYNTH_API
+int fluid_synth_deactivate_tuning(fluid_synth_t* synth, int chan, int apply);
 FLUIDSYNTH_API void fluid_synth_tuning_iteration_start(fluid_synth_t* synth);
 FLUIDSYNTH_API 
 int fluid_synth_tuning_iteration_next(fluid_synth_t* synth, int* bank, int* prog);
 FLUIDSYNTH_API int fluid_synth_tuning_dump(fluid_synth_t* synth, int bank, int prog, 
-					 char* name, int len, double* pitch);
+					   char* name, int len, double* pitch);
 
 /* Misc */
 

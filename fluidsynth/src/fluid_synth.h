@@ -110,6 +110,8 @@ typedef struct _fluid_sfont_info_t {
  * left_buf[], right_buf[] (Contents change)
  * fx_left_buf[], fx_right_buf[] (Contents change)
  * LADSPA_FxUnit (Contents change)
+ * cores
+ * core_threads[]
  *
  * Single thread use only (modify only prior to synthesis):
  * loaders<>
@@ -152,7 +154,7 @@ struct _fluid_synth_t
   fluid_private_t thread_queues;     /**< Thread private data for event queues for each non-synthesis thread queuing events */
   fluid_event_queue_t *queues[FLUID_MAX_EVENT_QUEUES];   /**< Thread event queues (NULL for unused elements) */
 
-  fluid_mutex_t mutex;               /**< Lock for multi-thread sensitive variables (not used by synthesis process) */
+  fluid_rec_mutex_t mutex;           /**< Lock for multi-thread sensitive variables (not used by synthesis process) */
   fluid_list_t *queue_pool;          /**< List of event queues whose threads have been destroyed and which can be re-used */
   fluid_event_queue_t *return_queue; /**< Event queue for events from synthesis thread to non-synthesis threads (memory frees, etc) */
   fluid_timer_t *return_queue_timer; /**< Timer thread to process return event queue */
@@ -218,6 +220,23 @@ struct _fluid_synth_t
 
   fluid_midi_router_t* midi_router;  /**< The midi router. Could be done nicer. */
   fluid_sample_timer_t* sample_timers; /**< List of timers triggered after a block has been processed */
+
+  int cores;                         /**< Number of CPU cores (1 by default) */
+  fluid_thread_t **core_threads;     /**< Array of core threads (cores - 1 in length) */
+  unsigned char cores_active;        /**< TRUE if core slave threads should remain active, FALSE to terminate them */
+
+  /* Multi-core variables (protected by core_mutex) */
+  fluid_cond_mutex_t *core_mutex;    /**< Mutex to protect all core_ variables and use with core_cond and core_wait_last_cond */
+  fluid_cond_t *core_cond;           /**< Thread condition for signaling core slave threads */
+  int core_work;                     /**< Boolean: TRUE if there is work, FALSE otherwise */
+
+  /* Used in a lockless atomic fashion */
+  int core_voice_index;              /**< Next voice index to process */
+  fluid_voice_t **core_voice_processed;  /**< Array for processed voices */
+  fluid_real_t *core_bufs;           /**< Block containing audio buffers for each voice (FLUID_BUFSIZE in length each) */
+  int core_inprogress;               /**< Count of secondary core threads in progress */
+  int core_waiting_for_last;         /**< Boolean: Set to TRUE if primary synthesis thread is waiting for last slave thread to finish */
+  fluid_cond_t *core_wait_last_cond; /**< Thread condition for signaling primary synthesis thread when last slave thread finishes */
 
 #ifdef LADSPA
   fluid_LADSPA_FxUnit_t* LADSPA_FxUnit; /**< Effects unit for LADSPA support */

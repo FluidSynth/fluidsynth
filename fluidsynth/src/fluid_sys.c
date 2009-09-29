@@ -364,6 +364,13 @@ fluid_utime (void)
 /*                                                             */
 /*=============================================================*/
 
+void
+fluid_thread_self_set_prio (fluid_thread_prio_t prio, int prio_level)
+{
+  if (prio == FLUID_THREAD_PRIO_HIGH)
+    SetThreadPriority (GetCurrentThread(), THREAD_PRIORITY_HIGHEST);
+}
+
 /***************************************************************
  *
  *               Timer
@@ -488,6 +495,13 @@ fluid_timer_join(fluid_timer_t* timer)
 /*                                                             */
 /*=============================================================*/
 
+void
+fluid_thread_self_set_prio (fluid_thread_prio_t prio, int prio_level)
+{
+  if (prio == FLUID_THREAD_PRIO_HIGH)
+    DosSetPriority (PRTYS_THREAD, PRTYC_REGULAR, PRTYD_MAXIMUM, 0);
+}
+
 /***************************************************************
  *
  *               Timer
@@ -610,6 +624,19 @@ fluid_timer_join(fluid_timer_t* timer)
 /*                                                             */
 /*=============================================================*/
 
+void
+fluid_thread_self_set_prio (fluid_thread_prio_t prio, int prio_level)
+{
+  struct sched_param priority;
+
+  if (prio == FLUID_THREAD_PRIO_HIGH)
+  {
+    priority.sched_priority = prio_level;
+
+    if (pthread_setschedparam (pthread_self (), SCHED_FIFO, &priority) != 0)
+      FLUID_LOG(FLUID_WARN, "Failed to set thread to high priority");
+  }
+}
 
 /***************************************************************
  *
@@ -871,16 +898,61 @@ void fluid_profiling_print(void)
  *
  */
 
+typedef struct
+{
+  fluid_thread_func_t func;
+  void *data;
+  int prio_level;
+} fluid_thread_info_t;
 
+static gpointer
+fluid_thread_high_prio (gpointer data)
+{
+  fluid_thread_info_t *info = data;
+
+  fluid_thread_self_set_prio (FLUID_THREAD_PRIO_HIGH, info->prio_level);
+
+  info->func (info->data);
+  FLUID_FREE (info);
+
+  return NULL;
+}
+
+/**
+ * Create a new thread.
+ * @param func Function to execute in new thread context
+ * @param data User defined data to pass to func
+ * @param prio Priority class
+ * @param prio_level Priority level (used only for high priority on Posix currently, 1-99)
+ * @param detach If TRUE, 'join' does not work and the thread destroys itself when finished.
+ * @return New thread pointer or NULL on error
+ */
 fluid_thread_t *
-new_fluid_thread (fluid_thread_func_t func, void *data, int detach)
+new_fluid_thread (fluid_thread_func_t func, void *data,
+                  fluid_thread_prio_t prio, int prio_level, int detach)
 {
   GThread *thread;
+  fluid_thread_info_t *info;
   GError *err = NULL;
 
   g_return_val_if_fail (func != NULL, NULL);
 
-  thread = g_thread_create ((GThreadFunc)func, data, detach == FALSE, &err);
+  if (prio == FLUID_THREAD_PRIO_HIGH)
+  {
+    info = FLUID_NEW (fluid_thread_info_t);
+
+    if (!info)
+    {
+      FLUID_LOG(FLUID_ERR, "Out of memory");
+      return NULL;
+    }
+
+    info->func = func;
+    info->data = data;
+    info->prio_level = prio_level;
+    thread = g_thread_create (fluid_thread_high_prio, info, detach == FALSE, &err);
+  }
+  else thread = g_thread_create ((GThreadFunc)func, data, detach == FALSE, &err);
 
   if (!thread)
   {
@@ -892,12 +964,23 @@ new_fluid_thread (fluid_thread_func_t func, void *data, int detach)
   return thread;
 }
 
-int delete_fluid_thread(fluid_thread_t* thread)
+/**
+ * Frees data associated with a thread (does not actually stop thread).
+ * @param thread Thread to free
+ */
+void
+delete_fluid_thread(fluid_thread_t* thread)
 {
-  return FLUID_OK;
+  /* Threads free themselves when they quit, nothing to do */
 }
 
-int fluid_thread_join(fluid_thread_t* thread)
+/**
+ * Join a thread (wait for it to terminate).
+ * @param thread Thread to join
+ * @return FLUID_OK
+ */
+int
+fluid_thread_join(fluid_thread_t* thread)
 {
   g_thread_join (thread);
 
@@ -1136,7 +1219,8 @@ new_fluid_server_socket(int port, fluid_server_func_t func, void* data)
   server_socket->data = data;
   server_socket->cont = 1;
 
-  server_socket->thread = new_fluid_thread(fluid_server_socket_run, server_socket, 0);
+  server_socket->thread = new_fluid_thread(fluid_server_socket_run, server_socket,
+                                           FLUID_THREAD_PRIO_NORMAL, 0, FALSE);
   if (server_socket->thread == NULL) {
     FLUID_FREE(server_socket);
     fluid_socket_close(sock);

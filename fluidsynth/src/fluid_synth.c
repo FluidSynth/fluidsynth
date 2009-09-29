@@ -93,6 +93,7 @@ static int fluid_synth_set_polyphony_LOCAL(fluid_synth_t* synth, int polyphony);
 static void init_dither(void);
 static inline int roundi (float x);
 static int fluid_synth_one_block(fluid_synth_t* synth, int do_not_mix_fx_to_out);
+static void fluid_synth_core_thread_func (void* data);
 static FLUID_INLINE void fluid_synth_process_event_queue_LOCAL
   (fluid_synth_t *synth, fluid_event_queue_t *queue);
 static fluid_voice_t* fluid_synth_free_voice_by_kill_LOCAL(fluid_synth_t* synth);
@@ -222,6 +223,7 @@ void fluid_synth_settings(fluid_settings_t* settings)
 			      0, NULL, NULL);
   fluid_settings_register_int(settings, "synth.device-id",
 			      0, 126, 0, 0, NULL, NULL);
+  fluid_settings_register_int(settings, "synth.cpu-cores", 1, 1, 256, 0, NULL, NULL);
 }
 
 /*
@@ -517,7 +519,7 @@ new_fluid_synth(fluid_settings_t *settings)
   }
   FLUID_MEMSET(synth, 0, sizeof(fluid_synth_t));
 
-  fluid_mutex_init(synth->mutex);
+  fluid_rec_mutex_init(synth->mutex);
   fluid_private_init(synth->thread_queues);
 
   synth->return_queue = fluid_event_queue_new (FLUID_MAX_RETURN_EVENTS);
@@ -542,6 +544,7 @@ new_fluid_synth(fluid_settings_t *settings)
   fluid_settings_getint(settings, "synth.effects-channels", &synth->effects_channels);
   fluid_settings_getnum(settings, "synth.gain", &synth->gain);
   fluid_settings_getint(settings, "synth.device-id", &synth->device_id);
+  fluid_settings_getint(settings, "synth.cpu-cores", &synth->cores);
 
   /* register the callbacks */
   fluid_settings_register_num(settings, "synth.gain",
@@ -729,6 +732,57 @@ new_fluid_synth(fluid_settings_t *settings)
     goto error_recovery;
   }
 
+  /* Initialize multi-core variables if multiple cores enabled */
+  if (synth->cores > 1)
+  {
+    int prio, prio_level;
+
+    synth->core_mutex = new_fluid_cond_mutex ();
+    synth->core_cond = new_fluid_cond ();
+    synth->core_wait_last_cond = new_fluid_cond ();
+
+    synth->core_threads = FLUID_ARRAY (fluid_thread_t *, synth->cores - 1);
+    synth->core_voice_processed = FLUID_ARRAY (fluid_voice_t *, synth->polyphony);
+    synth->core_bufs = FLUID_MALLOC (synth->polyphony * FLUID_BUFSIZE * sizeof (fluid_real_t));
+
+    if (!synth->core_mutex || !synth->core_cond || !synth->core_wait_last_cond
+        || !synth->core_threads || !synth->core_voice_processed
+        || !synth->core_bufs)
+    {
+      FLUID_LOG(FLUID_ERR, "Out of memory");
+      goto error_recovery;
+    }
+
+    synth->cores_active = TRUE;
+    synth->core_work = FALSE;
+    synth->core_inprogress = 0;
+    synth->core_waiting_for_last = FALSE;
+
+    for (i = 0; i < synth->polyphony; i++)
+      synth->core_voice_processed[i] = NULL;
+
+    prio = fluid_settings_str_equal (synth->settings, "audio.realtime", "yes");
+
+    if (prio)
+    {
+      prio = FLUID_THREAD_PRIO_HIGH;
+      fluid_settings_getint (synth->settings, "audio.realtime-prio", &prio_level);
+    }
+    else
+    {
+      prio = FLUID_THREAD_PRIO_NORMAL;
+      prio_level = 0;
+    }
+
+    for (i = 0; i < synth->cores - 1; i++)
+    {
+      synth->core_threads[i] = new_fluid_thread (fluid_synth_core_thread_func,
+                                                 synth, prio, prio_level, FALSE);
+      if (!synth->core_threads[i])
+        FLUID_LOG(FLUID_ERR, "Failed to create a synthesis core thread");
+    }
+  }
+
   /* FIXME */
   synth->start = fluid_curtime();
 
@@ -755,26 +809,26 @@ fluid_synth_return_event_process_callback (void* data, unsigned int msec)
     switch (event->type)
     {
       case FLUID_EVENT_QUEUE_ELEM_GAIN:         /* Sync gain variable */
-        fluid_mutex_lock (synth->mutex);        /* ++ Lock gain variable */
+        fluid_rec_mutex_lock (synth->mutex);        /* ++ Lock gain variable */
         synth->gain = event->dval;
-        fluid_mutex_unlock (synth->mutex);      /* -- Unlock */
+        fluid_rec_mutex_unlock (synth->mutex);      /* -- Unlock */
         break;
       case FLUID_EVENT_QUEUE_ELEM_REVERB:       /* Sync reverb shadow variables */
-        fluid_mutex_lock (synth->mutex);        /* ++ Lock reverb shadow variables */
+        fluid_rec_mutex_lock (synth->mutex);        /* ++ Lock reverb shadow variables */
         synth->reverb_roomsize = event->reverb.roomsize;
         synth->reverb_damping = event->reverb.damping;
         synth->reverb_width = event->reverb.width;
         synth->reverb_level = event->reverb.level;
-        fluid_mutex_unlock (synth->mutex);      /* -- Unlock */
+        fluid_rec_mutex_unlock (synth->mutex);      /* -- Unlock */
         break;
       case FLUID_EVENT_QUEUE_ELEM_CHORUS:       /* Sync chorus shadow variables */
-        fluid_mutex_lock (synth->mutex);        /* ++ Lock chorus shadow variables */
+        fluid_rec_mutex_lock (synth->mutex);        /* ++ Lock chorus shadow variables */
         synth->chorus_nr = event->chorus.nr;
         synth->chorus_level = event->chorus.level;
         synth->chorus_speed = event->chorus.speed;
         synth->chorus_depth = event->chorus.depth;
         synth->chorus_type = event->chorus.type;
-        fluid_mutex_unlock (synth->mutex);      /* -- Unlock */
+        fluid_rec_mutex_unlock (synth->mutex);      /* -- Unlock */
         break;
       case FLUID_EVENT_QUEUE_ELEM_FREE_PRESET:  /* Preset free event */
         preset = (fluid_preset_t *)(event->pval);
@@ -821,6 +875,26 @@ delete_fluid_synth(fluid_synth_t* synth)
   if (synth->return_queue) {
     fluid_synth_return_event_process_callback(synth, 0);
     fluid_event_queue_free(synth->return_queue);
+  }
+
+  /* Free multi-core resources (if multi-core enabled) */
+  if (synth->cores > 1)
+  {
+    /* Signal slave core threads to exit and wait for them to finish */
+    fluid_cond_mutex_lock (synth->core_mutex);  /* ++ Lock */
+    synth->cores_active = FALSE;
+    fluid_cond_broadcast (synth->core_cond);
+    fluid_cond_mutex_unlock (synth->core_mutex);  /* -- Unlock */
+
+    for (i = 0; i < synth->cores - 1; i++)
+      if (synth->core_threads[i])
+        fluid_thread_join (synth->core_threads[i]);
+
+    delete_fluid_cond_mutex (synth->core_mutex);
+    delete_fluid_cond (synth->core_cond);
+    delete_fluid_cond (synth->core_wait_last_cond);
+    FLUID_FREE (synth->core_voice_processed);
+    FLUID_FREE (synth->core_bufs);
   }
 
   /* turn off all voices, needed to unload SoundFont data */
@@ -959,7 +1033,7 @@ delete_fluid_synth(fluid_synth_t* synth)
   delete_fluid_list (synth->queue_pool);
   fluid_private_free (synth->thread_queues);
 
-  fluid_mutex_destroy(synth->mutex);
+  fluid_rec_mutex_destroy(synth->mutex);
 
   FLUID_FREE(synth);
 
@@ -992,7 +1066,7 @@ fluid_synth_get_event_queue (fluid_synth_t* synth)
 
   if (!queue)   /* This thread has no queue yet? */
   {
-    fluid_mutex_lock (synth->mutex);    /* ++ lock queue_pool */
+    fluid_rec_mutex_lock (synth->mutex);    /* ++ lock queue_pool */
 
     /* Use an unclaimed queue, if any (it will already be in synth->queues[] in that case) */
     if (synth->queue_pool)
@@ -1007,7 +1081,7 @@ fluid_synth_get_event_queue (fluid_synth_t* synth)
       delete1_fluid_list (p);
     }
 
-    fluid_mutex_unlock (synth->mutex);  /* -- unlock queue_pool */
+    fluid_rec_mutex_unlock (synth->mutex);  /* -- unlock queue_pool */
 
     if (!queue)         /* Create event queue, if one wasn't re-claimed */
     {
@@ -1180,9 +1254,9 @@ fluid_synth_thread_queue_destroy_notify (void *data)
 
   /* Queues are not freed (can't be thread safe without locking in synth thread),
    * added to pool for potential future use */
-  fluid_mutex_lock (synth->mutex);    /* ++ lock queue_pool */
+  fluid_rec_mutex_lock (synth->mutex);    /* ++ lock queue_pool */
   synth->queue_pool = fluid_list_prepend (synth->queue_pool, queue);
-  fluid_mutex_unlock (synth->mutex);  /* -- unlock queue_pool */
+  fluid_rec_mutex_unlock (synth->mutex);  /* -- unlock queue_pool */
 }
 
 /**
@@ -2101,7 +2175,7 @@ fluid_synth_get_preset(fluid_synth_t* synth, unsigned int sfontnum,
   fluid_sfont_info_t *sfont_info;
   fluid_list_t *list;
 
-  fluid_mutex_lock (synth->mutex);      /* ++ lock sfont list, bank offset list and sfont */
+  fluid_rec_mutex_lock (synth->mutex);      /* ++ lock sfont list, bank offset list and sfont */
 
   for (list = synth->sfont_info; list; list = fluid_list_next (list)) {
     sfont_info = (fluid_sfont_info_t *)fluid_list_get (list);
@@ -2115,7 +2189,7 @@ fluid_synth_get_preset(fluid_synth_t* synth, unsigned int sfontnum,
     }
   }
 
-  fluid_mutex_unlock (synth->mutex);      /* -- unlock */
+  fluid_rec_mutex_unlock (synth->mutex);      /* -- unlock */
 
   return preset;
 }
@@ -2134,7 +2208,7 @@ fluid_synth_get_preset_by_sfont_name(fluid_synth_t* synth, const char *sfontname
   fluid_sfont_info_t *sfont_info;
   fluid_list_t *list;
 
-  fluid_mutex_lock (synth->mutex);      /* ++ lock sfont list, bank offset list and sfont */
+  fluid_rec_mutex_lock (synth->mutex);      /* ++ lock sfont list, bank offset list and sfont */
 
   for (list = synth->sfont_info; list; list = fluid_list_next (list)) {
     sfont_info = (fluid_sfont_info_t *)fluid_list_get (list);
@@ -2148,7 +2222,7 @@ fluid_synth_get_preset_by_sfont_name(fluid_synth_t* synth, const char *sfontname
     }
   }
 
-  fluid_mutex_unlock (synth->mutex);      /* -- unlock */
+  fluid_rec_mutex_unlock (synth->mutex);      /* -- unlock */
 
   return preset;
 }
@@ -2167,7 +2241,7 @@ fluid_synth_find_preset(fluid_synth_t* synth, unsigned int banknum,
   fluid_list_t *list;
   int ofs;
 
-  fluid_mutex_lock (synth->mutex);      /* ++ lock sfont list, bank offset list and sfont */
+  fluid_rec_mutex_lock (synth->mutex);      /* ++ lock sfont list, bank offset list and sfont */
 
   for (list = synth->sfont_info; list; list = fluid_list_next (list)) {
     sfont_info = (fluid_sfont_info_t *)fluid_list_get (list);
@@ -2181,7 +2255,7 @@ fluid_synth_find_preset(fluid_synth_t* synth, unsigned int banknum,
     }
   }
 
-  fluid_mutex_unlock (synth->mutex);      /* -- unlock */
+  fluid_rec_mutex_unlock (synth->mutex);      /* -- unlock */
 
   return preset;
 }
@@ -2483,9 +2557,9 @@ fluid_synth_get_gain(fluid_synth_t* synth)
 
   fluid_return_val_if_fail (synth != NULL, 0.0);
 
-  fluid_mutex_lock (synth->mutex);
+  fluid_rec_mutex_lock (synth->mutex);
   gain = synth->gain;
-  fluid_mutex_unlock (synth->mutex);
+  fluid_rec_mutex_unlock (synth->mutex);
 
   return (gain);
 }
@@ -2511,7 +2585,7 @@ int
 fluid_synth_set_polyphony(fluid_synth_t* synth, int polyphony)
 {
   fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
-  fluid_return_val_if_fail (polyphony >= 1 && polyphony <= synth->nvoice, FLUID_FAILED);
+  fluid_return_val_if_fail (polyphony >= 16 && polyphony <= synth->nvoice, FLUID_FAILED);
 
   if (fluid_synth_should_queue (synth))
     return fluid_synth_queue_int_event (synth, FLUID_EVENT_QUEUE_ELEM_POLYPHONY,
@@ -2923,7 +2997,8 @@ fluid_synth_dither_s16(int *dither_index, int len, float* lin, float* rin,
 static int
 fluid_synth_one_block(fluid_synth_t* synth, int do_not_mix_fx_to_out)
 {
-  int i, auchan;
+  fluid_real_t local_voice_buf[FLUID_BUFSIZE];
+  int i, auchan, start_index, voice_index;
   fluid_voice_t* voice;
   fluid_real_t* left_buf;
   fluid_real_t* right_buf;
@@ -2931,6 +3006,8 @@ fluid_synth_one_block(fluid_synth_t* synth, int do_not_mix_fx_to_out)
   fluid_real_t* chorus_buf;
   int byte_size = FLUID_BUFSIZE * sizeof(fluid_real_t);
   double prof_ref = fluid_profile_ref();
+  double prof_ref_voice;
+  int count;
 
   /* Assign ID of synthesis thread, if not already set */
   if (synth->synth_thread_id == FLUID_THREAD_ID_NULL) 
@@ -2970,12 +3047,99 @@ fluid_synth_one_block(fluid_synth_t* synth, int do_not_mix_fx_to_out)
 
   fluid_profile(FLUID_PROF_ONE_BLOCK_CLEAR, prof_ref);
 
-  /* call all playing synthesis processes */
-  for (i = 0; i < synth->polyphony; i++) {
-    voice = synth->voice[i];
+  if (synth->cores > 1)
+  {
+    /* Look for first active voice to process */
+    for (voice_index = 0; voice_index < synth->polyphony; voice_index++)
+    {
+      voice = synth->voice[voice_index];
+      if (_PLAYING (voice)) break;
+    }
 
-    if (_PLAYING(voice)) {
-      double prof_ref_voice = fluid_profile_ref();
+    /* Was there a voice to process? */
+    if (voice_index < synth->polyphony)
+    {
+      fluid_cond_mutex_lock (synth->core_mutex);       /* ++ Lock core variables */
+
+      synth->core_voice_index = voice_index + 1;       /* Set the next core_voice_index */
+
+      /* Tell the other core threads that there is work to do */
+      synth->core_work = TRUE;
+      synth->core_waiting_for_last = FALSE;
+      fluid_cond_broadcast (synth->core_cond);
+
+      fluid_cond_mutex_unlock (synth->core_mutex);       /* -- Unlock core variables */
+
+      while (TRUE)
+      {
+got_voice:      /* We got a voice to process */
+        count = fluid_voice_write (voice, &synth->core_bufs[voice_index * FLUID_BUFSIZE]);
+
+        if (count > 0) synth->core_voice_processed[voice_index] = voice;
+
+        /* Look for next active voice to process (in a lock free manner) */
+        do
+        {
+          voice_index = fluid_atomic_int_get (&synth->core_voice_index);
+
+          for (start_index = voice_index; voice_index < synth->polyphony; voice_index++)
+          {
+            voice = synth->voice[voice_index];
+
+            if (_PLAYING (voice))
+            {
+              if (fluid_atomic_int_compare_and_exchange (&synth->core_voice_index,
+                                                         start_index, voice_index + 1))
+                goto got_voice;
+
+              break;    /* compare and exchange failed (another thread grabbed the voice first) */
+            }
+          }
+        }
+        while (voice_index < synth->polyphony);
+
+        /* No more voices to process */
+        fluid_cond_mutex_lock (synth->core_mutex);       /* ++ Lock core variables */
+        synth->core_work = FALSE;
+
+        /* If there are still other core threads in progress, wait for last one */
+        if (synth->core_inprogress > 0)
+        {
+          synth->core_waiting_for_last = TRUE;
+
+          while (synth->core_inprogress > 0)
+            fluid_cond_wait (synth->core_wait_last_cond, synth->core_mutex);
+        }
+
+        fluid_cond_mutex_unlock (synth->core_mutex);     /* -- Unlock core variables */
+        break;        /* We're done */
+      }         /* while (TRUE) - Process voices loop */
+
+      /* Mix all voices */
+      for (i = 0; i < synth->polyphony; i++)
+      {
+        voice = synth->core_voice_processed[i];
+        if (!voice) continue;
+
+        synth->core_voice_processed[i] = NULL;
+
+        auchan = fluid_channel_get_num (fluid_voice_get_channel (voice));
+        auchan %= synth->audio_groups;
+        left_buf = synth->left_buf[auchan];
+        right_buf = synth->right_buf[auchan];
+
+        fluid_voice_mix (voice, left_buf, right_buf, reverb_buf, chorus_buf);
+      }       /* while (TRUE) - Mix processed voices loop */
+    }   /* if (i < synth->polyphony) - Are there any voices to process? */
+  }
+  else          /* synth->cores < 1 - Not multi-core enabled */
+  {
+    /* call all playing synthesis processes */
+    for (i = 0; i < synth->polyphony; i++) {
+      voice = synth->voice[i];
+      if (!_PLAYING(voice)) continue;
+
+      prof_ref_voice = fluid_profile_ref();
 
       /* The output associated with a MIDI channel is wrapped around
        * using the number of audio groups as modulo divider.  This is
@@ -2994,7 +3158,8 @@ fluid_synth_one_block(fluid_synth_t* synth, int do_not_mix_fx_to_out)
       left_buf = synth->left_buf[auchan];
       right_buf = synth->right_buf[auchan];
 
-      fluid_voice_write(voice, left_buf, right_buf, reverb_buf, chorus_buf);
+      fluid_voice_write (voice, local_voice_buf);
+      fluid_voice_mix (voice, left_buf, right_buf, reverb_buf, chorus_buf);
 
       fluid_profile(FLUID_PROF_ONE_BLOCK_VOICE, prof_ref_voice);
     }
@@ -3064,6 +3229,84 @@ fluid_synth_one_block(fluid_synth_t* synth, int do_not_mix_fx_to_out)
   fluid_check_fpe("??? Remainder of synth_one_block ???");
 
   return 0;
+}
+
+/* Core thread function (processes voices in parallel to primary synthesis thread) */
+static void
+fluid_synth_core_thread_func (void* data)
+{
+  fluid_synth_t *synth = data;
+  fluid_voice_t *voice;
+  int i, count, start_index;
+
+  /* We do this, rather than adding an "if (first_run)" statement to the while loop */
+  fluid_cond_mutex_lock (synth->core_mutex);       /* ++ Lock core variables */
+  synth->core_inprogress++;
+  fluid_cond_mutex_unlock (synth->core_mutex);     /* -- Unlock core variables */
+
+  /* Loop until delete_fluid_synth() kills off core threads */
+  while (synth->cores_active)
+  {
+    fluid_cond_mutex_lock (synth->core_mutex);       /* ++ Lock core variables */
+
+    synth->core_inprogress--;
+
+    /* Wakeup primary synthesis thread if it is waiting for last and we are it */
+    if (synth->core_waiting_for_last && synth->core_inprogress == 0)
+      fluid_cond_signal (synth->core_wait_last_cond);
+
+    /* Wait until there is core work */
+    while (!synth->core_work && synth->cores_active)
+      fluid_cond_wait (synth->core_cond, synth->core_mutex);
+
+    if (!synth->cores_active)
+    {
+      fluid_cond_mutex_unlock (synth->core_mutex);   /* -- Unlock core variables */
+      break;
+    }
+
+    synth->core_inprogress++;
+
+    fluid_cond_mutex_unlock (synth->core_mutex);     /* -- Unlock core variables */
+
+    /* Voice processing loop (lock free) */
+    while (TRUE)
+    {
+      /* Look for next active voice to process (in a lock free manner) */
+      do
+      {
+        i = fluid_atomic_int_get (&synth->core_voice_index);
+
+        for (start_index = i; i < synth->polyphony; i++)
+        {
+          voice = synth->voice[i];
+
+          if (_PLAYING (voice))
+          {
+            if (fluid_atomic_int_compare_and_exchange (&synth->core_voice_index,
+                                                       start_index, i + 1))
+              goto got_voice;
+
+            break;    /* compare and exchange failed (another thread grabbed the voice first) */
+          }
+        }
+      }
+      while (i < synth->polyphony);
+
+      /* No more voices to process */
+      fluid_atomic_int_set (&synth->core_voice_index, synth->polyphony);
+      fluid_atomic_int_set (&synth->core_work, FALSE);
+      break;
+
+got_voice:
+
+      /* Synthesize the voice */
+      count = fluid_voice_write (voice, &synth->core_bufs[i * FLUID_BUFSIZE]);
+
+      /* Assign the processed voice to the same voicebuf index (if there was any audio) */
+      if (count > 0) synth->core_voice_processed[i] = voice;
+    }           /* while (TRUE) - Lock free voice processing loop */
+  }     /* while (synth->cores_active) */
 }
 
 /* Process events in an event queue */
@@ -3401,9 +3644,9 @@ fluid_synth_add_sfloader(fluid_synth_t* synth, fluid_sfloader_t* loader)
   sfont_already_loaded = synth->sfont_info != NULL;
   fluid_return_if_fail (!sfont_already_loaded);
 
-  fluid_mutex_lock (synth->mutex);
+  fluid_rec_mutex_lock (synth->mutex);
   synth->loaders = fluid_list_prepend(synth->loaders, loader);
-  fluid_mutex_unlock (synth->mutex);
+  fluid_rec_mutex_unlock (synth->mutex);
 }
 
 /**
@@ -3445,11 +3688,11 @@ fluid_synth_sfload(fluid_synth_t* synth, const char* filename, int reset_presets
         return FLUID_FAILED;
       }
 
-      fluid_mutex_lock (synth->mutex);  /* ++ Lock sfont_id and sfont list */
+      fluid_rec_mutex_lock (synth->mutex);  /* ++ Lock sfont_id and sfont list */
       sfont->id = sfont_id = ++synth->sfont_id;
       synth->sfont_info = fluid_list_prepend(synth->sfont_info, sfont_info);   /* prepend to list */
       fluid_hashtable_insert (synth->sfont_hash, sfont, sfont_info);       /* Hash sfont->sfont_info */
-      fluid_mutex_unlock (synth->mutex);        /* -- unlock */
+      fluid_rec_mutex_unlock (synth->mutex);        /* -- unlock */
 
       /* reset the presets for all channels if requested */
       if (reset_presets) fluid_synth_program_reset(synth);
@@ -3500,7 +3743,7 @@ fluid_synth_sfunload(fluid_synth_t* synth, unsigned int id, int reset_presets)
   fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
 
   /* remove the SoundFont from the list */
-  fluid_mutex_lock (synth->mutex);  /* ++ Lock sfont list */
+  fluid_rec_mutex_lock (synth->mutex);  /* ++ Lock sfont list */
 
   for (list = synth->sfont_info; list; list = fluid_list_next(list)) {
     sfont_info = (fluid_sfont_info_t*) fluid_list_get(list);
@@ -3512,7 +3755,7 @@ fluid_synth_sfunload(fluid_synth_t* synth, unsigned int id, int reset_presets)
     }
   }
 
-  fluid_mutex_unlock (synth->mutex);        /* -- unlock */
+  fluid_rec_mutex_unlock (synth->mutex);        /* -- unlock */
 
   if (!list) {
     FLUID_LOG(FLUID_ERR, "No SoundFont with id = %d", id);
@@ -3536,7 +3779,7 @@ fluid_synth_sfont_unref (fluid_synth_t *synth, fluid_sfont_t *sfont)
   fluid_sfont_info_t *sfont_info;
   int refcount = 0;
   
-  fluid_mutex_lock (synth->mutex);      /* ++ Lock sfont_hash */
+  fluid_rec_mutex_lock (synth->mutex);      /* ++ Lock sfont_hash */
 
   sfont_info = fluid_hashtable_lookup (synth->sfont_hash, sfont);
 
@@ -3549,7 +3792,7 @@ fluid_synth_sfont_unref (fluid_synth_t *synth, fluid_sfont_t *sfont)
       fluid_hashtable_remove (synth->sfont_hash, sfont_info->sfont);
   }
 
-  fluid_mutex_unlock (synth->mutex);    /* -- Unlock sfont_hash */
+  fluid_rec_mutex_unlock (synth->mutex);    /* -- Unlock sfont_hash */
 
   fluid_return_if_fail (sfont_info != NULL);    /* Shouldn't happen, programming error if so */
 
@@ -3598,7 +3841,7 @@ fluid_synth_sfreload(fluid_synth_t* synth, unsigned int id)
 
   fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
 
-  fluid_mutex_lock (synth->mutex);      /* ++ lock sfont list */
+  fluid_rec_mutex_lock (synth->mutex);      /* ++ lock sfont list */
 
   /* Search for SoundFont and get its index */
   for (list = synth->sfont_info, index = 0; list; list = fluid_list_next (list), index++) {
@@ -3607,7 +3850,7 @@ fluid_synth_sfreload(fluid_synth_t* synth, unsigned int id)
   }
 
   if (!list) {
-    fluid_mutex_unlock (synth->mutex);      /* -- unlock */
+    fluid_rec_mutex_unlock (synth->mutex);      /* -- unlock */
     FLUID_LOG(FLUID_ERR, "No SoundFont with id = %d", id);
     return FLUID_FAILED;
   }
@@ -3615,7 +3858,7 @@ fluid_synth_sfreload(fluid_synth_t* synth, unsigned int id)
   /* keep a copy of the SoundFont's filename */
   FLUID_STRCPY (filename, fluid_sfont_get_name (old_sfont_info->sfont));
 
-  fluid_mutex_unlock (synth->mutex);    /* -- unlock */
+  fluid_rec_mutex_unlock (synth->mutex);    /* -- unlock */
 
   if (fluid_synth_sfunload (synth, id, FALSE) != FLUID_OK)
     return FLUID_FAILED;
@@ -3638,10 +3881,10 @@ fluid_synth_sfreload(fluid_synth_t* synth, unsigned int id)
         return FLUID_FAILED;
       }
 
-      fluid_mutex_lock (synth->mutex);  /* ++ Lock sfont list */
+      fluid_rec_mutex_lock (synth->mutex);  /* ++ Lock sfont list */
       synth->sfont_info = fluid_list_insert_at(synth->sfont_info, index, sfont_info);  /* insert the sfont at the same index */
       fluid_hashtable_insert (synth->sfont_hash, sfont, sfont_info);       /* Hash sfont->sfont_info */
-      fluid_mutex_unlock (synth->mutex);        /* -- unlock */
+      fluid_rec_mutex_unlock (synth->mutex);        /* -- unlock */
 
       /* reset the presets for all channels */
       fluid_synth_update_presets(synth);
@@ -3672,11 +3915,11 @@ fluid_synth_add_sfont(fluid_synth_t* synth, fluid_sfont_t* sfont)
   sfont_info = new_fluid_sfont_info (synth, sfont);
   if (!sfont_info) return (FLUID_FAILED);
 
-  fluid_mutex_lock (synth->mutex);      /* ++ lock sfont_id and sfont_info list */
+  fluid_rec_mutex_lock (synth->mutex);      /* ++ lock sfont_id and sfont_info list */
   sfont->id = sfont_id = ++synth->sfont_id;
   synth->sfont_info = fluid_list_prepend (synth->sfont_info, sfont_info);       /* prepend to list */
   fluid_hashtable_insert (synth->sfont_hash, sfont, sfont_info);   /* Hash sfont->sfont_info */
-  fluid_mutex_unlock (synth->mutex);    /* -- unlock */
+  fluid_rec_mutex_unlock (synth->mutex);    /* -- unlock */
 
   /* reset the presets for all channels */
   fluid_synth_program_reset (synth);
@@ -3705,7 +3948,7 @@ fluid_synth_remove_sfont(fluid_synth_t* synth, fluid_sfont_t* sfont)
   fluid_return_if_fail (sfont != NULL);
 
   /* remove the SoundFont from the list */
-  fluid_mutex_lock (synth->mutex);  /* ++ Lock sfont_info list */
+  fluid_rec_mutex_lock (synth->mutex);  /* ++ Lock sfont_info list */
 
   for (list = synth->sfont_info; list; list = fluid_list_next(list)) {
     sfont_info = (fluid_sfont_info_t*) fluid_list_get(list);
@@ -3720,7 +3963,7 @@ fluid_synth_remove_sfont(fluid_synth_t* synth, fluid_sfont_t* sfont)
     }
   }
 
-  fluid_mutex_unlock (synth->mutex);        /* -- unlock */
+  fluid_rec_mutex_unlock (synth->mutex);        /* -- unlock */
 
   /* reset the presets for all channels */
   fluid_synth_program_reset (synth);
@@ -3738,9 +3981,9 @@ fluid_synth_sfcount(fluid_synth_t* synth)
   
   fluid_return_val_if_fail (synth != NULL, 0);
 
-  fluid_mutex_lock (synth->mutex);      /* ++ lock sfont_info list */
+  fluid_rec_mutex_lock (synth->mutex);      /* ++ lock sfont_info list */
   count = fluid_list_size (synth->sfont_info);
-  fluid_mutex_unlock (synth->mutex);      /* -- unlock */
+  fluid_rec_mutex_unlock (synth->mutex);      /* -- unlock */
 
   return count;
 }
@@ -3762,10 +4005,10 @@ fluid_synth_get_sfont(fluid_synth_t* synth, unsigned int num)
 
   fluid_return_val_if_fail (synth != NULL, NULL);
 
-  fluid_mutex_lock (synth->mutex);      /* ++ lock sfont list */
+  fluid_rec_mutex_lock (synth->mutex);      /* ++ lock sfont list */
   list = fluid_list_nth (synth->sfont_info, num);
   if (list) sfont = ((fluid_sfont_info_t *)fluid_list_get (list))->sfont;
-  fluid_mutex_unlock (synth->mutex);      /* -- unlock */
+  fluid_rec_mutex_unlock (synth->mutex);      /* -- unlock */
 
   return sfont;
 }
@@ -3787,7 +4030,7 @@ fluid_synth_get_sfont_by_id(fluid_synth_t* synth, unsigned int id)
 
   fluid_return_val_if_fail (synth != NULL, NULL);
 
-  fluid_mutex_lock (synth->mutex);      /* ++ lock sfont_info list */
+  fluid_rec_mutex_lock (synth->mutex);      /* ++ lock sfont_info list */
 
   for (list = synth->sfont_info; list; list = fluid_list_next(list)) {
     sfont = ((fluid_sfont_info_t *)fluid_list_get (list))->sfont;
@@ -3795,7 +4038,7 @@ fluid_synth_get_sfont_by_id(fluid_synth_t* synth, unsigned int id)
       break;
   }
 
-  fluid_mutex_unlock (synth->mutex);      /* -- unlock */
+  fluid_rec_mutex_unlock (synth->mutex);      /* -- unlock */
 
   return list ? sfont : NULL;
 }
@@ -3818,7 +4061,7 @@ fluid_synth_get_sfont_by_name(fluid_synth_t* synth, char *name)
   fluid_return_val_if_fail (synth != NULL, NULL);
   fluid_return_val_if_fail (name != NULL, NULL);
 
-  fluid_mutex_lock (synth->mutex);      /* ++ lock */
+  fluid_rec_mutex_lock (synth->mutex);      /* ++ lock */
 
   for (list = synth->sfont_info; list; list = fluid_list_next(list)) {
     sfont = ((fluid_sfont_info_t *)fluid_list_get (list))->sfont;
@@ -3826,7 +4069,7 @@ fluid_synth_get_sfont_by_name(fluid_synth_t* synth, char *name)
       break;
   }
 
-  fluid_mutex_unlock (synth->mutex);      /* -- unlock */
+  fluid_rec_mutex_unlock (synth->mutex);      /* -- unlock */
 
   return list ? sfont : NULL;
 }
@@ -4015,9 +4258,9 @@ fluid_synth_get_reverb_roomsize(fluid_synth_t* synth)
 
   fluid_return_val_if_fail (synth != NULL, 0.0);
 
-  fluid_mutex_lock (synth->mutex);      /* ++ Lock reverb value */
+  fluid_rec_mutex_lock (synth->mutex);      /* ++ Lock reverb value */
   value = synth->reverb_roomsize;
-  fluid_mutex_unlock (synth->mutex);    /* -- Unlock */
+  fluid_rec_mutex_unlock (synth->mutex);    /* -- Unlock */
 
   return value;
 }
@@ -4034,9 +4277,9 @@ fluid_synth_get_reverb_damp(fluid_synth_t* synth)
 
   fluid_return_val_if_fail (synth != NULL, 0.0);
 
-  fluid_mutex_lock (synth->mutex);      /* ++ Lock reverb value */
+  fluid_rec_mutex_lock (synth->mutex);      /* ++ Lock reverb value */
   value = synth->reverb_damping;
-  fluid_mutex_unlock (synth->mutex);    /* -- Unlock */
+  fluid_rec_mutex_unlock (synth->mutex);    /* -- Unlock */
 
   return value;
 }
@@ -4053,9 +4296,9 @@ fluid_synth_get_reverb_level(fluid_synth_t* synth)
 
   fluid_return_val_if_fail (synth != NULL, 0.0);
 
-  fluid_mutex_lock (synth->mutex);      /* ++ Lock reverb value */
+  fluid_rec_mutex_lock (synth->mutex);      /* ++ Lock reverb value */
   value = synth->reverb_level;
-  fluid_mutex_unlock (synth->mutex);    /* -- Unlock */
+  fluid_rec_mutex_unlock (synth->mutex);    /* -- Unlock */
 
   return value;
 }
@@ -4072,9 +4315,9 @@ fluid_synth_get_reverb_width(fluid_synth_t* synth)
 
   fluid_return_val_if_fail (synth != NULL, 0.0);
 
-  fluid_mutex_lock (synth->mutex);      /* ++ Lock reverb value */
+  fluid_rec_mutex_lock (synth->mutex);      /* ++ Lock reverb value */
   value = synth->reverb_width;
-  fluid_mutex_unlock (synth->mutex);    /* -- Unlock */
+  fluid_rec_mutex_unlock (synth->mutex);    /* -- Unlock */
 
   return value;
 }
@@ -4197,9 +4440,9 @@ fluid_synth_get_chorus_nr(fluid_synth_t* synth)
 
   fluid_return_val_if_fail (synth != NULL, 0.0);
 
-  fluid_mutex_lock (synth->mutex);      /* ++ Lock chorus value */
+  fluid_rec_mutex_lock (synth->mutex);      /* ++ Lock chorus value */
   value = synth->chorus_nr;
-  fluid_mutex_unlock (synth->mutex);    /* -- Unlock */
+  fluid_rec_mutex_unlock (synth->mutex);    /* -- Unlock */
 
   return value;
 }
@@ -4216,9 +4459,9 @@ fluid_synth_get_chorus_level(fluid_synth_t* synth)
 
   fluid_return_val_if_fail (synth != NULL, 0.0);
 
-  fluid_mutex_lock (synth->mutex);      /* ++ Lock chorus value */
+  fluid_rec_mutex_lock (synth->mutex);      /* ++ Lock chorus value */
   value = synth->chorus_level;
-  fluid_mutex_unlock (synth->mutex);    /* -- Unlock */
+  fluid_rec_mutex_unlock (synth->mutex);    /* -- Unlock */
 
   return value;
 }
@@ -4235,9 +4478,9 @@ fluid_synth_get_chorus_speed_Hz(fluid_synth_t* synth)
 
   fluid_return_val_if_fail (synth != NULL, 0.0);
 
-  fluid_mutex_lock (synth->mutex);      /* ++ Lock chorus value */
+  fluid_rec_mutex_lock (synth->mutex);      /* ++ Lock chorus value */
   value = synth->chorus_speed;
-  fluid_mutex_unlock (synth->mutex);    /* -- Unlock */
+  fluid_rec_mutex_unlock (synth->mutex);    /* -- Unlock */
 
   return value;
 }
@@ -4254,9 +4497,9 @@ fluid_synth_get_chorus_depth_ms(fluid_synth_t* synth)
 
   fluid_return_val_if_fail (synth != NULL, 0.0);
 
-  fluid_mutex_lock (synth->mutex);      /* ++ Lock chorus value */
+  fluid_rec_mutex_lock (synth->mutex);      /* ++ Lock chorus value */
   value = synth->chorus_depth;
-  fluid_mutex_unlock (synth->mutex);    /* -- Unlock */
+  fluid_rec_mutex_unlock (synth->mutex);    /* -- Unlock */
 
   return value;
 }
@@ -4273,9 +4516,9 @@ fluid_synth_get_chorus_type(fluid_synth_t* synth)
 
   fluid_return_val_if_fail (synth != NULL, 0.0);
 
-  fluid_mutex_lock (synth->mutex);      /* ++ Lock chorus value */
+  fluid_rec_mutex_lock (synth->mutex);      /* ++ Lock chorus value */
   value = synth->chorus_type;
-  fluid_mutex_unlock (synth->mutex);    /* -- Unlock */
+  fluid_rec_mutex_unlock (synth->mutex);    /* -- Unlock */
 
   return value;
 }
@@ -4599,7 +4842,7 @@ fluid_synth_activate_key_tuning(fluid_synth_t* synth, int bank, int prog,
   fluid_return_val_if_fail (prog >= 0 && prog < 128, FLUID_FAILED);
   fluid_return_val_if_fail (name != NULL, FLUID_FAILED);
 
-  fluid_mutex_lock (synth->mutex);      /* ++ Lock tunings */
+  fluid_rec_mutex_lock (synth->mutex);      /* ++ Lock tunings */
 
   tuning = new_fluid_tuning (name, bank, prog);
 
@@ -4611,7 +4854,7 @@ fluid_synth_activate_key_tuning(fluid_synth_t* synth, int bank, int prog,
   }
   else retval = FLUID_FAILED;
 
-  fluid_mutex_unlock (synth->mutex);    /* -- Unlock tunings */
+  fluid_rec_mutex_unlock (synth->mutex);    /* -- Unlock tunings */
 
   return retval;
 }
@@ -4665,7 +4908,7 @@ fluid_synth_activate_octave_tuning(fluid_synth_t* synth, int bank, int prog,
   fluid_return_val_if_fail (name != NULL, FLUID_FAILED);
   fluid_return_val_if_fail (pitch != NULL, FLUID_FAILED);
 
-  fluid_mutex_lock (synth->mutex);      /* ++ Lock tunings */
+  fluid_rec_mutex_lock (synth->mutex);      /* ++ Lock tunings */
 
   tuning = new_fluid_tuning (name, bank, prog);
 
@@ -4677,7 +4920,7 @@ fluid_synth_activate_octave_tuning(fluid_synth_t* synth, int bank, int prog,
   }
   else retval = FLUID_FAILED;
 
-  fluid_mutex_unlock (synth->mutex);    /* -- Unlock tunings */
+  fluid_rec_mutex_unlock (synth->mutex);    /* -- Unlock tunings */
 
   return retval;
 }
@@ -4714,7 +4957,7 @@ fluid_synth_tune_notes(fluid_synth_t* synth, int bank, int prog,
   fluid_return_val_if_fail (key != NULL, FLUID_FAILED);
   fluid_return_val_if_fail (pitch != NULL, FLUID_FAILED);
 
-  fluid_mutex_lock (synth->mutex);      /* ++ Lock tunings */
+  fluid_rec_mutex_lock (synth->mutex);      /* ++ Lock tunings */
 
   old_tuning = fluid_synth_get_tuning (synth, bank, prog);
 
@@ -4732,7 +4975,7 @@ fluid_synth_tune_notes(fluid_synth_t* synth, int bank, int prog,
   }
   else retval = FLUID_FAILED;
 
-  fluid_mutex_unlock (synth->mutex);    /* -- Unlock tunings */
+  fluid_rec_mutex_unlock (synth->mutex);    /* -- Unlock tunings */
 
   return retval;
 }
@@ -4786,7 +5029,7 @@ fluid_synth_activate_tuning(fluid_synth_t* synth, int chan, int bank, int prog,
   fluid_return_val_if_fail (bank >= 0 && bank < 128, FLUID_FAILED);
   fluid_return_val_if_fail (prog >= 0 && prog < 128, FLUID_FAILED);
 
-  fluid_mutex_lock (synth->mutex);      /* ++ Lock tunings */
+  fluid_rec_mutex_lock (synth->mutex);      /* ++ Lock tunings */
 
   tuning = fluid_synth_get_tuning (synth, bank, prog);
 
@@ -4800,7 +5043,7 @@ fluid_synth_activate_tuning(fluid_synth_t* synth, int chan, int bank, int prog,
 
   if (tuning) fluid_tuning_ref (tuning);  /* ++ ref for outside of lock */
 
-  fluid_mutex_unlock (synth->mutex);      /* -- Unlock tunings */
+  fluid_rec_mutex_unlock (synth->mutex);      /* -- Unlock tunings */
 
   if (!tuning) return (FLUID_FAILED);
 
@@ -4957,11 +5200,11 @@ fluid_synth_tuning_iteration_next(fluid_synth_t* synth, int* bank, int* prog)
   b = (p >> 8) & 0xFF;
   p &= 0xFF;
 
-  fluid_mutex_lock (synth->mutex);      /* ++ lock tunings */
+  fluid_rec_mutex_lock (synth->mutex);      /* ++ lock tunings */
 
   if (!synth->tuning)
   {
-    fluid_mutex_unlock (synth->mutex);    /* -- unlock tunings */
+    fluid_rec_mutex_unlock (synth->mutex);    /* -- unlock tunings */
     return 0;
   }
 
@@ -4981,12 +5224,12 @@ fluid_synth_tuning_iteration_next(fluid_synth_t* synth, int* bank, int* prog)
       else fluid_private_set (synth->tuning_iter,
                               FLUID_INT_TO_POINTER ((b + 1) << 8), NULL);
 
-      fluid_mutex_unlock (synth->mutex);    /* -- unlock tunings */
+      fluid_rec_mutex_unlock (synth->mutex);    /* -- unlock tunings */
       return 1;
     }
   }
 
-  fluid_mutex_unlock (synth->mutex);    /* -- unlock tunings */
+  fluid_rec_mutex_unlock (synth->mutex);    /* -- unlock tunings */
 
   return 0;
 }
@@ -5007,7 +5250,7 @@ fluid_synth_tuning_dump(fluid_synth_t* synth, int bank, int prog,
 {
   fluid_tuning_t* tuning;
 
-  fluid_mutex_lock (synth->mutex);      /* ++ lock tunings */
+  fluid_rec_mutex_lock (synth->mutex);      /* ++ lock tunings */
 
   tuning = fluid_synth_get_tuning (synth, bank, prog);
 
@@ -5023,7 +5266,7 @@ fluid_synth_tuning_dump(fluid_synth_t* synth, int bank, int prog,
       FLUID_MEMCPY (pitch, fluid_tuning_get_all (tuning), 128 * sizeof (double));
   }
 
-  fluid_mutex_unlock (synth->mutex);    /* unlock tunings */
+  fluid_rec_mutex_unlock (synth->mutex);    /* unlock tunings */
 
   return tuning ? FLUID_OK : FLUID_FAILED;
 }
@@ -5228,6 +5471,7 @@ fluid_synth_set_gen2(fluid_synth_t* synth, int chan, int param,
  * @param param SoundFont generator ID (#fluid_gen_type)
  * @return Current generator value assigned to MIDI channel
  */
+/* FIXME - Not currently SMP multi-thread safe (need atomic set/get of gen) */
 float
 fluid_synth_get_gen(fluid_synth_t* synth, int chan, int param)
 {
@@ -5379,7 +5623,7 @@ fluid_synth_set_bank_offset(fluid_synth_t* synth, int sfont_id, int offset)
 
   fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
 
-  fluid_mutex_lock (synth->mutex);      /* ++ lock sfont_info list */
+  fluid_rec_mutex_lock (synth->mutex);      /* ++ lock sfont_info list */
 
   for (list = synth->sfont_info; list; list = fluid_list_next(list)) {
     sfont_info = (fluid_sfont_info_t *)fluid_list_get (list);
@@ -5391,7 +5635,7 @@ fluid_synth_set_bank_offset(fluid_synth_t* synth, int sfont_id, int offset)
     }
   }
 
-  fluid_mutex_unlock (synth->mutex);      /* -- unlock */
+  fluid_rec_mutex_unlock (synth->mutex);      /* -- unlock */
 
   if (!list)
   {
@@ -5417,7 +5661,7 @@ fluid_synth_get_bank_offset(fluid_synth_t* synth, int sfont_id)
 
   fluid_return_val_if_fail (synth != NULL, 0);
 
-  fluid_mutex_lock (synth->mutex);      /* ++ lock sfont_info list */
+  fluid_rec_mutex_lock (synth->mutex);      /* ++ lock sfont_info list */
 
   for (list = synth->sfont_info; list; list = fluid_list_next(list)) {
     sfont_info = (fluid_sfont_info_t *)fluid_list_get (list);
@@ -5429,7 +5673,7 @@ fluid_synth_get_bank_offset(fluid_synth_t* synth, int sfont_id)
     }
   }
 
-  fluid_mutex_unlock (synth->mutex);      /* -- unlock */
+  fluid_rec_mutex_unlock (synth->mutex);      /* -- unlock */
 
   if (!list)
   {
