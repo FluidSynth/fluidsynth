@@ -105,19 +105,19 @@ static int fluid_file_renderer_find_file_type (char *extension, int *type);
 
 
 /* File type names. */
-char *type_names[] = {
+const char *type_names[] = {
   "raw",
   NULL          /* Terminator */
 };
 
 /* File audio format names. */
-char *format_names[] = {
+const char *format_names[] = {
   "s16",
   NULL          /* Terminator */
 };
 
 /* File endian byte order names. */
-char *endian_names[] = {
+const char *endian_names[] = {
   "cpu",
   NULL
 };

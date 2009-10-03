@@ -371,8 +371,13 @@ int main(int argc, char** argv)
         for (sp = names; *sp; sp++)
           printf (" %s", *sp);
 
+#if LIBSNDFILE_SUPPORT
         printf ("\n\nauto: Use audio file format's default endian byte order\n"
                 "cpu: Use CPU native byte order\n");
+#else
+        printf ("\n\nNOTE: No libsndfile support!\n"
+                "cpu: Use CPU native byte order\n");
+#endif
         exit (0);
       }
       else fluid_settings_setstr(settings, "audio.file.endian", optarg);
@@ -427,7 +432,11 @@ int main(int argc, char** argv)
         for (sp = names; *sp; sp++)
           printf (" %s", *sp);
 
+#if LIBSNDFILE_SUPPORT
         printf ("\n");
+#else
+        printf ("\n\nNOTE: No libsndfile support!\n");
+#endif
         exit (0);
       }
       else fluid_settings_setstr(settings, "audio.file.format", optarg);
@@ -465,7 +474,11 @@ int main(int argc, char** argv)
         for (sp = names; *sp; sp++)
           printf (" %s", *sp);
 
+#if LIBSNDFILE_SUPPORT
         printf ("\n\nauto: Determine type from file name extension, defaults to \"wav\"\n");
+#else
+        printf ("\n\nNOTE: No libsndfile support!\n");
+#endif
         exit (0);
       }
       else fluid_settings_setstr(settings, "audio.file.type", optarg);
