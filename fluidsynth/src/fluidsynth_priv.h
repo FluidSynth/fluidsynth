@@ -232,6 +232,7 @@ typedef FILE*  fluid_file;
 #define FLUID_STRCPY(_dst,_src)      strcpy(_dst,_src)
 #define FLUID_STRNCPY(_dst,_src,_n)  strncpy(_dst,_src,_n)
 #define FLUID_STRCHR(_s,_c)          strchr(_s,_c)
+#define FLUID_STRRCHR(_s,_c)         strrchr(_s,_c)
 #ifdef strdup
 #define FLUID_STRDUP(s)              strdup(s)
 #else

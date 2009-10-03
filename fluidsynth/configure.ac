@@ -157,6 +157,25 @@ PKG_CHECK_MODULES(GLIB, glib-2.0 >= 2.10 gthread-2.0 >= 2.10)
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
 
+dnl Check for libsndfile support
+
+AC_ARG_ENABLE(libsndfile-support, AS_HELP_STRING([--disable-libsndfile-support],
+      [Do not compile libsndfile support (default=auto)]),
+  enable_libsndfile_support=$enableval, enable_libsndfile_support="yes")
+
+if test "x$enable_libsndfile_support" != "xno"; then
+  PKG_CHECK_MODULES(LIBSNDFILE, sndfile >= 1.0.0, LIBSNDFILE_SUPPORT=1, LIBSNDFILE_SUPPORT=0)
+else
+  LIBSNDFILE_SUPPORT=0
+fi
+
+if test "$LIBSNDFILE_SUPPORT" = "1"; then
+  AC_DEFINE(LIBSNDFILE_SUPPORT, 1, [Define to enable libsndfile support])
+fi
+AM_CONDITIONAL(LIBSNDFILE_SUPPORT, test "$LIBSNDFILE_SUPPORT" = "1")
+AC_SUBST(LIBSNDFILE_CFLAGS)
+AC_SUBST(LIBSNDFILE_LIBS)
+
 
 dnl 
 dnl Check support for all the drivers
@@ -422,6 +441,12 @@ AC_OUTPUT([
 echo
 echo "**************************************************************"
 echo "Summary:"
+
+if test "${LIBSNDFILE_SUPPORT}" = "1"; then
+  echo "libsndfile:            yes"
+else 
+  echo "libsndfile:            no (raw audio file rendering only)"
+fi
 
 if test "${PULSE_SUPPORT}" = "1"; then
   echo "PulseAudio:            yes"

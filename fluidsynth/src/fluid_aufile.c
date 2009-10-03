@@ -27,6 +27,7 @@
 #include "fluid_adriver.h"
 #include "fluid_settings.h"
 #include "fluid_sys.h"
+#include "config.h"
 #include <stdio.h>
 
 
@@ -62,7 +63,36 @@ static int fluid_file_audio_run_s16(void* d, unsigned int msec);
 
 void fluid_file_audio_driver_settings(fluid_settings_t* settings)
 {
+#if LIBSNDFILE_SUPPORT
+	const char **names, **np;
+	int i;
+#endif
+
+#if LIBSNDFILE_SUPPORT
+	fluid_settings_register_str(settings, "audio.file.name", "fluidsynth.wav", 0, NULL, NULL);
+	fluid_settings_register_str(settings, "audio.file.type", "auto", 0, NULL, NULL);
+	fluid_settings_register_str(settings, "audio.file.format", "s16", 0, NULL, NULL);
+	fluid_settings_register_str(settings, "audio.file.endian", "auto", 0, NULL, NULL);
+
+	fluid_settings_add_option (settings, "audio.file.type", "auto");
+
+	names = fluid_file_renderer_get_type_names ();
+	for (np = names; *np; np++)
+		fluid_settings_add_option(settings, "audio.file.type", *np);
+
+	names = fluid_file_renderer_get_format_names ();
+	for (np = names; *np; np++)
+		fluid_settings_add_option(settings, "audio.file.format", *np);
+
+	names = fluid_file_renderer_get_endian_names ();
+	for (np = names; *np; np++)
+		fluid_settings_add_option(settings, "audio.file.endian", *np);
+#else
 	fluid_settings_register_str(settings, "audio.file.name", "fluidsynth.raw", 0, NULL, NULL);
+	fluid_settings_register_str(settings, "audio.file.type", "raw", 0, NULL, NULL);
+	fluid_settings_register_str(settings, "audio.file.format", "s16", 0, NULL, NULL);
+	fluid_settings_register_str(settings, "audio.file.endian", "cpu", 0, NULL, NULL);
+#endif
 }
 
 
@@ -72,7 +102,7 @@ new_fluid_file_audio_driver(fluid_settings_t* settings,
 {
 	fluid_file_audio_driver_t* dev;
 	int err;
-	char* filename = NULL;
+	char* filename = NULL, *type = NULL, *format = NULL, *endian = NULL;
 	int msec;
 
 	dev = FLUID_NEW(fluid_file_audio_driver_t);
@@ -94,13 +124,20 @@ new_fluid_file_audio_driver(fluid_settings_t* settings,
 		goto error_recovery;
 	}
 
-	dev->renderer = new_fluid_file_renderer(synth, filename, dev->period_size);
+	fluid_settings_dupstr (settings, "audio.file.type", &type);     /* ++ alloc file type */
+	fluid_settings_dupstr (settings, "audio.file.format", &format); /* ++ alloc file format */
+	fluid_settings_dupstr (settings, "audio.file.endian", &endian); /* ++ alloc file endian */
+
+	dev->renderer = new_fluid_file_renderer(synth, filename, type, format, endian,
+                                                dev->period_size);
+	if (filename) FLUID_FREE (filename);    /* -- free filename */
+	if (type) FLUID_FREE (type);            /* -- free type */
+	if (format) FLUID_FREE (format);        /* -- free format */
+	if (endian) FLUID_FREE (endian);        /* -- free endian */
+
 	if (dev->renderer == NULL) {
-  if (filename) FLUID_FREE (filename);    /* -- free filename */
 		goto error_recovery;
 	}
-
- if (filename) FLUID_FREE (filename);    /* -- free filename */
 
 	msec = (int) (0.5 + dev->period_size / dev->sample_rate * 1000.0);
 	dev->timer = new_fluid_timer(msec, fluid_file_audio_run_s16, (void*) dev, TRUE, FALSE, TRUE);

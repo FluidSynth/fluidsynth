@@ -63,6 +63,7 @@ void fluid_time_config(void);
 #define FLUID_UINT_TO_POINTER     GUINT_TO_POINTER
 #define FLUID_POINTER_TO_INT      GPOINTER_TO_INT
 #define FLUID_INT_TO_POINTER      GINT_TO_POINTER
+#define FLUID_N_ELEMENTS(struct)  (sizeof (struct) / sizeof (struct[0]))
 
 
 /*
@@ -126,6 +127,7 @@ int fluid_timer_stop(fluid_timer_t* timer);
 
 /* Regular mutex */
 typedef GStaticMutex fluid_mutex_t;
+#define FLUID_MUTEX_INIT          G_STATIC_MUTEX_INIT
 #define fluid_mutex_init(_m)      g_static_mutex_init(&(_m))
 #define fluid_mutex_destroy(_m)   g_static_mutex_free(&(_m))
 #define fluid_mutex_lock(_m)      g_static_mutex_lock(&(_m))

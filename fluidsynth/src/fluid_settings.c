@@ -944,7 +944,7 @@ fluid_settings_getstr_default(fluid_settings_t* settings, char* name)
  * @return 1 if the setting exists and option was added, 0 otherwise
  */
 int
-fluid_settings_add_option(fluid_settings_t* settings, char* name, char* s)
+fluid_settings_add_option(fluid_settings_t* settings, char* name, const char* s)
 {
   fluid_setting_node_t *node;
   char* tokens[MAX_SETTINGS_TOKENS];
@@ -981,7 +981,7 @@ fluid_settings_add_option(fluid_settings_t* settings, char* name, char* s)
  * @return 1 if the setting exists and option was removed, 0 otherwise
  */
 int
-fluid_settings_remove_option(fluid_settings_t* settings, char* name, char* s)
+fluid_settings_remove_option(fluid_settings_t* settings, char* name, const char* s)
 {
   fluid_setting_node_t *node;
   char* tokens[MAX_SETTINGS_TOKENS];

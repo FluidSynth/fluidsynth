@@ -176,24 +176,31 @@ settings_foreach_func (void *data, char *name, int type)
   }
 }
 
-void fast_render_loop(fluid_settings_t* settings, fluid_synth_t* synth, fluid_player_t* player)
+static void
+fast_render_loop(fluid_settings_t* settings, fluid_synth_t* synth, fluid_player_t* player)
 {
   fluid_file_renderer_t* renderer;
-  char* filename = NULL;
+  char* filename = NULL, *type = NULL, *format = NULL, *endian = NULL;
   int period_size = 0;
 
   fluid_settings_getint(settings, "audio.period-size", &period_size);
   fluid_settings_dupstr(settings, "audio.file.name", &filename);        /* ++ alloc file name */
+  fluid_settings_dupstr (settings, "audio.file.type", &type);           /* ++ alloc file type */
+  fluid_settings_dupstr (settings, "audio.file.format", &format);       /* ++ alloc file format */
+  fluid_settings_dupstr (settings, "audio.file.endian", &endian);       /* ++ alloc file endian */
 
-  if (filename == NULL || period_size <= 0) {
+  if (filename == NULL || type == NULL || format == NULL || endian == NULL || period_size <= 0) {
     fprintf(stderr, "Failed to fetch parameters for file renderer\n");
     if (filename) FLUID_FREE (filename);        /* -- free file name */
     return;
   }
 
-  renderer = new_fluid_file_renderer(synth, filename, period_size);
+  renderer = new_fluid_file_renderer (synth, filename, type, format, endian, period_size);
 
   FLUID_FREE (filename);        /* -- free file name */
+  FLUID_FREE (type);            /* -- free file type */
+  FLUID_FREE (format);          /* -- free format */
+  FLUID_FREE (endian);          /* -- free endian */
 
   if (!renderer) {
     return;
@@ -235,9 +242,6 @@ int main(int argc, char** argv)
   fluid_audio_driver_t* adriver = NULL;
   fluid_synth_t* synth = NULL;
   fluid_server_t* server = NULL;
-  char* midi_id = NULL;
-  char* midi_driver = NULL;
-  char* midi_device = NULL;
   char* config_file = NULL;
   int audio_groups = 0;
   int audio_channels = 0;
@@ -245,7 +249,7 @@ int main(int argc, char** argv)
   int dump = 0;
   int fast_render = 0;
   int connect_lash = 1;
-  char *optchars = "a:C:c:df:F:G:g:hijK:L:lm:no:p:R:r:sVvz:";
+  char *optchars = "a:C:c:dE:f:F:G:g:hijK:L:lm:nO:o:p:R:r:sT:Vvz:";
 #ifdef LASH_ENABLED
   int enabled_lash = 0;		/* set to TRUE if lash gets enabled */
   fluid_lash_args_t *lash_args;
@@ -266,6 +270,9 @@ int main(int argc, char** argv)
       {"audio-bufsize", 1, 0, 'z'},
       {"audio-channels", 1, 0, 'L'},
       {"audio-driver", 1, 0, 'a'},
+      {"audio-file-endian", 1, 0, 'E'},
+      {"audio-file-format", 1, 0, 'O'},
+      {"audio-file-type", 1, 0, 'T'},
       {"audio-groups", 1, 0, 'G'},
       {"chorus", 1, 0, 'C'},
       {"connect-jack-outputs", 0, 0, 'j'},
@@ -352,6 +359,24 @@ int main(int argc, char** argv)
       fluid_settings_setstr(settings, "synth.dump", "yes");
       dump = 1;
       break;
+    case 'E':
+      if (FLUID_STRCMP (optarg, "help") == 0)
+      {
+        const char **names = fluid_file_renderer_get_endian_names ();
+        const char **sp;
+
+        print_welcome ();
+        printf ("-E options (audio file byte order):\n   ");
+
+        for (sp = names; *sp; sp++)
+          printf (" %s", *sp);
+
+        printf ("\n\nauto: Use audio file format's default endian byte order\n"
+                "cpu: Use CPU native byte order\n");
+        exit (0);
+      }
+      else fluid_settings_setstr(settings, "audio.file.endian", optarg);
+      break;
     case 'f':
       config_file = optarg;
       break;
@@ -390,6 +415,23 @@ int main(int argc, char** argv)
     case 'n':
       midi_in = 0;
       break;
+    case 'O':
+      if (FLUID_STRCMP (optarg, "help") == 0)
+      {
+        const char **names = fluid_file_renderer_get_format_names ();
+        const char **sp;
+
+        print_welcome ();
+        printf ("-O options (file audio format):\n   ");
+
+        for (sp = names; *sp; sp++)
+          printf (" %s", *sp);
+
+        printf ("\n");
+        exit (0);
+      }
+      else fluid_settings_setstr(settings, "audio.file.format", optarg);
+      break;
     case 'o':
       process_o_cmd_line_option(settings, optarg);
       break;
@@ -408,6 +450,25 @@ int main(int argc, char** argv)
       break;
     case 's':
       with_server = 1;
+      break;
+    case 'T':
+      if (FLUID_STRCMP (optarg, "help") == 0)
+      {
+        const char **names = fluid_file_renderer_get_type_names ();
+        const char **sp;
+
+        if (!names) exit (1);   /* Can happen if out of memory */
+
+        print_welcome ();
+        printf ("-T options (audio file type):\n   ");
+
+        for (sp = names; *sp; sp++)
+          printf (" %s", *sp);
+
+        printf ("\n\nauto: Determine type from file name extension, defaults to \"wav\"\n");
+        exit (0);
+      }
+      else fluid_settings_setstr(settings, "audio.file.type", optarg);
       break;
     case 'V':
       printf("FluidSynth %s\n", VERSION);
@@ -725,20 +786,22 @@ print_help()
   printf(" -a, --audio-driver=[label]\n"
 	 "    The name of the audio driver to use.\n"
 	 "    Valid values: %s\n", allnames);
-  printf(" -C, --chorus\n"
-	 "    Turn the chorus on or off [0|1|yes|no, default = on]\n");
   printf(" -c, --audio-bufcount=[count]\n"
 	 "    Number of audio buffers\n");
+  printf(" -C, --chorus\n"
+	 "    Turn the chorus on or off [0|1|yes|no, default = on]\n");
   printf(" -d, --dump\n"
 	 "    Dump incoming and outgoing MIDI events to stdout\n");
-  printf(" -F, --fast-render=[file]\n"
-	 "    Render MIDI file to raw audio data and store in [file]\n");
+  printf(" -E, --audio-file-endian\n"
+	 "    Audio file endian for fast rendering or aufile driver (\"help\" for list)\n");
   printf(" -f, --load-config\n"
 	 "    Load command configuration file (shell commands)\n");
-  printf(" -G, --audio-groups\n"
-	 "    Defines the number of LADSPA audio nodes\n");
+  printf(" -F, --fast-render=[file]\n"
+	 "    Render MIDI file to raw audio data and store in [file]\n");
   printf(" -g, --gain\n"
 	 "    Set the master gain [0 < gain < 10, default = 0.2]\n");
+  printf(" -G, --audio-groups\n"
+	 "    Defines the number of LADSPA audio nodes\n");
   printf(" -h, --help\n"
 	 "    Print out this help summary\n");
   printf(" -i, --no-shell\n"
@@ -747,32 +810,36 @@ print_help()
 	 "    Attempt to connect the jack outputs to the physical ports\n");
   printf(" -K, --midi-channels=[num]\n"
 	 "    The number of midi channels [default = 16]\n");
-  printf(" -L, --audio-channels=[num]\n"
-	 "    The number of stereo audio channels [default = 1]\n");
 #ifdef LASH_ENABLED
   printf(" -l, --disable-lash\n"
 	 "    Don't connect to LASH server\n");
 #endif
+  printf(" -L, --audio-channels=[num]\n"
+	 "    The number of stereo audio channels [default = 1]\n");
   fluid_midi_driver_get_names(allnames, sizeof(allnames), ", ");
   printf(" -m, --midi-driver=[label]\n"
 	 "    The name of the midi driver to use.\n"
 	 "    Valid values: %s\n", allnames);
   printf(" -n, --no-midi-in\n"
 	 "    Don't create a midi driver to read MIDI input events [default = yes]\n");
-  printf(" -p, --portname=[label]\n"
-	 "    Set MIDI port name (alsa_seq, coremidi drivers)\n");
   printf(" -o\n"
 	 "    Define a setting, -o name=value (\"-o help\" to dump current values)\n");
-  printf(" -R, --reverb\n"
-	 "    Turn the reverb on or off [0|1|yes|no, default = on]\n");
+  printf(" -O, --audio-file-format\n"
+	 "    Audio file format for fast rendering or aufile driver (\"help\" for list)\n");
+  printf(" -p, --portname=[label]\n"
+	 "    Set MIDI port name (alsa_seq, coremidi drivers)\n");
   printf(" -r, --sample-rate\n"
 	 "    Set the sample rate\n");
+  printf(" -R, --reverb\n"
+	 "    Turn the reverb on or off [0|1|yes|no, default = on]\n");
   printf(" -s, --server\n"
 	 "    Start FluidSynth as a server process\n");
-  printf(" -V, --version\n"
-	 "    Show version of program\n");
+  printf(" -T, --audio-file-type\n"
+	 "    Audio file type for fast rendering or aufile driver (\"help\" for list)\n");
   printf(" -v, --verbose\n"
 	 "    Print out verbose messages about midi events\n");
+  printf(" -V, --version\n"
+	 "    Show version of program\n");
   printf(" -z, --audio-bufsize=[size]\n"
 	 "    Size of each audio buffer\n");
   exit(0);

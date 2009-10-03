@@ -132,6 +132,9 @@
 /* Include the LADSPA Fx unit */
 #undef LADSPA
 
+/* Define to enable libsndfile support */
+#undef LIBSNDFILE_SUPPORT
+
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */
 #undef LT_OBJDIR
