@@ -1220,7 +1220,7 @@ fluid_handle_get(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out)
 
   switch (fluid_settings_get_type(fluid_synth_get_settings(synth), av[0])) {
   case FLUID_NO_TYPE:
-    fluid_ostream_printf(out, "get: no such settings '%s'.", av[0]);
+    fluid_ostream_printf(out, "get: no such setting '%s'.\n", av[0]);
     return -1;
 
   case FLUID_NUM_TYPE: {
@@ -1315,7 +1315,7 @@ fluid_handle_settings(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t o
   data.out = out;
 
   fluid_settings_foreach(fluid_synth_get_settings(synth), &data, fluid_handle_settings_iter1);
-  fluid_settings_foreach(fluid_synth_get_settings(synth), &data, fluid_handle_settings_iter2);
+  fluid_settings_foreach_alpha(fluid_synth_get_settings(synth), &data, fluid_handle_settings_iter2);
   return 0;
 }
 
@@ -1350,7 +1350,7 @@ fluid_handle_info(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out)
 
   switch (fluid_settings_get_type(settings, av[0])) {
   case FLUID_NO_TYPE:
-    fluid_ostream_printf(out, "info: no such settings '%s'.", av[0]);
+    fluid_ostream_printf(out, "info: no such setting '%s'.\n", av[0]);
     return -1;
 
   case FLUID_NUM_TYPE: {
@@ -1399,7 +1399,7 @@ fluid_handle_info(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out)
     data.out = out;
     data.first = 1;
     fluid_ostream_printf(out, "Options:       ");
-    fluid_settings_foreach_option(settings, av[0], &data, fluid_handle_print_option);
+    fluid_settings_foreach_option_alpha (settings, av[0], &data, fluid_handle_print_option);
     fluid_ostream_printf(out, "\n");
 
     fluid_ostream_printf(out, "Real-time:     %s\n",

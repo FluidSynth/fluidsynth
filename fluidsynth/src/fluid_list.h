@@ -57,5 +57,6 @@ int fluid_list_size(fluid_list_t *list);
 #define fluid_list_next(slist)	((slist) ? (((fluid_list_t *)(slist))->next) : NULL)
 #define fluid_list_get(slist)	((slist) ? ((slist)->data) : NULL)
 
+int fluid_list_str_compare_func (void *a, void *b);
 
 #endif  /* _FLUID_LIST_H */

@@ -255,3 +255,14 @@ fluid_list_t* fluid_list_insert_at(fluid_list_t *list, int n, void* data)
     return new_list;
   }
 }
+
+/* Compare function to sort strings alphabetically,
+ * for use with fluid_list_sort(). */
+int
+fluid_list_str_compare_func (void *a, void *b)
+{
+  if (a && b) return FLUID_STRCMP ((char *)a, (char *)b);
+  if (!a && !b) return 0;
+  if (a) return -1;
+  return 1;
+}

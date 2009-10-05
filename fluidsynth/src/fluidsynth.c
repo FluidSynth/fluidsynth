@@ -136,6 +136,13 @@ print_pretty_int (int i)
   else printf ("%d", i);
 }
 
+/* Function to display each string option value */
+static void
+settings_option_foreach_func (void *data, char *name, char *option)
+{
+  printf (" %s", option);
+}
+
 /* fluid_settings_foreach function for displaying option help  "-o help" */
 static void
 settings_foreach_func (void *data, char *name, int type)
@@ -144,6 +151,7 @@ settings_foreach_func (void *data, char *name, int type)
   double dmin, dmax, ddef;
   int imin, imax, idef;
   char *defstr;
+  int count;
 
   switch (type)
   {
@@ -165,9 +173,22 @@ settings_foreach_func (void *data, char *name, int type)
     printf ("]\n");
     break;
   case FLUID_STR_TYPE:
-    defstr = fluid_settings_getstr_default (settings, name);
     printf ("%-24s STR", name);
-    if (defstr) printf ("   [def='%s']\n", defstr);
+
+    defstr = fluid_settings_getstr_default (settings, name);
+    count = fluid_settings_option_count (settings, name);
+
+    if (defstr || count > 0)
+    {
+      if (defstr && count > 0) printf ("   [def='%s' vals:", defstr);
+      else if (defstr) printf ("   [def='%s'", defstr);
+      else printf ("   [vals:");
+
+      if (count > 0)
+        fluid_settings_foreach_option_alpha (settings, name, NULL,
+                                             settings_option_foreach_func);
+      printf ("]\n");
+    }
     else printf ("\n");
     break;
   case FLUID_SET_TYPE:
@@ -523,7 +544,7 @@ int main(int argc, char** argv)
   {
     print_welcome ();
     printf ("FluidSynth settings:\n");
-    fluid_settings_foreach (settings, settings, settings_foreach_func);
+    fluid_settings_foreach_alpha (settings, settings, settings_foreach_func);
     exit (0);
   }
 

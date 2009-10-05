@@ -183,6 +183,12 @@ FLUIDSYNTH_API
 void fluid_settings_foreach_option(fluid_settings_t* settings,
 				  char* name, void* data,
 				  fluid_settings_foreach_option_t func);
+FLUIDSYNTH_API
+void fluid_settings_foreach_option_alpha (fluid_settings_t* settings,
+                                          char* name, void* data,
+                                          fluid_settings_foreach_option_t func);
+FLUIDSYNTH_API
+int fluid_settings_option_count (fluid_settings_t* settings, char* name);
 
 /**
  * Callback function type used with fluid_settings_foreach()
@@ -192,6 +198,9 @@ typedef void (*fluid_settings_foreach_t)(void* data, char* s, int type);
 FLUIDSYNTH_API
 void fluid_settings_foreach(fluid_settings_t* settings, void* data,
 			   fluid_settings_foreach_t func);
+FLUIDSYNTH_API
+void fluid_settings_foreach_alpha(fluid_settings_t* settings, void* data,
+                                  fluid_settings_foreach_t func);
 
 #ifdef __cplusplus
 }
