@@ -1324,6 +1324,7 @@ fluid_settings_foreach_option_alpha (fluid_settings_t* settings, char* name, voi
  * @param name Name of setting
  * @return Count of options for this string setting (0 if none, -1 if not found
  *   or not a string setting)
+ * @since 1.1.0
  */
 int
 fluid_settings_option_count (fluid_settings_t *settings, char *name)

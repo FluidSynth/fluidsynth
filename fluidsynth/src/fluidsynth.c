@@ -201,31 +201,9 @@ static void
 fast_render_loop(fluid_settings_t* settings, fluid_synth_t* synth, fluid_player_t* player)
 {
   fluid_file_renderer_t* renderer;
-  char* filename = NULL, *type = NULL, *format = NULL, *endian = NULL;
-  int period_size = 0;
 
-  fluid_settings_getint(settings, "audio.period-size", &period_size);
-  fluid_settings_dupstr(settings, "audio.file.name", &filename);        /* ++ alloc file name */
-  fluid_settings_dupstr (settings, "audio.file.type", &type);           /* ++ alloc file type */
-  fluid_settings_dupstr (settings, "audio.file.format", &format);       /* ++ alloc file format */
-  fluid_settings_dupstr (settings, "audio.file.endian", &endian);       /* ++ alloc file endian */
-
-  if (filename == NULL || type == NULL || format == NULL || endian == NULL || period_size <= 0) {
-    fprintf(stderr, "Failed to fetch parameters for file renderer\n");
-    if (filename) FLUID_FREE (filename);        /* -- free file name */
-    return;
-  }
-
-  renderer = new_fluid_file_renderer (synth, filename, type, format, endian, period_size);
-
-  FLUID_FREE (filename);        /* -- free file name */
-  FLUID_FREE (type);            /* -- free file type */
-  FLUID_FREE (format);          /* -- free format */
-  FLUID_FREE (endian);          /* -- free endian */
-
-  if (!renderer) {
-    return;
-  }
+  renderer = new_fluid_file_renderer (synth);
+  if (!renderer) return;
 
   while (fluid_player_get_status(player) == FLUID_PLAYER_PLAYING) {
     if (fluid_file_renderer_process_block(renderer) != FLUID_OK) {

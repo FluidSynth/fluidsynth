@@ -67,10 +67,7 @@ FLUIDSYNTH_API void delete_fluid_audio_driver(fluid_audio_driver_t* driver);
 
 FLUIDSYNTH_API void fluid_audio_driver_get_names(char* buf, size_t buflen, const char* separator);
 
-FLUIDSYNTH_API fluid_file_renderer_t *new_fluid_file_renderer(fluid_synth_t* synth,
-                                                              char* filename, char* type,
-                                                              char* format, char* endian,
-                                                              int period_size);
+FLUIDSYNTH_API fluid_file_renderer_t *new_fluid_file_renderer(fluid_synth_t* synth);
 FLUIDSYNTH_API int fluid_file_renderer_process_block(fluid_file_renderer_t* dev);
 FLUIDSYNTH_API void delete_fluid_file_renderer(fluid_file_renderer_t* dev);
 FLUIDSYNTH_API const char **fluid_file_renderer_get_type_names (void);

@@ -102,7 +102,6 @@ new_fluid_file_audio_driver(fluid_settings_t* settings,
 {
 	fluid_file_audio_driver_t* dev;
 	int err;
-	char* filename = NULL, *type = NULL, *format = NULL, *endian = NULL;
 	int msec;
 
 	dev = FLUID_NEW(fluid_file_audio_driver_t);
@@ -119,25 +118,10 @@ new_fluid_file_audio_driver(fluid_settings_t* settings,
 	dev->callback = (fluid_audio_func_t) fluid_synth_process;
 	dev->samples = 0;
 
-	if (fluid_settings_dupstr(settings, "audio.file.name", &filename) == 0) {       /* ++ alloc filename */
-		FLUID_LOG(FLUID_ERR, "No file name specified");
+	dev->renderer = new_fluid_file_renderer(synth);
+
+	if (dev->renderer == NULL)
 		goto error_recovery;
-	}
-
-	fluid_settings_dupstr (settings, "audio.file.type", &type);     /* ++ alloc file type */
-	fluid_settings_dupstr (settings, "audio.file.format", &format); /* ++ alloc file format */
-	fluid_settings_dupstr (settings, "audio.file.endian", &endian); /* ++ alloc file endian */
-
-	dev->renderer = new_fluid_file_renderer(synth, filename, type, format, endian,
-                                                dev->period_size);
-	if (filename) FLUID_FREE (filename);    /* -- free filename */
-	if (type) FLUID_FREE (type);            /* -- free type */
-	if (format) FLUID_FREE (format);        /* -- free format */
-	if (endian) FLUID_FREE (endian);        /* -- free endian */
-
-	if (dev->renderer == NULL) {
-		goto error_recovery;
-	}
 
 	msec = (int) (0.5 + dev->period_size / dev->sample_rate * 1000.0);
 	dev->timer = new_fluid_timer(msec, fluid_file_audio_run_s16, (void*) dev, TRUE, FALSE, TRUE);

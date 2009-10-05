@@ -222,7 +222,7 @@ void fluid_synth_settings(fluid_settings_t* settings)
 			      44100.0f, 22050.0f, 96000.0f,
 			      0, NULL, NULL);
   fluid_settings_register_int(settings, "synth.device-id",
-			      0, 126, 0, 0, NULL, NULL);
+			      0, 0, 126, 0, NULL, NULL);
   fluid_settings_register_int(settings, "synth.cpu-cores", 1, 1, 256, 0, NULL, NULL);
 }
 

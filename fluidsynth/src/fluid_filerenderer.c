@@ -128,26 +128,31 @@ const char *endian_names[] = {
 /**
  * Create a new file renderer and open the file.
  * @param synth The synth that creates audio data.
- * @param filename Output filename 
- * @param type File type string or NULL for default "auto", which tries to
- *   determine format from filename extension or uses "wav".
- * @param format Audio format string (can be empty or NULL for default format "s16")
- * @param endian Endian specification or NULL for default "auto", which uses
- *   the file type's usual byte order.
- * @param period_size Sample count, amount of samples to write to the file at 
- * every call to fluid_file_renderer_process_block().
  * @return the new object, or NULL on failure
  * @since: 1.1.0
+ *
+ * NOTE: Uses the following settings from the synth object:
+ * audio.file.name: Output filename
+ * audio.file.type: File type, "auto" tries to determine type from filename
+ *   extension with fallback to "wav".
+ * audio.file.format: Audio format
+ * audio.file.endian: Endian byte order, "auto" for file type's default byte order
+ * audio.period-size: Size of audio blocks to process
+ * synth.sample-rate: Sample rate to use
  */
 fluid_file_renderer_t *
-new_fluid_file_renderer(fluid_synth_t* synth, char* filename, char* type,
-                        char* format, char* endian, int period_size)
+new_fluid_file_renderer(fluid_synth_t* synth)
 {
-	fluid_file_renderer_t* dev;
 #if LIBSNDFILE_SUPPORT
+	char *filename, *type, *format, *endian;
 	SF_INFO info;
 	double samplerate;
+	int retval;
 #endif
+	fluid_file_renderer_t* dev;
+
+	fluid_return_val_if_fail (synth != NULL, NULL);
+	fluid_return_val_if_fail (synth->settings != NULL, NULL);
 
 	dev = FLUID_NEW(fluid_file_renderer_t);
 	if (dev == NULL) {
@@ -157,7 +162,7 @@ new_fluid_file_renderer(fluid_synth_t* synth, char* filename, char* type,
 	FLUID_MEMSET(dev, 0, sizeof(fluid_file_renderer_t));
 
 	dev->synth = synth;
-	dev->period_size = period_size;
+	fluid_settings_getint (synth->settings, "audio.period-size", &dev->period_size);
 
 #if LIBSNDFILE_SUPPORT
 	dev->buf_size = 2 * dev->period_size * sizeof (float);
@@ -182,8 +187,19 @@ new_fluid_file_renderer(fluid_synth_t* synth, char* filename, char* type,
 
         info.format = FLUID_FILE_RENDERER_DEFAULT_FILE_TYPE | SF_FORMAT_PCM_16;
 
-	if (!fluid_file_renderer_parse_options (type, format, endian, filename, &info))
-		goto error_recovery;
+	fluid_settings_dupstr (synth->settings, "audio.file.name", &filename);
+	fluid_settings_dupstr (synth->settings, "audio.file.type", &type);
+	fluid_settings_dupstr (synth->settings, "audio.file.format", &format);
+	fluid_settings_dupstr (synth->settings, "audio.file.endian", &endian);
+
+	retval = fluid_file_renderer_parse_options (type, format, endian, filename, &info);
+
+	if (filename) FLUID_FREE (filename);
+	if (type) FLUID_FREE (type);
+	if (format) FLUID_FREE (format);
+	if (endian) FLUID_FREE (endian);
+
+	if (!retval) goto error_recovery;
 
 	fluid_settings_getnum (synth->settings, "synth.sample-rate", &samplerate);
 	info.samplerate = samplerate + 0.5;
