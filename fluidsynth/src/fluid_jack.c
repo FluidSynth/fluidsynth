@@ -90,6 +90,8 @@ fluid_jack_audio_driver_settings(fluid_settings_t* settings)
 {
   fluid_settings_register_str(settings, "audio.jack.id", "fluidsynth", 0, NULL, NULL);
   fluid_settings_register_str(settings, "audio.jack.multi", "no", 0, NULL, NULL);
+  fluid_settings_add_option(settings, "audio.jack.multi", "no");
+  fluid_settings_add_option(settings, "audio.jack.multi", "yes");
   fluid_settings_register_int(settings, "audio.jack.autoconnect", 0, 0, 1, FLUID_HINT_TOGGLED, NULL, NULL);
 }
 

@@ -1142,6 +1142,8 @@ void fluid_player_settings(fluid_settings_t* settings)
 	/* Selects whether the player should reset the synth between 
            songs, or not. */
 	fluid_settings_register_str(settings, "player.reset-synth", "yes", 0, NULL, NULL);
+	fluid_settings_add_option(settings, "player.reset-synth", "no");
+	fluid_settings_add_option(settings, "player.reset-synth", "yes");
 }
 
 

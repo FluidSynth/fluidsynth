@@ -199,10 +199,20 @@ static fluid_revmodel_presets_t revmodel_preset[] = {
 void fluid_synth_settings(fluid_settings_t* settings)
 {
   fluid_settings_register_str(settings, "synth.verbose", "no", 0, NULL, NULL);
+  fluid_settings_add_option(settings, "synth.verbose", "no");
+  fluid_settings_add_option(settings, "synth.verbose", "yes");
   fluid_settings_register_str(settings, "synth.dump", "no", 0, NULL, NULL);
+  fluid_settings_add_option(settings, "synth.dump", "no");
+  fluid_settings_add_option(settings, "synth.dump", "yes");
   fluid_settings_register_str(settings, "synth.reverb.active", "yes", 0, NULL, NULL);
+  fluid_settings_add_option(settings, "synth.reverb.active", "no");
+  fluid_settings_add_option(settings, "synth.reverb.active", "yes");
   fluid_settings_register_str(settings, "synth.chorus.active", "yes", 0, NULL, NULL);
+  fluid_settings_add_option(settings, "synth.chorus.active", "no");
+  fluid_settings_add_option(settings, "synth.chorus.active", "yes");
   fluid_settings_register_str(settings, "synth.ladspa.active", "no", 0, NULL, NULL);
+  fluid_settings_add_option(settings, "synth.ladspa.active", "no");
+  fluid_settings_add_option(settings, "synth.ladspa.active", "yes");
   fluid_settings_register_str(settings, "midi.portname", "", 0, NULL, NULL);
 
   fluid_settings_register_int(settings, "synth.polyphony",
@@ -224,6 +234,12 @@ void fluid_synth_settings(fluid_settings_t* settings)
   fluid_settings_register_int(settings, "synth.device-id",
 			      0, 0, 126, 0, NULL, NULL);
   fluid_settings_register_int(settings, "synth.cpu-cores", 1, 1, 256, 0, NULL, NULL);
+
+  fluid_settings_register_str(settings, "synth.midi-mode", "normal", 0, NULL, NULL);
+  fluid_settings_add_option(settings, "synth.midi-mode", "normal");
+  fluid_settings_add_option(settings, "synth.midi-mode", "gm");
+  fluid_settings_add_option(settings, "synth.midi-mode", "gs");
+  fluid_settings_add_option(settings, "synth.midi-mode", "xg");
 }
 
 /*
