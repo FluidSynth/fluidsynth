@@ -109,7 +109,7 @@ fluid_audio_driver_t*
 new_fluid_jack_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func, void* data) {
   fluid_jack_audio_driver_t* dev = NULL;
   char name[64];
-  int i, audio_count, fx_count;
+  int i;
   /* for looking up ports */
   const char ** jack_ports;
   char* client_name;
@@ -281,7 +281,6 @@ int
 delete_fluid_jack_audio_driver(fluid_audio_driver_t* p)
 {
   fluid_jack_audio_driver_t* dev = (fluid_jack_audio_driver_t*) p;
-  int i;
 
   if (dev == NULL) {
     return 0;
@@ -363,7 +362,7 @@ fluid_jack_audio_driver_srate(jack_nframes_t nframes, void *arg)
 void
 fluid_jack_audio_driver_shutdown(void *arg)
 {
-  fluid_jack_audio_driver_t* dev = (fluid_jack_audio_driver_t*) arg;
+//  fluid_jack_audio_driver_t* dev = (fluid_jack_audio_driver_t*) arg;
   FLUID_LOG(FLUID_ERR, "Help! Lost the connection to the JACK server");
 /*   exit (1); */
 }
@@ -384,7 +383,6 @@ new_fluid_jack_midi_driver (fluid_settings_t *settings,
   fluid_jack_midi_driver_t* dev;
   char *client_name;
   char name[64];
-  int err;
 
   /* not much use doing anything */
   if (handler == NULL)
@@ -466,7 +464,6 @@ int
 delete_fluid_jack_midi_driver(fluid_midi_driver_t *p)
 {
   fluid_jack_midi_driver_t* dev;
-  int err;
 
   dev = (fluid_jack_midi_driver_t *)p;
 

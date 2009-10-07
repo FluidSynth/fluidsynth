@@ -289,6 +289,10 @@ extern fluid_profile_data_t fluid_profile_data[];
 /** Macro to obtain a time refence used for the profiling */
 #define fluid_profile_ref() fluid_utime()
 
+/** Macro to create a variable and assign the current reference time for profiling.
+ * So we don't get unused variable warnings when profiling is disabled. */
+#define fluid_profile_ref_var(name)     double name = fluid_utime()
+
 /** Macro to calculate the min/avg/max. Needs a time refence and a
     profile number. */
 #define fluid_profile(_num,_ref) { \
@@ -307,6 +311,7 @@ extern fluid_profile_data_t fluid_profile_data[];
 /* No profiling */
 #define fluid_profiling_print()
 #define fluid_profile_ref()  0
+#define fluid_profile_ref_var(name)
 #define fluid_profile(_num,_ref)
 
 #endif

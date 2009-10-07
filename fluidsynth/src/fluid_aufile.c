@@ -65,7 +65,6 @@ void fluid_file_audio_driver_settings(fluid_settings_t* settings)
 {
 #if LIBSNDFILE_SUPPORT
 	const char **names, **np;
-	int i;
 #endif
 
 #if LIBSNDFILE_SUPPORT
@@ -101,7 +100,6 @@ new_fluid_file_audio_driver(fluid_settings_t* settings,
 			    fluid_synth_t* synth)
 {
 	fluid_file_audio_driver_t* dev;
-	int err;
 	int msec;
 
 	dev = FLUID_NEW(fluid_file_audio_driver_t);

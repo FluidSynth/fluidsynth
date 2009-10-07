@@ -379,7 +379,6 @@ fluid_settings_set(fluid_settings_t* settings, char* name, void* value)
   fluid_setting_node_t *node;
   char* tokens[MAX_SETTINGS_TOKENS];
   char buf[MAX_SETTINGS_LABEL+1];
-  int ntokens;
   int n, num;
   char *dupname;
 
@@ -1287,7 +1286,6 @@ fluid_settings_foreach_option_alpha (fluid_settings_t* settings, char* name, voi
   fluid_setting_node_t *node;
   fluid_str_setting_t *setting;
   fluid_list_t *p, *newlist = NULL;
-  char* option;
 
   fluid_return_if_fail (settings != NULL);
   fluid_return_if_fail (name != NULL);

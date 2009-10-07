@@ -39,7 +39,6 @@ fluid_midi_router_t*
 new_fluid_midi_router(fluid_settings_t* settings, handle_midi_event_func_t handler, void* event_handler_data)
 {
   fluid_midi_router_t* router=NULL;
-  fluid_midi_router_rule_t* rule=NULL;
 
   /* create the router */
   router = FLUID_NEW(fluid_midi_router_t); if (router == NULL){
@@ -275,7 +274,6 @@ int
 fluid_midi_router_handle_midi_event(void* data, fluid_midi_event_t* event)
 {
   fluid_midi_router_t* router=(fluid_midi_router_t*)data;
-  fluid_synth_t* synth = router->synth;
   fluid_midi_router_rule_t* rule=NULL;
   fluid_midi_router_rule_t* next_rule=NULL;
   int event_has_par2=0; /* Flag, indicates that current event needs two parameters */

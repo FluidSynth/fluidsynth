@@ -511,8 +511,7 @@ static void* fluid_alsa_audio_run_s16(void* d)
   float* right;
   short* buf;
   float* handle[2];
-  int i, k, n, buffer_size, offset;
-  float s;
+  int n, buffer_size, offset;
 
   buffer_size = dev->buffer_size;
 
@@ -1134,7 +1133,6 @@ fluid_alsa_seq_run(void* d)
   snd_seq_event_t *seq_ev;
   fluid_midi_event_t evt;
   fluid_alsa_seq_driver_t* dev = (fluid_alsa_seq_driver_t*) d;
-  int channel;
 
   /* make sure the other threads can cancel this thread any time */
   if (pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL)) {

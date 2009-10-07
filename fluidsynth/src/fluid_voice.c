@@ -245,11 +245,8 @@ fluid_real_t fluid_voice_gen_value(fluid_voice_t* voice, int num)
 int
 fluid_voice_write (fluid_voice_t* voice, fluid_real_t *dsp_buf)
 {
-  unsigned int i;
-  fluid_real_t incr;
   fluid_real_t fres;
   fluid_real_t target_amp;	/* target amplitude */
-  int dsp_interp_method = voice->interp_method;
   fluid_env_data_t* env_data;
   fluid_real_t x;
   int count = 0;
@@ -665,7 +662,6 @@ fluid_voice_filter (fluid_voice_t *voice)
   fluid_real_t dsp_centernode;
   int count = voice->dsp_buf_count;
   int dsp_i;
-  float v;
 
   /* filter (implement the voice filter according to SoundFont standard) */
 
@@ -845,8 +841,6 @@ fluid_voice_calculate_gen_pitch(fluid_voice_t* voice)
 static int
 fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t* voice)
 {
-  fluid_real_t x;
-  fluid_real_t q_db;
   int i;
 
   int list_of_generators_to_initialize[35] = {

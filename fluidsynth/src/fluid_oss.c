@@ -76,9 +76,7 @@ typedef struct {
 int delete_fluid_oss_audio_driver(fluid_audio_driver_t* p);
 
 /* local utilities */
-static int fluid_oss_get_caps(fluid_oss_audio_driver_t* dev);
 static int fluid_oss_set_queue_size(fluid_oss_audio_driver_t* dev, int ss, int ch, int qs, int bs);
-static int fluid_oss_get_sample_formats(fluid_oss_audio_driver_t* dev);
 static void* fluid_oss_audio_run(void* d);
 static void* fluid_oss_audio_run2(void* d);
 
@@ -469,87 +467,6 @@ delete_fluid_oss_audio_driver(fluid_audio_driver_t* p)
   return FLUID_OK;
 }
 
-/*
- * fluid_oss_get_sample_formats
- */
-int
-fluid_oss_get_sample_formats(fluid_oss_audio_driver_t* dev)
-{
-  int mask;
-  unsigned short U16 = 1;
-  unsigned char* U8 = (unsigned char*) &U16;
-
-  dev->formats = 0;
-  dev->bigendian = 0;
-  if (ioctl(dev->dspfd, SNDCTL_DSP_GETFMTS, &mask) == -1) {
-    return -1;
-  }
-  dev->formats = mask;
-  if (U8[1] == 1) {
-    FLUID_LOG(FLUID_DBG, "Machine is big endian.");
-    dev->bigendian = 1;
-  }
-  if (U8[0] == 1) {
-    FLUID_LOG(FLUID_DBG, "Machine is little endian.");
-    dev->bigendian = 0;
-  }
-  FLUID_LOG(FLUID_DBG, "The sound device supports the following audio formats:");
-  if (mask & AFMT_U8)        { FLUID_LOG(FLUID_DBG, "  U8"); }
-  if (mask & AFMT_S8)        { FLUID_LOG(FLUID_DBG, "  S8"); }
-  if (mask & AFMT_U16_LE)    { FLUID_LOG(FLUID_DBG, "  U16LE"); }
-  if (mask & AFMT_U16_BE)    { FLUID_LOG(FLUID_DBG, "  U16BE"); }
-  if (mask & AFMT_S16_LE)    { FLUID_LOG(FLUID_DBG, "  S16LE"); }
-  if (mask & AFMT_S16_BE)    { FLUID_LOG(FLUID_DBG, "  S16BE"); }
-  if (mask & AFMT_MU_LAW)    { FLUID_LOG(FLUID_DBG, "  mu-law"); }
-  if (mask & AFMT_A_LAW)     { FLUID_LOG(FLUID_DBG, "  a-law"); }
-  if (mask & AFMT_IMA_ADPCM) { FLUID_LOG(FLUID_DBG, "  ima-adpcm"); }
-  if (mask & AFMT_MPEG)      { FLUID_LOG(FLUID_DBG, "  mpeg"); }
-  return 0;
-}
-
-/**
- *  fluid_oss_get_caps
- *
- *  Get the audio capacities of the sound card.
- */
-int
-fluid_oss_get_caps(fluid_oss_audio_driver_t* dev)
-{
-  int caps;
-  dev->caps = 0;
-  if (ioctl(dev->dspfd, SNDCTL_DSP_GETCAPS, &caps) < 0) {
-    return -1;
-  }
-  dev->caps = caps;
-  FLUID_LOG(FLUID_DBG, "The sound device has the following capabilities:");
-  if (caps & DSP_CAP_DUPLEX)   {
-    FLUID_LOG(FLUID_DBG, "  Duplex:    simultaneous playing and recording possible") ;
-  } else {
-    FLUID_LOG(FLUID_DBG, "  Duplex:    simultaneous playing and recording not possible");
-  }
-  if (caps & DSP_CAP_REALTIME) {
-    FLUID_LOG(FLUID_DBG, "  Real-time: precise reporting of output pointer possible");
-  } else {
-    FLUID_LOG(FLUID_DBG, "  Real-time: precise reporting of output pointer not possible");
-  }
-  if (caps & DSP_CAP_BATCH) {
-    FLUID_LOG(FLUID_DBG, "  Batch:     local storage for recording and/or playback");
-  } else {
-    FLUID_LOG(FLUID_DBG, "  Batch:     no local storage for recording and/or playback");
-  }
-  if (caps & DSP_CAP_TRIGGER) {
-    FLUID_LOG(FLUID_DBG, "  Trigger:   triggering of recording/playback possible");
-  } else {
-    FLUID_LOG(FLUID_DBG, "  Trigger:   triggering of recording/playback not possible");
-  }
-  if (caps & DSP_CAP_MMAP) {
-    FLUID_LOG(FLUID_DBG, "  Mmap:      direct access to the hardware level buffer possible");
-  } else {
-    FLUID_LOG(FLUID_DBG, "  Mmap:      direct access to the hardware level buffer not possible");
-  }
-  return 0;
-}
-
 /**
  *  fluid_oss_set_queue_size
  *
@@ -639,9 +556,7 @@ fluid_oss_audio_run2(void* d)
   float* left = dev->buffers[0];
   float* right = dev->buffers[1];
   int buffer_size = dev->buffer_size;
-  int len = dev->buffer_size;
   int dither_index = 0;
-  int i, k;
 
   FLUID_LOG(FLUID_DBG, "Audio thread running");
 

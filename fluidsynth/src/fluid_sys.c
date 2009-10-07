@@ -699,7 +699,6 @@ new_fluid_timer(int msec, fluid_timer_callback_t callback, void* data,
 {
   pthread_attr_t *attr = NULL;
   pthread_attr_t rt_attr;
-  int sched = SCHED_FIFO;
   struct sched_param priority;
   int err;
 
@@ -871,7 +870,6 @@ void fluid_profiling_print(void)
 
   printf("fluid_profiling_print\n");
 
-  FLUID_LOG(FLUID_INFO, "Estimated CPU frequency: %.0f MHz", fluid_cpu_frequency);
   FLUID_LOG(FLUID_INFO, "Estimated times: min/avg/max (micro seconds)");
 
   for (i = 0; i < FLUID_PROF_LAST; i++) {

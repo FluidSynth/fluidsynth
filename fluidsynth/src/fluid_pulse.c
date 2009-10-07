@@ -91,7 +91,7 @@ new_fluid_pulse_audio_driver2(fluid_settings_t* settings,
   pthread_attr_t attr;
   int sched = SCHED_FIFO;
   struct sched_param priority;
-  int i, err, dir = 0;
+  int err;
 
   dev = FLUID_NEW(fluid_pulse_audio_driver_t);
   if (dev == NULL) {
@@ -234,7 +234,6 @@ int delete_fluid_pulse_audio_driver(fluid_audio_driver_t* p)
 static void* fluid_pulse_audio_run(void* d)
 {
   fluid_pulse_audio_driver_t* dev = (fluid_pulse_audio_driver_t*) d;
-  fluid_synth_t *synth = (fluid_synth_t *)(dev->data);
   float *buf;
   int buffer_size;
   int err;

@@ -130,7 +130,7 @@ int
 fluid_dsp_float_interpolate_none (fluid_voice_t *voice)
 {
   fluid_phase_t dsp_phase = voice->phase;
-  fluid_phase_t dsp_phase_incr, end_phase;
+  fluid_phase_t dsp_phase_incr;
   short int *dsp_data = voice->sample->data;
   fluid_real_t *dsp_buf = voice->dsp_buf;
   fluid_real_t dsp_amp = voice->amp;
@@ -193,7 +193,7 @@ int
 fluid_dsp_float_interpolate_linear (fluid_voice_t *voice)
 {
   fluid_phase_t dsp_phase = voice->phase;
-  fluid_phase_t dsp_phase_incr, end_phase;
+  fluid_phase_t dsp_phase_incr;
   short int *dsp_data = voice->sample->data;
   fluid_real_t *dsp_buf = voice->dsp_buf;
   fluid_real_t dsp_amp = voice->amp;
@@ -284,7 +284,7 @@ int
 fluid_dsp_float_interpolate_4th_order (fluid_voice_t *voice)
 {
   fluid_phase_t dsp_phase = voice->phase;
-  fluid_phase_t dsp_phase_incr, end_phase;
+  fluid_phase_t dsp_phase_incr;
   short int *dsp_data = voice->sample->data;
   fluid_real_t *dsp_buf = voice->dsp_buf;
   fluid_real_t dsp_amp = voice->amp;
@@ -436,7 +436,7 @@ int
 fluid_dsp_float_interpolate_7th_order (fluid_voice_t *voice)
 {
   fluid_phase_t dsp_phase = voice->phase;
-  fluid_phase_t dsp_phase_incr, end_phase;
+  fluid_phase_t dsp_phase_incr;
   short int *dsp_data = voice->sample->data;
   fluid_real_t *dsp_buf = voice->dsp_buf;
   fluid_real_t dsp_amp = voice->amp;

@@ -239,7 +239,6 @@ void fluid_synth_settings(fluid_settings_t* settings)
   fluid_settings_add_option(settings, "synth.midi-mode", "normal");
   fluid_settings_add_option(settings, "synth.midi-mode", "gm");
   fluid_settings_add_option(settings, "synth.midi-mode", "gs");
-  fluid_settings_add_option(settings, "synth.midi-mode", "xg");
 }
 
 /*
@@ -1427,7 +1426,7 @@ fluid_synth_cc_real (fluid_synth_t* synth, int channum, int num, int value,
                      int noqueue)
 {
   fluid_channel_t* chan = synth->channel[channum];
-  int banknum, nrpn_select, nrpn_active = 0;
+  int nrpn_select, nrpn_active = 0;
   int rpn_msb = 0, rpn_lsb = 0;
 
   /* nrpn_active, rpn_msb and rpn_lsb may get used multiple times, read them
@@ -2255,7 +2254,6 @@ fluid_synth_find_preset(fluid_synth_t* synth, unsigned int banknum,
   fluid_preset_t *preset = NULL;
   fluid_sfont_info_t *sfont_info;
   fluid_list_t *list;
-  int ofs;
 
   fluid_rec_mutex_lock (synth->mutex);      /* ++ lock sfont list, bank offset list and sfont */
 
@@ -2461,8 +2459,6 @@ fluid_synth_program_select2(fluid_synth_t* synth, int chan, char* sfont_name,
 {
   fluid_preset_t* preset = NULL;
   fluid_channel_t* channel;
-  fluid_sfont_t* sfont = NULL;
-  int offset;
 
   fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
   fluid_return_val_if_fail (chan >= 0 && chan < synth->midi_channels, FLUID_FAILED);
@@ -2899,13 +2895,13 @@ fluid_synth_write_s16(fluid_synth_t* synth, int len,
   signed short* right_out = (signed short*) rout;
   fluid_real_t* left_in = synth->left_buf[0];
   fluid_real_t* right_in = synth->right_buf[0];
-  double prof_ref = fluid_profile_ref();
   fluid_real_t left_sample;
   fluid_real_t right_sample;
   double time = fluid_utime();
   int di = synth->dither_index;
   double prof_ref_on_block;
   float cpu_load;
+  fluid_profile_ref_var (prof_ref);
 
   /* make sure we're playing */
   if (synth->state != FLUID_SYNTH_PLAYING) {
@@ -2979,10 +2975,10 @@ fluid_synth_dither_s16(int *dither_index, int len, float* lin, float* rin,
   int i, j, k;
   signed short* left_out = (signed short*) lout;
   signed short* right_out = (signed short*) rout;
-  double prof_ref = fluid_profile_ref();
   fluid_real_t left_sample;
   fluid_real_t right_sample;
   int di = *dither_index;
+  fluid_profile_ref_var (prof_ref);
 
   for (i = 0, j = loff, k = roff; i < len; i++, j += lincr, k += rincr) {
 
@@ -3021,9 +3017,8 @@ fluid_synth_one_block(fluid_synth_t* synth, int do_not_mix_fx_to_out)
   fluid_real_t* reverb_buf;
   fluid_real_t* chorus_buf;
   int byte_size = FLUID_BUFSIZE * sizeof(fluid_real_t);
-  double prof_ref = fluid_profile_ref();
-  double prof_ref_voice;
   int count;
+  fluid_profile_ref_var (prof_ref);
 
   /* Assign ID of synthesis thread, if not already set */
   if (synth->synth_thread_id == FLUID_THREAD_ID_NULL) 
@@ -3152,10 +3147,10 @@ got_voice:      /* We got a voice to process */
   {
     /* call all playing synthesis processes */
     for (i = 0; i < synth->polyphony; i++) {
+      fluid_profile_ref_var (prof_ref_voice);
+
       voice = synth->voice[i];
       if (!_PLAYING(voice)) continue;
-
-      prof_ref_voice = fluid_profile_ref();
 
       /* The output associated with a MIDI channel is wrapped around
        * using the number of audio groups as modulo divider.  This is
@@ -3177,7 +3172,7 @@ got_voice:      /* We got a voice to process */
       fluid_voice_write (voice, local_voice_buf);
       fluid_voice_mix (voice, left_buf, right_buf, reverb_buf, chorus_buf);
 
-      fluid_profile(FLUID_PROF_ONE_BLOCK_VOICE, prof_ref_voice);
+      fluid_profile (FLUID_PROF_ONE_BLOCK_VOICE, prof_ref_voice);
     }
   }
 
@@ -5575,8 +5570,6 @@ int
 fluid_synth_start(fluid_synth_t* synth, unsigned int id, fluid_preset_t* preset, 
 		  int audio_chan, int midi_chan, int key, int vel)
 {
-  fluid_channel_t* channel;
-
   fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
   fluid_return_val_if_fail (preset != NULL, FLUID_FAILED);
   fluid_return_val_if_fail (midi_chan >= 0 && midi_chan < synth->midi_channels, FLUID_FAILED);

@@ -53,13 +53,6 @@
 #define WITH_MIDI 1
 #endif
 
-/* default audio fragment count (if none specified) */
-#ifdef WIN32
-#define DEFAULT_FRAG_COUNT 32
-#else
-#define DEFAULT_FRAG_COUNT 16
-#endif
-
 void print_usage(void);
 void print_help(void);
 void print_welcome(void);
@@ -231,7 +224,7 @@ int main(int argc, char** argv)
   fluid_settings_t* settings;
   int arg1 = 1;
   char buf[512];
-  int c, i, fragcount = DEFAULT_FRAG_COUNT;
+  int c, i;
   int interactive = 1;
   int midi_in = 1;
   fluid_player_t* player = NULL;

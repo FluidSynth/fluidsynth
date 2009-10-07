@@ -569,8 +569,6 @@ void _fluid_free_evt_queue(fluid_evt_entry** first, fluid_evt_entry** last);
 short
 _fluid_seq_queue_init(fluid_sequencer_t* seq, int maxEvents)
 {
-	int i;
-
 	seq->heap = _fluid_evt_heap_init(maxEvents);
 	if (seq->heap == NULL) {
 		fluid_log(FLUID_PANIC, "sequencer: Out of memory\n");
