@@ -712,7 +712,10 @@ int main(int argc, char** argv)
     if (interactive) {
       fluid_player_stop(player);
     }
-    fluid_player_join(player);
+    if (adriver != NULL || !fluid_settings_str_equal(settings,  "player.timing-source", "sample")) {
+      /* if no audio driver and sample timers are used, nothing makes the player advance */  
+      fluid_player_join(player);
+    }
     delete_fluid_player(player);
   }
 
