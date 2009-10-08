@@ -144,11 +144,12 @@ fluid_file_renderer_t *
 new_fluid_file_renderer(fluid_synth_t* synth)
 {
 #if LIBSNDFILE_SUPPORT
-	char *filename, *type, *format, *endian;
+	char *type, *format, *endian;
 	SF_INFO info;
 	double samplerate;
 	int retval;
 #endif
+        char *filename = NULL;
 	fluid_file_renderer_t* dev;
 
 	fluid_return_val_if_fail (synth != NULL, NULL);
@@ -177,6 +178,7 @@ new_fluid_file_renderer(fluid_synth_t* synth)
 		goto error_recovery;
 	}
 
+	fluid_settings_dupstr (synth->settings, "audio.file.name", &filename);
 	if (filename == NULL) {
 		FLUID_LOG(FLUID_ERR, "No file name specified");
 		goto error_recovery;
@@ -187,14 +189,12 @@ new_fluid_file_renderer(fluid_synth_t* synth)
 
         info.format = FLUID_FILE_RENDERER_DEFAULT_FILE_TYPE | SF_FORMAT_PCM_16;
 
-	fluid_settings_dupstr (synth->settings, "audio.file.name", &filename);
 	fluid_settings_dupstr (synth->settings, "audio.file.type", &type);
 	fluid_settings_dupstr (synth->settings, "audio.file.format", &format);
 	fluid_settings_dupstr (synth->settings, "audio.file.endian", &endian);
 
 	retval = fluid_file_renderer_parse_options (type, format, endian, filename, &info);
 
-	if (filename) FLUID_FREE (filename);
 	if (type) FLUID_FREE (type);
 	if (format) FLUID_FREE (format);
 	if (endian) FLUID_FREE (endian);
@@ -233,6 +233,7 @@ new_fluid_file_renderer(fluid_synth_t* synth)
 	return dev;
 
  error_recovery:
+	if (filename) FLUID_FREE (filename);
 	delete_fluid_file_renderer(dev);
 	return NULL;
 }
@@ -413,7 +414,7 @@ fluid_file_renderer_parse_options (char *filetype, char *format, char *endian,
     s = FLUID_STRRCHR (filename, '.');
 
     if (s && s[1] != '\0')
-    {
+    {	
       if (!fluid_file_renderer_find_file_type (s + 1, &type))
         FLUID_LOG (FLUID_WARN, "Failed to determine audio file type from filename, defaulting to WAV");
     }
