@@ -171,15 +171,20 @@ enum midi_meta_event {
 
 /* MIDI SYSEX useful manufacturer values */
 enum midi_sysex_manuf {
+  MIDI_SYSEX_MANUF_ROLAND       = 0x41,         /**< Roland manufacturer ID */
   MIDI_SYSEX_UNIV_NON_REALTIME  = 0x7E,         /**< Universal non realtime message */
   MIDI_SYSEX_UNIV_REALTIME      = 0x7F          /**< Universal realtime message */
 };
 
 #define MIDI_SYSEX_DEVICE_ID_ALL        0x7F    /**< Device ID used in SYSEX messages to indicate all devices */
 
-/* Sysex sub-ID #1 (following the device ID) for MIDI tuning messages */
-#define MIDI_SYSEX_MIDI_TUNING_ID       0x08
+/* SYSEX sub-ID #1 which follows device ID */
+#define MIDI_SYSEX_MIDI_TUNING_ID       0x08    /**< Sysex sub-ID #1 for MIDI tuning messages */
+#define MIDI_SYSEX_GM_ID                0x09    /**< Sysex sub-ID #1 for General MIDI messages */
 
+/**
+ * SYSEX tuning message IDs.
+ */
 enum midi_sysex_tuning_msg_id {
   MIDI_SYSEX_TUNING_BULK_DUMP_REQ       = 0x00, /**< Bulk tuning dump request (non-realtime) */
   MIDI_SYSEX_TUNING_BULK_DUMP           = 0x01, /**< Bulk tuning dump response (non-realtime) */
@@ -192,6 +197,10 @@ enum midi_sysex_tuning_msg_id {
   MIDI_SYSEX_TUNING_OCTAVE_TUNE_1BYTE   = 0x08, /**< Octave tuning message using 1 byte values (realtime/non-realtime) */
   MIDI_SYSEX_TUNING_OCTAVE_TUNE_2BYTE   = 0x09  /**< Octave tuning message using 2 byte values (realtime/non-realtime) */
 };
+
+/* General MIDI sub-ID #2 */
+#define MIDI_SYSEX_GM_ON                0x01    /**< Enable GM mode */
+#define MIDI_SYSEX_GM_OFF               0x02    /**< Disable GM mode */
 
 enum fluid_driver_status
 {

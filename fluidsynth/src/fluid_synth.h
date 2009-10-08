@@ -78,6 +78,16 @@ enum fluid_synth_status
 #define SYNTH_CHORUS_CHANNEL 1
 
 /**
+ * Defines the current MIDI mode.
+ */
+typedef enum
+{
+  FLUID_SYNTH_MIDI_MODE_NORMAL,         /**< Normal MIDI mode (percussion channel not special) */
+  FLUID_SYNTH_MIDI_MODE_GM,             /**< GM MIDI mode, no note-offs on percussion channel (except for long guiro and whistle) */
+  FLUID_SYNTH_MIDI_MODE_GS              /**< GS MIDI mode, identical to #FLUID_SYNTH_MIDI_MODE_GM at the moment */
+} fluid_synth_midi_mode_t;
+
+/**
  * Structure used for sfont_info field in #fluid_synth_t for each loaded
  * SoundFont with the SoundFont instance and additional fields.
  */
@@ -131,6 +141,8 @@ typedef struct _fluid_sfont_info_t {
  * with_reverb
  * with_chorus
  * state
+ * midi_mode
+ * midi_mode_lock
  * cpu_load
  * noteid
  * storeid
@@ -175,6 +187,8 @@ struct _fluid_synth_t
   int state;                         /**< the synthesizer state */
   unsigned int ticks;                /**< the number of audio samples since the start */
   unsigned int start;                /**< the start in msec, as returned by system clock */
+  int midi_mode;                     /**< Current MIDI mode (#fluid_synth_midi_mode_t) */
+  int midi_mode_lock;                /**< TRUE if MIDI mode cannot be changed by SYSEX messages */
 
   fluid_list_t *loaders;             /**< the SoundFont loaders */
   fluid_list_t *sfont_info;          /**< List of fluid_sfont_info_t for each loaded SoundFont (remains until SoundFont is unloaded) */
