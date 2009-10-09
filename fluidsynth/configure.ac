@@ -170,9 +170,17 @@ else
 fi
 
 if test "$LIBSNDFILE_SUPPORT" = "1"; then
+  PKG_CHECK_MODULES(LIBSNDFILE_VORBIS, sndfile >= 1.0.18, LIBSNDFILE_HASVORBIS=1, LIBSNDFILE_HASVORBIS=0)
   AC_DEFINE(LIBSNDFILE_SUPPORT, 1, [Define to enable libsndfile support])
+  if test "$LIBSNDFILE_HASVORBIS" = "1"; then
+    AC_DEFINE(LIBSNDFILE_HASVORBIS, 1, [libsndfile has ogg vorbis support])
+  fi
+else
+  LIBSNDFILE_HASVORBIS=0
 fi
+
 AM_CONDITIONAL(LIBSNDFILE_SUPPORT, test "$LIBSNDFILE_SUPPORT" = "1")
+AM_CONDITIONAL(LIBSNDFILE_HASVORBIS, test "$LIBSNDFILE_HASVORBIS" = "1")
 AC_SUBST(LIBSNDFILE_CFLAGS)
 AC_SUBST(LIBSNDFILE_LIBS)
 
@@ -443,7 +451,11 @@ echo "**************************************************************"
 echo "Summary:"
 
 if test "${LIBSNDFILE_SUPPORT}" = "1"; then
-  echo "libsndfile:            yes"
+  if test "${LIBSNDFILE_HASVORBIS}" = "1"; then
+    echo "libsndfile:            yes (with ogg vorbis support)"
+  else
+    echo "libsndfile:            yes"
+  fi
 else 
   echo "libsndfile:            no (raw audio file rendering only)"
 fi

@@ -425,6 +425,7 @@ fluid_file_renderer_parse_options (char *filetype, char *format, char *endian,
     return FALSE;
   }
 
+
   info->format = (info->format & ~SF_FORMAT_TYPEMASK) | type;
 
   /* Look for subtype */
@@ -442,6 +443,13 @@ fluid_file_renderer_parse_options (char *filetype, char *format, char *endian,
 
     info->format = (info->format & ~SF_FORMAT_SUBMASK) | format_ids[i];
   }
+
+#if LIBSNDFILE_HASVORBIS
+  /* Force subformat to vorbis as nothing else would make sense currently */
+  if ((info->format & SF_FORMAT_TYPEMASK) == SF_FORMAT_OGG) {
+    info->format = (info->format & ~SF_FORMAT_SUBMASK) | SF_FORMAT_VORBIS;
+  }
+#endif
 
   /* Look for endian */
   if (endian)

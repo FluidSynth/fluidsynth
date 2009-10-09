@@ -132,6 +132,9 @@
 /* Include the LADSPA Fx unit */
 #undef LADSPA
 
+/* libsndfile has ogg vorbis support */
+#undef LIBSNDFILE_HASVORBIS
+
 /* Define to enable libsndfile support */
 #undef LIBSNDFILE_SUPPORT
 
@@ -165,6 +168,9 @@
 
 /* Define to the one symbol short name of this package. */
 #undef PACKAGE_TARNAME
+
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
 
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
