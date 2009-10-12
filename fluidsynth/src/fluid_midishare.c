@@ -61,6 +61,7 @@ typedef struct {
   	UPPTaskPtr     upp_task_ptr;
   #endif
   SlotRefNum	slotRef;
+  unsigned char sysexbuf[FLUID_MIDI_PARSER_MAX_DATA_SIZE];
 } fluid_midishare_midi_driver_t;
 
 
@@ -72,10 +73,14 @@ int delete_fluid_midishare_midi_driver(fluid_midi_driver_t* p);
 int fluid_midishare_midi_driver_status(fluid_midi_driver_t* p);
 
 static void fluid_midishare_midi_driver_receive(short ref);
-static int fluid_midishare_open_appl (fluid_midishare_midi_driver_t* dev);
+
+#if defined(MIDISHARE_DRIVER)
 static int fluid_midishare_open_driver (fluid_midishare_midi_driver_t* dev);
 static void fluid_midishare_close_driver (fluid_midishare_midi_driver_t* dev);
+#else
+static int fluid_midishare_open_appl (fluid_midishare_midi_driver_t* dev);
 static void fluid_midishare_close_appl (fluid_midishare_midi_driver_t* dev);
+#endif
 
 /*
  * new_fluid_midishare_midi_driver
@@ -135,6 +140,7 @@ new_fluid_midishare_midi_driver(fluid_settings_t* settings,
   MidiAcceptType(dev->filter, typeCtrlChange, 1);
   MidiAcceptType(dev->filter, typeProgChange, 1);
   MidiAcceptType(dev->filter, typePitchWheel, 1);
+  MidiAcceptType(dev->filter, typeSysEx, 1);
 
   /* set the filter */
   MidiSetFilter(dev->refnum, dev->filter);
@@ -217,104 +223,110 @@ static void fluid_midishare_keyoff_task (long date, short ref, long a1, long a2,
  */
 static void fluid_midishare_midi_driver_receive(short ref)
 {
-	fluid_midishare_midi_driver_t* dev = (fluid_midishare_midi_driver_t*)MidiGetInfo(ref);
-	fluid_midi_event_t new_event;
-	MidiEvPtr e;
+  fluid_midishare_midi_driver_t* dev = (fluid_midishare_midi_driver_t*)MidiGetInfo(ref);
+  fluid_midi_event_t new_event;
+  MidiEvPtr e;
+  int count, i;
 
-	while ((e = MidiGetEv(ref))){
+  while ((e = MidiGetEv (ref)))
+  {
+    switch (EvType (e))
+    {
+      case typeNote:
+        /* Copy the data to fluid_midi_event_t */
+        fluid_midi_event_set_type(&new_event, NOTE_ON);
+        fluid_midi_event_set_channel(&new_event, Chan(e));
+        fluid_midi_event_set_pitch(&new_event, Pitch(e));
+        fluid_midi_event_set_velocity(&new_event, Vel(e));
 
-	    switch (EvType (e)){
+        /* and send it on its way to the router */
+        (*dev->driver.handler)(dev->driver.data, &new_event);
 
-		case typeNote:
-		      /* Copy the data to fluid_midi_event_t */
-		      fluid_midi_event_set_type(&new_event, NOTE_ON);
-		      fluid_midi_event_set_channel(&new_event, Chan(e));
-		      fluid_midi_event_set_pitch(&new_event, Pitch(e));
-		      fluid_midi_event_set_velocity(&new_event, Vel(e));
+#if defined(MACINTOSH) && defined(MACOS9)
+        MidiTask(dev->upp_task_ptr, MidiGetTime()+Dur(e), ref, (long)e, 0, 0);
+#else
+        MidiTask(fluid_midishare_keyoff_task, MidiGetTime()+Dur(e), ref, (long)e, 0, 0);
+#endif
 
-		      /* and send it on its way to the router */
-		      (*dev->driver.handler)(dev->driver.data, &new_event);
+        /* e gets freed in fluid_midishare_keyoff_task */
+        continue;
 
-		      #if defined(MACINTOSH) && defined(MACOS9)
-		      	MidiTask(dev->upp_task_ptr, MidiGetTime()+Dur(e), ref, (long)e, 0, 0);
-		      #else
-		      	MidiTask(fluid_midishare_keyoff_task, MidiGetTime()+Dur(e), ref, (long)e, 0, 0);
-		      #endif
-		      break;
+      case typeKeyOn:
+        /* Copy the data to fluid_midi_event_t */
+        fluid_midi_event_set_type(&new_event, NOTE_ON);
+        fluid_midi_event_set_channel(&new_event, Chan(e));
+        fluid_midi_event_set_pitch(&new_event, Pitch(e));
+        fluid_midi_event_set_velocity(&new_event, Vel(e));
+        break;
 
-		    case typeKeyOn:
-		      /* Copy the data to fluid_midi_event_t */
-		      fluid_midi_event_set_type(&new_event, NOTE_ON);
-		      fluid_midi_event_set_channel(&new_event, Chan(e));
-		      fluid_midi_event_set_pitch(&new_event, Pitch(e));
-		      fluid_midi_event_set_velocity(&new_event, Vel(e));
+      case typeKeyOff:
+        /* Copy the data to fluid_midi_event_t */
+        fluid_midi_event_set_type(&new_event, NOTE_OFF);
+        fluid_midi_event_set_channel(&new_event, Chan(e));
+        fluid_midi_event_set_pitch(&new_event, Pitch(e));
+        fluid_midi_event_set_velocity(&new_event, Vel(e)); /* release vel */
+        break;
 
-		      /* and send it on its way to the router */
-		      (*dev->driver.handler)(dev->driver.data, &new_event);
+      case typeCtrlChange:
+        /* Copy the data to fluid_midi_event_t */
+        fluid_midi_event_set_type(&new_event, CONTROL_CHANGE);
+        fluid_midi_event_set_channel(&new_event, Chan(e));
+        fluid_midi_event_set_control(&new_event, MidiGetField(e,0));
+        fluid_midi_event_set_value(&new_event, MidiGetField(e,1));
+        break;
 
-		      MidiFreeEv(e);
-		      break;
+      case typeProgChange:
+        /* Copy the data to fluid_midi_event_t */
+        fluid_midi_event_set_type(&new_event, PROGRAM_CHANGE);
+        fluid_midi_event_set_channel(&new_event, Chan(e));
+        fluid_midi_event_set_program(&new_event, MidiGetField(e,0));
+        break;
 
-		    case typeKeyOff:
-		      /* Copy the data to fluid_midi_event_t */
-		      fluid_midi_event_set_type(&new_event, NOTE_OFF);
-		      fluid_midi_event_set_channel(&new_event, Chan(e));
-		      fluid_midi_event_set_pitch(&new_event, Pitch(e));
-		      fluid_midi_event_set_velocity(&new_event, Vel(e)); /* release vel */
+      case typePitchWheel:
+        /* Copy the data to fluid_midi_event_t */
+        fluid_midi_event_set_type(&new_event, PITCH_BEND);
+        fluid_midi_event_set_channel(&new_event, Chan(e));
+        fluid_midi_event_set_value(&new_event, ((MidiGetField(e,0)
+                                                 + (MidiGetField(e,1) << 7))
+                                                - 8192));
+        break;
 
-		      /* and send it on its way to the router */
-		      (*dev->driver.handler)(dev->driver.data, &new_event);
+      case typeSysEx:
+        count = MidiCountFields (e);
 
-		      MidiFreeEv(e);
-		      break;
+        /* Discard empty or too large SYSEX messages */
+        if (count == 0 || count > FLUID_MIDI_PARSER_MAX_DATA_SIZE)
+        {
+          MidiFreeEv (e);
+          continue;
+        }
 
-		    case typeCtrlChange:
-		      /* Copy the data to fluid_midi_event_t */
-		      fluid_midi_event_set_type(&new_event, CONTROL_CHANGE);
-		      fluid_midi_event_set_channel(&new_event, Chan(e));
-		      fluid_midi_event_set_control(&new_event, MidiGetField(e,0));
-		      fluid_midi_event_set_value(&new_event, MidiGetField(e,1));
+        /* Copy SYSEX data, one byte at a time */
+        for (i = 0; i < count; i++)
+          dev->sysexbuf[i] = MidiGetField (e, i);
 
-		      /* and send it on its way to the router */
-		      (*dev->driver.handler)(dev->driver.data, &new_event);
+        fluid_midi_event_set_sysex (&new_event, dev->sysexbuf, count, FALSE);
+        break;
 
-		      MidiFreeEv(e);
-		      break;
+      default:
+        MidiFreeEv (e);
+        continue;
+    }
 
-		    case typeProgChange:
-		      /* Copy the data to fluid_midi_event_t */
-		      fluid_midi_event_set_type(&new_event, PROGRAM_CHANGE);
-		      fluid_midi_event_set_channel(&new_event, Chan(e));
-		      fluid_midi_event_set_program(&new_event, MidiGetField(e,0));
+    MidiFreeEv (e);
 
-		      /* and send it on its way to the router */
-		      (*dev->driver.handler)(dev->driver.data, &new_event);
-
-		      MidiFreeEv(e);
-		      break;
-
-		    case typePitchWheel:
-		      /* Copy the data to fluid_midi_event_t */
-		      fluid_midi_event_set_type(&new_event, PITCH_BEND);
-		      fluid_midi_event_set_channel(&new_event, Chan(e));
-		      fluid_midi_event_set_value(&new_event, ((MidiGetField(e,0)
-							      + (MidiGetField(e,1) << 7))
-							      - 8192));
-
-		      /* and send it on its way to the router */
-		      (*dev->driver.handler)(dev->driver.data, &new_event);
-
-		      MidiFreeEv(e);
-		      break;
-		 }
-	  }
+    /* Send the MIDI event */
+    (*dev->driver.handler)(dev->driver.data, &new_event);
+  }
 }
 
+
+#if defined(MIDISHARE_DRIVER)
 
 /*
  * fluid_midishare_wakeup
  */
- static void fluid_midishare_wakeup (short r)
+static void fluid_midishare_wakeup (short r)
 {
 	MidiConnect (MidiShareDrvRef, r, true);
 	MidiConnect (r, MidiShareDrvRef, true);
@@ -323,7 +335,7 @@ static void fluid_midishare_midi_driver_receive(short ref)
 /*
  * fluid_midishare_sleep
  */
- static void fluid_midishare_sleep (short r){}
+static void fluid_midishare_sleep (short r){}
 
 /*
  * fluid_midishare_open_driver
@@ -371,6 +383,8 @@ static void fluid_midishare_close_driver (fluid_midishare_midi_driver_t* dev)
 	if (dev->refnum > 0) MidiUnregisterDriver(dev->refnum);
 }
 
+#else   /* #if defined(MIDISHARE_DRIVER) */
+
 /*
  * fluid_midishare_open_appl
  */
@@ -405,5 +419,7 @@ static void fluid_midishare_close_appl (fluid_midishare_midi_driver_t* dev)
 {
 	if (dev->refnum > 0) MidiClose(dev->refnum);
 }
+
+#endif  /* #if defined(MIDISHARE_DRIVER) */
 
 #endif /* MIDISHARE_SUPPORT */

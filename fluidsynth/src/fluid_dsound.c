@@ -67,7 +67,7 @@ BOOL CALLBACK
 fluid_dsound_enum_callback(LPGUID guid, LPCTSTR description, LPCTSTR module, LPVOID context)
 {
   fluid_settings_t* settings = (fluid_settings_t*) context;
-  fluid_settings_add_option(settings, "audio.dsound.device", (char *)description);
+  fluid_settings_add_option(settings, "audio.dsound.device", (const char *)description);
 
   return TRUE;
 }
@@ -320,7 +320,6 @@ DWORD WINAPI fluid_dsound_audio_run(LPVOID lpParameter)
   fluid_dsound_audio_driver_t* dev = (fluid_dsound_audio_driver_t*) lpParameter;
   short *buf1, *buf2;
   DWORD bytes1, bytes2;
-  DWORD offset = 0;
   DWORD cur_position, frames, play_position, write_position, bytes;
   HRESULT res;
 

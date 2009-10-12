@@ -1212,6 +1212,12 @@ fluid_alsa_seq_run(void* d)
 	      evt.channel = seq_ev->dest.port * 16 + seq_ev->data.control.channel;
 	      evt.param1 = seq_ev->data.control.value;
 	      break;
+	    case SND_SEQ_EVENT_SYSEX:
+	      if (seq_ev->data.ext.len < 2) continue;
+
+	      fluid_midi_event_set_sysex (&evt, (char *)(seq_ev->data.ext.ptr) + 1,
+					  seq_ev->data.ext.len - 2, FALSE);
+	      break;
 	    default:
 	      continue;		/* unhandled event, next loop iteration */
 	    }

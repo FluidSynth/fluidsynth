@@ -295,7 +295,7 @@ fluid_midi_router_handle_midi_event(void* data, fluid_midi_event_t* event)
 
   /* Lock the rules table, so that for example the shell thread doesn't
    * clear the rules we are just working with */
-  fluid_mutex_lock(router->ruletables_mutex);
+  fluid_mutex_lock(router->ruletables_mutex);   /* ++ lock rules */
 
   /* Depending on the event type, choose the correct table of rules.
    * Also invoke the appropriate callback function for the event type
@@ -331,7 +331,10 @@ fluid_midi_router_handle_midi_event(void* data, fluid_midi_event_t* event)
 	event_has_par2=1;
 	break;
       case MIDI_SYSTEM_RESET:
-        return router->event_handler(router->event_handler_data,event);
+      case MIDI_SYSEX:
+        ret_val = router->event_handler (router->event_handler_data,event);
+        fluid_mutex_unlock (router->ruletables_mutex);  /* -- unlock rules */
+        return ret_val;
       default:
 	break;
   }
@@ -515,7 +518,7 @@ fluid_midi_router_handle_midi_event(void* data, fluid_midi_event_t* event)
   };
 
   /* We are finished with the rule tables. Allow the other threads to do their job. */
-  fluid_mutex_unlock(router->ruletables_mutex);
+  fluid_mutex_unlock(router->ruletables_mutex);         /* -- unlock rules */
 
   return ret_val;
 }

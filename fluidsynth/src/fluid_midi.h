@@ -224,7 +224,7 @@ enum fluid_driver_status
  */
 struct _fluid_midi_event_t {
   fluid_midi_event_t* next; /* Link to next event */
-  void *paramptr;           /* Pointer parameter (for SYSEX data), size is stored to param1 */
+  void *paramptr;           /* Pointer parameter (for SYSEX data), size is stored to param1, param2 indicates if pointer should be freed (dynamic if TRUE) */
   unsigned int dtime;       /* Delay (ticks) between this and previous event. midi tracks. */
   unsigned int param1;      /* First parameter */
   unsigned int param2;      /* Second parameter */
@@ -339,10 +339,9 @@ int fluid_midi_file_skip(fluid_midi_file* mf, int len);
 int fluid_midi_file_read_tracklen(fluid_midi_file* mf);
 int fluid_midi_file_eot(fluid_midi_file* mf);
 int fluid_midi_file_get_division(fluid_midi_file* midifile);
-int fluid_midi_event_length(unsigned char status);
 
-/* How many parameters may a MIDI event have? */
-#define FLUID_MIDI_PARSER_MAX_PAR 3
+
+#define FLUID_MIDI_PARSER_MAX_DATA_SIZE 1024    /**< Maximum size of MIDI parameters/data (largest is SYSEX data) */
 
 /*
  * fluid_midi_parser_t
@@ -352,7 +351,7 @@ struct _fluid_midi_parser_t {
   unsigned char channel;          /* The channel of the event that is received (in case of a channel event) */
   unsigned int nr_bytes;          /* How many bytes have been read for the current event? */
   unsigned int nr_bytes_total;    /* How many bytes does the current event type include? */
-  unsigned short p[FLUID_MIDI_PARSER_MAX_PAR]; /* The parameters */
+  unsigned char data[FLUID_MIDI_PARSER_MAX_DATA_SIZE]; /* The parameters or SYSEX data */
   fluid_midi_event_t event;        /* The event, that is returned to the MIDI driver. */
 };
 

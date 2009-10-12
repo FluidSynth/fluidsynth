@@ -1051,6 +1051,8 @@ delete_fluid_synth(fluid_synth_t* synth)
   FLUID_FREE(synth->LADSPA_FxUnit);
 #endif
 
+  fluid_private_free (synth->thread_queues);
+
   /* free any queues in pool */
   for (list = synth->queue_pool; list; list = list->next) {
     queue = (fluid_event_queue_t *)(list->data);
@@ -1065,7 +1067,6 @@ delete_fluid_synth(fluid_synth_t* synth)
     if (synth->queues[i]) fluid_event_queue_free (synth->queues[i]);
 
   delete_fluid_list (synth->queue_pool);
-  fluid_private_free (synth->thread_queues);
 
   fluid_rec_mutex_destroy(synth->mutex);
 
@@ -1713,7 +1714,7 @@ fluid_synth_sysex(fluid_synth_t *synth, char *data, int len,
   fluid_return_val_if_fail (len > 0, FLUID_FAILED);
   fluid_return_val_if_fail (!response || response_len, FLUID_FAILED);
 
-  if (len < 6) return FLUID_OK;
+  if (len < 4) return FLUID_OK;
 
   /* MIDI tuning SYSEX message? */
   if ((data[0] == MIDI_SYSEX_UNIV_NON_REALTIME || data[0] == MIDI_SYSEX_UNIV_REALTIME)
@@ -1742,10 +1743,12 @@ fluid_synth_sysex(fluid_synth_t *synth, char *data, int len,
         if (handled) *handled = FALSE;
         break;
     }
+
+    return FLUID_OK;
   }
 
   /* GS reset message? */
-  if (data[0] == MIDI_SYSEX_MANUF_ROLAND
+  if (len == 9 && data[0] == MIDI_SYSEX_MANUF_ROLAND
       && data[1] == 0x10 && data[2] == 0x42 && data[3] == 0x12 && data[4] == 0x40
       && data[5] == 0x00 && data[6] == 0x7F && data[7] == 0x00 && data[8] == 0x41)
   {
@@ -1753,6 +1756,8 @@ fluid_synth_sysex(fluid_synth_t *synth, char *data, int len,
       fluid_synth_setstr (synth, "synth.midi-mode", "gs");
 
     if (handled) *handled = FALSE;    
+
+    return FLUID_OK;
   }
 
   return FLUID_OK;
@@ -3874,7 +3879,7 @@ new_fluid_sfont_info (fluid_synth_t *synth, fluid_sfont_t *sfont)
 int
 fluid_synth_sfunload(fluid_synth_t* synth, unsigned int id, int reset_presets)
 {
-  fluid_sfont_info_t *sfont_info;
+  fluid_sfont_info_t *sfont_info = NULL;
   fluid_list_t *list;
 
   fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
@@ -5792,7 +5797,7 @@ fluid_synth_get_bank_offset(fluid_synth_t* synth, int sfont_id)
 {
   fluid_sfont_info_t *sfont_info;
   fluid_list_t *list;
-  int offset;
+  int offset = 0;
 
   fluid_return_val_if_fail (synth != NULL, 0);
 

@@ -153,7 +153,7 @@ else
 fi
 
 dnl Assert that glib and gthread are available
-PKG_CHECK_MODULES(GLIB, glib-2.0 >= 2.10 gthread-2.0 >= 2.10)
+PKG_CHECK_MODULES(GLIB, glib-2.0 >= 2.6.5 gthread-2.0 >= 2.6.5)
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
 

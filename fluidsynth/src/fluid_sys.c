@@ -26,6 +26,9 @@
 #include <readline/history.h>
 #endif
 
+/* WIN32 HACK - Flag used to differentiate between a file descriptor and a socket.
+ * Should work, so long as no SOCKET or file descriptor ends up with this bit set. - JG */
+#define WIN32_SOCKET_FLAG       0x40000000
 
 struct _fluid_server_socket_t
 {
@@ -388,7 +391,6 @@ struct _fluid_timer_t
   int auto_destroy;
 };
 
-static int fluid_timer_count = 0;
 DWORD WINAPI fluid_timer_run(LPVOID data);
 
 fluid_timer_t*
@@ -470,9 +472,13 @@ fluid_timer_run(LPVOID data)
 int
 delete_fluid_timer(fluid_timer_t* timer)
 {
+  int destroy = !timer->auto_destroy;
+
   timer->cont = 0;
   fluid_timer_join(timer);
-  FLUID_FREE(timer);
+
+  if (destroy) FLUID_FREE(timer);
+
   return FLUID_OK;
 }
 
@@ -518,7 +524,6 @@ struct _fluid_timer_t
   int auto_destroy;
 };
 
-static int fluid_timer_count = 0;
 void fluid_timer_run(void *data);
 
 fluid_timer_t*
@@ -599,9 +604,13 @@ fluid_timer_run(void *data)
 int
 delete_fluid_timer(fluid_timer_t* timer)
 {
+  int destroy = !timer->auto_destroy;
+
   timer->cont = 0;
   fluid_timer_join(timer);
-  FLUID_FREE(timer);
+
+  if (destroy) FLUID_FREE(timer);
+
   return FLUID_OK;
 }
 
@@ -748,10 +757,14 @@ new_fluid_timer(int msec, fluid_timer_callback_t callback, void* data,
 int
 delete_fluid_timer(fluid_timer_t* timer)
 {
+  int destroy = !timer->auto_destroy;
+
   timer->cont = 0;
   fluid_timer_join(timer);
   FLUID_LOG(FLUID_DBG, "Joined player thread");
-  FLUID_FREE(timer);
+
+  if (destroy) FLUID_FREE(timer);
+
   return FLUID_OK;
 }
 
@@ -1009,7 +1022,8 @@ fluid_get_stdout (void)
  * @return 0 if end-of-stream, -1 if error, non zero otherwise
  */
 int
-fluid_istream_readline(fluid_istream_t in, char* prompt, char* buf, int len)
+fluid_istream_readline (fluid_istream_t in, fluid_ostream_t out, char* prompt,
+                        char* buf, int len)
 {
 #if WITH_READLINE
   if (in == fluid_get_stdin ())
@@ -1028,10 +1042,11 @@ fluid_istream_readline(fluid_istream_t in, char* prompt, char* buf, int len)
     return 1;
   }
   else
-    return fluid_istream_gets(in, buf, len);
-#else
-  return fluid_istream_gets(in, buf, len);
 #endif
+  {
+    fluid_ostream_printf (out, "%s", prompt);
+    return fluid_istream_gets (in, buf, len);
+  }
 }
 
 /**
@@ -1051,8 +1066,22 @@ fluid_istream_gets (fluid_istream_t in, char* buf, int len)
 
   while (--len > 0)
   {
+#ifndef WIN32
     n = read(in, &c, 1);
     if (n == -1) return -1;
+#else
+    /* Handle read differently depending on if its a socket or file descriptor */
+    if (!(in & WIN32_SOCKET_FLAG))
+    {
+      n = read(in, &c, 1);
+      if (n == -1) return -1;
+    }
+    else
+    {
+      n = recv(in & ~WIN32_SOCKET_FLAG, &c, 1, 0);
+      if (n == SOCKET_ERROR) return -1;
+    }
+#endif
 
     if (n == 0)
     {
@@ -1060,13 +1089,14 @@ fluid_istream_gets (fluid_istream_t in, char* buf, int len)
       return 0;
     }
 
-    if ((c == '\n') || (c == '\r'))
+    if ((c == '\n'))
     {
       *buf++ = 0;
       return 1;
     }
 
-    *buf++ = c;
+    /* Store all characters excluding CR */
+    if (c != '\r') *buf++ = c;
   }
 
   return -1;
@@ -1104,21 +1134,16 @@ fluid_ostream_printf (fluid_ostream_t out, char* format, ...)
   {
     int retval;
 
-    retval = send (out, buf, strlen (buf), 0);
+    /* Handle write differently depending on if its a socket or file descriptor */
+    if (!(out & WIN32_SOCKET_FLAG))
+      return write(out, buf, strlen (buf));
+
+    /* Socket */
+    retval = send (out & ~WIN32_SOCKET_FLAG, buf, strlen (buf), 0);
 
     return retval != SOCKET_ERROR ? retval : -1;
   }
 #endif
-}
-
-fluid_istream_t fluid_socket_get_istream (fluid_socket_t sock)
-{
-  return sock;
-}
-
-fluid_ostream_t fluid_socket_get_ostream (fluid_socket_t sock)
-{
-  return sock;
 }
 
 int fluid_server_socket_join(fluid_server_socket_t *server_socket)
@@ -1130,6 +1155,16 @@ int fluid_server_socket_join(fluid_server_socket_t *server_socket)
 #ifndef WIN32           // Not win32?
 
 #define SOCKET_ERROR -1
+
+fluid_istream_t fluid_socket_get_istream (fluid_socket_t sock)
+{
+  return sock;
+}
+
+fluid_ostream_t fluid_socket_get_ostream (fluid_socket_t sock)
+{
+  return sock;
+}
 
 void fluid_socket_close(fluid_socket_t sock)
 {
@@ -1252,6 +1287,16 @@ int delete_fluid_server_socket(fluid_server_socket_t* server_socket)
 #include <winsock2.h>
 #include <ws2tcpip.h>
 
+fluid_istream_t fluid_socket_get_istream (fluid_socket_t sock)
+{
+  return sock | WIN32_SOCKET_FLAG;
+}
+
+fluid_ostream_t fluid_socket_get_ostream (fluid_socket_t sock)
+{
+  return sock | WIN32_SOCKET_FLAG;
+}
+
 void fluid_socket_close (fluid_socket_t sock)
 {
   if (sock != INVALID_SOCKET)
@@ -1270,7 +1315,7 @@ static void fluid_server_socket_run (void *data)
 
   while (server_socket->cont)
   {
-    client_socket = accept (server_socket->socket, &addr, &addrlen);
+    client_socket = accept (server_socket->socket, (struct sockaddr *)&addr, &addrlen);
 
     FLUID_LOG (FLUID_DBG, "New client connection");
 
@@ -1301,7 +1346,6 @@ new_fluid_server_socket(int port, fluid_server_func_t func, void* data)
   struct sockaddr_in addr;
   fluid_socket_t sock;
   WSADATA wsaData;
-  struct addrinfo *result = NULL, *ptr = NULL, hints;
   int retval;
 
   g_return_val_if_fail (func != NULL, NULL);
@@ -1315,44 +1359,28 @@ new_fluid_server_socket(int port, fluid_server_func_t func, void* data)
     return NULL;
   }
 
-  ZeroMemory (&hints, sizeof (hints));
-  hints.ai_family = AF_INET;
-  hints.ai_socktype = SOCK_STREAM;
-  hints.ai_protocol = IPPROTO_TCP;
-  hints.ai_flags = AI_PASSIVE;
-
-  // Resolve the local address and port to be used by the server
-  retval = getaddrinfo (NULL, port, &hints, &result);   // ++ alloc 'result'
-
-  if (retval != 0)
-  {
-    FLUID_LOG(FLUID_ERR, "Server socket creation error: getaddrinfo failed: %d", retval);
-    WSACleanup ();
-    return NULL;
-  }
-
-  sock = socket (result->ai_family, result->ai_socktype, result->ai_protocol);
+  sock = socket (AF_INET, SOCK_STREAM, 0);
 
   if (sock == INVALID_SOCKET)
   {
     FLUID_LOG (FLUID_ERR, "Failed to create server socket: %ld", WSAGetLastError ());
-    freeaddrinfo (result);    // -- free result
     WSACleanup ();
     return NULL;
   }
 
-  retval = bind (sock, result->ai_addr, (int)result->ai_addrlen);
+  addr.sin_family = AF_INET;
+  addr.sin_port = htons (port);
+  addr.sin_addr.s_addr = htonl (INADDR_ANY);
+
+  retval = bind (sock, (struct sockaddr *)&addr, sizeof (addr));
 
   if (retval == SOCKET_ERROR)
   {
     FLUID_LOG (FLUID_ERR, "Failed to bind server socket: %ld", WSAGetLastError ());
-    freeaddrinfo (result);    // -- free result
     fluid_socket_close (sock);
     WSACleanup ();
     return NULL;
   }
-
-  freeaddrinfo (result);    // -- free result
 
   if (listen (sock, SOMAXCONN) == SOCKET_ERROR)
   {
@@ -1377,8 +1405,8 @@ new_fluid_server_socket(int port, fluid_server_func_t func, void* data)
   server_socket->data = data;
   server_socket->cont = 1;
 
-  server_socket->thread = new_fluid_thread (fluid_server_socket_run, server_socket, FALSE);
-
+  server_socket->thread = new_fluid_thread(fluid_server_socket_run, server_socket,
+                                           FLUID_THREAD_PRIO_NORMAL, 0, FALSE);
   if (server_socket->thread == NULL)
   {
     FLUID_FREE (server_socket);

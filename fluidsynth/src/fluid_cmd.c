@@ -210,8 +210,19 @@ void fluid_shell_init(fluid_shell_t* shell,
 		     fluid_istream_t in, fluid_ostream_t out);
 
 
-fluid_shell_t* new_fluid_shell(fluid_settings_t* settings, fluid_cmd_handler_t* handler,
-			     fluid_istream_t in, fluid_ostream_t out, int thread)
+/**
+ * Create a new FluidSynth command shell.
+ * @param settings Setting parameters to use with the shell
+ * @param handler Command handler
+ * @param in Input stream
+ * @param out Output stream
+ * @param thread TRUE if shell should be run in a separate thread, FALSE to run
+ *   it in the current thread (function blocks until "quit")
+ * @return New shell instance or NULL on error
+ */
+fluid_shell_t *
+new_fluid_shell(fluid_settings_t* settings, fluid_cmd_handler_t* handler,
+                fluid_istream_t in, fluid_ostream_t out, int thread)
 {
   fluid_shell_t* shell = FLUID_NEW(fluid_shell_t);
   if (shell == NULL) {
@@ -272,7 +283,7 @@ int fluid_shell_run(fluid_shell_t* shell)
   /* handle user input */
   while (cont) {
 
-    n = fluid_istream_readline(shell->in, prompt ? prompt : "", workline, FLUID_WORKLINELENGTH);
+    n = fluid_istream_readline(shell->in, shell->out, prompt ? prompt : "", workline, FLUID_WORKLINELENGTH);
 
     if (n < 0) {
       break;

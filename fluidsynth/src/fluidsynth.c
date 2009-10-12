@@ -129,11 +129,23 @@ print_pretty_int (int i)
   else printf ("%d", i);
 }
 
+typedef struct
+{
+  int count;            /* Total count of options */
+  int curindex;         /* Current index in options */
+} OptionBag;
+
 /* Function to display each string option value */
 static void
 settings_option_foreach_func (void *data, char *name, char *option)
 {
-  printf (" %s", option);
+  OptionBag *bag = data;
+
+  bag->curindex++;
+
+  if (bag->curindex < bag->count)
+    printf ("'%s',", option);
+  else printf ("'%s'", option);
 }
 
 /* fluid_settings_foreach function for displaying option help  "-o help" */
@@ -145,6 +157,7 @@ settings_foreach_func (void *data, char *name, int type)
   int imin, imax, idef;
   char *defstr;
   int count;
+  OptionBag bag;
 
   switch (type)
   {
@@ -178,8 +191,13 @@ settings_foreach_func (void *data, char *name, int type)
       else printf ("   [vals:");
 
       if (count > 0)
-        fluid_settings_foreach_option_alpha (settings, name, NULL,
+      {
+        bag.count = count;
+        bag.curindex = 0;
+        fluid_settings_foreach_option_alpha (settings, name, &bag,
                                              settings_option_foreach_func);
+      }
+
       printf ("]\n");
     }
     else printf ("\n");
@@ -655,7 +673,7 @@ int main(int argc, char** argv)
   }
 
   /* run the server, if requested */
-#if !defined(MACINTOSH) && !defined(WIN32)
+#if !defined(MACINTOSH)
   if (with_server) {
     server = new_fluid_server(settings, newclient, synth);
     if (server == NULL) {

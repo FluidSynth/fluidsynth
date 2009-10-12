@@ -23,10 +23,8 @@
 #include "fluid_synth.h"
 #include "fluid_settings.h"
 
-/* all outgoing user messages are stored in a global text buffer */
-#define MIDI_MESSAGE_LENGTH 1024
-char midi_message_buffer[MIDI_MESSAGE_LENGTH];
 
+static int fluid_midi_event_length(unsigned char event);
 
 
 /***************************************************************
@@ -348,6 +346,7 @@ int fluid_midi_file_read_event(fluid_midi_file* mf, fluid_track_t* track)
 	int channel = 0;
 	int param1 = 0;
 	int param2 = 0;
+	int size;
 
 	/* read the delta-time of the event */
 	if (fluid_midi_file_read_varlen(mf) != FLUID_OK) {
@@ -405,9 +404,13 @@ int fluid_midi_file_read_event(fluid_midi_file* mf, fluid_track_t* track)
 			}
 
 			evt->dtime = mf->dtime;
-			evt->type = MIDI_SYSEX;
-			evt->paramptr = metadata;
-			evt->param1 = metadata[mf->varlen - 1] == MIDI_EOX ? mf->varlen - 1 : mf->varlen;
+			size = mf->varlen;
+
+			if (metadata[mf->varlen - 1] == MIDI_EOX)
+				size--;
+
+			/* Add SYSEX event and indicate that its dynamically allocated and should be freed with event */
+			fluid_midi_event_set_sysex (evt, metadata, size, TRUE);
 			fluid_track_add_event (track, evt);
 			mf->dtime = 0;
 		}
@@ -683,7 +686,8 @@ int delete_fluid_midi_event(fluid_midi_event_t* evt)
 	{
 		temp = evt->next;
 
-		if (evt->type == MIDI_SYSEX && evt->paramptr)
+  /* Dynamic SYSEX event? - free (param2 indicates if dynamic) */
+		if (evt->type == MIDI_SYSEX && evt->paramptr && evt->param2)
 			FLUID_FREE (evt->paramptr);
 
 		FLUID_FREE(evt);
@@ -862,11 +866,33 @@ int fluid_midi_event_get_pitch(fluid_midi_event_t* evt)
  * Set the pitch field of a MIDI event structure.
  * @param evt MIDI event structure
  * @param val Pitch value (DOCME units?)
- * @return Always returns 0
+ * @return Always returns FLUID_OK
  */
 int fluid_midi_event_set_pitch(fluid_midi_event_t* evt, int val)
 {
 	evt->param1 = val;
+	return FLUID_OK;
+}
+
+/**
+ * Assign sysex data to a MIDI event structure.
+ * @param evt MIDI event structure
+ * @param data Pointer to SYSEX data
+ * @param size Size of SYSEX data
+ * @param dynamic TRUE if the SYSEX data has been dynamically allocated and
+ *   should be freed when the event is freed (only applies if event gets destroyed
+ *   with delete_fluid_midi_event())
+ * @return Always returns FLUID_OK
+ *
+ * NOTE: Unlike the other event assignment functions, this one sets evt->type.
+ */
+int
+fluid_midi_event_set_sysex(fluid_midi_event_t* evt, void *data, int size, int dynamic)
+{
+	evt->type = MIDI_SYSEX;
+	evt->paramptr = data;
+	evt->param1 = size;
+	evt->param2 = dynamic;
 	return FLUID_OK;
 }
 
@@ -1493,129 +1519,118 @@ int delete_fluid_midi_parser(fluid_midi_parser_t* parser)
 	return FLUID_OK;
 }
 
-/*
- * fluid_midi_parser_parse
- *
- * Purpose:
- * The MIDI byte stream is fed into the parser, one byte at a time.
- * As soon as the parser has recognized an event, it will return it.
- * Otherwise it returns NULL.
+/**
+ * Parse a MIDI stream one character at a time.
+ * @param parser Parser instance
+ * @param c Next character in MIDI stream
+ * @return A parsed MIDI event or NULL if none.  Event is internal and should
+ *   not be modified or freed and is only valid until next call to this function.
  */
-fluid_midi_event_t* fluid_midi_parser_parse(fluid_midi_parser_t* parser, unsigned char c)
+fluid_midi_event_t *
+fluid_midi_parser_parse(fluid_midi_parser_t* parser, unsigned char c)
 {
-	/*********************************************************************/
-	/* 'Process' system real-time messages                               */
-	/*********************************************************************/
-	/* There are not too many real-time messages that are of interest here.
-	 * They can occur anywhere, even in the middle of a noteon message!
-	 * Real-time range: 0xF8 .. 0xFF
-	 * Note: Real-time does not affect (running) status.
-	 */
-	if (c >= 0xF8){
-		if (c == MIDI_SYSTEM_RESET){
-			parser->event.type = c;
-			parser->status = 0; /* clear the status */
-			return &parser->event;
-		};
-		return NULL;
-	};
+  fluid_midi_event_t *event;
 
-	/*********************************************************************/
-	/* 'Process' system common messages (again, just skip them)          */
-	/*********************************************************************/
-	/* There are no system common messages that are of interest here.
-	 * System common range: 0xF0 .. 0xF7
-	 */
+  /* Real-time messages (0xF8-0xFF) can occur anywhere, even in the middle
+   * of another message. */
+  if (c >= 0xF8)
+  {
+    if (c == MIDI_SYSTEM_RESET)
+    {
+      parser->event.type = c;
+      parser->status = 0;       /* clear the status */
+      return &parser->event;
+    }
 
-	if (c > 0xF0){
-		/* MIDI specs say: To ignore a non-real-time message, just discard all data up to
-		 * the next status byte.
-		 * And our parser will ignore data that is received without a valid status.
-		 * Note: system common cancels running status. */
-		parser->status = 0;
-		return NULL;
-	};
+    return NULL;
+  }
 
-	/*********************************************************************/
-	/* Process voice category messages:                                  */
-	/*********************************************************************/
-	/* Now that we have handled realtime and system common messages, only
-	 * voice messages are left.
-	 * Only a status byte has bit # 7 set.
-	 * So no matter the status of the parser (in case we have lost sync),
-	 * as soon as a byte >= 0x80 comes in, we are dealing with a status byte
-	 * and start a new event.
-	 */
+  /* Status byte? - If previous message not yet complete, it is discarded (re-sync). */
+  if (c & 0x80)
+  {
+    /* Any status byte terminates SYSEX messages (not just 0xF7) */
+    if (parser->status == MIDI_SYSEX && parser->nr_bytes > 0)
+    {
+      event = &parser->event;
+      fluid_midi_event_set_sysex (event, parser->data, parser->nr_bytes, FALSE);
+    }
+    else event = NULL;
 
-	if (c & 0x80){
-		parser->channel = c & 0x0F;
-		parser->status = c & 0xF0;
-		/* The event consumes x bytes of data... (subtract 1 for the status byte) */
-		parser->nr_bytes_total=fluid_midi_event_length(parser->status)-1;
-		/* of which we have read 0 at this time. */
-		parser->nr_bytes = 0;
-		return NULL;
-	};
+    if (c < 0xF0)       /* Voice category message? */
+    {
+      parser->channel = c & 0x0F;
+      parser->status = c & 0xF0;
 
-	/*********************************************************************/
-	/* Process data                                                      */
-	/*********************************************************************/
-	/* If we made it this far, then the received char belongs to the data
-	 * of the last event. */
-	if (parser->status == 0){
-		/* We are not interested in the event currently received.
-		 * Discard the data. */
-		return NULL;
-	};
+      /* The event consumes x bytes of data... (subtract 1 for the status byte) */
+      parser->nr_bytes_total = fluid_midi_event_length (parser->status) - 1;
 
-	/* Store the first couple of bytes */
-	if (parser->nr_bytes < FLUID_MIDI_PARSER_MAX_PAR){
-		parser->p[parser->nr_bytes]=c;
-	};
-	parser->nr_bytes++;
+      parser->nr_bytes = 0;     /* 0  bytes read so far */
+    }
+    else if (c == MIDI_SYSEX)
+    {
+      parser->status = MIDI_SYSEX;
+      parser->nr_bytes = 0;
+    }
+    else parser->status = 0;    /* Discard other system messages (0xF1-0xF7) */
 
-	/* Do we still need more data to get this event complete? */
-	if (parser->nr_bytes < parser->nr_bytes_total){
-		return NULL;
-	};
+    return event;       /* Return SYSEX event or NULL */
+  }
 
-	/*********************************************************************/
-	/* Send the event                                                    */
-	/*********************************************************************/
-	/* The event is ready-to-go.
-	 * About 'running status':
-	 * The MIDI protocol has a built-in compression mechanism. If several similar events are sent
-	 * in-a-row, for example note-ons, then the event type is only sent once. For this case,
-	 * the last event type (status) is remembered.
-	 * We simply keep the status as it is, just reset
-	 * the parameter counter. If another status byte comes in, it will overwrite the status. */
-	parser->event.type = parser->status;
-	parser->event.channel = parser->channel;
-	parser->nr_bytes = 0; /* Related to running status! */
-	switch (parser->status){
-	case NOTE_OFF:
-	case NOTE_ON:
-	case KEY_PRESSURE:
-	case CONTROL_CHANGE:
-	case PROGRAM_CHANGE:
-	case CHANNEL_PRESSURE:
-		parser->event.param1 = parser->p[0]; /* For example key number */
-		parser->event.param2 = parser->p[1]; /* For example velocity */
-		break;
-	case PITCH_BEND:
-		/* Pitch-bend is transmitted with 14-bit precision. */
-		parser->event.param1 = ((parser->p[1] << 7) | parser->p[0]); /* Note: '|' does here the same as '+' (no common bits), but might be faster */
-		break;
-	default:
-		/* Unlikely */
-		return NULL;
-	};
-	return &parser->event;
-};
+
+  /* Data/parameter byte */
+
+
+  /* Discard data bytes for events we don't care about */
+  if (parser->status == 0)
+    return NULL;
+
+  /* Max data size exceeded? (SYSEX messages only really) */
+  if (parser->nr_bytes == FLUID_MIDI_PARSER_MAX_DATA_SIZE)
+  {
+    parser->status = 0;         /* Discard the rest of the message */
+    return NULL;
+  }
+
+  /* Store next byte */
+  parser->data[parser->nr_bytes++] = c;
+
+  /* Do we still need more data to get this event complete? */
+  if (parser->nr_bytes < parser->nr_bytes_total)
+    return NULL;
+
+  /* Event is complete, return it.
+   * Running status byte MIDI feature is also handled here. */
+  parser->event.type = parser->status;
+  parser->event.channel = parser->channel;
+  parser->nr_bytes = 0;         /* Reset data size, in case there are additional running status messages */
+
+  switch (parser->status)
+  {
+    case NOTE_OFF:
+    case NOTE_ON:
+    case KEY_PRESSURE:
+    case CONTROL_CHANGE:
+    case PROGRAM_CHANGE:
+    case CHANNEL_PRESSURE:
+      parser->event.param1 = parser->data[0]; /* For example key number */
+      parser->event.param2 = parser->data[1]; /* For example velocity */
+      break;
+    case PITCH_BEND:
+      /* Pitch-bend is transmitted with 14-bit precision. */
+      parser->event.param1 = (parser->data[1] << 7) | parser->data[0];
+      break;
+    default: /* Unlikely */
+      return NULL;
+  }
+
+  return &parser->event;
+}
 
 /* Purpose:
- * Returns the length of the MIDI message. */
-int fluid_midi_event_length(unsigned char event){
+ * Returns the length of a MIDI message. */
+static int
+fluid_midi_event_length(unsigned char event)
+{
 	switch (event & 0xF0) {
 		case NOTE_OFF: 
 		case NOTE_ON:
@@ -1628,8 +1643,6 @@ int fluid_midi_event_length(unsigned char event){
 			return 2;
 	}
 	switch (event) {
-		case MIDI_SYSEX: 
-			return 0;
 		case MIDI_TIME_CODE:
 		case MIDI_SONG_SELECT:
 		case 0xF4:
@@ -1637,7 +1650,7 @@ int fluid_midi_event_length(unsigned char event){
 			return 2;
 		case MIDI_TUNE_REQUEST:
 			return 1;
-		case MIDI_SONG_POSITION: 
+		case MIDI_SONG_POSITION:
 			return 3;
 	}
 	return 1;
