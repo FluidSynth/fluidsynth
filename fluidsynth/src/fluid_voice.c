@@ -142,6 +142,7 @@ fluid_voice_init(fluid_voice_t* voice, fluid_sample_t* sample,
   voice->sample = sample;
   voice->start_time = start_time;
   voice->ticks = 0;
+  voice->noteoff_ticks = 0;
   voice->debug = 0;
   voice->has_looped = 0; /* Will be set during voice_write when the 2nd loop point is reached */
   voice->last_fres = -1; /* The filter coefficients have to be calculated later in the DSP loop. */
@@ -261,6 +262,11 @@ fluid_voice_write (fluid_voice_t* voice, fluid_real_t *dsp_buf)
   {
     fluid_voice_off(voice);
     return 0;
+  }
+
+  if (voice->noteoff_ticks != 0 && voice->ticks >= voice->noteoff_ticks) 
+  {
+    fluid_voice_noteoff(voice, 0);
   }
 
   fluid_check_fpe ("voice_write startup");
@@ -1551,11 +1557,20 @@ int fluid_voice_modulate_all(fluid_voice_t* voice)
 
 /*
  * fluid_voice_noteoff
+ * @param at_tick minimum amount of ticks (samples) when the note 
+ *  is turned off.
  */
 int
-fluid_voice_noteoff(fluid_voice_t* voice)
+fluid_voice_noteoff(fluid_voice_t* voice, unsigned int at_tick)
 {
   fluid_profile(FLUID_PROF_VOICE_NOTE, voice->ref);
+
+  if (at_tick > voice->ticks) {
+    /* Delay noteoff */
+    voice->noteoff_ticks = at_tick;
+    return FLUID_OK;
+  }
+  voice->noteoff_ticks = 0;
 
   if (voice->channel && fluid_channel_sustained(voice->channel)) {
     voice->status = FLUID_VOICE_SUSTAINED;

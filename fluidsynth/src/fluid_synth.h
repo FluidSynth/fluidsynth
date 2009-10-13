@@ -108,6 +108,7 @@ typedef struct _fluid_sfont_info_t {
  * verbose
  * dump
  * sample_rate (will be runtime change-able in the future)
+ * min_note_length_ticks
  * midi_channels
  * audio_channels
  * audio_groups
@@ -233,7 +234,8 @@ struct _fluid_synth_t
   fluid_private_t tuning_iter;       /**< Tuning iterators per each thread */
 
   fluid_midi_router_t* midi_router;  /**< The midi router. Could be done nicer. */
-  fluid_sample_timer_t* sample_timers; /**< List of timers triggered after a block has been processed */
+  fluid_sample_timer_t* sample_timers; /**< List of timers triggered before a block is processed */
+  unsigned int min_note_length_ticks; /**< If note-offs are triggered just after a note-on, they will be delayed */
 
   int cores;                         /**< Number of CPU cores (1 by default) */
   fluid_thread_t **core_threads;     /**< Array of core threads (cores - 1 in length) */

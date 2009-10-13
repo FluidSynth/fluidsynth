@@ -253,6 +253,8 @@ void fluid_synth_settings(fluid_settings_t* settings)
   fluid_settings_register_str(settings, "synth.midi-mode-lock", "no", 0, NULL, NULL);
   fluid_settings_add_option(settings, "synth.midi-mode-lock", "no");
   fluid_settings_add_option(settings, "synth.midi-mode-lock", "yes");
+
+  fluid_settings_register_int(settings, "synth.min-note-length", 0, 0, 65536, 0, NULL, NULL);
 }
 
 /*
@@ -575,6 +577,9 @@ new_fluid_synth(fluid_settings_t *settings)
   fluid_settings_getnum(settings, "synth.gain", &synth->gain);
   fluid_settings_getint(settings, "synth.device-id", &synth->device_id);
   fluid_settings_getint(settings, "synth.cpu-cores", &synth->cores);
+
+  fluid_settings_getint(settings, "synth.min-note-length", &i);
+  synth->min_note_length_ticks = (unsigned int) (i*synth->sample_rate/1000.0f);
 
   /* register the callbacks */
   fluid_settings_register_num(settings, "synth.gain",
@@ -1406,7 +1411,7 @@ fluid_synth_noteoff_LOCAL(fluid_synth_t* synth, int chan, int key)
 		 used_voices);
       } /* if verbose */
 
-      fluid_voice_noteoff(voice);
+      fluid_voice_noteoff(voice, synth->min_note_length_ticks);
       status = FLUID_OK;
     } /* if voice on */
   } /* for all voices */
@@ -1424,7 +1429,7 @@ fluid_synth_damp_voices_LOCAL(fluid_synth_t* synth, int chan)
     voice = synth->voice[i];
 
     if ((voice->chan == chan) && _SUSTAINED(voice))
-      fluid_voice_noteoff(voice);
+      fluid_voice_noteoff(voice, synth->min_note_length_ticks);
   }
 
   return FLUID_OK;
@@ -2008,7 +2013,7 @@ fluid_synth_all_notes_off_LOCAL(fluid_synth_t* synth, int chan)
     voice = synth->voice[i];
 
     if (_PLAYING(voice) && (voice->chan == chan))
-      fluid_voice_noteoff(voice);
+      fluid_voice_noteoff(voice, synth->min_note_length_ticks);
   }
   return FLUID_OK;
 }
@@ -4687,7 +4692,7 @@ fluid_synth_release_voice_on_same_note_LOCAL(fluid_synth_t* synth, int chan,
 	&& (voice->chan == chan)
 	&& (voice->key == key)
 	&& (fluid_voice_get_id(voice) != synth->noteid)) {
-      fluid_voice_noteoff(voice);
+      fluid_voice_noteoff(voice, synth->min_note_length_ticks);
     }
   }
 }
@@ -5745,7 +5750,7 @@ fluid_synth_stop_LOCAL (fluid_synth_t *synth, unsigned int id)
     voice = synth->voice[i];
 
     if (_ON(voice) && (fluid_voice_get_id (voice) == id))
-      fluid_voice_noteoff(voice);
+      fluid_voice_noteoff(voice, synth->min_note_length_ticks);
   }
 }
 
