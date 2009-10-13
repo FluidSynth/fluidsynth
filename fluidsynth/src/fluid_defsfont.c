@@ -1667,66 +1667,74 @@ fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defs
    equivalent to the matching ID list in memory regardless of LE/BE machine
 */
 
-#ifdef WORDS_BIGENDIAN
+#if FLUID_IS_BIG_ENDIAN
+
 #define READCHUNK(var,fd)	G_STMT_START {		\
 	if (!safe_fread(var, 8, fd))			\
-	return(FAIL);					\
-	((SFChunk *)(var))->size = GUINT32_FROM_BE(((SFChunk *)(var))->size);  \
+		return(FAIL);				\
+	((SFChunk *)(var))->size = GUINT32_FROM_LE(((SFChunk *)(var))->size);  \
 } G_STMT_END
+
+#define READD(var,fd)		G_STMT_START {		\
+	unsigned int _temp;				\
+	if (!safe_fread(&_temp, 4, fd))			\
+		return(FAIL);				\
+	var = GINT32_FROM_LE(_temp);			\
+} G_STMT_END
+
+#define READW(var,fd)		G_STMT_START {		\
+	unsigned short _temp;				\
+	if (!safe_fread(&_temp, 2, fd))			\
+		return(FAIL);				\
+	var = GINT16_FROM_LE(_temp);			\
+} G_STMT_END
+
 #else
+
 #define READCHUNK(var,fd)	G_STMT_START {		\
     if (!safe_fread(var, 8, fd))			\
 	return(FAIL);					\
     ((SFChunk *)(var))->size = GUINT32_FROM_LE(((SFChunk *)(var))->size);  \
 } G_STMT_END
-#endif
-#define READID(var,fd)		G_STMT_START {		\
-    if (!safe_fread(var, 4, fd))			\
-	return(FAIL);					\
-} G_STMT_END
-#define READSTR(var,fd)		G_STMT_START {		\
-    if (!safe_fread(var, 20, fd))			\
-	return(FAIL);					\
-    (*var)[20] = '\0';					\
-} G_STMT_END
-#ifdef WORDS_BIGENDIAN
-#define READD(var,fd)		G_STMT_START {		\
-	unsigned int _temp;					\
-	if (!safe_fread(&_temp, 4, fd))			\
-	return(FAIL);					\
-	var = GINT32_FROM_BE(_temp);			\
-} G_STMT_END
-#else
+
 #define READD(var,fd)		G_STMT_START {		\
     unsigned int _temp;					\
     if (!safe_fread(&_temp, 4, fd))			\
 	return(FAIL);					\
     var = GINT32_FROM_LE(_temp);			\
 } G_STMT_END
-#endif
-#ifdef WORDS_BIGENDIAN
-	#define READW(var,fd)		G_STMT_START {		\
-	unsigned short _temp;					\
-	if (!safe_fread(&_temp, 2, fd))			\
-	return(FAIL);					\
-var = GINT16_FROM_BE(_temp);			\
-} G_STMT_END
-#else
+
 #define READW(var,fd)		G_STMT_START {		\
     unsigned short _temp;					\
     if (!safe_fread(&_temp, 2, fd))			\
 	return(FAIL);					\
     var = GINT16_FROM_LE(_temp);			\
 } G_STMT_END
+
 #endif
+
+
+#define READID(var,fd)		G_STMT_START {		\
+    if (!safe_fread(var, 4, fd))			\
+	return(FAIL);					\
+} G_STMT_END
+
+#define READSTR(var,fd)		G_STMT_START {		\
+    if (!safe_fread(var, 20, fd))			\
+	return(FAIL);					\
+    (*var)[20] = '\0';					\
+} G_STMT_END
+
 #define READB(var,fd)		G_STMT_START {		\
     if (!safe_fread(&var, 1, fd))			\
 	return(FAIL);					\
 } G_STMT_END
+
 #define FSKIP(size,fd)		G_STMT_START {		\
     if (!safe_fseek(fd, size, SEEK_CUR))		\
 	return(FAIL);					\
 } G_STMT_END
+
 #define FSKIPW(fd)		G_STMT_START {		\
     if (!safe_fseek(fd, 2, SEEK_CUR))			\
 	return(FAIL);					\
@@ -1850,12 +1858,12 @@ load_body (unsigned int size, SFData * sf, FILE * fd)
 
   READID (&chunk.id, fd);	/* load file ID */
   if (chunkid (chunk.id) != SFBK_ID) {	/* error if not SFBK_ID */
-    FLUID_LOG (FLUID_ERR, _("Not a sound font file"));
+    FLUID_LOG (FLUID_ERR, _("Not a SoundFont file"));
     return (FAIL);
   }
 
   if (chunk.size != size - 8) {
-    gerr (ErrCorr, _("Sound font file size mismatch"));
+    gerr (ErrCorr, _("SoundFont file size mismatch"));
     return (FAIL);
   }
 
