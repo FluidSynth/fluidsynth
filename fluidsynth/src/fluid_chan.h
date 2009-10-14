@@ -139,5 +139,7 @@ int fluid_channel_get_interp_method(fluid_channel_t* chan);
 #define fluid_channel_set_gen(_c, _n, _v, _a)   { (_c)->gen[_n] = _v; (_c)->gen_abs[_n] = _a; }
 #define fluid_channel_get_gen(_c, _n)           ((_c)->gen[_n])
 #define fluid_channel_get_gen_abs(_c, _n)       ((_c)->gen_abs[_n])
+#define fluid_channel_get_min_note_length_ticks(chan) \
+  ((chan)->synth->min_note_length_ticks)
 
 #endif /* _FLUID_CHAN_H */

@@ -266,7 +266,7 @@ fluid_voice_write (fluid_voice_t* voice, fluid_real_t *dsp_buf)
 
   if (voice->noteoff_ticks != 0 && voice->ticks >= voice->noteoff_ticks) 
   {
-    fluid_voice_noteoff(voice, 0);
+    fluid_voice_noteoff(voice);
   }
 
   fluid_check_fpe ("voice_write startup");
@@ -1557,13 +1557,13 @@ int fluid_voice_modulate_all(fluid_voice_t* voice)
 
 /*
  * fluid_voice_noteoff
- * @param at_tick minimum amount of ticks (samples) when the note 
- *  is turned off.
  */
 int
-fluid_voice_noteoff(fluid_voice_t* voice, unsigned int at_tick)
+fluid_voice_noteoff(fluid_voice_t* voice)
 {
   fluid_profile(FLUID_PROF_VOICE_NOTE, voice->ref);
+
+  unsigned int at_tick = fluid_channel_get_min_note_length_ticks(voice->channel);
 
   if (at_tick > voice->ticks) {
     /* Delay noteoff */

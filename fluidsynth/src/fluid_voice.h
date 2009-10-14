@@ -244,7 +244,7 @@ int fluid_voice_set_gain(fluid_voice_t* voice, fluid_real_t gain);
     function.*/
 void fluid_voice_update_param(fluid_voice_t* voice, int gen);
 
-int fluid_voice_noteoff(fluid_voice_t* voice, unsigned int at_tick);
+int fluid_voice_noteoff(fluid_voice_t* voice);
 int fluid_voice_off(fluid_voice_t* voice);
 void fluid_voice_mix (fluid_voice_t *voice,
                       fluid_real_t* left_buf, fluid_real_t* right_buf,
