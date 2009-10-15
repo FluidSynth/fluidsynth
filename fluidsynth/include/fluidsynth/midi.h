@@ -56,7 +56,7 @@ FLUIDSYNTH_API int fluid_midi_event_set_sysex(fluid_midi_event_t* evt, void *dat
  * Generic callback function for MIDI events.
  * @param data User defined data pointer
  * @param event The MIDI event
- * @return DOCME
+ * @return Should return #FLUID_OK on success, #FLUID_FAILED otherwise
  *
  * Will be used between
  * - MIDI driver and MIDI router
@@ -66,26 +66,14 @@ FLUIDSYNTH_API int fluid_midi_event_set_sysex(fluid_midi_event_t* evt, void *dat
  */
 typedef int (*handle_midi_event_func_t)(void* data, fluid_midi_event_t* event);
 
-/*
- *  MIDI router
- *
- *  The MIDI handler forwards incoming MIDI events to the synthesizer
- */
-
 FLUIDSYNTH_API fluid_midi_router_t* new_fluid_midi_router(fluid_settings_t* settings,
 						       handle_midi_event_func_t handler, 
 						       void* event_handler_data); 
-
 FLUIDSYNTH_API int delete_fluid_midi_router(fluid_midi_router_t* handler); 
 FLUIDSYNTH_API int fluid_midi_router_handle_midi_event(void* data, fluid_midi_event_t* event);
 FLUIDSYNTH_API int fluid_midi_dump_prerouter(void* data, fluid_midi_event_t* event); 
 FLUIDSYNTH_API int fluid_midi_dump_postrouter(void* data, fluid_midi_event_t* event); 
 
-/*
- *  MIDI driver
- *
- *  The MIDI handler forwards incoming MIDI events to the synthesizer
- */
 
 FLUIDSYNTH_API 
 fluid_midi_driver_t* new_fluid_midi_driver(fluid_settings_t* settings, 
@@ -97,17 +85,14 @@ FLUIDSYNTH_API void delete_fluid_midi_driver(fluid_midi_driver_t* driver);
 FLUIDSYNTH_API void fluid_midi_driver_get_names(char* buf, size_t buflen, const char* separator);
 
 
-/*
- *  MIDI file player
- *
- *  The MIDI player allows you to play MIDI files with the FLUID Synth
+/**
+ * MIDI player status enum.
  */
-
 enum fluid_player_status
 {
-  FLUID_PLAYER_READY,
-  FLUID_PLAYER_PLAYING,
-  FLUID_PLAYER_DONE
+  FLUID_PLAYER_READY,           /**< Player is ready */
+  FLUID_PLAYER_PLAYING,         /**< Player is currently playing */
+  FLUID_PLAYER_DONE             /**< Player is finished playing */
 };
 
 FLUIDSYNTH_API fluid_player_t* new_fluid_player(fluid_synth_t* synth);

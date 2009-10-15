@@ -27,15 +27,14 @@
 extern "C" {
 #endif
 
-  /** registers fluidsynth as a client of the given sequencer.
-      The fluidsynth is registered with the name "fluidsynth".
-	
-      \returns the fluidsynth destID.
-  */
+/**
+ * @file seqbind.h
+ * @brief FIXME Not sure why this is separate from seq.h.
+ */
+
 FLUIDSYNTH_API 
 short fluid_sequencer_register_fluidsynth(fluid_sequencer_t* seq, fluid_synth_t* synth);
-
-int
+FLUIDSYNTH_API int
 fluid_sequencer_add_midi_event_to_buffer(void* data, fluid_midi_event_t* event);
 
 

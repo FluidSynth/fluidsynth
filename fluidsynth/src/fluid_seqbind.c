@@ -49,9 +49,7 @@ typedef struct _fluid_seqbind_t fluid_seqbind_t;
 int fluid_seqbind_timer_callback(void* data, unsigned int msec);
 void fluid_seq_fluidsynth_callback(unsigned int time, fluid_event_t* event, fluid_sequencer_t* seq, void* data);
 
-/** 
- * Proper cleanup of the seqbind struct.
- */
+/* Proper cleanup of the seqbind struct. */
 void 
 delete_fluid_seqbind(fluid_seqbind_t* seqbind) 
 {
@@ -73,19 +71,21 @@ delete_fluid_seqbind(fluid_seqbind_t* seqbind)
 }
 
 /** 
- * Registers fluidsynth as a client of the given sequencer.
- * The fluidsynth is registered with the name "fluidsynth".
- * @returns the fluidsynth destID in the sequencer, or -1 if function failed.
+ * Registers a synthesizer as a destination client of the given sequencer.
+ * The \a synth is registered with the name "fluidsynth".
+ * @param seq Sequencer instance
+ * @param synth Synthesizer instance
+ * @returns Sequencer client ID, or #FLUID_FAILED on error.
  */
 short 
-fluid_sequencer_register_fluidsynth(fluid_sequencer_t* seq, fluid_synth_t* synth)
+fluid_sequencer_register_fluidsynth (fluid_sequencer_t* seq, fluid_synth_t* synth)
 {
 	fluid_seqbind_t* seqbind;
 	
 	seqbind = FLUID_NEW(fluid_seqbind_t);
 	if (seqbind == NULL) {
 		fluid_log(FLUID_PANIC, "sequencer: Out of memory\n");
-		return -1;
+		return FLUID_FAILED;
 	}
 
 	seqbind->synth = synth;
@@ -94,13 +94,13 @@ fluid_sequencer_register_fluidsynth(fluid_sequencer_t* seq, fluid_synth_t* synth
 	seqbind->client_id = -1;
 
 	/* set up the sample timer */
-	if (!fluid_sequencer_get_useSystemTimer(seq)) {
+	if (!fluid_sequencer_get_use_system_timer(seq)) {
 		seqbind->sample_timer = 
 			new_fluid_sample_timer(synth, fluid_seqbind_timer_callback, (void *) seqbind);
 		if (seqbind->sample_timer == NULL) {
 			fluid_log(FLUID_PANIC, "sequencer: Out of memory\n");
 			delete_fluid_seqbind(seqbind);
-			return -1;
+			return FLUID_FAILED;
 		}
 	}
 
@@ -109,7 +109,7 @@ fluid_sequencer_register_fluidsynth(fluid_sequencer_t* seq, fluid_synth_t* synth
 		fluid_sequencer_register_client(seq, "fluidsynth", fluid_seq_fluidsynth_callback, (void *)seqbind);
 	if (seqbind->client_id == -1) {
 		delete_fluid_seqbind(seqbind);
-		return -1;
+		return FLUID_FAILED;
 	}
 
 	return seqbind->client_id;
@@ -277,9 +277,9 @@ static int get_fluidsynth_dest(fluid_sequencer_t* seq)
 /**
  * Transforms an incoming midi event (from a midi driver or midi router) to a 
  * sequencer event and adds it to the sequencer queue for sending as soon as possible.
- * @param data the sequencer, must be a valid fluid_sequencer_t
- * @param event midi event
- * @return FLUID_OK or FLUID_FAILED
+ * @param data The sequencer, must be a valid #fluid_sequencer_t
+ * @param event MIDI event
+ * @return #FLUID_OK or #FLUID_FAILED
  * @since 1.1.0
  */
 int

@@ -198,11 +198,11 @@ void fluid_midi_driver_settings(fluid_settings_t* settings)
 
 
 /**
- * Write a list of midi driver names into a buffer.
+ * Write a list of MIDI driver names into a buffer.
  * (A buffer length of 256 characters should be more than enough.)
- * @param buf buffert to write names into
- * @param buflen maximum amount of characters in buf.
- * @param separator separator string, written between names.
+ * @param buf Buffer to write names into
+ * @param buflen Maximum amount of characters in buf.
+ * @param separator Separator string, written between names.
  * @since 1.1.0
  */
 void

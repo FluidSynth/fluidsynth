@@ -32,8 +32,8 @@
  * @param event_handler_data Caller defined data pointer which gets passed to 'handler'
  * @return New MIDI router instance or NULL on error
  *
- * A midi handler connects to a midi input
- * device and forwards incoming midi events to the synthesizer.
+ * The MIDI handler connects to a midi input device and forwards incoming MIDI
+ * events to the synthesizer, after being filtered/modified by the MIDI router.
  */
 fluid_midi_router_t*
 new_fluid_midi_router(fluid_settings_t* settings, handle_midi_event_func_t handler, void* event_handler_data)
@@ -77,7 +77,7 @@ new_fluid_midi_router(fluid_settings_t* settings, handle_midi_event_func_t handl
 /**
  * Delete a MIDI router instance.
  * @param router MIDI router to delete
- * @return Always returns 0
+ * @return Always returns #FLUID_OK
  */
 int
 delete_fluid_midi_router(fluid_midi_router_t* router)
@@ -249,9 +249,11 @@ int fluid_midi_router_end(fluid_midi_router_t* router){
 
 /**
  * Handle a MIDI event through a MIDI router instance.
- * @param data MIDI router instance #fluid_midi_router_t (DOCME why is it a void *?)
+ * @param data MIDI router instance #fluid_midi_router_t, its a void * so that
+ *   this function can be used as a callback for other subsystems
+ *   (new_fluid_midi_driver() for example).
  * @param event MIDI event to handle
- * @return 0 on success, -1 otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  *
  * Purpose: The midi router is called for each event, that is received
  * via the 'physical' midi input. Each event can trigger an arbitrary number
@@ -260,7 +262,7 @@ int fluid_midi_router_end(fluid_midi_router_t* router){
  * In default mode, a noteon event is just forwarded to the synth's 'noteon' function,
  * a 'CC' event to the synth's 'CC' function and so on.
  *
- * The router can be used to
+ * The router can be used to:
  * - filter messages (for example: Pass sustain pedal CCs only to selected channels),
  * - split the keyboard (noteon with notenr < x: to ch 1, >x to ch 2),
  * - layer sounds (for each noteon received on ch 1, create a noteon on ch1, ch2, ch3,...)
@@ -817,7 +819,7 @@ void fluid_midi_router_free_unused_rules(fluid_midi_router_t* router)
  * MIDI event callback function to display event information to stdout
  * @param data MIDI router instance
  * @param event MIDI event data
- * @return 0 on success, -1 otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  *
  * An implementation of the #handle_midi_event_func_t function type, used for
  * displaying MIDI event information between the MIDI driver and router to
@@ -861,7 +863,7 @@ int fluid_midi_dump_prerouter(void* data, fluid_midi_event_t* event)
  * MIDI event callback function to display event information to stdout
  * @param data MIDI router instance
  * @param event MIDI event data
- * @return 0 on success, -1 otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  *
  * An implementation of the #handle_midi_event_func_t function type, used for
  * displaying MIDI event information between the MIDI driver and router to

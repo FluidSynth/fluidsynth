@@ -2253,7 +2253,7 @@ fluid_synth_pitch_wheel_sens_LOCAL(fluid_synth_t* synth, int chan, int val)
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
  * @param pval Location to store pitch wheel sensitivity value in semitones
  * @return FLUID_OK on success, FLUID_FAILED otherwise
- * @since: ?? Seems it was added sometime AFTER v1.0 API freeze.
+ * @since Sometime AFTER v1.0 API freeze.
  */
 int
 fluid_synth_get_pitch_wheel_sens(fluid_synth_t* synth, int chan, int* pval)

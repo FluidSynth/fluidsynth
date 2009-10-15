@@ -368,6 +368,7 @@ new_fluid_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
  * Like new_fluid_audio_driver() but allows for custom audio processing before
  * audio is sent to audio driver.  It is the responsibility of the callback
  * 'func' to render the audio into the buffers.
+ *
  * NOTE: Not as efficient as new_fluid_audio_driver().
  */
 fluid_audio_driver_t*

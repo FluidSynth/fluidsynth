@@ -34,28 +34,7 @@ extern "C" {
 #endif
 
 
-
-/*
-
-  Public interface
-
- */
-
-int fluid_ramsfont_sfont_delete(fluid_sfont_t* sfont);
-char* fluid_ramsfont_sfont_get_name(fluid_sfont_t* sfont);
-fluid_preset_t* fluid_ramsfont_sfont_get_preset(fluid_sfont_t* sfont, unsigned int bank, unsigned int prenum);
-void fluid_ramsfont_sfont_iteration_start(fluid_sfont_t* sfont);
-int fluid_ramsfont_sfont_iteration_next(fluid_sfont_t* sfont, fluid_preset_t* preset);
-
-
-int fluid_rampreset_preset_delete(fluid_preset_t* preset);
-char* fluid_rampreset_preset_get_name(fluid_preset_t* preset);
-int fluid_rampreset_preset_get_banknum(fluid_preset_t* preset);
-int fluid_rampreset_preset_get_num(fluid_preset_t* preset);
-int fluid_rampreset_preset_noteon(fluid_preset_t* preset, fluid_synth_t* synth, int chan, int key, int vel);
-
-
-/*
+  /*
  * fluid_ramsfont_t
  */
 struct _fluid_ramsfont_t
@@ -67,17 +46,6 @@ struct _fluid_ramsfont_t
   fluid_preset_t iter_preset;        /* preset interface used in the iteration */
   fluid_rampreset_t* iter_cur;       /* the current preset in the iteration */
 };
-
-/* interface */
-fluid_ramsfont_t* new_fluid_ramsfont(void);
-int delete_fluid_ramsfont(fluid_ramsfont_t* sfont);
-char* fluid_ramsfont_get_name(fluid_ramsfont_t* sfont);
-fluid_rampreset_t* fluid_ramsfont_get_preset(fluid_ramsfont_t* sfont, unsigned int bank, unsigned int prenum);
-void fluid_ramsfont_iteration_start(fluid_ramsfont_t* sfont);
-int fluid_ramsfont_iteration_next(fluid_ramsfont_t* sfont, fluid_preset_t* preset);
-/* specific */
-
-
 
 /*
  * fluid_preset_t
@@ -93,18 +61,6 @@ struct _fluid_rampreset_t
   fluid_preset_zone_t* zone;               /* the chained list of preset zones */
   fluid_list_t *presetvoices;									/* chained list of used voices */
 };
-
-/* interface */
-fluid_rampreset_t* new_fluid_rampreset(fluid_ramsfont_t* sfont);
-int delete_fluid_rampreset(fluid_rampreset_t* preset);
-fluid_rampreset_t* fluid_rampreset_next(fluid_rampreset_t* preset);
-char* fluid_rampreset_get_name(fluid_rampreset_t* preset);
-int fluid_rampreset_get_banknum(fluid_rampreset_t* preset);
-int fluid_rampreset_get_num(fluid_rampreset_t* preset);
-int fluid_rampreset_noteon(fluid_rampreset_t* preset, fluid_synth_t* synth, int chan, int key, int vel);
-
-
-
 
 
 #ifdef __cplusplus

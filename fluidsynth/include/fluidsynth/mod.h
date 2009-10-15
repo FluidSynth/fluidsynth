@@ -25,22 +25,24 @@
 extern "C" {
 #endif
 
-  /* Modulator-related definitions */
+/**
+ * @file mod.h
+ * @brief SoundFont modulator functions and constants.
+ */
 
-  /* Maximum number of modulators in a voice */
-#define FLUID_NUM_MOD           64
+#define FLUID_NUM_MOD           64      /**< Maximum number of modulators in a voice */
 
-  /*
-   *  fluid_mod_t
-   */
+/**
+ * Modulator structure.  See SoundFont 2.04 PDF section 8.2.
+ */
 struct _fluid_mod_t
 {
-  unsigned char dest;
-  unsigned char src1;
-  unsigned char flags1;
-  unsigned char src2;
-  unsigned char flags2;
-  double amount;
+  unsigned char dest;           /**< Destination generator to control */
+  unsigned char src1;           /**< Source controller 1 */
+  unsigned char flags1;         /**< Source controller 1 flags */
+  unsigned char src2;           /**< Source controller 2 */
+  unsigned char flags2;         /**< Source controller 2 flags */
+  double amount;                /**< Multiplier amount */
   /* The 'next' field allows to link modulators into a list.  It is
    * not used in fluid_voice.c, there each voice allocates memory for a
    * fixed number of modulators.  Since there may be a huge number of
@@ -49,43 +51,44 @@ struct _fluid_mod_t
   fluid_mod_t * next;
 };
 
-/* Flags telling the polarity of a modulator.  Compare with SF2.01
-   section 8.2. Note: The numbers of the bits are different!  (for
-   example: in the flags of a SF modulator, the polarity bit is bit
-   nr. 9) */
+/**
+ * Flags defining the polarity and mapping function of a modulator source.
+ * Compare with SoundFont 2.04 PDF section 8.2.
+ *
+ * Note: The numbers of the bits are different!  (for example: in the flags of
+ * a SoundFont modulator, the polarity bit is bit #9).
+ */
 enum fluid_mod_flags
 {
-  FLUID_MOD_POSITIVE = 0,
-  FLUID_MOD_NEGATIVE = 1,
-  FLUID_MOD_UNIPOLAR = 0,
-  FLUID_MOD_BIPOLAR = 2,
-  FLUID_MOD_LINEAR = 0,
-  FLUID_MOD_CONCAVE = 4,
-  FLUID_MOD_CONVEX = 8,
-  FLUID_MOD_SWITCH = 12,
-  FLUID_MOD_GC = 0,
-  FLUID_MOD_CC = 16
+  FLUID_MOD_POSITIVE = 0,       /**< Mapping function is positive */
+  FLUID_MOD_NEGATIVE = 1,       /**< Mapping function is negative */
+  FLUID_MOD_UNIPOLAR = 0,       /**< Mapping function is unipolar */
+  FLUID_MOD_BIPOLAR = 2,        /**< Mapping function is bipolar */
+  FLUID_MOD_LINEAR = 0,         /**< Linear mapping function */
+  FLUID_MOD_CONCAVE = 4,        /**< Concave mapping function */
+  FLUID_MOD_CONVEX = 8,         /**< Convex mapping function */
+  FLUID_MOD_SWITCH = 12,        /**< Switch (on/off) mapping function */
+  FLUID_MOD_GC = 0,             /**< General controller */
+  FLUID_MOD_CC = 16             /**< MIDI CC controller */
 };
 
-/* Flags telling the source of a modulator.  This corresponds to
- * SF2.01 section 8.2.1 */
+/**
+ * Flags indicating the source of a modulator (if #FLUID_MOD_GC).  This
+ * corresponds to SoundFont 2.04 PDF section 8.2.1
+ */
 enum fluid_mod_src
 {
-  FLUID_MOD_NONE = 0,
-  FLUID_MOD_VELOCITY = 2,
-  FLUID_MOD_KEY = 3,
-  FLUID_MOD_KEYPRESSURE = 10,
-  FLUID_MOD_CHANNELPRESSURE = 13,
-  FLUID_MOD_PITCHWHEEL = 14,
-  FLUID_MOD_PITCHWHEELSENS = 16
+  FLUID_MOD_NONE = 0,                   /**< No source controller */
+  FLUID_MOD_VELOCITY = 2,               /**< MIDI note-on velocity */
+  FLUID_MOD_KEY = 3,                    /**< MIDI note-on note number */
+  FLUID_MOD_KEYPRESSURE = 10,           /**< MIDI key pressure */
+  FLUID_MOD_CHANNELPRESSURE = 13,       /**< MIDI channel pressure */
+  FLUID_MOD_PITCHWHEEL = 14,            /**< Pitch wheel */
+  FLUID_MOD_PITCHWHEELSENS = 16         /**< Pitch wheel sensitivity */
 };
 
-/* Allocates memory for a new modulator */
-FLUIDSYNTH_API fluid_mod_t * fluid_mod_new(void);
-
-/* Frees the modulator */
+FLUIDSYNTH_API fluid_mod_t* fluid_mod_new(void);
 FLUIDSYNTH_API void fluid_mod_delete(fluid_mod_t * mod);
-
 
 FLUIDSYNTH_API void fluid_mod_set_source1(fluid_mod_t* mod, int src, int flags); 
 FLUIDSYNTH_API void fluid_mod_set_source2(fluid_mod_t* mod, int src, int flags); 
@@ -99,9 +102,6 @@ FLUIDSYNTH_API int fluid_mod_get_flags2(fluid_mod_t* mod);
 FLUIDSYNTH_API int fluid_mod_get_dest(fluid_mod_t* mod);
 FLUIDSYNTH_API double fluid_mod_get_amount(fluid_mod_t* mod);
 
-
-/* Determines, if two modulators are 'identical' (all parameters
-   except the amount match) */
 FLUIDSYNTH_API int fluid_mod_test_identity(fluid_mod_t * mod1, fluid_mod_t * mod2);
 
 

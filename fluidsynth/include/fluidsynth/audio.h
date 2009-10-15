@@ -37,7 +37,6 @@ extern "C" {
  * audio driver (although it is not as efficient).
  *
  * @sa @ref CreatingAudioDriver
- * @{
  */
 
 /**
@@ -47,7 +46,7 @@ extern "C" {
  * @param data The user data parameter as passed to new_fluid_audio_driver2().
  * @param len Length of the audio in frames.
  * @param nin Count of buffers in 'in'
- * @param in FIXME - Not used currently?
+ * @param in Not used currently
  * @param nout Count of arrays in 'out' (i.e., channel count)
  * @param out Output buffers, one for each channel
  * @return Should return 0 on success, non-zero if an error occured.
@@ -77,7 +76,5 @@ FLUIDSYNTH_API const char **fluid_file_renderer_get_endian_names (void);
 #ifdef __cplusplus
 }
 #endif
-
-/** @} */
 
 #endif /* _FLUIDSYNTH_AUDIO_H */

@@ -186,7 +186,7 @@ fluid_log_config(void)
  * @param level Log level (#fluid_log_level).
  * @param fmt Printf style format string for log message
  * @param ... Arguments for printf 'fmt' message string
- * @return Always returns -1
+ * @return Always returns #FLUID_FAILED
  */
 int
 fluid_log(int level, char* fmt, ...)
@@ -286,10 +286,13 @@ fluid_error()
   return fluid_errbuf;
 }
 
-
-/*
+/**
+ * Check if a file is a MIDI file.
+ * @param filename Path to the file to check
+ * @return TRUE if it could be a MIDI file, FALSE otherwise
  *
- *  fluid_is_midifile
+ * The current implementation only checks for the "MThd" header in the file.
+ * It is useful only to distinguish between SoundFont and MIDI files.
  */
 int
 fluid_is_midifile(char* filename)
@@ -309,9 +312,13 @@ fluid_is_midifile(char* filename)
   return strncmp(id, "MThd", 4) == 0;
 }
 
-/*
- *  fluid_is_soundfont
+/**
+ * Check if a file is a SoundFont file.
+ * @param filename Path to the file to check
+ * @return TRUE if it could be a SoundFont, FALSE otherwise
  *
+ * The current implementation only checks for the "RIFF" header in the file.
+ * It is useful only to distinguish between SoundFont and MIDI files.
  */
 int
 fluid_is_soundfont(char* filename)

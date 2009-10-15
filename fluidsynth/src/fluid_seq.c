@@ -74,36 +74,41 @@ typedef struct _fluid_sequencer_client_t {
 } fluid_sequencer_client_t;
 
 /* prototypes */
-/* sorting API */
-short _fluid_seq_queue_init(fluid_sequencer_t* seq, int nbEvents);
-void _fluid_seq_queue_end(fluid_sequencer_t* seq);
-short _fluid_seq_queue_pre_insert(fluid_sequencer_t* seq, fluid_event_t * evt);
-void _fluid_seq_queue_pre_remove(fluid_sequencer_t* seq, short src, short dest, int type);
-int _fluid_seq_queue_process(void* data, unsigned int msec); // callback from timer
+static short _fluid_seq_queue_init(fluid_sequencer_t* seq, int nbEvents);
+static void _fluid_seq_queue_end(fluid_sequencer_t* seq);
+static short _fluid_seq_queue_pre_insert(fluid_sequencer_t* seq, fluid_event_t * evt);
+static void _fluid_seq_queue_pre_remove(fluid_sequencer_t* seq, short src, short dest, int type);
+static int _fluid_seq_queue_process(void* data, unsigned int msec); // callback from timer
+static void _fluid_seq_queue_insert_entry(fluid_sequencer_t* seq, fluid_evt_entry * evtentry);
+static void _fluid_seq_queue_remove_entries_matching(fluid_sequencer_t* seq, fluid_evt_entry* temp);
+static void _fluid_seq_queue_send_queued_events(fluid_sequencer_t* seq);
+static void _fluid_free_evt_queue(fluid_evt_entry** first, fluid_evt_entry** last);
 
 
 /* API implementation */
 
 /**
- * Legacy call to new_fluid_sequencer to provide backwards compatibility.
- * Please use new_fluid_sequencer2 instead.
- * @deprecated
+ * Create a new sequencer object which uses the system timer.  Use
+ * new_fluid_sequencer2() to specify whether the system timer or
+ * fluid_sequencer_process() is used to advance the sequencer.
+ * @return New sequencer instance
  */
 fluid_sequencer_t*
-new_fluid_sequencer()
+new_fluid_sequencer (void)
 {
-	return new_fluid_sequencer2(1);
+	return new_fluid_sequencer2 (TRUE);
 }
 
 /**
  * Create a new sequencer object.
- * @param useSystemTimer if this parameter is non-zero, sequencer will advance 
- * at the rate of the computer's system clock. If zero, call fluid_sequencer_process 
- * to advance the sequencer.
+ * @param use_system_timer If TRUE, sequencer will advance at the rate of the
+ *   system clock. If FALSE, call fluid_sequencer_process() to advance
+ *   the sequencer.
+ * @return New sequencer instance
  * @since 1.1.0
  */
 fluid_sequencer_t*
-new_fluid_sequencer2(int useSystemTimer)
+new_fluid_sequencer2 (int use_system_timer)
 {
 	fluid_sequencer_t* seq;
 
@@ -116,7 +121,7 @@ new_fluid_sequencer2(int useSystemTimer)
 	FLUID_MEMSET(seq, 0, sizeof(fluid_sequencer_t));
 
 	seq->scale = 1000;	// default value
-	seq->useSystemTimer = useSystemTimer ? TRUE : FALSE;
+	seq->useSystemTimer = use_system_timer ? TRUE : FALSE;
 	seq->startMs = seq->useSystemTimer ? fluid_curtime() : 0;
 	seq->clients = NULL;
 	seq->clientsID = 0;
@@ -142,8 +147,12 @@ new_fluid_sequencer2(int useSystemTimer)
 	return(seq);
 }
 
+/**
+ * Free a sequencer object.
+ * @param seq Sequencer to delete
+ */
 void
-delete_fluid_sequencer(fluid_sequencer_t* seq)
+delete_fluid_sequencer (fluid_sequencer_t* seq)
 {
 
 	if (seq == NULL) {
@@ -179,11 +188,13 @@ delete_fluid_sequencer(fluid_sequencer_t* seq)
 }
 
 /**
- * @return 1 if system timers are enabled, or 0 if system timers are disabled.
+ * Check if a sequencer is using the system timer or not.
+ * @param seq Sequencer object
+ * @return TRUE if system timer is being used, FALSE otherwise.
  * @since 1.1.0
  */
 int 
-fluid_sequencer_get_useSystemTimer(fluid_sequencer_t* seq)
+fluid_sequencer_get_use_system_timer (fluid_sequencer_t* seq)
 {
 	return seq->useSystemTimer ? 1 : 0;
 }
@@ -216,12 +227,20 @@ fluid_seq_dotrace(fluid_sequencer_t* seq, char *fmt, ...)
 	return;
 }
 
+/**
+ * Clear sequencer trace buffer.
+ * @param seq Sequencer object
+ */
 void
 fluid_seq_cleartrace(fluid_sequencer_t* seq)
 {
 	seq->traceptr = seq->tracebuf;
 }
 
+/**
+ * Get sequencer trace buffer.
+ * @param seq Sequencer object
+ */
 char *
 fluid_seq_gettrace(fluid_sequencer_t* seq)
 {
@@ -235,22 +254,34 @@ void fluid_seq_dotrace(fluid_sequencer_t* seq, char *fmt, ...) {}
 
 /* clients */
 
-short fluid_sequencer_register_client(fluid_sequencer_t* seq, char* name,
-				      fluid_event_callback_t callback, void* data) {
-
+/**
+ * Register a sequencer client.
+ * @param seq Sequencer object
+ * @param name Name of sequencer client
+ * @param callback Sequencer client callback or NULL for a source client.
+ * @param data User data to pass to the \a callback
+ * @return Unique sequencer ID or #FLUID_FAILED on error
+ *
+ * Clients can be sources or destinations of events.  Sources don't need to
+ * register a callback.
+ */
+short
+fluid_sequencer_register_client (fluid_sequencer_t* seq, char* name,
+                                 fluid_event_callback_t callback, void* data)
+{
 	fluid_sequencer_client_t * client;
 	char * nameCopy;
 
 	client = FLUID_NEW(fluid_sequencer_client_t);
 	if (client == NULL) {
 		fluid_log(FLUID_PANIC, "sequencer: Out of memory\n");
-		return -1;
+		return FLUID_FAILED;
 	}
 
 	nameCopy = FLUID_STRDUP(name);
 	if (nameCopy == NULL) {
 		fluid_log(FLUID_PANIC, "sequencer: Out of memory\n");
-		return -1;
+		return FLUID_FAILED;
 	}
 
 	seq->clientsID++;
@@ -265,8 +296,13 @@ short fluid_sequencer_register_client(fluid_sequencer_t* seq, char* name,
 	return (client->id);
 }
 
-/** Unregister a previously registered client. */
-void fluid_sequencer_unregister_client(fluid_sequencer_t* seq, short id)
+/**
+ * Unregister a previously registered client.
+ * @param seq Sequencer object
+ * @param id Client ID as returned by fluid_sequencer_register_client().
+ */
+void
+fluid_sequencer_unregister_client (fluid_sequencer_t* seq, short id)
 {
 	fluid_list_t *tmp;
 	fluid_event_t* evt;
@@ -302,27 +338,45 @@ void fluid_sequencer_unregister_client(fluid_sequencer_t* seq, short id)
 	return;
 }
 
-int fluid_sequencer_count_clients(fluid_sequencer_t* seq)
+/**
+ * Count a sequencers registered clients.
+ * @param seq Sequencer object
+ * @return Count of sequencer clients.
+ */
+int
+fluid_sequencer_count_clients(fluid_sequencer_t* seq)
 {
 	if (seq->clients == NULL)
 		return 0;
 	return fluid_list_size(seq->clients);
 }
 
-/** Returns the id of a registered client. */
-short fluid_sequencer_get_client_id(fluid_sequencer_t* seq, int index)
+/**
+ * Get a client ID from its index (order in which it was registered).
+ * @param seq Sequencer object
+ * @param index Index of register client
+ * @return Client ID or #FLUID_FAILED if not found
+ */
+short fluid_sequencer_get_client_id (fluid_sequencer_t* seq, int index)
 {
 	fluid_list_t *tmp = fluid_list_nth(seq->clients, index);
 	if (tmp == NULL) {
-		return -1;
+		return FLUID_FAILED;
 	} else {
 		fluid_sequencer_client_t *client = (fluid_sequencer_client_t*)tmp->data;
 		return client->id;
 	}
 }
 
-/** Returns the name of a registered client. */
-char* fluid_sequencer_get_client_name(fluid_sequencer_t* seq, int id)
+/**
+ * Get the name of a registered client.
+ * @param seq Sequencer object
+ * @param id Client ID
+ * @return Client name or NULL if not found.  String is internal and should not
+ *   be modified or freed.
+ */
+char *
+fluid_sequencer_get_client_name(fluid_sequencer_t* seq, int id)
 {
 	fluid_list_t *tmp;
 
@@ -341,11 +395,18 @@ char* fluid_sequencer_get_client_name(fluid_sequencer_t* seq, int id)
 	return NULL;
 }
 
-int fluid_sequencer_client_is_dest(fluid_sequencer_t* seq, int id)
+/**
+ * Check if a client is a destination client.
+ * @param seq Sequencer object
+ * @param id Client ID
+ * @return TRUE if client is a destination client, FALSE otherwise or if not found
+ */
+int
+fluid_sequencer_client_is_dest(fluid_sequencer_t* seq, int id)
 {
 	fluid_list_t *tmp;
 
-	if (seq->clients == NULL) return 0;
+	if (seq->clients == NULL) return FALSE;
 
 	tmp = seq->clients;
 	while (tmp) {
@@ -356,11 +417,17 @@ int fluid_sequencer_client_is_dest(fluid_sequencer_t* seq, int id)
 
    		tmp = tmp->next;
 	}
-	return 0;
+	return FALSE;
 }
 
-/* sending events */
-void fluid_sequencer_send_now(fluid_sequencer_t* seq, fluid_event_t* evt)
+/**
+ * Send an event immediately.
+ * @param seq Sequencer object
+ * @param evt Event to send (copied)
+ */
+/* Event not actually copied, but since its used immediately it virtually is. */
+void
+fluid_sequencer_send_now(fluid_sequencer_t* seq, fluid_event_t* evt)
 {
 	short destID = fluid_event_get_dest(evt);
 
@@ -379,9 +446,18 @@ void fluid_sequencer_send_now(fluid_sequencer_t* seq, fluid_event_t* evt)
 	}
 }
 
-
+/**
+ * Schedule an event for sending at a later time.
+ * @param seq Sequencer object
+ * @param evt Event to send
+ * @param time Time value in ticks (in milliseconds with the default time scale of 1000).
+ * @param absolute TRUE if \a time is absolute sequencer time (time since sequencer
+ *   creation), FALSE if relative to current time.
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ */
 int
-fluid_sequencer_send_at(fluid_sequencer_t* seq, fluid_event_t* evt, unsigned int time, int absolute)
+fluid_sequencer_send_at (fluid_sequencer_t* seq, fluid_event_t* evt,
+                         unsigned int time, int absolute)
 {
 	unsigned int now = fluid_sequencer_get_tick(seq);
 
@@ -392,25 +468,20 @@ fluid_sequencer_send_at(fluid_sequencer_t* seq, fluid_event_t* evt, unsigned int
 	/* time stamp event */
 	fluid_event_set_time(evt, time);
 
-	/* process late */
-/* Commented out for thread safety - send_at must go via the queue */
-/*	if (time < now) {
-		fluid_sequencer_send_now(seq, evt);
-		return 0;
-	}*/
-
-	/* process now */
-/*	if (time == now) {
-		fluid_sequencer_send_now(seq, evt);
-		return 0;
-	}*/
-
 	/* queue for processing later */
 	return _fluid_seq_queue_pre_insert(seq, evt);
 }
 
+/**
+ * Remove events from the event queue.
+ * @param seq Sequencer object
+ * @param source Source client ID to match or -1 for wildcard
+ * @param dest Destination client ID to match or -1 for wildcard
+ * @param type Event type to match or -1 for wildcard (#fluid_seq_event_type)
+ */
 void
-fluid_sequencer_remove_events(fluid_sequencer_t* seq, short source, short dest, int type)
+fluid_sequencer_remove_events (fluid_sequencer_t* seq, short source,
+                               short dest, int type)
 {
 	_fluid_seq_queue_pre_remove(seq, source, dest, type);
 }
@@ -419,7 +490,14 @@ fluid_sequencer_remove_events(fluid_sequencer_t* seq, short source, short dest, 
 /*************************************
 	time
 **************************************/
-unsigned int fluid_sequencer_get_tick(fluid_sequencer_t* seq)
+
+/**
+ * Get the current tick of a sequencer.
+ * @param seq Sequencer object
+ * @return Current tick value
+ */
+unsigned int
+fluid_sequencer_get_tick (fluid_sequencer_t* seq)
 {
 	unsigned int absMs = seq->useSystemTimer ? (int) fluid_curtime() : g_atomic_int_get(&seq->currentMs);
 	double nowFloat;
@@ -429,7 +507,17 @@ unsigned int fluid_sequencer_get_tick(fluid_sequencer_t* seq)
 	return now;
 }
 
-void fluid_sequencer_set_time_scale(fluid_sequencer_t* seq, double scale)
+/**
+ * Set the time scale of a sequencer.
+ * @param seq Sequencer object
+ * @param scale Sequencer scale value in ticks per second
+ *   (default is 1000 for 1 tick per millisecond, max is 1000.0)
+ *
+ * If there are already scheduled events in the sequencer and the scale is changed
+ * the events are adjusted accordingly.
+ */
+void
+fluid_sequencer_set_time_scale (fluid_sequencer_t* seq, double scale)
 {
 	if (scale <= 0) {
 		fluid_log(FLUID_WARN, "sequencer: scale <= 0 : %f\n", scale);
@@ -473,9 +561,13 @@ void fluid_sequencer_set_time_scale(fluid_sequencer_t* seq, double scale)
 	}
 }
 
-/** Set the conversion from tick to absolute time (ticks per
-    second). */
-double fluid_sequencer_get_time_scale(fluid_sequencer_t* seq)
+/**
+ * Get a sequencer's time scale.
+ * @param seq Sequencer object.
+ * @return Time scale value in ticks per second.
+ */
+double
+fluid_sequencer_get_time_scale(fluid_sequencer_t* seq)
 {
 	return seq->scale;
 }
@@ -555,18 +647,11 @@ double fluid_sequencer_get_time_scale(fluid_sequencer_t* seq)
 */
 
 
-
-void _fluid_seq_queue_insert_entry(fluid_sequencer_t* seq, fluid_evt_entry * evtentry);
-void _fluid_seq_queue_remove_entries_matching(fluid_sequencer_t* seq, fluid_evt_entry* temp);
-void _fluid_seq_queue_send_queued_events(fluid_sequencer_t* seq);
-void _fluid_free_evt_queue(fluid_evt_entry** first, fluid_evt_entry** last);
-
-
 /********************/
 /*       API        */
 /********************/
 
-short
+static short
 _fluid_seq_queue_init(fluid_sequencer_t* seq, int maxEvents)
 {
 	seq->heap = _fluid_evt_heap_init(maxEvents);
@@ -595,7 +680,7 @@ _fluid_seq_queue_init(fluid_sequencer_t* seq, int maxEvents)
 	return (0);
 }
 
-void
+static void
 _fluid_seq_queue_end(fluid_sequencer_t* seq)
 {
 	int i;
@@ -628,10 +713,10 @@ _fluid_seq_queue_end(fluid_sequencer_t* seq)
 /* queue management */
 /********************/
 
-/* create event_entry and append to the preQueue */
-/* may be called from the main thread (usually) but also recursively
-   from the queue thread, when a callback itself does an insert... */
-short
+/* Create event_entry and append to the preQueue.
+ * May be called from the main thread (usually) but also recursively
+ * from the queue thread, when a callback itself does an insert... */
+static short
 _fluid_seq_queue_pre_insert(fluid_sequencer_t* seq, fluid_event_t * evt)
 {
 	fluid_evt_entry * evtentry = _fluid_seq_heap_get_free(seq->heap);
@@ -660,10 +745,10 @@ _fluid_seq_queue_pre_insert(fluid_sequencer_t* seq, fluid_event_t * evt)
 	return (0);
 }
 
-/* create event_entry and append to the preQueue */
-/* may be called from the main thread (usually) but also recursively
-   from the queue thread, when a callback itself does an insert... */
-void
+/* Create event_entry and append to the preQueue.
+ * May be called from the main thread (usually) but also recursively
+ * from the queue thread, when a callback itself does an insert... */
+static void
 _fluid_seq_queue_pre_remove(fluid_sequencer_t* seq, short src, short dest, int type)
 {
 	fluid_evt_entry * evtentry = _fluid_seq_heap_get_free(seq->heap);
@@ -697,7 +782,7 @@ _fluid_seq_queue_pre_remove(fluid_sequencer_t* seq, short src, short dest, int t
 	return;
 }
 
-void
+static void
 _fluid_free_evt_queue(fluid_evt_entry** first, fluid_evt_entry** last)
 {
 	fluid_evt_entry* tmp2;
@@ -713,12 +798,8 @@ _fluid_free_evt_queue(fluid_evt_entry** first, fluid_evt_entry** last)
 	}
 }
 
-/***********************
- * callback from timer
- * (may be in a different thread, or in an interrupt)
- *
- ***********************/
-int
+/* Callback from timer (may be in a different thread, or in an interrupt) */
+static int
 _fluid_seq_queue_process(void* data, unsigned int msec)
 {
 	fluid_sequencer_t* seq = (fluid_sequencer_t *)data;
@@ -728,8 +809,9 @@ _fluid_seq_queue_process(void* data, unsigned int msec)
 }
 
 /** 
- * Advance sequencer. Do not use if you created the sequencer with useSystemTimer enabled. 
- * @param msec the number of milliseconds (compared to when the sequencer was created).
+ * Advance a sequencer that isn't using the system timer.
+ * @param seq Sequencer object
+ * @param msec Time to advance sequencer to (absolute time since sequencer start).
  * @since 1.1.0
  */
 void
@@ -768,8 +850,8 @@ fluid_sequencer_process(fluid_sequencer_t* seq, unsigned int msec)
 
 }
 
-
-void
+#if 0
+static void
 _fluid_seq_queue_print_later(fluid_sequencer_t* seq)
 {
 	int count = 0;
@@ -785,9 +867,9 @@ _fluid_seq_queue_print_later(fluid_sequencer_t* seq)
 	}
 	printf("queueLater: Total of %i events\n", count);
 }
+#endif
 
-
-void
+static void
 _fluid_seq_queue_insert_queue0(fluid_sequencer_t* seq, fluid_evt_entry* tmp, int cell)
 {
 	if (seq->queue0[cell][1] == NULL) {
@@ -799,7 +881,7 @@ _fluid_seq_queue_insert_queue0(fluid_sequencer_t* seq, fluid_evt_entry* tmp, int
 	tmp->next = NULL;
 }
 
-void
+static void
 _fluid_seq_queue_insert_queue1(fluid_sequencer_t* seq, fluid_evt_entry* tmp, int cell)
 {
 	if (seq->queue1[cell][1] == NULL) {
@@ -811,7 +893,7 @@ _fluid_seq_queue_insert_queue1(fluid_sequencer_t* seq, fluid_evt_entry* tmp, int
 	tmp->next = NULL;
 }
 
-void
+static void
 _fluid_seq_queue_insert_queue_later(fluid_sequencer_t* seq, fluid_evt_entry* evtentry)
 {
 	fluid_evt_entry* prev;
@@ -851,7 +933,7 @@ _fluid_seq_queue_insert_queue_later(fluid_sequencer_t* seq, fluid_evt_entry* evt
 	prev->next = evtentry;
 }
 
-void
+static void
 _fluid_seq_queue_insert_entry(fluid_sequencer_t* seq, fluid_evt_entry * evtentry)
 {
 	/* time is relative to seq origin, in ticks */
@@ -898,7 +980,7 @@ _fluid_seq_queue_insert_entry(fluid_sequencer_t* seq, fluid_evt_entry * evtentry
 	}
 }
 
-int
+static int
 _fluid_seq_queue_matchevent(fluid_event_t* evt, int templType, short templSrc, short templDest)
 {
 	int eventType;
@@ -931,7 +1013,7 @@ _fluid_seq_queue_matchevent(fluid_event_t* evt, int templType, short templSrc, s
 	return 0;
 }
 
-void
+static void
 _fluid_seq_queue_remove_entries_matching(fluid_sequencer_t* seq, fluid_evt_entry* templ)
 {
 	/* we walk everything : this is slow, but that is life */
@@ -1032,7 +1114,7 @@ _fluid_seq_queue_remove_entries_matching(fluid_sequencer_t* seq, fluid_evt_entry
 	}
 }
 
-void
+static void
 _fluid_seq_queue_send_cell_events(fluid_sequencer_t* seq, int cellNb)
 {
 	fluid_evt_entry* next;
@@ -1051,7 +1133,7 @@ _fluid_seq_queue_send_cell_events(fluid_sequencer_t* seq, int cellNb)
 	seq->queue0[cellNb][1] = NULL;
 }
 
-void
+static void
 _fluid_seq_queue_slide(fluid_sequencer_t* seq)
 {
 	short i;
@@ -1108,7 +1190,7 @@ _fluid_seq_queue_slide(fluid_sequencer_t* seq)
 	seq->queueLater = tmp;
 }
 
-void
+static void
 _fluid_seq_queue_send_queued_events(fluid_sequencer_t* seq)
 {
 	unsigned int nowTicks = fluid_sequencer_get_tick(seq);

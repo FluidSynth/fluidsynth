@@ -35,7 +35,7 @@ extern lash_client_t * fluid_lash_client;
 #define fluid_lash_alsa_client_id  lash_alsa_client_id
 #define fluid_lash_jack_client_name  lash_jack_client_name
 
-#else		/* old depricated LADCCA support which will be removed someday */
+#else		/* old deprecated LADCCA support which will be removed someday */
 
 #include <ladcca/ladcca.h>
 extern cca_client_t * fluid_lash_client;

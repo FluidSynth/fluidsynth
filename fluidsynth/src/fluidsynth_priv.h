@@ -154,12 +154,6 @@ typedef double fluid_real_t;
 #endif
 
 
-typedef enum {
-  FLUID_OK = 0,
-  FLUID_FAILED = -1
-} fluid_status;
-
-
 #if defined(WIN32)
 typedef SOCKET fluid_socket_t;
 #else

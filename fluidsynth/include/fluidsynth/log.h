@@ -41,11 +41,12 @@ extern "C" {
  * and ignores all other messages by setting the log function to
  * NULL:
  *
- * DOCME (formatting)
- * fluid_set_log_function(FLUID_PANIC, show_dialog, (void*) root_window);
- * fluid_set_log_function(FLUID_ERR, NULL, NULL);
- * fluid_set_log_function(FLUID_WARN, NULL, NULL);
- * fluid_set_log_function(FLUID_DBG, NULL, NULL);
+ * @code
+ *   fluid_set_log_function(FLUID_PANIC, show_dialog, (void*) root_window);
+ *   fluid_set_log_function(FLUID_ERR, NULL, NULL);
+ *   fluid_set_log_function(FLUID_WARN, NULL, NULL);
+ *   fluid_set_log_function(FLUID_DBG, NULL, NULL);
+ * @endcode
  */
 
 /**

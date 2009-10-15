@@ -36,7 +36,7 @@ extern "C" {
  * Sequencer event type enumeration.
  */
 enum fluid_seq_event_type {
-  FLUID_SEQ_NOTE = 0,		/**< Note event (DOCME) */
+  FLUID_SEQ_NOTE = 0,		/**< Note event with duration */
   FLUID_SEQ_NOTEON,		/**< Note on event */
   FLUID_SEQ_NOTEOFF,		/**< Note off event */
   FLUID_SEQ_ALLSOUNDSOFF,	/**< All sounds off event */
@@ -45,7 +45,7 @@ enum fluid_seq_event_type {
   FLUID_SEQ_PROGRAMCHANGE,	/**< Program change message */
   FLUID_SEQ_PROGRAMSELECT,	/**< Program select message (DOCME) */
   FLUID_SEQ_PITCHBEND,		/**< Pitch bend message */
-  FLUID_SEQ_PITCHWHHELSENS,	/**< Pitch wheel sensitivity set message TODO: Correct spelling of this event? */
+  FLUID_SEQ_PITCHWHEELSENS,	/**< Pitch wheel sensitivity set message @since 1.1.0 was mispelled previously */
   FLUID_SEQ_MODULATION,		/**< Modulation controller event */
   FLUID_SEQ_SUSTAIN,		/**< Sustain controller event */
   FLUID_SEQ_CONTROLCHANGE,	/**< MIDI control change event */
@@ -60,6 +60,8 @@ enum fluid_seq_event_type {
   FLUID_SEQ_UNREGISTERING,      /**< Called when a sequencer client is being unregistered. @since 1.1.0 */
   FLUID_SEQ_LASTEVENT		/**< Defines the count of event enums */
 };
+
+#define FLUID_SEQ_PITCHWHHELSENS        FLUID_SEQ_PITCHWHEELSENS        /**< Old deprecated misspelling of #FLUID_SEQ_PITCHWHEELSENS */
 
 /* Event alloc/free */
 FLUIDSYNTH_API fluid_event_t* new_fluid_event(void);

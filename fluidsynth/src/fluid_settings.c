@@ -699,7 +699,7 @@ fluid_settings_setstr(fluid_settings_t* settings, char* name, char* str)
  * @param name a setting's name
  * @param str Caller supplied buffer to copy string value to
  * @param len Size of 'str' buffer (no more than len bytes will be written, which
- *   will always include a '\0' terminator)
+ *   will always include a zero terminator)
  * @return 1 if the value exists, 0 otherwise
  * @since 1.1.0
  *

@@ -50,7 +50,7 @@ TYPEDEF_HIDES_STRUCT   = NO
 #---------------------------------------------------------------------------
 # Build related configuration options
 #---------------------------------------------------------------------------
-EXTRACT_ALL            = YES
+EXTRACT_ALL            = NO
 EXTRACT_PRIVATE        = NO
 EXTRACT_STATIC         = YES
 EXTRACT_LOCAL_CLASSES  = NO
@@ -95,43 +95,11 @@ WARN_LOGFILE           =
 #---------------------------------------------------------------------------
 INPUT                  = fluidsynth-v11-devdoc.txt \
                          ../include \
+                         ../include/fluidsynth \
                          ../src
 INPUT_ENCODING         = UTF-8
-FILE_PATTERNS          = fluidsynth.h \
-                        audio.h \
-                        event.h \
-                        gen.h \
-                        log.h \
-                        midi.h \
-                        misc.h \
-                        mod.h \
-                        ramsfont.h \
-                        seq.h \
-                        seqbind.h \
-                        settings.h \
-                        sfont.h \
-                        shell.h \
-                        synth.h \
-                        types.h \
-                        version.h \
-                        voice.h \
-                        fluid_adriver.c \
-                        fluid_cmd.c \
-                        fluid_event.c \
-                        fluid_filerenderer.c \
-                        fluid_gen.c \
-                        fluid_sys.c \
-                        fluid_mdriver.c \
-                        fluid_midi.* \
-                        fluid_midi_router.* \
-                        fluid_mod.c \
-                        fluid_ramsfont.c \
-                        fluid_seq.c \
-                        fluid_seqbind.c \
-                        fluid_settings.c \
-                        fluid_synth.c \
-                        fluid_voice.c
-RECURSIVE              = YES
+FILE_PATTERNS          = *.[ch]
+RECURSIVE              = NO
 EXCLUDE                = 
 EXCLUDE_SYMLINKS       = NO
 EXCLUDE_PATTERNS       = 
@@ -146,7 +114,7 @@ FILTER_SOURCE_FILES    = NO
 #---------------------------------------------------------------------------
 # configuration options related to source browsing
 #---------------------------------------------------------------------------
-SOURCE_BROWSER         = YES
+SOURCE_BROWSER         = NO
 INLINE_SOURCES         = NO
 STRIP_CODE_COMMENTS    = YES
 REFERENCED_BY_RELATION = NO

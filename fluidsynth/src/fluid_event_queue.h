@@ -124,18 +124,18 @@ typedef struct
  */
 typedef struct
 {
-  char type;            /**< #fluid_event_queue_elem */
+  char type;            /**< fluid_event_queue_elem */
 
   union
   {
-    fluid_midi_event_t midi;    /**< If type == #FLUID_EVENT_QUEUE_ELEM_MIDI */
-    fluid_event_gen_t gen;      /**< If type == #FLUID_EVENT_QUEUE_ELEM_GEN */
-    fluid_event_preset_t preset;        /**< If type == #FLUID_EVENT_QUEUE_ELEM_PRESET */
-    fluid_event_reverb_t reverb;        /**< If type == #FLUID_EVENT_QUEUE_ELEM_REVERB */
-    fluid_event_chorus_t chorus;        /**< If type == #FLUID_EVENT_QUEUE_ELEM_CHORUS */
-    fluid_event_set_tuning_t set_tuning;        /**< If type == #FLUID_EVENT_QUEUE_ELEM_SET_TUNING */
-    fluid_event_repl_tuning_t repl_tuning;      /**< If type == #FLUID_EVENT_QUEUE_ELEM_REPL_TUNING */
-    fluid_event_unref_tuning_t unref_tuning;    /**< If type == #FLUID_EVENT_QUEUE_ELEM_UNREF_TUNING */
+    fluid_midi_event_t midi;    /**< If type == FLUID_EVENT_QUEUE_ELEM_MIDI */
+    fluid_event_gen_t gen;      /**< If type == FLUID_EVENT_QUEUE_ELEM_GEN */
+    fluid_event_preset_t preset;        /**< If type == FLUID_EVENT_QUEUE_ELEM_PRESET */
+    fluid_event_reverb_t reverb;        /**< If type == FLUID_EVENT_QUEUE_ELEM_REVERB */
+    fluid_event_chorus_t chorus;        /**< If type == FLUID_EVENT_QUEUE_ELEM_CHORUS */
+    fluid_event_set_tuning_t set_tuning;        /**< If type == FLUID_EVENT_QUEUE_ELEM_SET_TUNING */
+    fluid_event_repl_tuning_t repl_tuning;      /**< If type == FLUID_EVENT_QUEUE_ELEM_REPL_TUNING */
+    fluid_event_unref_tuning_t unref_tuning;    /**< If type == FLUID_EVENT_QUEUE_ELEM_UNREF_TUNING */
     double dval;                /**< A floating point payload value */
     int ival;                   /**< An integer payload value */
     void *pval;                 /**< A pointer payload value */

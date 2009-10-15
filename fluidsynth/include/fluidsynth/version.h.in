@@ -26,14 +26,17 @@
 extern "C" {
 #endif
 
-#define FLUIDSYNTH_VERSION       @FLUIDSYNTH_VERSION@
-#define FLUIDSYNTH_VERSION_MAJOR @FLUIDSYNTH_VERSION_MAJOR@
-#define FLUIDSYNTH_VERSION_MINOR @FLUIDSYNTH_VERSION_MINOR@
-#define FLUIDSYNTH_VERSION_MICRO @FLUIDSYNTH_VERSION_MICRO@
+/**
+ * @file version.h
+ * @brief Library version functions and defines
+ */
 
+#define FLUIDSYNTH_VERSION       @FLUIDSYNTH_VERSION@           /**< String constant of libfluidsynth version. */
+#define FLUIDSYNTH_VERSION_MAJOR @FLUIDSYNTH_VERSION_MAJOR@     /**< libfluidsynth major version integer constant. */
+#define FLUIDSYNTH_VERSION_MINOR @FLUIDSYNTH_VERSION_MINOR@     /**< libfluidsynth minor version integer constant. */
+#define FLUIDSYNTH_VERSION_MICRO @FLUIDSYNTH_VERSION_MICRO@     /**< libfluidsynth micro version integer constant. */
 
 FLUIDSYNTH_API void fluid_version(int *major, int *minor, int *micro);
-
 FLUIDSYNTH_API char* fluid_version_str(void);
 
 

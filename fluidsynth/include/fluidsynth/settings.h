@@ -49,15 +49,16 @@ extern "C" {
  *     }
  * @endcode
  * @sa @ref CreatingSettings
- * @{
  */
 
-/** Hint FLUID_HINT_BOUNDED_BELOW indicates that the LowerBound field
-   of the FLUID_PortRangeHint should be considered meaningful. The
-   value in this field should be considered the (inclusive) lower
-   bound of the valid range. If FLUID_HINT_SAMPLE_RATE is also
-   specified then the value of LowerBound should be multiplied by the
-   sample rate. */
+/**
+ * Hint FLUID_HINT_BOUNDED_BELOW indicates that the LowerBound field
+ * of the FLUID_PortRangeHint should be considered meaningful. The
+ * value in this field should be considered the (inclusive) lower
+ * bound of the valid range. If FLUID_HINT_SAMPLE_RATE is also
+ * specified then the value of LowerBound should be multiplied by the
+ * sample rate.
+ */
 #define FLUID_HINT_BOUNDED_BELOW   0x1
 
 /** Hint FLUID_HINT_BOUNDED_ABOVE indicates that the UpperBound field
@@ -68,38 +69,45 @@ extern "C" {
    sample rate. */
 #define FLUID_HINT_BOUNDED_ABOVE   0x2
 
-/** Hint FLUID_HINT_TOGGLED indicates that the data item should be
-   considered a Boolean toggle. Data less than or equal to zero should
-   be considered `off' or `false,' and data above zero should be
-   considered `on' or `true.' FLUID_HINT_TOGGLED may not be used in
-   conjunction with any other hint except FLUID_HINT_DEFAULT_0 or
-   FLUID_HINT_DEFAULT_1. */
+/**
+ * Hint FLUID_HINT_TOGGLED indicates that the data item should be
+ * considered a Boolean toggle. Data less than or equal to zero should
+ * be considered `off' or `false,' and data above zero should be
+ * considered `on' or `true.' FLUID_HINT_TOGGLED may not be used in
+ * conjunction with any other hint.
+ */
 #define FLUID_HINT_TOGGLED         0x4
 
-/** Hint FLUID_HINT_SAMPLE_RATE indicates that any bounds specified
-   should be interpreted as multiples of the sample rate. For
-   instance, a frequency range from 0Hz to the Nyquist frequency (half
-   the sample rate) could be requested by this hint in conjunction
-   with LowerBound = 0 and UpperBound = 0.5. Hosts that support bounds
-   at all must support this hint to retain meaning. */
+/**
+ * Hint FLUID_HINT_SAMPLE_RATE indicates that any bounds specified
+ * should be interpreted as multiples of the sample rate. For
+ * instance, a frequency range from 0Hz to the Nyquist frequency (half
+ * the sample rate) could be requested by this hint in conjunction
+ * with LowerBound = 0 and UpperBound = 0.5. Hosts that support bounds
+ * at all must support this hint to retain meaning.
+ */
 #define FLUID_HINT_SAMPLE_RATE     0x8
 
-/** Hint FLUID_HINT_LOGARITHMIC indicates that it is likely that the
-   user will find it more intuitive to view values using a logarithmic
-   scale. This is particularly useful for frequencies and gains. */
+/**
+ * Hint FLUID_HINT_LOGARITHMIC indicates that it is likely that the
+ * user will find it more intuitive to view values using a logarithmic
+ * scale. This is particularly useful for frequencies and gains.
+ */
 #define FLUID_HINT_LOGARITHMIC     0x10
 
-/** Hint FLUID_HINT_INTEGER indicates that a user interface would
-   probably wish to provide a stepped control taking only integer
-   values. Any bounds set should be slightly wider than the actual
-   integer range required to avoid floating point rounding errors. For
-   instance, the integer set {0,1,2,3} might be described as [-0.1,
-   3.1]. */
+/**
+ * Hint FLUID_HINT_INTEGER indicates that a user interface would
+ * probably wish to provide a stepped control taking only integer
+ * values. Any bounds set should be slightly wider than the actual
+ * integer range required to avoid floating point rounding errors. For
+ * instance, the integer set {0,1,2,3} might be described as [-0.1,
+ * 3.1].
+ */
 #define FLUID_HINT_INTEGER         0x20
 
 
-#define FLUID_HINT_FILENAME        0x01
-#define FLUID_HINT_OPTIONLIST      0x02
+#define FLUID_HINT_FILENAME        0x01         /**< Setting is a file name */
+#define FLUID_HINT_OPTIONLIST      0x02         /**< Setting is a list of string options */
 
 
 /**
@@ -110,11 +118,11 @@ extern "C" {
  * function fluid_settings_get_type()
  */
 enum fluid_types_enum {
-  FLUID_NO_TYPE = -1,//!< Undefined type
-  FLUID_NUM_TYPE,    //!< Numeric (double)
-  FLUID_INT_TYPE,    //!< Integer
-  FLUID_STR_TYPE,    //!< String
-  FLUID_SET_TYPE     //!< Set of values
+  FLUID_NO_TYPE = -1, /**< Undefined type */
+  FLUID_NUM_TYPE,     /**< Numeric (double) */
+  FLUID_INT_TYPE,     /**< Integer */
+  FLUID_STR_TYPE,     /**< String */
+  FLUID_SET_TYPE      /**< Set of values */
 };
 
 
@@ -176,6 +184,9 @@ void fluid_settings_getint_range(fluid_settings_t* settings, char* name,
 
 /**
  * Callback function type used with fluid_settings_foreach_option()
+ * @param data User defined data pointer
+ * @param name Setting name
+ * @param option A string option for this setting (iterates through the list)
  */
 typedef void (*fluid_settings_foreach_option_t)(void* data, char* name, char* option);
 
@@ -192,8 +203,11 @@ int fluid_settings_option_count (fluid_settings_t* settings, char* name);
 
 /**
  * Callback function type used with fluid_settings_foreach()
+ * @param data User defined data pointer
+ * @param name Setting name
+ * @param type Setting type (#fluid_types_enum)
  */
-typedef void (*fluid_settings_foreach_t)(void* data, char* s, int type);
+typedef void (*fluid_settings_foreach_t)(void* data, char* name, int type);
 
 FLUIDSYNTH_API
 void fluid_settings_foreach(fluid_settings_t* settings, void* data,
@@ -205,7 +219,5 @@ void fluid_settings_foreach_alpha(fluid_settings_t* settings, void* data,
 #ifdef __cplusplus
 }
 #endif
-
-/** @} */
 
 #endif /* _FLUIDSYNTH_SETTINGS_H */

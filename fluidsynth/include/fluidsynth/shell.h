@@ -27,17 +27,13 @@ extern "C" {
 #endif
 
 
-/*
+/**
+ * @file shell.h
+ * @brief Command shell interface
  *
- *   Shell interface
- *
- *   The shell interface allows you to send simple textual commands to
- *   the synthesizer, to parse a command file, or to read commands
- *   from the stdin or other input streams.
- *
- *   To find the list of currently supported commands, please check the
- *   fluid_cmd.c file.
- *   
+ * The shell interface allows you to send simple textual commands to
+ * the synthesizer, to parse a command file, or to read commands
+ * from the stdin or other input streams.
  */
 
 FLUIDSYNTH_API fluid_istream_t fluid_get_stdin(void);
@@ -47,29 +43,22 @@ FLUIDSYNTH_API char* fluid_get_userconf(char* buf, int len);
 FLUIDSYNTH_API char* fluid_get_sysconf(char* buf, int len);
 
 
-/** The command structure */
-
 typedef int (*fluid_cmd_func_t)(void* data, int ac, char** av, fluid_ostream_t out);  
 
+/**
+ * Shell command information structure.
+ */
 typedef struct {
-  char* name;                           /** The name of the command, as typed in in the shell */
-  char* topic;                          /** The help topic group of this command */ 
-  fluid_cmd_func_t handler;              /** Pointer to the handler for this command */
-  void* data;                           /** Pointer to the user data */
-  char* help;                           /** A help string */
+  char* name;                           /**< The name of the command, as typed in the shell */
+  char* topic;                          /**< The help topic group of this command */ 
+  fluid_cmd_func_t handler;             /**< Pointer to the handler for this command */
+  void* data;                           /**< User data passed to the handler */
+  char* help;                           /**< A help string */
 } fluid_cmd_t;
 
 
-/** The command handler */
+/* The command handler */
 
-/**
-    Create a new command handler. If the synth object passed as
-    argument is not NULL, the handler will add all the default
-    synthesizer commands to the command list.
-
-    \param synth The synthesizer object
-    \returns A new command handler
-*/
 FLUIDSYNTH_API 
 fluid_cmd_handler_t* new_fluid_cmd_handler(fluid_synth_t* synth);
 
@@ -79,14 +68,6 @@ void delete_fluid_cmd_handler(fluid_cmd_handler_t* handler);
 FLUIDSYNTH_API 
 void fluid_cmd_handler_set_synth(fluid_cmd_handler_t* handler, fluid_synth_t* synth);
 
-/**
-    Register a new command to the handler. The handler makes a private
-    copy of the 'cmd' structure passed as argument.
-
-    \param handler A pointer to the command handler
-    \param cmd A pointer to the command structure
-    \returns 0 if the command was inserted, non-zero if error
-*/
 FLUIDSYNTH_API 
 int fluid_cmd_handler_register(fluid_cmd_handler_t* handler, fluid_cmd_t* cmd);
 
@@ -94,7 +75,7 @@ FLUIDSYNTH_API
 int fluid_cmd_handler_unregister(fluid_cmd_handler_t* handler, char* cmd);
 
 
-/** Command function */
+/* Command function */
 
 FLUIDSYNTH_API 
 int fluid_command(fluid_cmd_handler_t* handler, char* cmd, fluid_ostream_t out);
@@ -106,7 +87,7 @@ FLUIDSYNTH_API
 void fluid_usershell(fluid_settings_t* settings, fluid_cmd_handler_t* handler);
 
 
-/** Shell */
+/* Shell */
 
 FLUIDSYNTH_API 
 fluid_shell_t* new_fluid_shell(fluid_settings_t* settings, fluid_cmd_handler_t* handler,
@@ -116,8 +97,14 @@ FLUIDSYNTH_API void delete_fluid_shell(fluid_shell_t* shell);
 
 
 
-/** TCP/IP server */
+/* TCP/IP server */
 
+/**
+ * Callback function which is executed for new server connections.
+ * @param data User defined data supplied in call to new_fluid_server()
+ * @param addr The IP address of the client (can be NULL)
+ * @return Should return a new command handler for the connection (new_fluid_cmd_handler()).
+ */
 typedef fluid_cmd_handler_t* (*fluid_server_newclient_func_t)(void* data, char* addr);
 
 FLUIDSYNTH_API 

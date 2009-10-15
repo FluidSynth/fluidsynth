@@ -36,6 +36,19 @@
 #define MAX_COMMAND_LEN 1024	/* max command length accepted by fluid_command() */
 #define FLUID_WORKLINELENGTH 1024 /* LADSPA plugins use long command lines */
 
+struct _fluid_shell_t {
+  fluid_settings_t* settings;
+  fluid_cmd_handler_t* handler;
+  fluid_thread_t* thread;
+  fluid_istream_t in;
+  fluid_ostream_t out;
+};
+
+static int fluid_shell_run(fluid_shell_t* shell);
+static void fluid_shell_init(fluid_shell_t* shell,
+                             fluid_settings_t* settings, fluid_cmd_handler_t* handler,
+                             fluid_istream_t in, fluid_ostream_t out);
+
 void fluid_shell_settings(fluid_settings_t* settings)
 {
   fluid_settings_register_str(settings, "shell.prompt", "", 0, NULL, NULL);
@@ -157,8 +170,8 @@ fluid_cmd_t fluid_commands[] = {
 
 /**
  * Process a string command.
- * NOTE: FluidSynth 1.0.8+ no longer modifies the 'cmd' string.
- * @param handle FluidSynth command handler
+ * NOTE: FluidSynth 1.0.8 and above no longer modifies the 'cmd' string.
+ * @param handler FluidSynth command handler
  * @param cmd Command string (NOTE: Gets modified by FluidSynth prior to 1.0.8)
  * @param out Output stream to display command response to
  * @return Integer value corresponding to: -1 on command error, 0 on success,
@@ -196,20 +209,6 @@ fluid_command(fluid_cmd_handler_t* handler, char* cmd, fluid_ostream_t out)
   return fluid_cmd_handler_handle(handler, num_tokens, &token[0], out);
 }
 
-struct _fluid_shell_t {
-  fluid_settings_t* settings;
-  fluid_cmd_handler_t* handler;
-  fluid_thread_t* thread;
-  fluid_istream_t in;
-  fluid_ostream_t out;
-};
-
-int fluid_shell_run(fluid_shell_t* shell);
-void fluid_shell_init(fluid_shell_t* shell,
-		     fluid_settings_t* settings, fluid_cmd_handler_t* handler,
-		     fluid_istream_t in, fluid_ostream_t out);
-
-
 /**
  * Create a new FluidSynth command shell.
  * @param settings Setting parameters to use with the shell
@@ -246,12 +245,12 @@ new_fluid_shell(fluid_settings_t* settings, fluid_cmd_handler_t* handler,
   }
 
   return shell;
-
 }
 
-void fluid_shell_init(fluid_shell_t* shell,
-		     fluid_settings_t* settings, fluid_cmd_handler_t* handler,
-		     fluid_istream_t in, fluid_ostream_t out)
+static void
+fluid_shell_init(fluid_shell_t* shell,
+		 fluid_settings_t* settings, fluid_cmd_handler_t* handler,
+		 fluid_istream_t in, fluid_ostream_t out)
 {
   shell->settings = settings;
   shell->handler = handler;
@@ -259,7 +258,12 @@ void fluid_shell_init(fluid_shell_t* shell,
   shell->out = out;
 }
 
-void delete_fluid_shell(fluid_shell_t* shell)
+/**
+ * Delete a FluidSynth command shell.
+ * @param shell Command shell instance
+ */
+void
+delete_fluid_shell(fluid_shell_t* shell)
 {
   if (shell->thread != NULL) {
     delete_fluid_thread(shell->thread);
@@ -268,8 +272,8 @@ void delete_fluid_shell(fluid_shell_t* shell)
   FLUID_FREE(shell);
 }
 
-
-int fluid_shell_run(fluid_shell_t* shell)
+static int
+fluid_shell_run(fluid_shell_t* shell)
 {
   char workline[FLUID_WORKLINELENGTH];
   char* prompt = NULL;
@@ -321,7 +325,12 @@ int fluid_shell_run(fluid_shell_t* shell)
   return errors;
 }
 
-
+/**
+ * A convenience function to create a shell interfacing to standard input/output
+ * console streams.
+ * @param settings Settings instance for the shell
+ * @param handler Command handler callback
+ */
 void
 fluid_usershell(fluid_settings_t* settings, fluid_cmd_handler_t* handler)
 {
@@ -330,6 +339,12 @@ fluid_usershell(fluid_settings_t* settings, fluid_cmd_handler_t* handler)
   fluid_shell_run(&shell);
 }
 
+/**
+ * Execute shell commands in a file.
+ * @param handler Command handler callback
+ * @param filename File name
+ * @return 0 on success, a value >1 on error
+ */
 int
 fluid_source(fluid_cmd_handler_t* handler, char* filename)
 {
@@ -348,7 +363,12 @@ fluid_source(fluid_cmd_handler_t* handler, char* filename)
   return fluid_shell_run(&shell);
 }
 
-
+/**
+ * Get the user specific FluidSynth command file name.
+ * @param buf Caller supplied string buffer to store file name to.
+ * @param len Length of \a buf
+ * @return Returns \a buf pointer or NULL if no user command file for this system type.
+ */
 char*
 fluid_get_userconf(char* buf, int len)
 {
@@ -365,6 +385,12 @@ fluid_get_userconf(char* buf, int len)
 #endif
 }
 
+/**
+ * Get the system FluidSynth command file name.
+ * @param buf Caller supplied string buffer to store file name to.
+ * @param len Length of \a buf
+ * @return Returns \a buf pointer or NULL if no system command file for this system type.
+ */
 char*
 fluid_get_sysconf(char* buf, int len)
 {
@@ -1589,7 +1615,14 @@ fluid_cmd_handler_destroy_hash_value (void *value)
   delete_fluid_cmd ((fluid_cmd_t *)value);
 }
 
-fluid_cmd_handler_t* new_fluid_cmd_handler(fluid_synth_t* synth)
+/**
+ * Create a new command handler.
+ * @param synth If not NULL, all the default synthesizer commands will be
+ *   added to the new handler.
+ * @return New command handler
+ */
+fluid_cmd_handler_t *
+new_fluid_cmd_handler(fluid_synth_t* synth)
 {
   int i;
   fluid_cmd_handler_t* handler;
@@ -1619,24 +1652,44 @@ fluid_cmd_handler_t* new_fluid_cmd_handler(fluid_synth_t* synth)
   return handler;
 }
 
-void delete_fluid_cmd_handler(fluid_cmd_handler_t* handler)
+/**
+ * Delete a command handler.
+ * @param handler Command handler to delete
+ */
+void
+delete_fluid_cmd_handler(fluid_cmd_handler_t* handler)
 {
   delete_fluid_hashtable (handler);
 }
 
-int fluid_cmd_handler_register(fluid_cmd_handler_t* handler, fluid_cmd_t* cmd)
+/**
+ * Register a new command to the handler.
+ * @param handler Command handler instance
+ * @param cmd Command info (gets copied)
+ * @return #FLUID_OK if command was inserted, #FLUID_FAILED otherwise
+ */
+int
+fluid_cmd_handler_register(fluid_cmd_handler_t* handler, fluid_cmd_t* cmd)
 {
   fluid_cmd_t* copy = fluid_cmd_copy(cmd);
   fluid_hashtable_insert(handler, copy->name, copy);
-  return 0;
+  return FLUID_OK;
 }
 
-int fluid_cmd_handler_unregister(fluid_cmd_handler_t* handler, char* cmd)
+/**
+ * Unregister a command from a command handler.
+ * @param handler Command handler instance
+ * @param cmd Name of the command
+ * @return TRUE if command was found and unregistered, FALSE otherwise
+ */
+int
+fluid_cmd_handler_unregister(fluid_cmd_handler_t* handler, char* cmd)
 {
   return fluid_hashtable_remove(handler, cmd);
 }
 
-int fluid_cmd_handler_handle(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out)
+int
+fluid_cmd_handler_handle(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out)
 {
   fluid_cmd_t* cmd;
 
@@ -1668,6 +1721,13 @@ static void fluid_server_handle_connection(fluid_server_t* server,
 					  char* addr);
 static void fluid_server_close(fluid_server_t* server);
 
+/**
+ * Create a new TCP/IP command shell server.
+ * @param settings Settings instance to use for the shell
+ * @param newclient Callback function to call for each new client connection
+ * @param data User defined data to pass to \a newclient callback
+ * @return New shell server instance or NULL on error
+ */
 fluid_server_t*
 new_fluid_server(fluid_settings_t* settings,
 		fluid_server_newclient_func_t newclient,
@@ -1702,7 +1762,12 @@ new_fluid_server(fluid_settings_t* settings,
   return server;
 }
 
-void delete_fluid_server(fluid_server_t* server)
+/**
+ * Delete a TCP/IP shell server.
+ * @param server Shell server instance
+ */
+void
+delete_fluid_server(fluid_server_t* server)
 {
   if (server == NULL) {
     return;
@@ -1776,6 +1841,11 @@ void fluid_server_remove_client(fluid_server_t* server, fluid_client_t* client)
   fluid_mutex_unlock(server->mutex);
 }
 
+/**
+ * Join a shell server thread (wait until it quits).
+ * @param server Shell server instance
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ */
 int fluid_server_join(fluid_server_t* server)
 {
   return fluid_server_socket_join(server->socket);

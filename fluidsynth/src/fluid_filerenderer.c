@@ -129,16 +129,20 @@ const char *endian_names[] = {
  * Create a new file renderer and open the file.
  * @param synth The synth that creates audio data.
  * @return the new object, or NULL on failure
- * @since: 1.1.0
+ * @since 1.1.0
  *
- * NOTE: Uses the following settings from the synth object:
- * audio.file.name: Output filename
- * audio.file.type: File type, "auto" tries to determine type from filename
- *   extension with fallback to "wav".
- * audio.file.format: Audio format
- * audio.file.endian: Endian byte order, "auto" for file type's default byte order
- * audio.period-size: Size of audio blocks to process
- * synth.sample-rate: Sample rate to use
+ * NOTE: Available file types and formats depends on if libfluidsynth was
+ * built with libsndfile support or not.  If not then only RAW 16 bit output is
+ * supported.
+ *
+ * Uses the following settings from the synth object:
+ *   - audio.file.name: Output filename
+ *   - audio.file.type: File type, "auto" tries to determine type from filename
+ *     extension with fallback to "wav".
+ *   - audio.file.format: Audio format
+ *   - audio.file.endian: Endian byte order, "auto" for file type's default byte order
+ *   - audio.period-size: Size of audio blocks to process
+ *   - synth.sample-rate: Sample rate to use
  */
 fluid_file_renderer_t *
 new_fluid_file_renderer(fluid_synth_t* synth)
@@ -241,7 +245,7 @@ new_fluid_file_renderer(fluid_synth_t* synth)
 /**
  * Close file and destroy a file renderer object.
  * @param dev File renderer object.
- * @since: 1.1.0
+ * @since 1.1.0
  */
 void delete_fluid_file_renderer(fluid_file_renderer_t* dev)
 {
@@ -274,7 +278,7 @@ void delete_fluid_file_renderer(fluid_file_renderer_t* dev)
  * Write period_size samples to file.
  * @param dev File renderer instance
  * @return FLUID_OK or FLUID_FAILED if an error occurred
- * @since: 1.1.0
+ * @since 1.1.0
  */
 int
 fluid_file_renderer_process_block(fluid_file_renderer_t* dev)

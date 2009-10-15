@@ -27,32 +27,44 @@ extern "C" {
 #endif
 
 
-/*
+/**
+ * @file misc.h
+ * @brief Miscellaneous utility functions and defines
+ */
+
+/**
+ * Value that indicates success, used by most libfluidsynth functions.
+ * @since 1.1.0
  *
- *  Utility functions
+ * NOTE: This was not publicly defined prior to libfluidsynth 1.1.0.  When
+ * writing code which should also be compatible with older versions, something
+ * like the following can be used:
+ *
+ * @code
+ *   #include <fluidsynth.h>
+ *
+ *   #ifndef FLUID_OK
+ *   #define FLUID_OK      (0)
+ *   #define FLUID_FAILED  (-1)
+ *   #endif
+ * @endcode
  */
+#define FLUID_OK        (0)
 
 /**
- * fluid_is_soundfont returns 1 if the specified filename is a
- * soundfont. It retuns 0 otherwise. The current implementation only
- * checks for the "RIFF" header in the file. It is useful only to
- * distinguish between SoundFonts and MIDI files.
+ * Value that indicates failure, used by most libfluidsynth functions.
+ * @since 1.1.0
+ *
+ * NOTE: See #FLUID_OK for more details.
  */
+#define FLUID_FAILED    (-1)
+
+
 FLUIDSYNTH_API int fluid_is_soundfont(char* filename);
-
-/**
- * fluid_is_midifile returns 1 if the specified filename is a MIDI
- * file. It retuns 0 otherwise. The current implementation only checks
- * for the "MThd" header in the file.  
- */
 FLUIDSYNTH_API int fluid_is_midifile(char* filename);
 
 
-
-
 #ifdef WIN32
-/** Set the handle to the instance of the application on the Windows
-    platform. The handle is needed to open DirectSound. */
 FLUIDSYNTH_API void* fluid_get_hinstance(void);
 FLUIDSYNTH_API void fluid_set_hinstance(void* hinstance);
 #endif

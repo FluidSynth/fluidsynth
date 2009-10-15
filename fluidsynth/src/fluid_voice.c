@@ -203,19 +203,40 @@ fluid_voice_init(fluid_voice_t* voice, fluid_sample_t* sample,
   return FLUID_OK;
 }
 
-void fluid_voice_gen_set(fluid_voice_t* voice, int i, float val)
+/**
+ * Set the value of a generator.
+ * @param voice Voice instance
+ * @param i Generator ID (#fluid_gen_type)
+ * @param val Generator value
+ */
+void
+fluid_voice_gen_set(fluid_voice_t* voice, int i, float val)
 {
   voice->gen[i].val = val;
   voice->gen[i].flags = GEN_SET;
 }
 
-void fluid_voice_gen_incr(fluid_voice_t* voice, int i, float val)
+/**
+ * Offset the value of a generator.
+ * @param voice Voice instance
+ * @param i Generator ID (#fluid_gen_type)
+ * @param val Value to add to the existing value
+ */
+void
+fluid_voice_gen_incr(fluid_voice_t* voice, int i, float val)
 {
   voice->gen[i].val += val;
   voice->gen[i].flags = GEN_SET;
 }
 
-float fluid_voice_gen_get(fluid_voice_t* voice, int gen)
+/**
+ * Get the value of a generator.
+ * @param voice Voice instance
+ * @param gen Generator ID (#fluid_gen_type)
+ * @return Current generator value
+ */
+float
+fluid_voice_gen_get(fluid_voice_t* voice, int gen)
 {
   return voice->gen[gen].val;
 }
@@ -1018,10 +1039,6 @@ calculate_hold_decay_buffers(fluid_voice_t* voice, int gen_base,
 }
 
 /*
- * fluid_voice_update_param
- *
- * Purpose:
- *
  * The value of a generator (gen) has changed.  (The different
  * generators are listed in fluidsynth.h, or in SF2.01 page 48-49)
  * Now the dependent 'voice' parameters are calculated.
@@ -1035,6 +1052,14 @@ calculate_hold_decay_buffers(fluid_voice_t* voice, int gen_base,
  * offset caused by modulators .mod, and an offset caused by the
  * NRPN system. _GEN(voice, generator_enumerator) returns the sum
  * of all three.
+ */
+/**
+ * Update all the synthesis parameters, which depend on generator \a gen.
+ * @param voice Voice instance
+ * @param gen Generator id (#fluid_gen_type)
+ *
+ * This is only necessary after changing a generator of an already operating voice.
+ * Most applications will not need this function.
  */
 void
 fluid_voice_update_param(fluid_voice_t* voice, int gen)
@@ -1444,7 +1469,10 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
 }
 
 /**
- * fluid_voice_modulate
+ * Recalculate voice parameters for a given control.
+ * @param voice the synthesis voice
+ * @param cc flag to distinguish between a continous control and a channel control (pitch bend, ...)
+ * @param ctrl the control number
  *
  * In this implementation, I want to make sure that all controllers
  * are event based: the parameter values of the DSP algorithm should
@@ -1464,12 +1492,7 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
  *
  * - For every changed generator, convert its value to the correct
  * unit of the corresponding DSP parameter
- *
- * @fn int fluid_voice_modulate(fluid_voice_t* voice, int cc, int ctrl, int val)
- * @param voice the synthesis voice
- * @param cc flag to distinguish between a continous control and a channel control (pitch bend, ...)
- * @param ctrl the control number
- * */
+ */
 int fluid_voice_modulate(fluid_voice_t* voice, int cc, int ctrl)
 {
   int i, k;
@@ -1510,8 +1533,6 @@ int fluid_voice_modulate(fluid_voice_t* voice, int cc, int ctrl)
 }
 
 /**
- * fluid_voice_modulate_all
- *
  * Update all the modulators. This function is called after a
  * ALL_CTRL_OFF MIDI message has been received (CC 121).
  *
@@ -1670,16 +1691,15 @@ fluid_voice_off(fluid_voice_t* voice)
   return FLUID_OK;
 }
 
-/*
- * fluid_voice_add_mod
- *
- * Adds a modulator to the voice.  "mode" indicates, what to do, if
- * an identical modulator exists already.
- *
- * mode == FLUID_VOICE_ADD: Identical modulators on preset level are added
- * mode == FLUID_VOICE_OVERWRITE: Identical modulators on instrument level are overwritten
- * mode == FLUID_VOICE_DEFAULT: This is a default modulator, there can be no identical modulator.
- *                             Don't check.
+/**
+ * Adds a modulator to the voice.
+ * @param voice Voice instance
+ * @param mod Modulator info (copied)
+ * @param mode Determines how to handle an existing identical modulator
+ *   #FLUID_VOICE_ADD to add (offset) the modulator amounts,
+ *   #FLUID_VOICE_OVERWRITE to replace the modulator,
+ *   #FLUID_VOICE_DEFAULT when adding a default modulator - no duplicate should
+ *   exist so don't check.
  */
 void
 fluid_voice_add_mod(fluid_voice_t* voice, fluid_mod_t* mod, int mode)
@@ -1735,11 +1755,32 @@ fluid_voice_add_mod(fluid_voice_t* voice, fluid_mod_t* mod, int mode)
   }
 }
 
+/**
+ * Get the unique ID of the noteon-event.
+ * @param voice Voice instance
+ * @return Note on unique ID
+ *
+ * A SoundFont loader may store the voice processes it has created for
+ * real-time control during the operation of a voice (for example: parameter
+ * changes in SoundFont editor). The synth uses a pool of voices, which are
+ * 'recycled' and never deallocated.
+ *
+ * Before modifying an existing voice, check
+ * - that its state is still 'playing'
+ * - that the ID is still the same
+ *
+ * Otherwise the voice has finished playing.
+ */
 unsigned int fluid_voice_get_id(fluid_voice_t* voice)
 {
   return voice->id;
 }
 
+/**
+ * Check if a voice is still playing.
+ * @param voice Voice instance
+ * @return TRUE if playing, FALSE otherwise
+ */
 int fluid_voice_is_playing(fluid_voice_t* voice)
 {
   return _PLAYING(voice);
@@ -1982,7 +2023,19 @@ int fluid_voice_set_gain(fluid_voice_t* voice, fluid_real_t gain)
  * - Calculate, what factor will make the loop inaudible
  * - Store in sample
  */
-int fluid_voice_optimize_sample(fluid_sample_t* s)
+/**
+ * Calculate the peak volume of a sample for voice off optimization.
+ * @param s Sample to optimize
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ *
+ * If the peak volume during the loop is known, then the voice can
+ * be released earlier during the release phase. Otherwise, the
+ * voice will operate (inaudibly), until the envelope is at the
+ * nominal turnoff point.  So it's a good idea to call
+ * fluid_voice_optimize_sample() on each sample once.
+ */
+int
+fluid_voice_optimize_sample(fluid_sample_t* s)
 {
   signed short peak_max = 0;
   signed short peak_min = 0;

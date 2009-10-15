@@ -28,7 +28,8 @@ extern "C" {
 
 
 /**
- * Embedded synthesizer
+ * @file synth.h
+ * @brief Embeddable SoundFont synthesizer
  *  
  * You create a new synthesizer with new_fluid_synth() and you destroy
  * if with delete_fluid_synth(). Use the settings structure to specify
@@ -109,11 +110,10 @@ FLUIDSYNTH_API double fluid_synth_get_reverb_damp(fluid_synth_t* synth);
 FLUIDSYNTH_API double fluid_synth_get_reverb_level(fluid_synth_t* synth);
 FLUIDSYNTH_API double fluid_synth_get_reverb_width(fluid_synth_t* synth);
 
-/* Default settings for the reverb */
-#define FLUID_REVERB_DEFAULT_ROOMSIZE 0.2f
-#define FLUID_REVERB_DEFAULT_DAMP 0.0f
-#define FLUID_REVERB_DEFAULT_WIDTH 0.5f
-#define FLUID_REVERB_DEFAULT_LEVEL 0.9f
+#define FLUID_REVERB_DEFAULT_ROOMSIZE 0.2f      /**< Default reverb room size */
+#define FLUID_REVERB_DEFAULT_DAMP 0.0f          /**< Default reverb damping */
+#define FLUID_REVERB_DEFAULT_WIDTH 0.5f         /**< Default reverb width */
+#define FLUID_REVERB_DEFAULT_LEVEL 0.9f         /**< Default reverb level */
 
 
 /* Chorus */
@@ -135,12 +135,11 @@ FLUIDSYNTH_API double fluid_synth_get_chorus_speed_Hz(fluid_synth_t* synth);
 FLUIDSYNTH_API double fluid_synth_get_chorus_depth_ms(fluid_synth_t* synth);
 FLUIDSYNTH_API int fluid_synth_get_chorus_type(fluid_synth_t* synth); /* see fluid_chorus_mod */
 
-/* Default settings for the chorus. */
-#define FLUID_CHORUS_DEFAULT_N 3
-#define FLUID_CHORUS_DEFAULT_LEVEL 2.0f
-#define FLUID_CHORUS_DEFAULT_SPEED 0.3f
-#define FLUID_CHORUS_DEFAULT_DEPTH 8.0f
-#define FLUID_CHORUS_DEFAULT_TYPE FLUID_CHORUS_MOD_SINE 
+#define FLUID_CHORUS_DEFAULT_N 3                                /**< Default chorus voice count */
+#define FLUID_CHORUS_DEFAULT_LEVEL 2.0f                         /**< Default chorus level */
+#define FLUID_CHORUS_DEFAULT_SPEED 0.3f                         /**< Default chorus speed */
+#define FLUID_CHORUS_DEFAULT_DEPTH 8.0f                         /**< Default chorus depth */
+#define FLUID_CHORUS_DEFAULT_TYPE FLUID_CHORUS_MOD_SINE         /**< Default chorus waveform type */
 
 
 /* Audio and MIDI channels */
@@ -172,11 +171,8 @@ enum fluid_interp {
   FLUID_INTERP_7THORDER = 7,    /**< Seventh-order interpolation */
 };
 
-/** Default interpolation method from #fluid_interp. */
-#define FLUID_INTERP_DEFAULT    FLUID_INTERP_4THORDER
-
-/** Highest interpolation method from #fluid_interp. */
-#define FLUID_INTERP_HIGHEST    FLUID_INTERP_7THORDER
+#define FLUID_INTERP_DEFAULT    FLUID_INTERP_4THORDER   /**< Default interpolation method from #fluid_interp. */
+#define FLUID_INTERP_HIGHEST    FLUID_INTERP_7THORDER   /**< Highest interpolation method from #fluid_interp. */
 
 
 /* Generator interface */
