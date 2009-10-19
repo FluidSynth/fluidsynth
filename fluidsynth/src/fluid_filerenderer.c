@@ -26,6 +26,7 @@
 #include "fluidsynth_priv.h"
 #include "fluid_synth.h"
 #include "fluid_sys.h"
+#include "fluid_settings.h"
 
 #if LIBSNDFILE_SUPPORT
 #include <sndfile.h>
@@ -99,6 +100,7 @@ const int endian_ids[] = {
 static int fluid_file_renderer_parse_options (char *filetype, char *format,
                                               char *endian, char *filename, SF_INFO *info);
 static int fluid_file_renderer_find_file_type (char *extension, int *type);
+static int fluid_file_renderer_find_valid_format (SF_INFO *info);
 
 
 #else   /* No libsndfile support */
@@ -124,6 +126,61 @@ const char *endian_names[] = {
 
 #endif
 
+
+void
+fluid_file_renderer_settings (fluid_settings_t* settings)
+{
+#if LIBSNDFILE_SUPPORT
+  SF_FORMAT_INFO finfo, cmpinfo;
+  int major_count;
+  int i, i2;
+  const char **np;
+
+  fluid_settings_register_str(settings, "audio.file.name", "fluidsynth.wav", 0, NULL, NULL);
+  fluid_settings_register_str(settings, "audio.file.type", "auto", 0, NULL, NULL);
+  fluid_settings_register_str(settings, "audio.file.format", "s16", 0, NULL, NULL);
+  fluid_settings_register_str(settings, "audio.file.endian", "auto", 0, NULL, NULL);
+
+  fluid_settings_add_option (settings, "audio.file.type", "auto");
+
+  sf_command (NULL, SFC_GET_FORMAT_MAJOR_COUNT, &major_count, sizeof (int));
+
+  for (i = 0; i < major_count; i++)
+  {
+    finfo.format = i;
+    sf_command (NULL, SFC_GET_FORMAT_MAJOR, &finfo, sizeof (finfo));
+
+    /* Check for duplicates */
+    for (i2 = 0; i2 < i; i2++)
+    {
+      cmpinfo.format = i2;
+      sf_command (NULL, SFC_GET_FORMAT_MAJOR, &cmpinfo, sizeof (cmpinfo));
+
+      if (FLUID_STRCMP (cmpinfo.extension, finfo.extension) == 0)
+        break;
+    }
+
+    if (i2 == i)
+      fluid_settings_add_option (settings, "audio.file.type", finfo.extension);
+  }
+
+  for (np = format_names; *np; np++)
+    fluid_settings_add_option (settings, "audio.file.format", *np);
+
+  for (np = endian_names; *np; np++)
+    fluid_settings_add_option (settings, "audio.file.endian", *np);
+
+#else
+
+  fluid_settings_register_str(settings, "audio.file.name", "fluidsynth.raw", 0, NULL, NULL);
+  fluid_settings_register_str(settings, "audio.file.type", "raw", 0, NULL, NULL);
+  fluid_settings_add_option (settings "audio.file.type", "raw");
+  fluid_settings_register_str(settings, "audio.file.format", "s16", 0, NULL, NULL);
+  fluid_settings_add_option (settings "audio.file.format", "s16");
+  fluid_settings_register_str(settings, "audio.file.endian", "cpu", 0, NULL, NULL);
+  fluid_settings_add_option (settings "audio.file.endian", "cpu");
+#endif
+}
 
 /**
  * Create a new file renderer and open the file.
@@ -209,7 +266,13 @@ new_fluid_file_renderer(fluid_synth_t* synth)
 	info.samplerate = samplerate + 0.5;
 	info.channels = 2;
 
-	if (!sf_format_check (&info))
+	/* Search for valid format for given file type, if invalid and no format was specified.
+	 * To handle Ogg/Vorbis and possibly future file types with new formats.
+	 * Checking if format is SF_FORMAT_PCM_16 isn't a fool proof way to check if
+	 * format was specified or not (if user specifies "s16" itself), but should suffice. */
+	if (!sf_format_check (&info)
+            && ((info.format & SF_FORMAT_SUBMASK) != SF_FORMAT_PCM_16
+                || !fluid_file_renderer_find_valid_format (&info)))
 	{
 	  FLUID_LOG(FLUID_ERR, "Invalid or unsupported audio file format settings");
 	  goto error_recovery;
@@ -317,77 +380,6 @@ fluid_file_renderer_process_block(fluid_file_renderer_t* dev)
 }
 
 #endif
-
-
-#if LIBSNDFILE_SUPPORT
-/**
- * Get NULL terminated list of supported audio file type names.
- * @return NULL terminated list of strings which is internal and should not be
- *   modified or freed.  NOTE: May return NULL if memory allocation fails.
- */
-const char **
-fluid_file_renderer_get_type_names (void)
-{
-  static fluid_mutex_t mutex = FLUID_MUTEX_INIT;
-  static const char **type_names = NULL;
-  SF_FORMAT_INFO finfo;
-  int major_count;
-  int i, i2, index;
-
-  fluid_mutex_lock (mutex);
-
-  if (!type_names)
-  {
-    sf_command (NULL, SFC_GET_FORMAT_MAJOR_COUNT, &major_count, sizeof (int));
-
-    type_names = FLUID_ARRAY (const char *, major_count + 1);
-
-    if (type_names)
-    {
-      for (i = 0, index = 0; i < major_count; i++)
-      {
-        finfo.format = i;
-        sf_command (NULL, SFC_GET_FORMAT_MAJOR, &finfo, sizeof (finfo));
-
-        /* Check for duplicates */
-        for (i2 = 0; i2 < index; i2++)
-          if (strcmp (type_names[i2], finfo.extension) == 0)
-            break;
-
-        if (i2 < index) continue;
-
-        type_names[index++] = finfo.extension;  /* Add name to array */
-      }
-
-      type_names[index] = NULL;
-    }
-    else FLUID_LOG (FLUID_ERR, "Out of memory");
-  }
-
-  fluid_mutex_unlock (mutex);
-
-  return (const char **)type_names;
-}
-#else
-const char **
-fluid_file_renderer_get_type_names (void)
-{
-  return type_names;
-}
-#endif
-
-
-const char **
-fluid_file_renderer_get_format_names (void)
-{
-  return format_names;
-}
-
-const char **
-fluid_file_renderer_get_endian_names (void)
-{
-  return endian_names;
-}
 
 
 #if LIBSNDFILE_SUPPORT
@@ -503,6 +495,29 @@ fluid_file_renderer_find_file_type (char *extension, int *type)
   {
     *type = finfo.format;
     return TRUE;
+  }
+
+  return FALSE;
+}
+
+/* Search for a valid audio format for a given file type */
+static int
+fluid_file_renderer_find_valid_format (SF_INFO *info)
+{
+  SF_FORMAT_INFO format_info;
+  int count, i;
+
+  sf_command (NULL, SFC_GET_FORMAT_SUBTYPE_COUNT, &count, sizeof (int));
+
+  for (i = 0; i < count; i++)
+  {
+    format_info.format = i;
+
+    sf_command (NULL, SFC_GET_FORMAT_SUBTYPE, &format_info, sizeof (format_info));
+
+    info->format = (info->format & ~SF_FORMAT_SUBMASK) | format_info.format;
+
+    if (sf_format_check (info)) return TRUE;
   }
 
   return FALSE;

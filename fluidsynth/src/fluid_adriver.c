@@ -112,12 +112,10 @@ int delete_fluid_dart_audio_driver(fluid_audio_driver_t* p);
 void fluid_dart_audio_driver_settings(fluid_settings_t* settings);
 #endif
 
-#define AUFILE_SUPPORT 1
 #if AUFILE_SUPPORT
 fluid_audio_driver_t* new_fluid_file_audio_driver(fluid_settings_t* settings,
 						  fluid_synth_t* synth);
 int delete_fluid_file_audio_driver(fluid_audio_driver_t* p);
-void fluid_file_audio_driver_settings(fluid_settings_t* settings);
 #endif
 
 /* Available audio drivers, listed in order of preference */
@@ -190,7 +188,7 @@ fluid_audriver_definition_t fluid_audio_drivers[] = {
     new_fluid_file_audio_driver,
     NULL,
     delete_fluid_file_audio_driver,
-    fluid_file_audio_driver_settings },
+    NULL },
 #endif
   { NULL, NULL, NULL, NULL, NULL }
 };

@@ -322,8 +322,8 @@ new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
   while (1) {
     err = pthread_attr_setschedpolicy(&attr, sched);
     if (err) {
-      FLUID_LOG(FLUID_WARN, "Couldn't set high priority scheduling for the audio output");
       if (sched == SCHED_FIFO) {
+        FLUID_LOG(FLUID_WARN, "Couldn't set high priority scheduling for the audio output");
 	sched = SCHED_OTHER;
 	continue;
       } else {
@@ -338,8 +338,8 @@ new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
 
     err = pthread_create(&dev->thread, &attr, fluid_alsa_formats[i].run, (void*) dev);
     if (err) {
-      FLUID_LOG(FLUID_WARN, "Couldn't set high priority scheduling for the audio output");
       if (sched == SCHED_FIFO) {
+        FLUID_LOG(FLUID_WARN, "Couldn't set high priority scheduling for the audio output");
 	sched = SCHED_OTHER;
 	continue;
       } else {
@@ -714,8 +714,8 @@ new_fluid_alsa_rawmidi_driver(fluid_settings_t* settings,
   while (1) {
     err = pthread_attr_setschedpolicy(&attr, sched);
     if (err) {
-      FLUID_LOG(FLUID_WARN, "Couldn't set high priority scheduling for the MIDI input");
       if (sched == SCHED_FIFO) {
+        FLUID_LOG(FLUID_WARN, "Couldn't set high priority scheduling for the MIDI input");
 	sched = SCHED_OTHER;
 	continue;
       } else {
@@ -730,8 +730,8 @@ new_fluid_alsa_rawmidi_driver(fluid_settings_t* settings,
 
     err = pthread_create(&dev->thread, &attr, fluid_alsa_midi_run, (void*) dev);
     if (err) {
-      FLUID_LOG(FLUID_WARN, "Couldn't set high priority scheduling for the MIDI input");
       if (sched == SCHED_FIFO) {
+        FLUID_LOG(FLUID_WARN, "Couldn't set high priority scheduling for the MIDI input");
 	sched = SCHED_OTHER;
 	continue;
       } else {
@@ -1042,8 +1042,8 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
   while (1) {
     err = pthread_attr_setschedpolicy(&attr, sched);
     if (err) {
-      FLUID_LOG(FLUID_WARN, "Couldn't set high priority scheduling for the MIDI input");
       if (sched == SCHED_FIFO) {
+        FLUID_LOG(FLUID_WARN, "Couldn't set high priority scheduling for the MIDI input");
 	sched = SCHED_OTHER;
 	continue;
       } else {
@@ -1058,8 +1058,8 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
 
     err = pthread_create(&dev->thread, &attr, fluid_alsa_seq_run, (void*) dev);
     if (err) {
-      FLUID_LOG(FLUID_WARN, "Couldn't set high priority scheduling for the MIDI input");
       if (sched == SCHED_FIFO) {
+        FLUID_LOG(FLUID_WARN, "Couldn't set high priority scheduling for the MIDI input");
 	sched = SCHED_OTHER;
 	continue;
       } else {

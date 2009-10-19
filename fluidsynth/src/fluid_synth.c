@@ -61,12 +61,6 @@ static int fluid_synth_cc_real(fluid_synth_t* synth, int channum, int num,
                                int value, int noqueue);
 static int fluid_synth_update_device_id (fluid_synth_t *synth, char *name,
                                          int value);
-static int fluid_synth_update_midi_mode (fluid_synth_t *synth, char *name,
-                                         char *value);
-static int fluid_synth_update_midi_mode_lock (fluid_synth_t *synth, char *name,
-                                              char *value);
-static void fluid_synth_set_midi_mode_LOCAL (fluid_synth_t *synth,
-                                             fluid_synth_midi_mode_t mode);
 static int fluid_synth_sysex_midi_tuning (fluid_synth_t *synth, char *data,
                                           int len, char *response,
                                           int *response_len, int avail_response,
@@ -244,15 +238,6 @@ void fluid_synth_settings(fluid_settings_t* settings)
   fluid_settings_register_int(settings, "synth.device-id",
 			      0, 0, 126, 0, NULL, NULL);
   fluid_settings_register_int(settings, "synth.cpu-cores", 1, 1, 256, 0, NULL, NULL);
-
-  fluid_settings_register_str(settings, "synth.midi-mode", "normal", 0, NULL, NULL);
-  fluid_settings_add_option(settings, "synth.midi-mode", "normal");
-  fluid_settings_add_option(settings, "synth.midi-mode", "gm");
-  fluid_settings_add_option(settings, "synth.midi-mode", "gs");
-
-  fluid_settings_register_str(settings, "synth.midi-mode-lock", "no", 0, NULL, NULL);
-  fluid_settings_add_option(settings, "synth.midi-mode-lock", "no");
-  fluid_settings_add_option(settings, "synth.midi-mode-lock", "yes");
 
   fluid_settings_register_int(settings, "synth.min-note-length", 10, 0, 65535, 0, NULL, NULL);
 }
@@ -566,7 +551,6 @@ new_fluid_synth(fluid_settings_t *settings)
   synth->with_chorus = fluid_settings_str_equal(settings, "synth.chorus.active", "yes");
   synth->verbose = fluid_settings_str_equal(settings, "synth.verbose", "yes");
   synth->dump = fluid_settings_str_equal(settings, "synth.dump", "yes");
-  synth->midi_mode_lock = fluid_settings_str_equal(settings, "synth.midi-mode-lock", "yes");
 
   fluid_settings_getint(settings, "synth.polyphony", &synth->polyphony);
   fluid_settings_getnum(settings, "synth.sample-rate", &synth->sample_rate);
@@ -592,10 +576,6 @@ new_fluid_synth(fluid_settings_t *settings)
   fluid_settings_register_int(settings, "synth.device-id",
 			      synth->device_id, 126, 0, 0,
                               (fluid_int_update_t) fluid_synth_update_device_id, synth);
-  fluid_settings_register_str(settings, "synth.midi-mode", "normal", 0,
-                              (fluid_str_update_t) fluid_synth_update_midi_mode, synth);
-  fluid_settings_register_str(settings, "synth.midi-mode-lock", "no", 0,
-                              (fluid_str_update_t) fluid_synth_update_midi_mode_lock, synth);
 
   /* do some basic sanity checking on the settings */
 
@@ -1378,19 +1358,7 @@ fluid_synth_noteoff_LOCAL(fluid_synth_t* synth, int chan, int key)
 {
   fluid_voice_t* voice;
   int status = FLUID_FAILED;
-  int midi_mode;
   int i;
-
-  /* We ignore percussion note offs in GM/GS for everything except
-   * Long Guiro and Long Whistle, as per GM revision 2 spec - JG */
-  if (chan == 9)
-  {
-    midi_mode = fluid_atomic_int_get (&synth->midi_mode);
-
-    if ((midi_mode == FLUID_SYNTH_MIDI_MODE_GM || midi_mode == FLUID_SYNTH_MIDI_MODE_GS)
-        && key != 72 && key != 74)
-      return FLUID_OK;
-  }
 
   for (i = 0; i < synth->polyphony; i++) {
     voice = synth->voice[i];
@@ -1625,60 +1593,6 @@ fluid_synth_update_device_id (fluid_synth_t *synth, char *name, int value)
   return 0;
 }
 
-/* Handler for synth.midi-mode setting. */
-static int
-fluid_synth_update_midi_mode (fluid_synth_t *synth, char *name, char *value)
-{
-  int mode = FLUID_SYNTH_MIDI_MODE_NORMAL;
-
-  if (FLUID_STRCMP (value, "gm") == 0)
-    mode = FLUID_SYNTH_MIDI_MODE_GM;
-  else if (FLUID_STRCMP (value, "gs") == 0)
-    mode = FLUID_SYNTH_MIDI_MODE_GS;
-
-  if (fluid_synth_should_queue (synth))
-    fluid_synth_queue_int_event (synth, FLUID_EVENT_QUEUE_ELEM_MIDI_MODE, mode);
-  else fluid_synth_set_midi_mode_LOCAL (synth, mode);
-
-  return 0;
-}
-
-/* Local synthesis context version of set MIDI mode */
-static void
-fluid_synth_set_midi_mode_LOCAL (fluid_synth_t *synth, fluid_synth_midi_mode_t mode)
-{
-  char *modestr;
-
-  if (synth->verbose)
-  {
-    switch (mode)
-    {
-      case FLUID_SYNTH_MIDI_MODE_GM:
-        modestr = "gm";
-        break;
-      case FLUID_SYNTH_MIDI_MODE_GS:
-        modestr = "gs";
-        break;
-      default:
-        modestr = "default";
-        break;
-    }
-
-    FLUID_LOG (FLUID_INFO, "midimode\t%s", modestr);
-  }
-
-  fluid_atomic_int_set (&synth->midi_mode, mode);
-}
-
-/* Handler for synth.midi-mode-lock setting. */
-static int
-fluid_synth_update_midi_mode_lock (fluid_synth_t *synth, char *name, char *value)
-{
-  fluid_atomic_int_set (&synth->midi_mode_lock,
-                        value && FLUID_STRCMP (value, "yes") == 0);
-  return 0;
-}
-
 /**
  * Process a MIDI SYSEX (system exclusive) message.
  * @param synth FluidSynth instance
@@ -1727,44 +1641,6 @@ fluid_synth_sysex(fluid_synth_t *synth, char *data, int len,
       && data[2] == MIDI_SYSEX_MIDI_TUNING_ID)
     return fluid_synth_sysex_midi_tuning (synth, data, len, response, response_len,
                                           avail_response, handled, dryrun);
-
-  /* General MIDI message? */
-  if (data[0] == MIDI_SYSEX_UNIV_NON_REALTIME
-      && (data[1] == synth->device_id || data[1] == MIDI_SYSEX_DEVICE_ID_ALL)
-      && data[2] == MIDI_SYSEX_GM_ID)
-  {
-    switch (data[3])
-    {
-      case MIDI_SYSEX_GM_ON:
-        if (!fluid_atomic_int_get (&synth->midi_mode_lock))
-          fluid_synth_setstr (synth, "synth.midi-mode", "gm");
-
-        if (handled) *handled = FALSE;
-        break;
-      case MIDI_SYSEX_GM_OFF:
-        if (!fluid_atomic_int_get (&synth->midi_mode_lock))
-          fluid_synth_setstr (synth, "synth.midi-mode", "normal");
-
-        if (handled) *handled = FALSE;
-        break;
-    }
-
-    return FLUID_OK;
-  }
-
-  /* GS reset message? */
-  if (len == 9 && data[0] == MIDI_SYSEX_MANUF_ROLAND
-      && data[1] == 0x10 && data[2] == 0x42 && data[3] == 0x12 && data[4] == 0x40
-      && data[5] == 0x00 && data[6] == 0x7F && data[7] == 0x00 && data[8] == 0x41)
-  {
-    if (!fluid_atomic_int_get (&synth->midi_mode_lock))
-      fluid_synth_setstr (synth, "synth.midi-mode", "gs");
-
-    if (handled) *handled = FALSE;    
-
-    return FLUID_OK;
-  }
-
   return FLUID_OK;
 }
 
@@ -3537,9 +3413,6 @@ fluid_synth_process_event_queue_LOCAL (fluid_synth_t *synth,
       fluid_synth_replace_tuning_LOCAL (synth, event->repl_tuning.old_tuning,
                                         event->repl_tuning.new_tuning,
                                         event->repl_tuning.apply, TRUE);
-      break;
-    case FLUID_EVENT_QUEUE_ELEM_MIDI_MODE:
-      fluid_synth_set_midi_mode_LOCAL (synth, event->ival);
       break;
     }
 

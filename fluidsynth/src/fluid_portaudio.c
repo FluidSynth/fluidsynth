@@ -97,8 +97,14 @@ fluid_portaudio_driver_settings (fluid_settings_t *settings)
     deviceInfo = Pa_GetDeviceInfo (i);
     if ( deviceInfo->maxOutputChannels >= 2 )
       fluid_settings_add_option (settings, "audio.portaudio.device",
-                                 (char *)(deviceInfo->name));
+                                 deviceInfo->name);
   }
+
+  /* done with PortAudio for now, may get reopened later */
+  err = Pa_Terminate();
+
+  if (err != paNoError)
+    printf ("PortAudio termination error: %s\n", Pa_GetErrorText (err) );
 }
 
 fluid_audio_driver_t *
@@ -116,6 +122,16 @@ new_fluid_portaudio_driver (fluid_settings_t *settings, fluid_synth_t *synth)
   if (dev == NULL)
   {
     FLUID_LOG (FLUID_ERR, "Out of memory");
+    return NULL;
+  }
+
+  err = Pa_Initialize ();
+
+  if (err != paNoError)
+  {
+    FLUID_LOG (FLUID_ERR, "Error initializing PortAudio driver: %s",
+               Pa_GetErrorText (err));
+    FLUID_FREE (dev);
     return NULL;
   }
 

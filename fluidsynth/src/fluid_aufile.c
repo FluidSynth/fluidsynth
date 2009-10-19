@@ -52,7 +52,6 @@ fluid_audio_driver_t* new_fluid_file_audio_driver(fluid_settings_t* settings,
 						  fluid_synth_t* synth);
 
 int delete_fluid_file_audio_driver(fluid_audio_driver_t* p);
-void fluid_file_audio_driver_settings(fluid_settings_t* settings);
 static int fluid_file_audio_run_s16(void* d, unsigned int msec);
 
 /**************************************************************
@@ -60,40 +59,6 @@ static int fluid_file_audio_run_s16(void* d, unsigned int msec);
  *        'file' audio driver
  * 
  */
-
-void fluid_file_audio_driver_settings(fluid_settings_t* settings)
-{
-#if LIBSNDFILE_SUPPORT
-	const char **names, **np;
-#endif
-
-#if LIBSNDFILE_SUPPORT
-	fluid_settings_register_str(settings, "audio.file.name", "fluidsynth.wav", 0, NULL, NULL);
-	fluid_settings_register_str(settings, "audio.file.type", "auto", 0, NULL, NULL);
-	fluid_settings_register_str(settings, "audio.file.format", "s16", 0, NULL, NULL);
-	fluid_settings_register_str(settings, "audio.file.endian", "auto", 0, NULL, NULL);
-
-	fluid_settings_add_option (settings, "audio.file.type", "auto");
-
-	names = fluid_file_renderer_get_type_names ();
-	for (np = names; *np; np++)
-		fluid_settings_add_option(settings, "audio.file.type", *np);
-
-	names = fluid_file_renderer_get_format_names ();
-	for (np = names; *np; np++)
-		fluid_settings_add_option(settings, "audio.file.format", *np);
-
-	names = fluid_file_renderer_get_endian_names ();
-	for (np = names; *np; np++)
-		fluid_settings_add_option(settings, "audio.file.endian", *np);
-#else
-	fluid_settings_register_str(settings, "audio.file.name", "fluidsynth.raw", 0, NULL, NULL);
-	fluid_settings_register_str(settings, "audio.file.type", "raw", 0, NULL, NULL);
-	fluid_settings_register_str(settings, "audio.file.format", "s16", 0, NULL, NULL);
-	fluid_settings_register_str(settings, "audio.file.endian", "cpu", 0, NULL, NULL);
-#endif
-}
-
 
 fluid_audio_driver_t*
 new_fluid_file_audio_driver(fluid_settings_t* settings,

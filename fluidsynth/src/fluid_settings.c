@@ -28,6 +28,9 @@
 #include "fluid_settings.h"
 #include "fluid_midi.h"
 
+/* Defined in fluid_filerenderer.c */
+extern void fluid_file_renderer_settings (fluid_settings_t* settings);
+
 /* maximum allowed components of a settings variable (separated by '.') */
 #define MAX_SETTINGS_TOKENS	8	/* currently only a max of 3 are used */
 #define MAX_SETTINGS_LABEL	256	/* max length of a settings variable label */
@@ -293,6 +296,7 @@ fluid_settings_init(fluid_settings_t* settings)
   fluid_synth_settings(settings);
   fluid_shell_settings(settings);
   fluid_player_settings(settings);
+  fluid_file_renderer_settings(settings);
   fluid_audio_driver_settings(settings);
   fluid_midi_driver_settings(settings);
 }

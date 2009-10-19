@@ -208,6 +208,19 @@ settings_foreach_func (void *data, char *name, int type)
   }
 }
 
+/* Output options for a setting string to stdout */
+static void
+show_settings_str_options (fluid_settings_t *settings, char *name)
+{
+  OptionBag bag;
+
+  bag.count = fluid_settings_option_count (settings, name);
+  bag.curindex = 0;
+  fluid_settings_foreach_option_alpha (settings, name, &bag,
+                                       settings_option_foreach_func);
+  printf ("\n");
+}
+
 static void
 fast_render_loop(fluid_settings_t* settings, fluid_synth_t* synth, fluid_player_t* player)
 {
@@ -353,7 +366,14 @@ int main(int argc, char** argv)
       break;
 #endif
     case 'a':
-      fluid_settings_setstr(settings, "audio.driver", optarg);
+      if (FLUID_STRCMP (optarg, "help") == 0)
+      {
+        print_welcome ();
+        printf ("-a options (audio driver):\n   ");
+        show_settings_str_options (settings, "audio.driver");
+        exit (0);
+      }
+      else fluid_settings_setstr(settings, "audio.driver", optarg);
       break;
     case 'C':
       if ((optarg != NULL) && ((strcmp(optarg, "0") == 0) || (strcmp(optarg, "no") == 0))) {
@@ -372,20 +392,15 @@ int main(int argc, char** argv)
     case 'E':
       if (FLUID_STRCMP (optarg, "help") == 0)
       {
-        const char **names = fluid_file_renderer_get_endian_names ();
-        const char **sp;
-
         print_welcome ();
         printf ("-E options (audio file byte order):\n   ");
-
-        for (sp = names; *sp; sp++)
-          printf (" %s", *sp);
+        show_settings_str_options (settings, "audio.file.endian");
 
 #if LIBSNDFILE_SUPPORT
-        printf ("\n\nauto: Use audio file format's default endian byte order\n"
+        printf ("\nauto: Use audio file format's default endian byte order\n"
                 "cpu: Use CPU native byte order\n");
 #else
-        printf ("\n\nNOTE: No libsndfile support!\n"
+        printf ("\nNOTE: No libsndfile support!\n"
                 "cpu: Use CPU native byte order\n");
 #endif
         exit (0);
@@ -425,7 +440,14 @@ int main(int argc, char** argv)
       connect_lash = 0;
       break;
     case 'm':
-      fluid_settings_setstr(settings, "midi.driver", optarg);
+      if (FLUID_STRCMP (optarg, "help") == 0)
+      {
+        print_welcome ();
+        printf ("-m options (MIDI driver):\n   ");
+        show_settings_str_options (settings, "midi.driver");
+        exit (0);
+      }
+      else fluid_settings_setstr(settings, "midi.driver", optarg);
       break;
     case 'n':
       midi_in = 0;
@@ -433,19 +455,16 @@ int main(int argc, char** argv)
     case 'O':
       if (FLUID_STRCMP (optarg, "help") == 0)
       {
-        const char **names = fluid_file_renderer_get_format_names ();
-        const char **sp;
-
         print_welcome ();
-        printf ("-O options (file audio format):\n   ");
-
-        for (sp = names; *sp; sp++)
-          printf (" %s", *sp);
+        printf ("-O options (audio file format):\n   ");
+        show_settings_str_options (settings, "audio.file.format");
 
 #if LIBSNDFILE_SUPPORT
-        printf ("\n");
+        printf ("\ns8, s16, s24, s32: Signed PCM audio of the given number of bits\n");
+        printf ("float, double: 32 bit and 64 bit floating point audio\n");
+        printf ("u8: Unsigned 8 bit audio\n");
 #else
-        printf ("\n\nNOTE: No libsndfile support!\n");
+        printf ("\nNOTE: No libsndfile support!\n");
 #endif
         exit (0);
       }
@@ -473,21 +492,14 @@ int main(int argc, char** argv)
     case 'T':
       if (FLUID_STRCMP (optarg, "help") == 0)
       {
-        const char **names = fluid_file_renderer_get_type_names ();
-        const char **sp;
-
-        if (!names) exit (1);   /* Can happen if out of memory */
-
         print_welcome ();
         printf ("-T options (audio file type):\n   ");
-
-        for (sp = names; *sp; sp++)
-          printf (" %s", *sp);
+        show_settings_str_options (settings, "audio.file.type");
 
 #if LIBSNDFILE_SUPPORT
-        printf ("\n\nauto: Determine type from file name extension, defaults to \"wav\"\n");
+        printf ("\nauto: Determine type from file name extension, defaults to \"wav\"\n");
 #else
-        printf ("\n\nNOTE: No libsndfile support!\n");
+        printf ("\nNOTE: No libsndfile support!\n");
 #endif
         exit (0);
       }
@@ -706,6 +718,13 @@ int main(int argc, char** argv)
   }
 
   if (fast_render) {
+    char *filename;
+
+    print_welcome ();
+    fluid_settings_dupstr (settings, "audio.file.name", &filename);
+    printf ("Rendering audio to file '%s'..\n", filename);
+    if (filename) FLUID_FREE (filename);
+
     fast_render_loop(settings, synth, player);
   }
 

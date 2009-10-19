@@ -34,9 +34,6 @@
 #include <pulse/simple.h>
 #include <pulse/error.h>
 
-/* SCHED_FIFO priorities for threads (see pthread_attr_setschedparam) */
-#define PULSE_PCM_SCHED_PRIORITY 90
-
 /** fluid_pulse_audio_driver_t
  *
  * This structure should not be accessed directly. Use audio port
@@ -89,8 +86,9 @@ new_fluid_pulse_audio_driver2(fluid_settings_t* settings,
   char *server = NULL;
   char *device = NULL;
   pthread_attr_t attr;
-  int sched = SCHED_FIFO;
   struct sched_param priority;
+  int realtime_prio;
+  int sched;
   int err;
 
   dev = FLUID_NEW(fluid_pulse_audio_driver_t);
@@ -106,6 +104,11 @@ new_fluid_pulse_audio_driver2(fluid_settings_t* settings,
   fluid_settings_getnum(settings, "synth.sample-rate", &sample_rate);
   fluid_settings_dupstr(settings, "audio.pulseaudio.server", &server);  /* ++ alloc server string */
   fluid_settings_dupstr(settings, "audio.pulseaudio.device", &device);  /* ++ alloc device string */
+  fluid_settings_getint (settings, "audio.realtime-prio", &realtime_prio);
+
+  if (fluid_settings_str_equal (settings, "audio.realtime", "yes"))
+    sched = SCHED_FIFO;
+  else sched = SCHED_OTHER;
 
   if (server && strcmp (server, "default") == 0)
   {
@@ -164,8 +167,8 @@ new_fluid_pulse_audio_driver2(fluid_settings_t* settings,
   while (1) {
     err = pthread_attr_setschedpolicy(&attr, sched);
     if (err) {
-      FLUID_LOG(FLUID_WARN, "Couldn't set high priority scheduling for the audio output");
       if (sched == SCHED_FIFO) {
+        FLUID_LOG(FLUID_WARN, "Couldn't set high priority scheduling for the audio output");
 	sched = SCHED_OTHER;
 	continue;
       } else {
@@ -175,14 +178,14 @@ new_fluid_pulse_audio_driver2(fluid_settings_t* settings,
     }
 
     /* SCHED_FIFO will not be active without setting the priority */
-    priority.sched_priority = (sched == SCHED_FIFO) ? PULSE_PCM_SCHED_PRIORITY : 0;
+    priority.sched_priority = (sched == SCHED_FIFO) ? realtime_prio : 0;
     pthread_attr_setschedparam(&attr, &priority);
 
     err = pthread_create(&dev->thread, &attr,
 			 func ? fluid_pulse_audio_run2 : fluid_pulse_audio_run, (void*) dev);
     if (err) {
-      FLUID_LOG(FLUID_WARN, "Couldn't set high priority scheduling for the audio output");
       if (sched == SCHED_FIFO) {
+        FLUID_LOG(FLUID_WARN, "Couldn't set high priority scheduling for the audio output");
 	sched = SCHED_OTHER;
 	continue;
       } else {

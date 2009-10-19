@@ -93,6 +93,7 @@ fluid_jack_audio_driver_settings(fluid_settings_t* settings)
   fluid_settings_add_option(settings, "audio.jack.multi", "no");
   fluid_settings_add_option(settings, "audio.jack.multi", "yes");
   fluid_settings_register_int(settings, "audio.jack.autoconnect", 0, 0, 1, FLUID_HINT_TOGGLED, NULL, NULL);
+  fluid_settings_register_str(settings, "audio.jack.server", "", 0, NULL, NULL);
 }
 
 
@@ -108,14 +109,14 @@ new_fluid_jack_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
 fluid_audio_driver_t*
 new_fluid_jack_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func, void* data) {
   fluid_jack_audio_driver_t* dev = NULL;
-  char name[64];
-  int i;
-  /* for looking up ports */
-  const char ** jack_ports;
+  const char ** jack_ports;     /* for looking up ports */
   char* client_name;
   int autoconnect = 0;
   int jack_srate;
   double sample_rate;
+  char name[64];
+  char *server;
+  int i;
 
   dev = FLUID_NEW(fluid_jack_audio_driver_t);
   if (dev == NULL) {
@@ -141,7 +142,15 @@ new_fluid_jack_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func
 
   if (client_name) FLUID_FREE (client_name);    /* -- free client name */
 
-  if ((dev->client = jack_client_new(name)) == 0) {
+  fluid_settings_dupstr (settings, "audio.jack.server", &server);
+
+  if (server && server[0] != '\0')
+    dev->client = jack_client_open (name, JackServerName, NULL, server);
+  else dev->client = jack_client_open (name, JackNullOption, NULL);
+
+  if (server) FLUID_FREE (server);
+
+  if (dev->client == NULL) {
     FLUID_LOG(FLUID_ERR, "Jack server not running?");
     goto error_recovery;
   }
@@ -371,6 +380,7 @@ fluid_jack_audio_driver_shutdown(void *arg)
 void fluid_jack_midi_driver_settings (fluid_settings_t *settings)
 {
   fluid_settings_register_str (settings, "midi.jack.id", "fluidsynth-midi", 0, NULL, NULL);
+  fluid_settings_register_str (settings, "midi.jack.server", "", 0, NULL, NULL);
 }
 
 /*
@@ -383,6 +393,7 @@ new_fluid_jack_midi_driver (fluid_settings_t *settings,
   fluid_jack_midi_driver_t* dev;
   char *client_name;
   char name[64];
+  char *server;
 
   /* not much use doing anything */
   if (handler == NULL)
@@ -426,9 +437,16 @@ new_fluid_jack_midi_driver (fluid_settings_t *settings,
 
   if (client_name) FLUID_FREE (client_name);    /* -- free client name */
 
-  if ((dev->client = jack_client_new (name)) == 0)
-  {
-    FLUID_LOG (FLUID_ERR, "Jack server not running?");
+  fluid_settings_dupstr (settings, "audio.jack.server", &server);
+
+  if (server && server[0] != '\0')
+    dev->client = jack_client_open (name, JackServerName, NULL, server);
+  else dev->client = jack_client_open (name, JackNullOption, NULL);
+
+  if (server) FLUID_FREE (server);
+
+  if (dev->client == NULL) {
+    FLUID_LOG(FLUID_ERR, "Jack server not running?");
     goto error_recovery;
   }
 

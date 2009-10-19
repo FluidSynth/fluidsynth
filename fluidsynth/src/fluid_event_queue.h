@@ -40,8 +40,7 @@ enum fluid_event_queue_elem
   FLUID_EVENT_QUEUE_ELEM_FREE_PRESET,   /**< Free preset return event. Uses pval field of event value */
   FLUID_EVENT_QUEUE_ELEM_SET_TUNING,    /**< Set tuning event. Uses set_tuning field of event value */
   FLUID_EVENT_QUEUE_ELEM_REPL_TUNING,   /**< Replace tuning event. Uses repl_tuning field of event value */
-  FLUID_EVENT_QUEUE_ELEM_UNREF_TUNING,  /**< Unref tuning return event. Uses unref_tuning field of event value */
-  FLUID_EVENT_QUEUE_ELEM_MIDI_MODE      /**< Set MIDI mode event. Uses ival field of event value */
+  FLUID_EVENT_QUEUE_ELEM_UNREF_TUNING   /**< Unref tuning return event. Uses unref_tuning field of event value */
 };
 
 /**
