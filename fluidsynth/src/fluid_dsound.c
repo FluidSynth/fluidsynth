@@ -50,7 +50,7 @@ typedef struct {
   WAVEFORMATEX* format;
   HANDLE thread;
   DWORD threadID;
-  fluid_synth_t* synth;
+  void* user_obj;
   fluid_audio_callback_t write;
   int cont;
   DWORD buffer_byte_size;
@@ -94,12 +94,8 @@ void fluid_dsound_audio_driver_settings(fluid_settings_t* settings)
   DirectSoundEnumerate((LPDSENUMCALLBACK) fluid_dsound_enum_callback, settings);
 }
 
-
-/*
- * new_fluid_dsound_audio_driver
- */
 fluid_audio_driver_t*
-new_fluid_dsound_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
+new_fluid_dsound_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func, void* data)
 {
   HRESULT hr;
   DSBUFFERDESC desc;
@@ -133,7 +129,7 @@ new_fluid_dsound_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
   }
   FLUID_MEMSET(dev, 0, sizeof(fluid_dsound_audio_driver_t));
 
-  dev->synth = synth;
+  dev->user_obj = data;
   dev->cont = 1;
 
   fluid_settings_getnum(settings, "synth.sample-rate", &sample_rate);
@@ -149,7 +145,7 @@ new_fluid_dsound_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
   dev->frame_size = 2 * sizeof(short);
   dev->buffer_byte_size = period_size * dev->frame_size;
   dev->queue_byte_size = periods * dev->buffer_byte_size;
-  dev->write = fluid_synth_write_s16;
+  dev->write = func;
 
   /* create and initialize the buffer format */
   dev->format = (WAVEFORMATEX*) FLUID_MALLOC(sizeof(WAVEFORMATEX));
@@ -270,6 +266,11 @@ new_fluid_dsound_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
   return NULL;
 }
 
+fluid_audio_driver_t*
+new_fluid_dsound_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
+{
+	return new_fluid_dsound_audio_driver2(settings, (fluid_audio_func_t)fluid_synth_write_s16, synth);
+}
 
 int delete_fluid_dsound_audio_driver(fluid_audio_driver_t* d)
 {
@@ -355,14 +356,14 @@ DWORD WINAPI fluid_dsound_audio_run(LPVOID lpParameter)
       /* fill the first part of the buffer */
       if (bytes1 > 0) {
 	frames = bytes1 / dev->frame_size;
-	dev->write(dev->synth, frames, buf1, 0, 2, buf1, 1, 2);
+	dev->write(dev->user_obj, frames, buf1, 0, 2, buf1, 1, 2);
 	cur_position += frames * dev->frame_size;
       }
 
       /* fill the second part of the buffer */
       if ((buf2 != NULL) && (bytes2 > 0)) {
 	frames = bytes2 / dev->frame_size;
-	dev->write(dev->synth, frames, buf2, 0, 2, buf2, 1, 2);
+	dev->write(dev->user_obj, frames, buf2, 0, 2, buf2, 1, 2);
 	cur_position += frames * dev->frame_size;
       }
 
