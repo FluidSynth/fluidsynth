@@ -18,234 +18,483 @@
  * 02111-1307, USA
  */
 
-/* Author: Markus Nentwig, nentwig@users.sourceforge.net
+/* Original author: Markus Nentwig, nentwig@users.sourceforge.net
+ *
+ * Josh Green made it general purpose with a complete usable public API and
+ * cleaned it up a bit.
  */
 
 #include "fluid_midi_router.h"
 #include "fluid_midi.h"
 #include "fluid_synth.h"
 
+/*
+ * fluid_midi_router
+ */
+struct _fluid_midi_router_t {
+  fluid_synth_t* synth;
+
+  fluid_mutex_t rules_mutex;
+  fluid_midi_router_rule_t *rules[FLUID_MIDI_ROUTER_RULE_COUNT];        /* List of rules for each rule type */
+  fluid_midi_router_rule_t *free_rules;      /* List of rules to free (was waiting for final events which were received) */
+
+  handle_midi_event_func_t event_handler;    /* Callback function for generated events */
+  void* event_handler_data;                  /* One arg for the callback */
+
+  int nr_midi_channels;                      /* For clipping the midi channel */
+
+  /* FIXME - If there are multiple command handlers, they will conflict! */
+  fluid_midi_router_rule_t *cmd_rule;        /* Rule currently being processed by shell command handler */
+  int cmd_rule_type;                         /* Type of the rule (fluid_midi_router_rule_type) */
+};
+
+struct _fluid_midi_router_rule_t {
+    int chan_min;                            /* Channel window, for which this rule is valid */
+    int chan_max;
+    fluid_real_t chan_mul;                   /* Channel multiplier (usually 0 or 1) */
+    int chan_add;                            /* Channel offset */
+
+    int par1_min;                            /* Parameter 1 window, for which this rule is valid */
+    int par1_max;
+    fluid_real_t par1_mul;
+    int par1_add;
+
+    int par2_min;                            /* Parameter 2 window, for which this rule is valid */
+    int par2_max;
+    fluid_real_t par2_mul;
+    int par2_add;
+
+    int pending_events;                      /* In case of noteon: How many keys are still down? */
+    char keys_cc[128];                       /* Flags, whether a key is down / controller is set (sustain) */
+    fluid_midi_router_rule_t* next;          /* next entry */
+    int waiting;                             /* Set to TRUE when rule has been deactivated but there are still pending_events */
+};
+
+
 /**
- * Create a new midi router.
+ * Create a new midi router.  The default rules will pass all events unmodified.
  * @param settings Settings used to configure MIDI router
- * @param handler MIDI event callback
+ * @param handler MIDI event callback.
  * @param event_handler_data Caller defined data pointer which gets passed to 'handler'
  * @return New MIDI router instance or NULL on error
  *
- * The MIDI handler connects to a midi input device and forwards incoming MIDI
- * events to the synthesizer, after being filtered/modified by the MIDI router.
+ * The MIDI handler callback should process the possibly filtered/modified MIDI
+ * events from the MIDI router and forward them on to a synthesizer for example.
+ * The function fluid_synth_handle_midi_event() can be used for \a handle and
+ * a #fluid_synth_t passed as the \a event_handler_data parameter for this purpose.
  */
-fluid_midi_router_t*
-new_fluid_midi_router(fluid_settings_t* settings, handle_midi_event_func_t handler, void* event_handler_data)
+fluid_midi_router_t *
+new_fluid_midi_router(fluid_settings_t *settings, handle_midi_event_func_t handler,
+                      void *event_handler_data)
 {
-  fluid_midi_router_t* router=NULL;
+  fluid_midi_router_t *router = NULL;
+  int i;
 
-  /* create the router */
-  router = FLUID_NEW(fluid_midi_router_t); if (router == NULL){
+  router = FLUID_NEW (fluid_midi_router_t);
+
+  if (router == NULL)
+  {
     FLUID_LOG(FLUID_ERR, "Out of memory");
     return NULL;
-  };
+  }
 
-  /* Clear the router, so that error_recovery can safely free all the rules.
-   * Dump functions are also NULLed.
-   */
-  FLUID_MEMSET(router, 0, sizeof(fluid_midi_router_t));
+  FLUID_MEMSET (router, 0, sizeof (fluid_midi_router_t));
+
   /* Retrieve the number of MIDI channels for range limiting */
   fluid_settings_getint(settings, "synth.midi-channels", &router->nr_midi_channels);
 
-  fluid_mutex_init(router->ruletables_mutex);
+  fluid_mutex_init (router->rules_mutex);
 
-  router->synth = (fluid_synth_t*) event_handler_data;
-  router->event_handler=handler;
-  router->event_handler_data=event_handler_data;
+  router->synth = (fluid_synth_t *)event_handler_data;
+  router->event_handler = handler;
+  router->event_handler_data = event_handler_data;
 
-  /* Create the default routing rules
-  * They accept events on any channel for any range of parameters,
-  * and route them unchanged ("result=par*1.0+0") */
-
-  if (fluid_midi_router_create_default_rules(router) != FLUID_OK) goto error_recovery;
+  /* Create default routing rules which pass all events unmodified */
+  for (i = 0; i < FLUID_MIDI_ROUTER_RULE_COUNT; i++)
+  {
+    router->rules[i] = new_fluid_midi_router_rule ();
+    if (!router->rules[i]) goto error_recovery;
+  }
 
   return router;
 
  error_recovery:
-  FLUID_LOG(FLUID_ERR, "new_fluid_midi_router failed");
-  fluid_midi_router_destroy_all_rules(router);
-  FLUID_FREE(router);
+  delete_fluid_midi_router (router);
   return NULL;
 }
 
 /**
  * Delete a MIDI router instance.
  * @param router MIDI router to delete
- * @return Always returns #FLUID_OK
+ * @return Returns #FLUID_OK on success, #FLUID_FAILED otherwise (only if NULL
+ *   \a router passed really)
  */
 int
-delete_fluid_midi_router(fluid_midi_router_t* router)
+delete_fluid_midi_router (fluid_midi_router_t *router)
 {
-  if (router == NULL) {
-    return FLUID_OK;
+  fluid_midi_router_rule_t *rule;
+  fluid_midi_router_rule_t *next_rule;
+  int i;
+
+  fluid_return_val_if_fail (router != NULL, FLUID_FAILED);
+
+  for (i = 0; i < FLUID_MIDI_ROUTER_RULE_COUNT; i++)
+  {
+    for (rule = router->rules[i]; rule; rule = next_rule)
+    {
+      next_rule = rule->next;
+      FLUID_FREE (rule);
+    }
   }
-  fluid_midi_router_destroy_all_rules(router);
-  FLUID_FREE(router);
+
+  fluid_mutex_destroy (router->rules_mutex);
+  FLUID_FREE (router);
+
   return FLUID_OK;
 }
 
-/*
- * fluid_midi_router_destroy_all_rules(fluid_midi_router_t* router)
- * Purpose:
- * Frees the used memory. This is used only for shutdown!
+/**
+ * Set a MIDI router to use default "unity" rules. Such a router will pass all
+ * events unmodified.
+ * @param router Router to set to default rules.
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ * @since 1.1.0
  */
-void fluid_midi_router_destroy_all_rules(fluid_midi_router_t* router){
-  fluid_midi_router_rule_t* rules[6];
-  fluid_midi_router_rule_t* current_rule;
-  fluid_midi_router_rule_t* next_rule;
-  int i;
+int
+fluid_midi_router_set_default_rules (fluid_midi_router_t *router)
+{
+  fluid_midi_router_rule_t *new_rules[FLUID_MIDI_ROUTER_RULE_COUNT];
+  fluid_midi_router_rule_t *del_rules[FLUID_MIDI_ROUTER_RULE_COUNT];
+  fluid_midi_router_rule_t *rule, *next_rule, *prev_rule;
+  int i, i2;
 
-  rules[0]=router->note_rules;
-  rules[1]=router->cc_rules;
-  rules[2]=router->progchange_rules;
-  rules[3]=router->pitchbend_rules;
-  rules[4]=router->channel_pressure_rules;
-  rules[5]=router->key_pressure_rules;
-  for (i=0; i < 6; i++){
-    current_rule=rules[i];
-    while (current_rule){
-      next_rule=current_rule->next;
-      FLUID_FREE(current_rule);
-      current_rule=next_rule;
-    };
-  };
+  fluid_return_val_if_fail (router != NULL, FLUID_FAILED);
+
+  /* Allocate new default rules outside of lock */
+
+  for (i = 0; i < FLUID_MIDI_ROUTER_RULE_COUNT; i++)
+  {
+    new_rules[i] = new_fluid_midi_router_rule ();
+
+    if (!new_rules[i])
+    { /* Free already allocated rules */
+      for (i2 = 0; i2 < i; i2++)
+        delete_fluid_midi_router_rule (new_rules[i]);
+
+      return FLUID_FAILED;
+    }
+  }
+
+
+  fluid_mutex_lock (router->rules_mutex);       /* ++ lock */
+
+  for (i = 0; i < FLUID_MIDI_ROUTER_RULE_COUNT; i++)
+  {
+    del_rules[i] = NULL;
+    prev_rule = NULL;
+
+    /* Process existing rules */
+    for (rule = router->rules[i]; rule; rule = next_rule)
+    {
+      next_rule = rule->next;
+
+      if (rule->pending_events == 0)    /* Rule has no pending events? */
+      { /* Remove rule from rule list */
+        if (prev_rule) prev_rule->next = next_rule;
+        else if (rule == router->rules[i]) router->rules[i] = next_rule;
+
+        /* Prepend to delete list */
+        rule->next = del_rules[i];
+        del_rules[i] = rule;
+      }
+      else
+      {
+        rule->waiting = TRUE;          /* Pending events, mark as waiting */
+        prev_rule = rule;
+      }
+    }
+
+    /* Prepend new default rule */
+    new_rules[i]->next = router->rules[i];
+    router->rules[i] = new_rules[i];
+  }
+
+  fluid_mutex_unlock (router->rules_mutex);     /* -- unlock */
+
+
+  /* Free old rules outside of lock */
+
+  for (i = 0; i < FLUID_MIDI_ROUTER_RULE_COUNT; i++)
+  {
+    for (rule = del_rules[i]; rule; rule = next_rule)
+    {
+      next_rule = rule->next;
+      FLUID_FREE (rule);
+    }
+  }
+
+  return FLUID_OK;
 }
 
-/*
- * new_fluid_midi_router_rule
+/**
+ * Clear all rules in a MIDI router. Such a router will drop all events until
+ * rules are added.
+ * @param router Router to clear all rules from
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ * @since 1.1.0
  */
-fluid_midi_router_rule_t* new_fluid_midi_router_rule(void)
+int
+fluid_midi_router_clear_rules (fluid_midi_router_t *router)
 {
-  fluid_midi_router_rule_t* rule=FLUID_NEW(fluid_midi_router_rule_t);
+  fluid_midi_router_rule_t *del_rules[FLUID_MIDI_ROUTER_RULE_COUNT];
+  fluid_midi_router_rule_t *rule, *next_rule, *prev_rule;
+  int i;
+
+  fluid_return_val_if_fail (router != NULL, FLUID_FAILED);
+
+  fluid_mutex_lock (router->rules_mutex);       /* ++ lock */
+
+  for (i = 0; i < FLUID_MIDI_ROUTER_RULE_COUNT; i++)
+  {
+    del_rules[i] = NULL;
+    prev_rule = NULL;
+
+    /* Process existing rules */
+    for (rule = router->rules[i]; rule; rule = next_rule)
+    {
+      next_rule = rule->next;
+
+      if (rule->pending_events == 0)    /* Rule has no pending events? */
+      { /* Remove rule from rule list */
+        if (prev_rule) prev_rule->next = next_rule;
+        else if (rule == router->rules[i]) router->rules[i] = next_rule;
+
+        /* Prepend to delete list */
+        rule->next = del_rules[i];
+        del_rules[i] = rule;
+      }
+      else
+      {
+        rule->waiting = TRUE;           /* Pending events, mark as waiting */
+        prev_rule = rule;
+      }
+    }
+  }
+
+  fluid_mutex_unlock (router->rules_mutex);     /* -- unlock */
+
+
+  /* Free old rules outside of lock */
+
+  for (i = 0; i < FLUID_MIDI_ROUTER_RULE_COUNT; i++)
+  {
+    for (rule = del_rules[i]; rule; rule = next_rule)
+    {
+      next_rule = rule->next;
+      FLUID_FREE (rule);
+    }
+  }
+
+  return FLUID_OK;
+}
+
+/**
+ * Add a rule to a MIDI router.
+ * @param router MIDI router
+ * @param rule Rule to add (used directly and should not be accessed again following a
+ *   successful call to this function).
+ * @param type The type of rule to add (#fluid_midi_router_rule_type)
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise (invalid rule for example)
+ * @since 1.1.0
+ */
+int
+fluid_midi_router_add_rule (fluid_midi_router_t *router, fluid_midi_router_rule_t *rule,
+                            int type)
+{
+  fluid_midi_router_rule_t *free_rules, *next_rule;
+
+  fluid_return_val_if_fail (router != NULL, FLUID_FAILED);
+  fluid_return_val_if_fail (rule != NULL, FLUID_FAILED);
+  fluid_return_val_if_fail (type >= 0 && type <= FLUID_MIDI_ROUTER_RULE_COUNT, FLUID_FAILED);
+
+
+  fluid_mutex_lock (router->rules_mutex);       /* ++ lock */
+
+  /* Take over free rules list, if any (to free outside of lock) */
+  free_rules = router->free_rules;
+  router->free_rules = NULL;
+
+  rule->next = router->rules[type];
+  router->rules[type] = rule;
+
+  fluid_mutex_unlock (router->rules_mutex);     /* -- unlock */
+
+
+  /* Free any deactivated rules which were waiting for events and are now done */
+
+  for (; free_rules; free_rules = next_rule)
+  {
+    next_rule = free_rules->next;
+    FLUID_FREE (free_rules);
+  }
+
+  return FLUID_OK;
+}
+
+/**
+ * Create a new MIDI router rule.
+ * @return Newly allocated router rule or NULL if out of memory.
+ * @since 1.1.0
+ *
+ * The new rule is a "unity" rule which will accept any values and wont modify
+ * them.
+ */
+fluid_midi_router_rule_t *
+new_fluid_midi_router_rule (void)
+{
+  fluid_midi_router_rule_t *rule;
+
+  rule = FLUID_NEW (fluid_midi_router_rule_t);
+
   if (rule == NULL) {
     FLUID_LOG(FLUID_ERR, "Out of memory");
     return NULL;
   }
 
-  FLUID_MEMSET(rule, 0, sizeof(fluid_midi_router_rule_t));
+  FLUID_MEMSET (rule, 0, sizeof (fluid_midi_router_rule_t));
+
+  rule->chan_min = 0;
+  rule->chan_max = 999999;
+  rule->chan_mul = 1.0;
+  rule->chan_add = 0;
+  rule->par1_min = 0;
+  rule->par1_max = 999999;
+  rule->par1_mul = 1.0;
+  rule->par1_add = 0;
+  rule->par2_min = 0;
+  rule->par2_max = 999999;
+  rule->par2_mul = 1.0;
+  rule->par2_add = 0;
+
   return rule;
 };
 
-/*
- * delete_fluid_midi_router_rule
+/**
+ * Free a MIDI router rule.
+ * @param rule Router rule to free
+ * @since 1.1.0
+ *
+ * Note that rules which have been added to a router are managed by the router,
+ * so this function should seldom be needed.
  */
-int
-delete_fluid_midi_router_rule(fluid_midi_router_rule_t* rule)
+void
+delete_fluid_midi_router_rule (fluid_midi_router_rule_t *rule)
 {
-  FLUID_FREE(rule);
-  return FLUID_OK;
+  fluid_return_if_fail (rule != NULL);
+  FLUID_FREE (rule);
 }
 
-
-int fluid_midi_router_create_default_rules(fluid_midi_router_t* router)
-{
-  fluid_midi_router_rule_t** rules[6];
-  int i;
-
-  rules[0]=&router->note_rules;
-  rules[1]=&router->cc_rules;
-  rules[2]=&router->progchange_rules;
-  rules[3]=&router->pitchbend_rules;
-  rules[4]=&router->channel_pressure_rules;
-  rules[5]=&router->key_pressure_rules;
-
-  for (i=0; i < 6; i++){
-    /* Start a new rule. rules[i] is the destination. _end will insert
-     * a new rule there into the linked list.
-     */
-    if (fluid_midi_router_begin(router, rules[i]) != FLUID_OK) goto error_recovery;
-    if (fluid_midi_router_end(router) != FLUID_OK) goto error_recovery;
-  };
-
-  return FLUID_OK;
- error_recovery:
-  FLUID_LOG(FLUID_ERR, "fluid_midi_router_create_default_rules failed");
-  return FLUID_FAILED;
-};
-
-/* Purpose:
- * Resets the new-rule registers in 'router' to their default values.
- * Stores the destination (the linked list into which the new rule is inserted by _end)
+/**
+ * Set the channel portion of a rule.
+ * @param rule MIDI router rule
+ * @param min Minimum value for rule match
+ * @param max Maximum value for rule match
+ * @param mul Value which is multiplied by matching event's channel value (1.0 to not modify)
+ * @param add Value which is added to matching event's channel value (0 to not modify)
+ * @since 1.1.0
+ *
+ * The \a min and \a max parameters define a channel range window to match
+ * incoming events to.  If \a min is less than or equal to \a max then an event
+ * is matched if its channel is within the defined range (including \a min
+ * and \a max). If \a min is greater than \a max then rule is inverted and matches
+ * everything except in *between* the defined range (so \a min and \a max would match).
+ *
+ * The \a mul and \a add values are used to modify event channel values prior to
+ * sending the event, if the rule matches.
  */
-int fluid_midi_router_begin(fluid_midi_router_t* router, fluid_midi_router_rule_t** dest)
+void
+fluid_midi_router_rule_set_chan (fluid_midi_router_rule_t *rule, int min, int max,
+                                 float mul, int add)
 {
-  if (!dest) goto error_recovery;
-  router->dest=dest;
+  fluid_return_if_fail (rule != NULL);
+  rule->chan_min = min;
+  rule->chan_max = max;
+  rule->chan_mul = mul;
+  rule->chan_add = add;
+}
 
-  /* In the days before the router, MIDI data went straight to the synth.
-   * So there is no need to check for reasonable values here.
-   */
-  router->new_rule_chan_min=0;
-  router->new_rule_chan_max=999999;
-  router->new_rule_chan_mul=1.;
-  router->new_rule_chan_add=0;
-  router->new_rule_par1_min=0;
-  router->new_rule_par1_max=999999;
-  router->new_rule_par1_mul=1.;
-  router->new_rule_par1_add=0;
-  router->new_rule_par2_min=0;
-  router->new_rule_par2_max=999999;
-  router->new_rule_par2_mul=1.;
-  router->new_rule_par2_add=0;
-
-  return FLUID_OK;
- error_recovery:
-  FLUID_LOG(FLUID_ERR, "fluid_midi_router_begin failed");
-  return FLUID_FAILED;
-};
-
-/* Purpose:
- * Concludes a sequence of commands:
- * - router_start type
- * - router_chan
- * - router_par1
- * - router_par2
- * - router_end (this call).
- * Creates a new event from the given parameters and stores it in
- * the correct list.
+/**
+ * Set the first parameter portion of a rule.
+ * @param rule MIDI router rule
+ * @param min Minimum value for rule match
+ * @param max Maximum value for rule match
+ * @param mul Value which is multiplied by matching event's 1st parameter value (1.0 to not modify)
+ * @param add Value which is added to matching event's 1st parameter value (0 to not modify)
+ * @since 1.1.0
+ *
+ * The 1st parameter of an event depends on the type of event.  For note events
+ * its the MIDI note #, for CC events its the MIDI control number, for program
+ * change events its the MIDI program #, for pitch bend events its the bend value,
+ * for channel pressure its the channel pressure value and for key pressure
+ * its the MIDI note number.
+ *
+ * Pitch bend values have a maximum value of 16383 (8192 is pitch bend center) and all
+ * other events have a max of 127.  All events have a minimum value of 0.
+ *
+ * The \a min and \a max parameters define a parameter range window to match
+ * incoming events to.  If \a min is less than or equal to \a max then an event
+ * is matched if its 1st parameter is within the defined range (including \a min
+ * and \a max). If \a min is greater than \a max then rule is inverted and matches
+ * everything except in *between* the defined range (so \a min and \a max would match).
+ *
+ * The \a mul and \a add values are used to modify event 1st parameter values prior to
+ * sending the event, if the rule matches.
  */
+void
+fluid_midi_router_rule_set_param1 (fluid_midi_router_rule_t *rule, int min, int max,
+                                   float mul, int add)
+{
+  fluid_return_if_fail (rule != NULL);
+  rule->par1_min = min;
+  rule->par1_max = max;
+  rule->par1_mul = mul;
+  rule->par1_add = add;
+}
 
-int fluid_midi_router_end(fluid_midi_router_t* router){
-  fluid_midi_router_rule_t* rule=new_fluid_midi_router_rule(); if (rule == NULL) goto error_recovery;
-
-  rule->chan_min=router->new_rule_chan_min;
-  rule->chan_max=router->new_rule_chan_max;
-  rule->chan_mul=router->new_rule_chan_mul;
-  rule->chan_add=router->new_rule_chan_add;
-  rule->par1_min=router->new_rule_par1_min;
-  rule->par1_max=router->new_rule_par1_max;
-  rule->par1_mul=router->new_rule_par1_mul;
-  rule->par1_add=router->new_rule_par1_add;
-  rule->par2_min=router->new_rule_par2_min;
-  rule->par2_max=router->new_rule_par2_max;
-  rule->par2_mul=router->new_rule_par2_mul;
-  rule->par2_add=router->new_rule_par2_add;
-
-  /* Now we modify the rules table. Lock it to make sure, that the RT
-   * thread is not in the middle of an event. Also prevent, that some
-   * other thread modifies the table at the same time.
-   */
-
-  fluid_mutex_lock(router->ruletables_mutex);
-
-  rule->next= *(router->dest);
-  *router->dest=rule;
-
-  fluid_mutex_unlock(router->ruletables_mutex);
-
-  return FLUID_OK;
-
- error_recovery:
-  FLUID_LOG(FLUID_ERR, "fluid_midi_router_end failed");
-  delete_fluid_midi_router_rule(rule);
-  return FLUID_FAILED;
-};
+/**
+ * Set the second parameter portion of a rule.
+ * @param rule MIDI router rule
+ * @param min Minimum value for rule match
+ * @param max Maximum value for rule match
+ * @param mul Value which is multiplied by matching event's 2nd parameter value (1.0 to not modify)
+ * @param add Value which is added to matching event's 2nd parameter value (0 to not modify)
+ * @since 1.1.0
+ *
+ * The 2nd parameter of an event depends on the type of event.  For note events
+ * its the MIDI velocity, for CC events its the control value and for key pressure
+ * events its the key pressure value.  All other types lack a 2nd parameter.
+ *
+ * All applicable 2nd parameters have the range 0-127.
+ *
+ * The \a min and \a max parameters define a parameter range window to match
+ * incoming events to.  If \a min is less than or equal to \a max then an event
+ * is matched if its 2nd parameter is within the defined range (including \a min
+ * and \a max). If \a min is greater than \a max then rule is inverted and matches
+ * everything except in *between* the defined range (so \a min and \a max would match).
+ *
+ * The \a mul and \a add values are used to modify event 2nd parameter values prior to
+ * sending the event, if the rule matches.
+ */
+void
+fluid_midi_router_rule_set_param2 (fluid_midi_router_rule_t *rule, int min, int max,
+                                   float mul, int add)
+{
+  fluid_return_if_fail (rule != NULL);
+  rule->par2_min = min;
+  rule->par2_max = max;
+  rule->par2_mul = mul;
+  rule->par2_add = add;
+}
 
 /**
  * Handle a MIDI event through a MIDI router instance.
@@ -257,14 +506,14 @@ int fluid_midi_router_end(fluid_midi_router_t* router){
  *
  * Purpose: The midi router is called for each event, that is received
  * via the 'physical' midi input. Each event can trigger an arbitrary number
- * of generated events.
+ * of generated events (one for each rule that matches).
  *
  * In default mode, a noteon event is just forwarded to the synth's 'noteon' function,
  * a 'CC' event to the synth's 'CC' function and so on.
  *
  * The router can be used to:
- * - filter messages (for example: Pass sustain pedal CCs only to selected channels),
- * - split the keyboard (noteon with notenr < x: to ch 1, >x to ch 2),
+ * - filter messages (for example: Pass sustain pedal CCs only to selected channels)
+ * - split the keyboard (noteon with notenr < x: to ch 1, >x to ch 2)
  * - layer sounds (for each noteon received on ch 1, create a noteon on ch1, ch2, ch3,...)
  * - velocity scaling (for each noteon event, scale the velocity by 1.27 to give DX7 users
  *   a chance)
@@ -273,254 +522,222 @@ int fluid_midi_router_end(fluid_midi_router_t* router){
  * - ...
  */
 int
-fluid_midi_router_handle_midi_event(void* data, fluid_midi_event_t* event)
+fluid_midi_router_handle_midi_event (void* data, fluid_midi_event_t* event)
 {
-  fluid_midi_router_t* router=(fluid_midi_router_t*)data;
-  fluid_midi_router_rule_t* rule=NULL;
-  fluid_midi_router_rule_t* next_rule=NULL;
-  int event_has_par2=0; /* Flag, indicates that current event needs two parameters */
-  int negative_event=0; /* Flag, indicates that current event releases a key / pedal */
-  int par1_max=127;     /* Range limit for par1 */
-  int par2_max=127;     /* Range limit for par2 */
-  int ret_val=FLUID_OK;
+  fluid_midi_router_t* router = (fluid_midi_router_t *)data;
+  fluid_midi_router_rule_t **rulep, *rule, *next_rule, *prev_rule = NULL;
+  int event_has_par2 = 0; /* Flag, indicates that current event needs two parameters */
+  int par1_max = 127;     /* Range limit for par1 */
+  int par2_max = 127;     /* Range limit for par2 */
+  int ret_val = FLUID_OK;
+
+  int chan; /* Channel of the generated event */
+  int par1; /* par1 of the generated event */
+  int par2;
+  int event_par1;
+  int event_par2;
+  fluid_midi_event_t new_event;
 
   /* Some keyboards report noteoff through a noteon event with vel=0.
-   * Convert those to noteoff to ease processing.*/
-  if (event->type == NOTE_ON && event->param2 == 0) {
-    /* Channel: Remains the same
-     * Param 1: Note number, remains the same
-     * Param 2: release velocity), set to max
-     */
+   * Convert those to noteoff to ease processing. */
+  if (event->type == NOTE_ON && event->param2 == 0)
+  {
     event->type = NOTE_OFF;
-    event->param2=127;
-  };
+    event->param2 = 127;        /* Release velocity */
+  }
 
-  /* Lock the rules table, so that for example the shell thread doesn't
-   * clear the rules we are just working with */
-  fluid_mutex_lock(router->ruletables_mutex);   /* ++ lock rules */
+  fluid_mutex_lock (router->rules_mutex);   /* ++ lock rules */
 
-  /* Depending on the event type, choose the correct table of rules.
-   * Also invoke the appropriate callback function for the event type
-   * to notify external applications.
-   * Note: An event type not listed here simply won't find any rules and
-   * will be ignored.
-   */
-  switch (event->type) {
+  /* Depending on the event type, choose the correct list of rules. */
+  switch (event->type)
+  {
       case NOTE_ON:
-	rule=router->note_rules;
-	event_has_par2=1;
+	rulep = &router->rules[FLUID_MIDI_ROUTER_RULE_NOTE];
+	event_has_par2 = 1;
 	break;
       case NOTE_OFF:
-	rule=router->note_rules;
-	event_has_par2=1;
+	rulep = &router->rules[FLUID_MIDI_ROUTER_RULE_NOTE];
+	event_has_par2 = 1;
 	break;
       case CONTROL_CHANGE:
-	rule=router->cc_rules;
-	event_has_par2=1;
+	rulep = &router->rules[FLUID_MIDI_ROUTER_RULE_CC];
+	event_has_par2 = 1;
 	break;
       case PROGRAM_CHANGE:
-	rule=router->progchange_rules;
+	rulep = &router->rules[FLUID_MIDI_ROUTER_RULE_PROG_CHANGE];
 	break;
       case PITCH_BEND:
-	rule=router->pitchbend_rules;
-	par1_max=16383;
+	rulep = &router->rules[FLUID_MIDI_ROUTER_RULE_PITCH_BEND];
+	par1_max = 16383;
 	break;
       case CHANNEL_PRESSURE:
-	rule=router->channel_pressure_rules;
+	rulep = &router->rules[FLUID_MIDI_ROUTER_RULE_CHANNEL_PRESSURE];
 	break;
       case KEY_PRESSURE:
-	rule=router->key_pressure_rules;
-	event_has_par2=1;
+	rulep = &router->rules[FLUID_MIDI_ROUTER_RULE_KEY_PRESSURE];
+	event_has_par2 = 1;
 	break;
       case MIDI_SYSTEM_RESET:
       case MIDI_SYSEX:
         ret_val = router->event_handler (router->event_handler_data,event);
-        fluid_mutex_unlock (router->ruletables_mutex);  /* -- unlock rules */
+        fluid_mutex_unlock (router->rules_mutex);  /* -- unlock rules */
         return ret_val;
       default:
+        rulep = NULL;    /* Event will not be passed on */
 	break;
   }
 
-  /* At this point 'rule' contains the first rule in a linked list.
-   * Check for all rules, whether channel and parameter ranges match.
-   */
-
-  while (rule){
-    int chan; /* Channel of the generated event */
-    int par1; /* par1 of the generated event */
-    int par2=0;
-    int event_par1=(int)event->param1;
-    int event_par2=(int)event->param2;
-    fluid_midi_event_t new_event;
-
-    /* Store the pointer to the next rule right now. If the rule is later flagged for destruction,
-     * it may not be accessed anymore.
-     */
-    next_rule=rule->next;
-
-    /* Check, whether the rule is still active. Expired rules cannot be removed immediately,
-     * because freeing memory in a realtime thread is no good idea. And the MIDI thread,
-     * which calls us here, has raised priority.*/
-    if (rule->state == MIDIRULE_DONE){
-      goto do_next_rule;
-    };
+  /* Loop over rules in the list, looking for matches for this event. */
+  for (rule = rulep ? *rulep : NULL; rule; prev_rule = rule, rule = next_rule)
+  {
+    event_par1 = (int)event->param1;
+    event_par2 = (int)event->param2;
+    next_rule = rule->next;     /* Rule may get removed from list, so get next here */
 
     /* Channel window */
-    if (rule->chan_min > rule->chan_max){
-      /* Inverted rule: Exclude everything between max and min (but not min/max) */
-      if (event->channel > rule->chan_max && event->channel < rule->chan_min){
-	goto do_next_rule;
-      }
-    } else {
-      /* Normal rule: Exclude everything < max or > min (but not min/max) */
-      if (event->channel > rule->chan_max || event->channel < rule->chan_min){
-	goto do_next_rule;
-      }
-    };
+    if (rule->chan_min > rule->chan_max)
+    { /* Inverted rule: Exclude everything between max and min (but not min/max) */
+      if (event->channel > rule->chan_max && event->channel < rule->chan_min)
+	continue;
+    }
+    else        /* Normal rule: Exclude everything < max or > min (but not min/max) */
+    {
+      if (event->channel > rule->chan_max || event->channel < rule->chan_min)
+	continue;
+    }
 
     /* Par 1 window */
-    if (rule->par1_min > rule->par1_max){
-      /* Inverted rule: Exclude everything between max and min (but not min/max) */
-      if (event_par1 > rule->par1_max && event_par1 < rule->par1_min){
-	goto do_next_rule;
-      }
-    } else {
-      /* Normal rule: Exclude everything < max or > min (but not min/max)*/
-      if (event_par1 > rule->par1_max || event_par1 < rule->par1_min){
-	goto do_next_rule;
-      }
-    };
+    if (rule->par1_min > rule->par1_max)
+    { /* Inverted rule: Exclude everything between max and min (but not min/max) */
+      if (event_par1 > rule->par1_max && event_par1 < rule->par1_min)
+	continue;
+    }
+    else        /* Normal rule: Exclude everything < max or > min (but not min/max)*/
+    {
+      if (event_par1 > rule->par1_max || event_par1 < rule->par1_min)
+	continue;
+    }
 
     /* Par 2 window (only applies to event types, which have 2 pars)
      * For noteoff events, velocity switching doesn't make any sense.
      * Velocity scaling might be useful, though.
      */
-    if (event_has_par2 && event->type != NOTE_OFF){
-      if (rule->par2_min > rule->par2_max){
-	/* Inverted rule: Exclude everything between max and min (but not min/max) */
-	if (event_par2 > rule->par2_max && event_par2 < rule->par2_min){
-	  goto do_next_rule;
-	}
-      } else {
-	/* Normal rule: Exclude everything < max or > min (but not min/max)*/
-	if (event_par2 > rule->par2_max || event_par2 < rule->par2_min){
-	  goto do_next_rule;
-	};
-      };
-    };
+    if (event_has_par2 && event->type != NOTE_OFF)
+    {
+      if (rule->par2_min > rule->par2_max)
+      { /* Inverted rule: Exclude everything between max and min (but not min/max) */
+	if (event_par2 > rule->par2_max && event_par2 < rule->par2_min)
+	  continue;
+      }
+      else      /* Normal rule: Exclude everything < max or > min (but not min/max)*/
+      {
+	if (event_par2 > rule->par2_max || event_par2 < rule->par2_min)
+	  continue;
+      }
+    }
 
     /* Channel scaling / offset
      * Note: rule->chan_mul will probably be 0 or 1. If it's 0, input from all
      * input channels is mapped to the same synth channel.
      */
-    chan=(int)((fluid_real_t)event->channel * (fluid_real_t)rule->chan_mul + (fluid_real_t)rule->chan_add + 0.5);
+    chan = (int)((fluid_real_t)event->channel * (fluid_real_t)rule->chan_mul
+                 + (fluid_real_t)rule->chan_add + 0.5);
 
     /* Par 1 scaling / offset */
-    par1=(int)((fluid_real_t)event_par1 * (fluid_real_t)rule->par1_mul + (fluid_real_t)rule->par1_add + 0.5);
+    par1 = (int)((fluid_real_t)event_par1 * (fluid_real_t)rule->par1_mul
+                 + (fluid_real_t)rule->par1_add + 0.5);
 
     /* Par 2 scaling / offset, if applicable */
-    if (event_has_par2){
-      par2=(int)((fluid_real_t)event_par2 * (fluid_real_t)rule->par2_mul + (fluid_real_t)rule->par2_add + 0.5);
-    };
+    if (event_has_par2)
+      par2 = (int)((fluid_real_t)event_par2 * (fluid_real_t)rule->par2_mul
+                   + (fluid_real_t)rule->par2_add + 0.5);
+    else par2 = 0;
 
     /* Channel range limiting */
-    if (chan < 0){
-      chan=0;
-      /* Upper limit is hard to implement, because the number of MIDI channels can be changed via settings any time. */
-    };
+    if (chan < 0)
+      chan = 0;
+    else if (chan >= router->nr_midi_channels)
+      chan = router->nr_midi_channels - 1;
 
     /* Par1 range limiting */
-    if (par1 < 0){
-      par1=0;
-    } else if (par1 > par1_max){
-      par1=par1_max;
-    };
+    if (par1 < 0)
+      par1 = 0;
+    else if (par1 > par1_max)
+      par1 = par1_max;
 
     /* Par2 range limiting */
-    if (event_has_par2){
-      if (par2 < 0){
-	par2=0;
-      } else if (par2 > par2_max){
-	par2=par2_max;
-      };
-    };
+    if (event_has_par2)
+    {
+      if (par2 < 0)
+        par2 = 0;
+      else if (par2 > par2_max)
+        par2 = par2_max;
+    }
 
     /* At this point we have to create an event of event->type on 'chan' with par1 (maybe par2).
      * We keep track on the state of noteon and sustain pedal events. If the application tries
      * to delete a rule, it will only be fully removed, if pending noteoff / pedal off events have
-     * arrived. In the meantime (MIDIRULE_WAITING) state, it will only let through 'negative' events
+     * arrived. In the meantime while waiting, it will only let through 'negative' events
      * (noteoff or pedal up).
      */
-
-    if (
-      event->type == NOTE_ON
-      || (event->type == CONTROL_CHANGE && par1 == SUSTAIN_SWITCH && par2 >= 64)
-      ){
+    if (event->type == NOTE_ON || (event->type == CONTROL_CHANGE
+                                   && par1 == SUSTAIN_SWITCH && par2 >= 64))
+    {
       /* Noteon or sustain pedal down event generated */
-      if (rule->keys_cc[par1] == 0){
-	rule->keys_cc[par1]=1;
+      if (rule->keys_cc[par1] == 0)
+      {
+	rule->keys_cc[par1] = 1;
 	rule->pending_events++;
-      };
-    } else if (
-      event->type == NOTE_OFF
-      || (event->type == CONTROL_CHANGE && par1 == SUSTAIN_SWITCH && par2 < 64)
-      ){
-      /* Noteoff or sustain pedal up event generated */
-      if (rule->keys_cc[par1] > 0){
-	rule->keys_cc[par1]=0;
+      }
+    }
+    else if (event->type == NOTE_OFF || (event->type == CONTROL_CHANGE
+                                         && par1 == SUSTAIN_SWITCH && par2 < 64))
+    { /* Noteoff or sustain pedal up event generated */
+      if (rule->keys_cc[par1] > 0)
+      {
+	rule->keys_cc[par1] = 0;
 	rule->pending_events--;
-	negative_event=1;
-      };
-    };
 
-    if (rule->state == MIDIRULE_WAITING){
-      if (negative_event){
-	if (rule->pending_events == 0){
-	  /* There are no more pending events in the rule - all keys are up.
-	   * Change its state to 'unused', it will be cleared up at the next
-	   * opportunity to run 'free' safely.
-	   * Note: After this, the rule may disappear at any time
-	   */
-	    rule->state=MIDIRULE_DONE;
-	};
-      } else {
+        /* Rule is waiting for negative event to be destroyed? */
+        if (rule->waiting)
+        {
+	  if (rule->pending_events == 0)
+          { /* Remove rule from rule list */
+            if (prev_rule) prev_rule->next = next_rule;
+            else *rulep = next_rule;
 
-	/* This rule only exists because of some unfinished business:
-	 * There is still a note or sustain pedal waiting to be
-	 * released. But the event that came in does not release any.
-	 * So we just ignore the event and go on with the next rule.
-	 */
-	goto do_next_rule;
-      };
-    };
+            /* Add to free list */
+            rule->next = router->free_rules;
+            router->free_rules = rule;
+
+            rule = prev_rule;   /* Set rule to previous rule, which gets assigned to the next prev_rule value (in for() statement) */
+          }
+
+          goto send_event;      /* Pass the event to complete the cycle */
+        }
+      }
+    }
+
+    /* Rule is still waiting for negative event? (note off or pedal up) */
+    if (rule->waiting)
+      continue;         /* Skip (rule is inactive except for matching negative event) */
+
+send_event:
 
     /* At this point it is decided, what is sent to the synth.
-     * Create a new event and make the appropriate call
-     */
+     * Create a new event and make the appropriate call */
 
-    fluid_midi_event_set_type(&new_event, event->type);
-    fluid_midi_event_set_channel(&new_event, chan);
-/*     fluid_midi_event_set_param1(&new_event, par1); */
-/*     fluid_midi_event_set_param2(&new_event, par2); */
+    fluid_midi_event_set_type (&new_event, event->type);
+    fluid_midi_event_set_channel (&new_event, chan);
     new_event.param1 = par1;
     new_event.param2 = par2;
 
-    /* Don't know what to do with return values: What is, if
-     * generating one event fails?  Current solution: Make all calls,
-     * regardless of failures, but report failure to the caller, as
-     * soon as only one call fails.  Strategy should be thought
-     * through.
-     */
-    if (router->event_handler(router->event_handler_data, &new_event) != FLUID_OK) {
-      ret_val=FLUID_FAILED;
-    }
+    /* FIXME - What should be done on failure?  For now continue to process events, but return failure to caller. */
+    if (router->event_handler (router->event_handler_data, &new_event) != FLUID_OK)
+      ret_val = FLUID_FAILED;
+  }
 
-  do_next_rule:
-    rule=next_rule;
-  };
-
-  /* We are finished with the rule tables. Allow the other threads to do their job. */
-  fluid_mutex_unlock(router->ruletables_mutex);         /* -- unlock rules */
+  fluid_mutex_unlock (router->rules_mutex);         /* -- unlock rules */
 
   return ret_val;
 }
@@ -528,292 +745,190 @@ fluid_midi_router_handle_midi_event(void* data, fluid_midi_event_t* event)
 #define CHECK_VALID_ROUTER(_router, _out)                                                \
   if (router == NULL) {                                                                  \
     fluid_ostream_printf(out, "cannot execute router command without a midi router.\n"); \
-    goto error_recovery;                                                                 \
+    return FLUID_FAILED;                                                                 \
   }
 
-int fluid_midi_router_handle_clear(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out)
+/* Command handler for "router_clear" command */
+int
+fluid_midi_router_handle_clear (fluid_synth_t* synth, int ac, char** av,
+                                fluid_ostream_t out)
 {
-  fluid_midi_router_t* router=synth->midi_router;
+  fluid_midi_router_t *router = synth->midi_router;
 
   if (ac != 0) {
-    fluid_ostream_printf(out, "router_clear needs no arguments.\n");
-    goto error_recovery;
+    fluid_ostream_printf (out, "router_clear needs no arguments.\n");
+    return FLUID_FAILED;
   }
-  CHECK_VALID_ROUTER(router, out);
 
-  /* Disable rules and mark for destruction */
-  fluid_midi_router_disable_all_rules(router);
+  CHECK_VALID_ROUTER (router, out);
 
-  /* Free unused rules */
-  fluid_midi_router_free_unused_rules(router);
+  fluid_midi_router_clear_rules (router);
 
-  return 0;
- error_recovery:
-  return -1;
-};
+  return FLUID_OK;
+}
 
-int fluid_midi_router_handle_default(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out)
+/* Command handler for "router_default" command */
+int
+fluid_midi_router_handle_default(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out)
 {
-  fluid_midi_router_t* router=synth->midi_router;
+  fluid_midi_router_t *router = synth->midi_router;
 
   if (ac != 0) {
     fluid_ostream_printf(out, "router_default needs no arguments.\n");
-    return -1;
+    return FLUID_FAILED;
   }
-  CHECK_VALID_ROUTER(router, out);
 
-  /* Disable rules and mark for destruction */
-  fluid_midi_router_disable_all_rules(router);
+  CHECK_VALID_ROUTER (router, out);
 
-  /* Create default rules */
-  if (fluid_midi_router_create_default_rules(router) != FLUID_OK){
-    FLUID_LOG(FLUID_ERR, "create_default_rules failed");
-    goto error_recovery;
-  };
+  fluid_midi_router_set_default_rules (router);
 
-  /* Free unused rules */
-  fluid_midi_router_free_unused_rules(router);
+  return FLUID_OK;
+}
 
-  return 0;
- error_recovery:
-  return -1;
-};
-
-int fluid_midi_router_handle_begin(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out)
+/* Command handler for "router_begin" command */
+int
+fluid_midi_router_handle_begin (fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out)
 {
-  fluid_midi_router_t* router=synth->midi_router;
-  fluid_midi_router_rule_t** dest=NULL;
+  fluid_midi_router_t* router = synth->midi_router;
 
   if (ac != 1) {
-    fluid_ostream_printf(out, "router_begin needs no arguments.\n");
-      goto error_recovery;
+    fluid_ostream_printf (out, "router_begin requires [note|cc|prog|pbend|cpress|kpress]\n");
+    return FLUID_FAILED;
   }
-  CHECK_VALID_ROUTER(router, out);
 
-  if (FLUID_STRCMP(av[0],"note") == 0){
-    dest=& router->note_rules;
-  } else if (FLUID_STRCMP(av[0],"cc") == 0){
-    dest=& router->cc_rules;
-  } else if (FLUID_STRCMP(av[0],"prog") == 0){
-    dest=& router->progchange_rules;
-  } else if (FLUID_STRCMP(av[0],"pbend") == 0){
-    dest=& router->pitchbend_rules;
-  } else if (FLUID_STRCMP(av[0],"cpress") == 0){
-    dest=& router->channel_pressure_rules;
-  } else if (FLUID_STRCMP(av[0],"kpress") == 0){
-    dest=& router->key_pressure_rules;
-  };
+  CHECK_VALID_ROUTER (router, out);
 
-  if (dest == NULL){
-      fluid_ostream_printf(out, "router_begin args: note, cc, prog, pbend, cpress, kpress\n");
-      goto error_recovery;
-  };
+  if (FLUID_STRCMP (av[0], "note") == 0)
+    router->cmd_rule_type = FLUID_MIDI_ROUTER_RULE_NOTE;
+  else if (FLUID_STRCMP (av[0], "cc") == 0)
+    router->cmd_rule_type = FLUID_MIDI_ROUTER_RULE_CC;
+  else if (FLUID_STRCMP (av[0], "prog") == 0)
+    router->cmd_rule_type = FLUID_MIDI_ROUTER_RULE_PROG_CHANGE;
+  else if (FLUID_STRCMP (av[0], "pbend") == 0)
+    router->cmd_rule_type = FLUID_MIDI_ROUTER_RULE_PITCH_BEND;
+  else if (FLUID_STRCMP (av[0], "cpress") == 0)
+    router->cmd_rule_type = FLUID_MIDI_ROUTER_RULE_CHANNEL_PRESSURE;
+  else if (FLUID_STRCMP (av[0], "kpress") == 0)
+    router->cmd_rule_type = FLUID_MIDI_ROUTER_RULE_KEY_PRESSURE;
+  else
+  {
+    fluid_ostream_printf (out, "router_begin requires [note|cc|prog|pbend|cpress|kpress]\n");
+    return FLUID_FAILED;
+  }
 
-  if (fluid_midi_router_begin(router, dest) != FLUID_OK){
-    goto error_recovery;
-  };
+  if (router->cmd_rule)
+    delete_fluid_midi_router_rule (router->cmd_rule);
 
-  /* Free unused rules (give it a try) */
-  fluid_midi_router_free_unused_rules(router);
+  router->cmd_rule = new_fluid_midi_router_rule ();
 
-  return 0;
+  if (!router->cmd_rule)
+    return FLUID_FAILED;
 
- error_recovery:
-  return -1;
-};
+  return FLUID_OK;
+}
 
-int fluid_midi_router_handle_end(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out)
+/* Command handler for "router_end" command */
+int
+fluid_midi_router_handle_end (fluid_synth_t* synth, int ac, char** av,
+                              fluid_ostream_t out)
 {
-  fluid_midi_router_t* router=synth->midi_router;
+  fluid_midi_router_t* router = synth->midi_router;
 
   if (ac != 0) {
-    fluid_ostream_printf(out, "router_end needs no arguments.");
-    goto error_recovery;
+    fluid_ostream_printf (out, "router_end needs no arguments.\n");
+    return FLUID_FAILED;
   }
-  CHECK_VALID_ROUTER(router, out);
 
-  if (fluid_midi_router_end(router) != FLUID_OK){
-    FLUID_LOG(FLUID_ERR, "midi_router_end failed");
-    goto error_recovery;
-  };
+  CHECK_VALID_ROUTER (router, out);
 
-  /* Free unused rules (give it a try) */
-  fluid_midi_router_free_unused_rules(router);
+  if (!router->cmd_rule)
+  {
+    fluid_ostream_printf (out, "No active router_begin command.\n");
+    return FLUID_FAILED;
+  }
 
-  return 0;
+  /* Add the rule */
+  if (fluid_midi_router_add_rule (router, router->cmd_rule, router->cmd_rule_type) != FLUID_OK)
+    delete_fluid_midi_router_rule (router->cmd_rule);   /* Free on failure */
 
- error_recovery:
-  return -1;
-};
+  router->cmd_rule = NULL;
 
-int fluid_midi_router_handle_chan(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out)
+  return FLUID_OK;
+}
+
+/* Command handler for "router_chan" command */
+int
+fluid_midi_router_handle_chan (fluid_synth_t* synth, int ac, char** av,
+                               fluid_ostream_t out)
 {
-  fluid_midi_router_t* router=synth->midi_router;
+  fluid_midi_router_t* router = synth->midi_router;
 
   if (ac != 4) {
     fluid_ostream_printf(out, "router_chan needs four args: min, max, mul, add.");
-    goto error_recovery;
+    return FLUID_FAILED;
   }
-  CHECK_VALID_ROUTER(router, out);
 
-  router->new_rule_chan_min=atoi(av[0]);
-  router->new_rule_chan_max=atoi(av[1]);
-  router->new_rule_chan_mul=atoi(av[2]);
-  router->new_rule_chan_add=atoi(av[3]);
+  CHECK_VALID_ROUTER (router, out);
 
-  /* Free unused rules (give it a try) */
-  fluid_midi_router_free_unused_rules(router);
+  if (!router->cmd_rule)
+  {
+    fluid_ostream_printf (out, "No active router_begin command.\n");
+    return FLUID_FAILED;
+  }
 
-  return 0;
+  fluid_midi_router_rule_set_chan (router->cmd_rule, atoi (av[0]), atoi (av[1]),
+                                   atof (av[2]), atoi (av[3]));
+  return FLUID_OK;
+}
 
- error_recovery:
-  return -1;
-};
-
-int fluid_midi_router_handle_par1(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out)
+/* Command handler for "router_par1" command */
+int
+fluid_midi_router_handle_par1 (fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out)
 {
-  fluid_midi_router_t* router=synth->midi_router;
+  fluid_midi_router_t* router = synth->midi_router;
 
   if (ac != 4) {
     fluid_ostream_printf(out, "router_par1 needs four args: min, max, mul, add.");
-    goto error_recovery;
+    return FLUID_FAILED;
   }
-  CHECK_VALID_ROUTER(router, out);
 
-  router->new_rule_par1_min=atoi(av[0]);
-  router->new_rule_par1_max=atoi(av[1]);
-  router->new_rule_par1_mul=atoi(av[2]);
-  router->new_rule_par1_add=atoi(av[3]);
+  CHECK_VALID_ROUTER (router, out);
 
-  /* Free unused rules (give it a try) */
-  fluid_midi_router_free_unused_rules(router);
+  if (!router->cmd_rule)
+  {
+    fluid_ostream_printf (out, "No active router_begin command.\n");
+    return FLUID_FAILED;
+  }
 
-  return 0;
+  fluid_midi_router_rule_set_param1 (router->cmd_rule, atoi (av[0]), atoi (av[1]),
+                                     atof (av[2]), atoi (av[3]));
+  return FLUID_OK;
+}
 
- error_recovery:
-  return -1;
-};
-
-int fluid_midi_router_handle_par2(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out)
+/* Command handler for "router_par2" command */
+int
+fluid_midi_router_handle_par2 (fluid_synth_t* synth, int ac, char** av,
+                               fluid_ostream_t out)
 {
-  fluid_midi_router_t* router=synth->midi_router;
+  fluid_midi_router_t* router = synth->midi_router;
 
   if (ac != 4) {
     fluid_ostream_printf(out, "router_par2 needs four args: min, max, mul, add.");
-    goto error_recovery;
+    return FLUID_FAILED;
   }
-  CHECK_VALID_ROUTER(router, out);
 
-  router->new_rule_par2_min=atoi(av[0]);
-  router->new_rule_par2_max=atoi(av[1]);
-  router->new_rule_par2_mul=atoi(av[2]);
-  router->new_rule_par2_add=atoi(av[3]);
+  CHECK_VALID_ROUTER (router, out);
 
-  /* Free unused rules (give it a try) */
-  fluid_midi_router_free_unused_rules(router);
-  return 0;
+  if (!router->cmd_rule)
+  {
+    fluid_ostream_printf (out, "No active router_begin command.\n");
+    return FLUID_FAILED;
+  }
 
- error_recovery:
-  return -1;
-};
-
-void fluid_midi_router_disable_all_rules(fluid_midi_router_t* router)
-{
-  /* Go through all rules. If the rule has no outstanding events, then
-   * flag it for destruction. Otherwise change it to wait mode. Then
-   * it will handle the pending events, and flag itself for destruction
-   * as soon as all events have arrived.
-   */
-
-  fluid_midi_router_rule_t* rules[6];
-  fluid_midi_router_rule_t* current_rule;
-  int i;
-  rules[0]=router->note_rules;
-  rules[1]=router->cc_rules;
-  rules[2]=router->progchange_rules;
-  rules[3]=router->pitchbend_rules;
-  rules[4]=router->channel_pressure_rules;
-  rules[5]=router->key_pressure_rules;
-
-  /* Lock the rules table. We live on the assumption, that the rules
-   * table does not change while we are chewing at it.
-   * Changes between the processing of note / cc etc are permitted.
-   */
-  for (i=0; i < 6; i++){
-    fluid_mutex_lock(router->ruletables_mutex);
-    current_rule=rules[i];
-    while (current_rule){
-      if (current_rule->pending_events == 0){
-	/* Flag for destruction */
-	current_rule->state=MIDIRULE_DONE;
-      } else {
-	/* Wait mode */
-	current_rule->state=MIDIRULE_WAITING;
-      };
-      current_rule=current_rule->next;
-    };
-    fluid_mutex_unlock(router->ruletables_mutex);
-  };
-};
-
-void fluid_midi_router_free_unused_rules(fluid_midi_router_t* router)
-{
-  int i;
-
-  for (i=0; i < 6; i++){
-    fluid_midi_router_rule_t** p=NULL;
-
-    /* We assume, that the table does not change while we are at it.
-     * Between different types (note, cc etc) we can allow changes.
-     */
-    fluid_mutex_lock(router->ruletables_mutex);
-    switch(i){
-	case 0:
-	  p=&router->note_rules;
-	  break;
-	case 1:
-	  p=&router->cc_rules;
-	  break;
-	case 2:
-	  p=&router->progchange_rules;
-	  break;
-	case 3:
-	  p=&router->pitchbend_rules;
-	  break;
-	case 4:
-	  p=&router->channel_pressure_rules;
-	  break;
-	case 5:
-	  p=&router->key_pressure_rules;
-	  break;
-	default:
-	  break;
-    };
-
-    while (*p){
-      fluid_midi_router_rule_t* current_rule=*p;
-      fluid_midi_router_rule_t* next_rule=current_rule->next;
-
-      if (current_rule->state == MIDIRULE_DONE){
-	/* p points to current_rule.
-	 * current_rule->next points to next_rule.
-	 * Unlink current_rule from the chain by setting the content
-	 * of p to next_rule.
-	 */
-
-	*p=next_rule;
-
-	/* Now the rule is not in the chain anymore. Destroy it. */
-	delete_fluid_midi_router_rule(current_rule);
-
-      } else {
-	/* We have to keep the rule, there is still unfinished business. */
-	p = &current_rule->next;
-      };
-    };
-    fluid_mutex_unlock(router->ruletables_mutex);
-  };
-};
+  fluid_midi_router_rule_set_param2 (router->cmd_rule, atoi (av[0]), atoi (av[1]),
+                                     atof (av[2]), atoi (av[3]));
+  return FLUID_OK;
+}
 
 /**
  * MIDI event callback function to display event information to stdout
@@ -855,9 +970,9 @@ int fluid_midi_dump_prerouter(void* data, fluid_midi_event_t* event)
 	break;
       default:
 	break;
-  };
+  }
   return fluid_midi_router_handle_midi_event((fluid_midi_router_t*) data, event);
-};
+}
 
 /**
  * MIDI event callback function to display event information to stdout
@@ -899,6 +1014,6 @@ int fluid_midi_dump_postrouter(void* data, fluid_midi_event_t* event)
 	break;
       default:
 	break;
-  };
+  }
   return fluid_synth_handle_midi_event((fluid_synth_t*) data, event);
-};
+}

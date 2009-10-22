@@ -227,9 +227,9 @@ void fluid_synth_settings(fluid_settings_t* settings)
 			      0.2f, 0.0f, 10.0f,
 			      0, NULL, NULL);
   fluid_settings_register_int(settings, "synth.audio-channels",
-			      1, 1, 256, 0, NULL, NULL);
+			      1, 1, 128, 0, NULL, NULL);
   fluid_settings_register_int(settings, "synth.audio-groups",
-			      1, 1, 256, 0, NULL, NULL);
+			      1, 1, 128, 0, NULL, NULL);
   fluid_settings_register_int(settings, "synth.effects-channels",
 			      2, 2, 2, 0, NULL, NULL);
   fluid_settings_register_num(settings, "synth.sample-rate",
@@ -4613,7 +4613,7 @@ fluid_synth_count_midi_channels(fluid_synth_t* synth)
 /**
  * Get the total count of audio channels.
  * @param synth FluidSynth instance
- * @return Count of audio channels
+ * @return Count of audio channel stereo pairs (1 = 2 channels, 2 = 4, etc)
  */
 int
 fluid_synth_count_audio_channels(fluid_synth_t* synth)
@@ -4625,10 +4625,10 @@ fluid_synth_count_audio_channels(fluid_synth_t* synth)
 
 /**
  * Get the total number of allocated audio channels.  Usually identical to the
- * number of audio channels.
+ * number of audio channels.  Can be employed by LADSPA effects subsystem.
  *
  * @param synth FluidSynth instance
- * @return Count of allocated audio channels
+ * @return Count of audio group stereo pairs (1 = 2 channels, 2 = 4, etc)
  */
 int
 fluid_synth_count_audio_groups(fluid_synth_t* synth)

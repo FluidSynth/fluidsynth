@@ -191,16 +191,16 @@ dnl
 
 
 dnl - Sound file support check
-dnl AUFILE_SUPPORT=0
-dnl 
-dnl AC_ARG_ENABLE(aufile-support,
-dnl   [  --disable-aufile-support Do not compile support for sound file output],
-dnl   enable_aufile_support=no)
-dnl 
-dnl if test "x${enable_aufile_support}" != "xno"; then
-dnl   AUFILE_SUPPORT=1
-dnl   AC_DEFINE(AUFILE_SUPPORT, 1, [Define to activate sound output to files])
-dnl fi
+AUFILE_SUPPORT=0
+
+AC_ARG_ENABLE(aufile-support,
+  [  --disable-aufile-support Do not compile support for sound file output],
+  enable_aufile_support=no)
+
+if test "x${enable_aufile_support}" != "xno"; then
+  AUFILE_SUPPORT=1
+  AC_DEFINE(AUFILE_SUPPORT, 1, [Define to activate sound output to files])
+fi
 
 dnl - Check for PulseAudio support
 
@@ -532,11 +532,11 @@ else
   echo "OS/2 DART support:     no"
 fi
 
-dnl if test "${AUFILE_SUPPORT}" = "1"; then
-dnl   echo "Sound file:            yes"
-dnl else
-dnl   echo "Sound file:            no"
-dnl fi
+if test "${AUFILE_SUPPORT}" = "1"; then
+  echo "Audio to file driver:  yes"
+else
+  echo "Audio to file driver:  no"
+fi
 
 if test "$WITH_READLINE" = "1"; then
   echo "Readline:              yes (NOTE: GPL library)"

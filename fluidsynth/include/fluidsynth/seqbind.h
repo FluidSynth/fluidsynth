@@ -29,7 +29,7 @@ extern "C" {
 
 /**
  * @file seqbind.h
- * @brief FIXME Not sure why this is separate from seq.h.
+ * @brief Functions for binding sequencer objects to other subsystems.
  */
 
 FLUIDSYNTH_API 

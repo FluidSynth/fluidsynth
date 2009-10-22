@@ -31,7 +31,6 @@ SHORT_NAMES            = NO
 JAVADOC_AUTOBRIEF      = YES
 QT_AUTOBRIEF           = NO
 MULTILINE_CPP_IS_BRIEF = NO
-DETAILS_AT_TOP         = NO
 INHERIT_DOCS           = YES
 SEPARATE_MEMBER_PAGES  = NO
 TAB_SIZE               = 8
@@ -52,7 +51,7 @@ TYPEDEF_HIDES_STRUCT   = NO
 #---------------------------------------------------------------------------
 EXTRACT_ALL            = NO
 EXTRACT_PRIVATE        = NO
-EXTRACT_STATIC         = YES
+EXTRACT_STATIC         = NO
 EXTRACT_LOCAL_CLASSES  = NO
 EXTRACT_LOCAL_METHODS  = NO
 EXTRACT_ANON_NSPACES   = NO
@@ -98,7 +97,7 @@ INPUT                  = fluidsynth-v11-devdoc.txt \
                          ../include/fluidsynth \
                          ../src
 INPUT_ENCODING         = UTF-8
-FILE_PATTERNS          = *.[ch]
+FILE_PATTERNS          = *.c *.h
 RECURSIVE              = NO
 EXCLUDE                = 
 EXCLUDE_SYMLINKS       = NO
@@ -121,7 +120,7 @@ REFERENCED_BY_RELATION = NO
 REFERENCES_RELATION    = NO
 REFERENCES_LINK_SOURCE = YES
 USE_HTAGS              = NO
-VERBATIM_HEADERS       = YES
+VERBATIM_HEADERS       = NO
 #---------------------------------------------------------------------------
 # configuration options related to the alphabetical class index
 #---------------------------------------------------------------------------

@@ -53,6 +53,20 @@ FLUIDSYNTH_API int fluid_midi_event_set_sysex(fluid_midi_event_t* evt, void *dat
                                               int size, int dynamic);
 
 /**
+ * MIDI router rule type.
+ */
+typedef enum
+{
+  FLUID_MIDI_ROUTER_RULE_NOTE,                  /**< MIDI note rule */
+  FLUID_MIDI_ROUTER_RULE_CC,                    /**< MIDI controller rule */
+  FLUID_MIDI_ROUTER_RULE_PROG_CHANGE,           /**< MIDI program change rule */
+  FLUID_MIDI_ROUTER_RULE_PITCH_BEND,            /**< MIDI pitch bend rule */
+  FLUID_MIDI_ROUTER_RULE_CHANNEL_PRESSURE,      /**< MIDI channel pressure rule */
+  FLUID_MIDI_ROUTER_RULE_KEY_PRESSURE,          /**< MIDI key pressure rule */
+  FLUID_MIDI_ROUTER_RULE_COUNT                  /**< Total count of rule types */
+} fluid_midi_router_rule_type;
+
+/**
  * Generic callback function for MIDI events.
  * @param data User defined data pointer
  * @param event The MIDI event
@@ -70,6 +84,18 @@ FLUIDSYNTH_API fluid_midi_router_t* new_fluid_midi_router(fluid_settings_t* sett
 						       handle_midi_event_func_t handler, 
 						       void* event_handler_data); 
 FLUIDSYNTH_API int delete_fluid_midi_router(fluid_midi_router_t* handler); 
+FLUIDSYNTH_API int fluid_midi_router_set_default_rules (fluid_midi_router_t *router);
+FLUIDSYNTH_API int fluid_midi_router_clear_rules (fluid_midi_router_t *router);
+FLUIDSYNTH_API int fluid_midi_router_add_rule (fluid_midi_router_t *router,
+                                               fluid_midi_router_rule_t *rule, int type);
+FLUIDSYNTH_API fluid_midi_router_rule_t *new_fluid_midi_router_rule (void);
+FLUIDSYNTH_API void delete_fluid_midi_router_rule (fluid_midi_router_rule_t *rule);
+FLUIDSYNTH_API void fluid_midi_router_rule_set_chan (fluid_midi_router_rule_t *rule,
+                                                     int min, int max, float mul, int add);
+FLUIDSYNTH_API void fluid_midi_router_rule_set_param1 (fluid_midi_router_rule_t *rule,
+                                                       int min, int max, float mul, int add);
+FLUIDSYNTH_API void fluid_midi_router_rule_set_param2 (fluid_midi_router_rule_t *rule,
+                                                       int min, int max, float mul, int add);
 FLUIDSYNTH_API int fluid_midi_router_handle_midi_event(void* data, fluid_midi_event_t* event);
 FLUIDSYNTH_API int fluid_midi_dump_prerouter(void* data, fluid_midi_event_t* event); 
 FLUIDSYNTH_API int fluid_midi_dump_postrouter(void* data, fluid_midi_event_t* event); 
