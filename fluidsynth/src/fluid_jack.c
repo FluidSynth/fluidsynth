@@ -89,9 +89,7 @@ void
 fluid_jack_audio_driver_settings(fluid_settings_t* settings)
 {
   fluid_settings_register_str(settings, "audio.jack.id", "fluidsynth", 0, NULL, NULL);
-  fluid_settings_register_str(settings, "audio.jack.multi", "no", 0, NULL, NULL);
-  fluid_settings_add_option(settings, "audio.jack.multi", "no");
-  fluid_settings_add_option(settings, "audio.jack.multi", "yes");
+  fluid_settings_register_int(settings, "audio.jack.multi", 0, 0, 1, FLUID_HINT_TOGGLED, NULL, NULL);
   fluid_settings_register_int(settings, "audio.jack.autoconnect", 0, 0, 1, FLUID_HINT_TOGGLED, NULL, NULL);
   fluid_settings_register_str(settings, "audio.jack.server", "", 0, NULL, NULL);
 }
@@ -177,7 +175,9 @@ new_fluid_jack_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func
 	      " (synth.sample-rate=%lu, jackd=%lu)", (int)sample_rate, jack_srate);
   }
 
-  if (!fluid_settings_str_equal(settings, "audio.jack.multi", "yes")) {
+  fluid_settings_getint (settings, "audio.jack.multi", &i);
+
+  if (i) {
 
     /* create the two audio output ports */
     dev->num_output_ports = 1;

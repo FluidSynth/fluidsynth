@@ -221,9 +221,7 @@ void fluid_audio_driver_settings(fluid_settings_t* settings)
   fluid_settings_register_int(settings, "audio.periods", 16, 2, 64, 0, NULL, NULL);
 #endif
 
-  fluid_settings_register_str (settings, "audio.realtime", "yes", 0, NULL, NULL);
-  fluid_settings_add_option (settings, "audio.realtime", "yes");
-  fluid_settings_add_option (settings, "audio.realtime", "no");
+  fluid_settings_register_int (settings, "audio.realtime", 1, 0, 1, FLUID_HINT_TOGGLED, NULL, NULL);
   fluid_settings_register_int (settings, "audio.realtime-prio",
                                FLUID_DEFAULT_AUDIO_RT_PRIO, 1, 99, 0, NULL, NULL);
 

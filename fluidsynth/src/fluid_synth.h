@@ -165,8 +165,8 @@ struct _fluid_synth_t
   int polyphony;                     /**< maximum polyphony */
   int with_reverb;                  /**< Should the synth use the built-in reverb unit? */
   int with_chorus;                  /**< Should the synth use the built-in chorus unit? */
-  char verbose;                      /**< Turn verbose mode on? */
-  char dump;                         /**< Dump events to stdout to hook up a user interface? */
+  int verbose;                      /**< Turn verbose mode on? */
+  int dump;                         /**< Dump events to stdout to hook up a user interface? */
   double sample_rate;                /**< The sample rate */
   int midi_channels;                 /**< the number of MIDI channels (>= 16) */
   int audio_channels;                /**< the number of audio channels (1 channel=left+right) */

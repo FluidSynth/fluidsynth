@@ -1229,19 +1229,43 @@ fluid_handle_dumptuning(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t
 int
 fluid_handle_set(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out)
 {
+  int hints;
+  int ival;
+
   if (ac < 2) {
-    fluid_ostream_printf(out, "set: too few arguments.\n");
+    fluid_ostream_printf(out, "set: Too few arguments.\n");
     return -1;
   }
 
-  if (fluid_is_number(av[1])) {
-    if (FLUID_STRCHR(av[1], '.') != NULL) {
-      fluid_synth_setnum(synth, av[0], atof(av[1]));
-    } else {
-      fluid_synth_setint(synth, av[0], atoi(av[1]));
-    }
-  } else {
-    fluid_synth_setstr(synth, av[0], av[1]);
+  switch (fluid_settings_get_type (synth->settings, av[0]))
+  {
+    case FLUID_NO_TYPE:
+      fluid_ostream_printf (out, "set: Parameter '%s' not found.\n", av[0]);
+      break;
+    case FLUID_INT_TYPE:
+      hints = fluid_settings_get_hints (synth->settings, av[0]);
+
+      if (hints & FLUID_HINT_TOGGLED)
+      {
+        if (FLUID_STRCMP (av[1], "yes") == 0 || FLUID_STRCMP (av[1], "True") == 0
+            || FLUID_STRCMP (av[1], "TRUE") == 0 || FLUID_STRCMP (av[1], "true") == 0
+            || FLUID_STRCMP (av[1], "T") == 0)
+          ival = 1;
+        else ival = atoi (av[1]);
+      }
+      else ival = atoi (av[1]);
+
+      fluid_synth_setint (synth, av[0], ival);
+      break;
+    case FLUID_NUM_TYPE:
+      fluid_synth_setnum (synth, av[0], atof (av[1]));
+      break;
+    case FLUID_STR_TYPE:
+      fluid_synth_setstr(synth, av[0], av[1]);
+      break;
+    case FLUID_SET_TYPE:
+      fluid_ostream_printf (out, "set: Parameter '%s' is a node.\n", av[0]);
+      break;
   }
 
   return 0;
@@ -1326,9 +1350,13 @@ static void fluid_handle_settings_iter2(void* data, char* name, int type)
   }
 
   case FLUID_INT_TYPE: {
-    int value;
+    int value, hints;
     fluid_synth_getint(d->synth, name, &value);
-    fluid_ostream_printf(d->out, "%d\n", value);
+    hints = fluid_settings_get_hints (d->synth->settings, name);
+
+    if (!(hints & FLUID_HINT_TOGGLED))
+      fluid_ostream_printf(d->out, "%d\n", value);
+    else fluid_ostream_printf(d->out, "%s\n", value ? "True" : "False");
     break;
   }
 
@@ -1352,7 +1380,7 @@ fluid_handle_settings(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t o
   data.out = out;
 
   fluid_settings_foreach(fluid_synth_get_settings(synth), &data, fluid_handle_settings_iter1);
-  fluid_settings_foreach_alpha(fluid_synth_get_settings(synth), &data, fluid_handle_settings_iter2);
+  fluid_settings_foreach(fluid_synth_get_settings(synth), &data, fluid_handle_settings_iter2);
   return 0;
 }
 
@@ -1407,16 +1435,30 @@ fluid_handle_info(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out)
   }
 
   case FLUID_INT_TYPE: {
-    int value, min, max;
+    int value, min, max, def, hints;
+
     fluid_settings_getint_range(settings, av[0], &min, &max);
     fluid_settings_getint(settings, av[0], &value);
+    hints = fluid_settings_get_hints(settings, av[0]);
+    def = fluid_settings_getint_default (settings, av[0]);
+
     fluid_ostream_printf(out, "%s:\n", av[0]);
-    fluid_ostream_printf(out, "Type:          integer\n");
-    fluid_ostream_printf(out, "Value:         %d\n", value);
-    fluid_ostream_printf(out, "Minimum value: %d\n", min);
-    fluid_ostream_printf(out, "Maximum value: %d\n", max);
-    fluid_ostream_printf(out, "Default value: %d\n",
-			fluid_settings_getint_default(settings, av[0]));
+
+    if (!(hints & FLUID_HINT_TOGGLED))
+    {
+      fluid_ostream_printf(out, "Type:          integer\n");
+      fluid_ostream_printf(out, "Value:         %d\n", value);
+      fluid_ostream_printf(out, "Minimum value: %d\n", min);
+      fluid_ostream_printf(out, "Maximum value: %d\n", max);
+      fluid_ostream_printf(out, "Default value: %d\n", def);
+    }
+    else
+    {
+      fluid_ostream_printf(out, "Type:          boolean\n");
+      fluid_ostream_printf(out, "Value:         %s\n", value ? "True" : "False");
+      fluid_ostream_printf(out, "Default value: %s\n", def ? "True" : "False");
+    }
+
     fluid_ostream_printf(out, "Real-time:     %s\n",
 			fluid_settings_is_realtime(settings, av[0])? "yes" : "no");
     break;
@@ -1436,7 +1478,7 @@ fluid_handle_info(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out)
     data.out = out;
     data.first = 1;
     fluid_ostream_printf(out, "Options:       ");
-    fluid_settings_foreach_option_alpha (settings, av[0], &data, fluid_handle_print_option);
+    fluid_settings_foreach_option (settings, av[0], &data, fluid_handle_print_option);
     fluid_ostream_printf(out, "\n");
 
     fluid_ostream_printf(out, "Real-time:     %s\n",
@@ -1445,7 +1487,8 @@ fluid_handle_info(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out)
   }
 
   case FLUID_SET_TYPE:
-    fluid_ostream_printf(out, "%s is a node", av[0]);
+    fluid_ostream_printf(out, "%s:\n", av[0]);
+    fluid_ostream_printf(out, "Type:          node\n");
     break;
   }
 
@@ -1478,7 +1521,7 @@ fluid_handle_help(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out)
    * - help help
    */
 
-  char* topic = "general"; /* default, if no topic is given */
+  char* topic = "help"; /* default, if no topic is given */
   int count = 0;
   int i;
 

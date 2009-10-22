@@ -145,9 +145,8 @@ void fluid_midi_driver_settings(fluid_settings_t* settings)
 {
   int i;
 
-  fluid_settings_register_str (settings, "midi.realtime", "yes", 0, NULL, NULL);
-  fluid_settings_add_option (settings, "midi.realtime", "yes");
-  fluid_settings_add_option (settings, "midi.realtime", "no");
+  fluid_settings_register_int (settings, "midi.realtime", 1, 0, 1,
+                               FLUID_HINT_TOGGLED, NULL, NULL);
   fluid_settings_register_int (settings, "midi.realtime-prio",
                                FLUID_DEFAULT_MIDI_RT_PRIO, 1, 99, 0, NULL, NULL);
 

@@ -133,7 +133,8 @@ new_fluid_oss_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
   fluid_settings_getnum(settings, "synth.sample-rate", &sample_rate);
   fluid_settings_getint (settings, "audio.realtime-prio", &realtime_prio);
 
-  if (fluid_settings_str_equal (settings, "audio.realtime", "yes"))
+  fluid_settings_getint (settings, "audio.realtime", &sched);
+  if (sched)
     sched = SCHED_FIFO;
   else sched = SCHED_OTHER;
 
@@ -310,7 +311,8 @@ new_fluid_oss_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func,
   fluid_settings_getnum(settings, "synth.sample-rate", &sample_rate);
   fluid_settings_getint (settings, "audio.realtime-prio", &realtime_prio);
 
-  if (fluid_settings_str_equal (settings, "audio.realtime", "yes"))
+  fluid_settings_getint (settings, "audio.realtime", &sched);
+  if (sched)
     sched = SCHED_FIFO;
   else sched = SCHED_OTHER;
 
@@ -653,7 +655,8 @@ new_fluid_oss_midi_driver(fluid_settings_t* settings,
 
   fluid_settings_getint (settings, "midi.realtime-prio", &realtime_prio);
 
-  if (fluid_settings_str_equal (settings, "midi.realtime", "yes"))
+  fluid_settings_getint (settings, "midi.realtime", &sched);
+  if (sched)
     sched = SCHED_FIFO;
   else sched = SCHED_OTHER;
 

@@ -76,14 +76,13 @@ extern int optind, opterr, optopt;
 #endif
 
 
-/* process_o_cmd_line_option
- *
- * Purpose:
- * Process a command line option -o setting=value,
- * for example: -o synth.polyhony=16
- */
-void process_o_cmd_line_option(fluid_settings_t* settings, char* optarg){
+/* Process a command line option -o setting=value, for example: -o synth.polyhony=16 */
+void process_o_cmd_line_option(fluid_settings_t* settings, char* optarg)
+{
   char* val;
+  int hints;
+  int ival;
+
   for (val = optarg; *val != '\0'; val++) {
     if (*val == '=') {
       *val++ = 0;
@@ -98,26 +97,43 @@ void process_o_cmd_line_option(fluid_settings_t* settings, char* optarg){
     return;
   }
 
-  /* At this point:
-   * optarg => "synth.polyphony"
-   * val => "16"
-   */
   switch(fluid_settings_get_type(settings, optarg)){
   case FLUID_NUM_TYPE:
-    if (fluid_settings_setnum(settings, optarg, atof(val))){
-      break;
-    };
+    if (!fluid_settings_setnum (settings, optarg, atof (val)))
+    {
+      fprintf (stderr, "Failed to set floating point parameter '%s'\n", optarg);
+      exit (1);
+    }
+    break;
   case FLUID_INT_TYPE:
-    if (fluid_settings_setint(settings, optarg, atoi(val))){
-      break;
-    };
+    hints = fluid_settings_get_hints (settings, optarg);
+
+    if (hints & FLUID_HINT_TOGGLED)
+    {
+      if (FLUID_STRCMP (val, "yes") == 0 || FLUID_STRCMP (val, "True") == 0
+          || FLUID_STRCMP (val, "TRUE") == 0 || FLUID_STRCMP (val, "true") == 0
+          || FLUID_STRCMP (val, "T") == 0)
+        ival = 1;
+      else ival = atoi (val);
+    }
+    else ival = atoi (val);
+
+    if (!fluid_settings_setint (settings, optarg, ival))
+    {
+      fprintf (stderr, "Failed to set integer parameter '%s'\n", optarg);
+      exit (1);
+    }
+    break;
   case FLUID_STR_TYPE:
-    if (fluid_settings_setstr(settings, optarg, val)){
-      break;
-    };
+    if (fluid_settings_setstr (settings, optarg, val))
+    {
+      fprintf (stderr, "Failed to set string parameter '%s'\n", optarg);
+      exit (1);
+    }
+    break;
   default:
-    fprintf (stderr, "Settings argument on command line: Failed to set \"%s\" to \"%s\".\n"
-	      "Most likely the parameter \"%s\" does not exist.\n", optarg, val, optarg);
+    fprintf (stderr, "Setting parameter '%s' not found\n", optarg);
+    exit (1);
   }
 }
 
@@ -154,7 +170,7 @@ settings_foreach_func (void *data, char *name, int type)
 {
   fluid_settings_t *settings = (fluid_settings_t *)data;
   double dmin, dmax, ddef;
-  int imin, imax, idef;
+  int imin, imax, idef, hints;
   char *defstr;
   int count;
   OptionBag bag;
@@ -170,13 +186,19 @@ settings_foreach_func (void *data, char *name, int type)
   case FLUID_INT_TYPE:
     fluid_settings_getint_range (settings, name, &imin, &imax);
     idef = fluid_settings_getint_default (settings, name);
-    printf ("%-24s INT   [min=", name);
-    print_pretty_int (imin);
-    printf (", max=");
-    print_pretty_int (imax);
-    printf (", def=");
-    print_pretty_int (idef);
-    printf ("]\n");
+    hints = fluid_settings_get_hints (settings, name);
+
+    if (!(hints & FLUID_HINT_TOGGLED))
+    {
+      printf ("%-24s INT   [min=", name);
+      print_pretty_int (imin);
+      printf (", max=");
+      print_pretty_int (imax);
+      printf (", def=");
+      print_pretty_int (idef);
+      printf ("]\n");
+    }
+    else printf ("%-24s BOOL  [def=%s]\n", name, idef ? "True" : "False");
     break;
   case FLUID_STR_TYPE:
     printf ("%-24s STR", name);
@@ -194,8 +216,8 @@ settings_foreach_func (void *data, char *name, int type)
       {
         bag.count = count;
         bag.curindex = 0;
-        fluid_settings_foreach_option_alpha (settings, name, &bag,
-                                             settings_option_foreach_func);
+        fluid_settings_foreach_option (settings, name, &bag,
+                                       settings_option_foreach_func);
       }
 
       printf ("]\n");
@@ -216,8 +238,8 @@ show_settings_str_options (fluid_settings_t *settings, char *name)
 
   bag.count = fluid_settings_option_count (settings, name);
   bag.curindex = 0;
-  fluid_settings_foreach_option_alpha (settings, name, &bag,
-                                       settings_option_foreach_func);
+  fluid_settings_foreach_option (settings, name, &bag,
+                                 settings_option_foreach_func);
   printf ("\n");
 }
 
@@ -279,6 +301,8 @@ int main(int argc, char** argv)
 
   lash_args = fluid_lash_extract_args (&argc, &argv);
 #endif
+
+  print_welcome ();
 
   settings = new_fluid_settings();
 
@@ -368,7 +392,6 @@ int main(int argc, char** argv)
     case 'a':
       if (FLUID_STRCMP (optarg, "help") == 0)
       {
-        print_welcome ();
         printf ("-a options (audio driver):\n   ");
         show_settings_str_options (settings, "audio.driver");
         exit (0);
@@ -377,22 +400,21 @@ int main(int argc, char** argv)
       break;
     case 'C':
       if ((optarg != NULL) && ((strcmp(optarg, "0") == 0) || (strcmp(optarg, "no") == 0))) {
-	fluid_settings_setstr(settings, "synth.chorus.active", "no");
+	fluid_settings_setint(settings, "synth.chorus.active", FALSE);
       } else {
-	fluid_settings_setstr(settings, "synth.chorus.active", "yes");
+	fluid_settings_setint(settings, "synth.chorus.active", TRUE);
       }
       break;
     case 'c':
       fluid_settings_setint(settings, "audio.periods", atoi(optarg));
       break;
     case 'd':
-      fluid_settings_setstr(settings, "synth.dump", "yes");
+      fluid_settings_setint(settings, "synth.dump", TRUE);
       dump = 1;
       break;
     case 'E':
       if (FLUID_STRCMP (optarg, "help") == 0)
       {
-        print_welcome ();
         printf ("-E options (audio file byte order):\n   ");
         show_settings_str_options (settings, "audio.file.endian");
 
@@ -442,7 +464,6 @@ int main(int argc, char** argv)
     case 'm':
       if (FLUID_STRCMP (optarg, "help") == 0)
       {
-        print_welcome ();
         printf ("-m options (MIDI driver):\n   ");
         show_settings_str_options (settings, "midi.driver");
         exit (0);
@@ -455,7 +476,6 @@ int main(int argc, char** argv)
     case 'O':
       if (FLUID_STRCMP (optarg, "help") == 0)
       {
-        print_welcome ();
         printf ("-O options (audio file format):\n   ");
         show_settings_str_options (settings, "audio.file.format");
 
@@ -478,9 +498,9 @@ int main(int argc, char** argv)
       break;
     case 'R':
       if ((optarg != NULL) && ((strcmp(optarg, "0") == 0) || (strcmp(optarg, "no") == 0))) {
-	fluid_settings_setstr(settings, "synth.reverb.active", "no");
+	fluid_settings_setint(settings, "synth.reverb.active", FALSE);
       } else {
-	fluid_settings_setstr(settings, "synth.reverb.active", "yes");
+	fluid_settings_setint(settings, "synth.reverb.active", TRUE);
       }
       break;
     case 'r':
@@ -492,7 +512,6 @@ int main(int argc, char** argv)
     case 'T':
       if (FLUID_STRCMP (optarg, "help") == 0)
       {
-        print_welcome ();
         printf ("-T options (audio file type):\n   ");
         show_settings_str_options (settings, "audio.file.type");
 
@@ -510,7 +529,7 @@ int main(int argc, char** argv)
       exit (0);
       break;
     case 'v':
-      fluid_settings_setstr(settings, "synth.verbose", "yes");
+      fluid_settings_setint(settings, "synth.verbose", TRUE);
       break;
     case 'z':
       fluid_settings_setint(settings, "audio.period-size", atoi(optarg));
@@ -543,9 +562,8 @@ int main(int argc, char** argv)
   /* option help requested?  "-o help" */
   if (option_help)
   {
-    print_welcome ();
     printf ("FluidSynth settings:\n");
-    fluid_settings_foreach_alpha (settings, settings, settings_foreach_func);
+    fluid_settings_foreach (settings, settings, settings_foreach_func);
     exit (0);
   }
 
@@ -703,9 +721,7 @@ int main(int argc, char** argv)
 
   /* run the shell */
   if (interactive) {
-    print_welcome();
-
-    printf ("Type 'help' for information on commands and 'help help' for help topics.\n\n");
+    printf ("Type 'help' for help topics.\n\n");
 
     /* In dump mode we set the prompt to "". The UI cannot easily
      * handle lines, which don't end with CR.  Changing the prompt
@@ -720,7 +736,6 @@ int main(int argc, char** argv)
   if (fast_render) {
     char *filename;
 
-    print_welcome ();
     fluid_settings_dupstr (settings, "audio.file.name", &filename);
     printf ("Rendering audio to file '%s'..\n", filename);
     if (filename) FLUID_FREE (filename);
@@ -797,15 +812,11 @@ static fluid_cmd_handler_t* newclient(void* data, char* addr)
 void
 print_usage()
 {
-  print_welcome ();
   fprintf(stderr, "Usage: fluidsynth [options] [soundfonts]\n");
   fprintf(stderr, "Try -h for help.\n");
   exit(0);
 }
 
-/*
- * print_welcome
- */
 void
 print_welcome()
 {
@@ -823,7 +834,7 @@ void
 print_help()
 {
   char allnames[256];
-  print_welcome ();
+
   printf("Usage: \n");
   printf("  fluidsynth [options] [soundfonts] [midifiles]\n");
   printf("Possible options:\n");

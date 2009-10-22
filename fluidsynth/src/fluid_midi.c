@@ -1123,8 +1123,9 @@ fluid_player_t* new_fluid_player(fluid_synth_t* synth)
 
 	player->use_system_timer = 
 		fluid_settings_str_equal(synth->settings, "player.timing-source", "system");
-	player->reset_synth_between_songs =
-		fluid_settings_str_equal(synth->settings, "player.reset-synth", "yes");
+
+	fluid_settings_getint (synth->settings, "player.reset-synth", &i);
+	player->reset_synth_between_songs = i;
 
 	return player;
 }
@@ -1163,11 +1164,12 @@ void fluid_player_settings(fluid_settings_t* settings)
 	/* player.timing-source can be either "system" (use system timer) 
 	or "sample" (use timer based on number of written samples) */
 	fluid_settings_register_str(settings, "player.timing-source", "sample", 0, NULL, NULL);
-	/* Selects whether the player should reset the synth between 
-           songs, or not. */
-	fluid_settings_register_str(settings, "player.reset-synth", "yes", 0, NULL, NULL);
-	fluid_settings_add_option(settings, "player.reset-synth", "no");
-	fluid_settings_add_option(settings, "player.reset-synth", "yes");
+	fluid_settings_add_option(settings, "player.timing-source", "sample");
+	fluid_settings_add_option(settings, "player.timing-source", "system");
+
+	/* Selects whether the player should reset the synth between songs, or not. */
+	fluid_settings_register_int(settings, "player.reset-synth", 1, 0, 1,
+                                    FLUID_HINT_TOGGLED, NULL, NULL);
 }
 
 

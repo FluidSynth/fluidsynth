@@ -202,21 +202,16 @@ static fluid_revmodel_presets_t revmodel_preset[] = {
 
 void fluid_synth_settings(fluid_settings_t* settings)
 {
-  fluid_settings_register_str(settings, "synth.verbose", "no", 0, NULL, NULL);
-  fluid_settings_add_option(settings, "synth.verbose", "no");
-  fluid_settings_add_option(settings, "synth.verbose", "yes");
-  fluid_settings_register_str(settings, "synth.dump", "no", 0, NULL, NULL);
-  fluid_settings_add_option(settings, "synth.dump", "no");
-  fluid_settings_add_option(settings, "synth.dump", "yes");
-  fluid_settings_register_str(settings, "synth.reverb.active", "yes", 0, NULL, NULL);
-  fluid_settings_add_option(settings, "synth.reverb.active", "no");
-  fluid_settings_add_option(settings, "synth.reverb.active", "yes");
-  fluid_settings_register_str(settings, "synth.chorus.active", "yes", 0, NULL, NULL);
-  fluid_settings_add_option(settings, "synth.chorus.active", "no");
-  fluid_settings_add_option(settings, "synth.chorus.active", "yes");
-  fluid_settings_register_str(settings, "synth.ladspa.active", "no", 0, NULL, NULL);
-  fluid_settings_add_option(settings, "synth.ladspa.active", "no");
-  fluid_settings_add_option(settings, "synth.ladspa.active", "yes");
+  fluid_settings_register_int(settings, "synth.verbose", 0, 0, 1,
+                              FLUID_HINT_TOGGLED, NULL, NULL);
+  fluid_settings_register_int(settings, "synth.dump", 0, 0, 1,
+                              FLUID_HINT_TOGGLED, NULL, NULL);
+  fluid_settings_register_int(settings, "synth.reverb.active", 1, 0, 1,
+                              FLUID_HINT_TOGGLED, NULL, NULL);
+  fluid_settings_register_int(settings, "synth.chorus.active", 1, 0, 1,
+                              FLUID_HINT_TOGGLED, NULL, NULL);
+  fluid_settings_register_int(settings, "synth.ladspa.active", 0, 0, 1,
+                              FLUID_HINT_TOGGLED, NULL, NULL);
   fluid_settings_register_str(settings, "midi.portname", "", 0, NULL, NULL);
 
   fluid_settings_register_int(settings, "synth.polyphony",
@@ -547,10 +542,10 @@ new_fluid_synth(fluid_settings_t *settings)
 
   synth->settings = settings;
 
-  synth->with_reverb = fluid_settings_str_equal(settings, "synth.reverb.active", "yes");
-  synth->with_chorus = fluid_settings_str_equal(settings, "synth.chorus.active", "yes");
-  synth->verbose = fluid_settings_str_equal(settings, "synth.verbose", "yes");
-  synth->dump = fluid_settings_str_equal(settings, "synth.dump", "yes");
+  fluid_settings_getint(settings, "synth.reverb.active", &synth->with_reverb);
+  fluid_settings_getint(settings, "synth.chorus.active", &synth->with_chorus);
+  fluid_settings_getint(settings, "synth.verbose", &synth->verbose);
+  fluid_settings_getint(settings, "synth.dump", &synth->dump);
 
   fluid_settings_getint(settings, "synth.polyphony", &synth->polyphony);
   fluid_settings_getnum(settings, "synth.sample-rate", &synth->sample_rate);
@@ -780,7 +775,7 @@ new_fluid_synth(fluid_settings_t *settings)
     for (i = 0; i < synth->polyphony; i++)
       synth->core_voice_processed[i] = NULL;
 
-    prio = fluid_settings_str_equal (synth->settings, "audio.realtime", "yes");
+    fluid_settings_getint (synth->settings, "audio.realtime", &prio);
 
     if (prio)
     {

@@ -98,15 +98,15 @@ extern "C" {
 /**
  * Hint FLUID_HINT_INTEGER indicates that a user interface would
  * probably wish to provide a stepped control taking only integer
- * values. Any bounds set should be slightly wider than the actual
- * integer range required to avoid floating point rounding errors. For
- * instance, the integer set {0,1,2,3} might be described as [-0.1,
- * 3.1].
+ * values.
+ * @deprecated
+ *
+ * As there is an integer setting type, this hint is not used.
  */
 #define FLUID_HINT_INTEGER         0x20
 
 
-#define FLUID_HINT_FILENAME        0x01         /**< Setting is a file name */
+#define FLUID_HINT_FILENAME        0x01         /**< String setting is a file name */
 #define FLUID_HINT_OPTIONLIST      0x02         /**< Setting is a list of string options */
 
 
@@ -195,10 +195,6 @@ void fluid_settings_foreach_option(fluid_settings_t* settings,
 				  char* name, void* data,
 				  fluid_settings_foreach_option_t func);
 FLUIDSYNTH_API
-void fluid_settings_foreach_option_alpha (fluid_settings_t* settings,
-                                          char* name, void* data,
-                                          fluid_settings_foreach_option_t func);
-FLUIDSYNTH_API
 int fluid_settings_option_count (fluid_settings_t* settings, char* name);
 
 /**
@@ -212,9 +208,6 @@ typedef void (*fluid_settings_foreach_t)(void* data, char* name, int type);
 FLUIDSYNTH_API
 void fluid_settings_foreach(fluid_settings_t* settings, void* data,
 			   fluid_settings_foreach_t func);
-FLUIDSYNTH_API
-void fluid_settings_foreach_alpha(fluid_settings_t* settings, void* data,
-                                  fluid_settings_foreach_t func);
 
 #ifdef __cplusplus
 }

@@ -191,7 +191,8 @@ new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
   fluid_settings_dupstr(settings, "audio.alsa.device", &device);   /* ++ dup device name */
   fluid_settings_getint (settings, "audio.realtime-prio", &realtime_prio);
 
-  if (fluid_settings_str_equal (settings, "audio.realtime", "yes"))
+  fluid_settings_getint (settings, "audio.realtime", &sched);
+  if (sched)
     sched = SCHED_FIFO;
   else sched = SCHED_OTHER;
 
@@ -288,8 +289,6 @@ new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
     FLUID_LOG(FLUID_ERR, "Failed to find a workable audio format");
     goto error_recovery;
   }
-
-  FLUID_LOG(FLUID_INFO, "ALSA driver: Using format %s", fluid_alsa_formats[i].name);
 
   /* Set the software params */
   snd_pcm_sw_params_current(dev->pcm, swparams);
@@ -653,7 +652,8 @@ new_fluid_alsa_rawmidi_driver(fluid_settings_t* settings,
 
   fluid_settings_getint (settings, "midi.realtime-prio", &realtime_prio);
 
-  if (fluid_settings_str_equal (settings, "midi.realtime", "yes"))
+  fluid_settings_getint (settings, "midi.realtime", &sched);
+  if (sched)
     sched = SCHED_FIFO;
   else sched = SCHED_OTHER;
 
@@ -923,7 +923,8 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
 
   fluid_settings_getint (settings, "midi.realtime-prio", &realtime_prio);
 
-  if (fluid_settings_str_equal (settings, "midi.realtime", "yes"))
+  fluid_settings_getint (settings, "midi.realtime", &sched);
+  if (sched)
     sched = SCHED_FIFO;
   else sched = SCHED_OTHER;
 
