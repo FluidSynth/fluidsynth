@@ -175,11 +175,11 @@ fluid_file_renderer_settings (fluid_settings_t* settings)
 
   fluid_settings_register_str(settings, "audio.file.name", "fluidsynth.raw", 0, NULL, NULL);
   fluid_settings_register_str(settings, "audio.file.type", "raw", 0, NULL, NULL);
-  fluid_settings_add_option (settings "audio.file.type", "raw");
+  fluid_settings_add_option (settings, "audio.file.type", "raw");
   fluid_settings_register_str(settings, "audio.file.format", "s16", 0, NULL, NULL);
-  fluid_settings_add_option (settings "audio.file.format", "s16");
+  fluid_settings_add_option (settings, "audio.file.format", "s16");
   fluid_settings_register_str(settings, "audio.file.endian", "cpu", 0, NULL, NULL);
-  fluid_settings_add_option (settings "audio.file.endian", "cpu");
+  fluid_settings_add_option (settings, "audio.file.endian", "cpu");
 #endif
 }
 
