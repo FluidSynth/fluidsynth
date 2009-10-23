@@ -108,8 +108,6 @@ fluid_midi_driver_t* new_fluid_midi_driver(fluid_settings_t* settings,
 
 FLUIDSYNTH_API void delete_fluid_midi_driver(fluid_midi_driver_t* driver);
 
-FLUIDSYNTH_API void fluid_midi_driver_get_names(char* buf, size_t buflen, const char* separator);
-
 
 /**
  * MIDI player status enum.

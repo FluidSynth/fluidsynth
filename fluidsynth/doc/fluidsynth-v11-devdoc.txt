@@ -19,6 +19,7 @@ All the source code examples in this document are in the public domain; you can 
 
 - \ref Disclaimer 
 - \ref Introduction 
+- \ref NewIn1_1_0
 - \ref CreatingSettings 
 - \ref CreatingSynth 
 - \ref CreatingAudioDriver 
@@ -53,6 +54,57 @@ What is FluidSynth?
 - FluidSynth can easily be embedded in an application. It has a main header file, fluidsynth.h, and one dynamically linkable library. FluidSynth runs on Linux, Mac OS 9, Mac OS X, and the Win32 platforms. It has audio and midi drivers for all mentioned platforms but you can use it with your own drivers if your application already handles MIDI and audio input/output. This document explains the basic usage of FluidSynth and provides examples that you can reuse. 
 
 - FluidSynth is open source, in active development. For more details, take a look at http://www.fluidsynth.org
+
+
+\section NewIn1_1_0 Whats new in 1.1.0?
+
+Overview of changes in FluidSynth 1.1.0 concerning developers:
+
+- Extensive work to make FluidSynth thread safe.  Previous versions had many multi-thread
+  issues which could lead to crashes or synthesis glitches.  Some of the API additions,
+  deprecations and function recommended conditions of use are related to this work.
+- File renderer object for rendering audio to files.
+- Sequencer objects can now use the system timer or the sample clock.  When using the sample
+  clock, events are triggered based on the current output audio sample position.  This means
+  that MIDI is synchronized with the audio and identical output will be achieved for the same
+  MIDI event input.
+- libsndfile support for rendering audio to different formats and file types.
+- API for using the MIDI router subsystem.
+- MIDI Tuning Standard functions were added for specifying whether to activate tuning changes
+  in realtime or not.
+- SYSEX support (MIDI Tuning Standard only at the moment).
+- Changed all yes/no boolean string settings to integer #FLUID_HINT_TOGGLED settings with
+  backwards compatibility (assignment and query of boolean values as strings).
+- Many other improvements and bug fixes.
+
+API additions:
+
+- A file renderer can be created with new_fluid_file_renderer(), deleted with
+  delete_fluid_file_renderer() and a block of audio processed with fluid_file_renderer_process_block().
+- Additional functions were added for using the MIDI router subsystem.
+  To clear all rules from a router use fluid_midi_router_clear_rules() and to set a router to default rules
+  use fluid_midi_router_set_default_rules().
+  To create a router rule use new_fluid_midi_router_rule() and to delete a rule use
+  delete_fluid_midi_router_rule() (seldom used).  Set values of a router rule with
+  fluid_midi_router_rule_set_chan(), fluid_midi_router_rule_set_param1() and fluid_midi_router_rule_set_param2().
+  fluid_midi_router_add_rule() can be used to add a rule to a router.
+- New MIDI event functions were added, including fluid_event_channel_pressure(), fluid_event_system_reset(),
+  and fluid_event_unregistering().  Additional sequencer functions include fluid_sequencer_add_midi_event_to_buffer(),
+  fluid_sequencer_get_use_system_timer() and fluid_sequencer_process().  new_fluid_sequencer2() was added to
+  allow for the timer type to be specified (system or sample clock).
+- The settings subsystem has some new functions for thread safety: fluid_settings_copystr() and fluid_settings_dupstr().
+  Also there are new convenience functions to count the number of string options for a setting: fluid_settings_option_count()
+  and for concatenating setting options with a separator: fluid_settings_option_concat().
+- MIDI Tuning Standard functions added include: fluid_synth_activate_key_tuning(), fluid_synth_activate_octave_tuning(),
+  fluid_synth_activate_tuning() and fluid_synth_deactivate_tuning().  All of which provide a parameter for specifying if
+  tuning changes should occur in realtime (affect existing voices) or not.
+- Additional synthesizer API: fluid_synth_get_sfont_by_name() to get a SoundFont by name,
+  fluid_synth_program_select_by_sfont_name() to select an instrument by SoundFont name/bank/program,
+  fluid_synth_set_gen2() for specifying additional parameters when assigning a generator value,
+  and fluid_synth_sysex() for sending SYSEX messages to the synth.
+- Miscellaneous additions: fluid_player_set_loop() to set playlist loop count.
+
+
 
 \section CreatingSettings Creating and changing the settings
 

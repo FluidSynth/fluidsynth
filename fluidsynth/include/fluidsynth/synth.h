@@ -70,6 +70,10 @@ FLUIDSYNTH_API int fluid_synth_sfont_select(fluid_synth_t* synth, int chan, unsi
 FLUIDSYNTH_API
 int fluid_synth_program_select(fluid_synth_t* synth, int chan, unsigned int sfont_id,
                                unsigned int bank_num, unsigned int preset_num);
+FLUIDSYNTH_API int
+fluid_synth_program_select_by_sfont_name (fluid_synth_t* synth, int chan,
+                                          char* sfont_name, unsigned int bank_num,
+                                          unsigned int preset_num);
 FLUIDSYNTH_API 
 int fluid_synth_get_program(fluid_synth_t* synth, int chan, unsigned int* sfont_id, 
                             unsigned int* bank_num, unsigned int* preset_num);
@@ -96,6 +100,8 @@ FLUIDSYNTH_API void fluid_synth_remove_sfont(fluid_synth_t* synth, fluid_sfont_t
 FLUIDSYNTH_API int fluid_synth_sfcount(fluid_synth_t* synth);
 FLUIDSYNTH_API fluid_sfont_t* fluid_synth_get_sfont(fluid_synth_t* synth, unsigned int num);
 FLUIDSYNTH_API fluid_sfont_t* fluid_synth_get_sfont_by_id(fluid_synth_t* synth, unsigned int id);
+FLUIDSYNTH_API fluid_sfont_t *fluid_synth_get_sfont_by_name (fluid_synth_t* synth,
+                                                             char *name);
 FLUIDSYNTH_API int fluid_synth_set_bank_offset(fluid_synth_t* synth, int sfont_id, int offset);
 FLUIDSYNTH_API int fluid_synth_get_bank_offset(fluid_synth_t* synth, int sfont_id);
 
@@ -179,6 +185,9 @@ enum fluid_interp {
 
 FLUIDSYNTH_API 
 int fluid_synth_set_gen(fluid_synth_t* synth, int chan, int param, float value);
+FLUIDSYNTH_API int fluid_synth_set_gen2 (fluid_synth_t* synth, int chan,
+                                         int param, float value,
+                                         int absolute, int normalized);
 FLUIDSYNTH_API float fluid_synth_get_gen(fluid_synth_t* synth, int chan, int param);
 
 

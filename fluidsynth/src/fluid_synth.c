@@ -133,26 +133,6 @@ static void fluid_synth_stop_LOCAL (fluid_synth_t *synth, unsigned int id);
 
 fluid_sfloader_t* new_fluid_defsfloader(void);
 
-/************************************************************************
- *
- * These functions were added after the v1.0 API freeze. They are not
- * in synth.h. They should be added as soon as a new development
- * version is started.
- *
- ************************************************************************/
-
-int fluid_synth_program_select2(fluid_synth_t* synth,
-				int chan,
-				char* sfont_name,
-				unsigned int bank_num,
-				unsigned int preset_num);
-
-fluid_sfont_t* fluid_synth_get_sfont_by_name(fluid_synth_t* synth, char *name);
-
-int fluid_synth_set_gen2(fluid_synth_t* synth, int chan,
-			 int param, float value,
-			 int absolute, int normalized);
-
 
 /***************************************************************
  *
@@ -2456,10 +2436,12 @@ fluid_synth_program_select(fluid_synth_t* synth, int chan, unsigned int sfont_id
  * @param bank_num MIDI bank number
  * @param preset_num MIDI program number
  * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @since 1.1.0
  */
 int
-fluid_synth_program_select2(fluid_synth_t* synth, int chan, char* sfont_name,
-                            unsigned int bank_num, unsigned int preset_num)
+fluid_synth_program_select_by_sfont_name (fluid_synth_t* synth, int chan,
+                                          char* sfont_name, unsigned int bank_num,
+                                          unsigned int preset_num)
 {
   fluid_preset_t* preset = NULL;
   fluid_channel_t* channel;
@@ -4063,6 +4045,7 @@ fluid_synth_get_sfont_by_id(fluid_synth_t* synth, unsigned int id)
  * @param synth FluidSynth instance
  * @param name Name of SoundFont
  * @return SoundFont instance or NULL if invalid name
+ * @since 1.1.0
  *
  * NOTE: Caller should be certain that SoundFont is not deleted (unloaded) for
  * the duration of use of the returned pointer.
@@ -5449,10 +5432,11 @@ fluid_synth_set_gen_LOCAL (fluid_synth_t* synth, int chan, int param, float valu
  * @param param SoundFont generator ID (#fluid_gen_type)
  * @param value Offset or absolute generator value to assign to the MIDI channel
  * @param absolute 0 to assign a relative value, non-zero to assign an absolute value
- * @param normalize 0 if value is specified in the native units of the generator,
+ * @param normalized 0 if value is specified in the native units of the generator,
  *   non-zero to take the value as a 0.0-1.0 range and apply it to the valid
  *   generator effect range (scaled and shifted as necessary).
  * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @since 1.1.0
  *
  * This function allows for setting all effect parameters in real time on a
  * MIDI channel.  Setting absolute to non-zero will cause the value to override

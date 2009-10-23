@@ -196,6 +196,9 @@ void fluid_settings_foreach_option(fluid_settings_t* settings,
 				  fluid_settings_foreach_option_t func);
 FLUIDSYNTH_API
 int fluid_settings_option_count (fluid_settings_t* settings, char* name);
+FLUIDSYNTH_API char *fluid_settings_option_concat (fluid_settings_t* settings,
+                                                   const char* name,
+                                                   const char* separator);
 
 /**
  * Callback function type used with fluid_settings_foreach()

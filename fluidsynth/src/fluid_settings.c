@@ -38,7 +38,7 @@ extern void fluid_file_renderer_settings (fluid_settings_t* settings);
 static void fluid_settings_init(fluid_settings_t* settings);
 static void fluid_settings_key_destroy_func(void* value);
 static void fluid_settings_value_destroy_func(void* value);
-static int fluid_settings_tokenize(char* s, char *buf, char** ptr);
+static int fluid_settings_tokenize(const char *s, char *buf, char **ptr);
 
 /* Common structure to all settings nodes */
 typedef struct {
@@ -302,7 +302,7 @@ fluid_settings_init(fluid_settings_t* settings)
 }
 
 static int
-fluid_settings_tokenize(char* s, char *buf, char** ptr)
+fluid_settings_tokenize(const char *s, char *buf, char **ptr)
 {
   char *tokstr, *tok;
   int n = 0;
@@ -341,7 +341,7 @@ fluid_settings_tokenize(char* s, char *buf, char** ptr)
  * @return 1 if the node exists, 0 otherwise
  */
 static int
-fluid_settings_get(fluid_settings_t* settings, char* name,
+fluid_settings_get(fluid_settings_t* settings, const char *name,
                    fluid_setting_node_t **value)
 {
   fluid_hashtable_t* table = settings;
@@ -489,6 +489,9 @@ fluid_settings_register_num(fluid_settings_t* settings, char* name, double def,
   fluid_return_val_if_fail (settings != NULL, 0);
   fluid_return_val_if_fail (name != NULL, 0);
 
+  /* For now, all floating point settings are bounded below and above */
+  hints |= FLUID_HINT_BOUNDED_BELOW | FLUID_HINT_BOUNDED_ABOVE;
+
   fluid_rec_mutex_lock (settings->mutex);
 
   if (!fluid_settings_get(settings, name, &node)) {
@@ -521,7 +524,7 @@ fluid_settings_register_num(fluid_settings_t* settings, char* name, double def,
 }
 
 /** returns 1 if the value has been register correctly, zero
-    otherwise */
+    otherwise. */
 int
 fluid_settings_register_int(fluid_settings_t* settings, char* name, int def,
 			    int min, int max, int hints,
@@ -532,6 +535,9 @@ fluid_settings_register_int(fluid_settings_t* settings, char* name, int def,
 
   fluid_return_val_if_fail (settings != NULL, 0);
   fluid_return_val_if_fail (name != NULL, 0);
+
+  /* For now, all integer settings are bounded below and above */
+  hints |= FLUID_HINT_BOUNDED_BELOW | FLUID_HINT_BOUNDED_ABOVE;
 
   fluid_rec_mutex_lock (settings->mutex);
 
@@ -1397,6 +1403,80 @@ fluid_settings_option_count (fluid_settings_t *settings, char *name)
   fluid_rec_mutex_unlock (settings->mutex);
 
   return (count);
+}
+
+/**
+ * Concatenate options for a string setting together with a separator between.
+ * @param settings Settings object
+ * @param name Settings name
+ * @param separator String to use between options (NULL to use ", ")
+ * @return Newly allocated string or NULL on error (out of memory, not a valid
+ *   setting \a name or not a string setting).  Free the string when finished with it.
+ * @since 1.1.0
+ */
+char *
+fluid_settings_option_concat (fluid_settings_t *settings, const char *name,
+                              const char *separator)
+{
+  fluid_setting_node_t *node;
+  fluid_str_setting_t *setting;
+  fluid_list_t *p, *newlist = NULL;
+  int count, len;
+  char *str, *option;
+
+  fluid_return_val_if_fail (settings != NULL, NULL);
+  fluid_return_val_if_fail (name != NULL, NULL);
+
+  if (!separator) separator = ", ";
+
+  fluid_rec_mutex_lock (settings->mutex);       /* ++ lock */
+
+  if (!fluid_settings_get (settings, name, &node) || node->type != FLUID_STR_TYPE)
+  {
+    fluid_rec_mutex_unlock (settings->mutex);   /* -- unlock */
+    return (NULL);
+  }
+
+  setting = (fluid_str_setting_t*)node;
+
+  /* Duplicate option list, count options and get total string length */
+  for (p = setting->options, count = 0, len = 0; p; p = p->next, count++)
+  {
+    option = fluid_list_get (p);
+
+    if (option)
+    {
+      newlist = fluid_list_append (newlist, option);
+      len += strlen (option);
+    }
+  }
+
+  if (count > 1) len += (count - 1) * strlen (separator);
+  len++;        /* For terminator */
+
+  /* Sort by name */
+  newlist = fluid_list_sort (newlist, fluid_list_str_compare_func);
+
+  str = FLUID_MALLOC (len);
+  str[0] = 0;
+
+  if (str)
+  {
+    for (p = newlist; p; p = p->next)
+    {
+      option = fluid_list_get (p);
+      strcat (str, option);
+      if (p->next) strcat (str, separator);
+    }
+  }
+
+  fluid_rec_mutex_unlock (settings->mutex);   /* -- unlock */
+
+  delete_fluid_list (newlist);
+
+  if (!str) FLUID_LOG (FLUID_ERR, "Out of memory");
+
+  return (str);
 }
 
 /* Structure passed to fluid_settings_foreach_iter recursive function */

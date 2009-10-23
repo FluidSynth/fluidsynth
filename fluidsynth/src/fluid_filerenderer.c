@@ -337,16 +337,16 @@ void delete_fluid_file_renderer(fluid_file_renderer_t* dev)
 	return;
 }
 
-#if LIBSNDFILE_SUPPORT
 /**
  * Write period_size samples to file.
  * @param dev File renderer instance
- * @return FLUID_OK or FLUID_FAILED if an error occurred
+ * @return #FLUID_OK or #FLUID_FAILED if an error occurred
  * @since 1.1.0
  */
 int
 fluid_file_renderer_process_block(fluid_file_renderer_t* dev)
 {
+#if LIBSNDFILE_SUPPORT
 	int n;
 
 	fluid_synth_write_float(dev->synth, dev->period_size, dev->buf, 0, 2, dev->buf, 1, 2);
@@ -359,11 +359,9 @@ fluid_file_renderer_process_block(fluid_file_renderer_t* dev)
 		return FLUID_FAILED;
 	}
 	return FLUID_OK;
-}
+
 #else   /* No libsndfile support */
-int
-fluid_file_renderer_process_block(fluid_file_renderer_t* dev)
-{
+
 	int n, offset;
 
 	fluid_synth_write_s16(dev->synth, dev->period_size, dev->buf, 0, 2, dev->buf, 1, 2);
@@ -378,9 +376,8 @@ fluid_file_renderer_process_block(fluid_file_renderer_t* dev)
 		}
 	}
 	return FLUID_OK;
-}
-
 #endif
+}
 
 
 #if LIBSNDFILE_SUPPORT

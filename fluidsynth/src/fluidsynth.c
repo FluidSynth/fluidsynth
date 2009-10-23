@@ -54,7 +54,7 @@
 #endif
 
 void print_usage(void);
-void print_help(void);
+void print_help(fluid_settings_t *settings);
 void print_welcome(void);
 
 static fluid_cmd_handler_t* newclient(void* data, char* addr);
@@ -443,7 +443,7 @@ int main(int argc, char** argv)
       fluid_settings_setnum(settings, "synth.gain", atof(optarg));
       break;
     case 'h':
-      print_help();
+      print_help(settings);
       break;
     case 'i':
       interactive = 0;
@@ -831,17 +831,20 @@ print_welcome()
  * print_help
  */
 void
-print_help()
+print_help (fluid_settings_t *settings)
 {
-  char allnames[256];
+  char *audio_options;
+  char *midi_options;
+
+  audio_options = fluid_settings_option_concat (settings, "audio.driver", NULL);
+  midi_options = fluid_settings_option_concat (settings, "midi.driver", NULL);
 
   printf("Usage: \n");
   printf("  fluidsynth [options] [soundfonts] [midifiles]\n");
   printf("Possible options:\n");
-  fluid_audio_driver_get_names(allnames, sizeof(allnames), ", ");
   printf(" -a, --audio-driver=[label]\n"
 	 "    The name of the audio driver to use.\n"
-	 "    Valid values: %s\n", allnames);
+	 "    Valid values: %s\n", audio_options ? audio_options : "ERROR");
   printf(" -c, --audio-bufcount=[count]\n"
 	 "    Number of audio buffers\n");
   printf(" -C, --chorus\n"
@@ -872,10 +875,9 @@ print_help()
 #endif
   printf(" -L, --audio-channels=[num]\n"
 	 "    The number of stereo audio channels [default = 1]\n");
-  fluid_midi_driver_get_names(allnames, sizeof(allnames), ", ");
   printf(" -m, --midi-driver=[label]\n"
 	 "    The name of the midi driver to use.\n"
-	 "    Valid values: %s\n", allnames);
+	 "    Valid values: %s\n", midi_options ? midi_options : "ERROR");
   printf(" -n, --no-midi-in\n"
 	 "    Don't create a midi driver to read MIDI input events [default = yes]\n");
   printf(" -o\n"
@@ -898,5 +900,11 @@ print_help()
 	 "    Show version of program\n");
   printf(" -z, --audio-bufsize=[size]\n"
 	 "    Size of each audio buffer\n");
+
+  if (audio_options) FLUID_FREE (audio_options);
+  if (midi_options) FLUID_FREE (midi_options);
+
+  delete_fluid_settings (settings);
+
   exit(0);
 }

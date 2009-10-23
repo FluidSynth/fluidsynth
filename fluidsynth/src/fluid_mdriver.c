@@ -195,36 +195,6 @@ void fluid_midi_driver_settings(fluid_settings_t* settings)
   }
 }
 
-
-/**
- * Write a list of MIDI driver names into a buffer.
- * (A buffer length of 256 characters should be more than enough.)
- * @param buf Buffer to write names into
- * @param buflen Maximum amount of characters in buf.
- * @param separator Separator string, written between names.
- * @since 1.1.0
- */
-void
-fluid_midi_driver_get_names(char* buf, size_t buflen, const char* separator)
-{
-  int i;
-
-  if (buflen <= 0) {
-    return;
-  }
-  buf[0] = '\0';
-  buflen--;
-
-  for (i = 0; fluid_midi_drivers[i].name != NULL; i++) {
-    if (i > 0) {
-      strncat(buf, separator, buflen - strlen(buf));
-    }
-    strncat(buf, fluid_midi_drivers[i].name, buflen - strlen(buf));
-  }
-  buf[buflen] = '\0';
-}
-
-
 /**
  * Create a new MIDI driver instance.
  * @param settings Settings used to configure new MIDI driver.
@@ -235,9 +205,10 @@ fluid_midi_driver_get_names(char* buf, size_t buflen, const char* separator)
  */
 fluid_midi_driver_t* new_fluid_midi_driver(fluid_settings_t* settings, handle_midi_event_func_t handler, void* event_handler_data)
 {
-  int i;
-  char allnames[256];
   fluid_midi_driver_t* driver = NULL;
+  char *allnames;
+  int i;
+
   for (i = 0; fluid_midi_drivers[i].name != NULL; i++) {
     if (fluid_settings_str_equal(settings, "midi.driver", fluid_midi_drivers[i].name)) {
       FLUID_LOG(FLUID_DBG, "Using '%s' midi driver", fluid_midi_drivers[i].name);
@@ -249,8 +220,11 @@ fluid_midi_driver_t* new_fluid_midi_driver(fluid_settings_t* settings, handle_mi
     }
   }
 
-  fluid_midi_driver_get_names(allnames, sizeof(allnames), ", ");
-  FLUID_LOG(FLUID_ERR, "Couldn't find the requested midi driver. Valid drivers are: %s.", allnames);
+  allnames = fluid_settings_option_concat (settings, "midi.driver", NULL);
+  FLUID_LOG(FLUID_ERR, "Couldn't find the requested midi driver. Valid drivers are: %s.",
+            allnames ? allnames : "ERROR");
+  if (allnames) FLUID_FREE (allnames);
+
   return NULL;
 }
 
