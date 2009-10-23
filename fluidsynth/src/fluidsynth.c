@@ -567,8 +567,6 @@ int main(int argc, char** argv)
     exit (0);
   }
 
-  g_thread_init (NULL);
-
 #ifdef WIN32
   SetPriorityClass(GetCurrentProcess(), REALTIME_PRIORITY_CLASS);
 #endif
