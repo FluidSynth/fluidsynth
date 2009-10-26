@@ -714,9 +714,14 @@ new_fluid_timer (int msec, fluid_timer_callback_t callback, void* data,
 int
 delete_fluid_timer (fluid_timer_t *timer)
 {
+  int auto_destroy = timer->auto_destroy;
+
   timer->cont = 0;
   fluid_timer_join (timer);
-  if (!timer->auto_destroy) FLUID_FREE (timer);
+
+  /* Shouldn't access timer now if auto_destroy enabled, since it has been destroyed */
+
+  if (!auto_destroy) FLUID_FREE (timer);
 
   return FLUID_OK;
 }
