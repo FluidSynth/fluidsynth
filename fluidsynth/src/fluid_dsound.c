@@ -26,7 +26,6 @@
 #include "fluid_sys.h"
 #include "fluid_adriver.h"
 #include "fluid_settings.h"
-#include <windows.h>
 #include <mmsystem.h>
 #include <dsound.h>
 

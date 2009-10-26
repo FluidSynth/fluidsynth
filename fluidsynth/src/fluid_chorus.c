@@ -266,7 +266,7 @@ fluid_chorus_set(fluid_chorus_t* chorus, int set, int nr, float level,
   if (set & FLUID_CHORUS_SET_DEPTH) chorus->new_depth_ms = depth_ms;
   if (set & FLUID_CHORUS_SET_TYPE) chorus->new_type = type;
 
-  return fluid_chorus_update (chorus);
+  fluid_chorus_update (chorus);
 }
 
 /* Purpose:

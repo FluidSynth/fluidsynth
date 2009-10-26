@@ -37,7 +37,6 @@
 #include "fluid_midi.h"
 #include "fluid_mdriver.h"
 #include "fluid_settings.h"
-#include <windows.h>
 
 #define MIDI_SYSEX_MAX_SIZE     512
 #define MIDI_SYSEX_BUF_COUNT    16

@@ -1582,9 +1582,11 @@ int fluid_voice_modulate_all(fluid_voice_t* voice)
 int
 fluid_voice_noteoff(fluid_voice_t* voice)
 {
+  unsigned int at_tick;
+
   fluid_profile(FLUID_PROF_VOICE_NOTE, voice->ref);
 
-  unsigned int at_tick = fluid_channel_get_min_note_length_ticks(voice->channel);
+  at_tick = fluid_channel_get_min_note_length_ticks (voice->channel);
 
   if (at_tick > voice->ticks) {
     /* Delay noteoff */

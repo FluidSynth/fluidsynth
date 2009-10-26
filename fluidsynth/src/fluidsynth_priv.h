@@ -113,6 +113,8 @@
 #endif
 
 #if HAVE_WINDOWS_H
+#include <winsock2.h>
+#include <ws2tcpip.h>
 #include <windows.h>
 #endif
 

@@ -19,7 +19,6 @@
  */
 
 #ifdef WIN32
-#include <windows.h>
 #include "fluidsynth_priv.h"
 #include "fluid_sys.h"
 

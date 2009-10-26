@@ -1024,9 +1024,6 @@ int delete_fluid_server_socket(fluid_server_socket_t* server_socket)
 #define WIN32_LEAN_AND_MEAN
 #endif
 
-#include <winsock2.h>
-#include <ws2tcpip.h>
-
 fluid_istream_t fluid_socket_get_istream (fluid_socket_t sock)
 {
   return sock | WIN32_SOCKET_FLAG;
