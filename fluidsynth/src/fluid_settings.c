@@ -337,7 +337,7 @@ fluid_settings_tokenize(const char *s, char *buf, char **ptr)
  *
  * @param settings a settings object
  * @param name Settings name
- * @param value Location to store 7setting node if found
+ * @param value Location to store setting node if found
  * @return 1 if the node exists, 0 otherwise
  */
 static int
@@ -1541,6 +1541,7 @@ fluid_settings_foreach (fluid_settings_t* settings, void* data,
   fluid_settings_foreach_bag_t bag;
   fluid_setting_node_t *node;
   fluid_list_t *p;
+  int r;
 
   fluid_return_if_fail (settings != NULL);
   fluid_return_if_fail (func != NULL);
@@ -1559,8 +1560,8 @@ fluid_settings_foreach (fluid_settings_t* settings, void* data,
   /* Loop over names and call the callback */
   for (p = bag.names; p; p = p->next)
   {
-    fluid_settings_get (settings, (char *)(p->data), &node);
-    if (node) (*func) (data, (char *)(p->data), node->type);
+    r = fluid_settings_get (settings, (char *)(p->data), &node);
+    if (r && node) (*func) (data, (char *)(p->data), node->type);
     FLUID_FREE (p->data);       /* -- Free name */
   }
 
