@@ -103,7 +103,7 @@ API additions:
   fluid_synth_program_select_by_sfont_name() to select an instrument by SoundFont name/bank/program,
   fluid_synth_set_gen2() for specifying additional parameters when assigning a generator value,
   and fluid_synth_sysex() for sending SYSEX messages to the synth.
-- Miscellaneous additions: fluid_player_set_loop() to set playlist loop count.
+- Miscellaneous additions: fluid_player_set_loop() to set playlist loop count and fluid_player_get_status() to get current player state.
 
 
 

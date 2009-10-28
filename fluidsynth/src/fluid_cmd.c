@@ -60,7 +60,7 @@ void fluid_shell_settings(fluid_settings_t* settings)
 
 fluid_cmd_t fluid_commands[] = {
   { "help", "general", (fluid_cmd_func_t) fluid_handle_help, NULL,
-    "help                       Command summary. 'help help' for more help topics" },
+    "help                       Show help topics ('help TOPIC' for more info)" },
   { "quit", "general", (fluid_cmd_func_t) fluid_handle_quit, NULL,
     "quit                       Quit the synthesizer" },
   { "noteon", "event", (fluid_cmd_func_t) fluid_handle_noteon, NULL,
@@ -1518,7 +1518,6 @@ fluid_handle_help(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out)
    * - help
    * - help (topic), where (topic) is 'general', 'chorus', etc.
    * - help all
-   * - help help
    */
 
   char* topic = "help"; /* default, if no topic is given */
@@ -1534,7 +1533,6 @@ fluid_handle_help(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out)
     /* "help help": Print a list of all topics */
     fluid_ostream_printf(out,
 			"*** Help topics:***\n"
-			"help help (prints this list)\n"
 			"help all (prints all topics)\n");
     for (i = 0; fluid_commands[i].name != NULL; i++) {
       int listed_first_time = 1;
