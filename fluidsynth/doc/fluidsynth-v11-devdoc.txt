@@ -89,9 +89,10 @@ API additions:
   fluid_midi_router_rule_set_chan(), fluid_midi_router_rule_set_param1() and fluid_midi_router_rule_set_param2().
   fluid_midi_router_add_rule() can be used to add a rule to a router.
 - New MIDI event functions were added, including fluid_event_channel_pressure(), fluid_event_system_reset(),
-  and fluid_event_unregistering().  Additional sequencer functions include fluid_sequencer_add_midi_event_to_buffer(),
+  and fluid_event_unregistering().  
+- Additional sequencer functions include fluid_sequencer_add_midi_event_to_buffer(),
   fluid_sequencer_get_use_system_timer() and fluid_sequencer_process().  new_fluid_sequencer2() was added to
-  allow for the timer type to be specified (system or sample clock).
+  allow for the timer type to be specified (system or sample clock). 
 - The settings subsystem has some new functions for thread safety: fluid_settings_copystr() and fluid_settings_dupstr().
   Also there are new convenience functions to count the number of string options for a setting: fluid_settings_option_count()
   and for concatenating setting options with a separator: fluid_settings_option_concat().
@@ -237,7 +238,7 @@ The following table provides details on all the settings used by the synthesizer
   <tr>
     <td></td>
     <td>Description</td>
-    <td>Sets the number of synthesis CPU cores. If set to a value
+    <td>(Experimental) Sets the number of synthesis CPU cores. If set to a value
     greater than 1, then additional synthesis threads will be created to take
     advantage of a multi CPU or CPU core system. This has the affect of
     utilizing more of the total CPU for voices or decreasing render times
@@ -1101,7 +1102,7 @@ the MIDI subsystems used, which are described in a following table.
   </tr>
 
   <tr>
-    <td>audio.realtime-prio</td>
+    <td>midi.realtime-prio</td>
     <td>Type</td>
     <td>integer</td>
   </tr>
@@ -1233,6 +1234,7 @@ The following table defines MIDI driver specific settings.
     <td>string</td>
   </tr>
   <tr>
+    <td></td>
     <td>Default</td>
     <td></td>
   </tr>
@@ -1246,7 +1248,7 @@ The following table defines MIDI driver specific settings.
 
 \section MIDIPlayer Loading and Playing a MIDI file
 
-FluidSynth can be used to play MIDI files, using the MIDI File Player interface. It follows a high level implementation, though its implementation is currently incomplete. After initializing the synthesizer, create the player passing the synth instance to new_fluid_player(). Then, you can add some SMF file names to the player using fluid_player_add(), and finally call fluid_player_play() to start the playback. You can wait for the player to terminate, using fluid_player_join().
+FluidSynth can be used to play MIDI files, using the MIDI File Player interface. It follows a high level implementation, though its implementation is currently incomplete. After initializing the synthesizer, create the player passing the synth instance to new_fluid_player(). Then, you can add some SMF file names to the player using fluid_player_add(), and finally call fluid_player_play() to start the playback. You can check if the player has finished by calling fluid_player_get_status(), or wait for the player to terminate using fluid_player_join().
 
 \code
 #include <fluidsynth.h>
@@ -1291,17 +1293,17 @@ Settings which the MIDI player uses are documented below.
   <tr>
     <td>player.reset-synth</td>
     <td>type</td>
-    <td>string</td>
+    <td>boolean</td>
   </tr>
   <tr>
     <td></td>
     <td>default</td>
-    <td>"yes"</td>
+    <td>1 (TRUE)</td>
   </tr>
   <tr>
     <td></td>
     <td>description</td>
-    <td>Reset the synth between MIDI songs?</td>
+    <td>If true, reset the synth before starting a new MIDI song, so the state of a previous song can't affect the new song. Turn it off for seamless looping of a song.</td>
   </tr>
 
   <tr>
@@ -1343,6 +1345,8 @@ Some examples of MIDI router usage:
 - Get rid of aftertouch
 
 The MIDI driver API has a clean separation between the midi thread and the synthesizer. That opens the door to add a midi router module.
+
+MIDI events coming from the MIDI player do not pass through the MIDI router.
 
 \code
 #include <fluidsynth.h>
@@ -1397,7 +1401,7 @@ int main(int argc, char** argv)
 
 FluidSynth's sequencer can be used to play MIDI events in a more flexible way than using the MIDI file player, which expects the events to be stored as Standard MIDI Files. Using the sequencer, you can provide the events one by one, with an optional timestamp for scheduling. 
 
-The client program should first initialize the sequencer instance using the function new_fluid_sequencer(). There is a complementary function delete_fluid_sequencer() to delete it. After creating the sequencer instance, the destinations can be registered using fluid_sequencer_register_fluidsynth() for the synthesizer destination, and optionally using fluid_sequencer_register_client() for the client destination providing a suitable callback function. It can be unregistered using fluid_sequencer_unregister_client(). After the initialization, events can be sent with fluid_sequencer_send_now() and scheduled to the future with fluid_sequencer_send_at(). The registration functions return identifiers, that can be used as destinations of an event using fluid_event_set_dest().
+The client program should first initialize the sequencer instance using the function new_fluid_sequencer2(). There is a complementary function delete_fluid_sequencer() to delete it. After creating the sequencer instance, the destinations can be registered using fluid_sequencer_register_fluidsynth() for the synthesizer destination, and optionally using fluid_sequencer_register_client() for the client destination providing a suitable callback function. It can be unregistered using fluid_sequencer_unregister_client(). After the initialization, events can be sent with fluid_sequencer_send_now() and scheduled to the future with fluid_sequencer_send_at(). The registration functions return identifiers, that can be used as destinations of an event using fluid_event_set_dest().
 
 The function fluid_sequencer_get_tick() returns the current playing position. A program may choose a new timescale in milliseconds using fluid_sequencer_set_time_scale().
 
@@ -1424,7 +1428,7 @@ void createsynth()
     fluid_settings_setstr(settings, "synth.chorus.active", "no");
     synth = new_fluid_synth(settings);
     adriver = new_fluid_audio_driver(settings, synth);
-    sequencer = new_fluid_sequencer();
+    sequencer = new_fluid_sequencer2(0);
 
     // register synth as first destination
     synthSeqID = fluid_sequencer_register_fluidsynth(sequencer, synth);
