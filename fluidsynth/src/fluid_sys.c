@@ -131,7 +131,7 @@ fluid_set_log_function(int level, fluid_log_function_t fun, void* data)
  * @param data User supplied data (not used)
  */
 void
-fluid_default_log_function(int level, char* message, void* data)
+fluid_default_log_function(int level, const char* message, void* data)
 {
   FILE* out;
 
@@ -210,7 +210,7 @@ fluid_log_config(void)
  * @return Always returns #FLUID_FAILED
  */
 int
-fluid_log(int level, char* fmt, ...)
+fluid_log(int level, const char* fmt, ...)
 {
   fluid_log_function_t fun = NULL;
 
@@ -316,7 +316,7 @@ fluid_error()
  * It is useful only to distinguish between SoundFont and MIDI files.
  */
 int
-fluid_is_midifile(char* filename)
+fluid_is_midifile(const char *filename)
 {
   FILE* fp = fopen(filename, "rb");
   char id[4];
@@ -342,7 +342,7 @@ fluid_is_midifile(char* filename)
  * It is useful only to distinguish between SoundFont and MIDI files.
  */
 int
-fluid_is_soundfont(char* filename)
+fluid_is_soundfont(const char *filename)
 {
   FILE* fp = fopen(filename, "rb");
   char id[4];
@@ -550,6 +550,15 @@ void fluid_profiling_print(void)
  *
  */
 
+/* Rather than inline this one, we just declare it as a function, to prevent
+ * GCC warning about inline failure. */
+fluid_cond_t *
+new_fluid_cond (void)
+{
+  if (!g_thread_supported ()) g_thread_init (NULL);
+  return g_cond_new ();
+}
+
 static gpointer
 fluid_thread_high_prio (gpointer data)
 {
@@ -745,12 +754,20 @@ fluid_timer_join (fluid_timer_t *timer)
  *
  */
 
+/**
+ * Get standard in stream handle.
+ * @return Standard in stream.
+ */
 fluid_istream_t
 fluid_get_stdin (void)
 {
   return STDIN_FILENO;
 }
 
+/**
+ * Get standard output stream handle.
+ * @return Standard out stream.
+ */
 fluid_ostream_t
 fluid_get_stdout (void)
 {

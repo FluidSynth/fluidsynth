@@ -36,8 +36,13 @@ fluid_mod_clone(fluid_mod_t* mod, fluid_mod_t* src)
   mod->amount = src->amount;
 }
 
-/*
- * fluid_mod_set_source1
+/**
+ * Set a modulator's primary source controller and flags.
+ * @param mod Modulator
+ * @param src Modulator source (#fluid_mod_src or a MIDI controller number)
+ * @param flags Flags determining mapping function and whether the source
+ *   controller is a general controller (#FLUID_MOD_GC) or a MIDI CC controller
+ *   (#FLUID_MOD_CC), see #fluid_mod_flags.
  */
 void
 fluid_mod_set_source1(fluid_mod_t* mod, int src, int flags)
@@ -46,8 +51,13 @@ fluid_mod_set_source1(fluid_mod_t* mod, int src, int flags)
   mod->flags1 = flags;
 }
 
-/*
- * fluid_mod_set_source2
+/**
+ * Set a modulator's secondary source controller and flags.
+ * @param mod Modulator
+ * @param src Modulator source (#fluid_mod_src or a MIDI controller number)
+ * @param flags Flags determining mapping function and whether the source
+ *   controller is a general controller (#FLUID_MOD_GC) or a MIDI CC controller
+ *   (#FLUID_MOD_CC), see #fluid_mod_flags.
  */
 void
 fluid_mod_set_source2(fluid_mod_t* mod, int src, int flags)
@@ -56,8 +66,10 @@ fluid_mod_set_source2(fluid_mod_t* mod, int src, int flags)
   mod->flags2 = flags;
 }
 
-/*
- * fluid_mod_set_dest
+/**
+ * Set the destination effect of a modulator.
+ * @param mod Modulator
+ * @param dest Destination generator (#fluid_gen_type)
  */
 void
 fluid_mod_set_dest(fluid_mod_t* mod, int dest)
@@ -65,8 +77,10 @@ fluid_mod_set_dest(fluid_mod_t* mod, int dest)
   mod->dest = dest;
 }
 
-/*
- * fluid_mod_set_amount
+/**
+ * Set the scale amount of a modulator.
+ * @param mod Modulator
+ * @param amount Scale amount to assign
  */
 void
 fluid_mod_set_amount(fluid_mod_t* mod, double amount)
@@ -74,32 +88,68 @@ fluid_mod_set_amount(fluid_mod_t* mod, double amount)
   mod->amount = (double) amount;
 }
 
-int fluid_mod_get_source1(fluid_mod_t* mod)
+/**
+ * Get the primary source value from a modulator.
+ * @param mod Modulator
+ * @return The primary source value (#fluid_mod_src or a MIDI CC controller value).
+ */
+int
+fluid_mod_get_source1(fluid_mod_t* mod)
 {
   return mod->src1;
 }
 
-int fluid_mod_get_flags1(fluid_mod_t* mod)
+/**
+ * Get primary source flags from a modulator.
+ * @param mod Modulator
+ * @return The primary source flags (#fluid_mod_flags).
+ */
+int
+fluid_mod_get_flags1(fluid_mod_t* mod)
 {
   return mod->flags1;
 }
 
-int fluid_mod_get_source2(fluid_mod_t* mod)
+/**
+ * Get the secondary source value from a modulator.
+ * @param mod Modulator
+ * @return The secondary source value (#fluid_mod_src or a MIDI CC controller value).
+ */
+int
+fluid_mod_get_source2(fluid_mod_t* mod)
 {
   return mod->src2;
 }
 
-int fluid_mod_get_flags2(fluid_mod_t* mod)
+/**
+ * Get secondary source flags from a modulator.
+ * @param mod Modulator
+ * @return The secondary source flags (#fluid_mod_flags).
+ */
+int
+fluid_mod_get_flags2(fluid_mod_t* mod)
 {
   return mod->flags2;
 }
 
-int fluid_mod_get_dest(fluid_mod_t* mod)
+/**
+ * Get destination effect from a modulator.
+ * @param mod Modulator
+ * @return Destination generator (#fluid_gen_type)
+ */
+int
+fluid_mod_get_dest(fluid_mod_t* mod)
 {
   return mod->dest;
 }
 
-double fluid_mod_get_amount(fluid_mod_t* mod)
+/**
+ * Get the scale amount from a modulator.
+ * @param mod Modulator
+ * @return Scale amount
+ */
+double
+fluid_mod_get_amount(fluid_mod_t* mod)
 {
   return (fluid_real_t) mod->amount;
 }
@@ -342,44 +392,48 @@ fluid_mod_get_value(fluid_mod_t* mod, fluid_channel_t* chan, fluid_voice_t* voic
   return (fluid_real_t) mod->amount * v1 * v2;
 }
 
-/*
- * fluid_mod_new
+/**
+ * Create a new uninitialized modulator structure.
+ * @return New allocated modulator or NULL if out of memory
  */
 fluid_mod_t*
 fluid_mod_new()
 {
-  fluid_mod_t* mod = FLUID_NEW(fluid_mod_t);
+  fluid_mod_t* mod = FLUID_NEW (fluid_mod_t);
   if (mod == NULL) {
     FLUID_LOG(FLUID_ERR, "Out of memory");
     return NULL;
   }
   return mod;
-};
+}
 
-/*
- * fluid_mod_delete
+/**
+ * Free a modulator structure.
+ * @param mod Modulator to free
  */
 void
-fluid_mod_delete(fluid_mod_t * mod)
+fluid_mod_delete (fluid_mod_t *mod)
 {
   FLUID_FREE(mod);
-};
+}
 
-/*
- * fluid_mod_test_identity
+/**
+ * Checks if two modulators are identical in sources, flags and destination.
+ * @param mod1 First modulator
+ * @param mod2 Second modulator
+ * @return TRUE if identical, FALSE otherwise
+ *
+ * SF2.01 section 9.5.1 page 69, 'bullet' 3 defines 'identical'.
  */
-/* Purpose:
- * Checks, if two modulators are identical.
- *  SF2.01 section 9.5.1 page 69, 'bullet' 3 defines 'identical'.
- */
-int fluid_mod_test_identity(fluid_mod_t * mod1, fluid_mod_t * mod2){
-  if (mod1->dest != mod2->dest){return 0;};
-  if (mod1->src1 != mod2->src1){return 0;};
-  if (mod1->src2 != mod2->src2){return 0;};
-  if (mod1->flags1 != mod2->flags1){return 0;}
-  if (mod1->flags2 != mod2->flags2){return 0;}
-  return 1;
-};
+int
+fluid_mod_test_identity (fluid_mod_t *mod1, fluid_mod_t *mod2)
+{
+  return mod1->dest == mod2->dest
+    && mod1->src1 == mod2->src1
+    && mod1->src2 == mod2->src2
+    && mod1->flags1 == mod2->flags1
+    && mod1->flags2 == mod2->flags2;
+}
 
 /* debug function: Prints the contents of a modulator */
 void fluid_dump_modulator(fluid_mod_t * mod){

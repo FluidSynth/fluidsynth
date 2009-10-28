@@ -25,15 +25,15 @@
 
 
 /** returns 1 if the option was added, 0 otherwise */
-int fluid_settings_add_option(fluid_settings_t* settings, char* name, const char* s);
+int fluid_settings_add_option(fluid_settings_t* settings, const char* name, const char* s);
 
 /** returns 1 if the option was added, 0 otherwise */
-int fluid_settings_remove_option(fluid_settings_t* settings, char* name, const char* s);
+int fluid_settings_remove_option(fluid_settings_t* settings, const char* name, const char* s);
 
 
-typedef int (*fluid_num_update_t)(void* data, char* name, double value);
-typedef int (*fluid_str_update_t)(void* data, char* name, char* value);
-typedef int (*fluid_int_update_t)(void* data, char* name, int value);
+typedef int (*fluid_num_update_t)(void* data, const char* name, double value);
+typedef int (*fluid_str_update_t)(void* data, const char* name, const char* value);
+typedef int (*fluid_int_update_t)(void* data, const char* name, int value);
 
 /** returns 0 if the value has been registered correctly, non-zero
     otherwise */

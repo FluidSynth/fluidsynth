@@ -106,7 +106,7 @@ int fluid_hashtable_lookup_extended (fluid_hashtable_t *hashtable, const void *l
 void fluid_hashtable_insert (fluid_hashtable_t *hashtable, void *key, void *value);
 void fluid_hashtable_replace (fluid_hashtable_t *hashtable, void *key, void *value);
 
-int fluid_hashtable_remove (fluid_hashtable_t *hashtable, void *key);
+int fluid_hashtable_remove (fluid_hashtable_t *hashtable, const void *key);
 int fluid_hashtable_steal (fluid_hashtable_t *hashtable, const void *key);
 void fluid_hashtable_remove_all (fluid_hashtable_t *hashtable);
 void fluid_hashtable_steal_all (fluid_hashtable_t *hashtable);

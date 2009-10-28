@@ -1227,11 +1227,18 @@ fluid_track_t* fluid_player_get_track(fluid_player_t* player, int i)
 	}
 }
 
-int fluid_player_add(fluid_player_t* player, char* midifile)
+/**
+ * Add a MIDI file to a player queue.
+ * @param player MIDI player instance
+ * @param midifile File name of the MIDI file to add
+ * @return #FLUID_OK
+ */
+int
+fluid_player_add(fluid_player_t* player, const char* midifile)
 {
 	char *s = FLUID_STRDUP(midifile);
 	player->playlist = fluid_list_append(player->playlist, s);
-	return 0;
+	return FLUID_OK;
 }
 
 /*
@@ -1413,8 +1420,14 @@ int fluid_player_stop(fluid_player_t* player)
 	return FLUID_OK;
 }
 
-
-int fluid_player_get_status(fluid_player_t* player)
+/**
+ * Get MIDI player status.
+ * @param player MIDI player instance
+ * @return Player status (#fluid_player_status)
+ * @since 1.1.0
+ */
+int
+fluid_player_get_status(fluid_player_t* player)
 {
 	return player->status;
 }

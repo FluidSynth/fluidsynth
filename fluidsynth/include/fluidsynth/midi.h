@@ -54,6 +54,7 @@ FLUIDSYNTH_API int fluid_midi_event_set_sysex(fluid_midi_event_t* evt, void *dat
 
 /**
  * MIDI router rule type.
+ * @since 1.1.0
  */
 typedef enum
 {
@@ -111,6 +112,7 @@ FLUIDSYNTH_API void delete_fluid_midi_driver(fluid_midi_driver_t* driver);
 
 /**
  * MIDI player status enum.
+ * @since 1.1.0
  */
 enum fluid_player_status
 {
@@ -121,7 +123,7 @@ enum fluid_player_status
 
 FLUIDSYNTH_API fluid_player_t* new_fluid_player(fluid_synth_t* synth);
 FLUIDSYNTH_API int delete_fluid_player(fluid_player_t* player);
-FLUIDSYNTH_API int fluid_player_add(fluid_player_t* player, char* midifile);
+FLUIDSYNTH_API int fluid_player_add(fluid_player_t* player, const char *midifile);
 FLUIDSYNTH_API int fluid_player_play(fluid_player_t* player);
 FLUIDSYNTH_API int fluid_player_stop(fluid_player_t* player);
 FLUIDSYNTH_API int fluid_player_join(fluid_player_t* player);

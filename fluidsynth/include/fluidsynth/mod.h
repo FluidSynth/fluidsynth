@@ -52,11 +52,11 @@ struct _fluid_mod_t
 };
 
 /**
- * Flags defining the polarity and mapping function of a modulator source.
+ * Flags defining the polarity, mapping function and type of a modulator source.
  * Compare with SoundFont 2.04 PDF section 8.2.
  *
- * Note: The numbers of the bits are different!  (for example: in the flags of
- * a SoundFont modulator, the polarity bit is bit #9).
+ * Note: Bit values do not correspond to the SoundFont spec!  Also note that
+ * #FLUID_MOD_GC and #FLUID_MOD_CC are in the flags field instead of the source field.
  */
 enum fluid_mod_flags
 {
@@ -68,12 +68,12 @@ enum fluid_mod_flags
   FLUID_MOD_CONCAVE = 4,        /**< Concave mapping function */
   FLUID_MOD_CONVEX = 8,         /**< Convex mapping function */
   FLUID_MOD_SWITCH = 12,        /**< Switch (on/off) mapping function */
-  FLUID_MOD_GC = 0,             /**< General controller */
-  FLUID_MOD_CC = 16             /**< MIDI CC controller */
+  FLUID_MOD_GC = 0,             /**< General controller source type (#fluid_mod_src) */
+  FLUID_MOD_CC = 16             /**< MIDI CC controller (source will be a MIDI CC number) */
 };
 
 /**
- * Flags indicating the source of a modulator (if #FLUID_MOD_GC).  This
+ * General controller (if #FLUID_MOD_GC in flags).  This
  * corresponds to SoundFont 2.04 PDF section 8.2.1
  */
 enum fluid_mod_src

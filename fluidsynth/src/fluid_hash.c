@@ -882,7 +882,7 @@ fluid_hashtable_remove_internal (fluid_hashtable_t *hashtable, const void *key,
  * Return value: %TRUE if the key was found and removed from the #fluid_hashtable_t.
  **/
 int
-fluid_hashtable_remove (fluid_hashtable_t *hashtable, void *key)
+fluid_hashtable_remove (fluid_hashtable_t *hashtable, const void *key)
 {
   return fluid_hashtable_remove_internal (hashtable, key, TRUE);
 }

@@ -30,6 +30,13 @@ extern "C" {
  * @brief MIDI event sequencer.
  */
 
+/**
+ * Event callback prototype for destination clients.
+ * @param time Current sequencer tick value (see fluid_sequencer_get_tick()).
+ * @param event The event being received
+ * @param seq The sequencer instance
+ * @param data User defined data registered with the client
+ */
 typedef void (*fluid_event_callback_t)(unsigned int time, fluid_event_t* event, 
 				      fluid_sequencer_t* seq, void* data);
 
@@ -39,7 +46,7 @@ FLUIDSYNTH_API fluid_sequencer_t* new_fluid_sequencer2(int use_system_timer);
 FLUIDSYNTH_API void delete_fluid_sequencer(fluid_sequencer_t* seq);
 FLUIDSYNTH_API int fluid_sequencer_get_use_system_timer(fluid_sequencer_t* seq);
 FLUIDSYNTH_API 
-short fluid_sequencer_register_client(fluid_sequencer_t* seq, char* name, 
+short fluid_sequencer_register_client(fluid_sequencer_t* seq, const char *name, 
 				     fluid_event_callback_t callback, void* data);
 FLUIDSYNTH_API void fluid_sequencer_unregister_client(fluid_sequencer_t* seq, short id);
 FLUIDSYNTH_API int fluid_sequencer_count_clients(fluid_sequencer_t* seq);

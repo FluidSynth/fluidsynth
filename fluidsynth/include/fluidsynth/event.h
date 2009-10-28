@@ -75,7 +75,7 @@ FLUIDSYNTH_API void fluid_event_set_dest(fluid_event_t* evt, short dest);
 FLUIDSYNTH_API void fluid_event_timer(fluid_event_t* evt, void* data);
 
 /* Note events */
-FLUIDSYNTH_API void fluid_event_nfluid_event_set_timeote(fluid_event_t* evt, int channel, 
+FLUIDSYNTH_API void fluid_event_note(fluid_event_t* evt, int channel, 
 				   short key, short vel, 
 				   unsigned int duration);
 

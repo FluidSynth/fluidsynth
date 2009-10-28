@@ -72,16 +72,16 @@ FLUIDSYNTH_API
 int fluid_cmd_handler_register(fluid_cmd_handler_t* handler, fluid_cmd_t* cmd);
 
 FLUIDSYNTH_API 
-int fluid_cmd_handler_unregister(fluid_cmd_handler_t* handler, char* cmd);
+int fluid_cmd_handler_unregister(fluid_cmd_handler_t* handler, const char *cmd);
 
 
 /* Command function */
 
 FLUIDSYNTH_API 
-int fluid_command(fluid_cmd_handler_t* handler, char* cmd, fluid_ostream_t out);
+int fluid_command(fluid_cmd_handler_t* handler, const char *cmd, fluid_ostream_t out);
 
 FLUIDSYNTH_API 
-int fluid_source(fluid_cmd_handler_t* handler, char* filename);
+int fluid_source(fluid_cmd_handler_t* handler, const char *filename);
 
 FLUIDSYNTH_API 
 void fluid_usershell(fluid_settings_t* settings, fluid_cmd_handler_t* handler);
@@ -105,7 +105,7 @@ FLUIDSYNTH_API void delete_fluid_shell(fluid_shell_t* shell);
  * @param addr The IP address of the client (can be NULL)
  * @return Should return a new command handler for the connection (new_fluid_cmd_handler()).
  */
-typedef fluid_cmd_handler_t* (*fluid_server_newclient_func_t)(void* data, char* addr);
+typedef fluid_cmd_handler_t* (*fluid_server_newclient_func_t)(void* data, const char* addr);
 
 FLUIDSYNTH_API 
 fluid_server_t* new_fluid_server(fluid_settings_t* settings, 

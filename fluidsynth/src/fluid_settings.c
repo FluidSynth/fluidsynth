@@ -84,7 +84,7 @@ typedef struct {
 
 
 static fluid_str_setting_t*
-new_fluid_str_setting(char* value, char* def, int hints, fluid_str_update_t fun, void* data)
+new_fluid_str_setting(const char* value, char* def, int hints, fluid_str_update_t fun, void* data)
 {
   fluid_str_setting_t* str;
 
@@ -377,7 +377,7 @@ fluid_settings_get(fluid_settings_t* settings, const char *name,
  * @return 1 if the value has been set, zero otherwise
  */
 static int
-fluid_settings_set(fluid_settings_t* settings, char* name, void* value)
+fluid_settings_set(fluid_settings_t* settings, const char *name, void* value)
 {
   fluid_hashtable_t* table = settings;
   fluid_setting_node_t *node;
@@ -578,7 +578,7 @@ fluid_settings_register_int(fluid_settings_t* settings, char* name, int def,
  * @return the type for the named setting, or #FLUID_NO_TYPE when it does not exist
  */
 int
-fluid_settings_get_type(fluid_settings_t* settings, char* name)
+fluid_settings_get_type(fluid_settings_t* settings, const char *name)
 {
   fluid_setting_node_t *node;
   int type;
@@ -601,7 +601,7 @@ fluid_settings_get_type(fluid_settings_t* settings, char* name)
  * @return the hints associated to the named setting if it exists, zero otherwise
  */
 int
-fluid_settings_get_hints(fluid_settings_t* settings, char* name)
+fluid_settings_get_hints(fluid_settings_t* settings, const char *name)
 {
   fluid_setting_node_t *node;
   int hints = 0;
@@ -637,7 +637,7 @@ fluid_settings_get_hints(fluid_settings_t* settings, char* name)
  * @return non zero if the setting is changeable in real-time
  */
 int
-fluid_settings_is_realtime(fluid_settings_t* settings, char* name)
+fluid_settings_is_realtime(fluid_settings_t* settings, const char *name)
 {
   fluid_setting_node_t *node;
   int isrealtime = FALSE;
@@ -674,7 +674,7 @@ fluid_settings_is_realtime(fluid_settings_t* settings, char* name)
  * @return 1 if the value has been set, 0 otherwise
  */
 int
-fluid_settings_setstr(fluid_settings_t* settings, char* name, char* str)
+fluid_settings_setstr(fluid_settings_t* settings, const char *name, const char *str)
 {
   fluid_setting_node_t *node;
   int retval = 0;
@@ -740,7 +740,8 @@ fluid_settings_setstr(fluid_settings_t* settings, char* name, char* str)
  * more than sufficient for the string buffer.
  */
 int
-fluid_settings_copystr(fluid_settings_t* settings, char* name, char* str, int len)
+fluid_settings_copystr(fluid_settings_t* settings, const char *name,
+                       char *str, int len)
 {
   fluid_setting_node_t *node;
   int retval = 0;
@@ -799,7 +800,7 @@ fluid_settings_copystr(fluid_settings_t* settings, char* name, char* str, int le
  * owns the string and should free it with free() when done using it.
  */
 int
-fluid_settings_dupstr(fluid_settings_t* settings, char* name, char** str)
+fluid_settings_dupstr(fluid_settings_t* settings, const char *name, char** str)
 {
   fluid_setting_node_t *node;
   int retval = 0;
@@ -861,7 +862,7 @@ fluid_settings_dupstr(fluid_settings_t* settings, char* name, char** str)
  * or fluid_settings_dupstr() which does not have this restriction.
  */
 int
-fluid_settings_getstr(fluid_settings_t* settings, char* name, char** str)
+fluid_settings_getstr(fluid_settings_t* settings, const char *name, char** str)
 {
   fluid_setting_node_t *node;
   int retval = 0;
@@ -907,7 +908,7 @@ fluid_settings_getstr(fluid_settings_t* settings, char* name, char** str)
  * @return 1 if the value exists and is equal to 's', 0 otherwise
  */
 int
-fluid_settings_str_equal (fluid_settings_t* settings, char* name, char* s)
+fluid_settings_str_equal (fluid_settings_t* settings, const char *name, const char *s)
 {
   fluid_setting_node_t *node;
   int retval = 0;
@@ -948,7 +949,7 @@ fluid_settings_str_equal (fluid_settings_t* settings, char* name, char* s)
  * @return the default string value of the setting if it exists, NULL otherwise
  */
 char*
-fluid_settings_getstr_default(fluid_settings_t* settings, char* name)
+fluid_settings_getstr_default(fluid_settings_t* settings, const char *name)
 {
   fluid_setting_node_t *node;
   char *retval = NULL;
@@ -989,7 +990,7 @@ fluid_settings_getstr_default(fluid_settings_t* settings, char* name)
  * Causes the setting's #FLUID_HINT_OPTIONLIST hint to be set.
  */
 int
-fluid_settings_add_option(fluid_settings_t* settings, char* name, const char* s)
+fluid_settings_add_option(fluid_settings_t* settings, const char *name, const char *s)
 {
   fluid_setting_node_t *node;
   int retval = 0;
@@ -1022,7 +1023,7 @@ fluid_settings_add_option(fluid_settings_t* settings, char* name, const char* s)
  * @return 1 if the setting exists and option was removed, 0 otherwise
  */
 int
-fluid_settings_remove_option(fluid_settings_t* settings, char* name, const char* s)
+fluid_settings_remove_option(fluid_settings_t* settings, const char *name, const char* s)
 {
   fluid_setting_node_t *node;
   int retval = 0;
@@ -1065,7 +1066,7 @@ fluid_settings_remove_option(fluid_settings_t* settings, char* name, const char*
  * @return 1 if the value has been set, 0 otherwise
  */
 int
-fluid_settings_setnum(fluid_settings_t* settings, char* name, double val)
+fluid_settings_setnum(fluid_settings_t* settings, const char *name, double val)
 {
   fluid_setting_node_t *node;
   fluid_num_setting_t* setting;
@@ -1112,7 +1113,7 @@ fluid_settings_setnum(fluid_settings_t* settings, char* name, double val)
  * @return 1 if the value exists, 0 otherwise
  */
 int
-fluid_settings_getnum(fluid_settings_t* settings, char* name, double* val)
+fluid_settings_getnum(fluid_settings_t* settings, const char *name, double* val)
 {
   fluid_setting_node_t *node;
   int retval = 0;
@@ -1144,7 +1145,8 @@ fluid_settings_getnum(fluid_settings_t* settings, char* name, double* val)
  * @param max setting's range upper limit
  */
 void
-fluid_settings_getnum_range(fluid_settings_t* settings, char* name, double* min, double* max)
+fluid_settings_getnum_range(fluid_settings_t* settings, const char *name,
+                            double* min, double* max)
 {
   fluid_setting_node_t *node;
 
@@ -1173,7 +1175,7 @@ fluid_settings_getnum_range(fluid_settings_t* settings, char* name, double* min,
  * @return the default value if the named setting exists, 0.0f otherwise
  */
 double
-fluid_settings_getnum_default(fluid_settings_t* settings, char* name)
+fluid_settings_getnum_default(fluid_settings_t* settings, const char *name)
 {
   fluid_setting_node_t *node;
   double retval = 0.0;
@@ -1203,7 +1205,7 @@ fluid_settings_getnum_default(fluid_settings_t* settings, char* name)
  * @return 1 if the value has been set, 0 otherwise
  */
 int
-fluid_settings_setint(fluid_settings_t* settings, char* name, int val)
+fluid_settings_setint(fluid_settings_t* settings, const char *name, int val)
 {
   fluid_setting_node_t *node;
   fluid_int_setting_t* setting;
@@ -1250,7 +1252,7 @@ fluid_settings_setint(fluid_settings_t* settings, char* name, int val)
  * @return 1 if the value exists, 0 otherwise
  */
 int
-fluid_settings_getint(fluid_settings_t* settings, char* name, int* val)
+fluid_settings_getint(fluid_settings_t* settings, const char *name, int* val)
 {
   fluid_setting_node_t *node;
   int retval = 0;
@@ -1281,7 +1283,8 @@ fluid_settings_getint(fluid_settings_t* settings, char* name, int* val)
  * @param max setting's range upper limit
  */
 void
-fluid_settings_getint_range(fluid_settings_t* settings, char* name, int* min, int* max)
+fluid_settings_getint_range(fluid_settings_t* settings, const char *name,
+                            int* min, int* max)
 {
   fluid_setting_node_t *node;
 
@@ -1310,7 +1313,7 @@ fluid_settings_getint_range(fluid_settings_t* settings, char* name, int* min, in
  * @return the setting's default integer value it it exists, zero otherwise
  */
 int
-fluid_settings_getint_default(fluid_settings_t* settings, char* name)
+fluid_settings_getint_default(fluid_settings_t* settings, const char *name)
 {
   fluid_setting_node_t *node;
   int retval = 0;
@@ -1344,8 +1347,8 @@ fluid_settings_getint_default(fluid_settings_t* settings, char* name)
  * option in alphabetical order.  Sort order was undefined in previous versions.
  */
 void
-fluid_settings_foreach_option (fluid_settings_t* settings, char* name, void* data,
-                               fluid_settings_foreach_option_t func)
+fluid_settings_foreach_option (fluid_settings_t* settings, const char *name,
+                               void* data, fluid_settings_foreach_option_t func)
 {
   fluid_setting_node_t *node;
   fluid_str_setting_t *setting;
@@ -1373,7 +1376,7 @@ fluid_settings_foreach_option (fluid_settings_t* settings, char* name, void* dat
   newlist = fluid_list_sort (newlist, fluid_list_str_compare_func);
 
   for (p = newlist; p; p = p->next)
-    (*func)(data, name, (char *)fluid_list_get (p));
+    (*func)(data, name, (const char *)fluid_list_get (p));
 
   fluid_rec_mutex_unlock (settings->mutex);   /* -- unlock */
 
@@ -1389,7 +1392,7 @@ fluid_settings_foreach_option (fluid_settings_t* settings, char* name, void* dat
  * @since 1.1.0
  */
 int
-fluid_settings_option_count (fluid_settings_t *settings, char *name)
+fluid_settings_option_count (fluid_settings_t *settings, const char *name)
 {
   fluid_setting_node_t *node;
   int count = -1;
@@ -1561,7 +1564,7 @@ fluid_settings_foreach (fluid_settings_t* settings, void* data,
   for (p = bag.names; p; p = p->next)
   {
     r = fluid_settings_get (settings, (char *)(p->data), &node);
-    if (r && node) (*func) (data, (char *)(p->data), node->type);
+    if (r && node) (*func) (data, (const char *)(p->data), node->type);
     FLUID_FREE (p->data);       /* -- Free name */
   }
 

@@ -293,7 +293,7 @@ fluid_ramsfont_get_name(fluid_ramsfont_t* sfont)
  * @return #FLUID_OK
  */
 int
-fluid_ramsfont_set_name (fluid_ramsfont_t *sfont, char *name)
+fluid_ramsfont_set_name (fluid_ramsfont_t *sfont, const char *name)
 {
   FLUID_MEMCPY(sfont->name, name, 20);
   return FLUID_OK;
@@ -1116,7 +1116,7 @@ fluid_rampreset_noteon (fluid_rampreset_t* preset, fluid_synth_t* synth, int cha
  * @return #FLUID_OK
  */
 int
-fluid_sample_set_name(fluid_sample_t* sample, char* name)
+fluid_sample_set_name(fluid_sample_t* sample, const char *name)
 {
   FLUID_MEMCPY(sample->name, name, 20);
   return FLUID_OK;

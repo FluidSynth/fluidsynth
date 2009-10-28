@@ -61,7 +61,7 @@ static int fluid_synth_cc_real(fluid_synth_t* synth, int channum, int num,
                                int value, int noqueue);
 static int fluid_synth_update_device_id (fluid_synth_t *synth, char *name,
                                          int value);
-static int fluid_synth_sysex_midi_tuning (fluid_synth_t *synth, char *data,
+static int fluid_synth_sysex_midi_tuning (fluid_synth_t *synth, const char *data,
                                           int len, char *response,
                                           int *response_len, int avail_response,
                                           int *handled, int dryrun);
@@ -217,8 +217,11 @@ void fluid_synth_settings(fluid_settings_t* settings)
   fluid_settings_register_int(settings, "synth.min-note-length", 10, 0, 65535, 0, NULL, NULL);
 }
 
-/*
- * fluid_version
+/**
+ * Get FluidSynth runtime version.
+ * @param major Location to store major number
+ * @param minor Location to store minor number
+ * @param micro Location to store micro number
  */
 void fluid_version(int *major, int *minor, int *micro)
 {
@@ -227,10 +230,13 @@ void fluid_version(int *major, int *minor, int *micro)
   *micro = FLUIDSYNTH_VERSION_MICRO;
 }
 
-/*
- * fluid_version_str
+/**
+ * Get FluidSynth runtime version as a string.
+ * @return FluidSynth version string, which is internal and should not be
+ *   modified or freed.
  */
-char* fluid_version_str(void)
+char *
+fluid_version_str (void)
 {
   return FLUIDSYNTH_VERSION;
 }
@@ -1590,7 +1596,7 @@ fluid_synth_update_device_id (fluid_synth_t *synth, char *name, int value)
  * Tuning messages: 0xF0 0x7E/0x7F <DeviceId> 0x08 <sub ID2> [BODY] <ChkSum> 0xF7
  */
 int
-fluid_synth_sysex(fluid_synth_t *synth, char *data, int len,
+fluid_synth_sysex(fluid_synth_t *synth, const char *data, int len,
                   char *response, int *response_len, int *handled, int dryrun)
 {
   int avail_response = 0;
@@ -1621,7 +1627,7 @@ fluid_synth_sysex(fluid_synth_t *synth, char *data, int len,
 
 /* Handler for MIDI tuning SYSEX messages */
 static int
-fluid_synth_sysex_midi_tuning (fluid_synth_t *synth, char *data, int len,
+fluid_synth_sysex_midi_tuning (fluid_synth_t *synth, const char *data, int len,
                                char *response, int *response_len, int avail_response,
                                int *handled, int dryrun)
 {
@@ -1633,7 +1639,8 @@ fluid_synth_sysex_midi_tuning (fluid_synth_t *synth, char *data, int len,
   int note, frac, frac2;
   uint8 chksum;
   int i, count, index;
-  char *dataptr;
+  const char *dataptr;
+  char *resptr;;
 
   realtime = data[0] == MIDI_SYSEX_UNIV_REALTIME;
   msgid = data[3];
@@ -1675,19 +1682,19 @@ fluid_synth_sysex_midi_tuning (fluid_synth_t *synth, char *data, int len,
         return FLUID_OK;
       }
 
-      dataptr = response;
+      resptr = response;
 
-      *dataptr++ = MIDI_SYSEX_UNIV_NON_REALTIME;
-      *dataptr++ = synth->device_id;
-      *dataptr++ = MIDI_SYSEX_MIDI_TUNING_ID;
-      *dataptr++ = MIDI_SYSEX_TUNING_BULK_DUMP;
+      *resptr++ = MIDI_SYSEX_UNIV_NON_REALTIME;
+      *resptr++ = synth->device_id;
+      *resptr++ = MIDI_SYSEX_MIDI_TUNING_ID;
+      *resptr++ = MIDI_SYSEX_TUNING_BULK_DUMP;
 
       if (msgid == MIDI_SYSEX_TUNING_BULK_DUMP_REQ_BANK)
-        *dataptr++ = bank;
+        *resptr++ = bank;
 
-      *dataptr++ = prog;
-      FLUID_STRNCPY (dataptr, name, 16);
-      dataptr += 16;
+      *resptr++ = prog;
+      FLUID_STRNCPY (resptr, name, 16);
+      resptr += 16;
 
       for (i = 0; i < 128; i++)
       {
@@ -1697,9 +1704,9 @@ fluid_synth_sysex_midi_tuning (fluid_synth_t *synth, char *data, int len,
         frac = ((tunedata[i] - note * 100.0) * 16384.0 + 50.0) / 100.0;
         fluid_clip (frac, 0, 16383);
 
-        *dataptr++ = note;
-        *dataptr++ = frac >> 7;
-        *dataptr++ = frac & 0x7F;
+        *resptr++ = note;
+        *resptr++ = frac >> 7;
+        *resptr++ = frac & 0x7F;
       }
 
       if (msgid == MIDI_SYSEX_TUNING_BULK_DUMP_REQ)
@@ -1716,7 +1723,7 @@ fluid_synth_sysex_midi_tuning (fluid_synth_t *synth, char *data, int len,
           chksum ^= response[i];
       }
 
-      *dataptr++ = chksum & 0x7F;
+      *resptr++ = chksum & 0x7F;
 
       if (handled) *handled = TRUE;
       break;
@@ -2440,7 +2447,7 @@ fluid_synth_program_select(fluid_synth_t* synth, int chan, unsigned int sfont_id
  */
 int
 fluid_synth_program_select_by_sfont_name (fluid_synth_t* synth, int chan,
-                                          char* sfont_name, unsigned int bank_num,
+                                          const char *sfont_name, unsigned int bank_num,
                                           unsigned int preset_num)
 {
   fluid_preset_t* preset = NULL;
@@ -2635,7 +2642,7 @@ fluid_synth_get_internal_bufsize(fluid_synth_t* synth)
   return FLUID_BUFSIZE;
 }
 
-/*
+/**
  * Resend a bank select and a program change for every channel.
  * @param synth FluidSynth instance
  * @return FLUID_OK on success, FLUID_FAILED otherwise
@@ -3966,7 +3973,7 @@ fluid_synth_remove_sfont(fluid_synth_t* synth, fluid_sfont_t* sfont)
   fluid_synth_program_reset (synth);
 }
 
-/*
+/**
  * Count number of loaded SoundFont files.
  * @param synth FluidSynth instance
  * @return Count of loaded SoundFont files.
@@ -4051,7 +4058,7 @@ fluid_synth_get_sfont_by_id(fluid_synth_t* synth, unsigned int id)
  * the duration of use of the returned pointer.
  */
 fluid_sfont_t *
-fluid_synth_get_sfont_by_name(fluid_synth_t* synth, char *name)
+fluid_synth_get_sfont_by_name(fluid_synth_t* synth, const char *name)
 {
   fluid_sfont_t* sfont = NULL;
   fluid_list_t* list;
@@ -4809,7 +4816,7 @@ fluid_synth_update_voice_tuning_LOCAL (fluid_synth_t *synth, fluid_channel_t *ch
  */
 int
 fluid_synth_create_key_tuning(fluid_synth_t* synth, int bank, int prog,
-                              char* name, double* pitch)
+                              const char* name, const double* pitch)
 {
   return fluid_synth_activate_key_tuning (synth, bank, prog, name, pitch, FALSE);
 }
@@ -4830,7 +4837,7 @@ fluid_synth_create_key_tuning(fluid_synth_t* synth, int bank, int prog,
  */
 int
 fluid_synth_activate_key_tuning(fluid_synth_t* synth, int bank, int prog,
-                                char* name, double* pitch, int apply)
+                                const char* name, const double* pitch, int apply)
 {
   fluid_tuning_t* tuning;
   int retval = FLUID_OK;
@@ -4874,7 +4881,7 @@ fluid_synth_activate_key_tuning(fluid_synth_t* synth, int bank, int prog,
  */
 int
 fluid_synth_create_octave_tuning(fluid_synth_t* synth, int bank, int prog,
-                                 char* name, double* pitch)
+                                 const char* name, const double* pitch)
 {
   return fluid_synth_activate_octave_tuning (synth, bank, prog, name, pitch, FALSE);
 }
@@ -4895,7 +4902,7 @@ fluid_synth_create_octave_tuning(fluid_synth_t* synth, int bank, int prog,
  */
 int
 fluid_synth_activate_octave_tuning(fluid_synth_t* synth, int bank, int prog,
-                                   char* name, double* pitch, int apply)
+                                   const char* name, const double* pitch, int apply)
 {
   fluid_tuning_t* tuning;
   int retval = FLUID_OK;
@@ -4942,7 +4949,7 @@ fluid_synth_activate_octave_tuning(fluid_synth_t* synth, int bank, int prog,
  */
 int
 fluid_synth_tune_notes(fluid_synth_t* synth, int bank, int prog,
-                       int len, int *key, double* pitch, int apply)
+                       int len, const int *key, const double* pitch, int apply)
 {
   fluid_tuning_t* old_tuning, *new_tuning;
   int retval = FLUID_OK;
@@ -5290,7 +5297,7 @@ fluid_synth_get_settings(fluid_synth_t* synth)
  * @return FLUID_OK on success, FLUID_FAILED otherwise
  */
 int
-fluid_synth_setstr(fluid_synth_t* synth, char* name, char* str)
+fluid_synth_setstr(fluid_synth_t* synth, const char* name, const char* str)
 {
   fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
   fluid_return_val_if_fail (name != NULL, FLUID_FAILED);
@@ -5309,7 +5316,7 @@ fluid_synth_setstr(fluid_synth_t* synth, char* name, char* str)
  * when finished with it.
  */
 int
-fluid_synth_dupstr(fluid_synth_t* synth, char* name, char** str)
+fluid_synth_dupstr(fluid_synth_t* synth, const char* name, char** str)
 {
   fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
   fluid_return_val_if_fail (name != NULL, FLUID_FAILED);
@@ -5326,7 +5333,7 @@ fluid_synth_dupstr(fluid_synth_t* synth, char* name, char** str)
  * @return FLUID_OK on success, FLUID_FAILED otherwise
  */
 int
-fluid_synth_setnum(fluid_synth_t* synth, char* name, double val)
+fluid_synth_setnum(fluid_synth_t* synth, const char* name, double val)
 {
   fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
   fluid_return_val_if_fail (name != NULL, FLUID_FAILED);
@@ -5342,7 +5349,7 @@ fluid_synth_setnum(fluid_synth_t* synth, char* name, double val)
  * @return FLUID_OK on success, FLUID_FAILED otherwise
  */
 int
-fluid_synth_getnum(fluid_synth_t* synth, char* name, double* val)
+fluid_synth_getnum(fluid_synth_t* synth, const char* name, double* val)
 {
   fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
   fluid_return_val_if_fail (name != NULL, FLUID_FAILED);
@@ -5358,7 +5365,7 @@ fluid_synth_getnum(fluid_synth_t* synth, char* name, double* val)
  * @return FLUID_OK on success, FLUID_FAILED otherwise
  */
 int
-fluid_synth_setint(fluid_synth_t* synth, char* name, int val)
+fluid_synth_setint(fluid_synth_t* synth, const char* name, int val)
 {
   fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
   fluid_return_val_if_fail (name != NULL, FLUID_FAILED);
@@ -5374,7 +5381,7 @@ fluid_synth_setint(fluid_synth_t* synth, char* name, int val)
  * @return FLUID_OK on success, FLUID_FAILED otherwise
  */
 int
-fluid_synth_getint(fluid_synth_t* synth, char* name, int* val)
+fluid_synth_getint(fluid_synth_t* synth, const char* name, int* val)
 {
   fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
   fluid_return_val_if_fail (name != NULL, FLUID_FAILED);

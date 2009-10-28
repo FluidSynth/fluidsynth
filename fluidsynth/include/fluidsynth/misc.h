@@ -60,8 +60,8 @@ extern "C" {
 #define FLUID_FAILED    (-1)
 
 
-FLUIDSYNTH_API int fluid_is_soundfont(char* filename);
-FLUIDSYNTH_API int fluid_is_midifile(char* filename);
+FLUIDSYNTH_API int fluid_is_soundfont (const char *filename);
+FLUIDSYNTH_API int fluid_is_midifile (const char *filename);
 
 
 #ifdef WIN32

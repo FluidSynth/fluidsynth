@@ -178,7 +178,7 @@ fluid_cmd_t fluid_commands[] = {
  *   1 if 'cmd' is a comment or is empty and -2 if quit was issued
  */
 int
-fluid_command(fluid_cmd_handler_t* handler, char* cmd, fluid_ostream_t out)
+fluid_command(fluid_cmd_handler_t* handler, const char *cmd, fluid_ostream_t out)
 {
   char* token[MAX_TOKENS];
   char buf[MAX_COMMAND_LEN+1];
@@ -346,7 +346,7 @@ fluid_usershell(fluid_settings_t* settings, fluid_cmd_handler_t* handler)
  * @return 0 on success, a value >1 on error
  */
 int
-fluid_source(fluid_cmd_handler_t* handler, char* filename)
+fluid_source(fluid_cmd_handler_t* handler, const char *filename)
 {
   int file;
   fluid_shell_t shell;
@@ -1320,7 +1320,7 @@ struct _fluid_handle_settings_data_t {
   fluid_ostream_t out;
 };
 
-static void fluid_handle_settings_iter1(void* data, char* name, int type)
+static void fluid_handle_settings_iter1(void* data, const char* name, int type)
 {
   struct _fluid_handle_settings_data_t* d = (struct _fluid_handle_settings_data_t*) data;
 
@@ -1330,7 +1330,7 @@ static void fluid_handle_settings_iter1(void* data, char* name, int type)
   }
 }
 
-static void fluid_handle_settings_iter2(void* data, char* name, int type)
+static void fluid_handle_settings_iter2(void* data, const char* name, int type)
 {
   struct _fluid_handle_settings_data_t* d = (struct _fluid_handle_settings_data_t*) data;
 
@@ -1390,7 +1390,7 @@ struct _fluid_handle_option_data_t {
   fluid_ostream_t out;
 };
 
-void fluid_handle_print_option(void* data, char* name, char* option)
+void fluid_handle_print_option(void* data, const char* name, const char* option)
 {
   struct _fluid_handle_option_data_t* d = (struct _fluid_handle_option_data_t*) data;
 
@@ -1726,7 +1726,7 @@ fluid_cmd_handler_register(fluid_cmd_handler_t* handler, fluid_cmd_t* cmd)
  * @return TRUE if command was found and unregistered, FALSE otherwise
  */
 int
-fluid_cmd_handler_unregister(fluid_cmd_handler_t* handler, char* cmd)
+fluid_cmd_handler_unregister(fluid_cmd_handler_t* handler, const char *cmd)
 {
   return fluid_hashtable_remove(handler, cmd);
 }

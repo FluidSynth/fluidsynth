@@ -266,7 +266,7 @@ void fluid_seq_dotrace(fluid_sequencer_t* seq, char *fmt, ...) {}
  * register a callback.
  */
 short
-fluid_sequencer_register_client (fluid_sequencer_t* seq, char* name,
+fluid_sequencer_register_client (fluid_sequencer_t* seq, const char *name,
                                  fluid_event_callback_t callback, void* data)
 {
 	fluid_sequencer_client_t * client;

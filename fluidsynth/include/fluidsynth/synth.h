@@ -57,7 +57,7 @@ FLUIDSYNTH_API int fluid_synth_noteon(fluid_synth_t* synth, int chan, int key, i
 FLUIDSYNTH_API int fluid_synth_noteoff(fluid_synth_t* synth, int chan, int key);
 FLUIDSYNTH_API int fluid_synth_cc(fluid_synth_t* synth, int chan, int ctrl, int val);
 FLUIDSYNTH_API int fluid_synth_get_cc(fluid_synth_t* synth, int chan, int ctrl, int* pval);
-FLUIDSYNTH_API int fluid_synth_sysex(fluid_synth_t *synth, char *data, int len,
+FLUIDSYNTH_API int fluid_synth_sysex(fluid_synth_t *synth, const char *data, int len,
                                      char *response, int *response_len, int *handled, int dryrun);
 FLUIDSYNTH_API int fluid_synth_pitch_bend(fluid_synth_t* synth, int chan, int val);
 FLUIDSYNTH_API int fluid_synth_get_pitch_bend(fluid_synth_t* synth, int chan, int* ppitch_bend);
@@ -72,7 +72,7 @@ int fluid_synth_program_select(fluid_synth_t* synth, int chan, unsigned int sfon
                                unsigned int bank_num, unsigned int preset_num);
 FLUIDSYNTH_API int
 fluid_synth_program_select_by_sfont_name (fluid_synth_t* synth, int chan,
-                                          char* sfont_name, unsigned int bank_num,
+                                          const char *sfont_name, unsigned int bank_num,
                                           unsigned int preset_num);
 FLUIDSYNTH_API 
 int fluid_synth_get_program(fluid_synth_t* synth, int chan, unsigned int* sfont_id, 
@@ -101,7 +101,7 @@ FLUIDSYNTH_API int fluid_synth_sfcount(fluid_synth_t* synth);
 FLUIDSYNTH_API fluid_sfont_t* fluid_synth_get_sfont(fluid_synth_t* synth, unsigned int num);
 FLUIDSYNTH_API fluid_sfont_t* fluid_synth_get_sfont_by_id(fluid_synth_t* synth, unsigned int id);
 FLUIDSYNTH_API fluid_sfont_t *fluid_synth_get_sfont_by_name (fluid_synth_t* synth,
-                                                             char *name);
+                                                             const char *name);
 FLUIDSYNTH_API int fluid_synth_set_bank_offset(fluid_synth_t* synth, int sfont_id, int offset);
 FLUIDSYNTH_API int fluid_synth_get_bank_offset(fluid_synth_t* synth, int sfont_id);
 
@@ -195,19 +195,19 @@ FLUIDSYNTH_API float fluid_synth_get_gen(fluid_synth_t* synth, int chan, int par
 
 FLUIDSYNTH_API 
 int fluid_synth_create_key_tuning(fluid_synth_t* synth, int bank, int prog,
-				  char* name, double* pitch);
+				  const char* name, const double* pitch);
 FLUIDSYNTH_API
 int fluid_synth_activate_key_tuning(fluid_synth_t* synth, int bank, int prog,
-                                    char* name, double* pitch, int apply);
+                                    const char* name, const double* pitch, int apply);
 FLUIDSYNTH_API 
 int fluid_synth_create_octave_tuning(fluid_synth_t* synth, int bank, int prog,
-                                     char* name, double* pitch);
+                                     const char* name, const double* pitch);
 FLUIDSYNTH_API
 int fluid_synth_activate_octave_tuning(fluid_synth_t* synth, int bank, int prog,
-                                       char* name, double* pitch, int apply);
+                                       const char* name, const double* pitch, int apply);
 FLUIDSYNTH_API 
 int fluid_synth_tune_notes(fluid_synth_t* synth, int bank, int prog,
-			   int len, int *keys, double* pitch, int apply);
+			   int len, const int *keys, const double* pitch, int apply);
 FLUIDSYNTH_API 
 int fluid_synth_select_tuning(fluid_synth_t* synth, int chan, int bank, int prog);
 FLUIDSYNTH_API
