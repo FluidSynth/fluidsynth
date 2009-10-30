@@ -87,7 +87,7 @@ new_fluid_pulse_audio_driver2(fluid_settings_t* settings,
   char *device = NULL;
   pthread_attr_t attr;
   struct sched_param priority;
-  int realtime_prio;
+  int realtime_prio = 0;
   int sched;
   int err;
 
@@ -106,8 +106,7 @@ new_fluid_pulse_audio_driver2(fluid_settings_t* settings,
   fluid_settings_dupstr(settings, "audio.pulseaudio.device", &device);  /* ++ alloc device string */
   fluid_settings_getint (settings, "audio.realtime-prio", &realtime_prio);
 
-  fluid_settings_getint (settings, "audio.realtime", &sched);
-  if (sched)
+  if (realtime_prio > 0)
     sched = SCHED_FIFO;
   else sched = SCHED_OTHER;
 
@@ -179,7 +178,7 @@ new_fluid_pulse_audio_driver2(fluid_settings_t* settings,
     }
 
     /* SCHED_FIFO will not be active without setting the priority */
-    priority.sched_priority = (sched == SCHED_FIFO) ? realtime_prio : 0;
+    priority.sched_priority = realtime_prio;
     pthread_attr_setschedparam(&attr, &priority);
 
     err = pthread_create(&dev->thread, &attr,

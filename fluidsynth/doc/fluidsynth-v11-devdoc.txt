@@ -597,24 +597,6 @@ There are a number of general audio driver settings. The audio.driver settings d
   </tr>
 
   <tr>
-    <td>audio.realtime</td>
-    <td>Type</td>
-    <td>boolean</td>
-  </tr>
-  <tr>
-    <td></td>
-    <td>Default</td>
-    <td>1 (TRUE)</td>
-  </tr>
-  <tr>
-    <td></td>
-    <td>Description</td>
-    <td>Enables or disables realtime scheduling priority for
-    audio driver and synthesis. Drivers which make use of this
-    option: alsa, oss and pulseaudio</td>
-  </tr>
-
-  <tr>
     <td>audio.realtime-prio</td>
     <td>Type</td>
     <td>integer</td>
@@ -622,18 +604,20 @@ There are a number of general audio driver settings. The audio.driver settings d
   <tr>
     <td></td>
     <td>Default</td>
-    <td>90</td>
+    <td>60</td>
   </tr>
   <tr>
     <td></td>
     <td>Min-Max</td>
-    <td>1-99</td>
+    <td>0-99</td>
   </tr>
   <tr>
     <td></td>
     <td>Description</td>
-    <td>If audio.realtime is enabled, then this value is used for
-    the realtime priority value (Linux only currently).</td>
+    <td>Sets the realtime scheduling priority of the audio synthesis thread
+    (0 disables high priority scheduling).  Linux is the only platform which
+    currently makes use of different priority levels.  Drivers which use this
+    option: alsa, oss and pulseaudio</td>
   </tr>
 
   <tr>
@@ -1084,24 +1068,6 @@ the MIDI subsystems used, which are described in a following table.
   </tr>
 
   <tr>
-    <td>midi.realtime</td>
-    <td>Type</td>
-    <td>string</td>
-  </tr>
-  <tr>
-    <td></td>
-    <td>Default</td>
-    <td>"yes"</td>
-  </tr>
-  <tr>
-    <td></td>
-    <td>Description</td>
-    <td>Enables or disables realtime scheduling priority for
-    MIDI driver. Drivers which make use of this option:
-    alsa_raw, alsa_seq, oss and pulseaudio</td>
-  </tr>
-
-  <tr>
     <td>midi.realtime-prio</td>
     <td>Type</td>
     <td>integer</td>
@@ -1109,18 +1075,20 @@ the MIDI subsystems used, which are described in a following table.
   <tr>
     <td></td>
     <td>Default</td>
-    <td>80</td>
+    <td>50</td>
   </tr>
   <tr>
     <td></td>
     <td>Min-Max</td>
-    <td>1-99</td>
+    <td>0-99</td>
   </tr>
   <tr>
     <td></td>
     <td>Description</td>
-    <td>If midi.realtime is enabled, then this value is used for
-    the realtime priority value (Linux only currently).</td>
+    <td>Sets the realtime scheduling priority of the MIDI thread
+    (0 disables high priority scheduling).  Linux is the only platform which
+    currently makes use of different priority levels.  Drivers which use this
+    option: alsa_raw, alsa_seq, oss</td>
   </tr>
 </table>
 

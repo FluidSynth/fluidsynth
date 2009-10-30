@@ -133,8 +133,7 @@ new_fluid_oss_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
   fluid_settings_getnum(settings, "synth.sample-rate", &sample_rate);
   fluid_settings_getint (settings, "audio.realtime-prio", &realtime_prio);
 
-  fluid_settings_getint (settings, "audio.realtime", &sched);
-  if (sched)
+  if (realtime_prio > 0)
     sched = SCHED_FIFO;
   else sched = SCHED_OTHER;
 
@@ -255,7 +254,7 @@ new_fluid_oss_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
     }
 
     /* SCHED_FIFO will not be active without setting the priority */
-    priority.sched_priority = (sched == SCHED_FIFO) ? realtime_prio : 0;
+    priority.sched_priority = realtime_prio;
     pthread_attr_setschedparam (&attr, &priority);
 
     err = pthread_create(&dev->thread, &attr, fluid_oss_audio_run, (void*) dev);
@@ -311,8 +310,7 @@ new_fluid_oss_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func,
   fluid_settings_getnum(settings, "synth.sample-rate", &sample_rate);
   fluid_settings_getint (settings, "audio.realtime-prio", &realtime_prio);
 
-  fluid_settings_getint (settings, "audio.realtime", &sched);
-  if (sched)
+  if (realtime_prio > 0)
     sched = SCHED_FIFO;
   else sched = SCHED_OTHER;
 
@@ -423,7 +421,7 @@ new_fluid_oss_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func,
     }
 
     /* SCHED_FIFO will not be active without setting the priority */
-    priority.sched_priority = (sched == SCHED_FIFO) ? realtime_prio : 0;
+    priority.sched_priority = realtime_prio;
     pthread_attr_setschedparam (&attr, &priority);
 
     err = pthread_create(&dev->thread, &attr, fluid_oss_audio_run2, (void*) dev);
@@ -612,7 +610,7 @@ new_fluid_oss_midi_driver(fluid_settings_t* settings,
   pthread_attr_t attr;
   int sched;
   struct sched_param priority;
-  int realtime_prio;
+  int realtime_prio = 0;
   char* device = NULL;
 
   /* not much use doing anything */
@@ -655,8 +653,7 @@ new_fluid_oss_midi_driver(fluid_settings_t* settings,
 
   fluid_settings_getint (settings, "midi.realtime-prio", &realtime_prio);
 
-  fluid_settings_getint (settings, "midi.realtime", &sched);
-  if (sched)
+  if (realtime_prio > 0)
     sched = SCHED_FIFO;
   else sched = SCHED_OTHER;
 
@@ -689,7 +686,7 @@ new_fluid_oss_midi_driver(fluid_settings_t* settings,
     }
 
     /* SCHED_FIFO will not be active without setting the priority */
-    priority.sched_priority = (sched == SCHED_FIFO) ? realtime_prio : 0;
+    priority.sched_priority = realtime_prio;
     pthread_attr_setschedparam (&attr, &priority);
 
     err = pthread_create(&dev->thread, &attr, fluid_oss_midi_run, (void*) dev);

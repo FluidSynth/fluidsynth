@@ -191,8 +191,7 @@ new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
   fluid_settings_dupstr(settings, "audio.alsa.device", &device);   /* ++ dup device name */
   fluid_settings_getint (settings, "audio.realtime-prio", &realtime_prio);
 
-  fluid_settings_getint (settings, "audio.realtime", &sched);
-  if (sched)
+  if (realtime_prio > 0)
     sched = SCHED_FIFO;
   else sched = SCHED_OTHER;
 
@@ -332,7 +331,7 @@ new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
     }
 
     /* SCHED_FIFO will not be active without setting the priority */
-    priority.sched_priority = (sched == SCHED_FIFO) ? realtime_prio : 0;
+    priority.sched_priority = realtime_prio;
     pthread_attr_setschedparam(&attr, &priority);
 
     err = pthread_create(&dev->thread, &attr, fluid_alsa_formats[i].run, (void*) dev);
@@ -652,8 +651,7 @@ new_fluid_alsa_rawmidi_driver(fluid_settings_t* settings,
 
   fluid_settings_getint (settings, "midi.realtime-prio", &realtime_prio);
 
-  fluid_settings_getint (settings, "midi.realtime", &sched);
-  if (sched)
+  if (realtime_prio > 0)
     sched = SCHED_FIFO;
   else sched = SCHED_OTHER;
 
@@ -725,7 +723,7 @@ new_fluid_alsa_rawmidi_driver(fluid_settings_t* settings,
     }
 
     /* SCHED_FIFO will not be active without setting the priority */
-    priority.sched_priority = (sched == SCHED_FIFO) ? realtime_prio : 0;
+    priority.sched_priority = realtime_prio;
     pthread_attr_setschedparam (&attr, &priority);
 
     err = pthread_create(&dev->thread, &attr, fluid_alsa_midi_run, (void*) dev);
@@ -923,8 +921,7 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
 
   fluid_settings_getint (settings, "midi.realtime-prio", &realtime_prio);
 
-  fluid_settings_getint (settings, "midi.realtime", &sched);
-  if (sched)
+  if (realtime_prio > 0)
     sched = SCHED_FIFO;
   else sched = SCHED_OTHER;
 
@@ -1054,7 +1051,7 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
     }
 
     /* SCHED_FIFO will not be active without setting the priority */
-    priority.sched_priority = (sched == SCHED_FIFO) ? realtime_prio : 0;
+    priority.sched_priority = realtime_prio;
     pthread_attr_setschedparam (&attr, &priority);
 
     err = pthread_create(&dev->thread, &attr, fluid_alsa_seq_run, (void*) dev);

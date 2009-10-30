@@ -213,11 +213,9 @@ Period size for audio buffers. Used by many audio drivers.
 .B audio.periods            INT   [min=2, max=64, def=16]
 Count of audio buffers. Used by many audio drivers.
 .TP
-.B audio.realtime           BOOL  [def=True]
-High priority (real time) toggle for audio driver thread.
-.TP
-.B audio.realtime\-prio     INT   [min=1, max=99, def=90]
-Priority to assign to audio thread if audio.realtime is enabled.
+.B audio.realtime\-prio     INT   [min=0, max=99, def=60]
+Realtime priority to assign to audio thread or 0 to disable high priority scheduling.
+Only used by some audio drivers (currently 'alsa' and 'oss').
 .TP
 .B audio.sample\-format     STR   [def='16bits' vals:'16bits','float']
 Audio output format, to select format for those drivers which support 16 bit or floating point.
@@ -284,11 +282,9 @@ PulseAudio driver server.
 .B midi.driver              STR
 MIDI driver to use. Default and valid options depend on available drivers.
 .TP
-.B midi.realtime            BOOL  [def=True]
-High priority (real time) toggle for MIDI driver thread.
-.TP
-.B midi.realtime\-prio      INT   [min=1, max=99, def=80]
-Priority to assign to MIDI thread if midi.realtime is enabled.
+.B midi.realtime\-prio      INT   [min=0, max=99, def=50]
+Realtime priority to assign to MIDI thread or 0 to disable high priority scheduling.
+Only used by some MIDI drivers (currently 'alsa_seq', 'alsa_raw' and 'oss').
 
 .TP
 .B MIDI DRIVER SPECIFIC

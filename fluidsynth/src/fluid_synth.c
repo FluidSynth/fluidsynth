@@ -735,7 +735,7 @@ new_fluid_synth(fluid_settings_t *settings)
   /* Initialize multi-core variables if multiple cores enabled */
   if (synth->cores > 1)
   {
-    int prio, prio_level;
+    int prio_level = 0, prio;
 
     synth->core_mutex = new_fluid_cond_mutex ();
     synth->core_cond = new_fluid_cond ();
@@ -761,18 +761,11 @@ new_fluid_synth(fluid_settings_t *settings)
     for (i = 0; i < synth->polyphony; i++)
       synth->core_voice_processed[i] = NULL;
 
-    fluid_settings_getint (synth->settings, "audio.realtime", &prio);
+    fluid_settings_getint (synth->settings, "audio.realtime-prio", &prio_level);
 
-    if (prio)
-    {
+    if (prio_level > 0)
       prio = FLUID_THREAD_PRIO_HIGH;
-      fluid_settings_getint (synth->settings, "audio.realtime-prio", &prio_level);
-    }
-    else
-    {
-      prio = FLUID_THREAD_PRIO_NORMAL;
-      prio_level = 0;
-    }
+    else prio = FLUID_THREAD_PRIO_NORMAL;
 
     for (i = 0; i < synth->cores - 1; i++)
     {
