@@ -121,7 +121,7 @@ void process_o_cmd_line_option(fluid_settings_t* settings, char* optarg)
     }
     break;
   case FLUID_STR_TYPE:
-    if (fluid_settings_setstr (settings, optarg, val))
+    if (!fluid_settings_setstr (settings, optarg, val))
     {
       fprintf (stderr, "Failed to set string parameter '%s'\n", optarg);
       exit (1);
