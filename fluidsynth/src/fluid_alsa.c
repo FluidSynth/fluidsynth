@@ -34,7 +34,6 @@
 
 #define ALSA_PCM_NEW_HW_PARAMS_API
 #include <alsa/asoundlib.h>
-#include <pthread.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
@@ -60,7 +59,7 @@ typedef struct {
   fluid_audio_func_t callback;
   void* data;
   int buffer_size;
-  pthread_t thread;
+  fluid_thread_t *thread;
   int cont;
 } fluid_alsa_audio_driver_t;
 
@@ -72,15 +71,15 @@ fluid_audio_driver_t* new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
 
 int delete_fluid_alsa_audio_driver(fluid_audio_driver_t* p);
 void fluid_alsa_audio_driver_settings(fluid_settings_t* settings);
-static void* fluid_alsa_audio_run_float(void* d);
-static void* fluid_alsa_audio_run_s16(void* d);
+static void fluid_alsa_audio_run_float(void* d);
+static void fluid_alsa_audio_run_s16(void* d);
 
 
 struct fluid_alsa_formats_t {
   char* name;
   snd_pcm_format_t format;
   snd_pcm_access_t access;
-  void* (*run)(void* d);
+  fluid_thread_func_t run;
 };
 
 struct fluid_alsa_formats_t fluid_alsa_formats[] = {
@@ -106,7 +105,7 @@ typedef struct {
   snd_rawmidi_t *rawmidi_in;
   struct pollfd *pfd;
   int npfd;
-  pthread_t thread;
+  fluid_thread_t *thread;
   int status;
   unsigned char buffer[BUFFER_LENGTH];
   fluid_midi_parser_t* parser;
@@ -118,7 +117,7 @@ fluid_midi_driver_t* new_fluid_alsa_rawmidi_driver(fluid_settings_t* settings,
 						   void* event_handler_data);
 
 int delete_fluid_alsa_rawmidi_driver(fluid_midi_driver_t* p);
-static void* fluid_alsa_midi_run(void* d);
+static void fluid_alsa_midi_run(void* d);
 
 
 /*
@@ -130,7 +129,7 @@ typedef struct {
   snd_seq_t *seq_handle;
   struct pollfd *pfd;
   int npfd;
-  pthread_t thread;
+  fluid_thread_t *thread;
   int status;
   int port_count;
 } fluid_alsa_seq_driver_t;
@@ -139,7 +138,7 @@ fluid_midi_driver_t* new_fluid_alsa_seq_driver(fluid_settings_t* settings,
 					     handle_midi_event_func_t handler,
 					     void* data);
 int delete_fluid_alsa_seq_driver(fluid_midi_driver_t* p);
-static void* fluid_alsa_seq_run(void* d);
+static void fluid_alsa_seq_run(void* d);
 
 /**************************************************************
  *
@@ -168,9 +167,7 @@ new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
   double sample_rate;
   int periods, period_size;
   char* device = NULL;
-  pthread_attr_t attr;
   int sched;
-  struct sched_param priority;
   int realtime_prio = 0;
   int i, err, dir = 0;
   snd_pcm_hw_params_t* hwparams;
@@ -306,47 +303,10 @@ new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
 
 
   /* Create the audio thread */
+  dev->thread = new_fluid_thread (fluid_alsa_formats[i].run, dev, realtime_prio, FALSE);
 
-  if (pthread_attr_init(&attr)) {
-    FLUID_LOG(FLUID_ERR, "Couldn't initialize audio thread attributes");
+  if (!dev->thread)
     goto error_recovery;
-  }
-
-  /* The pthread_create man page explains that
-     pthread_attr_setschedpolicy returns an error if the user is not
-     permitted the set SCHED_FIFO. It seems however that no error is
-     returned but pthread_create fails instead. That's why I try to
-     create the thread twice in a while loop. */
-  while (1) {
-    err = pthread_attr_setschedpolicy(&attr, sched);
-    if (err) {
-      if (sched == SCHED_FIFO) {
-        FLUID_LOG(FLUID_WARN, "Couldn't set high priority scheduling for the audio output");
-	sched = SCHED_OTHER;
-	continue;
-      } else {
-	FLUID_LOG(FLUID_ERR, "Couldn't set scheduling policy.");
-	goto error_recovery;
-      }
-    }
-
-    /* SCHED_FIFO will not be active without setting the priority */
-    priority.sched_priority = realtime_prio;
-    pthread_attr_setschedparam(&attr, &priority);
-
-    err = pthread_create(&dev->thread, &attr, fluid_alsa_formats[i].run, (void*) dev);
-    if (err) {
-      if (sched == SCHED_FIFO) {
-        FLUID_LOG(FLUID_WARN, "Couldn't set high priority scheduling for the audio output");
-	sched = SCHED_OTHER;
-	continue;
-      } else {
-	FLUID_LOG(FLUID_PANIC, "Couldn't create the audio thread.");
-	goto error_recovery;
-      }
-    }
-    break;
-  }
 
   if (device) FLUID_FREE (device);      /* -- free device name */
 
@@ -368,12 +328,8 @@ int delete_fluid_alsa_audio_driver(fluid_audio_driver_t* p)
 
   dev->cont = 0;
 
-  if (dev->thread) {
-    if (pthread_join(dev->thread, NULL)) {
-      FLUID_LOG(FLUID_ERR, "Failed to join the audio thread");
-      return FLUID_FAILED;
-    }
-  }
+  if (dev->thread)
+    fluid_thread_join (dev->thread);
 
   if (dev->pcm) {
     snd_pcm_state_t state = snd_pcm_state(dev->pcm);
@@ -420,7 +376,7 @@ static int fluid_alsa_handle_write_error (snd_pcm_t *pcm, int errval)
   return FLUID_OK;
 }
 
-static void* fluid_alsa_audio_run_float(void* d)
+static void fluid_alsa_audio_run_float (void *d)
 {
   fluid_alsa_audio_driver_t* dev = (fluid_alsa_audio_driver_t*) d;
   fluid_synth_t *synth = (fluid_synth_t *)(dev->data);
@@ -436,7 +392,7 @@ static void* fluid_alsa_audio_run_float(void* d)
 
   if ((left == NULL) || (right == NULL)) {
     FLUID_LOG(FLUID_ERR, "Out of memory.");
-    return NULL;
+    return;
   }
 
   if (snd_pcm_nonblock(dev->pcm, 0) != 0) { /* double negation */
@@ -498,11 +454,9 @@ static void* fluid_alsa_audio_run_float(void* d)
 
   FLUID_FREE(left);
   FLUID_FREE(right);
-
-  return NULL;
 }
 
-static void* fluid_alsa_audio_run_s16(void* d)
+static void fluid_alsa_audio_run_s16 (void *d)
 {
   fluid_alsa_audio_driver_t* dev = (fluid_alsa_audio_driver_t*) d;
   float* left;
@@ -519,7 +473,7 @@ static void* fluid_alsa_audio_run_s16(void* d)
 
   if ((left == NULL) || (right == NULL) || (buf == NULL)) {
     FLUID_LOG(FLUID_ERR, "Out of memory.");
-    return NULL;
+    return;
   }
 
   handle[0] = left;
@@ -590,8 +544,6 @@ static void* fluid_alsa_audio_run_s16(void* d)
   FLUID_FREE(left);
   FLUID_FREE(right);
   FLUID_FREE(buf);
-
-  return NULL;
 }
 
 
@@ -617,9 +569,6 @@ new_fluid_alsa_rawmidi_driver(fluid_settings_t* settings,
 {
   int i, err;
   fluid_alsa_rawmidi_driver_t* dev;
-  pthread_attr_t attr;
-  int sched;
-  struct sched_param priority;
   int realtime_prio = 0;
   int count;
   struct pollfd *pfd = NULL;
@@ -651,10 +600,6 @@ new_fluid_alsa_rawmidi_driver(fluid_settings_t* settings,
 
   fluid_settings_getint (settings, "midi.realtime-prio", &realtime_prio);
 
-  if (realtime_prio > 0)
-    sched = SCHED_FIFO;
-  else sched = SCHED_OTHER;
-
   /* get the device name. if none is specified, use the default device. */
   fluid_settings_dupstr(settings, "midi.alsa.device", &device);         /* ++ alloc device name */
 
@@ -664,6 +609,8 @@ new_fluid_alsa_rawmidi_driver(fluid_settings_t* settings,
     FLUID_LOG(FLUID_ERR, "Error opening ALSA raw MIDI port");
     goto error_recovery;
   }
+
+  snd_rawmidi_nonblock(dev->rawmidi_in, 1);
 
   /* get # of MIDI file descriptors */
   count = snd_rawmidi_poll_descriptors_count(dev->rawmidi_in);
@@ -687,58 +634,11 @@ new_fluid_alsa_rawmidi_driver(fluid_settings_t* settings,
 
   dev->status = FLUID_MIDI_READY;
 
-  /* create the midi thread */
-  if (pthread_attr_init(&attr)) {
-    FLUID_LOG(FLUID_ERR, "Couldn't initialize midi thread attributes");
+  /* create the MIDI thread */
+  dev->thread = new_fluid_thread (fluid_alsa_midi_run, dev, realtime_prio, FALSE);
+
+  if (!dev->thread)
     goto error_recovery;
-  }
-
-  /* Was: "use fifo scheduling. if it fails, use default scheduling." */
-  /* Now normal scheduling is used by default for the MIDI thread. The reason is,
-   * that fluidsynth works better with low latencies under heavy load, if only the
-   * audio thread is prioritized.
-   * With MIDI at ordinary priority, that could result in individual notes being played
-   * a bit late. On the other hand, if the audio thread is delayed, an audible dropout
-   * is the result.
-   * To reproduce this: Edirol UA-1 USB-MIDI interface, four buffers
-   * with 45 samples each (roughly 4 ms latency), ravewave soundfont. -MN
-   */
-
-  /* Not so sure anymore. We're losing MIDI data, if we can't keep up with
-   * the speed it is generated. */
-/*  FLUID_LOG(FLUID_WARN, "Note: High-priority scheduling for the MIDI thread was intentionally disabled.");
-    sched=SCHED_OTHER;*/
-
-  while (1) {
-    err = pthread_attr_setschedpolicy(&attr, sched);
-    if (err) {
-      if (sched == SCHED_FIFO) {
-        FLUID_LOG(FLUID_WARN, "Couldn't set high priority scheduling for the MIDI input");
-	sched = SCHED_OTHER;
-	continue;
-      } else {
-	FLUID_LOG(FLUID_ERR, "Couldn't set scheduling policy.");
-	goto error_recovery;
-      }
-    }
-
-    /* SCHED_FIFO will not be active without setting the priority */
-    priority.sched_priority = realtime_prio;
-    pthread_attr_setschedparam (&attr, &priority);
-
-    err = pthread_create(&dev->thread, &attr, fluid_alsa_midi_run, (void*) dev);
-    if (err) {
-      if (sched == SCHED_FIFO) {
-        FLUID_LOG(FLUID_WARN, "Couldn't set high priority scheduling for the MIDI input");
-	sched = SCHED_OTHER;
-	continue;
-      } else {
-	FLUID_LOG(FLUID_PANIC, "Couldn't create the midi thread.");
-	goto error_recovery;
-      }
-    }
-    break;
-  }
 
   if (device) FLUID_FREE (device);      /* -- free device name */
 
@@ -764,19 +664,12 @@ delete_fluid_alsa_rawmidi_driver(fluid_midi_driver_t* p)
     return FLUID_OK;
   }
 
+  /* cancel the thread and wait for it before cleaning up */
   dev->status = FLUID_MIDI_DONE;
 
-  /* cancel the thread and wait for it before cleaning up */
-  if (dev->thread) {
-    if (pthread_cancel(dev->thread)) {
-      FLUID_LOG(FLUID_ERR, "Failed to cancel the midi thread");
-      return FLUID_FAILED;
-    }
-    if (pthread_join(dev->thread, NULL)) {
-      FLUID_LOG(FLUID_ERR, "Failed to join the midi thread");
-      return FLUID_FAILED;
-    }
-  }
+  if (dev->thread)
+    fluid_thread_join (dev->thread);
+
   if (dev->rawmidi_in) {
     snd_rawmidi_close(dev->rawmidi_in);
   }
@@ -790,22 +683,12 @@ delete_fluid_alsa_rawmidi_driver(fluid_midi_driver_t* p)
 /*
  * fluid_alsa_midi_run
  */
-void*
+void
 fluid_alsa_midi_run(void* d)
 {
-  int n, i;
   fluid_midi_event_t* evt;
   fluid_alsa_rawmidi_driver_t* dev = (fluid_alsa_rawmidi_driver_t*) d;
-
-  /* make sure the other threads can cancel this thread any time */
-  if (pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL)) {
-    FLUID_LOG(FLUID_ERR, "Failed to set the cancel state of the midi thread");
-    pthread_exit(NULL);
-  }
-  if (pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL)) {
-    FLUID_LOG(FLUID_ERR, "Failed to set the cancel state of the midi thread");
-    pthread_exit(NULL);
-  }
+  int n, i;
 
   /* go into a loop until someone tells us to stop */
   dev->status = FLUID_MIDI_LISTENING;
@@ -833,7 +716,6 @@ fluid_alsa_midi_run(void* d)
       }
     }
   }
-  pthread_exit(NULL);
 }
 
 /**************************************************************
@@ -889,9 +771,6 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
 {
   int i, err;
   fluid_alsa_seq_driver_t* dev;
-  pthread_attr_t attr;
-  int sched;
-  struct sched_param priority;
   int realtime_prio = 0;
   int count;
   struct pollfd *pfd = NULL;
@@ -920,10 +799,6 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
   dev->driver.handler = handler;
 
   fluid_settings_getint (settings, "midi.realtime-prio", &realtime_prio);
-
-  if (realtime_prio > 0)
-    sched = SCHED_FIFO;
-  else sched = SCHED_OTHER;
 
   /* get the device name. if none is specified, use the default device. */
   if (fluid_settings_dupstr(settings, "midi.alsa_seq.device", &device) == 0)    /* ++ alloc device name */
@@ -957,6 +832,8 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
     FLUID_LOG(FLUID_ERR, "Error opening ALSA sequencer");
     goto error_recovery;
   }
+
+  snd_seq_nonblock (dev->seq_handle, 1);
 
   /* get # of MIDI file descriptors */
   count = snd_seq_poll_descriptors_count(dev->seq_handle, POLLIN);
@@ -1031,42 +908,8 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
 
   dev->status = FLUID_MIDI_READY;
 
-  /* create the midi thread */
-  if (pthread_attr_init(&attr)) {
-    FLUID_LOG(FLUID_ERR, "Couldn't initialize midi thread attributes");
-    goto error_recovery;
-  }
-  /* use fifo scheduling. if it fails, use default scheduling. */
-  while (1) {
-    err = pthread_attr_setschedpolicy(&attr, sched);
-    if (err) {
-      if (sched == SCHED_FIFO) {
-        FLUID_LOG(FLUID_WARN, "Couldn't set high priority scheduling for the MIDI input");
-	sched = SCHED_OTHER;
-	continue;
-      } else {
-	FLUID_LOG(FLUID_ERR, "Couldn't set scheduling policy.");
-	goto error_recovery;
-      }
-    }
-
-    /* SCHED_FIFO will not be active without setting the priority */
-    priority.sched_priority = realtime_prio;
-    pthread_attr_setschedparam (&attr, &priority);
-
-    err = pthread_create(&dev->thread, &attr, fluid_alsa_seq_run, (void*) dev);
-    if (err) {
-      if (sched == SCHED_FIFO) {
-        FLUID_LOG(FLUID_WARN, "Couldn't set high priority scheduling for the MIDI input");
-	sched = SCHED_OTHER;
-	continue;
-      } else {
-	FLUID_LOG(FLUID_PANIC, "Couldn't create the midi thread.");
-	goto error_recovery;
-      }
-    }
-    break;
-  }
+  /* create the MIDI thread */
+  dev->thread = new_fluid_thread (fluid_alsa_seq_run, dev, realtime_prio, FALSE);
 
   if (portname) FLUID_FREE (portname);
   if (id) FLUID_FREE (id);
@@ -1098,19 +941,12 @@ delete_fluid_alsa_seq_driver(fluid_midi_driver_t* p)
     return FLUID_OK;
   }
 
+  /* cancel the thread and wait for it before cleaning up */
   dev->status = FLUID_MIDI_DONE;
 
-  /* cancel the thread and wait for it before cleaning up */
-  if (dev->thread) {
-    if (pthread_cancel(dev->thread)) {
-      FLUID_LOG(FLUID_ERR, "Failed to cancel the midi thread");
-      return FLUID_FAILED;
-    }
-    if (pthread_join(dev->thread, NULL)) {
-      FLUID_LOG(FLUID_ERR, "Failed to join the midi thread");
-      return FLUID_FAILED;
-    }
-  }
+  if (dev->thread)
+    fluid_thread_join (dev->thread);
+
   if (dev->seq_handle) {
     snd_seq_close(dev->seq_handle);
   }
@@ -1124,23 +960,13 @@ delete_fluid_alsa_seq_driver(fluid_midi_driver_t* p)
 /*
  * fluid_alsa_seq_run
  */
-void*
+void
 fluid_alsa_seq_run(void* d)
 {
   int n, ev;
   snd_seq_event_t *seq_ev;
   fluid_midi_event_t evt;
   fluid_alsa_seq_driver_t* dev = (fluid_alsa_seq_driver_t*) d;
-
-  /* make sure the other threads can cancel this thread any time */
-  if (pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL)) {
-    FLUID_LOG(FLUID_ERR, "Failed to set the cancel state of the midi thread");
-    pthread_exit(NULL);
-  }
-  if (pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL)) {
-    FLUID_LOG(FLUID_ERR, "Failed to set the cancel state of the midi thread");
-    pthread_exit(NULL);
-  }
 
   /* go into a loop until someone tells us to stop */
   dev->status = FLUID_MIDI_LISTENING;
@@ -1154,6 +980,8 @@ fluid_alsa_seq_run(void* d)
       do
 	{
 	    ev = snd_seq_event_input(dev->seq_handle, &seq_ev);	/* read the events */
+
+            if (ev == -EAGAIN) break;
 
 	    /* Negative value indicates an error, ignore interrupted system call
 	     * (-EPERM) and input event buffer overrun (-ENOSPC) */
@@ -1226,7 +1054,6 @@ fluid_alsa_seq_run(void* d)
 	while (ev > 0);
     }	/* if poll() > 0 */
   }	/* while (dev->status == FLUID_MIDI_LISTENING) */
-  pthread_exit(NULL);
 }
 
 #endif /* #if ALSA_SUPPORT */

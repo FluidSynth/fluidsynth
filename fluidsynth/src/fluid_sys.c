@@ -390,9 +390,9 @@ fluid_utime (void)
 #if defined(WIN32)      /* Windoze specific stuff */
 
 void
-fluid_thread_self_set_prio (fluid_thread_prio_t prio, int prio_level)
+fluid_thread_self_set_prio (int prio_level)
 {
-  if (prio == FLUID_THREAD_PRIO_HIGH)
+  if (prio_level > 0)
     SetThreadPriority (GetCurrentThread(), THREAD_PRIORITY_HIGHEST);
 }
 
@@ -400,20 +400,20 @@ fluid_thread_self_set_prio (fluid_thread_prio_t prio, int prio_level)
 #elif defined(__OS2__)  /* OS/2 specific stuff */
 
 void
-fluid_thread_self_set_prio (fluid_thread_prio_t prio, int prio_level)
+fluid_thread_self_set_prio (int prio_level)
 {
-  if (prio == FLUID_THREAD_PRIO_HIGH)
+  if (prio_level > 0)
     DosSetPriority (PRTYS_THREAD, PRTYC_REGULAR, PRTYD_MAXIMUM, 0);
 }
 
 #else   /* POSIX stuff..  Nice POSIX..  Good POSIX. */
 
 void
-fluid_thread_self_set_prio (fluid_thread_prio_t prio, int prio_level)
+fluid_thread_self_set_prio (int prio_level)
 {
   struct sched_param priority;
 
-  if (prio == FLUID_THREAD_PRIO_HIGH)
+  if (prio_level > 0)
   {
     priority.sched_priority = prio_level;
 
@@ -564,7 +564,7 @@ fluid_thread_high_prio (gpointer data)
 {
   fluid_thread_info_t *info = data;
 
-  fluid_thread_self_set_prio (FLUID_THREAD_PRIO_HIGH, info->prio_level);
+  fluid_thread_self_set_prio (info->prio_level);
 
   info->func (info->data);
   FLUID_FREE (info);
@@ -576,14 +576,13 @@ fluid_thread_high_prio (gpointer data)
  * Create a new thread.
  * @param func Function to execute in new thread context
  * @param data User defined data to pass to func
- * @param prio Priority class
- * @param prio_level Priority level (used only for high priority on Posix currently, 1-99)
+ * @param prio_level Priority level.  If greater than 0 then high priority scheduling will
+ *   be used, with the given priority level (used by pthreads only).  0 uses normal scheduling.
  * @param detach If TRUE, 'join' does not work and the thread destroys itself when finished.
  * @return New thread pointer or NULL on error
  */
 fluid_thread_t *
-new_fluid_thread (fluid_thread_func_t func, void *data,
-                  fluid_thread_prio_t prio, int prio_level, int detach)
+new_fluid_thread (fluid_thread_func_t func, void *data, int prio_level, int detach)
 {
   GThread *thread;
   fluid_thread_info_t *info;
@@ -596,7 +595,7 @@ new_fluid_thread (fluid_thread_func_t func, void *data,
    * but what can we do *and* remain backwards compatible? */
   if (!g_thread_supported ()) g_thread_init (NULL);
 
-  if (prio == FLUID_THREAD_PRIO_HIGH)
+  if (prio_level > 0)
   {
     info = FLUID_NEW (fluid_thread_info_t);
 
@@ -707,8 +706,7 @@ new_fluid_timer (int msec, fluid_timer_callback_t callback, void* data,
   if (new_thread)
   {
     timer->thread = new_fluid_thread (fluid_timer_run, timer, high_priority
-                                      ? FLUID_THREAD_PRIO_HIGH : FLUID_THREAD_PRIO_NORMAL,
-                                      FLUID_SYS_TIMER_HIGH_PRIO_LEVEL, FALSE);
+                                      ? FLUID_SYS_TIMER_HIGH_PRIO_LEVEL : 0, FALSE);
     if (!timer->thread)
     {
       FLUID_FREE (timer);
@@ -1010,7 +1008,7 @@ new_fluid_server_socket(int port, fluid_server_func_t func, void* data)
   server_socket->cont = 1;
 
   server_socket->thread = new_fluid_thread(fluid_server_socket_run, server_socket,
-                                           FLUID_THREAD_PRIO_NORMAL, 0, FALSE);
+                                           0, FALSE);
   if (server_socket->thread == NULL) {
     FLUID_FREE(server_socket);
     fluid_socket_close(sock);
@@ -1160,7 +1158,7 @@ new_fluid_server_socket(int port, fluid_server_func_t func, void* data)
   server_socket->cont = 1;
 
   server_socket->thread = new_fluid_thread(fluid_server_socket_run, server_socket,
-                                           FLUID_THREAD_PRIO_NORMAL, 0, FALSE);
+                                           0, FALSE);
   if (server_socket->thread == NULL)
   {
     FLUID_FREE (server_socket);

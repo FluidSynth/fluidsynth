@@ -37,7 +37,6 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <pthread.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
@@ -56,7 +55,7 @@ typedef struct {
   fluid_synth_t* synth;
   fluid_audio_callback_t read;
   void* buffer;
-  pthread_t thread;
+  fluid_thread_t *thread;
   int cont;
   int dspfd;
   int buffer_size;
@@ -74,14 +73,14 @@ int delete_fluid_oss_audio_driver(fluid_audio_driver_t* p);
 
 /* local utilities */
 static int fluid_oss_set_queue_size(fluid_oss_audio_driver_t* dev, int ss, int ch, int qs, int bs);
-static void* fluid_oss_audio_run(void* d);
-static void* fluid_oss_audio_run2(void* d);
+static void fluid_oss_audio_run(void* d);
+static void fluid_oss_audio_run2(void* d);
 
 
 typedef struct {
   fluid_midi_driver_t driver;
   int fd;
-  pthread_t thread;
+  fluid_thread_t *thread;
   int status;
   unsigned char buffer[BUFFER_LENGTH];
   fluid_midi_parser_t* parser;
@@ -92,7 +91,7 @@ new_fluid_oss_midi_driver(fluid_settings_t* settings,
 			 handle_midi_event_func_t handler, void* data);
 int delete_fluid_oss_midi_driver(fluid_midi_driver_t* p);
 int fluid_oss_midi_driver_status(fluid_midi_driver_t* p);
-static void* fluid_oss_midi_run(void* d);
+static void fluid_oss_midi_run(void* d);
 
 
 void
@@ -113,13 +112,9 @@ new_fluid_oss_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
   int queuesize;
   double sample_rate;
   int periods, period_size;
+  int realtime_prio = 0;
   char* devname = NULL;
   int format;
-  pthread_attr_t attr;
-  int err;
-  int sched;
-  struct sched_param priority;
-  int realtime_prio = 0;
 
   dev = FLUID_NEW(fluid_oss_audio_driver_t);
   if (dev == NULL) {
@@ -132,10 +127,6 @@ new_fluid_oss_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
   fluid_settings_getint(settings, "audio.period-size", &period_size);
   fluid_settings_getnum(settings, "synth.sample-rate", &sample_rate);
   fluid_settings_getint (settings, "audio.realtime-prio", &realtime_prio);
-
-  if (realtime_prio > 0)
-    sched = SCHED_FIFO;
-  else sched = SCHED_OTHER;
 
   dev->dspfd = -1;
   dev->synth = synth;
@@ -230,46 +221,11 @@ new_fluid_oss_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
     goto error_recovery;
   }
 
-  if (pthread_attr_init(&attr)) {
-    FLUID_LOG(FLUID_ERR, "Couldn't initialize audio thread attributes");
+  /* Create the audio thread */
+  dev->thread = new_fluid_thread (fluid_oss_audio_run, dev, realtime_prio, FALSE);
+
+  if (!dev->thread)
     goto error_recovery;
-  }
-
-  /* the pthread_create man page explains that
-     pthread_attr_setschedpolicy returns an error if the user is not
-     permitted the set SCHED_FIFO. it seems however that no error is
-     returned but pthread_create fails instead. that's why i try to
-     create the thread twice in a while loop. */
-  while (1) {
-    err = pthread_attr_setschedpolicy(&attr, sched);
-    if (err) {
-      if (sched == SCHED_FIFO) {
-        FLUID_LOG(FLUID_WARN, "Couldn't set high priority scheduling for the audio output");
-	sched = SCHED_OTHER;
-	continue;
-      } else {
-	FLUID_LOG(FLUID_ERR, "Couldn't set scheduling policy.");
-	goto error_recovery;
-      }
-    }
-
-    /* SCHED_FIFO will not be active without setting the priority */
-    priority.sched_priority = realtime_prio;
-    pthread_attr_setschedparam (&attr, &priority);
-
-    err = pthread_create(&dev->thread, &attr, fluid_oss_audio_run, (void*) dev);
-    if (err) {
-      if (sched == SCHED_FIFO) {
-        FLUID_LOG(FLUID_WARN, "Couldn't set high priority scheduling for the audio output");
-	sched = SCHED_OTHER;
-	continue;
-      } else {
-	FLUID_LOG(FLUID_PANIC, "Couldn't create the audio thread.");
-	goto error_recovery;
-      }
-    }
-    break;
-  }
 
   if (devname) FLUID_FREE (devname);    /* -- free device name */
 
@@ -291,12 +247,8 @@ new_fluid_oss_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func,
   double sample_rate;
   int periods, period_size;
   char* devname = NULL;
-  int format;
-  pthread_attr_t attr;
-  int err;
-  int sched;
-  struct sched_param priority;
   int realtime_prio = 0;
+  int format;
 
   dev = FLUID_NEW(fluid_oss_audio_driver_t);
   if (dev == NULL) {
@@ -309,10 +261,6 @@ new_fluid_oss_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func,
   fluid_settings_getint(settings, "audio.period-size", &period_size);
   fluid_settings_getnum(settings, "synth.sample-rate", &sample_rate);
   fluid_settings_getint (settings, "audio.realtime-prio", &realtime_prio);
-
-  if (realtime_prio > 0)
-    sched = SCHED_FIFO;
-  else sched = SCHED_OTHER;
 
   dev->dspfd = -1;
   dev->synth = NULL;
@@ -397,46 +345,11 @@ new_fluid_oss_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func,
     goto error_recovery;
   }
 
-  if (pthread_attr_init(&attr)) {
-    FLUID_LOG(FLUID_ERR, "Couldn't initialize audio thread attributes");
+  /* Create the audio thread */
+  dev->thread = new_fluid_thread (fluid_oss_audio_run2, dev, realtime_prio, FALSE);
+
+  if (!dev->thread)
     goto error_recovery;
-  }
-
-  /* the pthread_create man page explains that
-     pthread_attr_setschedpolicy returns an error if the user is not
-     permitted the set SCHED_FIFO. it seems however that no error is
-     returned but pthread_create fails instead. that's why i try to
-     create the thread twice in a while loop. */
-  while (1) {
-    err = pthread_attr_setschedpolicy(&attr, sched);
-    if (err) {
-      if (sched == SCHED_FIFO) {
-        FLUID_LOG(FLUID_WARN, "Couldn't set high priority scheduling for the audio output");
-	sched = SCHED_OTHER;
-	continue;
-      } else {
-	FLUID_LOG(FLUID_ERR, "Couldn't set scheduling policy.");
-	goto error_recovery;
-      }
-    }
-
-    /* SCHED_FIFO will not be active without setting the priority */
-    priority.sched_priority = realtime_prio;
-    pthread_attr_setschedparam (&attr, &priority);
-
-    err = pthread_create(&dev->thread, &attr, fluid_oss_audio_run2, (void*) dev);
-    if (err) {
-      if (sched == SCHED_FIFO) {
-        FLUID_LOG(FLUID_WARN, "Couldn't set high priority scheduling for the audio output");
-	sched = SCHED_OTHER;
-	continue;
-      } else {
-	FLUID_LOG(FLUID_PANIC, "Couldn't create the audio thread.");
-	goto error_recovery;
-      }
-    }
-    break;
-  }
 
   if (devname) FLUID_FREE (devname);    /* -- free device name */
 
@@ -459,13 +372,12 @@ delete_fluid_oss_audio_driver(fluid_audio_driver_t* p)
   if (dev == NULL) {
     return FLUID_OK;
   }
+
   dev->cont = 0;
-  if (dev->thread) {
-    if (pthread_join(dev->thread, NULL)) {
-      FLUID_LOG(FLUID_ERR, "Failed to join the audio thread");
-      return FLUID_FAILED;
-    }
-  }
+
+  if (dev->thread)
+    fluid_thread_join (dev->thread);
+
   if (dev->dspfd >= 0) {
     close(dev->dspfd);
   }
@@ -525,7 +437,7 @@ fluid_oss_set_queue_size(fluid_oss_audio_driver_t* dev, int ss, int ch, int qs, 
 /*
  * fluid_oss_audio_run
  */
-void*
+void
 fluid_oss_audio_run(void* d)
 {
   fluid_oss_audio_driver_t* dev = (fluid_oss_audio_driver_t*) d;
@@ -547,17 +459,13 @@ fluid_oss_audio_run(void* d)
   }
 
   FLUID_LOG(FLUID_DBG, "Audio thread finished");
-
-  pthread_exit(NULL);
-
-  return 0; /* not reached */
 }
 
 
 /*
  * fluid_oss_audio_run
  */
-void*
+void
 fluid_oss_audio_run2(void* d)
 {
   fluid_oss_audio_driver_t* dev = (fluid_oss_audio_driver_t*) d;
@@ -586,10 +494,6 @@ fluid_oss_audio_run2(void* d)
   }
 
   FLUID_LOG(FLUID_DBG, "Audio thread finished");
-
-  pthread_exit(NULL);
-
-  return 0; /* not reached */
 }
 
 
@@ -605,11 +509,7 @@ fluid_midi_driver_t*
 new_fluid_oss_midi_driver(fluid_settings_t* settings,
 			 handle_midi_event_func_t handler, void* data)
 {
-  int err;
   fluid_oss_midi_driver_t* dev;
-  pthread_attr_t attr;
-  int sched;
-  struct sched_param priority;
   int realtime_prio = 0;
   char* device = NULL;
 
@@ -653,10 +553,6 @@ new_fluid_oss_midi_driver(fluid_settings_t* settings,
 
   fluid_settings_getint (settings, "midi.realtime-prio", &realtime_prio);
 
-  if (realtime_prio > 0)
-    sched = SCHED_FIFO;
-  else sched = SCHED_OTHER;
-
   /* open the default hardware device. only use midi in. */
   dev->fd = open(device, O_RDONLY, 0);
   if (dev->fd < 0) {
@@ -664,44 +560,20 @@ new_fluid_oss_midi_driver(fluid_settings_t* settings,
     goto error_recovery;
   }
 
-  dev->status = FLUID_MIDI_READY;
-
-  /* create the midi thread */
-  if (pthread_attr_init(&attr)) {
-    FLUID_LOG(FLUID_ERR, "Couldn't initialize midi thread attributes");
+  if (fcntl (dev->fd, F_SETFL, O_NONBLOCK) == -1)
+  {
+    FLUID_LOG(FLUID_ERR, "Failed to set OSS MIDI device to non-blocking: %s",
+              strerror (errno));
     goto error_recovery;
   }
-  /* use fifo scheduling. if it fails, use default scheduling. */
-  while (1) {
-    err = pthread_attr_setschedpolicy(&attr, sched);
-    if (err) {
-      FLUID_LOG(FLUID_WARN, "Couldn't set high priority scheduling for the MIDI input");
-      if (sched == SCHED_FIFO) {
-	sched = SCHED_OTHER;
-	continue;
-      } else {
-	FLUID_LOG(FLUID_ERR, "Couldn't set scheduling policy");
-	goto error_recovery;
-      }
-    }
 
-    /* SCHED_FIFO will not be active without setting the priority */
-    priority.sched_priority = realtime_prio;
-    pthread_attr_setschedparam (&attr, &priority);
+  dev->status = FLUID_MIDI_READY;
 
-    err = pthread_create(&dev->thread, &attr, fluid_oss_midi_run, (void*) dev);
-    if (err) {
-      FLUID_LOG(FLUID_WARN, "Couldn't set high priority scheduling for the MIDI input");
-      if (sched == SCHED_FIFO) {
-	sched = SCHED_OTHER;
-	continue;
-      } else {
-	FLUID_LOG(FLUID_PANIC, "Couldn't create the midi thread.");
-	goto error_recovery;
-      }
-    }
-    break;
-  }
+  /* create MIDI thread */
+  dev->thread = new_fluid_thread (fluid_oss_midi_run, dev, realtime_prio, FALSE);
+
+  if (!dev->thread)
+    goto error_recovery;
 
   if (device) FLUID_FREE (device);      /* ++ free device */
 
@@ -719,7 +591,6 @@ new_fluid_oss_midi_driver(fluid_settings_t* settings,
 int
 delete_fluid_oss_midi_driver(fluid_midi_driver_t* p)
 {
-  int err;
   fluid_oss_midi_driver_t* dev;
 
   dev = (fluid_oss_midi_driver_t*) p;
@@ -727,20 +598,12 @@ delete_fluid_oss_midi_driver(fluid_midi_driver_t* p)
     return FLUID_OK;
   }
 
+  /* cancel the thread and wait for it before cleaning up */
   dev->status = FLUID_MIDI_DONE;
 
-  /* cancel the thread and wait for it before cleaning up */
-  if (dev->thread) {
-    err = pthread_cancel(dev->thread);
-    if (err) {
-      FLUID_LOG(FLUID_ERR, "Failed to cancel the midi thread");
-      return FLUID_FAILED;
-    }
-    if (pthread_join(dev->thread, NULL)) {
-      FLUID_LOG(FLUID_ERR, "Failed to join the midi thread");
-      return FLUID_FAILED;
-    }
-  }
+  if (dev->thread)
+    fluid_thread_join (dev->thread);
+
   if (dev->fd >= 0) {
     close(dev->fd);
   }
@@ -754,34 +617,42 @@ delete_fluid_oss_midi_driver(fluid_midi_driver_t* p)
 /*
  * fluid_oss_midi_run
  */
-void*
+void
 fluid_oss_midi_run(void* d)
 {
-  int n, i;
-  fluid_midi_event_t* evt;
   fluid_oss_midi_driver_t* dev = (fluid_oss_midi_driver_t*) d;
-
-  /* make sure the other threads can cancel this thread any time */
-  if (pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL)) {
-    FLUID_LOG(FLUID_ERR, "Failed to set the cancel state of the midi thread");
-    pthread_exit(NULL);
-  }
-  if (pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL)) {
-    FLUID_LOG(FLUID_ERR, "Failed to set the cancel state of the midi thread");
-    pthread_exit(NULL);
-  }
+  fluid_midi_event_t* evt;
+  struct pollfd fds;
+  int n, i;
 
   /* go into a loop until someone tells us to stop */
   dev->status = FLUID_MIDI_LISTENING;
 
+  fds.fd = dev->fd;
+  fds.events = POLLIN;
+  fds.revents = 0;
+
   while (dev->status == FLUID_MIDI_LISTENING) {
+
+    n = poll (&fds, 1, 100);
+
+    if (n == 0) continue;
+
+    if (n < 0)
+    {
+      FLUID_LOG(FLUID_ERR, "Error waiting for MIDI input: %s", strerror (errno));
+      break;
+    }
 
     /* read new data */
     n = read(dev->fd, dev->buffer, BUFFER_LENGTH);
+
+    if (n == -EAGAIN) continue;
+
     if (n < 0) {
       perror("read");
       FLUID_LOG(FLUID_ERR, "Failed to read the midi input");
-      dev->status = FLUID_MIDI_DONE;
+      break;
     }
 
     /* let the parser convert the data into events */
@@ -792,9 +663,7 @@ fluid_oss_midi_run(void* d)
 	(*dev->driver.handler)(dev->driver.data, evt);
       }
     }
-
   }
-  pthread_exit(NULL);
 }
 
 int

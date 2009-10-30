@@ -223,7 +223,7 @@ new_fluid_winmidi_driver(fluid_settings_t* settings,
 
   /* Create thread which processes re-adding SYSEX buffers */
   dev->sysExAddThread = new_fluid_thread (fluid_winmidi_add_sysex_thread,
-                                          dev, FLUID_THREAD_PRIO_NORMAL, 0, FALSE);
+                                          dev, 0, FALSE);
   if (!dev->sysExAddThread)
   {
     FLUID_LOG(FLUID_ERR, "Failed to create SYSEX buffer processing thread");

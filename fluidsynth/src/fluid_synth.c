@@ -735,7 +735,7 @@ new_fluid_synth(fluid_settings_t *settings)
   /* Initialize multi-core variables if multiple cores enabled */
   if (synth->cores > 1)
   {
-    int prio_level = 0, prio;
+    int prio_level = 0;
 
     synth->core_mutex = new_fluid_cond_mutex ();
     synth->core_cond = new_fluid_cond ();
@@ -763,14 +763,10 @@ new_fluid_synth(fluid_settings_t *settings)
 
     fluid_settings_getint (synth->settings, "audio.realtime-prio", &prio_level);
 
-    if (prio_level > 0)
-      prio = FLUID_THREAD_PRIO_HIGH;
-    else prio = FLUID_THREAD_PRIO_NORMAL;
-
     for (i = 0; i < synth->cores - 1; i++)
     {
       synth->core_threads[i] = new_fluid_thread (fluid_synth_core_thread_func,
-                                                 synth, prio, prio_level, FALSE);
+                                                 synth, prio_level, FALSE);
       if (!synth->core_threads[i])
         FLUID_LOG(FLUID_ERR, "Failed to create a synthesis core thread");
     }

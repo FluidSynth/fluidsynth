@@ -226,23 +226,14 @@ typedef GStaticPrivate fluid_private_t;
 typedef GThread fluid_thread_t;
 typedef void (*fluid_thread_func_t)(void* data);
 
-/**
- * Thread priorities.
- */
-typedef enum
-{
-  FLUID_THREAD_PRIO_NORMAL,     /**< Normal thread priority */
-  FLUID_THREAD_PRIO_HIGH        /**< High priority thread */
-} fluid_thread_prio_t;
-
 #define FLUID_THREAD_ID_NULL            NULL                    /* A NULL "ID" value */
 #define fluid_thread_id_t               GThread *               /* Data type for a thread ID */
 #define fluid_thread_get_id()           g_thread_self()         /* Get unique "ID" for current thread */
 
 fluid_thread_t* new_fluid_thread(fluid_thread_func_t func, void *data,
-                                 fluid_thread_prio_t prio, int prio_level, int detach);
+                                 int prio_level, int detach);
 void delete_fluid_thread(fluid_thread_t* thread);
-void fluid_thread_self_set_prio (fluid_thread_prio_t prio, int prio_level);
+void fluid_thread_self_set_prio (int prio_level);
 int fluid_thread_join(fluid_thread_t* thread);
 
 /* Sockets and I/O */

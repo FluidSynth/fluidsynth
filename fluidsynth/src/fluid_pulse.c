@@ -28,7 +28,6 @@
 #include "fluid_adriver.h"
 #include "fluid_settings.h"
 
-#include <pthread.h>
 #include "config.h"
 
 #include <pulse/simple.h>
@@ -45,7 +44,7 @@ typedef struct {
   fluid_audio_func_t callback;
   void* data;
   int buffer_size;
-  pthread_t thread;
+  fluid_thread_t *thread;
   int cont;
 } fluid_pulse_audio_driver_t;
 
@@ -56,8 +55,8 @@ fluid_audio_driver_t* new_fluid_pulse_audio_driver2(fluid_settings_t* settings,
 						    fluid_audio_func_t func, void* data);
 int delete_fluid_pulse_audio_driver(fluid_audio_driver_t* p);
 void fluid_pulse_audio_driver_settings(fluid_settings_t* settings);
-static void* fluid_pulse_audio_run(void* d);
-static void* fluid_pulse_audio_run2(void* d);
+static void fluid_pulse_audio_run(void* d);
+static void fluid_pulse_audio_run2(void* d);
 
 
 void fluid_pulse_audio_driver_settings(fluid_settings_t* settings)
@@ -85,10 +84,7 @@ new_fluid_pulse_audio_driver2(fluid_settings_t* settings,
   int period_size, period_bytes;
   char *server = NULL;
   char *device = NULL;
-  pthread_attr_t attr;
-  struct sched_param priority;
   int realtime_prio = 0;
-  int sched;
   int err;
 
   dev = FLUID_NEW(fluid_pulse_audio_driver_t);
@@ -105,10 +101,6 @@ new_fluid_pulse_audio_driver2(fluid_settings_t* settings,
   fluid_settings_dupstr(settings, "audio.pulseaudio.server", &server);  /* ++ alloc server string */
   fluid_settings_dupstr(settings, "audio.pulseaudio.device", &device);  /* ++ alloc device string */
   fluid_settings_getint (settings, "audio.realtime-prio", &realtime_prio);
-
-  if (realtime_prio > 0)
-    sched = SCHED_FIFO;
-  else sched = SCHED_OTHER;
 
   if (server && strcmp (server, "default") == 0)
   {
@@ -153,48 +145,10 @@ new_fluid_pulse_audio_driver2(fluid_settings_t* settings,
   FLUID_LOG(FLUID_INFO, "Using PulseAudio driver");
 
   /* Create the audio thread */
-
-  if (pthread_attr_init(&attr)) {
-    FLUID_LOG(FLUID_ERR, "Couldn't initialize audio thread attributes");
+  dev->thread = new_fluid_thread (func ? fluid_pulse_audio_run2 : fluid_pulse_audio_run,
+                                  dev, realtime_prio, FALSE);
+  if (!dev->thread)
     goto error_recovery;
-  }
-
-  /* The pthread_create man page explains that
-     pthread_attr_setschedpolicy returns an error if the user is not
-     permitted the set SCHED_FIFO. It seems however that no error is
-     returned but pthread_create fails instead. That's why I try to
-     create the thread twice in a while loop. */
-  while (1) {
-    err = pthread_attr_setschedpolicy(&attr, sched);
-    if (err) {
-      if (sched == SCHED_FIFO) {
-        FLUID_LOG(FLUID_WARN, "Couldn't set high priority scheduling for the audio output");
-	sched = SCHED_OTHER;
-	continue;
-      } else {
-	FLUID_LOG(FLUID_ERR, "Couldn't set scheduling policy.");
-	goto error_recovery;
-      }
-    }
-
-    /* SCHED_FIFO will not be active without setting the priority */
-    priority.sched_priority = realtime_prio;
-    pthread_attr_setschedparam(&attr, &priority);
-
-    err = pthread_create(&dev->thread, &attr,
-			 func ? fluid_pulse_audio_run2 : fluid_pulse_audio_run, (void*) dev);
-    if (err) {
-      if (sched == SCHED_FIFO) {
-        FLUID_LOG(FLUID_WARN, "Couldn't set high priority scheduling for the audio output");
-	sched = SCHED_OTHER;
-	continue;
-      } else {
-	FLUID_LOG(FLUID_PANIC, "Couldn't create the audio thread.");
-	goto error_recovery;
-      }
-    }
-    break;
-  }
 
   if (server) FLUID_FREE (server);      /* -- free server string */
   if (device) FLUID_FREE (device);      /* -- free device string */
@@ -218,12 +172,8 @@ int delete_fluid_pulse_audio_driver(fluid_audio_driver_t* p)
 
   dev->cont = 0;
 
-  if (dev->thread) {
-    if (pthread_join(dev->thread, NULL)) {
-      FLUID_LOG(FLUID_ERR, "Failed to join the audio thread");
-      return FLUID_FAILED;
-    }
-  }
+  if (dev->thread)
+    fluid_thread_join (dev->thread);
 
   if (dev->pa_handle)
     pa_simple_free(dev->pa_handle);
@@ -234,7 +184,8 @@ int delete_fluid_pulse_audio_driver(fluid_audio_driver_t* p)
 }
 
 /* Thread without audio callback, more efficient */
-static void* fluid_pulse_audio_run(void* d)
+static void
+fluid_pulse_audio_run(void* d)
 {
   fluid_pulse_audio_driver_t* dev = (fluid_pulse_audio_driver_t*) d;
   float *buf;
@@ -243,12 +194,13 @@ static void* fluid_pulse_audio_run(void* d)
 
   buffer_size = dev->buffer_size;
 
+  /* FIXME - Probably shouldn't alloc in run() */
   buf = FLUID_ARRAY(float, buffer_size * 2);
 
   if (buf == NULL)
   {
     FLUID_LOG(FLUID_ERR, "Out of memory.");
-    return NULL;
+    return;
   }
 
   while (dev->cont)
@@ -264,11 +216,10 @@ static void* fluid_pulse_audio_run(void* d)
   }	/* while (dev->cont) */
 
   FLUID_FREE(buf);
-
-  return NULL;
 }
 
-static void* fluid_pulse_audio_run2(void* d)
+static void
+fluid_pulse_audio_run2(void* d)
 {
   fluid_pulse_audio_driver_t* dev = (fluid_pulse_audio_driver_t*) d;
   fluid_synth_t *synth = (fluid_synth_t *)(dev->data);
@@ -280,6 +231,7 @@ static void* fluid_pulse_audio_run2(void* d)
 
   buffer_size = dev->buffer_size;
 
+  /* FIXME - Probably shouldn't alloc in run() */
   left = FLUID_ARRAY(float, buffer_size);
   right = FLUID_ARRAY(float, buffer_size);
   buf = FLUID_ARRAY(float, buffer_size * 2);
@@ -287,7 +239,7 @@ static void* fluid_pulse_audio_run2(void* d)
   if (left == NULL || right == NULL || buf == NULL)
   {
     FLUID_LOG(FLUID_ERR, "Out of memory.");
-    return NULL;
+    return;
   }
 
   handle[0] = left;
@@ -315,6 +267,4 @@ static void* fluid_pulse_audio_run2(void* d)
   FLUID_FREE(left);
   FLUID_FREE(right);
   FLUID_FREE(buf);
-
-  return NULL;
 }
