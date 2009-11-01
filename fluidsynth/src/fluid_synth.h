@@ -138,15 +138,16 @@ typedef struct _fluid_sfont_info_t {
  * outbuf
  * sample_timers
  *
- * Only synth thread changes
+ * Only synth thread changes (atomic operations for non-synth thread reads)
  * -------------------------
  * ticks
  * reverb{}
  * chorus{}
  * cur
  * dither_index
- * polyphony (atomic int get for non-synth threads)
+ * polyphony
  * st_gain
+ * active_voice_count
  */
 
 struct _fluid_synth_t
@@ -187,6 +188,7 @@ struct _fluid_synth_t
   fluid_channel_t** channel;         /**< the channels */
   int nvoice;                        /**< the length of the synthesis process array (max polyphony allowed) */
   fluid_voice_t** voice;             /**< the synthesis voices */
+  int active_voice_count;            /**< count of active voices */
   unsigned int noteid;               /**< the id is incremented for every new note. it's used for noteoff's  */
   unsigned int storeid;
   int nbuf;                          /**< How many audio buffers are used? (depends on nr of audio channels / groups)*/

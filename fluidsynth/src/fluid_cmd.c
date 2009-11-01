@@ -48,6 +48,8 @@ static int fluid_shell_run(fluid_shell_t* shell);
 static void fluid_shell_init(fluid_shell_t* shell,
                              fluid_settings_t* settings, fluid_cmd_handler_t* handler,
                              fluid_istream_t in, fluid_ostream_t out);
+static int fluid_handle_voice_count (fluid_synth_t *synth, int ac, char **av,
+                                     fluid_ostream_t out);
 
 void fluid_shell_settings(fluid_settings_t* settings)
 {
@@ -113,6 +115,8 @@ fluid_cmd_t fluid_commands[] = {
     "chorus [0|1|on|off]        Turn the chorus on or off" },
   { "gain", "general", (fluid_cmd_func_t) fluid_handle_gain, NULL,
     "gain value                 Set the master gain (0 < gain < 5)" },
+  { "voice_count", "general", (fluid_cmd_func_t) fluid_handle_voice_count, NULL,
+    "voice_count                Get number of active synthesis voices" },
   { "tuning", "tuning", (fluid_cmd_func_t) fluid_handle_tuning, NULL,
     "tuning name bank prog      Create a tuning with name, bank number, \n"
     "                           and program number (0 <= bank,prog <= 127)" },
@@ -944,6 +948,16 @@ fluid_handle_gain(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out)
   fluid_synth_set_gain(synth, gain);
 
   return 0;
+}
+
+/* Response to voice_count command */
+static int
+fluid_handle_voice_count (fluid_synth_t *synth, int ac, char **av,
+                          fluid_ostream_t out)
+{
+  fluid_ostream_printf (out, "voice_count: %d\n",
+                        fluid_synth_get_active_voice_count (synth));
+  return FLUID_OK;
 }
 
 /* Purpose:

@@ -162,6 +162,7 @@ FLUIDSYNTH_API void fluid_synth_set_gain(fluid_synth_t* synth, float gain);
 FLUIDSYNTH_API float fluid_synth_get_gain(fluid_synth_t* synth);
 FLUIDSYNTH_API int fluid_synth_set_polyphony(fluid_synth_t* synth, int polyphony);
 FLUIDSYNTH_API int fluid_synth_get_polyphony(fluid_synth_t* synth);
+FLUIDSYNTH_API int fluid_synth_get_active_voice_count(fluid_synth_t* synth);
 FLUIDSYNTH_API int fluid_synth_get_internal_bufsize(fluid_synth_t* synth);
 
 FLUIDSYNTH_API 

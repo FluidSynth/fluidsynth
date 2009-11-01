@@ -829,6 +829,9 @@ void fluid_voice_start(fluid_voice_t* voice)
   voice->ref = fluid_profile_ref();
 
   voice->status = FLUID_VOICE_ON;
+
+  /* Increment voice count atomically, for non-synth thread read access */
+  fluid_atomic_int_add (&voice->channel->synth->active_voice_count, 1);
 }
 
 void 
@@ -1689,6 +1692,9 @@ fluid_voice_off(fluid_voice_t* voice)
     fluid_sample_decr_ref(voice->sample);
     voice->sample = NULL;
   }
+
+  /* Decrement voice count atomically, for non-synth thread read access */
+  fluid_atomic_int_add (&voice->channel->synth->active_voice_count, -1);
 
   return FLUID_OK;
 }
