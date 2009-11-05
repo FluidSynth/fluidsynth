@@ -42,7 +42,14 @@ FLUIDSYNTH_API fluid_ostream_t fluid_get_stdout(void);
 FLUIDSYNTH_API char* fluid_get_userconf(char* buf, int len);
 FLUIDSYNTH_API char* fluid_get_sysconf(char* buf, int len);
 
-
+/**
+ * Command handler function prototype.
+ * @param data User defined data
+ * @param ac Argument count
+ * @param av Array of string arguments
+ * @param out Output stream to send response to
+ * @return Should return #FLUID_OK on success, #FLUID_FAILED otherwise
+ */
 typedef int (*fluid_cmd_func_t)(void* data, int ac, char** av, fluid_ostream_t out);  
 
 /**
@@ -105,7 +112,7 @@ FLUIDSYNTH_API void delete_fluid_shell(fluid_shell_t* shell);
  * @param addr The IP address of the client (can be NULL)
  * @return Should return a new command handler for the connection (new_fluid_cmd_handler()).
  */
-typedef fluid_cmd_handler_t* (*fluid_server_newclient_func_t)(void* data, const char* addr);
+typedef fluid_cmd_handler_t* (*fluid_server_newclient_func_t)(void* data, char* addr);
 
 FLUIDSYNTH_API 
 fluid_server_t* new_fluid_server(fluid_settings_t* settings, 

@@ -224,17 +224,17 @@ fluid_mod_get_value(fluid_mod_t* mod, fluid_channel_t* chan, fluid_voice_t* voic
 	v1 = voice->key;
 	break;
       case FLUID_MOD_KEYPRESSURE:
-	v1 = chan->key_pressure;
+	v1 = fluid_channel_get_key_pressure (chan);
 	break;
       case FLUID_MOD_CHANNELPRESSURE:
-	v1 = chan->channel_pressure;
+	v1 = fluid_channel_get_channel_pressure (chan);
 	break;
       case FLUID_MOD_PITCHWHEEL:
-	v1 = chan->pitch_bend;
+	v1 = fluid_channel_get_pitch_bend (chan);
 	range1 = 0x4000;
 	break;
       case FLUID_MOD_PITCHWHEELSENS:
-	v1 = chan->pitch_wheel_sensitivity;
+	v1 = fluid_channel_get_pitch_wheel_sensitivity (chan);
 	break;
       default:
 	v1 = 0.0;
@@ -317,16 +317,16 @@ fluid_mod_get_value(fluid_mod_t* mod, fluid_channel_t* chan, fluid_voice_t* voic
 	v2 = voice->key;
 	break;
       case FLUID_MOD_KEYPRESSURE:
-	v2 = chan->key_pressure;
+	v2 = fluid_channel_get_key_pressure (chan);
 	break;
       case FLUID_MOD_CHANNELPRESSURE:
-	v2 = chan->channel_pressure;
+	v2 = fluid_channel_get_channel_pressure (chan);
 	break;
       case FLUID_MOD_PITCHWHEEL:
-	v2 = chan->pitch_bend;
+	v2 = fluid_channel_get_pitch_bend (chan);
 	break;
       case FLUID_MOD_PITCHWHEELSENS:
-	v2 = chan->pitch_wheel_sensitivity;
+	v2 = fluid_channel_get_pitch_wheel_sensitivity (chan);
 	break;
       default:
 	v1 = 0.0f;

@@ -30,8 +30,8 @@
 enum fluid_event_queue_elem
 {
   FLUID_EVENT_QUEUE_ELEM_MIDI,          /**< MIDI event. Uses midi field of event value */
-  FLUID_EVENT_QUEUE_ELEM_GAIN,          /**< Synth gain set or return event. Uses dval field of event value */
-  FLUID_EVENT_QUEUE_ELEM_POLYPHONY,     /**< Synth polyphony event. Uses ival field of event value */
+  FLUID_EVENT_QUEUE_ELEM_UPDATE_GAIN,   /**< Update synthesizer gain.  No payload value */
+  FLUID_EVENT_QUEUE_ELEM_POLYPHONY,     /**< Synth polyphony event. No payload value */
   FLUID_EVENT_QUEUE_ELEM_GEN,           /**< Generator event. Uses gen field of event value */
   FLUID_EVENT_QUEUE_ELEM_PRESET,        /**< Preset set event. Uses preset field of event value */
   FLUID_EVENT_QUEUE_ELEM_STOP_VOICES,   /**< Stop voices event. Uses ival field of event value */

@@ -36,7 +36,6 @@
  *
  * Synthesis thread context only:
  * preset
- * key_pressure
  * tuning
  * nrpn_select
  * nrpn_active
@@ -45,6 +44,7 @@
  *
  * Uses atomic operations:
  * sfont_bank_prog
+ * key_pressure
  * channel_pressure
  * pitch_bend
  * pitch_wheel_sensitivity
@@ -117,8 +117,23 @@ int fluid_channel_get_interp_method(fluid_channel_t* chan);
 #define fluid_channel_get_preset(chan)          ((chan)->preset)
 #define fluid_channel_set_cc(chan, num, val) \
   fluid_atomic_int_set (&(chan)->cc[num], val)
-#define fluid_channel_get_cc(chan, num) \
-  fluid_atomic_int_get (&(chan)->cc[num])
+#define fluid_channel_get_cc(chan, num)   fluid_atomic_int_get (&(chan)->cc[num])
+#define fluid_channel_get_key_pressure(chan) \
+  fluid_atomic_int_get (&(chan)->key_pressure)
+#define fluid_channel_set_key_pressure(chan, val) \
+  fluid_atomic_int_set (&(chan)->key_pressure, val)
+#define fluid_channel_get_channel_pressure(chan) \
+  fluid_atomic_int_get (&(chan)->channel_pressure)
+#define fluid_channel_set_channel_pressure(chan, val) \
+  fluid_atomic_int_set (&(chan)->channel_pressure, val)
+#define fluid_channel_get_pitch_bend(chan) \
+  fluid_atomic_int_get (&(chan)->pitch_bend)
+#define fluid_channel_set_pitch_bend(chan, val) \
+  fluid_atomic_int_set (&(chan)->pitch_bend, val)
+#define fluid_channel_get_pitch_wheel_sensitivity(chan) \
+  fluid_atomic_int_get (&(chan)->pitch_wheel_sensitivity)
+#define fluid_channel_set_pitch_wheel_sensitivity(chan, val) \
+  fluid_atomic_int_set (&(chan)->pitch_wheel_sensitivity, val)
 #define fluid_channel_get_num(chan)             ((chan)->channum)
 #define fluid_channel_set_interp_method(chan, new_method) \
   fluid_atomic_int_set (&(chan)->interp_method, new_method)

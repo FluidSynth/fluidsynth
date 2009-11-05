@@ -92,6 +92,8 @@ int fluid_jack_driver_process(jack_nframes_t nframes, void *arg);
 int delete_fluid_jack_midi_driver(fluid_midi_driver_t *p);
 
 
+static fluid_mutex_t last_client_mutex = G_STATIC_MUTEX_INIT;     /* Probably not necessary, but just in case drivers are created by multiple threads */
+static fluid_jack_client_t *last_client = NULL;       /* Last unpaired client. For audio/MIDI driver pairing. */
 
 
 void
@@ -114,8 +116,6 @@ fluid_jack_audio_driver_settings(fluid_settings_t* settings)
 static fluid_jack_client_t *
 new_fluid_jack_client (fluid_settings_t *settings, int isaudio, void *driver)
 {
-  static fluid_mutex_t mutex = G_STATIC_MUTEX_INIT;     /* Probably not necessary, but just in case drivers are created by multiple threads */
-  static fluid_jack_client_t *last_client = NULL;  /* Last unpaired client. For audio/MIDI driver pairing. */
   fluid_jack_client_t *client_ref = NULL;
   char *server = NULL;
   char* client_name;
@@ -124,7 +124,7 @@ new_fluid_jack_client (fluid_settings_t *settings, int isaudio, void *driver)
   fluid_settings_dupstr (settings, isaudio ? "audio.jack.server"        /* ++ alloc server name */
                          : "midi.jack.server", &server);
 
-  fluid_mutex_lock (mutex);     /* ++ lock last_client */
+  fluid_mutex_lock (last_client_mutex);     /* ++ lock last_client */
 
   /* If the last client uses the same server and is not the same type (audio or MIDI),
    * then re-use the client. */
@@ -142,7 +142,7 @@ new_fluid_jack_client (fluid_settings_t *settings, int isaudio, void *driver)
     if (isaudio) fluid_atomic_pointer_set (&client_ref->audio_driver, driver);
     else fluid_atomic_pointer_set (&client_ref->midi_driver, driver);
 
-    fluid_mutex_unlock (mutex);       /* -- unlock last_client */
+    fluid_mutex_unlock (last_client_mutex);       /* -- unlock last_client */
 
     if (server) FLUID_FREE (server);
 
@@ -216,7 +216,7 @@ new_fluid_jack_client (fluid_settings_t *settings, int isaudio, void *driver)
   if (isaudio) fluid_atomic_pointer_set (&client_ref->audio_driver, driver);
   else fluid_atomic_pointer_set (&client_ref->midi_driver, driver);
 
-  fluid_mutex_unlock (mutex);       /* -- unlock last_client */
+  fluid_mutex_unlock (last_client_mutex);       /* -- unlock last_client */
 
   if (server) FLUID_FREE (server);
 
@@ -224,7 +224,7 @@ new_fluid_jack_client (fluid_settings_t *settings, int isaudio, void *driver)
 
 error_recovery:
 
-  fluid_mutex_unlock (mutex);       /* -- unlock clients list */
+  fluid_mutex_unlock (last_client_mutex);       /* -- unlock clients list */
   if (server) FLUID_FREE (server);  /* -- free server name */
 
   if (client_ref)
@@ -339,6 +339,13 @@ fluid_jack_client_close (fluid_jack_client_t *client_ref, void *driver)
     g_usleep (100000);  /* FIXME - Hack to make sure that resources don't get freed while Jack callback is active */
     return;
   }
+
+  fluid_mutex_lock (last_client_mutex);
+
+  if (client_ref == last_client)
+    last_client = NULL;
+
+  fluid_mutex_unlock (last_client_mutex);
 
   if (client_ref->client)
     jack_client_close (client_ref->client);

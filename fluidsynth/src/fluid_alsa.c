@@ -167,7 +167,6 @@ new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
   double sample_rate;
   int periods, period_size;
   char* device = NULL;
-  int sched;
   int realtime_prio = 0;
   int i, err, dir = 0;
   snd_pcm_hw_params_t* hwparams;
@@ -187,10 +186,6 @@ new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
   fluid_settings_getnum(settings, "synth.sample-rate", &sample_rate);
   fluid_settings_dupstr(settings, "audio.alsa.device", &device);   /* ++ dup device name */
   fluid_settings_getint (settings, "audio.realtime-prio", &realtime_prio);
-
-  if (realtime_prio > 0)
-    sched = SCHED_FIFO;
-  else sched = SCHED_OTHER;
 
   dev->data = data;
   dev->callback = func;

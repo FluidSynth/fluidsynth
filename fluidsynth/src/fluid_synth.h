@@ -123,7 +123,6 @@ typedef struct _fluid_sfont_info_t {
  * sfont_info<>
  * tuning
  * sfont_id
- * gain
  * reverb_roomsize, reverb_damping, reverb_width, reverb_level
  * chorus_nr, chorus_level, chorus_speed, chorus_depth, chorus_type
  *
@@ -132,6 +131,7 @@ typedef struct _fluid_sfont_info_t {
  * with_reverb
  * with_chorus
  * state
+ * gain
  * cpu_load
  * noteid
  * storeid
@@ -146,7 +146,6 @@ typedef struct _fluid_sfont_info_t {
  * cur
  * dither_index
  * polyphony
- * st_gain
  * active_voice_count
  */
 
@@ -183,8 +182,7 @@ struct _fluid_synth_t
   fluid_hashtable_t *sfont_hash;     /**< Hash of fluid_sfont_t->fluid_sfont_info_t (remains until SoundFont is deleted) */
   unsigned int sfont_id;             /**< Incrementing ID assigned to each loaded SoundFont */
 
-  double gain;                       /**< master gain */
-  double st_gain;                    /**< Synth thread gain shadow value */
+  float gain;                        /**< master gain */
   fluid_channel_t** channel;         /**< the channels */
   int nvoice;                        /**< the length of the synthesis process array (max polyphony allowed) */
   fluid_voice_t** voice;             /**< the synthesis voices */

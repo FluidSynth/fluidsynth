@@ -33,8 +33,6 @@
 #pragma warning(disable : 4305)
 #pragma warning(disable : 4996)
 
-#define WITHOUT_SERVER 1
-
 #ifndef inline
 #define inline __inline
 #endif

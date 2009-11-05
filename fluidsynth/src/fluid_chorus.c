@@ -104,24 +104,11 @@
 
 /* Private data for SKEL file */
 struct _fluid_chorus_t {
-  /* Store the values between fluid_chorus_set_xxx and fluid_chorus_update
-   * Logic behind this:
-   * - both 'parameter' and 'new_parameter' hold the same value.
-   * - To change the chorus settings, 'new_parameter' is modified and
-   *   fluid_chorus_update is called.
-   * - If the new value is valid, it is copied to 'parameter'.
-   * - If it is invalid, 'new_parameter' is restored to 'parameter'.
-   */
-  int type;                  /* current value */
-  int new_type;              /* next value, if parameter check is OK */
-  fluid_real_t depth_ms;      /* current value */
-  fluid_real_t new_depth_ms;  /* next value, if parameter check is OK */
-  fluid_real_t level;         /* current value */
-  fluid_real_t new_level;     /* next value, if parameter check is OK */
-  fluid_real_t speed_Hz;      /* current value */
-  fluid_real_t new_speed_Hz;  /* next value, if parameter check is OK */
-  int number_blocks;         /* current value */
-  int new_number_blocks;     /* next value, if parameter check is OK */
+  int type;
+  fluid_real_t depth_ms;
+  fluid_real_t level;
+  fluid_real_t speed_Hz;
+  int number_blocks;
 
   fluid_real_t *chorusbuf;
   int counter;
@@ -134,7 +121,6 @@ struct _fluid_chorus_t {
   fluid_real_t sinc_table[INTERPOLATION_SAMPLES][INTERPOLATION_SUBSAMPLES];
 };
 
-static void fluid_chorus_update(fluid_chorus_t* chorus);
 static void fluid_chorus_triangle(int *buf, int len, int depth);
 static void fluid_chorus_sine(int *buf, int len, int depth);
 
@@ -260,62 +246,55 @@ void
 fluid_chorus_set(fluid_chorus_t* chorus, int set, int nr, float level,
                  float speed, float depth_ms, int type)
 {
-  if (set & FLUID_CHORUS_SET_NR) chorus->new_number_blocks = nr;
-  if (set & FLUID_CHORUS_SET_LEVEL) chorus->new_level = level;    
-  if (set & FLUID_CHORUS_SET_SPEED) chorus->new_speed_Hz = speed;
-  if (set & FLUID_CHORUS_SET_DEPTH) chorus->new_depth_ms = depth_ms;
-  if (set & FLUID_CHORUS_SET_TYPE) chorus->new_type = type;
-
-  fluid_chorus_update (chorus);
-}
-
-/* Purpose:
- * Calculates the internal chorus parameters. */
-static void
-fluid_chorus_update(fluid_chorus_t* chorus)
-{
-  int i;
   int modulation_depth_samples;
+  int i;
 
-  if (chorus->new_number_blocks < 0) {
+  if (set & FLUID_CHORUS_SET_NR) chorus->number_blocks = nr;
+  if (set & FLUID_CHORUS_SET_LEVEL) chorus->level = level;    
+  if (set & FLUID_CHORUS_SET_SPEED) chorus->speed_Hz = speed;
+  if (set & FLUID_CHORUS_SET_DEPTH) chorus->depth_ms = depth_ms;
+  if (set & FLUID_CHORUS_SET_TYPE) chorus->type = type;
+
+  if (chorus->number_blocks < 0) {
     fluid_log(FLUID_WARN, "chorus: number blocks must be >=0! Setting value to 0.");
-    chorus->new_number_blocks = 0;
-  } else if (chorus->new_number_blocks > MAX_CHORUS) {
+    chorus->number_blocks = 0;
+  } else if (chorus->number_blocks > MAX_CHORUS) {
     fluid_log(FLUID_WARN, "chorus: number blocks larger than max. allowed! Setting value to %d.",
 	     MAX_CHORUS);
-    chorus->new_number_blocks = MAX_CHORUS;
-  };
+    chorus->number_blocks = MAX_CHORUS;
+  }
 
-  if (chorus->new_speed_Hz < MIN_SPEED_HZ) {
+  if (chorus->speed_Hz < MIN_SPEED_HZ) {
     fluid_log(FLUID_WARN, "chorus: speed is too low (min %f)! Setting value to min.",
 	     (double) MIN_SPEED_HZ);
-    chorus->new_speed_Hz = MIN_SPEED_HZ;
-  } else if (chorus->new_speed_Hz > MAX_SPEED_HZ) {
+    chorus->speed_Hz = MIN_SPEED_HZ;
+  } else if (chorus->speed_Hz > MAX_SPEED_HZ) {
     fluid_log(FLUID_WARN, "chorus: speed must be below %f Hz! Setting value to max.",
 	     (double) MAX_SPEED_HZ);
-    chorus->new_speed_Hz = MAX_SPEED_HZ;
+    chorus->speed_Hz = MAX_SPEED_HZ;
   }
-  if (chorus->new_depth_ms < 0.0) {
+
+  if (chorus->depth_ms < 0.0) {
     fluid_log(FLUID_WARN, "chorus: depth must be positive! Setting value to 0.");
-    chorus->new_depth_ms = 0.0;
+    chorus->depth_ms = 0.0;
   }
   /* Depth: Check for too high value through modulation_depth_samples. */
 
-  if (chorus->new_level < 0.0) {
+  if (chorus->level < 0.0) {
     fluid_log(FLUID_WARN, "chorus: level must be positive! Setting value to 0.");
-    chorus->new_level = 0.0;
-  } else if (chorus->new_level > 10) {
+    chorus->level = 0.0;
+  } else if (chorus->level > 10) {
     fluid_log(FLUID_WARN, "chorus: level must be < 10. A reasonable level is << 1! "
 	     "Setting it to 0.1.");
-    chorus->new_level = 0.1;
+    chorus->level = 0.1;
   }
 
   /* The modulating LFO goes through a full period every x samples: */
-  chorus->modulation_period_samples = chorus->sample_rate / chorus->new_speed_Hz;
+  chorus->modulation_period_samples = chorus->sample_rate / chorus->speed_Hz;
 
   /* The variation in delay time is x: */
   modulation_depth_samples = (int)
-    (chorus->new_depth_ms / 1000.0  /* convert modulation depth in ms to s*/
+    (chorus->depth_ms / 1000.0  /* convert modulation depth in ms to s*/
      * chorus->sample_rate);
 
   if (modulation_depth_samples > MAX_SAMPLES) {
@@ -335,7 +314,7 @@ fluid_chorus_update(fluid_chorus_t* chorus)
     chorus->type = FLUID_CHORUS_MOD_SINE;
     fluid_chorus_sine(chorus->lookup_tab, chorus->modulation_period_samples,
 		     modulation_depth_samples);
-  };
+  }
 
   for (i = 0; i < chorus->number_blocks; i++) {
     /* Set the phase of the chorus blocks equally spaced */
@@ -345,12 +324,6 @@ fluid_chorus_update(fluid_chorus_t* chorus)
 
   /* Start of the circular buffer */
   chorus->counter = 0;
-
-  chorus->type = chorus->new_type;
-  chorus->depth_ms = chorus->new_depth_ms;
-  chorus->level = chorus->new_level;
-  chorus->speed_Hz = chorus->new_speed_Hz;
-  chorus->number_blocks = chorus->new_number_blocks;
 }
 
 

@@ -50,7 +50,6 @@ static int fluid_synth_queue_midi_event (fluid_synth_t* synth, int type, int cha
                                          int param1, int param2);
 static int fluid_synth_queue_gen_event (fluid_synth_t* synth, int chan,
                                         int param, float value, int absolute);
-static int fluid_synth_queue_float_event (fluid_synth_t* synth, int type, float val);
 static int fluid_synth_queue_int_event (fluid_synth_t* synth, int type, int val);
 static void fluid_synth_thread_queue_destroy_notify (void *data);
 static int fluid_synth_noteon_LOCAL(fluid_synth_t* synth, int chan, int key,
@@ -71,11 +70,9 @@ static int fluid_synth_system_reset_LOCAL(fluid_synth_t* synth);
 static int fluid_synth_modulate_voices_LOCAL(fluid_synth_t* synth, int chan,
                                              int is_cc, int ctrl);
 static int fluid_synth_modulate_voices_all_LOCAL(fluid_synth_t* synth, int chan);
-static int fluid_synth_channel_pressure_LOCAL(fluid_synth_t* synth, int channum,
-                                              int val);
-static int fluid_synth_pitch_bend_LOCAL(fluid_synth_t* synth, int chan, int val);
-static int fluid_synth_pitch_wheel_sens_LOCAL(fluid_synth_t* synth, int chan,
-                                              int val);
+static int fluid_synth_update_channel_pressure_LOCAL(fluid_synth_t* synth, int channum);
+static int fluid_synth_update_pitch_bend_LOCAL(fluid_synth_t* synth, int chan);
+static int fluid_synth_update_pitch_wheel_sens_LOCAL(fluid_synth_t* synth, int chan);
 static int fluid_synth_set_preset (fluid_synth_t *synth, int chan,
                                    fluid_preset_t *preset);
 static int fluid_synth_set_preset_LOCAL (fluid_synth_t *synth, int chan,
@@ -90,10 +87,10 @@ fluid_synth_get_preset_by_sfont_name(fluid_synth_t* synth, const char *sfontname
 static void fluid_synth_update_presets(fluid_synth_t* synth);
 static int fluid_synth_update_gain(fluid_synth_t* synth,
                                    char* name, double value);
-static void fluid_synth_set_gain_LOCAL(fluid_synth_t* synth, float gain);
+static void fluid_synth_update_gain_LOCAL(fluid_synth_t* synth);
 static int fluid_synth_update_polyphony(fluid_synth_t* synth,
                                         char* name, int value);
-static int fluid_synth_set_polyphony_LOCAL(fluid_synth_t* synth, int polyphony);
+static int fluid_synth_update_polyphony_LOCAL(fluid_synth_t* synth);
 static void init_dither(void);
 static inline int roundi (float x);
 static int fluid_synth_one_block(fluid_synth_t* synth, int do_not_mix_fx_to_out);
@@ -499,9 +496,10 @@ int delete_fluid_sample_timer(fluid_synth_t* synth, fluid_sample_timer_t* timer)
 fluid_synth_t*
 new_fluid_synth(fluid_settings_t *settings)
 {
-  int i;
   fluid_synth_t* synth;
   fluid_sfloader_t* loader;
+  double gain;
+  int i;
 
   /* initialize all the conversion tables and other stuff */
   if (fluid_synth_initialized == 0) {
@@ -539,7 +537,8 @@ new_fluid_synth(fluid_settings_t *settings)
   fluid_settings_getint(settings, "synth.audio-channels", &synth->audio_channels);
   fluid_settings_getint(settings, "synth.audio-groups", &synth->audio_groups);
   fluid_settings_getint(settings, "synth.effects-channels", &synth->effects_channels);
-  fluid_settings_getnum(settings, "synth.gain", &synth->gain);
+  fluid_settings_getnum(settings, "synth.gain", &gain);
+  synth->gain = gain;
   fluid_settings_getint(settings, "synth.device-id", &synth->device_id);
   fluid_settings_getint(settings, "synth.cpu-cores", &synth->cores);
 
@@ -797,27 +796,34 @@ fluid_synth_return_event_process_callback (void* data, unsigned int msec)
   {
     switch (event->type)
     {
-      case FLUID_EVENT_QUEUE_ELEM_GAIN:         /* Sync gain variable */
-        fluid_rec_mutex_lock (synth->mutex);        /* ++ Lock gain variable */
-        synth->gain = event->dval;
-        fluid_rec_mutex_unlock (synth->mutex);      /* -- Unlock */
-        break;
       case FLUID_EVENT_QUEUE_ELEM_REVERB:       /* Sync reverb shadow variables */
-        fluid_rec_mutex_lock (synth->mutex);        /* ++ Lock reverb shadow variables */
-        synth->reverb_roomsize = event->reverb.roomsize;
-        synth->reverb_damping = event->reverb.damping;
-        synth->reverb_width = event->reverb.width;
-        synth->reverb_level = event->reverb.level;
-        fluid_rec_mutex_unlock (synth->mutex);      /* -- Unlock */
+        if (event->reverb.set & FLUID_REVMODEL_SET_ROOMSIZE)
+          fluid_atomic_float_set (&synth->reverb_roomsize, event->reverb.roomsize);
+
+        if (event->reverb.set & FLUID_REVMODEL_SET_DAMPING)
+          fluid_atomic_float_set (&synth->reverb_damping, event->reverb.damping);
+
+        if (event->reverb.set & FLUID_REVMODEL_SET_WIDTH)
+          fluid_atomic_float_set (&synth->reverb_width, event->reverb.width);
+
+        if (event->reverb.set & FLUID_REVMODEL_SET_LEVEL)
+          fluid_atomic_float_set (&synth->reverb_level, event->reverb.level);
         break;
       case FLUID_EVENT_QUEUE_ELEM_CHORUS:       /* Sync chorus shadow variables */
-        fluid_rec_mutex_lock (synth->mutex);        /* ++ Lock chorus shadow variables */
-        synth->chorus_nr = event->chorus.nr;
-        synth->chorus_level = event->chorus.level;
-        synth->chorus_speed = event->chorus.speed;
-        synth->chorus_depth = event->chorus.depth;
-        synth->chorus_type = event->chorus.type;
-        fluid_rec_mutex_unlock (synth->mutex);      /* -- Unlock */
+        if (event->chorus.set & FLUID_CHORUS_SET_NR)
+          fluid_atomic_int_set (&synth->chorus_nr, event->chorus.nr);
+
+        if (event->chorus.set & FLUID_CHORUS_SET_LEVEL)
+          fluid_atomic_float_set (&synth->chorus_level, event->chorus.level);
+
+        if (event->chorus.set & FLUID_CHORUS_SET_SPEED)
+          fluid_atomic_float_set (&synth->chorus_speed, event->chorus.speed);
+
+        if (event->chorus.set & FLUID_CHORUS_SET_DEPTH)
+          fluid_atomic_float_set (&synth->chorus_depth, event->chorus.depth);
+
+        if (event->chorus.set & FLUID_CHORUS_SET_TYPE)
+          fluid_atomic_int_set (&synth->chorus_type, event->chorus.type);
         break;
       case FLUID_EVENT_QUEUE_ELEM_FREE_PRESET:  /* Preset free event */
         preset = (fluid_preset_t *)(event->pval);
@@ -1188,30 +1194,6 @@ fluid_synth_queue_gen_event (fluid_synth_t* synth, int chan,
 }
 
 /**
- * Queues an event with a floating point value payload.
- * @param synth FluidSynth instance
- * @param type Event type (#fluid_event_queue_elem)
- * @param val Event value
- * @return FLUID_OK on success, FLUID_FAILED otherwise
- */
-static int
-fluid_synth_queue_float_event (fluid_synth_t* synth, int type, float val)
-{
-  fluid_event_queue_t *queue;
-  fluid_event_queue_elem_t *event;
-
-  event = fluid_synth_get_event_elem (synth, &queue);
-  if (!event) return FLUID_FAILED;
-
-  event->type = type;
-  event->dval = val;
-
-  fluid_event_queue_next_inptr (queue);
-
-  return FLUID_OK;
-}
-
-/**
  * Queues an event with an integer value payload.
  * @param synth FluidSynth instance
  * @param type Event type (#fluid_event_queue_elem)
@@ -1474,8 +1456,9 @@ fluid_synth_cc_real (fluid_synth_t* synth, int channum, int num, int value,
       {
         switch (rpn_lsb)
         {
-          case RPN_PITCH_BEND_RANGE:
-            fluid_synth_pitch_wheel_sens_LOCAL (synth, channum, value);   /* Set bend range in semitones */
+          case RPN_PITCH_BEND_RANGE:    /* Set bend range in semitones */
+            fluid_channel_set_pitch_wheel_sensitivity (synth->channel[channum], value);
+            fluid_synth_update_pitch_wheel_sens_LOCAL (synth, channum);   /* Update bend range */
             /* FIXME - Handle LSB? (Fine bend range in cents) */
             break;
           case RPN_CHANNEL_FINE_TUNE:   /* Fine tune is 14 bit over 1 semitone (+/- 50 cents, 8192 = center) */
@@ -1998,19 +1981,20 @@ fluid_synth_channel_pressure(fluid_synth_t* synth, int chan, int val)
   fluid_return_val_if_fail (chan >= 0 && chan < synth->midi_channels, FLUID_FAILED);
   fluid_return_val_if_fail (val >= 0 && val <= 127, FLUID_FAILED);
 
-  if (fluid_synth_should_queue (synth))
-    return fluid_synth_queue_midi_event (synth, CHANNEL_PRESSURE, chan, val, 0);
-  else return fluid_synth_channel_pressure_LOCAL (synth, chan, val);
-}
-
-/* Local synthesis thread variant of channel pressure set */
-static int
-fluid_synth_channel_pressure_LOCAL(fluid_synth_t* synth, int chan, int val)
-{
   if (synth->verbose)
     FLUID_LOG(FLUID_INFO, "channelpressure\t%d\t%d", chan, val);
 
-  fluid_atomic_int_set (&synth->channel[chan]->channel_pressure, val);
+  fluid_channel_set_channel_pressure (synth->channel[chan], val);
+
+  if (fluid_synth_should_queue (synth))
+    return fluid_synth_queue_midi_event (synth, CHANNEL_PRESSURE, chan, 0, 0);
+  else return fluid_synth_update_channel_pressure_LOCAL (synth, chan);
+}
+
+/* Updates channel pressure from within synthesis thread */
+static int
+fluid_synth_update_channel_pressure_LOCAL(fluid_synth_t* synth, int chan)
+{
   return fluid_synth_modulate_voices_LOCAL (synth, chan, 0, FLUID_MOD_CHANNELPRESSURE);
 }
 
@@ -2028,19 +2012,20 @@ fluid_synth_pitch_bend(fluid_synth_t* synth, int chan, int val)
   fluid_return_val_if_fail (chan >= 0 && chan < synth->midi_channels, FLUID_FAILED);
   fluid_return_val_if_fail (val >= 0 && val <= 16383, FLUID_FAILED);
 
+  if (synth->verbose)
+    FLUID_LOG(FLUID_INFO, "pitchb\t%d\t%d", chan, val);
+
+  fluid_channel_set_pitch_bend (synth->channel[chan], val);
+
   if (fluid_synth_should_queue (synth))
-    return fluid_synth_queue_midi_event (synth, PITCH_BEND, chan, val, 0);
-  else return fluid_synth_pitch_bend_LOCAL (synth, chan, val);
+    return fluid_synth_queue_midi_event (synth, PITCH_BEND, chan, 0, 0);
+  else return fluid_synth_update_pitch_bend_LOCAL (synth, chan);
 }
 
 /* Local synthesis thread variant of pitch bend */
 static int
-fluid_synth_pitch_bend_LOCAL(fluid_synth_t* synth, int chan, int val)
+fluid_synth_update_pitch_bend_LOCAL(fluid_synth_t* synth, int chan)
 {
-  if (synth->verbose)
-    FLUID_LOG(FLUID_INFO, "pitchb\t%d\t%d", chan, val);
-
-  fluid_atomic_int_set (&synth->channel[chan]->pitch_bend, val);
   return fluid_synth_modulate_voices_LOCAL (synth, chan, 0, FLUID_MOD_PITCHWHEEL);
 }
 
@@ -2059,7 +2044,7 @@ fluid_synth_get_pitch_bend(fluid_synth_t* synth, int chan, int* ppitch_bend)
   fluid_return_val_if_fail (chan >= 0 && chan < synth->midi_channels, FLUID_FAILED);
   fluid_return_val_if_fail (ppitch_bend != NULL, FLUID_FAILED);
 
-  *ppitch_bend = fluid_atomic_int_get (&synth->channel[chan]->pitch_bend);
+  *ppitch_bend = fluid_channel_get_pitch_bend (synth->channel[chan]);
   return FLUID_OK;
 }
 
@@ -2077,20 +2062,21 @@ fluid_synth_pitch_wheel_sens(fluid_synth_t* synth, int chan, int val)
   fluid_return_val_if_fail (chan >= 0 && chan < synth->midi_channels, FLUID_FAILED);
   fluid_return_val_if_fail (val >= 0 && val <= 72, FLUID_FAILED);       /* 6 octaves!?  Better than no limit.. */
 
+  if (synth->verbose)
+    FLUID_LOG(FLUID_INFO, "pitchsens\t%d\t%d", chan, val);
+
+  fluid_channel_set_pitch_wheel_sensitivity (synth->channel[chan], val);
+
   if (fluid_synth_should_queue (synth))
     return fluid_synth_queue_midi_event (synth, RPN_LSB, chan,
                                          RPN_PITCH_BEND_RANGE, val);
-  else return fluid_synth_pitch_wheel_sens_LOCAL (synth, chan, val);
+  else return fluid_synth_update_pitch_wheel_sens_LOCAL (synth, chan);
 }
 
 /* Local synthesis thread variant of set pitch wheel sensitivity */
 static int
-fluid_synth_pitch_wheel_sens_LOCAL(fluid_synth_t* synth, int chan, int val)
+fluid_synth_update_pitch_wheel_sens_LOCAL(fluid_synth_t* synth, int chan)
 {
-  if (synth->verbose)
-    FLUID_LOG(FLUID_INFO, "pitchsens\t%d\t%d", chan, val);
-
-  fluid_atomic_int_set (&synth->channel[chan]->pitch_wheel_sensitivity, val);
   return fluid_synth_modulate_voices_LOCAL (synth, chan, 0, FLUID_MOD_PITCHWHEELSENS);
 }
 
@@ -2109,7 +2095,7 @@ fluid_synth_get_pitch_wheel_sens(fluid_synth_t* synth, int chan, int* pval)
   fluid_return_val_if_fail (chan >= 0 && chan < synth->midi_channels, FLUID_FAILED);
   fluid_return_val_if_fail (pval != NULL, FLUID_FAILED);
 
-  *pval = fluid_atomic_int_get (&synth->channel[chan]->pitch_wheel_sensitivity);
+  *pval = fluid_channel_get_pitch_wheel_sensitivity (synth->channel[chan]);
   return FLUID_OK;
 }
 
@@ -2505,19 +2491,21 @@ fluid_synth_set_gain(fluid_synth_t* synth, float gain)
 
   fluid_clip (gain, 0.0f, 10.0f);
 
+  fluid_atomic_float_set (&synth->gain, gain);
+
   if (fluid_synth_should_queue (synth))
-    fluid_synth_queue_float_event (synth, FLUID_EVENT_QUEUE_ELEM_GAIN, gain);
-  else fluid_synth_set_gain_LOCAL (synth, gain);
+    fluid_synth_queue_int_event (synth, FLUID_EVENT_QUEUE_ELEM_UPDATE_GAIN, 0); /* Integer value not actually used */
+  else fluid_synth_update_gain_LOCAL (synth);
 }
 
 /* Called by synthesis thread to update the gain in all voices */
 static void
-fluid_synth_set_gain_LOCAL(fluid_synth_t* synth, float gain)
+fluid_synth_update_gain_LOCAL(fluid_synth_t* synth)
 {
-  fluid_event_queue_elem_t *event;
+  float gain;
   int i;
 
-  synth->st_gain = gain;        /* Set Synth Thread gain value */
+  gain = fluid_atomic_float_get (&synth->gain);
 
   for (i = 0; i < synth->polyphony; i++) {
     fluid_voice_t* voice = synth->voice[i];
@@ -2525,18 +2513,6 @@ fluid_synth_set_gain_LOCAL(fluid_synth_t* synth, float gain)
       fluid_voice_set_gain(voice, gain);
     }
   }
-
-  /* Send a return gain event to sync synth's copy of gain */
-
-  event = fluid_event_queue_get_inptr (synth->return_queue);
-
-  if (event)
-  {
-    event->type = FLUID_EVENT_QUEUE_ELEM_GAIN;
-    event->dval = gain;
-    fluid_event_queue_next_inptr (synth->return_queue);
-  }
-  else FLUID_LOG (FLUID_ERR, "Synth return event queue full");
 }
 
 /**
@@ -2547,15 +2523,9 @@ fluid_synth_set_gain_LOCAL(fluid_synth_t* synth, float gain)
 float
 fluid_synth_get_gain(fluid_synth_t* synth)
 {
-  float gain;
-
   fluid_return_val_if_fail (synth != NULL, 0.0);
 
-  fluid_rec_mutex_lock (synth->mutex);
-  gain = synth->gain;
-  fluid_rec_mutex_unlock (synth->mutex);
-
-  return (gain);
+  return fluid_atomic_float_get (&synth->gain);
 }
 
 /*
@@ -2581,19 +2551,20 @@ fluid_synth_set_polyphony(fluid_synth_t* synth, int polyphony)
   fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
   fluid_return_val_if_fail (polyphony >= 16 && polyphony <= synth->nvoice, FLUID_FAILED);
 
+  fluid_atomic_int_set (&synth->polyphony, polyphony);
+
   if (fluid_synth_should_queue (synth))
-    return fluid_synth_queue_int_event (synth, FLUID_EVENT_QUEUE_ELEM_POLYPHONY,
-                                        polyphony);
-  else return fluid_synth_set_polyphony_LOCAL (synth, polyphony);
+    return fluid_synth_queue_int_event (synth, FLUID_EVENT_QUEUE_ELEM_POLYPHONY, 0);
+  else return fluid_synth_update_polyphony_LOCAL (synth);
 }
 
 /* Called by synthesis thread to update the polyphony value */
 static int
-fluid_synth_set_polyphony_LOCAL(fluid_synth_t* synth, int polyphony)
+fluid_synth_update_polyphony_LOCAL(fluid_synth_t* synth)
 {
-  int i;
+  int i, polyphony;
 
-  fluid_atomic_int_set (&synth->polyphony, polyphony);
+  polyphony = fluid_atomic_int_get (&synth->polyphony);
 
   /* turn off any voices above the new limit */
   for (i = polyphony; i < synth->nvoice; i++) {
@@ -3350,29 +3321,26 @@ fluid_synth_process_event_queue_LOCAL (fluid_synth_t *synth,
           fluid_synth_system_reset_LOCAL (synth);
           break;
         case CHANNEL_PRESSURE:
-          fluid_synth_channel_pressure_LOCAL (synth, event->midi.channel,
-                                              event->midi.param1);
+          fluid_synth_update_channel_pressure_LOCAL (synth, event->midi.channel);
           break;
         case PITCH_BEND:
-          fluid_synth_pitch_bend_LOCAL (synth, event->midi.channel,
-                                        event->midi.param1);
+          fluid_synth_update_pitch_bend_LOCAL (synth, event->midi.channel);
           break;
         case RPN_LSB:
           switch (event->midi.param1)
           {
             case RPN_PITCH_BEND_RANGE:
-              fluid_synth_pitch_wheel_sens_LOCAL (synth, event->midi.channel,
-                                                  event->midi.param2);
+              fluid_synth_update_pitch_wheel_sens_LOCAL (synth, event->midi.channel);
               break;
           }
           break;
       }
       break;
-    case FLUID_EVENT_QUEUE_ELEM_GAIN:
-      fluid_synth_set_gain_LOCAL (synth, event->dval);
+    case FLUID_EVENT_QUEUE_ELEM_UPDATE_GAIN:
+      fluid_synth_update_gain_LOCAL (synth);
       break;
     case FLUID_EVENT_QUEUE_ELEM_POLYPHONY:
-      fluid_synth_set_polyphony_LOCAL (synth, event->ival);
+      fluid_synth_update_polyphony_LOCAL (synth);
       break;
     case FLUID_EVENT_QUEUE_ELEM_GEN:
       fluid_synth_set_gen_LOCAL (synth, event->gen.channel, event->gen.param,
@@ -3392,8 +3360,8 @@ fluid_synth_process_event_queue_LOCAL (fluid_synth_t *synth,
       break;
     case FLUID_EVENT_QUEUE_ELEM_CHORUS:
       fluid_synth_set_chorus_LOCAL (synth, event->chorus.set, event->chorus.nr,
-                                    event->chorus.type, event->chorus.level,
-                                    event->chorus.speed, event->chorus.depth);
+                                    event->chorus.level, event->chorus.speed,
+                                    event->chorus.depth, event->chorus.type);
       break;
     case FLUID_EVENT_QUEUE_ELEM_SET_TUNING:
       fluid_synth_set_tuning_LOCAL (synth, event->set_tuning.channel,
@@ -4207,7 +4175,23 @@ fluid_synth_set_reverb_full(fluid_synth_t* synth, int set, double roomsize,
   fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
 
   if (!(set & FLUID_REVMODEL_SET_ALL))
-    set = FLUID_REVMODEL_SET_ALL;
+    set = FLUID_REVMODEL_SET_ALL; 
+
+  /* Synth shadow values are set here so that they will be returned if querried,
+   * but shadow values are also updated via a return event to ensure they don't
+   * get out of sync, if this is called from synthesis and non-synthesis context. */
+
+  if (set & FLUID_REVMODEL_SET_ROOMSIZE)
+    fluid_atomic_float_set (&synth->reverb_roomsize, roomsize);
+
+  if (set & FLUID_REVMODEL_SET_DAMPING)
+    fluid_atomic_float_set (&synth->reverb_damping, damping);
+
+  if (set & FLUID_REVMODEL_SET_WIDTH)
+    fluid_atomic_float_set (&synth->reverb_width, width);
+
+  if (set & FLUID_REVMODEL_SET_LEVEL)
+    fluid_atomic_float_set (&synth->reverb_level, level);
 
   if (fluid_synth_should_queue (synth))
   {
@@ -4265,15 +4249,9 @@ fluid_synth_set_reverb_LOCAL(fluid_synth_t* synth, int set, double roomsize,
 double
 fluid_synth_get_reverb_roomsize(fluid_synth_t* synth)
 {
-  double value;
-
   fluid_return_val_if_fail (synth != NULL, 0.0);
 
-  fluid_rec_mutex_lock (synth->mutex);      /* ++ Lock reverb value */
-  value = synth->reverb_roomsize;
-  fluid_rec_mutex_unlock (synth->mutex);    /* -- Unlock */
-
-  return value;
+  return fluid_atomic_float_get (&synth->reverb_roomsize);
 }
 
 /**
@@ -4284,15 +4262,9 @@ fluid_synth_get_reverb_roomsize(fluid_synth_t* synth)
 double
 fluid_synth_get_reverb_damp(fluid_synth_t* synth)
 {
-  double value;
-
   fluid_return_val_if_fail (synth != NULL, 0.0);
 
-  fluid_rec_mutex_lock (synth->mutex);      /* ++ Lock reverb value */
-  value = synth->reverb_damping;
-  fluid_rec_mutex_unlock (synth->mutex);    /* -- Unlock */
-
-  return value;
+  return fluid_atomic_float_get (&synth->reverb_damping);
 }
 
 /**
@@ -4303,15 +4275,9 @@ fluid_synth_get_reverb_damp(fluid_synth_t* synth)
 double
 fluid_synth_get_reverb_level(fluid_synth_t* synth)
 {
-  double value;
-
   fluid_return_val_if_fail (synth != NULL, 0.0);
 
-  fluid_rec_mutex_lock (synth->mutex);      /* ++ Lock reverb value */
-  value = synth->reverb_level;
-  fluid_rec_mutex_unlock (synth->mutex);    /* -- Unlock */
-
-  return value;
+  return fluid_atomic_float_get (&synth->reverb_level);
 }
 
 /**
@@ -4322,15 +4288,9 @@ fluid_synth_get_reverb_level(fluid_synth_t* synth)
 double
 fluid_synth_get_reverb_width(fluid_synth_t* synth)
 {
-  double value;
-
   fluid_return_val_if_fail (synth != NULL, 0.0);
 
-  fluid_rec_mutex_lock (synth->mutex);      /* ++ Lock reverb value */
-  value = synth->reverb_width;
-  fluid_rec_mutex_unlock (synth->mutex);    /* -- Unlock */
-
-  return value;
+  return fluid_atomic_float_get (&synth->reverb_width);
 }
 
 /**
@@ -4388,6 +4348,25 @@ fluid_synth_set_chorus_full(fluid_synth_t* synth, int set, int nr, double level,
 
   if (!(set & FLUID_CHORUS_SET_ALL))
     set = FLUID_CHORUS_SET_ALL;
+
+  /* Synth shadow values are set here so that they will be returned if querried,
+   * but shadow values are also updated via a return event to ensure they don't
+   * get out of sync, if this is called from synthesis and non-synthesis context. */
+
+  if (set & FLUID_CHORUS_SET_NR)
+    fluid_atomic_int_set (&synth->chorus_nr, nr);
+
+  if (set & FLUID_CHORUS_SET_LEVEL)
+    fluid_atomic_float_set (&synth->chorus_level, level);
+
+  if (set & FLUID_CHORUS_SET_SPEED)
+    fluid_atomic_float_set (&synth->chorus_speed, speed);
+
+  if (set & FLUID_CHORUS_SET_DEPTH)
+    fluid_atomic_float_set (&synth->chorus_depth, depth_ms);
+
+  if (set & FLUID_CHORUS_SET_TYPE)
+    fluid_atomic_int_set (&synth->chorus_type, type);
 
   if (fluid_synth_should_queue (synth))
   {
@@ -4447,15 +4426,9 @@ fluid_synth_set_chorus_LOCAL(fluid_synth_t* synth, int set, int nr, float level,
 int
 fluid_synth_get_chorus_nr(fluid_synth_t* synth)
 {
-  int value;
-
   fluid_return_val_if_fail (synth != NULL, 0.0);
 
-  fluid_rec_mutex_lock (synth->mutex);      /* ++ Lock chorus value */
-  value = synth->chorus_nr;
-  fluid_rec_mutex_unlock (synth->mutex);    /* -- Unlock */
-
-  return value;
+  return fluid_atomic_int_get (&synth->chorus_nr);
 }
 
 /**
@@ -4466,15 +4439,9 @@ fluid_synth_get_chorus_nr(fluid_synth_t* synth)
 double
 fluid_synth_get_chorus_level(fluid_synth_t* synth)
 {
-  double value;
-
   fluid_return_val_if_fail (synth != NULL, 0.0);
 
-  fluid_rec_mutex_lock (synth->mutex);      /* ++ Lock chorus value */
-  value = synth->chorus_level;
-  fluid_rec_mutex_unlock (synth->mutex);    /* -- Unlock */
-
-  return value;
+  return fluid_atomic_float_get (&synth->chorus_level);
 }
 
 /**
@@ -4485,15 +4452,9 @@ fluid_synth_get_chorus_level(fluid_synth_t* synth)
 double
 fluid_synth_get_chorus_speed_Hz(fluid_synth_t* synth)
 {
-  double value;
-
   fluid_return_val_if_fail (synth != NULL, 0.0);
 
-  fluid_rec_mutex_lock (synth->mutex);      /* ++ Lock chorus value */
-  value = synth->chorus_speed;
-  fluid_rec_mutex_unlock (synth->mutex);    /* -- Unlock */
-
-  return value;
+  return fluid_atomic_float_get (&synth->chorus_speed);
 }
 
 /**
@@ -4504,15 +4465,9 @@ fluid_synth_get_chorus_speed_Hz(fluid_synth_t* synth)
 double
 fluid_synth_get_chorus_depth_ms(fluid_synth_t* synth)
 {
-  double value;
-
   fluid_return_val_if_fail (synth != NULL, 0.0);
 
-  fluid_rec_mutex_lock (synth->mutex);      /* ++ Lock chorus value */
-  value = synth->chorus_depth;
-  fluid_rec_mutex_unlock (synth->mutex);    /* -- Unlock */
-
-  return value;
+  return fluid_atomic_float_get (&synth->chorus_depth);
 }
 
 /**
@@ -4523,15 +4478,9 @@ fluid_synth_get_chorus_depth_ms(fluid_synth_t* synth)
 int
 fluid_synth_get_chorus_type(fluid_synth_t* synth)
 {
-  int value;
-
   fluid_return_val_if_fail (synth != NULL, 0.0);
 
-  fluid_rec_mutex_lock (synth->mutex);      /* ++ Lock chorus value */
-  value = synth->chorus_type;
-  fluid_rec_mutex_unlock (synth->mutex);    /* -- Unlock */
-
-  return value;
+  return fluid_atomic_int_get (&synth->chorus_type);
 }
 
 /*
@@ -5540,7 +5489,7 @@ fluid_synth_handle_midi_event(void* data, fluid_midi_event_t* event)
 	return fluid_synth_program_change(synth, chan, fluid_midi_event_get_program(event));
 
       case CHANNEL_PRESSURE:
-      return fluid_synth_channel_pressure(synth, chan, fluid_midi_event_get_program(event));
+	return fluid_synth_channel_pressure(synth, chan, fluid_midi_event_get_program(event));
 
       case PITCH_BEND:
 	return fluid_synth_pitch_bend(synth, chan, fluid_midi_event_get_pitch(event));

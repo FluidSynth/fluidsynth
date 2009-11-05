@@ -53,7 +53,7 @@ void print_usage(void);
 void print_help(fluid_settings_t *settings);
 void print_welcome(void);
 
-static fluid_cmd_handler_t* newclient(void* data, const char* addr);
+static fluid_cmd_handler_t* newclient(void* data, char* addr);
 
 /*
  * the globals
@@ -149,7 +149,7 @@ typedef struct
 
 /* Function to display each string option value */
 static void
-settings_option_foreach_func (void *data, const char *name, const char *option)
+settings_option_foreach_func (void *data, char *name, char *option)
 {
   OptionBag *bag = data;
 
@@ -162,7 +162,7 @@ settings_option_foreach_func (void *data, const char *name, const char *option)
 
 /* fluid_settings_foreach function for displaying option help  "-o help" */
 static void
-settings_foreach_func (void *data, const char *name, int type)
+settings_foreach_func (void *data, char *name, int type)
 {
   fluid_settings_t *settings = (fluid_settings_t *)data;
   double dmin, dmax, ddef;
@@ -793,7 +793,7 @@ int main(int argc, char** argv)
   return 0;
 }
 
-static fluid_cmd_handler_t* newclient(void* data, const char* addr)
+static fluid_cmd_handler_t* newclient(void* data, char* addr)
 {
   fluid_synth_t* synth = (fluid_synth_t*) data;
   return new_fluid_cmd_handler(synth);
