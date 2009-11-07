@@ -145,10 +145,10 @@ AC_ARG_ENABLE(debug, AS_HELP_STRING([--enable-debug],
   ENABLE_DEBUG=$enableval)
 
 if test "$ENABLE_DEBUG" = "yes"; then
-  CFLAGS="${CFLAGS} ${FCCFLAGS} -g -Wall -W -Wpointer-arith -Wbad-function-cast -Wcast-qual -Wcast-align -Wstrict-prototypes -Wno-unused-parameter"
+  CFLAGS="${CFLAGS} ${FCCFLAGS} -g -Wall -W -Wpointer-arith -Wbad-function-cast -Wcast-qual -Wcast-align -Wstrict-prototypes -Wno-unused-parameter -Wno-cast-qual"
   AC_DEFINE(DEBUG, 1, [Define to activate debugging message]) 
 else
-  CFLAGS="${CFLAGS} ${FCCFLAGS} -O2 -fomit-frame-pointer -funroll-all-loops -finline-functions -Wall -W -Wpointer-arith -Wbad-function-cast -Wcast-qual -Wcast-align -Wstrict-prototypes -Winline -Wno-unused-parameter"
+  CFLAGS="${CFLAGS} ${FCCFLAGS} -O2 -fomit-frame-pointer -funroll-all-loops -finline-functions -Wall -W -Wpointer-arith -Wbad-function-cast -Wcast-qual -Wcast-align -Wstrict-prototypes -Winline -Wno-unused-parameter -Wno-cast-qual"
   AC_DEFINE(DEBUG, 0, [Define to activate debugging message])
 fi
 

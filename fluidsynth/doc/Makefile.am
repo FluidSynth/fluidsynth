@@ -1,7 +1,18 @@
 #  install the man pages and include in distribution
 man_MANS = fluidsynth.1 
-EXTRA_DIST = $(man_MANS) Doxyfile example.c fluidsynth.1 \
-  fluidsynth-v10-devdoc.xml FluidSynth-LADSPA.pdf
+
+EXTRA_DIST = \
+  $(man_MANS) \
+  Doxyfile \
+  example.c \
+  fluidsynth-v10-devdoc.xml \
+  fluidsynth-v11-devdoc.txt \
+  fluidsynth_arpeggio.c \
+  fluidsynth_fx.c \
+  fluidsynth_metronome.c \
+  fluidsynth_simple.c \
+  xtrafluid.txt \
+  FluidSynth-LADSPA.pdf
 
 docbook_docs = fluidsynth-v10-devdoc.xml
 

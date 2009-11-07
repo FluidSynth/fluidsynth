@@ -32,6 +32,22 @@
 #include "fluid_mdriver.h"
 #include "fluid_settings.h"
 
+/* Work around for OSX 10.4 */
+
+/* enum definition in OpenTransportProviders.h defines these tokens 
+   which are #defined from <netinet/tcp.h> */
+#ifdef TCP_NODELAY
+#undef TCP_NODELAY
+#endif
+#ifdef TCP_MAXSEG
+#undef TCP_MAXSEG
+#endif
+#ifdef TCP_KEEPALIVE
+#undef TCP_KEEPALIVE
+#endif
+
+/* End work around */
+
 #include <unistd.h>
 #include <CoreServices/CoreServices.h>
 #include <CoreMIDI/MIDIServices.h>
