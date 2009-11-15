@@ -108,8 +108,6 @@ void fluid_channel_set_bank_lsb(fluid_channel_t* chan, int banklsb);
 void fluid_channel_set_bank_msb(fluid_channel_t* chan, int bankmsb);
 void fluid_channel_get_sfont_bank_prog(fluid_channel_t* chan, int *sfont,
                                        int *bank, int *prog);
-void fluid_channel_set_cc(fluid_channel_t* chan, int num, int val);
-int fluid_channel_get_cc(fluid_channel_t* chan, int num);
 int fluid_channel_get_num(fluid_channel_t* chan);
 void fluid_channel_set_interp_method(fluid_channel_t* chan, int new_method);
 int fluid_channel_get_interp_method(fluid_channel_t* chan);

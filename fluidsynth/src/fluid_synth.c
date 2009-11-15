@@ -56,8 +56,7 @@ static int fluid_synth_noteon_LOCAL(fluid_synth_t* synth, int chan, int key,
                                        int vel);
 static int fluid_synth_noteoff_LOCAL(fluid_synth_t* synth, int chan, int key);
 static int fluid_synth_damp_voices_LOCAL(fluid_synth_t* synth, int chan);
-static int fluid_synth_cc_real(fluid_synth_t* synth, int channum, int num,
-                               int value, int noqueue);
+static int fluid_synth_cc_real(fluid_synth_t* synth, int channum, int num, int noqueue);
 static int fluid_synth_update_device_id (fluid_synth_t *synth, char *name,
                                          int value);
 static int fluid_synth_sysex_midi_tuning (fluid_synth_t *synth, const char *data,
@@ -532,6 +531,7 @@ new_fluid_synth(fluid_settings_t *settings)
   fluid_settings_getint(settings, "synth.dump", &synth->dump);
 
   fluid_settings_getint(settings, "synth.polyphony", &synth->polyphony);
+  synth->shadow_polyphony = synth->polyphony;
   fluid_settings_getnum(settings, "synth.sample-rate", &synth->sample_rate);
   fluid_settings_getint(settings, "synth.midi-channels", &synth->midi_channels);
   fluid_settings_getint(settings, "synth.audio-channels", &synth->audio_channels);
@@ -1370,21 +1370,24 @@ fluid_synth_cc(fluid_synth_t* synth, int chan, int num, int val)
   fluid_return_val_if_fail (num >= 0 && num <= 127, FLUID_FAILED);
   fluid_return_val_if_fail (val >= 0 && val <= 127, FLUID_FAILED);
 
-  fluid_synth_cc_real (synth, chan, num, val, FALSE);
+  if (synth->verbose)
+    FLUID_LOG(FLUID_INFO, "cc\t%d\t%d\t%d", chan, num, val);
+
+  fluid_channel_set_cc (synth->channel[chan], num, val);
+
+  fluid_synth_cc_real (synth, chan, num, FALSE);
 
   return FLUID_OK;
 }
 
-/* Local synthesis thread variant of MIDI CC set function.
- * NOTE: Gets called out of synthesis context for BANK_SELECT_MSB and
- * BANK_SELECT_LSB events, since they should be processed immediately. */
+/* Local synthesis thread variant of MIDI CC set function. */
 static int
-fluid_synth_cc_real (fluid_synth_t* synth, int channum, int num, int value,
-                     int noqueue)
+fluid_synth_cc_real (fluid_synth_t* synth, int channum, int num, int noqueue)
 {
   fluid_channel_t* chan = synth->channel[channum];
   int nrpn_select, nrpn_active = 0;
   int rpn_msb = 0, rpn_lsb = 0;
+  int value;
 
   /* nrpn_active, rpn_msb and rpn_lsb may get used multiple times, read them
    * once atomically if they are needed */
@@ -1405,12 +1408,9 @@ fluid_synth_cc_real (fluid_synth_t* synth, int channum, int num, int value,
       && num != BANK_SELECT_MSB && num != BANK_SELECT_LSB
       && !(num == DATA_ENTRY_MSB && !nrpn_active && rpn_msb == 0
            && (rpn_lsb == RPN_TUNING_PROGRAM_CHANGE || rpn_lsb == RPN_TUNING_BANK_SELECT)))
-    return fluid_synth_queue_midi_event (synth, CONTROL_CHANGE, channum, num, value);
+    return fluid_synth_queue_midi_event (synth, CONTROL_CHANGE, channum, num, 0);
 
-  if (synth->verbose)
-    FLUID_LOG(FLUID_INFO, "cc\t%d\t%d\t%d", channum, num, value);
-
-  fluid_channel_set_cc (chan, num, value);
+  value = fluid_channel_get_cc (chan, num);
 
   switch (num) {
   case SUSTAIN_SWITCH:
@@ -1948,8 +1948,6 @@ fluid_synth_modulate_voices_LOCAL(fluid_synth_t* synth, int chan, int is_cc, int
  * Update voices on a MIDI channel after all MIDI controllers have been changed.
  * @param synth FluidSynth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
- * @param is_cc Boolean value indicating if ctrl is a CC controller or not
- * @param ctrl MIDI controller value
  * @return FLUID_OK on success, FLUID_FAILED otherwise
  */
 static int
@@ -2502,16 +2500,16 @@ fluid_synth_set_gain(fluid_synth_t* synth, float gain)
 static void
 fluid_synth_update_gain_LOCAL(fluid_synth_t* synth)
 {
+  fluid_voice_t *voice;
   float gain;
   int i;
 
   gain = fluid_atomic_float_get (&synth->gain);
 
-  for (i = 0; i < synth->polyphony; i++) {
-    fluid_voice_t* voice = synth->voice[i];
-    if (_PLAYING(voice)) {
-      fluid_voice_set_gain(voice, gain);
-    }
+  for (i = 0; i < synth->polyphony; i++)
+  {
+    voice = synth->voice[i];
+    if (_PLAYING (voice)) fluid_voice_set_gain (voice, gain);
   }
 }
 
@@ -2551,7 +2549,7 @@ fluid_synth_set_polyphony(fluid_synth_t* synth, int polyphony)
   fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
   fluid_return_val_if_fail (polyphony >= 16 && polyphony <= synth->nvoice, FLUID_FAILED);
 
-  fluid_atomic_int_set (&synth->polyphony, polyphony);
+  fluid_atomic_int_set (&synth->shadow_polyphony, polyphony);
 
   if (fluid_synth_should_queue (synth))
     return fluid_synth_queue_int_event (synth, FLUID_EVENT_QUEUE_ELEM_POLYPHONY, 0);
@@ -2562,16 +2560,16 @@ fluid_synth_set_polyphony(fluid_synth_t* synth, int polyphony)
 static int
 fluid_synth_update_polyphony_LOCAL(fluid_synth_t* synth)
 {
-  int i, polyphony;
+  fluid_voice_t *voice;
+  int i;
 
-  polyphony = fluid_atomic_int_get (&synth->polyphony);
+  synth->polyphony = fluid_atomic_int_get (&synth->shadow_polyphony);
 
   /* turn off any voices above the new limit */
-  for (i = polyphony; i < synth->nvoice; i++) {
-    fluid_voice_t* voice = synth->voice[i];
-    if (_PLAYING(voice)) {
-      fluid_voice_off(voice);
-    }
+  for (i = synth->polyphony; i < synth->nvoice; i++)
+  {
+    voice = synth->voice[i];
+    if (_PLAYING (voice)) fluid_voice_off (voice);
   }
 
   return FLUID_OK;
@@ -2586,7 +2584,7 @@ fluid_synth_update_polyphony_LOCAL(fluid_synth_t* synth)
 int
 fluid_synth_get_polyphony(fluid_synth_t* synth)
 {
-  return fluid_atomic_int_get (&synth->polyphony);
+  return fluid_atomic_int_get (&synth->shadow_polyphony);
 }
 
 /**
@@ -2990,9 +2988,8 @@ fluid_synth_one_block(fluid_synth_t* synth, int do_not_mix_fx_to_out)
   int count;
   fluid_profile_ref_var (prof_ref);
 
-  /* Assign ID of synthesis thread, if not already set */
-  if (synth->synth_thread_id == FLUID_THREAD_ID_NULL) 
-    synth->synth_thread_id = fluid_thread_get_id ();
+  /* Assign ID of synthesis thread */
+  synth->synth_thread_id = fluid_thread_get_id ();
 
   fluid_check_fpe("??? Just starting up ???");
 
@@ -3314,8 +3311,7 @@ fluid_synth_process_event_queue_LOCAL (fluid_synth_t *synth,
           break;
         case CONTROL_CHANGE:
           /* Pass TRUE for noqueue, since event should never get re-queued */
-          fluid_synth_cc_real (synth, event->midi.channel, event->midi.param1,
-                               event->midi.param2, TRUE);
+          fluid_synth_cc_real (synth, event->midi.channel, event->midi.param1, TRUE);
           break;
         case MIDI_SYSTEM_RESET:
           fluid_synth_system_reset_LOCAL (synth);
@@ -3522,8 +3518,9 @@ fluid_synth_alloc_voice(fluid_synth_t* synth, fluid_sample_t* sample, int chan, 
 	  channel = synth->channel[chan];
   }
 
-  if (fluid_voice_init(voice, sample, channel, key, vel,
-		       synth->storeid, synth->ticks, synth->gain) != FLUID_OK) {
+  if (fluid_voice_init (voice, sample, channel, key, vel,
+                        synth->storeid, synth->ticks,
+                        fluid_atomic_float_get (&synth->gain)) != FLUID_OK) {
     FLUID_LOG(FLUID_WARN, "Failed to initialize voice");
     return NULL;
   }

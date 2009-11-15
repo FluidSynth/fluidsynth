@@ -296,6 +296,10 @@ new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
     FLUID_LOG(FLUID_ERR, "Software setup failed.");
   }
 
+  if (snd_pcm_nonblock(dev->pcm, 0) != 0) {
+    FLUID_LOG(FLUID_ERR, "Failed to set the audio device to blocking mode");
+    goto error_recovery;
+  }
 
   /* Create the audio thread */
   dev->thread = new_fluid_thread (fluid_alsa_formats[i].run, dev, realtime_prio, FALSE);
@@ -326,16 +330,8 @@ int delete_fluid_alsa_audio_driver(fluid_audio_driver_t* p)
   if (dev->thread)
     fluid_thread_join (dev->thread);
 
-  if (dev->pcm) {
-    snd_pcm_state_t state = snd_pcm_state(dev->pcm);
-    if ((state == SND_PCM_STATE_RUNNING)
-	|| (state == SND_PCM_STATE_XRUN)
-	|| (state == SND_PCM_STATE_SUSPENDED)
-	|| (state == SND_PCM_STATE_PAUSED)) {
-      snd_pcm_drop(dev->pcm);
-    }
+  if (dev->pcm)
     snd_pcm_close (dev->pcm);
-  }
 
   FLUID_FREE(dev);
 
@@ -388,11 +384,6 @@ static void fluid_alsa_audio_run_float (void *d)
   if ((left == NULL) || (right == NULL)) {
     FLUID_LOG(FLUID_ERR, "Out of memory.");
     return;
-  }
-
-  if (snd_pcm_nonblock(dev->pcm, 0) != 0) { /* double negation */
-    FLUID_LOG(FLUID_ERR, "Failed to set the audio device to blocking mode");
-    goto error_recovery;
   }
 
   if (snd_pcm_prepare(dev->pcm) != 0) {
@@ -473,11 +464,6 @@ static void fluid_alsa_audio_run_s16 (void *d)
 
   handle[0] = left;
   handle[1] = right;
-
-  if (snd_pcm_nonblock(dev->pcm, 0) != 0) { /* double negation */
-    FLUID_LOG(FLUID_ERR, "Failed to set the audio device to blocking mode");
-    goto error_recovery;
-  }
 
   if (snd_pcm_prepare(dev->pcm) != 0) {
     FLUID_LOG(FLUID_ERR, "Failed to prepare the audio device");

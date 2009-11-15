@@ -162,7 +162,8 @@ struct _fluid_synth_t
 
   fluid_settings_t* settings;        /**< the synthesizer settings */
   int device_id;                     /**< Device ID used for SYSEX messages */
-  int polyphony;                     /**< maximum polyphony */
+  int polyphony;                     /**< Maximum polyphony */
+  int shadow_polyphony;              /**< Maximum polyphony shadow value (for non-synth threads) */
   int with_reverb;                  /**< Should the synth use the built-in reverb unit? */
   int with_chorus;                  /**< Should the synth use the built-in chorus unit? */
   int verbose;                      /**< Turn verbose mode on? */

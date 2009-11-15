@@ -36,8 +36,6 @@
 #define SFONT_MASKVAL   0xFFE00000
 
 
-#define SETCC(_c,_n,_v)  _c->cc[_n] = _v
-
 static void fluid_channel_init(fluid_channel_t* chan);
 
 
@@ -137,26 +135,26 @@ fluid_channel_init_ctrl(fluid_channel_t* chan, int is_all_ctrl_off)
         continue;
       }
 
-      SETCC(chan, i, 0);
+      fluid_channel_set_cc (chan, i, 0);
     }
   }
   else {
     for (i = 0; i < 128; i++) {
-      SETCC(chan, i, 0);
+      fluid_channel_set_cc (chan, i, 0);
     }
   }
 
   /* Set RPN controllers to NULL state */
-  SETCC(chan, RPN_LSB, 127);
-  SETCC(chan, RPN_MSB, 127);
+  fluid_channel_set_cc (chan, RPN_LSB, 127);
+  fluid_channel_set_cc (chan, RPN_MSB, 127);
 
   /* Set NRPN controllers to NULL state */
-  SETCC(chan, NRPN_LSB, 127);
-  SETCC(chan, NRPN_MSB, 127);
+  fluid_channel_set_cc (chan, NRPN_LSB, 127);
+  fluid_channel_set_cc (chan, NRPN_MSB, 127);
 
   /* Expression (MSB & LSB) */
-  SETCC(chan, EXPRESSION_MSB, 127);
-  SETCC(chan, EXPRESSION_LSB, 127);
+  fluid_channel_set_cc (chan, EXPRESSION_MSB, 127);
+  fluid_channel_set_cc (chan, EXPRESSION_LSB, 127);
 
   if (!is_all_ctrl_off) {
 
@@ -164,19 +162,19 @@ fluid_channel_init_ctrl(fluid_channel_t* chan, int is_all_ctrl_off)
 
     /* Just like panning, a value of 64 indicates no change for sound ctrls */
     for (i = SOUND_CTRL1; i <= SOUND_CTRL10; i++) {
-      SETCC(chan, i, 64);
+      fluid_channel_set_cc (chan, i, 64);
     }
 
     /* Volume / initial attenuation (MSB & LSB) */
-    SETCC(chan, VOLUME_MSB, 100);
-    SETCC(chan, VOLUME_LSB, 0);
+    fluid_channel_set_cc (chan, VOLUME_MSB, 100);
+    fluid_channel_set_cc (chan, VOLUME_LSB, 0);
 
     /* Pan (MSB & LSB) */
-    SETCC(chan, PAN_MSB, 64);
-    SETCC(chan, PAN_LSB, 0);
+    fluid_channel_set_cc (chan, PAN_MSB, 64);
+    fluid_channel_set_cc (chan, PAN_LSB, 0);
 
     /* Reverb */
-    /* SETCC(chan, EFFECTS_DEPTH1, 40); */
+    /* fluid_channel_set_cc (chan, EFFECTS_DEPTH1, 40); */
     /* Note: although XG standard specifies the default amount of reverb to 
        be 40, most people preferred having it at zero.
        See http://lists.gnu.org/archive/html/fluid-dev/2009-07/msg00016.html */

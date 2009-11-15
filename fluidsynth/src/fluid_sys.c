@@ -736,10 +736,14 @@ delete_fluid_timer (fluid_timer_t *timer)
 int
 fluid_timer_join (fluid_timer_t *timer)
 {
+  int auto_destroy;
+
   if (timer->thread)
   {
+    auto_destroy = timer->auto_destroy;
     fluid_thread_join (timer->thread);
-    timer->thread = NULL;
+
+    if (!auto_destroy) timer->thread = NULL;
   }
 
   return FLUID_OK;
