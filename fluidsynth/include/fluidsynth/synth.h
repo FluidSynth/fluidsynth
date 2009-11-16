@@ -77,6 +77,8 @@ fluid_synth_program_select_by_sfont_name (fluid_synth_t* synth, int chan,
 FLUIDSYNTH_API 
 int fluid_synth_get_program(fluid_synth_t* synth, int chan, unsigned int* sfont_id, 
                             unsigned int* bank_num, unsigned int* preset_num);
+FLUIDSYNTH_API int fluid_synth_get_channel_preset_info (fluid_synth_t *synth, int chan,
+                                                        fluid_preset_info_t *info);
 FLUIDSYNTH_API int fluid_synth_program_reset(fluid_synth_t* synth);
 FLUIDSYNTH_API int fluid_synth_system_reset(fluid_synth_t* synth);
 

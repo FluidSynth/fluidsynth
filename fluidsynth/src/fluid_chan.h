@@ -44,6 +44,7 @@
  *
  * Uses atomic operations:
  * sfont_bank_prog
+ * shadow_preset
  * key_pressure
  * channel_pressure
  * pitch_bend
@@ -60,6 +61,7 @@ struct _fluid_channel_t
 
   int sfont_bank_prog;                  /**< SoundFont ID (bit 21-31), bank (bit 7-20), program (bit 0-6) */
   fluid_preset_t* preset;               /**< Selected preset */
+  fluid_preset_t* shadow_preset;        /**< Most recently assigned preset */
 
   int key_pressure;                     /**< MIDI key pressure */
   int channel_pressure;                 /**< MIDI channel pressure */

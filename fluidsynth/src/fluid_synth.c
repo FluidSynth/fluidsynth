@@ -791,6 +791,7 @@ fluid_synth_return_event_process_callback (void* data, unsigned int msec)
   fluid_synth_t *synth = data;
   fluid_event_queue_elem_t *event;
   fluid_preset_t *preset;
+  fluid_sfont_t *sfont;
 
   while ((event = fluid_event_queue_get_outptr (synth->return_queue)))
   {
@@ -827,8 +828,14 @@ fluid_synth_return_event_process_callback (void* data, unsigned int msec)
         break;
       case FLUID_EVENT_QUEUE_ELEM_FREE_PRESET:  /* Preset free event */
         preset = (fluid_preset_t *)(event->pval);
-        fluid_synth_sfont_unref (synth, preset->sfont); /* -- unref preset's SoundFont */
+        sfont = preset->sfont;
+
+        /* Delete presets under mutex lock, to protect chan->shadow_preset */
+        fluid_rec_mutex_lock (synth->mutex);
         delete_fluid_preset (preset);
+        fluid_rec_mutex_unlock (synth->mutex);
+
+        fluid_synth_sfont_unref (synth, sfont); /* -- unref preset's SoundFont */
         break;
     }
 
@@ -2109,6 +2116,7 @@ fluid_synth_set_preset (fluid_synth_t *synth, int chan, fluid_preset_t *preset)
 {
   fluid_event_queue_t *queue;
   fluid_event_queue_elem_t *event;
+  fluid_channel_t *channel;
 
   fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
   fluid_return_val_if_fail (chan >= 0 && chan < synth->midi_channels, FLUID_FAILED);
@@ -2117,6 +2125,9 @@ fluid_synth_set_preset (fluid_synth_t *synth, int chan, fluid_preset_t *preset)
   {
     event = fluid_synth_get_event_elem (synth, &queue);
     if (!event) return FLUID_FAILED;
+
+    channel = synth->channel[chan];
+    fluid_atomic_pointer_set (&channel->shadow_preset, preset);
 
     event->type = FLUID_EVENT_QUEUE_ELEM_PRESET;
     event->preset.channel = chan;
@@ -2135,7 +2146,9 @@ fluid_synth_set_preset_LOCAL (fluid_synth_t *synth, int chan,
 {
   fluid_channel_t *channel;
 
+  /* Set shadow preset again, so it contains the actual latest assigned value */
   channel = synth->channel[chan];
+  fluid_atomic_pointer_set (&channel->shadow_preset, preset);
   fluid_channel_set_preset (channel, preset);
   return FLUID_OK;
 }
@@ -4055,17 +4068,81 @@ fluid_synth_get_sfont_by_name(fluid_synth_t* synth, const char *name)
  * @param synth FluidSynth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
  * @return Preset or NULL if no preset active on channel
+ * @deprecated
  *
  * NOTE: Should only be called from within synthesis thread, which includes
- * SoundFont loader preset noteon methods.
+ * SoundFont loader preset noteon methods.  Not thread safe otherwise.
  */
 fluid_preset_t *
 fluid_synth_get_channel_preset(fluid_synth_t* synth, int chan)
 {
+  fluid_channel_t *channel;
+
   fluid_return_val_if_fail (synth != NULL, NULL);
   fluid_return_val_if_fail (chan >= 0 && chan < synth->midi_channels, NULL);
 
-  return fluid_channel_get_preset(synth->channel[chan]);
+  channel = synth->channel[chan];
+  return fluid_atomic_pointer_get (&channel->shadow_preset);
+}
+
+/**
+ * Get preset information for the currently selected preset on a MIDI channel.
+ * @param synth FluidSynth instance
+ * @param chan MIDI channel number (0 to MIDI channel count - 1)
+ * @param info Caller supplied structure to fill with preset information
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ * @since 1.1.1
+ */
+int
+fluid_synth_get_channel_preset_info (fluid_synth_t *synth, int chan,
+                                     fluid_preset_info_t *info)
+{
+  fluid_channel_t *channel;
+  fluid_preset_t *preset;
+  char *name;
+
+  if (info)
+  {
+    info->assigned = FALSE;
+    info->name[0] = '\0';
+  }
+
+  fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
+  fluid_return_val_if_fail (chan >= 0 && chan < synth->midi_channels, FLUID_FAILED);
+  fluid_return_val_if_fail (info != NULL, FLUID_FAILED);
+
+  /* Lock mutex to ensure preset doesn't get deleted, while working on it */
+  fluid_rec_mutex_lock (synth->mutex);
+
+  channel = synth->channel[chan];
+  preset = fluid_atomic_pointer_get (&channel->shadow_preset);
+
+  if (preset)
+  {
+    info->assigned = TRUE;
+    name = fluid_preset_get_name (preset);
+
+    if (name)
+    {
+      strncpy (info->name, name, FLUID_PRESET_INFO_NAME_LENGTH);
+      info->name[FLUID_PRESET_INFO_NAME_LENGTH - 1] = '\0';
+    }
+    else info->name[0] = '\0';
+
+    info->sfont_id = preset->sfont->id;
+    info->bank = fluid_preset_get_banknum (preset);
+    info->program = fluid_preset_get_num (preset);
+  }
+  else
+  {
+    info->assigned = FALSE;
+    fluid_channel_get_sfont_bank_prog (channel, &info->sfont_id, &info->bank, &info->program);
+    info->name[0] = '\0';
+  }
+
+  fluid_rec_mutex_unlock (synth->mutex);
+
+  return FLUID_OK;
 }
 
 /**
