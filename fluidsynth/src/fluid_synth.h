@@ -158,7 +158,9 @@ struct _fluid_synth_t
   fluid_rec_mutex_t mutex;           /**< Lock for multi-thread sensitive variables (not used by synthesis process) */
   fluid_list_t *queue_pool;          /**< List of event queues whose threads have been destroyed and which can be re-used */
   fluid_event_queue_t *return_queue; /**< Event queue for events from synthesis thread to non-synthesis threads (memory frees, etc) */
-  fluid_timer_t *return_queue_timer; /**< Timer thread to process return event queue */
+  fluid_thread_t *return_queue_thread;  /**< Return event queue processing thread */
+  fluid_cond_mutex_t *return_queue_mutex;       /**< Mutex for return queue condition */
+  fluid_cond_t *return_queue_cond;   /**< Return queue thread synchronization condition */
 
   fluid_settings_t* settings;        /**< the synthesizer settings */
   int device_id;                     /**< Device ID used for SYSEX messages */
