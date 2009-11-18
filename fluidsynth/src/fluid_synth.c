@@ -3530,8 +3530,10 @@ fluid_synth_free_voice_by_kill_LOCAL(fluid_synth_t* synth)
     this_voice_prio -= (synth->noteid - fluid_voice_get_id(voice));
 
     /* take a rough estimate of loudness into account. Louder voices are more important. */
-    if (voice->volenv_section != FLUID_VOICE_ENVATTACK){
+    if (voice->volenv_section > FLUID_VOICE_ENVATTACK){
       this_voice_prio += voice->volenv_val * 1000.;
+    } else {
+      this_voice_prio += voice->volenv_data[FLUID_VOICE_ENVATTACK].max * 1000.;
     }
 
     /* check if this voice has less priority than the previous candidate. */
