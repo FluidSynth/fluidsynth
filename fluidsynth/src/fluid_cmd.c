@@ -543,22 +543,25 @@ fluid_handle_inst(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out)
 int
 fluid_handle_channels(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out)
 {
-  int i;
-  fluid_preset_t* preset;
+  fluid_synth_channel_info_t info;
   int verbose = 0;
+  int i;
 
   if (ac > 0 && strcmp( av[0], "-verbose") == 0) verbose = 1;
 
-  for (i = 0; i < fluid_synth_count_midi_channels(synth); i++) {
-    preset = fluid_synth_get_channel_preset(synth, i);
-    if (preset == NULL) fluid_ostream_printf(out, "chan %d, no preset\n", i);
-    else if (!verbose) fluid_ostream_printf(out, "chan %d, %s\n", i, fluid_preset_get_name(preset));
-    else fluid_ostream_printf(out, "chan %d, sfont %d, bank %d, preset %d, %s\n", i,
-                              fluid_sfont_get_id( preset->sfont),
-                              fluid_preset_get_banknum(preset),
-                              fluid_preset_get_num(preset),
-                              fluid_preset_get_name(preset));
+  for (i = 0; i < fluid_synth_count_midi_channels (synth); i++)
+  {
+    fluid_synth_get_channel_info (synth, i, &info);
+
+    if (!verbose)
+      fluid_ostream_printf (out, "chan %d, %s\n", i,
+                            info.assigned ? info.name : "no preset");
+    else
+      fluid_ostream_printf (out, "chan %d, sfont %d, bank %d, preset %d, %s\n", i,
+                            info.sfont_id, info.bank, info.program,
+                            info.assigned ? info.name : "no preset");
   }
+
   return 0;
 }
 

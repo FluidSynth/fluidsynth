@@ -35,11 +35,11 @@ extern "C" {
 
 typedef struct _fluid_hashtable_t fluid_settings_t;             /**< Configuration settings instance */
 typedef struct _fluid_synth_t fluid_synth_t;                    /**< Synthesizer instance */
+typedef struct _fluid_synth_channel_info_t fluid_synth_channel_info_t;  /**< SoundFont channel info */
 typedef struct _fluid_voice_t fluid_voice_t;                    /**< Synthesis voice instance */
 typedef struct _fluid_sfloader_t fluid_sfloader_t;              /**< SoundFont loader plugin */
 typedef struct _fluid_sfont_t fluid_sfont_t;                    /**< SoundFont */
 typedef struct _fluid_preset_t fluid_preset_t;                  /**< SoundFont preset */
-typedef struct _fluid_preset_info_t fluid_preset_info_t;        /**< SoundFont preset info */
 typedef struct _fluid_sample_t fluid_sample_t;                  /**< SoundFont sample */
 typedef struct _fluid_mod_t fluid_mod_t;                        /**< SoundFont modulator */
 typedef struct _fluid_audio_driver_t fluid_audio_driver_t;      /**< Audio driver instance */

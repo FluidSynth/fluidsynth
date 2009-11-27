@@ -229,21 +229,6 @@ struct _fluid_preset_t {
   int (*notify)(fluid_preset_t* preset, int reason, int chan);
 };
 
-#define FLUID_PRESET_INFO_NAME_LENGTH   32      /**< Length of preset info name field (including zero terminator) */
-
-/**
- * Preset information structure.
- * @since 1.1.1
- */
-struct _fluid_preset_info_t
-{
-  int assigned;         /**< TRUE if a preset is assigned, FALSE otherwise */
-  int sfont_id;         /**< ID of parent SoundFont */
-  int bank;             /**< MIDI bank number (0-16383) */
-  int program;          /**< MIDI program number (0-127) */
-  char name[FLUID_PRESET_INFO_NAME_LENGTH];     /**< Preset name */
-};
-
 /**
  * Virtual SoundFont sample.
  */

@@ -76,8 +76,6 @@ static int fluid_synth_update_pitch_bend_LOCAL(fluid_synth_t* synth, int chan);
 static int fluid_synth_update_pitch_wheel_sens_LOCAL(fluid_synth_t* synth, int chan);
 static int fluid_synth_set_preset (fluid_synth_t *synth, int chan,
                                    fluid_preset_t *preset);
-static int fluid_synth_set_preset_LOCAL (fluid_synth_t *synth, int chan,
-                                         fluid_preset_t *preset);
 static fluid_preset_t*
 fluid_synth_get_preset(fluid_synth_t* synth, unsigned int sfontnum,
                        unsigned int banknum, unsigned int prognum);
@@ -858,10 +856,6 @@ fluid_synth_return_event_process_thread (void* data)
           fluid_rec_mutex_unlock (synth->mutex);
 
           fluid_synth_sfont_unref (synth, sfont); /* -- unref preset's SoundFont */
-          break;
-        case FLUID_EVENT_QUEUE_ELEM_MIDI:
-          if (event->midi.type == PROGRAM_CHANGE)
-            fluid_synth_program_change (synth, event->midi.channel, event->midi.param1);
           break;
       }
 
@@ -2166,12 +2160,13 @@ fluid_synth_set_preset (fluid_synth_t *synth, int chan, fluid_preset_t *preset)
   fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
   fluid_return_val_if_fail (chan >= 0 && chan < synth->midi_channels, FLUID_FAILED);
 
+  channel = synth->channel[chan];
+
   if (fluid_synth_should_queue (synth))
   {
     event = fluid_synth_get_event_elem (synth, &queue);
     if (!event) return FLUID_FAILED;
 
-    channel = synth->channel[chan];
     fluid_atomic_pointer_set (&channel->shadow_preset, preset);
 
     event->type = FLUID_EVENT_QUEUE_ELEM_PRESET;
@@ -2181,21 +2176,7 @@ fluid_synth_set_preset (fluid_synth_t *synth, int chan, fluid_preset_t *preset)
     fluid_event_queue_next_inptr (queue);
     return FLUID_OK;
   }
-  else return fluid_synth_set_preset_LOCAL (synth, chan, preset);
-}
-
-/* Local synthesis thread variant of set channel preset */
-static int
-fluid_synth_set_preset_LOCAL (fluid_synth_t *synth, int chan,
-                              fluid_preset_t *preset)
-{
-  fluid_channel_t *channel;
-
-  /* Set shadow preset again, so it contains the actual latest assigned value */
-  channel = synth->channel[chan];
-  fluid_atomic_pointer_set (&channel->shadow_preset, preset);
-  fluid_channel_set_preset (channel, preset);
-  return FLUID_OK;
+  else return fluid_channel_set_preset (channel, preset);
 }
 
 /* Get a preset by SoundFont, bank and program numbers.
@@ -2303,38 +2284,18 @@ fluid_synth_find_preset(fluid_synth_t* synth, unsigned int banknum,
  * @param prognum MIDI program number (0-127)
  * @return FLUID_OK on success, FLUID_FAILED otherwise
  */
+/* FIXME - Currently not real-time safe, due to preset allocation and mutex lock,
+ * and may be called from within synthesis context. */
 int
 fluid_synth_program_change(fluid_synth_t* synth, int chan, int prognum)
 {
   fluid_preset_t* preset = NULL;
   fluid_channel_t* channel;
-  fluid_event_queue_elem_t *event;
   int subst_bank, subst_prog, banknum;
 
   fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
   fluid_return_val_if_fail (chan >= 0 && chan < synth->midi_channels, FLUID_FAILED);
   fluid_return_val_if_fail (prognum >= 0 && prognum <= FLUID_NUM_PROGRAMS, FLUID_FAILED);
-
-  /* If this is the synthesis thread, send program change via return queue, to
-   * avoid mutex locks and other realtime naughties */
-  if (fluid_synth_is_synth_thread (synth))
-  {
-    event = fluid_event_queue_get_inptr (synth->return_queue);
-    if (!event)
-    {
-      FLUID_LOG (FLUID_ERR, "Synth return event queue full");
-      return FLUID_FAILED;
-    }
-
-    event->type = FLUID_EVENT_QUEUE_ELEM_MIDI;
-    event->midi.type = PROGRAM_CHANGE;
-    event->midi.param1 = prognum;
-    event->midi.channel = chan;
-
-    fluid_event_queue_next_inptr (synth->return_queue);
-
-    return FLUID_OK;
-  }
 
   channel = synth->channel[chan];
   fluid_channel_get_sfont_bank_prog(channel, NULL, &banknum, NULL);
@@ -2445,6 +2406,26 @@ static void
 fluid_synth_sfont_select_LOCAL (fluid_synth_t *synth, int chan, unsigned int sfont_id)
 {
   fluid_channel_set_sfont_bank_prog(synth->channel[chan], sfont_id, -1, -1);
+}
+
+/**
+ * Set the preset of a MIDI channel to an unassigned state.
+ * @param synth FluidSynth instance
+ * @param chan MIDI channel number (0 to MIDI channel count - 1)
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ * @since 1.1.1
+ *
+ * Note: Channel retains its SoundFont ID, bank and program numbers.  Certain
+ * operations, such as fluid_synth_reset() or MIDI program changes may
+ * re-assign the preset, if one matches.
+ */
+int
+fluid_synth_unset_program (fluid_synth_t *synth, int chan)
+{
+  fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
+  fluid_return_val_if_fail (chan >= 0 && chan < synth->midi_channels, FLUID_FAILED);
+
+  return fluid_synth_set_preset (synth, chan, NULL);
 }
 
 /**
@@ -3435,8 +3416,8 @@ fluid_synth_process_event_queue_LOCAL (fluid_synth_t *synth,
                                  event->gen.value, event->gen.absolute);
       break;
     case FLUID_EVENT_QUEUE_ELEM_PRESET:
-      fluid_synth_set_preset_LOCAL (synth, event->preset.channel,
-                                    event->preset.preset);
+      fluid_channel_set_preset (synth->channel[event->preset.channel],
+                                event->preset.preset);
       break;
     case FLUID_EVENT_QUEUE_ELEM_STOP_VOICES:
       fluid_synth_stop_LOCAL (synth, event->ival);
@@ -4155,7 +4136,7 @@ fluid_synth_get_sfont_by_name(fluid_synth_t* synth, const char *name)
  * @param synth FluidSynth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
  * @return Preset or NULL if no preset active on channel
- * @deprecated
+ * @deprecated fluid_synth_get_channel_info() should replace most use cases.
  *
  * NOTE: Should only be called from within synthesis thread, which includes
  * SoundFont loader preset noteon methods.  Not thread safe otherwise.
@@ -4173,7 +4154,7 @@ fluid_synth_get_channel_preset(fluid_synth_t* synth, int chan)
 }
 
 /**
- * Get preset information for the currently selected preset on a MIDI channel.
+ * Get information on the currently selected preset on a MIDI channel.
  * @param synth FluidSynth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
  * @param info Caller supplied structure to fill with preset information
@@ -4181,8 +4162,8 @@ fluid_synth_get_channel_preset(fluid_synth_t* synth, int chan)
  * @since 1.1.1
  */
 int
-fluid_synth_get_channel_preset_info (fluid_synth_t *synth, int chan,
-                                     fluid_preset_info_t *info)
+fluid_synth_get_channel_info (fluid_synth_t *synth, int chan,
+                              fluid_synth_channel_info_t *info)
 {
   fluid_channel_t *channel;
   fluid_preset_t *preset;
@@ -4211,8 +4192,8 @@ fluid_synth_get_channel_preset_info (fluid_synth_t *synth, int chan,
 
     if (name)
     {
-      strncpy (info->name, name, FLUID_PRESET_INFO_NAME_LENGTH);
-      info->name[FLUID_PRESET_INFO_NAME_LENGTH - 1] = '\0';
+      strncpy (info->name, name, FLUID_SYNTH_CHANNEL_INFO_NAME_SIZE);
+      info->name[FLUID_SYNTH_CHANNEL_INFO_NAME_SIZE - 1] = '\0';
     }
     else info->name[0] = '\0';
 

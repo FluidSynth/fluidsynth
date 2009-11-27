@@ -75,6 +75,7 @@ fluid_channel_init(fluid_channel_t* chan)
   chan->sfont_bank_prog = 0 << SFONT_SHIFTVAL | banknum << BANK_SHIFTVAL
     | prognum << PROG_SHIFTVAL;
 
+  /* FIXME - fluid_synth_find_preset not real-time safe */
   newpreset = fluid_synth_find_preset(chan->synth, banknum, prognum);
   fluid_channel_set_preset(chan, newpreset);
 
@@ -191,6 +192,7 @@ delete_fluid_channel(fluid_channel_t* chan)
   return FLUID_OK;
 }
 
+/* FIXME - Calls fluid_channel_init() potentially in synthesis context */
 void
 fluid_channel_reset(fluid_channel_t* chan)
 {
@@ -205,6 +207,9 @@ fluid_channel_set_preset(fluid_channel_t* chan, fluid_preset_t* preset)
   fluid_event_queue_elem_t *event;
 
   fluid_preset_notify (chan->preset, FLUID_PRESET_UNSELECTED, chan->channum);
+
+  /* Set shadow preset again, so it contains the actual latest assigned value */
+  fluid_atomic_pointer_set (&chan->shadow_preset, preset);
 
   if (chan->preset)     /* Queue preset free (shouldn't free() in synth context) */
   {
