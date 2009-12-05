@@ -1253,7 +1253,7 @@ int fluid_player_load(fluid_player_t* player, char *filename)
 		return FLUID_FAILED;
 	}
 	player->division = fluid_midi_file_get_division(midifile);
-
+	fluid_player_set_midi_tempo(player, player->miditempo); // Update deltatime
 	/*FLUID_LOG(FLUID_DBG, "quarter note division=%d\n", player->division); */
 
 	if (fluid_midi_file_load_tracks(midifile, player) != FLUID_OK){
