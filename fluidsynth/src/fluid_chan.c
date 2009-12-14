@@ -25,15 +25,15 @@
 
 /* Field shift amounts for sfont_bank_prog bit field integer */
 #define PROG_SHIFTVAL   0
-#define BANK_SHIFTVAL   7
-#define SFONT_SHIFTVAL  21
+#define BANK_SHIFTVAL   8
+#define SFONT_SHIFTVAL  22
 
 /* Field mask values for sfont_bank_prog bit field integer */
-#define PROG_MASKVAL    0x0000007F
-#define BANK_MASKVAL    0x001FFF80
-#define BANKLSB_MASKVAL 0x00003F80
-#define BANKMSB_MASKVAL 0x001FC000
-#define SFONT_MASKVAL   0xFFE00000
+#define PROG_MASKVAL    0x000000FF      /* Bit 7 is used to indicate unset state */
+#define BANK_MASKVAL    0x003FFF00
+#define BANKLSB_MASKVAL 0x00007F00
+#define BANKMSB_MASKVAL 0x003F8000
+#define SFONT_MASKVAL   0xFFC00000
 
 
 static void fluid_channel_init(fluid_channel_t* chan);

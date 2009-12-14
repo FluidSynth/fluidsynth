@@ -1451,7 +1451,7 @@ int fluid_player_set_loop(fluid_player_t* player, int loop)
 /**
  * Set the tempo of a MIDI player.
  * @param player MIDI player instance
- * @param tempo Tempo to set playback speed to (DOCME - Units?)
+ * @param tempo Tempo to set playback speed to (in microseconds per quarter note, as per MIDI file spec)
  * @return Always returns #FLUID_OK
  */
 int fluid_player_set_midi_tempo(fluid_player_t* player, int tempo)

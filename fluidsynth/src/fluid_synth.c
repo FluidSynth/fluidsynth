@@ -51,8 +51,6 @@ static int fluid_synth_queue_midi_event (fluid_synth_t* synth, int type, int cha
 static int fluid_synth_queue_gen_event (fluid_synth_t* synth, int chan,
                                         int param, float value, int absolute);
 static int fluid_synth_queue_int_event (fluid_synth_t* synth, int type, int val);
-static int fluid_synth_queue_chan_int_event (fluid_synth_t* synth, int type,
-                                             int chan, int val);
 static void fluid_synth_thread_queue_destroy_notify (void *data);
 static int fluid_synth_noteon_LOCAL(fluid_synth_t* synth, int chan, int key,
                                        int vel);
@@ -82,10 +80,6 @@ fluid_synth_get_preset(fluid_synth_t* synth, unsigned int sfontnum,
 static fluid_preset_t*
 fluid_synth_get_preset_by_sfont_name(fluid_synth_t* synth, const char *sfontname,
                                      unsigned int banknum, unsigned int prognum);
-static void fluid_synth_bank_select_LOCAL (fluid_synth_t *synth, int chan,
-                                           unsigned int bank);
-static void fluid_synth_sfont_select_LOCAL (fluid_synth_t *synth, int chan,
-                                            unsigned int sfont_id);
 
 static void fluid_synth_update_presets(fluid_synth_t* synth);
 static int fluid_synth_update_gain(fluid_synth_t* synth,
@@ -1257,32 +1251,6 @@ fluid_synth_queue_int_event (fluid_synth_t* synth, int type, int val)
   return FLUID_OK;
 }
 
-/**
- * Queues an event with a channel and integer value payload.
- * @param synth FluidSynth instance
- * @param type Event type (#fluid_event_queue_elem)
- * @param chan MIDI channel
- * @param val Event value
- * @return FLUID_OK on success, FLUID_FAILED otherwise
- */
-static int
-fluid_synth_queue_chan_int_event (fluid_synth_t* synth, int type, int chan, int val)
-{
-  fluid_event_queue_t *queue;
-  fluid_event_queue_elem_t *event;
-
-  event = fluid_synth_get_event_elem (synth, &queue);
-  if (!event) return FLUID_FAILED;
-
-  event->type = type;
-  event->chan_int.channel = chan;
-  event->chan_int.val = val;
-
-  fluid_event_queue_next_inptr (queue);
-
-  return FLUID_OK;
-}
-
 /* Gets called when a thread ends, which has been assigned a queue */
 static void
 fluid_synth_thread_queue_destroy_notify (void *data)
@@ -2193,6 +2161,9 @@ fluid_synth_get_preset(fluid_synth_t* synth, unsigned int sfontnum,
   fluid_sfont_info_t *sfont_info;
   fluid_list_t *list;
 
+  /* 128 indicates an "unset" operation" */
+  if (prognum == FLUID_UNSET_PROGRAM) return NULL;
+
   fluid_rec_mutex_lock (synth->mutex);      /* ++ lock sfont list, bank offset list and sfont */
 
   for (list = synth->sfont_info; list; list = fluid_list_next (list)) {
@@ -2286,6 +2257,9 @@ fluid_synth_find_preset(fluid_synth_t* synth, unsigned int banknum,
  */
 /* FIXME - Currently not real-time safe, due to preset allocation and mutex lock,
  * and may be called from within synthesis context. */
+
+/* As of 1.1.1 prognum can be set to 128 to unset the preset.  Not documented
+ * since fluid_synth_unset_program() should be used instead. */
 int
 fluid_synth_program_change(fluid_synth_t* synth, int chan, int prognum)
 {
@@ -2295,7 +2269,7 @@ fluid_synth_program_change(fluid_synth_t* synth, int chan, int prognum)
 
   fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
   fluid_return_val_if_fail (chan >= 0 && chan < synth->midi_channels, FLUID_FAILED);
-  fluid_return_val_if_fail (prognum >= 0 && prognum <= FLUID_NUM_PROGRAMS, FLUID_FAILED);
+  fluid_return_val_if_fail (prognum >= 0 && prognum <= 128, FLUID_FAILED);
 
   channel = synth->channel[chan];
   fluid_channel_get_sfont_bank_prog(channel, NULL, &banknum, NULL);
@@ -2310,9 +2284,13 @@ fluid_synth_program_change(fluid_synth_t* synth, int chan, int prognum)
    * is a hack for MIDI files that do bank changes in GM mode.  Proper way to
    * handle this would probably be to ignore bank changes when in GM mode. - JG
    */
-  if (channel->channum == 9)
-    preset = fluid_synth_find_preset(synth, DRUM_INST_BANK, prognum);
-  else preset = fluid_synth_find_preset(synth, banknum, prognum);
+  if (prognum != FLUID_UNSET_PROGRAM)
+  {
+    if (channel->channum == 9)
+      preset = fluid_synth_find_preset(synth, DRUM_INST_BANK, prognum);
+    else preset = fluid_synth_find_preset(synth, banknum, prognum);
+  }
+  else preset = NULL;
 
   /* Fallback to another preset if not found */
   if (!preset)
@@ -2364,20 +2342,11 @@ fluid_synth_bank_select(fluid_synth_t* synth, int chan, unsigned int bank)
 {
   fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
   fluid_return_val_if_fail (chan >= 0 && chan < synth->midi_channels, FLUID_FAILED);
+  fluid_return_val_if_fail (bank <= 16383, FLUID_FAILED);
 
-  if (fluid_synth_should_queue (synth))
-    return fluid_synth_queue_chan_int_event (synth, FLUID_EVENT_QUEUE_ELEM_BANK_SELECT,
-                                             chan, bank);
-  else fluid_synth_bank_select_LOCAL (synth, chan, bank);
+  fluid_channel_set_sfont_bank_prog (synth->channel[chan], -1, bank, -1);
 
   return FLUID_OK;
-}
-
-/* Local synthesis thread variant of bank select */
-static void
-fluid_synth_bank_select_LOCAL (fluid_synth_t *synth, int chan, unsigned int bank)
-{
-  fluid_channel_set_sfont_bank_prog (synth->channel[chan], -1, bank, -1);
 }
 
 /**
@@ -2393,19 +2362,9 @@ fluid_synth_sfont_select(fluid_synth_t* synth, int chan, unsigned int sfont_id)
   fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
   fluid_return_val_if_fail (chan >= 0 && chan < synth->midi_channels, FLUID_FAILED);
 
-  if (fluid_synth_should_queue (synth))
-    return fluid_synth_queue_chan_int_event (synth, FLUID_EVENT_QUEUE_ELEM_SFONT_ID,
-                                             chan, sfont_id);
-  else fluid_synth_sfont_select_LOCAL (synth, chan, sfont_id);
+  fluid_channel_set_sfont_bank_prog(synth->channel[chan], sfont_id, -1, -1);
 
   return FLUID_OK;
-}
-
-/* Local synthesis thread variant of SoundFont ID select */
-static void
-fluid_synth_sfont_select_LOCAL (fluid_synth_t *synth, int chan, unsigned int sfont_id)
-{
-  fluid_channel_set_sfont_bank_prog(synth->channel[chan], sfont_id, -1, -1);
 }
 
 /**
@@ -2415,9 +2374,9 @@ fluid_synth_sfont_select_LOCAL (fluid_synth_t *synth, int chan, unsigned int sfo
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  * @since 1.1.1
  *
- * Note: Channel retains its SoundFont ID, bank and program numbers.  Certain
- * operations, such as fluid_synth_reset() or MIDI program changes may
- * re-assign the preset, if one matches.
+ * Note: Channel retains its SoundFont ID and bank numbers, while the program
+ * number is set to an "unset" state.  MIDI program changes may re-assign a
+ * preset if one matches.
  */
 int
 fluid_synth_unset_program (fluid_synth_t *synth, int chan)
@@ -2425,7 +2384,7 @@ fluid_synth_unset_program (fluid_synth_t *synth, int chan)
   fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
   fluid_return_val_if_fail (chan >= 0 && chan < synth->midi_channels, FLUID_FAILED);
 
-  return fluid_synth_set_preset (synth, chan, NULL);
+  return fluid_synth_program_change (synth, chan, FLUID_UNSET_PROGRAM);
 }
 
 /**
@@ -2452,6 +2411,10 @@ fluid_synth_get_program(fluid_synth_t* synth, int chan, unsigned int* sfont_id,
   channel = synth->channel[chan];
   fluid_channel_get_sfont_bank_prog(channel, (int *)sfont_id, (int *)bank_num,
                                     (int *)preset_num);
+
+  /* 128 indicates that the preset is unset.  Set to 0 to be backwards compatible. */
+  if (*preset_num == FLUID_UNSET_PROGRAM) *preset_num = 0;
+
   return FLUID_OK;
 }
 
@@ -3440,12 +3403,6 @@ fluid_synth_process_event_queue_LOCAL (fluid_synth_t *synth,
       fluid_synth_replace_tuning_LOCAL (synth, event->repl_tuning.old_tuning,
                                         event->repl_tuning.new_tuning,
                                         event->repl_tuning.apply, TRUE);
-      break;
-    case FLUID_EVENT_QUEUE_ELEM_BANK_SELECT:
-      fluid_synth_bank_select_LOCAL (synth, event->chan_int.channel, event->chan_int.val);
-      break;
-    case FLUID_EVENT_QUEUE_ELEM_SFONT_ID:
-      fluid_synth_sfont_select_LOCAL (synth, event->chan_int.channel, event->chan_int.val);
       break;
     }
 

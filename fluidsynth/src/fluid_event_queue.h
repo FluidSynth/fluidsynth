@@ -40,9 +40,7 @@ enum fluid_event_queue_elem
   FLUID_EVENT_QUEUE_ELEM_FREE_PRESET,   /**< Free preset return event. Uses pval field of event value */
   FLUID_EVENT_QUEUE_ELEM_SET_TUNING,    /**< Set tuning event. Uses set_tuning field of event value */
   FLUID_EVENT_QUEUE_ELEM_REPL_TUNING,   /**< Replace tuning event. Uses repl_tuning field of event value */
-  FLUID_EVENT_QUEUE_ELEM_UNREF_TUNING,  /**< Unref tuning return event. Uses unref_tuning field of event value */
-  FLUID_EVENT_QUEUE_ELEM_BANK_SELECT,   /**< MIDI bank select on a channel. Uses chan_int field. */
-  FLUID_EVENT_QUEUE_ELEM_SFONT_ID       /**< SoundFont ID select on a channel. Uses chan_int field. */
+  FLUID_EVENT_QUEUE_ELEM_UNREF_TUNING  /**< Unref tuning return event. Uses unref_tuning field of event value */
 };
 
 /**
@@ -145,7 +143,6 @@ typedef struct
     fluid_event_set_tuning_t set_tuning;        /**< If type == FLUID_EVENT_QUEUE_ELEM_SET_TUNING */
     fluid_event_repl_tuning_t repl_tuning;      /**< If type == FLUID_EVENT_QUEUE_ELEM_REPL_TUNING */
     fluid_event_unref_tuning_t unref_tuning;    /**< If type == FLUID_EVENT_QUEUE_ELEM_UNREF_TUNING */
-    fluid_event_channel_int_t chan_int;         /**< If type == FLUID_EVENT_QUEUE_ELEM_BANK_SELECT || type == FLUID_EVENT_QUEUE_ELEM_SFONT_ID */
     double dval;                /**< A floating point payload value */
     int ival;                   /**< An integer payload value */
     void *pval;                 /**< A pointer payload value */
