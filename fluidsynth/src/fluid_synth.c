@@ -2289,39 +2289,38 @@ fluid_synth_program_change(fluid_synth_t* synth, int chan, int prognum)
     if (channel->channum == 9)
       preset = fluid_synth_find_preset(synth, DRUM_INST_BANK, prognum);
     else preset = fluid_synth_find_preset(synth, banknum, prognum);
-  }
-  else preset = NULL;
 
-  /* Fallback to another preset if not found */
-  if (!preset)
-  {
-    subst_bank = banknum;
-    subst_prog = prognum;
-
-    /* Melodic instrument? */
-    if (channel->channum != 9 && banknum != DRUM_INST_BANK)
+    /* Fallback to another preset if not found */
+    if (!preset)
     {
-      subst_bank = 0;
+      subst_bank = banknum;
+      subst_prog = prognum;
 
-      /* Fallback first to bank 0:prognum */
-      preset = fluid_synth_find_preset(synth, 0, prognum);
-
-      /* Fallback to first preset in bank 0 */
-      if (!preset && prognum != 0)
+      /* Melodic instrument? */
+      if (channel->channum != 9 && banknum != DRUM_INST_BANK)
       {
-	preset = fluid_synth_find_preset(synth, 0, 0);
-	subst_prog = 0;
-      }
-    }
-    else /* Percussion: Fallback to preset 0 in percussion bank */
-    {
-      preset = fluid_synth_find_preset(synth, DRUM_INST_BANK, 0);
-      subst_prog = 0;
-    }
+        subst_bank = 0;
 
-    if (preset)
-      FLUID_LOG(FLUID_WARN, "Instrument not found on channel %d [bank=%d prog=%d], substituted [bank=%d prog=%d]",
-		chan, banknum, prognum, subst_bank, subst_prog); 
+        /* Fallback first to bank 0:prognum */
+        preset = fluid_synth_find_preset(synth, 0, prognum);
+
+        /* Fallback to first preset in bank 0 */
+        if (!preset && prognum != 0)
+        {
+          preset = fluid_synth_find_preset(synth, 0, 0);
+	  subst_prog = 0;
+        }
+      }
+      else /* Percussion: Fallback to preset 0 in percussion bank */
+      {
+        preset = fluid_synth_find_preset(synth, DRUM_INST_BANK, 0);
+        subst_prog = 0;
+      }
+
+      if (preset)
+        FLUID_LOG(FLUID_WARN, "Instrument not found on channel %d [bank=%d prog=%d], substituted [bank=%d prog=%d]",
+                  chan, banknum, prognum, subst_bank, subst_prog); 
+    }
   }
 
   /* Assign the SoundFont ID and program number to the channel */
