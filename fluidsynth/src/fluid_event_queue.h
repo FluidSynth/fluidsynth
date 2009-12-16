@@ -35,8 +35,6 @@ enum fluid_event_queue_elem
   FLUID_EVENT_QUEUE_ELEM_GEN,           /**< Generator event. Uses gen field of event value */
   FLUID_EVENT_QUEUE_ELEM_PRESET,        /**< Preset set event. Uses preset field of event value */
   FLUID_EVENT_QUEUE_ELEM_STOP_VOICES,   /**< Stop voices event. Uses ival field of event value */
-  FLUID_EVENT_QUEUE_ELEM_REVERB,        /**< Reverb set or return event. Uses reverb field of event value */
-  FLUID_EVENT_QUEUE_ELEM_CHORUS,        /**< Chorus set or return event. Uses chorus field of event value */
   FLUID_EVENT_QUEUE_ELEM_FREE_PRESET,   /**< Free preset return event. Uses pval field of event value */
   FLUID_EVENT_QUEUE_ELEM_SET_TUNING,    /**< Set tuning event. Uses set_tuning field of event value */
   FLUID_EVENT_QUEUE_ELEM_REPL_TUNING,   /**< Replace tuning event. Uses repl_tuning field of event value */
@@ -62,31 +60,6 @@ typedef struct
   int channel;                  /**< MIDI channel number */
   fluid_preset_t *preset;       /**< Preset to assign (synth thread owns) */
 } fluid_event_preset_t;
-
-/**
- * Reverb assignment structure.
- */
-typedef struct
-{
-  char set;           /**< Bit 0: roomsize, 1: damping, 2: width, 3: level */
-  float roomsize;
-  float damping;
-  float width;
-  float level;
-} fluid_event_reverb_t;
-
-/**
- * Chorus assignment structure.
- */
-typedef struct
-{
-  char set;           /**< Bit 0: nr, 1: type, 2: level, 3: speed, 4: depth */
-  char nr;
-  char type;
-  float level;
-  float speed;
-  float depth;
-} fluid_event_chorus_t;
 
 /**
  * Tuning assignment event structure.
@@ -138,8 +111,6 @@ typedef struct
     fluid_midi_event_t midi;    /**< If type == FLUID_EVENT_QUEUE_ELEM_MIDI */
     fluid_event_gen_t gen;      /**< If type == FLUID_EVENT_QUEUE_ELEM_GEN */
     fluid_event_preset_t preset;        /**< If type == FLUID_EVENT_QUEUE_ELEM_PRESET */
-    fluid_event_reverb_t reverb;        /**< If type == FLUID_EVENT_QUEUE_ELEM_REVERB */
-    fluid_event_chorus_t chorus;        /**< If type == FLUID_EVENT_QUEUE_ELEM_CHORUS */
     fluid_event_set_tuning_t set_tuning;        /**< If type == FLUID_EVENT_QUEUE_ELEM_SET_TUNING */
     fluid_event_repl_tuning_t repl_tuning;      /**< If type == FLUID_EVENT_QUEUE_ELEM_REPL_TUNING */
     fluid_event_unref_tuning_t unref_tuning;    /**< If type == FLUID_EVENT_QUEUE_ELEM_UNREF_TUNING */

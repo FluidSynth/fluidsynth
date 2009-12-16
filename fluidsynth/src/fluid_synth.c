@@ -101,10 +101,6 @@ static fluid_sfont_info_t *new_fluid_sfont_info (fluid_synth_t *synth,
                                                  fluid_sfont_t *sfont);
 static void fluid_synth_sfont_unref (fluid_synth_t *synth, fluid_sfont_t *sfont);
 static int fluid_synth_sfunload_callback(void* data, unsigned int msec);
-static int fluid_synth_set_reverb_LOCAL(fluid_synth_t* synth, int set, double roomsize,
-                                        double damping, double width, double level);
-static int fluid_synth_set_chorus_LOCAL(fluid_synth_t* synth, int set, int nr, float level,
-                                        float speed, float depth_ms, int type);
 static void fluid_synth_release_voice_on_same_note_LOCAL(fluid_synth_t* synth,
                                                             int chan, int key);
 static fluid_tuning_t* fluid_synth_get_tuning(fluid_synth_t* synth,
@@ -811,35 +807,6 @@ fluid_synth_return_event_process_thread (void* data)
     {
       switch (event->type)
       {
-        case FLUID_EVENT_QUEUE_ELEM_REVERB:       /* Sync reverb shadow variables */
-          if (event->reverb.set & FLUID_REVMODEL_SET_ROOMSIZE)
-            fluid_atomic_float_set (&synth->reverb_roomsize, event->reverb.roomsize);
-
-          if (event->reverb.set & FLUID_REVMODEL_SET_DAMPING)
-            fluid_atomic_float_set (&synth->reverb_damping, event->reverb.damping);
-
-          if (event->reverb.set & FLUID_REVMODEL_SET_WIDTH)
-            fluid_atomic_float_set (&synth->reverb_width, event->reverb.width);
-
-          if (event->reverb.set & FLUID_REVMODEL_SET_LEVEL)
-            fluid_atomic_float_set (&synth->reverb_level, event->reverb.level);
-          break;
-        case FLUID_EVENT_QUEUE_ELEM_CHORUS:       /* Sync chorus shadow variables */
-          if (event->chorus.set & FLUID_CHORUS_SET_NR)
-            fluid_atomic_int_set (&synth->chorus_nr, event->chorus.nr);
-
-          if (event->chorus.set & FLUID_CHORUS_SET_LEVEL)
-            fluid_atomic_float_set (&synth->chorus_level, event->chorus.level);
-
-          if (event->chorus.set & FLUID_CHORUS_SET_SPEED)
-            fluid_atomic_float_set (&synth->chorus_speed, event->chorus.speed);
-
-          if (event->chorus.set & FLUID_CHORUS_SET_DEPTH)
-            fluid_atomic_float_set (&synth->chorus_depth, event->chorus.depth);
-
-          if (event->chorus.set & FLUID_CHORUS_SET_TYPE)
-            fluid_atomic_int_set (&synth->chorus_type, event->chorus.type);
-          break;
         case FLUID_EVENT_QUEUE_ELEM_FREE_PRESET:  /* Preset free event */
           preset = (fluid_preset_t *)(event->pval);
           sfont = preset->sfont;
@@ -3384,16 +3351,6 @@ fluid_synth_process_event_queue_LOCAL (fluid_synth_t *synth,
     case FLUID_EVENT_QUEUE_ELEM_STOP_VOICES:
       fluid_synth_stop_LOCAL (synth, event->ival);
       break;
-    case FLUID_EVENT_QUEUE_ELEM_REVERB:
-      fluid_synth_set_reverb_LOCAL (synth, event->reverb.set, event->reverb.roomsize,
-                                    event->reverb.damping, event->reverb.width,
-                                    event->reverb.level);
-      break;
-    case FLUID_EVENT_QUEUE_ELEM_CHORUS:
-      fluid_synth_set_chorus_LOCAL (synth, event->chorus.set, event->chorus.nr,
-                                    event->chorus.level, event->chorus.speed,
-                                    event->chorus.depth, event->chorus.type);
-      break;
     case FLUID_EVENT_QUEUE_ELEM_SET_TUNING:
       fluid_synth_set_tuning_LOCAL (synth, event->set_tuning.channel,
                                     event->set_tuning.tuning, event->set_tuning.apply);
@@ -4244,6 +4201,9 @@ fluid_synth_set_reverb_preset(fluid_synth_t* synth, int num)
  * @param damping Reverb damping value (0.0-1.0)
  * @param width Reverb width value (0.0-100.0)
  * @param level Reverb level value (0.0-1.0)
+ *
+ * NOTE: Not realtime safe and therefore should not be called from synthesis
+ * context at the risk of stalling audio output.
  */
 void
 fluid_synth_set_reverb(fluid_synth_t* synth, double roomsize, double damping,
@@ -4262,22 +4222,22 @@ fluid_synth_set_reverb(fluid_synth_t* synth, double roomsize, double damping,
  * @param width Reverb width value (0.0-100.0)
  * @param level Reverb level value (0.0-1.0)
  * @return FLUID_OK on success, FLUID_FAILED otherwise
+ *
+ * NOTE: Not realtime safe and therefore should not be called from synthesis
+ * context at the risk of stalling audio output.
  */
 int
 fluid_synth_set_reverb_full(fluid_synth_t* synth, int set, double roomsize,
                             double damping, double width, double level)
 {
-  fluid_event_queue_t *queue;
-  fluid_event_queue_elem_t *event;
-
   fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
 
   if (!(set & FLUID_REVMODEL_SET_ALL))
     set = FLUID_REVMODEL_SET_ALL; 
 
-  /* Synth shadow values are set here so that they will be returned if querried,
-   * but shadow values are also updated via a return event to ensure they don't
-   * get out of sync, if this is called from synthesis and non-synthesis context. */
+  /* Synth shadow values are set here so that they will be returned if querried */
+
+  fluid_rec_mutex_lock (synth->mutex);      /* ++ Lock reverb */
 
   if (set & FLUID_REVMODEL_SET_ROOMSIZE)
     fluid_atomic_float_set (&synth->reverb_roomsize, roomsize);
@@ -4291,50 +4251,9 @@ fluid_synth_set_reverb_full(fluid_synth_t* synth, int set, double roomsize,
   if (set & FLUID_REVMODEL_SET_LEVEL)
     fluid_atomic_float_set (&synth->reverb_level, level);
 
-  if (fluid_synth_should_queue (synth))
-  {
-    event = fluid_synth_get_event_elem (synth, &queue);
-    if (!event) return FLUID_FAILED;
-
-    event->type = FLUID_EVENT_QUEUE_ELEM_REVERB;
-    event->reverb.set = set;
-    event->reverb.roomsize = roomsize;
-    event->reverb.damping = damping;
-    event->reverb.width = width;
-    event->reverb.level = level;
-
-    fluid_event_queue_next_inptr (queue);
-    return FLUID_OK;
-  }
-  else return fluid_synth_set_reverb_LOCAL (synth, set, roomsize, damping, width, level);
-}
-
-/* Local synthesis thread reverb set function */
-static int
-fluid_synth_set_reverb_LOCAL(fluid_synth_t* synth, int set, double roomsize,
-                             double damping, double width, double level)
-{
-  fluid_event_queue_elem_t *event;
-
   fluid_revmodel_set (synth->reverb, set, roomsize, damping, width, level);
 
-  /* Send return reverb event to sync synth's copy of reverb parameters */
-
-  event = fluid_event_queue_get_inptr (synth->return_queue);
-  if (!event)
-  {
-    FLUID_LOG (FLUID_ERR, "Synth return event queue full");
-    return FLUID_FAILED;
-  }
-
-  event->type = FLUID_EVENT_QUEUE_ELEM_REVERB;
-  event->reverb.set = set;
-  event->reverb.roomsize = roomsize;
-  event->reverb.damping = damping;
-  event->reverb.width = width;
-  event->reverb.level = level;
-
-  fluid_event_queue_next_inptr (synth->return_queue);
+  fluid_rec_mutex_unlock (synth->mutex);    /* -- Unlock reverb */
 
   return FLUID_OK;
 }
@@ -4414,6 +4333,9 @@ fluid_synth_set_chorus_on(fluid_synth_t* synth, int on)
  * @param depth_ms Chorus depth (max value depends on synth sample rate,
  *   0.0-21.0 is safe for sample rate values up to 96KHz)
  * @param type Chorus waveform type (#fluid_chorus_mod)
+ *
+ * NOTE: Not realtime safe and therefore should not be called from synthesis
+ * context at the risk of stalling audio output.
  */
 void
 fluid_synth_set_chorus(fluid_synth_t* synth, int nr, double level,
@@ -4434,22 +4356,22 @@ fluid_synth_set_chorus(fluid_synth_t* synth, int nr, double level,
  * @param depth_ms Chorus depth (max value depends on synth sample rate,
  *   0.0-21.0 is safe for sample rate values up to 96KHz)
  * @param type Chorus waveform type (#fluid_chorus_mod)
+ *
+ * NOTE: Not realtime safe and therefore should not be called from synthesis
+ * context at the risk of stalling audio output.
  */
 int
 fluid_synth_set_chorus_full(fluid_synth_t* synth, int set, int nr, double level,
                             double speed, double depth_ms, int type)
 {
-  fluid_event_queue_t *queue;
-  fluid_event_queue_elem_t *event;
-
   fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
 
   if (!(set & FLUID_CHORUS_SET_ALL))
     set = FLUID_CHORUS_SET_ALL;
 
-  /* Synth shadow values are set here so that they will be returned if querried,
-   * but shadow values are also updated via a return event to ensure they don't
-   * get out of sync, if this is called from synthesis and non-synthesis context. */
+  /* Synth shadow values are set here so that they will be returned if querried */
+
+  fluid_rec_mutex_lock (synth->mutex);      /* ++ Lock chorus */
 
   if (set & FLUID_CHORUS_SET_NR)
     fluid_atomic_int_set (&synth->chorus_nr, nr);
@@ -4466,52 +4388,9 @@ fluid_synth_set_chorus_full(fluid_synth_t* synth, int set, int nr, double level,
   if (set & FLUID_CHORUS_SET_TYPE)
     fluid_atomic_int_set (&synth->chorus_type, type);
 
-  if (fluid_synth_should_queue (synth))
-  {
-    event = fluid_synth_get_event_elem (synth, &queue);
-    if (!event) return FLUID_FAILED;
-
-    event->type = FLUID_EVENT_QUEUE_ELEM_CHORUS;
-    event->chorus.set = set;
-    event->chorus.nr = nr;
-    event->chorus.type = type;
-    event->chorus.level = level;
-    event->chorus.speed = speed;
-    event->chorus.depth = depth_ms;
-
-    fluid_event_queue_next_inptr (queue);
-    return FLUID_OK;
-  }
-  else return fluid_synth_set_chorus_LOCAL (synth, set, nr, level, speed, depth_ms, type);
-}
-
-/* Local synthesis thread version of set chorus function */
-static int
-fluid_synth_set_chorus_LOCAL(fluid_synth_t* synth, int set, int nr, float level,
-                             float speed, float depth_ms, int type)
-{
-  fluid_event_queue_elem_t *event;
-
   fluid_chorus_set (synth->chorus, set, nr, level, speed, depth_ms, type);
 
-  /* Send return chorus event to sync synth's copy of chorus parameters */
-
-  event = fluid_event_queue_get_inptr (synth->return_queue);
-  if (!event)
-  {
-    FLUID_LOG (FLUID_ERR, "Synth return event queue full");
-    return FLUID_FAILED;
-  }
-
-  event->type = FLUID_EVENT_QUEUE_ELEM_CHORUS;
-  event->chorus.set = set;
-  event->chorus.nr = nr;
-  event->chorus.type = type;
-  event->chorus.level = level;
-  event->chorus.speed = speed;
-  event->chorus.depth = depth_ms;
-
-  fluid_event_queue_next_inptr (synth->return_queue);
+  fluid_rec_mutex_unlock (synth->mutex);    /* -- Unlock chorus */
 
   return FLUID_OK;
 }
