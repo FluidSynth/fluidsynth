@@ -63,6 +63,9 @@ void fluid_pulse_audio_driver_settings(fluid_settings_t* settings)
 {
   fluid_settings_register_str(settings, "audio.pulseaudio.server", "default", 0, NULL, NULL);
   fluid_settings_register_str(settings, "audio.pulseaudio.device", "default", 0, NULL, NULL);
+  fluid_settings_register_str(settings, "audio.pulseaudio.media-role", "music", 0, NULL, NULL);
+  fluid_settings_register_int(settings, "audio.pulseaudio.adjust-latency", 1, 0, 1,
+                              FLUID_HINT_TOGGLED, NULL, NULL);
 }
 
 
@@ -81,9 +84,10 @@ new_fluid_pulse_audio_driver2(fluid_settings_t* settings,
   pa_sample_spec samplespec;
   pa_buffer_attr bufattr;
   double sample_rate;
-  int period_size, period_bytes;
+  int period_size, period_bytes, adjust_latency;
   char *server = NULL;
   char *device = NULL;
+  char *media_role = NULL;
   int realtime_prio = 0;
   int err;
 
@@ -100,7 +104,16 @@ new_fluid_pulse_audio_driver2(fluid_settings_t* settings,
   fluid_settings_getnum(settings, "synth.sample-rate", &sample_rate);
   fluid_settings_dupstr(settings, "audio.pulseaudio.server", &server);  /* ++ alloc server string */
   fluid_settings_dupstr(settings, "audio.pulseaudio.device", &device);  /* ++ alloc device string */
-  fluid_settings_getint (settings, "audio.realtime-prio", &realtime_prio);
+  fluid_settings_dupstr(settings, "audio.pulseaudio.media-role", &media_role);  /* ++ alloc media-role string */
+  fluid_settings_getint(settings, "audio.realtime-prio", &realtime_prio);
+  fluid_settings_getint(settings, "audio.pulseaudio.adjust-latency", &adjust_latency);
+
+  if (media_role != NULL) {
+    if (strcmp(media_role, "") != 0) {
+      g_setenv("PULSE_PROP_media.role", media_role, TRUE);
+    }
+    FLUID_FREE (media_role);      /* -- free media_role string */
+  }
 
   if (server && strcmp (server, "default") == 0)
   {
@@ -124,14 +137,14 @@ new_fluid_pulse_audio_driver2(fluid_settings_t* settings,
   samplespec.rate = sample_rate;
 
   period_bytes = period_size * sizeof (float) * 2;
-  bufattr.maxlength = period_bytes;
+  bufattr.maxlength = adjust_latency ? -1 : period_bytes;
   bufattr.tlength = period_bytes;
   bufattr.minreq = -1;
   bufattr.prebuf = -1;    /* Just initialize to same value as tlength */
   bufattr.fragsize = -1;  /* Not used */
 
   dev->pa_handle = pa_simple_new (server, "FluidSynth", PA_STREAM_PLAYBACK,
-				  device, "Synth output", &samplespec,
+				  device, "FluidSynth output", &samplespec,
 				  NULL, /* pa_channel_map */
 				  &bufattr,
 				  &err);
