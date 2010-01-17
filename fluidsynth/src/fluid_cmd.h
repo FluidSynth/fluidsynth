@@ -36,6 +36,8 @@ int fluid_handle_help(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t o
 int fluid_handle_quit(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
 int fluid_handle_noteon(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
 int fluid_handle_noteoff(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_pitch_bend(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_pitch_bend_range(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
 int fluid_handle_cc(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
 int fluid_handle_prog(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
 int fluid_handle_select(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);

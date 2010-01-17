@@ -26,6 +26,7 @@
 #include "fluid_sys.h"
 #include "fluid_midi_router.h"
 #include "fluid_sfont.h"
+#include "fluid_chan.h"
 
 #if WITH_READLINE
 #include <readline/readline.h>
@@ -69,6 +70,10 @@ fluid_cmd_t fluid_commands[] = {
     "noteon chan key vel        Send noteon" },
   { "noteoff", "event", (fluid_cmd_func_t) fluid_handle_noteoff, NULL,
     "noteoff chan key           Send noteoff"  },
+  { "pitch_bend", "event", (fluid_cmd_func_t) fluid_handle_pitch_bend, NULL,
+    "pitch_bend chan offset           Bend pitch"  },
+  { "pitch_bend_range", "event", (fluid_cmd_func_t) fluid_handle_pitch_bend_range, NULL,
+    "pitch_bend chan range           Set bend pitch range"  },
   { "cc", "event", (fluid_cmd_func_t) fluid_handle_cc, NULL,
     "cc chan ctrl value         Send control-change message" },
   { "prog", "event", (fluid_cmd_func_t) fluid_handle_prog, NULL,
@@ -436,6 +441,37 @@ fluid_handle_noteoff(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t ou
     return -1;
   }
   return fluid_synth_noteoff(synth, atoi(av[0]), atoi(av[1]));
+}
+
+int
+fluid_handle_pitch_bend(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out)
+{
+  if (ac < 2) {
+    fluid_ostream_printf(out, "pitch_bend: too few arguments\n");
+    return -1;
+  }
+  if (!fluid_is_number(av[0]) || !fluid_is_number(av[1])) {
+    fluid_ostream_printf(out, "pitch_bend: invalid argument\n");
+    return -1;
+  }
+  return fluid_synth_pitch_bend(synth, atoi(av[0]), atoi(av[1]));
+}
+
+int
+fluid_handle_pitch_bend_range(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out)
+{
+  if (ac < 2) {
+    fluid_ostream_printf(out, "pitch_bend_range: too few arguments\n");
+    return -1;
+  }
+  if (!fluid_is_number(av[0]) || !fluid_is_number(av[1])) {
+    fluid_ostream_printf(out, "pitch_bend_range: invalid argument\n");
+    return -1;
+  }
+  int channum = atoi(av[0]);
+  int value = atoi(av[1]);
+  fluid_channel_set_pitch_wheel_sensitivity(synth->channel[channum], value);
+  return 0;
 }
 
 int
