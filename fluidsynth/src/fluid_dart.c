@@ -56,7 +56,6 @@ typedef struct {
     MCI_BUFFER_PARMS BufferParms;               /* Device buffer parms     */
 } fluid_dart_audio_driver_t;
 
-static fluid_dart_audio_driver_t* m_dev;
 static HMODULE m_hmodMDM = NULLHANDLE;
 static ULONG (APIENTRY *m_pfnmciSendCommand)(USHORT, USHORT, ULONG, PVOID, USHORT) = NULL;
 
@@ -115,7 +114,7 @@ new_fluid_dart_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
      */
     if( m_hmodMDM == NULLHANDLE )
     {
-        rc = DosLoadModule(szFailedName, sizeof(szFailedName), "MDM.DLL", &m_hmodMDM);
+        rc = DosLoadModule(szFailedName, sizeof(szFailedName), "MDM", &m_hmodMDM);
 
         if (rc != 0 ) {
             FLUID_LOG(FLUID_ERR, "Cannot load MDM.DLL for DART due to %s", szFailedName);
@@ -149,7 +148,7 @@ new_fluid_dart_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
 
     dev->usDeviceID = AmpOpenParms.usDeviceID;
 
-    /* Set the m_MixSetupParms data structure to match the requirements.
+    /* Set the MixSetupParms data structure to match the requirements.
      * This is a global that is used to setup the mixer.
      */
     dev->MixSetupParms.ulBitsPerSample = BPS_16;
@@ -172,7 +171,7 @@ new_fluid_dart_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
         goto error_recovery;
     }
 
-    /* Set up the m_BufferParms data structure and allocate
+    /* Set up the BufferParms data structure and allocate
      * device buffers from the Amp-Mixer
      */
     dev->BufferParms.ulNumBuffers = NUM_MIX_BUFS;
@@ -194,6 +193,7 @@ new_fluid_dart_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
        FLUID_MEMSET(dev->MixBuffers[i].pBuffer, 0, dev->BufferParms.ulBufferSize);
        dev->MixBuffers[i].ulBufferLength = dev->BufferParms.ulBufferSize;
        dev->MixBuffers[i].ulFlags = 0;
+       dev->MixBuffers[i].ulUserParm = (ULONG)dev;
        fluid_synth_write_s16(dev->synth, dev->MixBuffers[i].ulBufferLength / dev->frame_size,
                              dev->MixBuffers[i].pBuffer, 0, 2, dev->MixBuffers[i].pBuffer, 1, 2 );
     }
@@ -203,8 +203,6 @@ new_fluid_dart_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
     dev->MixSetupParms.pmixWrite(dev->MixSetupParms.ulMixHandle,
                                  dev->MixBuffers,
                                  NUM_MIX_BUFS);
-
-    m_dev = dev;
 
     return (fluid_audio_driver_t*) dev;
 
@@ -248,13 +246,15 @@ int delete_fluid_dart_audio_driver(fluid_audio_driver_t* p)
 
 static LONG APIENTRY fluid_dart_audio_run( ULONG ulStatus, PMCI_MIX_BUFFER pBuffer, ULONG ulFlags )
 {
+    fluid_dart_audio_driver_t* dev=(fluid_dart_audio_driver_t*)pBuffer->ulUserParm;
+
     switch( ulFlags ) {
         case MIX_STREAM_ERROR | MIX_WRITE_COMPLETE: /* error occur in device */
         case MIX_WRITE_COMPLETE:                    /* for playback  */
             FLUID_MEMSET(pBuffer->pBuffer, 0, pBuffer->ulBufferLength);
-            fluid_synth_write_s16(m_dev->synth, pBuffer->ulBufferLength / m_dev->frame_size,
+            fluid_synth_write_s16(dev->synth, pBuffer->ulBufferLength / dev->frame_size,
                                   pBuffer->pBuffer, 0, 2, pBuffer->pBuffer, 1, 2 );
-            m_dev->MixSetupParms.pmixWrite(m_dev->MixSetupParms.ulMixHandle, pBuffer, 1);
+            dev->MixSetupParms.pmixWrite(dev->MixSetupParms.ulMixHandle, pBuffer, 1);
             break;
     }
 
