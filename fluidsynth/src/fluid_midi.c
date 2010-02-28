@@ -253,7 +253,7 @@ int fluid_midi_file_read_track(fluid_midi_file* mf, fluid_player_t* player, int 
 	while (!found_track){
 
 		if (fluid_isasciistring((char*) id) == 0) {
-			FLUID_LOG(FLUID_ERR, "An non-ascii track header found, currupt file");
+			FLUID_LOG(FLUID_ERR, "An non-ascii track header found, corrupt file");
 			return FLUID_FAILED;
 
 		} else if (strcmp((char*) id, "MTrk") == 0) {
@@ -1184,7 +1184,7 @@ int fluid_player_reset(fluid_player_t* player)
 		}
 	}
 /*	player->current_file = NULL; */
-	player->status = FLUID_PLAYER_READY;
+/*	player->status = FLUID_PLAYER_READY; */
 /*	player->loop = 1; */
 	player->ntracks = 0;
 	player->division = 0;
