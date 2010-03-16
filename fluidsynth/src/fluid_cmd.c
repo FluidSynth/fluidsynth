@@ -460,6 +460,8 @@ fluid_handle_pitch_bend(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t
 int
 fluid_handle_pitch_bend_range(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out)
 {
+  int channum;
+  int value;
   if (ac < 2) {
     fluid_ostream_printf(out, "pitch_bend_range: too few arguments\n");
     return -1;
@@ -468,8 +470,8 @@ fluid_handle_pitch_bend_range(fluid_synth_t* synth, int ac, char** av, fluid_ost
     fluid_ostream_printf(out, "pitch_bend_range: invalid argument\n");
     return -1;
   }
-  int channum = atoi(av[0]);
-  int value = atoi(av[1]);
+  channum = atoi(av[0]);
+  value = atoi(av[1]);
   fluid_channel_set_pitch_wheel_sensitivity(synth->channel[channum], value);
   return 0;
 }
