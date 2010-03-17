@@ -365,11 +365,17 @@ fluid_is_soundfont(const char *filename)
  */
 unsigned int fluid_curtime(void)
 {
+  static glong initial_seconds = 0;
   GTimeVal timeval;
+
+  if (initial_seconds == 0) {
+    g_get_current_time (&timeval);
+    initial_seconds = timeval.tv_sec;
+  }
 
   g_get_current_time (&timeval);
 
-  return (timeval.tv_sec * 1000.0 + timeval.tv_usec / 1000.0);
+  return (unsigned int)((timeval.tv_sec - initial_seconds) * 1000.0 + timeval.tv_usec / 1000.0);
 }
 
 /**
