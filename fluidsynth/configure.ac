@@ -38,7 +38,7 @@ AC_SUBST(LT_VERSION_INFO)
 AM_CONFIG_HEADER(src/config.h)
 AC_CONFIG_MACRO_DIR([m4])
 
-CFLAGS="$CFLAGS -Wall"
+CFLAGS="$CFLAGS"
 
 dnl Check for programs
 AC_PROG_CC
@@ -144,12 +144,15 @@ AC_ARG_ENABLE(debug, AS_HELP_STRING([--enable-debug],
 	[enable debugging (default=no)]),
   ENABLE_DEBUG=$enableval)
 
-if test "$ENABLE_DEBUG" = "yes"; then
-  CFLAGS="${CFLAGS} ${FCCFLAGS} -g -Wall -W -Wpointer-arith -Wbad-function-cast -Wcast-qual -Wcast-align -Wstrict-prototypes -Wno-unused-parameter -Wno-cast-qual"
-  AC_DEFINE(DEBUG, 1, [Define to activate debugging message]) 
-else
-  CFLAGS="${CFLAGS} ${FCCFLAGS} -O2 -fomit-frame-pointer -funroll-all-loops -finline-functions -Wall -W -Wpointer-arith -Wbad-function-cast -Wcast-qual -Wcast-align -Wstrict-prototypes -Winline -Wno-unused-parameter -Wno-cast-qual"
-  AC_DEFINE(DEBUG, 0, [Define to activate debugging message])
+# Those are only valid for GCC
+if test "$GCC" = yes; then
+  if test "$ENABLE_DEBUG" = "yes"; then
+    CFLAGS="${CFLAGS} ${FCCFLAGS} -g -Wall -W -Wpointer-arith -Wbad-function-cast -Wcast-qual -Wcast-align -Wstrict-prototypes -Wno-unused-parameter -Wno-cast-qual"
+    AC_DEFINE(DEBUG, 1, [Define to activate debugging message]) 
+  else
+    CFLAGS="${CFLAGS} ${FCCFLAGS} -O2 -fomit-frame-pointer -funroll-all-loops -finline-functions -Wall -W -Wpointer-arith -Wbad-function-cast -Wcast-qual -Wcast-align -Wstrict-prototypes -Winline -Wno-unused-parameter -Wno-cast-qual"
+    AC_DEFINE(DEBUG, 0, [Define to activate debugging message])
+  fi
 fi
 
 dnl Assert that glib and gthread are available
