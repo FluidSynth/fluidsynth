@@ -44,6 +44,10 @@
 
 #define BUFFER_LENGTH 512
 
+// Build issue on some systems (OSS 4.0)?
+#ifndef SOUND_PCM_WRITE_CHANNELS
+  #define SOUND_PCM_WRITE_CHANNELS        SNDCTL_DSP_CHANNELS
+#endif
 
 /** fluid_oss_audio_driver_t
  *
