@@ -1489,7 +1489,7 @@ int fluid_player_join(fluid_player_t* player)
 		return fluid_timer_join(player->system_timer);
 	} else if (player->sample_timer) {
 		/* Busy-wait loop, since there's no thread to wait for... */
-		while (player->status == FLUID_PLAYER_PLAYING) {
+		while (player->status != FLUID_PLAYER_DONE) {
 #if defined(WIN32)
 			Sleep(10);
 #else
