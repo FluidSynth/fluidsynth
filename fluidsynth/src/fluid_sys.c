@@ -26,6 +26,10 @@
 #include <readline/history.h>
 #endif
 
+#ifdef DBUS_SUPPORT
+#include "fluid_rtkit.h"
+#endif
+
 /* WIN32 HACK - Flag used to differentiate between a file descriptor and a socket.
  * Should work, so long as no SOCKET or file descriptor ends up with this bit set. - JG */
 #define WIN32_SOCKET_FLAG       0x40000000
@@ -421,10 +425,21 @@ fluid_thread_self_set_prio (int prio_level)
 
   if (prio_level > 0)
   {
+
+    memset(&priority, 0, sizeof(priority));
     priority.sched_priority = prio_level;
 
-    if (pthread_setschedparam (pthread_self (), SCHED_FIFO, &priority) != 0)
-      FLUID_LOG(FLUID_WARN, "Failed to set thread to high priority");
+    if (pthread_setschedparam (pthread_self (), SCHED_FIFO, &priority) == 0) {
+      return;
+    }
+#ifdef DBUS_SUPPORT
+/* Try to gain high priority via rtkit */
+    
+    if (fluid_rtkit_make_realtime(0, prio_level) == 0) {
+      return;
+    }
+#endif
+    FLUID_LOG(FLUID_WARN, "Failed to set thread to high priority");
   }
 }
 

@@ -160,6 +160,26 @@ PKG_CHECK_MODULES(GLIB, glib-2.0 >= 2.6.5 gthread-2.0 >= 2.6.5)
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
 
+dnl - Check for DBUS support
+
+AC_ARG_ENABLE(dbus-support, AS_HELP_STRING([--disable-dbus-support],
+      [Do not compile with support for D-Bus (default=auto)]),
+  enable_dbus_support=$enableval, enable_dbus_support="yes")
+
+if test "x$enable_dbus_support" != "xno"; then
+  PKG_CHECK_MODULES(DBUS, dbus-1 >= 1.0.0, DBUS_SUPPORT=1, DBUS_SUPPORT=0)
+else
+  DBUS_SUPPORT=0
+fi
+
+if test "$DBUS_SUPPORT" = "1"; then
+  AC_DEFINE(DBUS_SUPPORT, 1, [Define to enable D-Bus support])
+fi
+AM_CONDITIONAL(DBUS_SUPPORT, test "$DBUS_SUPPORT" = "1")
+AC_SUBST(DBUS_CFLAGS)
+AC_SUBST(DBUS_LIBS)
+
+
 dnl Check for libsndfile support
 
 AC_ARG_ENABLE(libsndfile-support, AS_HELP_STRING([--disable-libsndfile-support],
@@ -204,6 +224,7 @@ if test "x${enable_aufile_support}" != "xno"; then
   AUFILE_SUPPORT=1
   AC_DEFINE(AUFILE_SUPPORT, 1, [Define to activate sound output to files])
 fi
+
 
 dnl - Check for PulseAudio support
 
@@ -461,6 +482,12 @@ if test "${LIBSNDFILE_SUPPORT}" = "1"; then
   fi
 else 
   echo "libsndfile:            no (raw audio file rendering only)"
+fi
+
+if test "${DBUS_SUPPORT}" = "1"; then
+  echo "D-Bus:                 yes"
+else 
+  echo "D-Bus:                 no"
 fi
 
 if test "${PULSE_SUPPORT}" = "1"; then

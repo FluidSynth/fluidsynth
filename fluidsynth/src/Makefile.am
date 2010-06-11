@@ -17,6 +17,10 @@ if COREMIDI_SUPPORT
 fluid_coremidi = fluid_coremidi.c
 endif
 
+if DBUS_SUPPORT
+fluid_rtkit = fluid_rtkit.c
+endif
+
 if JACK_SUPPORT
 fluid_jack = fluid_jack.c
 endif
@@ -67,6 +71,7 @@ libfluidsynth_la_SOURCES = \
 	$(fluid_pulse) \
 	$(fluid_windows) \
 	$(fluid_dart) \
+	$(fluid_rtkit) \
 	fluid_adriver.c \
 	fluid_adriver.h \
 	fluid_chan.c \
@@ -126,12 +131,13 @@ libfluidsynth_la_SOURCES = \
 
 INCLUDES = -I$(top_srcdir)/include $(LASH_CFLAGS) $(LADCCA_CFLAGS) \
   $(READLINE_CFLAGS) $(JACK_CFLAGS) $(ALSA_CFLAGS) $(PULSE_CFLAGS) \
-  $(PORTAUDIO_CFLAGS) $(DART_CFLAGS) $(GLIB_CFLAGS) $(LIBSNDFILE_CFLAGS)
+  $(PORTAUDIO_CFLAGS) $(DART_CFLAGS) $(GLIB_CFLAGS) $(LIBSNDFILE_CFLAGS) \
+  $(DBUS_CFLAGS)
 
 libfluidsynth_la_LIBADD = $(LIBFLUID_LIBS) $(LASH_LIBS) $(LADCCA_LIBS) \
   $(READLINE_LIBS) $(COREAUDIO_LIBS) $(COREMIDI_LIBS) $(JACK_LIBS) \
   $(ALSA_LIBS) $(PULSE_LIBS) $(PORTAUDIO_LIBS) $(DART_LIBS)  \
-  $(GLIB_LIBS) $(LIBSNDFILE_LIBS)
+  $(GLIB_LIBS) $(LIBSNDFILE_LIBS) $(DBUS_LIBS)
 
 libfluidsynth_la_LDFLAGS = \
 	-version-info @LT_VERSION_INFO@ \
