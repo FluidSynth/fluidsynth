@@ -77,29 +77,14 @@ new_fluid_voice(fluid_real_t output_rate)
    * or generator. Therefore it is enough to initialize them once
    * during the lifetime of the synth.
    */
-  voice->volenv_data[FLUID_VOICE_ENVSUSTAIN].count = 0xffffffff;
-  voice->volenv_data[FLUID_VOICE_ENVSUSTAIN].coeff = 1.0f;
-  voice->volenv_data[FLUID_VOICE_ENVSUSTAIN].incr = 0.0f;
-  voice->volenv_data[FLUID_VOICE_ENVSUSTAIN].min = -1.0f;
-  voice->volenv_data[FLUID_VOICE_ENVSUSTAIN].max = 2.0f;
-
-  voice->volenv_data[FLUID_VOICE_ENVFINISHED].count = 0xffffffff;
-  voice->volenv_data[FLUID_VOICE_ENVFINISHED].coeff = 0.0f;
-  voice->volenv_data[FLUID_VOICE_ENVFINISHED].incr = 0.0f;
-  voice->volenv_data[FLUID_VOICE_ENVFINISHED].min = -1.0f;
-  voice->volenv_data[FLUID_VOICE_ENVFINISHED].max = 1.0f;
-
-  voice->modenv_data[FLUID_VOICE_ENVSUSTAIN].count = 0xffffffff;
-  voice->modenv_data[FLUID_VOICE_ENVSUSTAIN].coeff = 1.0f;
-  voice->modenv_data[FLUID_VOICE_ENVSUSTAIN].incr = 0.0f;
-  voice->modenv_data[FLUID_VOICE_ENVSUSTAIN].min = -1.0f;
-  voice->modenv_data[FLUID_VOICE_ENVSUSTAIN].max = 2.0f;
-
-  voice->modenv_data[FLUID_VOICE_ENVFINISHED].count = 0xffffffff;
-  voice->modenv_data[FLUID_VOICE_ENVFINISHED].coeff = 0.0f;
-  voice->modenv_data[FLUID_VOICE_ENVFINISHED].incr = 0.0f;
-  voice->modenv_data[FLUID_VOICE_ENVFINISHED].min = -1.0f;
-  voice->modenv_data[FLUID_VOICE_ENVFINISHED].max = 1.0f;
+  fluid_adsr_env_set_data(&voice->volenv, FLUID_VOICE_ENVSUSTAIN, 
+                          0xffffffff, 1.0f, 0.0f, -1.0f, 2.0f);
+  fluid_adsr_env_set_data(&voice->volenv, FLUID_VOICE_ENVFINISHED, 
+                          0xffffffff, 0.0f, 0.0f, -1.0f, 1.0f);
+  fluid_adsr_env_set_data(&voice->modenv, FLUID_VOICE_ENVSUSTAIN, 
+                          0xffffffff, 1.0f, 0.0f, -1.0f, 2.0f);
+  fluid_adsr_env_set_data(&voice->modenv, FLUID_VOICE_ENVFINISHED, 
+                          0xffffffff, 0.0f, 0.0f, -1.0f, 1.0f);
 
   return voice;
 }
@@ -147,17 +132,13 @@ fluid_voice_init(fluid_voice_t* voice, fluid_sample_t* sample,
   voice->interp_method = fluid_channel_get_interp_method(voice->channel);
 
   /* vol env initialization */
-  voice->volenv_count = 0;
-  voice->volenv_section = 0;
-  voice->volenv_val = 0.0f;
+  fluid_adsr_env_reset(&voice->volenv);
   voice->amp = 0.0f; /* The last value of the volume envelope, used to
                         calculate the volume increment during
                         processing */
 
   /* mod env initialization*/
-  voice->modenv_count = 0;
-  voice->modenv_section = 0;
-  voice->modenv_val = 0.0f;
+  fluid_adsr_env_reset(&voice->modenv);
 
   /* mod lfo */
   voice->modlfo_val = 0.0;/* Fixme: Retrieve from any other existing
@@ -264,8 +245,6 @@ int
 fluid_voice_write (fluid_voice_t* voice, fluid_real_t *dsp_buf)
 {
   fluid_real_t target_amp;	/* target amplitude */
-  fluid_env_data_t* env_data;
-  fluid_real_t x;
   int count = 0;
 
   /* Other routines (such as fluid_voice_effects) use the last dsp_buf assigned */
@@ -293,38 +272,10 @@ fluid_voice_write (fluid_voice_t* voice, fluid_real_t *dsp_buf)
 
   /******************* vol env **********************/
 
-  env_data = &voice->volenv_data[voice->volenv_section];
+  fluid_adsr_env_calc(&voice->volenv, 1);
 
-  /* skip to the next section of the envelope if necessary */
-  while (voice->volenv_count >= env_data->count)
-  {
-    // If we're switching envelope stages from decay to sustain, force the value to be the end value of the previous stage
-    if (env_data && voice->volenv_section == FLUID_VOICE_ENVDECAY)
-      voice->volenv_val = env_data->min * env_data->coeff;
 
-    env_data = &voice->volenv_data[++voice->volenv_section];
-    voice->volenv_count = 0;
-  }
-
-  /* calculate the envelope value and check for valid range */
-  x = env_data->coeff * voice->volenv_val + env_data->incr;
-  if (x < env_data->min)
-  {
-    x = env_data->min;
-    voice->volenv_section++;
-    voice->volenv_count = 0;
-  }
-  else if (x > env_data->max)
-  {
-    x = env_data->max;
-    voice->volenv_section++;
-    voice->volenv_count = 0;
-  }
-
-  voice->volenv_val = x;
-  voice->volenv_count++;
-
-  if (voice->volenv_section == FLUID_VOICE_ENVFINISHED)
+  if (fluid_adsr_env_get_section(&voice->volenv) == FLUID_VOICE_ENVFINISHED)
   {
     fluid_profile (FLUID_PROF_VOICE_RELEASE, voice->ref);
     fluid_voice_off (voice);
@@ -335,33 +286,7 @@ fluid_voice_write (fluid_voice_t* voice, fluid_real_t *dsp_buf)
 
   /******************* mod env **********************/
 
-  env_data = &voice->modenv_data[voice->modenv_section];
-
-  /* skip to the next section of the envelope if necessary */
-  while (voice->modenv_count >= env_data->count)
-  {
-    env_data = &voice->modenv_data[++voice->modenv_section];
-    voice->modenv_count = 0;
-  }
-
-  /* calculate the envelope value and check for valid range */
-  x = env_data->coeff * voice->modenv_val + env_data->incr;
-
-  if (x < env_data->min)
-  {
-    x = env_data->min;
-    voice->modenv_section++;
-    voice->modenv_count = 0;
-  }
-  else if (x > env_data->max)
-  {
-    x = env_data->max;
-    voice->modenv_section++;
-    voice->modenv_count = 0;
-  }
-
-  voice->modenv_val = x;
-  voice->modenv_count++;
+  fluid_adsr_env_calc(&voice->modenv, 0);
   fluid_check_fpe ("voice_write mod env");
 
   /******************* mod lfo **********************/
@@ -411,17 +336,17 @@ fluid_voice_write (fluid_voice_t* voice, fluid_real_t *dsp_buf)
    * - amplitude envelope
    */
 
-  if (voice->volenv_section == FLUID_VOICE_ENVDELAY)
+  if (fluid_adsr_env_get_section(&voice->volenv) == FLUID_VOICE_ENVDELAY)
     goto post_process;	/* The volume amplitude is in hold phase. No sound is produced. */
 
-  if (voice->volenv_section == FLUID_VOICE_ENVATTACK)
+  if (fluid_adsr_env_get_section(&voice->volenv) == FLUID_VOICE_ENVATTACK)
   {
     /* the envelope is in the attack section: ramp linearly to max value.
      * A positive modlfo_to_vol should increase volume (negative attenuation).
      */
     target_amp = fluid_atten2amp (voice->attenuation)
       * fluid_cb2amp (voice->modlfo_val * -voice->modlfo_to_vol)
-      * voice->volenv_val;
+      * fluid_adsr_env_get_val(&voice->volenv);
   }
   else
   {
@@ -429,7 +354,7 @@ fluid_voice_write (fluid_voice_t* voice, fluid_real_t *dsp_buf)
     fluid_real_t amp_max;
 
     target_amp = fluid_atten2amp (voice->attenuation)
-      * fluid_cb2amp (960.0f * (1.0f - voice->volenv_val)
+      * fluid_cb2amp (960.0f * (1.0f - fluid_adsr_env_get_val(&voice->volenv))
 		      + voice->modlfo_val * -voice->modlfo_to_vol);
 
     /* We turn off a voice, if the volume has dropped low enough. */
@@ -455,7 +380,8 @@ fluid_voice_write (fluid_voice_t* voice, fluid_real_t *dsp_buf)
      * volenv_val can only drop):
      */
 
-    amp_max = fluid_atten2amp (voice->min_attenuation_cB) * voice->volenv_val;
+    amp_max = fluid_atten2amp (voice->min_attenuation_cB) * 
+              fluid_adsr_env_get_val(&voice->volenv);
 
     /* And if amp_max is already smaller than the known amplitude,
      * which will attenuate the sample below the noise floor, then we
@@ -484,7 +410,7 @@ fluid_voice_write (fluid_voice_t* voice, fluid_real_t *dsp_buf)
   voice->phase_incr = fluid_ct2hz_real
     (voice->pitch + voice->modlfo_val * voice->modlfo_to_pitch
      + voice->viblfo_val * voice->viblfo_to_pitch
-     + voice->modenv_val * voice->modenv_to_pitch) / voice->root_pitch_hz;
+     + fluid_adsr_env_get_val(&voice->modenv) * voice->modenv_to_pitch) / voice->root_pitch_hz;
 
   fluid_check_fpe ("voice_write phase calculation");
 
@@ -494,7 +420,7 @@ fluid_voice_write (fluid_voice_t* voice, fluid_real_t *dsp_buf)
   /*************** resonant filter ******************/
   fluid_iir_filter_calc(&voice->resonant_filter, voice->output_rate,
 		        voice->modlfo_val * voice->modlfo_to_fc +
-		        voice->modenv_val * voice->modenv_to_fc);
+		        fluid_adsr_env_get_val(&voice->modenv) * voice->modenv_to_fc);
 
   /*********************** run the dsp chain ************************
    * The sample is mixed with the output buffer.
@@ -1137,32 +1063,23 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
     x = _GEN(voice, GEN_VOLENVDELAY);
     fluid_clip(x, -12000.0f, 5000.0f);
     count = NUM_BUFFERS_DELAY(x);
-    voice->volenv_data[FLUID_VOICE_ENVDELAY].count = count;
-    voice->volenv_data[FLUID_VOICE_ENVDELAY].coeff = 0.0f;
-    voice->volenv_data[FLUID_VOICE_ENVDELAY].incr = 0.0f;
-    voice->volenv_data[FLUID_VOICE_ENVDELAY].min = -1.0f;
-    voice->volenv_data[FLUID_VOICE_ENVDELAY].max = 1.0f;
+    fluid_adsr_env_set_data(&voice->volenv, FLUID_VOICE_ENVDELAY,
+                            count, 0.0f, 0.0f, -1.0f, 1.0f);
     break;
 
   case GEN_VOLENVATTACK:               /* SF2.01 section 8.1.3 # 34 */
     x = _GEN(voice, GEN_VOLENVATTACK);
     fluid_clip(x, -12000.0f, 8000.0f);
     count = 1 + NUM_BUFFERS_ATTACK(x);
-    voice->volenv_data[FLUID_VOICE_ENVATTACK].count = count;
-    voice->volenv_data[FLUID_VOICE_ENVATTACK].coeff = 1.0f;
-    voice->volenv_data[FLUID_VOICE_ENVATTACK].incr = count ? 1.0f / count : 0.0f;
-    voice->volenv_data[FLUID_VOICE_ENVATTACK].min = -1.0f;
-    voice->volenv_data[FLUID_VOICE_ENVATTACK].max = 1.0f;
+    fluid_adsr_env_set_data(&voice->volenv, FLUID_VOICE_ENVATTACK,
+                            count, 1.0f, count ? 1.0f / count : 0.0f, -1.0f, 1.0f);
     break;
 
   case GEN_VOLENVHOLD:                 /* SF2.01 section 8.1.3 # 35 */
   case GEN_KEYTOVOLENVHOLD:            /* SF2.01 section 8.1.3 # 39 */
     count = calculate_hold_decay_buffers(voice, GEN_VOLENVHOLD, GEN_KEYTOVOLENVHOLD, 0); /* 0 means: hold */
-    voice->volenv_data[FLUID_VOICE_ENVHOLD].count = count;
-    voice->volenv_data[FLUID_VOICE_ENVHOLD].coeff = 1.0f;
-    voice->volenv_data[FLUID_VOICE_ENVHOLD].incr = 0.0f;
-    voice->volenv_data[FLUID_VOICE_ENVHOLD].min = -1.0f;
-    voice->volenv_data[FLUID_VOICE_ENVHOLD].max = 2.0f;
+    fluid_adsr_env_set_data(&voice->volenv, FLUID_VOICE_ENVHOLD,
+                            count, 1.0f, 0.0f, -1.0f, 2.0f);
     break;
 
   case GEN_VOLENVDECAY:               /* SF2.01 section 8.1.3 # 36 */
@@ -1171,54 +1088,39 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
     y = 1.0f - 0.001f * _GEN(voice, GEN_VOLENVSUSTAIN);
     fluid_clip(y, 0.0f, 1.0f);
     count = calculate_hold_decay_buffers(voice, GEN_VOLENVDECAY, GEN_KEYTOVOLENVDECAY, 1); /* 1 for decay */
-    voice->volenv_data[FLUID_VOICE_ENVDECAY].count = count;
-    voice->volenv_data[FLUID_VOICE_ENVDECAY].coeff = 1.0f;
-    voice->volenv_data[FLUID_VOICE_ENVDECAY].incr = count ? -1.0f / count : 0.0f;
-    voice->volenv_data[FLUID_VOICE_ENVDECAY].min = y;
-    voice->volenv_data[FLUID_VOICE_ENVDECAY].max = 2.0f;
+    fluid_adsr_env_set_data(&voice->volenv, FLUID_VOICE_ENVDECAY,
+                            count, 1.0f, count ? -1.0f / count : 0.0f, y, 2.0f);
     break;
 
   case GEN_VOLENVRELEASE:             /* SF2.01 section 8.1.3 # 38 */
     x = _GEN(voice, GEN_VOLENVRELEASE);
     fluid_clip(x, FLUID_MIN_VOLENVRELEASE, 8000.0f);
     count = 1 + NUM_BUFFERS_RELEASE(x);
-    voice->volenv_data[FLUID_VOICE_ENVRELEASE].count = count;
-    voice->volenv_data[FLUID_VOICE_ENVRELEASE].coeff = 1.0f;
-    voice->volenv_data[FLUID_VOICE_ENVRELEASE].incr = count ? -1.0f / count : 0.0f;
-    voice->volenv_data[FLUID_VOICE_ENVRELEASE].min = 0.0f;
-    voice->volenv_data[FLUID_VOICE_ENVRELEASE].max = 1.0f;
+    fluid_adsr_env_set_data(&voice->volenv, FLUID_VOICE_ENVRELEASE,
+                            count, 1.0f, count ? -1.0f / count : 0.0f, 0.0f, 1.0f);
     break;
 
     /* Modulation envelope */
   case GEN_MODENVDELAY:               /* SF2.01 section 8.1.3 # 25 */
     x = _GEN(voice, GEN_MODENVDELAY);
     fluid_clip(x, -12000.0f, 5000.0f);
-    voice->modenv_data[FLUID_VOICE_ENVDELAY].count = NUM_BUFFERS_DELAY(x);
-    voice->modenv_data[FLUID_VOICE_ENVDELAY].coeff = 0.0f;
-    voice->modenv_data[FLUID_VOICE_ENVDELAY].incr = 0.0f;
-    voice->modenv_data[FLUID_VOICE_ENVDELAY].min = -1.0f;
-    voice->modenv_data[FLUID_VOICE_ENVDELAY].max = 1.0f;
+    fluid_adsr_env_set_data(&voice->modenv, FLUID_VOICE_ENVDELAY,
+                            NUM_BUFFERS_DELAY(x), 0.0f, 0.0f, -1.0f, 1.0f);
     break;
 
   case GEN_MODENVATTACK:               /* SF2.01 section 8.1.3 # 26 */
     x = _GEN(voice, GEN_MODENVATTACK);
     fluid_clip(x, -12000.0f, 8000.0f);
     count = 1 + NUM_BUFFERS_ATTACK(x);
-    voice->modenv_data[FLUID_VOICE_ENVATTACK].count = count;
-    voice->modenv_data[FLUID_VOICE_ENVATTACK].coeff = 1.0f;
-    voice->modenv_data[FLUID_VOICE_ENVATTACK].incr = count ? 1.0f / count : 0.0f;
-    voice->modenv_data[FLUID_VOICE_ENVATTACK].min = -1.0f;
-    voice->modenv_data[FLUID_VOICE_ENVATTACK].max = 1.0f;
+    fluid_adsr_env_set_data(&voice->modenv, FLUID_VOICE_ENVATTACK,
+                            count, 1.0f, count ? 1.0f / count : 0.0f, -1.0f, 1.0f);
     break;
 
   case GEN_MODENVHOLD:               /* SF2.01 section 8.1.3 # 27 */
   case GEN_KEYTOMODENVHOLD:          /* SF2.01 section 8.1.3 # 31 */
     count = calculate_hold_decay_buffers(voice, GEN_MODENVHOLD, GEN_KEYTOMODENVHOLD, 0); /* 1 means: hold */
-    voice->modenv_data[FLUID_VOICE_ENVHOLD].count = count;
-    voice->modenv_data[FLUID_VOICE_ENVHOLD].coeff = 1.0f;
-    voice->modenv_data[FLUID_VOICE_ENVHOLD].incr = 0.0f;
-    voice->modenv_data[FLUID_VOICE_ENVHOLD].min = -1.0f;
-    voice->modenv_data[FLUID_VOICE_ENVHOLD].max = 2.0f;
+    fluid_adsr_env_set_data(&voice->modenv, FLUID_VOICE_ENVHOLD,
+                            count, 1.0f, 0.0f, -1.0f, 2.0f);
     break;
 
   case GEN_MODENVDECAY:                                   /* SF 2.01 section 8.1.3 # 28 */
@@ -1227,22 +1129,17 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
     count = calculate_hold_decay_buffers(voice, GEN_MODENVDECAY, GEN_KEYTOMODENVDECAY, 1); /* 1 for decay */
     y = 1.0f - 0.001f * _GEN(voice, GEN_MODENVSUSTAIN);
     fluid_clip(y, 0.0f, 1.0f);
-    voice->modenv_data[FLUID_VOICE_ENVDECAY].count = count;
-    voice->modenv_data[FLUID_VOICE_ENVDECAY].coeff = 1.0f;
-    voice->modenv_data[FLUID_VOICE_ENVDECAY].incr = count ? -1.0f / count : 0.0f;
-    voice->modenv_data[FLUID_VOICE_ENVDECAY].min = y;
-    voice->modenv_data[FLUID_VOICE_ENVDECAY].max = 2.0f;
+    fluid_adsr_env_set_data(&voice->modenv, FLUID_VOICE_ENVDECAY,
+                            count, 1.0f, count ? -1.0f / count : 0.0f, y, 2.0f);
     break;
 
   case GEN_MODENVRELEASE:                                  /* SF 2.01 section 8.1.3 # 30 */
     x = _GEN(voice, GEN_MODENVRELEASE);
     fluid_clip(x, -12000.0f, 8000.0f);
     count = 1 + NUM_BUFFERS_RELEASE(x);
-    voice->modenv_data[FLUID_VOICE_ENVRELEASE].count = count;
-    voice->modenv_data[FLUID_VOICE_ENVRELEASE].coeff = 1.0f;
-    voice->modenv_data[FLUID_VOICE_ENVRELEASE].incr = count ? -1.0f / count : 0.0;
-    voice->modenv_data[FLUID_VOICE_ENVRELEASE].min = 0.0f;
-    voice->modenv_data[FLUID_VOICE_ENVRELEASE].max = 2.0f;
+    fluid_adsr_env_set_data(&voice->modenv, FLUID_VOICE_ENVRELEASE,
+                            count, 1.0f, count ? -1.0f / count : 0.0f, 0.0f, 2.0f);
+
     break;
 
   } /* switch gen */
@@ -1378,25 +1275,23 @@ fluid_voice_noteoff(fluid_voice_t* voice)
   if (voice->channel && fluid_channel_sustained(voice->channel)) {
     voice->status = FLUID_VOICE_SUSTAINED;
   } else {
-    if (voice->volenv_section == FLUID_VOICE_ENVATTACK) {
+    if (fluid_adsr_env_get_section(&voice->volenv) == FLUID_VOICE_ENVATTACK) {
       /* A voice is turned off during the attack section of the volume
        * envelope.  The attack section ramps up linearly with
        * amplitude. The other sections use logarithmic scaling. Calculate new
        * volenv_val to achieve equievalent amplitude during the release phase
        * for seamless volume transition.
        */
-      if (voice->volenv_val > 0){
+      if (fluid_adsr_env_get_val(&voice->volenv) > 0){
 	fluid_real_t lfo = voice->modlfo_val * -voice->modlfo_to_vol;
-        fluid_real_t amp = voice->volenv_val * pow (10.0, lfo / -200);
+        fluid_real_t amp = fluid_adsr_env_get_val(&voice->volenv) * pow (10.0, lfo / -200);
         fluid_real_t env_value = - ((-200 * log (amp) / log (10.0) - lfo) / 960.0 - 1);
 	fluid_clip (env_value, 0.0, 1.0);
-        voice->volenv_val = env_value;
+        fluid_adsr_env_set_val(&voice->volenv, env_value);
       }
     }
-    voice->volenv_section = FLUID_VOICE_ENVRELEASE;
-    voice->volenv_count = 0;
-    voice->modenv_section = FLUID_VOICE_ENVRELEASE;
-    voice->modenv_count = 0;
+    fluid_adsr_env_set_section(&voice->volenv, FLUID_VOICE_ENVRELEASE);
+    fluid_adsr_env_set_section(&voice->modenv, FLUID_VOICE_ENVRELEASE);
   }
 
   return FLUID_OK;
@@ -1426,11 +1321,9 @@ fluid_voice_kill_excl(fluid_voice_t* voice){
   fluid_voice_gen_set(voice, GEN_EXCLUSIVECLASS, 0);
 
   /* If the voice is not yet in release state, put it into release state */
-  if (voice->volenv_section != FLUID_VOICE_ENVRELEASE){
-    voice->volenv_section = FLUID_VOICE_ENVRELEASE;
-    voice->volenv_count = 0;
-    voice->modenv_section = FLUID_VOICE_ENVRELEASE;
-    voice->modenv_count = 0;
+  if (fluid_adsr_env_get_section(&voice->volenv) != FLUID_VOICE_ENVRELEASE){
+    fluid_adsr_env_set_section(&voice->volenv, FLUID_VOICE_ENVRELEASE);
+    fluid_adsr_env_set_section(&voice->modenv, FLUID_VOICE_ENVRELEASE);
   }
 
   /* Speed up the volume envelope */
@@ -1458,10 +1351,8 @@ fluid_voice_off(fluid_voice_t* voice)
   fluid_profile(FLUID_PROF_VOICE_RELEASE, voice->ref);
 
   voice->chan = NO_CHANNEL;
-  voice->volenv_section = FLUID_VOICE_ENVFINISHED;
-  voice->volenv_count = 0;
-  voice->modenv_section = FLUID_VOICE_ENVFINISHED;
-  voice->modenv_count = 0;
+  fluid_adsr_env_set_section(&voice->volenv, FLUID_VOICE_ENVFINISHED);
+  fluid_adsr_env_set_section(&voice->modenv, FLUID_VOICE_ENVFINISHED);
   voice->status = FLUID_VOICE_OFF;
 
   /* Decrement the reference count of the sample. */
@@ -1748,7 +1639,8 @@ fluid_voice_check_sample_sanity(fluid_voice_t* voice)
 
     /* Is this voice run in loop mode, or does it run straight to the
        end of the waveform data? */
-    if (((_SAMPLEMODE(voice) == FLUID_LOOP_UNTIL_RELEASE) && (voice->volenv_section < FLUID_VOICE_ENVRELEASE))
+    if (((_SAMPLEMODE(voice) == FLUID_LOOP_UNTIL_RELEASE) && 
+        (fluid_adsr_env_get_section(&voice->volenv) < FLUID_VOICE_ENVRELEASE))
 	|| (_SAMPLEMODE(voice) == FLUID_LOOP_DURING_RELEASE)) {
       /* Yes, it will loop as soon as it reaches the loop point.  In
        * this case we must prevent, that the playback pointer (phase)
@@ -1874,3 +1766,6 @@ fluid_voice_optimize_sample(fluid_sample_t* s)
   };
   return FLUID_OK;
 }
+
+
+

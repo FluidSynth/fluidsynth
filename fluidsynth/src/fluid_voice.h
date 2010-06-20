@@ -26,6 +26,7 @@
 #include "fluid_gen.h"
 #include "fluid_mod.h"
 #include "fluid_iir_filter.h"
+#include "fluid_adsr_env.h"
 
 #define NO_CHANNEL             0xff
 
@@ -37,29 +38,6 @@ enum fluid_voice_status
 	FLUID_VOICE_OFF
 };
 
-
-/*
- * envelope data
- */
-struct _fluid_env_data_t {
-	unsigned int count;
-	fluid_real_t coeff;
-	fluid_real_t incr;
-	fluid_real_t min;
-	fluid_real_t max;
-};
-
-/* Indices for envelope tables */
-enum fluid_voice_envelope_index_t{
-	FLUID_VOICE_ENVDELAY,
-	FLUID_VOICE_ENVATTACK,
-	FLUID_VOICE_ENVHOLD,
-	FLUID_VOICE_ENVDECAY,
-	FLUID_VOICE_ENVSUSTAIN,
-	FLUID_VOICE_ENVRELEASE,
-	FLUID_VOICE_ENVFINISHED,
-	FLUID_VOICE_ENVLAST
-};
 
 /*
  * fluid_voice_t
@@ -140,18 +118,12 @@ struct _fluid_voice_t
 	fluid_real_t synth_gain;
 
 	/* vol env */
-	fluid_env_data_t volenv_data[FLUID_VOICE_ENVLAST];
-	unsigned int volenv_count;
-	int volenv_section;
-	fluid_real_t volenv_val;
+        fluid_adsr_env_t volenv;
 	fluid_real_t amplitude_that_reaches_noise_floor_nonloop;
 	fluid_real_t amplitude_that_reaches_noise_floor_loop;
 
 	/* mod env */
-	fluid_env_data_t modenv_data[FLUID_VOICE_ENVLAST];
-	unsigned int modenv_count;
-	int modenv_section;
-	fluid_real_t modenv_val;         /* the value of the modulation envelope */
+        fluid_adsr_env_t modenv;
 	fluid_real_t modenv_to_fc;
 	fluid_real_t modenv_to_pitch;
 
@@ -241,7 +213,7 @@ int fluid_voice_kill_excl(fluid_voice_t* voice);
 /* A voice is 'ON', if it has not yet received a noteoff
  * event. Sending a noteoff event will advance the envelopes to
  * section 5 (release). */
-#define _ON(voice)  ((voice)->status == FLUID_VOICE_ON && (voice)->volenv_section < FLUID_VOICE_ENVRELEASE)
+#define _ON(voice)  ((voice)->status == FLUID_VOICE_ON && fluid_adsr_env_get_section(&voice->volenv) < FLUID_VOICE_ENVRELEASE)
 #define _SUSTAINED(voice)  ((voice)->status == FLUID_VOICE_SUSTAINED)
 #define _AVAILABLE(voice)  (((voice)->status == FLUID_VOICE_CLEAN) || ((voice)->status == FLUID_VOICE_OFF))
 #define _RELEASED(voice)  ((voice)->chan == NO_CHANNEL)
@@ -250,6 +222,8 @@ int fluid_voice_kill_excl(fluid_voice_t* voice);
 
 /* FIXME - This doesn't seem to be used anywhere - JG */
 fluid_real_t fluid_voice_gen_value(fluid_voice_t* voice, int num);
+
+#define fluid_voice_get_loudness(voice) (fluid_adsr_env_get_max_val(&voice->volenv))
 
 #define _GEN(_voice, _n) \
   ((fluid_real_t)(_voice)->gen[_n].val \
