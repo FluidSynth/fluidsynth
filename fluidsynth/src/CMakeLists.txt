@@ -20,7 +20,9 @@
 # CMake based build system. Pedro Lopez-Cabanillas <plcl@users.sf.net>
 
 include_directories (
-    ${CMAKE_BINARY_DIR} 
+    ${CMAKE_BINARY_DIR}
+    ${CMAKE_SOURCE_DIR}/src 
+    ${CMAKE_SOURCE_DIR}/src/rvoice
     ${CMAKE_SOURCE_DIR}/include 
     ${CMAKE_BINARY_DIR}/include 
     ${PTHREADS_INCLUDE_DIR}
@@ -35,39 +37,39 @@ if ( READLINE_SUPPORT )
 endif ( READLINE_SUPPORT )
  
 if ( PULSE_SUPPORT ) 
-  set ( fluid_pulse_SOURCES fluid_pulse.c )
+  set ( fluid_pulse_SOURCES drivers/fluid_pulse.c )
   include_directories ( ${PULSE_INCLUDEDIR} ${PULSE_INCLUDE_DIRS} )
 endif ( PULSE_SUPPORT )
 
 if ( ALSA_SUPPORT )
-  set ( fluid_alsa_SOURCES fluid_alsa.c )
+  set ( fluid_alsa_SOURCES drivers/fluid_alsa.c )
   include_directories ( ${ALSA_INCLUDEDIR} ${ALSA_INCLUDE_DIRS} )
 endif ( ALSA_SUPPORT )
 
 if ( COREAUDIO_SUPPORT )
-  set ( fluid_coreaudio_SOURCES fluid_coreaudio.c )
+  set ( fluid_coreaudio_SOURCES drivers/fluid_coreaudio.c )
 endif ( COREAUDIO_SUPPORT )
 
 if ( COREMIDI_SUPPORT )
-  set ( fluid_coremidi_SOURCES fluid_coremidi.c )
+  set ( fluid_coremidi_SOURCES drivers/fluid_coremidi.c )
 endif ( COREMIDI_SUPPORT )
 
 if ( JACK_SUPPORT )
-  set ( fluid_jack_SOURCES fluid_jack.c )
+  set ( fluid_jack_SOURCES drivers/fluid_jack.c )
   include_directories ( ${JACK_INCLUDEDIR} ${JACK_INCLUDE_DIRS} ) 
 endif ( JACK_SUPPORT )
 
 if ( PORTAUDIO_SUPPORT )
-  set ( fluid_portaudio_SOURCES fluid_portaudio.c )
+  set ( fluid_portaudio_SOURCES drivers/fluid_portaudio.c )
   include_directories ( ${PORTAUDIO_INCLUDEDIR} ${PORTAUDIO_INCLUDE_DIRS} )
 endif ( PORTAUDIO_SUPPORT )
 
 if ( WINDOWS_SUPPORT )
-  set ( fluid_windows_SOURCES fluid_dll.c fluid_dsound.c fluid_winmidi.c )
+  set ( fluid_windows_SOURCES fluid_dll.c drivers/fluid_dsound.c drivers/fluid_winmidi.c )
 endif ( WINDOWS_SUPPORT )
 
 if ( OSS_SUPPORT )
-  set ( fluid_oss_SOURCES fluid_oss.c )
+  set ( fluid_oss_SOURCES drivers/fluid_oss.c )
 endif ( OSS_SUPPORT )
 
 if ( LASH_SUPPORT OR LADCCA_SUPPORT )
@@ -77,7 +79,7 @@ if ( LASH_SUPPORT OR LADCCA_SUPPORT )
 endif ( LASH_SUPPORT OR LADCCA_SUPPORT )
 
 if ( DART_SUPPORT )
-  set ( fluid_dart_SOURCES fluid_dart.c )
+  set ( fluid_dart_SOURCES drivers/fluid_dart.c )
   include_directories ( ${DART_INCLUDE_DIRS} ) 
 endif ( DART_SUPPORT )
 
@@ -90,7 +92,7 @@ if ( LADSPA_SUPPORT )
 endif ( LADSPA_SUPPORT )
 
 if ( MIDISHARE_SUPPORT )
-  set ( fluid_midishare_SOURCES fluid_midishare.c )
+  set ( fluid_midishare_SOURCES drivers/fluid_midishare.c )
   include_directories ( ${MidiShare_INCLUDE_DIRS} )
 endif ( MIDISHARE_SUPPORT )
 
@@ -116,6 +118,10 @@ set ( libfluidsynth_SOURCES
     fluid_gen.h 
     fluid_hash.c 
     fluid_hash.h 
+    rvoice/fluid_iir_filter.c
+    rvoice/fluid_iir_filter.h
+    rvoice/fluid_lfo.h
+    rvoice/fluid_adsr_env.h
     fluid_list.c 
     fluid_list.h 
     fluid_mdriver.c 
@@ -146,7 +152,7 @@ set ( libfluidsynth_SOURCES
     fluid_voice.c 
     fluid_voice.h 
     fluid_filerenderer.c 
-    fluid_aufile.c 
+    drivers/fluid_aufile.c 
 ) 
 
 link_directories (

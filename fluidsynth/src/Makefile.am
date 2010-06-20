@@ -1,20 +1,23 @@
 ## Process this file with automake to produce Makefile.in
 
-if PULSE_SUPPORT
-fluid_pulse = fluid_pulse.c
-endif
+AUTOMAKE_OPTIONS = subdir-objects
 
 # Tests for optional drivers
+
+if PULSE_SUPPORT
+fluid_pulse = drivers/fluid_pulse.c
+endif
+
 if ALSA_SUPPORT
-fluid_alsa = fluid_alsa.c
+fluid_alsa = drivers/fluid_alsa.c
 endif
 
 if COREAUDIO_SUPPORT
-fluid_coreaudio = fluid_coreaudio.c
+fluid_coreaudio = drivers/fluid_coreaudio.c
 endif
 
 if COREMIDI_SUPPORT
-fluid_coremidi = fluid_coremidi.c
+fluid_coremidi = drivers/fluid_coremidi.c
 endif
 
 if DBUS_SUPPORT
@@ -22,19 +25,19 @@ fluid_rtkit = fluid_rtkit.c
 endif
 
 if JACK_SUPPORT
-fluid_jack = fluid_jack.c
+fluid_jack = drivers/fluid_jack.c
 endif
 
 if PORTAUDIO_SUPPORT
-fluid_portaudio = fluid_portaudio.c
+fluid_portaudio = drivers/fluid_portaudio.c
 endif
 
 if MINGW32_SUPPORT
-fluid_windows = fluid_dll.c fluid_dsound.c fluid_winmidi.c
+fluid_windows = fluid_dll.c drivers/fluid_dsound.c drivers/fluid_winmidi.c
 endif
 
 if OSS_SUPPORT
-fluid_oss = fluid_oss.c
+fluid_oss = drivers/fluid_oss.c
 endif
 
 # if LASH_SUPPORT || LADCCA_SUPPORT (Makefile supports OR?)
@@ -47,15 +50,15 @@ endif
 endif
 
 if DART_SUPPORT
-fluid_dart = fluid_dart.c
+fluid_dart = drivers/fluid_dart.c
 endif
 
 # Extra files and optional drivers
-EXTRA_DIST = fluid_dll.c fluid_dsound.c fluid_winmidi.c fluid_portaudio.c \
-	fluid_coreaudio.c fluid_alsa.c fluid_oss.c fluid_pulse.c \
+EXTRA_DIST = fluid_dll.c drivers/fluid_dsound.c drivers/fluid_winmidi.c drivers/fluid_portaudio.c \
+	drivers/fluid_coreaudio.c drivers/fluid_alsa.c drivers/fluid_oss.c drivers/fluid_pulse.c \
 	fluid_dsp_simple.c \
-	fluid_sndmgr.c config_macos.h config_macosx.h config_macosx_pb.h \
-	config_win32.h fluid_jack.c fluid_dart.c
+	drivers/fluid_sndmgr.c config_macos.h config_macosx.h config_macosx_pb.h \
+	config_win32.h drivers/fluid_jack.c drivers/fluid_dart.c
 
 lib_LTLIBRARIES = libfluidsynth.la
 bin_PROGRAMS = fluidsynth 
@@ -104,7 +107,7 @@ libfluidsynth_la_SOURCES = \
 	fluid_midi.h \
 	fluid_midi_router.c \
 	fluid_midi_router.h \
-	fluid_midishare.c \
+        drivers/fluid_midishare.c \
 	fluid_mod.c \
 	fluid_mod.h \
 	fluid_phase.h \
@@ -126,14 +129,15 @@ libfluidsynth_la_SOURCES = \
 	fluid_tuning.h \
 	fluid_voice.c \
 	fluid_voice.h \
-	fluid_iir_filter.c \
-	fluid_iir_filter.h \
-	fluid_adsr_env.h \
-        fluid_lfo.h \
+	rvoice/fluid_iir_filter.c \
+	rvoice/fluid_iir_filter.h \
+	rvoice/fluid_adsr_env.h \
+	rvoice/fluid_lfo.h \
 	fluid_filerenderer.c \
-	fluid_aufile.c 
+	drivers/fluid_aufile.c 
 
-INCLUDES = -I$(top_srcdir)/include $(LASH_CFLAGS) $(LADCCA_CFLAGS) \
+INCLUDES = -I$(top_srcdir)/include -I$(top_srcdir)/src/rvoice \
+  $(LASH_CFLAGS) $(LADCCA_CFLAGS) \
   $(READLINE_CFLAGS) $(JACK_CFLAGS) $(ALSA_CFLAGS) $(PULSE_CFLAGS) \
   $(PORTAUDIO_CFLAGS) $(DART_CFLAGS) $(GLIB_CFLAGS) $(LIBSNDFILE_CFLAGS) \
   $(DBUS_CFLAGS)
