@@ -126,6 +126,7 @@ libfluidsynth_la_SOURCES = \
 	fluid_tuning.h \
 	fluid_voice.c \
 	fluid_voice.h \
+	fluid_iir_filter.c \
 	fluid_filerenderer.c \
 	fluid_aufile.c 
 

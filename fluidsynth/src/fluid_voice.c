@@ -48,7 +48,6 @@
 static int fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t* voice);
 static int calculate_hold_decay_buffers(fluid_voice_t* voice, int gen_base,
                                         int gen_key2base, int is_decay);
-static inline void fluid_voice_filter (fluid_voice_t *voice);
 static fluid_real_t
 fluid_voice_get_lower_boundary_for_attenuation(fluid_voice_t* voice);
 static void fluid_voice_check_sample_sanity(fluid_voice_t* voice);
@@ -145,8 +144,6 @@ fluid_voice_init(fluid_voice_t* voice, fluid_sample_t* sample,
   voice->noteoff_ticks = 0;
   voice->debug = 0;
   voice->has_looped = 0; /* Will be set during voice_write when the 2nd loop point is reached */
-  voice->last_fres = -1; /* The filter coefficients have to be calculated later in the DSP loop. */
-  voice->filter_startup = 1; /* Set the filter immediately, don't fade between old and new settings */
   voice->interp_method = fluid_channel_get_interp_method(voice->channel);
 
   /* vol env initialization */
@@ -171,8 +168,7 @@ fluid_voice_init(fluid_voice_t* voice, fluid_sample_t* sample,
   voice->viblfo_val = 0.0f; /* Fixme: See mod lfo */
 
   /* Clear sample history in filter */
-  voice->hist1 = 0;
-  voice->hist2 = 0;
+  fluid_iir_filter_reset(&voice->resonant_filter);
 
   /* Set all the generators to their default value, according to SF
    * 2.01 section 8.1.3 (page 48). The value of NRPN messages are
@@ -267,7 +263,6 @@ fluid_real_t fluid_voice_gen_value(fluid_voice_t* voice, int num)
 int
 fluid_voice_write (fluid_voice_t* voice, fluid_real_t *dsp_buf)
 {
-  fluid_real_t fres;
   fluid_real_t target_amp;	/* target amplitude */
   fluid_env_data_t* env_data;
   fluid_real_t x;
@@ -497,109 +492,9 @@ fluid_voice_write (fluid_voice_t* voice, fluid_real_t *dsp_buf)
   if (voice->phase_incr == 0) voice->phase_incr = 1;
 
   /*************** resonant filter ******************/
-
-  /* calculate the frequency of the resonant filter in Hz */
-  fres = fluid_ct2hz(voice->fres
-		     + voice->modlfo_val * voice->modlfo_to_fc
-		     + voice->modenv_val * voice->modenv_to_fc);
-
-  /* FIXME - Still potential for a click during turn on, can we interpolate
-     between 20khz cutoff and 0 Q? */
-
-  /* I removed the optimization of turning the filter off when the
-   * resonance frequence is above the maximum frequency. Instead, the
-   * filter frequency is set to a maximum of 0.45 times the sampling
-   * rate. For a 44100 kHz sampling rate, this amounts to 19845
-   * Hz. The reason is that there were problems with anti-aliasing when the
-   * synthesizer was run at lower sampling rates. Thanks to Stephan
-   * Tassart for pointing me to this bug. By turning the filter on and
-   * clipping the maximum filter frequency at 0.45*srate, the filter
-   * is used as an anti-aliasing filter. */
-
-  if (fres > 0.45f * voice->output_rate)
-    fres = 0.45f * voice->output_rate;
-  else if (fres < 5)
-    fres = 5;
-
-  /* if filter enabled and there is a significant frequency change.. */
-  if ((abs (fres - voice->last_fres) > 0.01))
-  {
-    /* The filter coefficients have to be recalculated (filter
-    * parameters have changed). Recalculation for various reasons is
-    * forced by setting last_fres to -1.  The flag filter_startup
-    * indicates, that the DSP loop runs for the first time, in this
-    * case, the filter is set directly, instead of smoothly fading
-    * between old and new settings.
-    *
-    * Those equations from Robert Bristow-Johnson's `Cookbook
-    * formulae for audio EQ biquad filter coefficients', obtained
-    * from Harmony-central.com / Computer / Programming. They are
-    * the result of the bilinear transform on an analogue filter
-    * prototype. To quote, `BLT frequency warping has been taken
-    * into account for both significant frequency relocation and for
-    * bandwidth readjustment'. */
-
-   fluid_real_t omega = (fluid_real_t) (2.0 * M_PI * (fres / ((float) voice->output_rate)));
-   fluid_real_t sin_coeff = (fluid_real_t) sin(omega);
-   fluid_real_t cos_coeff = (fluid_real_t) cos(omega);
-   fluid_real_t alpha_coeff = sin_coeff / (2.0f * voice->q_lin);
-   fluid_real_t a0_inv = 1.0f / (1.0f + alpha_coeff);
-
-   /* Calculate the filter coefficients. All coefficients are
-    * normalized by a0. Think of `a1' as `a1/a0'.
-    *
-    * Here a couple of multiplications are saved by reusing common expressions.
-    * The original equations should be:
-    *  voice->b0=(1.-cos_coeff)*a0_inv*0.5*voice->filter_gain;
-    *  voice->b1=(1.-cos_coeff)*a0_inv*voice->filter_gain;
-    *  voice->b2=(1.-cos_coeff)*a0_inv*0.5*voice->filter_gain; */
-
-   fluid_real_t a1_temp = -2.0f * cos_coeff * a0_inv;
-   fluid_real_t a2_temp = (1.0f - alpha_coeff) * a0_inv;
-   fluid_real_t b1_temp = (1.0f - cos_coeff) * a0_inv * voice->filter_gain;
-   /* both b0 -and- b2 */
-   fluid_real_t b02_temp = b1_temp * 0.5f;
-
-   if (voice->filter_startup)
-   {
-     /* The filter is calculated, because the voice was started up.
-      * In this case set the filter coefficients without delay.
-      */
-     voice->a1 = a1_temp;
-     voice->a2 = a2_temp;
-     voice->b02 = b02_temp;
-     voice->b1 = b1_temp;
-     voice->filter_coeff_incr_count = 0;
-     voice->filter_startup = 0;
-//       printf("Setting initial filter coefficients.\n");
-   }
-   else
-   {
-
-      /* The filter frequency is changed.  Calculate an increment
-       * factor, so that the new setting is reached after one buffer
-       * length. x_incr is added to the current value FLUID_BUFSIZE
-       * times. The length is arbitrarily chosen. Longer than one
-       * buffer will sacrifice some performance, though.  Note: If
-       * the filter is still too 'grainy', then increase this number
-       * at will.
-       */
-
-#define FILTER_TRANSITION_SAMPLES (FLUID_BUFSIZE)
-
-      voice->a1_incr = (a1_temp - voice->a1) / FILTER_TRANSITION_SAMPLES;
-      voice->a2_incr = (a2_temp - voice->a2) / FILTER_TRANSITION_SAMPLES;
-      voice->b02_incr = (b02_temp - voice->b02) / FILTER_TRANSITION_SAMPLES;
-      voice->b1_incr = (b1_temp - voice->b1) / FILTER_TRANSITION_SAMPLES;
-      /* Have to add the increments filter_coeff_incr_count times. */
-      voice->filter_coeff_incr_count = FILTER_TRANSITION_SAMPLES;
-    }
-    voice->last_fres = fres;
-    fluid_check_fpe ("voice_write filter calculation");
-  }
-
-
-  fluid_check_fpe ("voice_write DSP coefficients");
+  fluid_iir_filter_calc(&voice->resonant_filter, voice->output_rate,
+		        voice->modlfo_val * voice->modlfo_to_fc +
+		        voice->modenv_val * voice->modenv_to_fc);
 
   /*********************** run the dsp chain ************************
    * The sample is mixed with the output buffer.
@@ -629,7 +524,8 @@ fluid_voice_write (fluid_voice_t* voice, fluid_real_t *dsp_buf)
   voice->dsp_buf_count = count;
 
   /* Apply filter */
-  if (count > 0) fluid_voice_filter (voice);
+  if (count > 0) 
+    fluid_iir_filter_apply(&voice->resonant_filter, voice->dsp_buf, count);
 
   /* turn off voice if short count (sample ended and not looping) */
   if (count < FLUID_BUFSIZE)
@@ -644,103 +540,6 @@ fluid_voice_write (fluid_voice_t* voice, fluid_real_t *dsp_buf)
   return count;
 }
 
-
-/**
- * Applies a lowpass filter with variable cutoff frequency and quality factor.
- * @param voice Voice to apply filter to
- * @param count Count of samples in voice->dsp_buf
- */
-/*
- * Variable description:
- * - dsp_buf: Pointer to the synthesized audio data
- * - dsp_a1, dsp_a2, dsp_b0, dsp_b1, dsp_b2: Filter coefficients
- * - voice holds the voice structure
- *
- * A couple of variables are used internally, their results are discarded:
- * - dsp_i: Index through the output buffer
- * - dsp_phase_fractional: The fractional part of dsp_phase
- * - dsp_coeff: A table of four coefficients, depending on the fractional phase.
- *              Used to interpolate between samples.
- * - dsp_process_buffer: Holds the processed signal between stages
- * - dsp_centernode: delay line for the IIR filter
- * - dsp_hist1: same
- * - dsp_hist2: same
- */
-static inline void
-fluid_voice_filter (fluid_voice_t *voice)
-{
-  /* IIR filter sample history */
-  fluid_real_t dsp_hist1 = voice->hist1;
-  fluid_real_t dsp_hist2 = voice->hist2;
-
-  /* IIR filter coefficients */
-  fluid_real_t dsp_a1 = voice->a1;
-  fluid_real_t dsp_a2 = voice->a2;
-  fluid_real_t dsp_b02 = voice->b02;
-  fluid_real_t dsp_b1 = voice->b1;
-  fluid_real_t dsp_a1_incr = voice->a1_incr;
-  fluid_real_t dsp_a2_incr = voice->a2_incr;
-  fluid_real_t dsp_b02_incr = voice->b02_incr;
-  fluid_real_t dsp_b1_incr = voice->b1_incr;
-  int dsp_filter_coeff_incr_count = voice->filter_coeff_incr_count;
-
-  fluid_real_t *dsp_buf = voice->dsp_buf;
-
-  fluid_real_t dsp_centernode;
-  int count = voice->dsp_buf_count;
-  int dsp_i;
-
-  /* filter (implement the voice filter according to SoundFont standard) */
-
-  /* Check for denormal number (too close to zero). */
-  if (fabs (dsp_hist1) < 1e-20) dsp_hist1 = 0.0f;  /* FIXME JMG - Is this even needed? */
-
-  /* Two versions of the filter loop. One, while the filter is
-  * changing towards its new setting. The other, if the filter
-  * doesn't change.
-  */
-
-  if (dsp_filter_coeff_incr_count > 0)
-  {
-    /* Increment is added to each filter coefficient filter_coeff_incr_count times. */
-    for (dsp_i = 0; dsp_i < count; dsp_i++)
-    {
-      /* The filter is implemented in Direct-II form. */
-      dsp_centernode = dsp_buf[dsp_i] - dsp_a1 * dsp_hist1 - dsp_a2 * dsp_hist2;
-      dsp_buf[dsp_i] = dsp_b02 * (dsp_centernode + dsp_hist2) + dsp_b1 * dsp_hist1;
-      dsp_hist2 = dsp_hist1;
-      dsp_hist1 = dsp_centernode;
-
-      if (dsp_filter_coeff_incr_count-- > 0)
-      {
-	dsp_a1 += dsp_a1_incr;
-	dsp_a2 += dsp_a2_incr;
-	dsp_b02 += dsp_b02_incr;
-	dsp_b1 += dsp_b1_incr;
-      }
-    } /* for dsp_i */
-  }
-  else /* The filter parameters are constant.  This is duplicated to save time. */
-  {
-    for (dsp_i = 0; dsp_i < count; dsp_i++)
-    { /* The filter is implemented in Direct-II form. */
-      dsp_centernode = dsp_buf[dsp_i] - dsp_a1 * dsp_hist1 - dsp_a2 * dsp_hist2;
-      dsp_buf[dsp_i] = dsp_b02 * (dsp_centernode + dsp_hist2) + dsp_b1 * dsp_hist1;
-      dsp_hist2 = dsp_hist1;
-      dsp_hist1 = dsp_centernode;
-    }
-  }
-
-  voice->hist1 = dsp_hist1;
-  voice->hist2 = dsp_hist2;
-  voice->a1 = dsp_a1;
-  voice->a2 = dsp_a2;
-  voice->b02 = dsp_b02;
-  voice->b1 = dsp_b1;
-  voice->filter_coeff_incr_count = dsp_filter_coeff_incr_count;
-
-  fluid_check_fpe ("voice_filter");
-}
 
 /**
  * Mix voice data to left/right (panning), reverb and chorus buffers.
@@ -1146,11 +945,7 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
      * modulation.  The allowed range is tested in the 'fluid_ct2hz'
      * function [PH,20021214]
      */
-    voice->fres = _GEN(voice, GEN_FILTERFC);
-
-    /* The synthesis loop will have to recalculate the filter
-     * coefficients. */
-    voice->last_fres = -1.0f;
+    fluid_iir_filter_set_fres(&voice->resonant_filter, _GEN(voice, GEN_FILTERFC));
     break;
 
   case GEN_FILTERQ:
@@ -1177,26 +972,8 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
      * response of a non-resonant filter.  This idea is implemented as
      * follows: */
     q_dB -= 3.01f;
+    fluid_iir_filter_set_q_dB(&voice->resonant_filter, q_dB);
 
-    /* The 'sound font' Q is defined in dB. The filter needs a linear
-       q. Convert. */
-    voice->q_lin = (fluid_real_t) (pow(10.0f, q_dB / 20.0f));
-
-    /* SF 2.01 page 59:
-     *
-     *  The SoundFont specs ask for a gain reduction equal to half the
-     *  height of the resonance peak (Q).  For example, for a 10 dB
-     *  resonance peak, the gain is reduced by 5 dB.  This is done by
-     *  multiplying the total gain with sqrt(1/Q).  `Sqrt' divides dB
-     *  by 2 (100 lin = 40 dB, 10 lin = 20 dB, 3.16 lin = 10 dB etc)
-     *  The gain is later factored into the 'b' coefficients
-     *  (numerator of the filter equation).  This gain factor depends
-     *  only on Q, so this is the right place to calculate it.
-     */
-    voice->filter_gain = (fluid_real_t) (1.0 / sqrt(voice->q_lin));
-
-    /* The synthesis loop will have to recalculate the filter coefficients. */
-    voice->last_fres = -1.;
     break;
 
   case GEN_MODLFOTOPITCH:
