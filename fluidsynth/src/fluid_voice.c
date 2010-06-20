@@ -140,14 +140,14 @@ fluid_voice_init(fluid_voice_t* voice, fluid_sample_t* sample,
   /* mod env initialization*/
   fluid_adsr_env_reset(&voice->modenv);
 
-  /* mod lfo */
-  voice->modlfo_val = 0.0;/* Fixme: Retrieve from any other existing
-                             voice on this channel to keep LFOs in
-                             unison? */
+  /* lfo init */
+  /* Fixme: Retrieve from any other existing
+     voice on this channel to keep LFOs in
+     unison? */
 
-  /* vib lfo */
-  voice->viblfo_val = 0.0f; /* Fixme: See mod lfo */
-
+  fluid_lfo_reset(&voice->modlfo);
+  fluid_lfo_reset(&voice->viblfo);
+  
   /* Clear sample history in filter */
   fluid_iir_filter_reset(&voice->resonant_filter);
 
@@ -289,45 +289,12 @@ fluid_voice_write (fluid_voice_t* voice, fluid_real_t *dsp_buf)
   fluid_adsr_env_calc(&voice->modenv, 0);
   fluid_check_fpe ("voice_write mod env");
 
-  /******************* mod lfo **********************/
+  /******************* lfo **********************/
 
-  if (voice->ticks >= voice->modlfo_delay)
-  {
-    voice->modlfo_val += voice->modlfo_incr;
-  
-    if (voice->modlfo_val > 1.0)
-    {
-      voice->modlfo_incr = -voice->modlfo_incr;
-      voice->modlfo_val = (fluid_real_t) 2.0 - voice->modlfo_val;
-    }
-    else if (voice->modlfo_val < -1.0)
-    {
-      voice->modlfo_incr = -voice->modlfo_incr;
-      voice->modlfo_val = (fluid_real_t) -2.0 - voice->modlfo_val;
-    }
-  }
-  
+  fluid_lfo_calc(&voice->modlfo, voice->ticks);
   fluid_check_fpe ("voice_write mod LFO");
-
-  /******************* vib lfo **********************/
-
-  if (voice->ticks >= voice->viblfo_delay)
-  {
-    voice->viblfo_val += voice->viblfo_incr;
-
-    if (voice->viblfo_val > (fluid_real_t) 1.0)
-    {
-      voice->viblfo_incr = -voice->viblfo_incr;
-      voice->viblfo_val = (fluid_real_t) 2.0 - voice->viblfo_val;
-    }
-    else if (voice->viblfo_val < -1.0)
-    {
-      voice->viblfo_incr = -voice->viblfo_incr;
-      voice->viblfo_val = (fluid_real_t) -2.0 - voice->viblfo_val;
-    }
-  }
-
-  fluid_check_fpe ("voice_write Vib LFO");
+  fluid_lfo_calc(&voice->viblfo, voice->ticks);
+  fluid_check_fpe ("voice_write vib LFO");
 
   /******************* amplitude **********************/
 
@@ -345,7 +312,7 @@ fluid_voice_write (fluid_voice_t* voice, fluid_real_t *dsp_buf)
      * A positive modlfo_to_vol should increase volume (negative attenuation).
      */
     target_amp = fluid_atten2amp (voice->attenuation)
-      * fluid_cb2amp (voice->modlfo_val * -voice->modlfo_to_vol)
+      * fluid_cb2amp (fluid_lfo_get_val(&voice->modlfo) * -voice->modlfo_to_vol)
       * fluid_adsr_env_get_val(&voice->volenv);
   }
   else
@@ -355,7 +322,7 @@ fluid_voice_write (fluid_voice_t* voice, fluid_real_t *dsp_buf)
 
     target_amp = fluid_atten2amp (voice->attenuation)
       * fluid_cb2amp (960.0f * (1.0f - fluid_adsr_env_get_val(&voice->volenv))
-		      + voice->modlfo_val * -voice->modlfo_to_vol);
+		      + fluid_lfo_get_val(&voice->modlfo) * -voice->modlfo_to_vol);
 
     /* We turn off a voice, if the volume has dropped low enough. */
 
@@ -408,8 +375,8 @@ fluid_voice_write (fluid_voice_t* voice, fluid_real_t *dsp_buf)
    * buffer. It is the ratio between the frequencies of original
    * waveform and output waveform.*/
   voice->phase_incr = fluid_ct2hz_real
-    (voice->pitch + voice->modlfo_val * voice->modlfo_to_pitch
-     + voice->viblfo_val * voice->viblfo_to_pitch
+    (voice->pitch + fluid_lfo_get_val(&voice->modlfo) * voice->modlfo_to_pitch
+     + fluid_lfo_get_val(&voice->viblfo) * voice->viblfo_to_pitch
      + fluid_adsr_env_get_val(&voice->modenv) * voice->modenv_to_pitch) / voice->root_pitch_hz;
 
   fluid_check_fpe ("voice_write phase calculation");
@@ -419,7 +386,7 @@ fluid_voice_write (fluid_voice_t* voice, fluid_real_t *dsp_buf)
 
   /*************** resonant filter ******************/
   fluid_iir_filter_calc(&voice->resonant_filter, voice->output_rate,
-		        voice->modlfo_val * voice->modlfo_to_fc +
+		        fluid_lfo_get_val(&voice->modlfo) * voice->modlfo_to_fc +
 		        fluid_adsr_env_get_val(&voice->modenv) * voice->modenv_to_fc);
 
   /*********************** run the dsp chain ************************
@@ -920,7 +887,7 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
   case GEN_MODLFODELAY:
     x = _GEN(voice, GEN_MODLFODELAY);
     fluid_clip(x, -12000.0f, 5000.0f);
-    voice->modlfo_delay = (unsigned int) (voice->output_rate * fluid_tc2sec_delay(x));
+    fluid_lfo_set_delay(&voice->modlfo, (unsigned int) (voice->output_rate * fluid_tc2sec_delay(x)));
     break;
 
   case GEN_MODLFOFREQ:
@@ -929,7 +896,7 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
      */
     x = _GEN(voice, GEN_MODLFOFREQ);
     fluid_clip(x, -16000.0f, 4500.0f);
-    voice->modlfo_incr = (4.0f * FLUID_BUFSIZE * fluid_act2hz(x) / voice->output_rate);
+    fluid_lfo_set_incr(&voice->modlfo, (4.0f * FLUID_BUFSIZE * fluid_act2hz(x) / voice->output_rate)); 
     break;
 
   case GEN_VIBLFOFREQ:
@@ -940,13 +907,13 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
      */
     x = _GEN(voice, GEN_VIBLFOFREQ);
     fluid_clip(x, -16000.0f, 4500.0f);
-    voice->viblfo_incr = (4.0f * FLUID_BUFSIZE * fluid_act2hz(x) / voice->output_rate);
+    fluid_lfo_set_incr(&voice->viblfo, (4.0f * FLUID_BUFSIZE * fluid_act2hz(x) / voice->output_rate)); 
     break;
 
   case GEN_VIBLFODELAY:
     x = _GEN(voice,GEN_VIBLFODELAY);
     fluid_clip(x, -12000.0f, 5000.0f);
-    voice->viblfo_delay = (unsigned int) (voice->output_rate * fluid_tc2sec_delay(x));
+    fluid_lfo_set_delay(&voice->viblfo, (unsigned int) (voice->output_rate * fluid_tc2sec_delay(x))); 
     break;
 
   case GEN_VIBLFOTOPITCH:
@@ -1283,7 +1250,7 @@ fluid_voice_noteoff(fluid_voice_t* voice)
        * for seamless volume transition.
        */
       if (fluid_adsr_env_get_val(&voice->volenv) > 0){
-	fluid_real_t lfo = voice->modlfo_val * -voice->modlfo_to_vol;
+	fluid_real_t lfo = fluid_lfo_get_val(&voice->modlfo) * -voice->modlfo_to_vol;
         fluid_real_t amp = fluid_adsr_env_get_val(&voice->volenv) * pow (10.0, lfo / -200);
         fluid_real_t env_value = - ((-200 * log (amp) / log (10.0) - lfo) / 960.0 - 1);
 	fluid_clip (env_value, 0.0, 1.0);
@@ -1766,6 +1733,4 @@ fluid_voice_optimize_sample(fluid_sample_t* s)
   };
   return FLUID_OK;
 }
-
-
 

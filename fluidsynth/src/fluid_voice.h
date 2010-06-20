@@ -27,6 +27,7 @@
 #include "fluid_mod.h"
 #include "fluid_iir_filter.h"
 #include "fluid_adsr_env.h"
+#include "fluid_lfo.h"
 
 #define NO_CHANNEL             0xff
 
@@ -128,17 +129,13 @@ struct _fluid_voice_t
 	fluid_real_t modenv_to_pitch;
 
 	/* mod lfo */
-	fluid_real_t modlfo_val;          /* the value of the modulation LFO */
-	unsigned int modlfo_delay;       /* the delay of the lfo in samples */
-	fluid_real_t modlfo_incr;         /* the lfo frequency is converted to a per-buffer increment */
+        fluid_lfo_t modlfo;
 	fluid_real_t modlfo_to_fc;
 	fluid_real_t modlfo_to_pitch;
 	fluid_real_t modlfo_to_vol;
 
 	/* vib lfo */
-	fluid_real_t viblfo_val;        /* the value of the vibrato LFO */
-	unsigned int viblfo_delay;      /* the delay of the lfo in samples */
-	fluid_real_t viblfo_incr;       /* the lfo frequency is converted to a per-buffer increment */
+        fluid_lfo_t viblfo;
 	fluid_real_t viblfo_to_pitch;
 
 	fluid_iir_filter_t resonant_filter; /* IIR resonance dsp filter */
