@@ -11,6 +11,12 @@ else ( LIBSNDFILE_SUPPORT )
   message ( "libsndfile:            no (raw audio file rendering only)" )
 endif ( LIBSNDFILE_SUPPORT )
 
+if ( DBUS_SUPPORT )
+  message ( "D-Bus:                 yes" )
+else ( DBUS_SUPPORT ) 
+  message ( "D-Bus:                 no" )
+endif ( DBUS_SUPPORT )
+
 if ( PULSE_SUPPORT )
   message ( "PulseAudio:            yes" )
 else ( PULSE_SUPPORT ) 

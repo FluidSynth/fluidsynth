@@ -54,6 +54,11 @@ if ( COREMIDI_SUPPORT )
   set ( fluid_coremidi_SOURCES drivers/fluid_coremidi.c )
 endif ( COREMIDI_SUPPORT )
 
+if ( DBUS_SUPPORT )
+  set ( fluid_dbus_SOURCES fluid_rtkit.c fluid_rtkit.h )
+  include_directories ( ${DBUS_INCLUDEDIR} ${DBUS_INCLUDE_DIRS} )
+endif ( DBUS_SUPPORT )
+
 if ( JACK_SUPPORT )
   set ( fluid_jack_SOURCES drivers/fluid_jack.c )
   include_directories ( ${JACK_INCLUDEDIR} ${JACK_INCLUDE_DIRS} ) 
@@ -172,6 +177,8 @@ link_directories (
     ${PORTAUDIO_LIBRARY_DIRS} 
     ${LIBSNDFILE_LIBDIR}
     ${LIBSNDFILE_LIBRARY_DIRS}
+    ${DBUS_LIBDIR} 
+    ${DBUS_LIBRARY_DIRS} 
 )
 
 add_library ( libfluidsynth SHARED 
@@ -179,6 +186,7 @@ add_library ( libfluidsynth SHARED
     ${fluid_coreaudio_SOURCES}
     ${fluid_coremidi_SOURCES}
     ${fluid_dart_SOURCES}
+    ${fluid_dbus_SOURCES}
     ${fluid_jack_SOURCES}
     ${fluid_lash_SOURCES}
     ${fluid_ladspa_SOURCES}
@@ -218,13 +226,14 @@ target_link_libraries ( libfluidsynth
     ${PULSE_LIBRARIES} 
     ${PORTAUDIO_LIBRARIES} 
     ${LIBSNDFILE_LIBRARIES}
+    ${DBUS_LIBRARIES}
     ${READLINE_LIBS} 
     ${DART_LIBS}  
     ${COREAUDIO_LIBS} 
     ${COREMIDI_LIBS} 
     ${WINDOWS_LIBS}
     ${MidiShare_LIBS}
-    ${LIBFLUID_LIBS} 
+    ${LIBFLUID_LIBS}
 )
 
 # ************ CLI program ************

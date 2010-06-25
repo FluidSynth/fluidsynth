@@ -19,6 +19,9 @@
 /* Define if building for Mac OS X Darwin */
 #cmakedefine DARWIN @DARWIN@
 
+/* Define if D-Bus support is enabled */
+#cmakedefine DBUS_SUPPORT  @DBUS_SUPPORT@
+
 /* Define to enable FPE checks */
 #cmakedefine FPE_CHECK @FPE_CHECK@
 

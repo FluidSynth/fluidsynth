@@ -1,3 +1,11 @@
+Select build system
+===================
+
+   We currently have two different build systems and you can choose 
+which one works best for you. If you want to use the CMake build 
+system, please see the README.cmake file. For the autotools build 
+system, see below.
+
 Basic Installation
 ==================
 

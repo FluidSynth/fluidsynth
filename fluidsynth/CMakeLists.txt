@@ -61,6 +61,7 @@ option ( enable-midishare "compile MidiShare support (if it is available)" on )
 option ( enable-dart "compile DART support (if it is available)" on )
 option ( enable-readline "compile readline lib line editing (if it is available)" on )
 option ( enable-lash "compile LASH support (if it is available)" on )
+option ( enable-dbus "compile DBUS support (if it is available)" on )
 
 # Initialize the library directory name suffix.
 if ( CMAKE_SIZEOF_VOID_P EQUAL 8 )
@@ -325,6 +326,13 @@ if ( enable-ladcca )
   set ( LADCCA_SUPPORT ${LADCCA_FOUND} )
 endif ( enable-ladcca )
 
+set ( DBUS_SUPPORT )
+set ( DBUS_LIBRARIES )
+if ( enable-dbus )
+    pkg_check_modules ( DBUS dbus-1>=1.0.0 )
+    set ( DBUS_SUPPORT ${DBUS_FOUND} )
+endif ( enable-dbus )
+ 
 # General configuration file
 configure_file ( ${CMAKE_SOURCE_DIR}/src/config.cmake 
                  ${CMAKE_BINARY_DIR}/config.h )
