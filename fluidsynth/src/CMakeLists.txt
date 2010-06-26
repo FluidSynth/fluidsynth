@@ -114,7 +114,6 @@ set ( libfluidsynth_SOURCES
     fluid_conv.h 
     fluid_defsfont.c 
     fluid_defsfont.h 
-    fluid_dsp_float.c 
     fluid_event.c 
     fluid_event_priv.h 
     fluid_event_queue.c 
@@ -127,6 +126,9 @@ set ( libfluidsynth_SOURCES
     rvoice/fluid_iir_filter.h
     rvoice/fluid_lfo.h
     rvoice/fluid_adsr_env.h
+    rvoice/fluid_rvoice.h
+    rvoice/fluid_rvoice.c
+    rvoice/fluid_rvoice_dsp.c
     fluid_list.c 
     fluid_list.h 
     fluid_mdriver.c 

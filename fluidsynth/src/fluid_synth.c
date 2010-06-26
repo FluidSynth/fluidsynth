@@ -249,7 +249,7 @@ fluid_synth_init(void)
 
   fluid_conversion_config();
 
-  fluid_dsp_float_config();
+  fluid_rvoice_dsp_config();
 
   fluid_sys_config();
 
@@ -1324,11 +1324,9 @@ fluid_synth_noteoff_LOCAL(fluid_synth_t* synth, int chan, int key)
 	    used_voices++;
 	  }
 	}
-	FLUID_LOG(FLUID_INFO, "noteoff\t%d\t%d\t%d\t%05d\t%.3f\t%.3f\t%.3f\t%d",
+	FLUID_LOG(FLUID_INFO, "noteoff\t%d\t%d\t%d\t%05d\t%.3f\t%d",
 		 voice->chan, voice->key, 0, voice->id,
-		 (float) (voice->start_time + voice->ticks) / 44100.0f,
 		 (fluid_curtime() - synth->start) / 1000.0f,
-		 (float) voice->ticks / 44100.0f,
 		 used_voices);
       } /* if verbose */
 
@@ -2977,7 +2975,8 @@ static int
 fluid_synth_one_block(fluid_synth_t* synth, int do_not_mix_fx_to_out)
 {
   fluid_real_t local_voice_buf[FLUID_BUFSIZE];
-  int i, auchan, start_index, voice_index;
+  int i, auchan;
+//  int start_index, voice_index;
   fluid_voice_t* voice;
   fluid_real_t* left_buf;
   fluid_real_t* right_buf;
@@ -3024,6 +3023,7 @@ fluid_synth_one_block(fluid_synth_t* synth, int do_not_mix_fx_to_out)
 
   fluid_profile(FLUID_PROF_ONE_BLOCK_CLEAR, prof_ref);
 
+#if 0
   if (synth->cores > 1)
   {
     /* Look for first active voice to process */
@@ -3111,6 +3111,7 @@ got_voice:      /* We got a voice to process */
   }
   else          /* synth->cores < 1 - Not multi-core enabled */
   {
+#endif
     /* call all playing synthesis processes */
     for (i = 0; i < synth->polyphony; i++) {
       fluid_profile_ref_var (prof_ref_voice);
@@ -3135,12 +3136,16 @@ got_voice:      /* We got a voice to process */
       left_buf = synth->left_buf[auchan];
       right_buf = synth->right_buf[auchan];
 
-      fluid_voice_write (voice, local_voice_buf);
-      fluid_voice_mix (voice, left_buf, right_buf, reverb_buf, chorus_buf);
+      count = fluid_voice_write (voice, local_voice_buf);
+      if (count > 0)
+        fluid_voice_mix (voice, count, local_voice_buf, left_buf, right_buf, 
+                         reverb_buf, chorus_buf);
 
       fluid_profile (FLUID_PROF_ONE_BLOCK_VOICE, prof_ref_voice);
     }
+#if 0
   }
+#endif
 
   fluid_check_fpe("Synthesis processes");
 
@@ -3424,7 +3429,8 @@ fluid_synth_free_voice_by_kill_LOCAL(fluid_synth_t* synth)
     this_voice_prio -= (synth->noteid - fluid_voice_get_id(voice));
 
     /* take a rough estimate of loudness into account. Louder voices are more important. */
-    this_voice_prio += fluid_voice_get_loudness(voice) * 1000.;
+    // FIXME
+    // this_voice_prio += fluid_voice_get_loudness(voice) * 1000.;
 
     /* check if this voice has less priority than the previous candidate. */
     if (this_voice_prio < best_prio)
