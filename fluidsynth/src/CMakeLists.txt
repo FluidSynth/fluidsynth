@@ -23,6 +23,7 @@ include_directories (
     ${CMAKE_BINARY_DIR}
     ${CMAKE_SOURCE_DIR}/src 
     ${CMAKE_SOURCE_DIR}/src/rvoice
+    ${CMAKE_SOURCE_DIR}/src/datatypes
     ${CMAKE_SOURCE_DIR}/include 
     ${CMAKE_BINARY_DIR}/include 
     ${PTHREADS_INCLUDE_DIR}
@@ -120,8 +121,10 @@ set ( libfluidsynth_SOURCES
     fluid_event_queue.h 
     fluid_gen.c 
     fluid_gen.h 
-    fluid_hash.c 
-    fluid_hash.h 
+    datatypes/fluid_hash.c 
+    datatypes/fluid_hash.h 
+    datatypes/fluid_list.c 
+    datatypes/fluid_list.h 
     rvoice/fluid_iir_filter.c
     rvoice/fluid_iir_filter.h
     rvoice/fluid_lfo.h
@@ -129,8 +132,7 @@ set ( libfluidsynth_SOURCES
     rvoice/fluid_rvoice.h
     rvoice/fluid_rvoice.c
     rvoice/fluid_rvoice_dsp.c
-    fluid_list.c 
-    fluid_list.h 
+    rvoice/fluid_phase.h 
     fluid_mdriver.c 
     fluid_mdriver.h 
     fluid_midi.c 
@@ -139,7 +141,6 @@ set ( libfluidsynth_SOURCES
     fluid_midi_router.h 
     fluid_mod.c 
     fluid_mod.h 
-    fluid_phase.h 
     fluid_ramsfont.c 
     fluid_ramsfont.h 
     fluid_rev.c 

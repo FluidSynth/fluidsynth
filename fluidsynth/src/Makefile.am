@@ -94,13 +94,13 @@ libfluidsynth_la_SOURCES = \
 	fluid_event_queue.h \
 	fluid_gen.c \
 	fluid_gen.h \
-	fluid_hash.c \
-	fluid_hash.h \
+	datatypes/fluid_hash.c \
+	datatypes/fluid_hash.h \
 	fluid_ladspa.c \
 	fluid_ladspa.h \
 	fluid_lash.h \
-	fluid_list.c \
-	fluid_list.h \
+	datatypes/fluid_list.c \
+	datatypes/fluid_list.h \
 	fluid_mdriver.c \
 	fluid_mdriver.h \
 	fluid_midi.c \
@@ -110,7 +110,7 @@ libfluidsynth_la_SOURCES = \
         drivers/fluid_midishare.c \
 	fluid_mod.c \
 	fluid_mod.h \
-	fluid_phase.h \
+	rvoice/fluid_phase.h \
 	fluid_ramsfont.c \
 	fluid_ramsfont.h \
 	fluid_rev.c \
@@ -137,6 +137,7 @@ libfluidsynth_la_SOURCES = \
 	drivers/fluid_aufile.c 
 
 INCLUDES = -I$(top_srcdir)/include -I$(top_srcdir)/src/rvoice \
+  -I$(top_srcdir)/src/datatypes \
   $(LASH_CFLAGS) $(LADCCA_CFLAGS) \
   $(READLINE_CFLAGS) $(JACK_CFLAGS) $(ALSA_CFLAGS) $(PULSE_CFLAGS) \
   $(PORTAUDIO_CFLAGS) $(DART_CFLAGS) $(GLIB_CFLAGS) $(LIBSNDFILE_CFLAGS) \
