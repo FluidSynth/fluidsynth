@@ -21,7 +21,7 @@ fluid_coremidi = drivers/fluid_coremidi.c
 endif
 
 if DBUS_SUPPORT
-fluid_rtkit = fluid_rtkit.c
+fluid_rtkit = bindings/fluid_rtkit.c
 endif
 
 if JACK_SUPPORT
@@ -42,10 +42,10 @@ endif
 
 # if LASH_SUPPORT || LADCCA_SUPPORT (Makefile supports OR?)
 if LASH_SUPPORT
-fluid_lash = fluid_lash.c
+fluid_lash = bindings/fluid_lash.c
 else
 if LADCCA_SUPPORT
-fluid_lash = fluid_lash.c
+fluid_lash = bindings/fluid_lash.c
 endif
 endif
 
@@ -96,8 +96,8 @@ libfluidsynth_la_SOURCES = \
 	fluid_gen.h \
 	datatypes/fluid_hash.c \
 	datatypes/fluid_hash.h \
-	fluid_ladspa.c \
-	fluid_ladspa.h \
+	bindings/fluid_ladspa.c \
+	bindings/fluid_ladspa.h \
 	fluid_lash.h \
 	datatypes/fluid_list.c \
 	datatypes/fluid_list.h \
@@ -133,11 +133,11 @@ libfluidsynth_la_SOURCES = \
 	rvoice/fluid_iir_filter.h \
 	rvoice/fluid_adsr_env.h \
 	rvoice/fluid_lfo.h \
-	fluid_filerenderer.c \
+	bindings/fluid_filerenderer.c \
 	drivers/fluid_aufile.c 
 
 INCLUDES = -I$(top_srcdir)/include -I$(top_srcdir)/src/rvoice \
-  -I$(top_srcdir)/src/datatypes \
+  -I$(top_srcdir)/src/datatypes -I$(top_srcdir)/src/bindings/ \
   $(LASH_CFLAGS) $(LADCCA_CFLAGS) \
   $(READLINE_CFLAGS) $(JACK_CFLAGS) $(ALSA_CFLAGS) $(PULSE_CFLAGS) \
   $(PORTAUDIO_CFLAGS) $(DART_CFLAGS) $(GLIB_CFLAGS) $(LIBSNDFILE_CFLAGS) \

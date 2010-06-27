@@ -24,6 +24,8 @@ include_directories (
     ${CMAKE_SOURCE_DIR}/src 
     ${CMAKE_SOURCE_DIR}/src/rvoice
     ${CMAKE_SOURCE_DIR}/src/datatypes
+    ${CMAKE_SOURCE_DIR}/src/sfloader
+    ${CMAKE_SOURCE_DIR}/src/bindings
     ${CMAKE_SOURCE_DIR}/include 
     ${CMAKE_BINARY_DIR}/include 
     ${PTHREADS_INCLUDE_DIR}
@@ -56,7 +58,7 @@ if ( COREMIDI_SUPPORT )
 endif ( COREMIDI_SUPPORT )
 
 if ( DBUS_SUPPORT )
-  set ( fluid_dbus_SOURCES fluid_rtkit.c fluid_rtkit.h )
+  set ( fluid_dbus_SOURCES bindings/fluid_rtkit.c bindings/fluid_rtkit.h )
   include_directories ( ${DBUS_INCLUDEDIR} ${DBUS_INCLUDE_DIRS} )
 endif ( DBUS_SUPPORT )
 
@@ -79,7 +81,7 @@ if ( OSS_SUPPORT )
 endif ( OSS_SUPPORT )
 
 if ( LASH_SUPPORT OR LADCCA_SUPPORT )
-  set ( fluid_lash_SOURCES fluid_lash.c fluid_lash.h )
+  set ( fluid_lash_SOURCES bindings/fluid_lash.c bindings/fluid_lash.h )
   include_directories ( ${LASH_INCLUDEDIR} ${LADCCA_INCLUDEDIR} 
                         ${LASH_INCLUDE_DIRS} ${LADCCA_INCLUDE_DIRS} )
 endif ( LASH_SUPPORT OR LADCCA_SUPPORT )
@@ -94,7 +96,7 @@ if ( LIBSNDFILE_SUPPORT )
 endif ( LIBSNDFILE_SUPPORT )
 
 if ( LADSPA_SUPPORT )
-  set ( fluid_ladspa_SOURCES fluid_ladspa.c fluid_ladspa.h )
+  set ( fluid_ladspa_SOURCES bindings/fluid_ladspa.c bindings/fluid_ladspa.h )
 endif ( LADSPA_SUPPORT )
 
 if ( MIDISHARE_SUPPORT )
@@ -113,8 +115,11 @@ set ( libfluidsynth_SOURCES
     fluid_cmd.h
     fluid_conv.c 
     fluid_conv.h 
-    fluid_defsfont.c 
-    fluid_defsfont.h 
+    sfloader/fluid_defsfont.c 
+    sfloader/fluid_defsfont.h 
+    sfloader/fluid_ramsfont.c 
+    sfloader/fluid_ramsfont.h 
+    sfloader/fluid_sfont.h 
     fluid_event.c 
     fluid_event_priv.h 
     fluid_event_queue.c 
@@ -141,15 +146,12 @@ set ( libfluidsynth_SOURCES
     fluid_midi_router.h 
     fluid_mod.c 
     fluid_mod.h 
-    fluid_ramsfont.c 
-    fluid_ramsfont.h 
     fluid_rev.c 
     fluid_rev.h 
     fluid_seqbind.c 
     fluid_seq.c 
     fluid_settings.c 
     fluid_settings.h 
-    fluid_sfont.h 
     fluid_synth.c 
     fluid_synth.h 
     fluidsynth_priv.h 
@@ -159,7 +161,7 @@ set ( libfluidsynth_SOURCES
     fluid_tuning.h 
     fluid_voice.c 
     fluid_voice.h 
-    fluid_filerenderer.c 
+    bindings/fluid_filerenderer.c 
     drivers/fluid_aufile.c 
 ) 
 
