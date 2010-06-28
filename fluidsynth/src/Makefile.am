@@ -77,16 +77,16 @@ libfluidsynth_la_SOURCES = \
 	$(fluid_rtkit) \
 	fluid_adriver.c \
 	fluid_adriver.h \
-	fluid_chan.c \
-	fluid_chan.h \
+	synth/fluid_chan.c \
+	synth/fluid_chan.h \
 	fluid_chorus.c \
 	fluid_chorus.h \
-	fluid_cmd.c \
-	fluid_cmd.h \
+	bindings/fluid_cmd.c \
+	bindings/fluid_cmd.h \
 	fluid_conv.c \
 	fluid_conv.h \
-	fluid_defsfont.c \
-	fluid_defsfont.h \
+	sfloader/fluid_defsfont.c \
+	sfloader/fluid_defsfont.h \
 	fluid_dsp_float.c \
 	fluid_event.c \
 	fluid_event_priv.h \
@@ -108,27 +108,27 @@ libfluidsynth_la_SOURCES = \
 	fluid_midi_router.c \
 	fluid_midi_router.h \
         drivers/fluid_midishare.c \
-	fluid_mod.c \
-	fluid_mod.h \
+	synth/fluid_mod.c \
+	synth/fluid_mod.h \
 	rvoice/fluid_phase.h \
-	fluid_ramsfont.c \
-	fluid_ramsfont.h \
+	sfloader/fluid_ramsfont.c \
+	sfloader/fluid_ramsfont.h \
 	fluid_rev.c \
 	fluid_rev.h \
 	fluid_seqbind.c \
 	fluid_seq.c \
 	fluid_settings.c \
 	fluid_settings.h \
-	fluid_sfont.h \
-	fluid_synth.c \
-	fluid_synth.h \
+	sfloader/fluid_sfont.h \
+	synth/fluid_synth.c \
+	synth/fluid_synth.h \
 	fluidsynth_priv.h \
 	fluid_sys.c \
 	fluid_sys.h \
-	fluid_tuning.c \
-	fluid_tuning.h \
-	fluid_voice.c \
-	fluid_voice.h \
+	synth/fluid_tuning.c \
+	synth/fluid_tuning.h \
+	synth/fluid_voice.c \
+	synth/fluid_voice.h \
 	rvoice/fluid_iir_filter.c \
 	rvoice/fluid_iir_filter.h \
 	rvoice/fluid_adsr_env.h \
@@ -137,7 +137,8 @@ libfluidsynth_la_SOURCES = \
 	drivers/fluid_aufile.c 
 
 INCLUDES = -I$(top_srcdir)/include -I$(top_srcdir)/src/rvoice \
-  -I$(top_srcdir)/src/datatypes -I$(top_srcdir)/src/bindings/ \
+  -I$(top_srcdir)/src/datatypes -I$(top_srcdir)/src/bindings \
+  -I$(top_srcdir)/src/synth \
   $(LASH_CFLAGS) $(LADCCA_CFLAGS) \
   $(READLINE_CFLAGS) $(JACK_CFLAGS) $(ALSA_CFLAGS) $(PULSE_CFLAGS) \
   $(PORTAUDIO_CFLAGS) $(DART_CFLAGS) $(GLIB_CFLAGS) $(LIBSNDFILE_CFLAGS) \

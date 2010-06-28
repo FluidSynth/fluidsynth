@@ -22,6 +22,7 @@
 include_directories (
     ${CMAKE_BINARY_DIR}
     ${CMAKE_SOURCE_DIR}/src 
+    ${CMAKE_SOURCE_DIR}/src/synth
     ${CMAKE_SOURCE_DIR}/src/rvoice
     ${CMAKE_SOURCE_DIR}/src/datatypes
     ${CMAKE_SOURCE_DIR}/src/sfloader
@@ -107,12 +108,12 @@ endif ( MIDISHARE_SUPPORT )
 set ( libfluidsynth_SOURCES 
     fluid_adriver.c 
     fluid_adriver.h 
-    fluid_chan.c 
-    fluid_chan.h 
+    synth/fluid_chan.c 
+    synth/fluid_chan.h 
     fluid_chorus.c 
     fluid_chorus.h 
-    fluid_cmd.c 
-    fluid_cmd.h
+    bindings/fluid_cmd.c 
+    bindings/fluid_cmd.h
     fluid_conv.c 
     fluid_conv.h 
     sfloader/fluid_defsfont.c 
@@ -123,8 +124,8 @@ set ( libfluidsynth_SOURCES
     fluid_event.c 
     fluid_event_priv.h 
     fluid_event_queue.h 
-    fluid_gen.c 
-    fluid_gen.h 
+    synth/fluid_gen.c 
+    synth/fluid_gen.h 
     datatypes/fluid_hash.c 
     datatypes/fluid_hash.h 
     datatypes/fluid_list.c 
@@ -150,23 +151,23 @@ set ( libfluidsynth_SOURCES
     fluid_midi.h 
     fluid_midi_router.c 
     fluid_midi_router.h 
-    fluid_mod.c 
-    fluid_mod.h 
+    synth/fluid_mod.c 
+    synth/fluid_mod.h 
     fluid_rev.c 
     fluid_rev.h 
     fluid_seqbind.c 
     fluid_seq.c 
     fluid_settings.c 
     fluid_settings.h 
-    fluid_synth.c 
-    fluid_synth.h 
+    synth/fluid_synth.c 
+    synth/fluid_synth.h 
     fluidsynth_priv.h 
     fluid_sys.c 
     fluid_sys.h 
-    fluid_tuning.c 
-    fluid_tuning.h 
-    fluid_voice.c 
-    fluid_voice.h 
+    synth/fluid_tuning.c 
+    synth/fluid_tuning.h 
+    synth/fluid_voice.c 
+    synth/fluid_voice.h 
     bindings/fluid_filerenderer.c 
     drivers/fluid_aufile.c 
 ) 
