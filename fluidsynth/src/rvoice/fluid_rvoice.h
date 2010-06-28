@@ -134,10 +134,10 @@ struct _fluid_rvoice_dsp_t
  */
 struct _fluid_rvoice_buffers_t
 {
-	unsigned int count; /* Number of buffers */
+	unsigned int count; /* Number of records in "bufs" */
 	struct {
 		fluid_real_t amp;
-		fluid_real_t* buf;
+		int mapping; /* Mapping to mixdown buffer index */
 	} bufs[FLUID_RVOICE_MAX_BUFS];
 };
 
@@ -154,10 +154,15 @@ struct _fluid_rvoice_t
 };
 
 
-int fluid_rvoice_write (fluid_rvoice_t* voice, fluid_real_t *dsp_buf);
+int fluid_rvoice_write(fluid_rvoice_t* voice, fluid_real_t *dsp_buf);
+
 void fluid_rvoice_buffers_mix(fluid_rvoice_buffers_t* buffers, 
-                              fluid_real_t* dsp_buf, int count);
-int fluid_rvoice_render(fluid_rvoice_t* voice);
+                              fluid_real_t* dsp_buf, int samplecount, 
+                              fluid_real_t** dest_bufs, int dest_bufcount);
+void fluid_rvoice_buffers_set_amp(fluid_rvoice_buffers_t* buffers, 
+                                  unsigned int bufnum, fluid_real_t value);
+void fluid_rvoice_buffers_set_mapping(fluid_rvoice_buffers_t* buffers,
+                                      unsigned int bufnum, int mapping);
 
 /* Dynamic update functions */
 
@@ -171,7 +176,6 @@ void fluid_rvoice_set_pitch(fluid_rvoice_t* voice, fluid_real_t value);
 void fluid_rvoice_set_synth_gain(fluid_rvoice_t* voice, fluid_real_t value);
 void fluid_rvoice_set_attenuation(fluid_rvoice_t* voice, fluid_real_t value);
 void fluid_rvoice_set_min_attenuation_cB(fluid_rvoice_t* voice, fluid_real_t value);
-void fluid_rvoice_set_buf_amp(fluid_rvoice_t* voice, unsigned int bufnum, fluid_real_t value);
 void fluid_rvoice_set_viblfo_to_pitch(fluid_rvoice_t* voice, fluid_real_t value);
 void fluid_rvoice_set_modlfo_to_pitch(fluid_rvoice_t* voice, fluid_real_t value);
 void fluid_rvoice_set_modlfo_to_vol(fluid_rvoice_t* voice, fluid_real_t value);

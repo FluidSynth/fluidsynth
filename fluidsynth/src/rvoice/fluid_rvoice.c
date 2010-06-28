@@ -273,6 +273,8 @@ fluid_rvoice_write (fluid_rvoice_t* voice, fluid_real_t *dsp_buf)
 
   /******************* sample sanity check **********/
 
+  if (!voice->dsp.sample)
+    return 0;
   if (voice->dsp.check_sample_sanity_flag)
     fluid_rvoice_check_sample_sanity(voice);
 
@@ -369,32 +371,46 @@ fluid_rvoice_write (fluid_rvoice_t* voice, fluid_real_t *dsp_buf)
 }
 
 
+static inline fluid_real_t* 
+get_dest_buf(fluid_rvoice_buffers_t* buffers, int index,
+             fluid_real_t** dest_bufs, int dest_bufcount)
+{
+  int j = buffers->bufs[index].mapping;
+  if (j >= dest_bufcount || j < 0) return NULL;
+  return dest_bufs[j];
+}
+
 /**
  * Mix data down to buffers
  *
  * @param buffers Destination buffer(s)
  * @param dsp_buf Mono sample source
- * @param count Number of samples to process
+ * @param samplecount Number of samples to process (no FLUID_BUFSIZE restriction)
+ * @param dest_bufs Array of buffers to mixdown to
+ * @param dest_bufcount Length of dest_bufs
  */
 void 
 fluid_rvoice_buffers_mix(fluid_rvoice_buffers_t* buffers, 
-                         fluid_real_t* dsp_buf, int count)
+                         fluid_real_t* dsp_buf, int samplecount, 
+                         fluid_real_t** dest_bufs, int dest_bufcount)
 {
   int bufcount = buffers->count;
   int i, dsp_i;
+  if (!samplecount || !bufcount || !dest_bufcount) 
+    return;
 
   for (i=0; i < bufcount; i++) {
-    fluid_real_t amp = buffers->bufs[i].amp; 
-    fluid_real_t* buf = buffers->bufs[i].buf; 
+    fluid_real_t* buf = get_dest_buf(buffers, i, dest_bufs, dest_bufcount);
+    fluid_real_t* next_buf;
+    fluid_real_t amp = buffers->bufs[i].amp;
     if (buf == NULL || amp == 0.0f)
       continue;
 
     /* Optimization for centered stereo samples - we can save one 
        multiplication per sample */
-    if (i < bufcount-1 && buffers->bufs[i+1].buf != NULL && 
-        buffers->bufs[i+1].amp == amp) {
-      fluid_real_t* next_buf = buffers->bufs[i+1].buf;
-      for (dsp_i = 0; dsp_i < count; dsp_i++) {
+    next_buf = (i+1 >= bufcount ? NULL : get_dest_buf(buffers, i+1, dest_bufs, dest_bufcount));
+    if (next_buf && buffers->bufs[i+1].amp == amp) {
+      for (dsp_i = 0; dsp_i < samplecount; dsp_i++) {
         fluid_real_t samp = amp * dsp_buf[dsp_i]; 
         buf[dsp_i] += samp;
         next_buf[dsp_i] += samp;
@@ -402,28 +418,50 @@ fluid_rvoice_buffers_mix(fluid_rvoice_buffers_t* buffers,
       i++;
     }
     else {
-      for (dsp_i = 0; dsp_i < count; dsp_i++)
+      for (dsp_i = 0; dsp_i < samplecount; dsp_i++)
         buf[dsp_i] += amp * dsp_buf[dsp_i];
     }
   }
 }
 
 /**
- * Synthesize a voice to several buffers.
- *
- * @param voice rvoice to synthesize
- * @return Count of samples written to the buffers. (-1 means voice is currently 
- * quiet, 0 .. #FLUID_BUFSIZE-1 means voice finished.)
+ * Initialize buffers up to (and including) bufnum
  */
-int
-fluid_rvoice_render(fluid_rvoice_t* voice)
+static int
+fluid_rvoice_buffers_check_bufnum(fluid_rvoice_buffers_t* buffers, unsigned int bufnum)
 {
-  fluid_real_t dsp_buf[FLUID_BUFSIZE];
-  int result = fluid_rvoice_write(voice, dsp_buf);
-  if (result > 0)
-    fluid_rvoice_buffers_mix(&voice->buffers, dsp_buf, result);
-  return result;
+  unsigned int i; 
+
+  if (bufnum < buffers->count) return FLUID_OK;
+  if (bufnum >= FLUID_RVOICE_MAX_BUFS) return FLUID_FAILED;
+
+  for (i = buffers->count; i <= bufnum; i++) {
+    buffers->bufs[bufnum].amp = 0.0f;  
+    buffers->bufs[bufnum].mapping = i;  
+  }
+  buffers->count = bufnum+1;
+  return FLUID_OK;
 }
+
+
+void 
+fluid_rvoice_buffers_set_amp(fluid_rvoice_buffers_t* buffers, 
+                             unsigned int bufnum, fluid_real_t value)
+{
+  if (fluid_rvoice_buffers_check_bufnum(buffers, bufnum) != FLUID_OK)
+    return;
+  buffers->bufs[bufnum].amp = value;
+}
+
+void 
+fluid_rvoice_buffers_set_mapping(fluid_rvoice_buffers_t* buffers, 
+                                 unsigned int bufnum, int mapping)
+{
+  if (fluid_rvoice_buffers_check_bufnum(buffers, bufnum) != FLUID_OK)
+    return;
+  buffers->bufs[bufnum].mapping = mapping;
+}
+
 
 void
 fluid_rvoice_reset(fluid_rvoice_t* voice)
@@ -522,15 +560,6 @@ void
 fluid_rvoice_set_min_attenuation_cB(fluid_rvoice_t* voice, fluid_real_t value)
 {
   voice->dsp.min_attenuation_cB = value;
-}
-
-void 
-fluid_rvoice_set_buf_amp(fluid_rvoice_t* voice, unsigned int bufnum, fluid_real_t value)
-{
-  if (bufnum >= FLUID_RVOICE_MAX_BUFS) return; /* Safety net */
-  if (voice->buffers.count <= bufnum)
-    voice->buffers.count = bufnum+1;
-  voice->buffers.bufs[bufnum].amp = value;
 }
 
 void 

@@ -22,6 +22,7 @@
 #define _FLUID_ADSR_ENVELOPE_H
 
 #include "fluidsynth_priv.h"
+#include "fluid_sys.h"
 
 /*
  * envelope data
@@ -59,7 +60,7 @@ struct _fluid_adsr_env_t {
 
 /* For performance, all functions are inlined */
 
-static inline void 
+static FLUID_INLINE void 
 fluid_adsr_env_calc(fluid_adsr_env_t* env, int is_volenv)
 {
   fluid_env_data_t* env_data;
@@ -99,21 +100,16 @@ fluid_adsr_env_calc(fluid_adsr_env_t* env, int is_volenv)
   env->count++;
 }
 
-static inline void 
+/* This one cannot be inlined since it is referenced in 
+   the event queue */
+void 
 fluid_adsr_env_set_data(fluid_adsr_env_t* env,
                         fluid_adsr_env_section_t section,
                         unsigned int count,
                         fluid_real_t coeff,
                         fluid_real_t incr,
                         fluid_real_t min,
-                        fluid_real_t max)
-{
-  env->data[section].count = count;
-  env->data[section].coeff = coeff;
-  env->data[section].incr = incr;
-  env->data[section].min = min;
-  env->data[section].max = max;
-}
+                        fluid_real_t max);
 
 static inline void 
 fluid_adsr_env_reset(fluid_adsr_env_t* env)

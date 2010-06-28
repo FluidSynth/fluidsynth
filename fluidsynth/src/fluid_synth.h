@@ -40,6 +40,8 @@
 #include "fluid_ladspa.h"
 #include "fluid_midi_router.h"
 #include "fluid_sys.h"
+#include "fluid_rvoice_handler.h"
+#include "fluid_rvoice_event.h"
 
 /***************************************************************
  *
@@ -195,6 +197,7 @@ struct _fluid_synth_t
   unsigned int noteid;               /**< the id is incremented for every new note. it's used for noteoff's  */
   unsigned int storeid;
   int nbuf;                          /**< How many audio buffers are used? (depends on nr of audio channels / groups)*/
+  fluid_rvoice_eventhandler_t* eventhandler;
 
   fluid_real_t** left_buf;
   fluid_real_t** right_buf;

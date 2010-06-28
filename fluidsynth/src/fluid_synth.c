@@ -647,6 +647,12 @@ new_fluid_synth(fluid_settings_t *settings)
     }
   }
 
+  /* Allocate handler */
+  synth->eventhandler = new_fluid_rvoice_eventhandler(1, synth->polyphony*8, synth->polyphony);
+  if (synth->eventhandler == NULL)
+    goto error_recovery; 
+  fluid_rvoice_handler_set_polyphony(synth->eventhandler->handler, synth->polyphony);
+
   /* Allocate the sample buffers */
   synth->left_buf = NULL;
   synth->right_buf = NULL;
@@ -901,6 +907,9 @@ delete_fluid_synth(fluid_synth_t* synth)
     }
   }
 
+  if (synth->eventhandler)
+    delete_fluid_rvoice_eventhandler(synth->eventhandler);
+
   /* delete all the SoundFonts */
   for (list = synth->sfont_info; list; list = fluid_list_next (list)) {
     sfont_info = (fluid_sfont_info_t *)fluid_list_get (list);
@@ -1085,7 +1094,7 @@ fluid_synth_get_event_queue (fluid_synth_t* synth)
       queue = fluid_event_queue_new (FLUID_MAX_EVENTS_PER_BUFSIZE);
       if (!queue) return NULL;   /* Error has already been logged */
 
-      queue->synth = synth;
+      queue->userdata = synth;
 
       /* Atomicly and in a lock free fashion, put queue pointer in queues[] array */
       for (i = 0; i < FLUID_MAX_EVENT_QUEUES; i++)
@@ -1223,7 +1232,7 @@ static void
 fluid_synth_thread_queue_destroy_notify (void *data)
 {
   fluid_event_queue_t *queue = data;
-  fluid_synth_t *synth = queue->synth;
+  fluid_synth_t *synth = queue->userdata;
 
   /* Queues are not freed (can't be thread safe without locking in synth thread),
    * added to pool for potential future use */
@@ -2582,6 +2591,10 @@ fluid_synth_update_polyphony_LOCAL(fluid_synth_t* synth)
     if (_PLAYING (voice)) fluid_voice_off (voice);
   }
 
+  fluid_rvoice_eventhandler_push(synth->eventhandler, 
+    fluid_rvoice_handler_set_polyphony, synth->eventhandler->handler,
+    synth->polyphony, 0.0f);
+
   return FLUID_OK;
 }
 
@@ -2968,22 +2981,38 @@ fluid_synth_dither_s16(int *dither_index, int len, float* lin, float* rin,
   fluid_profile(FLUID_PROF_WRITE_S16, prof_ref);
 }
 
+static void
+fluid_synth_check_finished_voices(fluid_synth_t* synth)
+{
+  int j;
+  fluid_rvoice_t* fv;
+  
+  while (NULL != (fv = fluid_rvoice_eventhandler_get_finished_voice(synth->eventhandler))) {
+    for (j=0; j < synth->polyphony; j++) 
+      if (synth->voice[j]->rvoice == fv) {
+        fluid_voice_unlock_rvoice(synth->voice[j]);
+        fluid_voice_off(synth->voice[j]);
+      }
+  }
+}
+
 /*
  * Process a single block (FLUID_BUFSIZE) of audio.
  */
 static int
 fluid_synth_one_block(fluid_synth_t* synth, int do_not_mix_fx_to_out)
 {
-  fluid_real_t local_voice_buf[FLUID_BUFSIZE];
-  int i, auchan;
-//  int start_index, voice_index;
-  fluid_voice_t* voice;
-  fluid_real_t* left_buf;
-  fluid_real_t* right_buf;
+//  fluid_real_t local_voice_buf[FLUID_BUFSIZE];
+  int i;
+//  int start_index, voice_index, auchan;
+//  fluid_voice_t* voice;
+//  fluid_real_t* left_buf;
+//  fluid_real_t* right_buf;
   fluid_real_t* reverb_buf;
   fluid_real_t* chorus_buf;
-  int byte_size = FLUID_BUFSIZE * sizeof(fluid_real_t);
-  int count;
+  fluid_real_t* bufs[synth->audio_groups*2 + synth->effects_channels*2];
+//  int byte_size = FLUID_BUFSIZE * sizeof(fluid_real_t);
+//  int count;
   fluid_profile_ref_var (prof_ref);
 
   /* Assign ID of synthesis thread */
@@ -3003,16 +3032,6 @@ fluid_synth_one_block(fluid_synth_t* synth, int do_not_mix_fx_to_out)
     else break;         /* First NULL ends the array (values are never set to NULL) */
   }
 
-  /* clean the audio buffers */
-  for (i = 0; i < synth->nbuf; i++) {
-    FLUID_MEMSET(synth->left_buf[i], 0, byte_size);
-    FLUID_MEMSET(synth->right_buf[i], 0, byte_size);
-  }
-
-  for (i = 0; i < synth->effects_channels; i++) {
-    FLUID_MEMSET(synth->fx_left_buf[i], 0, byte_size);
-    FLUID_MEMSET(synth->fx_right_buf[i], 0, byte_size);
-  }
 
   /* Set up the reverb / chorus buffers only, when the effect is
    * enabled on synth level.  Nonexisting buffers are detected in the
@@ -3020,104 +3039,8 @@ fluid_synth_one_block(fluid_synth_t* synth, int do_not_mix_fx_to_out)
    * in that case. */
   reverb_buf = synth->with_reverb ? synth->fx_left_buf[SYNTH_REVERB_CHANNEL] : NULL;
   chorus_buf = synth->with_chorus ? synth->fx_left_buf[SYNTH_CHORUS_CHANNEL] : NULL;
-
-  fluid_profile(FLUID_PROF_ONE_BLOCK_CLEAR, prof_ref);
-
-#if 0
-  if (synth->cores > 1)
-  {
-    /* Look for first active voice to process */
-    for (voice_index = 0; voice_index < synth->polyphony; voice_index++)
-    {
-      voice = synth->voice[voice_index];
-      if (_PLAYING (voice)) break;
-    }
-
-    /* Was there a voice to process? */
-    if (voice_index < synth->polyphony)
-    {
-      fluid_cond_mutex_lock (synth->core_mutex);       /* ++ Lock core variables */
-
-      synth->core_voice_index = voice_index + 1;       /* Set the next core_voice_index */
-
-      /* Tell the other core threads that there is work to do */
-      synth->core_work = TRUE;
-      synth->core_waiting_for_last = FALSE;
-      fluid_cond_broadcast (synth->core_cond);
-
-      fluid_cond_mutex_unlock (synth->core_mutex);       /* -- Unlock core variables */
-
-      while (TRUE)
-      {
-got_voice:      /* We got a voice to process */
-        count = fluid_voice_write (voice, &synth->core_bufs[voice_index * FLUID_BUFSIZE]);
-
-        if (count > 0) synth->core_voice_processed[voice_index] = voice;
-
-        /* Look for next active voice to process (in a lock free manner) */
-        do
-        {
-          voice_index = fluid_atomic_int_get (&synth->core_voice_index);
-
-          for (start_index = voice_index; voice_index < synth->polyphony; voice_index++)
-          {
-            voice = synth->voice[voice_index];
-
-            if (_PLAYING (voice))
-            {
-              if (fluid_atomic_int_compare_and_exchange (&synth->core_voice_index,
-                                                         start_index, voice_index + 1))
-                goto got_voice;
-
-              break;    /* compare and exchange failed (another thread grabbed the voice first) */
-            }
-          }
-        }
-        while (voice_index < synth->polyphony);
-
-        /* No more voices to process */
-        fluid_cond_mutex_lock (synth->core_mutex);       /* ++ Lock core variables */
-        synth->core_work = FALSE;
-
-        /* If there are still other core threads in progress, wait for last one */
-        if (synth->core_inprogress > 0)
-        {
-          synth->core_waiting_for_last = TRUE;
-
-          while (synth->core_inprogress > 0)
-            fluid_cond_wait (synth->core_wait_last_cond, synth->core_mutex);
-        }
-
-        fluid_cond_mutex_unlock (synth->core_mutex);     /* -- Unlock core variables */
-        break;        /* We're done */
-      }         /* while (TRUE) - Process voices loop */
-
-      /* Mix all voices */
-      for (i = 0; i < synth->polyphony; i++)
-      {
-        voice = synth->core_voice_processed[i];
-        if (!voice) continue;
-
-        synth->core_voice_processed[i] = NULL;
-
-        auchan = fluid_channel_get_num (fluid_voice_get_channel (voice));
-        auchan %= synth->audio_groups;
-        left_buf = synth->left_buf[auchan];
-        right_buf = synth->right_buf[auchan];
-
-        fluid_voice_mix (voice, left_buf, right_buf, reverb_buf, chorus_buf);
-      }       /* while (TRUE) - Mix processed voices loop */
-    }   /* if (i < synth->polyphony) - Are there any voices to process? */
-  }
-  else          /* synth->cores < 1 - Not multi-core enabled */
-  {
-#endif
-    /* call all playing synthesis processes */
-    for (i = 0; i < synth->polyphony; i++) {
-      fluid_profile_ref_var (prof_ref_voice);
-
-      voice = synth->voice[i];
-      if (!_PLAYING(voice)) continue;
+  bufs[synth->audio_groups*2 + SYNTH_REVERB_CHANNEL] = reverb_buf;
+  bufs[synth->audio_groups*2 + SYNTH_CHORUS_CHANNEL] = chorus_buf;
 
       /* The output associated with a MIDI channel is wrapped around
        * using the number of audio groups as modulo divider.  This is
@@ -3131,21 +3054,14 @@ got_voice:      /* We got a voice to process */
        * channels 1, 4, 7, 10 etc go to output 1; 2, 5, 8, 11 etc to
        * output 2, 3, 6, 9, 12 etc to output 3.
        */
-      auchan = fluid_channel_get_num(fluid_voice_get_channel(voice));
-      auchan %= synth->audio_groups;
-      left_buf = synth->left_buf[auchan];
-      right_buf = synth->right_buf[auchan];
 
-      count = fluid_voice_write (voice, local_voice_buf);
-      if (count > 0)
-        fluid_voice_mix (voice, count, local_voice_buf, left_buf, right_buf, 
-                         reverb_buf, chorus_buf);
-
-      fluid_profile (FLUID_PROF_ONE_BLOCK_VOICE, prof_ref_voice);
-    }
-#if 0
+  for (i = 0; i < synth->audio_groups; i++) {
+    bufs[i*2] = synth->left_buf[i];
+    bufs[i*2+1] = synth->right_buf[i];
   }
-#endif
+
+  fluid_rvoice_eventhandler_dispatch_all(synth->eventhandler);
+  fluid_rvoice_handler_render(synth->eventhandler->handler, 1, synth->audio_groups*2 + 2, bufs);
 
   fluid_check_fpe("Synthesis processes");
 
@@ -3207,6 +3123,8 @@ got_voice:      /* We got a voice to process */
     fluid_cond_signal (synth->return_queue_cond);
 
   synth->ticks += FLUID_BUFSIZE;
+
+  fluid_synth_check_finished_voices(synth);
 
   /* Testcase, that provokes a denormal floating point error */
 #if 0
@@ -3448,6 +3366,7 @@ fluid_synth_free_voice_by_kill_LOCAL(fluid_synth_t* synth)
   return voice;
 }
 
+
 /**
  * Allocate a synthesis voice.
  * @param synth FluidSynth instance
@@ -3476,6 +3395,8 @@ fluid_synth_alloc_voice(fluid_synth_t* synth, fluid_sample_t* sample, int chan, 
   fluid_return_val_if_fail (chan >= 0 && chan < synth->midi_channels, NULL);
   fluid_return_val_if_fail (fluid_synth_is_synth_thread (synth), NULL);
 
+  fluid_synth_check_finished_voices(synth);
+
   /* check if there's an available synthesis process */
   for (i = 0; i < synth->polyphony; i++) {
     if (_AVAILABLE(synth->voice[i])) {
@@ -3486,6 +3407,7 @@ fluid_synth_alloc_voice(fluid_synth_t* synth, fluid_sample_t* sample, int chan, 
 
   /* No success yet? Then stop a running voice. */
   if (voice == NULL) {
+    FLUID_LOG(FLUID_DBG, "Polyphony exceeded, trying to kill a voice");
     voice = fluid_synth_free_voice_by_kill_LOCAL(synth);
   }
 
@@ -3589,6 +3511,11 @@ fluid_synth_start_voice(fluid_synth_t* synth, fluid_voice_t* voice)
   fluid_synth_kill_by_exclusive_class_LOCAL(synth, voice);
 
   fluid_voice_start(voice);     /* Start the new voice */
+  if (synth->eventhandler->is_threadsafe)
+    fluid_voice_lock_rvoice(voice);
+  fluid_rvoice_eventhandler_add_rvoice(synth->eventhandler, voice->rvoice);
+  /* TODO: Several voices in sync ? */
+  fluid_rvoice_eventhandler_flush(synth->eventhandler);
 }
 
 /**

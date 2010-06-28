@@ -23,6 +23,7 @@
 
 #include "fluid_sys.h"
 #include "fluid_midi.h"
+#include "fluid_ringbuffer.h"
 
 /**
  * Type of queued event.
@@ -120,22 +121,18 @@ typedef struct
   };
 } fluid_event_queue_elem_t;
 
-/**
- * Lockless event queue instance.
- */
-typedef struct
+typedef struct _fluid_ringbuffer_t fluid_event_queue_t;
+
+static FLUID_INLINE fluid_event_queue_t *
+fluid_event_queue_new (int count)
 {
-  fluid_event_queue_elem_t *array;  /**< Queue array of arbitrary size elements */
-  int totalcount;       /**< Total count of elements in array */
-  int count;            /**< Current count of elements */
-  int in;               /**< Index in queue to store next pushed element */
-  int out;              /**< Index in queue of next popped element */
-  void *synth;          /**< Owning fluid_synth_t instance */
-} fluid_event_queue_t;
+  return (fluid_event_queue_t *) new_fluid_ringbuffer(count, sizeof(fluid_event_queue_elem_t));
+}
 
-
-fluid_event_queue_t *fluid_event_queue_new (int count);
-void fluid_event_queue_free (fluid_event_queue_t *queue);
+static FLUID_INLINE void fluid_event_queue_free (fluid_event_queue_t *queue)
+{
+  delete_fluid_ringbuffer(queue);
+}
 
 /**
  * Get pointer to next input array element in queue.
@@ -151,8 +148,7 @@ void fluid_event_queue_free (fluid_event_queue_t *queue);
 static FLUID_INLINE fluid_event_queue_elem_t *
 fluid_event_queue_get_inptr (fluid_event_queue_t *queue)
 {
-  return fluid_atomic_int_get (&queue->count) == queue->totalcount ? NULL
-    : queue->array + queue->in;
+  return (fluid_event_queue_elem_t *) fluid_ringbuffer_get_inptr(queue, 0);
 }
 
 /**
@@ -165,10 +161,7 @@ fluid_event_queue_get_inptr (fluid_event_queue_t *queue)
 static FLUID_INLINE void
 fluid_event_queue_next_inptr (fluid_event_queue_t *queue)
 {
-  fluid_atomic_int_inc (&queue->count);
-
-  if (++queue->in == queue->totalcount)
-    queue->in = 0;
+  fluid_ringbuffer_next_inptr(queue, 1);
 }
 
 /**
@@ -183,8 +176,7 @@ fluid_event_queue_next_inptr (fluid_event_queue_t *queue)
 static FLUID_INLINE fluid_event_queue_elem_t *
 fluid_event_queue_get_outptr (fluid_event_queue_t *queue)
 {
-  return fluid_atomic_int_get (&queue->count) == 0 ? NULL
-    : queue->array + queue->out;
+  return (fluid_event_queue_elem_t *) fluid_ringbuffer_get_outptr(queue);
 }
 
 /**
@@ -197,10 +189,7 @@ fluid_event_queue_get_outptr (fluid_event_queue_t *queue)
 static FLUID_INLINE void
 fluid_event_queue_next_outptr (fluid_event_queue_t *queue)
 {
-  fluid_atomic_int_add (&queue->count, -1);
-
-  if (++queue->out == queue->totalcount)
-    queue->out = 0;
+  fluid_ringbuffer_next_outptr(queue);
 }
 
 #endif /* _FLUID_EVENT_QUEUE_H */

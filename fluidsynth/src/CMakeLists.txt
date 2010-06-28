@@ -122,7 +122,6 @@ set ( libfluidsynth_SOURCES
     sfloader/fluid_sfont.h 
     fluid_event.c 
     fluid_event_priv.h 
-    fluid_event_queue.c 
     fluid_event_queue.h 
     fluid_gen.c 
     fluid_gen.h 
@@ -130,13 +129,20 @@ set ( libfluidsynth_SOURCES
     datatypes/fluid_hash.h 
     datatypes/fluid_list.c 
     datatypes/fluid_list.h 
+    datatypes/fluid_ringbuffer.c
+    datatypes/fluid_ringbuffer.h
     rvoice/fluid_iir_filter.c
     rvoice/fluid_iir_filter.h
     rvoice/fluid_lfo.h
+    rvoice/fluid_adsr_env.c
     rvoice/fluid_adsr_env.h
     rvoice/fluid_rvoice.h
     rvoice/fluid_rvoice.c
     rvoice/fluid_rvoice_dsp.c
+    rvoice/fluid_rvoice_event.h
+    rvoice/fluid_rvoice_event.c
+    rvoice/fluid_rvoice_handler.h
+    rvoice/fluid_rvoice_handler.c
     rvoice/fluid_phase.h 
     fluid_mdriver.c 
     fluid_mdriver.h 

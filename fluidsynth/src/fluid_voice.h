@@ -29,6 +29,7 @@
 #include "fluid_adsr_env.h"
 #include "fluid_lfo.h"
 #include "fluid_rvoice.h"
+#include "fluid_sys.h"
 
 #define NO_CHANNEL             0xff
 
@@ -133,6 +134,26 @@ void fluid_voice_mix (fluid_voice_t *voice, int count, fluid_real_t* dsp_buf,
 
 int fluid_voice_kill_excl(fluid_voice_t* voice);
 
+/**
+ * Locks the rvoice for rendering, so it can't be modified directly
+ */
+static FLUID_INLINE fluid_rvoice_t* 
+fluid_voice_lock_rvoice(fluid_voice_t* voice)
+{
+  voice->can_access_rvoice = 0;
+  return voice->rvoice;
+}
+
+/**
+ * Locks the rvoice for rendering, so it can be modified directly
+ */
+static FLUID_INLINE void 
+fluid_voice_unlock_rvoice(fluid_voice_t* voice)
+{
+  voice->can_access_rvoice = 1;
+}
+
+
 #define fluid_voice_get_channel(voice)  ((voice)->channel)
 
 
@@ -147,7 +168,8 @@ int fluid_voice_kill_excl(fluid_voice_t* voice);
  * section 5 (release). */
 #define _ON(voice)  ((voice)->status == FLUID_VOICE_ON && !voice->has_noteoff)
 #define _SUSTAINED(voice)  ((voice)->status == FLUID_VOICE_SUSTAINED)
-#define _AVAILABLE(voice)  (((voice)->status == FLUID_VOICE_CLEAN) || ((voice)->status == FLUID_VOICE_OFF))
+#define _AVAILABLE(voice)  ((voice)->can_access_rvoice && \
+ (((voice)->status == FLUID_VOICE_CLEAN) || ((voice)->status == FLUID_VOICE_OFF)))
 #define _RELEASED(voice)  ((voice)->chan == NO_CHANNEL)
 #define _SAMPLEMODE(voice) ((int)(voice)->gen[GEN_SAMPLEMODE].val)
 

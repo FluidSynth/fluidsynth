@@ -26,6 +26,7 @@
 #include "fluid_synth.h"
 #include "fluid_sys.h"
 #include "fluid_sfont.h"
+#include "fluid_rvoice_event.h"
 
 /* used for filter turn off optimization - if filter cutoff is above the
    specified value and filter q is below the other value, turn filter off */
@@ -41,13 +42,54 @@ static int calculate_hold_decay_buffers(fluid_voice_t* voice, int gen_base,
 static fluid_real_t
 fluid_voice_get_lower_boundary_for_attenuation(fluid_voice_t* voice);
 
-#define UPDATE_RVOICE0(proc) proc(voice->rvoice)
-#define UPDATE_RVOICE1(proc, arg1) proc(voice->rvoice, arg1)
-#define UPDATE_RVOICE2(proc, arg1, arg2) proc(voice->rvoice, arg1, arg2)
-#define UPDATE_RVOICE_ENVLFO1(proc, envp, arg1) proc(&voice->rvoice->envlfo.envp, arg1)
+#define UPDATE_RVOICE0(proc) \
+  do { \
+    if (voice->can_access_rvoice) proc(voice->rvoice); \
+    else fluid_rvoice_eventhandler_push(voice->channel->synth->eventhandler, \
+      proc, voice->rvoice, 0, 0.0f); \
+  } while (0)
+
+#define UPDATE_RVOICE_GENERIC_R1(proc, obj, rarg) \
+  do { \
+    if (voice->can_access_rvoice) proc(obj, rarg); \
+    else fluid_rvoice_eventhandler_push(voice->channel->synth->eventhandler, \
+      proc, obj, 0, rarg); \
+  } while (0)
+
+#define UPDATE_RVOICE_GENERIC_I1(proc, obj, iarg) \
+  do { \
+    if (voice->can_access_rvoice) proc(obj, iarg); \
+    else fluid_rvoice_eventhandler_push(voice->channel->synth->eventhandler, \
+      proc, obj, iarg, 0.0f); \
+  } while (0)
+
+#define UPDATE_RVOICE_GENERIC_IR(proc, obj, iarg, rarg) \
+  do { \
+    if (voice->can_access_rvoice) proc(obj, iarg, rarg); \
+    else fluid_rvoice_eventhandler_push(voice->channel->synth->eventhandler, \
+      proc, obj, iarg, rarg); \
+  } while (0)
+
+#define UPDATE_RVOICE_GENERIC_ALL(proc, obj, iarg, r1, r2, r3, r4, r5) \
+  do { \
+    if (voice->can_access_rvoice) proc(obj, iarg, r1, r2, r3, r4, r5); \
+    else fluid_rvoice_eventhandler_push5(voice->channel->synth->eventhandler, \
+      proc, obj, iarg, r1, r2, r3, r4, r5); \
+  } while (0)
+
+
 #define UPDATE_RVOICE_ENVDATA(envp, section, arg1, arg2, arg3, arg4, arg5) \
-  fluid_adsr_env_set_data(&voice->rvoice->envlfo.envp, section, arg1, arg2, arg3, arg4, arg5)
-#define UPDATE_RVOICE_FILTER1(proc, arg1) proc(&voice->rvoice->resonant_filter, arg1)
+  UPDATE_RVOICE_GENERIC_ALL(fluid_adsr_env_set_data, &voice->rvoice->envlfo.envp, section, arg1, arg2, arg3, arg4, arg5)
+  
+#define UPDATE_RVOICE_R1(proc, arg1) UPDATE_RVOICE_GENERIC_R1(proc, voice->rvoice, arg1)
+#define UPDATE_RVOICE_I1(proc, arg1) UPDATE_RVOICE_GENERIC_I1(proc, voice->rvoice, arg1)
+#define UPDATE_RVOICE_FILTER1(proc, arg1) UPDATE_RVOICE_GENERIC_R1(proc, &voice->rvoice->resonant_filter, arg1)
+
+#define UPDATE_RVOICE2(proc, iarg, rarg) UPDATE_RVOICE_GENERIC_IR(proc, voice->rvoice, iarg, rarg)
+#define UPDATE_RVOICE_BUFFERS2(proc, iarg, rarg) UPDATE_RVOICE_GENERIC_IR(proc, &voice->rvoice->buffers, iarg, rarg)
+#define UPDATE_RVOICE_ENVLFO_R1(proc, envp, rarg) UPDATE_RVOICE_GENERIC_R1(proc, &voice->rvoice->envlfo.envp, rarg) 
+#define UPDATE_RVOICE_ENVLFO_I1(proc, envp, iarg) UPDATE_RVOICE_GENERIC_I1(proc, &voice->rvoice->envlfo.envp, iarg) 
+
 
 /*
  * new_fluid_voice
@@ -77,7 +119,7 @@ new_fluid_voice(fluid_real_t output_rate)
   voice->channel = NULL;
   voice->sample = NULL;
   voice->output_rate = output_rate;
-  UPDATE_RVOICE1(fluid_rvoice_set_output_rate, output_rate);
+  UPDATE_RVOICE_R1(fluid_rvoice_set_output_rate, output_rate);
 
   /* The 'sustain' and 'finished' segments of the volume / modulation
    * envelope are constant. They are never affected by any modulator
@@ -142,10 +184,10 @@ fluid_voice_init(fluid_voice_t* voice, fluid_sample_t* sample,
   voice->debug = 0;
   voice->has_noteoff = 0;
   UPDATE_RVOICE0(fluid_rvoice_reset);
-  UPDATE_RVOICE1(fluid_rvoice_set_sample, sample); 
+  fluid_rvoice_set_sample(voice->rvoice, sample); 
 
-  i = fluid_channel_get_interp_method(voice->channel);
-  UPDATE_RVOICE1(fluid_rvoice_set_interp_method, i);
+  i = fluid_channel_get_interp_method(channel);
+  UPDATE_RVOICE_I1(fluid_rvoice_set_interp_method, i);
 
   /* Set all the generators to their default value, according to SF
    * 2.01 section 8.1.3 (page 48). The value of NRPN messages are
@@ -154,14 +196,22 @@ fluid_voice_init(fluid_voice_t* voice, fluid_sample_t* sample,
    * into voice parameters in
    * fluid_voice_calculate_runtime_synthesis_parameters.  */
   fluid_gen_init(&voice->gen[0], channel);
-  UPDATE_RVOICE1(fluid_rvoice_set_samplemode, voice->gen[GEN_SAMPLEMODE].val);
+  UPDATE_RVOICE_I1(fluid_rvoice_set_samplemode, voice->gen[GEN_SAMPLEMODE].val);
 
   voice->synth_gain = gain;
   /* avoid division by zero later*/
   if (voice->synth_gain < 0.0000001){
     voice->synth_gain = 0.0000001;
   }
-  UPDATE_RVOICE1(fluid_rvoice_set_synth_gain, voice->synth_gain);
+  UPDATE_RVOICE_R1(fluid_rvoice_set_synth_gain, voice->synth_gain);
+
+  /* Set up buffer mapping, should be done more flexible in the future. */
+  i = channel->synth->audio_groups;
+  UPDATE_RVOICE_BUFFERS2(fluid_rvoice_buffers_set_mapping, 2, i*2 + SYNTH_REVERB_CHANNEL);
+  UPDATE_RVOICE_BUFFERS2(fluid_rvoice_buffers_set_mapping, 3, i*2 + SYNTH_CHORUS_CHANNEL);
+  i = 2 * (voice->chan % i);
+  UPDATE_RVOICE_BUFFERS2(fluid_rvoice_buffers_set_mapping, 0, i);
+  UPDATE_RVOICE_BUFFERS2(fluid_rvoice_buffers_set_mapping, 1, i+1);
 
   /* Increment the reference count of the sample to prevent the
      unloading of the soundfont while this voice is playing. */
@@ -182,7 +232,7 @@ fluid_voice_gen_set(fluid_voice_t* voice, int i, float val)
   voice->gen[i].val = val;
   voice->gen[i].flags = GEN_SET;
   if (i == GEN_SAMPLEMODE)
-    UPDATE_RVOICE1(fluid_rvoice_set_samplemode, val);
+    UPDATE_RVOICE_I1(fluid_rvoice_set_samplemode, val);
 }
 
 /**
@@ -269,19 +319,14 @@ fluid_voice_mix (fluid_voice_t *voice, int count, fluid_real_t* dsp_buf,
 		 fluid_real_t* reverb_buf, fluid_real_t* chorus_buf)
 {
   fluid_rvoice_buffers_t buffers;
+  fluid_real_t* dest_buf[4] = {left_buf, right_buf, reverb_buf, chorus_buf};
 
-  buffers.count = 4;
-  buffers.bufs[0].buf = left_buf;
-  buffers.bufs[1].buf = right_buf;
-  buffers.bufs[2].buf = reverb_buf;
-  buffers.bufs[3].buf = chorus_buf;
-
-  buffers.bufs[0].amp = voice->amp_left;
-  buffers.bufs[1].amp = voice->amp_right;
-  buffers.bufs[2].amp = voice->amp_reverb;
-  buffers.bufs[3].amp = voice->amp_chorus;
-  
-  fluid_rvoice_buffers_mix(&buffers, dsp_buf, count);
+  fluid_rvoice_buffers_set_amp(&buffers, 0, voice->amp_left);
+  fluid_rvoice_buffers_set_amp(&buffers, 1, voice->amp_right);
+  fluid_rvoice_buffers_set_amp(&buffers, 2, voice->amp_reverb);
+  fluid_rvoice_buffers_set_amp(&buffers, 3, voice->amp_chorus);
+ 
+  fluid_rvoice_buffers_mix(&buffers, dsp_buf, count, dest_buf, 4);
 
   fluid_check_fpe ("voice_mix");
 }
@@ -447,7 +492,7 @@ fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t* voice)
   }
 
   /* Make an estimate on how loud this voice can get at any time (attenuation). */
-  UPDATE_RVOICE1(fluid_rvoice_set_min_attenuation_cB, 
+  UPDATE_RVOICE_R1(fluid_rvoice_set_min_attenuation_cB, 
                  fluid_voice_get_lower_boundary_for_attenuation(voice)); 
   return FLUID_OK;
 }
@@ -555,8 +600,8 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
     voice->pan = _GEN(voice, GEN_PAN);
     voice->amp_left = fluid_pan(voice->pan, 1) * voice->synth_gain / 32768.0f;
     voice->amp_right = fluid_pan(voice->pan, 0) * voice->synth_gain / 32768.0f;
-    UPDATE_RVOICE2(fluid_rvoice_set_buf_amp, 0, voice->amp_left);
-    UPDATE_RVOICE2(fluid_rvoice_set_buf_amp, 1, voice->amp_right);
+    UPDATE_RVOICE_BUFFERS2(fluid_rvoice_buffers_set_amp, 0, voice->amp_left);
+    UPDATE_RVOICE_BUFFERS2(fluid_rvoice_buffers_set_amp, 1, voice->amp_right);
     break;
 
   case GEN_ATTENUATION:
@@ -567,7 +612,7 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
      * Motivation for range checking:
      * OHPiano.SF2 sets initial attenuation to a whooping -96 dB */
     fluid_clip(voice->attenuation, 0.0, 1440.0);
-    UPDATE_RVOICE1(fluid_rvoice_set_attenuation, voice->attenuation);
+    UPDATE_RVOICE_R1(fluid_rvoice_set_attenuation, voice->attenuation);
     break;
 
     /* The pitch is calculated from three different generators.
@@ -580,7 +625,7 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
     voice->pitch = (_GEN(voice, GEN_PITCH)
 		    + 100.0f * _GEN(voice, GEN_COARSETUNE)
 		    + _GEN(voice, GEN_FINETUNE));
-    UPDATE_RVOICE1(fluid_rvoice_set_pitch, voice->pitch);
+    UPDATE_RVOICE_R1(fluid_rvoice_set_pitch, voice->pitch);
     break;
 
   case GEN_REVERBSEND:
@@ -588,7 +633,7 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
     voice->reverb_send = _GEN(voice, GEN_REVERBSEND) / 1000.0f;
     fluid_clip(voice->reverb_send, 0.0, 1.0);
     voice->amp_reverb = voice->reverb_send * voice->synth_gain / 32768.0f;
-    UPDATE_RVOICE2(fluid_rvoice_set_buf_amp, 2, voice->amp_reverb);
+    UPDATE_RVOICE_BUFFERS2(fluid_rvoice_buffers_set_amp, 2, voice->amp_reverb);
     break;
 
   case GEN_CHORUSSEND:
@@ -596,7 +641,7 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
     voice->chorus_send = _GEN(voice, GEN_CHORUSSEND) / 1000.0f;
     fluid_clip(voice->chorus_send, 0.0, 1.0);
     voice->amp_chorus = voice->chorus_send * voice->synth_gain / 32768.0f;
-    UPDATE_RVOICE2(fluid_rvoice_set_buf_amp, 3, voice->amp_chorus);
+    UPDATE_RVOICE_BUFFERS2(fluid_rvoice_buffers_set_amp, 3, voice->amp_chorus);
     break;
 
   case GEN_OVERRIDEROOTKEY:
@@ -618,7 +663,7 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
     }
     /* voice->pitch depends on voice->root_pitch, so calculate voice->pitch now */
     fluid_voice_calculate_gen_pitch(voice);
-    UPDATE_RVOICE1(fluid_rvoice_set_root_pitch_hz, x);
+    UPDATE_RVOICE_R1(fluid_rvoice_set_root_pitch_hz, x);
 
     break;
 
@@ -663,26 +708,26 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
   case GEN_MODLFOTOPITCH:
     x = _GEN(voice, GEN_MODLFOTOPITCH);
     fluid_clip(x, -12000.0, 12000.0);
-    UPDATE_RVOICE1(fluid_rvoice_set_modlfo_to_pitch, x);
+    UPDATE_RVOICE_R1(fluid_rvoice_set_modlfo_to_pitch, x);
     break;
 
   case GEN_MODLFOTOVOL:
     x = _GEN(voice, GEN_MODLFOTOVOL);
     fluid_clip(x, -960.0, 960.0);
-    UPDATE_RVOICE1(fluid_rvoice_set_modlfo_to_vol, x);
+    UPDATE_RVOICE_R1(fluid_rvoice_set_modlfo_to_vol, x);
     break;
 
   case GEN_MODLFOTOFILTERFC:
     x = _GEN(voice, GEN_MODLFOTOFILTERFC);
     fluid_clip(x, -12000, 12000);
-    UPDATE_RVOICE1(fluid_rvoice_set_modlfo_to_fc, x);
+    UPDATE_RVOICE_R1(fluid_rvoice_set_modlfo_to_fc, x);
     break;
 
   case GEN_MODLFODELAY:
     x = _GEN(voice, GEN_MODLFODELAY);
     fluid_clip(x, -12000.0f, 5000.0f);
     z = (unsigned int) (voice->output_rate * fluid_tc2sec_delay(x));
-    UPDATE_RVOICE_ENVLFO1(fluid_lfo_set_delay, modlfo, z);
+    UPDATE_RVOICE_ENVLFO_I1(fluid_lfo_set_delay, modlfo, z);
     break;
 
   case GEN_MODLFOFREQ:
@@ -692,7 +737,7 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
     x = _GEN(voice, GEN_MODLFOFREQ);
     fluid_clip(x, -16000.0f, 4500.0f);
     x = (4.0f * FLUID_BUFSIZE * fluid_act2hz(x) / voice->output_rate);
-    UPDATE_RVOICE_ENVLFO1(fluid_lfo_set_incr, modlfo, x);
+    UPDATE_RVOICE_ENVLFO_R1(fluid_lfo_set_incr, modlfo, x);
     break;
 
   case GEN_VIBLFOFREQ:
@@ -704,20 +749,20 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
     x = _GEN(voice, GEN_VIBLFOFREQ);
     fluid_clip(x, -16000.0f, 4500.0f);
     x = 4.0f * FLUID_BUFSIZE * fluid_act2hz(x) / voice->output_rate;
-    UPDATE_RVOICE_ENVLFO1(fluid_lfo_set_incr, viblfo, x); 
+    UPDATE_RVOICE_ENVLFO_R1(fluid_lfo_set_incr, viblfo, x); 
     break;
 
   case GEN_VIBLFODELAY:
     x = _GEN(voice,GEN_VIBLFODELAY);
     fluid_clip(x, -12000.0f, 5000.0f);
     z = (unsigned int) (voice->output_rate * fluid_tc2sec_delay(x)); 
-    UPDATE_RVOICE_ENVLFO1(fluid_lfo_set_delay, viblfo, z); 
+    UPDATE_RVOICE_ENVLFO_I1(fluid_lfo_set_delay, viblfo, z); 
     break;
 
   case GEN_VIBLFOTOPITCH:
     x = _GEN(voice, GEN_VIBLFOTOPITCH);
     fluid_clip(x, -12000.0, 12000.0);
-    UPDATE_RVOICE1(fluid_rvoice_set_viblfo_to_pitch, x); 
+    UPDATE_RVOICE_R1(fluid_rvoice_set_viblfo_to_pitch, x); 
     break;
 
   case GEN_KEYNUM:
@@ -752,7 +797,7 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
   case GEN_MODENVTOPITCH:
     x = _GEN(voice, GEN_MODENVTOPITCH);
     fluid_clip(x, -12000.0, 12000.0);
-    UPDATE_RVOICE1(fluid_rvoice_set_modenv_to_pitch, x);
+    UPDATE_RVOICE_R1(fluid_rvoice_set_modenv_to_pitch, x);
     break;
 
   case GEN_MODENVTOFILTERFC:
@@ -763,7 +808,7 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
      * Filter is reported to make funny noises now and then
      */
     fluid_clip(x, -12000.0, 12000.0);
-    UPDATE_RVOICE1(fluid_rvoice_set_modenv_to_fc, x);
+    UPDATE_RVOICE_R1(fluid_rvoice_set_modenv_to_fc, x);
     break;
 
 
@@ -784,7 +829,7 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
       x = (voice->sample->start
 			     + (int) _GEN(voice, GEN_STARTADDROFS)
 			     + 32768 * (int) _GEN(voice, GEN_STARTADDRCOARSEOFS));
-      UPDATE_RVOICE1(fluid_rvoice_set_start, x);
+      UPDATE_RVOICE_I1(fluid_rvoice_set_start, x);
     }
     break;
   case GEN_ENDADDROFS:                 /* SF2.01 section 8.1.3 # 1 */
@@ -793,7 +838,7 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
       x = (voice->sample->end
 			   + (int) _GEN(voice, GEN_ENDADDROFS)
 			   + 32768 * (int) _GEN(voice, GEN_ENDADDRCOARSEOFS));
-      UPDATE_RVOICE1(fluid_rvoice_set_end, x);
+      UPDATE_RVOICE_I1(fluid_rvoice_set_end, x);
     }
     break;
   case GEN_STARTLOOPADDROFS:           /* SF2.01 section 8.1.3 # 2 */
@@ -802,7 +847,7 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
       x = (voice->sample->loopstart
 				  + (int) _GEN(voice, GEN_STARTLOOPADDROFS)
 				  + 32768 * (int) _GEN(voice, GEN_STARTLOOPADDRCOARSEOFS));
-      UPDATE_RVOICE1(fluid_rvoice_set_loopstart, x);
+      UPDATE_RVOICE_I1(fluid_rvoice_set_loopstart, x);
     }
     break;
 
@@ -812,7 +857,7 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
       x = (voice->sample->loopend
 				+ (int) _GEN(voice, GEN_ENDLOOPADDROFS)
 				+ 32768 * (int) _GEN(voice, GEN_ENDLOOPADDRCOARSEOFS));
-      UPDATE_RVOICE1(fluid_rvoice_set_loopend, x);
+      UPDATE_RVOICE_I1(fluid_rvoice_set_loopend, x);
     }
     break;
 
@@ -1036,7 +1081,7 @@ fluid_voice_noteoff(fluid_voice_t* voice)
     voice->status = FLUID_VOICE_SUSTAINED;
   } else {
     at_tick = fluid_channel_get_min_note_length_ticks (voice->channel);
-    UPDATE_RVOICE1(fluid_rvoice_noteoff, at_tick);
+    UPDATE_RVOICE_I1(fluid_rvoice_noteoff, at_tick);
     voice->has_noteoff = 1;
   }
 
@@ -1079,7 +1124,7 @@ fluid_voice_kill_excl(fluid_voice_t* voice){
   fluid_voice_update_param(voice, GEN_MODENVRELEASE);
 
   at_tick = fluid_channel_get_min_note_length_ticks (voice->channel);
-  UPDATE_RVOICE1(fluid_rvoice_noteoff, at_tick);
+  UPDATE_RVOICE_I1(fluid_rvoice_noteoff, at_tick);
 
 
   return FLUID_OK;
@@ -1295,11 +1340,11 @@ int fluid_voice_set_gain(fluid_voice_t* voice, fluid_real_t gain)
   voice->amp_reverb = voice->reverb_send * gain / 32768.0f;
   voice->amp_chorus = voice->chorus_send * gain / 32768.0f;
 
-  UPDATE_RVOICE1(fluid_rvoice_set_synth_gain, gain);
-  UPDATE_RVOICE2(fluid_rvoice_set_buf_amp, 0, voice->amp_left);
-  UPDATE_RVOICE2(fluid_rvoice_set_buf_amp, 1, voice->amp_right);
-  UPDATE_RVOICE2(fluid_rvoice_set_buf_amp, 2, voice->amp_reverb);
-  UPDATE_RVOICE2(fluid_rvoice_set_buf_amp, 3, voice->amp_chorus);
+  UPDATE_RVOICE_R1(fluid_rvoice_set_synth_gain, gain);
+  UPDATE_RVOICE_BUFFERS2(fluid_rvoice_buffers_set_amp, 0, voice->amp_left);
+  UPDATE_RVOICE_BUFFERS2(fluid_rvoice_buffers_set_amp, 1, voice->amp_right);
+  UPDATE_RVOICE_BUFFERS2(fluid_rvoice_buffers_set_amp, 2, voice->amp_reverb);
+  UPDATE_RVOICE_BUFFERS2(fluid_rvoice_buffers_set_amp, 3, voice->amp_chorus);
 
   return FLUID_OK;
 }
