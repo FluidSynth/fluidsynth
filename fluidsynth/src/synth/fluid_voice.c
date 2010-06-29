@@ -190,7 +190,7 @@ fluid_voice_init(fluid_voice_t* voice, fluid_sample_t* sample,
   voice->debug = 0;
   voice->has_noteoff = 0;
   UPDATE_RVOICE0(fluid_rvoice_reset);
-  UPDATE_RVOICE_PTR(fluid_rvoice_set_sample, voice->rvoice, sample); 
+  UPDATE_RVOICE_PTR(fluid_rvoice_set_sample, sample); 
 
   i = fluid_channel_get_interp_method(channel);
   UPDATE_RVOICE_I1(fluid_rvoice_set_interp_method, i);
