@@ -94,6 +94,7 @@ fluid_rvoice_event_dispatch(fluid_rvoice_event_t* event)
   EVENTFUNC_I1(fluid_rvoice_set_loopstart, fluid_rvoice_t*);
   EVENTFUNC_I1(fluid_rvoice_set_loopend, fluid_rvoice_t*);
   EVENTFUNC_I1(fluid_rvoice_set_samplemode, fluid_rvoice_t*);
+  EVENTFUNC_PTR(fluid_rvoice_set_sample, fluid_rvoice_t*, fluid_sample_t*);
 
   EVENTFUNC_R1(fluid_rvoice_handler_set_polyphony, fluid_rvoice_handler_t*);
 

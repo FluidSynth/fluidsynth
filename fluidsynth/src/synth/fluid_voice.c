@@ -49,6 +49,14 @@ fluid_voice_get_lower_boundary_for_attenuation(fluid_voice_t* voice);
       proc, voice->rvoice, 0, 0.0f); \
   } while (0)
 
+#define UPDATE_RVOICE_PTR(proc, obj) \
+  do { \
+    if (voice->can_access_rvoice) proc(voice->rvoice, obj); \
+    else fluid_rvoice_eventhandler_push_ptr(voice->channel->synth->eventhandler, \
+      proc, voice->rvoice, obj); \
+  } while (0)
+
+
 #define UPDATE_RVOICE_GENERIC_R1(proc, obj, rarg) \
   do { \
     if (voice->can_access_rvoice) proc(obj, rarg); \
@@ -171,8 +179,6 @@ fluid_voice_init(fluid_voice_t* voice, fluid_sample_t* sample,
    * of IIR filters, position in sample etc) is initialized. */
   int i;
 
-  fluid_return_val_if_fail(voice->can_access_rvoice, FLUID_FAILED);
-
   voice->id = id;
   voice->chan = fluid_channel_get_num(channel);
   voice->key = (unsigned char) key;
@@ -184,7 +190,7 @@ fluid_voice_init(fluid_voice_t* voice, fluid_sample_t* sample,
   voice->debug = 0;
   voice->has_noteoff = 0;
   UPDATE_RVOICE0(fluid_rvoice_reset);
-  fluid_rvoice_set_sample(voice->rvoice, sample); 
+  UPDATE_RVOICE_PTR(fluid_rvoice_set_sample, voice->rvoice, sample); 
 
   i = fluid_channel_get_interp_method(channel);
   UPDATE_RVOICE_I1(fluid_rvoice_set_interp_method, i);
