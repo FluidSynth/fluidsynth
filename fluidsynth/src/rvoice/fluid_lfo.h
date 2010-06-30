@@ -28,7 +28,7 @@ typedef struct _fluid_lfo_t fluid_lfo_t;
 struct _fluid_lfo_t {
 	fluid_real_t val;          /* the current value of the LFO */
 	unsigned int delay;       /* the delay of the lfo in samples */
-	fluid_real_t incr;         /* the lfo frequency is converted to a per-buffer increment */
+	fluid_real_t increment;         /* the lfo frequency is converted to a per-buffer increment */
 };
 
 static inline void 
@@ -38,9 +38,9 @@ fluid_lfo_reset(fluid_lfo_t* lfo)
 }
 
 static inline void
-fluid_lfo_set_incr(fluid_lfo_t* lfo, fluid_real_t incr)
+fluid_lfo_set_incr(fluid_lfo_t* lfo, fluid_real_t increment)
 {
-  lfo->incr = incr;
+  lfo->increment = increment;
 }
 
 static inline void
@@ -61,16 +61,16 @@ fluid_lfo_calc(fluid_lfo_t* lfo, unsigned int cur_delay)
   if (cur_delay < lfo->delay) 
     return;
   
-  lfo->val += lfo->incr;
+  lfo->val += lfo->increment;
   
   if (lfo->val > (fluid_real_t) 1.0)
   {
-    lfo->incr = -lfo->incr;
+    lfo->increment = -lfo->increment;
     lfo->val = (fluid_real_t) 2.0 - lfo->val;
   }
   else if (lfo->val < (fluid_real_t) -1.0)
   {
-    lfo->incr = -lfo->incr;
+    lfo->increment = -lfo->increment;
     lfo->val = (fluid_real_t) -2.0 - lfo->val;
   }
 

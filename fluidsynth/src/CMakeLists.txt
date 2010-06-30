@@ -140,6 +140,8 @@ set ( libfluidsynth_SOURCES
     rvoice/fluid_rvoice_event.c
     rvoice/fluid_rvoice_handler.h
     rvoice/fluid_rvoice_handler.c
+    rvoice/fluid_rvoice_mixer.h
+    rvoice/fluid_rvoice_mixer.c
     rvoice/fluid_phase.h 
     rvoice/fluid_rev.c 
     rvoice/fluid_rev.h 

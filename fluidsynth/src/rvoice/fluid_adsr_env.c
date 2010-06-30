@@ -25,13 +25,13 @@ fluid_adsr_env_set_data(fluid_adsr_env_t* env,
                         fluid_adsr_env_section_t section,
                         unsigned int count,
                         fluid_real_t coeff,
-                        fluid_real_t incr,
+                        fluid_real_t increment,
                         fluid_real_t min,
                         fluid_real_t max)
 {
   env->data[section].count = count;
   env->data[section].coeff = coeff;
-  env->data[section].incr = incr;
+  env->data[section].increment = increment;
   env->data[section].min = min;
   env->data[section].max = max;
 }

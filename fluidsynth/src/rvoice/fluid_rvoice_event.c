@@ -20,7 +20,7 @@
 
 #include "fluid_rvoice_event.h"
 #include "fluid_rvoice.h"
-#include "fluid_rvoice_handler.h"
+#include "fluid_rvoice_mixer.h"
 #include "fluid_iir_filter.h"
 #include "fluid_lfo.h"
 #include "fluid_adsr_env.h"
@@ -57,10 +57,16 @@
       event->realparams[4]); \
     return; }
 
+#define EVENTFUNC_R4(proc, type) \
+  if (event->method == proc) { \
+    proc((type) event->object, event->intparam, event->realparams[0], \
+      event->realparams[1], event->realparams[2], event->realparams[3]); \
+    return; }
+
 void
 fluid_rvoice_event_dispatch(fluid_rvoice_event_t* event)
 {
-  EVENTFUNC_PTR(fluid_rvoice_handler_add_voice, fluid_rvoice_handler_t*, fluid_rvoice_t*);
+  EVENTFUNC_PTR(fluid_rvoice_mixer_add_voice, fluid_rvoice_mixer_t*, fluid_rvoice_t*);
   EVENTFUNC_I1(fluid_rvoice_noteoff, fluid_rvoice_t*);
   EVENTFUNC_0(fluid_rvoice_voiceoff, fluid_rvoice_t*);
 
@@ -96,7 +102,15 @@ fluid_rvoice_event_dispatch(fluid_rvoice_event_t* event)
   EVENTFUNC_I1(fluid_rvoice_set_samplemode, fluid_rvoice_t*);
   EVENTFUNC_PTR(fluid_rvoice_set_sample, fluid_rvoice_t*, fluid_sample_t*);
 
-  EVENTFUNC_R1(fluid_rvoice_handler_set_polyphony, fluid_rvoice_handler_t*);
+  EVENTFUNC_R1(fluid_rvoice_mixer_set_samplerate, fluid_rvoice_mixer_t*);
+  EVENTFUNC_I1(fluid_rvoice_mixer_set_polyphony, fluid_rvoice_mixer_t*);
+  EVENTFUNC_I1(fluid_rvoice_mixer_set_reverb_enabled, fluid_rvoice_mixer_t*);
+  EVENTFUNC_I1(fluid_rvoice_mixer_set_chorus_enabled, fluid_rvoice_mixer_t*);
+  EVENTFUNC_I1(fluid_rvoice_mixer_set_mix_fx, fluid_rvoice_mixer_t*);
+  EVENTFUNC_0(fluid_rvoice_mixer_reset_fx, fluid_rvoice_mixer_t*);
+ 
+  EVENTFUNC_ALL(fluid_rvoice_mixer_set_chorus_params, fluid_rvoice_mixer_t*);
+  EVENTFUNC_R4(fluid_rvoice_mixer_set_reverb_params, fluid_rvoice_mixer_t*);
 
   FLUID_LOG(FLUID_ERR, "fluid_rvoice_event_dispatch: Unknown method %p to dispatch!", event->method);
 }
@@ -196,14 +210,14 @@ finished_voice_callback(void* userdata, fluid_rvoice_t* rvoice)
 }
 
 fluid_rvoice_eventhandler_t* new_fluid_rvoice_eventhandler(
-  int is_threadsafe, int queuesize, int finished_voices_size)
+  int is_threadsafe, int queuesize, int finished_voices_size, int bufs, int fx_bufs)
 {
   fluid_rvoice_eventhandler_t* eventhandler = FLUID_NEW(fluid_rvoice_eventhandler_t);
   if (eventhandler == NULL) {
     FLUID_LOG(FLUID_ERR, "Out of memory");
     return NULL;
   }
-  eventhandler->handler = NULL;
+  eventhandler->mixer = NULL;
   eventhandler->queue = NULL;
   eventhandler->finished_voices = NULL;
   eventhandler->is_threadsafe = is_threadsafe;
@@ -218,11 +232,11 @@ fluid_rvoice_eventhandler_t* new_fluid_rvoice_eventhandler(
   if (eventhandler->queue == NULL)
     goto error_recovery;
 
-  eventhandler->handler = new_fluid_rvoice_handler();
-  if (eventhandler->handler == NULL)
+  eventhandler->mixer = new_fluid_rvoice_mixer(bufs, fx_bufs); 
+  if (eventhandler->mixer == NULL)
     goto error_recovery;
-  fluid_rvoice_handler_set_voice_callback(eventhandler->handler, 
-                                          finished_voice_callback, eventhandler);
+  fluid_rvoice_mixer_set_finished_voices_callback(eventhandler->mixer, 
+                                        finished_voice_callback, eventhandler);
   return eventhandler;
   
 error_recovery:
@@ -249,6 +263,7 @@ void
 delete_fluid_rvoice_eventhandler(fluid_rvoice_eventhandler_t* handler)
 {
   if (handler == NULL) return;
+  delete_fluid_rvoice_mixer(handler->mixer);
   delete_fluid_ringbuffer(handler->queue);
   delete_fluid_ringbuffer(handler->finished_voices);
   FLUID_FREE(handler);

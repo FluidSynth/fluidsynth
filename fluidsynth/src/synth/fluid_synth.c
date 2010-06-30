@@ -492,7 +492,7 @@ new_fluid_synth(fluid_settings_t *settings)
   fluid_synth_t* synth;
   fluid_sfloader_t* loader;
   double gain;
-  int i;
+  int i, nbuf;
 
   /* initialize all the conversion tables and other stuff */
   if (fluid_synth_initialized == 0) {
@@ -593,9 +593,9 @@ new_fluid_synth(fluid_settings_t *settings)
   /* The number of buffers is determined by the higher number of nr
    * groups / nr audio channels.  If LADSPA is unused, they should be
    * the same. */
-  synth->nbuf = synth->audio_channels;
-  if (synth->audio_groups > synth->nbuf) {
-    synth->nbuf = synth->audio_groups;
+  nbuf = synth->audio_channels;
+  if (synth->audio_groups > nbuf) {
+    nbuf = synth->audio_groups;
   }
 
 #ifdef LADSPA
@@ -648,11 +648,18 @@ new_fluid_synth(fluid_settings_t *settings)
   }
 
   /* Allocate handler */
-  synth->eventhandler = new_fluid_rvoice_eventhandler(1, synth->polyphony*8, synth->polyphony);
+  synth->eventhandler = new_fluid_rvoice_eventhandler(0, synth->polyphony*8, 
+						      synth->polyphony,
+						      nbuf, synth->effects_channels);
   if (synth->eventhandler == NULL)
     goto error_recovery; 
-  fluid_rvoice_handler_set_polyphony(synth->eventhandler->handler, synth->polyphony);
-
+  fluid_rvoice_eventhandler_push(synth->eventhandler, 
+				 fluid_rvoice_mixer_set_polyphony, 
+				 synth->eventhandler->mixer, synth->polyphony, 0.0f);
+  fluid_synth_set_reverb_on(synth, synth->with_reverb);
+  fluid_synth_set_chorus_on(synth, synth->with_chorus);
+				 
+#if 0
   /* Allocate the sample buffers */
   synth->left_buf = NULL;
   synth->right_buf = NULL;
@@ -705,34 +712,39 @@ new_fluid_synth(fluid_settings_t *settings)
       goto error_recovery;
     }
   }
-
+#endif
 
   synth->cur = FLUID_BUFSIZE;
   synth->dither_index = 0;
 
+#if 0  
   /* allocate the reverb module */
   synth->reverb = new_fluid_revmodel();
   if (synth->reverb == NULL) {
     FLUID_LOG(FLUID_ERR, "Out of memory");
     goto error_recovery;
   }
-
+#endif 
   synth->reverb_roomsize = FLUID_REVERB_DEFAULT_ROOMSIZE;
   synth->reverb_damping = FLUID_REVERB_DEFAULT_DAMP;
   synth->reverb_width = FLUID_REVERB_DEFAULT_WIDTH;
   synth->reverb_level = FLUID_REVERB_DEFAULT_LEVEL;
 
-  fluid_revmodel_set (synth->reverb, FLUID_REVMODEL_SET_ALL,
-                      synth->reverb_roomsize, synth->reverb_damping,
-                      synth->reverb_width, synth->reverb_level);
+  fluid_rvoice_eventhandler_push5(synth->eventhandler, 
+				  fluid_rvoice_mixer_set_reverb_params,
+				  synth->eventhandler->mixer, 
+				  FLUID_REVMODEL_SET_ALL, synth->reverb_roomsize, 
+				  synth->reverb_damping, synth->reverb_width, 
+				  synth->reverb_level, 0.0f);
 
+#if 0		      
   /* allocate the chorus module */
   synth->chorus = new_fluid_chorus(synth->sample_rate);
   if (synth->chorus == NULL) {
     FLUID_LOG(FLUID_ERR, "Out of memory");
     goto error_recovery;
   }
-
+#endif 
   /* Initialize multi-core variables if multiple cores enabled */
   if (synth->cores > 1)
   {
@@ -952,6 +964,7 @@ delete_fluid_synth(fluid_synth_t* synth)
     FLUID_FREE(synth->voice);
   }
 
+#if 0
   /* free all the sample buffers */
   if (synth->left_buf != NULL) {
     for (i = 0; i < synth->nbuf; i++) {
@@ -998,6 +1011,7 @@ delete_fluid_synth(fluid_synth_t* synth)
   if (synth->chorus != NULL) {
     delete_fluid_chorus(synth->chorus);
   }
+#endif
 
   /* free the tunings, if any */
   if (synth->tuning != NULL) {
@@ -1272,7 +1286,9 @@ fluid_synth_noteon_LOCAL(fluid_synth_t* synth, int chan, int key, int vel)
   if (vel == 0) return fluid_synth_noteoff_LOCAL(synth, chan, key);
 
   channel = synth->channel[chan];
-
+  
+ // if (chan != 11) return FLUID_OK; /* DEBUG */
+  
   /* make sure this channel has a preset */
   if (channel->preset == NULL) {
     if (synth->verbose) {
@@ -1903,8 +1919,11 @@ fluid_synth_system_reset_LOCAL(fluid_synth_t* synth)
   for (i = 0; i < synth->midi_channels; i++)
     fluid_channel_reset(synth->channel[i]);
 
-  fluid_chorus_reset(synth->chorus);
-  fluid_revmodel_reset(synth->reverb);
+  fluid_rvoice_eventhandler_push(synth->eventhandler, 
+				 fluid_rvoice_mixer_reset_fx, 
+				 synth->eventhandler->mixer, 0, 0.0f);
+//  fluid_chorus_reset(synth->chorus);
+//  fluid_revmodel_reset(synth->reverb);
 
   return FLUID_OK;
 }
@@ -2592,7 +2611,7 @@ fluid_synth_update_polyphony_LOCAL(fluid_synth_t* synth)
   }
 
   fluid_rvoice_eventhandler_push(synth->eventhandler, 
-    fluid_rvoice_handler_set_polyphony, synth->eventhandler->handler,
+    fluid_rvoice_mixer_set_polyphony, synth->eventhandler->mixer,
     synth->polyphony, 0.0f);
 
   return FLUID_OK;
@@ -2678,8 +2697,8 @@ fluid_synth_nwrite_float(fluid_synth_t* synth, int len,
                          float** left, float** right,
                          float** fx_left, float** fx_right)
 {
-  fluid_real_t** left_in = synth->left_buf;
-  fluid_real_t** right_in = synth->right_buf;
+  fluid_real_t** left_in;
+  fluid_real_t** right_in;
   double time = fluid_utime();
   int i, num, available, count, bytes;
   float cpu_load;
@@ -2689,6 +2708,7 @@ fluid_synth_nwrite_float(fluid_synth_t* synth, int len,
   num = synth->cur;
   if (synth->cur < FLUID_BUFSIZE) {
     available = FLUID_BUFSIZE - synth->cur;
+    fluid_rvoice_mixer_get_bufs(synth->eventhandler->mixer, &left_in, &right_in);
 
     num = (available > len)? len : available;
     bytes = num * sizeof(float);
@@ -2704,6 +2724,7 @@ fluid_synth_nwrite_float(fluid_synth_t* synth, int len,
   /* Then, run one_block() and copy till we have 'len' samples  */
   while (count < len) {
     fluid_synth_one_block(synth, 1);
+    fluid_rvoice_mixer_get_bufs(synth->eventhandler->mixer, &left_in, &right_in);
 
     num = (FLUID_BUFSIZE > len - count)? len - count : FLUID_BUFSIZE;
     bytes = num * sizeof(float);
@@ -2789,8 +2810,8 @@ fluid_synth_write_float(fluid_synth_t* synth, int len,
   int i, j, k, l;
   float* left_out = (float*) lout;
   float* right_out = (float*) rout;
-  fluid_real_t* left_in = synth->left_buf[0];
-  fluid_real_t* right_in = synth->right_buf[0];
+  fluid_real_t** left_in;
+  fluid_real_t** right_in;
   double time = fluid_utime();
   float cpu_load;
 
@@ -2800,11 +2821,13 @@ fluid_synth_write_float(fluid_synth_t* synth, int len,
     /* fill up the buffers as needed */
       if (l == FLUID_BUFSIZE) {
 	fluid_synth_one_block(synth, 0);
+        fluid_rvoice_mixer_get_bufs(synth->eventhandler->mixer, &left_in, &right_in);
+
 	l = 0;
       }
 
-      left_out[j] = (float) left_in[l];
-      right_out[k] = (float) right_in[l];
+      left_out[j] = (float) left_in[0][l];
+      right_out[k] = (float) right_in[0][l];
   }
 
   synth->cur = l;
@@ -2876,8 +2899,8 @@ fluid_synth_write_s16(fluid_synth_t* synth, int len,
   int i, j, k, cur;
   signed short* left_out = (signed short*) lout;
   signed short* right_out = (signed short*) rout;
-  fluid_real_t* left_in = synth->left_buf[0];
-  fluid_real_t* right_in = synth->right_buf[0];
+  fluid_real_t** left_in;
+  fluid_real_t** right_in;
   fluid_real_t left_sample;
   fluid_real_t right_sample;
   double time = fluid_utime();
@@ -2895,13 +2918,14 @@ fluid_synth_write_s16(fluid_synth_t* synth, int len,
       prof_ref_on_block = fluid_profile_ref();
 
       fluid_synth_one_block(synth, 0);
+      fluid_rvoice_mixer_get_bufs(synth->eventhandler->mixer, &left_in, &right_in);
       cur = 0;
 
       fluid_profile(FLUID_PROF_ONE_BLOCK, prof_ref_on_block);
     }
 
-    left_sample = roundi (left_in[cur] * 32766.0f + rand_table[0][di]);
-    right_sample = roundi (right_in[cur] * 32766.0f + rand_table[1][di]);
+    left_sample = roundi (left_in[0][cur] * 32766.0f + rand_table[0][di]);
+    right_sample = roundi (right_in[0][cur] * 32766.0f + rand_table[1][di]);
 
     di++;
     if (di >= DITHER_SIZE) di = 0;
@@ -3008,9 +3032,9 @@ fluid_synth_one_block(fluid_synth_t* synth, int do_not_mix_fx_to_out)
 //  fluid_voice_t* voice;
 //  fluid_real_t* left_buf;
 //  fluid_real_t* right_buf;
-  fluid_real_t* reverb_buf;
-  fluid_real_t* chorus_buf;
-  fluid_real_t* bufs[synth->audio_groups*2 + synth->effects_channels*2];
+//  fluid_real_t* reverb_buf;
+//  fluid_real_t* chorus_buf;
+//  fluid_real_t* bufs[synth->audio_groups*2 + synth->effects_channels*2];
 //  int byte_size = FLUID_BUFSIZE * sizeof(fluid_real_t);
 //  int count;
   fluid_profile_ref_var (prof_ref);
@@ -3032,7 +3056,12 @@ fluid_synth_one_block(fluid_synth_t* synth, int do_not_mix_fx_to_out)
     else break;         /* First NULL ends the array (values are never set to NULL) */
   }
 
+  fluid_rvoice_eventhandler_dispatch_all(synth->eventhandler);
+  fluid_rvoice_mixer_set_mix_fx(synth->eventhandler->mixer, 
+				!do_not_mix_fx_to_out);
+  fluid_rvoice_mixer_render(synth->eventhandler->mixer, 1);
 
+#if 0
   /* Set up the reverb / chorus buffers only, when the effect is
    * enabled on synth level.  Nonexisting buffers are detected in the
    * DSP loop. Not sending the reverb / chorus signal saves some time
@@ -3111,7 +3140,8 @@ fluid_synth_one_block(fluid_synth_t* synth, int do_not_mix_fx_to_out)
   }
 
   fluid_profile(FLUID_PROF_ONE_BLOCK_CHORUS, prof_ref);
-
+#endif
+  
 #ifdef LADSPA
   /* Run the signal through the LADSPA Fx unit */
   fluid_LADSPA_run(synth->LADSPA_FxUnit, synth->left_buf, synth->right_buf, synth->fx_left_buf, synth->fx_right_buf);
@@ -4097,6 +4127,10 @@ fluid_synth_set_reverb_on(fluid_synth_t* synth, int on)
   fluid_return_if_fail (synth != NULL);
 
   fluid_atomic_int_set (&synth->with_reverb, on != 0);
+  fluid_rvoice_eventhandler_push(synth->eventhandler, 
+				 fluid_rvoice_mixer_set_reverb_enabled,
+				 synth->eventhandler->mixer,
+				 on != 0, 0.0f);
 }
 
 /**
@@ -4180,8 +4214,11 @@ fluid_synth_set_reverb_full(fluid_synth_t* synth, int set, double roomsize,
   if (set & FLUID_REVMODEL_SET_LEVEL)
     fluid_atomic_float_set (&synth->reverb_level, level);
 
-  fluid_revmodel_set (synth->reverb, set, roomsize, damping, width, level);
-
+  fluid_rvoice_eventhandler_push5(synth->eventhandler, 
+				  fluid_rvoice_mixer_set_reverb_params, 
+				  synth->eventhandler->mixer, set, 
+				  roomsize, damping, width, level, 0.0f);
+  
   fluid_rec_mutex_unlock (synth->mutex);    /* -- Unlock reverb */
 
   return FLUID_OK;
@@ -4250,6 +4287,11 @@ fluid_synth_set_chorus_on(fluid_synth_t* synth, int on)
   fluid_return_if_fail (synth != NULL);
 
   fluid_atomic_int_set (&synth->with_chorus, on != 0);
+  
+  fluid_rvoice_eventhandler_push(synth->eventhandler, 
+				 fluid_rvoice_mixer_set_chorus_enabled,
+				 synth->eventhandler->mixer,
+				 on != 0, 0.0f);
 }
 
 /**
@@ -4316,8 +4358,11 @@ fluid_synth_set_chorus_full(fluid_synth_t* synth, int set, int nr, double level,
 
   if (set & FLUID_CHORUS_SET_TYPE)
     fluid_atomic_int_set (&synth->chorus_type, type);
-
-  fluid_chorus_set (synth->chorus, set, nr, level, speed, depth_ms, type);
+  
+  fluid_rvoice_eventhandler_push5(synth->eventhandler, 
+				  fluid_rvoice_mixer_set_chorus_params, 
+				  synth->eventhandler->mixer, set, 
+				  nr, level, speed, depth_ms, type);
 
   fluid_rec_mutex_unlock (synth->mutex);    /* -- Unlock chorus */
 

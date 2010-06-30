@@ -23,7 +23,7 @@
 #define _FLUID_RVOICE_EVENT_H
 
 #include "fluidsynth_priv.h"
-#include "fluid_rvoice_handler.h"
+#include "fluid_rvoice_mixer.h"
 #include "fluid_ringbuffer.h"
 
 #define EVENT_REAL_PARAMS (5)
@@ -52,11 +52,11 @@ struct _fluid_rvoice_eventhandler_t {
 	fluid_ringbuffer_t* queue; /**< List of fluid_rvoice_event_t */
         int queue_stored; /**< Extras pushed but not flushed */
 	fluid_ringbuffer_t* finished_voices; /**< return queue from handler, list of fluid_rvoice_t* */ 
-	fluid_rvoice_handler_t* handler;
+	fluid_rvoice_mixer_t* mixer;
 };
 
 fluid_rvoice_eventhandler_t* new_fluid_rvoice_eventhandler(
-  int is_threadsafe, int queuesize, int finished_voices_size);
+  int is_threadsafe, int queuesize, int finished_voices_size, int bufs, int fx_bufs);
 
 void delete_fluid_rvoice_eventhandler(fluid_rvoice_eventhandler_t*);
 
@@ -102,10 +102,10 @@ fluid_rvoice_eventhandler_add_rvoice(fluid_rvoice_eventhandler_t* handler,
                                      fluid_rvoice_t* rvoice)
 {
   if (handler->is_threadsafe)
-    fluid_rvoice_eventhandler_push_ptr(handler, fluid_rvoice_handler_add_voice,
-                                       handler->handler, rvoice);
+    fluid_rvoice_eventhandler_push_ptr(handler, fluid_rvoice_mixer_add_voice,
+                                       handler->mixer, rvoice);
   else
-    fluid_rvoice_handler_add_voice(handler->handler, rvoice);
+    fluid_rvoice_mixer_add_voice(handler->mixer, rvoice);
 }
 
 

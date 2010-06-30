@@ -30,7 +30,7 @@
 struct _fluid_env_data_t {
 	unsigned int count;
 	fluid_real_t coeff;
-	fluid_real_t incr;
+	fluid_real_t increment;
 	fluid_real_t min;
 	fluid_real_t max;
 };
@@ -81,7 +81,7 @@ fluid_adsr_env_calc(fluid_adsr_env_t* env, int is_volenv)
   }
 
   /* calculate the envelope value and check for valid range */
-  x = env_data->coeff * env->val + env_data->incr;
+  x = env_data->coeff * env->val + env_data->increment;
 
   if (x < env_data->min)
   {
@@ -107,7 +107,7 @@ fluid_adsr_env_set_data(fluid_adsr_env_t* env,
                         fluid_adsr_env_section_t section,
                         unsigned int count,
                         fluid_real_t coeff,
-                        fluid_real_t incr,
+                        fluid_real_t increment,
                         fluid_real_t min,
                         fluid_real_t max);
 

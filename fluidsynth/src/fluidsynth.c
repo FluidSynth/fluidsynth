@@ -729,6 +729,10 @@ int main(int argc, char** argv)
 
   if (fast_render) {
     char *filename;
+    if (player == NULL) {
+      fprintf(stderr, "No midi file specified!\n");
+      goto cleanup;
+    } 
 
     fluid_settings_dupstr (settings, "audio.file.name", &filename);
     printf ("Rendering audio to file '%s'..\n", filename);

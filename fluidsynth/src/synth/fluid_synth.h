@@ -196,9 +196,9 @@ struct _fluid_synth_t
   int active_voice_count;            /**< count of active voices */
   unsigned int noteid;               /**< the id is incremented for every new note. it's used for noteoff's  */
   unsigned int storeid;
-  int nbuf;                          /**< How many audio buffers are used? (depends on nr of audio channels / groups)*/
+//  int nbuf;                          /**< How many audio buffers are used? (depends on nr of audio channels / groups)*/
   fluid_rvoice_eventhandler_t* eventhandler;
-
+/*
   fluid_real_t** left_buf;
   fluid_real_t** right_buf;
   fluid_real_t** fx_left_buf;
@@ -206,7 +206,7 @@ struct _fluid_synth_t
 
   fluid_revmodel_t* reverb;
   fluid_chorus_t* chorus;
-
+*/
   float reverb_roomsize;             /**< Shadow of reverb roomsize */
   float reverb_damping;              /**< Shadow of reverb damping */
   float reverb_width;                /**< Shadow of reverb width */
