@@ -206,6 +206,12 @@ void fluid_synth_settings(fluid_settings_t* settings)
   fluid_settings_register_int(settings, "synth.cpu-cores", 1, 1, 256, 0, NULL, NULL);
 
   fluid_settings_register_int(settings, "synth.min-note-length", 10, 0, 65535, 0, NULL, NULL);
+  
+  fluid_settings_register_int(settings, "synth.threadsafe-api", 1, 0, 1,
+                              FLUID_HINT_TOGGLED, NULL, NULL);
+  fluid_settings_register_int(settings, "synth.parallel-render", 1, 0, 1,
+                              FLUID_HINT_TOGGLED, NULL, NULL);
+  
 }
 
 /**
@@ -521,7 +527,7 @@ new_fluid_synth(fluid_settings_t *settings)
   FLUID_MEMSET(synth, 0, sizeof(fluid_synth_t));
 
   fluid_rec_mutex_init(synth->mutex);
-  synth->use_mutex = 1;
+  fluid_settings_getint(settings, "synth.threadsafe-api", &synth->use_mutex);
   synth->public_api_count = 0;
   
   fluid_private_init(synth->thread_queues);
@@ -628,8 +634,9 @@ new_fluid_synth(fluid_settings_t *settings)
   synth->tuning = NULL;
   fluid_private_init(synth->tuning_iter);
 
-  /* Allocate handler */
-  synth->eventhandler = new_fluid_rvoice_eventhandler(1, synth->polyphony*8, 
+  /* Allocate event queue for rvoice mixer */
+  fluid_settings_getint(settings, "synth.parallel-render", &i);
+  synth->eventhandler = new_fluid_rvoice_eventhandler(i, synth->polyphony*8, 
 						      synth->polyphony,
 						      nbuf, synth->effects_channels);
   if (synth->eventhandler == NULL)
