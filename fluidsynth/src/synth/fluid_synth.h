@@ -40,7 +40,6 @@
 #include "fluid_ladspa.h"
 #include "fluid_midi_router.h"
 #include "fluid_sys.h"
-#include "fluid_rvoice_handler.h"
 #include "fluid_rvoice_event.h"
 
 /***************************************************************
