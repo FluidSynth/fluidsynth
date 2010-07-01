@@ -159,6 +159,9 @@ struct _fluid_synth_t
   fluid_event_queue_t *queues[FLUID_MAX_EVENT_QUEUES];   /**< Thread event queues (NULL for unused elements) */
 
   fluid_rec_mutex_t mutex;           /**< Lock for multi-thread sensitive variables (not used by synthesis process) */
+  int use_mutex;                     /**< Use mutex for all public API functions? */
+  int public_api_count;            /**< How many times the mutex is currently locked */
+  
   fluid_list_t *queue_pool;          /**< List of event queues whose threads have been destroyed and which can be re-used */
   fluid_event_queue_t *return_queue; /**< Event queue for events from synthesis thread to non-synthesis threads (memory frees, etc) */
   fluid_thread_t *return_queue_thread;  /**< Return event queue processing thread */
@@ -282,6 +285,9 @@ int fluid_synth_set_chorus_full(fluid_synth_t* synth, int set, int nr, double le
 
 fluid_sample_timer_t* new_fluid_sample_timer(fluid_synth_t* synth, fluid_timer_callback_t callback, void* data);
 int delete_fluid_sample_timer(fluid_synth_t* synth, fluid_sample_timer_t* timer);
+
+void fluid_synth_api_enter(fluid_synth_t* synth);
+void fluid_synth_api_exit(fluid_synth_t* synth);
 
 /*
  * misc
