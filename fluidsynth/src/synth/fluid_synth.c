@@ -2606,7 +2606,7 @@ fluid_synth_update_gain_LOCAL(fluid_synth_t* synth)
 float
 fluid_synth_get_gain(fluid_synth_t* synth)
 {
-  int result;
+  float result;
   fluid_return_val_if_fail (synth != NULL, 0.0);
   fluid_synth_api_enter(synth);
 
