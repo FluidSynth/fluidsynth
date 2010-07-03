@@ -92,7 +92,7 @@ static int fluid_synth_update_polyphony_LOCAL(fluid_synth_t* synth);
 static void init_dither(void);
 static inline int roundi (float x);
 static int fluid_synth_one_block(fluid_synth_t* synth, int do_not_mix_fx_to_out);
-static void fluid_synth_core_thread_func (void* data);
+//static void fluid_synth_core_thread_func (void* data);
 static FLUID_INLINE void fluid_synth_process_event_queue_LOCAL
   (fluid_synth_t *synth, fluid_event_queue_t *queue);
 static fluid_voice_t* fluid_synth_free_voice_by_kill_LOCAL(fluid_synth_t* synth);
@@ -774,7 +774,13 @@ new_fluid_synth(fluid_settings_t *settings)
   if (synth->cores > 1)
   {
     int prio_level = 0;
-
+    fluid_settings_getint (synth->settings, "audio.realtime-prio", &prio_level);
+    fluid_rvoice_eventhandler_push(synth->eventhandler, 
+				   fluid_rvoice_mixer_set_threads, 
+				   synth->eventhandler->mixer, synth->cores-1,
+				   prio_level);
+    
+#if 0
     synth->core_mutex = new_fluid_cond_mutex ();
     synth->core_cond = new_fluid_cond ();
     synth->core_wait_last_cond = new_fluid_cond ();
@@ -799,8 +805,6 @@ new_fluid_synth(fluid_settings_t *settings)
     for (i = 0; i < synth->polyphony; i++)
       synth->core_voice_processed[i] = NULL;
 
-    fluid_settings_getint (synth->settings, "audio.realtime-prio", &prio_level);
-
     for (i = 0; i < synth->cores - 1; i++)
     {
       synth->core_threads[i] = new_fluid_thread (fluid_synth_core_thread_func,
@@ -808,6 +812,7 @@ new_fluid_synth(fluid_settings_t *settings)
       if (!synth->core_threads[i])
         FLUID_LOG(FLUID_ERR, "Failed to create a synthesis core thread");
     }
+#endif
   }
 
   /* FIXME */
@@ -916,6 +921,7 @@ delete_fluid_synth(fluid_synth_t* synth)
   if (synth->return_queue_cond)
     delete_fluid_cond (synth->return_queue_cond);
 
+#if 0  
   /* Free multi-core resources (if multi-core enabled) */
   if (synth->cores > 1)
   {
@@ -935,6 +941,7 @@ delete_fluid_synth(fluid_synth_t* synth)
     FLUID_FREE (synth->core_voice_processed);
     FLUID_FREE (synth->core_bufs);
   }
+#endif
 
   /* turn off all voices, needed to unload SoundFont data */
   if (synth->voice != NULL) {
@@ -3240,6 +3247,7 @@ fluid_synth_one_block(fluid_synth_t* synth, int do_not_mix_fx_to_out)
   return 0;
 }
 
+#if 0
 /* Core thread function (processes voices in parallel to primary synthesis thread) */
 static void
 fluid_synth_core_thread_func (void* data)
@@ -3317,6 +3325,7 @@ got_voice:
     }           /* while (TRUE) - Lock free voice processing loop */
   }     /* while (synth->cores_active) */
 }
+#endif 
 
 /* Process events in an event queue */
 static FLUID_INLINE void

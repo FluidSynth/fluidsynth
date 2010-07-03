@@ -108,6 +108,7 @@ fluid_rvoice_event_dispatch(fluid_rvoice_event_t* event)
   EVENTFUNC_I1(fluid_rvoice_mixer_set_chorus_enabled, fluid_rvoice_mixer_t*);
   EVENTFUNC_I1(fluid_rvoice_mixer_set_mix_fx, fluid_rvoice_mixer_t*);
   EVENTFUNC_0(fluid_rvoice_mixer_reset_fx, fluid_rvoice_mixer_t*);
+  EVENTFUNC_IR(fluid_rvoice_mixer_set_threads, fluid_rvoice_mixer_t*);
  
   EVENTFUNC_ALL(fluid_rvoice_mixer_set_chorus_params, fluid_rvoice_mixer_t*);
   EVENTFUNC_R4(fluid_rvoice_mixer_set_reverb_params, fluid_rvoice_mixer_t*);

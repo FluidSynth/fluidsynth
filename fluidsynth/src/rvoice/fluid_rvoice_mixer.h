@@ -24,11 +24,11 @@
 
 #include "fluidsynth_priv.h"
 #include "fluid_rvoice.h"
-#include <stdlib.h>
 
 typedef struct _fluid_rvoice_mixer_t fluid_rvoice_mixer_t;
 
 #define FLUID_MIXER_MAX_BUFFERS_DEFAULT (8192/FLUID_BUFSIZE) 
+
 
 void fluid_rvoice_mixer_set_finished_voices_callback(
   fluid_rvoice_mixer_t* mixer,
@@ -58,12 +58,8 @@ void fluid_rvoice_mixer_set_reverb_params(fluid_rvoice_mixer_t* mixer, int set,
 					 double width, double level);
 void fluid_rvoice_mixer_reset_fx(fluid_rvoice_mixer_t* mixer);
 
-/**
- * Update amount of threads. 
- * @param thread_count Number of extra mixer threads for multi-core rendering
- * @param prio_level real-time prio level for the extra mixer threads
- */
-void fluid_rvoice_mixer_set_threads(int thread_count, int prio_level);
+void fluid_rvoice_mixer_set_threads(fluid_rvoice_mixer_t* mixer, int thread_count, 
+				    int prio_level);
 
 #endif
 

@@ -234,6 +234,7 @@ struct _fluid_synth_t
   unsigned int min_note_length_ticks; /**< If note-offs are triggered just after a note-on, they will be delayed */
 
   int cores;                         /**< Number of CPU cores (1 by default) */
+#if 0
   fluid_thread_t **core_threads;     /**< Array of core threads (cores - 1 in length) */
   unsigned char cores_active;        /**< TRUE if core slave threads should remain active, FALSE to terminate them */
 
@@ -249,6 +250,7 @@ struct _fluid_synth_t
   int core_inprogress;               /**< Count of secondary core threads in progress */
   int core_waiting_for_last;         /**< Boolean: Set to TRUE if primary synthesis thread is waiting for last slave thread to finish */
   fluid_cond_t *core_wait_last_cond; /**< Thread condition for signaling primary synthesis thread when last slave thread finishes */
+#endif
 
 #ifdef LADSPA
   fluid_LADSPA_FxUnit_t* LADSPA_FxUnit; /**< Effects unit for LADSPA support */
