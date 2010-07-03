@@ -320,6 +320,14 @@ long long rtkit_get_rttime_nsec_max(DBusConnection *connection) {
 #  define RLIMIT_RTTIME 15
 #endif
 
+#define MAKE_REALTIME_RETURN(_value) \
+  do { \
+    dbus_connection_close(conn); \
+    dbus_connection_unref(conn); \
+    return _value; \
+  } while (0)
+    
+
 int fluid_rtkit_make_realtime(pid_t thread, int priority) {
 	DBusConnection *conn = NULL;
 	DBusError error;
@@ -329,7 +337,7 @@ int fluid_rtkit_make_realtime(pid_t thread, int priority) {
 
 	/* Initialize system bus connection */
 	dbus_error_init(&error);
-	conn = dbus_bus_get(DBUS_BUS_SYSTEM, &error);
+	conn = dbus_bus_get_private(DBUS_BUS_SYSTEM, &error);
 	if (conn == NULL) {
 		res = translate_error(error.name);
         	dbus_error_free(&error);
@@ -340,26 +348,27 @@ int fluid_rtkit_make_realtime(pid_t thread, int priority) {
 	/* Make sure we don't fail by wanting too much */
 	max_prio = rtkit_get_max_realtime_priority(conn);
 	if (max_prio < 0) 
-		return max_prio;
+                MAKE_REALTIME_RETURN(max_prio);
+
 	if (priority >= max_prio) 
 		priority = max_prio;
 	
 	/* Enforce RLIMIT_RTTIME, also a must for obtaining rt prio through rtkit */
 	max_rttime = rtkit_get_rttime_nsec_max(conn);
 	if (max_rttime < 0)
-		return max_rttime;
+		MAKE_REALTIME_RETURN(max_rttime);
 	new_limit.rlim_cur = new_limit.rlim_max = max_rttime;
 	if (getrlimit(RLIMIT_RTTIME, &old_limit) < 0) 
-		return -1;
+		MAKE_REALTIME_RETURN(-1);
 	if (setrlimit(RLIMIT_RTTIME, &new_limit) < 0)
-		return -1;
+		MAKE_REALTIME_RETURN(-1);
 	
 	/* Finally, let's try */
 	res = rtkit_make_realtime(conn, thread, priority);
 	if (res != 0) {
 		setrlimit(RLIMIT_RTTIME, &old_limit);
 	}
-	return res;
+	MAKE_REALTIME_RETURN(res);
 	
 }
 
