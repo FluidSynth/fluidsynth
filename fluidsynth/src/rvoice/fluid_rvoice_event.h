@@ -60,7 +60,8 @@ fluid_rvoice_eventhandler_t* new_fluid_rvoice_eventhandler(
 
 void delete_fluid_rvoice_eventhandler(fluid_rvoice_eventhandler_t*);
 
-void fluid_rvoice_eventhandler_dispatch_all(fluid_rvoice_eventhandler_t*);
+int fluid_rvoice_eventhandler_dispatch_all(fluid_rvoice_eventhandler_t*);
+int fluid_rvoice_eventhandler_dispatch_count(fluid_rvoice_eventhandler_t*);
 
 static FLUID_INLINE void 
 fluid_rvoice_eventhandler_flush(fluid_rvoice_eventhandler_t* handler)

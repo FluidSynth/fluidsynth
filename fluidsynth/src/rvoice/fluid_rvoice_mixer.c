@@ -368,7 +368,7 @@ fluid_mixer_buffers_init(fluid_mixer_buffers_t* buffers, fluid_rvoice_mixer_t* m
   buffers->buf_count = buffers->mixer->buffers.buf_count;
   buffers->fx_buf_count = buffers->mixer->buffers.fx_buf_count;
   buffers->buf_blocks = buffers->mixer->buffers.buf_blocks;
-  samplecount = FLUID_BUFSIZE * buffers->buf_count;
+  samplecount = FLUID_BUFSIZE * buffers->buf_blocks;
   
  
   /* Left and right audio buffers */
@@ -754,8 +754,6 @@ fluid_render_loop_multithread(fluid_rvoice_mixer_t* mixer)
   }
 }
 
-
-
 #endif
 
 /**
@@ -806,7 +804,7 @@ fluid_rvoice_mixer_set_threads(fluid_rvoice_mixer_t* mixer, int thread_count,
     fluid_mixer_buffers_t* b = &mixer->threads[i]; 
     if (!fluid_mixer_buffers_init(b, mixer))
       return;
-    fluid_atomic_int_set(&mixer->threads[i].ready, THREAD_BUF_NODATA);
+    fluid_atomic_int_set(&b->ready, THREAD_BUF_NODATA);
     b->thread = new_fluid_thread(fluid_mixer_thread_func, b, prio_level, 0);
     if (!b->thread)
       return;

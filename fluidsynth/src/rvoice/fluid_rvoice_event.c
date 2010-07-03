@@ -245,18 +245,28 @@ error_recovery:
   return NULL;
 }
 
+int 
+fluid_rvoice_eventhandler_dispatch_count(fluid_rvoice_eventhandler_t* handler)
+{
+  return fluid_ringbuffer_get_count(handler->queue);
+}
+
 
 /**
  * Call fluid_rvoice_event_dispatch for all events in queue
+ * @return number of events dispatched
  */
-void 
+int 
 fluid_rvoice_eventhandler_dispatch_all(fluid_rvoice_eventhandler_t* handler)
 {
   fluid_rvoice_event_t* event;
+  int result = 0;
   while (NULL != (event = fluid_ringbuffer_get_outptr(handler->queue))) {
     fluid_rvoice_event_dispatch(event);
+    result++;
     fluid_ringbuffer_next_outptr(handler->queue);   
   }
+  return result;
 }
 
 

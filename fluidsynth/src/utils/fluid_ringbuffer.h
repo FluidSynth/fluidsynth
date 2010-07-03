@@ -81,6 +81,18 @@ fluid_ringbuffer_next_inptr (fluid_ringbuffer_t *queue, int count)
 }
 
 /**
+ * Get amount of items currently in queue
+ * @param queue Lockless queue instance
+ * @return amount of items currently in queue
+ */
+static FLUID_INLINE int
+fluid_ringbuffer_get_count (fluid_ringbuffer_t *queue)
+{
+  return fluid_atomic_int_get (&queue->count);
+}
+
+
+/**
  * Get pointer to next output array element in queue.
  * @param queue Lockless queue instance
  * @return Pointer to array element data in the queue or NULL if empty, can only
@@ -92,9 +104,10 @@ fluid_ringbuffer_next_inptr (fluid_ringbuffer_t *queue, int count)
 static FLUID_INLINE void*
 fluid_ringbuffer_get_outptr (fluid_ringbuffer_t *queue)
 {
-  return fluid_atomic_int_get (&queue->count) == 0 ? NULL
+  return fluid_ringbuffer_get_count(queue) == 0 ? NULL
     : queue->array + queue->elementsize * queue->out;
 }
+
 
 /**
  * Advance the output queue index to complete a "pop" operation.

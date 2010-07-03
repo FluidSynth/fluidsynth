@@ -91,7 +91,7 @@ static int fluid_synth_update_polyphony(fluid_synth_t* synth,
 static int fluid_synth_update_polyphony_LOCAL(fluid_synth_t* synth);
 static void init_dither(void);
 static inline int roundi (float x);
-static int fluid_synth_one_block(fluid_synth_t* synth, int do_not_mix_fx_to_out);
+static int fluid_synth_render_blocks(fluid_synth_t* synth, int blockcount);
 //static void fluid_synth_core_thread_func (void* data);
 static FLUID_INLINE void fluid_synth_process_event_queue_LOCAL
   (fluid_synth_t *synth, fluid_event_queue_t *queue);
@@ -740,6 +740,7 @@ new_fluid_synth(fluid_settings_t *settings)
 #endif
 
   synth->cur = FLUID_BUFSIZE;
+  synth->curmax = 0;
   synth->dither_index = 0;
 
 #if 0  
@@ -2789,7 +2790,8 @@ fluid_synth_nwrite_float(fluid_synth_t* synth, int len,
 
   /* Then, run one_block() and copy till we have 'len' samples  */
   while (count < len) {
-    fluid_synth_one_block(synth, 1);
+    fluid_rvoice_mixer_set_mix_fx(synth->eventhandler->mixer, 0);
+    fluid_synth_render_blocks(synth, 1);
     fluid_rvoice_mixer_get_bufs(synth->eventhandler->mixer, &left_in, &right_in);
 
     num = (FLUID_BUFSIZE > len - count)? len - count : FLUID_BUFSIZE;
@@ -2887,12 +2889,15 @@ fluid_synth_write_float(fluid_synth_t* synth, int len,
   if (!synth->eventhandler->is_threadsafe)
     fluid_synth_api_enter(synth);
   
+  fluid_rvoice_mixer_set_mix_fx(synth->eventhandler->mixer, 1);
   l = synth->cur;
+  fluid_rvoice_mixer_get_bufs(synth->eventhandler->mixer, &left_in, &right_in);
 
   for (i = 0, j = loff, k = roff; i < len; i++, l++, j += lincr, k += rincr) {
     /* fill up the buffers as needed */
-      if (l == FLUID_BUFSIZE) {
-	fluid_synth_one_block(synth, 0);
+      if (l >= synth->curmax) {
+	int blocksleft = (len-i+FLUID_BUFSIZE-1) / FLUID_BUFSIZE;
+	synth->curmax = FLUID_BUFSIZE * fluid_synth_render_blocks(synth, blocksleft);
         fluid_rvoice_mixer_get_bufs(synth->eventhandler->mixer, &left_in, &right_in);
 
 	l = 0;
@@ -2987,16 +2992,19 @@ fluid_synth_write_s16(fluid_synth_t* synth, int len,
   if (!synth->eventhandler->is_threadsafe)
     fluid_synth_api_enter(synth);
   
+  fluid_rvoice_mixer_set_mix_fx(synth->eventhandler->mixer, 1);
+  fluid_rvoice_mixer_get_bufs(synth->eventhandler->mixer, &left_in, &right_in);
+
   cur = synth->cur;
   di = synth->dither_index;
 
   for (i = 0, j = loff, k = roff; i < len; i++, cur++, j += lincr, k += rincr) {
 
     /* fill up the buffers as needed */
-    if (cur == FLUID_BUFSIZE) {
+    if (cur >= synth->curmax) { 
+      int blocksleft = (len-i+FLUID_BUFSIZE-1) / FLUID_BUFSIZE;
       prof_ref_on_block = fluid_profile_ref();
-
-      fluid_synth_one_block(synth, 0);
+      synth->curmax = FLUID_BUFSIZE * fluid_synth_render_blocks(synth, blocksleft);
       fluid_rvoice_mixer_get_bufs(synth->eventhandler->mixer, &left_in, &right_in);
       cur = 0;
 
@@ -3102,34 +3110,37 @@ fluid_synth_check_finished_voices(fluid_synth_t* synth)
   }
 }
 
-/*
- * Process a single block (FLUID_BUFSIZE) of audio.
+/**
+ * Process blocks (FLUID_BUFSIZE) of audio.
+ * Must be called from renderer thread only!
+ * @return number of blocks rendered. Might (often) return less than requested
  */
 static int
-fluid_synth_one_block(fluid_synth_t* synth, int do_not_mix_fx_to_out)
+fluid_synth_render_blocks(fluid_synth_t* synth, int blockcount)
 {
-//  fluid_real_t local_voice_buf[FLUID_BUFSIZE];
   int i;
-//  int start_index, voice_index, auchan;
-//  fluid_voice_t* voice;
-//  fluid_real_t* left_buf;
-//  fluid_real_t* right_buf;
-//  fluid_real_t* reverb_buf;
-//  fluid_real_t* chorus_buf;
-//  fluid_real_t* bufs[synth->audio_groups*2 + synth->effects_channels*2];
-//  int byte_size = FLUID_BUFSIZE * sizeof(fluid_real_t);
-//  int count;
   fluid_profile_ref_var (prof_ref);
 
   /* Assign ID of synthesis thread */
-  synth->synth_thread_id = fluid_thread_get_id ();
+//  synth->synth_thread_id = fluid_thread_get_id ();
 
   fluid_check_fpe("??? Just starting up ???");
-
-  fluid_sample_timer_process(synth);
+  
+  fluid_rvoice_eventhandler_dispatch_all(synth->eventhandler);
+  
+  for (i=0; i < blockcount; i++) {
+    fluid_sample_timer_process(synth);
+    synth->ticks += FLUID_BUFSIZE;
+    if (fluid_rvoice_eventhandler_dispatch_count(synth->eventhandler)) {
+      // Something has happened, we can't process more
+      blockcount = i+1;
+      break; 
+    }
+  }
 
   fluid_check_fpe("fluid_sample_timer_process");
 
+#if 0  
   /* Process queued events */
   for (i = 0; i < FLUID_MAX_EVENT_QUEUES; i++)
   {
@@ -3137,93 +3148,13 @@ fluid_synth_one_block(fluid_synth_t* synth, int do_not_mix_fx_to_out)
       fluid_synth_process_event_queue_LOCAL (synth, synth->queues[i]);
     else break;         /* First NULL ends the array (values are never set to NULL) */
   }
+#endif 
 
-  fluid_rvoice_eventhandler_dispatch_all(synth->eventhandler);
-  fluid_rvoice_mixer_set_mix_fx(synth->eventhandler->mixer, 
-				!do_not_mix_fx_to_out);
-  fluid_rvoice_mixer_render(synth->eventhandler->mixer, 1);
+  //fluid_rvoice_mixer_set_mix_fx(synth->eventhandler->mixer, 
+  //				!do_not_mix_fx_to_out);
+  blockcount = fluid_rvoice_mixer_render(synth->eventhandler->mixer, blockcount);
 
-#if 0
-  /* Set up the reverb / chorus buffers only, when the effect is
-   * enabled on synth level.  Nonexisting buffers are detected in the
-   * DSP loop. Not sending the reverb / chorus signal saves some time
-   * in that case. */
-  reverb_buf = synth->with_reverb ? synth->fx_left_buf[SYNTH_REVERB_CHANNEL] : NULL;
-  chorus_buf = synth->with_chorus ? synth->fx_left_buf[SYNTH_CHORUS_CHANNEL] : NULL;
-  bufs[synth->audio_groups*2 + SYNTH_REVERB_CHANNEL] = reverb_buf;
-  bufs[synth->audio_groups*2 + SYNTH_CHORUS_CHANNEL] = chorus_buf;
-
-      /* The output associated with a MIDI channel is wrapped around
-       * using the number of audio groups as modulo divider.  This is
-       * typically the number of output channels on the 'sound card',
-       * as long as the LADSPA Fx unit is not used. In case of LADSPA
-       * unit, think of it as subgroups on a mixer.
-       *
-       * For example: Assume that the number of groups is set to 2.
-       * Then MIDI channel 1, 3, 5, 7 etc. go to output 1, channels 2,
-       * 4, 6, 8 etc to output 2.  Or assume 3 groups: Then MIDI
-       * channels 1, 4, 7, 10 etc go to output 1; 2, 5, 8, 11 etc to
-       * output 2, 3, 6, 9, 12 etc to output 3.
-       */
-
-  for (i = 0; i < synth->audio_groups; i++) {
-    bufs[i*2] = synth->left_buf[i];
-    bufs[i*2+1] = synth->right_buf[i];
-  }
-
-  fluid_rvoice_eventhandler_dispatch_all(synth->eventhandler);
-  fluid_rvoice_handler_render(synth->eventhandler->handler, 1, synth->audio_groups*2 + 2, bufs);
-
-  fluid_check_fpe("Synthesis processes");
-
-  fluid_profile(FLUID_PROF_ONE_BLOCK_VOICES, prof_ref);
-
-  /* if multi channel output, don't mix the output of the chorus and
-     reverb in the final output. The effects outputs are send
-     separately. */
-
-  if (do_not_mix_fx_to_out) {
-
-    /* send to reverb */
-    if (reverb_buf) {
-      fluid_revmodel_processreplace(synth->reverb, reverb_buf,
-				   synth->fx_left_buf[SYNTH_REVERB_CHANNEL],
-				   synth->fx_right_buf[SYNTH_REVERB_CHANNEL]);
-      fluid_check_fpe("Reverb");
-    }
-
-    fluid_profile(FLUID_PROF_ONE_BLOCK_REVERB, prof_ref);
-
-    /* send to chorus */
-    if (chorus_buf) {
-      fluid_chorus_processreplace(synth->chorus, chorus_buf,
-				 synth->fx_left_buf[SYNTH_CHORUS_CHANNEL],
-			         synth->fx_right_buf[SYNTH_CHORUS_CHANNEL]);
-      fluid_check_fpe("Chorus");
-    }
-
-  } else {
-
-    /* send to reverb */
-    if (reverb_buf) {
-      fluid_revmodel_processmix(synth->reverb, reverb_buf,
-			       synth->left_buf[0], synth->right_buf[0]);
-      fluid_check_fpe("Reverb");
-    }
-
-    fluid_profile(FLUID_PROF_ONE_BLOCK_REVERB, prof_ref);
-
-    /* send to chorus */
-    if (chorus_buf) {
-      fluid_chorus_processmix(synth->chorus, chorus_buf,
-			     synth->left_buf[0], synth->right_buf[0]);
-      fluid_check_fpe("Chorus");
-    }
-  }
-
-  fluid_profile(FLUID_PROF_ONE_BLOCK_CHORUS, prof_ref);
-#endif
-  
+ 
 #ifdef LADSPA
   /* Run the signal through the LADSPA Fx unit */
   fluid_LADSPA_run(synth->LADSPA_FxUnit, synth->left_buf, synth->right_buf, synth->fx_left_buf, synth->fx_right_buf);
@@ -3234,8 +3165,6 @@ fluid_synth_one_block(fluid_synth_t* synth, int do_not_mix_fx_to_out)
   if (fluid_atomic_int_get (&synth->return_queue->count) > 0)
     fluid_cond_signal (synth->return_queue_cond);
 
-  synth->ticks += FLUID_BUFSIZE;
-
   fluid_synth_check_finished_voices(synth);
 
   /* Testcase, that provokes a denormal floating point error */
@@ -3244,7 +3173,7 @@ fluid_synth_one_block(fluid_synth_t* synth, int do_not_mix_fx_to_out)
 #endif
   fluid_check_fpe("??? Remainder of synth_one_block ???");
 
-  return 0;
+  return blockcount;
 }
 
 #if 0

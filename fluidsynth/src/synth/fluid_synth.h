@@ -221,6 +221,7 @@ struct _fluid_synth_t
   int chorus_type;                   /**< Shadow of chorus type */
 
   int cur;                           /**< the current sample in the audio buffers to be output */
+  int curmax;                        /**< current amount of samples present in the audio buffers */
   int dither_index;		     /**< current index in random dither value buffer: fluid_synth_(write_s16|dither_s16) */
 
   char outbuf[256];                  /**< buffer for message output */
