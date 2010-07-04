@@ -266,7 +266,7 @@ fluid_ostream_t fluid_socket_get_ostream(fluid_socket_t sock);
  * fluid_sys.c
  */
 enum {
-  FLUID_PROF_WRITE_S16,
+  FLUID_PROF_WRITE,
   FLUID_PROF_ONE_BLOCK,
   FLUID_PROF_ONE_BLOCK_CLEAR,
   FLUID_PROF_ONE_BLOCK_VOICE,

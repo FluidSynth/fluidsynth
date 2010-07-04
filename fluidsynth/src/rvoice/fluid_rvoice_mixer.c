@@ -95,6 +95,7 @@ static FLUID_INLINE void
 fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t* mixer)
 {
   int i;
+  fluid_profile_ref_var(prof_ref);
   if (mixer->fx.with_reverb) {
     if (mixer->fx.mix_fx_to_out) {
       for (i=0; i < mixer->current_blockcount * FLUID_BUFSIZE; i += FLUID_BUFSIZE)
@@ -110,8 +111,9 @@ fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t* mixer)
 				  &mixer->buffers.fx_left_buf[SYNTH_REVERB_CHANNEL][i],
 				  &mixer->buffers.fx_right_buf[SYNTH_REVERB_CHANNEL][i]);
     }
+    fluid_profile(FLUID_PROF_ONE_BLOCK_REVERB, prof_ref);
   }
-
+  
   if (mixer->fx.with_chorus) {
     if (mixer->fx.mix_fx_to_out) {
       for (i=0; i < mixer->current_blockcount * FLUID_BUFSIZE; i += FLUID_BUFSIZE)
@@ -127,8 +129,8 @@ fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t* mixer)
 				&mixer->buffers.fx_left_buf[SYNTH_CHORUS_CHANNEL][i],
 				&mixer->buffers.fx_right_buf[SYNTH_CHORUS_CHANNEL][i]);
     }
+    fluid_profile(FLUID_PROF_ONE_BLOCK_CHORUS, prof_ref);
   }
-
 }
 
 /**
@@ -334,9 +336,11 @@ fluid_render_loop_singlethread(fluid_rvoice_mixer_t* mixer)
   int i;
   fluid_real_t* bufs[mixer->buffers.buf_count * 2 + mixer->buffers.fx_buf_count * 2];
   int bufcount = fluid_mixer_buffers_prepare(&mixer->buffers, bufs);
+  fluid_profile_ref_var(prof_ref);
   for (i=0; i < mixer->active_voices; i++) {
     fluid_mixer_buffers_render_one(&mixer->buffers, mixer->rvoices[i], bufs, 
 				   bufcount);
+    fluid_profile(FLUID_PROF_ONE_BLOCK_VOICE, prof_ref);
   }
 }
 
@@ -715,8 +719,8 @@ fluid_mixer_mix_in(fluid_rvoice_mixer_t* mixer)
 static FLUID_INLINE void 
 fluid_render_loop_multithread(fluid_rvoice_mixer_t* mixer)
 {
-  int i;
-  int scount = mixer->current_blockcount * FLUID_BUFSIZE;
+  int i; //, test=0, waits=0;
+  //int scount = mixer->current_blockcount * FLUID_BUFSIZE;
   fluid_real_t* bufs[mixer->buffers.buf_count * 2 + mixer->buffers.fx_buf_count * 2];
   int bufcount = fluid_mixer_buffers_prepare(&mixer->buffers, bufs);
   
@@ -734,24 +738,27 @@ fluid_render_loop_multithread(fluid_rvoice_mixer_t* mixer)
     // Otherwise get a voice and render it
     fluid_rvoice_t* rvoice = fluid_mixer_get_mt_rvoice(mixer);
     if (rvoice != NULL) {
-      int s = fluid_mix_one(rvoice, bufs, bufcount, mixer->current_blockcount);
-      if (s < scount) {
-        fluid_finish_rvoice(&mixer->buffers, rvoice);
-      }
+      fluid_profile_ref_var(prof_ref);
+      fluid_mixer_buffers_render_one(&mixer->buffers, rvoice, bufs, bufcount);
+      fluid_profile(FLUID_PROF_ONE_BLOCK_VOICE, prof_ref);
+      //test++;
     }
     else {
       // If no voices, wait for mixes. Make sure one is still processing to avoid deadlock
       int is_processing = 0;
+      //waits++;
       fluid_cond_mutex_lock(mixer->thread_ready_m);
       for (i=0; i < mixer->thread_count; i++) 
 	if (fluid_atomic_int_get(&mixer->threads[i].ready) == 
 	    THREAD_BUF_PROCESSING)
 	  is_processing = 1;
-      if (is_processing)
+      if (is_processing) 
         fluid_cond_wait(mixer->thread_ready, mixer->thread_ready_m);
       fluid_cond_mutex_unlock(mixer->thread_ready_m);
     }
   }
+  //FLUID_LOG(FLUID_DBG, "Blockcount: %d, mixed %d of %d voices myself, waits = %d", 
+  //	    mixer->current_blockcount, test, mixer->active_voices, waits);
 }
 
 #endif
@@ -821,11 +828,14 @@ fluid_rvoice_mixer_set_threads(fluid_rvoice_mixer_t* mixer, int thread_count,
 int 
 fluid_rvoice_mixer_render(fluid_rvoice_mixer_t* mixer, int blockcount)
 {
+  fluid_profile_ref_var(prof_ref);
+  
   mixer->current_blockcount = blockcount > mixer->buffers.buf_blocks ? 
       mixer->buffers.buf_blocks : blockcount;
 
   // Zero buffers
   fluid_mixer_buffers_zero(&mixer->buffers);
+  fluid_profile(FLUID_PROF_ONE_BLOCK_CLEAR, prof_ref);
   
 #ifdef ENABLE_MIXER_THREADS
   if (mixer->thread_count > 0)
@@ -833,6 +843,7 @@ fluid_rvoice_mixer_render(fluid_rvoice_mixer_t* mixer, int blockcount)
   else
 #endif
     fluid_render_loop_singlethread(mixer);
+  fluid_profile(FLUID_PROF_ONE_BLOCK_VOICES, prof_ref);
     
 
   // Process reverb & chorus

@@ -526,7 +526,7 @@ void fluid_clear_fpe_i386 (void)
 
 fluid_profile_data_t fluid_profile_data[] =
 {
-  { FLUID_PROF_WRITE_S16,        "fluid_synth_write_s16           ", 1e10, 0.0, 0.0, 0},
+  { FLUID_PROF_WRITE,            "fluid_synth_write_*             ", 1e10, 0.0, 0.0, 0},
   { FLUID_PROF_ONE_BLOCK,        "fluid_synth_one_block           ", 1e10, 0.0, 0.0, 0},
   { FLUID_PROF_ONE_BLOCK_CLEAR,  "fluid_synth_one_block:clear     ", 1e10, 0.0, 0.0, 0},
   { FLUID_PROF_ONE_BLOCK_VOICE,  "fluid_synth_one_block:one voice ", 1e10, 0.0, 0.0, 0},
