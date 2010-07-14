@@ -226,6 +226,23 @@ fluid_voice_init(fluid_voice_t* voice, fluid_sample_t* sample,
   return FLUID_OK;
 }
 
+
+/**
+ * Update sample rate. 
+ * NOTE: If the voice is active, it will be turned off.
+ */
+int 
+fluid_voice_set_output_rate(fluid_voice_t* voice, fluid_real_t value)
+{
+  if (_PLAYING(voice))
+    fluid_voice_off(voice);
+  
+  voice->output_rate = value;
+  UPDATE_RVOICE_R1(fluid_rvoice_set_output_rate, value);
+  return FLUID_FAILED;
+}
+
+
 /**
  * Set the value of a generator.
  * @param voice Voice instance

@@ -119,6 +119,8 @@ int fluid_voice_set_param(fluid_voice_t* voice, int gen, fluid_real_t value, int
 /** Set the gain. */
 int fluid_voice_set_gain(fluid_voice_t* voice, fluid_real_t gain);
 
+int fluid_voice_set_output_rate(fluid_voice_t* voice, fluid_real_t value);
+
 
 /** Update all the synthesis parameters, which depend on generator
     'gen'. This is only necessary after changing a generator of an

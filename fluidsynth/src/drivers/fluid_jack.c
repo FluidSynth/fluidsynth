@@ -404,7 +404,7 @@ new_fluid_jack_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func
   fluid_settings_getnum (settings, "synth.sample-rate", &sample_rate);
 
   if ((int)sample_rate != jack_srate) {
-    FLUID_LOG(FLUID_WARN, "Jack sample rate mismatch, adjusting."
+    FLUID_LOG(FLUID_INFO, "Jack sample rate mismatch, adjusting."
 	      " (synth.sample-rate=%lu, jackd=%lu)", (int)sample_rate, jack_srate);
     fluid_settings_setnum (settings, "synth.sample-rate", jack_srate);
   }

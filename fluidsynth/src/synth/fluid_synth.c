@@ -2613,6 +2613,8 @@ fluid_synth_set_sample_rate(fluid_synth_t* synth, float sample_rate)
   fluid_settings_getint(synth->settings, "synth.min-note-length", &i);
   synth->min_note_length_ticks = (unsigned int) (i*synth->sample_rate/1000.0f);
   
+  for (i=0; i < synth->polyphony; i++)
+    fluid_voice_set_output_rate(synth->voice[i], sample_rate);
   fluid_synth_update_mixer(synth, fluid_rvoice_mixer_set_samplerate, 
 			   0, sample_rate);
   fluid_synth_api_exit(synth);
