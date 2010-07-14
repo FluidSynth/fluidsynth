@@ -45,14 +45,19 @@ extern int feenableexcept (int excepts);
 
 
 static void fluid_synth_init(void);
+
+#if 0
 static void fluid_synth_return_event_process_thread (void* data);
 static fluid_event_queue_t *fluid_synth_get_event_queue (fluid_synth_t* synth);
+static void fluid_synth_thread_queue_destroy_notify (void *data);
+#endif
+
 static int fluid_synth_queue_midi_event (fluid_synth_t* synth, int type, int chan,
                                          int param1, int param2);
 static int fluid_synth_queue_gen_event (fluid_synth_t* synth, int chan,
                                         int param, float value, int absolute);
 static int fluid_synth_queue_int_event (fluid_synth_t* synth, int type, int val);
-static void fluid_synth_thread_queue_destroy_notify (void *data);
+
 static int fluid_synth_noteon_LOCAL(fluid_synth_t* synth, int chan, int key,
                                        int vel);
 static int fluid_synth_noteoff_LOCAL(fluid_synth_t* synth, int chan, int key);
@@ -100,7 +105,6 @@ static void fluid_synth_kill_by_exclusive_class_LOCAL(fluid_synth_t* synth,
                                                       fluid_voice_t* new_voice);
 static fluid_sfont_info_t *new_fluid_sfont_info (fluid_synth_t *synth,
                                                  fluid_sfont_t *sfont);
-static void fluid_synth_sfont_unref (fluid_synth_t *synth, fluid_sfont_t *sfont);
 static int fluid_synth_sfunload_callback(void* data, unsigned int msec);
 static void fluid_synth_release_voice_on_same_note_LOCAL(fluid_synth_t* synth,
                                                             int chan, int key);
@@ -530,8 +534,8 @@ new_fluid_synth(fluid_settings_t *settings)
   fluid_settings_getint(settings, "synth.threadsafe-api", &synth->use_mutex);
   synth->public_api_count = 0;
   
+#if 0
   fluid_private_init(synth->thread_queues);
-
   synth->return_queue = fluid_event_queue_new (FLUID_MAX_RETURN_EVENTS);
   synth->return_queue_mutex = new_fluid_cond_mutex ();
   synth->return_queue_cond = new_fluid_cond ();
@@ -540,6 +544,7 @@ new_fluid_synth(fluid_settings_t *settings)
     FLUID_LOG(FLUID_ERR, "Out of memory");
     goto error_recovery;
   }
+#endif 
 
   synth->settings = settings;
 
@@ -819,9 +824,11 @@ new_fluid_synth(fluid_settings_t *settings)
   /* FIXME */
   synth->start = fluid_curtime();
 
+#if 0  
   /* Spawn a thread to process synth thread return events */
   synth->return_queue_thread = new_fluid_thread (fluid_synth_return_event_process_thread,
                                                  synth, 0, FALSE);
+#endif 						 
   return synth;
 
  error_recovery:
@@ -829,6 +836,7 @@ new_fluid_synth(fluid_settings_t *settings)
   return NULL;
 }
 
+#if 0
 /* Callback to process synthesis thread return events */
 static void
 fluid_synth_return_event_process_thread (void* data)
@@ -875,6 +883,7 @@ fluid_synth_return_event_process_thread (void* data)
   }
   while (fluid_atomic_int_get (&synth->state) == FLUID_SYNTH_PLAYING);
 }
+#endif 
 
 /**
  * Delete a FluidSynth instance.
@@ -890,7 +899,7 @@ delete_fluid_synth(fluid_synth_t* synth)
   int i, k;
   fluid_list_t *list;
   fluid_sfont_info_t* sfont_info;
-  fluid_event_queue_t* queue;
+//  fluid_event_queue_t* queue;
   fluid_sfloader_t* loader;
 
   if (synth == NULL) {
@@ -899,7 +908,7 @@ delete_fluid_synth(fluid_synth_t* synth)
 
   fluid_profiling_print();
 
-
+#if 0
   /* Stop return event queue thread, and process remaining events */
   if (synth->return_queue_thread)
   { /* Signal the return queue thread to cause it to exit */
@@ -922,7 +931,6 @@ delete_fluid_synth(fluid_synth_t* synth)
   if (synth->return_queue_cond)
     delete_fluid_cond (synth->return_queue_cond);
 
-#if 0  
   /* Free multi-core resources (if multi-core enabled) */
   if (synth->cores > 1)
   {
@@ -1069,6 +1077,7 @@ delete_fluid_synth(fluid_synth_t* synth)
   FLUID_FREE(synth->LADSPA_FxUnit);
 #endif
 
+#if 0
   fluid_private_free (synth->thread_queues);
 
   /* free any queues in pool */
@@ -1085,6 +1094,7 @@ delete_fluid_synth(fluid_synth_t* synth)
     if (synth->queues[i]) fluid_event_queue_free (synth->queues[i]);
 
   delete_fluid_list (synth->queue_pool);
+#endif
 
   fluid_rec_mutex_destroy(synth->mutex);
 
@@ -1108,6 +1118,7 @@ fluid_synth_error(fluid_synth_t* synth)
   return fluid_error();
 }
 
+#if 0
 /* Get event queue for the current thread (create if necessary) */
 static fluid_event_queue_t *
 fluid_synth_get_event_queue (fluid_synth_t* synth)
@@ -1189,7 +1200,7 @@ fluid_synth_get_event_elem (fluid_synth_t* synth, fluid_event_queue_t **queue)
 
   return event;
 }
-
+#endif 
 /**
  * Queues a MIDI event to the FluidSynth synthesis thread.
  * @param synth FluidSynth instance
@@ -1203,6 +1214,7 @@ static int
 fluid_synth_queue_midi_event (fluid_synth_t* synth, int type, int chan,
                               int param1, int param2)
 {
+#if 0  
   fluid_event_queue_t *queue;
   fluid_event_queue_elem_t *event;
 
@@ -1216,7 +1228,7 @@ fluid_synth_queue_midi_event (fluid_synth_t* synth, int type, int chan,
   event->midi.param2 = param2;
 
   fluid_event_queue_next_inptr (queue);
-
+#endif
   return FLUID_OK;
 }
 
@@ -1233,6 +1245,7 @@ static int
 fluid_synth_queue_gen_event (fluid_synth_t* synth, int chan,
                              int param, float value, int absolute)
 {
+#if 0  
   fluid_event_queue_t *queue;
   fluid_event_queue_elem_t *event;
 
@@ -1246,7 +1259,7 @@ fluid_synth_queue_gen_event (fluid_synth_t* synth, int chan,
   event->gen.absolute = absolute;
 
   fluid_event_queue_next_inptr (queue);
-
+#endif
   return FLUID_OK;
 }
 
@@ -1260,6 +1273,7 @@ fluid_synth_queue_gen_event (fluid_synth_t* synth, int chan,
 static int
 fluid_synth_queue_int_event (fluid_synth_t* synth, int type, int val)
 {
+#if 0  
   fluid_event_queue_t *queue;
   fluid_event_queue_elem_t *event;
 
@@ -1270,10 +1284,11 @@ fluid_synth_queue_int_event (fluid_synth_t* synth, int type, int val)
   event->ival = val;
 
   fluid_event_queue_next_inptr (queue);
-
+#endif
   return FLUID_OK;
 }
 
+#if 0
 /* Gets called when a thread ends, which has been assigned a queue */
 static void
 fluid_synth_thread_queue_destroy_notify (void *data)
@@ -1287,6 +1302,7 @@ fluid_synth_thread_queue_destroy_notify (void *data)
   synth->queue_pool = fluid_list_prepend (synth->queue_pool, queue);
   fluid_rec_mutex_unlock (synth->mutex);  /* -- unlock queue_pool */
 }
+#endif
 
 /**
  * Send a note-on event to a FluidSynth object.
@@ -1303,10 +1319,13 @@ fluid_synth_noteon(fluid_synth_t* synth, int chan, int key, int vel)
   fluid_return_val_if_fail (key >= 0 && key <= 127, FLUID_FAILED);
   fluid_return_val_if_fail (vel >= 0 && vel <= 127, FLUID_FAILED);
   FLUID_API_ENTRY_CHAN(FLUID_FAILED);
-  
+
+#if 0  
   if (fluid_synth_should_queue (synth))
     result = fluid_synth_queue_midi_event (synth, NOTE_ON, chan, key, vel);
-  else result = fluid_synth_noteon_LOCAL (synth, chan, key, vel);
+  else 
+#endif     
+    result = fluid_synth_noteon_LOCAL (synth, chan, key, vel);
   FLUID_API_RETURN(result);
 }
 
@@ -1358,10 +1377,13 @@ fluid_synth_noteoff(fluid_synth_t* synth, int chan, int key)
   int result;
   fluid_return_val_if_fail (key >= 0 && key <= 127, FLUID_FAILED);
   FLUID_API_ENTRY_CHAN(FLUID_FAILED);
-  
+
+#if 0  
   if (fluid_synth_should_queue (synth))
     result = fluid_synth_queue_midi_event (synth, NOTE_OFF, chan, key, 0);
-  else result = fluid_synth_noteoff_LOCAL (synth, chan, key);
+  else 
+#endif    
+    result = fluid_synth_noteoff_LOCAL (synth, chan, key);
   
   FLUID_API_RETURN(result);
 }
@@ -2161,8 +2183,8 @@ fluid_synth_get_pitch_wheel_sens(fluid_synth_t* synth, int chan, int* pval)
 static int
 fluid_synth_set_preset (fluid_synth_t *synth, int chan, fluid_preset_t *preset)
 {
-  fluid_event_queue_t *queue;
-  fluid_event_queue_elem_t *event;
+//  fluid_event_queue_t *queue;
+//  fluid_event_queue_elem_t *event;
   fluid_channel_t *channel;
 
   fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
@@ -2170,6 +2192,7 @@ fluid_synth_set_preset (fluid_synth_t *synth, int chan, fluid_preset_t *preset)
 
   channel = synth->channel[chan];
 
+#if 0  
   if (fluid_synth_should_queue (synth))
   {
     event = fluid_synth_get_event_elem (synth, &queue);
@@ -2184,7 +2207,9 @@ fluid_synth_set_preset (fluid_synth_t *synth, int chan, fluid_preset_t *preset)
     fluid_event_queue_next_inptr (queue);
     return FLUID_OK;
   }
-  else return fluid_channel_set_preset (channel, preset);
+  else 
+#endif     
+    return fluid_channel_set_preset (channel, preset);
 }
 
 /* Get a preset by SoundFont, bank and program numbers.
@@ -2575,9 +2600,12 @@ fluid_synth_set_gain(fluid_synth_t* synth, float gain)
 
   fluid_atomic_float_set (&synth->gain, gain);
 
+#if 0  
   if (fluid_synth_should_queue (synth))
     fluid_synth_queue_int_event (synth, FLUID_EVENT_QUEUE_ELEM_UPDATE_GAIN, 0); /* Integer value not actually used */
-  else fluid_synth_update_gain_LOCAL (synth);
+  else 
+#endif    
+    fluid_synth_update_gain_LOCAL (synth);
   fluid_synth_api_exit(synth);
 }
 
@@ -3163,9 +3191,11 @@ fluid_synth_render_blocks(fluid_synth_t* synth, int blockcount)
   fluid_check_fpe("LADSPA");
 #endif
 
+#if 0
   /* Signal return queue thread if there are any events pending */
   if (fluid_atomic_int_get (&synth->return_queue->count) > 0)
     fluid_cond_signal (synth->return_queue_cond);
+#endif 
 
   fluid_synth_check_finished_voices(synth);
 
@@ -3715,7 +3745,7 @@ fluid_synth_sfunload(fluid_synth_t* synth, unsigned int id, int reset_presets)
 }
 
 /* Unref a SoundFont and destroy if no more references */
-static void
+void
 fluid_synth_sfont_unref (fluid_synth_t *synth, fluid_sfont_t *sfont)
 {
   fluid_sfont_info_t *sfont_info;
@@ -4628,8 +4658,8 @@ fluid_synth_replace_tuning_LOCK (fluid_synth_t* synth, fluid_tuning_t *tuning,
                                  int bank, int prog, int apply)
 {
   fluid_tuning_t *old_tuning;
-  fluid_event_queue_t *queue;
-  fluid_event_queue_elem_t *event;
+//  fluid_event_queue_t *queue;
+//  fluid_event_queue_elem_t *event;
 
   if (synth->tuning == NULL) {
     synth->tuning = FLUID_ARRAY(fluid_tuning_t**, 128);
@@ -4655,6 +4685,7 @@ fluid_synth_replace_tuning_LOCK (fluid_synth_t* synth, fluid_tuning_t *tuning,
   if (old_tuning) {
     if (!fluid_tuning_unref (old_tuning, 1))     /* -- unref old tuning */
     { /* Replace old tuning if present */
+#if 0
       if (fluid_synth_should_queue (synth))
       {
         event = fluid_synth_get_event_elem (synth, &queue);
@@ -4670,7 +4701,9 @@ fluid_synth_replace_tuning_LOCK (fluid_synth_t* synth, fluid_tuning_t *tuning,
           fluid_event_queue_next_inptr (queue);
         }
       }
-      else fluid_synth_replace_tuning_LOCAL (synth, old_tuning, tuning, apply, FALSE);
+      else 
+#endif 	
+	fluid_synth_replace_tuning_LOCAL (synth, old_tuning, tuning, apply, FALSE);
     }
   }
 
@@ -4683,7 +4716,7 @@ static void
 fluid_synth_replace_tuning_LOCAL (fluid_synth_t *synth, fluid_tuning_t *old_tuning,
                                   fluid_tuning_t *new_tuning, int apply, int unref_new)
 {
-  fluid_event_queue_elem_t *event;
+//  fluid_event_queue_elem_t *event;
   fluid_channel_t *channel;
   int old_tuning_unref = 0;
   int i;
@@ -4703,6 +4736,7 @@ fluid_synth_replace_tuning_LOCAL (fluid_synth_t *synth, fluid_tuning_t *old_tuni
   }
 
   /* Send unref old tuning event if any unrefs */
+#if 0
   if (old_tuning_unref > 0)
   {
     event = fluid_event_queue_get_inptr (synth->return_queue);
@@ -4720,9 +4754,12 @@ fluid_synth_replace_tuning_LOCAL (fluid_synth_t *synth, fluid_tuning_t *old_tuni
       FLUID_LOG (FLUID_ERR, "Synth return event queue full");
     }
   }
-
+#else
+  fluid_tuning_unref (old_tuning, old_tuning_unref);
+#endif
   if (!unref_new || !new_tuning) return;
 
+#if 0
   /* Send new tuning unref if requested (for replace queue event for example) */
   event = fluid_event_queue_get_inptr (synth->return_queue);
 
@@ -4738,6 +4775,9 @@ fluid_synth_replace_tuning_LOCAL (fluid_synth_t *synth, fluid_tuning_t *old_tuni
     fluid_tuning_unref (new_tuning, 1);
     FLUID_LOG (FLUID_ERR, "Synth return event queue full");
   }
+#else
+  fluid_tuning_unref (new_tuning, 1);
+#endif 
 }
 
 /* Update voice tunings in realtime */
@@ -4984,8 +5024,8 @@ int
 fluid_synth_activate_tuning(fluid_synth_t* synth, int chan, int bank, int prog,
                             int apply)
 {
-  fluid_event_queue_elem_t *event;
-  fluid_event_queue_t *queue;
+  //fluid_event_queue_elem_t *event;
+  //fluid_event_queue_t *queue;
   fluid_tuning_t* tuning;
   int retval = FLUID_OK;
 
@@ -5014,6 +5054,7 @@ fluid_synth_activate_tuning(fluid_synth_t* synth, int chan, int bank, int prog,
   if (!tuning) 
     FLUID_API_RETURN(FLUID_FAILED);
 
+#if 0  
   if (fluid_synth_should_queue (synth))
   {
     event = fluid_synth_get_event_elem (synth, &queue);
@@ -5031,6 +5072,7 @@ fluid_synth_activate_tuning(fluid_synth_t* synth, int chan, int bank, int prog,
     else retval = FLUID_FAILED;
   }
   else
+#endif     
   {
     fluid_tuning_ref (tuning);    /* ++ ref new tuning for following function */
     retval = fluid_synth_set_tuning_LOCAL (synth, chan, tuning, apply);
@@ -5046,7 +5088,7 @@ static int
 fluid_synth_set_tuning_LOCAL (fluid_synth_t *synth, int chan,
                               fluid_tuning_t *tuning, int apply)
 {
-  fluid_event_queue_elem_t *event;
+//  fluid_event_queue_elem_t *event;
   fluid_tuning_t *old_tuning;
   fluid_channel_t *channel;
 
@@ -5057,6 +5099,7 @@ fluid_synth_set_tuning_LOCAL (fluid_synth_t *synth, int chan,
 
   if (apply) fluid_synth_update_voice_tuning_LOCAL (synth, channel);
 
+#if 0  
   /* Send unref old tuning event */
   if (old_tuning)
   {
@@ -5075,6 +5118,10 @@ fluid_synth_set_tuning_LOCAL (fluid_synth_t *synth, int chan,
       FLUID_LOG (FLUID_ERR, "Synth return event queue full");
     }
   }
+#else
+  fluid_tuning_unref (old_tuning, 1);
+#endif
+
 
   return FLUID_OK;
 }
@@ -5106,12 +5153,13 @@ fluid_synth_reset_tuning(fluid_synth_t* synth, int chan)
 int
 fluid_synth_deactivate_tuning(fluid_synth_t* synth, int chan, int apply)
 {
-  fluid_event_queue_elem_t *event;
-  fluid_event_queue_t *queue;
+  //fluid_event_queue_elem_t *event;
+  //fluid_event_queue_t *queue;
   int retval = FLUID_OK;
 
   FLUID_API_ENTRY_CHAN(FLUID_FAILED);
 
+#if 0  
   if (fluid_synth_should_queue (synth))
   {
     event = fluid_synth_get_event_elem (synth, &queue);
@@ -5126,7 +5174,9 @@ fluid_synth_deactivate_tuning(fluid_synth_t* synth, int chan, int apply)
     }
     else retval = FLUID_FAILED;
   }
-  else retval = fluid_synth_set_tuning_LOCAL (synth, chan, NULL, apply);
+  else 
+#endif     
+    retval = fluid_synth_set_tuning_LOCAL (synth, chan, NULL, apply);
 
   FLUID_API_RETURN(retval);
 }
@@ -5369,15 +5419,18 @@ fluid_synth_getint(fluid_synth_t* synth, const char* name, int* val)
 int
 fluid_synth_set_gen(fluid_synth_t* synth, int chan, int param, float value)
 {
-  int result;
+//  int result;
   fluid_return_val_if_fail (param >= 0 && param < GEN_LAST, FLUID_FAILED);
   FLUID_API_ENTRY_CHAN(FLUID_FAILED);
 
+#if 0  
   if (fluid_synth_should_queue (synth)) {
     result = fluid_synth_queue_gen_event (synth, chan, param, value, FALSE);
     FLUID_API_RETURN(result);
   }
-  else fluid_synth_set_gen_LOCAL (synth, chan, param, value, FALSE);
+  else 
+#endif    
+    fluid_synth_set_gen_LOCAL (synth, chan, param, value, FALSE);
 
   FLUID_API_RETURN(FLUID_OK);
 }

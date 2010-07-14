@@ -154,20 +154,22 @@ typedef struct _fluid_sfont_info_t {
 
 struct _fluid_synth_t
 {
+#if 0
   fluid_thread_id_t synth_thread_id; /**< ID of the synthesis thread or FLUID_THREAD_ID_NULL if not yet set */
   fluid_private_t thread_queues;     /**< Thread private data for event queues for each non-synthesis thread queuing events */
   fluid_event_queue_t *queues[FLUID_MAX_EVENT_QUEUES];   /**< Thread event queues (NULL for unused elements) */
+#endif 
 
   fluid_rec_mutex_t mutex;           /**< Lock for multi-thread sensitive variables (not used by synthesis process) */
   int use_mutex;                     /**< Use mutex for all public API functions? */
   int public_api_count;            /**< How many times the mutex is currently locked */
-  
+#if 0  
   fluid_list_t *queue_pool;          /**< List of event queues whose threads have been destroyed and which can be re-used */
   fluid_event_queue_t *return_queue; /**< Event queue for events from synthesis thread to non-synthesis threads (memory frees, etc) */
   fluid_thread_t *return_queue_thread;  /**< Return event queue processing thread */
   fluid_cond_mutex_t *return_queue_mutex;       /**< Mutex for return queue condition */
   fluid_cond_t *return_queue_cond;   /**< Return queue thread synchronization condition */
-
+#endif
   fluid_settings_t* settings;        /**< the synthesizer settings */
   int device_id;                     /**< Device ID used for SYSEX messages */
   int polyphony;                     /**< Maximum polyphony */
@@ -268,6 +270,8 @@ int fluid_synth_getint(fluid_synth_t* synth, const char* name, int* val);
 fluid_preset_t* fluid_synth_find_preset(fluid_synth_t* synth,
 				      unsigned int banknum,
 				      unsigned int prognum);
+void fluid_synth_sfont_unref (fluid_synth_t *synth, fluid_sfont_t *sfont);
+				      
 
 int fluid_synth_all_notes_off(fluid_synth_t* synth, int chan);
 int fluid_synth_all_sounds_off(fluid_synth_t* synth, int chan);

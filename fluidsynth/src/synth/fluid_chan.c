@@ -65,7 +65,7 @@ new_fluid_channel(fluid_synth_t* synth, int num)
 static void
 fluid_channel_init(fluid_channel_t* chan)
 {
-  fluid_event_queue_elem_t *event;
+//  fluid_event_queue_elem_t *event;
   fluid_preset_t *newpreset;
   int prognum, banknum;
 
@@ -87,6 +87,7 @@ fluid_channel_init(fluid_channel_t* chan)
 
   if (chan->tuning)
   {
+#if 0    
     event = fluid_event_queue_get_inptr (chan->synth->return_queue);
 
     if (event)
@@ -98,10 +99,13 @@ fluid_channel_init(fluid_channel_t* chan)
     }
     else
     { /* Just unref it in synthesis thread if queue is full */
+    
       fluid_tuning_unref (chan->tuning, 1);
       FLUID_LOG (FLUID_ERR, "Synth return event queue full");
     }
-
+#else
+    fluid_tuning_unref (chan->tuning, 1);
+#endif
     chan->tuning = NULL;
   }
 }
@@ -204,13 +208,14 @@ fluid_channel_reset(fluid_channel_t* chan)
 int
 fluid_channel_set_preset(fluid_channel_t* chan, fluid_preset_t* preset)
 {
-  fluid_event_queue_elem_t *event;
+//  fluid_event_queue_elem_t *event;
 
   fluid_preset_notify (chan->preset, FLUID_PRESET_UNSELECTED, chan->channum);
 
   /* Set shadow preset again, so it contains the actual latest assigned value */
   fluid_atomic_pointer_set (&chan->shadow_preset, preset);
 
+#if 0  
   if (chan->preset)     /* Queue preset free (shouldn't free() in synth context) */
   {
     event = fluid_event_queue_get_inptr (chan->synth->return_queue);
@@ -224,7 +229,14 @@ fluid_channel_set_preset(fluid_channel_t* chan, fluid_preset_t* preset)
     event->pval = chan->preset;
     fluid_event_queue_next_inptr (chan->synth->return_queue);
   }
-
+#endif
+  if (chan->preset) {
+    fluid_sfont_t *sfont;
+    sfont = chan->preset->sfont;
+    delete_fluid_preset (chan->preset);
+    fluid_synth_sfont_unref (chan->synth, sfont); /* -- unref preset's SoundFont */
+  }
+  
   chan->preset = preset;
 
   fluid_preset_notify (preset, FLUID_PRESET_SELECTED, chan->channum);
