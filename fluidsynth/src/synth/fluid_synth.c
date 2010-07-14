@@ -4582,7 +4582,11 @@ int
 fluid_synth_set_interp_method(fluid_synth_t* synth, int chan, int interp_method)
 {
   int i;
-  FLUID_API_ENTRY_CHAN(FLUID_FAILED);
+  
+  fluid_return_val_if_fail (synth != NULL, FLUID_FAILED); 
+  fluid_synth_api_enter(synth); 
+  if (chan < -1 || chan >= synth->midi_channels) 
+    FLUID_API_RETURN(FLUID_FAILED);
 
   if (synth->channel[0] == NULL) {
     FLUID_LOG (FLUID_ERR, "Channels don't exist (yet)!");
