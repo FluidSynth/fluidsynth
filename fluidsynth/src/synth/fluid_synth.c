@@ -503,6 +503,18 @@ int delete_fluid_sample_timer(fluid_synth_t* synth, fluid_sample_timer_t* timer)
  *                      FLUID SYNTH
  */
 
+static FLUID_INLINE void
+fluid_synth_update_mixer(fluid_synth_t* synth, void* method, int intparam,
+			 fluid_real_t realparam)
+{
+  fluid_return_if_fail(synth != NULL || synth->eventhandler != NULL);
+  fluid_return_if_fail(synth->eventhandler->mixer != NULL);
+  fluid_rvoice_eventhandler_push(synth->eventhandler, method, 
+				 synth->eventhandler->mixer,
+				 intparam, realparam);
+}
+
+
 /**
  * Create new FluidSynth instance.
  * @param settings Configuration parameters to use (used directly).
@@ -686,9 +698,8 @@ new_fluid_synth(fluid_settings_t *settings)
 
   fluid_synth_set_sample_rate(synth, synth->sample_rate);
 
-  fluid_rvoice_eventhandler_push(synth->eventhandler, 
-				 fluid_rvoice_mixer_set_polyphony, 
-				 synth->eventhandler->mixer, synth->polyphony, 0.0f);
+  fluid_synth_update_mixer(synth, fluid_rvoice_mixer_set_polyphony, 
+			   synth->polyphony, 0.0f);
   fluid_synth_set_reverb_on(synth, synth->with_reverb);
   fluid_synth_set_chorus_on(synth, synth->with_chorus);
 				 
@@ -784,10 +795,8 @@ new_fluid_synth(fluid_settings_t *settings)
   {
     int prio_level = 0;
     fluid_settings_getint (synth->settings, "audio.realtime-prio", &prio_level);
-    fluid_rvoice_eventhandler_push(synth->eventhandler, 
-				   fluid_rvoice_mixer_set_threads, 
-				   synth->eventhandler->mixer, synth->cores-1,
-				   prio_level);
+    fluid_synth_update_mixer(synth, fluid_rvoice_mixer_set_threads, 
+			     synth->cores-1, prio_level);
     
 #if 0
     synth->core_mutex = new_fluid_cond_mutex ();
@@ -1989,11 +1998,7 @@ fluid_synth_system_reset_LOCAL(fluid_synth_t* synth)
   for (i = 0; i < synth->midi_channels; i++)
     fluid_channel_reset(synth->channel[i]);
 
-  fluid_rvoice_eventhandler_push(synth->eventhandler, 
-				 fluid_rvoice_mixer_reset_fx, 
-				 synth->eventhandler->mixer, 0, 0.0f);
-//  fluid_chorus_reset(synth->chorus);
-//  fluid_revmodel_reset(synth->reverb);
+  fluid_synth_update_mixer(synth, fluid_rvoice_mixer_reset_fx, 0, 0.0f); 
 
   return FLUID_OK;
 }
@@ -2608,10 +2613,8 @@ fluid_synth_set_sample_rate(fluid_synth_t* synth, float sample_rate)
   fluid_settings_getint(synth->settings, "synth.min-note-length", &i);
   synth->min_note_length_ticks = (unsigned int) (i*synth->sample_rate/1000.0f);
   
-  fluid_rvoice_eventhandler_push(synth->eventhandler, 
-				 fluid_rvoice_mixer_set_samplerate, 
-				 synth->eventhandler->mixer,
-				 0, sample_rate);
+  fluid_synth_update_mixer(synth, fluid_rvoice_mixer_set_samplerate, 
+			   0, sample_rate);
   fluid_synth_api_exit(synth);
 }
 
@@ -2731,9 +2734,8 @@ fluid_synth_update_polyphony_LOCAL(fluid_synth_t* synth)
     if (_PLAYING (voice)) fluid_voice_off (voice);
   }
 
-  fluid_rvoice_eventhandler_push(synth->eventhandler, 
-    fluid_rvoice_mixer_set_polyphony, synth->eventhandler->mixer,
-    synth->polyphony, 0.0f);
+  fluid_synth_update_mixer(synth, fluid_rvoice_mixer_set_polyphony, 
+			   synth->polyphony, 0.0f);
 
   return FLUID_OK;
 }
@@ -4209,10 +4211,8 @@ fluid_synth_set_reverb_on(fluid_synth_t* synth, int on)
   fluid_return_if_fail (synth != NULL);
 
   fluid_atomic_int_set (&synth->with_reverb, on != 0);
-  fluid_rvoice_eventhandler_push(synth->eventhandler, 
-				 fluid_rvoice_mixer_set_reverb_enabled,
-				 synth->eventhandler->mixer,
-				 on != 0, 0.0f);
+  fluid_synth_update_mixer(synth, fluid_rvoice_mixer_set_reverb_enabled,
+			   on != 0, 0.0f);
 }
 
 /**
@@ -4382,11 +4382,8 @@ fluid_synth_set_chorus_on(fluid_synth_t* synth, int on)
   fluid_synth_api_enter(synth);
 
   fluid_atomic_int_set (&synth->with_chorus, on != 0);
-  
-  fluid_rvoice_eventhandler_push(synth->eventhandler, 
-				 fluid_rvoice_mixer_set_chorus_enabled,
-				 synth->eventhandler->mixer,
-				 on != 0, 0.0f);
+  fluid_synth_update_mixer(synth, fluid_rvoice_mixer_set_chorus_enabled,
+			   on != 0, 0.0f);
   fluid_synth_api_exit(synth);
 }
 
