@@ -404,10 +404,9 @@ new_fluid_jack_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func
   fluid_settings_getnum (settings, "synth.sample-rate", &sample_rate);
 
   if ((int)sample_rate != jack_srate) {
-    /* There's currently no way to change the sampling rate of the
-       synthesizer after it's been created. */
-    FLUID_LOG(FLUID_WARN, "Jack sample rate mismatch, expect tuning issues"
+    FLUID_LOG(FLUID_WARN, "Jack sample rate mismatch, adjusting."
 	      " (synth.sample-rate=%lu, jackd=%lu)", (int)sample_rate, jack_srate);
+    fluid_settings_setnum (settings, "synth.sample-rate", jack_srate);
   }
 
 

@@ -88,6 +88,8 @@ fluid_synth_get_preset_by_sfont_name(fluid_synth_t* synth, const char *sfontname
                                      unsigned int banknum, unsigned int prognum);
 
 static void fluid_synth_update_presets(fluid_synth_t* synth);
+static int fluid_synth_update_sample_rate(fluid_synth_t* synth,
+                                   char* name, double value);
 static int fluid_synth_update_gain(fluid_synth_t* synth,
                                    char* name, double value);
 static void fluid_synth_update_gain_LOCAL(fluid_synth_t* synth);
@@ -565,10 +567,10 @@ new_fluid_synth(fluid_settings_t *settings)
   fluid_settings_getint(settings, "synth.device-id", &synth->device_id);
   fluid_settings_getint(settings, "synth.cpu-cores", &synth->cores);
 
-  fluid_settings_getint(settings, "synth.min-note-length", &i);
-  synth->min_note_length_ticks = (unsigned int) (i*synth->sample_rate/1000.0f);
-
   /* register the callbacks */
+  fluid_settings_register_num(settings, "synth.sample-rate",
+			      44100.0f, 22050.0f, 96000.0f, 0,
+			      (fluid_num_update_t) fluid_synth_update_sample_rate, synth);
   fluid_settings_register_num(settings, "synth.gain",
 			      0.2f, 0.0f, 10.0f, 0,
 			      (fluid_num_update_t) fluid_synth_update_gain, synth);
@@ -646,8 +648,7 @@ new_fluid_synth(fluid_settings_t *settings)
 						      nbuf, synth->effects_channels);
   if (synth->eventhandler == NULL)
     goto error_recovery; 
-  
-  
+    
   /* allocate and add the default sfont loader */
   loader = new_fluid_defsfloader();
 
@@ -682,6 +683,8 @@ new_fluid_synth(fluid_settings_t *settings)
       goto error_recovery;
     }
   }
+
+  fluid_synth_set_sample_rate(synth, synth->sample_rate);
 
   fluid_rvoice_eventhandler_push(synth->eventhandler, 
 				 fluid_rvoice_mixer_set_polyphony, 
@@ -2576,6 +2579,42 @@ fluid_synth_update_presets(fluid_synth_t* synth)
     fluid_synth_set_preset (synth, chan, preset);
   }
 }
+
+/* Handler for synth.gain setting. */
+static int
+fluid_synth_update_sample_rate(fluid_synth_t* synth, char* name, double value)
+{
+  fluid_synth_set_sample_rate(synth, (float) value);
+  return 0;
+}
+
+/**
+ * Set sample rate of the synth. 
+ * NOTE: This function is currently experimental and should only be 
+ * used when no voices or notes are active, and before any rendering calls.
+ * @param synth FluidSynth instance
+ * @param sample_rate New sample rate (Hz)
+ * @since 1.1.2
+ */
+void 
+fluid_synth_set_sample_rate(fluid_synth_t* synth, float sample_rate)
+{
+  int i;
+  fluid_return_if_fail (synth != NULL);
+  fluid_synth_api_enter(synth);
+  fluid_clip (sample_rate, 22500.0f, 96000.0f);
+  synth->sample_rate = sample_rate;
+  
+  fluid_settings_getint(synth->settings, "synth.min-note-length", &i);
+  synth->min_note_length_ticks = (unsigned int) (i*synth->sample_rate/1000.0f);
+  
+  fluid_rvoice_eventhandler_push(synth->eventhandler, 
+				 fluid_rvoice_mixer_set_samplerate, 
+				 synth->eventhandler->mixer,
+				 0, sample_rate);
+  fluid_synth_api_exit(synth);
+}
+
 
 /* Handler for synth.gain setting. */
 static int
