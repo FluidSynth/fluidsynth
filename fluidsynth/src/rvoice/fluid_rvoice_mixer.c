@@ -334,7 +334,8 @@ static FLUID_INLINE void
 fluid_render_loop_singlethread(fluid_rvoice_mixer_t* mixer)
 {
   int i;
-  fluid_real_t* bufs[mixer->buffers.buf_count * 2 + mixer->buffers.fx_buf_count * 2];
+  FLUID_DECLARE_VLA(fluid_real_t*, bufs, 
+		    mixer->buffers.buf_count * 2 + mixer->buffers.fx_buf_count * 2);
   int bufcount = fluid_mixer_buffers_prepare(&mixer->buffers, bufs);
   fluid_profile_ref_var(prof_ref);
   for (i=0; i < mixer->active_voices; i++) {
@@ -627,7 +628,7 @@ fluid_mixer_thread_func (void* data)
   fluid_mixer_buffers_t* buffers = data;  
   fluid_rvoice_mixer_t* mixer = buffers->mixer;
   int hasValidData = 0;
-  fluid_real_t* bufs[buffers->buf_count*2 + buffers->fx_buf_count*2];
+  FLUID_DECLARE_VLA(fluid_real_t*, bufs, buffers->buf_count*2 + buffers->fx_buf_count*2);
   int bufcount = 0;
   
   while (!fluid_atomic_int_get(&mixer->threads_should_terminate)) {
@@ -721,7 +722,8 @@ fluid_render_loop_multithread(fluid_rvoice_mixer_t* mixer)
 {
   int i; //, test=0, waits=0;
   //int scount = mixer->current_blockcount * FLUID_BUFSIZE;
-  fluid_real_t* bufs[mixer->buffers.buf_count * 2 + mixer->buffers.fx_buf_count * 2];
+  FLUID_DECLARE_VLA(fluid_real_t*, bufs, 
+		    mixer->buffers.buf_count * 2 + mixer->buffers.fx_buf_count * 2);
   int bufcount = fluid_mixer_buffers_prepare(&mixer->buffers, bufs);
   
   // Prepare voice list

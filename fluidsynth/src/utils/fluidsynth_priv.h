@@ -163,6 +163,14 @@ typedef int fluid_socket_t;
 #define INVALID_SOCKET -1
 #endif
 
+#if SUPPORTS_VLA
+#  define FLUID_DECLARE_VLA(_type, _name, _len) \
+  _type _name[_len]
+#else
+#  define FLUID_DECLARE_VLA(_type, _name, _len) \
+     _type* _name = alloca(sizeof(_type) * (_len))
+#endif
+
 
 /** Integer types  */
 typedef gint8              sint8;
