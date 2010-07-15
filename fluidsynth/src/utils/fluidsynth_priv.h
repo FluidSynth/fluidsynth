@@ -165,10 +165,10 @@ typedef int fluid_socket_t;
 
 #if SUPPORTS_VLA
 #  define FLUID_DECLARE_VLA(_type, _name, _len) \
-  _type _name[_len]
+     _type _name[_len]
 #else
 #  define FLUID_DECLARE_VLA(_type, _name, _len) \
-     _type* _name = alloca(sizeof(_type) * (_len))
+     _type* _name = g_newa(_type, (_len))
 #endif
 
 
