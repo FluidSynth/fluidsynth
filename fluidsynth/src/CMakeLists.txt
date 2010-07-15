@@ -214,6 +214,7 @@ add_library ( libfluidsynth SHARED
 
 set_target_properties ( libfluidsynth 
   PROPERTIES
+    PREFIX "lib"
     OUTPUT_NAME "fluidsynth" 
     VERSION ${LT_VERSION_INFO}
     SOVERSION ${LT_VERSION_CURRENT}
