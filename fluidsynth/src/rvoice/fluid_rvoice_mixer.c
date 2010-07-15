@@ -159,7 +159,7 @@ fluid_mix_one(fluid_rvoice_t* rvoice, fluid_real_t** bufs, unsigned int bufcount
 {
   int i, result = 0;
 
-  fluid_real_t local_buf[FLUID_BUFSIZE*blockcount];
+  FLUID_DECLARE_VLA(fluid_real_t, local_buf, FLUID_BUFSIZE*blockcount);
 
   for (i=0; i < blockcount; i++) {
     int s = fluid_rvoice_write(rvoice, &local_buf[FLUID_BUFSIZE*i]);
