@@ -163,7 +163,7 @@ typedef int fluid_socket_t;
 #define INVALID_SOCKET -1
 #endif
 
-#if SUPPORTS_VLA
+#if defined(SUPPORTS_VLA)
 #  define FLUID_DECLARE_VLA(_type, _name, _len) \
      _type _name[_len]
 #else

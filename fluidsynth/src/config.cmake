@@ -193,6 +193,9 @@
 /* Define to use the readline library for line editing */
 #cmakedefine WITH_READLINE @WITH_READLINE@
 
+/* Define if the compiler supports VLA */ 
+#cmakedefine SUPPORTS_VLA @SUPPORTS_VLA@ 
+
 /* Define to 1 if your processor stores words with the most significant byte
    first (like Motorola and SPARC, unlike Intel and VAX). */
 #cmakedefine WORDS_BIGENDIAN @WORDS_BIGENDIAN@

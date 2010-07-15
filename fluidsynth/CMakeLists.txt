@@ -98,6 +98,7 @@ check_include_file ( limits.h  HAVE_LIMITS_H )
 check_include_file ( pthread.h HAVE_PTHREAD_H ) 
 check_include_file ( signal.h HAVE_SIGNAL_H ) 
 include ( TestInline )
+include ( TestVLA )
 include ( TestBigEndian )
 test_big_endian ( WORDS_BIGENDIAN )
 
