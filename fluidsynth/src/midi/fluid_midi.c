@@ -1120,6 +1120,8 @@ fluid_player_t* new_fluid_player(fluid_synth_t* synth)
 	player->send_program_change = 1;
 	player->miditempo = 480000;
 	player->deltatime = 4.0;
+	player->cur_msec = 0;
+	player->cur_ticks = 0;
 
 	player->use_system_timer = 
 		fluid_settings_str_equal(synth->settings, "player.timing-source", "system");
