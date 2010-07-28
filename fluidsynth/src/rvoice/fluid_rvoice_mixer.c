@@ -165,7 +165,7 @@ fluid_mix_one(fluid_rvoice_t* rvoice, fluid_real_t** bufs, unsigned int bufcount
     int s = fluid_rvoice_write(rvoice, &local_buf[FLUID_BUFSIZE*i]);
     if (s == -1) {
       s = FLUID_BUFSIZE; /* Voice is quiet, TODO: optimize away memset/mix */
-      FLUID_MEMSET(&local_buf[FLUID_BUFSIZE*i], 0, FLUID_BUFSIZE*sizeof(fluid_real_t*));
+      FLUID_MEMSET(&local_buf[FLUID_BUFSIZE*i], 0, FLUID_BUFSIZE*sizeof(fluid_real_t));
     } 
     result += s;
     if (s < FLUID_BUFSIZE) {
