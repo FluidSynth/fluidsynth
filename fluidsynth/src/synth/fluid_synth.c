@@ -65,6 +65,8 @@ static int fluid_synth_damp_voices_LOCAL(fluid_synth_t* synth, int chan);
 static int fluid_synth_cc_LOCAL(fluid_synth_t* synth, int channum, int num);
 static int fluid_synth_update_device_id (fluid_synth_t *synth, char *name,
                                          int value);
+static int fluid_synth_update_overflow (fluid_synth_t *synth, char *name,
+                                         fluid_real_t value);
 static int fluid_synth_sysex_midi_tuning (fluid_synth_t *synth, const char *data,
                                           int len, char *response,
                                           int *response_len, int avail_response,
@@ -176,6 +178,21 @@ static fluid_revmodel_presets_t revmodel_preset[] = {
  *               INITIALIZATION & UTILITIES
  */
 
+static void fluid_synth_register_overflow(fluid_settings_t* settings,
+					  fluid_num_update_t update_func,
+					  void* update_data)
+{
+  fluid_settings_register_num(settings, "synth.overflow.drum-channel",
+			      4000, -10000, 10000, 0, update_func, update_data);
+  fluid_settings_register_num(settings, "synth.overflow.sustained",
+			      -1000, -10000, 10000, 0, update_func, update_data);
+  fluid_settings_register_num(settings, "synth.overflow.released",
+			      -2000, -10000, 10000, 0, update_func, update_data);
+  fluid_settings_register_num(settings, "synth.overflow.age",
+			      1000, -10000, 10000, 0, update_func, update_data);
+  fluid_settings_register_num(settings, "synth.overflow.volume",
+			      500, -10000, 10000, 0, update_func, update_data);  
+}
 
 void fluid_synth_settings(fluid_settings_t* settings)
 {
@@ -192,7 +209,7 @@ void fluid_synth_settings(fluid_settings_t* settings)
   fluid_settings_register_str(settings, "midi.portname", "", 0, NULL, NULL);
 
   fluid_settings_register_int(settings, "synth.polyphony",
-			      256, 16, 4096, 0, NULL, NULL);
+			      256, 1, 65535, 0, NULL, NULL);
   fluid_settings_register_int(settings, "synth.midi-channels",
 			      16, 16, 256, 0, NULL, NULL);
   fluid_settings_register_num(settings, "synth.gain",
@@ -218,6 +235,9 @@ void fluid_synth_settings(fluid_settings_t* settings)
   fluid_settings_register_int(settings, "synth.parallel-render", 1, 0, 1,
                               FLUID_HINT_TOGGLED, NULL, NULL);
   
+			      
+  fluid_synth_register_overflow(settings, NULL, NULL);
+			      
 }
 
 /**
@@ -430,6 +450,22 @@ fluid_synth_init(void)
   fluid_mod_set_amount(&default_pitch_bend_mod, 12700.0);                 /* Amount: 12700 cents */
 }
 
+static FLUID_INLINE unsigned int fluid_synth_get_ticks(fluid_synth_t* synth)
+{
+  if (synth->eventhandler->is_threadsafe)
+    return fluid_atomic_int_get(&synth->ticks_since_start);
+  else
+    return synth->ticks_since_start;
+}
+
+static FLUID_INLINE void fluid_synth_add_ticks(fluid_synth_t* synth, int val)
+{
+  if (synth->eventhandler->is_threadsafe)
+    fluid_atomic_int_add((int*) &synth->ticks_since_start, val);
+  else
+    synth->ticks_since_start += val;
+}
+
 
 /***************************************************************
  *                    FLUID SAMPLE TIMERS 
@@ -452,13 +488,14 @@ void fluid_sample_timer_process(fluid_synth_t* synth)
 	fluid_sample_timer_t* st;
 	long msec;
 	int cont;
-
+        unsigned int ticks = fluid_synth_get_ticks(synth);
+	
 	for (st=synth->sample_timers; st; st=st->next) {
 		if (st->isfinished) {
 			continue;
 		}
 
-		msec = (long) (1000.0*((double) (synth->ticks - st->starttick))/synth->sample_rate);
+		msec = (long) (1000.0*((double) (ticks - st->starttick))/synth->sample_rate);
 		cont = (*st->callback)(st->data, msec);
 		if (cont == 0) {
 			st->isfinished = 1;
@@ -473,7 +510,7 @@ fluid_sample_timer_t* new_fluid_sample_timer(fluid_synth_t* synth, fluid_timer_c
 		FLUID_LOG(FLUID_ERR, "Out of memory");
 		return NULL;
 	}
-	result->starttick = synth->ticks;
+	result->starttick = fluid_synth_get_ticks(synth);
 	result->isfinished = 0;
 	result->data = data;
 	result->callback = callback;
@@ -587,13 +624,16 @@ new_fluid_synth(fluid_settings_t *settings)
 			      0.2f, 0.0f, 10.0f, 0,
 			      (fluid_num_update_t) fluid_synth_update_gain, synth);
   fluid_settings_register_int(settings, "synth.polyphony",
-			      synth->polyphony, 16, 4096, 0,
+			      synth->polyphony, 1, 65535, 0,
 			      (fluid_int_update_t) fluid_synth_update_polyphony,
                               synth);
   fluid_settings_register_int(settings, "synth.device-id",
 			      synth->device_id, 126, 0, 0,
                               (fluid_int_update_t) fluid_synth_update_device_id, synth);
 
+  fluid_synth_register_overflow(settings, 
+				(fluid_num_update_t) fluid_synth_update_overflow, synth);
+				
   /* do some basic sanity checking on the settings */
 
   if (synth->midi_channels % 16 != 0) {
@@ -649,13 +689,14 @@ new_fluid_synth(fluid_settings_t *settings)
   synth->sfont_info = NULL;
   synth->sfont_hash = new_fluid_hashtable (NULL, NULL);
   synth->noteid = 0;
-  synth->ticks = 0;
+  synth->ticks_since_start = 0;
   synth->tuning = NULL;
   fluid_private_init(synth->tuning_iter);
 
   /* Allocate event queue for rvoice mixer */
   fluid_settings_getint(settings, "synth.parallel-render", &i);
-  synth->eventhandler = new_fluid_rvoice_eventhandler(i, synth->polyphony*8, 
+  /* In an overflow situation, a new voice takes about 50 spaces in the queue! */
+  synth->eventhandler = new_fluid_rvoice_eventhandler(i, synth->polyphony*64, 
 						      synth->polyphony,
 						      nbuf, synth->effects_channels);
   if (synth->eventhandler == NULL)
@@ -697,7 +738,8 @@ new_fluid_synth(fluid_settings_t *settings)
   }
 
   fluid_synth_set_sample_rate(synth, synth->sample_rate);
-
+  
+  fluid_synth_update_overflow(synth, "", 0.0f);
   fluid_synth_update_mixer(synth, fluid_rvoice_mixer_set_polyphony, 
 			   synth->polyphony, 0.0f);
   fluid_synth_set_reverb_on(synth, synth->with_reverb);
@@ -1352,14 +1394,12 @@ fluid_synth_noteon_LOCAL(fluid_synth_t* synth, int chan, int key, int vel)
 
   channel = synth->channel[chan];
   
- // if (chan != 11) return FLUID_OK; /* DEBUG */
-  
   /* make sure this channel has a preset */
   if (channel->preset == NULL) {
     if (synth->verbose) {
       FLUID_LOG(FLUID_INFO, "noteon\t%d\t%d\t%d\t%05d\t%.3f\t%.3f\t%.3f\t%d\t%s",
 	       chan, key, vel, 0,
-	       (float) synth->ticks / 44100.0f,
+	       fluid_synth_get_ticks(synth) / 44100.0f,
 	       (fluid_curtime() - synth->start) / 1000.0f,
 	       0.0f, 0, "channel has no preset");
     }
@@ -2708,10 +2748,9 @@ fluid_synth_set_polyphony(fluid_synth_t* synth, int polyphony)
 {
   int result;
   fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
-  fluid_return_val_if_fail (polyphony >= 16 && polyphony <= synth->nvoice, FLUID_FAILED);
+  fluid_return_val_if_fail (polyphony >= 1 && polyphony <= 65535, FLUID_FAILED);
   fluid_synth_api_enter(synth);
 
-  
   fluid_atomic_int_set (&synth->shadow_polyphony, polyphony);
 
   if (fluid_synth_should_queue (synth))
@@ -2725,10 +2764,25 @@ static int
 fluid_synth_update_polyphony_LOCAL(fluid_synth_t* synth)
 {
   fluid_voice_t *voice;
-  int i;
+  int i, new_polyphony;
 
-  synth->polyphony = fluid_atomic_int_get (&synth->shadow_polyphony);
-
+  new_polyphony = fluid_atomic_int_get (&synth->shadow_polyphony);
+  if (synth->polyphony > synth->nvoice) {
+    /* Create more voices */
+    fluid_voice_t** new_voices = FLUID_REALLOC(synth->voice, 
+					       sizeof(fluid_voice_t*) * new_polyphony);
+    if (new_voices == NULL) 
+      return FLUID_FAILED;
+    synth->voice = new_voices;
+    for (i = synth->nvoice; i < new_polyphony; i++) {
+      synth->voice[i] = new_fluid_voice(synth->sample_rate);
+      if (synth->voice[i] == NULL) 
+	return FLUID_FAILED;
+    }
+    synth->nvoice = new_polyphony;
+  }
+  
+  synth->polyphony = new_polyphony;
   /* turn off any voices above the new limit */
   for (i = synth->polyphony; i < synth->nvoice; i++)
   {
@@ -3203,7 +3257,7 @@ fluid_synth_render_blocks(fluid_synth_t* synth, int blockcount)
   
   for (i=0; i < blockcount; i++) {
     fluid_sample_timer_process(synth);
-    synth->ticks += FLUID_BUFSIZE;
+    fluid_synth_add_ticks(synth, FLUID_BUFSIZE);
     if (fluid_rvoice_eventhandler_dispatch_count(synth->eventhandler)) {
       // Something has happened, we can't process more
       blockcount = i+1;
@@ -3407,6 +3461,26 @@ fluid_synth_process_event_queue_LOCAL (fluid_synth_t *synth,
   }
 }
 
+static int fluid_synth_update_overflow (fluid_synth_t *synth, char *name,
+                                         fluid_real_t value)
+{
+  fluid_synth_api_enter(synth);
+  
+  fluid_settings_getnum(synth->settings, "synth.overflow.drum-channel", 
+			&synth->overflow.drum_channel);
+  fluid_settings_getnum(synth->settings, "synth.overflow.released", 
+			&synth->overflow.released);
+  fluid_settings_getnum(synth->settings, "synth.overflow.sustained", 
+			&synth->overflow.sustained);
+  fluid_settings_getnum(synth->settings, "synth.overflow.volume", 
+			&synth->overflow.volume);
+  fluid_settings_getnum(synth->settings, "synth.overflow.age", 
+			&synth->overflow.age);
+  
+  FLUID_API_RETURN(0);
+}
+
+
 /* Selects a voice for killing. */
 static fluid_voice_t*
 fluid_synth_free_voice_by_kill_LOCAL(fluid_synth_t* synth)
@@ -3416,7 +3490,14 @@ fluid_synth_free_voice_by_kill_LOCAL(fluid_synth_t* synth)
   fluid_real_t this_voice_prio;
   fluid_voice_t* voice;
   int best_voice_index=-1;
+  unsigned int ticks = fluid_synth_get_ticks(synth);
 
+  /*overflow_prio.drum_channel = 4000;
+  overflow_prio.released = -2000;
+  overflow_prio.sustained = -1000;
+  overflow_prio.volume = 1000;
+  overflow_prio.age = 500;*/
+  
   for (i = 0; i < synth->polyphony; i++) {
 
     voice = synth->voice[i];
@@ -3425,53 +3506,14 @@ fluid_synth_free_voice_by_kill_LOCAL(fluid_synth_t* synth)
     if (_AVAILABLE(voice)) {
       return voice;
     }
-
-    /* Determine, how 'important' a voice is.
-     * Start with an arbitrary number */
-    this_voice_prio = 10000.;
-
-    /* Is this voice on the drum channel?
-     * Then it is very important.
-     * Also, forget about the released-note condition:
-     * Typically, drum notes are triggered only very briefly, they run most
-     * of the time in release phase.
-     */
-    if (voice->chan == 9){
-      this_voice_prio += 4000;
-
-    } else if (_RELEASED(voice)){
-      /* The key for this voice has been released. Consider it much less important
-       * than a voice, which is still held.
-       */
-      this_voice_prio -= 2000.;
-    }
-
-    if (_SUSTAINED(voice)){
-      /* The sustain pedal is held down on this channel.
-       * Consider it less important than non-sustained channels.
-       * This decision is somehow subjective. But usually the sustain pedal
-       * is used to play 'more-voices-than-fingers', so it shouldn't hurt
-       * if we kill one voice.
-       */
-      this_voice_prio -= 1000;
-    }
-
-    /* We are not enthusiastic about releasing voices, which have just been started.
-     * Otherwise hitting a chord may result in killing notes belonging to that very same
-     * chord.
-     * So subtract the age of the voice from the priority - an older voice is just a little
-     * bit less important than a younger voice.
-     * This is a number between roughly 0 and 100.*/
-    this_voice_prio -= (synth->noteid - fluid_voice_get_id(voice));
-
-    /* take a rough estimate of loudness into account. Louder voices are more important. */
-    // FIXME
-    // this_voice_prio += fluid_voice_get_loudness(voice) * 1000.;
+    this_voice_prio = fluid_voice_get_overflow_prio(voice, &synth->overflow,
+						    ticks);
 
     /* check if this voice has less priority than the previous candidate. */
-    if (this_voice_prio < best_prio)
-      best_voice_index = i,
+    if (this_voice_prio < best_prio) {
+      best_voice_index = i;
       best_prio = this_voice_prio;
+    }
   }
 
   if (best_voice_index < 0) {
@@ -3479,6 +3521,8 @@ fluid_synth_free_voice_by_kill_LOCAL(fluid_synth_t* synth)
   }
 
   voice = synth->voice[best_voice_index];
+  FLUID_LOG(FLUID_DBG, "Killing voice %d, index %d, chan %d, key %d ",
+	    voice->id, best_voice_index, voice->chan, voice->key);
   fluid_voice_off(voice);
 
   return voice;
@@ -3507,6 +3551,7 @@ fluid_synth_alloc_voice(fluid_synth_t* synth, fluid_sample_t* sample, int chan, 
   int i, k;
   fluid_voice_t* voice = NULL;
   fluid_channel_t* channel = NULL;
+  unsigned int ticks;
 
   fluid_return_val_if_fail (sample != NULL, NULL);
   FLUID_API_ENTRY_CHAN(NULL);
@@ -3529,6 +3574,7 @@ fluid_synth_alloc_voice(fluid_synth_t* synth, fluid_sample_t* sample, int chan, 
     FLUID_LOG(FLUID_WARN, "Failed to allocate a synthesis process. (chan=%d,key=%d)", chan, key);
     FLUID_API_RETURN(NULL);
   }
+  ticks = fluid_synth_get_ticks(synth);
 
   if (synth->verbose) {
     k = 0;
@@ -3540,7 +3586,7 @@ fluid_synth_alloc_voice(fluid_synth_t* synth, fluid_sample_t* sample, int chan, 
 
     FLUID_LOG(FLUID_INFO, "noteon\t%d\t%d\t%d\t%05d\t%.3f\t%.3f\t%.3f\t%d",
 	     chan, key, vel, synth->storeid,
-	     (float) synth->ticks / 44100.0f,
+	     (float) ticks / 44100.0f,
 	     (fluid_curtime() - synth->start) / 1000.0f,
 	     0.0f,
 	     k);
@@ -3551,7 +3597,7 @@ fluid_synth_alloc_voice(fluid_synth_t* synth, fluid_sample_t* sample, int chan, 
   }
 
   if (fluid_voice_init (voice, sample, channel, key, vel,
-                        synth->storeid, synth->ticks,
+                        synth->storeid, ticks,
                         fluid_atomic_float_get (&synth->gain)) != FLUID_OK) {
     FLUID_LOG(FLUID_WARN, "Failed to initialize voice");
     FLUID_API_RETURN(NULL);

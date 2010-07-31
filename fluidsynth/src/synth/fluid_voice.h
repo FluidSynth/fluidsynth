@@ -33,6 +33,17 @@
 
 #define NO_CHANNEL             0xff
 
+typedef struct _fluid_overflow_prio_t fluid_overflow_prio_t;
+
+struct _fluid_overflow_prio_t 
+{
+  fluid_real_t drum_channel; /**< Is this voice on the drum channel? Then add this score */
+  fluid_real_t released; /**< Is this voice in release stage? Then add this score (usually negative) */ 
+  fluid_real_t sustained; /**< Is this voice sustained? Then add this score (usually negative) */
+  fluid_real_t volume; /**< Multiply current (or future) volume (a value between 0 and 1) */
+  fluid_real_t age; /**< This score will be divided by the number of seconds the voice has lasted */
+};
+
 enum fluid_voice_status
 {
 	FLUID_VOICE_CLEAN,
@@ -65,6 +76,7 @@ struct _fluid_voice_t
 	fluid_real_t output_rate;        /* the sample rate of the synthesizer (dupe in rvoice) */
 
 	unsigned int start_time;
+	fluid_adsr_env_t volenv;         /* Volume envelope (dupe in rvoice) */
 
 	/* basic parameters */
 	fluid_real_t pitch;              /* the pitch in midicents (dupe in rvoice) */
@@ -135,6 +147,9 @@ void fluid_voice_mix (fluid_voice_t *voice, int count, fluid_real_t* dsp_buf,
 		 fluid_real_t* reverb_buf, fluid_real_t* chorus_buf);
 
 int fluid_voice_kill_excl(fluid_voice_t* voice);
+fluid_real_t fluid_voice_get_overflow_prio(fluid_voice_t* voice, 
+					    fluid_overflow_prio_t* score,
+					    unsigned int cur_time);
 
 /**
  * Locks the rvoice for rendering, so it can't be modified directly
@@ -147,7 +162,7 @@ fluid_voice_lock_rvoice(fluid_voice_t* voice)
 }
 
 /**
- * Locks the rvoice for rendering, so it can be modified directly
+ * Unlocks the rvoice for rendering, so it can be modified directly
  */
 static FLUID_INLINE void 
 fluid_voice_unlock_rvoice(fluid_voice_t* voice)
@@ -172,7 +187,7 @@ fluid_voice_unlock_rvoice(fluid_voice_t* voice)
 #define _SUSTAINED(voice)  ((voice)->status == FLUID_VOICE_SUSTAINED)
 #define _AVAILABLE(voice)  ((voice)->can_access_rvoice && \
  (((voice)->status == FLUID_VOICE_CLEAN) || ((voice)->status == FLUID_VOICE_OFF)))
-#define _RELEASED(voice)  ((voice)->chan == NO_CHANNEL)
+//#define _RELEASED(voice)  ((voice)->chan == NO_CHANNEL)
 #define _SAMPLEMODE(voice) ((int)(voice)->gen[GEN_SAMPLEMODE].val)
 
 

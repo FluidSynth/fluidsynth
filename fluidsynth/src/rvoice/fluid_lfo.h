@@ -37,17 +37,9 @@ fluid_lfo_reset(fluid_lfo_t* lfo)
   lfo->val = 0.0f;
 }
 
-static inline void
-fluid_lfo_set_incr(fluid_lfo_t* lfo, fluid_real_t increment)
-{
-  lfo->increment = increment;
-}
-
-static inline void
-fluid_lfo_set_delay(fluid_lfo_t* lfo, unsigned int delay)
-{
-  lfo->delay = delay;
-}
+// These two cannot be inlined since they're used by event_dispatch
+void fluid_lfo_set_incr(fluid_lfo_t* lfo, fluid_real_t increment);
+void fluid_lfo_set_delay(fluid_lfo_t* lfo, unsigned int delay);
 
 static inline fluid_real_t
 fluid_lfo_get_val(fluid_lfo_t* lfo)

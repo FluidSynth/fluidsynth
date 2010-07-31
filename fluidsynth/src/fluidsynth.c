@@ -585,6 +585,14 @@ int main(int argc, char** argv)
   }
   fluid_settings_setint(settings, "synth.audio-groups", audio_groups);
 
+  if (fast_render) {
+    midi_in = 0;
+    interactive = 0;
+    with_server = 0;
+    fluid_settings_setstr(settings, "player.timing-source", "sample");  
+    fluid_settings_setint(settings, "synth.parallel-render", 1); /* TODO: Fast_render should not need this, but currently do */
+  }
+  
   /* create the synthesizer */
   synth = new_fluid_synth(settings);
   if (synth == NULL) {
@@ -613,13 +621,6 @@ int main(int argc, char** argv)
 #ifdef HAVE_SIGNAL_H
 /*   signal(SIGINT, handle_signal); */
 #endif
-
-  if (fast_render) {
-    midi_in = 0;
-    interactive = 0;
-    with_server = 0;
-    fluid_settings_setstr(settings, "player.timing-source", "sample");    
-  }
 
   /* start the synthesis thread */
   if (!fast_render) {

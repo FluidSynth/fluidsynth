@@ -132,6 +132,7 @@ set ( libfluidsynth_SOURCES
     rvoice/fluid_chorus.h 
     rvoice/fluid_iir_filter.c
     rvoice/fluid_iir_filter.h
+    rvoice/fluid_lfo.c
     rvoice/fluid_lfo.h
     rvoice/fluid_rvoice.h
     rvoice/fluid_rvoice.c

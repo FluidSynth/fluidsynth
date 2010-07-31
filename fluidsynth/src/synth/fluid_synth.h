@@ -185,8 +185,9 @@ struct _fluid_synth_t
 					  Typically equal to audio_channels. */
   int effects_channels;              /**< the number of effects channels (>= 2) */
   int state;                         /**< the synthesizer state */
-  unsigned int ticks;                /**< the number of audio samples since the start */
+  unsigned int ticks_since_start;    /**< the number of audio samples since the start */
   unsigned int start;                /**< the start in msec, as returned by system clock */
+  fluid_overflow_prio_t overflow;    /**< parameters for overflow priority (aka voice-stealing) */
 
   fluid_list_t *loaders;             /**< the SoundFont loaders */
   fluid_list_t *sfont_info;          /**< List of fluid_sfont_info_t for each loaded SoundFont (remains until SoundFont is unloaded) */

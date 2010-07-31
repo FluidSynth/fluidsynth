@@ -32,6 +32,7 @@
 
 #define EVENTFUNC_R1(proc, type) \
   if (event->method == proc) { \
+    if(event->intparam != 0) { FLUID_LOG(FLUID_DBG, "IR-mismatch"); }  \
     proc((type) event->object, event->realparams[0]); \
     return; }
 
@@ -42,6 +43,7 @@
 
 #define EVENTFUNC_I1(proc, type) \
   if (event->method == proc) { \
+    if(event->realparams[0] != 0.0f) { FLUID_LOG(FLUID_DBG, "IR-mismatch"); }  \
     proc((type) event->object, event->intparam); \
     return; } 
 
@@ -69,6 +71,7 @@ fluid_rvoice_event_dispatch(fluid_rvoice_event_t* event)
   EVENTFUNC_PTR(fluid_rvoice_mixer_add_voice, fluid_rvoice_mixer_t*, fluid_rvoice_t*);
   EVENTFUNC_I1(fluid_rvoice_noteoff, fluid_rvoice_t*);
   EVENTFUNC_0(fluid_rvoice_voiceoff, fluid_rvoice_t*);
+  EVENTFUNC_0(fluid_rvoice_reset, fluid_rvoice_t*);
 
   EVENTFUNC_ALL(fluid_adsr_env_set_data, fluid_adsr_env_t*);
 
@@ -131,8 +134,10 @@ fluid_rvoice_eventhandler_push(fluid_rvoice_eventhandler_t* handler,
   event = handler->is_threadsafe ? 
     fluid_ringbuffer_get_inptr(handler->queue, handler->queue_stored) : &local_event;
 
-  if (event == NULL) 
+  if (event == NULL) {
+    FLUID_LOG(FLUID_WARN, "Ringbuffer full, try increasing polyphony!");
     return FLUID_FAILED; // Buffer full...
+  }
 
   event->method = method;
   event->object = object;
@@ -155,8 +160,10 @@ fluid_rvoice_eventhandler_push_ptr(fluid_rvoice_eventhandler_t* handler,
   event = handler->is_threadsafe ? 
     fluid_ringbuffer_get_inptr(handler->queue, handler->queue_stored) : &local_event;
 
-  if (event == NULL) 
+  if (event == NULL) {
+    FLUID_LOG(FLUID_WARN, "Ringbuffer full, try increasing polyphony!");
     return FLUID_FAILED; // Buffer full...
+  }
 
   event->method = method;
   event->object = object;
@@ -180,8 +187,10 @@ fluid_rvoice_eventhandler_push5(fluid_rvoice_eventhandler_t* handler,
   event = handler->is_threadsafe ? 
     fluid_ringbuffer_get_inptr(handler->queue, handler->queue_stored) : &local_event;
 
-  if (event == NULL) 
+  if (event == NULL) {
+    FLUID_LOG(FLUID_WARN, "Ringbuffer full, try increasing polyphony!");
     return FLUID_FAILED; // Buffer full...
+  }
 
   event->method = method;
   event->object = object;
