@@ -182,7 +182,7 @@ static void fluid_synth_register_overflow(fluid_settings_t* settings,
 					  fluid_num_update_t update_func,
 					  void* update_data)
 {
-  fluid_settings_register_num(settings, "synth.overflow.drum-channel",
+  fluid_settings_register_num(settings, "synth.overflow.percussion",
 			      4000, -10000, 10000, 0, update_func, update_data);
   fluid_settings_register_num(settings, "synth.overflow.sustained",
 			      -1000, -10000, 10000, 0, update_func, update_data);
@@ -3466,8 +3466,8 @@ static int fluid_synth_update_overflow (fluid_synth_t *synth, char *name,
 {
   fluid_synth_api_enter(synth);
   
-  fluid_settings_getnum(synth->settings, "synth.overflow.drum-channel", 
-			&synth->overflow.drum_channel);
+  fluid_settings_getnum(synth->settings, "synth.overflow.percussion", 
+			&synth->overflow.percussion);
   fluid_settings_getnum(synth->settings, "synth.overflow.released", 
 			&synth->overflow.released);
   fluid_settings_getnum(synth->settings, "synth.overflow.sustained", 
@@ -3491,12 +3491,6 @@ fluid_synth_free_voice_by_kill_LOCAL(fluid_synth_t* synth)
   fluid_voice_t* voice;
   int best_voice_index=-1;
   unsigned int ticks = fluid_synth_get_ticks(synth);
-
-  /*overflow_prio.drum_channel = 4000;
-  overflow_prio.released = -2000;
-  overflow_prio.sustained = -1000;
-  overflow_prio.volume = 1000;
-  overflow_prio.age = 500;*/
   
   for (i = 0; i < synth->polyphony; i++) {
 

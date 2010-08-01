@@ -37,7 +37,7 @@ typedef struct _fluid_overflow_prio_t fluid_overflow_prio_t;
 
 struct _fluid_overflow_prio_t 
 {
-  fluid_real_t drum_channel; /**< Is this voice on the drum channel? Then add this score */
+  fluid_real_t percussion; /**< Is this voice on the drum channel? Then add this score */
   fluid_real_t released; /**< Is this voice in release stage? Then add this score (usually negative) */ 
   fluid_real_t sustained; /**< Is this voice sustained? Then add this score (usually negative) */
   fluid_real_t volume; /**< Multiply current (or future) volume (a value between 0 and 1) */

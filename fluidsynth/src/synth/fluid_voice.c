@@ -1491,7 +1491,7 @@ fluid_voice_get_overflow_prio(fluid_voice_t* voice,
    * Also skip the released and sustained scores.
    */
   if (voice->chan == 9){
-    this_voice_prio += score->drum_channel;
+    this_voice_prio += score->percussion;
   } 
   else if (voice->has_noteoff) {
     /* Noteoff has */
