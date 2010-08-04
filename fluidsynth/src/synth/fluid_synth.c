@@ -2767,7 +2767,7 @@ fluid_synth_update_polyphony_LOCAL(fluid_synth_t* synth)
   int i, new_polyphony;
 
   new_polyphony = fluid_atomic_int_get (&synth->shadow_polyphony);
-  if (synth->polyphony > synth->nvoice) {
+  if (new_polyphony > synth->nvoice) {
     /* Create more voices */
     fluid_voice_t** new_voices = FLUID_REALLOC(synth->voice, 
 					       sizeof(fluid_voice_t*) * new_polyphony);
