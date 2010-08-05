@@ -11,7 +11,7 @@ find_path ( READLINE_INCLUDE_DIR NAMES history.h readline/history.h )
 find_library ( READLINE_LIBRARIES NAMES readline )
 
 if ( READLINE_INCLUDE_DIR )
-    set ( HAVE_READLINE YES CACHE TYPE BOOL )
+    set ( HAVE_READLINE TRUE CACHE TYPE BOOL )
 endif ( READLINE_INCLUDE_DIR )
 
 include ( FindPackageHandleStandardArgs )
