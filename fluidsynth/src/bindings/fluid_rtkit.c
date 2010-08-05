@@ -34,7 +34,7 @@
 #include "fluid_rtkit.h"
 
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__APPLE__)
 
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
