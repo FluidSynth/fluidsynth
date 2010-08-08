@@ -229,9 +229,9 @@ if ( LIBFLUID_CPPFLAGS )
     PROPERTIES COMPILE_FLAGS ${LIBFLUID_CPPFLAGS} )
 endif ( LIBFLUID_CPPFLAGS ) 
 
-include ( CreateLibtoolFile )
-
-create_libtool_file ( libfluidsynth "lib${LIB_SUFFIX}" )
+# this code creates the file libfluidsynth.la
+# include ( CreateLibtoolFile )
+# create_libtool_file ( libfluidsynth "lib${LIB_SUFFIX}" )
 
 target_link_libraries ( libfluidsynth
     ${GLIB_LIBRARIES} 
