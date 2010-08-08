@@ -471,7 +471,10 @@ AC_OUTPUT([
 	fluidsynth.spec])
 
 echo
-echo "**************************************************************"
+echo "***************************************************************"
+echo "The autotools build system is deprecated and might be removed  "
+echo "in a future version. Please use the CMake build system instead."
+echo "***************************************************************"
 echo "Summary:"
 
 if test "${LIBSNDFILE_SUPPORT}" = "1"; then
@@ -598,5 +601,5 @@ else
   echo "Check FPE (debug):     no"
 fi
 
-echo "**************************************************************"
+echo "***************************************************************"
 echo
