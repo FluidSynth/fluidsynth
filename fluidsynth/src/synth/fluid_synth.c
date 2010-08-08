@@ -3464,18 +3464,19 @@ fluid_synth_process_event_queue_LOCAL (fluid_synth_t *synth,
 static int fluid_synth_update_overflow (fluid_synth_t *synth, char *name,
                                          fluid_real_t value)
 {
+  double d;
   fluid_synth_api_enter(synth);
   
-  fluid_settings_getnum(synth->settings, "synth.overflow.percussion", 
-			&synth->overflow.percussion);
-  fluid_settings_getnum(synth->settings, "synth.overflow.released", 
-			&synth->overflow.released);
-  fluid_settings_getnum(synth->settings, "synth.overflow.sustained", 
-			&synth->overflow.sustained);
-  fluid_settings_getnum(synth->settings, "synth.overflow.volume", 
-			&synth->overflow.volume);
-  fluid_settings_getnum(synth->settings, "synth.overflow.age", 
-			&synth->overflow.age);
+  fluid_settings_getnum(synth->settings, "synth.overflow.percussion", &d);
+  synth->overflow.percussion = d;
+  fluid_settings_getnum(synth->settings, "synth.overflow.released", &d);
+  synth->overflow.released = d;
+  fluid_settings_getnum(synth->settings, "synth.overflow.sustained", &d);
+  synth->overflow.sustained = d;
+  fluid_settings_getnum(synth->settings, "synth.overflow.volume", &d);
+  synth->overflow.volume = d;
+  fluid_settings_getnum(synth->settings, "synth.overflow.age", &d);
+  synth->overflow.age = d;
   
   FLUID_API_RETURN(0);
 }

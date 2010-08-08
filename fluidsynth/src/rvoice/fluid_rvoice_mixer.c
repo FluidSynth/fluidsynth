@@ -365,7 +365,7 @@ fluid_rvoice_mixer_set_polyphony(fluid_rvoice_mixer_t* handler, int value)
 }
 
 
-static FLUID_INLINE void 
+static void 
 fluid_render_loop_singlethread(fluid_rvoice_mixer_t* mixer)
 {
   int i;
@@ -752,7 +752,7 @@ fluid_mixer_mix_in(fluid_rvoice_mixer_t* mixer)
   return result;
 }
 
-static FLUID_INLINE void 
+static void 
 fluid_render_loop_multithread(fluid_rvoice_mixer_t* mixer)
 {
   int i; //, test=0, waits=0;
