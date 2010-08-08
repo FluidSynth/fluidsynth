@@ -29,13 +29,21 @@ set ( PACKAGE "fluidsynth" )
 # FluidSynth package version
 set ( FLUIDSYNTH_VERSION_MAJOR 1 )
 set ( FLUIDSYNTH_VERSION_MINOR 1 )
-set ( FLUIDSYNTH_VERSION_MICRO 1 )
+set ( FLUIDSYNTH_VERSION_MICRO 2 )
 set ( VERSION "${FLUIDSYNTH_VERSION_MAJOR}.${FLUIDSYNTH_VERSION_MINOR}.${FLUIDSYNTH_VERSION_MICRO}" )      
 set ( FLUIDSYNTH_VERSION "\"${VERSION}\"" )
 
-# libfluidsynth - Library version 
+# libfluidsynth - Library version
+# *** NOTICE ***
+# Update library version upon each release (follow these steps in order)
+# if any source code changes: REVISION++
+# if any interfaces added/removed/changed: REVISION=0
+# if any interfaces removed/changed (compatibility broken): CURRENT++
+# if any interfaces have been added: AGE++
+# if any interfaces have been removed/changed (compatibility broken): AGE=0
+# This is not exactly the same algorithm as the libtool one, but the results are the same.
 set ( LT_VERSION_CURRENT 1 )
-set ( LT_VERSION_AGE 3 )
+set ( LT_VERSION_AGE 4 )
 set ( LT_VERSION_REVISION 0 )
 set ( LT_VERSION_INFO "${LT_VERSION_CURRENT}.${LT_VERSION_AGE}.${LT_VERSION_REVISION}" )
 
@@ -385,9 +393,15 @@ if ( UNIX )
         COMMAND cp -r include ${PACKAGE}-${VERSION}
         COMMAND cp -r src ${PACKAGE}-${VERSION}
         COMMAND cp AUTHORS ChangeLog CMakeLists.txt COPYING ${PACKAGE}.* INSTALL NEWS README* THANKS TODO ${PACKAGE}-${VERSION}
-        COMMAND tar -cj --exclude .svn --exclude Makefile.am -f ${PACKAGE}-${VERSION}.tar.bz2 ${PACKAGE}-${VERSION}
-        COMMAND tar -cz --exclude .svn --exclude Makefile.am -f ${PACKAGE}-${VERSION}.tar.gz ${PACKAGE}-${VERSION}
-        COMMAND zip -qr ${PACKAGE}-${VERSION}.zip ${PACKAGE}-${VERSION} -x '*.svn*' -x '*Makefile.am'
+#       COMMAND tar -cj --exclude .svn --exclude Makefile.am -f ${PACKAGE}-${VERSION}.tar.bz2 ${PACKAGE}-${VERSION}
+#       COMMAND tar -cz --exclude .svn --exclude Makefile.am -f ${PACKAGE}-${VERSION}.tar.gz ${PACKAGE}-${VERSION}
+#       COMMAND zip -qr ${PACKAGE}-${VERSION}.zip ${PACKAGE}-${VERSION} -x '*.svn*' -x '*Makefile.am'
+        COMMAND cp acinclude.m4 autogen.sh configure.ac install-sh missing mkinstalldirs Makefile.am ${PACKAGE}-${VERSION}
+        COMMAND cp -r macbuild ${PACKAGE}-${VERSION}
+        COMMAND cp -r winbuild ${PACKAGE}-${VERSION}
+        COMMAND tar -cj --exclude .svn -f ${PACKAGE}-${VERSION}.tar.bz2 ${PACKAGE}-${VERSION}
+        COMMAND tar -cz --exclude .svn -f ${PACKAGE}-${VERSION}.tar.gz ${PACKAGE}-${VERSION}
+        COMMAND zip -qr ${PACKAGE}-${VERSION}.zip ${PACKAGE}-${VERSION} -x '*.svn*'
         COMMAND rm -rf ${PACKAGE}-${VERSION}
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     )

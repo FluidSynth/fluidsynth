@@ -18,6 +18,5 @@ pkginclude_HEADERS = 	types.h \
 			mod.h \
 			gen.h 
 
-
-EXTRA_DIST = version.h.in
+EXTRA_DIST = version.h.in CMakeLists.txt 
 DISTCLEANFILES = version.h

@@ -1,7 +1,8 @@
 #  install the man pages and include in distribution
 man_MANS = fluidsynth.1 
 
-EXTRA_DIST = \
+EXTRA_DIST = CMakeLists.txt \
+  Doxyfile.cmake \
   $(man_MANS) \
   Doxyfile \
   example.c \

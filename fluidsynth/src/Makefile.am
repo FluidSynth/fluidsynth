@@ -21,7 +21,7 @@ fluid_coremidi = drivers/fluid_coremidi.c
 endif
 
 if DBUS_SUPPORT
-fluid_rtkit = bindings/fluid_rtkit.c
+fluid_rtkit = bindings/fluid_rtkit.c bindings/fluid_rtkit.h
 endif
 
 if JACK_SUPPORT
@@ -42,10 +42,10 @@ endif
 
 # if LASH_SUPPORT || LADCCA_SUPPORT (Makefile supports OR?)
 if LASH_SUPPORT
-fluid_lash = bindings/fluid_lash.c
+fluid_lash = bindings/fluid_lash.c bindings/fluid_lash.h
 else
 if LADCCA_SUPPORT
-fluid_lash = bindings/fluid_lash.c
+fluid_lash = bindings/fluid_lash.c bindings/fluid_lash.h
 endif
 endif
 
@@ -54,11 +54,30 @@ fluid_dart = drivers/fluid_dart.c
 endif
 
 # Extra files and optional drivers
-EXTRA_DIST = fluid_dll.c drivers/fluid_dsound.c drivers/fluid_winmidi.c drivers/fluid_portaudio.c \
-	drivers/fluid_coreaudio.c drivers/fluid_alsa.c drivers/fluid_oss.c drivers/fluid_pulse.c \
-	fluid_dsp_simple.c \
-	drivers/fluid_sndmgr.c config_macos.h config_macosx.h config_macosx_pb.h \
-	config_win32.h drivers/fluid_jack.c drivers/fluid_dart.c
+EXTRA_DIST = fluid_dll.c \
+    bindings/fluid_ladspa.c \
+    bindings/fluid_ladspa.h \
+    drivers/fluid_alsa.c \
+    drivers/fluid_coreaudio.c \
+    drivers/fluid_coremidi.c \
+    drivers/fluid_dart.c \
+    drivers/fluid_dsound.c \
+    drivers/fluid_jack.c \
+    drivers/fluid_midishare.c \
+    drivers/fluid_oss.c \
+    drivers/fluid_portaudio.c \
+    drivers/fluid_pulse.c \
+    drivers/fluid_sndmgr.c \
+    drivers/fluid_winmidi.c \
+    config_macos.h \
+    config_macosx.h \
+    config_macosx_pb.h \
+    CMakeLists.txt \
+    config_win32.cmake \
+    config_win32.h.in \
+    config.cmake
+
+DISTCLEANFILES = config_win32.h
 
 lib_LTLIBRARIES = libfluidsynth.la
 bin_PROGRAMS = fluidsynth 

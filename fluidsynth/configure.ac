@@ -8,7 +8,7 @@ dnl *** NOTE *** Don't forget to update library version below also
 
 FLUIDSYNTH_VERSION_MAJOR=1
 FLUIDSYNTH_VERSION_MINOR=1
-FLUIDSYNTH_VERSION_MICRO=1
+FLUIDSYNTH_VERSION_MICRO=2
 FLUIDSYNTH_VERSION=$FLUIDSYNTH_VERSION_MAJOR.$FLUIDSYNTH_VERSION_MINOR.$FLUIDSYNTH_VERSION_MICRO
 
 AC_SUBST(FLUIDSYNTH_VERSION_MAJOR)
@@ -28,9 +28,9 @@ dnl if any interfaces added/removed/changed: lt_current++ and lt_revision=0
 dnl if any interfaces have been added: lt_age++
 dnl if any interfaces have been removed/changed (compatibility broken): lt_age=0
 
-m4_define([lt_current], [4])
+m4_define([lt_current], [5])
 m4_define([lt_revision], [0])
-m4_define([lt_age], [3])
+m4_define([lt_age], [4])
 
 LT_VERSION_INFO="lt_current:lt_revision:lt_age"
 AC_SUBST(LT_VERSION_INFO)
@@ -456,6 +456,7 @@ AM_CONDITIONAL(LADCCA_SUPPORT, test "$LADCCA_FOUND" = "yes")
 
 AC_OUTPUT([
 	Makefile
+    cmake_admin/Makefile
 	macbuild/Makefile
 	winbuild/Makefile
 	winbuild/fluidsynth/Makefile
