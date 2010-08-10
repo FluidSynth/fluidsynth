@@ -2,7 +2,7 @@
 
 ACLOCAL_AMFLAGS=-I m4
 
-SUBDIRS = macbuild src doc include cmake_admin
+SUBDIRS = src doc include cmake_admin
 EXTRA_DIST = TODO acinclude.m4 autogen.sh fluidsynth.pc.in \
   fluidsynth.spec.in fluidsynth.spec fluidsynth.anjuta README-OSX \
   README.cmake CMakeLists.txt
