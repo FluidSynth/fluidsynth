@@ -384,6 +384,34 @@ The following table provides details on all the settings used by the synthesizer
   </tr>
 
   <tr>
+    <td>synth.midi-bank-select</td>
+    <td>Type</td>
+    <td>string</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Default</td>
+    <td>gs</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Options</td>
+    <td>gm, gs, xg, mma</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Description</td>
+    <td>This setting defines how the synthesizer interprets Bank Select messages.
+       <ul>
+         <li>gm: ignores CC0 and CC32 messages.</li>
+         <li>gs: (default) CC0 becomes the bank number, CC32 is ignored.</li>
+         <li>xg: CC32 becomes the bank number, CC0 is ignored.</li>
+         <li>mma: bank is calculated as CC0*128+CC32.</li>
+       </ul>  
+    </td>
+  </tr>
+
+  <tr>
     <td>synth.min-note-length</td>
     <td>Type</td>
     <td>integer</td>

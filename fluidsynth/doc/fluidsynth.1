@@ -179,6 +179,9 @@ LADSPA subsystem enable toggle.
 .B synth.midi\-channels     INT   [min=16, max=256, def=16]
 Total MIDI channel count (must be multiple of 16).
 .TP
+.B synth.midi\-bank\-select STR   [def='gs' vals:'gm', 'gs', 'xg', 'mma']
+MIDI Bank Select message style.
+.TP
 .B synth.min\-note\-length  INT   [min=0, max=65535, def=10]
 Minimum duration for note events (work around for very short percussion notes).
 .TP

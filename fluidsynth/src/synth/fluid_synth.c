@@ -234,10 +234,15 @@ void fluid_synth_settings(fluid_settings_t* settings)
                               FLUID_HINT_TOGGLED, NULL, NULL);
   fluid_settings_register_int(settings, "synth.parallel-render", 1, 0, 1,
                               FLUID_HINT_TOGGLED, NULL, NULL);
-  
-			      
+
   fluid_synth_register_overflow(settings, NULL, NULL);
-			      
+
+  fluid_settings_register_str(settings, "synth.midi-bank-select", "gs", 0, NULL, NULL);
+  fluid_settings_add_option(settings, "synth.midi-bank-select", "gm");
+  fluid_settings_add_option(settings, "synth.midi-bank-select", "gs");
+  fluid_settings_add_option(settings, "synth.midi-bank-select", "xg");
+  fluid_settings_add_option(settings, "synth.midi-bank-select", "mma");
+  
 }
 
 /**
@@ -874,6 +879,16 @@ new_fluid_synth(fluid_settings_t *settings)
     }
 #endif
   }
+
+  synth->bank_select = FLUID_BANK_STYLE_GS;
+  if (fluid_settings_str_equal (settings, "synth.midi-bank-select", "gm") == 1)
+    synth->bank_select = FLUID_BANK_STYLE_GM;
+  else if (fluid_settings_str_equal (settings, "synth.midi-bank-select", "gs") == 1)
+    synth->bank_select = FLUID_BANK_STYLE_GS;
+  else if (fluid_settings_str_equal (settings, "synth.midi-bank-select", "xg") == 1)
+    synth->bank_select = FLUID_BANK_STYLE_XG;
+  else if (fluid_settings_str_equal (settings, "synth.midi-bank-select", "mma") == 1)
+    synth->bank_select = FLUID_BANK_STYLE_MMA;
 
   /* FIXME */
   synth->start = fluid_curtime();

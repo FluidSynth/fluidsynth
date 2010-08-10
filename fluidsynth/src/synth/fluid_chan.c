@@ -274,13 +274,22 @@ fluid_channel_set_sfont_bank_prog(fluid_channel_t* chan, int sfontnum,
 void
 fluid_channel_set_bank_lsb(fluid_channel_t* chan, int banklsb)
 {
-  int oldval, newval;
+  int oldval, newval, style;
+
+  style = fluid_atomic_int_get (&chan->synth->bank_select);
+  if (style == FLUID_BANK_STYLE_GM ||
+      style == FLUID_BANK_STYLE_GS ||
+      chan->channum == 9) //TODO: ask for channel drum mode, instead of number
+      return; /* ignored */
 
   /* Loop until bank LSB is atomically assigned */
   do
   {
     oldval = fluid_atomic_int_get (&chan->sfont_bank_prog);
-    newval = (oldval & ~BANKLSB_MASKVAL) | (banklsb << BANK_SHIFTVAL);
+    if (style == FLUID_BANK_STYLE_XG)
+        newval = (oldval & ~BANK_MASKVAL) | (banklsb << BANK_SHIFTVAL);
+    else /* style == FLUID_BANK_STYLE_MMA */
+        newval = (oldval & ~BANKLSB_MASKVAL) | (banklsb << BANK_SHIFTVAL);
   }
   while (newval != oldval
          && !fluid_atomic_int_compare_and_exchange (&chan->sfont_bank_prog,
@@ -291,13 +300,23 @@ fluid_channel_set_bank_lsb(fluid_channel_t* chan, int banklsb)
 void
 fluid_channel_set_bank_msb(fluid_channel_t* chan, int bankmsb)
 {
-  int oldval, newval;
+  int oldval, newval, style;
+
+  style = fluid_atomic_int_get (&chan->synth->bank_select);
+  if (style == FLUID_BANK_STYLE_GM ||
+      style == FLUID_BANK_STYLE_XG ||
+      chan->channum == 9) //TODO: ask for channel drum mode, instead of number
+      return; /* ignored */
+  //TODO: if style == XG and bankmsb == 127, convert the channel to drum mode
 
   /* Loop until bank MSB is atomically assigned */
   do
   {
     oldval = fluid_atomic_int_get (&chan->sfont_bank_prog);
-    newval = (oldval & ~BANKMSB_MASKVAL) | (bankmsb << (BANK_SHIFTVAL + 7));
+    if (style == FLUID_BANK_STYLE_GS)
+        newval = (oldval & ~BANK_MASKVAL) | (bankmsb << BANK_SHIFTVAL);
+    else /* style == FLUID_BANK_STYLE_MMA */
+        newval = (oldval & ~BANKMSB_MASKVAL) | (bankmsb << (BANK_SHIFTVAL + 7));
   }
   while (newval != oldval
          && !fluid_atomic_int_compare_and_exchange (&chan->sfont_bank_prog,

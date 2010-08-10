@@ -69,6 +69,17 @@
   FLUID_LOOP_UNTIL_RELEASE = 3
 };*/
 
+/**
+ * Bank Select MIDI message styles. Default style is GS.
+ */
+enum fluid_midi_bank_select
+{
+    FLUID_BANK_STYLE_GM,  /**< GM style, bank = 0 always (CC0/MSB and CC32/LSB ignored) */
+    FLUID_BANK_STYLE_GS,  /**< GS style, bank = CC0/MSB (CC32/LSB ignored) */
+    FLUID_BANK_STYLE_XG,  /**< XG style, bank = CC32/LSB (CC0/MSB ignored) */
+    FLUID_BANK_STYLE_MMA  /**< MMA style bank = 128*MSB+LSB */
+};
+
 enum fluid_synth_status
 {
   FLUID_SYNTH_CLEAN,
@@ -116,6 +127,7 @@ typedef struct _fluid_sfont_info_t {
  * LADSPA_FxUnit (Contents change)
  * cores
  * core_threads[]
+ * bank_select (FIXME: pending implementation of SYSEX midi mode changes)
  *
  * Single thread use only (modify only prior to synthesis):
  * loaders<>
@@ -180,6 +192,7 @@ struct _fluid_synth_t
   int dump;                         /**< Dump events to stdout to hook up a user interface? */
   double sample_rate;                /**< The sample rate */
   int midi_channels;                 /**< the number of MIDI channels (>= 16) */
+  int bank_select;                   /**< the style of Bank Select MIDI messages */
   int audio_channels;                /**< the number of audio channels (1 channel=left+right) */
   int audio_groups;                  /**< the number of (stereo) 'sub'groups from the synth.
 					  Typically equal to audio_channels. */
