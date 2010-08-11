@@ -2,7 +2,6 @@
 Current development team
 
 Josh Green
-Bernat Arlandis i Mañó
 Pedro Lopez-Cabanillas
 David Henningsson
 
@@ -91,8 +90,8 @@ summary of contributions.
 * Ebrahim Mayat made big efforts for compiling and running FluidSynth
   on MacOS X. He also wrote the README-OSX file.
 
-* Martin Uddén's midi package was used. His files are integrated into
-  the iiwu_midi file. Martin Uddén <nanook@lysator.liu.se> file:
+* Martin UddÃ©n's midi package was used. His files are integrated into
+  the iiwu_midi file. Martin UddÃ©n <nanook@lysator.liu.se> file:
   iiwu_midi.c
 
 * Ken Ellinwood send in a patch to add bank offsets to SoundFonts. An
@@ -110,8 +109,10 @@ summary of contributions.
 
 * KO Myung-Hun for OS/2 support with Dart audio driver.
 
+* Pedro Lopez-Cabanillas wrote the CoreMIDI driver for MacOSX, the CMake based 
+  build system, revised the doxygen documentation, sequencer examples, fixes.
+
 * Growing list of individuals who contributed bug fixes, corrections and minor features:
-Pedro Lopez-Cabanillas for midi.winmidi.device setting.
 Nicolas Boulicault for ALSA sequencer midi.portname setting.
 Werner Schweer
 Dave Philips
@@ -126,9 +127,10 @@ Takashi Iwai
 Bob Ham
 Gerald Pye
 Rui Nuno Capela
-Frieder Bürzele
+Frieder BÃ¼rzele
 Henri Manson
 Mihail Zenkov
 Paul Millar
 Nick Daly
 David Hilvert
+Bernat Arlandis i MaÃ±Ã³
