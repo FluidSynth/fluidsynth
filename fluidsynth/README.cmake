@@ -53,6 +53,9 @@ Valid values for boolean (enable-xxxx) options: 1, 0, yes, no, on, off.
    in Linux and other Unix systems) then execute make, gmake or mingw32-make.
    If you generated a project file, use your IDE to build it.
 
+You may find more information in the project Wiki: 
+    http://sourceforge.net/apps/trac/fluidsynth/wiki/BuildingWithCMake
+
 Compiling with make
 ===================
 
@@ -88,13 +91,17 @@ mailing list: http://lists.nongnu.org/mailman/listinfo/fluid-dev
 For developers - how to add a new feature to the CMake build system
 ===================================================================
 
-Let's explain this issue with an example. We are adding D-Bus support to FluidSynth as an optional feature, conditionally adding source files that require this feature. The first step is to add a macro "option()" to the main CMakeLists.txt file, the one that is located at the fluidsynth root directory.
+Let's explain this issue with an example. We are adding D-Bus support to 
+FluidSynth as an optional feature, conditionally adding source files that 
+require this feature. The first step is to add a macro "option()" to the main 
+CMakeLists.txt file, the one that is located at the fluidsynth root directory.
 
 file CMakeLists.txt, line 64:
 
 	option ( enable-dbus "compile DBUS support (if it is available)" on )
 
-Now, let's check if the dbus-1 library and headers are installed, using pkg-config:
+Now, let's check if the dbus-1 library and headers are installed, using 
+pkg-config:
 
 file CMakeLists.txt, lines 329-334:
 
@@ -105,9 +112,16 @@ file CMakeLists.txt, lines 329-334:
 		set ( DBUS_SUPPORT ${DBUS_FOUND} )
 	endif ( enable-dbus )
 
-The two first lines clear the values of the CMake variables DBUS_LIBRARIES and DBUS_SUPPORT. If the value of the option "enable-dbus" is true, then the macro pkg_check_modules() is used to test a package named "dbus-1" with version 1.0.0 or later. This macro automatically defines the variables DBUS_LIBRARIES, DBUS_INCLUDEDIR, DBUS_FOUND and others. The value of the last one is assigned to our variable DBUS_SUPPORT for later use.
+The two first lines clear the values of the CMake variables DBUS_LIBRARIES and 
+DBUS_SUPPORT. If the value of the option "enable-dbus" is true, then the macro 
+pkg_check_modules() is used to test a package named "dbus-1" with version 1.0.0 
+or later. This macro automatically defines the variables DBUS_LIBRARIES, 
+DBUS_INCLUDEDIR, DBUS_FOUND and others. The value of the last one is assigned 
+to our variable DBUS_SUPPORT for later use.
 
-There is a report to summarize the performed checks and the enabled features after the configuration steps, so let's add a line in this report regarding the D-Bus support.
+There is a report to summarize the performed checks and the enabled features 
+after the configuration steps, so let's add a line in this report regarding 
+the D-Bus support.
 
 file cmake_admin/report.cmake, lines 14-18:
 
@@ -117,19 +131,25 @@ file cmake_admin/report.cmake, lines 14-18:
 		message ( "D-Bus:                 no" )
 	endif ( DBUS_SUPPORT )
 
-The variable DBUS_SUPPORT is available for the CMake files, but we want to make it available to the compilers as well, to conditionally build code using "#ifdef DBUS_SUPPORT". This can be done adding a line to the config.cmake file:
+The variable DBUS_SUPPORT is available for the CMake files, but we want to make 
+it available to the compilers as well, to conditionally build code using 
+"#ifdef DBUS_SUPPORT". This can be done adding a line to the config.cmake file:
 
 file src/config.cmake, lines 22-23:
 
 	/* Define if D-Bus support is enabled */
 	#cmakedefine DBUS_SUPPORT @DBUS_SUPPORT@
 
-The file config.cmake will be processed at configure time, producing a header file "config.h" in the build directory with this content, if the dbus support has been enabled and found:
+The file config.cmake will be processed at configure time, producing a header 
+file "config.h" in the build directory with this content, if the dbus support 
+has been enabled and found:
 
 	/* Define if D-Bus support is enabled */
 	#define DBUS_SUPPORT  1
 
-Finally, we can add the new source files to the build system for the compiler target with the macro add_library(), and the libraries for the linker target with the macros link_directories() and target_link_libraries().
+Finally, we can add the new source files to the build system for the compiler 
+target with the macro add_library(), and the libraries for the linker target 
+with the macros link_directories() and target_link_libraries().
 
 file src/CMakeLists.txt, lines 57-60
 
