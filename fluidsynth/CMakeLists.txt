@@ -70,6 +70,7 @@ option ( enable-dart "compile DART support (if it is available)" on )
 option ( enable-readline "compile readline lib line editing (if it is available)" on )
 option ( enable-lash "compile LASH support (if it is available)" on )
 option ( enable-dbus "compile DBUS support (if it is available)" on )
+option ( BUILD_SHARED_LIBS "Build a shared object or DLL" on )
 
 # Initialize the library directory name suffix.
 if ( CMAKE_SIZEOF_VOID_P EQUAL 8 )

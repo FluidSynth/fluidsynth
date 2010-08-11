@@ -196,7 +196,9 @@ link_directories (
     ${DBUS_LIBRARY_DIRS} 
 )
 
-add_library ( libfluidsynth SHARED 
+# note: by default this target creates a shared object (or dll). To build a 
+# static library instead, set the option BUILD_SHARED_LIBS to FALSE.
+add_library ( libfluidsynth 
     ${fluid_alsa_SOURCES}
     ${fluid_coreaudio_SOURCES}
     ${fluid_coremidi_SOURCES}
