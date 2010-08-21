@@ -47,7 +47,7 @@ int main(int argc, char** argv)
    * get used from the SoundFont) */
   sfont_id = fluid_synth_sfload(synth, "example.sf2", 1);
 
-  /* Initialze the random number generator */
+  /* Initialize the random number generator */
   srand(getpid());
 
   for (i = 0; i < 12; i++) {
