@@ -3309,8 +3309,6 @@ fluid_synth_render_blocks(fluid_synth_t* synth, int blockcount)
     fluid_cond_signal (synth->return_queue_cond);
 #endif 
 
-  fluid_synth_check_finished_voices(synth);
-
   /* Testcase, that provokes a denormal floating point error */
 #if 0
   {float num=1;while (num != 0){num*=0.5;};};
