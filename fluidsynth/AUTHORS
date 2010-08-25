@@ -72,8 +72,8 @@ summary of contributions.
   to make iiwusynth independent from any library for maximum
   portability.
 
-* David Henningsson added code for fast rendering of MIDI files and 
-  fixed many bugs.
+* David Henningsson added code for fast rendering of MIDI files, 
+  rewrote the thread safety for 1.1.2, and fixed many bugs.
 
 * The midi device uses code from jMax's alsarawmidi.c file and from
   Smurf's midi_alsaraw.c by Josh Green.  file: iiwu_alsa.c
@@ -134,3 +134,4 @@ Paul Millar
 Nick Daly
 David Hilvert
 Bernat Arlandis i Mañó
+Sven Meier
