@@ -5,9 +5,10 @@
 \author Antoine Schmitt
 \author Pedro López-Cabanillas
 \author Josh Green
-\author Copyright &copy; 2003-2009 Peter Hanappe, Conrad Berhörster, Antoine Schmitt, Pedro López-Cabanillas, Josh Green
-\version Revision 1.1.1
-\date 2009-10-20
+\author David Henningsson
+\author Copyright &copy; 2003-2010 Peter Hanappe, Conrad Berhörster, Antoine Schmitt, Pedro López-Cabanillas, Josh Green, David Henningsson
+\version Revision 1.1.2
+\date 2010-08-26
 
 All the source code examples in this document are in the public domain; you can use them as you please. This document is licensed under the Creative Commons Attribution-Share Alike 3.0 Unported License. To view a copy of this license, visit http://creativecommons.org/licenses/by-sa/3.0/ . The FluidSynth library is distributed under the GNU Library General Public License. A copy of the GNU Library General Public License is contained in the FluidSynth package; if not, visit http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt or write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
@@ -19,6 +20,7 @@ All the source code examples in this document are in the public domain; you can 
 
 - \ref Disclaimer 
 - \ref Introduction 
+- \ref NewIn1_1_2
 - \ref NewIn1_1_1
 - \ref NewIn1_1_0
 - \ref CreatingSettings 
@@ -52,9 +54,36 @@ What is FluidSynth?
 
 - FluidSynth uses instrument samples contained in standard SF2 (SoundFont 2) files, having a file structure based on the RIFF format. The specification can be obtained here: http://connect.creativelabs.com/developer/SoundFont/Forms/AllItems.aspx but most users don't need to know any details of the format.
 
-- FluidSynth can easily be embedded in an application. It has a main header file, fluidsynth.h, and one dynamically linkable library. FluidSynth runs on Linux, Mac OS 9, Mac OS X, and the Win32 platforms. It has audio and midi drivers for all mentioned platforms but you can use it with your own drivers if your application already handles MIDI and audio input/output. This document explains the basic usage of FluidSynth and provides examples that you can reuse. 
+- FluidSynth can easily be embedded in an application. It has a main header file, fluidsynth.h, and one dynamically linkable library. FluidSynth runs on Linux, Mac OS X, and the Windows platforms, and support for OS/2 and OpenSolaris is experimental. It has audio and midi drivers for all mentioned platforms but you can use it with your own drivers if your application already handles MIDI and audio input/output. This document explains the basic usage of FluidSynth and provides examples that you can reuse. 
 
 - FluidSynth is open source, in active development. For more details, take a look at http://www.fluidsynth.org
+
+\section NewIn1_1_2 Whats new in 1.1.2?
+
+Changes in FluidSynth 1.1.2 concerning developers:
+
+- Build system has switched from autotools to CMake. For more information, see
+  README.cmake. The autotools build system is still working, but it is 
+  deprecated. The "winbuild" and "macbuild" directories have been dropped in 
+  favor of CMake's ability to create project files on demand.
+- Thread safety has been reworked to overcome the limitations and bugs in 
+  version 1.1.0 and 1.1.1. There are two new settings controlling the thread 
+  safety, synth.threadsafe-api and synth.parallel-render. More information 
+  about these settings is in the \ref CreatingSettings section. Please look
+  them through and set them appropriately according to your use case.
+- Voice overflow, i e what voice to kill when polyphony is exceeded, is now
+  configurable.
+- Possibility to update polyphony and sample rate real-time. Note that 
+  updating polyphony is not hard real-time safe, and updating sample rate will 
+  kill all currently sounding voices.
+- MIDI Bank Select handling is now configurable. See the synth.midi-bank-select
+  setting in the \ref CreatingSettings section for more information.
+- Can use RealTimeKit (on Linux) to get real-time priority, if the original 
+  attempt fails. Note that you'll need development headers for DBus to enable 
+  this functionality.
+- Shell commands for pitch bend and pitch bend range.
+- PulseAudio driver: two new settings allows you to specify media role, 
+  and control whether pulseaudio can adjust latency.
 
 \section NewIn1_1_1 Whats new in 1.1.1?
 
@@ -436,6 +465,28 @@ The following table provides details on all the settings used by the synthesizer
   </tr>
 
   <tr>
+    <td>synth.parallel-render</td>
+    <td>Type</td>
+    <td>boolean</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Default</td>
+    <td>1 (TRUE)</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Description</td>
+    <td>synth.parallel-render is the low-latency setting. If on, you're allowed
+to call fluid_synth_write_s16, fluid_synth_write_float,
+fluid_synth_nwrite_float or fluid_synth_process in parallel with the
+rest of the calls, and it won't be blocked by time intensive calls to
+the synth. Turn it off if throughput is more important than latency, e g
+in rendering-to-file scenarios where underruns is not an issue.</td>
+  </tr>
+
+
+  <tr>
     <td>synth.polyphony</td>
     <td>Type</td>
     <td>integer</td>
@@ -448,7 +499,7 @@ The following table provides details on all the settings used by the synthesizer
   <tr>
     <td></td>
     <td>Min-Max</td>
-    <td>16-4096</td>
+    <td>1-65535</td>
   </tr>
   <tr>
     <td></td>
@@ -501,6 +552,29 @@ The following table provides details on all the settings used by the synthesizer
     <td>The sample rate of the audio generated by the
     synthesizer.</td>
   </tr>
+
+  <tr>
+    <td>synth.threadsafe-api</td>
+    <td>Type</td>
+    <td>boolean</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Default</td>
+    <td>1 (TRUE)</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Description</td>
+    <td>synth.threadsafe-api controls whether the synth's public API is
+protected by a mutex or not. Default is on, turn it off for slightly
+better performance if you know you're only accessing the synth from one
+thread only, this could be the case in many embedded use cases for
+example. Note that libfluidsynth can use many threads by itself (shell 
+is one, midi driver is one, midi player is one etc) so you should usually 
+leave it on. Also see synth.parallel-render.</td>
+  </tr>
+
 
   <tr>
     <td>synth.verbose</td>
@@ -1576,6 +1650,7 @@ The shell interface allows you to send simple textual commands to the synthesize
 - Reverb settings
 - Chorus settings
 - Interpolation settings (set_gen, get_gen, NRPN)
+- Voice overflow settings
 - LADSPA effects unit
 - Multi-channel audio
 - MIDI tunings
