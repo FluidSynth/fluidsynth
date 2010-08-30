@@ -173,14 +173,14 @@ typedef int fluid_socket_t;
 
 
 /** Integer types  */
-typedef gint8              sint8;
+//typedef gint8              sint8;
 typedef guint8             uint8;
-typedef gint16             sint16;
-typedef guint16            uint16;
+//typedef gint16             sint16;
+//typedef guint16            uint16;
 typedef gint32             sint32;
 typedef guint32            uint32;
-typedef gint64             sint64;
-typedef guint64            uint64;
+//typedef gint64             sint64;
+//typedef guint64            uint64;
 
 
 /***************************************************************
