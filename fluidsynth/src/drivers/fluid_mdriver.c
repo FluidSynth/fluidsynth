@@ -75,8 +75,8 @@ int delete_fluid_midishare_midi_driver(fluid_midi_driver_t* p);
 /* definitions for the CoreMidi driver */
 #if COREMIDI_SUPPORT
 fluid_midi_driver_t* new_fluid_coremidi_driver(fluid_settings_t* settings,
-						   void* event_handler_data,
-						   handle_midi_event_func_t handler);
+                                               handle_midi_event_func_t handler,
+                                               void* event_handler_data);
 int delete_fluid_coremidi_driver(fluid_midi_driver_t* p);
 void fluid_coremidi_driver_settings(fluid_settings_t* settings);
 #endif
