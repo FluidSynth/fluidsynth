@@ -325,8 +325,8 @@ fluid_settings_tokenize(const char *s, char *buf, char **ptr)
 		MAX_SETTINGS_TOKENS);
       return 0;
     }
-
-    ptr[n++] = tok;
+    else
+      ptr[n++] = tok;
   }
 
   return n;
