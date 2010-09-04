@@ -652,8 +652,8 @@ fluid_LADSPA_handle_start(fluid_synth_t* synth, int ac, char** av, fluid_ostream
       /* A node without any input doesn't make sense.
        * The flow graph check aborts with an error. This case cannot happen.
        */
-      if (Current_Node->InCount==0 && !Current_Node->flags & fluid_LADSPA_node_is_dummy){ /* There can only be one warning at a time. */
-    fluid_ostream_printf(out, "***Warning020***"
+      if (Current_Node->InCount==0 && !Current_Node->flags && fluid_LADSPA_node_is_dummy){ /* There can only be one warning at a time. */
+        fluid_ostream_printf(out, "***Warning020***"
 		   "No input into node %s.\n"
 		   "Use '_' as first char in nodename to suppress this warning.\n"
 		   "Hint: Check for typos in the node name.\n",Current_Node->Name);
@@ -664,8 +664,8 @@ fluid_LADSPA_handle_start(fluid_synth_t* synth, int ac, char** av, fluid_ostream
     };
 
     /* A node without any output doesn't make sense. */
-    if (Current_Node->OutCount==0 && !Current_Node->flags & fluid_LADSPA_node_is_dummy){
-    fluid_ostream_printf(out, "***Warning021***\n"
+    if (Current_Node->OutCount==0 && !Current_Node->flags && fluid_LADSPA_node_is_dummy){
+      fluid_ostream_printf(out, "***Warning021***\n"
 		 "No output from node %s.\n"
 		 "Use '_' as first char in nodename to suppress this warning.\n"
 		 "Hint: Check for typos in the node name.\n",Current_Node->Name);
@@ -986,7 +986,7 @@ void fluid_LADSPA_clear(fluid_LADSPA_FxUnit_t* FxUnit){
 
 int fluid_LADSPA_handle_add(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out){
   int i;
-  char * Token;
+  //char * Token;
   char ** CommandLine;
   fluid_LADSPA_FxUnit_t* FxUnit;
   assert(synth);
@@ -1029,9 +1029,9 @@ int fluid_LADSPA_handle_add(fluid_synth_t* synth, int ac, char** av, fluid_ostre
 };
 
 int fluid_LADSPA_handle_declnode(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out){
-  int i;
-  char * Token;
-  char ** CommandLine;
+  //int i;
+  //char * Token;
+  //char ** CommandLine;
   char * NodeName;
   fluid_real_t NodeValue;
   fluid_LADSPA_FxUnit_t* FxUnit;
@@ -1060,8 +1060,8 @@ int fluid_LADSPA_handle_declnode(fluid_synth_t* synth, int ac, char** av, fluid_
   return(FLUID_OK);
 };
 int fluid_LADSPA_handle_setnode(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out){
-  int i;
-  char * Token;
+  //int i;
+  //char * Token;
   char * NodeName;
   fluid_real_t NodeValue;
   fluid_LADSPA_FxUnit_t* FxUnit;
