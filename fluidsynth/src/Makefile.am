@@ -40,9 +40,6 @@ if OSS_SUPPORT
 fluid_oss = drivers/fluid_oss.c
 endif
 
-if LADSPA_SUPPORT
-fluid_ladspa = bindings/fluid_ladspa.c bindings/fluid_ladspa.h
-endif
 
 # if LASH_SUPPORT || LADCCA_SUPPORT (Makefile supports OR?)
 if LASH_SUPPORT
@@ -163,6 +160,8 @@ libfluidsynth_la_SOURCES = \
     drivers/fluid_aufile.c \
     bindings/fluid_cmd.c \
     bindings/fluid_cmd.h \
+    bindings/fluid_ladspa.c \
+    bindings/fluid_ladspa.h \
     bindings/fluid_filerenderer.c 
 
 INCLUDES = -I$(top_srcdir)/include \
