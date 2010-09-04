@@ -32,8 +32,8 @@
 extern void fluid_file_renderer_settings (fluid_settings_t* settings);
 
 /* maximum allowed components of a settings variable (separated by '.') */
-#define MAX_SETTINGS_TOKENS	8	/* currently only a max of 3 are used */
-#define MAX_SETTINGS_LABEL	256	/* max length of a settings variable label */
+#define MAX_SETTINGS_TOKENS 8	/* currently only a max of 3 are used */
+#define MAX_SETTINGS_LABEL 256	/* max length of a settings variable label */
 
 static void fluid_settings_init(fluid_settings_t* settings);
 static void fluid_settings_key_destroy_func(void* value);
@@ -319,14 +319,13 @@ fluid_settings_tokenize(const char *s, char *buf, char **ptr)
 
   while ((tok = fluid_strtok (&tokstr, ".")))
   {
-    if (n > MAX_SETTINGS_TOKENS)
+    if (n >= MAX_SETTINGS_TOKENS)
     {
       FLUID_LOG(FLUID_ERR, "Setting variable name exceeded max token count of %d",
 		MAX_SETTINGS_TOKENS);
       return 0;
-    }
-    else
-      ptr[n++] = tok;
+    } else
+        ptr[n++] = tok;
   }
 
   return n;
