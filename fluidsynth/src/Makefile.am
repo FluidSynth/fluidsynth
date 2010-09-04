@@ -40,6 +40,10 @@ if OSS_SUPPORT
 fluid_oss = drivers/fluid_oss.c
 endif
 
+if LADSPA_SUPPORT
+fluid_ladspa = bindings/fluid_ladspa.c bindings/fluid_ladspa.h
+endif
+
 # if LASH_SUPPORT || LADCCA_SUPPORT (Makefile supports OR?)
 if LASH_SUPPORT
 fluid_lash = bindings/fluid_lash.c bindings/fluid_lash.h
@@ -87,6 +91,7 @@ libfluidsynth_la_SOURCES = \
 	$(fluid_coreaudio) \
 	$(fluid_coremidi) \
 	$(fluid_jack) \
+	$(fluid_ladspa) \
 	$(fluid_lash) \
 	$(fluid_oss) \
 	$(fluid_portaudio) \
