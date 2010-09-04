@@ -684,11 +684,6 @@ new_fluid_synth(fluid_settings_t *settings)
     nbuf = synth->audio_groups;
   }
 
-#ifdef LADSPA
-  /* Create and initialize the Fx unit.*/
-  synth->LADSPA_FxUnit = new_fluid_LADSPA_FxUnit(synth);
-#endif
-
   /* as soon as the synth is created it starts playing. */
   synth->state = FLUID_SYNTH_PLAYING;
   synth->sfont_info = NULL;
@@ -706,7 +701,13 @@ new_fluid_synth(fluid_settings_t *settings)
 						      nbuf, synth->effects_channels);
   if (synth->eventhandler == NULL)
     goto error_recovery; 
-    
+
+#ifdef LADSPA
+  /* Create and initialize the Fx unit.*/
+  synth->LADSPA_FxUnit = new_fluid_LADSPA_FxUnit(synth);
+  fluid_rvoice_mixer_set_ladspa(synth->eventhandler->mixer, synth->LADSPA_FxUnit);
+#endif
+  
   /* allocate and add the default sfont loader */
   loader = new_fluid_defsfloader();
 
@@ -3295,13 +3296,6 @@ fluid_synth_render_blocks(fluid_synth_t* synth, int blockcount)
   //fluid_rvoice_mixer_set_mix_fx(synth->eventhandler->mixer, 
   //				!do_not_mix_fx_to_out);
   blockcount = fluid_rvoice_mixer_render(synth->eventhandler->mixer, blockcount);
-
- 
-#ifdef LADSPA
-  /* Run the signal through the LADSPA Fx unit */
-  fluid_LADSPA_run(synth->LADSPA_FxUnit, synth->left_buf, synth->right_buf, synth->fx_left_buf, synth->fx_right_buf);
-  fluid_check_fpe("LADSPA");
-#endif
 
 #if 0
   /* Signal return queue thread if there are any events pending */

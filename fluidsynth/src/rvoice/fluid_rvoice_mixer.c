@@ -24,6 +24,7 @@
 #include "fluid_rev.h"
 #include "fluid_chorus.h"
 #include "fluidsynth_priv.h"
+#include "fluid_ladspa.h"
 
 #define SYNTH_REVERB_CHANNEL 0
 #define SYNTH_CHORUS_CHANNEL 1
@@ -75,6 +76,10 @@ struct _fluid_rvoice_mixer_t {
   int polyphony; /**< Read-only: Length of voices array */
   int active_voices; /**< Read-only: Number of non-null voices */
   int current_blockcount;      /**< Read-only: how many blocks to process this time */
+
+#ifdef LADSPA
+  fluid_LADSPA_FxUnit_t* LADSPA_FxUnit; /**< Used by mixer only: Effects unit for LADSPA support. Never created or freed */
+#endif
 
 #ifdef ENABLE_MIXER_THREADS
 //  int sleeping_threads;        /**< Atomic: number of threads currently asleep */
@@ -131,6 +136,38 @@ fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t* mixer)
     }
     fluid_profile(FLUID_PROF_ONE_BLOCK_CHORUS, prof_ref);
   }
+  
+#ifdef LADSPA
+  /* Run the signal through the LADSPA Fx unit */
+  if (mixer->LADSPA_FxUnit) {
+    int j;
+    FLUID_DECLARE_VLA(fluid_real_t*, left_buf, mixer->buffers.buf_count);
+    FLUID_DECLARE_VLA(fluid_real_t*, right_buf, mixer->buffers.buf_count);
+    FLUID_DECLARE_VLA(fluid_real_t*, fx_left_buf, mixer->buffers.fx_buf_count);
+    FLUID_DECLARE_VLA(fluid_real_t*, fx_right_buf, mixer->buffers.fx_buf_count);
+    for (j=0; j < mixer->buffers.buf_count; j++) {
+      left_buf[j] = mixer->buffers.left_buf[j];
+      right_buf[j] = mixer->buffers.right_buf[j];
+    }
+    for (j=0; j < mixer->buffers.fx_buf_count; j++) {
+      fx_left_buf[j] = mixer->buffers.fx_left_buf[j];
+      fx_right_buf[j] = mixer->buffers.fx_right_buf[j];
+    }
+    for (i=0; i < mixer->current_blockcount * FLUID_BUFSIZE; i += FLUID_BUFSIZE) {
+      fluid_LADSPA_run(mixer->LADSPA_FxUnit, left_buf, right_buf, fx_left_buf, 
+		       fx_right_buf);
+      for (j=0; j < mixer->buffers.buf_count; j++) {
+        left_buf[j] += FLUID_BUFSIZE;
+        right_buf[j] += FLUID_BUFSIZE;
+      }
+      for (j=0; j < mixer->buffers.fx_buf_count; j++) {
+        fx_left_buf[j] += FLUID_BUFSIZE;
+        fx_right_buf[j] += FLUID_BUFSIZE;
+      }
+    }
+    fluid_check_fpe("LADSPA");
+  }
+#endif
 }
 
 /**
@@ -597,6 +634,14 @@ void delete_fluid_rvoice_mixer(fluid_rvoice_mixer_t* mixer)
   FLUID_FREE(mixer);
 }
 
+
+#ifdef LADSPA				    
+void fluid_rvoice_mixer_set_ladspa(fluid_rvoice_mixer_t* mixer, 
+				   fluid_LADSPA_FxUnit_t* ladspa)
+{
+  mixer->LADSPA_FxUnit = ladspa;
+}
+#endif
 
 void fluid_rvoice_mixer_set_reverb_enabled(fluid_rvoice_mixer_t* mixer, int on)
 {

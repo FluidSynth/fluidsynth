@@ -24,6 +24,7 @@
 
 #include "fluidsynth_priv.h"
 #include "fluid_rvoice.h"
+#include "fluid_ladspa.h"
 
 typedef struct _fluid_rvoice_mixer_t fluid_rvoice_mixer_t;
 
@@ -60,6 +61,11 @@ void fluid_rvoice_mixer_reset_fx(fluid_rvoice_mixer_t* mixer);
 
 void fluid_rvoice_mixer_set_threads(fluid_rvoice_mixer_t* mixer, int thread_count, 
 				    int prio_level);
+				    
+#ifdef LADSPA				    
+void fluid_rvoice_mixer_set_ladspa(fluid_rvoice_mixer_t* mixer, 
+				   fluid_LADSPA_FxUnit_t* ladspa);
+#endif
 
 #endif
 
