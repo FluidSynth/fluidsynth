@@ -4845,7 +4845,8 @@ fluid_synth_replace_tuning_LOCAL (fluid_synth_t *synth, fluid_tuning_t *old_tuni
     }
   }
 #else
-  fluid_tuning_unref (old_tuning, old_tuning_unref);
+  if (old_tuning && old_tuning_unref)
+    fluid_tuning_unref (old_tuning, old_tuning_unref);
 #endif
   if (!unref_new || !new_tuning) return;
 
@@ -5189,10 +5190,10 @@ fluid_synth_set_tuning_LOCAL (fluid_synth_t *synth, int chan,
 
   if (apply) fluid_synth_update_voice_tuning_LOCAL (synth, channel);
 
-#if 0  
   /* Send unref old tuning event */
   if (old_tuning)
   {
+#if 0  
     event = fluid_event_queue_get_inptr (synth->return_queue);
 
     if (event)
@@ -5207,10 +5208,10 @@ fluid_synth_set_tuning_LOCAL (fluid_synth_t *synth, int chan,
       fluid_tuning_unref (old_tuning, 1);
       FLUID_LOG (FLUID_ERR, "Synth return event queue full");
     }
-  }
 #else
-  fluid_tuning_unref (old_tuning, 1);
+    fluid_tuning_unref (old_tuning, 1);
 #endif
+  }
 
 
   return FLUID_OK;
