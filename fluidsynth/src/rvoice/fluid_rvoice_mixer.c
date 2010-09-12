@@ -31,6 +31,10 @@
 
 #define ENABLE_MIXER_THREADS 1
 
+// If less than x voices, the thread overhead is larger than the gain,
+// so don't activate the thread(s).
+#define VOICES_PER_THREAD 8
+
 typedef struct _fluid_mixer_buffers_t fluid_mixer_buffers_t;
 
 struct _fluid_mixer_buffers_t {
@@ -700,6 +704,7 @@ fluid_mixer_get_mt_rvoice(fluid_rvoice_mixer_t* mixer)
 #define THREAD_BUF_PROCESSING 0
 #define THREAD_BUF_VALID 1
 #define THREAD_BUF_NODATA 2
+#define THREAD_BUF_TERMINATE 3
 
 /* Core thread function (processes voices in parallel to primary synthesis thread) */
 static void
@@ -721,8 +726,12 @@ fluid_mixer_thread_func (void* data)
       fluid_cond_mutex_unlock(mixer->thread_ready_m);
       
       fluid_cond_mutex_lock(mixer->wakeup_threads_m);
-      if (fluid_atomic_int_get(&buffers->ready) != THREAD_BUF_PROCESSING)
+      while (1) {
+        int j = fluid_atomic_int_get(&buffers->ready); 
+        if (j == THREAD_BUF_PROCESSING || j == THREAD_BUF_TERMINATE)
+          break;
         fluid_cond_wait(mixer->wakeup_threads, mixer->wakeup_threads_m);
+      }
       fluid_cond_mutex_unlock(mixer->wakeup_threads_m);
       
       hasValidData = 0;
@@ -774,13 +783,13 @@ fluid_mixer_buffers_mix(fluid_mixer_buffers_t* dest, fluid_mixer_buffers_t* src)
  * Go through all threads and see if someone is finished for mixing 
  */
 static FLUID_INLINE int
-fluid_mixer_mix_in(fluid_rvoice_mixer_t* mixer)
+fluid_mixer_mix_in(fluid_rvoice_mixer_t* mixer, int extra_threads)
 {
   int i, result, hasmixed;
   do {
     hasmixed = 0;
     result = 0;
-    for (i=0; i < mixer->thread_count; i++) {
+    for (i=0; i < extra_threads; i++) {
       int j = fluid_atomic_int_get(&mixer->threads[i].ready);
       switch (j) {
 	case THREAD_BUF_PROCESSING: 
@@ -800,23 +809,33 @@ fluid_mixer_mix_in(fluid_rvoice_mixer_t* mixer)
 static void 
 fluid_render_loop_multithread(fluid_rvoice_mixer_t* mixer)
 {
-  int i; //, test=0, waits=0;
+  int i, bufcount;
   //int scount = mixer->current_blockcount * FLUID_BUFSIZE;
   FLUID_DECLARE_VLA(fluid_real_t*, bufs, 
 		    mixer->buffers.buf_count * 2 + mixer->buffers.fx_buf_count * 2);
-  int bufcount = fluid_mixer_buffers_prepare(&mixer->buffers, bufs);
+  // How many threads should we start this time?
+  int extra_threads = mixer->active_voices / VOICES_PER_THREAD;
+  if (extra_threads > mixer->thread_count)
+    extra_threads = mixer->thread_count;
+  if (extra_threads == 0) {
+    // No extra threads? No thread overhead!
+    fluid_render_loop_singlethread(mixer);
+    return;
+  }
+
+  bufcount = fluid_mixer_buffers_prepare(&mixer->buffers, bufs);
   
   // Prepare voice list
   fluid_cond_mutex_lock(mixer->wakeup_threads_m);
   fluid_atomic_int_set(&mixer->current_rvoice, 0);
-  for (i=0; i < mixer->thread_count && i < (mixer->active_voices-1); i++)
+  for (i=0; i < extra_threads; i++)
     fluid_atomic_int_set(&mixer->threads[i].ready, THREAD_BUF_PROCESSING);
   // Signal threads to wake up
   fluid_cond_broadcast(mixer->wakeup_threads);
   fluid_cond_mutex_unlock(mixer->wakeup_threads_m);
   
   // If thread is finished, mix it in
-  while (fluid_mixer_mix_in(mixer)) {
+  while (fluid_mixer_mix_in(mixer, extra_threads)) {
     // Otherwise get a voice and render it
     fluid_rvoice_t* rvoice = fluid_mixer_get_mt_rvoice(mixer);
     if (rvoice != NULL) {
@@ -830,7 +849,7 @@ fluid_render_loop_multithread(fluid_rvoice_mixer_t* mixer)
       int is_processing = 0;
       //waits++;
       fluid_cond_mutex_lock(mixer->thread_ready_m);
-      for (i=0; i < mixer->thread_count; i++) 
+      for (i=0; i < extra_threads; i++) 
 	if (fluid_atomic_int_get(&mixer->threads[i].ready) == 
 	    THREAD_BUF_PROCESSING)
 	  is_processing = 1;
@@ -862,6 +881,8 @@ fluid_rvoice_mixer_set_threads(fluid_rvoice_mixer_t* mixer, int thread_count,
     fluid_atomic_int_set(&mixer->threads_should_terminate, 1);
     // Signal threads to wake up
     fluid_cond_mutex_lock(mixer->wakeup_threads_m);
+    for (i=0; i < mixer->thread_count; i++)
+      fluid_atomic_int_set(&mixer->threads[i].ready, THREAD_BUF_TERMINATE);
     fluid_cond_broadcast(mixer->wakeup_threads);
     fluid_cond_mutex_unlock(mixer->wakeup_threads_m);
   
