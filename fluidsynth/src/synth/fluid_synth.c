@@ -2905,7 +2905,7 @@ fluid_synth_nwrite_float(fluid_synth_t* synth, int len,
   fluid_real_t** left_in;
   fluid_real_t** right_in;
   double time = fluid_utime();
-  int i, num, available, count, bytes;
+  int i, j, num, available, count, bytes;
   float cpu_load;
 
   if (!synth->eventhandler->is_threadsafe)
@@ -2922,8 +2922,15 @@ fluid_synth_nwrite_float(fluid_synth_t* synth, int len,
     bytes = num * sizeof(float);
 
     for (i = 0; i < synth->audio_channels; i++) {
+#ifdef WITH_FLOAT
       FLUID_MEMCPY(left[i], left_in[i] + synth->cur, bytes);
       FLUID_MEMCPY(right[i], right_in[i] + synth->cur, bytes);
+#else //WITH_FLOAT
+      for (j = 0; j < num; j++) {
+          left[i][j] = (float) left_in[i][j + synth->cur];
+          right[i][j] = (float) right_in[i][j + synth->cur];
+      }
+#endif //WITH_FLOAT
     }
     count += num;
     num += synth->cur; /* if we're now done, num becomes the new synth->cur below */
