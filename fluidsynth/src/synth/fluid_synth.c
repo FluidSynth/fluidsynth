@@ -2939,15 +2939,22 @@ fluid_synth_nwrite_float(fluid_synth_t* synth, int len,
   /* Then, run one_block() and copy till we have 'len' samples  */
   while (count < len) {
     fluid_rvoice_mixer_set_mix_fx(synth->eventhandler->mixer, 0);
-    fluid_synth_render_blocks(synth, 1);
+    fluid_synth_render_blocks(synth, 1); // TODO: 
     fluid_rvoice_mixer_get_bufs(synth->eventhandler->mixer, &left_in, &right_in);
 
     num = (FLUID_BUFSIZE > len - count)? len - count : FLUID_BUFSIZE;
     bytes = num * sizeof(float);
 
     for (i = 0; i < synth->audio_channels; i++) {
+#ifdef WITH_FLOAT
       FLUID_MEMCPY(left[i] + count, left_in[i], bytes);
       FLUID_MEMCPY(right[i] + count, right_in[i], bytes);
+#else //WITH_FLOAT
+      for (j = 0; j < num; j++) {
+          left[i][j + count] = (float) left_in[i][j];
+          right[i][j + count] = (float) right_in[i][j];
+      }
+#endif //WITH_FLOAT
     }
 
     count += num;
