@@ -222,7 +222,7 @@ void fluid_synth_settings(fluid_settings_t* settings)
   fluid_settings_register_int(settings, "synth.effects-channels",
 			      2, 2, 2, 0, NULL, NULL);
   fluid_settings_register_num(settings, "synth.sample-rate",
-			      44100.0f, 22050.0f, 96000.0f,
+			      44100.0f, 8000.0f, 96000.0f,
 			      0, NULL, NULL);
   fluid_settings_register_int(settings, "synth.device-id",
 			      0, 0, 126, 0, NULL, NULL);
@@ -623,7 +623,7 @@ new_fluid_synth(fluid_settings_t *settings)
 
   /* register the callbacks */
   fluid_settings_register_num(settings, "synth.sample-rate",
-			      44100.0f, 22050.0f, 96000.0f, 0,
+			      44100.0f, 8000.0f, 96000.0f, 0,
 			      (fluid_num_update_t) fluid_synth_update_sample_rate, synth);
   fluid_settings_register_num(settings, "synth.gain",
 			      0.2f, 0.0f, 10.0f, 0,
