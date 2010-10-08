@@ -29,7 +29,7 @@ set ( PACKAGE "fluidsynth" )
 # FluidSynth package version
 set ( FLUIDSYNTH_VERSION_MAJOR 1 )
 set ( FLUIDSYNTH_VERSION_MINOR 1 )
-set ( FLUIDSYNTH_VERSION_MICRO 2 )
+set ( FLUIDSYNTH_VERSION_MICRO 3 )
 set ( VERSION "${FLUIDSYNTH_VERSION_MAJOR}.${FLUIDSYNTH_VERSION_MINOR}.${FLUIDSYNTH_VERSION_MICRO}" )      
 set ( FLUIDSYNTH_VERSION "\"${VERSION}\"" )
 
@@ -44,7 +44,7 @@ set ( FLUIDSYNTH_VERSION "\"${VERSION}\"" )
 # This is not exactly the same algorithm as the libtool one, but the results are the same.
 set ( LT_VERSION_CURRENT 1 )
 set ( LT_VERSION_AGE 4 )
-set ( LT_VERSION_REVISION 0 )
+set ( LT_VERSION_REVISION 1 )
 set ( LT_VERSION_INFO "${LT_VERSION_CURRENT}.${LT_VERSION_AGE}.${LT_VERSION_REVISION}" )
 
 # Options disabled by default
