@@ -38,6 +38,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <sys/poll.h>
+#include <glib.h>
 
 #include "config.h"
 
@@ -106,7 +107,7 @@ typedef struct {
   struct pollfd *pfd;
   int npfd;
   fluid_thread_t *thread;
-  int status;
+  gint should_quit;
   unsigned char buffer[BUFFER_LENGTH];
   fluid_midi_parser_t* parser;
 } fluid_alsa_rawmidi_driver_t;
@@ -130,7 +131,7 @@ typedef struct {
   struct pollfd *pfd;
   int npfd;
   fluid_thread_t *thread;
-  int status;
+  gint should_quit;
   int port_count;
 } fluid_alsa_seq_driver_t;
 
@@ -613,7 +614,7 @@ new_fluid_alsa_rawmidi_driver(fluid_settings_t* settings,
   }
   FLUID_FREE(pfd);
 
-  dev->status = FLUID_MIDI_READY;
+  g_atomic_int_set(&dev->should_quit, 0);
 
   /* create the MIDI thread */
   dev->thread = new_fluid_thread (fluid_alsa_midi_run, dev, realtime_prio, FALSE);
@@ -646,7 +647,7 @@ delete_fluid_alsa_rawmidi_driver(fluid_midi_driver_t* p)
   }
 
   /* cancel the thread and wait for it before cleaning up */
-  dev->status = FLUID_MIDI_DONE;
+  g_atomic_int_set(&dev->should_quit, 1);
 
   if (dev->thread)
     fluid_thread_join (dev->thread);
@@ -672,8 +673,7 @@ fluid_alsa_midi_run(void* d)
   int n, i;
 
   /* go into a loop until someone tells us to stop */
-  dev->status = FLUID_MIDI_LISTENING;
-  while (dev->status == FLUID_MIDI_LISTENING) {
+  while (!g_atomic_int_get(&dev->should_quit)) {
 
     /* is there something to read? */
     n = poll(dev->pfd, dev->npfd, 100); /* use a 100 milliseconds timeout */
@@ -685,7 +685,7 @@ fluid_alsa_midi_run(void* d)
       n = snd_rawmidi_read(dev->rawmidi_in, dev->buffer, BUFFER_LENGTH);
       if ((n < 0) && (n != -EAGAIN)) {
 	FLUID_LOG(FLUID_ERR, "Failed to read the midi input");
-	dev->status = FLUID_MIDI_DONE;
+        g_atomic_int_set(&dev->should_quit, 1);
       }
 
       /* let the parser convert the data into events */
@@ -887,7 +887,7 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
   }
 #endif /* LASH_ENABLED */
 
-  dev->status = FLUID_MIDI_READY;
+  g_atomic_int_set(&dev->should_quit, 0);
 
   /* create the MIDI thread */
   dev->thread = new_fluid_thread (fluid_alsa_seq_run, dev, realtime_prio, FALSE);
@@ -923,7 +923,7 @@ delete_fluid_alsa_seq_driver(fluid_midi_driver_t* p)
   }
 
   /* cancel the thread and wait for it before cleaning up */
-  dev->status = FLUID_MIDI_DONE;
+  g_atomic_int_set(&dev->should_quit, 1);
 
   if (dev->thread)
     fluid_thread_join (dev->thread);
@@ -950,8 +950,7 @@ fluid_alsa_seq_run(void* d)
   fluid_alsa_seq_driver_t* dev = (fluid_alsa_seq_driver_t*) d;
 
   /* go into a loop until someone tells us to stop */
-  dev->status = FLUID_MIDI_LISTENING;
-  while (dev->status == FLUID_MIDI_LISTENING) {
+  while (!g_atomic_int_get(&dev->should_quit)) {
 
     /* is there something to read? */
     n = poll(dev->pfd, dev->npfd, 100); /* use a 100 milliseconds timeout */
@@ -971,7 +970,7 @@ fluid_alsa_seq_run(void* d)
 		if (ev != -EPERM && ev != -ENOSPC)
 		{
 		  FLUID_LOG(FLUID_ERR, "Error while reading ALSA sequencer (code=%d)", ev);
-		  dev->status = FLUID_MIDI_DONE;
+                  g_atomic_int_set(&dev->should_quit, 1);
 		}
 		break;
 	    }
@@ -1034,7 +1033,7 @@ fluid_alsa_seq_run(void* d)
 	}
 	while (ev > 0);
     }	/* if poll() > 0 */
-  }	/* while (dev->status == FLUID_MIDI_LISTENING) */
+  }	/* while (!dev->should_quit) */
 }
 
 #endif /* #if ALSA_SUPPORT */
