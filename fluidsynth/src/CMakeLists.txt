@@ -175,6 +175,30 @@ set ( libfluidsynth_SOURCES
     bindings/fluid_filerenderer.c 
 ) 
 
+set ( public_HEADERS
+    ${CMAKE_SOURCE_DIR}/include/fluidsynth/audio.h 
+    ${CMAKE_SOURCE_DIR}/include/fluidsynth/event.h 
+    ${CMAKE_SOURCE_DIR}/include/fluidsynth/gen.h 
+    ${CMAKE_SOURCE_DIR}/include/fluidsynth/log.h 
+    ${CMAKE_SOURCE_DIR}/include/fluidsynth/midi.h 
+    ${CMAKE_SOURCE_DIR}/include/fluidsynth/misc.h 
+    ${CMAKE_SOURCE_DIR}/include/fluidsynth/mod.h 
+    ${CMAKE_SOURCE_DIR}/include/fluidsynth/ramsfont.h 
+    ${CMAKE_SOURCE_DIR}/include/fluidsynth/seq.h 
+    ${CMAKE_SOURCE_DIR}/include/fluidsynth/seqbind.h 
+    ${CMAKE_SOURCE_DIR}/include/fluidsynth/settings.h 
+    ${CMAKE_SOURCE_DIR}/include/fluidsynth/sfont.h 
+    ${CMAKE_SOURCE_DIR}/include/fluidsynth/shell.h 
+    ${CMAKE_SOURCE_DIR}/include/fluidsynth/synth.h 
+    ${CMAKE_SOURCE_DIR}/include/fluidsynth/types.h 
+    ${CMAKE_SOURCE_DIR}/include/fluidsynth/voice.h 
+    ${CMAKE_BINARY_DIR}/include/fluidsynth/version.h 
+)
+
+set ( public_main_HEADER
+    ${CMAKE_SOURCE_DIR}/include/fluidsynth.h 
+)
+
 link_directories (
     ${GLIB_LIBDIR} 
     ${GLIB_LIBRARY_DIRS} 
@@ -196,6 +220,7 @@ link_directories (
     ${DBUS_LIBRARY_DIRS} 
 )
 
+
 # note: by default this target creates a shared object (or dll). To build a 
 # static library instead, set the option BUILD_SHARED_LIBS to FALSE.
 add_library ( libfluidsynth 
@@ -213,27 +238,38 @@ add_library ( libfluidsynth
     ${fluid_pulse_SOURCES}
     ${fluid_windows_SOURCES}
     ${libfluidsynth_SOURCES} 
+    ${public_HEADERS}
+    ${public_main_HEADER}
 )
 
-set_target_properties ( libfluidsynth 
-  PROPERTIES
-    PREFIX "lib"
-    OUTPUT_NAME "fluidsynth" 
-    VERSION ${LT_VERSION_INFO}
-    SOVERSION ${LT_VERSION_CURRENT}
-    LT_VERSION_CURRENT ${LT_VERSION_CURRENT}
-    LT_VERSION_AGE ${LT_VERSION_AGE}
-    LT_VERSION_REVISION ${LT_VERSION_REVISION}
-)
-
-if ( LIBFLUID_CPPFLAGS ) 
+if ( MACOSX_FRAMEWORK )
+     set_property ( SOURCE ${public_HEADERS} 
+         PROPERTY MACOSX_PACKAGE_LOCATION Headers/fluidsynth 
+     )
+    set_target_properties ( libfluidsynth
+      PROPERTIES 
+        OUTPUT_NAME "FluidSynth" 
+        FRAMEWORK TRUE
+        PUBLIC_HEADER "${public_main_HEADER}"  
+        FRAMEWORK_VERSION "${LT_VERSION_CURRENT}"
+        INSTALL_NAME_DIR "/Library/Frameworks"
+        VERSION ${LT_VERSION_INFO}
+        SOVERSION ${LT_VERSION_CURRENT}
+    )
+else ( MACOSX_FRAMEWORK )
   set_target_properties ( libfluidsynth 
+    PROPERTIES
+      PREFIX "lib"
+      OUTPUT_NAME "fluidsynth" 
+      VERSION ${LT_VERSION_INFO}
+      SOVERSION ${LT_VERSION_CURRENT}
+  )
+endif ( MACOSX_FRAMEWORK )
+
+if ( LIBFLUID_CPPFLAGS )
+  set_target_properties ( libfluidsynth
     PROPERTIES COMPILE_FLAGS ${LIBFLUID_CPPFLAGS} )
 endif ( LIBFLUID_CPPFLAGS ) 
-
-# this code creates the file libfluidsynth.la
-# include ( CreateLibtoolFile )
-# create_libtool_file ( libfluidsynth "lib${LIB_SUFFIX}" )
 
 target_link_libraries ( libfluidsynth
     ${GLIB_LIBRARIES} 
@@ -276,4 +312,5 @@ install ( TARGETS fluidsynth libfluidsynth
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib${LIB_SUFFIX}
   ARCHIVE DESTINATION lib${LIB_SUFFIX}
+  FRAMEWORK DESTINATION /Library/Frameworks
 )

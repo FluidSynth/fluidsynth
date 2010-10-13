@@ -2905,7 +2905,7 @@ fluid_synth_nwrite_float(fluid_synth_t* synth, int len,
   fluid_real_t** left_in;
   fluid_real_t** right_in;
   double time = fluid_utime();
-  int i, j, num, available, count, bytes;
+  int i, num, available, count, bytes;
   float cpu_load;
 
   if (!synth->eventhandler->is_threadsafe)
@@ -2926,6 +2926,7 @@ fluid_synth_nwrite_float(fluid_synth_t* synth, int len,
       FLUID_MEMCPY(left[i], left_in[i] + synth->cur, bytes);
       FLUID_MEMCPY(right[i], right_in[i] + synth->cur, bytes);
 #else //WITH_FLOAT
+      int j;
       for (j = 0; j < num; j++) {
           left[i][j] = (float) left_in[i][j + synth->cur];
           right[i][j] = (float) right_in[i][j + synth->cur];
@@ -2950,6 +2951,7 @@ fluid_synth_nwrite_float(fluid_synth_t* synth, int len,
       FLUID_MEMCPY(left[i] + count, left_in[i], bytes);
       FLUID_MEMCPY(right[i] + count, right_in[i], bytes);
 #else //WITH_FLOAT
+      int j;
       for (j = 0; j < num; j++) {
           left[i][j + count] = (float) left_in[i][j];
           right[i][j + count] = (float) right_in[i][j];

@@ -21,7 +21,7 @@
 #ifndef _FLUIDSYNTH_SEQBIND_H
 #define _FLUIDSYNTH_SEQBIND_H
 
-#include "fluidsynth/seq.h"
+#include "seq.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -22,7 +22,8 @@
 configure_file ( ${CMAKE_CURRENT_SOURCE_DIR}/version.h.in 
                  ${CMAKE_CURRENT_BINARY_DIR}/version.h )
 
-set ( include_HEADERS 
+if ( NOT MACOSX_FRAMEWORK )
+  set ( include_HEADERS 
     audio.h 
     event.h 
     gen.h 
@@ -39,12 +40,12 @@ set ( include_HEADERS
     synth.h 
     types.h 
     voice.h 
-)
-
-install ( 
-  FILES 
-    ${include_HEADERS}
-    ${CMAKE_CURRENT_BINARY_DIR}/version.h
-  DESTINATION 
-    include/fluidsynth 
-)
+  )
+  install ( 
+    FILES 
+      ${include_HEADERS}
+      ${CMAKE_CURRENT_BINARY_DIR}/version.h
+    DESTINATION 
+      include/fluidsynth 
+  )
+endif ( NOT MACOSX_FRAMEWORK )
