@@ -445,3 +445,27 @@ if ( UNIX )
 endif ( UNIX )
 
 include ( report )
+
+# CPack support 
+set ( CPACK_PACKAGE_DESCRIPTION_SUMMARY "FluidSynth real-time synthesizer" )
+set ( CPACK_PACKAGE_VENDOR "fluidsynth.org" )
+set ( CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_SOURCE_DIR}/README" )
+set ( CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/COPYING" )
+set ( CPACK_PACKAGE_VERSION_MAJOR ${FLUIDSYNTH_VERSION_MAJOR} )
+set ( CPACK_PACKAGE_VERSION_MINOR ${FLUIDSYNTH_VERSION_MINOR} )
+set ( CPACK_PACKAGE_VERSION_PATCH ${FLUIDSYNTH_VERSION_MICRO} )
+set ( CPACK_PACKAGE_EXECUTABLES "fluidsynth" "FluidSynth CLI" )
+
+# source packages
+set ( CPACK_SOURCE_GENERATOR TGZ;TBZ2;ZIP )
+set ( CPACK_SOURCE_IGNORE_FILES "/.svn/;/build/;~$;.cproject;.project;/.settings/;${CPACK_SOURCE_IGNORE_FILES}" )
+set ( CPACK_SOURCE_PACKAGE_FILE_NAME "${PACKAGE}-${VERSION}" ) 
+set ( CPACK_SOURCE_STRIP_FILES OFF )
+
+# binary packages
+include ( InstallRequiredSystemLibraries )
+set ( CPACK_GENERATOR STGZ;TGZ;TBZ2;ZIP )
+set ( CPACK_PACKAGE_NAME ${PACKAGE} )
+set ( CPACK_STRIP_FILES ON )
+
+include ( CPack )
