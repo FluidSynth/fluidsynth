@@ -11,4 +11,5 @@ EXTRA_DIST = CheckDIRSymbolExists.cmake \
     FindReadline.cmake \
     report.cmake \
     TestInline.cmake \
-    TestVLA.cmake
+    TestVLA.cmake \
+    UnsetPkgConfig.cmake

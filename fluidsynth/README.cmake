@@ -22,7 +22,7 @@ Linux and other systems at:
 How to use it?
 ==============
 
-1. You need CMake 2.6 or later to build FluidSynth
+1. You need CMake 2.6.3 or later to build FluidSynth
 
 2. Unpack the FluidSynth sources somewhere, or checkout the repository, 
    and create a build directory. For instance, using a command line shell:
@@ -103,21 +103,22 @@ file CMakeLists.txt, line 64:
 Now, let's check if the dbus-1 library and headers are installed, using 
 pkg-config:
 
-file CMakeLists.txt, lines 329-334:
+file CMakeLists.txt, lines 371-377:
 
-	set ( DBUS_SUPPORT )
-	set ( DBUS_LIBRARIES )
+	unset ( DBUS_SUPPORT CACHE )
 	if ( enable-dbus )
 		pkg_check_modules ( DBUS dbus-1>=1.0.0 )
 		set ( DBUS_SUPPORT ${DBUS_FOUND} )
+    else ( enable-dbus )
+        unset_pkg_config ( DBUS )
 	endif ( enable-dbus )
 
-The two first lines clear the values of the CMake variables DBUS_LIBRARIES and 
-DBUS_SUPPORT. If the value of the option "enable-dbus" is true, then the macro 
-pkg_check_modules() is used to test a package named "dbus-1" with version 1.0.0 
-or later. This macro automatically defines the variables DBUS_LIBRARIES, 
-DBUS_INCLUDEDIR, DBUS_FOUND and others. The value of the last one is assigned 
-to our variable DBUS_SUPPORT for later use.
+The first line clears the value of the CMake variable DBUS_SUPPORT. If the 
+value of the option "enable-dbus" is true, then the macro  pkg_check_modules() 
+is used to test a package named "dbus-1" with version 1.0.0 or later. This macro 
+automatically defines the variables DBUS_LIBRARIES, DBUS_INCLUDEDIR, DBUS_FOUND 
+and others. The value of the last one is assigned to our variable DBUS_SUPPORT 
+for later use.
 
 There is a report to summarize the performed checks and the enabled features 
 after the configuration steps, so let's add a line in this report regarding 
@@ -166,7 +167,7 @@ file src/CMakeLists.txt, lines 163-197
 		${DBUS_LIBRARY_DIRS} 
 	)
 
-	add_library ( libfluidsynth SHARED 
+	add_library ( libfluidsynth  
 		...
 		${fluid_dbus_SOURCES}
 		...
