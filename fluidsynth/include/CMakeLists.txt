@@ -22,5 +22,5 @@
 add_subdirectory ( fluidsynth )
 
 IF (NOT MACOSX_FRAMEWORK )
-    install ( FILES fluidsynth.h DESTINATION include )
+    install ( FILES fluidsynth.h DESTINATION ${INCLUDE_INSTALL_DIR} )
 ENDIF (NOT MACOSX_FRAMEWORK )

@@ -93,6 +93,9 @@ set ( LIB_SUFFIX ${_init_lib_suffix} CACHE STRING
       "library directory name suffix (32/64/nothing)" )
 mark_as_advanced ( LIB_SUFFIX )
 
+# Default install directory names
+include ( DefaultDirs )
+
 # Basic C library checks
 include ( CheckSTDC )
 include ( CheckIncludeFile )
@@ -197,7 +200,8 @@ unset ( DARWIN CACHE )
 unset ( MACOSX_FRAMEWORK CACHE )
 if ( ${CMAKE_SYSTEM} MATCHES "Darwin" )
   set ( DARWIN 1 )
-  set ( CMAKE_INSTALL_NAME_DIR ${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX} )
+  set ( CMAKE_INSTALL_NAME_DIR 
+        ${CMAKE_INSTALL_PREFIX}/${LIB_INSTALL_DIR}${LIB_SUFFIX} )
   if ( enable-coreaudio )
     check_include_file ( CoreAudio/AudioHardware.h COREAUDIO_FOUND )
     if ( COREAUDIO_FOUND )
@@ -407,7 +411,7 @@ if ( UNIX )
     configure_file ( fluidsynth.pc.in 
         ${CMAKE_BINARY_DIR}/fluidsynth.pc IMMEDIATE @ONLY )
     install ( FILES ${CMAKE_BINARY_DIR}/fluidsynth.pc
-        DESTINATION lib${LIB_SUFFIX}/pkgconfig )
+        DESTINATION ${LIB_INSTALL_DIR}${LIB_SUFFIX}/pkgconfig )
     
     # uninstall custom target
     configure_file ( "${CMAKE_SOURCE_DIR}/cmake_admin/cmake_uninstall.cmake.in"

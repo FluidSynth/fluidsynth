@@ -31,5 +31,5 @@ endif ( DOXYGEN_FOUND )
 
 if ( UNIX )
   install ( FILES fluidsynth.1
-    DESTINATION share/man/man1 )
+    DESTINATION ${MAN_INSTALL_DIR} )
 endif ( UNIX )

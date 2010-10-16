@@ -46,6 +46,6 @@ if ( NOT MACOSX_FRAMEWORK )
       ${include_HEADERS}
       ${CMAKE_CURRENT_BINARY_DIR}/version.h
     DESTINATION 
-      include/fluidsynth 
+      ${INCLUDE_INSTALL_DIR}/fluidsynth 
   )
 endif ( NOT MACOSX_FRAMEWORK )
