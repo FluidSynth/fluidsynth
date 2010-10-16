@@ -42,10 +42,11 @@ set ( FLUIDSYNTH_VERSION "\"${VERSION}\"" )
 # if any interfaces have been added: AGE++
 # if any interfaces have been removed/changed (compatibility broken): AGE=0
 # This is not exactly the same algorithm as the libtool one, but the results are the same.
-set ( LT_VERSION_CURRENT 1 )
-set ( LT_VERSION_AGE 4 )
-set ( LT_VERSION_REVISION 1 )
-set ( LT_VERSION_INFO "${LT_VERSION_CURRENT}.${LT_VERSION_AGE}.${LT_VERSION_REVISION}" )
+set ( LIB_VERSION_CURRENT 1 )
+set ( LIB_VERSION_AGE 4 )
+set ( LIB_VERSION_REVISION 1 )
+set ( LIB_VERSION_INFO 
+      "${LIB_VERSION_CURRENT}.${LIB_VERSION_AGE}.${LIB_VERSION_REVISION}" )
 
 # Options disabled by default
 option ( enable-floats "enable type float instead of double for DSP samples" off )
@@ -406,8 +407,8 @@ if ( UNIX )
     # pkg-config support
     set ( prefix "${CMAKE_INSTALL_PREFIX}" )
     set ( exec_prefix "\${prefix}" )
-    set ( libdir "\${exec_prefix}/lib${LIB_SUFFIX}" )
-    set ( includedir "\${prefix}/include" )
+    set ( libdir "\${exec_prefix}/${LIB_INSTALL_DIR}${LIB_SUFFIX}" )
+    set ( includedir "\${prefix}/${INCLUDE_INSTALL_DIR}" )
     configure_file ( fluidsynth.pc.in 
         ${CMAKE_BINARY_DIR}/fluidsynth.pc IMMEDIATE @ONLY )
     install ( FILES ${CMAKE_BINARY_DIR}/fluidsynth.pc
@@ -415,10 +416,9 @@ if ( UNIX )
     
     # uninstall custom target
     configure_file ( "${CMAKE_SOURCE_DIR}/cmake_admin/cmake_uninstall.cmake.in"
-        "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
-        IMMEDIATE @ONLY)
+      "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake" IMMEDIATE @ONLY)
     add_custom_target ( uninstall
-        "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake")
+      "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake")
     
     # tarball custom target
     add_custom_target ( tarball

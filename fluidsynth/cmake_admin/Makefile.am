@@ -4,7 +4,6 @@ EXTRA_DIST = CheckDIRSymbolExists.cmake \
     CheckPrototypeExists.cmake \
     CheckSTDC.cmake \
     cmake_uninstall.cmake.in \
-    CreateLibtoolFile.cmake \
     DefaultDirs.cmake \
     FindMidiShare.cmake \
     FindOSS.cmake \
