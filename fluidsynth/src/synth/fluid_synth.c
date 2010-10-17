@@ -663,9 +663,9 @@ new_fluid_synth(fluid_settings_t *settings)
   /* Allocate event queue for rvoice mixer */
   fluid_settings_getint(settings, "synth.parallel-render", &i);
   /* In an overflow situation, a new voice takes about 50 spaces in the queue! */
-  synth->eventhandler = new_fluid_rvoice_eventhandler(i, synth->polyphony*64, 
-						      synth->polyphony,
-						      nbuf, synth->effects_channels, (int)synth->sample_rate);
+  synth->eventhandler = new_fluid_rvoice_eventhandler(i, synth->polyphony*64,
+	synth->polyphony, nbuf, synth->effects_channels, synth->sample_rate);
+
   if (synth->eventhandler == NULL)
     goto error_recovery; 
 
@@ -2229,7 +2229,7 @@ fluid_synth_set_polyphony(fluid_synth_t* synth, int polyphony)
   fluid_return_val_if_fail (polyphony >= 1 && polyphony <= 65535, FLUID_FAILED);
   fluid_synth_api_enter(synth);
 
-  fluid_synth_update_polyphony_LOCAL(synth, polyphony);
+  result = fluid_synth_update_polyphony_LOCAL(synth, polyphony);
 
   FLUID_API_RETURN(result);
 }

@@ -531,7 +531,7 @@ fluid_rvoice_mixer_set_samplerate(fluid_rvoice_mixer_t* mixer, fluid_real_t samp
  * @param fx_buf_count number of stereo effect buffers
  */
 fluid_rvoice_mixer_t* 
-new_fluid_rvoice_mixer(int buf_count, int fx_buf_count, int sample_rate)
+new_fluid_rvoice_mixer(int buf_count, int fx_buf_count, fluid_real_t sample_rate)
 {
   fluid_rvoice_mixer_t* mixer = FLUID_NEW(fluid_rvoice_mixer_t);
   if (mixer == NULL) {

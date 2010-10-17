@@ -219,8 +219,9 @@ finished_voice_callback(void* userdata, fluid_rvoice_t* rvoice)
   fluid_ringbuffer_next_inptr(eventhandler->finished_voices, 1);
 }
 
-fluid_rvoice_eventhandler_t* new_fluid_rvoice_eventhandler(
-  int is_threadsafe, int queuesize, int finished_voices_size, int bufs, int fx_bufs, int sample_rate)
+fluid_rvoice_eventhandler_t* 
+new_fluid_rvoice_eventhandler(int is_threadsafe, int queuesize, 
+  int finished_voices_size, int bufs, int fx_bufs, fluid_real_t sample_rate)
 {
   fluid_rvoice_eventhandler_t* eventhandler = FLUID_NEW(fluid_rvoice_eventhandler_t);
   if (eventhandler == NULL) {

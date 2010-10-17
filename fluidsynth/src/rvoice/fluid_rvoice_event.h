@@ -56,7 +56,8 @@ struct _fluid_rvoice_eventhandler_t {
 };
 
 fluid_rvoice_eventhandler_t* new_fluid_rvoice_eventhandler(
-  int is_threadsafe, int queuesize, int finished_voices_size, int bufs, int fx_bufs);
+  int is_threadsafe, int queuesize, int finished_voices_size, int bufs, 
+  int fx_bufs, fluid_real_t sample_rate);
 
 void delete_fluid_rvoice_eventhandler(fluid_rvoice_eventhandler_t*);
 

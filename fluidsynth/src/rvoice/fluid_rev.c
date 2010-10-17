@@ -71,8 +71,6 @@ struct _fluid_allpass {
   int bufidx;
 };
 
-void fluid_allpass_setbuffer(fluid_allpass* allpass, fluid_real_t *buf, int size);
-void fluid_allpass_release(fluid_comb* comb);
 void fluid_allpass_init(fluid_allpass* allpass);
 void fluid_allpass_setfeedback(fluid_allpass* allpass, fluid_real_t val);
 fluid_real_t fluid_allpass_getfeedback(fluid_allpass* allpass);
@@ -303,10 +301,10 @@ struct _fluid_revmodel_t {
 
 static void fluid_revmodel_update(fluid_revmodel_t* rev);
 static void fluid_revmodel_init(fluid_revmodel_t* rev);
-void fluid_set_revmodel_buffers(fluid_revmodel_t* rev, int sample_rate);
+void fluid_set_revmodel_buffers(fluid_revmodel_t* rev, fluid_real_t sample_rate);
 
 fluid_revmodel_t*
-new_fluid_revmodel(int sample_rate)
+new_fluid_revmodel(fluid_real_t sample_rate)
 {
   fluid_revmodel_t* rev;
   rev = FLUID_NEW(fluid_revmodel_t);
@@ -349,7 +347,7 @@ delete_fluid_revmodel(fluid_revmodel_t* rev)
 }
 
 void
-fluid_set_revmodel_buffers(fluid_revmodel_t* rev, int sample_rate) {
+fluid_set_revmodel_buffers(fluid_revmodel_t* rev, fluid_real_t sample_rate) {
 
   float srfactor = sample_rate/44100.0f;
 
@@ -532,7 +530,7 @@ fluid_revmodel_set(fluid_revmodel_t* rev, int set, float roomsize,
 }
 
 void
-fluid_revmodel_samplerate_change(fluid_revmodel_t* rev, int sample_rate) {
+fluid_revmodel_samplerate_change(fluid_revmodel_t* rev, fluid_real_t sample_rate) {
   int i;
   for (i = 0; i < numcombs;i++) {
     fluid_comb_release(&rev->combL[i]);
