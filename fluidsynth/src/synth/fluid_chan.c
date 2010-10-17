@@ -53,7 +53,6 @@ new_fluid_channel(fluid_synth_t* synth, int num)
   chan->synth = synth;
   chan->channum = num;
   chan->preset = NULL;
-  chan->shadow_preset = NULL;
   chan->tuning = NULL;
 
   fluid_channel_init(chan);
@@ -65,7 +64,6 @@ new_fluid_channel(fluid_synth_t* synth, int num)
 static void
 fluid_channel_init(fluid_channel_t* chan)
 {
-//  fluid_event_queue_elem_t *event;
   fluid_preset_t *newpreset;
   int prognum, banknum;
 
@@ -75,7 +73,6 @@ fluid_channel_init(fluid_channel_t* chan)
   chan->sfont_bank_prog = 0 << SFONT_SHIFTVAL | banknum << BANK_SHIFTVAL
     | prognum << PROG_SHIFTVAL;
 
-  /* FIXME - fluid_synth_find_preset not real-time safe */
   newpreset = fluid_synth_find_preset(chan->synth, banknum, prognum);
   fluid_channel_set_preset(chan, newpreset);
 
@@ -87,25 +84,7 @@ fluid_channel_init(fluid_channel_t* chan)
 
   if (chan->tuning)
   {
-#if 0    
-    event = fluid_event_queue_get_inptr (chan->synth->return_queue);
-
-    if (event)
-    {
-      event->type = FLUID_EVENT_QUEUE_ELEM_UNREF_TUNING;
-      event->unref_tuning.tuning = chan->tuning;
-      event->unref_tuning.count = 1;
-      fluid_event_queue_next_inptr (chan->synth->return_queue);
-    }
-    else
-    { /* Just unref it in synthesis thread if queue is full */
-    
-      fluid_tuning_unref (chan->tuning, 1);
-      FLUID_LOG (FLUID_ERR, "Synth return event queue full");
-    }
-#else
     fluid_tuning_unref (chan->tuning, 1);
-#endif
     chan->tuning = NULL;
   }
 }
@@ -208,28 +187,9 @@ fluid_channel_reset(fluid_channel_t* chan)
 int
 fluid_channel_set_preset(fluid_channel_t* chan, fluid_preset_t* preset)
 {
-//  fluid_event_queue_elem_t *event;
 
   fluid_preset_notify (chan->preset, FLUID_PRESET_UNSELECTED, chan->channum);
 
-  /* Set shadow preset again, so it contains the actual latest assigned value */
-  fluid_atomic_pointer_set (&chan->shadow_preset, preset);
-
-#if 0  
-  if (chan->preset)     /* Queue preset free (shouldn't free() in synth context) */
-  {
-    event = fluid_event_queue_get_inptr (chan->synth->return_queue);
-    if (!event)
-    {
-      FLUID_LOG (FLUID_ERR, "Synth return event queue full");
-      return FLUID_FAILED;
-    }
-
-    event->type = FLUID_EVENT_QUEUE_ELEM_FREE_PRESET;
-    event->pval = chan->preset;
-    fluid_event_queue_next_inptr (chan->synth->return_queue);
-  }
-#endif
   if (chan->preset) {
     fluid_sfont_t *sfont;
     sfont = chan->preset->sfont;
@@ -259,15 +219,9 @@ fluid_channel_set_sfont_bank_prog(fluid_channel_t* chan, int sfontnum,
     | ((banknum != -1) ? 0 : BANK_MASKVAL)
     | ((prognum != -1) ? 0 : PROG_MASKVAL);
 
-  /* Loop until SoundFont, bank and program integer is atomically assigned */
-  do
-  {
-    oldval = fluid_atomic_int_get (&chan->sfont_bank_prog);
-    newval = (newval & ~oldmask) | (oldval & oldmask);
-  }
-  while (newval != oldval
-         && !fluid_atomic_int_compare_and_exchange (&chan->sfont_bank_prog,
-                                                    oldval, newval));
+  oldval = chan->sfont_bank_prog;
+  newval = (newval & ~oldmask) | (oldval & oldmask);
+  chan->sfont_bank_prog = newval;
 }
 
 /* Set bank LSB 7 bits */
@@ -276,24 +230,18 @@ fluid_channel_set_bank_lsb(fluid_channel_t* chan, int banklsb)
 {
   int oldval, newval, style;
 
-  style = fluid_atomic_int_get (&chan->synth->bank_select);
+  style = chan->synth->bank_select;
   if (style == FLUID_BANK_STYLE_GM ||
       style == FLUID_BANK_STYLE_GS ||
       chan->channum == 9) //TODO: ask for channel drum mode, instead of number
       return; /* ignored */
 
-  /* Loop until bank LSB is atomically assigned */
-  do
-  {
-    oldval = fluid_atomic_int_get (&chan->sfont_bank_prog);
-    if (style == FLUID_BANK_STYLE_XG)
-        newval = (oldval & ~BANK_MASKVAL) | (banklsb << BANK_SHIFTVAL);
-    else /* style == FLUID_BANK_STYLE_MMA */
-        newval = (oldval & ~BANKLSB_MASKVAL) | (banklsb << BANK_SHIFTVAL);
-  }
-  while (newval != oldval
-         && !fluid_atomic_int_compare_and_exchange (&chan->sfont_bank_prog,
-                                                    oldval, newval));
+  oldval = chan->sfont_bank_prog;
+  if (style == FLUID_BANK_STYLE_XG)
+      newval = (oldval & ~BANK_MASKVAL) | (banklsb << BANK_SHIFTVAL);
+  else /* style == FLUID_BANK_STYLE_MMA */
+      newval = (oldval & ~BANKLSB_MASKVAL) | (banklsb << BANK_SHIFTVAL);
+  chan->sfont_bank_prog = newval;
 }
 
 /* Set bank MSB 7 bits */
@@ -302,25 +250,19 @@ fluid_channel_set_bank_msb(fluid_channel_t* chan, int bankmsb)
 {
   int oldval, newval, style;
 
-  style = fluid_atomic_int_get (&chan->synth->bank_select);
+  style = chan->synth->bank_select;
   if (style == FLUID_BANK_STYLE_GM ||
       style == FLUID_BANK_STYLE_XG ||
       chan->channum == 9) //TODO: ask for channel drum mode, instead of number
       return; /* ignored */
   //TODO: if style == XG and bankmsb == 127, convert the channel to drum mode
 
-  /* Loop until bank MSB is atomically assigned */
-  do
-  {
-    oldval = fluid_atomic_int_get (&chan->sfont_bank_prog);
-    if (style == FLUID_BANK_STYLE_GS)
-        newval = (oldval & ~BANK_MASKVAL) | (bankmsb << BANK_SHIFTVAL);
-    else /* style == FLUID_BANK_STYLE_MMA */
-        newval = (oldval & ~BANKMSB_MASKVAL) | (bankmsb << (BANK_SHIFTVAL + 7));
-  }
-  while (newval != oldval
-         && !fluid_atomic_int_compare_and_exchange (&chan->sfont_bank_prog,
-                                                    oldval, newval));
+  oldval = chan->sfont_bank_prog;
+  if (style == FLUID_BANK_STYLE_GS)
+      newval = (oldval & ~BANK_MASKVAL) | (bankmsb << BANK_SHIFTVAL);
+  else /* style == FLUID_BANK_STYLE_MMA */
+      newval = (oldval & ~BANKMSB_MASKVAL) | (bankmsb << (BANK_SHIFTVAL + 7));
+  chan->sfont_bank_prog = newval;
 }
 
 /* Get SoundFont ID, MIDI bank and/or program.  Use NULL to ignore a value. */
@@ -330,7 +272,7 @@ fluid_channel_get_sfont_bank_prog(fluid_channel_t* chan, int *sfont,
 {
   int sfont_bank_prog;
 
-  sfont_bank_prog = fluid_atomic_int_get (&chan->sfont_bank_prog);
+  sfont_bank_prog = chan->sfont_bank_prog;
 
   if (sfont) *sfont = (sfont_bank_prog & SFONT_MASKVAL) >> SFONT_SHIFTVAL;
   if (bank) *bank = (sfont_bank_prog & BANK_MASKVAL) >> BANK_SHIFTVAL;

@@ -28,29 +28,8 @@
 /*
  * fluid_channel_t
  *
- * Mutual exclusion notes:
- *
- * Set once on init:
- * channum
- * synth
- *
- * Synthesis thread context only:
- * preset
- * tuning
- * nrpn_select
- * nrpn_active
- * gen[]
- * gen_abs[]
- *
- * Uses atomic operations:
- * sfont_bank_prog
- * shadow_preset
- * key_pressure
- * channel_pressure
- * pitch_bend
- * pitch_wheel_sensitivity
- * cc[]
- * interp_method
+ * Mutual exclusion notes (as of 1.1.2):
+ * None - everything should have been synchronized by the synth.
  */
 struct _fluid_channel_t
 {
@@ -61,7 +40,6 @@ struct _fluid_channel_t
 
   int sfont_bank_prog;                  /**< SoundFont ID (bit 21-31), bank (bit 7-20), program (bit 0-6) */
   fluid_preset_t* preset;               /**< Selected preset */
-  fluid_preset_t* shadow_preset;        /**< Most recently assigned preset */
 
   int key_pressure;                     /**< MIDI key pressure */
   int channel_pressure;                 /**< MIDI channel pressure */
@@ -116,40 +94,41 @@ int fluid_channel_get_interp_method(fluid_channel_t* chan);
 
 #define fluid_channel_get_preset(chan)          ((chan)->preset)
 #define fluid_channel_set_cc(chan, num, val) \
-  fluid_atomic_int_set (&(chan)->cc[num], val)
-#define fluid_channel_get_cc(chan, num)   fluid_atomic_int_get (&(chan)->cc[num])
+  ((chan)->cc[num] = (val))
+#define fluid_channel_get_cc(chan, num) \
+  ((chan)->cc[num])
 #define fluid_channel_get_key_pressure(chan) \
-  fluid_atomic_int_get (&(chan)->key_pressure)
+  ((chan)->key_pressure)
 #define fluid_channel_set_key_pressure(chan, val) \
-  fluid_atomic_int_set (&(chan)->key_pressure, val)
+  ((chan)->key_pressure = (val))
 #define fluid_channel_get_channel_pressure(chan) \
-  fluid_atomic_int_get (&(chan)->channel_pressure)
+  ((chan)->channel_pressure)
 #define fluid_channel_set_channel_pressure(chan, val) \
-  fluid_atomic_int_set (&(chan)->channel_pressure, val)
+  ((chan)->channel_pressure = (val))
 #define fluid_channel_get_pitch_bend(chan) \
-  fluid_atomic_int_get (&(chan)->pitch_bend)
+  ((chan)->pitch_bend)
 #define fluid_channel_set_pitch_bend(chan, val) \
-  fluid_atomic_int_set (&(chan)->pitch_bend, val)
+  ((chan)->pitch_bend = (val))
 #define fluid_channel_get_pitch_wheel_sensitivity(chan) \
-  fluid_atomic_int_get (&(chan)->pitch_wheel_sensitivity)
+  ((chan)->pitch_wheel_sensitivity)
 #define fluid_channel_set_pitch_wheel_sensitivity(chan, val) \
-  fluid_atomic_int_set (&(chan)->pitch_wheel_sensitivity, val)
+  ((chan)->pitch_wheel_sensitivity = (val))
 #define fluid_channel_get_num(chan)             ((chan)->channum)
 #define fluid_channel_set_interp_method(chan, new_method) \
-  fluid_atomic_int_set (&(chan)->interp_method, new_method)
+  ((chan)->interp_method = (new_method))
 #define fluid_channel_get_interp_method(chan) \
-  fluid_atomic_int_get (&(chan)->interp_method);
+  ((chan)->interp_method);
 #define fluid_channel_set_tuning(_c, _t)        { (_c)->tuning = _t; }
 #define fluid_channel_has_tuning(_c)            ((_c)->tuning != NULL)
 #define fluid_channel_get_tuning(_c)            ((_c)->tuning)
 #define fluid_channel_get_tuning_bank(chan)     \
-  fluid_atomic_int_get (&(chan)->tuning_bank)
+  ((chan)->tuning_bank)
 #define fluid_channel_set_tuning_bank(chan, bank) \
-  fluid_atomic_int_set (&(chan)->tuning_bank, bank)
+  ((chan)->tuning_bank = (bank))
 #define fluid_channel_get_tuning_prog(chan)     \
-  fluid_atomic_int_get (&(chan)->tuning_prog)
+  ((chan)->tuning_prog)
 #define fluid_channel_set_tuning_prog(chan, prog) \
-  fluid_atomic_int_set (&(chan)->tuning_prog, prog)
+  ((chan)->tuning_prog = (prog))
 #define fluid_channel_sustained(_c)             ((_c)->cc[SUSTAIN_SWITCH] >= 64)
 #define fluid_channel_set_gen(_c, _n, _v, _a)   { (_c)->gen[_n] = _v; (_c)->gen_abs[_n] = _a; }
 #define fluid_channel_get_gen(_c, _n)           ((_c)->gen[_n])

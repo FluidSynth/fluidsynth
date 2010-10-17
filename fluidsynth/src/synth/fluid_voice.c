@@ -214,6 +214,9 @@ fluid_voice_init(fluid_voice_t* voice, fluid_sample_t* sample,
    * of IIR filters, position in sample etc) is initialized. */
   int i;
 
+  if (voice->sample)
+    fluid_voice_off(voice);
+
   voice->id = id;
   voice->chan = fluid_channel_get_num(channel);
   voice->key = (unsigned char) key;
@@ -406,8 +409,8 @@ void fluid_voice_start(fluid_voice_t* voice)
 
   voice->status = FLUID_VOICE_ON;
 
-  /* Increment voice count atomically, for non-synth thread read access */
-  fluid_atomic_int_add (&voice->channel->synth->active_voice_count, 1);
+  /* Increment voice count */
+  voice->channel->synth->active_voice_count++;
 }
 
 void 
@@ -1212,8 +1215,8 @@ fluid_voice_off(fluid_voice_t* voice)
     voice->sample = NULL;
   }
 
-  /* Decrement voice count atomically, for non-synth thread read access */
-  fluid_atomic_int_add (&voice->channel->synth->active_voice_count, -1);
+  /* Decrement voice count */
+  voice->channel->synth->active_voice_count--;
 
   return FLUID_OK;
 }

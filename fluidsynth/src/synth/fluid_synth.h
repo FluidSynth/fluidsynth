@@ -105,91 +105,31 @@ typedef struct _fluid_sfont_info_t {
 /*
  * fluid_synth_t
  *
- * Mutual exclusion notes:
+ * Mutual exclusion notes (as of 1.1.2):
  *
- * Set only once on init:
- * ----------------------
- * verbose
- * dump
- * sample_rate (will be runtime change-able in the future)
- * min_note_length_ticks
- * midi_channels
- * audio_channels
- * audio_groups
- * effects_channels
- * start
- * channel[] (Contents change)
- * nvoice
- * voice[] (Contents change)
- * nbuf
- * left_buf[], right_buf[] (Contents change)
- * fx_left_buf[], fx_right_buf[] (Contents change)
- * LADSPA_FxUnit (Contents change)
- * cores
- * core_threads[]
- * bank_select (FIXME: pending implementation of SYSEX midi mode changes)
+ * All variables are considered belongning to the "public API" thread,
+ * which processes all MIDI, except for:
  *
- * Single thread use only (modify only prior to synthesis):
- * loaders<>
- * midi_router
+ * ticks_since_start - atomic, set by rendering thread only
+ * cpu_load - atomic, set by rendering thread only
+ * cur, curmax, dither_index - used by rendering thread only
+ * LADSPA_FxUnit - same instance copied in rendering thread. Synchronising handled internally (I think...?).
  *
- * Mutex protected:
- * settings{} (has its own mutex)
- * sfont_info<>
- * tuning
- * sfont_id
- * reverb_roomsize, reverb_damping, reverb_width, reverb_level
- * chorus_nr, chorus_level, chorus_speed, chorus_depth, chorus_type
- *
- * Atomic operations:
- * ----------------------
- * with_reverb
- * with_chorus
- * state
- * gain
- * cpu_load
- * noteid
- * storeid
- * outbuf
- * sample_timers
- *
- * Only synth thread changes (atomic operations for non-synth thread reads)
- * -------------------------
- * ticks
- * reverb{}
- * chorus{}
- * cur
- * dither_index
- * polyphony
- * active_voice_count
  */
 
 struct _fluid_synth_t
 {
-#if 0
-  fluid_thread_id_t synth_thread_id; /**< ID of the synthesis thread or FLUID_THREAD_ID_NULL if not yet set */
-  fluid_private_t thread_queues;     /**< Thread private data for event queues for each non-synthesis thread queuing events */
-  fluid_event_queue_t *queues[FLUID_MAX_EVENT_QUEUES];   /**< Thread event queues (NULL for unused elements) */
-#endif 
-
-  fluid_rec_mutex_t mutex;           /**< Lock for multi-thread sensitive variables (not used by synthesis process) */
+  fluid_rec_mutex_t mutex;           /**< Lock for public API */
   int use_mutex;                     /**< Use mutex for all public API functions? */
-  int public_api_count;            /**< How many times the mutex is currently locked */
-#if 0  
-  fluid_list_t *queue_pool;          /**< List of event queues whose threads have been destroyed and which can be re-used */
-  fluid_event_queue_t *return_queue; /**< Event queue for events from synthesis thread to non-synthesis threads (memory frees, etc) */
-  fluid_thread_t *return_queue_thread;  /**< Return event queue processing thread */
-  fluid_cond_mutex_t *return_queue_mutex;       /**< Mutex for return queue condition */
-  fluid_cond_t *return_queue_cond;   /**< Return queue thread synchronization condition */
-#endif
+  int public_api_count;              /**< How many times the mutex is currently locked */
+
   fluid_settings_t* settings;        /**< the synthesizer settings */
   int device_id;                     /**< Device ID used for SYSEX messages */
   int polyphony;                     /**< Maximum polyphony */
-  int shadow_polyphony;              /**< Maximum polyphony shadow value (for non-synth threads) */
-  int with_reverb;                  /**< Should the synth use the built-in reverb unit? */
-  int with_chorus;                  /**< Should the synth use the built-in chorus unit? */
-  int verbose;                      /**< Turn verbose mode on? */
-  int dump;                         /**< Dump events to stdout to hook up a user interface? */
+  int with_reverb;                   /**< Should the synth use the built-in reverb unit? */
+  int with_chorus;                   /**< Should the synth use the built-in chorus unit? */
+  int verbose;                       /**< Turn verbose mode on? */
+  int dump;                          /**< Dump events to stdout to hook up a user interface? */
   double sample_rate;                /**< The sample rate */
   int midi_channels;                 /**< the number of MIDI channels (>= 16) */
   int bank_select;                   /**< the style of Bank Select MIDI messages */
@@ -214,17 +154,8 @@ struct _fluid_synth_t
   int active_voice_count;            /**< count of active voices */
   unsigned int noteid;               /**< the id is incremented for every new note. it's used for noteoff's  */
   unsigned int storeid;
-//  int nbuf;                          /**< How many audio buffers are used? (depends on nr of audio channels / groups)*/
   fluid_rvoice_eventhandler_t* eventhandler;
-/*
-  fluid_real_t** left_buf;
-  fluid_real_t** right_buf;
-  fluid_real_t** fx_left_buf;
-  fluid_real_t** fx_right_buf;
 
-  fluid_revmodel_t* reverb;
-  fluid_chorus_t* chorus;
-*/
   float reverb_roomsize;             /**< Shadow of reverb roomsize */
   float reverb_damping;              /**< Shadow of reverb damping */
   float reverb_width;                /**< Shadow of reverb width */
@@ -251,23 +182,6 @@ struct _fluid_synth_t
   unsigned int min_note_length_ticks; /**< If note-offs are triggered just after a note-on, they will be delayed */
 
   int cores;                         /**< Number of CPU cores (1 by default) */
-#if 0
-  fluid_thread_t **core_threads;     /**< Array of core threads (cores - 1 in length) */
-  unsigned char cores_active;        /**< TRUE if core slave threads should remain active, FALSE to terminate them */
-
-  /* Multi-core variables (protected by core_mutex) */
-  fluid_cond_mutex_t *core_mutex;    /**< Mutex to protect all core_ variables and use with core_cond and core_wait_last_cond */
-  fluid_cond_t *core_cond;           /**< Thread condition for signaling core slave threads */
-  int core_work;                     /**< Boolean: TRUE if there is work, FALSE otherwise */
-
-  /* Used in a lockless atomic fashion */
-  int core_voice_index;              /**< Next voice index to process */
-  fluid_voice_t **core_voice_processed;  /**< Array for processed voices */
-  fluid_real_t *core_bufs;           /**< Block containing audio buffers for each voice (FLUID_BUFSIZE in length each) */
-  int core_inprogress;               /**< Count of secondary core threads in progress */
-  int core_waiting_for_last;         /**< Boolean: Set to TRUE if primary synthesis thread is waiting for last slave thread to finish */
-  fluid_cond_t *core_wait_last_cond; /**< Thread condition for signaling primary synthesis thread when last slave thread finishes */
-#endif
 
 #ifdef LADSPA
   fluid_LADSPA_FxUnit_t* LADSPA_FxUnit; /**< Effects unit for LADSPA support */
