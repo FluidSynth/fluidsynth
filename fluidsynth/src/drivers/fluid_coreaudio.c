@@ -33,8 +33,8 @@
 #include "config.h"
 
 #if COREAUDIO_SUPPORT
-#include <CoreAudio/AudioHardware.h>
 #include <CoreAudio/CoreAudioTypes.h>
+#include <AudioUnit/AudioUnit.h>
 
 /*
  * fluid_core_audio_driver_t
@@ -42,7 +42,7 @@
  */
 typedef struct {
   fluid_audio_driver_t driver;
-  AudioDeviceID id;
+  AudioUnit outputUnit;
   AudioStreamBasicDescription format;
   fluid_audio_func_t callback;
   void* data;
@@ -57,13 +57,12 @@ fluid_audio_driver_t* new_fluid_core_audio_driver2(fluid_settings_t* settings,
 						      fluid_audio_func_t func,
 						      void* data);
 
-OSStatus fluid_core_audio_callback(AudioDeviceID dev,
-				   const AudioTimeStamp* now,
-				   const AudioBufferList* in,
-				   const AudioTimeStamp* intime,
-				   AudioBufferList* out,
-				   const AudioTimeStamp* outtime,
-				   void* data);
+OSStatus fluid_core_audio_callback (void *data,
+                                    AudioUnitRenderActionFlags *ioActionFlags,
+                                    const AudioTimeStamp *inTimeStamp,
+                                    UInt32 inBusNumber,
+                                    UInt32 inNumberFrames,
+                                    AudioBufferList *ioData);
 
 int delete_fluid_core_audio_driver(fluid_audio_driver_t* p);
 
@@ -77,7 +76,7 @@ int delete_fluid_core_audio_driver(fluid_audio_driver_t* p);
 void
 fluid_core_audio_driver_settings(fluid_settings_t* settings)
 {
-/*   fluid_settings_register_str(settings, "audio.coreaudio.device", "default", 0, NULL, NULL); */
+  /*fluid_settings_register_str(settings, "audio.coreaudio.device", "default", 0, NULL, NULL);*/
 }
 
 /*
@@ -86,9 +85,9 @@ fluid_core_audio_driver_settings(fluid_settings_t* settings)
 fluid_audio_driver_t*
 new_fluid_core_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
 {
-  return new_fluid_core_audio_driver2(settings,
-					  (fluid_audio_func_t) fluid_synth_process,
-					  (void*) synth);
+  return new_fluid_core_audio_driver2 ( settings,
+                                        (fluid_audio_func_t) fluid_synth_process,
+                                        (void*) synth );
 }
 
 /*
@@ -98,7 +97,8 @@ fluid_audio_driver_t*
 new_fluid_core_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func, void* data)
 {
   fluid_core_audio_driver_t* dev = NULL;
-  UInt32 size;
+  int period_size, periods;
+  double sample_rate;
   OSStatus status;
 
   dev = FLUID_NEW(fluid_core_audio_driver_t);
@@ -111,60 +111,102 @@ new_fluid_core_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func
   dev->callback = func;
   dev->data = data;
 
-  size = sizeof(AudioDeviceID);
-  status = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultOutputDevice,  &size, (void*) &dev->id);
-  if (status != noErr) {
+  // Open the default output unit
+  ComponentDescription desc;
+  desc.componentType = kAudioUnitType_Output;
+  desc.componentSubType = kAudioUnitSubType_HALOutput; //kAudioUnitSubType_DefaultOutput;
+  desc.componentManufacturer = kAudioUnitManufacturer_Apple;
+  desc.componentFlags = 0;
+  desc.componentFlagsMask = 0;
+
+  Component comp = FindNextComponent(NULL, &desc);
+  if (comp == NULL) {
     FLUID_LOG(FLUID_ERR, "Failed to get the default audio device");
     goto error_recovery;
   }
 
-  size = sizeof(UInt32);
-  status = AudioDeviceGetProperty(dev->id, 0, false,
-				  kAudioDevicePropertyBufferSize,
-				  &size, &dev->buffer_size);
+  status = OpenAComponent(comp, &dev->outputUnit);
   if (status != noErr) {
-    FLUID_LOG(FLUID_ERR, "Failed to get the default buffer size");
+    FLUID_LOG(FLUID_ERR, "Failed to open the default audio device");
     goto error_recovery;
   }
 
-  size = sizeof(AudioStreamBasicDescription);
-  status = AudioDeviceGetProperty(dev->id, 0, false,
-				  kAudioDevicePropertyStreamFormat,
-				  &size, &dev->format);
+  // Set up a callback function to generate output
+  AURenderCallbackStruct render;
+  render.inputProc = fluid_core_audio_callback;
+  render.inputProcRefCon = (void *) dev;
+  status = AudioUnitSetProperty (dev->outputUnit,
+                                 kAudioUnitProperty_SetRenderCallback,
+                                 kAudioUnitScope_Input,
+                                 0,
+                                 &render,
+                                 sizeof(render));
   if (status != noErr) {
-    FLUID_LOG(FLUID_ERR, "Failed to get the default audio format");
+    FLUID_LOG (FLUID_ERR, "Error setting the audio callback. Status=%ld\n", (long int)status);
     goto error_recovery;
   }
 
-  FLUID_LOG(FLUID_DBG, "sampleRate %g", dev->format.mSampleRate);
-  FLUID_LOG(FLUID_DBG, "mFormatFlags %08X", dev->format.mFormatFlags);
-  FLUID_LOG(FLUID_DBG, "mBytesPerPacket %d", dev->format.mBytesPerPacket);
-  FLUID_LOG(FLUID_DBG, "mFramesPerPacket %d", dev->format.mFramesPerPacket);
-  FLUID_LOG(FLUID_DBG, "mChannelsPerFrame %d", dev->format.mChannelsPerFrame);
-  FLUID_LOG(FLUID_DBG, "mBytesPerFrame %d", dev->format.mBytesPerFrame);
-  FLUID_LOG(FLUID_DBG, "mBitsPerChannel %d", dev->format.mBitsPerChannel);
+  fluid_settings_getnum(settings, "synth.sample-rate", &sample_rate);
+  fluid_settings_getint(settings, "audio.periods", &periods);
+  fluid_settings_getint(settings, "audio.period-size", &period_size);
+  dev->buffer_size = period_size * periods;
 
-  if (dev->format.mFormatID != kAudioFormatLinearPCM) {
-    FLUID_LOG(FLUID_ERR, "The default audio format is not PCM");
+  // The DefaultOutputUnit should do any format conversions
+  // necessary from our format to the device's format.
+  dev->format.mSampleRate = sample_rate; // sample rate of the audio stream
+  dev->format.mFormatID = kAudioFormatLinearPCM; // encoding type of the audio stream
+  dev->format.mFormatFlags = kLinearPCMFormatFlagIsFloat;
+  dev->format.mBytesPerPacket = 8;
+  dev->format.mFramesPerPacket = 1;
+  dev->format.mBytesPerFrame = 8;
+  dev->format.mChannelsPerFrame = 2;
+  dev->format.mBitsPerChannel = 32;
+
+  FLUID_LOG (FLUID_DBG, "mSampleRate %g", dev->format.mSampleRate);
+  FLUID_LOG (FLUID_DBG, "mFormatFlags %08X", dev->format.mFormatFlags);
+  FLUID_LOG (FLUID_DBG, "mBytesPerPacket %d", dev->format.mBytesPerPacket);
+  FLUID_LOG (FLUID_DBG, "mFramesPerPacket %d", dev->format.mFramesPerPacket);
+  FLUID_LOG (FLUID_DBG, "mChannelsPerFrame %d", dev->format.mChannelsPerFrame);
+  FLUID_LOG (FLUID_DBG, "mBytesPerFrame %d", dev->format.mBytesPerFrame);
+  FLUID_LOG (FLUID_DBG, "mBitsPerChannel %d", dev->format.mBitsPerChannel);
+
+  status = AudioUnitSetProperty (dev->outputUnit,
+                                 kAudioUnitProperty_StreamFormat,
+                                 kAudioUnitScope_Input,
+                                 0,
+                                 &dev->format,
+                                 sizeof(AudioStreamBasicDescription));
+  if (status != noErr) {
+    FLUID_LOG (FLUID_ERR, "Error setting the audio format. Status=%ld\n", (long int)status);
     goto error_recovery;
   }
-  if (!(dev->format.mFormatFlags & kLinearPCMFormatFlagIsFloat)) {
-    FLUID_LOG(FLUID_ERR, "The default audio format is not float");
+
+  status = AudioUnitSetProperty (dev->outputUnit,
+                                 kAudioUnitProperty_MaximumFramesPerSlice,
+                                 kAudioUnitScope_Input,
+                                 0,
+                                 &dev->buffer_size,
+                                 sizeof(unsigned int));
+  if (status != noErr) {
+    FLUID_LOG (FLUID_ERR, "Failed to set the MaximumFramesPerSlice. Status=%ld\n", (long int)status);
     goto error_recovery;
   }
+  FLUID_LOG (FLUID_DBG, "MaximumFramesPerSlice = %d", dev->buffer_size);
 
   dev->buffers[0] = FLUID_ARRAY(float, dev->buffer_size);
   dev->buffers[1] = FLUID_ARRAY(float, dev->buffer_size);
 
-  status = AudioDeviceAddIOProc(dev->id, fluid_core_audio_callback, (void*) dev);
+  // Initialize the audio unit
+  status = AudioUnitInitialize(dev->outputUnit);
   if (status != noErr) {
-    FLUID_LOG(FLUID_ERR, "The default audio format is not PCM");
+    FLUID_LOG (FLUID_ERR, "Error calling AudioUnitInitialize(). Status=%ld\n", (long int)status);
     goto error_recovery;
   }
 
-  status = AudioDeviceStart(dev->id, fluid_core_audio_callback);
+  // Start the rendering
+  status = AudioOutputUnitStart (dev->outputUnit);
   if (status != noErr) {
-    FLUID_LOG(FLUID_ERR, "The default audio format is not PCM");
+    FLUID_LOG (FLUID_ERR, "Error calling AudioOutputUnitStart(). Status=%ld\n", (long int)status);
     goto error_recovery;
   }
 
@@ -188,9 +230,7 @@ delete_fluid_core_audio_driver(fluid_audio_driver_t* p)
     return FLUID_OK;
   }
 
-  if (AudioDeviceStop(dev->id, fluid_core_audio_callback) == noErr) {
-    AudioDeviceRemoveIOProc(dev->id, fluid_core_audio_callback);
-  }
+  CloseComponent (dev->outputUnit);
 
   if (dev->buffers[0]) {
     FLUID_FREE(dev->buffers[0]);
@@ -205,18 +245,17 @@ delete_fluid_core_audio_driver(fluid_audio_driver_t* p)
 }
 
 OSStatus
-fluid_core_audio_callback(AudioDeviceID id,
-			  const AudioTimeStamp* now,
-			  const AudioBufferList* in,
-			  const AudioTimeStamp* intime,
-			  AudioBufferList* out,
-			  const AudioTimeStamp* outtime,
-			  void* data)
+fluid_core_audio_callback ( void *data,
+                            AudioUnitRenderActionFlags *ioActionFlags,
+                            const AudioTimeStamp *inTimeStamp,
+                            UInt32 inBusNumber,
+                            UInt32 inNumberFrames,
+                            AudioBufferList *ioData)
 {
   int i, k;
   fluid_core_audio_driver_t* dev = (fluid_core_audio_driver_t*) data;
-  int len = dev->buffer_size / dev->format.mBytesPerFrame;
-  float* buffer = out->mBuffers[0].mData;
+  int len = inNumberFrames;
+  float* buffer = ioData->mBuffers[0].mData;
 
   if (dev->callback)
   {

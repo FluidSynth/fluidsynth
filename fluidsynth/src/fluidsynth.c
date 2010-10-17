@@ -53,7 +53,9 @@ void print_usage(void);
 void print_help(fluid_settings_t *settings);
 void print_welcome(void);
 
+#if !defined(MACINTOSH)
 static fluid_cmd_handler_t* newclient(void* data, char* addr);
+#endif
 
 /*
  * the globals
@@ -282,7 +284,9 @@ int main(int argc, char** argv)
   fluid_midi_driver_t* mdriver = NULL;
   fluid_audio_driver_t* adriver = NULL;
   fluid_synth_t* synth = NULL;
+#if !defined(MACINTOSH)
   fluid_server_t* server = NULL;
+#endif
   char* config_file = NULL;
   int audio_groups = 0;
   int audio_channels = 0;
@@ -798,12 +802,13 @@ int main(int argc, char** argv)
   return 0;
 }
 
+#if !defined(MACINTOSH)
 static fluid_cmd_handler_t* newclient(void* data, char* addr)
 {
   fluid_synth_t* synth = (fluid_synth_t*) data;
   return new_fluid_cmd_handler(synth);
 }
-
+#endif
 
 /*
  * print_usage
