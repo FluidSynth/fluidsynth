@@ -665,7 +665,7 @@ new_fluid_synth(fluid_settings_t *settings)
   /* In an overflow situation, a new voice takes about 50 spaces in the queue! */
   synth->eventhandler = new_fluid_rvoice_eventhandler(i, synth->polyphony*64, 
 						      synth->polyphony,
-						      nbuf, synth->effects_channels);
+						      nbuf, synth->effects_channels, (int)synth->sample_rate);
   if (synth->eventhandler == NULL)
     goto error_recovery; 
 

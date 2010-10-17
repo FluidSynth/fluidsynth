@@ -220,7 +220,7 @@ finished_voice_callback(void* userdata, fluid_rvoice_t* rvoice)
 }
 
 fluid_rvoice_eventhandler_t* new_fluid_rvoice_eventhandler(
-  int is_threadsafe, int queuesize, int finished_voices_size, int bufs, int fx_bufs)
+  int is_threadsafe, int queuesize, int finished_voices_size, int bufs, int fx_bufs, int sample_rate)
 {
   fluid_rvoice_eventhandler_t* eventhandler = FLUID_NEW(fluid_rvoice_eventhandler_t);
   if (eventhandler == NULL) {
@@ -242,7 +242,7 @@ fluid_rvoice_eventhandler_t* new_fluid_rvoice_eventhandler(
   if (eventhandler->queue == NULL)
     goto error_recovery;
 
-  eventhandler->mixer = new_fluid_rvoice_mixer(bufs, fx_bufs); 
+  eventhandler->mixer = new_fluid_rvoice_mixer(bufs, fx_bufs, sample_rate); 
   if (eventhandler->mixer == NULL)
     goto error_recovery;
   fluid_rvoice_mixer_set_finished_voices_callback(eventhandler->mixer, 

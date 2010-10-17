@@ -519,6 +519,8 @@ fluid_rvoice_mixer_set_samplerate(fluid_rvoice_mixer_t* mixer, fluid_real_t samp
   if (mixer->fx.chorus)
     delete_fluid_chorus(mixer->fx.chorus);
   mixer->fx.chorus = new_fluid_chorus(samplerate);
+  if (mixer->fx.reverb)
+	  fluid_revmodel_samplerate_change(mixer->fx.reverb, samplerate);
   for (i=0; i < mixer->active_voices; i++)
     fluid_rvoice_set_output_rate(mixer->rvoices[i], samplerate);
 }
@@ -529,7 +531,7 @@ fluid_rvoice_mixer_set_samplerate(fluid_rvoice_mixer_t* mixer, fluid_real_t samp
  * @param fx_buf_count number of stereo effect buffers
  */
 fluid_rvoice_mixer_t* 
-new_fluid_rvoice_mixer(int buf_count, int fx_buf_count)
+new_fluid_rvoice_mixer(int buf_count, int fx_buf_count, int sample_rate)
 {
   fluid_rvoice_mixer_t* mixer = FLUID_NEW(fluid_rvoice_mixer_t);
   if (mixer == NULL) {
@@ -542,8 +544,8 @@ new_fluid_rvoice_mixer(int buf_count, int fx_buf_count)
   mixer->buffers.buf_blocks = FLUID_MIXER_MAX_BUFFERS_DEFAULT;
   
   /* allocate the reverb module */
-  mixer->fx.reverb = new_fluid_revmodel();
-  mixer->fx.chorus = new_fluid_chorus(44100); /* FIXME: Hardcoded sample rate */
+  mixer->fx.reverb = new_fluid_revmodel(sample_rate);
+  mixer->fx.chorus = new_fluid_chorus(sample_rate);
   if (mixer->fx.reverb == NULL) {
     FLUID_LOG(FLUID_ERR, "Out of memory");
     delete_fluid_rvoice_mixer(mixer);

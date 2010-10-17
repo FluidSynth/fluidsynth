@@ -54,7 +54,7 @@ typedef struct _fluid_revmodel_presets_t {
 /*
  * reverb
  */
-fluid_revmodel_t* new_fluid_revmodel(void);
+fluid_revmodel_t* new_fluid_revmodel(int sample_rate);
 void delete_fluid_revmodel(fluid_revmodel_t* rev);
 
 void fluid_revmodel_processmix(fluid_revmodel_t* rev, fluid_real_t *in,
@@ -67,5 +67,7 @@ void fluid_revmodel_reset(fluid_revmodel_t* rev);
 
 void fluid_revmodel_set(fluid_revmodel_t* rev, int set, float roomsize,
                         float damping, float width, float level);
+
+void fluid_revmodel_samplerate_change(fluid_revmodel_t* rev, int sample_rate);
 
 #endif /* _FLUID_REV_H */
