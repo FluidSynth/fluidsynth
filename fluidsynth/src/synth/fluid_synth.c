@@ -2131,7 +2131,7 @@ fluid_synth_set_sample_rate(fluid_synth_t* synth, float sample_rate)
   int i;
   fluid_return_if_fail (synth != NULL);
   fluid_synth_api_enter(synth);
-  fluid_clip (sample_rate, 22500.0f, 96000.0f);
+  fluid_clip (sample_rate, 8000.0f, 96000.0f);
   synth->sample_rate = sample_rate;
   
   fluid_settings_getint(synth->settings, "synth.min-note-length", &i);
