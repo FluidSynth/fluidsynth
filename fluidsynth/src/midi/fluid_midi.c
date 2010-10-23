@@ -38,32 +38,33 @@ static int fluid_midi_event_length(unsigned char event);
  * @param filename Path of file to open.
  * @return New MIDI file handle or NULL on error.
  */
-fluid_midi_file* new_fluid_midi_file(char* filename)
+fluid_midi_file *
+new_fluid_midi_file(char *filename)
 {
-	fluid_midi_file* mf;
+    fluid_midi_file *mf;
 
-	mf = FLUID_NEW(fluid_midi_file);
-	if (mf == NULL) {
-		FLUID_LOG(FLUID_ERR, "Out of memory");
-		return NULL;
-	}
-	FLUID_MEMSET(mf, 0, sizeof(fluid_midi_file));
+    mf = FLUID_NEW(fluid_midi_file);
+    if (mf == NULL) {
+        FLUID_LOG(FLUID_ERR, "Out of memory");
+        return NULL;
+    }
+    FLUID_MEMSET(mf, 0, sizeof(fluid_midi_file));
 
-	mf->c = -1;
-	mf->running_status = -1;
-	mf->fp = FLUID_FOPEN(filename, "rb");
+    mf->c = -1;
+    mf->running_status = -1;
+    mf->fp = FLUID_FOPEN(filename, "rb");
 
-	if (mf->fp == NULL) {
-		FLUID_LOG(FLUID_ERR, "Couldn't open the MIDI file");
-		FLUID_FREE(mf);
-		return NULL;
-	}
+    if (mf->fp == NULL) {
+        FLUID_LOG(FLUID_ERR, "Couldn't open the MIDI file");
+        FLUID_FREE(mf);
+        return NULL;
+    }
 
-	if (fluid_midi_file_read_mthd(mf) != FLUID_OK) {
-		FLUID_FREE(mf);
-		return NULL;
-	}
-	return mf;
+    if (fluid_midi_file_read_mthd(mf) != FLUID_OK) {
+        FLUID_FREE(mf);
+        return NULL;
+    }
+    return mf;
 }
 
 /**
@@ -71,579 +72,608 @@ fluid_midi_file* new_fluid_midi_file(char* filename)
  * @internal
  * @param mf MIDI file handle to close and free.
  */
-void delete_fluid_midi_file(fluid_midi_file* mf)
+void
+delete_fluid_midi_file (fluid_midi_file *mf)
 {
-	if (mf == NULL) {
-		return;
-	}
-	if (mf->fp != NULL) {
-		FLUID_FCLOSE(mf->fp);
-	}
-	FLUID_FREE(mf);
-	return;
+    if (mf == NULL) {
+        return;
+    }
+    if (mf->fp != NULL) {
+        FLUID_FCLOSE(mf->fp);
+    }
+    FLUID_FREE(mf);
+    return;
 }
 
 /*
- * Get the next byte in a MIDI file.
+ * Gets the next byte in a MIDI file, taking into account previous running status.
+ *
+ * returns FLUID_FAILED if EOF or read error
  */
-int fluid_midi_file_getc(fluid_midi_file* mf)
+int
+fluid_midi_file_getc (fluid_midi_file *mf)
 {
-	unsigned char c;
-	int n;
-	if (mf->c >= 0) {
-		c = mf->c;
-		mf->c = -1;
-	} else {
-		n = FLUID_FREAD(&c, 1, 1, mf->fp);
-		mf->trackpos++;
-	}
-	return (int) c;
+    unsigned char c;
+    int n;
+    if (mf->c >= 0) {
+        c = mf->c;
+        mf->c = -1;
+    } else {
+        n = FLUID_FREAD(&c, 1, 1, mf->fp);
+        if (n != 1)
+            return FLUID_FAILED;
+        mf->trackpos++;
+    }
+    return (int) c;
 }
 
 /*
- * fluid_midi_file_push
+ * Saves a byte to be returned the next time fluid_midi_file_getc() is called,
+ * when it is necessary according to running status.
  */
-int fluid_midi_file_push(fluid_midi_file* mf, int c)
+int
+fluid_midi_file_push(fluid_midi_file *mf, int c)
 {
-	mf->c = c;
-	return FLUID_OK;
+    mf->c = c;
+    return FLUID_OK;
 }
 
 /*
  * fluid_midi_file_read
  */
-int fluid_midi_file_read(fluid_midi_file* mf, void* buf, int len)
+int
+fluid_midi_file_read(fluid_midi_file *mf, void *buf, int len)
 {
-	int num = FLUID_FREAD(buf, 1, len, mf->fp);
-	mf->trackpos += num;
+    int num = FLUID_FREAD(buf, 1, len, mf->fp);
+    if (num == len)
+        mf->trackpos += num;
 #if DEBUG
-	if (num != len) {
-		FLUID_LOG(FLUID_DBG, "Coulnd't read the requested number of bytes");
-	}
+    else
+        FLUID_LOG(FLUID_DBG, "Could not read the requested number of bytes");
 #endif
-	return (num != len)? FLUID_FAILED : FLUID_OK;
+    return (num != len) ? FLUID_FAILED : FLUID_OK;
 }
 
 /*
  * fluid_midi_file_skip
  */
-int fluid_midi_file_skip(fluid_midi_file* mf, int skip)
+int
+fluid_midi_file_skip (fluid_midi_file *mf, int skip)
 {
-	int err = FLUID_FSEEK(mf->fp, skip, SEEK_CUR);
-	if (err) {
-		FLUID_LOG(FLUID_ERR, "Failed to seek position in file");
-		return FLUID_FAILED;
-	}
-	return FLUID_OK;
+    int err = FLUID_FSEEK(mf->fp, skip, SEEK_CUR);
+    if (err) {
+        FLUID_LOG(FLUID_ERR, "Failed to seek position in file");
+        return FLUID_FAILED;
+    }
+    return FLUID_OK;
 }
 
 /*
  * fluid_midi_file_read_mthd
  */
-int fluid_midi_file_read_mthd(fluid_midi_file* mf)
+int
+fluid_midi_file_read_mthd(fluid_midi_file *mf)
 {
-	char mthd[15];
-	if (fluid_midi_file_read(mf, mthd, 14) != FLUID_OK) {
-		return FLUID_FAILED;
-	}
-	if ((FLUID_STRNCMP(mthd, "MThd", 4) != 0) || (mthd[7] != 6) || (mthd[9] > 2)) {
-		FLUID_LOG(FLUID_ERR, "Doesn't look like a MIDI file: invalid MThd header");
-		return FLUID_FAILED;
-	}
-	mf->type = mthd[9];
-	mf->ntracks = (unsigned) mthd[11];
-	mf->ntracks += (unsigned int) (mthd[10]) << 16;
-	if((mthd[12]) < 0){
-		mf->uses_smpte = 1;
-		mf->smpte_fps = -mthd[12];
-		mf->smpte_res = (unsigned) mthd[13];
-		FLUID_LOG(FLUID_ERR, "File uses SMPTE timing -- Not implemented yet");
-		return FLUID_FAILED;
-	} else {
-		mf->uses_smpte = 0;
-		mf->division = (mthd[12] << 8) | (mthd[13] & 0xff);
-		FLUID_LOG(FLUID_DBG, "Division=%d", mf->division);
-	}
-	return FLUID_OK;
+    char mthd[15];
+    if (fluid_midi_file_read(mf, mthd, 14) != FLUID_OK) {
+        return FLUID_FAILED;
+    }
+    if ((FLUID_STRNCMP(mthd, "MThd", 4) != 0) || (mthd[7] != 6)
+            || (mthd[9] > 2)) {
+        FLUID_LOG(FLUID_ERR,
+                "Doesn't look like a MIDI file: invalid MThd header");
+        return FLUID_FAILED;
+    }
+    mf->type = mthd[9];
+    mf->ntracks = (unsigned) mthd[11];
+    mf->ntracks += (unsigned int) (mthd[10]) << 16;
+    if ((mthd[12]) < 0) {
+        mf->uses_smpte = 1;
+        mf->smpte_fps = -mthd[12];
+        mf->smpte_res = (unsigned) mthd[13];
+        FLUID_LOG(FLUID_ERR, "File uses SMPTE timing -- Not implemented yet");
+        return FLUID_FAILED;
+    } else {
+        mf->uses_smpte = 0;
+        mf->division = (mthd[12] << 8) | (mthd[13] & 0xff);
+        FLUID_LOG(FLUID_DBG, "Division=%d", mf->division);
+    }
+    return FLUID_OK;
 }
 
 /*
  * fluid_midi_file_load_tracks
  */
-int fluid_midi_file_load_tracks(fluid_midi_file* mf, fluid_player_t* player)
+int
+fluid_midi_file_load_tracks(fluid_midi_file *mf, fluid_player_t *player)
 {
-	int i;
-	for (i = 0; i < mf->ntracks; i++) {
-		if (fluid_midi_file_read_track(mf, player, i) != FLUID_OK) {
-			return FLUID_FAILED;
-		}
-	}
-	return FLUID_OK;
+    int i;
+    for (i = 0; i < mf->ntracks; i++) {
+        if (fluid_midi_file_read_track(mf, player, i) != FLUID_OK) {
+            return FLUID_FAILED;
+        }
+    }
+    return FLUID_OK;
 }
 
 /*
  * fluid_isasciistring
  */
-int fluid_isasciistring(char* s)
+int
+fluid_isasciistring(char *s)
 {
-	int i;
-	int len = (int) FLUID_STRLEN(s);
-	for (i = 0; i < len; i++) {
-		if (!fluid_isascii(s[i])) {
-			return 0;
-		}
-	}
-	return 1;
+    int i;
+    int len = (int) FLUID_STRLEN(s);
+    for (i = 0; i < len; i++) {
+        if (!fluid_isascii(s[i])) {
+            return 0;
+        }
+    }
+    return 1;
 }
 
 /*
  * fluid_getlength
  */
-long fluid_getlength(unsigned char *s)
+long
+fluid_getlength(unsigned char *s)
 {
-	long i = 0;
-	i = s[3] | (s[2]<<8) | (s[1]<<16) | (s[0]<<24);
-	return i;
+    long i = 0;
+    i = s[3] | (s[2] << 8) | (s[1] << 16) | (s[0] << 24);
+    return i;
 }
 
 /*
  * fluid_midi_file_read_tracklen
  */
-int fluid_midi_file_read_tracklen(fluid_midi_file* mf)
+int
+fluid_midi_file_read_tracklen(fluid_midi_file *mf)
 {
-	unsigned char length[5];
-	if (fluid_midi_file_read(mf, length, 4) != FLUID_OK) {
-		return FLUID_FAILED;
-	}
-	mf->tracklen = fluid_getlength(length);
-	mf->trackpos = 0;
-	mf->eot = 0;
-	return FLUID_OK;
+    unsigned char length[5];
+    if (fluid_midi_file_read(mf, length, 4) != FLUID_OK) {
+        return FLUID_FAILED;
+    }
+    mf->tracklen = fluid_getlength(length);
+    mf->trackpos = 0;
+    mf->eot = 0;
+    return FLUID_OK;
 }
 
 /*
  * fluid_midi_file_eot
  */
-int fluid_midi_file_eot(fluid_midi_file* mf)
+int
+fluid_midi_file_eot(fluid_midi_file *mf)
 {
 #if DEBUG
-	if (mf->trackpos > mf->tracklen) {
-		printf("track overrun: %d > %d\n", mf->trackpos, mf->tracklen);
-	}
+    if (mf->trackpos > mf->tracklen) {
+        printf("track overrun: %d > %d\n", mf->trackpos, mf->tracklen);
+    }
 #endif
-	return mf->eot || (mf->trackpos >= mf->tracklen);
+    return mf->eot || (mf->trackpos >= mf->tracklen);
 }
 
 /*
  * fluid_midi_file_read_track
  */
-int fluid_midi_file_read_track(fluid_midi_file* mf, fluid_player_t* player, int num)
+int
+fluid_midi_file_read_track(fluid_midi_file *mf, fluid_player_t *player, int num)
 {
-	fluid_track_t* track;
-	unsigned char id[5], length[5];
-	int found_track = 0;
-	int skip;
+    fluid_track_t *track;
+    unsigned char id[5], length[5];
+    int found_track = 0;
+    int skip;
 
-	if (fluid_midi_file_read(mf, id, 4) != FLUID_OK) {
-		return FLUID_FAILED;
-	}
-	id[4]='\0';
-	mf->dtime = 0;
+    if (fluid_midi_file_read(mf, id, 4) != FLUID_OK) {
+        return FLUID_FAILED;
+    }
+    id[4] = '\0';
+    mf->dtime = 0;
 
-	while (!found_track){
+    while (!found_track) {
 
-		if (fluid_isasciistring((char*) id) == 0) {
-			FLUID_LOG(FLUID_ERR, "An non-ascii track header found, corrupt file");
-			return FLUID_FAILED;
+        if (fluid_isasciistring((char *) id) == 0) {
+            FLUID_LOG(FLUID_ERR,
+                    "An non-ascii track header found, corrupt file");
+            return FLUID_FAILED;
 
-		} else if (strcmp((char*) id, "MTrk") == 0) {
+        } else if (strcmp((char *) id, "MTrk") == 0) {
 
-			found_track = 1;
+            found_track = 1;
 
-			if (fluid_midi_file_read_tracklen(mf) != FLUID_OK) {
-				return FLUID_FAILED;
-			}
+            if (fluid_midi_file_read_tracklen(mf) != FLUID_OK) {
+                return FLUID_FAILED;
+            }
 
-			track = new_fluid_track(num);
-			if (track == NULL) {
-				FLUID_LOG(FLUID_ERR, "Out of memory");
-				return FLUID_FAILED;
-			}
+            track = new_fluid_track(num);
+            if (track == NULL) {
+                FLUID_LOG(FLUID_ERR, "Out of memory");
+                return FLUID_FAILED;
+            }
 
-			while (!fluid_midi_file_eot(mf)) {
-				if (fluid_midi_file_read_event(mf, track) != FLUID_OK) {
-					return FLUID_FAILED;
-				}
-			}
+            while (!fluid_midi_file_eot(mf)) {
+                if (fluid_midi_file_read_event(mf, track) != FLUID_OK) {
+                    return FLUID_FAILED;
+                }
+            }
 
-			/* Skip remaining track data, if any */
-			if (mf->trackpos < mf->tracklen)
-				fluid_midi_file_skip (mf, mf->tracklen - mf->trackpos);
+            /* Skip remaining track data, if any */
+            if (mf->trackpos < mf->tracklen)
+                fluid_midi_file_skip(mf, mf->tracklen - mf->trackpos);
 
-			fluid_player_add_track(player, track);
+            fluid_player_add_track(player, track);
 
-		} else {
-			found_track = 0;
-			if (fluid_midi_file_read(mf, length, 4) != FLUID_OK) {
-				return FLUID_FAILED;
-			}
-			skip = fluid_getlength(length);
-/*        fseek(mf->fp, skip, SEEK_CUR); */
-			if (fluid_midi_file_skip(mf, skip) != FLUID_OK) {
-				return FLUID_FAILED;
-			}
-		}
-	}
-	if (feof(mf->fp)) {
-		FLUID_LOG(FLUID_ERR, "Unexpected end of file");
-		return FLUID_FAILED;
-	}
-	return FLUID_OK;
+        } else {
+            found_track = 0;
+            if (fluid_midi_file_read(mf, length, 4) != FLUID_OK) {
+                return FLUID_FAILED;
+            }
+            skip = fluid_getlength(length);
+            /* fseek(mf->fp, skip, SEEK_CUR); */
+            if (fluid_midi_file_skip(mf, skip) != FLUID_OK) {
+                return FLUID_FAILED;
+            }
+        }
+    }
+    if (feof(mf->fp)) {
+        FLUID_LOG(FLUID_ERR, "Unexpected end of file");
+        return FLUID_FAILED;
+    }
+    return FLUID_OK;
 }
 
 /*
  * fluid_midi_file_read_varlen
  */
-int fluid_midi_file_read_varlen(fluid_midi_file* mf)
+int
+fluid_midi_file_read_varlen(fluid_midi_file *mf)
 {
-	int i;
-	int c;
-	mf->varlen = 0;
-	for (i = 0;;i++) {
-		if (i == 4) {
-			FLUID_LOG(FLUID_ERR, "Invalid variable length number");
-			return FLUID_FAILED;
-		}
-		c = fluid_midi_file_getc(mf);
-		if (c < 0) {
-			FLUID_LOG(FLUID_ERR, "Unexpected end of file");
-			return FLUID_FAILED;
-		}
-		if (c & 0x80){
-			mf->varlen |= (int) (c & 0x7F);
-			mf->varlen <<= 7;
-		} else {
-			mf->varlen += c;
-			break;
-		}
-	}
-	return FLUID_OK;
+    int i;
+    int c;
+    mf->varlen = 0;
+    for (i = 0;; i++) {
+        if (i == 4) {
+            FLUID_LOG(FLUID_ERR, "Invalid variable length number");
+            return FLUID_FAILED;
+        }
+        c = fluid_midi_file_getc(mf);
+        if (c < 0) {
+            FLUID_LOG(FLUID_ERR, "Unexpected end of file");
+            return FLUID_FAILED;
+        }
+        if (c & 0x80) {
+            mf->varlen |= (int) (c & 0x7F);
+            mf->varlen <<= 7;
+        } else {
+            mf->varlen += c;
+            break;
+        }
+    }
+    return FLUID_OK;
 }
 
 /*
  * fluid_midi_file_read_event
  */
-int fluid_midi_file_read_event(fluid_midi_file* mf, fluid_track_t* track)
+int
+fluid_midi_file_read_event(fluid_midi_file *mf, fluid_track_t *track)
 {
-	int status;
-	int type;
-	int tempo;
-	unsigned char* metadata = NULL;
-	unsigned char* dyn_buf = NULL;
-	unsigned char static_buf[256];
-	int nominator, denominator, clocks, notes, sf, mi;
-	fluid_midi_event_t* evt;
-	int channel = 0;
-	int param1 = 0;
-	int param2 = 0;
-	int size;
+    int status;
+    int type;
+    int tempo;
+    unsigned char *metadata = NULL;
+    unsigned char *dyn_buf = NULL;
+    unsigned char static_buf[256];
+    int nominator, denominator, clocks, notes, sf, mi;
+    fluid_midi_event_t *evt;
+    int channel = 0;
+    int param1 = 0;
+    int param2 = 0;
+    int size;
 
-	/* read the delta-time of the event */
-	if (fluid_midi_file_read_varlen(mf) != FLUID_OK) {
-		return FLUID_FAILED;
-	}
-	mf->dtime += mf->varlen;
+    /* read the delta-time of the event */
+    if (fluid_midi_file_read_varlen(mf) != FLUID_OK) {
+        return FLUID_FAILED;
+    }
+    mf->dtime += mf->varlen;
 
-	/* read the status byte */
-	status = fluid_midi_file_getc(mf);
-	if (status < 0) {
-		FLUID_LOG(FLUID_ERR, "Unexpected end of file");
-		return FLUID_FAILED;
-	}
+    /* read the status byte */
+    status = fluid_midi_file_getc(mf);
+    if (status < 0) {
+        FLUID_LOG(FLUID_ERR, "Unexpected end of file");
+        return FLUID_FAILED;
+    }
 
-	/* not a valid status byte: use the running status instead */
-	if ((status & 0x80) == 0) {
-		if ((mf->running_status & 0x80) == 0) {
-			FLUID_LOG(FLUID_ERR, "Undefined status and invalid running status");
-			return FLUID_FAILED;
-		}
-		fluid_midi_file_push(mf, status);
-		status = mf->running_status;
-	}
+    /* not a valid status byte: use the running status instead */
+    if ((status & 0x80) == 0) {
+        if ((mf->running_status & 0x80) == 0) {
+            FLUID_LOG(FLUID_ERR, "Undefined status and invalid running status");
+            return FLUID_FAILED;
+        }
+        fluid_midi_file_push(mf, status);
+        status = mf->running_status;
+    }
 
-	/* check what message we have */
+    /* check what message we have */
 
-	mf->running_status = status;
+    mf->running_status = status;
 
-	if ((status == MIDI_SYSEX)) {     /* system exclusif */
-		/* read the length of the message */
-		if (fluid_midi_file_read_varlen(mf) != FLUID_OK) {
-			return FLUID_FAILED;
-		}
+    if ((status == MIDI_SYSEX)) { /* system exclusif */
+        /* read the length of the message */
+        if (fluid_midi_file_read_varlen(mf) != FLUID_OK) {
+            return FLUID_FAILED;
+        }
 
-		if (mf->varlen) {
-			FLUID_LOG(FLUID_DBG, "%s: %d: alloc metadata, len = %d", __FILE__, __LINE__, mf->varlen);
-			metadata = FLUID_MALLOC(mf->varlen + 1);
+        if (mf->varlen) {
+            FLUID_LOG(FLUID_DBG, "%s: %d: alloc metadata, len = %d", __FILE__,
+                    __LINE__, mf->varlen);
+            metadata = FLUID_MALLOC(mf->varlen + 1);
 
-			if (metadata == NULL) {
-				FLUID_LOG(FLUID_PANIC, "Out of memory");
-				return FLUID_FAILED;
-			}
+            if (metadata == NULL) {
+                FLUID_LOG(FLUID_PANIC, "Out of memory");
+                return FLUID_FAILED;
+            }
 
-			/* read the data of the message */
-			if (fluid_midi_file_read(mf, metadata, mf->varlen) != FLUID_OK) {
-				FLUID_FREE (metadata);
-				return FLUID_FAILED;
-			}
+            /* read the data of the message */
+            if (fluid_midi_file_read(mf, metadata, mf->varlen) != FLUID_OK) {
+                FLUID_FREE (metadata);
+                return FLUID_FAILED;
+            }
 
-			evt = new_fluid_midi_event();
-			if (evt == NULL) {
-				FLUID_LOG(FLUID_ERR, "Out of memory");
-				FLUID_FREE (metadata);
-				return FLUID_FAILED;
-			}
+            evt = new_fluid_midi_event();
+            if (evt == NULL) {
+                FLUID_LOG(FLUID_ERR, "Out of memory");
+                FLUID_FREE (metadata);
+                return FLUID_FAILED;
+            }
 
-			evt->dtime = mf->dtime;
-			size = mf->varlen;
+            evt->dtime = mf->dtime;
+            size = mf->varlen;
 
-			if (metadata[mf->varlen - 1] == MIDI_EOX)
-				size--;
+            if (metadata[mf->varlen - 1] == MIDI_EOX)
+                size--;
 
-			/* Add SYSEX event and indicate that its dynamically allocated and should be freed with event */
-			fluid_midi_event_set_sysex (evt, metadata, size, TRUE);
-			fluid_track_add_event (track, evt);
-			mf->dtime = 0;
-		}
+            /* Add SYSEX event and indicate that its dynamically allocated and should be freed with event */
+            fluid_midi_event_set_sysex(evt, metadata, size, TRUE);
+            fluid_track_add_event(track, evt);
+            mf->dtime = 0;
+        }
 
-		return FLUID_OK;
+        return FLUID_OK;
 
-	} else if (status == MIDI_META_EVENT) {             /* meta events */
+    } else if (status == MIDI_META_EVENT) { /* meta events */
 
-		int result = FLUID_OK;
+        int result = FLUID_OK;
 
-		/* get the type of the meta message */
-		type = fluid_midi_file_getc(mf);
-		if (type < 0) {
-			FLUID_LOG(FLUID_ERR, "Unexpected end of file");
-			return FLUID_FAILED;
-		}
+        /* get the type of the meta message */
+        type = fluid_midi_file_getc(mf);
+        if (type < 0) {
+            FLUID_LOG(FLUID_ERR, "Unexpected end of file");
+            return FLUID_FAILED;
+        }
 
-		/* get the length of the data part */
-		if (fluid_midi_file_read_varlen(mf) != FLUID_OK) {
-			return FLUID_FAILED;
-		}
+        /* get the length of the data part */
+        if (fluid_midi_file_read_varlen(mf) != FLUID_OK) {
+            return FLUID_FAILED;
+        }
 
-		if (mf->varlen < 255) {
-			metadata = &static_buf[0];
-		} else {
-			FLUID_LOG(FLUID_DBG, "%s: %d: alloc metadata, len = %d", __FILE__, __LINE__, mf->varlen);
-			dyn_buf = FLUID_MALLOC(mf->varlen + 1);
-			if (dyn_buf == NULL) {
-				FLUID_LOG(FLUID_PANIC, "Out of memory");
-				return FLUID_FAILED;
-			}
-			metadata = dyn_buf;
-		}
+        if (mf->varlen < 255) {
+            metadata = &static_buf[0];
+        } else {
+            FLUID_LOG(FLUID_DBG, "%s: %d: alloc metadata, len = %d", __FILE__,
+                    __LINE__, mf->varlen);
+            dyn_buf = FLUID_MALLOC(mf->varlen + 1);
+            if (dyn_buf == NULL) {
+                FLUID_LOG(FLUID_PANIC, "Out of memory");
+                return FLUID_FAILED;
+            }
+            metadata = dyn_buf;
+        }
 
-		/* read the data */
-		if (mf->varlen)
-		{
-			if (fluid_midi_file_read(mf, metadata, mf->varlen) != FLUID_OK) {
-				if (dyn_buf) {
-					FLUID_FREE(dyn_buf);
-				}
-				return FLUID_FAILED;
-			}
-		}
+        /* read the data */
+        if (mf->varlen) {
+            if (fluid_midi_file_read(mf, metadata, mf->varlen) != FLUID_OK) {
+                if (dyn_buf) {
+                    FLUID_FREE(dyn_buf);
+                }
+                return FLUID_FAILED;
+            }
+        }
 
-		/* handle meta data */
-		switch (type) {
+        /* handle meta data */
+        switch (type) {
 
-		case MIDI_COPYRIGHT:
-			metadata[mf->varlen] = 0;
-			break;
+            case MIDI_COPYRIGHT:
+                metadata[mf->varlen] = 0;
+                break;
 
-		case MIDI_TRACK_NAME:
-			metadata[mf->varlen] = 0;
-			fluid_track_set_name(track, (char*) metadata);
-			break;
+            case MIDI_TRACK_NAME:
+                metadata[mf->varlen] = 0;
+                fluid_track_set_name(track, (char *) metadata);
+                break;
 
-		case MIDI_INST_NAME:
-			metadata[mf->varlen] = 0;
-			break;
+            case MIDI_INST_NAME:
+                metadata[mf->varlen] = 0;
+                break;
 
-		case MIDI_LYRIC:
-			break;
+            case MIDI_LYRIC:
+                break;
 
-		case MIDI_MARKER:
-			break;
+            case MIDI_MARKER:
+                break;
 
-		case MIDI_CUE_POINT:
-			break; /* don't care much for text events */
+            case MIDI_CUE_POINT:
+                break; /* don't care much for text events */
 
-		case MIDI_EOT:
-			if (mf->varlen != 0) {
-				FLUID_LOG(FLUID_ERR, "Invalid length for EndOfTrack event");
-				result = FLUID_FAILED;
-				break;
-			}
-			mf->eot = 1;
-			break;
+            case MIDI_EOT:
+                if (mf->varlen != 0) {
+                    FLUID_LOG(FLUID_ERR, "Invalid length for EndOfTrack event");
+                    result = FLUID_FAILED;
+                    break;
+                }
+                mf->eot = 1;
+                break;
 
-		case MIDI_SET_TEMPO:
-			if (mf->varlen != 3) {
-				FLUID_LOG(FLUID_ERR, "Invalid length for SetTempo meta event");
-				result = FLUID_FAILED;
-				break;
-			}
-			tempo = (metadata[0] << 16) + (metadata[1] << 8) + metadata[2];
-			evt = new_fluid_midi_event();
-			if (evt == NULL) {
-				FLUID_LOG(FLUID_ERR, "Out of memory");
-				result = FLUID_FAILED;
-				break;
-			}
-			evt->dtime = mf->dtime;
-			evt->type = MIDI_SET_TEMPO;
-			evt->channel = 0;
-			evt->param1 = tempo;
-			evt->param2 = 0;
-			fluid_track_add_event(track, evt);
-			mf->dtime = 0;
-			break;
+            case MIDI_SET_TEMPO:
+                if (mf->varlen != 3) {
+                    FLUID_LOG(FLUID_ERR,
+                            "Invalid length for SetTempo meta event");
+                    result = FLUID_FAILED;
+                    break;
+                }
+                tempo = (metadata[0] << 16) + (metadata[1] << 8) + metadata[2];
+                evt = new_fluid_midi_event();
+                if (evt == NULL) {
+                    FLUID_LOG(FLUID_ERR, "Out of memory");
+                    result = FLUID_FAILED;
+                    break;
+                }
+                evt->dtime = mf->dtime;
+                evt->type = MIDI_SET_TEMPO;
+                evt->channel = 0;
+                evt->param1 = tempo;
+                evt->param2 = 0;
+                fluid_track_add_event(track, evt);
+                mf->dtime = 0;
+                break;
 
-		case MIDI_SMPTE_OFFSET:
-			if (mf->varlen != 5) {
-				FLUID_LOG(FLUID_ERR, "Invalid length for SMPTE Offset meta event");
-				result = FLUID_FAILED;
-				break;
-			}
-			break; /* we don't use smtp */
+            case MIDI_SMPTE_OFFSET:
+                if (mf->varlen != 5) {
+                    FLUID_LOG(FLUID_ERR,
+                            "Invalid length for SMPTE Offset meta event");
+                    result = FLUID_FAILED;
+                    break;
+                }
+                break; /* we don't use smtp */
 
-		case MIDI_TIME_SIGNATURE:
-			if (mf->varlen != 4) {
-				FLUID_LOG(FLUID_ERR, "Invalid length for TimeSignature meta event");
-				result = FLUID_FAILED;
-				break;
-			}
-			nominator = metadata[0];
-			denominator = pow(2.0, (double) metadata[1]);
-			clocks = metadata[2];
-			notes = metadata[3];
+            case MIDI_TIME_SIGNATURE:
+                if (mf->varlen != 4) {
+                    FLUID_LOG(FLUID_ERR,
+                            "Invalid length for TimeSignature meta event");
+                    result = FLUID_FAILED;
+                    break;
+                }
+                nominator = metadata[0];
+                denominator = pow(2.0, (double) metadata[1]);
+                clocks = metadata[2];
+                notes = metadata[3];
 
-			FLUID_LOG(FLUID_DBG, "signature=%d/%d, metronome=%d, 32nd-notes=%d",
-				  nominator, denominator, clocks, notes);
+                FLUID_LOG(FLUID_DBG,
+                        "signature=%d/%d, metronome=%d, 32nd-notes=%d",
+                        nominator, denominator, clocks, notes);
 
-			break;
+                break;
 
-		case MIDI_KEY_SIGNATURE:
-			if (mf->varlen != 2) {
-				FLUID_LOG(FLUID_ERR, "Invalid length for KeySignature meta event");
-				result = FLUID_FAILED;
-				break;
-			}
-			sf = metadata[0];
-			mi = metadata[1];
-			break;
+            case MIDI_KEY_SIGNATURE:
+                if (mf->varlen != 2) {
+                    FLUID_LOG(FLUID_ERR,
+                            "Invalid length for KeySignature meta event");
+                    result = FLUID_FAILED;
+                    break;
+                }
+                sf = metadata[0];
+                mi = metadata[1];
+                break;
 
-		case MIDI_SEQUENCER_EVENT:
-			break;
+            case MIDI_SEQUENCER_EVENT:
+                break;
 
-		default:
-			break;
-		}
+            default:
+                break;
+        }
 
-		if (dyn_buf) {
-			FLUID_LOG(FLUID_DBG, "%s: %d: free metadata", __FILE__, __LINE__);
-			FLUID_FREE(dyn_buf);
-		}
+        if (dyn_buf) {
+            FLUID_LOG(FLUID_DBG, "%s: %d: free metadata", __FILE__, __LINE__);
+            FLUID_FREE(dyn_buf);
+        }
 
-		return result;
+        return result;
 
-	} else {                /* channel messages */
+    } else { /* channel messages */
 
-		type = status & 0xf0;
-		channel = status & 0x0f;
+        type = status & 0xf0;
+        channel = status & 0x0f;
 
-		/* all channel message have at least 1 byte of associated data */
-		if ((param1 = fluid_midi_file_getc(mf)) < 0) {
-			FLUID_LOG(FLUID_ERR, "Unexpected end of file");
-			return FLUID_FAILED;
-		}
+        /* all channel message have at least 1 byte of associated data */
+        if ((param1 = fluid_midi_file_getc(mf)) < 0) {
+            FLUID_LOG(FLUID_ERR, "Unexpected end of file");
+            return FLUID_FAILED;
+        }
 
-		switch (type) {
+        switch (type) {
 
-		case NOTE_ON:
-			if ((param2 = fluid_midi_file_getc(mf)) < 0) {
-				FLUID_LOG(FLUID_ERR, "Unexpected end of file");
-				return FLUID_FAILED;
-			}
-			break;
+            case NOTE_ON:
+                if ((param2 = fluid_midi_file_getc(mf)) < 0) {
+                    FLUID_LOG(FLUID_ERR, "Unexpected end of file");
+                    return FLUID_FAILED;
+                }
+                break;
 
-		case NOTE_OFF:
-			if ((param2 = fluid_midi_file_getc(mf)) < 0) {
-				FLUID_LOG(FLUID_ERR, "Unexpected end of file");
-				return FLUID_FAILED;
-			}
-			break;
+            case NOTE_OFF:
+                if ((param2 = fluid_midi_file_getc(mf)) < 0) {
+                    FLUID_LOG(FLUID_ERR, "Unexpected end of file");
+                    return FLUID_FAILED;
+                }
+                break;
 
-		case KEY_PRESSURE:
-			if ((param2 = fluid_midi_file_getc(mf)) < 0) {
-				FLUID_LOG(FLUID_ERR, "Unexpected end of file");
-				return FLUID_FAILED;
-			}
-			break;
+            case KEY_PRESSURE:
+                if ((param2 = fluid_midi_file_getc(mf)) < 0) {
+                    FLUID_LOG(FLUID_ERR, "Unexpected end of file");
+                    return FLUID_FAILED;
+                }
+                break;
 
-		case CONTROL_CHANGE:
-			if ((param2 = fluid_midi_file_getc(mf)) < 0) {
-				FLUID_LOG(FLUID_ERR, "Unexpected end of file");
-				return FLUID_FAILED;
-			}
-			break;
+            case CONTROL_CHANGE:
+                if ((param2 = fluid_midi_file_getc(mf)) < 0) {
+                    FLUID_LOG(FLUID_ERR, "Unexpected end of file");
+                    return FLUID_FAILED;
+                }
+                break;
 
-		case PROGRAM_CHANGE:
-			break;
+            case PROGRAM_CHANGE:
+                break;
 
-		case CHANNEL_PRESSURE:
-			break;
+            case CHANNEL_PRESSURE:
+                break;
 
-		case PITCH_BEND:
-			if ((param2 = fluid_midi_file_getc(mf)) < 0) {
-				FLUID_LOG(FLUID_ERR, "Unexpected end of file");
-				return FLUID_FAILED;
-			}
+            case PITCH_BEND:
+                if ((param2 = fluid_midi_file_getc(mf)) < 0) {
+                    FLUID_LOG(FLUID_ERR, "Unexpected end of file");
+                    return FLUID_FAILED;
+                }
 
-			param1 = ((param2 & 0x7f) << 7) | (param1 & 0x7f);
-			param2 = 0;
-			break;
+                param1 = ((param2 & 0x7f) << 7) | (param1 & 0x7f);
+                param2 = 0;
+                break;
 
-		default:
-			/* Can't possibly happen !? */
-			FLUID_LOG(FLUID_ERR, "Unrecognized MIDI event");
-			return FLUID_FAILED;
-		}
-		evt = new_fluid_midi_event();
-		if (evt == NULL) {
-			FLUID_LOG(FLUID_ERR, "Out of memory");
-			return FLUID_FAILED;
-		}
-		evt->dtime = mf->dtime;
-		evt->type = type;
-		evt->channel = channel;
-		evt->param1 = param1;
-		evt->param2 = param2;
-		fluid_track_add_event(track, evt);
-		mf->dtime = 0;
-	}
-	return FLUID_OK;
+            default:
+                /* Can't possibly happen !? */
+                FLUID_LOG(FLUID_ERR, "Unrecognized MIDI event");
+                return FLUID_FAILED;
+        }
+        evt = new_fluid_midi_event();
+        if (evt == NULL) {
+            FLUID_LOG(FLUID_ERR, "Out of memory");
+            return FLUID_FAILED;
+        }
+        evt->dtime = mf->dtime;
+        evt->type = type;
+        evt->channel = channel;
+        evt->param1 = param1;
+        evt->param2 = param2;
+        fluid_track_add_event(track, evt);
+        mf->dtime = 0;
+    }
+    return FLUID_OK;
 }
 
 /*
  * fluid_midi_file_get_division
  */
-int fluid_midi_file_get_division(fluid_midi_file* midifile)
+int
+fluid_midi_file_get_division(fluid_midi_file *midifile)
 {
-	return midifile->division;
+    return midifile->division;
 }
 
 /******************************************************
@@ -655,22 +685,23 @@ int fluid_midi_file_get_division(fluid_midi_file* midifile)
  * Create a MIDI event structure.
  * @return New MIDI event structure or NULL when out of memory.
  */
-fluid_midi_event_t* new_fluid_midi_event()
+fluid_midi_event_t *
+new_fluid_midi_event ()
 {
-	fluid_midi_event_t* evt;
-	evt = FLUID_NEW(fluid_midi_event_t);
-	if (evt == NULL) {
-		FLUID_LOG(FLUID_ERR, "Out of memory");
-		return NULL;
-	}
-	evt->dtime = 0;
-	evt->type = 0;
-	evt->channel = 0;
-	evt->param1 = 0;
-	evt->param2 = 0;
-	evt->next = NULL;
-	evt->paramptr = NULL;
-	return evt;
+    fluid_midi_event_t* evt;
+    evt = FLUID_NEW(fluid_midi_event_t);
+    if (evt == NULL) {
+        FLUID_LOG(FLUID_ERR, "Out of memory");
+        return NULL;
+    }
+    evt->dtime = 0;
+    evt->type = 0;
+    evt->channel = 0;
+    evt->param1 = 0;
+    evt->param2 = 0;
+    evt->next = NULL;
+    evt->paramptr = NULL;
+    return evt;
 }
 
 /**
@@ -678,22 +709,22 @@ fluid_midi_event_t* new_fluid_midi_event()
  * @param evt MIDI event structure
  * @return Always returns #FLUID_OK
  */
-int delete_fluid_midi_event(fluid_midi_event_t* evt)
+int
+delete_fluid_midi_event(fluid_midi_event_t *evt)
 {
-	fluid_midi_event_t *temp;
+    fluid_midi_event_t *temp;
 
-	while (evt)
-	{
-		temp = evt->next;
+    while (evt) {
+        temp = evt->next;
 
-		/* Dynamic SYSEX event? - free (param2 indicates if dynamic) */
-		if (evt->type == MIDI_SYSEX && evt->paramptr && evt->param2)
-			FLUID_FREE (evt->paramptr);
+        /* Dynamic SYSEX event? - free (param2 indicates if dynamic) */
+        if (evt->type == MIDI_SYSEX && evt->paramptr && evt->param2)
+            FLUID_FREE (evt->paramptr);
 
-		FLUID_FREE(evt);
-		evt = temp;
-	}
-	return FLUID_OK;
+        FLUID_FREE(evt);
+        evt = temp;
+    }
+    return FLUID_OK;
 }
 
 /**
@@ -701,9 +732,10 @@ int delete_fluid_midi_event(fluid_midi_event_t* evt)
  * @param evt MIDI event structure
  * @return Event type field (MIDI status byte without channel)
  */
-int fluid_midi_event_get_type(fluid_midi_event_t* evt)
+int
+fluid_midi_event_get_type(fluid_midi_event_t *evt)
 {
-	return evt->type;
+    return evt->type;
 }
 
 /**
@@ -712,10 +744,11 @@ int fluid_midi_event_get_type(fluid_midi_event_t* evt)
  * @param type Event type field (MIDI status byte without channel)
  * @return Always returns #FLUID_OK
  */
-int fluid_midi_event_set_type(fluid_midi_event_t* evt, int type)
+int
+fluid_midi_event_set_type(fluid_midi_event_t *evt, int type)
 {
-	evt->type = type;
-	return FLUID_OK;
+    evt->type = type;
+    return FLUID_OK;
 }
 
 /**
@@ -723,9 +756,10 @@ int fluid_midi_event_set_type(fluid_midi_event_t* evt, int type)
  * @param evt MIDI event structure
  * @return Channel field
  */
-int fluid_midi_event_get_channel(fluid_midi_event_t* evt)
+int
+fluid_midi_event_get_channel(fluid_midi_event_t *evt)
 {
-	return evt->channel;
+    return evt->channel;
 }
 
 /**
@@ -734,10 +768,11 @@ int fluid_midi_event_get_channel(fluid_midi_event_t* evt)
  * @param chan MIDI channel field
  * @return Always returns #FLUID_OK
  */
-int fluid_midi_event_set_channel(fluid_midi_event_t* evt, int chan)
+int
+fluid_midi_event_set_channel(fluid_midi_event_t *evt, int chan)
 {
-	evt->channel = chan;
-	return FLUID_OK;
+    evt->channel = chan;
+    return FLUID_OK;
 }
 
 /**
@@ -745,9 +780,10 @@ int fluid_midi_event_set_channel(fluid_midi_event_t* evt, int chan)
  * @param evt MIDI event structure
  * @return MIDI note number (0-127)
  */
-int fluid_midi_event_get_key(fluid_midi_event_t* evt)
+int
+fluid_midi_event_get_key(fluid_midi_event_t *evt)
 {
-	return evt->param1;
+    return evt->param1;
 }
 
 /**
@@ -756,10 +792,11 @@ int fluid_midi_event_get_key(fluid_midi_event_t* evt)
  * @param v MIDI note number (0-127)
  * @return Always returns #FLUID_OK
  */
-int fluid_midi_event_set_key(fluid_midi_event_t* evt, int v)
+int
+fluid_midi_event_set_key(fluid_midi_event_t *evt, int v)
 {
-	evt->param1 = v;
-	return FLUID_OK;
+    evt->param1 = v;
+    return FLUID_OK;
 }
 
 /**
@@ -767,9 +804,10 @@ int fluid_midi_event_set_key(fluid_midi_event_t* evt, int v)
  * @param evt MIDI event structure
  * @return MIDI velocity number (0-127)
  */
-int fluid_midi_event_get_velocity(fluid_midi_event_t* evt)
+int
+fluid_midi_event_get_velocity(fluid_midi_event_t *evt)
 {
-	return evt->param2;
+    return evt->param2;
 }
 
 /**
@@ -778,10 +816,11 @@ int fluid_midi_event_get_velocity(fluid_midi_event_t* evt)
  * @param v MIDI velocity value
  * @return Always returns #FLUID_OK
  */
-int fluid_midi_event_set_velocity(fluid_midi_event_t* evt, int v)
+int
+fluid_midi_event_set_velocity(fluid_midi_event_t *evt, int v)
 {
-	evt->param2 = v;
-	return FLUID_OK;
+    evt->param2 = v;
+    return FLUID_OK;
 }
 
 /**
@@ -789,9 +828,10 @@ int fluid_midi_event_set_velocity(fluid_midi_event_t* evt, int v)
  * @param evt MIDI event structure
  * @return MIDI control number
  */
-int fluid_midi_event_get_control(fluid_midi_event_t* evt)
+int
+fluid_midi_event_get_control(fluid_midi_event_t *evt)
 {
-	return evt->param1;
+    return evt->param1;
 }
 
 /**
@@ -800,10 +840,11 @@ int fluid_midi_event_get_control(fluid_midi_event_t* evt)
  * @param v MIDI control number
  * @return Always returns #FLUID_OK
  */
-int fluid_midi_event_set_control(fluid_midi_event_t* evt, int v)
+int
+fluid_midi_event_set_control(fluid_midi_event_t *evt, int v)
 {
-	evt->param1 = v;
-	return FLUID_OK;
+    evt->param1 = v;
+    return FLUID_OK;
 }
 
 /**
@@ -811,9 +852,10 @@ int fluid_midi_event_set_control(fluid_midi_event_t* evt, int v)
  * @param evt MIDI event structure
  * @return Value field
  */
-int fluid_midi_event_get_value(fluid_midi_event_t* evt)
+int
+fluid_midi_event_get_value(fluid_midi_event_t *evt)
 {
-	return evt->param2;
+    return evt->param2;
 }
 
 /**
@@ -822,10 +864,11 @@ int fluid_midi_event_get_value(fluid_midi_event_t* evt)
  * @param v Value to assign
  * @return Always returns #FLUID_OK
  */
-int fluid_midi_event_set_value(fluid_midi_event_t* evt, int v)
+int
+fluid_midi_event_set_value(fluid_midi_event_t *evt, int v)
 {
-	evt->param2 = v;
-	return FLUID_OK;
+    evt->param2 = v;
+    return FLUID_OK;
 }
 
 /**
@@ -833,9 +876,10 @@ int fluid_midi_event_set_value(fluid_midi_event_t* evt, int v)
  * @param evt MIDI event structure
  * @return MIDI program number (0-127)
  */
-int fluid_midi_event_get_program(fluid_midi_event_t* evt)
+int
+fluid_midi_event_get_program(fluid_midi_event_t *evt)
 {
-	return evt->param1;
+    return evt->param1;
 }
 
 /**
@@ -844,10 +888,11 @@ int fluid_midi_event_get_program(fluid_midi_event_t* evt)
  * @param val MIDI program number (0-127)
  * @return Always returns #FLUID_OK
  */
-int fluid_midi_event_set_program(fluid_midi_event_t* evt, int val)
+int
+fluid_midi_event_set_program(fluid_midi_event_t *evt, int val)
 {
-	evt->param1 = val;
-	return FLUID_OK;
+    evt->param1 = val;
+    return FLUID_OK;
 }
 
 /**
@@ -855,9 +900,10 @@ int fluid_midi_event_set_program(fluid_midi_event_t* evt, int val)
  * @param evt MIDI event structure
  * @return Pitch value (14 bit value, 0-16383, 8192 is center)
  */
-int fluid_midi_event_get_pitch(fluid_midi_event_t* evt)
+int
+fluid_midi_event_get_pitch(fluid_midi_event_t *evt)
 {
-	return evt->param1;
+    return evt->param1;
 }
 
 /**
@@ -866,10 +912,11 @@ int fluid_midi_event_get_pitch(fluid_midi_event_t* evt)
  * @param val Pitch value (14 bit value, 0-16383, 8192 is center)
  * @return Always returns FLUID_OK
  */
-int fluid_midi_event_set_pitch(fluid_midi_event_t* evt, int val)
+int
+fluid_midi_event_set_pitch(fluid_midi_event_t *evt, int val)
 {
-	evt->param1 = val;
-	return FLUID_OK;
+    evt->param1 = val;
+    return FLUID_OK;
 }
 
 /**
@@ -885,13 +932,13 @@ int fluid_midi_event_set_pitch(fluid_midi_event_t* evt, int val)
  * NOTE: Unlike the other event assignment functions, this one sets evt->type.
  */
 int
-fluid_midi_event_set_sysex(fluid_midi_event_t* evt, void *data, int size, int dynamic)
+fluid_midi_event_set_sysex(fluid_midi_event_t *evt, void *data, int size, int dynamic)
 {
-	evt->type = MIDI_SYSEX;
-	evt->paramptr = data;
-	evt->param1 = size;
-	evt->param2 = dynamic;
-	return FLUID_OK;
+    evt->type = MIDI_SYSEX;
+    evt->paramptr = data;
+    evt->param1 = size;
+    evt->param2 = dynamic;
+    return FLUID_OK;
 }
 
 /******************************************************
@@ -902,188 +949,197 @@ fluid_midi_event_set_sysex(fluid_midi_event_t* evt, void *data, int size, int dy
 /*
  * new_fluid_track
  */
-fluid_track_t* new_fluid_track(int num)
+fluid_track_t *
+new_fluid_track(int num)
 {
-	fluid_track_t* track;
-	track = FLUID_NEW(fluid_track_t);
-	if (track == NULL) {
-		return NULL;
-	}
-	track->name = NULL;
-	track->num = num;
-	track->first = NULL;
-	track->cur = NULL;
-	track->last = NULL;
-	track->ticks = 0;
-	return track;
+    fluid_track_t *track;
+    track = FLUID_NEW(fluid_track_t);
+    if (track == NULL) {
+        return NULL;
+    }
+    track->name = NULL;
+    track->num = num;
+    track->first = NULL;
+    track->cur = NULL;
+    track->last = NULL;
+    track->ticks = 0;
+    return track;
 }
 
 /*
  * delete_fluid_track
  */
-int delete_fluid_track(fluid_track_t* track)
+int
+delete_fluid_track(fluid_track_t *track)
 {
-	if (track->name != NULL) {
-		FLUID_FREE(track->name);
-	}
-	if (track->first != NULL) {
-		delete_fluid_midi_event(track->first);
-	}
-	FLUID_FREE(track);
-	return FLUID_OK;
+    if (track->name != NULL) {
+        FLUID_FREE(track->name);
+    }
+    if (track->first != NULL) {
+        delete_fluid_midi_event(track->first);
+    }
+    FLUID_FREE(track);
+    return FLUID_OK;
 }
 
 /*
  * fluid_track_set_name
  */
-int fluid_track_set_name(fluid_track_t* track, char* name)
+int
+fluid_track_set_name(fluid_track_t *track, char *name)
 {
-	int len;
-	if (track->name != NULL) {
-		FLUID_FREE(track->name);
-	}
-	if (name == NULL) {
-		track->name = NULL;
-		return FLUID_OK;
-	}
-	len = FLUID_STRLEN(name);
-	track->name = FLUID_MALLOC(len + 1);
-	if (track->name == NULL) {
-		FLUID_LOG(FLUID_ERR, "Out of memory");
-		return FLUID_FAILED;
-	}
-	FLUID_STRCPY(track->name, name);
-	return FLUID_OK;
+    int len;
+    if (track->name != NULL) {
+        FLUID_FREE(track->name);
+    }
+    if (name == NULL) {
+        track->name = NULL;
+        return FLUID_OK;
+    }
+    len = FLUID_STRLEN(name);
+    track->name = FLUID_MALLOC(len + 1);
+    if (track->name == NULL) {
+        FLUID_LOG(FLUID_ERR, "Out of memory");
+        return FLUID_FAILED;
+    }
+    FLUID_STRCPY(track->name, name);
+    return FLUID_OK;
 }
 
 /*
  * fluid_track_get_name
  */
-char* fluid_track_get_name(fluid_track_t* track)
+char *
+fluid_track_get_name(fluid_track_t *track)
 {
-	return track->name;
+    return track->name;
 }
 
 /*
  * fluid_track_get_duration
  */
-int fluid_track_get_duration(fluid_track_t* track)
+int
+fluid_track_get_duration(fluid_track_t *track)
 {
-	int time = 0;
-	fluid_midi_event_t* evt = track->first;
-	while (evt != NULL) {
-		time += evt->dtime;
-		evt = evt->next;
-	}
-	return time;
+    int time = 0;
+    fluid_midi_event_t *evt = track->first;
+    while (evt != NULL) {
+        time += evt->dtime;
+        evt = evt->next;
+    }
+    return time;
 }
 
 /*
  * fluid_track_count_events
  */
-int fluid_track_count_events(fluid_track_t* track, int* on, int* off)
+int
+fluid_track_count_events(fluid_track_t *track, int *on, int *off)
 {
-	fluid_midi_event_t* evt = track->first;
-	while (evt != NULL) {
-		if (evt->type == NOTE_ON) {
-			(*on)++;
-		} else if (evt->type == NOTE_OFF) {
-			(*off)++;
-		}
-		evt = evt->next;
-	}
-	return FLUID_OK;
+    fluid_midi_event_t *evt = track->first;
+    while (evt != NULL) {
+        if (evt->type == NOTE_ON) {
+            (*on)++;
+        } else if (evt->type == NOTE_OFF) {
+            (*off)++;
+        }
+        evt = evt->next;
+    }
+    return FLUID_OK;
 }
 
 /*
  * fluid_track_add_event
  */
-int fluid_track_add_event(fluid_track_t* track, fluid_midi_event_t* evt)
+int
+fluid_track_add_event(fluid_track_t *track, fluid_midi_event_t *evt)
 {
-	evt->next = NULL;
-	if (track->first == NULL) {
-		track->first = evt;
-		track->cur = evt;
-		track->last = evt;
-	} else {
-		track->last->next = evt;
-		track->last = evt;
-	}
-	return FLUID_OK;
+    evt->next = NULL;
+    if (track->first == NULL) {
+        track->first = evt;
+        track->cur = evt;
+        track->last = evt;
+    } else {
+        track->last->next = evt;
+        track->last = evt;
+    }
+    return FLUID_OK;
 }
 
 /*
  * fluid_track_first_event
  */
-fluid_midi_event_t* fluid_track_first_event(fluid_track_t* track)
+fluid_midi_event_t *
+fluid_track_first_event(fluid_track_t *track)
 {
-	track->cur = track->first;
-	return track->cur;
+    track->cur = track->first;
+    return track->cur;
 }
 
 /*
  * fluid_track_next_event
  */
-fluid_midi_event_t* fluid_track_next_event(fluid_track_t* track)
+fluid_midi_event_t *
+fluid_track_next_event(fluid_track_t *track)
 {
-	if (track->cur != NULL) {
-		track->cur = track->cur->next;
-	}
-	return track->cur;
+    if (track->cur != NULL) {
+        track->cur = track->cur->next;
+    }
+    return track->cur;
 }
 
 /*
  * fluid_track_reset
  */
 int
-fluid_track_reset(fluid_track_t* track)
+fluid_track_reset(fluid_track_t *track)
 {
-	track->ticks = 0;
-	track->cur = track->first;
-	return FLUID_OK;
+    track->ticks = 0;
+    track->cur = track->first;
+    return FLUID_OK;
 }
 
 /*
  * fluid_track_send_events
  */
 int
-fluid_track_send_events(fluid_track_t* track,
-			fluid_synth_t* synth,
-			fluid_player_t* player,
+fluid_track_send_events(fluid_track_t *track,
+			fluid_synth_t *synth,
+			fluid_player_t *player,
 			unsigned int ticks)
 {
-	int status = FLUID_OK;
-	fluid_midi_event_t* event;
+    int status = FLUID_OK;
+    fluid_midi_event_t *event;
 
-	while (1) {
+    while (1) {
 
-		event = track->cur;
-		if (event == NULL) {
-			return status;
-		}
+        event = track->cur;
+        if (event == NULL) {
+            return status;
+        }
 
-/* 		printf("track=%02d\tticks=%05u\ttrack=%05u\tdtime=%05u\tnext=%05u\n", */
-/* 		       track->num, */
-/* 		       ticks, */
-/* 		       track->ticks, */
-/* 		       event->dtime, */
-/* 		       track->ticks + event->dtime); */
+        /* 		printf("track=%02d\tticks=%05u\ttrack=%05u\tdtime=%05u\tnext=%05u\n", */
+        /* 		       track->num, */
+        /* 		       ticks, */
+        /* 		       track->ticks, */
+        /* 		       event->dtime, */
+        /* 		       track->ticks + event->dtime); */
 
-		if (track->ticks + event->dtime > ticks) {
-			return status;
-		}
+        if (track->ticks + event->dtime > ticks) {
+            return status;
+        }
 
+        track->ticks += event->dtime;
 
-		track->ticks += event->dtime;
+        if (event->type != MIDI_SET_TEMPO)
+            fluid_synth_handle_midi_event(synth, event);
+        else if (player)
+            fluid_player_set_midi_tempo(player, event->param1);
 
-		if (event->type != MIDI_SET_TEMPO)
-			fluid_synth_handle_midi_event (synth, event);
-		else if (player) fluid_player_set_midi_tempo (player, event->param1);
+        fluid_track_next_event(track);
 
-		fluid_track_next_event(track);
-
-	}
-	return status;
+    }
+    return status;
 }
 
 /******************************************************
@@ -1096,40 +1152,41 @@ fluid_track_send_events(fluid_track_t* track,
  * @param synth Fluid synthesizer instance to create player for
  * @return New MIDI player instance or NULL on error (out of memory)
  */
-fluid_player_t* new_fluid_player(fluid_synth_t* synth)
+fluid_player_t *
+new_fluid_player(fluid_synth_t *synth)
 {
-	int i;
-	fluid_player_t* player;
-	player = FLUID_NEW(fluid_player_t);
-	if (player == NULL) {
-		FLUID_LOG(FLUID_ERR, "Out of memory");
-		return NULL;
-	}
-	player->status = FLUID_PLAYER_READY;
-	player->loop = 1;
-	player->ntracks = 0;
-	for (i = 0; i < MAX_NUMBER_OF_TRACKS; i++) {
-		player->track[i] = NULL;
-	}
-	player->synth = synth;
-	player->system_timer = NULL;
-	player->sample_timer = NULL;
-	player->playlist = NULL;
-	player->currentfile = NULL;
-	player->division = 0;
-	player->send_program_change = 1;
-	player->miditempo = 480000;
-	player->deltatime = 4.0;
-	player->cur_msec = 0;
-	player->cur_ticks = 0;
+    int i;
+    fluid_player_t *player;
+    player = FLUID_NEW(fluid_player_t);
+    if (player == NULL) {
+        FLUID_LOG(FLUID_ERR, "Out of memory");
+        return NULL;
+    }
+    player->status = FLUID_PLAYER_READY;
+    player->loop = 1;
+    player->ntracks = 0;
+    for (i = 0; i < MAX_NUMBER_OF_TRACKS; i++) {
+        player->track[i] = NULL;
+    }
+    player->synth = synth;
+    player->system_timer = NULL;
+    player->sample_timer = NULL;
+    player->playlist = NULL;
+    player->currentfile = NULL;
+    player->division = 0;
+    player->send_program_change = 1;
+    player->miditempo = 480000;
+    player->deltatime = 4.0;
+    player->cur_msec = 0;
+    player->cur_ticks = 0;
 
-	player->use_system_timer = 
-		fluid_settings_str_equal(synth->settings, "player.timing-source", "system");
+    player->use_system_timer = fluid_settings_str_equal(synth->settings,
+            "player.timing-source", "system");
 
-	fluid_settings_getint (synth->settings, "player.reset-synth", &i);
-	player->reset_synth_between_songs = i;
+    fluid_settings_getint(synth->settings, "player.reset-synth", &i);
+    player->reset_synth_between_songs = i;
 
-	return player;
+    return player;
 }
 
 /**
@@ -1137,96 +1194,103 @@ fluid_player_t* new_fluid_player(fluid_synth_t* synth)
  * @param player MIDI player instance
  * @return Always returns #FLUID_OK
  */
-int delete_fluid_player(fluid_player_t* player)
+int
+delete_fluid_player(fluid_player_t *player)
 {
-	fluid_list_t* q;	
+    fluid_list_t *q;
 
-	if (player == NULL) {
-		return FLUID_OK;
-	}
-	fluid_player_stop(player);
-	fluid_player_reset(player);
-	
-	while (player->playlist != NULL) {
-		q = player->playlist->next;
-		FLUID_FREE(player->playlist->data);
-		delete1_fluid_list(player->playlist);
-		player->playlist = q;
-	}
+    if (player == NULL) {
+        return FLUID_OK;
+    }
+    fluid_player_stop(player);
+    fluid_player_reset(player);
 
-	FLUID_FREE(player);
-	return FLUID_OK;
+    while (player->playlist != NULL) {
+        q = player->playlist->next;
+        FLUID_FREE(player->playlist->data);
+        delete1_fluid_list(player->playlist);
+        player->playlist = q;
+    }
+
+    FLUID_FREE(player);
+    return FLUID_OK;
 }
 
 /**
  * Registers settings related to the MIDI player
  */
-void fluid_player_settings(fluid_settings_t* settings)
+void
+fluid_player_settings(fluid_settings_t *settings)
 {
-	/* player.timing-source can be either "system" (use system timer) 
-	or "sample" (use timer based on number of written samples) */
-	fluid_settings_register_str(settings, "player.timing-source", "sample", 0, NULL, NULL);
-	fluid_settings_add_option(settings, "player.timing-source", "sample");
-	fluid_settings_add_option(settings, "player.timing-source", "system");
+    /* player.timing-source can be either "system" (use system timer)
+     or "sample" (use timer based on number of written samples) */
+    fluid_settings_register_str(settings, "player.timing-source", "sample", 0,
+            NULL, NULL);
+    fluid_settings_add_option(settings, "player.timing-source", "sample");
+    fluid_settings_add_option(settings, "player.timing-source", "system");
 
-	/* Selects whether the player should reset the synth between songs, or not. */
-	fluid_settings_register_int(settings, "player.reset-synth", 1, 0, 1,
-                                    FLUID_HINT_TOGGLED, NULL, NULL);
+    /* Selects whether the player should reset the synth between songs, or not. */
+    fluid_settings_register_int(settings, "player.reset-synth", 1, 0, 1,
+            FLUID_HINT_TOGGLED, NULL, NULL);
 }
 
 
-int fluid_player_reset(fluid_player_t* player)
+int
+fluid_player_reset(fluid_player_t *player)
 {
-	int i;
+    int i;
 
-	for (i = 0; i < MAX_NUMBER_OF_TRACKS; i++) {
-		if (player->track[i] != NULL) {
-			delete_fluid_track(player->track[i]);
-			player->track[i] = NULL;
-		}
-	}
-/*	player->current_file = NULL; */
-/*	player->status = FLUID_PLAYER_READY; */
-/*	player->loop = 1; */
-	player->ntracks = 0;
-	player->division = 0;
-	player->send_program_change = 1;
-	player->miditempo = 480000;
-	player->deltatime = 4.0;
-	return 0;
+    for (i = 0; i < MAX_NUMBER_OF_TRACKS; i++) {
+        if (player->track[i] != NULL) {
+            delete_fluid_track(player->track[i]);
+            player->track[i] = NULL;
+        }
+    }
+    /*	player->current_file = NULL; */
+    /*	player->status = FLUID_PLAYER_READY; */
+    /*	player->loop = 1; */
+    player->ntracks = 0;
+    player->division = 0;
+    player->send_program_change = 1;
+    player->miditempo = 480000;
+    player->deltatime = 4.0;
+    return 0;
 }
 
 /*
  * fluid_player_add_track
  */
-int fluid_player_add_track(fluid_player_t* player, fluid_track_t* track)
+int
+fluid_player_add_track(fluid_player_t *player, fluid_track_t *track)
 {
-	if (player->ntracks < MAX_NUMBER_OF_TRACKS) {
-		player->track[player->ntracks++] = track;
-		return FLUID_OK;
-	} else {
-		return FLUID_FAILED;
-	}
+    if (player->ntracks < MAX_NUMBER_OF_TRACKS) {
+        player->track[player->ntracks++] = track;
+        return FLUID_OK;
+    } else {
+        return FLUID_FAILED;
+    }
 }
 
 /*
  * fluid_player_count_tracks
  */
-int fluid_player_count_tracks(fluid_player_t* player)
+int
+fluid_player_count_tracks(fluid_player_t *player)
 {
-	return player->ntracks;
+    return player->ntracks;
 }
 
 /*
  * fluid_player_get_track
  */
-fluid_track_t* fluid_player_get_track(fluid_player_t* player, int i)
+fluid_track_t *
+fluid_player_get_track(fluid_player_t *player, int i)
 {
-	if ((i >= 0) && (i < MAX_NUMBER_OF_TRACKS)) {
-		return player->track[i];
-	} else {
-		return NULL;
-	}
+    if ((i >= 0) && (i < MAX_NUMBER_OF_TRACKS)) {
+        return player->track[i];
+    } else {
+        return NULL;
+    }
 }
 
 /**
@@ -1236,137 +1300,144 @@ fluid_track_t* fluid_player_get_track(fluid_player_t* player, int i)
  * @return #FLUID_OK
  */
 int
-fluid_player_add(fluid_player_t* player, const char* midifile)
+fluid_player_add(fluid_player_t *player, const char *midifile)
 {
-	char *s = FLUID_STRDUP(midifile);
-	player->playlist = fluid_list_append(player->playlist, s);
-	return FLUID_OK;
+    char *s = FLUID_STRDUP(midifile);
+    player->playlist = fluid_list_append(player->playlist, s);
+    return FLUID_OK;
 }
 
 /*
  * fluid_player_load
  */
-int fluid_player_load(fluid_player_t* player, char *filename)
+int
+fluid_player_load(fluid_player_t *player, char *filename)
 {
-	fluid_midi_file* midifile;
+    fluid_midi_file *midifile;
 
-	midifile = new_fluid_midi_file(filename);
-	if (midifile == NULL) {
-		return FLUID_FAILED;
-	}
-	player->division = fluid_midi_file_get_division(midifile);
-	fluid_player_set_midi_tempo(player, player->miditempo); // Update deltatime
-	/*FLUID_LOG(FLUID_DBG, "quarter note division=%d\n", player->division); */
+    midifile = new_fluid_midi_file(filename);
+    if (midifile == NULL) {
+        return FLUID_FAILED;
+    }
+    player->division = fluid_midi_file_get_division(midifile);
+    fluid_player_set_midi_tempo(player, player->miditempo); // Update deltatime
+    /*FLUID_LOG(FLUID_DBG, "quarter note division=%d\n", player->division); */
 
-	if (fluid_midi_file_load_tracks(midifile, player) != FLUID_OK){
-		return FLUID_FAILED;
-	}
-	delete_fluid_midi_file(midifile);
-	return FLUID_OK;
+    if (fluid_midi_file_load_tracks(midifile, player) != FLUID_OK) {
+        return FLUID_FAILED;
+    }
+    delete_fluid_midi_file(midifile);
+    return FLUID_OK;
 }
 
-void fluid_player_advancefile(fluid_player_t* player)
+void
+fluid_player_advancefile(fluid_player_t *player)
 {
-	if (player->playlist == NULL) {
-		return; /* No files to play */
-	}
-	if (player->currentfile != NULL) {
-		player->currentfile = fluid_list_next(player->currentfile);
-	}
-	if (player->currentfile == NULL) {
-		if (player->loop == 0) {
-			return; /* We're done playing */ 
-		}
-		if (player->loop > 0) {	
-			player->loop--;
-		} 
-		player->currentfile = player->playlist;
-	} 
+    if (player->playlist == NULL) {
+        return; /* No files to play */
+    }
+    if (player->currentfile != NULL) {
+        player->currentfile = fluid_list_next(player->currentfile);
+    }
+    if (player->currentfile == NULL) {
+        if (player->loop == 0) {
+            return; /* We're done playing */
+        }
+        if (player->loop > 0) {
+            player->loop--;
+        }
+        player->currentfile = player->playlist;
+    }
 }
 
-void fluid_player_playlist_load(fluid_player_t* player, unsigned int msec)
+void
+fluid_player_playlist_load(fluid_player_t *player, unsigned int msec)
 {
-	char* current_filename;
-	int i;
+    char *current_filename;
+    int i;
 
-	do {
-		fluid_player_advancefile(player);
-		if (player->currentfile == NULL) { 
-			/* Failed to find next song, probably since we're finished */
-			player->status = FLUID_PLAYER_DONE;
-			return;
-		}
+    do {
+        fluid_player_advancefile(player);
+        if (player->currentfile == NULL) {
+            /* Failed to find next song, probably since we're finished */
+            player->status = FLUID_PLAYER_DONE;
+            return;
+        }
 
-		fluid_player_reset(player);
-		current_filename = (char*) player->currentfile->data;
-		FLUID_LOG(FLUID_DBG, "%s: %d: Loading midifile %s", __FILE__, __LINE__, current_filename);
-	} while (fluid_player_load(player, current_filename) != FLUID_OK);
+        fluid_player_reset(player);
+        current_filename = (char *) player->currentfile->data;
+        FLUID_LOG(FLUID_DBG, "%s: %d: Loading midifile %s", __FILE__, __LINE__,
+                current_filename);
+    } while (fluid_player_load(player, current_filename) != FLUID_OK);
 
-	/* Successfully loaded midi file */
+    /* Successfully loaded midi file */
 
-	player->begin_msec = msec;
-	player->start_msec = msec;
-	player->start_ticks = 0;
-	player->cur_ticks = 0;
+    player->begin_msec = msec;
+    player->start_msec = msec;
+    player->start_ticks = 0;
+    player->cur_ticks = 0;
 
-	if (player->reset_synth_between_songs) {
-		fluid_synth_system_reset(player->synth);
-	}
+    if (player->reset_synth_between_songs) {
+        fluid_synth_system_reset(player->synth);
+    }
 
-	for (i = 0; i < player->ntracks; i++) {
-		if (player->track[i] != NULL) {
-			fluid_track_reset(player->track[i]);
-		}
-	}
+    for (i = 0; i < player->ntracks; i++) {
+        if (player->track[i] != NULL) {
+            fluid_track_reset(player->track[i]);
+        }
+    }
 }
 
 
 /*
  * fluid_player_callback
  */
-int fluid_player_callback(void* data, unsigned int msec)
+int
+fluid_player_callback(void *data, unsigned int msec)
 {
-	int i;
-	int loadnextfile;
-	int status = FLUID_PLAYER_DONE;
-	fluid_player_t* player;
-	fluid_synth_t* synth;
-	player = (fluid_player_t*) data;
-	synth = player->synth;
+    int i;
+    int loadnextfile;
+    int status = FLUID_PLAYER_DONE;
+    fluid_player_t *player;
+    fluid_synth_t *synth;
+    player = (fluid_player_t *) data;
+    synth = player->synth;
 
-	loadnextfile = player->currentfile == NULL ? 1 : 0; 
-	do {
-		if (loadnextfile) {
-			loadnextfile = 0;
-			fluid_player_playlist_load(player, msec);
-			if (player->currentfile == NULL) {
-				return 0;
-			}
-		}
+    loadnextfile = player->currentfile == NULL ? 1 : 0;
+    do {
+        if (loadnextfile) {
+            loadnextfile = 0;
+            fluid_player_playlist_load(player, msec);
+            if (player->currentfile == NULL) {
+                return 0;
+            }
+        }
 
-		player->cur_msec = msec;
-		player->cur_ticks = (player->start_ticks +
-			(int) ((double) (player->cur_msec - player->start_msec) / player->deltatime));
+        player->cur_msec = msec;
+        player->cur_ticks = (player->start_ticks
+                + (int) ((double) (player->cur_msec - player->start_msec)
+                        / player->deltatime));
 
-		for (i = 0; i < player->ntracks; i++) {
-			if (!fluid_track_eot(player->track[i])) {
-				status = FLUID_PLAYER_PLAYING;
-				if (fluid_track_send_events(player->track[i], synth, player, player->cur_ticks) != FLUID_OK) {
-				/* */
-				}
-			}
-		}
+        for (i = 0; i < player->ntracks; i++) {
+            if (!fluid_track_eot(player->track[i])) {
+                status = FLUID_PLAYER_PLAYING;
+                if (fluid_track_send_events(player->track[i], synth, player,
+                        player->cur_ticks) != FLUID_OK) {
+                    /* */
+                }
+            }
+        }
 
-		if (status == FLUID_PLAYER_DONE) {
-			FLUID_LOG(FLUID_DBG, "%s: %d: Duration=%.3f sec",
-				  __FILE__, __LINE__, (msec - player->begin_msec) / 1000.0);
-			loadnextfile = 1;
-		}
-	} while (loadnextfile);
+        if (status == FLUID_PLAYER_DONE) {
+            FLUID_LOG(FLUID_DBG, "%s: %d: Duration=%.3f sec", __FILE__,
+                    __LINE__, (msec - player->begin_msec) / 1000.0);
+            loadnextfile = 1;
+        }
+    } while (loadnextfile);
 
-	player->status = status;
+    player->status = status;
 
-	return 1;
+    return 1;
 }
 
 /**
@@ -1374,33 +1445,34 @@ int fluid_player_callback(void* data, unsigned int msec)
  * @param player MIDI player instance
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
-int fluid_player_play(fluid_player_t* player)
+int
+fluid_player_play(fluid_player_t *player)
 {
-	if (player->status == FLUID_PLAYER_PLAYING) {
-		return FLUID_OK;
-	}
+    if (player->status == FLUID_PLAYER_PLAYING) {
+        return FLUID_OK;
+    }
 
-	if (player->playlist == NULL) {
-		return FLUID_OK;
-	}
+    if (player->playlist == NULL) {
+        return FLUID_OK;
+    }
 
-	player->status = FLUID_PLAYER_PLAYING;
+    player->status = FLUID_PLAYER_PLAYING;
 
-	if (player->use_system_timer) {
-		player->system_timer = new_fluid_timer((int) player->deltatime, fluid_player_callback,
-					(void*) player, TRUE, FALSE, TRUE);
-		if (player->system_timer == NULL) {
-			return FLUID_FAILED;
-		}
-	} else {
-		player->sample_timer = new_fluid_sample_timer(player->synth, fluid_player_callback,
-					(void*) player);
-		
-		if (player->sample_timer == NULL) {
-			return FLUID_FAILED;
-		}
-	}
-	return FLUID_OK;
+    if (player->use_system_timer) {
+        player->system_timer = new_fluid_timer((int) player->deltatime,
+                fluid_player_callback, (void *) player, TRUE, FALSE, TRUE);
+        if (player->system_timer == NULL) {
+            return FLUID_FAILED;
+        }
+    } else {
+        player->sample_timer = new_fluid_sample_timer(player->synth,
+                fluid_player_callback, (void *) player);
+
+        if (player->sample_timer == NULL) {
+            return FLUID_FAILED;
+        }
+    }
+    return FLUID_OK;
 }
 
 /**
@@ -1408,18 +1480,19 @@ int fluid_player_play(fluid_player_t* player)
  * @param player MIDI player instance
  * @return Always returns #FLUID_OK
  */
-int fluid_player_stop(fluid_player_t* player)
+int
+fluid_player_stop(fluid_player_t *player)
 {
-	if (player->system_timer != NULL) {
-		delete_fluid_timer(player->system_timer);
-	}
-	if (player->sample_timer != NULL) {
-		delete_fluid_sample_timer(player->synth, player->sample_timer);
-	}
-	player->status = FLUID_PLAYER_DONE;
-	player->sample_timer = NULL;
-	player->system_timer = NULL;
-	return FLUID_OK;
+    if (player->system_timer != NULL) {
+        delete_fluid_timer(player->system_timer);
+    }
+    if (player->sample_timer != NULL) {
+        delete_fluid_sample_timer(player->synth, player->sample_timer);
+    }
+    player->status = FLUID_PLAYER_DONE;
+    player->sample_timer = NULL;
+    player->system_timer = NULL;
+    return FLUID_OK;
 }
 
 /**
@@ -1429,9 +1502,9 @@ int fluid_player_stop(fluid_player_t* player)
  * @since 1.1.0
  */
 int
-fluid_player_get_status(fluid_player_t* player)
+fluid_player_get_status(fluid_player_t *player)
 {
-	return player->status;
+    return player->status;
 }
 
 /**
@@ -1444,10 +1517,10 @@ fluid_player_get_status(fluid_player_t* player)
  * For example, if you want to loop the playlist twice, set loop to 2 
  * and call this function before you start the player.
  */
-int fluid_player_set_loop(fluid_player_t* player, int loop)
+int fluid_player_set_loop(fluid_player_t *player, int loop)
 {
-	player->loop = loop;
-	return FLUID_OK;
+    player->loop = loop;
+    return FLUID_OK;
 }
 
 /**
@@ -1456,17 +1529,18 @@ int fluid_player_set_loop(fluid_player_t* player, int loop)
  * @param tempo Tempo to set playback speed to (in microseconds per quarter note, as per MIDI file spec)
  * @return Always returns #FLUID_OK
  */
-int fluid_player_set_midi_tempo(fluid_player_t* player, int tempo)
+int fluid_player_set_midi_tempo(fluid_player_t *player, int tempo)
 {
-	player->miditempo = tempo;
-	player->deltatime = (double) tempo / player->division / 1000.0; /* in milliseconds */
-	player->start_msec = player->cur_msec;
-	player->start_ticks = player->cur_ticks;
+    player->miditempo = tempo;
+    player->deltatime = (double) tempo / player->division / 1000.0; /* in milliseconds */
+    player->start_msec = player->cur_msec;
+    player->start_ticks = player->cur_ticks;
 
-	FLUID_LOG(FLUID_DBG,"tempo=%d, tick time=%f msec, cur time=%d msec, cur tick=%d",
-		  tempo, player->deltatime, player->cur_msec, player->cur_ticks);
+    FLUID_LOG(FLUID_DBG,
+            "tempo=%d, tick time=%f msec, cur time=%d msec, cur tick=%d",
+            tempo, player->deltatime, player->cur_msec, player->cur_ticks);
 
-	return FLUID_OK;
+    return FLUID_OK;
 }
 
 /**
@@ -1475,9 +1549,10 @@ int fluid_player_set_midi_tempo(fluid_player_t* player, int tempo)
  * @param bpm Tempo in beats per minute
  * @return Always returns #FLUID_OK
  */
-int fluid_player_set_bpm(fluid_player_t* player, int bpm)
+int
+fluid_player_set_bpm(fluid_player_t *player, int bpm)
 {
-	return fluid_player_set_midi_tempo(player, (int)((double) 60 * 1e6 / bpm));
+    return fluid_player_set_midi_tempo(player, (int) ((double) 60 * 1e6 / bpm));
 }
 
 /**
@@ -1485,21 +1560,22 @@ int fluid_player_set_bpm(fluid_player_t* player, int bpm)
  * @param player MIDI player instance
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
-int fluid_player_join(fluid_player_t* player)
+int
+fluid_player_join(fluid_player_t *player)
 {
-	if (player->system_timer) {
-		return fluid_timer_join(player->system_timer);
-	} else if (player->sample_timer) {
-		/* Busy-wait loop, since there's no thread to wait for... */
-		while (player->status != FLUID_PLAYER_DONE) {
+    if (player->system_timer) {
+        return fluid_timer_join(player->system_timer);
+    } else if (player->sample_timer) {
+        /* Busy-wait loop, since there's no thread to wait for... */
+        while (player->status != FLUID_PLAYER_DONE) {
 #if defined(WIN32)
-			Sleep(10);
+            Sleep(10);
 #else
-			usleep(10000);
+            usleep(10000);
 #endif
-		}
-	}
-	return FLUID_OK;
+        }
+    }
+    return FLUID_OK;
 }
 
 /************************************************************************
@@ -1510,25 +1586,27 @@ int fluid_player_join(fluid_player_t* player)
 /*
  * new_fluid_midi_parser
  */
-fluid_midi_parser_t* new_fluid_midi_parser()
+fluid_midi_parser_t *
+new_fluid_midi_parser ()
 {
-	fluid_midi_parser_t* parser;
-	parser = FLUID_NEW(fluid_midi_parser_t);
-	if (parser == NULL) {
-		FLUID_LOG(FLUID_ERR, "Out of memory");
-		return NULL;
-	}
-	parser->status = 0; /* As long as the status is 0, the parser won't do anything -> no need to initialize all the fields. */
-	return parser;
+    fluid_midi_parser_t *parser;
+    parser = FLUID_NEW(fluid_midi_parser_t);
+    if (parser == NULL) {
+        FLUID_LOG(FLUID_ERR, "Out of memory");
+        return NULL;
+    }
+    parser->status = 0; /* As long as the status is 0, the parser won't do anything -> no need to initialize all the fields. */
+    return parser;
 }
 
 /*
  * delete_fluid_midi_parser
  */
-int delete_fluid_midi_parser(fluid_midi_parser_t* parser)
+int
+delete_fluid_midi_parser(fluid_midi_parser_t *parser)
 {
-	FLUID_FREE(parser);
-	return FLUID_OK;
+    FLUID_FREE(parser);
+    return FLUID_OK;
 }
 
 /**
@@ -1539,103 +1617,95 @@ int delete_fluid_midi_parser(fluid_midi_parser_t* parser)
  *   not be modified or freed and is only valid until next call to this function.
  */
 fluid_midi_event_t *
-fluid_midi_parser_parse(fluid_midi_parser_t* parser, unsigned char c)
+fluid_midi_parser_parse(fluid_midi_parser_t *parser, unsigned char c)
 {
-  fluid_midi_event_t *event;
+    fluid_midi_event_t *event;
 
-  /* Real-time messages (0xF8-0xFF) can occur anywhere, even in the middle
-   * of another message. */
-  if (c >= 0xF8)
-  {
-    if (c == MIDI_SYSTEM_RESET)
-    {
-      parser->event.type = c;
-      parser->status = 0;       /* clear the status */
-      return &parser->event;
+    /* Real-time messages (0xF8-0xFF) can occur anywhere, even in the middle
+     * of another message. */
+    if (c >= 0xF8) {
+        if (c == MIDI_SYSTEM_RESET) {
+            parser->event.type = c;
+            parser->status = 0; /* clear the status */
+            return &parser->event;
+        }
+
+        return NULL;
     }
 
-    return NULL;
-  }
+    /* Status byte? - If previous message not yet complete, it is discarded (re-sync). */
+    if (c & 0x80) {
+        /* Any status byte terminates SYSEX messages (not just 0xF7) */
+        if (parser->status == MIDI_SYSEX && parser->nr_bytes > 0) {
+            event = &parser->event;
+            fluid_midi_event_set_sysex(event, parser->data, parser->nr_bytes,
+                    FALSE);
+        } else
+            event = NULL;
 
-  /* Status byte? - If previous message not yet complete, it is discarded (re-sync). */
-  if (c & 0x80)
-  {
-    /* Any status byte terminates SYSEX messages (not just 0xF7) */
-    if (parser->status == MIDI_SYSEX && parser->nr_bytes > 0)
-    {
-      event = &parser->event;
-      fluid_midi_event_set_sysex (event, parser->data, parser->nr_bytes, FALSE);
+        if (c < 0xF0) /* Voice category message? */
+        {
+            parser->channel = c & 0x0F;
+            parser->status = c & 0xF0;
+
+            /* The event consumes x bytes of data... (subtract 1 for the status byte) */
+            parser->nr_bytes_total = fluid_midi_event_length(parser->status)
+                    - 1;
+
+            parser->nr_bytes = 0; /* 0  bytes read so far */
+        } else if (c == MIDI_SYSEX) {
+            parser->status = MIDI_SYSEX;
+            parser->nr_bytes = 0;
+        } else
+            parser->status = 0; /* Discard other system messages (0xF1-0xF7) */
+
+        return event; /* Return SYSEX event or NULL */
     }
-    else event = NULL;
 
-    if (c < 0xF0)       /* Voice category message? */
-    {
-      parser->channel = c & 0x0F;
-      parser->status = c & 0xF0;
+    /* Data/parameter byte */
 
-      /* The event consumes x bytes of data... (subtract 1 for the status byte) */
-      parser->nr_bytes_total = fluid_midi_event_length (parser->status) - 1;
+    /* Discard data bytes for events we don't care about */
+    if (parser->status == 0)
+        return NULL;
 
-      parser->nr_bytes = 0;     /* 0  bytes read so far */
+    /* Max data size exceeded? (SYSEX messages only really) */
+    if (parser->nr_bytes == FLUID_MIDI_PARSER_MAX_DATA_SIZE) {
+        parser->status = 0; /* Discard the rest of the message */
+        return NULL;
     }
-    else if (c == MIDI_SYSEX)
-    {
-      parser->status = MIDI_SYSEX;
-      parser->nr_bytes = 0;
+
+    /* Store next byte */
+    parser->data[parser->nr_bytes++] = c;
+
+    /* Do we still need more data to get this event complete? */
+    if (parser->nr_bytes < parser->nr_bytes_total)
+        return NULL;
+
+    /* Event is complete, return it.
+     * Running status byte MIDI feature is also handled here. */
+    parser->event.type = parser->status;
+    parser->event.channel = parser->channel;
+    parser->nr_bytes = 0; /* Reset data size, in case there are additional running status messages */
+
+    switch (parser->status) {
+        case NOTE_OFF:
+        case NOTE_ON:
+        case KEY_PRESSURE:
+        case CONTROL_CHANGE:
+        case PROGRAM_CHANGE:
+        case CHANNEL_PRESSURE:
+            parser->event.param1 = parser->data[0]; /* For example key number */
+            parser->event.param2 = parser->data[1]; /* For example velocity */
+            break;
+        case PITCH_BEND:
+            /* Pitch-bend is transmitted with 14-bit precision. */
+            parser->event.param1 = (parser->data[1] << 7) | parser->data[0];
+            break;
+        default: /* Unlikely */
+            return NULL;
     }
-    else parser->status = 0;    /* Discard other system messages (0xF1-0xF7) */
 
-    return event;       /* Return SYSEX event or NULL */
-  }
-
-
-  /* Data/parameter byte */
-
-
-  /* Discard data bytes for events we don't care about */
-  if (parser->status == 0)
-    return NULL;
-
-  /* Max data size exceeded? (SYSEX messages only really) */
-  if (parser->nr_bytes == FLUID_MIDI_PARSER_MAX_DATA_SIZE)
-  {
-    parser->status = 0;         /* Discard the rest of the message */
-    return NULL;
-  }
-
-  /* Store next byte */
-  parser->data[parser->nr_bytes++] = c;
-
-  /* Do we still need more data to get this event complete? */
-  if (parser->nr_bytes < parser->nr_bytes_total)
-    return NULL;
-
-  /* Event is complete, return it.
-   * Running status byte MIDI feature is also handled here. */
-  parser->event.type = parser->status;
-  parser->event.channel = parser->channel;
-  parser->nr_bytes = 0;         /* Reset data size, in case there are additional running status messages */
-
-  switch (parser->status)
-  {
-    case NOTE_OFF:
-    case NOTE_ON:
-    case KEY_PRESSURE:
-    case CONTROL_CHANGE:
-    case PROGRAM_CHANGE:
-    case CHANNEL_PRESSURE:
-      parser->event.param1 = parser->data[0]; /* For example key number */
-      parser->event.param2 = parser->data[1]; /* For example velocity */
-      break;
-    case PITCH_BEND:
-      /* Pitch-bend is transmitted with 14-bit precision. */
-      parser->event.param1 = (parser->data[1] << 7) | parser->data[0];
-      break;
-    default: /* Unlikely */
-      return NULL;
-  }
-
-  return &parser->event;
+    return &parser->event;
 }
 
 /* Purpose:
@@ -1643,27 +1713,27 @@ fluid_midi_parser_parse(fluid_midi_parser_t* parser, unsigned char c)
 static int
 fluid_midi_event_length(unsigned char event)
 {
-	switch (event & 0xF0) {
-		case NOTE_OFF: 
-		case NOTE_ON:
-		case KEY_PRESSURE:
-		case CONTROL_CHANGE:
-		case PITCH_BEND: 
-			return 3;
-		case PROGRAM_CHANGE:
-		case CHANNEL_PRESSURE: 
-			return 2;
-	}
-	switch (event) {
-		case MIDI_TIME_CODE:
-		case MIDI_SONG_SELECT:
-		case 0xF4:
-		case 0xF5:
-			return 2;
-		case MIDI_TUNE_REQUEST:
-			return 1;
-		case MIDI_SONG_POSITION:
-			return 3;
-	}
-	return 1;
+    switch (event & 0xF0) {
+        case NOTE_OFF:
+        case NOTE_ON:
+        case KEY_PRESSURE:
+        case CONTROL_CHANGE:
+        case PITCH_BEND:
+            return 3;
+        case PROGRAM_CHANGE:
+        case CHANNEL_PRESSURE:
+            return 2;
+    }
+    switch (event) {
+        case MIDI_TIME_CODE:
+        case MIDI_SONG_SELECT:
+        case 0xF4:
+        case 0xF5:
+            return 2;
+        case MIDI_TUNE_REQUEST:
+            return 1;
+        case MIDI_SONG_POSITION:
+            return 3;
+    }
+    return 1;
 }
