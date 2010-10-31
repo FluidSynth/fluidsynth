@@ -34,7 +34,7 @@
 
 /* Work around for OSX 10.4 */
 
-/* enum definition in OpenTransportProviders.h defines these tokens 
+/* enum definition in OpenTransportProviders.h defines these tokens
    which are #defined from <netinet/tcp.h> */
 #ifdef TCP_NODELAY
 #undef TCP_NODELAY
@@ -78,6 +78,7 @@ new_fluid_coremidi_driver(fluid_settings_t* settings, handle_midi_event_func_t h
   fluid_coremidi_driver_t* dev;
   MIDIClientRef client;
   MIDIEndpointRef endpoint;
+  char clientid[32];
   char * portname;
   char * id;
   CFStringRef str_portname;
@@ -108,24 +109,26 @@ new_fluid_coremidi_driver(fluid_settings_t* settings, handle_midi_event_func_t h
   }
 
   fluid_settings_dupstr(settings, "midi.coremidi.id", &id);     /* ++ alloc id string */
-  if (!id || FLUID_STRCMP(id, "pid") == 0)
-    str_clientname = CFStringCreateWithFormat(NULL, NULL,
-                                              CFSTR("FluidSynth %qi"),
-                                              (long long) getpid());
-  else
-    str_clientname = CFStringCreateWithFormat(NULL, NULL,
-                                              CFSTR("FluidSynth %s"), id);
-
-  if (id) FLUID_FREE (id);      /* -- free id string */
+  bzero (clientid, sizeof(clientid));
+  if (id != NULL) {
+    if (FLUID_STRCMP (id, "pid") == 0) {
+      snprintf (clientid, sizeof(clientid), " (%d)", getpid());
+    } else {
+      snprintf (clientid, sizeof(clientid), " (%s)", id);
+    }
+    FLUID_FREE (id);  /* -- free id string */
+  }
+  str_clientname = CFStringCreateWithFormat (NULL, NULL,
+                                             CFSTR("FluidSynth%s"), clientid);
 
   fluid_settings_dupstr(settings, "midi.portname", &portname);  /* ++ alloc port name */
   if (!portname || strlen(portname) == 0)
-    str_portname = CFStringCreateWithFormat(NULL, NULL,
-                                            CFSTR("FluidSynth virtual port %qi"),
-                                            (long long) getpid());
+    str_portname = CFStringCreateWithFormat (NULL, NULL,
+                                             CFSTR("FluidSynth virtual port%s"),
+                                             clientid);
   else
-    str_portname = CFStringCreateWithCString(NULL, portname,
-                                             kCFStringEncodingASCII);
+    str_portname = CFStringCreateWithCString (NULL, portname,
+                                              kCFStringEncodingASCII);
 
   if (portname) FLUID_FREE (portname);  /* -- free port name */
 
