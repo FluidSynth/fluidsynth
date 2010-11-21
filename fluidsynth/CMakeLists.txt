@@ -80,9 +80,9 @@ if ( ${CMAKE_SYSTEM} MATCHES "Darwin" )
     option ( enable-framework "create a Mac OSX style FluidSynth.framework" on )
 endif ( ${CMAKE_SYSTEM} MATCHES "Darwin" )
 
-if ( ${CMAKE_SYSTEM} MATCHES "os2" )
+if ( ${CMAKE_SYSTEM} MATCHES "OS2" )
     option ( enable-dart "compile DART support (if it is available)" on )
-endif ( ${CMAKE_SYSTEM} MATCHES "os2" )
+endif ( ${CMAKE_SYSTEM} MATCHES "OS2" )
 
 # Initialize the library directory name suffix.
 if ( CMAKE_SIZEOF_VOID_P EQUAL 8 )
@@ -133,12 +133,12 @@ unset ( FLUID_LIBS CACHE )
 
 # Options for the GNU C compiler only
 if ( CMAKE_COMPILER_IS_GNUCC )
-  if ( NOT APPLE )
+  if ( NOT APPLE AND NOT OS2 )
     set ( CMAKE_EXE_LINKER_FLAGS
           "${CMAKE_EXE_LINKER_FLAGS} -Wl,--as-needed" )
     set ( CMAKE_SHARED_LINKER_FLAGS
           "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-undefined" )
-  endif ( NOT APPLE )
+  endif ( NOT APPLE AND NOT OS2 )
   set ( GNUCC_WARNING_FLAGS "-Wall -W -Wpointer-arith -Wbad-function-cast -Wcast-qual -Wcast-align -Wstrict-prototypes -Wno-unused-parameter -Wno-cast-qual")
   set ( CMAKE_C_FLAGS_DEBUG "-g -DDEBUG ${GNUCC_WARNING_FLAGS}" )
   set ( CMAKE_C_FLAGS_RELEASE "-O2 -fomit-frame-pointer -funroll-all-loops -finline-functions -DNDEBUG ${GNUCC_WARNING_FLAGS}" )
@@ -176,15 +176,15 @@ endif ( WIN32 )
 unset ( DART_SUPPORT CACHE )
 unset ( DART_LIBS CACHE )
 unset ( DART_INCLUDE_DIRS CACHE )
-if ( ${CMAKE_SYSTEM} MATCHES "os2" )
+if ( ${CMAKE_SYSTEM} MATCHES "OS2" )
   set ( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Zbin-files" )
-  set ( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Zbin-files -no-undefined" )
+  set ( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Zbin-files" )
   if ( enable-dart )
     check_include_file ( os2me.h HAVE_DART_H )
     set ( DART_SUPPORT ${HAVE_DART_H} )
     unset ( DART_INCLUDE_DIRS CACHE )
   endif ( enable-dart )
-endif ( ${CMAKE_SYSTEM} MATCHES "os2" )
+endif ( ${CMAKE_SYSTEM} MATCHES "OS2" )
 
 # Solaris / SunOS
 if ( ${CMAKE_SYSTEM} MATCHES "SunOS" )

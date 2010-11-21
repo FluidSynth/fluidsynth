@@ -355,7 +355,7 @@ AC_SUBST(COREMIDI_LIBS)
 dnl
 dnl - Check support for DART
 dnl
-AC_CHECK_HEADER(os2me.h, DART_FOUND="yes", DART_FOUND="no")
+AC_CHECK_HEADER(os2me.h, DART_FOUND="yes", DART_FOUND="no", -)
 AC_ARG_ENABLE(dart, AS_HELP_STRING([--disable-dart],
     [disable DART support (default=auto)]),
   enable_dart=$enableval, enable_dart="yes")
