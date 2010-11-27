@@ -887,38 +887,38 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
   case GEN_STARTADDROFS:              /* SF2.01 section 8.1.3 # 0 */
   case GEN_STARTADDRCOARSEOFS:        /* SF2.01 section 8.1.3 # 4 */
     if (voice->sample != NULL) {
-      x = (voice->sample->start
+      z = (voice->sample->start
 			     + (int) _GEN(voice, GEN_STARTADDROFS)
 			     + 32768 * (int) _GEN(voice, GEN_STARTADDRCOARSEOFS));
-      UPDATE_RVOICE_I1(fluid_rvoice_set_start, x);
+      UPDATE_RVOICE_I1(fluid_rvoice_set_start, z);
     }
     break;
   case GEN_ENDADDROFS:                 /* SF2.01 section 8.1.3 # 1 */
   case GEN_ENDADDRCOARSEOFS:           /* SF2.01 section 8.1.3 # 12 */
     if (voice->sample != NULL) {
-      x = (voice->sample->end
+      z = (voice->sample->end
 			   + (int) _GEN(voice, GEN_ENDADDROFS)
 			   + 32768 * (int) _GEN(voice, GEN_ENDADDRCOARSEOFS));
-      UPDATE_RVOICE_I1(fluid_rvoice_set_end, x);
+      UPDATE_RVOICE_I1(fluid_rvoice_set_end, z);
     }
     break;
   case GEN_STARTLOOPADDROFS:           /* SF2.01 section 8.1.3 # 2 */
   case GEN_STARTLOOPADDRCOARSEOFS:     /* SF2.01 section 8.1.3 # 45 */
     if (voice->sample != NULL) {
-      x = (voice->sample->loopstart
+      z = (voice->sample->loopstart
 				  + (int) _GEN(voice, GEN_STARTLOOPADDROFS)
 				  + 32768 * (int) _GEN(voice, GEN_STARTLOOPADDRCOARSEOFS));
-      UPDATE_RVOICE_I1(fluid_rvoice_set_loopstart, x);
+      UPDATE_RVOICE_I1(fluid_rvoice_set_loopstart, z);
     }
     break;
 
   case GEN_ENDLOOPADDROFS:             /* SF2.01 section 8.1.3 # 3 */
   case GEN_ENDLOOPADDRCOARSEOFS:       /* SF2.01 section 8.1.3 # 50 */
     if (voice->sample != NULL) {
-      x = (voice->sample->loopend
+      z = (voice->sample->loopend
 				+ (int) _GEN(voice, GEN_ENDLOOPADDROFS)
 				+ 32768 * (int) _GEN(voice, GEN_ENDLOOPADDRCOARSEOFS));
-      UPDATE_RVOICE_I1(fluid_rvoice_set_loopend, x);
+      UPDATE_RVOICE_I1(fluid_rvoice_set_loopend, z);
     }
     break;
 
