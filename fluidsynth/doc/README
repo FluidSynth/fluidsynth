@@ -1,6 +1,11 @@
 To build FluidSynth API reference documentation, make sure you have Doxygen
-installed and execute the following command in the doc/ directory:
-make doxygen
+installed.
+
+If you are using the cmake build system, change to the root build directory.
+If you are using the deprecated auto-tools based build system, execute the 
+following command in this doc/ directory:
+
+$ make doxygen
 
 The latest generated API HTML docs can also be found, along with other
 information, on the Wiki documentation page:
