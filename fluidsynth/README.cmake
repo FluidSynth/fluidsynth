@@ -71,8 +71,8 @@ There is a "clean" target, but not a "distclean" one. You should use a build
 directory different to the source tree. In this case, the "distclean" target 
 would be equivalent to simply removing the build directory. 
 
-To compile the developer documentation, use this command from the root build
-directory:
+To compile the developer documentation, install Doxygen (http://www.doxygen.org) 
+and use this command from the root build directory:
 
 $ make doxygen
 
