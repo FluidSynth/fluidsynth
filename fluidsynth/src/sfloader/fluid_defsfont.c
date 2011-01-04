@@ -2024,7 +2024,10 @@ process_sdta (int size, SFData * sf, FILE * fd)
     return (gerr (ErrCorr,
 	_("Expected SMPL chunk found invalid id instead")));
 
-  if ((size - chunk.size) != 0)
+  /* SDTA chunk may also contain sm24 chunk for 24 bit samples
+   * (not yet supported), only an error if SMPL chunk size is
+   * greater than SDTA. */
+  if (chunk.size > size)
     return (gerr (ErrCorr, _("SDTA chunk size mismatch")));
 
   /* sample data follows */
@@ -2034,7 +2037,7 @@ process_sdta (int size, SFData * sf, FILE * fd)
   sdtachunk_size = chunk.size;
   sf->samplesize = chunk.size;
 
-  FSKIP (chunk.size, fd);
+  FSKIP (size, fd);
 
   return (OK);
 }
