@@ -4998,7 +4998,7 @@ void fluid_synth_api_exit(fluid_synth_t* synth)
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
  * @param type CHANNEL_TYPE_MELODIC, or CHANNEL_TYPE_DRUM
  * @return FLUID_OK on success, FLUID_FAILED otherwise
- * @since 1.1.3
+ * @since 1.1.4
  */
 int fluid_synth_set_channel_type(fluid_synth_t* synth, int chan, int type)
 {
