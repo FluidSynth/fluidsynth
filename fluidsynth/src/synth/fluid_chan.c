@@ -67,8 +67,9 @@ fluid_channel_init(fluid_channel_t* chan)
   fluid_preset_t *newpreset;
   int prognum, banknum;
 
+  chan->channel_type = (chan->channum == 9) ? CHANNEL_TYPE_DRUM : CHANNEL_TYPE_MELODIC;
   prognum = 0;
-  banknum = (chan->channum == 9)? 128 : 0; /* ?? */
+  banknum = (chan->channel_type == CHANNEL_TYPE_DRUM) ? DRUM_INST_BANK : 0;
 
   chan->sfont_bank_prog = 0 << SFONT_SHIFTVAL | banknum << BANK_SHIFTVAL
     | prognum << PROG_SHIFTVAL;
@@ -233,7 +234,7 @@ fluid_channel_set_bank_lsb(fluid_channel_t* chan, int banklsb)
   style = chan->synth->bank_select;
   if (style == FLUID_BANK_STYLE_GM ||
       style == FLUID_BANK_STYLE_GS ||
-      chan->channum == 9) //TODO: ask for channel drum mode, instead of number
+      chan->channel_type == CHANNEL_TYPE_DRUM)
       return; /* ignored */
 
   oldval = chan->sfont_bank_prog;
@@ -251,11 +252,19 @@ fluid_channel_set_bank_msb(fluid_channel_t* chan, int bankmsb)
   int oldval, newval, style;
 
   style = chan->synth->bank_select;
+
+  if (style == FLUID_BANK_STYLE_XG)
+  {
+    /* XG bank (128*MSB+LSB), save MSB, do drum-channel auto-switch */
+    /* The number "120" was based on several keyboards having drums at 120 - 127, 
+       reference: http://lists.nongnu.org/archive/html/fluid-dev/2011-02/msg00003.html */
+    chan->channel_type = (120 <= bankmsb) ? CHANNEL_TYPE_DRUM : CHANNEL_TYPE_MELODIC;
+    return;
+  }
+
   if (style == FLUID_BANK_STYLE_GM ||
-      style == FLUID_BANK_STYLE_XG ||
-      chan->channum == 9) //TODO: ask for channel drum mode, instead of number
+      chan->channel_type == CHANNEL_TYPE_DRUM)
       return; /* ignored */
-  //TODO: if style == XG and bankmsb == 127, convert the channel to drum mode
 
   oldval = chan->sfont_bank_prog;
   if (style == FLUID_BANK_STYLE_GS)
@@ -263,6 +272,7 @@ fluid_channel_set_bank_msb(fluid_channel_t* chan, int bankmsb)
   else /* style == FLUID_BANK_STYLE_MMA */
       newval = (oldval & ~BANKMSB_MASKVAL) | (bankmsb << (BANK_SHIFTVAL + 7));
   chan->sfont_bank_prog = newval;
+
 }
 
 /* Get SoundFont ID, MIDI bank and/or program.  Use NULL to ignore a value. */

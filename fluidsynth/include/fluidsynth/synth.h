@@ -100,6 +100,15 @@ FLUIDSYNTH_API int fluid_synth_program_reset(fluid_synth_t* synth);
 FLUIDSYNTH_API int fluid_synth_system_reset(fluid_synth_t* synth);
 
 
+enum fluid_midi_channel_type
+{
+  CHANNEL_TYPE_MELODIC = 0,
+  CHANNEL_TYPE_DRUM = 1
+};
+
+int fluid_synth_set_channel_type(fluid_synth_t* synth, int chan, int type);
+
+
 /* Low level access */
 FLUIDSYNTH_API fluid_preset_t* fluid_synth_get_channel_preset(fluid_synth_t* synth, int chan);
 FLUIDSYNTH_API int fluid_synth_start(fluid_synth_t* synth, unsigned int id, 

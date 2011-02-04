@@ -74,6 +74,10 @@ struct _fluid_channel_t
    * flag indicating whether the NRPN value is absolute or not.
    */
   char gen_abs[GEN_LAST];
+
+  /* Drum channel flag, CHANNEL_TYPE_MELODIC, or CHANNEL_TYPE_DRUM. */
+  int channel_type;
+
 };
 
 fluid_channel_t* new_fluid_channel(fluid_synth_t* synth, int num);

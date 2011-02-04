@@ -1876,13 +1876,13 @@ fluid_synth_program_change(fluid_synth_t* synth, int chan, int prognum)
   /* Special handling of channel 10 (or 9 counting from 0). channel
    * 10 is the percussion channel.
    *
-   * FIXME - Shouldn't hard code bank selection for channel 10.  I think this
+   * FIXME - I think this
    * is a hack for MIDI files that do bank changes in GM mode.  Proper way to
    * handle this would probably be to ignore bank changes when in GM mode. - JG
    */
   if (prognum != FLUID_UNSET_PROGRAM)
   {
-    if (channel->channum == 9)
+    if (channel->channel_type == CHANNEL_TYPE_DRUM)
       preset = fluid_synth_find_preset(synth, DRUM_INST_BANK, prognum);
     else preset = fluid_synth_find_preset(synth, banknum, prognum);
 
@@ -1893,7 +1893,7 @@ fluid_synth_program_change(fluid_synth_t* synth, int chan, int prognum)
       subst_prog = prognum;
 
       /* Melodic instrument? */
-      if (channel->channum != 9 && banknum != DRUM_INST_BANK)
+      if ((channel->channel_type != CHANNEL_TYPE_DRUM) && (DRUM_INST_BANK != banknum))
       {
         subst_bank = 0;
 
@@ -4990,3 +4990,23 @@ void fluid_synth_api_exit(fluid_synth_t* synth)
   }
   
 }
+
+
+/**
+ * Set midi channel type 
+ * @param synth FluidSynth instance
+ * @param chan MIDI channel number (0 to MIDI channel count - 1)
+ * @param type CHANNEL_TYPE_MELODIC, or CHANNEL_TYPE_DRUM
+ * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @since 1.1.3
+ */
+int fluid_synth_set_channel_type(fluid_synth_t* synth, int chan, int type)
+{
+  fluid_return_val_if_fail ((type >= CHANNEL_TYPE_MELODIC) && (type <= CHANNEL_TYPE_DRUM), FLUID_FAILED);
+  FLUID_API_ENTRY_CHAN(FLUID_FAILED);
+  
+  synth->channel[chan]->channel_type = type;
+
+  FLUID_API_RETURN(FLUID_OK);
+}
+
