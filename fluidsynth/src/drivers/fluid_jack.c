@@ -246,6 +246,8 @@ fluid_jack_client_register_ports (void *driver, int isaudio, jack_client_t *clie
   char name[64];
   int multi;
   int i;
+  int jack_srate;
+  double sample_rate;
 
   if (!isaudio)
   {
@@ -323,6 +325,23 @@ fluid_jack_client_register_ports (void *driver, int isaudio, jack_client_t *clie
     }
   }
 
+
+  /* Adjust sample rate to match JACK's */
+  jack_srate = jack_get_sample_rate (client);
+  FLUID_LOG (FLUID_DBG, "Jack engine sample rate: %lu", jack_srate);
+
+  fluid_settings_getnum (settings, "synth.sample-rate", &sample_rate);
+
+  if ((int)sample_rate != jack_srate) {
+    FLUID_LOG(FLUID_INFO, "Jack sample rate mismatch, adjusting."
+	      " (synth.sample-rate=%lu, jackd=%lu)", (int)sample_rate, jack_srate);
+    fluid_settings_setnum (settings, "synth.sample-rate", jack_srate);
+  }
+
+  /* Changing sample rate is non RT, so make sure we process it and/or other things now */
+  if (dev->callback == NULL) 
+    fluid_synth_process_event_queue(dev->data);
+
   return FLUID_OK;
 }
 
@@ -370,8 +389,6 @@ new_fluid_jack_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func
   jack_client_t *client;
   const char ** jack_ports;     /* for looking up ports */
   int autoconnect = 0;
-  int jack_srate;
-  double sample_rate;
   int i;
 
   dev = FLUID_NEW(fluid_jack_audio_driver_t);
@@ -393,22 +410,6 @@ new_fluid_jack_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func
   }
 
   client = dev->client_ref->client;
-
-  /* display the current sample rate. once the client is activated
-     (see below), you should rely on your own sample rate
-     callback (see above) for this value.
-  */
-  jack_srate = jack_get_sample_rate (client);
-  FLUID_LOG (FLUID_DBG, "Jack engine sample rate: %lu", jack_srate);
-
-  fluid_settings_getnum (settings, "synth.sample-rate", &sample_rate);
-
-  if ((int)sample_rate != jack_srate) {
-    FLUID_LOG(FLUID_INFO, "Jack sample rate mismatch, adjusting."
-	      " (synth.sample-rate=%lu, jackd=%lu)", (int)sample_rate, jack_srate);
-    fluid_settings_setnum (settings, "synth.sample-rate", jack_srate);
-  }
-
 
   /* connect the ports. */
 

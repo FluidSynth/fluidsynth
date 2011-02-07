@@ -224,6 +224,8 @@ int delete_fluid_sample_timer(fluid_synth_t* synth, fluid_sample_timer_t* timer)
 void fluid_synth_api_enter(fluid_synth_t* synth);
 void fluid_synth_api_exit(fluid_synth_t* synth);
 
+void fluid_synth_process_event_queue(fluid_synth_t* synth);
+
 /*
  * misc
  */

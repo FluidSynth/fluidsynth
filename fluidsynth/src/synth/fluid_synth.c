@@ -753,6 +753,8 @@ new_fluid_synth(fluid_settings_t *settings)
   else if (fluid_settings_str_equal (settings, "synth.midi-bank-select", "mma") == 1)
     synth->bank_select = FLUID_BANK_STYLE_MMA;
 
+  fluid_synth_process_event_queue(synth);
+
   /* FIXME */
   synth->start = fluid_curtime();
 
@@ -2728,6 +2730,17 @@ fluid_synth_check_finished_voices(fluid_synth_t* synth)
       }
   }
 }
+
+/**
+ * Process all waiting events in the rvoice queue.
+ * Make sure no (other) rendering is running in parallel when
+ * you call this function!
+ */
+void fluid_synth_process_event_queue(fluid_synth_t* synth)
+{
+  fluid_rvoice_eventhandler_dispatch_all(synth->eventhandler);
+}
+
 
 /**
  * Process blocks (FLUID_BUFSIZE) of audio.
