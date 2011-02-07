@@ -1459,14 +1459,21 @@ fluid_synth_sysex_midi_tuning (fluid_synth_t *synth, const char *data, int len,
  * @param synth FluidSynth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1), (chan=-1 selects all channels)
  * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @since 1.1.4
  */
 int
 fluid_synth_all_notes_off(fluid_synth_t* synth, int chan)
 {
-  fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
-  fluid_return_val_if_fail (chan >= -1 && chan < synth->midi_channels, FLUID_FAILED);
+  int result;
 
-  return fluid_synth_all_notes_off_LOCAL (synth, chan);
+  fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
+  fluid_return_val_if_fail (chan >= -1, FLUID_FAILED);
+  fluid_synth_api_enter(synth);
+  if (chan >= synth->midi_channels) 
+    result = FLUID_FAILED;
+  else
+    result = fluid_synth_all_notes_off_LOCAL (synth, chan);
+  FLUID_API_RETURN(result);
 }
 
 /* Local synthesis thread variant of all notes off, (chan=-1 selects all channels) */
@@ -1490,16 +1497,20 @@ fluid_synth_all_notes_off_LOCAL(fluid_synth_t* synth, int chan)
  * @param synth FluidSynth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1), (chan=-1 selects all channels)
  * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @since 1.1.4
  */
 int
 fluid_synth_all_sounds_off(fluid_synth_t* synth, int chan)
 {
-  fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
-  fluid_return_val_if_fail (chan >= -1 && chan < synth->midi_channels, FLUID_FAILED);
   int result;
-  FLUID_API_ENTRY_CHAN(FLUID_FAILED);
 
-  result = fluid_synth_all_sounds_off_LOCAL (synth, chan);
+  fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
+  fluid_return_val_if_fail (chan >= -1, FLUID_FAILED);
+  fluid_synth_api_enter(synth);
+  if (chan >= synth->midi_channels) 
+    result = FLUID_FAILED;
+  else
+    result = fluid_synth_all_sounds_off_LOCAL (synth, chan);
   FLUID_API_RETURN(result);
 }
 

@@ -99,6 +99,8 @@ FLUIDSYNTH_API int fluid_synth_get_channel_info (fluid_synth_t *synth, int chan,
 FLUIDSYNTH_API int fluid_synth_program_reset(fluid_synth_t* synth);
 FLUIDSYNTH_API int fluid_synth_system_reset(fluid_synth_t* synth);
 
+FLUIDSYNTH_API int fluid_synth_all_notes_off(fluid_synth_t* synth, int chan);
+FLUIDSYNTH_API int fluid_synth_all_sounds_off(fluid_synth_t* synth, int chan);
 
 enum fluid_midi_channel_type
 {
