@@ -1455,19 +1455,19 @@ fluid_synth_sysex_midi_tuning (fluid_synth_t *synth, const char *data, int len,
 /**
  * Turn off all notes on a MIDI channel (put them into release phase).
  * @param synth FluidSynth instance
- * @param chan MIDI channel number (0 to MIDI channel count - 1)
+ * @param chan MIDI channel number (0 to MIDI channel count - 1), (chan=-1 selects all channels)
  * @return FLUID_OK on success, FLUID_FAILED otherwise
  */
 int
 fluid_synth_all_notes_off(fluid_synth_t* synth, int chan)
 {
   fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
-  fluid_return_val_if_fail (chan >= 0 && chan < synth->midi_channels, FLUID_FAILED);
+  fluid_return_val_if_fail (chan >= -1 && chan < synth->midi_channels, FLUID_FAILED);
 
   return fluid_synth_all_notes_off_LOCAL (synth, chan);
 }
 
-/* Local synthesis thread variant of all notes off */
+/* Local synthesis thread variant of all notes off, (chan=-1 selects all channels) */
 static int
 fluid_synth_all_notes_off_LOCAL(fluid_synth_t* synth, int chan)
 {
@@ -1477,7 +1477,7 @@ fluid_synth_all_notes_off_LOCAL(fluid_synth_t* synth, int chan)
   for (i = 0; i < synth->polyphony; i++) {
     voice = synth->voice[i];
 
-    if (_PLAYING(voice) && (voice->chan == chan))
+    if (_PLAYING(voice) && ((-1 == chan) || (chan == voice->chan)))
       fluid_voice_noteoff(voice);
   }
   return FLUID_OK;
@@ -1486,12 +1486,14 @@ fluid_synth_all_notes_off_LOCAL(fluid_synth_t* synth, int chan)
 /**
  * Immediately stop all notes on a MIDI channel (skips release phase).
  * @param synth FluidSynth instance
- * @param chan MIDI channel number (0 to MIDI channel count - 1)
+ * @param chan MIDI channel number (0 to MIDI channel count - 1), (chan=-1 selects all channels)
  * @return FLUID_OK on success, FLUID_FAILED otherwise
  */
 int
 fluid_synth_all_sounds_off(fluid_synth_t* synth, int chan)
 {
+  fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
+  fluid_return_val_if_fail (chan >= -1 && chan < synth->midi_channels, FLUID_FAILED);
   int result;
   FLUID_API_ENTRY_CHAN(FLUID_FAILED);
 
@@ -1499,7 +1501,7 @@ fluid_synth_all_sounds_off(fluid_synth_t* synth, int chan)
   FLUID_API_RETURN(result);
 }
 
-/* Local synthesis thread variant of all sounds off */
+/* Local synthesis thread variant of all sounds off, (chan=-1 selects all channels) */
 static int
 fluid_synth_all_sounds_off_LOCAL(fluid_synth_t* synth, int chan)
 {
@@ -1509,7 +1511,7 @@ fluid_synth_all_sounds_off_LOCAL(fluid_synth_t* synth, int chan)
   for (i = 0; i < synth->polyphony; i++) {
     voice = synth->voice[i];
 
-    if (_PLAYING(voice) && (voice->chan == chan))
+    if (_PLAYING(voice) && ((-1 == chan) || (chan == voice->chan)))
       fluid_voice_off(voice);
   }
   return FLUID_OK;
