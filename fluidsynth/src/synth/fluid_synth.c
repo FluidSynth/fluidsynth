@@ -1877,60 +1877,60 @@ fluid_synth_program_change(fluid_synth_t* synth, int chan, int prognum)
 {
   fluid_preset_t* preset = NULL;
   fluid_channel_t* channel;
-  int subst_bank, subst_prog, banknum, result;
+  int subst_bank, subst_prog, banknum = 0, result;
 
   fluid_return_val_if_fail (prognum >= 0 && prognum <= 128, FLUID_FAILED);
   FLUID_API_ENTRY_CHAN(FLUID_FAILED);
   
   channel = synth->channel[chan];
-  fluid_channel_get_sfont_bank_prog(channel, NULL, &banknum, NULL);
+  if (channel->channel_type == CHANNEL_TYPE_DRUM) 
+    banknum = DRUM_INST_BANK;
+  else
+    fluid_channel_get_sfont_bank_prog(channel, NULL, &banknum, NULL);
 
   if (synth->verbose)
     FLUID_LOG(FLUID_INFO, "prog\t%d\t%d\t%d", chan, banknum, prognum);
 
-  /* Special handling of channel 10 (or 9 counting from 0). channel
-   * 10 is the percussion channel.
-   *
-   * FIXME - I think this
-   * is a hack for MIDI files that do bank changes in GM mode.  Proper way to
-   * handle this would probably be to ignore bank changes when in GM mode. - JG
+  /* I think this is a hack for MIDI files that do bank changes in GM mode.  
+   * Proper way to handle this would probably be to ignore bank changes when in 
+   * GM mode. - JG
+   * This is now possible by setting synth.midi-bank-select=gm, but let the hack
+   * stay for the time being. - DH
    */
   if (prognum != FLUID_UNSET_PROGRAM)
   {
-    if (channel->channel_type == CHANNEL_TYPE_DRUM)
-      preset = fluid_synth_find_preset(synth, DRUM_INST_BANK, prognum);
-    else preset = fluid_synth_find_preset(synth, banknum, prognum);
-
+    subst_bank = banknum;
+    subst_prog = prognum;
+    
+    preset = fluid_synth_find_preset(synth, subst_bank, subst_prog);
+    
     /* Fallback to another preset if not found */
-    if (!preset)
-    {
-      subst_bank = banknum;
-      subst_prog = prognum;
-
-      /* Melodic instrument? */
-      if ((channel->channel_type != CHANNEL_TYPE_DRUM) && (DRUM_INST_BANK != banknum))
-      {
-        subst_bank = 0;
-
-        /* Fallback first to bank 0:prognum */
-        preset = fluid_synth_find_preset(synth, 0, prognum);
-
-        /* Fallback to first preset in bank 0 */
-        if (!preset && prognum != 0)
-        {
-          preset = fluid_synth_find_preset(synth, 0, 0);
-	  subst_prog = 0;
-        }
-      }
-      else /* Percussion: Fallback to preset 0 in percussion bank */
-      {
-        preset = fluid_synth_find_preset(synth, DRUM_INST_BANK, 0);
+    if (!preset) {
+      /* Percussion: Fallback to preset 0 in percussion bank */
+      if (subst_bank == DRUM_INST_BANK) {
         subst_prog = 0;
+        preset = fluid_synth_find_preset(synth, subst_bank, subst_prog);
+      }
+      /* Melodic instrument */
+      else { 
+        /* Fallback first to bank 0:prognum */
+        subst_bank = 0;
+        preset = fluid_synth_find_preset(synth, subst_bank, subst_prog);
+
+        /* Fallback to first preset in bank 0 (usually piano...) */
+        if (!preset)
+        {
+	  subst_prog = 0;
+          preset = fluid_synth_find_preset(synth, subst_bank, subst_prog);
+        }
       }
 
       if (preset)
         FLUID_LOG(FLUID_WARN, "Instrument not found on channel %d [bank=%d prog=%d], substituted [bank=%d prog=%d]",
                   chan, banknum, prognum, subst_bank, subst_prog); 
+      else
+        FLUID_LOG(FLUID_WARN, "No preset found on channel %d [bank=%d prog=%d]",
+                  chan, banknum, prognum); 
     }
   }
 
