@@ -26,6 +26,14 @@
 
 static int fluid_midi_event_length(unsigned char event);
 
+/* Read the entire contents of a file into memory, allocating enough memory
+ * for the file, and returning the length and the buffer.
+ * Note: This rewinds the file to the start before reading.
+ * Returns NULL if there was an error reading or allocating memory.
+ */
+static char* fluid_file_read_full(fluid_file fp, size_t* length);
+#define READ_FULL_INITIAL_BUFLEN 1024
+
 
 /***************************************************************
  *
@@ -33,13 +41,15 @@ static int fluid_midi_event_length(unsigned char event);
  */
 
 /**
- * Open a MIDI file and return a new MIDI file handle.
+ * Return a new MIDI file handle for parsing an already-loaded MIDI file.
  * @internal
- * @param filename Path of file to open.
+ * @param buffer Pointer to full contents of MIDI file (borrows the pointer).
+ *  The caller must not free buffer until after the fluid_midi_file is deleted.
+ * @param length Size of the buffer in bytes.
  * @return New MIDI file handle or NULL on error.
  */
 fluid_midi_file *
-new_fluid_midi_file(char *filename)
+new_fluid_midi_file(const char* buffer, size_t length)
 {
     fluid_midi_file *mf;
 
@@ -52,19 +62,52 @@ new_fluid_midi_file(char *filename)
 
     mf->c = -1;
     mf->running_status = -1;
-    mf->fp = FLUID_FOPEN(filename, "rb");
 
-    if (mf->fp == NULL) {
-        FLUID_LOG(FLUID_ERR, "Couldn't open the MIDI file");
-        FLUID_FREE(mf);
-        return NULL;
-    }
+    mf->buffer = buffer;
+    mf->buf_len = length;
+    mf->buf_pos = 0;
+    mf->eof = FALSE;
 
     if (fluid_midi_file_read_mthd(mf) != FLUID_OK) {
         FLUID_FREE(mf);
         return NULL;
     }
     return mf;
+}
+
+static char*
+fluid_file_read_full(fluid_file fp, size_t* length)
+{
+    size_t buflen;
+    char* buffer;
+    size_t n;
+    /* Work out the length of the file in advance */
+    if (FLUID_FSEEK(fp, 0, SEEK_END) != 0)
+    {
+        FLUID_LOG(FLUID_ERR, "File load: Could not seek within file");
+        return NULL;
+    }
+    buflen = ftell(fp);
+    if (FLUID_FSEEK(fp, 0, SEEK_SET) != 0)
+    {
+        FLUID_LOG(FLUID_ERR, "File load: Could not seek within file");
+        return NULL;
+    }
+    FLUID_LOG(FLUID_DBG, "File load: Allocating %d bytes", buflen);
+    buffer = FLUID_MALLOC(buflen);
+    if (buffer == NULL) {
+        FLUID_LOG(FLUID_PANIC, "Out of memory");
+        return NULL;
+    }
+    n = FLUID_FREAD(buffer, 1, buflen, fp);
+    if (n != buflen) {
+        FLUID_LOG(FLUID_ERR, "Only read %d bytes; expected %d", n,
+                  buflen);
+        FLUID_FREE(buffer);
+        return NULL;
+    };
+    *length = n;
+    return buffer;
 }
 
 /**
@@ -77,9 +120,6 @@ delete_fluid_midi_file (fluid_midi_file *mf)
 {
     if (mf == NULL) {
         return;
-    }
-    if (mf->fp != NULL) {
-        FLUID_FCLOSE(mf->fp);
     }
     FLUID_FREE(mf);
     return;
@@ -94,14 +134,15 @@ int
 fluid_midi_file_getc (fluid_midi_file *mf)
 {
     unsigned char c;
-    int n;
     if (mf->c >= 0) {
         c = mf->c;
         mf->c = -1;
     } else {
-        n = FLUID_FREAD(&c, 1, 1, mf->fp);
-        if (n != 1)
+        if (mf->buf_pos >= mf->buf_len) {
+            mf->eof = TRUE;
             return FLUID_FAILED;
+        }
+        c = mf->buffer[mf->buf_pos++];
         mf->trackpos++;
     }
     return (int) c;
@@ -124,7 +165,19 @@ fluid_midi_file_push(fluid_midi_file *mf, int c)
 int
 fluid_midi_file_read(fluid_midi_file *mf, void *buf, int len)
 {
-    int num = FLUID_FREAD(buf, 1, len, mf->fp);
+    int num = len < mf->buf_len - mf->buf_pos
+        ? len : mf->buf_len - mf->buf_pos;
+    if (num != len) {
+        mf->eof = TRUE;
+    }
+    if (num < 0) {
+        num = 0;
+    }
+    /* Note: Read bytes, even if there aren't enough, but only increment
+     * trackpos if successful (emulates old behaviour of fluid_midi_file_read)
+     */
+    FLUID_MEMCPY(buf, mf->buffer+mf->buf_pos, num);
+    mf->buf_pos += num;
     if (num == len)
         mf->trackpos += num;
 #if DEBUG
@@ -140,12 +193,32 @@ fluid_midi_file_read(fluid_midi_file *mf, void *buf, int len)
 int
 fluid_midi_file_skip (fluid_midi_file *mf, int skip)
 {
-    int err = FLUID_FSEEK(mf->fp, skip, SEEK_CUR);
-    if (err) {
+    int new_pos = mf->buf_pos + skip;
+    /* Mimic the behaviour of fseek: Error to seek past the start of file, but
+     * OK to seek past end (this just puts it into the EOF state). */
+    if (new_pos < 0) {
         FLUID_LOG(FLUID_ERR, "Failed to seek position in file");
         return FLUID_FAILED;
     }
+    /* Clear the EOF flag, even if moved past the end of the file (this is
+     * consistent with the behaviour of fseek). */
+    mf->eof = FALSE;
+    mf->buf_pos = new_pos;
     return FLUID_OK;
+}
+
+/*
+ * fluid_midi_file_eof
+ */
+int fluid_midi_file_eof(fluid_midi_file* mf)
+{
+	/* Note: This does not simply test whether the file read pointer is past
+	 * the end of the file. It mimics the behaviour of feof by actually
+	 * testing the stateful EOF condition, which is set to TRUE if getc or
+	 * fread have attempted to read past the end (but not if they have
+	 * precisely reached the end), but reset to FALSE upon a successful seek.
+	 */
+	return mf->eof;
 }
 
 /*
@@ -315,7 +388,7 @@ fluid_midi_file_read_track(fluid_midi_file *mf, fluid_player_t *player, int num)
             }
         }
     }
-    if (feof(mf->fp)) {
+    if (fluid_midi_file_eof(mf)) {
         FLUID_LOG(FLUID_ERR, "Unexpected end of file");
         return FLUID_FAILED;
     }
@@ -1198,6 +1271,7 @@ int
 delete_fluid_player(fluid_player_t *player)
 {
     fluid_list_t *q;
+    fluid_playlist_item* pi;
 
     if (player == NULL) {
         return FLUID_OK;
@@ -1207,7 +1281,10 @@ delete_fluid_player(fluid_player_t *player)
 
     while (player->playlist != NULL) {
         q = player->playlist->next;
-        FLUID_FREE(player->playlist->data);
+        pi = (fluid_playlist_item*) player->playlist->data;
+        FLUID_FREE(pi->filename);
+        FLUID_FREE(pi->buffer);
+        FLUID_FREE(pi);
         delete1_fluid_list(player->playlist);
         player->playlist = q;
     }
@@ -1302,8 +1379,34 @@ fluid_player_get_track(fluid_player_t *player, int i)
 int
 fluid_player_add(fluid_player_t *player, const char *midifile)
 {
-    char *s = FLUID_STRDUP(midifile);
-    player->playlist = fluid_list_append(player->playlist, s);
+    fluid_playlist_item *pi = FLUID_MALLOC(sizeof(fluid_playlist_item));
+    pi->filename = FLUID_STRDUP(midifile);
+    pi->buffer = NULL;
+    pi->buffer_len = 0;
+    player->playlist = fluid_list_append(player->playlist, pi);
+    return FLUID_OK;
+}
+
+/**
+ * Add a MIDI file to a player queue, from a buffer in memory.
+ * @param player MIDI player instance
+ * @param buffer Pointer to memory containing the bytes of a complete MIDI
+ *   file. The data is copied, so the caller may free or modify it immediately
+ *   without affecting the playlist.
+ * @param len Length of the buffer, in bytes.
+ * @return #FLUID_OK
+ */
+int
+fluid_player_add_mem(fluid_player_t* player, const void *buffer, size_t len)
+{
+    /* Take a copy of the buffer, so the caller can free immediately. */
+    void *buf_copy = FLUID_MALLOC(len);
+    FLUID_MEMCPY(buf_copy, buffer, len);
+    fluid_playlist_item *pi = FLUID_MALLOC(sizeof(fluid_playlist_item));
+    pi->filename = NULL;
+    pi->buffer = buf_copy;
+    pi->buffer_len = len;
+    player->playlist = fluid_list_append(player->playlist, pi);
     return FLUID_OK;
 }
 
@@ -1311,12 +1414,49 @@ fluid_player_add(fluid_player_t *player, const char *midifile)
  * fluid_player_load
  */
 int
-fluid_player_load(fluid_player_t *player, char *filename)
+fluid_player_load(fluid_player_t *player, fluid_playlist_item *item)
 {
     fluid_midi_file *midifile;
+    char* buffer;
+    size_t buffer_length;
+    int buffer_owned;
 
-    midifile = new_fluid_midi_file(filename);
+    if (item->filename != NULL)
+    {
+        /* This file is specified by filename; load the file from disk */
+        FLUID_LOG(FLUID_DBG, "%s: %d: Loading midifile %s", __FILE__, __LINE__,
+                item->filename);
+
+        /* Read the entire contents of the file into the buffer */
+        fluid_file fp = FLUID_FOPEN(item->filename, "rb");
+        if (fp == NULL) {
+            FLUID_LOG(FLUID_ERR, "Couldn't open the MIDI file");
+            return FLUID_FAILED;
+        }
+        buffer = fluid_file_read_full(fp, &buffer_length);
+        if (buffer == NULL)
+        {
+            return FLUID_FAILED;
+        }
+        buffer_owned = 1;
+        FLUID_FCLOSE(fp);
+    }
+    else
+    {
+        /* This file is specified by a pre-loaded buffer; load from memory */
+        FLUID_LOG(FLUID_DBG, "%s: %d: Loading midifile from memory (%p)",
+                __FILE__, __LINE__, item->buffer);
+        buffer = item->buffer;
+        buffer_length = item->buffer_len;
+        /* Do not free the buffer (it is owned by the playlist) */
+        buffer_owned = 0;
+    }
+
+    midifile = new_fluid_midi_file(buffer, buffer_length);
     if (midifile == NULL) {
+        if (buffer_owned) {
+            FLUID_FREE(buffer);
+        }
         return FLUID_FAILED;
     }
     player->division = fluid_midi_file_get_division(midifile);
@@ -1324,9 +1464,15 @@ fluid_player_load(fluid_player_t *player, char *filename)
     /*FLUID_LOG(FLUID_DBG, "quarter note division=%d\n", player->division); */
 
     if (fluid_midi_file_load_tracks(midifile, player) != FLUID_OK) {
+        if (buffer_owned) {
+            FLUID_FREE(buffer);
+        }
         return FLUID_FAILED;
     }
     delete_fluid_midi_file(midifile);
+    if (buffer_owned) {
+        FLUID_FREE(buffer);
+    }
     return FLUID_OK;
 }
 
@@ -1353,7 +1499,7 @@ fluid_player_advancefile(fluid_player_t *player)
 void
 fluid_player_playlist_load(fluid_player_t *player, unsigned int msec)
 {
-    char *current_filename;
+    fluid_playlist_item* current_playitem;
     int i;
 
     do {
@@ -1365,10 +1511,8 @@ fluid_player_playlist_load(fluid_player_t *player, unsigned int msec)
         }
 
         fluid_player_reset(player);
-        current_filename = (char *) player->currentfile->data;
-        FLUID_LOG(FLUID_DBG, "%s: %d: Loading midifile %s", __FILE__, __LINE__,
-                current_filename);
-    } while (fluid_player_load(player, current_filename) != FLUID_OK);
+        current_playitem = (fluid_playlist_item *) player->currentfile->data;
+    } while (fluid_player_load(player, current_playitem) != FLUID_OK);
 
     /* Successfully loaded midi file */
 
