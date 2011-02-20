@@ -1374,13 +1374,21 @@ fluid_player_get_track(fluid_player_t *player, int i)
  * Add a MIDI file to a player queue.
  * @param player MIDI player instance
  * @param midifile File name of the MIDI file to add
- * @return #FLUID_OK
+ * @return #FLUID_OK or #FLUID_FAILED
  */
 int
 fluid_player_add(fluid_player_t *player, const char *midifile)
 {
     fluid_playlist_item *pi = FLUID_MALLOC(sizeof(fluid_playlist_item));
-    pi->filename = FLUID_STRDUP(midifile);
+    char* f = FLUID_STRDUP(midifile);
+    if (!pi || !f) {
+        FLUID_FREE(pi);
+        FLUID_FREE(f);
+        FLUID_LOG(FLUID_PANIC, "Out of memory");
+        return FLUID_FAILED;
+    }
+
+    pi->filename = f;
     pi->buffer = NULL;
     pi->buffer_len = 0;
     player->playlist = fluid_list_append(player->playlist, pi);
@@ -1394,15 +1402,22 @@ fluid_player_add(fluid_player_t *player, const char *midifile)
  *   file. The data is copied, so the caller may free or modify it immediately
  *   without affecting the playlist.
  * @param len Length of the buffer, in bytes.
- * @return #FLUID_OK
+ * @return #FLUID_OK or #FLUID_FAILED
  */
 int
 fluid_player_add_mem(fluid_player_t* player, const void *buffer, size_t len)
 {
     /* Take a copy of the buffer, so the caller can free immediately. */
-    void *buf_copy = FLUID_MALLOC(len);
-    FLUID_MEMCPY(buf_copy, buffer, len);
     fluid_playlist_item *pi = FLUID_MALLOC(sizeof(fluid_playlist_item));
+    void *buf_copy = FLUID_MALLOC(len);
+    if (!pi || !buf_copy) {
+        FLUID_FREE(pi);
+        FLUID_FREE(buf_copy);
+        FLUID_LOG(FLUID_PANIC, "Out of memory");
+        return FLUID_FAILED;
+    }
+
+    FLUID_MEMCPY(buf_copy, buffer, len);
     pi->filename = NULL;
     pi->buffer = buf_copy;
     pi->buffer_len = len;
