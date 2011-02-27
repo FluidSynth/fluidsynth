@@ -113,6 +113,7 @@ typedef struct _SFSample
   unsigned char origpitch;		/* root midi key number */
   signed char pitchadj;		/* pitch correction in cents */
   unsigned short sampletype;		/* 1 mono,2 right,4 left,linked 8,0x8000=ROM */
+  fluid_sample_t *fluid_sample;	/* Imported sample (fixed up in fluid_defsfont_load) */
 }
 SFSample;
 
@@ -420,7 +421,6 @@ int fluid_defsfont_iteration_next(fluid_defsfont_t* sfont, fluid_preset_t* prese
 int fluid_defsfont_load_sampledata(fluid_defsfont_t* sfont);
 int fluid_defsfont_add_sample(fluid_defsfont_t* sfont, fluid_sample_t* sample);
 int fluid_defsfont_add_preset(fluid_defsfont_t* sfont, fluid_defpreset_t* preset);
-fluid_sample_t* fluid_defsfont_get_sample(fluid_defsfont_t* sfont, char *s);
 
 
 /*

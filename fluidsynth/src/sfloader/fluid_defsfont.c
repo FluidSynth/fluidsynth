@@ -317,6 +317,9 @@ int fluid_defsfont_load(fluid_defsfont_t* sfont, const char* file)
     if (fluid_sample_import_sfont(sample, sfsample, sfont) != FLUID_OK)
       goto err_exit;
 
+    /* Store reference to FluidSynth sample in SFSample for later IZone fixups */
+    sfsample->fluid_sample = sample;
+
     fluid_defsfont_add_sample(sfont, sample);
     fluid_voice_optimize_sample(sample);
     p = fluid_list_next(p);
@@ -443,26 +446,6 @@ fluid_defsfont_load_sampledata(fluid_defsfont_t* sfont)
     }
   }
   return FLUID_OK;
-}
-
-/*
- * fluid_defsfont_get_sample
- */
-fluid_sample_t* fluid_defsfont_get_sample(fluid_defsfont_t* sfont, char *s)
-{
-  fluid_list_t* list;
-  fluid_sample_t* sample;
-
-  for (list = sfont->sample; list; list = fluid_list_next(list)) {
-
-    sample = (fluid_sample_t*) fluid_list_get(list);
-
-    if (FLUID_STRCMP(sample->name, s) == 0) {
-      return sample;
-    }
-  }
-
-  return NULL;
 }
 
 /*
@@ -1407,13 +1390,9 @@ fluid_inst_zone_import_sfont(fluid_inst_zone_t* zone, SFZone *sfzone, fluid_defs
 /*      FLUID_LOG(FLUID_DBG, "ExclusiveClass=%d\n", (int) zone->gen[GEN_EXCLUSIVECLASS].val); */
 /*    } */
 
-  if ((sfzone->instsamp != NULL) && (sfzone->instsamp->data != NULL)) {
-    zone->sample = fluid_defsfont_get_sample(sfont, ((SFSample *) sfzone->instsamp->data)->name);
-    if (zone->sample == NULL) {
-      FLUID_LOG(FLUID_ERR, "Couldn't find sample name");
-      return FLUID_FAILED;
-    }
-  }
+  /* fixup sample pointer */
+  if ((sfzone->instsamp != NULL) && (sfzone->instsamp->data != NULL))
+    zone->sample = ((SFSample *)(sfzone->instsamp->data))->fluid_sample;
 
   /* Import the modulators (only SF2.1 and higher) */
   for (count = 0, r = sfzone->mod; r != NULL; count++) {
