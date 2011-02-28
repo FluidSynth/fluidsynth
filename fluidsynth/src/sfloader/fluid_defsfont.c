@@ -1731,7 +1731,7 @@ static int chunkid (unsigned int id);
 static int load_body (unsigned int size, SFData * sf, FILE * fd);
 static int read_listchunk (SFChunk * chunk, FILE * fd);
 static int process_info (int size, SFData * sf, FILE * fd);
-static int process_sdta (int size, SFData * sf, FILE * fd);
+static int process_sdta (unsigned int size, SFData * sf, FILE * fd);
 static int pdtahelper (unsigned int expid, unsigned int reclen, SFChunk * chunk,
   int * size, FILE * fd);
 static int process_pdta (int size, SFData * sf, FILE * fd);
@@ -1988,7 +1988,7 @@ process_info (int size, SFData * sf, FILE * fd)
 }
 
 static int
-process_sdta (int size, SFData * sf, FILE * fd)
+process_sdta (unsigned int size, SFData * sf, FILE * fd)
 {
   SFChunk chunk;
 
