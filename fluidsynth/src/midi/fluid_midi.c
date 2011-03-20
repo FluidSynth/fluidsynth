@@ -1438,12 +1438,12 @@ fluid_player_load(fluid_player_t *player, fluid_playlist_item *item)
 
     if (item->filename != NULL)
     {
+        fluid_file fp;
         /* This file is specified by filename; load the file from disk */
         FLUID_LOG(FLUID_DBG, "%s: %d: Loading midifile %s", __FILE__, __LINE__,
                 item->filename);
-
         /* Read the entire contents of the file into the buffer */
-        fluid_file fp = FLUID_FOPEN(item->filename, "rb");
+        fp = FLUID_FOPEN(item->filename, "rb");
         if (fp == NULL) {
             FLUID_LOG(FLUID_ERR, "Couldn't open the MIDI file");
             return FLUID_FAILED;
@@ -1461,7 +1461,7 @@ fluid_player_load(fluid_player_t *player, fluid_playlist_item *item)
         /* This file is specified by a pre-loaded buffer; load from memory */
         FLUID_LOG(FLUID_DBG, "%s: %d: Loading midifile from memory (%p)",
                 __FILE__, __LINE__, item->buffer);
-        buffer = item->buffer;
+        buffer = (char *) item->buffer;
         buffer_length = item->buffer_len;
         /* Do not free the buffer (it is owned by the playlist) */
         buffer_owned = 0;
