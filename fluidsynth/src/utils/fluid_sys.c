@@ -900,7 +900,12 @@ fluid_ostream_printf (fluid_ostream_t out, char* format, ...)
   len = vsnprintf (buf, 4095, format, args);
   va_end (args);
 
-  if (len <= 0)
+  if (len == 0)
+  {
+    return 0;
+  }
+
+  if (len < 0)
   {
     printf("fluid_ostream_printf: buffer overflow");
     return -1;
