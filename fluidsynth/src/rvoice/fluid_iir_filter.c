@@ -56,10 +56,6 @@ fluid_iir_filter_apply(fluid_iir_filter_t* iir_filter,
   fluid_real_t dsp_a2 = iir_filter->a2;
   fluid_real_t dsp_b02 = iir_filter->b02;
   fluid_real_t dsp_b1 = iir_filter->b1;
-  fluid_real_t dsp_a1_incr = iir_filter->a1_incr;
-  fluid_real_t dsp_a2_incr = iir_filter->a2_incr;
-  fluid_real_t dsp_b02_incr = iir_filter->b02_incr;
-  fluid_real_t dsp_b1_incr = iir_filter->b1_incr;
   int dsp_filter_coeff_incr_count = iir_filter->filter_coeff_incr_count;
 
   fluid_real_t dsp_centernode;
@@ -77,6 +73,12 @@ fluid_iir_filter_apply(fluid_iir_filter_t* iir_filter,
 
   if (dsp_filter_coeff_incr_count > 0)
   {
+    fluid_real_t dsp_a1_incr = iir_filter->a1_incr;
+    fluid_real_t dsp_a2_incr = iir_filter->a2_incr;
+    fluid_real_t dsp_b02_incr = iir_filter->b02_incr;
+    fluid_real_t dsp_b1_incr = iir_filter->b1_incr;
+
+
     /* Increment is added to each filter coefficient filter_coeff_incr_count times. */
     for (dsp_i = 0; dsp_i < count; dsp_i++)
     {
@@ -88,10 +90,19 @@ fluid_iir_filter_apply(fluid_iir_filter_t* iir_filter,
 
       if (dsp_filter_coeff_incr_count-- > 0)
       {
+        fluid_real_t old_b02 = dsp_b02;
 	dsp_a1 += dsp_a1_incr;
 	dsp_a2 += dsp_a2_incr;
 	dsp_b02 += dsp_b02_incr;
 	dsp_b1 += dsp_b1_incr;
+
+        /* Compensate history to avoid the filter going havoc with large frequency changes */
+	if (fabs(dsp_b02) > 0.001) {
+          fluid_real_t compensate = old_b02 / dsp_b02;
+          dsp_centernode *= compensate;
+          dsp_hist1 *= compensate;
+          dsp_hist2 *= compensate;
+        }
       }
     } /* for dsp_i */
   }
