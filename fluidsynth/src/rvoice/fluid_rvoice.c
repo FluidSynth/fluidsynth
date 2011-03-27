@@ -195,8 +195,8 @@ fluid_rvoice_check_sample_sanity(fluid_rvoice_t* voice)
       /* Is the voice loop within the sample loop? */
       if ((int)voice->dsp.loopstart >= (int)voice->dsp.sample->loopstart
 	  && (int)voice->dsp.loopend <= (int)voice->dsp.sample->loopend){
-	/* Is there a valid peak amplitude available for the loop? */
-	if (voice->dsp.sample->amplitude_that_reaches_noise_floor_is_valid){
+	/* Is there a valid peak amplitude available for the loop, and can we use it? */
+	if (voice->dsp.sample->amplitude_that_reaches_noise_floor_is_valid && voice->dsp.samplemode == FLUID_LOOP_DURING_RELEASE){
 	  voice->dsp.amplitude_that_reaches_noise_floor_loop=voice->dsp.sample->amplitude_that_reaches_noise_floor / voice->dsp.synth_gain;
 	} else {
 	  /* Worst case */
