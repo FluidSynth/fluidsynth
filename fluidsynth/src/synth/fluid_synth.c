@@ -2734,11 +2734,17 @@ fluid_synth_check_finished_voices(fluid_synth_t* synth)
   fluid_rvoice_t* fv;
   
   while (NULL != (fv = fluid_rvoice_eventhandler_get_finished_voice(synth->eventhandler))) {
-    for (j=0; j < synth->polyphony; j++) 
+    for (j=0; j < synth->polyphony; j++) {
       if (synth->voice[j]->rvoice == fv) {
         fluid_voice_unlock_rvoice(synth->voice[j]);
         fluid_voice_off(synth->voice[j]);
+        break;
       }
+      else if (synth->voice[j]->overflow_rvoice == fv) {
+        fluid_voice_overflow_rvoice_finished(synth->voice[j]);
+        break;
+      }
+    }
   }
 }
 
@@ -2821,7 +2827,7 @@ static fluid_voice_t*
 fluid_synth_free_voice_by_kill_LOCAL(fluid_synth_t* synth)
 {
   int i;
-  fluid_real_t best_prio = 999999.;
+  fluid_real_t best_prio = OVERFLOW_PRIO_CANNOT_KILL-1;
   fluid_real_t this_voice_prio;
   fluid_voice_t* voice;
   int best_voice_index=-1;

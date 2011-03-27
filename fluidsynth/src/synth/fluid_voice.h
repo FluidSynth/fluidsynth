@@ -101,7 +101,9 @@ struct _fluid_voice_t
 
 	/* rvoice control */
 	fluid_rvoice_t* rvoice;
+	fluid_rvoice_t* overflow_rvoice; /* Used temporarily and only in overflow situations */
 	int can_access_rvoice; /* False if rvoice is being rendered in separate thread */ 
+	int can_access_overflow_rvoice; /* False if overflow_rvoice is being rendered in separate thread */ 
 
 	/* for debugging */
 	int debug;
@@ -142,6 +144,7 @@ void fluid_voice_update_param(fluid_voice_t* voice, int gen);
 
 int fluid_voice_noteoff(fluid_voice_t* voice);
 int fluid_voice_off(fluid_voice_t* voice);
+void fluid_voice_overflow_rvoice_finished(fluid_voice_t* voice);
 void fluid_voice_mix (fluid_voice_t *voice, int count, fluid_real_t* dsp_buf,
 		 fluid_real_t* left_buf, fluid_real_t* right_buf,
 		 fluid_real_t* reverb_buf, fluid_real_t* chorus_buf);
@@ -150,6 +153,8 @@ int fluid_voice_kill_excl(fluid_voice_t* voice);
 fluid_real_t fluid_voice_get_overflow_prio(fluid_voice_t* voice, 
 					    fluid_overflow_prio_t* score,
 					    unsigned int cur_time);
+
+#define OVERFLOW_PRIO_CANNOT_KILL 999999.
 
 /**
  * Locks the rvoice for rendering, so it can't be modified directly

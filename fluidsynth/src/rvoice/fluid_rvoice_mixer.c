@@ -309,7 +309,7 @@ fluid_mixer_buffers_render_one(fluid_mixer_buffers_t* buffers,
     fluid_finish_rvoice(buffers, voice);
   }
 }
-
+/*
 static int fluid_mixer_buffers_replace_voice(fluid_mixer_buffers_t* buffers, 
 			                      fluid_rvoice_t* voice)
 {
@@ -325,35 +325,35 @@ static int fluid_mixer_buffers_replace_voice(fluid_mixer_buffers_t* buffers,
   fvc = buffers->finished_voice_count;
   return retval;  
 }
+*/
 
 int 
 fluid_rvoice_mixer_add_voice(fluid_rvoice_mixer_t* mixer, fluid_rvoice_t* voice)
 {
-  // Check if this voice is already in array, this can happen in some overflow conditions
-  int i, j=0;
-  for (i=0; i < mixer->active_voices; i++) {
-    if (mixer->rvoices[i] == voice) 
-      j++;
-  }
-  
-  if (j > 0) {
-    // It's already present, make sure it won't get deleted right away
-#ifdef ENABLE_MIXER_THREADS  
-    for (i=0; i < mixer->thread_count; i++)
-      fluid_mixer_buffers_replace_voice(&mixer->threads[i], voice);
-#endif
-    fluid_mixer_buffers_replace_voice(&mixer->buffers, voice);
+  int i;
+
+  if (mixer->active_voices < mixer->polyphony) {
+    mixer->rvoices[mixer->active_voices++] = voice;
     return FLUID_OK;
   }
-
- 
-  if (mixer->active_voices >= mixer->polyphony) {
-    FLUID_LOG(FLUID_WARN, "Trying to exceed polyphony in fluid_rvoice_mixer_add_voice");
-    return FLUID_FAILED;
+  
+  /* See if any voices just finished, if so, take its place.
+     This can happen in voice overflow conditions. */
+  for (i=0; i < mixer->active_voices; i++) {
+    if (mixer->rvoices[i] == voice) {
+      FLUID_LOG(FLUID_ERR, "Internal error: Trying to replace an existing rvoice in fluid_rvoice_mixer_add_voice?!");
+      return FLUID_FAILED;
+    }
+    if (mixer->rvoices[i]->envlfo.volenv.section == FLUID_VOICE_ENVFINISHED) {
+      fluid_finish_rvoice(&mixer->buffers, mixer->rvoices[i]);
+      mixer->rvoices[i] = voice;
+      return FLUID_OK;
+    }
   }
-    
-  mixer->rvoices[mixer->active_voices++] = voice;
-  return FLUID_OK;
+
+  /* This should never happen */
+  FLUID_LOG(FLUID_ERR, "Trying to exceed polyphony in fluid_rvoice_mixer_add_voice");
+  return FLUID_FAILED;
 }
 
 static int 

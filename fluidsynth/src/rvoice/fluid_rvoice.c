@@ -648,13 +648,8 @@ void fluid_rvoice_set_samplemode(fluid_rvoice_t* voice, enum fluid_loop value)
 void 
 fluid_rvoice_set_sample(fluid_rvoice_t* voice, fluid_sample_t* value)
 {
-  if (voice->dsp.sample) {
-    fluid_sample_decr_ref(voice->dsp.sample);
-    voice->dsp.sample = NULL;
-  }
+  voice->dsp.sample = value;
   if (value) {
-    voice->dsp.sample = value;
-    fluid_sample_incr_ref(voice->dsp.sample);
     voice->dsp.check_sample_sanity_flag |= FLUID_SAMPLESANITY_STARTUP;
   }
 }
@@ -664,10 +659,6 @@ fluid_rvoice_voiceoff(fluid_rvoice_t* voice)
 {
   fluid_adsr_env_set_section(&voice->envlfo.volenv, FLUID_VOICE_ENVFINISHED);
   fluid_adsr_env_set_section(&voice->envlfo.modenv, FLUID_VOICE_ENVFINISHED);
-  if (voice->dsp.sample) {
-    fluid_sample_decr_ref(voice->dsp.sample);
-    voice->dsp.sample = NULL;
-  }
 }
 
 
