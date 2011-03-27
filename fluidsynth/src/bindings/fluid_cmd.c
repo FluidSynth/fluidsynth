@@ -18,6 +18,8 @@
  * 02111-1307, USA
  */
 
+#include <glib.h>
+
 #include "fluidsynth_priv.h"
 #include "fluid_cmd.h"
 #include "fluid_synth.h"
@@ -189,33 +191,22 @@ fluid_cmd_t fluid_commands[] = {
 int
 fluid_command(fluid_cmd_handler_t* handler, const char *cmd, fluid_ostream_t out)
 {
-  char* token[MAX_TOKENS];
-  char buf[MAX_COMMAND_LEN+1];
-  char *strtok, *tok;
-  int num_tokens = 0;
+  int result, num_tokens = 0;
+  char** tokens = NULL;
 
-  if (cmd[0] == '#') {
+  if (cmd[0] == '#' || cmd[0] == '\0') {
     return 1;
   }
 
-  if (strlen (cmd) > MAX_COMMAND_LEN)
-  {
-    fluid_ostream_printf(out, "Command exceeded max length of %d chars\n",
-			 MAX_COMMAND_LEN);
+  if (!g_shell_parse_argv(cmd, &num_tokens, &tokens, NULL)) {
+    fluid_ostream_printf(out, "Error parsing command\n");
     return -1;
   }
 
-  FLUID_STRCPY(buf, cmd);	/* copy - since fluid_strtok thrashes it */
-  strtok = buf;
+  result = fluid_cmd_handler_handle(handler, num_tokens, &tokens[0], out);
+  g_strfreev(tokens);
 
-  /* tokenize the input line */
-  while ((tok = fluid_strtok (&strtok, " \t\n\r")))
-    token[num_tokens++] = tok;
-
-  if (num_tokens == 0) return 1;
-
-  /* handle the command */
-  return fluid_cmd_handler_handle(handler, num_tokens, &token[0], out);
+  return result;
 }
 
 /**
