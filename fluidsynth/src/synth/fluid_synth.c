@@ -792,8 +792,13 @@ delete_fluid_synth(fluid_synth_t* synth)
   /* turn off all voices, needed to unload SoundFont data */
   if (synth->voice != NULL) {
     for (i = 0; i < synth->nvoice; i++) {
-      if (synth->voice[i] && fluid_voice_is_playing (synth->voice[i]))
-	fluid_voice_off (synth->voice[i]);
+      fluid_voice_t* voice = synth->voice[i];
+      if (!voice)
+        continue;
+      fluid_voice_unlock_rvoice(voice);
+      fluid_voice_overflow_rvoice_finished(voice); 
+      if (fluid_voice_is_playing(voice))
+	fluid_voice_off(voice);
     }
   }
 
