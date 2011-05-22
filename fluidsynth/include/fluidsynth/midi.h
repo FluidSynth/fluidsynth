@@ -132,6 +132,7 @@ FLUIDSYNTH_API int fluid_player_set_loop(fluid_player_t* player, int loop);
 FLUIDSYNTH_API int fluid_player_set_midi_tempo(fluid_player_t* player, int tempo);
 FLUIDSYNTH_API int fluid_player_set_bpm(fluid_player_t* player, int bpm);
 FLUIDSYNTH_API int fluid_player_get_status(fluid_player_t* player);
+FLUIDSYNTH_API int fluid_player_set_playback_callback(fluid_player_t* player, handle_midi_event_func_t handler, void* handler_data);
 
 #ifdef __cplusplus
 }

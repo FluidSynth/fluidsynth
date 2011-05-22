@@ -1204,8 +1204,10 @@ fluid_track_send_events(fluid_track_t *track,
 
         track->ticks += event->dtime;
 
-        if (event->type != MIDI_SET_TEMPO)
-            fluid_synth_handle_midi_event(synth, event);
+        if (event->type != MIDI_SET_TEMPO) {
+            if (player->playback_callback)
+                player->playback_callback(player->playback_userdata, event);
+	}
         else if (player)
             fluid_player_set_midi_tempo(player, event->param1);
 
@@ -1252,6 +1254,7 @@ new_fluid_player(fluid_synth_t *synth)
     player->deltatime = 4.0;
     player->cur_msec = 0;
     player->cur_ticks = 0;
+    fluid_player_set_playback_callback(player, fluid_synth_handle_midi_event, synth);
 
     player->use_system_timer = fluid_settings_str_equal(synth->settings,
             "player.timing-source", "system");
@@ -1368,6 +1371,28 @@ fluid_player_get_track(fluid_player_t *player, int i)
     } else {
         return NULL;
     }
+}
+
+/**
+ * Change the MIDI callback function. This is usually set to 
+ * fluid_synth_handle_midi_event, but can optionally be changed
+ * to a user-defined function instead, for intercepting all MIDI
+ * messages sent to the synth. You can also use a midi router as 
+ * the callback function to modify the MIDI messages before sending
+ * them to the synth. 
+ * @param player MIDI player instance
+ * @param handler Pointer to callback function
+ * @param handler_data Parameter sent to the callback function
+ * @returns FLUID_OK
+ * @since 1.1.4
+ */
+int 
+fluid_player_set_playback_callback(fluid_player_t* player, 
+    handle_midi_event_func_t handler, void* handler_data)
+{
+    player->playback_callback = handler;
+    player->playback_userdata = handler_data;
+    return FLUID_OK;
 }
 
 /**
