@@ -8,7 +8,7 @@ dnl *** NOTE *** Don't forget to update library version below also
 
 FLUIDSYNTH_VERSION_MAJOR=1
 FLUIDSYNTH_VERSION_MINOR=1
-FLUIDSYNTH_VERSION_MICRO=3
+FLUIDSYNTH_VERSION_MICRO=4
 FLUIDSYNTH_VERSION=$FLUIDSYNTH_VERSION_MAJOR.$FLUIDSYNTH_VERSION_MINOR.$FLUIDSYNTH_VERSION_MICRO
 
 AC_SUBST(FLUIDSYNTH_VERSION_MAJOR)
@@ -29,8 +29,8 @@ dnl if any interfaces have been added: lt_age++
 dnl if any interfaces have been removed/changed (compatibility broken): lt_age=0
 
 m4_define([lt_current], [5])
-m4_define([lt_revision], [1])
-m4_define([lt_age], [4])
+m4_define([lt_revision], [0])
+m4_define([lt_age], [5])
 
 LT_VERSION_INFO="lt_current:lt_revision:lt_age"
 AC_SUBST(LT_VERSION_INFO)
