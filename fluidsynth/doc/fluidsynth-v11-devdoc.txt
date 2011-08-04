@@ -69,6 +69,7 @@ Changes in FluidSynth 1.1.4 concerning developers:
 - A hook can be inserted for MIDI file playback, at playback time. This is done through the new fluid_player_set_playback_callback API function. You can use this to both inspect and modify MIDI events as they are being played (or add a MIDI router), just as you can for MIDI input drivers.
 - Channel 10 used to be the one and only drum channel, this can now be changed using the fluid_synth_set_channel_type. 
 - fluid_synth_all_sounds_off and fluid_synth_all_notes_off are new public API functions. You can use them to turn notes off (i e releasing all keys, voices advance to release phase) or sounds off (more like pressing the mute button), for one channel or all channels.
+- For Mac OS X users: The CoreAudio driver has been adapted to use AuHAL, and the default build style has changed to "FluidSynth.framework".
 - For a full list of other enhancements and bug fixes, see
   http://sourceforge.net/apps/trac/fluidsynth/wiki/ChangeLog1_1_4
 
