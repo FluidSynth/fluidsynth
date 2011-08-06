@@ -109,6 +109,12 @@ char* fluid_defsfont_sfont_get_name(fluid_sfont_t* sfont)
   return fluid_defsfont_get_name((fluid_defsfont_t*) sfont->data);
 }
 
+fluid_sample_t* fluid_defsfont_get_sample(fluid_defsfont_t* sfont, char *s)
+{
+  /* This function is here just to avoid an ABI/SONAME bump, see ticket #98. Should never be used. */
+  return NULL;
+}
+
 fluid_preset_t*
 fluid_defsfont_sfont_get_preset(fluid_sfont_t* sfont, unsigned int bank, unsigned int prenum)
 {
