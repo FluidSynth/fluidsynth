@@ -28,7 +28,7 @@ dnl if any interfaces added/removed/changed: lt_current++ and lt_revision=0
 dnl if any interfaces have been added: lt_age++
 dnl if any interfaces have been removed/changed (compatibility broken): lt_age=0
 
-m4_define([lt_current], [5])
+m4_define([lt_current], [6])
 m4_define([lt_revision], [0])
 m4_define([lt_age], [5])
 
