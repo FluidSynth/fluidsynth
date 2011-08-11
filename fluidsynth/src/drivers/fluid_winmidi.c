@@ -74,8 +74,8 @@ fluid_midi_driver_t* new_fluid_winmidi_driver(fluid_settings_t* settings,
 
 int delete_fluid_winmidi_driver(fluid_midi_driver_t* p);
 
-void CALLBACK fluid_winmidi_callback(HMIDIIN hmi, UINT wMsg, DWORD dwInstance,
-				    DWORD msg, DWORD extra);
+void CALLBACK fluid_winmidi_callback(HMIDIIN hmi, UINT wMsg, DWORD_PTR dwInstance,
+				    DWORD_PTR msg, DWORD_PTR extra);
 static void fluid_winmidi_add_sysex_thread (void *data);
 static char* fluid_winmidi_input_error(int no);
 int fluid_winmidi_driver_status(fluid_midi_driver_t* p);
@@ -170,8 +170,8 @@ new_fluid_winmidi_driver(fluid_settings_t* settings,
 
   /* try opening the device */
   err = midiInOpen(&dev->hmidiin, midi_num,
-		   (DWORD) fluid_winmidi_callback,
-		   (DWORD) dev, CALLBACK_FUNCTION);
+		   (DWORD_PTR) fluid_winmidi_callback,
+		   (DWORD_PTR) dev, CALLBACK_FUNCTION);
   if (err != MMSYSERR_NOERROR) {
     FLUID_LOG(FLUID_ERR, "Couldn't open MIDI input: %s (error %d)",
 	     fluid_winmidi_input_error(err), err);
@@ -272,14 +272,15 @@ delete_fluid_winmidi_driver(fluid_midi_driver_t* p)
 }
 
 void CALLBACK
-fluid_winmidi_callback(HMIDIIN hmi, UINT wMsg, DWORD dwInstance,
-                       DWORD dwParam1, DWORD dwParam2)
+fluid_winmidi_callback(HMIDIIN hmi, UINT wMsg, DWORD_PTR dwInstance,
+                       DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
   fluid_winmidi_driver_t* dev = (fluid_winmidi_driver_t *) dwInstance;
   fluid_midi_event_t event;
   LPMIDIHDR pMidiHdr;
   unsigned char *data;
   int index;
+  unsigned int msg_param = (unsigned int) dwParam1;
 
   switch (wMsg) {
   case MIM_OPEN:
@@ -289,14 +290,14 @@ fluid_winmidi_callback(HMIDIIN hmi, UINT wMsg, DWORD dwInstance,
     break;
 
   case MIM_DATA:
-    event.type = msg_type(dwParam1);
-    event.channel = msg_chan(dwParam1);
+    event.type = msg_type(msg_param);
+    event.channel = msg_chan(msg_param);
 
     if (event.type != PITCH_BEND) {
-      event.param1 = msg_p1(dwParam1);
-      event.param2 = msg_p2(dwParam1);
+      event.param1 = msg_p1(msg_param);
+      event.param2 = msg_p2(msg_param);
     } else {  /* Pitch bend is a 14 bit value */
-      event.param1 = (msg_p2 (dwParam1) << 7) | msg_p1 (dwParam1);
+      event.param1 = (msg_p2 (msg_param) << 7) | msg_p1 (msg_param);
       event.param2 = 0;
     }
 
