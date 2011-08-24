@@ -433,7 +433,7 @@ new_fluid_jack_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func
         }
       }
 
-      free (jack_ports);  /* free jack ports array (not the port values!) */
+      jack_free (jack_ports);  /* free jack ports array (not the port values!) */
     } else {
       FLUID_LOG(FLUID_WARN, "Could not connect to any physical jack ports; fluidsynth is unconnected");
     }
