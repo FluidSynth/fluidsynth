@@ -143,6 +143,38 @@ static inline void fluid_sample_null_ptr(fluid_sample_t** sample)
 }
 
 /*
+ * Swaps the current rvoice with the current overflow_rvoice
+ */
+static void fluid_voice_swap_rvoice(fluid_voice_t* voice)
+{
+  fluid_rvoice_t* rtemp = voice->rvoice;
+  int ctemp = voice->can_access_rvoice;
+  voice->rvoice = voice->overflow_rvoice;
+  voice->can_access_rvoice = voice->can_access_overflow_rvoice;
+  voice->overflow_rvoice = rtemp;
+  voice->can_access_overflow_rvoice = ctemp;
+}
+
+static void fluid_voice_initialize_rvoice(fluid_voice_t* voice)
+{
+  FLUID_MEMSET(voice->rvoice, 0, sizeof(fluid_rvoice_t));
+
+  /* The 'sustain' and 'finished' segments of the volume / modulation
+   * envelope are constant. They are never affected by any modulator
+   * or generator. Therefore it is enough to initialize them once
+   * during the lifetime of the synth.
+   */
+  fluid_voice_update_volenv(voice, FLUID_VOICE_ENVSUSTAIN, 
+                          0xffffffff, 1.0f, 0.0f, -1.0f, 2.0f);
+  fluid_voice_update_volenv(voice, FLUID_VOICE_ENVFINISHED, 
+                          0xffffffff, 0.0f, 0.0f, -1.0f, 1.0f);
+  fluid_voice_update_modenv(voice, FLUID_VOICE_ENVSUSTAIN, 
+                          0xffffffff, 1.0f, 0.0f, -1.0f, 2.0f);
+  fluid_voice_update_modenv(voice, FLUID_VOICE_ENVFINISHED, 
+                          0xffffffff, 0.0f, 0.0f, -1.0f, 1.0f);
+}
+
+/*
  * new_fluid_voice
  */
 fluid_voice_t*
@@ -162,10 +194,6 @@ new_fluid_voice(fluid_real_t output_rate)
     FLUID_FREE(voice);
     return NULL;
   }
-  FLUID_MEMSET(voice->rvoice, 0, sizeof(fluid_rvoice_t));
-  FLUID_MEMSET(voice->overflow_rvoice, 0, sizeof(fluid_rvoice_t));
-  voice->can_access_rvoice = 1; 
-  voice->can_access_overflow_rvoice = 1; 
 
   voice->status = FLUID_VOICE_CLEAN;
   voice->chan = NO_CHANNEL;
@@ -173,21 +201,15 @@ new_fluid_voice(fluid_real_t output_rate)
   voice->vel = 0;
   voice->channel = NULL;
   voice->sample = NULL;
-  fluid_voice_set_output_rate(voice, output_rate);
 
-  /* The 'sustain' and 'finished' segments of the volume / modulation
-   * envelope are constant. They are never affected by any modulator
-   * or generator. Therefore it is enough to initialize them once
-   * during the lifetime of the synth.
-   */
-  fluid_voice_update_volenv(voice, FLUID_VOICE_ENVSUSTAIN, 
-                          0xffffffff, 1.0f, 0.0f, -1.0f, 2.0f);
-  fluid_voice_update_volenv(voice, FLUID_VOICE_ENVFINISHED, 
-                          0xffffffff, 0.0f, 0.0f, -1.0f, 1.0f);
-  fluid_voice_update_modenv(voice, FLUID_VOICE_ENVSUSTAIN, 
-                          0xffffffff, 1.0f, 0.0f, -1.0f, 2.0f);
-  fluid_voice_update_modenv(voice, FLUID_VOICE_ENVFINISHED, 
-                          0xffffffff, 0.0f, 0.0f, -1.0f, 1.0f);
+  /* Initialize both the rvoice and overflow_rvoice */
+  voice->can_access_rvoice = 1; 
+  voice->can_access_overflow_rvoice = 1; 
+  fluid_voice_initialize_rvoice(voice);
+  fluid_voice_swap_rvoice(voice);
+  fluid_voice_initialize_rvoice(voice);
+
+  fluid_voice_set_output_rate(voice, output_rate);
 
   return voice;
 }
@@ -209,19 +231,6 @@ delete_fluid_voice(fluid_voice_t* voice)
   FLUID_FREE(voice->rvoice);
   FLUID_FREE(voice);
   return FLUID_OK;
-}
-
-/*
- * Swaps the current rvoice with the current overflow_rvoice
- */
-static void fluid_voice_swap_rvoice(fluid_voice_t* voice)
-{
-  fluid_rvoice_t* rtemp = voice->rvoice;
-  int ctemp = voice->can_access_rvoice;
-  voice->rvoice = voice->overflow_rvoice;
-  voice->can_access_rvoice = voice->can_access_overflow_rvoice;
-  voice->overflow_rvoice = rtemp;
-  voice->can_access_overflow_rvoice = ctemp;
 }
 
 /* fluid_voice_init
