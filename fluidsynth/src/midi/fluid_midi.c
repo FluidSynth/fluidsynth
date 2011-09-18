@@ -585,6 +585,16 @@ fluid_midi_file_read_event(fluid_midi_file *mf, fluid_track_t *track)
                     break;
                 }
                 mf->eot = 1;
+                evt = new_fluid_midi_event();
+                if (evt == NULL) {
+                    FLUID_LOG(FLUID_ERR, "Out of memory");
+                    result = FLUID_FAILED;
+                    break;
+                }
+                evt->dtime = mf->dtime;
+                evt->type = MIDI_EOT;
+                fluid_track_add_event(track, evt);
+                mf->dtime = 0;
                 break;
 
             case MIDI_SET_TEMPO:
@@ -1204,12 +1214,15 @@ fluid_track_send_events(fluid_track_t *track,
 
         track->ticks += event->dtime;
 
-        if (event->type != MIDI_SET_TEMPO) {
+        if (!player || event->type == MIDI_EOT) {
+        }
+        else if (event->type == MIDI_SET_TEMPO) {
+            fluid_player_set_midi_tempo(player, event->param1);
+        }
+        else {
             if (player->playback_callback)
                 player->playback_callback(player->playback_userdata, event);
-	}
-        else if (player)
-            fluid_player_set_midi_tempo(player, event->param1);
+        }
 
         fluid_track_next_event(track);
 
