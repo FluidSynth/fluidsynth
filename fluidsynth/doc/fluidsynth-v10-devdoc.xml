@@ -129,7 +129,7 @@
     numbers (double floats), and integers. You can change the values
     of a setting using the <function>fluid_settings_setstr</function>,
     <function>fluid_settings_setnum</function>, and
-    <function>fluid_synth_setint</function> functions. For example:
+    <function>fluid_settings_setint</function> functions. For example:
 
 <programlisting>
 #include &lt;fluidsynth.h&gt;
@@ -138,7 +138,7 @@ int main(int argc, char** argv)
 {
   fluid_settings_t* settings = new_fluid_settings();
 
-  fluid_synth_setint(settings, "synth.polyphony", 128);
+  fluid_settings_setint(settings, "synth.polyphony", 128);
 
   delete_fluid_settings(settings);
   return 0;

@@ -189,7 +189,7 @@ All settings have a name that follows the "dotted-name" notation. For example, "
 int main(int argc, char** argv) 
 {
     fluid_settings_t* settings = new_fluid_settings();
-    fluid_synth_setint(settings, "synth.polyphony", 128);
+    fluid_settings_setint(settings, "synth.polyphony", 128);
     /* ... */
     delete_fluid_settings(settings);
     return 0;
