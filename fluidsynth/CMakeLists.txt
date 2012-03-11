@@ -399,21 +399,21 @@ add_subdirectory ( src )
 add_subdirectory ( include )
 add_subdirectory ( doc )
 
+# pkg-config support
+set ( prefix "${CMAKE_INSTALL_PREFIX}" )
+set ( exec_prefix "\${prefix}" )
+set ( libdir "\${exec_prefix}/${LIB_INSTALL_DIR}${LIB_SUFFIX}" )
+set ( includedir "\${prefix}/${INCLUDE_INSTALL_DIR}" )
+configure_file ( fluidsynth.pc.in
+	${CMAKE_BINARY_DIR}/fluidsynth.pc IMMEDIATE @ONLY )
+install ( FILES ${CMAKE_BINARY_DIR}/fluidsynth.pc
+	DESTINATION ${LIB_INSTALL_DIR}${LIB_SUFFIX}/pkgconfig )
+
 # Extra targets for Unix build environments
 if ( UNIX )
     # RPM spec
     configure_file ( fluidsynth.spec.in
         ${CMAKE_BINARY_DIR}/fluidsynth.spec IMMEDIATE @ONLY )
-
-    # pkg-config support
-    set ( prefix "${CMAKE_INSTALL_PREFIX}" )
-    set ( exec_prefix "\${prefix}" )
-    set ( libdir "\${exec_prefix}/${LIB_INSTALL_DIR}${LIB_SUFFIX}" )
-    set ( includedir "\${prefix}/${INCLUDE_INSTALL_DIR}" )
-    configure_file ( fluidsynth.pc.in
-        ${CMAKE_BINARY_DIR}/fluidsynth.pc IMMEDIATE @ONLY )
-    install ( FILES ${CMAKE_BINARY_DIR}/fluidsynth.pc
-        DESTINATION ${LIB_INSTALL_DIR}${LIB_SUFFIX}/pkgconfig )
 
     # uninstall custom target
     configure_file ( "${CMAKE_SOURCE_DIR}/cmake_admin/cmake_uninstall.cmake.in"
