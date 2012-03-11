@@ -30,6 +30,9 @@
 
 #if !defined(WIN32) && !defined(MACINTOSH)
 #define _GNU_SOURCE
+#endif
+
+#if defined(HAVE_GETOPT_H)
 #include <getopt.h>
 #endif
 
@@ -66,13 +69,12 @@ int option_help = 0;		/* set to 1 if "-o help" is specified */
 /*
  * support for the getopt function
  */
-#if !defined(WIN32) && !defined(MACINTOSH)
+#if defined(HAVE_GETOPT_H)
 #define GETOPT_SUPPORT 1
 int getopt(int argc, char * const argv[], const char *optstring);
 extern char *optarg;
 extern int optind, opterr, optopt;
 #endif
-
 
 /* Process a command line option -o setting=value, for example: -o synth.polyhony=16 */
 void process_o_cmd_line_option(fluid_settings_t* settings, char* optarg)
