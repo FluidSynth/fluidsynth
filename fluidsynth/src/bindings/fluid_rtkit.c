@@ -335,6 +335,9 @@ int fluid_rtkit_make_realtime(pid_t thread, int priority) {
 	long long max_rttime;
 	struct rlimit old_limit, new_limit;
 
+	if (!dbus_threads_init_default())
+		return -ENOMEM;
+
 	/* Initialize system bus connection */
 	dbus_error_init(&error);
 	conn = dbus_bus_get_private(DBUS_BUS_SYSTEM, &error);
