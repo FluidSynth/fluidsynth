@@ -20,6 +20,7 @@ All the source code examples in this document are in the public domain; you can 
 
 - \ref Disclaimer 
 - \ref Introduction 
+- \ref NewIn1_1_6
 - \ref NewIn1_1_5
 - \ref NewIn1_1_4
 - \ref NewIn1_1_3
@@ -61,6 +62,19 @@ What is FluidSynth?
 - FluidSynth can easily be embedded in an application. It has a main header file, fluidsynth.h, and one dynamically linkable library. FluidSynth runs on Linux, Mac OS X, and the Windows platforms, and support for OS/2 and OpenSolaris is experimental. It has audio and midi drivers for all mentioned platforms but you can use it with your own drivers if your application already handles MIDI and audio input/output. This document explains the basic usage of FluidSynth and provides examples that you can reuse. 
 
 - FluidSynth is open source, in active development. For more details, take a look at http://www.fluidsynth.org
+
+\section NewIn1_1_6 Whats new in 1.1.6?
+
+Changes in FluidSynth 1.1.6 concerning developers:
+
+- The player will not continue to the next song until all EOT (end of track events) have been reached.
+- Enable long arguments on all platforms where getopt.h is available
+- Windows: Fluidsynth.pc (pkg-config spec) is now installed.
+- Mac OS X Lion: A build failure was fixed.
+
+- For a full list of bug fixes, see
+  http://sourceforge.net/apps/trac/fluidsynth/wiki/ChangeLog1_1_6
+
 
 \section NewIn1_1_5 Whats new in 1.1.5?
 

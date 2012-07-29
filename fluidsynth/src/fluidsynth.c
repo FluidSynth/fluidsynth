@@ -827,7 +827,7 @@ void
 print_welcome()
 {
   printf("FluidSynth version %s\n"
-	 "Copyright (C) 2000-2011 Peter Hanappe and others.\n"
+	 "Copyright (C) 2000-2012 Peter Hanappe and others.\n"
 	 "Distributed under the LGPL license.\n"
 	 "SoundFont(R) is a registered trademark of E-mu Systems, Inc.\n\n",
 	 FLUIDSYNTH_VERSION);
