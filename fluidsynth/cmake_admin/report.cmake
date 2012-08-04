@@ -1,6 +1,8 @@
 message( "\n**************************************************************\n"
          "Summary:" )
 
+message( "Build type:            " ${CMAKE_BUILD_TYPE} )
+
 if ( LIBSNDFILE_SUPPORT )
   if ( LIBSNDFILE_HASVORBIS )
     message ( "libsndfile:            yes (with ogg vorbis support)" )

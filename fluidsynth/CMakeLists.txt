@@ -265,6 +265,11 @@ if ( enable-debug )
           "Choose the build type, options: Debug Release RelWithDebInfo" FORCE )
 endif ( enable-debug )
 
+if ( NOT CMAKE_BUILD_TYPE )
+    set ( CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING
+          "Choose the build type, options: Debug Release RelWithDebInfo" FORCE )
+endif ( NOT CMAKE_BUILD_TYPE )
+
 unset ( ENABLE_DEBUG CACHE )
 unset ( DEBUG CACHE )
 if ( CMAKE_BUILD_TYPE MATCHES "Debug" )
