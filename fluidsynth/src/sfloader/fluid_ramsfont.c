@@ -889,7 +889,7 @@ fluid_rampreset_noteon (fluid_rampreset_t* preset, fluid_synth_t* synth, int cha
 {
   fluid_preset_zone_t *preset_zone;
   fluid_inst_t* inst;
-  fluid_inst_zone_t *inst_zone, *global_inst_zone, *z;
+  fluid_inst_zone_t *inst_zone, *global_inst_zone;
   fluid_sample_t* sample;
   fluid_voice_t* voice;
   fluid_mod_t * mod;
@@ -935,8 +935,6 @@ fluid_rampreset_noteon (fluid_rampreset_t* preset, fluid_synth_t* synth, int cha
 	  if (fluid_rampreset_remembervoice(preset, voice) != FLUID_OK) {
 	    return FLUID_FAILED;
 	  }
-
-	  z = inst_zone;
 
 	  /* Instrument level, generators */
 

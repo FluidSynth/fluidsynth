@@ -295,7 +295,9 @@ int main(int argc, char** argv)
   int with_server = 0;
   int dump = 0;
   int fast_render = 0;
+#ifdef LASH_ENABLED
   int connect_lash = 1;
+#endif
   char *optchars = "a:C:c:dE:f:F:G:g:hijK:L:lm:nO:o:p:R:r:sT:Vvz:";
 #ifdef LASH_ENABLED
   int enabled_lash = 0;		/* set to TRUE if lash gets enabled */
@@ -461,7 +463,9 @@ int main(int argc, char** argv)
       fluid_settings_setint(settings, "synth.audio-channels", audio_channels);
       break;
     case 'l':			/* disable LASH */
+#ifdef LASH_ENABLED
       connect_lash = 0;
+#endif
       break;
     case 'm':
       if (FLUID_STRCMP (optarg, "help") == 0)

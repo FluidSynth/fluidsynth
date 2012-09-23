@@ -2371,7 +2371,10 @@ fluid_synth_nwrite_float(fluid_synth_t* synth, int len,
   fluid_real_t** left_in;
   fluid_real_t** right_in;
   double time = fluid_utime();
-  int i, num, available, count, bytes;
+  int i, num, available, count;
+#ifdef WITH_FLOAT
+  int bytes;
+#endif
   float cpu_load;
 
   if (!synth->eventhandler->is_threadsafe)
@@ -2385,7 +2388,9 @@ fluid_synth_nwrite_float(fluid_synth_t* synth, int len,
     fluid_rvoice_mixer_get_bufs(synth->eventhandler->mixer, &left_in, &right_in);
 
     num = (available > len)? len : available;
+#ifdef WITH_FLOAT
     bytes = num * sizeof(float);
+#endif
 
     for (i = 0; i < synth->audio_channels; i++) {
 #ifdef WITH_FLOAT
@@ -2410,7 +2415,9 @@ fluid_synth_nwrite_float(fluid_synth_t* synth, int len,
     fluid_rvoice_mixer_get_bufs(synth->eventhandler->mixer, &left_in, &right_in);
 
     num = (FLUID_BUFSIZE > len - count)? len - count : FLUID_BUFSIZE;
+#ifdef WITH_FLOAT
     bytes = num * sizeof(float);
+#endif
 
     for (i = 0; i < synth->audio_channels; i++) {
 #ifdef WITH_FLOAT

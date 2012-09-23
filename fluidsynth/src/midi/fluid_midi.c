@@ -437,7 +437,7 @@ fluid_midi_file_read_event(fluid_midi_file *mf, fluid_track_t *track)
     unsigned char *metadata = NULL;
     unsigned char *dyn_buf = NULL;
     unsigned char static_buf[256];
-    int nominator, denominator, clocks, notes, sf, mi;
+    int nominator, denominator, clocks, notes;
     fluid_midi_event_t *evt;
     int channel = 0;
     int param1 = 0;
@@ -654,8 +654,9 @@ fluid_midi_file_read_event(fluid_midi_file *mf, fluid_track_t *track)
                     result = FLUID_FAILED;
                     break;
                 }
-                sf = metadata[0];
-                mi = metadata[1];
+                /* We don't care about key signatures anyway */
+                /* sf = metadata[0];
+                mi = metadata[1]; */
                 break;
 
             case MIDI_SEQUENCER_EVENT:
