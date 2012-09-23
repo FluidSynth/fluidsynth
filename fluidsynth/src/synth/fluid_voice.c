@@ -290,7 +290,7 @@ fluid_voice_init(fluid_voice_t* voice, fluid_sample_t* sample,
    * into voice parameters in
    * fluid_voice_calculate_runtime_synthesis_parameters.  */
   fluid_gen_init(&voice->gen[0], channel);
-  UPDATE_RVOICE_I1(fluid_rvoice_set_samplemode, voice->gen[GEN_SAMPLEMODE].val);
+  UPDATE_RVOICE_I1(fluid_rvoice_set_samplemode, _SAMPLEMODE(voice));
 
   voice->synth_gain = gain;
   /* avoid division by zero later*/
@@ -344,7 +344,7 @@ fluid_voice_gen_set(fluid_voice_t* voice, int i, float val)
   voice->gen[i].val = val;
   voice->gen[i].flags = GEN_SET;
   if (i == GEN_SAMPLEMODE)
-    UPDATE_RVOICE_I1(fluid_rvoice_set_samplemode, val);
+    UPDATE_RVOICE_I1(fluid_rvoice_set_samplemode, (int) val);
 }
 
 /**
