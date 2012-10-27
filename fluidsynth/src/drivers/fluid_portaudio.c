@@ -143,7 +143,7 @@ new_fluid_portaudio_driver (fluid_settings_t *settings, fluid_synth_t *synth)
   fluid_settings_getnum (settings, "synth.sample-rate", &sample_rate);
   fluid_settings_dupstr(settings, "audio.portaudio.device", &device);   /* ++ alloc device name */
 
-  bzero (&outputParams, sizeof (outputParams));
+  memset (&outputParams, 0, sizeof (outputParams));
   outputParams.channelCount = 2;
   outputParams.suggestedLatency = (PaTime)period_size / sample_rate;
 

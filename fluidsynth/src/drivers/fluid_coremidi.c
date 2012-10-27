@@ -109,7 +109,7 @@ new_fluid_coremidi_driver(fluid_settings_t* settings, handle_midi_event_func_t h
   }
 
   fluid_settings_dupstr(settings, "midi.coremidi.id", &id);     /* ++ alloc id string */
-  bzero (clientid, sizeof(clientid));
+  memset (clientid, 0, sizeof(clientid));
   if (id != NULL) {
     if (FLUID_STRCMP (id, "pid") == 0) {
       snprintf (clientid, sizeof(clientid), " (%d)", getpid());
