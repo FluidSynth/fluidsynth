@@ -1536,6 +1536,35 @@ fluid_synth_all_sounds_off_LOCAL(fluid_synth_t* synth, int chan)
 }
 
 /**
+ * Reset reverb engine
+ * @param synth FluidSynth instance
+ * @return FLUID_OK on success, FLUID_FAILED otherwise
+ */
+int
+fluid_synth_reset_reverb(fluid_synth_t* synth)
+{
+  fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
+  fluid_synth_api_enter(synth);
+  fluid_synth_update_mixer(synth, fluid_rvoice_mixer_reset_reverb, 0, 0.0f);
+  FLUID_API_RETURN(FLUID_OK);
+}
+
+/**
+ * Reset chorus engine
+ * @param synth FluidSynth instance
+ * @return FLUID_OK on success, FLUID_FAILED otherwise
+ */
+int
+fluid_synth_reset_chorus(fluid_synth_t* synth)
+{
+  fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
+  fluid_synth_api_enter(synth);
+  fluid_synth_update_mixer(synth, fluid_rvoice_mixer_reset_chorus, 0, 0.0f);
+  FLUID_API_RETURN(FLUID_OK);
+}
+
+
+/**
  * Send MIDI system reset command (big red 'panic' button), turns off notes and
  *   resets controllers.
  * @param synth FluidSynth instance

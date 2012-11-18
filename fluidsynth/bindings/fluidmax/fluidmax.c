@@ -761,7 +761,7 @@ fluidmax_reverb(t_object *o, Symbol *s, short ac, Atom *at)
   if(ac == 0)
   {
     fluid_synth_set_reverb_on(self->synth, 1);
-    fluid_revmodel_reset(self->synth->reverb);
+    fluid_synth_reset_reverb(self->synth);
     self->reverb = 1;
   }
   else if(ftmax_is_number(at))
@@ -816,7 +816,7 @@ fluidmax_chorus(t_object *o, Symbol *s, short ac, Atom *at)
   if(ac == 0)
   {
     fluid_synth_set_chorus_on(self->synth, 1);
-    fluid_chorus_reset(self->synth->chorus);
+    fluid_synth_reset_chorus(self->synth);
     self->chorus = 1;
   }
   else if(ftmax_is_number(at))

@@ -683,6 +683,16 @@ void fluid_rvoice_mixer_reset_fx(fluid_rvoice_mixer_t* mixer)
   fluid_chorus_reset(mixer->fx.chorus);
 }
 
+void fluid_rvoice_mixer_reset_reverb(fluid_rvoice_mixer_t* mixer)
+{
+  fluid_revmodel_reset(mixer->fx.reverb);
+}
+
+void fluid_rvoice_mixer_reset_chorus(fluid_rvoice_mixer_t* mixer)
+{
+  fluid_chorus_reset(mixer->fx.chorus);
+}
+
 int fluid_rvoice_mixer_get_bufs(fluid_rvoice_mixer_t* mixer, 
 				  fluid_real_t*** left, fluid_real_t*** right)
 {

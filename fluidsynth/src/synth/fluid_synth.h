@@ -211,10 +211,12 @@ void fluid_synth_dither_s16(int *dither_index, int len, float* lin, float* rin,
 			    void* lout, int loff, int lincr,
 			    void* rout, int roff, int rincr);
 
+int fluid_synth_reset_reverb(fluid_synth_t* synth);
 int fluid_synth_set_reverb_preset(fluid_synth_t* synth, int num);
 int fluid_synth_set_reverb_full(fluid_synth_t* synth, int set, double roomsize,
                                 double damping, double width, double level);
 
+int fluid_synth_reset_chorus(fluid_synth_t* synth);
 int fluid_synth_set_chorus_full(fluid_synth_t* synth, int set, int nr, double level,
                                 double speed, double depth_ms, int type);
 

@@ -59,6 +59,8 @@ void fluid_rvoice_mixer_set_reverb_params(fluid_rvoice_mixer_t* mixer, int set,
 					 double roomsize, double damping, 
 					 double width, double level);
 void fluid_rvoice_mixer_reset_fx(fluid_rvoice_mixer_t* mixer);
+void fluid_rvoice_mixer_reset_reverb(fluid_rvoice_mixer_t* mixer);
+void fluid_rvoice_mixer_reset_chorus(fluid_rvoice_mixer_t* mixer);
 
 void fluid_rvoice_mixer_set_threads(fluid_rvoice_mixer_t* mixer, int thread_count, 
 				    int prio_level);
