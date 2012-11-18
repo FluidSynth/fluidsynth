@@ -746,7 +746,7 @@ fluidmax_select(t_object *o, Symbol *s, short ac, Atom *at)
         if(sf != NULL)
           fluid_synth_program_select(self->synth, channel - 1, fluid_sfont_get_id(sf), bank, preset);
         else
-          error("fluidsynth~ select:Êcannot find soundfont named '%s'", ftmax_symbol_name(name));
+          error("fluidsynth~ select: cannot find soundfont named '%s'", ftmax_symbol_name(name));
       }
     case 0:
       break;
