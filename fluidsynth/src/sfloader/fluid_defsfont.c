@@ -31,7 +31,7 @@
  *                           SFONT LOADER
  */
 
-fluid_sfloader_t* new_fluid_defsfloader()
+fluid_sfloader_t* new_fluid_defsfloader(fluid_settings_t* settings)
 {
   fluid_sfloader_t* loader;
 
@@ -41,7 +41,7 @@ fluid_sfloader_t* new_fluid_defsfloader()
     return NULL;
   }
 
-  loader->data = NULL;
+  loader->data = settings;
   loader->free = delete_fluid_defsfloader;
   loader->load = fluid_defsfloader_load;
 
@@ -61,7 +61,7 @@ fluid_sfont_t* fluid_defsfloader_load(fluid_sfloader_t* loader, const char* file
   fluid_defsfont_t* defsfont;
   fluid_sfont_t* sfont;
 
-  defsfont = new_fluid_defsfont();
+  defsfont = new_fluid_defsfont(loader->data);
 
   if (defsfont == NULL) {
     return NULL;
@@ -200,12 +200,13 @@ int fluid_defpreset_preset_noteon(fluid_preset_t* preset, fluid_synth_t* synth,
  *                    CACHED SAMPLEDATA LOADER
  */
 
-typedef struct _fluid_cached_sampledata_t{
+typedef struct _fluid_cached_sampledata_t {
   struct _fluid_cached_sampledata_t *next;
 
   char* filename;
   time_t modification_time;
   int num_references;
+  int mlock;
 
   const short* sampledata;
   unsigned int samplesize;
@@ -231,7 +232,8 @@ static int fluid_get_file_modification_time(char *filename, time_t *modification
 #endif
 }
 
-static int fluid_cached_sampledata_load(char *filename, unsigned int samplepos, unsigned int samplesize, short **sampledata)
+static int fluid_cached_sampledata_load(char *filename, unsigned int samplepos,
+  unsigned int samplesize, short **sampledata, int try_mlock)
 {
   fluid_file fd = NULL;
   short *loaded_sampledata = NULL;
@@ -245,25 +247,27 @@ static int fluid_cached_sampledata_load(char *filename, unsigned int samplepos, 
     modification_time = 0;
   }
 
-  cached_sampledata = all_cached_sampledata;
-  while (cached_sampledata != NULL) {
-    if (!strcmp(filename, cached_sampledata->filename)) {
-        
-      if (cached_sampledata->modification_time == modification_time) {
-        
-        if (cached_sampledata->samplesize != samplesize) {
-          FLUID_LOG(FLUID_ERR, "Cached size of soundfont doesn't match actual size of soundfont (cached: %u. actual: %u)",
-                    cached_sampledata->samplesize,samplesize);
-        } else {
-          
-          cached_sampledata->num_references++;
-          loaded_sampledata = (short*) cached_sampledata->sampledata;
-          goto success_exit;
-        }
-      }
+  for (cached_sampledata = all_cached_sampledata; cached_sampledata; cached_sampledata = cached_sampledata->next) {
+    if (strcmp(filename, cached_sampledata->filename))
+      continue;
+    if (cached_sampledata->modification_time != modification_time)
+      continue;
+    if (cached_sampledata->samplesize != samplesize) {
+      FLUID_LOG(FLUID_ERR, "Cached size of soundfont doesn't match actual size of soundfont (cached: %u. actual: %u)",
+        cached_sampledata->samplesize, samplesize);
+      continue;
     }
 
-    cached_sampledata = cached_sampledata->next;
+    if (try_mlock && !cached_sampledata->mlock) {
+      if (fluid_mlock(*sampledata, samplesize) != 0)
+        FLUID_LOG(FLUID_WARN, "Failed to pin the sample data to RAM; swapping is possible.");
+      else
+        cached_sampledata->mlock = try_mlock;
+    }
+
+    cached_sampledata->num_references++;
+    loaded_sampledata = (short*) cached_sampledata->sampledata;
+    goto success_exit;
   }
 
   fd = FLUID_FOPEN(filename, "rb");
@@ -291,10 +295,21 @@ static int fluid_cached_sampledata_load(char *filename, unsigned int samplepos, 
   FLUID_FCLOSE(fd);
   fd = NULL;
 
+
+  cached_sampledata = (fluid_cached_sampledata_t*) FLUID_MALLOC(sizeof(fluid_cached_sampledata_t));
+  if (cached_sampledata == NULL) {
+    FLUID_LOG(FLUID_ERR, "Out of memory.");
+    goto error_exit;
+  }
+
   /* Lock the memory to disable paging. It's okay if this fails. It
      probably means that the user doesn't have to required permission.  */
-  if (fluid_mlock(*sampledata, samplesize) != 0) {
-    FLUID_LOG(FLUID_WARN, "Failed to pin the sample data to RAM; swapping is possible.");
+  cached_sampledata->mlock = 0;
+  if (try_mlock) {
+    if (fluid_mlock(*sampledata, samplesize) != 0)
+      FLUID_LOG(FLUID_WARN, "Failed to pin the sample data to RAM; swapping is possible.");
+    else
+      cached_sampledata->mlock = try_mlock;
   }
 
   /* If this machine is big endian, the sample have to byte swapped  */
@@ -310,12 +325,6 @@ static int fluid_cached_sampledata_load(char *filename, unsigned int samplepos, 
       s = (hi << 8) | lo;
       loaded_sampledata[i] = s;
     }
-  }
-
-  cached_sampledata = (fluid_cached_sampledata_t*) FLUID_MALLOC(sizeof(fluid_cached_sampledata_t));
-  if (cached_sampledata == NULL) {
-    FLUID_LOG(FLUID_ERR, "Out of memory.");
-    goto error_exit;
   }
 
   cached_sampledata->filename = (char*) FLUID_MALLOC(strlen(filename) + 1);
@@ -373,7 +382,8 @@ static int fluid_cached_sampledata_unload(const short *sampledata)
       cached_sampledata->num_references--;
 
       if (cached_sampledata->num_references == 0) {
-        fluid_munlock(cached_sampledata->sampledata, cached_sampledata->samplesize);
+        if (cached_sampledata->mlock)
+          fluid_munlock(cached_sampledata->sampledata, cached_sampledata->samplesize);
         FLUID_FREE((short*) cached_sampledata->sampledata);
         FLUID_FREE(cached_sampledata->filename);
 
@@ -416,7 +426,7 @@ static int fluid_cached_sampledata_unload(const short *sampledata)
 /*
  * new_fluid_defsfont
  */
-fluid_defsfont_t* new_fluid_defsfont()
+fluid_defsfont_t* new_fluid_defsfont(fluid_settings_t* settings)
 {
   fluid_defsfont_t* sfont;
 
@@ -432,6 +442,7 @@ fluid_defsfont_t* new_fluid_defsfont()
   sfont->sample = NULL;
   sfont->sampledata = NULL;
   sfont->preset = NULL;
+  fluid_settings_getint(settings, "synth.lock-memory", &sfont->mlock);
 
   return sfont;
 }
@@ -616,7 +627,8 @@ int fluid_defsfont_add_preset(fluid_defsfont_t* sfont, fluid_defpreset_t* preset
 int
 fluid_defsfont_load_sampledata(fluid_defsfont_t* sfont)
 {
-  return fluid_cached_sampledata_load(sfont->filename, sfont->samplepos, sfont->samplesize, &sfont->sampledata);
+  return fluid_cached_sampledata_load(sfont->filename, sfont->samplepos,
+    sfont->samplesize, &sfont->sampledata, sfont->mlock);
 }
 
 /*

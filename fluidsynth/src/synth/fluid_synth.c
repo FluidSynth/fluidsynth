@@ -27,6 +27,7 @@
 #include "fluid_settings.h"
 #include "fluid_sfont.h"
 #include "fluid_hash.h"
+#include "fluid_defsfont.h"
 
 #ifdef TRAP_ON_FPE
 #define _GNU_SOURCE
@@ -110,8 +111,6 @@ static void fluid_synth_set_gen_LOCAL (fluid_synth_t* synth, int chan,
 static void fluid_synth_stop_LOCAL (fluid_synth_t *synth, unsigned int id);
 
 
-fluid_sfloader_t* new_fluid_defsfloader(void);
-
 
 /***************************************************************
  *
@@ -185,6 +184,8 @@ void fluid_synth_settings(fluid_settings_t* settings)
   fluid_settings_register_int(settings, "synth.chorus.active", 1, 0, 1,
                               FLUID_HINT_TOGGLED, NULL, NULL);
   fluid_settings_register_int(settings, "synth.ladspa.active", 0, 0, 1,
+                              FLUID_HINT_TOGGLED, NULL, NULL);
+  fluid_settings_register_int(settings, "synth.lock-memory", 1, 0, 1,
                               FLUID_HINT_TOGGLED, NULL, NULL);
   fluid_settings_register_str(settings, "midi.portname", "", 0, NULL, NULL);
 
@@ -676,7 +677,7 @@ new_fluid_synth(fluid_settings_t *settings)
 #endif
   
   /* allocate and add the default sfont loader */
-  loader = new_fluid_defsfloader();
+  loader = new_fluid_defsfloader(settings);
 
   if (loader == NULL) {
     FLUID_LOG(FLUID_WARN, "Failed to create the default SoundFont loader");

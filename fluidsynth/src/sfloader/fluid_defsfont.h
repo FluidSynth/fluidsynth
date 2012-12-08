@@ -375,7 +375,7 @@ typedef struct _fluid_inst_zone_t fluid_inst_zone_t;
 
  */
 
-fluid_sfloader_t* new_fluid_defsfloader(void);
+fluid_sfloader_t* new_fluid_defsfloader(fluid_settings_t* settings);
 int delete_fluid_defsfloader(fluid_sfloader_t* loader);
 fluid_sfont_t* fluid_defsfloader_load(fluid_sfloader_t* loader, const char* filename);
 
@@ -405,13 +405,14 @@ struct _fluid_defsfont_t
   short* sampledata;        /* the sample data, loaded in ram */
   fluid_list_t* sample;      /* the samples in this soundfont */
   fluid_defpreset_t* preset; /* the presets of this soundfont */
+  int mlock;                 /* Should we try memlock (avoid swapping)? */
 
   fluid_preset_t iter_preset;        /* preset interface used in the iteration */
   fluid_defpreset_t* iter_cur;       /* the current preset in the iteration */
 };
 
 
-fluid_defsfont_t* new_fluid_defsfont(void);
+fluid_defsfont_t* new_fluid_defsfont(fluid_settings_t* settings);
 int delete_fluid_defsfont(fluid_defsfont_t* sfont);
 int fluid_defsfont_load(fluid_defsfont_t* sfont, const char* file);
 char* fluid_defsfont_get_name(fluid_defsfont_t* sfont);
