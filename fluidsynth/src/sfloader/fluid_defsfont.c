@@ -259,7 +259,7 @@ static int fluid_cached_sampledata_load(char *filename, unsigned int samplepos,
     }
 
     if (try_mlock && !cached_sampledata->mlock) {
-      if (fluid_mlock(*sampledata, samplesize) != 0)
+      if (fluid_mlock(cached_sampledata->sampledata, samplesize) != 0)
         FLUID_LOG(FLUID_WARN, "Failed to pin the sample data to RAM; swapping is possible.");
       else
         cached_sampledata->mlock = try_mlock;
@@ -306,7 +306,7 @@ static int fluid_cached_sampledata_load(char *filename, unsigned int samplepos,
      probably means that the user doesn't have to required permission.  */
   cached_sampledata->mlock = 0;
   if (try_mlock) {
-    if (fluid_mlock(*sampledata, samplesize) != 0)
+    if (fluid_mlock(loaded_sampledata, samplesize) != 0)
       FLUID_LOG(FLUID_WARN, "Failed to pin the sample data to RAM; swapping is possible.");
     else
       cached_sampledata->mlock = try_mlock;
