@@ -3767,14 +3767,11 @@ fluid_synth_set_chorus_on(fluid_synth_t* synth, int on)
  * @param synth FluidSynth instance
  * @param nr Chorus voice count (0-99, CPU time consumption proportional to
  *   this value)
- * @param level Chorus level (0.0-1.0)
+ * @param level Chorus level (0.0-10.0, a reasonable level is below 1)
  * @param speed Chorus speed in Hz (0.29-5.0)
  * @param depth_ms Chorus depth (max value depends on synth sample rate,
  *   0.0-21.0 is safe for sample rate values up to 96KHz)
  * @param type Chorus waveform type (#fluid_chorus_mod)
- *
- * NOTE: Not realtime safe and therefore should not be called from synthesis
- * context at the risk of stalling audio output.
  */
 void
 fluid_synth_set_chorus(fluid_synth_t* synth, int nr, double level,
@@ -3790,14 +3787,11 @@ fluid_synth_set_chorus(fluid_synth_t* synth, int nr, double level,
  * @param set Flags indicating which chorus parameters to set (#fluid_chorus_set_t)
  * @param nr Chorus voice count (0-99, CPU time consumption proportional to
  *   this value)
- * @param level Chorus level (0.0-1.0)
+ * @param level Chorus level (0.0-10.0, a reasonable level is below 1)
  * @param speed Chorus speed in Hz (0.29-5.0)
  * @param depth_ms Chorus depth (max value depends on synth sample rate,
  *   0.0-21.0 is safe for sample rate values up to 96KHz)
  * @param type Chorus waveform type (#fluid_chorus_mod)
- *
- * NOTE: Not realtime safe and therefore should not be called from synthesis
- * context at the risk of stalling audio output.
  */
 int
 fluid_synth_set_chorus_full(fluid_synth_t* synth, int set, int nr, double level,
@@ -3808,7 +3802,7 @@ fluid_synth_set_chorus_full(fluid_synth_t* synth, int set, int nr, double level,
   if (!(set & FLUID_CHORUS_SET_ALL))
     set = FLUID_CHORUS_SET_ALL;
 
-  /* Synth shadow values are set here so that they will be returned if querried */
+  /* Synth shadow values are set here so that they will be returned if queried */
   fluid_synth_api_enter(synth);
 
   if (set & FLUID_CHORUS_SET_NR)
@@ -3827,8 +3821,8 @@ fluid_synth_set_chorus_full(fluid_synth_t* synth, int set, int nr, double level,
     fluid_atomic_int_set (&synth->chorus_type, type);
   
   fluid_rvoice_eventhandler_push5(synth->eventhandler, 
-				  fluid_rvoice_mixer_set_chorus_params, 
-				  synth->eventhandler->mixer, set, 
+				  fluid_rvoice_mixer_set_chorus_params,
+				  synth->eventhandler->mixer, set,
 				  nr, level, speed, depth_ms, type);
 
   FLUID_API_RETURN(FLUID_OK);

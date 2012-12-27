@@ -236,7 +236,7 @@ fluid_chorus_reset(fluid_chorus_t* chorus)
  * @param set Flags indicating which chorus parameters to set (#fluid_chorus_set_t)
  * @param nr Chorus voice count (0-99, CPU time consumption proportional to
  *   this value)
- * @param level Chorus level (0.0-1.0)
+ * @param level Chorus level (0.0-10.0, a reasonable level is below 1)
  * @param speed Chorus speed in Hz (0.29-5.0)
  * @param depth_ms Chorus depth (max value depends on synth sample rate,
  *   0.0-21.0 is safe for sample rate values up to 96KHz)
@@ -250,7 +250,7 @@ fluid_chorus_set(fluid_chorus_t* chorus, int set, int nr, float level,
   int i;
 
   if (set & FLUID_CHORUS_SET_NR) chorus->number_blocks = nr;
-  if (set & FLUID_CHORUS_SET_LEVEL) chorus->level = level;    
+  if (set & FLUID_CHORUS_SET_LEVEL) chorus->level = level;
   if (set & FLUID_CHORUS_SET_SPEED) chorus->speed_Hz = speed;
   if (set & FLUID_CHORUS_SET_DEPTH) chorus->depth_ms = depth_ms;
   if (set & FLUID_CHORUS_SET_TYPE) chorus->type = type;
