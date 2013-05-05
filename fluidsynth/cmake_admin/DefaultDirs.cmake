@@ -1,6 +1,16 @@
 # Several directory names used by FluidSynth to install files
 # the variable names are similar to the KDE4 build system
 
+# DEFAULT_SOUNDFONT - automatically loaded in some use cases
+if ( WIN32 )
+  set (DEFAULT_SOUNDFONT "C:\\soundfonts\\default.sf2" CACHE STRING
+       "Default soundfont file")
+else ( WIN32 )
+  set (DEFAULT_SOUNDFONT "share/soundfonts/default.sf2" CACHE STRING
+       "Default soundfont file")
+endif ( WIN32 )
+mark_as_advanced (DEFAULT_SOUNDFONT)
+
 # BUNDLE_INSTALL_DIR - Mac only: the directory for application bundles 
 set (BUNDLE_INSTALL_DIR "/Applications" CACHE STRING 
      "The install dir for application bundles")

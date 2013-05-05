@@ -22,6 +22,9 @@
 /* Define if D-Bus support is enabled */
 #cmakedefine DBUS_SUPPORT  @DBUS_SUPPORT@
 
+/* Soundfont to load automatically in some use cases */
+#cmakedefine DEFAULT_SOUNDFONT "@DEFAULT_SOUNDFONT@"
+
 /* Define to enable FPE checks */
 #cmakedefine FPE_CHECK @FPE_CHECK@
 
