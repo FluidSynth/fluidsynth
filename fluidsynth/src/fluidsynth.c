@@ -705,6 +705,16 @@ int main(int argc, char** argv)
   }
 
   if (player != NULL) {
+
+    if (fluid_synth_get_sfont(synth, 0) == NULL) {
+      /* Try to load the default soundfont if no soundfont specified */
+      char *s;
+      if (fluid_settings_getstr(settings, "synth.default-soundfont", &s) <= 0)
+        s = NULL;
+      if ((s != NULL) && (s[0] != '\0'))
+        fluid_synth_sfload(synth, s, 1);
+    }
+
     fluid_player_play(player);
   }
 
