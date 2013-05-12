@@ -409,6 +409,10 @@ struct _fluid_defsfont_t
 
   fluid_preset_t iter_preset;        /* preset interface used in the iteration */
   fluid_defpreset_t* iter_cur;       /* the current preset in the iteration */
+
+  fluid_preset_t** preset_stack; /* List of presets that are available to use */
+  int preset_stack_capacity;     /* Length of preset_stack array */
+  int preset_stack_size;         /* Current number of items in the stack */
 };
 
 

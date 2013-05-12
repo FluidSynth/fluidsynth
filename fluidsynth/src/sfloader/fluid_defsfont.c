@@ -118,17 +118,23 @@ fluid_sample_t* fluid_defsfont_get_sample(fluid_defsfont_t* sfont, char *s)
 fluid_preset_t*
 fluid_defsfont_sfont_get_preset(fluid_sfont_t* sfont, unsigned int bank, unsigned int prenum)
 {
-  fluid_preset_t* preset;
+  fluid_preset_t* preset = NULL;
   fluid_defpreset_t* defpreset;
+  fluid_defsfont_t* defsfont = sfont->data;
 
-  defpreset = fluid_defsfont_get_preset((fluid_defsfont_t*) sfont->data, bank, prenum);
+  defpreset = fluid_defsfont_get_preset(defsfont, bank, prenum);
 
   if (defpreset == NULL) {
     return NULL;
   }
 
-  preset = FLUID_NEW(fluid_preset_t);
-  if (preset == NULL) {
+  if (defsfont->preset_stack_size > 0) {
+    defsfont->preset_stack_size--;
+    preset = defsfont->preset_stack[defsfont->preset_stack_size];
+  }
+  if (!preset)
+    preset = FLUID_NEW(fluid_preset_t);
+  if (!preset) {
     FLUID_LOG(FLUID_ERR, "Out of memory");
     return NULL;
   }
@@ -164,9 +170,15 @@ int fluid_defsfont_sfont_iteration_next(fluid_sfont_t* sfont, fluid_preset_t* pr
 
 int fluid_defpreset_preset_delete(fluid_preset_t* preset)
 {
-  FLUID_FREE(preset);
+  fluid_defpreset_t* defpreset = preset ? preset->data : NULL;
+  fluid_defsfont_t* sfont = defpreset ? defpreset->sfont : NULL;
 
-  /* TODO: free modulators */
+  if (sfont && sfont->preset_stack_size < sfont->preset_stack_capacity) {
+     sfont->preset_stack[sfont->preset_stack_size] = preset;
+     sfont->preset_stack_size++;
+  }
+  else
+    FLUID_FREE(preset);
 
   return 0;
 }
@@ -429,6 +441,7 @@ static int fluid_cached_sampledata_unload(const short *sampledata)
 fluid_defsfont_t* new_fluid_defsfont(fluid_settings_t* settings)
 {
   fluid_defsfont_t* sfont;
+  int i;
 
   sfont = FLUID_NEW(fluid_defsfont_t);
   if (sfont == NULL) {
@@ -443,6 +456,29 @@ fluid_defsfont_t* new_fluid_defsfont(fluid_settings_t* settings)
   sfont->sampledata = NULL;
   sfont->preset = NULL;
   fluid_settings_getint(settings, "synth.lock-memory", &sfont->mlock);
+
+  /* Initialise preset cache, so we don't have to call malloc on program changes.
+     Usually, we have at most one preset per channel plus one temporarily used,
+     so optimise for that case. */
+  fluid_settings_getint(settings, "synth.midi-channels", &sfont->preset_stack_capacity);
+  sfont->preset_stack_capacity++;
+  sfont->preset_stack_size = 0;
+  sfont->preset_stack = FLUID_ARRAY(fluid_preset_t*, sfont->preset_stack_capacity);
+  if (!sfont->preset_stack) {
+    FLUID_LOG(FLUID_ERR, "Out of memory");
+    FLUID_FREE(sfont);
+    return NULL;
+  }
+
+  for (i = 0; i < sfont->preset_stack_capacity; i++) {
+    sfont->preset_stack[i] = FLUID_NEW(fluid_preset_t);
+    if (!sfont->preset_stack[i]) {
+      FLUID_LOG(FLUID_ERR, "Out of memory");
+      delete_fluid_defsfont(sfont);
+      return NULL;
+    }
+    sfont->preset_stack_size++;
+  }
 
   return sfont;
 }
@@ -479,6 +515,10 @@ int delete_fluid_defsfont(fluid_defsfont_t* sfont)
   if (sfont->sampledata != NULL) {
     fluid_cached_sampledata_unload(sfont->sampledata);
   }
+
+  while (sfont->preset_stack_size > 0)
+    FLUID_FREE(sfont->preset_stack[--sfont->preset_stack_size]);
+  FLUID_FREE(sfont->preset_stack);
 
   preset = sfont->preset;
   while (preset != NULL) {

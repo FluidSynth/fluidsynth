@@ -806,6 +806,12 @@ delete_fluid_synth(fluid_synth_t* synth)
     }
   }
 
+  /* also unset all presets for clean SoundFont unload */
+  if (synth->channel != NULL)
+    for (i = 0; i < synth->midi_channels; i++)
+      if (synth->channel[i] != NULL)
+        fluid_channel_set_preset(synth->channel[i], NULL);
+
   if (synth->eventhandler)
     delete_fluid_rvoice_eventhandler(synth->eventhandler);
 
