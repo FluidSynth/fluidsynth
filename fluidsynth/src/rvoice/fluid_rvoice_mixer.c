@@ -619,7 +619,7 @@ fluid_mixer_buffers_free(fluid_mixer_buffers_t* buffers)
 
 void delete_fluid_rvoice_mixer(fluid_rvoice_mixer_t* mixer)
 {
-  if (!mixer) 
+  if (!mixer)
     return;
   fluid_rvoice_mixer_set_threads(mixer, 0, 0);
 #ifdef ENABLE_MIXER_THREADS
@@ -637,6 +637,7 @@ void delete_fluid_rvoice_mixer(fluid_rvoice_mixer_t* mixer)
     delete_fluid_revmodel(mixer->fx.reverb);
   if (mixer->fx.chorus)
     delete_fluid_chorus(mixer->fx.chorus);
+  FLUID_FREE(mixer->rvoices);
   FLUID_FREE(mixer);
 }
 
