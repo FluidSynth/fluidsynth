@@ -292,8 +292,6 @@ finish:
         return ret;
 }
 
-#endif
-
 #ifndef RLIMIT_RTTIME
 #  define RLIMIT_RTTIME 15
 #endif
@@ -380,4 +378,6 @@ int fluid_rtkit_make_realtime(pid_t thread, int priority) {
         return -ENOTSUP;
 }
 
-#endif
+#endif /* defined(__linux__) || defined(__APPLE__) */
+
+#endif /* DBUS_SUPPORT */
