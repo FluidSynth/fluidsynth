@@ -97,6 +97,11 @@ void process_o_cmd_line_option(fluid_settings_t* settings, char* optarg)
     return;
   }
 
+  if (strcmp (optarg, "") == 0) {
+    fprintf (stderr, "Invalid -o option (name part is empty)\n");
+    return;
+  }
+
   switch(fluid_settings_get_type(settings, optarg)){
   case FLUID_NUM_TYPE:
     if (!fluid_settings_setnum (settings, optarg, atof (val)))
