@@ -823,7 +823,7 @@ fluid_defpreset_noteon(fluid_defpreset_t* preset, fluid_synth_t* synth, int chan
 
 	/* make sure this instrument zone has a valid sample */
 	sample = fluid_inst_zone_get_sample(inst_zone);
-	if (fluid_sample_in_rom(sample) || (sample == NULL)) {
+	if ((sample == NULL) || fluid_sample_in_rom(sample)) {
 	  inst_zone = fluid_inst_zone_next(inst_zone);
 	  continue;
 	}
