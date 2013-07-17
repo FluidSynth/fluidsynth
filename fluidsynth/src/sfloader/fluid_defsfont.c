@@ -1054,6 +1054,7 @@ fluid_defpreset_import_sfont(fluid_defpreset_t* preset,
       return FLUID_FAILED;
     }
     if (fluid_preset_zone_import_sfont(zone, sfzone, sfont) != FLUID_OK) {
+      delete_fluid_preset_zone(zone);
       return FLUID_FAILED;
     }
     if ((count == 0) && (fluid_preset_zone_get_inst(zone) == NULL)) {
@@ -1455,6 +1456,7 @@ fluid_inst_import_sfont(fluid_inst_t* inst, SFInst *sfinst, fluid_defsfont_t* sf
     }
 
     if (fluid_inst_zone_import_sfont(zone, sfzone, sfont) != FLUID_OK) {
+      delete_fluid_inst_zone(zone);
       return FLUID_FAILED;
     }
 
