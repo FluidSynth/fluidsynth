@@ -98,6 +98,7 @@ fluid_ramsfont_create_sfont()
   sfont = FLUID_NEW(fluid_sfont_t);
   if (sfont == NULL) {
     FLUID_LOG(FLUID_ERR, "Out of memory");
+    delete_fluid_ramsfont(ramsfont);
     return NULL;
   }
 
@@ -368,6 +369,7 @@ fluid_ramsfont_add_izone(fluid_ramsfont_t* sfont, unsigned int bank,
 
 		err = fluid_rampreset_add_sample(preset, sample, lokey, hikey);
 		if (err != FLUID_OK) {
+			delete_fluid_rampreset(preset);
 			return FLUID_FAILED;
 		}
 
