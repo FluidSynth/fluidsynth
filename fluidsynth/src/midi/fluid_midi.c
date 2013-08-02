@@ -366,6 +366,7 @@ fluid_midi_file_read_track(fluid_midi_file *mf, fluid_player_t *player, int num)
 
             while (!fluid_midi_file_eot(mf)) {
                 if (fluid_midi_file_read_event(mf, track) != FLUID_OK) {
+                    delete_fluid_track(track);
                     return FLUID_FAILED;
                 }
             }
@@ -1490,6 +1491,7 @@ fluid_player_load(fluid_player_t *player, fluid_playlist_item *item)
         buffer = fluid_file_read_full(fp, &buffer_length);
         if (buffer == NULL)
         {
+            FLUID_FCLOSE(fp);
             return FLUID_FAILED;
         }
         buffer_owned = 1;
@@ -1521,6 +1523,7 @@ fluid_player_load(fluid_player_t *player, fluid_playlist_item *item)
         if (buffer_owned) {
             FLUID_FREE(buffer);
         }
+        delete_fluid_midi_file(midifile);
         return FLUID_FAILED;
     }
     delete_fluid_midi_file(midifile);
