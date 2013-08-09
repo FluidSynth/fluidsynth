@@ -1487,10 +1487,10 @@ fluid_settings_option_concat (fluid_settings_t *settings, const char *name,
   newlist = fluid_list_sort (newlist, fluid_list_str_compare_func);
 
   str = FLUID_MALLOC (len);
-  str[0] = 0;
 
   if (str)
   {
+    str[0] = 0;
     for (p = newlist; p; p = p->next)
     {
       option = fluid_list_get (p);

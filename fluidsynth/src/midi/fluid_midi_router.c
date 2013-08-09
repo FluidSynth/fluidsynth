@@ -315,7 +315,7 @@ fluid_midi_router_add_rule (fluid_midi_router_t *router, fluid_midi_router_rule_
 
   fluid_return_val_if_fail (router != NULL, FLUID_FAILED);
   fluid_return_val_if_fail (rule != NULL, FLUID_FAILED);
-  fluid_return_val_if_fail (type >= 0 && type <= FLUID_MIDI_ROUTER_RULE_COUNT, FLUID_FAILED);
+  fluid_return_val_if_fail (type >= 0 && type < FLUID_MIDI_ROUTER_RULE_COUNT, FLUID_FAILED);
 
 
   fluid_mutex_lock (router->rules_mutex);       /* ++ lock */
