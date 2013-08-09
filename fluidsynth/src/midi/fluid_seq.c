@@ -281,6 +281,7 @@ fluid_sequencer_register_client (fluid_sequencer_t* seq, const char *name,
 	nameCopy = FLUID_STRDUP(name);
 	if (nameCopy == NULL) {
 		fluid_log(FLUID_PANIC, "sequencer: Out of memory\n");
+		FLUID_FREE(client);
 		return FLUID_FAILED;
 	}
 

@@ -3115,7 +3115,7 @@ fluid_synth_sfload(fluid_synth_t* synth, const char* filename, int reset_presets
 
       if (!sfont_info)
       {
-        delete_fluid_sfont (sfont_info->sfont);         /* FIXME - Shouldn't fail right? - JG */
+        delete_fluid_sfont (sfont);
         FLUID_API_RETURN(FLUID_FAILED);
       }
 
@@ -3295,7 +3295,7 @@ fluid_synth_sfreload(fluid_synth_t* synth, unsigned int id)
 
       if (!sfont_info)
       {
-        delete_fluid_sfont (sfont_info->sfont);         /* FIXME - Shouldn't fail right? - JG */
+        delete_fluid_sfont (sfont);
         FLUID_API_RETURN(FLUID_FAILED);
       }
 
