@@ -222,7 +222,7 @@ new_fluid_winmidi_driver(fluid_settings_t* settings,
   }
 
   /* Create thread which processes re-adding SYSEX buffers */
-  dev->sysExAddThread = new_fluid_thread (fluid_winmidi_add_sysex_thread,
+  dev->sysExAddThread = new_fluid_thread ("winmidi-sysex", fluid_winmidi_add_sysex_thread,
                                           dev, 0, FALSE);
   if (!dev->sysExAddThread)
   {

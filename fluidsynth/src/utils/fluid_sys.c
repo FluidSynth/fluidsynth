@@ -571,6 +571,8 @@ void fluid_profiling_print(void)
  *
  */
 
+#if OLD_GLIB_THREAD_API
+
 /* Rather than inline this one, we just declare it as a function, to prevent
  * GCC warning about inline failure. */
 fluid_cond_t *
@@ -579,6 +581,8 @@ new_fluid_cond (void)
   if (!g_thread_supported ()) g_thread_init (NULL);
   return g_cond_new ();
 }
+
+#endif
 
 static gpointer
 fluid_thread_high_prio (gpointer data)
@@ -603,7 +607,7 @@ fluid_thread_high_prio (gpointer data)
  * @return New thread pointer or NULL on error
  */
 fluid_thread_t *
-new_fluid_thread (fluid_thread_func_t func, void *data, int prio_level, int detach)
+new_fluid_thread (const char *name, fluid_thread_func_t func, void *data, int prio_level, int detach)
 {
   GThread *thread;
   fluid_thread_info_t *info;
@@ -611,10 +615,12 @@ new_fluid_thread (fluid_thread_func_t func, void *data, int prio_level, int deta
 
   g_return_val_if_fail (func != NULL, NULL);
 
+#if OLD_GLIB_THREAD_API
   /* Make sure g_thread_init has been called.
    * FIXME - Probably not a good idea in a shared library,
    * but what can we do *and* remain backwards compatible? */
   if (!g_thread_supported ()) g_thread_init (NULL);
+#endif
 
   if (prio_level > 0)
   {
@@ -629,16 +635,29 @@ new_fluid_thread (fluid_thread_func_t func, void *data, int prio_level, int deta
     info->func = func;
     info->data = data;
     info->prio_level = prio_level;
+#if NEW_GLIB_THREAD_API
+    thread = g_thread_try_new (name, fluid_thread_high_prio, info, &err);
+#else
     thread = g_thread_create (fluid_thread_high_prio, info, detach == FALSE, &err);
+#endif
   }
+#if NEW_GLIB_THREAD_API
+  else thread = g_thread_try_new (name, (GThreadFunc)func, data, &err);
+#else
   else thread = g_thread_create ((GThreadFunc)func, data, detach == FALSE, &err);
+#endif
 
   if (!thread)
   {
     FLUID_LOG(FLUID_ERR, "Failed to create the thread: %s",
               fluid_gerror_message (err));
     g_clear_error (&err);
+    return NULL;
   }
+
+#if NEW_GLIB_THREAD_API
+  if (detach) g_thread_unref (thread);  // Release thread reference, if caller wants to detach
+#endif
 
   return thread;
 }
@@ -726,7 +745,7 @@ new_fluid_timer (int msec, fluid_timer_callback_t callback, void* data,
 
   if (new_thread)
   {
-    timer->thread = new_fluid_thread (fluid_timer_run, timer, high_priority
+    timer->thread = new_fluid_thread ("timer", fluid_timer_run, timer, high_priority
                                       ? FLUID_SYS_TIMER_HIGH_PRIO_LEVEL : 0, FALSE);
     if (!timer->thread)
     {
@@ -1037,7 +1056,7 @@ new_fluid_server_socket(int port, fluid_server_func_t func, void* data)
   server_socket->data = data;
   server_socket->cont = 1;
 
-  server_socket->thread = new_fluid_thread(fluid_server_socket_run, server_socket,
+  server_socket->thread = new_fluid_thread("server", fluid_server_socket_run, server_socket,
                                            0, FALSE);
   if (server_socket->thread == NULL) {
     FLUID_FREE(server_socket);
@@ -1187,7 +1206,7 @@ new_fluid_server_socket(int port, fluid_server_func_t func, void* data)
   server_socket->data = data;
   server_socket->cont = 1;
 
-  server_socket->thread = new_fluid_thread(fluid_server_socket_run, server_socket,
+  server_socket->thread = new_fluid_thread("server", fluid_server_socket_run, server_socket,
                                            0, FALSE);
   if (server_socket->thread == NULL)
   {

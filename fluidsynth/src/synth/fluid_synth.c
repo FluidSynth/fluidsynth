@@ -4480,7 +4480,7 @@ fluid_synth_tuning_iteration_start(fluid_synth_t* synth)
 {
   fluid_return_if_fail (synth != NULL);
   fluid_synth_api_enter(synth);
-  fluid_private_set (synth->tuning_iter, FLUID_INT_TO_POINTER (0), NULL);
+  fluid_private_set (synth->tuning_iter, FLUID_INT_TO_POINTER (0));
   fluid_synth_api_exit(synth);
 }
 
@@ -4525,9 +4525,9 @@ fluid_synth_tuning_iteration_next(fluid_synth_t* synth, int* bank, int* prog)
       *prog = p;
 
       if (p < 127) fluid_private_set (synth->tuning_iter,
-                                      FLUID_INT_TO_POINTER (b << 8 | (p + 1)), NULL);
+                                      FLUID_INT_TO_POINTER (b << 8 | (p + 1)));
       else fluid_private_set (synth->tuning_iter,
-                              FLUID_INT_TO_POINTER ((b + 1) << 8), NULL);
+                              FLUID_INT_TO_POINTER ((b + 1) << 8));
 
       FLUID_API_RETURN(1);
     }

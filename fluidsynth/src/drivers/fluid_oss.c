@@ -226,7 +226,7 @@ new_fluid_oss_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
   }
 
   /* Create the audio thread */
-  dev->thread = new_fluid_thread (fluid_oss_audio_run, dev, realtime_prio, FALSE);
+  dev->thread = new_fluid_thread ("oss-audio", fluid_oss_audio_run, dev, realtime_prio, FALSE);
 
   if (!dev->thread)
     goto error_recovery;
@@ -350,7 +350,7 @@ new_fluid_oss_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func,
   }
 
   /* Create the audio thread */
-  dev->thread = new_fluid_thread (fluid_oss_audio_run2, dev, realtime_prio, FALSE);
+  dev->thread = new_fluid_thread ("oss-audio", fluid_oss_audio_run2, dev, realtime_prio, FALSE);
 
   if (!dev->thread)
     goto error_recovery;
@@ -574,7 +574,7 @@ new_fluid_oss_midi_driver(fluid_settings_t* settings,
   dev->status = FLUID_MIDI_READY;
 
   /* create MIDI thread */
-  dev->thread = new_fluid_thread (fluid_oss_midi_run, dev, realtime_prio, FALSE);
+  dev->thread = new_fluid_thread ("oss-midi", fluid_oss_midi_run, dev, realtime_prio, FALSE);
 
   if (!dev->thread)
     goto error_recovery;

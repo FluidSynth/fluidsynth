@@ -158,7 +158,7 @@ new_fluid_pulse_audio_driver2(fluid_settings_t* settings,
   FLUID_LOG(FLUID_INFO, "Using PulseAudio driver");
 
   /* Create the audio thread */
-  dev->thread = new_fluid_thread (func ? fluid_pulse_audio_run2 : fluid_pulse_audio_run,
+  dev->thread = new_fluid_thread ("pulse-audio", func ? fluid_pulse_audio_run2 : fluid_pulse_audio_run,
                                   dev, realtime_prio, FALSE);
   if (!dev->thread)
     goto error_recovery;

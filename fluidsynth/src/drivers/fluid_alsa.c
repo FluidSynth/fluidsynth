@@ -303,7 +303,7 @@ new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
   }
 
   /* Create the audio thread */
-  dev->thread = new_fluid_thread (fluid_alsa_formats[i].run, dev, realtime_prio, FALSE);
+  dev->thread = new_fluid_thread ("alsa-audio", fluid_alsa_formats[i].run, dev, realtime_prio, FALSE);
 
   if (!dev->thread)
     goto error_recovery;
@@ -617,7 +617,7 @@ new_fluid_alsa_rawmidi_driver(fluid_settings_t* settings,
   g_atomic_int_set(&dev->should_quit, 0);
 
   /* create the MIDI thread */
-  dev->thread = new_fluid_thread (fluid_alsa_midi_run, dev, realtime_prio, FALSE);
+  dev->thread = new_fluid_thread ("alsa-midi-raw", fluid_alsa_midi_run, dev, realtime_prio, FALSE);
 
   if (!dev->thread)
     goto error_recovery;
@@ -890,7 +890,7 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
   g_atomic_int_set(&dev->should_quit, 0);
 
   /* create the MIDI thread */
-  dev->thread = new_fluid_thread (fluid_alsa_seq_run, dev, realtime_prio, FALSE);
+  dev->thread = new_fluid_thread ("alsa-midi-seq", fluid_alsa_seq_run, dev, realtime_prio, FALSE);
 
   if (portname) FLUID_FREE (portname);
   if (id) FLUID_FREE (id);
