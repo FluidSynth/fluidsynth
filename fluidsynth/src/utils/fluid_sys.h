@@ -251,7 +251,7 @@ fluid_cond_t *new_fluid_cond (void);
 /* Thread private data */
 typedef GStaticPrivate fluid_private_t;
 #define fluid_private_get(_priv)                   g_static_private_get(&(_priv))
-#define fluid_private_set(_priv, _data)            g_static_private_set(&(_priv), _data)
+#define fluid_private_set(_priv, _data)            g_static_private_set(&(_priv), _data, NULL)
 #define fluid_private_free(_priv)                  g_static_private_free(&(_priv))
 
 #define fluid_private_init(_priv)                  G_STMT_START { \
