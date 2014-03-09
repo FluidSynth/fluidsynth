@@ -3,7 +3,7 @@
 
 # DEFAULT_SOUNDFONT - automatically loaded in some use cases
 if ( WIN32 )
-  set (DEFAULT_SOUNDFONT "C:\\soundfonts\\default.sf2" CACHE STRING
+  set (DEFAULT_SOUNDFONT "C:\\\\soundfonts\\\\default.sf2" CACHE STRING
        "Default soundfont file")
 else ( WIN32 )
   set (DEFAULT_SOUNDFONT "share/soundfonts/default.sf2" CACHE STRING
