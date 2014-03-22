@@ -141,9 +141,9 @@ if ( CMAKE_COMPILER_IS_GNUCC )
           "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-undefined" )
   endif ( NOT APPLE AND NOT OS2 )
   set ( GNUCC_WARNING_FLAGS "-Wall -W -Wpointer-arith -Wbad-function-cast -Wno-cast-qual -Wcast-align -Wstrict-prototypes -Wno-unused-parameter -Wdeclaration-after-statement" )
-  set ( CMAKE_C_FLAGS_DEBUG "-g -DDEBUG ${GNUCC_WARNING_FLAGS}" )
-  set ( CMAKE_C_FLAGS_RELEASE "-O2 -fomit-frame-pointer -funroll-all-loops -finline-functions -DNDEBUG ${GNUCC_WARNING_FLAGS}" )
-  set ( CMAKE_C_FLAGS_RELWITHDEBINFO "-O2 -g -fomit-frame-pointer -funroll-all-loops -finline-functions -DNDEBUG ${GNUCC_WARNING_FLAGS}" )
+  set ( CMAKE_C_FLAGS_DEBUG "-g -fvisibility=hidden -DDEBUG ${GNUCC_WARNING_FLAGS}" )
+  set ( CMAKE_C_FLAGS_RELEASE "-O2 -fomit-frame-pointer -funroll-all-loops -finline-functions -fvisibility=hidden -DNDEBUG ${GNUCC_WARNING_FLAGS}" )
+  set ( CMAKE_C_FLAGS_RELWITHDEBINFO "-O2 -g -fomit-frame-pointer -funroll-all-loops -finline-functions -fvisibility=hidden -DNDEBUG ${GNUCC_WARNING_FLAGS}" )
 endif ( CMAKE_COMPILER_IS_GNUCC )
 
 # Windows
