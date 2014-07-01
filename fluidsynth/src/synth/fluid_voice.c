@@ -763,15 +763,19 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
      * which offsets the original rate.  This means that the fine tuning is
      * inverted with respect to the root note (so subtract it, not add).
      */
-    if (voice->gen[GEN_OVERRIDEROOTKEY].val > -1) {   //FIXME: use flag instead of -1
-      voice->root_pitch = voice->gen[GEN_OVERRIDEROOTKEY].val * 100.0f
-	- voice->sample->pitchadj;
-    } else {
-      voice->root_pitch = voice->sample->origpitch * 100.0f - voice->sample->pitchadj;
-    }
-    x = fluid_ct2hz(voice->root_pitch);
     if (voice->sample != NULL) {
-      x *= (fluid_real_t) voice->output_rate / voice->sample->samplerate;
+      if (voice->gen[GEN_OVERRIDEROOTKEY].val > -1)   //FIXME: use flag instead of -1
+        voice->root_pitch = voice->gen[GEN_OVERRIDEROOTKEY].val * 100.0f
+	  - voice->sample->pitchadj;
+      else
+        voice->root_pitch = voice->sample->origpitch * 100.0f - voice->sample->pitchadj;
+      x = (fluid_ct2hz(voice->root_pitch) * ((fluid_real_t) voice->output_rate / voice->sample->samplerate));
+    } else {
+      if (voice->gen[GEN_OVERRIDEROOTKEY].val > -1)    //FIXME: use flag instead of -1
+        voice->root_pitch = voice->gen[GEN_OVERRIDEROOTKEY].val * 100.0f;
+      else
+        voice->root_pitch = 0;
+      x = fluid_ct2hz(voice->root_pitch);
     }
     /* voice->pitch depends on voice->root_pitch, so calculate voice->pitch now */
     fluid_voice_calculate_gen_pitch(voice);
