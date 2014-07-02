@@ -103,6 +103,12 @@ else ( AUFILE_SUPPORT )
   message ( "Audio to file driver:  no" )
 endif ( AUFILE_SUPPORT )
 
+if ( IPV6_SUPPORT )
+  message ( "IPV6 Support :         yes" )
+else ( IPV6_SUPPORT )
+  message ( "IPV6 Support :         no" )
+endif ( IPV6_SUPPORT )
+
 if ( WITH_READLINE )
   message ( "Readline:              yes (NOTE: GPL library)" )
 else ( WITH_READLINE )

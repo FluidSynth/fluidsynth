@@ -981,9 +981,16 @@ fluid_server_socket_run (void *data)
 {
   fluid_server_socket_t *server_socket = (fluid_server_socket_t *)data;
   fluid_socket_t client_socket;
+#ifdef IPV6
+  struct sockaddr_in6 addr;
+  char straddr[INET6_ADDRSTRLEN];
+#else
   struct sockaddr_in addr;
+  char straddr[INET_ADDRSTRLEN];
+#endif
   socklen_t addrlen = sizeof (addr);
   int retval;
+  FLUID_MEMSET((char *)&addr, 0, sizeof(addr));
 
   FLUID_LOG (FLUID_DBG, "Server listening for connections");
 
@@ -1001,8 +1008,13 @@ fluid_server_socket_run (void *data)
       server_socket->cont = 0;
       return;
     } else {
+#ifdef IPV6
+      inet_ntop(AF_INET6, &addr.sin6_addr, straddr, sizeof(straddr));
+#else
+      inet_ntop(AF_INET, &addr.sin_addr, straddr, sizeof(straddr));
+#endif
       retval = server_socket->func (server_socket->data, client_socket,
-                                    inet_ntoa (addr.sin_addr));  // FIXME - inet_ntoa is not thread safe
+                                    straddr);
 
       if (retval != 0)
 	fluid_socket_close(client_socket);
@@ -1016,10 +1028,26 @@ fluid_server_socket_t*
 new_fluid_server_socket(int port, fluid_server_func_t func, void* data)
 {
   fluid_server_socket_t* server_socket;
+#ifdef IPV6
+  struct sockaddr_in6 addr;
+#else
   struct sockaddr_in addr;
+#endif
   fluid_socket_t sock;
 
   g_return_val_if_fail (func != NULL, NULL);
+#ifdef IPV6
+  sock = socket(AF_INET6, SOCK_STREAM, 0);
+  if (sock == INVALID_SOCKET) {
+    FLUID_LOG(FLUID_ERR, "Failed to create server socket");
+    return NULL;
+  }
+
+  FLUID_MEMSET((char *)&addr, 0, sizeof(struct sockaddr_in6));
+  addr.sin6_family = AF_INET6;
+  addr.sin6_addr = in6addr_any;
+  addr.sin6_port = htons(port);
+#else
 
   sock = socket(AF_INET, SOCK_STREAM, 0);
   if (sock == INVALID_SOCKET) {
@@ -1031,8 +1059,8 @@ new_fluid_server_socket(int port, fluid_server_func_t func, void* data)
   addr.sin_family = AF_INET;
   addr.sin_addr.s_addr = htonl(INADDR_ANY);
   addr.sin_port = htons(port);
-
-  if (bind(sock, (const struct sockaddr *) &addr, sizeof(struct sockaddr_in)) == SOCKET_ERROR) {
+#endif
+  if (bind(sock, (const struct sockaddr *) &addr, sizeof(addr)) == SOCKET_ERROR) {
     FLUID_LOG(FLUID_ERR, "Failed to bind server socket");
     fluid_socket_close(sock);
     return NULL;
@@ -1108,9 +1136,16 @@ static void fluid_server_socket_run (void *data)
 {
   fluid_server_socket_t *server_socket = (fluid_server_socket_t *)data;
   fluid_socket_t client_socket;
+#ifdef IPV6
+  struct sockaddr_in6 addr;
+  char straddr[INET6_ADDRSTRLEN];
+#else
   struct sockaddr_in addr;
+  char straddr[INET_ADDRSTRLEN];
+#endif
   socklen_t addrlen = sizeof (addr);
   int r;
+  FLUID_MEMSET((char *)&addr, 0, sizeof(addr));
 
   FLUID_LOG(FLUID_DBG, "Server listening for connections");
 
@@ -1130,8 +1165,13 @@ static void fluid_server_socket_run (void *data)
     }
     else
     {
+#ifdef IPV6
+      inet_ntop(AF_INET6, &addr.sin6_addr, straddr, sizeof(straddr));
+#else
+      inet_ntop(AF_INET, &addr.sin_addr, straddr, sizeof(straddr));
+#endif
       r = server_socket->func (server_socket->data, client_socket,
-                               inet_ntoa (addr.sin_addr));  // FIXME - inet_ntoa is not thread safe
+                               straddr);
       if (r != 0)
 	fluid_socket_close (client_socket);
     }
@@ -1144,7 +1184,12 @@ fluid_server_socket_t*
 new_fluid_server_socket(int port, fluid_server_func_t func, void* data)
 {
   fluid_server_socket_t* server_socket;
+#ifdef IPV6
+  struct sockaddr_in6 addr;
+#else
   struct sockaddr_in addr;
+#endif
+
   fluid_socket_t sock;
   WSADATA wsaData;
   int retval;
@@ -1159,6 +1204,18 @@ new_fluid_server_socket(int port, fluid_server_func_t func, void* data)
     FLUID_LOG(FLUID_ERR, "Server socket creation error: WSAStartup failed: %d", retval);
     return NULL;
   }
+#ifdef IPV6
+  sock = socket (AF_INET6, SOCK_STREAM, 0);
+  if (sock == INVALID_SOCKET)
+  {
+    FLUID_LOG (FLUID_ERR, "Failed to create server socket: %ld", WSAGetLastError ());
+    WSACleanup ();
+    return NULL;
+  }
+  addr.sin6_family = AF_INET6;
+  addr.sin6_port = htons (port);
+  addr.sin6_addr = in6addr_any;
+#else
 
   sock = socket (AF_INET, SOCK_STREAM, 0);
 
@@ -1172,7 +1229,7 @@ new_fluid_server_socket(int port, fluid_server_func_t func, void* data)
   addr.sin_family = AF_INET;
   addr.sin_port = htons (port);
   addr.sin_addr.s_addr = htonl (INADDR_ANY);
-
+#endif
   retval = bind (sock, (struct sockaddr *)&addr, sizeof (addr));
 
   if (retval == SOCKET_ERROR)

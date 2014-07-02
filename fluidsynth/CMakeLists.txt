@@ -66,6 +66,7 @@ option ( enable-midishare "compile MidiShare support (if it is available)" on )
 option ( enable-readline "compile readline lib line editing (if it is available)" on )
 option ( enable-dbus "compile DBUS support (if it is available)" on )
 option ( BUILD_SHARED_LIBS "Build a shared object or DLL" on )
+option ( enable-ipv6  "enable ipv6 support " on )
 
 # Platform specific options
 if ( ${CMAKE_SYSTEM} MATCHES "Linux" )
@@ -387,6 +388,12 @@ if ( enable-dbus )
 else ( enable-dbus )
   unset_pkg_config ( DBUS )
 endif ( enable-dbus )
+
+unset ( IPV6_SUPPORT CACHE )
+if ( enable-ipv6 )
+  set ( IPV6 1 )
+  set ( IPV6_SUPPORT 1 )
+endif ( enable-ipv6 )
 
 # General configuration file
 configure_file ( ${CMAKE_SOURCE_DIR}/src/config.cmake

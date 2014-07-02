@@ -452,7 +452,37 @@ else
 fi
 AM_CONDITIONAL(LADCCA_SUPPORT, test "$LADCCA_FOUND" = "yes")
 
-
+#Checking for IPV6 support
+AC_MSG_CHECKING(for IPv6 support)
+AC_ARG_ENABLE(ipv6, AS_HELP_STRING([--enable-ipv6],
+                [Enable IPV6 support (default=auto)]),
+  ENABLE_IPV6=$enableval,
+  ENABLE_IPV6=yes)
+if test "$ENABLE_IPV6" = "yes" ; then
+    AC_CACHE_VAL(ac_cv_ipv6,
+    AC_TRY_RUN([
+    #include <sys/types.h>
+    #include <sys/socket.h>
+    #include <netinet/in.h>
+    #include <stdlib.h>
+     main()
+       {
+       int fd;
+       struct sockaddr_in6 foo;
+       fd = socket(AF_INET6, SOCK_STREAM, 0);
+       exit(fd >= 0 ? 0 : 1);
+       }],
+       ac_cv_ipv6=yes,
+       ac_cv_ipv6=no,
+       ac_cv_ipv6=yes))
+    AC_MSG_RESULT($ac_cv_ipv6)
+    if test $ac_cv_ipv6 = yes ; then
+        AC_DEFINE(IPV6,1,[check if system supports IPV6])
+    else
+        ENABLE_IPV6="no"
+    fi
+ 
+fi
 
 AC_OUTPUT([
 	Makefile
@@ -543,6 +573,11 @@ else
   echo "LADSPA support:        no"
 fi
 
+if test "${ENABLE_IPV6}" = "yes"; then
+  echo "IPV6 support:          yes"
+else
+  echo "IPV6 support:          no"
+fi
 if test "${LASH_FOUND}" = "yes"; then
   echo "LASH support:          yes (NOTE: GPL library)"
 else
