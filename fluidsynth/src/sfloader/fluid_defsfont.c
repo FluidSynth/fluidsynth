@@ -2010,6 +2010,7 @@ sfload_file (const char * fname)
   if (!(sf = FLUID_NEW (SFData)))
     {
       FLUID_LOG(FLUID_ERR, "Out of memory");
+      fclose(fd);
       err = TRUE;
     }
 
