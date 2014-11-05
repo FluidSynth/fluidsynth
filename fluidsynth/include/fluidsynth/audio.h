@@ -67,6 +67,7 @@ FLUIDSYNTH_API void delete_fluid_audio_driver(fluid_audio_driver_t* driver);
 FLUIDSYNTH_API fluid_file_renderer_t *new_fluid_file_renderer(fluid_synth_t* synth);
 FLUIDSYNTH_API int fluid_file_renderer_process_block(fluid_file_renderer_t* dev);
 FLUIDSYNTH_API void delete_fluid_file_renderer(fluid_file_renderer_t* dev);
+FLUIDSYNTH_API int fluid_file_set_encoding_quality(fluid_file_renderer_t* dev, double q);
 
 #ifdef __cplusplus
 }

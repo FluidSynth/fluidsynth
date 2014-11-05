@@ -290,6 +290,7 @@ new_fluid_file_renderer(fluid_synth_t* synth)
 	/* Turn on clipping and normalization of floats (-1.0 - 1.0) */
 	sf_command (dev->sndfile, SFC_SET_CLIPPING, NULL, SF_TRUE);
 	sf_command (dev->sndfile, SFC_SET_NORM_FLOAT, NULL, SF_TRUE);
+
 #else
 	dev->file = fopen(filename, "wb");
 	if (dev->file == NULL) {
@@ -304,6 +305,22 @@ new_fluid_file_renderer(fluid_synth_t* synth)
 	if (filename) FLUID_FREE (filename);
 	delete_fluid_file_renderer(dev);
 	return NULL;
+}
+
+/**
+ * Set vbr encoding quality (only available with libsndfile support)
+ * @param dev File renderer object.
+ * @since 1.1.7
+ */
+int
+fluid_file_set_encoding_quality(fluid_file_renderer_t* r, double q)
+{
+#if LIBSNDFILE_SUPPORT
+	if (sf_command (r->sndfile, SFC_SET_VBR_ENCODING_QUALITY, &q, sizeof (double)) == 0)
+		return FLUID_OK;
+	else
+#endif
+		return FLUID_FAILED;
 }
 
 /**
