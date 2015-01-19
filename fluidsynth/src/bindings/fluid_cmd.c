@@ -1803,7 +1803,7 @@ struct _fluid_server_t {
   fluid_mutex_t mutex;
 };
 
-static void fluid_server_handle_connection(fluid_server_t* server,
+static int fluid_server_handle_connection(fluid_server_t* server,
 					  fluid_socket_t client_socket,
 					  char* addr);
 static void fluid_server_close(fluid_server_t* server);
@@ -1896,7 +1896,7 @@ static void fluid_server_close(fluid_server_t* server)
   }
 }
 
-static void
+static int
 fluid_server_handle_connection(fluid_server_t* server, fluid_socket_t client_socket, char* addr)
 {
   fluid_client_t* client;
@@ -1904,14 +1904,16 @@ fluid_server_handle_connection(fluid_server_t* server, fluid_socket_t client_soc
 
   handler = server->newclient(server->data, addr);
   if (handler == NULL) {
-    return;
+    return -1;
   }
 
   client = new_fluid_client(server, server->settings, handler, client_socket);
   if (client == NULL) {
-    return;
+    return -1;
   }
   fluid_server_add_client(server, client);
+
+  return 0;
 }
 
 void fluid_server_add_client(fluid_server_t* server, fluid_client_t* client)
