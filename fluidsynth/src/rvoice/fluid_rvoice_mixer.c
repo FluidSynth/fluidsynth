@@ -563,7 +563,7 @@ new_fluid_rvoice_mixer(int buf_count, int fx_buf_count, fluid_real_t sample_rate
   mixer->thread_ready_m = new_fluid_cond_mutex();
   mixer->wakeup_threads_m = new_fluid_cond_mutex();
   if (!mixer->thread_ready || !mixer->wakeup_threads || 
-      !mixer->wakeup_threads_m || !mixer->wakeup_threads_m) {
+      !mixer->thread_ready_m || !mixer->wakeup_threads_m) {
     delete_fluid_rvoice_mixer(mixer);
     return NULL;
   }
