@@ -1757,8 +1757,7 @@ int fluid_player_set_midi_tempo(fluid_player_t *player, int tempo)
  * @param bpm Tempo in beats per minute
  * @return Always returns #FLUID_OK
  */
-int
-fluid_player_set_bpm(fluid_player_t *player, int bpm)
+int fluid_player_set_bpm(fluid_player_t *player, int bpm)
 {
     return fluid_player_set_midi_tempo(player, (int) ((double) 60 * 1e6 / bpm));
 }
@@ -1784,6 +1783,37 @@ fluid_player_join(fluid_player_t *player)
         }
     }
     return FLUID_OK;
+}
+
+
+int fluid_player_get_current_tick( fluid_player_t * player )
+{
+    return player->cur_ticks;
+}
+
+int fluid_player_get_total_ticks( fluid_player_t * player )
+{
+    int i;
+    int maxTicks = 0;
+    for (i = 0; i < player->ntracks; i++) {
+        if (player->track[i] != NULL) {
+            int ticks = fluid_track_get_duration( player->track[i] );
+            if( ticks > maxTicks )
+                maxTicks = ticks;
+        }
+    }
+    return maxTicks;
+
+}
+
+int fluid_player_get_bpm( fluid_player_t * player )
+{
+    return   (int)( 60e6 / player->miditempo );
+}
+
+int fluid_player_get_midi_tempo( fluid_player_t * player )
+{
+    return player->miditempo;
 }
 
 /************************************************************************
