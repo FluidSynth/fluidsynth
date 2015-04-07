@@ -48,6 +48,11 @@ struct _fluid_channel_t
 
   int cc[128];                          /**< MIDI controller values */
 
+  /* Sostenuto order id gives the order of SostenutoOn event.
+     This value is useful to known when the sostenuto pedal is depressed
+     (before or after a key note). We need to compare SostenutoOrderId with voice id.
+   */
+  unsigned int  sostenuto_orderid;
   int interp_method;                    /**< Interpolation method (enum fluid_interp) */
   fluid_tuning_t* tuning;               /**< Micro tuning */
   int tuning_bank;                      /**< Current tuning bank number */
@@ -134,6 +139,7 @@ int fluid_channel_get_interp_method(fluid_channel_t* chan);
 #define fluid_channel_set_tuning_prog(chan, prog) \
   ((chan)->tuning_prog = (prog))
 #define fluid_channel_sustained(_c)             ((_c)->cc[SUSTAIN_SWITCH] >= 64)
+#define fluid_channel_sostenuto(_c)             ((_c)->cc[SOSTENUTO_SWITCH] >= 64)
 #define fluid_channel_set_gen(_c, _n, _v, _a)   { (_c)->gen[_n] = _v; (_c)->gen_abs[_n] = _a; }
 #define fluid_channel_get_gen(_c, _n)           ((_c)->gen[_n])
 #define fluid_channel_get_gen_abs(_c, _n)       ((_c)->gen_abs[_n])

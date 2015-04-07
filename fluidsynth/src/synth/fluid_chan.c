@@ -67,6 +67,8 @@ fluid_channel_init(fluid_channel_t* chan)
   fluid_preset_t *newpreset;
   int prognum, banknum;
 
+  chan->sostenuto_orderid = 0;
+
   chan->channel_type = (chan->channum == 9) ? CHANNEL_TYPE_DRUM : CHANNEL_TYPE_MELODIC;
   prognum = 0;
   banknum = (chan->channel_type == CHANNEL_TYPE_DRUM) ? DRUM_INST_BANK : 0;

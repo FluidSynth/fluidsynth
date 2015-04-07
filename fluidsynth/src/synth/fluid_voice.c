@@ -1183,23 +1183,45 @@ int fluid_voice_modulate_all(fluid_voice_t* voice)
 }
 
 /*
+ Force the voice into release stage. Useful anywhere a voice
+ needs to be damped even if pedals (sustain sostenuto) are depressed.
+ See fluid_synth_damp_voices_by_sustain_LOCAL(),
+ fluid_synth_damp_voices_by_sostenuto_LOCAL,
+ fluid_voice_noteoff().
+*/
+void
+fluid_voice_release(fluid_voice_t* voice)
+{
+    unsigned int at_tick = fluid_channel_get_min_note_length_ticks (voice->channel);
+    UPDATE_RVOICE_I1(fluid_rvoice_noteoff, at_tick);
+    voice->has_noteoff = 1; // voice is marked as noteoff occured
+}
+
+/*
  * fluid_voice_noteoff
  */
 int
 fluid_voice_noteoff(fluid_voice_t* voice)
 {
-  unsigned int at_tick;
+  fluid_channel_t* channel;
 
   fluid_profile(FLUID_PROF_VOICE_NOTE, voice->ref);
 
+  channel = voice->channel;
 
-  if (voice->channel && fluid_channel_sustained(voice->channel)) {
-    voice->status = FLUID_VOICE_SUSTAINED;
-  } else {
-    at_tick = fluid_channel_get_min_note_length_ticks (voice->channel);
-    UPDATE_RVOICE_I1(fluid_rvoice_noteoff, at_tick);
-    voice->has_noteoff = 1;
+  /* Sustain a note under Sostenuto pedal */
+  if (fluid_channel_sostenuto(channel) &&
+      channel->sostenuto_orderid > voice->id)
+  { // Sostenuto depressed after note
+    voice->status = FLUID_VOICE_HELD_BY_SOSTENUTO;
   }
+  /* Or sustain a note under Sustain pedal */
+  else if (fluid_channel_sustained(channel)) {
+     voice->status = FLUID_VOICE_SUSTAINED;
+  }
+  /* Or force the voice to release stage */
+  else
+    fluid_voice_release(voice);
 
   return FLUID_OK;
 }
@@ -1569,7 +1591,7 @@ fluid_voice_get_overflow_prio(fluid_voice_t* voice,
   else if (voice->has_noteoff) {
     /* Noteoff has */
     this_voice_prio += score->released;
-  } else if (_SUSTAINED(voice)){
+  } else if (_SUSTAINED(voice) || _HELD_BY_SOSTENUTO(voice)) {
     /* This voice is still active, since the sustain pedal is held down.
      * Consider it less important than non-sustained channels.
      * This decision is somehow subjective. But usually the sustain pedal

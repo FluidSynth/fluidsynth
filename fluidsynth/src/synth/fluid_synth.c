@@ -42,7 +42,6 @@ static void fluid_synth_init(void);
 static int fluid_synth_noteon_LOCAL(fluid_synth_t* synth, int chan, int key,
                                        int vel);
 static int fluid_synth_noteoff_LOCAL(fluid_synth_t* synth, int chan, int key);
-static int fluid_synth_damp_voices_LOCAL(fluid_synth_t* synth, int chan);
 static int fluid_synth_cc_LOCAL(fluid_synth_t* synth, int channum, int num);
 static int fluid_synth_update_device_id (fluid_synth_t *synth, char *name,
                                          int value);
@@ -950,7 +949,6 @@ fluid_synth_noteon_LOCAL(fluid_synth_t* synth, int chan, int key, int vel)
      advance it to the release phase. */
   fluid_synth_release_voice_on_same_note_LOCAL(synth, chan, key);
 
-  synth->storeid = synth->noteid++;
 
   return fluid_preset_noteon(channel->preset, synth, chan, key, vel);
 }
@@ -1007,9 +1005,10 @@ fluid_synth_noteoff_LOCAL(fluid_synth_t* synth, int chan, int key)
   return status;
 }
 
-/* Damp all voices on a channel (turn notes off) */
+/* Damp voices on a channel (turn notes off), if they're sustained by
+   sustain pedal */
 static int
-fluid_synth_damp_voices_LOCAL(fluid_synth_t* synth, int chan)
+fluid_synth_damp_voices_by_sustain_LOCAL(fluid_synth_t* synth, int chan)
 {
   fluid_voice_t* voice;
   int i;
@@ -1018,11 +1017,30 @@ fluid_synth_damp_voices_LOCAL(fluid_synth_t* synth, int chan)
     voice = synth->voice[i];
 
     if ((voice->chan == chan) && _SUSTAINED(voice))
-      fluid_voice_noteoff(voice);
+     fluid_voice_release(voice);
   }
 
   return FLUID_OK;
 }
+
+/* Damp voices on a channel (turn notes off), if they're sustained by
+   sostenuto pedal */
+static int
+fluid_synth_damp_voices_by_sostenuto_LOCAL(fluid_synth_t* synth, int chan)
+{
+  fluid_voice_t* voice;
+  int i;
+
+  for (i = 0; i < synth->polyphony; i++) {
+    voice = synth->voice[i];
+
+    if ((voice->chan == chan) && _HELD_BY_SOSTENUTO(voice))
+     fluid_voice_release(voice);
+  }
+
+  return FLUID_OK;
+}
+
 
 /**
  * Send a MIDI controller event on a MIDI channel.
@@ -1060,8 +1078,20 @@ fluid_synth_cc_LOCAL (fluid_synth_t* synth, int channum, int num)
 
   switch (num) {
   case SUSTAIN_SWITCH:
-    if (value < 64) fluid_synth_damp_voices_LOCAL (synth, channum);
+    /* Release voices if Sustain switch is released */
+    if (value < 64) /* Sustain is released */
+        fluid_synth_damp_voices_by_sustain_LOCAL (synth, channum);
     break;
+
+  case SOSTENUTO_SWITCH:
+    /* Release voices if Sostetuno switch is released */
+    if (value < 64) /* Sostenuto is released */
+        fluid_synth_damp_voices_by_sostenuto_LOCAL(synth, channum);
+    else /* Sostenuto is depressed */
+         /* Update sostenuto order id when pedaling on Sostenuto */
+        chan->sostenuto_orderid = synth->noteid; /* future voice id value */
+    break;
+
   case BANK_SELECT_MSB:
     fluid_channel_set_bank_msb (chan, value & 0x7F);
     break;
@@ -3933,13 +3963,19 @@ fluid_synth_release_voice_on_same_note_LOCAL(fluid_synth_t* synth, int chan,
   int i;
   fluid_voice_t* voice;
 
+  synth->storeid = synth->noteid++;
+
   for (i = 0; i < synth->polyphony; i++) {
     voice = synth->voice[i];
     if (_PLAYING(voice)
 	&& (voice->chan == chan)
 	&& (voice->key == key)
 	&& (fluid_voice_get_id(voice) != synth->noteid)) {
-      fluid_voice_noteoff(voice);
+      /* Id of voices that was sustained by sostenuto */
+      if(_HELD_BY_SOSTENUTO(voice))
+        synth->storeid = voice->id;
+      /* Force the voice into release stage (pedaling is ignored) */
+      fluid_voice_release(voice);
     }
   }
 }

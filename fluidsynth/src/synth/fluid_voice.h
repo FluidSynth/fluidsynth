@@ -48,7 +48,8 @@ enum fluid_voice_status
 {
 	FLUID_VOICE_CLEAN,
 	FLUID_VOICE_ON,
-	FLUID_VOICE_SUSTAINED,
+	FLUID_VOICE_SUSTAINED,         /* Sustained by Sustain pedal */
+	FLUID_VOICE_HELD_BY_SOSTENUTO, /* Sustained by Sostenuto pedal */
 	FLUID_VOICE_OFF
 };
 
@@ -142,6 +143,13 @@ int fluid_voice_set_output_rate(fluid_voice_t* voice, fluid_real_t value);
     function.*/
 void fluid_voice_update_param(fluid_voice_t* voice, int gen);
 
+/**  fluid_voice_release
+ Force the voice into release stage. Usefuf anywhere a voice
+ needs to be damped even if pedals (sustain sostenuto) are depressed.
+ See fluid_synth_damp_voices_LOCAL(), fluid_synth_damp_voices_by_sostenuto_LOCAL,
+ fluid_voice_noteoff(), fluid_synth_stop_LOCAL().
+*/
+void fluid_voice_release(fluid_voice_t* voice);
 int fluid_voice_noteoff(fluid_voice_t* voice);
 int fluid_voice_off(fluid_voice_t* voice);
 void fluid_voice_overflow_rvoice_finished(fluid_voice_t* voice);
@@ -183,13 +191,16 @@ fluid_voice_unlock_rvoice(fluid_voice_t* voice)
 #define fluid_voice_get_chan(_voice)     (_voice)->chan
 
 
-#define _PLAYING(voice)  (((voice)->status == FLUID_VOICE_ON) || ((voice)->status == FLUID_VOICE_SUSTAINED))
+#define _PLAYING(voice)  (((voice)->status == FLUID_VOICE_ON) || \
+                                           _SUSTAINED(voice)  || \
+                                           _HELD_BY_SOSTENUTO(voice) )
 
 /* A voice is 'ON', if it has not yet received a noteoff
  * event. Sending a noteoff event will advance the envelopes to
  * section 5 (release). */
 #define _ON(voice)  ((voice)->status == FLUID_VOICE_ON && !voice->has_noteoff)
 #define _SUSTAINED(voice)  ((voice)->status == FLUID_VOICE_SUSTAINED)
+#define _HELD_BY_SOSTENUTO(voice)  ((voice)->status == FLUID_VOICE_HELD_BY_SOSTENUTO)
 #define _AVAILABLE(voice)  ((voice)->can_access_rvoice && \
  (((voice)->status == FLUID_VOICE_CLEAN) || ((voice)->status == FLUID_VOICE_OFF)))
 //#define _RELEASED(voice)  ((voice)->chan == NO_CHANNEL)
