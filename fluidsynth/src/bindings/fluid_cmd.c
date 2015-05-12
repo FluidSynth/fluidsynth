@@ -695,9 +695,14 @@ fluid_handle_fonts(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out)
 
   for (i = 0; i < num; i++) {
     sfont = fluid_synth_get_sfont(synth, i);
-    fluid_ostream_printf(out, "%2d  %s\n",
-			fluid_sfont_get_id(sfont),
-			fluid_sfont_get_name(sfont));
+    if (sfont) {
+      fluid_ostream_printf(out, "%2d  %s\n",
+                       fluid_sfont_get_id(sfont),
+                       fluid_sfont_get_name(sfont));
+    }
+    else {
+      fluid_ostream_printf(out, "sfont is \"NULL\" for index %d\n", i);
+    }
   }
 
   return 0;
