@@ -550,7 +550,7 @@ int fluid_defsfont_load(fluid_defsfont_t* sfont, const char* file)
   SFPreset* sfpreset;
   SFSample* sfsample;
   fluid_sample_t* sample;
-  fluid_defpreset_t* preset;
+  fluid_defpreset_t* preset = NULL;
 
   sfont->filename = FLUID_MALLOC(1 + FLUID_STRLEN(file));
   if (sfont->filename == NULL) {
@@ -613,6 +613,8 @@ int fluid_defsfont_load(fluid_defsfont_t* sfont, const char* file)
 
 err_exit:
   sfont_close (sfdata);
+  if (preset != NULL)
+    delete_fluid_defpreset(preset);
   return FLUID_FAILED;
 }
 
