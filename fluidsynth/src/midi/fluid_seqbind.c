@@ -267,7 +267,7 @@ static int get_fluidsynth_dest(fluid_sequencer_t* seq)
 	for (i = 0; i < j; i++) {
 		id = fluid_sequencer_get_client_id(seq, i);
 		name = fluid_sequencer_get_client_name(seq, id);
-		if (strcmp(name, "fluidsynth") == 0) {
+		if (name && (strcmp(name, "fluidsynth") == 0)) {
 			return id;
 		}
 	}
