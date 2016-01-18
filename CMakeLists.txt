@@ -84,6 +84,7 @@ endif ( ${CMAKE_SYSTEM} MATCHES "Darwin" )
 
 if ( ${CMAKE_SYSTEM} MATCHES "OS2" )
     option ( enable-dart "compile DART support (if it is available)" on )
+    set ( enable-ipv6 off )
 endif ( ${CMAKE_SYSTEM} MATCHES "OS2" )
 
 # Initialize the library directory name suffix.
