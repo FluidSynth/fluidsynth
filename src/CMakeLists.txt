@@ -266,8 +266,7 @@ if ( MACOSX_FRAMEWORK )
 elseif ( OS2 )
     set_target_properties ( libfluidsynth
       PROPERTIES
-        OUTPUT_NAME "fluidsyn"
-        ARCHIVE_OUTPUT_NAME "fluidsynth"
+        OUTPUT_NAME "fluidsynth"
         VERSION ${LIB_VERSION_INFO}
         SOVERSION ${LIB_VERSION_CURRENT}
     )
