@@ -128,6 +128,7 @@ static void fluid_alsa_midi_run(void* d);
 typedef struct {
   fluid_midi_driver_t driver;
   snd_seq_t *seq_handle;
+  snd_seq_port_info_t *port_info;
   struct pollfd *pfd;
   int npfd;
   fluid_thread_t *thread;
@@ -147,9 +148,53 @@ static void fluid_alsa_seq_run(void* d);
  *
  */
 
+// Connect ALSA MIDI inputs to dev->port_info
+static void autoconnect_inputs(fluid_alsa_seq_driver_t* dev) {
+  snd_seq_t *seq = dev->seq_handle;
+  snd_seq_port_subscribe_t *subs;
+  snd_seq_client_info_t *cinfo;
+  snd_seq_port_info_t *pinfo;
+
+  snd_seq_port_subscribe_alloca(&subs);
+  snd_seq_client_info_alloca(&cinfo);
+  snd_seq_port_info_alloca(&pinfo);
+
+  snd_seq_client_info_set_client(cinfo, -1);
+  while (snd_seq_query_next_client(seq, cinfo) >= 0) {
+    const snd_seq_addr_t *dest = snd_seq_port_info_get_addr(dev->port_info);
+
+    snd_seq_port_info_set_client(pinfo, snd_seq_client_info_get_client(cinfo));
+    snd_seq_port_info_set_port(pinfo, -1);
+    while (snd_seq_query_next_port(seq, pinfo) >= 0) {
+      unsigned int needed_type = SND_SEQ_PORT_TYPE_MIDI_GENERIC;
+      if ((snd_seq_port_info_get_type(pinfo) & needed_type) != needed_type)
+	continue;
+      unsigned int needed_cap = SND_SEQ_PORT_CAP_READ|SND_SEQ_PORT_CAP_SUBS_READ;
+      if ((snd_seq_port_info_get_capability(pinfo) & needed_cap) != needed_cap)
+	continue;
+      const snd_seq_addr_t *sender = snd_seq_port_info_get_addr(pinfo);
+      const char *pname = snd_seq_port_info_get_name(pinfo);
+
+      snd_seq_port_subscribe_set_sender(subs, sender);
+      snd_seq_port_subscribe_set_dest(subs, dest);
+
+      if (snd_seq_get_port_subscription(seq, subs) == 0) {
+	fprintf(stderr, _("Connection %s is already subscribed\n"), pname);
+	continue;
+      }
+      if (snd_seq_subscribe_port(seq, subs) < 0) {
+	fprintf(stderr, _("Connection of %s failed (%s)\n"), pname, snd_strerror(errno));
+	continue;
+      }
+      fprintf(stderr, _("Connection of %s succeeded\n"), pname);
+    }
+  }
+}
+
 void fluid_alsa_audio_driver_settings(fluid_settings_t* settings)
 {
   fluid_settings_register_str(settings, "audio.alsa.device", "default", 0, NULL, NULL);
+  fluid_settings_register_int(settings, "audio.alsa.autoconnect_inputs", 0, 0, 1, FLUID_HINT_TOGGLED, NULL, NULL);
 }
 
 
@@ -888,6 +933,13 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
       goto error_recovery;
     }
   }
+
+  dev->port_info = port_info;
+
+  int autoconn_inputs = 0;
+  fluid_settings_getint(settings, "audio.alsa.autoconnect_inputs", &autoconn_inputs);
+  if (autoconn_inputs)
+    autoconnect_inputs(dev);
 
   /* tell the lash server our client id */
 #ifdef LASH_ENABLED
