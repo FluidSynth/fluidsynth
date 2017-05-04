@@ -26,6 +26,10 @@
 /* Todo: Get rid of that 'include' */
 #include "fluid_sys.h"
 
+#if LIBSNDFILE_SUPPORT
+#include <sndfile.h>
+#endif
+
 /***************************************************************
  *
  *                           SFONT LOADER
@@ -1801,6 +1805,14 @@ new_fluid_sample()
 int
 delete_fluid_sample(fluid_sample_t* sample)
 {
+  if (sample->sampletype & FLUID_SAMPLETYPE_OGG_VORBIS)
+  {
+#if LIBSNDFILE_SUPPORT
+    if (sample->data)
+      FLUID_FREE(sample->data);
+#endif
+  }
+
   FLUID_FREE(sample);
   return FLUID_OK;
 }
@@ -1817,6 +1829,61 @@ fluid_sample_in_rom(fluid_sample_t* sample)
 /*
  * fluid_sample_import_sfont
  */
+#if LIBSNDFILE_SUPPORT
+// virtual file access rountines to allow for handling
+// samples as virtual files in memory
+static sf_count_t sfvio_pos;
+
+static sf_count_t
+sfvio_get_filelen(void* user_data)
+{
+  fluid_sample_t *sample = (fluid_sample_t *)user_data;
+
+  return (sf_count_t)(sample->end + 1 - sample->start);
+};
+
+static sf_count_t
+sfvio_seek(sf_count_t offset, int whence, void* user_data)
+{
+  fluid_sample_t *sample = (fluid_sample_t *)user_data;
+
+  switch (whence)
+  {
+    case SEEK_SET:
+      sfvio_pos = offset;
+      break;
+    case SEEK_CUR:
+      sfvio_pos += offset;
+      break;
+    case SEEK_END:
+      sfvio_pos = sfvio_get_filelen(user_data) + offset;
+      break;
+  }
+
+  return sfvio_pos;
+};
+
+static sf_count_t
+sfvio_read(void* ptr, sf_count_t count, void* user_data)
+{
+  fluid_sample_t *sample = (fluid_sample_t *)user_data;
+
+  if (count > sfvio_get_filelen(user_data) - sfvio_pos)
+      count = sfvio_get_filelen(user_data) - sfvio_pos;
+
+  memcpy(ptr, (char *)sample->data + sample->start + sfvio_pos, count);
+  sfvio_pos += count;
+
+  return count;
+};
+
+static sf_count_t
+sfvio_tell (void* user_data)
+{
+  return sfvio_pos;
+};
+#endif
+
 int
 fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defsfont_t* sfont)
 {
@@ -1830,6 +1897,87 @@ fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defs
   sample->origpitch = sfsample->origpitch;
   sample->pitchadj = sfsample->pitchadj;
   sample->sampletype = sfsample->sampletype;
+
+  if (sample->sampletype & FLUID_SAMPLETYPE_OGG_VORBIS)
+  {
+#if LIBSNDFILE_SUPPORT
+    SNDFILE *sndfile;
+    SF_INFO sfinfo;
+    SF_VIRTUAL_IO sfvio = {
+      sfvio_get_filelen,
+      sfvio_seek,
+      sfvio_read,
+      NULL,
+      sfvio_tell
+    };
+    short *sampledata_ogg;
+
+    // initialize file position indicator and SF_INFO structure
+    sfvio_pos = 0;
+    memset(&sfinfo, 0, sizeof(sfinfo));
+
+    // open sample as a virtual file in memory
+    sndfile = sf_open_virtual(&sfvio, SFM_READ, &sfinfo, sample);
+    if (!sndfile)
+    {
+      FLUID_LOG(FLUID_ERR, sf_strerror(sndfile));
+      return FLUID_FAILED;
+    }
+
+    // empty sample
+    if (!sfinfo.frames || !sfinfo.channels)
+    {
+      sample->start = sample->end =
+      sample->loopstart = sample->loopend =
+      sample->valid = 0;
+      sample->data = NULL;
+      sf_close(sndfile);
+      return FLUID_OK;
+    }
+
+    // allocate memory for uncompressed sample data stream
+    sampledata_ogg = (short *)FLUID_MALLOC(sfinfo.frames * sfinfo.channels * sizeof(short));
+    if (!sampledata_ogg)
+    {
+      FLUID_LOG(FLUID_ERR, "Out of memory");
+      sf_close(sndfile);
+      return FLUID_FAILED;
+    }
+
+    // uncompress sample data stream
+    if (sf_readf_short(sndfile, sampledata_ogg, sfinfo.frames) < sfinfo.frames)
+    {
+      FLUID_FREE(sampledata_ogg);
+      FLUID_LOG(FLUID_ERR, sf_strerror(sndfile));
+      sf_close(sndfile);
+      return FLUID_FAILED;
+    }
+    sf_close(sndfile);
+
+    // point sample data to uncompressed data stream
+    sample->data = sampledata_ogg;
+    sample->start = 0;
+    sample->end = sfinfo.frames - 1;
+
+    /* loop is fowled?? (cluck cluck :) */
+    if (sample->loopend > sample->end ||
+        sample->loopstart >= sample->loopend ||
+        sample->loopstart <= sample->start)
+    {
+      /* can pad loop by 8 samples and ensure at least 4 for loop (2*8+4) */
+      if ((sample->end - sample->start) >= 20)
+      {
+        sample->loopstart = sample->start + 8;
+        sample->loopend = sample->end - 8;
+      }
+      else /* loop is fowled, sample is tiny (can't pad 8 samples) */
+      {
+        sample->loopstart = sample->start + 1;
+        sample->loopend = sample->end - 1;
+      }
+    }
+#endif
+  }
 
   if (sample->sampletype & FLUID_SAMPLETYPE_ROM) {
     sample->valid = 0;
@@ -2157,6 +2305,10 @@ process_info (int size, SFData * sf, FILE * fd)
 	    return (FAIL);
 	  }
 
+#if LIBSNDFILE_SUPPORT
+	  if (sf->version.major == 3) {}
+	  else
+#endif
 	  if (sf->version.major > 2) {
 	    FLUID_LOG (FLUID_WARN,
 		      _("Sound font version is %d.%d which is newer than"
@@ -3178,6 +3330,9 @@ fixup_sample (SFData * sf)
 
 	  return (OK);
 	}
+      /* compressed samples get fixed up after decompression */
+      else if (sam->sampletype & FLUID_SAMPLETYPE_OGG_VORBIS)
+	{}
       else if (sam->loopend > sam->end || sam->loopstart >= sam->loopend
 	|| sam->loopstart <= sam->start)
 	{			/* loop is fowled?? (cluck cluck :) */
