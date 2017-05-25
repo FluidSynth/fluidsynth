@@ -207,9 +207,9 @@ fluid_iir_filter_calculate_coefficients(fluid_iir_filter_t* iir_filter,
 
   fluid_real_t a1_temp = -2.0f * cos_coeff * a0_inv;
   fluid_real_t a2_temp = (1.0f - alpha_coeff) * a0_inv;
-  fluid_real_t b1_temp = (1.0f - cos_coeff) * a0_inv * iir_filter->filter_gain;
+  fluid_real_t b1_temp = (iir_filter->high_low_sign * 1.0f - cos_coeff) * a0_inv * iir_filter->filter_gain;
    /* both b0 -and- b2 */
-  fluid_real_t b02_temp = b1_temp * 0.5f;
+  fluid_real_t b02_temp = b1_temp * 0.5f * iir_filter->high_low_sign;
 
   iir_filter->compensate_incr = 0;
 

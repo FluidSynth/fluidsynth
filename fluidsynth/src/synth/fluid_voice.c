@@ -98,6 +98,7 @@ fluid_voice_get_lower_boundary_for_attenuation(fluid_voice_t* voice);
 #define UPDATE_RVOICE_R1(proc, arg1) UPDATE_RVOICE_GENERIC_R1(proc, voice->rvoice, arg1)
 #define UPDATE_RVOICE_I1(proc, arg1) UPDATE_RVOICE_GENERIC_I1(proc, voice->rvoice, arg1)
 #define UPDATE_RVOICE_FILTER1(proc, arg1) UPDATE_RVOICE_GENERIC_R1(proc, &voice->rvoice->resonant_filter, arg1)
+#define UPDATE_RVOICE_HPFILTER1(proc, arg1) UPDATE_RVOICE_GENERIC_R1(proc, &voice->rvoice->resonant_hp_filter, arg1)
 
 #define UPDATE_RVOICE2(proc, iarg, rarg) UPDATE_RVOICE_GENERIC_IR(proc, voice->rvoice, iarg, rarg)
 #define UPDATE_RVOICE_BUFFERS2(proc, iarg, rarg) UPDATE_RVOICE_GENERIC_IR(proc, &voice->rvoice->buffers, iarg, rarg)
@@ -818,7 +819,23 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
      * follows: */
     q_dB -= 3.01f;
     UPDATE_RVOICE_FILTER1(fluid_iir_filter_set_q_dB, q_dB);
+		/* FIXME: setting the high-pass Q to a fixed amount here is just
+		 * ugly. Find a better way to do that! */
+    UPDATE_RVOICE_HPFILTER1(fluid_iir_filter_set_q_dB, -3.01f);
 
+    break;
+
+  /* same as the two above, only for the high-pass filter */
+  case GEN_HPFILTERFC:
+    x = _GEN(voice, GEN_HPFILTERFC);
+    UPDATE_RVOICE_HPFILTER1(fluid_iir_filter_set_fres, x);
+    break;
+
+  case GEN_HPFILTERQ:
+    q_dB = _GEN(voice, GEN_HPFILTERQ) / 10.0f;
+    fluid_clip(q_dB, 0.0f, 96.0f);
+    q_dB -= 3.01f;
+    UPDATE_RVOICE_HPFILTER1(fluid_iir_filter_set_q_dB, q_dB);
     break;
 
   case GEN_MODLFOTOPITCH:
@@ -1657,4 +1674,11 @@ fluid_voice_get_overflow_prio(fluid_voice_t* voice,
   }
     
   return this_voice_prio;
+}
+
+void
+fluid_voice_enable_high_pass_filter(fluid_voice_t *voice, int enabled)
+{
+	voice->rvoice->resonant_hp_filter.enabled = enabled;
+	voice->overflow_rvoice->resonant_hp_filter.enabled = enabled;
 }

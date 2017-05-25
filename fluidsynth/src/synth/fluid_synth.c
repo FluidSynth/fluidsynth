@@ -139,6 +139,8 @@ fluid_mod_t default_reverb_mod;         /* SF2.01 section 8.4.8  */
 fluid_mod_t default_chorus_mod;         /* SF2.01 section 8.4.9  */
 fluid_mod_t default_pitch_bend_mod;     /* SF2.01 section 8.4.10 */
 
+fluid_mod_t custom_cc2hpfilterfc_mod;
+
 /* reverb presets */
 static fluid_revmodel_presets_t revmodel_preset[] = {
   /* name */    /* roomsize */ /* damp */ /* width */ /* level */
@@ -225,7 +227,9 @@ void fluid_synth_settings(fluid_settings_t* settings)
   fluid_settings_add_option(settings, "synth.midi-bank-select", "gs");
   fluid_settings_add_option(settings, "synth.midi-bank-select", "xg");
   fluid_settings_add_option(settings, "synth.midi-bank-select", "mma");
-  
+
+  fluid_settings_register_int(settings, "synth.high-pass-filter", 0, 0, 1,
+                              FLUID_HINT_TOGGLED, NULL, NULL);
 }
 
 /**
@@ -436,6 +440,18 @@ fluid_synth_init(void)
 		       );
   fluid_mod_set_dest(&default_pitch_bend_mod, GEN_PITCH);                 /* Destination: Initial pitch */
   fluid_mod_set_amount(&default_pitch_bend_mod, 12700.0);                 /* Amount: 12700 cents */
+
+
+  /* Custom CC16 -> High-Pass Filter Cutoff */
+  fluid_mod_set_source1(&custom_cc2hpfilterfc_mod, 16,
+		       FLUID_MOD_CC
+		       | FLUID_MOD_LINEAR
+		       | FLUID_MOD_UNIPOLAR
+                       | FLUID_MOD_POSITIVE
+		       );
+  fluid_mod_set_source2(&custom_cc2hpfilterfc_mod, 0, 0);
+  fluid_mod_set_dest(&custom_cc2hpfilterfc_mod, GEN_HPFILTERFC);
+  fluid_mod_set_amount(&custom_cc2hpfilterfc_mod, 8000);
 }
 
 static FLUID_INLINE unsigned int fluid_synth_get_ticks(fluid_synth_t* synth)
@@ -591,6 +607,8 @@ new_fluid_synth(fluid_settings_t *settings)
   fluid_settings_getint(settings, "synth.device-id", &synth->device_id);
   fluid_settings_getint(settings, "synth.cpu-cores", &synth->cores);
 
+  fluid_settings_getint(settings, "synth.high-pass-filter", &synth->with_high_pass);
+
   /* register the callbacks */
   fluid_settings_register_num(settings, "synth.sample-rate",
 			      44100.0f, 8000.0f, 96000.0f, 0,
@@ -711,6 +729,11 @@ new_fluid_synth(fluid_settings_t *settings)
     if (synth->voice[i] == NULL) {
       goto error_recovery;
     }
+  }
+
+  /* enable high-pass filter */
+  for (i = 0; i < synth->nvoice; i++) {
+		fluid_voice_enable_high_pass_filter(synth->voice[i], synth->with_high_pass);
   }
 
   fluid_synth_set_sample_rate(synth, synth->sample_rate);
@@ -3110,6 +3133,8 @@ fluid_synth_alloc_voice(fluid_synth_t* synth, fluid_sample_t* sample, int chan, 
   fluid_voice_add_mod(voice, &default_reverb_mod, FLUID_VOICE_DEFAULT);     /* SF2.01 $8.4.8  */
   fluid_voice_add_mod(voice, &default_chorus_mod, FLUID_VOICE_DEFAULT);     /* SF2.01 $8.4.9  */
   fluid_voice_add_mod(voice, &default_pitch_bend_mod, FLUID_VOICE_DEFAULT); /* SF2.01 $8.4.10 */
+
+  fluid_voice_add_mod(voice, &custom_cc2hpfilterfc_mod, FLUID_VOICE_DEFAULT);
 
   FLUID_API_RETURN(voice);
 }

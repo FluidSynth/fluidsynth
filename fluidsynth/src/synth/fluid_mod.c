@@ -473,6 +473,8 @@ void fluid_dump_modulator(fluid_mod_t * mod){
   switch(dest){
       case GEN_FILTERQ: printf("Q"); break;
       case GEN_FILTERFC: printf("fc"); break;
+      case GEN_HPFILTERQ: printf("HP-Q"); break;
+      case GEN_HPFILTERFC: printf("HP-fc"); break;
       case GEN_VIBLFOTOPITCH: printf("VibLFO-to-pitch"); break;
       case GEN_MODENVTOPITCH: printf("ModEnv-to-pitch"); break;
       case GEN_MODLFOTOPITCH: printf("ModLFO-to-pitch"); break;

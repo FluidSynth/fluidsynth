@@ -69,6 +69,11 @@ struct _fluid_iir_filter_t
 	/* indicates, that the filter has to be recalculated. */
 	fluid_real_t q_lin;             /* the q-factor on a linear scale */
 	fluid_real_t filter_gain;       /* Gain correction factor, depends on q */
+
+	int high_low_sign;              /* controls the sign of two factors to
+					   switch between low-pass (1) and
+					   high-pass (1) coefficients */
+	int enabled;
 };
 
 #endif
