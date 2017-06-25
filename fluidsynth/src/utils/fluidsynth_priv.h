@@ -223,11 +223,7 @@ typedef FILE*  fluid_file;
 #define FLUID_NEW(_t)                (_t*)malloc(sizeof(_t))
 #define FLUID_ARRAY(_t,_n)           (_t*)malloc((_n)*sizeof(_t))
 #define FLUID_FREE(_p)               free(_p)
-#if defined(WIN32)
-  #define FLUID_FOPEN(_f,_m)         _wfopen(_f,_m)
-#else
-  #define FLUID_FOPEN(_f,_m)         fopen(_f,_m)
-#endif
+#define FLUID_FOPEN(_f,_m)           fopen(_f,_m)
 #define FLUID_FCLOSE(_f)             fclose(_f)
 #define FLUID_FREAD(_p,_s,_n,_f)     fread(_p,_s,_n,_f)
 #define FLUID_FSEEK(_f,_n,_set)      fseek(_f,_n,_set)
