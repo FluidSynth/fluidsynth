@@ -384,7 +384,7 @@ static void fluid_alsa_audio_run_float (void *d)
 
   if ((left == NULL) || (right == NULL)) {
     FLUID_LOG(FLUID_ERR, "Out of memory.");
-    return;
+    goto error_recovery;
   }
 
   if (snd_pcm_prepare(dev->pcm) != 0) {
@@ -460,7 +460,7 @@ static void fluid_alsa_audio_run_s16 (void *d)
 
   if ((left == NULL) || (right == NULL) || (buf == NULL)) {
     FLUID_LOG(FLUID_ERR, "Out of memory.");
-    return;
+    goto error_recovery;
   }
 
   handle[0] = left;
