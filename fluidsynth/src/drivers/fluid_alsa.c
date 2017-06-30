@@ -349,7 +349,7 @@ static int fluid_alsa_handle_write_error (snd_pcm_t *pcm, int errval)
     break;
 // on some BSD variants ESTRPIPE is defined as EPIPE.
 // not sure why, maybe because this version of alsa doesnt support
-// suspending pcm stream. anyway, since EPIPE seems to be more 
+// suspending pcm streams. anyway, since EPIPE seems to be more 
 // likely than ESTRPIPE, so ifdef it out in case.
 #if ESTRPIPE != EPIPE
   case -ESTRPIPE:
