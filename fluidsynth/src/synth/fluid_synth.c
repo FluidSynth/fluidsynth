@@ -1396,7 +1396,7 @@ fluid_synth_sysex_midi_tuning (fluid_synth_t *synth, const char *data, int len,
       else
       {
         if (len < 11 || data[4] & 0x80 || data[5] & 0x80 || data[6] & 0x80
-            || len != data[5] * 4 + 7)
+            || len != data[6] * 4 + 7)
           return FLUID_OK;
 
         bank = *dataptr++;
