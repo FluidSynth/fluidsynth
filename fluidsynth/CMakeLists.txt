@@ -169,9 +169,9 @@ if ( WIN32 )
   endif  ( MINGW )
 else ( WIN32 )
 # Check PThreads, but not in Windows
-  find_package ( Pthreads REQUIRED )
-  set ( HAVE_LIBPTHREAD ${PTHREADS_FOUND} )
-  set ( LIBFLUID_LIBS "m" )
+  find_package ( Threads REQUIRED )
+  set ( HAVE_LIBPTHREAD ${Threads_FOUND} )
+  set ( LIBFLUID_LIBS "m" ${CMAKE_THREAD_LIBS_INIT} )
 endif ( WIN32 )
 
 # IBM OS/2
