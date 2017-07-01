@@ -1886,7 +1886,7 @@ fluid_midi_parser_parse(fluid_midi_parser_t *parser, unsigned char c)
     parser->data[parser->nr_bytes++] = c;
 
     /* Do we still need more data to get this event complete? */
-    if (parser->nr_bytes < parser->nr_bytes_total)
+    if (parser->status == MIDI_SYSEX || parser->nr_bytes < parser->nr_bytes_total)
         return NULL;
 
     /* Event is complete, return it.
