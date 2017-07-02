@@ -46,8 +46,8 @@ extern cca_client_t * fluid_lash_client;
 #endif
 
 
-fluid_lash_args_t *fluid_lash_extract_args (int * pargc, char *** pargv);
-int fluid_lash_connect (fluid_lash_args_t * args);
-void fluid_lash_create_thread (fluid_synth_t * synth);
+FLUIDSYNTH_API fluid_lash_args_t *fluid_lash_extract_args (int * pargc, char *** pargv);
+FLUIDSYNTH_API int fluid_lash_connect (fluid_lash_args_t * args);
+FLUIDSYNTH_API void fluid_lash_create_thread (fluid_synth_t * synth);
 
 #endif 		/* defined(HAVE_LASH) || defined(HAVE_LADCCA) */
