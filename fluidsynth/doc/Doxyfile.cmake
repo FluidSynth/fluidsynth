@@ -213,7 +213,7 @@ PERL_PATH = /usr/bin/perl
 #---------------------------------------------------------------------------
 # Configuration options related to the dot tool   
 #---------------------------------------------------------------------------
-CLASS_DIAGRAMS = NO
+CLASS_DIAGRAMS = YES
 MSCGEN_PATH = 
 HIDE_UNDOC_RELATIONS = YES
 HAVE_DOT = NO
