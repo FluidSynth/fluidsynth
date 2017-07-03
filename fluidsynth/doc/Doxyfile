@@ -242,4 +242,4 @@ DOT_CLEANUP = YES
 #---------------------------------------------------------------------------
 # Configuration::additions related to the search engine   
 #---------------------------------------------------------------------------
-SEARCHENGINE = NO
+SEARCHENGINE = YES
