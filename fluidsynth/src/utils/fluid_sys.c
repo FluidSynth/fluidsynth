@@ -1008,13 +1008,20 @@ fluid_server_socket_run (void *data)
       server_socket->cont = 0;
       return;
     } else {
+#ifdef HAVE_INETNTOP
 #ifdef IPV6
       inet_ntop(AF_INET6, &addr.sin6_addr, straddr, sizeof(straddr));
 #else
       inet_ntop(AF_INET, &addr.sin_addr, straddr, sizeof(straddr));
 #endif
+#endif
+#ifdef HAVE_INETNTOP
       retval = server_socket->func (server_socket->data, client_socket,
                                     straddr);
+#else
+      retval = server_socket->func (server_socket->data, client_socket,
+                                    inet_ntoa (addr.sin_addr));
+#endif
 
       if (retval != 0)
 	fluid_socket_close(client_socket);
@@ -1141,7 +1148,9 @@ static void fluid_server_socket_run (void *data)
   char straddr[INET6_ADDRSTRLEN];
 #else
   struct sockaddr_in addr;
+#ifdef HAVE_INETNTOP
   char straddr[INET_ADDRSTRLEN];
+#endif
 #endif
   socklen_t addrlen = sizeof (addr);
   int r;
@@ -1165,13 +1174,20 @@ static void fluid_server_socket_run (void *data)
     }
     else
     {
+#ifdef HAVE_INETNTOP
 #ifdef IPV6
       inet_ntop(AF_INET6, &addr.sin6_addr, straddr, sizeof(straddr));
 #else
       inet_ntop(AF_INET, &addr.sin_addr, straddr, sizeof(straddr));
 #endif
+#endif
+#ifdef HAVE_INETNTOP
       r = server_socket->func (server_socket->data, client_socket,
                                straddr);
+#else
+      r = server_socket->func (server_socket->data, client_socket,
+                               inet_ntoa (addr.sin_addr));
+#endif
       if (r != 0)
 	fluid_socket_close (client_socket);
     }
