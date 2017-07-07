@@ -143,7 +143,7 @@
 #cmakedefine LADSPA @LADSPA_SUPPORT@
 
 /* Define to enable IPV6 support */
-#cmakedefine IPV6 @IPV6_SUPPORT@
+#cmakedefine IPV6_SUPPORT @IPV6_SUPPORT@
 
 /* libsndfile has ogg vorbis support */
 #cmakedefine LIBSNDFILE_HASVORBIS @LIBSNDFILE_HASVORBIS@

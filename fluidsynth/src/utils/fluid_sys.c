@@ -981,7 +981,7 @@ fluid_server_socket_run (void *data)
 {
   fluid_server_socket_t *server_socket = (fluid_server_socket_t *)data;
   fluid_socket_t client_socket;
-#ifdef IPV6
+#ifdef IPV6_SUPPORT
   struct sockaddr_in6 addr;
   char straddr[INET6_ADDRSTRLEN];
 #else
@@ -1009,7 +1009,7 @@ fluid_server_socket_run (void *data)
       return;
     } else {
 #ifdef HAVE_INETNTOP
-#ifdef IPV6
+#ifdef IPV6_SUPPORT
       inet_ntop(AF_INET6, &addr.sin6_addr, straddr, sizeof(straddr));
 #else
       inet_ntop(AF_INET, &addr.sin_addr, straddr, sizeof(straddr));
@@ -1035,7 +1035,7 @@ fluid_server_socket_t*
 new_fluid_server_socket(int port, fluid_server_func_t func, void* data)
 {
   fluid_server_socket_t* server_socket;
-#ifdef IPV6
+#ifdef IPV6_SUPPORT
   struct sockaddr_in6 addr;
 #else
   struct sockaddr_in addr;
@@ -1043,7 +1043,7 @@ new_fluid_server_socket(int port, fluid_server_func_t func, void* data)
   fluid_socket_t sock;
 
   g_return_val_if_fail (func != NULL, NULL);
-#ifdef IPV6
+#ifdef IPV6_SUPPORT
   sock = socket(AF_INET6, SOCK_STREAM, 0);
   if (sock == INVALID_SOCKET) {
     FLUID_LOG(FLUID_ERR, "Failed to create server socket");
@@ -1143,7 +1143,7 @@ static void fluid_server_socket_run (void *data)
 {
   fluid_server_socket_t *server_socket = (fluid_server_socket_t *)data;
   fluid_socket_t client_socket;
-#ifdef IPV6
+#ifdef IPV6_SUPPORT
   struct sockaddr_in6 addr;
   char straddr[INET6_ADDRSTRLEN];
 #else
@@ -1175,7 +1175,7 @@ static void fluid_server_socket_run (void *data)
     else
     {
 #ifdef HAVE_INETNTOP
-#ifdef IPV6
+#ifdef IPV6_SUPPORT
       inet_ntop(AF_INET6, &addr.sin6_addr, straddr, sizeof(straddr));
 #else
       inet_ntop(AF_INET, &addr.sin_addr, straddr, sizeof(straddr));
@@ -1200,7 +1200,7 @@ fluid_server_socket_t*
 new_fluid_server_socket(int port, fluid_server_func_t func, void* data)
 {
   fluid_server_socket_t* server_socket;
-#ifdef IPV6
+#ifdef IPV6_SUPPORT
   struct sockaddr_in6 addr;
 #else
   struct sockaddr_in addr;
@@ -1220,7 +1220,7 @@ new_fluid_server_socket(int port, fluid_server_func_t func, void* data)
     FLUID_LOG(FLUID_ERR, "Server socket creation error: WSAStartup failed: %d", retval);
     return NULL;
   }
-#ifdef IPV6
+#ifdef IPV6_SUPPORT
   sock = socket (AF_INET6, SOCK_STREAM, 0);
   if (sock == INVALID_SOCKET)
   {
