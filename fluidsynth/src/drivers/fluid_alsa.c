@@ -347,16 +347,24 @@ static int fluid_alsa_handle_write_error (snd_pcm_t *pcm, int errval)
   case -EAGAIN:
     snd_pcm_wait(pcm, 1);
     break;
+// on some BSD variants ESTRPIPE is defined as EPIPE.
+// not sure why, maybe because this version of alsa doesnt support
+// suspending pcm streams. anyway, since EPIPE seems to be more 
+// likely than ESTRPIPE, so ifdef it out in case.
+#if ESTRPIPE == EPIPE
+  #warning "ESTRPIPE defined as EPIPE. This may cause trouble with ALSA playback."
+#else
+  case -ESTRPIPE:
+    if (snd_pcm_resume(pcm) != 0) {
+      FLUID_LOG(FLUID_ERR, "Failed to resume the audio device");
+      return FLUID_FAILED;
+    }
+  /* fall through, since the stream got resumed, but still has to be prepared */
+#endif
   case -EPIPE:
   case -EBADFD:
     if (snd_pcm_prepare(pcm) != 0) {
       FLUID_LOG(FLUID_ERR, "Failed to prepare the audio device");
-      return FLUID_FAILED;
-    }
-    break;
-  case -ESTRPIPE:
-    if ((snd_pcm_resume(pcm) != 0) && (snd_pcm_prepare(pcm) != 0)) {
-      FLUID_LOG(FLUID_ERR, "Failed to resume the audio device");
       return FLUID_FAILED;
     }
     break;
