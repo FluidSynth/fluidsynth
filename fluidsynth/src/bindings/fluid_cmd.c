@@ -823,7 +823,7 @@ fluid_handle_reverbsetlevel(fluid_synth_t* synth, int ac, char** av, fluid_ostre
     return -1;
   }
   level = atof(av[0]);
-  if (abs(level) > 30){
+  if (fabs(level) > 30){
     fluid_ostream_printf(out, "rev_setlevel: Value too high! (Value of 10 =+20 dB)\n");
     return 0;
   }

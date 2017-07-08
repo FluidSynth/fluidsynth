@@ -479,7 +479,7 @@ fluid_midi_file_read_event(fluid_midi_file *mf, fluid_track_t *track)
 
     mf->running_status = status;
 
-    if ((status == MIDI_SYSEX)) { /* system exclusif */
+    if (status == MIDI_SYSEX) { /* system exclusif */
         /* read the length of the message */
         if (fluid_midi_file_read_varlen(mf) != FLUID_OK) {
             return FLUID_FAILED;

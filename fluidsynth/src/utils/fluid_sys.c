@@ -888,7 +888,7 @@ fluid_istream_gets (fluid_istream_t in, char* buf, int len)
       return 0;
     }
 
-    if ((c == '\n'))
+    if (c == '\n')
     {
       *buf++ = 0;
       return 1;
