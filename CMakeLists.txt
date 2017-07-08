@@ -19,8 +19,8 @@
 
 # CMake based build system. Pedro Lopez-Cabanillas <plcl@users.sf.net>
 
+cmake_minimum_required ( VERSION 3.0.2 )
 project ( FluidSynth C )
-cmake_minimum_required ( VERSION 2.6.3 )
 set ( CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake_admin )
 
 # FluidSynth package name
@@ -137,7 +137,7 @@ unset ( FLUID_CPPFLAGS CACHE )
 unset ( FLUID_LIBS CACHE )
 
 # Options for the GNU C compiler only
-if ( CMAKE_COMPILER_IS_GNUCC )
+if ( CMAKE_COMPILER_IS_GNUCC OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" )
   if ( NOT APPLE AND NOT OS2 )
     set ( CMAKE_EXE_LINKER_FLAGS
           "${CMAKE_EXE_LINKER_FLAGS} -Wl,--as-needed" )
