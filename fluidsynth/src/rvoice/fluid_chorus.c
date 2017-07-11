@@ -1,13 +1,25 @@
-/*
- * August 24, 1998
- * Copyright (C) 1998 Juergen Mueller And Sundry Contributors
- * This source code is freely redistributable and may be used for
- * any purpose.  This copyright notice must be maintained.
- * Juergen Mueller And Sundry Contributors are not responsible for
- * the consequences of using this software.
+/* FluidSynth - A Software Synthesizer
+ *
+ * Copyright (C) 2003  Peter Hanappe, Markus Nentwig and others.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Library General Public License
+ * as published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Library General Public License for more details.
+ *
+ * You should have received a copy of the GNU Library General Public
+ * License along with this library; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301, USA
  */
 
 /*
+  based on a chrous implementation made by Juergen Mueller And Sundry Contributors in 1998
 
   CHANGES
 
