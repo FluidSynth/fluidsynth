@@ -2426,8 +2426,8 @@ fluid_synth_program_reset(fluid_synth_t* synth)
  * @param len Count of audio frames to synthesize
  * @param left Array of floats to store left channel of audio (\c len in size)
  * @param right Array of floats to store right channel of audio (\c len in size)
- * @param fx_left Array of floats to store left effect channel (reverb and chrous, \c len in size)
- * @param fx_right Array of floats to store right effect channel (reverb and chorus, \c len in size)
+ * @param fx_left since 1.1.7: Array of floats to store left effect channel (reverb and chrous, \c len in size)
+ * @param fx_right since 1.1.7: Array of floats to store right effect channel (reverb and chorus, \c len in size)
  * @return FLUID_OK on success, FLUID_FAIL otherwise
  *
  * @note Should only be called from synthesis thread.
