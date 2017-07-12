@@ -268,7 +268,7 @@ fluid_jack_client_register_ports (void *driver, int isaudio, jack_client_t *clie
 
   fluid_settings_getint (settings, "audio.jack.multi", &multi);
 
-  if (multi)
+  if (!multi)
   {
     /* create the two audio output ports */
     dev->num_output_ports = 1;
