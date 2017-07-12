@@ -2424,13 +2424,13 @@ fluid_synth_program_reset(fluid_synth_t* synth)
  * Synthesize a block of floating point audio to audio buffers.
  * @param synth FluidSynth instance
  * @param len Count of audio frames to synthesize
- * @param left Array of floats to store left channel of audio (len in size)
- * @param right Array of floats to store right channel of audio (len in size)
- * @param fx_left Not currently used
- * @param fx_right Not currently used
+ * @param left Array of floats to store left channel of audio (\c len in size)
+ * @param right Array of floats to store right channel of audio (\c len in size)
+ * @param fx_left Array of floats to store left effect channel (reverb and chrous, \c len in size)
+ * @param fx_right Array of floats to store right effect channel (reverb and chorus, \c len in size)
  * @return FLUID_OK on success, FLUID_FAIL otherwise
  *
- * NOTE: Should only be called from synthesis thread.
+ * @note Should only be called from synthesis thread.
  */
 int
 fluid_synth_nwrite_float(fluid_synth_t* synth, int len,
@@ -2527,7 +2527,8 @@ fluid_synth_nwrite_float(fluid_synth_t* synth, int len,
  * @return FLUID_OK on success, FLUID_FAIL otherwise
  *
  * This function implements the default interface defined in fluidsynth/audio.h.
- * NOTE: Should only be called from synthesis thread.
+ * 
+ * @note Should only be called from synthesis thread.
  */
 /*
  * FIXME: Currently if nout != 2 memory allocation will occur!
@@ -2576,7 +2577,8 @@ fluid_synth_process(fluid_synth_t* synth, int len, int nin, float** in,
  * Useful for storing interleaved stereo (lout = rout, loff = 0, roff = 1,
  * lincr = 2, rincr = 2).
  *
- * NOTE: Should only be called from synthesis thread.
+ * @note Should only be called from synthesis thread.
+ * @note Reverb and Chorus are mixed to \c lout resp. \c rout.
  */
 int
 fluid_synth_write_float(fluid_synth_t* synth, int len,
@@ -2674,8 +2676,9 @@ roundi (float x)
  * Useful for storing interleaved stereo (lout = rout, loff = 0, roff = 1,
  * lincr = 2, rincr = 2).
  *
- * NOTE: Should only be called from synthesis thread.
- * NOTE: Dithering is performed when converting from internal floating point to
+ * @note Should only be called from synthesis thread.
+ * @note Reverb and Chorus are mixed to \c lout resp. \c rout.
+ * @note Dithering is performed when converting from internal floating point to
  * 16 bit audio.
  */
 int
