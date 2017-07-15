@@ -1946,7 +1946,7 @@ fluid_synth_program_change(fluid_synth_t* synth, int chan, int prognum)
   
   channel = synth->channel[chan];
   if (channel->channel_type == CHANNEL_TYPE_DRUM &&
-      chan->synth->bank_select != FLUID_BANK_STYLE_MMA) 
+      synth->bank_select != FLUID_BANK_STYLE_MMA) 
     banknum = DRUM_INST_BANK;
   else
     fluid_channel_get_sfont_bank_prog(channel, NULL, &banknum, NULL);
