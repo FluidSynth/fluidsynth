@@ -1970,8 +1970,9 @@ fluid_synth_program_change(fluid_synth_t* synth, int chan, int prognum)
     /* Fallback to another preset if not found */
     if (!preset) {
       /* Percussion: Fallback to preset 0 in percussion bank */
-      if (subst_bank == DRUM_INST_BANK) {
+      if (channel->channel_type == CHANNEL_TYPE_DRUM) {
         subst_prog = 0;
+        subst_bank = DRUM_INST_BANK;
         preset = fluid_synth_find_preset(synth, subst_bank, subst_prog);
       }
       /* Melodic instrument */
