@@ -2426,8 +2426,8 @@ fluid_synth_program_reset(fluid_synth_t* synth)
  * @param len Count of audio frames to synthesize
  * @param left Array of float buffers to store left channel of planar audio (as many as \c synth.audio-channels buffers, each of \c len in size)
  * @param right Array of float buffers to store right channel of planar audio (size: dito)
- * @param fx_left Since 1.1.7: If not \c NULL, array of arrays of floats to store left effect channel (as many as \c synth.effects-channels buffers, each of \c len in size)
- * @param fx_right Since 1.1.7: If not \c NULL, array of arrays of floats to store right effect channel (size: dito)
+ * @param fx_left Since 1.1.7: If not \c NULL, array of float buffers to store left effect channels (as many as \c synth.effects-channels buffers, each of \c len in size)
+ * @param fx_right Since 1.1.7: If not \c NULL, array of float buffers to store right effect channels (size: dito)
  * @return FLUID_OK on success, FLUID_FAIL otherwise
  *
  * @note Should only be called from synthesis thread.
