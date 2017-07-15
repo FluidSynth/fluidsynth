@@ -2421,13 +2421,13 @@ fluid_synth_program_reset(fluid_synth_t* synth)
 }
 
 /**
- * Synthesize a block of floating point audio to separate audio buffers (multichannel rendering).
+ * Synthesize a block of floating point audio to separate audio buffers (multichannel rendering). First effect channel used by reverb, second for chorus.
  * @param synth FluidSynth instance
  * @param len Count of audio frames to synthesize
- * @param left Array of arrays of floats to store left channel of planar audio (\c len in size)
- * @param right Array of arrays of floats to store right channel of planar audio (\c len in size)
- * @param fx_left Since 1.1.7: If not \c NULL, array of arrays of floats to store left effect channel (reverb and chrous, \c len in size)
- * @param fx_right Since 1.1.7: If not \c NULL, array of arrays of floats to store right effect channel (reverb and chorus, \c len in size)
+ * @param left Array of float buffers to store left channel of planar audio (as many as \c synth.audio-channels buffers, each of \c len in size)
+ * @param right Array of float buffers to store right channel of planar audio (size: dito)
+ * @param fx_left Since 1.1.7: If not \c NULL, array of arrays of floats to store left effect channel (as many as \c synth.effects-channels buffers, each of \c len in size)
+ * @param fx_right Since 1.1.7: If not \c NULL, array of arrays of floats to store right effect channel (size: dito)
  * @return FLUID_OK on success, FLUID_FAIL otherwise
  *
  * @note Should only be called from synthesis thread.
@@ -2442,7 +2442,7 @@ fluid_synth_program_reset(fluid_synth_t* synth)
     // we need twice as many (mono-)buffers
     channels *= 2;
     
-    // fluid_synth_process renders planar audio, i.e. each midi channel gets render to its own stereo buffer, rather than having one buffer and interleaving PCM
+    // fluid_synth_nwrite_float renders planar audio, e.g. if synth.audio-channels==16: each midi channel gets rendered to its own stereo buffer, rather than having one buffer and interleaved PCM
     float** mix_buf = new float*[channels];
     for(int i = 0; i < channels; i++)
     {
