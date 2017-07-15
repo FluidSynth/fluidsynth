@@ -112,7 +112,7 @@
 #include <io.h>
 #endif
 
-#if HAVE_WINDOWS_H
+#if defined(WIN32) &&  HAVE_WINDOWS_H
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <windows.h>

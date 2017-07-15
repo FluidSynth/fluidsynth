@@ -101,6 +101,7 @@ include ( DefaultDirs )
 # Basic C library checks
 include ( CheckSTDC )
 include ( CheckIncludeFile )
+include ( CheckFunctionExists )
 check_include_file ( string.h HAVE_STRING_H )
 check_include_file ( stdlib.h HAVE_STDLIB_H )
 check_include_file ( stdio.h HAVE_STDIO_H )
@@ -223,6 +224,16 @@ if ( ${CMAKE_SYSTEM} MATCHES "Darwin" )
     set ( MACOSX_FRAMEWORK 1 )
   endif ( enable-framework )
 endif ( ${CMAKE_SYSTEM} MATCHES "Darwin" )
+
+
+unset ( HAVE_INETNTOP CACHE )
+unset ( IPV6_SUPPORT CACHE )
+CHECK_FUNCTION_EXISTS ( "inet_ntop" HAVE_INETNTOP )
+if ( enable-ipv6 )
+  if ( HAVE_INETNTOP )
+    set ( IPV6_SUPPORT 1 )
+  endif ( HAVE_INETNTOP )
+endif ( enable-ipv6 )
 
 unset ( WITH_FLOAT CACHE )
 if ( enable-floats )
@@ -388,12 +399,6 @@ if ( enable-dbus )
 else ( enable-dbus )
   unset_pkg_config ( DBUS )
 endif ( enable-dbus )
-
-unset ( IPV6_SUPPORT CACHE )
-if ( enable-ipv6 )
-  set ( IPV6 1 )
-  set ( IPV6_SUPPORT 1 )
-endif ( enable-ipv6 )
 
 # General configuration file
 configure_file ( ${CMAKE_SOURCE_DIR}/src/config.cmake
