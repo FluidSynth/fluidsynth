@@ -25,7 +25,6 @@
 fluid_real_t fluid_ct2hz_tab[FLUID_CENTS_HZ_SIZE];
 fluid_real_t fluid_cb2amp_tab[FLUID_CB_AMP_SIZE];
 fluid_real_t fluid_atten2amp_tab[FLUID_ATTEN_AMP_SIZE];
-fluid_real_t fluid_posbp_tab[128];
 fluid_real_t fluid_concave_tab[128];
 fluid_real_t fluid_convex_tab[128];
 fluid_real_t fluid_pan_tab[FLUID_PAN_SIZE];

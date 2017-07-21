@@ -133,6 +133,9 @@
 /* Define to 1 if you have the <getopt.h> header file. */
 #cmakedefine HAVE_GETOPT_H @HAVE_GETOPT_H@
 
+/* Define to 1 if you have the inet_ntop() function. */
+#cmakedefine HAVE_INETNTOP @HAVE_INETNTOP@
+
 /* Define to enable JACK driver */
 #cmakedefine JACK_SUPPORT @JACK_SUPPORT@
 
@@ -140,7 +143,7 @@
 #cmakedefine LADSPA @LADSPA_SUPPORT@
 
 /* Define to enable IPV6 support */
-#cmakedefine IPV6 @IPV6_SUPPORT@
+#cmakedefine IPV6_SUPPORT @IPV6_SUPPORT@
 
 /* libsndfile has ogg vorbis support */
 #cmakedefine LIBSNDFILE_HASVORBIS @LIBSNDFILE_HASVORBIS@
