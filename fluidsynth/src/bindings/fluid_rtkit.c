@@ -146,7 +146,7 @@ finish:
 }
 
 int rtkit_get_max_realtime_priority(DBusConnection *connection) {
-        long long retval;
+        long long retval = 0;
         int err;
 
         err = rtkit_get_int_property(connection, "MaxRealtimePriority", &retval);
@@ -154,7 +154,7 @@ int rtkit_get_max_realtime_priority(DBusConnection *connection) {
 }
 
 int rtkit_get_min_nice_level(DBusConnection *connection, int* min_nice_level) {
-        long long retval;
+        long long retval = 0;
         int err;
 
         err = rtkit_get_int_property(connection, "MinNiceLevel", &retval);
@@ -164,7 +164,7 @@ int rtkit_get_min_nice_level(DBusConnection *connection, int* min_nice_level) {
 }
 
 long long rtkit_get_rttime_nsec_max(DBusConnection *connection) {
-        long long retval;
+        long long retval = 0;
         int err;
 
         err = rtkit_get_int_property(connection, "RTTimeNSecMax", &retval);
