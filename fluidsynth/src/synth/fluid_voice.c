@@ -1538,10 +1538,10 @@ fluid_voice_optimize_sample(fluid_sample_t* s)
     }
 
     /* Determine the peak level */
-    if (peak_max >- peak_min){
+    if (peak_max > -peak_min){
       peak = peak_max;
     } else {
-      peak =- peak_min;
+      peak = -peak_min;
     };
     if (peak == 0){
       /* Avoid division by zero */
