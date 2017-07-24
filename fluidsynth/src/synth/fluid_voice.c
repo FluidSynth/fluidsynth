@@ -1526,27 +1526,27 @@ fluid_voice_optimize_sample(fluid_sample_t* s)
   /* ignore ROM and other(?) invalid samples */
   if (!s->valid) return (FLUID_OK);
 
-  if (!s->amplitude_that_reaches_noise_floor_is_valid){ /* Only once */
+  if (!s->amplitude_that_reaches_noise_floor_is_valid) { /* Only once */
     /* Scan the loop */
-    for (i = (int)s->loopstart; i < (int) s->loopend; i ++){
+    for (i = (int)s->loopstart; i < (int)s->loopend; i++){
       signed short val = s->data[i];
       if (val > peak_max) {
-	peak_max = val;
+        peak_max = val;
       } else if (val < peak_min) {
-	peak_min = val;
+        peak_min = val;
       }
     }
 
     /* Determine the peak level */
-    if (peak_max > -peak_min){
+    if (peak_max > -peak_min) {
       peak = peak_max;
     } else {
       peak = -peak_min;
-    };
+    }
     if (peak == 0){
       /* Avoid division by zero */
       peak = 1;
-    };
+    }
 
     /* Calculate what factor will make the loop inaudible
      * For example: Take a peak of 3277 (10 % of 32768).  The
@@ -1565,7 +1565,7 @@ fluid_voice_optimize_sample(fluid_sample_t* s)
 #if 0
     printf("Sample peak detection: factor %f\n", (double)result);
 #endif
-  };
+  }
   return FLUID_OK;
 }
 
@@ -1585,10 +1585,9 @@ fluid_voice_get_overflow_prio(fluid_voice_t* voice,
    * Then it is very important.
    * Also skip the released and sustained scores.
    */
-  if (voice->channel->channel_type == CHANNEL_TYPE_DRUM){
+  if (voice->channel->channel_type == CHANNEL_TYPE_DRUM) {
     this_voice_prio += score->percussion;
-  } 
-  else if (voice->has_noteoff) {
+  } else if (voice->has_noteoff) {
     /* Noteoff has */
     this_voice_prio += score->released;
   } else if (_SUSTAINED(voice) || _HELD_BY_SOSTENUTO(voice)) {
@@ -1606,8 +1605,9 @@ fluid_voice_get_overflow_prio(fluid_voice_t* voice,
    * chord. So give newer voices a higher score. */
   if (score->age) {
     cur_time -= voice->start_time;
-    if (cur_time < 1) 
+    if (cur_time < 1) {
       cur_time = 1; // Avoid div by zero
+    }
     this_voice_prio += (score->age * voice->output_rate) / cur_time;
   }
 
