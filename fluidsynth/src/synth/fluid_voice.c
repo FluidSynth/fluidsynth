@@ -1617,10 +1617,11 @@ fluid_voice_get_overflow_prio(fluid_voice_t* voice,
     if (voice->has_noteoff) {
       // FIXME: Should take into account where on the envelope we are...?
     }
-    if (a < 0.1) 
+    if (a < 0.1) {
       a = 0.1; // Avoid div by zero
-      this_voice_prio += score->volume / a;
     }
+    this_voice_prio += score->volume / a;
+  }
     
   return this_voice_prio;
 }
