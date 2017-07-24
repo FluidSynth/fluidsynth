@@ -359,8 +359,9 @@ static int fluid_alsa_handle_write_error (snd_pcm_t *pcm, int errval)
       FLUID_LOG(FLUID_ERR, "Failed to resume the audio device");
       return FLUID_FAILED;
     }
-  /* fall through, since the stream got resumed, but still has to be prepared */
 #endif
+  /* fall through ... */
+  /* ... since the stream got resumed, but still has to be prepared */
   case -EPIPE:
   case -EBADFD:
     if (snd_pcm_prepare(pcm) != 0) {
