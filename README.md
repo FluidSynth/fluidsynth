@@ -116,6 +116,7 @@ Soundfont Editors
 
 - Polyphone, http://polyphone-soundfonts.com/en/
 
+    **Note:** We cannot recommend using Audio Compositor for creating or editing Soundfonts, as it generates files that violate the Soundfont2 spec (specifically the order of generators as defined in section 8.1.2) and are therefore unusable with fluidsynth!
 
 Conversion Tools
 
