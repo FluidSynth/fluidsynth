@@ -446,7 +446,7 @@ if ( UNIX )
         COMMAND cp -r doc ${PACKAGE}-${VERSION}
         COMMAND cp -r include ${PACKAGE}-${VERSION}
         COMMAND cp -r src ${PACKAGE}-${VERSION}
-        COMMAND cp AUTHORS ChangeLog CMakeLists.txt COPYING ${PACKAGE}.* INSTALL NEWS README* THANKS TODO ${PACKAGE}-${VERSION}
+        COMMAND cp AUTHORS ChangeLog CMakeLists.txt ../LICENSE ${PACKAGE}.* INSTALL NEWS README* ../README.md THANKS TODO ${PACKAGE}-${VERSION}
 #       COMMAND tar -cj --exclude .svn --exclude Makefile.am -f ${PACKAGE}-${VERSION}.tar.bz2 ${PACKAGE}-${VERSION}
 #       COMMAND tar -cz --exclude .svn --exclude Makefile.am -f ${PACKAGE}-${VERSION}.tar.gz ${PACKAGE}-${VERSION}
 #       COMMAND zip -qr ${PACKAGE}-${VERSION}.zip ${PACKAGE}-${VERSION} -x '*.svn*' -x '*Makefile.am'
@@ -465,7 +465,7 @@ if ( UNIX )
         COMMAND cp -r doc ${PACKAGE}-${VERSION}
         COMMAND cp -r include ${PACKAGE}-${VERSION}
         COMMAND cp -r src ${PACKAGE}-${VERSION}
-        COMMAND cp AUTHORS ChangeLog CMakeLists.txt COPYING ${PACKAGE}.* INSTALL NEWS README* THANKS TODO ${PACKAGE}-${VERSION}
+        COMMAND cp AUTHORS ChangeLog CMakeLists.txt ../LICENSE ${PACKAGE}.* INSTALL NEWS README* ../README.md THANKS TODO ${PACKAGE}-${VERSION}
         COMMAND cp acinclude.m4 autogen.sh configure.ac install-sh missing mkinstalldirs Makefile.am ${PACKAGE}-${VERSION}
         # Files below are added when running autogen.sh
         # COMMAND cp -r autom4te.cache ${PACKAGE}-${VERSION}
@@ -485,8 +485,8 @@ include ( report )
 # CPack support
 set ( CPACK_PACKAGE_DESCRIPTION_SUMMARY "FluidSynth real-time synthesizer" )
 set ( CPACK_PACKAGE_VENDOR "fluidsynth.org" )
-set ( CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_SOURCE_DIR}/README" )
-set ( CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/COPYING" )
+set ( CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_SOURCE_DIR}/../README.md" )
+set ( CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/../LICENSE" )
 set ( CPACK_PACKAGE_VERSION_MAJOR ${FLUIDSYNTH_VERSION_MAJOR} )
 set ( CPACK_PACKAGE_VERSION_MINOR ${FLUIDSYNTH_VERSION_MINOR} )
 set ( CPACK_PACKAGE_VERSION_PATCH ${FLUIDSYNTH_VERSION_MICRO} )
