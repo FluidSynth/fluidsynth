@@ -84,7 +84,7 @@ Documentation
 - Introduction to SoundFonts, by Josh Green,
   http://smurf.sourceforge.net/sfont_intro.php
 
-- Soundfont2 Documentation, http://www.emu.com/download/sfspec21.pdf (if
+- Soundfont2 Documentation, http://www.synthfont.com/SFSPEC21.PDF (if
   it moved, do a search on sfspec21.pdf).
 
 - Soundfont.com FAQ, http://www.soundfont.com/faqs.html
@@ -110,11 +110,11 @@ Soundfont Editors
 
 - Smurf Soundfont Editor by Josh Green (Linux), http://smurf.sourceforge.net
 
-- Vienna SoundFont Editor from Creative Labs (Win),
-http://www.soundblaster.com/goodies/vienna
+- Vienna SoundFont Editor by Creative Technology Ltd. (Win)
 
-- Alive Soundfont Editor by Soundfaction (Win),
-http://www.soundfaction.com/alive/index.htm
+- Alive Soundfont Editor by Soundfaction (Win), http://www.soundfaction.com/alive/index.htm
+
+- Polyphone, http://polyphone-soundfonts.com/en/
 
 
 Conversion Tools
