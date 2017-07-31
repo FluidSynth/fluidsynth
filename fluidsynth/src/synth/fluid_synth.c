@@ -2521,12 +2521,15 @@ fluid_synth_nwrite_float(fluid_synth_t* synth, int len,
         FLUID_MEMCPY(fx_right[i], fx_right_in[i] + synth->cur, bytes);
 #else //WITH_FLOAT
       int j;
-      for (j = 0; (fx_left != NULL) && (j < num); j++)
+      if(fx_left != NULL) {
+        for (j = 0; j < num; j++)
           fx_left[i][j] = (float) fx_left_in[i][j + synth->cur];
+      }
       
-      for (j = 0; (fx_right != NULL) && (j < num); j++)
+      if(fx_right != NULL) {
+        for (j = 0; j < num; j++)
           fx_right[i][j] = (float) fx_right_in[i][j + synth->cur];
-      
+      }
 #endif //WITH_FLOAT
     }
     
@@ -2569,12 +2572,15 @@ fluid_synth_nwrite_float(fluid_synth_t* synth, int len,
         FLUID_MEMCPY(fx_right[i + count], fx_right_in[i], bytes);
 #else //WITH_FLOAT
       int j;
-      for (j = 0; (fx_left != NULL) && (j < num); j++)
+      if(fx_left != NULL) {
+        for (j = 0; j < num; j++)
           fx_left[i][j + count] = (float) fx_left_in[i][j];
+      }
       
-      for (j = 0; (fx_right != NULL) && (j < num); j++)
+      if(fx_right != NULL) {
+        for (j = 0; j < num; j++)
           fx_right[i][j + count] = (float) fx_right_in[i][j];
-      
+      }
 #endif //WITH_FLOAT
     }
 
