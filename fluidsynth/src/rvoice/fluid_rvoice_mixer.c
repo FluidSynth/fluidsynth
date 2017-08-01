@@ -702,6 +702,14 @@ int fluid_rvoice_mixer_get_bufs(fluid_rvoice_mixer_t* mixer,
   return mixer->buffers.buf_count;
 }
 
+int fluid_rvoice_mixer_get_fx_bufs(fluid_rvoice_mixer_t* mixer, 
+                  fluid_real_t*** fx_left, fluid_real_t*** fx_right)
+{
+  *fx_left = mixer->buffers.fx_left_buf;
+  *fx_right = mixer->buffers.fx_right_buf;
+  return mixer->buffers.fx_buf_count;
+}
+
 
 #ifdef ENABLE_MIXER_THREADS
 

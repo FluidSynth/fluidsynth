@@ -39,7 +39,9 @@ void fluid_rvoice_mixer_set_finished_voices_callback(
 
 int fluid_rvoice_mixer_render(fluid_rvoice_mixer_t* mixer, int blockcount);
 int fluid_rvoice_mixer_get_bufs(fluid_rvoice_mixer_t* mixer, 
-				  fluid_real_t*** left, fluid_real_t*** right);
+                               fluid_real_t*** left, fluid_real_t*** right);
+int fluid_rvoice_mixer_get_fx_bufs(fluid_rvoice_mixer_t* mixer, 
+                                  fluid_real_t*** fx_left, fluid_real_t*** fx_right);
 
 fluid_rvoice_mixer_t* new_fluid_rvoice_mixer(int buf_count, int fx_buf_count, 
 					     fluid_real_t sample_rate);

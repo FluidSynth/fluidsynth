@@ -60,10 +60,17 @@ struct _fluid_jack_audio_driver_t
 {
   fluid_audio_driver_t driver;
   fluid_jack_client_t *client_ref;
+  
   int audio_channels;
+  
   jack_port_t **output_ports;
   int num_output_ports;
   float **output_bufs;
+  
+  jack_port_t **fx_ports;
+  int num_fx_ports;
+  float **fx_bufs;
+  
   fluid_audio_func_t callback;
   void* data;
 };
@@ -268,10 +275,11 @@ fluid_jack_client_register_ports (void *driver, int isaudio, jack_client_t *clie
 
   fluid_settings_getint (settings, "audio.jack.multi", &multi);
 
-  if (multi)
+  if (!multi)
   {
     /* create the two audio output ports */
     dev->num_output_ports = 1;
+    dev->num_fx_ports = 0;
 
     dev->output_ports = FLUID_ARRAY (jack_port_t*, 2 * dev->num_output_ports);
 
@@ -322,6 +330,32 @@ fluid_jack_client_register_ports (void *driver, int isaudio, jack_client_t *clie
       sprintf(name, "r_%02d", i);
       dev->output_ports[2 * i + 1]
         = jack_port_register (client, name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
+    }
+    
+    fluid_settings_getint (settings, "synth.effects-channels", &dev->num_fx_ports);
+
+    dev->fx_ports = FLUID_ARRAY(jack_port_t*, 2 * dev->num_fx_ports);
+    if (dev->fx_ports == NULL) {
+      FLUID_LOG(FLUID_PANIC, "Out of memory");
+      return FLUID_FAILED;
+    }
+
+    dev->fx_bufs = FLUID_ARRAY(float*, 2 * dev->num_fx_ports);
+    if (dev->fx_bufs == NULL) {
+      FLUID_LOG(FLUID_PANIC, "Out of memory");
+      return FLUID_FAILED;
+    }
+
+    FLUID_MEMSET(dev->fx_ports, 0, 2 * dev->num_fx_ports * sizeof(jack_port_t*));
+
+    for (i = 0; i < dev->num_fx_ports; i++) {
+      sprintf(name, "fx_l_%02d", i);
+      dev->fx_ports[2 * i]
+        = jack_port_register(client, name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
+
+      sprintf(name, "fx_r_%02d", i);
+      dev->fx_ports[2 * i + 1]
+        = jack_port_register(client, name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
     }
   }
 
@@ -432,6 +466,15 @@ new_fluid_jack_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func
           connected++;
         }
       }
+      
+      for (i = 0; jack_ports[i] && i<2 * dev->num_fx_ports; ++i) {
+        err = jack_connect (client, jack_port_name(dev->fx_ports[i]), jack_ports[i]);
+        if (err) {
+          FLUID_LOG(FLUID_ERR, "Error connecting jack port");
+        } else {
+          connected++;
+        }
+      }
 
       jack_free (jack_ports);  /* free jack ports array (not the port values!) */
     } else {
@@ -460,6 +503,12 @@ delete_fluid_jack_audio_driver(fluid_audio_driver_t* p)
 
   if (dev->output_ports)
     FLUID_FREE (dev->output_ports);
+
+  if (dev->fx_bufs)
+    FLUID_FREE(dev->fx_bufs);
+
+  if (dev->fx_ports)
+    FLUID_FREE(dev->fx_ports);
 
   FLUID_FREE(dev);
   return 0;
@@ -517,7 +566,7 @@ fluid_jack_driver_process (jack_nframes_t nframes, void *arg)
                                      2 * audio_driver->num_output_ports,
                                      audio_driver->output_bufs);
   }
-  else if (audio_driver->num_output_ports == 1)
+  else if (audio_driver->num_output_ports == 1 && audio_driver->num_fx_ports == 0) /* i.e. audio.jack.multi=no */
   {
     left = (float*) jack_port_get_buffer (audio_driver->output_ports[0], nframes);
     right = (float*) jack_port_get_buffer (audio_driver->output_ports[1], nframes);
@@ -530,9 +579,17 @@ fluid_jack_driver_process (jack_nframes_t nframes, void *arg)
       audio_driver->output_bufs[i] = (float *)jack_port_get_buffer (audio_driver->output_ports[2*i], nframes);
       audio_driver->output_bufs[k] = (float *)jack_port_get_buffer (audio_driver->output_ports[2*i+1], nframes);
     }
+    for (i = 0, k = audio_driver->num_fx_ports; i < audio_driver->num_fx_ports; i++, k++) {
+      audio_driver->fx_bufs[i] = (float*) jack_port_get_buffer(audio_driver->fx_ports[2*i], nframes);
+      audio_driver->fx_bufs[k] = (float*) jack_port_get_buffer(audio_driver->fx_ports[2*i+1], nframes);
+    }
 
-    fluid_synth_nwrite_float (audio_driver->data, nframes, audio_driver->output_bufs,
-                              audio_driver->output_bufs + audio_driver->num_output_ports, NULL, NULL);
+    fluid_synth_nwrite_float (audio_driver->data,
+                              nframes,
+                              audio_driver->output_bufs,
+                              audio_driver->output_bufs + audio_driver->num_output_ports,
+                              audio_driver->fx_bufs,
+                              audio_driver->fx_bufs + audio_driver->num_fx_ports);
   }
 
   return 0;

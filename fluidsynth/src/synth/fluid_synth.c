@@ -2423,24 +2423,60 @@ fluid_synth_program_reset(fluid_synth_t* synth)
 }
 
 /**
- * Synthesize a block of floating point audio to audio buffers.
+ * Synthesize a block of floating point audio to separate audio buffers (multichannel rendering). First effect channel used by reverb, second for chorus.
  * @param synth FluidSynth instance
  * @param len Count of audio frames to synthesize
- * @param left Array of floats to store left channel of audio (len in size)
- * @param right Array of floats to store right channel of audio (len in size)
- * @param fx_left Not currently used
- * @param fx_right Not currently used
+ * @param left Array of float buffers to store left channel of planar audio (as many as \c synth.audio-channels buffers, each of \c len in size)
+ * @param right Array of float buffers to store right channel of planar audio (size: dito)
+ * @param fx_left Since 1.1.7: If not \c NULL, array of float buffers to store left effect channels (as many as \c synth.effects-channels buffers, each of \c len in size)
+ * @param fx_right Since 1.1.7: If not \c NULL, array of float buffers to store right effect channels (size: dito)
  * @return FLUID_OK on success, FLUID_FAIL otherwise
  *
- * NOTE: Should only be called from synthesis thread.
+ * @note Should only be called from synthesis thread.
+ * 
+ * Usage example:
+ * @code
+    const int FramesToRender = 64;
+    int channels;
+    // retrieve number of stereo audio channels
+    fluid_settings_getint(settings, "synth.audio-channels", &channels);
+    
+    // we need twice as many (mono-)buffers
+    channels *= 2;
+    
+    // fluid_synth_nwrite_float renders planar audio, e.g. if synth.audio-channels==16: each midi channel gets rendered to its own stereo buffer, rather than having one buffer and interleaved PCM
+    float** mix_buf = new float*[channels];
+    for(int i = 0; i < channels; i++)
+    {
+        mix_buf[i] = new float[FramesToRender];
+    }
+    
+    // retrieve number of (stereo) effect channels (internally hardcoded to reverb (first chan) and chrous (second chan))
+    fluid_settings_getint(settings, "synth.effects-channels", &channels);
+    channels *= 2;
+
+    float** fx_buf = new float*[channels];
+    for(int i = 0; i < channels; i++)
+    {
+        fx_buf[i] = new float[FramesToRender];
+    }
+    
+    float** mix_buf_l = mix_buf;
+    float** mix_buf_r = &mix_buf[channels/2];
+    
+    float** fx_buf_l = fx_buf;
+    float** fx_buf_r = &fx_buf[channels/2];
+    
+    fluid_synth_nwrite_float(synth, FramesToRender, mix_buf_l, mix_buf_r, fx_buf_l, fx_buf_r)
+ * @endcode
  */
 int
 fluid_synth_nwrite_float(fluid_synth_t* synth, int len,
                          float** left, float** right,
                          float** fx_left, float** fx_right)
 {
-  fluid_real_t** left_in;
-  fluid_real_t** right_in;
+  fluid_real_t** left_in, **fx_left_in;
+  fluid_real_t** right_in, **fx_right_in;
   double time = fluid_utime();
   int i, num, available, count;
 #ifdef WITH_FLOAT
@@ -2457,6 +2493,7 @@ fluid_synth_nwrite_float(fluid_synth_t* synth, int len,
   if (synth->cur < FLUID_BUFSIZE) {
     available = FLUID_BUFSIZE - synth->cur;
     fluid_rvoice_mixer_get_bufs(synth->eventhandler->mixer, &left_in, &right_in);
+    fluid_rvoice_mixer_get_fx_bufs(synth->eventhandler->mixer, &fx_left_in, &fx_right_in);
 
     num = (available > len)? len : available;
 #ifdef WITH_FLOAT
@@ -2475,6 +2512,29 @@ fluid_synth_nwrite_float(fluid_synth_t* synth, int len,
       }
 #endif //WITH_FLOAT
     }
+    
+    for (i = 0; i < synth->effects_channels; i++)
+    {
+#ifdef WITH_FLOAT
+      if(fx_left != NULL)
+        FLUID_MEMCPY(fx_left[i], fx_left_in[i] + synth->cur, bytes);
+      
+      if(fx_right != NULL)
+        FLUID_MEMCPY(fx_right[i], fx_right_in[i] + synth->cur, bytes);
+#else //WITH_FLOAT
+      int j;
+      if(fx_left != NULL) {
+        for (j = 0; j < num; j++)
+          fx_left[i][j] = (float) fx_left_in[i][j + synth->cur];
+      }
+      
+      if(fx_right != NULL) {
+        for (j = 0; j < num; j++)
+          fx_right[i][j] = (float) fx_right_in[i][j + synth->cur];
+      }
+#endif //WITH_FLOAT
+    }
+    
     count += num;
     num += synth->cur; /* if we're now done, num becomes the new synth->cur below */
   }
@@ -2484,6 +2544,7 @@ fluid_synth_nwrite_float(fluid_synth_t* synth, int len,
     fluid_rvoice_mixer_set_mix_fx(synth->eventhandler->mixer, 0);
     fluid_synth_render_blocks(synth, 1); // TODO: 
     fluid_rvoice_mixer_get_bufs(synth->eventhandler->mixer, &left_in, &right_in);
+    fluid_rvoice_mixer_get_fx_bufs(synth->eventhandler->mixer, &fx_left_in, &fx_right_in);
 
     num = (FLUID_BUFSIZE > len - count)? len - count : FLUID_BUFSIZE;
 #ifdef WITH_FLOAT
@@ -2499,6 +2560,28 @@ fluid_synth_nwrite_float(fluid_synth_t* synth, int len,
       for (j = 0; j < num; j++) {
           left[i][j + count] = (float) left_in[i][j];
           right[i][j + count] = (float) right_in[i][j];
+      }
+#endif //WITH_FLOAT
+    }
+
+    for (i = 0; i < synth->effects_channels; i++)
+    {
+#ifdef WITH_FLOAT
+      if(fx_left != NULL)
+        FLUID_MEMCPY(fx_left[i + count], fx_left_in[i], bytes);
+      
+      if(fx_right != NULL)
+        FLUID_MEMCPY(fx_right[i + count], fx_right_in[i], bytes);
+#else //WITH_FLOAT
+      int j;
+      if(fx_left != NULL) {
+        for (j = 0; j < num; j++)
+          fx_left[i][j + count] = (float) fx_left_in[i][j];
+      }
+      
+      if(fx_right != NULL) {
+        for (j = 0; j < num; j++)
+          fx_right[i][j + count] = (float) fx_right_in[i][j];
       }
 #endif //WITH_FLOAT
     }
@@ -2529,7 +2612,8 @@ fluid_synth_nwrite_float(fluid_synth_t* synth, int len,
  * @return FLUID_OK on success, FLUID_FAIL otherwise
  *
  * This function implements the default interface defined in fluidsynth/audio.h.
- * NOTE: Should only be called from synthesis thread.
+ * 
+ * @note Should only be called from synthesis thread.
  */
 /*
  * FIXME: Currently if nout != 2 memory allocation will occur!
@@ -2578,7 +2662,8 @@ fluid_synth_process(fluid_synth_t* synth, int len, int nin, float** in,
  * Useful for storing interleaved stereo (lout = rout, loff = 0, roff = 1,
  * lincr = 2, rincr = 2).
  *
- * NOTE: Should only be called from synthesis thread.
+ * @note Should only be called from synthesis thread.
+ * @note Reverb and Chorus are mixed to \c lout resp. \c rout.
  */
 int
 fluid_synth_write_float(fluid_synth_t* synth, int len,
@@ -2676,8 +2761,9 @@ roundi (float x)
  * Useful for storing interleaved stereo (lout = rout, loff = 0, roff = 1,
  * lincr = 2, rincr = 2).
  *
- * NOTE: Should only be called from synthesis thread.
- * NOTE: Dithering is performed when converting from internal floating point to
+ * @note Should only be called from synthesis thread.
+ * @note Reverb and Chorus are mixed to \c lout resp. \c rout.
+ * @note Dithering is performed when converting from internal floating point to
  * 16 bit audio.
  */
 int
