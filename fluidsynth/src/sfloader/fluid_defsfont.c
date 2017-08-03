@@ -1832,8 +1832,6 @@ fluid_sample_in_rom(fluid_sample_t* sample)
 #if LIBSNDFILE_SUPPORT
 // virtual file access rountines to allow for handling
 // samples as virtual files in memory
-static sf_count_t sfvio_pos;
-
 static sf_count_t
 sfvio_get_filelen(void* user_data)
 {
@@ -1850,17 +1848,17 @@ sfvio_seek(sf_count_t offset, int whence, void* user_data)
   switch (whence)
   {
     case SEEK_SET:
-      sfvio_pos = offset;
+      sample->userdata = (void *)offset;
       break;
     case SEEK_CUR:
-      sfvio_pos += offset;
+      sample->userdata = (void *)((intptr_t)sample->userdata + offset);
       break;
     case SEEK_END:
-      sfvio_pos = sfvio_get_filelen(user_data) + offset;
+      sample->userdata = (void *)(sfvio_get_filelen(user_data) + offset);
       break;
   }
 
-  return sfvio_pos;
+  return (sf_count_t)sample->userdata;
 };
 
 static sf_count_t
@@ -1868,11 +1866,11 @@ sfvio_read(void* ptr, sf_count_t count, void* user_data)
 {
   fluid_sample_t *sample = (fluid_sample_t *)user_data;
 
-  if (count > sfvio_get_filelen(user_data) - sfvio_pos)
-      count = sfvio_get_filelen(user_data) - sfvio_pos;
+  if (count > sfvio_get_filelen(user_data) - (sf_count_t)sample->userdata)
+      count = sfvio_get_filelen(user_data) - (sf_count_t)sample->userdata;
 
-  memcpy(ptr, (char *)sample->data + sample->start + sfvio_pos, count);
-  sfvio_pos += count;
+  memcpy(ptr, (char *)sample->data + sample->start + (sf_count_t)sample->userdata, count);
+  sample->userdata = (void *)((intptr_t)sample->userdata + count);
 
   return count;
 };
@@ -1880,7 +1878,9 @@ sfvio_read(void* ptr, sf_count_t count, void* user_data)
 static sf_count_t
 sfvio_tell (void* user_data)
 {
-  return sfvio_pos;
+  fluid_sample_t *sample = (fluid_sample_t *)user_data;
+
+  return (sf_count_t)sample->userdata;
 };
 #endif
 
@@ -1913,7 +1913,7 @@ fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defs
     short *sampledata_ogg;
 
     // initialize file position indicator and SF_INFO structure
-    sfvio_pos = 0;
+    sample->userdata = NULL;
     memset(&sfinfo, 0, sizeof(sfinfo));
 
     // open sample as a virtual file in memory
