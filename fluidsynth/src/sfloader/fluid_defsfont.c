@@ -3179,7 +3179,7 @@ fixup_sample (SFData * sf)
 	  return (OK);
 	}
       else if (sam->loopend > sam->end || sam->loopstart >= sam->loopend
-	|| sam->loopstart <= sam->start)
+	|| sam->loopstart < sam->start)
 	{			/* loop is fowled?? (cluck cluck :) */
 	  /* can pad loop by 8 samples and ensure at least 4 for loop (2*8+4) */
 	  if ((sam->end - sam->start) >= 20)
