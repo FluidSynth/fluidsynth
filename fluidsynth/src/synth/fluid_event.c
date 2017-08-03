@@ -433,6 +433,27 @@ fluid_event_channel_pressure(fluid_event_t* evt, int channel, short val)
 }
 
 /**
+ * Set a sequencer event to be a polyphonic aftertouch event.
+ * @param evt Sequencer event structure
+ * @param channel MIDI channel number
+ * @param key MIDI note number (0-127)
+ * @param val Aftertouch amount (0-127)
+ * @since 1.1.7
+ */
+void
+fluid_event_key_pressure(fluid_event_t* evt, int channel, short key, short val)
+{
+	evt->type = FLUID_SEQ_KEYPRESSURE;
+	evt->channel = channel;
+	if (key < 0) key = 0;
+	if (key > 127) key = 127;
+	if (val < 0) val = 0;
+	if (val > 127) val = 127;
+	evt->key = key;
+	evt->value = val;
+}
+
+/**
  * Set a sequencer event to be a midi system reset event.
  * @param evt Sequencer event structure
  * @since 1.1.0

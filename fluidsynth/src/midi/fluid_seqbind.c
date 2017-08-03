@@ -237,6 +237,14 @@ fluid_seq_fluidsynth_callback(unsigned int time, fluid_event_t* evt, fluid_seque
 	  }
 	break;
 
+  case FLUID_SEQ_KEYPRESSURE:
+	  {
+		fluid_synth_key_pressure(synth, fluid_event_get_channel(evt),
+					 fluid_event_get_key(evt),
+					 fluid_event_get_value(evt));
+	  }
+	break;
+
   case FLUID_SEQ_SYSTEMRESET: 
 	  {
 		fluid_synth_system_reset(synth);
@@ -313,6 +321,11 @@ fluid_sequencer_add_midi_event_to_buffer(void* data, fluid_midi_event_t* event)
 		break;
 	case CHANNEL_PRESSURE:
 		fluid_event_channel_pressure(&evt, chan, fluid_midi_event_get_program(event));
+		break;
+	case KEY_PRESSURE:
+		fluid_event_key_pressure(&evt, chan,
+					 fluid_midi_event_get_key(event),
+					 fluid_midi_event_get_value(event));
 		break;
 	case MIDI_SYSTEM_RESET:
 		fluid_event_system_reset(&evt);
