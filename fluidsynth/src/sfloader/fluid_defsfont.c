@@ -3159,6 +3159,7 @@ fixup_sample (SFData * sf)
 {
   fluid_list_t *p;
   SFSample *sam;
+  int invalid_loops=FALSE;
 
   p = sf->sample;
   while (p)
@@ -3181,6 +3182,10 @@ fixup_sample (SFData * sf)
       else if (sam->loopend > sam->end || sam->loopstart >= sam->loopend
 	|| sam->loopstart < sam->start)
 	{			/* loop is fowled?? (cluck cluck :) */
+          FLUID_LOG (FLUID_DBG, _("Sample '%s' has invalid loop,"
+              " extending loop to full sample"), sam->name);
+          invalid_loops |= TRUE;
+	  
 	  /* can pad loop by 8 samples and ensure at least 4 for loop (2*8+4) */
 	  if ((sam->end - sam->start) >= 20)
 	    {
@@ -3200,6 +3205,11 @@ fixup_sample (SFData * sf)
       sam->loopend -= sam->start;
 
       p = fluid_list_next (p);
+    }
+
+    if(invalid_loops)
+    {
+      FLUID_LOG (FLUID_WARN, _("Found samples with invalid loops, audible glitches possible."));
     }
 
   return (OK);
