@@ -1838,7 +1838,7 @@ sfvio_get_filelen(void* user_data)
   fluid_sample_t *sample = (fluid_sample_t *)user_data;
 
   return (sf_count_t)(sample->end + 1 - sample->start);
-};
+}
 
 static sf_count_t
 sfvio_seek(sf_count_t offset, int whence, void* user_data)
@@ -1859,7 +1859,7 @@ sfvio_seek(sf_count_t offset, int whence, void* user_data)
   }
 
   return (sf_count_t)sample->userdata;
-};
+}
 
 static sf_count_t
 sfvio_read(void* ptr, sf_count_t count, void* user_data)
@@ -1873,7 +1873,7 @@ sfvio_read(void* ptr, sf_count_t count, void* user_data)
   sample->userdata = (void *)((intptr_t)sample->userdata + count);
 
   return count;
-};
+}
 
 static sf_count_t
 sfvio_tell (void* user_data)
@@ -1881,7 +1881,7 @@ sfvio_tell (void* user_data)
   fluid_sample_t *sample = (fluid_sample_t *)user_data;
 
   return (sf_count_t)sample->userdata;
-};
+}
 #endif
 
 int
