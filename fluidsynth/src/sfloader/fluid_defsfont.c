@@ -3170,8 +3170,12 @@ fixup_sample (SFData * sf)
       
       /* The SoundFont 2.4 spec defines the loop start index as the first sample point of the loop */
       inv_start = (sam->loopstart < sam->start) || (sam->loopstart >= sam->loopend);
-      /* while loop end is the first point AFTER the last sample of the loop */
-      inv_end = (sam->loopend > sam->end) || (sam->loopstart >= sam->loopend);
+      /* while loop end is the first point AFTER the last sample of the loop.
+       * this is as it should be. however we cannot be sure whether any of sam.loopend or sam.end
+       * is correct. hours of thinking through this have concluded, that it would be best practice 
+       * to mangle with loops as little as necessary by only making sure loopend is within
+       * sdtachunk_size. incorrect soundfont shall preferably fail loudly. */
+      inv_end = (sam->loopend > sdtachunk_size) || (sam->loopstart >= sam->loopend);
       
       /* if sample is not a ROM sample and end is over the sample data chunk
          or sam start is greater than 4 less than the end (at least 4 samples) */
