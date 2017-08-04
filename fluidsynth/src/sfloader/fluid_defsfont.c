@@ -1851,7 +1851,7 @@ sfvio_seek(sf_count_t offset, int whence, void* user_data)
       sample->userdata = (void *)offset;
       break;
     case SEEK_CUR:
-      sample->userdata = (void *)((intptr_t)sample->userdata + offset);
+      sample->userdata = (void *)((sf_count_t)sample->userdata + offset);
       break;
     case SEEK_END:
       sample->userdata = (void *)(sfvio_get_filelen(user_data) + offset);
@@ -1870,7 +1870,7 @@ sfvio_read(void* ptr, sf_count_t count, void* user_data)
       count = sfvio_get_filelen(user_data) - (sf_count_t)sample->userdata;
 
   memcpy(ptr, (char *)sample->data + sample->start + (sf_count_t)sample->userdata, count);
-  sample->userdata = (void *)((intptr_t)sample->userdata + count);
+  sample->userdata = (void *)((sf_count_t)sample->userdata + count);
 
   return count;
 }
