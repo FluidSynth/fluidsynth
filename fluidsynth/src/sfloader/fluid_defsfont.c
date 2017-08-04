@@ -1865,9 +1865,10 @@ static sf_count_t
 sfvio_read(void* ptr, sf_count_t count, void* user_data)
 {
   fluid_sample_t *sample = (fluid_sample_t *)user_data;
-
-  if (count > sfvio_get_filelen(user_data) - (sf_count_t)sample->userdata)
-      count = sfvio_get_filelen(user_data) - (sf_count_t)sample->userdata;
+  sf_count_t remain = sfvio_get_filelen(user_data) - (sf_count_t)sample->userdata;
+  
+  if (count > remain)
+      count = remain;
 
   memcpy(ptr, (char *)sample->data + sample->start + (sf_count_t)sample->userdata, count);
   sample->userdata = (void *)((sf_count_t)sample->userdata + count);
@@ -1913,7 +1914,7 @@ fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defs
     short *sampledata_ogg;
 
     // initialize file position indicator and SF_INFO structure
-    sample->userdata = NULL;
+    g_assert(sample->userdata == NULL);
     memset(&sfinfo, 0, sizeof(sfinfo));
 
     // open sample as a virtual file in memory
