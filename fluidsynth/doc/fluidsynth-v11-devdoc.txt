@@ -481,8 +481,7 @@ The following table provides details on all the settings used by the synthesizer
          <li>gs: (default) CC0 becomes the bank number, CC32 is ignored.</li>
          <li>xg: CC32 becomes the bank number, CC0 is ignored.</li>
          <li>mma: bank is calculated as CC0*128+CC32.</li>
-       </ul>
-       Note: Drum channels are initialized to \c DRUM_INST_BANK (==128). Since 1.1.7 mma mode also allows the bank of drum channels to be changed the same way as for melodic channels.
+       </ul>  
     </td>
   </tr>
 
