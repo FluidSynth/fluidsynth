@@ -3171,7 +3171,7 @@ fixup_sample (SFData * sf)
       /* The SoundFont 2.4 spec defines the loop start index as the first sample point of the loop */
       inv_start = (sam->loopstart < sam->start) || (sam->loopstart >= sam->loopend);
       /* while loop end is the first point AFTER the last sample of the loop */
-      inv_end = (sam->loopend > sam->end+1) || (sam->loopstart >= sam->loopend);
+      inv_end = (sam->loopend > sam->end) || (sam->loopstart >= sam->loopend);
       
       /* if sample is not a ROM sample and end is over the sample data chunk
          or sam start is greater than 4 less than the end (at least 4 samples) */
@@ -3203,6 +3203,7 @@ fixup_sample (SFData * sf)
 	  {
             FLUID_LOG (FLUID_DBG, _("Sample '%s' has invalid loop stop '%d',"
               " setting to sample stop at '%d'-1"), sam->name, sam->loopend, sam->end);
+            /* since sam->end points after valid sample data, set loopend to last sample available */
             sam->loopend = sam->end - 1;
 	  }
 	}
