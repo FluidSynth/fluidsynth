@@ -3168,9 +3168,9 @@ fixup_sample (SFData * sf)
     {
       sam = (SFSample *) (p->data);
       
-      // The SoundFont 2.4 spec defines the loop start index as the first sample point of the loop
+      /* The SoundFont 2.4 spec defines the loop start index as the first sample point of the loop */
       inv_start = (sam->loopstart < sam->start) || (sam->loopstart >= sam->loopend);
-      // while loop end is the first point AFTER the last sample of the loop.
+      /* while loop end is the first point AFTER the last sample of the loop */
       inv_end = (sam->loopend > sam->end+1) || (sam->loopstart >= sam->loopend);
       
       /* if sample is not a ROM sample and end is over the sample data chunk
@@ -3187,28 +3187,24 @@ fixup_sample (SFData * sf)
 	  return (OK);
 	}
       else if (inv_start || inv_end)
-	{			/* loop is fowled?? (cluck cluck :) */
-          FLUID_LOG (FLUID_DBG, _("Sample '%s' has invalid loop,"
-              " extending loop to full sample"), sam->name);
+	{
+          /* loop is fowled?? (cluck cluck :) */
           invalid_loops |= TRUE;
 	  
-	  /* can pad loop by 8 samples and ensure at least 4 for loop (2*8+4) */
-	  if ((sam->end - sam->start) >= 20)
-	    {
-              if(inv_start)
-                sam->loopstart = sam->start + 8;
+	  /* force incorrect loop points into the sample range, ignore padding */
+          if(inv_start)
+	  {
+            FLUID_LOG (FLUID_DBG, _("Sample '%s' has invalid loop start '%d',"
+              " setting to sample start at '%d'+1"), sam->name, sam->loopstart, sam->start);
+            sam->loopstart = sam->start + 1;
+	  }
           
-              if(inv_end)
-                sam->loopend = sam->end - 8;
-	    }
-	  else
-	    {			/* loop is fowled, sample is tiny (can't pad 8 samples) */
-              if(inv_start)
-                sam->loopstart = sam->start + 1;
-          
-              if(inv_end)
-                sam->loopend = sam->end - 1;
-	    }
+          if(inv_end)
+	  {
+            FLUID_LOG (FLUID_DBG, _("Sample '%s' has invalid loop stop '%d',"
+              " setting to sample stop at '%d'-1"), sam->name, sam->loopend, sam->end);
+            sam->loopend = sam->end - 1;
+	  }
 	}
 
       /* convert sample end, loopstart, loopend to offsets from sam->start */
