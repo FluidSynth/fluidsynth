@@ -270,7 +270,7 @@ struct _fluid_sample_t
 #define FLUID_SAMPLETYPE_RIGHT	2       /**< Flag for #fluid_sample_t \a sampletype field for right samples of a stereo pair */
 #define FLUID_SAMPLETYPE_LEFT	4       /**< Flag for #fluid_sample_t \a sampletype field for left samples of a stereo pair */
 #define FLUID_SAMPLETYPE_LINKED	8       /**< Flag for #fluid_sample_t \a sampletype field, not used currently */
-#define FLUID_SAMPLETYPE_OGG_VORBIS	0x10 /**< Flag for #fluid_sample_t \a sampletype field for Ogg Vorbis compressed samples */
+#define FLUID_SAMPLETYPE_OGG_VORBIS	0x10 /**< Flag for #fluid_sample_t \a sampletype field for Ogg Vorbis compressed samples @since 1.1.7 */
 #define FLUID_SAMPLETYPE_ROM	0x8000  /**< Flag for #fluid_sample_t \a sampletype field, ROM sample, causes sample to be ignored */
 
 
