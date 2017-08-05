@@ -435,7 +435,7 @@ struct _fluid_defpreset_t
 {
   fluid_defpreset_t* next;
   fluid_defsfont_t* sfont;                  /* the soundfont this preset belongs to */
-  char name[22];                        /* the name of the preset */
+  char name[21];                        /* the name of the preset */
   unsigned int bank;                    /* the bank number */
   unsigned int num;                     /* the preset number */
   fluid_preset_zone_t* global_zone;        /* the global zone of the preset */
