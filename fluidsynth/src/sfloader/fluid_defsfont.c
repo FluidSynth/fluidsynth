@@ -2160,7 +2160,7 @@ process_info (int size, SFData * sf, FILE * fd)
 	  if (sf->version.major > 2) {
 	    FLUID_LOG (FLUID_WARN,
 		      _("Sound font version is %d.%d which is newer than"
-			" what this version of FLUID Synth was designed for (v2.0x)"),
+			" what this version of fluidsynth was designed for (v2.0x)"),
 		      sf->version.major,
 		      sf->version.minor);
 	    return (FAIL);
