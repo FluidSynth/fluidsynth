@@ -1137,9 +1137,9 @@ fluid_synth_cc_LOCAL (fluid_synth_t* synth, int channum, int num)
             fluid_synth_update_pitch_wheel_sens_LOCAL (synth, channum);   /* Update bend range */
             /* FIXME - Handle LSB? (Fine bend range in cents) */
             break;
-          case RPN_CHANNEL_FINE_TUNE:   /* Fine tune is 14 bit over 1 semitone (+/- 50 cents, 8192 = center) */
+          case RPN_CHANNEL_FINE_TUNE:   /* Fine tune is 14 bit over +/-1 semitone (+/- 100 cents, 8192 = center) */
             fluid_synth_set_gen_LOCAL (synth, channum, GEN_FINETUNE,
-                                       (data - 8192) / 8192.0 * 50.0, FALSE);
+                                       (data - 8192) / 8192.0 * 100.0, FALSE);
             break;
           case RPN_CHANNEL_COARSE_TUNE: /* Coarse tune is 7 bit and in semitones (64 is center) */
             fluid_synth_set_gen_LOCAL (synth, channum, GEN_COARSETUNE,
