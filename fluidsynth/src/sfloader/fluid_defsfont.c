@@ -3207,7 +3207,7 @@ fixup_sample (SFData * sf)
           
           if(invalid_loopend)
 	  {
-            FLUID_LOG (FLUID_DBG, _("Sample '%s' has out-of-range loop stop '%d',"
+            FLUID_LOG (FLUID_DBG, _("Sample '%s' has unusable loop stop '%d',"
               " setting to sample stop at '%d'-1"), sam->name, sam->loopend, sam->end);
             /* since sam->end points after valid sample data, set loopend to last sample available */
             sam->loopend = sam->end - 1;
@@ -3216,7 +3216,7 @@ fixup_sample (SFData * sf)
           if(loopend_end_mismatch)
 	  {
             FLUID_LOG (FLUID_DBG, _("Sample '%s' has invalid loop stop '%d',"
-              ", sample stop at '%d', using it anyway"), sam->name, sam->loopend, sam->end);
+              " sample stop at '%d', using it anyway"), sam->name, sam->loopend, sam->end);
 	  }
 	}
 
