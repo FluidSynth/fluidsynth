@@ -264,7 +264,7 @@ fluid_channel_set_bank_msb(fluid_channel_t* chan, int bankmsb)
   }
 
   if (style == FLUID_BANK_STYLE_GM ||
-     (chan->channel_type == CHANNEL_TYPE_DRUM && style != FLUID_BANK_STYLE_MMA))
+      chan->channel_type == CHANNEL_TYPE_DRUM)
       return; /* ignored */
 
   oldval = chan->sfont_bank_prog;

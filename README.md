@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/FluidSynth/fluidsynth.svg?branch=master)](https://travis-ci.org/FluidSynth/fluidsynth)
+
 Introduction
 ============
 
