@@ -1,8 +1,17 @@
 language: c
 sudo: required
 dist: trusty
-#compiler:
-#- clang
+env:
+    - CMAKE_FLAGS="-Denable-floats=1"
+    - CMAKE_FLAGS="-Denable-profiling=1"
+    - CMAKE_FLAGS="-Denable-floats=1 -Denable-profiling=1"
+    - CMAKE_FLAGS="-Denable-trap-on-fpe=1"
+    - CMAKE_FLAGS="-Denable-fpe-check=1"
+    - CMAKE_FLAGS="-Denable-debug=1"
+    - CMAKE_FLAGS="-Denable-libsndfile=0"
+    - CMAKE_FLAGS="-Denable-alsa=0"
+    - CMAKE_FLAGS="-Denable-jack=0"
+    - CMAKE_FLAGS="-Denable-portaudio=0"
 matrix:
   include:
     - os: linux
@@ -20,17 +29,7 @@ matrix:
             - libjack-dev
             - portaudio19-dev
       env:
-         #- MATRIX_EVAL="CC=gcc-4.8 && CXX=g++-4.8"
-         - CMAKE_FLAGS="-DCMAKE_C_COMPILER=gcc-4.8 -Denable-floats=1"
-         - CMAKE_FLAGS="-DCMAKE_C_COMPILER=gcc-4.8 -Denable-profiling=1"
-         - CMAKE_FLAGS="-DCMAKE_C_COMPILER=gcc-4.8 -Denable-floats=1 -Denable-profiling=1"
-         - CMAKE_FLAGS="-DCMAKE_C_COMPILER=gcc-4.8 -Denable-trap-on-fpe=1"
-         - CMAKE_FLAGS="-DCMAKE_C_COMPILER=gcc-4.8 -Denable-fpe-check=1"
-         - CMAKE_FLAGS="-DCMAKE_C_COMPILER=gcc-4.8 -Denable-debug=1"
-         - CMAKE_FLAGS="-DCMAKE_C_COMPILER=gcc-4.8 -Denable-libsndfile=0"
-         - CMAKE_FLAGS="-DCMAKE_C_COMPILER=gcc-4.8 -Denable-alsa=0"
-         - CMAKE_FLAGS="-DCMAKE_C_COMPILER=gcc-4.8 -Denable-jack=0"
-         - CMAKE_FLAGS="-DCMAKE_C_COMPILER=gcc-4.8 -Denable-portaudio=0"
+         - MATRIX_EVAL="CC=gcc-4.8 && CXX=g++-4.8"
          
     - os: linux
       addons:
