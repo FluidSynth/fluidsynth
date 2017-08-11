@@ -3159,12 +3159,26 @@ fixup_sample (SFData * sf)
 {
   fluid_list_t *p;
   SFSample *sam;
+  int invalid_loops=FALSE;
+  int invalid_loopstart;
+  int invalid_loopend, loopend_end_mismatch;
 
   p = sf->sample;
   while (p)
     {
       sam = (SFSample *) (p->data);
-
+      
+      /* The SoundFont 2.4 spec defines the loop start index as the first sample point of the loop */
+      invalid_loopstart = (sam->loopstart < sam->start) || (sam->loopstart >= sam->loopend);
+      /* while loop end is the first point AFTER the last sample of the loop.
+       * this is as it should be. however we cannot be sure whether any of sam.loopend or sam.end
+       * is correct. hours of thinking through this have concluded, that it would be best practice 
+       * to mangle with loops as little as necessary by only making sure loopend is within
+       * sdtachunk_size. incorrect soundfont shall preferably fail loudly. */
+      invalid_loopend = (sam->loopend > sdtachunk_size) || (sam->loopstart >= sam->loopend);
+      
+      loopend_end_mismatch = (sam->loopend > sam->end);
+	  
       /* if sample is not a ROM sample and end is over the sample data chunk
          or sam start is greater than 4 less than the end (at least 4 samples) */
       if ((!(sam->sampletype & FLUID_SAMPLETYPE_ROM)
@@ -3178,20 +3192,32 @@ fixup_sample (SFData * sf)
 
 	  return (OK);
 	}
-      else if (sam->loopend > sam->end || sam->loopstart >= sam->loopend
-	|| sam->loopstart <= sam->start)
-	{			/* loop is fowled?? (cluck cluck :) */
-	  /* can pad loop by 8 samples and ensure at least 4 for loop (2*8+4) */
-	  if ((sam->end - sam->start) >= 20)
-	    {
-	      sam->loopstart = sam->start + 8;
-	      sam->loopend = sam->end - 8;
-	    }
-	  else
-	    {			/* loop is fowled, sample is tiny (can't pad 8 samples) */
-	      sam->loopstart = sam->start + 1;
-	      sam->loopend = sam->end - 1;
-	    }
+      else if (invalid_loopstart || invalid_loopend || loopend_end_mismatch)
+	{
+          /* loop is fowled?? (cluck cluck :) */
+          invalid_loops |= TRUE;
+	  
+	  /* force incorrect loop points into the sample range, ignore padding */
+          if(invalid_loopstart)
+	  {
+            FLUID_LOG (FLUID_DBG, _("Sample '%s' has unusable loop start '%d',"
+              " setting to sample start at '%d'+1"), sam->name, sam->loopstart, sam->start);
+            sam->loopstart = sam->start + 1;
+	  }
+          
+          if(invalid_loopend)
+	  {
+            FLUID_LOG (FLUID_DBG, _("Sample '%s' has unusable loop stop '%d',"
+              " setting to sample stop at '%d'-1"), sam->name, sam->loopend, sam->end);
+            /* since sam->end points after valid sample data, set loopend to last sample available */
+            sam->loopend = sam->end - 1;
+	  }
+	  
+          if(loopend_end_mismatch)
+	  {
+            FLUID_LOG (FLUID_DBG, _("Sample '%s' has invalid loop stop '%d',"
+              " sample stop at '%d', using it anyway"), sam->name, sam->loopend, sam->end);
+	  }
 	}
 
       /* convert sample end, loopstart, loopend to offsets from sam->start */
@@ -3200,6 +3226,11 @@ fixup_sample (SFData * sf)
       sam->loopend -= sam->start;
 
       p = fluid_list_next (p);
+    }
+
+    if(invalid_loops)
+    {
+      FLUID_LOG (FLUID_WARN, _("Found samples with invalid loops, audible glitches possible."));
     }
 
   return (OK);
