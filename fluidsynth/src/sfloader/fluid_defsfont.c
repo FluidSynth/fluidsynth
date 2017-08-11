@@ -26,6 +26,10 @@
 /* Todo: Get rid of that 'include' */
 #include "fluid_sys.h"
 
+#if LIBSNDFILE_SUPPORT
+#include <sndfile.h>
+#endif
+
 /***************************************************************
  *
  *                           SFONT LOADER
@@ -1801,6 +1805,14 @@ new_fluid_sample()
 int
 delete_fluid_sample(fluid_sample_t* sample)
 {
+  if (sample->sampletype & FLUID_SAMPLETYPE_OGG_VORBIS)
+  {
+#if LIBSNDFILE_SUPPORT
+    if (sample->data)
+      FLUID_FREE(sample->data);
+#endif
+  }
+
   FLUID_FREE(sample);
   return FLUID_OK;
 }
@@ -1817,6 +1829,62 @@ fluid_sample_in_rom(fluid_sample_t* sample)
 /*
  * fluid_sample_import_sfont
  */
+#if LIBSNDFILE_SUPPORT
+// virtual file access rountines to allow for handling
+// samples as virtual files in memory
+static sf_count_t
+sfvio_get_filelen(void* user_data)
+{
+  fluid_sample_t *sample = (fluid_sample_t *)user_data;
+
+  return (sf_count_t)(sample->end + 1 - sample->start);
+}
+
+static sf_count_t
+sfvio_seek(sf_count_t offset, int whence, void* user_data)
+{
+  fluid_sample_t *sample = (fluid_sample_t *)user_data;
+
+  switch (whence)
+  {
+    case SEEK_SET:
+      sample->userdata = (void *)offset;
+      break;
+    case SEEK_CUR:
+      sample->userdata = (void *)((sf_count_t)sample->userdata + offset);
+      break;
+    case SEEK_END:
+      sample->userdata = (void *)(sfvio_get_filelen(user_data) + offset);
+      break;
+  }
+
+  return (sf_count_t)sample->userdata;
+}
+
+static sf_count_t
+sfvio_read(void* ptr, sf_count_t count, void* user_data)
+{
+  fluid_sample_t *sample = (fluid_sample_t *)user_data;
+  sf_count_t remain = sfvio_get_filelen(user_data) - (sf_count_t)sample->userdata;
+  
+  if (count > remain)
+      count = remain;
+
+  memcpy(ptr, (char *)sample->data + sample->start + (sf_count_t)sample->userdata, count);
+  sample->userdata = (void *)((sf_count_t)sample->userdata + count);
+
+  return count;
+}
+
+static sf_count_t
+sfvio_tell (void* user_data)
+{
+  fluid_sample_t *sample = (fluid_sample_t *)user_data;
+
+  return (sf_count_t)sample->userdata;
+}
+#endif
+
 int
 fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defsfont_t* sfont)
 {
@@ -1830,6 +1898,71 @@ fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defs
   sample->origpitch = sfsample->origpitch;
   sample->pitchadj = sfsample->pitchadj;
   sample->sampletype = sfsample->sampletype;
+
+  if (sample->sampletype & FLUID_SAMPLETYPE_OGG_VORBIS)
+  {
+#if LIBSNDFILE_SUPPORT
+    SNDFILE *sndfile;
+    SF_INFO sfinfo;
+    SF_VIRTUAL_IO sfvio = {
+      sfvio_get_filelen,
+      sfvio_seek,
+      sfvio_read,
+      NULL,
+      sfvio_tell
+    };
+    short *sampledata_ogg;
+
+    // initialize file position indicator and SF_INFO structure
+    g_assert(sample->userdata == NULL);
+    memset(&sfinfo, 0, sizeof(sfinfo));
+
+    // open sample as a virtual file in memory
+    sndfile = sf_open_virtual(&sfvio, SFM_READ, &sfinfo, sample);
+    if (!sndfile)
+    {
+      FLUID_LOG(FLUID_ERR, sf_strerror(sndfile));
+      return FLUID_FAILED;
+    }
+
+    // empty sample
+    if (!sfinfo.frames || !sfinfo.channels)
+    {
+      sample->start = sample->end =
+      sample->loopstart = sample->loopend =
+      sample->valid = 0;
+      sample->data = NULL;
+      sf_close(sndfile);
+      return FLUID_OK;
+    }
+
+    // allocate memory for uncompressed sample data stream
+    sampledata_ogg = (short *)FLUID_MALLOC(sfinfo.frames * sfinfo.channels * sizeof(short));
+    if (!sampledata_ogg)
+    {
+      FLUID_LOG(FLUID_ERR, "Out of memory");
+      sf_close(sndfile);
+      return FLUID_FAILED;
+    }
+
+    // uncompress sample data stream
+    if (sf_readf_short(sndfile, sampledata_ogg, sfinfo.frames) < sfinfo.frames)
+    {
+      FLUID_FREE(sampledata_ogg);
+      FLUID_LOG(FLUID_ERR, sf_strerror(sndfile));
+      sf_close(sndfile);
+      return FLUID_FAILED;
+    }
+    sf_close(sndfile);
+
+    // point sample data to uncompressed data stream
+    sample->data = sampledata_ogg;
+    sample->start = 0;
+    sample->end = sfinfo.frames - 1;
+
+    fixup_sample_loop(sample);
+#endif
+  }
 
   if (sample->sampletype & FLUID_SAMPLETYPE_ROM) {
     sample->valid = 0;
@@ -2157,7 +2290,17 @@ process_info (int size, SFData * sf, FILE * fd)
 	    return (FAIL);
 	  }
 
-	  if (sf->version.major > 2) {
+	  if (sf->version.major == 3) {
+#if !LIBSNDFILE_SUPPORT
+	    FLUID_LOG (FLUID_WARN,
+		      _("Sound font version is %d.%d but fluidsynth was compiled without"
+			" support for (v3.x)"),
+		      sf->version.major,
+		      sf->version.minor);
+	    return (FAIL);
+#endif
+	  }
+	  else if (sf->version.major > 2) {
 	    FLUID_LOG (FLUID_WARN,
 		      _("Sound font version is %d.%d which is newer than"
 			" what this version of fluidsynth was designed for (v2.0x)"),
@@ -3181,44 +3324,47 @@ fixup_sample (SFData * sf)
 	  
       /* if sample is not a ROM sample and end is over the sample data chunk
          or sam start is greater than 4 less than the end (at least 4 samples) */
-      if ((!(sam->sampletype & FLUID_SAMPLETYPE_ROM)
-	  && sam->end > sdtachunk_size) || sam->start > (sam->end - 4))
-	{
-	  FLUID_LOG (FLUID_WARN, _("Sample '%s' start/end file positions are invalid,"
-	      " disabling and will not be saved"), sam->name);
+      if ((!(sam->sampletype & FLUID_SAMPLETYPE_ROM) && sam->end > sdtachunk_size)
+          || sam->start > (sam->end - 4))
+      {
+          FLUID_LOG (FLUID_WARN, _("Sample '%s' start/end file positions are invalid,"
+          " disabling and will not be saved"), sam->name);
 
-	  /* disable sample by setting all sample markers to 0 */
-	  sam->start = sam->end = sam->loopstart = sam->loopend = 0;
+	        /* disable sample by setting all sample markers to 0 */
+	        sam->start = sam->end = sam->loopstart = sam->loopend = 0;
 
-	  return (OK);
-	}
+	        return (OK);
+	    }
+      /* compressed samples get fixed up after decompression */
+      else if (sam->sampletype & FLUID_SAMPLETYPE_OGG_VORBIS)
+	    {}
       else if (invalid_loopstart || invalid_loopend || loopend_end_mismatch)
-	{
+	    {
           /* loop is fowled?? (cluck cluck :) */
           invalid_loops |= TRUE;
 	  
-	  /* force incorrect loop points into the sample range, ignore padding */
+	        /* force incorrect loop points into the sample range, ignore padding */
           if(invalid_loopstart)
-	  {
+          {
             FLUID_LOG (FLUID_DBG, _("Sample '%s' has unusable loop start '%d',"
               " setting to sample start at '%d'+1"), sam->name, sam->loopstart, sam->start);
             sam->loopstart = sam->start + 1;
-	  }
+	        }
           
           if(invalid_loopend)
-	  {
+	        {
             FLUID_LOG (FLUID_DBG, _("Sample '%s' has unusable loop stop '%d',"
               " setting to sample stop at '%d'-1"), sam->name, sam->loopend, sam->end);
             /* since sam->end points after valid sample data, set loopend to last sample available */
             sam->loopend = sam->end - 1;
-	  }
+	        }
 	  
           if(loopend_end_mismatch)
-	  {
+	        {
             FLUID_LOG (FLUID_DBG, _("Sample '%s' has invalid loop stop '%d',"
               " sample stop at '%d', using it anyway"), sam->name, sam->loopend, sam->end);
-	  }
-	}
+	        }
+	    }
 
       /* convert sample end, loopstart, loopend to offsets from sam->start */
       sam->end -= sam->start + 1;	/* marks last sample, contrary to SF spec. */
