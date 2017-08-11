@@ -174,5 +174,5 @@ before_script:
     - mkdir build && cd build
     
 script:
-    - cmake "${CMAKE_FLAGS}" "-DCMAKE_BUILD_TYPE=RelWithDebInfo" ..
+    - cmake ${CMAKE_FLAGS} "-DCMAKE_BUILD_TYPE=RelWithDebInfo" ..
     - make -j4

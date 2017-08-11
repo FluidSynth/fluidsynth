@@ -108,7 +108,7 @@ enum fluid_midi_channel_type
   CHANNEL_TYPE_DRUM = 1
 };
 
-int fluid_synth_set_channel_type(fluid_synth_t* synth, int chan, int type);
+FLUIDSYNTH_API int fluid_synth_set_channel_type(fluid_synth_t* synth, int chan, int type);
 
 
 /* Low level access */
