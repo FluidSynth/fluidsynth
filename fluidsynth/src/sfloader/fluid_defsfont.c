@@ -1965,6 +1965,8 @@ fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defs
         sample->loopstart >= sample->loopend ||
         sample->loopstart < sample->start)
     {
+/* always use whole sample, having an equivalent treatment to uncompressed samples */
+#if 0
       /* can pad loop by 8 samples and ensure at least 4 for loop (2*8+4) */
       if ((sample->end - sample->start) >= 20)
       {
@@ -1972,9 +1974,10 @@ fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defs
         sample->loopend = sample->end - 8;
       }
       else /* loop is fowled, sample is tiny (can't pad 8 samples) */
+#endif
       {
-        sample->loopstart = sample->start + 1;
-        sample->loopend = sample->end - 1;
+        sample->loopstart = sample->start;
+        sample->loopend = sample->end;
       }
     }
 #endif
