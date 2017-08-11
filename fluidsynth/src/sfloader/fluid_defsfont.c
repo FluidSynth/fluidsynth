@@ -3368,8 +3368,8 @@ fixup_sample (SFData * sf)
           if(invalid_loopstart)
           {
             FLUID_LOG (FLUID_DBG, _("Sample '%s' has unusable loop start '%d',"
-              " setting to sample start at '%d'+1"), sam->name, sam->loopstart, sam->start);
-            sam->loopstart = sam->start + 1;
+              " setting to sample start at '%d'"), sam->name, sam->loopstart, sam->start);
+            sam->loopstart = sam->start;
 	        }
           
           if(invalid_loopend)
