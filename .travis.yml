@@ -1,43 +1,64 @@
 language: c
-sudo: required
+#sudo: required
 dist: trusty
-apt:
-    sources:
-      - ubuntu-toolchain-r-test
-    packages:
-      - cmake-data
-      - cmake
-      - libglib2.0-0
-      - libsndfile-dev
-      - libasound2-dev
-      - libjack-dev
-      - portaudio19-dev
 env:
-    - CMAKE_FLAGS="-Denable-floats=1"
     - CMAKE_FLAGS="-Denable-profiling=1"
     - CMAKE_FLAGS="-Denable-floats=1 -Denable-profiling=1"
     - CMAKE_FLAGS="-Denable-trap-on-fpe=1"
     - CMAKE_FLAGS="-Denable-fpe-check=1"
     - CMAKE_FLAGS="-Denable-debug=1"
-    - CMAKE_FLAGS="-Denable-libsndfile=0"
-    - CMAKE_FLAGS="-Denable-alsa=0"
-    - CMAKE_FLAGS="-Denable-jack=0"
-    - CMAKE_FLAGS="-Denable-portaudio=0"
 matrix:
   include:
     - os: linux
       addons:
         apt:
+          sources:
+            - ubuntu-toolchain-r-test
           packages:
             - g++-4.8
+            - cmake-data
+            - cmake
+            - libglib2.0-0
+            - libsndfile-dev
+            - libasound2-dev
+            - libjack-dev
+            - portaudio19-dev
+            - libpulse-dev
+            - libdbus-glib-1-dev
       env:
          - MATRIX_EVAL="CC=gcc-4.8 && CXX=g++-4.8"
+         - CMAKE_FLAGS="-Denable-floats=1"
          
     - os: linux
       addons:
         apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-4.8
+            - cmake-data
+            - cmake
+            - libglib2.0-0
+            - libsndfile-dev
+            - libasound2-dev
+            - libjack-dev
+            - portaudio19-dev
+            - libpulse-dev
+            - libdbus-glib-1-dev
+      env:
+         - MATRIX_EVAL="CC=gcc-4.8 && CXX=g++-4.8"
+         - CMAKE_FLAGS="-Denable-floats=0"
+         
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
           packages:
             - g++-4.9
+            - cmake-data
+            - cmake
+            - libglib2.0-0
       env:
          - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9"
 
@@ -45,8 +66,13 @@ matrix:
     - os: linux
       addons:
         apt:
+          sources:
+            - ubuntu-toolchain-r-test
           packages:
             - g++-5
+            - cmake-data
+            - cmake
+            - libglib2.0-0
       env:
          - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5"
 
@@ -54,8 +80,13 @@ matrix:
     - os: linux
       addons:
         apt:
+          sources:
+            - ubuntu-toolchain-r-test
           packages:
             - g++-6
+            - cmake-data
+            - cmake
+            - libglib2.0-0
       env:
         - MATRIX_EVAL="CC=gcc-6 && CXX=g++-6"
 
@@ -64,10 +95,14 @@ matrix:
       addons:
         apt:
           sources:
+            - ubuntu-toolchain-r-test
             - llvm-toolchain-precise-3.8
             - george-edison55-precise-backports
           packages:
             - clang-3.8
+            - cmake-data
+            - cmake
+            - libglib2.0-0
       env:
         - MATRIX_EVAL="CC=clang-3.8 && CXX=clang++-3.8"
 
@@ -80,6 +115,9 @@ matrix:
             - george-edison55-precise-backports
           packages:
             - clang-3.9
+            - cmake-data
+            - cmake
+            - libglib2.0-0
       env:
         - MATRIX_EVAL="CC=clang-3.9 && CXX=clang++-3.9"
 
@@ -92,6 +130,9 @@ matrix:
             - george-edison55-precise-backports
           packages:
             - clang-4.0
+            - cmake-data
+            - cmake
+            - libglib2.0-0
       env:
         - MATRIX_EVAL="CC=clang-4.0 && CXX=clang++-4.0"
 
@@ -133,5 +174,5 @@ before_script:
     - mkdir build && cd build
     
 script:
-    - cmake ${CMAKE_FLAGS} "-DCMAKE_BUILD_TYPE=RelWithDebInfo" ..
+    - cmake "${CMAKE_FLAGS}" "-DCMAKE_BUILD_TYPE=RelWithDebInfo" ..
     - make -j4
