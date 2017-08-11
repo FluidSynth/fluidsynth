@@ -1963,7 +1963,7 @@ fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defs
     /* loop is fowled?? (cluck cluck :) */
     if (sample->loopend > sample->end ||
         sample->loopstart >= sample->loopend ||
-        sample->loopstart <= sample->start)
+        sample->loopstart < sample->start)
     {
       /* can pad loop by 8 samples and ensure at least 4 for loop (2*8+4) */
       if ((sample->end - sample->start) >= 20)
@@ -3351,9 +3351,14 @@ fixup_sample (SFData * sf)
 
 	        return (OK);
 	    }
-      /* compressed samples get fixed up after decompression */
       else if (sam->sampletype & FLUID_SAMPLETYPE_OGG_VORBIS)
-	    {}
+	    {
+            /*
+             * compressed samples get fixed up after decompression
+             * 
+             * however we cant use the logic below, because uncompressed samples are stored in individual buffers
+             */
+        }
       else if (invalid_loopstart || invalid_loopend || loopend_end_mismatch)
 	    {
           /* loop is fowled?? (cluck cluck :) */
