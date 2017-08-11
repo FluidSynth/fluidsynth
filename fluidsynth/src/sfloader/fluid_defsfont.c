@@ -1960,7 +1960,23 @@ fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defs
     sample->start = 0;
     sample->end = sfinfo.frames - 1;
 
-    fixup_sample_loop(sample);
+    /* loop is fowled?? (cluck cluck :) */
+    if (sample->loopend > sample->end ||
+        sample->loopstart >= sample->loopend ||
+        sample->loopstart <= sample->start)
+    {
+      /* can pad loop by 8 samples and ensure at least 4 for loop (2*8+4) */
+      if ((sample->end - sample->start) >= 20)
+      {
+        sample->loopstart = sample->start + 8;
+        sample->loopend = sample->end - 8;
+      }
+      else /* loop is fowled, sample is tiny (can't pad 8 samples) */
+      {
+        sample->loopstart = sample->start + 1;
+        sample->loopend = sample->end - 1;
+      }
+    }
 #endif
   }
 
