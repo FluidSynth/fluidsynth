@@ -5,7 +5,33 @@ dist: trusty
 #- clang
 matrix:
   include:
-  # works on Precise and Trusty
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-4.8
+            - cmake-data
+            - cmake
+            - libglib2.0-0
+            - libsndfile-dev
+            - libasound2-dev
+            - libjack-dev
+            - portaudio19-dev
+      env:
+         #- MATRIX_EVAL="CC=gcc-4.8 && CXX=g++-4.8"
+         - CMAKE_FLAGS="-DCMAKE_C_COMPILER=gcc-4.8 -Denable-floats=1"
+         - CMAKE_FLAGS="-DCMAKE_C_COMPILER=gcc-4.8 -Denable-profiling=1"
+         - CMAKE_FLAGS="-DCMAKE_C_COMPILER=gcc-4.8 -Denable-floats=1 -Denable-profiling=1"
+         - CMAKE_FLAGS="-DCMAKE_C_COMPILER=gcc-4.8 -Denable-trap-on-fpe=1"
+         - CMAKE_FLAGS="-DCMAKE_C_COMPILER=gcc-4.8 -Denable-fpe-check=1"
+         - CMAKE_FLAGS="-DCMAKE_C_COMPILER=gcc-4.8 -Denable-debug=1"
+         - CMAKE_FLAGS="-DCMAKE_C_COMPILER=gcc-4.8 -Denable-libsndfile=0"
+         - CMAKE_FLAGS="-DCMAKE_C_COMPILER=gcc-4.8 -Denable-alsa=0"
+         - CMAKE_FLAGS="-DCMAKE_C_COMPILER=gcc-4.8 -Denable-jack=0"
+         - CMAKE_FLAGS="-DCMAKE_C_COMPILER=gcc-4.8 -Denable-portaudio=0"
+         
     - os: linux
       addons:
         apt:
@@ -108,21 +134,20 @@ matrix:
       #env:
         #- MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0"
     
-  allow_failures:
-    - os: osx
-      osx_image: xcode8
-      env:
-        - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9"
+    #- os: osx
+      #osx_image: xcode8
+      #env:
+        #- MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9"
 
-    - os: osx
-      osx_image: xcode8
-      env:
-        - MATRIX_EVAL="brew install gcc5 && CC=gcc-5 && CXX=g++-5"
+    #- os: osx
+      #osx_image: xcode8
+      #env:
+        #- MATRIX_EVAL="brew install gcc5 && CC=gcc-5 && CXX=g++-5"
 
-    - os: osx
-      osx_image: xcode8
-      env:
-        - MATRIX_EVAL="brew install gcc && CC=gcc-6 && CXX=g++-6"
+    #- os: osx
+      #osx_image: xcode8
+      #env:
+        #- MATRIX_EVAL="brew install gcc && CC=gcc-6 && CXX=g++-6"
 
 before_install:
     - eval "${MATRIX_EVAL}"
@@ -132,5 +157,5 @@ before_script:
     - mkdir build && cd build
     
 script:
-    - cmake "-DCMAKE_BUILD_TYPE=RelWithDebInfo" ..
+    - cmake "${CMAKE_FLAGS}" "-DCMAKE_BUILD_TYPE=RelWithDebInfo" ..
     - make -j4
