@@ -1912,6 +1912,7 @@ fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defs
       sfvio_tell
     };
     short *sampledata_ogg;
+    int inv_loop = FALSE;
 
     // initialize file position indicator and SF_INFO structure
     g_assert(sample->userdata == NULL);
@@ -1961,35 +1962,41 @@ fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defs
     sample->end = sfinfo.frames - 1;
 
     /* loop is fowled?? (cluck cluck :) */
-    if (sample->loopend > sample->end ||
-        sample->loopstart >= sample->loopend ||
-        sample->loopstart < sample->start)
+    if (sample->loopend-1 > sample->end /* loopend may point one sample after valid sample data, as this one will never be played */
+        || sample->loopstart >= sample->loopend)
     {
-/* always use whole sample, having an equivalent treatment to uncompressed samples */
-#if 0
-      /* can pad loop by 8 samples and ensure at least 4 for loop (2*8+4) */
-      if ((sample->end - sample->start) >= 20)
-      {
-        sample->loopstart = sample->start + 8;
-        sample->loopend = sample->end - 8;
-      }
-      else /* loop is fowled, sample is tiny (can't pad 8 samples) */
-#endif
-      {
+        FLUID_LOG (FLUID_DBG, _("Vorbis sample '%s' has unusable loop stop '%d',"
+        " setting to sample end '%d'+1"), sample->name, sample->loopend, sample->end);
+        
+        /* though illegal, loopend may be set to loopstart to disable loop */
+        /* is it worth informing the user? */
+        inv_loop |= (sample->loopend != sample->loopstart);
+        sample->loopend = sample->end+1;
+    }
+    
+    if(sample->loopstart < sample->start
+       || sample->loopstart >= sample->loopend)
+    {
+        FLUID_LOG (FLUID_DBG, _("Vorbis sample '%s' has unusable loop start '%d',"
+        " setting to sample start '%d'"), sample->name, sample->loopstart, sample->start);
         sample->loopstart = sample->start;
-        sample->loopend = sample->end;
-      }
+        inv_loop |= TRUE;
+    }
+    
+    if(inv_loop)
+    {
+        FLUID_LOG (FLUID_WARN, _("Vorbis sample '%s' has invalid loop points"), sample->name);
     }
 #endif
   }
 
   if (sample->sampletype & FLUID_SAMPLETYPE_ROM) {
     sample->valid = 0;
-    FLUID_LOG(FLUID_WARN, "Ignoring sample %s: can't use ROM samples", sample->name);
+    FLUID_LOG(FLUID_WARN, "Ignoring sample '%s': can't use ROM samples", sample->name);
   }
   if (sample->end - sample->start < 8) {
     sample->valid = 0;
-    FLUID_LOG(FLUID_WARN, "Ignoring sample %s: too few sample data points", sample->name);
+    FLUID_LOG(FLUID_WARN, "Ignoring sample '%s': too few sample data points", sample->name);
   } else {
 /*      if (sample->loopstart < sample->start + 8) { */
 /*        FLUID_LOG(FLUID_WARN, "Fixing sample %s: at least 8 data points required before loop start", sample->name);     */
@@ -3330,9 +3337,9 @@ fixup_sample (SFData * sf)
     {
       sam = (SFSample *) (p->data);
       
-      /* The SoundFont 2.4 spec defines the loop start index as the first sample point of the loop */
+      /* The SoundFont 2.4 spec defines the loopstart index as the first sample point of the loop */
       invalid_loopstart = (sam->loopstart < sam->start) || (sam->loopstart >= sam->loopend);
-      /* while loop end is the first point AFTER the last sample of the loop.
+      /* while loopend is the first point AFTER the last sample of the loop.
        * this is as it should be. however we cannot be sure whether any of sam.loopend or sam.end
        * is correct. hours of thinking through this have concluded, that it would be best practice 
        * to mangle with loops as little as necessary by only making sure loopend is within
@@ -3362,10 +3369,11 @@ fixup_sample (SFData * sf)
              * however we cant use the logic below, because uncompressed samples are stored in individual buffers
              */
         }
-      else if (invalid_loopstart || invalid_loopend || loopend_end_mismatch)
+      else if (invalid_loopstart || invalid_loopend || loopend_end_mismatch) /* loop is fowled?? (cluck cluck :) */
 	    {
-          /* loop is fowled?? (cluck cluck :) */
-          invalid_loops |= TRUE;
+            /* though illegal, loopend may be set to loopstart to disable loop */
+            /* is it worth informing the user? */
+            invalid_loops |= (sam->loopend != sam->loopstart);
 	  
 	        /* force incorrect loop points into the sample range, ignore padding */
           if(invalid_loopstart)
@@ -3378,9 +3386,11 @@ fixup_sample (SFData * sf)
           if(invalid_loopend)
 	        {
             FLUID_LOG (FLUID_DBG, _("Sample '%s' has unusable loop stop '%d',"
-              " setting to sample stop at '%d'-1"), sam->name, sam->loopend, sam->end);
-            /* since sam->end points after valid sample data, set loopend to last sample available */
-            sam->loopend = sam->end - 1;
+              " setting to sample stop at '%d'"), sam->name, sam->loopend, sam->end);
+            /* since at this time sam->end points after valid sample data (will correct that few lines below),
+             * set loopend to that first invalid sample, since it should never be played, but instead the last
+             * valid sample will be played */
+            sam->loopend = sam->end;
 	        }
 	  
           if(loopend_end_mismatch)
