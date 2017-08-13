@@ -545,7 +545,7 @@ fluid_synth_update_mixer(fluid_synth_t* synth, void* method, int intparam,
  * @param settings Configuration parameters to use (used directly).
  * @return New FluidSynth instance or NULL on error
  *
- * NOTE: The settings parameter is used directly and should not be modified
+ * @note The settings parameter is used directly and should not be modified
  * or freed independently.
  */
 fluid_synth_t*
@@ -774,7 +774,7 @@ new_fluid_synth(fluid_settings_t *settings)
  * @param synth FluidSynth instance to delete
  * @return FLUID_OK
  *
- * NOTE: Other users of a synthesizer instance, such as audio and MIDI drivers,
+ * @note Other users of a synthesizer instance, such as audio and MIDI drivers,
  * should be deleted prior to freeing the FluidSynth instance.
  */
 int
@@ -1836,7 +1836,7 @@ fluid_synth_set_preset (fluid_synth_t *synth, int chan, fluid_preset_t *preset)
 /* Get a preset by SoundFont, bank and program numbers.
  * Returns preset pointer or NULL.
  *
- * NOTE: The returned preset has been allocated, caller owns it and should
+ * @note The returned preset has been allocated, caller owns it and should
  *       free it when finished using it.
  */
 static fluid_preset_t*
@@ -1868,7 +1868,7 @@ fluid_synth_get_preset(fluid_synth_t* synth, unsigned int sfontnum,
 /* Get a preset by SoundFont name, bank and program.
  * Returns preset pointer or NULL.
  *
- * NOTE: The returned preset has been allocated, caller owns it and should
+ * @note The returned preset has been allocated, caller owns it and should
  *       free it when finished using it.
  */
 static fluid_preset_t*
@@ -1897,7 +1897,7 @@ fluid_synth_get_preset_by_sfont_name(fluid_synth_t* synth, const char *sfontname
 /* Find a preset by bank and program numbers.
  * Returns preset pointer or NULL.
  *
- * NOTE: The returned preset has been allocated, caller owns it and should
+ * @note The returned preset has been allocated, caller owns it and should
  *       free it when finished using it. */
 fluid_preset_t*
 fluid_synth_find_preset(fluid_synth_t* synth, unsigned int banknum,
@@ -2197,7 +2197,7 @@ fluid_synth_update_sample_rate(fluid_synth_t* synth, char* name, double value)
 
 /**
  * Set sample rate of the synth. 
- * NOTE: This function is currently experimental and should only be 
+ * @note This function is currently experimental and should only be 
  * used when no voices or notes are active, and before any rendering calls.
  * @param synth FluidSynth instance
  * @param sample_rate New sample rate (Hz)
@@ -2851,7 +2851,7 @@ fluid_synth_write_s16(fluid_synth_t* synth, int len,
  * @param roff Offset index in 'rout' for first sample
  * @param rincr Increment between samples stored to 'rout'
  *
- * NOTE: Currently private to libfluidsynth.
+ * @note Currently private to libfluidsynth.
  */
 void
 fluid_synth_dither_s16(int *dither_index, int len, float* lin, float* rin,
@@ -3039,7 +3039,7 @@ fluid_synth_free_voice_by_kill_LOCAL(fluid_synth_t* synth)
  * The returned voice comes with default modulators and generators.
  * A single noteon event may create any number of voices, when the preset is layered.
  *
- * NOTE: Should only be called from within synthesis thread, which includes
+ * @note Should only be called from within synthesis thread, which includes
  * SoundFont loader preset noteon method.
  */
 fluid_voice_t*
@@ -3151,7 +3151,7 @@ fluid_synth_kill_by_exclusive_class_LOCAL(fluid_synth_t* synth,
  * This function is called by a SoundFont's preset in response to a noteon
  * event.  Exclusive classes are processed here.
  *
- * NOTE: Should only be called from within synthesis thread, which includes
+ * @note Should only be called from within synthesis thread, which includes
  * SoundFont loader preset noteon method.
  */
 void
@@ -3186,7 +3186,7 @@ fluid_synth_start_voice(fluid_synth_t* synth, fluid_voice_t* voice)
  * method even non SoundFont instruments can be synthesized, although limited
  * to the SoundFont synthesis model.
  *
- * NOTE: Should only be called before any SoundFont files are loaded.
+ * @note Should only be called before any SoundFont files are loaded.
  */
 void
 fluid_synth_add_sfloader(fluid_synth_t* synth, fluid_sfloader_t* loader)
@@ -3472,7 +3472,7 @@ fluid_synth_add_sfont(fluid_synth_t* synth, fluid_sfont_t* sfont)
  *
  * SoundFont is not freed and is left as the responsibility of the caller.
  *
- * NOTE: The SoundFont should only be freed after there are no presets
+ * @note The SoundFont should only be freed after there are no presets
  *   referencing it.  This can only be ensured by the SoundFont loader and
  *   therefore this function should not normally be used.
  */
@@ -3527,7 +3527,7 @@ fluid_synth_sfcount(fluid_synth_t* synth)
  * @param num SoundFont index on the stack (starting from 0 for top of stack).
  * @return SoundFont instance or NULL if invalid index
  *
- * NOTE: Caller should be certain that SoundFont is not deleted (unloaded) for
+ * @note Caller should be certain that SoundFont is not deleted (unloaded) for
  * the duration of use of the returned pointer.
  */
 fluid_sfont_t *
@@ -3549,7 +3549,7 @@ fluid_synth_get_sfont(fluid_synth_t* synth, unsigned int num)
  * @param id SoundFont ID
  * @return SoundFont instance or NULL if invalid ID
  *
- * NOTE: Caller should be certain that SoundFont is not deleted (unloaded) for
+ * @note Caller should be certain that SoundFont is not deleted (unloaded) for
  * the duration of use of the returned pointer.
  */
 fluid_sfont_t *
@@ -3577,7 +3577,7 @@ fluid_synth_get_sfont_by_id(fluid_synth_t* synth, unsigned int id)
  * @return SoundFont instance or NULL if invalid name
  * @since 1.1.0
  *
- * NOTE: Caller should be certain that SoundFont is not deleted (unloaded) for
+ * @note Caller should be certain that SoundFont is not deleted (unloaded) for
  * the duration of use of the returned pointer.
  */
 fluid_sfont_t *
@@ -3606,7 +3606,7 @@ fluid_synth_get_sfont_by_name(fluid_synth_t* synth, const char *name)
  * @return Preset or NULL if no preset active on channel
  * @deprecated fluid_synth_get_channel_info() should replace most use cases.
  *
- * NOTE: Should only be called from within synthesis thread, which includes
+ * @note Should only be called from within synthesis thread, which includes
  * SoundFont loader preset noteon methods.  Not thread safe otherwise.
  */
 fluid_preset_t *
@@ -3684,7 +3684,7 @@ fluid_synth_get_channel_info (fluid_synth_t *synth, int chan,
  * @param bufsize Count of indexes in buf
  * @param id Voice ID to search for or < 0 to return list of all playing voices
  *
- * NOTE: Should only be called from within synthesis thread, which includes
+ * @note Should only be called from within synthesis thread, which includes
  * SoundFont loader preset noteon methods.  Voices are only guaranteed to remain
  * unchanged until next synthesis process iteration.
  */
@@ -3731,7 +3731,7 @@ fluid_synth_set_reverb_on(fluid_synth_t* synth, int on)
  * @param num Reverb preset number
  * @return FLUID_OK on success, FLUID_FAILED otherwise
  *
- * NOTE: Currently private to libfluidsynth.
+ * @note Currently private to libfluidsynth.
  */
 int
 fluid_synth_set_reverb_preset(fluid_synth_t* synth, int num)
@@ -3757,7 +3757,7 @@ fluid_synth_set_reverb_preset(fluid_synth_t* synth, int num)
  * @param width Reverb width value (0.0-100.0)
  * @param level Reverb level value (0.0-1.0)
  *
- * NOTE: Not realtime safe and therefore should not be called from synthesis
+ * @note Not realtime safe and therefore should not be called from synthesis
  * context at the risk of stalling audio output.
  */
 void
@@ -3778,7 +3778,7 @@ fluid_synth_set_reverb(fluid_synth_t* synth, double roomsize, double damping,
  * @param level Reverb level value (0.0-1.0)
  * @return FLUID_OK on success, FLUID_FAILED otherwise
  *
- * NOTE: Not realtime safe and therefore should not be called from synthesis
+ * @note Not realtime safe and therefore should not be called from synthesis
  * context at the risk of stalling audio output.
  */
 int
@@ -4298,7 +4298,7 @@ fluid_synth_update_voice_tuning_LOCAL (fluid_synth_t *synth, fluid_channel_t *ch
  *   Pass NULL to create a well-tempered (normal) scale.
  * @return FLUID_OK on success, FLUID_FAILED otherwise
  *
- * NOTE: Tuning is not applied in realtime to existing notes of the replaced
+ * @note Tuning is not applied in realtime to existing notes of the replaced
  * tuning (if any), use fluid_synth_activate_key_tuning() instead to specify
  * this behavior.
  */
@@ -4360,7 +4360,7 @@ fluid_synth_activate_key_tuning(fluid_synth_t* synth, int bank, int prog,
  *   tuning amount)
  * @return FLUID_OK on success, FLUID_FAILED otherwise
  *
- * NOTE: Tuning is not applied in realtime to existing notes of the replaced
+ * @note Tuning is not applied in realtime to existing notes of the replaced
  * tuning (if any), use fluid_synth_activate_octave_tuning() instead to specify
  * this behavior.
  */
@@ -4425,7 +4425,7 @@ fluid_synth_activate_octave_tuning(fluid_synth_t* synth, int bank, int prog,
  *   the specified tuning, FALSE otherwise
  * @return FLUID_OK on success, FLUID_FAILED otherwise
  *
- * NOTE: Prior to version 1.1.0 it was an error to specify a tuning that didn't
+ * @note Prior to version 1.1.0 it was an error to specify a tuning that didn't
  * already exist.  Starting with 1.1.0, the default equal tempered scale will be
  * used as a basis, if no tuning exists for the given bank and prog.
  */
@@ -4473,11 +4473,11 @@ fluid_synth_tune_notes(fluid_synth_t* synth, int bank, int prog,
  * @param prog Tuning preset number (0-127), not related to MIDI instrument program
  * @return FLUID_OK on success, FLUID_FAILED otherwise
  *
- * NOTE: This function does NOT activate tuning in realtime, use
+ * @note This function does NOT activate tuning in realtime, use
  * fluid_synth_activate_tuning() instead to specify whether tuning change
  * should cause existing notes to update.
  *
- * NOTE: Prior to version 1.1.0 it was an error to select a tuning that didn't
+ * @note Prior to version 1.1.0 it was an error to select a tuning that didn't
  * already exist.  Starting with 1.1.0, a default equal tempered scale will be
  * created, if no tuning exists for the given bank and prog.
  */
@@ -4497,7 +4497,7 @@ fluid_synth_select_tuning(fluid_synth_t* synth, int chan, int bank, int prog)
  * @return FLUID_OK on success, FLUID_FAILED otherwise
  * @since 1.1.0
  *
- * NOTE: A default equal tempered scale will be created, if no tuning exists
+ * @note A default equal tempered scale will be created, if no tuning exists
  * on the given bank and prog.
  */
 int
@@ -4570,7 +4570,7 @@ fluid_synth_set_tuning_LOCAL (fluid_synth_t *synth, int chan,
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
  * @return FLUID_OK on success, FLUID_FAILED otherwise
  *
- * NOTE: This function does NOT activate tuning change in realtime, use
+ * @note This function does NOT activate tuning change in realtime, use
  * fluid_synth_deactivate_tuning() instead to specify whether tuning change
  * should cause existing notes to update.
  */
@@ -4911,7 +4911,7 @@ fluid_synth_get_gen(fluid_synth_t* synth, int chan, int param)
  * @param synth FluidSynth instance
  * @param router MIDI router to assign to the synth
  *
- * NOTE: This should only be done once and prior to using the synth.
+ * @note This should only be done once and prior to using the synth.
  */
 void
 fluid_synth_set_midi_router(fluid_synth_t* synth, fluid_midi_router_t* router)
@@ -4978,7 +4978,7 @@ fluid_synth_handle_midi_event(void* data, fluid_midi_event_t* event)
  * @param vel MIDI velocity number (1-127)
  * @return FLUID_OK on success, FLUID_FAILED otherwise
  *
- * NOTE: Should only be called from within synthesis thread, which includes
+ * @note Should only be called from within synthesis thread, which includes
  * SoundFont loader preset noteon method.
  */
 int
@@ -5001,7 +5001,7 @@ fluid_synth_start(fluid_synth_t* synth, unsigned int id, fluid_preset_t* preset,
  * @param id Voice note event ID
  * @return FLUID_OK on success, FLUID_FAILED otherwise
  *
- * NOTE: In FluidSynth versions prior to 1.1.0 #FLUID_FAILED would be returned
+ * @note In FluidSynth versions prior to 1.1.0 #FLUID_FAILED would be returned
  * if no matching voice note event ID was found.  Versions after 1.1.0 only
  * return #FLUID_FAILED if an error occurs.
  */

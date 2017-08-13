@@ -313,7 +313,7 @@ fluid_voice_init(fluid_voice_t* voice, fluid_sample_t* sample,
 
 /**
  * Update sample rate. 
- * NOTE: If the voice is active, it will be turned off.
+ * @note If the voice is active, it will be turned off.
  */
 int 
 fluid_voice_set_output_rate(fluid_voice_t* voice, fluid_real_t value)

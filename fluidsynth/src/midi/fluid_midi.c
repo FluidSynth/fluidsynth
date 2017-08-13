@@ -1021,7 +1021,7 @@ fluid_midi_event_set_pitch(fluid_midi_event_t *evt, int val)
  *   with delete_fluid_midi_event())
  * @return Always returns #FLUID_OK
  *
- * NOTE: Unlike the other event assignment functions, this one sets evt->type.
+ * @note Unlike the other event assignment functions, this one sets evt->type.
  */
 int
 fluid_midi_event_set_sysex(fluid_midi_event_t *evt, void *data, int size, int dynamic)
