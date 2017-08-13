@@ -184,12 +184,7 @@ fluid_voice_unlock_rvoice(fluid_voice_t* voice)
 }
 
 
-#define fluid_voice_get_channel(voice)  ((voice)->channel)
-
-
 #define fluid_voice_set_id(_voice, _id)  { (_voice)->id = (_id); }
-#define fluid_voice_get_chan(_voice)     (_voice)->chan
-
 
 #define _PLAYING(voice)  (((voice)->status == FLUID_VOICE_ON) || \
                                            _SUSTAINED(voice)  || \

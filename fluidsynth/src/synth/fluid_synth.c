@@ -3678,7 +3678,7 @@ fluid_synth_get_channel_info (fluid_synth_t *synth, int chan,
 }
 
 /**
- * Get list of voices.
+ * Get list of currently playing voices.
  * @param synth FluidSynth instance
  * @param buf Array to store voices to (NULL terminated if not filled completely)
  * @param bufsize Count of indexes in buf

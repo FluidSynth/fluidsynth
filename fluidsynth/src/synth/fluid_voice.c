@@ -1403,6 +1403,39 @@ int fluid_voice_is_playing(fluid_voice_t* voice)
   return _PLAYING(voice);
 }
 
+/**
+ * If the voice is playing gets the midi channel the voice is playing on. Else the result is undefined.
+ * @param voice Voice instance
+ * @return The channel assigned to this voice
+ * @since 1.1.7
+ */
+int fluid_voice_get_channel(fluid_voice_t* voice)
+{
+  return voice->chan;
+}
+
+/**
+ * If the voice is playing gets the midi key the voice is playing on. Else the result is undefined.
+ * @param voice Voice instance
+ * @return The midi key assigned to this voice
+ * @since 1.1.7
+ */
+int fluid_voice_get_key(fluid_voice_t* voice)
+{
+  return voice->key;
+}
+
+/**
+ * If the voice is playing gets the midi velocity the voice is playing at. Else the result is undefined.
+ * @param voice Voice instance
+ * @return The midi velocity assigned to this voice
+ * @since 1.1.7
+ */
+int fluid_voice_get_velocity(fluid_voice_t* voice)
+{
+  return voice->vel;
+}
+
 /*
  * fluid_voice_get_lower_boundary_for_attenuation
  *
