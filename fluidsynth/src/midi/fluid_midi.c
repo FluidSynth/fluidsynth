@@ -1785,33 +1785,55 @@ fluid_player_join(fluid_player_t *player)
     return FLUID_OK;
 }
 
-
-int fluid_player_get_current_tick( fluid_player_t * player )
+/**
+ * Get the number of tempo ticks passed.
+ * @param player MIDI player instance
+ * @return The number of tempo ticks passed
+ * @since 1.1.7
+ */
+int fluid_player_get_current_tick(fluid_player_t * player)
 {
     return player->cur_ticks;
 }
 
-int fluid_player_get_total_ticks( fluid_player_t * player )
+/**
+ * Looks through all available MIDI tracks and gets the absolute tick of the very last event to play. 
+ * @param player MIDI player instance
+ * @return Total tick count of the sequence
+ * @since 1.1.7
+ */
+int fluid_player_get_total_ticks(fluid_player_t * player)
 {
     int i;
     int maxTicks = 0;
     for (i = 0; i < player->ntracks; i++) {
         if (player->track[i] != NULL) {
-            int ticks = fluid_track_get_duration( player->track[i] );
+            int ticks = fluid_track_get_duration(player->track[i]);
             if( ticks > maxTicks )
                 maxTicks = ticks;
         }
     }
     return maxTicks;
-
 }
 
-int fluid_player_get_bpm( fluid_player_t * player )
+/**
+ * Get the tempo of a MIDI player in beats per minute.
+ * @param player MIDI player instance
+ * @return MIDI player tempo in BPM
+ * @since 1.1.7
+ */
+int fluid_player_get_bpm(fluid_player_t * player)
 {
-    return   (int)( 60e6 / player->miditempo );
+    return (int)(60e6 / player->miditempo);
 }
 
-int fluid_player_get_midi_tempo( fluid_player_t * player )
+/**
+ * Get the tempo of a MIDI player.
+ * @param player MIDI player instance
+ * @return Tempo of the MIDI player (in microseconds per quarter note, as per MIDI file spec)
+ * @since 1.1.7
+ */
+int fluid_player_get_midi_tempo(fluid_player_t * player)
 {
     return player->miditempo;
 }
