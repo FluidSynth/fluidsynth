@@ -634,7 +634,7 @@ new_fluid_synth(fluid_settings_t *settings)
   fluid_settings_getint(settings, "synth.cpu-cores", &synth->cores);
 
   fluid_settings_getint(settings, "synth.high-pass-filter", &synth->with_high_pass);
-  fluid_settings_getint(settings, "synth.high-pass-filter", &synth->with_band_pass);
+  fluid_settings_getint(settings, "synth.band-pass-filter", &synth->with_band_pass);
 
   /* register the callbacks */
   fluid_settings_register_num(settings, "synth.sample-rate",
