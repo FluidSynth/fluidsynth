@@ -165,15 +165,21 @@ fluid_iir_filter_set_fres(fluid_iir_filter_t* iir_filter,
   iir_filter->last_fres = -1.;
 }
 
-
 void 
 fluid_iir_filter_set_q_dB(fluid_iir_filter_t* iir_filter, 
                           fluid_real_t q_dB)
 {
     /* The 'sound font' Q is defined in dB. The filter needs a linear
        q. Convert. */
-    iir_filter->q_lin = (fluid_real_t) (pow(10.0f, q_dB / 20.0f));
+    fluid_iir_filter_set_q_linear(iir_filter, pow(10.0f, q_dB / 20.0f));
+}
 
+void 
+fluid_iir_filter_set_q_linear(fluid_iir_filter_t* iir_filter, 
+                          fluid_real_t q_linear)
+{
+    iir_filter->q_lin = q_linear;
+    
     /* SF 2.01 page 59:
      *
      *  The SoundFont specs ask for a gain reduction equal to half the
@@ -189,9 +195,7 @@ fluid_iir_filter_set_q_dB(fluid_iir_filter_t* iir_filter,
 
     /* The synthesis loop will have to recalculate the filter coefficients. */
     iir_filter->last_fres = -1.;
-
 }
-
 
 static inline void 
 fluid_iir_filter_calculate_coefficients(fluid_iir_filter_t* iir_filter, 
@@ -235,7 +239,7 @@ fluid_iir_filter_calculate_coefficients(fluid_iir_filter_t* iir_filter,
     case FLUID_IIR_BANDPASS:
       b1_temp = 0;
       
-      b0_temp = sin_coeff * 0.5f * a0_inv;
+      b0_temp = sin_coeff * 0.5f * a0_inv * iir_filter->filter_gain;
       b2_temp = -b0_temp;
       break;
       

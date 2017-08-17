@@ -41,6 +41,9 @@ void fluid_iir_filter_reset(fluid_iir_filter_t* iir_filter);
 void fluid_iir_filter_set_q_dB(fluid_iir_filter_t* iir_filter, 
                                fluid_real_t q_dB);
 
+void fluid_iir_filter_set_q_linear(fluid_iir_filter_t* iir_filter, 
+                               fluid_real_t q_linear);
+
 void fluid_iir_filter_set_fres(fluid_iir_filter_t* iir_filter, 
                                fluid_real_t fres);
 

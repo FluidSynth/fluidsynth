@@ -466,7 +466,7 @@ fluid_synth_init(void)
 		       );
   fluid_mod_set_source2(&custom_cc2bpfilterfc_mod, 0, 0);
   fluid_mod_set_dest(&custom_cc2bpfilterfc_mod, GEN_BPFILTERFC);
-  fluid_mod_set_amount(&custom_cc2bpfilterfc_mod, 8000);
+  fluid_mod_set_amount(&custom_cc2bpfilterfc_mod, 10000);
   
   /* Custom CC33 -> Band-Pass Filter Q */
   fluid_mod_set_source1(&custom_cc2bpfilterq_mod, 33,
@@ -477,7 +477,7 @@ fluid_synth_init(void)
 		       );
   fluid_mod_set_source2(&custom_cc2bpfilterq_mod, 0, 0);
   fluid_mod_set_dest(&custom_cc2bpfilterq_mod, GEN_BPFILTERQ);
-  fluid_mod_set_amount(&custom_cc2bpfilterq_mod, 1);
+  fluid_mod_set_amount(&custom_cc2bpfilterq_mod, 10);
 }
 
 static FLUID_INLINE unsigned int fluid_synth_get_ticks(fluid_synth_t* synth)

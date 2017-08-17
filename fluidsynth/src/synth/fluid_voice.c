@@ -831,7 +831,6 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
 		/* FIXME: setting the high-pass Q to a fixed amount here is just
 		 * ugly. Find a better way to do that! */
     UPDATE_RVOICE_HPFILTER1(fluid_iir_filter_set_q_dB, -3.01f);
-
     break;
 
   /* same as the two above, only for the high-pass filter */
@@ -853,10 +852,8 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
     break;
 
   case GEN_BPFILTERQ:
-    q_dB = _GEN(voice, GEN_BPFILTERQ) / 10.0f;
-    fluid_clip(q_dB, 0.0f, 96.0f);
-    q_dB -= 3.01f;
-    UPDATE_RVOICE_BPFILTER1(fluid_iir_filter_set_q_dB, q_dB);
+    x = _GEN(voice, GEN_BPFILTERQ);
+    UPDATE_RVOICE_BPFILTER1(fluid_iir_filter_set_q_linear, x);
     break;
     
   case GEN_MODLFOTOPITCH:
