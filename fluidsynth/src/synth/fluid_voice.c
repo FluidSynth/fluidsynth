@@ -173,6 +173,13 @@ static void fluid_voice_initialize_rvoice(fluid_voice_t* voice)
                           0xffffffff, 1.0f, 0.0f, -1.0f, 2.0f);
   fluid_voice_update_modenv(voice, FLUID_VOICE_ENVFINISHED, 
                           0xffffffff, 0.0f, 0.0f, -1.0f, 1.0f);
+  
+  
+  /* Setup low-pass and high-pass signs. */
+  voice->rvoice->resonant_filter.high_low_sign = 1;
+  voice->rvoice->resonant_hp_filter.high_low_sign = -1;
+  
+  voice->rvoice->resonant_filter.enabled = TRUE;
 }
 
 /*
@@ -204,8 +211,8 @@ new_fluid_voice(fluid_real_t output_rate)
   voice->sample = NULL;
 
   /* Initialize both the rvoice and overflow_rvoice */
-  voice->can_access_rvoice = 1; 
-  voice->can_access_overflow_rvoice = 1; 
+  voice->can_access_rvoice = TRUE; 
+  voice->can_access_overflow_rvoice = TRUE; 
   fluid_voice_initialize_rvoice(voice);
   fluid_voice_swap_rvoice(voice);
   fluid_voice_initialize_rvoice(voice);

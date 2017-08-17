@@ -72,7 +72,7 @@ struct _fluid_iir_filter_t
 
 	int high_low_sign;              /* controls the sign of two factors to
 					   switch between low-pass (1) and
-					   high-pass (1) coefficients */
+					   high-pass (-1) coefficients */
 	int enabled;
 };
 
