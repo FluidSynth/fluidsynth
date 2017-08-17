@@ -25,9 +25,16 @@
 
 typedef struct _fluid_iir_filter_t fluid_iir_filter_t;
 
+enum fluid_iir_filter_type {
+    FLUID_IIR_LOWPASS=0,
+    FLUID_IIR_HIGHPASS,
+    FLUID_IIR_BANDPASS,
+};
+
+void fluid_iir_filter_init(fluid_iir_filter_t* iir_filter, enum fluid_iir_filter_type, int is_enabled);
 
 void fluid_iir_filter_apply(fluid_iir_filter_t* iir_filter,
-                            fluid_real_t *dsp_buf, int dsp_buf_count); 
+                            fluid_real_t *dsp_buf, int dsp_buf_count);
 
 void fluid_iir_filter_reset(fluid_iir_filter_t* iir_filter);
 
@@ -39,22 +46,26 @@ void fluid_iir_filter_set_fres(fluid_iir_filter_t* iir_filter,
 
 void fluid_iir_filter_calc(fluid_iir_filter_t* iir_filter, 
                            fluid_real_t output_rate, 
-                           fluid_real_t fres_mod); 
+                           fluid_real_t fres_mod);
 
 /* We can't do information hiding here, as fluid_voice_t includes the struct
    without a pointer. */
 struct _fluid_iir_filter_t
 {
+	int enabled;
+	enum fluid_iir_filter_type type; /* specifies the type of this filter (highpass, lowpass or bandpass) */
+    
 	/* filter coefficients */
 	/* The coefficients are normalized to a0. */
-	/* b0 and b2 are identical => b02 */
-	fluid_real_t b02;              /* b0 / a0 */
+	fluid_real_t b0;              /* b0 / a0 */
 	fluid_real_t b1;              /* b1 / a0 */
+	fluid_real_t b2;              /* b2 / a0 */
 	fluid_real_t a1;              /* a0 / a0 */
 	fluid_real_t a2;              /* a1 / a0 */
 
-	fluid_real_t b02_incr;
+	fluid_real_t b0_incr;
 	fluid_real_t b1_incr;
+	fluid_real_t b2_incr;
 	fluid_real_t a1_incr;
 	fluid_real_t a2_incr;
 	int filter_coeff_incr_count;
@@ -69,11 +80,6 @@ struct _fluid_iir_filter_t
 	/* indicates, that the filter has to be recalculated. */
 	fluid_real_t q_lin;             /* the q-factor on a linear scale */
 	fluid_real_t filter_gain;       /* Gain correction factor, depends on q */
-
-	int high_low_sign;              /* controls the sign of two factors to
-					   switch between low-pass (1) and
-					   high-pass (-1) coefficients */
-	int enabled;
 };
 
 #endif

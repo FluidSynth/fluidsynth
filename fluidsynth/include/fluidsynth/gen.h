@@ -104,6 +104,10 @@ enum fluid_gen_type {
   GEN_HPFILTERFC,		/**< High-pass filter cutoff */
   GEN_HPFILTERQ,		/**< High-pass filter Q */
 
+  /* non-standard generator for an additional band-pass filter */
+  GEN_BPFILTERFC,		/**< Band-pass filter cutoff */
+  GEN_BPFILTERQ,		/**< Band-pass filter Q */
+  
   GEN_LAST			/**< Value defines the count of generators (#fluid_gen_type) */
 };
 

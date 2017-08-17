@@ -99,6 +99,7 @@ fluid_voice_get_lower_boundary_for_attenuation(fluid_voice_t* voice);
 #define UPDATE_RVOICE_I1(proc, arg1) UPDATE_RVOICE_GENERIC_I1(proc, voice->rvoice, arg1)
 #define UPDATE_RVOICE_FILTER1(proc, arg1) UPDATE_RVOICE_GENERIC_R1(proc, &voice->rvoice->resonant_filter, arg1)
 #define UPDATE_RVOICE_HPFILTER1(proc, arg1) UPDATE_RVOICE_GENERIC_R1(proc, &voice->rvoice->resonant_hp_filter, arg1)
+#define UPDATE_RVOICE_BPFILTER1(proc, arg1) UPDATE_RVOICE_GENERIC_R1(proc, &voice->rvoice->resonant_bp_filter, arg1)
 
 #define UPDATE_RVOICE2(proc, iarg, rarg) UPDATE_RVOICE_GENERIC_IR(proc, voice->rvoice, iarg, rarg)
 #define UPDATE_RVOICE_BUFFERS2(proc, iarg, rarg) UPDATE_RVOICE_GENERIC_IR(proc, &voice->rvoice->buffers, iarg, rarg)
@@ -174,12 +175,9 @@ static void fluid_voice_initialize_rvoice(fluid_voice_t* voice)
   fluid_voice_update_modenv(voice, FLUID_VOICE_ENVFINISHED, 
                           0xffffffff, 0.0f, 0.0f, -1.0f, 1.0f);
   
-  
-  /* Setup low-pass and high-pass signs. */
-  voice->rvoice->resonant_filter.high_low_sign = 1;
-  voice->rvoice->resonant_hp_filter.high_low_sign = -1;
-  
-  voice->rvoice->resonant_filter.enabled = TRUE;
+  fluid_iir_filter_init(&voice->rvoice->resonant_filter,    FLUID_IIR_LOWPASS, TRUE);
+  fluid_iir_filter_init(&voice->rvoice->resonant_hp_filter, FLUID_IIR_HIGHPASS, FALSE);
+  fluid_iir_filter_init(&voice->rvoice->resonant_bp_filter, FLUID_IIR_BANDPASS, FALSE);
 }
 
 /*
@@ -512,7 +510,7 @@ fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t* voice)
 {
   int i;
 
-  int list_of_generators_to_initialize[35] = {
+  static const int list_of_generators_to_initialize[] = {
     GEN_STARTADDROFS,                    /* SF2.01 page 48 #0   */
     GEN_ENDADDROFS,                      /*                #1   */
     GEN_STARTLOOPADDROFS,                /*                #2   */
@@ -563,6 +561,10 @@ fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t* voice)
     /* GEN_FINETUNE             [1]                        #52  */
     GEN_OVERRIDEROOTKEY,                 /*                #58  */
     GEN_PITCH,                           /*                ---  */
+    GEN_HPFILTERFC,                      /*                ---  */
+    GEN_HPFILTERQ,                       /*                ---  */
+    GEN_BPFILTERFC,                      /*                ---  */
+    GEN_BPFILTERQ,                       /*                ---  */
     -1};                                 /* end-of-list marker  */
 
   /* When the voice is made ready for the synthesis process, a lot of
@@ -845,6 +847,18 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
     UPDATE_RVOICE_HPFILTER1(fluid_iir_filter_set_q_dB, q_dB);
     break;
 
+  case GEN_BPFILTERFC:
+    x = _GEN(voice, GEN_BPFILTERFC);
+    UPDATE_RVOICE_BPFILTER1(fluid_iir_filter_set_fres, x);
+    break;
+
+  case GEN_BPFILTERQ:
+    q_dB = _GEN(voice, GEN_BPFILTERQ) / 10.0f;
+    fluid_clip(q_dB, 0.0f, 96.0f);
+    q_dB -= 3.01f;
+    UPDATE_RVOICE_BPFILTER1(fluid_iir_filter_set_q_dB, q_dB);
+    break;
+    
   case GEN_MODLFOTOPITCH:
     x = _GEN(voice, GEN_MODLFOTOPITCH);
     fluid_clip(x, -12000.0, 12000.0);
@@ -1683,9 +1697,15 @@ fluid_voice_get_overflow_prio(fluid_voice_t* voice,
   return this_voice_prio;
 }
 
-void
-fluid_voice_enable_high_pass_filter(fluid_voice_t *voice, int enabled)
+void fluid_voice_enable_high_pass_filter(fluid_voice_t *voice, int enabled)
 {
 	voice->rvoice->resonant_hp_filter.enabled = enabled;
 	voice->overflow_rvoice->resonant_hp_filter.enabled = enabled;
 }
+
+void fluid_voice_enable_band_pass_filter(fluid_voice_t *voice, int enabled)
+{
+	voice->rvoice->resonant_bp_filter.enabled = enabled;
+	voice->overflow_rvoice->resonant_bp_filter.enabled = enabled;
+}
+

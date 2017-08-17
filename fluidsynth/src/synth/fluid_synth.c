@@ -140,6 +140,8 @@ fluid_mod_t default_chorus_mod;         /* SF2.01 section 8.4.9  */
 fluid_mod_t default_pitch_bend_mod;     /* SF2.01 section 8.4.10 */
 
 fluid_mod_t custom_cc2hpfilterfc_mod;
+fluid_mod_t custom_cc2bpfilterfc_mod;
+fluid_mod_t custom_cc2bpfilterq_mod;
 
 /* reverb presets */
 static fluid_revmodel_presets_t revmodel_preset[] = {
@@ -229,6 +231,8 @@ void fluid_synth_settings(fluid_settings_t* settings)
   fluid_settings_add_option(settings, "synth.midi-bank-select", "mma");
 
   fluid_settings_register_int(settings, "synth.high-pass-filter", 0, 0, 1,
+                              FLUID_HINT_TOGGLED, NULL, NULL);
+  fluid_settings_register_int(settings, "synth.band-pass-filter", 0, 0, 1,
                               FLUID_HINT_TOGGLED, NULL, NULL);
 }
 
@@ -447,11 +451,33 @@ fluid_synth_init(void)
 		       FLUID_MOD_CC
 		       | FLUID_MOD_LINEAR
 		       | FLUID_MOD_UNIPOLAR
-                       | FLUID_MOD_POSITIVE
+		       | FLUID_MOD_POSITIVE
 		       );
   fluid_mod_set_source2(&custom_cc2hpfilterfc_mod, 0, 0);
   fluid_mod_set_dest(&custom_cc2hpfilterfc_mod, GEN_HPFILTERFC);
   fluid_mod_set_amount(&custom_cc2hpfilterfc_mod, 8000);
+  
+  /* Custom CC34 -> Band-Pass Filter Cutoff */
+  fluid_mod_set_source1(&custom_cc2bpfilterfc_mod, 34,
+		       FLUID_MOD_CC
+		       | FLUID_MOD_LINEAR
+		       | FLUID_MOD_UNIPOLAR
+		       | FLUID_MOD_POSITIVE
+		       );
+  fluid_mod_set_source2(&custom_cc2bpfilterfc_mod, 0, 0);
+  fluid_mod_set_dest(&custom_cc2bpfilterfc_mod, GEN_BPFILTERFC);
+  fluid_mod_set_amount(&custom_cc2bpfilterfc_mod, 8000);
+  
+  /* Custom CC33 -> Band-Pass Filter Q */
+  fluid_mod_set_source1(&custom_cc2bpfilterq_mod, 33,
+		       FLUID_MOD_CC
+		       | FLUID_MOD_LINEAR
+		       | FLUID_MOD_UNIPOLAR
+		       | FLUID_MOD_POSITIVE
+		       );
+  fluid_mod_set_source2(&custom_cc2bpfilterq_mod, 0, 0);
+  fluid_mod_set_dest(&custom_cc2bpfilterq_mod, GEN_BPFILTERQ);
+  fluid_mod_set_amount(&custom_cc2bpfilterq_mod, 1);
 }
 
 static FLUID_INLINE unsigned int fluid_synth_get_ticks(fluid_synth_t* synth)
@@ -608,6 +634,7 @@ new_fluid_synth(fluid_settings_t *settings)
   fluid_settings_getint(settings, "synth.cpu-cores", &synth->cores);
 
   fluid_settings_getint(settings, "synth.high-pass-filter", &synth->with_high_pass);
+  fluid_settings_getint(settings, "synth.high-pass-filter", &synth->with_band_pass);
 
   /* register the callbacks */
   fluid_settings_register_num(settings, "synth.sample-rate",
@@ -735,7 +762,12 @@ new_fluid_synth(fluid_settings_t *settings)
   for (i = 0; i < synth->nvoice; i++) {
 		fluid_voice_enable_high_pass_filter(synth->voice[i], synth->with_high_pass);
   }
-
+  
+  /* enable band-pass filter */
+  for (i = 0; i < synth->nvoice; i++) {
+		fluid_voice_enable_band_pass_filter(synth->voice[i], synth->with_band_pass);
+  }
+  
   fluid_synth_set_sample_rate(synth, synth->sample_rate);
   
   fluid_synth_update_overflow(synth, "", 0.0f);
@@ -3135,6 +3167,8 @@ fluid_synth_alloc_voice(fluid_synth_t* synth, fluid_sample_t* sample, int chan, 
   fluid_voice_add_mod(voice, &default_pitch_bend_mod, FLUID_VOICE_DEFAULT); /* SF2.01 $8.4.10 */
 
   fluid_voice_add_mod(voice, &custom_cc2hpfilterfc_mod, FLUID_VOICE_DEFAULT);
+  fluid_voice_add_mod(voice, &custom_cc2bpfilterfc_mod, FLUID_VOICE_DEFAULT);
+  fluid_voice_add_mod(voice, &custom_cc2bpfilterq_mod, FLUID_VOICE_DEFAULT);
 
   FLUID_API_RETURN(voice);
 }

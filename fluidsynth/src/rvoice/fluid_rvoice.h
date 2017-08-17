@@ -151,6 +151,7 @@ struct _fluid_rvoice_t
 	fluid_rvoice_dsp_t dsp; 
 	fluid_iir_filter_t resonant_filter; /* IIR resonant dsp filter */
 	fluid_iir_filter_t resonant_hp_filter; /* IIR resonant dsp high-pass filter */
+	fluid_iir_filter_t resonant_bp_filter; /* IIR resonant dsp band-pass filter */
 	fluid_rvoice_buffers_t buffers;
 };
 

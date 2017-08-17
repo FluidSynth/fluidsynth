@@ -183,7 +183,8 @@ struct _fluid_synth_t
 
   int cores;                         /**< Number of CPU cores (1 by default) */
 
-  int with_high_pass;              /**< Flag to enable new custom high-pass filter */
+  int with_high_pass;              /**< Flag to enable custom high-pass filter */
+  int with_band_pass;              /**< Flag to enable custom band-pass filter */
 
 #ifdef LADSPA
   fluid_LADSPA_FxUnit_t* LADSPA_FxUnit; /**< Effects unit for LADSPA support */

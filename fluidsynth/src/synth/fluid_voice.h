@@ -163,6 +163,7 @@ fluid_real_t fluid_voice_get_overflow_prio(fluid_voice_t* voice,
 					    unsigned int cur_time);
 
 void fluid_voice_enable_high_pass_filter(fluid_voice_t *voice, int enabled);
+void fluid_voice_enable_band_pass_filter(fluid_voice_t *voice, int enabled);
 
 #define OVERFLOW_PRIO_CANNOT_KILL 999999.
 

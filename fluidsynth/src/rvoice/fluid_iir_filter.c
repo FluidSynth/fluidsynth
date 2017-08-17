@@ -31,14 +31,11 @@
  */
 /*
  * Variable description:
- * - dsp_a1, dsp_a2, dsp_b0, dsp_b1, dsp_b2: Filter coefficients
+ * - dsp_a1, dsp_a2: Filter coefficients for the input signal
+ * - dsp_b0, dsp_b1, dsp_b2: Filter coefficients for the previously filtered output signal
  *
  * A couple of variables are used internally, their results are discarded:
  * - dsp_i: Index through the output buffer
- * - dsp_phase_fractional: The fractional part of dsp_phase
- * - dsp_coeff: A table of four coefficients, depending on the fractional phase.
- *              Used to interpolate between samples.
- * - dsp_process_buffer: Holds the processed signal between stages
  * - dsp_centernode: delay line for the IIR filter
  * - dsp_hist1: same
  * - dsp_hist2: same
@@ -47,6 +44,9 @@ void
 fluid_iir_filter_apply(fluid_iir_filter_t* iir_filter,
                        fluid_real_t *dsp_buf, int count)
 {
+  if(iir_filter->enabled)
+  {
+    
   /* IIR filter sample history */
   fluid_real_t dsp_hist1 = iir_filter->hist1;
   fluid_real_t dsp_hist2 = iir_filter->hist2;
@@ -54,8 +54,9 @@ fluid_iir_filter_apply(fluid_iir_filter_t* iir_filter,
   /* IIR filter coefficients */
   fluid_real_t dsp_a1 = iir_filter->a1;
   fluid_real_t dsp_a2 = iir_filter->a2;
-  fluid_real_t dsp_b02 = iir_filter->b02;
+  fluid_real_t dsp_b0 = iir_filter->b0;
   fluid_real_t dsp_b1 = iir_filter->b1;
+  fluid_real_t dsp_b2 = iir_filter->b2;
   int dsp_filter_coeff_incr_count = iir_filter->filter_coeff_incr_count;
 
   fluid_real_t dsp_centernode;
@@ -75,8 +76,9 @@ fluid_iir_filter_apply(fluid_iir_filter_t* iir_filter,
   {
     fluid_real_t dsp_a1_incr = iir_filter->a1_incr;
     fluid_real_t dsp_a2_incr = iir_filter->a2_incr;
-    fluid_real_t dsp_b02_incr = iir_filter->b02_incr;
+    fluid_real_t dsp_b0_incr = iir_filter->b0_incr;
     fluid_real_t dsp_b1_incr = iir_filter->b1_incr;
+    fluid_real_t dsp_b2_incr = iir_filter->b2_incr;
 
 
     /* Increment is added to each filter coefficient filter_coeff_incr_count times. */
@@ -84,21 +86,22 @@ fluid_iir_filter_apply(fluid_iir_filter_t* iir_filter,
     {
       /* The filter is implemented in Direct-II form. */
       dsp_centernode = dsp_buf[dsp_i] - dsp_a1 * dsp_hist1 - dsp_a2 * dsp_hist2;
-      dsp_buf[dsp_i] = dsp_b02 * (dsp_centernode + dsp_hist2) + dsp_b1 * dsp_hist1;
+      dsp_buf[dsp_i] = dsp_b0 * dsp_centernode + dsp_b2 * dsp_hist2 + dsp_b1 * dsp_hist1;
       dsp_hist2 = dsp_hist1;
       dsp_hist1 = dsp_centernode;
 
       if (dsp_filter_coeff_incr_count-- > 0)
       {
-        fluid_real_t old_b02 = dsp_b02;
-	dsp_a1 += dsp_a1_incr;
-	dsp_a2 += dsp_a2_incr;
-	dsp_b02 += dsp_b02_incr;
-	dsp_b1 += dsp_b1_incr;
+        fluid_real_t old_b0 = dsp_b0;
+        dsp_a1 += dsp_a1_incr;
+        dsp_a2 += dsp_a2_incr;
+        dsp_b0 += dsp_b0_incr;
+        dsp_b1 += dsp_b1_incr;
+        dsp_b2 += dsp_b2_incr;
 
         /* Compensate history to avoid the filter going havoc with large frequency changes */
-	if (iir_filter->compensate_incr && fabs(dsp_b02) > 0.001) {
-          fluid_real_t compensate = old_b02 / dsp_b02;
+	if (iir_filter->compensate_incr && fabs(dsp_b0) > 0.001) {
+          fluid_real_t compensate = old_b0 / dsp_b0;
           dsp_centernode *= compensate;
           dsp_hist1 *= compensate;
           dsp_hist2 *= compensate;
@@ -111,7 +114,7 @@ fluid_iir_filter_apply(fluid_iir_filter_t* iir_filter,
     for (dsp_i = 0; dsp_i < count; dsp_i++)
     { /* The filter is implemented in Direct-II form. */
       dsp_centernode = dsp_buf[dsp_i] - dsp_a1 * dsp_hist1 - dsp_a2 * dsp_hist2;
-      dsp_buf[dsp_i] = dsp_b02 * (dsp_centernode + dsp_hist2) + dsp_b1 * dsp_hist1;
+      dsp_buf[dsp_i] = dsp_b0 * dsp_centernode + dsp_b2 * dsp_hist2 + dsp_b1 * dsp_hist1;
       dsp_hist2 = dsp_hist1;
       dsp_hist1 = dsp_centernode;
     }
@@ -121,13 +124,29 @@ fluid_iir_filter_apply(fluid_iir_filter_t* iir_filter,
   iir_filter->hist2 = dsp_hist2;
   iir_filter->a1 = dsp_a1;
   iir_filter->a2 = dsp_a2;
-  iir_filter->b02 = dsp_b02;
+  iir_filter->b0 = dsp_b0;
   iir_filter->b1 = dsp_b1;
+  iir_filter->b2 = dsp_b2;
   iir_filter->filter_coeff_incr_count = dsp_filter_coeff_incr_count;
 
   fluid_check_fpe ("voice_filter");
+  }
 }
 
+
+void fluid_iir_filter_init(fluid_iir_filter_t* iir_filter, enum fluid_iir_filter_type type, int is_enabled)
+{
+    if(is_enabled >= 0)
+    iir_filter->enabled = is_enabled;
+    
+    if(type >= 0)
+    iir_filter->type = type;
+    
+    if(iir_filter->enabled)
+    {
+        fluid_iir_filter_reset(iir_filter);
+    }
+}
 
 void 
 fluid_iir_filter_reset(fluid_iir_filter_t* iir_filter)
@@ -205,11 +224,38 @@ fluid_iir_filter_calculate_coefficients(fluid_iir_filter_t* iir_filter,
    *  iir_filter->b1=(1.-cos_coeff)*a0_inv*iir_filter->filter_gain;
    *  iir_filter->b2=(1.-cos_coeff)*a0_inv*0.5*iir_filter->filter_gain; */
 
+  /* "a" coeffs are same for all 3 available filter types */
   fluid_real_t a1_temp = -2.0f * cos_coeff * a0_inv;
   fluid_real_t a2_temp = (1.0f - alpha_coeff) * a0_inv;
-  fluid_real_t b1_temp = (iir_filter->high_low_sign * 1.0f - cos_coeff) * a0_inv * iir_filter->filter_gain;
-   /* both b0 -and- b2 */
-  fluid_real_t b02_temp = b1_temp * 0.5f * iir_filter->high_low_sign;
+  
+  fluid_real_t b0_temp, b1_temp, b2_temp;
+  
+  switch(iir_filter->type)
+  {
+    case FLUID_IIR_BANDPASS:
+      b1_temp = 0;
+      
+      b0_temp = sin_coeff * 0.5f * a0_inv;
+      b2_temp = -b0_temp;
+      break;
+      
+    case FLUID_IIR_HIGHPASS:
+      b1_temp = (1.0f + cos_coeff) * a0_inv * iir_filter->filter_gain;
+      
+      /* both b0 -and- b2 */
+      b0_temp = b2_temp = b1_temp * 0.5f;
+      
+      b1_temp *= -1.0f;
+      break;
+      
+    case FLUID_IIR_LOWPASS:
+    default:
+      b1_temp = (1.0f - cos_coeff) * a0_inv * iir_filter->filter_gain;
+      
+      /* both b0 -and- b2 */
+      b0_temp = b2_temp = b1_temp * 0.5f;
+      break;
+  }
 
   iir_filter->compensate_incr = 0;
 
@@ -220,8 +266,9 @@ fluid_iir_filter_calculate_coefficients(fluid_iir_filter_t* iir_filter,
     */
     iir_filter->a1 = a1_temp;
     iir_filter->a2 = a2_temp;
-    iir_filter->b02 = b02_temp;
+    iir_filter->b0 = b0_temp;
     iir_filter->b1 = b1_temp;
+    iir_filter->b2 = b2_temp;
     iir_filter->filter_coeff_incr_count = 0;
     iir_filter->filter_startup = 0;
 //       printf("Setting initial filter coefficients.\n");
@@ -240,10 +287,11 @@ fluid_iir_filter_calculate_coefficients(fluid_iir_filter_t* iir_filter,
 
     iir_filter->a1_incr = (a1_temp - iir_filter->a1) / transition_samples;
     iir_filter->a2_incr = (a2_temp - iir_filter->a2) / transition_samples;
-    iir_filter->b02_incr = (b02_temp - iir_filter->b02) / transition_samples;
+    iir_filter->b0_incr = (b0_temp - iir_filter->b0) / transition_samples;
     iir_filter->b1_incr = (b1_temp - iir_filter->b1) / transition_samples;
-    if (fabs(iir_filter->b02) > 0.0001) {
-      fluid_real_t quota = b02_temp / iir_filter->b02;
+    iir_filter->b2_incr = (b2_temp - iir_filter->b2) / transition_samples;
+    if (fabs(iir_filter->b0) > 0.0001) {
+      fluid_real_t quota = b0_temp / iir_filter->b0;
       iir_filter->compensate_incr = quota < 0.5 || quota > 2;
     }
     /* Have to add the increments filter_coeff_incr_count times. */
@@ -281,7 +329,7 @@ void fluid_iir_filter_calc(fluid_iir_filter_t* iir_filter,
     fres = 5;
 
   /* if filter enabled and there is a significant frequency change.. */
-  if (fabs (fres - iir_filter->last_fres) > 0.01)
+  if (iir_filter->enabled && fabs (fres - iir_filter->last_fres) > 0.01)
   {
    /* The filter coefficients have to be recalculated (filter
     * parameters have changed). Recalculation for various reasons is
