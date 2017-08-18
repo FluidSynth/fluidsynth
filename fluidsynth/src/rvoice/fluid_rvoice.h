@@ -143,7 +143,7 @@ struct _fluid_rvoice_buffers_t
 
 
 /**
- * Parameters needed to synthesize a voice
+ * Hard real-time parameters needed to synthesize a voice
  */
 struct _fluid_rvoice_t
 {
