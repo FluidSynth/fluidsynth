@@ -2942,7 +2942,16 @@ fluid_synth_render_blocks(fluid_synth_t* synth, int blockcount)
   for (i=0; i < blockcount; i++) {
     fluid_sample_timer_process(synth);
     fluid_synth_add_ticks(synth, FLUID_BUFSIZE);
-    if (fluid_rvoice_eventhandler_dispatch_count(synth->eventhandler)) {
+    
+    /* If events have been queued waiting for fluid_rvoice_eventhandler_dispatch_all()
+     * (should only happen with parallel render) OR we are about to process more 
+     * blocks than we can store internally (being at risk having already dispatched many rvoices,
+     * because we may not be using parallel render), stop processing and go for rendering
+     */
+    if (fluid_rvoice_eventhandler_dispatch_count(synth->eventhandler)
+        || i+1 >= FLUID_MIXER_MAX_BUFFERS_DEFAULT-1 /* there actually is one 1 too many here,
+        but this seems to be the only way it works */
+    ) {
       // Something has happened, we can't process more
       blockcount = i+1;
       break; 
