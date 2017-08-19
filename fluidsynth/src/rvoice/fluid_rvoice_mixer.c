@@ -710,6 +710,10 @@ int fluid_rvoice_mixer_get_fx_bufs(fluid_rvoice_mixer_t* mixer,
   return mixer->buffers.fx_buf_count;
 }
 
+int fluid_rvoice_mixer_get_bufcount(fluid_rvoice_mixer_t* mixer)
+{
+    return mixer->buffers.buf_blocks;
+}
 
 #ifdef ENABLE_MIXER_THREADS
 
