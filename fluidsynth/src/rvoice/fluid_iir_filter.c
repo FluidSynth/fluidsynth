@@ -44,7 +44,7 @@ void
 fluid_iir_filter_apply(fluid_iir_filter_t* iir_filter,
                        fluid_real_t *dsp_buf, int count)
 {
-  if(iir_filter->enabled)
+  if(iir_filter->enabled && iir_filter->q_lin != 0)
   {
     
   /* IIR filter sample history */
@@ -202,63 +202,74 @@ fluid_iir_filter_calculate_coefficients(fluid_iir_filter_t* iir_filter,
                                         int transition_samples, 
                                         fluid_real_t output_rate)
 {
+    fluid_real_t a1_temp, a2_temp;
+    fluid_real_t b0_temp, b1_temp, b2_temp;
+    
+    if(iir_filter->q_lin != 0)
+    {
+       /*
+        * Those equations from Robert Bristow-Johnson's `Cookbook
+        * formulae for audio EQ biquad filter coefficients', obtained
+        * from Harmony-central.com / Computer / Programming. They are
+        * the result of the bilinear transform on an analogue filter
+        * prototype. To quote, `BLT frequency warping has been taken
+        * into account for both significant frequency relocation and for
+        * bandwidth readjustment'. */
 
-  /*
-    * Those equations from Robert Bristow-Johnson's `Cookbook
-    * formulae for audio EQ biquad filter coefficients', obtained
-    * from Harmony-central.com / Computer / Programming. They are
-    * the result of the bilinear transform on an analogue filter
-    * prototype. To quote, `BLT frequency warping has been taken
-    * into account for both significant frequency relocation and for
-    * bandwidth readjustment'. */
+        fluid_real_t omega = (fluid_real_t) (2.0 * M_PI * 
+                            (iir_filter->last_fres / ((float) output_rate)));
+        fluid_real_t sin_coeff = (fluid_real_t) sin(omega);
+        fluid_real_t cos_coeff = (fluid_real_t) cos(omega);
+        fluid_real_t alpha_coeff = sin_coeff / (2.0f * iir_filter->q_lin);
+        fluid_real_t a0_inv = 1.0f / (1.0f + alpha_coeff);
 
-  fluid_real_t omega = (fluid_real_t) (2.0 * M_PI * 
-                       (iir_filter->last_fres / ((float) output_rate)));
-  fluid_real_t sin_coeff = (fluid_real_t) sin(omega);
-  fluid_real_t cos_coeff = (fluid_real_t) cos(omega);
-  fluid_real_t alpha_coeff = sin_coeff / (2.0f * iir_filter->q_lin);
-  fluid_real_t a0_inv = 1.0f / (1.0f + alpha_coeff);
+        /* Calculate the filter coefficients. All coefficients are
+        * normalized by a0. Think of `a1' as `a1/a0'.
+        *
+        * Here a couple of multiplications are saved by reusing common expressions.
+        * The original equations should be:
+        *  iir_filter->b0=(1.-cos_coeff)*a0_inv*0.5*iir_filter->filter_gain;
+        *  iir_filter->b1=(1.-cos_coeff)*a0_inv*iir_filter->filter_gain;
+        *  iir_filter->b2=(1.-cos_coeff)*a0_inv*0.5*iir_filter->filter_gain; */
 
-  /* Calculate the filter coefficients. All coefficients are
-   * normalized by a0. Think of `a1' as `a1/a0'.
-   *
-   * Here a couple of multiplications are saved by reusing common expressions.
-   * The original equations should be:
-   *  iir_filter->b0=(1.-cos_coeff)*a0_inv*0.5*iir_filter->filter_gain;
-   *  iir_filter->b1=(1.-cos_coeff)*a0_inv*iir_filter->filter_gain;
-   *  iir_filter->b2=(1.-cos_coeff)*a0_inv*0.5*iir_filter->filter_gain; */
-
-  /* "a" coeffs are same for all 3 available filter types */
-  fluid_real_t a1_temp = -2.0f * cos_coeff * a0_inv;
-  fluid_real_t a2_temp = (1.0f - alpha_coeff) * a0_inv;
-  
-  fluid_real_t b0_temp, b1_temp, b2_temp;
-  
-  switch(iir_filter->type)
+        /* "a" coeffs are same for all 3 available filter types */
+        a1_temp = -2.0f * cos_coeff * a0_inv;
+        a2_temp = (1.0f - alpha_coeff) * a0_inv;
+        
+        
+        switch(iir_filter->type)
+        {
+            case FLUID_IIR_BANDPASS:
+            b1_temp = 0;
+            
+            b0_temp = sin_coeff * 0.5f * a0_inv * iir_filter->filter_gain;
+            b2_temp = -b0_temp;
+            break;
+            
+            case FLUID_IIR_HIGHPASS:
+            b1_temp = (1.0f + cos_coeff) * a0_inv * iir_filter->filter_gain;
+            
+            /* both b0 -and- b2 */
+            b0_temp = b2_temp = b1_temp * 0.5f;
+            
+            b1_temp *= -1.0f;
+            break;
+            
+            case FLUID_IIR_LOWPASS:
+            default:
+            b1_temp = (1.0f - cos_coeff) * a0_inv * iir_filter->filter_gain;
+            
+            /* both b0 -and- b2 */
+            b0_temp = b2_temp = b1_temp * 0.5f;
+            break;
+        }
+  }
+  else
   {
-    case FLUID_IIR_BANDPASS:
-      b1_temp = 0;
-      
-      b0_temp = sin_coeff * 0.5f * a0_inv * iir_filter->filter_gain;
-      b2_temp = -b0_temp;
-      break;
-      
-    case FLUID_IIR_HIGHPASS:
-      b1_temp = (1.0f + cos_coeff) * a0_inv * iir_filter->filter_gain;
-      
-      /* both b0 -and- b2 */
-      b0_temp = b2_temp = b1_temp * 0.5f;
-      
-      b1_temp *= -1.0f;
-      break;
-      
-    case FLUID_IIR_LOWPASS:
-    default:
-      b1_temp = (1.0f - cos_coeff) * a0_inv * iir_filter->filter_gain;
-      
-      /* both b0 -and- b2 */
-      b0_temp = b2_temp = b1_temp * 0.5f;
-      break;
+      /* if Q==0 we would get some inf and nan values for our coefficients. To
+       * avoid that, just set them all to 0, literally disabling the filter.
+       */
+      a1_temp = a2_temp = b0_temp = b1_temp = b2_temp = 0;
   }
 
   iir_filter->compensate_incr = 0;
