@@ -151,9 +151,125 @@ fluid_mod_get_dest(fluid_mod_t* mod)
 double
 fluid_mod_get_amount(fluid_mod_t* mod)
 {
-  return (fluid_real_t) mod->amount;
+  return (double) mod->amount;
 }
 
+
+static fluid_real_t
+fluid_mod_get_source_value(const unsigned char mod_src,
+                           const unsigned char mod_flags,
+                           fluid_real_t* range,
+                           const fluid_channel_t* chan,
+                           const fluid_voice_t* voice
+                          )
+{
+    fluid_real_t val;
+    
+    if (mod_flags & FLUID_MOD_CC)
+    {
+        val = fluid_channel_get_cc(chan, mod_src);
+    }
+    else
+    {
+        switch (mod_src)
+        {
+        case FLUID_MOD_NONE:         /* SF 2.01 8.2.1 item 0: src enum=0 => value is 1 */
+            val = *range;
+            break;
+        case FLUID_MOD_VELOCITY:
+            val = voice->vel;
+            break;
+        case FLUID_MOD_KEY:
+            val = voice->key;
+            break;
+        case FLUID_MOD_KEYPRESSURE:
+            val = fluid_channel_get_key_pressure (chan);
+            break;
+        case FLUID_MOD_CHANNELPRESSURE:
+            val = fluid_channel_get_channel_pressure (chan);
+            break;
+        case FLUID_MOD_PITCHWHEEL:
+            val = fluid_channel_get_pitch_bend (chan);
+            *range = 0x4000;
+            break;
+        case FLUID_MOD_PITCHWHEELSENS:
+            val = fluid_channel_get_pitch_wheel_sensitivity (chan);
+            break;
+        default:
+            val = 0.0;
+        }
+    }
+    return val;
+}
+
+static fluid_real_t
+fluid_mod_transform_source_value(fluid_real_t val, unsigned char mod_flags, const fluid_real_t range)
+{
+    /* we could also only switch case the lower nibble of mod_flags, however
+     * this would keep us from adding further mod types in the future
+     * 
+     * instead just remove the flag(s) we already took care of
+     */
+    mod_flags &= ~FLUID_MOD_CC;
+    
+    switch (mod_flags/* & 0x0f*/)
+    {
+    case FLUID_MOD_LINEAR | FLUID_MOD_UNIPOLAR | FLUID_MOD_POSITIVE: /* =0 */
+      val /= range;
+      break;
+    case FLUID_MOD_LINEAR | FLUID_MOD_UNIPOLAR | FLUID_MOD_NEGATIVE: /* =1 */
+      val = 1.0f - val / range;
+      break;
+    case FLUID_MOD_LINEAR | FLUID_MOD_BIPOLAR | FLUID_MOD_POSITIVE: /* =2 */
+      val = -1.0f + 2.0f * val / range;
+      break;
+    case FLUID_MOD_LINEAR | FLUID_MOD_BIPOLAR | FLUID_MOD_NEGATIVE: /* =3 */
+      val = 1.0f - 2.0f * val / range;
+      break;
+    case FLUID_MOD_CONCAVE | FLUID_MOD_UNIPOLAR | FLUID_MOD_POSITIVE: /* =4 */
+      val = fluid_concave(val);
+      break;
+    case FLUID_MOD_CONCAVE | FLUID_MOD_UNIPOLAR | FLUID_MOD_NEGATIVE: /* =5 */
+      val = fluid_concave(127 - val);
+      break;
+    case FLUID_MOD_CONCAVE | FLUID_MOD_BIPOLAR | FLUID_MOD_POSITIVE: /* =6 */
+      val = (val > 64)? fluid_concave(2 * (val - 64)) : -fluid_concave(2 * (64 - val));
+      break;
+    case FLUID_MOD_CONCAVE | FLUID_MOD_BIPOLAR | FLUID_MOD_NEGATIVE: /* =7 */
+      val = (val > 64)? -fluid_concave(2 * (val - 64)) : fluid_concave(2 * (64 - val));
+      break;
+    case FLUID_MOD_CONVEX | FLUID_MOD_UNIPOLAR | FLUID_MOD_POSITIVE: /* =8 */
+      val = fluid_convex(val);
+      break;
+    case FLUID_MOD_CONVEX | FLUID_MOD_UNIPOLAR | FLUID_MOD_NEGATIVE: /* =9 */
+      val = fluid_convex(127 - val);
+      break;
+    case FLUID_MOD_CONVEX | FLUID_MOD_BIPOLAR | FLUID_MOD_POSITIVE: /* =10 */
+      val = (val > 64)? fluid_convex(2 * (val - 64)) : -fluid_convex(2 * (64 - val));
+      break;
+    case FLUID_MOD_CONVEX | FLUID_MOD_BIPOLAR | FLUID_MOD_NEGATIVE: /* =11 */
+      val = (val > 64)? -fluid_convex(2 * (val - 64)) : fluid_convex(2 * (64 - val));
+      break;
+    case FLUID_MOD_SWITCH | FLUID_MOD_UNIPOLAR | FLUID_MOD_POSITIVE: /* =12 */
+      val = (val >= 64)? 1.0f : 0.0f;
+      break;
+    case FLUID_MOD_SWITCH | FLUID_MOD_UNIPOLAR | FLUID_MOD_NEGATIVE: /* =13 */
+      val = (val >= 64)? 0.0f : 1.0f;
+      break;
+    case FLUID_MOD_SWITCH | FLUID_MOD_BIPOLAR | FLUID_MOD_POSITIVE: /* =14 */
+      val = (val >= 64)? 1.0f : -1.0f;
+      break;
+    case FLUID_MOD_SWITCH | FLUID_MOD_BIPOLAR | FLUID_MOD_NEGATIVE: /* =15 */
+      val = (val >= 64)? -1.0f : 1.0f;
+      break;
+    default:
+      FLUID_LOG(FLUID_ERR, "Unknown modulator type %d, disabling modulator.", mod_flags);
+      val = 0.0f;
+      break;
+    }
+    
+    return val;
+}
 
 /*
  * fluid_mod_get_value
@@ -209,90 +325,15 @@ fluid_mod_get_value(fluid_mod_t* mod, fluid_channel_t* chan, fluid_voice_t* voic
 // end S. Christian Collins' mod
 
   /* get the initial value of the first source */
-  if (mod->src1 > 0) {
-    if (mod->flags1 & FLUID_MOD_CC) {
-      v1 = fluid_channel_get_cc(chan, mod->src1);
-    } else {  /* source 1 is one of the direct controllers */
-      switch (mod->src1) {
-      case FLUID_MOD_NONE:         /* SF 2.01 8.2.1 item 0: src enum=0 => value is 1 */
-	v1 = range1;
-	break;
-      case FLUID_MOD_VELOCITY:
-	v1 = voice->vel;
-	break;
-      case FLUID_MOD_KEY:
-	v1 = voice->key;
-	break;
-      case FLUID_MOD_KEYPRESSURE:
-	v1 = fluid_channel_get_key_pressure (chan);
-	break;
-      case FLUID_MOD_CHANNELPRESSURE:
-	v1 = fluid_channel_get_channel_pressure (chan);
-	break;
-      case FLUID_MOD_PITCHWHEEL:
-	v1 = fluid_channel_get_pitch_bend (chan);
-	range1 = 0x4000;
-	break;
-      case FLUID_MOD_PITCHWHEELSENS:
-	v1 = fluid_channel_get_pitch_wheel_sensitivity (chan);
-	break;
-      default:
-	v1 = 0.0;
-      }
-    }
+  if (mod->src1 > 0)
+  {
+    v1 = fluid_mod_get_source_value(mod->src1, mod->flags1, &range1, chan, voice);
 
     /* transform the input value */
-    switch (mod->flags1 & 0x0f) {
-    case 0: /* linear, unipolar, positive */
-      v1 /= range1;
-      break;
-    case 1: /* linear, unipolar, negative */
-      v1 = 1.0f - v1 / range1;
-      break;
-    case 2: /* linear, bipolar, positive */
-      v1 = -1.0f + 2.0f * v1 / range1;
-      break;
-    case 3: /* linear, bipolar, negative */
-      v1 = 1.0f - 2.0f * v1 / range1;
-      break;
-    case 4: /* concave, unipolar, positive */
-      v1 = fluid_concave(v1);
-      break;
-    case 5: /* concave, unipolar, negative */
-      v1 = fluid_concave(127 - v1);
-      break;
-    case 6: /* concave, bipolar, positive */
-      v1 = (v1 > 64)? fluid_concave(2 * (v1 - 64)) : -fluid_concave(2 * (64 - v1));
-      break;
-    case 7: /* concave, bipolar, negative */
-      v1 = (v1 > 64)? -fluid_concave(2 * (v1 - 64)) : fluid_concave(2 * (64 - v1));
-      break;
-    case 8: /* convex, unipolar, positive */
-      v1 = fluid_convex(v1);
-      break;
-    case 9: /* convex, unipolar, negative */
-      v1 = fluid_convex(127 - v1);
-      break;
-    case 10: /* convex, bipolar, positive */
-      v1 = (v1 > 64)? fluid_convex(2 * (v1 - 64)) : -fluid_convex(2 * (64 - v1));
-      break;
-    case 11: /* convex, bipolar, negative */
-      v1 = (v1 > 64)? -fluid_convex(2 * (v1 - 64)) : fluid_convex(2 * (64 - v1));
-      break;
-    case 12: /* switch, unipolar, positive */
-      v1 = (v1 >= 64)? 1.0f : 0.0f;
-      break;
-    case 13: /* switch, unipolar, negative */
-      v1 = (v1 >= 64)? 0.0f : 1.0f;
-      break;
-    case 14: /* switch, bipolar, positive */
-      v1 = (v1 >= 64)? 1.0f : -1.0f;
-      break;
-    case 15: /* switch, bipolar, negative */
-      v1 = (v1 >= 64)? -1.0f : 1.0f;
-      break;
-    }
-  } else {
+    v1 = fluid_mod_transform_source_value(v1, mod->flags1, range1);
+  }
+  else
+  {
     return 0.0;
   }
 
@@ -302,89 +343,15 @@ fluid_mod_get_value(fluid_mod_t* mod, fluid_channel_t* chan, fluid_voice_t* voic
   }
 
   /* get the second input source */
-  if (mod->src2 > 0) {
-    if (mod->flags2 & FLUID_MOD_CC) {
-      v2 = fluid_channel_get_cc(chan, mod->src2);
-    } else {
-      switch (mod->src2) {
-      case FLUID_MOD_NONE:         /* SF 2.01 8.2.1 item 0: src enum=0 => value is 1 */
-	v2 = range2;
-	break;
-      case FLUID_MOD_VELOCITY:
-	v2 = voice->vel;
-	break;
-      case FLUID_MOD_KEY:
-	v2 = voice->key;
-	break;
-      case FLUID_MOD_KEYPRESSURE:
-	v2 = fluid_channel_get_key_pressure (chan);
-	break;
-      case FLUID_MOD_CHANNELPRESSURE:
-	v2 = fluid_channel_get_channel_pressure (chan);
-	break;
-      case FLUID_MOD_PITCHWHEEL:
-	v2 = fluid_channel_get_pitch_bend (chan);
-	break;
-      case FLUID_MOD_PITCHWHEELSENS:
-	v2 = fluid_channel_get_pitch_wheel_sensitivity (chan);
-	break;
-      default:
-	v1 = 0.0f;
-      }
-    }
+  if (mod->src2 > 0)
+  {
+    v2 = fluid_mod_get_source_value(mod->src2, mod->flags2, &range2, chan, voice);
 
     /* transform the second input value */
-    switch (mod->flags2 & 0x0f) {
-    case 0: /* linear, unipolar, positive */
-      v2 /= range2;
-      break;
-    case 1: /* linear, unipolar, negative */
-      v2 = 1.0f - v2 / range2;
-      break;
-    case 2: /* linear, bipolar, positive */
-      v2 = -1.0f + 2.0f * v2 / range2;
-      break;
-    case 3: /* linear, bipolar, negative */
-      v2 = -1.0f + 2.0f * v2 / range2;
-      break;
-    case 4: /* concave, unipolar, positive */
-      v2 = fluid_concave(v2);
-      break;
-    case 5: /* concave, unipolar, negative */
-      v2 = fluid_concave(127 - v2);
-      break;
-    case 6: /* concave, bipolar, positive */
-      v2 = (v2 > 64)? fluid_concave(2 * (v2 - 64)) : -fluid_concave(2 * (64 - v2));
-      break;
-    case 7: /* concave, bipolar, negative */
-      v2 = (v2 > 64)? -fluid_concave(2 * (v2 - 64)) : fluid_concave(2 * (64 - v2));
-      break;
-    case 8: /* convex, unipolar, positive */
-      v2 = fluid_convex(v2);
-      break;
-    case 9: /* convex, unipolar, negative */
-      v2 = 1.0f - fluid_convex(v2);
-      break;
-    case 10: /* convex, bipolar, positive */
-      v2 = (v2 > 64)? -fluid_convex(2 * (v2 - 64)) : fluid_convex(2 * (64 - v2));
-      break;
-    case 11: /* convex, bipolar, negative */
-      v2 = (v2 > 64)? -fluid_convex(2 * (v2 - 64)) : fluid_convex(2 * (64 - v2));
-      break;
-    case 12: /* switch, unipolar, positive */
-      v2 = (v2 >= 64)? 1.0f : 0.0f;
-      break;
-    case 13: /* switch, unipolar, negative */
-      v2 = (v2 >= 64)? 0.0f : 1.0f;
-      break;
-    case 14: /* switch, bipolar, positive */
-      v2 = (v2 >= 64)? 1.0f : -1.0f;
-      break;
-    case 15: /* switch, bipolar, negative */
-      v2 = (v2 >= 64)? -1.0f : 1.0f;
-      break;
-    }
-  } else {
+    v2 = fluid_mod_transform_source_value(v2, mod->flags2, range2);
+  }
+  else
+  {
     v2 = 1.0f;
   }
 
