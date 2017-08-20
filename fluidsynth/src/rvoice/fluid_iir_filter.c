@@ -135,16 +135,17 @@ fluid_iir_filter_apply(fluid_iir_filter_t* iir_filter,
 
 
 void fluid_iir_filter_init(fluid_iir_filter_t* iir_filter, enum fluid_iir_filter_type type, int is_enabled)
-{
-    if(is_enabled >= 0)
-    iir_filter->enabled = is_enabled;
-    
+{    
     if(type >= 0)
     iir_filter->type = type;
-    
-    if(iir_filter->enabled)
+ 
+    if(is_enabled >= 0)
     {
-        fluid_iir_filter_reset(iir_filter);
+        iir_filter->enabled = is_enabled;
+        if(is_enabled)
+        {
+            fluid_iir_filter_reset(iir_filter);
+        }
     }
 }
 
@@ -191,7 +192,14 @@ fluid_iir_filter_set_q_linear(fluid_iir_filter_t* iir_filter,
      *  (numerator of the filter equation).  This gain factor depends
      *  only on Q, so this is the right place to calculate it.
      */
-    iir_filter->filter_gain = (fluid_real_t) (1.0 / sqrt(iir_filter->q_lin));
+    /*
+     * However if Q is between [0;1], using sqrt would increase the value
+     * again, resulting in a much more silent signal (specifically of use
+     * for bandpass filter, shouldnt affect SF2 lowpass filter, since Q
+     * is in dB range and never gets <1
+     */
+    iir_filter->filter_gain  = 1.0f;
+    iir_filter->filter_gain /= q_linear<=1.0f ? q_linear : sqrt(q_linear);
 
     /* The synthesis loop will have to recalculate the filter coefficients. */
     iir_filter->last_fres = -1.;
