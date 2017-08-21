@@ -1371,6 +1371,10 @@ fluid_voice_add_mod(fluid_voice_t* voice, fluid_mod_t* mod, int mode)
   if (voice->mod_count < FLUID_NUM_MOD) {
     fluid_mod_clone(&voice->mod[voice->mod_count++], mod);
   }
+  else
+  {
+    FLUID_LOG(FLUID_WARN, "Voice %i has more modulators than supported, ignoring.", voice->id);
+  }
 }
 
 /**
