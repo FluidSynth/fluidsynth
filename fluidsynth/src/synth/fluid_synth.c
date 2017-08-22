@@ -2947,7 +2947,7 @@ fluid_synth_render_blocks(fluid_synth_t* synth, int blockcount)
 #else
   /* if we process more blocks, noteons will be timed incorrectly
    * this bug seems to be design made, i.e. the current implementation requires to
-   * process all events from one block and then whatever we just processed. */
+   * process all events for one block and then render whatever we just processed. */
   blockcount = 1;
 #endif
   
