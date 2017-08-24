@@ -198,6 +198,7 @@ fluid_mod_get_source_value(const unsigned char mod_src,
             val = fluid_channel_get_pitch_wheel_sensitivity (chan);
             break;
         default:
+	    FLUID_LOG(FLUID_ERR, "Unknown modulator source '%d', disabling modulator.", mod_src);
             val = 0.0;
         }
     }
@@ -278,7 +279,7 @@ fluid_mod_transform_source_value(fluid_real_t val, unsigned char mod_flags, cons
       val = (val_norm >= 0.5f)? -1.0f : 1.0f;
       break;
     default:
-      FLUID_LOG(FLUID_ERR, "Unknown modulator type %d, disabling modulator.", mod_flags);
+      FLUID_LOG(FLUID_ERR, "Unknown modulator type '%d', disabling modulator.", mod_flags);
       val = 0.0f;
       break;
     }
