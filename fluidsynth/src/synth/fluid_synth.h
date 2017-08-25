@@ -50,23 +50,11 @@
 
 #define FLUID_UNSET_PROGRAM     128     /* Program number used to unset a preset */
 
-#if defined(WITH_FLOAT)
-#define FLUID_SAMPLE_FORMAT     FLUID_SAMPLE_FLOAT
-#else
-#define FLUID_SAMPLE_FORMAT     FLUID_SAMPLE_DOUBLE
-#endif
-
 
 /***************************************************************
  *
  *                         ENUM
  */
-/*enum fluid_loop {
-  FLUID_UNLOOPED = 0,
-  FLUID_LOOP_DURING_RELEASE = 1,
-  FLUID_NOTUSED = 2,
-  FLUID_LOOP_UNTIL_RELEASE = 3
-};*/
 
 /**
  * Bank Select MIDI message styles. Default style is GS.
@@ -170,7 +158,6 @@ struct _fluid_synth_t
   int curmax;                        /**< current amount of samples present in the audio buffers */
   int dither_index;		     /**< current index in random dither value buffer: fluid_synth_(write_s16|dither_s16) */
 
-  char outbuf[256];                  /**< buffer for message output */
   float cpu_load;                    /**< CPU load in percent (CPU time required / audio synthesized time * 100) */
 
   fluid_tuning_t*** tuning;          /**< 128 banks of 128 programs for the tunings */

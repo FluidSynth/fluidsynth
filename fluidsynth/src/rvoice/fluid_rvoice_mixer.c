@@ -25,9 +25,8 @@
 #include "fluid_chorus.h"
 #include "fluidsynth_priv.h"
 #include "fluid_ladspa.h"
+#include "fluid_synth.h"
 
-#define SYNTH_REVERB_CHANNEL 0
-#define SYNTH_CHORUS_CHANNEL 1
 
 #define ENABLE_MIXER_THREADS 1
 
