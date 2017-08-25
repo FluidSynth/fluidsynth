@@ -32,7 +32,6 @@
 #include "config.h"
 #endif
 #include "fluidsynth_priv.h"
-#include "fluid_event_queue.h"
 #include "fluid_list.h"
 #include "fluid_rev.h"
 #include "fluid_voice.h"

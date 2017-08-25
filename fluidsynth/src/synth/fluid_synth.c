@@ -81,9 +81,7 @@ static int fluid_synth_update_polyphony_LOCAL(fluid_synth_t* synth, int new_poly
 static void init_dither(void);
 static inline int roundi (float x);
 static int fluid_synth_render_blocks(fluid_synth_t* synth, int blockcount);
-//static void fluid_synth_core_thread_func (void* data);
-//static FLUID_INLINE void fluid_synth_process_event_queue_LOCAL
-//  (fluid_synth_t *synth, fluid_event_queue_t *queue);
+
 static fluid_voice_t* fluid_synth_free_voice_by_kill_LOCAL(fluid_synth_t* synth);
 static void fluid_synth_kill_by_exclusive_class_LOCAL(fluid_synth_t* synth,
                                                       fluid_voice_t* new_voice);
@@ -783,7 +781,6 @@ delete_fluid_synth(fluid_synth_t* synth)
   int i, k;
   fluid_list_t *list;
   fluid_sfont_info_t* sfont_info;
-//  fluid_event_queue_t* queue;
   fluid_sfloader_t* loader;
 
   if (synth == NULL) {
@@ -4201,8 +4198,6 @@ fluid_synth_replace_tuning_LOCK (fluid_synth_t* synth, fluid_tuning_t *tuning,
                                  int bank, int prog, int apply)
 {
   fluid_tuning_t *old_tuning;
-//  fluid_event_queue_t *queue;
-//  fluid_event_queue_elem_t *event;
 
   if (synth->tuning == NULL) {
     synth->tuning = FLUID_ARRAY(fluid_tuning_t**, 128);
@@ -4241,7 +4236,6 @@ static void
 fluid_synth_replace_tuning_LOCAL (fluid_synth_t *synth, fluid_tuning_t *old_tuning,
                                   fluid_tuning_t *new_tuning, int apply, int unref_new)
 {
-//  fluid_event_queue_elem_t *event;
   fluid_channel_t *channel;
   int old_tuning_unref = 0;
   int i;
@@ -4504,8 +4498,6 @@ int
 fluid_synth_activate_tuning(fluid_synth_t* synth, int chan, int bank, int prog,
                             int apply)
 {
-  //fluid_event_queue_elem_t *event;
-  //fluid_event_queue_t *queue;
   fluid_tuning_t* tuning;
   int retval = FLUID_OK;
 

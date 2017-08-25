@@ -136,7 +136,6 @@ libfluidsynth_la_SOURCES = \
     synth/fluid_chan.h \
     synth/fluid_event.c \
     synth/fluid_event_priv.h \
-    synth/fluid_event_queue.h \
     synth/fluid_gen.c \
     synth/fluid_gen.h \
     synth/fluid_mod.c \
