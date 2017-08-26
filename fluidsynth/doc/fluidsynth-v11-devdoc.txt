@@ -73,7 +73,7 @@ Changes in FluidSynth 1.1.6 concerning developers:
 - Mac OS X Lion: A build failure was fixed.
 
 - For a full list of bug fixes, see
-  http://sourceforge.net/apps/trac/fluidsynth/wiki/ChangeLog1_1_6
+  https://github.com/FluidSynth/fluidsynth/wiki/ChangeLog#fluidsynth-116
 
 
 \section NewIn1_1_5 Whats new in 1.1.5?
@@ -81,7 +81,7 @@ Changes in FluidSynth 1.1.6 concerning developers:
 Changes in FluidSynth 1.1.5 concerning developers:
 - A change in the Jack driver might require a newer Jack version compared to 1.1.4.
 - For a full list of bug fixes, see
-  http://sourceforge.net/apps/trac/fluidsynth/wiki/ChangeLog1_1_5
+  https://github.com/FluidSynth/fluidsynth/wiki/ChangeLog#fluidsynth-115
 
 \section NewIn1_1_4 Whats new in 1.1.4?
 
@@ -93,7 +93,7 @@ Changes in FluidSynth 1.1.4 concerning developers:
 - fluid_synth_all_sounds_off and fluid_synth_all_notes_off are new public API functions. You can use them to turn notes off (i e releasing all keys, voices advance to release phase) or sounds off (more like pressing the mute button), for one channel or all channels.
 - For Mac OS X users: The CoreAudio driver has been adapted to use AuHAL, and the default build style has changed to "FluidSynth.framework".
 - For a full list of other enhancements and bug fixes, see
-  http://sourceforge.net/apps/trac/fluidsynth/wiki/ChangeLog1_1_4
+  https://github.com/FluidSynth/fluidsynth/wiki/ChangeLog#fluidsynth-114
 
 \section NewIn1_1_3 Whats new in 1.1.3?
 
@@ -101,7 +101,7 @@ Changes in FluidSynth 1.1.3 concerning developers:
 
 - There are no new API additions in 1.1.3, this is a pure bug-fix release.
   For a list of bugs fixed, see 
-  https://sourceforge.net/apps/trac/fluidsynth/wiki/ChangeLog1_1_3
+  https://github.com/FluidSynth/fluidsynth/wiki/ChangeLog#fluidsynth-113
 
 \section NewIn1_1_2 Whats new in 1.1.2?
 
