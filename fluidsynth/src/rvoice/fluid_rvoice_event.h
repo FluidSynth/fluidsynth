@@ -105,15 +105,11 @@ static FLUID_INLINE void
 fluid_rvoice_eventhandler_add_rvoice(fluid_rvoice_eventhandler_t* handler, 
                                      fluid_rvoice_t* rvoice)
 {
-/* always queue events. without it we may run into timing issues, when events are being dispatched
- * via the sampletimers, without actually rendering it.
- */
-    
-//   if (handler->is_threadsafe)
+  if (handler->is_threadsafe)
     fluid_rvoice_eventhandler_push_ptr(handler, fluid_rvoice_mixer_add_voice,
                                        handler->mixer, rvoice);
-//   else
-//     fluid_rvoice_mixer_add_voice(handler->mixer, rvoice);
+  else
+    fluid_rvoice_mixer_add_voice(handler->mixer, rvoice);
 }
 
 
