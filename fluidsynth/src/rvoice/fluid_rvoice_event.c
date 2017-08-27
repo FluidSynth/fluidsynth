@@ -233,7 +233,13 @@ new_fluid_rvoice_eventhandler(int is_threadsafe, int queuesize,
   eventhandler->mixer = NULL;
   eventhandler->queue = NULL;
   eventhandler->finished_voices = NULL;
-  eventhandler->is_threadsafe = is_threadsafe;
+  
+  /* HACK 2017-08-27: always enforce threadsafety, i.e. enforce enqueuing events
+   * otherwise we mess up rendering if more than one block is requested by the user
+   * because fluid_rvoice_eventhandler_dispatch_count() always stays zero causing
+   * that too many events are dispatched too early, causing incorrectly timed audio
+   */
+  eventhandler->is_threadsafe = TRUE;
   eventhandler->queue_stored = 0;
   
   eventhandler->finished_voices = new_fluid_ringbuffer(finished_voices_size,

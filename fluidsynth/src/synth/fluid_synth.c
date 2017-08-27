@@ -2939,17 +2939,10 @@ fluid_synth_render_blocks(fluid_synth_t* synth, int blockcount)
   
   fluid_rvoice_eventhandler_dispatch_all(synth->eventhandler);
   
-#if 0
   /* do not render more blocks than we can store internally */
   maxblocks = fluid_rvoice_mixer_get_bufcount(synth->eventhandler->mixer);
   if (blockcount > maxblocks)
       blockcount = maxblocks;
-#else
-  /* if we process more blocks, noteons will be timed incorrectly
-   * this bug seems to be design made, i.e. the current implementation requires to
-   * process all events for one block and then render whatever we just processed. */
-  blockcount = 1;
-#endif
   
   for (i=0; i < blockcount; i++) {
     fluid_sample_timer_process(synth);
