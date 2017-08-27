@@ -318,7 +318,7 @@ fluid_voice_init(fluid_voice_t* voice, fluid_sample_t* sample,
 int 
 fluid_voice_set_output_rate(fluid_voice_t* voice, fluid_real_t value)
 {
-  if (_PLAYING(voice))
+  if (fluid_voice_is_playing(voice))
     fluid_voice_off(voice);
   
   voice->output_rate = value;
@@ -407,7 +407,7 @@ fluid_voice_write (fluid_voice_t* voice, fluid_real_t *dsp_buf)
   if (result == -1)
     return 0;
 
-  if ((result < FLUID_BUFSIZE) && _PLAYING(voice)) /* Voice finished by itself */
+  if ((result < FLUID_BUFSIZE) && fluid_voice_is_playing(voice)) /* Voice finished by itself */
     fluid_voice_off(voice);
 
   return result;
@@ -1199,6 +1199,8 @@ fluid_voice_release(fluid_voice_t* voice)
 
 /*
  * fluid_voice_noteoff
+ * 
+ * Sending a noteoff event will advance the envelopes to section 5 (release).
  */
 int
 fluid_voice_noteoff(fluid_voice_t* voice)
@@ -1243,7 +1245,7 @@ fluid_voice_kill_excl(fluid_voice_t* voice){
 
   unsigned int at_tick;
 
-  if (!_PLAYING(voice)) {
+  if (!fluid_voice_is_playing(voice)) {
     return FLUID_OK;
   }
 
@@ -1399,13 +1401,49 @@ unsigned int fluid_voice_get_id(fluid_voice_t* voice)
 }
 
 /**
- * Check if a voice is still playing.
+ * Check if a voice is producing sound. This is also true after a voice received a noteoff as it may be playing in release phase.
  * @param voice Voice instance
  * @return TRUE if playing, FALSE otherwise
  */
 int fluid_voice_is_playing(fluid_voice_t* voice)
 {
-  return _PLAYING(voice);
+  return  (voice->status == FLUID_VOICE_ON)
+          || fluid_voice_is_sustained(voice)
+          || fluid_voice_is_sostenuto(voice);
+
+}
+
+/**
+ * Check if a voice is ON. A voice is ON, if it has not yet received a noteoff event.
+ * @param voice Voice instance
+ * @return TRUE if on, FALSE otherwise
+ * @since 1.1.7
+ */
+int fluid_voice_is_on(fluid_voice_t* voice)
+{
+  return (voice->status == FLUID_VOICE_ON && !voice->has_noteoff);
+}
+
+/**
+ * Check if a voice is sustained.
+ * @param voice Voice instance
+ * @return TRUE if sustained, FALSE otherwise
+ * @since 1.1.7
+ */
+int fluid_voice_is_sustained(fluid_voice_t* voice)
+{
+  return (voice->status == FLUID_VOICE_SUSTAINED);
+}
+
+/**
+ * Check if a voice is held by sostenuto.
+ * @param voice Voice instance
+ * @return TRUE if sostenuto, FALSE otherwise
+ * @since 1.1.7
+ */
+int fluid_voice_is_sostenuto(fluid_voice_t* voice)
+{
+  return (voice->status == FLUID_VOICE_HELD_BY_SOSTENUTO);
 }
 
 /**
@@ -1628,7 +1666,7 @@ fluid_voice_get_overflow_prio(fluid_voice_t* voice,
   } else if (voice->has_noteoff) {
     /* Noteoff has */
     this_voice_prio += score->released;
-  } else if (_SUSTAINED(voice) || _HELD_BY_SOSTENUTO(voice)) {
+  } else if (fluid_voice_is_sustained(voice) || fluid_voice_is_sostenuto(voice)) {
     /* This voice is still active, since the sustain pedal is held down.
      * Consider it less important than non-sustained channels.
      * This decision is somehow subjective. But usually the sustain pedal

@@ -183,19 +183,6 @@ fluid_voice_unlock_rvoice(fluid_voice_t* voice)
   voice->can_access_rvoice = 1;
 }
 
-
-#define fluid_voice_set_id(_voice, _id)  { (_voice)->id = (_id); }
-
-#define _PLAYING(voice)  (((voice)->status == FLUID_VOICE_ON) || \
-                                           _SUSTAINED(voice)  || \
-                                           _HELD_BY_SOSTENUTO(voice) )
-
-/* A voice is 'ON', if it has not yet received a noteoff
- * event. Sending a noteoff event will advance the envelopes to
- * section 5 (release). */
-#define _ON(voice)  ((voice)->status == FLUID_VOICE_ON && !voice->has_noteoff)
-#define _SUSTAINED(voice)  ((voice)->status == FLUID_VOICE_SUSTAINED)
-#define _HELD_BY_SOSTENUTO(voice)  ((voice)->status == FLUID_VOICE_HELD_BY_SOSTENUTO)
 #define _AVAILABLE(voice)  ((voice)->can_access_rvoice && \
  (((voice)->status == FLUID_VOICE_CLEAN) || ((voice)->status == FLUID_VOICE_OFF)))
 //#define _RELEASED(voice)  ((voice)->chan == NO_CHANNEL)
