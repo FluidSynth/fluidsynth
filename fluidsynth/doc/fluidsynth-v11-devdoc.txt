@@ -527,7 +527,9 @@ to call fluid_synth_write_s16, fluid_synth_write_float,
 fluid_synth_nwrite_float or fluid_synth_process in parallel with the
 rest of the calls, and it won't be blocked by time intensive calls to
 the synth. Turn it off if throughput is more important than latency, e g
-in rendering-to-file scenarios where underruns is not an issue.</td>
+in rendering-to-file scenarios where underruns is not an issue.
+<br /><br /><strong>Deprecated:</strong><br />As of 1.1.7 this option is deprecated. The current implementation relies on the fact that this option is set to TRUE to correctly render audio. Also in fact it enforces thread safety for rvoice_mixer instead of enabling parallel-render, which is mainly controlled by "synth.cpu-cores".
+    </td>
   </tr>
 
 
