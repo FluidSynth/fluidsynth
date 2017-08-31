@@ -1207,6 +1207,8 @@ _fluid_seq_queue_send_queued_events(fluid_sequencer_t* seq)
 
 		/* process queue0[cellNb] */
 		_fluid_seq_queue_send_cell_events(seq, cellNb);
+		/* the current tick may have changed */
+		nowTicks = fluid_sequencer_get_tick(seq);
 
 		/* next cell */
 		cellNb++;
