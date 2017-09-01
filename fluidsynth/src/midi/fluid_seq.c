@@ -1204,9 +1204,11 @@ _fluid_seq_queue_send_queued_events(fluid_sequencer_t* seq)
 			_fluid_seq_queue_slide(seq);
 		} /* slide */
 
-
 		/* process queue0[cellNb] */
 		_fluid_seq_queue_send_cell_events(seq, cellNb);
+		
+		/* the current scale may have changed through a callback event */
+		nowTicks = fluid_sequencer_get_tick(seq);
 
 		/* next cell */
 		cellNb++;
