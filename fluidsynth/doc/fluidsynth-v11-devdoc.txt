@@ -528,7 +528,7 @@ fluid_synth_nwrite_float or fluid_synth_process in parallel with the
 rest of the calls, and it won't be blocked by time intensive calls to
 the synth. Turn it off if throughput is more important than latency, e g
 in rendering-to-file scenarios where underruns is not an issue.
-<br /><br /><strong>Deprecated:</strong><br />As of 1.1.7 this option is deprecated. The current implementation relies on the fact that this option is set to TRUE to correctly render audio. Also in fact it enforces thread safety for rvoice_mixer instead of enabling parallel-render, which is mainly controlled by "synth.cpu-cores".
+<br /><br /><strong>Deprecated:</strong><br />As of 1.1.7 this option is deprecated. This option enforces thread safety for rvoice_mixer, which causes rvoice_events to be queued internally. The current implementation relies on the fact that this option is set to TRUE to correctly render any amount of requested audio. Also calling fluid_synth_write_* in parallel is not considered to be a use-case. It would cause undefined audio output, as it would be unpredictable for the user which rvoice_events specifically would be dispatched to which fluid_synth_write_* call.
     </td>
   </tr>
 
