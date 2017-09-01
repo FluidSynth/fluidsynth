@@ -1292,8 +1292,8 @@ void fluid_voice_off(fluid_voice_t* voice)
  * fluid_voice_stop
  *
  * Purpose:
- * Turns off a voice, meaning that it is not processed
- * anymore by the DSP loop.
+ * Turns off a voice, meaning that it is not processed anymore by the
+ * DSP loop, i.e. contrary part to fluid_voice_start().
  */
 void
 fluid_voice_stop(fluid_voice_t* voice)
