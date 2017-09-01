@@ -1624,7 +1624,7 @@ fluid_player_callback(void *data, unsigned int msec)
         player->cur_msec = msec;
         player->cur_ticks = (player->start_ticks
                 + (int) ((double) (player->cur_msec - player->start_msec)
-                        / player->deltatime));
+                        / player->deltatime + 0.5)); /* 0.5 to average overall error when casting */
 
         for (i = 0; i < player->ntracks; i++) {
             if (!fluid_track_eot(player->track[i])) {

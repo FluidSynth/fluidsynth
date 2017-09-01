@@ -65,6 +65,9 @@
       event->realparams[1], event->realparams[2], event->realparams[3]); \
     return; }
 
+
+static int fluid_rvoice_eventhandler_push_LOCAL(fluid_rvoice_eventhandler_t* handler, const fluid_rvoice_event_t* src_event);
+
 void
 fluid_rvoice_event_dispatch(fluid_rvoice_event_t* event)
 {
@@ -131,25 +134,14 @@ fluid_rvoice_eventhandler_push(fluid_rvoice_eventhandler_t* handler,
                                 void* method, void* object, int intparam, 
                                 fluid_real_t realparam)
 {
-  fluid_rvoice_event_t* event;
   fluid_rvoice_event_t local_event;
-  event = handler->is_threadsafe ? 
-    fluid_ringbuffer_get_inptr(handler->queue, handler->queue_stored) : &local_event;
-
-  if (event == NULL) {
-    FLUID_LOG(FLUID_WARN, "Ringbuffer full, try increasing polyphony!");
-    return FLUID_FAILED; // Buffer full...
-  }
-
-  event->method = method;
-  event->object = object;
-  event->intparam = intparam;
-  event->realparams[0] = realparam;
-  if (handler->is_threadsafe)
-    handler->queue_stored++;
-  else
-    fluid_rvoice_event_dispatch(event);
-  return FLUID_OK;
+  
+  local_event.method = method;
+  local_event.object = object;
+  local_event.intparam = intparam;
+  local_event.realparams[0] = realparam;
+  
+  return fluid_rvoice_eventhandler_push_LOCAL(handler, &local_event);
 }
 
 
@@ -157,24 +149,13 @@ int
 fluid_rvoice_eventhandler_push_ptr(fluid_rvoice_eventhandler_t* handler, 
                                    void* method, void* object, void* ptr)
 {
-  fluid_rvoice_event_t* event;
   fluid_rvoice_event_t local_event;
-  event = handler->is_threadsafe ? 
-    fluid_ringbuffer_get_inptr(handler->queue, handler->queue_stored) : &local_event;
-
-  if (event == NULL) {
-    FLUID_LOG(FLUID_WARN, "Ringbuffer full, try increasing polyphony!");
-    return FLUID_FAILED; // Buffer full...
-  }
-
-  event->method = method;
-  event->object = object;
-  event->ptr = ptr;
-  if (handler->is_threadsafe)
-    handler->queue_stored++;
-  else
-    fluid_rvoice_event_dispatch(event);
-  return FLUID_OK;
+  
+  local_event.method = method;
+  local_event.object = object;
+  local_event.ptr = ptr;
+  
+  return fluid_rvoice_eventhandler_push_LOCAL(handler, &local_event);
 }
 
 
@@ -184,28 +165,36 @@ fluid_rvoice_eventhandler_push5(fluid_rvoice_eventhandler_t* handler,
                                 fluid_real_t r1, fluid_real_t r2, 
                                 fluid_real_t r3, fluid_real_t r4, fluid_real_t r5)
 {
-  fluid_rvoice_event_t* event;
   fluid_rvoice_event_t local_event;
-  event = handler->is_threadsafe ? 
-    fluid_ringbuffer_get_inptr(handler->queue, handler->queue_stored) : &local_event;
+  
+  local_event.method = method;
+  local_event.object = object;
+  local_event.intparam = intparam;
+  local_event.realparams[0] = r1;
+  local_event.realparams[1] = r2;
+  local_event.realparams[2] = r3;
+  local_event.realparams[3] = r4;
+  local_event.realparams[4] = r5;
+  
+  return fluid_rvoice_eventhandler_push_LOCAL(handler, &local_event);
+    
+}
+
+static int fluid_rvoice_eventhandler_push_LOCAL(fluid_rvoice_eventhandler_t* handler, const fluid_rvoice_event_t* src_event)
+{
+  fluid_rvoice_event_t* event;
+  int old_queue_stored = fluid_atomic_int_add(&handler->queue_stored, 1);
+  
+  event = fluid_ringbuffer_get_inptr(handler->queue, old_queue_stored);
 
   if (event == NULL) {
+    fluid_atomic_int_add(&handler->queue_stored, -1);
     FLUID_LOG(FLUID_WARN, "Ringbuffer full, try increasing polyphony!");
     return FLUID_FAILED; // Buffer full...
   }
 
-  event->method = method;
-  event->object = object;
-  event->intparam = intparam;
-  event->realparams[0] = r1;
-  event->realparams[1] = r2;
-  event->realparams[2] = r3;
-  event->realparams[3] = r4;
-  event->realparams[4] = r5;
-  if (handler->is_threadsafe)
-    handler->queue_stored++;
-  else
-    fluid_rvoice_event_dispatch(event);
+  memcpy(event, src_event, sizeof(*event));
+  
   return FLUID_OK;
 }
 
@@ -233,7 +222,13 @@ new_fluid_rvoice_eventhandler(int is_threadsafe, int queuesize,
   eventhandler->mixer = NULL;
   eventhandler->queue = NULL;
   eventhandler->finished_voices = NULL;
-  eventhandler->is_threadsafe = is_threadsafe;
+  
+  /* HACK 2017-08-27: always enforce threadsafety, i.e. enforce enqueuing events
+   * otherwise we mess up rendering if more than one block is requested by the user
+   * because fluid_rvoice_eventhandler_dispatch_count() always stays zero causing
+   * that too many events are dispatched too early, causing incorrectly timed audio
+   */
+  eventhandler->is_threadsafe = TRUE;
   eventhandler->queue_stored = 0;
   
   eventhandler->finished_voices = new_fluid_ringbuffer(finished_voices_size,

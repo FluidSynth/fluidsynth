@@ -67,9 +67,11 @@ int fluid_rvoice_eventhandler_dispatch_count(fluid_rvoice_eventhandler_t*);
 static FLUID_INLINE void 
 fluid_rvoice_eventhandler_flush(fluid_rvoice_eventhandler_t* handler)
 {
-  if (handler->queue_stored > 0) {
-    fluid_ringbuffer_next_inptr(handler->queue, handler->queue_stored);
-    handler->queue_stored = 0;
+  int queue_stored = fluid_atomic_int_get(&handler->queue_stored);
+    
+  if (queue_stored > 0) {
+    fluid_atomic_int_set(&handler->queue_stored, 0);
+    fluid_ringbuffer_next_inptr(handler->queue, queue_stored);
   }
 }
 
