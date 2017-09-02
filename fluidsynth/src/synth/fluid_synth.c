@@ -980,7 +980,7 @@ fluid_synth_noteoff_LOCAL(fluid_synth_t* synth, int chan, int key)
 
   for (i = 0; i < synth->polyphony; i++) {
     voice = synth->voice[i];
-    if (fluid_voice_is_on(voice) && (voice->chan == chan) && (voice->key == key)) {
+    if (fluid_voice_is_on(voice) && (fluid_voice_get_channel(voice) == chan) && (fluid_voice_get_key(voice) == key)) {
       if (synth->verbose) {
 	int used_voices = 0;
 	int k;
@@ -990,7 +990,7 @@ fluid_synth_noteoff_LOCAL(fluid_synth_t* synth, int chan, int key)
 	  }
 	}
 	FLUID_LOG(FLUID_INFO, "noteoff\t%d\t%d\t%d\t%05d\t%.3f\t%d",
-		 voice->chan, voice->key, 0, voice->id,
+		 fluid_voice_get_channel(voice), fluid_voice_get_key(voice), 0, fluid_voice_get_id(voice),
 		 (fluid_curtime() - synth->start) / 1000.0f,
 		 used_voices);
       } /* if verbose */
@@ -1013,7 +1013,7 @@ fluid_synth_damp_voices_by_sustain_LOCAL(fluid_synth_t* synth, int chan)
   for (i = 0; i < synth->polyphony; i++) {
     voice = synth->voice[i];
 
-    if ((voice->chan == chan) && fluid_voice_is_sustained(voice))
+    if ((fluid_voice_get_channel(voice) == chan) && fluid_voice_is_sustained(voice))
      fluid_voice_release(voice);
   }
 
@@ -1031,7 +1031,7 @@ fluid_synth_damp_voices_by_sostenuto_LOCAL(fluid_synth_t* synth, int chan)
   for (i = 0; i < synth->polyphony; i++) {
     voice = synth->voice[i];
 
-    if ((voice->chan == chan) && fluid_voice_is_sostenuto(voice))
+    if ((fluid_voice_get_channel(voice) == chan) && fluid_voice_is_sostenuto(voice))
      fluid_voice_release(voice);
   }
 
@@ -1528,7 +1528,7 @@ fluid_synth_all_notes_off_LOCAL(fluid_synth_t* synth, int chan)
   for (i = 0; i < synth->polyphony; i++) {
     voice = synth->voice[i];
 
-    if (fluid_voice_is_playing(voice) && ((-1 == chan) || (chan == voice->chan)))
+    if (fluid_voice_is_playing(voice) && ((-1 == chan) || (chan == fluid_voice_get_channel(voice))))
       fluid_voice_noteoff(voice);
   }
   return FLUID_OK;
@@ -1566,7 +1566,7 @@ fluid_synth_all_sounds_off_LOCAL(fluid_synth_t* synth, int chan)
   for (i = 0; i < synth->polyphony; i++) {
     voice = synth->voice[i];
 
-    if (fluid_voice_is_playing(voice) && ((-1 == chan) || (chan == voice->chan)))
+    if (fluid_voice_is_playing(voice) && ((-1 == chan) || (chan == fluid_voice_get_channel(voice))))
       fluid_voice_off(voice);
   }
   return FLUID_OK;
@@ -1656,7 +1656,7 @@ fluid_synth_modulate_voices_LOCAL(fluid_synth_t* synth, int chan, int is_cc, int
   for (i = 0; i < synth->polyphony; i++) {
     voice = synth->voice[i];
 
-    if (voice->chan == chan)
+    if (fluid_voice_get_channel(voice) == chan)
       fluid_voice_modulate(voice, is_cc, ctrl);
   }
   return FLUID_OK;
@@ -1677,7 +1677,7 @@ fluid_synth_modulate_voices_all_LOCAL(fluid_synth_t* synth, int chan)
   for (i = 0; i < synth->polyphony; i++) {
     voice = synth->voice[i];
 
-    if (voice->chan == chan)
+    if (fluid_voice_get_channel(voice) == chan)
       fluid_voice_modulate_all(voice);
   }
   return FLUID_OK;
@@ -3025,7 +3025,7 @@ fluid_synth_free_voice_by_kill_LOCAL(fluid_synth_t* synth)
 
   voice = synth->voice[best_voice_index];
   FLUID_LOG(FLUID_DBG, "Killing voice %d, index %d, chan %d, key %d ",
-	    voice->id, best_voice_index, voice->chan, voice->key);
+	    fluid_voice_get_id(voice), best_voice_index, fluid_voice_get_channel(voice), fluid_voice_get_key(voice));
   fluid_voice_off(voice);
 
   return voice;
@@ -3142,7 +3142,7 @@ fluid_synth_kill_by_exclusive_class_LOCAL(fluid_synth_t* synth,
      * class and is not part of the same noteon event (voice group), then kill it */
 
     if (fluid_voice_is_playing(existing_voice)
-        && existing_voice->chan == new_voice->chan
+        && fluid_voice_get_channel(existing_voice) == fluid_voice_get_channel(new_voice)
         && (int)_GEN (existing_voice, GEN_EXCLUSIVECLASS) == excl_class
         && fluid_voice_get_id (existing_voice) != fluid_voice_get_id(new_voice))
       fluid_voice_kill_excl(existing_voice);
@@ -4067,12 +4067,12 @@ fluid_synth_release_voice_on_same_note_LOCAL(fluid_synth_t* synth, int chan,
   for (i = 0; i < synth->polyphony; i++) {
     voice = synth->voice[i];
     if (fluid_voice_is_playing(voice)
-	&& (voice->chan == chan)
-	&& (voice->key == key)
+	&& (fluid_voice_get_channel(voice) == chan)
+	&& (fluid_voice_get_key(voice) == key)
 	&& (fluid_voice_get_id(voice) != synth->noteid)) {
       /* Id of voices that was sustained by sostenuto */
       if(fluid_voice_is_sostenuto(voice))
-        synth->storeid = voice->id;
+        synth->storeid = fluid_voice_get_id(voice);
       /* Force the voice into release stage (pedaling is ignored) */
       fluid_voice_release(voice);
     }
@@ -4850,7 +4850,7 @@ fluid_synth_set_gen_LOCAL (fluid_synth_t* synth, int chan, int param, float valu
   for (i = 0; i < synth->polyphony; i++) {
     voice = synth->voice[i];
 
-    if (voice->chan == chan)
+    if (fluid_voice_get_channel(voice) == chan)
       fluid_voice_set_param (voice, param, value, absolute);
   }
 }

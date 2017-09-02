@@ -179,10 +179,10 @@ fluid_mod_get_source_value(const unsigned char mod_src,
             val = *range;
             break;
         case FLUID_MOD_VELOCITY:
-            val = voice->vel;
+            val = fluid_voice_get_velocity(voice);
             break;
         case FLUID_MOD_KEY:
-            val = voice->key;
+            val = fluid_voice_get_key(voice);
             break;
         case FLUID_MOD_KEYPRESSURE:
             val = fluid_channel_get_key_pressure (chan);
