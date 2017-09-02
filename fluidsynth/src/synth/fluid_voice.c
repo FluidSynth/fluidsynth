@@ -890,6 +890,10 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
      * There is a flag, which should indicate, whether a generator is
      * enabled or not.  But here we rely on the default value of -1.
      * */
+    
+    /* 2017-09-02: do not change the voice's key here, otherwise it will
+     * never be released on a noteoff event
+     */
 #if 0
     x = _GEN(voice, GEN_KEYNUM);
     if (x >= 0){
