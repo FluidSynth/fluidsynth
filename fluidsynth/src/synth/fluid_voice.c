@@ -1447,7 +1447,7 @@ int fluid_voice_is_sostenuto(fluid_voice_t* voice)
 }
 
 /**
- * If the voice is playing gets the midi channel the voice is playing on. Else the result is undefined.
+ * If the voice is playing, gets the midi channel the voice is playing on. Else the result is undefined.
  * @param voice Voice instance
  * @return The channel assigned to this voice
  * @since 1.1.7
@@ -1458,9 +1458,31 @@ int fluid_voice_get_channel(fluid_voice_t* voice)
 }
 
 /**
- * If the voice is playing gets the midi key the voice is playing on. Else the result is undefined.
+ * If the voice is playing, gets the midi key the voice is actually playing at. Else the result is undefined.
+ * If the voice was started from an instrument which uses a fixed key generator, it returns that.
+ * Else returns the same as \c fluid_voice_get_key.
  * @param voice Voice instance
- * @return The midi key assigned to this voice
+ * @return The midi key this voice is playing at
+ * @since 1.1.7
+ */
+int fluid_voice_get_actual_key(fluid_voice_t* voice)
+{
+    fluid_real_t x = _GEN(voice, GEN_KEYNUM);
+    if (x >= 0)
+    {
+        return (int)x;
+    }
+    else
+    {
+        return fluid_voice_get_key(voice);
+    }
+}
+
+/**
+ * If the voice is playing, gets the midi key from the noteon event, by which the voice was initially turned on with.
+ * Else the result is undefined.
+ * @param voice Voice instance
+ * @return The midi key of the noteon event that originally turned on this voice
  * @since 1.1.7
  */
 int fluid_voice_get_key(fluid_voice_t* voice)
@@ -1469,9 +1491,31 @@ int fluid_voice_get_key(fluid_voice_t* voice)
 }
 
 /**
- * If the voice is playing gets the midi velocity the voice is playing at. Else the result is undefined.
+ * If the voice is playing, gets the midi velocity the voice is actually playing at. Else the result is undefined.
+ * If the voice was started from an instrument which uses a fixed velocity generator, it returns that.
+ * Else returns the same as \c fluid_voice_get_velocity.
  * @param voice Voice instance
- * @return The midi velocity assigned to this voice
+ * @return The midi velocity this voice is playing at
+ * @since 1.1.7
+ */
+int fluid_voice_get_actual_velocity(fluid_voice_t* voice)
+{
+    fluid_real_t x = _GEN(voice, GEN_VELOCITY);
+    if (x > 0)
+    {
+        return (int)x;
+    }
+    else
+    {
+        return fluid_voice_get_velocity(voice);
+    }
+}
+
+/**
+ * If the voice is playing, gets the midi velocity from the noteon event, by which the voice was initially
+ * turned on with. Else the result is undefined.
+ * @param voice Voice instance
+ * @return The midi velocity which originally turned on this voice
  * @since 1.1.7
  */
 int fluid_voice_get_velocity(fluid_voice_t* voice)
