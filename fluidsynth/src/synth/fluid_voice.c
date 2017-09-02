@@ -481,10 +481,10 @@ fluid_voice_calculate_gen_pitch(fluid_voice_t* voice)
     tuning = fluid_channel_get_tuning (voice->channel);
     x = fluid_tuning_get_pitch (tuning, (int)(voice->root_pitch / 100.0f));
     voice->gen[GEN_PITCH].val = voice->gen[GEN_SCALETUNE].val / 100.0f *
-      (fluid_tuning_get_pitch (tuning, voice->key) - x) + x;
+      (fluid_tuning_get_pitch (tuning, fluid_voice_get_actual_key(voice)) - x) + x;
   } else {
     voice->gen[GEN_PITCH].val = voice->gen[GEN_SCALETUNE].val
-      * (voice->key - voice->root_pitch / 100.0f) + voice->root_pitch;
+      * (fluid_voice_get_actual_key(voice) - voice->root_pitch / 100.0f) + voice->root_pitch;
   }
 
 }
@@ -636,7 +636,7 @@ calculate_hold_decay_buffers(fluid_voice_t* voice, int gen_base,
    * will cause (60-72)*100=-1200 timecents of time variation.
    * The time is cut in half.
    */
-  timecents = (_GEN(voice, gen_base) + _GEN(voice, gen_key2base) * (60.0 - voice->key));
+  timecents = (_GEN(voice, gen_base) + _GEN(voice, gen_key2base) * (60.0 - fluid_voice_get_actual_key(voice)));
 
   /* Range checking */
   if (is_decay){
@@ -890,10 +890,12 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
      * There is a flag, which should indicate, whether a generator is
      * enabled or not.  But here we rely on the default value of -1.
      * */
+#if 0
     x = _GEN(voice, GEN_KEYNUM);
     if (x >= 0){
       voice->key = x;
     }
+#endif
     break;
 
   case GEN_VELOCITY:
