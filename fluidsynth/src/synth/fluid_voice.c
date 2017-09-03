@@ -889,7 +889,7 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
      *
      * There is a flag, which should indicate, whether a generator is
      * enabled or not.  But here we rely on the default value of -1.
-     * */
+     */
     
     /* 2017-09-02: do not change the voice's key here, otherwise it will
      * never be released on a noteoff event
@@ -909,11 +909,18 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
      * value. Non-realtime controller.
      *
      * There is a flag, which should indicate, whether a generator is
-     * enabled or not. But here we rely on the default value of -1.  */
+     * enabled or not. But here we rely on the default value of -1.
+     */
+    /* 2017-09-02: do not change the voice's velocity here, user
+     * fluid_voice_get_actual_velocity() to get the value of this generator
+     * if active.
+     */
+#if 0
     x = _GEN(voice, GEN_VELOCITY);
     if (x > 0) {
       voice->vel = x;
     }
+#endif
     break;
 
   case GEN_MODENVTOPITCH:
