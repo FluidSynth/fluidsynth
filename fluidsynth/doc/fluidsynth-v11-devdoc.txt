@@ -6,9 +6,10 @@
 \author Pedro López-Cabanillas
 \author Josh Green
 \author David Henningsson
-\author Copyright &copy; 2003-2017 Peter Hanappe, Conrad Berhörster, Antoine Schmitt, Pedro López-Cabanillas, Josh Green, David Henningsson
-\version Revision 1.1.6
-\date 2012-08-04
+\author Tom Moebert
+\author Copyright &copy; 2003-2017 Peter Hanappe, Conrad Berhörster, Antoine Schmitt, Pedro López-Cabanillas, Josh Green, David Henningsson, Tom Moebert
+\version Revision 1.1.7
+\date 2017-09-04
 
 All the source code examples in this document are in the public domain; you can use them as you please. This document is licensed under the Creative Commons Attribution-Share Alike 3.0 Unported License. To view a copy of this license, visit http://creativecommons.org/licenses/by-sa/3.0/ . The FluidSynth library is distributed under the GNU Lesser General Public License. A copy of the GNU Lesser General Public License is contained in the FluidSynth package; if not, visit http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt or write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
@@ -18,8 +19,9 @@ All the source code examples in this document are in the public domain; you can 
 
 \section Contents Table of Contents
 
-- \ref Disclaimer 
-- \ref Introduction 
+- \ref Disclaimer
+- \ref Introduction
+- \ref NewIn1_1_7
 - \ref NewIn1_1_6
 - \ref NewIn1_1_5
 - \ref NewIn1_1_4
