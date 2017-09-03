@@ -481,10 +481,10 @@ fluid_voice_calculate_gen_pitch(fluid_voice_t* voice)
     tuning = fluid_channel_get_tuning (voice->channel);
     x = fluid_tuning_get_pitch (tuning, (int)(voice->root_pitch / 100.0f));
     voice->gen[GEN_PITCH].val = voice->gen[GEN_SCALETUNE].val / 100.0f *
-      (fluid_tuning_get_pitch (tuning, voice->key) - x) + x;
+      (fluid_tuning_get_pitch (tuning, fluid_voice_get_actual_key(voice)) - x) + x;
   } else {
     voice->gen[GEN_PITCH].val = voice->gen[GEN_SCALETUNE].val
-      * (voice->key - voice->root_pitch / 100.0f) + voice->root_pitch;
+      * (fluid_voice_get_actual_key(voice) - voice->root_pitch / 100.0f) + voice->root_pitch;
   }
 
 }
@@ -636,7 +636,7 @@ calculate_hold_decay_buffers(fluid_voice_t* voice, int gen_base,
    * will cause (60-72)*100=-1200 timecents of time variation.
    * The time is cut in half.
    */
-  timecents = (_GEN(voice, gen_base) + _GEN(voice, gen_key2base) * (60.0 - voice->key));
+  timecents = (_GEN(voice, gen_base) + _GEN(voice, gen_key2base) * (60.0 - fluid_voice_get_actual_key(voice)));
 
   /* Range checking */
   if (is_decay){
@@ -889,11 +889,17 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
      *
      * There is a flag, which should indicate, whether a generator is
      * enabled or not.  But here we rely on the default value of -1.
-     * */
+     */
+    
+    /* 2017-09-02: do not change the voice's key here, otherwise it will
+     * never be released on a noteoff event
+     */
+#if 0
     x = _GEN(voice, GEN_KEYNUM);
     if (x >= 0){
       voice->key = x;
     }
+#endif
     break;
 
   case GEN_VELOCITY:
@@ -903,11 +909,18 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
      * value. Non-realtime controller.
      *
      * There is a flag, which should indicate, whether a generator is
-     * enabled or not. But here we rely on the default value of -1.  */
+     * enabled or not. But here we rely on the default value of -1.
+     */
+    /* 2017-09-02: do not change the voice's velocity here, user
+     * fluid_voice_get_actual_velocity() to get the value of this generator
+     * if active.
+     */
+#if 0
     x = _GEN(voice, GEN_VELOCITY);
     if (x > 0) {
       voice->vel = x;
     }
+#endif
     break;
 
   case GEN_MODENVTOPITCH:
@@ -1395,7 +1408,7 @@ fluid_voice_add_mod(fluid_voice_t* voice, fluid_mod_t* mod, int mode)
  *
  * Otherwise the voice has finished playing.
  */
-unsigned int fluid_voice_get_id(fluid_voice_t* voice)
+unsigned int fluid_voice_get_id(const fluid_voice_t* voice)
 {
   return voice->id;
 }
@@ -1405,7 +1418,7 @@ unsigned int fluid_voice_get_id(fluid_voice_t* voice)
  * @param voice Voice instance
  * @return TRUE if playing, FALSE otherwise
  */
-int fluid_voice_is_playing(fluid_voice_t* voice)
+int fluid_voice_is_playing(const fluid_voice_t* voice)
 {
   return  (voice->status == FLUID_VOICE_ON)
           || fluid_voice_is_sustained(voice)
@@ -1419,7 +1432,7 @@ int fluid_voice_is_playing(fluid_voice_t* voice)
  * @return TRUE if on, FALSE otherwise
  * @since 1.1.7
  */
-int fluid_voice_is_on(fluid_voice_t* voice)
+int fluid_voice_is_on(const fluid_voice_t* voice)
 {
   return (voice->status == FLUID_VOICE_ON && !voice->has_noteoff);
 }
@@ -1430,7 +1443,7 @@ int fluid_voice_is_on(fluid_voice_t* voice)
  * @return TRUE if sustained, FALSE otherwise
  * @since 1.1.7
  */
-int fluid_voice_is_sustained(fluid_voice_t* voice)
+int fluid_voice_is_sustained(const fluid_voice_t* voice)
 {
   return (voice->status == FLUID_VOICE_SUSTAINED);
 }
@@ -1441,7 +1454,7 @@ int fluid_voice_is_sustained(fluid_voice_t* voice)
  * @return TRUE if sostenuto, FALSE otherwise
  * @since 1.1.7
  */
-int fluid_voice_is_sostenuto(fluid_voice_t* voice)
+int fluid_voice_is_sostenuto(const fluid_voice_t* voice)
 {
   return (voice->status == FLUID_VOICE_HELD_BY_SOSTENUTO);
 }
@@ -1452,7 +1465,7 @@ int fluid_voice_is_sostenuto(fluid_voice_t* voice)
  * @return The channel assigned to this voice
  * @since 1.1.7
  */
-int fluid_voice_get_channel(fluid_voice_t* voice)
+int fluid_voice_get_channel(const fluid_voice_t* voice)
 {
   return voice->chan;
 }
@@ -1465,7 +1478,7 @@ int fluid_voice_get_channel(fluid_voice_t* voice)
  * @return The midi key this voice is playing at
  * @since 1.1.7
  */
-int fluid_voice_get_actual_key(fluid_voice_t* voice)
+int fluid_voice_get_actual_key(const fluid_voice_t* voice)
 {
     fluid_real_t x = _GEN(voice, GEN_KEYNUM);
     if (x >= 0)
@@ -1485,7 +1498,7 @@ int fluid_voice_get_actual_key(fluid_voice_t* voice)
  * @return The midi key of the noteon event that originally turned on this voice
  * @since 1.1.7
  */
-int fluid_voice_get_key(fluid_voice_t* voice)
+int fluid_voice_get_key(const fluid_voice_t* voice)
 {
   return voice->key;
 }
@@ -1498,7 +1511,7 @@ int fluid_voice_get_key(fluid_voice_t* voice)
  * @return The midi velocity this voice is playing at
  * @since 1.1.7
  */
-int fluid_voice_get_actual_velocity(fluid_voice_t* voice)
+int fluid_voice_get_actual_velocity(const fluid_voice_t* voice)
 {
     fluid_real_t x = _GEN(voice, GEN_VELOCITY);
     if (x > 0)
@@ -1518,7 +1531,7 @@ int fluid_voice_get_actual_velocity(fluid_voice_t* voice)
  * @return The midi velocity which originally turned on this voice
  * @since 1.1.7
  */
-int fluid_voice_get_velocity(fluid_voice_t* voice)
+int fluid_voice_get_velocity(const fluid_voice_t* voice)
 {
   return voice->vel;
 }

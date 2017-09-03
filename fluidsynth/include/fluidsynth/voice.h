@@ -52,14 +52,16 @@ FLUIDSYNTH_API void fluid_voice_gen_set(fluid_voice_t* voice, int gen, float val
 FLUIDSYNTH_API float fluid_voice_gen_get(fluid_voice_t* voice, int gen);
 FLUIDSYNTH_API void fluid_voice_gen_incr(fluid_voice_t* voice, int gen, float val);
 
-FLUIDSYNTH_API unsigned int fluid_voice_get_id(fluid_voice_t* voice);
-FLUIDSYNTH_API int fluid_voice_is_playing(fluid_voice_t* voice);
-FLUIDSYNTH_API int fluid_voice_is_on(fluid_voice_t* voice);
-FLUIDSYNTH_API int fluid_voice_is_sustained(fluid_voice_t* voice);
-FLUIDSYNTH_API int fluid_voice_is_sostenuto(fluid_voice_t* voice);
-FLUIDSYNTH_API int fluid_voice_get_channel(fluid_voice_t* voice);
-FLUIDSYNTH_API int fluid_voice_get_key(fluid_voice_t* voice);
-FLUIDSYNTH_API int fluid_voice_get_velocity(fluid_voice_t* voice);
+FLUIDSYNTH_API unsigned int fluid_voice_get_id(const fluid_voice_t* voice);
+FLUIDSYNTH_API int fluid_voice_is_playing(const fluid_voice_t* voice);
+FLUIDSYNTH_API int fluid_voice_is_on(const fluid_voice_t* voice);
+FLUIDSYNTH_API int fluid_voice_is_sustained(const fluid_voice_t* voice);
+FLUIDSYNTH_API int fluid_voice_is_sostenuto(const fluid_voice_t* voice);
+FLUIDSYNTH_API int fluid_voice_get_channel(const fluid_voice_t* voice);
+FLUIDSYNTH_API int fluid_voice_get_actual_key(const fluid_voice_t* voice);
+FLUIDSYNTH_API int fluid_voice_get_key(const fluid_voice_t* voice);
+FLUIDSYNTH_API int fluid_voice_get_actual_velocity(const fluid_voice_t* voice);
+FLUIDSYNTH_API int fluid_voice_get_velocity(const fluid_voice_t* voice);
 FLUIDSYNTH_API int fluid_voice_optimize_sample(fluid_sample_t* s);       
     
 
