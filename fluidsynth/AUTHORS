@@ -1,6 +1,11 @@
 [:Team:]
 Current development team
 
+Tom Moebert
+
+
+Former development team
+
 Josh Green
 Pedro Lopez-Cabanillas
 David Henningsson
@@ -22,7 +27,7 @@ summary of contributions.
 * Peter Hanappe. Initiated the project. files: stuck his nose in all
   files.
 
-* Josh Green is the current maintainer and contributed a lot of code
+* Josh Green is the former maintainer and contributed a lot of code
   directly or indirectly through the Swami and Smurf code base.
   The SoundFont loader is completely based on his code. He also wrote
   the alsa sequencer driver. He made many changes and bug fixes,
