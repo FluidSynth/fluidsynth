@@ -1292,21 +1292,30 @@ void fluid_voice_overflow_rvoice_finished(fluid_voice_t* voice)
   fluid_sample_null_ptr(&voice->overflow_rvoice->dsp.sample);
 }
 
-
 /*
  * fluid_voice_off
+ * 
+ * Force the voice into finished stage. Useful anywhere a voice
+ * needs to be cancelled from MIDI API.
+ */
+void fluid_voice_off(fluid_voice_t* voice)
+{
+  UPDATE_RVOICE0(fluid_rvoice_voiceoff); /* request to finish the voice */
+}
+
+/*
+ * fluid_voice_stop
  *
  * Purpose:
- * Turns off a voice, meaning that it is not processed
- * anymore by the DSP loop.
+ * Turns off a voice, meaning that it is not processed anymore by the
+ * DSP loop, i.e. contrary part to fluid_voice_start().
  */
-int
-fluid_voice_off(fluid_voice_t* voice)
+void
+fluid_voice_stop(fluid_voice_t* voice)
 {
   fluid_profile(FLUID_PROF_VOICE_RELEASE, voice->ref);
 
   voice->chan = NO_CHANNEL;
-  UPDATE_RVOICE0(fluid_rvoice_voiceoff);
   
   if (voice->can_access_rvoice)
     fluid_sample_null_ptr(&voice->rvoice->dsp.sample);
@@ -1319,8 +1328,6 @@ fluid_voice_off(fluid_voice_t* voice)
 
   /* Decrement voice count */
   voice->channel->synth->active_voice_count--;
-
-  return FLUID_OK;
 }
 
 /**

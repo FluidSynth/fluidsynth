@@ -143,15 +143,10 @@ int fluid_voice_set_output_rate(fluid_voice_t* voice, fluid_real_t value);
     function.*/
 void fluid_voice_update_param(fluid_voice_t* voice, int gen);
 
-/**  fluid_voice_release
- Force the voice into release stage. Usefuf anywhere a voice
- needs to be damped even if pedals (sustain sostenuto) are depressed.
- See fluid_synth_damp_voices_LOCAL(), fluid_synth_damp_voices_by_sostenuto_LOCAL,
- fluid_voice_noteoff(), fluid_synth_stop_LOCAL().
-*/
 void fluid_voice_release(fluid_voice_t* voice);
 int fluid_voice_noteoff(fluid_voice_t* voice);
-int fluid_voice_off(fluid_voice_t* voice);
+void fluid_voice_off(fluid_voice_t* voice);
+void fluid_voice_stop(fluid_voice_t* voice);
 void fluid_voice_overflow_rvoice_finished(fluid_voice_t* voice);
 void fluid_voice_mix (fluid_voice_t *voice, int count, fluid_real_t* dsp_buf,
 		 fluid_real_t* left_buf, fluid_real_t* right_buf,

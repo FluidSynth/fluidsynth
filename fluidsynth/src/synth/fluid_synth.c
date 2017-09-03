@@ -797,8 +797,18 @@ delete_fluid_synth(fluid_synth_t* synth)
         continue;
       fluid_voice_unlock_rvoice(voice);
       fluid_voice_overflow_rvoice_finished(voice); 
-      if (fluid_voice_is_playing(voice))
-	fluid_voice_off(voice);
+      if (fluid_voice_is_playing(voice)) {
+        fluid_voice_off(voice);
+        /* If we only use fluid_voice_off(voice) it will trigger a delayed 
+         * fluid_voice_stop(voice) via fluid_synth_check_finished_voices().
+         * But here, we are deleting the fluid_synth_t instance so
+         * fluid_voice_stop() will be never triggered resulting in 
+         * SoundFont data never unloaded (i.e a serious memory leak).
+         * So, fluid_voice_stop() must be explicitly called to insure 
+         * unloading SoundFont data
+         */
+        fluid_voice_stop(voice);
+     }
     }
   }
 
@@ -2896,7 +2906,7 @@ fluid_synth_check_finished_voices(fluid_synth_t* synth)
     for (j=0; j < synth->polyphony; j++) {
       if (synth->voice[j]->rvoice == fv) {
         fluid_voice_unlock_rvoice(synth->voice[j]);
-        fluid_voice_off(synth->voice[j]);
+        fluid_voice_stop(synth->voice[j]);
         break;
       }
       else if (synth->voice[j]->overflow_rvoice == fv) {
