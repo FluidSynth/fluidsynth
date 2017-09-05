@@ -58,7 +58,7 @@ enum fluid_seq_event_type {
   FLUID_SEQ_CHANNELPRESSURE,    /**< Channel aftertouch event @since 1.1.0 */
   FLUID_SEQ_SYSTEMRESET,        /**< System reset event @since 1.1.0 */
   FLUID_SEQ_UNREGISTERING,      /**< Called when a sequencer client is being unregistered. @since 1.1.0 */
-  FLUID_SEQ_LASTEVENT		/**< Defines the count of event enums */
+  FLUID_SEQ_LASTEVENT		/**< Defines the count of event enums @deprecated As of 1.1.7 this enum value is deprecated and will be removed in a future release, because it prevents adding new enum values without breaking ABI compatibility. */
 };
 
 #define FLUID_SEQ_PITCHWHHELSENS        FLUID_SEQ_PITCHWHEELSENS        /**< Old deprecated misspelling of #FLUID_SEQ_PITCHWHEELSENS */
