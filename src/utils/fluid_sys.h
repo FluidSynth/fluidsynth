@@ -265,7 +265,6 @@ typedef GStaticPrivate fluid_private_t;
 /* Atomic operations */
 
 #define fluid_atomic_int_inc(_pi) g_atomic_int_inc(_pi)
-#define fluid_atomic_int_add(_pi, _val) g_atomic_int_add(_pi, _val)
 #define fluid_atomic_int_get(_pi) g_atomic_int_get(_pi)
 #define fluid_atomic_int_set(_pi, _val) g_atomic_int_set(_pi, _val)
 #define fluid_atomic_int_dec_and_test(_pi) g_atomic_int_dec_and_test(_pi)
@@ -275,8 +274,12 @@ typedef GStaticPrivate fluid_private_t;
 #if GLIB_MAJOR_VERSION > 2 || (GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION >= 30)
 #define fluid_atomic_int_exchange_and_add(_pi, _add) \
   g_atomic_int_add(_pi, _add)
+#define fluid_atomic_int_add(_pi, _add) \
+  g_atomic_int_add(_pi, _add)
 #else
 #define fluid_atomic_int_exchange_and_add(_pi, _add) \
+  g_atomic_int_exchange_and_add(_pi, _add)
+#define fluid_atomic_int_add(_pi, _add) \
   g_atomic_int_exchange_and_add(_pi, _add)
 #endif
 
