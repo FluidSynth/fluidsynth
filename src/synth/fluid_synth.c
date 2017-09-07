@@ -1083,7 +1083,7 @@ fluid_synth_damp_voices_by_sostenuto_LOCAL(fluid_synth_t* synth, int chan)
  * @return FLUID_OK on success, FLUID_FAILED otherwise
  */
 int
-fluid_synth_add_default_mod(fluid_synth_t* synth, fluid_mod_t* mod, int mode)
+fluid_synth_add_default_mod(fluid_synth_t* synth, fluid_mod_t* mod, enum fluid_synth_add_mod mode)
 {
   fluid_mod_t* default_mod;
   fluid_mod_t* last_mod = NULL;
@@ -1098,8 +1098,10 @@ fluid_synth_add_default_mod(fluid_synth_t* synth, fluid_mod_t* mod, int mode)
     if (fluid_mod_test_identity(default_mod, mod)) {
       if (mode == FLUID_SYNTH_ADD)
         default_mod->amount += mod->amount;
-      else // FLUID_SYNTH_OVERWRITE
+      else if (mode == FLUID_SYNTH_OVERWRITE)
         default_mod->amount = mod->amount;
+      else
+          FLUID_API_RETURN(FLUID_FAILED);
       FLUID_API_RETURN(FLUID_OK);
     }
     last_mod = default_mod;
