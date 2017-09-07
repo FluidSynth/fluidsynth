@@ -670,6 +670,21 @@ new_fluid_synth(fluid_settings_t *settings)
   if (synth->eventhandler == NULL)
     goto error_recovery; 
 
+  /* Setup the list of default modulators.
+   * Needs to happen after eventhandler has been set up, as fluid_synth_enter_api is called in the process */
+  synth->default_mod = NULL;
+  fluid_synth_add_default_mod(synth, &default_vel2att_mod, FLUID_SYNTH_ADD);
+  fluid_synth_add_default_mod(synth, &default_vel2filter_mod, FLUID_SYNTH_ADD);
+  fluid_synth_add_default_mod(synth, &default_at2viblfo_mod, FLUID_SYNTH_ADD);
+  fluid_synth_add_default_mod(synth, &default_mod2viblfo_mod, FLUID_SYNTH_ADD);
+  fluid_synth_add_default_mod(synth, &default_att_mod, FLUID_SYNTH_ADD);
+  fluid_synth_add_default_mod(synth, &default_pan_mod, FLUID_SYNTH_ADD);
+  fluid_synth_add_default_mod(synth, &default_expr_mod, FLUID_SYNTH_ADD);
+  fluid_synth_add_default_mod(synth, &default_reverb_mod, FLUID_SYNTH_ADD);
+  fluid_synth_add_default_mod(synth, &default_chorus_mod, FLUID_SYNTH_ADD);
+  fluid_synth_add_default_mod(synth, &default_pitch_bend_mod, FLUID_SYNTH_ADD);
+
+
 #ifdef LADSPA
   /* Create and initialize the Fx unit.*/
   synth->LADSPA_FxUnit = new_fluid_LADSPA_FxUnit(synth);
@@ -782,6 +797,8 @@ delete_fluid_synth(fluid_synth_t* synth)
   fluid_list_t *list;
   fluid_sfont_info_t* sfont_info;
   fluid_sfloader_t* loader;
+  fluid_mod_t* default_mod;
+  fluid_mod_t* mod;
 
   if (synth == NULL) {
     return FLUID_OK;
@@ -886,6 +903,14 @@ delete_fluid_synth(fluid_synth_t* synth)
   fluid_LADSPA_shutdown(synth->LADSPA_FxUnit);
   FLUID_FREE(synth->LADSPA_FxUnit);
 #endif
+
+  /* delete all default modulators */
+  default_mod = synth->default_mod;
+  while (default_mod != NULL) {
+    mod = default_mod;
+    default_mod = mod->next;
+    fluid_mod_delete(mod);
+  }
 
   fluid_rec_mutex_destroy(synth->mutex);
 
@@ -1046,6 +1071,55 @@ fluid_synth_damp_voices_by_sostenuto_LOCAL(fluid_synth_t* synth, int chan)
   }
 
   return FLUID_OK;
+}
+
+/**
+ * Adds a default modulator to the synth.
+ * @param synth FluidSynth instance
+ * @param mod Modulator info (values copied, passed in object can be freed again immediately)
+ * @param mode Determines how to handle an existing identical modulator
+ *   #FLUID_SYNTH_ADD to add (offset) the modulator amounts,
+ *   #FLUID_SYNTH_OVERWRITE to replace the modulator,
+ * @return FLUID_OK on success, FLUID_FAILED otherwise
+ */
+int
+fluid_synth_add_default_mod(fluid_synth_t* synth, fluid_mod_t* mod, int mode)
+{
+  fluid_mod_t* default_mod;
+  fluid_mod_t* last_mod = NULL;
+  fluid_mod_t* new_mod;
+
+  fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
+  fluid_synth_api_enter(synth);
+
+  default_mod = synth->default_mod;
+
+  while (default_mod != NULL) {
+    if (fluid_mod_test_identity(default_mod, mod)) {
+      if (mode == FLUID_SYNTH_ADD)
+        default_mod->amount += mod->amount;
+      else // FLUID_SYNTH_OVERWRITE
+        default_mod->amount = mod->amount;
+      FLUID_API_RETURN(FLUID_OK);
+    }
+    last_mod = default_mod;
+    default_mod = default_mod->next;
+  }
+
+  /* Add a new modulator (no existing modulator to add / overwrite). */
+  new_mod = fluid_mod_new();
+  if (new_mod == NULL)
+    FLUID_API_RETURN(FLUID_FAILED);
+
+  fluid_mod_clone(new_mod, mod);
+  new_mod->next = NULL;
+
+  if (last_mod == NULL)
+    synth->default_mod = new_mod;
+  else
+    last_mod->next = new_mod;
+
+  FLUID_API_RETURN(FLUID_OK);
 }
 
 
@@ -3064,6 +3138,7 @@ fluid_synth_alloc_voice(fluid_synth_t* synth, fluid_sample_t* sample, int chan, 
   int i, k;
   fluid_voice_t* voice = NULL;
   fluid_channel_t* channel = NULL;
+  fluid_mod_t* default_mod;
   unsigned int ticks;
 
   fluid_return_val_if_fail (sample != NULL, NULL);
@@ -3116,16 +3191,11 @@ fluid_synth_alloc_voice(fluid_synth_t* synth, fluid_sample_t* sample, int chan, 
   }
 
   /* add the default modulators to the synthesis process. */
-  fluid_voice_add_mod(voice, &default_vel2att_mod, FLUID_VOICE_DEFAULT);    /* SF2.01 $8.4.1  */
-  fluid_voice_add_mod(voice, &default_vel2filter_mod, FLUID_VOICE_DEFAULT); /* SF2.01 $8.4.2  */
-  fluid_voice_add_mod(voice, &default_at2viblfo_mod, FLUID_VOICE_DEFAULT);  /* SF2.01 $8.4.3  */
-  fluid_voice_add_mod(voice, &default_mod2viblfo_mod, FLUID_VOICE_DEFAULT); /* SF2.01 $8.4.4  */
-  fluid_voice_add_mod(voice, &default_att_mod, FLUID_VOICE_DEFAULT);        /* SF2.01 $8.4.5  */
-  fluid_voice_add_mod(voice, &default_pan_mod, FLUID_VOICE_DEFAULT);        /* SF2.01 $8.4.6  */
-  fluid_voice_add_mod(voice, &default_expr_mod, FLUID_VOICE_DEFAULT);       /* SF2.01 $8.4.7  */
-  fluid_voice_add_mod(voice, &default_reverb_mod, FLUID_VOICE_DEFAULT);     /* SF2.01 $8.4.8  */
-  fluid_voice_add_mod(voice, &default_chorus_mod, FLUID_VOICE_DEFAULT);     /* SF2.01 $8.4.9  */
-  fluid_voice_add_mod(voice, &default_pitch_bend_mod, FLUID_VOICE_DEFAULT); /* SF2.01 $8.4.10 */
+  default_mod = synth->default_mod;
+  while (default_mod != NULL) {
+    fluid_voice_add_mod(voice, default_mod, FLUID_VOICE_DEFAULT);
+    default_mod = default_mod->next;
+  }
 
   FLUID_API_RETURN(voice);
 }
