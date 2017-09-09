@@ -170,7 +170,6 @@ before_install:
     - eval "${MATRIX_EVAL}"
     
 before_script:
-    - cd fluidsynth
     - mkdir build && cd build
     
 script:
