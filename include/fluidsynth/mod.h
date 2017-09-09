@@ -69,7 +69,10 @@ enum fluid_mod_flags
   FLUID_MOD_CONVEX = 8,         /**< Convex mapping function */
   FLUID_MOD_SWITCH = 12,        /**< Switch (on/off) mapping function */
   FLUID_MOD_GC = 0,             /**< General controller source type (#fluid_mod_src) */
-  FLUID_MOD_CC = 16             /**< MIDI CC controller (source will be a MIDI CC number) */
+  FLUID_MOD_CC = 16,             /**< MIDI CC controller (source will be a MIDI CC number) */
+    
+  FLUID_MOD_LOG = 0x80,            /**< custom non-standard log10 mapping function */
+  FLUID_MOD_SIN = 0xC0,            /**< custom non-standard sinus mapping function */
 };
 
 /**
