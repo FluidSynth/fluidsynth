@@ -564,8 +564,16 @@ new_fluid_synth(fluid_settings_t *settings)
     {
         if(FLUID_STRCMP(buf, "compliant") == 0)
             fluid_conversion_set_atten_power(FLUID_ATTEN_POWER_DEFAULT_COMPLIANT);
-        else
+        else if(FLUID_STRCMP(buf, "emu") == 0)
             fluid_conversion_set_atten_power(FLUID_ATTEN_POWER_DEFAULT_EMU);
+        else
+        {
+            double atten = atof(buf);
+            if(atten != 0.0)
+                fluid_conversion_set_atten_power(atten);
+            else
+                fluid_conversion_set_atten_power(FLUID_ATTEN_POWER_DEFAULT_EMU);
+        }
     }
     
     fluid_synth_init();
