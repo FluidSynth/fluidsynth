@@ -185,7 +185,7 @@ fluid_mod_get_source_value(const unsigned char mod_src,
             val = fluid_voice_get_actual_key(voice);
             break;
         case FLUID_MOD_KEYPRESSURE:
-            val = fluid_channel_get_key_pressure (chan);
+            val = fluid_channel_get_key_pressure(chan, voice->key);
             break;
         case FLUID_MOD_CHANNELPRESSURE:
             val = fluid_channel_get_channel_pressure (chan);

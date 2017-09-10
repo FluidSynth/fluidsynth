@@ -41,7 +41,7 @@ struct _fluid_channel_t
   int sfont_bank_prog;                  /**< SoundFont ID (bit 21-31), bank (bit 7-20), program (bit 0-6) */
   fluid_preset_t* preset;               /**< Selected preset */
 
-  int key_pressure;                     /**< MIDI key pressure */
+  char key_pressure[128];               /**< MIDI polyphonic key pressure */
   int channel_pressure;                 /**< MIDI channel pressure */
   int pitch_bend;                       /**< Current pitch bend value */
   int pitch_wheel_sensitivity;          /**< Current pitch wheel sensitivity */
@@ -106,10 +106,10 @@ int fluid_channel_get_interp_method(fluid_channel_t* chan);
   ((chan)->cc[num] = (val))
 #define fluid_channel_get_cc(chan, num) \
   ((chan)->cc[num])
-#define fluid_channel_get_key_pressure(chan) \
-  ((chan)->key_pressure)
-#define fluid_channel_set_key_pressure(chan, val) \
-  ((chan)->key_pressure = (val))
+#define fluid_channel_get_key_pressure(chan, key) \
+  ((chan)->key_pressure[key])
+#define fluid_channel_set_key_pressure(chan, key, val) \
+  ((chan)->key_pressure[key] = (val))
 #define fluid_channel_get_channel_pressure(chan) \
   ((chan)->channel_pressure)
 #define fluid_channel_set_channel_pressure(chan, val) \

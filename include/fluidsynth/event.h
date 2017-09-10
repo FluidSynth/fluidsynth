@@ -56,6 +56,7 @@ enum fluid_seq_event_type {
   FLUID_SEQ_TIMER,		/**< Timer event (useful for giving a callback at a certain time) */
   FLUID_SEQ_ANYCONTROLCHANGE,	/**< DOCME (used for remove_events only) */
   FLUID_SEQ_CHANNELPRESSURE,    /**< Channel aftertouch event @since 1.1.0 */
+  FLUID_SEQ_KEYPRESSURE,        /**< Polyphonic aftertouch event @since 1.1.7 */
   FLUID_SEQ_SYSTEMRESET,        /**< System reset event @since 1.1.0 */
   FLUID_SEQ_UNREGISTERING,      /**< Called when a sequencer client is being unregistered. @since 1.1.0 */
   FLUID_SEQ_LASTEVENT		/**< Defines the count of event enums @deprecated As of 1.1.7 this enum value is deprecated and will be removed in a future release, because it prevents adding new enum values without breaking ABI compatibility. */
@@ -103,6 +104,7 @@ FLUIDSYNTH_API void fluid_event_volume(fluid_event_t* evt, int channel, short va
 FLUIDSYNTH_API void fluid_event_reverb_send(fluid_event_t* evt, int channel, short val);
 FLUIDSYNTH_API void fluid_event_chorus_send(fluid_event_t* evt, int channel, short val);
 
+FLUIDSYNTH_API void fluid_event_key_pressure(fluid_event_t* evt, int channel, short key, short val);
 FLUIDSYNTH_API void fluid_event_channel_pressure(fluid_event_t* evt, int channel, short val);
 FLUIDSYNTH_API void fluid_event_system_reset(fluid_event_t* evt);
 

@@ -58,6 +58,7 @@ static int fluid_synth_modulate_voices_LOCAL(fluid_synth_t* synth, int chan,
                                              int is_cc, int ctrl);
 static int fluid_synth_modulate_voices_all_LOCAL(fluid_synth_t* synth, int chan);
 static int fluid_synth_update_channel_pressure_LOCAL(fluid_synth_t* synth, int channum);
+static int fluid_synth_update_key_pressure_LOCAL(fluid_synth_t* synth, int chan, int key);
 static int fluid_synth_update_pitch_bend_LOCAL(fluid_synth_t* synth, int chan);
 static int fluid_synth_update_pitch_wheel_sens_LOCAL(fluid_synth_t* synth, int chan);
 static int fluid_synth_set_preset (fluid_synth_t *synth, int chan,
@@ -1722,6 +1723,52 @@ static int
 fluid_synth_update_channel_pressure_LOCAL(fluid_synth_t* synth, int chan)
 {
   return fluid_synth_modulate_voices_LOCAL (synth, chan, 0, FLUID_MOD_CHANNELPRESSURE);
+}
+
+/**
+ * Set the MIDI polyphonic key pressure controller value.
+ * @param synth FluidSynth instance
+ * @param chan MIDI channel number (0 to MIDI channel count - 1)
+ * @param key MIDI key number (0-127)
+ * @param val MIDI key pressure value (0-127)
+ * @return FLUID_OK on success, FLUID_FAILED otherwise
+ */
+int
+fluid_synth_key_pressure(fluid_synth_t* synth, int chan, int key, int val)
+{
+  int result;
+  fluid_return_val_if_fail (key >= 0 && key <= 127, FLUID_FAILED);
+  fluid_return_val_if_fail (val >= 0 && val <= 127, FLUID_FAILED);
+
+  FLUID_API_ENTRY_CHAN(FLUID_FAILED);
+
+  if (synth->verbose)
+    FLUID_LOG(FLUID_INFO, "keypressure\t%d\t%d\t%d", chan, key, val);
+
+  fluid_channel_set_key_pressure (synth->channel[chan], key, val);
+
+  result = fluid_synth_update_key_pressure_LOCAL (synth, chan, key);
+  FLUID_API_RETURN(result);
+}
+
+/* Updates key pressure from within synthesis thread */
+static int
+fluid_synth_update_key_pressure_LOCAL(fluid_synth_t* synth, int chan, int key)
+{
+  fluid_voice_t* voice;
+  int i;
+  int result = FLUID_OK;
+
+  for (i = 0; i < synth->polyphony; i++) {
+    voice = synth->voice[i];
+
+    if (voice->chan == chan && voice->key == key) {
+      result = fluid_voice_modulate(voice, 0, FLUID_MOD_KEYPRESSURE);
+      if (result != FLUID_OK)
+        return result;
+    }
+  }
+  return result;
 }
 
 /**
@@ -4966,6 +5013,11 @@ fluid_synth_handle_midi_event(void* data, fluid_midi_event_t* event)
 
       case CHANNEL_PRESSURE:
 	return fluid_synth_channel_pressure(synth, chan, fluid_midi_event_get_program(event));
+
+      case KEY_PRESSURE:
+	return fluid_synth_key_pressure(synth, chan,
+					fluid_midi_event_get_key(event),
+					fluid_midi_event_get_value(event));
 
       case PITCH_BEND:
 	return fluid_synth_pitch_bend(synth, chan, fluid_midi_event_get_pitch(event));
