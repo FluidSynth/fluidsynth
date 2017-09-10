@@ -23,7 +23,12 @@
 #include "fluid_conv.h"
 
 /**
- * Applies a lowpass filter with variable cutoff frequency and quality factor.
+ * Applies a low-, band- or high-pass filter with variable cutoff frequency and quality factor
+ * for a given biquad transfer function:
+ *          b0 + b1*z^-1 + b2*z^-2
+ *  H(z) = ------------------------
+ *          a0 + a1*z^-1 + a2*z^-2
+ *
  * Also modifies filter state accordingly.
  * @param iir_filter Filter parameter
  * @param dsp_buf Pointer to the synthesized audio data
@@ -31,8 +36,9 @@
  */
 /*
  * Variable description:
- * - dsp_a1, dsp_a2: Filter coefficients for the input signal
- * - dsp_b0, dsp_b1, dsp_b2: Filter coefficients for the previously filtered output signal
+ * - dsp_a1, dsp_a2: Filter coefficients for the the previously filtered output signal
+ * - dsp_b0, dsp_b1, dsp_b2: Filter coefficients for input signal
+ * - coefficients normalized to a0
  *
  * A couple of variables are used internally, their results are discarded:
  * - dsp_i: Index through the output buffer
@@ -195,7 +201,7 @@ fluid_iir_filter_set_q_linear(fluid_iir_filter_t* iir_filter,
     /*
      * However if Q is between [0;1], using sqrt would increase the value
      * again, resulting in a much more silent signal (specifically of use
-     * for bandpass filter, shouldnt affect SF2 lowpass filter, since Q
+     * for bandpass filter), shouldnt affect SF2 lowpass filter, since Q
      * is in dB range and never gets <1
      */
     iir_filter->filter_gain  = 1.0f;
