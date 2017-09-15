@@ -43,7 +43,7 @@ enum fluid_seq_event_type {
   FLUID_SEQ_ALLNOTESOFF,	/**< All notes off event */
   FLUID_SEQ_BANKSELECT,		/**< Bank select message */
   FLUID_SEQ_PROGRAMCHANGE,	/**< Program change message */
-  FLUID_SEQ_PROGRAMSELECT,	/**< Program select message (DOCME) */
+  FLUID_SEQ_PROGRAMSELECT,	/**< Program select message */
   FLUID_SEQ_PITCHBEND,		/**< Pitch bend message */
   FLUID_SEQ_PITCHWHEELSENS,	/**< Pitch wheel sensitivity set message @since 1.1.0 was mispelled previously */
   FLUID_SEQ_MODULATION,		/**< Modulation controller event */
