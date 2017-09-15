@@ -62,8 +62,6 @@ enum fluid_seq_event_type {
   FLUID_SEQ_LASTEVENT		/**< Defines the count of event enums @deprecated As of 1.1.7 this enum value is deprecated and will be removed in a future release, because it prevents adding new enum values without breaking ABI compatibility. */
 };
 
-#define FLUID_SEQ_PITCHWHHELSENS        FLUID_SEQ_PITCHWHEELSENS        /**< Old deprecated misspelling of #FLUID_SEQ_PITCHWHEELSENS */
-
 /* Event alloc/free */
 FLUIDSYNTH_API fluid_event_t* new_fluid_event(void);
 FLUIDSYNTH_API void delete_fluid_event(fluid_event_t* evt);
