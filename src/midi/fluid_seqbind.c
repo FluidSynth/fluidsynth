@@ -181,7 +181,7 @@ fluid_seq_fluidsynth_callback(unsigned int time, fluid_event_t* evt, fluid_seque
   	fluid_synth_pitch_bend(synth, fluid_event_get_channel(evt), fluid_event_get_pitch(evt));
   	break;
 
-  case FLUID_SEQ_PITCHWHHELSENS:
+  case FLUID_SEQ_PITCHWHEELSENS:
   	fluid_synth_pitch_wheel_sens(synth, fluid_event_get_channel(evt), fluid_event_get_value(evt));
   	break;
 
