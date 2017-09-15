@@ -85,12 +85,6 @@ else ( LASH_SUPPORT )
   message ( "LASH support:          no" )
 endif ( LASH_SUPPORT )
 
-if ( LADCCA_SUPPORT )
-  message ( "LADCCA support:        yes (NOTE: GPL library)" )
-else ( LADCCA_SUPPORT )
-  message ( "LADCCA support:        no" )
-endif ( LADCCA_SUPPORT )
-
 if ( DART_SUPPORT )
   message ( "OS/2 DART support:     yes" )
 else ( DART_SUPPORT )

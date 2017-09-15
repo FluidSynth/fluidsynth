@@ -83,11 +83,11 @@ if ( OSS_SUPPORT )
   set ( fluid_oss_SOURCES drivers/fluid_oss.c )
 endif ( OSS_SUPPORT )
 
-if ( LASH_SUPPORT OR LADCCA_SUPPORT )
+if ( LASH_SUPPORT )
   set ( fluid_lash_SOURCES bindings/fluid_lash.c bindings/fluid_lash.h )
-  include_directories ( ${LASH_INCLUDEDIR} ${LADCCA_INCLUDEDIR}
-                        ${LASH_INCLUDE_DIRS} ${LADCCA_INCLUDE_DIRS} )
-endif ( LASH_SUPPORT OR LADCCA_SUPPORT )
+  include_directories ( ${LASH_INCLUDEDIR}
+                        ${LASH_INCLUDE_DIRS})
+endif ( LASH_SUPPORT )
 
 if ( DART_SUPPORT )
   set ( fluid_dart_SOURCES drivers/fluid_dart.c )
@@ -210,8 +210,6 @@ link_directories (
     ${GLIB_LIBRARY_DIRS}
     ${LASH_LIBDIR}
     ${LASH_LIBRARY_DIRS}
-    ${LADCCA_LIBDIR}
-    ${LADCCA_LIBRARY_DIRS}
     ${JACK_LIBDIR}
     ${JACK_LIBRARY_DIRS}
     ${ALSA_LIBDIR}
@@ -289,7 +287,6 @@ endif ( LIBFLUID_CPPFLAGS )
 target_link_libraries ( libfluidsynth
     ${GLIB_LIBRARIES}
     ${LASH_LIBRARIES}
-    ${LADCCA_LIBRARIES}
     ${JACK_LIBRARIES}
     ${ALSA_LIBRARIES}
     ${PULSE_LIBRARIES}

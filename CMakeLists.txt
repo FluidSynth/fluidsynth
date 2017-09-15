@@ -71,7 +71,6 @@ option ( enable-ipv6  "enable ipv6 support " on )
 
 # Platform specific options
 if ( ${CMAKE_SYSTEM} MATCHES "Linux" )
-    option ( enable-ladcca "compile LADCCA support if it is available (deprecated)" off )
     option ( enable-lash "compile LASH support (if it is available)" on )
     option ( enable-alsa "compile ALSA support (if it is available)" on )
 endif ( ${CMAKE_SYSTEM} MATCHES "Linux" )
@@ -378,14 +377,6 @@ else(NOT enable-pkgconfig)
     unset_pkg_config ( LASH )
     remove_definitions( -DHAVE_LASH )
     endif ( enable-lash )
-
-    unset ( LADCCA_SUPPORT CACHE )
-    if ( enable-ladcca )
-    pkg_check_modules ( LADCCA ladcca-1.0>=0.3 )
-    set ( LADCCA_SUPPORT ${LADCCA_FOUND} )
-    else ( enable-ladcca )
-    unset_pkg_config ( LADCCA )
-    endif ( enable-ladcca )
 
     unset ( DBUS_SUPPORT CACHE )
     if ( enable-dbus )
