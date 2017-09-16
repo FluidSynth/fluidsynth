@@ -157,7 +157,7 @@ fluid_seq_fluidsynth_callback(unsigned int time, fluid_event_t* evt, fluid_seque
   	break;
 
   case FLUID_SEQ_ALLNOTESOFF:
-  	fluid_synth_cc(synth, fluid_event_get_channel(evt), 0x7B, 0);
+  	fluid_synth_cc(synth, fluid_event_get_channel(evt), ALL_NOTES_OFF, 0);
   	break;
 
   case FLUID_SEQ_BANKSELECT:
@@ -169,8 +169,11 @@ fluid_seq_fluidsynth_callback(unsigned int time, fluid_event_t* evt, fluid_seque
   	break;
 
   case FLUID_SEQ_PROGRAMSELECT:
-  	fluid_synth_program_select(synth, fluid_event_get_channel(evt), fluid_event_get_sfont_id(evt),
-		fluid_event_get_bank(evt), fluid_event_get_program(evt));
+  	fluid_synth_program_select(synth,
+                               fluid_event_get_channel(evt),
+                               fluid_event_get_sfont_id(evt),
+                               fluid_event_get_bank(evt),
+                               fluid_event_get_program(evt));
   	break;
 
   case FLUID_SEQ_ANYCONTROLCHANGE:
@@ -186,76 +189,51 @@ fluid_seq_fluidsynth_callback(unsigned int time, fluid_event_t* evt, fluid_seque
   	break;
 
   case FLUID_SEQ_CONTROLCHANGE:
-	 fluid_synth_cc(synth, fluid_event_get_channel(evt), fluid_event_get_control(evt), fluid_event_get_value(evt));
+    fluid_synth_cc(synth, fluid_event_get_channel(evt), fluid_event_get_control(evt), fluid_event_get_value(evt));
   	break;
 
   case FLUID_SEQ_MODULATION:
-	  {
-	  	short ctrl = 0x01;	// MODULATION_MSB
-	  	fluid_synth_cc(synth, fluid_event_get_channel(evt), ctrl, fluid_event_get_value(evt));
-	  }
+    fluid_synth_cc(synth, fluid_event_get_channel(evt), MODULATION_MSB, fluid_event_get_value(evt));
   	break;
 
   case FLUID_SEQ_SUSTAIN:
-	  {
-	  	short ctrl = 0x40;	// SUSTAIN_SWITCH
-	  	fluid_synth_cc(synth, fluid_event_get_channel(evt), ctrl, fluid_event_get_value(evt));
-	  }
+    fluid_synth_cc(synth, fluid_event_get_channel(evt), SUSTAIN_SWITCH, fluid_event_get_value(evt));
   	break;
 
   case FLUID_SEQ_PAN:
-	  {
-	  	short ctrl = 0x0A;	// PAN_MSB
-	  	fluid_synth_cc(synth, fluid_event_get_channel(evt), ctrl, fluid_event_get_value(evt));
-	  }
+    fluid_synth_cc(synth, fluid_event_get_channel(evt), PAN_MSB, fluid_event_get_value(evt));
   	break;
 
   case FLUID_SEQ_VOLUME:
-	  {
-	  	short ctrl = 0x07;	// VOLUME_MSB
-	  	fluid_synth_cc(synth, fluid_event_get_channel(evt), ctrl, fluid_event_get_value(evt));
-	  }
+    fluid_synth_cc(synth, fluid_event_get_channel(evt), VOLUME_MSB, fluid_event_get_value(evt));
   	break;
 
   case FLUID_SEQ_REVERBSEND:
-	  {
-	  	short ctrl = 0x5B;	// EFFECTS_DEPTH1
-	  	fluid_synth_cc(synth, fluid_event_get_channel(evt), ctrl, fluid_event_get_value(evt));
-	  }
+    fluid_synth_cc(synth, fluid_event_get_channel(evt), EFFECTS_DEPTH1, fluid_event_get_value(evt));
   	break;
 
   case FLUID_SEQ_CHORUSSEND:
-	  {
-	  	short ctrl = 0x5D;	// EFFECTS_DEPTH3
-	  	fluid_synth_cc(synth, fluid_event_get_channel(evt), ctrl, fluid_event_get_value(evt));
-	  }
+    fluid_synth_cc(synth, fluid_event_get_channel(evt), EFFECTS_DEPTH3, fluid_event_get_value(evt));
   	break;
 
-  case FLUID_SEQ_CHANNELPRESSURE: 
-	  {
-		fluid_synth_channel_pressure(synth, fluid_event_get_channel(evt), fluid_event_get_value(evt));
-	  }
+  case FLUID_SEQ_CHANNELPRESSURE:
+    fluid_synth_channel_pressure(synth, fluid_event_get_channel(evt), fluid_event_get_value(evt));
 	break;
 
   case FLUID_SEQ_KEYPRESSURE:
-	  {
-		fluid_synth_key_pressure(synth, fluid_event_get_channel(evt),
+		fluid_synth_key_pressure(synth,
+					 fluid_event_get_channel(evt),
 					 fluid_event_get_key(evt),
 					 fluid_event_get_value(evt));
-	  }
 	break;
 
   case FLUID_SEQ_SYSTEMRESET: 
-	  {
-		fluid_synth_system_reset(synth);
-	  }
+    fluid_synth_system_reset(synth);
 	break;
 
   case FLUID_SEQ_UNREGISTERING: /* free ourselves */
-	  {
-		seqbind->client_id = -1; /* avoid recursive call to fluid_sequencer_unregister_client */
-	        delete_fluid_seqbind(seqbind);
-	  }
+    seqbind->client_id = -1; /* avoid recursive call to fluid_sequencer_unregister_client */
+    delete_fluid_seqbind(seqbind);
 	break;
 
   case FLUID_SEQ_TIMER:
