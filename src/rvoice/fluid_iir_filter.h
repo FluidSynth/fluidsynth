@@ -29,6 +29,9 @@ enum fluid_iir_filter_type {
     FLUID_IIR_LOWPASS=0,
     FLUID_IIR_HIGHPASS,
     FLUID_IIR_BANDPASS,
+    FLUID_IIR_NOTCH,
+    FLUID_IIR_LOWSHELF,
+    FLUID_IIR_HIGHSHELF,
 };
 
 void fluid_iir_filter_init(fluid_iir_filter_t* iir_filter, enum fluid_iir_filter_type, int is_enabled);

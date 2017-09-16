@@ -253,6 +253,11 @@ fluid_iir_filter_calculate_coefficients(fluid_iir_filter_t* iir_filter,
         
         switch(iir_filter->type)
         {
+            case FLUID_IIR_NOTCH:
+            b0_temp = b2_temp = 1;
+            b1_temp = -2.0f * cos_coeff;
+            break;
+            
             case FLUID_IIR_BANDPASS:
             b1_temp = 0;
             
