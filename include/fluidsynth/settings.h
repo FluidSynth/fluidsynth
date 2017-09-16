@@ -95,16 +95,6 @@ extern "C" {
  */
 #define FLUID_HINT_LOGARITHMIC     0x10
 
-/**
- * Hint FLUID_HINT_INTEGER indicates that a user interface would
- * probably wish to provide a stepped control taking only integer
- * values.
- * @deprecated
- *
- * As there is an integer setting type, this hint is not used.
- */
-#define FLUID_HINT_INTEGER         0x20
-
 
 #define FLUID_HINT_FILENAME        0x01         /**< String setting is a file name */
 #define FLUID_HINT_OPTIONLIST      0x02         /**< Setting is a list of string options */
