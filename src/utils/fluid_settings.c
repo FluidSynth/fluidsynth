@@ -1310,7 +1310,7 @@ fluid_settings_getint_default(fluid_settings_t* settings, const char *name)
  * @param data any user provided pointer
  * @param func callback function to be called on each iteration
  *
- * NOTE: Starting with FluidSynth 1.1.0 the \a func callback is called for each
+ * @note Starting with FluidSynth 1.1.0 the \a func callback is called for each
  * option in alphabetical order.  Sort order was undefined in previous versions.
  */
 void
@@ -1504,7 +1504,7 @@ fluid_settings_foreach_iter (void* key, void* value, void* data)
  * @param data any user provided pointer
  * @param func callback function to be called on each iteration
  *
- * NOTE: Starting with FluidSynth 1.1.0 the \a func callback is called for each
+ * @note Starting with FluidSynth 1.1.0 the \a func callback is called for each
  * setting in alphabetical order.  Sort order was undefined in previous versions.
  */
 void

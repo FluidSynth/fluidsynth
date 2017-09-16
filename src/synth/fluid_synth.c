@@ -2100,7 +2100,7 @@ fluid_synth_sfont_select(fluid_synth_t* synth, int chan, unsigned int sfont_id)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  * @since 1.1.1
  *
- * Note: Channel retains its SoundFont ID and bank numbers, while the program
+ * @note Channel retains its SoundFont ID and bank numbers, while the program
  * number is set to an "unset" state.  MIDI program changes may re-assign a
  * preset if one matches.
  */
@@ -2426,7 +2426,7 @@ fluid_synth_get_polyphony(fluid_synth_t* synth)
  * @return Number of currently active voices.
  * @since 1.1.0
  *
- * Note: To generate accurate continuous statistics of the voice count, caller
+ * @note To generate accurate continuous statistics of the voice count, caller
  * should ensure this function is called synchronously with the audio synthesis
  * process.  This can be done in the new_fluid_audio_driver2() audio callback
  * function for example.
