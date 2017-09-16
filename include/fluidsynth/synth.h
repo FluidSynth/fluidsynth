@@ -207,12 +207,11 @@ enum fluid_interp {
   FLUID_INTERP_NONE = 0,        /**< No interpolation: Fastest, but questionable audio quality */
   FLUID_INTERP_LINEAR = 1,      /**< Straight-line interpolation: A bit slower, reasonable audio quality */
   FLUID_INTERP_4THORDER = 4,    /**< Fourth-order interpolation, good quality, the default */
-  FLUID_INTERP_7THORDER = 7     /**< Seventh-order interpolation */
+  FLUID_INTERP_7THORDER = 7,    /**< Seventh-order interpolation */
+  
+  FLUID_INTERP_DEFAULT = FLUID_INTERP_4THORDER, /**< Default interpolation method */
+  FLUID_INTERP_HIGHEST = FLUID_INTERP_7THORDER, /**< Highest interpolation method */
 };
-
-#define FLUID_INTERP_DEFAULT    FLUID_INTERP_4THORDER   /**< Default interpolation method from #fluid_interp. */
-#define FLUID_INTERP_HIGHEST    FLUID_INTERP_7THORDER   /**< Highest interpolation method from #fluid_interp. */
-
 
 /* Generator interface */
 
