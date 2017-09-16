@@ -735,7 +735,7 @@ fluid_settings_setstr(fluid_settings_t* settings, const char *name, const char *
 }
 
 /**
- * Copy the value of a string setting
+ * Copy the value of a string setting into the provided buffer (thread safe)
  * @param settings a settings object
  * @param name a setting's name
  * @param str Caller supplied buffer to copy string value to
@@ -744,8 +744,7 @@ fluid_settings_setstr(fluid_settings_t* settings, const char *name, const char *
  * @return 1 if the value exists, 0 otherwise
  * @since 1.1.0
  *
- * Like fluid_settings_getstr() but is thread safe.  A size of 256 should be
- * more than sufficient for the string buffer.
+ * @note A size of 256 should be more than sufficient for the string buffer.
  */
 int
 fluid_settings_copystr(fluid_settings_t* settings, const char *name,
@@ -854,61 +853,6 @@ fluid_settings_dupstr(fluid_settings_t* settings, const char *name, char** str)
   return retval;
 }
 
-/**
- * Get the value of a string setting
- * @param settings a settings object
- * @param name a setting's name
- * @param str Location to store pointer to the settings string value
- * @return 1 if the value exists, 0 otherwise
- * @deprecated
- *
- * If the value does not exists, 'str' is set to NULL. Otherwise, 'str' will
- * point to the value. The application does not own the returned value and it
- * is valid only until a new value is assigned to the setting of the given name.
- *
- * NOTE: In a multi-threaded environment, caller must ensure that the setting
- * being read by fluid_settings_getstr() is not assigned during the
- * duration of callers use of the setting's value.  Use fluid_settings_copystr()
- * or fluid_settings_dupstr() which does not have this restriction.
- */
-int
-fluid_settings_getstr(fluid_settings_t* settings, const char *name, char** str)
-{
-  fluid_setting_node_t *node;
-  int retval = 0;
-
-  fluid_return_val_if_fail (settings != NULL, 0);
-  fluid_return_val_if_fail (name != NULL, 0);
-  fluid_return_val_if_fail (name[0] != '\0', 0);
-  fluid_return_val_if_fail (str != NULL, 0);
-
-  fluid_rec_mutex_lock (settings->mutex);
-
-  if (fluid_settings_get(settings, name, &node))
-  {
-    if (node->type == FLUID_STR_TYPE)
-    {
-      fluid_str_setting_t *setting = (fluid_str_setting_t *)node;
-      *str = setting->value;
-      retval = 1;
-    }
-    else if (node->type == FLUID_INT_TYPE)      /* Handle boolean integers for backwards compatibility */
-    {
-      fluid_int_setting_t *setting = (fluid_int_setting_t *)node;
-
-      if (setting->hints & FLUID_HINT_TOGGLED)
-      {
-        *str = setting->value ? "yes" : "no";
-        retval = 1;
-      }
-    }
-  }
-  else *str = NULL;
-
-  fluid_rec_mutex_unlock (settings->mutex);
-
-  return retval;
-}
 
 /**
  * Test a string setting for some value.
