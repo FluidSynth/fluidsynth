@@ -313,7 +313,7 @@ fluid_synth_init(void)
 		       FLUID_MOD_GC                        /* CC=0 */
 		       | FLUID_MOD_LINEAR                  /* type=0 */
 		       | FLUID_MOD_UNIPOLAR                /* P=0 */
-                       | FLUID_MOD_NEGATIVE                /* D=1 */
+		       | FLUID_MOD_NEGATIVE                /* D=1 */
 		       );
   fluid_mod_set_source2(&default_vel2filter_mod, FLUID_MOD_VELOCITY, /* Index=2 */
 		       FLUID_MOD_GC                                 /* CC=0 */
@@ -341,7 +341,7 @@ fluid_synth_init(void)
 
 
   /* SF2.01 page 53 section 8.4.4: Mod wheel (Controller 1) to Vibrato LFO pitch depth */
-  fluid_mod_set_source1(&default_mod2viblfo_mod, 1, /* Index=1 */
+  fluid_mod_set_source1(&default_mod2viblfo_mod, MODULATION_MSB, /* Index=1 */
 		       FLUID_MOD_CC                        /* CC=1 */
 		       | FLUID_MOD_LINEAR                  /* type=0 */
 		       | FLUID_MOD_UNIPOLAR                /* P=0 */
@@ -354,7 +354,7 @@ fluid_synth_init(void)
 
 
   /* SF2.01 page 55 section 8.4.5: MIDI continuous controller 7 to initial attenuation*/
-  fluid_mod_set_source1(&default_att_mod, 7,                     /* index=7 */
+  fluid_mod_set_source1(&default_att_mod, VOLUME_MSB,    /* index=7 */
 		       FLUID_MOD_CC                              /* CC=1 */
 		       | FLUID_MOD_CONCAVE                       /* type=1 */
 		       | FLUID_MOD_UNIPOLAR                      /* P=0 */
@@ -367,7 +367,7 @@ fluid_synth_init(void)
 
 
   /* SF2.01 page 55 section 8.4.6 MIDI continuous controller 10 to Pan Position */
-  fluid_mod_set_source1(&default_pan_mod, 10,                    /* index=10 */
+  fluid_mod_set_source1(&default_pan_mod, PAN_MSB,       /* index=10 */
 		       FLUID_MOD_CC                              /* CC=1 */
 		       | FLUID_MOD_LINEAR                        /* type=0 */
 		       | FLUID_MOD_BIPOLAR                       /* P=1 */
@@ -382,7 +382,7 @@ fluid_synth_init(void)
 
 
   /* SF2.01 page 55 section 8.4.7: MIDI continuous controller 11 to initial attenuation*/
-  fluid_mod_set_source1(&default_expr_mod, 11,                     /* index=11 */
+  fluid_mod_set_source1(&default_expr_mod, EXPRESSION_MSB, /* index=11 */
 		       FLUID_MOD_CC                              /* CC=1 */
 		       | FLUID_MOD_CONCAVE                       /* type=1 */
 		       | FLUID_MOD_UNIPOLAR                      /* P=0 */
@@ -395,7 +395,7 @@ fluid_synth_init(void)
 
 
   /* SF2.01 page 55 section 8.4.8: MIDI continuous controller 91 to Reverb send */
-  fluid_mod_set_source1(&default_reverb_mod, 91,                 /* index=91 */
+  fluid_mod_set_source1(&default_reverb_mod, EFFECTS_DEPTH1, /* index=91 */
 		       FLUID_MOD_CC                              /* CC=1 */
 		       | FLUID_MOD_LINEAR                        /* type=0 */
 		       | FLUID_MOD_UNIPOLAR                      /* P=0 */
@@ -408,7 +408,7 @@ fluid_synth_init(void)
 
 
   /* SF2.01 page 55 section 8.4.9: MIDI continuous controller 93 to Chorus send */
-  fluid_mod_set_source1(&default_chorus_mod, 93,                 /* index=93 */
+  fluid_mod_set_source1(&default_chorus_mod, EFFECTS_DEPTH3, /* index=93 */
 		       FLUID_MOD_CC                              /* CC=1 */
 		       | FLUID_MOD_LINEAR                        /* type=0 */
 		       | FLUID_MOD_UNIPOLAR                      /* P=0 */
