@@ -225,6 +225,8 @@ void fluid_synth_settings(fluid_settings_t* settings)
   fluid_settings_add_option(settings, "synth.midi-bank-select", "mma");
   
   fluid_settings_register_str(settings, "synth.volenv", "emu", 0, NULL, NULL);
+  fluid_settings_add_option(settings, "synth.volenv", "emu");
+  fluid_settings_add_option(settings, "synth.volenv", "compliant");
 }
 
 /**
@@ -559,20 +561,22 @@ new_fluid_synth(fluid_settings_t *settings)
   /* initialize all the conversion tables and other stuff */
   if (fluid_synth_initialized == 0)
   {
-    char* buf;
-    if(fluid_settings_getstr(settings, "synth.volenv", &buf))
+    char buf[64];
+    if (fluid_settings_str_equal (settings, "synth.volenv", "compliant") == 1)
     {
-        if(FLUID_STRCMP(buf, "compliant") == 0)
             fluid_conversion_set_atten_power(FLUID_ATTEN_POWER_DEFAULT_COMPLIANT);
-        else if(FLUID_STRCMP(buf, "emu") == 0)
+    }
+    else if (fluid_settings_str_equal (settings, "synth.volenv", "emu") == 1)
+    {
             fluid_conversion_set_atten_power(FLUID_ATTEN_POWER_DEFAULT_EMU);
-        else
+    }
+    else
+    {
+        if (fluid_settings_copystr(settings, "synth.volenv", buf, 64) == 1)
         {
             double atten = atof(buf);
             if(atten != 0.0)
                 fluid_conversion_set_atten_power(atten);
-            else
-                fluid_conversion_set_atten_power(FLUID_ATTEN_POWER_DEFAULT_EMU);
         }
     }
     
