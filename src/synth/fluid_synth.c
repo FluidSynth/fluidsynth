@@ -572,7 +572,7 @@ new_fluid_synth(fluid_settings_t *settings)
     }
     else
     {
-        if (fluid_settings_copystr(settings, "synth.volenv", buf, 64) == 1)
+        if (fluid_settings_copystr(settings, "synth.volenv", buf, sizeof(buf)/sizeof(buf[0])) == 1)
         {
             double atten = atof(buf);
             if(atten != 0.0)
