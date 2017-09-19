@@ -24,7 +24,8 @@
 /* EMU 8k/10k don't follow spec in regards to volume attenuation.
  * This factor is used in the equation pow (10.0, cb / FLUID_ATTEN_POWER_FACTOR).
  * By the standard this should be -200.0. */
-/* 07/11/2008 modified by S. Christian Collins for increased velocity sensitivity.  Now it equals the response of EMU10K1 programming.*/
+/* 07/11/2008 modified by S. Christian Collins for increased velocity sensitivity.
+ * Now it equals the response of EMU10K1 programming.*/
 static double FLUID_ATTEN_POWER_FACTOR = FLUID_ATTEN_POWER_DEFAULT_EMU;	/* was (-531.509)*/
 
 /* conversion tables */
