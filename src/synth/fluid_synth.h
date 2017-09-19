@@ -116,7 +116,6 @@ struct _fluid_synth_t
   int with_reverb;                   /**< Should the synth use the built-in reverb unit? */
   int with_chorus;                   /**< Should the synth use the built-in chorus unit? */
   int verbose;                       /**< Turn verbose mode on? */
-  int dump;                          /**< Dump events to stdout to hook up a user interface? */
   double sample_rate;                /**< The sample rate */
   int midi_channels;                 /**< the number of MIDI channels (>= 16) */
   int bank_select;                   /**< the style of Bank Select MIDI messages */

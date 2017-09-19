@@ -175,8 +175,6 @@ void fluid_synth_settings(fluid_settings_t* settings)
 {
   fluid_settings_register_int(settings, "synth.verbose", 0, 0, 1,
                               FLUID_HINT_TOGGLED, NULL, NULL);
-  fluid_settings_register_int(settings, "synth.dump", 0, 0, 1,
-                              FLUID_HINT_TOGGLED, NULL, NULL);
   fluid_settings_register_int(settings, "synth.reverb.active", 1, 0, 1,
                               FLUID_HINT_TOGGLED, NULL, NULL);
   fluid_settings_register_int(settings, "synth.chorus.active", 1, 0, 1,
@@ -577,7 +575,6 @@ new_fluid_synth(fluid_settings_t *settings)
   fluid_settings_getint(settings, "synth.reverb.active", &synth->with_reverb);
   fluid_settings_getint(settings, "synth.chorus.active", &synth->with_chorus);
   fluid_settings_getint(settings, "synth.verbose", &synth->verbose);
-  fluid_settings_getint(settings, "synth.dump", &synth->dump);
 
   fluid_settings_getint(settings, "synth.polyphony", &synth->polyphony);
   fluid_settings_getnum(settings, "synth.sample-rate", &synth->sample_rate);

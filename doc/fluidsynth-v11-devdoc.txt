@@ -372,22 +372,6 @@ The following table provides details on all the settings used by the synthesizer
   </tr>
 
   <tr>
-    <td>synth.dump</td>
-    <td>Type</td>
-    <td>boolean</td>
-  </tr>
-  <tr>
-    <td></td>
-    <td>Default</td>
-    <td>0 (FALSE)</td>
-  </tr>
-  <tr>
-    <td></td>
-    <td>Description</td>
-    <td>Does nothing currently.</td>
-  </tr>
-
-  <tr>
     <td>synth.effects-channels</td>
     <td>Type</td>
     <td>integer</td>

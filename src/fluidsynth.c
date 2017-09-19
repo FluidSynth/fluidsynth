@@ -418,7 +418,6 @@ int main(int argc, char** argv)
       fluid_settings_setint(settings, "audio.periods", atoi(optarg));
       break;
     case 'd':
-      fluid_settings_setint(settings, "synth.dump", TRUE);
       dump = 1;
       break;
     case 'E':
