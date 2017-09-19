@@ -683,7 +683,10 @@ leave it on. Also see synth.parallel-render.</td>
     The default setting 'emu' causes the envelope to be highly
     dynamic (i.e. compatible with the EMU10K1). Alternatively this
     may be set to 'compliant' for a less dynamic envelope, as it was
-    done before fluidsynth 1.0.9.</td>
+    done before fluidsynth 1.0.9. Note that this setting can only be
+    changed until the first synth has been created. Changing it
+    afterwards will have no effect for the rest of fluidsynths
+    lifetime.</td>
   </tr>
 </table>
 
