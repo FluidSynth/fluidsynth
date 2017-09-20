@@ -4732,6 +4732,7 @@ fluid_synth_get_settings(fluid_synth_t* synth)
  * @param name Name of setting parameter
  * @param str Value to assign to the setting
  * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @deprecated Use fluid_settings_setstr() in combination with fluid_synth_get_settings() instead.
  */
 int
 fluid_synth_setstr(fluid_synth_t* synth, const char* name, const char* str)
@@ -4748,6 +4749,7 @@ fluid_synth_setstr(fluid_synth_t* synth, const char* name, const char* str)
  * @param name Name of setting parameter
  * @param str Location to store a pointer to the newly allocated string value
  * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @deprecated Use fluid_settings_dupstr() in combination with fluid_synth_get_settings() instead.
  *
  * The returned string is owned by the caller and should be freed with free()
  * when finished with it.
@@ -4768,6 +4770,7 @@ fluid_synth_dupstr(fluid_synth_t* synth, const char* name, char** str)
  * @param name Name of setting parameter
  * @param val Value to assign to the setting
  * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @deprecated Use fluid_settings_setnum() in combination with fluid_synth_get_settings() instead.
  */
 int
 fluid_synth_setnum(fluid_synth_t* synth, const char* name, double val)
@@ -4784,6 +4787,7 @@ fluid_synth_setnum(fluid_synth_t* synth, const char* name, double val)
  * @param name Name of setting parameter
  * @param val Location to store the current value of the setting
  * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @deprecated Use fluid_settings_getnum() in combination with fluid_synth_get_settings() instead.
  */
 int
 fluid_synth_getnum(fluid_synth_t* synth, const char* name, double* val)
@@ -4800,6 +4804,7 @@ fluid_synth_getnum(fluid_synth_t* synth, const char* name, double* val)
  * @param name Name of setting parameter
  * @param val Value to assign to the setting
  * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @deprecated Use fluid_settings_setint() in combination with fluid_synth_get_settings() instead.
  */
 int
 fluid_synth_setint(fluid_synth_t* synth, const char* name, int val)
@@ -4816,6 +4821,7 @@ fluid_synth_setint(fluid_synth_t* synth, const char* name, int val)
  * @param name Name of setting parameter
  * @param val Location to store the current value of the setting
  * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @deprecated Use fluid_settings_getint() in combination with fluid_synth_get_settings() instead.
  */
 int
 fluid_synth_getint(fluid_synth_t* synth, const char* name, int* val)
