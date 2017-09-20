@@ -208,9 +208,7 @@ enum fluid_interp {
 
 /* Generator interface */
 
-FLUIDSYNTH_API 
-int fluid_synth_set_gen(fluid_synth_t* synth, int chan, int param, float value);
-FLUIDSYNTH_API int fluid_synth_set_gen2 (fluid_synth_t* synth, int chan,
+FLUIDSYNTH_API int fluid_synth_set_gen (fluid_synth_t* synth, int chan,
                                          int param, float value,
                                          int absolute, int normalized);
 FLUIDSYNTH_API float fluid_synth_get_gen(fluid_synth_t* synth, int chan, int param);
