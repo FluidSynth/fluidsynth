@@ -111,9 +111,8 @@ void process_o_cmd_line_option(fluid_settings_t* settings, char* optarg)
     }
     break;
   case FLUID_INT_TYPE:
-    hints = fluid_settings_get_hints (settings, optarg);
-
-    if (hints & FLUID_HINT_TOGGLED)
+    if (fluid_settings_get_hints (settings, optarg, &hints) == FLUID_OK
+        && hints & FLUID_HINT_TOGGLED)
     {
       if (FLUID_STRCMP (val, "yes") == 0 || FLUID_STRCMP (val, "True") == 0
           || FLUID_STRCMP (val, "TRUE") == 0 || FLUID_STRCMP (val, "true") == 0
@@ -184,14 +183,14 @@ settings_foreach_func (void *data, char *name, int type)
   {
   case FLUID_NUM_TYPE:
     fluid_settings_getnum_range (settings, name, &dmin, &dmax);
-    ddef = fluid_settings_getnum_default (settings, name);
+    fluid_settings_getnum_default (settings, name, &ddef);
     printf ("%-24s FLOAT [min=%0.3f, max=%0.3f, def=%0.3f]\n",
 	    name, dmin, dmax, ddef);
     break;
   case FLUID_INT_TYPE:
     fluid_settings_getint_range (settings, name, &imin, &imax);
-    idef = fluid_settings_getint_default (settings, name);
-    hints = fluid_settings_get_hints (settings, name);
+    fluid_settings_getint_default (settings, name, &idef);
+    fluid_settings_get_hints (settings, name, &hints);
 
     if (!(hints & FLUID_HINT_TOGGLED))
     {

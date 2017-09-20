@@ -123,7 +123,7 @@ FLUIDSYNTH_API
 int fluid_settings_get_type(fluid_settings_t* settings, const char *name);
 
 FLUIDSYNTH_API
-int fluid_settings_get_hints(fluid_settings_t* settings, const char *name);
+int fluid_settings_get_hints(fluid_settings_t* settings, const char *name, int* val);
 
 FLUIDSYNTH_API
 int fluid_settings_is_realtime(fluid_settings_t* settings, const char *name);
@@ -150,10 +150,10 @@ FLUIDSYNTH_API
 int fluid_settings_getnum(fluid_settings_t* settings, const char *name, double* val);
 
 FLUIDSYNTH_API
-double fluid_settings_getnum_default(fluid_settings_t* settings, const char *name);
+int fluid_settings_getnum_default(fluid_settings_t* settings, const char *name, double* val);
 
 FLUIDSYNTH_API
-void fluid_settings_getnum_range(fluid_settings_t* settings, const char *name,
+int fluid_settings_getnum_range(fluid_settings_t* settings, const char *name,
 				double* min, double* max);
 
 FLUIDSYNTH_API
@@ -163,10 +163,10 @@ FLUIDSYNTH_API
 int fluid_settings_getint(fluid_settings_t* settings, const char *name, int* val);
 
 FLUIDSYNTH_API
-int fluid_settings_getint_default(fluid_settings_t* settings, const char *name);
+int fluid_settings_getint_default(fluid_settings_t* settings, const char *name, int* val);
 
 FLUIDSYNTH_API
-void fluid_settings_getint_range(fluid_settings_t* settings, const char *name,
+int fluid_settings_getint_range(fluid_settings_t* settings, const char *name,
 				int* min, int* max);
 
 /**
