@@ -1309,13 +1309,13 @@ fluid_handle_set(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out)
       }
       else ival = atoi (av[1]);
 
-      fluid_synth_setint (synth, av[0], ival);
+      fluid_settings_setint (synth->settings, av[0], ival);
       break;
     case FLUID_NUM_TYPE:
-      fluid_synth_setnum (synth, av[0], atof (av[1]));
+      fluid_settings_setnum (synth->settings, av[0], atof (av[1]));
       break;
     case FLUID_STR_TYPE:
-      fluid_synth_setstr(synth, av[0], av[1]);
+      fluid_settings_setstr(synth->settings, av[0], av[1]);
       break;
     case FLUID_SET_TYPE:
       fluid_ostream_printf (out, "set: Parameter '%s' is a node.\n", av[0]);
@@ -1340,21 +1340,21 @@ fluid_handle_get(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out)
 
   case FLUID_NUM_TYPE: {
     double value;
-    fluid_synth_getnum(synth, av[0], &value);
+    fluid_settings_getnum(synth->settings, av[0], &value);
     fluid_ostream_printf(out, "%.3f", value);
     break;
   }
 
   case FLUID_INT_TYPE: {
     int value;
-    fluid_synth_getint(synth, av[0], &value);
+    fluid_settings_getint(synth->settings, av[0], &value);
     fluid_ostream_printf(out, "%d", value);
     break;
   }
 
   case FLUID_STR_TYPE: {
     char* s;
-    fluid_synth_dupstr(synth, av[0], &s);       /* ++ alloc string */
+    fluid_settings_dupstr(synth->settings, av[0], &s);       /* ++ alloc string */
     fluid_ostream_printf(out, "%s", s ? s : "NULL");
     if (s) FLUID_FREE (s);      /* -- free string */
     break;
@@ -1398,14 +1398,14 @@ static void fluid_handle_settings_iter2(void* data, char* name, int type)
   switch (fluid_settings_get_type(fluid_synth_get_settings(d->synth), name)) {
   case FLUID_NUM_TYPE: {
     double value;
-    fluid_synth_getnum(d->synth, name, &value);
+    fluid_settings_getnum(d->synth->settings, name, &value);
     fluid_ostream_printf(d->out, "%.3f\n", value);
     break;
   }
 
   case FLUID_INT_TYPE: {
     int value, hints;
-    fluid_synth_getint(d->synth, name, &value);
+    fluid_settings_getint(d->synth->settings, name, &value);
     
     if(fluid_settings_get_hints (d->synth->settings, name, &hints) == FLUID_OK)
     {
@@ -1418,7 +1418,7 @@ static void fluid_handle_settings_iter2(void* data, char* name, int type)
 
   case FLUID_STR_TYPE: {
     char* s;
-    fluid_synth_dupstr(d->synth, name, &s);     /* ++ alloc string */
+    fluid_settings_dupstr(d->synth->settings, name, &s);     /* ++ alloc string */
     fluid_ostream_printf(d->out, "%s\n", s ? s : "NULL");
     if (s) FLUID_FREE (s);      /* -- free string */
     break;

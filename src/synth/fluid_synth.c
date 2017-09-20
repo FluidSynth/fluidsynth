@@ -4691,112 +4691,6 @@ fluid_synth_get_settings(fluid_synth_t* synth)
 }
 
 /**
- * Convenience function to set a string setting of a synth.
- * @param synth FluidSynth instance
- * @param name Name of setting parameter
- * @param str Value to assign to the setting
- * @return FLUID_OK on success, FLUID_FAILED otherwise
- * @deprecated Use fluid_settings_setstr() in combination with fluid_synth_get_settings() instead.
- */
-int
-fluid_synth_setstr(fluid_synth_t* synth, const char* name, const char* str)
-{
-  fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
-  fluid_return_val_if_fail (name != NULL, FLUID_FAILED);
-
-  return fluid_settings_setstr(synth->settings, name, str);
-}
-
-/**
- * Convenience function to duplicate a string setting of a synth.
- * @param synth FluidSynth instance
- * @param name Name of setting parameter
- * @param str Location to store a pointer to the newly allocated string value
- * @return FLUID_OK on success, FLUID_FAILED otherwise
- * @deprecated Use fluid_settings_dupstr() in combination with fluid_synth_get_settings() instead.
- *
- * The returned string is owned by the caller and should be freed with free()
- * when finished with it.
- */
-int
-fluid_synth_dupstr(fluid_synth_t* synth, const char* name, char** str)
-{
-  fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
-  fluid_return_val_if_fail (name != NULL, FLUID_FAILED);
-  fluid_return_val_if_fail (str != NULL, FLUID_FAILED);
-
-  return fluid_settings_dupstr(synth->settings, name, str);
-}
-
-/**
- * Convenience function to set a floating point setting of a synth.
- * @param synth FluidSynth instance
- * @param name Name of setting parameter
- * @param val Value to assign to the setting
- * @return FLUID_OK on success, FLUID_FAILED otherwise
- * @deprecated Use fluid_settings_setnum() in combination with fluid_synth_get_settings() instead.
- */
-int
-fluid_synth_setnum(fluid_synth_t* synth, const char* name, double val)
-{
-  fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
-  fluid_return_val_if_fail (name != NULL, FLUID_FAILED);
-
-  return fluid_settings_setnum(synth->settings, name, val);
-}
-
-/**
- * Convenience function to get a floating point setting of a synth.
- * @param synth FluidSynth instance
- * @param name Name of setting parameter
- * @param val Location to store the current value of the setting
- * @return FLUID_OK on success, FLUID_FAILED otherwise
- * @deprecated Use fluid_settings_getnum() in combination with fluid_synth_get_settings() instead.
- */
-int
-fluid_synth_getnum(fluid_synth_t* synth, const char* name, double* val)
-{
-  fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
-  fluid_return_val_if_fail (name != NULL, FLUID_FAILED);
-
-  return fluid_settings_getnum(synth->settings, name, val);
-}
-
-/**
- * Convenience function to set an integer setting of a synth.
- * @param synth FluidSynth instance
- * @param name Name of setting parameter
- * @param val Value to assign to the setting
- * @return FLUID_OK on success, FLUID_FAILED otherwise
- * @deprecated Use fluid_settings_setint() in combination with fluid_synth_get_settings() instead.
- */
-int
-fluid_synth_setint(fluid_synth_t* synth, const char* name, int val)
-{
-  fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
-  fluid_return_val_if_fail (name != NULL, FLUID_FAILED);
-
-  return fluid_settings_setint(synth->settings, name, val);
-}
-
-/**
- * Convenience function to get an integer setting of a synth.
- * @param synth FluidSynth instance
- * @param name Name of setting parameter
- * @param val Location to store the current value of the setting
- * @return FLUID_OK on success, FLUID_FAILED otherwise
- * @deprecated Use fluid_settings_getint() in combination with fluid_synth_get_settings() instead.
- */
-int
-fluid_synth_getint(fluid_synth_t* synth, const char* name, int* val)
-{
-  fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
-  fluid_return_val_if_fail (name != NULL, FLUID_FAILED);
-
-  return fluid_settings_getint(synth->settings, name, val);
-}
-
-/**
  * Set a SoundFont generator (effect) value on a MIDI channel in real-time.
  * @param synth FluidSynth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
@@ -5111,7 +5005,6 @@ void fluid_synth_api_exit(fluid_synth_t* synth)
   }
   
 }
-
 
 /**
  * Set midi channel type 
