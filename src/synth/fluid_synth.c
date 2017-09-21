@@ -743,13 +743,13 @@ new_fluid_synth(fluid_settings_t *settings)
   }
 
   synth->bank_select = FLUID_BANK_STYLE_GS;
-  if (fluid_settings_str_equal (settings, "synth.midi-bank-select", "gm") == 1)
+  if (fluid_settings_str_equal (settings, "synth.midi-bank-select", "gm"))
     synth->bank_select = FLUID_BANK_STYLE_GM;
-  else if (fluid_settings_str_equal (settings, "synth.midi-bank-select", "gs") == 1)
+  else if (fluid_settings_str_equal (settings, "synth.midi-bank-select", "gs"))
     synth->bank_select = FLUID_BANK_STYLE_GS;
-  else if (fluid_settings_str_equal (settings, "synth.midi-bank-select", "xg") == 1)
+  else if (fluid_settings_str_equal (settings, "synth.midi-bank-select", "xg"))
     synth->bank_select = FLUID_BANK_STYLE_XG;
-  else if (fluid_settings_str_equal (settings, "synth.midi-bank-select", "mma") == 1)
+  else if (fluid_settings_str_equal (settings, "synth.midi-bank-select", "mma"))
     synth->bank_select = FLUID_BANK_STYLE_MMA;
 
   fluid_synth_process_event_queue(synth);

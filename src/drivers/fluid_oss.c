@@ -163,7 +163,7 @@ new_fluid_oss_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
     goto error_recovery;
   }
 
-  if (!fluid_settings_dupstr(settings, "audio.oss.device", &devname) || !devname) {         /* ++ alloc device name */
+  if (fluid_settings_dupstr(settings, "audio.oss.device", &devname) != FLUID_OK || !devname) {         /* ++ alloc device name */
     devname = FLUID_STRDUP ("/dev/dsp");
 
     if (devname == NULL) {
@@ -277,7 +277,7 @@ new_fluid_oss_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func,
   dev->buffer_byte_size = dev->buffer_size * 2 * 2; /* 2 channels * 16 bits audio */
 
 
-  if (!fluid_settings_dupstr(settings, "audio.oss.device", &devname) || !devname) {
+  if (fluid_settings_dupstr(settings, "audio.oss.device", &devname) != FLUID_OK || !devname) {
     devname = FLUID_STRDUP ("/dev/dsp");
 
     if (!devname)

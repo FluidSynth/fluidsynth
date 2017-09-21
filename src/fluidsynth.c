@@ -104,7 +104,7 @@ void process_o_cmd_line_option(fluid_settings_t* settings, char* optarg)
 
   switch(fluid_settings_get_type(settings, optarg)){
   case FLUID_NUM_TYPE:
-    if (!fluid_settings_setnum (settings, optarg, atof (val)))
+    if (fluid_settings_setnum (settings, optarg, atof (val)) != FLUID_OK)
     {
       fprintf (stderr, "Failed to set floating point parameter '%s'\n", optarg);
       exit (1);
@@ -122,14 +122,14 @@ void process_o_cmd_line_option(fluid_settings_t* settings, char* optarg)
     }
     else ival = atoi (val);
 
-    if (!fluid_settings_setint (settings, optarg, ival))
+    if (fluid_settings_setint (settings, optarg, ival) != FLUID_OK)
     {
       fprintf (stderr, "Failed to set integer parameter '%s'\n", optarg);
       exit (1);
     }
     break;
   case FLUID_STR_TYPE:
-    if (!fluid_settings_setstr (settings, optarg, val))
+    if (fluid_settings_setstr (settings, optarg, val) != FLUID_OK)
     {
       fprintf (stderr, "Failed to set string parameter '%s'\n", optarg);
       exit (1);
@@ -712,7 +712,7 @@ int main(int argc, char** argv)
     if (fluid_synth_get_sfont(synth, 0) == NULL) {
       /* Try to load the default soundfont if no soundfont specified */
       char *s;
-      if (fluid_settings_dupstr(settings, "synth.default-soundfont", &s) <= 0)
+      if (fluid_settings_dupstr(settings, "synth.default-soundfont", &s) != FLUID_OK)
         s = NULL;
       if ((s != NULL) && (s[0] != '\0'))
         fluid_synth_sfload(synth, s, 1);
@@ -789,7 +789,7 @@ int main(int argc, char** argv)
     if (interactive) {
       fluid_player_stop(player);
     }
-    if (adriver != NULL || !fluid_settings_str_equal(settings,  "player.timing-source", "sample")) {
+    if (adriver != NULL || fluid_settings_str_equal(settings, "player.timing-source", "sample") != FLUID_OK) {
       /* if no audio driver and sample timers are used, nothing makes the player advance */  
       fluid_player_join(player);
     }
