@@ -607,22 +607,22 @@ fluid_settings_register_int(fluid_settings_t* settings, const char* name, int de
  *
  * @param settings a settings object
  * @param name a setting's name
- * @return the type for the named setting, or #FLUID_NO_TYPE when it does not exist
+ * @return the type for the named setting (see #fluid_types_enum), or #FLUID_NO_TYPE when it does not exist
  */
-enum fluid_types_enum
+int
 fluid_settings_get_type(fluid_settings_t* settings, const char *name)
 {
   fluid_setting_node_t *node;
-  enum fluid_types_enum type = FLUID_NO_TYPE;
+  int type = FLUID_NO_TYPE;
 
-  fluid_return_val_if_fail (settings != NULL, FLUID_NO_TYPE);
-  fluid_return_val_if_fail (name != NULL, FLUID_NO_TYPE);
-  fluid_return_val_if_fail (name[0] != '\0', FLUID_NO_TYPE);
+  fluid_return_val_if_fail (settings != NULL, type);
+  fluid_return_val_if_fail (name != NULL, type);
+  fluid_return_val_if_fail (name[0] != '\0', type);
 
   fluid_rec_mutex_lock (settings->mutex);
-  type = fluid_settings_get (settings, name, &node) == FLUID_OK
-         ? (enum fluid_types_enum)node->type
-         : FLUID_NO_TYPE;
+  if(fluid_settings_get (settings, name, &node) == FLUID_OK)
+      type = node->type;
+  
   fluid_rec_mutex_unlock (settings->mutex);
 
   return type;
