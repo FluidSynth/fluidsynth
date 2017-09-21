@@ -77,7 +77,7 @@ Changes in FluidSynth @NEXT_RELEASE@ concerning developers:
 - remove deprecated fluid_settings_getstr()
 - remove deprecated FLUID_HINT_INTEGER
 - remove misspelled FLUID_SEQ_PITCHWHHELSENS macro
-- consistently return either FLUID_OK or FLUID_FAILED for most public \c fluid_settings_* functions
+- all public \c fluid_settings_* functions that return an int that shall not be interpreted as a bool consistently return either FLUID_OK or FLUID_FAILED
 - remove fluid_synth_set_gen2(), fluid_synth_set_gen() now behaves as fluid_synth_set_gen2()
 - struct fluid_mod_t was removed from public API
 - add "synth.volenv" a setting for volume envelope processing
