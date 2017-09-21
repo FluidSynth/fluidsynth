@@ -641,7 +641,6 @@ is one, midi driver is one, midi player is one etc) so you should usually
 leave it on. Also see synth.parallel-render.</td>
   </tr>
 
-
   <tr>
     <td>synth.verbose</td>
     <td>Type</td>
@@ -659,6 +658,35 @@ leave it on. Also see synth.parallel-render.</td>
     information about the received MIDI events to the stdout. This
     can be helpful for debugging. This setting cannot be changed
     after the synthesizer has started.</td>
+  </tr>
+
+  <tr>
+    <td>synth.volenv</td>
+    <td>Type</td>
+    <td>string</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Default</td>
+    <td>emu</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Options</td>
+    <td>compliant, emu</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>Description</td>
+    <td>Specifies the kind of volume envelope processing. This 
+    esp. influences the way fluidsynth responses to noteon velocity.
+    The default setting 'emu' causes the envelope to be highly
+    dynamic (i.e. compatible with the EMU10K1). Alternatively this
+    may be set to 'compliant' for a less dynamic envelope, as it was
+    done before fluidsynth 1.0.9. Note that this setting can only be
+    changed until the first synth has been created. Changing it
+    afterwards will have no effect for the rest of fluidsynths
+    lifetime.</td>
   </tr>
 </table>
 

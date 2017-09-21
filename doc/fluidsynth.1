@@ -221,6 +221,9 @@ Must always to be true for usage by fluidsynth executable.
 .TP
 .B synth.verbose            BOOL  [def=False]
 Print received MIDI events to stdout.
+.TP
+.B synth.volenv             STR   [def='emu' vals:'compliant', 'emu']
+Specifies the kind of volume envelope processing. This esp. influences the way fluidsynth responses to noteon velocity. The default setting 'emu' causes the envelope to be highly dynamic (i.e. compatible with the EMU10K1). Alternatively this may be set to 'compliant' for a less dynamic envelope, as it was done before fluidsynth 1.0.9.
 
 .TP
 .B GENERAL AUDIO
