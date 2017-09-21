@@ -34,6 +34,8 @@ extern "C" {
 
 /**
  * Modulator structure.  See SoundFont 2.04 PDF section 8.2.
+ * 
+ * @deprecated To be removed from the public API.
  */
 struct _fluid_mod_t
 {
