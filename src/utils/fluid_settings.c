@@ -896,13 +896,13 @@ fluid_settings_dupstr(fluid_settings_t* settings, const char *name, char** str)
  * @param settings a settings object
  * @param name a setting's name
  * @param s a string to be tested
- * @return #FLUID_OK if the value exists and is equal to 's', #FLUID_FAILED otherwise
+ * @return TRUE if the value exists and is equal to 's', FALSE otherwise
  */
 int
 fluid_settings_str_equal (fluid_settings_t* settings, const char *name, const char *s)
 {
   fluid_setting_node_t *node;
-  int retval = FLUID_FAILED;
+  int retval = FALSE;
 
   fluid_return_val_if_fail (settings != NULL, retval);
   fluid_return_val_if_fail (name != NULL, retval);
@@ -917,22 +917,14 @@ fluid_settings_str_equal (fluid_settings_t* settings, const char *name, const ch
     {
       fluid_str_setting_t *setting = (fluid_str_setting_t *)node;
       if (setting->value)
-      {
-          retval = FLUID_STRCMP (setting->value, s) == 0
-                   ? FLUID_OK
-                   : FLUID_FAILED;
-      }
+          retval = FLUID_STRCMP (setting->value, s) == 0;
     }
     else if (node->type == FLUID_INT_TYPE)      /* Handle boolean integers for backwards compatibility */
     {
       fluid_int_setting_t *setting = (fluid_int_setting_t *)node;
 
       if (setting->hints & FLUID_HINT_TOGGLED)
-      {
-        retval = FLUID_STRCMP (setting->value ? "yes" : "no", s) == 0
-                 ? FLUID_OK
-                 : FLUID_FAILED;
-      }
+          retval = FLUID_STRCMP (setting->value ? "yes" : "no", s) == 0;
     }
   }
 
