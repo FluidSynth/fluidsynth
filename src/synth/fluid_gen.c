@@ -92,7 +92,8 @@ fluid_gen_info_t fluid_gen_info[] = {
 /**
  * Set an array of generators to their default values.
  * @param gen Array of generators (should be #GEN_LAST in size).
- * @return Always returns 0
+ * @return Always returns #FLUID_OK
+ * @deprecated Will be removed from the public API in a future release, because there is no current usecase for it.
  */
 int
 fluid_gen_set_default_values(fluid_gen_t* gen)
