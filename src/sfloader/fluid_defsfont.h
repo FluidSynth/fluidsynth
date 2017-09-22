@@ -29,6 +29,7 @@
 #include "fluidsynth_priv.h"
 #include "fluid_list.h"
 #include "fluid_mod.h"
+#include "fluid_gen.h"
 
 
 

@@ -103,31 +103,6 @@ enum fluid_gen_type {
 };
 
 
-/**
- * SoundFont generator structure.
- */
-typedef struct _fluid_gen_t
-{
-  unsigned char flags; /**< Is the generator set or not (#fluid_gen_flags) */
-  double val;          /**< The nominal value */
-  double mod;          /**< Change by modulators */
-  double nrpn;         /**< Change by NRPN messages */
-} fluid_gen_t;
-
-/**
- * Enum value for 'flags' field of #fluid_gen_t (not really flags).
- */
-enum fluid_gen_flags
-{
-  GEN_UNUSED,		/**< Generator value is not set */
-  GEN_SET,		/**< Generator value is set */
-  GEN_ABS_NRPN		/**< Generator is an absolute value */
-};
-
-FLUIDSYNTH_API int fluid_gen_set_default_values(fluid_gen_t* gen);
-
-
-
 #ifdef __cplusplus
 }
 #endif
