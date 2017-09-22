@@ -463,7 +463,7 @@ fluid_settings_register_str(fluid_settings_t* settings, const char* name, const 
 
   fluid_rec_mutex_lock (settings->mutex);
 
-  if (!fluid_settings_get(settings, name, &node)) {
+  if (fluid_settings_get(settings, name, &node) != FLUID_OK) {
     setting = new_fluid_str_setting(def, def, hints, fun, data);
     retval = fluid_settings_set(settings, name, setting);
     if (retval != FLUID_OK) delete_fluid_str_setting (setting);
@@ -516,7 +516,7 @@ fluid_settings_register_num(fluid_settings_t* settings, const char* name, double
 
   fluid_rec_mutex_lock (settings->mutex);
 
-  if (!fluid_settings_get(settings, name, &node)) {
+  if (fluid_settings_get(settings, name, &node) != FLUID_OK) {
     /* insert a new setting */
     fluid_num_setting_t* setting;
     setting = new_fluid_num_setting(min, max, def, hints, fun, data);
@@ -574,7 +574,7 @@ fluid_settings_register_int(fluid_settings_t* settings, const char* name, int de
 
   fluid_rec_mutex_lock (settings->mutex);
 
-  if (!fluid_settings_get(settings, name, &node)) {
+  if (fluid_settings_get(settings, name, &node) != FLUID_OK) {
     /* insert a new setting */
     fluid_int_setting_t* setting;
     setting = new_fluid_int_setting(min, max, def, hints, fun, data);
