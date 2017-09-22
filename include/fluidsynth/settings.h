@@ -95,16 +95,6 @@ extern "C" {
  */
 #define FLUID_HINT_LOGARITHMIC     0x10
 
-/**
- * Hint FLUID_HINT_INTEGER indicates that a user interface would
- * probably wish to provide a stepped control taking only integer
- * values.
- * @deprecated
- *
- * As there is an integer setting type, this hint is not used.
- */
-#define FLUID_HINT_INTEGER         0x20
-
 
 #define FLUID_HINT_FILENAME        0x01         /**< String setting is a file name */
 #define FLUID_HINT_OPTIONLIST      0x02         /**< Setting is a list of string options */
@@ -133,7 +123,7 @@ FLUIDSYNTH_API
 int fluid_settings_get_type(fluid_settings_t* settings, const char *name);
 
 FLUIDSYNTH_API
-int fluid_settings_get_hints(fluid_settings_t* settings, const char *name);
+int fluid_settings_get_hints(fluid_settings_t* settings, const char *name, int* val);
 
 FLUIDSYNTH_API
 int fluid_settings_is_realtime(fluid_settings_t* settings, const char *name);
@@ -148,9 +138,6 @@ FLUIDSYNTH_API
 int fluid_settings_dupstr(fluid_settings_t* settings, const char *name, char** str);
 
 FLUIDSYNTH_API
-int fluid_settings_getstr(fluid_settings_t* settings, const char *name, char** str);
-
-FLUIDSYNTH_API
 char* fluid_settings_getstr_default(fluid_settings_t* settings, const char *name);
 
 FLUIDSYNTH_API
@@ -163,10 +150,10 @@ FLUIDSYNTH_API
 int fluid_settings_getnum(fluid_settings_t* settings, const char *name, double* val);
 
 FLUIDSYNTH_API
-double fluid_settings_getnum_default(fluid_settings_t* settings, const char *name);
+int fluid_settings_getnum_default(fluid_settings_t* settings, const char *name, double* val);
 
 FLUIDSYNTH_API
-void fluid_settings_getnum_range(fluid_settings_t* settings, const char *name,
+int fluid_settings_getnum_range(fluid_settings_t* settings, const char *name,
 				double* min, double* max);
 
 FLUIDSYNTH_API
@@ -176,10 +163,10 @@ FLUIDSYNTH_API
 int fluid_settings_getint(fluid_settings_t* settings, const char *name, int* val);
 
 FLUIDSYNTH_API
-int fluid_settings_getint_default(fluid_settings_t* settings, const char *name);
+int fluid_settings_getint_default(fluid_settings_t* settings, const char *name, int* val);
 
 FLUIDSYNTH_API
-void fluid_settings_getint_range(fluid_settings_t* settings, const char *name,
+int fluid_settings_getint_range(fluid_settings_t* settings, const char *name,
 				int* min, int* max);
 
 /**

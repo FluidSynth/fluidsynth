@@ -99,7 +99,6 @@ new_fluid_pulse_audio_driver2(fluid_settings_t* settings,
 
   FLUID_MEMSET(dev, 0, sizeof(fluid_pulse_audio_driver_t));
 
-//  fluid_settings_getint(settings, "audio.periods", &periods);
   fluid_settings_getint(settings, "audio.period-size", &period_size);
   fluid_settings_getnum(settings, "synth.sample-rate", &sample_rate);
   fluid_settings_dupstr(settings, "audio.pulseaudio.server", &server);  /* ++ alloc server string */

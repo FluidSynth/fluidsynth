@@ -286,7 +286,7 @@ fluid_event_pitch_bend(fluid_event_t* evt, int channel, int pitch)
 void
 fluid_event_pitch_wheelsens(fluid_event_t* evt, int channel, short value)
 {
-	evt->type = FLUID_SEQ_PITCHWHHELSENS;
+	evt->type = FLUID_SEQ_PITCHWHEELSENS;
 	evt->channel = channel;
 	evt->value = value;
 }
@@ -558,7 +558,7 @@ short fluid_event_get_control(fluid_event_t* evt)
  *
  * The Value field is used by the following event types:
  * #FLUID_SEQ_PROGRAMCHANGE, #FLUID_SEQ_PROGRAMSELECT (preset_num),
- * #FLUID_SEQ_PITCHWHHELSENS, #FLUID_SEQ_MODULATION, #FLUID_SEQ_SUSTAIN,
+ * #FLUID_SEQ_PITCHWHEELSENS, #FLUID_SEQ_MODULATION, #FLUID_SEQ_SUSTAIN,
  * #FLUID_SEQ_CONTROLCHANGE, #FLUID_SEQ_PAN, #FLUID_SEQ_VOLUME,
  * #FLUID_SEQ_REVERBSEND, #FLUID_SEQ_CHORUSSEND.
  */

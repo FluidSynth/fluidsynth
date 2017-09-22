@@ -71,7 +71,6 @@ option ( enable-ipv6  "enable ipv6 support " on )
 
 # Platform specific options
 if ( ${CMAKE_SYSTEM} MATCHES "Linux" )
-    option ( enable-ladcca "compile LADCCA support if it is available (deprecated)" off )
     option ( enable-lash "compile LASH support (if it is available)" on )
     option ( enable-alsa "compile ALSA support (if it is available)" on )
 endif ( ${CMAKE_SYSTEM} MATCHES "Linux" )
@@ -380,14 +379,6 @@ else(NOT enable-pkgconfig)
     remove_definitions( -DHAVE_LASH )
     endif ( enable-lash )
 
-    unset ( LADCCA_SUPPORT CACHE )
-    if ( enable-ladcca )
-    pkg_check_modules ( LADCCA ladcca-1.0>=0.3 )
-    set ( LADCCA_SUPPORT ${LADCCA_FOUND} )
-    else ( enable-ladcca )
-    unset_pkg_config ( LADCCA )
-    endif ( enable-ladcca )
-
     unset ( DBUS_SUPPORT CACHE )
     if ( enable-dbus )
     pkg_check_modules ( DBUS dbus-1>=1.0.0 )
@@ -473,31 +464,10 @@ if ( UNIX )
         COMMAND cp -r doc ${PACKAGE}-${VERSION}
         COMMAND cp -r include ${PACKAGE}-${VERSION}
         COMMAND cp -r src ${PACKAGE}-${VERSION}
-        COMMAND cp AUTHORS ChangeLog CMakeLists.txt ../LICENSE ${PACKAGE}.* INSTALL NEWS README* ../README.md THANKS TODO ${PACKAGE}-${VERSION}
+        COMMAND cp AUTHORS ChangeLog CMakeLists.txt LICENSE ${PACKAGE}.* INSTALL NEWS README* THANKS TODO ${PACKAGE}-${VERSION}
 #       COMMAND tar -cj --exclude .svn --exclude Makefile.am -f ${PACKAGE}-${VERSION}.tar.bz2 ${PACKAGE}-${VERSION}
 #       COMMAND tar -cz --exclude .svn --exclude Makefile.am -f ${PACKAGE}-${VERSION}.tar.gz ${PACKAGE}-${VERSION}
 #       COMMAND zip -qr ${PACKAGE}-${VERSION}.zip ${PACKAGE}-${VERSION} -x '*.svn*' -x '*Makefile.am'
-        COMMAND tar -cj --exclude .svn -f ${PACKAGE}-${VERSION}.tar.bz2 ${PACKAGE}-${VERSION}
-        COMMAND tar -cz --exclude .svn -f ${PACKAGE}-${VERSION}.tar.gz ${PACKAGE}-${VERSION}
-        COMMAND zip -qr ${PACKAGE}-${VERSION}.zip ${PACKAGE}-${VERSION} -x '*.svn*'
-        COMMAND rm -rf ${PACKAGE}-${VERSION}
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    )
-
-    # tarball custom target
-    add_custom_target ( tarball-autotools
-        COMMAND mkdir -p ${PACKAGE}-${VERSION}
-        COMMAND cp -r bindings ${PACKAGE}-${VERSION}
-        COMMAND cp -r cmake_admin ${PACKAGE}-${VERSION}
-        COMMAND cp -r doc ${PACKAGE}-${VERSION}
-        COMMAND cp -r include ${PACKAGE}-${VERSION}
-        COMMAND cp -r src ${PACKAGE}-${VERSION}
-        COMMAND cp AUTHORS ChangeLog CMakeLists.txt ../LICENSE ${PACKAGE}.* INSTALL NEWS README* ../README.md THANKS TODO ${PACKAGE}-${VERSION}
-        COMMAND cp acinclude.m4 autogen.sh configure.ac install-sh missing mkinstalldirs Makefile.am ${PACKAGE}-${VERSION}
-        # Files below are added when running autogen.sh
-        # COMMAND cp -r autom4te.cache ${PACKAGE}-${VERSION}
-        COMMAND cp -r m4 ${PACKAGE}-${VERSION}
-        COMMAND cp aclocal.m4 compile config.guess config.sub configure depcomp ltmain.sh Makefile.in ${PACKAGE}-${VERSION}
         COMMAND tar -cj --exclude .svn -f ${PACKAGE}-${VERSION}.tar.bz2 ${PACKAGE}-${VERSION}
         COMMAND tar -cz --exclude .svn -f ${PACKAGE}-${VERSION}.tar.gz ${PACKAGE}-${VERSION}
         COMMAND zip -qr ${PACKAGE}-${VERSION}.zip ${PACKAGE}-${VERSION} -x '*.svn*'

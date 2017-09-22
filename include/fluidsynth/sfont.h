@@ -116,7 +116,7 @@ struct _fluid_sfont_t {
    * @param sfont Virtual SoundFont
    * @return The name of the virtual SoundFont.
    */
-  char* (*get_name)(fluid_sfont_t* sfont);
+  const char* (*get_name)(fluid_sfont_t* sfont);
 
   /**
    * Get a virtual SoundFont preset by bank and program numbers.
@@ -172,7 +172,7 @@ struct _fluid_preset_t {
    *   valid for the duration of the virtual preset (or the duration of the
    *   SoundFont, in the case of preset iteration).
    */
-  char* (*get_name)(fluid_preset_t* preset);
+  const char* (*get_name)(fluid_preset_t* preset);
 
   /**
    * Method to get a virtual SoundFont preset MIDI bank number.

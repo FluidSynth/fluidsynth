@@ -98,34 +98,9 @@ enum fluid_gen_type {
    * mentioned in the list of generator in the SF2 specifications. It
    * is used, however, as the destination for the default pitch wheel
    * modulator. */
-  GEN_PITCH,			/**< Pitch (NOTE: Not a real SoundFont generator) */
+  GEN_PITCH,			/**< Pitch @note Not a real SoundFont generator */
   GEN_LAST			/**< Value defines the count of generators (#fluid_gen_type) @deprecated As of 1.1.7 this enum value is deprecated and will be removed in a future release, because it prevents adding new enum values without breaking ABI compatibility. */
 };
-
-
-/**
- * SoundFont generator structure.
- */
-typedef struct _fluid_gen_t
-{
-  unsigned char flags; /**< Is the generator set or not (#fluid_gen_flags) */
-  double val;          /**< The nominal value */
-  double mod;          /**< Change by modulators */
-  double nrpn;         /**< Change by NRPN messages */
-} fluid_gen_t;
-
-/**
- * Enum value for 'flags' field of #fluid_gen_t (not really flags).
- */
-enum fluid_gen_flags
-{
-  GEN_UNUSED,		/**< Generator value is not set */
-  GEN_SET,		/**< Generator value is set */
-  GEN_ABS_NRPN		/**< Generator is an absolute value */
-};
-
-FLUIDSYNTH_API int fluid_gen_set_default_values(fluid_gen_t* gen);
-
 
 
 #ifdef __cplusplus

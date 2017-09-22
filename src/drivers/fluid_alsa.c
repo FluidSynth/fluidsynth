@@ -791,10 +791,10 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
   fluid_settings_getint (settings, "midi.realtime-prio", &realtime_prio);
 
   /* get the device name. if none is specified, use the default device. */
-  if (fluid_settings_dupstr(settings, "midi.alsa_seq.device", &device) == 0)    /* ++ alloc device name */
+  if (fluid_settings_dupstr(settings, "midi.alsa_seq.device", &device) != FLUID_OK)    /* ++ alloc device name */
     goto error_recovery;
 
-  if (fluid_settings_dupstr(settings, "midi.alsa_seq.id", &id) == 0)    /* ++ alloc id string */
+  if (fluid_settings_dupstr(settings, "midi.alsa_seq.id", &id) != FLUID_OK)    /* ++ alloc id string */
     goto error_recovery;
 
   if (id == NULL) {

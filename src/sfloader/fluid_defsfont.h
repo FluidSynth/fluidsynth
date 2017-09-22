@@ -28,6 +28,8 @@
 #include "fluidsynth.h"
 #include "fluidsynth_priv.h"
 #include "fluid_list.h"
+#include "fluid_mod.h"
+#include "fluid_gen.h"
 
 
 
@@ -381,14 +383,14 @@ fluid_sfont_t* fluid_defsfloader_load(fluid_sfloader_t* loader, const char* file
 
 
 int fluid_defsfont_sfont_delete(fluid_sfont_t* sfont);
-char* fluid_defsfont_sfont_get_name(fluid_sfont_t* sfont);
+const char* fluid_defsfont_sfont_get_name(fluid_sfont_t* sfont);
 fluid_preset_t* fluid_defsfont_sfont_get_preset(fluid_sfont_t* sfont, unsigned int bank, unsigned int prenum);
 void fluid_defsfont_sfont_iteration_start(fluid_sfont_t* sfont);
 int fluid_defsfont_sfont_iteration_next(fluid_sfont_t* sfont, fluid_preset_t* preset);
 
 
 int fluid_defpreset_preset_delete(fluid_preset_t* preset);
-char* fluid_defpreset_preset_get_name(fluid_preset_t* preset);
+const char* fluid_defpreset_preset_get_name(fluid_preset_t* preset);
 int fluid_defpreset_preset_get_banknum(fluid_preset_t* preset);
 int fluid_defpreset_preset_get_num(fluid_preset_t* preset);
 int fluid_defpreset_preset_noteon(fluid_preset_t* preset, fluid_synth_t* synth, int chan, int key, int vel);
@@ -419,7 +421,7 @@ struct _fluid_defsfont_t
 fluid_defsfont_t* new_fluid_defsfont(fluid_settings_t* settings);
 int delete_fluid_defsfont(fluid_defsfont_t* sfont);
 int fluid_defsfont_load(fluid_defsfont_t* sfont, const char* file);
-char* fluid_defsfont_get_name(fluid_defsfont_t* sfont);
+const char* fluid_defsfont_get_name(fluid_defsfont_t* sfont);
 fluid_defpreset_t* fluid_defsfont_get_preset(fluid_defsfont_t* sfont, unsigned int bank, unsigned int prenum);
 void fluid_defsfont_iteration_start(fluid_defsfont_t* sfont);
 int fluid_defsfont_iteration_next(fluid_defsfont_t* sfont, fluid_preset_t* preset);
@@ -452,7 +454,7 @@ fluid_preset_zone_t* fluid_defpreset_get_zone(fluid_defpreset_t* preset);
 fluid_preset_zone_t* fluid_defpreset_get_global_zone(fluid_defpreset_t* preset);
 int fluid_defpreset_get_banknum(fluid_defpreset_t* preset);
 int fluid_defpreset_get_num(fluid_defpreset_t* preset);
-char* fluid_defpreset_get_name(fluid_defpreset_t* preset);
+const char* fluid_defpreset_get_name(fluid_defpreset_t* preset);
 int fluid_defpreset_noteon(fluid_defpreset_t* preset, fluid_synth_t* synth, int chan, int key, int vel);
 
 /*

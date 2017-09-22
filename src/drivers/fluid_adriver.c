@@ -204,10 +204,6 @@ void fluid_audio_driver_settings(fluid_settings_t* settings)
   fluid_settings_add_option(settings, "audio.sample-format", "16bits");
   fluid_settings_add_option(settings, "audio.sample-format", "float");
 
-  fluid_settings_register_int(settings, "audio.output-channels", 2, 2, 32, 0, NULL, NULL);
-  fluid_settings_register_int(settings, "audio.input-channels", 0, 0, 2, 0, NULL, NULL);
-
-
 #if defined(WIN32)
   fluid_settings_register_int(settings, "audio.period-size", 512, 64, 8192, 0, NULL, NULL);
   fluid_settings_register_int(settings, "audio.periods", 8, 2, 64, 0, NULL, NULL);

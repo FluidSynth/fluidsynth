@@ -43,9 +43,6 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #cmakedefine HAVE_INTTYPES_H @HAVE_INTTYPES_H@
 
-/* whether or not we are supporting ladcca */
-#cmakedefine HAVE_LADCCA @HAVE_LADCCA@
-
 /* whether or not we are supporting lash */
 #cmakedefine HAVE_LASH @HAVE_LASH@
 
