@@ -168,11 +168,6 @@ matrix:
     - os: osx
       osx_image: xcode8
       env:
-        - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9"
-
-    - os: osx
-      osx_image: xcode8
-      env:
         - MATRIX_EVAL="brew install gcc5 glib && CC=gcc-5 && CXX=g++-5"
 
     - os: osx
@@ -188,9 +183,6 @@ matrix:
 before_install:
     - eval "${MATRIX_EVAL}"
     
-#install:
-  #- if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install glib; fi
-  
 before_script:
     - mkdir build && cd build
     
