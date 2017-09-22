@@ -561,11 +561,11 @@ new_fluid_synth(fluid_settings_t *settings)
   if (fluid_synth_initialized == 0)
   {
     char buf[64];
-    if (fluid_settings_str_equal (settings, "synth.volenv", "compliant") == FLUID_OK)
+    if (fluid_settings_str_equal (settings, "synth.volenv", "compliant"))
     {
             fluid_conversion_set_atten_power(FLUID_ATTEN_POWER_DEFAULT_COMPLIANT);
     }
-    else if (fluid_settings_str_equal (settings, "synth.volenv", "emu") == FLUID_OK)
+    else if (fluid_settings_str_equal (settings, "synth.volenv", "emu"))
     {
             fluid_conversion_set_atten_power(FLUID_ATTEN_POWER_DEFAULT_EMU);
     }
