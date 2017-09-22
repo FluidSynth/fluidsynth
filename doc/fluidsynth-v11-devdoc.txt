@@ -68,12 +68,11 @@ What is FluidSynth?
 
 \section NewIn@NEXT_RELEASE@ Whats new in @NEXT_RELEASE@?
 
-FluidSynths SOVERSION was bumped. The API was reworked, deprecated functions were removed.
+FluidSynths SOVERSION was bumped. The API was reworked, deprecated functions were removed. Functions that were doing (nearly) the same were fused together.
 
 Changes in FluidSynth @NEXT_RELEASE@ concerning developers:
 
-- remove deprecated fluid_synth_get_channel_preset()
-- remove deprecated fluid_synth_get_program(), use fluid_synth_get_channel_info() instead
+- remove deprecated fluid_synth_get_program() and fluid_synth_get_channel_preset(), use fluid_synth_get_channel_info() instead
 - remove deprecated fluid_settings_getstr()
 - remove deprecated FLUID_HINT_INTEGER
 - remove misspelled FLUID_SEQ_PITCHWHHELSENS macro
