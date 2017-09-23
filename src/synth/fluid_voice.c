@@ -1568,7 +1568,14 @@ fluid_voice_get_lower_boundary_for_attenuation(fluid_voice_t* voice)
 
         /* Modulator has attenuation as target and can change over time? */
         if ((mod->dest == GEN_ATTENUATION)
-                && ((mod->flags1 & FLUID_MOD_CC) || (mod->flags2 & FLUID_MOD_CC))) {
+                && ((mod->flags1 & FLUID_MOD_CC)
+                    || (mod->flags2 & FLUID_MOD_CC)
+                    || (mod->src1 == FLUID_MOD_CHANNELPRESSURE)
+                    || (mod->src1 == FLUID_MOD_KEYPRESSURE)
+                    || (mod->src1 == FLUID_MOD_PITCHWHEEL)
+                    || (mod->src2 == FLUID_MOD_CHANNELPRESSURE)
+                    || (mod->src2 == FLUID_MOD_KEYPRESSURE)
+                    || (mod->src2 == FLUID_MOD_PITCHWHEEL))) {
 
             fluid_real_t current_val = fluid_mod_get_value(mod, voice->channel, voice);
             fluid_real_t v = fabs(mod->amount);
