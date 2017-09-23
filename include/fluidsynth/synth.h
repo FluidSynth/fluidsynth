@@ -48,7 +48,7 @@ extern "C" {
 
 /**
  * Channel information structure for fluid_synth_get_channel_info().
- * @since 1.1.1
+ * @since @NEXT_RELEASE@
  */
 struct _fluid_synth_channel_info_t
 {
@@ -56,6 +56,7 @@ struct _fluid_synth_channel_info_t
   int sfont_id;         /**< ID of the SoundFont assigned to the corresponding MIDI channel */
   int bank;             /**< MIDI bank number (0-16383) assigned to the corresponding MIDI channel */
   int program;          /**< MIDI program number (0-127) assigned to the corresponding MIDI channel */
+  char reserved[64];    /**< reserved for future expansion */
 };
 
 FLUIDSYNTH_API fluid_synth_t* new_fluid_synth(fluid_settings_t* settings);
