@@ -3643,6 +3643,8 @@ fluid_synth_get_channel_preset(fluid_synth_t* synth, int chan)
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
  * @param info Caller supplied structure to fill with preset information
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ * @deprecated Provides redundant functionality that can be achieved with
+ * fluid_synth_get_channel_preset() or fluid_synth_get_program().
  * @since 1.1.1
  */
 int
