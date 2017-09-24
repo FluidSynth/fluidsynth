@@ -2136,6 +2136,37 @@ fluid_synth_unset_program (fluid_synth_t *synth, int chan)
 }
 
 /**
+ * Get current SoundFont ID, bank number and program number for a MIDI channel.
+ * @param synth FluidSynth instance
+ * @param chan MIDI channel number (0 to MIDI channel count - 1)
+ * @param sfont_id Location to store SoundFont ID
+ * @param bank_num Location to store MIDI bank number
+ * @param preset_num Location to store MIDI program number
+ * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @deprecated Use fluid_synth_get_channel_info() instead.
+ */
+int
+fluid_synth_get_program(fluid_synth_t* synth, int chan, unsigned int* sfont_id,
+                        unsigned int* bank_num, unsigned int* preset_num)
+{
+  fluid_channel_t* channel;
+
+  fluid_return_val_if_fail (sfont_id != NULL, FLUID_FAILED);
+  fluid_return_val_if_fail (bank_num != NULL, FLUID_FAILED);
+  fluid_return_val_if_fail (preset_num != NULL, FLUID_FAILED);
+  FLUID_API_ENTRY_CHAN(FLUID_FAILED);
+
+  channel = synth->channel[chan];
+  fluid_channel_get_sfont_bank_prog(channel, (int *)sfont_id, (int *)bank_num,
+                                    (int *)preset_num);
+
+  /* 128 indicates that the preset is unset.  Set to 0 to be backwards compatible. */
+  if (*preset_num == FLUID_UNSET_PROGRAM) *preset_num = 0;
+
+  FLUID_API_RETURN(FLUID_OK);
+}
+
+/**
  * Select an instrument on a MIDI channel by SoundFont ID, bank and program numbers.
  * @param synth FluidSynth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
@@ -3655,28 +3686,78 @@ fluid_synth_get_sfont_by_name(fluid_synth_t* synth, const char *name)
 }
 
 /**
- * Get information about a MIDI channel. Specifically retrieve the currently active fluid_preset_t, SoundFont ID, bank number and program number for that MIDI channel.
+ * Get active preset on a MIDI channel.
+ * @param synth FluidSynth instance
+ * @param chan MIDI channel number (0 to MIDI channel count - 1)
+ * @return Preset or NULL if no preset active on channel
+ * @deprecated fluid_synth_get_channel_info() should replace most use cases.
+ *
+ * @note Should only be called from within synthesis thread, which includes
+ * SoundFont loader preset noteon methods.  Not thread safe otherwise.
+ */
+fluid_preset_t *
+fluid_synth_get_channel_preset(fluid_synth_t* synth, int chan)
+{
+  fluid_preset_t* result;
+  fluid_channel_t *channel;
+  FLUID_API_ENTRY_CHAN(NULL);
+
+  channel = synth->channel[chan];
+  result = channel->preset;
+  fluid_synth_api_exit(synth);
+  return result;
+}
+
+/**
+ * Get information on the currently selected preset on a MIDI channel.
  * @param synth FluidSynth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
  * @param info Caller supplied structure to fill with preset information
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  * @since 1.1.1
- * 
- * @note The ID, bank and program assigned to the MIDI channel may be different to the ID, bank and program specified by the preset. This may happen if e.g. a preset requested by a program change could not be found and the synth falls back to a default preset instead.
  */
 int
 fluid_synth_get_channel_info (fluid_synth_t *synth, int chan,
                               fluid_synth_channel_info_t *info)
 {
   fluid_channel_t *channel;
+  fluid_preset_t *preset;
+  char *name;
+
+  if (info)
+  {
+    info->assigned = FALSE;
+    info->name[0] = '\0';
+  }
 
   fluid_return_val_if_fail (info != NULL, FLUID_FAILED);
   FLUID_API_ENTRY_CHAN(FLUID_FAILED);
   
   channel = synth->channel[chan];
-  
-  info->preset = channel->preset;
-  fluid_channel_get_sfont_bank_prog (channel, &info->sfont_id, &info->bank, &info->program);
+  preset = channel->preset;
+
+  if (preset)
+  {
+    info->assigned = TRUE;
+    name = fluid_preset_get_name (preset);
+
+    if (name)
+    {
+      strncpy (info->name, name, FLUID_SYNTH_CHANNEL_INFO_NAME_SIZE);
+      info->name[FLUID_SYNTH_CHANNEL_INFO_NAME_SIZE - 1] = '\0';
+    }
+    else info->name[0] = '\0';
+
+    info->sfont_id = preset->sfont->id;
+    info->bank = fluid_preset_get_banknum (preset);
+    info->program = fluid_preset_get_num (preset);
+  }
+  else
+  {
+    info->assigned = FALSE;
+    fluid_channel_get_sfont_bank_prog (channel, &info->sfont_id, &info->bank, &info->program);
+    info->name[0] = '\0';
+  }
 
   fluid_synth_api_exit(synth);
   return FLUID_OK;
