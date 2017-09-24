@@ -2143,7 +2143,6 @@ fluid_synth_unset_program (fluid_synth_t *synth, int chan)
  * @param bank_num Location to store MIDI bank number
  * @param preset_num Location to store MIDI program number
  * @return FLUID_OK on success, FLUID_FAILED otherwise
- * @deprecated Use fluid_synth_get_channel_info() instead.
  */
 int
 fluid_synth_get_program(fluid_synth_t* synth, int chan, unsigned int* sfont_id,
