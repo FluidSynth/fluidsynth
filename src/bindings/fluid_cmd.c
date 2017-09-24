@@ -584,15 +584,11 @@ fluid_handle_channels(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t o
 
     if (!verbose)
       fluid_ostream_printf (out, "chan %d, %s\n", i,
-                            info.preset!=NULL
-                            ? fluid_preset_get_name(info.preset)
-                            : "no preset");
+                            info.assigned ? info.name : "no preset");
     else
       fluid_ostream_printf (out, "chan %d, sfont %d, bank %d, preset %d, %s\n", i,
                             info.sfont_id, info.bank, info.program,
-                            info.preset!=NULL
-                            ? fluid_preset_get_name(info.preset)
-                            : "no preset");
+                            info.assigned ? info.name : "no preset");
   }
 
   return 0;
