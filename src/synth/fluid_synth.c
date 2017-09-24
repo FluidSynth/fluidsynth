@@ -3688,11 +3688,10 @@ fluid_synth_get_sfont_by_name(fluid_synth_t* synth, const char *name)
  * Get active preset on a MIDI channel.
  * @param synth FluidSynth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
- * @return Preset or NULL if no preset active on channel
- * @deprecated fluid_synth_get_channel_info() should replace most use cases.
+ * @return Preset or NULL if no preset active on \c chan
  *
  * @note Should only be called from within synthesis thread, which includes
- * SoundFont loader preset noteon methods.  Not thread safe otherwise.
+ * SoundFont loader preset noteon methods. Not thread safe otherwise.
  */
 fluid_preset_t *
 fluid_synth_get_channel_preset(fluid_synth_t* synth, int chan)
