@@ -110,7 +110,7 @@ http://www.livesynth.com/lspro.html
 
 Soundfont Editors
 
-- Smurf Soundfont Editor by Josh Green (Linux), http://smurf.sourceforge.net
+- Project SWAMI by Josh Green (Linux), http://www.swamiproject.org/
 
 - Vienna SoundFont Editor by Creative Technology Ltd. (Win)
 
