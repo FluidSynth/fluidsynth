@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="fluidsettings.xsl"?>
+<fluidsettings>
+    <synth>
+        <setting>
+            <name>something</name>
+            <type>int</type>
+            <def>10</def>
+            <vals>0-90</vals>
+            <desc>some very very very very very very very very very very very very very very long  very very very very very very very very very very very very very very very very very very very desc goes here</desc>
+        </setting>
+        <setting>
+            <name>asdf</name>
+            <type>num</type>
+            <def>10</def>
+            <vals>[0;90]</vals>
+            <desc>some very very very very very very very very very very very very very very long  very very very very very very very very very very very very very very very very very very very desc goes here</desc>
+        </setting>
+        <setting>
+            <name>qwer</name>
+            <type>bool</type>
+            <def>10</def>
+            <vals>0-90</vals>
+            <desc>some very very very very very very very very very very very very very very long  very very very very very very very very very very very very very very very very very very very desc goes here</desc>
+        </setting>
+        <setting>
+            <name>ölkj</name>
+            <type>str</type>
+            <def>10</def>
+            <vals>"asdf", "jköl", "qwertz"</vals>
+            <desc>some very very very very very very very very very very very very very very long  very very very very very very very very very very very very very very very very very very very desc goes here</desc>
+        </setting>
+        <setting>
+            <name>oipu</name>
+            <type>int</type>
+            <def>10</def>
+            <vals>0-90</vals>
+            <desc>some very very very very very very very very very very very very very very long  very very very very very very very very very very very very very very very very very very very desc goes here</desc>
+        </setting>
+    </synth>
+    
+    <audio>
+        <setting>
+            <name>channels</name>
+            <type>int</type>
+            <def>10</def>
+            <vals>0-90</vals>
+            <desc>some very very very very very very very very very very very very very very long  very very very very very very very very very very very very very very very very very very very desc goes here</desc>
+        </setting>
+        <setting>
+            <name>groups</name>
+            <type>int</type>
+            <def>10</def>
+            <vals>0-90</vals>
+            <desc>some very very very very very very very very very very very very very very long  very very very very very very very very very very very very very very very very very very very desc goes here</desc>
+        </setting>
+    </audio>
+    
+    <midi>
+        <setting>
+            <name>channels</name>
+            <type>int</type>
+            <def>10</def>
+            <vals>0-90</vals>
+            <desc>some very very very very very very very very very very very very very very long  very very very very very very very very very very very very very very very very very very very desc goes here</desc>
+        </setting>
+        <setting>
+            <name>sample-timer</name>
+            <type>int</type>
+            <def>10</def>
+            <vals>0-90</vals>
+            <desc>some very very very very very very very very very very very very very very long  very very very very very very very very very very very very very very very very very very very desc goes here</desc>
+        </setting>
+    </midi>
+    
+    <player>
+        <setting>
+            <name>reset-synth</name>
+            <type>bool</type>
+            <def>10</def>
+            <vals>0-90</vals>
+            <desc>some very very very very very very very very very very very very very very long  very very very very very very very very very very very very very very very very very very very desc goes here</desc>
+        </setting>
+    </player>
+</fluidsettings>
+
