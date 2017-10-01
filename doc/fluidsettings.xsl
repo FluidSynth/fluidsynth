@@ -13,8 +13,9 @@ td
 {
 <!--      border-bottom: 2px solid black; -->
 <!--      border-top: 0px solid black; -->
-     padding-top: 20px;
-     padding-bottom: 20px;
+<!--      padding-top: 20px; -->
+<!--      padding-bottom: 20px; -->
+    padding: 15px 5px 15px 5px;
 }
 
 .cell-type

@@ -192,7 +192,221 @@ lifetime.
                 The audio system to be used.
             </desc>
         </setting>
+        <setting>
+            <name>periods</name>
+            <type>int</type>
+            <def>16 (Linux, Mac OS X),<br />
+                 8 (Windows)
+            </def>
+            <min>2</min>
+            <max>64</max>
+            <desc>
+                The number of the audio buffers used by the driver. This number of buffers, multiplied by the buffer size (see setting audio.period-size), determines the maximum latency of the audio driver.
+            </desc>
+        </setting>
+        <setting>
+            <name>period-size</name>
+            <type>int</type>
+            <def>64 (Linux, Mac OS X),<br />
+                 512 (Windows)
+            </def>
+            <min>64</min>
+            <max>8192</max>
+            <desc>
+                The size of the audio buffers (in frames).
+            </desc>
+        </setting>
+        <setting>
+            <name>realtime-prio</name>
+            <type>int</type>
+            <def>60</def>
+            <min>0</min>
+            <max>99</max>
+            <desc>
+                Sets the realtime scheduling priority of the audio synthesis thread (0 disables high priority scheduling). Linux is the only platform which currently makes use of different priority levels. Drivers which use this option: alsa, oss and pulseaudio
+            </desc>
+        </setting>
+        <setting>
+            <name>sample-format</name>
+            <type>str</type>
+            <def>16bits</def>
+            <vals>16bits, float</vals>
+            <desc>
+                The format of the audio samples. This is currently only an indication; the audio driver may ignore this setting if it can't handle the specified format.
+            </desc>
+        </setting>
     </audio>
+    
+    <audio.alsa>
+        <setting>
+            <name>device</name>
+            <type>str</type>
+            <def>default</def>
+            <vals>ALSA device string, such as: "hw:0", "plughw:1", etc.</vals>
+            <desc>
+                Selects the ALSA audio device to use.
+            </desc>
+        </setting>
+    </audio.alsa>
+    
+    <audio.coreaudio>
+        <setting>
+            <name>device</name>
+            <type>str</type>
+            <def>default</def>
+            <desc>
+                Selects the CoreAudio device to use.
+            </desc>
+        </setting>
+    </audio.coreaudio>
+    
+    <audio.dart>
+        <setting>
+            <name>device</name>
+            <type>str</type>
+            <def>default</def>
+            <desc>
+                Selects the Dart (OS/2 driver) device to use.
+            </desc>
+        </setting>
+    </audio.dart>
+    
+    <audio.dsound>
+        <setting>
+            <name>device</name>
+            <type>str</type>
+            <def>default</def>
+            <desc>
+                Selects the DirectSound (Windows) device to use.
+            </desc>
+        </setting>
+    </audio.dsound>
+    
+    <audio.file>
+        <setting>
+            <name>endian</name>
+            <type>str</type>
+            <def>'auto' if libsndfile support is built in,<br />
+                 'cpu' otherwise.</def>
+            <vals>auto, big, cpu, little ('cpu' is all that is supported if libsndfile support is not built in)</vals>
+            <desc>
+                Defines the byte order when using the 'file' driver or file renderer to store audio to a file. 'auto' uses the default for the given file type, 'cpu' uses the CPU byte order, 'big' uses big endian byte order and 'little' uses little endian byte order.
+            </desc>
+        </setting>
+        <setting>
+            <name>format</name>
+            <type>str</type>
+            <def>s16</def>
+            <vals>double, float, s16, s24, s32, s8, u8 ('s16' is all that is supported if libsndfile support not built in)</vals>
+            <desc>
+                Defines the audio format when rendering audio to a file.
+                <ul>
+                    <li>'double' is 64 bit floating point,</li>
+                    <li>'float' is 32 bit floating point,</li>
+                    <li>'s16' is 16 bit signed PCM,</li>
+                    <li>'s24' is 24 bit signed PCM,</li>
+                    <li>'s32' is 32 bit signed PCM,</li>
+                    <li>'s8' is 8 bit signed PCM and</li>
+                    <li>'u8' is 8 bit unsigned PCM.</li>
+                </ul>
+            </desc>
+        </setting>
+        <setting>
+            <name>name</name>
+            <type>str</type>
+            <def>'fluidsynth.wav' if libsndfile support is built in,<br />
+                 'fluidsynth.raw' otherwise.</def>
+            <desc>
+                Specifies the file name to store the audio to, when rendering audio to a file.
+            </desc>
+        </setting>
+        <setting>
+            <name>type</name>
+            <type>str</type>
+            <def>'auto' if libsndfile support is built in,<br />
+                 'raw' otherwise.</def>
+            <vals>aiff, au, auto, avr, caf, flac, htk, iff, mat, oga, paf, pvf, raw, sd2, sds, sf, voc, w64, wav, xi (actual list of types may vary and depends on the libsndfile library used, 'raw' is the only type available if no libsndfile support is built in).</vals>
+            <desc>
+                Sets the file type of the file which the audio will be stored to. 'auto' attempts to determine the file type from the audio.file.name file extension and falls back to 'wav' if the extension doesn't match any types.
+            </desc>
+        </setting>
+    </audio.file>
+    
+    <audio.jack>
+        <setting>
+            <name>autoconnect</name>
+            <type>bool</type>
+            <def>0 (FALSE)</def>
+            <desc>
+                If 1 (TRUE), then FluidSynth output is automatically connected to jack system audio output.
+            </desc>
+        </setting>
+        <setting>
+            <name>id</name>
+            <type>str</type>
+            <def>fluidsynth</def>
+            <desc>
+                ID used when creating Jack client connection.
+            </desc>
+        </setting>
+        <setting>
+            <name>multi</name>
+            <type>bool</type>
+            <def>0 (FALSE)</def>
+            <desc>
+                If 1 (TRUE), then multi-channel Jack output will be enabled if synth.audio-channels is greater than 1.
+            </desc>
+        </setting>
+        <setting>
+            <name>server</name>
+            <type>str</type>
+            <def></def>
+            <desc>
+                Jack server to connect to. Defaults to an empty string, which uses default Jack server.
+            </desc>
+        </setting>
+    </audio.jack>
+    
+    <audio.oss>
+        <setting>
+            <name>device</name>
+            <type>str</type>
+            <def>/dev/dsp</def>
+            <desc>
+                Device to use for OSS audio output.
+            </desc>
+        </setting>
+    </audio.oss>
+    
+    <audio.portaudio>
+        <setting>
+            <name>device</name>
+            <type>str</type>
+            <def>PortAudio Default</def>
+            <desc>
+                Device to use for PortAudio driver output. Note that 'PortAudio Default' is a special value which outputs to the default PortAudio device.
+            </desc>
+        </setting>
+    </audio.portaudio>
+    
+    <audio.pulseaudio>
+        <setting>
+            <name>device</name>
+            <type>str</type>
+            <def>default</def>
+            <desc>
+                Device to use for PulseAudio driver output.
+            </desc>
+        </setting>
+        <setting>
+            <name>server</name>
+            <type>str</type>
+            <def>default</def>
+            <desc>
+                Server to use for PulseAudio driver output.
+            </desc>
+        </setting>
+    </audio.pulseaudio>
     
     <midi>
         <setting>
