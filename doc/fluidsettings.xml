@@ -3,56 +3,194 @@
 <fluidsettings>
     <synth>
         <setting>
-            <name>something</name>
+            <name>audio-channels</name>
             <type>int</type>
-            <def>10</def>
-            <vals>0-90</vals>
-            <desc>some very very very very very very very very very very very very very very long  very very very very very very very very very very very very very very very very very very very desc goes here</desc>
+            <def>1</def>
+            <min>1</min>
+            <max>128</max>
+            <desc>
+                By default, the synthesizer outputs a single stereo signal. Using this option, the synthesizer can output multichannel audio. Sets the number of stereo channel pairs. So 1 is actually 2 channels (a stereo pair).</desc>
         </setting>
         <setting>
-            <name>asdf</name>
-            <type>num</type>
-            <def>10</def>
-            <vals>[0;90]</vals>
-            <desc>some very very very very very very very very very very very very very very long  very very very very very very very very very very very very very very very very very very very desc goes here</desc>
+            <name>audio-groups</name>
+            <type>int</type>
+            <def>1</def>
+            <min>1</min>
+            <max>128</max>
+            <desc>
+                Normally the same value as synth.audio-channels. LADSPA effects subsystem can use this value though, in which case it may differ.</desc>
         </setting>
         <setting>
-            <name>qwer</name>
+            <name>chorus.active</name>
             <type>bool</type>
-            <def>10</def>
-            <vals>0-90</vals>
-            <desc>some very very very very very very very very very very very very very very long  very very very very very very very very very very very very very very very very very very very desc goes here</desc>
+            <def>1 (TRUE)</def>
+            <desc>
+                When set to 1 (TRUE) the chorus effects module is activated. Otherwise, no chorus will be added to the output signal. Note that the amount of signal sent to the chorus module depends on the "chorus send" generator defined in the SoundFont.</desc>
         </setting>
         <setting>
-            <name>ölkj</name>
+            <name>cpu-cores</name>
+            <type>int</type>
+            <def>1</def>
+            <min>1</min>
+            <max>256</max>
+            <desc>
+                (Experimental) Sets the number of synthesis CPU cores. If set to a value greater than 1, then additional synthesis threads will be created to take advantage of a multi CPU or CPU core system. This has the affect of utilizing more of the total CPU for voices or decreasing render times when synthesizing audio to a file.</desc>
+        </setting>
+        <setting>
+            <name>device-id</name>
+            <type>int</type>
+            <def>0</def>
+            <min>0</min>
+            <max>126</max>
+            <desc>
+                Device identifier used for SYSEX commands, such as MIDI Tuning Standard commands. Only those SYSEX commands destined for this ID or to all devices will be acted upon.</desc>
+        </setting>
+        <setting>
+            <name>ladspa.active</name>
+            <type>bool</type>
+            <def>0 (FALSE)</def>
+            <desc>
+                When set to "yes" the LADSPA subsystem will be enabled. This subsystem allows to load and interconnect LADSPA plug-ins. The output of the synthesizer is processed by the LADSPA subsystem. Note that the synthesizer has to be compiled with LADSPA support. More information about the LADSPA subsystem later.</desc>
+        </setting>
+        <setting>
+            <name>midi-channels</name>
+            <type>int</type>
+            <def>16</def>
+            <min>16</min>
+            <max>256</max>
+            <desc>
+                This setting defines the number of MIDI channels of the synthesizer. The MIDI standard defines 16 channels, so MIDI hardware is limited to this number. Internally FluidSynth can use more channels which can be mapped to different MIDI sources.</desc>
+        </setting>
+        <setting>
+            <name>midi-bank-select</name>
             <type>str</type>
-            <def>10</def>
-            <vals>"asdf", "jköl", "qwertz"</vals>
-            <desc>some very very very very very very very very very very very very very very long  very very very very very very very very very very very very very very very very very very very desc goes here</desc>
+            <def>gs</def>
+            <vals>gm, gs, xg, mma</vals>
+            <desc>
+                This setting defines how the synthesizer interprets Bank Select messages.
+                <ul>
+                    <li>gm: ignores CC0 and CC32 messages.</li>
+                    <li>gs: (default) CC0 becomes the bank number, CC32 is ignored.</li>
+                    <li>xg: CC32 becomes the bank number, CC0 is ignored.</li>
+                    <li>mma: bank is calculated as CC0*128+CC32.</li>
+                </ul>
+            </desc>
         </setting>
         <setting>
-            <name>oipu</name>
+            <name>min-note-length</name>
             <type>int</type>
             <def>10</def>
-            <vals>0-90</vals>
-            <desc>some very very very very very very very very very very very very very very long  very very very very very very very very very very very very very very very very very very very desc goes here</desc>
+            <min>0</min>
+            <max>65535</max>
+            <desc>
+                Sets the minimum note duration in milliseconds. This ensures that really short duration note events, such as percussion notes, have a better chance of sounding as intended. Set to 0 to disable this feature.</desc>
+        </setting>
+        <setting>
+            <name>parallel-render</name>
+            <type>bool</type>
+            <def>1 (TRUE)</def>
+            <desc>
+                This is the low-latency setting. If on, you're allowed to call fluid_synth_write_s16, fluid_synth_write_float,
+fluid_synth_nwrite_float or fluid_synth_process in parallel with the
+rest of the calls, and it won't be blocked by time intensive calls to
+the synth. Turn it off if throughput is more important than latency, e g
+in rendering-to-file scenarios where underruns is not an issue.
+<br /><br /><strong>Deprecated:</strong><br />As of 1.1.7 this option is deprecated. This option enforces thread safety for rvoice_mixer, which causes rvoice_events to be queued internally. The current implementation relies on the fact that this option is set to TRUE to correctly render any amount of requested audio. Also calling fluid_synth_write_* in parallel is not considered to be a use-case. It would cause undefined audio output, as it would be unpredictable for the user which rvoice_events specifically would be dispatched to which fluid_synth_write_* call.
+</desc>
+        </setting>
+        <setting>
+            <name>polyphony</name>
+            <type>int</type>
+            <def>256</def>
+            <min>1</min>
+            <max>65535</max>
+            <desc>
+                The polyphony defines how many voices can be played in parallel. A note event produces one or more voices. Its good to set this to a value which the system can handle and will thus limit FluidSynth's CPU usage. When FluidSynth runs out of voices it will begin terminating lower priority voices for new note events.</desc>
+        </setting>
+        <setting>
+            <name>reverb.active</name>
+            <type>bool</type>
+            <def>1 (TRUE)</def>
+            <desc>
+                When set to 1 (TRUE) the reverb effects module is activated. Otherwise, no reverb will be added to the output signal. Note that the amount of signal sent to the reverb module depends on the "reverb send" generator defined in the SoundFont.
+            </desc>
+        </setting>
+        <setting>
+            <name>sample-rate</name>
+            <type>num</type>
+            <def>44100.0</def>
+            <min>22050.0</min>
+            <max>96000.0</max>
+            <desc>
+                The sample rate of the audio generated by the synthesizer.
+            </desc>
+        </setting>
+        <setting>
+            <name>threadsafe-api</name>
+            <type>bool</type>
+            <def>1 (TRUE)</def>
+            <desc>
+                Controls whether the synth's public API is protected by a mutex or not. Default is on, turn it off for slightly better performance if you know you're only accessing the synth from one thread only, this could be the case in many embedded use cases for example. Note that libfluidsynth can use many threads by itself (shell is one, midi driver is one, midi player is one etc) so you should usually leave it on. Also see synth.parallel-render.
+            </desc>
+        </setting>
+        <setting>
+            <name>verbose</name>
+            <type>bool</type>
+            <def>0 (FALSE)</def>
+            <desc>
+                When set to 1 (TRUE) the synthesizer will print out information about the received MIDI events to the stdout. This can be helpful for debugging. This setting cannot be changed after the synthesizer has started.
+            </desc>
+        </setting>
+        <setting>
+            <name>volenv</name>
+            <type>str</type>
+            <def>emu</def>
+            <vals>compliant, emu</vals>
+            <desc>
+                Specifies the kind of volume envelope processing. This 
+    esp. influences the way fluidsynth responses to noteon velocity.
+    The default setting 'emu' causes the envelope to be highly
+    dynamic (i.e. compatible with the EMU10K1). Alternatively this
+    may be set to 'compliant' for a less dynamic envelope, as it was
+    done before fluidsynth 1.0.9. Note that this setting can only be
+    changed until the first synth has been created. Changing it
+    afterwards will have no effect for the rest of fluidsynths
+lifetime.
+            </desc>
+        </setting>
+        <setting>
+            <name>effects-channels</name>
+            <type>int</type>
+            <def>2</def>
+            <min>2</min>
+            <max>2</max>
+            <desc>Currently unused.</desc>
+        </setting>
+        <setting>
+            <name>gain</name>
+            <type>num</type>
+            <def>0.2</def>
+            <min>0.0</min>
+            <max>10.0</max>
+            <desc>The gain is applied to the final or master output of the synthesizer. It is set to a low value by default to avoid the saturation of the output when many notes are played.</desc>
         </setting>
     </synth>
+        
     
     <audio>
         <setting>
-            <name>channels</name>
-            <type>int</type>
-            <def>10</def>
-            <vals>0-90</vals>
-            <desc>some very very very very very very very very very very very very very very long  very very very very very very very very very very very very very very very very very very very desc goes here</desc>
-        </setting>
-        <setting>
-            <name>groups</name>
-            <type>int</type>
-            <def>10</def>
-            <vals>0-90</vals>
-            <desc>some very very very very very very very very very very very very very very long  very very very very very very very very very very very very very very very very very very very desc goes here</desc>
+            <name>driver</name>
+            <type>str</type>
+            <def>jack (Linux),<br />
+                  dsound (Windows),<br />
+                  sndman (MacOS9),<br />
+                  coreaudio (Mac OS X),<br />
+                  dart (OS/2)
+            </def>
+            <vals>jack, alsa, oss, pulseaudio, coreaudio, dsound, portaudio, sndman, dart, file</vals>
+            <desc>
+                The audio system to be used.
+            </desc>
         </setting>
     </audio>
     

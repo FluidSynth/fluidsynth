@@ -4,10 +4,30 @@
       <html>
          <head>
             <style>
-.int  {background-color: powderblue;}
-.bool {background-color: lime;}
-.num  {background-color: yellow;}
-.str  {background-color: red;}
+table
+{
+    border: 2px solid black;
+}
+            
+td
+{
+<!--      border-bottom: 2px solid black; -->
+<!--      border-top: 0px solid black; -->
+     padding-top: 20px;
+     padding-bottom: 20px;
+}
+
+.cell-type
+{
+    text-align: center;
+    white-space: nowrap;
+}
+.cell-def
+{
+    text-align: center;
+    white-space: nowrap;
+}
+.cell-vals { text-align: center; }
 
 .audio {background-color: rgb( 255, 190, 170 );}
 .midi {background-color: rgb( 200, 255, 240 );}
@@ -17,7 +37,7 @@
          </head>
          <body>
             <h2>FluidSettings</h2>
-            <table border="1">
+            <table>
                <tr bgcolor="#9acd32">
                   <th>Name</th>
                   <th>Type</th>
@@ -28,7 +48,7 @@
                
                <!--print each and every setting to its own row in the table-->
                <xsl:for-each select="fluidsettings/*/*">
-                  <xsl:sort select=".." />
+                  <xsl:sort select="name(..)" />
                   <xsl:sort select="name" />
                   <tr>
                      <!-- the class attribute of tr shall be the name of the settings group of the current setting -->
@@ -39,26 +59,35 @@
                      <td>
                         <xsl:value-of select="name(..)" />.<xsl:value-of select="name" />
                      </td>
+                    
+                     <td class="cell-type">
+                        <xsl:value-of select="type" />
+                     </td>
+                        
+                     <td class="cell-def">
+                        <xsl:copy-of select="def" />
+                     </td>
+                     
+                     <td class="cell-vals">
                      <xsl:choose>
-                        <xsl:when test="type = 'Integer'">
-                           <td style="text-align:center">
-                              <xsl:value-of select="type" />
-                           </td>
+                        <xsl:when test="type = 'str'">
+                              <xsl:value-of select="vals" />
+                        </xsl:when>
+                        <xsl:when test="type = 'bool'">
+                              
                         </xsl:when>
                         <xsl:otherwise>
-                           <td style="text-align:center">
-                              <xsl:value-of select="type" />
-                           </td>
+                              [
+                              <xsl:value-of select="min" />
+                              ;
+                              <xsl:value-of select="max" />
+                              ]
                         </xsl:otherwise>
                      </xsl:choose>
-                     <td style="text-align:center">
-                        <xsl:value-of select="def" />
                      </td>
-                     <td style="text-align:center">
-                        <xsl:value-of select="vals" />
-                     </td>
-                     <td>
-                        <xsl:value-of select="desc" />
+                     
+                     <td class="cell-desc">
+                        <xsl:copy-of select="desc" />
                      </td>
                   </tr>
                </xsl:for-each>
