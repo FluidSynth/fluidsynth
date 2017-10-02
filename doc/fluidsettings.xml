@@ -434,6 +434,54 @@ lifetime.
         </setting>
     </midi>
     
+    <midi.alsa>
+        <setting>
+            <name>device</name>
+            <type>str</type>
+            <def>default</def>
+            <desc>ALSA MIDI device to use for RAW ALSA MIDI driver.</desc>
+        </setting>
+    </midi.alsa>
+    
+    <midi.alsa_seq>
+        <setting>
+            <name>device</name>
+            <type>str</type>
+            <def>default</def>
+            <desc>ALSA sequencer device to use for ALSA sequencer driver.</desc>
+        </setting>
+        <setting>
+            <name>id</name>
+            <type>str</type>
+            <def>pid</def>
+            <desc>ID to use when registering ports with the ALSA sequencer driver. If set to "pid" then the ID will be "FLUID Synth (PID)", where PID is the FluidSynth process ID of the audio thread otherwise the provided string will be used in place of PID.</desc>
+        </setting>
+    </midi.alsa_seq>
+    
+    <midi.jack>
+        <setting>
+            <name>server</name>
+            <type>str</type>
+            <def></def>
+            <desc>Jack server to connect to for Jack MIDI driver. If an empty string then the default server will be used.</desc>
+        </setting>
+        <setting>
+            <name>id</name>
+            <type>str</type>
+            <def>fluidsynth-midi</def>
+            <desc>Client ID to use with the Jack MIDI driver.</desc>
+        </setting>
+    </midi.jack>
+    
+    <midi.oss>
+        <setting>
+            <name>device</name>
+            <type>str</type>
+            <def>/dev/midi</def>
+            <desc>Device to use for OSS MIDI driver.</desc>
+        </setting>
+    </midi.oss>
+    
     <player>
         <setting>
             <name>reset-synth</name>
