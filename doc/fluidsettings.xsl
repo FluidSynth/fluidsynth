@@ -22,18 +22,26 @@ td
 {
     text-align: center;
     white-space: nowrap;
+    border-top: 2px solid black;
 }
 .cell-def
 {
     text-align: center;
     white-space: nowrap;
+    border-top: 2px solid black;
 }
-.cell-vals { text-align: center; }
+.cell-vals
+{
+    text-align: center;
+    border-top: 2px solid black;
+}
+.cell-name { border-top: 2px solid black; }
 
-.audio {background-color: rgb( 255, 190, 170 );}
-.midi {background-color: rgb( 200, 255, 240 );}
-.player {background-color: rgb( 255, 255, 180 );}
-.synth {background-color: rgb( 190, 255, 170 );}
+.audio {background-color: hsl(0, 100%, 90%);}
+.midi {background-color: hsl(165, 100%, 85%);}
+.player {background-color: hsl(60, 100%, 80%);}
+.shell {background-color: hsl(36, 100%, 85%);}
+.synth {background-color: hsl(105, 100%, 85%);}
             </style>
          </head>
          <body>
@@ -44,7 +52,7 @@ td
                   <th>Type</th>
                   <th>Default Value</th>
                   <th>Allowed Values</th>
-                  <th>Description</th>
+<!--                   <th>Description</th> -->
                </tr>
                
                <!--print each and every setting to its own row in the table-->
@@ -57,7 +65,7 @@ td
                         <xsl:value-of select="name(..)" />
                      </xsl:attribute>
                      
-                     <td>
+                     <td class="cell-name">
                         <xsl:value-of select="name(..)" />.<xsl:value-of select="name" />
                      </td>
                     
@@ -86,8 +94,12 @@ td
                         </xsl:otherwise>
                      </xsl:choose>
                      </td>
-                     
-                     <td class="cell-desc">
+                   </tr>
+                   <tr>
+                     <xsl:attribute name="class">
+                        <xsl:value-of select="name(..)" />
+                     </xsl:attribute>
+                     <td class="cell-desc" colspan="4">
                         <xsl:copy-of select="desc" />
                      </td>
                   </tr>
