@@ -410,18 +410,27 @@ lifetime.
     
     <midi>
         <setting>
-            <name>channels</name>
-            <type>int</type>
-            <def>10</def>
-            <vals>0-90</vals>
-            <desc>some very very very very very very very very very very very very very very long  very very very very very very very very very very very very very very very very very very very desc goes here</desc>
+            <name>driver</name>
+            <type>str</type>
+            <def>alsa_seq (Linux),<br />
+                 winmidi (Windows),<br />
+                 jack (Mac OS X)</def>
+            <vals>alsa_raw, alsa_seq, coremidi, jack, midishare, oss, winmidi</vals>
+            <desc>The MIDI system to be used.</desc>
         </setting>
         <setting>
-            <name>sample-timer</name>
+            <name>realtime-prio</name>
             <type>int</type>
-            <def>10</def>
-            <vals>0-90</vals>
-            <desc>some very very very very very very very very very very very very very very long  very very very very very very very very very very very very very very very very very very very desc goes here</desc>
+            <def>50</def>
+            <min>0</min>
+            <max>99</max>
+            <desc>Sets the realtime scheduling priority of the MIDI thread (0 disables high priority scheduling). Linux is the only platform which currently makes use of different priority levels. Drivers which use this option: alsa_raw, alsa_seq, oss</desc>
+        </setting>
+        <setting>
+            <name>portname</name>
+            <type>str</type>
+            <def></def>
+            <desc>Used by coremidi and alsa_seq drivers for the portnames registered with the MIDI subsystem.</desc>
         </setting>
     </midi>
     
@@ -429,10 +438,33 @@ lifetime.
         <setting>
             <name>reset-synth</name>
             <type>bool</type>
-            <def>10</def>
-            <vals>0-90</vals>
-            <desc>some very very very very very very very very very very very very very very long  very very very very very very very very very very very very very very very very very very very desc goes here</desc>
+            <def>1 (TRUE)</def>
+            <desc>If true, reset the synth before starting a new MIDI song, so the state of a previous song can't affect the new song. Turn it off for seamless looping of a song.</desc>
+        </setting>
+        <setting>
+            <name>timing-source</name>
+            <type>str</type>
+            <def>sample</def>
+            <vals>sample, system</vals>
+            <desc>Determines the timing source of the player sequencer. 'sample' uses the sample clock (how much audio has been output) to sequence events, in which case audio is synchronized with MIDI events. 'system' uses the system clock, audio and MIDI are not synchronized exactly.</desc>
         </setting>
     </player>
+    
+    <shell>
+        <setting>
+            <name>prompt</name>
+            <type>str</type>
+            <def>""</def>
+            <desc>In dump mode we set the prompt to "". The ui cannot easily handle lines, which don't end with cr. Changing the prompt cannot be done through a command, because the current shell does not handle empty arguments.</desc>
+        </setting>
+        <setting>
+            <name>port</name>
+            <type>num</type>
+            <def>9800</def>
+            <min>1</min>
+            <max>65535</max>
+            <desc>The shell can be used in a client/server mode. This setting controls what TCP/IP port the server uses.</desc>
+        </setting>
+    </shell>
 </fluidsettings>
 
