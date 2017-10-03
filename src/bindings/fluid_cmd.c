@@ -51,7 +51,7 @@ static int fluid_shell_run(fluid_shell_t* shell);
 static void fluid_shell_init(fluid_shell_t* shell,
                              fluid_settings_t* settings, fluid_cmd_handler_t* handler,
                              fluid_istream_t in, fluid_ostream_t out);
-static int fluid_handle_voice_count (fluid_synth_t *synth, int ac, char **av,
+static int fluid_handle_voice_count (fluid_cmd_handler_t* handler, int ac, char **av,
                                      fluid_ostream_t out);
 
 void fluid_shell_settings(fluid_settings_t* settings)
@@ -447,7 +447,7 @@ fluid_handle_pitch_bend(fluid_cmd_handler_t* handler, int ac, char** av, fluid_o
     fluid_ostream_printf(out, "pitch_bend: invalid argument\n");
     return -1;
   }
-  return fluid_synth_pitch_bend(synth, atoi(av[0]), atoi(av[1]));
+  return fluid_synth_pitch_bend(handler->synth, atoi(av[0]), atoi(av[1]));
 }
 
 int
@@ -465,7 +465,7 @@ fluid_handle_pitch_bend_range(fluid_cmd_handler_t* handler, int ac, char** av, f
   }
   channum = atoi(av[0]);
   value = atoi(av[1]);
-  fluid_channel_set_pitch_wheel_sensitivity(synth->channel[channum], value);
+  fluid_channel_set_pitch_wheel_sensitivity(handler->synth->channel[channum], value);
   return 0;
 }
 
@@ -574,7 +574,7 @@ fluid_handle_inst(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream
 int
 fluid_handle_channels(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out)
 {
-  fluid_synth_channel_info_t info;
+  fluid_preset_t* preset;
   int verbose = 0;
   int i;
 
@@ -1681,29 +1681,29 @@ int fluid_handle_router_begin(fluid_cmd_handler_t* handler, int ac, char** av, f
   CHECK_VALID_ROUTER (router, out);
 
   if (FLUID_STRCMP (av[0], "note") == 0)
-    router->cmd_rule_type = FLUID_MIDI_ROUTER_RULE_NOTE;
+    handler->cmd_rule_type = FLUID_MIDI_ROUTER_RULE_NOTE;
   else if (FLUID_STRCMP (av[0], "cc") == 0)
-    router->cmd_rule_type = FLUID_MIDI_ROUTER_RULE_CC;
+    handler->cmd_rule_type = FLUID_MIDI_ROUTER_RULE_CC;
   else if (FLUID_STRCMP (av[0], "prog") == 0)
-    router->cmd_rule_type = FLUID_MIDI_ROUTER_RULE_PROG_CHANGE;
+    handler->cmd_rule_type = FLUID_MIDI_ROUTER_RULE_PROG_CHANGE;
   else if (FLUID_STRCMP (av[0], "pbend") == 0)
-    router->cmd_rule_type = FLUID_MIDI_ROUTER_RULE_PITCH_BEND;
+    handler->cmd_rule_type = FLUID_MIDI_ROUTER_RULE_PITCH_BEND;
   else if (FLUID_STRCMP (av[0], "cpress") == 0)
-    router->cmd_rule_type = FLUID_MIDI_ROUTER_RULE_CHANNEL_PRESSURE;
+    handler->cmd_rule_type = FLUID_MIDI_ROUTER_RULE_CHANNEL_PRESSURE;
   else if (FLUID_STRCMP (av[0], "kpress") == 0)
-    router->cmd_rule_type = FLUID_MIDI_ROUTER_RULE_KEY_PRESSURE;
+    handler->cmd_rule_type = FLUID_MIDI_ROUTER_RULE_KEY_PRESSURE;
   else
   {
     fluid_ostream_printf (out, "router_begin requires [note|cc|prog|pbend|cpress|kpress]\n");
     return FLUID_FAILED;
   }
 
-  if (router->cmd_rule)
-    delete_fluid_midi_router_rule (router->cmd_rule);
+  if (handler->cmd_rule)
+    delete_fluid_midi_router_rule (handler->cmd_rule);
 
-  router->cmd_rule = new_fluid_midi_router_rule ();
+  handler->cmd_rule = new_fluid_midi_router_rule ();
 
-  if (!router->cmd_rule)
+  if (!handler->cmd_rule)
     return FLUID_FAILED;
 
   return FLUID_OK;
@@ -1721,17 +1721,17 @@ int fluid_handle_router_end(fluid_cmd_handler_t* handler, int ac, char** av, flu
 
   CHECK_VALID_ROUTER (router, out);
 
-  if (!router->cmd_rule)
+  if (!handler->cmd_rule)
   {
     fluid_ostream_printf (out, "No active router_begin command.\n");
     return FLUID_FAILED;
   }
 
   /* Add the rule */
-  if (fluid_midi_router_add_rule (router, router->cmd_rule, router->cmd_rule_type) != FLUID_OK)
-    delete_fluid_midi_router_rule (router->cmd_rule);   /* Free on failure */
+  if (fluid_midi_router_add_rule (router, handler->cmd_rule, handler->cmd_rule_type) != FLUID_OK)
+    delete_fluid_midi_router_rule (handler->cmd_rule);   /* Free on failure */
 
-  router->cmd_rule = NULL;
+  handler->cmd_rule = NULL;
 
   return FLUID_OK;
 }
@@ -1748,13 +1748,13 @@ int fluid_handle_router_chan(fluid_cmd_handler_t* handler, int ac, char** av, fl
 
   CHECK_VALID_ROUTER (router, out);
 
-  if (!router->cmd_rule)
+  if (!handler->cmd_rule)
   {
     fluid_ostream_printf (out, "No active router_begin command.\n");
     return FLUID_FAILED;
   }
 
-  fluid_midi_router_rule_set_chan (router->cmd_rule, atoi (av[0]), atoi (av[1]),
+  fluid_midi_router_rule_set_chan (handler->cmd_rule, atoi (av[0]), atoi (av[1]),
                                    atof (av[2]), atoi (av[3]));
   return FLUID_OK;
 }
@@ -1771,13 +1771,13 @@ int fluid_handle_router_par1(fluid_cmd_handler_t* handler, int ac, char** av, fl
 
   CHECK_VALID_ROUTER (router, out);
 
-  if (!router->cmd_rule)
+  if (!handler->cmd_rule)
   {
     fluid_ostream_printf (out, "No active router_begin command.\n");
     return FLUID_FAILED;
   }
 
-  fluid_midi_router_rule_set_param1 (router->cmd_rule, atoi (av[0]), atoi (av[1]),
+  fluid_midi_router_rule_set_param1 (handler->cmd_rule, atoi (av[0]), atoi (av[1]),
                                      atof (av[2]), atoi (av[3]));
   return FLUID_OK;
 }
@@ -1785,7 +1785,7 @@ int fluid_handle_router_par1(fluid_cmd_handler_t* handler, int ac, char** av, fl
 /* Command handler for "router_par2" command */
 int fluid_handle_router_par2(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out)
 {
-  fluid_midi_router_t* router = synth->midi_router;
+  fluid_midi_router_t* router = handler->router;
 
   if (ac != 4) {
     fluid_ostream_printf(out, "router_par2 needs four args: min, max, mul, add.");
@@ -1794,13 +1794,13 @@ int fluid_handle_router_par2(fluid_cmd_handler_t* handler, int ac, char** av, fl
 
   CHECK_VALID_ROUTER (router, out);
 
-  if (!router->cmd_rule)
+  if (!handler->cmd_rule)
   {
     fluid_ostream_printf (out, "No active router_begin command.\n");
     return FLUID_FAILED;
   }
 
-  fluid_midi_router_rule_set_param2 (router->cmd_rule, atoi (av[0]), atoi (av[1]),
+  fluid_midi_router_rule_set_param2 (handler->cmd_rule, atoi (av[0]), atoi (av[1]),
                                      atof (av[2]), atoi (av[3]));
   return FLUID_OK;
 }

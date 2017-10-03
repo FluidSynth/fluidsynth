@@ -42,10 +42,6 @@ struct _fluid_midi_router_t {
   void* event_handler_data;                  /* One arg for the callback */
 
   int nr_midi_channels;                      /* For clipping the midi channel */
-
-  /* FIXME - If there are multiple command handlers, they will conflict! */
-  fluid_midi_router_rule_t *cmd_rule;        /* Rule currently being processed by shell command handler */
-  int cmd_rule_type;                         /* Type of the rule (fluid_midi_router_rule_type) */
 };
 
 struct _fluid_midi_router_rule_t {
