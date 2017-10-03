@@ -180,11 +180,13 @@ enum fluid_chorus_mod {
    * If faulty parameters are given, all new settings are discarded.
    * Keep in mind, that the needed CPU time is proportional to 'nr'.
    */
-FLUIDSYNTH_API void fluid_synth_set_chorus_nr(fluid_synth_t* synth, int nr);
-FLUIDSYNTH_API void fluid_synth_set_chorus_level(fluid_synth_t* synth, double level);
-FLUIDSYNTH_API void fluid_synth_set_chorus_speed(fluid_synth_t* synth, double speed);
-FLUIDSYNTH_API void fluid_synth_set_chorus_depth(fluid_synth_t* synth, double depth_ms);
-FLUIDSYNTH_API void fluid_synth_set_chorus_type(fluid_synth_t* synth, int type);
+FLUIDSYNTH_API int fluid_synth_set_chorus(fluid_synth_t* synth, int nr, double level,
+					 double speed, double depth_ms, int type);
+FLUIDSYNTH_API int fluid_synth_set_chorus_nr(fluid_synth_t* synth, int nr);
+FLUIDSYNTH_API int fluid_synth_set_chorus_level(fluid_synth_t* synth, double level);
+FLUIDSYNTH_API int fluid_synth_set_chorus_speed(fluid_synth_t* synth, double speed);
+FLUIDSYNTH_API int fluid_synth_set_chorus_depth(fluid_synth_t* synth, double depth_ms);
+FLUIDSYNTH_API int fluid_synth_set_chorus_type(fluid_synth_t* synth, int type);
 
   /** Turn on (1) / off (0) the built-in chorus unit */
 FLUIDSYNTH_API void fluid_synth_set_chorus_on(fluid_synth_t* synth, int on);

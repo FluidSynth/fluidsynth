@@ -3909,11 +3909,9 @@ fluid_synth_set_reverb_full(fluid_synth_t* synth, int set, double roomsize,
                             double damping, double width, double level)
 {
   int ret;
-  
   fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
-
-  if (!(set & FLUID_REVMODEL_SET_ALL))
-    set = FLUID_REVMODEL_SET_ALL; 
+  /* if non of the flags is set, fail */
+  fluid_return_val_if_fail (set & FLUID_REVMODEL_SET_ALL, FLUID_FAILED);
 
   /* Synth shadow values are set here so that they will be returned if querried */
 
@@ -4030,13 +4028,58 @@ fluid_synth_set_chorus_on(fluid_synth_t* synth, int on)
  * @param depth_ms Chorus depth (max value depends on synth sample rate,
  *   0.0-21.0 is safe for sample rate values up to 96KHz)
  * @param type Chorus waveform type (#fluid_chorus_mod)
+ * @return FLUID_OK on success, FLUID_FAILED otherwise
  */
-void
-fluid_synth_set_chorus(fluid_synth_t* synth, int nr, double level,
+int fluid_synth_set_chorus(fluid_synth_t* synth, int nr, double level,
                        double speed, double depth_ms, int type)
 {
-  fluid_synth_set_chorus_full (synth, FLUID_CHORUS_SET_ALL, nr, level, speed,
+  return fluid_synth_set_chorus_full (synth, FLUID_CHORUS_SET_ALL, nr, level, speed,
                                depth_ms, type);
+}
+
+/**
+ * Set the chorus voice count. See fluid_synth_set_chorus() for further info.
+ * @return FLUID_OK on success, FLUID_FAILED otherwise
+ */
+int fluid_synth_set_chorus_nr(fluid_synth_t* synth, int nr)
+{
+  return fluid_synth_set_chorus_full (synth, FLUID_CHORUS_SET_NR, nr, 0, 0, 0, 0);
+}
+
+/**
+ * Set the chorus level. See fluid_synth_set_chorus() for further info.
+ * @return FLUID_OK on success, FLUID_FAILED otherwise
+ */
+int fluid_synth_set_chorus_level(fluid_synth_t* synth, double level)
+{
+  return fluid_synth_set_chorus_full (synth, FLUID_CHORUS_SET_LEVEL, 0, level, 0, 0, 0);
+}
+
+/**
+ * Set the chorus speed. See fluid_synth_set_chorus() for further info.
+ * @return FLUID_OK on success, FLUID_FAILED otherwise
+ */
+int fluid_synth_set_chorus_speed(fluid_synth_t* synth, double speed)
+{
+  return fluid_synth_set_chorus_full (synth, FLUID_CHORUS_SET_SPEED, 0, 0, speed, 0, 0);
+}
+
+/**
+ * Set the chorus depth. See fluid_synth_set_chorus() for further info.
+ * @return FLUID_OK on success, FLUID_FAILED otherwise
+ */
+int fluid_synth_set_chorus_depth(fluid_synth_t* synth, double depth_ms)
+{
+  return fluid_synth_set_chorus_full (synth, FLUID_CHORUS_SET_DEPTH, 0, 0, 0, depth_ms, 0);
+}
+
+/**
+ * Set the chorus type. See fluid_synth_set_chorus() for further info.
+ * @return FLUID_OK on success, FLUID_FAILED otherwise
+ */
+int fluid_synth_set_chorus_type(fluid_synth_t* synth, int type)
+{
+  return fluid_synth_set_chorus_full (synth, FLUID_CHORUS_SET_TYPE, 0, 0, 0, 0, type);
 }
 
 /**
@@ -4050,15 +4093,16 @@ fluid_synth_set_chorus(fluid_synth_t* synth, int nr, double level,
  * @param depth_ms Chorus depth (max value depends on synth sample rate,
  *   0.0-21.0 is safe for sample rate values up to 96KHz)
  * @param type Chorus waveform type (#fluid_chorus_mod)
+ * @return FLUID_OK on success, FLUID_FAILED otherwise
  */
 int
 fluid_synth_set_chorus_full(fluid_synth_t* synth, int set, int nr, double level,
                             double speed, double depth_ms, int type)
 {
+  int ret;
   fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
-
-  if (!(set & FLUID_CHORUS_SET_ALL))
-    set = FLUID_CHORUS_SET_ALL;
+  /* if non of the flags is set, fail */
+  fluid_return_val_if_fail (set & FLUID_CHORUS_SET_ALL, FLUID_FAILED);
 
   /* Synth shadow values are set here so that they will be returned if queried */
   fluid_synth_api_enter(synth);
@@ -4078,12 +4122,12 @@ fluid_synth_set_chorus_full(fluid_synth_t* synth, int set, int nr, double level,
   if (set & FLUID_CHORUS_SET_TYPE)
     fluid_atomic_int_set (&synth->chorus_type, type);
   
-  fluid_rvoice_eventhandler_push5(synth->eventhandler, 
+  ret = fluid_rvoice_eventhandler_push5(synth->eventhandler, 
 				  fluid_rvoice_mixer_set_chorus_params,
 				  synth->eventhandler->mixer, set,
 				  nr, level, speed, depth_ms, type);
 
-  FLUID_API_RETURN(FLUID_OK);
+  FLUID_API_RETURN(ret);
 }
 
 /**
