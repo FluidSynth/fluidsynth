@@ -146,10 +146,12 @@ FLUIDSYNTH_API int fluid_synth_get_bank_offset(fluid_synth_t* synth, int sfont_i
    */
 
   /** Set the parameters for the built-in reverb unit */
-FLUIDSYNTH_API void fluid_synth_set_reverb_roomsize(fluid_synth_t* synth, double roomsize);
-FLUIDSYNTH_API void fluid_synth_set_reverb_damp(fluid_synth_t* synth, double damping);
-FLUIDSYNTH_API void fluid_synth_set_reverb_width(fluid_synth_t* synth, double width);
-FLUIDSYNTH_API void fluid_synth_set_reverb_level(fluid_synth_t* synth, double level);
+FLUIDSYNTH_API int fluid_synth_set_reverb(fluid_synth_t* synth, double roomsize, 
+					 double damping, double width, double level);
+FLUIDSYNTH_API int fluid_synth_set_reverb_roomsize(fluid_synth_t* synth, double roomsize);
+FLUIDSYNTH_API int fluid_synth_set_reverb_damp(fluid_synth_t* synth, double damping);
+FLUIDSYNTH_API int fluid_synth_set_reverb_width(fluid_synth_t* synth, double width);
+FLUIDSYNTH_API int fluid_synth_set_reverb_level(fluid_synth_t* synth, double level);
 
   /** Turn on (1) / off (0) the built-in reverb unit */
 FLUIDSYNTH_API void fluid_synth_set_reverb_on(fluid_synth_t* synth, int on);

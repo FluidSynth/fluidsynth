@@ -3842,16 +3842,53 @@ fluid_synth_set_reverb_preset(fluid_synth_t* synth, int num)
  * @param damping Reverb damping value (0.0-1.0)
  * @param width Reverb width value (0.0-100.0)
  * @param level Reverb level value (0.0-1.0)
+ * @return FLUID_OK on success, FLUID_FAILED otherwise
  *
  * @note Not realtime safe and therefore should not be called from synthesis
  * context at the risk of stalling audio output.
  */
-void
+int
 fluid_synth_set_reverb(fluid_synth_t* synth, double roomsize, double damping,
                        double width, double level)
 {
-  fluid_synth_set_reverb_full (synth, FLUID_REVMODEL_SET_ALL,
+    return fluid_synth_set_reverb_full (synth, FLUID_REVMODEL_SET_ALL,
                                roomsize, damping, width, level);
+}
+
+/**
+ * Set reverb roomsize. See fluid_synth_set_reverb() for further info.
+ * @return FLUID_OK on success, FLUID_FAILED otherwise
+ */
+int fluid_synth_set_reverb_roomsize(fluid_synth_t* synth, double roomsize)
+{
+    return fluid_synth_set_reverb_full(synth, FLUID_REVMODEL_SET_ROOMSIZE, roomsize, 0, 0, 0);
+}
+
+/**
+ * Set reverb damping. See fluid_synth_set_reverb() for further info.
+ * @return FLUID_OK on success, FLUID_FAILED otherwise
+ */
+int fluid_synth_set_reverb_damp(fluid_synth_t* synth, double damping)
+{
+    return fluid_synth_set_reverb_full(synth, FLUID_REVMODEL_SET_DAMPING, 0, damping, 0, 0);
+}
+
+/**
+ * Set reverb width. See fluid_synth_set_reverb() for further info.
+ * @return FLUID_OK on success, FLUID_FAILED otherwise
+ */
+int fluid_synth_set_reverb_width(fluid_synth_t* synth, double width)
+{
+    return fluid_synth_set_reverb_full(synth, FLUID_REVMODEL_SET_WIDTH, 0, 0, width, 0);
+}
+
+/**
+ * Set reverb level. See fluid_synth_set_reverb() for further info.
+ * @return FLUID_OK on success, FLUID_FAILED otherwise
+ */
+int fluid_synth_set_reverb_level(fluid_synth_t* synth, double level)
+{
+    return fluid_synth_set_reverb_full(synth, FLUID_REVMODEL_SET_LEVEL, 0, 0, 0, level);
 }
 
 /**
@@ -3871,6 +3908,8 @@ int
 fluid_synth_set_reverb_full(fluid_synth_t* synth, int set, double roomsize,
                             double damping, double width, double level)
 {
+  int ret;
+  
   fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
 
   if (!(set & FLUID_REVMODEL_SET_ALL))
@@ -3892,12 +3931,13 @@ fluid_synth_set_reverb_full(fluid_synth_t* synth, int set, double roomsize,
   if (set & FLUID_REVMODEL_SET_LEVEL)
     fluid_atomic_float_set (&synth->reverb_level, level);
 
-  fluid_rvoice_eventhandler_push5(synth->eventhandler, 
+  /* finally enqueue an rvoice event to the mixer to actual update reverb */
+  ret = fluid_rvoice_eventhandler_push5(synth->eventhandler,
 				  fluid_rvoice_mixer_set_reverb_params, 
 				  synth->eventhandler->mixer, set, 
 				  roomsize, damping, width, level, 0.0f);
   
-  FLUID_API_RETURN(FLUID_OK);
+  FLUID_API_RETURN(ret);
 }
 
 /**
