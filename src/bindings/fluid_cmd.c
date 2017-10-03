@@ -1628,184 +1628,182 @@ fluid_handle_help(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream
   return 0;
 }
 
-int fluid_handle_router_clear(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out)
-{
-  fluid_midi_router_t* router=handler->router;
-
-  if (ac != 0) {
-    fluid_ostream_printf(out, "router_clear needs no arguments.\n");
-    goto error_recovery;
+#define CHECK_VALID_ROUTER(_router, _out)                                                \
+  if (router == NULL) {                                                                  \
+    fluid_ostream_printf(out, "cannot execute router command without a midi router.\n"); \
+    return FLUID_FAILED;                                                                 \
   }
 
-  /* Disable rules and mark for destruction */
-  fluid_midi_router_disable_all_rules(router);
+/* Command handler for "router_clear" command */
+int fluid_handle_router_clear(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out)
+{
+  fluid_midi_router_t *router = handler->router;
 
-  /* Free unused rules */
-  fluid_midi_router_free_unused_rules(router);
+  if (ac != 0) {
+    fluid_ostream_printf (out, "router_clear needs no arguments.\n");
+    return FLUID_FAILED;
+  }
 
-  return 0;
- error_recovery:
-  return -1;
-};
+  CHECK_VALID_ROUTER (router, out);
 
+  fluid_midi_router_clear_rules (router);
+
+  return FLUID_OK;
+}
+
+/* Command handler for "router_default" command */
 int fluid_handle_router_default(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out)
 {
-  fluid_midi_router_t* router=handler->router;
+  fluid_midi_router_t *router = handler->router;
 
   if (ac != 0) {
     fluid_ostream_printf(out, "router_default needs no arguments.\n");
-    return -1;
+    return FLUID_FAILED;
   }
 
-  /* Disable rules and mark for destruction */
-  fluid_midi_router_disable_all_rules(router);
+  CHECK_VALID_ROUTER (router, out);
 
-  /* Create default rules */
-  if (fluid_midi_router_create_default_rules(router) != FLUID_OK){
-    FLUID_LOG(FLUID_ERR, "create_default_rules failed");
-    goto error_recovery;
-  };
+  fluid_midi_router_set_default_rules (router);
 
-  /* Free unused rules */
-  fluid_midi_router_free_unused_rules(router);
+  return FLUID_OK;
+}
 
-  return 0;
- error_recovery:
-  return -1;
-};
-
+/* Command handler for "router_begin" command */
 int fluid_handle_router_begin(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out)
 {
-  fluid_midi_router_t* router=handler->router;
-  fluid_midi_router_rule_t** dest=NULL;
+  fluid_midi_router_t* router = handler->router;
 
   if (ac != 1) {
-    fluid_ostream_printf(out, "router_begin needs no arguments.\n");
-      goto error_recovery;
+    fluid_ostream_printf (out, "router_begin requires [note|cc|prog|pbend|cpress|kpress]\n");
+    return FLUID_FAILED;
   }
 
-  if (FLUID_STRCMP(av[0],"note") == 0){
-    dest=& router->note_rules;
-  } else if (FLUID_STRCMP(av[0],"cc") == 0){
-    dest=& router->cc_rules;
-  } else if (FLUID_STRCMP(av[0],"prog") == 0){
-    dest=& router->progchange_rules;
-  } else if (FLUID_STRCMP(av[0],"pbend") == 0){
-    dest=& router->pitchbend_rules;
-  } else if (FLUID_STRCMP(av[0],"cpress") == 0){
-    dest=& router->channel_pressure_rules;
-  } else if (FLUID_STRCMP(av[0],"kpress") == 0){
-    dest=& router->key_pressure_rules;
-  };
+  CHECK_VALID_ROUTER (router, out);
 
-  if (dest == NULL){
-      fluid_ostream_printf(out, "router_begin args: note, cc, prog, pbend, cpress, kpress\n");
-      goto error_recovery;
-  };
+  if (FLUID_STRCMP (av[0], "note") == 0)
+    router->cmd_rule_type = FLUID_MIDI_ROUTER_RULE_NOTE;
+  else if (FLUID_STRCMP (av[0], "cc") == 0)
+    router->cmd_rule_type = FLUID_MIDI_ROUTER_RULE_CC;
+  else if (FLUID_STRCMP (av[0], "prog") == 0)
+    router->cmd_rule_type = FLUID_MIDI_ROUTER_RULE_PROG_CHANGE;
+  else if (FLUID_STRCMP (av[0], "pbend") == 0)
+    router->cmd_rule_type = FLUID_MIDI_ROUTER_RULE_PITCH_BEND;
+  else if (FLUID_STRCMP (av[0], "cpress") == 0)
+    router->cmd_rule_type = FLUID_MIDI_ROUTER_RULE_CHANNEL_PRESSURE;
+  else if (FLUID_STRCMP (av[0], "kpress") == 0)
+    router->cmd_rule_type = FLUID_MIDI_ROUTER_RULE_KEY_PRESSURE;
+  else
+  {
+    fluid_ostream_printf (out, "router_begin requires [note|cc|prog|pbend|cpress|kpress]\n");
+    return FLUID_FAILED;
+  }
 
-  if (fluid_midi_router_begin(router, dest) != FLUID_OK){
-    goto error_recovery;
-  };
+  if (router->cmd_rule)
+    delete_fluid_midi_router_rule (router->cmd_rule);
 
-  /* Free unused rules (give it a try) */
-  fluid_midi_router_free_unused_rules(router);
+  router->cmd_rule = new_fluid_midi_router_rule ();
 
-  return 0;
+  if (!router->cmd_rule)
+    return FLUID_FAILED;
 
- error_recovery:
-  return -1;
-};
+  return FLUID_OK;
+}
 
+/* Command handler for "router_end" command */
 int fluid_handle_router_end(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out)
 {
-  fluid_midi_router_t* router=handler->router;
+  fluid_midi_router_t* router = handler->router;
 
   if (ac != 0) {
-    fluid_ostream_printf(out, "router_end needs no arguments.");
-    goto error_recovery;
+    fluid_ostream_printf (out, "router_end needs no arguments.\n");
+    return FLUID_FAILED;
   }
 
-  if (fluid_midi_router_end(router) != FLUID_OK){
-    FLUID_LOG(FLUID_ERR, "midi_router_end failed");
-    goto error_recovery;
-  };
+  CHECK_VALID_ROUTER (router, out);
 
-  /* Free unused rules (give it a try) */
-  fluid_midi_router_free_unused_rules(router);
+  if (!router->cmd_rule)
+  {
+    fluid_ostream_printf (out, "No active router_begin command.\n");
+    return FLUID_FAILED;
+  }
 
-  return 0;
+  /* Add the rule */
+  if (fluid_midi_router_add_rule (router, router->cmd_rule, router->cmd_rule_type) != FLUID_OK)
+    delete_fluid_midi_router_rule (router->cmd_rule);   /* Free on failure */
 
- error_recovery:
-  return -1;
-};
+  router->cmd_rule = NULL;
 
+  return FLUID_OK;
+}
+
+/* Command handler for "router_chan" command */
 int fluid_handle_router_chan(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out)
 {
-  fluid_midi_router_t* router=handler->router;
+  fluid_midi_router_t* router = handler->router;
 
   if (ac != 4) {
     fluid_ostream_printf(out, "router_chan needs four args: min, max, mul, add.");
-    goto error_recovery;
+    return FLUID_FAILED;
   }
 
-  router->new_rule_chan_min=atoi(av[0]);
-  router->new_rule_chan_max=atoi(av[1]);
-  router->new_rule_chan_mul=atoi(av[2]);
-  router->new_rule_chan_add=atoi(av[3]);
+  CHECK_VALID_ROUTER (router, out);
 
-  /* Free unused rules (give it a try) */
-  fluid_midi_router_free_unused_rules(router);
+  if (!router->cmd_rule)
+  {
+    fluid_ostream_printf (out, "No active router_begin command.\n");
+    return FLUID_FAILED;
+  }
 
-  return 0;
+  fluid_midi_router_rule_set_chan (router->cmd_rule, atoi (av[0]), atoi (av[1]),
+                                   atof (av[2]), atoi (av[3]));
+  return FLUID_OK;
+}
 
- error_recovery:
-  return -1;
-};
-
+/* Command handler for "router_par1" command */
 int fluid_handle_router_par1(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out)
 {
-  fluid_midi_router_t* router=handler->router;
+  fluid_midi_router_t* router = handler->router;
 
   if (ac != 4) {
     fluid_ostream_printf(out, "router_par1 needs four args: min, max, mul, add.");
-    goto error_recovery;
+    return FLUID_FAILED;
   }
 
-  router->new_rule_par1_min=atoi(av[0]);
-  router->new_rule_par1_max=atoi(av[1]);
-  router->new_rule_par1_mul=atoi(av[2]);
-  router->new_rule_par1_add=atoi(av[3]);
+  CHECK_VALID_ROUTER (router, out);
 
-  /* Free unused rules (give it a try) */
-  fluid_midi_router_free_unused_rules(router);
+  if (!router->cmd_rule)
+  {
+    fluid_ostream_printf (out, "No active router_begin command.\n");
+    return FLUID_FAILED;
+  }
 
-  return 0;
+  fluid_midi_router_rule_set_param1 (router->cmd_rule, atoi (av[0]), atoi (av[1]),
+                                     atof (av[2]), atoi (av[3]));
+  return FLUID_OK;
+}
 
- error_recovery:
-  return -1;
-};
-
+/* Command handler for "router_par2" command */
 int fluid_handle_router_par2(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out)
 {
-  fluid_midi_router_t* router=handler->router;
+  fluid_midi_router_t* router = synth->midi_router;
 
   if (ac != 4) {
     fluid_ostream_printf(out, "router_par2 needs four args: min, max, mul, add.");
-    goto error_recovery;
+    return FLUID_FAILED;
   }
 
-  router->new_rule_par2_min=atoi(av[0]);
-  router->new_rule_par2_max=atoi(av[1]);
-  router->new_rule_par2_mul=atoi(av[2]);
-  router->new_rule_par2_add=atoi(av[3]);
+  CHECK_VALID_ROUTER (router, out);
 
-  /* Free unused rules (give it a try) */
-  fluid_midi_router_free_unused_rules(router);
-  return 0;
+  if (!router->cmd_rule)
+  {
+    fluid_ostream_printf (out, "No active router_begin command.\n");
+    return FLUID_FAILED;
+  }
 
- error_recovery:
-  return -1;
-};
+  fluid_midi_router_rule_set_param2 (router->cmd_rule, atoi (av[0]), atoi (av[1]),
+                                     atof (av[2]), atoi (av[3]));
+  return FLUID_OK;
+}
 
 int
 fluid_is_number(char* a)
