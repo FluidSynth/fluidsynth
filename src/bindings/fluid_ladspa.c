@@ -92,7 +92,7 @@ void fluid_LADSPA_CreateSystemNodes(fluid_LADSPA_FxUnit_t* FxUnit){
   };
 
   /* Create output nodes (usually towards the sound card) */
-  for (i=0; i < nr_input_nodes; i++){
+  for (i=0; i < nr_output_nodes; i++){
       sprintf(str, "out%i_L",(i+1));
       fluid_LADSPA_CreateNode(FxUnit, str, fluid_LADSPA_node_is_audio | fluid_LADSPA_node_is_sink);
       sprintf(str, "out%i_R",(i+1));
