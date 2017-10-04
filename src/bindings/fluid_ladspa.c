@@ -858,8 +858,8 @@ fluid_LADSPA_CreateNode(fluid_LADSPA_FxUnit_t* FxUnit, char * Name, int flags){
     printf( "***Error026***\n"
 	    "The node name %s starts with a digit / minus sign!\n"
 	    "Please use a letter to start a node name.\n"
-	    "A constant node is created by using `#' as first character,\n"
-	    "for example #-2.5.\n",
+	    "A constant node is created by using `$' as first character,\n"
+	    "for example $-2.5.\n",
 	    Name);
     fluid_LADSPA_clear(FxUnit);
     return NULL;
@@ -889,8 +889,8 @@ fluid_LADSPA_CreateNode(fluid_LADSPA_FxUnit_t* FxUnit, char * Name, int flags){
   NewNode->OutCount=0;
   NewNode->flags=flags;
 
-  /* A nodename starting with "#" means that the node holds a constant value. */
-  if (NewNode->Name[0] == '#'){
+  /* A nodename starting with "$" means that the node holds a constant value. */
+  if (NewNode->Name[0] == '$'){
     assert(flags & fluid_LADSPA_node_is_control);
     /* Skip the first character => +1 */
     NewNode->buf[0]=(LADSPA_Data)atof(NewNode->Name+1);
