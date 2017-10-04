@@ -40,9 +40,13 @@
 #define L(x);
 
 fluid_LADSPA_FxUnit_t* new_fluid_LADSPA_FxUnit(fluid_synth_t* synth){
+  if(synth == NULL)
+    return NULL;
+
   fluid_LADSPA_FxUnit_t* FxUnit=FLUID_NEW(fluid_LADSPA_FxUnit_t);
-  assert(FxUnit);
-  assert(synth);
+  if(FxUnit == NULL)
+    return NULL;
+
   /* The default state is 'bypassed'. The Fx unit has to be turned on explicitly by the user. */
   /* Those settings have to be done in order to allow fluid_LADSPA_clean. */
   FxUnit->Bypass=fluid_LADSPA_Bypassed;
@@ -221,7 +225,11 @@ fluid_LADSPA_handle_start(fluid_synth_t* synth, int ac, char** av, fluid_ostream
 
   L(fluid_ostream_printf(out,"ladspa_start: starting..."));
   assert(synth);
-  FxUnit=synth->LADSPA_FxUnit; assert(FxUnit);
+  FxUnit=synth->LADSPA_FxUnit;
+  if (!FxUnit) {
+    fluid_ostream_printf(out, "ladspa not active!\n");
+    return FLUID_FAILED;
+  }
 
   /* When calling fluid_ladspastart, the Fx unit must be 'cleared' (no plugins, no libs, no nodes). Verify this here. */
   if (FxUnit->NumberPlugins || FxUnit->NumberLibs){
@@ -990,7 +998,11 @@ int fluid_LADSPA_handle_add(fluid_synth_t* synth, int ac, char** av, fluid_ostre
   char ** CommandLine;
   fluid_LADSPA_FxUnit_t* FxUnit;
   assert(synth);
-  FxUnit=synth->LADSPA_FxUnit; assert(FxUnit);
+  FxUnit=synth->LADSPA_FxUnit;
+  if (!FxUnit) {
+    fluid_ostream_printf(out, "ladspa not active!\n");
+    return FLUID_FAILED;
+  }
   if (ac>=FLUID_LADSPA_MaxTokens){
     /* Can't be tested. fluidsynth limits the number of tokens. */
     printf("***Error001***\n"
@@ -1036,7 +1048,11 @@ int fluid_LADSPA_handle_declnode(fluid_synth_t* synth, int ac, char** av, fluid_
   fluid_real_t NodeValue;
   fluid_LADSPA_FxUnit_t* FxUnit;
   assert(synth);
-  FxUnit=synth->LADSPA_FxUnit; assert(FxUnit);
+  FxUnit=synth->LADSPA_FxUnit;
+  if (!FxUnit) {
+    fluid_ostream_printf(out, "ladspa not active!\n");
+    return FLUID_FAILED;
+  }
 
   if (ac<2){
     printf("***Error028***\n"
@@ -1067,7 +1083,11 @@ int fluid_LADSPA_handle_setnode(fluid_synth_t* synth, int ac, char** av, fluid_o
   fluid_LADSPA_FxUnit_t* FxUnit;
   fluid_LADSPA_Node_t* CurrentNode;
   assert(synth);
-  FxUnit=synth->LADSPA_FxUnit; assert(FxUnit);
+  FxUnit=synth->LADSPA_FxUnit;
+  if (!FxUnit) {
+    fluid_ostream_printf(out, "ladspa not active!\n");
+    return FLUID_FAILED;
+  }
 
   if (ac!=2){
     printf("***Error029***\n"
@@ -1102,7 +1122,11 @@ int fluid_LADSPA_handle_setnode(fluid_synth_t* synth, int ac, char** av, fluid_o
 int fluid_LADSPA_handle_clear(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out){
   fluid_LADSPA_FxUnit_t* FxUnit;
   assert(synth);
-  FxUnit=synth->LADSPA_FxUnit; assert(FxUnit);
+  FxUnit=synth->LADSPA_FxUnit;
+  if (!FxUnit) {
+    fluid_ostream_printf(out, "ladspa not active!\n");
+    return FLUID_FAILED;
+  }
   fluid_LADSPA_clear(FxUnit);
   return(FLUID_OK);
 };
