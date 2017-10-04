@@ -4954,23 +4954,6 @@ fluid_synth_get_gen(fluid_synth_t* synth, int chan, int param)
 }
 
 /**
- * Assign a MIDI router to a synth.
- * @param synth FluidSynth instance
- * @param router MIDI router to assign to the synth
- *
- * @note This should only be done once and prior to using the synth.
- */
-void
-fluid_synth_set_midi_router(fluid_synth_t* synth, fluid_midi_router_t* router)
-{
-  fluid_return_if_fail (synth != NULL);
-  fluid_synth_api_enter(synth);
-
-  synth->midi_router = router;
-  fluid_synth_api_exit(synth);
-};
-
-/**
  * Handle MIDI event from MIDI router, used as a callback function.
  * @param data FluidSynth instance
  * @param event MIDI event to handle
