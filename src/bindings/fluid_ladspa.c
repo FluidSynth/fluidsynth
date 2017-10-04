@@ -40,9 +40,13 @@
 #define L(x);
 
 fluid_LADSPA_FxUnit_t* new_fluid_LADSPA_FxUnit(fluid_synth_t* synth){
+  if(synth == NULL)
+    return NULL;
+
   fluid_LADSPA_FxUnit_t* FxUnit=FLUID_NEW(fluid_LADSPA_FxUnit_t);
-  assert(FxUnit);
-  assert(synth);
+  if(FxUnit == NULL)
+    return NULL;
+
   /* The default state is 'bypassed'. The Fx unit has to be turned on explicitly by the user. */
   /* Those settings have to be done in order to allow fluid_LADSPA_clean. */
   FxUnit->Bypass=fluid_LADSPA_Bypassed;
