@@ -4930,6 +4930,7 @@ fluid_synth_get_gen(fluid_synth_t* synth, int chan, int param)
  * @param router MIDI router to assign to the synth
  *
  * @note This should only be done once and prior to using the synth.
+ * @deprecated This function is only used by shell command handler, which will be refactored in a future release.
  */
 void
 fluid_synth_set_midi_router(fluid_synth_t* synth, fluid_midi_router_t* router)
