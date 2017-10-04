@@ -68,19 +68,12 @@ void fluid_LADSPA_CreateSystemNodes(fluid_LADSPA_FxUnit_t* FxUnit){
   int nr_input_nodes;
   int nr_fx_input_nodes;
   int nr_output_nodes;
-  int temp;
   int i;
 
   /* Retrieve the number of synth / audio out / Fx send nodes */
-  assert(fluid_settings_getint(FxUnit->synth->settings, "synth.audio-groups", &temp) == FLUID_OK);
-  nr_input_nodes=(int) temp;
-  printf("%i audio groups\n", nr_input_nodes);
-
-  assert(fluid_settings_getint(FxUnit->synth->settings, "synth.audio-channels", &temp) == FLUID_OK);
-  nr_output_nodes=temp;
-
-  assert(fluid_settings_getint(FxUnit->synth->settings, "synth.effects-channels", &temp) == FLUID_OK);
-  nr_fx_input_nodes=temp;
+  nr_input_nodes = FxUnit->synth->audio_groups;
+  nr_output_nodes = FxUnit->synth->audio_channels;
+  nr_fx_input_nodes = FxUnit->synth->effects_channels;
 
   /* Create regular input nodes (associated with audio groups) */
   for (i=0; i < nr_input_nodes; i++){
@@ -714,17 +707,11 @@ fluid_LADSPA_run(fluid_LADSPA_FxUnit_t* FxUnit, fluid_real_t* left_buf[], fluid_
   int byte_size = FLUID_BUFSIZE * sizeof(fluid_real_t);
   char str[99];
   fluid_LADSPA_Node_t* n;
-  int temp;
 
   /* Retrieve the number of synth / audio out / Fx send nodes */
-  assert(fluid_settings_getint(FxUnit->synth->settings, "synth.audio-groups", &temp) == FLUID_OK);
-  nr_groups=(int) temp;
-
-  assert(fluid_settings_getint(FxUnit->synth->settings, "synth.audio-channels", &temp) == FLUID_OK);
-  nr_audio_channels=temp;
-
-  assert(fluid_settings_getint(FxUnit->synth->settings, "synth.effects-channels", &temp) == FLUID_OK);
-  nr_fx_sends=temp;
+  nr_groups = FxUnit->synth->audio_groups;
+  nr_audio_channels = FxUnit->synth->audio_channels;
+  nr_fx_sends = FxUnit->synth->effects_channels;
 
   /* Fixme: Retrieving nodes via names is inefficient
    * (but not that bad, because the interesting nodes are always at the start of the list).
