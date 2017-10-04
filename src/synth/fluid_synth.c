@@ -555,7 +555,7 @@ new_fluid_synth(fluid_settings_t *settings)
   fluid_sfloader_t* loader;
   double gain;
   int i, nbuf;
-
+  int with_ladspa = 0;
   
   /* initialize all the conversion tables and other stuff */
   if (fluid_synth_initialized == 0)
@@ -694,8 +694,11 @@ new_fluid_synth(fluid_settings_t *settings)
 
 #ifdef LADSPA
   /* Create and initialize the Fx unit.*/
-  synth->LADSPA_FxUnit = new_fluid_LADSPA_FxUnit(synth);
-  fluid_rvoice_mixer_set_ladspa(synth->eventhandler->mixer, synth->LADSPA_FxUnit);
+  fluid_settings_getint(settings, "synth.ladspa.active", &with_ladspa);
+  if (with_ladspa) {
+    synth->LADSPA_FxUnit = new_fluid_LADSPA_FxUnit(synth);
+    fluid_rvoice_mixer_set_ladspa(synth->eventhandler->mixer, synth->LADSPA_FxUnit);
+  }
 #endif
   
   /* allocate and add the default sfont loader */
@@ -905,8 +908,10 @@ delete_fluid_synth(fluid_synth_t* synth)
 
 #ifdef LADSPA
   /* Release the LADSPA Fx unit */
-  fluid_LADSPA_shutdown(synth->LADSPA_FxUnit);
-  FLUID_FREE(synth->LADSPA_FxUnit);
+  if (synth->LADSPA_FxUnit) {
+    fluid_LADSPA_shutdown(synth->LADSPA_FxUnit);
+    FLUID_FREE(synth->LADSPA_FxUnit);
+  }
 #endif
 
   fluid_rec_mutex_destroy(synth->mutex);
