@@ -704,7 +704,7 @@ fluid_LADSPA_run(fluid_LADSPA_FxUnit_t* FxUnit, fluid_real_t* left_buf[], fluid_
   int nr_audio_channels;
   int nr_fx_sends;
   int nr_groups;
-  int byte_size = FLUID_BUFSIZE * sizeof(fluid_real_t);
+  int byte_size = FLUID_BUFSIZE * sizeof(LADSPA_Data);
   char str[99];
   fluid_LADSPA_Node_t* n;
 
