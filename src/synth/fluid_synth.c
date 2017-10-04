@@ -697,6 +697,10 @@ new_fluid_synth(fluid_settings_t *settings)
   fluid_settings_getint(settings, "synth.ladspa.active", &with_ladspa);
   if (with_ladspa) {
     synth->LADSPA_FxUnit = new_fluid_LADSPA_FxUnit(synth);
+    if(synth->LADSPA_FxUnit == NULL) {
+      FLUID_LOG(FLUID_ERR, "Out of memory");
+      goto error_recovery;
+    }
     fluid_rvoice_mixer_set_ladspa(synth->eventhandler->mixer, synth->LADSPA_FxUnit);
   }
 #endif
