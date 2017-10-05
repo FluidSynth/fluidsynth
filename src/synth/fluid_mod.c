@@ -22,8 +22,11 @@
 #include "fluid_chan.h"
 #include "fluid_voice.h"
 
-/*
- * fluid_mod_clone
+/**
+ * Clone the modulators destination, sources, flags and amount.
+ * @param mod the modulator to store the copy to
+ * @param src the source modulator to retrieve the information from
+ * @note The \c next member of \c mod will be left unchanged.
  */
 void
 fluid_mod_clone(fluid_mod_t* mod, fluid_mod_t* src)
@@ -185,7 +188,7 @@ fluid_mod_get_source_value(const unsigned char mod_src,
             val = fluid_voice_get_actual_key(voice);
             break;
         case FLUID_MOD_KEYPRESSURE:
-            val = fluid_channel_get_key_pressure (chan);
+            val = fluid_channel_get_key_pressure(chan, voice->key);
             break;
         case FLUID_MOD_CHANNELPRESSURE:
             val = fluid_channel_get_channel_pressure (chan);
@@ -449,7 +452,43 @@ fluid_mod_test_identity (fluid_mod_t *mod1, fluid_mod_t *mod2)
     && mod1->flags2 == mod2->flags2;
 }
 
+/**
+ * Check if the modulator has the given source.
+ * 
+ * @param cc Boolean value indicating if ctrl is a CC controller or not
+ * @param ctrl The source to check for (if \c cc == FALSE : a value of type #fluid_mod_src, else the value of the MIDI CC to check for)
+ * 
+ * @return TRUE if the modulator has the given source, FALSE otherwise.
+ */
+int fluid_mod_has_source(fluid_mod_t * mod, int cc, int ctrl)
+{
+    return
+    (
+        (
+            ((mod->src1 == ctrl) && ((mod->flags1 & FLUID_MOD_CC) != 0) && (cc != 0))
+         || ((mod->src1 == ctrl) && ((mod->flags1 & FLUID_MOD_CC) == 0) && (cc == 0))
+        )
+        ||
+        (
+            ((mod->src2 == ctrl) && ((mod->flags2 & FLUID_MOD_CC) != 0) && (cc != 0))
+        ||  ((mod->src2 == ctrl) && ((mod->flags2 & FLUID_MOD_CC) == 0) && (cc == 0))
+        )
+    );
+}
+
+/**
+ * Check if the modulator has the given destination.
+ * @param gen The destination generator of type #fluid_gen_type to check for
+ * @return TRUE if the modulator has the given destination, FALSE otherwise.
+ */
+int fluid_mod_has_dest(fluid_mod_t * mod, int gen)
+{
+    return mod->dest == gen;
+}
+
+
 /* debug function: Prints the contents of a modulator */
+#ifdef DEBUG
 void fluid_dump_modulator(fluid_mod_t * mod){
   int src1=mod->src1;
   int dest=mod->dest;
@@ -502,5 +541,5 @@ void fluid_dump_modulator(fluid_mod_t * mod){
   }; /* switch dest */
   printf(", amount %f flags %i src2 %i flags2 %i\n",amount, flags1, src2, flags2);
 };
-
+#endif
 

@@ -29,13 +29,11 @@
 #define FLUID_ATTEN_AMP_SIZE    1441
 #define FLUID_PAN_SIZE          1002
 
-/* EMU 8k/10k don't follow spec in regards to volume attenuation.
- * This factor is used in the equation pow (10.0, cb / FLUID_ATTEN_POWER_FACTOR).
- * By the standard this should be -200.0. */
-/* 07/11/2008 modified by S. Christian Collins for increased velocity sensitivity.  Now it equals the response of EMU10K1 programming.*/
-#define FLUID_ATTEN_POWER_FACTOR  (-200.0)	/* was (-531.509)*/
+#define FLUID_ATTEN_POWER_DEFAULT_EMU (-200.0)
+#define FLUID_ATTEN_POWER_DEFAULT_COMPLIANT (-531.509)
 
 void fluid_conversion_config(void);
+void fluid_conversion_set_atten_power(double atten);
 
 fluid_real_t fluid_ct2hz_real(fluid_real_t cents);
 fluid_real_t fluid_ct2hz(fluid_real_t cents);

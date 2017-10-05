@@ -42,11 +42,6 @@ static int fluid_settings_tokenize(const char *s, char *buf, char **ptr);
 
 /* Common structure to all settings nodes */
 typedef struct {
-  int type;             /**< fluid_types_enum */
-} fluid_setting_node_t; 
-
-typedef struct {
-  fluid_setting_node_t node;
   char* value;
   char* def;
   int hints;
@@ -56,7 +51,6 @@ typedef struct {
 } fluid_str_setting_t;
 
 typedef struct {
-  fluid_setting_node_t node;
   double value;
   double def;
   double min;
@@ -67,7 +61,6 @@ typedef struct {
 } fluid_num_setting_t;
 
 typedef struct {
-  fluid_setting_node_t node;
   int value;
   int def;
   int min;
@@ -78,152 +71,184 @@ typedef struct {
 } fluid_int_setting_t;
 
 typedef struct {
-  fluid_setting_node_t node;
   fluid_hashtable_t *hashtable;
 } fluid_set_setting_t;
 
+typedef struct {
+  int type;             /**< fluid_types_enum */
+  
+  union
+  {
+      fluid_str_setting_t str;
+      fluid_num_setting_t num;
+      fluid_int_setting_t i;
+      fluid_set_setting_t set;
+  };
+} fluid_setting_node_t;
 
-static fluid_str_setting_t*
+static fluid_setting_node_t*
 new_fluid_str_setting(const char* value, const char* def, int hints, fluid_str_update_t fun, void* data)
 {
+  fluid_setting_node_t* node;
   fluid_str_setting_t* str;
+  
+  node = FLUID_NEW(fluid_setting_node_t);
 
-  str = FLUID_NEW(fluid_str_setting_t);
-
-  if (!str)
+  if (!node)
   {
     FLUID_LOG(FLUID_ERR, "Out of memory");
     return NULL;
   }
 
-  str->node.type = FLUID_STR_TYPE;
+  node->type = FLUID_STR_TYPE;
+  str = &node->str;
+  
   str->value = value? FLUID_STRDUP(value) : NULL;
   str->def = def? FLUID_STRDUP(def) : NULL;
   str->hints = hints;
   str->options = NULL;
   str->update = fun;
   str->data = data;
-  return str;
+  return node;
 }
 
 static void
-delete_fluid_str_setting(fluid_str_setting_t* str)
+delete_fluid_str_setting(fluid_setting_node_t* node)
 {
-  if (!str) return;
+  if (!node) return;
+  
+  FLUID_ASSERT(node->type, FLUID_STR_TYPE);
 
-  if (str->value) FLUID_FREE(str->value);
-  if (str->def) FLUID_FREE(str->def);
+  FLUID_FREE(node->str.value);
+  FLUID_FREE(node->str.def);
 
-  if (str->options) {
-    fluid_list_t* list = str->options;
+  if (node->str.options) {
+    fluid_list_t* list = node->str.options;
 
     while (list) {
       FLUID_FREE (list->data);
       list = fluid_list_next(list);
     }
 
-    delete_fluid_list(str->options);
+    delete_fluid_list(node->str.options);
   }
 
-  FLUID_FREE(str);
+  FLUID_FREE(node);
 }
 
 
-static fluid_num_setting_t*
+static fluid_setting_node_t*
 new_fluid_num_setting(double min, double max, double def,
 		     int hints, fluid_num_update_t fun, void* data)
 {
-  fluid_num_setting_t* setting;
+  fluid_setting_node_t* node;
+  fluid_num_setting_t* num;
 
-  setting = FLUID_NEW(fluid_num_setting_t);
+  node = FLUID_NEW(fluid_setting_node_t);
 
-  if (!setting)
+  if (!node)
   {
     FLUID_LOG(FLUID_ERR, "Out of memory");
     return NULL;
   }
 
-  setting->node.type = FLUID_NUM_TYPE;
-  setting->value = def;
-  setting->def = def;
-  setting->min = min;
-  setting->max = max;
-  setting->hints = hints;
-  setting->update = fun;
-  setting->data = data;
-  return setting;
+  node->type = FLUID_NUM_TYPE;
+  num = &node->num;
+  
+  num->value = def;
+  num->def = def;
+  num->min = min;
+  num->max = max;
+  num->hints = hints;
+  num->update = fun;
+  num->data = data;
+  
+  return node;
 }
 
 static void
-delete_fluid_num_setting(fluid_num_setting_t* setting)
+delete_fluid_num_setting(fluid_setting_node_t* node)
 {
-  if (setting) FLUID_FREE(setting);
+  if (!node) return;
+  
+  FLUID_ASSERT (node->type, FLUID_NUM_TYPE);
+  FLUID_FREE(node);
 }
 
-static fluid_int_setting_t*
+static fluid_setting_node_t*
 new_fluid_int_setting(int min, int max, int def,
 		     int hints, fluid_int_update_t fun, void* data)
 {
-  fluid_int_setting_t* setting;
+  fluid_setting_node_t* node;
+  fluid_int_setting_t* i;
 
-  setting = FLUID_NEW(fluid_int_setting_t);
+  node = FLUID_NEW(fluid_setting_node_t);
 
-  if (!setting)
+  if (!node)
   {
     FLUID_LOG(FLUID_ERR, "Out of memory");
     return NULL;
   }
 
-  setting->node.type = FLUID_INT_TYPE;
-  setting->value = def;
-  setting->def = def;
-  setting->min = min;
-  setting->max = max;
-  setting->hints = hints;
-  setting->update = fun;
-  setting->data = data;
-  return setting;
+  node->type = FLUID_INT_TYPE;
+  i = &node->i;
+  
+  i->value = def;
+  i->def = def;
+  i->min = min;
+  i->max = max;
+  i->hints = hints;
+  i->update = fun;
+  i->data = data;
+  return node;
 }
 
 static void
-delete_fluid_int_setting(fluid_int_setting_t* setting)
+delete_fluid_int_setting(fluid_setting_node_t* node)
 {
-  if (setting) FLUID_FREE(setting);
+  if (!node) return;
+  
+  FLUID_ASSERT (node->type, FLUID_INT_TYPE);
+  FLUID_FREE(node);
 }
 
-static fluid_set_setting_t*
+static fluid_setting_node_t*
 new_fluid_set_setting(void)
 {
-  fluid_set_setting_t* setting;
+  fluid_setting_node_t* node;
+  fluid_set_setting_t* set;
 
-  setting = FLUID_NEW(fluid_set_setting_t);
+  node = FLUID_NEW(fluid_setting_node_t);
 
-  if (!setting)
+  if (!node)
   {
     FLUID_LOG(FLUID_ERR, "Out of memory");
     return NULL;
   }
 
-  setting->node.type = FLUID_SET_TYPE;
-  setting->hashtable = new_fluid_hashtable_full(fluid_str_hash, fluid_str_equal,
+  node->type = FLUID_SET_TYPE;
+  set = &node->set;
+  
+  set->hashtable = new_fluid_hashtable_full(fluid_str_hash, fluid_str_equal,
                                                 fluid_settings_key_destroy_func,
                                                 fluid_settings_value_destroy_func);
-  if (!setting->hashtable)
+  if (!set->hashtable)
   {
-    FLUID_FREE (setting);
+    FLUID_FREE (node);
     return NULL;
   }
 
-  return setting;
+  return node;
 }
 
 static void
-delete_fluid_set_setting(fluid_set_setting_t* setting)
+delete_fluid_set_setting(fluid_setting_node_t* node)
 {
-  if (setting)
+  if (node)
   {
-    delete_fluid_hashtable(setting->hashtable);
-    FLUID_FREE(setting);
+    FLUID_ASSERT (node->type, FLUID_SET_TYPE);
+    delete_fluid_hashtable(node->set.hashtable);
+    FLUID_FREE(node);
   }
 }
 
@@ -274,16 +299,16 @@ fluid_settings_value_destroy_func(void* value)
 
   switch (node->type) {
   case FLUID_NUM_TYPE:
-    delete_fluid_num_setting((fluid_num_setting_t*) value);
+    delete_fluid_num_setting(node);
     break;
   case FLUID_INT_TYPE:
-    delete_fluid_int_setting((fluid_int_setting_t*) value);
+    delete_fluid_int_setting(node);
     break;
   case FLUID_STR_TYPE:
-    delete_fluid_str_setting((fluid_str_setting_t*) value);
+    delete_fluid_str_setting(node);
     break;
   case FLUID_SET_TYPE:
-    delete_fluid_set_setting((fluid_set_setting_t*) value);
+    delete_fluid_set_setting(node);
     break;
   }
 }
@@ -337,7 +362,7 @@ fluid_settings_tokenize(const char *s, char *buf, char **ptr)
  * @param settings a settings object
  * @param name Settings name
  * @param value Location to store setting node if found
- * @return 1 if the node exists, 0 otherwise
+ * @return #FLUID_OK if the node exists, #FLUID_FAILED otherwise
  */
 static int
 fluid_settings_get(fluid_settings_t* settings, const char *name,
@@ -352,19 +377,19 @@ fluid_settings_get(fluid_settings_t* settings, const char *name,
 
   ntokens = fluid_settings_tokenize (name, buf, tokens);
 
-  if (table == NULL || ntokens <= 0) return 0;
+  if (table == NULL || ntokens <= 0) return FLUID_FAILED;
 
   for (n = 0; n < ntokens; n++) {
 
     node = fluid_hashtable_lookup(table, tokens[n]);
-    if (!node) return 0;
+    if (!node) return FLUID_FAILED;
 
-    table = (node->type == FLUID_SET_TYPE) ? ((fluid_set_setting_t *)node)->hashtable : NULL;
+    table = (node->type == FLUID_SET_TYPE) ? node->set.hashtable : NULL;
   }
 
   if (value) *value = node;
 
-  return 1;
+  return FLUID_OK;
 }
 
 /**
@@ -373,10 +398,10 @@ fluid_settings_get(fluid_settings_t* settings, const char *name,
  * @param settings a settings object
  * @param name Settings name
  * @param value Node instance to assign (used directly)
- * @return 1 if the value has been set, zero otherwise
+ * @return #FLUID_OK if the value has been set, #FLUID_FAILED otherwise
  */
 static int
-fluid_settings_set(fluid_settings_t* settings, const char *name, void* value)
+fluid_settings_set(fluid_settings_t* settings, const char *name, fluid_setting_node_t* value)
 {
   fluid_hashtable_t* table = settings;
   fluid_setting_node_t *node;
@@ -387,7 +412,7 @@ fluid_settings_set(fluid_settings_t* settings, const char *name, void* value)
 
   num = fluid_settings_tokenize (name, buf, tokens) - 1;
   if (num == 0)
-    return 0;
+    return FLUID_FAILED;
 
   for (n = 0; n < num; n++) {
 
@@ -396,16 +421,16 @@ fluid_settings_set(fluid_settings_t* settings, const char *name, void* value)
     if (node) {
 
       if (node->type == FLUID_SET_TYPE) {
-	table = ((fluid_set_setting_t *)node)->hashtable;
+	table = node->set.hashtable;
       } else {
 	/* path ends prematurely */
 	FLUID_LOG(FLUID_WARN, "'%s' is not a node", name[n]);
-	return 0;
+	return FLUID_FAILED;
       }
 
     } else {
       /* create a new node */
-      fluid_set_setting_t* setnode;
+      fluid_setting_node_t* setnode;
 
       dupname = FLUID_STRDUP (tokens[n]);
       setnode = new_fluid_set_setting ();
@@ -417,11 +442,11 @@ fluid_settings_set(fluid_settings_t* settings, const char *name, void* value)
 
         if (setnode) delete_fluid_set_setting (setnode);
 
-        return 0;
+        return FLUID_FAILED;
       }
 
       fluid_hashtable_insert(table, dupname, setnode);
-      table = setnode->hashtable;
+      table = setnode->set.hashtable;
     }
   }
 
@@ -430,46 +455,53 @@ fluid_settings_set(fluid_settings_t* settings, const char *name, void* value)
   if (!dupname)
   {
     FLUID_LOG(FLUID_ERR, "Out of memory");
-    return 0;
+    return FLUID_FAILED;
   }
 
   fluid_hashtable_insert(table, dupname, value);
 
-  return 1;
+  return FLUID_OK;
 }
 
-/** returns 1 if the value has been registered correctly, 0
-    otherwise */
+/**
+ * Registers a new string value for the specified setting.
+ * 
+ * @param settings a settings object
+ * @param name the setting's name
+ * @param def the default value for the setting
+ * @param hints the hints for the setting
+ * @param fun an update function for the setting
+ * @param data user supplied data
+ * @return #FLUID_OK if the value has been register correctly, #FLUID_FAILED otherwise
+ */
 int
 fluid_settings_register_str(fluid_settings_t* settings, const char* name, const char* def, int hints,
 			    fluid_str_update_t fun, void* data)
 {
   fluid_setting_node_t *node;
-  fluid_str_setting_t* setting;
-  int retval;
+  int retval = FLUID_FAILED;
 
-  fluid_return_val_if_fail (settings != NULL, 0);
-  fluid_return_val_if_fail (name != NULL, 0);
-  fluid_return_val_if_fail (name[0] != '\0', 0);
+  fluid_return_val_if_fail (settings != NULL, retval);
+  fluid_return_val_if_fail (name != NULL, retval);
+  fluid_return_val_if_fail (name[0] != '\0', retval);
 
   fluid_rec_mutex_lock (settings->mutex);
 
-  if (!fluid_settings_get(settings, name, &node)) {
-    setting = new_fluid_str_setting(def, def, hints, fun, data);
-    retval = fluid_settings_set(settings, name, setting);
-    if (retval != 1) delete_fluid_str_setting (setting);
+  if (fluid_settings_get(settings, name, &node) != FLUID_OK) {
+    node = new_fluid_str_setting(def, def, hints, fun, data);
+    retval = fluid_settings_set(settings, name, node);
+    if (retval != FLUID_OK) delete_fluid_str_setting (node);
   } else {
     /* if variable already exists, don't change its value. */
     if (node->type == FLUID_STR_TYPE) {
-      setting = (fluid_str_setting_t*) node;
+      fluid_str_setting_t* setting = &node->str;
       setting->update = fun;
       setting->data = data;
       setting->def = def? FLUID_STRDUP(def) : NULL;
       setting->hints = hints;
-      retval = 1;
+      retval = FLUID_OK;
     } else {
       FLUID_LOG(FLUID_WARN, "Type mismatch on setting '%s'", name);
-      retval = 0;
     }
   }
 
@@ -478,46 +510,55 @@ fluid_settings_register_str(fluid_settings_t* settings, const char* name, const 
   return retval;
 }
 
-/** returns 1 if the value has been register correctly, zero
-    otherwise */
+/**
+ * Registers a new float value for the specified setting.
+ * 
+ * @param settings a settings object
+ * @param name the setting's name
+ * @param def the default value for the setting
+ * @param min the smallest allowed value for the setting
+ * @param max the largest allowed value for the setting
+ * @param hints the hints for the setting
+ * @param fun an update function for the setting
+ * @param data user supplied data
+ * @return #FLUID_OK if the value has been register correctly, #FLUID_FAILED otherwise
+ */
 int
 fluid_settings_register_num(fluid_settings_t* settings, const char* name, double def,
 			    double min, double max, int hints,
 			    fluid_num_update_t fun, void* data)
 {
   fluid_setting_node_t *node;
-  int retval;
+  int retval = FLUID_FAILED;
 
-  fluid_return_val_if_fail (settings != NULL, 0);
-  fluid_return_val_if_fail (name != NULL, 0);
-  fluid_return_val_if_fail (name[0] != '\0', 0);
+  fluid_return_val_if_fail (settings != NULL, retval);
+  fluid_return_val_if_fail (name != NULL, retval);
+  fluid_return_val_if_fail (name[0] != '\0', retval);
 
   /* For now, all floating point settings are bounded below and above */
   hints |= FLUID_HINT_BOUNDED_BELOW | FLUID_HINT_BOUNDED_ABOVE;
 
   fluid_rec_mutex_lock (settings->mutex);
 
-  if (!fluid_settings_get(settings, name, &node)) {
+  if (fluid_settings_get(settings, name, &node) != FLUID_OK) {
     /* insert a new setting */
-    fluid_num_setting_t* setting;
-    setting = new_fluid_num_setting(min, max, def, hints, fun, data);
-    retval = fluid_settings_set(settings, name, setting);
-    if (retval != 1) delete_fluid_num_setting (setting);
+    node = new_fluid_num_setting(min, max, def, hints, fun, data);
+    retval = fluid_settings_set(settings, name, node);
+    if (retval != FLUID_OK) delete_fluid_num_setting (node);
   } else {
     if (node->type == FLUID_NUM_TYPE) {
       /* update the existing setting but don't change its value */
-      fluid_num_setting_t* setting = (fluid_num_setting_t*) node;
+      fluid_num_setting_t* setting = &node->num;
       setting->update = fun;
       setting->data = data;
       setting->min = min;
       setting->max = max;
       setting->def = def;
       setting->hints = hints;
-      retval = 1;
+      retval = FLUID_OK;
     } else {
       /* type mismatch */
       FLUID_LOG(FLUID_WARN, "Type mismatch on setting '%s'", name);
-      retval = 0;
     }
   }
 
@@ -526,46 +567,55 @@ fluid_settings_register_num(fluid_settings_t* settings, const char* name, double
   return retval;
 }
 
-/** returns 1 if the value has been register correctly, zero
-    otherwise. */
+/**
+ * Registers a new integer value for the specified setting.
+ * 
+ * @param settings a settings object
+ * @param name the setting's name
+ * @param def the default value for the setting
+ * @param min the smallest allowed value for the setting
+ * @param max the largest allowed value for the setting
+ * @param hints the hints for the setting
+ * @param fun an update function for the setting
+ * @param data user supplied data
+ * @return #FLUID_OK if the value has been register correctly, #FLUID_FAILED otherwise
+ */
 int
 fluid_settings_register_int(fluid_settings_t* settings, const char* name, int def,
 			    int min, int max, int hints,
 			    fluid_int_update_t fun, void* data)
 {
   fluid_setting_node_t *node;
-  int retval;
+  int retval = FLUID_FAILED;
 
-  fluid_return_val_if_fail (settings != NULL, 0);
-  fluid_return_val_if_fail (name != NULL, 0);
-  fluid_return_val_if_fail (name[0] != '\0', 0);
+  fluid_return_val_if_fail (settings != NULL, retval);
+  fluid_return_val_if_fail (name != NULL, retval);
+  fluid_return_val_if_fail (name[0] != '\0', retval);
 
   /* For now, all integer settings are bounded below and above */
   hints |= FLUID_HINT_BOUNDED_BELOW | FLUID_HINT_BOUNDED_ABOVE;
 
   fluid_rec_mutex_lock (settings->mutex);
 
-  if (!fluid_settings_get(settings, name, &node)) {
+  if (fluid_settings_get(settings, name, &node) != FLUID_OK) {
     /* insert a new setting */
-    fluid_int_setting_t* setting;
-    setting = new_fluid_int_setting(min, max, def, hints, fun, data);
-    retval = fluid_settings_set(settings, name, setting);
-    if (retval != 1) delete_fluid_int_setting (setting);
+    node = new_fluid_int_setting(min, max, def, hints, fun, data);
+    retval = fluid_settings_set(settings, name, node);
+    if (retval != FLUID_OK) delete_fluid_int_setting (node);
   } else {
     if (node->type == FLUID_INT_TYPE) {
       /* update the existing setting but don't change its value */
-      fluid_int_setting_t* setting = (fluid_int_setting_t*) node;
+      fluid_int_setting_t* setting = &node->i;
       setting->update = fun;
       setting->data = data;
       setting->min = min;
       setting->max = max;
       setting->def = def;
       setting->hints = hints;
-      retval = 1;
+      retval = FLUID_OK;
     } else {
       /* type mismatch */
       FLUID_LOG(FLUID_WARN, "Type mismatch on setting '%s'", name);
-      retval = 0;
     }
   }
 
@@ -579,23 +629,25 @@ fluid_settings_register_int(fluid_settings_t* settings, const char* name, int de
  *
  * @param settings a settings object
  * @param name a setting's name
- * @return the type for the named setting, or #FLUID_NO_TYPE when it does not exist
+ * @return the type for the named setting (see #fluid_types_enum), or #FLUID_NO_TYPE when it does not exist
  */
 int
 fluid_settings_get_type(fluid_settings_t* settings, const char *name)
 {
   fluid_setting_node_t *node;
-  int type;
+  int type = FLUID_NO_TYPE;
 
-  fluid_return_val_if_fail (settings != NULL, FLUID_NO_TYPE);
-  fluid_return_val_if_fail (name != NULL, FLUID_NO_TYPE);
-  fluid_return_val_if_fail (name[0] != '\0', FLUID_NO_TYPE);
+  fluid_return_val_if_fail (settings != NULL, type);
+  fluid_return_val_if_fail (name != NULL, type);
+  fluid_return_val_if_fail (name[0] != '\0', type);
 
   fluid_rec_mutex_lock (settings->mutex);
-  type = fluid_settings_get (settings, name, &node) ? node->type : FLUID_NO_TYPE;
+  if(fluid_settings_get (settings, name, &node) == FLUID_OK)
+      type = node->type;
+  
   fluid_rec_mutex_unlock (settings->mutex);
 
-  return (type);
+  return type;
 }
 
 /**
@@ -603,36 +655,40 @@ fluid_settings_get_type(fluid_settings_t* settings, const char *name)
  *
  * @param settings a settings object
  * @param name a setting's name
- * @return the hints associated to the named setting if it exists, zero otherwise
+ * @param hints set to the hints associated to the setting if it exists
+ * @return #FLUID_OK if hints associated to the named setting exist, #FLUID_FAILED otherwise
  */
 int
-fluid_settings_get_hints(fluid_settings_t* settings, const char *name)
+fluid_settings_get_hints(fluid_settings_t* settings, const char *name, int* hints)
 {
   fluid_setting_node_t *node;
-  int hints = 0;
+  int retval = FLUID_FAILED;
 
-  fluid_return_val_if_fail (settings != NULL, 0);
-  fluid_return_val_if_fail (name != NULL, 0);
-  fluid_return_val_if_fail (name[0] != '\0', 0);
+  fluid_return_val_if_fail (settings != NULL, retval);
+  fluid_return_val_if_fail (name != NULL, retval);
+  fluid_return_val_if_fail (name[0] != '\0', retval);
 
   fluid_rec_mutex_lock (settings->mutex);
 
-  if (fluid_settings_get(settings, name, &node)) {
+  if (fluid_settings_get(settings, name, &node) == FLUID_OK) {
     if (node->type == FLUID_NUM_TYPE) {
-      fluid_num_setting_t* setting = (fluid_num_setting_t*) node;
-      hints = setting->hints;
+      fluid_num_setting_t* setting = &node->num;
+      *hints = setting->hints;
+      retval = FLUID_OK;
     } else if (node->type == FLUID_STR_TYPE) {
-      fluid_str_setting_t* setting = (fluid_str_setting_t*) node;
-      hints = setting->hints;
+      fluid_str_setting_t* setting = &node->str;
+      *hints = setting->hints;
+      retval = FLUID_OK;
     } else if (node->type == FLUID_INT_TYPE) {
-      fluid_int_setting_t* setting = (fluid_int_setting_t*) node;
-      hints = setting->hints;
+      fluid_int_setting_t* setting = &node->i;
+      *hints = setting->hints;
+      retval = FLUID_OK;
     }
   }
 
   fluid_rec_mutex_unlock (settings->mutex);
 
-  return hints;
+  return retval;
 }
 
 /**
@@ -640,7 +696,7 @@ fluid_settings_get_hints(fluid_settings_t* settings, const char *name)
  *
  * @param settings a settings object
  * @param name a setting's name
- * @return non zero if the setting is changeable in real-time
+ * @return TRUE if the setting is changeable in real-time, FALSE otherwise
  */
 int
 fluid_settings_is_realtime(fluid_settings_t* settings, const char *name)
@@ -654,15 +710,15 @@ fluid_settings_is_realtime(fluid_settings_t* settings, const char *name)
 
   fluid_rec_mutex_lock (settings->mutex);
 
-  if (fluid_settings_get(settings, name, &node)) {
+  if (fluid_settings_get(settings, name, &node) == FLUID_OK) {
     if (node->type == FLUID_NUM_TYPE) {
-      fluid_num_setting_t* setting = (fluid_num_setting_t*) node;
+      fluid_num_setting_t* setting = &node->num;
       isrealtime = setting->update != NULL;
     } else if (node->type == FLUID_STR_TYPE) {
-      fluid_str_setting_t* setting = (fluid_str_setting_t*) node;
+      fluid_str_setting_t* setting = &node->str;
       isrealtime = setting->update != NULL;
     } else if (node->type == FLUID_INT_TYPE) {
-      fluid_int_setting_t* setting = (fluid_int_setting_t*) node;
+      fluid_int_setting_t* setting = &node->i;
       isrealtime = setting->update != NULL;
     }
   }
@@ -678,34 +734,34 @@ fluid_settings_is_realtime(fluid_settings_t* settings, const char *name)
  * @param settings a settings object
  * @param name a setting's name
  * @param str new string value
- * @return 1 if the value has been set, 0 otherwise
+ * @return #FLUID_OK if the value has been set, #FLUID_FAILED otherwise
  */
 int
 fluid_settings_setstr(fluid_settings_t* settings, const char *name, const char *str)
 {
   fluid_setting_node_t *node;
-  int retval = 0;
+  int retval = FLUID_FAILED;
 
-  fluid_return_val_if_fail (settings != NULL, 0);
-  fluid_return_val_if_fail (name != NULL, 0);
-  fluid_return_val_if_fail (name[0] != '\0', 0);
+  fluid_return_val_if_fail (settings != NULL, retval);
+  fluid_return_val_if_fail (name != NULL, retval);
+  fluid_return_val_if_fail (name[0] != '\0', retval);
 
   fluid_rec_mutex_lock (settings->mutex);
 
-  if (fluid_settings_get (settings, name, &node)) {
+  if (fluid_settings_get (settings, name, &node) == FLUID_OK) {
     if (node->type == FLUID_STR_TYPE) {
-      fluid_str_setting_t *setting = (fluid_str_setting_t *)node;
+      fluid_str_setting_t *setting = &node->str;
 
       if (setting->value) FLUID_FREE (setting->value);
       setting->value = str ? FLUID_STRDUP (str) : NULL;
 
       /* Call under lock to keep update() synchronized with the current value */
       if (setting->update) (*setting->update)(setting->data, name, str);
-      retval = 1;
+      retval = FLUID_OK;
     }
     else if (node->type == FLUID_INT_TYPE)      /* Handle yes/no for boolean values for backwards compatibility */
     {
-      fluid_int_setting_t *setting = (fluid_int_setting_t *)node;
+      fluid_int_setting_t *setting = &node->i;
 
       if (setting->hints & FLUID_HINT_TOGGLED)
       {
@@ -713,20 +769,21 @@ fluid_settings_setstr(fluid_settings_t* settings, const char *name, const char *
         {
           setting->value = TRUE;
           if (setting->update) (*setting->update)(setting->data, name, TRUE);
+          retval = FLUID_OK;
         }
         else if (FLUID_STRCMP (str, "no") == 0)
         {
           setting->value = FALSE;
           if (setting->update) (*setting->update)(setting->data, name, FALSE);
+          retval = FLUID_OK;
         }
       }
     }
   } else {
     /* insert a new setting */
-    fluid_str_setting_t* setting;
-    setting = new_fluid_str_setting(str, NULL, 0, NULL, NULL);
-    retval = fluid_settings_set(settings, name, setting);
-    if (retval != 1) delete_fluid_str_setting (setting);
+    node = new_fluid_str_setting(str, NULL, 0, NULL, NULL);
+    retval = fluid_settings_set(settings, name, node);
+    if (retval != FLUID_OK) delete_fluid_str_setting (node);
   }
 
   fluid_rec_mutex_unlock (settings->mutex);
@@ -735,40 +792,39 @@ fluid_settings_setstr(fluid_settings_t* settings, const char *name, const char *
 }
 
 /**
- * Copy the value of a string setting
+ * Copy the value of a string setting into the provided buffer (thread safe)
  * @param settings a settings object
  * @param name a setting's name
  * @param str Caller supplied buffer to copy string value to
  * @param len Size of 'str' buffer (no more than len bytes will be written, which
  *   will always include a zero terminator)
- * @return 1 if the value exists, 0 otherwise
+ * @return #FLUID_OK if the value exists, #FLUID_FAILED otherwise
  * @since 1.1.0
  *
- * Like fluid_settings_getstr() but is thread safe.  A size of 256 should be
- * more than sufficient for the string buffer.
+ * @note A size of 256 should be more than sufficient for the string buffer.
  */
 int
 fluid_settings_copystr(fluid_settings_t* settings, const char *name,
                        char *str, int len)
 {
   fluid_setting_node_t *node;
-  int retval = 0;
+  int retval = FLUID_FAILED;
 
-  fluid_return_val_if_fail (settings != NULL, 0);
-  fluid_return_val_if_fail (name != NULL, 0);
-  fluid_return_val_if_fail (name[0] != '\0', 0);
-  fluid_return_val_if_fail (str != NULL, 0);
-  fluid_return_val_if_fail (len > 0, 0);
+  fluid_return_val_if_fail (settings != NULL, retval);
+  fluid_return_val_if_fail (name != NULL, retval);
+  fluid_return_val_if_fail (name[0] != '\0', retval);
+  fluid_return_val_if_fail (str != NULL, retval);
+  fluid_return_val_if_fail (len > 0, retval);
 
   str[0] = 0;
 
   fluid_rec_mutex_lock (settings->mutex);
 
-  if (fluid_settings_get (settings, name, &node))
+  if (fluid_settings_get (settings, name, &node) == FLUID_OK)
   {
     if (node->type == FLUID_STR_TYPE)
     {
-      fluid_str_setting_t *setting = (fluid_str_setting_t *)node;
+      fluid_str_setting_t *setting = &node->str;
 
       if (setting->value)
       {
@@ -776,18 +832,18 @@ fluid_settings_copystr(fluid_settings_t* settings, const char *name,
         str[len - 1] = 0;   /* Force terminate, in case of truncation */
       }
 
-      retval = 1;
+      retval = FLUID_OK;
     }
     else if (node->type == FLUID_INT_TYPE)      /* Handle boolean integers for backwards compatibility */
     {
-      fluid_int_setting_t *setting = (fluid_int_setting_t *)node;
+      fluid_int_setting_t *setting = &node->i;
 
       if (setting->hints & FLUID_HINT_TOGGLED)
       {
         FLUID_STRNCPY (str, setting->value ? "yes" : "no", len);
         str[len - 1] = 0;   /* Force terminate, in case of truncation */
 
-        retval = 1;
+        retval = FLUID_OK;
       }
     }
   }
@@ -802,7 +858,7 @@ fluid_settings_copystr(fluid_settings_t* settings, const char *name,
  * @param settings a settings object
  * @param name a setting's name
  * @param str Location to store pointer to allocated duplicate string
- * @return 1 if the value exists and was successfully duplicated, 0 otherwise
+ * @return #FLUID_OK if the value exists and was successfully duplicated, #FLUID_FAILED otherwise
  * @since 1.1.0
  *
  * Like fluid_settings_copystr() but allocates a new copy of the string.  Caller
@@ -812,20 +868,20 @@ int
 fluid_settings_dupstr(fluid_settings_t* settings, const char *name, char** str)
 {
   fluid_setting_node_t *node;
-  int retval = 0;
+  int retval = FLUID_FAILED;
 
-  fluid_return_val_if_fail (settings != NULL, 0);
-  fluid_return_val_if_fail (name != NULL, 0);
-  fluid_return_val_if_fail (name[0] != '\0', 0);
-  fluid_return_val_if_fail (str != NULL, 0);
+  fluid_return_val_if_fail (settings != NULL, retval);
+  fluid_return_val_if_fail (name != NULL, retval);
+  fluid_return_val_if_fail (name[0] != '\0', retval);
+  fluid_return_val_if_fail (str != NULL, retval);
 
   fluid_rec_mutex_lock (settings->mutex);
 
-  if (fluid_settings_get(settings, name, &node))
+  if (fluid_settings_get(settings, name, &node) == FLUID_OK)
   {
     if (node->type == FLUID_STR_TYPE)
     {
-      fluid_str_setting_t *setting = (fluid_str_setting_t *)node;
+      fluid_str_setting_t *setting = &node->str;
 
       if (setting->value)
       {
@@ -833,18 +889,18 @@ fluid_settings_dupstr(fluid_settings_t* settings, const char *name, char** str)
         if (!*str) FLUID_LOG (FLUID_ERR, "Out of memory");
       }
 
-      if (!setting->value || *str) retval = 1;    /* Don't set to 1 if out of memory */
+      if (!setting->value || *str) retval = FLUID_OK;    /* Don't set to FLUID_OK if out of memory */
     }
     else if (node->type == FLUID_INT_TYPE)      /* Handle boolean integers for backwards compatibility */
     {
-      fluid_int_setting_t *setting = (fluid_int_setting_t *)node;
+      fluid_int_setting_t *setting = &node->i;
 
       if (setting->hints & FLUID_HINT_TOGGLED)
       {
         *str = FLUID_STRDUP (setting->value ? "yes" : "no");
         if (!*str) FLUID_LOG (FLUID_ERR, "Out of memory");
 
-        if (!setting->value || *str) retval = 1;    /* Don't set to 1 if out of memory */
+        if (!setting->value || *str) retval = FLUID_OK;    /* Don't set to FLUID_OK if out of memory */
       }
     }
   }
@@ -854,61 +910,6 @@ fluid_settings_dupstr(fluid_settings_t* settings, const char *name, char** str)
   return retval;
 }
 
-/**
- * Get the value of a string setting
- * @param settings a settings object
- * @param name a setting's name
- * @param str Location to store pointer to the settings string value
- * @return 1 if the value exists, 0 otherwise
- * @deprecated
- *
- * If the value does not exists, 'str' is set to NULL. Otherwise, 'str' will
- * point to the value. The application does not own the returned value and it
- * is valid only until a new value is assigned to the setting of the given name.
- *
- * NOTE: In a multi-threaded environment, caller must ensure that the setting
- * being read by fluid_settings_getstr() is not assigned during the
- * duration of callers use of the setting's value.  Use fluid_settings_copystr()
- * or fluid_settings_dupstr() which does not have this restriction.
- */
-int
-fluid_settings_getstr(fluid_settings_t* settings, const char *name, char** str)
-{
-  fluid_setting_node_t *node;
-  int retval = 0;
-
-  fluid_return_val_if_fail (settings != NULL, 0);
-  fluid_return_val_if_fail (name != NULL, 0);
-  fluid_return_val_if_fail (name[0] != '\0', 0);
-  fluid_return_val_if_fail (str != NULL, 0);
-
-  fluid_rec_mutex_lock (settings->mutex);
-
-  if (fluid_settings_get(settings, name, &node))
-  {
-    if (node->type == FLUID_STR_TYPE)
-    {
-      fluid_str_setting_t *setting = (fluid_str_setting_t *)node;
-      *str = setting->value;
-      retval = 1;
-    }
-    else if (node->type == FLUID_INT_TYPE)      /* Handle boolean integers for backwards compatibility */
-    {
-      fluid_int_setting_t *setting = (fluid_int_setting_t *)node;
-
-      if (setting->hints & FLUID_HINT_TOGGLED)
-      {
-        *str = setting->value ? "yes" : "no";
-        retval = 1;
-      }
-    }
-  }
-  else *str = NULL;
-
-  fluid_rec_mutex_unlock (settings->mutex);
-
-  return retval;
-}
 
 /**
  * Test a string setting for some value.
@@ -916,34 +917,35 @@ fluid_settings_getstr(fluid_settings_t* settings, const char *name, char** str)
  * @param settings a settings object
  * @param name a setting's name
  * @param s a string to be tested
- * @return 1 if the value exists and is equal to 's', 0 otherwise
+ * @return TRUE if the value exists and is equal to 's', FALSE otherwise
  */
 int
 fluid_settings_str_equal (fluid_settings_t* settings, const char *name, const char *s)
 {
   fluid_setting_node_t *node;
-  int retval = 0;
+  int retval = FALSE;
 
-  fluid_return_val_if_fail (settings != NULL, 0);
-  fluid_return_val_if_fail (name != NULL, 0);
-  fluid_return_val_if_fail (name[0] != '\0', 0);
-  fluid_return_val_if_fail (s != NULL, 0);
+  fluid_return_val_if_fail (settings != NULL, retval);
+  fluid_return_val_if_fail (name != NULL, retval);
+  fluid_return_val_if_fail (name[0] != '\0', retval);
+  fluid_return_val_if_fail (s != NULL, retval);
 
   fluid_rec_mutex_lock (settings->mutex);
 
-  if (fluid_settings_get (settings, name, &node))
+  if (fluid_settings_get (settings, name, &node) == FLUID_OK)
   {
     if (node->type == FLUID_STR_TYPE)
     {
-      fluid_str_setting_t *setting = (fluid_str_setting_t *)node;
-      if (setting->value) retval = FLUID_STRCMP (setting->value, s) == 0;
+      fluid_str_setting_t *setting = &node->str;
+      if (setting->value)
+          retval = FLUID_STRCMP (setting->value, s) == 0;
     }
     else if (node->type == FLUID_INT_TYPE)      /* Handle boolean integers for backwards compatibility */
     {
-      fluid_int_setting_t *setting = (fluid_int_setting_t *)node;
+      fluid_int_setting_t *setting = &node->i;
 
       if (setting->hints & FLUID_HINT_TOGGLED)
-        retval = FLUID_STRCMP (setting->value ? "yes" : "no", s) == 0;
+          retval = FLUID_STRCMP (setting->value ? "yes" : "no", s) == 0;
     }
   }
 
@@ -972,16 +974,16 @@ fluid_settings_getstr_default(fluid_settings_t* settings, const char *name)
 
   fluid_rec_mutex_lock (settings->mutex);
 
-  if (fluid_settings_get (settings, name, &node))
+  if (fluid_settings_get (settings, name, &node) == FLUID_OK)
   {
     if (node->type == FLUID_STR_TYPE)
     {
-      fluid_str_setting_t* setting = (fluid_str_setting_t*) node;
+      fluid_str_setting_t* setting = &node->str;
       retval = setting->def;
     }
     else if (node->type == FLUID_INT_TYPE)      /* Handle boolean integers for backwards compatibility */
     {
-      fluid_int_setting_t *setting = (fluid_int_setting_t *)node;
+      fluid_int_setting_t *setting = &node->i;
 
       if (setting->hints & FLUID_HINT_TOGGLED)
         retval = setting->def ? "yes" : "no";
@@ -998,7 +1000,7 @@ fluid_settings_getstr_default(fluid_settings_t* settings, const char *name)
  * @param settings a settings object
  * @param name a setting's name
  * @param s option string to add
- * @return 1 if the setting exists and option was added, 0 otherwise
+ * @return #FLUID_OK if the setting exists and option was added, #FLUID_FAILED otherwise
  *
  * Causes the setting's #FLUID_HINT_OPTIONLIST hint to be set.
  */
@@ -1006,22 +1008,22 @@ int
 fluid_settings_add_option(fluid_settings_t* settings, const char *name, const char *s)
 {
   fluid_setting_node_t *node;
-  int retval = 0;
+  int retval = FLUID_FAILED;
 
-  fluid_return_val_if_fail (settings != NULL, 0);
-  fluid_return_val_if_fail (name != NULL, 0);
-  fluid_return_val_if_fail (name[0] != '\0', 0);
-  fluid_return_val_if_fail (s != NULL, 0);
+  fluid_return_val_if_fail (settings != NULL, retval);
+  fluid_return_val_if_fail (name != NULL, retval);
+  fluid_return_val_if_fail (name[0] != '\0', retval);
+  fluid_return_val_if_fail (s != NULL, retval);
 
   fluid_rec_mutex_lock (settings->mutex);
 
-  if (fluid_settings_get(settings, name, &node)
+  if (fluid_settings_get(settings, name, &node) == FLUID_OK
       && (node->type == FLUID_STR_TYPE)) {
-    fluid_str_setting_t* setting = (fluid_str_setting_t*) node;
+    fluid_str_setting_t* setting = &node->str;
     char* copy = FLUID_STRDUP(s);
     setting->options = fluid_list_append(setting->options, copy);
     setting->hints |= FLUID_HINT_OPTIONLIST;
-    retval = 1;
+    retval = FLUID_OK;
   }
 
   fluid_rec_mutex_unlock (settings->mutex);
@@ -1034,33 +1036,33 @@ fluid_settings_add_option(fluid_settings_t* settings, const char *name, const ch
  * @param settings a settings object
  * @param name a setting's name
  * @param s option string to remove
- * @return 1 if the setting exists and option was removed, 0 otherwise
+ * @return #FLUID_OK if the setting exists and option was removed, #FLUID_FAILED otherwise
  */
 int
 fluid_settings_remove_option(fluid_settings_t* settings, const char *name, const char* s)
 {
   fluid_setting_node_t *node;
-  int retval = 0;
+  int retval = FLUID_FAILED;
 
-  fluid_return_val_if_fail (settings != NULL, 0);
-  fluid_return_val_if_fail (name != NULL, 0);
-  fluid_return_val_if_fail (name[0] != '\0', 0);
-  fluid_return_val_if_fail (s != NULL, 0);
+  fluid_return_val_if_fail (settings != NULL, retval);
+  fluid_return_val_if_fail (name != NULL, retval);
+  fluid_return_val_if_fail (name[0] != '\0', retval);
+  fluid_return_val_if_fail (s != NULL, retval);
 
   fluid_rec_mutex_lock (settings->mutex);
 
-  if (fluid_settings_get(settings, name, &node)
+  if (fluid_settings_get(settings, name, &node) == FLUID_OK
       && (node->type == FLUID_STR_TYPE)) {
 
-    fluid_str_setting_t* setting = (fluid_str_setting_t*) node;
+    fluid_str_setting_t* setting = &node->str;
     fluid_list_t* list = setting->options;
 
     while (list) {
       char* option = (char*) fluid_list_get(list);
       if (FLUID_STRCMP(s, option) == 0) {
-	FLUID_FREE (option);
-	setting->options = fluid_list_remove_link(setting->options, list);
-	retval = 1;
+        FLUID_FREE (option);
+        setting->options = fluid_list_remove_link(setting->options, list);
+        retval = FLUID_OK;
         break;
       }
       list = fluid_list_next(list);
@@ -1078,24 +1080,23 @@ fluid_settings_remove_option(fluid_settings_t* settings, const char *name, const
  * @param settings a settings object
  * @param name a setting's name
  * @param val new setting's value
- * @return 1 if the value has been set, 0 otherwise
+ * @return #FLUID_OK if the value has been set, #FLUID_FAILED otherwise
  */
 int
 fluid_settings_setnum(fluid_settings_t* settings, const char *name, double val)
 {
   fluid_setting_node_t *node;
-  fluid_num_setting_t* setting;
-  int retval = 0;
+  int retval = FLUID_FAILED;
 
-  fluid_return_val_if_fail (settings != NULL, 0);
-  fluid_return_val_if_fail (name != NULL, 0);
-  fluid_return_val_if_fail (name[0] != '\0', 0);
+  fluid_return_val_if_fail (settings != NULL, retval);
+  fluid_return_val_if_fail (name != NULL, retval);
+  fluid_return_val_if_fail (name[0] != '\0', retval);
 
   fluid_rec_mutex_lock (settings->mutex);
 
-  if (fluid_settings_get(settings, name, &node)) {
+  if (fluid_settings_get(settings, name, &node) == FLUID_OK) {
     if (node->type == FLUID_NUM_TYPE) {
-      setting = (fluid_num_setting_t*) node;
+      fluid_num_setting_t* setting = &node->num;
 
       if (val < setting->min) val = setting->min;
       else if (val > setting->max) val = setting->max;
@@ -1104,15 +1105,14 @@ fluid_settings_setnum(fluid_settings_t* settings, const char *name, double val)
 
       /* Call under lock to keep update() synchronized with the current value */
       if (setting->update) (*setting->update)(setting->data, name, val);
-      retval = 1;
+      retval = FLUID_OK;
     }
   } else {
     /* insert a new setting */
-    fluid_num_setting_t* setting;
-    setting = new_fluid_num_setting(-1e10, 1e10, 0.0f, 0, NULL, NULL);
-    setting->value = val;
-    retval = fluid_settings_set(settings, name, setting);
-    if (retval != 1) delete_fluid_num_setting (setting);
+    node = new_fluid_num_setting(-1e10, 1e10, 0.0f, 0, NULL, NULL);
+    node->num.value = val;
+    retval = fluid_settings_set(settings, name, node);
+    if (retval != FLUID_OK) delete_fluid_num_setting (node);
   }
 
   fluid_rec_mutex_unlock (settings->mutex);
@@ -1126,26 +1126,26 @@ fluid_settings_setnum(fluid_settings_t* settings, const char *name, double val)
  * @param settings a settings object
  * @param name a setting's name
  * @param val variable pointer to receive the setting's numeric value
- * @return 1 if the value exists, 0 otherwise
+ * @return #FLUID_OK if the value exists, #FLUID_FAILED otherwise
  */
 int
 fluid_settings_getnum(fluid_settings_t* settings, const char *name, double* val)
 {
   fluid_setting_node_t *node;
-  int retval = 0;
+  int retval = FLUID_FAILED;
 
-  fluid_return_val_if_fail (settings != NULL, 0);
-  fluid_return_val_if_fail (name != NULL, 0);
-  fluid_return_val_if_fail (name[0] != '\0', 0);
-  fluid_return_val_if_fail (val != NULL, 0);
+  fluid_return_val_if_fail (settings != NULL, retval);
+  fluid_return_val_if_fail (name != NULL, retval);
+  fluid_return_val_if_fail (name[0] != '\0', retval);
+  fluid_return_val_if_fail (val != NULL, retval);
 
   fluid_rec_mutex_lock (settings->mutex);
 
-  if (fluid_settings_get(settings, name, &node)
+  if (fluid_settings_get(settings, name, &node) == FLUID_OK
       && (node->type == FLUID_NUM_TYPE)) {
-    fluid_num_setting_t* setting = (fluid_num_setting_t*) node;
+    fluid_num_setting_t* setting = &node->num;
     *val = setting->value;
-    retval = 1;
+    retval = FLUID_OK;
   }
 
   fluid_rec_mutex_unlock (settings->mutex);
@@ -1160,29 +1160,34 @@ fluid_settings_getnum(fluid_settings_t* settings, const char *name, double* val)
  * @param name a setting's name
  * @param min setting's range lower limit
  * @param max setting's range upper limit
+ * @return #FLUID_OK if the setting's range exists, #FLUID_FAILED otherwise
  */
-void
+int
 fluid_settings_getnum_range(fluid_settings_t* settings, const char *name,
                             double* min, double* max)
 {
   fluid_setting_node_t *node;
+  int retval = FLUID_FAILED;
 
-  fluid_return_if_fail (settings != NULL);
-  fluid_return_if_fail (name != NULL);
-  fluid_return_if_fail (name[0] != '\0');
-  fluid_return_if_fail (min != NULL);
-  fluid_return_if_fail (max != NULL);
+  fluid_return_val_if_fail (settings != NULL, retval);
+  fluid_return_val_if_fail (name != NULL, retval);
+  fluid_return_val_if_fail (name[0] != '\0', retval);
+  fluid_return_val_if_fail (min != NULL, retval);
+  fluid_return_val_if_fail (max != NULL, retval);
 
   fluid_rec_mutex_lock (settings->mutex);
 
-  if (fluid_settings_get(settings, name, &node)
+  if (fluid_settings_get(settings, name, &node) == FLUID_OK
       && (node->type == FLUID_NUM_TYPE)) {
-    fluid_num_setting_t* setting = (fluid_num_setting_t*) node;
+    fluid_num_setting_t* setting = &node->num;
     *min = setting->min;
     *max = setting->max;
+    retval = FLUID_OK;
   }
 
   fluid_rec_mutex_unlock (settings->mutex);
+  
+  return retval;
 }
 
 /**
@@ -1190,24 +1195,27 @@ fluid_settings_getnum_range(fluid_settings_t* settings, const char *name,
  *
  * @param settings a settings object
  * @param name a setting's name
- * @return the default value if the named setting exists, 0.0f otherwise
+ * @param val set to the default value if the named setting exists
+ * @return #FLUID_OK if the default value of the named setting exists, #FLUID_FAILED otherwise
  */
-double
-fluid_settings_getnum_default(fluid_settings_t* settings, const char *name)
+int
+fluid_settings_getnum_default(fluid_settings_t* settings, const char *name, double* val)
 {
   fluid_setting_node_t *node;
-  double retval = 0.0;
+  int retval = FLUID_FAILED;
 
-  fluid_return_val_if_fail (settings != NULL, 0.0);
-  fluid_return_val_if_fail (name != NULL, 0.0);
-  fluid_return_val_if_fail (name[0] != '\0', 0.0);
+  fluid_return_val_if_fail (settings != NULL, retval);
+  fluid_return_val_if_fail (name != NULL, retval);
+  fluid_return_val_if_fail (name[0] != '\0', retval);
+  fluid_return_val_if_fail (val != NULL, retval);
 
   fluid_rec_mutex_lock (settings->mutex);
 
-  if (fluid_settings_get(settings, name, &node)
+  if (fluid_settings_get(settings, name, &node) == FLUID_OK
       && (node->type == FLUID_NUM_TYPE)) {
-    fluid_num_setting_t* setting = (fluid_num_setting_t*) node;
-    retval = setting->def;
+    fluid_num_setting_t* setting = &node->num;
+    *val = setting->def;
+    retval = FLUID_OK;
   }
 
   fluid_rec_mutex_unlock (settings->mutex);
@@ -1221,24 +1229,23 @@ fluid_settings_getnum_default(fluid_settings_t* settings, const char *name)
  * @param settings a settings object
  * @param name a setting's name
  * @param val new setting's integer value
- * @return 1 if the value has been set, 0 otherwise
+ * @return #FLUID_OK if the value has been set, #FLUID_FAILED otherwise
  */
 int
 fluid_settings_setint(fluid_settings_t* settings, const char *name, int val)
 {
   fluid_setting_node_t *node;
-  fluid_int_setting_t* setting;
-  int retval = 0;
+  int retval = FLUID_FAILED;
 
-  fluid_return_val_if_fail (settings != NULL, 0);
-  fluid_return_val_if_fail (name != NULL, 0);
-  fluid_return_val_if_fail (name[0] != '\0', 0);
+  fluid_return_val_if_fail (settings != NULL, retval);
+  fluid_return_val_if_fail (name != NULL, retval);
+  fluid_return_val_if_fail (name[0] != '\0', retval);
 
   fluid_rec_mutex_lock (settings->mutex);
 
-  if (fluid_settings_get(settings, name, &node)) {
+  if (fluid_settings_get(settings, name, &node) == FLUID_OK) {
     if (node->type == FLUID_INT_TYPE) {
-      setting = (fluid_int_setting_t*) node;
+      fluid_int_setting_t* setting = &node->i;
 
       if (val < setting->min) val = setting->min;
       else if (val > setting->max) val = setting->max;
@@ -1247,15 +1254,14 @@ fluid_settings_setint(fluid_settings_t* settings, const char *name, int val)
 
       /* Call under lock to keep update() synchronized with the current value */
       if (setting->update) (*setting->update)(setting->data, name, val);
-      retval = 1;
+      retval = FLUID_OK;
     }
   } else {
     /* insert a new setting */
-    fluid_int_setting_t* setting;
-    setting = new_fluid_int_setting(INT_MIN, INT_MAX, 0, 0, NULL, NULL);
-    setting->value = val;
-    retval = fluid_settings_set(settings, name, setting);
-    if (retval != 1) delete_fluid_int_setting (setting);
+    node = new_fluid_int_setting(INT_MIN, INT_MAX, 0, 0, NULL, NULL);
+    node->i.value = val;
+    retval = fluid_settings_set(settings, name, node);
+    if (retval != FLUID_OK) delete_fluid_int_setting (node);
   }
 
   fluid_rec_mutex_unlock (settings->mutex);
@@ -1269,26 +1275,26 @@ fluid_settings_setint(fluid_settings_t* settings, const char *name, int val)
  * @param settings a settings object
  * @param name a setting's name
  * @param val pointer to a variable to receive the setting's integer value
- * @return 1 if the value exists, 0 otherwise
+ * @return #FLUID_OK if the value exists, #FLUID_FAILED otherwise
  */
 int
 fluid_settings_getint(fluid_settings_t* settings, const char *name, int* val)
 {
   fluid_setting_node_t *node;
-  int retval = 0;
+  int retval = FLUID_FAILED;
 
-  fluid_return_val_if_fail (settings != NULL, 0);
-  fluid_return_val_if_fail (name != NULL, 0);
-  fluid_return_val_if_fail (name[0] != '\0', 0);
-  fluid_return_val_if_fail (val != NULL, 0);
+  fluid_return_val_if_fail (settings != NULL, retval);
+  fluid_return_val_if_fail (name != NULL, retval);
+  fluid_return_val_if_fail (name[0] != '\0', retval);
+  fluid_return_val_if_fail (val != NULL, retval);
 
   fluid_rec_mutex_lock (settings->mutex);
 
-  if (fluid_settings_get(settings, name, &node)
+  if (fluid_settings_get(settings, name, &node) == FLUID_OK
       && (node->type == FLUID_INT_TYPE)) {
-    fluid_int_setting_t* setting = (fluid_int_setting_t*) node;
+    fluid_int_setting_t* setting = &node->i;
     *val = setting->value;
-    retval = 1;
+    retval = FLUID_OK;
   }
 
   fluid_rec_mutex_unlock (settings->mutex);
@@ -1302,29 +1308,34 @@ fluid_settings_getint(fluid_settings_t* settings, const char *name, int* val)
  * @param name a setting's name
  * @param min setting's range lower limit
  * @param max setting's range upper limit
+ * @return #FLUID_OK if the setting's range exists, #FLUID_FAILED otherwise
  */
-void
+int
 fluid_settings_getint_range(fluid_settings_t* settings, const char *name,
                             int* min, int* max)
 {
   fluid_setting_node_t *node;
+  int retval = FLUID_FAILED;
 
-  fluid_return_if_fail (settings != NULL);
-  fluid_return_if_fail (name != NULL);
-  fluid_return_if_fail (name[0] != '\0');
-  fluid_return_if_fail (min != NULL);
-  fluid_return_if_fail (max != NULL);
+  fluid_return_val_if_fail (settings != NULL, retval);
+  fluid_return_val_if_fail (name != NULL, retval);
+  fluid_return_val_if_fail (name[0] != '\0', retval);
+  fluid_return_val_if_fail (min != NULL, retval);
+  fluid_return_val_if_fail (max != NULL, retval);
 
   fluid_rec_mutex_lock (settings->mutex);
 
-  if (fluid_settings_get(settings, name, &node)
+  if (fluid_settings_get(settings, name, &node) == FLUID_OK
       && (node->type == FLUID_INT_TYPE)) {
-    fluid_int_setting_t* setting = (fluid_int_setting_t*) node;
+    fluid_int_setting_t* setting = &node->i;
     *min = setting->min;
     *max = setting->max;
+    retval = FLUID_OK;
   }
 
   fluid_rec_mutex_unlock (settings->mutex);
+  
+  return retval;
 }
 
 /**
@@ -1332,24 +1343,26 @@ fluid_settings_getint_range(fluid_settings_t* settings, const char *name,
  *
  * @param settings a settings object
  * @param name a setting's name
- * @return the setting's default integer value it it exists, zero otherwise
+ * @param val set to the setting's default integer value if it exists
+ * @return #FLUID_OK if the setting's default integer value exists, #FLUID_FAILED otherwise
  */
-int
-fluid_settings_getint_default(fluid_settings_t* settings, const char *name)
+int fluid_settings_getint_default(fluid_settings_t* settings, const char *name, int* val)
 {
   fluid_setting_node_t *node;
-  int retval = 0;
+  int retval = FLUID_FAILED;
 
-  fluid_return_val_if_fail (settings != NULL, 0);
-  fluid_return_val_if_fail (name != NULL, 0);
-  fluid_return_val_if_fail (name[0] != '\0', 0);
+  fluid_return_val_if_fail (settings != NULL, retval);
+  fluid_return_val_if_fail (name != NULL, retval);
+  fluid_return_val_if_fail (name[0] != '\0', retval);
+  fluid_return_val_if_fail (val != NULL, retval);
 
   fluid_rec_mutex_lock (settings->mutex);
 
-  if (fluid_settings_get(settings, name, &node)
+  if (fluid_settings_get(settings, name, &node) == FLUID_OK
       && (node->type == FLUID_INT_TYPE)) {
-    fluid_int_setting_t* setting = (fluid_int_setting_t*) node;
-    retval = setting->def;
+    fluid_int_setting_t* setting = &node->i;
+    *val = setting->def;
+    retval = FLUID_OK;
   }
 
   fluid_rec_mutex_unlock (settings->mutex);
@@ -1366,7 +1379,7 @@ fluid_settings_getint_default(fluid_settings_t* settings, const char *name)
  * @param data any user provided pointer
  * @param func callback function to be called on each iteration
  *
- * NOTE: Starting with FluidSynth 1.1.0 the \a func callback is called for each
+ * @note Starting with FluidSynth 1.1.0 the \a func callback is called for each
  * option in alphabetical order.  Sort order was undefined in previous versions.
  */
 void
@@ -1384,13 +1397,14 @@ fluid_settings_foreach_option (fluid_settings_t* settings, const char *name,
 
   fluid_rec_mutex_lock (settings->mutex);       /* ++ lock */
 
-  if (!fluid_settings_get (settings, name, &node) || node->type != FLUID_STR_TYPE)
+  if (fluid_settings_get (settings, name, &node) != FLUID_OK
+      || node->type != FLUID_STR_TYPE)
   {
     fluid_rec_mutex_unlock (settings->mutex);   /* -- unlock */
     return;
   }
 
-  setting = (fluid_str_setting_t*)node;
+  setting = &node->str;
 
   /* Duplicate option list */
   for (p = setting->options; p; p = p->next)
@@ -1426,8 +1440,9 @@ fluid_settings_option_count (fluid_settings_t *settings, const char *name)
   fluid_return_val_if_fail (name[0] != '\0', -1);
 
   fluid_rec_mutex_lock (settings->mutex);
-  if (fluid_settings_get(settings, name, &node) && node->type == FLUID_STR_TYPE)
-    count = fluid_list_size (((fluid_str_setting_t *)node)->options);
+  if (fluid_settings_get(settings, name, &node) == FLUID_OK
+      && node->type == FLUID_STR_TYPE)
+    count = fluid_list_size (node->str.options);
   fluid_rec_mutex_unlock (settings->mutex);
 
   return (count);
@@ -1460,13 +1475,14 @@ fluid_settings_option_concat (fluid_settings_t *settings, const char *name,
 
   fluid_rec_mutex_lock (settings->mutex);       /* ++ lock */
 
-  if (!fluid_settings_get (settings, name, &node) || node->type != FLUID_STR_TYPE)
+  if (fluid_settings_get (settings, name, &node) != FLUID_OK
+      || node->type != FLUID_STR_TYPE)
   {
     fluid_rec_mutex_unlock (settings->mutex);   /* -- unlock */
     return (NULL);
   }
 
-  setting = (fluid_str_setting_t*)node;
+  setting = &node->str;
 
   /* Duplicate option list, count options and get total string length */
   for (p = setting->options, count = 0, len = 0; p; p = p->next, count++)
@@ -1542,7 +1558,7 @@ fluid_settings_foreach_iter (void* key, void* value, void* data)
     if (s) bag->names = fluid_list_append (bag->names, s);
     break;
   case FLUID_SET_TYPE:
-    fluid_hashtable_foreach(((fluid_set_setting_t *)value)->hashtable,
+    fluid_hashtable_foreach(node->set.hashtable,
                             fluid_settings_foreach_iter, bag);
     break;
   }
@@ -1560,7 +1576,7 @@ fluid_settings_foreach_iter (void* key, void* value, void* data)
  * @param data any user provided pointer
  * @param func callback function to be called on each iteration
  *
- * NOTE: Starting with FluidSynth 1.1.0 the \a func callback is called for each
+ * @note Starting with FluidSynth 1.1.0 the \a func callback is called for each
  * setting in alphabetical order.  Sort order was undefined in previous versions.
  */
 void
@@ -1570,7 +1586,6 @@ fluid_settings_foreach (fluid_settings_t* settings, void* data,
   fluid_settings_foreach_bag_t bag;
   fluid_setting_node_t *node;
   fluid_list_t *p;
-  int r;
 
   fluid_return_if_fail (settings != NULL);
   fluid_return_if_fail (func != NULL);
@@ -1589,8 +1604,9 @@ fluid_settings_foreach (fluid_settings_t* settings, void* data,
   /* Loop over names and call the callback */
   for (p = bag.names; p; p = p->next)
   {
-    r = fluid_settings_get (settings, (char *)(p->data), &node);
-    if (r && node) (*func) (data, (char *)(p->data), node->type);
+    if (fluid_settings_get (settings, (char *)(p->data), &node) == FLUID_OK
+        && node)
+        (*func) (data, (char *)(p->data), node->type);
     FLUID_FREE (p->data);       /* -- Free name */
   }
 

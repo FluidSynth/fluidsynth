@@ -1605,50 +1605,57 @@ int fluid_voice_get_velocity(const fluid_voice_t* voice)
 static fluid_real_t
 fluid_voice_get_lower_boundary_for_attenuation(fluid_voice_t* voice)
 {
-  int i;
-  fluid_mod_t* mod;
-  fluid_real_t possible_att_reduction_cB=0;
-  fluid_real_t lower_bound;
+    int i;
+    fluid_mod_t* mod;
+    fluid_real_t possible_att_reduction_cB=0;
+    fluid_real_t lower_bound;
 
-  for (i = 0; i < voice->mod_count; i++) {
-    mod = &voice->mod[i];
+    for (i = 0; i < voice->mod_count; i++) {
+        mod = &voice->mod[i];
 
-    /* Modulator has attenuation as target and can change over time? */
-    if ((mod->dest == GEN_ATTENUATION)
-	&& ((mod->flags1 & FLUID_MOD_CC) || (mod->flags2 & FLUID_MOD_CC))) {
+        /* Modulator has attenuation as target and can change over time? */
+        if ((mod->dest == GEN_ATTENUATION)
+                && ((mod->flags1 & FLUID_MOD_CC)
+                    || (mod->flags2 & FLUID_MOD_CC)
+                    || (mod->src1 == FLUID_MOD_CHANNELPRESSURE)
+                    || (mod->src1 == FLUID_MOD_KEYPRESSURE)
+                    || (mod->src1 == FLUID_MOD_PITCHWHEEL)
+                    || (mod->src2 == FLUID_MOD_CHANNELPRESSURE)
+                    || (mod->src2 == FLUID_MOD_KEYPRESSURE)
+                    || (mod->src2 == FLUID_MOD_PITCHWHEEL))) {
 
-      fluid_real_t current_val = fluid_mod_get_value(mod, voice->channel, voice);
-      fluid_real_t v = fabs(mod->amount);
+            fluid_real_t current_val = fluid_mod_get_value(mod, voice->channel, voice);
+            fluid_real_t v = fabs(mod->amount);
 
-      if ((mod->src1 == FLUID_MOD_PITCHWHEEL)
-	  || (mod->flags1 & FLUID_MOD_BIPOLAR)
-	  || (mod->flags2 & FLUID_MOD_BIPOLAR)
-	  || (mod->amount < 0)) {
-	/* Can this modulator produce a negative contribution? */
-	v *= -1.0;
-      } else {
-	/* No negative value possible. But still, the minimum contribution is 0. */
-	v = 0;
-      }
+            if ((mod->src1 == FLUID_MOD_PITCHWHEEL)
+                    || (mod->flags1 & FLUID_MOD_BIPOLAR)
+                    || (mod->flags2 & FLUID_MOD_BIPOLAR)
+                    || (mod->amount < 0)) {
+                /* Can this modulator produce a negative contribution? */
+                v *= -1.0;
+            } else {
+                /* No negative value possible. But still, the minimum contribution is 0. */
+                v = 0;
+            }
 
-      /* For example:
-       * - current_val=100
-       * - min_val=-4000
-       * - possible_att_reduction_cB += 4100
-       */
-      if (current_val > v){
-	possible_att_reduction_cB += (current_val - v);
-      }
+            /* For example:
+             * - current_val=100
+             * - min_val=-4000
+             * - possible_att_reduction_cB += 4100
+             */
+            if (current_val > v){
+                possible_att_reduction_cB += (current_val - v);
+            }
+        }
     }
-  }
 
-  lower_bound = voice->attenuation-possible_att_reduction_cB;
+    lower_bound = voice->attenuation-possible_att_reduction_cB;
 
-  /* SF2.01 specs do not allow negative attenuation */
-  if (lower_bound < 0) {
-    lower_bound = 0;
-  }
-  return lower_bound;
+    /* SF2.01 specs do not allow negative attenuation */
+    if (lower_bound < 0) {
+        lower_bound = 0;
+    }
+    return lower_bound;
 }
 
 

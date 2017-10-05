@@ -58,6 +58,7 @@ static int fluid_synth_modulate_voices_LOCAL(fluid_synth_t* synth, int chan,
                                              int is_cc, int ctrl);
 static int fluid_synth_modulate_voices_all_LOCAL(fluid_synth_t* synth, int chan);
 static int fluid_synth_update_channel_pressure_LOCAL(fluid_synth_t* synth, int channum);
+static int fluid_synth_update_key_pressure_LOCAL(fluid_synth_t* synth, int chan, int key);
 static int fluid_synth_update_pitch_bend_LOCAL(fluid_synth_t* synth, int chan);
 static int fluid_synth_update_pitch_wheel_sens_LOCAL(fluid_synth_t* synth, int chan);
 static int fluid_synth_set_preset (fluid_synth_t *synth, int chan,
@@ -178,8 +179,6 @@ void fluid_synth_settings(fluid_settings_t* settings)
 {
   fluid_settings_register_int(settings, "synth.verbose", 0, 0, 1,
                               FLUID_HINT_TOGGLED, NULL, NULL);
-  fluid_settings_register_int(settings, "synth.dump", 0, 0, 1,
-                              FLUID_HINT_TOGGLED, NULL, NULL);
   fluid_settings_register_int(settings, "synth.reverb.active", 1, 0, 1,
                               FLUID_HINT_TOGGLED, NULL, NULL);
   fluid_settings_register_int(settings, "synth.chorus.active", 1, 0, 1,
@@ -232,6 +231,10 @@ void fluid_synth_settings(fluid_settings_t* settings)
                               FLUID_HINT_TOGGLED, NULL, NULL);
   fluid_settings_register_int(settings, "synth.band-pass-filter", 0, 0, 1,
                               FLUID_HINT_TOGGLED, NULL, NULL);
+  
+  fluid_settings_register_str(settings, "synth.volenv", "emu", 0, NULL, NULL);
+  fluid_settings_add_option(settings, "synth.volenv", "emu");
+  fluid_settings_add_option(settings, "synth.volenv", "compliant");
 }
 
 /**
@@ -320,7 +323,7 @@ fluid_synth_init(void)
 		       FLUID_MOD_GC                        /* CC=0 */
 		       | FLUID_MOD_LINEAR                  /* type=0 */
 		       | FLUID_MOD_UNIPOLAR                /* P=0 */
-                       | FLUID_MOD_NEGATIVE                /* D=1 */
+		       | FLUID_MOD_NEGATIVE                /* D=1 */
 		       );
   fluid_mod_set_source2(&default_vel2filter_mod, FLUID_MOD_VELOCITY, /* Index=2 */
 		       FLUID_MOD_GC                                 /* CC=0 */
@@ -348,7 +351,7 @@ fluid_synth_init(void)
 
 
   /* SF2.01 page 53 section 8.4.4: Mod wheel (Controller 1) to Vibrato LFO pitch depth */
-  fluid_mod_set_source1(&default_mod2viblfo_mod, 1, /* Index=1 */
+  fluid_mod_set_source1(&default_mod2viblfo_mod, MODULATION_MSB, /* Index=1 */
 		       FLUID_MOD_CC                        /* CC=1 */
 		       | FLUID_MOD_LINEAR                  /* type=0 */
 		       | FLUID_MOD_UNIPOLAR                /* P=0 */
@@ -361,7 +364,7 @@ fluid_synth_init(void)
 
 
   /* SF2.01 page 55 section 8.4.5: MIDI continuous controller 7 to initial attenuation*/
-  fluid_mod_set_source1(&default_att_mod, 7,                     /* index=7 */
+  fluid_mod_set_source1(&default_att_mod, VOLUME_MSB,    /* index=7 */
 		       FLUID_MOD_CC                              /* CC=1 */
 		       | FLUID_MOD_CONCAVE                       /* type=1 */
 		       | FLUID_MOD_UNIPOLAR                      /* P=0 */
@@ -374,7 +377,7 @@ fluid_synth_init(void)
 
 
   /* SF2.01 page 55 section 8.4.6 MIDI continuous controller 10 to Pan Position */
-  fluid_mod_set_source1(&default_pan_mod, 10,                    /* index=10 */
+  fluid_mod_set_source1(&default_pan_mod, PAN_MSB,       /* index=10 */
 		       FLUID_MOD_CC                              /* CC=1 */
 		       | FLUID_MOD_LINEAR                        /* type=0 */
 		       | FLUID_MOD_BIPOLAR                       /* P=1 */
@@ -389,7 +392,7 @@ fluid_synth_init(void)
 
 
   /* SF2.01 page 55 section 8.4.7: MIDI continuous controller 11 to initial attenuation*/
-  fluid_mod_set_source1(&default_expr_mod, 11,                     /* index=11 */
+  fluid_mod_set_source1(&default_expr_mod, EXPRESSION_MSB, /* index=11 */
 		       FLUID_MOD_CC                              /* CC=1 */
 		       | FLUID_MOD_CONCAVE                       /* type=1 */
 		       | FLUID_MOD_UNIPOLAR                      /* P=0 */
@@ -402,7 +405,7 @@ fluid_synth_init(void)
 
 
   /* SF2.01 page 55 section 8.4.8: MIDI continuous controller 91 to Reverb send */
-  fluid_mod_set_source1(&default_reverb_mod, 91,                 /* index=91 */
+  fluid_mod_set_source1(&default_reverb_mod, EFFECTS_DEPTH1, /* index=91 */
 		       FLUID_MOD_CC                              /* CC=1 */
 		       | FLUID_MOD_LINEAR                        /* type=0 */
 		       | FLUID_MOD_UNIPOLAR                      /* P=0 */
@@ -415,7 +418,7 @@ fluid_synth_init(void)
 
 
   /* SF2.01 page 55 section 8.4.9: MIDI continuous controller 93 to Chorus send */
-  fluid_mod_set_source1(&default_chorus_mod, 93,                 /* index=93 */
+  fluid_mod_set_source1(&default_chorus_mod, EFFECTS_DEPTH3, /* index=93 */
 		       FLUID_MOD_CC                              /* CC=1 */
 		       | FLUID_MOD_LINEAR                        /* type=0 */
 		       | FLUID_MOD_UNIPOLAR                      /* P=0 */
@@ -602,9 +605,30 @@ new_fluid_synth(fluid_settings_t *settings)
   fluid_sfloader_t* loader;
   double gain;
   int i, nbuf;
-
+  int with_ladspa = 0;
+  
   /* initialize all the conversion tables and other stuff */
-  if (fluid_synth_initialized == 0) {
+  if (fluid_synth_initialized == 0)
+  {
+    char buf[64];
+    if (fluid_settings_str_equal (settings, "synth.volenv", "compliant"))
+    {
+            fluid_conversion_set_atten_power(FLUID_ATTEN_POWER_DEFAULT_COMPLIANT);
+    }
+    else if (fluid_settings_str_equal (settings, "synth.volenv", "emu"))
+    {
+            fluid_conversion_set_atten_power(FLUID_ATTEN_POWER_DEFAULT_EMU);
+    }
+    else
+    {
+        if (fluid_settings_copystr(settings, "synth.volenv", buf, sizeof(buf)/sizeof(buf[0])) == FLUID_OK)
+        {
+            double atten = atof(buf);
+            if(atten != 0.0)
+                fluid_conversion_set_atten_power(atten);
+        }
+    }
+    
     fluid_synth_init();
   }
 
@@ -625,7 +649,6 @@ new_fluid_synth(fluid_settings_t *settings)
   fluid_settings_getint(settings, "synth.reverb.active", &synth->with_reverb);
   fluid_settings_getint(settings, "synth.chorus.active", &synth->with_chorus);
   fluid_settings_getint(settings, "synth.verbose", &synth->verbose);
-  fluid_settings_getint(settings, "synth.dump", &synth->dump);
 
   fluid_settings_getint(settings, "synth.polyphony", &synth->polyphony);
   fluid_settings_getnum(settings, "synth.sample-rate", &synth->sample_rate);
@@ -724,8 +747,15 @@ new_fluid_synth(fluid_settings_t *settings)
 
 #ifdef LADSPA
   /* Create and initialize the Fx unit.*/
-  synth->LADSPA_FxUnit = new_fluid_LADSPA_FxUnit(synth);
-  fluid_rvoice_mixer_set_ladspa(synth->eventhandler->mixer, synth->LADSPA_FxUnit);
+  fluid_settings_getint(settings, "synth.ladspa.active", &with_ladspa);
+  if (with_ladspa) {
+    synth->LADSPA_FxUnit = new_fluid_LADSPA_FxUnit(synth);
+    if(synth->LADSPA_FxUnit == NULL) {
+      FLUID_LOG(FLUID_ERR, "Out of memory");
+      goto error_recovery;
+    }
+    fluid_rvoice_mixer_set_ladspa(synth->eventhandler->mixer, synth->LADSPA_FxUnit);
+  }
 #endif
   
   /* allocate and add the default sfont loader */
@@ -807,13 +837,13 @@ new_fluid_synth(fluid_settings_t *settings)
   }
 
   synth->bank_select = FLUID_BANK_STYLE_GS;
-  if (fluid_settings_str_equal (settings, "synth.midi-bank-select", "gm") == 1)
+  if (fluid_settings_str_equal (settings, "synth.midi-bank-select", "gm"))
     synth->bank_select = FLUID_BANK_STYLE_GM;
-  else if (fluid_settings_str_equal (settings, "synth.midi-bank-select", "gs") == 1)
+  else if (fluid_settings_str_equal (settings, "synth.midi-bank-select", "gs"))
     synth->bank_select = FLUID_BANK_STYLE_GS;
-  else if (fluid_settings_str_equal (settings, "synth.midi-bank-select", "xg") == 1)
+  else if (fluid_settings_str_equal (settings, "synth.midi-bank-select", "xg"))
     synth->bank_select = FLUID_BANK_STYLE_XG;
-  else if (fluid_settings_str_equal (settings, "synth.midi-bank-select", "mma") == 1)
+  else if (fluid_settings_str_equal (settings, "synth.midi-bank-select", "mma"))
     synth->bank_select = FLUID_BANK_STYLE_MMA;
 
   fluid_synth_process_event_queue(synth);
@@ -945,8 +975,10 @@ delete_fluid_synth(fluid_synth_t* synth)
 
 #ifdef LADSPA
   /* Release the LADSPA Fx unit */
-  fluid_LADSPA_shutdown(synth->LADSPA_FxUnit);
-  FLUID_FREE(synth->LADSPA_FxUnit);
+  if (synth->LADSPA_FxUnit) {
+    fluid_LADSPA_shutdown(synth->LADSPA_FxUnit);
+    FLUID_FREE(synth->LADSPA_FxUnit);
+  }
 #endif
 
   fluid_rec_mutex_destroy(synth->mutex);
@@ -1787,6 +1819,53 @@ fluid_synth_update_channel_pressure_LOCAL(fluid_synth_t* synth, int chan)
 }
 
 /**
+ * Set the MIDI polyphonic key pressure controller value.
+ * @param synth FluidSynth instance
+ * @param chan MIDI channel number (0 to MIDI channel count - 1)
+ * @param key MIDI key number (0-127)
+ * @param val MIDI key pressure value (0-127)
+ * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @since @NEXT_RELEASE@
+ */
+int
+fluid_synth_key_pressure(fluid_synth_t* synth, int chan, int key, int val)
+{
+  int result;
+  fluid_return_val_if_fail (key >= 0 && key <= 127, FLUID_FAILED);
+  fluid_return_val_if_fail (val >= 0 && val <= 127, FLUID_FAILED);
+
+  FLUID_API_ENTRY_CHAN(FLUID_FAILED);
+
+  if (synth->verbose)
+    FLUID_LOG(FLUID_INFO, "keypressure\t%d\t%d\t%d", chan, key, val);
+
+  fluid_channel_set_key_pressure (synth->channel[chan], key, val);
+
+  result = fluid_synth_update_key_pressure_LOCAL (synth, chan, key);
+  FLUID_API_RETURN(result);
+}
+
+/* Updates key pressure from within synthesis thread */
+static int
+fluid_synth_update_key_pressure_LOCAL(fluid_synth_t* synth, int chan, int key)
+{
+  fluid_voice_t* voice;
+  int i;
+  int result = FLUID_OK;
+
+  for (i = 0; i < synth->polyphony; i++) {
+    voice = synth->voice[i];
+
+    if (voice->chan == chan && voice->key == key) {
+      result = fluid_voice_modulate(voice, 0, FLUID_MOD_KEYPRESSURE);
+      if (result != FLUID_OK)
+        return result;
+    }
+  }
+  return result;
+}
+
+/**
  * Set the MIDI pitch bend controller value on a MIDI channel.
  * @param synth FluidSynth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
@@ -2114,7 +2193,7 @@ fluid_synth_sfont_select(fluid_synth_t* synth, int chan, unsigned int sfont_id)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  * @since 1.1.1
  *
- * Note: Channel retains its SoundFont ID and bank numbers, while the program
+ * @note Channel retains its SoundFont ID and bank numbers, while the program
  * number is set to an "unset" state.  MIDI program changes may re-assign a
  * preset if one matches.
  */
@@ -2440,7 +2519,7 @@ fluid_synth_get_polyphony(fluid_synth_t* synth)
  * @return Number of currently active voices.
  * @since 1.1.0
  *
- * Note: To generate accurate continuous statistics of the voice count, caller
+ * @note To generate accurate continuous statistics of the voice count, caller
  * should ensure this function is called synchronously with the audio synthesis
  * process.  This can be done in the new_fluid_audio_driver2() audio callback
  * function for example.
@@ -3685,11 +3764,10 @@ fluid_synth_get_sfont_by_name(fluid_synth_t* synth, const char *name)
  * Get active preset on a MIDI channel.
  * @param synth FluidSynth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
- * @return Preset or NULL if no preset active on channel
- * @deprecated fluid_synth_get_channel_info() should replace most use cases.
+ * @return Preset or NULL if no preset active on \c chan
  *
  * @note Should only be called from within synthesis thread, which includes
- * SoundFont loader preset noteon methods.  Not thread safe otherwise.
+ * SoundFont loader preset noteon methods. Not thread safe otherwise.
  */
 fluid_preset_t *
 fluid_synth_get_channel_preset(fluid_synth_t* synth, int chan)
@@ -3710,6 +3788,8 @@ fluid_synth_get_channel_preset(fluid_synth_t* synth, int chan)
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
  * @param info Caller supplied structure to fill with preset information
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ * @deprecated Provides redundant functionality that can be achieved with
+ * fluid_synth_get_channel_preset() or fluid_synth_get_program().
  * @since 1.1.1
  */
 int
@@ -4791,124 +4871,40 @@ fluid_synth_get_settings(fluid_synth_t* synth)
   return synth->settings;
 }
 
-/**
- * Convenience function to set a string setting of a synth.
- * @param synth FluidSynth instance
- * @param name Name of setting parameter
- * @param str Value to assign to the setting
- * @return FLUID_OK on success, FLUID_FAILED otherwise
- */
-int
-fluid_synth_setstr(fluid_synth_t* synth, const char* name, const char* str)
-{
-  fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
-  fluid_return_val_if_fail (name != NULL, FLUID_FAILED);
-
-  return fluid_settings_setstr(synth->settings, name, str);
-}
-
-/**
- * Convenience function to duplicate a string setting of a synth.
- * @param synth FluidSynth instance
- * @param name Name of setting parameter
- * @param str Location to store a pointer to the newly allocated string value
- * @return FLUID_OK on success, FLUID_FAILED otherwise
- *
- * The returned string is owned by the caller and should be freed with free()
- * when finished with it.
- */
-int
-fluid_synth_dupstr(fluid_synth_t* synth, const char* name, char** str)
-{
-  fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
-  fluid_return_val_if_fail (name != NULL, FLUID_FAILED);
-  fluid_return_val_if_fail (str != NULL, FLUID_FAILED);
-
-  return fluid_settings_dupstr(synth->settings, name, str);
-}
-
-/**
- * Convenience function to set a floating point setting of a synth.
- * @param synth FluidSynth instance
- * @param name Name of setting parameter
- * @param val Value to assign to the setting
- * @return FLUID_OK on success, FLUID_FAILED otherwise
- */
-int
-fluid_synth_setnum(fluid_synth_t* synth, const char* name, double val)
-{
-  fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
-  fluid_return_val_if_fail (name != NULL, FLUID_FAILED);
-
-  return fluid_settings_setnum(synth->settings, name, val);
-}
-
-/**
- * Convenience function to get a floating point setting of a synth.
- * @param synth FluidSynth instance
- * @param name Name of setting parameter
- * @param val Location to store the current value of the setting
- * @return FLUID_OK on success, FLUID_FAILED otherwise
- */
-int
-fluid_synth_getnum(fluid_synth_t* synth, const char* name, double* val)
-{
-  fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
-  fluid_return_val_if_fail (name != NULL, FLUID_FAILED);
-
-  return fluid_settings_getnum(synth->settings, name, val);
-}
-
-/**
- * Convenience function to set an integer setting of a synth.
- * @param synth FluidSynth instance
- * @param name Name of setting parameter
- * @param val Value to assign to the setting
- * @return FLUID_OK on success, FLUID_FAILED otherwise
- */
-int
-fluid_synth_setint(fluid_synth_t* synth, const char* name, int val)
-{
-  fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
-  fluid_return_val_if_fail (name != NULL, FLUID_FAILED);
-
-  return fluid_settings_setint(synth->settings, name, val);
-}
-
-/**
- * Convenience function to get an integer setting of a synth.
- * @param synth FluidSynth instance
- * @param name Name of setting parameter
- * @param val Location to store the current value of the setting
- * @return FLUID_OK on success, FLUID_FAILED otherwise
- */
-int
-fluid_synth_getint(fluid_synth_t* synth, const char* name, int* val)
-{
-  fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
-  fluid_return_val_if_fail (name != NULL, FLUID_FAILED);
-
-  return fluid_settings_getint(synth->settings, name, val);
-}
 
 /**
  * Set a SoundFont generator (effect) value on a MIDI channel in real-time.
  * @param synth FluidSynth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
  * @param param SoundFont generator ID (#fluid_gen_type)
- * @param value Offset generator value to assign to the MIDI channel
+ * @param value Offset or absolute generator value to assign to the MIDI channel
+ * @param absolute FALSE to assign a relative value, TRUE to assign an absolute value
+ * @param normalized FALSE if value is specified in the native units of the generator,
+ *   TRUE to take the value as a 0.0-1.0 range and apply it to the valid
+ *   generator effect range (scaled and shifted as necessary).
  * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @since @NEXT_RELEASE@
  *
- * Parameter numbers and ranges are described in the SoundFont 2.01
- * specification PDF, paragraph 8.1.3, page 48.  See #fluid_gen_type.
+ * This function allows for setting all effect parameters in real time on a
+ * MIDI channel.  Setting absolute to non-zero will cause the value to override
+ * any generator values set in the instruments played on the MIDI channel.
+ * See SoundFont 2.01 spec, paragraph 8.1.3, page 48 for details on SoundFont
+ * generator parameters and valid ranges.
+ * 
+ * @note The old behaviour of fluid_synth_set_gen() assumed \c absolute and \c normalized to
+ * be FALSE.
  */
 int
-fluid_synth_set_gen(fluid_synth_t* synth, int chan, int param, float value)
+fluid_synth_set_gen(fluid_synth_t* synth, int chan, int param,
+		     float value, int absolute, int normalized)
 {
+  float v;
   fluid_return_val_if_fail (param >= 0 && param < GEN_LAST, FLUID_FAILED);
   FLUID_API_ENTRY_CHAN(FLUID_FAILED);
 
-  fluid_synth_set_gen_LOCAL (synth, chan, param, value, FALSE);
+  v = normalized ? fluid_gen_scale(param, value) : value;
+
+  fluid_synth_set_gen_LOCAL (synth, chan, param, v, absolute);
 
   FLUID_API_RETURN(FLUID_OK);
 }
@@ -4929,40 +4925,6 @@ fluid_synth_set_gen_LOCAL (fluid_synth_t* synth, int chan, int param, float valu
     if (fluid_voice_get_channel(voice) == chan)
       fluid_voice_set_param (voice, param, value, absolute);
   }
-}
-
-/**
- * Set a SoundFont generator (effect) value on a MIDI channel in real-time.
- * @param synth FluidSynth instance
- * @param chan MIDI channel number (0 to MIDI channel count - 1)
- * @param param SoundFont generator ID (#fluid_gen_type)
- * @param value Offset or absolute generator value to assign to the MIDI channel
- * @param absolute 0 to assign a relative value, non-zero to assign an absolute value
- * @param normalized 0 if value is specified in the native units of the generator,
- *   non-zero to take the value as a 0.0-1.0 range and apply it to the valid
- *   generator effect range (scaled and shifted as necessary).
- * @return FLUID_OK on success, FLUID_FAILED otherwise
- * @since 1.1.0
- *
- * This function allows for setting all effect parameters in real time on a
- * MIDI channel.  Setting absolute to non-zero will cause the value to override
- * any generator values set in the instruments played on the MIDI channel.
- * See SoundFont 2.01 spec, paragraph 8.1.3, page 48 for details on SoundFont
- * generator parameters and valid ranges.
- */
-int
-fluid_synth_set_gen2(fluid_synth_t* synth, int chan, int param,
-		     float value, int absolute, int normalized)
-{
-  float v;
-  fluid_return_val_if_fail (param >= 0 && param < GEN_LAST, FLUID_FAILED);
-  FLUID_API_ENTRY_CHAN(FLUID_FAILED);
-
-  v = normalized ? fluid_gen_scale(param, value) : value;
-
-  fluid_synth_set_gen_LOCAL (synth, chan, param, v, absolute);
-
-  FLUID_API_RETURN(FLUID_OK);
 }
 
 /**
@@ -5032,6 +4994,11 @@ fluid_synth_handle_midi_event(void* data, fluid_midi_event_t* event)
 
       case CHANNEL_PRESSURE:
 	return fluid_synth_channel_pressure(synth, chan, fluid_midi_event_get_program(event));
+
+      case KEY_PRESSURE:
+	return fluid_synth_key_pressure(synth, chan,
+					fluid_midi_event_get_key(event),
+					fluid_midi_event_get_value(event));
 
       case PITCH_BEND:
 	return fluid_synth_pitch_bend(synth, chan, fluid_midi_event_get_pitch(event));
@@ -5201,7 +5168,6 @@ void fluid_synth_api_exit(fluid_synth_t* synth)
   }
   
 }
-
 
 /**
  * Set midi channel type 

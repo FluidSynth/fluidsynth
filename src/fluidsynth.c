@@ -104,16 +104,15 @@ void process_o_cmd_line_option(fluid_settings_t* settings, char* optarg)
 
   switch(fluid_settings_get_type(settings, optarg)){
   case FLUID_NUM_TYPE:
-    if (!fluid_settings_setnum (settings, optarg, atof (val)))
+    if (fluid_settings_setnum (settings, optarg, atof (val)) != FLUID_OK)
     {
       fprintf (stderr, "Failed to set floating point parameter '%s'\n", optarg);
       exit (1);
     }
     break;
   case FLUID_INT_TYPE:
-    hints = fluid_settings_get_hints (settings, optarg);
-
-    if (hints & FLUID_HINT_TOGGLED)
+    if (fluid_settings_get_hints (settings, optarg, &hints) == FLUID_OK
+        && hints & FLUID_HINT_TOGGLED)
     {
       if (FLUID_STRCMP (val, "yes") == 0 || FLUID_STRCMP (val, "True") == 0
           || FLUID_STRCMP (val, "TRUE") == 0 || FLUID_STRCMP (val, "true") == 0
@@ -123,14 +122,14 @@ void process_o_cmd_line_option(fluid_settings_t* settings, char* optarg)
     }
     else ival = atoi (val);
 
-    if (!fluid_settings_setint (settings, optarg, ival))
+    if (fluid_settings_setint (settings, optarg, ival) != FLUID_OK)
     {
       fprintf (stderr, "Failed to set integer parameter '%s'\n", optarg);
       exit (1);
     }
     break;
   case FLUID_STR_TYPE:
-    if (!fluid_settings_setstr (settings, optarg, val))
+    if (fluid_settings_setstr (settings, optarg, val) != FLUID_OK)
     {
       fprintf (stderr, "Failed to set string parameter '%s'\n", optarg);
       exit (1);
@@ -184,14 +183,14 @@ settings_foreach_func (void *data, char *name, int type)
   {
   case FLUID_NUM_TYPE:
     fluid_settings_getnum_range (settings, name, &dmin, &dmax);
-    ddef = fluid_settings_getnum_default (settings, name);
+    fluid_settings_getnum_default (settings, name, &ddef);
     printf ("%-24s FLOAT [min=%0.3f, max=%0.3f, def=%0.3f]\n",
 	    name, dmin, dmax, ddef);
     break;
   case FLUID_INT_TYPE:
     fluid_settings_getint_range (settings, name, &imin, &imax);
-    idef = fluid_settings_getint_default (settings, name);
-    hints = fluid_settings_get_hints (settings, name);
+    fluid_settings_getint_default (settings, name, &idef);
+    fluid_settings_get_hints (settings, name, &hints);
 
     if (!(hints & FLUID_HINT_TOGGLED))
     {
@@ -418,7 +417,6 @@ int main(int argc, char** argv)
       fluid_settings_setint(settings, "audio.periods", atoi(optarg));
       break;
     case 'd':
-      fluid_settings_setint(settings, "synth.dump", TRUE);
       dump = 1;
       break;
     case 'E':
@@ -714,10 +712,12 @@ int main(int argc, char** argv)
     if (fluid_synth_get_sfont(synth, 0) == NULL) {
       /* Try to load the default soundfont if no soundfont specified */
       char *s;
-      if (fluid_settings_getstr(settings, "synth.default-soundfont", &s) <= 0)
+      if (fluid_settings_dupstr(settings, "synth.default-soundfont", &s) != FLUID_OK)
         s = NULL;
       if ((s != NULL) && (s[0] != '\0'))
         fluid_synth_sfload(synth, s, 1);
+      
+      FLUID_FREE(s);
     }
 
     fluid_player_play(player);
@@ -789,7 +789,7 @@ int main(int argc, char** argv)
     if (interactive) {
       fluid_player_stop(player);
     }
-    if (adriver != NULL || !fluid_settings_str_equal(settings,  "player.timing-source", "sample")) {
+    if (adriver != NULL || !fluid_settings_str_equal(settings, "player.timing-source", "sample")) {
       /* if no audio driver and sample timers are used, nothing makes the player advance */  
       fluid_player_join(player);
     }
@@ -847,7 +847,7 @@ void
 print_welcome()
 {
   printf("FluidSynth version %s\n"
-	 "Copyright (C) 2000-2012 Peter Hanappe and others.\n"
+	 "Copyright (C) 2000-2017 Peter Hanappe and others.\n"
 	 "Distributed under the LGPL license.\n"
 	 "SoundFont(R) is a registered trademark of E-mu Systems, Inc.\n\n",
 	 FLUIDSYNTH_VERSION);

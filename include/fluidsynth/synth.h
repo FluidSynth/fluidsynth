@@ -49,7 +49,7 @@ extern "C" {
 
 /**
  * Channel information structure for fluid_synth_get_channel_info().
- * @since 1.1.1
+ * @since @NEXT_RELEASE@
  */
 struct _fluid_synth_channel_info_t
 {
@@ -81,6 +81,7 @@ FLUIDSYNTH_API int fluid_synth_pitch_wheel_sens(fluid_synth_t* synth, int chan, 
 FLUIDSYNTH_API int fluid_synth_get_pitch_wheel_sens(fluid_synth_t* synth, int chan, int* pval);
 FLUIDSYNTH_API int fluid_synth_program_change(fluid_synth_t* synth, int chan, int program);
 FLUIDSYNTH_API int fluid_synth_channel_pressure(fluid_synth_t* synth, int chan, int val);
+FLUIDSYNTH_API int fluid_synth_key_pressure(fluid_synth_t* synth, int chan, int key, int val);
 FLUIDSYNTH_API int fluid_synth_bank_select(fluid_synth_t* synth, int chan, unsigned int bank);
 FLUIDSYNTH_API int fluid_synth_sfont_select(fluid_synth_t* synth, int chan, unsigned int sfont_id);
 FLUIDSYNTH_API
@@ -206,18 +207,15 @@ enum fluid_interp {
   FLUID_INTERP_NONE = 0,        /**< No interpolation: Fastest, but questionable audio quality */
   FLUID_INTERP_LINEAR = 1,      /**< Straight-line interpolation: A bit slower, reasonable audio quality */
   FLUID_INTERP_4THORDER = 4,    /**< Fourth-order interpolation, good quality, the default */
-  FLUID_INTERP_7THORDER = 7     /**< Seventh-order interpolation */
+  FLUID_INTERP_7THORDER = 7,    /**< Seventh-order interpolation */
+  
+  FLUID_INTERP_DEFAULT = FLUID_INTERP_4THORDER, /**< Default interpolation method */
+  FLUID_INTERP_HIGHEST = FLUID_INTERP_7THORDER, /**< Highest interpolation method */
 };
-
-#define FLUID_INTERP_DEFAULT    FLUID_INTERP_4THORDER   /**< Default interpolation method from #fluid_interp. */
-#define FLUID_INTERP_HIGHEST    FLUID_INTERP_7THORDER   /**< Highest interpolation method from #fluid_interp. */
-
 
 /* Generator interface */
 
-FLUIDSYNTH_API 
-int fluid_synth_set_gen(fluid_synth_t* synth, int chan, int param, float value);
-FLUIDSYNTH_API int fluid_synth_set_gen2 (fluid_synth_t* synth, int chan,
+FLUIDSYNTH_API int fluid_synth_set_gen (fluid_synth_t* synth, int chan,
                                          int param, float value,
                                          int absolute, int normalized);
 FLUIDSYNTH_API float fluid_synth_get_gen(fluid_synth_t* synth, int chan, int param);

@@ -27,7 +27,7 @@
 
 /* Prototypes */
 static int fluid_ramsfont_sfont_delete(fluid_sfont_t* sfont);
-static char *fluid_ramsfont_sfont_get_name(fluid_sfont_t* sfont);
+static const char *fluid_ramsfont_sfont_get_name(fluid_sfont_t* sfont);
 static fluid_preset_t *fluid_ramsfont_sfont_get_preset(fluid_sfont_t* sfont,
                                                        unsigned int bank,
                                                        unsigned int prenum);
@@ -35,7 +35,7 @@ static void fluid_ramsfont_sfont_iteration_start(fluid_sfont_t* sfont);
 static int fluid_ramsfont_sfont_iteration_next(fluid_sfont_t* sfont,
                                                fluid_preset_t* preset);
 static int fluid_rampreset_preset_delete(fluid_preset_t* preset);
-static char *fluid_rampreset_preset_get_name(fluid_preset_t* preset);
+static const char *fluid_rampreset_preset_get_name(fluid_preset_t* preset);
 static int fluid_rampreset_preset_get_banknum(fluid_preset_t* preset);
 static int fluid_rampreset_preset_get_num(fluid_preset_t* preset);
 static int fluid_rampreset_preset_noteon(fluid_preset_t* preset,
@@ -43,7 +43,7 @@ static int fluid_rampreset_preset_noteon(fluid_preset_t* preset,
                                          int key, int vel);
 static fluid_ramsfont_t *new_fluid_ramsfont (void);
 static int delete_fluid_ramsfont (fluid_ramsfont_t* sfont);
-static char *fluid_ramsfont_get_name(fluid_ramsfont_t* sfont);
+static const char *fluid_ramsfont_get_name(fluid_ramsfont_t* sfont);
 static int fluid_ramsfont_add_preset (fluid_ramsfont_t* sfont,
                                       fluid_rampreset_t* preset);
 static fluid_rampreset_t *fluid_ramsfont_get_preset (fluid_ramsfont_t* sfont,
@@ -55,7 +55,7 @@ static fluid_rampreset_t* new_fluid_rampreset(fluid_ramsfont_t* sfont);
 static int delete_fluid_rampreset (fluid_rampreset_t* preset);
 static int fluid_rampreset_get_banknum (fluid_rampreset_t* preset);
 static int fluid_rampreset_get_num (fluid_rampreset_t* preset);
-static char *fluid_rampreset_get_name (fluid_rampreset_t* preset);
+static const char *fluid_rampreset_get_name (fluid_rampreset_t* preset);
 static fluid_rampreset_t *fluid_rampreset_next (fluid_rampreset_t* preset);
 static int fluid_rampreset_add_zone(fluid_rampreset_t* preset,
                                     fluid_preset_zone_t* zone);
@@ -123,7 +123,7 @@ fluid_ramsfont_sfont_delete(fluid_sfont_t* sfont)
 }
 
 /* RAM SoundFont loader method to get name */
-static char *
+static const char *
 fluid_ramsfont_sfont_get_name(fluid_sfont_t* sfont)
 {
   return fluid_ramsfont_get_name((fluid_ramsfont_t*) sfont->data);
@@ -193,7 +193,7 @@ fluid_rampreset_preset_delete(fluid_preset_t* preset)
 }
 
 /* RAM SoundFont loader get preset name method */
-static char *
+static const char *
 fluid_rampreset_preset_get_name(fluid_preset_t* preset)
 {
   return fluid_rampreset_get_name((fluid_rampreset_t*) preset->data);
@@ -281,7 +281,7 @@ delete_fluid_ramsfont (fluid_ramsfont_t* sfont)
   return FLUID_OK;
 }
 
-static char *
+static const char *
 fluid_ramsfont_get_name(fluid_ramsfont_t* sfont)
 {
   return sfont->name;
@@ -588,7 +588,7 @@ fluid_rampreset_get_num (fluid_rampreset_t* preset)
 }
 
 /* Get a RAM SoundFont preset name */
-static char *
+static const char *
 fluid_rampreset_get_name (fluid_rampreset_t* preset)
 {
   return preset->name;

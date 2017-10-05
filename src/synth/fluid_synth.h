@@ -116,7 +116,6 @@ struct _fluid_synth_t
   int with_reverb;                   /**< Should the synth use the built-in reverb unit? */
   int with_chorus;                   /**< Should the synth use the built-in chorus unit? */
   int verbose;                       /**< Turn verbose mode on? */
-  int dump;                          /**< Dump events to stdout to hook up a user interface? */
   double sample_rate;                /**< The sample rate */
   int midi_channels;                 /**< the number of MIDI channels (>= 16) */
   int bank_select;                   /**< the style of Bank Select MIDI messages */
@@ -176,13 +175,6 @@ struct _fluid_synth_t
   fluid_LADSPA_FxUnit_t* LADSPA_FxUnit; /**< Effects unit for LADSPA support */
 #endif
 };
-
-int fluid_synth_setstr(fluid_synth_t* synth, const char* name, const char* str);
-int fluid_synth_dupstr(fluid_synth_t* synth, const char* name, char** str);
-int fluid_synth_setnum(fluid_synth_t* synth, const char* name, double val);
-int fluid_synth_getnum(fluid_synth_t* synth, const char* name, double* val);
-int fluid_synth_setint(fluid_synth_t* synth, const char* name, int val);
-int fluid_synth_getint(fluid_synth_t* synth, const char* name, int* val);
 
 fluid_preset_t* fluid_synth_find_preset(fluid_synth_t* synth,
 				      unsigned int banknum,

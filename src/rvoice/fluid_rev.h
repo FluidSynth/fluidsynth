@@ -33,11 +33,14 @@ typedef enum
   FLUID_REVMODEL_SET_ROOMSIZE       = 1 << 0,
   FLUID_REVMODEL_SET_DAMPING        = 1 << 1,
   FLUID_REVMODEL_SET_WIDTH          = 1 << 2,
-  FLUID_REVMODEL_SET_LEVEL          = 1 << 3
+  FLUID_REVMODEL_SET_LEVEL          = 1 << 3,
+  
+  /** Value for fluid_revmodel_set() which sets all reverb parameters. */
+  FLUID_REVMODEL_SET_ALL            =   FLUID_REVMODEL_SET_LEVEL
+                                      | FLUID_REVMODEL_SET_WIDTH
+                                      | FLUID_REVMODEL_SET_DAMPING
+                                      | FLUID_REVMODEL_SET_ROOMSIZE,
 } fluid_revmodel_set_t;
-
-/** Value for fluid_revmodel_set() which sets all reverb parameters. */
-#define FLUID_REVMODEL_SET_ALL      0x0F
 
 /*
  * reverb preset

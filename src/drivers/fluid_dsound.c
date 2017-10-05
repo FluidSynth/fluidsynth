@@ -168,7 +168,7 @@ new_fluid_dsound_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
 
   devsel.devGUID = NULL;
   /* get the selected device name. if none is specified, use NULL for the default device. */
-  if(fluid_settings_dupstr(settings, "audio.dsound.device", &devsel.devname)    /* ++ alloc device name */
+  if(fluid_settings_dupstr(settings, "audio.dsound.device", &devsel.devname) == FLUID_OK /* ++ alloc device name */
      && devsel.devname && strlen (devsel.devname) > 0) {
     /* look for the GUID of the selected device */
     DirectSoundEnumerate((LPDSENUMCALLBACK) fluid_dsound_enum_callback2, (void *)&devsel);

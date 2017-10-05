@@ -286,7 +286,7 @@ fluid_event_pitch_bend(fluid_event_t* evt, int channel, int pitch)
 void
 fluid_event_pitch_wheelsens(fluid_event_t* evt, int channel, short value)
 {
-	evt->type = FLUID_SEQ_PITCHWHHELSENS;
+	evt->type = FLUID_SEQ_PITCHWHEELSENS;
 	evt->channel = channel;
 	evt->value = value;
 }
@@ -433,6 +433,27 @@ fluid_event_channel_pressure(fluid_event_t* evt, int channel, short val)
 }
 
 /**
+ * Set a sequencer event to be a polyphonic aftertouch event.
+ * @param evt Sequencer event structure
+ * @param channel MIDI channel number
+ * @param key MIDI note number (0-127)
+ * @param val Aftertouch amount (0-127)
+ * @since @NEXT_RELEASE@
+ */
+void
+fluid_event_key_pressure(fluid_event_t* evt, int channel, short key, short val)
+{
+	evt->type = FLUID_SEQ_KEYPRESSURE;
+	evt->channel = channel;
+	if (key < 0) key = 0;
+	if (key > 127) key = 127;
+	if (val < 0) val = 0;
+	if (val > 127) val = 127;
+	evt->key = key;
+	evt->value = val;
+}
+
+/**
  * Set a sequencer event to be a midi system reset event.
  * @param evt Sequencer event structure
  * @since 1.1.0
@@ -537,7 +558,7 @@ short fluid_event_get_control(fluid_event_t* evt)
  *
  * The Value field is used by the following event types:
  * #FLUID_SEQ_PROGRAMCHANGE, #FLUID_SEQ_PROGRAMSELECT (preset_num),
- * #FLUID_SEQ_PITCHWHHELSENS, #FLUID_SEQ_MODULATION, #FLUID_SEQ_SUSTAIN,
+ * #FLUID_SEQ_PITCHWHEELSENS, #FLUID_SEQ_MODULATION, #FLUID_SEQ_SUSTAIN,
  * #FLUID_SEQ_CONTROLCHANGE, #FLUID_SEQ_PAN, #FLUID_SEQ_VOLUME,
  * #FLUID_SEQ_REVERBSEND, #FLUID_SEQ_CHORUSSEND.
  */

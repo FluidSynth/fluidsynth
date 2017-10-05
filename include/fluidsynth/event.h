@@ -43,7 +43,7 @@ enum fluid_seq_event_type {
   FLUID_SEQ_ALLNOTESOFF,	/**< All notes off event */
   FLUID_SEQ_BANKSELECT,		/**< Bank select message */
   FLUID_SEQ_PROGRAMCHANGE,	/**< Program change message */
-  FLUID_SEQ_PROGRAMSELECT,	/**< Program select message (DOCME) */
+  FLUID_SEQ_PROGRAMSELECT,	/**< Program select message */
   FLUID_SEQ_PITCHBEND,		/**< Pitch bend message */
   FLUID_SEQ_PITCHWHEELSENS,	/**< Pitch wheel sensitivity set message @since 1.1.0 was mispelled previously */
   FLUID_SEQ_MODULATION,		/**< Modulation controller event */
@@ -56,12 +56,11 @@ enum fluid_seq_event_type {
   FLUID_SEQ_TIMER,		/**< Timer event (useful for giving a callback at a certain time) */
   FLUID_SEQ_ANYCONTROLCHANGE,	/**< DOCME (used for remove_events only) */
   FLUID_SEQ_CHANNELPRESSURE,    /**< Channel aftertouch event @since 1.1.0 */
+  FLUID_SEQ_KEYPRESSURE,        /**< Polyphonic aftertouch event @since @NEXT_RELEASE@ */
   FLUID_SEQ_SYSTEMRESET,        /**< System reset event @since 1.1.0 */
   FLUID_SEQ_UNREGISTERING,      /**< Called when a sequencer client is being unregistered. @since 1.1.0 */
   FLUID_SEQ_LASTEVENT		/**< Defines the count of event enums @deprecated As of 1.1.7 this enum value is deprecated and will be removed in a future release, because it prevents adding new enum values without breaking ABI compatibility. */
 };
-
-#define FLUID_SEQ_PITCHWHHELSENS        FLUID_SEQ_PITCHWHEELSENS        /**< Old deprecated misspelling of #FLUID_SEQ_PITCHWHEELSENS */
 
 /* Event alloc/free */
 FLUIDSYNTH_API fluid_event_t* new_fluid_event(void);
@@ -103,6 +102,7 @@ FLUIDSYNTH_API void fluid_event_volume(fluid_event_t* evt, int channel, short va
 FLUIDSYNTH_API void fluid_event_reverb_send(fluid_event_t* evt, int channel, short val);
 FLUIDSYNTH_API void fluid_event_chorus_send(fluid_event_t* evt, int channel, short val);
 
+FLUIDSYNTH_API void fluid_event_key_pressure(fluid_event_t* evt, int channel, short key, short val);
 FLUIDSYNTH_API void fluid_event_channel_pressure(fluid_event_t* evt, int channel, short val);
 FLUIDSYNTH_API void fluid_event_system_reset(fluid_event_t* evt);
 

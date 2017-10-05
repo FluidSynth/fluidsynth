@@ -33,25 +33,6 @@ extern "C" {
 #define FLUID_NUM_MOD           64      /**< Maximum number of modulators in a voice */
 
 /**
- * Modulator structure.  See SoundFont 2.04 PDF section 8.2.
- */
-struct _fluid_mod_t
-{
-  unsigned char dest;           /**< Destination generator to control */
-  unsigned char src1;           /**< Source controller 1 */
-  unsigned char flags1;         /**< Source controller 1 flags */
-  unsigned char src2;           /**< Source controller 2 */
-  unsigned char flags2;         /**< Source controller 2 flags */
-  double amount;                /**< Multiplier amount */
-  /* The 'next' field allows to link modulators into a list.  It is
-   * not used in fluid_voice.c, there each voice allocates memory for a
-   * fixed number of modulators.  Since there may be a huge number of
-   * different zones, this is more efficient.
-   */
-  fluid_mod_t * next;
-};
-
-/**
  * Flags defining the polarity, mapping function and type of a modulator source.
  * Compare with SoundFont 2.04 PDF section 8.2.
  *
@@ -106,7 +87,10 @@ FLUIDSYNTH_API int fluid_mod_get_dest(fluid_mod_t* mod);
 FLUIDSYNTH_API double fluid_mod_get_amount(fluid_mod_t* mod);
 
 FLUIDSYNTH_API int fluid_mod_test_identity(fluid_mod_t * mod1, fluid_mod_t * mod2);
+FLUIDSYNTH_API int fluid_mod_has_source(fluid_mod_t * mod, int cc, int ctrl);
+FLUIDSYNTH_API int fluid_mod_has_dest(fluid_mod_t * mod, int gen);
 
+FLUIDSYNTH_API void fluid_mod_clone(fluid_mod_t* mod, fluid_mod_t* src);
 
 #ifdef __cplusplus
 }

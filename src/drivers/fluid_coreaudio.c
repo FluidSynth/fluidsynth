@@ -206,7 +206,7 @@ new_fluid_core_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func
   fluid_settings_getint(settings, "audio.period-size", &period_size);
 
   /* get the selected device name. if none is specified, use NULL for the default device. */
-  if (fluid_settings_dupstr(settings, "audio.coreaudio.device", &devname)  /* alloc device name */
+  if (fluid_settings_dupstr(settings, "audio.coreaudio.device", &devname) == FLUID_OK  /* alloc device name */
       && devname && strlen (devname) > 0) {
     AudioObjectPropertyAddress pa;
     pa.mSelector = kAudioHardwarePropertyDevices;

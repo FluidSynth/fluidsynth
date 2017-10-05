@@ -164,9 +164,6 @@ Number of CPU cores to use for multi-core support.
 .B synth.device\-id         INT   [min=0, max=126, def=0] REALTIME
 Device ID to use for accepting incoming SYSEX messages.
 .TP
-.B synth.dump               BOOL  [def=False]
-No effect currently.
-.TP
 .B synth.effects\-channels  INT   [min=2, max=2, def=2]
 No effect currently.
 .TP
@@ -221,6 +218,9 @@ Must always to be true for usage by fluidsynth executable.
 .TP
 .B synth.verbose            BOOL  [def=False]
 Print received MIDI events to stdout.
+.TP
+.B synth.volenv             STR   [def='emu' vals:'compliant', 'emu']
+Specifies the kind of volume envelope processing. This esp. influences the way fluidsynth responses to noteon velocity. The default setting 'emu' causes the envelope to be highly dynamic (i.e. compatible with the EMU10K1). Alternatively this may be set to 'compliant' for a less dynamic envelope, as it was done before fluidsynth 1.0.9.
 
 .TP
 .B GENERAL AUDIO

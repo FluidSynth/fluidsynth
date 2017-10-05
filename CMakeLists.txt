@@ -19,8 +19,8 @@
 
 # CMake based build system. Pedro Lopez-Cabanillas <plcl@users.sf.net>
 
+cmake_minimum_required ( VERSION 3.0.2 )
 project ( FluidSynth C )
-cmake_minimum_required ( VERSION 2.6.3 )
 set ( CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake_admin )
 
 # FluidSynth package name
@@ -71,7 +71,6 @@ option ( enable-ipv6  "enable ipv6 support " on )
 
 # Platform specific options
 if ( ${CMAKE_SYSTEM} MATCHES "Linux" )
-    option ( enable-ladcca "compile LADCCA support if it is available (deprecated)" off )
     option ( enable-lash "compile LASH support (if it is available)" on )
     option ( enable-alsa "compile ALSA support (if it is available)" on )
 endif ( ${CMAKE_SYSTEM} MATCHES "Linux" )
@@ -136,18 +135,19 @@ unset ( FLUID_CPPFLAGS CACHE )
 unset ( FLUID_LIBS CACHE )
 
 # Options for the GNU C compiler only
-if ( CMAKE_COMPILER_IS_GNUCC )
+if ( CMAKE_COMPILER_IS_GNUCC OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" )
   if ( NOT APPLE AND NOT OS2 )
     set ( CMAKE_EXE_LINKER_FLAGS
           "${CMAKE_EXE_LINKER_FLAGS} -Wl,--as-needed" )
     set ( CMAKE_SHARED_LINKER_FLAGS
           "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-undefined" )
   endif ( NOT APPLE AND NOT OS2 )
+  
   set ( GNUCC_WARNING_FLAGS "-Wall -W -Wpointer-arith -Wbad-function-cast -Wno-cast-qual -Wcast-align -Wstrict-prototypes -Wno-unused-parameter -Wdeclaration-after-statement" )
   set ( CMAKE_C_FLAGS_DEBUG "-std=gnu89 -g -fvisibility=hidden -DDEBUG ${GNUCC_WARNING_FLAGS}" )
-  set ( CMAKE_C_FLAGS_RELEASE "-std=gnu89 -O2 -fomit-frame-pointer -funroll-all-loops -finline-functions -fvisibility=hidden -DNDEBUG ${GNUCC_WARNING_FLAGS}" )
-  set ( CMAKE_C_FLAGS_RELWITHDEBINFO "-std=gnu89 -O2 -g -fomit-frame-pointer -funroll-all-loops -finline-functions -fvisibility=hidden -DNDEBUG ${GNUCC_WARNING_FLAGS}" )
-endif ( CMAKE_COMPILER_IS_GNUCC )
+  set ( CMAKE_C_FLAGS_RELEASE "-std=gnu89 -O2 -fomit-frame-pointer -finline-functions -fvisibility=hidden -DNDEBUG ${GNUCC_WARNING_FLAGS}" )
+  set ( CMAKE_C_FLAGS_RELWITHDEBINFO "-std=gnu89 -O2 -g -fomit-frame-pointer -finline-functions -fvisibility=hidden -DNDEBUG ${GNUCC_WARNING_FLAGS}" )
+endif ( CMAKE_COMPILER_IS_GNUCC OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" )
 
 # Windows
 unset ( WINDOWS_SUPPORT CACHE )
@@ -161,8 +161,8 @@ if ( WIN32 )
   check_include_files ( "windows.h;mmsystem.h" HAVE_MMSYSTEM_H )
   set ( WINDOWS_SUPPORT ${HAVE_WINDOWS_H} )
   set ( WINDOWS_LIBS "dsound;winmm;ws2_32" )
+  set ( LIBFLUID_CPPFLAGS "-DFLUIDSYNTH_DLL_EXPORTS" )
   set ( FLUID_CPPFLAGS "-DFLUIDSYNTH_NOT_A_DLL" )
-  set ( LIBFLUID_CPPFLAGS "${FLUID_CPPFLAGS} -DFLUIDSYNTH_DLL_EXPORTS" )
   set ( CMAKE_DEBUG_POSTFIX "_debug" )
   # MinGW compiler (a Windows GCC port)
   if ( MINGW )
@@ -379,14 +379,6 @@ else(NOT enable-pkgconfig)
     remove_definitions( -DHAVE_LASH )
     endif ( enable-lash )
 
-    unset ( LADCCA_SUPPORT CACHE )
-    if ( enable-ladcca )
-    pkg_check_modules ( LADCCA ladcca-1.0>=0.3 )
-    set ( LADCCA_SUPPORT ${LADCCA_FOUND} )
-    else ( enable-ladcca )
-    unset_pkg_config ( LADCCA )
-    endif ( enable-ladcca )
-
     unset ( DBUS_SUPPORT CACHE )
     if ( enable-dbus )
     pkg_check_modules ( DBUS dbus-1>=1.0.0 )
@@ -472,31 +464,10 @@ if ( UNIX )
         COMMAND cp -r doc ${PACKAGE}-${VERSION}
         COMMAND cp -r include ${PACKAGE}-${VERSION}
         COMMAND cp -r src ${PACKAGE}-${VERSION}
-        COMMAND cp AUTHORS ChangeLog CMakeLists.txt ../LICENSE ${PACKAGE}.* INSTALL NEWS README* ../README.md THANKS TODO ${PACKAGE}-${VERSION}
+        COMMAND cp AUTHORS ChangeLog CMakeLists.txt LICENSE ${PACKAGE}.* INSTALL NEWS README* THANKS TODO ${PACKAGE}-${VERSION}
 #       COMMAND tar -cj --exclude .svn --exclude Makefile.am -f ${PACKAGE}-${VERSION}.tar.bz2 ${PACKAGE}-${VERSION}
 #       COMMAND tar -cz --exclude .svn --exclude Makefile.am -f ${PACKAGE}-${VERSION}.tar.gz ${PACKAGE}-${VERSION}
 #       COMMAND zip -qr ${PACKAGE}-${VERSION}.zip ${PACKAGE}-${VERSION} -x '*.svn*' -x '*Makefile.am'
-        COMMAND tar -cj --exclude .svn -f ${PACKAGE}-${VERSION}.tar.bz2 ${PACKAGE}-${VERSION}
-        COMMAND tar -cz --exclude .svn -f ${PACKAGE}-${VERSION}.tar.gz ${PACKAGE}-${VERSION}
-        COMMAND zip -qr ${PACKAGE}-${VERSION}.zip ${PACKAGE}-${VERSION} -x '*.svn*'
-        COMMAND rm -rf ${PACKAGE}-${VERSION}
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    )
-
-    # tarball custom target
-    add_custom_target ( tarball-autotools
-        COMMAND mkdir -p ${PACKAGE}-${VERSION}
-        COMMAND cp -r bindings ${PACKAGE}-${VERSION}
-        COMMAND cp -r cmake_admin ${PACKAGE}-${VERSION}
-        COMMAND cp -r doc ${PACKAGE}-${VERSION}
-        COMMAND cp -r include ${PACKAGE}-${VERSION}
-        COMMAND cp -r src ${PACKAGE}-${VERSION}
-        COMMAND cp AUTHORS ChangeLog CMakeLists.txt ../LICENSE ${PACKAGE}.* INSTALL NEWS README* ../README.md THANKS TODO ${PACKAGE}-${VERSION}
-        COMMAND cp acinclude.m4 autogen.sh configure.ac install-sh missing mkinstalldirs Makefile.am ${PACKAGE}-${VERSION}
-        # Files below are added when running autogen.sh
-        # COMMAND cp -r autom4te.cache ${PACKAGE}-${VERSION}
-        COMMAND cp -r m4 ${PACKAGE}-${VERSION}
-        COMMAND cp aclocal.m4 compile config.guess config.sub configure depcomp ltmain.sh Makefile.in ${PACKAGE}-${VERSION}
         COMMAND tar -cj --exclude .svn -f ${PACKAGE}-${VERSION}.tar.bz2 ${PACKAGE}-${VERSION}
         COMMAND tar -cz --exclude .svn -f ${PACKAGE}-${VERSION}.tar.gz ${PACKAGE}-${VERSION}
         COMMAND zip -qr ${PACKAGE}-${VERSION}.zip ${PACKAGE}-${VERSION} -x '*.svn*'

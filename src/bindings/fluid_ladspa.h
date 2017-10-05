@@ -122,7 +122,7 @@ typedef struct {
 
   /* List of Command lines
    * During the setup phase, each ladspa_add command creates one command sequence. For example:
-   * ./aw.so alienwah_stereo Input <- Master_L_Synth Output -> Master_R_Synth Parameter <- #42.0
+   * ./aw.so alienwah_stereo Input <- Master_L_Synth Output -> Master_R_Synth Parameter <- $42.0
    * Those lists are stored in LADSPA_Command_Sequence.
    * One command line results in one plugin => size MaxPlugins.
    */

@@ -132,7 +132,7 @@ new_fluid_winmidi_driver(fluid_settings_t* settings,
   dev->closing = FALSE;
 
   /* get the device name. if none is specified, use the default device. */
-  if(!fluid_settings_dupstr(settings, "midi.winmidi.device", &devname) || !devname) {
+  if(fluid_settings_dupstr(settings, "midi.winmidi.device", &devname) != FLUID_OK || !devname) {
     devname = FLUID_STRDUP ("default");
 
     if (!devname)

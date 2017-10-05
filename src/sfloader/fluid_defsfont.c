@@ -108,7 +108,7 @@ int fluid_defsfont_sfont_delete(fluid_sfont_t* sfont)
   return 0;
 }
 
-char* fluid_defsfont_sfont_get_name(fluid_sfont_t* sfont)
+const char* fluid_defsfont_sfont_get_name(fluid_sfont_t* sfont)
 {
   return fluid_defsfont_get_name((fluid_defsfont_t*) sfont->data);
 }
@@ -187,7 +187,7 @@ int fluid_defpreset_preset_delete(fluid_preset_t* preset)
   return 0;
 }
 
-char* fluid_defpreset_preset_get_name(fluid_preset_t* preset)
+const char* fluid_defpreset_preset_get_name(fluid_preset_t* preset)
 {
   return fluid_defpreset_get_name((fluid_defpreset_t*) preset->data);
 }
@@ -538,7 +538,7 @@ int delete_fluid_defsfont(fluid_defsfont_t* sfont)
 /*
  * fluid_defsfont_get_name
  */
-char* fluid_defsfont_get_name(fluid_defsfont_t* sfont)
+const char* fluid_defsfont_get_name(fluid_defsfont_t* sfont)
 {
   return sfont->filename;
 }
@@ -778,7 +778,7 @@ fluid_defpreset_get_num(fluid_defpreset_t* preset)
   return preset->num;
 }
 
-char*
+const char*
 fluid_defpreset_get_name(fluid_defpreset_t* preset)
 {
   return preset->name;
