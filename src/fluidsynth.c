@@ -42,10 +42,6 @@
 #include "config_win32.h"
 #endif
 
-#ifdef HAVE_SIGNAL_H
-#include "signal.h"
-#endif
-
 #include "fluid_lash.h"
 
 #ifndef WITH_MIDI
@@ -262,16 +258,6 @@ fast_render_loop(fluid_settings_t* settings, fluid_synth_t* synth, fluid_player_
   }
   delete_fluid_file_renderer(renderer);
 }
-
-#ifdef HAVE_SIGNAL_H
-/*
- * handle_signal
- */
-void handle_signal(int sig_num)
-{
-}
-#endif
-
 
 /*
  * main
@@ -589,14 +575,18 @@ int main(int argc, char** argv)
     }
 #endif
 
-  /* The 'groups' setting is only relevant for LADSPA operation
+  /* The 'groups' setting is relevant for LADSPA operation and channel mapping
+   * in rvoice_mixer.
    * If not given, set number groups to number of audio channels, because
    * they are the same (there is nothing between synth output and 'sound card')
    */
   if ((audio_groups == 0) && (audio_channels != 0)) {
       audio_groups = audio_channels;
   }
-  fluid_settings_setint(settings, "synth.audio-groups", audio_groups);
+  if (audio_groups != 0)
+  {
+      fluid_settings_setint(settings, "synth.audio-groups", audio_groups);
+  }
 
   if (fast_render) {
     midi_in = 0;
@@ -631,10 +621,6 @@ int main(int argc, char** argv)
       fprintf (stderr, "Parameter '%s' not a SoundFont or MIDI file or error occurred identifying it.\n",
 	       argv[i]);
   }
-
-#ifdef HAVE_SIGNAL_H
-/*   signal(SIGINT, handle_signal); */
-#endif
 
   /* start the synthesis thread */
   if (!fast_render) {
@@ -682,9 +668,9 @@ int main(int argc, char** argv)
   /* run commands specified in config file */
   if (config_file != NULL) {
     fluid_source(cmd_handler, config_file);
-  } else if (fluid_get_userconf(buf, 512) != NULL) {
+  } else if (fluid_get_userconf(buf, sizeof(buf)*sizeof(buf[0])) != NULL) {
     fluid_source(cmd_handler, buf);
-  } else if (fluid_get_sysconf(buf, 512) != NULL) {
+  } else if (fluid_get_sysconf(buf, sizeof(buf)*sizeof(buf[0])) != NULL) {
     fluid_source(cmd_handler, buf);
   }
 

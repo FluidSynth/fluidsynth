@@ -554,7 +554,7 @@ fluid_jack_driver_process (jack_nframes_t nframes, void *arg)
     }
   }
 
-  audio_driver = client->audio_driver;
+  audio_driver = fluid_atomic_pointer_get (&client->audio_driver);
   if (!audio_driver) return 0;
 
   if (audio_driver->callback != NULL)
