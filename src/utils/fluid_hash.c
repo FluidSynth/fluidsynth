@@ -91,7 +91,7 @@ static const guint primes[] =
   13845163,
 };
 
-static const unsigned int nprimes = sizeof (primes) / sizeof (primes[0]);
+static const unsigned int nprimes = FLUID_N_ELEMENTS(primes);
 
 unsigned int
 spaced_primes_closest (unsigned int num)

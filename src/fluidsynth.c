@@ -695,9 +695,9 @@ int main(int argc, char** argv)
   /* try to load the user or system configuration */
   if (config_file != NULL) {
     fluid_source(cmd_handler, config_file);
-  } else if (fluid_get_userconf(buf, sizeof(buf)*sizeof(buf[0])) != NULL) {
+  } else if (fluid_get_userconf(buf, sizeof(buf)) != NULL) {
     fluid_source(cmd_handler, buf);
-  } else if (fluid_get_sysconf(buf, sizeof(buf)*sizeof(buf[0])) != NULL) {
+  } else if (fluid_get_sysconf(buf, sizeof(buf)) != NULL) {
     fluid_source(cmd_handler, buf);
   }
   
