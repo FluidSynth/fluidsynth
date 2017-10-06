@@ -3851,16 +3851,53 @@ fluid_synth_set_reverb_preset(fluid_synth_t* synth, int num)
  * @param damping Reverb damping value (0.0-1.0)
  * @param width Reverb width value (0.0-100.0)
  * @param level Reverb level value (0.0-1.0)
+ * @return FLUID_OK on success, FLUID_FAILED otherwise
  *
  * @note Not realtime safe and therefore should not be called from synthesis
  * context at the risk of stalling audio output.
  */
-void
+int
 fluid_synth_set_reverb(fluid_synth_t* synth, double roomsize, double damping,
                        double width, double level)
 {
-  fluid_synth_set_reverb_full (synth, FLUID_REVMODEL_SET_ALL,
+    return fluid_synth_set_reverb_full (synth, FLUID_REVMODEL_SET_ALL,
                                roomsize, damping, width, level);
+}
+
+/**
+ * Set reverb roomsize. See fluid_synth_set_reverb() for further info.
+ * @return FLUID_OK on success, FLUID_FAILED otherwise
+ */
+int fluid_synth_set_reverb_roomsize(fluid_synth_t* synth, double roomsize)
+{
+    return fluid_synth_set_reverb_full(synth, FLUID_REVMODEL_SET_ROOMSIZE, roomsize, 0, 0, 0);
+}
+
+/**
+ * Set reverb damping. See fluid_synth_set_reverb() for further info.
+ * @return FLUID_OK on success, FLUID_FAILED otherwise
+ */
+int fluid_synth_set_reverb_damp(fluid_synth_t* synth, double damping)
+{
+    return fluid_synth_set_reverb_full(synth, FLUID_REVMODEL_SET_DAMPING, 0, damping, 0, 0);
+}
+
+/**
+ * Set reverb width. See fluid_synth_set_reverb() for further info.
+ * @return FLUID_OK on success, FLUID_FAILED otherwise
+ */
+int fluid_synth_set_reverb_width(fluid_synth_t* synth, double width)
+{
+    return fluid_synth_set_reverb_full(synth, FLUID_REVMODEL_SET_WIDTH, 0, 0, width, 0);
+}
+
+/**
+ * Set reverb level. See fluid_synth_set_reverb() for further info.
+ * @return FLUID_OK on success, FLUID_FAILED otherwise
+ */
+int fluid_synth_set_reverb_level(fluid_synth_t* synth, double level)
+{
+    return fluid_synth_set_reverb_full(synth, FLUID_REVMODEL_SET_LEVEL, 0, 0, 0, level);
 }
 
 /**
@@ -3880,10 +3917,10 @@ int
 fluid_synth_set_reverb_full(fluid_synth_t* synth, int set, double roomsize,
                             double damping, double width, double level)
 {
+  int ret;
   fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
-
-  if (!(set & FLUID_REVMODEL_SET_ALL))
-    set = FLUID_REVMODEL_SET_ALL; 
+  /* if non of the flags is set, fail */
+  fluid_return_val_if_fail (set & FLUID_REVMODEL_SET_ALL, FLUID_FAILED);
 
   /* Synth shadow values are set here so that they will be returned if querried */
 
@@ -3901,12 +3938,13 @@ fluid_synth_set_reverb_full(fluid_synth_t* synth, int set, double roomsize,
   if (set & FLUID_REVMODEL_SET_LEVEL)
     fluid_atomic_float_set (&synth->reverb_level, level);
 
-  fluid_rvoice_eventhandler_push5(synth->eventhandler, 
+  /* finally enqueue an rvoice event to the mixer to actual update reverb */
+  ret = fluid_rvoice_eventhandler_push5(synth->eventhandler,
 				  fluid_rvoice_mixer_set_reverb_params, 
 				  synth->eventhandler->mixer, set, 
 				  roomsize, damping, width, level, 0.0f);
   
-  FLUID_API_RETURN(FLUID_OK);
+  FLUID_API_RETURN(ret);
 }
 
 /**
@@ -3990,7 +4028,8 @@ fluid_synth_set_chorus_on(fluid_synth_t* synth, int on)
 }
 
 /**
- * Set chorus parameters.
+ * Set chorus parameters. It should be turned on with fluid_synth_set_chorus_on().
+ * Keep in mind, that the needed CPU time is proportional to 'nr'.
  * @param synth FluidSynth instance
  * @param nr Chorus voice count (0-99, CPU time consumption proportional to
  *   this value)
@@ -3999,13 +4038,58 @@ fluid_synth_set_chorus_on(fluid_synth_t* synth, int on)
  * @param depth_ms Chorus depth (max value depends on synth sample rate,
  *   0.0-21.0 is safe for sample rate values up to 96KHz)
  * @param type Chorus waveform type (#fluid_chorus_mod)
+ * @return FLUID_OK on success, FLUID_FAILED otherwise
  */
-void
-fluid_synth_set_chorus(fluid_synth_t* synth, int nr, double level,
+int fluid_synth_set_chorus(fluid_synth_t* synth, int nr, double level,
                        double speed, double depth_ms, int type)
 {
-  fluid_synth_set_chorus_full (synth, FLUID_CHORUS_SET_ALL, nr, level, speed,
+  return fluid_synth_set_chorus_full (synth, FLUID_CHORUS_SET_ALL, nr, level, speed,
                                depth_ms, type);
+}
+
+/**
+ * Set the chorus voice count. See fluid_synth_set_chorus() for further info.
+ * @return FLUID_OK on success, FLUID_FAILED otherwise
+ */
+int fluid_synth_set_chorus_nr(fluid_synth_t* synth, int nr)
+{
+  return fluid_synth_set_chorus_full (synth, FLUID_CHORUS_SET_NR, nr, 0, 0, 0, 0);
+}
+
+/**
+ * Set the chorus level. See fluid_synth_set_chorus() for further info.
+ * @return FLUID_OK on success, FLUID_FAILED otherwise
+ */
+int fluid_synth_set_chorus_level(fluid_synth_t* synth, double level)
+{
+  return fluid_synth_set_chorus_full (synth, FLUID_CHORUS_SET_LEVEL, 0, level, 0, 0, 0);
+}
+
+/**
+ * Set the chorus speed. See fluid_synth_set_chorus() for further info.
+ * @return FLUID_OK on success, FLUID_FAILED otherwise
+ */
+int fluid_synth_set_chorus_speed(fluid_synth_t* synth, double speed)
+{
+  return fluid_synth_set_chorus_full (synth, FLUID_CHORUS_SET_SPEED, 0, 0, speed, 0, 0);
+}
+
+/**
+ * Set the chorus depth. See fluid_synth_set_chorus() for further info.
+ * @return FLUID_OK on success, FLUID_FAILED otherwise
+ */
+int fluid_synth_set_chorus_depth(fluid_synth_t* synth, double depth_ms)
+{
+  return fluid_synth_set_chorus_full (synth, FLUID_CHORUS_SET_DEPTH, 0, 0, 0, depth_ms, 0);
+}
+
+/**
+ * Set the chorus type. See fluid_synth_set_chorus() for further info.
+ * @return FLUID_OK on success, FLUID_FAILED otherwise
+ */
+int fluid_synth_set_chorus_type(fluid_synth_t* synth, int type)
+{
+  return fluid_synth_set_chorus_full (synth, FLUID_CHORUS_SET_TYPE, 0, 0, 0, 0, type);
 }
 
 /**
@@ -4019,15 +4103,16 @@ fluid_synth_set_chorus(fluid_synth_t* synth, int nr, double level,
  * @param depth_ms Chorus depth (max value depends on synth sample rate,
  *   0.0-21.0 is safe for sample rate values up to 96KHz)
  * @param type Chorus waveform type (#fluid_chorus_mod)
+ * @return FLUID_OK on success, FLUID_FAILED otherwise
  */
 int
 fluid_synth_set_chorus_full(fluid_synth_t* synth, int set, int nr, double level,
                             double speed, double depth_ms, int type)
 {
+  int ret;
   fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
-
-  if (!(set & FLUID_CHORUS_SET_ALL))
-    set = FLUID_CHORUS_SET_ALL;
+  /* if non of the flags is set, fail */
+  fluid_return_val_if_fail (set & FLUID_CHORUS_SET_ALL, FLUID_FAILED);
 
   /* Synth shadow values are set here so that they will be returned if queried */
   fluid_synth_api_enter(synth);
@@ -4047,12 +4132,12 @@ fluid_synth_set_chorus_full(fluid_synth_t* synth, int set, int nr, double level,
   if (set & FLUID_CHORUS_SET_TYPE)
     fluid_atomic_int_set (&synth->chorus_type, type);
   
-  fluid_rvoice_eventhandler_push5(synth->eventhandler, 
+  ret = fluid_rvoice_eventhandler_push5(synth->eventhandler, 
 				  fluid_rvoice_mixer_set_chorus_params,
 				  synth->eventhandler->mixer, set,
 				  nr, level, speed, depth_ms, type);
 
-  FLUID_API_RETURN(FLUID_OK);
+  FLUID_API_RETURN(ret);
 }
 
 /**
@@ -4877,23 +4962,6 @@ fluid_synth_get_gen(fluid_synth_t* synth, int chan, int param)
   result = fluid_channel_get_gen(synth->channel[chan], param);
   FLUID_API_RETURN(result);
 }
-
-/**
- * Assign a MIDI router to a synth.
- * @param synth FluidSynth instance
- * @param router MIDI router to assign to the synth
- *
- * @note This should only be done once and prior to using the synth.
- */
-void
-fluid_synth_set_midi_router(fluid_synth_t* synth, fluid_midi_router_t* router)
-{
-  fluid_return_if_fail (synth != NULL);
-  fluid_synth_api_enter(synth);
-
-  synth->midi_router = router;
-  fluid_synth_api_exit(synth);
-};
 
 /**
  * Handle MIDI event from MIDI router, used as a callback function.

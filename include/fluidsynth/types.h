@@ -49,7 +49,7 @@ typedef struct _fluid_midi_event_t fluid_midi_event_t;          /**< MIDI event 
 typedef struct _fluid_midi_driver_t fluid_midi_driver_t;        /**< MIDI driver instance */
 typedef struct _fluid_midi_router_t fluid_midi_router_t;        /**< MIDI router instance */
 typedef struct _fluid_midi_router_rule_t fluid_midi_router_rule_t;      /**< MIDI router rule */
-typedef struct _fluid_hashtable_t fluid_cmd_handler_t;          /**< Command handler */
+typedef struct _fluid_hashtable_t fluid_cmd_hash_t;             /**< Command handler hash table */
 typedef struct _fluid_shell_t fluid_shell_t;                    /**< Command shell */
 typedef struct _fluid_server_t fluid_server_t;                  /**< TCP/IP shell server instance */
 typedef struct _fluid_event_t fluid_event_t;                    /**< Sequencer event */
