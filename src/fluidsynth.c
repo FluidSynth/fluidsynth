@@ -591,14 +591,18 @@ int main(int argc, char** argv)
     }
 #endif
 
-  /* The 'groups' setting is only relevant for LADSPA operation
+  /* The 'groups' setting is relevant for LADSPA operation and channel mapping
+   * in rvoice_mixer.
    * If not given, set number groups to number of audio channels, because
    * they are the same (there is nothing between synth output and 'sound card')
    */
   if ((audio_groups == 0) && (audio_channels != 0)) {
       audio_groups = audio_channels;
   }
-  fluid_settings_setint(settings, "synth.audio-groups", audio_groups);
+  if (audio_groups != 0)
+  {
+      fluid_settings_setint(settings, "synth.audio-groups", audio_groups);
+  }
 
   if (fast_render) {
     midi_in = 0;
