@@ -42,10 +42,6 @@
 #include "config_win32.h"
 #endif
 
-#ifdef HAVE_SIGNAL_H
-#include "signal.h"
-#endif
-
 #include "fluid_lash.h"
 
 #ifndef WITH_MIDI
@@ -262,16 +258,6 @@ fast_render_loop(fluid_settings_t* settings, fluid_synth_t* synth, fluid_player_
   }
   delete_fluid_file_renderer(renderer);
 }
-
-#ifdef HAVE_SIGNAL_H
-/*
- * handle_signal
- */
-void handle_signal(int sig_num)
-{
-}
-#endif
-
 
 /*
  * main
@@ -632,10 +618,6 @@ int main(int argc, char** argv)
 	       argv[i]);
   }
 
-#ifdef HAVE_SIGNAL_H
-/*   signal(SIGINT, handle_signal); */
-#endif
-
   /* start the synthesis thread */
   if (!fast_render) {
     adriver = new_fluid_audio_driver(settings, synth);
@@ -682,9 +664,9 @@ int main(int argc, char** argv)
   /* run commands specified in config file */
   if (config_file != NULL) {
     fluid_source(cmd_handler, config_file);
-  } else if (fluid_get_userconf(buf, 512) != NULL) {
+  } else if (fluid_get_userconf(buf, sizeof(buf)*sizeof(buf[0])) != NULL) {
     fluid_source(cmd_handler, buf);
-  } else if (fluid_get_sysconf(buf, 512) != NULL) {
+  } else if (fluid_get_sysconf(buf, sizeof(buf)*sizeof(buf[0])) != NULL) {
     fluid_source(cmd_handler, buf);
   }
 
