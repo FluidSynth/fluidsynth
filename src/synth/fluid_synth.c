@@ -4019,7 +4019,8 @@ fluid_synth_set_chorus_on(fluid_synth_t* synth, int on)
 }
 
 /**
- * Set chorus parameters.
+ * Set chorus parameters. It should be turned on with fluid_synth_set_chorus_on().
+ * Keep in mind, that the needed CPU time is proportional to 'nr'.
  * @param synth FluidSynth instance
  * @param nr Chorus voice count (0-99, CPU time consumption proportional to
  *   this value)
