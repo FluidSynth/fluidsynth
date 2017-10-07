@@ -1911,9 +1911,9 @@ fluid_cmd_handler_destroy_hash_value (void *value)
 
 /**
  * Create a new command handler.
- * @param synth If not NULL, all the default synthesizer commands will be
- *   added to the new handler.
- * @return New command handler
+ * @param synth If not NULL, all the default synthesizer commands will be added to the new handler.
+ * @param router If not NULL, all the default midi_router commands will be added to the new handler.
+ * @return New command handler, or NULL if alloc failed
  */
 fluid_cmd_handler_t* new_fluid_cmd_handler(fluid_synth_t* synth, fluid_midi_router_t* router)
 {
