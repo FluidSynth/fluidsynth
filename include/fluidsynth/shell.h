@@ -63,16 +63,6 @@ typedef struct {
   char* help;                           /**< A help string */
 } fluid_cmd_t;
 
-/* the shell cmd handler struct */
-typedef struct {
-  fluid_synth_t* synth;
-  fluid_midi_router_t* router;
-  fluid_cmd_hash_t* commands;
-  
-  fluid_midi_router_rule_t *cmd_rule;        /* Rule currently being processed by shell command handler */
-  int cmd_rule_type;                         /* Type of the rule (#fluid_midi_router_rule_type) */
-} fluid_cmd_handler_t;
-
 /* The command handler */
 
 FLUIDSYNTH_API 

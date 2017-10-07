@@ -56,6 +56,7 @@ typedef struct _fluid_event_t fluid_event_t;                    /**< Sequencer e
 typedef struct _fluid_sequencer_t fluid_sequencer_t;            /**< Sequencer instance */
 typedef struct _fluid_ramsfont_t fluid_ramsfont_t;              /**< RAM SoundFont */
 typedef struct _fluid_rampreset_t fluid_rampreset_t;            /**< RAM SoundFont preset */
+typedef struct _fluid_cmd_handler_t fluid_cmd_handler_t;        /**< Shell Command Handler */
 
 typedef int fluid_istream_t;    /**< Input stream descriptor */
 typedef int fluid_ostream_t;    /**< Output stream descriptor */
