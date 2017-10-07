@@ -2134,7 +2134,7 @@ static int fixup_sample (SFData * sf);
 
 char idlist[] = {
   "RIFFLISTsfbkINFOsdtapdtaifilisngINAMiromiverICRDIENGIPRD"
-    "ICOPICMTISFTsnamsmplphdrpbagpmodpgeninstibagimodigenshdr"
+    "ICOPICMTISFTsnamsmplphdrpbagpmodpgeninstibagimodigenshdrsm24"
 };
 
 static unsigned int sdtachunk_size;
@@ -2411,8 +2411,51 @@ process_sdta (unsigned int size, SFData * sf, FILE * fd)
   sdtachunk_size = chunk.size;
   sf->samplesize = chunk.size;
 
+  FSKIP (chunk.size, fd);
+  size -= chunk.size;
+  
+  if(sf->version.major >= 2 && sf->version.minor >= 4)
+  {
+    /* any chance to find another chunk here? */
+    if(size > 8)
+    {
+        /* read sub chunk */
+        READCHUNK (&chunk, fd);
+        size -= 8;
+        
+        if (chunkid (chunk.id) == SM24_ID)
+        {
+            int sm24size, sdtahalfsize;
+            
+            FLUID_LOG(FLUID_DBG, "Found SM24 chunk");
+            if (chunk.size > size)
+            {
+                FLUID_LOG(FLUID_WARN, "SM24 exeeds SDTA chunk, ignoring SM24");
+                goto ret; // no error
+            }
+            
+            sdtahalfsize = sf->samplesize/2;
+            /* + 1 byte in the case that half the size of smpl chunk is an odd value */
+            sdtahalfsize += sdtahalfsize%2;
+            sm24size =  chunk.size;
+            
+            if (sdtahalfsize != sm24size)
+            {
+                FLUID_LOG(FLUID_WARN, "SM24 not equal to half the size of SMPL chunk (0x%X != 0x%X), ignoring SM24", sm24size, sdtahalfsize);
+                goto ret; // no error
+            }
+            
+            /* sample data24 follows */
+            sf->hassample24 = TRUE;
+            sf->sample24pos = ftell (fd);
+            sf->sample24size = chunk.size;
+        }
+    }
+  }
+  
+ret:
   FSKIP (size, fd);
-
+  
   return (OK);
 }
 
@@ -3336,6 +3379,9 @@ fixup_sample (SFData * sf)
   while (p)
     {
       sam = (SFSample *) (p->data);
+      
+      if(sf->samplesize != sdtachunk_size)
+          FLUID_LOG(FLUID_ERR, "OMGOMGOMGOM");
       
       /* The SoundFont 2.4 spec defines the loopstart index as the first sample point of the loop */
       invalid_loopstart = (sam->loopstart < sam->start) || (sam->loopstart >= sam->loopend);
