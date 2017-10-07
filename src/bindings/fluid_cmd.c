@@ -2001,7 +2001,6 @@ fluid_cmd_handler_handle(fluid_cmd_handler_t* handler, int ac, char** av, fluid_
 #if !defined(WITHOUT_SERVER)
 
 
-
 struct _fluid_server_t {
   fluid_server_socket_t* socket;
   fluid_settings_t* settings;
@@ -2019,8 +2018,8 @@ static void fluid_server_close(fluid_server_t* server);
 /**
  * Create a new TCP/IP command shell server.
  * @param settings Settings instance to use for the shell
- * @param newclient Callback function to call for each new client connection
- * @param data User defined data to pass to \a newclient callback
+ * @param synth If not NULL, the synth instance for the command handler to be used by the client
+ * @param router If not NULL, the midi_router instance for the command handler to be used by the client
  * @return New shell server instance or NULL on error
  */
 fluid_server_t*
@@ -2149,8 +2148,6 @@ int fluid_server_join(fluid_server_t* server)
 }
 
 
-
-
 struct _fluid_client_t {
   fluid_server_t* server;
   fluid_settings_t* settings;
@@ -2158,7 +2155,6 @@ struct _fluid_client_t {
   fluid_socket_t socket;
   fluid_thread_t* thread;
 };
-
 
 
 static void fluid_client_run(fluid_client_t* client)
