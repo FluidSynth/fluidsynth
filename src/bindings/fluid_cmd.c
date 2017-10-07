@@ -2005,7 +2005,6 @@ fluid_cmd_handler_handle(fluid_cmd_handler_t* handler, int ac, char** av, fluid_
 struct _fluid_server_t {
   fluid_server_socket_t* socket;
   fluid_settings_t* settings;
-  fluid_server_newclient_func_t newclient;
   fluid_synth_t* synth;
   fluid_midi_router_t* router;
   fluid_list_t* clients;
