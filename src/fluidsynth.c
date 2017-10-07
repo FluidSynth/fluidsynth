@@ -704,7 +704,7 @@ int main(int argc, char** argv)
   /* run the server, if requested */
 #if !defined(MACINTOSH)
   if (with_server) {
-    server = new_fluid_server(settings, cmd_handler);
+    server = new_fluid_server(settings, synth, router);
     if (server == NULL) {
       fprintf(stderr, "Failed to create the server.\n"
 	     "Continuing without it.\n");

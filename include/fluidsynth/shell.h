@@ -63,16 +63,6 @@ typedef struct {
   char* help;                           /**< A help string */
 } fluid_cmd_t;
 
-/* the shell cmd handler struct */
-typedef struct {
-  fluid_synth_t* synth;
-  fluid_midi_router_t* router;
-  fluid_cmd_hash_t* commands;
-  
-  fluid_midi_router_rule_t *cmd_rule;        /* Rule currently being processed by shell command handler */
-  int cmd_rule_type;                         /* Type of the rule (#fluid_midi_router_rule_type) */
-} fluid_cmd_handler_t;
-
 /* The command handler */
 
 FLUIDSYNTH_API 
@@ -115,17 +105,10 @@ FLUIDSYNTH_API void delete_fluid_shell(fluid_shell_t* shell);
 
 /* TCP/IP server */
 
-/**
- * Callback function which is executed for new server connections.
- * @param data User defined data supplied in call to new_fluid_server()
- * @param addr The IP address of the client (can be NULL)
- * @return Should return a new command handler for the connection (new_fluid_cmd_handler()).
- */
-typedef fluid_cmd_handler_t* (*fluid_server_newclient_func_t)(void* data, char* addr, char* addr2);
 
 FLUIDSYNTH_API 
-fluid_server_t* new_fluid_server(fluid_settings_t* settings, 
-			       fluid_cmd_handler_t* handler);
+fluid_server_t* new_fluid_server(fluid_settings_t* settings,
+		fluid_synth_t* synth, fluid_midi_router_t* router);
 
 FLUIDSYNTH_API void delete_fluid_server(fluid_server_t* server);
 

@@ -39,6 +39,18 @@
 #define MAX_COMMAND_LEN 1024	/* max command length accepted by fluid_command() */
 #define FLUID_WORKLINELENGTH 1024 /* LADSPA plugins use long command lines */
 
+
+/* the shell cmd handler struct */
+struct _fluid_cmd_handler_t {
+  fluid_synth_t* synth;
+  fluid_midi_router_t* router;
+  fluid_cmd_hash_t* commands;
+  
+  fluid_midi_router_rule_t *cmd_rule;        /* Rule currently being processed by shell command handler */
+  int cmd_rule_type;                         /* Type of the rule (#fluid_midi_router_rule_type) */
+};
+
+
 struct _fluid_shell_t {
   fluid_settings_t* settings;
   fluid_cmd_handler_t* handler;
@@ -63,7 +75,7 @@ void fluid_shell_settings(fluid_settings_t* settings)
 
 /** the table of all handled commands */
 
-fluid_cmd_t fluid_commands[] = {
+static fluid_cmd_t fluid_commands[] = {
   { "help", "general", (fluid_cmd_func_t) fluid_handle_help, NULL,
     "help                       Show help topics ('help TOPIC' for more info)" },
   { "quit", "general", (fluid_cmd_func_t) fluid_handle_quit, NULL,
@@ -1899,9 +1911,9 @@ fluid_cmd_handler_destroy_hash_value (void *value)
 
 /**
  * Create a new command handler.
- * @param synth If not NULL, all the default synthesizer commands will be
- *   added to the new handler.
- * @return New command handler
+ * @param synth If not NULL, all the default synthesizer commands will be added to the new handler.
+ * @param router If not NULL, all the default midi_router commands will be added to the new handler.
+ * @return New command handler, or NULL if alloc failed
  */
 fluid_cmd_handler_t* new_fluid_cmd_handler(fluid_synth_t* synth, fluid_midi_router_t* router)
 {
@@ -1923,8 +1935,11 @@ fluid_cmd_handler_t* new_fluid_cmd_handler(fluid_synth_t* synth, fluid_midi_rout
   handler->router = router;
   
   if (synth != NULL) {
-    for (i = 0; fluid_commands[i].name != NULL; i++) {
-      fluid_cmd_handler_register(handler, &fluid_commands[i]);
+    for (i = 0; fluid_commands[i].name != NULL; i++)
+    {
+        fluid_commands[i].data = handler;
+        fluid_cmd_handler_register(handler, &fluid_commands[i]);
+        fluid_commands[i].data = NULL;
     }
   }
 
@@ -1986,12 +2001,11 @@ fluid_cmd_handler_handle(fluid_cmd_handler_t* handler, int ac, char** av, fluid_
 #if !defined(WITHOUT_SERVER)
 
 
-
 struct _fluid_server_t {
   fluid_server_socket_t* socket;
   fluid_settings_t* settings;
-  fluid_server_newclient_func_t newclient;
-  fluid_cmd_handler_t* handler;
+  fluid_synth_t* synth;
+  fluid_midi_router_t* router;
   fluid_list_t* clients;
   fluid_mutex_t mutex;
 };
@@ -2004,13 +2018,13 @@ static void fluid_server_close(fluid_server_t* server);
 /**
  * Create a new TCP/IP command shell server.
  * @param settings Settings instance to use for the shell
- * @param newclient Callback function to call for each new client connection
- * @param data User defined data to pass to \a newclient callback
+ * @param synth If not NULL, the synth instance for the command handler to be used by the client
+ * @param router If not NULL, the midi_router instance for the command handler to be used by the client
  * @return New shell server instance or NULL on error
  */
 fluid_server_t*
 new_fluid_server(fluid_settings_t* settings,
-		fluid_cmd_handler_t* handler)
+		fluid_synth_t* synth, fluid_midi_router_t* router)
 {
   fluid_server_t* server;
   int port;
@@ -2023,7 +2037,8 @@ new_fluid_server(fluid_settings_t* settings,
 
   server->settings = settings;
   server->clients = NULL;
-  server->handler = handler;
+  server->synth = synth;
+  server->router = router;
 
   fluid_mutex_init(server->mutex);
 
@@ -2093,13 +2108,14 @@ fluid_server_handle_connection(fluid_server_t* server, fluid_socket_t client_soc
   fluid_client_t* client;
   fluid_cmd_handler_t* handler;
 
-  handler = new_fluid_cmd_handler(server->handler->synth, server->handler->router);
+  handler = new_fluid_cmd_handler(server->synth, server->router);
   if (handler == NULL) {
     return -1;
   }
 
   client = new_fluid_client(server, server->settings, handler, client_socket);
   if (client == NULL) {
+    delete_fluid_cmd_handler(handler);
     return -1;
   }
   fluid_server_add_client(server, client);
@@ -2132,8 +2148,6 @@ int fluid_server_join(fluid_server_t* server)
 }
 
 
-
-
 struct _fluid_client_t {
   fluid_server_t* server;
   fluid_settings_t* settings;
@@ -2141,7 +2155,6 @@ struct _fluid_client_t {
   fluid_socket_t socket;
   fluid_thread_t* thread;
 };
-
 
 
 static void fluid_client_run(fluid_client_t* client)
