@@ -2115,6 +2115,7 @@ fluid_server_handle_connection(fluid_server_t* server, fluid_socket_t client_soc
 
   client = new_fluid_client(server, server->settings, handler, client_socket);
   if (client == NULL) {
+    delete_fluid_cmd_handler(handler);
     return -1;
   }
   fluid_server_add_client(server, client);
