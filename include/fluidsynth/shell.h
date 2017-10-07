@@ -114,8 +114,8 @@ FLUIDSYNTH_API void delete_fluid_shell(fluid_shell_t* shell);
 typedef fluid_cmd_handler_t* (*fluid_server_newclient_func_t)(void* data, char* addr, char* addr2);
 
 FLUIDSYNTH_API 
-fluid_server_t* new_fluid_server(fluid_settings_t* settings, 
-			       fluid_cmd_handler_t* handler);
+fluid_server_t* new_fluid_server(fluid_settings_t* settings,
+		fluid_synth_t* synth, fluid_midi_router_t* router);
 
 FLUIDSYNTH_API void delete_fluid_server(fluid_server_t* server);
 

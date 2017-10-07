@@ -2006,7 +2006,8 @@ struct _fluid_server_t {
   fluid_server_socket_t* socket;
   fluid_settings_t* settings;
   fluid_server_newclient_func_t newclient;
-  fluid_cmd_handler_t* handler;
+  fluid_synth_t* synth;
+  fluid_midi_router_t* router;
   fluid_list_t* clients;
   fluid_mutex_t mutex;
 };
@@ -2025,7 +2026,7 @@ static void fluid_server_close(fluid_server_t* server);
  */
 fluid_server_t*
 new_fluid_server(fluid_settings_t* settings,
-		fluid_cmd_handler_t* handler)
+		fluid_synth_t* synth, fluid_midi_router_t* router)
 {
   fluid_server_t* server;
   int port;
@@ -2038,7 +2039,8 @@ new_fluid_server(fluid_settings_t* settings,
 
   server->settings = settings;
   server->clients = NULL;
-  server->handler = handler;
+  server->synth = synth;
+  server->router = router;
 
   fluid_mutex_init(server->mutex);
 
@@ -2108,7 +2110,7 @@ fluid_server_handle_connection(fluid_server_t* server, fluid_socket_t client_soc
   fluid_client_t* client;
   fluid_cmd_handler_t* handler;
 
-  handler = new_fluid_cmd_handler(server->handler->synth, server->handler->router);
+  handler = new_fluid_cmd_handler(server->synth, server->router);
   if (handler == NULL) {
     return -1;
   }
