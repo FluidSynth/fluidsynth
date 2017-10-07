@@ -75,7 +75,7 @@ void fluid_shell_settings(fluid_settings_t* settings)
 
 /** the table of all handled commands */
 
-fluid_cmd_t fluid_commands[] = {
+static fluid_cmd_t fluid_commands[] = {
   { "help", "general", (fluid_cmd_func_t) fluid_handle_help, NULL,
     "help                       Show help topics ('help TOPIC' for more info)" },
   { "quit", "general", (fluid_cmd_func_t) fluid_handle_quit, NULL,
@@ -1935,8 +1935,11 @@ fluid_cmd_handler_t* new_fluid_cmd_handler(fluid_synth_t* synth, fluid_midi_rout
   handler->router = router;
   
   if (synth != NULL) {
-    for (i = 0; fluid_commands[i].name != NULL; i++) {
-      fluid_cmd_handler_register(handler, &fluid_commands[i]);
+    for (i = 0; fluid_commands[i].name != NULL; i++)
+    {
+        fluid_commands[i].data = handler;
+        fluid_cmd_handler_register(handler, &fluid_commands[i]);
+        fluid_commands[i].data = NULL;
     }
   }
 
