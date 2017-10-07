@@ -414,7 +414,6 @@ struct _fluid_defsfont_t
   fluid_defpreset_t* preset; /* the presets of this soundfont */
   int mlock;                 /* Should we try memlock (avoid swapping)? */
 
-  fluid_preset_t iter_preset;        /* preset interface used in the iteration */
   fluid_defpreset_t* iter_cur;       /* the current preset in the iteration */
 
   fluid_preset_t** preset_stack; /* List of presets that are available to use */
