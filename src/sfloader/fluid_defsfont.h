@@ -143,12 +143,14 @@ typedef struct _SFData
 {				/* Sound font data structure */
   SFVersion version;		/* sound font version */
   SFVersion romver;		/* ROM version */
+  
   unsigned int samplepos;		/* position within sffd of the sample chunk */
   unsigned int samplesize;		/* length within sffd of the sample chunk */
   
   int hassample24;		/* TRUE if valid 24 bit samples are available (i.e. the two members below are set */
   unsigned int sample24pos;		/* position within sffd of the sm24 chunk */
   unsigned int sample24size;		/* length within sffd of the sm24 chunk */
+  
   char *fname;			/* file name */
   FILE *sffd;			/* loaded sfont file descriptor */
   fluid_list_t *info;		     /* linked list of info strings (1st byte is ID) */
@@ -410,6 +412,12 @@ struct _fluid_defsfont_t
   unsigned int samplepos;   /* the position in the file at which the sample data starts */
   unsigned int samplesize;  /* the size of the sample data in bytes */
   short* sampledata;        /* the sample data, loaded in ram */
+  
+  int hassample24;		/* TRUE if valid 24 bit samples are available (i.e. the two members below are set */
+  unsigned int sample24pos;		/* position within sffd of the sm24 chunk */
+  unsigned int sample24size;		/* length within sffd of the sm24 chunk */
+  char* sample24data;        /* if not NULL, the least significant byte of the 24bit sample data, loaded in ram */
+  
   fluid_list_t* sample;      /* the samples in this soundfont */
   fluid_defpreset_t* preset; /* the presets of this soundfont */
   int mlock;                 /* Should we try memlock (avoid swapping)? */

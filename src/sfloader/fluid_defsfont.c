@@ -224,8 +224,11 @@ typedef struct _fluid_cached_sampledata_t {
   int num_references;
   int mlock;
 
-  const short* sampledata;
+  short* sampledata;
   unsigned int samplesize;
+  
+  char* sample24data;
+  unsigned int sample24size;
 } fluid_cached_sampledata_t;
 
 static fluid_cached_sampledata_t* all_cached_sampledata = NULL;
@@ -248,11 +251,18 @@ static int fluid_get_file_modification_time(char *filename, time_t *modification
 #endif
 }
 
-static int fluid_cached_sampledata_load(char *filename, unsigned int samplepos,
-  unsigned int samplesize, short **sampledata, int try_mlock)
+static int fluid_cached_sampledata_load(char *filename,
+                                        unsigned int samplepos,
+                                        unsigned int samplesize,
+                                        short **sampledata,
+                                        unsigned int sample24pos,
+                                        unsigned int sample24size,
+                                        char **sample24data,
+                                        int try_mlock)
 {
   fluid_file fd = NULL;
   short *loaded_sampledata = NULL;
+  char  *loaded_sample24data = NULL;
   fluid_cached_sampledata_t* cached_sampledata = NULL;
   time_t modification_time;
 
@@ -282,7 +292,8 @@ static int fluid_cached_sampledata_load(char *filename, unsigned int samplepos,
     }
 
     cached_sampledata->num_references++;
-    loaded_sampledata = (short*) cached_sampledata->sampledata;
+    loaded_sampledata = cached_sampledata->sampledata;
+    loaded_sample24data = cached_sampledata->sample24data;
     goto success_exit;
   }
 
@@ -453,12 +464,8 @@ fluid_defsfont_t* new_fluid_defsfont(fluid_settings_t* settings)
     return NULL;
   }
 
-  sfont->filename = NULL;
-  sfont->samplepos = 0;
-  sfont->samplesize = 0;
-  sfont->sample = NULL;
-  sfont->sampledata = NULL;
-  sfont->preset = NULL;
+  FLUID_MEMSET(sfont, 0, sizeof(*sfont));
+  
   fluid_settings_getint(settings, "synth.lock-memory", &sfont->mlock);
 
   /* Initialise preset cache, so we don't have to call malloc on program changes.
@@ -466,7 +473,7 @@ fluid_defsfont_t* new_fluid_defsfont(fluid_settings_t* settings)
      so optimise for that case. */
   fluid_settings_getint(settings, "synth.midi-channels", &sfont->preset_stack_capacity);
   sfont->preset_stack_capacity++;
-  sfont->preset_stack_size = 0;
+  
   sfont->preset_stack = FLUID_ARRAY(fluid_preset_t*, sfont->preset_stack_capacity);
   if (!sfont->preset_stack) {
     FLUID_LOG(FLUID_ERR, "Out of memory");
@@ -574,6 +581,9 @@ int fluid_defsfont_load(fluid_defsfont_t* sfont, const char* file)
      it's loaded separately (and might be unoaded/reloaded in future) */
   sfont->samplepos = sfdata->samplepos;
   sfont->samplesize = sfdata->samplesize;
+  sfont->hassample24 = sfdata->hassample24;
+  sfont->sample24pos = sfdata->sample24pos;
+  sfont->sample24size = sfdata->sample24size;
 
   /* load sample data in one block */
   if (fluid_defsfont_load_sampledata(sfont) != FLUID_OK)
@@ -2137,8 +2147,6 @@ char idlist[] = {
     "ICOPICMTISFTsnamsmplphdrpbagpmodpgeninstibagimodigenshdrsm24"
 };
 
-static unsigned int sdtachunk_size;
-
 /* sound font file load functions */
 static int
 chunkid (unsigned int id)
@@ -2408,7 +2416,6 @@ process_sdta (unsigned int size, SFData * sf, FILE * fd)
   sf->samplepos = ftell (fd);
 
   /* used in fixup_sample() to check validity of sample headers */
-  sdtachunk_size = chunk.size;
   sf->samplesize = chunk.size;
 
   FSKIP (chunk.size, fd);
@@ -3374,14 +3381,12 @@ fixup_sample (SFData * sf)
   int invalid_loops=FALSE;
   int invalid_loopstart;
   int invalid_loopend, loopend_end_mismatch;
+  unsigned int sdtachunk_size = sf->samplesize;
 
   p = sf->sample;
   while (p)
     {
       sam = (SFSample *) (p->data);
-      
-      if(sf->samplesize != sdtachunk_size)
-          FLUID_LOG(FLUID_ERR, "OMGOMGOMGOM");
       
       /* The SoundFont 2.4 spec defines the loopstart index as the first sample point of the loop */
       invalid_loopstart = (sam->loopstart < sam->start) || (sam->loopstart >= sam->loopend);
