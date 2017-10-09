@@ -71,12 +71,24 @@ int fluid_handle_dumptuning(fluid_synth_t* synth, int ac, char** av, fluid_ostre
 int fluid_handle_reset(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
 int fluid_handle_source(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
 int fluid_handle_echo(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_sleep(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
 
 int fluid_handle_set(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
 int fluid_handle_get(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
 int fluid_handle_info(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
 int fluid_handle_settings(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
-
+/* Poly Mono mode commands */
+int fluid_handle_basicchannels(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_resetbasicchannels (fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_setbasicchannels (fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_channelsmode(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_legatomode(fluid_synth_t* synth, int ac, char** av,fluid_ostream_t out);
+int fluid_handle_setlegatomode(fluid_synth_t* synth, int ac, char** av,fluid_ostream_t out);
+int fluid_handle_portamentomode(fluid_synth_t* synth, int ac, char** av,fluid_ostream_t out);
+int fluid_handle_setportamentomode(fluid_synth_t* synth, int ac, char** av,fluid_ostream_t out);
+int fluid_handle_breathmode(fluid_synth_t* synth, int ac, char** av,fluid_ostream_t out);
+int fluid_handle_setbreathmode(fluid_synth_t* synth, int ac, char** av, 
+								fluid_ostream_t out);
 
 fluid_cmd_t* fluid_cmd_copy(fluid_cmd_t* cmd);
 void delete_fluid_cmd(fluid_cmd_t* cmd);

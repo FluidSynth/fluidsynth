@@ -149,7 +149,10 @@ fluid_cmd_t fluid_commands[] = {
     "settings                   Print out all settings" },
   { "echo", "general", (fluid_cmd_func_t) fluid_handle_echo, NULL,
     "echo arg                   Print arg" },
-  /* LADSPA-related commands */
+  /* Sleep command, useful to insert a delay between commands */
+  { "sleep", "general", (fluid_cmd_func_t) fluid_handle_sleep, NULL,
+    "sleep  duration            sleep duration(in ms)" },
+	/* LADSPA-related commands */
 #ifdef LADSPA
   { "ladspa_clear", "ladspa", (fluid_cmd_func_t) fluid_LADSPA_handle_clear, NULL,
     "ladspa_clear               Resets LADSPA effect unit to bypass state"},
@@ -176,7 +179,28 @@ fluid_cmd_t fluid_commands[] = {
     "router_par2 min max mul add      filters and maps parameter 2 (vel/cc val)"},
   { "router_end", "router", (fluid_cmd_func_t) fluid_midi_router_handle_end, NULL,
     "router_end                 closes and commits the current routing rule"},
-  { NULL, NULL, NULL, NULL, NULL }
+  /* Poly Mono mode commands */
+	{ "basicchannels", "polymono", (fluid_cmd_func_t) fluid_handle_basicchannels, NULL,
+      "basicchannels                         Display the list of basic channels"},
+	{ "resetbasicchannels", "polymono", (fluid_cmd_func_t) fluid_handle_resetbasicchannels, NULL,
+      "resetbasicchannels [chan mode val..]  Reset the list of basic channels"},
+	{ "setbasicchannels", "polymono", (fluid_cmd_func_t) fluid_handle_setbasicchannels, NULL,
+      "setbasicchannels chan mode val [chan mode val..] Change or add basic channels"},
+	{ "channelsmode", "polymono", (fluid_cmd_func_t) fluid_handle_channelsmode, NULL,
+      "channelsmode [chan1 chan2..]          Print channels mode"},
+	{ "legatomode", "polymono", (fluid_cmd_func_t) fluid_handle_legatomode, NULL,
+      "legatomode [chan1 chan2..]            Print channels legato mode"},
+	{ "setlegatomode", "polymono", (fluid_cmd_func_t) fluid_handle_setlegatomode, NULL,
+      "setlegatomode chan mode [chan mode..] Change legato mode"},
+	{ "portamentomode", "polymono", (fluid_cmd_func_t) fluid_handle_portamentomode, NULL,
+      "portamentomode [chan1 chan2..]        Print channels portamento mode"},
+	{ "setportamentomode", "polymono", (fluid_cmd_func_t) fluid_handle_setportamentomode, NULL,
+      "setportamentomode chan mode [chan mode..] Change portamento mode"},
+	{ "breathmode", "polymono", (fluid_cmd_func_t) fluid_handle_breathmode, NULL,
+      "breathmode [chan1 chan2..]            Print channels breath mode"},
+	{ "setbreathmode", "polymono", (fluid_cmd_func_t) fluid_handle_setbreathmode, NULL,
+      "setbreathmode chan poly(1/0) mono(1/0) breath_sync(1/0) [..] Set breath mode"},
+	{ NULL, NULL, NULL, NULL, NULL },
 };
 
 /**
@@ -946,6 +970,30 @@ fluid_handle_echo(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream
   }
 
   fluid_ostream_printf(out, "%s\n",av[0]);
+
+  return 0;
+}
+
+/* Purpose:
+ * Sleep during a time in ms
+ * The command itself is useful to insert a delay between commands.
+ * It can help for exemple to build a small song using noteon/noteoff commands
+ * in a command file.
+ */
+int
+fluid_handle_sleep(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out)
+{
+//  int delay;
+  if (ac < 1) {
+    fluid_ostream_printf(out, "sleep: too few arguments.\n");
+    return -1;
+  }
+  if (!fluid_is_number(av[0])) {
+    fluid_ostream_printf(out, "sleep: argument should be a number in ms.\n");
+    return -1;
+  }
+//  delay = atoi(av[0] * 1000); /* delay in micro second.*/
+  g_usleep(atoi(av[0]) * 1000);	/* delay in micro second.*/	
 
   return 0;
 }

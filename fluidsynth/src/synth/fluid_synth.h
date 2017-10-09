@@ -154,6 +154,7 @@ struct _fluid_synth_t
   int active_voice_count;            /**< count of active voices */
   unsigned int noteid;               /**< the id is incremented for every new note. it's used for noteoff's  */
   unsigned int storeid;
+  int fromkey_portamento;			 /**< fromkey portamento */
   fluid_rvoice_eventhandler_t* eventhandler;
 
   float reverb_roomsize;             /**< Shadow of reverb roomsize */

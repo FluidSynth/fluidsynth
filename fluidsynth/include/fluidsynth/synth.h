@@ -45,6 +45,130 @@ extern "C" {
  * fluid_synth_noteon(), fluid_synth_noteoff(), ...
  */
 
+
+/*******************************************************************
+ API: Poly mono mode 
+ */
+
+/* Macros interface to poly/mono mode variables */
+enum PolyMonoMode
+{
+	OMNION_POLY,  /* MIDI mode 0 */
+	OMNION_MONO,  /* MIDI mode 1 */
+	OMNIOFF_POLY, /* MIDI mode 2 */
+	OMNIOFF_MONO, /* MIDI mode 3 */
+	MODE_NBR
+};
+
+/* bits basic channel infos */
+#define MONO 0x01            /* b0, 0: poly on , 1: mono on */
+#define OMNI 0x02            /* b1, 0: omni on, 1:omni off */
+#define MASKMODE (OMNI|MONO)
+#define BASIC_CHANNEL  0x04  /* b2, 1: channel is basic channel */
+#define ENABLED 0x08         /* b3, 1: channel is listened */
+
+/* access to mode */
+#define GetModeMode(mode) (mode &  MASKMODE)
+#define IsModeMono(mode)  (mode & MONO)
+#define IsModeBasicChan(mode) (mode &  BASIC_CHANNEL)
+#define SetModeBasicChan(mode) (mode |= BASIC_CHANNEL)
+#define ResetModeBasicChan(mode) (mode &= ~ BASIC_CHANNEL)
+#define IsModeChanEn(mode) (mode &  ENABLED)
+#define SetModeChanEn(mode) (mode |= ENABLED)
+#define ResetModeChanEn(mode) (mode &= ~ENABLED)
+
+#define FLUID_POLYMONO_WARNING (-2) /* returned by fluid_synth_reset_basic_channels() */
+struct _fluid_basic_channel_infos_t
+{
+	int basicchan;  /* MIDI channel numer to set as basic channel */
+	int mode;       /* 0:OmniOn_Poly	 1:OmniOn_Mono	2:OmniOff_Poly	3 OmniOff_Mono */
+	int val;        /* Number of monophonic channel (Mode 3) */
+};
+typedef struct  _fluid_basic_channel_infos_t   fluid_basic_channel_infos_t;
+
+FLUIDSYNTH_API int fluid_synth_get_basic_channels(	fluid_synth_t* synth,
+								   fluid_basic_channel_infos_t **basicChannelInfos);
+FLUIDSYNTH_API int fluid_synth_reset_basic_channels(fluid_synth_t* synth, int n, 
+                                          fluid_basic_channel_infos_t *basicChannelInfos);
+FLUIDSYNTH_API int fluid_synth_get_channel_mode(fluid_synth_t* synth, int chan,
+												fluid_basic_channel_infos_t  *modeInfos);
+FLUIDSYNTH_API int fluid_synth_set_basic_channel(fluid_synth_t* synth, 
+												 int basicchan, int mode, int val);
+/* Interface to mono legato mode  */
+/* n1,n2,n3,.. is a legato passage. n1 is the first note, and n2,n3,n4 are played
+ legato with previous note. n2,n3,..make use of previous voices if any.
+*/
+enum LegatoMode
+{
+	/* Release previous note (fast release), start a new note */
+	RETRIGGER_0, /* mode 0 */
+
+	/* Release previous note (normal release), start a new note */
+	RETRIGGER_1, /* mode 1 */
+	/* On n2,n3,.. retrigger in attack section using  current value and 
+	  shape attack using current dynamic  */ 
+	MULTI_RETRIGGER, /* mode 2 */
+
+	/* On n2,n3,.stay in current value section and shape current section
+	using current dynamic  */
+	SINGLE_TRIGGER_0, /* mode 3 */
+
+	/* On n2,n3,.stay in current value section using current dynamic (don't shape adsr)  */
+	SINGLE_TRIGGER_1, /* mode 4 */
+	LEGATOMODE_NBR
+};
+
+FLUIDSYNTH_API int fluid_synth_set_legato_mode(fluid_synth_t* synth, 
+												int chan, int legatomode);
+FLUIDSYNTH_API int fluid_synth_get_legato_mode(fluid_synth_t* synth,
+												int chan, int  *legatomode);
+/* End of API: Poly mono mode */
+
+/* Interface to portamento mode  */
+/* Macros interface to portamento mode variable */
+enum PortamentoMode
+{
+	/* Portamento on each note (staccato or legato) */
+	EACH_NOTE,		/* mode 0 */
+	/* Portamento only on legato note  */ 
+	LEGATO_ONLY,	/* mode 1 */
+	/* Portamento only on staccato note  */ 
+	STACCATO_ONLY,	/* mode 2 */
+	PORTAMENTOMODE_NBR
+};
+
+FLUIDSYNTH_API int fluid_synth_set_portamento_model(fluid_synth_t* synth,
+													int chan, int portamentomode);
+FLUIDSYNTH_API int fluid_synth_get_portamento_model(fluid_synth_t* synth,
+												int chan, int  * portamentomode);
+
+/* End of API: portamento mode */
+
+/* Interface to breath mode   */
+/* breath mode bits infos */
+#define BREATH_POLY 0x10     /* b4, 1: default breath poly On */
+#define BREATH_MONO 0x20     /* b5, 1: default breath mono On */
+#define BREATH_SYNC 0x40     /* b6, 1: BreathSyn On */
+
+/* access to breath mode bits */
+#define IsPolyDefaultBreath(breath) (breath &  BREATH_POLY)
+#define SetPolyDefaultBreath(breath) (breath |= BREATH_POLY)
+#define ResetPolyDefaultBreath(breath) (breath &= ~ BREATH_POLY)
+#define IsMonoDefaultBreath(breath) (breath &  BREATH_MONO)
+#define SetMonoDefaultBreath(breath) (breath |= BREATH_MONO)
+#define ResetMonoDefaultBreath(breath) (breath &= ~ BREATH_MONO)
+
+#define IsBreathSync(breath) (breath &  BREATH_SYNC)
+#define SetBreathSync(breath) (breath |= BREATH_SYNC)
+#define ResetBreathSync(breath) (breath &= ~ BREATH_SYNC)
+
+FLUIDSYNTH_API int fluid_synth_set_breath_mode(fluid_synth_t* synth, 
+												int chan, int breathmode);
+FLUIDSYNTH_API int fluid_synth_get_breath_mode(fluid_synth_t* synth,
+												int chan, int  *breathmode);
+
+/* End of API: breath mode */
+
 #define FLUID_SYNTH_CHANNEL_INFO_NAME_SIZE   32    /**< Length of channel info name field (including zero terminator) */
 
 /**
@@ -299,7 +423,8 @@ typedef int (*fluid_audio_callback_t)(fluid_synth_t* synth, int len,
 /* Synthesizer's interface to handle SoundFont loaders */
 
 FLUIDSYNTH_API void fluid_synth_add_sfloader(fluid_synth_t* synth, fluid_sfloader_t* loader);
-FLUIDSYNTH_API fluid_voice_t* fluid_synth_alloc_voice(fluid_synth_t* synth, fluid_sample_t* sample,
+FLUIDSYNTH_API fluid_voice_t* fluid_synth_alloc_voice(fluid_synth_t* synth, 
+													  fluid_inst_zone_t* inst_zone,
                                                       int channum, int key, int vel);
 FLUIDSYNTH_API void fluid_synth_start_voice(fluid_synth_t* synth, fluid_voice_t* voice);
 FLUIDSYNTH_API void fluid_synth_get_voicelist(fluid_synth_t* synth,

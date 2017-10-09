@@ -95,9 +95,11 @@ fluid_adsr_env_calc(fluid_adsr_env_t* env, int is_volenv)
     env->section++;
     env->count = 0;
   }
+  else env->count++;
 
   env->val = x;
-  env->count++;
+	  
+
 }
 
 /* This one cannot be inlined since it is referenced in 

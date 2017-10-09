@@ -69,6 +69,7 @@ struct _fluid_voice_t
 	fluid_gen_t gen[GEN_LAST];
 	fluid_mod_t mod[FLUID_NUM_MOD];
 	int mod_count;
+	fluid_inst_zone_t *inst_zone;	/* Instrument Zone */
 	fluid_sample_t* sample;         /* Pointer to sample (dupe in rvoice) */
 
 	int has_noteoff;                /* Flag set when noteoff has been sent */
@@ -120,7 +121,8 @@ void  fluid_voice_calculate_gen_pitch(fluid_voice_t* voice);
 
 int fluid_voice_write (fluid_voice_t* voice, fluid_real_t *dsp_buf);
 
-int fluid_voice_init(fluid_voice_t* voice, fluid_sample_t* sample,
+//int fluid_voice_init(fluid_voice_t* voice, fluid_sample_t* sample,
+int fluid_voice_init(fluid_voice_t* voice, fluid_inst_zone_t *inst_zone,
 		     fluid_channel_t* channel, int key, int vel,
 		     unsigned int id, unsigned int time, fluid_real_t gain);
 
@@ -142,6 +144,19 @@ int fluid_voice_set_output_rate(fluid_voice_t* voice, fluid_real_t value);
     already operating voice.  Most applications will not need this
     function.*/
 void fluid_voice_update_param(fluid_voice_t* voice, int gen);
+
+/** legato modes */
+/* force in the release section for legato mode retrigger: 0 and 1 */
+void fluid_update_release(fluid_voice_t* voice, unsigned char flags);
+/* force in the attack section for legato mode multi_retrigger: 1 */
+void fluid_update_multi_retrigger_attack(fluid_voice_t* voice,int tokey, int vel);
+/* force in the current section for legato mode single_trigger: 2*/
+void fluid_update_single_trigger0(fluid_voice_t* voice, int fromkey, int tokey, int vel);
+/* force in the current section for legato mode single_trigger: 2*/
+void fluid_update_single_trigger1(fluid_voice_t* voice, int fromkey, int tokey, int vel);
+/* Update portamento parameter */
+void fluid_voice_update_portamento (fluid_voice_t* voice, int fromkey, int tokey);
+
 
 /**  fluid_voice_release
  Force the voice into release stage. Usefuf anywhere a voice

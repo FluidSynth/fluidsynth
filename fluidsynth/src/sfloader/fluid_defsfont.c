@@ -822,7 +822,9 @@ fluid_defpreset_noteon(fluid_defpreset_t* preset, fluid_synth_t* synth, int chan
       /* run thru all the zones of this instrument */
       inst_zone = fluid_inst_get_zone(inst);
 	  while (inst_zone != NULL) {
-
+		  /* ignoreIZ is set in mono legato playing */
+		  unsigned char ignoreIZ = IsIgnoreInstZone(inst_zone);
+		  ResetIgnoreInstZone(inst_zone); /* Reset the 'ignore' request */
 	/* make sure this instrument zone has a valid sample */
 	sample = fluid_inst_zone_get_sample(inst_zone);
 	if ((sample == NULL) || fluid_sample_in_rom(sample)) {
@@ -830,15 +832,17 @@ fluid_defpreset_noteon(fluid_defpreset_t* preset, fluid_synth_t* synth, int chan
 	  continue;
 	}
 
-	/* check if the note falls into the key and velocity range of this
-	   instrument */
-
-	if (fluid_inst_zone_inside_range(inst_zone, key, vel) && (sample != NULL)) {
+	/* check if the instrument zone doesn't be ignored and the note falls into
+	   the key and velocity range of this  instrument zone.
+	   An instrument zone must be ignored when its voice is already running
+	   played by a legato passage (see fluid_synth_noteon_mono_legato()) */
+	if (! ignoreIZ &&
+		fluid_inst_zone_inside_range(inst_zone, key, vel) && (sample != NULL)) {
 
 	  /* this is a good zone. allocate a new synthesis process and
              initialize it */
 
-	  voice = fluid_synth_alloc_voice(synth, sample, chan, key, vel);
+	  voice = fluid_synth_alloc_voice(synth, inst_zone, chan, key, vel);
 	  if (voice == NULL) {
 	    return FLUID_FAILED;
 	  }
@@ -1210,7 +1214,8 @@ fluid_preset_zone_import_sfont(fluid_preset_zone_t* zone, SFZone *sfzone, fluid_
       FLUID_LOG(FLUID_ERR, "Out of memory");
       return FLUID_FAILED;
     }
-    if (fluid_inst_import_sfont(zone->inst, (SFInst *) sfzone->instsamp->data, sfont) != FLUID_OK) {
+    if (fluid_inst_import_sfont(zone, zone->inst, 
+							(SFInst *) sfzone->instsamp->data, sfont) != FLUID_OK) {
       return FLUID_FAILED;
     }
   }
@@ -1431,7 +1436,8 @@ fluid_inst_set_global_zone(fluid_inst_t* inst, fluid_inst_zone_t* zone)
  * fluid_inst_import_sfont
  */
 int
-fluid_inst_import_sfont(fluid_inst_t* inst, SFInst *sfinst, fluid_defsfont_t* sfont)
+fluid_inst_import_sfont(fluid_preset_zone_t* zonePZ, fluid_inst_t* inst, 
+						SFInst *sfinst, fluid_defsfont_t* sfont)
 {
   fluid_list_t *p;
   SFZone* sfzone;
@@ -1457,7 +1463,7 @@ fluid_inst_import_sfont(fluid_inst_t* inst, SFInst *sfinst, fluid_defsfont_t* sf
       return FLUID_FAILED;
     }
 
-    if (fluid_inst_zone_import_sfont(zone, sfzone, sfont) != FLUID_OK) {
+    if (fluid_inst_zone_import_sfont(zonePZ,zone, sfzone, sfont) != FLUID_OK) {
       delete_fluid_inst_zone(zone);
       return FLUID_FAILED;
     }
@@ -1541,7 +1547,7 @@ new_fluid_inst_zone(char* name)
   zone->keyhi = 128;
   zone->vello = 0;
   zone->velhi = 128;
-
+  zone->flags = 0; /* 0: This IZ must not ignored, 1:ZI is ignored */
   /* Flag the generators as unused.
    * This also sets the generator values to default, but they will be overwritten anyway, if used.*/
   fluid_gen_set_default_values(&zone->gen[0]);
@@ -1583,7 +1589,8 @@ fluid_inst_zone_next(fluid_inst_zone_t* zone)
  * fluid_inst_zone_import_sfont
  */
 int
-fluid_inst_zone_import_sfont(fluid_inst_zone_t* zone, SFZone *sfzone, fluid_defsfont_t* sfont)
+fluid_inst_zone_import_sfont(fluid_preset_zone_t* zonePZ, fluid_inst_zone_t* zone,
+							 SFZone *sfzone, fluid_defsfont_t* sfont)
 {
   fluid_list_t *r;
   SFGen* sfgen;
@@ -1609,6 +1616,13 @@ fluid_inst_zone_import_sfont(fluid_inst_zone_t* zone, SFZone *sfzone, fluid_defs
     }
     r = fluid_list_next(r);
   }
+  
+  /* adjust IZ keyrange to integrate PZ keyrange */
+  if (zonePZ->keylo > zone->keylo) zone->keylo = zonePZ->keylo;
+  if (zonePZ->keyhi < zone->keyhi) zone->keyhi = zonePZ->keyhi;
+  /* adjust IZ velrange to integrate PZ velrange */
+  if (zonePZ->vello > zone->vello) zone->vello = zonePZ->vello;
+  if (zonePZ->velhi < zone->velhi) zone->velhi = zonePZ->velhi;
 
   /* FIXME */
 /*    if (zone->gen[GEN_EXCLUSIVECLASS].flags == GEN_SET) { */

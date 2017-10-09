@@ -27,6 +27,7 @@
 #include "fluid_sys.h"
 #include "fluid_sfont.h"
 #include "fluid_rvoice_event.h"
+#include "fluid_defsfont.h"
 
 /* used for filter turn off optimization - if filter cutoff is above the
    specified value and filter q is below the other value, turn filter off */
@@ -236,9 +237,13 @@ delete_fluid_voice(fluid_voice_t* voice)
 /* fluid_voice_init
  *
  * Initialize the synthesis process
+ * inst_zone, the Instrument Zone contains the sample, Keyrange,Velrange
+ * of the voice. 
+ * When playing legato (n1,n2) in mono mode, n2 will use n1 voices 
+ * as far as n2 still enters in Keyrange,Velrange of n1.
  */
 int
-fluid_voice_init(fluid_voice_t* voice, fluid_sample_t* sample,
+fluid_voice_init(fluid_voice_t* voice, fluid_inst_zone_t *inst_zone,
 		 fluid_channel_t* channel, int key, int vel, unsigned int id,
 		 unsigned int start_time, fluid_real_t gain)
 {
@@ -247,6 +252,7 @@ fluid_voice_init(fluid_voice_t* voice, fluid_sample_t* sample,
    * the 'working memory' of the voice (position in envelopes, history
    * of IIR filters, position in sample etc) is initialized. */
   int i;
+  fluid_sample_t* sample;
 
   if (!voice->can_access_rvoice) {
     if (voice->can_access_overflow_rvoice) 
@@ -261,6 +267,8 @@ fluid_voice_init(fluid_voice_t* voice, fluid_sample_t* sample,
   if (voice->sample)
     fluid_voice_off(voice);
 
+  sample = fluid_inst_zone_get_sample(inst_zone);
+  voice->inst_zone = inst_zone; /* Instrument Zone for legato */
   voice->id = id;
   voice->chan = fluid_channel_get_num(channel);
   voice->key = (unsigned char) key;
@@ -464,14 +472,18 @@ void fluid_voice_start(fluid_voice_t* voice)
   voice->channel->synth->active_voice_count++;
 }
 
-void 
-fluid_voice_calculate_gen_pitch(fluid_voice_t* voice)
+/* Useful to return the nominal pitch of a key */
+/* The nominal pitch is dependant of voice->root_pitch,tuning, and
+   GEN_SCALETUNE generator.
+   This is useful to set the value of GEN_PITCH generator on noteOn.
+   This is useful to get the beginning/ending pitch for portamento.
+*/
+fluid_real_t fluid_voice_calculate_pitch(fluid_voice_t* voice, int key)
 {
   fluid_tuning_t* tuning;
-  fluid_real_t x;
+  fluid_real_t x,pitch;
 
-  /* The GEN_PITCH is a hack to fit the pitch bend controller into the
-   * modulator paradigm.  Now the nominal pitch of the key is set.
+  /* Now the nominal pitch of the key is returned.
    * Note about SCALETUNE: SF2.01 8.1.3 says, that this generator is a
    * non-realtime parameter. So we don't allow modulation (as opposed
    * to _GEN(voice, GEN_SCALETUNE) When the scale tuning is varied,
@@ -480,14 +492,22 @@ fluid_voice_calculate_gen_pitch(fluid_voice_t* voice)
   if (fluid_channel_has_tuning(voice->channel)) {
     tuning = fluid_channel_get_tuning (voice->channel);
     x = fluid_tuning_get_pitch (tuning, (int)(voice->root_pitch / 100.0f));
-    voice->gen[GEN_PITCH].val = voice->gen[GEN_SCALETUNE].val / 100.0f *
-      (fluid_tuning_get_pitch (tuning, voice->key) - x) + x;
+    pitch = voice->gen[GEN_SCALETUNE].val / 100.0f *
+      (fluid_tuning_get_pitch (tuning, key) - x) + x;
   } else {
-    voice->gen[GEN_PITCH].val = voice->gen[GEN_SCALETUNE].val
-      * (voice->key - voice->root_pitch / 100.0f) + voice->root_pitch;
+    pitch = voice->gen[GEN_SCALETUNE].val
+      * (key - voice->root_pitch / 100.0f) + voice->root_pitch;
   }
-
+  return pitch;
 }
+
+void
+fluid_voice_calculate_gen_pitch(fluid_voice_t* voice)
+{
+	voice->gen[GEN_PITCH].val = fluid_voice_calculate_pitch(voice,
+								voice->key);
+}
+
 
 /*
  * fluid_voice_calculate_runtime_synthesis_parameters
@@ -601,6 +621,17 @@ fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t* voice)
   /* Calculate the voice parameter(s) dependent on each generator. */
   for (i = 0; list_of_generators_to_initialize[i] != -1; i++) {
     fluid_voice_update_param(voice, list_of_generators_to_initialize[i]);
+  }
+
+  /* Start portamento if enabled */
+  {	/* fromkey note comes from "GetFromKeyPortamentoLegato()" detector.
+	When fromkey is set to ValidNote , portamento is started */
+	  /* Return fromkey portamento */
+	  int fromkey = voice->channel->synth->fromkey_portamento;
+      if(IsValidNote(fromkey))
+	  {		/* Send portamento parameters to the voice dsp */
+			fluid_voice_update_portamento(voice,fromkey, voice->key);
+	  }
   }
 
   /* Make an estimate on how loud this voice can get at any time (attenuation). */
@@ -1182,6 +1213,134 @@ int fluid_voice_modulate_all(fluid_voice_t* voice)
   return FLUID_OK;
 }
 
+/** legato update function ---------------------------------------------------*/
+/* Update portamento parameter */
+void fluid_voice_update_portamento (fluid_voice_t* voice, int fromkey,int tokey)
+									
+{
+	fluid_channel_t* channel= voice->channel;
+	fluid_real_t PitchBeg = fluid_voice_calculate_pitch(voice,fromkey);
+	fluid_real_t PitchEnd = fluid_voice_calculate_pitch(voice,tokey);
+	fluid_real_t pitchoffset = PitchBeg - PitchEnd;
+	/* Increment number is function of PortamentoTime (ms)*/
+	unsigned int countinc = (int)(((fluid_real_t)voice->output_rate * 
+					0.001f *
+			        (fluid_real_t)fluid_channel_portamentotime(channel))  /
+					(fluid_real_t)FLUID_BUFSIZE  +0.5);
+	UPDATE_RVOICE2(fluid_rvoice_set_portamento, countinc, pitchoffset); 
+}
+
+/*---------------------------------------------------------------*/
+extern fluid_gen_info_t fluid_gen_info[];
+/* force in the release section for legato mode retrigger 0 and 1:
+  flags:
+    0: fast release.  
+    1: normal release. RELEASE generators are forced to the minimum possible
+*/
+void fluid_update_release(fluid_voice_t* voice, unsigned char flags)
+{
+	if (!flags)
+	{
+		/* force possible minimum Release value */
+		fluid_voice_gen_set(voice, GEN_MODENVRELEASE,
+							fluid_gen_info[GEN_MODENVRELEASE].min);
+		fluid_voice_gen_set(voice, GEN_VOLENVRELEASE, FLUID_MIN_VOLENVRELEASE);
+		/* update */
+		fluid_voice_update_param(voice, GEN_MODENVRELEASE);
+		fluid_voice_update_param(voice, GEN_VOLENVRELEASE);
+	}
+	/* Skip in release section */
+	/* Skip immediately in release section */
+	UPDATE_RVOICE_I1(fluid_rvoice_noteoff, 0);
+	voice->has_noteoff = 1; // voice is marked as noteoff occured
+}
+
+/*---------------------------------------------------------------*/
+/* force in the attack section for legato mode multi_retrigger: 1 */
+void fluid_update_multi_retrigger_attack(fluid_voice_t* voice,
+										 int tokey, int vel)
+{
+	voice->key = tokey;  /* new note */
+	voice->vel = vel; /* new velocity */
+	/* Update dependent generator of velocity */
+	/* Modulate GEN_ATTENUATION (and others ) before calling
+	   fluid_rvoice_multi_retrigger_attack().*/
+	fluid_voice_modulate(voice,0,FLUID_MOD_VELOCITY);			
+		
+	/* Update dependent generator of key */
+	fluid_voice_update_param(voice, GEN_KEYTOMODENVHOLD);
+	fluid_voice_update_param(voice, GEN_KEYTOMODENVDECAY);
+	fluid_voice_update_param(voice, GEN_KEYTOVOLENVHOLD);
+	fluid_voice_update_param(voice, GEN_KEYTOVOLENVDECAY);
+	fluid_voice_calculate_gen_pitch(voice);
+	fluid_voice_update_param(voice, GEN_PITCH);
+	/* update adrs generator */
+	UPDATE_RVOICE0(fluid_rvoice_multi_retrigger_attack); 
+}
+
+/*---------------------------------------------------------------*/
+/* force in the current section for legato mode single_trigger: 2*/
+void fluid_update_single_trigger0(fluid_voice_t* voice,int fromkey,
+								 int tokey, int vel)
+{
+	int decaycount; /* decay data count */
+	int dholdcount; /* difference hold data count with fromkey */
+
+	voice->key = tokey;  /* new note */
+	voice->vel = vel; /* new velocity */
+	/* Update dependent generator of velocity */
+	/* Modulate GEN_ATTENUATION (and others ) before calling
+	   fluid_rvoice_single_trigger().*/
+	fluid_voice_modulate(voice,0,FLUID_MOD_VELOCITY);			
+
+	/* Update dependent generator of key for tokey*/
+	fluid_voice_update_param(voice, GEN_KEYTOMODENVHOLD);
+	fluid_voice_update_param(voice, GEN_KEYTOMODENVDECAY);
+	/* Attention GEN_KEYTOVOLENVHOLD, GEN_KEYTOVOLENVDECAY
+	   fluid_update_single_trigger0() need only get data count
+	   section HOLD et DECAY updated.
+	   (max,min, increment, must not be changed !) */
+    /* calculate decaycount for tokey  (1 for decay )*/
+	decaycount = calculate_hold_decay_buffers(voice, GEN_VOLENVDECAY, 
+									GEN_KEYTOVOLENVDECAY, 1); 
+
+	/* calculate dholdcount for tokey  (0 for hold) */
+	dholdcount = calculate_hold_decay_buffers(voice, GEN_VOLENVHOLD,
+									GEN_KEYTOVOLENVHOLD, 0); 
+	/* now the difference with hold count for fromkey (0 for hold)*/
+	voice->key = fromkey;  /* fromkey note */
+	dholdcount -= calculate_hold_decay_buffers(voice, GEN_VOLENVHOLD,
+									GEN_KEYTOVOLENVHOLD, 0);
+	voice->key = tokey;  /* come back to tokey */
+	/* update Pitch */
+	fluid_voice_calculate_gen_pitch(voice);
+	fluid_voice_update_param(voice, GEN_PITCH);
+	/* update adrs generator */
+	UPDATE_RVOICE2(fluid_rvoice_single_trigger, dholdcount, decaycount); 
+}
+
+/*---------------------------------------------------------------*/
+/* force in the current section for legato mode single_trigger: 2*/
+void fluid_update_single_trigger1(fluid_voice_t* voice,int fromkey,
+								 int tokey, int vel)
+{
+	voice->key = tokey;  /* new note */
+	voice->vel = vel; /* new velocity */
+	/* Update dependent generator of velocity */
+	/* Modulate GEN_ATTENUATION (and others ) */
+	fluid_voice_modulate(voice,0,FLUID_MOD_VELOCITY);			
+		
+	/* Update dependent generator of key */
+	fluid_voice_update_param(voice, GEN_KEYTOMODENVHOLD);
+	fluid_voice_update_param(voice, GEN_KEYTOMODENVDECAY);
+	fluid_voice_update_param(voice, GEN_KEYTOVOLENVHOLD);
+	fluid_voice_update_param(voice, GEN_KEYTOVOLENVDECAY);
+	fluid_voice_calculate_gen_pitch(voice);
+	fluid_voice_update_param(voice, GEN_PITCH);
+}
+
+/** end of legato update function */
+
 /*
  Force the voice into release stage. Useful anywhere a voice
  needs to be damped even if pedals (sustain sostenuto) are depressed.
@@ -1199,12 +1358,15 @@ fluid_voice_release(fluid_voice_t* voice)
 
 /*
  * fluid_voice_noteoff
+ * The function is convenient for polyphonic or monophonic note
+ * On return, The function return True if the voice is sustained
+ * (by Sustain or Sostenuto).
  */
 int
 fluid_voice_noteoff(fluid_voice_t* voice)
 {
   fluid_channel_t* channel;
-
+  int IsSustained = 0;
   fluid_profile(FLUID_PROF_VOICE_NOTE, voice->ref);
 
   channel = voice->channel;
@@ -1214,16 +1376,18 @@ fluid_voice_noteoff(fluid_voice_t* voice)
       channel->sostenuto_orderid > voice->id)
   { // Sostenuto depressed after note
     voice->status = FLUID_VOICE_HELD_BY_SOSTENUTO;
+	IsSustained = 1;
   }
   /* Or sustain a note under Sustain pedal */
   else if (fluid_channel_sustained(channel)) {
-     voice->status = FLUID_VOICE_SUSTAINED;
+    voice->status = FLUID_VOICE_SUSTAINED;
+	IsSustained = 1;
   }
   /* Or force the voice to release stage */
   else
     fluid_voice_release(voice);
 
-  return FLUID_OK;
+  return IsSustained;
 }
 
 /*

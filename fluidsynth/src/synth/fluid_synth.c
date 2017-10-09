@@ -37,6 +37,28 @@
 extern int feenableexcept (int excepts);
 #endif
 
+/* extern declared fluid_synth_polymono.c */
+extern int fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth, 
+											 int basicchan,int mode, int val);
+/* extern declared in fluid_synth_mono.c */
+extern int fluid_synth_noteon_mono_LOCAL(fluid_synth_t* synth, int chan,
+							   int key, int vel);
+extern int fluid_synth_noteoff_mono_LOCAL(fluid_synth_t* synth, int chan, 
+								   int key);
+extern int fluid_synth_noteon_mono_legato(fluid_synth_t* synth, int chan,
+							   int fromkey, int tokey, int vel);
+extern int fluid_synth_noteoff_monopoly(fluid_synth_t* synth, int chan, int key,
+							 char Mono);
+
+extern void fluid_channel_set_onenote_monolist(fluid_channel_t* chan, 
+											   unsigned char key,
+								            unsigned char vel);
+extern void fluid_channel_clear_monolist(fluid_channel_t* chan);
+extern void ValidInvalidPrevNoteStaccato(fluid_channel_t* chan);
+extern void LegatoOnOff(fluid_channel_t* chan, int value);
+extern void BreathOnOff(fluid_channel_t* chan, int value);
+
+/* End of extern declared in fluid_synth_mono.c , fluid_synth_polymono.c */
 static void fluid_synth_init(void);
 
 static int fluid_synth_noteon_LOCAL(fluid_synth_t* synth, int chan, int key,
@@ -51,7 +73,7 @@ static int fluid_synth_sysex_midi_tuning (fluid_synth_t *synth, const char *data
                                           int len, char *response,
                                           int *response_len, int avail_response,
                                           int *handled, int dryrun);
-static int fluid_synth_all_notes_off_LOCAL(fluid_synth_t* synth, int chan);
+int fluid_synth_all_notes_off_LOCAL(fluid_synth_t* synth, int chan);
 static int fluid_synth_all_sounds_off_LOCAL(fluid_synth_t* synth, int chan);
 static int fluid_synth_system_reset_LOCAL(fluid_synth_t* synth);
 static int fluid_synth_modulate_voices_LOCAL(fluid_synth_t* synth, int chan,
@@ -90,7 +112,7 @@ static void fluid_synth_kill_by_exclusive_class_LOCAL(fluid_synth_t* synth,
 static fluid_sfont_info_t *new_fluid_sfont_info (fluid_synth_t *synth,
                                                  fluid_sfont_t *sfont);
 static int fluid_synth_sfunload_callback(void* data, unsigned int msec);
-static void fluid_synth_release_voice_on_same_note_LOCAL(fluid_synth_t* synth,
+void fluid_synth_release_voice_on_same_note_LOCAL(fluid_synth_t* synth,
                                                             int chan, int key);
 static fluid_tuning_t* fluid_synth_get_tuning(fluid_synth_t* synth,
                                               int bank, int prog);
@@ -127,6 +149,13 @@ static void init_dither(void);
  * There is a set of predefined default modulators. They have to be
  * explicitly overridden by the sound font in order to turn them off.
  */
+
+/* default_breath2att_modulator is not a default modulator specified in SF
+it is intended to replace default_vel2att_mod on demand using
+API fluid_set_breath_mode() or command shell setbreathmode.
+*/
+fluid_mod_t default_breath2att_mod;        
+
 
 fluid_mod_t default_vel2att_mod;        /* SF2.01 section 8.4.1  */
 fluid_mod_t default_vel2filter_mod;     /* SF2.01 section 8.4.2  */
@@ -195,6 +224,17 @@ void fluid_synth_settings(fluid_settings_t* settings)
 			      256, 1, 65535, 0, NULL, NULL);
   fluid_settings_register_int(settings, "synth.midi-channels",
 			      16, 16, 256, 0, NULL, NULL);
+  /* basic channel settings for poly/mono mode */
+  /* synth.basic-channel: default: 0, min:0, max:255, no hint,no callback function */
+  fluid_settings_register_int(settings, "synth.basic-channel",
+			      0, 0, 255, 0, NULL, NULL);
+  /* synth.basic-channel.mode: default: 0, min:0, max:3, no hint,no callback */
+  fluid_settings_register_int(settings, "synth.basic-channel-mode",
+			      0, 0, 3, 0, NULL, NULL);
+  /* synth.basic-channel.modeval: default: 0, min:0, max:255, no hint,no callback*/
+  fluid_settings_register_int(settings, "synth.basic-channel-modeval",
+			      0, 0, 255, 0, NULL, NULL);
+  /* End of settings for poly/mono mode */
   fluid_settings_register_num(settings, "synth.gain",
 			      0.2f, 0.0f, 10.0f,
 			      0, NULL, NULL);
@@ -288,6 +328,20 @@ fluid_synth_init(void)
 
   init_dither();
 
+  /* default_breath2att_modulator is not a default modulator specified in SF2.01.
+   it is intended to replace default_vel2att_mod on demand using
+   API fluid_set_breath_mode() or command shell setbreathmode.
+   */    
+  fluid_mod_set_source1(&default_breath2att_mod, /* The modulator we are programming here */
+		       2,    /* Source. breath MSB corresponds to 2. */
+		       FLUID_MOD_CC           /* MIDI continuous controller */
+		       | FLUID_MOD_CONCAVE    /* Curve shape. Corresponds to 'type=1' */
+		       | FLUID_MOD_UNIPOLAR   /* Polarity. Corresponds to 'P=0' */
+		       | FLUID_MOD_NEGATIVE   /* Direction. Corresponds to 'D=1' */
+		       );
+  fluid_mod_set_source2(&default_breath2att_mod, 0, 0); /* No 2nd source */
+  fluid_mod_set_dest(&default_breath2att_mod, GEN_ATTENUATION);  /* Target: Initial attenuation */
+  fluid_mod_set_amount(&default_breath2att_mod, 960.0);          /* Modulation amount: 960 */
 
   /* SF2.01 page 53 section 8.4.1: MIDI Note-On Velocity to Initial Attenuation */
   fluid_mod_set_source1(&default_vel2att_mod, /* The modulator we are programming here */
@@ -539,7 +593,6 @@ fluid_synth_update_mixer(fluid_synth_t* synth, void* method, int intparam,
 				 intparam, realparam);
 }
 
-
 /**
  * Create new FluidSynth instance.
  * @param settings Configuration parameters to use (used directly).
@@ -659,6 +712,7 @@ new_fluid_synth(fluid_settings_t *settings)
   synth->sfont_info = NULL;
   synth->sfont_hash = new_fluid_hashtable (NULL, NULL);
   synth->noteid = 0;
+  synth->fromkey_portamento = InvalidNote;		/* disable portamento */
   synth->ticks_since_start = 0;
   synth->tuning = NULL;
   fluid_private_init(synth->tuning_iter);
@@ -713,6 +767,24 @@ new_fluid_synth(fluid_settings_t *settings)
     }
   }
 
+  /* set basic channel */
+  {
+ 	int basicchan, mode,val;
+
+	fluid_settings_getint(settings, "synth.basic-channel", &basicchan);
+	fluid_settings_getint(settings, "synth.basic-channel-mode", &mode);
+	fluid_settings_getint(settings, "synth.basic-channel-modeval", &val);
+    if (basicchan >= synth->midi_channels ||
+		basicchan + val > synth->midi_channels)
+	{
+		/* Set basic channel 0, mode 0 (Poly Omni On) */
+		/* (i.e all channels are polyphonic */
+		basicchan = 0; mode = OMNION_POLY; val = 0;
+	    FLUID_LOG(FLUID_WARN, "Requested basic channel, mode, modeval is incorrect.\n"
+	     "basic channel:0 , poly omni on (mode 0) has been set");
+	}
+	fluid_synth_set_basic_channel(synth, basicchan, mode, val);
+  }
   fluid_synth_set_sample_rate(synth, synth->sample_rate);
   
   fluid_synth_update_overflow(synth, "", 0.0f);
@@ -917,8 +989,8 @@ fluid_synth_noteon(fluid_synth_t* synth, int chan, int key, int vel)
   fluid_return_val_if_fail (key >= 0 && key <= 127, FLUID_FAILED);
   fluid_return_val_if_fail (vel >= 0 && vel <= 127, FLUID_FAILED);
   FLUID_API_ENTRY_CHAN(FLUID_FAILED);
-
-  result = fluid_synth_noteon_LOCAL (synth, chan, key, vel);
+  if(! IsChanEnabled(synth->channel[chan])) result = FLUID_FAILED;
+  else result = fluid_synth_noteon_LOCAL (synth, chan, key, vel);
   FLUID_API_RETURN(result);
 }
 
@@ -926,13 +998,12 @@ fluid_synth_noteon(fluid_synth_t* synth, int chan, int key, int vel)
 static int
 fluid_synth_noteon_LOCAL(fluid_synth_t* synth, int chan, int key, int vel)
 {
-  fluid_channel_t* channel;
-
+  fluid_channel_t* channel ;
   /* notes with velocity zero go to noteoff  */
   if (vel == 0) return fluid_synth_noteoff_LOCAL(synth, chan, key);
 
   channel = synth->channel[chan];
-  
+
   /* make sure this channel has a preset */
   if (channel->preset == NULL) {
     if (synth->verbose) {
@@ -944,13 +1015,24 @@ fluid_synth_noteon_LOCAL(fluid_synth_t* synth, int chan, int key, int vel)
     }
     return FLUID_FAILED;
   }
+  
+  if(IsChanPlayingMono(channel)) /* channel is mono or legato On) */
+  {		/* play the noteOn in monophonic */
+		return fluid_synth_noteon_mono_LOCAL(synth, chan, key, vel);
+  }
+  else { /* channel is poly and legato Off) */
 
-  /* If there is another voice process on the same channel and key,
-     advance it to the release phase. */
-  fluid_synth_release_voice_on_same_note_LOCAL(synth, chan, key);
+	  /* play the noteOn in polyphonic */
+      /* Set the note at first position in monophonic list */
+      fluid_channel_set_onenote_monolist(channel, (unsigned char) key,
+								            (unsigned char) vel);
 
+	  /* If there is another voice process on the same channel and key,
+         advance it to the release phase. */
+      fluid_synth_release_voice_on_same_note_LOCAL(synth, chan, key);
 
-  return fluid_preset_noteon(channel->preset, synth, chan, key, vel);
+	  return fluid_synth_noteon_mono_legato(synth, chan, InvalidNote, key, vel);
+  }
 }
 
 /**
@@ -968,7 +1050,8 @@ fluid_synth_noteoff(fluid_synth_t* synth, int chan, int key)
   fluid_return_val_if_fail (key >= 0 && key <= 127, FLUID_FAILED);
   FLUID_API_ENTRY_CHAN(FLUID_FAILED);
 
-  result = fluid_synth_noteoff_LOCAL (synth, chan, key);
+  if(! IsChanEnabled(synth->channel[chan])) result = FLUID_FAILED;
+  else result = fluid_synth_noteoff_LOCAL (synth, chan, key);
   
   FLUID_API_RETURN(result);
 }
@@ -977,31 +1060,20 @@ fluid_synth_noteoff(fluid_synth_t* synth, int chan, int key)
 static int
 fluid_synth_noteoff_LOCAL(fluid_synth_t* synth, int chan, int key)
 {
-  fluid_voice_t* voice;
-  int status = FLUID_FAILED;
-  int i;
-
-  for (i = 0; i < synth->polyphony; i++) {
-    voice = synth->voice[i];
-    if (_ON(voice) && (voice->chan == chan) && (voice->key == key)) {
-      if (synth->verbose) {
-	int used_voices = 0;
-	int k;
-	for (k = 0; k < synth->polyphony; k++) {
-	  if (!_AVAILABLE(synth->voice[k])) {
-	    used_voices++;
-	  }
-	}
-	FLUID_LOG(FLUID_INFO, "noteoff\t%d\t%d\t%d\t%05d\t%.3f\t%d",
-		 voice->chan, voice->key, 0, voice->id,
-		 (fluid_curtime() - synth->start) / 1000.0f,
-		 used_voices);
-      } /* if verbose */
-
-      fluid_voice_noteoff(voice);
-      status = FLUID_OK;
-    } /* if voice on */
-  } /* for all voices */
+  int status;
+  fluid_channel_t* channel = synth->channel[chan];
+  if(IsChanPlayingMono(channel)) /* channel is mono or legato On) */
+  {		/* play the noteOff in monophonic */
+		status = fluid_synth_noteoff_mono_LOCAL(synth, chan, key);
+  }
+  else { /* channel is poly and legato Off) */
+	  /* remove the note from the monophonic list */
+      if(key == ChanLastNote(channel))  fluid_channel_clear_monolist(channel);
+	  status = fluid_synth_noteoff_monopoly(synth, chan, key, 0);
+  }
+  /* Change the state (Valid/Invalid) of the most recent note played in a 
+     staccato manner */
+  ValidInvalidPrevNoteStaccato(channel);
   return status;
 }
 
@@ -1010,6 +1082,7 @@ fluid_synth_noteoff_LOCAL(fluid_synth_t* synth, int chan, int key)
 static int
 fluid_synth_damp_voices_by_sustain_LOCAL(fluid_synth_t* synth, int chan)
 {
+  fluid_channel_t* channel = synth->channel[chan];
   fluid_voice_t* voice;
   int i;
 
@@ -1017,7 +1090,11 @@ fluid_synth_damp_voices_by_sustain_LOCAL(fluid_synth_t* synth, int chan)
     voice = synth->voice[i];
 
     if ((voice->chan == chan) && _SUSTAINED(voice))
-     fluid_voice_release(voice);
+	{	/* key_sustained must be marked released (-1) only if key_sustain
+		is sustained by sustain pedal */
+		if(voice->key == channel->key_sustained) channel->key_sustained = -1;
+		fluid_voice_release(voice);
+	}
   }
 
   return FLUID_OK;
@@ -1028,6 +1105,7 @@ fluid_synth_damp_voices_by_sustain_LOCAL(fluid_synth_t* synth, int chan)
 static int
 fluid_synth_damp_voices_by_sostenuto_LOCAL(fluid_synth_t* synth, int chan)
 {
+  fluid_channel_t* channel = synth->channel[chan];
   fluid_voice_t* voice;
   int i;
 
@@ -1035,7 +1113,11 @@ fluid_synth_damp_voices_by_sostenuto_LOCAL(fluid_synth_t* synth, int chan)
     voice = synth->voice[i];
 
     if ((voice->chan == chan) && _HELD_BY_SOSTENUTO(voice))
-     fluid_voice_release(voice);
+	{	/* key_sustained must be marked released (-1) only if key_sustain
+		is sustained by sostenuto pedal */
+		if(voice->key == channel->key_sustained) channel->key_sustained = -1;
+		fluid_voice_release(voice);
+	}
   }
 
   return FLUID_OK;
@@ -1049,20 +1131,50 @@ fluid_synth_damp_voices_by_sostenuto_LOCAL(fluid_synth_t* synth, int chan)
  * @param num MIDI controller number (0-127)
  * @param val MIDI controller value (0-127)
  * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * Note: The function support MIDI CC global which will be send to
+ * all channels when the basic channel is in mode (OmniOn,Mono).
+ * The CC needs to be send on MIDI channel one below the 'basic Channel'
+ * of the receiver. 
  */
 int
 fluid_synth_cc(fluid_synth_t* synth, int chan, int num, int val)
 {
   int result;
+  fluid_channel_t* channel;
   fluid_return_val_if_fail (num >= 0 && num <= 127, FLUID_FAILED);
   fluid_return_val_if_fail (val >= 0 && val <= 127, FLUID_FAILED);
   FLUID_API_ENTRY_CHAN(FLUID_FAILED);
 
-  if (synth->verbose)
-    FLUID_LOG(FLUID_INFO, "cc\t%d\t%d\t%d", chan, num, val);
-
-  fluid_channel_set_cc (synth->channel[chan], num, val);
-  result = fluid_synth_cc_LOCAL (synth, chan, num);
+  channel = synth->channel[chan];
+  if( IsChanEnabled(channel))
+  {	/* chan is enabled */
+	  if (synth->verbose)
+		FLUID_LOG(FLUID_INFO, "cc\t%d\t%d\t%d", chan, num, val);
+	  fluid_channel_set_cc (channel, num, val);
+	  result = fluid_synth_cc_LOCAL (synth, chan, num);
+  }
+  else /* chan is disabled so it is a candidate for global channel */
+  {	/* look for next basic channel */
+	int nChan = synth->midi_channels; /* MIDI Channels number */
+	int basicchan ;
+	if (chan < nChan-1) basicchan = chan + 1; /* next channel */
+	else  basicchan = 0; /* wrap to 0 */
+	channel = synth->channel[basicchan];
+	/* Channel must be a basicchan in mode OMNIOFF_MONO */
+	if (IsChanBasicChannel(channel) &&  (GetChanMode(channel) == OMNIOFF_MONO))
+	{	/* send cc to all channels in this basic channel */
+		int i,val = GetChanModeVal(channel);
+		for (i = basicchan; i < basicchan+val; i++)
+		{ 
+			if (synth->verbose)
+				FLUID_LOG(FLUID_INFO, "cc\t%d\t%d\t%d", i, num, val);
+	  		fluid_channel_set_cc (synth->channel[i], num, val);
+	  		result = fluid_synth_cc_LOCAL (synth, i, num);
+		}
+	}
+	/* The channel chan is not a valid 'global channel' */
+	else result = FLUID_FAILED;
+  }
   FLUID_API_RETURN(result);
 }
 
@@ -1077,6 +1189,83 @@ fluid_synth_cc_LOCAL (fluid_synth_t* synth, int channum, int num)
   value = fluid_channel_get_cc (chan, num);
 
   switch (num) {
+
+  /* Poly Mono mode */
+  case POLY_OFF: /* Mono On */
+	/* allowed only if channum is a basic channel */
+	if (IsChanBasicChannel(chan))
+	{
+		int new_mode, new_val;
+		if(IsChanOmniOn(chan)) /* channel is actually Omni On */
+		{new_mode = OMNION_MONO; new_val=0;} /* set channel in mode 1 */
+		else /* channel is actually Omni Off */
+		{new_mode = OMNIOFF_MONO; new_val= value;} /* set channel in mode 3 */
+		return fluid_synth_set_basic_channel_LOCAL(synth,channum, 
+											new_mode, new_val);
+	}
+	else  return FLUID_FAILED;
+    break;
+
+  case POLY_ON: /* Mono Off */
+	/* allowed only if channum is a basic channel */
+	if (IsChanBasicChannel(chan))
+	{
+		int new_mode, new_val;
+		if(IsChanOmniOn(chan)) /* channel is actually Omni On */
+		{new_mode = OMNION_POLY; new_val=0;} /* set channel in mode 0 */
+		else /* channel is actually Omni Off */
+		{new_mode = OMNIOFF_POLY; new_val= 0;} /* set channel in mode 2 */
+		return fluid_synth_set_basic_channel_LOCAL(synth,channum, 
+											new_mode, new_val);
+	}
+	else  return FLUID_FAILED;
+	break;
+  
+  case OMNI_ON: /* Omni On */
+	/* allowed only if channum is a basic channel */
+	if (IsChanBasicChannel(chan))
+	{
+		int new_mode, new_val;
+		if(IsChanPoly(chan)) /* channel is actually Poly On */
+		{new_mode = OMNION_POLY; new_val=0;} /* set channel in mode 0 */
+		else /* channel is actually Mono On */
+		{new_mode = OMNION_MONO; new_val=0;} /* set channel in mode 1 */
+		return fluid_synth_set_basic_channel_LOCAL(synth,channum, 
+											new_mode, new_val);
+	}
+	else  return FLUID_FAILED;
+	break;
+  
+  case OMNI_OFF: /* Omni Off */
+	/* allowed only if channum is a basic channel */
+	if (IsChanBasicChannel(chan))
+	{
+		int new_mode, new_val;
+		if(IsChanPoly(chan)) /* channel is actually Poly On */
+		{new_mode = OMNIOFF_POLY; new_val= 0;} /* set channel in mode 2 */
+		else /* channel is actually Mono On */
+		/* Channel will bet set in mode 3 with only one channel enabled(ie the
+		basic channel). After sending cc OMNI OFF, the sending MIDI transmitter
+		have to send cc MONO ON next to OMNI_OFF to change the number of 
+		monophonic channel that need to be enabled */
+		{new_mode = OMNIOFF_MONO; new_val= 1;} /* set channel in mode 3 */
+		return fluid_synth_set_basic_channel_LOCAL(synth,channum, 
+											new_mode, new_val);
+	}
+	else  return FLUID_FAILED;
+	break;
+
+  case LEGATO_SWITCH:
+	/* handle Poly/mono commutation on Legato pedal On/Off.*/
+	LegatoOnOff(chan,value);
+    break;
+
+  case PORTAMENTO_SWITCH:
+      /* Special handling of the monophonic list  */
+      /* Invalid) the most recent note played in a staccato manner */
+	  ValidInvalidPrevNoteStaccato(chan);
+    break;
+
   case SUSTAIN_SWITCH:
     /* Release voices if Sustain switch is released */
     if (value < 64) /* Sustain is released */
@@ -1186,6 +1375,9 @@ fluid_synth_cc_LOCAL (fluid_synth_t* synth, int channum, int num)
     chan->nrpn_active = 0;
     break;
   default:
+	/* handle CC Breath On/Off noteOn/noteOff mode */
+	if (num == BREATH_MSB) BreathOnOff(chan, value);
+
     return fluid_synth_modulate_voices_LOCAL (synth, channum, 1, num);
   }
 
@@ -1203,13 +1395,17 @@ fluid_synth_cc_LOCAL (fluid_synth_t* synth, int channum, int num)
 int
 fluid_synth_get_cc(fluid_synth_t* synth, int chan, int num, int* pval)
 {
+  int result;
   fluid_return_val_if_fail (num >= 0 && num < 128, FLUID_FAILED);
   fluid_return_val_if_fail (pval != NULL, FLUID_FAILED);
 
   FLUID_API_ENTRY_CHAN(FLUID_FAILED);
-  
-  *pval = fluid_channel_get_cc (synth->channel[chan], num);
-  FLUID_API_RETURN(FLUID_OK);
+  if(! IsChanEnabled(synth->channel[chan])) result = FLUID_FAILED;
+  else{
+	*pval = fluid_channel_get_cc (synth->channel[chan], num);
+	result = FLUID_OK;
+  }
+  FLUID_API_RETURN(result);
 }
 
 /*
@@ -1517,12 +1713,14 @@ fluid_synth_all_notes_off(fluid_synth_t* synth, int chan)
   if (chan >= synth->midi_channels) 
     result = FLUID_FAILED;
   else
-    result = fluid_synth_all_notes_off_LOCAL (synth, chan);
+	if(! IsChanEnabled(synth->channel[chan])) result = FLUID_FAILED;
+    else result = fluid_synth_all_notes_off_LOCAL (synth, chan);
   FLUID_API_RETURN(result);
 }
 
 /* Local synthesis thread variant of all notes off, (chan=-1 selects all channels) */
-static int
+//static int
+int
 fluid_synth_all_notes_off_LOCAL(fluid_synth_t* synth, int chan)
 {
   fluid_voice_t* voice;
@@ -1555,7 +1753,8 @@ fluid_synth_all_sounds_off(fluid_synth_t* synth, int chan)
   if (chan >= synth->midi_channels) 
     result = FLUID_FAILED;
   else
-    result = fluid_synth_all_sounds_off_LOCAL (synth, chan);
+ 	if(! IsChanEnabled(synth->channel[chan])) result = FLUID_FAILED;
+    else result = fluid_synth_all_sounds_off_LOCAL (synth, chan);
   FLUID_API_RETURN(result);
 }
 
@@ -1626,7 +1825,6 @@ fluid_synth_system_reset_LOCAL(fluid_synth_t* synth)
 {
   fluid_voice_t* voice;
   int i;
-
   for (i = 0; i < synth->polyphony; i++) {
     voice = synth->voice[i];
 
@@ -1636,6 +1834,10 @@ fluid_synth_system_reset_LOCAL(fluid_synth_t* synth)
 
   for (i = 0; i < synth->midi_channels; i++)
     fluid_channel_reset(synth->channel[i]);
+
+  /* Basic channel 0, Mode Omni On Poly */
+  fluid_synth_set_basic_channel(synth, 0, OMNION_POLY, 0);
+
 
   fluid_synth_update_mixer(synth, fluid_rvoice_mixer_reset_fx, 0, 0.0f); 
 
@@ -1700,13 +1902,15 @@ fluid_synth_channel_pressure(fluid_synth_t* synth, int chan, int val)
   fluid_return_val_if_fail (val >= 0 && val <= 127, FLUID_FAILED);
 
   FLUID_API_ENTRY_CHAN(FLUID_FAILED);
-  
-  if (synth->verbose)
-    FLUID_LOG(FLUID_INFO, "channelpressure\t%d\t%d", chan, val);
+  if(! IsChanEnabled(synth->channel[chan])) result = FLUID_FAILED;
+  else  {
+	  if (synth->verbose)
+		FLUID_LOG(FLUID_INFO, "channelpressure\t%d\t%d", chan, val);
 
-  fluid_channel_set_channel_pressure (synth->channel[chan], val);
+	  fluid_channel_set_channel_pressure (synth->channel[chan], val);
 
-  result = fluid_synth_update_channel_pressure_LOCAL (synth, chan);
+	  result = fluid_synth_update_channel_pressure_LOCAL (synth, chan);
+  }
   FLUID_API_RETURN(result);
 }
 
@@ -1731,12 +1935,15 @@ fluid_synth_pitch_bend(fluid_synth_t* synth, int chan, int val)
   fluid_return_val_if_fail (val >= 0 && val <= 16383, FLUID_FAILED);
   FLUID_API_ENTRY_CHAN(FLUID_FAILED);
   
-  if (synth->verbose)
-    FLUID_LOG(FLUID_INFO, "pitchb\t%d\t%d", chan, val);
+  if(! IsChanEnabled(synth->channel[chan])) result = FLUID_FAILED;
+  else {
+	  if (synth->verbose)
+		FLUID_LOG(FLUID_INFO, "pitchb\t%d\t%d", chan, val);
 
-  fluid_channel_set_pitch_bend (synth->channel[chan], val);
+	  fluid_channel_set_pitch_bend (synth->channel[chan], val);
 
-  result = fluid_synth_update_pitch_bend_LOCAL (synth, chan);
+	  result = fluid_synth_update_pitch_bend_LOCAL (synth, chan);
+  }
   FLUID_API_RETURN(result);
 }
 
@@ -1758,11 +1965,16 @@ fluid_synth_update_pitch_bend_LOCAL(fluid_synth_t* synth, int chan)
 int
 fluid_synth_get_pitch_bend(fluid_synth_t* synth, int chan, int* ppitch_bend)
 {
+  int result;
   fluid_return_val_if_fail (ppitch_bend != NULL, FLUID_FAILED);
   FLUID_API_ENTRY_CHAN(FLUID_FAILED);
   
-  *ppitch_bend = fluid_channel_get_pitch_bend (synth->channel[chan]);
-  FLUID_API_RETURN(FLUID_OK);
+  if(! IsChanEnabled(synth->channel[chan])) result = FLUID_FAILED;
+  else {
+	  *ppitch_bend = fluid_channel_get_pitch_bend (synth->channel[chan]);
+	  result = FLUID_OK;
+  }
+  FLUID_API_RETURN(result);
 }
 
 /**
@@ -1779,12 +1991,15 @@ fluid_synth_pitch_wheel_sens(fluid_synth_t* synth, int chan, int val)
   fluid_return_val_if_fail (val >= 0 && val <= 72, FLUID_FAILED);       /* 6 octaves!?  Better than no limit.. */
   FLUID_API_ENTRY_CHAN(FLUID_FAILED);
   
-  if (synth->verbose)
-    FLUID_LOG(FLUID_INFO, "pitchsens\t%d\t%d", chan, val);
+  if(! IsChanEnabled(synth->channel[chan])) result = FLUID_FAILED;
+  else {
+	if (synth->verbose)
+		FLUID_LOG(FLUID_INFO, "pitchsens\t%d\t%d", chan, val);
 
-  fluid_channel_set_pitch_wheel_sensitivity (synth->channel[chan], val);
+	fluid_channel_set_pitch_wheel_sensitivity (synth->channel[chan], val);
 
-  result = fluid_synth_update_pitch_wheel_sens_LOCAL (synth, chan);
+    result = fluid_synth_update_pitch_wheel_sens_LOCAL (synth, chan);
+  }
   FLUID_API_RETURN(result);
 }
 
@@ -1806,11 +2021,16 @@ fluid_synth_update_pitch_wheel_sens_LOCAL(fluid_synth_t* synth, int chan)
 int
 fluid_synth_get_pitch_wheel_sens(fluid_synth_t* synth, int chan, int* pval)
 {
+  int result;
   fluid_return_val_if_fail (pval != NULL, FLUID_FAILED);
   FLUID_API_ENTRY_CHAN(FLUID_FAILED);
   
-  *pval = fluid_channel_get_pitch_wheel_sensitivity (synth->channel[chan]);
-  FLUID_API_RETURN(FLUID_OK);
+  if(! IsChanEnabled(synth->channel[chan])) result = FLUID_FAILED;
+  else {
+	*pval = fluid_channel_get_pitch_wheel_sensitivity (synth->channel[chan]);
+	result = FLUID_OK;
+  }
+  FLUID_API_RETURN(result);
 }
 
 /**
@@ -1945,61 +2165,64 @@ fluid_synth_program_change(fluid_synth_t* synth, int chan, int prognum)
   FLUID_API_ENTRY_CHAN(FLUID_FAILED);
   
   channel = synth->channel[chan];
-  if (channel->channel_type == CHANNEL_TYPE_DRUM) 
-    banknum = DRUM_INST_BANK;
-  else
-    fluid_channel_get_sfont_bank_prog(channel, NULL, &banknum, NULL);
+  if(! IsChanEnabled(channel)) result = FLUID_FAILED;
+  else {
+	  if (channel->channel_type == CHANNEL_TYPE_DRUM) 
+		banknum = DRUM_INST_BANK;
+	  else
+		fluid_channel_get_sfont_bank_prog(channel, NULL, &banknum, NULL);
 
-  if (synth->verbose)
-    FLUID_LOG(FLUID_INFO, "prog\t%d\t%d\t%d", chan, banknum, prognum);
+	  if (synth->verbose)
+		FLUID_LOG(FLUID_INFO, "prog\t%d\t%d\t%d", chan, banknum, prognum);
 
-  /* I think this is a hack for MIDI files that do bank changes in GM mode.  
-   * Proper way to handle this would probably be to ignore bank changes when in 
-   * GM mode. - JG
-   * This is now possible by setting synth.midi-bank-select=gm, but let the hack
-   * stay for the time being. - DH
-   */
-  if (prognum != FLUID_UNSET_PROGRAM)
-  {
-    subst_bank = banknum;
-    subst_prog = prognum;
+	  /* I think this is a hack for MIDI files that do bank changes in GM mode.  
+	   * Proper way to handle this would probably be to ignore bank changes when 
+	   * in GM mode. - JG
+	   * This is now possible by setting synth.midi-bank-select=gm, but let the
+	   * hack stay for the time being. - DH
+	   */
+	  if (prognum != FLUID_UNSET_PROGRAM)
+	  {
+		subst_bank = banknum;
+		subst_prog = prognum;
     
-    preset = fluid_synth_find_preset(synth, subst_bank, subst_prog);
+		preset = fluid_synth_find_preset(synth, subst_bank, subst_prog);
     
-    /* Fallback to another preset if not found */
-    if (!preset) {
-      /* Percussion: Fallback to preset 0 in percussion bank */
-      if (subst_bank == DRUM_INST_BANK) {
-        subst_prog = 0;
-        preset = fluid_synth_find_preset(synth, subst_bank, subst_prog);
-      }
-      /* Melodic instrument */
-      else { 
-        /* Fallback first to bank 0:prognum */
-        subst_bank = 0;
-        preset = fluid_synth_find_preset(synth, subst_bank, subst_prog);
+		/* Fallback to another preset if not found */
+		if (!preset) {
+		  /* Percussion: Fallback to preset 0 in percussion bank */
+		  if (subst_bank == DRUM_INST_BANK) {
+			subst_prog = 0;
+			preset = fluid_synth_find_preset(synth, subst_bank, subst_prog);
+		  }
+		  /* Melodic instrument */
+		  else { 
+			/* Fallback first to bank 0:prognum */
+			subst_bank = 0;
+			preset = fluid_synth_find_preset(synth, subst_bank, subst_prog);
 
-        /* Fallback to first preset in bank 0 (usually piano...) */
-        if (!preset)
-        {
-	  subst_prog = 0;
-          preset = fluid_synth_find_preset(synth, subst_bank, subst_prog);
-        }
-      }
+			/* Fallback to first preset in bank 0 (usually piano...) */
+			if (!preset)
+			{
+		  subst_prog = 0;
+			  preset = fluid_synth_find_preset(synth, subst_bank, subst_prog);
+			}
+		  }
 
-      if (preset)
-        FLUID_LOG(FLUID_WARN, "Instrument not found on channel %d [bank=%d prog=%d], substituted [bank=%d prog=%d]",
-                  chan, banknum, prognum, subst_bank, subst_prog); 
-      else
-        FLUID_LOG(FLUID_WARN, "No preset found on channel %d [bank=%d prog=%d]",
-                  chan, banknum, prognum); 
-    }
+		  if (preset)
+			FLUID_LOG(FLUID_WARN, "Instrument not found on channel %d [bank=%d prog=%d], substituted [bank=%d prog=%d]",
+					  chan, banknum, prognum, subst_bank, subst_prog); 
+		  else
+			FLUID_LOG(FLUID_WARN, "No preset found on channel %d [bank=%d prog=%d]",
+					  chan, banknum, prognum); 
+		}
+	  }
+
+	  /* Assign the SoundFont ID and program number to the channel */
+	  fluid_channel_set_sfont_bank_prog (channel, preset ? fluid_sfont_get_id (preset->sfont) : 0,
+										 -1, prognum);
+	  result = fluid_synth_set_preset (synth, chan, preset);
   }
-
-  /* Assign the SoundFont ID and program number to the channel */
-  fluid_channel_set_sfont_bank_prog (channel, preset ? fluid_sfont_get_id (preset->sfont) : 0,
-                                     -1, prognum);
-  result = fluid_synth_set_preset (synth, chan, preset);
   FLUID_API_RETURN(result);
 }
 
@@ -2013,11 +2236,15 @@ fluid_synth_program_change(fluid_synth_t* synth, int chan, int prognum)
 int
 fluid_synth_bank_select(fluid_synth_t* synth, int chan, unsigned int bank)
 {
+  int result;
   fluid_return_val_if_fail (bank <= 16383, FLUID_FAILED);
   FLUID_API_ENTRY_CHAN(FLUID_FAILED);
-  
-  fluid_channel_set_sfont_bank_prog (synth->channel[chan], -1, bank, -1);
-  FLUID_API_RETURN(FLUID_OK);
+  if(! IsChanEnabled(synth->channel[chan])) result = FLUID_FAILED;
+  else {
+	fluid_channel_set_sfont_bank_prog (synth->channel[chan], -1, bank, -1);
+	result = FLUID_OK;
+  }
+  FLUID_API_RETURN(result);
 }
 
 /**
@@ -2030,11 +2257,15 @@ fluid_synth_bank_select(fluid_synth_t* synth, int chan, unsigned int bank)
 int
 fluid_synth_sfont_select(fluid_synth_t* synth, int chan, unsigned int sfont_id)
 {
+  int result;
   FLUID_API_ENTRY_CHAN(FLUID_FAILED);
   
-  fluid_channel_set_sfont_bank_prog(synth->channel[chan], sfont_id, -1, -1);
-
-  FLUID_API_RETURN(FLUID_OK);
+  if(! IsChanEnabled(synth->channel[chan])) result = FLUID_FAILED;
+  else {
+    fluid_channel_set_sfont_bank_prog(synth->channel[chan], sfont_id, -1, -1);
+	result = FLUID_OK;
+  }
+  FLUID_API_RETURN(result);
 }
 
 /**
@@ -2054,7 +2285,10 @@ fluid_synth_unset_program (fluid_synth_t *synth, int chan)
   int result;
   FLUID_API_ENTRY_CHAN(FLUID_FAILED);
 
-  result = fluid_synth_program_change (synth, chan, FLUID_UNSET_PROGRAM);
+  if(! IsChanEnabled(synth->channel[chan])) result = FLUID_FAILED;
+  else {
+	result = fluid_synth_program_change (synth, chan, FLUID_UNSET_PROGRAM);
+  }
   FLUID_API_RETURN(result);
 }
 
@@ -2071,6 +2305,7 @@ int
 fluid_synth_get_program(fluid_synth_t* synth, int chan, unsigned int* sfont_id,
                         unsigned int* bank_num, unsigned int* preset_num)
 {
+  int result;
   fluid_channel_t* channel;
 
   fluid_return_val_if_fail (sfont_id != NULL, FLUID_FAILED);
@@ -2079,13 +2314,16 @@ fluid_synth_get_program(fluid_synth_t* synth, int chan, unsigned int* sfont_id,
   FLUID_API_ENTRY_CHAN(FLUID_FAILED);
 
   channel = synth->channel[chan];
-  fluid_channel_get_sfont_bank_prog(channel, (int *)sfont_id, (int *)bank_num,
-                                    (int *)preset_num);
+  if(! IsChanEnabled(channel)) result = FLUID_FAILED;
+  else {
+	  fluid_channel_get_sfont_bank_prog(channel, (int *)sfont_id, (int *)bank_num,
+										(int *)preset_num);
 
-  /* 128 indicates that the preset is unset.  Set to 0 to be backwards compatible. */
-  if (*preset_num == FLUID_UNSET_PROGRAM) *preset_num = 0;
-
-  FLUID_API_RETURN(FLUID_OK);
+	  /* 128 indicates that the preset is unset.  Set to 0 to be backwards compatible. */
+	  if (*preset_num == FLUID_UNSET_PROGRAM) *preset_num = 0;
+	  result = FLUID_OK;
+  }
+  FLUID_API_RETURN(result);
 }
 
 /**
@@ -2107,21 +2345,22 @@ fluid_synth_program_select(fluid_synth_t* synth, int chan, unsigned int sfont_id
   FLUID_API_ENTRY_CHAN(FLUID_FAILED);
 
   channel = synth->channel[chan];
+  if(! IsChanEnabled(channel)) result = FLUID_FAILED;
+  else {
+	  /* ++ Allocate preset */
+	  preset = fluid_synth_get_preset (synth, sfont_id, bank_num, preset_num);
 
-  /* ++ Allocate preset */
-  preset = fluid_synth_get_preset (synth, sfont_id, bank_num, preset_num);
+	  if (preset == NULL) {
+		FLUID_LOG(FLUID_ERR,
+			  "There is no preset with bank number %d and preset number %d in SoundFont %d",
+			  bank_num, preset_num, sfont_id);
+		FLUID_API_RETURN(FLUID_FAILED);
+	  }
 
-  if (preset == NULL) {
-    FLUID_LOG(FLUID_ERR,
-	      "There is no preset with bank number %d and preset number %d in SoundFont %d",
-	      bank_num, preset_num, sfont_id);
-    FLUID_API_RETURN(FLUID_FAILED);
+	  /* Assign the new SoundFont ID, bank and program number to the channel */
+	  fluid_channel_set_sfont_bank_prog (channel, sfont_id, bank_num, preset_num);
+	  result = fluid_synth_set_preset (synth, chan, preset);
   }
-
-  /* Assign the new SoundFont ID, bank and program number to the channel */
-  fluid_channel_set_sfont_bank_prog (channel, sfont_id, bank_num, preset_num);
-  result = fluid_synth_set_preset (synth, chan, preset);
-  
   FLUID_API_RETURN(result);
 }
 
@@ -2147,21 +2386,23 @@ fluid_synth_program_select_by_sfont_name (fluid_synth_t* synth, int chan,
   FLUID_API_ENTRY_CHAN(FLUID_FAILED);
 
   channel = synth->channel[chan];
+  if(! IsChanEnabled(channel)) result = FLUID_FAILED;
+  else {
+	  /* ++ Allocate preset */
+	  preset = fluid_synth_get_preset_by_sfont_name (synth, sfont_name, bank_num,
+													 preset_num);
+	  if (preset == NULL) {
+		FLUID_LOG(FLUID_ERR,
+			  "There is no preset with bank number %d and preset number %d in SoundFont %s",
+			  bank_num, preset_num, sfont_name);
+		FLUID_API_RETURN(FLUID_FAILED);
+	  }
 
-  /* ++ Allocate preset */
-  preset = fluid_synth_get_preset_by_sfont_name (synth, sfont_name, bank_num,
-                                                 preset_num);
-  if (preset == NULL) {
-    FLUID_LOG(FLUID_ERR,
-	      "There is no preset with bank number %d and preset number %d in SoundFont %s",
-	      bank_num, preset_num, sfont_name);
-    FLUID_API_RETURN(FLUID_FAILED);
+	  /* Assign the new SoundFont ID, bank and program number to the channel */
+	  fluid_channel_set_sfont_bank_prog (channel, fluid_sfont_get_id (preset->sfont),
+										 bank_num, preset_num);
+	  result = fluid_synth_set_preset (synth, chan, preset);
   }
-
-  /* Assign the new SoundFont ID, bank and program number to the channel */
-  fluid_channel_set_sfont_bank_prog (channel, fluid_sfont_get_id (preset->sfont),
-                                     bank_num, preset_num);
-  result = fluid_synth_set_preset (synth, chan, preset);
   FLUID_API_RETURN(result);  
 }
 
@@ -2936,7 +3177,8 @@ fluid_synth_free_voice_by_kill_LOCAL(fluid_synth_t* synth)
 /**
  * Allocate a synthesis voice.
  * @param synth FluidSynth instance
- * @param sample Sample to assign to the voice
+// * @param sample Sample to assign to the voice
+ * @param inst_zone Instrument Zone to assign to the voice
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
  * @param key MIDI note number for the voice (0-127)
  * @param vel MIDI velocity for the voice (0-127)
@@ -2950,14 +3192,16 @@ fluid_synth_free_voice_by_kill_LOCAL(fluid_synth_t* synth)
  * SoundFont loader preset noteon method.
  */
 fluid_voice_t*
-fluid_synth_alloc_voice(fluid_synth_t* synth, fluid_sample_t* sample, int chan, int key, int vel)
+fluid_synth_alloc_voice(fluid_synth_t* synth, fluid_inst_zone_t *inst_zone,
+						int chan, int key, int vel)
 {
   int i, k;
   fluid_voice_t* voice = NULL;
   fluid_channel_t* channel = NULL;
   unsigned int ticks;
 
-  fluid_return_val_if_fail (sample != NULL, NULL);
+//  fluid_return_val_if_fail (sample != NULL, NULL);
+  fluid_return_val_if_fail (fluid_inst_zone_get_sample != NULL, NULL);
   FLUID_API_ENTRY_CHAN(NULL);
 
   /* check if there's an available synthesis process */
@@ -3000,14 +3244,28 @@ fluid_synth_alloc_voice(fluid_synth_t* synth, fluid_sample_t* sample, int chan, 
 	  channel = synth->channel[chan];
   }
 
-  if (fluid_voice_init (voice, sample, channel, key, vel,
+  if (fluid_voice_init (voice, inst_zone, channel, key, vel,
                         synth->storeid, ticks, synth->gain) != FLUID_OK) {
     FLUID_LOG(FLUID_WARN, "Failed to initialize voice");
     FLUID_API_RETURN(NULL);
   }
 
   /* add the default modulators to the synthesis process. */
-  fluid_voice_add_mod(voice, &default_vel2att_mod, FLUID_VOICE_DEFAULT);    /* SF2.01 $8.4.1  */
+
+  /* default_breath2att_modulator is not a default modulator specified in SF
+    it is intended to replace default_vel2att_mod on demand using
+    API fluid_set_setbreath_mode() or command shell setbreathmode.
+   */ 
+  {
+	  unsigned char mono = IsChanPlayingMono(channel);
+      if((!mono && IsChanPolyDefaultBreath(channel)) ||
+		  (mono && IsChanMonoDefaultBreath(channel)))
+		/* add breathToAttenuation modulator */
+		fluid_voice_add_mod(voice, &default_breath2att_mod, FLUID_VOICE_DEFAULT);
+	  else /* add default  velocityToAttenuation modulator */
+		fluid_voice_add_mod(voice, &default_vel2att_mod, FLUID_VOICE_DEFAULT);    /* SF2.01 $8.4.1  */
+  }
+  
   fluid_voice_add_mod(voice, &default_vel2filter_mod, FLUID_VOICE_DEFAULT); /* SF2.01 $8.4.2  */
   fluid_voice_add_mod(voice, &default_at2viblfo_mod, FLUID_VOICE_DEFAULT);  /* SF2.01 $8.4.3  */
   fluid_voice_add_mod(voice, &default_mod2viblfo_mod, FLUID_VOICE_DEFAULT); /* SF2.01 $8.4.4  */
@@ -3956,15 +4214,20 @@ fluid_synth_get_chorus_type(fluid_synth_t* synth)
  * several voice processes, for example a stereo sample.  Don't
  * release those...
  */
-static void
+void
 fluid_synth_release_voice_on_same_note_LOCAL(fluid_synth_t* synth, int chan,
                                              int key)
 {
   int i;
   fluid_voice_t* voice;
 
-  synth->storeid = synth->noteid++;
+  /* storeid is a parameter for fluid_voice_init() */
+  synth->storeid = synth->noteid++; 
 
+  /* for "monophonic playing" key is the previous sustained note 
+    if it exists (0 to 127) or -1 otherwise */
+  if(key < 0) return;
+  
   for (i = 0; i < synth->polyphony; i++) {
     voice = synth->voice[i];
     if (_PLAYING(voice)

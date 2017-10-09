@@ -65,10 +65,28 @@ static void
 fluid_channel_init(fluid_channel_t* chan)
 {
   fluid_preset_t *newpreset;
-  int prognum, banknum;
+  int i, prognum, banknum;
 
   chan->sostenuto_orderid = 0;
-
+  /*--- Init poly/mono modes variables --------------------------------------*/
+  chan->mode = 0;
+  chan->mode_val = 0;
+  /* monophonic list initialization */
+  for (i=0; i < maxNotes; i++)  {
+     chan->monolist[i].next = i+1;
+     chan->monolist[i].prev = i-1;
+  }
+  chan->monolist[maxNotes -1].next = 0; /* ending element chained to the 1st */
+  chan->monolist[0].prev = maxNotes -1; /* first element chained to the ending */
+  chan->iLast = chan->nNotes = 0; /* list is clear */
+  chan->iFirst = 1;
+  ChanClearPrevNote(chan); /* Mark previous note invalid */
+  /*---*/
+  chan->key_sustained = -1;				/* No previous mono note sustained */
+  chan->legatomode = RETRIGGER_0;		/* Default mode */
+  chan->portamentomode = EACH_NOTE;		/* Default mode */
+ /*--- End of poly/mono initialization --------------------------------------*/
+  
   chan->channel_type = (chan->channum == 9) ? CHANNEL_TYPE_DRUM : CHANNEL_TYPE_MELODIC;
   prognum = 0;
   banknum = (chan->channel_type == CHANNEL_TYPE_DRUM) ? DRUM_INST_BANK : 0;
@@ -130,6 +148,8 @@ fluid_channel_init_ctrl(fluid_channel_t* chan, int is_all_ctrl_off)
     for (i = 0; i < 128; i++) {
       fluid_channel_set_cc (chan, i, 0);
     }
+	clearPortamentoCtrl(chan); /* Clear PTC receive */
+    ChanClearPreviousBreath(chan);/* Reset previous breath */
   }
 
   /* Set RPN controllers to NULL state */

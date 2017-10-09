@@ -25,6 +25,17 @@
 #include "fluid_midi.h"
 #include "fluid_tuning.h"
 
+
+/* mononophonic list for monophonic mode */
+#define maxNotes  10  /* Size of the monophonic list */
+struct mononote
+{
+    unsigned char prev; /* previous note */
+    unsigned char next; /* next note */
+    unsigned char note; /* note */
+    unsigned char vel;  /* velocity */
+};
+
 /*
  * fluid_channel_t
  *
@@ -37,7 +48,21 @@ struct _fluid_channel_t
 
   fluid_synth_t* synth;                 /**< Parent synthesizer instance */
   int channum;                          /**< MIDI channel number */
-
+  /* Poly Mono variables see macro access description */
+  int mode;								/**< Poly Mono mode */
+  int mode_val;							/**< number of monophonic channel (for mode 3) */
+  /* monophonic list */
+  struct mononote monolist[maxNotes];   /**< monophonic list */
+  unsigned char iFirst;           /**< First note index */
+  unsigned char iLast;            /**< most recent note index since the most recent add */
+  unsigned char PrevNote;         /**< previous note of the most recent add */
+  unsigned char nNotes;           /**< actual number of notes in the list */
+  /*--*/
+  int key_sustained;              /**< previous sustained monophonic note */
+  unsigned char legatomode;       /**< legato mode */
+  unsigned char portamentomode;   /**< portamento mode */
+  int previous_cc_breath;		  /**< Previous Breath */
+  /*- End of Poly/mono variables description */
   int sfont_bank_prog;                  /**< SoundFont ID (bit 21-31), bank (bit 7-20), program (bit 0-6) */
   fluid_preset_t* preset;               /**< Selected preset */
 
@@ -84,6 +109,93 @@ struct _fluid_channel_t
   int channel_type;
 
 };
+
+/* Macros interface to monophonic list variables */
+/* ChanLastNote() return the note in iLast entry of the monophonic list */
+#define InvalidNote 255
+#define IsInvalidNote(n)  (n == InvalidNote)
+#define IsValidNote(n)    (n != InvalidNote)
+#define ChanLastNote(chan)	(chan->monolist[chan->iLast].note)
+#define ChanLastVel(chan)	(chan->monolist[chan->iLast].vel)
+#define ChanPrevNote(chan)	(chan->PrevNote)
+#define ChanClearPrevNote(chan)	(chan->PrevNote = InvalidNote)
+/* End of interface to monophonic list variables */
+
+/* Macros interface to poly/mono mode variables */
+#define MASK_BASICCHANINFOS  (MASKMODE|BASIC_CHANNEL|ENABLED)
+/* access to channel mode */
+/* SetBasicChanInfos set the basic channel infos for a MIDI basic channel */
+#define SetBasicChanInfos(chan,Infos) \
+(chan->mode = (chan->mode & ~MASK_BASICCHANINFOS) | (Infos & MASK_BASICCHANINFOS))
+/* ResetBasicChanInfos restset the basic channel infos for a MIDI basic channel */
+#define ResetBasicChanInfos(chan) (chan->mode &=  ~MASK_BASICCHANINFOS)
+
+/* GetChanMode get the mode for a MIDI basic channel */
+#define GetChanMode(chan) GetModeMode(chan->mode)
+/* GetChanModeVal get the mode_val for a MIDI basic channel */
+#define GetChanModeVal(chan) (chan->mode_val)
+
+/* IsChanMono(chan) return true when channnel is Mono */
+#define IsChanMono(chan)  (IsModeMono(chan->mode))
+/* IsChanPoly(chan) return true when channnel is Poly */
+#define IsChanPoly(chan)  (!IsChanMono(chan))
+/* IsChanOmniOff(chan) return true when channnel is Omni off */
+#define IsChanOmniOff(chan)  (chan->mode & OMNI)
+/* IsChanOmniOn(chan) return true when channnel is Omni on */
+#define IsChanOmniOn(chan)  (!IsChanOmniOff(chan))
+
+/* IsChanBasicChannel(chan) return true when channnel is Basic channel */
+#define IsChanBasicChannel(chan) IsModeBasicChan(chan->mode)
+/* IsChanEnabled(chan) return true when channnel is listened */
+#define IsChanEnabled(chan) IsModeChanEn(chan->mode)
+/* IsChanPlayingMono return true when channel is Mono or legato is on */
+#define IsChanPlayingMono(chan) (IsChanMono(chan) || fluid_channel_legato(chan))
+
+/* b7, 1: means legato playing , 0: means staccato playing */
+#define LEGATO_PLAYING  0x80     
+#define IsChanLegato(chan) (chan->mode  & LEGATO_PLAYING)
+#define IsChanStaccato(chan) (!IsChanLegato(chan))
+#define SetChanLegato(chan) (chan->mode |= LEGATO_PLAYING)
+#define ResetChanLegato(chan) (chan->mode &= ~ LEGATO_PLAYING)
+
+/* End of macros interface to poly/mono mode variables */
+
+/* Macros interface to breath variables */
+#define MASK_BREATH_MODE  (BREATH_POLY|BREATH_MONO|BREATH_SYNC)
+/* access to default breath infos */
+/* SetBreathInfos set the breath infos for a MIDI  channel */
+#define SetBreathInfos(chan,BreathInfos) \
+(chan->mode = (chan->mode & ~MASK_BREATH_MODE) | (BreathInfos & MASK_BREATH_MODE))
+#define GetBreathInfos(chan) (chan->mode & MASK_BREATH_MODE)
+
+
+/* IsChanPolyDefaultBreath(chan) return true when default breath is set for a channel */
+#define IsChanPolyDefaultBreath(chan) IsPolyDefaultBreath(chan->mode)
+#define SetChanPolyDefaultBreath(chan) SetPolyDefaultBreath(chan->mode)
+#define ResetChanPolyDefaultBreath(chan) ResetPolyDefaultBreath(chan->mode)
+#define IsChanMonoDefaultBreath(chan) IsMonoDefaultBreath(chan->mode)
+#define SetChanMonoDefaultBreath(chan) SetMonoDefaultBreath(chan->mode)
+#define ResetChanMonoDefaultBreath(chan) ResetMonoDefaultBreath(chan->mode)
+#define IsChanBreathSync(chan) IsBreathSync(chan->mode)
+#define ChanClearPreviousBreath(chan)	(chan->previous_cc_breath = 0)
+/* End of interface to breath variables */
+
+
+/* acces to channel legato mode */
+/* SetChanLegatoMode set the legato mode for a MIDI channel */
+#define SetChanLegatoMode(chan,mode) (chan->legatomode = mode)
+
+/* GetChanLegatoMode get the legato mode for a MIDI channel */
+#define GetChanLegatoMode(chan) (chan->legatomode)
+/* End of macros interface to legato mode variables */
+
+/* acces to channel portamento mode */
+/* SetChanPortamentoMode set the portamento mode for a MIDI channel */
+#define SetChanPortamentoMode(chan,mode) (chan->portamentomode = mode)
+
+/* GetChanPortamentoMode get the portamento mode for a MIDI channel */
+#define GetChanPortamentoMode(chan) (chan->portamentomode)
+/* End of macros interface to portamento mode variables */
 
 fluid_channel_t* new_fluid_channel(fluid_synth_t* synth, int num);
 void fluid_channel_init_ctrl(fluid_channel_t* chan, int is_all_ctrl_off);
@@ -138,6 +250,13 @@ int fluid_channel_get_interp_method(fluid_channel_t* chan);
   ((chan)->tuning_prog)
 #define fluid_channel_set_tuning_prog(chan, prog) \
   ((chan)->tuning_prog = (prog))
+#define fluid_channel_portamentotime(_c) \
+    ((_c)->cc[PORTAMENTO_TIME_MSB] * 128 + (_c)->cc[PORTAMENTO_TIME_LSB])
+#define fluid_channel_portamento(_c)			((_c)->cc[PORTAMENTO_SWITCH] >= 64)
+#define fluid_channel_breath_msb(_c)			((_c)->cc[BREATH_MSB] > 0)
+#define clearPortamentoCtrl(_c)		((_c)->cc[PORTAMENTO_CTRL] = InvalidNote)
+#define portamentoCtrl(_c)			((unsigned char)(_c)->cc[PORTAMENTO_CTRL])
+#define fluid_channel_legato(_c)			    ((_c)->cc[LEGATO_SWITCH] >= 64)
 #define fluid_channel_sustained(_c)             ((_c)->cc[SUSTAIN_SWITCH] >= 64)
 #define fluid_channel_sostenuto(_c)             ((_c)->cc[SOSTENUTO_SWITCH] >= 64)
 #define fluid_channel_set_gen(_c, _n, _v, _a)   { (_c)->gen[_n] = _v; (_c)->gen_abs[_n] = _a; }
@@ -145,5 +264,4 @@ int fluid_channel_get_interp_method(fluid_channel_t* chan);
 #define fluid_channel_get_gen_abs(_c, _n)       ((_c)->gen_abs[_n])
 #define fluid_channel_get_min_note_length_ticks(chan) \
   ((chan)->synth->min_note_length_ticks)
-
 #endif /* _FLUID_CHAN_H */

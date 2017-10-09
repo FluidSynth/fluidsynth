@@ -367,7 +367,6 @@ typedef struct _fluid_defsfont_t fluid_defsfont_t;
 typedef struct _fluid_defpreset_t fluid_defpreset_t;
 typedef struct _fluid_preset_zone_t fluid_preset_zone_t;
 typedef struct _fluid_inst_t fluid_inst_t;
-typedef struct _fluid_inst_zone_t fluid_inst_zone_t;
 
 /*
 
@@ -490,7 +489,8 @@ struct _fluid_inst_t
 
 fluid_inst_t* new_fluid_inst(void);
 int delete_fluid_inst(fluid_inst_t* inst);
-int fluid_inst_import_sfont(fluid_inst_t* inst, SFInst *sfinst, fluid_defsfont_t* sfont);
+int fluid_inst_import_sfont(fluid_preset_zone_t* zonePZ, fluid_inst_t* inst,
+							SFInst *sfinst, fluid_defsfont_t* sfont);
 int fluid_inst_set_global_zone(fluid_inst_t* inst, fluid_inst_zone_t* zone);
 int fluid_inst_add_zone(fluid_inst_t* inst, fluid_inst_zone_t* zone);
 fluid_inst_zone_t* fluid_inst_get_zone(fluid_inst_t* inst);
@@ -508,14 +508,25 @@ struct _fluid_inst_zone_t
   int keyhi;
   int vello;
   int velhi;
+  unsigned char flags;	/* for legato playing */
   fluid_gen_t gen[GEN_LAST];
   fluid_mod_t * mod; /* List of modulators */
 };
 
+/* Flag IGNORE_IZ is set on legato playing to ignore this IZ */
+#define IGNORE_IZ 0x01
+/* IsIgnoreInstZone return True when an IZ must be ignored */
+#define IsIgnoreInstZone(iz)	(iz->flags & IGNORE_IZ)
+/* SetIgnoreInstZone request an IZ to be ignored */
+#define SetIgnoreInstZone(iz)	(iz->flags |= IGNORE_IZ)
+/* ResetgnoreInstZone reset the request to ignore an IZ */
+#define ResetIgnoreInstZone(iz)	(iz->flags &= ~IGNORE_IZ)
+
 fluid_inst_zone_t* new_fluid_inst_zone(char* name);
 int delete_fluid_inst_zone(fluid_inst_zone_t* zone);
 fluid_inst_zone_t* fluid_inst_zone_next(fluid_inst_zone_t* zone);
-int fluid_inst_zone_import_sfont(fluid_inst_zone_t* zone, SFZone *sfzone, fluid_defsfont_t* sfont);
+int fluid_inst_zone_import_sfont(fluid_preset_zone_t* zonePZ,
+								 fluid_inst_zone_t* zone, SFZone *sfzone, fluid_defsfont_t* sfont);
 int fluid_inst_zone_inside_range(fluid_inst_zone_t* zone, int key, int vel);
 fluid_sample_t* fluid_inst_zone_get_sample(fluid_inst_zone_t* zone);
 
