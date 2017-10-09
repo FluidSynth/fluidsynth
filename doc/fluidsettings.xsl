@@ -6,38 +6,45 @@
             <style>
 table
 {
-    border: 2px solid black;
+    border: 3px solid black;
 }
-            
+
+.first-row
+{
+    border-top: 3px solid black;
+}
+
+th
+{
+    font-weight: normal;
+    white-space: nowrap;
+    padding: 15px 5px 15px 5px;
+    border-top: 1px solid black;
+    border-left: 1px solid black;
+    border-right: 1px solid black;
+}
+
+
 td
 {
-<!--      border-bottom: 2px solid black; -->
-<!--      border-top: 0px solid black; -->
-<!--      padding-top: 20px; -->
-<!--      padding-bottom: 20px; -->
     padding: 15px 5px 15px 5px;
 }
 
-.cell-type
-{
-    text-align: center;
-    white-space: nowrap;
-    border-top: 2px solid black;
-}
 .cell-def
 {
-    text-align: center;
     white-space: nowrap;
-    border-top: 2px solid black;
+    border-top: 1px solid black;
 }
 .cell-vals
 {
-    text-align: center;
-    border-top: 2px solid black;
+    border-top: 1px solid black;
 }
-.cell-name { border-top: 2px solid black; }
+.cell-desc
+{
+    border-top: 1px solid black;
+}
 
-.audio {background-color: hsl(0, 100%, 90%);}
+.audio {background-color: hsl(0, 100%, 94%);}
 .midi {background-color: hsl(165, 100%, 85%);}
 .player {background-color: hsl(60, 100%, 80%);}
 .shell {background-color: hsl(36, 100%, 85%);}
@@ -46,16 +53,8 @@ td
          </head>
          <body>
             <h2>FluidSettings</h2>
-            <table>
-               <tr bgcolor="#9acd32">
-                  <th>Name</th>
-                  <th>Type</th>
-                  <th>Default Value</th>
-                  <th>Allowed Values</th>
-<!--                   <th>Description</th> -->
-               </tr>
-               
-               <!--print each and every setting to its own row in the table-->
+            <table>               
+               <!--print each and every setting row by row in the table-->
                <xsl:for-each select="fluidsettings/*/*">
                   <xsl:sort select="name(..)" />
                   <xsl:sort select="name" />
@@ -65,17 +64,52 @@ td
                         <xsl:value-of select="name(..)" />
                      </xsl:attribute>
                      
-                     <td class="cell-name">
-                        <xsl:value-of select="name(..)" />.<xsl:value-of select="name" />
+                     <td class="cell-name first-row">
+                        <xsl:attribute name="id"><xsl:value-of select="name(..)" />-<xsl:value-of select="name" /></xsl:attribute>
+                        <a>
+                            <xsl:attribute name="href">#<xsl:value-of select="name(..)" />-<xsl:value-of select="name" /></xsl:attribute>
+                            <xsl:value-of select="name(..)" />.<xsl:value-of select="name" />
+                        </a>
                      </td>
                     
-                     <td class="cell-type">
+                    <th class="first-row">Type</th>
+                    
+                     <td class="cell-type first-row">
                         <xsl:value-of select="type" />
                      </td>
-                        
+                  </tr>
+                  
+                  <tr>
+                     <xsl:attribute name="class">
+                        <xsl:value-of select="name(..)" />
+                     </xsl:attribute>
+                     <td></td>
+                     <th>Default</th>
                      <td class="cell-def">
                         <xsl:copy-of select="def" />
                      </td>
+                  </tr>
+                  
+                  <tr>
+                     <xsl:attribute name="class">
+                        <xsl:value-of select="name(..)" />
+                     </xsl:attribute>
+                     <td></td>
+                     <th>
+                     <xsl:choose>
+                        <xsl:when test="type = 'str'">
+                              Values
+                        </xsl:when>
+                        <xsl:when test="type = 'bool'">
+                              Values
+                        </xsl:when>
+                        <xsl:otherwise>
+                              Min
+                              -
+                              Max
+                        </xsl:otherwise>
+                     </xsl:choose>
+                     </th>
                      
                      <td class="cell-vals">
                      <xsl:choose>
@@ -83,23 +117,24 @@ td
                               <xsl:value-of select="vals" />
                         </xsl:when>
                         <xsl:when test="type = 'bool'">
-                              
+                              1, "yes", 0, "no"
                         </xsl:when>
                         <xsl:otherwise>
-                              [
                               <xsl:value-of select="min" />
-                              ;
+                              -
                               <xsl:value-of select="max" />
-                              ]
                         </xsl:otherwise>
                      </xsl:choose>
                      </td>
                    </tr>
+                   
                    <tr>
                      <xsl:attribute name="class">
                         <xsl:value-of select="name(..)" />
                      </xsl:attribute>
-                     <td class="cell-desc" colspan="4">
+                     <td></td>
+                     <th>Description</th>
+                     <td class="cell-desc">
                         <xsl:copy-of select="desc" />
                      </td>
                   </tr>
