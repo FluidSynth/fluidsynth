@@ -1090,6 +1090,7 @@ fluid_synth_add_default_mod(fluid_synth_t* synth, fluid_mod_t* mod, int mode)
   fluid_mod_t* new_mod;
 
   fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
+  fluid_return_val_if_fail (mod != NULL, FLUID_FAILED);
   fluid_synth_api_enter(synth);
 
   default_mod = synth->default_mod;
