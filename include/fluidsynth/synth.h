@@ -275,6 +275,19 @@ FLUIDSYNTH_API double fluid_synth_get_cpu_load(fluid_synth_t* synth);
 FLUIDSYNTH_API char* fluid_synth_error(fluid_synth_t* synth);
 
 
+/* Default modulators */
+
+/**
+ * Enum used with fluid_synth_add_default_mod() to specify how to handle duplicate modulators.
+ */
+enum fluid_synth_add_mod {
+  FLUID_SYNTH_OVERWRITE,        /**< Overwrite any existing matching modulator */
+  FLUID_SYNTH_ADD,              /**< Add (sum) modulator amounts */
+};
+
+FLUIDSYNTH_API int fluid_synth_add_default_mod(fluid_synth_t* synth, fluid_mod_t* mod, int mode);
+
+
 /*
  * Synthesizer plugin
  *

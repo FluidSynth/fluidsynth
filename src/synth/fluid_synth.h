@@ -167,6 +167,8 @@ struct _fluid_synth_t
 
   int cores;                         /**< Number of CPU cores (1 by default) */
 
+  fluid_mod_t* default_mod;          /**< the (dynamic) list of default modulators */
+
 #ifdef LADSPA
   fluid_LADSPA_FxUnit_t* LADSPA_FxUnit; /**< Effects unit for LADSPA support */
 #endif
