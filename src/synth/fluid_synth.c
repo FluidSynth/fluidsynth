@@ -1074,12 +1074,12 @@ fluid_synth_damp_voices_by_sostenuto_LOCAL(fluid_synth_t* synth, int chan)
 }
 
 /**
- * Adds a default modulator to the synth.
+ * Adds the specified modulator \c mod as default modulator to the synth. If \c mod is new it
+ * will be used by any subsequently created voice. If an amount of an existing modulator is
+ * changed by \c mod it will take effect for any subsequently created voice.
  * @param synth FluidSynth instance
  * @param mod Modulator info (values copied, passed in object can be freed again immediately)
- * @param mode Determines how to handle an existing identical modulator
- *   #FLUID_SYNTH_ADD to add (offset) the modulator amounts,
- *   #FLUID_SYNTH_OVERWRITE to replace the modulator,
+ * @param mode Determines how to handle an existing identical modulator (#fluid_synth_add_mod)
  * @return FLUID_OK on success, FLUID_FAILED otherwise
  */
 int
