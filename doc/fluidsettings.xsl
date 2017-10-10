@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
+   <xsl:output method="html" doctype-system="about:legacy-compat"/>
    <xsl:template match="/">
       <html>
          <head>
@@ -65,9 +66,9 @@ td
                      </xsl:attribute>
                      
                      <td class="cell-name first-row">
-                        <xsl:attribute name="id"><xsl:value-of select="name(..)" />-<xsl:value-of select="name" /></xsl:attribute>
+                        <xsl:attribute name="id"><xsl:value-of select="name(..)" /><![CDATA[.]]><xsl:value-of select="name" /></xsl:attribute>
                         <a>
-                            <xsl:attribute name="href">#<xsl:value-of select="name(..)" />-<xsl:value-of select="name" /></xsl:attribute>
+                            <xsl:attribute name="href"><![CDATA[#]]><xsl:value-of select="name(..)" /><![CDATA[.]]><xsl:value-of select="name" /></xsl:attribute>
                             <xsl:value-of select="name(..)" />.<xsl:value-of select="name" />
                         </a>
                      </td>
