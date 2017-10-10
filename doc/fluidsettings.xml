@@ -90,13 +90,8 @@
             <type>bool</type>
             <def>1 (TRUE)</def>
             <desc>
-                This is the low-latency setting. If on, you're allowed to call fluid_synth_write_s16, fluid_synth_write_float,
-fluid_synth_nwrite_float or fluid_synth_process in parallel with the
-rest of the calls, and it won't be blocked by time intensive calls to
-the synth. Turn it off if throughput is more important than latency, e g
-in rendering-to-file scenarios where underruns is not an issue.
-<br /><br /><strong>Deprecated:</strong><br />As of 1.1.7 this option is deprecated. This option enforces thread safety for rvoice_mixer, which causes rvoice_events to be queued internally. The current implementation relies on the fact that this option is set to TRUE to correctly render any amount of requested audio. Also calling fluid_synth_write_* in parallel is not considered to be a use-case. It would cause undefined audio output, as it would be unpredictable for the user which rvoice_events specifically would be dispatched to which fluid_synth_write_* call.
-</desc>
+                This is the low-latency setting. If on, you're allowed to call fluid_synth_write_s16, fluid_synth_write_float, fluid_synth_nwrite_float or fluid_synth_process in parallel with the rest of the calls, and it won't be blocked by time intensive calls to the synth. Turn it off if throughput is more important than latency, e g in rendering-to-file scenarios where underruns is not an issue. <br /><br /><strong>Deprecated:</strong><br />As of 1.1.7 this option is deprecated. This option enforces thread safety for rvoice_mixer, which causes rvoice_events to be queued internally. The current implementation relies on the fact that this option is set to TRUE to correctly render any amount of requested audio. Also calling fluid_synth_write_* in parallel is not considered to be a use-case. It would cause undefined audio output, as it would be unpredictable for the user which rvoice_events specifically would be dispatched to which fluid_synth_write_* call.
+            </desc>
         </setting>
         <setting>
             <name>polyphony</name>
@@ -147,15 +142,7 @@ in rendering-to-file scenarios where underruns is not an issue.
             <def>emu</def>
             <vals>compliant, emu</vals>
             <desc>
-                Specifies the kind of volume envelope processing. This 
-    esp. influences the way fluidsynth responses to noteon velocity.
-    The default setting 'emu' causes the envelope to be highly
-    dynamic (i.e. compatible with the EMU10K1). Alternatively this
-    may be set to 'compliant' for a less dynamic envelope, as it was
-    done before fluidsynth 1.0.9. Note that this setting can only be
-    changed until the first synth has been created. Changing it
-    afterwards will have no effect for the rest of fluidsynths
-lifetime.
+                Specifies the kind of volume envelope processing. This esp. influences the way fluidsynth responses to noteon velocity. The default setting 'emu' causes the envelope to be highly dynamic (i.e. compatible with the EMU10K1). Alternatively this may be set to 'compliant' for a less dynamic envelope, as it was done before fluidsynth 1.0.9. Note that this setting can only be changed until the first synth has been created. Changing it afterwards will have no effect for the rest of fluidsynths lifetime.
             </desc>
         </setting>
         <setting>
@@ -235,11 +222,8 @@ lifetime.
                 The format of the audio samples. This is currently only an indication; the audio driver may ignore this setting if it can't handle the specified format.
             </desc>
         </setting>
-    </audio>
-    
-    <audio.alsa>
         <setting>
-            <name>device</name>
+            <name>alsa.device</name>
             <type>str</type>
             <def>default</def>
             <vals>ALSA device string, such as: "hw:0", "plughw:1", etc.</vals>
@@ -247,44 +231,32 @@ lifetime.
                 Selects the ALSA audio device to use.
             </desc>
         </setting>
-    </audio.alsa>
-    
-    <audio.coreaudio>
         <setting>
-            <name>device</name>
+            <name>coreaudio.device</name>
             <type>str</type>
             <def>default</def>
             <desc>
                 Selects the CoreAudio device to use.
             </desc>
         </setting>
-    </audio.coreaudio>
-    
-    <audio.dart>
         <setting>
-            <name>device</name>
+            <name>dart.device</name>
             <type>str</type>
             <def>default</def>
             <desc>
                 Selects the Dart (OS/2 driver) device to use.
             </desc>
         </setting>
-    </audio.dart>
-    
-    <audio.dsound>
         <setting>
-            <name>device</name>
+            <name>dsound.device</name>
             <type>str</type>
             <def>default</def>
             <desc>
                 Selects the DirectSound (Windows) device to use.
             </desc>
         </setting>
-    </audio.dsound>
-    
-    <audio.file>
         <setting>
-            <name>endian</name>
+            <name>file.endian</name>
             <type>str</type>
             <def>'auto' if libsndfile support is built in,<br />
                  'cpu' otherwise.</def>
@@ -294,7 +266,7 @@ lifetime.
             </desc>
         </setting>
         <setting>
-            <name>format</name>
+            <name>file.format</name>
             <type>str</type>
             <def>s16</def>
             <vals>double, float, s16, s24, s32, s8, u8 ('s16' is all that is supported if libsndfile support not built in)</vals>
@@ -312,7 +284,7 @@ lifetime.
             </desc>
         </setting>
         <setting>
-            <name>name</name>
+            <name>file.name</name>
             <type>str</type>
             <def>'fluidsynth.wav' if libsndfile support is built in,<br />
                  'fluidsynth.raw' otherwise.</def>
@@ -321,7 +293,7 @@ lifetime.
             </desc>
         </setting>
         <setting>
-            <name>type</name>
+            <name>file.type</name>
             <type>str</type>
             <def>'auto' if libsndfile support is built in,<br />
                  'raw' otherwise.</def>
@@ -330,11 +302,8 @@ lifetime.
                 Sets the file type of the file which the audio will be stored to. 'auto' attempts to determine the file type from the audio.file.name file extension and falls back to 'wav' if the extension doesn't match any types.
             </desc>
         </setting>
-    </audio.file>
-    
-    <audio.jack>
         <setting>
-            <name>autoconnect</name>
+            <name>jack.autoconnect</name>
             <type>bool</type>
             <def>0 (FALSE)</def>
             <desc>
@@ -342,7 +311,7 @@ lifetime.
             </desc>
         </setting>
         <setting>
-            <name>id</name>
+            <name>jack.id</name>
             <type>str</type>
             <def>fluidsynth</def>
             <desc>
@@ -350,7 +319,7 @@ lifetime.
             </desc>
         </setting>
         <setting>
-            <name>multi</name>
+            <name>jack.multi</name>
             <type>bool</type>
             <def>0 (FALSE)</def>
             <desc>
@@ -358,40 +327,31 @@ lifetime.
             </desc>
         </setting>
         <setting>
-            <name>server</name>
+            <name>jack.server</name>
             <type>str</type>
             <def></def>
             <desc>
                 Jack server to connect to. Defaults to an empty string, which uses default Jack server.
             </desc>
         </setting>
-    </audio.jack>
-    
-    <audio.oss>
         <setting>
-            <name>device</name>
+            <name>oss.device</name>
             <type>str</type>
             <def>/dev/dsp</def>
             <desc>
                 Device to use for OSS audio output.
             </desc>
         </setting>
-    </audio.oss>
-    
-    <audio.portaudio>
         <setting>
-            <name>device</name>
+            <name>portaudio.device</name>
             <type>str</type>
             <def>PortAudio Default</def>
             <desc>
                 Device to use for PortAudio driver output. Note that 'PortAudio Default' is a special value which outputs to the default PortAudio device.
             </desc>
         </setting>
-    </audio.portaudio>
-    
-    <audio.pulseaudio>
         <setting>
-            <name>device</name>
+            <name>pulseaudio.device</name>
             <type>str</type>
             <def>default</def>
             <desc>
@@ -399,14 +359,14 @@ lifetime.
             </desc>
         </setting>
         <setting>
-            <name>server</name>
+            <name>pulseaudio.server</name>
             <type>str</type>
             <def>default</def>
             <desc>
                 Server to use for PulseAudio driver output.
             </desc>
         </setting>
-    </audio.pulseaudio>
+    </audio>
     
     <midi>
         <setting>
@@ -432,55 +392,43 @@ lifetime.
             <def></def>
             <desc>Used by coremidi and alsa_seq drivers for the portnames registered with the MIDI subsystem.</desc>
         </setting>
-    </midi>
-    
-    <midi.alsa>
         <setting>
-            <name>device</name>
+            <name>alsa.device</name>
             <type>str</type>
             <def>default</def>
             <desc>ALSA MIDI device to use for RAW ALSA MIDI driver.</desc>
         </setting>
-    </midi.alsa>
-    
-    <midi.alsa_seq>
         <setting>
-            <name>device</name>
+            <name>alsa_seq.device</name>
             <type>str</type>
             <def>default</def>
             <desc>ALSA sequencer device to use for ALSA sequencer driver.</desc>
         </setting>
         <setting>
-            <name>id</name>
+            <name>alsa_seq.id</name>
             <type>str</type>
             <def>pid</def>
             <desc>ID to use when registering ports with the ALSA sequencer driver. If set to "pid" then the ID will be "FLUID Synth (PID)", where PID is the FluidSynth process ID of the audio thread otherwise the provided string will be used in place of PID.</desc>
         </setting>
-    </midi.alsa_seq>
-    
-    <midi.jack>
         <setting>
-            <name>server</name>
+            <name>jack.server</name>
             <type>str</type>
             <def></def>
             <desc>Jack server to connect to for Jack MIDI driver. If an empty string then the default server will be used.</desc>
         </setting>
         <setting>
-            <name>id</name>
+            <name>jack.id</name>
             <type>str</type>
             <def>fluidsynth-midi</def>
             <desc>Client ID to use with the Jack MIDI driver.</desc>
         </setting>
-    </midi.jack>
-    
-    <midi.oss>
         <setting>
-            <name>device</name>
+            <name>oss.device</name>
             <type>str</type>
             <def>/dev/midi</def>
             <desc>Device to use for OSS MIDI driver.</desc>
         </setting>
-    </midi.oss>
+    </midi>
     
     <player>
         <setting>
