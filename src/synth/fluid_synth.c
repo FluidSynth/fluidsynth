@@ -447,17 +447,17 @@ fluid_synth_init(void)
   fluid_mod_set_amount(&default_pitch_bend_mod, 12700.0);                 /* Amount: 12700 cents */
 
 
-  /* Custom CC16 -> High-Pass Filter Cutoff */
-  fluid_mod_set_source1(&custom_cc2hpfilterfc_mod, 16,
-		       FLUID_MOD_CC
-		       | FLUID_MOD_LINEAR
-		       | FLUID_MOD_UNIPOLAR
-		       | FLUID_MOD_POSITIVE
-		       );
-  fluid_mod_set_source2(&custom_cc2hpfilterfc_mod, 0, 0);
-  fluid_mod_set_dest(&custom_cc2hpfilterfc_mod, GEN_HPFILTERFC);
-  fluid_mod_set_amount(&custom_cc2hpfilterfc_mod, 8000);
-  
+//   /* Custom CC16 -> High-Pass Filter Cutoff */
+//   fluid_mod_set_source1(&custom_cc2hpfilterfc_mod, 16,
+// 		       FLUID_MOD_CC
+// 		       | FLUID_MOD_LINEAR
+// 		       | FLUID_MOD_UNIPOLAR
+// 		       | FLUID_MOD_POSITIVE
+// 		       );
+//   fluid_mod_set_source2(&custom_cc2hpfilterfc_mod, 0, 0);
+//   fluid_mod_set_dest(&custom_cc2hpfilterfc_mod, GEN_HPFILTERFC);
+//   fluid_mod_set_amount(&custom_cc2hpfilterfc_mod, 8000);
+//   
   /* Custom CC34 -> Band-Pass Filter Cutoff */
   fluid_mod_set_source1(&custom_cc2bpfilterfc_mod, 34,
 		       FLUID_MOD_CC
@@ -485,7 +485,7 @@ fluid_synth_init(void)
 		       );
   fluid_mod_set_source2(&custom_cc2bpfilterq_mod, 0, 0);
   fluid_mod_set_dest(&custom_cc2bpfilterq_mod, GEN_BPFILTERQ);
-  fluid_mod_set_amount(&custom_cc2bpfilterq_mod, 6);
+  fluid_mod_set_amount(&custom_cc2bpfilterq_mod, 10);
 }
 
 static FLUID_INLINE unsigned int fluid_synth_get_ticks(fluid_synth_t* synth)
@@ -800,7 +800,7 @@ new_fluid_synth(fluid_settings_t *settings)
   
   /* enable band-pass filter */
   for (i = 0; i < synth->nvoice; i++) {
-		fluid_voice_enable_band_pass_filter(synth->voice[i], synth->with_band_pass);
+		fluid_voice_enable_high_pass_filter(synth->voice[i], synth->with_band_pass);
   }
   
   fluid_synth_set_sample_rate(synth, synth->sample_rate);

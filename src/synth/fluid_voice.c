@@ -848,28 +848,23 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
 
   case GEN_BPFILTERFC:
     x = _GEN(voice, GEN_BPFILTERFC);
-//     if(x<=6000)
-//         UPDATE_RVOICE_GENERIC_IR(fluid_iir_filter_init, &voice->rvoice->resonant_bp_filter, FLUID_IIR_LOWPASS, -1);
-//     else
-//         UPDATE_RVOICE_GENERIC_IR(fluid_iir_filter_init, &voice->rvoice->resonant_bp_filter, FLUID_IIR_BANDPASS, -1);
-    UPDATE_RVOICE_BPFILTER1(fluid_iir_filter_set_fres, x);
+    q_dB = 10-_GEN(voice, GEN_BPFILTERQ);
+    q_dB *= 100;
+    q_dB /=2;
+    
+    UPDATE_RVOICE_HPFILTER1(fluid_iir_filter_set_fres, x-q_dB);
+    UPDATE_RVOICE_FILTER1(fluid_iir_filter_set_fres, x+q_dB);
     break;
 
   case GEN_BPFILTERQ:
-//     q_dB = _GEN(voice, GEN_BPFILTERQ) / 10.0f;
-//     fluid_clip(q_dB, 0.0f, 96.0f);
-// //     q_dB -= 3.01f;
-//     if(q_dB == 0.0)
-//     UPDATE_RVOICE_BPFILTER1(fluid_iir_filter_set_q_linear, 0);
-// //         UPDATE_RVOICE_GENERIC_IR(fluid_iir_filter_init, &voice->rvoice->resonant_bp_filter, -1, FALSE);
-//     else
-//     UPDATE_RVOICE_BPFILTER1(fluid_iir_filter_set_q_dB, q_dB);
     x = _GEN(voice, GEN_BPFILTERQ);
-    if(x == 0.0)
-    UPDATE_RVOICE_BPFILTER1(fluid_iir_filter_set_q_linear, 0);
+    if(x == 0.0){
+    UPDATE_RVOICE_HPFILTER1(fluid_iir_filter_set_q_linear, 0);
+    UPDATE_RVOICE_FILTER1(fluid_iir_filter_set_q_linear, 0);}
 //         UPDATE_RVOICE_GENERIC_IR(fluid_iir_filter_init, &voice->rvoice->resonant_bp_filter, -1, FALSE);
-        else
+        else{
     UPDATE_RVOICE_BPFILTER1(fluid_iir_filter_set_q_linear, x+1);
+    UPDATE_RVOICE_FILTER1(fluid_iir_filter_set_q_linear, x+1);}
     break;
     
   case GEN_MODLFOTOPITCH:
