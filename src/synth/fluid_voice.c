@@ -848,12 +848,12 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
 
   case GEN_BPFILTERFC:
     x = _GEN(voice, GEN_BPFILTERFC);
-    q_dB = /*2-*/_GEN(voice, GEN_BPFILTERQ);
-    q_dB *= 400;
+    q_dB = 8-_GEN(voice, GEN_BPFILTERQ);
+    q_dB *= 1000;
 //     q_dB /=2;
     
     UPDATE_RVOICE_HPFILTER1(fluid_iir_filter_set_fres, x-q_dB);
-    UPDATE_RVOICE_FILTER1(fluid_iir_filter_set_fres, x+q_dB);
+    UPDATE_RVOICE_FILTER1(fluid_iir_filter_set_fres, x/*+q_dB*/);
     break;
 
   case GEN_BPFILTERQ:
