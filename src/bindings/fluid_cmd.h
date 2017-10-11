@@ -102,7 +102,6 @@ void fluid_server_add_client(fluid_server_t* server, fluid_client_t* client);
 
 fluid_client_t* new_fluid_client(fluid_server_t* server,
 			       fluid_settings_t* settings,
-			       fluid_cmd_handler_t* handler,
 			       fluid_socket_t sock);
 
 void delete_fluid_client(fluid_client_t* client);

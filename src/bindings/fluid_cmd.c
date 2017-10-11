@@ -2106,16 +2106,9 @@ static int
 fluid_server_handle_connection(fluid_server_t* server, fluid_socket_t client_socket, char* addr)
 {
   fluid_client_t* client;
-  fluid_cmd_handler_t* handler;
 
-  handler = new_fluid_cmd_handler(server->synth, server->router);
-  if (handler == NULL) {
-    return -1;
-  }
-
-  client = new_fluid_client(server, server->settings, handler, client_socket);
+  client = new_fluid_client(server, server->settings, client_socket);
   if (client == NULL) {
-    delete_fluid_cmd_handler(handler);
     return -1;
   }
   fluid_server_add_client(server, client);
@@ -2172,32 +2165,40 @@ static void fluid_client_run(fluid_client_t* client)
 
 
 fluid_client_t*
-new_fluid_client(fluid_server_t* server, fluid_settings_t* settings,
-		fluid_cmd_handler_t* handler, fluid_socket_t sock)
+new_fluid_client(fluid_server_t* server, fluid_settings_t* settings, fluid_socket_t sock)
 {
   fluid_client_t* client;
+  fluid_cmd_handler_t* handler;
 
   client = FLUID_NEW(fluid_client_t);
   if (client == NULL) {
     FLUID_LOG(FLUID_ERR, "Out of memory");
     return NULL;
   }
-
+  
+  handler = new_fluid_cmd_handler(server->synth, server->router);
+  if (handler == NULL) {
+    goto error_recovery;
+  }
+  
   client->server = server;
   client->socket = sock;
   client->settings = settings;
   client->handler = handler;
-
   client->thread = new_fluid_thread("client", (fluid_thread_func_t) fluid_client_run, client,
                                     0, FALSE);
 
   if (client->thread == NULL) {
-    fluid_socket_close(sock);
-    FLUID_FREE(client);
-    return NULL;
+    goto error_recovery;
   }
 
   return client;
+  
+error_recovery:
+  FLUID_LOG(FLUID_ERR, "Out of memory");
+  delete_fluid_client(client);
+  return NULL;
+  
 }
 
 void fluid_client_quit(fluid_client_t* client)
@@ -2213,6 +2214,12 @@ void fluid_client_quit(fluid_client_t* client)
 
 void delete_fluid_client(fluid_client_t* client)
 {
+  if(client->handler != NULL)
+  {
+    delete_fluid_cmd_handler(client->handler);
+    client->handler = NULL;
+  }
+  
   if (client->socket != INVALID_SOCKET) {
     fluid_socket_close(client->socket);
     client->socket = INVALID_SOCKET;
