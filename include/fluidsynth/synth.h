@@ -102,10 +102,13 @@ FLUIDSYNTH_API int fluid_synth_system_reset(fluid_synth_t* synth);
 FLUIDSYNTH_API int fluid_synth_all_notes_off(fluid_synth_t* synth, int chan);
 FLUIDSYNTH_API int fluid_synth_all_sounds_off(fluid_synth_t* synth, int chan);
 
+/**
+ * The midi channel type used by fluid_synth_set_channel_type()
+ */
 enum fluid_midi_channel_type
 {
-  CHANNEL_TYPE_MELODIC = 0,
-  CHANNEL_TYPE_DRUM = 1
+  CHANNEL_TYPE_MELODIC = 0, /**< Melodic midi channel */
+  CHANNEL_TYPE_DRUM = 1 /**< Drum midi channel */
 };
 
 FLUIDSYNTH_API int fluid_synth_set_channel_type(fluid_synth_t* synth, int chan, int type);
