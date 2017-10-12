@@ -4309,12 +4309,14 @@ fluid_synth_update_voice_tuning_LOCAL (fluid_synth_t *synth, fluid_channel_t *ch
  * @param name Label name for this tuning
  * @param pitch Array of pitch values (length of 128, each value is number of
  *   cents, for example normally note 0 is 0.0, 1 is 100.0, 60 is 6000.0, etc).
- *   Pass NULL to create a well-tempered (normal) scale.
+ *   Pass NULL to create a equal tempered (normal) scale.
  * @return FLUID_OK on success, FLUID_FAILED otherwise
  *
  * @note Tuning is not applied in realtime to existing notes of the replaced
  * tuning (if any), use fluid_synth_activate_key_tuning() instead to specify
  * this behavior.
+ * 
+ * @deprecated Use fluid_synth_activate_key_tuning(synth, bank, prog, name, pitch, FALSE) instead.
  */
 int
 fluid_synth_create_key_tuning(fluid_synth_t* synth, int bank, int prog,
@@ -4331,7 +4333,7 @@ fluid_synth_create_key_tuning(fluid_synth_t* synth, int bank, int prog,
  * @param name Label name for this tuning
  * @param pitch Array of pitch values (length of 128, each value is number of
  *   cents, for example normally note 0 is 0.0, 1 is 100.0, 60 is 6000.0, etc).
- *   Pass NULL to create a well-tempered (normal) scale.
+ *   Pass NULL to create a equal tempered (normal) scale.
  * @param apply TRUE to apply new tuning in realtime to existing notes which
  *   are using the replaced tuning (if any), FALSE otherwise
  * @return FLUID_OK on success, FLUID_FAILED otherwise
@@ -4377,6 +4379,8 @@ fluid_synth_activate_key_tuning(fluid_synth_t* synth, int bank, int prog,
  * @note Tuning is not applied in realtime to existing notes of the replaced
  * tuning (if any), use fluid_synth_activate_octave_tuning() instead to specify
  * this behavior.
+ * 
+ * @deprecated Use fluid_synth_activate_octave_tuning(synth, bank, prog, name, pitch, FALSE) instead.
  */
 int
 fluid_synth_create_octave_tuning(fluid_synth_t* synth, int bank, int prog,
@@ -4440,7 +4444,7 @@ fluid_synth_activate_octave_tuning(fluid_synth_t* synth, int bank, int prog,
  * @return FLUID_OK on success, FLUID_FAILED otherwise
  *
  * @note Prior to version 1.1.0 it was an error to specify a tuning that didn't
- * already exist.  Starting with 1.1.0, the default equal tempered scale will be
+ * already exist. Starting with 1.1.0, the default equal tempered scale will be
  * used as a basis, if no tuning exists for the given bank and prog.
  */
 int
@@ -4492,8 +4496,10 @@ fluid_synth_tune_notes(fluid_synth_t* synth, int bank, int prog,
  * should cause existing notes to update.
  *
  * @note Prior to version 1.1.0 it was an error to select a tuning that didn't
- * already exist.  Starting with 1.1.0, a default equal tempered scale will be
+ * already exist. Starting with 1.1.0, a default equal tempered scale will be
  * created, if no tuning exists for the given bank and prog.
+ * 
+ * @deprecated Use fluid_synth_activate_tuning(synth, chan, bank, prog, FALSE) instead.
  */
 int
 fluid_synth_select_tuning(fluid_synth_t* synth, int chan, int bank, int prog)
@@ -4577,7 +4583,7 @@ fluid_synth_set_tuning_LOCAL (fluid_synth_t *synth, int chan,
 }
 
 /**
- * Clear tuning scale on a MIDI channel (set it to the default well-tempered scale).
+ * Clear tuning scale on a MIDI channel (set it to the default equal tempered scale).
  * @param synth FluidSynth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
  * @return FLUID_OK on success, FLUID_FAILED otherwise
@@ -4585,6 +4591,8 @@ fluid_synth_set_tuning_LOCAL (fluid_synth_t *synth, int chan,
  * @note This function does NOT activate tuning change in realtime, use
  * fluid_synth_deactivate_tuning() instead to specify whether tuning change
  * should cause existing notes to update.
+ * 
+ * @deprecated Use fluid_synth_deactivate_tuning(synth, chan, FALSE) instead.
  */
 int
 fluid_synth_reset_tuning(fluid_synth_t* synth, int chan)
