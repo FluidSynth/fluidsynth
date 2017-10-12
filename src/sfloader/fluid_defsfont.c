@@ -1046,7 +1046,7 @@ fluid_defpreset_import_sfont(fluid_defpreset_t* preset,
   if (FLUID_STRLEN(sfpreset->name) > 0) {
     FLUID_STRCPY(preset->name, sfpreset->name);
   } else {
-    FLUID_SNPRINTF(preset->name, sizeof(preset->name), "Bank%d,Pre%d", sfpreset->bank, sfpreset->prenum);
+    FLUID_SPRINTF(preset->name, "Bank%d,Pre%d", sfpreset->bank, sfpreset->prenum);
   }
   preset->bank = sfpreset->bank;
   preset->num = sfpreset->prenum;
@@ -1054,7 +1054,7 @@ fluid_defpreset_import_sfont(fluid_defpreset_t* preset,
   count = 0;
   while (p != NULL) {
     sfzone = (SFZone *) p->data;
-    FLUID_SNPRINTF(zone_name, sizeof(zone_name), "%s/%d", preset->name, count);
+    FLUID_SPRINTF(zone_name, "%s/%d", preset->name, count);
     zone = new_fluid_preset_zone(zone_name);
     if (zone == NULL) {
       return FLUID_FAILED;
@@ -1454,7 +1454,7 @@ fluid_inst_import_sfont(fluid_inst_t* inst, SFInst *sfinst, fluid_defsfont_t* sf
   while (p != NULL) {
 
     sfzone = (SFZone *) p->data;
-    FLUID_SNPRINTF(zone_name, sizeof(zone_name), "%s/%d", inst->name, count);
+    FLUID_SPRINTF(zone_name, "%s/%d", inst->name, count);
 
     zone = new_fluid_inst_zone(zone_name);
     if (zone == NULL) {
