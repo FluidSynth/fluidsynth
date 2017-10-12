@@ -8,8 +8,8 @@
 \author David Henningsson
 \author Tom Moebert
 \author Copyright &copy; 2003-2017 Peter Hanappe, Conrad Berhörster, Antoine Schmitt, Pedro López-Cabanillas, Josh Green, David Henningsson, Tom Moebert
-\version Revision 1.1.7
-\date 2017-09-04
+\version Revision 1.1.8
+\date 2017-10-14
 
 All the source code examples in this document are in the public domain; you can use them as you please. This document is licensed under the Creative Commons Attribution-Share Alike 3.0 Unported License. To view a copy of this license, visit http://creativecommons.org/licenses/by-sa/3.0/ . The FluidSynth library is distributed under the GNU Lesser General Public License. A copy of the GNU Lesser General Public License is contained in the FluidSynth package; if not, visit http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt or write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
@@ -21,6 +21,7 @@ All the source code examples in this document are in the public domain; you can 
 
 - \ref Disclaimer
 - \ref Introduction
+- \ref NewIn1_1_8
 - \ref NewIn1_1_7
 - \ref NewIn1_1_6
 - \ref NewIn1_1_5
@@ -64,6 +65,20 @@ What is FluidSynth?
 - FluidSynth can easily be embedded in an application. It has a main header file, fluidsynth.h, and one dynamically linkable library. FluidSynth runs on Linux, Mac OS X, and the Windows platforms, and support for OS/2 and OpenSolaris is experimental. It has audio and midi drivers for all mentioned platforms but you can use it with your own drivers if your application already handles MIDI and audio input/output. This document explains the basic usage of FluidSynth and provides examples that you can reuse. 
 
 - FluidSynth is open source, in active development. For more details, take a look at http://www.fluidsynth.org
+
+\section NewIn1_1_8 Whats new in 1.1.8?
+
+Changes in FluidSynth 1.1.8 concerning developers:
+
+- fluid_synth_get_channel_preset() is not deprecated anymore
+- deprecate fluid_synth_get_channel_info()
+- deprecate fluid_synth_set_midi_router()
+- deprecate redundant tuning functions
+- deprecate fluid_gen_set_default_values()
+- deprecate struct _fluid_mod_t, use the respective getter and setter functions
+
+- For a full list of bug fixes, see
+  https://github.com/FluidSynth/fluidsynth/wiki/ChangeLog#fluidsynth-118
 
 \section NewIn1_1_7 Whats new in 1.1.7?
 
