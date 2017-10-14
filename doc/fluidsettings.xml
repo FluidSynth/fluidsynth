@@ -54,6 +54,22 @@ https://stackoverflow.com/a/6251757
                 Device identifier used for SYSEX commands, such as MIDI Tuning Standard commands. Only those SYSEX commands destined for this ID or to all devices will be acted upon.</desc>
         </setting>
         <setting>
+            <name>effects-channels</name>
+            <type>int</type>
+            <def>2</def>
+            <min>2</min>
+            <max>2</max>
+            <desc>Currently unused.</desc>
+        </setting>
+        <setting>
+            <name>gain</name>
+            <type>num</type>
+            <def>0.2</def>
+            <min>0.0</min>
+            <max>10.0</max>
+            <desc>The gain is applied to the final or master output of the synthesizer. It is set to a low value by default to avoid the saturation of the output when many notes are played.</desc>
+        </setting>
+        <setting>
             <name>ladspa.active</name>
             <type>bool</type>
             <def>0 (FALSE)</def>
@@ -152,22 +168,6 @@ https://stackoverflow.com/a/6251757
             <desc>
                 Specifies the kind of volume envelope processing. This esp. influences the way fluidsynth responses to noteon velocity. The default setting 'emu' causes the envelope to be highly dynamic (i.e. compatible with the EMU10K1). Alternatively this may be set to 'compliant' for a less dynamic envelope, as it was done before fluidsynth 1.0.9. Note that this setting can only be changed until the first synth has been created. Changing it afterwards will have no effect for the rest of fluidsynths lifetime.
             </desc>
-        </setting>
-        <setting>
-            <name>effects-channels</name>
-            <type>int</type>
-            <def>2</def>
-            <min>2</min>
-            <max>2</max>
-            <desc>Currently unused.</desc>
-        </setting>
-        <setting>
-            <name>gain</name>
-            <type>num</type>
-            <def>0.2</def>
-            <min>0.0</min>
-            <max>10.0</max>
-            <desc>The gain is applied to the final or master output of the synthesizer. It is set to a low value by default to avoid the saturation of the output when many notes are played.</desc>
         </setting>
     </synth>
         
@@ -277,9 +277,9 @@ https://stackoverflow.com/a/6251757
             <name>file.format</name>
             <type>str</type>
             <def>s16</def>
-            <vals>double, float, s16, s24, s32, s8, u8 ('s16' is all that is supported if libsndfile support not built in)</vals>
+            <vals>double, float, s16, s24, s32, s8, u8</vals>
             <desc>
-                Defines the audio format when rendering audio to a file.
+                Defines the audio format when rendering audio to a file. Limited to 's16' if no libsndfile support.
                 <ul>
                     <li>'double' is 64 bit floating point,</li>
                     <li>'float' is 32 bit floating point,</li>
@@ -305,9 +305,9 @@ https://stackoverflow.com/a/6251757
             <type>str</type>
             <def>'auto' if libsndfile support is built in,<br />
                  'raw' otherwise.</def>
-            <vals>aiff, au, auto, avr, caf, flac, htk, iff, mat, oga, paf, pvf, raw, sd2, sds, sf, voc, w64, wav, xi (actual list of types may vary and depends on the libsndfile library used, 'raw' is the only type available if no libsndfile support is built in).</vals>
+            <vals>aiff, au, auto, avr, caf, flac, htk, iff, mat, oga, paf, pvf, raw, sd2, sds, sf, voc, w64, wav, xi</vals>
             <desc>
-                Sets the file type of the file which the audio will be stored to. 'auto' attempts to determine the file type from the audio.file.name file extension and falls back to 'wav' if the extension doesn't match any types.
+                Sets the file type of the file which the audio will be stored to. 'auto' attempts to determine the file type from the audio.file.name file extension and falls back to 'wav' if the extension doesn't match any types. Limited to 'raw' if compiled without libsndfile support. Actual options will vary depending on libsndfile library.
             </desc>
         </setting>
         <setting>
@@ -359,11 +359,27 @@ https://stackoverflow.com/a/6251757
             </desc>
         </setting>
         <setting>
+            <name>pulseaudio.adjust-latency</name>
+            <type>bool</type>
+            <def>1 (TRUE)</def>
+            <desc>
+                If TRUE increases the latency dynamically if PulseAudio suggests so. Else uses a buffer with length of "audio.period-size".
+            </desc>
+        </setting>
+        <setting>
             <name>pulseaudio.device</name>
             <type>str</type>
             <def>default</def>
             <desc>
                 Device to use for PulseAudio driver output.
+            </desc>
+        </setting>
+        <setting>
+            <name>pulseaudio.media-role</name>
+            <type>str</type>
+            <def>music</def>
+            <desc>
+                PulseAudio media role information.
             </desc>
         </setting>
         <setting>
@@ -419,6 +435,12 @@ https://stackoverflow.com/a/6251757
             <desc>ID to use when registering ports with the ALSA sequencer driver. If set to "pid" then the ID will be "FLUID Synth (PID)", where PID is the FluidSynth process ID of the audio thread otherwise the provided string will be used in place of PID.</desc>
         </setting>
         <setting>
+            <name>coremidi.id</name>
+            <type>str</type>
+            <def>pid</def>
+            <desc>Client ID to use for CoreMIDI driver. 'pid' will use process ID as port of the client name.</desc>
+        </setting>
+        <setting>
             <name>jack.server</name>
             <type>str</type>
             <def></def>
@@ -435,6 +457,12 @@ https://stackoverflow.com/a/6251757
             <type>str</type>
             <def>/dev/midi</def>
             <desc>Device to use for OSS MIDI driver.</desc>
+        </setting>
+        <setting>
+            <name>winmidi.device</name>
+            <type>str</type>
+            <def>default</def>
+            <desc>Device for Windows MIDI driver.</desc>
         </setting>
     </midi>
     

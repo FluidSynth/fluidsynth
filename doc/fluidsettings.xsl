@@ -45,11 +45,11 @@ td
     border-top: 1px solid black;
 }
 
-.audio {background-color: hsl(0, 100%, 94%);}
-.midi {background-color: hsl(165, 100%, 85%);}
-.player {background-color: hsl(60, 100%, 80%);}
-.shell {background-color: hsl(36, 100%, 85%);}
-.synth {background-color: hsl(105, 100%, 85%);}
+.audio {background-color: hsl(165, 100%, 90%);}
+.midi {background-color: hsl(105, 100%, 90%);}
+.player {background-color: hsl(60, 100%, 85%);}
+.shell {background-color: hsl(40, 100%, 90%);}
+.synth {background-color: hsl(20, 100%, 90%);}
             </style>
          </head>
          <body>
@@ -58,7 +58,7 @@ td
                <!--print each and every setting row by row in the table-->
                <xsl:for-each select="fluidsettings/*/*">
                   <xsl:sort select="name(..)" />
-                  <xsl:sort select="name" />
+<!--                   <xsl:sort select="name" /> -->
                   <tr>
                      <!-- the class attribute of tr shall be the name of the settings group of the current setting -->
                      <xsl:attribute name="class">
