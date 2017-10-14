@@ -1123,7 +1123,6 @@ fluid_synth_noteoff(fluid_synth_t* synth, int chan, int key)
 static int
 fluid_synth_noteoff_LOCAL(fluid_synth_t* synth, int chan, int key)
 {
-<<<<<<< HEAD:fluidsynth/src/synth/fluid_synth.c
   int status;
   fluid_channel_t* channel = synth->channel[chan];
   if(IsChanPlayingMono(channel)) /* channel is mono or legato On) */
@@ -1138,33 +1137,6 @@ fluid_synth_noteoff_LOCAL(fluid_synth_t* synth, int chan, int key)
   /* Change the state (Valid/Invalid) of the most recent note played in a 
      staccato manner */
   ValidInvalidPrevNoteStaccato(channel);
-=======
-  fluid_voice_t* voice;
-  int status = FLUID_FAILED;
-  int i;
-
-  for (i = 0; i < synth->polyphony; i++) {
-    voice = synth->voice[i];
-    if (fluid_voice_is_on(voice) && (fluid_voice_get_channel(voice) == chan) && (fluid_voice_get_key(voice) == key)) {
-      if (synth->verbose) {
-	int used_voices = 0;
-	int k;
-	for (k = 0; k < synth->polyphony; k++) {
-	  if (!_AVAILABLE(synth->voice[k])) {
-	    used_voices++;
-	  }
-	}
-	FLUID_LOG(FLUID_INFO, "noteoff\t%d\t%d\t%d\t%05d\t%.3f\t%d",
-		 fluid_voice_get_channel(voice), fluid_voice_get_key(voice), 0, fluid_voice_get_id(voice),
-		 (fluid_curtime() - synth->start) / 1000.0f,
-		 used_voices);
-      } /* if verbose */
-
-      fluid_voice_noteoff(voice);
-      status = FLUID_OK;
-    } /* if voice on */
-  } /* for all voices */
->>>>>>> master:src/synth/fluid_synth.c
   return status;
 }
 

@@ -476,7 +476,7 @@ int fluid_synth_noteoff_monopoly(fluid_synth_t* synth, int chan, int key,
 	/* noteoff for all voices with same chan and same key */
 	for (i = 0; i < synth->polyphony; i++) {
 		voice = synth->voice[i];
-		if (_ON(voice) && (voice->chan == chan) && (voice->key == key)) {
+    if (fluid_voice_is_on(voice) && (fluid_voice_get_channel(voice) == chan) && (fluid_voice_get_key(voice) == key)) {
 			if (synth->verbose) {
 				int used_voices = 0;
 				int k;
@@ -485,10 +485,10 @@ int fluid_synth_noteoff_monopoly(fluid_synth_t* synth, int chan, int key,
 					used_voices++;
 					}
 				}
-				FLUID_LOG(FLUID_INFO, "noteoff\t%d\t%d\t%d\t%05d\t%.3f\t%d",
-						voice->chan, voice->key, 0, voice->id,
-						(fluid_curtime() - synth->start) / 1000.0f,
-						used_voices);
+	FLUID_LOG(FLUID_INFO, "noteoff\t%d\t%d\t%d\t%05d\t%.3f\t%d",
+		 fluid_voice_get_channel(voice), fluid_voice_get_key(voice), 0, fluid_voice_get_id(voice),
+		 (fluid_curtime() - synth->start) / 1000.0f,
+		 used_voices);
 			} /* if verbose */
 			
 			fluid_voice_noteoff(voice);
