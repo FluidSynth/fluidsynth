@@ -465,45 +465,45 @@ fluid_synth_noteon_mono_staccato(fluid_synth_t* synth,int chan,int key,int vel)
  * it will be released. Remembering is done here on noteOff.
  */
 int fluid_synth_noteoff_monopoly(fluid_synth_t* synth, int chan, int key,
-							 char Mono)
+                            char Mono)
 {
-	int status = FLUID_FAILED;
-	fluid_voice_t* voice;
-	int i, IsSustained;
-	fluid_channel_t* channel = synth->channel[chan];
-	/* Key_sustained is prepared to return no note sustained (-1) */
-	if (Mono) channel->key_sustained = -1; /* no mono note sustained */
-	/* noteoff for all voices with same chan and same key */
-	for (i = 0; i < synth->polyphony; i++) {
-		voice = synth->voice[i];
-    if (fluid_voice_is_on(voice) && (fluid_voice_get_channel(voice) == chan) && (fluid_voice_get_key(voice) == key)) {
-			if (synth->verbose) {
-				int used_voices = 0;
-				int k;
-				for (k = 0; k < synth->polyphony; k++) {
-					if (!_AVAILABLE(synth->voice[k])) {
-					used_voices++;
-					}
-				}
-	FLUID_LOG(FLUID_INFO, "noteoff\t%d\t%d\t%d\t%05d\t%.3f\t%d",
-		 fluid_voice_get_channel(voice), fluid_voice_get_key(voice), 0, fluid_voice_get_id(voice),
-		 (fluid_curtime() - synth->start) / 1000.0f,
-		 used_voices);
-			} /* if verbose */
-			
-			fluid_voice_noteoff(voice);
-			/* noteoff on monophonic note */
-			/* Key remembering if the note is sustained  */
-			if(Mono &&
-               (fluid_voice_is_sustained(voice) || fluid_voice_is_sostenuto(voice)))
-               {
-                   channel->key_sustained = key;
-               }
-               
-			status = FLUID_OK;
-		} /* if voice on */
-	} /* for all voices */
-	return status;
+    int status = FLUID_FAILED;
+    fluid_voice_t* voice;
+    int i, IsSustained;
+    fluid_channel_t* channel = synth->channel[chan];
+    /* Key_sustained is prepared to return no note sustained (-1) */
+    if (Mono) channel->key_sustained = -1; /* no mono note sustained */
+    /* noteoff for all voices with same chan and same key */
+    for (i = 0; i < synth->polyphony; i++) {
+        voice = synth->voice[i];
+        if (fluid_voice_is_on(voice) && (fluid_voice_get_channel(voice) == chan) && (fluid_voice_get_key(voice) == key)) {
+            if (synth->verbose) {
+                int used_voices = 0;
+                int k;
+                for (k = 0; k < synth->polyphony; k++) {
+                    if (!_AVAILABLE(synth->voice[k])) {
+                    used_voices++;
+                    }
+                }
+                FLUID_LOG(FLUID_INFO, "noteoff\t%d\t%d\t%d\t%05d\t%.3f\t%d",
+                    fluid_voice_get_channel(voice), fluid_voice_get_key(voice), 0, fluid_voice_get_id(voice),
+                    (fluid_curtime() - synth->start) / 1000.0f,
+                    used_voices);
+            } /* if verbose */
+            
+            fluid_voice_noteoff(voice);
+            /* noteoff on monophonic note */
+            /* Key remembering if the note is sustained  */
+            if(Mono &&
+            (fluid_voice_is_sustained(voice) || fluid_voice_is_sostenuto(voice)))
+            {
+                channel->key_sustained = key;
+            }
+            
+            status = FLUID_OK;
+        } /* if voice on */
+    } /* for all voices */
+    return status;
 }
 
 /*----------------------------------------------------------------------------
