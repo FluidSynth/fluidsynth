@@ -492,19 +492,11 @@ fluid_real_t fluid_voice_calculate_pitch(fluid_voice_t* voice, int key)
   if (fluid_channel_has_tuning(voice->channel)) {
     tuning = fluid_channel_get_tuning (voice->channel);
     x = fluid_tuning_get_pitch (tuning, (int)(voice->root_pitch / 100.0f));
-<<<<<<< HEAD:fluidsynth/src/synth/fluid_voice.c
     pitch = voice->gen[GEN_SCALETUNE].val / 100.0f *
       (fluid_tuning_get_pitch (tuning, key) - x) + x;
   } else {
     pitch = voice->gen[GEN_SCALETUNE].val
       * (key - voice->root_pitch / 100.0f) + voice->root_pitch;
-=======
-    voice->gen[GEN_PITCH].val = voice->gen[GEN_SCALETUNE].val / 100.0f *
-      (fluid_tuning_get_pitch (tuning, fluid_voice_get_actual_key(voice)) - x) + x;
-  } else {
-    voice->gen[GEN_PITCH].val = voice->gen[GEN_SCALETUNE].val
-      * (fluid_voice_get_actual_key(voice) - voice->root_pitch / 100.0f) + voice->root_pitch;
->>>>>>> master:src/synth/fluid_voice.c
   }
   return pitch;
 }
@@ -512,8 +504,7 @@ fluid_real_t fluid_voice_calculate_pitch(fluid_voice_t* voice, int key)
 void
 fluid_voice_calculate_gen_pitch(fluid_voice_t* voice)
 {
-	voice->gen[GEN_PITCH].val = fluid_voice_calculate_pitch(voice,
-								voice->key);
+	voice->gen[GEN_PITCH].val = fluid_voice_calculate_pitch(voice, fluid_voice_get_actual_key(voice));
 }
 
 
@@ -638,7 +629,7 @@ fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t* voice)
 	  int fromkey = voice->channel->synth->fromkey_portamento;
       if(IsValidNote(fromkey))
 	  {		/* Send portamento parameters to the voice dsp */
-			fluid_voice_update_portamento(voice,fromkey, voice->key);
+			fluid_voice_update_portamento(voice,fromkey, fluid_voice_get_actual_key(voice));
 	  }
   }
 
