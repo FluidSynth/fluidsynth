@@ -439,7 +439,7 @@ fluid_synth_noteon_mono_staccato(fluid_synth_t* synth,int chan,int key,int vel)
 {
 	fluid_channel_t* channel = synth->channel[chan];
 	
-	/* Before playing a new note, il a previous monophonic note is currently
+	/* Before playing a new note, if a previous monophonic note is currently
 	   sustained it needs to be released */
 	fluid_synth_release_voice_on_same_note_LOCAL(synth,chan,
 												channel->key_sustained);
@@ -490,10 +490,16 @@ int fluid_synth_noteoff_monopoly(fluid_synth_t* synth, int chan, int key,
 						(fluid_curtime() - synth->start) / 1000.0f,
 						used_voices);
 			} /* if verbose */
-			IsSustained = fluid_voice_noteoff(voice);
+			
+			fluid_voice_noteoff(voice);
 			/* noteoff on monophonic note */
 			/* Key remembering if the note is sustained  */
-			if(Mono && IsSustained)	channel->key_sustained = key;
+			if(Mono &&
+               (fluid_voice_is_sustained(voice) || fluid_voice_is_sostenuto(voice)))
+               {
+                   channel->key_sustained = key;
+               }
+               
 			status = FLUID_OK;
 		} /* if voice on */
 	} /* for all voices */

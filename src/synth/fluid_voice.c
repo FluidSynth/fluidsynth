@@ -1277,7 +1277,7 @@ void fluid_update_multi_retrigger_attack(fluid_voice_t* voice,
 	/* Update dependent generator of velocity */
 	/* Modulate GEN_ATTENUATION (and others ) before calling
 	   fluid_rvoice_multi_retrigger_attack().*/
-	fluid_voice_modulate(voice,0,FLUID_MOD_VELOCITY);			
+	fluid_voice_modulate(voice, FALSE, FLUID_MOD_VELOCITY);
 		
 	/* Update dependent generator of key */
 	fluid_voice_update_param(voice, GEN_KEYTOMODENVHOLD);
@@ -1303,7 +1303,7 @@ void fluid_update_single_trigger0(fluid_voice_t* voice,int fromkey,
 	/* Update dependent generator of velocity */
 	/* Modulate GEN_ATTENUATION (and others ) before calling
 	   fluid_rvoice_single_trigger().*/
-	fluid_voice_modulate(voice,0,FLUID_MOD_VELOCITY);			
+	fluid_voice_modulate(voice, FALSE, FLUID_MOD_VELOCITY);
 
 	/* Update dependent generator of key for tokey*/
 	fluid_voice_update_param(voice, GEN_KEYTOMODENVHOLD);
@@ -1370,20 +1370,15 @@ fluid_voice_release(fluid_voice_t* voice)
 
 /*
  * fluid_voice_noteoff
-<<<<<<< HEAD:fluidsynth/src/synth/fluid_voice.c
- * The function is convenient for polyphonic or monophonic note
- * On return, The function return True if the voice is sustained
- * (by Sustain or Sostenuto).
-=======
  * 
  * Sending a noteoff event will advance the envelopes to section 5 (release).
->>>>>>> master:src/synth/fluid_voice.c
+ * The function is convenient for polyphonic or monophonic note
  */
-int
+void
 fluid_voice_noteoff(fluid_voice_t* voice)
 {
   fluid_channel_t* channel;
-  int IsSustained = 0;
+
   fluid_profile(FLUID_PROF_VOICE_NOTE, voice->ref);
 
   channel = voice->channel;
@@ -1393,18 +1388,14 @@ fluid_voice_noteoff(fluid_voice_t* voice)
       channel->sostenuto_orderid > voice->id)
   { // Sostenuto depressed after note
     voice->status = FLUID_VOICE_HELD_BY_SOSTENUTO;
-	IsSustained = 1;
   }
   /* Or sustain a note under Sustain pedal */
   else if (fluid_channel_sustained(channel)) {
     voice->status = FLUID_VOICE_SUSTAINED;
-	IsSustained = 1;
   }
   /* Or force the voice to release stage */
   else
     fluid_voice_release(voice);
-
-  return IsSustained;
 }
 
 /*
