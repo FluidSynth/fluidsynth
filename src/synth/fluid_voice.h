@@ -159,7 +159,7 @@ void fluid_voice_update_portamento (fluid_voice_t* voice, int fromkey, int tokey
 
 
 void fluid_voice_release(fluid_voice_t* voice);
-int fluid_voice_noteoff(fluid_voice_t* voice);
+void fluid_voice_noteoff(fluid_voice_t* voice);
 void fluid_voice_off(fluid_voice_t* voice);
 void fluid_voice_stop(fluid_voice_t* voice);
 void fluid_voice_overflow_rvoice_finished(fluid_voice_t* voice);
