@@ -148,14 +148,6 @@ static void init_dither(void);
  * There is a set of predefined default modulators. They have to be
  * explicitly overridden by the sound font in order to turn them off.
  */
-
-/* custom_breath2att_modulator is not a default modulator specified in SF
-it is intended to replace default_vel2att_mod on demand using
-API fluid_set_breath_mode() or command shell setbreathmode.
-*/
-static fluid_mod_t custom_breath2att_mod;        
-
-
 fluid_mod_t default_vel2att_mod;        /* SF2.01 section 8.4.1  */
 fluid_mod_t default_vel2filter_mod;     /* SF2.01 section 8.4.2  */
 fluid_mod_t default_at2viblfo_mod;      /* SF2.01 section 8.4.3  */
@@ -166,6 +158,12 @@ fluid_mod_t default_expr_mod;           /* SF2.01 section 8.4.7  */
 fluid_mod_t default_reverb_mod;         /* SF2.01 section 8.4.8  */
 fluid_mod_t default_chorus_mod;         /* SF2.01 section 8.4.9  */
 fluid_mod_t default_pitch_bend_mod;     /* SF2.01 section 8.4.10 */
+
+/* custom_breath2att_modulator is not a default modulator specified in SF
+it is intended to replace default_vel2att_mod on demand using
+API fluid_set_breath_mode() or command shell setbreathmode.
+*/
+static fluid_mod_t custom_breath2att_mod;
 
 /* reverb presets */
 static fluid_revmodel_presets_t revmodel_preset[] = {
