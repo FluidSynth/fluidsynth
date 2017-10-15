@@ -254,7 +254,11 @@ typedef FILE*  fluid_file;
     #define FLUID_VSNPRINTF               vsnprintf
 #endif
 
-
+#if defined(WIN32) && !defined(MINGW32)
+    #define FLUID_STRCASECMP _stricmp
+#else
+    #define FLUID_STRCASECMP strcasecmp
+#endif
 
 
 #define fluid_clip(_val, _min, _max) \

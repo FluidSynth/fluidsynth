@@ -150,12 +150,12 @@ new_fluid_winmidi_driver(fluid_settings_t* settings,
   }
 
   /* find the device */
-  if (strcasecmp("default", devname) != 0) {
+  if (FLUID_STRCASECMP("default", devname) != 0) {
     for (i = 0; i < num; i++) {
       res = midiInGetDevCaps(i, &in_caps, sizeof(MIDIINCAPS));
       if (res == MMSYSERR_NOERROR) {
         FLUID_LOG(FLUID_DBG, "Testing midi device: %s\n", in_caps.szPname);
-        if (strcasecmp(devname, in_caps.szPname) == 0) {
+        if (FLUID_STRCASECMP(devname, in_caps.szPname) == 0) {
           FLUID_LOG(FLUID_DBG, "Selected midi device number: %d\n", i);
           midi_num = i;
           break;
