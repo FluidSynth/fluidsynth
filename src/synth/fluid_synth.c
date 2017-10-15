@@ -2319,54 +2319,72 @@ fluid_synth_program_change(fluid_synth_t* synth, int chan, int prognum)
 {
   fluid_preset_t* preset = NULL;
   fluid_channel_t* channel;
-  int subst_bank, subst_prog, banknum = 0, result;
+  int subst_bank, subst_prog, banknum = 0, result = FLUID_FAILED;
 
   fluid_return_val_if_fail (prognum >= 0 && prognum <= 128, FLUID_FAILED);
   FLUID_API_ENTRY_CHAN(FLUID_FAILED);
   
   channel = synth->channel[chan];
-  if(! IsChanEnabled(channel)) result = FLUID_FAILED;
-  else {
-	  if (channel->channel_type == CHANNEL_TYPE_DRUM) 
-		banknum = DRUM_INST_BANK;
-	  else
-		fluid_channel_get_sfont_bank_prog(channel, NULL, &banknum, NULL);
+  if(IsChanEnabled(channel))
+  {
+    if (channel->channel_type == CHANNEL_TYPE_DRUM) 
+        banknum = DRUM_INST_BANK;
+    else
+        fluid_channel_get_sfont_bank_prog(channel, NULL, &banknum, NULL);
 
-	  if (synth->verbose)
-		FLUID_LOG(FLUID_INFO, "prog\t%d\t%d\t%d", chan, banknum, prognum);
+    if (synth->verbose)
+        FLUID_LOG(FLUID_INFO, "prog\t%d\t%d\t%d", chan, banknum, prognum);
 
-	  /* I think this is a hack for MIDI files that do bank changes in GM mode.  
-	   * Proper way to handle this would probably be to ignore bank changes when 
-	   * in GM mode. - JG
-	   * This is now possible by setting synth.midi-bank-select=gm, but let the
-	   * hack stay for the time being. - DH
-	   */
-	  if (prognum != FLUID_UNSET_PROGRAM)
-	  {
-		subst_bank = banknum;
-		subst_prog = prognum;
-    
-		preset = fluid_synth_find_preset(synth, subst_bank, subst_prog);
-    
-    /* Fallback to another preset if not found */
-    if (!preset) {
-      /* Percussion: Fallback to preset 0 in percussion bank */
-      if (channel->channel_type == CHANNEL_TYPE_DRUM) {
-        subst_prog = 0;
-        subst_bank = DRUM_INST_BANK;
+    /* I think this is a hack for MIDI files that do bank changes in GM mode.  
+    * Proper way to handle this would probably be to ignore bank changes when in 
+    * GM mode. - JG
+    * This is now possible by setting synth.midi-bank-select=gm, but let the hack
+    * stay for the time being. - DH
+    */
+    if (prognum != FLUID_UNSET_PROGRAM)
+    {
+        subst_bank = banknum;
+        subst_prog = prognum;
+        
         preset = fluid_synth_find_preset(synth, subst_bank, subst_prog);
-      }
-      /* Melodic instrument */
-      else { 
-        /* Fallback first to bank 0:prognum */
-        subst_bank = 0;
-        preset = fluid_synth_find_preset(synth, subst_bank, subst_prog);
+        
+        /* Fallback to another preset if not found */
+        if (!preset) {
+        /* Percussion: Fallback to preset 0 in percussion bank */
+        if (channel->channel_type == CHANNEL_TYPE_DRUM) {
+            subst_prog = 0;
+            subst_bank = DRUM_INST_BANK;
+            preset = fluid_synth_find_preset(synth, subst_bank, subst_prog);
+        }
+        /* Melodic instrument */
+        else { 
+            /* Fallback first to bank 0:prognum */
+            subst_bank = 0;
+            preset = fluid_synth_find_preset(synth, subst_bank, subst_prog);
 
-	  /* Assign the SoundFont ID and program number to the channel */
-	  fluid_channel_set_sfont_bank_prog (channel, preset ? fluid_sfont_get_id (preset->sfont) : 0,
-										 -1, prognum);
-	  result = fluid_synth_set_preset (synth, chan, preset);
+            /* Fallback to first preset in bank 0 (usually piano...) */
+            if (!preset)
+            {
+            subst_prog = 0;
+            preset = fluid_synth_find_preset(synth, subst_bank, subst_prog);
+            }
+        }
+
+        if (preset)
+            FLUID_LOG(FLUID_WARN, "Instrument not found on channel %d [bank=%d prog=%d], substituted [bank=%d prog=%d]",
+                    chan, banknum, prognum, subst_bank, subst_prog); 
+        else
+            FLUID_LOG(FLUID_WARN, "No preset found on channel %d [bank=%d prog=%d]",
+                    chan, banknum, prognum); 
+        }
+    }
+
+    /* Assign the SoundFont ID and program number to the channel */
+    fluid_channel_set_sfont_bank_prog (channel, preset ? fluid_sfont_get_id (preset->sfont) : 0,
+                                        -1, prognum);
+    result = fluid_synth_set_preset (synth, chan, preset);
   }
+  
   FLUID_API_RETURN(result);
 }
 
