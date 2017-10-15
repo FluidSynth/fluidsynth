@@ -5,14 +5,7 @@
 #define DSOUND_SUPPORT 1
 #define WINMIDI_SUPPORT 1
 
-#if _MSC_VER < 1900
-#define snprintf _snprintf
-#endif
 #define strcasecmp _stricmp
-
-#if _MSC_VER < 1500
-#define vsnprintf _vsnprintf
-#endif
 
 #define STDIN_FILENO 0
 #define STDOUT_FILENO 1
