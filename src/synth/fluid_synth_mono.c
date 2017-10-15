@@ -469,7 +469,7 @@ int fluid_synth_noteoff_monopoly(fluid_synth_t* synth, int chan, int key,
 {
     int status = FLUID_FAILED;
     fluid_voice_t* voice;
-    int i, IsSustained;
+    int i;
     fluid_channel_t* channel = synth->channel[chan];
     /* Key_sustained is prepared to return no note sustained (-1) */
     if (Mono) channel->key_sustained = -1; /* no mono note sustained */
@@ -537,7 +537,10 @@ int fluid_synth_noteon_mono_legato(fluid_synth_t* synth, int chan,
 	if (IsValidNote(fromkey)) for (i = 0; i < synth->polyphony; i++) {
 		/* search fromkey voice: only those who don't have 'note off' */
 		voice = synth->voice[i];
-		if (_ON(voice) && (voice->chan == chan) && (voice->key == fromkey)){
+		if (fluid_voice_is_on(voice) &&
+            fluid_voice_get_channel(voice) == chan &&
+            fluid_voice_get_key(voice) == fromkey)
+            {
 			/* Check if tokey is inside the range of the running voice */
 			if (fluid_inst_zone_inside_range(voice->inst_zone, tokey, vel)) {
 				switch (legatomode) 
