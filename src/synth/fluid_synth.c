@@ -149,11 +149,11 @@ static void init_dither(void);
  * explicitly overridden by the sound font in order to turn them off.
  */
 
-/* default_breath2att_modulator is not a default modulator specified in SF
+/* custom_breath2att_modulator is not a default modulator specified in SF
 it is intended to replace default_vel2att_mod on demand using
 API fluid_set_breath_mode() or command shell setbreathmode.
 */
-fluid_mod_t default_breath2att_mod;        
+static fluid_mod_t custom_breath2att_mod;        
 
 
 fluid_mod_t default_vel2att_mod;        /* SF2.01 section 8.4.1  */
@@ -328,20 +328,20 @@ fluid_synth_init(void)
 
   init_dither();
 
-  /* default_breath2att_modulator is not a default modulator specified in SF2.01.
+  /* custom_breath2att_mod is not a default modulator specified in SF2.01.
    it is intended to replace default_vel2att_mod on demand using
    API fluid_set_breath_mode() or command shell setbreathmode.
    */    
-  fluid_mod_set_source1(&default_breath2att_mod, /* The modulator we are programming here */
-		       2,    /* Source. breath MSB corresponds to 2. */
+  fluid_mod_set_source1(&custom_breath2att_mod, /* The modulator we are programming here */
+		       BREATH_MSB,    /* Source. breath MSB corresponds to 2. */
 		       FLUID_MOD_CC           /* MIDI continuous controller */
 		       | FLUID_MOD_CONCAVE    /* Curve shape. Corresponds to 'type=1' */
 		       | FLUID_MOD_UNIPOLAR   /* Polarity. Corresponds to 'P=0' */
 		       | FLUID_MOD_NEGATIVE   /* Direction. Corresponds to 'D=1' */
 		       );
-  fluid_mod_set_source2(&default_breath2att_mod, 0, 0); /* No 2nd source */
-  fluid_mod_set_dest(&default_breath2att_mod, GEN_ATTENUATION);  /* Target: Initial attenuation */
-  fluid_mod_set_amount(&default_breath2att_mod, 960.0);          /* Modulation amount: 960 */
+  fluid_mod_set_source2(&custom_breath2att_mod, 0, 0); /* No 2nd source */
+  fluid_mod_set_dest(&custom_breath2att_mod, GEN_ATTENUATION);  /* Target: Initial attenuation */
+  fluid_mod_set_amount(&custom_breath2att_mod, 960.0);          /* Modulation amount: 960 */
 
   /* SF2.01 page 53 section 8.4.1: MIDI Note-On Velocity to Initial Attenuation */
   fluid_mod_set_source1(&default_vel2att_mod, /* The modulator we are programming here */
@@ -3498,7 +3498,7 @@ fluid_synth_alloc_voice(fluid_synth_t* synth, fluid_inst_zone_t *inst_zone,
   }
 
   /* add the default modulators to the synthesis process. */
-  /* default_breath2att_modulator is not a default modulator specified in SF
+  /* custom_breath2att_modulator is not a default modulator specified in SF
     it is intended to replace default_vel2att_mod for this channel on demand using
     API fluid_synth_set_breath_mode() or shell command setbreathmode for this channel.
   */
@@ -3511,13 +3511,13 @@ fluid_synth_alloc_voice(fluid_synth_t* synth, fluid_inst_zone_t *inst_zone,
             /* See if default_mod is the velocity_to_attenuation modulator */
             fluid_mod_has_source(default_mod, FALSE, FLUID_MOD_VELOCITY) &&
             fluid_mod_has_dest(default_mod, GEN_ATTENUATION) &&
-            // See if a replacement by default_breath2att_modulator has been demanded
+            // See if a replacement by custom_breath2att_modulator has been demanded
             // for this channel
             ((!mono && IsChanPolyDefaultBreath(channel)) || (mono && IsChanMonoDefaultBreath(channel)))
         )
         {
-            // Replacement of default_vel2att modulator by default_breath2att_modulator
-            fluid_voice_add_mod(voice, &default_breath2att_mod, FLUID_VOICE_DEFAULT);
+            // Replacement of default_vel2att modulator by custom_breath2att_modulator
+            fluid_voice_add_mod(voice, &custom_breath2att_mod, FLUID_VOICE_DEFAULT);
         }
         else
         {
