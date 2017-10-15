@@ -86,6 +86,17 @@ int fluid_handle_router_chan(fluid_cmd_handler_t* handler, int ac, char** av, fl
 int fluid_handle_router_par1(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
 int fluid_handle_router_par2(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
 
+int fluid_handle_basicchannels (void* data, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_resetbasicchannels (void* data, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_setbasicchannels (void* data, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_channelsmode (void* data, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_legatomode(void* data, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_setlegatomode(void* data, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_portamentomode(void* data, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_setportamentomode(void* data, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_breathmode(void* data, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_setbreathmode(void* data, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_sleep(void *data, int ac, char** av, fluid_ostream_t out);
 
 fluid_cmd_t* fluid_cmd_copy(fluid_cmd_t* cmd);
 void delete_fluid_cmd(fluid_cmd_t* cmd);
