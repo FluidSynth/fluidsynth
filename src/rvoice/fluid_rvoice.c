@@ -25,7 +25,7 @@
 /**
  * @return -1 if voice has finished, 0 if it's currently quiet, 1 otherwise
  */
-static inline int
+static FLUID_INLINE int
 fluid_rvoice_calc_amp(fluid_rvoice_t* voice)
 {
   fluid_real_t target_amp;	/* target amplitude */
@@ -371,7 +371,7 @@ fluid_rvoice_write (fluid_rvoice_t* voice, fluid_real_t *dsp_buf)
 }
 
 
-static inline fluid_real_t* 
+static FLUID_INLINE fluid_real_t* 
 get_dest_buf(fluid_rvoice_buffers_t* buffers, int index,
              fluid_real_t** dest_bufs, int dest_bufcount)
 {
