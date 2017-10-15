@@ -211,7 +211,22 @@ void fluid_synth_process_event_queue(fluid_synth_t* synth);
 /*
  * misc
  */
-
 void fluid_synth_settings(fluid_settings_t* settings);
+
+
+/* extern declared fluid_synth_polymono.c */
+int fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth, int basicchan,int mode, int val);
+/* extern declared in fluid_synth_mono.c */
+int fluid_synth_noteon_mono_LOCAL(fluid_synth_t* synth, int chan, int key, int vel);
+int fluid_synth_noteoff_mono_LOCAL(fluid_synth_t* synth, int chan, int key);
+int fluid_synth_noteon_mono_legato(fluid_synth_t* synth, int chan, int fromkey, int tokey, int vel);
+int fluid_synth_noteoff_monopoly(fluid_synth_t* synth, int chan, int key, char Mono);
+
+void fluid_channel_set_onenote_monolist(fluid_channel_t* chan, unsigned char key, unsigned char vel);
+void fluid_channel_clear_monolist(fluid_channel_t* chan);
+void ValidInvalidPrevNoteStaccato(fluid_channel_t* chan);
+void LegatoOnOff(fluid_channel_t* chan, int value);
+void BreathOnOff(fluid_channel_t* chan, int value);
+
 
 #endif  /* _FLUID_SYNTH_H */

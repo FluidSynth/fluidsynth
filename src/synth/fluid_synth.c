@@ -37,28 +37,6 @@
 extern int feenableexcept (int excepts);
 #endif
 
-/* extern declared fluid_synth_polymono.c */
-extern int fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth, 
-											 int basicchan,int mode, int val);
-/* extern declared in fluid_synth_mono.c */
-extern int fluid_synth_noteon_mono_LOCAL(fluid_synth_t* synth, int chan,
-							   int key, int vel);
-extern int fluid_synth_noteoff_mono_LOCAL(fluid_synth_t* synth, int chan, 
-								   int key);
-extern int fluid_synth_noteon_mono_legato(fluid_synth_t* synth, int chan,
-							   int fromkey, int tokey, int vel);
-extern int fluid_synth_noteoff_monopoly(fluid_synth_t* synth, int chan, int key,
-							 char Mono);
-
-extern void fluid_channel_set_onenote_monolist(fluid_channel_t* chan, 
-											   unsigned char key,
-								            unsigned char vel);
-extern void fluid_channel_clear_monolist(fluid_channel_t* chan);
-extern void ValidInvalidPrevNoteStaccato(fluid_channel_t* chan);
-extern void LegatoOnOff(fluid_channel_t* chan, int value);
-extern void BreathOnOff(fluid_channel_t* chan, int value);
-
-/* End of extern declared in fluid_synth_mono.c , fluid_synth_polymono.c */
 static void fluid_synth_init(void);
 
 static int fluid_synth_noteon_LOCAL(fluid_synth_t* synth, int chan, int key,
