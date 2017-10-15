@@ -137,9 +137,9 @@ enum PortamentoMode
 	PORTAMENTOMODE_NBR
 };
 
-FLUIDSYNTH_API int fluid_synth_set_portamento_model(fluid_synth_t* synth,
+FLUIDSYNTH_API int fluid_synth_set_portamento_mode(fluid_synth_t* synth,
 													int chan, int portamentomode);
-FLUIDSYNTH_API int fluid_synth_get_portamento_model(fluid_synth_t* synth,
+FLUIDSYNTH_API int fluid_synth_get_portamento_mode(fluid_synth_t* synth,
 												int chan, int  * portamentomode);
 
 /* End of API: portamento mode */
