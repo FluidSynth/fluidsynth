@@ -393,7 +393,7 @@ fluid_get_userconf(char* buf, int len)
   if (home == NULL) {
     return NULL;
   } else {
-    snprintf(buf, len, "%s/.fluidsynth", home);
+    FLUID_SNPRINTF (buf, len, "%s/.fluidsynth", home);
     return buf;
   }
 #endif
@@ -411,7 +411,7 @@ fluid_get_sysconf(char* buf, int len)
 #if defined(WIN32) || defined(MACOS9)
   return NULL;
 #else
-  snprintf(buf, len, "/etc/fluidsynth.conf");
+  FLUID_SNPRINTF (buf, len, "/etc/fluidsynth.conf");
   return buf;
 #endif
 }
@@ -1845,17 +1845,17 @@ char*
 fluid_expand_path(char* path, char* new_path, int len)
 {
 #if defined(WIN32) || defined(MACOS9)
-  snprintf(new_path, len - 1, "%s", path);
+  FLUID_SNPRINTF (new_path, len - 1, "%s", path);
 #else
   if ((path[0] == '~') && (path[1] == '/')) {
     char* home = getenv("HOME");
     if (home == NULL) {
-      snprintf(new_path, len - 1, "%s", path);
+      FLUID_SNPRINTF (new_path, len - 1, "%s", path);
     } else {
-      snprintf(new_path, len - 1, "%s%s", home, &path[1]);
+      FLUID_SNPRINTF (new_path, len - 1, "%s%s", home, &path[1]);
     }
   } else {
-    snprintf(new_path, len - 1, "%s", path);
+    FLUID_SNPRINTF (new_path, len - 1, "%s", path);
   }
 #endif
 

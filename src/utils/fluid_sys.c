@@ -834,7 +834,7 @@ fluid_istream_readline (fluid_istream_t in, fluid_ostream_t out, char* prompt,
     if (line == NULL)
       return -1;
 
-    snprintf(buf, len, "%s", line);
+    FLUID_SNPRINTF (buf, len, "%s", line);
     buf[len - 1] = 0;
 
     free(line);

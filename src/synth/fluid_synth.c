@@ -4946,7 +4946,7 @@ fluid_synth_tuning_dump(fluid_synth_t* synth, int bank, int prog,
   {
     if (name)
     {
-      snprintf (name, len - 1, "%s", fluid_tuning_get_name (tuning));
+      FLUID_SNPRINTF (name, len - 1, "%s", fluid_tuning_get_name (tuning));
       name[len - 1] = 0;  /* make sure the string is null terminated */
     }
 
