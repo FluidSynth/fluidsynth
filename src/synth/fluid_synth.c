@@ -3445,7 +3445,6 @@ fluid_synth_alloc_voice(fluid_synth_t* synth, fluid_inst_zone_t *inst_zone,
   int i, k;
   fluid_voice_t* voice = NULL;
   fluid_channel_t* channel = NULL;
-  fluid_mod_t* default_mod;
   unsigned int ticks;
 
 //  fluid_return_val_if_fail (sample != NULL, NULL);
@@ -3499,38 +3498,36 @@ fluid_synth_alloc_voice(fluid_synth_t* synth, fluid_inst_zone_t *inst_zone,
   }
 
   /* add the default modulators to the synthesis process. */
-<<<<<<< HEAD:fluidsynth/src/synth/fluid_synth.c
-
   /* default_breath2att_modulator is not a default modulator specified in SF
-    it is intended to replace default_vel2att_mod on demand using
-    API fluid_set_setbreath_mode() or command shell setbreathmode.
-   */ 
+    it is intended to replace default_vel2att_mod for this channel on demand using
+    API fluid_synth_set_breath_mode() or shell command setbreathmode for this channel.
+  */
   {
-	  unsigned char mono = IsChanPlayingMono(channel);
-      if((!mono && IsChanPolyDefaultBreath(channel)) ||
-		  (mono && IsChanMonoDefaultBreath(channel)))
-		/* add breathToAttenuation modulator */
-		fluid_voice_add_mod(voice, &default_breath2att_mod, FLUID_VOICE_DEFAULT);
-	  else /* add default  velocityToAttenuation modulator */
-		fluid_voice_add_mod(voice, &default_vel2att_mod, FLUID_VOICE_DEFAULT);    /* SF2.01 $8.4.1  */
+    int mono = IsChanPlayingMono(channel);
+    fluid_mod_t* default_mod =synth->default_mod; 
+    while (default_mod != NULL)
+    {
+        if(
+            /* See if default_mod is the velocity_to_attenuation modulator */
+            fluid_mod_has_source(default_mod, FALSE, FLUID_MOD_VELOCITY) &&
+            fluid_mod_has_dest(default_mod, GEN_ATTENUATION) &&
+            // See if a replacement by default_breath2att_modulator has been demanded
+            // for this channel
+            ((!mono && IsChanPolyDefaultBreath(channel)) || (mono && IsChanMonoDefaultBreath(channel)))
+        )
+        {
+            // Replacement of default_vel2att modulator by default_breath2att_modulator
+            fluid_voice_add_mod(voice, &default_breath2att_mod, FLUID_VOICE_DEFAULT);
+        }
+        else
+        {
+            fluid_voice_add_mod(voice, default_mod, FLUID_VOICE_DEFAULT);
+        }
+        
+        // Next default modulator to add to the voice
+        default_mod = default_mod->next; 
+    }
   }
-  
-  fluid_voice_add_mod(voice, &default_vel2filter_mod, FLUID_VOICE_DEFAULT); /* SF2.01 $8.4.2  */
-  fluid_voice_add_mod(voice, &default_at2viblfo_mod, FLUID_VOICE_DEFAULT);  /* SF2.01 $8.4.3  */
-  fluid_voice_add_mod(voice, &default_mod2viblfo_mod, FLUID_VOICE_DEFAULT); /* SF2.01 $8.4.4  */
-  fluid_voice_add_mod(voice, &default_att_mod, FLUID_VOICE_DEFAULT);        /* SF2.01 $8.4.5  */
-  fluid_voice_add_mod(voice, &default_pan_mod, FLUID_VOICE_DEFAULT);        /* SF2.01 $8.4.6  */
-  fluid_voice_add_mod(voice, &default_expr_mod, FLUID_VOICE_DEFAULT);       /* SF2.01 $8.4.7  */
-  fluid_voice_add_mod(voice, &default_reverb_mod, FLUID_VOICE_DEFAULT);     /* SF2.01 $8.4.8  */
-  fluid_voice_add_mod(voice, &default_chorus_mod, FLUID_VOICE_DEFAULT);     /* SF2.01 $8.4.9  */
-  fluid_voice_add_mod(voice, &default_pitch_bend_mod, FLUID_VOICE_DEFAULT); /* SF2.01 $8.4.10 */
-=======
-  default_mod = synth->default_mod;
-  while (default_mod != NULL) {
-    fluid_voice_add_mod(voice, default_mod, FLUID_VOICE_DEFAULT);
-    default_mod = default_mod->next;
-  }
->>>>>>> master:src/synth/fluid_synth.c
 
   FLUID_API_RETURN(voice);
 }
