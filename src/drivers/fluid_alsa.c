@@ -726,12 +726,12 @@ static char* fluid_alsa_seq_full_id(char* id, char* buf, int len)
 {
   if (id != NULL) {
     if (FLUID_STRCMP(id, "pid") == 0) {
-      snprintf(buf, len, "FLUID Synth (%d)", getpid());
+      FLUID_SNPRINTF (buf, len, "FLUID Synth (%d)", getpid());
     } else {
-      snprintf(buf, len, "FLUID Synth (%s)", id);
+      FLUID_SNPRINTF (buf, len, "FLUID Synth (%s)", id);
     }
   } else {
-    snprintf(buf, len, "FLUID Synth");
+    FLUID_SNPRINTF (buf, len, "FLUID Synth");
   }
 
   return buf;
@@ -741,12 +741,12 @@ static char* fluid_alsa_seq_full_name(char* id, int port, char* buf, int len)
 {
   if (id != NULL) {
     if (FLUID_STRCMP(id, "pid") == 0) {
-      snprintf(buf, len, "Synth input port (%d:%d)", getpid(), port);
+      FLUID_SNPRINTF (buf, len, "Synth input port (%d:%d)", getpid(), port);
     } else {
-      snprintf(buf, len, "Synth input port (%s:%d)", id, port);
+      FLUID_SNPRINTF (buf, len, "Synth input port (%s:%d)", id, port);
     }
   } else {
-    snprintf(buf, len, "Synth input port");
+    FLUID_SNPRINTF (buf, len, "Synth input port");
   }
   return buf;
 }
