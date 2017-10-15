@@ -96,7 +96,7 @@ int fluid_debug(int level, char * fmt, ...)
     va_list args;
 
     va_start (args, fmt);
-    vsnprintf(fluid_errbuf, sizeof (fluid_errbuf), fmt, args);
+    FLUID_VSNPRINTF (fluid_errbuf, sizeof (fluid_errbuf), fmt, args);
     va_end (args);
 
     fun = fluid_log_function[FLUID_DBG];
@@ -220,7 +220,7 @@ fluid_log(int level, const char* fmt, ...)
 
   va_list args;
   va_start (args, fmt);
-  vsnprintf(fluid_errbuf, sizeof (fluid_errbuf), fmt, args);
+  FLUID_VSNPRINTF (fluid_errbuf, sizeof (fluid_errbuf), fmt, args);
   va_end (args);
 
   if ((level >= 0) && (level < LAST_LOG_LEVEL)) {
@@ -916,7 +916,7 @@ fluid_ostream_printf (fluid_ostream_t out, char* format, ...)
   int len;
 
   va_start (args, format);
-  len = vsnprintf (buf, 4095, format, args);
+  len = FLUID_VSNPRINTF (buf, 4095, format, args);
   va_end (args);
 
   if (len == 0)
