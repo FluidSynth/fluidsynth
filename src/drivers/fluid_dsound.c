@@ -76,7 +76,7 @@ fluid_dsound_enum_callback2(LPGUID guid, LPCTSTR description, LPCTSTR module, LP
 {
   fluid_dsound_devsel_t* devsel = (fluid_dsound_devsel_t*) context;
   FLUID_LOG(FLUID_DBG, "Testing audio device: %s", description);
-  if (strcasecmp(devsel->devname, description) == 0) {
+  if (FLUID_STRCASECMP(devsel->devname, description) == 0) {
     devsel->devGUID = FLUID_NEW(GUID);
     if(devsel->devGUID) {
       memcpy(devsel->devGUID, guid, sizeof(GUID));

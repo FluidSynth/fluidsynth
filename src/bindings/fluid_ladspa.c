@@ -309,10 +309,10 @@ fluid_LADSPA_handle_start(fluid_synth_t* synth, int ac, char** av, fluid_ostream
 	fluid_LADSPA_clear(FxUnit);
 	return(PrintErrorMessage);
       }; /* if no LADSPA_PATH */
-      snprintf(LibFullPath,FLUID_LADSPA_MaxPathLength,"%s/%s",LADSPA_Path,LibraryFilename);
+      FLUID_SNPRINTF (LibFullPath,FLUID_LADSPA_MaxPathLength,"%s/%s",LADSPA_Path,LibraryFilename);
       /* If no slash in filename */
     } else {
-	snprintf(LibFullPath,FLUID_LADSPA_MaxPathLength,"%s",LibraryFilename);
+	FLUID_SNPRINTF (LibFullPath,FLUID_LADSPA_MaxPathLength,"%s",LibraryFilename);
     };
 
     L(fluid_ostream_printf(out,"Full Library path name: %s",LibFullPath));

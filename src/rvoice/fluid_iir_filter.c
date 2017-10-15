@@ -174,7 +174,7 @@ fluid_iir_filter_set_q_dB(fluid_iir_filter_t* iir_filter,
 }
 
 
-static inline void 
+static FLUID_INLINE void 
 fluid_iir_filter_calculate_coefficients(fluid_iir_filter_t* iir_filter, 
                                         int transition_samples, 
                                         fluid_real_t output_rate)

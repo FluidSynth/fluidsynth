@@ -221,7 +221,7 @@ new_fluid_core_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func
           size = sizeof (name);
           pa.mSelector = kAudioDevicePropertyDeviceName;
           if (OK (AudioObjectGetPropertyData (devs[i], &pa, 0, 0, &size, name))) {
-            if (get_num_outputs (devs[i]) > 0 && strcasecmp(devname, name) == 0) {
+            if (get_num_outputs (devs[i]) > 0 && FLUID_STRCASECMP(devname, name) == 0) {
               AudioDeviceID selectedID = devs[i];
               status = AudioUnitSetProperty (dev->outputUnit,
                                              kAudioOutputUnitProperty_CurrentDevice,

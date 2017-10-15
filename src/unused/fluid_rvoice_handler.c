@@ -112,7 +112,7 @@ fluid_rvoice_handler_remove_voice(fluid_rvoice_handler_t* handler, int index)
  * @return Number of samples written 
  */
 #if 0
-static inline int
+static FLUID_INLINE int
 fluid_rvoice_handler_write_one(fluid_rvoice_handler_t* handler, int index, 
                                fluid_real_t* buf, int blockcount)
 {
@@ -137,7 +137,7 @@ fluid_rvoice_handler_write_one(fluid_rvoice_handler_t* handler, int index,
  * voice has been finished, removed and possibly replaced with another voice.
  * @return Number of samples written 
  */
-static inline int
+static FLUID_INLINE int
 fluid_rvoice_handler_mix_one(fluid_rvoice_handler_t* handler, int index, 
                                fluid_real_t** bufs, unsigned int blockcount, unsigned int bufcount)
 {
@@ -166,7 +166,7 @@ fluid_rvoice_handler_mix_one(fluid_rvoice_handler_t* handler, int index,
   return result;
 }
 
-static inline void
+static FLUID_INLINE void
 fluid_resetbufs(int blockcount, int bufcount, fluid_real_t** bufs)
 {
   int i;
@@ -177,7 +177,7 @@ fluid_resetbufs(int blockcount, int bufcount, fluid_real_t** bufs)
 /**
  * Single-threaded scenario, no worker threads 
  */
-static inline void
+static FLUID_INLINE void
 fluid_rvoice_handler_render_loop_simple(fluid_rvoice_handler_t* handler, 
                             int blockcount, int bufcount, fluid_real_t** bufs)
 {

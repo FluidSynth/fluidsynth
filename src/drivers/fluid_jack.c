@@ -171,7 +171,7 @@ new_fluid_jack_client (fluid_settings_t *settings, int isaudio, void *driver)
                          : "midi.jack.id", &client_name);
 
   if (client_name != NULL && client_name[0] != 0)
-    snprintf(name, 64, "%s", client_name);
+    FLUID_SNPRINTF (name, 64, "%s", client_name);
   else strcpy (name, "fluidsynth");
 
   name[63] = '\0';

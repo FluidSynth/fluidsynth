@@ -940,7 +940,7 @@ fluid_rvoice_mixer_set_threads(fluid_rvoice_mixer_t* mixer, int thread_count,
     if (!fluid_mixer_buffers_init(b, mixer))
       return;
     fluid_atomic_int_set(&b->ready, THREAD_BUF_NODATA);
-    g_snprintf (name, sizeof (name), "mixer%d", i);
+    FLUID_SNPRINTF (name, sizeof (name), "mixer%d", i);
     b->thread = new_fluid_thread(name, fluid_mixer_thread_func, b, prio_level, 0);
     if (!b->thread)
       return;

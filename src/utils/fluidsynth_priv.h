@@ -122,8 +122,6 @@
 #ifdef MINGW32
 
 #include <stdint.h>
-#define snprintf _snprintf
-#define vsnprintf _vsnprintf
 
 #define DSOUND_SUPPORT 1
 #define WINMIDI_SUPPORT 1
@@ -236,14 +234,34 @@ typedef FILE*  fluid_file;
 #define FLUID_STRNCPY(_dst,_src,_n)  strncpy(_dst,_src,_n)
 #define FLUID_STRCHR(_s,_c)          strchr(_s,_c)
 #define FLUID_STRRCHR(_s,_c)         strrchr(_s,_c)
+
 #ifdef strdup
-#define FLUID_STRDUP(s)              strdup(s)
+    #define FLUID_STRDUP(s)          strdup(s)
 #else
-#define FLUID_STRDUP(s) 		    FLUID_STRCPY(FLUID_MALLOC(FLUID_STRLEN(s) + 1), s)
+    #define FLUID_STRDUP(s)          FLUID_STRCPY(FLUID_MALLOC(FLUID_STRLEN(s) + 1), s)
 #endif
+
 #define FLUID_SPRINTF                sprintf
-#define FLUID_SNPRINTF               snprintf
 #define FLUID_FPRINTF                fprintf
+
+#if (defined(WIN32) && _MSC_VER < 1900) || defined(MINGW32)
+    #define FLUID_SNPRINTF           _snprintf
+#else
+    #define FLUID_SNPRINTF           snprintf
+#endif
+
+#if (defined(WIN32) && _MSC_VER < 1500) || defined(MINGW32)
+    #define FLUID_VSNPRINTF          _vsnprintf
+#else
+    #define FLUID_VSNPRINTF          vsnprintf
+#endif
+
+#if defined(WIN32) && !defined(MINGW32)
+    #define FLUID_STRCASECMP         _stricmp
+#else
+    #define FLUID_STRCASECMP         strcasecmp
+#endif
+
 
 #define fluid_clip(_val, _min, _max) \
 { (_val) = ((_val) < (_min))? (_min) : (((_val) > (_max))? (_max) : (_val)); }

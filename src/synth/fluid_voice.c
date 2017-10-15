@@ -104,7 +104,7 @@ fluid_voice_get_lower_boundary_for_attenuation(fluid_voice_t* voice);
 #define UPDATE_RVOICE_ENVLFO_R1(proc, envp, rarg) UPDATE_RVOICE_GENERIC_R1(proc, &voice->rvoice->envlfo.envp, rarg) 
 #define UPDATE_RVOICE_ENVLFO_I1(proc, envp, iarg) UPDATE_RVOICE_GENERIC_I1(proc, &voice->rvoice->envlfo.envp, iarg) 
 
-static inline void
+static FLUID_INLINE void
 fluid_voice_update_volenv(fluid_voice_t* voice, 
 			  fluid_adsr_env_section_t section,
                           unsigned int count,
@@ -120,7 +120,7 @@ fluid_voice_update_volenv(fluid_voice_t* voice,
 			    coeff, increment, min, max);
 }
 
-static inline void
+static FLUID_INLINE void
 fluid_voice_update_modenv(fluid_voice_t* voice, 
 			  fluid_adsr_env_section_t section,
                           unsigned int count,
@@ -134,7 +134,7 @@ fluid_voice_update_modenv(fluid_voice_t* voice,
 			    coeff, increment, min, max);
 }
 
-static inline void fluid_sample_null_ptr(fluid_sample_t** sample)
+static FLUID_INLINE void fluid_sample_null_ptr(fluid_sample_t** sample)
 {
   if (*sample != NULL) {
     fluid_sample_decr_ref(*sample);

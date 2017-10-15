@@ -136,7 +136,7 @@ spaced_primes_closest (unsigned int num)
  * save insertions from having to compute the hash record again for
  * the new record.
  */
-static inline fluid_hashnode_t **
+static FLUID_INLINE fluid_hashnode_t **
 fluid_hashtable_lookup_node (fluid_hashtable_t *hashtable, const void *key,
                              unsigned int *hash_return)
 {
@@ -316,7 +316,7 @@ fluid_hashtable_resize (fluid_hashtable_t *hashtable)
  * Essentially, calls fluid_hashtable_resize() if the table has strayed
  * too far from its ideal size for its number of nodes.
  */
-static inline void
+static FLUID_INLINE void
 fluid_hashtable_maybe_resize (fluid_hashtable_t *hashtable)
 {
   int nnodes = hashtable->nnodes;
