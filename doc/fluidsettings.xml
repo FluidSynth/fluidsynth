@@ -11,6 +11,7 @@ https://stackoverflow.com/a/6251757
 <fluidsettings>
     <synth>
         <setting>
+            <isFirst>Synthesizer settings</isFirst>
             <name>audio-channels</name>
             <type>int</type>
             <def>1</def>
@@ -174,6 +175,7 @@ https://stackoverflow.com/a/6251757
     
     <audio>
         <setting>
+            <isFirst>Audio driver settings</isFirst>
             <name>driver</name>
             <type>str</type>
             <def>jack (Linux),<br />
@@ -394,6 +396,7 @@ https://stackoverflow.com/a/6251757
     
     <midi>
         <setting>
+            <isFirst>MIDI driver settings</isFirst>
             <name>driver</name>
             <type>str</type>
             <def>alsa_seq (Linux),<br />
@@ -468,6 +471,7 @@ https://stackoverflow.com/a/6251757
     
     <player>
         <setting>
+            <isFirst>MIDI player settings</isFirst>
             <name>reset-synth</name>
             <type>bool</type>
             <def>1 (TRUE)</def>
@@ -484,6 +488,7 @@ https://stackoverflow.com/a/6251757
     
     <shell>
         <setting>
+            <isFirst>Shell (command line) settings</isFirst>
             <name>prompt</name>
             <type>str</type>
             <def>""</def>

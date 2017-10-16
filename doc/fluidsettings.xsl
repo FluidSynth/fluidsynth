@@ -45,15 +45,34 @@ td
     border-top: 1px solid black;
 }
 
-.audio {background-color: hsl(165, 100%, 90%);}
-.midi {background-color: hsl(105, 100%, 90%);}
-.player {background-color: hsl(60, 100%, 85%);}
-.shell {background-color: hsl(40, 100%, 90%);}
-.synth {background-color: hsl(20, 100%, 90%);}
+.audio {background-color: hsl(170, 100%, 90%);}
+.midi {background-color: hsl(125, 100%, 90%);}
+.player {background-color: hsl(85, 100%, 85%);}
+.shell {background-color: hsl(60, 100%, 90%);}
+.synth {background-color: hsl(35, 100%, 90%);}
             </style>
+            <title>FluidSettings</title>
          </head>
          <body>
-            <h2>FluidSettings</h2>
+            <h1>FluidSettings</h1>
+            
+            <ul>
+             <!-- Select the first setting of each group and use it for building up a TOC -->
+             <xsl:for-each select="fluidsettings/*/*[isFirst]">
+               <xsl:sort select="name(..)" />
+               <li style="margin-bottom: 15px">
+                <xsl:attribute name="class">
+                    <xsl:value-of select="name(..)" />
+                </xsl:attribute>
+                  <a>
+                    <xsl:attribute name="href"><![CDATA[#]]><xsl:value-of select="name(..)" /><![CDATA[.]]><xsl:value-of select="name" /></xsl:attribute>
+                    <xsl:value-of select="isFirst" />
+                  </a>
+               </li>
+             </xsl:for-each>
+            </ul>
+            
+            
             <table>               
                <!--print each and every setting row by row in the table-->
                <xsl:for-each select="fluidsettings/*/*">
