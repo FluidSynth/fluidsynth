@@ -453,7 +453,7 @@ https://stackoverflow.com/a/6251757
             <name>jack.id</name>
             <type>str</type>
             <def>fluidsynth-midi</def>
-            <desc>Client ID to use with the Jack MIDI driver.</desc>
+            <desc>Client ID to use with the Jack MIDI driver. If jack is also used as audio driver and "midi.jack.server" and "audio.jack.server" are equal, this setting will be overridden by "audio.jack.id", because a client cannot have multiple names.</desc>
         </setting>
         <setting>
             <name>oss.device</name>
