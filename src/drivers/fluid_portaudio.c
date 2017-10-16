@@ -37,9 +37,6 @@
 
 #if PORTAUDIO_SUPPORT
 
-#include <fcntl.h>
-#include <unistd.h>
-#include <errno.h>
 #include <portaudio.h>
 
 
