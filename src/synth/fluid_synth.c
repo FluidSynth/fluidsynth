@@ -268,19 +268,6 @@ fluid_version_str (void)
   return FLUIDSYNTH_VERSION;
 }
 
-#define FLUID_API_ENTRY_CHAN(fail_value)  \
-  fluid_return_val_if_fail (synth != NULL, fail_value); \
-  fluid_return_val_if_fail (chan >= 0, fail_value); \
-  fluid_synth_api_enter(synth); \
-  if (chan >= synth->midi_channels) { \
-    fluid_synth_api_exit(synth); \
-    return fail_value; \
-  } \
-
-#define FLUID_API_RETURN(return_value) \
-  do { fluid_synth_api_exit(synth); \
-  return return_value; } while (0)
-  
 /*
  * void fluid_synth_init
  *
