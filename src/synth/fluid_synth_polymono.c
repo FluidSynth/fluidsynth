@@ -226,23 +226,20 @@ int fluid_synth_reset_basic_channels(fluid_synth_t* synth,
  */
 int fluid_synth_set_basic_channel(fluid_synth_t* synth, int basicchan, int mode, int val)
 {
-	int nChan;
-	int result;
-	/* check parameters first */
-	fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
-	nChan = synth->midi_channels; /* MIDI Channels number */
+    int result;
+    const int chan = basicchan;
 
-	if (basicchan < 0 || basicchan >= nChan || 
-		mode < 0 ||mode >= MODE_NBR ||
-		val < 0 || basicchan + val > nChan)
-		return FLUID_FAILED;
+    fluid_return_val_if_fail (mode >= 0, FLUID_FAILED);
+    fluid_return_val_if_fail (mode < MODE_NBR, FLUID_FAILED);
+    fluid_return_val_if_fail (val >= 0, FLUID_FAILED);
+    FLUID_API_ENTRY_CHAN(FLUID_FAILED);
 
-	fluid_synth_api_enter(synth);
-	/**/
-	result = fluid_synth_set_basic_channel_LOCAL(synth, basicchan,mode,val);
-	/**/
-	fluid_synth_api_exit(synth);
-	return result;
+    if (basicchan + val > synth->midi_channels)
+        FLUID_API_RETURN(FLUID_FAILED);
+
+    result = fluid_synth_set_basic_channel_LOCAL(synth, basicchan,mode,val);
+
+    FLUID_API_RETURN(result);
 }
 
 /**
