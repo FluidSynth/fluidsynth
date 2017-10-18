@@ -123,7 +123,7 @@ void fluid_dsp_float_config (void)
 }
 
 
-static inline int 
+static FLUID_INLINE int 
 fluid_voice_is_looping(fluid_voice_t *voice)
 {
   return _SAMPLEMODE (voice) == FLUID_LOOP_DURING_RELEASE

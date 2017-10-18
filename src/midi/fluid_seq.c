@@ -211,7 +211,7 @@ fluid_seq_dotrace(fluid_sequencer_t* seq, char *fmt, ...)
 	if (remain <= 0) return;
 
 	va_start (args, fmt);
-	len = vsnprintf(seq->traceptr, remain, fmt, args);
+	len = FLUID_VSNPRINTF (seq->traceptr, remain, fmt, args);
 	va_end (args);
 
 	if (len > 0) {

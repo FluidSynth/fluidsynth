@@ -113,7 +113,7 @@ fluid_adsr_env_set_data(fluid_adsr_env_t* env,
                         fluid_real_t min,
                         fluid_real_t max);
 
-static inline void 
+static FLUID_INLINE void 
 fluid_adsr_env_reset(fluid_adsr_env_t* env)
 {
   env->count = 0;
@@ -121,25 +121,25 @@ fluid_adsr_env_reset(fluid_adsr_env_t* env)
   env->val = 0.0f;
 }
 
-static inline fluid_real_t 
+static FLUID_INLINE fluid_real_t 
 fluid_adsr_env_get_val(fluid_adsr_env_t* env)
 {
   return env->val;
 }
 
-static inline void
+static FLUID_INLINE void
 fluid_adsr_env_set_val(fluid_adsr_env_t* env, fluid_real_t val)
 {
   env->val = val;
 }
 
-static inline fluid_adsr_env_section_t
+static FLUID_INLINE fluid_adsr_env_section_t
 fluid_adsr_env_get_section(fluid_adsr_env_t* env)
 {
   return env->section;
 }
 
-static inline void 
+static FLUID_INLINE void 
 fluid_adsr_env_set_section(fluid_adsr_env_t* env, 
                            fluid_adsr_env_section_t section)
 {
@@ -150,7 +150,7 @@ fluid_adsr_env_set_section(fluid_adsr_env_t* env,
 /* Used for determining which voice to kill. 
    Returns max amplitude from now, and forward in time.
 */
-static inline fluid_real_t
+static FLUID_INLINE fluid_real_t
 fluid_adsr_env_get_max_val(fluid_adsr_env_t* env)
 {
   if (env->section > FLUID_VOICE_ENVATTACK){
