@@ -139,12 +139,16 @@ int fluid_synth_reset_basic_channels(fluid_synth_t* synth,
                              fluid_basic_channel_infos_t *basicChannelInfos)
 {
 	int i,nChan;
-    const int chan = n; /* required by FLUID_API_ENTRY_CHAN */
 	int result;
-	fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
-    FLUID_API_ENTRY_CHAN(FLUID_FAILED);
+    fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail (n >= 0, FLUID_FAILED);
+    fluid_synth_api_enter(synth);
     
     nChan = synth->midi_channels; /* MIDI Channels number */
+    if (n > nChan)
+    {
+        FLUID_API_RETURN(FLUID_FAILED);
+    }
     
 	/* Check if information are valid  */
 	if(n && basicChannelInfos ) for (i = 0; i < n; i++)
