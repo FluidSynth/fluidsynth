@@ -139,11 +139,13 @@ int fluid_synth_reset_basic_channels(fluid_synth_t* synth,
                              fluid_basic_channel_infos_t *basicChannelInfos)
 {
 	int i,nChan;
+    const int chan = n; /* required by FLUID_API_ENTRY_CHAN */
 	int result;
-	/* check parameters first */
 	fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
-	nChan = synth->midi_channels; /* MIDI Channels number */
-	if( n < 0 || n > nChan) return FLUID_FAILED;
+    FLUID_API_ENTRY_CHAN(FLUID_FAILED);
+    
+    nChan = synth->midi_channels; /* MIDI Channels number */
+    
 	/* Check if information are valid  */
 	if(n && basicChannelInfos ) for (i = 0; i < n; i++)
 	{
@@ -153,10 +155,11 @@ int fluid_synth_reset_basic_channels(fluid_synth_t* synth,
 			basicChannelInfos[i].mode >= MODE_NBR ||
 			basicChannelInfos[i].val < 0 ||
 			basicChannelInfos[i].basicchan + basicChannelInfos[i].val > nChan)
-			return FLUID_FAILED;
+        {
+            FLUID_API_RETURN(FLUID_FAILED);
+        }
 	}
 
-	fluid_synth_api_enter(synth);
 	/* Clear previous list of basic channel */
 	for(i = 0; i <  nChan; i++) {
 		ResetBasicChanInfos(synth->channel[i]);
@@ -169,7 +172,6 @@ int fluid_synth_reset_basic_channels(fluid_synth_t* synth,
 		/* Set the new list of basic channel */
 		for (i = 0; i < n; i++)
 		{
-			
 			int bchan = basicChannelInfos[i].basicchan;
 			if (IsChanBasicChannel(synth->channel[bchan]))
 				/* Different entries have the same basic channel. 
@@ -190,8 +192,8 @@ int fluid_synth_reset_basic_channels(fluid_synth_t* synth,
 		}
 	}
 	else result = fluid_synth_set_basic_channel_LOCAL( synth, 0, OMNION_POLY,0);
-	fluid_synth_api_exit(synth);
-	return result;
+
+    FLUID_API_RETURN(result);
 }
 
 /**
