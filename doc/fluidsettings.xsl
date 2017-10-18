@@ -50,6 +50,7 @@ td
 .player {background-color: hsl(85, 100%, 85%);}
 .shell {background-color: hsl(60, 100%, 90%);}
 .synth {background-color: hsl(35, 100%, 90%);}
+.deprecated {background-color: hsl(0, 0%, 93%);}
             </style>
             <title>FluidSettings</title>
          </head>
@@ -79,9 +80,16 @@ td
                   <xsl:sort select="name(..)" />
 <!--                   <xsl:sort select="name" /> -->
                   <tr>
-                     <!-- the class attribute of tr shall be the name of the settings group of the current setting -->
+                     <!-- the class attribute of tr shall be the name of the settings group of the current setting, unless the setting is marked deprecated -->
                      <xsl:attribute name="class">
-                        <xsl:value-of select="name(..)" />
+                        <xsl:choose>
+                            <xsl:when test="deprecated">
+                                deprecated
+                            </xsl:when>
+                            <xsl:otherwise>
+                                <xsl:value-of select="name(..)" />
+                            </xsl:otherwise>
+                        </xsl:choose>
                      </xsl:attribute>
                      
                      <td class="cell-name first-row">
@@ -101,8 +109,17 @@ td
                   
                   <tr>
                      <xsl:attribute name="class">
-                        <xsl:value-of select="name(..)" />
+                        <xsl:choose>
+                            <xsl:when test="deprecated">
+                                deprecated
+                            </xsl:when>
+                            <xsl:otherwise>
+                                <xsl:value-of select="name(..)" />
+                            </xsl:otherwise>
+                            
+                        </xsl:choose>
                      </xsl:attribute>
+                     
                      <td></td>
                      <th>Default</th>
                      <td class="cell-def">
@@ -112,8 +129,17 @@ td
                   
                   <tr>
                      <xsl:attribute name="class">
-                        <xsl:value-of select="name(..)" />
+                        <xsl:choose>
+                            <xsl:when test="deprecated">
+                                deprecated
+                            </xsl:when>
+                            <xsl:otherwise>
+                                <xsl:value-of select="name(..)" />
+                            </xsl:otherwise>
+                            
+                        </xsl:choose>
                      </xsl:attribute>
+                     
                      <td></td>
                      <th>
                      <xsl:choose>
@@ -150,12 +176,28 @@ td
                    
                    <tr>
                      <xsl:attribute name="class">
-                        <xsl:value-of select="name(..)" />
+                        <xsl:choose>
+                            <xsl:when test="deprecated">
+                                deprecated
+                            </xsl:when>
+                            <xsl:otherwise>
+                                <xsl:value-of select="name(..)" />
+                            </xsl:otherwise>
+                            
+                        </xsl:choose>
                      </xsl:attribute>
+                     
                      <td></td>
                      <th>Description</th>
                      <td class="cell-desc">
                         <xsl:copy-of select="desc" />
+                        <xsl:choose>
+                            <xsl:when test="deprecated">
+                                <br /><br />
+                                <strong style="color:red">DEPRECATED</strong><br /><br />
+                                <xsl:copy-of select="deprecated" />
+                            </xsl:when>
+                        </xsl:choose>
                      </td>
                   </tr>
                </xsl:for-each>
