@@ -141,12 +141,10 @@ int fluid_synth_reset_basic_channels(fluid_synth_t* synth,
 	int i,nChan;
 	int result;
 	/* check parameters first */
-	fluid_synth_api_enter(synth);
+	fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
 	nChan = synth->midi_channels; /* MIDI Channels number */
-	result = FLUID_OK;
-	/* check synth and n range */
-	if( synth == NULL || n < 0 || n > nChan) result = FLUID_FAILED;
-	/* Check basic channel informations:basicchan,mode and val  */
+	if( n < 0 || n > nChan) return FLUID_FAILED;
+	/* Check if information are valid  */
 	if(n && basicChannelInfos ) for (i = 0; i < n; i++)
 	{
 		if (basicChannelInfos[i].basicchan < 0 || 
@@ -155,14 +153,10 @@ int fluid_synth_reset_basic_channels(fluid_synth_t* synth,
 			basicChannelInfos[i].mode >= MODE_NBR ||
 			basicChannelInfos[i].val < 0 ||
 			basicChannelInfos[i].basicchan + basicChannelInfos[i].val > nChan)
-			result = FLUID_FAILED;
+			return FLUID_FAILED;
 	}
-	if (result == FLUID_FAILED)
-	{	/* Invalid parameters */
-		fluid_synth_api_exit(synth);
-		return result;
-	}
-	/**/
+
+	fluid_synth_api_enter(synth);
 	/* Clear previous list of basic channel */
 	for(i = 0; i <  nChan; i++) {
 		ResetBasicChanInfos(synth->channel[i]);
@@ -223,24 +217,21 @@ int fluid_synth_reset_basic_channels(fluid_synth_t* synth,
  *   - synth is NULL.
  *   - chan or val is outside MIDI channel count.
  *   - mode is invalid.
- *
- * Note: default shell has an equivalent command "setbasicchannels".
  */
 int fluid_synth_set_basic_channel(fluid_synth_t* synth, int basicchan, int mode, int val)
 {
 	int nChan;
 	int result;
 	/* check parameters first */
-	fluid_synth_api_enter(synth);
+	fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
 	nChan = synth->midi_channels; /* MIDI Channels number */
-    	/* check synth , basicchan, mode and val */
-	if ( synth == NULL ||basicchan < 0 || basicchan >= nChan || 
+
+	if (basicchan < 0 || basicchan >= nChan || 
 		mode < 0 ||mode >= MODE_NBR ||
 		val < 0 || basicchan + val > nChan)
-	{	/* Invalid parameters */
-		fluid_synth_api_exit(synth);
 		return FLUID_FAILED;
-	}
+
+	fluid_synth_api_enter(synth);
 	/**/
 	result = fluid_synth_set_basic_channel_LOCAL(synth, basicchan,mode,val);
 	/**/
@@ -386,14 +377,11 @@ int fluid_synth_get_channel_mode(fluid_synth_t* synth, int chan,
 {
 	int nChan;
 	/* check parameters first */
-	fluid_synth_api_enter(synth);
+	fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
+	fluid_return_val_if_fail (modeInfos!= NULL, FLUID_FAILED);
 	nChan = synth->midi_channels; /* MIDI Channels number */
-	/* check synth , chan, and modeinfos pointer*/
-	if(synth == NULL || chan < 0 || chan >= nChan || modeInfos == NULL) 
-	{	/* Invalid parameters */
-		fluid_synth_api_exit(synth);
-		return FLUID_FAILED;
-	}
+	if(chan < 0 || chan >= nChan) return FLUID_FAILED;
+	fluid_synth_api_enter(synth);
 	/**/
 	modeInfos->basicchan= chan;
 	modeInfos->mode = synth->channel[chan]->mode;
@@ -424,15 +412,14 @@ int fluid_synth_set_legato_mode(fluid_synth_t* synth, int chan, int legatomode)
 {
 	int nChan;
 	/* check parameters first */
-	fluid_synth_api_enter(synth);
+	fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
 	nChan = synth->midi_channels; /* MIDI Channels number */
-    	/* check synth , chan, and legatomode */
-	if(synth == NULL || chan < 0 || chan >= nChan ||
+
+	if (chan < 0 || chan >= nChan || 
 		legatomode < 0 ||legatomode >= LEGATOMODE_NBR )
-	{	/* Invalid parameters */
-		fluid_synth_api_exit(synth);
 		return FLUID_FAILED;
-	}
+
+	fluid_synth_api_enter(synth);
 	/**/
 	SetChanLegatoMode(synth->channel[chan],legatomode);
 	/**/
@@ -461,14 +448,11 @@ int fluid_synth_get_legato_mode(fluid_synth_t* synth, int chan, int *legatomode)
 {
 	int nChan;
 	/* check parameters first */
-	fluid_synth_api_enter(synth);
+	fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
+	fluid_return_val_if_fail (legatomode!= NULL, FLUID_FAILED);
 	nChan = synth->midi_channels; /* MIDI Channels number */
-    	/* check synth , chan, and legatomode pointer */
-	if(synth == NULL || chan < 0 || chan >= nChan || legatomode == NULL)
-	{	/* Invalid parameters */
-		fluid_synth_api_exit(synth);
-		return FLUID_FAILED;
-	}
+	if(chan < 0 || chan >= nChan) return FLUID_FAILED;
+	fluid_synth_api_enter(synth);
 	/**/
 	* legatomode = GetChanLegatoMode(synth->channel[chan]);
 	/**/
@@ -498,15 +482,14 @@ int fluid_synth_set_portamento_mode(fluid_synth_t* synth, int chan,
 {
 	int nChan;
 	/* check parameters first */
-	fluid_synth_api_enter(synth);
+	fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
 	nChan = synth->midi_channels; /* MIDI Channels number */
-    	/* check synth , chan, and portamentmode  */
-	if(synth == NULL || chan < 0 || chan >= nChan || 
+
+	if (chan < 0 || chan >= nChan || 
 		portamentomode < 0 ||portamentomode >= PORTAMENTOMODE_NBR )
-	{	/* Invalid parameters */
-		fluid_synth_api_exit(synth);
 		return FLUID_FAILED;
-	}
+
+	fluid_synth_api_enter(synth);
 	/**/
 	SetChanPortamentoMode(synth->channel[chan],portamentomode);
 	/**/
@@ -535,14 +518,11 @@ int fluid_synth_get_portamento_mode(fluid_synth_t* synth, int chan,
 {
 	int nChan;
 	/* check parameters first */
-	fluid_synth_api_enter(synth);
+	fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
+	fluid_return_val_if_fail (portamentomode!= NULL, FLUID_FAILED);
 	nChan = synth->midi_channels; /* MIDI Channels number */
-    	/* check synth , chan, and portamentomode pointer */
-	if(synth == NULL || chan < 0 || chan >= nChan || portamentomode == NULL)
-	{	/* Invalid parameters */
-		fluid_synth_api_exit(synth);
-		return FLUID_FAILED;
-	}
+	if(chan < 0 || chan >= nChan) return FLUID_FAILED;
+	fluid_synth_api_enter(synth);
 	/**/
 	* portamentomode = GetChanPortamentoMode(synth->channel[chan]);
 	/**/
@@ -571,13 +551,13 @@ int fluid_synth_set_breath_mode(fluid_synth_t* synth, int chan, int breathmode)
 {
 	int nChan;
 	/* check parameters first */
-	fluid_synth_api_enter(synth);
-	/* check synth , chan */
-	if(synth == NULL || chan < 0 || chan >= synth->midi_channels)
-	{	/* Invalid parameters */
-		fluid_synth_api_exit(synth);
+	fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
+	nChan = synth->midi_channels; /* MIDI Channels number */
+
+	if (chan < 0 || chan >= nChan )
 		return FLUID_FAILED;
-	}
+
+	fluid_synth_api_enter(synth);
 	/**/
 	SetBreathInfos(synth->channel[chan],breathmode);
 	/**/
@@ -606,14 +586,11 @@ int fluid_synth_get_breath_mode(fluid_synth_t* synth, int chan, int *breathmode)
 {
 	int nChan;
 	/* check parameters first */
-	fluid_synth_api_enter(synth);
+	fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
+	fluid_return_val_if_fail (breathmode!= NULL, FLUID_FAILED);
 	nChan = synth->midi_channels; /* MIDI Channels number */
-    	/* check synth , chan, and breathmode pointer */
-	if(synth == NULL || chan < 0 || chan >= nChan || breathmode == NULL)
-	{	/* Invalid parameters */
-		fluid_synth_api_exit(synth);
-		return FLUID_FAILED;
-	}
+	if(chan < 0 || chan >= nChan) return FLUID_FAILED;
+	fluid_synth_api_enter(synth);
 	/**/
 	* breathmode = GetBreathInfos(synth->channel[chan]);
 	/**/
