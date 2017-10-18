@@ -138,8 +138,8 @@ int fluid_synth_reset_basic_channels(fluid_synth_t* synth,
                              int n, 
                              fluid_basic_channel_infos_t *basicChannelInfos)
 {
-	int i,nChan;
-	int result;
+    int i,nChan;
+    int result;
     fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
     fluid_return_val_if_fail (n >= 0, FLUID_FAILED);
     fluid_synth_api_enter(synth);
@@ -150,53 +150,52 @@ int fluid_synth_reset_basic_channels(fluid_synth_t* synth,
         FLUID_API_RETURN(FLUID_FAILED);
     }
     
-	/* Check if information are valid  */
-	if(n && basicChannelInfos ) for (i = 0; i < n; i++)
-	{
-		if (basicChannelInfos[i].basicchan < 0 || 
-			basicChannelInfos[i].basicchan >= nChan ||
-			basicChannelInfos[i].mode < 0 ||
-			basicChannelInfos[i].mode >= MODE_NBR ||
-			basicChannelInfos[i].val < 0 ||
-			basicChannelInfos[i].basicchan + basicChannelInfos[i].val > nChan)
+    /* Check if information are valid  */
+    if(n && basicChannelInfos ) for (i = 0; i < n; i++)
+    {
+	if (	basicChannelInfos[i].basicchan < 0 || 
+		basicChannelInfos[i].basicchan >= nChan ||
+		basicChannelInfos[i].mode < 0 ||
+		basicChannelInfos[i].mode >= MODE_NBR ||
+		basicChannelInfos[i].val < 0 ||
+		basicChannelInfos[i].basicchan + basicChannelInfos[i].val > nChan)
         {
             FLUID_API_RETURN(FLUID_FAILED);
         }
-	}
+    }
 
-	/* Clear previous list of basic channel */
-	for(i = 0; i <  nChan; i++) {
-		ResetBasicChanInfos(synth->channel[i]);
-		synth->channel[i]->mode_val = 0; 
-	}
-	if(n && basicChannelInfos)
+    /* Clear previous list of basic channel */
+    for(i = 0; i <  nChan; i++) {
+	ResetBasicChanInfos(synth->channel[i]);
+	synth->channel[i]->mode_val = 0; 
+    }
+    if(n && basicChannelInfos)
+    {
+	result = FLUID_OK;
+
+	/* Set the new list of basic channel */
+	for (i = 0; i < n; i++)
 	{
-		result = FLUID_OK;
-		
-		/* Set the new list of basic channel */
-		for (i = 0; i < n; i++)
-		{
-			int bchan = basicChannelInfos[i].basicchan;
-			if (IsChanBasicChannel(synth->channel[bchan]))
-				/* Different entries have the same basic channel. 
-				 An entry supersedes a previous entry with the same 
-				 basic channel.*/
-				result = FLUID_POLYMONO_WARNING;
-			/* Set Basic channel first */
-			else SetModeBasicChan(synth->channel[bchan]->mode);
-		}
-
-		for (i = 0; i < n; i++)
-		{
-			int r =fluid_synth_set_basic_channel_LOCAL( synth, 
-									basicChannelInfos[i].basicchan,
-									basicChannelInfos[i].mode,
-									basicChannelInfos[i].val);
-			if (result == FLUID_OK) result = r;
-		}
+	    int bchan = basicChannelInfos[i].basicchan;
+	    if (IsChanBasicChannel(synth->channel[bchan]))
+		/* Different entries have the same basic channel. 
+		 An entry supersedes a previous entry with the same 
+		 basic channel.*/
+		result = FLUID_POLYMONO_WARNING;
+	    /* Set Basic channel first */
+	    else SetModeBasicChan(synth->channel[bchan]->mode);
 	}
-	else result = fluid_synth_set_basic_channel_LOCAL( synth, 0, OMNION_POLY,0);
 
+	for (i = 0; i < n; i++)
+	{
+	    int r =fluid_synth_set_basic_channel_LOCAL( synth, 
+				basicChannelInfos[i].basicchan,
+				basicChannelInfos[i].mode,
+				basicChannelInfos[i].val);
+	    if (result == FLUID_OK) result = r;
+	}
+    }
+    else result = fluid_synth_set_basic_channel_LOCAL( synth, 0, OMNION_POLY,0);
     FLUID_API_RETURN(result);
 }
 
@@ -233,12 +232,12 @@ int fluid_synth_set_basic_channel(fluid_synth_t* synth, int basicchan, int mode,
     fluid_return_val_if_fail (mode < MODE_NBR, FLUID_FAILED);
     fluid_return_val_if_fail (val >= 0, FLUID_FAILED);
     FLUID_API_ENTRY_CHAN(FLUID_FAILED);
-
+    /**/
     if (basicchan + val > synth->midi_channels)
         FLUID_API_RETURN(FLUID_FAILED);
 
     result = fluid_synth_set_basic_channel_LOCAL(synth, basicchan,mode,val);
-
+    /**/
     FLUID_API_RETURN(result);
 }
 
@@ -378,20 +377,15 @@ int fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth,
 int fluid_synth_get_channel_mode(fluid_synth_t* synth, int chan,
 				fluid_basic_channel_infos_t  *modeInfos)
 {
-	int nChan;
 	/* check parameters first */
-	fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
 	fluid_return_val_if_fail (modeInfos!= NULL, FLUID_FAILED);
-	nChan = synth->midi_channels; /* MIDI Channels number */
-	if(chan < 0 || chan >= nChan) return FLUID_FAILED;
-	fluid_synth_api_enter(synth);
+	FLUID_API_ENTRY_CHAN(FLUID_FAILED);
 	/**/
 	modeInfos->basicchan= chan;
 	modeInfos->mode = synth->channel[chan]->mode;
 	modeInfos->val = synth->channel[chan]->mode_val;
 	/**/
-	fluid_synth_api_exit(synth);
-	return FLUID_OK;
+	FLUID_API_RETURN(FLUID_OK);
 }
 /**  API legato mode *********************************************************/
 /**
@@ -413,21 +407,14 @@ int fluid_synth_get_channel_mode(fluid_synth_t* synth, int chan,
  */
 int fluid_synth_set_legato_mode(fluid_synth_t* synth, int chan, int legatomode)
 {
-	int nChan;
 	/* check parameters first */
-	fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
-	nChan = synth->midi_channels; /* MIDI Channels number */
-
-	if (chan < 0 || chan >= nChan || 
-		legatomode < 0 ||legatomode >= LEGATOMODE_NBR )
-		return FLUID_FAILED;
-
-	fluid_synth_api_enter(synth);
+	fluid_return_val_if_fail (legatomode >= 0, FLUID_FAILED);
+	fluid_return_val_if_fail (legatomode < LEGATOMODE_NBR, FLUID_FAILED);
+	FLUID_API_ENTRY_CHAN(FLUID_FAILED);
 	/**/
 	SetChanLegatoMode(synth->channel[chan],legatomode);
 	/**/
-	fluid_synth_api_exit(synth);
-	return FLUID_OK;
+	FLUID_API_RETURN(FLUID_OK);
 }
 
 /**
@@ -449,18 +436,13 @@ int fluid_synth_set_legato_mode(fluid_synth_t* synth, int chan, int legatomode)
  */
 int fluid_synth_get_legato_mode(fluid_synth_t* synth, int chan, int *legatomode)
 {
-	int nChan;
 	/* check parameters first */
-	fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
 	fluid_return_val_if_fail (legatomode!= NULL, FLUID_FAILED);
-	nChan = synth->midi_channels; /* MIDI Channels number */
-	if(chan < 0 || chan >= nChan) return FLUID_FAILED;
-	fluid_synth_api_enter(synth);
+	FLUID_API_ENTRY_CHAN(FLUID_FAILED);
 	/**/
 	* legatomode = GetChanLegatoMode(synth->channel[chan]);
 	/**/
-	fluid_synth_api_exit(synth);
-	return FLUID_OK;
+	FLUID_API_RETURN(FLUID_OK);
 }
 
 /**  API portamento mode *********************************************************/
@@ -483,21 +465,14 @@ int fluid_synth_get_legato_mode(fluid_synth_t* synth, int chan, int *legatomode)
 int fluid_synth_set_portamento_mode(fluid_synth_t* synth, int chan,
 					int portamentomode)
 {
-	int nChan;
 	/* check parameters first */
-	fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
-	nChan = synth->midi_channels; /* MIDI Channels number */
-
-	if (chan < 0 || chan >= nChan || 
-		portamentomode < 0 ||portamentomode >= PORTAMENTOMODE_NBR )
-		return FLUID_FAILED;
-
-	fluid_synth_api_enter(synth);
+	fluid_return_val_if_fail (portamentomode >= 0, FLUID_FAILED);
+	fluid_return_val_if_fail (portamentomode < PORTAMENTOMODE_NBR, FLUID_FAILED);
+	FLUID_API_ENTRY_CHAN(FLUID_FAILED);
 	/**/
 	SetChanPortamentoMode(synth->channel[chan],portamentomode);
 	/**/
-	fluid_synth_api_exit(synth);
-	return FLUID_OK;
+	FLUID_API_RETURN(FLUID_OK);
 }
 
 /**
@@ -519,18 +494,13 @@ int fluid_synth_set_portamento_mode(fluid_synth_t* synth, int chan,
 int fluid_synth_get_portamento_mode(fluid_synth_t* synth, int chan,
 					int *portamentomode)
 {
-	int nChan;
 	/* check parameters first */
-	fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
 	fluid_return_val_if_fail (portamentomode!= NULL, FLUID_FAILED);
-	nChan = synth->midi_channels; /* MIDI Channels number */
-	if(chan < 0 || chan >= nChan) return FLUID_FAILED;
-	fluid_synth_api_enter(synth);
+	FLUID_API_ENTRY_CHAN(FLUID_FAILED);
 	/**/
 	* portamentomode = GetChanPortamentoMode(synth->channel[chan]);
 	/**/
-	fluid_synth_api_exit(synth);
-	return FLUID_OK;
+	FLUID_API_RETURN(FLUID_OK);
 }
 
 /**  API breath mode *********************************************************/
@@ -552,20 +522,12 @@ int fluid_synth_get_portamento_mode(fluid_synth_t* synth, int chan,
  */
 int fluid_synth_set_breath_mode(fluid_synth_t* synth, int chan, int breathmode)
 {
-	int nChan;
 	/* check parameters first */
-	fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
-	nChan = synth->midi_channels; /* MIDI Channels number */
-
-	if (chan < 0 || chan >= nChan )
-		return FLUID_FAILED;
-
-	fluid_synth_api_enter(synth);
+	FLUID_API_ENTRY_CHAN(FLUID_FAILED);
 	/**/
 	SetBreathInfos(synth->channel[chan],breathmode);
 	/**/
-	fluid_synth_api_exit(synth);
-	return FLUID_OK;
+	FLUID_API_RETURN(FLUID_OK);
 }
 
 /**
@@ -587,17 +549,12 @@ int fluid_synth_set_breath_mode(fluid_synth_t* synth, int chan, int breathmode)
  */
 int fluid_synth_get_breath_mode(fluid_synth_t* synth, int chan, int *breathmode)
 {
-	int nChan;
 	/* check parameters first */
-	fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
 	fluid_return_val_if_fail (breathmode!= NULL, FLUID_FAILED);
-	nChan = synth->midi_channels; /* MIDI Channels number */
-	if(chan < 0 || chan >= nChan) return FLUID_FAILED;
-	fluid_synth_api_enter(synth);
+	FLUID_API_ENTRY_CHAN(FLUID_FAILED);
 	/**/
 	* breathmode = GetBreathInfos(synth->channel[chan]);
 	/**/
-	fluid_synth_api_exit(synth);
-	return FLUID_OK;
+	FLUID_API_RETURN(FLUID_OK);
 }
 
