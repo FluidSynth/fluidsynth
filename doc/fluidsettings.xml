@@ -100,7 +100,7 @@ https://stackoverflow.com/a/6251757
                 <ul>
                     <li>gm: ignores CC0 and CC32 messages.</li>
                     <li>gs: (default) CC0 becomes the bank number, CC32 is ignored.</li>
-                    <li>xg: CC32 becomes the bank number, CC0 is ignored.</li>
+                    <li>xg: CC32 becomes the bank number, CC0 toggles between melodic or drum channel.</li>
                     <li>mma: bank is calculated as CC0*128+CC32.</li>
                 </ul>
             </desc>
