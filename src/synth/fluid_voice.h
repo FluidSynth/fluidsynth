@@ -105,10 +105,6 @@ struct _fluid_voice_t
 	fluid_rvoice_t* overflow_rvoice; /* Used temporarily and only in overflow situations */
 	int can_access_rvoice; /* False if rvoice is being rendered in separate thread */ 
 	int can_access_overflow_rvoice; /* False if overflow_rvoice is being rendered in separate thread */ 
-
-	/* for debugging */
-	int debug;
-	double ref;
 };
 
 
