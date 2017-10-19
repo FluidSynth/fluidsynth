@@ -1445,7 +1445,7 @@ int fluid_voice_is_on(const fluid_voice_t* voice)
 }
 
 /**
- * Check if a voice is sustained.
+ * Check if a voice keeps playing after it has received a noteoff due to being held by sustain.
  * @param voice Voice instance
  * @return TRUE if sustained, FALSE otherwise
  * @since 1.1.7
@@ -1456,7 +1456,7 @@ int fluid_voice_is_sustained(const fluid_voice_t* voice)
 }
 
 /**
- * Check if a voice is held by sostenuto.
+ * Check if a voice keeps playing after it has received a noteoff due to being held by sostenuto.
  * @param voice Voice instance
  * @return TRUE if sostenuto, FALSE otherwise
  * @since 1.1.7
