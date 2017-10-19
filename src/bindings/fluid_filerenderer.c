@@ -317,7 +317,7 @@ int
 fluid_file_set_encoding_quality(fluid_file_renderer_t* r, double q)
 {
 #if LIBSNDFILE_SUPPORT
-	if (sf_command (r->sndfile, SFC_SET_VBR_ENCODING_QUALITY, &q, sizeof (double)) == 0)
+	if (sf_command (r->sndfile, SFC_SET_VBR_ENCODING_QUALITY, &q, sizeof (double)) == SF_TRUE)
 		return FLUID_OK;
 	else
 #endif
