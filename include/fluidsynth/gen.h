@@ -124,7 +124,7 @@ enum fluid_gen_flags
   GEN_ABS_NRPN		/**< Generator is an absolute value */
 };
 
-FLUIDSYNTH_API int fluid_gen_set_default_values(fluid_gen_t* gen);
+FLUIDSYNTH_API FLUID_DEPRECATED int fluid_gen_set_default_values(fluid_gen_t* gen);
 
 
 
