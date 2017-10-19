@@ -71,8 +71,6 @@ struct _fluid_voice_t
 	int mod_count;
 	fluid_sample_t* sample;         /* Pointer to sample (dupe in rvoice) */
 
-	int has_noteoff;                /* Flag set when noteoff has been sent */
-
 	/* basic parameters */
 	fluid_real_t output_rate;        /* the sample rate of the synthesizer (dupe in rvoice) */
 
@@ -103,8 +101,9 @@ struct _fluid_voice_t
 	/* rvoice control */
 	fluid_rvoice_t* rvoice;
 	fluid_rvoice_t* overflow_rvoice; /* Used temporarily and only in overflow situations */
-	int can_access_rvoice; /* False if rvoice is being rendered in separate thread */ 
-	int can_access_overflow_rvoice; /* False if overflow_rvoice is being rendered in separate thread */ 
+	char can_access_rvoice; /* False if rvoice is being rendered in separate thread */
+	char can_access_overflow_rvoice; /* False if overflow_rvoice is being rendered in separate thread */
+	char has_noteoff; /* Flag set when noteoff has been sent */
 };
 
 
