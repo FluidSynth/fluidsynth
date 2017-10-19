@@ -555,7 +555,9 @@ new_fluid_synth(fluid_settings_t *settings)
   fluid_sfloader_t* loader;
   double gain;
   int i, nbuf;
+#ifdef LADSPA
   int with_ladspa = 0;
+#endif
   
   /* initialize all the conversion tables and other stuff */
   if (fluid_synth_initialized == 0)
