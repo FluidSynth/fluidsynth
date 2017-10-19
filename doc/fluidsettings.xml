@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-NOTE: You're not expected to look at this raw XML file. Please open it in a webbrowser, favourably firefox, and it should display a nice HTML page. Make sure the fluidsettings.xsl stylesheet is provided in the same directory as the fluidsettings.xml
+NOTE: You're not expected to look at this raw XML file. Please open it in a webbrowser, favourably firefox,
+      and it should display a nice HTML page. Make sure the fluidsettings.xsl stylesheet is provided in the
+      same directory as the fluidsettings.xml
 
-Some browsers may not allow local XML files to be rendered and display blank page instead. Please consult the web on how to make your browser display XSLT content. For instance if you're using Chrome and open the file locally you'll need to start Chrome with the "allow-file-access-from-files" flag.
+      Some browsers may not allow local XML files to be rendered and display blank page instead. Please
+      consult the web on how to make your browser display XSLT content. For instance if you're using Chrome
+      and open the file locally you'll need to start Chrome with the "allow-file-access-from-files" flag.
 
 https://stackoverflow.com/a/3839054
 https://stackoverflow.com/a/6251757
