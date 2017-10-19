@@ -711,12 +711,12 @@ new_fluid_synth(fluid_settings_t *settings)
   /* Create and initialize the Fx unit.*/
   fluid_settings_getint(settings, "synth.ladspa.active", &with_ladspa);
   if (with_ladspa) {
-    synth->LADSPA_FxUnit = new_fluid_LADSPA_FxUnit(synth);
-    if(synth->LADSPA_FxUnit == NULL) {
+    synth->ladspa_fx = new_fluid_ladspa_fx(synth);
+    if(synth->ladspa_fx == NULL) {
       FLUID_LOG(FLUID_ERR, "Out of memory");
       goto error_recovery;
     }
-    fluid_rvoice_mixer_set_ladspa(synth->eventhandler->mixer, synth->LADSPA_FxUnit);
+    fluid_rvoice_mixer_set_ladspa(synth->eventhandler->mixer, synth->ladspa_fx);
   }
 #endif
   
@@ -928,10 +928,9 @@ delete_fluid_synth(fluid_synth_t* synth)
   fluid_private_free (synth->tuning_iter);
 
 #ifdef LADSPA
-  /* Release the LADSPA Fx unit */
-  if (synth->LADSPA_FxUnit) {
-    fluid_LADSPA_shutdown(synth->LADSPA_FxUnit);
-    FLUID_FREE(synth->LADSPA_FxUnit);
+  /* Release the LADSPA effects unit */
+  if (synth->ladspa_fx) {
+    delete_fluid_ladspa_fx(synth->ladspa_fx);
   }
 #endif
 
@@ -5269,3 +5268,24 @@ int fluid_synth_set_channel_type(fluid_synth_t* synth, int chan, int type)
   FLUID_API_RETURN(FLUID_OK);
 }
 
+#ifdef LADSPA
+/**
+ * Deactivate the LADSPA effects
+ *
+ * @param synth FluidSynth instance
+ * @return FLUID_OK on success, FLUID_FAILED otherwise
+ */
+int fluid_synth_deactivate_ladspa(fluid_synth_t *synth)
+{
+    int ret;
+
+    fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
+    fluid_synth_api_enter(synth);
+
+    ret = fluid_rvoice_eventhandler_push(synth->eventhandler,
+            fluid_rvoice_mixer_deactivate_ladspa,
+            synth->eventhandler->mixer, 0, 0.0f);
+
+    FLUID_API_RETURN(ret);
+}
+#endif /* LADSPA */

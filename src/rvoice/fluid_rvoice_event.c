@@ -121,6 +121,10 @@ fluid_rvoice_event_dispatch(fluid_rvoice_event_t* event)
   EVENTFUNC_ALL(fluid_rvoice_mixer_set_chorus_params, fluid_rvoice_mixer_t*);
   EVENTFUNC_R4(fluid_rvoice_mixer_set_reverb_params, fluid_rvoice_mixer_t*);
 
+#ifdef LADSPA
+  EVENTFUNC_0(fluid_rvoice_mixer_deactivate_ladspa, fluid_rvoice_mixer_t*);
+#endif
+
   FLUID_LOG(FLUID_ERR, "fluid_rvoice_event_dispatch: Unknown method %p to dispatch!", event->method);
 }
 

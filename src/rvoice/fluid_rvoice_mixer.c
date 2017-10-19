@@ -81,7 +81,7 @@ struct _fluid_rvoice_mixer_t {
   int current_blockcount;      /**< Read-only: how many blocks to process this time */
 
 #ifdef LADSPA
-  fluid_LADSPA_FxUnit_t* LADSPA_FxUnit; /**< Used by mixer only: Effects unit for LADSPA support. Never created or freed */
+  fluid_ladspa_fx_t* ladspa_fx; /**< Used by mixer only: Effects unit for LADSPA support. Never created or freed */
 #endif
 
 #ifdef ENABLE_MIXER_THREADS
@@ -142,7 +142,7 @@ fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t* mixer)
   
 #ifdef LADSPA
   /* Run the signal through the LADSPA Fx unit */
-  if (mixer->LADSPA_FxUnit) {
+  if (mixer->ladspa_fx && mixer->ladspa_fx->state == FLUID_LADSPA_ACTIVE) {
     int j;
     FLUID_DECLARE_VLA(fluid_real_t*, left_buf, mixer->buffers.buf_count);
     FLUID_DECLARE_VLA(fluid_real_t*, right_buf, mixer->buffers.buf_count);
@@ -157,8 +157,8 @@ fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t* mixer)
       fx_right_buf[j] = mixer->buffers.fx_right_buf[j];
     }
     for (i=0; i < mixer->current_blockcount * FLUID_BUFSIZE; i += FLUID_BUFSIZE) {
-      fluid_LADSPA_run(mixer->LADSPA_FxUnit, left_buf, right_buf, fx_left_buf, 
-		       fx_right_buf);
+      fluid_ladspa_run(mixer->ladspa_fx, left_buf, right_buf, fx_left_buf,
+                      fx_right_buf);
       for (j=0; j < mixer->buffers.buf_count; j++) {
         left_buf[j] += FLUID_BUFSIZE;
         right_buf[j] += FLUID_BUFSIZE;
@@ -642,10 +642,20 @@ void delete_fluid_rvoice_mixer(fluid_rvoice_mixer_t* mixer)
 
 
 #ifdef LADSPA				    
-void fluid_rvoice_mixer_set_ladspa(fluid_rvoice_mixer_t* mixer, 
-				   fluid_LADSPA_FxUnit_t* ladspa)
+void fluid_rvoice_mixer_set_ladspa(fluid_rvoice_mixer_t* mixer, fluid_ladspa_fx_t *ladspa_fx)
 {
-  mixer->LADSPA_FxUnit = ladspa;
+  mixer->ladspa_fx = ladspa_fx;
+}
+
+void fluid_rvoice_mixer_deactivate_ladspa(fluid_rvoice_mixer_t *mixer)
+{
+    if (mixer->ladspa_fx == NULL) return;
+    mixer->ladspa_fx->state = FLUID_LADSPA_INACTIVE;
+
+    /* Signal LADSPA engine that deactivation has been processed */
+    fluid_cond_mutex_lock(mixer->ladspa_fx->state_mutex);
+    fluid_cond_broadcast(mixer->ladspa_fx->state_cond);
+    fluid_cond_mutex_unlock(mixer->ladspa_fx->state_mutex);
 }
 #endif
 

@@ -69,8 +69,8 @@ void fluid_rvoice_mixer_set_threads(fluid_rvoice_mixer_t* mixer, int thread_coun
 				    int prio_level);
 				    
 #ifdef LADSPA				    
-void fluid_rvoice_mixer_set_ladspa(fluid_rvoice_mixer_t* mixer, 
-				   fluid_LADSPA_FxUnit_t* ladspa);
+void fluid_rvoice_mixer_set_ladspa(fluid_rvoice_mixer_t* mixer, fluid_ladspa_fx_t* ladspa_fx);
+void fluid_rvoice_mixer_deactivate_ladspa(fluid_rvoice_mixer_t *mixer);
 #endif
 
 #endif
