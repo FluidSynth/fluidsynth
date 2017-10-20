@@ -106,7 +106,6 @@ struct _fluid_voice_t
 	char has_noteoff; /* Flag set when noteoff has been sent */
 
 	/* for debugging */
-	int debug;
 	double ref;
 };
 
