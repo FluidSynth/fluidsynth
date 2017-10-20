@@ -1049,7 +1049,6 @@ static fluid_ladspa_plugin_t *
 new_fluid_ladspa_plugin(fluid_ladspa_fx_t *fx, const fluid_ladspa_lib_t *lib, const char *name)
 {
     fluid_ladspa_plugin_t *plugin;
-    unsigned int i;
 
     plugin = FLUID_NEW(fluid_ladspa_plugin_t);
     if (plugin == NULL)
@@ -1081,12 +1080,7 @@ new_fluid_ladspa_plugin(fluid_ladspa_fx_t *fx, const fluid_ladspa_lib_t *lib, co
         FLUID_LOG(FLUID_ERR, "Out of memory");
         return NULL;
     }
-
-    for (i = 0; i < plugin->desc->PortCount; i++)
-    {
-        plugin->ports[i].num_inputs = 0;
-        plugin->ports[i].num_outputs = 0;
-    }
+    FLUID_MEMSET(plugin->ports, 0, plugin->desc->PortCount * sizeof(fluid_ladspa_port_state_t));
 
     return plugin;
 }
