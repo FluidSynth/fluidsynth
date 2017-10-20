@@ -1249,7 +1249,7 @@ extern fluid_gen_info_t fluid_gen_info[];
     0: fast release.  
     1: normal release. RELEASE generators are forced to the minimum possible
 */
-void fluid_update_release(fluid_voice_t* voice, unsigned char flags)
+void fluid_voice_update_release(fluid_voice_t* voice, unsigned char flags)
 {
 	if (!flags)
 	{
@@ -1269,7 +1269,7 @@ void fluid_update_release(fluid_voice_t* voice, unsigned char flags)
 
 /*---------------------------------------------------------------*/
 /* force in the attack section for legato mode multi_retrigger: 1 */
-void fluid_update_multi_retrigger_attack(fluid_voice_t* voice,
+void fluid_voice_update_multi_retrigger_attack(fluid_voice_t* voice,
 										 int tokey, int vel)
 {
 	voice->key = tokey;  /* new note */
@@ -1292,7 +1292,7 @@ void fluid_update_multi_retrigger_attack(fluid_voice_t* voice,
 
 /*---------------------------------------------------------------*/
 /* force in the current section for legato mode single_trigger: 2*/
-void fluid_update_single_trigger0(fluid_voice_t* voice,int fromkey,
+void fluid_voice_update_single_trigger0(fluid_voice_t* voice,int fromkey,
 								 int tokey, int vel)
 {
 	int decaycount; /* decay data count */
@@ -1333,7 +1333,7 @@ void fluid_update_single_trigger0(fluid_voice_t* voice,int fromkey,
 
 /*---------------------------------------------------------------*/
 /* force in the current section for legato mode single_trigger: 2*/
-void fluid_update_single_trigger1(fluid_voice_t* voice,int fromkey,
+void fluid_voice_update_single_trigger1(fluid_voice_t* voice,int fromkey,
 								 int tokey, int vel)
 {
 	voice->key = tokey;  /* new note */
