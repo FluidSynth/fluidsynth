@@ -845,34 +845,38 @@ int fluid_ladspa_check(fluid_ladspa_fx_t *fx, char *err, int err_size)
 
 static FLUID_INLINE void buffer_to_node(fluid_real_t *buffer, fluid_ladspa_node_t *node)
 {
-    int i;
-
     /* If the node is not used by any plugin, then we don't need to fill it */
     if (node->num_outputs == 0)
     {
         return;
     }
 
-    for (i = 0; i < FLUID_BUFSIZE; i++)
+#ifdef WITH_FLOAT
+    FLUID_MEMCPY(node->buf, buffer, FLUID_BUFSIZE * sizeof(float));
+#else
+    for (int i = 0; i < FLUID_BUFSIZE; i++)
     {
         node->buf[i] = (LADSPA_Data)buffer[i];
     };
+#endif
 }
 
 static FLUID_INLINE void node_to_buffer(fluid_ladspa_node_t *node, fluid_real_t *buffer)
 {
-    int i;
-
     /* If the node has no inputs, then we don't need to copy it to the node */
     if (node->num_inputs == 0)
     {
         return;
     }
 
-    for (i = 0; i < FLUID_BUFSIZE; i++)
+#ifdef WITH_FLOAT
+    FLUID_MEMCPY(buffer, node->buf, FLUID_BUFSIZE * sizeof(float));
+#else
+    for (int i = 0; i < FLUID_BUFSIZE; i++)
     {
         buffer[i] = (fluid_real_t)node->buf[i];
     };
+#endif
 }
 
 static void activate_plugin(fluid_ladspa_plugin_t *plugin)
