@@ -6,7 +6,6 @@ env:
     - CMAKE_FLAGS="-Denable-floats=1 -Denable-profiling=1"
     - CMAKE_FLAGS="-Denable-trap-on-fpe=1"
     - CMAKE_FLAGS="-Denable-fpe-check=1"
-    - CMAKE_FLAGS="-Denable-debug=1"
 matrix:
   include:
     - os: linux
@@ -75,6 +74,7 @@ matrix:
             - libglib2.0-0
       env:
          - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5"
+         - CMAKE_FLAGS="-Denable-debug=1"
 
     # works on Precise and Trusty
     - os: linux
