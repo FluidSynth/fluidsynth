@@ -268,6 +268,7 @@ fluid_voice_init(fluid_voice_t* voice, fluid_sample_t* sample,
   voice->channel = channel;
   voice->mod_count = 0;
   voice->start_time = start_time;
+  voice->debug = 0;
   voice->has_noteoff = 0;
   UPDATE_RVOICE0(fluid_rvoice_reset);
 
@@ -454,6 +455,8 @@ void fluid_voice_start(fluid_voice_t* voice)
    * for the first time.*/
 
   fluid_voice_calculate_runtime_synthesis_parameters(voice);
+
+  voice->ref = fluid_profile_ref();
 
   voice->status = FLUID_VOICE_ON;
 
