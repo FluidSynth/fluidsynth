@@ -826,8 +826,8 @@ fluid_defpreset_noteon(fluid_defpreset_t* preset, fluid_synth_t* synth, int chan
       /* run thru all the zones of this instrument */
       inst_zone = fluid_inst_get_zone(inst);
 	  while (inst_zone != NULL) {
-		  /* ignoreIZ is set in mono legato playing */
-		  unsigned char ignoreIZ = IsIgnoreInstZone(inst_zone);
+		  /* ignoreInstrumentZone is set in mono legato playing */
+		  unsigned char ignoreInstrumentZone = IsIgnoreInstZone(inst_zone);
 		  ResetIgnoreInstZone(inst_zone); /* Reset the 'ignore' request */
 	/* make sure this instrument zone has a valid sample */
 	sample = fluid_inst_zone_get_sample(inst_zone);
@@ -840,7 +840,7 @@ fluid_defpreset_noteon(fluid_defpreset_t* preset, fluid_synth_t* synth, int chan
 	   the key and velocity range of this  instrument zone.
 	   An instrument zone must be ignored when its voice is already running
 	   played by a legato passage (see fluid_synth_noteon_mono_legato()) */
-	if (! ignoreIZ &&
+	if (! ignoreInstrumentZone &&
 		fluid_inst_zone_inside_range(inst_zone, key, vel) && (sample != NULL)) {
 
 	  /* this is a good zone. allocate a new synthesis process and
