@@ -74,7 +74,7 @@ typedef struct _fluid_ladspa_plugin_t
     const LADSPA_Descriptor *desc;
     LADSPA_Handle *handle;
 
-    volatile int active;
+    int active;
 
     /* Used to keep track of the port connection states */
     fluid_ladspa_port_state_t *ports;
