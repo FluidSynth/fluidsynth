@@ -515,13 +515,13 @@ struct _fluid_inst_zone_t
   fluid_mod_t * mod; /* List of modulators */
 };
 
-/* Flag IGNORE_IZ is set on legato playing to ignore this IZ */
+/* Flag IGNORE_IZ is set on legato playing to ignore an Instrument Zone */
 #define IGNORE_IZ 0x01
-/* IsIgnoreInstZone return True when an IZ must be ignored */
+/* IsIgnoreInstZone return True when an Instrument Zone must be ignored */
 #define IsIgnoreInstZone(iz)	(iz->flags & IGNORE_IZ)
-/* SetIgnoreInstZone request an IZ to be ignored */
+/* SetIgnoreInstZone set a request when an Instrument Zone must be ignored */
 #define SetIgnoreInstZone(iz)	(iz->flags |= IGNORE_IZ)
-/* ResetgnoreInstZone reset the request to ignore an IZ */
+/* ResetgnoreInstZone reset the request to ignore an Instrument Zone */
 #define ResetIgnoreInstZone(iz)	(iz->flags &= ~IGNORE_IZ)
 
 fluid_inst_zone_t* new_fluid_inst_zone(char* name);
