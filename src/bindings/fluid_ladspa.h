@@ -29,7 +29,6 @@
 
 #ifdef LADSPA
 #include <ladspa.h>
-#include <pthread.h>
 
 #define FLUID_LADSPA_MAX_LIBS 100
 #define FLUID_LADSPA_MAX_PLUGINS 100
