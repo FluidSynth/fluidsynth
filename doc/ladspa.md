@@ -10,7 +10,7 @@ To configure and compile FluidSynth with LADSPA support, make sure you have
 the LADSPA SDK (basically the ladspa.h header file) installed. Then enable
 LADSPA when calling cmake:
 
-    cmake path/to/source/ -Denable-ladspa=1
+    cmake -Denable-ladspa=1 <path-to-source>
 
 You should see `LADSPA support: yes` in the cmake output.
 
@@ -60,5 +60,5 @@ the engine.
 
     ladspa_start
 
-The audible effect should be an untouch right channel and a slightly
+The audible effect should be an untouched right channel and a slightly
 lower volume on the left with a delay effect of 1 second on top.
