@@ -178,19 +178,20 @@ matrix:
     - os: osx
       osx_image: xcode8
       env:
-        - MATRIX_EVAL="brew update && brew install gcc5 glib && CC=gcc-5 && CXX=g++-5"
+        - MATRIX_EVAL="brew install gcc5 glib && CC=gcc-5 && CXX=g++-5"
 
     - os: osx
       osx_image: xcode8
       env:
-        - MATRIX_EVAL="brew update && brew install gcc6 glib && CC=gcc-6 && CXX=g++-6"
+        - MATRIX_EVAL="brew install gcc6 glib && CC=gcc-6 && CXX=g++-6"
 
     - os: osx
       osx_image: xcode8
       env:
-        - MATRIX_EVAL="brew update && brew install gcc glib libsndfile jack dbus-glib pulseaudio portaudio && CC=gcc-7 && CXX=g++-7"
+        - MATRIX_EVAL="brew install gcc glib libsndfile jack dbus-glib pulseaudio portaudio && CC=gcc-7 && CXX=g++-7"
 
 before_install:
+    - if [ $TRAVIS_OS_NAME = linux ]; then sudo apt-get update; else brew update; fi
     - eval "${MATRIX_EVAL}"
     
 before_script:
