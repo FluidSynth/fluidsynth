@@ -106,6 +106,7 @@ fluid_ladspa_fx_t *new_fluid_ladspa_fx(fluid_synth_t *synth)
     fx->state_cond = new_fluid_cond();
     if (fx->state_cond == NULL)
     {
+        delete_fluid_cond_mutex(fx->state_mutex);
         FLUID_FREE(fx);
         return NULL;
     }
