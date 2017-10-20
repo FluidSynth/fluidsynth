@@ -24,6 +24,7 @@ matrix:
             - portaudio19-dev
             - libpulse-dev
             - libdbus-glib-1-dev
+            - ladspa-sdk
       env:
          - MATRIX_EVAL="CC=gcc-4.8 && CXX=g++-4.8"
          - CMAKE_FLAGS="-Denable-floats=1"
@@ -44,6 +45,7 @@ matrix:
             - portaudio19-dev
             - libpulse-dev
             - libdbus-glib-1-dev
+            - ladspa-sdk
       env:
          - MATRIX_EVAL="CC=gcc-4.8 && CXX=g++-4.8"
          - CMAKE_FLAGS="-Denable-floats=0"
@@ -58,6 +60,7 @@ matrix:
             - cmake-data
             - cmake
             - libglib2.0-0
+            - ladspa-sdk
       env:
          - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9"
 
@@ -72,6 +75,7 @@ matrix:
             - cmake-data
             - cmake
             - libglib2.0-0
+            - ladspa-sdk
       env:
          - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5"
          - CMAKE_FLAGS="-Denable-debug=1"
@@ -87,6 +91,7 @@ matrix:
             - cmake-data
             - cmake
             - libglib2.0-0
+            - ladspa-sdk
       env:
         - MATRIX_EVAL="CC=gcc-6 && CXX=g++-6"
 
@@ -101,6 +106,7 @@ matrix:
             - cmake-data
             - cmake
             - libglib2.0-0
+            - ladspa-sdk
       env:
         - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
 
@@ -117,6 +123,7 @@ matrix:
             - cmake-data
             - cmake
             - libglib2.0-0
+            - ladspa-sdk
       env:
         - MATRIX_EVAL="CC=clang-3.8 && CXX=clang++-3.8"
 
@@ -132,6 +139,7 @@ matrix:
             - cmake-data
             - cmake
             - libglib2.0-0
+            - ladspa-sdk
       env:
         - MATRIX_EVAL="CC=clang-3.9 && CXX=clang++-3.9"
 
@@ -147,6 +155,7 @@ matrix:
             - cmake-data
             - cmake
             - libglib2.0-0
+            - ladspa-sdk
       env:
         - MATRIX_EVAL="CC=clang-4.0 && CXX=clang++-4.0"
 
@@ -162,6 +171,7 @@ matrix:
             - cmake-data
             - cmake
             - libglib2.0-0
+            - ladspa-sdk
       env:
         - MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0"
         
@@ -187,5 +197,5 @@ before_script:
     - mkdir build && cd build
     
 script:
-    - cmake ${CMAKE_FLAGS} "-Denable-portaudio=1" "-DCMAKE_BUILD_TYPE=RelWithDebInfo" ..
+    - cmake ${CMAKE_FLAGS} "-Denable-portaudio=1" "-Denable-ladspa=1" "-DCMAKE_BUILD_TYPE=RelWithDebInfo" ..
     - make -j4
