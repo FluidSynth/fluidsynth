@@ -81,6 +81,10 @@ fluid_ladspa_fx_t *new_fluid_ladspa_fx(fluid_synth_t *synth)
     {
         return NULL;
     }
+    FLUID_MEMSET(fx, 0, sizeof(fluid_ladspa_fx_t));
+
+    /* Setup recursive mutex to protect access to public API */
+    fluid_rec_mutex_init(fx->api_mutex);
 
     fx->state = FLUID_LADSPA_INACTIVE;
 
@@ -90,29 +94,19 @@ fluid_ladspa_fx_t *new_fluid_ladspa_fx(fluid_synth_t *synth)
     fx->effects_channels = synth->effects_channels;
     fx->audio_channels = synth->audio_channels;
 
-    fx->num_libs = 0;
-    fx->num_nodes = 0;
-    fx->num_plugins = 0;
-
-    fx->next_plugin_id = 0;
-
     /* Setup mutex and cond used to signal deactivation from rvoice mixer thread */
     fx->state_mutex = new_fluid_cond_mutex();
     if (fx->state_mutex == NULL)
     {
-        FLUID_FREE(fx);
+        delete_fluid_ladspa_fx(fx);
         return NULL;
     }
     fx->state_cond = new_fluid_cond();
     if (fx->state_cond == NULL)
     {
-        delete_fluid_cond_mutex(fx->state_mutex);
-        FLUID_FREE(fx);
+        delete_fluid_ladspa_fx(fx);
         return NULL;
     }
-
-    /* Setup recursive mutex to protect access to public API */
-    fluid_rec_mutex_init(fx->api_mutex);
 
     /* Finally, create the nodes that carry audio into LADSPA and back out
      * again to FluidSynth. They will always be the first in the fx->nodes
@@ -120,8 +114,7 @@ fluid_ladspa_fx_t *new_fluid_ladspa_fx(fluid_synth_t *synth)
      * instance is deleted. */
     if (create_input_output_nodes(fx) != FLUID_OK)
     {
-        fluid_rec_mutex_destroy(fx->api_mutex);
-        FLUID_FREE(fx);
+        delete_fluid_ladspa_fx(fx);
         return NULL;
     }
 
@@ -151,9 +144,18 @@ void delete_fluid_ladspa_fx(fluid_ladspa_fx_t *fx)
         delete_fluid_ladspa_node(fx->nodes[i]);
     };
 
-    delete_fluid_cond(fx->state_cond);
-    delete_fluid_cond_mutex(fx->state_mutex);
+    if (fx->state_cond != NULL)
+    {
+        delete_fluid_cond(fx->state_cond);
+    }
+
+    if (fx->state_mutex != NULL)
+    {
+        delete_fluid_cond_mutex(fx->state_mutex);
+    }
+
     fluid_rec_mutex_destroy(fx->api_mutex);
+
     FLUID_FREE(fx);
 };
 
@@ -1055,18 +1057,19 @@ new_fluid_ladspa_plugin(fluid_ladspa_fx_t *fx, const fluid_ladspa_lib_t *lib, co
         FLUID_LOG(FLUID_ERR, "Out of memory");
         return NULL;
     }
+    FLUID_MEMSET(plugin, 0, sizeof(fluid_ladspa_plugin_t));
 
     plugin->desc = get_plugin_descriptor(lib, name);
     if (plugin->desc == NULL)
     {
-        FLUID_FREE(plugin);
+        delete_fluid_ladspa_plugin(plugin);
         return NULL;
     }
 
     plugin->handle = plugin->desc->instantiate(plugin->desc, fx->sample_rate);
     if (plugin->handle == NULL)
     {
-        FLUID_FREE(plugin);
+        delete_fluid_ladspa_plugin(plugin);
         FLUID_LOG(FLUID_ERR, "Unable to instantiate plugin '%s' from '%s'", name, lib->filename);
         return NULL;
     }
@@ -1074,8 +1077,7 @@ new_fluid_ladspa_plugin(fluid_ladspa_fx_t *fx, const fluid_ladspa_lib_t *lib, co
     plugin->ports = FLUID_ARRAY(fluid_ladspa_port_state_t, plugin->desc->PortCount);
     if (plugin->ports == NULL)
     {
-        plugin->desc->cleanup(plugin->handle);
-        FLUID_FREE(plugin);
+        delete_fluid_ladspa_plugin(plugin);
         FLUID_LOG(FLUID_ERR, "Out of memory");
         return NULL;
     }
@@ -1091,8 +1093,16 @@ new_fluid_ladspa_plugin(fluid_ladspa_fx_t *fx, const fluid_ladspa_lib_t *lib, co
 
 static void delete_fluid_ladspa_plugin(fluid_ladspa_plugin_t *plugin)
 {
-    FLUID_FREE(plugin->ports);
-    plugin->desc->cleanup(plugin->handle);
+    if (plugin->ports != NULL)
+    {
+        FLUID_FREE(plugin->ports);
+    }
+
+    if (plugin->handle != NULL)
+    {
+        plugin->desc->cleanup(plugin->handle);
+    }
+
     FLUID_FREE(plugin);
 }
 
@@ -1119,13 +1129,14 @@ static fluid_ladspa_node_t *new_fluid_ladspa_node(fluid_ladspa_fx_t *fx, const c
         FLUID_LOG(FLUID_ERR, "Out of memory");
         return NULL;
     }
+    FLUID_MEMSET(node, 0, sizeof(fluid_ladspa_node_t));
 
     node->type = type;
 
     node->name = FLUID_STRDUP(name);
     if (node->name == NULL)
     {
-        FLUID_FREE(node);
+        delete_fluid_ladspa_node(node);
         FLUID_LOG(FLUID_ERR, "Out of memory");
         return NULL;
     }
@@ -1133,16 +1144,12 @@ static fluid_ladspa_node_t *new_fluid_ladspa_node(fluid_ladspa_fx_t *fx, const c
     node->buf = FLUID_ARRAY(LADSPA_Data, buf_size);
     if (node->buf == NULL)
     {
-        FLUID_FREE(node->name);
-        FLUID_FREE(node);
+        delete_fluid_ladspa_node(node);
         FLUID_LOG(FLUID_ERR, "Out of memory");
         return NULL;
     }
 
     FLUID_MEMSET(node->buf, 0, buf_size * sizeof(LADSPA_Data));
-
-    node->num_inputs = 0;
-    node->num_outputs = 0;
 
     fx->nodes[fx->num_nodes++] = node;
 
@@ -1151,8 +1158,16 @@ static fluid_ladspa_node_t *new_fluid_ladspa_node(fluid_ladspa_fx_t *fx, const c
 
 static void delete_fluid_ladspa_node(fluid_ladspa_node_t *node)
 {
-    FLUID_FREE(node->buf);
-    FLUID_FREE(node->name);
+    if (node->buf != NULL)
+    {
+        FLUID_FREE(node->buf);
+    }
+
+    if (node->name != NULL)
+    {
+        FLUID_FREE(node->name);
+    }
+
     FLUID_FREE(node);
 }
 
@@ -1203,11 +1218,12 @@ static fluid_ladspa_lib_t *new_fluid_ladspa_lib(fluid_ladspa_fx_t *fx, const cha
         FLUID_LOG(FLUID_ERR, "Out of memory");
         return NULL;
     }
+    FLUID_MEMSET(lib, 0, sizeof(fluid_ladspa_lib_t));
 
     lib->filename = FLUID_STRDUP(filename);
     if (lib->filename == NULL)
     {
-        FLUID_FREE(lib);
+        delete_fluid_ladspa_lib(lib);
         FLUID_LOG(FLUID_ERR, "Out of memory");
         return NULL;
     }
@@ -1217,7 +1233,11 @@ static fluid_ladspa_lib_t *new_fluid_ladspa_lib(fluid_ladspa_fx_t *fx, const cha
 
 static void delete_fluid_ladspa_lib(fluid_ladspa_lib_t *lib)
 {
-    FLUID_FREE(lib->filename);
+    if (lib->filename != NULL)
+    {
+        FLUID_FREE(lib->filename);
+    }
+
     FLUID_FREE(lib);
 }
 
