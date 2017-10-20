@@ -1742,12 +1742,7 @@ fluid_synth_system_reset_LOCAL(fluid_synth_t* synth)
   fluid_voice_t* voice;
   int i;
 
-  for (i = 0; i < synth->polyphony; i++) {
-    voice = synth->voice[i];
-
-    if (fluid_voice_is_playing(voice))
-      fluid_voice_off(voice);
-  }
+  fluid_synth_all_sounds_off_LOCAL(synth, -1);
 
   for (i = 0; i < synth->midi_channels; i++)
     fluid_channel_reset(synth->channel[i]);
