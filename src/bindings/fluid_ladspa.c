@@ -34,6 +34,8 @@
 
 #define LADSPA_API_ENTER(_fx) (fluid_rec_mutex_lock((_fx)->api_mutex))
 
+#define LADSPA_API_EXIT(_fx) (fluid_rec_mutex_unlock((_fx)->api_mutex))
+
 #define LADSPA_API_RETURN(_fx, _ret)          \
     fluid_rec_mutex_unlock((_fx)->api_mutex); \
     return (_ret);
@@ -88,7 +90,7 @@ fluid_ladspa_fx_t *new_fluid_ladspa_fx(fluid_synth_t *synth)
 
     fx->state = FLUID_LADSPA_INACTIVE;
 
-    fx->sample_rate = synth->sample_rate;
+    fx->sample_rate = (unsigned long)synth->sample_rate;
 
     fx->audio_groups = synth->audio_groups;
     fx->effects_channels = synth->effects_channels;
@@ -158,6 +160,43 @@ void delete_fluid_ladspa_fx(fluid_ladspa_fx_t *fx)
 
     FLUID_FREE(fx);
 };
+
+/**
+ * Set the sample rate of the LADSPA effects.
+ *
+ * Resets the LADSPA effects if the sample rate is different from the
+ * previous sample rate.
+ *
+ * @param fx LADSPA fx instance
+ * @param sample_rate new sample rate
+ */
+void fluid_ladspa_set_sample_rate(fluid_ladspa_fx_t *fx, fluid_synth_t *synth)
+{
+    unsigned long new_sample_rate = (unsigned long)synth->sample_rate;
+
+    LADSPA_API_ENTER(fx);
+
+    if (fx->sample_rate == new_sample_rate)
+    {
+        LADSPA_API_EXIT(fx);
+        return;
+    }
+
+    if (fluid_ladspa_is_active(fx))
+    {
+        if (fluid_ladspa_deactivate(fx, synth) != FLUID_OK)
+        {
+            FLUID_LOG(FLUID_ERR, "Failed to deactivate LADSPA, unable to change sample rate");
+            LADSPA_API_EXIT(fx);
+            return;
+        }
+    }
+
+    clear_ladspa(fx);
+    fx->sample_rate = new_sample_rate;
+
+    LADSPA_API_EXIT(fx);
+}
 
 /**
  * Check if the LADSPA engine is in use by FluidSynth.

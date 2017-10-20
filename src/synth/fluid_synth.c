@@ -2350,7 +2350,7 @@ fluid_synth_update_presets(fluid_synth_t* synth)
   }
 }
 
-/* Handler for synth.gain setting. */
+/* Handler for synth.sample-rate setting. */
 static int
 fluid_synth_update_sample_rate(fluid_synth_t* synth, char* name, double value)
 {
@@ -2383,6 +2383,16 @@ fluid_synth_set_sample_rate(fluid_synth_t* synth, float sample_rate)
   fluid_synth_update_mixer(synth, fluid_rvoice_mixer_set_samplerate, 
 			   0, sample_rate);
   fluid_synth_api_exit(synth);
+
+#ifdef LADSPA
+  /* Signal sample rate change to LADSPA effects. Called after releasing the
+   * synth api, as LADSPA might need to wait for rvoice mixer to deactivate
+   * the effects unit first. */
+  if (synth->ladspa_fx != NULL)
+  {
+    fluid_ladspa_set_sample_rate(synth->ladspa_fx, synth);
+  }
+#endif
 }
 
 
