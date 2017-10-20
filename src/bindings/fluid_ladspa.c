@@ -342,13 +342,13 @@ static int create_input_output_nodes(fluid_ladspa_fx_t *fx)
      * LADSPA effects unit. Create left and right input nodes for each audio group. */
     for (i = 0; i < fx->audio_groups; i++)
     {
-        FLUID_SPRINTF(name, "in%i_L", (i + 1));
+        FLUID_SNPRINTF(name, sizeof(name), "in%i_L", (i + 1));
         if (new_fluid_ladspa_node(fx, name, FLUID_LADSPA_NODE_AUDIO, FLUID_BUFSIZE) == NULL)
         {
             return FLUID_FAILED;
         }
 
-        FLUID_SPRINTF(name, "in%i_R", (i + 1));
+        FLUID_SNPRINTF(name, sizeof(name), "in%i_R", (i + 1));
         if (new_fluid_ladspa_node(fx, name, FLUID_LADSPA_NODE_AUDIO, FLUID_BUFSIZE) == NULL)
         {
             return FLUID_FAILED;
@@ -375,13 +375,13 @@ static int create_input_output_nodes(fluid_ladspa_fx_t *fx)
      */
     for (i = 0; i < fx->effects_channels; i++)
     {
-        FLUID_SPRINTF(name, "send%i_L", (i + 1));
+        FLUID_SNPRINTF(name, sizeof(name), "send%i_L", (i + 1));
         if (new_fluid_ladspa_node(fx, name, FLUID_LADSPA_NODE_AUDIO, FLUID_BUFSIZE) == NULL)
         {
             return FLUID_FAILED;
         }
 
-        FLUID_SPRINTF(name, "send%i_R", (i + 1));
+        FLUID_SNPRINTF(name, sizeof(name), "send%i_R", (i + 1));
         if (new_fluid_ladspa_node(fx, name, FLUID_LADSPA_NODE_AUDIO, FLUID_BUFSIZE) == NULL)
         {
             return FLUID_FAILED;
@@ -393,13 +393,13 @@ static int create_input_output_nodes(fluid_ladspa_fx_t *fx)
      * left and right output nodes for each audio channel. */
     for (i = 0; i < fx->audio_channels; i++)
     {
-        FLUID_SPRINTF(name, "out%i_L", (i + 1));
+        FLUID_SNPRINTF(name, sizeof(name), "out%i_L", (i + 1));
         if (new_fluid_ladspa_node(fx, name, FLUID_LADSPA_NODE_AUDIO, FLUID_BUFSIZE) == NULL)
         {
             return FLUID_FAILED;
         }
 
-        FLUID_SPRINTF(name, "out%i_R", (i + 1));
+        FLUID_SNPRINTF(name, sizeof(name), "out%i_R", (i + 1));
         if (new_fluid_ladspa_node(fx, name, FLUID_LADSPA_NODE_AUDIO, FLUID_BUFSIZE) == NULL)
         {
             return FLUID_FAILED;
