@@ -520,11 +520,11 @@ int fluid_synth_noteoff_monopoly(fluid_synth_t* synth, int chan, int key,
  * @param vel MIDI velocity (0-127).
  * @return FLUID_OK on success, FLUID_FAILED otherwise.
  * Note: The voices with key 'fromkey' are to be used to play key 'tokey'.
- * The fonction is able to play legato over Preset Zone(s) (PZ) and
- * Instrument Zone(s) (IZ).
- * as far as possible. When key tokey is outside the current IZ,PZ current
- * fromkey voices are released.If necessary new voices are restarted when tokey
- * enters in new IZ,PZ.
+ * The fonction is able to play legato through Preset Zone(s) (PZ) and
+ * Instrument Zone(s) (IZ) as far as possible.
+ * When key tokey is outside the current Instrument Zone,
+ * Preset Zone, current fromkey' voices are released.If necessary new voices
+ * are restarted when tokey enters inside new Instruent(s) Zones,Preset Zone(s).
  */
 int fluid_synth_noteon_mono_legato(fluid_synth_t* synth, int chan,
 							   int fromkey, int tokey, int vel)
@@ -548,20 +548,20 @@ int fluid_synth_noteon_mono_legato(fluid_synth_t* synth, int chan,
 				switch (legatomode) 
 				{
 					case RETRIGGER_0: /* mode 0 */
-						fluid_update_release(voice,0); /* fast release */
+						fluid_voice_update_release(voice,0); /* fast release */
 					break;
 					case RETRIGGER_1: /* mode 1 */
-						fluid_update_release(voice,1); /* normal release */
+						fluid_voice_update_release(voice,1); /* normal release */
 					break;
 					case MULTI_RETRIGGER: /* mode 2 */
 						/* Skip in attack section */
-						fluid_update_multi_retrigger_attack(voice,tokey,vel);
+						fluid_voice_update_multi_retrigger_attack(voice,tokey,vel);
 					break;
 					case SINGLE_TRIGGER_0: /* mode 3 */
-						fluid_update_single_trigger0(voice,fromkey,tokey,vel);
+						fluid_voice_update_single_trigger0(voice,fromkey,tokey,vel);
 					break;
 					case SINGLE_TRIGGER_1: /* mode 4 */
-						fluid_update_single_trigger1(voice,fromkey,tokey,vel);
+						fluid_voice_update_single_trigger1(voice,fromkey,tokey,vel);
 					break;
 					default: /* Invalid mode */
 					FLUID_LOG(FLUID_WARN, 
@@ -575,18 +575,19 @@ int fluid_synth_noteon_mono_legato(fluid_synth_t* synth, int chan,
 						fluid_voice_update_portamento(voice,
 											synth->fromkey_portamento,tokey);
 					/* The voice is now used to play tokey in legato manner */
-					/* mark this IZ to be ignored during next fluid_preset_noteon() */
+					/* mark this Instrument Zone to be ignored during next
+					   fluid_preset_noteon() */
 					SetIgnoreInstZone (voice->inst_zone);
 				}
 			}
 			else  
 			{ /* tokey note is outside the voice range, so the voice is released */
-				fluid_update_release(voice,legatomode);
+				fluid_voice_update_release(voice,legatomode);
 			}
 		}
 	}
-	/* May be,tokey will enter in others IZ,PZ , in this case it needs to be
-	played by voices allocation  */
+	/* May be,tokey will enter in others Insrument Zone(s),Preset Zone(s), in
+	   this case it needs to be played by voices allocation  */
 	return fluid_preset_noteon(channel->preset,synth,chan,tokey,vel);
 }
 
