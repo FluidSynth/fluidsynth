@@ -2168,7 +2168,6 @@ fluid_client_t*
 new_fluid_client(fluid_server_t* server, fluid_settings_t* settings, fluid_socket_t sock)
 {
   fluid_client_t* client;
-  fluid_cmd_handler_t* handler;
 
   client = FLUID_NEW(fluid_client_t);
   if (client == NULL) {
@@ -2176,19 +2175,14 @@ new_fluid_client(fluid_server_t* server, fluid_settings_t* settings, fluid_socke
     return NULL;
   }
   
-  handler = new_fluid_cmd_handler(server->synth, server->router);
-  if (handler == NULL) {
-    goto error_recovery;
-  }
-  
   client->server = server;
   client->socket = sock;
   client->settings = settings;
-  client->handler = handler;
+  client->handler = new_fluid_cmd_handler(server->synth, server->router);
   client->thread = new_fluid_thread("client", (fluid_thread_func_t) fluid_client_run, client,
                                     0, FALSE);
 
-  if (client->thread == NULL) {
+  if (client->handler == NULL || client->thread == NULL) {
     goto error_recovery;
   }
 
