@@ -500,7 +500,7 @@ fluid_sequencer_remove_events (fluid_sequencer_t* seq, short source,
 unsigned int
 fluid_sequencer_get_tick (fluid_sequencer_t* seq)
 {
-	unsigned int absMs = seq->useSystemTimer ? (int) fluid_curtime() : g_atomic_int_get(&seq->currentMs);
+	unsigned int absMs = seq->useSystemTimer ? (int) fluid_curtime() : fluid_atomic_int_get(&seq->currentMs);
 	double nowFloat;
 	unsigned int now;
 	nowFloat = ((double)(absMs - seq->startMs))*seq->scale/1000.0f;
@@ -846,7 +846,7 @@ fluid_sequencer_process(fluid_sequencer_t* seq, unsigned int msec)
 	}
 
 	/* send queued events */
-	g_atomic_int_set(&seq->currentMs, msec);
+	fluid_atomic_int_set(&seq->currentMs, msec);
 	_fluid_seq_queue_send_queued_events(seq);
 
 }
