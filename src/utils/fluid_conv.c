@@ -92,7 +92,7 @@ fluid_conversion_config(void)
   }
 
   /* initialize the pan conversion table */
-  x = PI / 2.0 / (FLUID_PAN_SIZE - 1.0);
+  x = M_PI / 2.0 / (FLUID_PAN_SIZE - 1.0);
   for (i = 0; i < FLUID_PAN_SIZE; i++) {
     fluid_pan_tab[i] = (fluid_real_t) sin(i * x);
   }
