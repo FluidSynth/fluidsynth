@@ -3243,7 +3243,7 @@ fixup_pgen (SFData * sf)
       while (p2)
 	{			/* traverse this preset's zones */
 	  z = (SFZone *) (p2->data);
-	  if ((i = GPOINTER_TO_INT (z->instsamp)))
+	  if ((i = FLUID_POINTER_TO_INT (z->instsamp)))
 	    {			/* load instrument # */
 	      p3 = fluid_list_nth (sf->inst, i - 1);
 	      if (!p3)
@@ -3278,7 +3278,7 @@ fixup_igen (SFData * sf)
       while (p2)
 	{			/* traverse instrument's zones */
 	  z = (SFZone *) (p2->data);
-	  if ((i = GPOINTER_TO_INT (z->instsamp)))
+	  if ((i = FLUID_POINTER_TO_INT (z->instsamp)))
 	    {			/* load sample # */
 	      p3 = fluid_list_nth (sf->sample, i - 1);
 	      if (!p3)
