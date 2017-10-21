@@ -802,7 +802,7 @@ int fluid_ladspa_check(fluid_ladspa_fx_t *fx, char *err, int err_size)
     if (fx->num_plugins == 0)
     {
         FLUID_SNPRINTF(err, err_size, "No plugins loaded\n");
-        return FLUID_FAILED;
+        LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
 
     /* Check that all plugin ports are connected */
@@ -818,13 +818,13 @@ int fluid_ladspa_check(fluid_ladspa_fx_t *fx, char *err, int err_size)
             {
                 FLUID_SNPRINTF(err, err_size, "Input port '%s' on plugin '%s' is not connected\n",
                                plugin->desc->PortNames[k], plugin->desc->Label);
-                return FLUID_FAILED;
+                LADSPA_API_RETURN(fx, FLUID_FAILED);
             }
             else if (LADSPA_IS_PORT_OUTPUT(port_flags) && plugin->ports[k].num_outputs == 0)
             {
                 FLUID_SNPRINTF(err, err_size, "Output port '%s' on plugin '%s' is not connected\n",
                                plugin->desc->PortNames[k], plugin->desc->Label);
-                return FLUID_FAILED;
+                LADSPA_API_RETURN(fx, FLUID_FAILED);
             }
         }
     }
@@ -842,7 +842,7 @@ int fluid_ladspa_check(fluid_ladspa_fx_t *fx, char *err, int err_size)
     if (!has_connections)
     {
         FLUID_SNPRINTF(err, err_size, "No system input nodes are connected\n");
-        return FLUID_FAILED;
+        LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
 
     num_system_nodes = 2 * (fx->audio_groups + fx->effects_channels + fx->audio_channels);
@@ -860,7 +860,7 @@ int fluid_ladspa_check(fluid_ladspa_fx_t *fx, char *err, int err_size)
     if (!has_connections)
     {
         FLUID_SNPRINTF(err, err_size, "No system output nodes are connected\n");
-        return FLUID_FAILED;
+        LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
 
     /* Check that custom audio nodes have both input and output and control nodes have an output */
@@ -871,17 +871,17 @@ int fluid_ladspa_check(fluid_ladspa_fx_t *fx, char *err, int err_size)
         {
             FLUID_SNPRINTF(err, err_size, "Audio node '%s' is not connected on input and output\n",
                            fx->nodes[i]->name);
-            return FLUID_FAILED;
+            LADSPA_API_RETURN(fx, FLUID_FAILED);
         }
 
         if (fx->nodes[i]->type == FLUID_LADSPA_NODE_CONTROL && (fx->nodes[i]->num_outputs == 0))
         {
             FLUID_SNPRINTF(err, err_size, "Control node '%s' is not connected\n", fx->nodes[i]->name);
-            return FLUID_FAILED;
+            LADSPA_API_RETURN(fx, FLUID_FAILED);
         }
     }
 
-    return FLUID_OK;
+    LADSPA_API_RETURN(fx, FLUID_OK);
 }
 
 
