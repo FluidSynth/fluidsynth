@@ -231,7 +231,12 @@ typedef FILE*  fluid_file;
 #define FLUID_STRCMP(_s,_t)          strcmp(_s,_t)
 #define FLUID_STRNCMP(_s,_t,_n)      strncmp(_s,_t,_n)
 #define FLUID_STRCPY(_dst,_src)      strcpy(_dst,_src)
-#define FLUID_STRNCPY(_dst,_src,_n)  strncpy(_dst,_src,_n)
+
+#define FLUID_STRNCPY(_dst,_src,_n) \
+do { strncpy(_dst,_src,_n); \
+    (_dst)[(_n)-1]=0; \
+}while(0)
+
 #define FLUID_STRCHR(_s,_c)          strchr(_s,_c)
 #define FLUID_STRRCHR(_s,_c)         strrchr(_s,_c)
 
