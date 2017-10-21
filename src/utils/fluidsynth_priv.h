@@ -206,10 +206,6 @@ typedef struct _fluid_sample_timer_t fluid_sample_timer_t;
 #define FLUID_DEFAULT_AUDIO_RT_PRIO  60         /**< Default setting for audio.realtime-prio */
 #define FLUID_DEFAULT_MIDI_RT_PRIO   50         /**< Default setting for midi.realtime-prio */
 
-#ifndef PI
-#define PI                          3.141592654
-#endif
-
 /***************************************************************
  *
  *                      SYSTEM INTERFACE
@@ -291,6 +287,13 @@ do { strncpy(_dst,_src,_n); \
 #define M_PI 3.1415926535897932384626433832795
 #endif
 
+#ifndef M_LN2
+#define M_LN2 0.69314718055994530941723212145818
+#endif
+
+#ifndef M_LN10
+#define M_LN10 2.3025850929940456840179914546844
+#endif
 
 #define FLUID_ASSERT(a,b)
 #define FLUID_ASSERT_P(a,b)

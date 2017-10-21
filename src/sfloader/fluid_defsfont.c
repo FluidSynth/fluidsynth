@@ -2132,7 +2132,7 @@ static int fixup_pgen (SFData * sf);
 static int fixup_igen (SFData * sf);
 static int fixup_sample (SFData * sf);
 
-char idlist[] = {
+static const char idlist[] = {
   "RIFFLISTsfbkINFOsdtapdtaifilisngINAMiromiverICRDIENGIPRD"
     "ICOPICMTISFTsnamsmplphdrpbagpmodpgeninstibagimodigenshdr"
 };
@@ -2421,7 +2421,7 @@ pdtahelper (unsigned int expid, unsigned int reclen, SFChunk * chunk,
   int * size, FILE * fd)
 {
   unsigned int id;
-  char *expstr;
+  const char *expstr;
 
   expstr = CHNKIDSTR (expid);	/* in case we need it */
 
@@ -3429,11 +3429,13 @@ fixup_sample (SFData * sf)
 #define MOD_CHUNK_OPTIMUM_AREA		256
 #define GEN_CHUNK_OPTIMUM_AREA		256
 
-unsigned short badgen[] = { Gen_Unused1, Gen_Unused2, Gen_Unused3, Gen_Unused4,
+static const unsigned short badgen[] = {
+  Gen_Unused1, Gen_Unused2, Gen_Unused3, Gen_Unused4,
   Gen_Reserved1, Gen_Reserved2, Gen_Reserved3, 0
 };
 
-unsigned short badpgen[] = { Gen_StartAddrOfs, Gen_EndAddrOfs, Gen_StartLoopAddrOfs,
+static const unsigned short badpgen[] = {
+  Gen_StartAddrOfs, Gen_EndAddrOfs, Gen_StartLoopAddrOfs,
   Gen_EndLoopAddrOfs, Gen_StartAddrCoarseOfs, Gen_EndAddrCoarseOfs,
   Gen_StartLoopAddrCoarseOfs, Gen_Keynum, Gen_Velocity,
   Gen_EndLoopAddrCoarseOfs, Gen_SampleModes, Gen_ExclusiveClass,

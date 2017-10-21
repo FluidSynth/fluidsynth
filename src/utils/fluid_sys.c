@@ -74,7 +74,7 @@ static fluid_log_function_t fluid_log_function[LAST_LOG_LEVEL];
 static void* fluid_log_user_data[LAST_LOG_LEVEL];
 static int fluid_log_initialized = 0;
 
-static char* fluid_libname = "fluidsynth";
+static const char fluid_libname[] = "fluidsynth";
 
 
 void fluid_sys_config()

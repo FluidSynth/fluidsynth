@@ -64,6 +64,17 @@ struct _fluid_shell_t {
   fluid_ostream_t out;
 };
 
+/**
+ * Reduced command information structure for constant data.
+ * For internal use only.
+ */
+typedef struct {
+  const char *name;             /**< The name of the command, as typed in the shell */
+  const char *topic;            /**< The help topic group of this command */ 
+  fluid_cmd_func_t handler;     /**< Pointer to the handler for this command */
+  const char *help;             /**< A help string */
+} fluid_cmd_int_t;
+
 static int fluid_shell_run(fluid_shell_t* shell);
 static void fluid_shell_init(fluid_shell_t* shell,
                              fluid_settings_t* settings, fluid_cmd_handler_t* handler,
@@ -80,128 +91,127 @@ void fluid_shell_settings(fluid_settings_t* settings)
 
 /** the table of all handled commands */
 
-static fluid_cmd_t fluid_commands[] = {
-  { "help", "general", (fluid_cmd_func_t) fluid_handle_help, NULL,
+static const fluid_cmd_int_t fluid_commands[] = {
+  { "help", "general", (fluid_cmd_func_t) fluid_handle_help,
     "help                       Show help topics ('help TOPIC' for more info)" },
-  { "quit", "general", (fluid_cmd_func_t) fluid_handle_quit, NULL,
+  { "quit", "general", (fluid_cmd_func_t) fluid_handle_quit,
     "quit                       Quit the synthesizer" },
-  { "source", "general", (fluid_cmd_func_t) fluid_handle_source, NULL,
+  { "source", "general", (fluid_cmd_func_t) fluid_handle_source,
   "source filename            Load a file and parse every line as a command" },
-  { "noteon", "event", (fluid_cmd_func_t) fluid_handle_noteon, NULL,
+  { "noteon", "event", (fluid_cmd_func_t) fluid_handle_noteon,
     "noteon chan key vel        Send noteon" },
-  { "noteoff", "event", (fluid_cmd_func_t) fluid_handle_noteoff, NULL,
+  { "noteoff", "event", (fluid_cmd_func_t) fluid_handle_noteoff,
     "noteoff chan key           Send noteoff"  },
-  { "pitch_bend", "event", (fluid_cmd_func_t) fluid_handle_pitch_bend, NULL,
+  { "pitch_bend", "event", (fluid_cmd_func_t) fluid_handle_pitch_bend,
     "pitch_bend chan offset           Bend pitch"  },
-  { "pitch_bend_range", "event", (fluid_cmd_func_t) fluid_handle_pitch_bend_range, NULL,
+  { "pitch_bend_range", "event", (fluid_cmd_func_t) fluid_handle_pitch_bend_range,
     "pitch_bend chan range           Set bend pitch range"  },
-  { "cc", "event", (fluid_cmd_func_t) fluid_handle_cc, NULL,
+  { "cc", "event", (fluid_cmd_func_t) fluid_handle_cc,
     "cc chan ctrl value         Send control-change message" },
-  { "prog", "event", (fluid_cmd_func_t) fluid_handle_prog, NULL,
+  { "prog", "event", (fluid_cmd_func_t) fluid_handle_prog,
     "prog chan num              Send program-change message" },
-  { "select", "event", (fluid_cmd_func_t) fluid_handle_select, NULL,
+  { "select", "event", (fluid_cmd_func_t) fluid_handle_select,
     "select chan sfont bank prog  Combination of bank-select and program-change" },
-  { "load", "general", (fluid_cmd_func_t) fluid_handle_load, NULL,
+  { "load", "general", (fluid_cmd_func_t) fluid_handle_load,
     "load file [reset] [bankofs] Load SoundFont (reset=0|1, def 1; bankofs=n, def 0)" },
-  { "unload", "general", (fluid_cmd_func_t) fluid_handle_unload, NULL,
+  { "unload", "general", (fluid_cmd_func_t) fluid_handle_unload,
     "unload id [reset]          Unload SoundFont by ID (reset=0|1, default 1)"},
-  { "reload", "general", (fluid_cmd_func_t) fluid_handle_reload, NULL,
+  { "reload", "general", (fluid_cmd_func_t) fluid_handle_reload,
     "reload id                  Reload the SoundFont with the specified ID" },
-  { "fonts", "general", (fluid_cmd_func_t) fluid_handle_fonts, NULL,
+  { "fonts", "general", (fluid_cmd_func_t) fluid_handle_fonts,
     "fonts                      Display the list of loaded SoundFonts" },
-  { "inst", "general", (fluid_cmd_func_t) fluid_handle_inst, NULL,
+  { "inst", "general", (fluid_cmd_func_t) fluid_handle_inst,
     "inst font                  Print out the available instruments for the font" },
-  { "channels", "general", (fluid_cmd_func_t) fluid_handle_channels, NULL,
+  { "channels", "general", (fluid_cmd_func_t) fluid_handle_channels,
     "channels [-verbose]        Print out preset of all channels" },
-  { "interp", "general", (fluid_cmd_func_t) fluid_handle_interp, NULL,
+  { "interp", "general", (fluid_cmd_func_t) fluid_handle_interp,
     "interp num                 Choose interpolation method for all channels" },
-  { "interpc", "general", (fluid_cmd_func_t) fluid_handle_interpc, NULL,
+  { "interpc", "general", (fluid_cmd_func_t) fluid_handle_interpc,
     "interpc chan num           Choose interpolation method for one channel" },
-  { "rev_preset", "reverb", (fluid_cmd_func_t) fluid_handle_reverbpreset, NULL,
+  { "rev_preset", "reverb", (fluid_cmd_func_t) fluid_handle_reverbpreset,
     "rev_preset num             Load preset num into the reverb unit" },
-  { "rev_setroomsize", "reverb", (fluid_cmd_func_t) fluid_handle_reverbsetroomsize, NULL,
+  { "rev_setroomsize", "reverb", (fluid_cmd_func_t) fluid_handle_reverbsetroomsize,
     "rev_setroomsize num        Change reverb room size" },
-  { "rev_setdamp", "reverb", (fluid_cmd_func_t) fluid_handle_reverbsetdamp, NULL,
+  { "rev_setdamp", "reverb", (fluid_cmd_func_t) fluid_handle_reverbsetdamp,
     "rev_setdamp num            Change reverb damping" },
-  { "rev_setwidth", "reverb", (fluid_cmd_func_t) fluid_handle_reverbsetwidth, NULL,
+  { "rev_setwidth", "reverb", (fluid_cmd_func_t) fluid_handle_reverbsetwidth,
     "rev_setwidth num           Change reverb width" },
-  { "rev_setlevel", "reverb", (fluid_cmd_func_t) fluid_handle_reverbsetlevel, NULL,
+  { "rev_setlevel", "reverb", (fluid_cmd_func_t) fluid_handle_reverbsetlevel,
     "rev_setlevel num           Change reverb level" },
-  { "reverb", "reverb", (fluid_cmd_func_t) fluid_handle_reverb, NULL,
+  { "reverb", "reverb", (fluid_cmd_func_t) fluid_handle_reverb,
     "reverb [0|1|on|off]        Turn the reverb on or off" },
-  { "cho_set_nr", "chorus", (fluid_cmd_func_t) fluid_handle_chorusnr, NULL,
+  { "cho_set_nr", "chorus", (fluid_cmd_func_t) fluid_handle_chorusnr,
     "cho_set_nr n               Use n delay lines (default 3)" },
-  { "cho_set_level", "chorus", (fluid_cmd_func_t) fluid_handle_choruslevel, NULL,
+  { "cho_set_level", "chorus", (fluid_cmd_func_t) fluid_handle_choruslevel,
     "cho_set_level num          Set output level of each chorus line to num" },
-  { "cho_set_speed", "chorus", (fluid_cmd_func_t) fluid_handle_chorusspeed, NULL,
+  { "cho_set_speed", "chorus", (fluid_cmd_func_t) fluid_handle_chorusspeed,
     "cho_set_speed num          Set mod speed of chorus to num (Hz)" },
-  { "cho_set_depth", "chorus", (fluid_cmd_func_t) fluid_handle_chorusdepth, NULL,
+  { "cho_set_depth", "chorus", (fluid_cmd_func_t) fluid_handle_chorusdepth,
     "cho_set_depth num          Set chorus modulation depth to num (ms)" },
-  { "chorus", "chorus", (fluid_cmd_func_t) fluid_handle_chorus, NULL,
+  { "chorus", "chorus", (fluid_cmd_func_t) fluid_handle_chorus,
     "chorus [0|1|on|off]        Turn the chorus on or off" },
-  { "gain", "general", (fluid_cmd_func_t) fluid_handle_gain, NULL,
+  { "gain", "general", (fluid_cmd_func_t) fluid_handle_gain,
     "gain value                 Set the master gain (0 < gain < 5)" },
-  { "voice_count", "general", (fluid_cmd_func_t) fluid_handle_voice_count, NULL,
+  { "voice_count", "general", (fluid_cmd_func_t) fluid_handle_voice_count,
     "voice_count                Get number of active synthesis voices" },
-  { "tuning", "tuning", (fluid_cmd_func_t) fluid_handle_tuning, NULL,
+  { "tuning", "tuning", (fluid_cmd_func_t) fluid_handle_tuning,
     "tuning name bank prog      Create a tuning with name, bank number, \n"
     "                           and program number (0 <= bank,prog <= 127)" },
-  { "tune", "tuning", (fluid_cmd_func_t) fluid_handle_tune, NULL,
+  { "tune", "tuning", (fluid_cmd_func_t) fluid_handle_tune,
     "tune bank prog key pitch   Tune a key" },
-  { "settuning", "tuning", (fluid_cmd_func_t) fluid_handle_settuning, NULL,
+  { "settuning", "tuning", (fluid_cmd_func_t) fluid_handle_settuning,
     "settuning chan bank prog   Set the tuning for a MIDI channel" },
-  { "resettuning", "tuning", (fluid_cmd_func_t) fluid_handle_resettuning, NULL,
+  { "resettuning", "tuning", (fluid_cmd_func_t) fluid_handle_resettuning,
     "resettuning chan           Restore the default tuning of a MIDI channel" },
-  { "tunings", "tuning", (fluid_cmd_func_t) fluid_handle_tunings, NULL,
+  { "tunings", "tuning", (fluid_cmd_func_t) fluid_handle_tunings,
     "tunings                    Print the list of available tunings" },
-  { "dumptuning", "tuning", (fluid_cmd_func_t) fluid_handle_dumptuning, NULL,
+  { "dumptuning", "tuning", (fluid_cmd_func_t) fluid_handle_dumptuning,
     "dumptuning bank prog       Print the pitch details of the tuning" },
-  { "reset", "general", (fluid_cmd_func_t) fluid_handle_reset, NULL,
+  { "reset", "general", (fluid_cmd_func_t) fluid_handle_reset,
     "reset                      System reset (all notes off, reset controllers)" },
-  { "set", "settings", (fluid_cmd_func_t) fluid_handle_set, NULL,
+  { "set", "settings", (fluid_cmd_func_t) fluid_handle_set,
     "set name value             Set the value of a controller or settings" },
-  { "get", "settings", (fluid_cmd_func_t) fluid_handle_get, NULL,
+  { "get", "settings", (fluid_cmd_func_t) fluid_handle_get,
     "get name                   Get the value of a controller or settings" },
-  { "info", "settings", (fluid_cmd_func_t) fluid_handle_info, NULL,
+  { "info", "settings", (fluid_cmd_func_t) fluid_handle_info,
     "info name                  Get information about a controller or settings" },
-  { "settings", "settings", (fluid_cmd_func_t) fluid_handle_settings, NULL,
+  { "settings", "settings", (fluid_cmd_func_t) fluid_handle_settings,
     "settings                   Print out all settings" },
-  { "echo", "general", (fluid_cmd_func_t) fluid_handle_echo, NULL,
+  { "echo", "general", (fluid_cmd_func_t) fluid_handle_echo,
     "echo arg                   Print arg" },
   /* LADSPA-related commands */
 #ifdef LADSPA
-  { "ladspa_plugin", "ladspa", (fluid_cmd_func_t) fluid_handle_ladspa_plugin, NULL,
+  { "ladspa_plugin", "ladspa", (fluid_cmd_func_t) fluid_handle_ladspa_plugin,
     "ladspa_plugin              Instantiate a new LADSPA plugin"},
-  { "ladspa_port", "ladspa", (fluid_cmd_func_t) fluid_handle_ladspa_port, NULL,
+  { "ladspa_port", "ladspa", (fluid_cmd_func_t) fluid_handle_ladspa_port,
     "ladspa_port                Connect a LADSPA plugin port"},
-  { "ladspa_node", "ladspa", (fluid_cmd_func_t) fluid_handle_ladspa_node, NULL,
+  { "ladspa_node", "ladspa", (fluid_cmd_func_t) fluid_handle_ladspa_node,
     "ladspa_node                Create a LADSPA audio or control node"},
-  { "ladspa_control", "ladspa", (fluid_cmd_func_t) fluid_handle_ladspa_control, NULL,
+  { "ladspa_control", "ladspa", (fluid_cmd_func_t) fluid_handle_ladspa_control,
     "ladspa_control             Set the value of a LADSPA control node"},
-  { "ladspa_check", "ladspa", (fluid_cmd_func_t) fluid_handle_ladspa_check, NULL,
+  { "ladspa_check", "ladspa", (fluid_cmd_func_t) fluid_handle_ladspa_check,
     "ladspa_check               Check LADSPA configuration"},
-  { "ladspa_start", "ladspa", (fluid_cmd_func_t) fluid_handle_ladspa_start, NULL,
+  { "ladspa_start", "ladspa", (fluid_cmd_func_t) fluid_handle_ladspa_start,
     "ladspa_start               Start LADSPA effects"},
-  { "ladspa_stop", "ladspa", (fluid_cmd_func_t) fluid_handle_ladspa_stop, NULL,
+  { "ladspa_stop", "ladspa", (fluid_cmd_func_t) fluid_handle_ladspa_stop,
     "ladspa_stop                Stop LADSPA effect unit"},
-  { "ladspa_reset", "ladspa", (fluid_cmd_func_t) fluid_handle_ladspa_reset, NULL,
+  { "ladspa_reset", "ladspa", (fluid_cmd_func_t) fluid_handle_ladspa_reset,
     "ladspa_reset               Stop and reset LADSPA effects"},
 #endif
-  { "router_clear", "router", (fluid_cmd_func_t) fluid_handle_router_clear, NULL,
+  { "router_clear", "router", (fluid_cmd_func_t) fluid_handle_router_clear,
     "router_clear               Clears all routing rules from the midi router"},
-  { "router_default", "router", (fluid_cmd_func_t) fluid_handle_router_default, NULL,
+  { "router_default", "router", (fluid_cmd_func_t) fluid_handle_router_default,
     "router_default             Resets the midi router to default state"},
-  { "router_begin", "router", (fluid_cmd_func_t) fluid_handle_router_begin, NULL,
+  { "router_begin", "router", (fluid_cmd_func_t) fluid_handle_router_begin,
     "router_begin [note|cc|prog|pbend|cpress|kpress]: Starts a new routing rule"},
-  { "router_chan", "router", (fluid_cmd_func_t) fluid_handle_router_chan, NULL,
+  { "router_chan", "router", (fluid_cmd_func_t) fluid_handle_router_chan,
     "router_chan min max mul add      filters and maps midi channels on current rule"},
-  { "router_par1", "router", (fluid_cmd_func_t) fluid_handle_router_par1, NULL,
+  { "router_par1", "router", (fluid_cmd_func_t) fluid_handle_router_par1,
     "router_par1 min max mul add      filters and maps parameter 1 (key/ctrl nr)"},
-  { "router_par2", "router", (fluid_cmd_func_t) fluid_handle_router_par2, NULL,
+  { "router_par2", "router", (fluid_cmd_func_t) fluid_handle_router_par2,
     "router_par2 min max mul add      filters and maps parameter 2 (vel/cc val)"},
-  { "router_end", "router", (fluid_cmd_func_t) fluid_handle_router_end, NULL,
-    "router_end                 closes and commits the current routing rule"},
-  { NULL, NULL, NULL, NULL, NULL }
+  { "router_end", "router", (fluid_cmd_func_t) fluid_handle_router_end,
+    "router_end                 closes and commits the current routing rule"}
 };
 
 /**
@@ -1609,7 +1619,7 @@ fluid_handle_help(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream
 
   char* topic = "help"; /* default, if no topic is given */
   int count = 0;
-  int i;
+  unsigned int i;
 
   fluid_ostream_printf(out, "\n");
   /* 1st argument (optional): help topic */
@@ -1621,9 +1631,9 @@ fluid_handle_help(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream
     fluid_ostream_printf(out,
 			"*** Help topics:***\n"
 			"help all (prints all topics)\n");
-    for (i = 0; fluid_commands[i].name != NULL; i++) {
+    for (i = 0; i < FLUID_N_ELEMENTS(fluid_commands); i++) {
       int listed_first_time = 1;
-      int ii;
+      unsigned int ii;
       for (ii = 0; ii < i; ii++){
 	if (strcmp(fluid_commands[i].topic, fluid_commands[ii].topic) == 0){
 	  listed_first_time = 0;
@@ -1635,10 +1645,9 @@ fluid_handle_help(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream
     }; /* for all topics (outer loop) */
   } else {
     /* help (arbitrary topic or "all") */
-    for (i = 0; fluid_commands[i].name != NULL; i++) {
-      fluid_cmd_t cmd = fluid_commands[i];
-      if (cmd.help != NULL) {
-	if (strcmp(topic,"all") == 0 || strcmp(topic,cmd.topic) == 0){
+    for (i = 0; FLUID_N_ELEMENTS(fluid_commands); i++) {
+      if (fluid_commands[i].help != NULL) {
+	if (strcmp(topic,"all") == 0 || strcmp(topic,fluid_commands[i].topic) == 0){
 	  fluid_ostream_printf(out, "%s\n", fluid_commands[i].help);
 	  count++;
 	}; /* if it matches the topic */
@@ -2188,7 +2197,7 @@ fluid_cmd_handler_destroy_hash_value (void *value)
  */
 fluid_cmd_handler_t* new_fluid_cmd_handler(fluid_synth_t* synth, fluid_midi_router_t* router)
 {
-  int i;
+  unsigned int i;
   fluid_cmd_handler_t* handler;
 
   handler = FLUID_NEW(fluid_cmd_handler_t);
@@ -2206,11 +2215,17 @@ fluid_cmd_handler_t* new_fluid_cmd_handler(fluid_synth_t* synth, fluid_midi_rout
   handler->router = router;
   
   if (synth != NULL) {
-    for (i = 0; fluid_commands[i].name != NULL; i++)
+    for (i = 0; i < FLUID_N_ELEMENTS(fluid_commands); i++)
     {
-        fluid_commands[i].data = handler;
-        fluid_cmd_handler_register(handler, &fluid_commands[i]);
-        fluid_commands[i].data = NULL;
+        fluid_cmd_t cmd = {
+            (char *)fluid_commands[i].name,
+            (char *)fluid_commands[i].topic,
+            fluid_commands[i].handler,
+            handler,
+            (char *)fluid_commands[i].help
+        };
+
+        fluid_cmd_handler_register(handler, &cmd);
     }
   }
 
