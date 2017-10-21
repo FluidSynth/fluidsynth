@@ -54,21 +54,20 @@ struct _fluid_file_renderer_t {
 
 /* File audio format names.
  * !! Keep in sync with format_ids[] */
-const char *format_names[] = {
+static const char * const format_names[] = {
   "s8",
   "s16",
   "s24",
   "s32",
   "u8",
   "float",
-  "double",
-  NULL          /* Terminator */
+  "double"
 };
   
 
 /* File audio format IDs.
  * !! Keep in sync with format_names[] */
-const int format_ids[] = {
+static const int format_ids[] = {
   SF_FORMAT_PCM_S8,
   SF_FORMAT_PCM_16,
   SF_FORMAT_PCM_24,
@@ -80,17 +79,16 @@ const int format_ids[] = {
 
 /* File endian byte order names.
  * !! Keep in sync with endian_ids[] */
-const char *endian_names[] = {
+static const char * const endian_names[] = {
   "auto",
   "little",
   "big",
-  "cpu",
-  NULL
+  "cpu"
 };
 
 /* File endian byte order ids.
  * !! Keep in sync with endian_names[] */
-const int endian_ids[] = {
+static const int endian_ids[] = {
   SF_ENDIAN_FILE,
   SF_ENDIAN_LITTLE,
   SF_ENDIAN_BIG,
@@ -107,21 +105,18 @@ static int fluid_file_renderer_find_valid_format (SF_INFO *info);
 
 
 /* File type names. */
-const char *type_names[] = {
-  "raw",
-  NULL          /* Terminator */
+static const char * const type_names[] = {
+  "raw"
 };
 
 /* File audio format names. */
-const char *format_names[] = {
-  "s16",
-  NULL          /* Terminator */
+static const char * const format_names[] = {
+  "s16"
 };
 
 /* File endian byte order names. */
-const char *endian_names[] = {
-  "cpu",
-  NULL
+static const char * const endian_names[] = {
+  "cpu"
 };
 
 #endif
@@ -134,7 +129,7 @@ fluid_file_renderer_settings (fluid_settings_t* settings)
   SF_FORMAT_INFO finfo, cmpinfo;
   int major_count;
   int i, i2;
-  const char **np;
+  unsigned int n;
 
   fluid_settings_register_str(settings, "audio.file.name", "fluidsynth.wav",
                               FLUID_HINT_FILENAME, NULL, NULL);
@@ -165,11 +160,11 @@ fluid_file_renderer_settings (fluid_settings_t* settings)
       fluid_settings_add_option (settings, "audio.file.type", finfo.extension);
   }
 
-  for (np = format_names; *np; np++)
-    fluid_settings_add_option (settings, "audio.file.format", *np);
+  for (n = 0; n < FLUID_N_ELEMENTS(format_names); n++)
+    fluid_settings_add_option (settings, "audio.file.format", format_names[n]);
 
-  for (np = endian_names; *np; np++)
-    fluid_settings_add_option (settings, "audio.file.endian", *np);
+  for (n = 0; n < FLUID_N_ELEMENTS(endian_names); n++)
+    fluid_settings_add_option (settings, "audio.file.endian", endian_names[n]);
 
 #else
 
@@ -417,7 +412,7 @@ fluid_file_renderer_parse_options (char *filetype, char *format, char *endian,
 {
   int type = -1;        /* -1 indicates "auto" type */
   char *s;
-  int i;
+  unsigned int i;
 
   /* If "auto" type, then use extension to search for a match */
   if (!filetype || FLUID_STRCMP (filetype, "auto") == 0)
@@ -443,11 +438,11 @@ fluid_file_renderer_parse_options (char *filetype, char *format, char *endian,
   /* Look for subtype */
   if (format)
   {
-    for (i = 0; format_names[i]; i++)
+    for (i = 0; i < FLUID_N_ELEMENTS(format_names); i++)
       if (FLUID_STRCMP (format, format_names[i]) == 0)
         break;
 
-    if (!format_names[i])
+    if (i >= FLUID_N_ELEMENTS(format_names))
     {
       FLUID_LOG (FLUID_ERR, "Invalid or unsupported file audio format '%s'", format);
       return FALSE;
@@ -466,11 +461,11 @@ fluid_file_renderer_parse_options (char *filetype, char *format, char *endian,
   /* Look for endian */
   if (endian)
   {
-    for (i = 0; endian_names[i]; i++)
+    for (i = 0; i < FLUID_N_ELEMENTS(endian_names); i++)
       if (FLUID_STRCMP (endian, endian_names[i]) == 0)
         break;
 
-    if (!endian_names[i])
+    if (i >= FLUID_N_ELEMENTS(endian_names))
     {
       FLUID_LOG (FLUID_ERR, "Invalid or unsupported endian byte order '%s'", endian);
       return FALSE;
