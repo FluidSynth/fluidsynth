@@ -238,6 +238,12 @@ int fluid_ladspa_activate(fluid_ladspa_fx_t *fx)
         LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
 
+    if (fluid_ladspa_check(fx, NULL, 0) != FLUID_OK)
+    {
+        FLUID_LOG(FLUID_ERR, "LADSPA check failed, unable to activate effects");
+        LADSPA_API_RETURN(fx, FLUID_FAILED);
+    }
+
     for (i = 0; i < fx->num_plugins; i++)
     {
         activate_plugin(fx->plugins[i]);
