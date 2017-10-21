@@ -490,7 +490,7 @@ static void clear_ladspa(fluid_ladspa_fx_t *fx)
 };
 
 /**
- * Check if a named node exists. Nodes are searched by exact string comparison.
+ * Check if a named node exists. Nodes are searched by case-insensitive string comparison.
  *
  * @param fx LADSPA fx instance
  * @param name the node name string
@@ -596,7 +596,7 @@ int fluid_ladspa_add_control_node(fluid_ladspa_fx_t *fx, const char *name, fluid
 /**
  * Set the value of a user constrol node
  *
- * Nodes are searched by exact string comparison.
+ * Nodes are searched by case-insensitive string comparison.
  *
  * @param fx LADSPA fx instance
  * @param name node name string
@@ -681,8 +681,8 @@ int fluid_ladspa_add_plugin(fluid_ladspa_fx_t *fx, const char *lib_name, const c
  * @param fx LADSPA effects instance
  * @param plugin_id the integer plugin id as returned by fluid_ladspa_add_plugin
  * @param dir connect to port as FLUID_LADSPA_INPUT or FLUID_LADSPA_OUTPUT
- * @param port_name the port name to connect to (prefix match, see get_plugin_port_idx)
- * @param node_name the node name to connect to (exact match)
+ * @param port_name the port name to connect to (case-insensitive prefix match, see get_plugin_port_idx)
+ * @param node_name the node name to connect to (case-insensitive)
  * @return FLUID_OK on success, otherwise FLUID_FAILED
  */
 int fluid_ladspa_connect(fluid_ladspa_fx_t *fx, int plugin_id, fluid_ladspa_dir_t dir,
@@ -963,7 +963,7 @@ static void deactivate_plugin(fluid_ladspa_plugin_t *plugin)
 }
 
 /**
- * Return a LADSPA node by name. Nodes are searched by exact string comparison.
+ * Return a LADSPA node by name. Nodes are searched case insensitive.
  *
  * @param fx LADSPA fx instance
  * @param name the node name string
@@ -975,7 +975,7 @@ static fluid_ladspa_node_t *get_node(fluid_ladspa_fx_t *fx, const char *name)
 
     for (i = 0; i < fx->num_nodes; i++)
     {
-        if (FLUID_STRCMP(fx->nodes[i]->name, name) == 0)
+        if (FLUID_STRCASECMP(fx->nodes[i]->name, name) == 0)
         {
             return fx->nodes[i];
         }
