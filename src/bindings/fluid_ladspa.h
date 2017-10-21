@@ -35,9 +35,12 @@
 #define FLUID_LADSPA_MAX_NODES 100
 #define FLUID_LADSPA_MAX_PATH_LENGTH 512
 
-#define FLUID_LADSPA_INACTIVE (0)
-#define FLUID_LADSPA_ACTIVE (1)
-#define FLUID_LADSPA_RUNNING (2)
+typedef enum _fluid_ladspa_state_t {
+    FLUID_LADSPA_INACTIVE = 0,
+    FLUID_LADSPA_ACTIVE,
+    FLUID_LADSPA_RUNNING
+    
+} fluid_ladspa_state_t;
 
 typedef enum _fluid_ladspa_dir_t {
     FLUID_LADSPA_INPUT,
