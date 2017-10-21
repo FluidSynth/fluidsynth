@@ -2030,8 +2030,6 @@ fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defs
    equivalent to the matching ID list in memory regardless of LE/BE machine
 */
 
-#if FLUID_IS_BIG_ENDIAN
-
 #define READCHUNK(var,fd)	G_STMT_START {		\
 	if (!safe_fread(var, 8, fd))			\
 		return(FAIL);				\
@@ -2051,31 +2049,6 @@ fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defs
 		return(FAIL);				\
 	var = GINT16_FROM_LE(_temp);			\
 } G_STMT_END
-
-#else
-
-#define READCHUNK(var,fd)	G_STMT_START {		\
-    if (!safe_fread(var, 8, fd))			\
-	return(FAIL);					\
-    ((SFChunk *)(var))->size = GUINT32_FROM_LE(((SFChunk *)(var))->size);  \
-} G_STMT_END
-
-#define READD(var,fd)		G_STMT_START {		\
-    unsigned int _temp;					\
-    if (!safe_fread(&_temp, 4, fd))			\
-	return(FAIL);					\
-    var = GINT32_FROM_LE(_temp);			\
-} G_STMT_END
-
-#define READW(var,fd)		G_STMT_START {		\
-    unsigned short _temp;					\
-    if (!safe_fread(&_temp, 2, fd))			\
-	return(FAIL);					\
-    var = GINT16_FROM_LE(_temp);			\
-} G_STMT_END
-
-#endif
-
 
 #define READID(var,fd)		G_STMT_START {		\
     if (!safe_fread(var, 4, fd))			\
