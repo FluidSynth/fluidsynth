@@ -522,6 +522,12 @@ fluid_rvoice_mixer_set_samplerate(fluid_rvoice_mixer_t* mixer, fluid_real_t samp
 	  fluid_revmodel_samplerate_change(mixer->fx.reverb, samplerate);
   for (i=0; i < mixer->active_voices; i++)
     fluid_rvoice_set_output_rate(mixer->rvoices[i], samplerate);
+#if LADSPA
+  if (mixer->ladspa_fx != NULL)
+  {
+    fluid_ladspa_set_sample_rate(mixer->ladspa_fx, samplerate);
+  }
+#endif
 }
 
 
