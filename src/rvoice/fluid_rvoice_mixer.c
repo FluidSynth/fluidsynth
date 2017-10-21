@@ -648,7 +648,7 @@ void delete_fluid_rvoice_mixer(fluid_rvoice_mixer_t* mixer)
 
 
 #ifdef LADSPA				    
-void fluid_rvoice_mixer_set_ladspa(fluid_rvoice_mixer_t* mixer, fluid_ladspa_fx_t *ladspa_fx)
+void fluid_rvoice_mixer_set_ladspa(fluid_rvoice_mixer_t* mixer, fluid_ladspa_fx_t *ladspa_fx, int in_place)
 {
   mixer->ladspa_fx = ladspa_fx;
 }
