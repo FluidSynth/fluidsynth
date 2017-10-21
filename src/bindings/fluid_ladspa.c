@@ -20,6 +20,9 @@
 
 /* This module: 3/2002
  * Author: Markus Nentwig, nentwig@users.sourceforge.net
+ * 
+ * Complete rewrite: 10/2017
+ * Author: Marcus Weseloh
  */
 
 #include "fluidsynth_priv.h"
