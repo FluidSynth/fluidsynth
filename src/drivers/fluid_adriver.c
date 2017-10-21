@@ -336,11 +336,11 @@ new_fluid_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
 fluid_audio_driver_t*
 new_fluid_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func, void* data)
 {
-  int i;
+  unsigned int i;
   fluid_audio_driver_t* driver = NULL;
   char* name;
 
-  for (i = 0; fluid_audio_drivers[i].name != NULL; i++) {
+  for (i = 0; i < FLUID_N_ELEMENTS(fluid_audio_drivers); i++) {
     if (fluid_settings_str_equal(settings, "audio.driver", fluid_audio_drivers[i].name) &&
 	(fluid_audio_drivers[i].new2 != NULL)) {
       FLUID_LOG(FLUID_DBG, "Using '%s' audio driver", fluid_audio_drivers[i].name);
@@ -368,9 +368,9 @@ new_fluid_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func, voi
 void
 delete_fluid_audio_driver(fluid_audio_driver_t* driver)
 {
-  int i;
+  unsigned int i;
 
-  for (i = 0; fluid_audio_drivers[i].name != NULL; i++) {
+  for (i = 0; i < FLUID_N_ELEMENTS(fluid_audio_drivers); i++) {
     if (fluid_audio_drivers[i].name == driver->name) {
       fluid_audio_drivers[i].free(driver);
       return;
