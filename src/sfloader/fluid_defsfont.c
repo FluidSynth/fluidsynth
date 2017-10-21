@@ -2733,7 +2733,7 @@ load_pgen (int size, SFData * sf, FILE * fd)
 		{		/* inst is last gen */
 		  level = 3;
 		  READW (genval.uword, fd);
-		  ((SFZone *) (p2->data))->instsamp = GINT_TO_POINTER (genval.uword + 1);
+		  ((SFZone *) (p2->data))->instsamp = FLUID_INT_TO_POINTER (genval.uword + 1);
 		  break;	/* break out of generator loop */
 		}
 	      else
@@ -3083,7 +3083,7 @@ load_igen (int size, SFData * sf, FILE * fd)
 		{		/* sample is last gen */
 		  level = 3;
 		  READW (genval.uword, fd);
-		  ((SFZone *) (p2->data))->instsamp = GINT_TO_POINTER (genval.uword + 1);
+		  ((SFZone *) (p2->data))->instsamp = FLUID_INT_TO_POINTER (genval.uword + 1);
 		  break;	/* break out of generator loop */
 		}
 	      else
