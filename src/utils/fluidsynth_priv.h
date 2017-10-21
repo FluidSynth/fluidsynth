@@ -267,6 +267,12 @@ do { strncpy(_dst,_src,_n); \
     #define FLUID_STRCASECMP         strcasecmp
 #endif
 
+#if defined(WIN32) && !defined(MINGW32)
+    #define FLUID_STRNCASECMP         _strincmp
+#else
+    #define FLUID_STRNCASECMP         strncasecmp
+#endif
+
 
 #define fluid_clip(_val, _min, _max) \
 { (_val) = ((_val) < (_min))? (_min) : (((_val) > (_max))? (_max) : (_val)); }
