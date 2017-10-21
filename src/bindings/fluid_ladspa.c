@@ -97,6 +97,20 @@ fluid_ladspa_fx_t *new_fluid_ladspa_fx(fluid_real_t sample_rate, int audio_group
     fx->effects_channels = effects_channels;
     fx->audio_channels = audio_channels;
 
+    /* Setup mutex and cond used to signal that fluid_ladspa_run has finished */
+     fx->run_finished_mutex = new_fluid_cond_mutex();
+     if (fx->run_finished_mutex == NULL)
+     {
+         delete_fluid_ladspa_fx(fx);
+         return NULL;
+     }
+     fx->run_finished_cond = new_fluid_cond();
+     if (fx->run_finished_cond == NULL)
+     {
+         delete_fluid_ladspa_fx(fx);
+         return NULL;
+     }
+
     /* Finally, create the nodes that carry audio in and out of the LADSPA unit.
      * They will always be the first in the fx->nodes array and not removed on
      * fluid_ladspa_reset but only when this LADSPA fx instance is deleted. */
@@ -132,6 +146,16 @@ void delete_fluid_ladspa_fx(fluid_ladspa_fx_t *fx)
         delete_fluid_ladspa_node(fx->nodes[i]);
     };
 
+    if (fx->run_finished_cond != NULL)
+    {
+        delete_fluid_cond(fx->run_finished_cond);
+    }
+
+    if (fx->run_finished_mutex != NULL)
+    {
+        delete_fluid_cond_mutex(fx->run_finished_mutex);
+    }
+
     fluid_rec_mutex_destroy(fx->api_mutex);
 
     FLUID_FREE(fx);
@@ -141,8 +165,7 @@ void delete_fluid_ladspa_fx(fluid_ladspa_fx_t *fx)
  * Set the sample rate of the LADSPA effects.
  *
  * Resets the LADSPA effects if the sample rate is different from the
- * previous sample rate. If the LADSPA effects is active, it tries to 
- * deactivate and reset it once, without timeout.
+ * previous sample rate.
  *
  * @param fx LADSPA fx instance
  * @param sample_rate new sample rate
@@ -164,16 +187,11 @@ int fluid_ladspa_set_sample_rate(fluid_ladspa_fx_t *fx, fluid_real_t sample_rate
 
     if (fluid_ladspa_is_active(fx))
     {
-        /* Deactivate without timeout */
-        if (fluid_ladspa_deactivate(fx, 0) != FLUID_OK)
+        if (fluid_ladspa_reset(fx) != FLUID_OK)
         {
-            FLUID_LOG(FLUID_ERR, "Failed to deactivate LADSPA, unable to change sample rate");
+            FLUID_LOG(FLUID_ERR, "Failed to reset LADSPA, unable to change sample rate");
             LADSPA_API_RETURN(fx, FLUID_FAILED);
         }
-
-        /* A new sample rate means the plugin parameters need to be updateded anyway, so
-         * no point in keeping the old setup */
-        clear_ladspa(fx);
     }
 
     fx->sample_rate = new_sample_rate;
@@ -242,13 +260,11 @@ int fluid_ladspa_activate(fluid_ladspa_fx_t *fx)
  * @note This function may sleep.
  *
  * @param fx LADSPA fx instance
- * @param timeout_ms number of milliseconds to wait for deactivation. Set to 0 to return immediately on failiure.
  * @return FLUID_OK if deactivation succeeded, otherwise FLUID_FAILED
  */
-int fluid_ladspa_deactivate(fluid_ladspa_fx_t *fx, int timeout_ms)
+int fluid_ladspa_deactivate(fluid_ladspa_fx_t *fx)
 {
     int i;
-    int retries;
 
     LADSPA_API_ENTER(fx);
 
@@ -258,32 +274,16 @@ int fluid_ladspa_deactivate(fluid_ladspa_fx_t *fx, int timeout_ms)
         LADSPA_API_RETURN(fx, FLUID_OK);
     }
 
-    /* Try to set the state to inactive. If this fails, then fluid_ladspa_run is currently
-     * processing plugins, so wait a little and try again. Set pending_deactivation to inform
-     * fluid_ladspa_run to bail out early, otherwise deactivation might clash with it
-     * again on the next retry. If it's still not possible to deactivate after the configured timeout,
-     * then log an error and report failure to the caller. */
+    /* Notify fluid_ladspa_run that we would like to deactivate and that it should
+     * send us a signal when its done if it is currently running */
     fx->pending_deactivation = 1;
 
-    for (retries = 0; retries <= timeout_ms; retries++)
+    fluid_cond_mutex_lock(fx->run_finished_mutex);
+    while (!fluid_atomic_int_compare_and_exchange(&fx->state, FLUID_LADSPA_ACTIVE, FLUID_LADSPA_INACTIVE))
     {
-        if (fluid_atomic_int_compare_and_exchange(&fx->state, FLUID_LADSPA_ACTIVE, FLUID_LADSPA_INACTIVE))
-        {
-            break;
-        }
-        if (timeout_ms)
-        {
-            /* FIXME: this should probably be a FLUID_* style macro */
-            g_usleep(1000); /* wait one millisecond */
-        }
+        fluid_cond_wait(fx->run_finished_cond, fx->run_finished_mutex);
     }
-
-    if (fluid_atomic_int_get(&fx->state) != FLUID_LADSPA_INACTIVE)
-    {
-        fx->pending_deactivation = 0;
-        FLUID_LOG(FLUID_ERR, "Unable to deactivate LADSPA after %dms!", timeout_ms);
-        LADSPA_API_RETURN(fx, FLUID_FAILED);
-    }
+    fluid_cond_mutex_unlock(fx->run_finished_mutex);
 
     /* Now that we're inactive, deactivate all plugins and return success */
     for (i = 0; i < fx->num_plugins; i++)
@@ -309,7 +309,7 @@ int fluid_ladspa_reset(fluid_ladspa_fx_t *fx)
 
     if (fluid_ladspa_is_active(fx))
     {
-        if (fluid_ladspa_deactivate(fx, FLUID_LADSPA_DEACTIVATE_TIMEOUT_MS) != FLUID_OK)
+        if (fluid_ladspa_deactivate(fx) != FLUID_OK)
         {
             LADSPA_API_RETURN(fx, FLUID_FAILED);
         }
@@ -387,6 +387,15 @@ void fluid_ladspa_run(fluid_ladspa_fx_t *fx, fluid_real_t *left_buf[], fluid_rea
     if (!fluid_atomic_int_compare_and_exchange(&fx->state, FLUID_LADSPA_RUNNING, FLUID_LADSPA_ACTIVE))
     {
         FLUID_LOG(FLUID_ERR, "Unable to reset LADSPA running state!");
+    }
+
+    /* If deactivation was requested while in running state, notify that we've finished now
+     * and deactivation can proceed */
+    if (fx->pending_deactivation)
+    {
+        fluid_cond_mutex_lock(fx->run_finished_mutex);
+        fluid_cond_broadcast(fx->run_finished_cond);
+        fluid_cond_mutex_unlock(fx->run_finished_mutex);
     }
 };
 

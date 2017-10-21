@@ -39,8 +39,6 @@
 #define FLUID_LADSPA_ACTIVE (1)
 #define FLUID_LADSPA_RUNNING (2)
 
-#define FLUID_LADSPA_DEACTIVATE_TIMEOUT_MS (1000)
-
 typedef enum _fluid_ladspa_dir_t {
     FLUID_LADSPA_INPUT,
     FLUID_LADSPA_OUTPUT,
@@ -121,6 +119,9 @@ typedef struct _fluid_ladspa_fx_t
     int state;
     int pending_deactivation;
 
+    fluid_cond_mutex_t *run_finished_mutex;
+    fluid_cond_t *run_finished_cond;
+
 } fluid_ladspa_fx_t;
 
 
@@ -130,7 +131,7 @@ int fluid_ladspa_set_sample_rate(fluid_ladspa_fx_t *fx, fluid_real_t sample_rate
 
 int fluid_ladspa_is_active(fluid_ladspa_fx_t *fx);
 int fluid_ladspa_activate(fluid_ladspa_fx_t *fx);
-int fluid_ladspa_deactivate(fluid_ladspa_fx_t *fx, int timeout_ms);
+int fluid_ladspa_deactivate(fluid_ladspa_fx_t *fx);
 int fluid_ladspa_reset(fluid_ladspa_fx_t *fx);
 
 void fluid_ladspa_run(fluid_ladspa_fx_t *fx, fluid_real_t *left_buf[], fluid_real_t *right_buf[],

@@ -1879,7 +1879,7 @@ int fluid_handle_ladspa_stop(fluid_cmd_handler_t *handler, int ac, char **av, fl
         fluid_ostream_printf(out, "LADSPA has not been started.\n");
     }
 
-    if (fluid_ladspa_deactivate(fx, FLUID_LADSPA_DEACTIVATE_TIMEOUT_MS) != FLUID_OK)
+    if (fluid_ladspa_deactivate(fx) != FLUID_OK)
     {
         fluid_ostream_printf(out, "Unable to stop LADSPA.\n");
         return FLUID_FAILED;
