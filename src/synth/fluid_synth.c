@@ -1738,7 +1738,6 @@ fluid_synth_system_reset(fluid_synth_t* synth)
 static int
 fluid_synth_system_reset_LOCAL(fluid_synth_t* synth)
 {
-  fluid_voice_t* voice;
   int i;
 
   fluid_synth_all_sounds_off_LOCAL(synth, -1);
