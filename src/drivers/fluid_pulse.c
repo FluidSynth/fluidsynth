@@ -251,6 +251,9 @@ fluid_pulse_audio_run2(void* d)
 
   if (left == NULL || right == NULL || buf == NULL)
   {
+    FLUID_FREE(left);
+    FLUID_FREE(right);
+    FLUID_FREE(buf);
     FLUID_LOG(FLUID_ERR, "Out of memory.");
     return;
   }
