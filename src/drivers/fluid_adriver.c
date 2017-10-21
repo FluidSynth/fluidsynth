@@ -27,7 +27,7 @@
 
 typedef struct _fluid_audriver_definition_t
 {
-  char* name;
+  const char* name;
   fluid_audio_driver_t* (*new)(fluid_settings_t* settings, fluid_synth_t* synth);
   fluid_audio_driver_t* (*new2)(fluid_settings_t* settings,
 				fluid_audio_func_t func,
@@ -119,7 +119,7 @@ int delete_fluid_file_audio_driver(fluid_audio_driver_t* p);
 #endif
 
 /* Available audio drivers, listed in order of preference */
-fluid_audriver_definition_t fluid_audio_drivers[] = {
+static const fluid_audriver_definition_t fluid_audio_drivers[] = {
 #if JACK_SUPPORT
   { "jack",
     new_fluid_jack_audio_driver,
@@ -190,7 +190,6 @@ fluid_audriver_definition_t fluid_audio_drivers[] = {
     delete_fluid_file_audio_driver,
     NULL },
 #endif
-  { NULL, NULL, NULL, NULL, NULL }
 };
 
 
@@ -198,7 +197,7 @@ fluid_audriver_definition_t fluid_audio_drivers[] = {
 
 void fluid_audio_driver_settings(fluid_settings_t* settings)
 {
-  int i;
+  unsigned int i;
 
   fluid_settings_register_str(settings, "audio.sample-format", "16bits", 0, NULL, NULL);
   fluid_settings_add_option(settings, "audio.sample-format", "16bits");
@@ -275,7 +274,7 @@ void fluid_audio_driver_settings(fluid_settings_t* settings)
   fluid_settings_add_option(settings, "audio.driver", "file");
 #endif
 
-  for (i = 0; fluid_audio_drivers[i].name != NULL; i++) {
+  for (i = 0; i < FLUID_N_ELEMENTS(fluid_audio_drivers); i++) {
     if (fluid_audio_drivers[i].settings != NULL) {
       fluid_audio_drivers[i].settings(settings);
     }
@@ -295,12 +294,12 @@ void fluid_audio_driver_settings(fluid_settings_t* settings)
 fluid_audio_driver_t*
 new_fluid_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
 {
-  int i;
+  unsigned int i;
   fluid_audio_driver_t* driver = NULL;
   char* name;
   char *allnames;
 
-  for (i = 0; fluid_audio_drivers[i].name != NULL; i++) {
+  for (i = 0; i < FLUID_N_ELEMENTS(fluid_audio_drivers); i++) {
     if (fluid_settings_str_equal(settings, "audio.driver", fluid_audio_drivers[i].name)) {
       FLUID_LOG(FLUID_DBG, "Using '%s' audio driver", fluid_audio_drivers[i].name);
       driver = (*fluid_audio_drivers[i].new)(settings, synth);
