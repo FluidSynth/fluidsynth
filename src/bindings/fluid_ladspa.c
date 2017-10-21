@@ -27,9 +27,7 @@
 #ifdef LADSPA
 
 #include "fluid_ladspa.h"
-#include "fluid_synth.h"
 #include "fluid_sys.h"
-#include <ctype.h>
 #include <dlfcn.h>
 
 #define LADSPA_API_ENTER(_fx) (fluid_rec_mutex_lock((_fx)->api_mutex))
