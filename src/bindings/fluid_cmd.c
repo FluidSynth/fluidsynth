@@ -1859,7 +1859,7 @@ int fluid_handle_ladspa_start(fluid_cmd_handler_t *handler, int ac, char **av, f
         return FLUID_FAILED;
     }
 
-    if (fluid_ladspa_activate(fx, handler->synth) != FLUID_OK)
+    if (fluid_ladspa_activate(fx) != FLUID_OK)
     {
         fluid_ostream_printf(out, "Unable to start LADSPA.\n");
         return FLUID_FAILED;
@@ -1879,7 +1879,7 @@ int fluid_handle_ladspa_stop(fluid_cmd_handler_t *handler, int ac, char **av, fl
         fluid_ostream_printf(out, "LADSPA has not been started.\n");
     }
 
-    if (fluid_ladspa_deactivate(fx, handler->synth) != FLUID_OK)
+    if (fluid_ladspa_deactivate(fx, FLUID_LADSPA_DEACTIVATE_TIMEOUT_MS) != FLUID_OK)
     {
         fluid_ostream_printf(out, "Unable to stop LADSPA.\n");
         return FLUID_FAILED;
@@ -1893,11 +1893,6 @@ int fluid_handle_ladspa_reset(fluid_cmd_handler_t *handler, int ac, char **av, f
     fluid_ladspa_fx_t *fx = handler->synth->ladspa_fx;
 
     CHECK_LADSPA_ENABLED(fx, out);
-
-    if (fluid_ladspa_is_active(fx))
-    {
-        fluid_ladspa_deactivate(fx, handler->synth);
-    }
 
     fluid_ladspa_reset(fx);
 

@@ -37,6 +37,9 @@
 
 #define FLUID_LADSPA_INACTIVE (0)
 #define FLUID_LADSPA_ACTIVE (1)
+#define FLUID_LADSPA_RUNNING (2)
+
+#define FLUID_LADSPA_DEACTIVATE_TIMEOUT_MS (1000)
 
 typedef enum _fluid_ladspa_dir_t {
     FLUID_LADSPA_INPUT,
@@ -68,7 +71,7 @@ typedef struct _fluid_ladspa_port_state_t
 
 typedef struct _fluid_ladspa_plugin_t
 {
-    /* plugin instance id unique to the synth */
+    /* plugin instance id unique to the effects unit */
     int id;
 
     const LADSPA_Descriptor *desc;
@@ -115,20 +118,19 @@ typedef struct _fluid_ladspa_fx_t
 
     fluid_rec_mutex_t api_mutex;
 
-    volatile int state;
-    fluid_cond_mutex_t *state_mutex;
-    fluid_cond_t *state_cond;
+    int state;
+    int pending_deactivation;
 
 } fluid_ladspa_fx_t;
 
 
-fluid_ladspa_fx_t *new_fluid_ladspa_fx(fluid_synth_t *synth);
+fluid_ladspa_fx_t *new_fluid_ladspa_fx(fluid_real_t sample_rate, int audio_groups, int effects_channels, int audio_channels);
 void delete_fluid_ladspa_fx(fluid_ladspa_fx_t *fx);
-void fluid_ladspa_set_sample_rate(fluid_ladspa_fx_t *fx, fluid_synth_t *synth);
+int fluid_ladspa_set_sample_rate(fluid_ladspa_fx_t *fx, fluid_real_t sample_rate);
 
 int fluid_ladspa_is_active(fluid_ladspa_fx_t *fx);
-int fluid_ladspa_activate(fluid_ladspa_fx_t *fx, fluid_synth_t *synth);
-int fluid_ladspa_deactivate(fluid_ladspa_fx_t *fx, fluid_synth_t *synth);
+int fluid_ladspa_activate(fluid_ladspa_fx_t *fx);
+int fluid_ladspa_deactivate(fluid_ladspa_fx_t *fx, int timeout_ms);
 int fluid_ladspa_reset(fluid_ladspa_fx_t *fx);
 
 void fluid_ladspa_run(fluid_ladspa_fx_t *fx, fluid_real_t *left_buf[], fluid_real_t *right_buf[],

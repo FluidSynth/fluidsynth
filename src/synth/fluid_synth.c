@@ -713,7 +713,8 @@ new_fluid_synth(fluid_settings_t *settings)
   /* Create and initialize the Fx unit.*/
   fluid_settings_getint(settings, "synth.ladspa.active", &with_ladspa);
   if (with_ladspa) {
-    synth->ladspa_fx = new_fluid_ladspa_fx(synth);
+    synth->ladspa_fx = new_fluid_ladspa_fx(synth->sample_rate, synth->audio_groups,
+            synth->effects_channels, synth->audio_channels);
     if(synth->ladspa_fx == NULL) {
       FLUID_LOG(FLUID_ERR, "Out of memory");
       goto error_recovery;

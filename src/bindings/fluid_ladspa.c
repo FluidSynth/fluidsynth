@@ -34,8 +34,6 @@
 
 #define LADSPA_API_ENTER(_fx) (fluid_rec_mutex_lock((_fx)->api_mutex))
 
-#define LADSPA_API_EXIT(_fx) (fluid_rec_mutex_unlock((_fx)->api_mutex))
-
 #define LADSPA_API_RETURN(_fx, _ret)          \
     fluid_rec_mutex_unlock((_fx)->api_mutex); \
     return (_ret);
@@ -71,10 +69,13 @@ static FLUID_INLINE void buffer_to_node(fluid_real_t *buffer, fluid_ladspa_node_
 /**
  * Creates a new LADSPA effects unit.
  *
- * @param synth FluidSynth instance
+ * @param sample_rate sample_rate for the LADSPA plugins
+ * @param audio_groups number of input audio channels (stereo)
+ * @param effects_channels number of input effects channels (stereo)
+ * @param audio_channels number of output audio channels (stereo)
  * @return pointer to the new LADSPA effects unit
  */
-fluid_ladspa_fx_t *new_fluid_ladspa_fx(fluid_synth_t *synth)
+fluid_ladspa_fx_t *new_fluid_ladspa_fx(fluid_real_t sample_rate, int audio_groups, int effects_channels, int audio_channels)
 {
     fluid_ladspa_fx_t *fx;
 
@@ -90,30 +91,16 @@ fluid_ladspa_fx_t *new_fluid_ladspa_fx(fluid_synth_t *synth)
 
     fx->state = FLUID_LADSPA_INACTIVE;
 
-    fx->sample_rate = (unsigned long)synth->sample_rate;
+    /* add 0.5 to minimize overall casting error */
+    fx->sample_rate = (unsigned long)sample_rate + 0.5;
 
-    fx->audio_groups = synth->audio_groups;
-    fx->effects_channels = synth->effects_channels;
-    fx->audio_channels = synth->audio_channels;
+    fx->audio_groups = audio_groups;
+    fx->effects_channels = effects_channels;
+    fx->audio_channels = audio_channels;
 
-    /* Setup mutex and cond used to signal deactivation from rvoice mixer thread */
-    fx->state_mutex = new_fluid_cond_mutex();
-    if (fx->state_mutex == NULL)
-    {
-        delete_fluid_ladspa_fx(fx);
-        return NULL;
-    }
-    fx->state_cond = new_fluid_cond();
-    if (fx->state_cond == NULL)
-    {
-        delete_fluid_ladspa_fx(fx);
-        return NULL;
-    }
-
-    /* Finally, create the nodes that carry audio into LADSPA and back out
-     * again to FluidSynth. They will always be the first in the fx->nodes
-     * array and not removed on fluid_ladspa_reset but only when this LADSPA fx
-     * instance is deleted. */
+    /* Finally, create the nodes that carry audio in and out of the LADSPA unit.
+     * They will always be the first in the fx->nodes array and not removed on
+     * fluid_ladspa_reset but only when this LADSPA fx instance is deleted. */
     if (create_input_output_nodes(fx) != FLUID_OK)
     {
         delete_fluid_ladspa_fx(fx);
@@ -130,7 +117,7 @@ fluid_ladspa_fx_t *new_fluid_ladspa_fx(fluid_synth_t *synth)
  * @note This function does not check the engine state for
  * possible users, so make sure that you only call this
  * if you are sure nobody is using the engine anymore (especially
- * that the FluidSynth rvoice mixer has been shut down)
+ * that nobody calls fluid_ladspa_run)
  *
  * @param fx LADSPA effects instance
  */
@@ -140,21 +127,11 @@ void delete_fluid_ladspa_fx(fluid_ladspa_fx_t *fx)
 
     clear_ladspa(fx);
 
-    /* clear the remaining input or output nodes used to interface with FluidSynth */
+    /* clear the remaining input or output nodes */
     for (i = 0; i < fx->num_nodes; i++)
     {
         delete_fluid_ladspa_node(fx->nodes[i]);
     };
-
-    if (fx->state_cond != NULL)
-    {
-        delete_fluid_cond(fx->state_cond);
-    }
-
-    if (fx->state_mutex != NULL)
-    {
-        delete_fluid_cond_mutex(fx->state_mutex);
-    }
 
     fluid_rec_mutex_destroy(fx->api_mutex);
 
@@ -165,49 +142,55 @@ void delete_fluid_ladspa_fx(fluid_ladspa_fx_t *fx)
  * Set the sample rate of the LADSPA effects.
  *
  * Resets the LADSPA effects if the sample rate is different from the
- * previous sample rate.
+ * previous sample rate. If the LADSPA effects is active, it tries to 
+ * deactivate and reset it once, without timeout.
  *
  * @param fx LADSPA fx instance
  * @param sample_rate new sample rate
+ * @return FLUID_OK on success, otherwise FLUID_FAILED
  */
-void fluid_ladspa_set_sample_rate(fluid_ladspa_fx_t *fx, fluid_synth_t *synth)
+int fluid_ladspa_set_sample_rate(fluid_ladspa_fx_t *fx, fluid_real_t sample_rate)
 {
-    unsigned long new_sample_rate = (unsigned long)synth->sample_rate;
+    unsigned long new_sample_rate;
 
     LADSPA_API_ENTER(fx);
 
+    /* Add 0.5 to minimize rounding errors */
+    new_sample_rate = (unsigned long)sample_rate + 0.5;
+
     if (fx->sample_rate == new_sample_rate)
     {
-        LADSPA_API_EXIT(fx);
-        return;
+        LADSPA_API_RETURN(fx, FLUID_OK);
     }
 
     if (fluid_ladspa_is_active(fx))
     {
-        if (fluid_ladspa_deactivate(fx, synth) != FLUID_OK)
+        /* Deactivate without timeout */
+        if (fluid_ladspa_deactivate(fx, 0) != FLUID_OK)
         {
             FLUID_LOG(FLUID_ERR, "Failed to deactivate LADSPA, unable to change sample rate");
-            LADSPA_API_EXIT(fx);
-            return;
+            LADSPA_API_RETURN(fx, FLUID_FAILED);
         }
+
+        /* A new sample rate means the plugin parameters need to be updateded anyway, so
+         * no point in keeping the old setup */
+        clear_ladspa(fx);
     }
 
-    clear_ladspa(fx);
     fx->sample_rate = new_sample_rate;
 
-    LADSPA_API_EXIT(fx);
+    LADSPA_API_RETURN(fx, FLUID_OK);
 }
 
 /**
- * Check if the LADSPA engine is in use by FluidSynth.
+ * Check if the LADSPA engine is currently used to render audio
  *
  * If an engine is active, the only allowed user actions are deactivation or
  * changing user control nodes. Anything else, especially adding or removing
  * plugins, nodes or ports, is only allowed in deactivated state.
  *
  * @param fx LADSPA fx instance
- * @param synth FluidSynth instance
- * @return 1 if LADSPA effects engine is active, otherwise 0
+ * @return TRUE if LADSPA effects engine is active, otherwise FALSE
  */
 int fluid_ladspa_is_active(fluid_ladspa_fx_t *fx)
 {
@@ -215,19 +198,18 @@ int fluid_ladspa_is_active(fluid_ladspa_fx_t *fx)
 
     LADSPA_API_ENTER(fx);
 
-    is_active = (fx->state != FLUID_LADSPA_INACTIVE);
+    is_active = (fluid_atomic_int_get(&fx->state) != FLUID_LADSPA_INACTIVE);
 
     LADSPA_API_RETURN(fx, is_active);
 }
 
 /**
- * Activate the LADSPA fx instance. Also activates each configured plugin.
+ * Activate the LADSPA fx instance and each configured plugin.
  *
  * @param fx LADSPA fx instance
- * @param synth FluidSynth instance
- * @return FLUID_OK if activation succeeded, otherwise FLUID_FAILED
+ * @return FLUID_OK if activation succeeded or already active, otherwise FLUID_FAILED
  */
-int fluid_ladspa_activate(fluid_ladspa_fx_t *fx, fluid_synth_t *synth)
+int fluid_ladspa_activate(fluid_ladspa_fx_t *fx)
 {
     int i;
 
@@ -243,53 +225,81 @@ int fluid_ladspa_activate(fluid_ladspa_fx_t *fx, fluid_synth_t *synth)
         activate_plugin(fx->plugins[i]);
     }
 
-    fx->state = FLUID_LADSPA_ACTIVE;
+    if (!fluid_atomic_int_compare_and_exchange(&fx->state, FLUID_LADSPA_INACTIVE, FLUID_LADSPA_ACTIVE))
+    {
+        for (i = 0; i < fx->num_plugins; i++)
+        {
+            deactivate_plugin(fx->plugins[i]);
+        }
+        LADSPA_API_RETURN(fx, FLUID_FAILED);
+    }
 
     LADSPA_API_RETURN(fx, FLUID_OK);
 }
 
 /**
- * Deactivate a LADSPA fx instance. Also deactivates each active plugin.
+ * Deactivate a LADSPA fx instance and all configured plugins.
+ *
+ * @note This function may sleep.
  *
  * @param fx LADSPA fx instance
- * @param synth FluidSynth instance
+ * @param timeout_ms number of milliseconds to wait for deactivation. Set to 0 to return immediately on failiure.
  * @return FLUID_OK if deactivation succeeded, otherwise FLUID_FAILED
  */
-int fluid_ladspa_deactivate(fluid_ladspa_fx_t *fx, fluid_synth_t *synth)
+int fluid_ladspa_deactivate(fluid_ladspa_fx_t *fx, int timeout_ms)
 {
     int i;
+    int retries;
 
     LADSPA_API_ENTER(fx);
 
-    if (!fluid_ladspa_is_active(fx))
+    /* If we are already inactive, then simply return success */
+    if (fluid_atomic_int_get(&fx->state) == FLUID_LADSPA_INACTIVE)
     {
+        LADSPA_API_RETURN(fx, FLUID_OK);
+    }
+
+    /* Try to set the state to inactive. If this fails, then fluid_ladspa_run is currently
+     * processing plugins, so wait a little and try again. Set pending_deactivation to inform
+     * fluid_ladspa_run to bail out early, otherwise deactivation might clash with it
+     * again on the next retry. If it's still not possible to deactivate after the configured timeout,
+     * then log an error and report failure to the caller. */
+    fx->pending_deactivation = 1;
+
+    for (retries = 0; retries <= timeout_ms; retries++)
+    {
+        if (fluid_atomic_int_compare_and_exchange(&fx->state, FLUID_LADSPA_ACTIVE, FLUID_LADSPA_INACTIVE))
+        {
+            break;
+        }
+        if (timeout_ms)
+        {
+            /* FIXME: this should probably be a FLUID_* style macro */
+            g_usleep(1000); /* wait one millisecond */
+        }
+    }
+
+    if (fluid_atomic_int_get(&fx->state) != FLUID_LADSPA_INACTIVE)
+    {
+        fx->pending_deactivation = 0;
+        FLUID_LOG(FLUID_ERR, "Unable to deactivate LADSPA after %dms!", timeout_ms);
         LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
 
-    if (fluid_synth_deactivate_ladspa(synth) != FLUID_OK)
-    {
-        LADSPA_API_RETURN(fx, FLUID_FAILED);
-    }
-
-    /* Wait for the rvoice mixer thread to deactivate LADSPA */
-    fluid_cond_mutex_lock(fx->state_mutex);
-    while (fx->state != FLUID_LADSPA_INACTIVE)
-    {
-        fluid_cond_wait(fx->state_cond, fx->state_mutex);
-    }
-    fluid_cond_mutex_unlock(fx->state_mutex);
-
+    /* Now that we're inactive, deactivate all plugins and return success */
     for (i = 0; i < fx->num_plugins; i++)
     {
         deactivate_plugin(fx->plugins[i]);
     }
 
+    fx->pending_deactivation = 0;
+
     LADSPA_API_RETURN(fx, FLUID_OK);
 }
 
 /**
- * Clear the LADSPA effects engine. Removes all plugin instances, unloads all libraries
- * and resets the LADSPA engine to default state.
+ * Reset the LADSPA effects engine: Deactivate LADSPA if currently active, remove all
+ * plugin instances, remove all user nodes and unload all libraries.
  *
  * @param fx LADSPA fx instance
  * @return FLUID_OK on success, otherwise FLUID_FAILED
@@ -300,7 +310,10 @@ int fluid_ladspa_reset(fluid_ladspa_fx_t *fx)
 
     if (fluid_ladspa_is_active(fx))
     {
-        LADSPA_API_RETURN(fx, FLUID_FAILED);
+        if (fluid_ladspa_deactivate(fx, FLUID_LADSPA_DEACTIVATE_TIMEOUT_MS) != FLUID_OK)
+        {
+            LADSPA_API_RETURN(fx, FLUID_FAILED);
+        }
     }
 
     clear_ladspa(fx);
@@ -311,7 +324,7 @@ int fluid_ladspa_reset(fluid_ladspa_fx_t *fx)
 /**
  * Processes a block of audio data via the LADSPA effects unit.
  *
- * This function is called during the main FluidSynth output mixing, just after
+ * FluidSynth calls this function during main output mixing, just after
  * the internal reverb and chorus effects have been processed.
  *
  * It reads data from the supplied buffers, runs all LADSPA plugins and writes the
@@ -326,10 +339,23 @@ void fluid_ladspa_run(fluid_ladspa_fx_t *fx, fluid_real_t *left_buf[], fluid_rea
 {
     int i, n;
 
-    /* The nodes used to interface with FluidSynth are always the first nodes in the fx->nodes
-     * array. They are created in the order: inputs, effect sends, outputs. Left and right channels
-     * interleaved, so in1_L, in1_R, ... */
+    /* Somebody wants to deactivate the engine, so let's give them a chance to do that.
+     * And check that there is at least one plugin loaded, to avoid the overhead of the
+     * atomic compare and exchange on an unconfigured LADSPA engine. */
+    if (fx->pending_deactivation || fx->num_plugins == 0)
+    {
+        return;
+    }
 
+    /* Inform the engine that we are now running pluings, and bail out if it's not active */
+    if (!fluid_atomic_int_compare_and_exchange(&fx->state, FLUID_LADSPA_ACTIVE, FLUID_LADSPA_RUNNING))
+    {
+        return;
+    }
+
+    /* The input and output nodes are always first in the fx->nodes array, in the order:
+     * main inputs, effect inputs, main outputs.
+     * All inputs and outputs use two nodes (stereo), left and right channels interleaved. */
     n = 0;
 
     /* Incoming main audio data */
@@ -339,7 +365,7 @@ void fluid_ladspa_run(fluid_ladspa_fx_t *fx, fluid_real_t *left_buf[], fluid_rea
         buffer_to_node(right_buf[i], fx->nodes[n++]);
     };
 
-    /* Effect send paths */
+    /* Incoming effects audio data */
     for (i = 0; i < fx->effects_channels; i++)
     {
         buffer_to_node(fx_left_buf[i], fx->nodes[n++]);
@@ -352,20 +378,24 @@ void fluid_ladspa_run(fluid_ladspa_fx_t *fx, fluid_real_t *left_buf[], fluid_rea
         fx->plugins[i]->desc->run(fx->plugins[i]->handle, FLUID_BUFSIZE);
     };
 
-    /* Copy the data from the output nodes back to the synth. */
+    /* Copy the data from the output nodes back to the output buffers */
     for (i = 0; i < fx->audio_channels; i++)
     {
         node_to_buffer(fx->nodes[n++], left_buf[i]);
         node_to_buffer(fx->nodes[n++], right_buf[i]);
     };
+
+    if (!fluid_atomic_int_compare_and_exchange(&fx->state, FLUID_LADSPA_RUNNING, FLUID_LADSPA_ACTIVE))
+    {
+        FLUID_LOG(FLUID_ERR, "Unable to reset LADSPA running state!");
+    }
 };
 
 /**
- * Creates the nodes to get data from FluidSynth into the LADSPA effects
- * and back out again to FluidSynth
+ * Create the nodes to get data in and out of the LADSPA effects unit.
  *
  * The nodes are named from LADSPAs perspective. So the "in*" and "send*" nodes carry audio data
- * from FluidSynth into LADSPA, "out*" nodes carry audio data from LADSPA back into FluidSynth.
+ * into LADSPA, "out*" nodes carry audio data back out.
  *
  * System nodes are referenced from the fx->nodes array, just like user created nodes. The system
  * nodes are always the first in the array. The order of nodes is:
@@ -379,8 +409,7 @@ static int create_input_output_nodes(fluid_ladspa_fx_t *fx)
     char name[99];
     int i;
 
-    /* These nodes transport the main audio generated by FluidSynth into the
-     * LADSPA effects unit. Create left and right input nodes for each audio group. */
+    /* Create left and right input nodes for each audio group. */
     for (i = 0; i < fx->audio_groups; i++)
     {
         FLUID_SNPRINTF(name, sizeof(name), "in%i_L", (i + 1));
@@ -396,24 +425,7 @@ static int create_input_output_nodes(fluid_ladspa_fx_t *fx)
         }
     };
 
-    /* These nodes transport the reverb and chorus audio generated by FluidSynth into the
-     * LADSPA effects unit. Create left and right input nodes for each effect channel.
-     *
-     * Note: even though FluidSynth has an "effects-channels" setting, that number is currently not
-     * used. If set to anything larger than 2, those additional buffers are created but never filled
-     * with any data. Only effect channels 0 (reverb) and 1 (chorus) are used.
-     *
-     * Unless the fluid_synth_nwrite_float multi-channel output is used in combination with
-     * fluid_rvoice_mixer_set_mix_fx(0), then the effects are mixed into the first main audio
-     * channels and not into these dedicated effect sends.
-     *
-     * Also: the reverb and chorus send buffers are only filled if the respective effect is active
-     * in the synth. If it is switched off, the buffers are not filled at all. This is due to an
-     * optimization in fluid_mixer_buffers_prepare. So there is no way to get the dry effect send
-     * for reverb and chorus, i.e. the signal that is meant to be fed into such an effect as
-     * specified for the instrument in the soundfont without having an active reverb or chrous unit.
-     * Only the already processed signal is available.
-     */
+     /* Create left and right input nodes for each effect channel */
     for (i = 0; i < fx->effects_channels; i++)
     {
         FLUID_SNPRINTF(name, sizeof(name), "send%i_L", (i + 1));
@@ -429,9 +441,7 @@ static int create_input_output_nodes(fluid_ladspa_fx_t *fx)
         }
     };
 
-    /* These nodes transport the audio as processed by the LADSPA effects back into
-     * the FluidSynth output buffers (and then usually to a soundcard). Create
-     * left and right output nodes for each audio channel. */
+    /* Create left and right output nodes for each audio channel. */
     for (i = 0; i < fx->audio_channels; i++)
     {
         FLUID_SNPRINTF(name, sizeof(name), "out%i_L", (i + 1));
@@ -518,7 +528,7 @@ int fluid_ladspa_port_exists(fluid_ladspa_fx_t *fx, int plugin_id, const char *n
     plugin = get_plugin_by_id(fx, plugin_id);
     if (plugin == NULL)
     {
-        LADSPA_API_RETURN(fx, 0);
+        LADSPA_API_RETURN(fx, FALSE);
     }
 
     port_exists = (get_plugin_port_idx(plugin, name) != -1);
@@ -621,7 +631,7 @@ int fluid_ladspa_set_control_node(fluid_ladspa_fx_t *fx, const char *name, fluid
  *
  * The returned id can be used to reference this plugin instance at a later time,
  * for example when connecting the plugin instance ports with nodes. Plugin instance
- * ids are never reused in a synth.
+ * ids are never reused in a LADSPA fx instance.
  *
  * @param fx LADSPA effects instance
  * @param lib_name filename of ladspa plugin library
@@ -887,6 +897,10 @@ int fluid_ladspa_check(fluid_ladspa_fx_t *fx, char *err, int err_size)
 
 static FLUID_INLINE void buffer_to_node(fluid_real_t *buffer, fluid_ladspa_node_t *node)
 {
+#ifndef WITH_FLOAT
+    int i;
+#endif
+
     /* If the node is not used by any plugin, then we don't need to fill it */
     if (node->num_outputs == 0)
     {
@@ -896,7 +910,7 @@ static FLUID_INLINE void buffer_to_node(fluid_real_t *buffer, fluid_ladspa_node_
 #ifdef WITH_FLOAT
     FLUID_MEMCPY(node->buf, buffer, FLUID_BUFSIZE * sizeof(float));
 #else
-    for (int i = 0; i < FLUID_BUFSIZE; i++)
+    for (i = 0; i < FLUID_BUFSIZE; i++)
     {
         node->buf[i] = (LADSPA_Data)buffer[i];
     };
@@ -905,6 +919,10 @@ static FLUID_INLINE void buffer_to_node(fluid_real_t *buffer, fluid_ladspa_node_
 
 static FLUID_INLINE void node_to_buffer(fluid_ladspa_node_t *node, fluid_real_t *buffer)
 {
+#ifndef WITH_FLOAT
+    int i;
+#endif
+
     /* If the node has no inputs, then we don't need to copy it to the node */
     if (node->num_inputs == 0)
     {
@@ -914,7 +932,7 @@ static FLUID_INLINE void node_to_buffer(fluid_ladspa_node_t *node, fluid_real_t 
 #ifdef WITH_FLOAT
     FLUID_MEMCPY(buffer, node->buf, FLUID_BUFSIZE * sizeof(float));
 #else
-    for (int i = 0; i < FLUID_BUFSIZE; i++)
+    for (i = 0; i < FLUID_BUFSIZE; i++)
     {
         buffer[i] = (fluid_real_t)node->buf[i];
     };
