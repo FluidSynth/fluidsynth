@@ -122,7 +122,7 @@ fluid_ladspa_fx_t *new_fluid_ladspa_fx(fluid_real_t sample_rate, int audio_group
     }
 
     return fx;
-};
+}
 
 /**
  * Destroys and frees a LADSPA effects unit previously created
@@ -145,7 +145,7 @@ void delete_fluid_ladspa_fx(fluid_ladspa_fx_t *fx)
     for (i = 0; i < fx->num_nodes; i++)
     {
         delete_fluid_ladspa_node(fx->nodes[i]);
-    };
+    }
 
     if (fx->run_finished_cond != NULL)
     {
@@ -160,7 +160,7 @@ void delete_fluid_ladspa_fx(fluid_ladspa_fx_t *fx)
     fluid_rec_mutex_destroy(fx->api_mutex);
 
     FLUID_FREE(fx);
-};
+}
 
 /**
  * Set the sample rate of the LADSPA effects.
@@ -363,27 +363,27 @@ void fluid_ladspa_run(fluid_ladspa_fx_t *fx, fluid_real_t *left_buf[], fluid_rea
     {
         buffer_to_node(left_buf[i], fx->nodes[n++]);
         buffer_to_node(right_buf[i], fx->nodes[n++]);
-    };
+    }
 
     /* Incoming effects audio data */
     for (i = 0; i < fx->effects_channels; i++)
     {
         buffer_to_node(fx_left_buf[i], fx->nodes[n++]);
         buffer_to_node(fx_right_buf[i], fx->nodes[n++]);
-    };
+    }
 
     /* Run each plugin on a block of data */
     for (i = 0; i < fx->num_plugins; i++)
     {
         fx->plugins[i]->desc->run(fx->plugins[i]->handle, FLUID_BUFSIZE);
-    };
+    }
 
     /* Copy the data from the output nodes back to the output buffers */
     for (i = 0; i < fx->audio_channels; i++)
     {
         node_to_buffer(fx->nodes[n++], left_buf[i]);
         node_to_buffer(fx->nodes[n++], right_buf[i]);
-    };
+    }
 
     if (!fluid_atomic_int_compare_and_exchange(&fx->state, FLUID_LADSPA_RUNNING, FLUID_LADSPA_ACTIVE))
     {
@@ -398,7 +398,7 @@ void fluid_ladspa_run(fluid_ladspa_fx_t *fx, fluid_real_t *left_buf[], fluid_rea
         fluid_cond_broadcast(fx->run_finished_cond);
         fluid_cond_mutex_unlock(fx->run_finished_mutex);
     }
-};
+}
 
 /**
  * Create the nodes to get data in and out of the LADSPA effects unit.
@@ -432,7 +432,7 @@ static int create_input_output_nodes(fluid_ladspa_fx_t *fx)
         {
             return FLUID_FAILED;
         }
-    };
+    }
 
      /* Create left and right input nodes for each effect channel */
     for (i = 0; i < fx->effects_channels; i++)
@@ -448,7 +448,7 @@ static int create_input_output_nodes(fluid_ladspa_fx_t *fx)
         {
             return FLUID_FAILED;
         }
-    };
+    }
 
     /* Create left and right output nodes for each audio channel. */
     for (i = 0; i < fx->audio_channels; i++)
@@ -464,10 +464,10 @@ static int create_input_output_nodes(fluid_ladspa_fx_t *fx)
         {
             return FLUID_FAILED;
         }
-    };
+    }
 
     return FLUID_OK;
-};
+}
 
 static void clear_ladspa(fluid_ladspa_fx_t *fx)
 {
@@ -487,7 +487,7 @@ static void clear_ladspa(fluid_ladspa_fx_t *fx)
     {
         unload_plugin_library(fx->libs[i]);
         delete_fluid_ladspa_lib(fx->libs[i]);
-    };
+    }
     fx->num_libs = 0;
 
     /* Free all user defined nodes, leaving system nodes untouched */
@@ -495,9 +495,9 @@ static void clear_ladspa(fluid_ladspa_fx_t *fx)
     for (i = num_system_nodes; i < fx->num_nodes; i++)
     {
         delete_fluid_ladspa_node(fx->nodes[i]);
-    };
+    }
     fx->num_nodes = num_system_nodes;
-};
+}
 
 /**
  * Check if a named node exists. Nodes are searched by case-insensitive string comparison.
@@ -922,7 +922,7 @@ static FLUID_INLINE void buffer_to_node(fluid_real_t *buffer, fluid_ladspa_node_
     for (i = 0; i < FLUID_BUFSIZE; i++)
     {
         node->buf[i] = (LADSPA_Data)buffer[i];
-    };
+    }
 #endif
 }
 
@@ -944,7 +944,7 @@ static FLUID_INLINE void node_to_buffer(fluid_ladspa_node_t *node, fluid_real_t 
     for (i = 0; i < FLUID_BUFSIZE; i++)
     {
         buffer[i] = (fluid_real_t)node->buf[i];
-    };
+    }
 #endif
 }
 
