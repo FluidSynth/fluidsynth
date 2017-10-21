@@ -277,7 +277,7 @@ int fluid_ladspa_deactivate(fluid_ladspa_fx_t *fx)
 
     /* Notify fluid_ladspa_run that we would like to deactivate and that it should
      * send us a signal when its done if it is currently running */
-    fx->pending_deactivation = 1;
+    fluid_atomic_int_set(&fx->pending_deactivation, 1);
 
     fluid_cond_mutex_lock(fx->run_finished_mutex);
     while (!fluid_atomic_int_compare_and_exchange(&fx->state, FLUID_LADSPA_ACTIVE, FLUID_LADSPA_INACTIVE))
@@ -292,7 +292,7 @@ int fluid_ladspa_deactivate(fluid_ladspa_fx_t *fx)
         deactivate_plugin(fx->plugins[i]);
     }
 
-    fx->pending_deactivation = 0;
+    fluid_atomic_int_set(&fx->pending_deactivation, 0);
 
     LADSPA_API_RETURN(fx, FLUID_OK);
 }
@@ -342,7 +342,7 @@ void fluid_ladspa_run(fluid_ladspa_fx_t *fx, fluid_real_t *left_buf[], fluid_rea
     /* Somebody wants to deactivate the engine, so let's give them a chance to do that.
      * And check that there is at least one plugin loaded, to avoid the overhead of the
      * atomic compare and exchange on an unconfigured LADSPA engine. */
-    if (fx->pending_deactivation || fx->num_plugins == 0)
+    if (fluid_atomic_int_get(&fx->pending_deactivation) || fx->num_plugins == 0)
     {
         return;
     }
@@ -392,7 +392,7 @@ void fluid_ladspa_run(fluid_ladspa_fx_t *fx, fluid_real_t *left_buf[], fluid_rea
 
     /* If deactivation was requested while in running state, notify that we've finished now
      * and deactivation can proceed */
-    if (fx->pending_deactivation)
+    if (fluid_atomic_int_get(&fx->pending_deactivation))
     {
         fluid_cond_mutex_lock(fx->run_finished_mutex);
         fluid_cond_broadcast(fx->run_finished_cond);
