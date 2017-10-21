@@ -344,8 +344,10 @@ int fluid_ladspa_reset(fluid_ladspa_fx_t *fx)
  * resulting audio back into the same buffers.
  *
  * @param fx LADSPA effects instance
- * @param buf array of pointers into the interleaved left and right audio group buffers
- * @param fx_buf array of pointers into the interleaved left and right effects channel buffers
+ * @param left_buf array of pointers into the left audio group buffers
+ * @param right_buf array of pointers into the right audio group buffers
+ * @param fx_left_buf array of pointers into the left effects buffers
+ * @param fx_right_buf array of pointers into the right effects buffers
  */
 void fluid_ladspa_run(fluid_ladspa_fx_t *fx, fluid_real_t *left_buf[], fluid_real_t *right_buf[],
                       fluid_real_t *fx_left_buf[], fluid_real_t *fx_right_buf[])
