@@ -66,8 +66,8 @@ void fluid_time_config(void);
 #define FLUID_N_ELEMENTS(struct)  (sizeof (struct) / sizeof (struct[0]))
 
 /* Open/closes statement block */
-#define FLUID_STMT_START          G_STMT_START
-#define FLUID_STMT_END            G_STMT_END
+#define FLUID_STMT_START          do
+#define FLUID_STMT_END            while (0)
 
 #define FLUID_IS_BIG_ENDIAN       (G_BYTE_ORDER == G_BIG_ENDIAN)
 
