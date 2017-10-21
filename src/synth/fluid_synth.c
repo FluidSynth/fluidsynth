@@ -3895,10 +3895,10 @@ fluid_synth_set_reverb_on(fluid_synth_t* synth, int on)
  * @note Currently private to libfluidsynth.
  */
 int
-fluid_synth_set_reverb_preset(fluid_synth_t* synth, int num)
+fluid_synth_set_reverb_preset(fluid_synth_t* synth, unsigned int num)
 {
   fluid_return_val_if_fail (
-    num < 0 || num >= (int)FLUID_N_ELEMENTS(revmodel_preset),
+    num < FLUID_N_ELEMENTS(revmodel_preset),
     FLUID_FAILED
   );
 

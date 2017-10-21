@@ -191,7 +191,7 @@ void fluid_synth_dither_s16(int *dither_index, int len, float* lin, float* rin,
 			    void* rout, int roff, int rincr);
 
 int fluid_synth_reset_reverb(fluid_synth_t* synth);
-int fluid_synth_set_reverb_preset(fluid_synth_t* synth, int num);
+int fluid_synth_set_reverb_preset(fluid_synth_t* synth, unsigned int num);
 int fluid_synth_set_reverb_full(fluid_synth_t* synth, int set, double roomsize,
                                 double damping, double width, double level);
 
