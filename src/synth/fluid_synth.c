@@ -139,14 +139,13 @@ fluid_mod_t default_chorus_mod;         /* SF2.01 section 8.4.9  */
 fluid_mod_t default_pitch_bend_mod;     /* SF2.01 section 8.4.10 */
 
 /* reverb presets */
-static fluid_revmodel_presets_t revmodel_preset[] = {
+static const fluid_revmodel_presets_t revmodel_preset[] = {
   /* name */    /* roomsize */ /* damp */ /* width */ /* level */
   { "Test 1",          0.2f,      0.0f,       0.5f,       0.9f },
   { "Test 2",          0.4f,      0.2f,       0.5f,       0.8f },
   { "Test 3",          0.6f,      0.4f,       0.5f,       0.7f },
   { "Test 4",          0.8f,      0.7f,       0.5f,       0.6f },
   { "Test 5",          0.8f,      1.0f,       0.5f,       0.5f },
-  { NULL, 0.0f, 0.0f, 0.0f, 0.0f }
 };
 
 
@@ -3799,7 +3798,7 @@ fluid_synth_get_channel_info (fluid_synth_t *synth, int chan,
 {
   fluid_channel_t *channel;
   fluid_preset_t *preset;
-  char *name;
+  const char *name;
 
   if (info)
   {
@@ -3897,19 +3896,15 @@ fluid_synth_set_reverb_on(fluid_synth_t* synth, int on)
  * @note Currently private to libfluidsynth.
  */
 int
-fluid_synth_set_reverb_preset(fluid_synth_t* synth, int num)
+fluid_synth_set_reverb_preset(fluid_synth_t* synth, unsigned int num)
 {
-  int i = 0;
-  while (revmodel_preset[i].name != NULL) {
-    if (i == num) {
-      fluid_synth_set_reverb (synth, revmodel_preset[i].roomsize,
-                              revmodel_preset[i].damp, revmodel_preset[i].width,
-                              revmodel_preset[i].level);
-      return FLUID_OK;
-    }
-    i++;
-  }
-  return FLUID_FAILED;
+  if (num >= FLUID_N_ELEMENTS(revmodel_preset))
+    return FLUID_FAILED;
+
+  fluid_synth_set_reverb (synth, revmodel_preset[num].roomsize,
+                          revmodel_preset[num].damp, revmodel_preset[num].width,
+                          revmodel_preset[num].level);
+  return FLUID_OK;
 }
 
 /**
