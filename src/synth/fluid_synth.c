@@ -554,9 +554,7 @@ new_fluid_synth(fluid_settings_t *settings)
   fluid_sfloader_t* loader;
   double gain;
   int i, nbuf;
-#ifdef LADSPA
   int with_ladspa = 0;
-#endif
   
   /* initialize all the conversion tables and other stuff */
   if (fluid_synth_initialized == 0)
@@ -708,10 +706,10 @@ new_fluid_synth(fluid_settings_t *settings)
   fluid_synth_add_default_mod(synth, &default_pitch_bend_mod, FLUID_SYNTH_ADD);
 
 
-#ifdef LADSPA
   /* Create and initialize the Fx unit.*/
   fluid_settings_getint(settings, "synth.ladspa.active", &with_ladspa);
   if (with_ladspa) {
+#ifdef LADSPA
     synth->ladspa_fx = new_fluid_ladspa_fx(synth->sample_rate, synth->audio_groups,
             synth->effects_channels, synth->audio_channels);
     if(synth->ladspa_fx == NULL) {
@@ -719,8 +717,10 @@ new_fluid_synth(fluid_settings_t *settings)
       goto error_recovery;
     }
     fluid_rvoice_mixer_set_ladspa(synth->eventhandler->mixer, synth->ladspa_fx);
+#else /* LADSPA */
+    FLUID_LOG(FLUID_WARN, "FluidSynth has not been compiled with LADSPA support");
+#endif /* LADSPA */
   }
-#endif
   
   /* allocate and add the default sfont loader */
   loader = new_fluid_defsfloader(settings);
