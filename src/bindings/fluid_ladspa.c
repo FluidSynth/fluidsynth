@@ -20,7 +20,7 @@
 
 /* This module: 3/2002
  * Author: Markus Nentwig, nentwig@users.sourceforge.net
- * 
+ *
  * Complete rewrite: 10/2017
  * Author: Marcus Weseloh
  */
@@ -1101,7 +1101,7 @@ static const LADSPA_Descriptor *get_plugin_descriptor(const fluid_ladspa_lib_t *
     }
 }
 
-/** 
+/**
  * Instantiate a new LADSPA plugin from a library and set up the associated
  * control structures needed by the LADSPA fx engine.
  *
@@ -1158,7 +1158,7 @@ static void delete_fluid_ladspa_plugin(fluid_ladspa_plugin_t *plugin)
     {
         return;
     }
-    
+
     if (plugin->ports != NULL)
     {
         FLUID_FREE(plugin->ports);
