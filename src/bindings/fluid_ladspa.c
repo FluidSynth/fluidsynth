@@ -37,7 +37,7 @@
 
 #define LADSPA_API_RETURN(_fx, _ret)          \
     fluid_rec_mutex_unlock((_fx)->api_mutex); \
-    return (_ret);
+    return (_ret)
 
 static void clear_ladspa(fluid_ladspa_fx_t *fx);
 
