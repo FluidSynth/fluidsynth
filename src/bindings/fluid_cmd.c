@@ -189,6 +189,8 @@ static const fluid_cmd_int_t fluid_commands[] = {
     "ladspa_node                Create a LADSPA audio or control node"},
   { "ladspa_control", "ladspa", (fluid_cmd_func_t) fluid_handle_ladspa_control,
     "ladspa_control             Set the value of a LADSPA control node"},
+  { "ladspa_control_defaults", "ladspa", (fluid_cmd_func_t) fluid_handle_ladspa_control_defaults,
+    "ladspa_control_defaults    Assign all unconnected controls on all plugins their default value"},
   { "ladspa_check", "ladspa", (fluid_cmd_func_t) fluid_handle_ladspa_check,
     "ladspa_check               Check LADSPA configuration"},
   { "ladspa_start", "ladspa", (fluid_cmd_func_t) fluid_handle_ladspa_start,
@@ -1904,6 +1906,23 @@ int fluid_handle_ladspa_reset(fluid_cmd_handler_t *handler, int ac, char **av, f
     CHECK_LADSPA_ENABLED(fx, out);
 
     fluid_ladspa_reset(fx);
+
+    return FLUID_OK;
+}
+
+int fluid_handle_ladspa_control_defaults(fluid_cmd_handler_t *handler, int ac, char **av, fluid_ostream_t out)
+{
+    fluid_ladspa_fx_t *fx = handler->synth->ladspa_fx;
+
+    CHECK_LADSPA_ENABLED(fx, out);
+
+    if (fluid_ladspa_control_defaults(fx) != FLUID_OK)
+    {
+        fluid_ostream_printf(out, "Error while setting default values for control ports\n");
+        return FLUID_FAILED;
+    }
+
+    fluid_ostream_printf(out, "Control port defaults set\n");
 
     return FLUID_OK;
 }
