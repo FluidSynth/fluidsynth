@@ -89,7 +89,7 @@ fluid_ladspa_fx_t *new_fluid_ladspa_fx(fluid_real_t sample_rate, int audio_group
     fx->state = FLUID_LADSPA_INACTIVE;
 
     /* add 0.5 to minimize overall casting error */
-    fx->sample_rate = (unsigned long)sample_rate + 0.5;
+    fx->sample_rate = (unsigned long)(sample_rate + 0.5);
 
     fx->audio_groups = audio_groups;
     fx->effects_channels = effects_channels;
@@ -176,7 +176,7 @@ int fluid_ladspa_set_sample_rate(fluid_ladspa_fx_t *fx, fluid_real_t sample_rate
     LADSPA_API_ENTER(fx);
 
     /* Add 0.5 to minimize rounding errors */
-    new_sample_rate = (unsigned long)sample_rate + 0.5;
+    new_sample_rate = (unsigned long)(sample_rate + 0.5);
 
     if (fx->sample_rate == new_sample_rate)
     {
