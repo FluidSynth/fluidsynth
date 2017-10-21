@@ -48,7 +48,6 @@ static fluid_ladspa_node_t *get_node(fluid_ladspa_fx_t *fx, const char *name);
 
 static int get_plugin_port_idx(const fluid_ladspa_plugin_t *plugin, const char *name);
 static const LADSPA_Descriptor *get_plugin_descriptor(const fluid_ladspa_lib_t *lib, const char *name);
-static int fuzzy_prefix_match(const char *haystack, const char *needle);
 
 static fluid_ladspa_plugin_t *
 new_fluid_ladspa_plugin(fluid_ladspa_fx_t *fx, const fluid_ladspa_lib_t *lib, const char *name);
@@ -682,7 +681,7 @@ int fluid_ladspa_add_plugin(fluid_ladspa_fx_t *fx, const char *lib_name, const c
  * @param fx LADSPA effects instance
  * @param plugin_id the integer plugin id as returned by fluid_ladspa_add_plugin
  * @param dir connect to port as FLUID_LADSPA_INPUT or FLUID_LADSPA_OUTPUT
- * @param port_name the port name to connect to (fuzzy match, see get_plugin_port_idx)
+ * @param port_name the port name to connect to (prefix match, see get_plugin_port_idx)
  * @param node_name the node name to connect to (exact match)
  * @return FLUID_OK on success, otherwise FLUID_FAILED
  */
@@ -964,46 +963,6 @@ static void deactivate_plugin(fluid_ladspa_plugin_t *plugin)
 }
 
 /**
- * Does a case insensitive 'fuzzy' prefix match.
- *
- * Checks if haystack starts with needle, ignoring case differences and
- * treating spaces and underscores as equal.
- *
- * @param haystack string to search in
- * @param needle string prefix to search for
- * @return TRUE if match was found, otherwise FALSE
- */
-static int fuzzy_prefix_match(const char *haystack, const char *needle)
-{
-    unsigned int num_chars;
-    unsigned int i;
-    char a;
-    char b;
-
-    num_chars = FLUID_STRLEN(needle);
-    if (FLUID_STRLEN(haystack) < num_chars)
-    {
-        return FALSE;
-    }
-
-    for (i = 0; i < num_chars; i++)
-    {
-        a = haystack[i];
-        a = (a == ' ') ? '_' : tolower(a);
-
-        b = needle[i];
-        b = (b == ' ') ? '_' : tolower(b);
-
-        if (a != b)
-        {
-            return FALSE;
-        }
-    }
-
-    return TRUE;
-}
-
-/**
  * Return a LADSPA node by name. Nodes are searched by exact string comparison.
  *
  * @param fx LADSPA fx instance
@@ -1043,7 +1002,7 @@ static int get_plugin_port_idx(const fluid_ladspa_plugin_t *plugin, const char *
 
     for (i = 0; i < plugin->desc->PortCount; i++)
     {
-        if (fuzzy_prefix_match(plugin->desc->PortNames[i], name))
+        if (FLUID_STRNCASECMP(plugin->desc->PortNames[i], name, FLUID_STRLEN(name)) == 0)
         {
             /* exact match, return immediately */
             if (FLUID_STRLEN(plugin->desc->PortNames[i]) == FLUID_STRLEN(name))
@@ -1051,7 +1010,7 @@ static int get_plugin_port_idx(const fluid_ladspa_plugin_t *plugin, const char *
                 return i;
             }
 
-            /* more than one fuzzy match should be treated as not found */
+            /* more than one prefix match should be treated as not found */
             if (port != -1)
             {
                 return -1;
