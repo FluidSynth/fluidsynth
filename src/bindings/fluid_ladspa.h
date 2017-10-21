@@ -91,6 +91,9 @@ typedef struct _fluid_ladspa_node_t
     fluid_ladspa_node_type_t type;
     LADSPA_Data *buf;
 
+    /* used to indicate that buf was not allocated by the LADSPA fx, but is supplied externally */
+    int buf_is_shared;
+
     int num_inputs;
     int num_outputs;
 
@@ -103,6 +106,8 @@ typedef struct _fluid_ladspa_fx_t
     int audio_groups;
     int effects_channels;
     int audio_channels;
+
+    int in_place;
 
     fluid_ladspa_lib_t *libs[FLUID_LADSPA_MAX_LIBS];
     int num_libs;

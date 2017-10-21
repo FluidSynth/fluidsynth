@@ -430,18 +430,23 @@ static int create_input_output_nodes(fluid_ladspa_fx_t *fx)
 {
     char name[99];
     int i;
+    int buf_size;
+
+    /* If this LADSPA fx is set to work on the buffers passed into fluid_ladspa_run in-place,
+     * then don't allocate space on the nodes. */
+    buf_size = (fx->in_place) ?  0 : FLUID_BUFSIZE;
 
     /* Create left and right input nodes for each audio group. */
     for (i = 0; i < fx->audio_groups; i++)
     {
         FLUID_SNPRINTF(name, sizeof(name), "in%i_L", (i + 1));
-        if (new_fluid_ladspa_node(fx, name, FLUID_LADSPA_NODE_AUDIO, FLUID_BUFSIZE) == NULL)
+        if (new_fluid_ladspa_node(fx, name, FLUID_LADSPA_NODE_AUDIO, buf_size) == NULL)
         {
             return FLUID_FAILED;
         }
 
         FLUID_SNPRINTF(name, sizeof(name), "in%i_R", (i + 1));
-        if (new_fluid_ladspa_node(fx, name, FLUID_LADSPA_NODE_AUDIO, FLUID_BUFSIZE) == NULL)
+        if (new_fluid_ladspa_node(fx, name, FLUID_LADSPA_NODE_AUDIO, buf_size) == NULL)
         {
             return FLUID_FAILED;
         }
@@ -451,13 +456,13 @@ static int create_input_output_nodes(fluid_ladspa_fx_t *fx)
     for (i = 0; i < fx->effects_channels; i++)
     {
         FLUID_SNPRINTF(name, sizeof(name), "send%i_L", (i + 1));
-        if (new_fluid_ladspa_node(fx, name, FLUID_LADSPA_NODE_AUDIO, FLUID_BUFSIZE) == NULL)
+        if (new_fluid_ladspa_node(fx, name, FLUID_LADSPA_NODE_AUDIO, buf_size) == NULL)
         {
             return FLUID_FAILED;
         }
 
         FLUID_SNPRINTF(name, sizeof(name), "send%i_R", (i + 1));
-        if (new_fluid_ladspa_node(fx, name, FLUID_LADSPA_NODE_AUDIO, FLUID_BUFSIZE) == NULL)
+        if (new_fluid_ladspa_node(fx, name, FLUID_LADSPA_NODE_AUDIO, buf_size) == NULL)
         {
             return FLUID_FAILED;
         }
@@ -467,13 +472,13 @@ static int create_input_output_nodes(fluid_ladspa_fx_t *fx)
     for (i = 0; i < fx->audio_channels; i++)
     {
         FLUID_SNPRINTF(name, sizeof(name), "out%i_L", (i + 1));
-        if (new_fluid_ladspa_node(fx, name, FLUID_LADSPA_NODE_AUDIO, FLUID_BUFSIZE) == NULL)
+        if (new_fluid_ladspa_node(fx, name, FLUID_LADSPA_NODE_AUDIO, buf_size) == NULL)
         {
             return FLUID_FAILED;
         }
 
         FLUID_SNPRINTF(name, sizeof(name), "out%i_R", (i + 1));
-        if (new_fluid_ladspa_node(fx, name, FLUID_LADSPA_NODE_AUDIO, FLUID_BUFSIZE) == NULL)
+        if (new_fluid_ladspa_node(fx, name, FLUID_LADSPA_NODE_AUDIO, buf_size) == NULL)
         {
             return FLUID_FAILED;
         }
@@ -1222,7 +1227,7 @@ static fluid_ladspa_node_t *new_fluid_ladspa_node(fluid_ladspa_fx_t *fx, const c
 
 static void delete_fluid_ladspa_node(fluid_ladspa_node_t *node)
 {
-    if (node->buf != NULL)
+    if (node->buf != NULL && !node->buf_is_shared)
     {
         FLUID_FREE(node->buf);
     }
