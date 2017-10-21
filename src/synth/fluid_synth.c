@@ -2383,16 +2383,6 @@ fluid_synth_set_sample_rate(fluid_synth_t* synth, float sample_rate)
   fluid_synth_update_mixer(synth, fluid_rvoice_mixer_set_samplerate, 
 			   0, sample_rate);
   fluid_synth_api_exit(synth);
-
-#ifdef LADSPA
-  /* Signal sample rate change to LADSPA effects. Called after releasing the
-   * synth api, as LADSPA might need to wait for rvoice mixer to deactivate
-   * the effects unit first. */
-  if (synth->ladspa_fx != NULL)
-  {
-    fluid_ladspa_set_sample_rate(synth->ladspa_fx, synth);
-  }
-#endif
 }
 
 
@@ -5279,25 +5269,3 @@ int fluid_synth_set_channel_type(fluid_synth_t* synth, int chan, int type)
 
   FLUID_API_RETURN(FLUID_OK);
 }
-
-#ifdef LADSPA
-/**
- * Deactivate the LADSPA effects
- *
- * @param synth FluidSynth instance
- * @return FLUID_OK on success, FLUID_FAILED otherwise
- */
-int fluid_synth_deactivate_ladspa(fluid_synth_t *synth)
-{
-    int ret;
-
-    fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
-    fluid_synth_api_enter(synth);
-
-    ret = fluid_rvoice_eventhandler_push(synth->eventhandler,
-            fluid_rvoice_mixer_deactivate_ladspa,
-            synth->eventhandler->mixer, 0, 0.0f);
-
-    FLUID_API_RETURN(ret);
-}
-#endif /* LADSPA */

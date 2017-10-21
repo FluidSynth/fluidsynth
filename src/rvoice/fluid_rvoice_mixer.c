@@ -646,17 +646,6 @@ void fluid_rvoice_mixer_set_ladspa(fluid_rvoice_mixer_t* mixer, fluid_ladspa_fx_
 {
   mixer->ladspa_fx = ladspa_fx;
 }
-
-void fluid_rvoice_mixer_deactivate_ladspa(fluid_rvoice_mixer_t *mixer)
-{
-    if (mixer->ladspa_fx == NULL) return;
-    mixer->ladspa_fx->state = FLUID_LADSPA_INACTIVE;
-
-    /* Signal LADSPA engine that deactivation has been processed */
-    fluid_cond_mutex_lock(mixer->ladspa_fx->state_mutex);
-    fluid_cond_broadcast(mixer->ladspa_fx->state_cond);
-    fluid_cond_mutex_unlock(mixer->ladspa_fx->state_mutex);
-}
 #endif
 
 void fluid_rvoice_mixer_set_reverb_enabled(fluid_rvoice_mixer_t* mixer, int on)
