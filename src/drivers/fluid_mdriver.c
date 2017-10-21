@@ -204,9 +204,9 @@ fluid_midi_driver_t* new_fluid_midi_driver(fluid_settings_t* settings, handle_mi
 {
   fluid_midi_driver_t* driver = NULL;
   char *allnames;
-  int i;
+  unsigned int i;
 
-  for (i = 0; fluid_midi_drivers[i].name != NULL; i++) {
+  for (i = 0; i < FLUID_N_ELEMENTS(fluid_midi_drivers); i++) {
     if (fluid_settings_str_equal(settings, "midi.driver", fluid_midi_drivers[i].name)) {
       FLUID_LOG(FLUID_DBG, "Using '%s' midi driver", fluid_midi_drivers[i].name);
       driver = fluid_midi_drivers[i].new(settings, handler, event_handler_data);
@@ -231,9 +231,9 @@ fluid_midi_driver_t* new_fluid_midi_driver(fluid_settings_t* settings, handle_mi
  */
 void delete_fluid_midi_driver(fluid_midi_driver_t* driver)
 {
-  int i;
+  unsigned int i;
 
-  for (i = 0; fluid_midi_drivers[i].name != NULL; i++) {
+  for (i = 0; i < FLUID_N_ELEMENTS(fluid_midi_drivers); i++) {
     if (fluid_midi_drivers[i].name == driver->name) {
       fluid_midi_drivers[i].free(driver);
       return;
