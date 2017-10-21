@@ -100,7 +100,7 @@ typedef struct _fluid_sfont_info_t {
  * ticks_since_start - atomic, set by rendering thread only
  * cpu_load - atomic, set by rendering thread only
  * cur, curmax, dither_index - used by rendering thread only
- * LADSPA_FxUnit - same instance copied in rendering thread. Synchronising handled internally (I think...?).
+ * ladspa_fx - same instance copied in rendering thread. Synchronising handled internally.
  *
  */
 
@@ -170,7 +170,7 @@ struct _fluid_synth_t
   fluid_mod_t* default_mod;          /**< the (dynamic) list of default modulators */
 
 #ifdef LADSPA
-  fluid_LADSPA_FxUnit_t* LADSPA_FxUnit; /**< Effects unit for LADSPA support */
+  fluid_ladspa_fx_t* ladspa_fx; /**< Effects unit for LADSPA support */
 #endif
 };
 
