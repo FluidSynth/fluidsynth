@@ -1113,12 +1113,17 @@ new_fluid_ladspa_plugin(fluid_ladspa_fx_t *fx, const fluid_ladspa_lib_t *lib, co
 
 static void delete_fluid_ladspa_plugin(fluid_ladspa_plugin_t *plugin)
 {
+    if (plugin == NULL)
+    {
+        return;
+    }
+    
     if (plugin->ports != NULL)
     {
         FLUID_FREE(plugin->ports);
     }
 
-    if (plugin->handle != NULL)
+    if (plugin->handle != NULL && plugin->desc != NULL && plugin->desc->cleanup != NULL)
     {
         plugin->desc->cleanup(plugin->handle);
     }
