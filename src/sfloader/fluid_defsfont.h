@@ -212,11 +212,6 @@ typedef enum
 }
 Gen_Unit;
 
-/* global data */
-
-extern unsigned short badgen[]; 	/* list of bad generators */
-extern unsigned short badpgen[]; 	/* list of bad preset generators */
-
 /* functions */
 void sfont_init_chunks (void);
 
@@ -294,9 +289,6 @@ typedef struct _SFShdr
   unsigned short sampletype;		/* 1 mono,2 right,4 left,linked 8,0x8000=ROM */
 }
 SFShdr;
-
-/* data */
-extern char idlist[];
 
 /* functions */
 SFData *sfload_file (const char * fname);
