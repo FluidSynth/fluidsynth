@@ -151,6 +151,7 @@ int fluid_ladspa_node_exists(fluid_ladspa_fx_t *fx, const char *name);
 int fluid_ladspa_connect(fluid_ladspa_fx_t *fx, int plugin_id, fluid_ladspa_dir_t dir,
                          const char *port_name, const char *node_name);
 int fluid_ladspa_check(fluid_ladspa_fx_t *fx, char *err, int err_size);
+int fluid_ladspa_control_defaults(fluid_ladspa_fx_t *fx);
 
 #endif /* LADSPA */
 #endif /* _FLUID_LADSPA_H */
