@@ -137,6 +137,8 @@ typedef struct _fluid_ladspa_fx_t
 fluid_ladspa_fx_t *new_fluid_ladspa_fx(fluid_real_t sample_rate, int audio_groups, int effects_channels, int audio_channels, int buffer_size);
 void delete_fluid_ladspa_fx(fluid_ladspa_fx_t *fx);
 int fluid_ladspa_set_sample_rate(fluid_ladspa_fx_t *fx, fluid_real_t sample_rate);
+int fluid_ladspa_set_in_place_buffers(fluid_ladspa_fx_t *fx, fluid_real_t *left_buf[],
+        fluid_real_t *right_buf[], fluid_real_t *fx_left_buf[], fluid_real_t *fx_right_buf[]);
 
 int fluid_ladspa_is_active(fluid_ladspa_fx_t *fx);
 int fluid_ladspa_activate(fluid_ladspa_fx_t *fx);
@@ -144,7 +146,8 @@ int fluid_ladspa_deactivate(fluid_ladspa_fx_t *fx);
 int fluid_ladspa_reset(fluid_ladspa_fx_t *fx);
 
 void fluid_ladspa_run(fluid_ladspa_fx_t *fx, fluid_real_t *left_buf[], fluid_real_t *right_buf[],
-                      fluid_real_t *fx_left_buf[], fluid_real_t *fx_right_buf[], int block, int block_size);
+                      fluid_real_t *fx_left_buf[], fluid_real_t *fx_right_buf[], int block_count, int block_size);
+void fluid_ladspa_run_in_place(fluid_ladspa_fx_t *fx, int block_count, int block_size);
 
 int fluid_ladspa_add_plugin(fluid_ladspa_fx_t *fx, const char *lib_name, const char *plugin_name);
 int fluid_ladspa_port_exists(fluid_ladspa_fx_t *fx, int plugin_id, const char *name);
