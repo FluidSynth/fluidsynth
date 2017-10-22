@@ -91,8 +91,8 @@ typedef struct _fluid_ladspa_node_t
     fluid_ladspa_node_type_t type;
     LADSPA_Data *buf;
 
-    char num_inputs;
-    char num_outputs;
+    int num_inputs;
+    int num_outputs;
 
 } fluid_ladspa_node_t;
 

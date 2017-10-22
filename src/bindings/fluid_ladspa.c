@@ -20,7 +20,7 @@
 
 /* This module: 3/2002
  * Author: Markus Nentwig, nentwig@users.sourceforge.net
- * 
+ *
  * Complete rewrite: 10/2017
  * Author: Marcus Weseloh
  */
@@ -344,8 +344,10 @@ int fluid_ladspa_reset(fluid_ladspa_fx_t *fx)
  * resulting audio back into the same buffers.
  *
  * @param fx LADSPA effects instance
- * @param buf array of pointers into the interleaved left and right audio group buffers
- * @param fx_buf array of pointers into the interleaved left and right effects channel buffers
+ * @param left_buf array of pointers into the left audio group buffers
+ * @param right_buf array of pointers into the right audio group buffers
+ * @param fx_left_buf array of pointers into the left effects buffers
+ * @param fx_right_buf array of pointers into the right effects buffers
  */
 void fluid_ladspa_run(fluid_ladspa_fx_t *fx, fluid_real_t *left_buf[], fluid_real_t *right_buf[],
                       fluid_real_t *fx_left_buf[], fluid_real_t *fx_right_buf[])
@@ -812,6 +814,11 @@ int fluid_ladspa_control_defaults(fluid_ladspa_fx_t *fx)
 
     LADSPA_API_ENTER(fx);
 
+    if (fluid_ladspa_is_active(fx))
+    {
+        LADSPA_API_RETURN(fx, FLUID_FAILED);
+    }
+
     for (i = 0; i < fx->num_plugins; i++)
     {
         if (connect_default_control_nodes(fx, fx->plugins[i]) != FLUID_OK)
@@ -930,50 +937,57 @@ int fluid_ladspa_check(fluid_ladspa_fx_t *fx, char *err, int err_size)
     LADSPA_API_RETURN(fx, FLUID_OK);
 }
 
+#ifdef WITH_FLOAT
 
 static FLUID_INLINE void buffer_to_node(fluid_real_t *buffer, fluid_ladspa_node_t *node)
 {
-#ifndef WITH_FLOAT
-    int i;
-#endif
-
     /* If the node is not used by any plugin, then we don't need to fill it */
-    if (node->num_outputs == 0)
+    if (node->num_outputs > 0)
     {
-        return;
+        FLUID_MEMCPY(node->buf, buffer, FLUID_BUFSIZE * sizeof(float));
     }
-
-#ifdef WITH_FLOAT
-    FLUID_MEMCPY(node->buf, buffer, FLUID_BUFSIZE * sizeof(float));
-#else
-    for (i = 0; i < FLUID_BUFSIZE; i++)
-    {
-        node->buf[i] = (LADSPA_Data)buffer[i];
-    }
-#endif
 }
 
 static FLUID_INLINE void node_to_buffer(fluid_ladspa_node_t *node, fluid_real_t *buffer)
 {
-#ifndef WITH_FLOAT
+    /* If the node has no inputs, then we don't need to copy it to the node */
+    if (node->num_inputs > 0)
+    {
+        FLUID_MEMCPY(buffer, node->buf, FLUID_BUFSIZE * sizeof(float));
+    }
+}
+
+#else /* WITH_FLOAT */
+
+static FLUID_INLINE void buffer_to_node(fluid_real_t *buffer, fluid_ladspa_node_t *node)
+{
     int i;
-#endif
+
+    /* If the node is not used by any plugin, then we don't need to fill it */
+    if (node->num_outputs > 0)
+    {
+        for (i = 0; i < FLUID_BUFSIZE; i++)
+        {
+            node->buf[i] = (LADSPA_Data)buffer[i];
+        }
+    }
+}
+
+static FLUID_INLINE void node_to_buffer(fluid_ladspa_node_t *node, fluid_real_t *buffer)
+{
+    int i;
 
     /* If the node has no inputs, then we don't need to copy it to the node */
-    if (node->num_inputs == 0)
+    if (node->num_inputs > 0)
     {
-        return;
+        for (i = 0; i < FLUID_BUFSIZE; i++)
+        {
+            buffer[i] = (fluid_real_t)node->buf[i];
+        }
     }
-
-#ifdef WITH_FLOAT
-    FLUID_MEMCPY(buffer, node->buf, FLUID_BUFSIZE * sizeof(float));
-#else
-    for (i = 0; i < FLUID_BUFSIZE; i++)
-    {
-        buffer[i] = (fluid_real_t)node->buf[i];
-    }
-#endif
 }
+
+#endif /* WITH_FLOAT */
 
 static void activate_plugin(fluid_ladspa_plugin_t *plugin)
 {
@@ -1087,7 +1101,7 @@ static const LADSPA_Descriptor *get_plugin_descriptor(const fluid_ladspa_lib_t *
     }
 }
 
-/** 
+/**
  * Instantiate a new LADSPA plugin from a library and set up the associated
  * control structures needed by the LADSPA fx engine.
  *
@@ -1144,7 +1158,7 @@ static void delete_fluid_ladspa_plugin(fluid_ladspa_plugin_t *plugin)
     {
         return;
     }
-    
+
     if (plugin->ports != NULL)
     {
         FLUID_FREE(plugin->ports);
