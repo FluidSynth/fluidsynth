@@ -488,22 +488,7 @@ fluid_voice_calculate_gen_pitch(fluid_voice_t* voice)
 
 }
 
-/*
- * fluid_voice_calculate_runtime_synthesis_parameters
- *
- * in this function we calculate the values of all the parameters. the
- * parameters are converted to their most useful unit for the DSP
- * algorithm, for example, number of samples instead of
- * timecents. Some parameters keep their "perceptual" unit and
- * conversion will be done in the DSP function. This is the case, for
- * example, for the pitch since it is modulated by the controllers in
- * cents. */
-static int
-fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t* voice)
-{
-  int i;
-
-  int list_of_generators_to_initialize[35] = {
+static int const list_of_generators_to_initialize[] = {
     GEN_STARTADDROFS,                    /* SF2.01 page 48 #0   */
     GEN_ENDADDROFS,                      /*                #1   */
     GEN_STARTLOOPADDROFS,                /*                #2   */
@@ -553,8 +538,23 @@ fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t* voice)
     /* GEN_COARSETUNE           [1]                        #51  */
     /* GEN_FINETUNE             [1]                        #52  */
     GEN_OVERRIDEROOTKEY,                 /*                #58  */
-    GEN_PITCH,                           /*                ---  */
-    -1};                                 /* end-of-list marker  */
+    GEN_PITCH                            /*                ---  */
+};
+
+/*
+ * fluid_voice_calculate_runtime_synthesis_parameters
+ *
+ * in this function we calculate the values of all the parameters. the
+ * parameters are converted to their most useful unit for the DSP
+ * algorithm, for example, number of samples instead of
+ * timecents. Some parameters keep their "perceptual" unit and
+ * conversion will be done in the DSP function. This is the case, for
+ * example, for the pitch since it is modulated by the controllers in
+ * cents. */
+static int
+fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t* voice)
+{
+  int i;
 
   /* When the voice is made ready for the synthesis process, a lot of
    * voice-internal parameters have to be calculated.
@@ -598,7 +598,7 @@ fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t* voice)
    */
 
   /* Calculate the voice parameter(s) dependent on each generator. */
-  for (i = 0; list_of_generators_to_initialize[i] != -1; i++) {
+  for (i = 0; i < FLUID_N_ELEMENTS(list_of_generators_to_initialize); i++) {
     fluid_voice_update_param(voice, list_of_generators_to_initialize[i]);
   }
 
@@ -702,7 +702,7 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
   fluid_real_t y;
   unsigned int count, z;
   // Alternate attenuation scale used by EMU10K1 cards when setting the attenuation at the preset or instrument level within the SoundFont bank.
-  static const float ALT_ATTENUATION_SCALE = 0.4;
+  static const float ALT_ATTENUATION_SCALE = 0.4f;
 
   switch (gen) {
 
