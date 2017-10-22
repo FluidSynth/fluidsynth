@@ -731,7 +731,7 @@ new_fluid_timer (int msec, fluid_timer_callback_t callback, void* data,
   else
   {
       fluid_timer_run (timer);  /* Run directly, instead of as a separate thread */
-      if(timer->auto_destroy)
+      if(auto_destroy)
       {
           /* do NOT return freed memory */
           return NULL;
