@@ -27,8 +27,6 @@
 
 #include "fluidsynth_priv.h"
 
-#ifdef LADSPA
-
 #include "fluid_ladspa.h"
 #include "fluid_sys.h"
 #include <dlfcn.h>
@@ -1559,5 +1557,3 @@ static void connect_node_to_port(fluid_ladspa_node_t *node, fluid_ladspa_dir_t d
     }
 }
 
-
-#endif /*LADSPA*/
