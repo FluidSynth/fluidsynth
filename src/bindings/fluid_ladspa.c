@@ -812,6 +812,11 @@ int fluid_ladspa_control_defaults(fluid_ladspa_fx_t *fx)
 
     LADSPA_API_ENTER(fx);
 
+    if (fluid_ladspa_is_active(fx))
+    {
+        LADSPA_API_RETURN(fx, FLUID_FAILED);
+    }
+
     for (i = 0; i < fx->num_plugins; i++)
     {
         if (connect_default_control_nodes(fx, fx->plugins[i]) != FLUID_OK)
