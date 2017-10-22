@@ -73,23 +73,6 @@ void fluid_time_config(void);
 char *fluid_strtok (char **str, char *delim);
 
 
-/**
-
-  Additional debugging system, separate from the log system. This
-  allows to print selected debug messages of a specific subsystem.
- */
-
-extern unsigned int fluid_debug_flags;
-
-#if DEBUG
-
-int fluid_debug(int level, char * fmt, ...);
-
-#else
-#define fluid_debug
-#endif
-
-
 #if defined(__OS2__)
 #define INCL_DOS
 #include <os2.h>

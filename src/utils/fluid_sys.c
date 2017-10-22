@@ -83,31 +83,6 @@ void fluid_sys_config()
 }
 
 
-unsigned int fluid_debug_flags = 0;
-
-#if DEBUG
-/*
- * fluid_debug
- */
-int fluid_debug(int level, char * fmt, ...)
-{
-  if (fluid_debug_flags & level) {
-    fluid_log_function_t fun;
-    va_list args;
-
-    va_start (args, fmt);
-    FLUID_VSNPRINTF (fluid_errbuf, sizeof (fluid_errbuf), fmt, args);
-    va_end (args);
-
-    fun = fluid_log_function[FLUID_DBG];
-    if (fun != NULL) {
-      (*fun)(level, fluid_errbuf, fluid_log_user_data[FLUID_DBG]);
-    }
-  }
-  return 0;
-}
-#endif
-
 /**
  * Installs a new log function for a specified log level.
  * @param level Log level to install handler for.
