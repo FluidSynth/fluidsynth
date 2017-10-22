@@ -2030,59 +2030,59 @@ fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defs
    equivalent to the matching ID list in memory regardless of LE/BE machine
 */
 
-#define READCHUNK(var,fd)	FLUID_STMT_START {		\
+#define READCHUNK(var,fd)	do {		\
 	if (!safe_fread(var, 8, fd))			\
 		return(FAIL);				\
 	((SFChunk *)(var))->size = GUINT32_FROM_LE(((SFChunk *)(var))->size);  \
-} FLUID_STMT_END
+} while(0)
 
-#define READD(var,fd)		FLUID_STMT_START {		\
+#define READD(var,fd)		do {		\
 	unsigned int _temp;				\
 	if (!safe_fread(&_temp, 4, fd))			\
 		return(FAIL);				\
 	var = GINT32_FROM_LE(_temp);			\
-} FLUID_STMT_END
+} while(0)
 
-#define READW(var,fd)		FLUID_STMT_START {		\
+#define READW(var,fd)		do {		\
 	unsigned short _temp;				\
 	if (!safe_fread(&_temp, 2, fd))			\
 		return(FAIL);				\
 	var = GINT16_FROM_LE(_temp);			\
-} FLUID_STMT_END
+} while(0)
 
-#define READID(var,fd)		FLUID_STMT_START {		\
+#define READID(var,fd)		do {		\
     if (!safe_fread(var, 4, fd))			\
 	return(FAIL);					\
-} FLUID_STMT_END
+} while(0)
 
-#define READSTR(var,fd)		FLUID_STMT_START {		\
+#define READSTR(var,fd)		do {		\
     if (!safe_fread(var, 20, fd))			\
 	return(FAIL);					\
     (*var)[20] = '\0';					\
-} FLUID_STMT_END
+} while(0)
 
-#define READB(var,fd)		FLUID_STMT_START {		\
+#define READB(var,fd)		do {		\
     if (!safe_fread(&var, 1, fd))			\
 	return(FAIL);					\
-} FLUID_STMT_END
+} while(0)
 
-#define FSKIP(size,fd)		FLUID_STMT_START {		\
+#define FSKIP(size,fd)		do {		\
     if (!safe_fseek(fd, size, SEEK_CUR))		\
 	return(FAIL);					\
-} FLUID_STMT_END
+} while(0)
 
-#define FSKIPW(fd)		FLUID_STMT_START {		\
+#define FSKIPW(fd)		do {		\
     if (!safe_fseek(fd, 2, SEEK_CUR))			\
 	return(FAIL);					\
-} FLUID_STMT_END
+} while(0)
 
 /* removes and advances a fluid_list_t pointer */
-#define SLADVREM(list, item)	FLUID_STMT_START {		\
+#define SLADVREM(list, item)	do {		\
     fluid_list_t *_temp = item;				\
     item = fluid_list_next(item);				\
     list = fluid_list_remove_link(list, _temp);		\
     delete1_fluid_list(_temp);				\
-} FLUID_STMT_END
+} while(0)
 
 static int chunkid (unsigned int id);
 static int load_body (unsigned int size, SFData * sf, FILE * fd);
