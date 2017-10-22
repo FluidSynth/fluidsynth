@@ -142,7 +142,7 @@ fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t* mixer)
   
 #ifdef LADSPA
   /* Run the signal through the LADSPA Fx unit */
-  if (mixer->ladspa_fx && mixer->ladspa_fx->state == FLUID_LADSPA_ACTIVE) {
+  if (mixer->ladspa_fx) {
     for (i=0; i < mixer->current_blockcount; i++) {
       fluid_ladspa_run(mixer->ladspa_fx,
               mixer->buffers.left_buf, mixer->buffers.right_buf,
