@@ -82,6 +82,13 @@ https://stackoverflow.com/a/6251757
                 When set to "yes" the LADSPA subsystem will be enabled. This subsystem allows to load and interconnect LADSPA plug-ins. The output of the synthesizer is processed by the LADSPA subsystem. Note that the synthesizer has to be compiled with LADSPA support. More information about the LADSPA subsystem later.</desc>
         </setting>
         <setting>
+            <name>ladspa.in-place</name>
+            <type>bool</type>
+            <def>0 (FALSE)</def>
+            <desc>
+                (Only supported if FluidSynth has been compiled to use floats instead of doubles). When set to "yes" the LADSPA subsystem will enable plugins to render audio in-place, without the overhead of copying input and output buffers.</desc>
+        </setting>
+        <setting>
             <name>midi-channels</name>
             <type>int</type>
             <def>16</def>
