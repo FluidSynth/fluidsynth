@@ -554,7 +554,7 @@ static int const list_of_generators_to_initialize[] = {
 static int
 fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t* voice)
 {
-  int i;
+  unsigned int i;
 
   /* When the voice is made ready for the synthesis process, a lot of
    * voice-internal parameters have to be calculated.
@@ -1113,7 +1113,7 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
  */
 int fluid_voice_modulate(fluid_voice_t* voice, int cc, int ctrl)
 {
-  int i, k;
+  unsigned int i, k;
   fluid_mod_t* mod;
   int gen;
   fluid_real_t modval;
@@ -1158,7 +1158,8 @@ int fluid_voice_modulate(fluid_voice_t* voice, int cc, int ctrl)
 int fluid_voice_modulate_all(fluid_voice_t* voice)
 {
   fluid_mod_t* mod;
-  int i, k, gen;
+  unsigned int i, k;
+  int gen;
   fluid_real_t modval;
 
   /* Loop through all the modulators.
@@ -1342,7 +1343,7 @@ fluid_voice_stop(fluid_voice_t* voice)
 void
 fluid_voice_add_mod(fluid_voice_t* voice, fluid_mod_t* mod, int mode)
 {
-  int i;
+  unsigned int i;
 
   /*
    * Some soundfonts come with a huge number of non-standard
@@ -1557,7 +1558,7 @@ int fluid_voice_get_velocity(const fluid_voice_t* voice)
 static fluid_real_t
 fluid_voice_get_lower_boundary_for_attenuation(fluid_voice_t* voice)
 {
-    int i;
+    unsigned int i;
     fluid_mod_t* mod;
     fluid_real_t possible_att_reduction_cB=0;
     fluid_real_t lower_bound;
