@@ -502,7 +502,7 @@ static FLUID_INLINE int ladspa_run_start(fluid_ladspa_fx_t *fx)
     /* Somebody wants to deactivate the engine, so let's give them a chance to do that.
      * And check that there is at least one plugin loaded, to avoid the overhead of the
      * atomic compare and exchange on an unconfigured LADSPA engine. */
-    if (fluid_atomic_int_get(&fx->pending_deactivation) || fx->num_plugins == 0)
+    if (fx->pending_deactivation || fx->num_plugins == 0)
     {
         return FLUID_FAILED;
     }
