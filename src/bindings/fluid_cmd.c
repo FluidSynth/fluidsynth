@@ -1647,7 +1647,7 @@ fluid_handle_help(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream
     }; /* for all topics (outer loop) */
   } else {
     /* help (arbitrary topic or "all") */
-    for (i = 0; FLUID_N_ELEMENTS(fluid_commands); i++) {
+    for (i = 0; i < FLUID_N_ELEMENTS(fluid_commands); i++) {
       if (fluid_commands[i].help != NULL) {
 	if (strcmp(topic,"all") == 0 || strcmp(topic,fluid_commands[i].topic) == 0){
 	  fluid_ostream_printf(out, "%s\n", fluid_commands[i].help);
