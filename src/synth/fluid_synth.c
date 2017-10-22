@@ -3353,13 +3353,12 @@ fluid_synth_start_voice(fluid_synth_t* synth, fluid_voice_t* voice)
 void
 fluid_synth_add_sfloader(fluid_synth_t* synth, fluid_sfloader_t* loader)
 {
-  gboolean sfont_already_loaded;
-
   fluid_return_if_fail (synth != NULL);
   fluid_return_if_fail (loader != NULL);
   fluid_synth_api_enter(synth);
-  sfont_already_loaded = synth->sfont_info != NULL;
-  if (!sfont_already_loaded) 
+
+  /* Test if sfont is already loaded */
+  if (synth->sfont_info == NULL) 
     synth->loaders = fluid_list_prepend(synth->loaders, loader);
   fluid_synth_api_exit(synth);
 }

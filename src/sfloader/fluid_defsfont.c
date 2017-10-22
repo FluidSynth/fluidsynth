@@ -2030,86 +2030,59 @@ fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defs
    equivalent to the matching ID list in memory regardless of LE/BE machine
 */
 
-#if FLUID_IS_BIG_ENDIAN
-
-#define READCHUNK(var,fd)	G_STMT_START {		\
+#define READCHUNK(var,fd)	FLUID_STMT_START {		\
 	if (!safe_fread(var, 8, fd))			\
 		return(FAIL);				\
 	((SFChunk *)(var))->size = GUINT32_FROM_LE(((SFChunk *)(var))->size);  \
-} G_STMT_END
+} FLUID_STMT_END
 
-#define READD(var,fd)		G_STMT_START {		\
+#define READD(var,fd)		FLUID_STMT_START {		\
 	unsigned int _temp;				\
 	if (!safe_fread(&_temp, 4, fd))			\
 		return(FAIL);				\
 	var = GINT32_FROM_LE(_temp);			\
-} G_STMT_END
+} FLUID_STMT_END
 
-#define READW(var,fd)		G_STMT_START {		\
+#define READW(var,fd)		FLUID_STMT_START {		\
 	unsigned short _temp;				\
 	if (!safe_fread(&_temp, 2, fd))			\
 		return(FAIL);				\
 	var = GINT16_FROM_LE(_temp);			\
-} G_STMT_END
+} FLUID_STMT_END
 
-#else
-
-#define READCHUNK(var,fd)	G_STMT_START {		\
-    if (!safe_fread(var, 8, fd))			\
-	return(FAIL);					\
-    ((SFChunk *)(var))->size = GUINT32_FROM_LE(((SFChunk *)(var))->size);  \
-} G_STMT_END
-
-#define READD(var,fd)		G_STMT_START {		\
-    unsigned int _temp;					\
-    if (!safe_fread(&_temp, 4, fd))			\
-	return(FAIL);					\
-    var = GINT32_FROM_LE(_temp);			\
-} G_STMT_END
-
-#define READW(var,fd)		G_STMT_START {		\
-    unsigned short _temp;					\
-    if (!safe_fread(&_temp, 2, fd))			\
-	return(FAIL);					\
-    var = GINT16_FROM_LE(_temp);			\
-} G_STMT_END
-
-#endif
-
-
-#define READID(var,fd)		G_STMT_START {		\
+#define READID(var,fd)		FLUID_STMT_START {		\
     if (!safe_fread(var, 4, fd))			\
 	return(FAIL);					\
-} G_STMT_END
+} FLUID_STMT_END
 
-#define READSTR(var,fd)		G_STMT_START {		\
+#define READSTR(var,fd)		FLUID_STMT_START {		\
     if (!safe_fread(var, 20, fd))			\
 	return(FAIL);					\
     (*var)[20] = '\0';					\
-} G_STMT_END
+} FLUID_STMT_END
 
-#define READB(var,fd)		G_STMT_START {		\
+#define READB(var,fd)		FLUID_STMT_START {		\
     if (!safe_fread(&var, 1, fd))			\
 	return(FAIL);					\
-} G_STMT_END
+} FLUID_STMT_END
 
-#define FSKIP(size,fd)		G_STMT_START {		\
+#define FSKIP(size,fd)		FLUID_STMT_START {		\
     if (!safe_fseek(fd, size, SEEK_CUR))		\
 	return(FAIL);					\
-} G_STMT_END
+} FLUID_STMT_END
 
-#define FSKIPW(fd)		G_STMT_START {		\
+#define FSKIPW(fd)		FLUID_STMT_START {		\
     if (!safe_fseek(fd, 2, SEEK_CUR))			\
 	return(FAIL);					\
-} G_STMT_END
+} FLUID_STMT_END
 
 /* removes and advances a fluid_list_t pointer */
-#define SLADVREM(list, item)	G_STMT_START {		\
+#define SLADVREM(list, item)	FLUID_STMT_START {		\
     fluid_list_t *_temp = item;				\
     item = fluid_list_next(item);				\
     list = fluid_list_remove_link(list, _temp);		\
     delete1_fluid_list(_temp);				\
-} G_STMT_END
+} FLUID_STMT_END
 
 static int chunkid (unsigned int id);
 static int load_body (unsigned int size, SFData * sf, FILE * fd);
@@ -2760,7 +2733,7 @@ load_pgen (int size, SFData * sf, FILE * fd)
 		{		/* inst is last gen */
 		  level = 3;
 		  READW (genval.uword, fd);
-		  ((SFZone *) (p2->data))->instsamp = GINT_TO_POINTER (genval.uword + 1);
+		  ((SFZone *) (p2->data))->instsamp = FLUID_INT_TO_POINTER (genval.uword + 1);
 		  break;	/* break out of generator loop */
 		}
 	      else
@@ -3110,7 +3083,7 @@ load_igen (int size, SFData * sf, FILE * fd)
 		{		/* sample is last gen */
 		  level = 3;
 		  READW (genval.uword, fd);
-		  ((SFZone *) (p2->data))->instsamp = GINT_TO_POINTER (genval.uword + 1);
+		  ((SFZone *) (p2->data))->instsamp = FLUID_INT_TO_POINTER (genval.uword + 1);
 		  break;	/* break out of generator loop */
 		}
 	      else
@@ -3270,7 +3243,7 @@ fixup_pgen (SFData * sf)
       while (p2)
 	{			/* traverse this preset's zones */
 	  z = (SFZone *) (p2->data);
-	  if ((i = GPOINTER_TO_INT (z->instsamp)))
+	  if ((i = FLUID_POINTER_TO_INT (z->instsamp)))
 	    {			/* load instrument # */
 	      p3 = fluid_list_nth (sf->inst, i - 1);
 	      if (!p3)
@@ -3305,7 +3278,7 @@ fixup_igen (SFData * sf)
       while (p2)
 	{			/* traverse instrument's zones */
 	  z = (SFZone *) (p2->data);
-	  if ((i = GPOINTER_TO_INT (z->instsamp)))
+	  if ((i = FLUID_POINTER_TO_INT (z->instsamp)))
 	    {			/* load sample # */
 	      p3 = fluid_list_nth (sf->sample, i - 1);
 	      if (!p3)
