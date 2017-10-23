@@ -1273,7 +1273,7 @@ fluid_handle_tunings(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostr
 int
 fluid_handle_dumptuning(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out)
 {
-  int bank, prog, i;
+  int bank, prog, i, res;
   double pitch[128];
   char name[256];
 
@@ -1302,7 +1302,7 @@ fluid_handle_dumptuning(fluid_cmd_handler_t* handler, int ac, char** av, fluid_o
     return -1;
   };
 
-  int res = fluid_synth_tuning_dump(handler->synth, bank, prog, name, 256, pitch);
+  res = fluid_synth_tuning_dump(handler->synth, bank, prog, name, 256, pitch);
   if (FLUID_OK != res) {
     fluid_ostream_printf(out, "Tuning %03d-%03d does not exist.\n", bank, prog);
     return -1;
