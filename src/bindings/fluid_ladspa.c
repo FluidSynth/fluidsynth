@@ -518,6 +518,13 @@ static void clear_ladspa(fluid_ladspa_fx_t *fx)
         delete_fluid_ladspa_node(fx->nodes[i]);
     }
     fx->num_nodes = num_system_nodes;
+
+    /* Reset connection counts for system nodes */
+    for (i = 0; i < num_system_nodes; i++)
+    {
+        fx->nodes[i]->num_inputs = 0;
+        fx->nodes[i]->num_outputs = 0;
+    }
 }
 
 /**
