@@ -180,6 +180,8 @@ void fluid_synth_settings(fluid_settings_t* settings)
                               FLUID_HINT_TOGGLED, NULL, NULL);
   fluid_settings_register_int(settings, "synth.ladspa.active", 0, 0, 1,
                               FLUID_HINT_TOGGLED, NULL, NULL);
+  fluid_settings_register_int(settings, "synth.ladspa.in-place", 0, 0, 1,
+                              FLUID_HINT_TOGGLED, NULL, NULL);
   fluid_settings_register_int(settings, "synth.lock-memory", 1, 0, 1,
                               FLUID_HINT_TOGGLED, NULL, NULL);
   fluid_settings_register_str(settings, "midi.portname", "", 0, NULL, NULL);
@@ -710,13 +712,25 @@ new_fluid_synth(fluid_settings_t *settings)
   fluid_settings_getint(settings, "synth.ladspa.active", &with_ladspa);
   if (with_ladspa) {
 #ifdef LADSPA
+    int ladspa_in_place = 0;
+    fluid_settings_getint(settings, "synth.ladspa.in-place", &ladspa_in_place);
+
+#ifndef WITH_FLOAT
+    if (ladspa_in_place) {
+      FLUID_LOG(FLUID_WARN, "In-place rendering for LADSPA is only available if "
+              "FluidSynth was compiled to use float instead of double");
+      ladspa_in_place = 0;
+    }
+#endif /* WITH_FLOAT */
+
     synth->ladspa_fx = new_fluid_ladspa_fx(synth->sample_rate, synth->audio_groups,
-            synth->effects_channels, synth->audio_channels);
+            synth->effects_channels, synth->audio_channels,
+            FLUID_MIXER_MAX_BUFFERS_DEFAULT * FLUID_BUFSIZE);
     if(synth->ladspa_fx == NULL) {
       FLUID_LOG(FLUID_ERR, "Out of memory");
       goto error_recovery;
     }
-    fluid_rvoice_mixer_set_ladspa(synth->eventhandler->mixer, synth->ladspa_fx);
+    fluid_rvoice_mixer_set_ladspa(synth->eventhandler->mixer, synth->ladspa_fx, ladspa_in_place);
 #else /* LADSPA */
     FLUID_LOG(FLUID_WARN, "FluidSynth has not been compiled with LADSPA support");
 #endif /* LADSPA */

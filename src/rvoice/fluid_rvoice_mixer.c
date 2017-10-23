@@ -82,6 +82,7 @@ struct _fluid_rvoice_mixer_t {
 
 #ifdef LADSPA
   fluid_ladspa_fx_t* ladspa_fx; /**< Used by mixer only: Effects unit for LADSPA support. Never created or freed */
+  int ladspa_in_place;          /**< flag to enable in-place rendering on the mixer buffers */
 #endif
 
 #ifdef ENABLE_MIXER_THREADS
@@ -142,33 +143,20 @@ fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t* mixer)
   
 #ifdef LADSPA
   /* Run the signal through the LADSPA Fx unit */
-  if (mixer->ladspa_fx && mixer->ladspa_fx->state == FLUID_LADSPA_ACTIVE) {
-    int j;
-    FLUID_DECLARE_VLA(fluid_real_t*, left_buf, mixer->buffers.buf_count);
-    FLUID_DECLARE_VLA(fluid_real_t*, right_buf, mixer->buffers.buf_count);
-    FLUID_DECLARE_VLA(fluid_real_t*, fx_left_buf, mixer->buffers.fx_buf_count);
-    FLUID_DECLARE_VLA(fluid_real_t*, fx_right_buf, mixer->buffers.fx_buf_count);
-    for (j=0; j < mixer->buffers.buf_count; j++) {
-      left_buf[j] = mixer->buffers.left_buf[j];
-      right_buf[j] = mixer->buffers.right_buf[j];
-    }
-    for (j=0; j < mixer->buffers.fx_buf_count; j++) {
-      fx_left_buf[j] = mixer->buffers.fx_left_buf[j];
-      fx_right_buf[j] = mixer->buffers.fx_right_buf[j];
-    }
-    for (i=0; i < mixer->current_blockcount * FLUID_BUFSIZE; i += FLUID_BUFSIZE) {
-      fluid_ladspa_run(mixer->ladspa_fx, left_buf, right_buf, fx_left_buf,
-                      fx_right_buf);
-      for (j=0; j < mixer->buffers.buf_count; j++) {
-        left_buf[j] += FLUID_BUFSIZE;
-        right_buf[j] += FLUID_BUFSIZE;
+  if (mixer->ladspa_fx) {
+      /* If in-place rendering is requested, run the LADSPA engine on the previously set
+       * buffers (set in fluid_rvoice_mixer_set_ladspa) */
+      if (mixer->ladspa_in_place)
+      {
+        fluid_ladspa_run_in_place(mixer->ladspa_fx, mixer->current_blockcount, FLUID_BUFSIZE);
       }
-      for (j=0; j < mixer->buffers.fx_buf_count; j++) {
-        fx_left_buf[j] += FLUID_BUFSIZE;
-        fx_right_buf[j] += FLUID_BUFSIZE;
+      else {
+        fluid_ladspa_run(mixer->ladspa_fx,
+                mixer->buffers.left_buf, mixer->buffers.right_buf,
+                mixer->buffers.fx_left_buf, mixer->buffers.fx_right_buf,
+                mixer->current_blockcount, FLUID_BUFSIZE);
       }
-    }
-    fluid_check_fpe("LADSPA");
+      fluid_check_fpe("LADSPA");
   }
 #endif
 }
@@ -648,9 +636,21 @@ void delete_fluid_rvoice_mixer(fluid_rvoice_mixer_t* mixer)
 
 
 #ifdef LADSPA				    
-void fluid_rvoice_mixer_set_ladspa(fluid_rvoice_mixer_t* mixer, fluid_ladspa_fx_t *ladspa_fx)
+void fluid_rvoice_mixer_set_ladspa(fluid_rvoice_mixer_t* mixer, fluid_ladspa_fx_t *ladspa_fx, int in_place)
 {
   mixer->ladspa_fx = ladspa_fx;
+  mixer->ladspa_in_place = in_place;
+
+  /* Connect the mixer buffers to LADSPA for in-place rendering */
+  if (mixer->ladspa_in_place)
+  {
+      if (fluid_ladspa_set_in_place_buffers(ladspa_fx, mixer->buffers.left_buf, mixer->buffers.right_buf,
+              mixer->buffers.fx_left_buf, mixer->buffers.fx_right_buf) != FLUID_OK)
+      {
+          FLUID_LOG(FLUID_WARN, "Failed to set up LADSPA in-place buffers, disabling in-place rendering");
+          mixer->ladspa_in_place = 0;
+      }
+  }
 }
 #endif
 
