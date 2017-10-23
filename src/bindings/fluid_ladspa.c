@@ -858,7 +858,6 @@ int fluid_ladspa_check(fluid_ladspa_fx_t *fx, char *err, int err_size)
     int has_connections;
     int num_system_nodes;
     fluid_ladspa_plugin_t *plugin;
-    LADSPA_PortDescriptor port_flags;
 
     LADSPA_API_ENTER(fx);
 
@@ -876,17 +875,9 @@ int fluid_ladspa_check(fluid_ladspa_fx_t *fx, char *err, int err_size)
 
         for (k = 0; k < plugin->desc->PortCount; k++)
         {
-            port_flags = plugin->desc->PortDescriptors[k];
-
-            if (LADSPA_IS_PORT_INPUT(port_flags) && plugin->ports[k].num_inputs == 0)
+            if (plugin->port_nodes[k] == NULL)
             {
-                FLUID_SNPRINTF(err, err_size, "Input port '%s' on plugin '%s' is not connected\n",
-                               plugin->desc->PortNames[k], plugin->desc->Label);
-                LADSPA_API_RETURN(fx, FLUID_FAILED);
-            }
-            else if (LADSPA_IS_PORT_OUTPUT(port_flags) && plugin->ports[k].num_outputs == 0)
-            {
-                FLUID_SNPRINTF(err, err_size, "Output port '%s' on plugin '%s' is not connected\n",
+                FLUID_SNPRINTF(err, err_size, "Port '%s' on plugin '%s' is not connected\n",
                                plugin->desc->PortNames[k], plugin->desc->Label);
                 LADSPA_API_RETURN(fx, FLUID_FAILED);
             }
@@ -1153,14 +1144,14 @@ new_fluid_ladspa_plugin(fluid_ladspa_fx_t *fx, const fluid_ladspa_lib_t *lib, co
         return NULL;
     }
 
-    plugin->ports = FLUID_ARRAY(fluid_ladspa_port_state_t, plugin->desc->PortCount);
-    if (plugin->ports == NULL)
+    plugin->port_nodes = FLUID_ARRAY(fluid_ladspa_node_t*, plugin->desc->PortCount);
+    if (plugin->port_nodes == NULL)
     {
         delete_fluid_ladspa_plugin(plugin);
         FLUID_LOG(FLUID_ERR, "Out of memory");
         return NULL;
     }
-    FLUID_MEMSET(plugin->ports, 0, plugin->desc->PortCount * sizeof(fluid_ladspa_port_state_t));
+    FLUID_MEMSET(plugin->port_nodes, 0, plugin->desc->PortCount * sizeof(fluid_ladspa_node_t*));
 
     return plugin;
 }
@@ -1172,9 +1163,9 @@ static void delete_fluid_ladspa_plugin(fluid_ladspa_plugin_t *plugin)
         return;
     }
 
-    if (plugin->ports != NULL)
+    if (plugin->port_nodes != NULL)
     {
-        FLUID_FREE(plugin->ports);
+        FLUID_FREE(plugin->port_nodes);
     }
 
     if (plugin->handle != NULL && plugin->desc != NULL && plugin->desc->cleanup != NULL)
@@ -1536,7 +1527,7 @@ static int connect_default_control_nodes(fluid_ladspa_fx_t *fx, fluid_ladspa_plu
     {
         port_flags = plugin->desc->PortDescriptors[i];
 
-        if (plugin->ports[i].num_inputs > 0 || !LADSPA_IS_PORT_CONTROL(port_flags))
+        if ((plugin->port_nodes[i] != NULL) || !LADSPA_IS_PORT_CONTROL(port_flags))
         {
             continue;
         }
@@ -1563,16 +1554,15 @@ static void connect_node_to_port(fluid_ladspa_node_t *node, fluid_ladspa_dir_t d
         fluid_ladspa_plugin_t *plugin, int port_idx)
 {
     plugin->desc->connect_port(plugin->handle, port_idx, node->buf);
+    plugin->port_nodes[port_idx] = node;
 
-    /* Mark port and node as connected in the respective direction */
+    /* Mark node as connected in the respective direction */
     if (dir == FLUID_LADSPA_INPUT || dir == FLUID_LADSPA_FIXED)
     {
-        plugin->ports[port_idx].num_inputs++;
         node->num_outputs++;
     }
     else
     {
-        plugin->ports[port_idx].num_outputs++;
         node->num_inputs++;
     }
 }

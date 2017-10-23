@@ -63,12 +63,16 @@ typedef struct _fluid_ladspa_lib_t
 
 } fluid_ladspa_lib_t;
 
-typedef struct _fluid_ladspa_port_state_t
+typedef struct _fluid_ladspa_node_t
 {
+    char *name;
+    fluid_ladspa_node_type_t type;
+    LADSPA_Data *buf;
+
     int num_inputs;
     int num_outputs;
 
-} fluid_ladspa_port_state_t;
+} fluid_ladspa_node_t;
 
 typedef struct _fluid_ladspa_plugin_t
 {
@@ -80,21 +84,10 @@ typedef struct _fluid_ladspa_plugin_t
 
     int active;
 
-    /* Used to keep track of the port connection states */
-    fluid_ladspa_port_state_t *ports;
+    /* Used to keep track of the port connection state */
+    fluid_ladspa_node_t **port_nodes;
 
 } fluid_ladspa_plugin_t;
-
-typedef struct _fluid_ladspa_node_t
-{
-    char *name;
-    fluid_ladspa_node_type_t type;
-    LADSPA_Data *buf;
-
-    int num_inputs;
-    int num_outputs;
-
-} fluid_ladspa_node_t;
 
 typedef struct _fluid_ladspa_fx_t
 {
