@@ -41,7 +41,7 @@
 static void clear_ladspa(fluid_ladspa_fx_t *fx);
 
 static fluid_ladspa_node_t *new_fluid_ladspa_node(fluid_ladspa_fx_t *fx, const char *name,
-                                                  fluid_ladspa_node_type_t type, int buf_size);
+                                                  fluid_ladspa_node_type_t type);
 static void delete_fluid_ladspa_node(fluid_ladspa_node_t *node);
 static int create_input_output_nodes(fluid_ladspa_fx_t *fx);
 static fluid_ladspa_node_t *get_node(fluid_ladspa_fx_t *fx, const char *name);
@@ -78,9 +78,11 @@ static int connect_default_control_nodes(fluid_ladspa_fx_t *fx, fluid_ladspa_plu
  * @param audio_groups number of input audio channels (stereo)
  * @param effects_channels number of input effects channels (stereo)
  * @param audio_channels number of output audio channels (stereo)
+ * @param buffer_size size of buffers for audio nodes
  * @return pointer to the new LADSPA effects unit
  */
-fluid_ladspa_fx_t *new_fluid_ladspa_fx(fluid_real_t sample_rate, int audio_groups, int effects_channels, int audio_channels)
+fluid_ladspa_fx_t *new_fluid_ladspa_fx(fluid_real_t sample_rate, int audio_groups, int effects_channels,
+        int audio_channels, int buffer_size)
 {
     fluid_ladspa_fx_t *fx;
 
@@ -102,6 +104,7 @@ fluid_ladspa_fx_t *new_fluid_ladspa_fx(fluid_real_t sample_rate, int audio_group
     fx->audio_groups = audio_groups;
     fx->effects_channels = effects_channels;
     fx->audio_channels = audio_channels;
+    fx->buffer_size = buffer_size;
 
     /* Setup mutex and cond used to signal that fluid_ladspa_run has finished */
      fx->run_finished_mutex = new_fluid_cond_mutex();
@@ -435,13 +438,13 @@ static int create_input_output_nodes(fluid_ladspa_fx_t *fx)
     for (i = 0; i < fx->audio_groups; i++)
     {
         FLUID_SNPRINTF(name, sizeof(name), "in%i_L", (i + 1));
-        if (new_fluid_ladspa_node(fx, name, FLUID_LADSPA_NODE_AUDIO, FLUID_BUFSIZE) == NULL)
+        if (new_fluid_ladspa_node(fx, name, FLUID_LADSPA_NODE_AUDIO) == NULL)
         {
             return FLUID_FAILED;
         }
 
         FLUID_SNPRINTF(name, sizeof(name), "in%i_R", (i + 1));
-        if (new_fluid_ladspa_node(fx, name, FLUID_LADSPA_NODE_AUDIO, FLUID_BUFSIZE) == NULL)
+        if (new_fluid_ladspa_node(fx, name, FLUID_LADSPA_NODE_AUDIO) == NULL)
         {
             return FLUID_FAILED;
         }
@@ -451,13 +454,13 @@ static int create_input_output_nodes(fluid_ladspa_fx_t *fx)
     for (i = 0; i < fx->effects_channels; i++)
     {
         FLUID_SNPRINTF(name, sizeof(name), "send%i_L", (i + 1));
-        if (new_fluid_ladspa_node(fx, name, FLUID_LADSPA_NODE_AUDIO, FLUID_BUFSIZE) == NULL)
+        if (new_fluid_ladspa_node(fx, name, FLUID_LADSPA_NODE_AUDIO) == NULL)
         {
             return FLUID_FAILED;
         }
 
         FLUID_SNPRINTF(name, sizeof(name), "send%i_R", (i + 1));
-        if (new_fluid_ladspa_node(fx, name, FLUID_LADSPA_NODE_AUDIO, FLUID_BUFSIZE) == NULL)
+        if (new_fluid_ladspa_node(fx, name, FLUID_LADSPA_NODE_AUDIO) == NULL)
         {
             return FLUID_FAILED;
         }
@@ -467,13 +470,13 @@ static int create_input_output_nodes(fluid_ladspa_fx_t *fx)
     for (i = 0; i < fx->audio_channels; i++)
     {
         FLUID_SNPRINTF(name, sizeof(name), "out%i_L", (i + 1));
-        if (new_fluid_ladspa_node(fx, name, FLUID_LADSPA_NODE_AUDIO, FLUID_BUFSIZE) == NULL)
+        if (new_fluid_ladspa_node(fx, name, FLUID_LADSPA_NODE_AUDIO) == NULL)
         {
             return FLUID_FAILED;
         }
 
         FLUID_SNPRINTF(name, sizeof(name), "out%i_R", (i + 1));
-        if (new_fluid_ladspa_node(fx, name, FLUID_LADSPA_NODE_AUDIO, FLUID_BUFSIZE) == NULL)
+        if (new_fluid_ladspa_node(fx, name, FLUID_LADSPA_NODE_AUDIO) == NULL)
         {
             return FLUID_FAILED;
         }
@@ -578,7 +581,7 @@ int fluid_ladspa_add_audio_node(fluid_ladspa_fx_t *fx, const char *name)
         LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
 
-    node = new_fluid_ladspa_node(fx, name, FLUID_LADSPA_NODE_AUDIO, FLUID_BUFSIZE);
+    node = new_fluid_ladspa_node(fx, name, FLUID_LADSPA_NODE_AUDIO);
     if (node == NULL)
     {
         LADSPA_API_RETURN(fx, FLUID_FAILED);
@@ -605,7 +608,7 @@ int fluid_ladspa_add_control_node(fluid_ladspa_fx_t *fx, const char *name, fluid
         LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
 
-    node = new_fluid_ladspa_node(fx, name, FLUID_LADSPA_NODE_CONTROL, 1);
+    node = new_fluid_ladspa_node(fx, name, FLUID_LADSPA_NODE_CONTROL);
     if (node == NULL)
     {
         LADSPA_API_RETURN(fx, FLUID_FAILED);
@@ -743,7 +746,7 @@ int fluid_ladspa_connect(fluid_ladspa_fx_t *fx, int plugin_id, fluid_ladspa_dir_
      * value */
     if (dir == FLUID_LADSPA_FIXED)
     {
-        node = new_fluid_ladspa_node(fx, "", FLUID_LADSPA_NODE_CONTROL, 1);
+        node = new_fluid_ladspa_node(fx, "", FLUID_LADSPA_NODE_CONTROL);
         if (node == NULL)
         {
             LADSPA_API_RETURN(fx, FLUID_FAILED);
@@ -1171,9 +1174,11 @@ static void delete_fluid_ladspa_plugin(fluid_ladspa_plugin_t *plugin)
 }
 
 static fluid_ladspa_node_t *new_fluid_ladspa_node(fluid_ladspa_fx_t *fx, const char *name,
-                                                  fluid_ladspa_node_type_t type, int buf_size)
+                                                  fluid_ladspa_node_type_t type)
 {
+    int buf_size;
     fluid_ladspa_node_t *node;
+
 
     /* check if node with this name exits already */
     if (FLUID_STRLEN(name) > 0 && get_node(fx, name) != NULL)
@@ -1204,6 +1209,9 @@ static fluid_ladspa_node_t *new_fluid_ladspa_node(fluid_ladspa_fx_t *fx, const c
         FLUID_LOG(FLUID_ERR, "Out of memory");
         return NULL;
     }
+
+    /* Audio buffers get the full buffer size, control ports use only one float value */
+    buf_size = (type == FLUID_LADSPA_NODE_AUDIO) ? fx->buffer_size : 1;
 
     node->buf = FLUID_ARRAY(LADSPA_Data, buf_size);
     if (node->buf == NULL)
@@ -1523,7 +1531,7 @@ static int connect_default_control_nodes(fluid_ladspa_fx_t *fx, fluid_ladspa_plu
 
         if (set_default_port_value(plugin, i, fx->sample_rate, &value) == FLUID_OK)
         {
-            node = new_fluid_ladspa_node(fx, "", FLUID_LADSPA_NODE_CONTROL, 1);
+            node = new_fluid_ladspa_node(fx, "", FLUID_LADSPA_NODE_CONTROL);
             if (node == NULL)
             {
                 return FLUID_FAILED;

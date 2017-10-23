@@ -103,6 +103,7 @@ typedef struct _fluid_ladspa_fx_t
     int audio_groups;
     int effects_channels;
     int audio_channels;
+    int buffer_size;
 
     fluid_ladspa_lib_t *libs[FLUID_LADSPA_MAX_LIBS];
     int num_libs;
@@ -128,7 +129,7 @@ typedef struct _fluid_ladspa_fx_t
 } fluid_ladspa_fx_t;
 
 
-fluid_ladspa_fx_t *new_fluid_ladspa_fx(fluid_real_t sample_rate, int audio_groups, int effects_channels, int audio_channels);
+fluid_ladspa_fx_t *new_fluid_ladspa_fx(fluid_real_t sample_rate, int audio_groups, int effects_channels, int audio_channels, int buffer_size);
 void delete_fluid_ladspa_fx(fluid_ladspa_fx_t *fx);
 int fluid_ladspa_set_sample_rate(fluid_ladspa_fx_t *fx, fluid_real_t sample_rate);
 

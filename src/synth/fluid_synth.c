@@ -711,7 +711,8 @@ new_fluid_synth(fluid_settings_t *settings)
   if (with_ladspa) {
 #ifdef LADSPA
     synth->ladspa_fx = new_fluid_ladspa_fx(synth->sample_rate, synth->audio_groups,
-            synth->effects_channels, synth->audio_channels);
+            synth->effects_channels, synth->audio_channels,
+            FLUID_MIXER_MAX_BUFFERS_DEFAULT * FLUID_BUFSIZE);
     if(synth->ladspa_fx == NULL) {
       FLUID_LOG(FLUID_ERR, "Out of memory");
       goto error_recovery;
