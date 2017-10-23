@@ -45,7 +45,7 @@ struct _fluid_cmd_handler_t {
   fluid_synth_t* synth;
   fluid_midi_router_t* router;
   fluid_cmd_hash_t* commands;
-  
+
   fluid_midi_router_rule_t *cmd_rule;        /* Rule currently being processed by shell command handler */
   int cmd_rule_type;                         /* Type of the rule (#fluid_midi_router_rule_type) */
 
@@ -70,7 +70,7 @@ struct _fluid_shell_t {
  */
 typedef struct {
   const char *name;             /**< The name of the command, as typed in the shell */
-  const char *topic;            /**< The help topic group of this command */ 
+  const char *topic;            /**< The help topic group of this command */
   fluid_cmd_func_t handler;     /**< Pointer to the handler for this command */
   const char *help;             /**< A help string */
 } fluid_cmd_int_t;
@@ -1302,7 +1302,11 @@ fluid_handle_dumptuning(fluid_cmd_handler_t* handler, int ac, char** av, fluid_o
     return -1;
   };
 
-  fluid_synth_tuning_dump(handler->synth, bank, prog, name, 256, pitch);
+  int res = fluid_synth_tuning_dump(handler->synth, bank, prog, name, 256, pitch);
+  if (FLUID_OK != res) {
+    fluid_ostream_printf(out, "Tuning %03d-%03d does not exist.\n", bank, prog);
+    return -1;
+  }
 
   fluid_ostream_printf(out, "%03d-%03d %s:\n", bank, prog, name);
 
@@ -1438,7 +1442,7 @@ static void fluid_handle_settings_iter2(void* data, char* name, int type)
   case FLUID_INT_TYPE: {
     int value, hints;
     fluid_settings_getint(d->synth->settings, name, &value);
-    
+
     if(fluid_settings_get_hints (d->synth->settings, name, &hints) == FLUID_OK)
     {
         if (!(hints & FLUID_HINT_TOGGLED))
@@ -2223,7 +2227,7 @@ fluid_cmd_handler_t* new_fluid_cmd_handler(fluid_synth_t* synth, fluid_midi_rout
   if (handler == NULL) {
     return NULL;
   }
-  handler->commands = new_fluid_hashtable_full (fluid_str_hash, fluid_str_equal,                                                              
+  handler->commands = new_fluid_hashtable_full (fluid_str_hash, fluid_str_equal,
                                         NULL, fluid_cmd_handler_destroy_hash_value);
   if (handler->commands == NULL) {
     FLUID_FREE(handler);
@@ -2232,7 +2236,7 @@ fluid_cmd_handler_t* new_fluid_cmd_handler(fluid_synth_t* synth, fluid_midi_rout
 
   handler->synth = synth;
   handler->router = router;
-  
+
   if (synth != NULL) {
     for (i = 0; i < FLUID_N_ELEMENTS(fluid_commands); i++)
     {
@@ -2483,7 +2487,7 @@ new_fluid_client(fluid_server_t* server, fluid_settings_t* settings, fluid_socke
     FLUID_LOG(FLUID_ERR, "Out of memory");
     return NULL;
   }
-  
+
   client->server = server;
   client->socket = sock;
   client->settings = settings;
@@ -2496,12 +2500,12 @@ new_fluid_client(fluid_server_t* server, fluid_settings_t* settings, fluid_socke
   }
 
   return client;
-  
+
 error_recovery:
   FLUID_LOG(FLUID_ERR, "Out of memory");
   delete_fluid_client(client);
   return NULL;
-  
+
 }
 
 void fluid_client_quit(fluid_client_t* client)
@@ -2522,7 +2526,7 @@ void delete_fluid_client(fluid_client_t* client)
     delete_fluid_cmd_handler(client->handler);
     client->handler = NULL;
   }
-  
+
   if (client->socket != INVALID_SOCKET) {
     fluid_socket_close(client->socket);
     client->socket = INVALID_SOCKET;
