@@ -62,8 +62,8 @@ static fluid_ladspa_lib_t *get_ladspa_library(fluid_ladspa_fx_t *fx, const char 
 static int load_plugin_library(fluid_ladspa_lib_t *lib);
 static void unload_plugin_library(fluid_ladspa_lib_t *lib);
 
-static FLUID_INLINE void node_to_buffer(fluid_ladspa_node_t *node, fluid_real_t *buffer);
-static FLUID_INLINE void buffer_to_node(fluid_real_t *buffer, fluid_ladspa_node_t *node);
+static FLUID_INLINE void node_to_buffer(fluid_ladspa_node_t *node, fluid_real_t *buffer, int num_samples);
+static FLUID_INLINE void buffer_to_node(fluid_real_t *buffer, fluid_ladspa_node_t *node, int num_samples);
 
 static int set_default_port_value(fluid_ladspa_plugin_t *plugin, unsigned int port_idx,
         int sample_rate, LADSPA_Data *data);
@@ -336,12 +336,12 @@ int fluid_ladspa_reset(fluid_ladspa_fx_t *fx)
 }
 
 /**
- * Processes a block of audio data via the LADSPA effects unit.
+ * Processes audio data via the LADSPA effects unit.
  *
  * FluidSynth calls this function during main output mixing, just after
  * the internal reverb and chorus effects have been processed.
  *
- * It reads data from the supplied buffers, runs all LADSPA plugins and writes the
+ * It copies audio data from the supplied buffers, runs all LADSPA plugins and copies the
  * resulting audio back into the same buffers.
  *
  * @param fx LADSPA effects instance
@@ -349,11 +349,15 @@ int fluid_ladspa_reset(fluid_ladspa_fx_t *fx)
  * @param right_buf array of pointers into the right audio group buffers
  * @param fx_left_buf array of pointers into the left effects buffers
  * @param fx_right_buf array of pointers into the right effects buffers
+ * @param block_count number of blocks to render
+ * @param block_size number of samples in a block
  */
 void fluid_ladspa_run(fluid_ladspa_fx_t *fx, fluid_real_t *left_buf[], fluid_real_t *right_buf[],
-                      fluid_real_t *fx_left_buf[], fluid_real_t *fx_right_buf[])
+                      fluid_real_t *fx_left_buf[], fluid_real_t *fx_right_buf[],
+                      int block_count, int block_size)
 {
     int i, n;
+    int num_samples;
 
     /* Somebody wants to deactivate the engine, so let's give them a chance to do that.
      * And check that there is at least one plugin loaded, to avoid the overhead of the
@@ -373,32 +377,33 @@ void fluid_ladspa_run(fluid_ladspa_fx_t *fx, fluid_real_t *left_buf[], fluid_rea
      * main inputs, effect inputs, main outputs.
      * All inputs and outputs use two nodes (stereo), left and right channels interleaved. */
     n = 0;
+    num_samples = block_count * block_size;
 
     /* Incoming main audio data */
     for (i = 0; i < fx->audio_groups; i++)
     {
-        buffer_to_node(left_buf[i], fx->nodes[n++]);
-        buffer_to_node(right_buf[i], fx->nodes[n++]);
+        buffer_to_node(left_buf[i], fx->nodes[n++], num_samples);
+        buffer_to_node(right_buf[i], fx->nodes[n++], num_samples);
     }
 
     /* Incoming effects audio data */
     for (i = 0; i < fx->effects_channels; i++)
     {
-        buffer_to_node(fx_left_buf[i], fx->nodes[n++]);
-        buffer_to_node(fx_right_buf[i], fx->nodes[n++]);
+        buffer_to_node(fx_left_buf[i], fx->nodes[n++], num_samples);
+        buffer_to_node(fx_right_buf[i], fx->nodes[n++], num_samples);
     }
 
     /* Run each plugin on a block of data */
     for (i = 0; i < fx->num_plugins; i++)
     {
-        fx->plugins[i]->desc->run(fx->plugins[i]->handle, FLUID_BUFSIZE);
+        fx->plugins[i]->desc->run(fx->plugins[i]->handle, num_samples);
     }
 
     /* Copy the data from the output nodes back to the output buffers */
     for (i = 0; i < fx->audio_channels; i++)
     {
-        node_to_buffer(fx->nodes[n++], left_buf[i]);
-        node_to_buffer(fx->nodes[n++], right_buf[i]);
+        node_to_buffer(fx->nodes[n++], left_buf[i], num_samples);
+        node_to_buffer(fx->nodes[n++], right_buf[i], num_samples);
     }
 
     if (!fluid_atomic_int_compare_and_exchange(&fx->state, FLUID_LADSPA_RUNNING, FLUID_LADSPA_ACTIVE))
@@ -940,48 +945,48 @@ int fluid_ladspa_check(fluid_ladspa_fx_t *fx, char *err, int err_size)
 
 #ifdef WITH_FLOAT
 
-static FLUID_INLINE void buffer_to_node(fluid_real_t *buffer, fluid_ladspa_node_t *node)
+static FLUID_INLINE void buffer_to_node(fluid_real_t *buffer, fluid_ladspa_node_t *node, int num_samples)
 {
     /* If the node is not used by any plugin, then we don't need to fill it */
     if (node->num_outputs > 0)
     {
-        FLUID_MEMCPY(node->buf, buffer, FLUID_BUFSIZE * sizeof(float));
+        FLUID_MEMCPY(node->buf, buffer, num_samples * sizeof(float));
     }
 }
 
-static FLUID_INLINE void node_to_buffer(fluid_ladspa_node_t *node, fluid_real_t *buffer)
+static FLUID_INLINE void node_to_buffer(fluid_ladspa_node_t *node, fluid_real_t *buffer, int num_samples)
 {
     /* If the node has no inputs, then we don't need to copy it to the node */
     if (node->num_inputs > 0)
     {
-        FLUID_MEMCPY(buffer, node->buf, FLUID_BUFSIZE * sizeof(float));
+        FLUID_MEMCPY(buffer, node->buf, num_samples * sizeof(float));
     }
 }
 
 #else /* WITH_FLOAT */
 
-static FLUID_INLINE void buffer_to_node(fluid_real_t *buffer, fluid_ladspa_node_t *node)
+static FLUID_INLINE void buffer_to_node(fluid_real_t *buffer, fluid_ladspa_node_t *node, int num_samples)
 {
     int i;
 
     /* If the node is not used by any plugin, then we don't need to fill it */
     if (node->num_outputs > 0)
     {
-        for (i = 0; i < FLUID_BUFSIZE; i++)
+        for (i = 0; i < num_samples; i++)
         {
             node->buf[i] = (LADSPA_Data)buffer[i];
         }
     }
 }
 
-static FLUID_INLINE void node_to_buffer(fluid_ladspa_node_t *node, fluid_real_t *buffer)
+static FLUID_INLINE void node_to_buffer(fluid_ladspa_node_t *node, fluid_real_t *buffer, int num_samples)
 {
     int i;
 
     /* If the node has no inputs, then we don't need to copy it to the node */
     if (node->num_inputs > 0)
     {
-        for (i = 0; i < FLUID_BUFSIZE; i++)
+        for (i = 0; i < num_samples; i++)
         {
             buffer[i] = (fluid_real_t)node->buf[i];
         }
@@ -1564,4 +1569,3 @@ static void connect_node_to_port(fluid_ladspa_node_t *node, fluid_ladspa_dir_t d
         node->num_inputs++;
     }
 }
-
