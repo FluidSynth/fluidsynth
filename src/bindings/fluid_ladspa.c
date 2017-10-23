@@ -854,10 +854,11 @@ int fluid_ladspa_control_defaults(fluid_ladspa_fx_t *fx)
 int fluid_ladspa_check(fluid_ladspa_fx_t *fx, char *err, int err_size)
 {
     int i;
-    unsigned int k;
+    unsigned int j, k;
     int has_connections;
     int num_system_nodes;
     fluid_ladspa_plugin_t *plugin;
+    LADSPA_PortDescriptor flags1, flags2;
 
     LADSPA_API_ENTER(fx);
 
@@ -880,6 +881,41 @@ int fluid_ladspa_check(fluid_ladspa_fx_t *fx, char *err, int err_size)
                 FLUID_SNPRINTF(err, err_size, "Port '%s' on plugin '%s' is not connected\n",
                                plugin->desc->PortNames[k], plugin->desc->Label);
                 LADSPA_API_RETURN(fx, FLUID_FAILED);
+            }
+        }
+    }
+
+    /* In-place broken plugins can't cope with input and output audio ports connected to the same
+     * buffer. Check all plugins to make sure this doesn't happen */
+    for (i = 0; i < fx->num_plugins; i++)
+    {
+        plugin = fx->plugins[i];
+
+        if (!LADSPA_IS_INPLACE_BROKEN(plugin->desc->Properties))
+            continue;
+
+        for (j = 0; j < plugin->desc->PortCount; j++)
+        {
+            flags1 = plugin->desc->PortDescriptors[j];
+
+            for (k = 0; k < plugin->desc->PortCount; k++)
+            {
+                flags2 = plugin->desc->PortDescriptors[k];
+
+                /* First two bits or port flags specify input (1) or output (2) direction */
+                if (j != k
+                    && plugin->port_nodes[j] == plugin->port_nodes[k]
+                    && (flags1 & 0x3) != (flags2 & 0x3) /* first two bits encode direction */
+                    && LADSPA_IS_PORT_AUDIO(flags1) && LADSPA_IS_PORT_AUDIO(flags2))
+                {
+                    FLUID_SNPRINTF(err, err_size,
+                            "Plugin '%s' is in-place broken, '%s' and '%s' are not allowed "
+                            "to connect to the same node\n",
+                            plugin->desc->Label,
+                            plugin->desc->PortNames[j],
+                            plugin->desc->PortNames[k]);
+                    LADSPA_API_RETURN(fx, FLUID_FAILED);
+                }
             }
         }
     }
