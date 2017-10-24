@@ -142,33 +142,12 @@ fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t* mixer)
   
 #ifdef LADSPA
   /* Run the signal through the LADSPA Fx unit */
-  if (mixer->ladspa_fx && mixer->ladspa_fx->state == FLUID_LADSPA_ACTIVE) {
-    int j;
-    FLUID_DECLARE_VLA(fluid_real_t*, left_buf, mixer->buffers.buf_count);
-    FLUID_DECLARE_VLA(fluid_real_t*, right_buf, mixer->buffers.buf_count);
-    FLUID_DECLARE_VLA(fluid_real_t*, fx_left_buf, mixer->buffers.fx_buf_count);
-    FLUID_DECLARE_VLA(fluid_real_t*, fx_right_buf, mixer->buffers.fx_buf_count);
-    for (j=0; j < mixer->buffers.buf_count; j++) {
-      left_buf[j] = mixer->buffers.left_buf[j];
-      right_buf[j] = mixer->buffers.right_buf[j];
-    }
-    for (j=0; j < mixer->buffers.fx_buf_count; j++) {
-      fx_left_buf[j] = mixer->buffers.fx_left_buf[j];
-      fx_right_buf[j] = mixer->buffers.fx_right_buf[j];
-    }
-    for (i=0; i < mixer->current_blockcount * FLUID_BUFSIZE; i += FLUID_BUFSIZE) {
-      fluid_ladspa_run(mixer->ladspa_fx, left_buf, right_buf, fx_left_buf,
-                      fx_right_buf);
-      for (j=0; j < mixer->buffers.buf_count; j++) {
-        left_buf[j] += FLUID_BUFSIZE;
-        right_buf[j] += FLUID_BUFSIZE;
-      }
-      for (j=0; j < mixer->buffers.fx_buf_count; j++) {
-        fx_left_buf[j] += FLUID_BUFSIZE;
-        fx_right_buf[j] += FLUID_BUFSIZE;
-      }
-    }
-    fluid_check_fpe("LADSPA");
+  if (mixer->ladspa_fx) {
+      fluid_ladspa_run(mixer->ladspa_fx,
+              mixer->buffers.left_buf, mixer->buffers.right_buf,
+              mixer->buffers.fx_left_buf, mixer->buffers.fx_right_buf,
+              mixer->current_blockcount, FLUID_BUFSIZE);
+      fluid_check_fpe("LADSPA");
   }
 #endif
 }
