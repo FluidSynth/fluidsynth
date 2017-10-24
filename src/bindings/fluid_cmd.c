@@ -1905,12 +1905,6 @@ int fluid_handle_basicchannels (void* data, int ac, char** av,
 	return 0;
 }
 
-char * WarningMsg ="resetbasicchannels: warning:\n\
--(1) Different entries have the same basic channel.An entry supersedes\n\
- a previous entry with the same basic channel.\n\
--(2) Number of channels in one entry overlaps the next basic channel.\n\
-Anyway, the command succeeds and restricts nbr to the right value.\n";
-
 char *InvalidArg =" invalid argument";
 char *TooFewArg = " too few argument, chan mode val [chan mode val]...";
 /*-----------------------------------------------------------------------------
@@ -1960,17 +1954,10 @@ int fluid_handle_resetbasicchannels (void* data, int ac, char** av,
 	/* set list of basic channels */
 	result = fluid_synth_reset_basic_channels(synth,n, bci);
 	if(bci) free(bci);
-	if (result==FLUID_POLYMONO_WARNING)
-		fluid_ostream_printf(out, WarningMsg);
 	if (result == FLUID_FAILED)  
 		fluid_ostream_printf(out, "resetbasicchannels:%s\n",InvalidArg);
 	return 0;
 }
-
-char * WarningMsg1 ="warning:\n\
--(1) val of the previous basic channel has been narrowed or\n\
--(2) Number of channels in one entry overlaps the next basic channel.\n\
-Anyway, the command succeeds and restricts nbr to the right value.\n";
 
 /*-----------------------------------------------------------------------------
   setbasicchannels chan1 Mode1 nbr1    [chan2 Mode2 nbr2..]
@@ -2018,9 +2005,6 @@ int fluid_handle_setbasicchannels (void* data, int ac, char** av,
 		/* change basic channels */
 	
 		result = fluid_synth_set_basic_channel(synth,basicchan,mode,val);
-		if (result==FLUID_POLYMONO_WARNING)
-			fluid_ostream_printf(out,"channel:%3d, mode:%3d, nbr:%3d, %s",
-				basicchan,mode, val, WarningMsg1);
 		if (result == FLUID_FAILED)  
 			fluid_ostream_printf(out,"channel:%3d, mode:%3d, nbr:%3d, %s\n",
 				basicchan,mode, val, InvalidArg);
