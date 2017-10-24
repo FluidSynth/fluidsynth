@@ -400,7 +400,11 @@ fluid_source(fluid_cmd_handler_t* handler, const char *filename)
   fluid_shell_init(&shell, NULL, handler, file, fluid_get_stdout());
   result = fluid_shell_run(&shell);
 
+#ifdef WIN32
+  _close(file);
+#else
   close(file);
+#endif
 
   return result;
 }
