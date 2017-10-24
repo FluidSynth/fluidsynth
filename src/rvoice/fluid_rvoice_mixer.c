@@ -545,7 +545,7 @@ new_fluid_rvoice_mixer(int buf_count, int fx_buf_count, fluid_real_t sample_rate
   /* allocate the reverb module */
   mixer->fx.reverb = new_fluid_revmodel(sample_rate);
   mixer->fx.chorus = new_fluid_chorus(sample_rate);
-  if (mixer->fx.reverb == NULL) {
+  if (mixer->fx.reverb == NULL || mixer->fx.chorus == NULL) {
     FLUID_LOG(FLUID_ERR, "Out of memory");
     delete_fluid_rvoice_mixer(mixer);
     return NULL;
