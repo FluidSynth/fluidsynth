@@ -77,7 +77,6 @@ enum PolyMonoMode
 #define SetModeChanEn(mode) (mode |= ENABLED)
 #define ResetModeChanEn(mode) (mode &= ~ENABLED)
 
-#define FLUID_POLYMONO_WARNING (-2) /* returned by fluid_synth_reset_basic_channels() */
 struct _fluid_basic_channel_infos_t
 {
 	int basicchan;  /* MIDI channel numer to set as basic channel */
