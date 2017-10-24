@@ -119,21 +119,20 @@ int fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth,
  * 
  * @return
  *  - FLUID_OK on success.
- *  - FLUID_POLYMONO_WARNING prevents about entries coherence in the table.
- *     - 1) when different entries have the same basic channel, any entry
- *          supersedes a previous entry with the same basic channel.
- *     - 2) if val has a number of channels overlapping the next basic channel.
- *      Anyway, the function does the job and restricts val to the right value.
  *  - FLUID_FAILED 
  *    - synth is NULL.
  *    - n, basicchan or val is outside MIDI channel count.
  *    - mode is invalid. 
+ *    - val has a number of channels overlapping the next basic channel.
  * 
  * Note:This API is the only one to replace all the basics channels in the 
  * synth instance.
  * The default shell has an equivalent command "resetbasicchannels" to set one
  * or more basic channels.
  */
+char * WarningMsg ="resetbasicchannels: Different entries have the same basic channel.\n\
+An entry supersedes a previous entry with the same basic channel.\n";
+
 int fluid_synth_reset_basic_channels(fluid_synth_t* synth, 
                              int n, 
                              fluid_basic_channel_infos_t *basicChannelInfos)
@@ -181,7 +180,7 @@ int fluid_synth_reset_basic_channels(fluid_synth_t* synth,
 		/* Different entries have the same basic channel. 
 		 An entry supersedes a previous entry with the same 
 		 basic channel.*/
-		result = FLUID_POLYMONO_WARNING;
+		FLUID_LOG(FLUID_INFO, WarningMsg);
 	    /* Set Basic channel first */
 	    else SetModeBasicChan(synth->channel[bchan]->mode);
 	}
@@ -214,14 +213,11 @@ int fluid_synth_reset_basic_channels(fluid_synth_t* synth,
  * 
  * @return 
  * - FLUID_OK on success.
- * - FLUID_POLYMONO_WARNING
- *   - 1) if val of the previous basic channel has been narrowed or
- *   - 2) if val has a number of channels that overlaps the next basic channel part.
- *   - Anyway, the function does the job and restricts val to the right value.
  * - FLUID_FAILED
  *   - synth is NULL.
  *   - chan or val is outside MIDI channel count.
  *   - mode is invalid.
+ *   - val has a number of channels overlapping the next basic channel.
  */
 int fluid_synth_set_basic_channel(fluid_synth_t* synth, int basicchan, int mode, int val)
 {
@@ -259,15 +255,16 @@ int fluid_synth_set_basic_channel(fluid_synth_t* synth, int basicchan, int mode,
  * 
  * @return 
  * - FLUID_OK on success.
- * - FLUID_POLYMONO_WARNING
- *   - 1) if val of the previous basic channel has been narrowed or
- *   - 2) if val has a number of channels that overlaps the next basic channel part or
- *   - 3) val is outside MIDI channel count.
- *   - Anyway, the function does the job and restricts val to the right value.
- * - FLUID_FAILED basicchan is outside MIDI channel count.
+ * - FLUID_FAILED
+ *   - basicchan is outside MIDI channel count.
+ *   - val has a number of channels overlapping the next basic channel.
  * 
  * Note: default shell has an equivalent command "setbasicchannels".
  */
+char * WarningMsg1 = "Basic channel %d has been narrowed to %d channels.";
+char * WarningMsg2 = "Basic channel %d have number of channels that overlaps.\n\
+the next basic channel\n";
+
 int fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth, 
 					int basicchan,int mode, int val)
 {
@@ -277,6 +274,7 @@ int fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth,
 	{
 		int LastBeginRange; /* Last channel num inside the beginning range + 1. */
 		int LastEndRange; /* Last channel num inside the ending range + 1. */
+		int prevbasicchan = -1 ; // Previous basic channel
 		int i;
 		result = FLUID_OK;
 		if ( !IsChanBasicChannel(synth->channel[basicchan]))
@@ -288,9 +286,7 @@ int fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth,
 				{	/* search previous basic channel */
 					if (IsChanBasicChannel(synth->channel[i]))
 					{	/* i is the previous basic channel */
-						/* val of previous is narrowed */
-						synth->channel[i]->mode_val = basicchan - i;
-						result = FLUID_POLYMONO_WARNING;
+						prevbasicchan = i;
 						break;
 					}
 				}
@@ -316,12 +312,18 @@ int fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth,
 				if (val) LastBeginRange = basicchan + val;
 				else LastBeginRange = LastEndRange;
 		}
-		/* LastBeginRange limited up to LastEndRange */
+		/* Check if val overlaps the next basic channel */
 		if (LastBeginRange > LastEndRange)
 		{	
-			LastBeginRange = LastEndRange;
 			/* val have number of channels that overlaps the next basic channel */
-			result = FLUID_POLYMONO_WARNING;
+			FLUID_LOG(FLUID_INFO,WarningMsg2,basicchan);
+			return FLUID_FAILED;
+		}
+		/* if previous basic channel exists, val is narrowed */
+		if(prevbasicchan >= 0)
+		{
+			synth->channel[prevbasicchan]->mode_val = basicchan - prevbasicchan;
+			FLUID_LOG(FLUID_INFO,WarningMsg1,prevbasicchan,basicchan - prevbasicchan);
 		}
 
 		/* val is limited up to LastBeginRange */
