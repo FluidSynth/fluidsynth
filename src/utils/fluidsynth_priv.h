@@ -181,9 +181,9 @@ typedef guint32            uint32;
 //typedef guint64            uint64;
 
 /** Atomic types */
-typedef int fluid_atomic_int;
-typedef unsigned int fluid_atomic_uint;
-typedef float fluid_atomic_float;
+typedef int fluid_atomic_int_t;
+typedef unsigned int fluid_atomic_uint_t;
+typedef float fluid_atomic_float_t;
 
 /***************************************************************
  *

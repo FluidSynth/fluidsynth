@@ -45,7 +45,7 @@ struct _fluid_mixer_buffers_t {
   fluid_rvoice_t** finished_voices; /* List of voices who have finished */
   int finished_voice_count;
 
-  fluid_atomic_int ready;             /**< Atomic: buffers are ready for mixing */
+  fluid_atomic_int_t ready;             /**< Atomic: buffers are ready for mixing */
 
   int buf_blocks;             /**< Number of blocks allocated in the buffers */
 
@@ -87,8 +87,8 @@ struct _fluid_rvoice_mixer_t {
 #ifdef ENABLE_MIXER_THREADS
 //  int sleeping_threads;        /**< Atomic: number of threads currently asleep */
 //  int active_threads;          /**< Atomic: number of threads in the thread loop */
-  fluid_atomic_int threads_should_terminate; /**< Atomic: Set to TRUE when threads should terminate */
-  fluid_atomic_int current_rvoice;           /**< Atomic: for the threads to know next voice to  */
+  fluid_atomic_int_t threads_should_terminate; /**< Atomic: Set to TRUE when threads should terminate */
+  fluid_atomic_int_t current_rvoice;           /**< Atomic: for the threads to know next voice to  */
   fluid_cond_t* wakeup_threads; /**< Signalled when the threads should wake up */
   fluid_cond_mutex_t* wakeup_threads_m; /**< wakeup_threads mutex companion */
   fluid_cond_t* thread_ready; /**< Signalled from thread, when the thread has a buffer ready for mixing */
