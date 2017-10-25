@@ -116,7 +116,7 @@ static void fluid_synth_stop_LOCAL (fluid_synth_t *synth, unsigned int id);
  */
 
 /* has the synth module been initialized? */
-static int fluid_synth_initialized = 0;
+static fluid_atomic_int_t fluid_synth_initialized = 0;
 static void fluid_synth_init(void);
 static void init_dither(void);
 
@@ -272,8 +272,6 @@ fluid_version_str (void)
 static void
 fluid_synth_init(void)
 {
-  fluid_synth_initialized++;
-
 #ifdef TRAP_ON_FPE
   /* Turn on floating point exception traps */
   feenableexcept (FE_DIVBYZERO | FE_UNDERFLOW | FE_OVERFLOW | FE_INVALID);
@@ -553,7 +551,7 @@ new_fluid_synth(fluid_settings_t *settings)
   int with_chorus = 0;
   
   /* initialize all the conversion tables and other stuff */
-  if (fluid_synth_initialized == 0)
+  if (fluid_atomic_int_compare_and_exchange(&fluid_synth_initialized, 0, 1))
   {
     char buf[64];
     if (fluid_settings_str_equal (settings, "synth.volenv", "compliant"))
