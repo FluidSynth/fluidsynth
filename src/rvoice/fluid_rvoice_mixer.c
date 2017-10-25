@@ -736,7 +736,7 @@ fluid_mixer_get_mt_rvoice(fluid_rvoice_mixer_t* mixer)
 #define THREAD_BUF_TERMINATE 3
 
 /* Core thread function (processes voices in parallel to primary synthesis thread) */
-static FLUID_THREAD_RETURN_TYPE
+static fluid_thread_return_t
 fluid_mixer_thread_func (void* data)
 {
   fluid_mixer_buffers_t* buffers = data;  
