@@ -21,7 +21,7 @@
 #ifndef _FLUID_EVENT_QUEUE_H
 #define _FLUID_EVENT_QUEUE_H
 
-#include "fluid_sys.h"
+#include <fluid_sys.h>
 #include "fluid_midi.h"
 #include "fluid_ringbuffer.h"
 

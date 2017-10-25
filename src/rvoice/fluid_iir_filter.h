@@ -21,7 +21,7 @@
 #ifndef _FLUID_IIR_FILTER_H
 #define _FLUID_IIR_FILTER_H
 
-#include "fluidsynth_priv.h"
+#include <fluidsynth_priv.h>
 
 typedef struct _fluid_iir_filter_t fluid_iir_filter_t;
 

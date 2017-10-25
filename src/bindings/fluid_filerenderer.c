@@ -23,9 +23,9 @@
   */
 
 #include <stdio.h>
-#include "fluidsynth_priv.h"
+#include <fluidsynth_priv.h>
 #include "fluid_synth.h"
-#include "fluid_sys.h"
+#include <fluid_sys.h>
 #include "fluid_settings.h"
 
 #if LIBSNDFILE_SUPPORT

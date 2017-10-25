@@ -21,7 +21,7 @@
 #ifndef _FLUID_CONV_H
 #define _FLUID_CONV_H
 
-#include "fluidsynth_priv.h"
+#include <fluidsynth_priv.h>
 
 #define FLUID_CENTS_HZ_SIZE     1200
 #define FLUID_VEL_CB_SIZE       128

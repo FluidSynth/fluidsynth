@@ -24,7 +24,7 @@
 
 #include "fluid_defsfont.h"
 /* Todo: Get rid of that 'include' */
-#include "fluid_sys.h"
+#include <fluid_sys.h>
 
 #if LIBSNDFILE_SUPPORT
 #include <sndfile.h>
@@ -229,7 +229,11 @@ typedef struct _fluid_cached_sampledata_t {
 } fluid_cached_sampledata_t;
 
 static fluid_cached_sampledata_t* all_cached_sampledata = NULL;
+#ifdef FLUID_MUTEX_INIT
 static fluid_mutex_t cached_sampledata_mutex = FLUID_MUTEX_INIT;
+#else
+static fluid_mutex_t cached_sampledata_mutex;
+#endif
 
 static int fluid_get_file_modification_time(char *filename, time_t *modification_time)
 {
@@ -2030,24 +2034,40 @@ fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defs
    equivalent to the matching ID list in memory regardless of LE/BE machine
 */
 
+#if FLUID_IS_BIG_ENDIAN
+#define UINT32_FROM_LE(x) \
+  ((((x) & 0xff000000) >> 24) | (((x) & 0x00ff0000) >>  8) | \
+  (((x) & 0x0000ff00) <<  8) | (((x) & 0x000000ff) << 24))
+#define INT32_FROM_LE(x) \
+  ((((x) & 0xff000000) >> 24) | (((x) & 0x00ff0000) >>  8) | \
+  (((x) & 0x0000ff00) <<  8) | (((x) & 0x000000ff) << 24))
+#define INT16_FROM_LE(x) \
+  ((((x) >> 8) & 0xff) | (((x) & 0xff) << 8))
+#else
+#define UINT32_FROM_LE(x) x
+#define INT32_FROM_LE(x) x
+#define INT16_FROM_LE(x) x
+#endif
+
+
 #define READCHUNK(var,fd)	do {		\
 	if (!safe_fread(var, 8, fd))			\
 		return(FAIL);				\
-	((SFChunk *)(var))->size = GUINT32_FROM_LE(((SFChunk *)(var))->size);  \
+	((SFChunk *)(var))->size = UINT32_FROM_LE(((SFChunk *)(var))->size);  \
 } while(0)
 
 #define READD(var,fd)		do {		\
 	unsigned int _temp;				\
 	if (!safe_fread(&_temp, 4, fd))			\
 		return(FAIL);				\
-	var = GINT32_FROM_LE(_temp);			\
+	var = INT32_FROM_LE(_temp);			\
 } while(0)
 
 #define READW(var,fd)		do {		\
 	unsigned short _temp;				\
 	if (!safe_fread(&_temp, 2, fd))			\
 		return(FAIL);				\
-	var = GINT16_FROM_LE(_temp);			\
+	var = INT16_FROM_LE(_temp);			\
 } while(0)
 
 #define READID(var,fd)		do {		\

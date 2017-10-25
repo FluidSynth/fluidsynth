@@ -21,7 +21,7 @@
 #ifndef _FLUID_RINGBUFFER_H
 #define _FLUID_RINGBUFFER_H
 
-#include "fluid_sys.h"
+#include <fluid_sys.h>
 
 /**
  * Lockless event queue instance.
@@ -30,7 +30,7 @@ struct _fluid_ringbuffer_t
 {
   char *array;  /**< Queue array of arbitrary size elements */
   int totalcount;       /**< Total count of elements in array */
-  int count;            /**< Current count of elements */
+  fluid_atomic_int count;            /**< Current count of elements */
   int in;               /**< Index in queue to store next pushed element */
   int out;              /**< Index in queue of next popped element */
   int elementsize;          /**< Size of each element */

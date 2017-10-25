@@ -20,10 +20,10 @@
 
 #include "fluid_rvoice_mixer.h"
 #include "fluid_rvoice.h"
-#include "fluid_sys.h"
+#include <fluid_sys.h>
 #include "fluid_rev.h"
 #include "fluid_chorus.h"
-#include "fluidsynth_priv.h"
+#include <fluidsynth_priv.h>
 #include "fluid_ladspa.h"
 #include "fluid_synth.h"
 
@@ -45,7 +45,7 @@ struct _fluid_mixer_buffers_t {
   fluid_rvoice_t** finished_voices; /* List of voices who have finished */
   int finished_voice_count;
 
-  int ready;             /**< Atomic: buffers are ready for mixing */
+  fluid_atomic_int ready;             /**< Atomic: buffers are ready for mixing */
 
   int buf_blocks;             /**< Number of blocks allocated in the buffers */
 
@@ -87,8 +87,8 @@ struct _fluid_rvoice_mixer_t {
 #ifdef ENABLE_MIXER_THREADS
 //  int sleeping_threads;        /**< Atomic: number of threads currently asleep */
 //  int active_threads;          /**< Atomic: number of threads in the thread loop */
-  int threads_should_terminate; /**< Atomic: Set to TRUE when threads should terminate */
-  int current_rvoice;           /**< Atomic: for the threads to know next voice to  */
+  fluid_atomic_int threads_should_terminate; /**< Atomic: Set to TRUE when threads should terminate */
+  fluid_atomic_int current_rvoice;           /**< Atomic: for the threads to know next voice to  */
   fluid_cond_t* wakeup_threads; /**< Signalled when the threads should wake up */
   fluid_cond_mutex_t* wakeup_threads_m; /**< wakeup_threads mutex companion */
   fluid_cond_t* thread_ready; /**< Signalled from thread, when the thread has a buffer ready for mixing */
@@ -736,7 +736,7 @@ fluid_mixer_get_mt_rvoice(fluid_rvoice_mixer_t* mixer)
 #define THREAD_BUF_TERMINATE 3
 
 /* Core thread function (processes voices in parallel to primary synthesis thread) */
-static void
+static FLUID_THREAD_RETURN_TYPE
 fluid_mixer_thread_func (void* data)
 {
   fluid_mixer_buffers_t* buffers = data;  
@@ -777,6 +777,7 @@ fluid_mixer_thread_func (void* data)
     }
   }
 
+  return FLUID_THREAD_RETURN_VALUE;
 }
 
 static void

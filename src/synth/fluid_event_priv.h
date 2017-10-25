@@ -23,7 +23,7 @@
 #define _FLUID_EVENT_PRIV_H
 
 #include "fluidsynth.h"
-#include "fluid_sys.h"
+#include <fluid_sys.h>
 
 /* Private data for event */
 /* ?? should be optimized in size, using unions */

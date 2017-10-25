@@ -30,7 +30,7 @@
  * conditional to wake up the thread.  Lame-o API! :(
  */
 
-#include "fluidsynth_priv.h"
+#include <fluidsynth_priv.h>
 
 #if WINMIDI_SUPPORT
 

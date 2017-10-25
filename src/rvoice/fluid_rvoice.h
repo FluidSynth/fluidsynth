@@ -22,7 +22,7 @@
 #ifndef _FLUID_RVOICE_H
 #define _FLUID_RVOICE_H
 
-#include "fluidsynth_priv.h"
+#include <fluidsynth_priv.h>
 #include "fluid_iir_filter.h"
 #include "fluid_adsr_env.h"
 #include "fluid_lfo.h"

@@ -18,7 +18,7 @@
  * 02110-1301, USA
  */
 
-#include "fluidsynth_priv.h"
+#include <fluidsynth_priv.h>
 #include "fluid_phase.h"
 
 /* Purpose:
@@ -43,7 +43,7 @@
  * - dsp_buf: Output buffer of floating point values (FLUID_BUFSIZE in length)
  */
 
-#include "fluidsynth_priv.h"
+#include <fluidsynth_priv.h>
 #include "fluid_synth.h"
 #include "fluid_voice.h"
 

@@ -19,8 +19,8 @@
  */
 
 #ifdef WIN32
-#include "fluidsynth_priv.h"
-#include "fluid_sys.h"
+#include <fluidsynth_priv.h>
+#include <fluid_sys.h>
 
 static HINSTANCE fluid_hinstance = NULL;
 static HWND fluid_wnd = NULL;

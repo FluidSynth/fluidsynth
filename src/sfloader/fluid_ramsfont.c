@@ -19,7 +19,7 @@
  */
 
 #include "fluid_ramsfont.h"
-#include "fluid_sys.h"
+#include <fluid_sys.h>
 #include "fluid_synth.h"
 
 /* thenumber of samples before the start and after the end */

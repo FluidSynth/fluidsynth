@@ -23,7 +23,7 @@
 #define _FLUID_RVOICE_HANDLER_H
 
 #include "fluid_rvoice.h"
-#include "fluid_sys.h"
+#include <fluid_sys.h>
 
 typedef struct _fluid_rvoice_handler_t fluid_rvoice_handler_t;
 

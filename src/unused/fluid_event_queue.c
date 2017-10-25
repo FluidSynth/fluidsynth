@@ -24,7 +24,7 @@
  */
 
 #include "fluid_event_queue.h"
-#include "fluidsynth_priv.h"
+#include <fluidsynth_priv.h>
 
 
 /**

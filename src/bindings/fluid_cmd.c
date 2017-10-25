@@ -20,12 +20,12 @@
 
 #include <glib.h>
 
-#include "fluidsynth_priv.h"
+#include <fluidsynth_priv.h>
 #include "fluid_cmd.h"
 #include "fluid_synth.h"
 #include "fluid_settings.h"
 #include "fluid_hash.h"
-#include "fluid_sys.h"
+#include <fluid_sys.h>
 #include "fluid_midi_router.h"
 #include "fluid_sfont.h"
 #include "fluid_chan.h"

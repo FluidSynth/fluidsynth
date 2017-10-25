@@ -18,7 +18,7 @@
  * 02110-1301, USA
  */
 
-#include "fluid_sys.h"
+#include <fluid_sys.h>
 
 
 #if WITH_READLINE

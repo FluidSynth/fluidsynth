@@ -22,7 +22,7 @@
 #ifndef _FLUID_CHORUS_H
 #define _FLUID_CHORUS_H
 
-#include "fluidsynth_priv.h"
+#include <fluidsynth_priv.h>
 
 
 typedef struct _fluid_chorus_t fluid_chorus_t;

@@ -29,7 +29,7 @@
 
 
 #include "fluid_event_priv.h"
-#include "fluidsynth_priv.h"
+#include <fluidsynth_priv.h>
 
 /***************************************************************
  *

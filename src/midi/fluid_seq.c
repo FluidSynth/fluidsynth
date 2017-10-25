@@ -28,8 +28,8 @@
 */
 
 #include "fluid_event_priv.h"
-#include "fluidsynth_priv.h"	// FLUID_NEW, etc
-#include "fluid_sys.h"	// timer, threads, etc...
+#include <fluidsynth_priv.h>	// FLUID_NEW, etc
+#include <fluid_sys.h>	// timer, threads, etc...
 #include "fluid_list.h"
 
 /***************************************************************
@@ -42,7 +42,7 @@
 /* Private data for SEQUENCER */
 struct _fluid_sequencer_t {
 	unsigned int startMs;
-	int currentMs;
+	fluid_atomic_int currentMs;
 	int useSystemTimer;
 	double scale; // ticks per second
 	fluid_list_t* clients;

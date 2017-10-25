@@ -37,7 +37,7 @@
 #define _FLUID_SYS_H
 
 #include <glib.h>
-#include "fluidsynth_priv.h"
+#include <fluidsynth_priv.h>
 
 
 /**
@@ -287,6 +287,9 @@ fluid_atomic_float_get(volatile float *fptr)
 
 
 /* Threads */
+
+#define FLUID_THREAD_RETURN_TYPE void
+#define FLUID_THREAD_RETURN_VALUE
 
 typedef GThread fluid_thread_t;
 typedef void (*fluid_thread_func_t)(void* data);
