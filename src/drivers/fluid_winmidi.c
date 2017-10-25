@@ -181,7 +181,7 @@ new_fluid_winmidi_driver(fluid_settings_t* settings,
   /* Prepare and add SYSEX buffers */
   for (i = 0; i < MIDI_SYSEX_BUF_COUNT; i++)
   {
-    fluid_atomic_int_set (dev->sysExHdrAdd[i], FALSE);
+    fluid_atomic_int_set (&dev->sysExHdrAdd[i], FALSE);
     hdr = &dev->sysExHdrs[i];
 
     hdr->lpData = &dev->sysExBuf[i * MIDI_SYSEX_MAX_SIZE];
