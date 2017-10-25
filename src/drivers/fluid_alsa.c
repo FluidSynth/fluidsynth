@@ -805,6 +805,7 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
 			 handle_midi_event_func_t handler, void* data)
 {
   int i, err;
+  int autoconn_inputs = 0;
   fluid_alsa_seq_driver_t* dev;
   int realtime_prio = 0;
   int count;
@@ -936,7 +937,6 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
 
   dev->port_info = port_info;
 
-  int autoconn_inputs = 0;
   fluid_settings_getint(settings, "audio.alsa.autoconnect", &autoconn_inputs);
   if (autoconn_inputs)
     autoconnect_inputs(dev);
