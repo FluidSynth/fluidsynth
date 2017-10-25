@@ -185,7 +185,9 @@ static const fluid_cmd_int_t fluid_commands[] = {
   { "ladspa_plugin", "ladspa", fluid_handle_ladspa_plugin,
     "ladspa_plugin              Instantiate a new LADSPA plugin"},
   { "ladspa_port", "ladspa", fluid_handle_ladspa_port,
-    "ladspa_port                Connect a LADSPA plugin port"},
+    "ladspa_port                Connect a port of the current LADSPA plugin"},
+  { "ladspa_mode", "ladspa", fluid_handle_ladspa_mode,
+    "ladspa_mode                Set the output mode of the current LADSPA plugin"},
   { "ladspa_node", "ladspa", fluid_handle_ladspa_node,
     "ladspa_node                Create a LADSPA audio or control node"},
   { "ladspa_control", "ladspa", fluid_handle_ladspa_control,
@@ -2162,6 +2164,49 @@ int fluid_handle_ladspa_port(void* data, int ac, char **av, fluid_ostream_t out)
     if (fluid_ladspa_connect(fx, handler->ladspa_plugin_id, dir, av[0], av[2]) != FLUID_OK)
     {
         fluid_ostream_printf(out, "Failed to connect plugin port.\n");
+        return FLUID_FAILED;
+    }
+
+    return FLUID_OK;
+}
+
+int fluid_handle_ladspa_mode(void *data, int ac, char **av, fluid_ostream_t out)
+{
+  FLUID_ENTRY_COMMAND(data);
+    fluid_ladspa_fx_t *fx = handler->synth->ladspa_fx;
+    fluid_ladspa_mode_t mode;
+    float gain = 1.0f;
+
+    CHECK_LADSPA_ENABLED(fx, out);
+
+    if (handler->ladspa_plugin_id == -1)
+    {
+        fluid_ostream_printf(out, "Please choose a plugin with ladspa_plugin first.\n");
+        return FLUID_FAILED;
+    }
+
+    if (ac < 1 || (FLUID_STRCMP(av[0], "add") != 0 && FLUID_STRCMP(av[0], "replace") != 0))
+    {
+        fluid_ostream_printf(out, "Please provide the output mode: 'add' or 'replace'\n");
+        return FLUID_FAILED;
+    }
+
+    if (FLUID_STRCMP(av[0], "add") == 0)
+    {
+        if (ac == 2) {
+            gain = atof(av[1]);
+        }
+
+        mode = FLUID_LADSPA_MODE_ADD;
+    }
+    else
+    {
+        mode = FLUID_LADSPA_MODE_REPLACE;
+    }
+
+    if (fluid_ladspa_plugin_mode(fx, handler->ladspa_plugin_id, mode, gain) != FLUID_OK)
+    {
+        fluid_ostream_printf(out, "Failed to set output mode\n");
         return FLUID_FAILED;
     }
 

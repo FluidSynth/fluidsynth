@@ -709,14 +709,14 @@ new_fluid_synth(fluid_settings_t *settings)
   fluid_settings_getint(settings, "synth.ladspa.active", &with_ladspa);
   if (with_ladspa) {
 #ifdef LADSPA
-    synth->ladspa_fx = new_fluid_ladspa_fx(synth->sample_rate, synth->audio_groups,
-            synth->effects_channels, synth->audio_channels,
+    synth->ladspa_fx = new_fluid_ladspa_fx(synth->sample_rate,
             FLUID_MIXER_MAX_BUFFERS_DEFAULT * FLUID_BUFSIZE);
     if(synth->ladspa_fx == NULL) {
       FLUID_LOG(FLUID_ERR, "Out of memory");
       goto error_recovery;
     }
-    fluid_rvoice_mixer_set_ladspa(synth->eventhandler->mixer, synth->ladspa_fx);
+    fluid_rvoice_mixer_set_ladspa(synth->eventhandler->mixer, synth->ladspa_fx,
+            synth->audio_groups);
 #else /* LADSPA */
     FLUID_LOG(FLUID_WARN, "FluidSynth has not been compiled with LADSPA support");
 #endif /* LADSPA */

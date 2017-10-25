@@ -39,7 +39,7 @@ typedef enum _fluid_ladspa_state_t {
     FLUID_LADSPA_INACTIVE = 0,
     FLUID_LADSPA_ACTIVE,
     FLUID_LADSPA_RUNNING
-    
+
 } fluid_ladspa_state_t;
 
 typedef enum _fluid_ladspa_dir_t {
@@ -52,8 +52,15 @@ typedef enum _fluid_ladspa_dir_t {
 typedef enum _fluid_ladspa_node_type_t {
     FLUID_LADSPA_NODE_AUDIO,
     FLUID_LADSPA_NODE_CONTROL,
+    FLUID_LADSPA_NODE_HOST,
 
 } fluid_ladspa_node_type_t;
+
+typedef enum _fluid_ladspa_mode_t {
+    FLUID_LADSPA_MODE_REPLACE = 0,
+    FLUID_LADSPA_MODE_ADD,
+
+} fluid_ladspa_mode_t;
 
 typedef struct _fluid_ladspa_lib_t
 {
@@ -67,7 +74,15 @@ typedef struct _fluid_ladspa_node_t
 {
     char *name;
     fluid_ladspa_node_type_t type;
-    LADSPA_Data *buf;
+
+    /* The buffer that LADSPA plugins read and/or write to.
+     * If FluidSynth has been compiled WITH_FLOAT, then this
+     * points to the host buffer, otherwise it's a separate
+     * buffer. */
+    LADSPA_Data *plugin_buffer;
+
+    /* Only set for host nodes, points to the host buffer */
+    fluid_real_t *host_buffer;
 
     int num_inputs;
     int num_outputs;
@@ -75,7 +90,7 @@ typedef struct _fluid_ladspa_node_t
 } fluid_ladspa_node_t;
 
 typedef struct _fluid_ladspa_plugin_t
-{
+
     /* plugin instance id unique to the effects unit */
     int id;
 
@@ -83,6 +98,9 @@ typedef struct _fluid_ladspa_plugin_t
     LADSPA_Handle *handle;
 
     int active;
+
+    /* Decides if to replace data in output buffer (default) or add to it */
+    fluid_ladspa_mode_t mode;
 
     /* Used to keep track of the port connection state */
     fluid_ladspa_node_t **port_nodes;
@@ -104,6 +122,14 @@ typedef struct _fluid_ladspa_fx_t
     fluid_ladspa_node_t *nodes[FLUID_LADSPA_MAX_NODES];
     int num_nodes;
 
+    /* Pointers to host nodes in nodes array */
+    fluid_ladspa_node_t *host_nodes[FLUID_LADSPA_MAX_NODES];
+    int num_host_nodes;
+
+    /* Pointers to user audio nodes in nodes array */
+    fluid_ladspa_node_t *audio_nodes[FLUID_LADSPA_MAX_NODES];
+    int num_audio_nodes;
+
     /* plugins are really plugin instances */
     fluid_ladspa_plugin_t *plugins[FLUID_LADSPA_MAX_PLUGINS];
     int num_plugins;
@@ -122,19 +148,22 @@ typedef struct _fluid_ladspa_fx_t
 } fluid_ladspa_fx_t;
 
 
-fluid_ladspa_fx_t *new_fluid_ladspa_fx(fluid_real_t sample_rate, int audio_groups, int effects_channels, int audio_channels, int buffer_size);
+fluid_ladspa_fx_t *new_fluid_ladspa_fx(fluid_real_t sample_rate, int buffer_size);
 void delete_fluid_ladspa_fx(fluid_ladspa_fx_t *fx);
+int fluid_ladspa_add_host_buffers(fluid_ladspa_fx_t *fx, const char *prefix,
+        int buffer_count, int buffer_size, fluid_real_t *left[], fluid_real_t *right[]);
 int fluid_ladspa_set_sample_rate(fluid_ladspa_fx_t *fx, fluid_real_t sample_rate);
+void fluid_ladspa_run(fluid_ladspa_fx_t *fx, int block_count, int block_size);
 
 int fluid_ladspa_is_active(fluid_ladspa_fx_t *fx);
 int fluid_ladspa_activate(fluid_ladspa_fx_t *fx);
 int fluid_ladspa_deactivate(fluid_ladspa_fx_t *fx);
 int fluid_ladspa_reset(fluid_ladspa_fx_t *fx);
 
-void fluid_ladspa_run(fluid_ladspa_fx_t *fx, fluid_real_t *left_buf[], fluid_real_t *right_buf[],
-                      fluid_real_t *fx_left_buf[], fluid_real_t *fx_right_buf[], int block_count, int block_size);
-
 int fluid_ladspa_add_plugin(fluid_ladspa_fx_t *fx, const char *lib_name, const char *plugin_name);
+int fluid_ladspa_plugin_can_add(fluid_ladspa_fx_t *fx, int plugin_id);
+int fluid_ladspa_plugin_mode(fluid_ladspa_fx_t *fx, int plugin_id,
+        fluid_ladspa_mode_t mode, float gain);
 int fluid_ladspa_port_exists(fluid_ladspa_fx_t *fx, int plugin_id, const char *name);
 
 int fluid_ladspa_add_audio_node(fluid_ladspa_fx_t *fx, const char *name);

@@ -141,12 +141,10 @@ fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t* mixer)
   }
   
 #ifdef LADSPA
-  /* Run the signal through the LADSPA Fx unit */
+  /* Run the signal through the LADSPA Fx unit. The buffers have already been
+   * set up in fluid_rvoice_mixer_set_ladspa. */
   if (mixer->ladspa_fx) {
-      fluid_ladspa_run(mixer->ladspa_fx,
-              mixer->buffers.left_buf, mixer->buffers.right_buf,
-              mixer->buffers.fx_left_buf, mixer->buffers.fx_right_buf,
-              mixer->current_blockcount, FLUID_BUFSIZE);
+      fluid_ladspa_run(mixer->ladspa_fx, mixer->current_blockcount, FLUID_BUFSIZE);
       fluid_check_fpe("LADSPA");
   }
 #endif
@@ -627,9 +625,33 @@ void delete_fluid_rvoice_mixer(fluid_rvoice_mixer_t* mixer)
 
 
 #ifdef LADSPA				    
-void fluid_rvoice_mixer_set_ladspa(fluid_rvoice_mixer_t* mixer, fluid_ladspa_fx_t *ladspa_fx)
+/**
+ * Set a LADSPS fx instance to be used by the mixer and assign the mixer buffers
+ * as LADSPA host buffers with sensible names */
+void fluid_rvoice_mixer_set_ladspa(fluid_rvoice_mixer_t* mixer,
+        fluid_ladspa_fx_t *ladspa_fx, int audio_groups)
 {
-  mixer->ladspa_fx = ladspa_fx;
+    int buffer_size;
+
+    mixer->ladspa_fx = ladspa_fx;
+    if (ladspa_fx == NULL)
+    {
+        return;
+    }
+
+    buffer_size = mixer->buffers.buf_blocks * FLUID_BUFSIZE;
+
+    fluid_ladspa_add_host_buffers(ladspa_fx, "Main", audio_groups, buffer_size,
+            mixer->buffers.left_buf,
+            mixer->buffers.right_buf);
+
+    fluid_ladspa_add_host_buffers(ladspa_fx, "Reverb", 1, buffer_size,
+            &mixer->buffers.fx_left_buf[SYNTH_REVERB_CHANNEL],
+            &mixer->buffers.fx_right_buf[SYNTH_REVERB_CHANNEL]);
+
+    fluid_ladspa_add_host_buffers(ladspa_fx, "Chorus", 1, buffer_size,
+            &mixer->buffers.fx_left_buf[SYNTH_REVERB_CHANNEL],
+            &mixer->buffers.fx_right_buf[SYNTH_REVERB_CHANNEL]);
 }
 #endif
 
