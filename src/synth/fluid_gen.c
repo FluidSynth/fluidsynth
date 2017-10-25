@@ -24,7 +24,7 @@
 
 
 /* See SFSpec21 $8.1.3 */
-static const fluid_gen_info_t fluid_gen_info[] = {
+const fluid_gen_info_t fluid_gen_info[] = {
         /* number/name             init  scale         min        max         def */
         { GEN_STARTADDROFS,           1,     1,       0.0f,     1e10f,       0.0f },
         { GEN_ENDADDROFS,             1,     1,     -1e10f,      0.0f,       0.0f },
