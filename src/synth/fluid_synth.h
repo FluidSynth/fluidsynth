@@ -142,16 +142,16 @@ struct _fluid_synth_t
   unsigned int storeid;
   fluid_rvoice_eventhandler_t* eventhandler;
 
-  fluid_atomic_float_t reverb_roomsize;             /**< Shadow of reverb roomsize */
-  fluid_atomic_float_t reverb_damping;              /**< Shadow of reverb damping */
-  fluid_atomic_float_t reverb_width;                /**< Shadow of reverb width */
-  fluid_atomic_float_t reverb_level;                /**< Shadow of reverb level */
+  double reverb_roomsize;             /**< Shadow of reverb roomsize */
+  double reverb_damping;              /**< Shadow of reverb damping */
+  double reverb_width;                /**< Shadow of reverb width */
+  double reverb_level;                /**< Shadow of reverb level */
 
-  fluid_atomic_int_t chorus_nr;                     /**< Shadow of chorus number */
-  fluid_atomic_float_t chorus_level;                /**< Shadow of chorus level */
-  fluid_atomic_float_t chorus_speed;                /**< Shadow of chorus speed */
-  fluid_atomic_float_t chorus_depth;                /**< Shadow of chorus depth */
-  fluid_atomic_int_t chorus_type;                   /**< Shadow of chorus type */
+  int chorus_nr;                     /**< Shadow of chorus number */
+  double chorus_level;                /**< Shadow of chorus level */
+  double chorus_speed;                /**< Shadow of chorus speed */
+  double chorus_depth;                /**< Shadow of chorus depth */
+  int chorus_type;                   /**< Shadow of chorus type */
 
   int cur;                           /**< the current sample in the audio buffers to be output */
   int curmax;                        /**< current amount of samples present in the audio buffers */
