@@ -149,7 +149,7 @@ static void fluid_alsa_seq_run(void* d);
  */
 
 // Connect ALSA MIDI inputs to dev->port_info
-static void autoconnect_inputs(fluid_alsa_seq_driver_t* dev) {
+static void fluid_alsa_autoconnect_inputs(fluid_alsa_seq_driver_t* dev) {
   snd_seq_t *seq = dev->seq_handle;
   snd_seq_port_subscribe_t *subs;
   snd_seq_client_info_t *cinfo;
@@ -939,7 +939,7 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
 
   fluid_settings_getint(settings, "audio.alsa.autoconnect", &autoconn_inputs);
   if (autoconn_inputs)
-    autoconnect_inputs(dev);
+    fluid_alsa_autoconnect_inputs(dev);
 
   /* tell the lash server our client id */
 #ifdef LASH_ENABLED
