@@ -549,8 +549,8 @@ new_fluid_synth(fluid_settings_t *settings)
   double gain;
   int i, nbuf;
   int with_ladspa = 0;
-  int with_reverb;
-  int with_chorus;
+  int with_reverb = 0;
+  int with_chorus = 0;
   
   /* initialize all the conversion tables and other stuff */
   if (fluid_synth_initialized == 0)
