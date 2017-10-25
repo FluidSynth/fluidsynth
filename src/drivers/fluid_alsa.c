@@ -167,13 +167,13 @@ static void fluid_alsa_autoconnect_inputs(fluid_alsa_seq_driver_t* dev, const sn
     snd_seq_port_info_set_port(pinfo, -1);
     while (snd_seq_query_next_port(seq, pinfo) >= 0) {
       unsigned int needed_type = SND_SEQ_PORT_TYPE_MIDI_GENERIC;
-      if ((snd_seq_port_info_get_type(pinfo) & needed_type) != needed_type)
-	continue;
       unsigned int needed_cap = SND_SEQ_PORT_CAP_READ|SND_SEQ_PORT_CAP_SUBS_READ;
-      if ((snd_seq_port_info_get_capability(pinfo) & needed_cap) != needed_cap)
-	continue;
       const snd_seq_addr_t *sender = snd_seq_port_info_get_addr(pinfo);
       const char *pname = snd_seq_port_info_get_name(pinfo);
+      if ((snd_seq_port_info_get_type(pinfo) & needed_type) != needed_type)
+	continue;
+      if ((snd_seq_port_info_get_capability(pinfo) & needed_cap) != needed_cap)
+	continue;
 
       snd_seq_port_subscribe_set_sender(subs, sender);
       snd_seq_port_subscribe_set_dest(subs, dest);
