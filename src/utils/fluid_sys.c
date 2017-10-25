@@ -74,7 +74,7 @@ static fluid_log_function_t fluid_log_function[LAST_LOG_LEVEL];
 static void* fluid_log_user_data[LAST_LOG_LEVEL];
 static int fluid_log_initialized = 0;
 
-static char* fluid_libname = "fluidsynth";
+static const char fluid_libname[] = "fluidsynth";
 
 
 void fluid_sys_config()
@@ -82,31 +82,6 @@ void fluid_sys_config()
   fluid_log_config();
 }
 
-
-unsigned int fluid_debug_flags = 0;
-
-#if DEBUG
-/*
- * fluid_debug
- */
-int fluid_debug(int level, char * fmt, ...)
-{
-  if (fluid_debug_flags & level) {
-    fluid_log_function_t fun;
-    va_list args;
-
-    va_start (args, fmt);
-    FLUID_VSNPRINTF (fluid_errbuf, sizeof (fluid_errbuf), fmt, args);
-    va_end (args);
-
-    fun = fluid_log_function[FLUID_DBG];
-    if (fun != NULL) {
-      (*fun)(level, fluid_errbuf, fluid_log_user_data[FLUID_DBG]);
-    }
-  }
-  return 0;
-}
-#endif
 
 /**
  * Installs a new log function for a specified log level.
@@ -753,7 +728,15 @@ new_fluid_timer (int msec, fluid_timer_callback_t callback, void* data,
       return NULL;
     }
   }
-  else fluid_timer_run (timer);  /* Run directly, instead of as a separate thread */
+  else
+  {
+      fluid_timer_run (timer);  /* Run directly, instead of as a separate thread */
+      if(auto_destroy)
+      {
+          /* do NOT return freed memory */
+          return NULL;
+      }
+  }
 
   return timer;
 }

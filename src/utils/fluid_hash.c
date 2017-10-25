@@ -53,7 +53,7 @@ typedef struct
 
 /* Excerpt from glib gprimes.c */
 
-static const guint primes[] =
+static const unsigned int primes[] =
 {
   11,
   19,

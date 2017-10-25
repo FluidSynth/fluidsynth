@@ -206,10 +206,6 @@ typedef struct _fluid_sample_timer_t fluid_sample_timer_t;
 #define FLUID_DEFAULT_AUDIO_RT_PRIO  60         /**< Default setting for audio.realtime-prio */
 #define FLUID_DEFAULT_MIDI_RT_PRIO   50         /**< Default setting for midi.realtime-prio */
 
-#ifndef PI
-#define PI                          3.141592654
-#endif
-
 /***************************************************************
  *
  *                      SYSTEM INTERFACE
@@ -231,7 +227,12 @@ typedef FILE*  fluid_file;
 #define FLUID_STRCMP(_s,_t)          strcmp(_s,_t)
 #define FLUID_STRNCMP(_s,_t,_n)      strncmp(_s,_t,_n)
 #define FLUID_STRCPY(_dst,_src)      strcpy(_dst,_src)
-#define FLUID_STRNCPY(_dst,_src,_n)  strncpy(_dst,_src,_n)
+
+#define FLUID_STRNCPY(_dst,_src,_n) \
+do { strncpy(_dst,_src,_n); \
+    (_dst)[(_n)-1]=0; \
+}while(0)
+
 #define FLUID_STRCHR(_s,_c)          strchr(_s,_c)
 #define FLUID_STRRCHR(_s,_c)         strrchr(_s,_c)
 
@@ -262,6 +263,12 @@ typedef FILE*  fluid_file;
     #define FLUID_STRCASECMP         strcasecmp
 #endif
 
+#if defined(WIN32) && !defined(MINGW32)
+    #define FLUID_STRNCASECMP         _strincmp
+#else
+    #define FLUID_STRNCASECMP         strncasecmp
+#endif
+
 
 #define fluid_clip(_val, _min, _max) \
 { (_val) = ((_val) < (_min))? (_min) : (((_val) > (_max))? (_max) : (_val)); }
@@ -280,6 +287,13 @@ typedef FILE*  fluid_file;
 #define M_PI 3.1415926535897932384626433832795
 #endif
 
+#ifndef M_LN2
+#define M_LN2 0.69314718055994530941723212145818
+#endif
+
+#ifndef M_LN10
+#define M_LN10 2.3025850929940456840179914546844
+#endif
 
 #define FLUID_ASSERT(a,b)
 #define FLUID_ASSERT_P(a,b)

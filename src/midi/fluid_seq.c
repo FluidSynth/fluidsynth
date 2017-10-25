@@ -42,8 +42,8 @@
 /* Private data for SEQUENCER */
 struct _fluid_sequencer_t {
 	unsigned int startMs;
-	gint currentMs;
-	gboolean useSystemTimer;
+	int currentMs;
+	int useSystemTimer;
 	double scale; // ticks per second
 	fluid_list_t* clients;
 	short clientsID;
@@ -121,7 +121,7 @@ new_fluid_sequencer2 (int use_system_timer)
 	FLUID_MEMSET(seq, 0, sizeof(fluid_sequencer_t));
 
 	seq->scale = 1000;	// default value
-	seq->useSystemTimer = use_system_timer ? TRUE : FALSE;
+	seq->useSystemTimer = use_system_timer ? 1 : 0;
 	seq->startMs = seq->useSystemTimer ? fluid_curtime() : 0;
 	seq->clients = NULL;
 	seq->clientsID = 0;
@@ -196,7 +196,7 @@ delete_fluid_sequencer (fluid_sequencer_t* seq)
 int 
 fluid_sequencer_get_use_system_timer (fluid_sequencer_t* seq)
 {
-	return seq->useSystemTimer ? 1 : 0;
+	return seq->useSystemTimer;
 }
 
 
@@ -500,7 +500,7 @@ fluid_sequencer_remove_events (fluid_sequencer_t* seq, short source,
 unsigned int
 fluid_sequencer_get_tick (fluid_sequencer_t* seq)
 {
-	unsigned int absMs = seq->useSystemTimer ? (int) fluid_curtime() : g_atomic_int_get(&seq->currentMs);
+	unsigned int absMs = seq->useSystemTimer ? (int) fluid_curtime() : fluid_atomic_int_get(&seq->currentMs);
 	double nowFloat;
 	unsigned int now;
 	nowFloat = ((double)(absMs - seq->startMs))*seq->scale/1000.0f;
@@ -846,7 +846,7 @@ fluid_sequencer_process(fluid_sequencer_t* seq, unsigned int msec)
 	}
 
 	/* send queued events */
-	g_atomic_int_set(&seq->currentMs, msec);
+	fluid_atomic_int_set(&seq->currentMs, msec);
 	_fluid_seq_queue_send_queued_events(seq);
 
 }

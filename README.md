@@ -1,7 +1,6 @@
 [![Build Status](https://travis-ci.org/FluidSynth/fluidsynth.svg?branch=master)](https://travis-ci.org/FluidSynth/fluidsynth)
 
-Introduction
-============
+# Introduction
 
 FluidSynth is a software real-time synthesizer based on the
 Soundfont 2 specifications.
@@ -11,15 +10,13 @@ device. It is the software analogue of a MIDI synthesizer. FluidSynth
 can also play midifiles using a Soundfont.
 
 
-Information on the web
-======================
+# Information on the web
 
 The place to look if you are looking for the latest information on
 FluidSynth is the web site at http://www.fluidsynth.org/.
 
 
-Why did we do it
-================
+# Why did we do it
 
 The synthesizer grew out of a project, started by Samuel Bianchini and
 Peter Hanappe, and later joined by Johnathan Lee, that aimed at
@@ -53,8 +50,7 @@ synthesizer. That is why we developed FluidSynth.
 
 
 
-Design decisions
-================
+# Design decisions
 
 The synthesizer was designed to be as self-contained as possible for
 several reasons:
@@ -74,14 +70,13 @@ several reasons:
   on external code.
 
 
-Links
-=====
+# Links
 
-Home Page
+### Home Page
 
 - http://www.fluidsynth.org
 
-Documentation
+### Documentation
 
 - Introduction to SoundFonts, by Josh Green,
   http://smurf.sourceforge.net/sfont_intro.php
@@ -96,7 +91,7 @@ Documentation
   http://www.midi.org/about-midi/dls/abtdls.htm
 
 
-Software SoundFont Synthesizers:
+### Software SoundFont Synthesizers:
 
 - LiveSynth Pro DXi and Crescendo from LiveUpdate (Win),
 http://www.livesynth.com/lspro.html
@@ -108,7 +103,7 @@ http://www.livesynth.com/lspro.html
 - Logic from eMagic, http://www.emagic.de
 
 
-Soundfont Editors
+### Soundfont Editors
 
 - Project SWAMI by Josh Green (Linux), http://www.swamiproject.org/
 
@@ -120,7 +115,7 @@ Soundfont Editors
 
     **Note:** We cannot recommend using Audio Compositor for creating or editing Soundfonts, as it generates files that violate the Soundfont2 spec (specifically the order of generators as defined in section 8.1.2) and are therefore unusable with fluidsynth!
 
-Conversion Tools
+### Conversion Tools
 
 - CDxtract from CDxtract  (Win), http://www.cdxtract.com
 
@@ -131,7 +126,7 @@ http://www.propellerheads.se/products/recycle/
 http://www.chickensys.com/translator
 
 
-Soundfont Databases
+### Soundfont Databases
 
 - HammerSound, http://www.hammersound.net
 

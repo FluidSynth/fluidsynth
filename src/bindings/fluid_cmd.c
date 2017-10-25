@@ -45,9 +45,14 @@ struct _fluid_cmd_handler_t {
   fluid_synth_t* synth;
   fluid_midi_router_t* router;
   fluid_cmd_hash_t* commands;
-  
+
   fluid_midi_router_rule_t *cmd_rule;        /* Rule currently being processed by shell command handler */
   int cmd_rule_type;                         /* Type of the rule (#fluid_midi_router_rule_type) */
+
+#ifdef LADSPA
+ /* Instance id of the LADSPA plugin currently being processed by shell command handler */
+  int ladspa_plugin_id;
+#endif
 };
 
 
@@ -58,6 +63,17 @@ struct _fluid_shell_t {
   fluid_istream_t in;
   fluid_ostream_t out;
 };
+
+/**
+ * Reduced command information structure for constant data.
+ * For internal use only.
+ */
+typedef struct {
+  const char *name;             /**< The name of the command, as typed in the shell */
+  const char *topic;            /**< The help topic group of this command */
+  fluid_cmd_func_t handler;     /**< Pointer to the handler for this command */
+  const char *help;             /**< A help string */
+} fluid_cmd_int_t;
 
 static int fluid_shell_run(fluid_shell_t* shell);
 static void fluid_shell_init(fluid_shell_t* shell,
@@ -75,146 +91,153 @@ void fluid_shell_settings(fluid_settings_t* settings)
 
 /** the table of all handled commands */
 
-static fluid_cmd_t fluid_commands[] = {
-  { "help", "general", (fluid_cmd_func_t) fluid_handle_help, NULL,
+static const fluid_cmd_int_t fluid_commands[] = {
+  { "help", "general", (fluid_cmd_func_t) fluid_handle_help,
     "help                       Show help topics ('help TOPIC' for more info)" },
-  { "quit", "general", (fluid_cmd_func_t) fluid_handle_quit, NULL,
+  { "quit", "general", (fluid_cmd_func_t) fluid_handle_quit,
     "quit                       Quit the synthesizer" },
-  { "source", "general", (fluid_cmd_func_t) fluid_handle_source, NULL,
+  { "source", "general", (fluid_cmd_func_t) fluid_handle_source,
   "source filename            Load a file and parse every line as a command" },
-  { "noteon", "event", (fluid_cmd_func_t) fluid_handle_noteon, NULL,
+  { "noteon", "event", (fluid_cmd_func_t) fluid_handle_noteon,
     "noteon chan key vel        Send noteon" },
-  { "noteoff", "event", (fluid_cmd_func_t) fluid_handle_noteoff, NULL,
+  { "noteoff", "event", (fluid_cmd_func_t) fluid_handle_noteoff,
     "noteoff chan key           Send noteoff"  },
-  { "pitch_bend", "event", (fluid_cmd_func_t) fluid_handle_pitch_bend, NULL,
+  { "pitch_bend", "event", (fluid_cmd_func_t) fluid_handle_pitch_bend,
     "pitch_bend chan offset           Bend pitch"  },
-  { "pitch_bend_range", "event", (fluid_cmd_func_t) fluid_handle_pitch_bend_range, NULL,
+  { "pitch_bend_range", "event", (fluid_cmd_func_t) fluid_handle_pitch_bend_range,
     "pitch_bend chan range           Set bend pitch range"  },
-  { "cc", "event", (fluid_cmd_func_t) fluid_handle_cc, NULL,
+  { "cc", "event", (fluid_cmd_func_t) fluid_handle_cc,
     "cc chan ctrl value         Send control-change message" },
-  { "prog", "event", (fluid_cmd_func_t) fluid_handle_prog, NULL,
+  { "prog", "event", (fluid_cmd_func_t) fluid_handle_prog,
     "prog chan num              Send program-change message" },
-  { "select", "event", (fluid_cmd_func_t) fluid_handle_select, NULL,
+  { "select", "event", (fluid_cmd_func_t) fluid_handle_select,
     "select chan sfont bank prog  Combination of bank-select and program-change" },
-  { "load", "general", (fluid_cmd_func_t) fluid_handle_load, NULL,
+  { "load", "general", (fluid_cmd_func_t) fluid_handle_load,
     "load file [reset] [bankofs] Load SoundFont (reset=0|1, def 1; bankofs=n, def 0)" },
-  { "unload", "general", (fluid_cmd_func_t) fluid_handle_unload, NULL,
+  { "unload", "general", (fluid_cmd_func_t) fluid_handle_unload,
     "unload id [reset]          Unload SoundFont by ID (reset=0|1, default 1)"},
-  { "reload", "general", (fluid_cmd_func_t) fluid_handle_reload, NULL,
+  { "reload", "general", (fluid_cmd_func_t) fluid_handle_reload,
     "reload id                  Reload the SoundFont with the specified ID" },
-  { "fonts", "general", (fluid_cmd_func_t) fluid_handle_fonts, NULL,
+  { "fonts", "general", (fluid_cmd_func_t) fluid_handle_fonts,
     "fonts                      Display the list of loaded SoundFonts" },
-  { "inst", "general", (fluid_cmd_func_t) fluid_handle_inst, NULL,
+  { "inst", "general", (fluid_cmd_func_t) fluid_handle_inst,
     "inst font                  Print out the available instruments for the font" },
-  { "channels", "general", (fluid_cmd_func_t) fluid_handle_channels, NULL,
+  { "channels", "general", (fluid_cmd_func_t) fluid_handle_channels,
     "channels [-verbose]        Print out preset of all channels" },
-  { "interp", "general", (fluid_cmd_func_t) fluid_handle_interp, NULL,
+  { "interp", "general", (fluid_cmd_func_t) fluid_handle_interp,
     "interp num                 Choose interpolation method for all channels" },
-  { "interpc", "general", (fluid_cmd_func_t) fluid_handle_interpc, NULL,
+  { "interpc", "general", (fluid_cmd_func_t) fluid_handle_interpc,
     "interpc chan num           Choose interpolation method for one channel" },
-  { "rev_preset", "reverb", (fluid_cmd_func_t) fluid_handle_reverbpreset, NULL,
+  { "rev_preset", "reverb", (fluid_cmd_func_t) fluid_handle_reverbpreset,
     "rev_preset num             Load preset num into the reverb unit" },
-  { "rev_setroomsize", "reverb", (fluid_cmd_func_t) fluid_handle_reverbsetroomsize, NULL,
+  { "rev_setroomsize", "reverb", (fluid_cmd_func_t) fluid_handle_reverbsetroomsize,
     "rev_setroomsize num        Change reverb room size" },
-  { "rev_setdamp", "reverb", (fluid_cmd_func_t) fluid_handle_reverbsetdamp, NULL,
+  { "rev_setdamp", "reverb", (fluid_cmd_func_t) fluid_handle_reverbsetdamp,
     "rev_setdamp num            Change reverb damping" },
-  { "rev_setwidth", "reverb", (fluid_cmd_func_t) fluid_handle_reverbsetwidth, NULL,
+  { "rev_setwidth", "reverb", (fluid_cmd_func_t) fluid_handle_reverbsetwidth,
     "rev_setwidth num           Change reverb width" },
-  { "rev_setlevel", "reverb", (fluid_cmd_func_t) fluid_handle_reverbsetlevel, NULL,
+  { "rev_setlevel", "reverb", (fluid_cmd_func_t) fluid_handle_reverbsetlevel,
     "rev_setlevel num           Change reverb level" },
-  { "reverb", "reverb", (fluid_cmd_func_t) fluid_handle_reverb, NULL,
+  { "reverb", "reverb", (fluid_cmd_func_t) fluid_handle_reverb,
     "reverb [0|1|on|off]        Turn the reverb on or off" },
-  { "cho_set_nr", "chorus", (fluid_cmd_func_t) fluid_handle_chorusnr, NULL,
+  { "cho_set_nr", "chorus", (fluid_cmd_func_t) fluid_handle_chorusnr,
     "cho_set_nr n               Use n delay lines (default 3)" },
-  { "cho_set_level", "chorus", (fluid_cmd_func_t) fluid_handle_choruslevel, NULL,
+  { "cho_set_level", "chorus", (fluid_cmd_func_t) fluid_handle_choruslevel,
     "cho_set_level num          Set output level of each chorus line to num" },
-  { "cho_set_speed", "chorus", (fluid_cmd_func_t) fluid_handle_chorusspeed, NULL,
+  { "cho_set_speed", "chorus", (fluid_cmd_func_t) fluid_handle_chorusspeed,
     "cho_set_speed num          Set mod speed of chorus to num (Hz)" },
-  { "cho_set_depth", "chorus", (fluid_cmd_func_t) fluid_handle_chorusdepth, NULL,
+  { "cho_set_depth", "chorus", (fluid_cmd_func_t) fluid_handle_chorusdepth,
     "cho_set_depth num          Set chorus modulation depth to num (ms)" },
-  { "chorus", "chorus", (fluid_cmd_func_t) fluid_handle_chorus, NULL,
+  { "chorus", "chorus", (fluid_cmd_func_t) fluid_handle_chorus,
     "chorus [0|1|on|off]        Turn the chorus on or off" },
-  { "gain", "general", (fluid_cmd_func_t) fluid_handle_gain, NULL,
+  { "gain", "general", (fluid_cmd_func_t) fluid_handle_gain,
     "gain value                 Set the master gain (0 < gain < 5)" },
-  { "voice_count", "general", (fluid_cmd_func_t) fluid_handle_voice_count, NULL,
+  { "voice_count", "general", (fluid_cmd_func_t) fluid_handle_voice_count,
     "voice_count                Get number of active synthesis voices" },
-  { "tuning", "tuning", (fluid_cmd_func_t) fluid_handle_tuning, NULL,
+  { "tuning", "tuning", (fluid_cmd_func_t) fluid_handle_tuning,
     "tuning name bank prog      Create a tuning with name, bank number, \n"
     "                           and program number (0 <= bank,prog <= 127)" },
-  { "tune", "tuning", (fluid_cmd_func_t) fluid_handle_tune, NULL,
+  { "tune", "tuning", (fluid_cmd_func_t) fluid_handle_tune,
     "tune bank prog key pitch   Tune a key" },
-  { "settuning", "tuning", (fluid_cmd_func_t) fluid_handle_settuning, NULL,
+  { "settuning", "tuning", (fluid_cmd_func_t) fluid_handle_settuning,
     "settuning chan bank prog   Set the tuning for a MIDI channel" },
-  { "resettuning", "tuning", (fluid_cmd_func_t) fluid_handle_resettuning, NULL,
+  { "resettuning", "tuning", (fluid_cmd_func_t) fluid_handle_resettuning,
     "resettuning chan           Restore the default tuning of a MIDI channel" },
-  { "tunings", "tuning", (fluid_cmd_func_t) fluid_handle_tunings, NULL,
+  { "tunings", "tuning", (fluid_cmd_func_t) fluid_handle_tunings,
     "tunings                    Print the list of available tunings" },
-  { "dumptuning", "tuning", (fluid_cmd_func_t) fluid_handle_dumptuning, NULL,
+  { "dumptuning", "tuning", (fluid_cmd_func_t) fluid_handle_dumptuning,
     "dumptuning bank prog       Print the pitch details of the tuning" },
-  { "reset", "general", (fluid_cmd_func_t) fluid_handle_reset, NULL,
+  { "reset", "general", (fluid_cmd_func_t) fluid_handle_reset,
     "reset                      System reset (all notes off, reset controllers)" },
-  { "set", "settings", (fluid_cmd_func_t) fluid_handle_set, NULL,
+  { "set", "settings", (fluid_cmd_func_t) fluid_handle_set,
     "set name value             Set the value of a controller or settings" },
-  { "get", "settings", (fluid_cmd_func_t) fluid_handle_get, NULL,
+  { "get", "settings", (fluid_cmd_func_t) fluid_handle_get,
     "get name                   Get the value of a controller or settings" },
-  { "info", "settings", (fluid_cmd_func_t) fluid_handle_info, NULL,
+  { "info", "settings", (fluid_cmd_func_t) fluid_handle_info,
     "info name                  Get information about a controller or settings" },
-  { "settings", "settings", (fluid_cmd_func_t) fluid_handle_settings, NULL,
+  { "settings", "settings", (fluid_cmd_func_t) fluid_handle_settings,
     "settings                   Print out all settings" },
-  { "echo", "general", (fluid_cmd_func_t) fluid_handle_echo, NULL,
+  { "echo", "general", (fluid_cmd_func_t) fluid_handle_echo,
     "echo arg                   Print arg" },
   /* Sleep command, useful to insert a delay between commands */
   { "sleep", "general", fluid_handle_sleep, NULL,
     "sleep  duration            sleep duration(in ms)" },
 	/* LADSPA-related commands */
 #ifdef LADSPA
-  { "ladspa_clear", "ladspa", (fluid_cmd_func_t) fluid_LADSPA_handle_clear, NULL,
-    "ladspa_clear               Resets LADSPA effect unit to bypass state"},
-  { "ladspa_add", "ladspa", (fluid_cmd_func_t) fluid_LADSPA_handle_add, NULL,
-    "ladspa_add lib plugin n1 <- p1 n2 -> p2 ... Loads and connects LADSPA plugin"},
-  { "ladspa_start", "ladspa", (fluid_cmd_func_t) fluid_LADSPA_handle_start, NULL,
-    "ladspa_start               Starts LADSPA effect unit"},
-  { "ladspa_declnode", "ladspa", (fluid_cmd_func_t) fluid_LADSPA_handle_declnode, NULL,
-    "ladspa_declnode node value Declares control node `node' with value `value'"},
-  { "ladspa_setnode", "ladspa", (fluid_cmd_func_t) fluid_LADSPA_handle_setnode, NULL,
-    "ladspa_setnode node value  Assigns `value' to `node'"},
+  { "ladspa_plugin", "ladspa", (fluid_cmd_func_t) fluid_handle_ladspa_plugin,
+    "ladspa_plugin              Instantiate a new LADSPA plugin"},
+  { "ladspa_port", "ladspa", (fluid_cmd_func_t) fluid_handle_ladspa_port,
+    "ladspa_port                Connect a LADSPA plugin port"},
+  { "ladspa_node", "ladspa", (fluid_cmd_func_t) fluid_handle_ladspa_node,
+    "ladspa_node                Create a LADSPA audio or control node"},
+  { "ladspa_control", "ladspa", (fluid_cmd_func_t) fluid_handle_ladspa_control,
+    "ladspa_control             Set the value of a LADSPA control node"},
+  { "ladspa_control_defaults", "ladspa", (fluid_cmd_func_t) fluid_handle_ladspa_control_defaults,
+    "ladspa_control_defaults    Assign all unconnected controls on all plugins their default value"},
+  { "ladspa_check", "ladspa", (fluid_cmd_func_t) fluid_handle_ladspa_check,
+    "ladspa_check               Check LADSPA configuration"},
+  { "ladspa_start", "ladspa", (fluid_cmd_func_t) fluid_handle_ladspa_start,
+    "ladspa_start               Start LADSPA effects"},
+  { "ladspa_stop", "ladspa", (fluid_cmd_func_t) fluid_handle_ladspa_stop,
+    "ladspa_stop                Stop LADSPA effect unit"},
+  { "ladspa_reset", "ladspa", (fluid_cmd_func_t) fluid_handle_ladspa_reset,
+    "ladspa_reset               Stop and reset LADSPA effects"},
 #endif
-  { "router_clear", "router", (fluid_cmd_func_t) fluid_handle_router_clear, NULL,
+  { "router_clear", "router", (fluid_cmd_func_t) fluid_handle_router_clear,
     "router_clear               Clears all routing rules from the midi router"},
-  { "router_default", "router", (fluid_cmd_func_t) fluid_handle_router_default, NULL,
+  { "router_default", "router", (fluid_cmd_func_t) fluid_handle_router_default,
     "router_default             Resets the midi router to default state"},
-  { "router_begin", "router", (fluid_cmd_func_t) fluid_handle_router_begin, NULL,
+  { "router_begin", "router", (fluid_cmd_func_t) fluid_handle_router_begin,
     "router_begin [note|cc|prog|pbend|cpress|kpress]: Starts a new routing rule"},
-  { "router_chan", "router", (fluid_cmd_func_t) fluid_handle_router_chan, NULL,
+  { "router_chan", "router", (fluid_cmd_func_t) fluid_handle_router_chan,
     "router_chan min max mul add      filters and maps midi channels on current rule"},
-  { "router_par1", "router", (fluid_cmd_func_t) fluid_handle_router_par1, NULL,
+  { "router_par1", "router", (fluid_cmd_func_t) fluid_handle_router_par1,
     "router_par1 min max mul add      filters and maps parameter 1 (key/ctrl nr)"},
-  { "router_par2", "router", (fluid_cmd_func_t) fluid_handle_router_par2, NULL,
+  { "router_par2", "router", (fluid_cmd_func_t) fluid_handle_router_par2,
     "router_par2 min max mul add      filters and maps parameter 2 (vel/cc val)"},
-  { "router_end", "router", (fluid_cmd_func_t) fluid_handle_router_end, NULL,
+  { "router_end", "router", (fluid_cmd_func_t) fluid_handle_router_end,
     "router_end                 closes and commits the current routing rule"},
   /* Poly Mono mode commands */
-	{ "basicchannels", "polymono", fluid_handle_basicchannels, NULL,
+	{ "basicchannels", "polymono", fluid_handle_basicchannels,
       "basicchannels                         Display the list of basic channels"},
-	{ "resetbasicchannels", "polymono", fluid_handle_resetbasicchannels, NULL,
+	{ "resetbasicchannels", "polymono", fluid_handle_resetbasicchannels,
       "resetbasicchannels [chan mode val..]  Reset the list of basic channels"},
-	{ "setbasicchannels", "polymono", fluid_handle_setbasicchannels, NULL,
+	{ "setbasicchannels", "polymono", fluid_handle_setbasicchannels,
       "setbasicchannels chan mode val [chan mode val..] Change or add basic channels"},
-	{ "channelsmode", "polymono", fluid_handle_channelsmode, NULL,
+	{ "channelsmode", "polymono", fluid_handle_channelsmode,
       "channelsmode [chan1 chan2..]          Print channels mode"},
-	{ "legatomode", "polymono", fluid_handle_legatomode, NULL,
+	{ "legatomode", "polymono", fluid_handle_legatomode,
       "legatomode [chan1 chan2..]            Print channels legato mode"},
-	{ "setlegatomode", "polymono", fluid_handle_setlegatomode, NULL,
+	{ "setlegatomode", "polymono", fluid_handle_setlegatomode,
       "setlegatomode chan mode [chan mode..] Change legato mode"},
-	{ "portamentomode", "polymono", fluid_handle_portamentomode, NULL,
+	{ "portamentomode", "polymono", fluid_handle_portamentomode,
       "portamentomode [chan1 chan2..]        Print channels portamento mode"},
-	{ "setportamentomode", "polymono", fluid_handle_setportamentomode, NULL,
+	{ "setportamentomode", "polymono", fluid_handle_setportamentomode,
       "setportamentomode chan mode [chan mode..] Change portamento mode"},
-	{ "breathmode", "polymono", fluid_handle_breathmode, NULL,
+	{ "breathmode", "polymono", fluid_handle_breathmode,
       "breathmode [chan1 chan2..]            Print channels breath mode"},
-	{ "setbreathmode", "polymono", fluid_handle_setbreathmode, NULL,
-      "setbreathmode chan poly(1/0) mono(1/0) breath_sync(1/0) [..] Set breath mode"},
-	{ NULL, NULL, NULL, NULL, NULL },
+	{ "setbreathmode", "polymono", fluid_handle_setbreathmode,
+      "setbreathmode chan poly(1/0) mono(1/0) breath_sync(1/0) [..] Set breath mode"}
 };
 
 /**
@@ -1296,7 +1319,7 @@ fluid_handle_tunings(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostr
 int
 fluid_handle_dumptuning(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out)
 {
-  int bank, prog, i;
+  int bank, prog, i, res;
   double pitch[128];
   char name[256];
 
@@ -1325,7 +1348,11 @@ fluid_handle_dumptuning(fluid_cmd_handler_t* handler, int ac, char** av, fluid_o
     return -1;
   };
 
-  fluid_synth_tuning_dump(handler->synth, bank, prog, name, 256, pitch);
+  res = fluid_synth_tuning_dump(handler->synth, bank, prog, name, 256, pitch);
+  if (FLUID_OK != res) {
+    fluid_ostream_printf(out, "Tuning %03d-%03d does not exist.\n", bank, prog);
+    return -1;
+  }
 
   fluid_ostream_printf(out, "%03d-%03d %s:\n", bank, prog, name);
 
@@ -1461,7 +1488,7 @@ static void fluid_handle_settings_iter2(void* data, char* name, int type)
   case FLUID_INT_TYPE: {
     int value, hints;
     fluid_settings_getint(d->synth->settings, name, &value);
-    
+
     if(fluid_settings_get_hints (d->synth->settings, name, &hints) == FLUID_OK)
     {
         if (!(hints & FLUID_HINT_TOGGLED))
@@ -1644,7 +1671,7 @@ fluid_handle_help(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream
 
   char* topic = "help"; /* default, if no topic is given */
   int count = 0;
-  int i;
+  unsigned int i;
 
   fluid_ostream_printf(out, "\n");
   /* 1st argument (optional): help topic */
@@ -1656,9 +1683,9 @@ fluid_handle_help(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream
     fluid_ostream_printf(out,
 			"*** Help topics:***\n"
 			"help all (prints all topics)\n");
-    for (i = 0; fluid_commands[i].name != NULL; i++) {
+    for (i = 0; i < FLUID_N_ELEMENTS(fluid_commands); i++) {
       int listed_first_time = 1;
-      int ii;
+      unsigned int ii;
       for (ii = 0; ii < i; ii++){
 	if (strcmp(fluid_commands[i].topic, fluid_commands[ii].topic) == 0){
 	  listed_first_time = 0;
@@ -1670,10 +1697,9 @@ fluid_handle_help(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream
     }; /* for all topics (outer loop) */
   } else {
     /* help (arbitrary topic or "all") */
-    for (i = 0; fluid_commands[i].name != NULL; i++) {
-      fluid_cmd_t cmd = fluid_commands[i];
-      if (cmd.help != NULL) {
-	if (strcmp(topic,"all") == 0 || strcmp(topic,cmd.topic) == 0){
+    for (i = 0; i < FLUID_N_ELEMENTS(fluid_commands); i++) {
+      if (fluid_commands[i].help != NULL) {
+	if (strcmp(topic,"all") == 0 || strcmp(topic,fluid_commands[i].topic) == 0){
 	  fluid_ostream_printf(out, "%s\n", fluid_commands[i].help);
 	  count++;
 	}; /* if it matches the topic */
@@ -2422,6 +2448,283 @@ int fluid_handle_setbreathmode(void* data, int ac, char** av,
 }
 
 
+#ifdef LADSPA
+
+#define CHECK_LADSPA_ENABLED(_fx, _out) \
+  if (_fx == NULL) \
+  { \
+    fluid_ostream_printf(_out, "LADSPA is not enabled.\n"); \
+    return FLUID_FAILED; \
+  }
+
+#define LADSPA_ERR_LEN (1024)
+
+int fluid_handle_ladspa_start(fluid_cmd_handler_t *handler, int ac, char **av, fluid_ostream_t out)
+{
+    fluid_ladspa_fx_t *fx = handler->synth->ladspa_fx;
+    char error[LADSPA_ERR_LEN];
+
+    CHECK_LADSPA_ENABLED(fx, out);
+
+    if (fluid_ladspa_is_active(fx))
+    {
+        fluid_ostream_printf(out, "LADSPA already started.\n");
+        return FLUID_FAILED;
+    }
+
+    if (fluid_ladspa_check(fx, error, LADSPA_ERR_LEN) != FLUID_OK)
+    {
+        fluid_ostream_printf(out, "LADSPA check failed: %s", error);
+        fluid_ostream_printf(out, "LADSPA not started.\n");
+        return FLUID_FAILED;
+    }
+
+    if (fluid_ladspa_activate(fx) != FLUID_OK)
+    {
+        fluid_ostream_printf(out, "Unable to start LADSPA.\n");
+        return FLUID_FAILED;
+    }
+
+    return FLUID_OK;
+}
+
+int fluid_handle_ladspa_stop(fluid_cmd_handler_t *handler, int ac, char **av, fluid_ostream_t out)
+{
+    fluid_ladspa_fx_t *fx = handler->synth->ladspa_fx;
+
+    CHECK_LADSPA_ENABLED(fx, out);
+
+    if (!fluid_ladspa_is_active(fx))
+    {
+        fluid_ostream_printf(out, "LADSPA has not been started.\n");
+    }
+
+    if (fluid_ladspa_deactivate(fx) != FLUID_OK)
+    {
+        fluid_ostream_printf(out, "Unable to stop LADSPA.\n");
+        return FLUID_FAILED;
+    }
+
+    return FLUID_OK;
+}
+
+int fluid_handle_ladspa_reset(fluid_cmd_handler_t *handler, int ac, char **av, fluid_ostream_t out)
+{
+    fluid_ladspa_fx_t *fx = handler->synth->ladspa_fx;
+
+    CHECK_LADSPA_ENABLED(fx, out);
+
+    fluid_ladspa_reset(fx);
+
+    return FLUID_OK;
+}
+
+int fluid_handle_ladspa_control_defaults(fluid_cmd_handler_t *handler, int ac, char **av, fluid_ostream_t out)
+{
+    fluid_ladspa_fx_t *fx = handler->synth->ladspa_fx;
+
+    CHECK_LADSPA_ENABLED(fx, out);
+
+    if (fluid_ladspa_control_defaults(fx) != FLUID_OK)
+    {
+        fluid_ostream_printf(out, "Error while setting default values for control ports\n");
+        return FLUID_FAILED;
+    }
+
+    fluid_ostream_printf(out, "Control port defaults set\n");
+
+    return FLUID_OK;
+}
+
+int fluid_handle_ladspa_check(fluid_cmd_handler_t *handler, int ac, char **av, fluid_ostream_t out)
+{
+    fluid_ladspa_fx_t *fx = handler->synth->ladspa_fx;
+    char error[LADSPA_ERR_LEN];
+
+    CHECK_LADSPA_ENABLED(fx, out);
+
+    if (fluid_ladspa_check(fx, error, LADSPA_ERR_LEN) != FLUID_OK)
+    {
+        fluid_ostream_printf(out, "LADSPA check failed: %s", error);
+        return FLUID_FAILED;
+    }
+
+    fluid_ostream_printf(out, "LADSPA check ok\n");
+
+    return FLUID_OK;
+}
+
+int fluid_handle_ladspa_control(fluid_cmd_handler_t *handler, int ac, char **av, fluid_ostream_t out)
+{
+    fluid_ladspa_fx_t *fx = handler->synth->ladspa_fx;
+
+    CHECK_LADSPA_ENABLED(fx, out);
+
+    if (ac != 2)
+    {
+        fluid_ostream_printf(out, "ladspa_control needs two arguments: node name and value.\n");
+        return FLUID_FAILED;
+    };
+
+    /* Redundant check, just here to give a more detailed error message */
+    if (!fluid_ladspa_node_exists(fx, av[0]))
+    {
+        fluid_ostream_printf(out, "Node '%s' not found.\n", av[0]);
+        return FLUID_FAILED;
+    }
+
+    if (fluid_ladspa_set_control_node(fx, av[0], atof(av[1])) != FLUID_OK)
+    {
+        fluid_ostream_printf(out, "Failed to set node '%s', maybe it's not a control node?\n",
+                             av[0]);
+        return FLUID_FAILED;
+    }
+
+    return FLUID_OK;
+};
+
+int fluid_handle_ladspa_node(fluid_cmd_handler_t *handler, int ac, char **av, fluid_ostream_t out)
+{
+    fluid_ladspa_fx_t *fx = handler->synth->ladspa_fx;
+    char *name;
+    char *type;
+
+    CHECK_LADSPA_ENABLED(fx, out);
+
+    if (ac < 2)
+    {
+        fluid_ostream_printf(out, "ladspa_node needs at least two arguments: node name and type.\n");
+        return FLUID_FAILED;
+    };
+
+    name = av[0];
+    type = av[1];
+
+    /* audio node - additional no arguments */
+    if (FLUID_STRCMP(type, "audio") == 0)
+    {
+        if (fluid_ladspa_add_audio_node(fx, name) != FLUID_OK)
+        {
+            fluid_ostream_printf(out, "Failed to add audio node.\n");
+            return FLUID_FAILED;
+        }
+    }
+    /* control node - arguments: <val> */
+    else if (FLUID_STRCMP(type, "control") == 0)
+    {
+        if (ac != 3)
+        {
+            fluid_ostream_printf(out, "Control nodes need 3 arguments.\n");
+            return FLUID_FAILED;
+        }
+
+        if (fluid_ladspa_add_control_node(fx, name, atof(av[2])) != FLUID_OK)
+        {
+            fluid_ostream_printf(out, "Failed to add contrl node.\n");
+            return FLUID_FAILED;
+        }
+    }
+    else {
+            fluid_ostream_printf(out, "Invalid node type.\n");
+            return FLUID_FAILED;
+    }
+
+    return FLUID_OK;
+};
+
+int fluid_handle_ladspa_plugin(fluid_cmd_handler_t *handler, int ac, char **av, fluid_ostream_t out)
+{
+    fluid_ladspa_fx_t *fx = handler->synth->ladspa_fx;
+    int plugin_id;
+
+    CHECK_LADSPA_ENABLED(fx, out);
+
+    if (ac != 2)
+    {
+        fluid_ostream_printf(out, "ladspa_plugin needs 2 arguments: library and plugin id.\n");
+        return FLUID_FAILED;
+    }
+
+    plugin_id = fluid_ladspa_add_plugin(fx, av[0], av[1]);
+    if (plugin_id < 0)
+    {
+        fluid_ostream_printf(out, "Failed to add plugin.\n");
+        return FLUID_FAILED;
+    }
+
+    /* store current plugin in the handler, so that subsequent ladspa_port
+     * commands know which plugin to configure */
+    handler->ladspa_plugin_id = plugin_id;
+
+    return FLUID_OK;
+}
+
+int fluid_handle_ladspa_port(fluid_cmd_handler_t *handler, int ac, char **av, fluid_ostream_t out)
+{
+    fluid_ladspa_fx_t *fx = handler->synth->ladspa_fx;
+    int dir;
+
+    CHECK_LADSPA_ENABLED(fx, out);
+
+    if (ac != 3)
+    {
+        fluid_ostream_printf(out, "ladspa_port needs 3 arguments: "
+                                  "port name, direction and node name.\n");
+        return FLUID_FAILED;
+    }
+
+    if (handler->ladspa_plugin_id == -1)
+    {
+        fluid_ostream_printf(out, "Please choose a plugin with ladspa_plugin first.\n");
+        return FLUID_FAILED;
+    }
+
+    if (FLUID_STRCMP(av[1], "<") == 0)
+    {
+        dir = FLUID_LADSPA_INPUT;
+    }
+    else if (FLUID_STRCMP(av[1], ">") == 0)
+    {
+        dir = FLUID_LADSPA_OUTPUT;
+    }
+    else if (FLUID_STRCMP(av[1], "=") == 0)
+    {
+        dir = FLUID_LADSPA_FIXED;
+    }
+    else
+    {
+        fluid_ostream_printf(out, "Invalid direction, please use <, > or =\n");
+        return FLUID_FAILED;
+    }
+
+    /* Check port and node name before trying to connect them by name. This is
+     * redundant, as fluid_ladspa_connect checks them as well, but we do it
+     * here anyway to give the user better feedback in case a port or node
+     * could not be found.
+     */
+    if (!fluid_ladspa_port_exists(fx, handler->ladspa_plugin_id, av[0]))
+    {
+        fluid_ostream_printf(out, "Port '%s' not found.\n", av[0]);
+        return FLUID_FAILED;
+    }
+
+    if (dir != FLUID_LADSPA_FIXED && !fluid_ladspa_node_exists(fx, av[2]))
+    {
+        fluid_ostream_printf(out, "Node '%s' not found.\n", av[2]);
+        return FLUID_FAILED;
+    }
+
+    if (fluid_ladspa_connect(fx, handler->ladspa_plugin_id, dir, av[0], av[2]) != FLUID_OK)
+    {
+        fluid_ostream_printf(out, "Failed to connect plugin port.\n");
+        return FLUID_FAILED;
+    }
+
+    return FLUID_OK;
+}
+
+#endif /* LADSPA */
+
 int
 fluid_is_number(char* a)
 {
@@ -2522,14 +2825,14 @@ fluid_cmd_handler_destroy_hash_value (void *value)
  */
 fluid_cmd_handler_t* new_fluid_cmd_handler(fluid_synth_t* synth, fluid_midi_router_t* router)
 {
-  int i;
+  unsigned int i;
   fluid_cmd_handler_t* handler;
 
   handler = FLUID_NEW(fluid_cmd_handler_t);
   if (handler == NULL) {
     return NULL;
   }
-  handler->commands = new_fluid_hashtable_full (fluid_str_hash, fluid_str_equal,                                                              
+  handler->commands = new_fluid_hashtable_full (fluid_str_hash, fluid_str_equal,
                                         NULL, fluid_cmd_handler_destroy_hash_value);
   if (handler->commands == NULL) {
     FLUID_FREE(handler);
@@ -2538,15 +2841,25 @@ fluid_cmd_handler_t* new_fluid_cmd_handler(fluid_synth_t* synth, fluid_midi_rout
 
   handler->synth = synth;
   handler->router = router;
-  
+
   if (synth != NULL) {
-    for (i = 0; fluid_commands[i].name != NULL; i++)
+    for (i = 0; i < FLUID_N_ELEMENTS(fluid_commands); i++)
     {
-        fluid_commands[i].data = handler;
-        fluid_cmd_handler_register(handler, &fluid_commands[i]);
-        fluid_commands[i].data = NULL;
+        fluid_cmd_t cmd = {
+            (char *)fluid_commands[i].name,
+            (char *)fluid_commands[i].topic,
+            fluid_commands[i].handler,
+            handler,
+            (char *)fluid_commands[i].help
+        };
+
+        fluid_cmd_handler_register(handler, &cmd);
     }
   }
+
+#ifdef LADSPA
+  handler->ladspa_plugin_id = -1;
+#endif
 
   return handler;
 }
@@ -2773,37 +3086,31 @@ fluid_client_t*
 new_fluid_client(fluid_server_t* server, fluid_settings_t* settings, fluid_socket_t sock)
 {
   fluid_client_t* client;
-  fluid_cmd_handler_t* handler;
 
   client = FLUID_NEW(fluid_client_t);
   if (client == NULL) {
     FLUID_LOG(FLUID_ERR, "Out of memory");
     return NULL;
   }
-  
-  handler = new_fluid_cmd_handler(server->synth, server->router);
-  if (handler == NULL) {
-    goto error_recovery;
-  }
-  
+
   client->server = server;
   client->socket = sock;
   client->settings = settings;
-  client->handler = handler;
+  client->handler = new_fluid_cmd_handler(server->synth, server->router);
   client->thread = new_fluid_thread("client", (fluid_thread_func_t) fluid_client_run, client,
                                     0, FALSE);
 
-  if (client->thread == NULL) {
+  if (client->handler == NULL || client->thread == NULL) {
     goto error_recovery;
   }
 
   return client;
-  
+
 error_recovery:
   FLUID_LOG(FLUID_ERR, "Out of memory");
   delete_fluid_client(client);
   return NULL;
-  
+
 }
 
 void fluid_client_quit(fluid_client_t* client)
@@ -2824,7 +3131,7 @@ void delete_fluid_client(fluid_client_t* client)
     delete_fluid_cmd_handler(client->handler);
     client->handler = NULL;
   }
-  
+
   if (client->socket != INVALID_SOCKET) {
     fluid_socket_close(client->socket);
     client->socket = INVALID_SOCKET;

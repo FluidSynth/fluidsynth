@@ -73,27 +73,6 @@ void fluid_time_config(void);
 char *fluid_strtok (char **str, char *delim);
 
 
-/**
-
-  Additional debugging system, separate from the log system. This
-  allows to print selected debug messages of a specific subsystem.
- */
-
-extern unsigned int fluid_debug_flags;
-
-#if DEBUG
-
-enum fluid_debug_level {
-  FLUID_DBG_DRIVER = 1
-};
-
-int fluid_debug(int level, char * fmt, ...);
-
-#else
-#define fluid_debug
-#endif
-
-
 #if defined(__OS2__)
 #define INCL_DOS
 #include <os2.h>
@@ -211,10 +190,10 @@ typedef GStaticMutex fluid_mutex_t;
 #define fluid_mutex_lock(_m)      g_static_mutex_lock(&(_m))
 #define fluid_mutex_unlock(_m)    g_static_mutex_unlock(&(_m))
 
-#define fluid_mutex_init(_m)      G_STMT_START { \
+#define fluid_mutex_init(_m)      do { \
   if (!g_thread_supported ()) g_thread_init (NULL); \
   g_static_mutex_init (&(_m)); \
-} G_STMT_END;
+} while(0)
 
 /* Recursive lock capable mutex */
 typedef GStaticRecMutex fluid_rec_mutex_t;
@@ -222,10 +201,10 @@ typedef GStaticRecMutex fluid_rec_mutex_t;
 #define fluid_rec_mutex_lock(_m)      g_static_rec_mutex_lock(&(_m))
 #define fluid_rec_mutex_unlock(_m)    g_static_rec_mutex_unlock(&(_m))
 
-#define fluid_rec_mutex_init(_m)      G_STMT_START { \
+#define fluid_rec_mutex_init(_m)      do { \
   if (!g_thread_supported ()) g_thread_init (NULL); \
   g_static_rec_mutex_init (&(_m)); \
-} G_STMT_END;
+} while(0)
 
 /* Dynamically allocated mutex suitable for fluid_cond_t use */
 typedef GMutex    fluid_cond_mutex_t;
@@ -254,10 +233,10 @@ typedef GStaticPrivate fluid_private_t;
 #define fluid_private_set(_priv, _data)            g_static_private_set(&(_priv), _data, NULL)
 #define fluid_private_free(_priv)                  g_static_private_free(&(_priv))
 
-#define fluid_private_init(_priv)                  G_STMT_START { \
+#define fluid_private_init(_priv)                  do { \
   if (!g_thread_supported ()) g_thread_init (NULL); \
   g_static_private_init (&(_priv)); \
-} G_STMT_END;
+} while(0)
 
 #endif
 

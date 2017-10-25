@@ -46,7 +46,7 @@ typedef enum
  * reverb preset
  */
 typedef struct _fluid_revmodel_presets_t {
-  char* name;
+  const char* name;
   fluid_real_t roomsize;
   fluid_real_t damp;
   fluid_real_t width;
