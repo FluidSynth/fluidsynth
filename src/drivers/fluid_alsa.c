@@ -128,7 +128,6 @@ static void fluid_alsa_midi_run(void* d);
 typedef struct {
   fluid_midi_driver_t driver;
   snd_seq_t *seq_handle;
-  snd_seq_port_info_t *port_info;
   struct pollfd *pfd;
   int npfd;
   fluid_thread_t *thread;
@@ -148,8 +147,9 @@ static void fluid_alsa_seq_run(void* d);
  *
  */
 
-// Connect ALSA MIDI inputs to dev->port_info
-static void fluid_alsa_autoconnect_inputs(fluid_alsa_seq_driver_t* dev) {
+// Connect ALSA MIDI inputs to port_info
+static void fluid_alsa_autoconnect_inputs(fluid_alsa_seq_driver_t* dev, const snd_seq_port_info_t *port_info)
+{
   snd_seq_t *seq = dev->seq_handle;
   snd_seq_port_subscribe_t *subs;
   snd_seq_client_info_t *cinfo;
@@ -161,7 +161,7 @@ static void fluid_alsa_autoconnect_inputs(fluid_alsa_seq_driver_t* dev) {
 
   snd_seq_client_info_set_client(cinfo, -1);
   while (snd_seq_query_next_client(seq, cinfo) >= 0) {
-    const snd_seq_addr_t *dest = snd_seq_port_info_get_addr(dev->port_info);
+    const snd_seq_addr_t *dest = snd_seq_port_info_get_addr(port_info);
 
     snd_seq_port_info_set_client(pinfo, snd_seq_client_info_get_client(cinfo));
     snd_seq_port_info_set_port(pinfo, -1);
@@ -935,11 +935,9 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
     }
   }
 
-  dev->port_info = port_info;
-
   fluid_settings_getint(settings, "audio.alsa.autoconnect", &autoconn_inputs);
   if (autoconn_inputs)
-    fluid_alsa_autoconnect_inputs(dev);
+    fluid_alsa_autoconnect_inputs(dev, port_info);
 
   /* tell the lash server our client id */
 #ifdef LASH_ENABLED
