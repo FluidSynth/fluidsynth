@@ -240,6 +240,14 @@ https://stackoverflow.com/a/6251757
             </desc>
         </setting>
         <setting>
+            <name>alsa.autoconnect</name>
+            <type>bool</type>
+            <def>0 (FALSE)</def>
+            <desc>
+                If 1 (TRUE), automatically connects FluidSynth to available ALSA MIDI input ports.
+            </desc>
+        </setting>
+        <setting>
             <name>alsa.device</name>
             <type>str</type>
             <def>default</def>
