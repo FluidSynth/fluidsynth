@@ -229,7 +229,7 @@ new_fluid_rvoice_eventhandler(int is_threadsafe, int queuesize,
    * that too many events are dispatched too early, causing incorrectly timed audio
    */
   eventhandler->is_threadsafe = TRUE;
-  eventhandler->queue_stored = 0;
+  fluid_atomic_int_set(&eventhandler->queue_stored, 0);
   
   eventhandler->finished_voices = new_fluid_ringbuffer(finished_voices_size,
                                                        sizeof(fluid_rvoice_t*));

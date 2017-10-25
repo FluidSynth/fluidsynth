@@ -32,14 +32,14 @@
 #ifndef _FLUID_TUNING_H
 #define _FLUID_TUNING_H
 
-#include "fluidsynth_priv.h"
+#include <fluidsynth_priv.h>
 
 struct _fluid_tuning_t {
   char* name;
   int bank;
   int prog;
   double pitch[128];  /* the pitch of every key, in cents */
-  int refcount;         /* Tuning reference count */
+  fluid_atomic_int_t refcount;         /* Tuning reference count */
 };
 
 fluid_tuning_t* new_fluid_tuning(const char* name, int bank, int prog);

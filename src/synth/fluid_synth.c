@@ -184,8 +184,10 @@ void fluid_synth_settings(fluid_settings_t* settings)
                               FLUID_HINT_TOGGLED, NULL, NULL);
   fluid_settings_register_str(settings, "midi.portname", "", 0, NULL, NULL);
 
+#ifdef DEFAULT_SOUNDFONT
   fluid_settings_register_str(settings, "synth.default-soundfont",
-			      DEFAULT_SOUNDFONT, 0, NULL, NULL);
+            DEFAULT_SOUNDFONT, 0, NULL, NULL);
+#endif
 
   fluid_settings_register_int(settings, "synth.polyphony",
 			      256, 1, 65535, 0, NULL, NULL);
@@ -439,18 +441,12 @@ fluid_synth_init(void)
 
 static FLUID_INLINE unsigned int fluid_synth_get_ticks(fluid_synth_t* synth)
 {
-  if (synth->eventhandler->is_threadsafe)
-    return fluid_atomic_int_get(&synth->ticks_since_start);
-  else
-    return synth->ticks_since_start;
+  return fluid_atomic_int_get(&synth->ticks_since_start);
 }
 
 static FLUID_INLINE void fluid_synth_add_ticks(fluid_synth_t* synth, int val)
 {
-  if (synth->eventhandler->is_threadsafe)
-    fluid_atomic_int_add((int*) &synth->ticks_since_start, val);
-  else
-    synth->ticks_since_start += val;
+  fluid_atomic_int_add(&synth->ticks_since_start, val);
 }
 
 
@@ -555,7 +551,9 @@ new_fluid_synth(fluid_settings_t *settings)
   double gain;
   int i, nbuf;
   int with_ladspa = 0;
-  
+  int with_reverb;
+  int with_chorus;
+
   /* initialize all the conversion tables and other stuff */
   if (fluid_synth_initialized == 0)
   {
@@ -595,8 +593,10 @@ new_fluid_synth(fluid_settings_t *settings)
   
   synth->settings = settings;
 
-  fluid_settings_getint(settings, "synth.reverb.active", &synth->with_reverb);
-  fluid_settings_getint(settings, "synth.chorus.active", &synth->with_chorus);
+  fluid_settings_getint(settings, "synth.reverb.active", &with_reverb);
+  fluid_atomic_int_set(&synth->with_reverb, with_reverb);  
+  fluid_settings_getint(settings, "synth.chorus.active", &with_chorus);
+  fluid_atomic_int_set(&synth->with_chorus, with_chorus);  
   fluid_settings_getint(settings, "synth.verbose", &synth->verbose);
 
   fluid_settings_getint(settings, "synth.polyphony", &synth->polyphony);
@@ -678,7 +678,7 @@ new_fluid_synth(fluid_settings_t *settings)
   synth->sfont_info = NULL;
   synth->sfont_hash = new_fluid_hashtable (NULL, NULL);
   synth->noteid = 0;
-  synth->ticks_since_start = 0;
+  fluid_atomic_int_set(&synth->ticks_since_start, 0);
   synth->tuning = NULL;
   fluid_private_init(synth->tuning_iter);
 
@@ -763,24 +763,24 @@ new_fluid_synth(fluid_settings_t *settings)
   fluid_synth_update_overflow(synth, "", 0.0f);
   fluid_synth_update_mixer(synth, fluid_rvoice_mixer_set_polyphony, 
 			   synth->polyphony, 0.0f);
-  fluid_synth_set_reverb_on(synth, synth->with_reverb);
-  fluid_synth_set_chorus_on(synth, synth->with_chorus);
-				 
+  fluid_synth_set_reverb_on(synth, fluid_atomic_int_get(&synth->with_reverb));
+  fluid_synth_set_chorus_on(synth, fluid_atomic_int_get(&synth->with_chorus));
+              
   synth->cur = FLUID_BUFSIZE;
   synth->curmax = 0;
   synth->dither_index = 0;
 
-  synth->reverb_roomsize = FLUID_REVERB_DEFAULT_ROOMSIZE;
-  synth->reverb_damping = FLUID_REVERB_DEFAULT_DAMP;
-  synth->reverb_width = FLUID_REVERB_DEFAULT_WIDTH;
-  synth->reverb_level = FLUID_REVERB_DEFAULT_LEVEL;
+  fluid_atomic_float_set(&synth->reverb_roomsize, FLUID_REVERB_DEFAULT_ROOMSIZE);
+  fluid_atomic_float_set(&synth->reverb_damping, FLUID_REVERB_DEFAULT_DAMP);
+  fluid_atomic_float_set(&synth->reverb_width, FLUID_REVERB_DEFAULT_WIDTH);
+  fluid_atomic_float_set(&synth->reverb_level, FLUID_REVERB_DEFAULT_LEVEL);
 
   fluid_rvoice_eventhandler_push5(synth->eventhandler, 
 				  fluid_rvoice_mixer_set_reverb_params,
 				  synth->eventhandler->mixer, 
-				  FLUID_REVMODEL_SET_ALL, synth->reverb_roomsize, 
-				  synth->reverb_damping, synth->reverb_width, 
-				  synth->reverb_level, 0.0f);
+				  FLUID_REVMODEL_SET_ALL, fluid_atomic_float_get(&synth->reverb_roomsize), 
+				  fluid_atomic_float_get(&synth->reverb_damping), fluid_atomic_float_get(&synth->reverb_width), 
+				  fluid_atomic_float_get(&synth->reverb_level), 0.0f);
 
   /* Initialize multi-core variables if multiple cores enabled */
   if (synth->cores > 1)
@@ -2749,7 +2749,7 @@ fluid_synth_nwrite_float(fluid_synth_t* synth, int len,
   synth->cur = num;
 
   time = fluid_utime() - time;
-  cpu_load = 0.5 * (synth->cpu_load + time * synth->sample_rate / len / 10000.0);
+  cpu_load = 0.5 * (fluid_atomic_float_get(&synth->cpu_load) + time * synth->sample_rate / len / 10000.0);
   fluid_atomic_float_set (&synth->cpu_load, cpu_load);
 
   if (!synth->eventhandler->is_threadsafe)
@@ -2860,7 +2860,7 @@ fluid_synth_write_float(fluid_synth_t* synth, int len,
   synth->cur = l;
 
   time = fluid_utime() - time;
-  cpu_load = 0.5 * (synth->cpu_load + time * synth->sample_rate / len / 10000.0);
+  cpu_load = 0.5 * (fluid_atomic_float_get(&synth->cpu_load) + time * synth->sample_rate / len / 10000.0);
   fluid_atomic_float_set (&synth->cpu_load, cpu_load);
 
   if (!synth->eventhandler->is_threadsafe)
@@ -2985,7 +2985,7 @@ fluid_synth_write_s16(fluid_synth_t* synth, int len,
   fluid_profile(FLUID_PROF_WRITE, prof_ref);
 
   time = fluid_utime() - time;
-  cpu_load = 0.5 * (synth->cpu_load + time * synth->sample_rate / len / 10000.0);
+  cpu_load = 0.5 * (fluid_atomic_float_get(&synth->cpu_load) + time * synth->sample_rate / len / 10000.0);
   fluid_atomic_float_set (&synth->cpu_load, cpu_load);
 
   if (!synth->eventhandler->is_threadsafe)
