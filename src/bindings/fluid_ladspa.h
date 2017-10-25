@@ -119,7 +119,7 @@ typedef struct _fluid_ladspa_fx_t
 
     fluid_rec_mutex_t api_mutex;
 
-    int state;
+    fluid_atomic_int_t state;
     int pending_deactivation;
 
     fluid_cond_mutex_t *run_finished_mutex;
