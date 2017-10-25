@@ -194,7 +194,7 @@ static void autoconnect_inputs(fluid_alsa_seq_driver_t* dev) {
 void fluid_alsa_audio_driver_settings(fluid_settings_t* settings)
 {
   fluid_settings_register_str(settings, "audio.alsa.device", "default", 0, NULL, NULL);
-  fluid_settings_register_int(settings, "audio.alsa.autoconnect_inputs", 0, 0, 1, FLUID_HINT_TOGGLED, NULL, NULL);
+  fluid_settings_register_int(settings, "audio.alsa.autoconnect", 0, 0, 1, FLUID_HINT_TOGGLED, NULL, NULL);
 }
 
 
@@ -937,7 +937,7 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
   dev->port_info = port_info;
 
   int autoconn_inputs = 0;
-  fluid_settings_getint(settings, "audio.alsa.autoconnect_inputs", &autoconn_inputs);
+  fluid_settings_getint(settings, "audio.alsa.autoconnect", &autoconn_inputs);
   if (autoconn_inputs)
     autoconnect_inputs(dev);
 
