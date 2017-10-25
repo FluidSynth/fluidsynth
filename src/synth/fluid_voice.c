@@ -501,7 +501,8 @@ fluid_voice_calculate_gen_pitch(fluid_voice_t* voice)
 static int
 fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t* voice)
 {
-  unsigned int i;
+  int i;
+  unsigned int n;
 
   static int const list_of_generators_to_initialize[] = {
     GEN_STARTADDROFS,                    /* SF2.01 page 48 #0   */
@@ -598,8 +599,8 @@ fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t* voice)
    */
 
   /* Calculate the voice parameter(s) dependent on each generator. */
-  for (i = 0; i < FLUID_N_ELEMENTS(list_of_generators_to_initialize); i++) {
-    fluid_voice_update_param(voice, list_of_generators_to_initialize[i]);
+  for (n = 0; n < FLUID_N_ELEMENTS(list_of_generators_to_initialize); n++) {
+    fluid_voice_update_param(voice, list_of_generators_to_initialize[n]);
   }
 
   /* Make an estimate on how loud this voice can get at any time (attenuation). */
@@ -1113,7 +1114,7 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
  */
 int fluid_voice_modulate(fluid_voice_t* voice, int cc, int ctrl)
 {
-  unsigned int i, k;
+  int i, k;
   fluid_mod_t* mod;
   int gen;
   fluid_real_t modval;
@@ -1158,8 +1159,7 @@ int fluid_voice_modulate(fluid_voice_t* voice, int cc, int ctrl)
 int fluid_voice_modulate_all(fluid_voice_t* voice)
 {
   fluid_mod_t* mod;
-  unsigned int i, k;
-  int gen;
+  int i, k, gen;
   fluid_real_t modval;
 
   /* Loop through all the modulators.
@@ -1343,7 +1343,7 @@ fluid_voice_stop(fluid_voice_t* voice)
 void
 fluid_voice_add_mod(fluid_voice_t* voice, fluid_mod_t* mod, int mode)
 {
-  unsigned int i;
+  int i;
 
   /*
    * Some soundfonts come with a huge number of non-standard
@@ -1558,7 +1558,7 @@ int fluid_voice_get_velocity(const fluid_voice_t* voice)
 static fluid_real_t
 fluid_voice_get_lower_boundary_for_attenuation(fluid_voice_t* voice)
 {
-    unsigned int i;
+    int i;
     fluid_mod_t* mod;
     fluid_real_t possible_att_reduction_cB=0;
     fluid_real_t lower_bound;

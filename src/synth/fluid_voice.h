@@ -68,7 +68,7 @@ struct _fluid_voice_t
 	fluid_channel_t* channel;
 	fluid_gen_t gen[GEN_LAST];
 	fluid_mod_t mod[FLUID_NUM_MOD];
-	unsigned int mod_count;
+	int mod_count;
 	fluid_sample_t* sample;         /* Pointer to sample (dupe in rvoice) */
 
 	/* basic parameters */
