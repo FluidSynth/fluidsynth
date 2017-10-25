@@ -288,7 +288,7 @@ fluid_atomic_float_get(volatile float *fptr)
 
 /* Threads */
 
-typedef fluid_thread_return_t void
+typedef fluid_thread_return_t void;
 #define FLUID_THREAD_RETURN_VALUE
 
 typedef GThread fluid_thread_t;
