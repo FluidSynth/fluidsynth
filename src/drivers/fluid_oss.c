@@ -77,8 +77,8 @@ int delete_fluid_oss_audio_driver(fluid_audio_driver_t* p);
 
 /* local utilities */
 static int fluid_oss_set_queue_size(fluid_oss_audio_driver_t* dev, int ss, int ch, int qs, int bs);
-static void fluid_oss_audio_run(void* d);
-static void fluid_oss_audio_run2(void* d);
+static fluid_thread_return_t fluid_oss_audio_run(void* d);
+static fluid_thread_return_t fluid_oss_audio_run2(void* d);
 
 
 typedef struct {
@@ -441,7 +441,7 @@ fluid_oss_set_queue_size(fluid_oss_audio_driver_t* dev, int ss, int ch, int qs, 
 /*
  * fluid_oss_audio_run
  */
-void
+fluid_thread_return_t
 fluid_oss_audio_run(void* d)
 {
   fluid_oss_audio_driver_t* dev = (fluid_oss_audio_driver_t*) d;
@@ -469,7 +469,7 @@ fluid_oss_audio_run(void* d)
 /*
  * fluid_oss_audio_run
  */
-void
+fluid_thread_return_t
 fluid_oss_audio_run2(void* d)
 {
   fluid_oss_audio_driver_t* dev = (fluid_oss_audio_driver_t*) d;

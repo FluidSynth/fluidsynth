@@ -661,7 +661,7 @@ fluid_thread_join(fluid_thread_t* thread)
 }
 
 
-void
+fluid_thread_return_t
 fluid_timer_run (void *data)
 {
   fluid_timer_t *timer;
@@ -694,7 +694,7 @@ fluid_timer_run (void *data)
   if (timer->auto_destroy)
     FLUID_FREE (timer);
 
-  return;
+  return FLUID_THREAD_RETURN_VALUE;
 }
 
 fluid_timer_t*
