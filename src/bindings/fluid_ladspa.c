@@ -25,10 +25,10 @@
  * Author: Marcus Weseloh
  */
 
-#include <fluidsynth_priv.h>
+#include "fluidsynth_priv.h"
 
 #include "fluid_ladspa.h"
-#include <fluid_sys.h>
+#include "fluid_sys.h"
 #include <dlfcn.h>
 #include <math.h>
 

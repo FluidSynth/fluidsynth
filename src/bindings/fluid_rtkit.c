@@ -25,7 +25,7 @@
   SOFTWARE.
 ***/
 
-#include <fluidsynth_priv.h>
+#include "fluidsynth_priv.h"
 
 #ifdef DBUS_SUPPORT
 

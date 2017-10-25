@@ -21,7 +21,7 @@
 #ifndef _FLUID_MDRIVER_H
 #define _FLUID_MDRIVER_H
 
-#include <fluid_sys.h>
+#include "fluid_sys.h"
 
 void fluid_midi_driver_settings(fluid_settings_t* settings);
 

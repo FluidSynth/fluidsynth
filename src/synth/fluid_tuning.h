@@ -32,7 +32,7 @@
 #ifndef _FLUID_TUNING_H
 #define _FLUID_TUNING_H
 
-#include <fluidsynth_priv.h>
+#include "fluidsynth_priv.h"
 
 struct _fluid_tuning_t {
   char* name;

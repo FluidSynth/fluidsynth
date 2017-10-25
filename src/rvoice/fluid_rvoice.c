@@ -20,7 +20,7 @@
 
 #include "fluid_rvoice.h"
 #include "fluid_conv.h"
-#include <fluid_sys.h>
+#include "fluid_sys.h"
 
 /**
  * @return -1 if voice has finished, 0 if it's currently quiet, 1 otherwise

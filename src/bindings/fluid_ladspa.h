@@ -24,8 +24,8 @@
 #ifndef _FLUID_LADSPA_H
 #define _FLUID_LADSPA_H
 
-#include <fluid_sys.h>
-#include <fluidsynth_priv.h>
+#include "fluid_sys.h"
+#include "fluidsynth_priv.h"
 
 #ifdef LADSPA
 #include <ladspa.h>

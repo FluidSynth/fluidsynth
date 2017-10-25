@@ -22,7 +22,7 @@
 #ifndef _FLUID_REV_H
 #define _FLUID_REV_H
 
-#include <fluidsynth_priv.h>
+#include "fluidsynth_priv.h"
 
 typedef struct _fluid_revmodel_t fluid_revmodel_t;
 

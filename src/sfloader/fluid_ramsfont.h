@@ -24,7 +24,7 @@
 
 
 #include "fluidsynth.h"
-#include <fluidsynth_priv.h>
+#include "fluidsynth_priv.h"
 
 #include "fluid_defsfont.h"
 

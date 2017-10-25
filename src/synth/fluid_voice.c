@@ -18,13 +18,13 @@
  * 02110-1301, USA
  */
 
-#include <fluidsynth_priv.h>
+#include "fluidsynth_priv.h"
 #include "fluid_voice.h"
 #include "fluid_mod.h"
 #include "fluid_chan.h"
 #include "fluid_conv.h"
 #include "fluid_synth.h"
-#include <fluid_sys.h>
+#include "fluid_sys.h"
 #include "fluid_sfont.h"
 #include "fluid_rvoice_event.h"
 

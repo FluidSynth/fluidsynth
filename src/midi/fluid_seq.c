@@ -28,8 +28,8 @@
 */
 
 #include "fluid_event_priv.h"
-#include <fluidsynth_priv.h>	// FLUID_NEW, etc
-#include <fluid_sys.h>	// timer, threads, etc...
+#include "fluidsynth_priv.h"	// FLUID_NEW, etc
+#include "fluid_sys.h"	// timer, threads, etc...
 #include "fluid_list.h"
 
 /***************************************************************

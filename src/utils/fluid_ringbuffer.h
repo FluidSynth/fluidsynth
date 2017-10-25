@@ -21,7 +21,7 @@
 #ifndef _FLUID_RINGBUFFER_H
 #define _FLUID_RINGBUFFER_H
 
-#include <fluid_sys.h>
+#include "fluid_sys.h"
 
 /**
  * Lockless event queue instance.

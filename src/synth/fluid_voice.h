@@ -29,7 +29,7 @@
 #include "fluid_adsr_env.h"
 #include "fluid_lfo.h"
 #include "fluid_rvoice.h"
-#include <fluid_sys.h>
+#include "fluid_sys.h"
 
 #define NO_CHANNEL             0xff
 

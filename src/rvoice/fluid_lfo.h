@@ -21,7 +21,7 @@
 #ifndef _FLUID_LFO_H
 #define _FLUID_LFO_H
 
-#include <fluid_sys.h>
+#include "fluid_sys.h"
 
 typedef struct _fluid_lfo_t fluid_lfo_t;
 

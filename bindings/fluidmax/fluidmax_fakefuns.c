@@ -38,7 +38,7 @@
  */
 #include "ftmax.h"
 #include "fluidsynth.h"
-#include <fluidsynth_priv.h>
+#include "fluidsynth_priv.h"
 #include "fluid_settings.h"
 
 unsigned int 

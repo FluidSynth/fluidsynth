@@ -21,8 +21,8 @@
 #ifndef _FLUID_MIDI_H
 #define _FLUID_MIDI_H
 
-#include <fluidsynth_priv.h>
-#include <fluid_sys.h>
+#include "fluidsynth_priv.h"
+#include "fluid_sys.h"
 #include "fluid_list.h"
 
 typedef struct _fluid_midi_parser_t fluid_midi_parser_t;

@@ -21,7 +21,7 @@
 #ifndef _FLUID_MOD_H
 #define _FLUID_MOD_H
 
-#include <fluidsynth_priv.h>
+#include "fluidsynth_priv.h"
 #include "fluid_conv.h"
 
 /**

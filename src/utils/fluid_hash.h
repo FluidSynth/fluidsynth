@@ -35,9 +35,9 @@
 #ifndef _FLUID_HASH_H
 #define _FLUID_HASH_H
 
-#include <fluidsynth_priv.h>
+#include "fluidsynth_priv.h"
 #include "fluid_list.h"
-#include <fluid_sys.h>
+#include "fluid_sys.h"
 
 /* Extracted from gtypes.h */
 typedef void (*fluid_destroy_notify_t)(void *data);

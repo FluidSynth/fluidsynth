@@ -78,7 +78,7 @@
  */
 
 #include "fluid_chorus.h"
-#include <fluid_sys.h>
+#include "fluid_sys.h"
 
 #define MAX_CHORUS	99
 #define MAX_DELAY	100

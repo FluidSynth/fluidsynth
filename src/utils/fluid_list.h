@@ -20,7 +20,7 @@
 #ifndef _FLUID_LIST_H
 #define _FLUID_LIST_H
 
-#include <fluidsynth_priv.h>
+#include "fluidsynth_priv.h"
 
 /*
  *

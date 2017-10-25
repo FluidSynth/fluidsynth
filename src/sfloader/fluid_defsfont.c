@@ -24,7 +24,7 @@
 
 #include "fluid_defsfont.h"
 /* Todo: Get rid of that 'include' */
-#include <fluid_sys.h>
+#include "fluid_sys.h"
 
 #if LIBSNDFILE_SUPPORT
 #include <sndfile.h>

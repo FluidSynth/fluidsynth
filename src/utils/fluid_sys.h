@@ -37,7 +37,7 @@
 #define _FLUID_SYS_H
 
 #include <glib.h>
-#include <fluidsynth_priv.h>
+#include "fluidsynth_priv.h"
 
 
 /**

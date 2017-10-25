@@ -21,9 +21,9 @@
 
 #define INITGUID
 
-#include <fluidsynth_priv.h>
+#include "fluidsynth_priv.h"
 #include "fluid_synth.h"
-#include <fluid_sys.h>
+#include "fluid_sys.h"
 #include "fluid_adriver.h"
 #include "fluid_settings.h"
 #include <mmsystem.h>

@@ -22,7 +22,7 @@
 #ifndef _FLUID_RVOICE_EVENT_H
 #define _FLUID_RVOICE_EVENT_H
 
-#include <fluidsynth_priv.h>
+#include "fluidsynth_priv.h"
 #include "fluid_rvoice_mixer.h"
 #include "fluid_ringbuffer.h"
 

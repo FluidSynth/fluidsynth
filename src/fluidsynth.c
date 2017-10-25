@@ -26,7 +26,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <fluidsynth_priv.h>
+#include "fluidsynth_priv.h"
 
 #if !defined(WIN32) && !defined(MACINTOSH)
 #define _GNU_SOURCE

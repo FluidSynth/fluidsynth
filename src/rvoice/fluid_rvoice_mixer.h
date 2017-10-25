@@ -22,7 +22,7 @@
 #ifndef _FLUID_RVOICE_MIXER_H
 #define _FLUID_RVOICE_MIXER_H
 
-#include <fluidsynth_priv.h>
+#include "fluidsynth_priv.h"
 #include "fluid_rvoice.h"
 #include "fluid_ladspa.h"
 
