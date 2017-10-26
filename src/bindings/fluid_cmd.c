@@ -359,7 +359,7 @@ fluid_shell_run(fluid_shell_t* shell)
 
   if (prompt) FLUID_FREE (prompt);      /* -- free prompt */
 
-  return (void*)errors;
+  return (fluid_thread_return_t)errors;
 }
 
 /**
