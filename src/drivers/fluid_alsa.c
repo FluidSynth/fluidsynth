@@ -118,7 +118,7 @@ fluid_midi_driver_t* new_fluid_alsa_rawmidi_driver(fluid_settings_t* settings,
 						   void* event_handler_data);
 
 int delete_fluid_alsa_rawmidi_driver(fluid_midi_driver_t* p);
-static void fluid_alsa_midi_run(void* d);
+static fluid_thread_return_t fluid_alsa_midi_run(void* d);
 
 
 /*
@@ -139,7 +139,7 @@ fluid_midi_driver_t* new_fluid_alsa_seq_driver(fluid_settings_t* settings,
 					     handle_midi_event_func_t handler,
 					     void* data);
 int delete_fluid_alsa_seq_driver(fluid_midi_driver_t* p);
-static void fluid_alsa_seq_run(void* d);
+static fluid_thread_return_t fluid_alsa_seq_run(void* d);
 
 /**************************************************************
  *
@@ -674,7 +674,7 @@ delete_fluid_alsa_rawmidi_driver(fluid_midi_driver_t* p)
 /*
  * fluid_alsa_midi_run
  */
-void
+fluid_thread_return_t
 fluid_alsa_midi_run(void* d)
 {
   fluid_midi_event_t* evt;
@@ -953,7 +953,7 @@ delete_fluid_alsa_seq_driver(fluid_midi_driver_t* p)
 /*
  * fluid_alsa_seq_run
  */
-void
+fluid_thread_return_t
 fluid_alsa_seq_run(void* d)
 {
   int n, ev;
