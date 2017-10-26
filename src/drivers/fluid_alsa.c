@@ -180,14 +180,14 @@ static void fluid_alsa_autoconnect_inputs(fluid_alsa_seq_driver_t* dev, const sn
       snd_seq_port_subscribe_set_dest(subs, dest);
 
       if (snd_seq_get_port_subscription(seq, subs) == 0) {
-	FLUID_LOG(FLUID_ERR, "Connection %s is already subscribed\n", pname);
+	FLUID_LOG(FLUID_WARN, "Connection %s is already subscribed\n", pname);
 	continue;
       }
       if (snd_seq_subscribe_port(seq, subs) < 0) {
 	FLUID_LOG(FLUID_ERR, "Connection of %s failed (%s)\n", pname, snd_strerror(errno));
 	continue;
       }
-      FLUID_LOG(FLUID_ERR, "Connection of %s succeeded\n", pname);
+      FLUID_LOG(FLUID_INFO, "Connection of %s succeeded\n", pname);
     }
   }
 }
