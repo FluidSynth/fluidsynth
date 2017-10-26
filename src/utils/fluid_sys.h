@@ -288,8 +288,10 @@ fluid_atomic_float_get(volatile float *fptr)
 
 /* Threads */
 
-typedef void* fluid_thread_return_t;        /* other system thread implementation might changes this for their needs */
-#define FLUID_THREAD_RETURN_VALUE NULL      /* static return value for thread implementation which requires a return value */
+/* other thread implementations might change this for their needs */
+typedef void* fluid_thread_return_t;
+/* static return value for thread functions which requires a return value */
+#define FLUID_THREAD_RETURN_VALUE (NULL)
 
 typedef GThread fluid_thread_t;
 typedef fluid_thread_return_t (*fluid_thread_func_t)(void* data);
