@@ -316,7 +316,7 @@ fluid_shell_run(void* data)
   char workline[FLUID_WORKLINELENGTH];
   char* prompt = NULL;
   int cont = 1;
-  int errors = 0;
+  int errors = FALSE;
   int n;
 
   if (shell->settings)
@@ -344,7 +344,7 @@ fluid_shell_run(void* data)
       break;
 
     case -1: /* erronous command */
-      errors++;
+      errors |= TRUE;
     case 0: /* valid command */
       break;
 
@@ -360,7 +360,7 @@ fluid_shell_run(void* data)
 
   if (prompt) FLUID_FREE (prompt);      /* -- free prompt */
 
-  return (fluid_thread_return_t)errors;
+  return errors ? (fluid_thread_return_t)(-1) : FLUID_THREAD_RETURN_VALUE;
 }
 
 /**
@@ -381,7 +381,7 @@ fluid_usershell(fluid_settings_t* settings, fluid_cmd_handler_t* handler)
  * Execute shell commands in a file.
  * @param handler Command handler callback
  * @param filename File name
- * @return 0 on success, a value >1 on error
+ * @return 0 on success, a negative value on error
  */
 int
 fluid_source(fluid_cmd_handler_t* handler, const char *filename)
@@ -398,7 +398,7 @@ fluid_source(fluid_cmd_handler_t* handler, const char *filename)
     return file;
   }
   fluid_shell_init(&shell, NULL, handler, file, fluid_get_stdout());
-  return (int) fluid_shell_run(&shell);
+  return (fluid_shell_run(&shell) == FLUID_THREAD_RETURN_VALUE) ? 0 : -1;
 }
 
 /**
