@@ -95,7 +95,7 @@ new_fluid_oss_midi_driver(fluid_settings_t* settings,
 			 handle_midi_event_func_t handler, void* data);
 int delete_fluid_oss_midi_driver(fluid_midi_driver_t* p);
 int fluid_oss_midi_driver_status(fluid_midi_driver_t* p);
-static void fluid_oss_midi_run(void* d);
+static fluid_thread_return_t fluid_oss_midi_run(void* d);
 
 
 void
@@ -621,7 +621,7 @@ delete_fluid_oss_midi_driver(fluid_midi_driver_t* p)
 /*
  * fluid_oss_midi_run
  */
-void
+fluid_thread_return_t
 fluid_oss_midi_run(void* d)
 {
   fluid_oss_midi_driver_t* dev = (fluid_oss_midi_driver_t*) d;
