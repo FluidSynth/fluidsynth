@@ -75,7 +75,7 @@ typedef struct {
   const char *help;             /**< A help string */
 } fluid_cmd_int_t;
 
-static fluid_thread_return_t fluid_shell_run(fluid_shell_t* shell);
+static fluid_thread_return_t fluid_shell_run(void* data);
 static void fluid_shell_init(fluid_shell_t* shell,
                              fluid_settings_t* settings, fluid_cmd_handler_t* handler,
                              fluid_istream_t in, fluid_ostream_t out);
@@ -310,8 +310,9 @@ delete_fluid_shell(fluid_shell_t* shell)
 }
 
 static fluid_thread_return_t
-fluid_shell_run(fluid_shell_t* shell)
+fluid_shell_run(void* data)
 {
+  fluid_shell_t* shell = (fluid_shell_t*)data;
   char workline[FLUID_WORKLINELENGTH];
   char* prompt = NULL;
   int cont = 1;
@@ -2463,9 +2464,11 @@ struct _fluid_client_t {
 };
 
 
-static void fluid_client_run(fluid_client_t* client)
+static fluid_thread_return_t fluid_client_run(void* data)
 {
   fluid_shell_t shell;
+  fluid_client_t* client = (fluid_client_t*)data;
+  
   fluid_shell_init(&shell,
 		  client->settings,
 		  client->handler,
@@ -2474,6 +2477,8 @@ static void fluid_client_run(fluid_client_t* client)
   fluid_shell_run(&shell);
   fluid_server_remove_client(client->server, client);
   delete_fluid_client(client);
+  
+  return FLUID_THREAD_RETURN_VALUE;
 }
 
 
