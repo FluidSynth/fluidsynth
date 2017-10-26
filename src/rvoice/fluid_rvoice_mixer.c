@@ -201,21 +201,21 @@ fluid_mix_one(fluid_rvoice_t* rvoice, fluid_real_t** bufs, unsigned int bufcount
 static FLUID_INLINE int 
 fluid_mixer_buffers_prepare(fluid_mixer_buffers_t* buffers, fluid_real_t** outbufs)
 {
-  fluid_real_t *reverb_buf = NULL;
-  fluid_real_t *chorus_buf = NULL;
+  fluid_real_t *reverb_buf, *chorus_buf;
   int i;
+  int with_reverb = buffers->mixer->fx.with_reverb;
+  int with_chorus = buffers->mixer->fx.with_chorus;
 
   /* Set up the reverb and chorus buffers only when the effect is enabled or
    * when LADSPA is active. Nonexisting buffers are detected in the DSP loop.
    * Not sending the effect signals saves some time in that case. */
-  if (buffers->mixer->fx.with_reverb || buffers->mixer->ladspa_fx != NULL)
-  {
-    reverb_buf = buffers->fx_left_buf[SYNTH_REVERB_CHANNEL];
-  }
-  if (buffers->mixer->fx.with_chorus || buffers->mixer->ladspa_fx != NULL)
-  {
-    chorus_buf = buffers->fx_left_buf[SYNTH_CHORUS_CHANNEL];
-  }
+#ifdef LADSPA
+  int with_ladspa = (buffers->mixer->ladspa_fx != NULL);
+  with_reverb = (with_reverb | with_ladspa);
+  with_chorus = (with_chorus | with_ladspa);
+#endif
+  reverb_buf = (with_reverb) ? buffers->fx_left_buf[SYNTH_REVERB_CHANNEL] : NULL;
+  chorus_buf = (with_chorus) ? buffers->fx_left_buf[SYNTH_CHORUS_CHANNEL] : NULL;
   outbufs[buffers->buf_count*2 + SYNTH_REVERB_CHANNEL] = reverb_buf;
   outbufs[buffers->buf_count*2 + SYNTH_CHORUS_CHANNEL] = chorus_buf;
 
