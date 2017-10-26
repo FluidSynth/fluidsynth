@@ -75,7 +75,7 @@ typedef struct {
   const char *help;             /**< A help string */
 } fluid_cmd_int_t;
 
-static int fluid_shell_run(fluid_shell_t* shell);
+static fluid_thread_return_t fluid_shell_run(void* data);
 static void fluid_shell_init(fluid_shell_t* shell,
                              fluid_settings_t* settings, fluid_cmd_handler_t* handler,
                              fluid_istream_t in, fluid_ostream_t out);
@@ -270,7 +270,7 @@ new_fluid_shell(fluid_settings_t* settings, fluid_cmd_handler_t* handler,
   fluid_shell_init(shell, settings, handler, in, out);
 
   if (thread) {
-    shell->thread = new_fluid_thread("shell", (fluid_thread_func_t) fluid_shell_run, shell,
+    shell->thread = new_fluid_thread("shell", fluid_shell_run, shell,
                                      0, TRUE);
     if (shell->thread == NULL) {
       delete_fluid_shell(shell);
@@ -309,13 +309,14 @@ delete_fluid_shell(fluid_shell_t* shell)
   FLUID_FREE(shell);
 }
 
-static int
-fluid_shell_run(fluid_shell_t* shell)
+static fluid_thread_return_t
+fluid_shell_run(void* data)
 {
+  fluid_shell_t* shell = (fluid_shell_t*)data;
   char workline[FLUID_WORKLINELENGTH];
   char* prompt = NULL;
   int cont = 1;
-  int errors = 0;
+  int errors = FALSE;
   int n;
 
   if (shell->settings)
@@ -343,7 +344,7 @@ fluid_shell_run(fluid_shell_t* shell)
       break;
 
     case -1: /* erronous command */
-      errors++;
+      errors |= TRUE;
     case 0: /* valid command */
       break;
 
@@ -359,7 +360,7 @@ fluid_shell_run(fluid_shell_t* shell)
 
   if (prompt) FLUID_FREE (prompt);      /* -- free prompt */
 
-  return errors;
+  return errors ? (fluid_thread_return_t)(-1) : FLUID_THREAD_RETURN_VALUE;
 }
 
 /**
@@ -380,7 +381,7 @@ fluid_usershell(fluid_settings_t* settings, fluid_cmd_handler_t* handler)
  * Execute shell commands in a file.
  * @param handler Command handler callback
  * @param filename File name
- * @return 0 on success, a value >1 on error
+ * @return 0 on success, a negative value on error
  */
 int
 fluid_source(fluid_cmd_handler_t* handler, const char *filename)
@@ -398,7 +399,7 @@ fluid_source(fluid_cmd_handler_t* handler, const char *filename)
     return file;
   }
   fluid_shell_init(&shell, NULL, handler, file, fluid_get_stdout());
-  result = fluid_shell_run(&shell);
+  result = (fluid_shell_run(&shell) == FLUID_THREAD_RETURN_VALUE) ? 0 : -1;
 
 #ifdef WIN32
   _close(file);
@@ -2472,9 +2473,11 @@ struct _fluid_client_t {
 };
 
 
-static void fluid_client_run(fluid_client_t* client)
+static fluid_thread_return_t fluid_client_run(void* data)
 {
   fluid_shell_t shell;
+  fluid_client_t* client = (fluid_client_t*)data;
+  
   fluid_shell_init(&shell,
 		  client->settings,
 		  client->handler,
@@ -2483,6 +2486,8 @@ static void fluid_client_run(fluid_client_t* client)
   fluid_shell_run(&shell);
   fluid_server_remove_client(client->server, client);
   delete_fluid_client(client);
+  
+  return FLUID_THREAD_RETURN_VALUE;
 }
 
 
@@ -2501,7 +2506,7 @@ new_fluid_client(fluid_server_t* server, fluid_settings_t* settings, fluid_socke
   client->socket = sock;
   client->settings = settings;
   client->handler = new_fluid_cmd_handler(server->synth, server->router);
-  client->thread = new_fluid_thread("client", (fluid_thread_func_t) fluid_client_run, client,
+  client->thread = new_fluid_thread("client", fluid_client_run, client,
                                     0, FALSE);
 
   if (client->handler == NULL || client->thread == NULL) {
