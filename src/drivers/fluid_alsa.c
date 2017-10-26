@@ -72,8 +72,8 @@ fluid_audio_driver_t* new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
 
 int delete_fluid_alsa_audio_driver(fluid_audio_driver_t* p);
 void fluid_alsa_audio_driver_settings(fluid_settings_t* settings);
-static void fluid_alsa_audio_run_float(void* d);
-static void fluid_alsa_audio_run_s16(void* d);
+fluid_thread_return_t void fluid_alsa_audio_run_float(void* d);
+fluid_thread_return_t void fluid_alsa_audio_run_s16(void* d);
 
 
 struct fluid_alsa_formats_t {
