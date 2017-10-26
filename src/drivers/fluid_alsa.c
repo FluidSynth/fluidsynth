@@ -377,7 +377,7 @@ static int fluid_alsa_handle_write_error (snd_pcm_t *pcm, int errval)
   return FLUID_OK;
 }
 
-static void fluid_alsa_audio_run_float (void *d)
+static fluid_thread_return_t fluid_alsa_audio_run_float (void *d)
 {
   fluid_alsa_audio_driver_t* dev = (fluid_alsa_audio_driver_t*) d;
   fluid_synth_t *synth = (fluid_synth_t *)(dev->data);
@@ -452,7 +452,7 @@ static void fluid_alsa_audio_run_float (void *d)
   FLUID_FREE(right);
 }
 
-static void fluid_alsa_audio_run_s16 (void *d)
+static fluid_thread_return_t fluid_alsa_audio_run_s16 (void *d)
 {
   fluid_alsa_audio_driver_t* dev = (fluid_alsa_audio_driver_t*) d;
   float* left;
