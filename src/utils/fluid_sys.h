@@ -67,6 +67,9 @@ void fluid_time_config(void);
 
 #define FLUID_IS_BIG_ENDIAN       (G_BYTE_ORDER == G_BIG_ENDIAN)
 
+#define FLUID_LE32TOH(x)          GINT32_FROM_LE(x)
+#define FLUID_LE16TOH(x)          GINT16_FROM_LE(x)
+
 /*
  * Utility functions
  */

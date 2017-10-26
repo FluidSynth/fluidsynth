@@ -388,6 +388,7 @@ fluid_source(fluid_cmd_handler_t* handler, const char *filename)
 {
   int file;
   fluid_shell_t shell;
+  int result;
 
 #ifdef WIN32
   file = _open(filename, _O_RDONLY);
@@ -398,7 +399,15 @@ fluid_source(fluid_cmd_handler_t* handler, const char *filename)
     return file;
   }
   fluid_shell_init(&shell, NULL, handler, file, fluid_get_stdout());
-  return (fluid_shell_run(&shell) == FLUID_THREAD_RETURN_VALUE) ? 0 : -1;
+  result = (fluid_shell_run(&shell) == FLUID_THREAD_RETURN_VALUE) ? 0 : -1;
+
+#ifdef WIN32
+  _close(file);
+#else
+  close(file);
+#endif
+
+  return result;
 }
 
 /**

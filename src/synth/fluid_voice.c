@@ -502,8 +502,9 @@ static int
 fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t* voice)
 {
   int i;
+  unsigned int n;
 
-  int list_of_generators_to_initialize[35] = {
+  static int const list_of_generators_to_initialize[] = {
     GEN_STARTADDROFS,                    /* SF2.01 page 48 #0   */
     GEN_ENDADDROFS,                      /*                #1   */
     GEN_STARTLOOPADDROFS,                /*                #2   */
@@ -553,8 +554,8 @@ fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t* voice)
     /* GEN_COARSETUNE           [1]                        #51  */
     /* GEN_FINETUNE             [1]                        #52  */
     GEN_OVERRIDEROOTKEY,                 /*                #58  */
-    GEN_PITCH,                           /*                ---  */
-    -1};                                 /* end-of-list marker  */
+    GEN_PITCH                            /*                ---  */
+  };
 
   /* When the voice is made ready for the synthesis process, a lot of
    * voice-internal parameters have to be calculated.
@@ -598,8 +599,8 @@ fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t* voice)
    */
 
   /* Calculate the voice parameter(s) dependent on each generator. */
-  for (i = 0; list_of_generators_to_initialize[i] != -1; i++) {
-    fluid_voice_update_param(voice, list_of_generators_to_initialize[i]);
+  for (n = 0; n < FLUID_N_ELEMENTS(list_of_generators_to_initialize); n++) {
+    fluid_voice_update_param(voice, list_of_generators_to_initialize[n]);
   }
 
   /* Make an estimate on how loud this voice can get at any time (attenuation). */
@@ -702,7 +703,7 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
   fluid_real_t y;
   unsigned int count, z;
   // Alternate attenuation scale used by EMU10K1 cards when setting the attenuation at the preset or instrument level within the SoundFont bank.
-  static const float ALT_ATTENUATION_SCALE = 0.4;
+  static const float ALT_ATTENUATION_SCALE = 0.4f;
 
   switch (gen) {
 

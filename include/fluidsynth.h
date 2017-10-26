@@ -48,7 +48,7 @@ extern "C" {
 
 #if defined(__GNUC__) || defined(__clang__)
 #    define FLUID_DEPRECATED __attribute__((deprecated))
-#elif defined(_MSC_VER)
+#elif defined(_MSC_VER) && _MSC_VER > 1200
 #    define FLUID_DEPRECATED __declspec(deprecated)
 #else
 #    define FLUID_DEPRECATED
