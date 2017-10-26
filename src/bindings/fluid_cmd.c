@@ -270,7 +270,7 @@ new_fluid_shell(fluid_settings_t* settings, fluid_cmd_handler_t* handler,
   fluid_shell_init(shell, settings, handler, in, out);
 
   if (thread) {
-    shell->thread = new_fluid_thread("shell", (fluid_thread_func_t) fluid_shell_run, shell,
+    shell->thread = new_fluid_thread("shell", fluid_shell_run, shell,
                                      0, TRUE);
     if (shell->thread == NULL) {
       delete_fluid_shell(shell);
@@ -2492,7 +2492,7 @@ new_fluid_client(fluid_server_t* server, fluid_settings_t* settings, fluid_socke
   client->socket = sock;
   client->settings = settings;
   client->handler = new_fluid_cmd_handler(server->synth, server->router);
-  client->thread = new_fluid_thread("client", (fluid_thread_func_t) fluid_client_run, client,
+  client->thread = new_fluid_thread("client", fluid_client_run, client,
                                     0, FALSE);
 
   if (client->handler == NULL || client->thread == NULL) {
