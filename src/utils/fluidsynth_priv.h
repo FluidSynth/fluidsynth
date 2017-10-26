@@ -174,7 +174,7 @@ typedef int fluid_socket_t;
 //typedef gint8              sint8;
 typedef guint8             uint8;
 //typedef gint16             sint16;
-//typedef guint16            uint16;
+typedef guint16            uint16;
 typedef gint32             sint32;
 typedef guint32            uint32;
 //typedef gint64             sint64;

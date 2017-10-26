@@ -2047,21 +2047,21 @@ fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defs
 #define READCHUNK(var,fd)	do {		\
 	if (!safe_fread(var, 8, fd))			\
 		return(FAIL);				\
-	((SFChunk *)(var))->size = GUINT32_FROM_LE(((SFChunk *)(var))->size);  \
+	((SFChunk *)(var))->size = FLUID_LE32TOH(((SFChunk *)(var))->size);  \
 } while(0)
 
 #define READD(var,fd)		do {		\
-	unsigned int _temp;				\
+	uint32 _temp;				\
 	if (!safe_fread(&_temp, 4, fd))			\
 		return(FAIL);				\
-	var = GINT32_FROM_LE(_temp);			\
+	var = FLUID_LE32TOH(_temp);			\
 } while(0)
 
 #define READW(var,fd)		do {		\
-	unsigned short _temp;				\
+	uint16 _temp;				\
 	if (!safe_fread(&_temp, 2, fd))			\
 		return(FAIL);				\
-	var = GINT16_FROM_LE(_temp);			\
+	var = FLUID_LE16TOH(_temp);			\
 } while(0)
 
 #define READID(var,fd)		do {		\

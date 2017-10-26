@@ -76,7 +76,7 @@ int delete_fluid_winmidi_driver(fluid_midi_driver_t* p);
 
 void CALLBACK fluid_winmidi_callback(HMIDIIN hmi, UINT wMsg, DWORD_PTR dwInstance,
 				    DWORD_PTR msg, DWORD_PTR extra);
-static void fluid_winmidi_add_sysex_thread (void *data);
+static fluid_thread_return_t fluid_winmidi_add_sysex_thread (void *data);
 static char* fluid_winmidi_input_error(int no);
 int fluid_winmidi_driver_status(fluid_midi_driver_t* p);
 
@@ -339,7 +339,7 @@ fluid_winmidi_callback(HMIDIIN hmi, UINT wMsg, DWORD_PTR dwInstance,
 }
 
 /* Thread for re-adding SYSEX buffers */
-static void
+static fluid_thread_return_t
 fluid_winmidi_add_sysex_thread (void *data)
 {
   fluid_winmidi_driver_t *dev = data;
@@ -360,6 +360,8 @@ fluid_winmidi_add_sysex_thread (void *data)
       }
     }
   }
+
+  return FLUID_THREAD_RETURN_VALUE;
 }
 
 int

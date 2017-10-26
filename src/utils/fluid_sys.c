@@ -661,7 +661,7 @@ fluid_thread_join(fluid_thread_t* thread)
 }
 
 
-void
+fluid_thread_return_t
 fluid_timer_run (void *data)
 {
   fluid_timer_t *timer;
@@ -694,7 +694,7 @@ fluid_timer_run (void *data)
   if (timer->auto_destroy)
     FLUID_FREE (timer);
 
-  return;
+  return FLUID_THREAD_RETURN_VALUE;
 }
 
 fluid_timer_t*
@@ -959,7 +959,7 @@ void fluid_socket_close(fluid_socket_t sock)
     close (sock);
 }
 
-static void
+static fluid_thread_return_t
 fluid_server_socket_run (void *data)
 {
   fluid_server_socket_t *server_socket = (fluid_server_socket_t *)data;
@@ -989,7 +989,7 @@ fluid_server_socket_run (void *data)
 	FLUID_LOG(FLUID_ERR, "Failed to accept connection");
 
       server_socket->cont = 0;
-      return;
+      return FLUID_THREAD_RETURN_VALUE;
     } else {
 #ifdef HAVE_INETNTOP
 #ifdef IPV6_SUPPORT
@@ -1012,6 +1012,8 @@ fluid_server_socket_run (void *data)
   }
 
   FLUID_LOG(FLUID_DBG, "Server closing");
+
+  return FLUID_THREAD_RETURN_VALUE;
 }
 
 fluid_server_socket_t*
@@ -1122,7 +1124,7 @@ void fluid_socket_close (fluid_socket_t sock)
     closesocket (sock);
 }
 
-static void fluid_server_socket_run (void *data)
+static fluid_thread_return_t fluid_server_socket_run (void *data)
 {
   fluid_server_socket_t *server_socket = (fluid_server_socket_t *)data;
   fluid_socket_t client_socket;
@@ -1153,7 +1155,7 @@ static void fluid_server_socket_run (void *data)
 	FLUID_LOG (FLUID_ERR, "Failed to accept connection: %ld", WSAGetLastError ());
 
       server_socket->cont = 0;
-      return;
+      return FLUID_THREAD_RETURN_VALUE;
     }
     else
     {
@@ -1177,6 +1179,8 @@ static void fluid_server_socket_run (void *data)
   }
 
   FLUID_LOG (FLUID_DBG, "Server closing");
+  
+  return FLUID_THREAD_RETURN_VALUE;  
 }
 
 fluid_server_socket_t*

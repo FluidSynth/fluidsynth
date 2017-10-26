@@ -72,8 +72,8 @@ fluid_audio_driver_t* new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
 
 int delete_fluid_alsa_audio_driver(fluid_audio_driver_t* p);
 void fluid_alsa_audio_driver_settings(fluid_settings_t* settings);
-static void fluid_alsa_audio_run_float(void* d);
-static void fluid_alsa_audio_run_s16(void* d);
+static fluid_thread_return_t fluid_alsa_audio_run_float(void* d);
+static fluid_thread_return_t fluid_alsa_audio_run_s16(void* d);
 
 
 struct fluid_alsa_formats_t {
@@ -118,7 +118,7 @@ fluid_midi_driver_t* new_fluid_alsa_rawmidi_driver(fluid_settings_t* settings,
 						   void* event_handler_data);
 
 int delete_fluid_alsa_rawmidi_driver(fluid_midi_driver_t* p);
-static void fluid_alsa_midi_run(void* d);
+static fluid_thread_return_t fluid_alsa_midi_run(void* d);
 
 
 /*
@@ -139,7 +139,7 @@ fluid_midi_driver_t* new_fluid_alsa_seq_driver(fluid_settings_t* settings,
 					     handle_midi_event_func_t handler,
 					     void* data);
 int delete_fluid_alsa_seq_driver(fluid_midi_driver_t* p);
-static void fluid_alsa_seq_run(void* d);
+static fluid_thread_return_t fluid_alsa_seq_run(void* d);
 
 /**************************************************************
  *
@@ -377,7 +377,7 @@ static int fluid_alsa_handle_write_error (snd_pcm_t *pcm, int errval)
   return FLUID_OK;
 }
 
-static void fluid_alsa_audio_run_float (void *d)
+static fluid_thread_return_t fluid_alsa_audio_run_float (void *d)
 {
   fluid_alsa_audio_driver_t* dev = (fluid_alsa_audio_driver_t*) d;
   fluid_synth_t *synth = (fluid_synth_t *)(dev->data);
@@ -450,9 +450,11 @@ static void fluid_alsa_audio_run_float (void *d)
 
   FLUID_FREE(left);
   FLUID_FREE(right);
+
+  return FLUID_THREAD_RETURN_VALUE;
 }
 
-static void fluid_alsa_audio_run_s16 (void *d)
+static fluid_thread_return_t fluid_alsa_audio_run_s16 (void *d)
 {
   fluid_alsa_audio_driver_t* dev = (fluid_alsa_audio_driver_t*) d;
   float* left;
@@ -535,6 +537,8 @@ static void fluid_alsa_audio_run_s16 (void *d)
   FLUID_FREE(left);
   FLUID_FREE(right);
   FLUID_FREE(buf);
+
+  return FLUID_THREAD_RETURN_VALUE;
 }
 
 
@@ -674,7 +678,7 @@ delete_fluid_alsa_rawmidi_driver(fluid_midi_driver_t* p)
 /*
  * fluid_alsa_midi_run
  */
-void
+fluid_thread_return_t
 fluid_alsa_midi_run(void* d)
 {
   fluid_midi_event_t* evt;
@@ -706,6 +710,8 @@ fluid_alsa_midi_run(void* d)
       }
     }
   }
+
+  return FLUID_THREAD_RETURN_VALUE;
 }
 
 /**************************************************************
@@ -953,7 +959,7 @@ delete_fluid_alsa_seq_driver(fluid_midi_driver_t* p)
 /*
  * fluid_alsa_seq_run
  */
-void
+fluid_thread_return_t
 fluid_alsa_seq_run(void* d)
 {
   int n, ev;
@@ -1046,6 +1052,8 @@ fluid_alsa_seq_run(void* d)
 	while (ev > 0);
     }	/* if poll() > 0 */
   }	/* while (!dev->should_quit) */
+
+  return FLUID_THREAD_RETURN_VALUE;
 }
 
 #endif /* #if ALSA_SUPPORT */
