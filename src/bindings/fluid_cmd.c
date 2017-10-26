@@ -75,7 +75,7 @@ typedef struct {
   const char *help;             /**< A help string */
 } fluid_cmd_int_t;
 
-static int fluid_shell_run(fluid_shell_t* shell);
+static fluid_thread_return_t fluid_shell_run(fluid_shell_t* shell);
 static void fluid_shell_init(fluid_shell_t* shell,
                              fluid_settings_t* settings, fluid_cmd_handler_t* handler,
                              fluid_istream_t in, fluid_ostream_t out);
@@ -309,7 +309,7 @@ delete_fluid_shell(fluid_shell_t* shell)
   FLUID_FREE(shell);
 }
 
-static int
+static fluid_thread_return_t
 fluid_shell_run(fluid_shell_t* shell)
 {
   char workline[FLUID_WORKLINELENGTH];
@@ -359,7 +359,7 @@ fluid_shell_run(fluid_shell_t* shell)
 
   if (prompt) FLUID_FREE (prompt);      /* -- free prompt */
 
-  return errors;
+  return (void*)errors;
 }
 
 /**
@@ -397,7 +397,7 @@ fluid_source(fluid_cmd_handler_t* handler, const char *filename)
     return file;
   }
   fluid_shell_init(&shell, NULL, handler, file, fluid_get_stdout());
-  return fluid_shell_run(&shell);
+  return (int) fluid_shell_run(&shell);
 }
 
 /**

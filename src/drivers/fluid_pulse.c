@@ -212,7 +212,7 @@ fluid_pulse_audio_run(void* d)
   if (buf == NULL)
   {
     FLUID_LOG(FLUID_ERR, "Out of memory.");
-    return;
+    return FLUID_THREAD_RETURN_VALUE;
   }
 
   while (dev->cont)
@@ -228,6 +228,8 @@ fluid_pulse_audio_run(void* d)
   }	/* while (dev->cont) */
 
   FLUID_FREE(buf);
+
+  return FLUID_THREAD_RETURN_VALUE;
 }
 
 static fluid_thread_return_t
@@ -254,7 +256,7 @@ fluid_pulse_audio_run2(void* d)
     FLUID_FREE(right);
     FLUID_FREE(buf);
     FLUID_LOG(FLUID_ERR, "Out of memory.");
-    return;
+    return FLUID_THREAD_RETURN_VALUE;
   }
 
   handle[0] = left;
@@ -282,4 +284,6 @@ fluid_pulse_audio_run2(void* d)
   FLUID_FREE(left);
   FLUID_FREE(right);
   FLUID_FREE(buf);
+
+  return FLUID_THREAD_RETURN_VALUE;
 }

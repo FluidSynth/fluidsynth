@@ -463,6 +463,8 @@ fluid_oss_audio_run(void* d)
   }
 
   FLUID_LOG(FLUID_DBG, "Audio thread finished");
+
+  return FLUID_THREAD_RETURN_VALUE;
 }
 
 
@@ -498,6 +500,8 @@ fluid_oss_audio_run2(void* d)
   }
 
   FLUID_LOG(FLUID_DBG, "Audio thread finished");
+
+  return FLUID_THREAD_RETURN_VALUE;
 }
 
 
@@ -668,6 +672,8 @@ fluid_oss_midi_run(void* d)
       }
     }
   }
+
+  return FLUID_THREAD_RETURN_VALUE;
 }
 
 int

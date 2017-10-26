@@ -360,6 +360,8 @@ fluid_winmidi_add_sysex_thread (void *data)
       }
     }
   }
+
+  return FLUID_THREAD_RETURN_VALUE;
 }
 
 int

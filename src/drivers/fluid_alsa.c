@@ -450,6 +450,8 @@ static fluid_thread_return_t fluid_alsa_audio_run_float (void *d)
 
   FLUID_FREE(left);
   FLUID_FREE(right);
+
+  return FLUID_THREAD_RETURN_VALUE;
 }
 
 static fluid_thread_return_t fluid_alsa_audio_run_s16 (void *d)
@@ -535,6 +537,8 @@ static fluid_thread_return_t fluid_alsa_audio_run_s16 (void *d)
   FLUID_FREE(left);
   FLUID_FREE(right);
   FLUID_FREE(buf);
+
+  return FLUID_THREAD_RETURN_VALUE;
 }
 
 
@@ -706,6 +710,8 @@ fluid_alsa_midi_run(void* d)
       }
     }
   }
+
+  return FLUID_THREAD_RETURN_VALUE;
 }
 
 /**************************************************************
@@ -1046,6 +1052,8 @@ fluid_alsa_seq_run(void* d)
 	while (ev > 0);
     }	/* if poll() > 0 */
   }	/* while (!dev->should_quit) */
+
+  return FLUID_THREAD_RETURN_VALUE;
 }
 
 #endif /* #if ALSA_SUPPORT */
