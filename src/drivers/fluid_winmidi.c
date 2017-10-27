@@ -44,7 +44,7 @@
 typedef struct {
   fluid_midi_driver_t driver;
   HMIDIIN hmidiin;
-  int closing;                  /* Set to TRUE when closing driver, to prevent endless SYSEX lockup loop */
+  fluid_atomic_int_t closing;                  /* Set to TRUE when closing driver, to prevent endless SYSEX lockup loop */
 
   fluid_thread_t *sysExAddThread;       /* Thread for SYSEX re-add thread */
   fluid_cond_mutex_t *mutex;    /* Lock for condition */
@@ -54,7 +54,7 @@ typedef struct {
   MIDIHDR sysExHdrs[MIDI_SYSEX_BUF_COUNT];
 
   /* TRUE for each MIDIHDR buffer which should be re-added to MIDI device */
-  int sysExHdrAdd[MIDI_SYSEX_BUF_COUNT];
+  fluid_atomic_int_t sysExHdrAdd[MIDI_SYSEX_BUF_COUNT];
 
   /* Sysex data buffer */
   unsigned char sysExBuf[MIDI_SYSEX_BUF_COUNT * MIDI_SYSEX_MAX_SIZE];
@@ -129,7 +129,7 @@ new_fluid_winmidi_driver(fluid_settings_t* settings,
   dev->hmidiin = NULL;
   dev->driver.handler = handler;
   dev->driver.data = data;
-  dev->closing = FALSE;
+  fluid_atomic_int_set (&dev->closing, FALSE);
 
   /* get the device name. if none is specified, use the default device. */
   if(fluid_settings_dupstr(settings, "midi.winmidi.device", &devname) != FLUID_OK || !devname) {
@@ -181,7 +181,7 @@ new_fluid_winmidi_driver(fluid_settings_t* settings,
   /* Prepare and add SYSEX buffers */
   for (i = 0; i < MIDI_SYSEX_BUF_COUNT; i++)
   {
-    dev->sysExHdrAdd[i] = FALSE;
+    fluid_atomic_int_set (&dev->sysExHdrAdd[i], FALSE);
     hdr = &dev->sysExHdrs[i];
 
     hdr->lpData = &dev->sysExBuf[i * MIDI_SYSEX_MAX_SIZE];
@@ -305,7 +305,7 @@ fluid_winmidi_callback(HMIDIIN hmi, UINT wMsg, DWORD_PTR dwInstance,
     break;
 
   case MIM_LONGDATA:    /* SYSEX data */
-    if (dev->closing) break;    /* Prevent MIM_LONGDATA endless loop, don't re-add buffer if closing */
+    if (fluid_atomic_int_get (&dev->closing)) break;    /* Prevent MIM_LONGDATA endless loop, don't re-add buffer if closing */
 
     pMidiHdr = (LPMIDIHDR)dwParam1;
     data = (unsigned char *)(pMidiHdr->lpData);

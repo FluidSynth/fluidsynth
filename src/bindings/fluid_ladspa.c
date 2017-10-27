@@ -115,7 +115,7 @@ struct _fluid_ladspa_fx_t
 
     fluid_rec_mutex_t api_mutex;
 
-    int state;
+    fluid_atomic_int_t state;
     int pending_deactivation;
 
     fluid_cond_mutex_t *run_finished_mutex;
@@ -189,7 +189,7 @@ fluid_ladspa_fx_t *new_fluid_ladspa_fx(fluid_real_t sample_rate, int audio_group
     /* Setup recursive mutex to protect access to public API */
     fluid_rec_mutex_init(fx->api_mutex);
 
-    fx->state = FLUID_LADSPA_INACTIVE;
+    fluid_atomic_int_set(&fx->state, FLUID_LADSPA_INACTIVE);
 
     /* add 0.5 to minimize overall casting error */
     fx->sample_rate = (unsigned long)(sample_rate + 0.5);

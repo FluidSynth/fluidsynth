@@ -50,7 +50,7 @@ void fluid_rvoice_event_dispatch(fluid_rvoice_event_t* event);
 struct _fluid_rvoice_eventhandler_t {
 	int is_threadsafe; /* False for optimal performance, true for atomic operations */
 	fluid_ringbuffer_t* queue; /**< List of fluid_rvoice_event_t */
-        int queue_stored; /**< Extras pushed but not flushed */
+  fluid_atomic_int_t queue_stored; /**< Extras pushed but not flushed */
 	fluid_ringbuffer_t* finished_voices; /**< return queue from handler, list of fluid_rvoice_t* */ 
 	fluid_rvoice_mixer_t* mixer;
 };
