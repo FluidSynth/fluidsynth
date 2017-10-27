@@ -71,7 +71,6 @@ static int check_all_ports_connected(fluid_ladspa_plugin_t *plugin, const char *
 static int check_no_inplace_broken(fluid_ladspa_plugin_t *plugin, const char **name1, const char **name2);
 static int check_host_output_used(fluid_ladspa_fx_t *fx);
 static int check_all_audio_nodes_connected(fluid_ladspa_fx_t *fx, const char **name);
-static int check_all_control_nodes_connected(fluid_ladspa_fx_t *fx, const char **name);
 
 static FLUID_INLINE void mix_plugin_with_host_buffer(fluid_ladspa_node_t *node,
         int num_samples, float gain);
@@ -266,8 +265,9 @@ int fluid_ladspa_set_sample_rate(fluid_ladspa_fx_t *fx, fluid_real_t sample_rate
  * Check if the LADSPA engine is currently used to render audio
  *
  * If an engine is active, the only allowed user actions are deactivation or
- * changing user control nodes. Anything else, especially adding or removing
- * plugins, nodes or ports, is only allowed in deactivated state.
+ * setting values of  control ports on effects. Anything else, especially
+ * adding or removing plugins, nodes or ports, is only allowed in deactivated
+ * state.
  *
  * @param fx LADSPA fx instance
  * @return TRUE if LADSPA effects engine is active, otherwise FALSE
@@ -662,35 +662,6 @@ int fluid_ladspa_add_audio_node(fluid_ladspa_fx_t *fx, const char *name)
 }
 
 /**
- * Create and add a new LADSPA control node that can be set manually.
- *
- * @param fx LADSPA effects instance
- * @param name name of the new node
- * @param val the initial float value of the node
- * @return FLUID_OK on success, FLUID_FAILED on error
- */
-int fluid_ladspa_add_control_node(fluid_ladspa_fx_t *fx, const char *name, fluid_real_t val)
-{
-    fluid_ladspa_node_t *node;
-
-    LADSPA_API_ENTER(fx);
-    if (fluid_ladspa_is_active(fx))
-    {
-        LADSPA_API_RETURN(fx, FLUID_FAILED);
-    }
-
-    node = new_fluid_ladspa_node(fx, name, FLUID_LADSPA_NODE_CONTROL, NULL);
-    if (node == NULL)
-    {
-        LADSPA_API_RETURN(fx, FLUID_FAILED);
-    }
-
-    node->plugin_buffer[0] = val;
-
-    LADSPA_API_RETURN(fx, FLUID_OK);
-}
-
-/**
  * Set the value of an effect control port
  *
  * Nodes are searched by case-insensitive string comparison.
@@ -932,12 +903,6 @@ int fluid_ladspa_check(fluid_ladspa_fx_t *fx, char *err, int err_size)
     if (check_all_audio_nodes_connected(fx, &str) == FLUID_FAILED)
     {
         FLUID_SNPRINTF(err, err_size, "Audio node '%s' is not fully connected\n", str);
-        LADSPA_API_RETURN(fx, FLUID_FAILED);
-    }
-
-    if (check_all_control_nodes_connected(fx, &str) == FLUID_FAILED)
-    {
-        FLUID_SNPRINTF(err, err_size, "Control node '%s' is not connected\n", str);
         LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
 
@@ -1560,7 +1525,7 @@ static void connect_node_to_port(fluid_ladspa_node_t *node, fluid_ladspa_dir_t d
     plugin->port_nodes[port_idx] = node;
 
     /* Mark node as connected in the respective direction */
-    if (dir == FLUID_LADSPA_INPUT || dir == FLUID_LADSPA_FIXED)
+    if (dir == FLUID_LADSPA_INPUT)
     {
         node->num_outputs++;
     }
@@ -1670,29 +1635,6 @@ static int check_all_audio_nodes_connected(fluid_ladspa_fx_t *fx, const char **n
         if (fx->audio_nodes[i]->num_inputs == 0 || fx->audio_nodes[i]->num_outputs == 0)
         {
             *name = fx->audio_nodes[i]->name;
-            return FLUID_FAILED;
-        }
-    }
-    return FLUID_OK;
-}
-
-/**
- * Check that all user control nodes have an input or an output
- *
- * @param fx LADSPA fx instance
- * @param name if check fails, points to the name of first failed node
- * @return FLUID_OK on successful check, otherwise FLUID_FAILED
- */
-static int check_all_control_nodes_connected(fluid_ladspa_fx_t *fx, const char **name)
-{
-    int i;
-
-    for (i = 0; i < fx->num_nodes; i++)
-    {
-        if (fx->nodes[i]->type == FLUID_LADSPA_NODE_CONTROL &&
-            (fx->nodes[i]->num_outputs == 0) && (fx->nodes[i]->num_inputs == 0))
-        {
-            *name = fx->nodes[i]->name;
             return FLUID_FAILED;
         }
     }
