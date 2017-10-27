@@ -165,13 +165,13 @@ int fluid_ladspa_port_exists(fluid_ladspa_fx_t *fx, const char *plugin_name, con
 
 int fluid_ladspa_add_audio_node(fluid_ladspa_fx_t *fx, const char *name);
 int fluid_ladspa_add_control_node(fluid_ladspa_fx_t *fx, const char *name, fluid_real_t val);
-int fluid_ladspa_set_control_node(fluid_ladspa_fx_t *fx, const char *name, fluid_real_t val);
+int fluid_ladspa_set_control_port(fluid_ladspa_fx_t *fx, const char *effect_name,
+        const char *port_name, fluid_real_t val);
 int fluid_ladspa_node_exists(fluid_ladspa_fx_t *fx, const char *name);
 
 int fluid_ladspa_connect(fluid_ladspa_fx_t *fx, const char *effect_name,
         const char *port_name, const char *node_name);
 int fluid_ladspa_check(fluid_ladspa_fx_t *fx, char *err, int err_size);
-int fluid_ladspa_control_defaults(fluid_ladspa_fx_t *fx);
 
 #endif /* LADSPA */
 #endif /* _FLUID_LADSPA_H */

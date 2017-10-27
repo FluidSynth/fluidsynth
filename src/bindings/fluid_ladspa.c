@@ -691,22 +691,38 @@ int fluid_ladspa_add_control_node(fluid_ladspa_fx_t *fx, const char *name, fluid
 }
 
 /**
- * Set the value of a user constrol node
+ * Set the value of an effect control port
  *
  * Nodes are searched by case-insensitive string comparison.
  *
  * @param fx LADSPA fx instance
- * @param name node name string
+ * @param effect_name name of the effect
+ * @param port_name name of the port
  * @param val floating point value
  * @return FLUID_OK on success, FLUID_FAILED on error
  */
-int fluid_ladspa_set_control_node(fluid_ladspa_fx_t *fx, const char *name, fluid_real_t val)
+int fluid_ladspa_set_control_port(fluid_ladspa_fx_t *fx, const char *effect_name,
+        const char *port_name, fluid_real_t val)
 {
     fluid_ladspa_node_t *node;
+    fluid_ladspa_plugin_t *plugin;
+    int port_idx;
 
     LADSPA_API_ENTER(fx);
 
-    node = get_node(fx, name);
+    plugin = get_plugin(fx, effect_name);
+    if (plugin == NULL)
+    {
+        LADSPA_API_RETURN(fx, FLUID_FAILED);
+    }
+
+    port_idx = get_plugin_port_idx(plugin, port_name);
+    if (port_idx < 0)
+    {
+        LADSPA_API_RETURN(fx, FLUID_FAILED);
+    }
+
+    node = plugin->port_nodes[port_idx];
     if (node == NULL)
     {
         LADSPA_API_RETURN(fx, FLUID_FAILED);
@@ -770,6 +786,12 @@ int fluid_ladspa_add_plugin(fluid_ladspa_fx_t *fx, const char *effect_name,
     }
 
     fx->plugins[fx->num_plugins++] = plugin;
+
+    /* Create nodes for all plugin controls */
+    if (connect_default_control_nodes(fx, plugin) != FLUID_OK)
+    {
+        LADSPA_API_RETURN(fx, FLUID_FAILED);
+    }
 
     LADSPA_API_RETURN(fx, FLUID_OK);
 }
@@ -853,35 +875,6 @@ int fluid_ladspa_connect(fluid_ladspa_fx_t *fx, const char *effect_name,
               (dir == FLUID_LADSPA_INPUT) ? "<" : ">", node_name);
 
     connect_node_to_port(node, dir, plugin, port_idx);
-
-    LADSPA_API_RETURN(fx, FLUID_OK);
-}
-
-/**
- * Find all unconnected control ports on all configured plugins and fill any unconnected ports with
- * their default value, if available.
- *
- * @param fx LADSPA fx instance
- * @return FLUID_OK on success, otherwise FLUID_FAILED
- */
-int fluid_ladspa_control_defaults(fluid_ladspa_fx_t *fx)
-{
-    int i;
-
-    LADSPA_API_ENTER(fx);
-
-    if (fluid_ladspa_is_active(fx))
-    {
-        LADSPA_API_RETURN(fx, FLUID_FAILED);
-    }
-
-    for (i = 0; i < fx->num_plugins; i++)
-    {
-        if (connect_default_control_nodes(fx, fx->plugins[i]) != FLUID_OK)
-        {
-            LADSPA_API_RETURN(fx, FLUID_FAILED);
-        }
-    }
 
     LADSPA_API_RETURN(fx, FLUID_OK);
 }
@@ -1542,17 +1535,19 @@ static int connect_default_control_nodes(fluid_ladspa_fx_t *fx, fluid_ladspa_plu
 
         if (set_default_port_value(plugin, i, fx->sample_rate, &value) == FLUID_OK)
         {
-            node = new_fluid_ladspa_node(fx, "", FLUID_LADSPA_NODE_CONTROL, NULL);
-            if (node == NULL)
-            {
-                return FLUID_FAILED;
-            }
-            node->plugin_buffer[0] = value;
-
-            dir = LADSPA_IS_PORT_INPUT(port_flags) ? FLUID_LADSPA_INPUT : FLUID_LADSPA_OUTPUT;
-
-            connect_node_to_port(node, dir, plugin, i);
+            value = 0.0f;
         }
+
+        node = new_fluid_ladspa_node(fx, "", FLUID_LADSPA_NODE_CONTROL, NULL);
+        if (node == NULL)
+        {
+            return FLUID_FAILED;
+        }
+        node->plugin_buffer[0] = value;
+
+        dir = LADSPA_IS_PORT_INPUT(port_flags) ? FLUID_LADSPA_INPUT : FLUID_LADSPA_OUTPUT;
+
+        connect_node_to_port(node, dir, plugin, i);
     }
 
     return FLUID_OK;

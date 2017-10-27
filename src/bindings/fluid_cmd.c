@@ -183,10 +183,8 @@ static const fluid_cmd_int_t fluid_commands[] = {
     "ladspa_link                Connect an effect port to a host port or buffer"},
   { "ladspa_node", "ladspa", fluid_handle_ladspa_node,
     "ladspa_node                Create a LADSPA audio or control node"},
-  { "ladspa_control", "ladspa", fluid_handle_ladspa_control,
-    "ladspa_control             Set the value of a LADSPA control node"},
-  { "ladspa_control_defaults", "ladspa", fluid_handle_ladspa_control_defaults,
-    "ladspa_control_defaults    Assign all unconnected controls on all plugins their default value"},
+  { "ladspa_set", "ladspa", fluid_handle_ladspa_set,
+    "ladspa_set                 Set the value of an effect control port"},
   { "ladspa_check", "ladspa", fluid_handle_ladspa_check,
     "ladspa_check               Check LADSPA configuration"},
   { "ladspa_start", "ladspa", fluid_handle_ladspa_start,
@@ -1973,25 +1971,6 @@ int fluid_handle_ladspa_reset(void* data, int ac, char **av, fluid_ostream_t out
     return FLUID_OK;
 }
 
-int fluid_handle_ladspa_control_defaults(void* data, int ac, char **av, fluid_ostream_t out)
-{
-  FLUID_ENTRY_COMMAND(data);
-    fluid_ladspa_fx_t *fx = handler->synth->ladspa_fx;
-
-    CHECK_LADSPA_ENABLED(fx, out);
-    CHECK_LADSPA_INACTIVE(fx, out);
-
-    if (fluid_ladspa_control_defaults(fx) != FLUID_OK)
-    {
-        fluid_ostream_printf(out, "Error while setting default values for control ports\n");
-        return FLUID_FAILED;
-    }
-
-    fluid_ostream_printf(out, "Control port defaults set\n");
-
-    return FLUID_OK;
-}
-
 int fluid_handle_ladspa_check(void* data, int ac, char **av, fluid_ostream_t out)
 {
   FLUID_ENTRY_COMMAND(data);
@@ -2011,30 +1990,38 @@ int fluid_handle_ladspa_check(void* data, int ac, char **av, fluid_ostream_t out
     return FLUID_OK;
 }
 
-int fluid_handle_ladspa_control(void* data, int ac, char **av, fluid_ostream_t out)
+int fluid_handle_ladspa_set(void *data, int ac, char **av, fluid_ostream_t out)
 {
   FLUID_ENTRY_COMMAND(data);
+    char *effect_name = NULL;
+    char *port_name = NULL;
     fluid_ladspa_fx_t *fx = handler->synth->ladspa_fx;
 
     CHECK_LADSPA_ENABLED(fx, out);
 
     if (ac != 2)
     {
-        fluid_ostream_printf(out, "ladspa_control needs two arguments: node name and value.\n");
+        fluid_ostream_printf(out, "ladspa_set needs two arguments: port name and value.\n");
         return FLUID_FAILED;
     };
 
-    /* Redundant check, just here to give a more detailed error message */
-    if (!fluid_ladspa_node_exists(fx, av[0]))
+    if (!fluid_ladspa_split(av[0], &effect_name, &port_name))
     {
-        fluid_ostream_printf(out, "Node '%s' not found.\n", av[0]);
+        fluid_ostream_printf(out, "Effect port names need to be in the format <effect name>:<port name>\n");
         return FLUID_FAILED;
     }
 
-    if (fluid_ladspa_set_control_node(fx, av[0], atof(av[1])) != FLUID_OK)
+    /* Redundant check, just here to give a more detailed error message */
+    if (!fluid_ladspa_port_exists(fx, effect_name, port_name))
     {
-        fluid_ostream_printf(out, "Failed to set node '%s', maybe it's not a control node?\n",
-                             av[0]);
+        fluid_ostream_printf(out, "Effect port '%s:%s' not found\n", effect_name, port_name);
+        return FLUID_FAILED;
+    }
+
+    if (fluid_ladspa_set_control_port(fx, effect_name, port_name, atof(av[1])) != FLUID_OK)
+    {
+        fluid_ostream_printf(out, "Failed to set effect port '%s:%s', maybe it is "
+                "not a control node?\n", effect_name, port_name);
         return FLUID_FAILED;
     }
 
