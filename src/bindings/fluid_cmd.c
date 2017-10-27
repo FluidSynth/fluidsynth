@@ -179,8 +179,8 @@ static const fluid_cmd_int_t fluid_commands[] = {
 #ifdef LADSPA
   { "ladspa_effect", "ladspa", fluid_handle_ladspa_effect,
     "ladspa_effect              Create a new effect from a LADSPA plugin"},
-  { "ladspa_port", "ladspa", fluid_handle_ladspa_port,
-    "ladspa_port                Connect a port of the current LADSPA plugin"},
+  { "ladspa_link", "ladspa", fluid_handle_ladspa_link,
+    "ladspa_link                Connect an effect port to a host port"},
   { "ladspa_node", "ladspa", fluid_handle_ladspa_node,
     "ladspa_node                Create a LADSPA audio or control node"},
   { "ladspa_control", "ladspa", fluid_handle_ladspa_control,
@@ -2134,7 +2134,7 @@ int fluid_handle_ladspa_effect(void* data, int ac, char **av, fluid_ostream_t ou
     return FLUID_OK;
 }
 
-int fluid_handle_ladspa_port(void* data, int ac, char **av, fluid_ostream_t out)
+int fluid_handle_ladspa_link(void* data, int ac, char **av, fluid_ostream_t out)
 {
   FLUID_ENTRY_COMMAND(data);
     fluid_ladspa_fx_t *fx = handler->synth->ladspa_fx;
