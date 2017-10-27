@@ -36,7 +36,6 @@
 #ifndef _FLUID_SYS_H
 #define _FLUID_SYS_H
 
-#include <glib.h>
 #include "fluidsynth_priv.h"
 
 
@@ -56,33 +55,24 @@ void fluid_time_config(void);
 
 /* Misc */
 
-#define fluid_return_val_if_fail  g_return_val_if_fail
-#define fluid_return_if_fail      g_return_if_fail
-#define FLUID_INLINE              inline
-#define FLUID_POINTER_TO_UINT     GPOINTER_TO_UINT
-#define FLUID_UINT_TO_POINTER     GUINT_TO_POINTER
-#define FLUID_POINTER_TO_INT      GPOINTER_TO_INT
-#define FLUID_INT_TO_POINTER      GINT_TO_POINTER
-#define FLUID_N_ELEMENTS(struct)  (sizeof (struct) / sizeof (struct[0]))
+#define fluid_return_val_if_fail(expr, val) if (!(expr)) return (val)
+#define fluid_return_if_fail(expr)          if (!(expr)) return
+#define FLUID_INLINE                        inline
+#define FLUID_POINTER_TO_UINT(x)            ((size_t)(x))
+#define FLUID_POINTER_TO_INT(x)             ((intptr_t)(x))
+#define FLUID_INT_TO_POINTER(val)           ((void*) (((char*) 0) + (val)))
+#define FLUID_N_ELEMENTS(struct)            (sizeof (struct) / sizeof (struct[0]))
 
-#define FLUID_IS_BIG_ENDIAN       (G_BYTE_ORDER == G_BIG_ENDIAN)
+// TODO: Add proper big endianess check
+#define FLUID_IS_BIG_ENDIAN       false
 
-#define FLUID_LE32TOH(x)          GINT32_FROM_LE(x)
-#define FLUID_LE16TOH(x)          GINT16_FROM_LE(x)
+#define FLUID_LE32TOH(x)          le32toh(x)
+#define FLUID_LE16TOH(x)          le16toh(x)
 
 /*
  * Utility functions
  */
 char *fluid_strtok (char **str, char *delim);
-
-
-#if defined(__OS2__)
-#define INCL_DOS
-#include <os2.h>
-
-typedef int socklen_t;
-#endif
-
 unsigned int fluid_curtime(void);
 double fluid_utime(void);
 
@@ -106,188 +96,86 @@ int delete_fluid_timer(fluid_timer_t* timer);
 int fluid_timer_join(fluid_timer_t* timer);
 int fluid_timer_stop(fluid_timer_t* timer);
 
-// Macros to use for pre-processor if statements to test which Glib thread API we have (pre or post 2.32)
-#define NEW_GLIB_THREAD_API  (GLIB_MAJOR_VERSION > 2 || (GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION >= 32))
-#define OLD_GLIB_THREAD_API  (GLIB_MAJOR_VERSION < 2 || (GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION < 32))
-
 /* Muteces */
 
-#if NEW_GLIB_THREAD_API
+static FLUID_INLINE void
+fluid_pthread_mutex_init(pthread_mutex_t *m, int kind)
+{
+    pthread_mutexattr_t attr;
 
-/* glib 2.32 and newer */
-
+    pthread_mutexattr_init(&attr);
+    pthread_mutexattr_settype(&attr, kind);
+    pthread_mutex_init(m, &attr);
+}
 /* Regular mutex */
-typedef GMutex fluid_mutex_t;
-#define FLUID_MUTEX_INIT          { 0 }
-#define fluid_mutex_init(_m)      g_mutex_init (&(_m))
-#define fluid_mutex_destroy(_m)   g_mutex_clear (&(_m))
-#define fluid_mutex_lock(_m)      g_mutex_lock(&(_m))
-#define fluid_mutex_unlock(_m)    g_mutex_unlock(&(_m))
+typedef pthread_mutex_t fluid_mutex_t;
+#define FLUID_MUTEX_INIT          PTHREAD_MUTEX_INITIALIZER
+#define fluid_mutex_init(_m)      pthread_mutex_init (&(_m), NULL)
+#define fluid_mutex_destroy(_m)   pthread_mutex_destroy(&(_m))
+#define fluid_mutex_lock(_m)      pthread_mutex_lock(&(_m))
+#define fluid_mutex_unlock(_m)    pthread_mutex_unlock(&(_m))
 
 /* Recursive lock capable mutex */
-typedef GRecMutex fluid_rec_mutex_t;
-#define fluid_rec_mutex_init(_m)      g_rec_mutex_init(&(_m))
-#define fluid_rec_mutex_destroy(_m)   g_rec_mutex_clear(&(_m))
-#define fluid_rec_mutex_lock(_m)      g_rec_mutex_lock(&(_m))
-#define fluid_rec_mutex_unlock(_m)    g_rec_mutex_unlock(&(_m))
+typedef pthread_mutex_t fluid_rec_mutex_t;
+#define fluid_rec_mutex_init(_m)      fluid_pthread_mutex_init(&(_m), PTHREAD_MUTEX_RECURSIVE)
+#define fluid_rec_mutex_destroy(_m)   pthread_mutex_destroy(&(_m))
+#define fluid_rec_mutex_lock(_m)      pthread_mutex_lock(&(_m))
+#define fluid_rec_mutex_unlock(_m)    pthread_mutex_unlock(&(_m))
 
 /* Dynamically allocated mutex suitable for fluid_cond_t use */
-typedef GMutex    fluid_cond_mutex_t;
-#define fluid_cond_mutex_lock(m)        g_mutex_lock(m)
-#define fluid_cond_mutex_unlock(m)      g_mutex_unlock(m)
+typedef pthread_mutex_t fluid_cond_mutex_t;
+#define fluid_cond_mutex_init(m)      pthread_mutex_init(m, NULL)
+#define fluid_cond_mutex_destroy(m)   pthread_mutex_destroy(m)
+#define fluid_cond_mutex_lock(m)      pthread_mutex_lock(m)
+#define fluid_cond_mutex_unlock(m)    pthread_mutex_unlock(m)
 
 static FLUID_INLINE fluid_cond_mutex_t *
 new_fluid_cond_mutex (void)
 {
-  GMutex *mutex;
-  mutex = g_new (GMutex, 1);
-  g_mutex_init (mutex);
-  return (mutex);
+    fluid_cond_mutex_t *mutex;
+    mutex = malloc(sizeof(fluid_cond_mutex_t));
+    fluid_cond_mutex_init(mutex);
+    return mutex;
 }
 
 static FLUID_INLINE void
 delete_fluid_cond_mutex (fluid_cond_mutex_t *m)
 {
-  g_mutex_clear (m);
-  g_free (m);
+    fluid_cond_mutex_destroy(m);
+    free(m);
 }
 
 /* Thread condition signaling */
-typedef GCond fluid_cond_t;
-#define fluid_cond_signal(cond)         g_cond_signal(cond)
-#define fluid_cond_broadcast(cond)      g_cond_broadcast(cond)
-#define fluid_cond_wait(cond, mutex)    g_cond_wait(cond, mutex)
+typedef pthread_cond_t fluid_cond_t;
+#define fluid_cond_init(cond)           pthread_cond_init(cond, NULL)
+#define fluid_cond_destroy(cond)        pthread_cond_destroy(cond)
+#define fluid_cond_signal(cond)         pthread_cond_signal(cond)
+#define fluid_cond_broadcast(cond)      pthread_cond_broadcast(cond)
+#define fluid_cond_wait(cond, mutex)    pthread_cond_wait(cond, mutex)
 
 static FLUID_INLINE fluid_cond_t *
 new_fluid_cond (void)
 {
-  GCond *cond;
-  cond = g_new (GCond, 1);
-  g_cond_init (cond);
-  return (cond);
+    fluid_cond_t *cond;
+    cond = malloc(sizeof(fluid_cond_t));
+    fluid_cond_init(cond);
+    return cond;
 }
 
 static FLUID_INLINE void
 delete_fluid_cond (fluid_cond_t *cond)
 {
-  g_cond_clear (cond);
-  g_free (cond);
+    fluid_cond_destroy(cond);
+    free(cond);
 }
 
 /* Thread private data */
 
-typedef GPrivate fluid_private_t;
-#define fluid_private_init(_priv)                  memset (&_priv, 0, sizeof (_priv))
+typedef pthread_key_t fluid_private_t;
+#define fluid_private_init(_priv)                  pthread_key_create(&_priv, NULL)
 #define fluid_private_free(_priv)
-#define fluid_private_get(_priv)                   g_private_get(&(_priv))
-#define fluid_private_set(_priv, _data)            g_private_set(&(_priv), _data)
-
-#else
-
-/* glib prior to 2.32 */
-
-/* Regular mutex */
-typedef GStaticMutex fluid_mutex_t;
-#define FLUID_MUTEX_INIT          G_STATIC_MUTEX_INIT
-#define fluid_mutex_destroy(_m)   g_static_mutex_free(&(_m))
-#define fluid_mutex_lock(_m)      g_static_mutex_lock(&(_m))
-#define fluid_mutex_unlock(_m)    g_static_mutex_unlock(&(_m))
-
-#define fluid_mutex_init(_m)      do { \
-  if (!g_thread_supported ()) g_thread_init (NULL); \
-  g_static_mutex_init (&(_m)); \
-} while(0)
-
-/* Recursive lock capable mutex */
-typedef GStaticRecMutex fluid_rec_mutex_t;
-#define fluid_rec_mutex_destroy(_m)   g_static_rec_mutex_free(&(_m))
-#define fluid_rec_mutex_lock(_m)      g_static_rec_mutex_lock(&(_m))
-#define fluid_rec_mutex_unlock(_m)    g_static_rec_mutex_unlock(&(_m))
-
-#define fluid_rec_mutex_init(_m)      do { \
-  if (!g_thread_supported ()) g_thread_init (NULL); \
-  g_static_rec_mutex_init (&(_m)); \
-} while(0)
-
-/* Dynamically allocated mutex suitable for fluid_cond_t use */
-typedef GMutex    fluid_cond_mutex_t;
-#define delete_fluid_cond_mutex(m)      g_mutex_free(m)
-#define fluid_cond_mutex_lock(m)        g_mutex_lock(m)
-#define fluid_cond_mutex_unlock(m)      g_mutex_unlock(m)
-
-static FLUID_INLINE fluid_cond_mutex_t *
-new_fluid_cond_mutex (void)
-{
-  if (!g_thread_supported ()) g_thread_init (NULL);
-  return g_mutex_new ();
-}
-
-/* Thread condition signaling */
-typedef GCond fluid_cond_t;
-fluid_cond_t *new_fluid_cond (void);
-#define delete_fluid_cond(cond)         g_cond_free(cond)
-#define fluid_cond_signal(cond)         g_cond_signal(cond)
-#define fluid_cond_broadcast(cond)      g_cond_broadcast(cond)
-#define fluid_cond_wait(cond, mutex)    g_cond_wait(cond, mutex)
-
-/* Thread private data */
-typedef GStaticPrivate fluid_private_t;
-#define fluid_private_get(_priv)                   g_static_private_get(&(_priv))
-#define fluid_private_set(_priv, _data)            g_static_private_set(&(_priv), _data, NULL)
-#define fluid_private_free(_priv)                  g_static_private_free(&(_priv))
-
-#define fluid_private_init(_priv)                  do { \
-  if (!g_thread_supported ()) g_thread_init (NULL); \
-  g_static_private_init (&(_priv)); \
-} while(0)
-
-#endif
-
-
-/* Atomic operations */
-
-#define fluid_atomic_int_inc(_pi) g_atomic_int_inc(_pi)
-#define fluid_atomic_int_get(_pi) g_atomic_int_get(_pi)
-#define fluid_atomic_int_set(_pi, _val) g_atomic_int_set(_pi, _val)
-#define fluid_atomic_int_dec_and_test(_pi) g_atomic_int_dec_and_test(_pi)
-#define fluid_atomic_int_compare_and_exchange(_pi, _old, _new) \
-  g_atomic_int_compare_and_exchange(_pi, _old, _new)
-
-#if GLIB_MAJOR_VERSION > 2 || (GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION >= 30)
-#define fluid_atomic_int_exchange_and_add(_pi, _add) \
-  g_atomic_int_add(_pi, _add)
-#define fluid_atomic_int_add(_pi, _add) \
-  g_atomic_int_add(_pi, _add)
-#else
-#define fluid_atomic_int_exchange_and_add(_pi, _add) \
-  g_atomic_int_exchange_and_add(_pi, _add)
-#define fluid_atomic_int_add(_pi, _add) \
-  g_atomic_int_exchange_and_add(_pi, _add)
-#endif
-
-#define fluid_atomic_pointer_get(_pp)           g_atomic_pointer_get(_pp)
-#define fluid_atomic_pointer_set(_pp, val)      g_atomic_pointer_set(_pp, val)
-#define fluid_atomic_pointer_compare_and_exchange(_pp, _old, _new) \
-  g_atomic_pointer_compare_and_exchange(_pp, _old, _new)
-
-static FLUID_INLINE void
-fluid_atomic_float_set(volatile float *fptr, float val)
-{
-  sint32 ival;
-  memcpy (&ival, &val, 4);
-  fluid_atomic_int_set ((volatile int *)fptr, ival);
-}
-
-static FLUID_INLINE float
-fluid_atomic_float_get(volatile float *fptr)
-{
-  sint32 ival;
-  float fval;
-  ival = fluid_atomic_int_get ((volatile int *)fptr);
-  memcpy (&fval, &ival, 4);
-  return fval;
-}
-
+#define fluid_private_get(_priv)                   pthread_getspecific((_priv))
+#define fluid_private_set(_priv, _data)            pthread_setspecific((_priv), (_data))
 
 /* Threads */
 
@@ -296,18 +184,22 @@ typedef void* fluid_thread_return_t;
 /* static return value for thread functions which requires a return value */
 #define FLUID_THREAD_RETURN_VALUE (NULL)
 
-typedef GThread fluid_thread_t;
-typedef fluid_thread_return_t (*fluid_thread_func_t)(void* data);
+typedef pthread_t fluid_thread_t;
+typedef void *(*fluid_thread_func_t)(void* data);
 
-#define FLUID_THREAD_ID_NULL            NULL                    /* A NULL "ID" value */
-#define fluid_thread_id_t               GThread *               /* Data type for a thread ID */
-#define fluid_thread_get_id()           g_thread_self()         /* Get unique "ID" for current thread */
+#define FLUID_THREAD_ID_NULL            NULL                   /* A NULL "ID" value */
+#define fluid_thread_id_t               pthread_t              /* Data type for a thread ID */
+#define fluid_thread_get_id()           pthread_self()         /* Get unique "ID" for current thread */
 
 fluid_thread_t* new_fluid_thread(const char *name, fluid_thread_func_t func, void *data,
                                  int prio_level, int detach);
 void delete_fluid_thread(fluid_thread_t* thread);
 void fluid_thread_self_set_prio (int prio_level);
 int fluid_thread_join(fluid_thread_t* thread);
+
+/* Atomic operations */
+
+#include "fluid_atomic.h"
 
 /* Sockets and I/O */
 
@@ -424,15 +316,7 @@ extern fluid_profile_data_t fluid_profile_data[];
     fluid_check_fpe() checks for "unnormalized numbers" and other
     exceptions of the floating point processsor.
 */
-#ifdef FPE_CHECK
-#define fluid_check_fpe(expl) fluid_check_fpe_i386(expl)
-#define fluid_clear_fpe() fluid_clear_fpe_i386()
-#else
 #define fluid_check_fpe(expl)
 #define fluid_clear_fpe()
-#endif
-
-unsigned int fluid_check_fpe_i386(char * explanation_in_case_of_fpe);
-void fluid_clear_fpe_i386(void);
 
 #endif /* _FLUID_SYS_H */

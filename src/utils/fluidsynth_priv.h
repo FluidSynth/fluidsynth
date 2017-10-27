@@ -22,18 +22,8 @@
 #ifndef _FLUIDSYNTH_PRIV_H
 #define _FLUIDSYNTH_PRIV_H
 
-#include <glib.h>
-
 #if HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#if defined(__POWERPC__) && !(defined(__APPLE__) && defined(__MACH__))
-#include "config_maxmsp43.h"
-#endif
-
-#if defined(WIN32) && !defined(MINGW32)
-#include "config_win32.h"
 #endif
 
 #if HAVE_STRING_H
@@ -112,32 +102,6 @@
 #include <io.h>
 #endif
 
-#if defined(WIN32) &&  HAVE_WINDOWS_H
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#include <windows.h>
-#endif
-
-/* MinGW32 special defines */
-#ifdef MINGW32
-
-#include <stdint.h>
-
-#define DSOUND_SUPPORT 1
-#define WINMIDI_SUPPORT 1
-#define STDIN_FILENO 0
-#define STDOUT_FILENO 1
-#define STDERR_FILENO 2
-
-#endif
-
-/* Darwin special defines (taken from config_macosx.h) */
-#ifdef DARWIN
-#define MACINTOSH
-#define __Types__
-#define WITHOUT_SERVER 1
-#endif
-
 
 #include "fluidsynth.h"
 
@@ -154,12 +118,8 @@ typedef double fluid_real_t;
 #endif
 
 
-#if defined(WIN32)
-typedef SOCKET fluid_socket_t;
-#else
 typedef int fluid_socket_t;
 #define INVALID_SOCKET -1
-#endif
 
 #if defined(SUPPORTS_VLA)
 #  define FLUID_DECLARE_VLA(_type, _name, _len) \
@@ -169,22 +129,25 @@ typedef int fluid_socket_t;
      _type* _name = g_newa(_type, (_len))
 #endif
 
+#define TRUE 1
+#define FALSE 0
+
 
 /** Integer types  */
-//typedef gint8              sint8;
-typedef guint8             uint8;
-//typedef gint16             sint16;
-typedef guint16            uint16;
-typedef gint32             sint32;
-typedef guint32            uint32;
-//typedef gint64             sint64;
-//typedef guint64            uint64;
+typedef uint8_t             uint8;
+typedef uint16_t            uint16;
+typedef uint32_t            uint32;
 
-/** Atomic types  */
-typedef int fluid_atomic_int_t;
-typedef unsigned int fluid_atomic_uint_t;
-typedef float fluid_atomic_float_t;
-
+/** Atomic types */
+typedef struct {
+    volatile int value;
+} fluid_atomic_int_t;
+typedef struct {
+    volatile unsigned value;
+} fluid_atomic_uint_t;
+typedef struct {
+    volatile float value;
+} fluid_atomic_float_t;
 
 /***************************************************************
  *
@@ -308,6 +271,5 @@ char* fluid_error(void);
 
 /* Internationalization */
 #define _(s) s
-
 
 #endif /* _FLUIDSYNTH_PRIV_H */
