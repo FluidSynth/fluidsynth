@@ -592,7 +592,7 @@ new_fluid_cond (void)
 
 #endif
 
-static FLUID_THREAD_RETURN_TYPE
+static fluid_thread_return_t
 fluid_thread_high_prio (void *data)
 {
     fluid_thread_info_t *info = data;
@@ -689,7 +689,7 @@ fluid_thread_join(fluid_thread_t* thread)
 }
 
 
-FLUID_THREAD_RETURN_TYPE
+fluid_thread_return_t
 fluid_timer_run (void *data)
 {
     fluid_timer_t *timer;
