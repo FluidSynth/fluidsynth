@@ -22,6 +22,7 @@
 cmake_minimum_required ( VERSION 3.0.2 )
 project ( FluidSynth C )
 set ( CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake_admin )
+set ( CMAKE_EXPORT_COMPILE_COMMANDS 1 )
 
 # FluidSynth package name
 set ( PACKAGE "fluidsynth" )
