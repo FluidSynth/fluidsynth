@@ -477,17 +477,17 @@ void fluid_ladspa_run(fluid_ladspa_fx_t *fx, int block_count, int block_size)
  * interfaces necessary for the FLUID_LADSPA_ADD output mode.
  *
  * @param fx LADSPA fx
- * @param plugin_id the id of the plugin to check
+ * @param name the name of the plugin
  * @return TRUE if add mode is supported, otherwise FALSE
  */
-int fluid_ladspa_plugin_can_add(fluid_ladspa_fx_t *fx, int plugin_id)
+int fluid_ladspa_plugin_can_add(fluid_ladspa_fx_t *fx, const char *name)
 {
     int can_add;
     fluid_ladspa_plugin_t *plugin;
 
     LADSPA_API_ENTER(fx);
 
-    plugin = get_plugin_by_id(fx, plugin_id);
+    plugin = get_plugin(fx, name);
     if (plugin == NULL)
     {
         LADSPA_API_RETURN(fx, FALSE);
@@ -504,12 +504,12 @@ int fluid_ladspa_plugin_can_add(fluid_ladspa_fx_t *fx, int plugin_id)
  * to the buffer(s) with a fixed gain. The default mode is FLUID_LADSPA_MODE_REPLACE.
  *
  * @param fx LADSPA fx instance
- * @param plugin_id integer plugin id as returned by fluid_ladspa_add_*_node
+ * @param name the name of the plugin
  * @param mode which mode to set: FLUID_LADSPA_MODE_ADD or FLUID_LADSPA_MODE_REPLACE
  * @param gain the gain to apply to the plugin output before adding to output. Ignored for replace mode.
  * @return FLUID_OK on success, otherwise FLUID_FAILED
  */
-int fluid_ladspa_plugin_mode(fluid_ladspa_fx_t *fx, int plugin_id,
+int fluid_ladspa_plugin_mode(fluid_ladspa_fx_t *fx, const char *name,
         fluid_ladspa_mode_t mode, float gain)
 {
     fluid_ladspa_plugin_t *plugin;
@@ -521,7 +521,7 @@ int fluid_ladspa_plugin_mode(fluid_ladspa_fx_t *fx, int plugin_id,
         LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
 
-    plugin = get_plugin_by_id(fx, plugin_id);
+    plugin = get_plugin(fx, name);
     if (plugin == NULL)
     {
         LADSPA_API_RETURN(fx, FLUID_FAILED);
@@ -610,18 +610,18 @@ int fluid_ladspa_node_exists(fluid_ladspa_fx_t *fx, const char *name)
  * The string match is case-insensitive and treats spaces and underscores as equal.
  *
  * @param fx LADSPA fx instance
- * @param plugin_id integer plugin id as returned by fluid_ladspa_add_*_node
+ * @param effect_name name of the plugin
  * @param name the port name
  * @return TRUE if port was found, otherwise FALSE
  */
-int fluid_ladspa_port_exists(fluid_ladspa_fx_t *fx, int plugin_id, const char *name)
+int fluid_ladspa_port_exists(fluid_ladspa_fx_t *fx, const char *effect_name, const char *name)
 {
     fluid_ladspa_plugin_t *plugin;
     int port_exists;
 
     LADSPA_API_ENTER(fx);
 
-    plugin = get_plugin_by_id(fx, plugin_id);
+    plugin = get_plugin(fx, effect_name);
     if (plugin == NULL)
     {
         LADSPA_API_RETURN(fx, FALSE);
@@ -723,18 +723,16 @@ int fluid_ladspa_set_control_node(fluid_ladspa_fx_t *fx, const char *name, fluid
 }
 
 /**
- * Instantiate a plugin from a LADSPA plugin library and return it's unique id
- *
- * The returned id can be used to reference this plugin instance at a later time,
- * for example when connecting the plugin instance ports with nodes. Plugin instance
- * ids are never reused in a LADSPA fx instance.
+ * Instantiate a plugin from a LADSPA plugin library
  *
  * @param fx LADSPA effects instance
+ * @param effect_name name of the effect (plugin instance)
  * @param lib_name filename of ladspa plugin library
  * @param plugin_name plugin name (the unique label of the plugin in the LADSPA library)
- * @return integer plugin id or -1 on error
+ * @return FLUID_OK on success, otherwise FLUID_FAILED
  */
-int fluid_ladspa_add_plugin(fluid_ladspa_fx_t *fx, const char *lib_name, const char *plugin_name)
+int fluid_ladspa_add_plugin(fluid_ladspa_fx_t *fx, const char *effect_name,
+        const char *lib_name, const char *plugin_name)
 {
     fluid_ladspa_lib_t *lib;
     fluid_ladspa_plugin_t *plugin;
@@ -742,31 +740,38 @@ int fluid_ladspa_add_plugin(fluid_ladspa_fx_t *fx, const char *lib_name, const c
     LADSPA_API_ENTER(fx);
     if (fluid_ladspa_is_active(fx))
     {
-        LADSPA_API_RETURN(fx, -1);
+        LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
 
     if (fx->num_plugins >= FLUID_LADSPA_MAX_PLUGINS)
     {
         FLUID_LOG(FLUID_ERR, "Maximum number of LADSPA plugins reached");
-        LADSPA_API_RETURN(fx, -1);
+        LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
 
     lib = get_ladspa_library(fx, lib_name);
     if (lib == NULL)
     {
-        LADSPA_API_RETURN(fx, -1);
+        LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
 
     plugin = new_fluid_ladspa_plugin(fx, lib, plugin_name);
     if (plugin == NULL)
     {
-        LADSPA_API_RETURN(fx, -1);
+        LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
 
-    plugin->id = fx->next_plugin_id++;
+    plugin->name = FLUID_STRDUP(effect_name);
+    if (plugin->name == NULL)
+    {
+        FLUID_LOG(FLUID_ERR, "Out of memory");
+        delete_fluid_ladspa_plugin(plugin);
+        LADSPA_API_RETURN(fx, FLUID_FAILED);
+    }
+
     fx->plugins[fx->num_plugins++] = plugin;
 
-    LADSPA_API_RETURN(fx, plugin->id);
+    LADSPA_API_RETURN(fx, FLUID_OK);
 }
 
 /**
@@ -776,21 +781,20 @@ int fluid_ladspa_add_plugin(fluid_ladspa_fx_t *fx, const char *lib_name, const c
  * clear everything with fluid_ladspa_reset and start again from scratch.
  *
  * @param fx LADSPA effects instance
- * @param plugin_id the integer plugin id as returned by fluid_ladspa_add_plugin
+ * @param plugin_name name of the plugin instance
  * @param dir connect to port as FLUID_LADSPA_INPUT or FLUID_LADSPA_OUTPUT
  * @param port_name the port name to connect to (case-insensitive prefix match, see get_plugin_port_idx)
  * @param node_name the node name to connect to (case-insensitive)
  * @return FLUID_OK on success, otherwise FLUID_FAILED
  */
-int fluid_ladspa_connect(fluid_ladspa_fx_t *fx, int plugin_id, fluid_ladspa_dir_t dir,
-                         const char *port_name, const char *node_name)
+int fluid_ladspa_connect(fluid_ladspa_fx_t *fx, const char *plugin_name,
+        const char *port_name, fluid_ladspa_dir_t dir, const char *node_name)
 {
     fluid_ladspa_plugin_t *plugin;
     fluid_ladspa_node_t *node;
     int port_idx;
     int port_flags;
     const char *full_port_name;
-    const char *plugin_name;
 
     LADSPA_API_ENTER(fx);
 
@@ -798,10 +802,10 @@ int fluid_ladspa_connect(fluid_ladspa_fx_t *fx, int plugin_id, fluid_ladspa_dir_
     {
         LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
-    plugin = get_plugin_by_id(fx, plugin_id);
+    plugin = get_plugin(fx, plugin_name);
     if (plugin == NULL)
     {
-        FLUID_LOG(FLUID_ERR, "LADSPA plugin with ID %d not found", plugin_id);
+        FLUID_LOG(FLUID_ERR, "LADSPA plugin '%s' not found", plugin_name);
         LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
 
@@ -1148,6 +1152,11 @@ static void delete_fluid_ladspa_plugin(fluid_ladspa_plugin_t *plugin)
         plugin->desc->cleanup(plugin->handle);
     }
 
+    if (plugin->name != NULL)
+    {
+        FLUID_FREE(plugin->name);
+    }
+
     FLUID_FREE(plugin);
 }
 
@@ -1384,18 +1393,13 @@ static void unload_plugin_library(fluid_ladspa_lib_t *lib)
 }
 
 /**
- * Retrieve a ladspa_plugin_t instance by it's plugin id, as returned from
- * fluid_ladspa_add_plugin.
- *
- * @note The returned pointer is only guaranteed to be valid as long as the
- * caller holds the LADSPA API lock. Calles should not store the pointer
- * but the plugin id to retrieve it at a later time.
+ * Retrieve a ladspa_plugin_t instance by it's name.
  *
  * @param fx LADSPA effects instance
- * @param id plugin id (integer)
+ * @param name plugin name
  * @return pointer to plugin or NULL if not found
  */
-static fluid_ladspa_plugin_t *get_plugin_by_id(fluid_ladspa_fx_t *fx, int id)
+static fluid_ladspa_plugin_t *get_plugin(fluid_ladspa_fx_t *fx, const char *name)
 {
     int i;
 
@@ -1403,12 +1407,13 @@ static fluid_ladspa_plugin_t *get_plugin_by_id(fluid_ladspa_fx_t *fx, int id)
 
     for (i = 0; i < fx->num_plugins; i++)
     {
-        if (fx->plugins[i]->id == id)
+        if (FLUID_STRNCASECMP(fx->plugins[i]->name, name, FLUID_STRLEN(name)) == 0)
         {
             LADSPA_API_RETURN(fx, fx->plugins[i]);
         }
     }
 
+    printf("Effect '%s' not found!\n", name);
     LADSPA_API_RETURN(fx, NULL);
 }
 

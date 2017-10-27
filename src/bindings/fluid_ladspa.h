@@ -90,9 +90,8 @@ typedef struct _fluid_ladspa_node_t
 } fluid_ladspa_node_t;
 
 typedef struct _fluid_ladspa_plugin_t
-
-    /* plugin instance id unique to the effects unit */
-    int id;
+{
+    char *name;
 
     const LADSPA_Descriptor *desc;
     LADSPA_Handle *handle;
@@ -134,9 +133,6 @@ typedef struct _fluid_ladspa_fx_t
     fluid_ladspa_plugin_t *plugins[FLUID_LADSPA_MAX_PLUGINS];
     int num_plugins;
 
-    /* used to generate the unique plugin ids */
-    int next_plugin_id;
-
     fluid_rec_mutex_t api_mutex;
 
     fluid_atomic_int_t state;
@@ -160,19 +156,20 @@ int fluid_ladspa_activate(fluid_ladspa_fx_t *fx);
 int fluid_ladspa_deactivate(fluid_ladspa_fx_t *fx);
 int fluid_ladspa_reset(fluid_ladspa_fx_t *fx);
 
-int fluid_ladspa_add_plugin(fluid_ladspa_fx_t *fx, const char *lib_name, const char *plugin_name);
-int fluid_ladspa_plugin_can_add(fluid_ladspa_fx_t *fx, int plugin_id);
-int fluid_ladspa_plugin_mode(fluid_ladspa_fx_t *fx, int plugin_id,
+int fluid_ladspa_add_plugin(fluid_ladspa_fx_t *fx, const char *effect_name,
+        const char *lib_name, const char *plugin_name);
+int fluid_ladspa_plugin_can_add(fluid_ladspa_fx_t *fx, const char *name);
+int fluid_ladspa_plugin_mode(fluid_ladspa_fx_t *fx, const char *name,
         fluid_ladspa_mode_t mode, float gain);
-int fluid_ladspa_port_exists(fluid_ladspa_fx_t *fx, int plugin_id, const char *name);
+int fluid_ladspa_port_exists(fluid_ladspa_fx_t *fx, const char *plugin_name, const char *name);
 
 int fluid_ladspa_add_audio_node(fluid_ladspa_fx_t *fx, const char *name);
 int fluid_ladspa_add_control_node(fluid_ladspa_fx_t *fx, const char *name, fluid_real_t val);
 int fluid_ladspa_set_control_node(fluid_ladspa_fx_t *fx, const char *name, fluid_real_t val);
 int fluid_ladspa_node_exists(fluid_ladspa_fx_t *fx, const char *name);
 
-int fluid_ladspa_connect(fluid_ladspa_fx_t *fx, int plugin_id, fluid_ladspa_dir_t dir,
-                         const char *port_name, const char *node_name);
+int fluid_ladspa_connect(fluid_ladspa_fx_t *fx, const char *plugin_name,
+        const char *port_name, fluid_ladspa_dir_t dir, const char *node_name);
 int fluid_ladspa_check(fluid_ladspa_fx_t *fx, char *err, int err_size);
 int fluid_ladspa_control_defaults(fluid_ladspa_fx_t *fx);
 
