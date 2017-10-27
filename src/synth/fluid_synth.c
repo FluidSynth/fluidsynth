@@ -184,8 +184,10 @@ void fluid_synth_settings(fluid_settings_t* settings)
                               FLUID_HINT_TOGGLED, NULL, NULL);
   fluid_settings_register_str(settings, "midi.portname", "", 0, NULL, NULL);
 
+#ifdef DEFAULT_SOUNDFONT
   fluid_settings_register_str(settings, "synth.default-soundfont",
-			      DEFAULT_SOUNDFONT, 0, NULL, NULL);
+            DEFAULT_SOUNDFONT, 0, NULL, NULL);
+#endif
 
   fluid_settings_register_int(settings, "synth.polyphony",
 			      256, 1, 65535, 0, NULL, NULL);
