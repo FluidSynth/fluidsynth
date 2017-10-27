@@ -1890,6 +1890,13 @@ int fluid_handle_router_par2(void* data, int ac, char** av, fluid_ostream_t out)
     return FLUID_FAILED; \
   }
 
+#define CHECK_LADSPA_INACTIVE(_fx, _out) \
+  if (fluid_ladspa_is_active(_fx)) \
+  { \
+    fluid_ostream_printf(_out, "LADSPA already started.\n"); \
+    return FLUID_FAILED; \
+  }
+
 #define LADSPA_ERR_LEN (1024)
 
 int fluid_handle_ladspa_start(void* data, int ac, char **av, fluid_ostream_t out)
@@ -1899,12 +1906,7 @@ int fluid_handle_ladspa_start(void* data, int ac, char **av, fluid_ostream_t out
     char error[LADSPA_ERR_LEN];
 
     CHECK_LADSPA_ENABLED(fx, out);
-
-    if (fluid_ladspa_is_active(fx))
-    {
-        fluid_ostream_printf(out, "LADSPA already started.\n");
-        return FLUID_FAILED;
-    }
+    CHECK_LADSPA_INACTIVE(fx, out);
 
     if (fluid_ladspa_check(fx, error, LADSPA_ERR_LEN) != FLUID_OK)
     {
@@ -1961,6 +1963,7 @@ int fluid_handle_ladspa_control_defaults(void* data, int ac, char **av, fluid_os
     fluid_ladspa_fx_t *fx = handler->synth->ladspa_fx;
 
     CHECK_LADSPA_ENABLED(fx, out);
+    CHECK_LADSPA_INACTIVE(fx, out);
 
     if (fluid_ladspa_control_defaults(fx) != FLUID_OK)
     {
@@ -2030,6 +2033,7 @@ int fluid_handle_ladspa_node(void* data, int ac, char **av, fluid_ostream_t out)
     char *type;
 
     CHECK_LADSPA_ENABLED(fx, out);
+    CHECK_LADSPA_INACTIVE(fx, out);
 
     if (ac < 2)
     {
@@ -2078,6 +2082,7 @@ int fluid_handle_ladspa_plugin(void* data, int ac, char **av, fluid_ostream_t ou
     fluid_ladspa_fx_t *fx = handler->synth->ladspa_fx;
 
     CHECK_LADSPA_ENABLED(fx, out);
+    CHECK_LADSPA_INACTIVE(fx, out);
 
     if (ac != 3)
     {
@@ -2101,6 +2106,7 @@ int fluid_handle_ladspa_port(void* data, int ac, char **av, fluid_ostream_t out)
     int dir;
 
     CHECK_LADSPA_ENABLED(fx, out);
+    CHECK_LADSPA_INACTIVE(fx, out);
 
     if (ac != 4)
     {
@@ -2161,6 +2167,7 @@ int fluid_handle_ladspa_mode(void *data, int ac, char **av, fluid_ostream_t out)
     float gain = 1.0f;
 
     CHECK_LADSPA_ENABLED(fx, out);
+    CHECK_LADSPA_INACTIVE(fx, out);
 
     if (ac < 2 || (FLUID_STRCMP(av[1], "add") != 0 && FLUID_STRCMP(av[1], "replace") != 0))
     {
