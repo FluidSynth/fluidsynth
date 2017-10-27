@@ -1897,6 +1897,24 @@ int fluid_handle_router_par2(void* data, int ac, char** av, fluid_ostream_t out)
 
 #define LADSPA_ERR_LEN (1024)
 
+/**
+ * Split a string at most once on ':'. Modifies the input string.
+ * @return TRUE if delimiter found and both tokens contain at least one char, otherwise FALSE
+ */
+static int fluid_ladspa_split(char *input, char **tok1, char **tok2)
+{
+    char *str = input;
+
+    *tok1 = fluid_strtok(&str, ":");
+    if (*tok1 != NULL)
+    {
+        *tok2 = fluid_strtok(&str, ":");
+        return (FLUID_STRLEN(*tok1) > 0) && (FLUID_STRLEN(*tok2) > 0);
+    }
+    return FALSE;
+}
+
+
 int fluid_handle_ladspa_start(void* data, int ac, char **av, fluid_ostream_t out)
 {
   FLUID_ENTRY_COMMAND(data);
@@ -2121,26 +2139,28 @@ int fluid_handle_ladspa_port(void* data, int ac, char **av, fluid_ostream_t out)
   FLUID_ENTRY_COMMAND(data);
     fluid_ladspa_fx_t *fx = handler->synth->ladspa_fx;
     int dir;
+    char *effect_name = NULL;
+    char *port_name = NULL;
 
     CHECK_LADSPA_ENABLED(fx, out);
     CHECK_LADSPA_INACTIVE(fx, out);
 
-    if (ac != 4)
+    if (ac != 3)
     {
-        fluid_ostream_printf(out, "ladspa_port needs 4 arguments: "
-                                  "effect name, port name, direction and node name.\n");
+        fluid_ostream_printf(out, "ladspa_port needs 3 arguments: "
+                                  "port name, direction and node name.\n");
         return FLUID_FAILED;
     }
 
-    if (FLUID_STRCMP(av[2], "<") == 0)
+    if (FLUID_STRCMP(av[1], "<") == 0)
     {
         dir = FLUID_LADSPA_INPUT;
     }
-    else if (FLUID_STRCMP(av[2], ">") == 0)
+    else if (FLUID_STRCMP(av[1], ">") == 0)
     {
         dir = FLUID_LADSPA_OUTPUT;
     }
-    else if (FLUID_STRCMP(av[2], "=") == 0)
+    else if (FLUID_STRCMP(av[1], "=") == 0)
     {
         dir = FLUID_LADSPA_FIXED;
     }
@@ -2150,24 +2170,30 @@ int fluid_handle_ladspa_port(void* data, int ac, char **av, fluid_ostream_t out)
         return FLUID_FAILED;
     }
 
+    if (!fluid_ladspa_split(av[0], &effect_name, &port_name))
+    {
+        fluid_ostream_printf(out, "Port names need to be in the format <effect name>:<port name>\n");
+        return FLUID_FAILED;
+    }
+
     /* Check port and node name before trying to connect them by name. This is
      * redundant, as fluid_ladspa_connect checks them as well, but we do it
      * here anyway to give the user better feedback in case a port or node
      * could not be found.
      */
-    if (!fluid_ladspa_port_exists(fx, av[0], av[1]))
+    if (!fluid_ladspa_port_exists(fx, effect_name, port_name))
     {
-        fluid_ostream_printf(out, "Port '%s' not found.\n", av[1]);
+        fluid_ostream_printf(out, "Port '%s' not found.\n", av[0]);
         return FLUID_FAILED;
     }
 
-    if (dir != FLUID_LADSPA_FIXED && !fluid_ladspa_node_exists(fx, av[3]))
+    if (dir != FLUID_LADSPA_FIXED && !fluid_ladspa_node_exists(fx, av[2]))
     {
-        fluid_ostream_printf(out, "Node '%s' not found.\n", av[3]);
+        fluid_ostream_printf(out, "Node '%s' not found.\n", av[2]);
         return FLUID_FAILED;
     }
 
-    if (fluid_ladspa_connect(fx, av[0], av[1], dir, av[3]) != FLUID_OK)
+    if (fluid_ladspa_connect(fx, effect_name, port_name, dir, av[2]) != FLUID_OK)
     {
         fluid_ostream_printf(out, "Failed to connect plugin port.\n");
         return FLUID_FAILED;
