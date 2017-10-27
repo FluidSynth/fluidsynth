@@ -181,8 +181,8 @@ static const fluid_cmd_int_t fluid_commands[] = {
     "ladspa_effect              Create a new effect from a LADSPA plugin"},
   { "ladspa_link", "ladspa", fluid_handle_ladspa_link,
     "ladspa_link                Connect an effect port to a host port or buffer"},
-  { "ladspa_node", "ladspa", fluid_handle_ladspa_node,
-    "ladspa_node                Create a LADSPA audio or control node"},
+  { "ladspa_buffer", "ladspa", fluid_handle_ladspa_buffer,
+    "ladspa_buffer              Create a LADSPA buffer"},
   { "ladspa_set", "ladspa", fluid_handle_ladspa_set,
     "ladspa_set                 Set the value of an effect control port"},
   { "ladspa_check", "ladspa", fluid_handle_ladspa_check,
@@ -2028,52 +2028,24 @@ int fluid_handle_ladspa_set(void *data, int ac, char **av, fluid_ostream_t out)
     return FLUID_OK;
 };
 
-int fluid_handle_ladspa_node(void* data, int ac, char **av, fluid_ostream_t out)
+int fluid_handle_ladspa_buffer(void *data, int ac, char **av, fluid_ostream_t out)
 {
   FLUID_ENTRY_COMMAND(data);
     fluid_ladspa_fx_t *fx = handler->synth->ladspa_fx;
-    char *name;
-    char *type;
 
     CHECK_LADSPA_ENABLED(fx, out);
     CHECK_LADSPA_INACTIVE(fx, out);
 
-    if (ac < 2)
+    if (ac != 1)
     {
-        fluid_ostream_printf(out, "ladspa_node needs at least two arguments: node name and type.\n");
+        fluid_ostream_printf(out, "Please specify the buffer name\n");
         return FLUID_FAILED;
     };
 
-    name = av[0];
-    type = av[1];
-
-    /* audio node - additional no arguments */
-    if (FLUID_STRCMP(type, "audio") == 0)
+    if (fluid_ladspa_add_audio_node(fx, av[0]) != FLUID_OK)
     {
-        if (fluid_ladspa_add_audio_node(fx, name) != FLUID_OK)
-        {
-            fluid_ostream_printf(out, "Failed to add audio node.\n");
-            return FLUID_FAILED;
-        }
-    }
-    /* control node - arguments: <val> */
-    else if (FLUID_STRCMP(type, "control") == 0)
-    {
-        if (ac != 3)
-        {
-            fluid_ostream_printf(out, "Control nodes need 3 arguments.\n");
-            return FLUID_FAILED;
-        }
-
-        if (fluid_ladspa_add_control_node(fx, name, atof(av[2])) != FLUID_OK)
-        {
-            fluid_ostream_printf(out, "Failed to add contrl node.\n");
-            return FLUID_FAILED;
-        }
-    }
-    else {
-            fluid_ostream_printf(out, "Invalid node type.\n");
-            return FLUID_FAILED;
+        fluid_ostream_printf(out, "Failed to add buffer\n");
+        return FLUID_FAILED;
     }
 
     return FLUID_OK;
