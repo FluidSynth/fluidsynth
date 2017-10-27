@@ -86,9 +86,8 @@ int fluid_handle_router_par1(void* data, int ac, char** av, fluid_ostream_t out)
 int fluid_handle_router_par2(void* data, int ac, char** av, fluid_ostream_t out);
 
 #ifdef LADSPA
-int fluid_handle_ladspa_plugin(void *data, int ac, char **av, fluid_ostream_t out);
+int fluid_handle_ladspa_effect(void *data, int ac, char **av, fluid_ostream_t out);
 int fluid_handle_ladspa_port(void *data, int ac, char **av, fluid_ostream_t out);
-int fluid_handle_ladspa_mode(void *data, int ac, char **av, fluid_ostream_t out);
 int fluid_handle_ladspa_node(void *data, int ac, char **av, fluid_ostream_t out);
 int fluid_handle_ladspa_control(void *data, int ac, char **av, fluid_ostream_t out);
 int fluid_handle_ladspa_control_defaults(void *data, int ac, char **av, fluid_ostream_t out);

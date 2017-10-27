@@ -177,12 +177,10 @@ static const fluid_cmd_int_t fluid_commands[] = {
     "echo arg                   Print arg" },
   /* LADSPA-related commands */
 #ifdef LADSPA
-  { "ladspa_plugin", "ladspa", fluid_handle_ladspa_plugin,
-    "ladspa_plugin              Instantiate a new LADSPA plugin"},
+  { "ladspa_effect", "ladspa", fluid_handle_ladspa_effect,
+    "ladspa_effect              Create a new effect from a LADSPA plugin"},
   { "ladspa_port", "ladspa", fluid_handle_ladspa_port,
     "ladspa_port                Connect a port of the current LADSPA plugin"},
-  { "ladspa_mode", "ladspa", fluid_handle_ladspa_mode,
-    "ladspa_mode                Set the output mode of the current LADSPA plugin"},
   { "ladspa_node", "ladspa", fluid_handle_ladspa_node,
     "ladspa_node                Create a LADSPA audio or control node"},
   { "ladspa_control", "ladspa", fluid_handle_ladspa_control,
@@ -2076,23 +2074,42 @@ int fluid_handle_ladspa_node(void* data, int ac, char **av, fluid_ostream_t out)
     return FLUID_OK;
 };
 
-int fluid_handle_ladspa_plugin(void* data, int ac, char **av, fluid_ostream_t out)
+int fluid_handle_ladspa_effect(void* data, int ac, char **av, fluid_ostream_t out)
 {
   FLUID_ENTRY_COMMAND(data);
     fluid_ladspa_fx_t *fx = handler->synth->ladspa_fx;
+    int mode;
+    float gain;
 
     CHECK_LADSPA_ENABLED(fx, out);
     CHECK_LADSPA_INACTIVE(fx, out);
 
-    if (ac != 3)
+    if (ac < 2 || ac > 5)
     {
-        fluid_ostream_printf(out, "ladspa_plugin needs 3 arguments: effect name, library and plugin id.\n");
+        fluid_ostream_printf(out, "ladspa_effect: invalid number of arguments\n");
         return FLUID_FAILED;
+    }
+
+    if ((ac > 3) && (FLUID_STRCMP(av[3], "mix") == 0))
+    {
+        mode = FLUID_LADSPA_MODE_ADD;
+        gain = (ac > 4) ? atof(av[4]) : 1.0f;
+    }
+    else
+    {
+        mode = FLUID_LADSPA_MODE_REPLACE;
+        gain = 1.0f;
     }
 
     if (fluid_ladspa_add_plugin(fx, av[0], av[1], av[2]) != FLUID_OK)
     {
-        fluid_ostream_printf(out, "Failed to add plugin.\n");
+        fluid_ostream_printf(out, "Failed to add plugin\n");
+        return FLUID_FAILED;
+    }
+
+    if (fluid_ladspa_plugin_mode(fx, av[0], mode, gain) != FLUID_OK)
+    {
+        fluid_ostream_printf(out, "Failed to set effect output mode\n");
         return FLUID_FAILED;
     }
 
@@ -2153,44 +2170,6 @@ int fluid_handle_ladspa_port(void* data, int ac, char **av, fluid_ostream_t out)
     if (fluid_ladspa_connect(fx, av[0], av[1], dir, av[3]) != FLUID_OK)
     {
         fluid_ostream_printf(out, "Failed to connect plugin port.\n");
-        return FLUID_FAILED;
-    }
-
-    return FLUID_OK;
-}
-
-int fluid_handle_ladspa_mode(void *data, int ac, char **av, fluid_ostream_t out)
-{
-  FLUID_ENTRY_COMMAND(data);
-    fluid_ladspa_fx_t *fx = handler->synth->ladspa_fx;
-    fluid_ladspa_mode_t mode;
-    float gain = 1.0f;
-
-    CHECK_LADSPA_ENABLED(fx, out);
-    CHECK_LADSPA_INACTIVE(fx, out);
-
-    if (ac < 2 || (FLUID_STRCMP(av[1], "add") != 0 && FLUID_STRCMP(av[1], "replace") != 0))
-    {
-        fluid_ostream_printf(out, "Please provide the effect name and output mode: 'add' or 'replace'\n");
-        return FLUID_FAILED;
-    }
-
-    if (FLUID_STRCMP(av[1], "add") == 0)
-    {
-        if (ac == 3) {
-            gain = atof(av[2]);
-        }
-
-        mode = FLUID_LADSPA_MODE_ADD;
-    }
-    else
-    {
-        mode = FLUID_LADSPA_MODE_REPLACE;
-    }
-
-    if (fluid_ladspa_plugin_mode(fx, av[0], mode, gain) != FLUID_OK)
-    {
-        fluid_ostream_printf(out, "Failed to set output mode\n");
         return FLUID_FAILED;
     }
 
