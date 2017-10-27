@@ -116,7 +116,8 @@ static void fluid_synth_stop_LOCAL (fluid_synth_t *synth, unsigned int id);
  */
 
 /* has the synth module been initialized? */
-static fluid_atomic_int_t fluid_synth_initialized = 0;
+/* fluid_atomic_int_t may be anything, so init with {0} to catch most cases */
+static fluid_atomic_int_t fluid_synth_initialized = {0};
 static void fluid_synth_init(void);
 static void init_dither(void);
 
