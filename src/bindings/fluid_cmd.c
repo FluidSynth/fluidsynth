@@ -1131,7 +1131,7 @@ fluid_handle_tuning(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostre
     return -1;
   };
 
-  fluid_synth_create_key_tuning(handler->synth, bank, prog, name, NULL);
+  fluid_synth_activate_key_tuning(handler->synth, bank, prog, name, NULL, FALSE);
 
   return 0;
 }
@@ -1228,7 +1228,7 @@ fluid_handle_settuning(fluid_cmd_handler_t* handler, int ac, char** av, fluid_os
     return -1;
   };
 
-  fluid_synth_select_tuning(handler->synth, chan, bank, prog);
+  fluid_synth_activate_tuning(handler->synth, chan, bank, prog, FALSE);
 
   return 0;
 }
@@ -1253,7 +1253,7 @@ fluid_handle_resettuning(fluid_cmd_handler_t* handler, int ac, char** av, fluid_
     return -1;
   };
 
-  fluid_synth_reset_tuning(handler->synth, chan);
+  fluid_synth_deactivate_tuning(handler->synth, chan, FALSE);
 
   return 0;
 }
