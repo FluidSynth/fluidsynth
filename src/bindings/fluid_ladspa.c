@@ -775,26 +775,25 @@ int fluid_ladspa_add_plugin(fluid_ladspa_fx_t *fx, const char *effect_name,
 }
 
 /**
- * Connect an input or output plugin port to a node
+ * Connect an effect port to a name
  *
  * @note There is no corresponding disconnect function. If the connections need to be changed,
  * clear everything with fluid_ladspa_reset and start again from scratch.
  *
  * @param fx LADSPA effects instance
- * @param plugin_name name of the plugin instance
- * @param dir connect to port as FLUID_LADSPA_INPUT or FLUID_LADSPA_OUTPUT
+ * @param effect_name name of the effect
  * @param port_name the port name to connect to (case-insensitive prefix match, see get_plugin_port_idx)
  * @param node_name the node name to connect to (case-insensitive)
  * @return FLUID_OK on success, otherwise FLUID_FAILED
  */
-int fluid_ladspa_connect(fluid_ladspa_fx_t *fx, const char *plugin_name,
-        const char *port_name, fluid_ladspa_dir_t dir, const char *node_name)
+int fluid_ladspa_connect(fluid_ladspa_fx_t *fx, const char *effect_name,
+        const char *port_name, const char *node_name)
 {
     fluid_ladspa_plugin_t *plugin;
     fluid_ladspa_node_t *node;
     int port_idx;
     int port_flags;
-    const char *full_port_name;
+    int dir;
 
     LADSPA_API_ENTER(fx);
 
@@ -802,75 +801,56 @@ int fluid_ladspa_connect(fluid_ladspa_fx_t *fx, const char *plugin_name,
     {
         LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
-    plugin = get_plugin(fx, plugin_name);
+
+    plugin = get_plugin(fx, effect_name);
     if (plugin == NULL)
     {
-        FLUID_LOG(FLUID_ERR, "LADSPA plugin '%s' not found", plugin_name);
+        FLUID_LOG(FLUID_ERR, "Effect '%s' not found", effect_name);
         LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
 
     port_idx = get_plugin_port_idx(plugin, port_name);
     if (port_idx < 0)
     {
-        FLUID_LOG(FLUID_ERR, "LADSPA plugin port '%s' not found on plugin '%s'", port_name,
-                  plugin->desc->Label);
+        FLUID_LOG(FLUID_ERR, "Port '%s' not found on effect '%s'", port_name, effect_name);
         LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
 
-    /* fixed node, create a new 'anonymous' node and interpret the node name as it's fixed float
-     * value */
-    if (dir == FLUID_LADSPA_FIXED)
+    node = get_node(fx, node_name);
+    if (node == NULL)
     {
-        node = new_fluid_ladspa_node(fx, "", FLUID_LADSPA_NODE_CONTROL, NULL);
-        if (node == NULL)
-        {
-            LADSPA_API_RETURN(fx, FLUID_FAILED);
-        }
-        node->plugin_buffer[0] = atof(node_name);
-    }
-    else
-    {
-        node = get_node(fx, node_name);
-        if (node == NULL)
-        {
-            FLUID_LOG(FLUID_ERR, "LADSPA node '%s' not found", node_name);
-            LADSPA_API_RETURN(fx, FLUID_FAILED);
-        }
+        FLUID_LOG(FLUID_ERR, "Node '%s' not found", node_name);
+        LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
 
-    /* For easier access during sanity checks */
     port_flags = plugin->desc->PortDescriptors[port_idx];
-    full_port_name = plugin->desc->PortNames[port_idx];
-    plugin_name = plugin->desc->Label;
-
-    /* Check that requested direction matches with port direction */
-    if (dir == FLUID_LADSPA_INPUT && !LADSPA_IS_PORT_INPUT(port_flags))
-    {
-        FLUID_LOG(FLUID_ERR, "Port '%s' on plugin '%s' is not an input port", full_port_name, plugin_name);
-        LADSPA_API_RETURN(fx, FLUID_FAILED);
-    }
-    else if (dir == FLUID_LADSPA_OUTPUT && !LADSPA_IS_PORT_OUTPUT(port_flags))
-    {
-        FLUID_LOG(FLUID_ERR, "Port '%s' on plugin '%s' is not an output port", full_port_name, plugin_name);
-        LADSPA_API_RETURN(fx, FLUID_FAILED);
-    }
 
     /* Check that requested port type matches the node type */
     if (LADSPA_IS_PORT_CONTROL(port_flags) && node->type != FLUID_LADSPA_NODE_CONTROL)
     {
-        FLUID_LOG(FLUID_ERR, "Cannot connect control port '%s' on plugin '%s' to an audio node",
-                  full_port_name, plugin_name);
+        FLUID_LOG(FLUID_ERR, "Cannot connect control port '%s' on effect '%s' "
+                "to an audio node", port_name, effect_name);
         LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
     else if (LADSPA_IS_PORT_AUDIO(port_flags) && node->type == FLUID_LADSPA_NODE_CONTROL)
     {
-        FLUID_LOG(FLUID_ERR, "Cannot connect audio port '%s' on plugin '%s' to a control node",
-                  full_port_name, plugin_name);
+        FLUID_LOG(FLUID_ERR, "Cannot connect audio port '%s' on effect '%s' "
+                "to a control node", port_name, effect_name);
         LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
 
-    FLUID_LOG(FLUID_DBG, "Connecting LADSPA plugin '%s': port '%s' %s node '%s'", plugin->desc->Label,
-              full_port_name, (dir == FLUID_LADSPA_INPUT) ? "<" : ">", node_name);
+    if (LADSPA_IS_PORT_INPUT(port_flags))
+    {
+        dir = FLUID_LADSPA_INPUT;
+    }
+    else
+    {
+        dir = FLUID_LADSPA_OUTPUT;
+    }
+
+    FLUID_LOG(FLUID_DBG, "Connecting effect '%s': port '%s' %s node '%s'",
+              effect_name, port_name,
+              (dir == FLUID_LADSPA_INPUT) ? "<" : ">", node_name);
 
     connect_node_to_port(node, dir, plugin, port_idx);
 

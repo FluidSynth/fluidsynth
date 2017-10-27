@@ -180,7 +180,7 @@ static const fluid_cmd_int_t fluid_commands[] = {
   { "ladspa_effect", "ladspa", fluid_handle_ladspa_effect,
     "ladspa_effect              Create a new effect from a LADSPA plugin"},
   { "ladspa_link", "ladspa", fluid_handle_ladspa_link,
-    "ladspa_link                Connect an effect port to a host port"},
+    "ladspa_link                Connect an effect port to a host port or buffer"},
   { "ladspa_node", "ladspa", fluid_handle_ladspa_node,
     "ladspa_node                Create a LADSPA audio or control node"},
   { "ladspa_control", "ladspa", fluid_handle_ladspa_control,
@@ -2138,41 +2138,21 @@ int fluid_handle_ladspa_link(void* data, int ac, char **av, fluid_ostream_t out)
 {
   FLUID_ENTRY_COMMAND(data);
     fluid_ladspa_fx_t *fx = handler->synth->ladspa_fx;
-    int dir;
     char *effect_name = NULL;
     char *port_name = NULL;
 
     CHECK_LADSPA_ENABLED(fx, out);
     CHECK_LADSPA_INACTIVE(fx, out);
 
-    if (ac != 3)
+    if (ac != 2)
     {
-        fluid_ostream_printf(out, "ladspa_port needs 3 arguments: "
-                                  "port name, direction and node name.\n");
-        return FLUID_FAILED;
-    }
-
-    if (FLUID_STRCMP(av[1], "<") == 0)
-    {
-        dir = FLUID_LADSPA_INPUT;
-    }
-    else if (FLUID_STRCMP(av[1], ">") == 0)
-    {
-        dir = FLUID_LADSPA_OUTPUT;
-    }
-    else if (FLUID_STRCMP(av[1], "=") == 0)
-    {
-        dir = FLUID_LADSPA_FIXED;
-    }
-    else
-    {
-        fluid_ostream_printf(out, "Invalid direction, please use <, > or =\n");
+        fluid_ostream_printf(out, "ladspa_link needs 2 arguments\n");
         return FLUID_FAILED;
     }
 
     if (!fluid_ladspa_split(av[0], &effect_name, &port_name))
     {
-        fluid_ostream_printf(out, "Port names need to be in the format <effect name>:<port name>\n");
+        fluid_ostream_printf(out, "Effect port names need to be in the format <effect name>:<port name>\n");
         return FLUID_FAILED;
     }
 
@@ -2183,19 +2163,19 @@ int fluid_handle_ladspa_link(void* data, int ac, char **av, fluid_ostream_t out)
      */
     if (!fluid_ladspa_port_exists(fx, effect_name, port_name))
     {
-        fluid_ostream_printf(out, "Port '%s' not found.\n", av[0]);
+        fluid_ostream_printf(out, "Effect port '%s:%s' not found.\n", effect_name, port_name);
         return FLUID_FAILED;
     }
 
-    if (dir != FLUID_LADSPA_FIXED && !fluid_ladspa_node_exists(fx, av[2]))
+    if (!fluid_ladspa_node_exists(fx, av[1]))
     {
-        fluid_ostream_printf(out, "Node '%s' not found.\n", av[2]);
+        fluid_ostream_printf(out, "Host port or buffer '%s' not found.\n", av[1]);
         return FLUID_FAILED;
     }
 
-    if (fluid_ladspa_connect(fx, effect_name, port_name, dir, av[2]) != FLUID_OK)
+    if (fluid_ladspa_connect(fx, effect_name, port_name, av[1]) != FLUID_OK)
     {
-        fluid_ostream_printf(out, "Failed to connect plugin port.\n");
+        fluid_ostream_printf(out, "Failed to link ports\n");
         return FLUID_FAILED;
     }
 
