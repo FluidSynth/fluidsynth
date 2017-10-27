@@ -2096,22 +2096,24 @@ int fluid_handle_ladspa_effect(void* data, int ac, char **av, fluid_ostream_t ou
 {
   FLUID_ENTRY_COMMAND(data);
     fluid_ladspa_fx_t *fx = handler->synth->ladspa_fx;
+    char *lib_name = NULL;
+    char *plugin_name = NULL;
     int mode;
     float gain;
 
     CHECK_LADSPA_ENABLED(fx, out);
     CHECK_LADSPA_INACTIVE(fx, out);
 
-    if (ac < 2 || ac > 5)
+    if (ac < 2 || ac > 4)
     {
         fluid_ostream_printf(out, "ladspa_effect: invalid number of arguments\n");
         return FLUID_FAILED;
     }
 
-    if ((ac > 3) && (FLUID_STRCMP(av[3], "mix") == 0))
+    if ((ac > 2) && (FLUID_STRCMP(av[2], "mix") == 0))
     {
         mode = FLUID_LADSPA_MODE_ADD;
-        gain = (ac > 4) ? atof(av[4]) : 1.0f;
+        gain = (ac > 3) ? atof(av[3]) : 1.0f;
     }
     else
     {
@@ -2119,9 +2121,11 @@ int fluid_handle_ladspa_effect(void* data, int ac, char **av, fluid_ostream_t ou
         gain = 1.0f;
     }
 
-    if (fluid_ladspa_add_plugin(fx, av[0], av[1], av[2]) != FLUID_OK)
+    fluid_ladspa_split(av[1], &lib_name, &plugin_name);
+
+    if (fluid_ladspa_add_plugin(fx, av[0], lib_name, plugin_name) != FLUID_OK)
     {
-        fluid_ostream_printf(out, "Failed to add plugin\n");
+        fluid_ostream_printf(out, "Failed to create effect\n");
         return FLUID_FAILED;
     }
 

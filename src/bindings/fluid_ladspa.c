@@ -728,7 +728,7 @@ int fluid_ladspa_set_control_node(fluid_ladspa_fx_t *fx, const char *name, fluid
  * @param fx LADSPA effects instance
  * @param effect_name name of the effect (plugin instance)
  * @param lib_name filename of ladspa plugin library
- * @param plugin_name plugin name (the unique label of the plugin in the LADSPA library)
+ * @param plugin_name optional, plugin name if there is more than one plugin in the library
  * @return FLUID_OK on success, otherwise FLUID_FAILED
  */
 int fluid_ladspa_add_plugin(fluid_ladspa_fx_t *fx, const char *effect_name,
@@ -1040,6 +1040,8 @@ static int get_plugin_port_idx(const fluid_ladspa_plugin_t *plugin, const char *
 /**
  * Return a LADSPA descriptor structure for a plugin in a LADSPA library.
  *
+ * If name is optional if the library contains only one plugin.
+ *
  * @param lib pointer to fluid_ladspa_lib_t instance
  * @param name name (LADSPA Label) of the plugin
  * @return pointer to LADSPA_Descriptor, NULL on error or if not found
@@ -1047,32 +1049,47 @@ static int get_plugin_port_idx(const fluid_ladspa_plugin_t *plugin, const char *
 static const LADSPA_Descriptor *get_plugin_descriptor(const fluid_ladspa_lib_t *lib, const char *name)
 {
     const LADSPA_Descriptor *desc;
+    const LADSPA_Descriptor *last_desc = NULL;
     int i = 0;
 
-    while (1)
+    for (i = 0; /* endless */; i++)
     {
-        desc = lib->descriptor(i++);
+        desc = lib->descriptor(i);
         if (desc == NULL)
-        {
-            return NULL;
-        }
+            break;
 
-        if (FLUID_STRCMP(desc->Label, name) == 0)
+        if (name != NULL && FLUID_STRCMP(desc->Label, name) == 0)
         {
             return desc;
         }
+
+        last_desc = desc;
     }
+
+    if (name == NULL)
+    {
+        if (i == 1)
+        {
+            return last_desc;
+        }
+        FLUID_LOG(FLUID_ERR, "Library contains more than one plugin, please specify "
+                "the plugin label");
+    }
+
+    return NULL;
 }
 
 /**
  * Instantiate a new LADSPA plugin from a library and set up the associated
  * control structures needed by the LADSPA fx engine.
  *
+ * If the library contains only one plugin, then the name is optional.
+ *
  * Plugins are identified by their "Label" in the plugin descriptor structure.
  *
  * @param fx LADSPA fx instance
  * @param lib pointer to fluid_ladspa_lib_t
- * @param name string name of the plugin (the LADSPA Label)
+ * @param name (optional) string name of the plugin (the LADSPA Label)
  * @return pointer to the new ladspa_plugin_t structure or NULL on error
  */
 static fluid_ladspa_plugin_t *
