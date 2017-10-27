@@ -1014,7 +1014,7 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
     fluid_clip(x, -12000.0f, 8000.0f);
     count = 1 + NUM_BUFFERS_ATTACK(x);
     fluid_voice_update_volenv(voice, FLUID_VOICE_ENVATTACK,
-                            count, 1.0f, count ? 1.0f / count : 0.0f, -1.0f, 1.0f);
+                            count, 1.0f, 1.0f / count, -1.0f, 1.0f);
     break;
 
   case GEN_VOLENVHOLD:                 /* SF2.01 section 8.1.3 # 35 */
@@ -1039,7 +1039,7 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
     fluid_clip(x, FLUID_MIN_VOLENVRELEASE, 8000.0f);
     count = 1 + NUM_BUFFERS_RELEASE(x);
     fluid_voice_update_volenv(voice, FLUID_VOICE_ENVRELEASE,
-                            count, 1.0f, count ? -1.0f / count : 0.0f, 0.0f, 1.0f);
+                            count, 1.0f, -1.0f / count, 0.0f, 1.0f);
     break;
 
     /* Modulation envelope */
@@ -1055,7 +1055,7 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
     fluid_clip(x, -12000.0f, 8000.0f);
     count = 1 + NUM_BUFFERS_ATTACK(x);
     fluid_voice_update_modenv(voice, FLUID_VOICE_ENVATTACK,
-                            count, 1.0f, count ? 1.0f / count : 0.0f, -1.0f, 1.0f);
+                            count, 1.0f, 1.0f / count, -1.0f, 1.0f);
     break;
 
   case GEN_MODENVHOLD:               /* SF2.01 section 8.1.3 # 27 */
@@ -1080,7 +1080,7 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
     fluid_clip(x, -12000.0f, 8000.0f);
     count = 1 + NUM_BUFFERS_RELEASE(x);
     fluid_voice_update_modenv(voice, FLUID_VOICE_ENVRELEASE,
-                            count, 1.0f, count ? -1.0f / count : 0.0f, 0.0f, 2.0f);
+                            count, 1.0f, -1.0f / count, 0.0f, 2.0f);
 
     break;
 
