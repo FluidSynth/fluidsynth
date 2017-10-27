@@ -757,6 +757,50 @@ static char* fluid_alsa_seq_full_name(char* id, int port, char* buf, int len)
   return buf;
 }
 
+// Connect available ALSA MIDI inputs to port_info
+static void fluid_alsa_seq_autoconnect(fluid_alsa_seq_driver_t* dev, const snd_seq_port_info_t *port_info)
+{
+  snd_seq_t *seq = dev->seq_handle;
+  snd_seq_port_subscribe_t *subs;
+  snd_seq_client_info_t *cinfo;
+  snd_seq_port_info_t *pinfo;
+
+  snd_seq_port_subscribe_alloca(&subs);
+  snd_seq_client_info_alloca(&cinfo);
+  snd_seq_port_info_alloca(&pinfo);
+
+  snd_seq_client_info_set_client(cinfo, -1);
+  while (snd_seq_query_next_client(seq, cinfo) >= 0) {
+    const snd_seq_addr_t *dest = snd_seq_port_info_get_addr(port_info);
+
+    snd_seq_port_info_set_client(pinfo, snd_seq_client_info_get_client(cinfo));
+    snd_seq_port_info_set_port(pinfo, -1);
+    while (snd_seq_query_next_port(seq, pinfo) >= 0) {
+      const unsigned int needed_type = SND_SEQ_PORT_TYPE_MIDI_GENERIC;
+      const unsigned int needed_cap = SND_SEQ_PORT_CAP_READ|SND_SEQ_PORT_CAP_SUBS_READ;
+      const snd_seq_addr_t *sender = snd_seq_port_info_get_addr(pinfo);
+      const char *pname = snd_seq_port_info_get_name(pinfo);
+      
+      if ((snd_seq_port_info_get_type(pinfo) & needed_type) != needed_type)
+	continue;
+      if ((snd_seq_port_info_get_capability(pinfo) & needed_cap) != needed_cap)
+	continue;
+
+      snd_seq_port_subscribe_set_sender(subs, sender);
+      snd_seq_port_subscribe_set_dest(subs, dest);
+
+      if (snd_seq_get_port_subscription(seq, subs) == 0) {
+	FLUID_LOG(FLUID_WARN, "Connection %s is already subscribed\n", pname);
+	continue;
+      }
+      if (snd_seq_subscribe_port(seq, subs) < 0) {
+	FLUID_LOG(FLUID_ERR, "Connection of %s failed (%s)\n", pname, snd_strerror(errno));
+	continue;
+      }
+      FLUID_LOG(FLUID_INFO, "Connection of %s succeeded\n", pname);
+    }
+  }
+}
 
 /*
  * new_fluid_alsa_seq_driver
@@ -766,6 +810,7 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
 			 handle_midi_event_func_t handler, void* data)
 {
   int i, err;
+  int autoconn_inputs = 0;
   fluid_alsa_seq_driver_t* dev;
   int realtime_prio = 0;
   int count;
@@ -894,6 +939,10 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
       goto error_recovery;
     }
   }
+
+  fluid_settings_getint(settings, "midi.autoconnect", &autoconn_inputs);
+  if (autoconn_inputs)
+    fluid_alsa_seq_autoconnect(dev, port_info);
 
   /* tell the lash server our client id */
 #ifdef LASH_ENABLED
