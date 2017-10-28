@@ -2046,7 +2046,7 @@ int fluid_handle_ladspa_buffer(void *data, int ac, char **av, fluid_ostream_t ou
         return FLUID_FAILED;
     };
 
-    if (fluid_ladspa_add_audio_node(fx, av[0]) != FLUID_OK)
+    if (fluid_ladspa_add_buffer(fx, av[0]) != FLUID_OK)
     {
         fluid_ostream_printf(out, "Failed to add buffer\n");
         return FLUID_FAILED;
@@ -2136,7 +2136,7 @@ int fluid_handle_ladspa_link(void* data, int ac, char **av, fluid_ostream_t out)
         return FLUID_FAILED;
     }
 
-    if (!fluid_ladspa_node_exists(fx, av[1]))
+    if (!fluid_ladspa_host_port_exists(fx, av[1]) || !fluid_ladspa_buffer_exists(fx, av[1]))
     {
         fluid_ostream_printf(out, "Host port or buffer '%s' not found.\n", av[1]);
         return FLUID_FAILED;

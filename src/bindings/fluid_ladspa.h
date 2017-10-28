@@ -49,9 +49,11 @@ typedef enum _fluid_ladspa_dir_t {
 } fluid_ladspa_dir_t;
 
 typedef enum _fluid_ladspa_node_type_t {
-    FLUID_LADSPA_NODE_AUDIO,
-    FLUID_LADSPA_NODE_CONTROL,
-    FLUID_LADSPA_NODE_HOST,
+    FLUID_LADSPA_NODE_AUDIO = 1,
+    FLUID_LADSPA_NODE_CONTROL = 2,
+    FLUID_LADSPA_NODE_EFFECT = 4,
+    FLUID_LADSPA_NODE_HOST = 8,
+    FLUID_LADSPA_NODE_USER = 16,
 
 } fluid_ladspa_node_type_t;
 
@@ -160,14 +162,15 @@ int fluid_ladspa_effect_can_add(fluid_ladspa_fx_t *fx, const char *name);
 int fluid_ladspa_set_effect_mode(fluid_ladspa_fx_t *fx, const char *name,
         fluid_ladspa_mode_t mode, float gain);
 int fluid_ladspa_effect_port_exists(fluid_ladspa_fx_t *fx, const char *effect_name, const char *port_name);
+int fluid_ladspa_host_port_exists(fluid_ladspa_fx_t *fx, const char *name);
+int fluid_ladspa_buffer_exists(fluid_ladspa_fx_t *fx, const char *name);
 
-int fluid_ladspa_add_audio_node(fluid_ladspa_fx_t *fx, const char *name);
+int fluid_ladspa_add_buffer(fluid_ladspa_fx_t *fx, const char *name);
 int fluid_ladspa_set_effect_control(fluid_ladspa_fx_t *fx, const char *effect_name,
         const char *port_name, float val);
-int fluid_ladspa_node_exists(fluid_ladspa_fx_t *fx, const char *name);
 
 int fluid_ladspa_connect(fluid_ladspa_fx_t *fx, const char *effect_name,
-        const char *port_name, const char *node_name);
+        const char *port_name, const char *name);
 int fluid_ladspa_check(fluid_ladspa_fx_t *fx, char *err, int err_size);
 
 #endif /* LADSPA */
