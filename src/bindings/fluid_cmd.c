@@ -1896,7 +1896,10 @@ int fluid_handle_router_par2(void* data, int ac, char** av, fluid_ostream_t out)
 #define LADSPA_ERR_LEN (1024)
 
 /**
- * Split a string at most once on ':'. Modifies the input string.
+ * Split a string once on ':' and set tok1 and tok2 to point to the two tokens in the input string.
+ *
+ * @note Modifies the input string!
+ *
  * @return TRUE if delimiter found and both tokens contain at least one char, otherwise FALSE
  */
 static int fluid_ladspa_split(char *input, char **tok1, char **tok2)
@@ -1924,8 +1927,7 @@ int fluid_handle_ladspa_start(void* data, int ac, char **av, fluid_ostream_t out
 
     if (fluid_ladspa_check(fx, error, LADSPA_ERR_LEN) != FLUID_OK)
     {
-        fluid_ostream_printf(out, "LADSPA check failed: %s", error);
-        fluid_ostream_printf(out, "LADSPA not started.\n");
+        fluid_ostream_printf(out, "Unable to start LADSPA: %s", error);
         return FLUID_FAILED;
     }
 
@@ -2058,7 +2060,7 @@ int fluid_handle_ladspa_effect(void* data, int ac, char **av, fluid_ostream_t ou
     char *lib_name = NULL;
     char *plugin_name = NULL;
     int mode;
-    float gain;
+    float gain = 1.0f;
 
     CHECK_LADSPA_ENABLED(fx, out);
     CHECK_LADSPA_INACTIVE(fx, out);
@@ -2072,12 +2074,14 @@ int fluid_handle_ladspa_effect(void* data, int ac, char **av, fluid_ostream_t ou
     if ((ac > 2) && (FLUID_STRCMP(av[2], "mix") == 0))
     {
         mode = FLUID_LADSPA_MODE_ADD;
-        gain = (ac > 3) ? atof(av[3]) : 1.0f;
+        if (ac > 3)
+        {
+            gain = atof(av[3]);
+        }
     }
     else
     {
         mode = FLUID_LADSPA_MODE_REPLACE;
-        gain = 1.0f;
     }
 
     fluid_ladspa_split(av[1], &lib_name, &plugin_name);
