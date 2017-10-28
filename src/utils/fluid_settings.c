@@ -426,7 +426,7 @@ fluid_settings_set(fluid_settings_t* settings, const char *name, fluid_setting_n
 	table = node->set.hashtable;
       } else {
 	/* path ends prematurely */
-	FLUID_LOG(FLUID_WARN, "'%s' is not a node", name[n]);
+	FLUID_LOG(FLUID_WARN, "'%s' is not a node. Name of the setting was '%s'", tokens[n], name);
 	return FLUID_FAILED;
       }
 
