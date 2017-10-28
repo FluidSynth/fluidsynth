@@ -99,7 +99,6 @@ fluid_voice_get_lower_boundary_for_attenuation(fluid_voice_t* voice);
 #define UPDATE_RVOICE_I1(proc, arg1) UPDATE_RVOICE_GENERIC_I1(proc, voice->rvoice, arg1)
 #define UPDATE_RVOICE_FILTER1(proc, arg1) UPDATE_RVOICE_GENERIC_R1(proc, &voice->rvoice->resonant_filter, arg1)
 #define UPDATE_RVOICE_HPFILTER1(proc, arg1) UPDATE_RVOICE_GENERIC_R1(proc, &voice->rvoice->resonant_hp_filter, arg1)
-#define UPDATE_RVOICE_BPFILTER1(proc, arg1) UPDATE_RVOICE_GENERIC_R1(proc, &voice->rvoice->resonant_bp_filter, arg1)
 
 #define UPDATE_RVOICE2(proc, iarg, rarg) UPDATE_RVOICE_GENERIC_IR(proc, voice->rvoice, iarg, rarg)
 #define UPDATE_RVOICE_BUFFERS2(proc, iarg, rarg) UPDATE_RVOICE_GENERIC_IR(proc, &voice->rvoice->buffers, iarg, rarg)
@@ -177,7 +176,6 @@ static void fluid_voice_initialize_rvoice(fluid_voice_t* voice)
   
   fluid_iir_filter_init(&voice->rvoice->resonant_filter,    FLUID_IIR_LOWPASS, TRUE);
   fluid_iir_filter_init(&voice->rvoice->resonant_hp_filter, FLUID_IIR_HIGHPASS, FALSE);
-  fluid_iir_filter_init(&voice->rvoice->resonant_bp_filter, FLUID_IIR_BANDPASS, FALSE);
 }
 
 /*
@@ -850,7 +848,6 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
     x = _GEN(voice, GEN_BPFILTERFC);
     q_dB = 8-_GEN(voice, GEN_BPFILTERQ);
     q_dB *= 1000;
-//     q_dB /=2;
     
     UPDATE_RVOICE_HPFILTER1(fluid_iir_filter_set_fres, x-q_dB);
     UPDATE_RVOICE_FILTER1(fluid_iir_filter_set_fres, x/*+q_dB*/);
@@ -861,9 +858,8 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
     if(x == 0.0){
     UPDATE_RVOICE_HPFILTER1(fluid_iir_filter_set_q_linear, 0);
     UPDATE_RVOICE_FILTER1(fluid_iir_filter_set_q_linear, 0);}
-//         UPDATE_RVOICE_GENERIC_IR(fluid_iir_filter_init, &voice->rvoice->resonant_bp_filter, -1, FALSE);
         else{
-    UPDATE_RVOICE_BPFILTER1(fluid_iir_filter_set_q_linear, x+1);
+//     UPDATE_RVOICE_HPFILTER1(fluid_iir_filter_set_q_linear, x+1);
     UPDATE_RVOICE_FILTER1(fluid_iir_filter_set_q_linear, x+1);}
     break;
     
@@ -1821,13 +1817,6 @@ fluid_voice_get_overflow_prio(fluid_voice_t* voice,
 
 void fluid_voice_enable_high_pass_filter(fluid_voice_t *voice, int enabled)
 {
-	voice->rvoice->resonant_hp_filter.enabled = enabled;
-	voice->overflow_rvoice->resonant_hp_filter.enabled = enabled;
+  fluid_iir_filter_init(&voice->rvoice->resonant_hp_filter, FLUID_IIR_HIGHPASS, TRUE);
+  fluid_iir_filter_init(&voice->overflow_rvoice->resonant_hp_filter, FLUID_IIR_HIGHPASS, TRUE);
 }
-
-void fluid_voice_enable_band_pass_filter(fluid_voice_t *voice, int enabled)
-{
-	voice->rvoice->resonant_bp_filter.enabled = enabled;
-	voice->overflow_rvoice->resonant_bp_filter.enabled = enabled;
-}
-

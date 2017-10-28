@@ -372,10 +372,6 @@ fluid_rvoice_write (fluid_rvoice_t* voice, fluid_real_t *dsp_buf)
   fluid_iir_filter_calc(&voice->resonant_hp_filter, voice->dsp.output_rate, 0);
   fluid_iir_filter_apply(&voice->resonant_hp_filter, dsp_buf, count);
   
-//   /* additonal band-pass filter - no lfos here either... */
-//   fluid_iir_filter_calc(&voice->resonant_bp_filter, voice->dsp.output_rate, 0);
-//   fluid_iir_filter_apply(&voice->resonant_bp_filter, dsp_buf, count);
-
   return count;
 }
 
@@ -497,7 +493,6 @@ fluid_rvoice_reset(fluid_rvoice_t* voice)
   /* Clear sample history in filter */
   fluid_iir_filter_reset(&voice->resonant_filter);
   fluid_iir_filter_reset(&voice->resonant_hp_filter);
-  fluid_iir_filter_reset(&voice->resonant_bp_filter);
 
   /* Force setting of the phase at the first DSP loop run
    * This cannot be done earlier, because it depends on modulators. 
