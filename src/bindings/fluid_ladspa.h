@@ -164,7 +164,7 @@ int fluid_ladspa_effect_port_exists(fluid_ladspa_fx_t *fx, const char *effect_na
 
 int fluid_ladspa_add_audio_node(fluid_ladspa_fx_t *fx, const char *name);
 int fluid_ladspa_set_effect_control(fluid_ladspa_fx_t *fx, const char *effect_name,
-        const char *port_name, fluid_real_t val);
+        const char *port_name, float val);
 int fluid_ladspa_node_exists(fluid_ladspa_fx_t *fx, const char *name);
 
 int fluid_ladspa_connect(fluid_ladspa_fx_t *fx, const char *effect_name,

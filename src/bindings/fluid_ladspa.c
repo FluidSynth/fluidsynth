@@ -670,7 +670,7 @@ int fluid_ladspa_add_audio_node(fluid_ladspa_fx_t *fx, const char *name)
  * @return FLUID_OK on success, FLUID_FAILED on error
  */
 int fluid_ladspa_set_effect_control(fluid_ladspa_fx_t *fx, const char *effect_name,
-        const char *port_name, fluid_real_t val)
+        const char *port_name, float val)
 {
     fluid_ladspa_node_t *node;
     fluid_ladspa_plugin_t *plugin;
