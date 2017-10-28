@@ -663,15 +663,13 @@ int fluid_ladspa_add_audio_node(fluid_ladspa_fx_t *fx, const char *name)
 /**
  * Set the value of an effect control port
  *
- * Nodes are searched by case-insensitive string comparison.
- *
  * @param fx LADSPA fx instance
  * @param effect_name name of the effect
  * @param port_name name of the port
  * @param val floating point value
  * @return FLUID_OK on success, FLUID_FAILED on error
  */
-int fluid_ladspa_set_control_port(fluid_ladspa_fx_t *fx, const char *effect_name,
+int fluid_ladspa_set_effect_control(fluid_ladspa_fx_t *fx, const char *effect_name,
         const char *port_name, fluid_real_t val)
 {
     fluid_ladspa_node_t *node;

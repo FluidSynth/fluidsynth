@@ -2018,7 +2018,7 @@ int fluid_handle_ladspa_set(void *data, int ac, char **av, fluid_ostream_t out)
         return FLUID_FAILED;
     }
 
-    if (fluid_ladspa_set_control_port(fx, effect_name, port_name, atof(av[1])) != FLUID_OK)
+    if (fluid_ladspa_set_effect_control(fx, effect_name, port_name, atof(av[1])) != FLUID_OK)
     {
         fluid_ostream_printf(out, "Failed to set '%s:%s', maybe it is not a control port?\n",
                 effect_name, port_name);
