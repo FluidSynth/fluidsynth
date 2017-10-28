@@ -361,6 +361,7 @@ fluid_shell_run(void* data)
 
   if (prompt) FLUID_FREE (prompt);      /* -- free prompt */
 
+  /* return FLUID_THREAD_RETURN_VALUE on success, something else on failure */
   return errors ? (fluid_thread_return_t)(-1) : FLUID_THREAD_RETURN_VALUE;
 }
 
