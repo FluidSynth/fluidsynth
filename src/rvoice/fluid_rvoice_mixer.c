@@ -45,7 +45,7 @@ struct _fluid_mixer_buffers_t {
   fluid_rvoice_t** finished_voices; /* List of voices who have finished */
   int finished_voice_count;
 
-  int ready;             /**< Atomic: buffers are ready for mixing */
+  fluid_atomic_int_t ready;             /**< Atomic: buffers are ready for mixing */
 
   int buf_blocks;             /**< Number of blocks allocated in the buffers */
 
@@ -81,14 +81,14 @@ struct _fluid_rvoice_mixer_t {
   int current_blockcount;      /**< Read-only: how many blocks to process this time */
 
 #ifdef LADSPA
-  fluid_LADSPA_FxUnit_t* LADSPA_FxUnit; /**< Used by mixer only: Effects unit for LADSPA support. Never created or freed */
+  fluid_ladspa_fx_t* ladspa_fx; /**< Used by mixer only: Effects unit for LADSPA support. Never created or freed */
 #endif
 
 #ifdef ENABLE_MIXER_THREADS
 //  int sleeping_threads;        /**< Atomic: number of threads currently asleep */
 //  int active_threads;          /**< Atomic: number of threads in the thread loop */
-  int threads_should_terminate; /**< Atomic: Set to TRUE when threads should terminate */
-  int current_rvoice;           /**< Atomic: for the threads to know next voice to  */
+  fluid_atomic_int_t threads_should_terminate; /**< Atomic: Set to TRUE when threads should terminate */
+  fluid_atomic_int_t current_rvoice;           /**< Atomic: for the threads to know next voice to  */
   fluid_cond_t* wakeup_threads; /**< Signalled when the threads should wake up */
   fluid_cond_mutex_t* wakeup_threads_m; /**< wakeup_threads mutex companion */
   fluid_cond_t* thread_ready; /**< Signalled from thread, when the thread has a buffer ready for mixing */
@@ -142,33 +142,12 @@ fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t* mixer)
   
 #ifdef LADSPA
   /* Run the signal through the LADSPA Fx unit */
-  if (mixer->LADSPA_FxUnit) {
-    int j;
-    FLUID_DECLARE_VLA(fluid_real_t*, left_buf, mixer->buffers.buf_count);
-    FLUID_DECLARE_VLA(fluid_real_t*, right_buf, mixer->buffers.buf_count);
-    FLUID_DECLARE_VLA(fluid_real_t*, fx_left_buf, mixer->buffers.fx_buf_count);
-    FLUID_DECLARE_VLA(fluid_real_t*, fx_right_buf, mixer->buffers.fx_buf_count);
-    for (j=0; j < mixer->buffers.buf_count; j++) {
-      left_buf[j] = mixer->buffers.left_buf[j];
-      right_buf[j] = mixer->buffers.right_buf[j];
-    }
-    for (j=0; j < mixer->buffers.fx_buf_count; j++) {
-      fx_left_buf[j] = mixer->buffers.fx_left_buf[j];
-      fx_right_buf[j] = mixer->buffers.fx_right_buf[j];
-    }
-    for (i=0; i < mixer->current_blockcount * FLUID_BUFSIZE; i += FLUID_BUFSIZE) {
-      fluid_LADSPA_run(mixer->LADSPA_FxUnit, left_buf, right_buf, fx_left_buf, 
-		       fx_right_buf);
-      for (j=0; j < mixer->buffers.buf_count; j++) {
-        left_buf[j] += FLUID_BUFSIZE;
-        right_buf[j] += FLUID_BUFSIZE;
-      }
-      for (j=0; j < mixer->buffers.fx_buf_count; j++) {
-        fx_left_buf[j] += FLUID_BUFSIZE;
-        fx_right_buf[j] += FLUID_BUFSIZE;
-      }
-    }
-    fluid_check_fpe("LADSPA");
+  if (mixer->ladspa_fx) {
+      fluid_ladspa_run(mixer->ladspa_fx,
+              mixer->buffers.left_buf, mixer->buffers.right_buf,
+              mixer->buffers.fx_left_buf, mixer->buffers.fx_right_buf,
+              mixer->current_blockcount, FLUID_BUFSIZE);
+      fluid_check_fpe("LADSPA");
   }
 #endif
 }
@@ -522,6 +501,12 @@ fluid_rvoice_mixer_set_samplerate(fluid_rvoice_mixer_t* mixer, fluid_real_t samp
 	  fluid_revmodel_samplerate_change(mixer->fx.reverb, samplerate);
   for (i=0; i < mixer->active_voices; i++)
     fluid_rvoice_set_output_rate(mixer->rvoices[i], samplerate);
+#if LADSPA
+  if (mixer->ladspa_fx != NULL)
+  {
+    fluid_ladspa_set_sample_rate(mixer->ladspa_fx, samplerate);
+  }
+#endif
 }
 
 
@@ -642,10 +627,9 @@ void delete_fluid_rvoice_mixer(fluid_rvoice_mixer_t* mixer)
 
 
 #ifdef LADSPA				    
-void fluid_rvoice_mixer_set_ladspa(fluid_rvoice_mixer_t* mixer, 
-				   fluid_LADSPA_FxUnit_t* ladspa)
+void fluid_rvoice_mixer_set_ladspa(fluid_rvoice_mixer_t* mixer, fluid_ladspa_fx_t *ladspa_fx)
 {
-  mixer->LADSPA_FxUnit = ladspa;
+  mixer->ladspa_fx = ladspa_fx;
 }
 #endif
 
@@ -731,7 +715,7 @@ fluid_mixer_get_mt_rvoice(fluid_rvoice_mixer_t* mixer)
 #define THREAD_BUF_TERMINATE 3
 
 /* Core thread function (processes voices in parallel to primary synthesis thread) */
-static void
+static fluid_thread_return_t
 fluid_mixer_thread_func (void* data)
 {
   fluid_mixer_buffers_t* buffers = data;  
@@ -772,6 +756,7 @@ fluid_mixer_thread_func (void* data)
     }
   }
 
+  return FLUID_THREAD_RETURN_VALUE;
 }
 
 static void
@@ -940,7 +925,7 @@ fluid_rvoice_mixer_set_threads(fluid_rvoice_mixer_t* mixer, int thread_count,
     if (!fluid_mixer_buffers_init(b, mixer))
       return;
     fluid_atomic_int_set(&b->ready, THREAD_BUF_NODATA);
-    g_snprintf (name, sizeof (name), "mixer%d", i);
+    FLUID_SNPRINTF (name, sizeof (name), "mixer%d", i);
     b->thread = new_fluid_thread(name, fluid_mixer_thread_func, b, prio_level, 0);
     if (!b->thread)
       return;

@@ -410,9 +410,11 @@ fluid_settings_set(fluid_settings_t* settings, const char *name, fluid_setting_n
   int n, num;
   char *dupname;
 
-  num = fluid_settings_tokenize (name, buf, tokens) - 1;
+  num = fluid_settings_tokenize (name, buf, tokens);
   if (num == 0)
     return FLUID_FAILED;
+  
+  num--;
 
   for (n = 0; n < num; n++) {
 
@@ -1098,8 +1100,11 @@ fluid_settings_setnum(fluid_settings_t* settings, const char *name, double val)
     if (node->type == FLUID_NUM_TYPE) {
       fluid_num_setting_t* setting = &node->num;
 
-      if (val < setting->min) val = setting->min;
-      else if (val > setting->max) val = setting->max;
+      if (val < setting->min || val > setting->max)
+      {
+          FLUID_LOG(FLUID_DBG, "requested set value for %s out of range", name);
+          return retval;
+      }
 
       setting->value = val;
 
@@ -1247,8 +1252,11 @@ fluid_settings_setint(fluid_settings_t* settings, const char *name, int val)
     if (node->type == FLUID_INT_TYPE) {
       fluid_int_setting_t* setting = &node->i;
 
-      if (val < setting->min) val = setting->min;
-      else if (val > setting->max) val = setting->max;
+      if (val < setting->min || val > setting->max)
+      {
+          FLUID_LOG(FLUID_DBG, "requested set value for %s out of range", name);
+          return retval;
+      }
 
       setting->value = val;
 

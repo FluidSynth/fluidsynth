@@ -1065,7 +1065,7 @@ fluidmax_version(t_object *o)
   post("  Max/MSP integration by Norbert Schnell IMTR IRCAM - Centre Pompidou");
 }
 
-extern fluid_gen_info_t fluid_gen_info[];
+extern const fluid_gen_info_t fluid_gen_info[];
 
 static void 
 fluidmax_print(t_object *o, Symbol *s, short ac, Atom *at)

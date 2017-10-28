@@ -212,11 +212,6 @@ typedef enum
 }
 Gen_Unit;
 
-/* global data */
-
-extern unsigned short badgen[]; 	/* list of bad generators */
-extern unsigned short badpgen[]; 	/* list of bad preset generators */
-
 /* functions */
 void sfont_init_chunks (void);
 
@@ -295,9 +290,6 @@ typedef struct _SFShdr
 }
 SFShdr;
 
-/* data */
-extern char idlist[];
-
 /* functions */
 SFData *sfload_file (const char * fname);
 
@@ -308,27 +300,6 @@ SFData *sfload_file (const char * fname);
 /********************************************************************************/
 /********************************************************************************/
 /********************************************************************************/
-
-/* GLIB - Library of useful routines for C programming
- * Copyright (C) 1995-1997  Peter Mattis, Spencer Kimball and Josh MacDonald
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02110-1301, USA.
- */
-
-#include <glib.h>
 
 
 /*-----------------------------------util.h----------------------------*/

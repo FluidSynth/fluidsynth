@@ -72,8 +72,8 @@ fluid_audio_driver_t* new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
 
 int delete_fluid_alsa_audio_driver(fluid_audio_driver_t* p);
 void fluid_alsa_audio_driver_settings(fluid_settings_t* settings);
-static void fluid_alsa_audio_run_float(void* d);
-static void fluid_alsa_audio_run_s16(void* d);
+static fluid_thread_return_t fluid_alsa_audio_run_float(void* d);
+static fluid_thread_return_t fluid_alsa_audio_run_s16(void* d);
 
 
 struct fluid_alsa_formats_t {
@@ -118,7 +118,7 @@ fluid_midi_driver_t* new_fluid_alsa_rawmidi_driver(fluid_settings_t* settings,
 						   void* event_handler_data);
 
 int delete_fluid_alsa_rawmidi_driver(fluid_midi_driver_t* p);
-static void fluid_alsa_midi_run(void* d);
+static fluid_thread_return_t fluid_alsa_midi_run(void* d);
 
 
 /*
@@ -139,7 +139,7 @@ fluid_midi_driver_t* new_fluid_alsa_seq_driver(fluid_settings_t* settings,
 					     handle_midi_event_func_t handler,
 					     void* data);
 int delete_fluid_alsa_seq_driver(fluid_midi_driver_t* p);
-static void fluid_alsa_seq_run(void* d);
+static fluid_thread_return_t fluid_alsa_seq_run(void* d);
 
 /**************************************************************
  *
@@ -377,7 +377,7 @@ static int fluid_alsa_handle_write_error (snd_pcm_t *pcm, int errval)
   return FLUID_OK;
 }
 
-static void fluid_alsa_audio_run_float (void *d)
+static fluid_thread_return_t fluid_alsa_audio_run_float (void *d)
 {
   fluid_alsa_audio_driver_t* dev = (fluid_alsa_audio_driver_t*) d;
   fluid_synth_t *synth = (fluid_synth_t *)(dev->data);
@@ -450,9 +450,11 @@ static void fluid_alsa_audio_run_float (void *d)
 
   FLUID_FREE(left);
   FLUID_FREE(right);
+
+  return FLUID_THREAD_RETURN_VALUE;
 }
 
-static void fluid_alsa_audio_run_s16 (void *d)
+static fluid_thread_return_t fluid_alsa_audio_run_s16 (void *d)
 {
   fluid_alsa_audio_driver_t* dev = (fluid_alsa_audio_driver_t*) d;
   float* left;
@@ -535,6 +537,8 @@ static void fluid_alsa_audio_run_s16 (void *d)
   FLUID_FREE(left);
   FLUID_FREE(right);
   FLUID_FREE(buf);
+
+  return FLUID_THREAD_RETURN_VALUE;
 }
 
 
@@ -674,7 +678,7 @@ delete_fluid_alsa_rawmidi_driver(fluid_midi_driver_t* p)
 /*
  * fluid_alsa_midi_run
  */
-void
+fluid_thread_return_t
 fluid_alsa_midi_run(void* d)
 {
   fluid_midi_event_t* evt;
@@ -706,6 +710,8 @@ fluid_alsa_midi_run(void* d)
       }
     }
   }
+
+  return FLUID_THREAD_RETURN_VALUE;
 }
 
 /**************************************************************
@@ -726,12 +732,12 @@ static char* fluid_alsa_seq_full_id(char* id, char* buf, int len)
 {
   if (id != NULL) {
     if (FLUID_STRCMP(id, "pid") == 0) {
-      snprintf(buf, len, "FLUID Synth (%d)", getpid());
+      FLUID_SNPRINTF (buf, len, "FLUID Synth (%d)", getpid());
     } else {
-      snprintf(buf, len, "FLUID Synth (%s)", id);
+      FLUID_SNPRINTF (buf, len, "FLUID Synth (%s)", id);
     }
   } else {
-    snprintf(buf, len, "FLUID Synth");
+    FLUID_SNPRINTF (buf, len, "FLUID Synth");
   }
 
   return buf;
@@ -741,16 +747,60 @@ static char* fluid_alsa_seq_full_name(char* id, int port, char* buf, int len)
 {
   if (id != NULL) {
     if (FLUID_STRCMP(id, "pid") == 0) {
-      snprintf(buf, len, "Synth input port (%d:%d)", getpid(), port);
+      FLUID_SNPRINTF (buf, len, "Synth input port (%d:%d)", getpid(), port);
     } else {
-      snprintf(buf, len, "Synth input port (%s:%d)", id, port);
+      FLUID_SNPRINTF (buf, len, "Synth input port (%s:%d)", id, port);
     }
   } else {
-    snprintf(buf, len, "Synth input port");
+    FLUID_SNPRINTF (buf, len, "Synth input port");
   }
   return buf;
 }
 
+// Connect available ALSA MIDI inputs to port_info
+static void fluid_alsa_seq_autoconnect(fluid_alsa_seq_driver_t* dev, const snd_seq_port_info_t *port_info)
+{
+  snd_seq_t *seq = dev->seq_handle;
+  snd_seq_port_subscribe_t *subs;
+  snd_seq_client_info_t *cinfo;
+  snd_seq_port_info_t *pinfo;
+
+  snd_seq_port_subscribe_alloca(&subs);
+  snd_seq_client_info_alloca(&cinfo);
+  snd_seq_port_info_alloca(&pinfo);
+
+  snd_seq_client_info_set_client(cinfo, -1);
+  while (snd_seq_query_next_client(seq, cinfo) >= 0) {
+    const snd_seq_addr_t *dest = snd_seq_port_info_get_addr(port_info);
+
+    snd_seq_port_info_set_client(pinfo, snd_seq_client_info_get_client(cinfo));
+    snd_seq_port_info_set_port(pinfo, -1);
+    while (snd_seq_query_next_port(seq, pinfo) >= 0) {
+      const unsigned int needed_type = SND_SEQ_PORT_TYPE_MIDI_GENERIC;
+      const unsigned int needed_cap = SND_SEQ_PORT_CAP_READ|SND_SEQ_PORT_CAP_SUBS_READ;
+      const snd_seq_addr_t *sender = snd_seq_port_info_get_addr(pinfo);
+      const char *pname = snd_seq_port_info_get_name(pinfo);
+      
+      if ((snd_seq_port_info_get_type(pinfo) & needed_type) != needed_type)
+	continue;
+      if ((snd_seq_port_info_get_capability(pinfo) & needed_cap) != needed_cap)
+	continue;
+
+      snd_seq_port_subscribe_set_sender(subs, sender);
+      snd_seq_port_subscribe_set_dest(subs, dest);
+
+      if (snd_seq_get_port_subscription(seq, subs) == 0) {
+	FLUID_LOG(FLUID_WARN, "Connection %s is already subscribed\n", pname);
+	continue;
+      }
+      if (snd_seq_subscribe_port(seq, subs) < 0) {
+	FLUID_LOG(FLUID_ERR, "Connection of %s failed (%s)\n", pname, snd_strerror(errno));
+	continue;
+      }
+      FLUID_LOG(FLUID_INFO, "Connection of %s succeeded\n", pname);
+    }
+  }
+}
 
 /*
  * new_fluid_alsa_seq_driver
@@ -760,6 +810,7 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
 			 handle_midi_event_func_t handler, void* data)
 {
   int i, err;
+  int autoconn_inputs = 0;
   fluid_alsa_seq_driver_t* dev;
   int realtime_prio = 0;
   int count;
@@ -889,6 +940,10 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
     }
   }
 
+  fluid_settings_getint(settings, "midi.autoconnect", &autoconn_inputs);
+  if (autoconn_inputs)
+    fluid_alsa_seq_autoconnect(dev, port_info);
+
   /* tell the lash server our client id */
 #ifdef LASH_ENABLED
   {
@@ -953,7 +1008,7 @@ delete_fluid_alsa_seq_driver(fluid_midi_driver_t* p)
 /*
  * fluid_alsa_seq_run
  */
-void
+fluid_thread_return_t
 fluid_alsa_seq_run(void* d)
 {
   int n, ev;
@@ -1046,6 +1101,8 @@ fluid_alsa_seq_run(void* d)
 	while (ev > 0);
     }	/* if poll() > 0 */
   }	/* while (!dev->should_quit) */
+
+  return FLUID_THREAD_RETURN_VALUE;
 }
 
 #endif /* #if ALSA_SUPPORT */

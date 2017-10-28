@@ -34,16 +34,13 @@
 
 #if defined(HAVE_GETOPT_H)
 #include <getopt.h>
+#define GETOPT_SUPPORT 1
 #endif
 
 #include "fluidsynth.h"
 
 #if defined(WIN32) && !defined(MINGW32)
 #include "config_win32.h"
-#endif
-
-#ifdef HAVE_SIGNAL_H
-#include "signal.h"
 #endif
 
 #include "fluid_lash.h"
@@ -56,25 +53,12 @@ void print_usage(void);
 void print_help(fluid_settings_t *settings);
 void print_welcome(void);
 
-#if !defined(MACINTOSH)
-static fluid_cmd_handler_t* newclient(void* data, char* addr);
-#endif
-
 /*
  * the globals
  */
 fluid_cmd_handler_t* cmd_handler = NULL;
 int option_help = 0;		/* set to 1 if "-o help" is specified */
 
-/*
- * support for the getopt function
- */
-#if defined(HAVE_GETOPT_H)
-#define GETOPT_SUPPORT 1
-int getopt(int argc, char * const argv[], const char *optstring);
-extern char *optarg;
-extern int optind, opterr, optopt;
-#endif
 
 /* Process a command line option -o setting=value, for example: -o synth.polyhony=16 */
 void process_o_cmd_line_option(fluid_settings_t* settings, char* optarg)
@@ -262,16 +246,6 @@ fast_render_loop(fluid_settings_t* settings, fluid_synth_t* synth, fluid_player_
   }
   delete_fluid_file_renderer(renderer);
 }
-
-#ifdef HAVE_SIGNAL_H
-/*
- * handle_signal
- */
-void handle_signal(int sig_num)
-{
-}
-#endif
-
 
 /*
  * main
@@ -589,14 +563,18 @@ int main(int argc, char** argv)
     }
 #endif
 
-  /* The 'groups' setting is only relevant for LADSPA operation
+  /* The 'groups' setting is relevant for LADSPA operation and channel mapping
+   * in rvoice_mixer.
    * If not given, set number groups to number of audio channels, because
    * they are the same (there is nothing between synth output and 'sound card')
    */
   if ((audio_groups == 0) && (audio_channels != 0)) {
       audio_groups = audio_channels;
   }
-  fluid_settings_setint(settings, "synth.audio-groups", audio_groups);
+  if (audio_groups != 0)
+  {
+      fluid_settings_setint(settings, "synth.audio-groups", audio_groups);
+  }
 
   if (fast_render) {
     midi_in = 0;
@@ -614,12 +592,6 @@ int main(int argc, char** argv)
     exit(-1);
   }
 
-  cmd_handler = new_fluid_cmd_handler(synth);
-  if (cmd_handler == NULL) {
-    fprintf(stderr, "Failed to create the command handler\n");
-    goto cleanup;
-  }
-
   /* load the soundfonts (check that all non options are SoundFont or MIDI files) */
   for (i = arg1; i < argc; i++) {
     if (fluid_is_soundfont(argv[i]))
@@ -631,10 +603,6 @@ int main(int argc, char** argv)
       fprintf (stderr, "Parameter '%s' not a SoundFont or MIDI file or error occurred identifying it.\n",
 	       argv[i]);
   }
-
-#ifdef HAVE_SIGNAL_H
-/*   signal(SIGINT, handle_signal); */
-#endif
 
   /* start the synthesis thread */
   if (!fast_render) {
@@ -664,8 +632,6 @@ int main(int argc, char** argv)
 	      "will be available. You can access the synthesizer \n"
 	      "through the console.\n");
     } else {
-      fluid_synth_set_midi_router(synth, router); /* Fixme, needed for command handler */
-//      fluid_sequencer_register_fluidsynth(sequencer, synth);
       mdriver = new_fluid_midi_driver(
 	settings,
 	dump ? fluid_midi_dump_prerouter : fluid_midi_router_handle_midi_event,
@@ -678,17 +644,6 @@ int main(int argc, char** argv)
     }
   }
 #endif
-
-  /* run commands specified in config file */
-  if (config_file != NULL) {
-    fluid_source(cmd_handler, config_file);
-  } else if (fluid_get_userconf(buf, 512) != NULL) {
-    fluid_source(cmd_handler, buf);
-  } else if (fluid_get_sysconf(buf, 512) != NULL) {
-    fluid_source(cmd_handler, buf);
-  }
-
-
 
   /* play the midi files, if any */
   for (i = arg1; i < argc; i++) {
@@ -723,17 +678,31 @@ int main(int argc, char** argv)
     fluid_player_play(player);
   }
 
+  cmd_handler = new_fluid_cmd_handler(synth, router);
+  if (cmd_handler == NULL) {
+    fprintf(stderr, "Failed to create the command handler\n");
+    goto cleanup;
+  }
+  
+  /* try to load the user or system configuration */
+  if (config_file != NULL) {
+    fluid_source(cmd_handler, config_file);
+  } else if (fluid_get_userconf(buf, sizeof(buf)) != NULL) {
+    fluid_source(cmd_handler, buf);
+  } else if (fluid_get_sysconf(buf, sizeof(buf)) != NULL) {
+    fluid_source(cmd_handler, buf);
+  }
+  
   /* run the server, if requested */
 #if !defined(MACINTOSH)
   if (with_server) {
-    server = new_fluid_server(settings, newclient, synth);
+    server = new_fluid_server(settings, synth, router);
     if (server == NULL) {
       fprintf(stderr, "Failed to create the server.\n"
 	     "Continuing without it.\n");
     }
   }
 #endif
-
 
 #ifdef LASH_ENABLED
   if (enabled_lash)
@@ -823,14 +792,6 @@ int main(int argc, char** argv)
 
   return 0;
 }
-
-#if !defined(MACINTOSH)
-static fluid_cmd_handler_t* newclient(void* data, char* addr)
-{
-  fluid_synth_t* synth = (fluid_synth_t*) data;
-  return new_fluid_cmd_handler(synth);
-}
-#endif
 
 /*
  * print_usage

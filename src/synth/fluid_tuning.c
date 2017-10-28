@@ -48,7 +48,7 @@ fluid_tuning_t* new_fluid_tuning(const char* name, int bank, int prog)
     tuning->pitch[i] = i * 100.0;
   }
 
-  tuning->refcount = 1;         /* Start with a refcount of 1 */
+  fluid_atomic_int_set(&tuning->refcount, 1);         /* Start with a refcount of 1 */
 
   return tuning;
 }
@@ -86,7 +86,7 @@ fluid_tuning_duplicate (fluid_tuning_t *tuning)
   for (i = 0; i < 128; i++)
     new_tuning->pitch[i] = tuning->pitch[i];
 
-  new_tuning->refcount = 1;     /* Start with a refcount of 1 */
+  fluid_atomic_int_set(&new_tuning->refcount, 1);     /* Start with a refcount of 1 */
 
   return new_tuning;
 }

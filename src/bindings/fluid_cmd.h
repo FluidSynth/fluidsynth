@@ -23,6 +23,7 @@
 
 #include "fluidsynth_priv.h"
 
+
 void fluid_shell_settings(fluid_settings_t* settings);
 
 
@@ -32,51 +33,70 @@ int fluid_is_empty(char* a);
 char* fluid_expand_path(char* path, char* new_path, int len);
 
 /** the handlers for the command lines */
-int fluid_handle_help(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
-int fluid_handle_quit(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
-int fluid_handle_noteon(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
-int fluid_handle_noteoff(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
-int fluid_handle_pitch_bend(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
-int fluid_handle_pitch_bend_range(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
-int fluid_handle_cc(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
-int fluid_handle_prog(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
-int fluid_handle_select(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
-int fluid_handle_inst(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
-int fluid_handle_channels(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
-int fluid_handle_load(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
-int fluid_handle_unload(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
-int fluid_handle_reload(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
-int fluid_handle_fonts(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
-int fluid_handle_mstat(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
-int fluid_handle_reverbpreset(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
-int fluid_handle_reverbsetroomsize(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
-int fluid_handle_reverbsetdamp(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
-int fluid_handle_reverbsetwidth(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
-int fluid_handle_reverbsetlevel(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
-int fluid_handle_chorusnr(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
-int fluid_handle_choruslevel(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
-int fluid_handle_chorusspeed(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
-int fluid_handle_chorusdepth(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
-int fluid_handle_chorus(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
-int fluid_handle_reverb(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
-int fluid_handle_gain(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
-int fluid_handle_interp(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
-int fluid_handle_interpc(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
-int fluid_handle_tuning(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
-int fluid_handle_tune(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
-int fluid_handle_settuning(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
-int fluid_handle_resettuning(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
-int fluid_handle_tunings(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
-int fluid_handle_dumptuning(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
-int fluid_handle_reset(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_help(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_quit(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_noteon(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_noteoff(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_pitch_bend(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_pitch_bend_range(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_cc(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_prog(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_select(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_inst(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_channels(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_load(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_unload(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_reload(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_fonts(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_mstat(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_reverbpreset(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_reverbsetroomsize(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_reverbsetdamp(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_reverbsetwidth(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_reverbsetlevel(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_chorusnr(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_choruslevel(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_chorusspeed(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_chorusdepth(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_chorus(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_reverb(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_gain(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_interp(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_interpc(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_tuning(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_tune(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_settuning(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_resettuning(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_tunings(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_dumptuning(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_reset(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
 int fluid_handle_source(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
 int fluid_handle_echo(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
 
-int fluid_handle_set(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
-int fluid_handle_get(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
-int fluid_handle_info(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
-int fluid_handle_settings(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_set(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_get(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_info(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_settings(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
 
+int fluid_handle_router_clear(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_router_default(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_router_begin(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_router_end(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_router_chan(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_router_par1(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_router_par2(fluid_cmd_handler_t* handler, int ac, char** av, fluid_ostream_t out);
+
+#ifdef LADSPA
+int fluid_handle_ladspa_plugin(fluid_cmd_handler_t *handler, int ac, char **av, fluid_ostream_t out);
+int fluid_handle_ladspa_port(fluid_cmd_handler_t *handler, int ac, char **av, fluid_ostream_t out);
+int fluid_handle_ladspa_node(fluid_cmd_handler_t *handler, int ac, char **av, fluid_ostream_t out);
+int fluid_handle_ladspa_control(fluid_cmd_handler_t *handler, int ac, char **av, fluid_ostream_t out);
+int fluid_handle_ladspa_control_defaults(fluid_cmd_handler_t *handler, int ac, char **av, fluid_ostream_t out);
+int fluid_handle_ladspa_check(fluid_cmd_handler_t *handler, int ac, char **av, fluid_ostream_t out);
+int fluid_handle_ladspa_start(fluid_cmd_handler_t *handler, int ac, char **av, fluid_ostream_t out);
+int fluid_handle_ladspa_stop(fluid_cmd_handler_t *handler, int ac, char **av, fluid_ostream_t out);
+int fluid_handle_ladspa_reset(fluid_cmd_handler_t *handler, int ac, char **av, fluid_ostream_t out);
+#endif
 
 fluid_cmd_t* fluid_cmd_copy(fluid_cmd_t* cmd);
 void delete_fluid_cmd(fluid_cmd_t* cmd);
@@ -93,7 +113,6 @@ void fluid_server_add_client(fluid_server_t* server, fluid_client_t* client);
 
 fluid_client_t* new_fluid_client(fluid_server_t* server,
 			       fluid_settings_t* settings,
-			       fluid_cmd_handler_t* handler,
 			       fluid_socket_t sock);
 
 void delete_fluid_client(fluid_client_t* client);

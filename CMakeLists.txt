@@ -22,6 +22,7 @@
 cmake_minimum_required ( VERSION 3.0.2 )
 project ( FluidSynth C )
 set ( CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake_admin )
+set ( CMAKE_EXPORT_COMPILE_COMMANDS 1 )
 
 # FluidSynth package name
 set ( PACKAGE "fluidsynth" )
@@ -29,7 +30,7 @@ set ( PACKAGE "fluidsynth" )
 # FluidSynth package version
 set ( FLUIDSYNTH_VERSION_MAJOR 1 )
 set ( FLUIDSYNTH_VERSION_MINOR 1 )
-set ( FLUIDSYNTH_VERSION_MICRO 7 )
+set ( FLUIDSYNTH_VERSION_MICRO 8 )
 set ( VERSION "${FLUIDSYNTH_VERSION_MAJOR}.${FLUIDSYNTH_VERSION_MINOR}.${FLUIDSYNTH_VERSION_MICRO}" )
 set ( FLUIDSYNTH_VERSION "\"${VERSION}\"" )
 
@@ -44,7 +45,7 @@ set ( FLUIDSYNTH_VERSION "\"${VERSION}\"" )
 # This is not exactly the same algorithm as the libtool one, but the results are the same.
 set ( LIB_VERSION_CURRENT 1 )
 set ( LIB_VERSION_AGE 6 )
-set ( LIB_VERSION_REVISION 0 )
+set ( LIB_VERSION_REVISION 1 )
 set ( LIB_VERSION_INFO
       "${LIB_VERSION_CURRENT}.${LIB_VERSION_AGE}.${LIB_VERSION_REVISION}" )
 
@@ -70,20 +71,22 @@ option ( BUILD_SHARED_LIBS "Build a shared object or DLL" on )
 option ( enable-ipv6  "enable ipv6 support " on )
 
 # Platform specific options
-if ( ${CMAKE_SYSTEM} MATCHES "Linux" )
+if ( CMAKE_SYSTEM MATCHES "Linux" )
+    option ( enable-ladcca "compile LADCCA support if it is available (deprecated)" off )
     option ( enable-lash "compile LASH support (if it is available)" on )
     option ( enable-alsa "compile ALSA support (if it is available)" on )
-endif ( ${CMAKE_SYSTEM} MATCHES "Linux" )
+endif ( CMAKE_SYSTEM MATCHES "Linux" )
 
-if ( ${CMAKE_SYSTEM} MATCHES "Darwin" )
+if ( CMAKE_SYSTEM MATCHES "Darwin" )
     option ( enable-coreaudio "compile CoreAudio support (if it is available)" on )
     option ( enable-coremidi "compile CoreMIDI support (if it is available)" on )
     option ( enable-framework "create a Mac OSX style FluidSynth.framework" on )
-endif ( ${CMAKE_SYSTEM} MATCHES "Darwin" )
+endif ( CMAKE_SYSTEM MATCHES "Darwin" )
 
-if ( ${CMAKE_SYSTEM} MATCHES "OS2" )
+if ( CMAKE_SYSTEM MATCHES "OS2" )
     option ( enable-dart "compile DART support (if it is available)" on )
-endif ( ${CMAKE_SYSTEM} MATCHES "OS2" )
+    set ( enable-ipv6 off )
+endif ( CMAKE_SYSTEM MATCHES "OS2" )
 
 # Initialize the library directory name suffix.
 if ( CMAKE_SIZEOF_VOID_P EQUAL 8 )
@@ -143,10 +146,16 @@ if ( CMAKE_COMPILER_IS_GNUCC OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" )
           "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-undefined" )
   endif ( NOT APPLE AND NOT OS2 )
   
+  if ( OS2 )
+    set ( GNUCC_VISIBILITY_FLAG "" )
+  else ( OS2 )
+    set ( GNUCC_VISIBILITY_FLAG "-fvisibility=hidden" )
+  endif ( OS2 )
+
   set ( GNUCC_WARNING_FLAGS "-Wall -W -Wpointer-arith -Wbad-function-cast -Wno-cast-qual -Wcast-align -Wstrict-prototypes -Wno-unused-parameter -Wdeclaration-after-statement" )
-  set ( CMAKE_C_FLAGS_DEBUG "-std=gnu89 -g -fvisibility=hidden -DDEBUG ${GNUCC_WARNING_FLAGS}" )
-  set ( CMAKE_C_FLAGS_RELEASE "-std=gnu89 -O2 -fomit-frame-pointer -finline-functions -fvisibility=hidden -DNDEBUG ${GNUCC_WARNING_FLAGS}" )
-  set ( CMAKE_C_FLAGS_RELWITHDEBINFO "-std=gnu89 -O2 -g -fomit-frame-pointer -finline-functions -fvisibility=hidden -DNDEBUG ${GNUCC_WARNING_FLAGS}" )
+  set ( CMAKE_C_FLAGS_DEBUG "-std=gnu89 -g ${GNUCC_VISIBILITY_FLAG} -DDEBUG ${GNUCC_WARNING_FLAGS} -fsanitize=undefined" )
+  set ( CMAKE_C_FLAGS_RELEASE "-std=gnu89 -O2 -fomit-frame-pointer -finline-functions ${GNUCC_VISIBILITY_FLAG} -DNDEBUG ${GNUCC_WARNING_FLAGS}" )
+  set ( CMAKE_C_FLAGS_RELWITHDEBINFO "-std=gnu89 -O2 -g -fomit-frame-pointer -finline-functions ${GNUCC_VISIBILITY_FLAG} -DNDEBUG ${GNUCC_WARNING_FLAGS}" )
 endif ( CMAKE_COMPILER_IS_GNUCC OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" )
 
 # Windows
@@ -180,7 +189,7 @@ endif ( WIN32 )
 unset ( DART_SUPPORT CACHE )
 unset ( DART_LIBS CACHE )
 unset ( DART_INCLUDE_DIRS CACHE )
-if ( ${CMAKE_SYSTEM} MATCHES "OS2" )
+if ( CMAKE_SYSTEM MATCHES "OS2" )
   set ( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Zbin-files" )
   set ( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Zbin-files" )
   if ( enable-dart )
@@ -188,13 +197,13 @@ if ( ${CMAKE_SYSTEM} MATCHES "OS2" )
     set ( DART_SUPPORT ${HAVE_DART_H} )
     unset ( DART_INCLUDE_DIRS CACHE )
   endif ( enable-dart )
-endif ( ${CMAKE_SYSTEM} MATCHES "OS2" )
+endif ( CMAKE_SYSTEM MATCHES "OS2" )
 
 # Solaris / SunOS
-if ( ${CMAKE_SYSTEM} MATCHES "SunOS" )
+if ( CMAKE_SYSTEM MATCHES "SunOS" )
   set ( FLUID_LIBS "${FLUID_LIBS};nsl;socket" )
   set ( LIBFLUID_LIBS "${LIBFLUID_LIBS};nsl;socket" )
-endif ( ${CMAKE_SYSTEM} MATCHES "SunOS" )
+endif ( CMAKE_SYSTEM MATCHES "SunOS" )
 
 # Apple Mac OSX
 unset ( COREAUDIO_SUPPORT CACHE )
@@ -203,7 +212,7 @@ unset ( COREMIDI_SUPPORT CACHE )
 unset ( COREMIDI_LIBS CACHE )
 unset ( DARWIN CACHE )
 unset ( MACOSX_FRAMEWORK CACHE )
-if ( ${CMAKE_SYSTEM} MATCHES "Darwin" )
+if ( CMAKE_SYSTEM MATCHES "Darwin" )
   set ( DARWIN 1 )
   set ( CMAKE_INSTALL_NAME_DIR
         ${CMAKE_INSTALL_PREFIX}/${LIB_INSTALL_DIR}${LIB_SUFFIX} )
@@ -224,7 +233,7 @@ if ( ${CMAKE_SYSTEM} MATCHES "Darwin" )
   if ( enable-framework )
     set ( MACOSX_FRAMEWORK 1 )
   endif ( enable-framework )
-endif ( ${CMAKE_SYSTEM} MATCHES "Darwin" )
+endif ( CMAKE_SYSTEM MATCHES "Darwin" )
 
 
 unset ( HAVE_INETNTOP CACHE )

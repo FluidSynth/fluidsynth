@@ -74,7 +74,7 @@ static fluid_log_function_t fluid_log_function[LAST_LOG_LEVEL];
 static void* fluid_log_user_data[LAST_LOG_LEVEL];
 static int fluid_log_initialized = 0;
 
-static char* fluid_libname = "fluidsynth";
+static const char fluid_libname[] = "fluidsynth";
 
 
 void fluid_sys_config()
@@ -82,31 +82,6 @@ void fluid_sys_config()
   fluid_log_config();
 }
 
-
-unsigned int fluid_debug_flags = 0;
-
-#if DEBUG
-/*
- * fluid_debug
- */
-int fluid_debug(int level, char * fmt, ...)
-{
-  if (fluid_debug_flags & level) {
-    fluid_log_function_t fun;
-    va_list args;
-
-    va_start (args, fmt);
-    vsnprintf(fluid_errbuf, sizeof (fluid_errbuf), fmt, args);
-    va_end (args);
-
-    fun = fluid_log_function[FLUID_DBG];
-    if (fun != NULL) {
-      (*fun)(level, fluid_errbuf, fluid_log_user_data[FLUID_DBG]);
-    }
-  }
-  return 0;
-}
-#endif
 
 /**
  * Installs a new log function for a specified log level.
@@ -220,7 +195,7 @@ fluid_log(int level, const char* fmt, ...)
 
   va_list args;
   va_start (args, fmt);
-  vsnprintf(fluid_errbuf, sizeof (fluid_errbuf), fmt, args);
+  FLUID_VSNPRINTF (fluid_errbuf, sizeof (fluid_errbuf), fmt, args);
   va_end (args);
 
   if ((level >= 0) && (level < LAST_LOG_LEVEL)) {
@@ -686,7 +661,7 @@ fluid_thread_join(fluid_thread_t* thread)
 }
 
 
-void
+fluid_thread_return_t
 fluid_timer_run (void *data)
 {
   fluid_timer_t *timer;
@@ -719,7 +694,7 @@ fluid_timer_run (void *data)
   if (timer->auto_destroy)
     FLUID_FREE (timer);
 
-  return;
+  return FLUID_THREAD_RETURN_VALUE;
 }
 
 fluid_timer_t*
@@ -753,7 +728,15 @@ new_fluid_timer (int msec, fluid_timer_callback_t callback, void* data,
       return NULL;
     }
   }
-  else fluid_timer_run (timer);  /* Run directly, instead of as a separate thread */
+  else
+  {
+      fluid_timer_run (timer);  /* Run directly, instead of as a separate thread */
+      if(auto_destroy)
+      {
+          /* do NOT return freed memory */
+          return NULL;
+      }
+  }
 
   return timer;
 }
@@ -834,7 +817,7 @@ fluid_istream_readline (fluid_istream_t in, fluid_ostream_t out, char* prompt,
     if (line == NULL)
       return -1;
 
-    snprintf(buf, len, "%s", line);
+    FLUID_SNPRINTF (buf, len, "%s", line);
     buf[len - 1] = 0;
 
     free(line);
@@ -916,7 +899,7 @@ fluid_ostream_printf (fluid_ostream_t out, char* format, ...)
   int len;
 
   va_start (args, format);
-  len = vsnprintf (buf, 4095, format, args);
+  len = FLUID_VSNPRINTF (buf, 4095, format, args);
   va_end (args);
 
   if (len == 0)
@@ -976,7 +959,7 @@ void fluid_socket_close(fluid_socket_t sock)
     close (sock);
 }
 
-static void
+static fluid_thread_return_t
 fluid_server_socket_run (void *data)
 {
   fluid_server_socket_t *server_socket = (fluid_server_socket_t *)data;
@@ -1006,7 +989,7 @@ fluid_server_socket_run (void *data)
 	FLUID_LOG(FLUID_ERR, "Failed to accept connection");
 
       server_socket->cont = 0;
-      return;
+      return FLUID_THREAD_RETURN_VALUE;
     } else {
 #ifdef HAVE_INETNTOP
 #ifdef IPV6_SUPPORT
@@ -1029,6 +1012,8 @@ fluid_server_socket_run (void *data)
   }
 
   FLUID_LOG(FLUID_DBG, "Server closing");
+
+  return FLUID_THREAD_RETURN_VALUE;
 }
 
 fluid_server_socket_t*
@@ -1139,7 +1124,7 @@ void fluid_socket_close (fluid_socket_t sock)
     closesocket (sock);
 }
 
-static void fluid_server_socket_run (void *data)
+static fluid_thread_return_t fluid_server_socket_run (void *data)
 {
   fluid_server_socket_t *server_socket = (fluid_server_socket_t *)data;
   fluid_socket_t client_socket;
@@ -1170,7 +1155,7 @@ static void fluid_server_socket_run (void *data)
 	FLUID_LOG (FLUID_ERR, "Failed to accept connection: %ld", WSAGetLastError ());
 
       server_socket->cont = 0;
-      return;
+      return FLUID_THREAD_RETURN_VALUE;
     }
     else
     {
@@ -1194,6 +1179,8 @@ static void fluid_server_socket_run (void *data)
   }
 
   FLUID_LOG (FLUID_DBG, "Server closing");
+  
+  return FLUID_THREAD_RETURN_VALUE;  
 }
 
 fluid_server_socket_t*

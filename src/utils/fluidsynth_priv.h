@@ -122,8 +122,6 @@
 #ifdef MINGW32
 
 #include <stdint.h>
-#define snprintf _snprintf
-#define vsnprintf _vsnprintf
 
 #define DSOUND_SUPPORT 1
 #define WINMIDI_SUPPORT 1
@@ -176,11 +174,16 @@ typedef int fluid_socket_t;
 //typedef gint8              sint8;
 typedef guint8             uint8;
 //typedef gint16             sint16;
-//typedef guint16            uint16;
+typedef guint16            uint16;
 typedef gint32             sint32;
 typedef guint32            uint32;
 //typedef gint64             sint64;
 //typedef guint64            uint64;
+
+/** Atomic types  */
+typedef int fluid_atomic_int_t;
+typedef unsigned int fluid_atomic_uint_t;
+typedef float fluid_atomic_float_t;
 
 
 /***************************************************************
@@ -208,10 +211,6 @@ typedef struct _fluid_sample_timer_t fluid_sample_timer_t;
 #define FLUID_DEFAULT_AUDIO_RT_PRIO  60         /**< Default setting for audio.realtime-prio */
 #define FLUID_DEFAULT_MIDI_RT_PRIO   50         /**< Default setting for midi.realtime-prio */
 
-#ifndef PI
-#define PI                          3.141592654
-#endif
-
 /***************************************************************
  *
  *                      SYSTEM INTERFACE
@@ -233,16 +232,48 @@ typedef FILE*  fluid_file;
 #define FLUID_STRCMP(_s,_t)          strcmp(_s,_t)
 #define FLUID_STRNCMP(_s,_t,_n)      strncmp(_s,_t,_n)
 #define FLUID_STRCPY(_dst,_src)      strcpy(_dst,_src)
-#define FLUID_STRNCPY(_dst,_src,_n)  strncpy(_dst,_src,_n)
+
+#define FLUID_STRNCPY(_dst,_src,_n) \
+do { strncpy(_dst,_src,_n); \
+    (_dst)[(_n)-1]=0; \
+}while(0)
+
 #define FLUID_STRCHR(_s,_c)          strchr(_s,_c)
 #define FLUID_STRRCHR(_s,_c)         strrchr(_s,_c)
+
 #ifdef strdup
-#define FLUID_STRDUP(s)              strdup(s)
+    #define FLUID_STRDUP(s)          strdup(s)
 #else
-#define FLUID_STRDUP(s) 		    FLUID_STRCPY(FLUID_MALLOC(FLUID_STRLEN(s) + 1), s)
+    #define FLUID_STRDUP(s)          FLUID_STRCPY(FLUID_MALLOC(FLUID_STRLEN(s) + 1), s)
 #endif
+
 #define FLUID_SPRINTF                sprintf
 #define FLUID_FPRINTF                fprintf
+
+#if (defined(WIN32) && _MSC_VER < 1900) || defined(MINGW32)
+    #define FLUID_SNPRINTF           _snprintf
+#else
+    #define FLUID_SNPRINTF           snprintf
+#endif
+
+#if (defined(WIN32) && _MSC_VER < 1500) || defined(MINGW32)
+    #define FLUID_VSNPRINTF          _vsnprintf
+#else
+    #define FLUID_VSNPRINTF          vsnprintf
+#endif
+
+#if defined(WIN32) && !defined(MINGW32)
+    #define FLUID_STRCASECMP         _stricmp
+#else
+    #define FLUID_STRCASECMP         strcasecmp
+#endif
+
+#if defined(WIN32) && !defined(MINGW32)
+    #define FLUID_STRNCASECMP         _strincmp
+#else
+    #define FLUID_STRNCASECMP         strncasecmp
+#endif
+
 
 #define fluid_clip(_val, _min, _max) \
 { (_val) = ((_val) < (_min))? (_min) : (((_val) > (_max))? (_max) : (_val)); }
@@ -261,6 +292,13 @@ typedef FILE*  fluid_file;
 #define M_PI 3.1415926535897932384626433832795
 #endif
 
+#ifndef M_LN2
+#define M_LN2 0.69314718055994530941723212145818
+#endif
+
+#ifndef M_LN10
+#define M_LN10 2.3025850929940456840179914546844
+#endif
 
 #define FLUID_ASSERT(a,b)
 #define FLUID_ASSERT_P(a,b)

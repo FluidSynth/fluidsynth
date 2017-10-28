@@ -106,7 +106,7 @@ fluid_voice_get_lower_boundary_for_attenuation(fluid_voice_t* voice);
 #define UPDATE_RVOICE_ENVLFO_R1(proc, envp, rarg) UPDATE_RVOICE_GENERIC_R1(proc, &voice->rvoice->envlfo.envp, rarg) 
 #define UPDATE_RVOICE_ENVLFO_I1(proc, envp, iarg) UPDATE_RVOICE_GENERIC_I1(proc, &voice->rvoice->envlfo.envp, iarg) 
 
-static inline void
+static FLUID_INLINE void
 fluid_voice_update_volenv(fluid_voice_t* voice, 
 			  fluid_adsr_env_section_t section,
                           unsigned int count,
@@ -122,7 +122,7 @@ fluid_voice_update_volenv(fluid_voice_t* voice,
 			    coeff, increment, min, max);
 }
 
-static inline void
+static FLUID_INLINE void
 fluid_voice_update_modenv(fluid_voice_t* voice, 
 			  fluid_adsr_env_section_t section,
                           unsigned int count,
@@ -136,7 +136,7 @@ fluid_voice_update_modenv(fluid_voice_t* voice,
 			    coeff, increment, min, max);
 }
 
-static inline void fluid_sample_null_ptr(fluid_sample_t** sample)
+static FLUID_INLINE void fluid_sample_null_ptr(fluid_sample_t** sample)
 {
   if (*sample != NULL) {
     fluid_sample_decr_ref(*sample);
@@ -274,7 +274,6 @@ fluid_voice_init(fluid_voice_t* voice, fluid_sample_t* sample,
   voice->channel = channel;
   voice->mod_count = 0;
   voice->start_time = start_time;
-  voice->debug = 0;
   voice->has_noteoff = 0;
   UPDATE_RVOICE0(fluid_rvoice_reset);
 
@@ -509,8 +508,9 @@ static int
 fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t* voice)
 {
   int i;
+  unsigned int n;
 
-  static const int list_of_generators_to_initialize[] = {
+  static int const list_of_generators_to_initialize[] = {
     GEN_STARTADDROFS,                    /* SF2.01 page 48 #0   */
     GEN_ENDADDROFS,                      /*                #1   */
     GEN_STARTLOOPADDROFS,                /*                #2   */
@@ -565,7 +565,7 @@ fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t* voice)
     GEN_HPFILTERQ,                       /*                ---  */
     GEN_BPFILTERFC,                      /*                ---  */
     GEN_BPFILTERQ,                       /*                ---  */
-    -1};                                 /* end-of-list marker  */
+  };
 
   /* When the voice is made ready for the synthesis process, a lot of
    * voice-internal parameters have to be calculated.
@@ -609,8 +609,8 @@ fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t* voice)
    */
 
   /* Calculate the voice parameter(s) dependent on each generator. */
-  for (i = 0; list_of_generators_to_initialize[i] != -1; i++) {
-    fluid_voice_update_param(voice, list_of_generators_to_initialize[i]);
+  for (n = 0; n < FLUID_N_ELEMENTS(list_of_generators_to_initialize); n++) {
+    fluid_voice_update_param(voice, list_of_generators_to_initialize[n]);
   }
 
   /* Make an estimate on how loud this voice can get at any time (attenuation). */
@@ -713,7 +713,7 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
   fluid_real_t y;
   unsigned int count, z;
   // Alternate attenuation scale used by EMU10K1 cards when setting the attenuation at the preset or instrument level within the SoundFont bank.
-  static const float ALT_ATTENUATION_SCALE = 0.4;
+  static const float ALT_ATTENUATION_SCALE = 0.4f;
 
   switch (gen) {
 
@@ -1060,7 +1060,7 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
     fluid_clip(x, -12000.0f, 8000.0f);
     count = 1 + NUM_BUFFERS_ATTACK(x);
     fluid_voice_update_volenv(voice, FLUID_VOICE_ENVATTACK,
-                            count, 1.0f, count ? 1.0f / count : 0.0f, -1.0f, 1.0f);
+                            count, 1.0f, 1.0f / count, -1.0f, 1.0f);
     break;
 
   case GEN_VOLENVHOLD:                 /* SF2.01 section 8.1.3 # 35 */
@@ -1085,7 +1085,7 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
     fluid_clip(x, FLUID_MIN_VOLENVRELEASE, 8000.0f);
     count = 1 + NUM_BUFFERS_RELEASE(x);
     fluid_voice_update_volenv(voice, FLUID_VOICE_ENVRELEASE,
-                            count, 1.0f, count ? -1.0f / count : 0.0f, 0.0f, 1.0f);
+                            count, 1.0f, -1.0f / count, 0.0f, 1.0f);
     break;
 
     /* Modulation envelope */
@@ -1101,7 +1101,7 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
     fluid_clip(x, -12000.0f, 8000.0f);
     count = 1 + NUM_BUFFERS_ATTACK(x);
     fluid_voice_update_modenv(voice, FLUID_VOICE_ENVATTACK,
-                            count, 1.0f, count ? 1.0f / count : 0.0f, -1.0f, 1.0f);
+                            count, 1.0f, 1.0f / count, -1.0f, 1.0f);
     break;
 
   case GEN_MODENVHOLD:               /* SF2.01 section 8.1.3 # 27 */
@@ -1126,7 +1126,7 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
     fluid_clip(x, -12000.0f, 8000.0f);
     count = 1 + NUM_BUFFERS_RELEASE(x);
     fluid_voice_update_modenv(voice, FLUID_VOICE_ENVRELEASE,
-                            count, 1.0f, count ? -1.0f / count : 0.0f, 0.0f, 2.0f);
+                            count, 1.0f, -1.0f / count, 0.0f, 2.0f);
 
     break;
 
@@ -1491,7 +1491,7 @@ int fluid_voice_is_on(const fluid_voice_t* voice)
 }
 
 /**
- * Check if a voice is sustained.
+ * Check if a voice keeps playing after it has received a noteoff due to being held by sustain.
  * @param voice Voice instance
  * @return TRUE if sustained, FALSE otherwise
  * @since 1.1.7
@@ -1502,7 +1502,7 @@ int fluid_voice_is_sustained(const fluid_voice_t* voice)
 }
 
 /**
- * Check if a voice is held by sostenuto.
+ * Check if a voice keeps playing after it has received a noteoff due to being held by sostenuto.
  * @param voice Voice instance
  * @return TRUE if sostenuto, FALSE otherwise
  * @since 1.1.7

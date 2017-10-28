@@ -44,7 +44,7 @@
 typedef struct {
   fluid_midi_driver_t driver;
   HMIDIIN hmidiin;
-  int closing;                  /* Set to TRUE when closing driver, to prevent endless SYSEX lockup loop */
+  fluid_atomic_int_t closing;                  /* Set to TRUE when closing driver, to prevent endless SYSEX lockup loop */
 
   fluid_thread_t *sysExAddThread;       /* Thread for SYSEX re-add thread */
   fluid_cond_mutex_t *mutex;    /* Lock for condition */
@@ -54,7 +54,7 @@ typedef struct {
   MIDIHDR sysExHdrs[MIDI_SYSEX_BUF_COUNT];
 
   /* TRUE for each MIDIHDR buffer which should be re-added to MIDI device */
-  int sysExHdrAdd[MIDI_SYSEX_BUF_COUNT];
+  fluid_atomic_int_t sysExHdrAdd[MIDI_SYSEX_BUF_COUNT];
 
   /* Sysex data buffer */
   unsigned char sysExBuf[MIDI_SYSEX_BUF_COUNT * MIDI_SYSEX_MAX_SIZE];
@@ -76,7 +76,7 @@ int delete_fluid_winmidi_driver(fluid_midi_driver_t* p);
 
 void CALLBACK fluid_winmidi_callback(HMIDIIN hmi, UINT wMsg, DWORD_PTR dwInstance,
 				    DWORD_PTR msg, DWORD_PTR extra);
-static void fluid_winmidi_add_sysex_thread (void *data);
+static fluid_thread_return_t fluid_winmidi_add_sysex_thread (void *data);
 static char* fluid_winmidi_input_error(int no);
 int fluid_winmidi_driver_status(fluid_midi_driver_t* p);
 
@@ -129,7 +129,7 @@ new_fluid_winmidi_driver(fluid_settings_t* settings,
   dev->hmidiin = NULL;
   dev->driver.handler = handler;
   dev->driver.data = data;
-  dev->closing = FALSE;
+  fluid_atomic_int_set (&dev->closing, FALSE);
 
   /* get the device name. if none is specified, use the default device. */
   if(fluid_settings_dupstr(settings, "midi.winmidi.device", &devname) != FLUID_OK || !devname) {
@@ -150,12 +150,12 @@ new_fluid_winmidi_driver(fluid_settings_t* settings,
   }
 
   /* find the device */
-  if (strcasecmp("default", devname) != 0) {
+  if (FLUID_STRCASECMP("default", devname) != 0) {
     for (i = 0; i < num; i++) {
       res = midiInGetDevCaps(i, &in_caps, sizeof(MIDIINCAPS));
       if (res == MMSYSERR_NOERROR) {
         FLUID_LOG(FLUID_DBG, "Testing midi device: %s\n", in_caps.szPname);
-        if (strcasecmp(devname, in_caps.szPname) == 0) {
+        if (FLUID_STRCASECMP(devname, in_caps.szPname) == 0) {
           FLUID_LOG(FLUID_DBG, "Selected midi device number: %d\n", i);
           midi_num = i;
           break;
@@ -181,7 +181,7 @@ new_fluid_winmidi_driver(fluid_settings_t* settings,
   /* Prepare and add SYSEX buffers */
   for (i = 0; i < MIDI_SYSEX_BUF_COUNT; i++)
   {
-    dev->sysExHdrAdd[i] = FALSE;
+    fluid_atomic_int_set (&dev->sysExHdrAdd[i], FALSE);
     hdr = &dev->sysExHdrs[i];
 
     hdr->lpData = &dev->sysExBuf[i * MIDI_SYSEX_MAX_SIZE];
@@ -305,7 +305,7 @@ fluid_winmidi_callback(HMIDIIN hmi, UINT wMsg, DWORD_PTR dwInstance,
     break;
 
   case MIM_LONGDATA:    /* SYSEX data */
-    if (dev->closing) break;    /* Prevent MIM_LONGDATA endless loop, don't re-add buffer if closing */
+    if (fluid_atomic_int_get (&dev->closing)) break;    /* Prevent MIM_LONGDATA endless loop, don't re-add buffer if closing */
 
     pMidiHdr = (LPMIDIHDR)dwParam1;
     data = (unsigned char *)(pMidiHdr->lpData);
@@ -339,7 +339,7 @@ fluid_winmidi_callback(HMIDIIN hmi, UINT wMsg, DWORD_PTR dwInstance,
 }
 
 /* Thread for re-adding SYSEX buffers */
-static void
+static fluid_thread_return_t
 fluid_winmidi_add_sysex_thread (void *data)
 {
   fluid_winmidi_driver_t *dev = data;
@@ -360,6 +360,8 @@ fluid_winmidi_add_sysex_thread (void *data)
       }
     }
   }
+
+  return FLUID_THREAD_RETURN_VALUE;
 }
 
 int
