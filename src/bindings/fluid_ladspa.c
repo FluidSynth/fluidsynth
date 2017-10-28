@@ -61,11 +61,11 @@ static fluid_ladspa_lib_t *get_ladspa_library(fluid_ladspa_fx_t *fx, const char 
 static int load_plugin_library(fluid_ladspa_lib_t *lib);
 static void unload_plugin_library(fluid_ladspa_lib_t *lib);
 
-static int set_default_port_value(fluid_ladspa_plugin_t *plugin, unsigned int port_idx,
-        int sample_rate, LADSPA_Data *data);
+static LADSPA_Data get_default_port_value(fluid_ladspa_plugin_t *plugin, unsigned int port_idx,
+        int sample_rate);
 static void connect_node_to_port(fluid_ladspa_node_t *node, fluid_ladspa_dir_t dir,
         fluid_ladspa_plugin_t *plugin, int port_idx);
-static int connect_default_control_nodes(fluid_ladspa_fx_t *fx, fluid_ladspa_plugin_t *plugin);
+static int create_control_port_nodes(fluid_ladspa_fx_t *fx, fluid_ladspa_plugin_t *plugin);
 
 static int check_all_ports_connected(fluid_ladspa_plugin_t *plugin, const char **name);
 static int check_no_inplace_broken(fluid_ladspa_plugin_t *plugin, const char **name1, const char **name2);
@@ -405,7 +405,6 @@ int fluid_ladspa_reset(fluid_ladspa_fx_t *fx)
 void fluid_ladspa_run(fluid_ladspa_fx_t *fx, int block_count, int block_size)
 {
     int i;
-    unsigned int p;
     int num_samples;
     fluid_ladspa_plugin_t *plugin;
 
@@ -756,13 +755,13 @@ int fluid_ladspa_add_plugin(fluid_ladspa_fx_t *fx, const char *effect_name,
         LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
 
-    fx->plugins[fx->num_plugins++] = plugin;
-
-    /* Create nodes for all plugin controls */
-    if (connect_default_control_nodes(fx, plugin) != FLUID_OK)
+    if (create_control_port_nodes(fx, plugin) != FLUID_OK)
     {
+        delete_fluid_ladspa_plugin(plugin);
         LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
+
+    fx->plugins[fx->num_plugins++] = plugin;
 
     LADSPA_API_RETURN(fx, FLUID_OK);
 }
@@ -1373,26 +1372,30 @@ static fluid_ladspa_plugin_t *get_plugin(fluid_ladspa_fx_t *fx, const char *name
 }
 
 /**
- * Return the default value of a plugin port, as specified by the port hints.
+ * Set the passed in float pointer to the default value of a plugin port, as specified
+ * by the LADSPA port hints. If no default hints are found or the port is not a control
+ * node, it returns 0.0f;
+ *
+ * The sample rate is needed because some LADSPA port default hints are expressed as a
+ * fraction of the current sample rate.
  *
  * @param plugin pointer to plugin instance
  * @param port_idx index of the port in the plugin
  * @param sample_rate the current sample rate of the LADSPA fx
- * @param pointer to LADSPA_Data value to set
- * @return FLUID_OK on success, otherwise FLUID_FAILED
+ * @return default port value or 0.0f
  */
-static int set_default_port_value(fluid_ladspa_plugin_t *plugin, unsigned int port_idx, int sample_rate,
-        LADSPA_Data *data)
+static LADSPA_Data get_default_port_value(fluid_ladspa_plugin_t *plugin, unsigned int port_idx,
+        int sample_rate)
 {
     const LADSPA_PortRangeHint *hint;
     LADSPA_PortRangeHintDescriptor flags;
-    LADSPA_Data value;
+    LADSPA_Data value = 0.0;
     float low_factor = 0.0;
     float high_factor = 0.0;
 
     if (port_idx >= plugin->desc->PortCount)
     {
-        return FLUID_FAILED;
+        return value;
     }
 
     hint = &plugin->desc->PortRangeHints[port_idx];
@@ -1400,7 +1403,7 @@ static int set_default_port_value(fluid_ladspa_plugin_t *plugin, unsigned int po
 
     if (!LADSPA_IS_HINT_HAS_DEFAULT(flags))
     {
-        return FLUID_FAILED;
+        return value;
     }
 
     if (LADSPA_IS_HINT_DEFAULT_0(flags))
@@ -1468,23 +1471,21 @@ static int set_default_port_value(fluid_ladspa_plugin_t *plugin, unsigned int po
         value = floor(value + 0.5);
     }
 
-    *data = value;
-
-    return FLUID_OK;
+    return value;
 }
 
 /**
- * For each control port that hasn't got an input yet, create a node based on the port hints
- * specified in the plugin (if available).
+ * Create a control node for each control port on the passed in effect. The value of the
+ * node is taken from port hint defaults, if available. This gets run automatically after
+ * an effect has been added.
  *
  * @param fx LADSPA fx instance
  * @param plugin plugin instance
  * @return FLUID_OK on success, otherwise FLUID_FAILED
  */
-static int connect_default_control_nodes(fluid_ladspa_fx_t *fx, fluid_ladspa_plugin_t *plugin)
+static int create_control_port_nodes(fluid_ladspa_fx_t *fx, fluid_ladspa_plugin_t *plugin)
 {
     unsigned int i;
-    LADSPA_Data value;
     fluid_ladspa_node_t *node;
     fluid_ladspa_dir_t dir;
     int port_flags;
@@ -1493,24 +1494,18 @@ static int connect_default_control_nodes(fluid_ladspa_fx_t *fx, fluid_ladspa_plu
     {
         port_flags = plugin->desc->PortDescriptors[i];
 
-        if ((plugin->port_nodes[i] != NULL) || !LADSPA_IS_PORT_CONTROL(port_flags))
-        {
+        if (!LADSPA_IS_PORT_CONTROL(port_flags))
             continue;
-        }
-
-        if (set_default_port_value(plugin, i, fx->sample_rate, &value) == FLUID_OK)
-        {
-            value = 0.0f;
-        }
 
         node = new_fluid_ladspa_node(fx, "", FLUID_LADSPA_NODE_CONTROL, NULL);
         if (node == NULL)
         {
             return FLUID_FAILED;
         }
-        node->plugin_buffer[0] = value;
 
-        dir = LADSPA_IS_PORT_INPUT(port_flags) ? FLUID_LADSPA_INPUT : FLUID_LADSPA_OUTPUT;
+        node->plugin_buffer[0] = get_default_port_value(plugin, i, fx->sample_rate);
+
+        dir = (LADSPA_IS_PORT_INPUT(port_flags)) ? FLUID_LADSPA_INPUT : FLUID_LADSPA_OUTPUT;
 
         connect_node_to_port(node, dir, plugin, i);
     }
