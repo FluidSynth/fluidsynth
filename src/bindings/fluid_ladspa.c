@@ -45,15 +45,15 @@ static fluid_ladspa_node_t *new_fluid_ladspa_node(fluid_ladspa_fx_t *fx, const c
 static void delete_fluid_ladspa_node(fluid_ladspa_node_t *node);
 static fluid_ladspa_node_t *get_node(fluid_ladspa_fx_t *fx, const char *name);
 
-static int get_plugin_port_idx(const fluid_ladspa_plugin_t *plugin, const char *name);
+static int get_effect_port_idx(const fluid_ladspa_effect_t *effect, const char *name);
 static const LADSPA_Descriptor *get_plugin_descriptor(const fluid_ladspa_lib_t *lib, const char *name);
 
-static fluid_ladspa_plugin_t *
-new_fluid_ladspa_plugin(fluid_ladspa_fx_t *fx, const fluid_ladspa_lib_t *lib, const char *name);
-static void delete_fluid_ladspa_plugin(fluid_ladspa_plugin_t *plugin);
-static void activate_plugin(fluid_ladspa_plugin_t *plugin);
-static void deactivate_plugin(fluid_ladspa_plugin_t *plugin);
-static fluid_ladspa_plugin_t *get_plugin(fluid_ladspa_fx_t *fx, const char *name);
+static fluid_ladspa_effect_t *
+new_fluid_ladspa_effect(fluid_ladspa_fx_t *fx, const fluid_ladspa_lib_t *lib, const char *plugin_name);
+static void delete_fluid_ladspa_effect(fluid_ladspa_effect_t *effect);
+static void activate_effect(fluid_ladspa_effect_t *effect);
+static void deactivate_effect(fluid_ladspa_effect_t *effect);
+static fluid_ladspa_effect_t *get_effect(fluid_ladspa_fx_t *fx, const char *name);
 
 static fluid_ladspa_lib_t *new_fluid_ladspa_lib(fluid_ladspa_fx_t *fx, const char *filename);
 static void delete_fluid_ladspa_lib(fluid_ladspa_lib_t *lib);
@@ -61,29 +61,29 @@ static fluid_ladspa_lib_t *get_ladspa_library(fluid_ladspa_fx_t *fx, const char 
 static int load_plugin_library(fluid_ladspa_lib_t *lib);
 static void unload_plugin_library(fluid_ladspa_lib_t *lib);
 
-static LADSPA_Data get_default_port_value(fluid_ladspa_plugin_t *plugin, unsigned int port_idx,
+static LADSPA_Data get_default_port_value(fluid_ladspa_effect_t *effect, unsigned int port_idx,
         int sample_rate);
 static void connect_node_to_port(fluid_ladspa_node_t *node, fluid_ladspa_dir_t dir,
-        fluid_ladspa_plugin_t *plugin, int port_idx);
-static int create_control_port_nodes(fluid_ladspa_fx_t *fx, fluid_ladspa_plugin_t *plugin);
+        fluid_ladspa_effect_t *effect, int port_idx);
+static int create_control_port_nodes(fluid_ladspa_fx_t *fx, fluid_ladspa_effect_t *effect);
 
-static int check_all_ports_connected(fluid_ladspa_plugin_t *plugin, const char **name);
-static int check_no_inplace_broken(fluid_ladspa_plugin_t *plugin, const char **name1, const char **name2);
+static int check_all_ports_connected(fluid_ladspa_effect_t *effect, const char **name);
+static int check_no_inplace_broken(fluid_ladspa_effect_t *effect, const char **name1, const char **name2);
 static int check_host_output_used(fluid_ladspa_fx_t *fx);
 static int check_all_audio_nodes_connected(fluid_ladspa_fx_t *fx, const char **name);
 
-static FLUID_INLINE void mix_plugin_with_host_buffer(fluid_ladspa_node_t *node,
+static FLUID_INLINE void mix_effect_with_host_buffer(fluid_ladspa_node_t *node,
         int num_samples, float gain);
 
 #ifndef WITH_FLOAT
-static FLUID_INLINE void copy_host_to_plugin_buffers(fluid_ladspa_fx_t *fx, int num_samples);
-static FLUID_INLINE void copy_plugin_to_host_buffers(fluid_ladspa_fx_t *fx, int num_samples);
+static FLUID_INLINE void copy_host_to_effect_buffers(fluid_ladspa_fx_t *fx, int num_samples);
+static FLUID_INLINE void copy_effect_to_host_buffers(fluid_ladspa_fx_t *fx, int num_samples);
 #endif
 
 /**
  * Creates a new LADSPA effects unit.
  *
- * @param sample_rate sample_rate for the LADSPA plugins
+ * @param sample_rate sample_rate for the LADSPA effects
  * @param buffer_size size of all audio buffers
  * @return pointer to the new LADSPA effects unit
  */
@@ -266,7 +266,7 @@ int fluid_ladspa_set_sample_rate(fluid_ladspa_fx_t *fx, fluid_real_t sample_rate
  *
  * If an engine is active, the only allowed user actions are deactivation or
  * setting values of  control ports on effects. Anything else, especially
- * adding or removing plugins, nodes or ports, is only allowed in deactivated
+ * adding or removing effects, buffers or ports, is only allowed in deactivated
  * state.
  *
  * @param fx LADSPA fx instance
@@ -284,7 +284,7 @@ int fluid_ladspa_is_active(fluid_ladspa_fx_t *fx)
 }
 
 /**
- * Activate the LADSPA fx instance and each configured plugin.
+ * Activate the LADSPA fx instance and each configured effect.
  *
  * @param fx LADSPA fx instance
  * @return FLUID_OK if activation succeeded or already active, otherwise FLUID_FAILED
@@ -306,16 +306,16 @@ int fluid_ladspa_activate(fluid_ladspa_fx_t *fx)
         LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
 
-    for (i = 0; i < fx->num_plugins; i++)
+    for (i = 0; i < fx->num_effects; i++)
     {
-        activate_plugin(fx->plugins[i]);
+        activate_effect(fx->effects[i]);
     }
 
     if (!fluid_atomic_int_compare_and_exchange(&fx->state, FLUID_LADSPA_INACTIVE, FLUID_LADSPA_ACTIVE))
     {
-        for (i = 0; i < fx->num_plugins; i++)
+        for (i = 0; i < fx->num_effects; i++)
         {
-            deactivate_plugin(fx->plugins[i]);
+            deactivate_effect(fx->effects[i]);
         }
         LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
@@ -324,7 +324,7 @@ int fluid_ladspa_activate(fluid_ladspa_fx_t *fx)
 }
 
 /**
- * Deactivate a LADSPA fx instance and all configured plugins.
+ * Deactivate a LADSPA fx instance and all configured effects.
  *
  * @note This function may sleep.
  *
@@ -354,10 +354,10 @@ int fluid_ladspa_deactivate(fluid_ladspa_fx_t *fx)
     }
     fluid_cond_mutex_unlock(fx->run_finished_mutex);
 
-    /* Now that we're inactive, deactivate all plugins and return success */
-    for (i = 0; i < fx->num_plugins; i++)
+    /* Now that we're inactive, deactivate all effects and return success */
+    for (i = 0; i < fx->num_effects; i++)
     {
-        deactivate_plugin(fx->plugins[i]);
+        deactivate_effect(fx->effects[i]);
     }
 
     fx->pending_deactivation = 0;
@@ -367,7 +367,7 @@ int fluid_ladspa_deactivate(fluid_ladspa_fx_t *fx)
 
 /**
  * Reset the LADSPA effects engine: Deactivate LADSPA if currently active, remove all
- * plugin instances, remove all user nodes and unload all libraries.
+ * effects, remove all user nodes and unload all libraries.
  *
  * @param fx LADSPA fx instance
  * @return FLUID_OK on success, otherwise FLUID_FAILED
@@ -395,7 +395,7 @@ int fluid_ladspa_reset(fluid_ladspa_fx_t *fx)
  * FluidSynth calls this function during main output mixing, just after
  * the internal reverb and chorus effects have been processed.
  *
- * It copies audio data from the supplied buffers, runs all LADSPA plugins and copies the
+ * It copies audio data from the supplied buffers, runs all effects and copies the
  * resulting audio back into the same buffers.
  *
  * @param fx LADSPA effects instance
@@ -406,12 +406,12 @@ void fluid_ladspa_run(fluid_ladspa_fx_t *fx, int block_count, int block_size)
 {
     int i;
     int num_samples;
-    fluid_ladspa_plugin_t *plugin;
+    fluid_ladspa_effect_t *effect;
 
     /* Somebody wants to deactivate the engine, so let's give them a chance to do that.
-     * And check that there is at least one plugin loaded, to avoid the overhead of the
+     * And check that there is at least one effect, to avoid the overhead of the
      * atomic compare and exchange on an unconfigured LADSPA engine. */
-    if (fx->pending_deactivation || fx->num_plugins == 0)
+    if (fx->pending_deactivation || fx->num_effects == 0)
     {
         return;
     }
@@ -425,35 +425,31 @@ void fluid_ladspa_run(fluid_ladspa_fx_t *fx, int block_count, int block_size)
     num_samples = block_count * block_size;
 
 #ifndef WITH_FLOAT
-    copy_host_to_plugin_buffers(fx, num_samples);
+    copy_host_to_effect_buffers(fx, num_samples);
 #endif
 
-    /* Clear all user audio nodes. This is really only necessary if the first plugin
-     * writing to the buffer is in 'add' mode. So there's room for optimization here,
-     * but it would mean keeping track of which plugin connected to which audio node
-     * in which order. */
     for (i = 0; i < fx->num_audio_nodes; i++)
     {
-        FLUID_MEMSET(fx->audio_nodes[i]->plugin_buffer, 0, fx->buffer_size * sizeof(LADSPA_Data));
+        FLUID_MEMSET(fx->audio_nodes[i]->effect_buffer, 0, fx->buffer_size * sizeof(LADSPA_Data));
     }
 
-    /* Run each plugin in the order that they were added */
-    for (i = 0; i < fx->num_plugins; i++)
+    /* Run each effect in the order that they were added */
+    for (i = 0; i < fx->num_effects; i++)
     {
-        plugin = fx->plugins[i];
+        effect = fx->effects[i];
 
-        if (plugin->mode == FLUID_LADSPA_MODE_ADD)
+        if (effect->mode == FLUID_LADSPA_MODE_ADD)
         {
-            plugin->desc->run_adding(plugin->handle, num_samples);
+            effect->desc->run_adding(effect->handle, num_samples);
         }
         else
         {
-            plugin->desc->run(plugin->handle, num_samples);
+            effect->desc->run(effect->handle, num_samples);
         }
     }
 
 #ifndef WITH_FLOAT
-    copy_plugin_to_host_buffers(fx, num_samples);
+    copy_effect_to_host_buffers(fx, num_samples);
 #endif
 
     if (!fluid_atomic_int_compare_and_exchange(&fx->state, FLUID_LADSPA_RUNNING, FLUID_LADSPA_ACTIVE))
@@ -472,46 +468,46 @@ void fluid_ladspa_run(fluid_ladspa_fx_t *fx, int block_count, int block_size)
 }
 
 /**
- * Check if the plugin supports the run_adding and set_run_adding_gain
+ * Check if the effect plugin supports the run_adding and set_run_adding_gain
  * interfaces necessary for the FLUID_LADSPA_ADD output mode.
  *
  * @param fx LADSPA fx
- * @param name the name of the plugin
+ * @param name the name of the effect
  * @return TRUE if add mode is supported, otherwise FALSE
  */
-int fluid_ladspa_plugin_can_add(fluid_ladspa_fx_t *fx, const char *name)
+int fluid_ladspa_effect_can_add(fluid_ladspa_fx_t *fx, const char *name)
 {
     int can_add;
-    fluid_ladspa_plugin_t *plugin;
+    fluid_ladspa_effect_t *effect;
 
     LADSPA_API_ENTER(fx);
 
-    plugin = get_plugin(fx, name);
-    if (plugin == NULL)
+    effect = get_effect(fx, name);
+    if (effect == NULL)
     {
         LADSPA_API_RETURN(fx, FALSE);
     }
 
-    can_add = (plugin->desc->run_adding != NULL
-            && plugin->desc->set_run_adding_gain != NULL);
+    can_add = (effect->desc->run_adding != NULL
+            && effect->desc->set_run_adding_gain != NULL);
 
     LADSPA_API_RETURN(fx, can_add);
 }
 
 /**
- * Set if the plugin should replace everything in the output buffer(s) or add
+ * Set if the effect should replace everything in the output buffer(s) or add
  * to the buffer(s) with a fixed gain. The default mode is FLUID_LADSPA_MODE_REPLACE.
  *
  * @param fx LADSPA fx instance
- * @param name the name of the plugin
+ * @param name the name of theeffect 
  * @param mode which mode to set: FLUID_LADSPA_MODE_ADD or FLUID_LADSPA_MODE_REPLACE
- * @param gain the gain to apply to the plugin output before adding to output. Ignored for replace mode.
+ * @param gain the gain to apply to the effect output before adding to output. Ignored for replace mode.
  * @return FLUID_OK on success, otherwise FLUID_FAILED
  */
-int fluid_ladspa_plugin_mode(fluid_ladspa_fx_t *fx, const char *name,
+int fluid_ladspa_set_effect_mode(fluid_ladspa_fx_t *fx, const char *name,
         fluid_ladspa_mode_t mode, float gain)
 {
-    fluid_ladspa_plugin_t *plugin;
+    fluid_ladspa_effect_t *effect;
 
     LADSPA_API_ENTER(fx);
 
@@ -520,25 +516,25 @@ int fluid_ladspa_plugin_mode(fluid_ladspa_fx_t *fx, const char *name,
         LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
 
-    plugin = get_plugin(fx, name);
-    if (plugin == NULL)
+    effect = get_effect(fx, name);
+    if (effect == NULL)
     {
         LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
 
     if (mode == FLUID_LADSPA_MODE_ADD)
     {
-        if (!fluid_ladspa_plugin_can_add(fx, name))
+        if (!fluid_ladspa_effect_can_add(fx, name))
         {
-            FLUID_LOG(FLUID_ERR, "Plugin '%s' does not support 'add' mode",
-                    plugin->desc->Label);
+            FLUID_LOG(FLUID_ERR, "Effect '%s' does not support 'add' mode",
+                    effect->desc->Label);
             LADSPA_API_RETURN(fx, FLUID_FAILED);
         }
 
-        plugin->desc->set_run_adding_gain(plugin->handle, gain);
+        effect->desc->set_run_adding_gain(effect->handle, gain);
     }
 
-    plugin->mode = mode;
+    effect->mode = mode;
 
     LADSPA_API_RETURN(fx, FLUID_OK);
 }
@@ -547,13 +543,13 @@ static void clear_ladspa(fluid_ladspa_fx_t *fx)
 {
     int i;
 
-    /* Deactivate and free all plugins */
-    for (i = 0; i < fx->num_plugins; i++)
+    /* Deactivate and free all effects */
+    for (i = 0; i < fx->num_effects; i++)
     {
-        deactivate_plugin(fx->plugins[i]);
-        delete_fluid_ladspa_plugin(fx->plugins[i]);
+        deactivate_effect(fx->effects[i]);
+        delete_fluid_ladspa_effect(fx->effects[i]);
     }
-    fx->num_plugins = 0;
+    fx->num_effects = 0;
 
     /* Unload and free all libraries */
     for (i = 0; i < fx->num_libs; i++)
@@ -604,29 +600,29 @@ int fluid_ladspa_node_exists(fluid_ladspa_fx_t *fx, const char *name)
 }
 
 /**
- * Check if the named port exists on a plugin instance.
+ * Check if the named port exists on an effect
  *
  * The string match is case-insensitive and treats spaces and underscores as equal.
  *
  * @param fx LADSPA fx instance
- * @param effect_name name of the plugin
+ * @param effect_name name of the effect
  * @param name the port name
  * @return TRUE if port was found, otherwise FALSE
  */
 int fluid_ladspa_effect_port_exists(fluid_ladspa_fx_t *fx, const char *effect_name, const char *port_name)
 {
-    fluid_ladspa_plugin_t *plugin;
+    fluid_ladspa_effect_t *effect;
     int port_exists;
 
     LADSPA_API_ENTER(fx);
 
-    plugin = get_plugin(fx, effect_name);
-    if (plugin == NULL)
+    effect = get_effect(fx, effect_name);
+    if (effect == NULL)
     {
         LADSPA_API_RETURN(fx, FALSE);
     }
 
-    port_exists = (get_plugin_port_idx(plugin, port_name) != -1);
+    port_exists = (get_effect_port_idx(effect, port_name) != -1);
 
     LADSPA_API_RETURN(fx, port_exists);
 }
@@ -634,7 +630,7 @@ int fluid_ladspa_effect_port_exists(fluid_ladspa_fx_t *fx, const char *effect_na
 /**
  * Create and add a new LADSPA audio node.
  *
- * Audio nodes are used to connect the output of one plugin to the input of
+ * Audio nodes are used to connect the output of one effect to the input of
  * another.
  *
  * @param fx LADSPA effects instance
@@ -673,24 +669,24 @@ int fluid_ladspa_set_effect_control(fluid_ladspa_fx_t *fx, const char *effect_na
         const char *port_name, float val)
 {
     fluid_ladspa_node_t *node;
-    fluid_ladspa_plugin_t *plugin;
+    fluid_ladspa_effect_t *effect;
     int port_idx;
 
     LADSPA_API_ENTER(fx);
 
-    plugin = get_plugin(fx, effect_name);
-    if (plugin == NULL)
+    effect = get_effect(fx, effect_name);
+    if (effect == NULL)
     {
         LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
 
-    port_idx = get_plugin_port_idx(plugin, port_name);
+    port_idx = get_effect_port_idx(effect, port_name);
     if (port_idx < 0)
     {
         LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
 
-    node = plugin->port_nodes[port_idx];
+    node = effect->port_nodes[port_idx];
     if (node == NULL)
     {
         LADSPA_API_RETURN(fx, FLUID_FAILED);
@@ -701,25 +697,25 @@ int fluid_ladspa_set_effect_control(fluid_ladspa_fx_t *fx, const char *effect_na
         LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
 
-    node->plugin_buffer[0] = val;
+    node->effect_buffer[0] = val;
 
     LADSPA_API_RETURN(fx, FLUID_OK);
 }
 
 /**
- * Instantiate a plugin from a LADSPA plugin library
+ * Create an effect, i.e. an instance of a LADSPA plugin
  *
  * @param fx LADSPA effects instance
- * @param effect_name name of the effect (plugin instance)
+ * @param effect_name name of the effect
  * @param lib_name filename of ladspa plugin library
  * @param plugin_name optional, plugin name if there is more than one plugin in the library
  * @return FLUID_OK on success, otherwise FLUID_FAILED
  */
-int fluid_ladspa_add_plugin(fluid_ladspa_fx_t *fx, const char *effect_name,
+int fluid_ladspa_add_effect(fluid_ladspa_fx_t *fx, const char *effect_name,
         const char *lib_name, const char *plugin_name)
 {
     fluid_ladspa_lib_t *lib;
-    fluid_ladspa_plugin_t *plugin;
+    fluid_ladspa_effect_t *effect;
 
     LADSPA_API_ENTER(fx);
     if (fluid_ladspa_is_active(fx))
@@ -727,9 +723,9 @@ int fluid_ladspa_add_plugin(fluid_ladspa_fx_t *fx, const char *effect_name,
         LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
 
-    if (fx->num_plugins >= FLUID_LADSPA_MAX_PLUGINS)
+    if (fx->num_effects >= FLUID_LADSPA_MAX_EFFECTS)
     {
-        FLUID_LOG(FLUID_ERR, "Maximum number of LADSPA plugins reached");
+        FLUID_LOG(FLUID_ERR, "Maximum number of LADSPA effects reached");
         LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
 
@@ -739,27 +735,27 @@ int fluid_ladspa_add_plugin(fluid_ladspa_fx_t *fx, const char *effect_name,
         LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
 
-    plugin = new_fluid_ladspa_plugin(fx, lib, plugin_name);
-    if (plugin == NULL)
+    effect = new_fluid_ladspa_effect(fx, lib, plugin_name);
+    if (effect == NULL)
     {
         LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
 
-    plugin->name = FLUID_STRDUP(effect_name);
-    if (plugin->name == NULL)
+    effect->name = FLUID_STRDUP(effect_name);
+    if (effect->name == NULL)
     {
         FLUID_LOG(FLUID_ERR, "Out of memory");
-        delete_fluid_ladspa_plugin(plugin);
+        delete_fluid_ladspa_effect(effect);
         LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
 
-    if (create_control_port_nodes(fx, plugin) != FLUID_OK)
+    if (create_control_port_nodes(fx, effect) != FLUID_OK)
     {
-        delete_fluid_ladspa_plugin(plugin);
+        delete_fluid_ladspa_effect(effect);
         LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
 
-    fx->plugins[fx->num_plugins++] = plugin;
+    fx->effects[fx->num_effects++] = effect;
 
     LADSPA_API_RETURN(fx, FLUID_OK);
 }
@@ -772,14 +768,14 @@ int fluid_ladspa_add_plugin(fluid_ladspa_fx_t *fx, const char *effect_name,
  *
  * @param fx LADSPA effects instance
  * @param effect_name name of the effect
- * @param port_name the port name to connect to (case-insensitive prefix match, see get_plugin_port_idx)
+ * @param port_name the port name to connect to (case-insensitive prefix match, see get_effect_port_idx)
  * @param node_name the node name to connect to (case-insensitive)
  * @return FLUID_OK on success, otherwise FLUID_FAILED
  */
 int fluid_ladspa_connect(fluid_ladspa_fx_t *fx, const char *effect_name,
         const char *port_name, const char *node_name)
 {
-    fluid_ladspa_plugin_t *plugin;
+    fluid_ladspa_effect_t *effect;
     fluid_ladspa_node_t *node;
     int port_idx;
     int port_flags;
@@ -792,14 +788,14 @@ int fluid_ladspa_connect(fluid_ladspa_fx_t *fx, const char *effect_name,
         LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
 
-    plugin = get_plugin(fx, effect_name);
-    if (plugin == NULL)
+    effect = get_effect(fx, effect_name);
+    if (effect == NULL)
     {
         FLUID_LOG(FLUID_ERR, "Effect '%s' not found", effect_name);
         LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
 
-    port_idx = get_plugin_port_idx(plugin, port_name);
+    port_idx = get_effect_port_idx(effect, port_name);
     if (port_idx < 0)
     {
         FLUID_LOG(FLUID_ERR, "Port '%s' not found on effect '%s'", port_name, effect_name);
@@ -813,7 +809,7 @@ int fluid_ladspa_connect(fluid_ladspa_fx_t *fx, const char *effect_name,
         LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
 
-    port_flags = plugin->desc->PortDescriptors[port_idx];
+    port_flags = effect->desc->PortDescriptors[port_idx];
 
     /* Check that requested port type matches the node type */
     if (LADSPA_IS_PORT_CONTROL(port_flags) && node->type != FLUID_LADSPA_NODE_CONTROL)
@@ -842,7 +838,7 @@ int fluid_ladspa_connect(fluid_ladspa_fx_t *fx, const char *effect_name,
               effect_name, port_name,
               (dir == FLUID_LADSPA_INPUT) ? "<" : ">", node_name);
 
-    connect_node_to_port(node, dir, plugin, port_idx);
+    connect_node_to_port(node, dir, effect, port_idx);
 
     LADSPA_API_RETURN(fx, FLUID_OK);
 }
@@ -860,40 +856,40 @@ int fluid_ladspa_check(fluid_ladspa_fx_t *fx, char *err, int err_size)
     int i;
     const char *str;
     const char *str2;
-    fluid_ladspa_plugin_t *plugin;
+    fluid_ladspa_effect_t *effect;
 
     LADSPA_API_ENTER(fx);
 
-    /* Check that there is at least one plugin */
-    if (fx->num_plugins == 0)
+    /* Check that there is at least one effect */
+    if (fx->num_effects == 0)
     {
-        FLUID_SNPRINTF(err, err_size, "No plugins loaded\n");
+        FLUID_SNPRINTF(err, err_size, "No effects configured\n");
         LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
 
-    for (i = 0; i < fx->num_plugins; i++)
+    for (i = 0; i < fx->num_effects; i++)
     {
-        plugin = fx->plugins[i];
+        effect = fx->effects[i];
 
-        if (check_all_ports_connected(plugin, &str) == FLUID_FAILED)
+        if (check_all_ports_connected(effect, &str) == FLUID_FAILED)
         {
-            FLUID_SNPRINTF(err, err_size, "Port '%s' on plugin '%s' is not connected\n",
-                            str, plugin->desc->Label);
+            FLUID_SNPRINTF(err, err_size, "Port '%s' on effect '%s' is not connected\n",
+                            str, effect->name);
             LADSPA_API_RETURN(fx, FLUID_FAILED);
         }
 
-        if (check_no_inplace_broken(plugin, &str, &str2) == FLUID_FAILED)
+        if (check_no_inplace_broken(effect, &str, &str2) == FLUID_FAILED)
         {
                 FLUID_SNPRINTF(err, err_size,
-                        "Plugin '%s' is in-place broken, '%s' and '%s' are not allowed "
-                        "to connect to the same node\n", plugin->desc->Label, str, str2);
+                        "effect '%s' is in-place broken, '%s' and '%s' are not allowed "
+                        "to connect to the same node\n", effect->name, str, str2);
                 LADSPA_API_RETURN(fx, FLUID_FAILED);
         }
     }
 
     if (check_host_output_used(fx) == FLUID_FAILED)
     {
-        FLUID_SNPRINTF(err, err_size, "No plugin outputs to one the host nodes\n");
+        FLUID_SNPRINTF(err, err_size, "No effect outputs to one the host nodes\n");
         LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
 
@@ -907,26 +903,26 @@ int fluid_ladspa_check(fluid_ladspa_fx_t *fx, char *err, int err_size)
 }
 
 
-static void activate_plugin(fluid_ladspa_plugin_t *plugin)
+static void activate_effect(fluid_ladspa_effect_t *effect)
 {
-    if (!plugin->active)
+    if (!effect->active)
     {
-        plugin->active = 1;
-        if (plugin->desc->activate != NULL)
+        effect->active = 1;
+        if (effect->desc->activate != NULL)
         {
-            plugin->desc->activate(plugin->handle);
+            effect->desc->activate(effect->handle);
         }
     }
 }
 
-static void deactivate_plugin(fluid_ladspa_plugin_t *plugin)
+static void deactivate_effect(fluid_ladspa_effect_t *effect)
 {
-    if (plugin->active)
+    if (effect->active)
     {
-        plugin->active = 0;
-        if (plugin->desc->deactivate != NULL)
+        effect->active = 0;
+        if (effect->desc->deactivate != NULL)
         {
-            plugin->desc->deactivate(plugin->handle);
+            effect->desc->deactivate(effect->handle);
         }
     }
 }
@@ -954,27 +950,27 @@ static fluid_ladspa_node_t *get_node(fluid_ladspa_fx_t *fx, const char *name)
 }
 
 /**
- * Return a LADSPA plugin port index by name, using a 'fuzzy match'.
+ * Return a LADSPA effect port index by name, using a 'fuzzy match'.
  *
- * Returns the first plugin port which matches the name. If no exact match is
+ * Returns the first effect port which matches the name. If no exact match is
  * found, returns the port that starts with the specified name, but only if there is
  * only one such match.
  *
- * @param plugin pointer to fluid_ladspa_plugin_t
+ * @param effect pointer to fluid_ladspa_effect_t
  * @param name the port name
- * @return index of the port in the plugin or -1 on error
+ * @return index of the port in the effect or -1 on error
  */
-static int get_plugin_port_idx(const fluid_ladspa_plugin_t *plugin, const char *name)
+static int get_effect_port_idx(const fluid_ladspa_effect_t *effect, const char *name)
 {
     unsigned int i;
     int port = -1;
 
-    for (i = 0; i < plugin->desc->PortCount; i++)
+    for (i = 0; i < effect->desc->PortCount; i++)
     {
-        if (FLUID_STRNCASECMP(plugin->desc->PortNames[i], name, FLUID_STRLEN(name)) == 0)
+        if (FLUID_STRNCASECMP(effect->desc->PortNames[i], name, FLUID_STRLEN(name)) == 0)
         {
             /* exact match, return immediately */
-            if (FLUID_STRLEN(plugin->desc->PortNames[i]) == FLUID_STRLEN(name))
+            if (FLUID_STRLEN(effect->desc->PortNames[i]) == FLUID_STRLEN(name))
             {
                 return i;
             }
@@ -1035,11 +1031,10 @@ static const LADSPA_Descriptor *get_plugin_descriptor(const fluid_ladspa_lib_t *
 }
 
 /**
- * Instantiate a new LADSPA plugin from a library and set up the associated
+ * Instantiate a LADSPA plugin from a library and set up the associated
  * control structures needed by the LADSPA fx engine.
  *
  * If the library contains only one plugin, then the name is optional.
- *
  * Plugins are identified by their "Label" in the plugin descriptor structure.
  *
  * @param fx LADSPA fx instance
@@ -1047,69 +1042,69 @@ static const LADSPA_Descriptor *get_plugin_descriptor(const fluid_ladspa_lib_t *
  * @param name (optional) string name of the plugin (the LADSPA Label)
  * @return pointer to the new ladspa_plugin_t structure or NULL on error
  */
-static fluid_ladspa_plugin_t *
-new_fluid_ladspa_plugin(fluid_ladspa_fx_t *fx, const fluid_ladspa_lib_t *lib, const char *name)
+static fluid_ladspa_effect_t *
+new_fluid_ladspa_effect(fluid_ladspa_fx_t *fx, const fluid_ladspa_lib_t *lib, const char *plugin_name)
 {
-    fluid_ladspa_plugin_t *plugin;
+    fluid_ladspa_effect_t *effect;
 
-    plugin = FLUID_NEW(fluid_ladspa_plugin_t);
-    if (plugin == NULL)
+    effect = FLUID_NEW(fluid_ladspa_effect_t);
+    if (effect == NULL)
     {
         FLUID_LOG(FLUID_ERR, "Out of memory");
         return NULL;
     }
-    FLUID_MEMSET(plugin, 0, sizeof(fluid_ladspa_plugin_t));
+    FLUID_MEMSET(effect, 0, sizeof(fluid_ladspa_effect_t));
 
-    plugin->desc = get_plugin_descriptor(lib, name);
-    if (plugin->desc == NULL)
+    effect->desc = get_plugin_descriptor(lib, plugin_name);
+    if (effect->desc == NULL)
     {
-        delete_fluid_ladspa_plugin(plugin);
+        delete_fluid_ladspa_effect(effect);
         return NULL;
     }
 
-    plugin->handle = plugin->desc->instantiate(plugin->desc, fx->sample_rate);
-    if (plugin->handle == NULL)
+    effect->handle = effect->desc->instantiate(effect->desc, fx->sample_rate);
+    if (effect->handle == NULL)
     {
-        delete_fluid_ladspa_plugin(plugin);
-        FLUID_LOG(FLUID_ERR, "Unable to instantiate plugin '%s' from '%s'", name, lib->filename);
+        delete_fluid_ladspa_effect(effect);
+        FLUID_LOG(FLUID_ERR, "Unable to instantiate plugin '%s' from '%s'", plugin_name, lib->filename);
         return NULL;
     }
 
-    plugin->port_nodes = FLUID_ARRAY(fluid_ladspa_node_t*, plugin->desc->PortCount);
-    if (plugin->port_nodes == NULL)
+    effect->port_nodes = FLUID_ARRAY(fluid_ladspa_node_t*, effect->desc->PortCount);
+    if (effect->port_nodes == NULL)
     {
-        delete_fluid_ladspa_plugin(plugin);
+        delete_fluid_ladspa_effect(effect);
         FLUID_LOG(FLUID_ERR, "Out of memory");
         return NULL;
     }
-    FLUID_MEMSET(plugin->port_nodes, 0, plugin->desc->PortCount * sizeof(fluid_ladspa_node_t*));
+    FLUID_MEMSET(effect->port_nodes, 0, effect->desc->PortCount * sizeof(fluid_ladspa_node_t*));
 
-    return plugin;
+    return effect;
 }
 
-static void delete_fluid_ladspa_plugin(fluid_ladspa_plugin_t *plugin)
+static void delete_fluid_ladspa_effect(fluid_ladspa_effect_t *effect)
 {
-    if (plugin == NULL)
+    if (effect == NULL)
     {
         return;
     }
 
-    if (plugin->port_nodes != NULL)
+    if (effect->port_nodes != NULL)
     {
-        FLUID_FREE(plugin->port_nodes);
+        FLUID_FREE(effect->port_nodes);
     }
 
-    if (plugin->handle != NULL && plugin->desc != NULL && plugin->desc->cleanup != NULL)
+    if (effect->handle != NULL && effect->desc != NULL && effect->desc->cleanup != NULL)
     {
-        plugin->desc->cleanup(plugin->handle);
+        effect->desc->cleanup(effect->handle);
     }
 
-    if (plugin->name != NULL)
+    if (effect->name != NULL)
     {
-        FLUID_FREE(plugin->name);
+        FLUID_FREE(effect->name);
     }
 
-    FLUID_FREE(plugin);
+    FLUID_FREE(effect);
 }
 
 static fluid_ladspa_node_t *new_fluid_ladspa_node(fluid_ladspa_fx_t *fx, const char *name,
@@ -1158,26 +1153,26 @@ static fluid_ladspa_node_t *new_fluid_ladspa_node(fluid_ladspa_fx_t *fx, const c
         }
 
 #ifdef WITH_FLOAT
-        /* If the host uses the same floating-point width as LADSPA, then plugins
+        /* If the host uses the same floating-point width as LADSPA, then effects
          * can work in-place on the host buffer. Otherwise well need a separate
          * buffer for type conversion. */
-        node->plugin_buffer = node->host_buffer;
+        node->effect_buffer = node->host_buffer;
 #endif
     }
 
-    if (node->plugin_buffer == NULL)
+    if (node->effect_buffer == NULL)
     {
         /* Control nodes only store a single floating-point value */
         buffer_size = (type == FLUID_LADSPA_NODE_CONTROL) ? 1 : fx->buffer_size;
 
-        node->plugin_buffer = FLUID_ARRAY(LADSPA_Data, buffer_size);
-        if (node->plugin_buffer == NULL)
+        node->effect_buffer = FLUID_ARRAY(LADSPA_Data, buffer_size);
+        if (node->effect_buffer == NULL)
         {
             delete_fluid_ladspa_node(node);
             FLUID_LOG(FLUID_ERR, "Out of memory");
             return NULL;
         }
-        FLUID_MEMSET(node->plugin_buffer, 0, buffer_size * sizeof(LADSPA_Data));
+        FLUID_MEMSET(node->effect_buffer, 0, buffer_size * sizeof(LADSPA_Data));
     }
 
     fx->nodes[fx->num_nodes++] = node;
@@ -1198,11 +1193,11 @@ static fluid_ladspa_node_t *new_fluid_ladspa_node(fluid_ladspa_fx_t *fx, const c
 
 static void delete_fluid_ladspa_node(fluid_ladspa_node_t *node)
 {
-    /* If plugin_buffer the same as host_buffer, then the plugin_buffer has been
+    /* If effect_buffer the same as host_buffer, then the effect_buffer has been
      * provided externally, so don't free */
-    if ((node->plugin_buffer != NULL) && ((void *)node->plugin_buffer != (void *)node->host_buffer))
+    if ((node->effect_buffer != NULL) && ((void *)node->effect_buffer != (void *)node->host_buffer))
     {
-        FLUID_FREE(node->plugin_buffer);
+        FLUID_FREE(node->effect_buffer);
     }
 
     if (node->name != NULL)
@@ -1296,7 +1291,7 @@ static int load_plugin_library(fluid_ladspa_lib_t *lib)
         ladspa_path = getenv("LADSPA_PATH");
         if (ladspa_path == NULL)
         {
-            FLUID_LOG(FLUID_ERR, "Unable to load LADSPA plugin '%s'. Use slashes in the "
+            FLUID_LOG(FLUID_ERR, "Unable to load LADSPA library '%s'. Use slashes in the "
                                  "LADSPA library filename or set the LADSPA_PATH variable.",
                       lib->filename);
             return FLUID_FAILED;
@@ -1317,7 +1312,7 @@ static int load_plugin_library(fluid_ladspa_lib_t *lib)
         {
             error = "Unknown error";
         }
-        FLUID_LOG(FLUID_ERR, "Unable to load LADSPA plugin library '%s': %d", filepath, error);
+        FLUID_LOG(FLUID_ERR, "Unable to load LADSPA library '%s': %d", filepath, error);
         return FLUID_FAILED;
     }
 
@@ -1345,23 +1340,23 @@ static void unload_plugin_library(fluid_ladspa_lib_t *lib)
 }
 
 /**
- * Retrieve a ladspa_plugin_t instance by it's name.
+ * Retrieve a ladspa_effect_t instance by it's name.
  *
  * @param fx LADSPA effects instance
- * @param name plugin name
- * @return pointer to plugin or NULL if not found
+ * @param name effect name
+ * @return pointer to effect or NULL if not found
  */
-static fluid_ladspa_plugin_t *get_plugin(fluid_ladspa_fx_t *fx, const char *name)
+static fluid_ladspa_effect_t *get_effect(fluid_ladspa_fx_t *fx, const char *name)
 {
     int i;
 
     LADSPA_API_ENTER(fx);
 
-    for (i = 0; i < fx->num_plugins; i++)
+    for (i = 0; i < fx->num_effects; i++)
     {
-        if (FLUID_STRNCASECMP(fx->plugins[i]->name, name, FLUID_STRLEN(name)) == 0)
+        if (FLUID_STRNCASECMP(fx->effects[i]->name, name, FLUID_STRLEN(name)) == 0)
         {
-            LADSPA_API_RETURN(fx, fx->plugins[i]);
+            LADSPA_API_RETURN(fx, fx->effects[i]);
         }
     }
 
@@ -1370,19 +1365,19 @@ static fluid_ladspa_plugin_t *get_plugin(fluid_ladspa_fx_t *fx, const char *name
 }
 
 /**
- * Set the passed in float pointer to the default value of a plugin port, as specified
+ * Set the passed in float pointer to the default value of a effect port, as specified
  * by the LADSPA port hints. If no default hints are found or the port is not a control
  * node, it returns 0.0f;
  *
  * The sample rate is needed because some LADSPA port default hints are expressed as a
  * fraction of the current sample rate.
  *
- * @param plugin pointer to plugin instance
- * @param port_idx index of the port in the plugin
+ * @param effect pointer to effect instance
+ * @param port_idx index of the port in theeffect 
  * @param sample_rate the current sample rate of the LADSPA fx
  * @return default port value or 0.0f
  */
-static LADSPA_Data get_default_port_value(fluid_ladspa_plugin_t *plugin, unsigned int port_idx,
+static LADSPA_Data get_default_port_value(fluid_ladspa_effect_t *effect, unsigned int port_idx,
         int sample_rate)
 {
     const LADSPA_PortRangeHint *hint;
@@ -1391,12 +1386,12 @@ static LADSPA_Data get_default_port_value(fluid_ladspa_plugin_t *plugin, unsigne
     float low_factor = 0.0;
     float high_factor = 0.0;
 
-    if (port_idx >= plugin->desc->PortCount)
+    if (port_idx >= effect->desc->PortCount)
     {
         return value;
     }
 
-    hint = &plugin->desc->PortRangeHints[port_idx];
+    hint = &effect->desc->PortRangeHints[port_idx];
     flags = hint->HintDescriptor;
 
     if (!LADSPA_IS_HINT_HAS_DEFAULT(flags))
@@ -1478,19 +1473,19 @@ static LADSPA_Data get_default_port_value(fluid_ladspa_plugin_t *plugin, unsigne
  * an effect has been added.
  *
  * @param fx LADSPA fx instance
- * @param plugin plugin instance
+ * @param effect effect instance
  * @return FLUID_OK on success, otherwise FLUID_FAILED
  */
-static int create_control_port_nodes(fluid_ladspa_fx_t *fx, fluid_ladspa_plugin_t *plugin)
+static int create_control_port_nodes(fluid_ladspa_fx_t *fx, fluid_ladspa_effect_t *effect)
 {
     unsigned int i;
     fluid_ladspa_node_t *node;
     fluid_ladspa_dir_t dir;
     int port_flags;
 
-    for (i = 0; i < plugin->desc->PortCount; i++)
+    for (i = 0; i < effect->desc->PortCount; i++)
     {
-        port_flags = plugin->desc->PortDescriptors[i];
+        port_flags = effect->desc->PortDescriptors[i];
 
         if (!LADSPA_IS_PORT_CONTROL(port_flags))
             continue;
@@ -1501,21 +1496,21 @@ static int create_control_port_nodes(fluid_ladspa_fx_t *fx, fluid_ladspa_plugin_
             return FLUID_FAILED;
         }
 
-        node->plugin_buffer[0] = get_default_port_value(plugin, i, fx->sample_rate);
+        node->effect_buffer[0] = get_default_port_value(effect, i, fx->sample_rate);
 
         dir = (LADSPA_IS_PORT_INPUT(port_flags)) ? FLUID_LADSPA_INPUT : FLUID_LADSPA_OUTPUT;
 
-        connect_node_to_port(node, dir, plugin, i);
+        connect_node_to_port(node, dir, effect, i);
     }
 
     return FLUID_OK;
 }
 
 static void connect_node_to_port(fluid_ladspa_node_t *node, fluid_ladspa_dir_t dir,
-        fluid_ladspa_plugin_t *plugin, int port_idx)
+        fluid_ladspa_effect_t *effect, int port_idx)
 {
-    plugin->desc->connect_port(plugin->handle, port_idx, node->plugin_buffer);
-    plugin->port_nodes[port_idx] = node;
+    effect->desc->connect_port(effect->handle, port_idx, node->effect_buffer);
+    effect->port_nodes[port_idx] = node;
 
     /* Mark node as connected in the respective direction */
     if (dir == FLUID_LADSPA_INPUT)
@@ -1530,21 +1525,21 @@ static void connect_node_to_port(fluid_ladspa_node_t *node, fluid_ladspa_dir_t d
 
 
 /**
- * Check that all ports on the plugin are connected to a node.
+ * Check that all ports on the effect are connected to a node.
  *
- * @param plugin LADSPA plugin instance
+ * @param effect LADSPA effect instance
  * @param name if check fails, points to the name of first failed port
  * @return FLUID_OK on successful check, otherwise FLUID_FAILED
  */
-static int check_all_ports_connected(fluid_ladspa_plugin_t *plugin, const char **name)
+static int check_all_ports_connected(fluid_ladspa_effect_t *effect, const char **name)
 {
     unsigned int i;
 
-    for (i = 0; i < plugin->desc->PortCount; i++)
+    for (i = 0; i < effect->desc->PortCount; i++)
     {
-        if (plugin->port_nodes[i] == NULL)
+        if (effect->port_nodes[i] == NULL)
         {
-            *name = plugin->desc->PortNames[i];
+            *name = effect->desc->PortNames[i];
             return FLUID_FAILED;
         }
     }
@@ -1553,38 +1548,38 @@ static int check_all_ports_connected(fluid_ladspa_plugin_t *plugin, const char *
 
 /**
  * In-place broken plugins can't cope with input and output audio ports connected
- * to the same buffer. Check for this condition in the plugin.
+ * to the same buffer. Check for this condition in the effect.
  *
- * @param plugin LADSPA plugin instance
+ * @param effect effect instance
  * @param name1 if check fails, points to the first port name
  * @param name2 if check fails, points to the second port name
  * @return FLUID_OK on successful check, otherwise FLUID_FAILED
  */
-static int check_no_inplace_broken(fluid_ladspa_plugin_t *plugin, const char **name1, const char **name2)
+static int check_no_inplace_broken(fluid_ladspa_effect_t *effect, const char **name1, const char **name2)
 {
     unsigned int i, k;
     LADSPA_PortDescriptor flags1, flags2;
 
-    if (!LADSPA_IS_INPLACE_BROKEN(plugin->desc->Properties))
+    if (!LADSPA_IS_INPLACE_BROKEN(effect->desc->Properties))
     {
         return FLUID_OK;
     }
 
-    for (i = 0; i < plugin->desc->PortCount; i++)
+    for (i = 0; i < effect->desc->PortCount; i++)
     {
-        flags1 = plugin->desc->PortDescriptors[i];
+        flags1 = effect->desc->PortDescriptors[i];
 
-        for (k = 0; k < plugin->desc->PortCount; k++)
+        for (k = 0; k < effect->desc->PortCount; k++)
         {
-            flags2 = plugin->desc->PortDescriptors[k];
+            flags2 = effect->desc->PortDescriptors[k];
 
             if (i != k
-                && plugin->port_nodes[i]->plugin_buffer == plugin->port_nodes[k]->plugin_buffer
+                && effect->port_nodes[i]->effect_buffer == effect->port_nodes[k]->effect_buffer
                 && (flags1 & 0x3) != (flags2 & 0x3) /* first two bits encode direction */
                 && LADSPA_IS_PORT_AUDIO(flags1) && LADSPA_IS_PORT_AUDIO(flags2))
             {
-                *name1 = plugin->desc->PortNames[i];
-                *name2 = plugin->desc->PortNames[k];
+                *name1 = effect->desc->PortNames[i];
+                *name2 = effect->desc->PortNames[k];
                 return FLUID_FAILED;
             }
         }
@@ -1593,7 +1588,7 @@ static int check_no_inplace_broken(fluid_ladspa_plugin_t *plugin, const char **n
 }
 
 /**
- * Check that at least one host node is used by a plugin
+ * Check that at least one host node is used by an effect
  *
  * @param fx LADSPA fx instance
  * @return FLUID_OK on successful check, otherwise FLUID_FAILED
@@ -1634,23 +1629,23 @@ static int check_all_audio_nodes_connected(fluid_ladspa_fx_t *fx, const char **n
     return FLUID_OK;
 }
 
-static FLUID_INLINE void mix_plugin_with_host_buffer(fluid_ladspa_node_t *node,
+static FLUID_INLINE void mix_effect_with_host_buffer(fluid_ladspa_node_t *node,
         int num_samples, float gain)
 {
     int i;
 
     for (i = 0; i < num_samples; i++)
     {
-        node->host_buffer[i] += node->plugin_buffer[i] * gain;
+        node->host_buffer[i] += node->effect_buffer[i] * gain;
     }
 }
 
 #ifndef WITH_FLOAT
 /**
- * Copy and type convert host buffers to plugin buffers. Used only if host and LADSPA
+ * Copy and type convert host buffers to effect buffers. Used only if host and LADSPA
  * use different float types.
  */
-static FLUID_INLINE void copy_host_to_plugin_buffers(fluid_ladspa_fx_t *fx, int num_samples)
+static FLUID_INLINE void copy_host_to_effect_buffers(fluid_ladspa_fx_t *fx, int num_samples)
 {
     int i, n;
     fluid_ladspa_node_t  *node;
@@ -1659,22 +1654,22 @@ static FLUID_INLINE void copy_host_to_plugin_buffers(fluid_ladspa_fx_t *fx, int 
     {
         node = fx->host_nodes[n];
         /* Only copy host nodes that have at least one output or output, i.e.
-         * that are connected to at least one plugin port. */
+         * that are connected to at least one effect port. */
         if (node->num_inputs > 0 || node->num_outputs > 0)
         {
             for (i = 0; i < num_samples; i++)
             {
-                node->plugin_buffer[i] = (LADSPA_Data)node->host_buffer[i];
+                node->effect_buffer[i] = (LADSPA_Data)node->host_buffer[i];
             }
         }
     }
 }
 
 /**
- * Copy and type convert plugin buffers to host buffers. Used only if host and LADSPA
+ * Copy and type convert effect buffers to host buffers. Used only if host and LADSPA
  * use different float types.
  */
-static FLUID_INLINE void copy_plugin_to_host_buffers(fluid_ladspa_fx_t *fx, int num_samples)
+static FLUID_INLINE void copy_effect_to_host_buffers(fluid_ladspa_fx_t *fx, int num_samples)
 {
     int i, n;
     fluid_ladspa_node_t  *node;
@@ -1682,13 +1677,13 @@ static FLUID_INLINE void copy_plugin_to_host_buffers(fluid_ladspa_fx_t *fx, int 
     for (n = 0; n < fx->num_host_nodes; n++)
     {
         node = fx->host_nodes[n];
-        /* Only copy plugin nodes that have at least one input, i.e. that are connected to
-         * at least one plugin output */
+        /* Only copy effect nodes that have at least one input, i.e. that are connected to
+         * at least one effect output */
         if (node->num_inputs > 0)
         {
             for (i = 0; i < num_samples; i++)
             {
-                node->host_buffer[i] = (fluid_real_t)node->plugin_buffer[i];
+                node->host_buffer[i] = (fluid_real_t)node->effect_buffer[i];
             }
         }
     }

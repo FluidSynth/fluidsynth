@@ -2086,13 +2086,13 @@ int fluid_handle_ladspa_effect(void* data, int ac, char **av, fluid_ostream_t ou
 
     fluid_ladspa_split(av[1], &lib_name, &plugin_name);
 
-    if (fluid_ladspa_add_plugin(fx, av[0], lib_name, plugin_name) != FLUID_OK)
+    if (fluid_ladspa_add_effect(fx, av[0], lib_name, plugin_name) != FLUID_OK)
     {
         fluid_ostream_printf(out, "Failed to create effect\n");
         return FLUID_FAILED;
     }
 
-    if (fluid_ladspa_plugin_mode(fx, av[0], mode, gain) != FLUID_OK)
+    if (fluid_ladspa_set_effect_mode(fx, av[0], mode, gain) != FLUID_OK)
     {
         fluid_ostream_printf(out, "Failed to set effect output mode\n");
         return FLUID_FAILED;

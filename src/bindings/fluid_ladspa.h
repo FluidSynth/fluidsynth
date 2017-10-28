@@ -31,7 +31,7 @@
 #include <ladspa.h>
 
 #define FLUID_LADSPA_MAX_LIBS 100
-#define FLUID_LADSPA_MAX_PLUGINS 100
+#define FLUID_LADSPA_MAX_EFFECTS 100
 #define FLUID_LADSPA_MAX_NODES 100
 #define FLUID_LADSPA_MAX_PATH_LENGTH 512
 
@@ -74,11 +74,11 @@ typedef struct _fluid_ladspa_node_t
     char *name;
     fluid_ladspa_node_type_t type;
 
-    /* The buffer that LADSPA plugins read and/or write to.
+    /* The buffer that LADSPA effects read and/or write to.
      * If FluidSynth has been compiled WITH_FLOAT, then this
      * points to the host buffer, otherwise it's a separate
      * buffer. */
-    LADSPA_Data *plugin_buffer;
+    LADSPA_Data *effect_buffer;
 
     /* Only set for host nodes, points to the host buffer */
     fluid_real_t *host_buffer;
@@ -88,7 +88,7 @@ typedef struct _fluid_ladspa_node_t
 
 } fluid_ladspa_node_t;
 
-typedef struct _fluid_ladspa_plugin_t
+typedef struct _fluid_ladspa_effect_t
 {
     char *name;
 
@@ -103,7 +103,7 @@ typedef struct _fluid_ladspa_plugin_t
     /* Used to keep track of the port connection state */
     fluid_ladspa_node_t **port_nodes;
 
-} fluid_ladspa_plugin_t;
+} fluid_ladspa_effect_t;
 
 typedef struct _fluid_ladspa_fx_t
 {
@@ -128,9 +128,8 @@ typedef struct _fluid_ladspa_fx_t
     fluid_ladspa_node_t *audio_nodes[FLUID_LADSPA_MAX_NODES];
     int num_audio_nodes;
 
-    /* plugins are really plugin instances */
-    fluid_ladspa_plugin_t *plugins[FLUID_LADSPA_MAX_PLUGINS];
-    int num_plugins;
+    fluid_ladspa_effect_t *effects[FLUID_LADSPA_MAX_EFFECTS];
+    int num_effects;
 
     fluid_rec_mutex_t api_mutex;
 
@@ -155,10 +154,10 @@ int fluid_ladspa_activate(fluid_ladspa_fx_t *fx);
 int fluid_ladspa_deactivate(fluid_ladspa_fx_t *fx);
 int fluid_ladspa_reset(fluid_ladspa_fx_t *fx);
 
-int fluid_ladspa_add_plugin(fluid_ladspa_fx_t *fx, const char *effect_name,
+int fluid_ladspa_add_effect(fluid_ladspa_fx_t *fx, const char *effect_name,
         const char *lib_name, const char *plugin_name);
-int fluid_ladspa_plugin_can_add(fluid_ladspa_fx_t *fx, const char *name);
-int fluid_ladspa_plugin_mode(fluid_ladspa_fx_t *fx, const char *name,
+int fluid_ladspa_effect_can_add(fluid_ladspa_fx_t *fx, const char *name);
+int fluid_ladspa_set_effect_mode(fluid_ladspa_fx_t *fx, const char *name,
         fluid_ladspa_mode_t mode, float gain);
 int fluid_ladspa_effect_port_exists(fluid_ladspa_fx_t *fx, const char *effect_name, const char *port_name);
 
