@@ -613,7 +613,7 @@ int fluid_ladspa_node_exists(fluid_ladspa_fx_t *fx, const char *name)
  * @param name the port name
  * @return TRUE if port was found, otherwise FALSE
  */
-int fluid_ladspa_port_exists(fluid_ladspa_fx_t *fx, const char *effect_name, const char *name)
+int fluid_ladspa_effect_port_exists(fluid_ladspa_fx_t *fx, const char *effect_name, const char *port_name)
 {
     fluid_ladspa_plugin_t *plugin;
     int port_exists;
@@ -626,7 +626,7 @@ int fluid_ladspa_port_exists(fluid_ladspa_fx_t *fx, const char *effect_name, con
         LADSPA_API_RETURN(fx, FALSE);
     }
 
-    port_exists = (get_plugin_port_idx(plugin, name) != -1);
+    port_exists = (get_plugin_port_idx(plugin, port_name) != -1);
 
     LADSPA_API_RETURN(fx, port_exists);
 }

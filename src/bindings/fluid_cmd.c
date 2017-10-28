@@ -2012,7 +2012,7 @@ int fluid_handle_ladspa_set(void *data, int ac, char **av, fluid_ostream_t out)
     }
 
     /* Redundant check, just here to give a more detailed error message */
-    if (!fluid_ladspa_port_exists(fx, effect_name, port_name))
+    if (!fluid_ladspa_effect_port_exists(fx, effect_name, port_name))
     {
         fluid_ostream_printf(out, "Effect port '%s:%s' not found\n", effect_name, port_name);
         return FLUID_FAILED;
@@ -2020,8 +2020,8 @@ int fluid_handle_ladspa_set(void *data, int ac, char **av, fluid_ostream_t out)
 
     if (fluid_ladspa_set_control_port(fx, effect_name, port_name, atof(av[1])) != FLUID_OK)
     {
-        fluid_ostream_printf(out, "Failed to set effect port '%s:%s', maybe it is "
-                "not a control node?\n", effect_name, port_name);
+        fluid_ostream_printf(out, "Failed to set '%s:%s', maybe it is not a control port?\n",
+                effect_name, port_name);
         return FLUID_FAILED;
     }
 
@@ -2124,7 +2124,7 @@ int fluid_handle_ladspa_link(void* data, int ac, char **av, fluid_ostream_t out)
      * here anyway to give the user better feedback in case a port or node
      * could not be found.
      */
-    if (!fluid_ladspa_port_exists(fx, effect_name, port_name))
+    if (!fluid_ladspa_effect_port_exists(fx, effect_name, port_name))
     {
         fluid_ostream_printf(out, "Effect port '%s:%s' not found.\n", effect_name, port_name);
         return FLUID_FAILED;
