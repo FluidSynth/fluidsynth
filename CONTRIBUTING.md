@@ -29,7 +29,7 @@ Find FluidSynth's style guide below. Most of the syntax issues can be automatica
 #### General
 * Every function should have a short comment explaining it's purpose
 * Every public API function **must** be documented with purpose, params and return value
-* Prefer `int` to `unsigned int`
+* Prefer signed integer types to unsigned ones
 * Use spaces rather than tabs
 * Avoid macros
 
