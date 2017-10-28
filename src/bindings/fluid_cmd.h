@@ -48,7 +48,6 @@ int fluid_handle_load(void* data, int ac, char** av, fluid_ostream_t out);
 int fluid_handle_unload(void* data, int ac, char** av, fluid_ostream_t out);
 int fluid_handle_reload(void* data, int ac, char** av, fluid_ostream_t out);
 int fluid_handle_fonts(void* data, int ac, char** av, fluid_ostream_t out);
-int fluid_handle_mstat(void* data, int ac, char** av, fluid_ostream_t out);
 int fluid_handle_reverbpreset(void* data, int ac, char** av, fluid_ostream_t out);
 int fluid_handle_reverbsetroomsize(void* data, int ac, char** av, fluid_ostream_t out);
 int fluid_handle_reverbsetdamp(void* data, int ac, char** av, fluid_ostream_t out);

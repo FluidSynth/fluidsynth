@@ -767,23 +767,6 @@ fluid_handle_fonts(void* data, int ac, char** av, fluid_ostream_t out)
   return 0;
 }
 
-int
-fluid_handle_mstat(void* data, int ac, char** av, fluid_ostream_t out)
-{
-/*    fluid_ostream_printf(out, "Dvr=%s, Dev=%s\n",  */
-/*  	 fluid_midi_handler_get_driver_name(midi), */
-/*  	 fluid_midi_handler_get_device_name(midi)); */
-/*    fluid_ostream_printf(out, "Stat=%s, On=%d, Off=%d, Prog=%d, Pbend=%d, Err=%d\n",  */
-/*  	 fluid_midi_handler_get_status(midi), */
-/*  	 fluid_midi_handler_get_event_count(midi, 0x90), */
-/*  	 fluid_midi_handler_get_event_count(midi, 0x80), */
-/*  	 fluid_midi_handler_get_event_count(midi, 0xc0), */
-/*  	 fluid_midi_handler_get_event_count(midi, 0xe0), */
-/*  	 fluid_midi_handler_get_event_count(midi, 0)); */
-  fluid_ostream_printf(out, "not yet implemented\n");
-  return -1;
-}
-
 /* Purpose:
  * Response to 'rev_preset' command.
  * Load the values from a reverb preset into the reverb unit. */
