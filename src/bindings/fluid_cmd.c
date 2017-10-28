@@ -1978,6 +1978,7 @@ int fluid_handle_ladspa_control_defaults(void* data, int ac, char **av, fluid_os
 
 int fluid_handle_ladspa_check(void* data, int ac, char **av, fluid_ostream_t out)
 {
+  FLUID_ENTRY_COMMAND(data);
     fluid_ladspa_fx_t *fx = handler->synth->ladspa_fx;
     char error[LADSPA_ERR_LEN];
 
