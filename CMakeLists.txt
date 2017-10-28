@@ -52,7 +52,6 @@ set ( LIB_VERSION_INFO
 # Options disabled by default
 option ( enable-floats "enable type float instead of double for DSP samples" off )
 option ( enable-profiling "profile the dsp code" off )
-option ( enable-ladspa "enable LADSPA effect units" off )
 option ( enable-portaudio "compile PortAudio support" off )
 option ( enable-trap-on-fpe "enable SIGFPE trap on Floating Point Exceptions" off )
 option ( enable-fpe-check "enable Floating Point Exception checks and debug messages" off )
@@ -68,6 +67,7 @@ option ( enable-midishare "compile MidiShare support (if it is available)" on )
 option ( enable-readline "compile readline lib line editing (if it is available)" on )
 option ( enable-dbus "compile DBUS support (if it is available)" on )
 option ( BUILD_SHARED_LIBS "Build a shared object or DLL" on )
+option ( enable-ladspa "enable LADSPA effect units" on )
 option ( enable-ipv6  "enable ipv6 support " on )
 
 # Platform specific options
