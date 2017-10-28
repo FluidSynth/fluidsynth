@@ -28,10 +28,6 @@ typedef struct _fluid_iir_filter_t fluid_iir_filter_t;
 enum fluid_iir_filter_type {
     FLUID_IIR_LOWPASS=0,
     FLUID_IIR_HIGHPASS,
-    FLUID_IIR_BANDPASS,
-    FLUID_IIR_NOTCH,
-    FLUID_IIR_LOWSHELF,
-    FLUID_IIR_HIGHSHELF,
 };
 
 void fluid_iir_filter_init(fluid_iir_filter_t* iir_filter, enum fluid_iir_filter_type, int is_enabled);
@@ -63,15 +59,14 @@ struct _fluid_iir_filter_t
     
 	/* filter coefficients */
 	/* The coefficients are normalized to a0. */
-	fluid_real_t b0;              /* b0 / a0 */
+    /* b0 and b2 are identical => b02 */
+	fluid_real_t b02;              /* b0 / a0 */
 	fluid_real_t b1;              /* b1 / a0 */
-	fluid_real_t b2;              /* b2 / a0 */
 	fluid_real_t a1;              /* a0 / a0 */
 	fluid_real_t a2;              /* a1 / a0 */
 
-	fluid_real_t b0_incr;
+	fluid_real_t b02_incr;
 	fluid_real_t b1_incr;
-	fluid_real_t b2_incr;
 	fluid_real_t a1_incr;
 	fluid_real_t a2_incr;
 	int filter_coeff_incr_count;
