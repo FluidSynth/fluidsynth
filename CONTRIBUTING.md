@@ -25,3 +25,24 @@ Some things that will increase the chance that your pull request or patch is acc
 * Follow our style guide.
 * Keep your commits "atomic".
 * Write a meaningful commit messages.
+
+## Style Guide
+
+Find FluidSynth's style guide below. Most of the syntax issues can be automatically applied with `clang-format` and `clang-tidy` using the config files in the repository root.
+
+#### General
+* Every function should have a short comment explaining it's purpose
+* Every public API function **must** be documented with purpose, params and return value
+* Prefer `int` to `unsigned int`
+* Use spaces rather than tabs
+* Avoid macros
+
+#### Naming Conventions
+* Words separated by underscores
+* Macros always UPPER_CASE
+* Function and Variable names always lower_case,  (e.g. `fluid_componentname_purpose()`)
+
+#### Bracing
+* Every block after an if, else, while or for should be enclosed in braces
+* **Allman-Style** braces everywhere
+
