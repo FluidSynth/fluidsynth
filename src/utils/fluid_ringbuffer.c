@@ -84,6 +84,9 @@ new_fluid_ringbuffer (int count, int elementsize)
 void
 delete_fluid_ringbuffer (fluid_ringbuffer_t *queue)
 {
+  if(queue != NULL)
+  {
   FLUID_FREE (queue->array);
   FLUID_FREE (queue);
+  }
 }
