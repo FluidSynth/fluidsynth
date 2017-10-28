@@ -20,1109 +20,1768 @@
 
 /* This module: 3/2002
  * Author: Markus Nentwig, nentwig@users.sourceforge.net
+ *
+ * Complete rewrite: 10/2017
+ * Author: Marcus Weseloh
  */
-
-#define PrintErrorMessage -1
 
 #include "fluidsynth_priv.h"
 
-#ifdef LADSPA
-#include <assert.h>
-
-/* Dynamic library functions */
-#include <dlfcn.h>
-
 #include "fluid_ladspa.h"
-#include "fluid_synth.h"
+#include "fluid_sys.h"
+#include <dlfcn.h>
+#include <math.h>
+#include <ladspa.h>
 
-/* Logging to stdout. */
-//#define L(x) x;printf("\n");
-#define L(x);
+#define LADSPA_API_ENTER(_fx) (fluid_rec_mutex_lock((_fx)->api_mutex))
 
-fluid_LADSPA_FxUnit_t* new_fluid_LADSPA_FxUnit(fluid_synth_t* synth){
-  if(synth == NULL)
+#define LADSPA_API_RETURN(_fx, _ret)          \
+    fluid_rec_mutex_unlock((_fx)->api_mutex); \
+    return (_ret)
+
+#define FLUID_LADSPA_MAX_LIBS 100
+#define FLUID_LADSPA_MAX_PLUGINS 100
+#define FLUID_LADSPA_MAX_NODES 100
+#define FLUID_LADSPA_MAX_PATH_LENGTH 512
+
+typedef enum _fluid_ladspa_state_t {
+    FLUID_LADSPA_INACTIVE = 0,
+    FLUID_LADSPA_ACTIVE,
+    FLUID_LADSPA_RUNNING
+    
+} fluid_ladspa_state_t;
+    
+typedef enum _fluid_ladspa_node_type_t {
+    FLUID_LADSPA_NODE_AUDIO,
+    FLUID_LADSPA_NODE_CONTROL,
+
+} fluid_ladspa_node_type_t;
+
+typedef struct _fluid_ladspa_lib_t
+{
+    char *filename;
+    void *dlib;
+    LADSPA_Descriptor_Function descriptor;
+
+} fluid_ladspa_lib_t;
+
+typedef struct _fluid_ladspa_node_t
+{
+    char *name;
+    fluid_ladspa_node_type_t type;
+    LADSPA_Data *buf;
+
+    int num_inputs;
+    int num_outputs;
+
+} fluid_ladspa_node_t;
+
+typedef struct _fluid_ladspa_plugin_t
+{
+    /* plugin instance id unique to the effects unit */
+    int id;
+
+    const LADSPA_Descriptor *desc;
+    LADSPA_Handle *handle;
+
+    int active;
+
+    /* Used to keep track of the port connection state */
+    fluid_ladspa_node_t **port_nodes;
+
+} fluid_ladspa_plugin_t;
+
+struct _fluid_ladspa_fx_t
+{
+    unsigned long sample_rate;
+
+    int audio_groups;
+    int effects_channels;
+    int audio_channels;
+    int buffer_size;
+
+    fluid_ladspa_lib_t *libs[FLUID_LADSPA_MAX_LIBS];
+    int num_libs;
+
+    fluid_ladspa_node_t *nodes[FLUID_LADSPA_MAX_NODES];
+    int num_nodes;
+
+    /* plugins are really plugin instances */
+    fluid_ladspa_plugin_t *plugins[FLUID_LADSPA_MAX_PLUGINS];
+    int num_plugins;
+
+    /* used to generate the unique plugin ids */
+    int next_plugin_id;
+
+    fluid_rec_mutex_t api_mutex;
+
+    fluid_atomic_int_t state;
+    int pending_deactivation;
+
+    fluid_cond_mutex_t *run_finished_mutex;
+    fluid_cond_t *run_finished_cond;
+
+};
+    
+    
+static void clear_ladspa(fluid_ladspa_fx_t *fx);
+
+static fluid_ladspa_node_t *new_fluid_ladspa_node(fluid_ladspa_fx_t *fx, const char *name,
+                                                  fluid_ladspa_node_type_t type);
+static void delete_fluid_ladspa_node(fluid_ladspa_node_t *node);
+static int create_input_output_nodes(fluid_ladspa_fx_t *fx);
+static fluid_ladspa_node_t *get_node(fluid_ladspa_fx_t *fx, const char *name);
+
+static int get_plugin_port_idx(const fluid_ladspa_plugin_t *plugin, const char *name);
+static const LADSPA_Descriptor *get_plugin_descriptor(const fluid_ladspa_lib_t *lib, const char *name);
+
+static fluid_ladspa_plugin_t *
+new_fluid_ladspa_plugin(fluid_ladspa_fx_t *fx, const fluid_ladspa_lib_t *lib, const char *name);
+static void delete_fluid_ladspa_plugin(fluid_ladspa_plugin_t *plugin);
+static void activate_plugin(fluid_ladspa_plugin_t *plugin);
+static void deactivate_plugin(fluid_ladspa_plugin_t *plugin);
+static fluid_ladspa_plugin_t *get_plugin_by_id(fluid_ladspa_fx_t *fx, int id);
+
+static fluid_ladspa_lib_t *new_fluid_ladspa_lib(fluid_ladspa_fx_t *fx, const char *filename);
+static void delete_fluid_ladspa_lib(fluid_ladspa_lib_t *lib);
+static fluid_ladspa_lib_t *get_ladspa_library(fluid_ladspa_fx_t *fx, const char *filename);
+static int load_plugin_library(fluid_ladspa_lib_t *lib);
+static void unload_plugin_library(fluid_ladspa_lib_t *lib);
+
+static FLUID_INLINE void node_to_buffer(fluid_ladspa_node_t *node, fluid_real_t *buffer, int num_samples);
+static FLUID_INLINE void buffer_to_node(fluid_real_t *buffer, fluid_ladspa_node_t *node, int num_samples);
+
+static int set_default_port_value(fluid_ladspa_plugin_t *plugin, unsigned int port_idx,
+        int sample_rate, LADSPA_Data *data);
+static void connect_node_to_port(fluid_ladspa_node_t *node, fluid_ladspa_dir_t dir,
+        fluid_ladspa_plugin_t *plugin, int port_idx);
+static int connect_default_control_nodes(fluid_ladspa_fx_t *fx, fluid_ladspa_plugin_t *plugin);
+
+static int check_all_ports_connected(fluid_ladspa_plugin_t *plugin, const char **name);
+static int check_no_inplace_broken(fluid_ladspa_plugin_t *plugin, const char **name1, const char **name2);
+static int check_system_input_used(fluid_ladspa_fx_t *fx);
+static int check_system_output_used(fluid_ladspa_fx_t *fx);
+static int check_all_audio_nodes_connected(fluid_ladspa_fx_t *fx, const char **name);
+static int check_all_control_nodes_connected(fluid_ladspa_fx_t *fx, const char **name);
+
+/**
+ * Creates a new LADSPA effects unit.
+ *
+ * @param sample_rate sample_rate for the LADSPA plugins
+ * @param audio_groups number of input audio channels (stereo)
+ * @param effects_channels number of input effects channels (stereo)
+ * @param audio_channels number of output audio channels (stereo)
+ * @param buffer_size size of buffers for audio nodes
+ * @return pointer to the new LADSPA effects unit
+ */
+fluid_ladspa_fx_t *new_fluid_ladspa_fx(fluid_real_t sample_rate, int audio_groups, int effects_channels,
+        int audio_channels, int buffer_size)
+{
+    fluid_ladspa_fx_t *fx;
+
+    fx = FLUID_NEW(fluid_ladspa_fx_t);
+    if (fx == NULL)
+    {
+        return NULL;
+    }
+    FLUID_MEMSET(fx, 0, sizeof(fluid_ladspa_fx_t));
+
+    /* Setup recursive mutex to protect access to public API */
+    fluid_rec_mutex_init(fx->api_mutex);
+
+    fluid_atomic_int_set(&fx->state, FLUID_LADSPA_INACTIVE);
+
+    /* add 0.5 to minimize overall casting error */
+    fx->sample_rate = (unsigned long)(sample_rate + 0.5);
+
+    fx->audio_groups = audio_groups;
+    fx->effects_channels = effects_channels;
+    fx->audio_channels = audio_channels;
+    fx->buffer_size = buffer_size;
+
+    /* Setup mutex and cond used to signal that fluid_ladspa_run has finished */
+     fx->run_finished_mutex = new_fluid_cond_mutex();
+     if (fx->run_finished_mutex == NULL)
+     {
+         delete_fluid_ladspa_fx(fx);
+         return NULL;
+     }
+     fx->run_finished_cond = new_fluid_cond();
+     if (fx->run_finished_cond == NULL)
+     {
+         delete_fluid_ladspa_fx(fx);
+         return NULL;
+     }
+
+    /* Finally, create the nodes that carry audio in and out of the LADSPA unit.
+     * They will always be the first in the fx->nodes array and not removed on
+     * fluid_ladspa_reset but only when this LADSPA fx instance is deleted. */
+    if (create_input_output_nodes(fx) != FLUID_OK)
+    {
+        delete_fluid_ladspa_fx(fx);
+        return NULL;
+    }
+
+    return fx;
+}
+
+/**
+ * Destroys and frees a LADSPA effects unit previously created
+ * with new_fluid_ladspa_fx.
+ *
+ * @note This function does not check the engine state for
+ * possible users, so make sure that you only call this
+ * if you are sure nobody is using the engine anymore (especially
+ * that nobody calls fluid_ladspa_run)
+ *
+ * @param fx LADSPA effects instance
+ */
+void delete_fluid_ladspa_fx(fluid_ladspa_fx_t *fx)
+{
+    int i;
+
+    clear_ladspa(fx);
+
+    /* clear the remaining input or output nodes */
+    for (i = 0; i < fx->num_nodes; i++)
+    {
+        delete_fluid_ladspa_node(fx->nodes[i]);
+    }
+
+    if (fx->run_finished_cond != NULL)
+    {
+        delete_fluid_cond(fx->run_finished_cond);
+    }
+
+    if (fx->run_finished_mutex != NULL)
+    {
+        delete_fluid_cond_mutex(fx->run_finished_mutex);
+    }
+
+    fluid_rec_mutex_destroy(fx->api_mutex);
+
+    FLUID_FREE(fx);
+}
+
+/**
+ * Set the sample rate of the LADSPA effects.
+ *
+ * Resets the LADSPA effects if the sample rate is different from the
+ * previous sample rate.
+ *
+ * @param fx LADSPA fx instance
+ * @param sample_rate new sample rate
+ * @return FLUID_OK on success, otherwise FLUID_FAILED
+ */
+int fluid_ladspa_set_sample_rate(fluid_ladspa_fx_t *fx, fluid_real_t sample_rate)
+{
+    unsigned long new_sample_rate;
+
+    LADSPA_API_ENTER(fx);
+
+    /* Add 0.5 to minimize rounding errors */
+    new_sample_rate = (unsigned long)(sample_rate + 0.5);
+
+    if (fx->sample_rate == new_sample_rate)
+    {
+        LADSPA_API_RETURN(fx, FLUID_OK);
+    }
+
+    if (fluid_ladspa_is_active(fx))
+    {
+        if (fluid_ladspa_reset(fx) != FLUID_OK)
+        {
+            FLUID_LOG(FLUID_ERR, "Failed to reset LADSPA, unable to change sample rate");
+            LADSPA_API_RETURN(fx, FLUID_FAILED);
+        }
+    }
+
+    fx->sample_rate = new_sample_rate;
+
+    LADSPA_API_RETURN(fx, FLUID_OK);
+}
+
+/**
+ * Check if the LADSPA engine is currently used to render audio
+ *
+ * If an engine is active, the only allowed user actions are deactivation or
+ * changing user control nodes. Anything else, especially adding or removing
+ * plugins, nodes or ports, is only allowed in deactivated state.
+ *
+ * @param fx LADSPA fx instance
+ * @return TRUE if LADSPA effects engine is active, otherwise FALSE
+ */
+int fluid_ladspa_is_active(fluid_ladspa_fx_t *fx)
+{
+    int is_active;
+
+    LADSPA_API_ENTER(fx);
+
+    is_active = (fluid_atomic_int_get(&fx->state) != FLUID_LADSPA_INACTIVE);
+
+    LADSPA_API_RETURN(fx, is_active);
+}
+
+/**
+ * Activate the LADSPA fx instance and each configured plugin.
+ *
+ * @param fx LADSPA fx instance
+ * @return FLUID_OK if activation succeeded or already active, otherwise FLUID_FAILED
+ */
+int fluid_ladspa_activate(fluid_ladspa_fx_t *fx)
+{
+    int i;
+
+    LADSPA_API_ENTER(fx);
+
+    if (fluid_ladspa_is_active(fx))
+    {
+        LADSPA_API_RETURN(fx, FLUID_FAILED);
+    }
+
+    if (fluid_ladspa_check(fx, NULL, 0) != FLUID_OK)
+    {
+        FLUID_LOG(FLUID_ERR, "LADSPA check failed, unable to activate effects");
+        LADSPA_API_RETURN(fx, FLUID_FAILED);
+    }
+
+    for (i = 0; i < fx->num_plugins; i++)
+    {
+        activate_plugin(fx->plugins[i]);
+    }
+
+    if (!fluid_atomic_int_compare_and_exchange(&fx->state, FLUID_LADSPA_INACTIVE, FLUID_LADSPA_ACTIVE))
+    {
+        for (i = 0; i < fx->num_plugins; i++)
+        {
+            deactivate_plugin(fx->plugins[i]);
+        }
+        LADSPA_API_RETURN(fx, FLUID_FAILED);
+    }
+
+    LADSPA_API_RETURN(fx, FLUID_OK);
+}
+
+/**
+ * Deactivate a LADSPA fx instance and all configured plugins.
+ *
+ * @note This function may sleep.
+ *
+ * @param fx LADSPA fx instance
+ * @return FLUID_OK if deactivation succeeded, otherwise FLUID_FAILED
+ */
+int fluid_ladspa_deactivate(fluid_ladspa_fx_t *fx)
+{
+    int i;
+
+    LADSPA_API_ENTER(fx);
+
+    /* If we are already inactive, then simply return success */
+    if (fluid_atomic_int_get(&fx->state) == FLUID_LADSPA_INACTIVE)
+    {
+        LADSPA_API_RETURN(fx, FLUID_OK);
+    }
+
+    /* Notify fluid_ladspa_run that we would like to deactivate and that it should
+     * send us a signal when its done if it is currently running */
+    fx->pending_deactivation = 1;
+
+    fluid_cond_mutex_lock(fx->run_finished_mutex);
+    while (!fluid_atomic_int_compare_and_exchange(&fx->state, FLUID_LADSPA_ACTIVE, FLUID_LADSPA_INACTIVE))
+    {
+        fluid_cond_wait(fx->run_finished_cond, fx->run_finished_mutex);
+    }
+    fluid_cond_mutex_unlock(fx->run_finished_mutex);
+
+    /* Now that we're inactive, deactivate all plugins and return success */
+    for (i = 0; i < fx->num_plugins; i++)
+    {
+        deactivate_plugin(fx->plugins[i]);
+    }
+
+    fx->pending_deactivation = 0;
+
+    LADSPA_API_RETURN(fx, FLUID_OK);
+}
+
+/**
+ * Reset the LADSPA effects engine: Deactivate LADSPA if currently active, remove all
+ * plugin instances, remove all user nodes and unload all libraries.
+ *
+ * @param fx LADSPA fx instance
+ * @return FLUID_OK on success, otherwise FLUID_FAILED
+ */
+int fluid_ladspa_reset(fluid_ladspa_fx_t *fx)
+{
+    LADSPA_API_ENTER(fx);
+
+    if (fluid_ladspa_is_active(fx))
+    {
+        if (fluid_ladspa_deactivate(fx) != FLUID_OK)
+        {
+            LADSPA_API_RETURN(fx, FLUID_FAILED);
+        }
+    }
+
+    clear_ladspa(fx);
+
+    LADSPA_API_RETURN(fx, FLUID_OK);
+}
+
+/**
+ * Processes audio data via the LADSPA effects unit.
+ *
+ * FluidSynth calls this function during main output mixing, just after
+ * the internal reverb and chorus effects have been processed.
+ *
+ * It copies audio data from the supplied buffers, runs all LADSPA plugins and copies the
+ * resulting audio back into the same buffers.
+ *
+ * @param fx LADSPA effects instance
+ * @param left_buf array of pointers into the left audio group buffers
+ * @param right_buf array of pointers into the right audio group buffers
+ * @param fx_left_buf array of pointers into the left effects buffers
+ * @param fx_right_buf array of pointers into the right effects buffers
+ * @param block_count number of blocks to render
+ * @param block_size number of samples in a block
+ */
+void fluid_ladspa_run(fluid_ladspa_fx_t *fx, fluid_real_t *left_buf[], fluid_real_t *right_buf[],
+                      fluid_real_t *fx_left_buf[], fluid_real_t *fx_right_buf[],
+                      int block_count, int block_size)
+{
+    int i, n;
+    int num_samples;
+
+    /* Somebody wants to deactivate the engine, so let's give them a chance to do that.
+     * And check that there is at least one plugin loaded, to avoid the overhead of the
+     * atomic compare and exchange on an unconfigured LADSPA engine. */
+    if (fx->pending_deactivation || fx->num_plugins == 0)
+    {
+        return;
+    }
+
+    /* Inform the engine that we are now running pluings, and bail out if it's not active */
+    if (!fluid_atomic_int_compare_and_exchange(&fx->state, FLUID_LADSPA_ACTIVE, FLUID_LADSPA_RUNNING))
+    {
+        return;
+    }
+
+    /* The input and output nodes are always first in the fx->nodes array, in the order:
+     * main inputs, effect inputs, main outputs.
+     * All inputs and outputs use two nodes (stereo), left and right channels interleaved. */
+    n = 0;
+    num_samples = block_count * block_size;
+
+    /* Incoming main audio data */
+    for (i = 0; i < fx->audio_groups; i++)
+    {
+        buffer_to_node(left_buf[i], fx->nodes[n++], num_samples);
+        buffer_to_node(right_buf[i], fx->nodes[n++], num_samples);
+    }
+
+    /* Incoming effects audio data */
+    for (i = 0; i < fx->effects_channels; i++)
+    {
+        buffer_to_node(fx_left_buf[i], fx->nodes[n++], num_samples);
+        buffer_to_node(fx_right_buf[i], fx->nodes[n++], num_samples);
+    }
+
+    /* Run each plugin on a block of data */
+    for (i = 0; i < fx->num_plugins; i++)
+    {
+        fx->plugins[i]->desc->run(fx->plugins[i]->handle, num_samples);
+    }
+
+    /* Copy the data from the output nodes back to the output buffers */
+    for (i = 0; i < fx->audio_channels; i++)
+    {
+        node_to_buffer(fx->nodes[n++], left_buf[i], num_samples);
+        node_to_buffer(fx->nodes[n++], right_buf[i], num_samples);
+    }
+
+    if (!fluid_atomic_int_compare_and_exchange(&fx->state, FLUID_LADSPA_RUNNING, FLUID_LADSPA_ACTIVE))
+    {
+        FLUID_LOG(FLUID_ERR, "Unable to reset LADSPA running state!");
+    }
+
+    /* If deactivation was requested while in running state, notify that we've finished now
+     * and deactivation can proceed */
+    if (fx->pending_deactivation)
+    {
+        fluid_cond_mutex_lock(fx->run_finished_mutex);
+        fluid_cond_broadcast(fx->run_finished_cond);
+        fluid_cond_mutex_unlock(fx->run_finished_mutex);
+    }
+}
+
+/**
+ * Create the nodes to get data in and out of the LADSPA effects unit.
+ *
+ * The nodes are named from LADSPAs perspective. So the "in*" and "send*" nodes carry audio data
+ * into LADSPA, "out*" nodes carry audio data back out.
+ *
+ * System nodes are referenced from the fx->nodes array, just like user created nodes. The system
+ * nodes are always the first in the array. The order of nodes is:
+ *  in1_L, in1_R, ..., send1_L, send1_R, ..., out1_L, out1_R, ..., [user created nodes ...]
+ *
+ * @param fx LADSPA fx instance
+ * @return FLUID_OK on success, otherwise FLUID_FAILED
+ */
+static int create_input_output_nodes(fluid_ladspa_fx_t *fx)
+{
+    char name[99];
+    int i;
+
+    /* Create left and right input nodes for each audio group. */
+    for (i = 0; i < fx->audio_groups; i++)
+    {
+        FLUID_SNPRINTF(name, sizeof(name), "in%i_L", (i + 1));
+        if (new_fluid_ladspa_node(fx, name, FLUID_LADSPA_NODE_AUDIO) == NULL)
+        {
+            return FLUID_FAILED;
+        }
+
+        FLUID_SNPRINTF(name, sizeof(name), "in%i_R", (i + 1));
+        if (new_fluid_ladspa_node(fx, name, FLUID_LADSPA_NODE_AUDIO) == NULL)
+        {
+            return FLUID_FAILED;
+        }
+    }
+
+     /* Create left and right input nodes for each effect channel */
+    for (i = 0; i < fx->effects_channels; i++)
+    {
+        FLUID_SNPRINTF(name, sizeof(name), "send%i_L", (i + 1));
+        if (new_fluid_ladspa_node(fx, name, FLUID_LADSPA_NODE_AUDIO) == NULL)
+        {
+            return FLUID_FAILED;
+        }
+
+        FLUID_SNPRINTF(name, sizeof(name), "send%i_R", (i + 1));
+        if (new_fluid_ladspa_node(fx, name, FLUID_LADSPA_NODE_AUDIO) == NULL)
+        {
+            return FLUID_FAILED;
+        }
+    }
+
+    /* Create left and right output nodes for each audio channel. */
+    for (i = 0; i < fx->audio_channels; i++)
+    {
+        FLUID_SNPRINTF(name, sizeof(name), "out%i_L", (i + 1));
+        if (new_fluid_ladspa_node(fx, name, FLUID_LADSPA_NODE_AUDIO) == NULL)
+        {
+            return FLUID_FAILED;
+        }
+
+        FLUID_SNPRINTF(name, sizeof(name), "out%i_R", (i + 1));
+        if (new_fluid_ladspa_node(fx, name, FLUID_LADSPA_NODE_AUDIO) == NULL)
+        {
+            return FLUID_FAILED;
+        }
+    }
+
+    return FLUID_OK;
+}
+
+static void clear_ladspa(fluid_ladspa_fx_t *fx)
+{
+    int i;
+    int num_system_nodes;
+
+    /* Deactivate and free all plugins */
+    for (i = 0; i < fx->num_plugins; i++)
+    {
+        deactivate_plugin(fx->plugins[i]);
+        delete_fluid_ladspa_plugin(fx->plugins[i]);
+    }
+    fx->num_plugins = 0;
+
+    /* Unload and free all libraries */
+    for (i = 0; i < fx->num_libs; i++)
+    {
+        unload_plugin_library(fx->libs[i]);
+        delete_fluid_ladspa_lib(fx->libs[i]);
+    }
+    fx->num_libs = 0;
+
+    /* Free all user defined nodes, leaving system nodes untouched */
+    num_system_nodes = 2 * (fx->audio_groups + fx->effects_channels + fx->audio_channels);
+    for (i = num_system_nodes; i < fx->num_nodes; i++)
+    {
+        delete_fluid_ladspa_node(fx->nodes[i]);
+    }
+    fx->num_nodes = num_system_nodes;
+
+    /* Reset connection counts for system nodes */
+    for (i = 0; i < num_system_nodes; i++)
+    {
+        fx->nodes[i]->num_inputs = 0;
+        fx->nodes[i]->num_outputs = 0;
+    }
+}
+
+/**
+ * Check if a named node exists. Nodes are searched by case-insensitive string comparison.
+ *
+ * @param fx LADSPA fx instance
+ * @param name the node name string
+ * @return TRUE if the node exists, otherwise FALSE
+ */
+int fluid_ladspa_node_exists(fluid_ladspa_fx_t *fx, const char *name)
+{
+    int node_exists;
+
+    LADSPA_API_ENTER(fx);
+
+    node_exists = (get_node(fx, name) != NULL);
+
+    LADSPA_API_RETURN(fx, node_exists);
+}
+
+/**
+ * Check if the named port exists on a plugin instance.
+ *
+ * The string match is case-insensitive and treats spaces and underscores as equal.
+ *
+ * @param fx LADSPA fx instance
+ * @param plugin_id integer plugin id as returned by fluid_ladspa_add_*_node
+ * @param name the port name
+ * @return TRUE if port was found, otherwise FALSE
+ */
+int fluid_ladspa_port_exists(fluid_ladspa_fx_t *fx, int plugin_id, const char *name)
+{
+    fluid_ladspa_plugin_t *plugin;
+    int port_exists;
+
+    LADSPA_API_ENTER(fx);
+
+    plugin = get_plugin_by_id(fx, plugin_id);
+    if (plugin == NULL)
+    {
+        LADSPA_API_RETURN(fx, FALSE);
+    }
+
+    port_exists = (get_plugin_port_idx(plugin, name) != -1);
+
+    LADSPA_API_RETURN(fx, port_exists);
+}
+
+/**
+ * Create and add a new LADSPA audio node.
+ *
+ * Audio nodes are used to connect the output of one plugin to the input of
+ * another.
+ *
+ * @param fx LADSPA effects instance
+ * @param name name of the new node
+ * @return FLUID_OK on success, FLUID_FAILED on error
+ */
+int fluid_ladspa_add_audio_node(fluid_ladspa_fx_t *fx, const char *name)
+{
+    fluid_ladspa_node_t *node;
+
+    LADSPA_API_ENTER(fx);
+    if (fluid_ladspa_is_active(fx))
+    {
+        LADSPA_API_RETURN(fx, FLUID_FAILED);
+    }
+
+    node = new_fluid_ladspa_node(fx, name, FLUID_LADSPA_NODE_AUDIO);
+    if (node == NULL)
+    {
+        LADSPA_API_RETURN(fx, FLUID_FAILED);
+    }
+
+    LADSPA_API_RETURN(fx, FLUID_OK);
+}
+
+/**
+ * Create and add a new LADSPA control node that can be set manually.
+ *
+ * @param fx LADSPA effects instance
+ * @param name name of the new node
+ * @param val the initial float value of the node
+ * @return FLUID_OK on success, FLUID_FAILED on error
+ */
+int fluid_ladspa_add_control_node(fluid_ladspa_fx_t *fx, const char *name, fluid_real_t val)
+{
+    fluid_ladspa_node_t *node;
+
+    LADSPA_API_ENTER(fx);
+    if (fluid_ladspa_is_active(fx))
+    {
+        LADSPA_API_RETURN(fx, FLUID_FAILED);
+    }
+
+    node = new_fluid_ladspa_node(fx, name, FLUID_LADSPA_NODE_CONTROL);
+    if (node == NULL)
+    {
+        LADSPA_API_RETURN(fx, FLUID_FAILED);
+    }
+
+    node->buf[0] = val;
+
+    LADSPA_API_RETURN(fx, FLUID_OK);
+}
+
+/**
+ * Set the value of a user constrol node
+ *
+ * Nodes are searched by case-insensitive string comparison.
+ *
+ * @param fx LADSPA fx instance
+ * @param name node name string
+ * @param val floating point value
+ * @return FLUID_OK on success, FLUID_FAILED on error
+ */
+int fluid_ladspa_set_control_node(fluid_ladspa_fx_t *fx, const char *name, fluid_real_t val)
+{
+    fluid_ladspa_node_t *node;
+
+    LADSPA_API_ENTER(fx);
+
+    node = get_node(fx, name);
+    if (node == NULL)
+    {
+        LADSPA_API_RETURN(fx, FLUID_FAILED);
+    }
+
+    if (node->type != FLUID_LADSPA_NODE_CONTROL)
+    {
+        LADSPA_API_RETURN(fx, FLUID_FAILED);
+    }
+
+    node->buf[0] = val;
+
+    LADSPA_API_RETURN(fx, FLUID_OK);
+}
+
+/**
+ * Instantiate a plugin from a LADSPA plugin library and return it's unique id
+ *
+ * The returned id can be used to reference this plugin instance at a later time,
+ * for example when connecting the plugin instance ports with nodes. Plugin instance
+ * ids are never reused in a LADSPA fx instance.
+ *
+ * @param fx LADSPA effects instance
+ * @param lib_name filename of ladspa plugin library
+ * @param plugin_name plugin name (the unique label of the plugin in the LADSPA library)
+ * @return integer plugin id or -1 on error
+ */
+int fluid_ladspa_add_plugin(fluid_ladspa_fx_t *fx, const char *lib_name, const char *plugin_name)
+{
+    fluid_ladspa_lib_t *lib;
+    fluid_ladspa_plugin_t *plugin;
+
+    LADSPA_API_ENTER(fx);
+    if (fluid_ladspa_is_active(fx))
+    {
+        LADSPA_API_RETURN(fx, -1);
+    }
+
+    if (fx->num_plugins >= FLUID_LADSPA_MAX_PLUGINS)
+    {
+        FLUID_LOG(FLUID_ERR, "Maximum number of LADSPA plugins reached");
+        LADSPA_API_RETURN(fx, -1);
+    }
+
+    lib = get_ladspa_library(fx, lib_name);
+    if (lib == NULL)
+    {
+        LADSPA_API_RETURN(fx, -1);
+    }
+
+    plugin = new_fluid_ladspa_plugin(fx, lib, plugin_name);
+    if (plugin == NULL)
+    {
+        LADSPA_API_RETURN(fx, -1);
+    }
+
+    plugin->id = fx->next_plugin_id++;
+    fx->plugins[fx->num_plugins++] = plugin;
+
+    LADSPA_API_RETURN(fx, plugin->id);
+}
+
+/**
+ * Connect an input or output plugin port to a node
+ *
+ * @note There is no corresponding disconnect function. If the connections need to be changed,
+ * clear everything with fluid_ladspa_reset and start again from scratch.
+ *
+ * @param fx LADSPA effects instance
+ * @param plugin_id the integer plugin id as returned by fluid_ladspa_add_plugin
+ * @param dir connect to port as FLUID_LADSPA_INPUT or FLUID_LADSPA_OUTPUT
+ * @param port_name the port name to connect to (case-insensitive prefix match, see get_plugin_port_idx)
+ * @param node_name the node name to connect to (case-insensitive)
+ * @return FLUID_OK on success, otherwise FLUID_FAILED
+ */
+int fluid_ladspa_connect(fluid_ladspa_fx_t *fx, int plugin_id, fluid_ladspa_dir_t dir,
+                         const char *port_name, const char *node_name)
+{
+    fluid_ladspa_plugin_t *plugin;
+    fluid_ladspa_node_t *node;
+    int port_idx;
+    int port_flags;
+    const char *full_port_name;
+    const char *plugin_name;
+
+    LADSPA_API_ENTER(fx);
+
+    if (fluid_ladspa_is_active(fx))
+    {
+        LADSPA_API_RETURN(fx, FLUID_FAILED);
+    }
+    plugin = get_plugin_by_id(fx, plugin_id);
+    if (plugin == NULL)
+    {
+        FLUID_LOG(FLUID_ERR, "LADSPA plugin with ID %d not found", plugin_id);
+        LADSPA_API_RETURN(fx, FLUID_FAILED);
+    }
+
+    port_idx = get_plugin_port_idx(plugin, port_name);
+    if (port_idx < 0)
+    {
+        FLUID_LOG(FLUID_ERR, "LADSPA plugin port '%s' not found on plugin '%s'", port_name,
+                  plugin->desc->Label);
+        LADSPA_API_RETURN(fx, FLUID_FAILED);
+    }
+
+    /* fixed node, create a new 'anonymous' node and interpret the node name as it's fixed float
+     * value */
+    if (dir == FLUID_LADSPA_FIXED)
+    {
+        node = new_fluid_ladspa_node(fx, "", FLUID_LADSPA_NODE_CONTROL);
+        if (node == NULL)
+        {
+            LADSPA_API_RETURN(fx, FLUID_FAILED);
+        }
+        node->buf[0] = atof(node_name);
+    }
+    else
+    {
+        node = get_node(fx, node_name);
+        if (node == NULL)
+        {
+            FLUID_LOG(FLUID_ERR, "LADSPA node '%s' not found", node_name);
+            LADSPA_API_RETURN(fx, FLUID_FAILED);
+        }
+    }
+
+    /* For easier access during sanity checks */
+    port_flags = plugin->desc->PortDescriptors[port_idx];
+    full_port_name = plugin->desc->PortNames[port_idx];
+    plugin_name = plugin->desc->Label;
+
+    /* Check that requested direction matches with port direction */
+    if (dir == FLUID_LADSPA_INPUT && !LADSPA_IS_PORT_INPUT(port_flags))
+    {
+        FLUID_LOG(FLUID_ERR, "Port '%s' on plugin '%s' is not an input port", full_port_name, plugin_name);
+        LADSPA_API_RETURN(fx, FLUID_FAILED);
+    }
+    else if (dir == FLUID_LADSPA_OUTPUT && !LADSPA_IS_PORT_OUTPUT(port_flags))
+    {
+        FLUID_LOG(FLUID_ERR, "Port '%s' on plugin '%s' is not an output port", full_port_name, plugin_name);
+        LADSPA_API_RETURN(fx, FLUID_FAILED);
+    }
+
+    /* Check that requested port type matches the node type */
+    if (LADSPA_IS_PORT_CONTROL(port_flags) && node->type == FLUID_LADSPA_NODE_AUDIO)
+    {
+        FLUID_LOG(FLUID_ERR, "Cannot connect control port '%s' on plugin '%s' to an audio node",
+                  full_port_name, plugin_name);
+        LADSPA_API_RETURN(fx, FLUID_FAILED);
+    }
+    else if (LADSPA_IS_PORT_AUDIO(port_flags) && node->type != FLUID_LADSPA_NODE_AUDIO)
+    {
+        FLUID_LOG(FLUID_ERR, "Cannot connect audio port '%s' on plugin '%s' to a control node",
+                  full_port_name, plugin_name);
+        LADSPA_API_RETURN(fx, FLUID_FAILED);
+    }
+
+    FLUID_LOG(FLUID_DBG, "Connecting LADSPA plugin '%s': port '%s' %s node '%s'", plugin->desc->Label,
+              full_port_name, (dir == FLUID_LADSPA_INPUT) ? "<" : ">", node_name);
+
+    connect_node_to_port(node, dir, plugin, port_idx);
+
+    LADSPA_API_RETURN(fx, FLUID_OK);
+}
+
+/**
+ * Find all unconnected control ports on all configured plugins and fill any unconnected ports with
+ * their default value, if available.
+ *
+ * @param fx LADSPA fx instance
+ * @return FLUID_OK on success, otherwise FLUID_FAILED
+ */
+int fluid_ladspa_control_defaults(fluid_ladspa_fx_t *fx)
+{
+    int i;
+
+    LADSPA_API_ENTER(fx);
+
+    if (fluid_ladspa_is_active(fx))
+    {
+        LADSPA_API_RETURN(fx, FLUID_FAILED);
+    }
+
+    for (i = 0; i < fx->num_plugins; i++)
+    {
+        if (connect_default_control_nodes(fx, fx->plugins[i]) != FLUID_OK)
+        {
+            LADSPA_API_RETURN(fx, FLUID_FAILED);
+        }
+    }
+
+    LADSPA_API_RETURN(fx, FLUID_OK);
+}
+
+/**
+ * Do a sanity check for problems in the LADSPA setup
+ *
+ * @param fx LADSPA fx instance
+ * @param err pointer to string that should be filled with an error message, if applicable
+ * @param err_size size of the error buffer
+ * @return FLUID_OK on success, otherwise FLUID_FAILED
+ */
+int fluid_ladspa_check(fluid_ladspa_fx_t *fx, char *err, int err_size)
+{
+    int i;
+    const char *str;
+    const char *str2;
+    fluid_ladspa_plugin_t *plugin;
+
+    LADSPA_API_ENTER(fx);
+
+    /* Check that there is at least one plugin */
+    if (fx->num_plugins == 0)
+    {
+        FLUID_SNPRINTF(err, err_size, "No plugins loaded\n");
+        LADSPA_API_RETURN(fx, FLUID_FAILED);
+    }
+
+    for (i = 0; i < fx->num_plugins; i++)
+    {
+        plugin = fx->plugins[i];
+
+        if (check_all_ports_connected(plugin, &str) == FLUID_FAILED)
+        {
+            FLUID_SNPRINTF(err, err_size, "Port '%s' on plugin '%s' is not connected\n",
+                            str, plugin->desc->Label);
+            LADSPA_API_RETURN(fx, FLUID_FAILED);
+        }
+
+        if (check_no_inplace_broken(plugin, &str, &str2) == FLUID_FAILED)
+        {
+                FLUID_SNPRINTF(err, err_size,
+                        "Plugin '%s' is in-place broken, '%s' and '%s' are not allowed "
+                        "to connect to the same node\n", plugin->desc->Label, str, str2);
+                LADSPA_API_RETURN(fx, FLUID_FAILED);
+        }
+    }
+
+    if (check_system_input_used(fx) == FLUID_FAILED)
+    {
+        FLUID_SNPRINTF(err, err_size, "No system input nodes are connected\n");
+        LADSPA_API_RETURN(fx, FLUID_FAILED);
+    }
+
+    if (check_system_output_used(fx) == FLUID_FAILED)
+    {
+        FLUID_SNPRINTF(err, err_size, "No system output nodes are connected\n");
+        LADSPA_API_RETURN(fx, FLUID_FAILED);
+    }
+
+    if (check_all_audio_nodes_connected(fx, &str) == FLUID_FAILED)
+    {
+        FLUID_SNPRINTF(err, err_size, "Audio node '%s' is not fully connected\n", str);
+        LADSPA_API_RETURN(fx, FLUID_FAILED);
+    }
+
+    if (check_all_control_nodes_connected(fx, &str) == FLUID_FAILED)
+    {
+        FLUID_SNPRINTF(err, err_size, "Control node '%s' is not connected\n", str);
+        LADSPA_API_RETURN(fx, FLUID_FAILED);
+    }
+
+    LADSPA_API_RETURN(fx, FLUID_OK);
+}
+
+#ifdef WITH_FLOAT
+
+static FLUID_INLINE void buffer_to_node(fluid_real_t *buffer, fluid_ladspa_node_t *node, int num_samples)
+{
+    /* If the node is not used by any plugin, then we don't need to fill it */
+    if (node->num_outputs > 0)
+    {
+        FLUID_MEMCPY(node->buf, buffer, num_samples * sizeof(float));
+    }
+}
+
+static FLUID_INLINE void node_to_buffer(fluid_ladspa_node_t *node, fluid_real_t *buffer, int num_samples)
+{
+    /* If the node has no inputs, then we don't need to copy it to the node */
+    if (node->num_inputs > 0)
+    {
+        FLUID_MEMCPY(buffer, node->buf, num_samples * sizeof(float));
+    }
+}
+
+#else /* WITH_FLOAT */
+
+static FLUID_INLINE void buffer_to_node(fluid_real_t *buffer, fluid_ladspa_node_t *node, int num_samples)
+{
+    int i;
+
+    /* If the node is not used by any plugin, then we don't need to fill it */
+    if (node->num_outputs > 0)
+    {
+        for (i = 0; i < num_samples; i++)
+        {
+            node->buf[i] = (LADSPA_Data)buffer[i];
+        }
+    }
+}
+
+static FLUID_INLINE void node_to_buffer(fluid_ladspa_node_t *node, fluid_real_t *buffer, int num_samples)
+{
+    int i;
+
+    /* If the node has no inputs, then we don't need to copy it to the node */
+    if (node->num_inputs > 0)
+    {
+        for (i = 0; i < num_samples; i++)
+        {
+            buffer[i] = (fluid_real_t)node->buf[i];
+        }
+    }
+}
+
+#endif /* WITH_FLOAT */
+
+static void activate_plugin(fluid_ladspa_plugin_t *plugin)
+{
+    if (!plugin->active)
+    {
+        plugin->active = 1;
+        if (plugin->desc->activate != NULL)
+        {
+            plugin->desc->activate(plugin->handle);
+        }
+    }
+}
+
+static void deactivate_plugin(fluid_ladspa_plugin_t *plugin)
+{
+    if (plugin->active)
+    {
+        plugin->active = 0;
+        if (plugin->desc->deactivate != NULL)
+        {
+            plugin->desc->deactivate(plugin->handle);
+        }
+    }
+}
+
+/**
+ * Return a LADSPA node by name. Nodes are searched case insensitive.
+ *
+ * @param fx LADSPA fx instance
+ * @param name the node name string
+ * @return a fluid_ladspa_node_t pointer or NULL if not found
+ */
+static fluid_ladspa_node_t *get_node(fluid_ladspa_fx_t *fx, const char *name)
+{
+    int i;
+
+    for (i = 0; i < fx->num_nodes; i++)
+    {
+        if (FLUID_STRCASECMP(fx->nodes[i]->name, name) == 0)
+        {
+            return fx->nodes[i];
+        }
+    }
+
     return NULL;
+}
 
-  fluid_LADSPA_FxUnit_t* FxUnit=FLUID_NEW(fluid_LADSPA_FxUnit_t);
-  if(FxUnit == NULL)
-    return NULL;
-
-  /* The default state is 'bypassed'. The Fx unit has to be turned on explicitly by the user. */
-  /* Those settings have to be done in order to allow fluid_LADSPA_clean. */
-  FxUnit->Bypass=fluid_LADSPA_Bypassed;
-  FxUnit->NumberNodes=0;
-  FxUnit->NumberPlugins=0;
-  FxUnit->NumberLibs=0;
-  FxUnit->NumberCommands=0;
-  FxUnit->NumberUserControlNodes=0;
-  FxUnit->synth=synth;
-  pthread_cond_init(&FxUnit->cond,NULL);
-  return FxUnit;
-};
-
-/* Purpose:
- * Creates the system nodes to get data into and out of the Fx unit.
+/**
+ * Return a LADSPA plugin port index by name, using a 'fuzzy match'.
+ *
+ * Returns the first plugin port which matches the name. If no exact match is
+ * found, returns the port that starts with the specified name, but only if there is
+ * only one such match.
+ *
+ * @param plugin pointer to fluid_ladspa_plugin_t
+ * @param name the port name
+ * @return index of the port in the plugin or -1 on error
  */
-void fluid_LADSPA_CreateSystemNodes(fluid_LADSPA_FxUnit_t* FxUnit){
-  char str[99];
-  int nr_input_nodes;
-  int nr_fx_input_nodes;
-  int nr_output_nodes;
-  int i;
+static int get_plugin_port_idx(const fluid_ladspa_plugin_t *plugin, const char *name)
+{
+    unsigned int i;
+    int port = -1;
 
-  /* Retrieve the number of synth / audio out / Fx send nodes */
-  nr_input_nodes = FxUnit->synth->audio_groups;
-  nr_output_nodes = FxUnit->synth->audio_channels;
-  nr_fx_input_nodes = FxUnit->synth->effects_channels;
+    for (i = 0; i < plugin->desc->PortCount; i++)
+    {
+        if (FLUID_STRNCASECMP(plugin->desc->PortNames[i], name, FLUID_STRLEN(name)) == 0)
+        {
+            /* exact match, return immediately */
+            if (FLUID_STRLEN(plugin->desc->PortNames[i]) == FLUID_STRLEN(name))
+            {
+                return i;
+            }
 
-  /* Create regular input nodes (associated with audio groups) */
-  for (i=0; i < nr_input_nodes; i++){
-      sprintf(str, "in%i_L",(i+1));
-      fluid_LADSPA_CreateNode(FxUnit, str, fluid_LADSPA_node_is_audio | fluid_LADSPA_node_is_source);
-      sprintf(str, "in%i_R",(i+1));
-      fluid_LADSPA_CreateNode(FxUnit, str, fluid_LADSPA_node_is_audio | fluid_LADSPA_node_is_source);
-  };
+            /* more than one prefix match should be treated as not found */
+            if (port != -1)
+            {
+                return -1;
+            }
 
-  /* Create effects send nodes (for example reverb, chorus send) */
-  for (i=0; i < nr_fx_input_nodes; i++){
-      sprintf(str, "send%i_L",(i+1));
-      fluid_LADSPA_CreateNode(FxUnit, str, fluid_LADSPA_node_is_audio | fluid_LADSPA_node_is_source);
-      sprintf(str, "send%i_R",(i+1));
-      fluid_LADSPA_CreateNode(FxUnit, str, fluid_LADSPA_node_is_audio | fluid_LADSPA_node_is_source);
-  };
+            port = i;
+        }
+    }
 
-  /* Create output nodes (usually towards the sound card) */
-  for (i=0; i < nr_output_nodes; i++){
-      sprintf(str, "out%i_L",(i+1));
-      fluid_LADSPA_CreateNode(FxUnit, str, fluid_LADSPA_node_is_audio | fluid_LADSPA_node_is_sink);
-      sprintf(str, "out%i_R",(i+1));
-      fluid_LADSPA_CreateNode(FxUnit, str, fluid_LADSPA_node_is_audio | fluid_LADSPA_node_is_sink);
-  };
-};
+    return port;
+}
 
-/* Purpose:
- * Creates predeclared nodes for control of the Fx unit during operation.
+/**
+ * Return a LADSPA descriptor structure for a plugin in a LADSPA library.
+ *
+ * @param lib pointer to fluid_ladspa_lib_t instance
+ * @param name name (LADSPA Label) of the plugin
+ * @return pointer to LADSPA_Descriptor, NULL on error or if not found
  */
-void fluid_LADSPA_CreateUserControlNodes(fluid_LADSPA_FxUnit_t* FxUnit){
-  int i;
-  fluid_LADSPA_Node_t* CurrentNode;
+static const LADSPA_Descriptor *get_plugin_descriptor(const fluid_ladspa_lib_t *lib, const char *name)
+{
+    const LADSPA_Descriptor *desc;
+    int i = 0;
 
-  for (i=0; i<FxUnit->NumberUserControlNodes; i++){
-    CurrentNode=fluid_LADSPA_CreateNode(FxUnit,FxUnit->UserControlNodeNames[i],fluid_LADSPA_node_is_control);
-    assert(CurrentNode);
-    CurrentNode->buf[0]=FxUnit->UserControlNodeValues[i];
-    CurrentNode->InCount++; /* The constant counts as input */
-    CurrentNode->flags=fluid_LADSPA_node_is_source | fluid_LADSPA_node_is_user_ctrl; /* It is a user control node */
-  };
-};
+    while (1)
+    {
+        desc = lib->descriptor(i++);
+        if (desc == NULL)
+        {
+            return NULL;
+        }
 
-/* Purpose:
- * Returns the pointer to the shared library loaded using 'LibraryFilename' (if it has been loaded).
- * Return NULL otherwise.
- * If not: Clear Fx and abort.
+        if (FLUID_STRCMP(desc->Label, name) == 0)
+        {
+            return desc;
+        }
+    }
+}
+
+/**
+ * Instantiate a new LADSPA plugin from a library and set up the associated
+ * control structures needed by the LADSPA fx engine.
+ *
+ * Plugins are identified by their "Label" in the plugin descriptor structure.
+ *
+ * @param fx LADSPA fx instance
+ * @param lib pointer to fluid_ladspa_lib_t
+ * @param name string name of the plugin (the LADSPA Label)
+ * @return pointer to the new ladspa_plugin_t structure or NULL on error
  */
-void * fluid_LADSPA_RetrieveSharedLibrary(fluid_LADSPA_FxUnit_t* FxUnit, char * LibraryFilename){
-  void * CurrentLib=NULL;
-  int LibCount;
-  for (LibCount=0; LibCount<FxUnit->NumberLibs; LibCount++){
-    assert(FxUnit->ppvPluginLibNames[LibCount]);
-    if (FLUID_STRCMP(FxUnit->ppvPluginLibNames[LibCount],LibraryFilename)==0){
-      CurrentLib=FxUnit->ppvPluginLibs[LibCount];
-    };
-  };
-  return CurrentLib;
-};
+static fluid_ladspa_plugin_t *
+new_fluid_ladspa_plugin(fluid_ladspa_fx_t *fx, const fluid_ladspa_lib_t *lib, const char *name)
+{
+    fluid_ladspa_plugin_t *plugin;
 
-/* Purpose:
- * Loads a shared LADSPA library.
- * Return NULL, if failed.
- * TODO: use LADSPA_PATH
+    plugin = FLUID_NEW(fluid_ladspa_plugin_t);
+    if (plugin == NULL)
+    {
+        FLUID_LOG(FLUID_ERR, "Out of memory");
+        return NULL;
+    }
+    FLUID_MEMSET(plugin, 0, sizeof(fluid_ladspa_plugin_t));
+
+    plugin->desc = get_plugin_descriptor(lib, name);
+    if (plugin->desc == NULL)
+    {
+        delete_fluid_ladspa_plugin(plugin);
+        return NULL;
+    }
+
+    plugin->handle = plugin->desc->instantiate(plugin->desc, fx->sample_rate);
+    if (plugin->handle == NULL)
+    {
+        delete_fluid_ladspa_plugin(plugin);
+        FLUID_LOG(FLUID_ERR, "Unable to instantiate plugin '%s' from '%s'", name, lib->filename);
+        return NULL;
+    }
+
+    plugin->port_nodes = FLUID_ARRAY(fluid_ladspa_node_t*, plugin->desc->PortCount);
+    if (plugin->port_nodes == NULL)
+    {
+        delete_fluid_ladspa_plugin(plugin);
+        FLUID_LOG(FLUID_ERR, "Out of memory");
+        return NULL;
+    }
+    FLUID_MEMSET(plugin->port_nodes, 0, plugin->desc->PortCount * sizeof(fluid_ladspa_node_t*));
+
+    return plugin;
+}
+
+static void delete_fluid_ladspa_plugin(fluid_ladspa_plugin_t *plugin)
+{
+    if (plugin == NULL)
+    {
+        return;
+    }
+
+    if (plugin->port_nodes != NULL)
+    {
+        FLUID_FREE(plugin->port_nodes);
+    }
+
+    if (plugin->handle != NULL && plugin->desc != NULL && plugin->desc->cleanup != NULL)
+    {
+        plugin->desc->cleanup(plugin->handle);
+    }
+
+    FLUID_FREE(plugin);
+}
+
+static fluid_ladspa_node_t *new_fluid_ladspa_node(fluid_ladspa_fx_t *fx, const char *name,
+                                                  fluid_ladspa_node_type_t type)
+{
+    int buf_size;
+    fluid_ladspa_node_t *node;
+
+
+    /* check if node with this name exits already */
+    if (FLUID_STRLEN(name) > 0 && get_node(fx, name) != NULL)
+    {
+        return NULL;
+    }
+
+    if (fx->num_nodes >= FLUID_LADSPA_MAX_NODES)
+    {
+        FLUID_LOG(FLUID_ERR, "Maximum number of nodes reached");
+        return NULL;
+    }
+
+    node = FLUID_NEW(fluid_ladspa_node_t);
+    if (node == NULL)
+    {
+        FLUID_LOG(FLUID_ERR, "Out of memory");
+        return NULL;
+    }
+    FLUID_MEMSET(node, 0, sizeof(fluid_ladspa_node_t));
+
+    node->type = type;
+
+    node->name = FLUID_STRDUP(name);
+    if (node->name == NULL)
+    {
+        delete_fluid_ladspa_node(node);
+        FLUID_LOG(FLUID_ERR, "Out of memory");
+        return NULL;
+    }
+
+    /* Audio buffers get the full buffer size, control ports use only one float value */
+    buf_size = (type == FLUID_LADSPA_NODE_AUDIO) ? fx->buffer_size : 1;
+
+    node->buf = FLUID_ARRAY(LADSPA_Data, buf_size);
+    if (node->buf == NULL)
+    {
+        delete_fluid_ladspa_node(node);
+        FLUID_LOG(FLUID_ERR, "Out of memory");
+        return NULL;
+    }
+
+    FLUID_MEMSET(node->buf, 0, buf_size * sizeof(LADSPA_Data));
+
+    fx->nodes[fx->num_nodes++] = node;
+
+    return node;
+}
+
+static void delete_fluid_ladspa_node(fluid_ladspa_node_t *node)
+{
+    if (node->buf != NULL)
+    {
+        FLUID_FREE(node->buf);
+    }
+
+    if (node->name != NULL)
+    {
+        FLUID_FREE(node->name);
+    }
+
+    FLUID_FREE(node);
+}
+
+static fluid_ladspa_lib_t *get_ladspa_library(fluid_ladspa_fx_t *fx, const char *filename)
+{
+    int i;
+    fluid_ladspa_lib_t *lib;
+
+    /* check if we have loaded this lib before and return it if found */
+    for (i = 0; i < fx->num_libs; i++)
+    {
+        if (FLUID_STRCMP(fx->libs[i]->filename, filename) == 0)
+        {
+            return fx->libs[i];
+        }
+    }
+
+    if (fx->num_libs >= FLUID_LADSPA_MAX_LIBS)
+    {
+        FLUID_LOG(FLUID_ERR, "Maximum number of LADSPA libraries reached");
+        return NULL;
+    }
+
+    lib = new_fluid_ladspa_lib(fx, filename);
+    if (lib == NULL)
+    {
+        return NULL;
+    }
+
+    if (load_plugin_library(lib) != FLUID_OK)
+    {
+        delete_fluid_ladspa_lib(lib);
+        return NULL;
+    }
+
+    fx->libs[fx->num_libs++] = lib;
+
+    return lib;
+}
+
+static fluid_ladspa_lib_t *new_fluid_ladspa_lib(fluid_ladspa_fx_t *fx, const char *filename)
+{
+    fluid_ladspa_lib_t *lib;
+
+    lib = FLUID_NEW(fluid_ladspa_lib_t);
+    if (lib == NULL)
+    {
+        FLUID_LOG(FLUID_ERR, "Out of memory");
+        return NULL;
+    }
+    FLUID_MEMSET(lib, 0, sizeof(fluid_ladspa_lib_t));
+
+    lib->filename = FLUID_STRDUP(filename);
+    if (lib->filename == NULL)
+    {
+        delete_fluid_ladspa_lib(lib);
+        FLUID_LOG(FLUID_ERR, "Out of memory");
+        return NULL;
+    }
+
+    return lib;
+}
+
+static void delete_fluid_ladspa_lib(fluid_ladspa_lib_t *lib)
+{
+    if (lib->filename != NULL)
+    {
+        FLUID_FREE(lib->filename);
+    }
+
+    FLUID_FREE(lib);
+}
+
+static int load_plugin_library(fluid_ladspa_lib_t *lib)
+{
+    char filepath[FLUID_LADSPA_MAX_PATH_LENGTH];
+    char *error;
+    char *ladspa_path;
+
+    /* If the library name does not contain a slash, then try to load from
+     * LADSPA_PATH */
+    if (FLUID_STRCHR(lib->filename, '/') == NULL)
+    {
+        ladspa_path = getenv("LADSPA_PATH");
+        if (ladspa_path == NULL)
+        {
+            FLUID_LOG(FLUID_ERR, "Unable to load LADSPA plugin '%s'. Use slashes in the "
+                                 "LADSPA library filename or set the LADSPA_PATH variable.",
+                      lib->filename);
+            return FLUID_FAILED;
+        }
+        FLUID_SNPRINTF(filepath, FLUID_LADSPA_MAX_PATH_LENGTH, "%s/%s", ladspa_path, lib->filename);
+    }
+    else
+    {
+        FLUID_SNPRINTF(filepath, FLUID_LADSPA_MAX_PATH_LENGTH, "%s", lib->filename);
+    }
+
+    dlerror();
+    lib->dlib = dlopen(filepath, RTLD_NOW);
+    error = dlerror();
+    if (lib->dlib == NULL || error)
+    {
+        if (error == NULL)
+        {
+            error = "Unknown error";
+        }
+        FLUID_LOG(FLUID_ERR, "Unable to load LADSPA plugin library '%s': %d", filepath, error);
+        return FLUID_FAILED;
+    }
+
+    lib->descriptor = (LADSPA_Descriptor_Function)dlsym(lib->dlib, "ladspa_descriptor");
+    error = dlerror();
+    if (lib->descriptor == NULL || error)
+    {
+        if (error == NULL)
+        {
+            error = "Unknown error";
+        }
+        dlclose(lib->dlib);
+        FLUID_LOG(FLUID_ERR, "Unable to find ladspa_descriptor in '%': %s", filepath, error);
+        return FLUID_FAILED;
+    }
+
+    return FLUID_OK;
+}
+
+static void unload_plugin_library(fluid_ladspa_lib_t *lib)
+{
+    dlclose(lib->dlib);
+    lib->dlib = NULL;
+    lib->descriptor = NULL;
+}
+
+/**
+ * Retrieve a ladspa_plugin_t instance by it's plugin id, as returned from
+ * fluid_ladspa_add_plugin.
+ *
+ * @note The returned pointer is only guaranteed to be valid as long as the
+ * caller holds the LADSPA API lock. Calles should not store the pointer
+ * but the plugin id to retrieve it at a later time.
+ *
+ * @param fx LADSPA effects instance
+ * @param id plugin id (integer)
+ * @return pointer to plugin or NULL if not found
  */
-void * fluid_LADSPA_LoadSharedLibrary(fluid_LADSPA_FxUnit_t* FxUnit, char * LibraryFilename){
-  void * LoadedLib;
-  assert(LibraryFilename);
-  LoadedLib=dlopen(LibraryFilename,RTLD_NOW);
-  if (!LoadedLib){
-    return NULL;
-  };
-  FxUnit->ppvPluginLibs[FxUnit->NumberLibs]=LoadedLib;
-  FxUnit->ppvPluginLibNames[FxUnit->NumberLibs]=FLUID_STRDUP(LibraryFilename);
-  FxUnit->NumberLibs++;
-  return LoadedLib;
-};
+static fluid_ladspa_plugin_t *get_plugin_by_id(fluid_ladspa_fx_t *fx, int id)
+{
+    int i;
 
-/* Purpose:
- * Retrieves a descriptor to the plugin labeled 'PluginLabel' from the shared library.
+    LADSPA_API_ENTER(fx);
+
+    for (i = 0; i < fx->num_plugins; i++)
+    {
+        if (fx->plugins[i]->id == id)
+        {
+            LADSPA_API_RETURN(fx, fx->plugins[i]);
+        }
+    }
+
+    LADSPA_API_RETURN(fx, NULL);
+}
+
+/**
+ * Return the default value of a plugin port, as specified by the port hints.
+ *
+ * @param plugin pointer to plugin instance
+ * @param port_idx index of the port in the plugin
+ * @param sample_rate the current sample rate of the LADSPA fx
+ * @param pointer to LADSPA_Data value to set
+ * @return FLUID_OK on success, otherwise FLUID_FAILED
  */
-const LADSPA_Descriptor * fluid_LADSPA_Retrieve_Plugin_Descriptor(void * CurrentLib, char * PluginLabel){
-  LADSPA_Descriptor_Function pfDescriptorFunction;
-  unsigned long lPluginIndex=0;
-  const LADSPA_Descriptor * psDescriptor;
-  pfDescriptorFunction = (LADSPA_Descriptor_Function)dlsym(CurrentLib,"ladspa_descriptor");
-  while (pfDescriptorFunction(lPluginIndex)){
-    psDescriptor = pfDescriptorFunction(lPluginIndex);
-    if (FLUID_STRCMP(psDescriptor->Label, PluginLabel) == 0){
-      return psDescriptor;
-    };
-    lPluginIndex++;
-  };
-  return NULL;
-};
+static int set_default_port_value(fluid_ladspa_plugin_t *plugin, unsigned int port_idx, int sample_rate,
+        LADSPA_Data *data)
+{
+    const LADSPA_PortRangeHint *hint;
+    LADSPA_PortRangeHintDescriptor flags;
+    LADSPA_Data value;
+    float low_factor = 0.0;
+    float high_factor = 0.0;
 
-/* Purpose:
- * Finds out, if 'PortName' starts with 'PluginPort'.
- * Spaces and underscore mean the same.
- * The comparison is not case sensitive.
- * The result distinguishes between a full match (strings are equal), and a partial match (PortName starts with Plugin_Port, but is longer).
+    if (port_idx >= plugin->desc->PortCount)
+    {
+        return FLUID_FAILED;
+    }
+
+    hint = &plugin->desc->PortRangeHints[port_idx];
+    flags = hint->HintDescriptor;
+
+    if (!LADSPA_IS_HINT_HAS_DEFAULT(flags))
+    {
+        return FLUID_FAILED;
+    }
+
+    if (LADSPA_IS_HINT_DEFAULT_0(flags))
+    {
+        value = 0.0;
+    }
+    else if (LADSPA_IS_HINT_DEFAULT_1(flags))
+    {
+        value = 1.0;
+    }
+    else if (LADSPA_IS_HINT_DEFAULT_100(flags))
+    {
+        value = 100.0;
+    }
+    else if (LADSPA_IS_HINT_DEFAULT_440(flags))
+    {
+        value = 440.0;
+    }
+    /* defaults based on lower or upper bounds must consider HINT_SAMPLE_RATE */
+    else {
+        if (LADSPA_IS_HINT_DEFAULT_MINIMUM(flags))
+        {
+            low_factor = 1.0;
+            high_factor = 0.0;
+        }
+        else if (LADSPA_IS_HINT_DEFAULT_LOW(flags))
+        {
+            low_factor = 0.75;
+            high_factor = 0.25;
+        }
+        else if (LADSPA_IS_HINT_DEFAULT_MIDDLE(flags))
+        {
+            low_factor = 0.5;
+            high_factor = 0.5;
+        }
+        else if (LADSPA_IS_HINT_DEFAULT_HIGH(flags))
+        {
+            low_factor = 0.25;
+            high_factor = 0.75;
+        }
+        else if (LADSPA_IS_HINT_DEFAULT_MAXIMUM(flags))
+        {
+            low_factor = 0.0;
+            high_factor = 1.0;
+        }
+
+        if (LADSPA_IS_HINT_LOGARITHMIC(flags) && low_factor > 0 && high_factor > 0)
+        {
+            value = exp(log(hint->LowerBound) * low_factor + log(hint->UpperBound) * high_factor);
+        }
+        else
+        {
+            value = (hint->LowerBound * low_factor + hint->UpperBound * high_factor);
+        }
+
+        if (LADSPA_IS_HINT_SAMPLE_RATE(flags))
+        {
+            value *= sample_rate;
+        }
+    }
+
+    if (LADSPA_IS_HINT_INTEGER(flags))
+    {
+        /* LADSPA doesn't specify which rounding method to use, so lets keep it simple... */
+        value = floor(value + 0.5);
+    }
+
+    *data = value;
+
+    return FLUID_OK;
+}
+
+/**
+ * For each control port that hasn't got an input yet, create a node based on the port hints
+ * specified in the plugin (if available).
+ *
+ * @param fx LADSPA fx instance
+ * @param plugin plugin instance
+ * @return FLUID_OK on success, otherwise FLUID_FAILED
  */
+static int connect_default_control_nodes(fluid_ladspa_fx_t *fx, fluid_ladspa_plugin_t *plugin)
+{
+    unsigned int i;
+    LADSPA_Data value;
+    fluid_ladspa_node_t *node;
+    fluid_ladspa_dir_t dir;
+    int port_flags;
 
-fluid_LADSPA_Stringmatch_t fluid_LADSPA_Check_SubString_Match(const char * Plugin_Port, const char * PortName){
-  unsigned int CharCount;
-  char a;
-  char b;
-  for(CharCount=0; CharCount<FLUID_STRLEN(Plugin_Port); CharCount++){
-    a=PortName[CharCount];
-    b=Plugin_Port[CharCount];
-    if (a>='a' && a <='z'){a-=32;}
-    if (b>='a' && b <='z'){b-=32;}
-    if (a == ' '){a='_';};
-    if (b == ' '){b='_';};
-    if ( a != b){
-      return fluid_LADSPA_NoMatch;
-    };
-  };
-  if (FLUID_STRLEN(Plugin_Port) == FLUID_STRLEN(PortName)){
-    return fluid_LADSPA_FullMatch;
-  };
-  return fluid_LADSPA_PartialMatch;
+    for (i = 0; i < plugin->desc->PortCount; i++)
+    {
+        port_flags = plugin->desc->PortDescriptors[i];
 
-};
+        if ((plugin->port_nodes[i] != NULL) || !LADSPA_IS_PORT_CONTROL(port_flags))
+        {
+            continue;
+        }
 
-/* Purpose:
- * Load the plugins added with 'ladspa_add' and then start the Fx unit.
+        if (set_default_port_value(plugin, i, fx->sample_rate, &value) == FLUID_OK)
+        {
+            node = new_fluid_ladspa_node(fx, "", FLUID_LADSPA_NODE_CONTROL);
+            if (node == NULL)
+            {
+                return FLUID_FAILED;
+            }
+            node->buf[0] = value;
+
+            dir = LADSPA_IS_PORT_INPUT(port_flags) ? FLUID_LADSPA_INPUT : FLUID_LADSPA_OUTPUT;
+
+            connect_node_to_port(node, dir, plugin, i);
+        }
+    }
+
+    return FLUID_OK;
+}
+
+static void connect_node_to_port(fluid_ladspa_node_t *node, fluid_ladspa_dir_t dir,
+        fluid_ladspa_plugin_t *plugin, int port_idx)
+{
+    plugin->desc->connect_port(plugin->handle, port_idx, node->buf);
+    plugin->port_nodes[port_idx] = node;
+
+    /* Mark node as connected in the respective direction */
+    if (dir == FLUID_LADSPA_INPUT || dir == FLUID_LADSPA_FIXED)
+    {
+        node->num_outputs++;
+    }
+    else
+    {
+        node->num_inputs++;
+    }
+}
+
+
+/**
+ * Check that all ports on the plugin are connected to a node.
+ *
+ * @param plugin LADSPA plugin instance
+ * @param name if check fails, points to the name of first failed port
+ * @return FLUID_OK on successful check, otherwise FLUID_FAILED
  */
+static int check_all_ports_connected(fluid_ladspa_plugin_t *plugin, const char **name)
+{
+    unsigned int i;
 
-int
-fluid_LADSPA_handle_start(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out){
-  fluid_LADSPA_FxUnit_t* FxUnit;
-  int CommandLineCount;
-  char * LibraryFilename;
-  char * PluginLabel;
-  char ** TokenSequence;
-  void * CurrentLib;
-  int NodeCount; //x
-  int IngoingSignalCount; // Count signals going into LADSPA Fx section
-  int OutgoingSignalCount; // Count signals going out of LADSPA Fx section
-  int ReturnVal=FLUID_OK; /* If warnings occur, this is set to -1. */
-  char * LADSPA_Path = getenv("LADSPA_PATH");
+    for (i = 0; i < plugin->desc->PortCount; i++)
+    {
+        if (plugin->port_nodes[i] == NULL)
+        {
+            *name = plugin->desc->PortNames[i];
+            return FLUID_FAILED;
+        }
+    }
+    return FLUID_OK;
+}
 
-  L(fluid_ostream_printf(out,"ladspa_start: starting..."));
-  assert(synth);
-  FxUnit=synth->LADSPA_FxUnit;
-  if (!FxUnit) {
-    fluid_ostream_printf(out, "ladspa not active!\n");
+/**
+ * In-place broken plugins can't cope with input and output audio ports connected
+ * to the same buffer. Check for this condition in the plugin.
+ *
+ * @param plugin LADSPA plugin instance
+ * @param name1 if check fails, points to the first port name
+ * @param name2 if check fails, points to the second port name
+ * @return FLUID_OK on successful check, otherwise FLUID_FAILED
+ */
+static int check_no_inplace_broken(fluid_ladspa_plugin_t *plugin, const char **name1, const char **name2)
+{
+    unsigned int i, k;
+    LADSPA_PortDescriptor flags1, flags2;
+
+    if (!LADSPA_IS_INPLACE_BROKEN(plugin->desc->Properties))
+    {
+        return FLUID_OK;
+    }
+
+    for (i = 0; i < plugin->desc->PortCount; i++)
+    {
+        flags1 = plugin->desc->PortDescriptors[i];
+
+        for (k = 0; k < plugin->desc->PortCount; k++)
+        {
+            flags2 = plugin->desc->PortDescriptors[k];
+
+            if (i != k
+                && plugin->port_nodes[i]->buf == plugin->port_nodes[k]->buf
+                && (flags1 & 0x3) != (flags2 & 0x3) /* first two bits encode direction */
+                && LADSPA_IS_PORT_AUDIO(flags1) && LADSPA_IS_PORT_AUDIO(flags2))
+            {
+                *name1 = plugin->desc->PortNames[i];
+                *name2 = plugin->desc->PortNames[k];
+                return FLUID_FAILED;
+            }
+        }
+    }
+    return FLUID_OK;
+}
+
+/**
+ * Check that at least one system input is used
+ *
+ * @param fx LADSPA fx instance
+ * @return FLUID_OK on successful check, otherwise FLUID_FAILED
+ */
+static int check_system_input_used(fluid_ladspa_fx_t *fx)
+{
+    int i;
+
+    for (i = 0; i < 2 * (fx->audio_groups + fx->effects_channels); i++)
+    {
+        if (fx->nodes[i]->num_outputs)
+        {
+            return FLUID_OK;
+        }
+    }
     return FLUID_FAILED;
-  }
-
-  /* When calling fluid_ladspastart, the Fx unit must be 'cleared' (no plugins, no libs, no nodes). Verify this here. */
-  if (FxUnit->NumberPlugins || FxUnit->NumberLibs){
-    fluid_ostream_printf(out, "***Error006***\n"
-	     "Fx unit is currently in use!\n"
-	     "Please run the ladspa_clear command before attempting to use ladspa_add!\n");
-    /* In this case do _not_ clear the Fx unit. */
-    return(PrintErrorMessage);
-  };
-  if (!FxUnit->NumberCommands){
-    fluid_ostream_printf(out, "***Error007***\n"
-	     "Refusing to start the Fx unit without any plugin.\n"
-	     "Use ladspa_add first!\n");
-    fluid_LADSPA_clear(FxUnit);
-    return(PrintErrorMessage);
-  };
-
-  /* Create predefined nodes */
-  L(fluid_ostream_printf(out,"ladspa_start: creating predefined nodes..."));
-  fluid_LADSPA_CreateSystemNodes(FxUnit);
-
-  /* Create predeclared nodes, that will allow to control the Fx unit during operation */
-  L(fluid_ostream_printf(out,"ladspa_start: creating user control nodes..."));
-  fluid_LADSPA_CreateUserControlNodes(FxUnit);
-
-  L(fluid_ostream_printf(out,"ladspa_start: Processing command lines..."));
-  for (CommandLineCount=0; CommandLineCount<FxUnit->NumberCommands; CommandLineCount++){
-    int CurrentPlugin_PortConnected[FLUID_LADSPA_MaxTokens/3]; /* For example: 100 tokens corresponds to roughly 30 ports. */
-    char LibFullPath[FLUID_LADSPA_MaxPathLength];
-    const LADSPA_Descriptor * CurrentPluginDescriptor;
-    LADSPA_Handle CurrentPlugin;
-    unsigned long PortCount;
-    int TokenCount=0;
-    char * Search;
-    int HasASlash=0;
-
-    if (FxUnit->NumberPlugins>=FLUID_LADSPA_MaxPlugins){
-    fluid_ostream_printf(out, "***Error003***\n"
-	       "Too many plugins at the same time (%i).\n"
-	       "Change FLUID_LADSPA_MaxPlugins!\n",
-	       FxUnit->NumberPlugins);
-      fluid_LADSPA_clear(FxUnit);
-      return(PrintErrorMessage);
-    };
-
-    L(fluid_ostream_printf(out,"Processing plugin nr. %i",FxUnit->NumberPlugins));
-
-    TokenSequence=FxUnit->LADSPA_Command_Sequence[CommandLineCount];
-    assert(TokenSequence);
-
-    /* Check, if the library is already loaded. If not, load. */
-    LibraryFilename=TokenSequence[TokenCount++]; assert(LibraryFilename);
-
-    L(fluid_ostream_printf(out,"Library name from ladspa_add: %s",LibraryFilename));
-    /* A slash-free filename refers to the LADSPA_PATH directory. Add that path, if needed. */
-
-
-
-    /* Determine, if the library filename contains a slash.
-     * If no, try to retrieve the environment variable LADSPA_PATH.
-     * If that fails, signal error.
-     * Otherwise leave the filename as it is.
-     */;
-
-    /* Determine, if the library name is just the filename, or a path (including a slash) */
-    Search=LibraryFilename;
-    while (*Search != '\0') {
-      if ((*Search)== '/'){
-	HasASlash=1;
-      };
-      Search++;
-    };
-
-    if (!HasASlash){
-      if (!LADSPA_Path){
-    fluid_ostream_printf(out, "***Error018***\n"
-		 "The library file name %s does not include a path.\n"
-		 "The environment variable LADSPA_PATH is not set.\n"
-		 "- Use an absolute path (i.e. /home/myself/mylib.so)\n"
-		 "- For the current directory use ./mylib.so\n"
-		 "- set the environment variable LADSPA_PATH (export LADSPA_PATH=/usr/lib/ladspa)\n"
-		 "- depending on your shell, try 'setenv' instead of 'export'\n",
-		 LibraryFilename);
-	fluid_LADSPA_clear(FxUnit);
-	return(PrintErrorMessage);
-      }; /* if no LADSPA_PATH */
-      snprintf(LibFullPath,FLUID_LADSPA_MaxPathLength,"%s/%s",LADSPA_Path,LibraryFilename);
-      /* If no slash in filename */
-    } else {
-	snprintf(LibFullPath,FLUID_LADSPA_MaxPathLength,"%s",LibraryFilename);
-    };
-
-    L(fluid_ostream_printf(out,"Full Library path name: %s",LibFullPath));
-
-    CurrentLib=fluid_LADSPA_RetrieveSharedLibrary(FxUnit, LibFullPath);
-    if (!CurrentLib){
-      LADSPA_Descriptor_Function pfDescriptorFunction;
-
-      L(fluid_ostream_printf(out,"Library %s not yet loaded. Loading.",LibFullPath));
-
-      if (FxUnit->NumberLibs>=FLUID_LADSPA_MaxLibs){
-    fluid_ostream_printf(out, "***Error004***\n"
-		 "Too many libraries open (%i)\n"
-		 "Change FLUID_LADSPA_MaxLibs",FxUnit->NumberPlugins);
-	fluid_LADSPA_clear(FxUnit);
-	return(PrintErrorMessage);
-      };
-
-      /* Load a LADSPA plugin library and store it for future use.*/
-      CurrentLib=fluid_LADSPA_LoadSharedLibrary(FxUnit, LibFullPath);
-
-      if (!CurrentLib){
-    fluid_ostream_printf(out, "***Error008***\n"
-		 "Failed to load plugin library %s.",
-		 LibraryFilename);
-	fluid_LADSPA_clear(FxUnit);
-	return(PrintErrorMessage);
-      };
-
-
-      dlerror();
-      pfDescriptorFunction = (LADSPA_Descriptor_Function)dlsym(CurrentLib,"ladspa_descriptor");
-      if (!pfDescriptorFunction) {
-	const char * pcError = dlerror();
-	if (!pcError) {pcError="Huh?! No error from lib!";};
-    fluid_ostream_printf(out, "***Error015***\n"
-		 "Unable to find ladspa_descriptor() function in plugin library file \"%s\": %s.\n"
-		 "Are you sure this is a LADSPA plugin file?\n",
-		 LibraryFilename,
-		 pcError);
-	fluid_LADSPA_clear(FxUnit);
-	return(PrintErrorMessage);
-      };
-
-      L(fluid_ostream_printf(out,"Library loaded."));
-    };
-
-    PluginLabel=TokenSequence[TokenCount++]; assert(PluginLabel);
-    L(fluid_ostream_printf(out,"Plugin Label from ladspa_add: %s",PluginLabel));
-    /* Retrieve a 'plugin descriptor' from the library. */
-    L(fluid_ostream_printf(out,"Looking for the plugin labeled %s",PluginLabel));
-
-    CurrentPluginDescriptor=fluid_LADSPA_Retrieve_Plugin_Descriptor(CurrentLib, PluginLabel);
-
-
-    /* Check, that the plugin was actually found.*/
-    if (CurrentPluginDescriptor==NULL){
-    fluid_ostream_printf(out, "***Error016***\n"
-	       "Unable to find the plugin labeled \"%s\" in plugin library file \"%s\".\n"
-	       "Hint: run analyzeplugin %s from the command line to get a list of valid plugin labels.\n",
-	       PluginLabel,
-	       LibraryFilename,
-	       LibraryFilename);
-      fluid_LADSPA_clear(FxUnit);
-      return(PrintErrorMessage);
-    };
-
-    /* Create an instance of the plugin type from the descriptor */
-    L(fluid_ostream_printf(out,"instantiating plugin %s",PluginLabel));
-    CurrentPlugin=CurrentPluginDescriptor
-      ->instantiate(CurrentPluginDescriptor,44100); /* Sample rate hardcoded */
-    assert(CurrentPlugin);
-
-    /* The descriptor ("type of plugin") and the instance are stored for each plugin instantiation.
-       If one plugin type is instantiated several times, they will have the same descriptor, only
-       different instances.*/
-    FxUnit->PluginDescriptorTable[FxUnit->NumberPlugins]=CurrentPluginDescriptor;
-    FxUnit->PluginInstanceTable[FxUnit->NumberPlugins]=CurrentPlugin;
-
-    /*
-     *
-     * Wire up the inputs and outputs
-     *
-     */
-
-    /* List for checking, that each plugin port is exactly connected once */
-    for (PortCount=0; PortCount<CurrentPluginDescriptor->PortCount; PortCount++){
-      CurrentPlugin_PortConnected[PortCount]=0;
-    };
-
-    /* Note: There are three NULL tokens at the end. The last condition may be evaluated even if the first one already detects the end. */
-    while (TokenSequence[TokenCount] && TokenSequence[TokenCount+1] && TokenSequence[TokenCount+2]){
-      int CurrentPort_StringMatchCount;
-      LADSPA_PortDescriptor CurrentPort_Descriptor;
-      char * Plugin_Port=TokenSequence[TokenCount++];
-      char * Direction=TokenSequence[TokenCount++];
-      char * FLUID_Node=TokenSequence[TokenCount++];
-      fluid_LADSPA_Node_t* Current_Node;
-      const char * PortName=NULL;
-      int CurrentPort_Index=-1;
-      fluid_LADSPA_Stringmatch_t StringMatchType=fluid_LADSPA_NoMatch;
-      fluid_LADSPA_Stringmatch_t CurrentPort_StringMatchType=fluid_LADSPA_NoMatch;
-      CurrentPort_StringMatchCount=0;
-
-      L(fluid_ostream_printf(out,"Wiring %s %s %s",Plugin_Port, Direction, FLUID_Node));
-
-      /* Find the port number on the plugin, that belongs to "Plugin_Port".
-       * Match the identifier specified by the user against the first characters
-       * of the port name.
-       *
-       * If the given identifier matches several port names only partly, then the input is ambiguous, an error
-       * message results.
-       *
-       * Example: cmt.so, limit_peak: This plugin uses the labels
-       * -  Output Envelope Attack (s)
-       * -  Output Envelope Decay (s)
-       * -  Output
-       *
-       * The user input 'Output' matches the first two labels partly, the third fully. This will be accepted.
-       * The user input 'Out' matches all three only partly, this results in an error message.
-       */
-
-      for (PortCount=0; PortCount<CurrentPluginDescriptor->PortCount; PortCount++){
-	PortName=CurrentPluginDescriptor->PortNames[PortCount];
-
-	StringMatchType=fluid_LADSPA_Check_SubString_Match(Plugin_Port, PortName);
-	/* If a full-string match has been found earlier, reject all partial matches. */
-	if (StringMatchType==fluid_LADSPA_FullMatch ||
-	    (StringMatchType==fluid_LADSPA_PartialMatch && CurrentPort_StringMatchType != fluid_LADSPA_FullMatch)){
-
-	  if(StringMatchType==fluid_LADSPA_FullMatch && CurrentPort_StringMatchType==fluid_LADSPA_FullMatch){
-    fluid_ostream_printf(out, "***Error027***\n"
-		     "While processing plugin %s: The port label %s appears more than once!\n"
-		     "This is an error in the plugin itself. Please correct it or use another plugin.",PluginLabel, Plugin_Port);
-	    fluid_LADSPA_clear(FxUnit);
-	    return(PrintErrorMessage);
-	  };
-
-	  CurrentPort_Index=PortCount;
-	  CurrentPort_StringMatchType=StringMatchType;
-	  CurrentPort_StringMatchCount++;
-
-	}; /* if suitable match */
-      }; /* For port count */
-
-      /* Several partial matches? Then the identifier is not unique. */
-      if (CurrentPort_StringMatchCount > 1 && CurrentPort_StringMatchType == fluid_LADSPA_PartialMatch){
-    fluid_ostream_printf(out, "***Error019***\n"
-		 "While processing plugin %s: The identifier %s matches more than one plugin port.\n"
-		 "Please use more letters for the port name. If needed, replace spaces with underscores (_).\n"
-		 "This error will not occur, if you use the full name of a port.\n",PluginLabel, Plugin_Port);
-	fluid_LADSPA_clear(FxUnit);
-	return(PrintErrorMessage);
-      };
-
-      if (CurrentPort_Index<0){
-    fluid_ostream_printf(out, "***Error017***\n"
-		 "Unable to find port '%s' on plugin %s\n"
-		 "Port names are:\n",Plugin_Port,PluginLabel);
-	for (PortCount=0; PortCount<CurrentPluginDescriptor->PortCount; PortCount++){
-	  printf("- `%s'\n",CurrentPluginDescriptor->PortNames[PortCount]);
-	};
-
-	fluid_LADSPA_clear(FxUnit);
-	return(PrintErrorMessage);
-      };
-      CurrentPort_Descriptor=CurrentPluginDescriptor->PortDescriptors[CurrentPort_Index];
-      assert(CurrentPort_Descriptor);
-
-      /* Retrieve the node with the right name. */
-      Current_Node=fluid_LADSPA_RetrieveNode(FxUnit,FLUID_Node);
-#define PortIsAudio LADSPA_IS_PORT_AUDIO(CurrentPort_Descriptor) && !(LADSPA_IS_PORT_CONTROL(CurrentPort_Descriptor))
-#define PortIsControl LADSPA_IS_PORT_CONTROL(CurrentPort_Descriptor) && !(LADSPA_IS_PORT_AUDIO(CurrentPort_Descriptor))
-      if (!Current_Node){
-	/* Doesn't exist? Then create it. */
-	if (FxUnit->NumberNodes>=FLUID_LADSPA_MaxNodes){
-    fluid_ostream_printf(out, "***Error005***\n"
-		   "Too many nodes (%i)\n"
-		   "Change FLUID_LADSPA_MaxNodes",FxUnit->NumberNodes);
-	  fluid_LADSPA_clear(FxUnit);
-	  return(PrintErrorMessage);
-	};
-	if (PortIsAudio){
-	  Current_Node=fluid_LADSPA_CreateNode(FxUnit,FLUID_Node,fluid_LADSPA_node_is_audio);
-	} else if (PortIsControl){
-	  Current_Node=fluid_LADSPA_CreateNode(FxUnit,FLUID_Node,fluid_LADSPA_node_is_control);
-	} else {
-    fluid_ostream_printf(out, "***Error025***\n"
-		   "Plugin port number %i is neither input nor output!\n"
-		   "This is an error in the plugin.\n"
-		   "Please check plugin sourcecode.\n",
-		   CurrentPort_Index);
-	  fluid_LADSPA_clear(FxUnit);
-	  return(PrintErrorMessage);
-	};
-      };
-      assert(Current_Node);
-
-      /*
-       *
-       * Check flowgraph for some possible errors.
-       *
-       */
-
-      if (FLUID_STRCMP(Direction,"->")==0){
-	/* Data from plugin to FLUID, into node
-	 *
-	 * *** Rule: ****
-	 * A node may not have more than one data source.*/
-	if (Current_Node->InCount !=0){
-    fluid_ostream_printf(out, "***Error009***\n"
-		   "Plugin %s tries to feed data from output %s into node %s, which is already connected to a data source.\n",PluginLabel,Plugin_Port,FLUID_Node);
-	  fluid_LADSPA_clear(FxUnit);
-	  return(PrintErrorMessage);
-	};
-	Current_Node->InCount++;
-      } else if (FLUID_STRCMP(Direction,"<-")==0){
-	/* Data from FLUID to plugin, out of node
-	 *
-	 * This check verifies the integrity of the flow graph:
-	 * *** Rule ***
-	 * The execution order of the plugins is the order, in which they are programmed.
-	 * The plugins must be ordered so, that the input of a plugin is already computed at the time of its execution.
-	 * If the user tries to read data out of a node that has not yet an input, then something is wrong.*/
-	assert(Current_Node->InCount<=1);
-	if (Current_Node->InCount !=1){
-    fluid_ostream_printf(out, "***Error010***\n"
-		   "Plugin %s tries to read data through input %s from node %s.\n"
-		   "But at this point there is no valid data at that node.\n"
-		   "Please check the flowgraph and especially the execution order!\n",PluginLabel,Plugin_Port,FLUID_Node);
-	  fluid_LADSPA_clear(FxUnit);
-	  return(PrintErrorMessage);
-	};
-	Current_Node->OutCount++;
-      } else {
-	fluid_ostream_printf(out, "***Error024***\n"
-	       "Syntax error: Illegal `arrow' `%s', expecting -> or <-\n",
-	       Direction);
-	fluid_LADSPA_clear(FxUnit);
-	return(PrintErrorMessage);
-      };
-
-      /* In any case, there must be a valid data source for the port at this time. */
-      assert(Current_Node->InCount==1);
-
-      /* Keep track on the number of connections to each port.
-       * This error occurs only, if an attempt is made to connect one port twice (i.e. ladspa_add libname pluginname port <- nodex port <- nodey) */
-      if (CurrentPlugin_PortConnected[CurrentPort_Index]){
-    fluid_ostream_printf(out, "***Error011***\n"
-		 "Refusing to connect twice to port %s on plugin %s.\n",CurrentPluginDescriptor->PortNames[CurrentPort_Index], PluginLabel);
-	fluid_LADSPA_clear(FxUnit);
-	return(PrintErrorMessage);
-      };
-
-      /*
-       *
-       * Connect the port
-       *
-       */
-
-      L(fluid_ostream_printf(out,"Connecting %i",CurrentPort_Index));
-      CurrentPluginDescriptor->connect_port
-	(CurrentPlugin,
-	 CurrentPort_Index,
-	 Current_Node->buf
-	 );
-      CurrentPlugin_PortConnected[CurrentPort_Index]++;
-
-    }; /* While Tokensequence (more connections) */
-
-    /*
-     *
-     * Check for left-over tokens
-     *
-     */
-
-    if (TokenSequence[TokenCount]){
-      char * T1="";char * T2="";char * T3="";
-      if (TokenSequence[TokenCount]){T1=TokenSequence[TokenCount];};
-      if (TokenSequence[TokenCount+1]){T2=TokenSequence[TokenCount+1];};
-      if (TokenSequence[TokenCount+2]){T3=TokenSequence[TokenCount+2];};
-    fluid_ostream_printf(out, "***Error012***\n"
-	       "Leftover tokens: %s %s %s...\n",T1,T2,T3);
-      fluid_LADSPA_clear(FxUnit);
-      return(PrintErrorMessage);
-    };
-
-    /*
-     *
-     * Check, that all plugin ports are connected
-     *
-     */
-    L(fluid_ostream_printf(out,"Checking left-over ports"));
-    assert(CurrentPluginDescriptor);
-    for (PortCount=0; PortCount<CurrentPluginDescriptor->PortCount; PortCount++){
-      assert(CurrentPlugin_PortConnected[PortCount] <=1);
-      if (CurrentPlugin_PortConnected[PortCount] !=1){
-    fluid_ostream_printf(out, "***Error013***\nPlugin: %s. Port %s is unconnected!\n",PluginLabel, CurrentPluginDescriptor->PortNames[PortCount]);
-	fluid_LADSPA_clear(FxUnit);
-	return(PrintErrorMessage);
-      };
-    };
-
-    /*
-     *
-     *Run activate function on plugin, where possible
-     *
-     */
-
-    if (CurrentPluginDescriptor->activate !=NULL){
-      CurrentPluginDescriptor->activate(CurrentPlugin);
-    };
-
-    FxUnit->NumberPlugins++;
-  }; /* For CommandLineCount: once for each new command (i.e. plugin instantiation request from user */
-
-  /*
-   *
-   * Further flow graph checks
-   *
-   */
-
-  L(fluid_ostream_printf(out,"Checking flow graph"));
-
-  IngoingSignalCount=0;
-  OutgoingSignalCount=0;
-
-  for (NodeCount=0; NodeCount<FxUnit->NumberNodes; NodeCount++){
-    fluid_LADSPA_Node_t* Current_Node;
-    Current_Node=FxUnit->Nodelist[NodeCount];
-    assert(Current_Node);
-    if (Current_Node->flags & fluid_LADSPA_node_is_source){
-      IngoingSignalCount+=Current_Node->OutCount;
-    } else if (Current_Node->flags & fluid_LADSPA_node_is_sink){
-      OutgoingSignalCount+=Current_Node->InCount;
-    } else {
-
-      /* A node without any input doesn't make sense.
-       * The flow graph check aborts with an error. This case cannot happen.
-       */
-      if (Current_Node->InCount==0 && !Current_Node->flags && fluid_LADSPA_node_is_dummy){ /* There can only be one warning at a time. */
-        fluid_ostream_printf(out, "***Warning020***"
-		   "No input into node %s.\n"
-		   "Use '_' as first char in nodename to suppress this warning.\n"
-		   "Hint: Check for typos in the node name.\n",Current_Node->Name);
-	  /* A warning can also be printed as an error message (check fluid_cmd.c). The only difference between
-	     the return values -1 and 0 is, that -1 prints the result. */
-      };
-      ReturnVal=PrintErrorMessage;
-    };
-
-    /* A node without any output doesn't make sense. */
-    if (Current_Node->OutCount==0 && !Current_Node->flags && fluid_LADSPA_node_is_dummy){
-      fluid_ostream_printf(out, "***Warning021***\n"
-		 "No output from node %s.\n"
-		 "Use '_' as first char in nodename to suppress this warning.\n"
-		 "Hint: Check for typos in the node name.\n",Current_Node->Name);
-      ReturnVal=PrintErrorMessage;
-    };
-    /* A free-flying node simply cannot happen. */
-    assert(Current_Node->OutCount+Current_Node->InCount);
-  }; /* Foreach node */
-
-  /* Issue a warning, if no signal goes into the Fx section. */
-  if (IngoingSignalCount==0){
-    fluid_ostream_printf(out, "***Warning022***\n"
-	       "You have not connected anything to the synthesizer section (in1_L, in1_R).\n");
-    ReturnVal=PrintErrorMessage;
-  };
-
-  /* Issue a warning, if no signal leaves the Fx section. */
-  if (OutgoingSignalCount==0){
-    fluid_ostream_printf(out, "***Warning023***\n"
-	       "You have not connected anything to the output (out1_L, out1_R).\n");
-  };
-
-  /* Finally turn on the Fx unit. */
-  FxUnit->Bypass=fluid_LADSPA_Active;
-  L(fluid_ostream_printf(out,"LADSPA Init OK"));
-  return(ReturnVal);
-};
-
-void
-fluid_LADSPA_run(fluid_LADSPA_FxUnit_t* FxUnit, fluid_real_t* left_buf[], fluid_real_t* right_buf[], fluid_real_t* fx_left_buf[], fluid_real_t* fx_right_buf[]){
-  int i;
-  int ii;
-
-
-  int nr_audio_channels;
-  int nr_fx_sends;
-  int nr_groups;
-  int byte_size = FLUID_BUFSIZE * sizeof(LADSPA_Data);
-  char str[99];
-  fluid_LADSPA_Node_t* n;
-
-  /* Retrieve the number of synth / audio out / Fx send nodes */
-  nr_groups = FxUnit->synth->audio_groups;
-  nr_audio_channels = FxUnit->synth->audio_channels;
-  nr_fx_sends = FxUnit->synth->effects_channels;
-
-  /* Fixme: Retrieving nodes via names is inefficient
-   * (but not that bad, because the interesting nodes are always at the start of the list).
-   */
-
-  /* Input and output are processed via the same buffers. Therefore the effect is bypassed by just skipping everything else. */
-  if (FxUnit->Bypass==fluid_LADSPA_Bypassed){
-    return;
-  };
-
-  if (FxUnit->Bypass==fluid_LADSPA_BypassRequest){
-    FxUnit->Bypass=fluid_LADSPA_Bypassed;
-    pthread_mutex_lock(&FxUnit->mutex);
-    pthread_cond_broadcast(&FxUnit->cond);
-    pthread_mutex_unlock(&FxUnit->mutex);
-    L(printf("LADSPA_Run: Command line asked for bypass of Fx unit. Acknowledged."));
-    return;
-  };
-
-  assert(FxUnit);
-
-  /* Clear the output buffers, if they are not connected anywhere */
-  for (ii=0; ii < nr_audio_channels; ii++){
-
-      sprintf(str, "out%i_L",(ii+1));
-      n=fluid_LADSPA_RetrieveNode(FxUnit, str); assert(n);
-      if (n->InCount == 0){
-/*	  printf("Output node %s is not connected -> clear buffer\n", str); */
-	  FLUID_MEMSET(n->buf, 0, byte_size);
-      };
-
-      sprintf(str, "out%i_R",(ii+1));
-      n=fluid_LADSPA_RetrieveNode(FxUnit, str); assert(n);
-      if (n->InCount == 0){
-/*	  printf("Output node %s is not connected -> clear buffer\n", str); */
-	  FLUID_MEMSET(n->buf, 0, byte_size);
-      };
-  };
-
-  /* Prepare the incoming data:
-   * Convert fluid_real_t data type to LADSPA_Data type */
-  for (ii=0; ii < nr_groups; ii++){
-      fluid_real_t* src_buf=left_buf[ii];
-      sprintf(str, "in%i_L",(ii+1));
-      n=fluid_LADSPA_RetrieveNode(FxUnit, str); assert(n);
-
-      assert(FLUID_BUFSIZE % 2 == 0);
-
-      /* Add a very small high frequency signal. This avoids denormal number problems. */
-      for (i=0; i<FLUID_BUFSIZE;){
-	  n->buf[i]=(LADSPA_Data)(src_buf[i]+1.e-15);
-	  i++;
-	  n->buf[i]=(LADSPA_Data)(src_buf[i]);
-	  i++;
-      };
-
-      src_buf=right_buf[ii];
-      sprintf(str, "in%i_R",(ii+1));
-      n=fluid_LADSPA_RetrieveNode(FxUnit, str); assert(n);
-
-      /* Add a very small high frequency signal. This avoids denormal number problems. */
-      for (i=0; i<FLUID_BUFSIZE;){
-	  n->buf[i]=(LADSPA_Data)(src_buf[i]+1.e-15);
-	  i++;
-	  n->buf[i]=(LADSPA_Data)(src_buf[i]);
-	  i++;
-      };
-  };
-
-  /* Effect send paths */
-  for (ii=0; ii < nr_fx_sends; ii++){
-      sprintf(str, "send%i_L",(ii+1));
-      n=fluid_LADSPA_RetrieveNode(FxUnit, str); assert(n);
-      for (i=0; i<FLUID_BUFSIZE; i++){
-	  n->buf[i]=(LADSPA_Data)(fx_left_buf[ii][i]);
-      };
-
-      sprintf(str, "send%i_R",(ii+1));
-      n=fluid_LADSPA_RetrieveNode(FxUnit, str); assert(n);
-      for (i=0; i<FLUID_BUFSIZE; i++){
-	  n->buf[i]=(LADSPA_Data)(fx_right_buf[ii][i]);
-      };
-  };
-
-  /* Run each plugin on a block of data.
-   * The execution order has been checked during setup.*/
-  for (i=0; i<FxUnit->NumberPlugins; i++){
-    FxUnit->PluginDescriptorTable[i]->run(FxUnit->PluginInstanceTable[i],FLUID_BUFSIZE);
-  };
-
-  /* Copy the data from the output nodes back to the synth. */
-  for (ii=0; ii < nr_audio_channels; ii++){
-      fluid_real_t* dest_buf=left_buf[ii];
-      sprintf(str, "out%i_L",(ii+1));
-      n=fluid_LADSPA_RetrieveNode(FxUnit, str); assert(n);
-      for (i=0; i<FLUID_BUFSIZE; i++){
-	  dest_buf[i]=(fluid_real_t)n->buf[i];
-      };
-
-      dest_buf=right_buf[ii];
-      sprintf(str, "out%i_R",(ii+1));
-      n=fluid_LADSPA_RetrieveNode(FxUnit, str); assert(n);
-      for (i=0; i<FLUID_BUFSIZE; i++){
-	  dest_buf[i]=(fluid_real_t)n->buf[i];
-      };
-  };
-};
-
-fluid_LADSPA_Node_t*
-fluid_LADSPA_RetrieveNode(fluid_LADSPA_FxUnit_t* FxUnit, char * Name){
-  int i=0;
-  assert(FxUnit);assert(Name);
-  for (i=0; i<FxUnit->NumberNodes; i++){
-    assert(FxUnit->Nodelist[i]);
-    if (FLUID_STRCMP(FxUnit->Nodelist[i]->Name,Name)==0){
-      return FxUnit->Nodelist[i];
-    };
-  };
-  return NULL;
-};
-
-
-/* Purpose:
- * Creates a new node from the node name given by the user.
+}
+
+/**
+ * Check that at least one system output is used
+ *
+ * @param fx LADSPA fx instance
+ * @return FLUID_OK on successful check, otherwise FLUID_FAILED
  */
-fluid_LADSPA_Node_t*
-fluid_LADSPA_CreateNode(fluid_LADSPA_FxUnit_t* FxUnit, char * Name, int flags){
-  int Dummy=0;
-  fluid_LADSPA_Node_t* NewNode;
-  assert(FxUnit);
-  assert(Name);
-//  printf("Flags is %i\n",flags);
-  L(printf("Create node: %s",Name));
-  if (FxUnit->NumberNodes>=FLUID_LADSPA_MaxNodes){
-    printf( "***Error014***\n"
-	    "Too many nodes (%i)\n"
-	    "Change FLUID_LADSPA_MaxNodes.\n",FxUnit->NumberNodes);
-    fluid_LADSPA_clear(FxUnit);
-    return NULL;
-  };
+static int check_system_output_used(fluid_ladspa_fx_t *fx)
+{
+    int i;
+    int num_system_nodes = 2 * (fx->audio_groups + fx->effects_channels + fx->audio_channels);
 
-  /* Don't allow node names, which start with -, 0..9 */
-  if (Name[0] == '-' || (Name[0]>='0' && Name[0]<='9')){
-    printf( "***Error026***\n"
-	    "The node name %s starts with a digit / minus sign!\n"
-	    "Please use a letter to start a node name.\n"
-	    "A constant node is created by using `$' as first character,\n"
-	    "for example $-2.5.\n",
-	    Name);
-    fluid_LADSPA_clear(FxUnit);
-    return NULL;
-  };
-
-  /* A nodename starting with "_" is a possible dummy node, which may (but need not) act as a data sink or source (dummy node). */
-  if (Name[0] == ' '){ /* ??? Should be '_' ??? */
-    Dummy=1;
-  };
-  NewNode=FLUID_NEW(fluid_LADSPA_Node_t);assert(NewNode);
-  if (flags && fluid_LADSPA_node_is_audio){
-    /* Audio node contains buffer. */
-    NewNode->buf=FLUID_ARRAY(LADSPA_Data, (FLUID_BUFSIZE));assert(NewNode->buf);
-    /* It is permitted to use a dummy node without input. Therefore clear all node buffers at startup. */
-    FLUID_MEMSET(NewNode->buf, 0, (FLUID_BUFSIZE*sizeof(LADSPA_Data)));
-  } else if (flags & fluid_LADSPA_node_is_control){
-    /* Control node contains single value. */
-    NewNode->buf=FLUID_ARRAY(LADSPA_Data, 1);assert(NewNode->buf);
-  } else {
-    assert(0);
-  };
-  NewNode->Name=FLUID_STRDUP(Name);assert(NewNode->Name);
-  if (Dummy){
-      flags |= fluid_LADSPA_node_is_dummy;
-  };
-  NewNode->InCount=0;
-  NewNode->OutCount=0;
-  NewNode->flags=flags;
-
-  /* A nodename starting with "$" means that the node holds a constant value. */
-  if (NewNode->Name[0] == '$'){
-    assert(flags & fluid_LADSPA_node_is_control);
-    /* Skip the first character => +1 */
-    NewNode->buf[0]=(LADSPA_Data)atof(NewNode->Name+1);
-    NewNode->InCount++;
-  };
-  if (flags & fluid_LADSPA_node_is_source){
-    NewNode->InCount++;
-//    printf("****************************** Source!\n");
-  } else if (flags & fluid_LADSPA_node_is_sink){
-    NewNode->OutCount++;
-  };
-  FxUnit->Nodelist[FxUnit->NumberNodes++]=NewNode;
-
-  L(printf("Node %s created.",Name));
-  return NewNode;
-};
-
-void fluid_LADSPA_clear(fluid_LADSPA_FxUnit_t* FxUnit){
-  int i;
-  int ii;
-  L(printf("ladspa_clear"));
-  assert(FxUnit);
-
-  if (FxUnit->Bypass==fluid_LADSPA_Active){
-    L(printf("clear: Requesting bypass from synthesis thread"));
-    /* Bypass the Fx unit before anything else.
-     * Reason: Not a good idea to release plugins, while another thread runs them.
-     */
-    FxUnit->Bypass=fluid_LADSPA_BypassRequest;
-    pthread_mutex_lock(&FxUnit->mutex);
-    pthread_cond_wait(&FxUnit->cond,&FxUnit->mutex);
-    pthread_mutex_unlock(&FxUnit->mutex);
-    L(printf("clear: Synthesis thread has switched to bypass."));
-  } else {
-    L(printf("clear: Fx unit was already bypassed. No action needed."));
-  };
-
-  L(printf("Clear all user control node declarations"));
-  for (i=0; i<FxUnit->NumberUserControlNodes; i++){
-    FLUID_FREE(FxUnit->UserControlNodeNames[i]);
-  };
-  FxUnit->NumberUserControlNodes=0;
-
-  L(printf("Clear all plugin instances"));
-  for (i=0; i<FxUnit->NumberPlugins; i++){
-    assert(FxUnit->PluginDescriptorTable[i]);
-    assert(FxUnit->PluginInstanceTable[i]);
-
-    /* Run deactivate function on plugin, if possible */
-    if (FxUnit->PluginDescriptorTable[i]->deactivate){
-      FxUnit->PluginDescriptorTable[i]->deactivate(FxUnit->PluginInstanceTable[i]);
-    };
-    FxUnit->PluginDescriptorTable[i]->cleanup(FxUnit->PluginInstanceTable[i]);
-  };
-  FxUnit->NumberPlugins=0;
-
-  L(printf("Clear all nodes")); /* Only after removing plugins! */
-  for (i=0; i<FxUnit->NumberNodes; i++){
-    FLUID_FREE(FxUnit->Nodelist[i]->buf);
-    FLUID_FREE(FxUnit->Nodelist[i]);
-  };
-  FxUnit->NumberNodes=0;
-
-
-  L(printf("Clear all plugin libraries"));
-  for (i=0; i<FxUnit->NumberLibs; i++){
-
-    assert(FxUnit->ppvPluginLibs[i]);
-    dlclose(FxUnit->ppvPluginLibs[i]);
-
-    assert(FxUnit->ppvPluginLibNames[i]);
-    FLUID_FREE(FxUnit->ppvPluginLibNames[i]);
-  };
-  FxUnit->NumberLibs=0;
-
-  L(printf("Clear all command lines"));
-  for (i=0; i<FxUnit->NumberCommands;i++){
-    ii=0;
-    assert(FxUnit->LADSPA_Command_Sequence[i]);
-    while (FxUnit->LADSPA_Command_Sequence[i][ii]){
-      FLUID_FREE(FxUnit->LADSPA_Command_Sequence[i][ii]);
-      ii++;
-    };
-    FLUID_FREE(FxUnit->LADSPA_Command_Sequence[i]);
-  };
-  FxUnit->NumberCommands=0;
-};
-
-int fluid_LADSPA_handle_add(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out){
-  int i;
-  //char * Token;
-  char ** CommandLine;
-  fluid_LADSPA_FxUnit_t* FxUnit;
-  assert(synth);
-  FxUnit=synth->LADSPA_FxUnit;
-  if (!FxUnit) {
-    fluid_ostream_printf(out, "ladspa not active!\n");
+    for (i = 2 * (fx->audio_groups + fx->effects_channels); i < num_system_nodes; i++)
+    {
+        if (fx->nodes[i]->num_inputs)
+        {
+            return FLUID_OK;
+        }
+    }
     return FLUID_FAILED;
-  }
-  if (ac>=FLUID_LADSPA_MaxTokens){
-    /* Can't be tested. fluidsynth limits the number of tokens. */
-    printf("***Error001***\n"
-	     "Too many ports.\nChange FLUID_LADSPA_MaxTokens!");
-    fluid_LADSPA_clear(FxUnit);
-    return(PrintErrorMessage);
-  };
-  if (ac<2){
-    printf("***Error002***\n"
-	     "ladspa_add needs at least two arguments - libname and plugin name!");
-    fluid_LADSPA_clear(FxUnit);
-    return(PrintErrorMessage);
-  };
+}
 
-  if (FxUnit->NumberCommands>=FLUID_LADSPA_MaxPlugins){
-    printf("***Error032***\n"
-	     "Too many plugins.\nChange FLUID_LADSPA_MaxPlugins!");
-    fluid_LADSPA_clear(FxUnit);
-    return(PrintErrorMessage);
-  };
+/**
+ * Check that all user audio nodes have an input and an output
+ *
+ * @param fx LADSPA fx instance
+ * @param name if check fails, points to the name of first failed node
+ * @return FLUID_OK on successful check, otherwise FLUID_FAILED
+ */
+static int check_all_audio_nodes_connected(fluid_ladspa_fx_t *fx, const char **name)
+{
+    int i;
+    int num_system_nodes = 2 * (fx->audio_groups + fx->effects_channels + fx->audio_channels);
 
-  /* CommandLine (token sequence) is terminated with NULL.
-   * Add two more NULLs, so that a chunk of three tokens can be checked later without risk.*/
+    for (i = num_system_nodes; i < fx->num_nodes; i++)
+    {
+        if (fx->nodes[i]->type == FLUID_LADSPA_NODE_AUDIO &&
+            (fx->nodes[i]->num_inputs == 0 || fx->nodes[i]->num_outputs == 0))
+        {
+            *name = fx->nodes[i]->name;
+            return FLUID_FAILED;
+        }
+    }
+    return FLUID_OK;
+}
 
-  CommandLine=FLUID_ARRAY(char*, (ac+3));assert(CommandLine);
-  for (i=0; i<ac; i++){
-    CommandLine[i]=FLUID_STRDUP(av[i]);assert(CommandLine[i]);
-  };
-  CommandLine[ac]=NULL;
-  CommandLine[ac+1]=NULL;
-  CommandLine[ac+2]=NULL;
+/**
+ * Check that all user control nodes have an input or an output
+ *
+ * @param fx LADSPA fx instance
+ * @param name if check fails, points to the name of first failed node
+ * @return FLUID_OK on successful check, otherwise FLUID_FAILED
+ */
+static int check_all_control_nodes_connected(fluid_ladspa_fx_t *fx, const char **name)
+{
+    int i;
+    int num_system_nodes = 2 * (fx->audio_groups + fx->effects_channels + fx->audio_channels);
 
-  FxUnit->LADSPA_Command_Sequence[FxUnit->NumberCommands]=CommandLine;
-  FxUnit->NumberCommands++;
-  return(FLUID_OK);
-};
-
-int fluid_LADSPA_handle_declnode(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out){
-  //int i;
-  //char * Token;
-  //char ** CommandLine;
-  char * NodeName;
-  fluid_real_t NodeValue;
-  fluid_LADSPA_FxUnit_t* FxUnit;
-  assert(synth);
-  FxUnit=synth->LADSPA_FxUnit;
-  if (!FxUnit) {
-    fluid_ostream_printf(out, "ladspa not active!\n");
-    return FLUID_FAILED;
-  }
-
-  if (ac<2){
-    printf("***Error028***\n"
-	   "ladspa_declnode needs two arguments - node name and value!\n");
-    fluid_LADSPA_clear(FxUnit);
-    return(PrintErrorMessage);
-  };
-
-  if (FxUnit->NumberUserControlNodes>=FLUID_LADSPA_MaxNodes){
-    printf("***Error033***\n"
-	     "Too many user-control nodes.\nChange FLUID_LADSPA_MaxNodes!");
-    fluid_LADSPA_clear(FxUnit);
-    return(PrintErrorMessage);
-  };
-
-  NodeName=FLUID_STRDUP(av[0]); assert(NodeName);
-  NodeValue=atof(av[1]);
-  FxUnit->UserControlNodeNames[FxUnit->NumberUserControlNodes]=NodeName;
-  FxUnit->UserControlNodeValues[FxUnit->NumberUserControlNodes]=NodeValue;
-  FxUnit->NumberUserControlNodes++;
-  return(FLUID_OK);
-};
-int fluid_LADSPA_handle_setnode(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out){
-  //int i;
-  //char * Token;
-  char * NodeName;
-  fluid_real_t NodeValue;
-  fluid_LADSPA_FxUnit_t* FxUnit;
-  fluid_LADSPA_Node_t* CurrentNode;
-  assert(synth);
-  FxUnit=synth->LADSPA_FxUnit;
-  if (!FxUnit) {
-    fluid_ostream_printf(out, "ladspa not active!\n");
-    return FLUID_FAILED;
-  }
-
-  if (ac!=2){
-    printf("***Error029***\n"
-	   "ladspa_setnode needs two arguments - node name and value!\n");
-    /* Do not clear the Fx unit (no fluid_LADSPA_clear). */
-    return(PrintErrorMessage);
-  };
-
-  NodeName=av[0]; assert(NodeName);
-  NodeValue=atof(av[1]);
-
-  CurrentNode=fluid_LADSPA_RetrieveNode(FxUnit,NodeName);
-  if (!CurrentNode){
-    printf("***Error030***\n"
-	   "The node %s was not found. Please use the full name of a node, that was\n"
-	   "previously declared with ladspa_declnode.\n",NodeName);
-    /* Do not clear the Fx unit (no fluid_LADSPA_clear). */
-    return(PrintErrorMessage);
-  };
-  if (!(CurrentNode->flags & fluid_LADSPA_node_is_user_ctrl)){
-    printf("***Error031***\n"
-	   "The node %s is an ordinary control node.\n"
-	   "Only user control nodes can be modified with ladspa_setnode.\n",NodeName);
-    /* Do not clear the Fx unit (no fluid_LADSPA_clear). */
-    return(PrintErrorMessage);
-  };
-  L(printf("ladspa_setnode: Assigning value %f",NodeValue));
-  CurrentNode->buf[0]=NodeValue;
-  return(FLUID_OK);
-};
-
-int fluid_LADSPA_handle_clear(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out){
-  fluid_LADSPA_FxUnit_t* FxUnit;
-  assert(synth);
-  FxUnit=synth->LADSPA_FxUnit;
-  if (!FxUnit) {
-    fluid_ostream_printf(out, "ladspa not active!\n");
-    return FLUID_FAILED;
-  }
-  fluid_LADSPA_clear(FxUnit);
-  return(FLUID_OK);
-};
-
-void fluid_LADSPA_shutdown(fluid_LADSPA_FxUnit_t* FxUnit){
-  /* The synthesis thread is not running anymore.
-   * Set the bypass switch, so that fluid_LADSPA_clear can proceed.*/
-  FxUnit->Bypass=fluid_LADSPA_Bypassed;
-  fluid_LADSPA_clear(FxUnit);
-  pthread_cond_destroy(&FxUnit->cond); /* pro forma */
-};
-#endif /*LADSPA*/
+    for (i = num_system_nodes; i < fx->num_nodes; i++)
+    {
+        if (fx->nodes[i]->type == FLUID_LADSPA_NODE_CONTROL &&
+            (fx->nodes[i]->num_outputs == 0) && (fx->nodes[i]->num_inputs == 0))
+        {
+            *name = fx->nodes[i]->name;
+            return FLUID_FAILED;
+        }
+    }
+    return FLUID_OK;
+}

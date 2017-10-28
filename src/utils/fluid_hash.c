@@ -53,7 +53,7 @@ typedef struct
 
 /* Excerpt from glib gprimes.c */
 
-static const guint primes[] =
+static const unsigned int primes[] =
 {
   11,
   19,
@@ -136,7 +136,7 @@ spaced_primes_closest (unsigned int num)
  * save insertions from having to compute the hash record again for
  * the new record.
  */
-static inline fluid_hashnode_t **
+static FLUID_INLINE fluid_hashnode_t **
 fluid_hashtable_lookup_node (fluid_hashtable_t *hashtable, const void *key,
                              unsigned int *hash_return)
 {
@@ -316,7 +316,7 @@ fluid_hashtable_resize (fluid_hashtable_t *hashtable)
  * Essentially, calls fluid_hashtable_resize() if the table has strayed
  * too far from its ideal size for its number of nodes.
  */
-static inline void
+static FLUID_INLINE void
 fluid_hashtable_maybe_resize (fluid_hashtable_t *hashtable)
 {
   int nnodes = hashtable->nnodes;
@@ -389,7 +389,7 @@ new_fluid_hashtable_full (fluid_hash_func_t hash_func,
   hashtable->nnodes             = 0;
   hashtable->hash_func          = hash_func ? hash_func : fluid_direct_hash;
   hashtable->key_equal_func     = key_equal_func;
-  hashtable->ref_count          = 1;
+  fluid_atomic_int_set(&hashtable->ref_count, 1);
   hashtable->key_destroy_func   = key_destroy_func;
   hashtable->value_destroy_func = value_destroy_func;
   hashtable->nodes              = FLUID_ARRAY (fluid_hashnode_t*, hashtable->size);
@@ -616,7 +616,7 @@ fluid_hashtable_t*
 fluid_hashtable_ref (fluid_hashtable_t *hashtable)
 {
   fluid_return_val_if_fail (hashtable != NULL, NULL);
-  fluid_return_val_if_fail (hashtable->ref_count > 0, hashtable);
+  fluid_return_val_if_fail (fluid_atomic_int_get(&hashtable->ref_count) > 0, hashtable);
 
   fluid_atomic_int_add (&hashtable->ref_count, 1);
   return hashtable;
@@ -637,7 +637,7 @@ void
 fluid_hashtable_unref (fluid_hashtable_t *hashtable)
 {
   fluid_return_if_fail (hashtable != NULL);
-  fluid_return_if_fail (hashtable->ref_count > 0);
+  fluid_return_if_fail (fluid_atomic_int_get(&hashtable->ref_count) > 0);
 
   if (fluid_atomic_int_exchange_and_add (&hashtable->ref_count, -1) - 1 == 0)
     {
@@ -662,7 +662,7 @@ void
 delete_fluid_hashtable (fluid_hashtable_t *hashtable)
 {
   fluid_return_if_fail (hashtable != NULL);
-  fluid_return_if_fail (hashtable->ref_count > 0);
+  fluid_return_if_fail (fluid_atomic_int_get(&hashtable->ref_count) > 0);
 
   fluid_hashtable_remove_all (hashtable);
   fluid_hashtable_unref (hashtable);
@@ -753,7 +753,7 @@ fluid_hashtable_insert_internal (fluid_hashtable_t *hashtable, void *key,
   unsigned int key_hash;
 
   fluid_return_if_fail (hashtable != NULL);
-  fluid_return_if_fail (hashtable->ref_count > 0);
+  fluid_return_if_fail (fluid_atomic_int_get(&hashtable->ref_count) > 0);
 
   node_ptr = fluid_hashtable_lookup_node (hashtable, key, &key_hash);
 

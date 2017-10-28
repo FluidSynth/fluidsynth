@@ -410,9 +410,11 @@ fluid_settings_set(fluid_settings_t* settings, const char *name, fluid_setting_n
   int n, num;
   char *dupname;
 
-  num = fluid_settings_tokenize (name, buf, tokens) - 1;
+  num = fluid_settings_tokenize (name, buf, tokens);
   if (num == 0)
     return FLUID_FAILED;
+  
+  num--;
 
   for (n = 0; n < num; n++) {
 

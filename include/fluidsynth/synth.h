@@ -95,18 +95,22 @@ FLUIDSYNTH_API
 int fluid_synth_get_program(fluid_synth_t* synth, int chan, unsigned int* sfont_id, 
                             unsigned int* bank_num, unsigned int* preset_num);
 FLUIDSYNTH_API int fluid_synth_unset_program (fluid_synth_t *synth, int chan);
-FLUIDSYNTH_API int fluid_synth_get_channel_info (fluid_synth_t *synth, int chan,
-                                                 fluid_synth_channel_info_t *info);
+FLUIDSYNTH_API 
+FLUID_DEPRECATED 
+int fluid_synth_get_channel_info (fluid_synth_t *synth, int chan, fluid_synth_channel_info_t *info);
 FLUIDSYNTH_API int fluid_synth_program_reset(fluid_synth_t* synth);
 FLUIDSYNTH_API int fluid_synth_system_reset(fluid_synth_t* synth);
 
 FLUIDSYNTH_API int fluid_synth_all_notes_off(fluid_synth_t* synth, int chan);
 FLUIDSYNTH_API int fluid_synth_all_sounds_off(fluid_synth_t* synth, int chan);
 
+/**
+ * The midi channel type used by fluid_synth_set_channel_type()
+ */
 enum fluid_midi_channel_type
 {
-  CHANNEL_TYPE_MELODIC = 0,
-  CHANNEL_TYPE_DRUM = 1
+  CHANNEL_TYPE_MELODIC = 0, /**< Melodic midi channel */
+  CHANNEL_TYPE_DRUM = 1 /**< Drum midi channel */
 };
 
 FLUIDSYNTH_API int fluid_synth_set_channel_type(fluid_synth_t* synth, int chan, int type);
@@ -241,12 +245,14 @@ FLUIDSYNTH_API float fluid_synth_get_gen(fluid_synth_t* synth, int chan, int par
 /* Tuning */
 
 FLUIDSYNTH_API 
+FLUID_DEPRECATED 
 int fluid_synth_create_key_tuning(fluid_synth_t* synth, int bank, int prog,
 				  const char* name, const double* pitch);
 FLUIDSYNTH_API
 int fluid_synth_activate_key_tuning(fluid_synth_t* synth, int bank, int prog,
                                     const char* name, const double* pitch, int apply);
 FLUIDSYNTH_API 
+FLUID_DEPRECATED 
 int fluid_synth_create_octave_tuning(fluid_synth_t* synth, int bank, int prog,
                                      const char* name, const double* pitch);
 FLUIDSYNTH_API
@@ -256,11 +262,14 @@ FLUIDSYNTH_API
 int fluid_synth_tune_notes(fluid_synth_t* synth, int bank, int prog,
 			   int len, const int *keys, const double* pitch, int apply);
 FLUIDSYNTH_API 
+FLUID_DEPRECATED 
 int fluid_synth_select_tuning(fluid_synth_t* synth, int chan, int bank, int prog);
 FLUIDSYNTH_API
 int fluid_synth_activate_tuning(fluid_synth_t* synth, int chan, int bank, int prog,
                                 int apply);
-FLUIDSYNTH_API int fluid_synth_reset_tuning(fluid_synth_t* synth, int chan);
+FLUIDSYNTH_API
+FLUID_DEPRECATED 
+int fluid_synth_reset_tuning(fluid_synth_t* synth, int chan);
 FLUIDSYNTH_API
 int fluid_synth_deactivate_tuning(fluid_synth_t* synth, int chan, int apply);
 FLUIDSYNTH_API void fluid_synth_tuning_iteration_start(fluid_synth_t* synth);
@@ -273,6 +282,19 @@ FLUIDSYNTH_API int fluid_synth_tuning_dump(fluid_synth_t* synth, int bank, int p
 
 FLUIDSYNTH_API double fluid_synth_get_cpu_load(fluid_synth_t* synth);
 FLUIDSYNTH_API char* fluid_synth_error(fluid_synth_t* synth);
+
+
+/* Default modulators */
+
+/**
+ * Enum used with fluid_synth_add_default_mod() to specify how to handle duplicate modulators.
+ */
+enum fluid_synth_add_mod {
+  FLUID_SYNTH_OVERWRITE,        /**< Overwrite any existing matching modulator */
+  FLUID_SYNTH_ADD,              /**< Add (sum) modulator amounts */
+};
+
+FLUIDSYNTH_API int fluid_synth_add_default_mod(fluid_synth_t* synth, fluid_mod_t* mod, int mode);
 
 
 /*
@@ -320,8 +342,9 @@ FLUIDSYNTH_API void fluid_synth_start_voice(fluid_synth_t* synth, fluid_voice_t*
 FLUIDSYNTH_API void fluid_synth_get_voicelist(fluid_synth_t* synth,
                                               fluid_voice_t* buf[], int bufsize, int ID);
 FLUIDSYNTH_API int fluid_synth_handle_midi_event(void* data, fluid_midi_event_t* event);
-FLUIDSYNTH_API void fluid_synth_set_midi_router(fluid_synth_t* synth,
-                                                fluid_midi_router_t* router);
+FLUIDSYNTH_API 
+FLUID_DEPRECATED 
+void fluid_synth_set_midi_router(fluid_synth_t* synth, fluid_midi_router_t* router);
 
 #ifdef __cplusplus
 }

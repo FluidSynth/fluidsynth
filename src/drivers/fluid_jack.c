@@ -128,16 +128,19 @@ new_fluid_jack_client (fluid_settings_t *settings, int isaudio, void *driver)
   char* client_name;
   char name[64];
 
-  fluid_settings_dupstr (settings, isaudio ? "audio.jack.server"        /* ++ alloc server name */
-                         : "midi.jack.server", &server);
+  if (fluid_settings_dupstr (settings, isaudio ? "audio.jack.server"        /* ++ alloc server name */
+                         : "midi.jack.server", &server) != FLUID_OK)
+  {
+      return NULL;
+  }
 
   fluid_mutex_lock (last_client_mutex);     /* ++ lock last_client */
 
   /* If the last client uses the same server and is not the same type (audio or MIDI),
    * then re-use the client. */
-  if (last_client && ((!last_client->server && !server)
-                      || FLUID_STRCMP (last_client->server, server) == 0)
-      && ((!isaudio && !last_client->midi_driver) || (isaudio && !last_client->audio_driver)))
+  if (last_client &&
+      (last_client->server != NULL && server != NULL && FLUID_STRCMP (last_client->server, server) == 0) &&
+      ((!isaudio && last_client->midi_driver != NULL) || (isaudio && last_client->audio_driver != NULL)))
   {
     client_ref = last_client;
     last_client = NULL;         /* No more pairing for this client */
@@ -171,7 +174,7 @@ new_fluid_jack_client (fluid_settings_t *settings, int isaudio, void *driver)
                          : "midi.jack.id", &client_name);
 
   if (client_name != NULL && client_name[0] != 0)
-    snprintf(name, 64, "%s", client_name);
+    FLUID_SNPRINTF (name, 64, "%s", client_name);
   else strcpy (name, "fluidsynth");
 
   name[63] = '\0';

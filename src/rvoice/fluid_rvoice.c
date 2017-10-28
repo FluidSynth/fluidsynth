@@ -25,7 +25,7 @@
 /**
  * @return -1 if voice has finished, 0 if it's currently quiet, 1 otherwise
  */
-static inline int
+static FLUID_INLINE int
 fluid_rvoice_calc_amp(fluid_rvoice_t* voice)
 {
   fluid_real_t target_amp;	/* target amplitude */
@@ -371,7 +371,7 @@ fluid_rvoice_write (fluid_rvoice_t* voice, fluid_real_t *dsp_buf)
 }
 
 
-static inline fluid_real_t* 
+static FLUID_INLINE fluid_real_t* 
 get_dest_buf(fluid_rvoice_buffers_t* buffers, int index,
              fluid_real_t** dest_bufs, int dest_bufcount)
 {
@@ -514,7 +514,7 @@ fluid_rvoice_noteoff(fluid_rvoice_t* voice, unsigned int min_ticks)
      */
     if (fluid_adsr_env_get_val(&voice->envlfo.volenv) > 0){
       fluid_real_t lfo = fluid_lfo_get_val(&voice->envlfo.modlfo) * -voice->envlfo.modlfo_to_vol;
-      fluid_real_t amp = fluid_adsr_env_get_val(&voice->envlfo.volenv) * pow (10.0, lfo / -200);
+      fluid_real_t amp = fluid_adsr_env_get_val(&voice->envlfo.volenv) * fluid_cb2amp(lfo);
       fluid_real_t env_value = - ((-200 * log (amp) / log (10.0) - lfo) / 960.0 - 1);
       fluid_clip (env_value, 0.0, 1.0);
       fluid_adsr_env_set_val(&voice->envlfo.volenv, env_value);

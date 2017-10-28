@@ -2040,86 +2040,59 @@ fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defs
    equivalent to the matching ID list in memory regardless of LE/BE machine
 */
 
-#if FLUID_IS_BIG_ENDIAN
-
-#define READCHUNK(var,fd)	G_STMT_START {		\
+#define READCHUNK(var,fd)	do {		\
 	if (!safe_fread(var, 8, fd))			\
 		return(FAIL);				\
-	((SFChunk *)(var))->size = GUINT32_FROM_LE(((SFChunk *)(var))->size);  \
-} G_STMT_END
+	((SFChunk *)(var))->size = FLUID_LE32TOH(((SFChunk *)(var))->size);  \
+} while(0)
 
-#define READD(var,fd)		G_STMT_START {		\
-	unsigned int _temp;				\
+#define READD(var,fd)		do {		\
+	uint32 _temp;				\
 	if (!safe_fread(&_temp, 4, fd))			\
 		return(FAIL);				\
-	var = GINT32_FROM_LE(_temp);			\
-} G_STMT_END
+	var = FLUID_LE32TOH(_temp);			\
+} while(0)
 
-#define READW(var,fd)		G_STMT_START {		\
-	unsigned short _temp;				\
+#define READW(var,fd)		do {		\
+	uint16 _temp;				\
 	if (!safe_fread(&_temp, 2, fd))			\
 		return(FAIL);				\
-	var = GINT16_FROM_LE(_temp);			\
-} G_STMT_END
+	var = FLUID_LE16TOH(_temp);			\
+} while(0)
 
-#else
-
-#define READCHUNK(var,fd)	G_STMT_START {		\
-    if (!safe_fread(var, 8, fd))			\
-	return(FAIL);					\
-    ((SFChunk *)(var))->size = GUINT32_FROM_LE(((SFChunk *)(var))->size);  \
-} G_STMT_END
-
-#define READD(var,fd)		G_STMT_START {		\
-    unsigned int _temp;					\
-    if (!safe_fread(&_temp, 4, fd))			\
-	return(FAIL);					\
-    var = GINT32_FROM_LE(_temp);			\
-} G_STMT_END
-
-#define READW(var,fd)		G_STMT_START {		\
-    unsigned short _temp;					\
-    if (!safe_fread(&_temp, 2, fd))			\
-	return(FAIL);					\
-    var = GINT16_FROM_LE(_temp);			\
-} G_STMT_END
-
-#endif
-
-
-#define READID(var,fd)		G_STMT_START {		\
+#define READID(var,fd)		do {		\
     if (!safe_fread(var, 4, fd))			\
 	return(FAIL);					\
-} G_STMT_END
+} while(0)
 
-#define READSTR(var,fd)		G_STMT_START {		\
+#define READSTR(var,fd)		do {		\
     if (!safe_fread(var, 20, fd))			\
 	return(FAIL);					\
     (*var)[20] = '\0';					\
-} G_STMT_END
+} while(0)
 
-#define READB(var,fd)		G_STMT_START {		\
+#define READB(var,fd)		do {		\
     if (!safe_fread(&var, 1, fd))			\
 	return(FAIL);					\
-} G_STMT_END
+} while(0)
 
-#define FSKIP(size,fd)		G_STMT_START {		\
+#define FSKIP(size,fd)		do {		\
     if (!safe_fseek(fd, size, SEEK_CUR))		\
 	return(FAIL);					\
-} G_STMT_END
+} while(0)
 
-#define FSKIPW(fd)		G_STMT_START {		\
+#define FSKIPW(fd)		do {		\
     if (!safe_fseek(fd, 2, SEEK_CUR))			\
 	return(FAIL);					\
-} G_STMT_END
+} while(0)
 
 /* removes and advances a fluid_list_t pointer */
-#define SLADVREM(list, item)	G_STMT_START {		\
+#define SLADVREM(list, item)	do {		\
     fluid_list_t *_temp = item;				\
     item = fluid_list_next(item);				\
     list = fluid_list_remove_link(list, _temp);		\
     delete1_fluid_list(_temp);				\
-} G_STMT_END
+} while(0)
 
 static int chunkid (unsigned int id);
 static int load_body (unsigned int size, SFData * sf, FILE * fd);
@@ -2142,7 +2115,7 @@ static int fixup_pgen (SFData * sf);
 static int fixup_igen (SFData * sf);
 static int fixup_sample (SFData * sf);
 
-char idlist[] = {
+static const char idlist[] = {
   "RIFFLISTsfbkINFOsdtapdtaifilisngINAMiromiverICRDIENGIPRD"
     "ICOPICMTISFTsnamsmplphdrpbagpmodpgeninstibagimodigenshdrsm24"
 };
@@ -2471,7 +2444,7 @@ pdtahelper (unsigned int expid, unsigned int reclen, SFChunk * chunk,
   int * size, FILE * fd)
 {
   unsigned int id;
-  char *expstr;
+  const char *expstr;
 
   expstr = CHNKIDSTR (expid);	/* in case we need it */
 
@@ -2810,7 +2783,7 @@ load_pgen (int size, SFData * sf, FILE * fd)
 		{		/* inst is last gen */
 		  level = 3;
 		  READW (genval.uword, fd);
-		  ((SFZone *) (p2->data))->instsamp = GINT_TO_POINTER (genval.uword + 1);
+		  ((SFZone *) (p2->data))->instsamp = FLUID_INT_TO_POINTER (genval.uword + 1);
 		  break;	/* break out of generator loop */
 		}
 	      else
@@ -3160,7 +3133,7 @@ load_igen (int size, SFData * sf, FILE * fd)
 		{		/* sample is last gen */
 		  level = 3;
 		  READW (genval.uword, fd);
-		  ((SFZone *) (p2->data))->instsamp = GINT_TO_POINTER (genval.uword + 1);
+		  ((SFZone *) (p2->data))->instsamp = FLUID_INT_TO_POINTER (genval.uword + 1);
 		  break;	/* break out of generator loop */
 		}
 	      else
@@ -3320,7 +3293,7 @@ fixup_pgen (SFData * sf)
       while (p2)
 	{			/* traverse this preset's zones */
 	  z = (SFZone *) (p2->data);
-	  if ((i = GPOINTER_TO_INT (z->instsamp)))
+	  if ((i = FLUID_POINTER_TO_INT (z->instsamp)))
 	    {			/* load instrument # */
 	      p3 = fluid_list_nth (sf->inst, i - 1);
 	      if (!p3)
@@ -3355,7 +3328,7 @@ fixup_igen (SFData * sf)
       while (p2)
 	{			/* traverse instrument's zones */
 	  z = (SFZone *) (p2->data);
-	  if ((i = GPOINTER_TO_INT (z->instsamp)))
+	  if ((i = FLUID_POINTER_TO_INT (z->instsamp)))
 	    {			/* load sample # */
 	      p3 = fluid_list_nth (sf->sample, i - 1);
 	      if (!p3)
@@ -3480,11 +3453,13 @@ fixup_sample (SFData * sf)
 #define MOD_CHUNK_OPTIMUM_AREA		256
 #define GEN_CHUNK_OPTIMUM_AREA		256
 
-unsigned short badgen[] = { Gen_Unused1, Gen_Unused2, Gen_Unused3, Gen_Unused4,
+static const unsigned short badgen[] = {
+  Gen_Unused1, Gen_Unused2, Gen_Unused3, Gen_Unused4,
   Gen_Reserved1, Gen_Reserved2, Gen_Reserved3, 0
 };
 
-unsigned short badpgen[] = { Gen_StartAddrOfs, Gen_EndAddrOfs, Gen_StartLoopAddrOfs,
+static const unsigned short badpgen[] = {
+  Gen_StartAddrOfs, Gen_EndAddrOfs, Gen_StartLoopAddrOfs,
   Gen_EndLoopAddrOfs, Gen_StartAddrCoarseOfs, Gen_EndAddrCoarseOfs,
   Gen_StartLoopAddrCoarseOfs, Gen_Keynum, Gen_Velocity,
   Gen_EndLoopAddrCoarseOfs, Gen_SampleModes, Gen_ExclusiveClass,

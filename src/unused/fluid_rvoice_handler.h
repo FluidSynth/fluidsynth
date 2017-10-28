@@ -66,7 +66,7 @@ fluid_rvoice_handler_get_finished_voices(fluid_rvoice_handler_t* handler,
   return handler->finished_voices;
 }
 
-static inline void 
+static FLUID_INLINE void 
 fluid_rvoice_handler_clear_finished_voices(fluid_rvoice_handler_t* handler) 
 {
   handler->finished_voice_count = 0;

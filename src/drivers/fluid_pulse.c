@@ -55,8 +55,8 @@ fluid_audio_driver_t* new_fluid_pulse_audio_driver2(fluid_settings_t* settings,
 						    fluid_audio_func_t func, void* data);
 int delete_fluid_pulse_audio_driver(fluid_audio_driver_t* p);
 void fluid_pulse_audio_driver_settings(fluid_settings_t* settings);
-static void fluid_pulse_audio_run(void* d);
-static void fluid_pulse_audio_run2(void* d);
+static fluid_thread_return_t fluid_pulse_audio_run(void* d);
+static fluid_thread_return_t fluid_pulse_audio_run2(void* d);
 
 
 void fluid_pulse_audio_driver_settings(fluid_settings_t* settings)
@@ -196,7 +196,7 @@ int delete_fluid_pulse_audio_driver(fluid_audio_driver_t* p)
 }
 
 /* Thread without audio callback, more efficient */
-static void
+static fluid_thread_return_t
 fluid_pulse_audio_run(void* d)
 {
   fluid_pulse_audio_driver_t* dev = (fluid_pulse_audio_driver_t*) d;
@@ -212,7 +212,7 @@ fluid_pulse_audio_run(void* d)
   if (buf == NULL)
   {
     FLUID_LOG(FLUID_ERR, "Out of memory.");
-    return;
+    return FLUID_THREAD_RETURN_VALUE;
   }
 
   while (dev->cont)
@@ -228,9 +228,11 @@ fluid_pulse_audio_run(void* d)
   }	/* while (dev->cont) */
 
   FLUID_FREE(buf);
+
+  return FLUID_THREAD_RETURN_VALUE;
 }
 
-static void
+static fluid_thread_return_t
 fluid_pulse_audio_run2(void* d)
 {
   fluid_pulse_audio_driver_t* dev = (fluid_pulse_audio_driver_t*) d;
@@ -250,8 +252,11 @@ fluid_pulse_audio_run2(void* d)
 
   if (left == NULL || right == NULL || buf == NULL)
   {
+    FLUID_FREE(left);
+    FLUID_FREE(right);
+    FLUID_FREE(buf);
     FLUID_LOG(FLUID_ERR, "Out of memory.");
-    return;
+    return FLUID_THREAD_RETURN_VALUE;
   }
 
   handle[0] = left;
@@ -279,4 +284,6 @@ fluid_pulse_audio_run2(void* d)
   FLUID_FREE(left);
   FLUID_FREE(right);
   FLUID_FREE(buf);
+
+  return FLUID_THREAD_RETURN_VALUE;
 }

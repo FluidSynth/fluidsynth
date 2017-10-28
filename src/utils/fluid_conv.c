@@ -86,13 +86,13 @@ fluid_conversion_config(void)
      implemented according to the pictures on SF2.01 page 73. */
 
   for (i = 1; i < 127; i++) {
-    x = -20.0 / 96.0 * log((i * i) / (127.0 * 127.0)) / log(10.0);
+    x = -20.0 / 96.0 * log((i * i) / (127.0 * 127.0)) / M_LN10;
     fluid_convex_tab[i] = (fluid_real_t) (1.0 - x);
     fluid_concave_tab[127 - i] = (fluid_real_t) x;
   }
 
   /* initialize the pan conversion table */
-  x = PI / 2.0 / (FLUID_PAN_SIZE - 1.0);
+  x = M_PI / 2.0 / (FLUID_PAN_SIZE - 1.0);
   for (i = 0; i < FLUID_PAN_SIZE; i++) {
     fluid_pan_tab[i] = (fluid_real_t) sin(i * x);
   }
@@ -281,7 +281,7 @@ fluid_act2hz(fluid_real_t c)
 fluid_real_t
 fluid_hz2ct(fluid_real_t f)
 {
-  return (fluid_real_t) (6900 + 1200 * log(f / 440.0) / log(2.0));
+  return (fluid_real_t) (6900 + 1200 * log(f / 440.0) / M_LN2);
 }
 
 /*
