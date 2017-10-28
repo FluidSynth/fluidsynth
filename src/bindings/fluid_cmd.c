@@ -35,9 +35,11 @@
 #include <readline/history.h>
 #endif
 
-#define MAX_TOKENS 100 /* LADSPA plugins need lots of parameters */
+/* FIXME: LADSPA used to need a lot of parameters on a single line. This is not
+ * necessary anymore, so the limits below could probably be reduced */
+#define MAX_TOKENS 100
 #define MAX_COMMAND_LEN 1024	/* max command length accepted by fluid_command() */
-#define FLUID_WORKLINELENGTH 1024 /* LADSPA plugins use long command lines */
+#define FLUID_WORKLINELENGTH 1024
 
 #define FLUID_ENTRY_COMMAND(data) fluid_cmd_handler_t* handler=(fluid_cmd_handler_t*)(data)
 
