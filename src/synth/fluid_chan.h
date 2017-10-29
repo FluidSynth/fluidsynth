@@ -120,7 +120,7 @@ struct _fluid_channel_t
 
 /* Macros interface to poly/mono mode variables */
 /* IsChanPlayingMono return true when channel is Mono or legato is on */
-#define IsChanPlayingMono(chan) (IsModeMono(chan->mode) || fluid_channel_legato(chan))
+#define IsChanPlayingMono(chan) ((chan->mode & MONO) || fluid_channel_legato(chan))
 /* End of macros interface to poly/mono mode variables */
 
 /* acces to channel legato mode and portamento mode */
