@@ -67,16 +67,6 @@ enum PolyMonoMode
 #define BASIC_CHANNEL  0x04  /* b2, 1: channel is basic channel */
 #define ENABLED 0x08         /* b3, 1: channel is listened */
 
-/* access to mode */
-#define GetModeMode(mode) (mode &  MASKMODE)
-#define IsModeMono(mode)  (mode & MONO)
-#define IsModeBasicChan(mode) (mode &  BASIC_CHANNEL)
-#define SetModeBasicChan(mode) (mode |= BASIC_CHANNEL)
-#define ResetModeBasicChan(mode) (mode &= ~ BASIC_CHANNEL)
-#define IsModeChanEn(mode) (mode &  ENABLED)
-#define SetModeChanEn(mode) (mode |= ENABLED)
-#define ResetModeChanEn(mode) (mode &= ~ENABLED)
-
 struct _fluid_basic_channel_infos_t
 {
 	int basicchan;  /* MIDI channel numer to set as basic channel */
@@ -137,9 +127,9 @@ enum PortamentoMode
 };
 
 FLUIDSYNTH_API int fluid_synth_set_portamento_mode(fluid_synth_t* synth,
-													int chan, int portamentomode);
+						int chan, int portamentomode);
 FLUIDSYNTH_API int fluid_synth_get_portamento_mode(fluid_synth_t* synth,
-												int chan, int  * portamentomode);
+						int chan, int  * portamentomode);
 
 /* End of API: portamento mode */
 
@@ -149,22 +139,10 @@ FLUIDSYNTH_API int fluid_synth_get_portamento_mode(fluid_synth_t* synth,
 #define BREATH_MONO 0x20     /* b5, 1: default breath mono On */
 #define BREATH_SYNC 0x40     /* b6, 1: BreathSyn On */
 
-/* access to breath mode bits */
-#define IsPolyDefaultBreath(breath) (breath &  BREATH_POLY)
-#define SetPolyDefaultBreath(breath) (breath |= BREATH_POLY)
-#define ResetPolyDefaultBreath(breath) (breath &= ~ BREATH_POLY)
-#define IsMonoDefaultBreath(breath) (breath &  BREATH_MONO)
-#define SetMonoDefaultBreath(breath) (breath |= BREATH_MONO)
-#define ResetMonoDefaultBreath(breath) (breath &= ~ BREATH_MONO)
-
-#define IsBreathSync(breath) (breath &  BREATH_SYNC)
-#define SetBreathSync(breath) (breath |= BREATH_SYNC)
-#define ResetBreathSync(breath) (breath &= ~ BREATH_SYNC)
-
 FLUIDSYNTH_API int fluid_synth_set_breath_mode(fluid_synth_t* synth, 
-												int chan, int breathmode);
+						int chan, int breathmode);
 FLUIDSYNTH_API int fluid_synth_get_breath_mode(fluid_synth_t* synth,
-												int chan, int  *breathmode);
+						int chan, int  *breathmode);
 
 /* End of API: breath mode */
 
