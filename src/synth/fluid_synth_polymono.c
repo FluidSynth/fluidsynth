@@ -84,7 +84,7 @@ int fluid_synth_get_basic_channels(	fluid_synth_t* synth,
 	/* count basic channels */
 	for(i = 0, nBasicChan = 0; i <  nChan; i++)
 	{
-		if (IsModeBasicChan(synth->channel[i]->mode)) nBasicChan++;
+		if (synth->channel[i]->mode &  BASIC_CHANNEL) nBasicChan++;
 	}
 
 	if (basicChannelInfos && nBasicChan) 
@@ -97,10 +97,10 @@ int fluid_synth_get_basic_channels(	fluid_synth_t* synth,
 		if (bci) for(i = 0, b=0; i <  nChan; i++)
 		{	
 			fluid_channel_t* chan = synth->channel[i];
-			if (IsModeBasicChan(chan->mode))
+			if (chan->mode &  BASIC_CHANNEL)
 			{	/* This channel is a basic channel */
 				bci[b].basicchan = i;	/* channel number */
-				bci[b].mode = GetModeMode(chan->mode); /* MIDI mode:0,1,2,3 */
+				bci[b].mode = chan->mode &  MASKMODE; /* MIDI mode:0,1,2,3 */
 				bci[b].val = chan->mode_val;	/* value (for mode 3 only) */
 				b++;
 			}
@@ -193,13 +193,13 @@ int fluid_synth_reset_basic_channels(fluid_synth_t* synth,
 	for (i = 0; i < n; i++)
 	{
 	    int bchan = basicChannelInfos[i].basicchan;
-            if (IsModeBasicChan(synth->channel[bchan]->mode))
+            if (synth->channel[bchan]->mode &  BASIC_CHANNEL)
 		/* Different entries have the same basic channel. 
 		 An entry supersedes a previous entry with the same 
 		 basic channel.*/
 		FLUID_LOG(FLUID_INFO, WarningMsg);
 	    /* Set Basic channel first */
-	    else SetModeBasicChan(synth->channel[bchan]->mode);
+            else synth->channel[bchan]->mode |= BASIC_CHANNEL;
 	}
 
 	for (i = 0; i < n; i++)
@@ -294,14 +294,14 @@ int fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth,
 		int prevbasicchan = -1 ; // Previous basic channel
 		int i;
 		result = FLUID_OK;
-		if ( !IsModeBasicChan(synth->channel[basicchan]->mode))
+		if ( !(synth->channel[basicchan]->mode &  BASIC_CHANNEL))
 		{	/* a new basic channel is inserted between previous basic channel 
 			and the next basic channel.	*/
-			if ( IsModeChanEn(synth->channel[basicchan]->mode))
+			if (synth->channel[basicchan]->mode &  ENABLED)
 			{ /* val value of the previous basic channel need to be narrowed */
 				for (i = basicchan - 1; i >=0; i--)
 				{	/* search previous basic channel */
-					if (IsModeBasicChan(synth->channel[i]->mode))
+					if (synth->channel[i]->mode &  BASIC_CHANNEL)
 					{	/* i is the previous basic channel */
 						prevbasicchan = i;
 						break;
@@ -316,7 +316,7 @@ int fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth,
 			if (IsModeBasicChan(synth->channel[LastEndRange]->mode)) break;
 		}
 		/* Now LastBeginRange is set */
-		switch (mode = GetModeMode(mode))
+		switch (mode = mode &  MASKMODE)
 		{
 			case OMNION_POLY:	/* Mode 0 and 1 */
 			case OMNION_MONO:
@@ -353,10 +353,10 @@ int fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth,
 			 ALL_NOTES_OFF */
 			fluid_synth_all_notes_off_LOCAL (synth, i);
 			/* basicchan only is marked Basic Channel */
-			if (i == basicchan)	SetModeBasicChan(newmode); 
+			if (i == basicchan)	newmode |= BASIC_CHANNEL; 
 			else val =0; /* val is 0 for other channel than basic channel */
 			/* Channel in beginning zone are enabled */
-			if (i < LastBeginRange) SetModeChanEn(newmode); 
+			if (i < LastBeginRange) newmode |= ENABLED; 
 			/* Channel in ending zone are disabled */
 			else newmode = 0;
 			/* Now mode is OMNI OFF/ON,MONO/POLY, BASIC_CHANNEL or not
