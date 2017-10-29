@@ -334,6 +334,8 @@ void
 delete_fluid_revmodel(fluid_revmodel_t* rev)
 {
   int i;
+  fluid_return_if_fail(rev != NULL);
+  
   for (i = 0; i < numcombs;i++) {
     fluid_comb_release(&rev->combL[i]);
     fluid_comb_release(&rev->combR[i]);

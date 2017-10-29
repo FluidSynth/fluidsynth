@@ -75,7 +75,6 @@ new_fluid_event()
 void
 delete_fluid_event(fluid_event_t* evt)
 {
-
   if (evt == NULL) {
     return;
   }

@@ -54,10 +54,10 @@ fluid_sfloader_t* new_fluid_defsfloader(fluid_settings_t* settings)
 
 int delete_fluid_defsfloader(fluid_sfloader_t* loader)
 {
-  if (loader) {
+    fluid_return_val_if_fail(loader != NULL, 0);
+    
     FLUID_FREE(loader);
-  }
-  return FLUID_OK;
+    return 0;
 }
 
 fluid_sfont_t* fluid_defsfloader_load(fluid_sfloader_t* loader, const char* filename)
@@ -101,7 +101,7 @@ fluid_sfont_t* fluid_defsfloader_load(fluid_sfloader_t* loader, const char* file
 
 int fluid_defsfont_sfont_delete(fluid_sfont_t* sfont)
 {
-  if (delete_fluid_defsfont(sfont->data) != 0) {
+  if (delete_fluid_defsfont(sfont->data) != FLUID_OK) {
     return -1;
   }
   FLUID_FREE(sfont);
@@ -496,11 +496,14 @@ int delete_fluid_defsfont(fluid_defsfont_t* sfont)
   fluid_defpreset_t* preset;
   fluid_sample_t* sample;
 
+  if(sfont == NULL)
+      return FLUID_OK;
+  
   /* Check that no samples are currently used */
   for (list = sfont->sample; list; list = fluid_list_next(list)) {
     sample = (fluid_sample_t*) fluid_list_get(list);
     if (fluid_sample_refcount(sample) != 0) {
-      return -1;
+      return FLUID_FAILED;
     }
   }
 
@@ -748,18 +751,17 @@ delete_fluid_defpreset(fluid_defpreset_t* preset)
 {
   int err = FLUID_OK;
   fluid_preset_zone_t* zone;
-  if (preset->global_zone != NULL) {
-    if (delete_fluid_preset_zone(preset->global_zone) != FLUID_OK) {
-      err = FLUID_FAILED;
-    }
+  
+  if(preset == NULL)
+      return err;
+  
+    delete_fluid_preset_zone(preset->global_zone);
     preset->global_zone = NULL;
-  }
+  
   zone = preset->zone;
   while (zone != NULL) {
     preset->zone = zone->next;
-    if (delete_fluid_preset_zone(zone) != FLUID_OK) {
-      err = FLUID_FAILED;
-    }
+    delete_fluid_preset_zone(zone);
     zone = preset->zone;
   }
   FLUID_FREE(preset);
@@ -1161,11 +1163,14 @@ new_fluid_preset_zone(char *name)
 /*
  * delete_fluid_preset_zone
  */
-int
+void
 delete_fluid_preset_zone(fluid_preset_zone_t* zone)
 {
   fluid_mod_t *mod, *tmp;
 
+  if(zone == NULL)
+      return;
+  
   mod = zone->mod;
   while (mod)	/* delete the modulators */
     {
@@ -1177,7 +1182,6 @@ delete_fluid_preset_zone(fluid_preset_zone_t* zone)
   if (zone->name) FLUID_FREE (zone->name);
   if (zone->inst) delete_fluid_inst (zone->inst);
   FLUID_FREE(zone);
-  return FLUID_OK;
 }
 
 /*
@@ -1403,18 +1407,14 @@ delete_fluid_inst(fluid_inst_t* inst)
 {
   fluid_inst_zone_t* zone;
   int err = FLUID_OK;
-  if (inst->global_zone != NULL) {
-    if (delete_fluid_inst_zone(inst->global_zone) != FLUID_OK) {
-      err = FLUID_FAILED;
-    }
+  
+    delete_fluid_inst_zone(inst->global_zone);
     inst->global_zone = NULL;
-  }
+    
   zone = inst->zone;
   while (zone != NULL) {
     inst->zone = zone->next;
-    if (delete_fluid_inst_zone(zone) != FLUID_OK) {
-      err = FLUID_FAILED;
-    }
+    delete_fluid_inst_zone(zone);
     zone = inst->zone;
   }
   FLUID_FREE(inst);
@@ -1556,11 +1556,14 @@ new_fluid_inst_zone(char* name)
 /*
  * delete_fluid_inst_zone
  */
-int
+void
 delete_fluid_inst_zone(fluid_inst_zone_t* zone)
 {
   fluid_mod_t *mod, *tmp;
 
+  if(zone == NULL)
+      return;
+  
   mod = zone->mod;
   while (mod)	/* delete the modulators */
     {
@@ -1569,9 +1572,8 @@ delete_fluid_inst_zone(fluid_inst_zone_t* zone)
       fluid_mod_delete (tmp);
     }
 
-  if (zone->name) FLUID_FREE (zone->name);
+  FLUID_FREE (zone->name);
   FLUID_FREE(zone);
-  return FLUID_OK;
 }
 
 /*
@@ -1802,19 +1804,20 @@ new_fluid_sample()
 /*
  * delete_fluid_sample
  */
-int
+void
 delete_fluid_sample(fluid_sample_t* sample)
 {
+  if(sample == NULL)
+      return;
+    
   if (sample->sampletype & FLUID_SAMPLETYPE_OGG_VORBIS)
   {
 #if LIBSNDFILE_SUPPORT
-    if (sample->data)
       FLUID_FREE(sample->data);
 #endif
   }
 
   FLUID_FREE(sample);
-  return FLUID_OK;
 }
 
 /*

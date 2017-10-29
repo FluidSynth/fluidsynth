@@ -61,7 +61,7 @@ typedef struct {
 
 fluid_midi_driver_t* new_fluid_coremidi_driver(fluid_settings_t* settings,
                        handle_midi_event_func_t handler, void* data);
-int delete_fluid_coremidi_driver(fluid_midi_driver_t* p);
+void delete_fluid_coremidi_driver(fluid_midi_driver_t* p);
 void fluid_coremidi_callback(const MIDIPacketList *list, void *p, void *src);
 
 void fluid_coremidi_driver_settings(fluid_settings_t* settings)
@@ -158,10 +158,14 @@ error_recovery:
 /*
  * delete_fluid_coremidi_driver
  */
-int
+void
 delete_fluid_coremidi_driver(fluid_midi_driver_t* p)
 {
   fluid_coremidi_driver_t* dev = (fluid_coremidi_driver_t*) p;
+  
+  if(dev == NULL)
+      return;
+  
   if (dev->client != NULL) {
     MIDIClientDispose(dev->client);
   }

@@ -51,7 +51,7 @@ typedef struct {
 fluid_audio_driver_t* new_fluid_file_audio_driver(fluid_settings_t* settings,
 						  fluid_synth_t* synth);
 
-int delete_fluid_file_audio_driver(fluid_audio_driver_t* p);
+void delete_fluid_file_audio_driver(fluid_audio_driver_t* p);
 static int fluid_file_audio_run_s16(void* d, unsigned int msec);
 
 /**************************************************************
@@ -100,13 +100,11 @@ new_fluid_file_audio_driver(fluid_settings_t* settings,
 	return NULL;
 }
 
-int delete_fluid_file_audio_driver(fluid_audio_driver_t* p)
+void delete_fluid_file_audio_driver(fluid_audio_driver_t* p)
 {
 	fluid_file_audio_driver_t* dev = (fluid_file_audio_driver_t*) p;
-
-	if (dev == NULL) {
-		return FLUID_OK;
-	}
+    
+	fluid_return_if_fail(dev != NULL);
 
 	if (dev->timer != NULL) {
 		delete_fluid_timer(dev->timer);
@@ -117,7 +115,6 @@ int delete_fluid_file_audio_driver(fluid_audio_driver_t* p)
 	}
 
 	FLUID_FREE(dev);
-	return FLUID_OK;
 }
 
 static int fluid_file_audio_run_s16(void* d, unsigned int clock_time)

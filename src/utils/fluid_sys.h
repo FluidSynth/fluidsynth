@@ -102,7 +102,7 @@ fluid_timer_t* new_fluid_timer(int msec, fluid_timer_callback_t callback,
                                void* data, int new_thread, int auto_destroy,
                                int high_priority);
 
-int delete_fluid_timer(fluid_timer_t* timer);
+void delete_fluid_timer(fluid_timer_t* timer);
 int fluid_timer_join(fluid_timer_t* timer);
 int fluid_timer_stop(fluid_timer_t* timer);
 
@@ -322,7 +322,7 @@ int fluid_ostream_printf (fluid_ostream_t out, char* format, ...);
 typedef int (*fluid_server_func_t)(void* data, fluid_socket_t client_socket, char* addr);
 
 fluid_server_socket_t* new_fluid_server_socket(int port, fluid_server_func_t func, void* data);
-int delete_fluid_server_socket(fluid_server_socket_t* sock);
+void delete_fluid_server_socket(fluid_server_socket_t* sock);
 int fluid_server_socket_join(fluid_server_socket_t* sock);
 void fluid_socket_close(fluid_socket_t sock);
 fluid_istream_t fluid_socket_get_istream(fluid_socket_t sock);

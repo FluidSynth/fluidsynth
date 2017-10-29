@@ -501,19 +501,19 @@ fluid_sample_timer_t* new_fluid_sample_timer(fluid_synth_t* synth, fluid_timer_c
 	return result;		
 }
 
-int delete_fluid_sample_timer(fluid_synth_t* synth, fluid_sample_timer_t* timer)
+void delete_fluid_sample_timer(fluid_synth_t* synth, fluid_sample_timer_t* timer)
 {
+    fluid_return_if_fail(synth != NULL);
+    fluid_return_if_fail(timer != NULL);
+    
 	fluid_sample_timer_t** ptr = &synth->sample_timers;
 	while (*ptr) {
 		if (*ptr == timer) {
 			*ptr = timer->next; 
 			FLUID_FREE(timer);
-			return FLUID_OK;
 		}
 		ptr = &((*ptr)->next);
 	}
-	FLUID_LOG(FLUID_ERR,"delete_fluid_sample_timer failed, no timer found");
-	return FLUID_FAILED;
 }
 
 
@@ -821,7 +821,7 @@ new_fluid_synth(fluid_settings_t *settings)
  * @note Other users of a synthesizer instance, such as audio and MIDI drivers,
  * should be deleted prior to freeing the FluidSynth instance.
  */
-int
+void
 delete_fluid_synth(fluid_synth_t* synth)
 {
   int i, k;
@@ -831,9 +831,7 @@ delete_fluid_synth(fluid_synth_t* synth)
   fluid_mod_t* default_mod;
   fluid_mod_t* mod;
 
-  if (synth == NULL) {
-    return FLUID_OK;
-  }
+  fluid_return_if_fail(synth != NULL);
 
   fluid_profiling_print();
 
@@ -947,8 +945,6 @@ delete_fluid_synth(fluid_synth_t* synth)
   fluid_rec_mutex_destroy(synth->mutex);
 
   FLUID_FREE(synth);
-
-  return FLUID_OK;
 }
 
 /**

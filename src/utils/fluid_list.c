@@ -42,6 +42,8 @@ new_fluid_list(void)
 void
 delete_fluid_list(fluid_list_t *list)
 {
+  fluid_return_if_fail(list != NULL);
+
   fluid_list_t *next;
   while (list) {
     next = list->next;
@@ -53,9 +55,7 @@ delete_fluid_list(fluid_list_t *list)
 void
 delete1_fluid_list(fluid_list_t *list)
 {
-  if (list) {
     FLUID_FREE(list);
-  }
 }
 
 fluid_list_t*

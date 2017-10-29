@@ -342,12 +342,8 @@ void delete_fluid_file_renderer(fluid_file_renderer_t* dev)
 	}
 #endif
 
-	if (dev->buf != NULL) {
-		FLUID_FREE(dev->buf);
-	}
-
+    FLUID_FREE(dev->buf);
 	FLUID_FREE(dev);
-	return;
 }
 
 /**
