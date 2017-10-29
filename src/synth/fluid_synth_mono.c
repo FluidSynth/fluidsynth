@@ -29,10 +29,6 @@
 
 /* b7, 1: means legato playing , 0: means staccato playing */
 #define LEGATO_PLAYING  0x80     
-#define IsChanLegato(chan) (chan->mode  & LEGATO_PLAYING)
-#define IsChanStaccato(chan) (!IsChanLegato(chan))
-#define SetChanLegato(chan) (chan->mode |= LEGATO_PLAYING)
-#define ResetChanLegato(chan) (chan->mode &= ~ LEGATO_PLAYING)
 
 extern void fluid_synth_release_voice_on_same_note_LOCAL(fluid_synth_t* synth,
                                                             int chan, int key);
@@ -67,8 +63,8 @@ fluid_channel_add_monolist(fluid_channel_t* chan, unsigned char key,
 						   unsigned char vel, unsigned char onenote)
 {
 	unsigned char iLast = chan->iLast;
-	if (chan->nNotes) SetChanLegato(chan); /* update Legato playing bit */
-	else ResetChanLegato(chan); /* update Staccato playing bit */
+	if (chan->nNotes) chan->mode |= LEGATO_PLAYING; /* update Legato playing bit */
+	else chan->mode &= ~ LEGATO_PLAYING; /* update Staccato playing bit */
 	/* keeps trace of the note prior last note */
 	if(chan->nNotes) chan->PrevNote = chan->monolist[iLast].note;
 	/* updates iLast before writing new note */
@@ -155,8 +151,8 @@ fluid_channel_remove_monolist(fluid_channel_t* chan, short i)
 		}
 	}
 	chan->nNotes--;
-	if (chan->nNotes) SetChanLegato(chan); /* update Legato playing bit */
-	else ResetChanLegato(chan); /* update Staccato playing bit */
+	if (chan->nNotes) chan->mode |= LEGATO_PLAYING; /* update Legato playing bit */
+	else chan->mode &= ~ LEGATO_PLAYING; /* update Staccato playing bit */
 	return iPrev;
 }
 
@@ -173,7 +169,7 @@ void fluid_channel_clear_monolist(fluid_channel_t* chan)
 	chan->iFirst = chan->monolist[chan->iLast].next;
 	chan->PrevNote= chan->monolist[chan->iLast].note;
 	chan->nNotes = 0;
-	ResetChanLegato(chan);
+	chan->mode &= ~ LEGATO_PLAYING; /* update Staccato playing bit */
 }
 
 /**
@@ -289,11 +285,11 @@ static unsigned char GetFromKeyPortamentoLegato(fluid_channel_t* chan,
 			else fromkey_portamento = ChanPrevNote(chan); /* on each note */
 			if(portamentomode == LEGATO_ONLY)
 			{   /* Mode portamento:legato only */
-				if(IsChanStaccato(chan)) fromkey_portamento = InvalidNote;
+				if(!(chan->mode  & LEGATO_PLAYING)) fromkey_portamento = InvalidNote;
 			}
 			else if(portamentomode == STACCATO_ONLY)
 			{	/* Mode portamento:staccato only */
-				if(IsChanLegato(chan)) fromkey_portamento = InvalidNote;
+				if(chan->mode  & LEGATO_PLAYING) fromkey_portamento = InvalidNote;
 			}
 			/* else Mode portamento: on each note (staccato/legato) */
 		}
@@ -305,7 +301,7 @@ static unsigned char GetFromKeyPortamentoLegato(fluid_channel_t* chan,
 			/* in staccato (poly/Mono) return InvalidNote */
 			/* In mono mode legato playing return the note prior most 
 			   recent note played */
-			if (IsChanPlayingMono(chan) && IsChanLegato(chan))
+			if (IsChanPlayingMono(chan) && (chan->mode  & LEGATO_PLAYING))
 					defaultFromkey = ChanPrevNote(chan); /* note prior last note */
 			/* In poly mode legato playing, actually we don't want playing legato.
 			So we return InvalidNote */
@@ -331,7 +327,7 @@ static unsigned char GetFromKeyPortamentoLegato(fluid_channel_t* chan,
  */
 void ValidInvalidPrevNoteStaccato(fluid_channel_t* chan)
 {
-	if(IsChanStaccato(chan)) /* the monophonic list is empty */ 
+	if(!(chan->mode  & LEGATO_PLAYING)) /* the monophonic list is empty */ 
 	if(! fluid_channel_portamento(chan))  ChanClearPrevNote(chan); 
 	/* else PrevNote still remains valid for next fromkey portamento */
 }
@@ -376,10 +372,10 @@ int fluid_synth_noteon_mono_LOCAL(fluid_synth_t* synth, int chan,
 
 	/* Adds note to the monophonic list */
 	fluid_channel_add_monolist(channel,(unsigned char)key,(unsigned char)vel,0);
-	if (!IsBreathSync(channel->mode) || fluid_channel_breath_msb(channel) )
+	if (!(channel->mode &  BREATH_SYNC) || fluid_channel_breath_msb(channel) )
 	{
 		/* legato/staccato playing detection */
-		if(IsChanLegato(channel)) { /* legato playing */
+		if(channel->mode  & LEGATO_PLAYING) { /* legato playing */
 			/* legato from iPrev to key */
 			/* the voices from iPrev key number are to be used to play key number */
 			/* fromkey must be valid */
@@ -412,10 +408,10 @@ int fluid_synth_noteoff_mono_LOCAL(fluid_synth_t* synth, int chan, int key)
 		/* Removes note out the monophonic list */
 		iPrev = fluid_channel_remove_monolist(channel,i);
 
-		if (!IsBreathSync(channel->mode) || fluid_channel_breath_msb(channel) )
+		if (!(channel->mode &  BREATH_SYNC) || fluid_channel_breath_msb(channel) )
 		{
 			/* legato playing detection */
-			if(IsChanLegato(channel)) { /* the list contains others notes */
+			if(channel->mode  & LEGATO_PLAYING) { /* the list contains others notes */
 				if(IsValidNote(iPrev)) { /* legato playing detection */
 					/* legato from key to iPrev key */
 					/* the voices from key number are to be used to
@@ -620,7 +616,7 @@ int fluid_synth_noteon_mono_legato(fluid_synth_t* synth, int chan,
 void LegatoOnOff(fluid_channel_t* chan, int value)
 {
 	/* Special handling of the monophonic list  */
-	if (!IsModeMono(chan->mode) && chan->nNotes) /* The monophonic list have notes */
+	if (!(chan->mode & MONO) && chan->nNotes) /* The monophonic list have notes */
 	{
 		if (value < 64 ) /* legato is released */
 		{	/* returns from monophonic to polyphonic with note in monophonic list */
@@ -629,7 +625,7 @@ void LegatoOnOff(fluid_channel_t* chan, int value)
 		else /* legato is depressed */
 		{	/* Inters in monophonic from polyphonic with note in monophonic list */
 			/* Stops the running note to remain coherent with Breath Sync mode */
-			if (IsBreathSync(chan->mode) && !fluid_channel_breath_msb(chan))
+			if ((chan->mode &  BREATH_SYNC) && !fluid_channel_breath_msb(chan))
 				fluid_synth_noteoff_monopoly(chan->synth,chan->channum,
 									ChanLastNote(chan),1);
 		}
@@ -642,7 +638,7 @@ void LegatoOnOff(fluid_channel_t* chan, int value)
  */
 void BreathOnOff(fluid_channel_t* chan, int value)
 {	
-	if (IsBreathSync(chan->mode)  && IsChanPlayingMono(chan) && (chan->nNotes))
+	if ((chan->mode &  BREATH_SYNC)  && IsChanPlayingMono(chan) && (chan->nNotes))
 	{	
 		/* The monophonic list isn't empty */
 		if((value > 0) && (chan->previous_cc_breath == 0))
