@@ -11,13 +11,9 @@ https://help.github.com/articles/proposing-changes-to-your-work-with-pull-reques
 
 Patches should be created with `git format-patch`, so in every case you should be familiar with the basics of git.
 
-We'll try comment on our changes within three business days
-(and typically, one business day). We may suggest
-changes, improvements or alternatives.
-
 Some things that will increase the chance that your pull request or patch is accepted:
 
-* Except for bug fixing, give a reasoning / motivation for any changes or proposals you make.
+* Give a reasoning / motivation for any changes or proposals you make.
 * Follow our style guide.
 * Keep your commits "atomic".
 * Write a meaningful commit messages.
