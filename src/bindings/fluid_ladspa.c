@@ -442,7 +442,7 @@ void fluid_ladspa_run(fluid_ladspa_fx_t *fx, int block_count, int block_size)
     {
         effect = fx->effects[i];
 
-        if (effect->mode == FLUID_LADSPA_MODE_ADD)
+        if (effect->mix)
         {
             effect->desc->run_adding(effect->handle, num_samples);
         }
@@ -473,15 +473,15 @@ void fluid_ladspa_run(fluid_ladspa_fx_t *fx, int block_count, int block_size)
 
 /**
  * Check if the effect plugin supports the run_adding and set_run_adding_gain
- * interfaces necessary for the FLUID_LADSPA_ADD output mode.
+ * interfaces necessary for output mixing
  *
  * @param fx LADSPA fx
  * @param name the name of the effect
- * @return TRUE if add mode is supported, otherwise FALSE
+ * @return TRUE if mix mode is supported, otherwise FALSE
  */
-int fluid_ladspa_effect_can_add(fluid_ladspa_fx_t *fx, const char *name)
+int fluid_ladspa_effect_can_mix(fluid_ladspa_fx_t *fx, const char *name)
 {
-    int can_add;
+    int can_mix;
     fluid_ladspa_effect_t *effect;
 
     LADSPA_API_ENTER(fx);
@@ -492,24 +492,23 @@ int fluid_ladspa_effect_can_add(fluid_ladspa_fx_t *fx, const char *name)
         LADSPA_API_RETURN(fx, FALSE);
     }
 
-    can_add = (effect->desc->run_adding != NULL
+    can_mix = (effect->desc->run_adding != NULL
             && effect->desc->set_run_adding_gain != NULL);
 
-    LADSPA_API_RETURN(fx, can_add);
+    LADSPA_API_RETURN(fx, can_mix);
 }
 
 /**
- * Set if the effect should replace everything in the output buffer(s) or add
- * to the buffer(s) with a fixed gain. The default mode is FLUID_LADSPA_MODE_REPLACE.
+ * Set if the effect should replace everything in the output buffers (mix = 0, default)
+ * or add to the buffers with a fixed gain (mix = 1).
  *
  * @param fx LADSPA fx instance
- * @param name the name of theeffect 
- * @param mode which mode to set: FLUID_LADSPA_MODE_ADD or FLUID_LADSPA_MODE_REPLACE
- * @param gain the gain to apply to the effect output before adding to output. Ignored for replace mode.
+ * @param name the name of the effect
+ * @param mix (boolen) if to enable mix mode
+ * @param gain the gain to apply to the effect output before adding to output.
  * @return FLUID_OK on success, otherwise FLUID_FAILED
  */
-int fluid_ladspa_set_effect_mode(fluid_ladspa_fx_t *fx, const char *name,
-        fluid_ladspa_mode_t mode, float gain)
+int fluid_ladspa_effect_set_mix(fluid_ladspa_fx_t *fx, const char *name, int mix, float gain)
 {
     fluid_ladspa_effect_t *effect;
 
@@ -526,19 +525,18 @@ int fluid_ladspa_set_effect_mode(fluid_ladspa_fx_t *fx, const char *name,
         LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
 
-    if (mode == FLUID_LADSPA_MODE_ADD)
+    if (mix)
     {
-        if (!fluid_ladspa_effect_can_add(fx, name))
+        if (!fluid_ladspa_effect_can_mix(fx, name))
         {
-            FLUID_LOG(FLUID_ERR, "Effect '%s' does not support 'add' mode",
-                    effect->desc->Label);
+            FLUID_LOG(FLUID_ERR, "Effect '%s' does not support mix mode", name);
             LADSPA_API_RETURN(fx, FLUID_FAILED);
         }
 
         effect->desc->set_run_adding_gain(effect->handle, gain);
     }
 
-    effect->mode = mode;
+    effect->mix = mix;
 
     LADSPA_API_RETURN(fx, FLUID_OK);
 }
