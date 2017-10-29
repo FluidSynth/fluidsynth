@@ -40,40 +40,39 @@
 
 static void clear_ladspa(fluid_ladspa_fx_t *fx);
 
+/* Node helpers */
 static fluid_ladspa_node_t *new_fluid_ladspa_node(fluid_ladspa_fx_t *fx, const char *name,
         fluid_ladspa_node_type_t type, fluid_real_t *host_buffer);
 static void delete_fluid_ladspa_node(fluid_ladspa_node_t *node);
 static fluid_ladspa_node_t *get_node(fluid_ladspa_fx_t *fx, const char *name);
 
-static int get_effect_port_idx(const fluid_ladspa_effect_t *effect, const char *name);
-static const LADSPA_Descriptor *get_plugin_descriptor(const fluid_ladspa_lib_t *lib, const char *name);
-
+/* Effect helpers */
 static fluid_ladspa_effect_t *
 new_fluid_ladspa_effect(fluid_ladspa_fx_t *fx, const fluid_ladspa_lib_t *lib, const char *plugin_name);
 static void delete_fluid_ladspa_effect(fluid_ladspa_effect_t *effect);
 static void activate_effect(fluid_ladspa_effect_t *effect);
 static void deactivate_effect(fluid_ladspa_effect_t *effect);
 static fluid_ladspa_effect_t *get_effect(fluid_ladspa_fx_t *fx, const char *name);
-
-static fluid_ladspa_lib_t *new_fluid_ladspa_lib(fluid_ladspa_fx_t *fx, const char *filename);
-static void delete_fluid_ladspa_lib(fluid_ladspa_lib_t *lib);
-static fluid_ladspa_lib_t *get_ladspa_library(fluid_ladspa_fx_t *fx, const char *filename);
-static int load_plugin_library(fluid_ladspa_lib_t *lib);
-static void unload_plugin_library(fluid_ladspa_lib_t *lib);
-
+static int get_effect_port_idx(const fluid_ladspa_effect_t *effect, const char *name);
 static LADSPA_Data get_default_port_value(fluid_ladspa_effect_t *effect, unsigned int port_idx,
         int sample_rate);
 static void connect_node_to_port(fluid_ladspa_node_t *node, fluid_ladspa_dir_t dir,
         fluid_ladspa_effect_t *effect, int port_idx);
 static int create_control_port_nodes(fluid_ladspa_fx_t *fx, fluid_ladspa_effect_t *effect);
 
+/* LADSPA library and plugin helpers */
+static fluid_ladspa_lib_t *new_fluid_ladspa_lib(fluid_ladspa_fx_t *fx, const char *filename);
+static void delete_fluid_ladspa_lib(fluid_ladspa_lib_t *lib);
+static fluid_ladspa_lib_t *get_ladspa_library(fluid_ladspa_fx_t *fx, const char *filename);
+static int load_plugin_library(fluid_ladspa_lib_t *lib);
+static void unload_plugin_library(fluid_ladspa_lib_t *lib);
+static const LADSPA_Descriptor *get_plugin_descriptor(const fluid_ladspa_lib_t *lib, const char *name);
+
+/* Sanity checks */
 static int check_all_ports_connected(fluid_ladspa_effect_t *effect, const char **name);
 static int check_no_inplace_broken(fluid_ladspa_effect_t *effect, const char **name1, const char **name2);
 static int check_host_output_used(fluid_ladspa_fx_t *fx);
 static int check_all_audio_nodes_connected(fluid_ladspa_fx_t *fx, const char **name);
-
-static FLUID_INLINE void mix_effect_with_host_buffer(fluid_ladspa_node_t *node,
-        int num_samples, float gain);
 
 #ifndef WITH_FLOAT
 static FLUID_INLINE void copy_host_to_effect_buffers(fluid_ladspa_fx_t *fx, int num_samples);
@@ -172,7 +171,7 @@ void delete_fluid_ladspa_fx(fluid_ladspa_fx_t *fx)
  * @param right array of pointers to right side buffers
  * @return FLUID_OK on success, otherwise FLUID_FAILED
  */
-int fluid_ladspa_add_host_buffers(fluid_ladspa_fx_t *fx, const char *prefix,
+int fluid_ladspa_add_host_ports(fluid_ladspa_fx_t *fx, const char *prefix,
         int buffer_count, int buffer_size, fluid_real_t *left[], fluid_real_t *right[])
 {
     int i, c;
@@ -700,7 +699,7 @@ int fluid_ladspa_add_buffer(fluid_ladspa_fx_t *fx, const char *name)
  * @param val floating point value
  * @return FLUID_OK on success, FLUID_FAILED on error
  */
-int fluid_ladspa_set_effect_control(fluid_ladspa_fx_t *fx, const char *effect_name,
+int fluid_ladspa_effect_set_control(fluid_ladspa_fx_t *fx, const char *effect_name,
         const char *port_name, float val)
 {
     fluid_ladspa_node_t *node;
@@ -796,18 +795,18 @@ int fluid_ladspa_add_effect(fluid_ladspa_fx_t *fx, const char *effect_name,
 }
 
 /**
- * Connect an effect port to a name
+ * Connect an effect port to a host port or buffer
  *
  * @note There is no corresponding disconnect function. If the connections need to be changed,
  * clear everything with fluid_ladspa_reset and start again from scratch.
  *
  * @param fx LADSPA effects instance
  * @param effect_name name of the effect
- * @param port_name the port name to connect to (case-insensitive prefix match, see get_effect_port_idx)
+ * @param port_name the port name to connect to (case-insensitive prefix match)
  * @param name the host port or buffer to connect to (case-insensitive)
  * @return FLUID_OK on success, otherwise FLUID_FAILED
  */
-int fluid_ladspa_connect(fluid_ladspa_fx_t *fx, const char *effect_name,
+int fluid_ladspa_effect_link(fluid_ladspa_fx_t *fx, const char *effect_name,
         const char *port_name, const char *name)
 {
     fluid_ladspa_effect_t *effect;
@@ -1660,17 +1659,6 @@ static int check_all_audio_nodes_connected(fluid_ladspa_fx_t *fx, const char **n
         }
     }
     return FLUID_OK;
-}
-
-static FLUID_INLINE void mix_effect_with_host_buffer(fluid_ladspa_node_t *node,
-        int num_samples, float gain)
-{
-    int i;
-
-    for (i = 0; i < num_samples; i++)
-    {
-        node->host_buffer[i] += node->effect_buffer[i] * gain;
-    }
 }
 
 #ifndef WITH_FLOAT

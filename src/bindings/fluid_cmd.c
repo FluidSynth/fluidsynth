@@ -2032,7 +2032,7 @@ int fluid_handle_ladspa_set(void *data, int ac, char **av, fluid_ostream_t out)
         return FLUID_FAILED;
     }
 
-    if (fluid_ladspa_set_effect_control(fx, av[0], av[1], atof(av[2])) != FLUID_OK)
+    if (fluid_ladspa_effect_set_control(fx, av[0], av[1], atof(av[2])) != FLUID_OK)
     {
         fluid_ostream_printf(out, "Failed to set port '%s' on effect '%s', "
                 "maybe it is not a control port?\n", av[1], av[0]);
@@ -2163,7 +2163,7 @@ int fluid_handle_ladspa_link(void* data, int ac, char **av, fluid_ostream_t out)
         return FLUID_FAILED;
     }
 
-    if (fluid_ladspa_connect(fx, av[0], av[1], av[2]) != FLUID_OK)
+    if (fluid_ladspa_effect_link(fx, av[0], av[1], av[2]) != FLUID_OK)
     {
         fluid_ostream_printf(out, "Failed to link port\n");
         return FLUID_FAILED;

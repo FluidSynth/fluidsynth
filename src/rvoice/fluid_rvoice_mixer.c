@@ -641,15 +641,15 @@ void fluid_rvoice_mixer_set_ladspa(fluid_rvoice_mixer_t* mixer,
 
     buffer_size = mixer->buffers.buf_blocks * FLUID_BUFSIZE;
 
-    fluid_ladspa_add_host_buffers(ladspa_fx, "Main", audio_groups, buffer_size,
+    fluid_ladspa_add_host_ports(ladspa_fx, "Main", audio_groups, buffer_size,
             mixer->buffers.left_buf,
             mixer->buffers.right_buf);
 
-    fluid_ladspa_add_host_buffers(ladspa_fx, "Reverb", 1, buffer_size,
+    fluid_ladspa_add_host_ports(ladspa_fx, "Reverb", 1, buffer_size,
             &mixer->buffers.fx_left_buf[SYNTH_REVERB_CHANNEL],
             &mixer->buffers.fx_right_buf[SYNTH_REVERB_CHANNEL]);
 
-    fluid_ladspa_add_host_buffers(ladspa_fx, "Chorus", 1, buffer_size,
+    fluid_ladspa_add_host_ports(ladspa_fx, "Chorus", 1, buffer_size,
             &mixer->buffers.fx_left_buf[SYNTH_REVERB_CHANNEL],
             &mixer->buffers.fx_right_buf[SYNTH_REVERB_CHANNEL]);
 }
