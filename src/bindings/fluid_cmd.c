@@ -1898,31 +1898,19 @@ int fluid_handle_router_par2(void* data, int ac, char** av, fluid_ostream_t out)
 #define LADSPA_ERR_LEN (1024)
 
 /**
- * Split a string once on ':' and set tok1 and tok2 to point to the two tokens in the input string.
- *
- * @note Modifies the input string!
- *
- * @return TRUE if delimiter found and both tokens contain at least one char, otherwise FALSE
+ * ladspa_start
  */
-static int fluid_ladspa_split(char *input, char **tok1, char **tok2)
-{
-    char *str = input;
-
-    *tok1 = fluid_strtok(&str, ":");
-    if (*tok1 != NULL)
-    {
-        *tok2 = fluid_strtok(&str, ":");
-        return (FLUID_STRLEN(*tok1) > 0) && (FLUID_STRLEN(*tok2) > 0);
-    }
-    return FALSE;
-}
-
-
 int fluid_handle_ladspa_start(void* data, int ac, char **av, fluid_ostream_t out)
 {
   FLUID_ENTRY_COMMAND(data);
     fluid_ladspa_fx_t *fx = handler->synth->ladspa_fx;
     char error[LADSPA_ERR_LEN];
+
+    if (ac != 0)
+    {
+        fluid_ostream_printf(out, "ladspa_start does not accept any arguments\n");
+        return FLUID_FAILED;
+    }
 
     CHECK_LADSPA_ENABLED(fx, out);
     CHECK_LADSPA_INACTIVE(fx, out);
@@ -1942,10 +1930,19 @@ int fluid_handle_ladspa_start(void* data, int ac, char **av, fluid_ostream_t out
     return FLUID_OK;
 }
 
+/**
+ * ladspa_stop
+ */
 int fluid_handle_ladspa_stop(void* data, int ac, char **av, fluid_ostream_t out)
 {
   FLUID_ENTRY_COMMAND(data);
     fluid_ladspa_fx_t *fx = handler->synth->ladspa_fx;
+
+    if (ac != 0)
+    {
+        fluid_ostream_printf(out, "ladspa_stop does not accept any arguments\n");
+        return FLUID_FAILED;
+    }
 
     CHECK_LADSPA_ENABLED(fx, out);
 
@@ -1963,10 +1960,19 @@ int fluid_handle_ladspa_stop(void* data, int ac, char **av, fluid_ostream_t out)
     return FLUID_OK;
 }
 
+/**
+ * ladspa_reset
+ */
 int fluid_handle_ladspa_reset(void* data, int ac, char **av, fluid_ostream_t out)
 {
   FLUID_ENTRY_COMMAND(data);
     fluid_ladspa_fx_t *fx = handler->synth->ladspa_fx;
+
+    if (ac != 0)
+    {
+        fluid_ostream_printf(out, "ladspa_reset does not accept any arguments\n");
+        return FLUID_FAILED;
+    }
 
     CHECK_LADSPA_ENABLED(fx, out);
 
@@ -1975,11 +1981,20 @@ int fluid_handle_ladspa_reset(void* data, int ac, char **av, fluid_ostream_t out
     return FLUID_OK;
 }
 
+/**
+ * ladspa_check
+ */
 int fluid_handle_ladspa_check(void* data, int ac, char **av, fluid_ostream_t out)
 {
   FLUID_ENTRY_COMMAND(data);
     fluid_ladspa_fx_t *fx = handler->synth->ladspa_fx;
     char error[LADSPA_ERR_LEN];
+
+    if (ac != 0)
+    {
+        fluid_ostream_printf(out, "ladspa_reset does not accept any arguments\n");
+        return FLUID_FAILED;
+    }
 
     CHECK_LADSPA_ENABLED(fx, out);
 
@@ -1994,57 +2009,55 @@ int fluid_handle_ladspa_check(void* data, int ac, char **av, fluid_ostream_t out
     return FLUID_OK;
 }
 
+/**
+ * ladspa_set <effect> <port> <value>
+ */
 int fluid_handle_ladspa_set(void *data, int ac, char **av, fluid_ostream_t out)
 {
   FLUID_ENTRY_COMMAND(data);
-    char *effect_name = NULL;
-    char *port_name = NULL;
     fluid_ladspa_fx_t *fx = handler->synth->ladspa_fx;
 
-    CHECK_LADSPA_ENABLED(fx, out);
-
-    if (ac != 2)
+    if (ac != 3)
     {
-        fluid_ostream_printf(out, "ladspa_set needs two arguments: port name and value.\n");
+        fluid_ostream_printf(out, "ladspa_set needs three arguments: <effect> <port> <value>\n");
         return FLUID_FAILED;
     };
 
-    if (!fluid_ladspa_split(av[0], &effect_name, &port_name))
-    {
-        fluid_ostream_printf(out, "Effect port names need to be in the format <effect name>:<port name>\n");
-        return FLUID_FAILED;
-    }
+    CHECK_LADSPA_ENABLED(fx, out);
 
     /* Redundant check, just here to give a more detailed error message */
-    if (!fluid_ladspa_effect_port_exists(fx, effect_name, port_name))
+    if (!fluid_ladspa_effect_port_exists(fx, av[0], av[1]))
     {
-        fluid_ostream_printf(out, "Effect port '%s:%s' not found\n", effect_name, port_name);
+        fluid_ostream_printf(out, "Port '%s' not found on effect '%s'\n", av[1], av[0]);
         return FLUID_FAILED;
     }
 
-    if (fluid_ladspa_set_effect_control(fx, effect_name, port_name, atof(av[1])) != FLUID_OK)
+    if (fluid_ladspa_set_effect_control(fx, av[0], av[1], atof(av[2])) != FLUID_OK)
     {
-        fluid_ostream_printf(out, "Failed to set '%s:%s', maybe it is not a control port?\n",
-                effect_name, port_name);
+        fluid_ostream_printf(out, "Failed to set port '%s' on effect '%s', "
+                "maybe it is not a control port?\n", av[1], av[0]);
         return FLUID_FAILED;
     }
 
     return FLUID_OK;
 };
 
+/**
+ * ladspa_buffer <name>
+ */
 int fluid_handle_ladspa_buffer(void *data, int ac, char **av, fluid_ostream_t out)
 {
   FLUID_ENTRY_COMMAND(data);
     fluid_ladspa_fx_t *fx = handler->synth->ladspa_fx;
 
-    CHECK_LADSPA_ENABLED(fx, out);
-    CHECK_LADSPA_INACTIVE(fx, out);
-
     if (ac != 1)
     {
-        fluid_ostream_printf(out, "Please specify the buffer name\n");
+        fluid_ostream_printf(out, "ladspa_buffer needs one argument: <name>\n");
         return FLUID_FAILED;
     };
+
+    CHECK_LADSPA_ENABLED(fx, out);
+    CHECK_LADSPA_INACTIVE(fx, out);
 
     if (fluid_ladspa_add_buffer(fx, av[0]) != FLUID_OK)
     {
@@ -2055,96 +2068,104 @@ int fluid_handle_ladspa_buffer(void *data, int ac, char **av, fluid_ostream_t ou
     return FLUID_OK;
 };
 
+/**
+ * ladspa_effect <name> <library> [plugin] [--mix [gain]]
+ */
 int fluid_handle_ladspa_effect(void* data, int ac, char **av, fluid_ostream_t out)
 {
   FLUID_ENTRY_COMMAND(data);
     fluid_ladspa_fx_t *fx = handler->synth->ladspa_fx;
-    char *lib_name = NULL;
     char *plugin_name = NULL;
-    int mode;
+    int pos;
+    int mix = FALSE;
     float gain = 1.0f;
+
+    if (ac < 2 || ac > 5)
+    {
+        fluid_ostream_printf(out, "ladspa_effect invalid arguments: "
+                "<name> <library> [plugin] [--mix [gain]]\n");
+        return FLUID_FAILED;
+    }
+
+    pos = 2;
+    /* If the first optional arg is not --mix, then it must be the plugin label */
+    if ((pos < ac) && (FLUID_STRCMP(av[pos], "--mix") != 0))
+    {
+        plugin_name = av[pos];
+        pos++;
+    }
+
+    /* If this optional arg is --mix and there's an argument after it, that that
+     * must be the gain */
+    if ((pos < ac) && (FLUID_STRCMP(av[pos], "--mix") == 0))
+    {
+        mix = TRUE;
+        if (pos + 1 < ac)
+        {
+            gain = atof(av[pos + 1]);
+        }
+    }
 
     CHECK_LADSPA_ENABLED(fx, out);
     CHECK_LADSPA_INACTIVE(fx, out);
 
-    if (ac < 2 || ac > 4)
-    {
-        fluid_ostream_printf(out, "ladspa_effect: invalid number of arguments\n");
-        return FLUID_FAILED;
-    }
-
-    if ((ac > 2) && (FLUID_STRCMP(av[2], "mix") == 0))
-    {
-        mode = FLUID_LADSPA_MODE_ADD;
-        if (ac > 3)
-        {
-            gain = atof(av[3]);
-        }
-    }
-    else
-    {
-        mode = FLUID_LADSPA_MODE_REPLACE;
-    }
-
-    fluid_ladspa_split(av[1], &lib_name, &plugin_name);
-
-    if (fluid_ladspa_add_effect(fx, av[0], lib_name, plugin_name) != FLUID_OK)
+    if (fluid_ladspa_add_effect(fx, av[0], av[1], plugin_name) != FLUID_OK)
     {
         fluid_ostream_printf(out, "Failed to create effect\n");
         return FLUID_FAILED;
     }
 
-    if (fluid_ladspa_set_effect_mode(fx, av[0], mode, gain) != FLUID_OK)
+    if (mix)
     {
-        fluid_ostream_printf(out, "Failed to set effect output mode\n");
-        return FLUID_FAILED;
+        if (!fluid_ladspa_effect_can_mix(fx, av[0]))
+        {
+            fluid_ostream_printf(out, "Effect '%s' does not support --mix mode\n", av[0]);
+            return FLUID_FAILED;
+        }
+
+        if (fluid_ladspa_effect_set_mix(fx, av[0], mix, gain) != FLUID_OK)
+        {
+            fluid_ostream_printf(out, "Failed to set --mix mode\n");
+            return FLUID_FAILED;
+        }
     }
 
     return FLUID_OK;
 }
 
+/*
+ * ladspa_link <effect> <port> <buffer or host port>
+ */
 int fluid_handle_ladspa_link(void* data, int ac, char **av, fluid_ostream_t out)
 {
   FLUID_ENTRY_COMMAND(data);
     fluid_ladspa_fx_t *fx = handler->synth->ladspa_fx;
-    char *effect_name = NULL;
-    char *port_name = NULL;
+
+    if (ac != 3)
+    {
+        fluid_ostream_printf(out, "ladspa_link needs 3 arguments: "
+                "<effect> <port> <buffer or host name>\n");
+        return FLUID_FAILED;
+    }
 
     CHECK_LADSPA_ENABLED(fx, out);
     CHECK_LADSPA_INACTIVE(fx, out);
 
-    if (ac != 2)
+    if (!fluid_ladspa_effect_port_exists(fx, av[0], av[1]))
     {
-        fluid_ostream_printf(out, "ladspa_link needs 2 arguments\n");
+        fluid_ostream_printf(out, "Port '%s' not found on effect '%s'\n", av[1], av[0]);
         return FLUID_FAILED;
     }
 
-    if (!fluid_ladspa_split(av[0], &effect_name, &port_name))
+    if (!fluid_ladspa_host_port_exists(fx, av[2]) && !fluid_ladspa_buffer_exists(fx, av[2]))
     {
-        fluid_ostream_printf(out, "Effect port names need to be in the format <effect name>:<port name>\n");
+        fluid_ostream_printf(out, "Host port or buffer '%s' not found.\n", av[2]);
         return FLUID_FAILED;
     }
 
-    /* Check port and node name before trying to connect them by name. This is
-     * redundant, as fluid_ladspa_connect checks them as well, but we do it
-     * here anyway to give the user better feedback in case a port or node
-     * could not be found.
-     */
-    if (!fluid_ladspa_effect_port_exists(fx, effect_name, port_name))
+    if (fluid_ladspa_connect(fx, av[0], av[1], av[2]) != FLUID_OK)
     {
-        fluid_ostream_printf(out, "Effect port '%s:%s' not found.\n", effect_name, port_name);
-        return FLUID_FAILED;
-    }
-
-    if (!fluid_ladspa_host_port_exists(fx, av[1]) || !fluid_ladspa_buffer_exists(fx, av[1]))
-    {
-        fluid_ostream_printf(out, "Host port or buffer '%s' not found.\n", av[1]);
-        return FLUID_FAILED;
-    }
-
-    if (fluid_ladspa_connect(fx, effect_name, port_name, av[1]) != FLUID_OK)
-    {
-        fluid_ostream_printf(out, "Failed to link ports\n");
+        fluid_ostream_printf(out, "Failed to link port\n");
         return FLUID_FAILED;
     }
 
