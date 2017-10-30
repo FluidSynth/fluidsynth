@@ -71,6 +71,7 @@ What is FluidSynth?
 
 Changes in FluidSynth 1.1.9 concerning developers:
 
+- add a function for registering audio drivers based on acutal needs: fluid_audio_driver_register()
 - implement handling of #FLUID_SEQ_ALLSOUNDSOFF events in fluid_seq_fluidsynth_callback()
 - fix return value of fluid_file_set_encoding_quality()
 
