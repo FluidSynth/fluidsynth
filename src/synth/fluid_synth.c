@@ -861,10 +861,8 @@ delete_fluid_synth(fluid_synth_t* synth)
   /* also unset all presets for clean SoundFont unload */
   if (synth->channel != NULL)
     for (i = 0; i < synth->midi_channels; i++)
-      if (synth->channel[i] != NULL)
         fluid_channel_set_preset(synth->channel[i], NULL);
 
-  if (synth->eventhandler)
     delete_fluid_rvoice_eventhandler(synth->eventhandler);
 
   /* delete all the SoundFonts */
@@ -878,7 +876,7 @@ delete_fluid_synth(fluid_synth_t* synth)
 
 
   /* Delete the SoundFont info hash */
-  if (synth->sfont_hash) delete_fluid_hashtable (synth->sfont_hash);
+  delete_fluid_hashtable (synth->sfont_hash);
 
 
   /* delete all the SoundFont loaders */
@@ -893,18 +891,14 @@ delete_fluid_synth(fluid_synth_t* synth)
 
   if (synth->channel != NULL) {
     for (i = 0; i < synth->midi_channels; i++) {
-      if (synth->channel[i] != NULL) {
 	delete_fluid_channel(synth->channel[i]);
-      }
     }
     FLUID_FREE(synth->channel);
   }
 
   if (synth->voice != NULL) {
     for (i = 0; i < synth->nvoice; i++) {
-      if (synth->voice[i] != NULL) {
 	delete_fluid_voice(synth->voice[i]);
-      }
     }
     FLUID_FREE(synth->voice);
   }
@@ -915,9 +909,7 @@ delete_fluid_synth(fluid_synth_t* synth)
     for (i = 0; i < 128; i++) {
       if (synth->tuning[i] != NULL) {
 	for (k = 0; k < 128; k++) {
-	  if (synth->tuning[i][k] != NULL) {
 	    delete_fluid_tuning(synth->tuning[i][k]);
-	  }
 	}
 	FLUID_FREE(synth->tuning[i]);
       }
@@ -929,9 +921,7 @@ delete_fluid_synth(fluid_synth_t* synth)
 
 #ifdef LADSPA
   /* Release the LADSPA effects unit */
-  if (synth->ladspa_fx) {
     delete_fluid_ladspa_fx(synth->ladspa_fx);
-  }
 #endif
 
   /* delete all default modulators */
