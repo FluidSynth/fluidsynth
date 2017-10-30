@@ -279,7 +279,7 @@ static unsigned char GetFromKeyPortamentoLegato(fluid_channel_t* chan,
 		{	/* Portamento when Portamento pedal is On */
 			/* 'fromkey portamento'is determined from the portamento mode
 			 and the most recent note played */
-			unsigned char portamentomode = GetChanPortamentoMode(chan);
+			unsigned char portamentomode = chan->portamentomode;
 			if(IsValidNote(defaultFromkey)) 
 				fromkey_portamento = defaultFromkey; /* on each note */
 			else fromkey_portamento = ChanPrevNote(chan); /* on each note */
@@ -547,7 +547,7 @@ int fluid_synth_noteon_mono_legato(fluid_synth_t* synth, int chan,
 							   int fromkey, int tokey, int vel)
 {
 	fluid_channel_t* channel = synth->channel[chan];
-	unsigned char legatomode = GetChanLegatoMode(channel);
+	unsigned char legatomode = channel->legatomode;
 	fluid_voice_t* voice;
 	int i ;
 	/* Get possible 'fromkey portamento' and possible 'fromkey legato' note  */
