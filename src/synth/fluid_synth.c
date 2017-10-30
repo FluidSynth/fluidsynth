@@ -512,6 +512,7 @@ void delete_fluid_sample_timer(fluid_synth_t* synth, fluid_sample_timer_t* timer
 		if (*ptr == timer) {
 			*ptr = timer->next; 
 			FLUID_FREE(timer);
+            return;
 		}
 		ptr = &((*ptr)->next);
 	}
