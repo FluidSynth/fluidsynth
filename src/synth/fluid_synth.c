@@ -1157,6 +1157,46 @@ fluid_synth_add_default_mod(fluid_synth_t* synth, fluid_mod_t* mod, int mode)
   FLUID_API_RETURN(FLUID_OK);
 }
 
+/**
+ * Removes the specified modulator \c mod from the synth's default modulator list.
+ * fluid_mod_test_identity() will be used to test modulator matching.
+ * @param synth synth instance
+ * @param mod The modulator to remove
+ * @return FLUID_OK if a matching modulator was found and successfully removed, FLUID_FAILED otherwise
+ */
+int
+fluid_synth_remove_default_mod(fluid_synth_t* synth, const fluid_mod_t* mod)
+{
+  fluid_mod_t* default_mod;
+  fluid_mod_t* last_mod;
+
+  fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
+  fluid_return_val_if_fail (mod != NULL, FLUID_FAILED);
+  fluid_synth_api_enter(synth);
+
+  last_mod = default_mod = synth->default_mod;
+
+  while (default_mod != NULL) {
+    if (fluid_mod_test_identity(default_mod, mod))
+    {
+        if(synth->default_mod == default_mod)
+        {
+            synth->default_mod = synth->default_mod->next;
+        }
+        else
+        {
+            last_mod->next = default_mod->next;
+        }
+        fluid_mod_delete(default_mod);
+        FLUID_API_RETURN(FLUID_OK);
+    }
+    last_mod = default_mod;
+    default_mod = default_mod->next;
+  }
+
+  FLUID_API_RETURN(FLUID_FAILED);
+}
+
 
 /**
  * Send a MIDI controller event on a MIDI channel.
