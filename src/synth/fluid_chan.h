@@ -123,13 +123,6 @@ struct _fluid_channel_t
 #define IsChanPlayingMono(chan) ((chan->mode & MONO) || fluid_channel_legato(chan))
 /* End of macros interface to poly/mono mode variables */
 
-/* acces to channel legato mode and portamento mode */
-/* GetChanLegatoMode get the legato mode for a MIDI channel */
-#define GetChanLegatoMode(chan) (chan->legatomode)
-/* GetChanPortamentoMode get the portamento mode for a MIDI channel */
-#define GetChanPortamentoMode(chan) (chan->portamentomode)
-/* End of macros interface to legato and portamento modes variables */
-
 fluid_channel_t* new_fluid_channel(fluid_synth_t* synth, int num);
 void fluid_channel_init_ctrl(fluid_channel_t* chan, int is_all_ctrl_off);
 int delete_fluid_channel(fluid_channel_t* chan);
