@@ -162,9 +162,7 @@ void
 delete_fluid_coremidi_driver(fluid_midi_driver_t* p)
 {
   fluid_coremidi_driver_t* dev = (fluid_coremidi_driver_t*) p;
-  
-  if(dev == NULL)
-      return;
+  fluid_return_if_fail(dev != NULL);
   
   if (dev->client != NULL) {
     MIDIClientDispose(dev->client);

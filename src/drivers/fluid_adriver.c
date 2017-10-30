@@ -369,6 +369,7 @@ void
 delete_fluid_audio_driver(fluid_audio_driver_t* driver)
 {
   unsigned int i;
+  fluid_return_if_fail(driver != NULL);
 
   for (i = 0; i < FLUID_N_ELEMENTS(fluid_audio_drivers); i++) {
     if (fluid_audio_drivers[i].name == driver->name) {

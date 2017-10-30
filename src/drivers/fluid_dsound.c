@@ -273,10 +273,7 @@ new_fluid_dsound_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
 void delete_fluid_dsound_audio_driver(fluid_audio_driver_t* d)
 {
   fluid_dsound_audio_driver_t* dev = (fluid_dsound_audio_driver_t*) d;
-
-  if (dev == NULL) {
-    return;
-  }
+  fluid_return_if_fail(dev != NULL);
 
   /* tell the audio thread to stop its loop */
   dev->cont = 0;

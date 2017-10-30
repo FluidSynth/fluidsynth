@@ -321,7 +321,6 @@ new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
 void delete_fluid_alsa_audio_driver(fluid_audio_driver_t* p)
 {
   fluid_alsa_audio_driver_t* dev = (fluid_alsa_audio_driver_t*) p;
-
   fluid_return_if_fail(dev != NULL);
 
   dev->cont = 0;
@@ -649,7 +648,6 @@ void
 delete_fluid_alsa_rawmidi_driver(fluid_midi_driver_t* p)
 {
   fluid_alsa_rawmidi_driver_t* dev = (fluid_alsa_rawmidi_driver_t*) p;
-  
   fluid_return_if_fail(dev != NULL);
 
   /* cancel the thread and wait for it before cleaning up */
@@ -975,7 +973,6 @@ void
 delete_fluid_alsa_seq_driver(fluid_midi_driver_t* p)
 {
   fluid_alsa_seq_driver_t* dev = (fluid_alsa_seq_driver_t*) p;
-  
   fluid_return_if_fail(dev != NULL);
 
   /* cancel the thread and wait for it before cleaning up */

@@ -251,6 +251,7 @@ delete_fluid_ramsfont (fluid_ramsfont_t* sfont)
 {
   fluid_list_t *list;
   fluid_rampreset_t* preset;
+  fluid_return_if_fail(sfont != NULL);
 
   /* Check that no samples are currently used */
   for (list = sfont->sample; list; list = fluid_list_next(list)) {
@@ -534,25 +535,21 @@ new_fluid_rampreset(fluid_ramsfont_t* sfont)
 }
 
 /* Delete a RAM SoundFont preset */
-static int
+static void
 delete_fluid_rampreset (fluid_rampreset_t* preset)
 {
-  int err = FLUID_OK;
   fluid_preset_zone_t* zone;
   fluid_rampreset_voice_t *data;
+  fluid_return_if_fail(preset != NULL);
 
   if (preset->global_zone != NULL) {
-    if (delete_fluid_preset_zone(preset->global_zone) != FLUID_OK) {
-      err = FLUID_FAILED;
-    }
+    delete_fluid_preset_zone(preset->global_zone);
     preset->global_zone = NULL;
   }
   zone = preset->zone;
   while (zone != NULL) {
     preset->zone = zone->next;
-    if (delete_fluid_preset_zone(zone) != FLUID_OK) {
-      err = FLUID_FAILED;
-    }
+    delete_fluid_preset_zone(zone) != FLUID_OK);
     zone = preset->zone;
   }
 
@@ -570,7 +567,6 @@ delete_fluid_rampreset (fluid_rampreset_t* preset)
   preset->presetvoices = NULL;
 
   FLUID_FREE(preset);
-  return err;
 }
 
 /* Get a RAM SoundFont preset bank */
@@ -1217,14 +1213,12 @@ new_fluid_ramsample (void)
  * @param sample Sample to delete
  * @return #FLUID_OK
  */
-int
+void
 delete_fluid_ramsample (fluid_sample_t* sample)
 {
+    fluid_return_if_fail(sample != NULL);
+    
 	/* same as delete_fluid_sample, plus frees the data */
-  if (sample->data != NULL) {
   	FLUID_FREE(sample->data);
-  }
-  sample->data = NULL;
   FLUID_FREE(sample);
-  return FLUID_OK;
 }

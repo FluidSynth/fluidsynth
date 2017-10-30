@@ -745,9 +745,7 @@ void
 delete_fluid_timer (fluid_timer_t *timer)
 {
   int auto_destroy;
-  
-  if(timer == NULL)
-      return;
+  fluid_return_if_fail(timer != NULL);
   
   auto_destroy = timer->auto_destroy;
 
@@ -1092,8 +1090,7 @@ new_fluid_server_socket(int port, fluid_server_func_t func, void* data)
 
 void delete_fluid_server_socket(fluid_server_socket_t* server_socket)
 {
-  if(server_socket == NULL)
-      return;
+  fluid_return_if_fail(server_socket != NULL);
   
   server_socket->cont = 0;
   if (server_socket->socket != INVALID_SOCKET) {
@@ -1286,8 +1283,7 @@ new_fluid_server_socket(int port, fluid_server_func_t func, void* data)
 
 void delete_fluid_server_socket(fluid_server_socket_t *server_socket)
 {
-  if(server_socket == NULL)
-      return;
+  fluid_return_if_fail(server_socket != NULL);
   
   server_socket->cont = 0;
 

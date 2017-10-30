@@ -94,11 +94,10 @@ fluid_tuning_duplicate (fluid_tuning_t *tuning)
 void
 delete_fluid_tuning (fluid_tuning_t *tuning)
 {
-    if(tuning != NULL)
-    {
-        if (tuning->name) FLUID_FREE (tuning->name);
-        FLUID_FREE (tuning);
-    }
+    fluid_return_if_fail(tuning != NULL);
+    
+    FLUID_FREE (tuning->name);
+    FLUID_FREE (tuning);
 }
 
 /* Add a reference to a tuning object */

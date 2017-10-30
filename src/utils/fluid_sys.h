@@ -148,6 +148,7 @@ new_fluid_cond_mutex (void)
 static FLUID_INLINE void
 delete_fluid_cond_mutex (fluid_cond_mutex_t *m)
 {
+  fluid_return_if_fail(m != NULL);
   g_mutex_clear (m);
   g_free (m);
 }
@@ -170,6 +171,7 @@ new_fluid_cond (void)
 static FLUID_INLINE void
 delete_fluid_cond (fluid_cond_t *cond)
 {
+  fluid_return_if_fail(cond != NULL);
   g_cond_clear (cond);
   g_free (cond);
 }

@@ -303,6 +303,8 @@ fluid_shell_init(fluid_shell_t* shell,
 void
 delete_fluid_shell(fluid_shell_t* shell)
 {
+    fluid_return_if_fail(shell != NULL);
+    
   if (shell->thread != NULL) {
     delete_fluid_thread(shell->thread);
   }
@@ -2240,16 +2242,11 @@ fluid_cmd_t* fluid_cmd_copy(fluid_cmd_t* cmd)
 
 void delete_fluid_cmd(fluid_cmd_t* cmd)
 {
-  if (cmd->name) {
+    fluid_return_if_fail(cmd != NULL);
     FLUID_FREE(cmd->name);
-  }
-  if (cmd->topic) {
     FLUID_FREE(cmd->topic);
-  }
-  if (cmd->help) {
     FLUID_FREE(cmd->help);
-  }
-  FLUID_FREE(cmd);
+    FLUID_FREE(cmd);
 }
 
 /*
@@ -2316,6 +2313,8 @@ fluid_cmd_handler_t* new_fluid_cmd_handler(fluid_synth_t* synth, fluid_midi_rout
 void
 delete_fluid_cmd_handler(fluid_cmd_handler_t* handler)
 {
+    fluid_return_if_fail(handler != NULL);
+    
   delete_fluid_hashtable(handler->commands);
   FLUID_FREE(handler);
 }
@@ -2426,9 +2425,7 @@ new_fluid_server(fluid_settings_t* settings,
 void
 delete_fluid_server(fluid_server_t* server)
 {
-  if (server == NULL) {
-    return;
-  }
+  fluid_return_if_fail(server != NULL);
 
   fluid_server_close(server);
 
@@ -2441,9 +2438,7 @@ static void fluid_server_close(fluid_server_t* server)
   fluid_list_t* clients;
   fluid_client_t* client;
 
-  if (server == NULL) {
-    return;
-  }
+  fluid_return_if_fail(server != NULL);
 
   fluid_mutex_lock(server->mutex);
   clients = server->clients;
@@ -2565,10 +2560,8 @@ error_recovery:
 
 void fluid_client_quit(fluid_client_t* client)
 {
-  if (client->socket != INVALID_SOCKET) {
     fluid_socket_close(client->socket);
-    client->socket = INVALID_SOCKET;
-  }
+    
   FLUID_LOG(FLUID_DBG, "fluid_client_quit: joining");
   fluid_thread_join(client->thread);
   FLUID_LOG(FLUID_DBG, "fluid_client_quit: done");
@@ -2576,20 +2569,12 @@ void fluid_client_quit(fluid_client_t* client)
 
 void delete_fluid_client(fluid_client_t* client)
 {
-  if(client->handler != NULL)
-  {
+    fluid_return_if_fail(client != NULL);
+    
     delete_fluid_cmd_handler(client->handler);
-    client->handler = NULL;
-  }
-
-  if (client->socket != INVALID_SOCKET) {
     fluid_socket_close(client->socket);
-    client->socket = INVALID_SOCKET;
-  }
-  if (client->thread != NULL) {
     delete_fluid_thread(client->thread);
-    client->thread = NULL;
-  }
+    
   FLUID_FREE(client);
 }
 

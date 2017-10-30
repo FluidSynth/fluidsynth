@@ -220,9 +220,8 @@ new_fluid_voice(fluid_real_t output_rate)
 int
 delete_fluid_voice(fluid_voice_t* voice)
 {
-  if (voice == NULL) {
-    return FLUID_OK;
-  }
+  fluid_return_val_if_fail(voice != NULL, FLUID_OK);
+  
   if (!voice->can_access_rvoice || !voice->can_access_overflow_rvoice) {
     /* stop rvoice before deleting voice! */
     return FLUID_FAILED;

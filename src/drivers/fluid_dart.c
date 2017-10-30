@@ -215,10 +215,7 @@ error_recovery:
 void delete_fluid_dart_audio_driver(fluid_audio_driver_t* p)
 {
     fluid_dart_audio_driver_t* dev = (fluid_dart_audio_driver_t*) p;
-
-    if (dev == NULL) {
-        return;
-    }
+    fluid_return_if_fail(dev != NULL);
 
     if (dev->usDeviceID != 0) {
         MCI_GENERIC_PARMS    GenericParms;

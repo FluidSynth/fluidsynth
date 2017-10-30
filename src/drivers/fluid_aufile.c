@@ -103,17 +103,11 @@ new_fluid_file_audio_driver(fluid_settings_t* settings,
 void delete_fluid_file_audio_driver(fluid_audio_driver_t* p)
 {
 	fluid_file_audio_driver_t* dev = (fluid_file_audio_driver_t*) p;
-    
 	fluid_return_if_fail(dev != NULL);
 
-	if (dev->timer != NULL) {
 		delete_fluid_timer(dev->timer);
-	}
-	
-	if (dev->renderer != NULL) {
 		delete_fluid_file_renderer(dev->renderer);
-	}
-
+        
 	FLUID_FREE(dev);
 }
 

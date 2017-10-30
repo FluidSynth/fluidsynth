@@ -234,6 +234,7 @@ fluid_midi_driver_t* new_fluid_midi_driver(fluid_settings_t* settings, handle_mi
 void delete_fluid_midi_driver(fluid_midi_driver_t* driver)
 {
   unsigned int i;
+  fluid_return_if_fail(driver != NULL);
 
   for (i = 0; i < FLUID_N_ELEMENTS(fluid_midi_drivers); i++) {
     if (fluid_midi_drivers[i].name == driver->name) {

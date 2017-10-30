@@ -247,9 +247,7 @@ void
 delete_fluid_winmidi_driver(fluid_midi_driver_t* p)
 {
   fluid_winmidi_driver_t* dev = (fluid_winmidi_driver_t*) p;
-  
-  if(dev == NULL)
-      return;
+  fluid_return_if_fail (dev != NULL);
   
   if (dev->hmidiin != NULL) {
     fluid_atomic_int_set (&dev->closing, TRUE);

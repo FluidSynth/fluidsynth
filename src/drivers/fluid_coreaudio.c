@@ -319,10 +319,7 @@ void
 delete_fluid_core_audio_driver(fluid_audio_driver_t* p)
 {
   fluid_core_audio_driver_t* dev = (fluid_core_audio_driver_t*) p;
-
-  if (dev == NULL) {
-    return;
-  }
+  fluid_return_if_fail(dev != NULL);
 
   CloseComponent (dev->outputUnit);
 
