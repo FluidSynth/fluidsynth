@@ -119,7 +119,7 @@ int delete_fluid_file_audio_driver(fluid_audio_driver_t* p);
 #endif
 
 /* Available audio drivers, listed in order of preference */
-static const fluid_audriver_definition_t fluid_audio_drivers[] = {
+static const fluid_audriver_definition_t fluid_audio_drivers_template[] = {
 #if JACK_SUPPORT
   { "jack",
     new_fluid_jack_audio_driver,
@@ -192,7 +192,7 @@ static const fluid_audriver_definition_t fluid_audio_drivers[] = {
 #endif
 };
 
-
+static fluid_audriver_definition_t fluid_audio_drivers[FLUID_N_ELEMENTS(fluid_audio_drivers_template)];
 
 
 void fluid_audio_driver_settings(fluid_settings_t* settings)
@@ -370,10 +370,82 @@ delete_fluid_audio_driver(fluid_audio_driver_t* driver)
 {
   unsigned int i;
 
-  for (i = 0; i < FLUID_N_ELEMENTS(fluid_audio_drivers); i++) {
-    if (fluid_audio_drivers[i].name == driver->name) {
-      fluid_audio_drivers[i].free(driver);
+  /* iterate over fluid_audio_drivers_template to ensure deleting even drivers currently not registered */
+  for (i = 0; i < FLUID_N_ELEMENTS(fluid_audio_drivers_template); i++) {
+    if (fluid_audio_drivers_template[i].name == driver->name) {
+      fluid_audio_drivers_template[i].free(driver);
       return;
     }
   }
+}
+
+
+/**
+ * @brief Registers audio drivers to use
+ * 
+ * When creating a settings instance with new_fluid_settings(), all audio drivers are initialized once.
+ * In the past this has caused segfaults and application crashes due to buggy soundcard drivers.
+ * 
+ * This function enables the user to only initialize specific audio drivers when settings instances are created.
+ * Therefore pass a NULL-terminated array of C-strings containing the \c names of audio drivers to register
+ * for the usage with fluidsynth.
+ * The \c names are the same as used for the \c audio.driver setting.
+ * 
+ * By default all audio drivers fluidsynth has been compiled with are registered.
+ * 
+ * Any attempt of using audio drivers that have not been registered is undefined behaviour!
+ * 
+ * @param adrivers NULL-terminated array of audio drivers to register. Pass NULL to register all available drivers.
+ * @return #FLUID_OK if all the audio drivers requested by the user are supported by fluidsynth and have been
+ * successfully registered. Otherwise #FLUID_FAILED is returned and ALL available audio drivers are registered instead.
+ * 
+ * @warning This function may only be called if no thread is residing in fluidsynth's API and no instances
+ * of any kind are alive (e.g. as it would be the case right after fluidsynth's inital creation).
+ * Else the behaviour is undefined.
+ * 
+ * @note This function is not thread safe and will never be!
+ */
+int fluid_audio_driver_register(const char** adrivers)
+{
+    unsigned int i, j, add=0;
+    
+    if(adrivers == NULL)
+    {
+        FLUID_MEMCPY(fluid_audio_drivers, fluid_audio_drivers_template, sizeof(fluid_audio_drivers));
+    }
+    else
+    {
+        FLUID_MEMSET(fluid_audio_drivers, 0, sizeof(fluid_audio_drivers));
+        for(i=0; adrivers[i] != NULL; i++)
+        {
+            /* search the requested audio driver in the template and copy it over if found */
+            for (j = 0; j < FLUID_N_ELEMENTS(fluid_audio_drivers_template); j++)
+            {
+                if (FLUID_STRCMP(adrivers[i], fluid_audio_drivers_template[j].name) == 0)
+                {
+                    FLUID_MEMCPY(&fluid_audio_drivers[add], &fluid_audio_drivers_template[j], sizeof(fluid_audio_drivers[add]));
+                    add++;
+                    break;
+                }
+            }
+            
+            if(j >= FLUID_N_ELEMENTS(fluid_audio_drivers_template))
+            {
+                /* requested driver not found, failure */
+                goto error;
+            }
+        }
+    }
+    
+    if(i >= FLUID_N_ELEMENTS(fluid_audio_drivers_template))
+    {
+        /* user requested more drivers than this build of fluidsynth supports, failure */
+        goto error;
+    }
+    
+    return FLUID_OK;
+    
+error:
+    FLUID_MEMSET(fluid_audio_drivers, 0, sizeof(fluid_audio_drivers));
+    return FLUID_FAILED;
 }
