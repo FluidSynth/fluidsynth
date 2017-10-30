@@ -459,7 +459,7 @@ int fluid_synth_get_legato_mode(fluid_synth_t* synth, int chan, int *legatomode)
 	fluid_return_val_if_fail (legatomode!= NULL, FLUID_FAILED);
 	FLUID_API_ENTRY_CHAN(FLUID_FAILED);
 	/**/
-	* legatomode = GetChanLegatoMode(synth->channel[chan]);
+	* legatomode = synth->channel[chan]->legatomode;
 	/**/
 	FLUID_API_RETURN(FLUID_OK);
 }
@@ -517,7 +517,7 @@ int fluid_synth_get_portamento_mode(fluid_synth_t* synth, int chan,
 	fluid_return_val_if_fail (portamentomode!= NULL, FLUID_FAILED);
 	FLUID_API_ENTRY_CHAN(FLUID_FAILED);
 	/**/
-	* portamentomode = GetChanPortamentoMode(synth->channel[chan]);
+	* portamentomode = synth->channel[chan]->portamentomode;
 	/**/
 	FLUID_API_RETURN(FLUID_OK);
 }
