@@ -52,7 +52,7 @@ static void fluid_ramsfont_iteration_start (fluid_ramsfont_t* sfont);
 static int fluid_ramsfont_iteration_next (fluid_ramsfont_t* sfont,
                                           fluid_preset_t* preset);
 static fluid_rampreset_t* new_fluid_rampreset(fluid_ramsfont_t* sfont);
-static int delete_fluid_rampreset (fluid_rampreset_t* preset);
+static void delete_fluid_rampreset (fluid_rampreset_t* preset);
 static int fluid_rampreset_get_banknum (fluid_rampreset_t* preset);
 static int fluid_rampreset_get_num (fluid_rampreset_t* preset);
 static const char *fluid_rampreset_get_name (fluid_rampreset_t* preset);
@@ -251,7 +251,7 @@ delete_fluid_ramsfont (fluid_ramsfont_t* sfont)
 {
   fluid_list_t *list;
   fluid_rampreset_t* preset;
-  fluid_return_if_fail(sfont != NULL);
+  fluid_return_val_if_fail(sfont != NULL, FLUID_OK);
 
   /* Check that no samples are currently used */
   for (list = sfont->sample; list; list = fluid_list_next(list)) {
@@ -549,7 +549,7 @@ delete_fluid_rampreset (fluid_rampreset_t* preset)
   zone = preset->zone;
   while (zone != NULL) {
     preset->zone = zone->next;
-    delete_fluid_preset_zone(zone) != FLUID_OK);
+    delete_fluid_preset_zone(zone);
     zone = preset->zone;
   }
 

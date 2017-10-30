@@ -9,6 +9,7 @@
   Translated to C by Peter Hanappe, Mai 2001
 */
 
+#include "fluid_sys.h"
 #include "fluid_rev.h"
 
 /***************************************************************

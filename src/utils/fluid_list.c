@@ -26,6 +26,7 @@
 
 
 
+#include "fluid_sys.h"
 #include "fluid_list.h"
 
 
@@ -42,9 +43,9 @@ new_fluid_list(void)
 void
 delete_fluid_list(fluid_list_t *list)
 {
+  fluid_list_t *next;
   fluid_return_if_fail(list != NULL);
 
-  fluid_list_t *next;
   while (list) {
     next = list->next;
     FLUID_FREE(list);

@@ -503,10 +503,11 @@ fluid_sample_timer_t* new_fluid_sample_timer(fluid_synth_t* synth, fluid_timer_c
 
 void delete_fluid_sample_timer(fluid_synth_t* synth, fluid_sample_timer_t* timer)
 {
+    fluid_sample_timer_t** ptr;
     fluid_return_if_fail(synth != NULL);
     fluid_return_if_fail(timer != NULL);
     
-	fluid_sample_timer_t** ptr = &synth->sample_timers;
+	ptr = &synth->sample_timers;
 	while (*ptr) {
 		if (*ptr == timer) {
 			*ptr = timer->next; 
