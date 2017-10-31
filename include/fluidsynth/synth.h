@@ -49,7 +49,7 @@ extern "C" {
 
 /**
  * Channel information structure for fluid_synth_get_channel_info().
- * @since @NEXT_RELEASE@
+ * @since 2.0.0
  */
 struct _fluid_synth_channel_info_t
 {
