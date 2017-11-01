@@ -1782,18 +1782,22 @@ fluid_player_get_status(fluid_player_t *player)
 }
 
 /**
- * Seek to position in midi ticks.
+ * Seek in the current playing file.
  * @param player MIDI player instance
- * @param mticks
- * @return the current position
+ * @param ticks the position to seek to in the current file
+ * @return #FLUID_FAILED if ticks is after the latest tick of the file,
+ *   #FLUID_OK otherwise
  * @since 1.1.8
  * 
  * The actual seek is performed during the player_callback.
  */
 int fluid_player_seek(fluid_player_t *player, int ticks)
 {
+    if (ticks > fluid_player_get_total_ticks(player)) {
+        return FLUID_FAILED;
+    }
     player->seek_ticks = ticks;
-    return player->cur_ticks;
+    return FLUID_OK;
 }
 
 
