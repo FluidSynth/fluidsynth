@@ -694,7 +694,7 @@ new_fluid_synth(fluid_settings_t *settings)
   synth->sfont_info = NULL;
   synth->sfont_hash = new_fluid_hashtable (NULL, NULL);
   synth->noteid = 0;
-  synth->fromkey_portamento = InvalidNote;		/* disable portamento */
+  synth->fromkey_portamento = INVALID_NOTE;		/* disable portamento */
   synth->ticks_since_start = 0;
   synth->tuning = NULL;
   fluid_private_init(synth->tuning_iter);
@@ -1044,7 +1044,7 @@ fluid_synth_noteon_LOCAL(fluid_synth_t* synth, int chan, int key, int vel)
     return FLUID_FAILED;
   }
   
-  if(IsChanPlayingMono(channel)) /* channel is mono or legato On) */
+  if(is_fluid_channel_playing_mono(channel)) /* channel is mono or legato On) */
   {		/* play the noteOn in monophonic */
 		return fluid_synth_noteon_mono_LOCAL(synth, chan, key, vel);
   }
@@ -1059,7 +1059,7 @@ fluid_synth_noteon_LOCAL(fluid_synth_t* synth, int chan, int key, int vel)
          advance it to the release phase. */
       fluid_synth_release_voice_on_same_note_LOCAL(synth, chan, key);
 
-	  return fluid_synth_noteon_mono_legato(synth, chan, InvalidNote, key, vel);
+      return fluid_synth_noteon_mono_legato(synth, chan, INVALID_NOTE, key, vel);
   }
 }
 
@@ -1090,13 +1090,16 @@ fluid_synth_noteoff_LOCAL(fluid_synth_t* synth, int chan, int key)
 {
   int status;
   fluid_channel_t* channel = synth->channel[chan];
-  if(IsChanPlayingMono(channel)) /* channel is mono or legato On) */
+  if(is_fluid_channel_playing_mono(channel)) /* channel is mono or legato On) */
   {		/* play the noteOff in monophonic */
 		status = fluid_synth_noteoff_mono_LOCAL(synth, chan, key);
   }
   else { /* channel is poly and legato Off) */
 	  /* remove the note from the monophonic list */
-      if(key == ChanLastNote(channel))  fluid_channel_clear_monolist(channel);
+      if(key == fluid_channel_last_note(channel))
+      {
+		  fluid_channel_clear_monolist(channel);
+      }
 	  status = fluid_synth_noteoff_monopoly(synth, chan, key, 0);
   }
   /* Change the state (Valid/Invalid) of the most recent note played in a 
@@ -3483,7 +3486,7 @@ fluid_synth_alloc_voice(fluid_synth_t* synth, fluid_inst_zone_t *inst_zone,
     API fluid_synth_set_breath_mode() or shell command setbreathmode for this channel.
   */
   {
-    int mono = IsChanPlayingMono(channel);
+    int mono = is_fluid_channel_playing_mono(channel);
     fluid_mod_t* default_mod =synth->default_mod; 
     while (default_mod != NULL)
     {
