@@ -627,7 +627,7 @@ fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t* voice)
 	When fromkey is set to ValidNote , portamento is started */
 	  /* Return fromkey portamento */
 	  int fromkey = voice->channel->synth->fromkey_portamento;
-      if(IsValidNote(fromkey))
+      if(is_valid_note(fromkey))
 	  {		/* Send portamento parameters to the voice dsp */
 			fluid_voice_update_portamento(voice,fromkey, fluid_voice_get_actual_key(voice));
 	  }
@@ -1225,8 +1225,16 @@ int fluid_voice_modulate_all(fluid_voice_t* voice)
   return FLUID_OK;
 }
 
-/** legato update function ---------------------------------------------------*/
-/* Update portamento parameter */
+/** legato update functions --------------------------------------------------*/
+/* Updates voice portamento parameter
+ *
+ * @voice voice the synthesis voice
+ * @fromkey the begining pitch of portamento.
+ * @tokey the ending pitch of portamento.
+ *
+ * The function calculates pitch offset and increment, then the parameters
+ * are send to the dsp 
+*/
 void fluid_voice_update_portamento (fluid_voice_t* voice, int fromkey,int tokey)
 									
 {
@@ -1244,10 +1252,12 @@ void fluid_voice_update_portamento (fluid_voice_t* voice, int fromkey,int tokey)
 
 /*---------------------------------------------------------------*/
 extern fluid_gen_info_t fluid_gen_info[];
-/* force in the release section for legato mode retrigger 0 and 1:
-  flags:
-    0: fast release.  
-    1: normal release. RELEASE generators are forced to the minimum possible
+/* forces the voice envelopes release section for legato mode retrigger 0 and 1:
+ *
+ * @voice voice the synthesis voice
+ * @flags:
+ *   0: fast release.  
+ *   1: normal release. RELEASE generators are forced to the minimum possible
 */
 void fluid_voice_update_release(fluid_voice_t* voice, unsigned char flags)
 {
@@ -1268,7 +1278,13 @@ void fluid_voice_update_release(fluid_voice_t* voice, unsigned char flags)
 }
 
 /*---------------------------------------------------------------*/
-/* force in the attack section for legato mode multi_retrigger: 1 */
+/* forces the voice envelopes in the attack section for 
+ * legato mode: multi_retrigger
+ *
+ * @voice voice the synthesis voice
+ * @tokey the new key to be applied to this voice.
+ * @vel the new velocity to be applied to this voice.
+ */
 void fluid_voice_update_multi_retrigger_attack(fluid_voice_t* voice,
 										 int tokey, int vel)
 {
@@ -1291,7 +1307,13 @@ void fluid_voice_update_multi_retrigger_attack(fluid_voice_t* voice,
 }
 
 /*---------------------------------------------------------------*/
-/* force in the current section for legato mode single_trigger: 2*/
+/* forces the voice envelopes current section for legato mode: single_trigger_0 
+ *
+ * @voice voice the synthesis voice
+ * @fromkey the key prior to key tokey.
+ * @tokey the new key to be applied to this voice.
+ * @vel the new velocity to be applied to this voice.
+*/
 void fluid_voice_update_single_trigger0(fluid_voice_t* voice,int fromkey,
 								 int tokey, int vel)
 {
@@ -1312,7 +1334,7 @@ void fluid_voice_update_single_trigger0(fluid_voice_t* voice,int fromkey,
 	   fluid_update_single_trigger0() need only get data count
 	   section HOLD et DECAY updated.
 	   (max,min, increment, must not be changed !) */
-    /* calculate decaycount for tokey  (1 for decay )*/
+        /* calculate decaycount for tokey  (1 for decay )*/
 	decaycount = calculate_hold_decay_buffers(voice, GEN_VOLENVDECAY, 
 									GEN_KEYTOVOLENVDECAY, 1); 
 
@@ -1327,12 +1349,19 @@ void fluid_voice_update_single_trigger0(fluid_voice_t* voice,int fromkey,
 	/* update Pitch */
 	fluid_voice_calculate_gen_pitch(voice);
 	fluid_voice_update_param(voice, GEN_PITCH);
-	/* update adrs generator */
+	/* update adsr envelope generator */
 	UPDATE_RVOICE2(fluid_rvoice_single_trigger, dholdcount, decaycount); 
 }
 
 /*---------------------------------------------------------------*/
-/* force in the current section for legato mode single_trigger: 2*/
+/* force the voice envelopes current section for 
+ * legato mode single_trigger_1: 
+ *
+ * @voice voice the synthesis voice
+ * @fromkey the key prior to key tokey.
+ * @tokey the new key to be applied to this voice.
+ * @vel the new velocity to be applied to this voice.
+*/
 void fluid_voice_update_single_trigger1(fluid_voice_t* voice,int fromkey,
 								 int tokey, int vel)
 {
@@ -1351,7 +1380,7 @@ void fluid_voice_update_single_trigger1(fluid_voice_t* voice,int fromkey,
 	fluid_voice_update_param(voice, GEN_PITCH);
 }
 
-/** end of legato update function */
+/** end of legato update functions */
 
 /*
  Force the voice into release stage. Useful anywhere a voice
