@@ -27,20 +27,21 @@ extern int fluid_is_number(char* a);
 /* Macros interface to poly/mono mode variables */
 #define MASK_BASICCHANINFOS  (MASKMODE|BASIC_CHANNEL|ENABLED)
 /* access to channel mode */
-/* SetBasicChanInfos set the basic channel infos for a MIDI basic channel */
-#define SetBasicChanInfos(chan,Infos) \
+/* Set the basic channel infos for a MIDI basic channel */
+#define set_fluid_channel_basic_channel_infos(chan,Infos) \
 (chan->mode = (chan->mode & ~MASK_BASICCHANINFOS) | (Infos & MASK_BASICCHANINFOS))
-/* ResetBasicChanInfos restset the basic channel infos for a MIDI basic channel */
+/* Reset the basic channel infos for a MIDI basic channel */
+#define reset_fluid_channel_basic_channel_infos(chan) (chan->mode &=  ~MASK_BASICCHANINFOS)
 /* End of macros interface to poly/mono mode variables */
-#define ResetBasicChanInfos(chan) (chan->mode &=  ~MASK_BASICCHANINFOS)
 
 /* Macros interface to breath variables */
 #define MASK_BREATH_MODE  (BREATH_POLY|BREATH_MONO|BREATH_SYNC)
 /* access to default breath infos */
-/* SetBreathInfos set the breath infos for a MIDI  channel */
-#define SetBreathInfos(chan,BreathInfos) \
+/* Set the breath infos for a MIDI  channel */
+#define set_fluid_channel_breath_infos(chan,BreathInfos) \
 (chan->mode = (chan->mode & ~MASK_BREATH_MODE) | (BreathInfos & MASK_BREATH_MODE))
-#define GetBreathInfos(chan) (chan->mode & MASK_BREATH_MODE)
+/* Get the breath infos for a MIDI  channel */
+#define get_fluid_channel_breath_infos(chan) (chan->mode & MASK_BREATH_MODE)
 
 /**  API Poly/mono mode ******************************************************/
 /**
@@ -182,7 +183,7 @@ int fluid_synth_reset_basic_channels(fluid_synth_t* synth,
 
     /* Clear previous list of basic channel */
     for(i = 0; i <  nChan; i++) {
-	ResetBasicChanInfos(synth->channel[i]);
+	reset_fluid_channel_basic_channel_infos(synth->channel[i]);
 	synth->channel[i]->mode_val = 0; 
     }
     if(n && basicChannelInfos)
@@ -361,7 +362,7 @@ int fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth,
 			else newmode = 0;
 			/* Now mode is OMNI OFF/ON,MONO/POLY, BASIC_CHANNEL or not
 			   ENABLED or not */	
-			SetBasicChanInfos(synth->channel[i],newmode);
+			set_fluid_channel_basic_channel_infos(synth->channel[i],newmode);
 			synth->channel[i]->mode_val = val;
 		}
 	}
@@ -544,7 +545,7 @@ int fluid_synth_set_breath_mode(fluid_synth_t* synth, int chan, int breathmode)
 	/* check parameters first */
 	FLUID_API_ENTRY_CHAN(FLUID_FAILED);
 	/**/
-	SetBreathInfos(synth->channel[chan],breathmode);
+	set_fluid_channel_breath_infos(synth->channel[chan],breathmode);
 	/**/
 	FLUID_API_RETURN(FLUID_OK);
 }
@@ -572,7 +573,7 @@ int fluid_synth_get_breath_mode(fluid_synth_t* synth, int chan, int *breathmode)
 	fluid_return_val_if_fail (breathmode!= NULL, FLUID_FAILED);
 	FLUID_API_ENTRY_CHAN(FLUID_FAILED);
 	/**/
-	* breathmode = GetBreathInfos(synth->channel[chan]);
+	* breathmode = get_fluid_channel_breath_infos(synth->channel[chan]);
 	/**/
 	FLUID_API_RETURN(FLUID_OK);
 }
