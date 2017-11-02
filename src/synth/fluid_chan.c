@@ -72,20 +72,20 @@ fluid_channel_init(fluid_channel_t* chan)
   chan->mode = 0;
   chan->mode_val = 0;
   /* monophonic list initialization */
-  for (i=0; i < maxNotes; i++)  {
+   for (i=0; i < SIZE_MONOLIST; i++)  {
      chan->monolist[i].next = i+1;
      chan->monolist[i].prev = i-1;
   }
-  chan->monolist[maxNotes -1].next = 0; /* ending element chained to the 1st */
-  chan->monolist[0].prev = maxNotes -1; /* first element chained to the ending */
-  chan->iLast = chan->nNotes = 0; /* list is clear */
-  chan->iFirst = 1;
-  ChanClearPrevNote(chan); /* Mark previous note invalid */
+  chan->monolist[SIZE_MONOLIST -1].next = 0; /* ending element chained to the 1st */
+  chan->monolist[0].prev = SIZE_MONOLIST -1; /* first element chained to the ending */
+  chan->i_last = chan->n_notes = 0; /* list is clear */
+  chan->i_first = chan->monolist[chan->i_last].next; /* first note index in the list */
+  fluid_channel_clear_prev_note(chan); /* Mark previous note invalid */
   /*---*/
   chan->key_sustained = -1;				/* No previous mono note sustained */
-  chan->legatomode = RETRIGGER_0;		/* Default mode */
-  chan->portamentomode = EACH_NOTE;		/* Default mode */
- /*--- End of poly/mono initialization --------------------------------------*/
+  chan->legatomode = RETRIGGER_1;		/* Default mode */
+  chan->portamentomode = LEGATO_ONLY;	/* Default mode */
+/*--- End of poly/mono initialization --------------------------------------*/
   
   chan->channel_type = (chan->channum == 9) ? CHANNEL_TYPE_DRUM : CHANNEL_TYPE_MELODIC;
   prognum = 0;
