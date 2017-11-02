@@ -74,10 +74,9 @@ extern void fluid_synth_release_voice_on_same_note_LOCAL(fluid_synth_t* synth,
    +--->|vel |-->|vel |-->....-->|vel |-->|vel |----+
         +----+   +----+          +----+   +----+
          /|\                      /|\
-		  |                        |
-		i_first                   i_last
-
-  
+          |                        |
+        i_first                   i_last
+ 
   The list allows an easy automatic detection of a legato passage when it is
   played on a MIDI keyboard input device.
   It is useful also when the input device is an ewi (electronic wind instrument)
@@ -133,8 +132,8 @@ extern void fluid_synth_release_voice_on_same_note_LOCAL(fluid_synth_t* synth,
  *  +--->|vel |-->|vel |-->....-->|vel |-->|vel |----+
  *       +----+   +----+          +----+   +----+
  *        /|\                      /|\
- *	       |                        |
- *       i_first                   i_last
+ *         |                        |
+ *      i_first                   i_last
  *
  * The monophonic list is a circular buffer of  SIZE_MONOLIST elements
  * Each element is linked forward and backward at initialisation time.
@@ -197,8 +196,8 @@ fluid_channel_add_monolist(fluid_channel_t* chan, unsigned char key,
  *  +--->|vel |-->|vel |-->....-->|vel |-->|vel |----+
  *       +----+   +----+          +----+   +----+
  *        /|\                      /|\
- *	       |                        |
- *       i_first                   i_last
+ *         |                        |
+ *      i_first                   i_last
  * 
  * @param chan  fluid_channel_t.
  * @param key MIDI note number (0-127) to search.
@@ -240,8 +239,8 @@ fluid_channel_search_monolist(fluid_channel_t* chan, unsigned char key)
  *  +--->|vel |-->|vel |-->....-->|vel |-->|vel |----+
  *       +----+   +----+          +----+   +----+
  *        /|\                      /|\
- *	       |                        |
- *       i_first                   i_last
+ *         |                        |
+ *      i_first                   i_last
  *
  * The monophonic list is a circular buffer of  SIZE_MONOLIST elements
  * Each element is linked forward and backward at initialisation time.
@@ -331,8 +330,8 @@ fluid_channel_remove_monolist(fluid_channel_t* chan, short i)
  *  +--->|vel |-->|vel |-->....-->|vel |-->|vel |----+
  *       +----+   +----+          +----+   +----+
  *        /|\                      /|\
- *	       |                        |
- *       i_first                   i_last
+ *         |                        |
+ *      i_first                   i_last
  * @param chan  fluid_channel_t.
  * Note: i_last index keeps a trace of the most recent note played even if
  *       the list is empty.
@@ -363,8 +362,8 @@ void fluid_channel_clear_monolist(fluid_channel_t* chan)
  *  +--->|vel |-->|vel |-->....-->|vel |-->|vel |----+
  *       +----+   +----+          +----+   +----+
  *        /|\                      /|\
- *	       |                        |
- *       i_first                   i_last
+ *         |                        |
+ *      i_first                   i_last
  * @param chan  fluid_channel_t.
  * Note: i_last index keeps a trace of the most recent note played.
  *       prev_note keeps a trace of the note .
