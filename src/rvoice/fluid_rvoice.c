@@ -552,11 +552,13 @@ fluid_rvoice_noteoff(fluid_rvoice_t* voice, unsigned int min_ticks)
 }
 
 /*----------------------------------------------------------------------------*/
-/* skip to Attack section 
-   Update vol and  attack data 
-   Correction on volume val to achieve equivalent amplitude at noteOn legato
+/* skips to Attack section 
+ * Update vol and  attack data 
+ * Correction on volume val to achieve equivalent amplitude at noteOn legato
+ * 
+ * @ voice the synthesis voice to be updated
 */
-void fluid_retrigger_attack (fluid_rvoice_t* voice)
+static void fluid_rvoice_local_retrigger_attack (fluid_rvoice_t* voice)
 {
 	/* skip to Attack section */
 	/* Once in Attack section, current count must be reset, to be sure
@@ -583,9 +585,11 @@ void fluid_retrigger_attack (fluid_rvoice_t* voice)
 	}
 }
 
-/*----------------------------------------------------------------------------*/
-/* Used by legato Mode 1: multi_retrigger -  
-   see fluid_synth_noteon_mono_legato_multi_retrigger() */
+/*----------------------------------------------------------------------------
+/* Used by legato Mode : multi_retrigger   
+ *  see fluid_synth_noteon_mono_legato_multi_retrigger() 
+ * @ voice the synthesis voice to be updated
+*/
 void 
 fluid_rvoice_multi_retrigger_attack (fluid_rvoice_t* voice)
 {
@@ -608,7 +612,7 @@ fluid_rvoice_multi_retrigger_attack (fluid_rvoice_t* voice)
 	}
 	/* skip to Attack section from any section */
 	/* Update vol and  attack data */
-	fluid_retrigger_attack(voice);
+	fluid_rvoice_local_retrigger_attack(voice);
 	/*-------------------------------------------------------------------------
 	 Section skip for modulation envelope 
 	--------------------------------------------------------------------------*/
@@ -621,10 +625,12 @@ fluid_rvoice_multi_retrigger_attack (fluid_rvoice_t* voice)
 	 a correction for seamless val transition. Here is the place */
 }
 
-/*----------------------------------------------------------------------------*/
-/* Used by legato Mode 2: single_trigger -  */
-/* dholdcount: difference hold data count with previous note.
-   decaycount: decay data count
+/*----------------------------------------------------------------------------
+/* Used by legato Mode : single_trigger
+ * See fluid_voice_update_single_trigger0
+ * @ voice the synthesis voice to be updated
+ * @dholdcount: difference hold data count with previous note.
+ * @decaycount: decay data count
 */
 void 
 fluid_rvoice_single_trigger(fluid_rvoice_t* voice, int dholdcount, int decaycount)
@@ -640,11 +646,14 @@ fluid_rvoice_single_trigger(fluid_rvoice_t* voice, int dholdcount, int decaycoun
 	 Section skip for volume envelope 
 	--------------------------------------------------------------------------*/
 	if (section == FLUID_VOICE_ENVDELAY)
+	{
 		/* Skip from DELAY section to ATTACK section */
 		fluid_adsr_env_set_section(&voice->envlfo.volenv, FLUID_VOICE_ENVATTACK);
+	}
 	else if (section <= FLUID_VOICE_ENVHOLD)
 	{	/* ATTACK or HOLD section */
-		fluid_env_data_t* env_data_hold; int hc;
+		fluid_env_data_t* env_data_hold; 
+		int hc;
 		env_data_hold = &voice->envlfo.volenv.data[FLUID_VOICE_ENVHOLD];
 		/* update count of Hold section */
 		hc = env_data_hold->count + dholdcount ;
@@ -653,21 +662,29 @@ fluid_rvoice_single_trigger(fluid_rvoice_t* voice, int dholdcount, int decaycoun
 			env_data_hold->max =  3.0f; /* 3.0 means  legato occurs during HOLD */
 		}
 		/* When legato occurs during HOLD, HOLD count is reduced */
-		if(env_data_hold->max == 3.0f) {	/* Count of HOLD section is reduced */
+		if(env_data_hold->max == 3.0f) 
+		{	/* Count of HOLD section is reduced */
 			hc -= voice->envlfo.volenv.count;
 		}
-		if(hc <0) hc = 0; /* hold section is finished */
+		if(hc <0)
+		{
+			hc = 0; /* hold section is finished */
+		}
 		env_data_hold->count = hc;
 		/* Skip from HOLD section to ATTACK section */
-		fluid_retrigger_attack(voice);
+		fluid_rvoice_local_retrigger_attack(voice);
 	}
 	else /* Here adsr is in DECAY or SUSTAIN section */
 	{ 	/* dAtt is the attenuation variation (in cB) */
 		fluid_real_t volval,finalval, dAtt, dAttFinal;
 		if(voice->dsp.prev_sav_attenuation < 0.0f) /* n1,n2 */
+		{
 			dAtt = voice->dsp.attenuation - voice->dsp.prev_attenuation;
+		}
 		else /* n2,n3 or n3,n4,... */
+		{
 			dAtt = voice->dsp.attenuation - voice->dsp.prev_sav_attenuation;
+		}
 		/* save effective attenuation */
 		voice->dsp.prev_sav_attenuation = voice->dsp.attenuation;
 
@@ -682,33 +699,59 @@ fluid_rvoice_single_trigger(fluid_rvoice_t* voice, int dholdcount, int decaycoun
 		volval = fluid_adsr_env_get_val(&voice->envlfo.volenv);
 		finalval = (env_data_d->increment <= 0.0f) ? env_data_d->min: env_data_d->max;
 		/* Variation is positive or negative */
-		if (dAtt > 0.0f) {	/* Attenuation increase */
+		if (dAtt > 0.0f) 
+		{	/* Attenuation increase */
 			fluid_real_t maxAtt; /* rest of limitation agaisnt Max attenuation */
 			fluid_real_t  maxAttVol = 960.0f * (1.0f - volval);
 			/* Attenuation must stay in range [0..1440] cB */
 			/* limit dAtt against the maximum possible (1440 cB] for dsp.attenuation */
 			maxAtt = voice->dsp.prev_attenuation + dAtt -
 					(fluid_real_t)(FLUID_ATTEN_AMP_SIZE-1);
-			if (maxAtt > 0.0f) dAtt -= maxAtt; /* limit dAtt */
-			else maxAtt = 0; /* no rest */
+			if (maxAtt > 0.0f)
+			{
+				dAtt -= maxAtt; /* limit dAtt */
+			}
+			else 
+			{
+				maxAtt = 0; /* no rest */
+			}
 			/* limit dAtt to the maximum possible from vol to 1.0 */
 			dAttFinal = dAtt - maxAttVol; /* rest of limitation */
-			if(dAttFinal > 0.0f) dAtt = maxAttVol; /* limit dAtt */
-			else dAttFinal = 0.0f; /* no rest */
+			if(dAttFinal > 0.0f) 
+			{
+				dAtt = maxAttVol; /* limit dAtt */
+			}
+			else
+			{
+				dAttFinal = 0.0f; /* no rest */
+			}
 			/* accumulate rest dAttFinal and maxAtt */
 			dAttFinal += maxAtt;
 		}
-		else 	{ /* Attenuation decrease */
+		else 
+		{ /* Attenuation decrease */
 			fluid_real_t minAtt;
 			fluid_real_t minAttVol = -volval * 960.0f;
 			/* limit dAtt against the minimum possible for dsp.attenuation */
 			minAtt = voice->dsp.prev_attenuation + dAtt;
-			if(minAtt < 0.0f) dAtt = - voice->dsp.prev_attenuation; /* limit */
-			else minAtt = 0.0f; /* no rest */
+			if(minAtt < 0.0f)
+			{
+				dAtt = - voice->dsp.prev_attenuation; /* limit */
+			}
+			else
+			{
+				minAtt = 0.0f; /* no rest */
+			}
 			/*limit dAtt against the minimum possible from vol to 0.0*/
 			dAttFinal = dAtt - minAttVol; /* rest of limitation */
-			if(dAttFinal < 0.0f) dAtt = minAttVol; /* limit dAtt */
-			else dAttFinal = 0.0f; /* no rest */
+			if(dAttFinal < 0.0f)
+			{
+				dAtt = minAttVol; /* limit dAtt */
+			}
+			else
+			{
+				dAttFinal = 0.0f; /* no rest */
+			}
 			/* accumulate dAttFinal and minAtt */
 			dAttFinal += minAtt;
 		}
@@ -724,12 +767,17 @@ fluid_rvoice_single_trigger(fluid_rvoice_t* voice, int dholdcount, int decaycoun
 		
 		/* Volval and finalval have been changed , so the slope is changed */
 		/* minimum acceptable decay time */
-		if (env_data_d->count == 0) env_data_d->count = 1; 
-		if (volval >= finalval) { /* Decay needs negative slope */
+		if (env_data_d->count == 0)
+		{
+			env_data_d->count = 1; 
+		}
+		if (volval >= finalval) 
+		{ /* Decay needs negative slope */
 			env_data_d->increment = -1.0f / env_data_d->count;
 			env_data_d->min = finalval; env_data_d->max =  1.0f;
 		}
-		else { /* Decay needs positive slope */
+		else 
+		{ /* Decay needs positive slope */
 			env_data_d->increment = +1.0f / env_data_d->count;
 			env_data_d->min = 0.0f; env_data_d->max =  finalval;
 		}
@@ -742,15 +790,15 @@ fluid_rvoice_single_trigger(fluid_rvoice_t* voice, int dholdcount, int decaycoun
 }
 
 /*----------------------------------------------------------------------------
- set the portamento parameter. 
- voice, rvoice to set portamento.
- countinc, increment count number.
- pitchoffset, pitch offset to apply to voice dsp.pitch.
- 
- Notes
- 1) To get continuous portamento between consecutive noteOn (n1,n2,n3...),
-    pitchoffet is accumulated in current dsp pitchoffset.
- 2) And to get constant portamento duration, dsp pitch increment is updated.
+ * set the portamento dsp parameters. 
+ * @voice, rvoice to set portamento.
+ * @countinc, increment count number.
+ * @pitchoffset, pitch offset to apply to voice dsp.pitch.
+ *
+ * Notes:
+ * 1) To get continuous portamento between consecutive noteOn (n1,n2,n3...),
+ *   pitchoffet is accumulated in current dsp pitchoffset.
+ * 2) And to get constant portamento duration, dsp pitch increment is updated.
 */  
 void fluid_rvoice_set_portamento(fluid_rvoice_t * voice, unsigned int countinc,
 								 fluid_real_t pitchoffset)
