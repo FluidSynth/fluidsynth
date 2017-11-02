@@ -25,9 +25,44 @@
 #include "fluid_midi.h"
 #include "fluid_tuning.h"
 
+/* The mononophonic list is part of the legato detector for monophonic mode */
+/* see fluid_synth_mono.c about a description of the legato detector device
+/* Size of the monophonic list 
+   - 1 is the minimum. it allows playing legato passage of any number 
+     of notes.
+   - Size above 1 allows playing legato at noteOff resulting in
+     playing fast trills (see fluid_synth_mono.c). 
+	 Choosing a size of 10 is sufficient (because most musician have
+	 only 10 fingers when playing o monophonic instrument).
 
-/* mononophonic list for monophonic mode */
-#define maxNotes  10  /* Size of the monophonic list */
+*/
+#define SIZE_MONOLIST  10 
+
+/* 
+
+            The monopholist list
+   +------------------------------------------------+
+   | +--------------------------------------------+ |
+   | |  +----+   +----+          +----+   +----+  | |
+   | +--|note|<--|note|<--....<--|note|<--|note|<-+ |
+   +--->|vel |-->|vel |-->....-->|vel |-->|vel |----+
+        +----+   +----+          +----+   +----+
+         /|\                      /|\
+		  |                        |
+		i_first                   i_last
+ 
+ The monophonic list is a circular buffer of SIZE_MONOLIST elements
+ Each element is linked forward and backward at initialisation time.
+ - when a note is added at noteOn  (see fluid_channel_add_monolist()) each
+   element is use in the forward direction and indexed by i_last variable. 
+ - when a note is removed at noteOff (see fluid_channel_remove_monolist()),
+   the element concerned is fast unlinked and relinked after the i_last element.
+ 
+ The most recent note added is indexed by i_last.
+ The most ancient note added is the first note indexed by i_first. i_first is
+ moving in the forward direction in a circular manner.
+
+*/
 struct mononote
 {
     unsigned char prev; /* previous note */
@@ -51,12 +86,12 @@ struct _fluid_channel_t
   /* Poly Mono variables see macro access description */
   int mode;								/**< Poly Mono mode */
   int mode_val;							/**< number of monophonic channel (for mode 3) */
-  /* monophonic list */
-  struct mononote monolist[maxNotes];   /**< monophonic list */
-  unsigned char iFirst;           /**< First note index */
-  unsigned char iLast;            /**< most recent note index since the most recent add */
-  unsigned char PrevNote;         /**< previous note of the most recent add */
-  unsigned char nNotes;           /**< actual number of notes in the list */
+  /* monophonic list - legato detector */
+  struct mononote monolist[SIZE_MONOLIST];   /**< monophonic list */
+  unsigned char i_first;          /**< First note index */
+  unsigned char i_last;           /**< most recent note index since the most recent add */
+  unsigned char prev_note;        /**< previous note of the most recent add */
+  unsigned char n_notes;          /**< actual number of notes in the list */
   /*--*/
   int key_sustained;              /**< previous sustained monophonic note */
   unsigned char legatomode;       /**< legato mode */
@@ -111,16 +146,20 @@ struct _fluid_channel_t
 };
 
 /* Macros interface to monophonic list variables */
-#define InvalidNote 255
-#define IsValidNote(n)    (n != InvalidNote)
-/* ChanLastNote() return the note in iLast entry of the monophonic list */
-#define ChanLastNote(chan)	(chan->monolist[chan->iLast].note)
-#define ChanClearPrevNote(chan)	(chan->PrevNote = InvalidNote)
+#define INVALID_NOTE 255
+/* Returns true when a note is a valid note */
+#define is_valid_note(n)    (n != INVALID_NOTE)
+/* Marks prev_note as invalid. */
+#define fluid_channel_clear_prev_note(chan)	(chan->prev_note = INVALID_NOTE)
+
+/* Returns the most recent note from i_last entry of the monophonic list */
+#define fluid_channel_last_note(chan)	(chan->monolist[chan->i_last].note)
 /* End of interface to monophonic list variables */
 
 /* Macros interface to poly/mono mode variables */
-/* IsChanPlayingMono return true when channel is Mono or legato is on */
-#define IsChanPlayingMono(chan) ((chan->mode & MONO) || fluid_channel_legato(chan))
+/* Returns true when channel is mono or legato is on */
+#define is_fluid_channel_playing_mono(chan) ((chan->mode & MONO) ||\
+                                             fluid_channel_legato(chan))
 /* End of macros interface to poly/mono mode variables */
 
 fluid_channel_t* new_fluid_channel(fluid_synth_t* synth, int num);
@@ -180,7 +219,7 @@ int fluid_channel_get_interp_method(fluid_channel_t* chan);
     ((_c)->cc[PORTAMENTO_TIME_MSB] * 128 + (_c)->cc[PORTAMENTO_TIME_LSB])
 #define fluid_channel_portamento(_c)			((_c)->cc[PORTAMENTO_SWITCH] >= 64)
 #define fluid_channel_breath_msb(_c)			((_c)->cc[BREATH_MSB] > 0)
-#define clearPortamentoCtrl(_c)		((_c)->cc[PORTAMENTO_CTRL] = InvalidNote)
+#define clearPortamentoCtrl(_c)		((_c)->cc[PORTAMENTO_CTRL] = INVALID_NOTE)
 #define portamentoCtrl(_c)			((unsigned char)(_c)->cc[PORTAMENTO_CTRL])
 #define fluid_channel_legato(_c)			    ((_c)->cc[LEGATO_SWITCH] >= 64)
 #define fluid_channel_sustained(_c)             ((_c)->cc[SUSTAIN_SWITCH] >= 64)
