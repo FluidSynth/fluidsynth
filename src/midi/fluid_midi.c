@@ -1737,7 +1737,7 @@ fluid_player_get_status(fluid_player_t *player)
  * Seek in the currently playing file.
  * @param player MIDI player instance
  * @param ticks the position to seek to in the current file
- * @return #FLUID_FAILED if ticks is negative of after the latest tick of the file,
+ * @return #FLUID_FAILED if ticks is negative or after the latest tick of the file,
  *   #FLUID_OK otherwise
  * @since 1.1.9
  * 
