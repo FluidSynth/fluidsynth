@@ -438,7 +438,7 @@ fluid_event_channel_pressure(fluid_event_t* evt, int channel, short val)
  * @param channel MIDI channel number
  * @param key MIDI note number (0-127)
  * @param val Aftertouch amount (0-127)
- * @since @NEXT_RELEASE@
+ * @since 2.0.0
  */
 void
 fluid_event_key_pressure(fluid_event_t* evt, int channel, short key, short val)

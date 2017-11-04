@@ -31,6 +31,7 @@
 #include "fluid_sys.h"
 #include <dlfcn.h>
 #include <math.h>
+#include <ladspa.h>
 
 #define LADSPA_API_ENTER(_fx) (fluid_rec_mutex_lock((_fx)->api_mutex))
 
@@ -38,6 +39,91 @@
     fluid_rec_mutex_unlock((_fx)->api_mutex); \
     return (_ret)
 
+#define FLUID_LADSPA_MAX_LIBS 100
+#define FLUID_LADSPA_MAX_PLUGINS 100
+#define FLUID_LADSPA_MAX_NODES 100
+#define FLUID_LADSPA_MAX_PATH_LENGTH 512
+
+typedef enum _fluid_ladspa_state_t {
+    FLUID_LADSPA_INACTIVE = 0,
+    FLUID_LADSPA_ACTIVE,
+    FLUID_LADSPA_RUNNING
+    
+} fluid_ladspa_state_t;
+    
+typedef enum _fluid_ladspa_node_type_t {
+    FLUID_LADSPA_NODE_AUDIO,
+    FLUID_LADSPA_NODE_CONTROL,
+
+} fluid_ladspa_node_type_t;
+
+typedef struct _fluid_ladspa_lib_t
+{
+    char *filename;
+    void *dlib;
+    LADSPA_Descriptor_Function descriptor;
+
+} fluid_ladspa_lib_t;
+
+typedef struct _fluid_ladspa_node_t
+{
+    char *name;
+    fluid_ladspa_node_type_t type;
+    LADSPA_Data *buf;
+
+    int num_inputs;
+    int num_outputs;
+
+} fluid_ladspa_node_t;
+
+typedef struct _fluid_ladspa_plugin_t
+{
+    /* plugin instance id unique to the effects unit */
+    int id;
+
+    const LADSPA_Descriptor *desc;
+    LADSPA_Handle *handle;
+
+    int active;
+
+    /* Used to keep track of the port connection state */
+    fluid_ladspa_node_t **port_nodes;
+
+} fluid_ladspa_plugin_t;
+
+struct _fluid_ladspa_fx_t
+{
+    unsigned long sample_rate;
+
+    int audio_groups;
+    int effects_channels;
+    int audio_channels;
+    int buffer_size;
+
+    fluid_ladspa_lib_t *libs[FLUID_LADSPA_MAX_LIBS];
+    int num_libs;
+
+    fluid_ladspa_node_t *nodes[FLUID_LADSPA_MAX_NODES];
+    int num_nodes;
+
+    /* plugins are really plugin instances */
+    fluid_ladspa_plugin_t *plugins[FLUID_LADSPA_MAX_PLUGINS];
+    int num_plugins;
+
+    /* used to generate the unique plugin ids */
+    int next_plugin_id;
+
+    fluid_rec_mutex_t api_mutex;
+
+    fluid_atomic_int_t state;
+    int pending_deactivation;
+
+    fluid_cond_mutex_t *run_finished_mutex;
+    fluid_cond_t *run_finished_cond;
+
+};
+    
+    
 static void clear_ladspa(fluid_ladspa_fx_t *fx);
 
 static fluid_ladspa_node_t *new_fluid_ladspa_node(fluid_ladspa_fx_t *fx, const char *name,
@@ -103,7 +189,7 @@ fluid_ladspa_fx_t *new_fluid_ladspa_fx(fluid_real_t sample_rate, int audio_group
     /* Setup recursive mutex to protect access to public API */
     fluid_rec_mutex_init(fx->api_mutex);
 
-    fx->state = FLUID_LADSPA_INACTIVE;
+    fluid_atomic_int_set(&fx->state, FLUID_LADSPA_INACTIVE);
 
     /* add 0.5 to minimize overall casting error */
     fx->sample_rate = (unsigned long)(sample_rate + 0.5);

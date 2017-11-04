@@ -67,7 +67,7 @@ new_fluid_ringbuffer (int count, int elementsize)
 
   queue->totalcount = count;
   queue->elementsize = elementsize;
-  queue->count = 0;
+  fluid_atomic_int_set(&queue->count, 0);
   queue->in = 0;
   queue->out = 0;
 
@@ -84,6 +84,9 @@ new_fluid_ringbuffer (int count, int elementsize)
 void
 delete_fluid_ringbuffer (fluid_ringbuffer_t *queue)
 {
+  if(queue != NULL)
+  {
   FLUID_FREE (queue->array);
   FLUID_FREE (queue);
+  }
 }

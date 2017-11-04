@@ -541,7 +541,7 @@ fluid_rvoice_noteoff(fluid_rvoice_t* voice, unsigned int min_ticks)
      */
     if (fluid_adsr_env_get_val(&voice->envlfo.volenv) > 0){
       fluid_real_t lfo = fluid_lfo_get_val(&voice->envlfo.modlfo) * -voice->envlfo.modlfo_to_vol;
-      fluid_real_t amp = fluid_adsr_env_get_val(&voice->envlfo.volenv) * pow (10.0, lfo / -200);
+      fluid_real_t amp = fluid_adsr_env_get_val(&voice->envlfo.volenv) * fluid_cb2amp(lfo);
       fluid_real_t env_value = - ((-200 * log (amp) / log (10.0) - lfo) / 960.0 - 1);
       fluid_clip (env_value, 0.0, 1.0);
       fluid_adsr_env_set_val(&voice->envlfo.volenv, env_value);

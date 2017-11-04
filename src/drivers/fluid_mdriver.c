@@ -144,6 +144,8 @@ void fluid_midi_driver_settings(fluid_settings_t* settings)
 {
   unsigned int i;
 
+  fluid_settings_register_int (settings, "midi.autoconnect", 0, 0, 1, FLUID_HINT_TOGGLED, NULL, NULL);
+  
   fluid_settings_register_int (settings, "midi.realtime-prio",
                                FLUID_DEFAULT_MIDI_RT_PRIO, 0, 99, 0, NULL, NULL);
 

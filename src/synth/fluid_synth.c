@@ -116,7 +116,8 @@ static void fluid_synth_stop_LOCAL (fluid_synth_t *synth, unsigned int id);
  */
 
 /* has the synth module been initialized? */
-static int fluid_synth_initialized = 0;
+/* fluid_atomic_int_t may be anything, so init with {0} to catch most cases */
+static fluid_atomic_int_t fluid_synth_initialized = {0};
 static void fluid_synth_init(void);
 static void init_dither(void);
 
@@ -189,8 +190,10 @@ void fluid_synth_settings(fluid_settings_t* settings)
                               FLUID_HINT_TOGGLED, NULL, NULL);
   fluid_settings_register_str(settings, "midi.portname", "", 0, NULL, NULL);
 
+#ifdef DEFAULT_SOUNDFONT
   fluid_settings_register_str(settings, "synth.default-soundfont",
-			      DEFAULT_SOUNDFONT, 0, NULL, NULL);
+            DEFAULT_SOUNDFONT, 0, NULL, NULL);
+#endif
 
   fluid_settings_register_int(settings, "synth.polyphony",
 			      256, 1, 65535, 0, NULL, NULL);
@@ -275,8 +278,6 @@ fluid_version_str (void)
 static void
 fluid_synth_init(void)
 {
-  fluid_synth_initialized++;
-
 #ifdef TRAP_ON_FPE
   /* Turn on floating point exception traps */
   feenableexcept (FE_DIVBYZERO | FE_UNDERFLOW | FE_OVERFLOW | FE_INVALID);
@@ -456,18 +457,12 @@ fluid_synth_init(void)
 
 static FLUID_INLINE unsigned int fluid_synth_get_ticks(fluid_synth_t* synth)
 {
-  if (synth->eventhandler->is_threadsafe)
-    return fluid_atomic_int_get(&synth->ticks_since_start);
-  else
-    return synth->ticks_since_start;
+  return fluid_atomic_int_get(&synth->ticks_since_start);
 }
 
 static FLUID_INLINE void fluid_synth_add_ticks(fluid_synth_t* synth, int val)
 {
-  if (synth->eventhandler->is_threadsafe)
-    fluid_atomic_int_add((int*) &synth->ticks_since_start, val);
-  else
-    synth->ticks_since_start += val;
+  fluid_atomic_int_add(&synth->ticks_since_start, val);
 }
 
 
@@ -571,9 +566,11 @@ new_fluid_synth(fluid_settings_t *settings)
   double gain;
   int i, nbuf;
   int with_ladspa = 0;
+  int with_reverb = 0;
+  int with_chorus = 0;
   
   /* initialize all the conversion tables and other stuff */
-  if (fluid_synth_initialized == 0)
+  if (fluid_atomic_int_compare_and_exchange(&fluid_synth_initialized, 0, 1))
   {
     char buf[64];
     if (fluid_settings_str_equal (settings, "synth.volenv", "compliant"))
@@ -611,8 +608,10 @@ new_fluid_synth(fluid_settings_t *settings)
   
   synth->settings = settings;
 
-  fluid_settings_getint(settings, "synth.reverb.active", &synth->with_reverb);
-  fluid_settings_getint(settings, "synth.chorus.active", &synth->with_chorus);
+  fluid_settings_getint(settings, "synth.reverb.active", &with_reverb);
+  fluid_atomic_int_set(&synth->with_reverb, with_reverb);
+  fluid_settings_getint(settings, "synth.chorus.active", &with_chorus);
+  fluid_atomic_int_set(&synth->with_chorus, with_chorus);
   fluid_settings_getint(settings, "synth.verbose", &synth->verbose);
 
   fluid_settings_getint(settings, "synth.polyphony", &synth->polyphony);
@@ -695,7 +694,7 @@ new_fluid_synth(fluid_settings_t *settings)
   synth->sfont_hash = new_fluid_hashtable (NULL, NULL);
   synth->noteid = 0;
   synth->fromkey_portamento = INVALID_NOTE;		/* disable portamento */
-  synth->ticks_since_start = 0;
+  fluid_atomic_int_set(&synth->ticks_since_start, 0);
   synth->tuning = NULL;
   fluid_private_init(synth->tuning_iter);
 
@@ -798,8 +797,8 @@ new_fluid_synth(fluid_settings_t *settings)
   fluid_synth_update_overflow(synth, "", 0.0f);
   fluid_synth_update_mixer(synth, fluid_rvoice_mixer_set_polyphony, 
 			   synth->polyphony, 0.0f);
-  fluid_synth_set_reverb_on(synth, synth->with_reverb);
-  fluid_synth_set_chorus_on(synth, synth->with_chorus);
+  fluid_synth_set_reverb_on(synth, fluid_atomic_int_get(&synth->with_reverb));
+  fluid_synth_set_chorus_on(synth, fluid_atomic_int_get(&synth->with_chorus));
 				 
   synth->cur = FLUID_BUFSIZE;
   synth->curmax = 0;
@@ -2006,7 +2005,7 @@ fluid_synth_update_channel_pressure_LOCAL(fluid_synth_t* synth, int chan)
  * @param key MIDI key number (0-127)
  * @param val MIDI key pressure value (0-127)
  * @return FLUID_OK on success, FLUID_FAILED otherwise
- * @since @NEXT_RELEASE@
+ * @since 2.0.0
  */
 int
 fluid_synth_key_pressure(fluid_synth_t* synth, int chan, int key, int val)
@@ -2960,7 +2959,7 @@ fluid_synth_nwrite_float(fluid_synth_t* synth, int len,
   synth->cur = num;
 
   time = fluid_utime() - time;
-  cpu_load = 0.5 * (synth->cpu_load + time * synth->sample_rate / len / 10000.0);
+  cpu_load = 0.5 * (fluid_atomic_float_get(&synth->cpu_load) + time * synth->sample_rate / len / 10000.0);
   fluid_atomic_float_set (&synth->cpu_load, cpu_load);
 
   if (!synth->eventhandler->is_threadsafe)
@@ -3071,7 +3070,7 @@ fluid_synth_write_float(fluid_synth_t* synth, int len,
   synth->cur = l;
 
   time = fluid_utime() - time;
-  cpu_load = 0.5 * (synth->cpu_load + time * synth->sample_rate / len / 10000.0);
+  cpu_load = 0.5 * (fluid_atomic_float_get(&synth->cpu_load) + time * synth->sample_rate / len / 10000.0);
   fluid_atomic_float_set (&synth->cpu_load, cpu_load);
 
   if (!synth->eventhandler->is_threadsafe)
@@ -3196,7 +3195,7 @@ fluid_synth_write_s16(fluid_synth_t* synth, int len,
   fluid_profile(FLUID_PROF_WRITE, prof_ref);
 
   time = fluid_utime() - time;
-  cpu_load = 0.5 * (synth->cpu_load + time * synth->sample_rate / len / 10000.0);
+  cpu_load = 0.5 * (fluid_atomic_float_get(&synth->cpu_load) + time * synth->sample_rate / len / 10000.0);
   fluid_atomic_float_set (&synth->cpu_load, cpu_load);
 
   if (!synth->eventhandler->is_threadsafe)
@@ -4231,16 +4230,16 @@ fluid_synth_set_reverb_full(fluid_synth_t* synth, int set, double roomsize,
   fluid_synth_api_enter(synth);
 
   if (set & FLUID_REVMODEL_SET_ROOMSIZE)
-    fluid_atomic_float_set (&synth->reverb_roomsize, roomsize);
+    synth->reverb_roomsize = roomsize;
 
   if (set & FLUID_REVMODEL_SET_DAMPING)
-    fluid_atomic_float_set (&synth->reverb_damping, damping);
+    synth->reverb_damping = damping;
 
   if (set & FLUID_REVMODEL_SET_WIDTH)
-    fluid_atomic_float_set (&synth->reverb_width, width);
+    synth->reverb_width = width;
 
   if (set & FLUID_REVMODEL_SET_LEVEL)
-    fluid_atomic_float_set (&synth->reverb_level, level);
+    synth->reverb_level = level;
 
   /* finally enqueue an rvoice event to the mixer to actual update reverb */
   ret = fluid_rvoice_eventhandler_push5(synth->eventhandler,
@@ -4262,7 +4261,7 @@ fluid_synth_get_reverb_roomsize(fluid_synth_t* synth)
   double result;
   fluid_return_val_if_fail (synth != NULL, 0.0);
   fluid_synth_api_enter(synth);
-  result = fluid_atomic_float_get (&synth->reverb_roomsize);
+  result = synth->reverb_roomsize;
   FLUID_API_RETURN(result);
 }
 
@@ -4278,7 +4277,7 @@ fluid_synth_get_reverb_damp(fluid_synth_t* synth)
   fluid_return_val_if_fail (synth != NULL, 0.0);
   fluid_synth_api_enter(synth);
 
-  result = fluid_atomic_float_get (&synth->reverb_damping);
+  result = synth->reverb_damping;
   FLUID_API_RETURN(result);
 }
 
@@ -4294,7 +4293,7 @@ fluid_synth_get_reverb_level(fluid_synth_t* synth)
   fluid_return_val_if_fail (synth != NULL, 0.0);
   fluid_synth_api_enter(synth);
 
-  result = fluid_atomic_float_get (&synth->reverb_level);
+  result = synth->reverb_level;
   FLUID_API_RETURN(result);
 }
 
@@ -4310,7 +4309,7 @@ fluid_synth_get_reverb_width(fluid_synth_t* synth)
   fluid_return_val_if_fail (synth != NULL, 0.0);
   fluid_synth_api_enter(synth);
 
-  result = fluid_atomic_float_get (&synth->reverb_width);
+  result = synth->reverb_width;
   FLUID_API_RETURN(result);
 }
 
@@ -4422,19 +4421,19 @@ fluid_synth_set_chorus_full(fluid_synth_t* synth, int set, int nr, double level,
   fluid_synth_api_enter(synth);
 
   if (set & FLUID_CHORUS_SET_NR)
-    fluid_atomic_int_set (&synth->chorus_nr, nr);
+    synth->chorus_nr = nr;
 
   if (set & FLUID_CHORUS_SET_LEVEL)
-    fluid_atomic_float_set (&synth->chorus_level, level);
+    synth->chorus_level = level;
 
   if (set & FLUID_CHORUS_SET_SPEED)
-    fluid_atomic_float_set (&synth->chorus_speed, speed);
+    synth->chorus_speed = speed;
 
   if (set & FLUID_CHORUS_SET_DEPTH)
-    fluid_atomic_float_set (&synth->chorus_depth, depth_ms);
+    synth->chorus_depth = depth_ms;
 
   if (set & FLUID_CHORUS_SET_TYPE)
-    fluid_atomic_int_set (&synth->chorus_type, type);
+    synth->chorus_type = type;
   
   ret = fluid_rvoice_eventhandler_push5(synth->eventhandler, 
 				  fluid_rvoice_mixer_set_chorus_params,
@@ -4456,7 +4455,7 @@ fluid_synth_get_chorus_nr(fluid_synth_t* synth)
   fluid_return_val_if_fail (synth != NULL, 0.0);
   fluid_synth_api_enter(synth);
 
-  result = fluid_atomic_int_get (&synth->chorus_nr);
+  result = synth->chorus_nr;
   FLUID_API_RETURN(result);
 }
 
@@ -4472,7 +4471,7 @@ fluid_synth_get_chorus_level(fluid_synth_t* synth)
   fluid_return_val_if_fail (synth != NULL, 0.0);
   fluid_synth_api_enter(synth);
 
-  result = fluid_atomic_float_get (&synth->chorus_level);
+  result = synth->chorus_level;
   FLUID_API_RETURN(result);
 }
 
@@ -4488,7 +4487,7 @@ fluid_synth_get_chorus_speed_Hz(fluid_synth_t* synth)
   fluid_return_val_if_fail (synth != NULL, 0.0);
   fluid_synth_api_enter(synth);
 
-  result = fluid_atomic_float_get (&synth->chorus_speed);
+  result = synth->chorus_speed;
   FLUID_API_RETURN(result);
 }
 
@@ -4504,7 +4503,7 @@ fluid_synth_get_chorus_depth_ms(fluid_synth_t* synth)
   fluid_return_val_if_fail (synth != NULL, 0.0);
   fluid_synth_api_enter(synth);
 
-  result = fluid_atomic_float_get (&synth->chorus_depth);
+  result = synth->chorus_depth;
   FLUID_API_RETURN(result);
 }
 
@@ -4520,7 +4519,7 @@ fluid_synth_get_chorus_type(fluid_synth_t* synth)
   fluid_return_val_if_fail (synth != NULL, 0.0);
   fluid_synth_api_enter(synth);
 
-  result = fluid_atomic_int_get (&synth->chorus_type);
+  result = synth->chorus_type;
   FLUID_API_RETURN(result);
 }
 
@@ -5218,7 +5217,7 @@ fluid_synth_get_settings(fluid_synth_t* synth)
  *   TRUE to take the value as a 0.0-1.0 range and apply it to the valid
  *   generator effect range (scaled and shifted as necessary).
  * @return FLUID_OK on success, FLUID_FAILED otherwise
- * @since @NEXT_RELEASE@
+ * @since 2.0.0
  *
  * This function allows for setting all effect parameters in real time on a
  * MIDI channel.  Setting absolute to non-zero will cause the value to override
