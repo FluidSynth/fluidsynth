@@ -631,27 +631,23 @@ void delete_fluid_rvoice_mixer(fluid_rvoice_mixer_t* mixer)
 void fluid_rvoice_mixer_set_ladspa(fluid_rvoice_mixer_t* mixer,
         fluid_ladspa_fx_t *ladspa_fx, int audio_groups)
 {
-    int buffer_size;
-
     mixer->ladspa_fx = ladspa_fx;
     if (ladspa_fx == NULL)
     {
         return;
     }
 
-    buffer_size = mixer->buffers.buf_blocks * FLUID_BUFSIZE;
+    fluid_ladspa_add_host_ports(ladspa_fx, "Main:L", audio_groups,
+            mixer->buffers.left_buf);
 
-    fluid_ladspa_add_host_ports(ladspa_fx, "Main", audio_groups, buffer_size,
-            mixer->buffers.left_buf,
+    fluid_ladspa_add_host_ports(ladspa_fx, "Main:R", audio_groups,
             mixer->buffers.right_buf);
 
-    fluid_ladspa_add_host_ports(ladspa_fx, "Reverb", 1, buffer_size,
-            &mixer->buffers.fx_left_buf[SYNTH_REVERB_CHANNEL],
-            &mixer->buffers.fx_right_buf[SYNTH_REVERB_CHANNEL]);
+    fluid_ladspa_add_host_ports(ladspa_fx, "Reverb:Send", 1,
+            &mixer->buffers.fx_left_buf[SYNTH_REVERB_CHANNEL]);
 
-    fluid_ladspa_add_host_ports(ladspa_fx, "Chorus", 1, buffer_size,
-            &mixer->buffers.fx_left_buf[SYNTH_REVERB_CHANNEL],
-            &mixer->buffers.fx_right_buf[SYNTH_REVERB_CHANNEL]);
+    fluid_ladspa_add_host_ports(ladspa_fx, "Chorus:Send", 1,
+            &mixer->buffers.fx_left_buf[SYNTH_REVERB_CHANNEL]);
 }
 #endif
 

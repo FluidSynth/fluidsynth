@@ -273,20 +273,20 @@ void delete_fluid_ladspa_fx(fluid_ladspa_fx_t *fx)
 /**
  * Add host buffers to the LADSPA engine.
  *
+ * @note The size of the buffers pointed to by the buffers array must be
+ * at least as large as the buffer size given to new_fluid_ladspa_fx.
+ *
  * @param fx LADSPA fx instance
  * @param prefix common name prefix for the created nodes
- * @param num_buffers count of buffers in the left and right arrays
- * @param left array of pointers to left side buffers
- * @param right array of pointers to right side buffers
+ * @param num_buffers number of of buffers buffer array
+ * @param buffers array of pointers to buffers
  * @return FLUID_OK on success, otherwise FLUID_FAILED
  */
 int fluid_ladspa_add_host_ports(fluid_ladspa_fx_t *fx, const char *prefix,
-        int buffer_count, int buffer_size, fluid_real_t *left[], fluid_real_t *right[])
+        int buffer_count, fluid_real_t *buffers[])
 {
-    int i, c;
+    int i;
     char name[99];
-    char *side;
-    fluid_real_t **bufs;
 
     LADSPA_API_ENTER(fx);
 
@@ -295,37 +295,23 @@ int fluid_ladspa_add_host_ports(fluid_ladspa_fx_t *fx, const char *prefix,
         LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
 
-    /* Create left and right nodes for all channels */
-    for (c = 0; c < buffer_count; c++)
+    /* Create nodes for all channels */
+    for (i = 0; i < buffer_count; i++)
     {
-        for (i = 0; i < 2; i++)
+        /* If there is more than one buffer, then append a 1-based index to each node name */
+        if (buffer_count > 1) {
+            FLUID_SNPRINTF(name, sizeof(name), "%s%d", prefix, (i + 1));
+        }
+        else
         {
-            if (i == 0)
-            {
-                side = "L";
-                bufs = left;
-            }
-            else
-            {
-                side = "R";
-                bufs = right;
-            }
+            FLUID_STRNCPY(name, prefix, sizeof(name));
+        }
 
-            /* If there is more than one channel, then append a 1-based index to each name */
-            if (buffer_count > 1) {
-                FLUID_SNPRINTF(name, sizeof(name), "%s%d:%s", prefix, (i + 1), side);
-            }
-            else
-            {
-                FLUID_SNPRINTF(name, sizeof(name), "%s:%s", prefix, side);
-            }
-
-            if (new_fluid_ladspa_node(fx, name,
-                        FLUID_LADSPA_NODE_AUDIO | FLUID_LADSPA_NODE_HOST,
-                        bufs[c]) == NULL)
-            {
-                return FLUID_FAILED;
-            }
+        if (new_fluid_ladspa_node(fx, name,
+                    FLUID_LADSPA_NODE_AUDIO | FLUID_LADSPA_NODE_HOST,
+                    buffers[i]) == NULL)
+        {
+            return FLUID_FAILED;
         }
     }
 

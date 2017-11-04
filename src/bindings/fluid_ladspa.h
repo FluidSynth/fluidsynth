@@ -45,7 +45,7 @@ int fluid_ladspa_reset(fluid_ladspa_fx_t *fx);
 int fluid_ladspa_check(fluid_ladspa_fx_t *fx, char *err, int err_size);
 
 int fluid_ladspa_add_host_ports(fluid_ladspa_fx_t *fx, const char *prefix,
-        int buffer_count, int buffer_size, fluid_real_t *left[], fluid_real_t *right[]);
+        int buffer_count, fluid_real_t *buffers[]);
 int fluid_ladspa_host_port_exists(fluid_ladspa_fx_t *fx, const char *name);
 
 int fluid_ladspa_add_buffer(fluid_ladspa_fx_t *fx, const char *name);
