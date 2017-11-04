@@ -1410,7 +1410,7 @@ fluid_synth_sysex_midi_tuning (fluid_synth_t *synth, const char *data, int len,
   int keys[128];
   char name[17];
   int note, frac, frac2;
-  uint8 chksum;
+  uint8_t chksum;
   int i, count, index;
   const char *dataptr;
   char *resptr;;

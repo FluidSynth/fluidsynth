@@ -112,6 +112,24 @@
 #include <io.h>
 #endif
 
+/** Integer types  */
+#if HAVE_STDINT_H
+#include <stdint.h>
+
+#elif defined _MSC_VER
+
+/* Emulate with standard MSVC types */
+typedef signed __int8    int8_t;
+typedef unsigned __int8  uint8_t;
+typedef signed __int16   int16_t;
+typedef unsigned __int16 uint16_t;
+typedef signed __int32   int32_t;
+typedef unsigned __int32 uint32_t;
+typedef signed __int64   int64_t;
+typedef unsigned __int64 uint64_t;
+
+#endif
+
 #if defined(WIN32) &&  HAVE_WINDOWS_H
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -120,8 +138,6 @@
 
 /* MinGW32 special defines */
 #ifdef MINGW32
-
-#include <stdint.h>
 
 #define DSOUND_SUPPORT 1
 #define WINMIDI_SUPPORT 1
@@ -169,16 +185,6 @@ typedef int fluid_socket_t;
      _type* _name = g_newa(_type, (_len))
 #endif
 
-
-/** Integer types  */
-//typedef gint8              sint8;
-typedef guint8             uint8;
-//typedef gint16             sint16;
-typedef guint16            uint16;
-typedef gint32             sint32;
-typedef guint32            uint32;
-//typedef gint64             sint64;
-//typedef guint64            uint64;
 
 /** Atomic types  */
 typedef int fluid_atomic_int_t;

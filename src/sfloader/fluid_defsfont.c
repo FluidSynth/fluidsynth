@@ -2031,14 +2031,14 @@ fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defs
 } while(0)
 
 #define READD(var,fd)		do {		\
-	uint32 _temp;				\
+	uint32_t _temp;				\
 	if (!safe_fread(&_temp, 4, fd))			\
 		return(FAIL);				\
 	var = FLUID_LE32TOH(_temp);			\
 } while(0)
 
 #define READW(var,fd)		do {		\
-	uint16 _temp;				\
+	uint16_t _temp;				\
 	if (!safe_fread(&_temp, 2, fd))			\
 		return(FAIL);				\
 	var = FLUID_LE16TOH(_temp);			\
