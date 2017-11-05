@@ -48,6 +48,7 @@ typedef struct {
   LPDIRECTSOUNDBUFFER sec_buffer;
   WAVEFORMATEX* format;
   HANDLE thread;
+  HWND hwnd; /* local window used by dsound */
   DWORD threadID;
   fluid_synth_t* synth;
   fluid_audio_callback_t write;
@@ -61,6 +62,44 @@ typedef struct {
   LPGUID devGUID;
   char* devname;
 } fluid_dsound_devsel_t;
+
+/***
+  Window creation functions needed for dsound.
+***/
+const char *fluid_window_class_name = "FluidSynth";
+
+/* window procedure */
+static long FAR PASCAL fluid_win32_wndproc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    return DefWindowProc(hWnd, message, wParam, lParam);
+}
+
+/* window creation 
+ * @return handle of window if success NULL otherwise
+*/
+HWND fluid_win32_create_window(void)
+{
+  HWND hwnd = NULL; /* handle to return */
+  WNDCLASS myClass;
+  /* register the window class */
+  myClass.hCursor = LoadCursor( NULL, IDC_ARROW );
+  myClass.hIcon = NULL;
+  myClass.lpszMenuName = (LPSTR) NULL;
+  myClass.lpszClassName = (LPSTR) fluid_window_class_name;
+  myClass.hbrBackground = (HBRUSH)(COLOR_WINDOW);
+  myClass.hInstance = fluid_get_hinstance();
+  myClass.style = CS_GLOBALCLASS;
+  myClass.lpfnWndProc = fluid_win32_wndproc;
+  myClass.cbClsExtra = 0;
+  myClass.cbWndExtra = 0;
+  if (RegisterClass(&myClass))
+  { /* now create the window */
+    hwnd = CreateWindow((LPSTR) fluid_window_class_name, (LPSTR) "FluidSynth", WS_OVERLAPPEDWINDOW,
+              CW_USEDEFAULT, CW_USEDEFAULT, 400, 300, (HWND) NULL, (HMENU) NULL,
+              fluid_get_hinstance(), (LPSTR) NULL);
+  }
+  return hwnd;
+}
 
 BOOL CALLBACK
 fluid_dsound_enum_callback(LPGUID guid, LPCTSTR description, LPCTSTR module, LPVOID context)
@@ -109,6 +148,7 @@ new_fluid_dsound_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
   double sample_rate;
   int periods, period_size;
   fluid_dsound_devsel_t devsel;
+  HWND hwnd; /* window handle needed for dsound */
 
   /* check if the globals are initialized */
   if (FLUID_HINSTANCE == NULL) {
@@ -116,14 +156,6 @@ new_fluid_dsound_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
     return NULL;
   }
 
-/*
-  if (fluid_wnd == NULL) {
-    if (fluid_win32_create_window() != 0) {
-      FLUID_LOG(FLUID_ERR, "Couldn't create window needed for DirectSound");
-      return NULL;
-    }
-  }
-*/
   /* create and clear the driver data */
   dev = FLUID_NEW(fluid_dsound_audio_driver_t);
   if (dev == NULL) {
@@ -131,6 +163,27 @@ new_fluid_dsound_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
     return NULL;
   }
   FLUID_MEMSET(dev, 0, sizeof(fluid_dsound_audio_driver_t));
+  /* Create a local window if the application window doesn't exist */
+  /* The window handle returned by fluid_win32_create_window()
+     is any window handle set by the application using fluid_win32_set_window()
+     function given for convenience (see fluid_dll.c) 
+	 
+     It isn't mandatory for an application to set a window handle
+     in this case dsound driver will create its own window.
+   */
+  hwnd = fluid_win32_get_window(); /* window application handle */
+  if (! hwnd)
+  {	/* the window application doesn't exist, dsound driver create a
+       local window   needed for dsound */
+     dev->hwnd = fluid_win32_create_window();
+     if (!dev->hwnd)
+     {
+         FLUID_LOG(FLUID_ERR, "Couldn't create window needed for DirectSound");
+         goto error_recovery;
+     }
+     /* dsound will use this local hwnd(see IDirectSound_SetCooperativeLevel() */
+     else hwnd = dev->hwnd; 
+  }
 
   dev->synth = synth;
   dev->cont = 1;
@@ -183,7 +236,7 @@ new_fluid_dsound_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
     goto error_recovery;
   }
 
-  hr = IDirectSound_SetCooperativeLevel(dev->direct_sound, fluid_win32_get_window(), DSSCL_PRIORITY);
+  hr = IDirectSound_SetCooperativeLevel(dev->direct_sound, hwnd, DSSCL_PRIORITY);
   if (hr != DS_OK) {
     FLUID_LOG(FLUID_ERR, "Failed to set the cooperative level");
     goto error_recovery;
@@ -306,10 +359,13 @@ int delete_fluid_dsound_audio_driver(fluid_audio_driver_t* d)
   if (dev->direct_sound != NULL) {
     IDirectSound_Release(dev->direct_sound);
   }
-
+  /* destroy local window if it exists */
+  if(dev->hwnd ) 
+  {
+	  DestroyWindow(dev->hwnd);
+	  UnregisterClass(fluid_window_class_name,fluid_get_hinstance());
+  }
   FLUID_FREE(dev);
-
-//  fluid_win32_destroy_window();
 
   return 0;
 }
