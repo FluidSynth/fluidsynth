@@ -31,7 +31,7 @@ extern void fluid_synth_release_voice_on_same_note_LOCAL(fluid_synth_t* synth,
 
 /* 
   prev_note is used to determine fromkey_portamento as well as 
-  fromkey_legato (see get_fromKey_portamento_legato()).
+  fromkey_legato (see get_fromkey_portamento_legato()).
 
   prev_note is updated on noteOn/noteOff mono by the legato detector as this:
   - On noteOn mono, before adding a new note into the monolist,the most
@@ -114,7 +114,7 @@ extern void fluid_synth_release_voice_on_same_note_LOCAL(fluid_synth_t* synth,
   (when enabled) is triggered at noteOn (like legato). Like in legato
   situation it is usual to have a portamento from a note 'fromkey' to another
   note 'tokey'. Portamento fromkey note choice is determined at noteOn by
-  get_fromKey_portamento_legato() (see below).
+  get_fromkey_portamento_legato() (see below).
 
 ******************************************************************************/
 
@@ -396,74 +396,74 @@ void fluid_channel_set_onenote_monolist(fluid_channel_t* chan, unsigned char key
 ******************************************************************************/
 
 /**
- * get_fromKey_portamento_legato returns two informations:
- *    - fromkey note for portamento
- *    - fromkey note for legato
+ * get_fromkey_portamento_legato returns two informations:
+ *    - fromkey note for portamento.
+ *    - fromkey note for legato.
  *                                                 +-----> fromkey_portamento
  *                                           ______|________    
- *                portamento modes >------->|  portamento   |   
- *                                          |enable/disable |   
+ *                portamento modes >------->|               |   
+ *                                          | get_fromkey   |   
  *  Porta.on/off >------------------------->|_______________|    
  *  (PTC)                                          |          
  *                                                 +-----> fromkey_legato
  *
  * The functions is intended to be call on noteOn mono
  * see fluid_synth_noteon_mono_staccato(), fluid_synth_noteon_mono_legato()
- *
- * 1)The function determines if a portamento must occur on next noteOn 
- * (PTC, or Portamento On).On portamento On, the function takes into account the
- * 'portamento mode'
- * 'fromkey portamento' which is the pitchstart key of a portamento is returned
- * in fluid_synth_t.fromkey_portamento to enable the portamento.
- *  -When CC PTC has been received its value supersedes the defaultFromkey and any
- *   Portamento pedal and portamento mode.
- *  -When CC PTC haven't received and Portamento is On ,'fromkey portamento' is
- *   the 'defaultFromkey' note if this parameter is valid, otherwise 
- *  'fromkey portamento' is determined from the portamento mode and the note prior
- *  the most  recent note played.
- *  Where portamento mode is: 
- *  - each note, the note prior the most recent note is any note played staccato
- *    or legato.
- *  - legato only, the note prior the most recent note is a note played legato
- *    with the next.Any staccato note and the first note of a legato passage will
- *	 be played without portamento.
- *
+ * -------
+ * 1)The function determines if a portamento must occur on next noteOn. 
+ * The value returned is 'fromkey portamento' which is the pitchstart key 
+ * of a portamento, as function of PTC, or (default_fromkey, prev_note) both
+ * if Portamento On. By order of precedence the result is:
+ *  1.1) PTC have precedence over Portamento On.
+ *       If CC PTC has been received, its value supersedes  and any
+ *       portamento pedal On, default_fromkey,prev_note or portamento mode.
+ *  1.2) Otherwise ,when Portamento On the function takes the following value:
+ *       - default_fromkey if valid have précedence over prev_note
+ *         (prev_note is the note prior the most recent note played).
+ *       Then portamento mode is applied to validate the value choosen.
+ *       Where portamento mode is: 
+ *       - each note, a portamento occurs on each note.
+ *       - legato only, portamento only on notes played legato. 
+ *       - staccato only, portamento only on notes played staccatoo. 
+ *  1.3) Otherwise, portamento is off,INVALID_NOTE is returned (portamento is disabled).
+ * ------
  * 2)The function determines if a legato playing must occurs on next noteOn.
- *  'fromkey legato note' is returned in the case of legato playing. 
- *	- When en CC PTC has been received its value supersedes the defaultFromkey
- *	  only if defaultFromkey is invalid.
- *  - When CC PTC haven't received, 'fromkey legato' is  'defaultFromkey'
- *	  if this parameter is valid, otherwise 'fromkey legato' is determined from
- *	  the mono/poly mode and the actual 'staccato/legato' playing state as this:
- *	   - in staccato (poly/Mono), fromkey legato is INVALID_NOTE.
- *	   - in mono mode legato playing, fromkey legato is the note prior the most
- *	     recent note played.
- *	   - in poly mode legato playing, actually we don't want playing legato. So
+ *  'fromkey legato note' is returned as a function of default_fromkey, PTC,
+ *   current mono/poly mode,actual 'staccato/legato' playing state and prev_note.
+ *   By order of precedence the result is:
+ *   2.1) If valid, default_fromkey have precedence over any other value.
+ *   2.1) Otherwise if CC PTC has been received its value is returned.
+ *   2.2) Otherwise fromkey legato is determined from the mono/poly mode,
+ *        the actual 'staccato/legato' playing state (LEGATO_PLAYING) and prev_note
+ *        as this:
+ *      - in staccato (poly/Mono), fromkey legato is INVALID_NOTE.
+ *	    - in poly mode legato playing, actually we don't want playing legato. So
  *        fromkey legato is INVALID_NOTE.
+ *      - in mono mode legato playing, fromkey legato is the note prior the most
+ *	     recent note played.
  *
  * On input
  * @param chan  fluid_channel_t.
  * @param defaultFromkey, the defaut 'fromkey portamento' note or 'fromkey legato'
  *       note (see description above).
- *
+ * 
  * @return
  *  1)'fromkey portamento' is returned in fluid_synth_t.fromkey_portamento.
- *  If valid,it means that portamento is enabled (by PTC receive or Portamento On).
- *  otherwise it means that portamento is disabled.
- *  During next voices staccato/legato starting process, if fromkey is valid the
- *  portamento will be started.
+ *  If valid,it means that portamento is enabled .
  *
- *  2) The 'fromkey legato' note is returned in the case of legato playing.
+ *  2) The 'fromkey legato' note is returned.
  *
+ * Notes about usage:
  * The function is intended to be called when the following event occurs:
  * - On noteOn (Poly or Mono) after insertion in the monophonic list.
- * - On noteOff(mono legato playing). In this case, defaultFromkey must be valid.
+ * - On noteOff(mono legato playing). In this case, default_fromkey must be valid.
  *
- * In poly, defaultFromkey must be INVALID_NOTE.
- * In mono staccato playing,defaultFromkey must be INVALID_NOTE. 
- * In mono when legato playing,defaultFromkey must be valid.
+ * Typical calling usage:
+ * - In poly, default_fromkey must be INVALID_NOTE. 
+ * - In mono staccato playing,default_fromkey must be INVALID_NOTE.
+ * - In mono when legato playing,default_fromkey must be valid.
  */
-static unsigned char get_fromKey_portamento_legato(fluid_channel_t* chan, 
+static unsigned char get_fromkey_portamento_legato(fluid_channel_t* chan, 
 								   unsigned char default_fromkey)
 {
 	unsigned char ptc =  portamentoCtrl(chan);
@@ -480,7 +480,7 @@ static unsigned char get_fromKey_portamento_legato(fluid_channel_t* chan,
 		if(fluid_channel_portamento(chan))
 		{	/* Portamento when Portamento pedal is On */
 			/* 'fromkey portamento'is determined from the portamento mode
-			 and the most recent note played */
+			 and the most recent note played (prev_note)*/
 			unsigned char portamentomode = chan->portamentomode;
 			if(is_valid_note(default_fromkey))
 			{	
@@ -537,7 +537,7 @@ static unsigned char get_fromKey_portamento_legato(fluid_channel_t* chan,
  * - On Portamento Off(in poly or mono mode), to mark the previous note invalid.
  * @param chan  fluid_channel_t.
  */
-void ValidInvalidPrevNoteStaccato(fluid_channel_t* chan)
+void invalid_prev_note_staccato(fluid_channel_t* chan)
 {
 	if(!(chan->mode  & LEGATO_PLAYING)) /* the monophonic list is empty */ 
 	if(! fluid_channel_portamento(chan))
@@ -568,19 +568,19 @@ void ValidInvalidPrevNoteStaccato(fluid_channel_t* chan)
  *  noteOn poly  >---*------------------*          |           |
  *                                      |          |           | 
  *                                      |    _____ |________   |
- *                portamento modes >--- | ->|  portamento   |  |
- *                                      |   |enable/disable |  |
+ *                portamento modes >--- | ->|               |  |
+ *                                      |   |  get-fromkey  |  |
  *  Porta.on/off >--------------------- | ->|_______________|  | 
  *  (PTC)                               |          |           |
  *                                      |  fromkey | fromkey   |
  *                                      |  legato  | portamento|
  *                                      |    _____\|/_______   |
- *                                      |   |   noteon      |--/
- *                                      *-->| mono_legato   |----> voices
- *                                      |   |_______________|      triggering
- *                                      |         /|\              (with or without)
- *                                      |          |               (portamento)
- *                legato modes >------  | ---------+         
+ *                                      *-->| noteon        |--/
+ *                                      |   | mono_legato   |----> voices
+ *                legato modes >------- | ->|_______________|      triggering
+ *                                      |                          (with or without)
+ *                                      |                          (portamento)
+ *                                      |                    
  *                                      |
  *  noteOff poly >---*----------------- | ---------+
  *                   |  clear           |          |
@@ -621,7 +621,9 @@ int fluid_synth_noteon_mono_legato(fluid_synth_t* synth, int chan,
  *                                     |   |   noteon      |
  *                                     +-->| mono_legato   |---> voices
  *                                         |_______________|     triggering
- *                                                 
+ * 
+ * The function uses the legato detector (see above) to determine if the note must
+ * be played stacatto or legato.
  *
  * @param synth instance.
  * @param chan MIDI channel number (0 to MIDI channel count - 1).
@@ -680,7 +682,9 @@ int fluid_synth_noteon_mono_LOCAL(fluid_synth_t* synth, int chan,
  *  LOCAL         |(remove_monolist)|   O-->|   noteoff     | 
  *                |_________________|       |   monopoly    |----> noteoff
  *                                          |_______________|
- *              									        
+ *
+ * The function uses the legato detector (see above) to determine if the noteoff must
+ * be played stacatto or legato.
  *
  * @param synth instance.
  * @param chan MIDI channel number (0 to MIDI channel count - 1).
@@ -750,12 +754,21 @@ int fluid_synth_noteoff_mono_LOCAL(fluid_synth_t* synth, int chan, int key)
  *                                               | portamento 
  *                                               |            
  *                                               |             
- *                                         _____ |________    
- *                portamento modes >----->|  portamento   |   
- *                                        |enable/disable |   
+ *                                         ______|________    
+ *                portamento modes >----->|               |   
+ *                                        |  get_fromkey  |   
  *  Porta.on/off >----------------------->|_______________|    
  *  Portamento                                                  
  *  (PTC)                                                        
+ *
+ * We are in staccato situation (where no previous note have been depressed).
+ * Before the note been passed to fluid_preset_noteon(), the function must detemine
+ * the from_key_portamento parameter used by fluid_preset_noteon().
+ * 
+ * from_key_portamento is returned by get_fromkey_portamento_legato() function.
+ * fromkey_portamento is set to valid/invalid  key value depending of the portamento
+ * modes (see portamento mode API) , CC portamento On/Off , and CC portamento control
+ * (PTC).
  *
  * @param synth instance.
  * @param chan MIDI channel number (0 to MIDI channel count - 1).
@@ -773,7 +786,7 @@ fluid_synth_noteon_mono_staccato(fluid_synth_t* synth,int chan,int key,int vel)
 	fluid_synth_release_voice_on_same_note_LOCAL(synth,chan,
 												channel->key_sustained);
 	/* Get possible 'fromkey portamento'   */
-	get_fromKey_portamento_legato( channel, INVALID_NOTE);
+	get_fromkey_portamento_legato( channel, INVALID_NOTE);
 	/* The note needs to be played by voices allocation  */
 	return fluid_preset_noteon(channel->preset, synth, chan, key, vel);
 }
@@ -793,6 +806,14 @@ fluid_synth_noteon_mono_staccato(fluid_synth_t* synth,int chan,int key,int vel)
  *  Sust.on/off  >------------------------->|_______________|
  *  Sost.on/off										        
  *
+ * The function has the same behavior when the noteoff is poly of mono, except
+ * that for mono noteoff, if any pedal (sustain or sostenuto ) is depressed, the
+ * key is memorized. This is neccessary when the next mono note will be played
+ * staccato, as any current mono note currently sustained will need to be released 
+ * (see fluid_synth_noteon_mono_staccato()).
+ * Note also that for a monophonic legato passage, the function is called only when
+ * the last noteoff of the passage occurs. That means that if sustain or sostenuto
+ * is depressed, only the last note of a legato passage will be sustained.
  *
  * @param synth instance.
  * @param chan MIDI channel number (0 to MIDI channel count - 1).
@@ -801,10 +822,8 @@ fluid_synth_noteon_mono_staccato(fluid_synth_t* synth,int chan,int key,int vel)
  *              0 noteoff on polyphonic note.
  * @return FLUID_OK on success, FLUID_FAILED otherwise.
  *
- * Note: On return, on monophonic, sustained note  needs to be remembered
- * in key_sustained.
- * On next noteon for a monophonic note if a previous monophonic note is sustained
- * it will be released. Remembering is done here on noteOff.
+ * Note: On return, on monophonic, possible sustained note is memorized in
+ * key_sustained. Memorization is done here on noteOff.
  */
 int fluid_synth_noteoff_monopoly(fluid_synth_t* synth, int chan, int key,
                             char Mono)
@@ -857,8 +876,8 @@ int fluid_synth_noteoff_monopoly(fluid_synth_t* synth, int chan, int key,
  *
  *                                                              
  *                                         _______________    
- *                portamento modes >----->|  portamento   |   
- *                                        |enable/disable |  
+ *                portamento modes >----->|               |   
+ *                                        | get_fromkey   |
  *  Porta.on/off >----------------------->|_______________|   
  *  Portamento                                   |           
  *  (PTC)                                        |           +-->preset_noteon
@@ -871,7 +890,18 @@ int fluid_synth_noteoff_monopoly(fluid_synth_t* synth, int chan, int key,
  *                                              /|\              (with or without)
  *                                               |               (portamento)
  *                legato modes >-----------------+         
- *                                      
+ *
+ * We are in legato situation (where a previous note have been depressed).
+ * The function must detemine 
+ * the from_key_portamento and from_key_legato parameters used by 
+ * fluid_preset_noteon() function or the voice trigering functions.
+ *
+ * from_key_portamento is returned by get_fromkey_portamento_legato() function.
+ * fromkey_portamento is set to valid/invalid  key value depending of the portamento
+ * modes (see portamento mode API) , CC portamento On/Off , and CC portamento control
+ * (PTC).
+ * Then depending of the legato modes (see legato mode API), the function will call
+ * the appropriate triggering functions: 
  * @param synth instance.
  * @param chan MIDI channel number (0 to MIDI channel count - 1).
  * @param fromkey MIDI note number (0-127).
@@ -894,7 +924,7 @@ int fluid_synth_noteon_mono_legato(fluid_synth_t* synth, int chan,
 	fluid_voice_t* voice;
 	int i ;
 	/* Gets possible 'fromkey portamento' and possible 'fromkey legato' note  */
-	fromkey = get_fromKey_portamento_legato( channel, (unsigned char)fromkey);
+	fromkey = get_fromkey_portamento_legato( channel, (unsigned char)fromkey);
 
 	if (is_valid_note(fromkey)) for (i = 0; i < synth->polyphony; i++) 
 	{
@@ -959,7 +989,7 @@ int fluid_synth_noteon_mono_legato(fluid_synth_t* synth, int chan,
  * @param chan  fluid_channel_t.
  * @param value, value of the CC legato..
  */
-void LegatoOnOff(fluid_channel_t* chan, int value)
+void legato_on_off(fluid_channel_t* chan, int value)
 {
 	/* Special handling of the monophonic list  */
 	if (!(chan->mode & MONO) && chan->nNotes) /* The monophonic list have notes */
@@ -986,7 +1016,7 @@ void LegatoOnOff(fluid_channel_t* chan, int value)
  * @param chan  fluid_channel_t.
  * @param value, value of the CC Breath..
  */
-void BreathOnOff(fluid_channel_t* chan, int value)
+void breath_note_on_off(fluid_channel_t* chan, int value)
 {	
 	if ((chan->mode &  BREATH_SYNC)  && is_fluid_channel_playing_mono(chan) &&
 		(chan->n_notes))
