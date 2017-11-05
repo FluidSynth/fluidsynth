@@ -1834,7 +1834,7 @@ fluid_synth_update_channel_pressure_LOCAL(fluid_synth_t* synth, int chan)
  * @param key MIDI key number (0-127)
  * @param val MIDI key pressure value (0-127)
  * @return FLUID_OK on success, FLUID_FAILED otherwise
- * @since @NEXT_RELEASE@
+ * @since 2.0.0
  */
 int
 fluid_synth_key_pressure(fluid_synth_t* synth, int chan, int key, int val)
@@ -4974,7 +4974,7 @@ fluid_synth_get_settings(fluid_synth_t* synth)
  *   TRUE to take the value as a 0.0-1.0 range and apply it to the valid
  *   generator effect range (scaled and shifted as necessary).
  * @return FLUID_OK on success, FLUID_FAILED otherwise
- * @since @NEXT_RELEASE@
+ * @since 2.0.0
  *
  * This function allows for setting all effect parameters in real time on a
  * MIDI channel.  Setting absolute to non-zero will cause the value to override
