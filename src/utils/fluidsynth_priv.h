@@ -137,6 +137,7 @@ typedef gint16   int16_t;
 typedef guint16  uint16_t;
 typedef gint32   int32_t;
 typedef guint32  uint32_t;
+typedef gint64   int64_t;
 typedef guint64  uint64_t;
 
 #endif
