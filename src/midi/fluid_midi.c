@@ -1636,6 +1636,10 @@ fluid_player_callback(void *data, unsigned int msec)
                 + (int) ((double) (player->cur_msec - player->start_msec)
                         / player->deltatime + 0.5)); /* 0.5 to average overall error when casting */
 
+        if (player->seek_ticks >= 0) {
+            fluid_synth_all_sounds_off(synth, -1); /* avoid hanging notes */
+        }
+
         for (i = 0; i < player->ntracks; i++) {
             if (!fluid_track_eot(player->track[i])) {
                 status = FLUID_PLAYER_PLAYING;
