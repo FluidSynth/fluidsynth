@@ -33,14 +33,14 @@
    - Size above 1 allows playing legato at noteOff resulting in
      playing fast trills (see fluid_synth_mono.c). 
 	 Choosing a size of 10 is sufficient (because most musician have
-	 only 10 fingers when playing o monophonic instrument).
+	 only 10 fingers when playing a monophonic instrument).
 
 */
 #define SIZE_MONOLIST  10 
 
 /* 
 
-            The monopholist list
+            The monophonic list
    +------------------------------------------------+
    | +--------------------------------------------+ |
    | |  +----+   +----+          +----+   +----+  | |
