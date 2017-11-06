@@ -44,14 +44,14 @@ extern void fluid_synth_release_voice_on_same_note_LOCAL(fluid_synth_t* synth,
 /* 
   LEGATO_PLAYING bit of channel mode keeps trace of the legato /staccato 
   state playing.
+  LEGATO_PLAYING bit is updated on noteOn/noteOff mono by the legato detector:
+  - On noteOn, before inserting a new note into the monolist.
+  - On noteOff, after removing a note out of the monolist.
+
   - On noteOn, this state is used by fluid_synth_noteon_mono_LOCAL()
   to play the current  note legato or staccato.
   - On noteOff, this state is used by fluid_synth_noteoff_mono_LOCAL()
   to play the current noteOff legato with the most recent note.
- 
-  LEGATO_PLAYING bit is updated on noteOn/noteOff mono by the legato detector:
-  - On noteOn, before inserting a new note into the monolist.
-  - On noteOff, after removing a note out of the monolist.
 */
 /* b7, 1: means legato playing , 0: means staccato playing */
 #define LEGATO_PLAYING  0x80 
@@ -66,7 +66,7 @@ extern void fluid_synth_release_voice_on_same_note_LOCAL(fluid_synth_t* synth,
     into the list.
   - fluid_channel_remove_monolist(), for removing a note out of the list.
 
-            The monopholist list
+            The monophonic list
    +------------------------------------------------+
    | +--------------------------------------------+ |
    | |  +----+   +----+          +----+   +----+  | |
@@ -80,7 +80,7 @@ extern void fluid_synth_release_voice_on_same_note_LOCAL(fluid_synth_t* synth,
   The list allows an easy automatic detection of a legato passage when it is
   played on a MIDI keyboard input device.
   It is useful also when the input device is an ewi (electronic wind instrument)
-  or evi (electronic valve instrument) and these instruments ar unable to send
+  or evi (electronic valve instrument) and these instruments are unable to send
   MIDI CC legato on/off.
   
   The list remembers the notes in playing order. 
@@ -124,7 +124,7 @@ extern void fluid_synth_release_voice_on_same_note_LOCAL(fluid_synth_t* synth,
  * detector. fluid_channel_add_monolist() is intended to be called by
  * fluid_synth_noteon_mono_LOCAL().
  *
- *            The monopholist list
+ *            The monophonic list
  *  +------------------------------------------------+
  *  | +--------------------------------------------+ |
  *  | |  +----+   +----+          +----+   +----+  | |
@@ -188,7 +188,7 @@ fluid_channel_add_monolist(fluid_channel_t* chan, unsigned char key,
  *
  * The search start from the first note in the list indexed by i_first
  *
- *                The monopholist list
+ *                The monophonic list
  *  +------------------------------------------------+
  *  | +--------------------------------------------+ |
  *  | |  +----+   +----+          +----+   +----+  | |
@@ -231,7 +231,7 @@ fluid_channel_search_monolist(fluid_channel_t* chan, unsigned char key)
  * fluid_channel_remove_monolist() is intended to be called by 
  * fluid_synth_noteoff_mono_LOCAL().
  *
- *            The monopholist list
+ *            The monophonic list
  *  +------------------------------------------------+
  *  | +--------------------------------------------+ |
  *  | |  +----+   +----+          +----+   +----+  | |
@@ -258,7 +258,7 @@ fluid_channel_search_monolist(fluid_channel_t* chan, unsigned char key)
  * Note: the following variables in Channel keeps trace of the situation.
  *       - i_last index keeps a trace of the most recent note played even if
  *       the list is empty.
- *       - prev_note keeps a trace of the note removed.
+ *       - prev_note keeps a trace of the note removed if it is i_last.
  *       - LEGATO_PLAYING bit keeps a trace of legato/staccato playing state.
  */
 static unsigned char
@@ -322,7 +322,8 @@ fluid_channel_remove_monolist(fluid_channel_t* chan, short i)
 
 /**
  * On noteOff on a polyphonic channel,the monophonic list is fully flushed.
- *            The monopholist list
+ *
+ *            The monophonic list
  *  +------------------------------------------------+
  *  | +--------------------------------------------+ |
  *  | |  +----+   +----+          +----+   +----+  | |
@@ -332,6 +333,7 @@ fluid_channel_remove_monolist(fluid_channel_t* chan, short i)
  *        /|\                      /|\
  *         |                        |
  *      i_first                   i_last
+ *
  * @param chan  fluid_channel_t.
  * Note: i_last index keeps a trace of the most recent note played even if
  *       the list is empty.
@@ -354,7 +356,8 @@ void fluid_channel_clear_monolist(fluid_channel_t* chan)
  * The monophonic list is flushed keeping last note only.
  * The function is entended to be called on legato Off when the
  * monolist have notes.
- *            The monopholist list
+ *
+ *            The monophonic list
  *  +------------------------------------------------+
  *  | +--------------------------------------------+ |
  *  | |  +----+   +----+          +----+   +----+  | |
@@ -364,6 +367,7 @@ void fluid_channel_clear_monolist(fluid_channel_t* chan)
  *        /|\                      /|\
  *         |                        |
  *      i_first                   i_last
+ *
  * @param chan  fluid_channel_t.
  * Note: i_last index keeps a trace of the most recent note played.
  *       prev_note keeps a trace of the note .
@@ -412,10 +416,10 @@ void fluid_channel_set_onenote_monolist(fluid_channel_t* chan, unsigned char key
  * -------
  * 1)The function determines if a portamento must occur on next noteOn. 
  * The value returned is 'fromkey portamento' which is the pitchstart key 
- * of a portamento, as function of PTC, or (default_fromkey, prev_note) both
+ * of a portamento, as function of PTC or (default_fromkey, prev_note) both
  * if Portamento On. By order of precedence the result is:
  *  1.1) PTC have precedence over Portamento On.
- *       If CC PTC has been received, its value supersedes  and any
+ *       If CC PTC has been received, its value supersedes and any
  *       portamento pedal On, default_fromkey,prev_note or portamento mode.
  *  1.2) Otherwise ,when Portamento On the function takes the following value:
  *       - default_fromkey if valid 
@@ -428,19 +432,19 @@ void fluid_channel_set_onenote_monolist(fluid_channel_t* chan, unsigned char key
  *       - staccato only, portamento only on notes played staccato. 
  *  1.3) Otherwise, portamento is off,INVALID_NOTE is returned (portamento is disabled).
  * ------
- * 2)The function determines if a legato playing must occurs on next noteOn.
+ * 2)The function determines if a legato playing must occur on next noteOn.
  *  'fromkey legato note' is returned as a function of default_fromkey, PTC,
  *   current mono/poly mode,actual 'staccato/legato' playing state and prev_note.
  *   By order of precedence the result is:
  *   2.1) If valid, default_fromkey have precedence over any other value.
- *   2.1) Otherwise if CC PTC has been received its value is returned.
- *   2.2) Otherwise fromkey legato is determined from the mono/poly mode,
+ *   2.2) Otherwise if CC PTC has been received its value is returned.
+ *   2.3) Otherwise fromkey legato is determined from the mono/poly mode,
  *        the actual 'staccato/legato' playing state (LEGATO_PLAYING) and prev_note
  *        as this:
  *        - in (poly/Mono) staccato , INVALID_NOTE is returned.
  *        - in poly  legato , actually we don't want playing legato. So
  *          INVALID_NOTE is returned.
- *        - in mono legato , prev_note  is returned.
+ *        - in mono legato , prev_note is returned.
  *
  * On input
  * @param chan  fluid_channel_t.
@@ -461,7 +465,7 @@ void fluid_channel_set_onenote_monolist(fluid_channel_t* chan, unsigned char key
  * Typical calling usage:
  * - In poly, default_fromkey must be INVALID_NOTE. 
  * - In mono staccato playing,default_fromkey must be INVALID_NOTE.
- * - In mono when legato playing,default_fromkey must be valid.
+ * - In mono legato playing,default_fromkey must be valid.
  */
 static unsigned char get_fromkey_portamento_legato(fluid_channel_t* chan, 
 								   unsigned char default_fromkey)
@@ -529,19 +533,19 @@ static unsigned char get_fromkey_portamento_legato(fluid_channel_t* chan,
  * noteOn a portamento will be started from the most recent note played 
  * staccato fluid_channel_last_note.
  * It will be possible that it isn't appropriate. To give the musician the 
- * possibility to choose this note , the note will be marked valid on noteOff
- * if portamento pedal is On, otherwise the note  will be marked invalid.
+ * possibility to choose this note , prev_note will be marked invalid on noteOff
+ * if portamento pedal is Off.
  *
  * The function is intended to be called when the following event occurs:
- * - On noteOff (in poly or mono mode), to mark previous note valid/invalid.
- * - On Portamento Off(in poly or mono mode), to mark the previous note invalid.
+ * - On noteOff (in poly or mono mode), to mark prev_note invalid.
+ * - On Portamento Off(in poly or mono mode), to mark prev_note invalid.
  * @param chan  fluid_channel_t.
  */
 void invalid_prev_note_staccato(fluid_channel_t* chan)
 {
 	if(!(chan->mode  & LEGATO_PLAYING)) /* the monophonic list is empty */ 
 	if(! fluid_channel_portamento(chan))
-	{
+	{	/* mark prev_note invalid */
 		fluid_channel_clear_prev_note(chan);
 	}
 	/* else prev_note still remains valid for next fromkey portamento */
@@ -558,6 +562,7 @@ void invalid_prev_note_staccato(fluid_channel_t* chan)
  *  polyphonic mode and legato pedal is On during the playing.
  *  When a channel is in "monophonic playing" state, only one note at a time can be
  *  played in a staccato or legato manner (with or without portamento).
+ *  See FluidPolyMono-0003.pdf chapter 4 (Appendices).
  *                                           _______________                                     
  *                 ________________         |    noteon     |
  *                | legato detector|    O-->| mono_staccato |--*-> preset_noteon
@@ -601,7 +606,7 @@ int fluid_synth_noteon_mono_legato(fluid_synth_t* synth, int chan,
 							   int fromkey, int tokey, int vel);
 
 /**
- * Plays a note-on event for a Synth instance in "monophonic playing" state.
+ * Plays a noteon event for a Synth instance in "monophonic playing" state.
  * Please see the description above about "monophonic playing".
  *                                          _______________                                     
  *                ________________         |    noteon     |
@@ -659,7 +664,7 @@ int fluid_synth_noteon_mono_LOCAL(fluid_synth_t* synth, int chan,
 }
 
 /**
- * Plays a note-off event for a Synth instance in "monophonic playing" state.
+ * Plays a noteoff event for a Synth instance in "monophonic playing" state.
  * Please see the description above about "monophonic playing"
  *
  *                                           _______________    
@@ -741,7 +746,7 @@ int fluid_synth_noteoff_mono_LOCAL(fluid_synth_t* synth, int chan, int key)
  staccato playing
 -----------------------------------------------------------------------------*/
 /**
- * Plays note-on for a monophonic note in staccato manner.
+ * Plays noteon for a monophonic note in staccato manner.
  * Please see the description above about "monophonic playing".
  *                                         _______________                                     
  *                                        |    noteon     |
@@ -893,7 +898,8 @@ int fluid_synth_noteoff_monopoly(fluid_synth_t* synth, int chan, int key,
  * The function must determine the from_key_portamento and from_key_legato parameters
  * used by fluid_preset_noteon() function or the voices triggering functions.
  *
- * from_key_portamento is returned by get_fromkey_portamento_legato() function.
+ * from_key_portamento and from_key_legato are returned by 
+ * get_fromkey_portamento_legato() function.
  * fromkey_portamento is set to valid/invalid  key value depending of the portamento
  * modes (see portamento mode API) , CC portamento On/Off , and CC portamento control
  * (PTC).
@@ -1008,8 +1014,8 @@ void legato_on_off(fluid_channel_t* chan, int value)
 /**
  * The function handles CC Breath On/Off detection. When a channel is in 
  * Breath Sync mode and in monophonic playing, the breath controller allows
- * to tigger noteOn/noteOff note when the musician start to breath (noteOn) and
- * stop to breath.
+ * to tigger noteon/noteoff note when the musician starts to breath (noteon) and
+ * stops to breath (noteoff).
  * @param chan  fluid_channel_t.
  * @param value, value of the CC Breath..
  */
