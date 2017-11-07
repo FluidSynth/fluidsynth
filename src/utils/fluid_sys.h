@@ -273,7 +273,7 @@ typedef GStaticPrivate fluid_private_t;
 static FLUID_INLINE void
 fluid_atomic_float_set(volatile float *fptr, float val)
 {
-  sint32 ival;
+  int32_t ival;
   memcpy (&ival, &val, 4);
   fluid_atomic_int_set ((volatile int *)fptr, ival);
 }
@@ -281,7 +281,7 @@ fluid_atomic_float_set(volatile float *fptr, float val)
 static FLUID_INLINE float
 fluid_atomic_float_get(volatile float *fptr)
 {
-  sint32 ival;
+  int32_t ival;
   float fval;
   ival = fluid_atomic_int_get ((volatile int *)fptr);
   memcpy (&fval, &ival, 4);

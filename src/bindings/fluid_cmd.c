@@ -345,7 +345,7 @@ fluid_shell_run(void* data)
       break;
 
     case FLUID_FAILED: /* erronous command */
-      errors |= TRUE;
+      errors = TRUE;
     case FLUID_OK: /* valid command */
       break;
 
