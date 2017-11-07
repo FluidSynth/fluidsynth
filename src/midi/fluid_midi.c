@@ -1743,7 +1743,7 @@ fluid_player_get_status(fluid_player_t *player)
  * @param ticks the position to seek to in the current file
  * @return #FLUID_FAILED if ticks is negative or after the latest tick of the file,
  *   #FLUID_OK otherwise
- * @since 1.1.9
+ * @since 2.0.0
  * 
  * The actual seek is performed during the player_callback.
  */
