@@ -1202,6 +1202,13 @@ fluid_track_send_events(fluid_track_t *track,
 {
     int status = FLUID_OK;
     fluid_midi_event_t *event;
+    int seeking = player->seek_ticks >= 0;
+
+    if (seeking) {
+        ticks = player->seek_ticks; /* update target ticks */
+        if (track->ticks > ticks)
+            fluid_track_reset (track); /* reset track if seeking backwards */
+    }
 
     while (1) {
 
@@ -1227,6 +1234,9 @@ fluid_track_send_events(fluid_track_t *track,
         }
         else if (event->type == MIDI_SET_TEMPO) {
             fluid_player_set_midi_tempo(player, event->param1);
+        }
+        else if (seeking && (event->type == NOTE_ON || event->type == NOTE_OFF)) {
+            /* skip on/off messages */
         }
         else {
             if (player->playback_callback)
@@ -1276,6 +1286,7 @@ new_fluid_player(fluid_synth_t *synth)
     player->deltatime = 4.0;
     player->cur_msec = 0;
     player->cur_ticks = 0;
+    player->seek_ticks = -1;    
     fluid_player_set_playback_callback(player, fluid_synth_handle_midi_event, synth);
 
     player->use_system_timer = fluid_settings_str_equal(synth->settings,
@@ -1596,7 +1607,6 @@ fluid_player_playlist_load(fluid_player_t *player, unsigned int msec)
     }
 }
 
-
 /*
  * fluid_player_callback
  */
@@ -1626,6 +1636,10 @@ fluid_player_callback(void *data, unsigned int msec)
                 + (int) ((double) (player->cur_msec - player->start_msec)
                         / player->deltatime + 0.5)); /* 0.5 to average overall error when casting */
 
+        if (player->seek_ticks >= 0) {
+            fluid_synth_all_sounds_off(synth, -1); /* avoid hanging notes */
+        }
+
         for (i = 0; i < player->ntracks; i++) {
             if (!fluid_track_eot(player->track[i])) {
                 status = FLUID_PLAYER_PLAYING;
@@ -1634,6 +1648,14 @@ fluid_player_callback(void *data, unsigned int msec)
                     /* */
                 }
             }
+        }
+
+        if (player->seek_ticks >= 0) {
+            player->start_ticks = player->seek_ticks;   /* tick position of last tempo value (which is now) */
+            player->cur_ticks = player->seek_ticks;
+            player->begin_msec = msec;      /* only used to calculate the duration of playing */
+            player->start_msec = msec;      /* should be the (synth)-time of the last tempo change */        
+            player->seek_ticks = -1;        /* clear seek_ticks */
         }
 
         if (status == FLUID_PLAYER_DONE) {
@@ -1714,6 +1736,26 @@ fluid_player_get_status(fluid_player_t *player)
 {
     return player->status;
 }
+
+/**
+ * Seek in the currently playing file.
+ * @param player MIDI player instance
+ * @param ticks the position to seek to in the current file
+ * @return #FLUID_FAILED if ticks is negative or after the latest tick of the file,
+ *   #FLUID_OK otherwise
+ * @since 2.0.0
+ * 
+ * The actual seek is performed during the player_callback.
+ */
+int fluid_player_seek(fluid_player_t *player, int ticks)
+{
+    if (ticks < 0 || ticks > fluid_player_get_total_ticks(player)) {
+        return FLUID_FAILED;
+    }
+    player->seek_ticks = ticks;
+    return FLUID_OK;
+}
+
 
 /**
  * Enable looping of a MIDI player 
