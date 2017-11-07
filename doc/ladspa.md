@@ -266,8 +266,8 @@ Create a new audio buffer called `<buffer-name>`. The buffer is able to be used 
 mono output or mono input to an effect. Buffers can be used to connect plugins
 between each other without overwriting the host ports with temporary data.
 
-Please note that there is not command to delete a buffer. To remove buffers,
-please use `ladspa_reset` to clear everything start from scratch.
+Please note that there is no command to delete a buffer. To remove buffers,
+please use `ladspa_reset` to clear everything and start from scratch.
 
 Can only be used when the effect unit is not active.
 
@@ -281,8 +281,8 @@ Connects an effect input or output port with a buffer or a host port. This
 command can be called multiple times and will overwrite the previous connection
 made on that effect port.
 
-Please note that there is not command to unlink an effect port. Use
-`ladspa_reset` to clear everything start from scratch.
+Please note that there is no command to unlink an effect port. Use
+`ladspa_reset` to clear everything and start from scratch.
 
 Can only be used when the effect unit is not active.
 
@@ -401,11 +401,9 @@ ladspa_link e1 "Output Right" Main:R
 ladspa_start
 ```
 
-And start FluidSynth with the internal reverb disabled:
-```
-```
-(You will need to replace the `test.mid` with your own MIDI file and maybe
-change the paths to the effects.txt file and the SoundFont)
+And start FluidSynth with the internal reverb disabled. (You will need to
+replace the `test.mid` with your own MIDI file and maybe change the paths to
+the effects.txt file and the SoundFont)
 
 ```
 user@host:$ fluidsynth -a alsa -R0 -o synth.ladspa.active=1 -f effects.txt FluidR3_GM.sf2 test.mid
