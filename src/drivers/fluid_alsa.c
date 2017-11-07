@@ -133,6 +133,8 @@ typedef struct {
   fluid_thread_t *thread;
   fluid_atomic_int_t should_quit;
   int port_count;
+  int autoconn_inputs;
+  snd_seq_addr_t autoconn_dest;
 } fluid_alsa_seq_driver_t;
 
 fluid_midi_driver_t* new_fluid_alsa_seq_driver(fluid_settings_t* settings,
@@ -757,47 +759,75 @@ static char* fluid_alsa_seq_full_name(char* id, int port, char* buf, int len)
   return buf;
 }
 
-// Connect available ALSA MIDI inputs to port_info
-static void fluid_alsa_seq_autoconnect(fluid_alsa_seq_driver_t* dev, const snd_seq_port_info_t *port_info)
+// Connect a single port_info to autoconnect_dest if it has right type/capabilities
+static void fluid_alsa_seq_autoconnect_port_info(fluid_alsa_seq_driver_t* dev, snd_seq_port_info_t *pinfo)
 {
-  snd_seq_t *seq = dev->seq_handle;
   snd_seq_port_subscribe_t *subs;
+  snd_seq_t *seq = dev->seq_handle;
+  const unsigned int needed_type = SND_SEQ_PORT_TYPE_MIDI_GENERIC;
+  const unsigned int needed_cap = SND_SEQ_PORT_CAP_READ|SND_SEQ_PORT_CAP_SUBS_READ;
+  const snd_seq_addr_t *sender = snd_seq_port_info_get_addr(pinfo);
+  const char *pname = snd_seq_port_info_get_name(pinfo);
+  if ((snd_seq_port_info_get_type(pinfo) & needed_type) != needed_type)
+    return;
+  if ((snd_seq_port_info_get_capability(pinfo) & needed_cap) != needed_cap)
+    return;
+  snd_seq_port_subscribe_alloca(&subs);
+  snd_seq_port_subscribe_set_sender(subs, sender);
+  snd_seq_port_subscribe_set_dest(subs, &dev->autoconn_dest);
+
+  if (snd_seq_get_port_subscription(seq, subs) == 0) {
+    FLUID_LOG(FLUID_WARN, "Connection %s is already subscribed", pname);
+    return;
+  }
+  if (snd_seq_subscribe_port(seq, subs) < 0) {
+    FLUID_LOG(FLUID_ERR, "Connection of %s failed (%s)", pname, snd_strerror(errno));
+    return;
+  }
+  FLUID_LOG(FLUID_INFO, "Connection of %s succeeded", pname);
+}
+
+// Autoconnect a single client port (by id) to autoconnect_dest if it has right type/capabilities
+static void fluid_alsa_seq_autoconnect_port(fluid_alsa_seq_driver_t* dev, int client_id, int port_id)
+{
+  int err;
+  snd_seq_t *seq = dev->seq_handle;
+  snd_seq_port_info_t *pinfo;
+
+  snd_seq_port_info_alloca(&pinfo);
+
+  if ((err = snd_seq_get_any_port_info(seq, client_id, port_id, pinfo)) < 0) {
+    FLUID_LOG(FLUID_ERR, "snd_seq_get_any_port_info() failed: %s", snd_strerror(err));
+    return;
+  }
+  fluid_alsa_seq_autoconnect_port_info(dev, pinfo);
+}
+
+// Connect available ALSA MIDI inputs to the provided port_info
+static void fluid_alsa_seq_autoconnect(fluid_alsa_seq_driver_t* dev, const snd_seq_port_info_t *dest_pinfo)
+{
+  int err;
+  snd_seq_t *seq = dev->seq_handle;
   snd_seq_client_info_t *cinfo;
   snd_seq_port_info_t *pinfo;
 
-  snd_seq_port_subscribe_alloca(&subs);
+  // subscribe to future new clients/ports showing up
+  if ((err = snd_seq_connect_from(seq, snd_seq_port_info_get_port(dest_pinfo),
+	  SND_SEQ_CLIENT_SYSTEM, SND_SEQ_PORT_SYSTEM_ANNOUNCE)) < 0) {
+    FLUID_LOG(FLUID_ERR, "snd_seq_connect_from() failed: %s", snd_strerror(err));
+  }
+
   snd_seq_client_info_alloca(&cinfo);
   snd_seq_port_info_alloca(&pinfo);
 
+  dev->autoconn_dest = *snd_seq_port_info_get_addr(dest_pinfo);
+
   snd_seq_client_info_set_client(cinfo, -1);
   while (snd_seq_query_next_client(seq, cinfo) >= 0) {
-    const snd_seq_addr_t *dest = snd_seq_port_info_get_addr(port_info);
-
     snd_seq_port_info_set_client(pinfo, snd_seq_client_info_get_client(cinfo));
     snd_seq_port_info_set_port(pinfo, -1);
     while (snd_seq_query_next_port(seq, pinfo) >= 0) {
-      const unsigned int needed_type = SND_SEQ_PORT_TYPE_MIDI_GENERIC;
-      const unsigned int needed_cap = SND_SEQ_PORT_CAP_READ|SND_SEQ_PORT_CAP_SUBS_READ;
-      const snd_seq_addr_t *sender = snd_seq_port_info_get_addr(pinfo);
-      const char *pname = snd_seq_port_info_get_name(pinfo);
-      
-      if ((snd_seq_port_info_get_type(pinfo) & needed_type) != needed_type)
-	continue;
-      if ((snd_seq_port_info_get_capability(pinfo) & needed_cap) != needed_cap)
-	continue;
-
-      snd_seq_port_subscribe_set_sender(subs, sender);
-      snd_seq_port_subscribe_set_dest(subs, dest);
-
-      if (snd_seq_get_port_subscription(seq, subs) == 0) {
-	FLUID_LOG(FLUID_WARN, "Connection %s is already subscribed\n", pname);
-	continue;
-      }
-      if (snd_seq_subscribe_port(seq, subs) < 0) {
-	FLUID_LOG(FLUID_ERR, "Connection of %s failed (%s)\n", pname, snd_strerror(errno));
-	continue;
-      }
-      FLUID_LOG(FLUID_INFO, "Connection of %s succeeded\n", pname);
+      fluid_alsa_seq_autoconnect_port_info(dev, pinfo);
     }
   }
 }
@@ -810,7 +840,6 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
 			 handle_midi_event_func_t handler, void* data)
 {
   int i, err;
-  int autoconn_inputs = 0;
   fluid_alsa_seq_driver_t* dev;
   int realtime_prio = 0;
   int count;
@@ -940,8 +969,8 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
     }
   }
 
-  fluid_settings_getint(settings, "midi.autoconnect", &autoconn_inputs);
-  if (autoconn_inputs)
+  fluid_settings_getint(settings, "midi.autoconnect", &dev->autoconn_inputs);
+  if (dev->autoconn_inputs)
     fluid_alsa_seq_autoconnect(dev, port_info);
 
   /* tell the lash server our client id */
@@ -1090,6 +1119,12 @@ fluid_alsa_seq_run(void* d)
 
 	      fluid_midi_event_set_sysex (&evt, (char *)(seq_ev->data.ext.ptr) + 1,
 					  seq_ev->data.ext.len - 2, FALSE);
+	      break;
+	    case SND_SEQ_EVENT_PORT_START: {
+	      if (dev->autoconn_inputs) {
+		fluid_alsa_seq_autoconnect_port(dev, seq_ev->data.addr.client, seq_ev->data.addr.port);
+	      }
+	    }
 	      break;
 	    default:
 	      continue;		/* unhandled event, next loop iteration */
