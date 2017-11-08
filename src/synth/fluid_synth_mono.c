@@ -115,7 +115,8 @@ extern void fluid_synth_release_voice_on_same_note_LOCAL(fluid_synth_t* synth,
   situation it is usual to have a portamento from a note 'fromkey' to another
   note 'tokey'. Portamento fromkey note choice is determined at noteOn by
   get_fromkey_portamento_legato() (see below).
-
+  
+  More informations in FluidPolyMono-0003.pdf chapter 4 (Appendices).
 ******************************************************************************/
 
 
@@ -148,7 +149,9 @@ extern void fluid_synth_release_voice_on_same_note_LOCAL(fluid_synth_t* synth,
  * Note: i_last index keeps a trace of the most recent note added.
  *       prev_note keeps a trace of the note prior i_last note.
  *       LEGATO_PLAYING bit keeps trace of legato/staccato playing state.
- */
+ * 
+ * More informations in FluidPolyMono-0003.pdf chapter 4 (Appendices).
+*/
 
 
 static void
@@ -260,6 +263,8 @@ fluid_channel_search_monolist(fluid_channel_t* chan, unsigned char key)
  *       the list is empty.
  *       - prev_note keeps a trace of the note removed if it is i_last.
  *       - LEGATO_PLAYING bit keeps a trace of legato/staccato playing state.
+ * 
+ * More informations in FluidPolyMono-0003.pdf chapter 4 (Appendices).
  */
 static unsigned char
 fluid_channel_remove_monolist(fluid_channel_t* chan, short i)
@@ -562,7 +567,7 @@ void invalid_prev_note_staccato(fluid_channel_t* chan)
  *  polyphonic mode and legato pedal is On during the playing.
  *  When a channel is in "monophonic playing" state, only one note at a time can be
  *  played in a staccato or legato manner (with or without portamento).
- *  See FluidPolyMono-0003.pdf chapter 4 (Appendices).
+ *  More informations in FluidPolyMono-0003.pdf chapter 4 (Appendices).
  *                                           _______________                                     
  *                 ________________         |    noteon     |
  *                | legato detector|    O-->| mono_staccato |--*-> preset_noteon
@@ -935,7 +940,7 @@ int fluid_synth_noteon_mono_legato(fluid_synth_t* synth, int chan,
 		voice = synth->voice[i];
 		if (_ON(voice) && (voice->chan == chan) && (voice->key == fromkey))
 		{
-			/* Check if tokey is inside the range of the running voice */
+			/* Checks if tokey is inside the range of the running voice */
 			if (fluid_inst_zone_inside_range(voice->inst_zone, tokey, vel))
 			{
 				switch (legatomode) 
@@ -966,12 +971,12 @@ int fluid_synth_noteon_mono_legato(fluid_synth_t* synth, int chan,
 					/* Starts portamento if enabled */
 					if(	is_valid_note(synth->fromkey_portamento))
 					{
-						/* Send portamento parameters to the voice dsp */
+						/* Sends portamento parameters to the voice dsp */
 						fluid_voice_update_portamento(voice,
 											synth->fromkey_portamento,tokey);
 					}
 					/* The voice is now used to play tokey in legato manner */
-					/* mark this Instrument Zone to be ignored during next
+					/* Marks this Instrument Zone to be ignored during next
 					   fluid_preset_noteon() */
 					SetIgnoreInstZone (voice->inst_zone);
 				}
@@ -982,7 +987,7 @@ int fluid_synth_noteon_mono_legato(fluid_synth_t* synth, int chan,
 			}
 		}
 	}
-	/* May be,tokey will enter in others Insrument Zone(s),Preset Zone(s), in
+	/* May be,tokey will enter in other Insrument Zone(s),Preset Zone(s), in
 	   this case it needs to be played by voices allocation  */
 	return fluid_preset_noteon(channel->preset,synth,chan,tokey,vel);
 }
