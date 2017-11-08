@@ -118,11 +118,9 @@ fluid_file_read_full(fluid_file fp, size_t* length)
 void
 delete_fluid_midi_file (fluid_midi_file *mf)
 {
-    if (mf == NULL) {
-        return;
-    }
+    fluid_return_if_fail(mf != NULL);
+    
     FLUID_FREE(mf);
-    return;
 }
 
 /*
@@ -801,10 +799,11 @@ new_fluid_midi_event ()
  * @param evt MIDI event structure
  * @return Always returns #FLUID_OK
  */
-int
+void
 delete_fluid_midi_event(fluid_midi_event_t *evt)
 {
     fluid_midi_event_t *temp;
+    fluid_return_if_fail(evt != NULL);
 
     while (evt) {
         temp = evt->next;
@@ -816,7 +815,6 @@ delete_fluid_midi_event(fluid_midi_event_t *evt)
         FLUID_FREE(evt);
         evt = temp;
     }
-    return FLUID_OK;
 }
 
 /**
@@ -1061,17 +1059,14 @@ new_fluid_track(int num)
 /*
  * delete_fluid_track
  */
-int
+void
 delete_fluid_track(fluid_track_t *track)
 {
-    if (track->name != NULL) {
-        FLUID_FREE(track->name);
-    }
-    if (track->first != NULL) {
-        delete_fluid_midi_event(track->first);
-    }
+    fluid_return_if_fail(track != NULL);
+    
+    FLUID_FREE(track->name);
+    delete_fluid_midi_event(track->first);
     FLUID_FREE(track);
-    return FLUID_OK;
 }
 
 /*
@@ -1303,15 +1298,14 @@ new_fluid_player(fluid_synth_t *synth)
  * @param player MIDI player instance
  * @return Always returns #FLUID_OK
  */
-int
+void
 delete_fluid_player(fluid_player_t *player)
 {
     fluid_list_t *q;
     fluid_playlist_item* pi;
 
-    if (player == NULL) {
-        return FLUID_OK;
-    }
+    fluid_return_if_fail(player != NULL);
+    
     fluid_player_stop(player);
     fluid_player_reset(player);
 
@@ -1326,7 +1320,6 @@ delete_fluid_player(fluid_player_t *player)
     }
 
     FLUID_FREE(player);
-    return FLUID_OK;
 }
 
 /**
@@ -1904,11 +1897,12 @@ new_fluid_midi_parser ()
 /*
  * delete_fluid_midi_parser
  */
-int
+void
 delete_fluid_midi_parser(fluid_midi_parser_t *parser)
 {
+    fluid_return_if_fail(parser != NULL);
+    
     FLUID_FREE(parser);
-    return FLUID_OK;
 }
 
 /**

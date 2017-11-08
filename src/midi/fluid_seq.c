@@ -154,10 +154,7 @@ new_fluid_sequencer2 (int use_system_timer)
 void
 delete_fluid_sequencer (fluid_sequencer_t* seq)
 {
-
-	if (seq == NULL) {
-		return;
-	}
+    fluid_return_if_fail(seq != NULL);
 
 	/* cleanup clients */
 	while (seq->clients) {

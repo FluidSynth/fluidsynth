@@ -102,6 +102,9 @@
 #include <io.h>
 #endif
 
+/** Integer types */
+#include <stdint.h>
+
 
 #include "fluidsynth.h"
 
@@ -132,11 +135,6 @@ typedef int fluid_socket_t;
 #define TRUE 1
 #define FALSE 0
 
-
-/** Integer types  */
-typedef uint8_t             uint8;
-typedef uint16_t            uint16;
-typedef uint32_t            uint32;
 
 /** Atomic types */
 typedef struct {

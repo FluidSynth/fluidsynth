@@ -63,7 +63,7 @@ struct _fluid_synth_channel_info_t
 };
 
 FLUIDSYNTH_API fluid_synth_t* new_fluid_synth(fluid_settings_t* settings);
-FLUIDSYNTH_API int delete_fluid_synth(fluid_synth_t* synth);
+FLUIDSYNTH_API void delete_fluid_synth(fluid_synth_t* synth);
 FLUIDSYNTH_API fluid_settings_t* fluid_synth_get_settings(fluid_synth_t* synth);
 
 

@@ -91,12 +91,12 @@ static int fluid_jack_client_register_ports (void *driver, int isaudio,
                                              fluid_settings_t *settings);
 fluid_audio_driver_t*
 new_fluid_jack_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func, void* data);
-int delete_fluid_jack_audio_driver(fluid_audio_driver_t* p);
+void delete_fluid_jack_audio_driver(fluid_audio_driver_t* p);
 void fluid_jack_driver_shutdown(void *arg);
 int fluid_jack_driver_srate(jack_nframes_t nframes, void *arg);
 int fluid_jack_driver_bufsize(jack_nframes_t nframes, void *arg);
 int fluid_jack_driver_process(jack_nframes_t nframes, void *arg);
-int delete_fluid_jack_midi_driver(fluid_midi_driver_t *p);
+void delete_fluid_jack_midi_driver(fluid_midi_driver_t *p);
 
 
 static fluid_mutex_t last_client_mutex = G_STATIC_MUTEX_INIT;     /* Probably not necessary, but just in case drivers are created by multiple threads */
@@ -491,30 +491,20 @@ new_fluid_jack_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func
 /*
  * delete_fluid_jack_audio_driver
  */
-int
+void
 delete_fluid_jack_audio_driver(fluid_audio_driver_t* p)
 {
   fluid_jack_audio_driver_t* dev = (fluid_jack_audio_driver_t*) p;
-
-  if (dev == NULL) return 0;
+  fluid_return_if_fail (dev != NULL);
 
   if (dev->client_ref != NULL)
     fluid_jack_client_close (dev->client_ref, dev);
 
-  if (dev->output_bufs)
     FLUID_FREE (dev->output_bufs);
-
-  if (dev->output_ports)
     FLUID_FREE (dev->output_ports);
-
-  if (dev->fx_bufs)
     FLUID_FREE(dev->fx_bufs);
-
-  if (dev->fx_ports)
     FLUID_FREE(dev->fx_ports);
-
   FLUID_FREE(dev);
-  return 0;
 }
 
 /* Process function for audio and MIDI Jack drivers */
@@ -674,20 +664,16 @@ new_fluid_jack_midi_driver (fluid_settings_t *settings,
   return (fluid_midi_driver_t *)dev;
 }
 
-int
+void
 delete_fluid_jack_midi_driver(fluid_midi_driver_t *p)
 {
   fluid_jack_midi_driver_t *dev = (fluid_jack_midi_driver_t *)p;
-
-  if (dev == NULL) return FLUID_OK;
+  fluid_return_if_fail (dev != NULL);
 
   if (dev->client_ref != NULL)
     fluid_jack_client_close (dev->client_ref, dev);
 
-  if (dev->parser != NULL)
     delete_fluid_midi_parser (dev->parser);
-
+  
   FLUID_FREE (dev);
-
-  return FLUID_OK;
 }

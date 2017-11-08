@@ -92,7 +92,7 @@ fluid_timer_t* new_fluid_timer(int msec, fluid_timer_callback_t callback,
                                void* data, int new_thread, int auto_destroy,
                                int high_priority);
 
-int delete_fluid_timer(fluid_timer_t* timer);
+void delete_fluid_timer(fluid_timer_t* timer);
 int fluid_timer_join(fluid_timer_t* timer);
 int fluid_timer_stop(fluid_timer_t* timer);
 
@@ -141,6 +141,7 @@ new_fluid_cond_mutex (void)
 static FLUID_INLINE void
 delete_fluid_cond_mutex (fluid_cond_mutex_t *m)
 {
+    fluid_return_if_fail(m != NULL);
     fluid_cond_mutex_destroy(m);
     free(m);
 }
@@ -165,6 +166,7 @@ new_fluid_cond (void)
 static FLUID_INLINE void
 delete_fluid_cond (fluid_cond_t *cond)
 {
+    fluid_return_if_fail(cond != NULL);
     fluid_cond_destroy(cond);
     free(cond);
 }
@@ -207,20 +209,6 @@ fluid_istream_t fluid_get_stdin (void);
 fluid_ostream_t fluid_get_stdout (void);
 int fluid_istream_readline(fluid_istream_t in, fluid_ostream_t out, char* prompt, char* buf, int len);
 int fluid_ostream_printf (fluid_ostream_t out, char* format, ...);
-
-/* The function should return 0 if no error occured, non-zero
-   otherwise. If the function return non-zero, the socket will be
-   closed by the server. */
-typedef int (*fluid_server_func_t)(void* data, fluid_socket_t client_socket, char* addr);
-
-fluid_server_socket_t* new_fluid_server_socket(int port, fluid_server_func_t func, void* data);
-int delete_fluid_server_socket(fluid_server_socket_t* sock);
-int fluid_server_socket_join(fluid_server_socket_t* sock);
-void fluid_socket_close(fluid_socket_t sock);
-fluid_istream_t fluid_socket_get_istream(fluid_socket_t sock);
-fluid_ostream_t fluid_socket_get_ostream(fluid_socket_t sock);
-
-
 
 /* Profiling */
 

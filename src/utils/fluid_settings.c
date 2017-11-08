@@ -115,7 +115,7 @@ new_fluid_str_setting(const char* value, const char* def, int hints, fluid_str_u
 static void
 delete_fluid_str_setting(fluid_setting_node_t* node)
 {
-  if (!node) return;
+  fluid_return_if_fail(node != NULL);
   
   FLUID_ASSERT(node->type, FLUID_STR_TYPE);
 
@@ -169,7 +169,7 @@ new_fluid_num_setting(double min, double max, double def,
 static void
 delete_fluid_num_setting(fluid_setting_node_t* node)
 {
-  if (!node) return;
+  fluid_return_if_fail(node != NULL);
   
   FLUID_ASSERT (node->type, FLUID_NUM_TYPE);
   FLUID_FREE(node);
@@ -206,7 +206,7 @@ new_fluid_int_setting(int min, int max, int def,
 static void
 delete_fluid_int_setting(fluid_setting_node_t* node)
 {
-  if (!node) return;
+    fluid_return_if_fail(node != NULL);
   
   FLUID_ASSERT (node->type, FLUID_INT_TYPE);
   FLUID_FREE(node);
@@ -244,12 +244,11 @@ new_fluid_set_setting(void)
 static void
 delete_fluid_set_setting(fluid_setting_node_t* node)
 {
-  if (node)
-  {
+    fluid_return_if_fail(node != NULL);
+    
     FLUID_ASSERT (node->type, FLUID_SET_TYPE);
     delete_fluid_hashtable(node->set.hashtable);
     FLUID_FREE(node);
-  }
 }
 
 /**
