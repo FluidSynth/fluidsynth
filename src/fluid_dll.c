@@ -22,29 +22,46 @@
 #include "fluidsynth_priv.h"
 #include "fluid_sys.h"
 
-static HINSTANCE fluid_hinstance = NULL;
-static HWND fluid_wnd = NULL;
+/* fluid_wnd is the window handle will be use by the dsound driver if not NULL 
+ See fluid_win32_set_window() below.
+*/
+static HWND fluid_wnd = NULL;  
 HWND fluid_win32_get_window(void);
+/* The class name "FluidSynth" */
+const char fluid_window_class_name[] = ("FluidSynth");
 
 #ifndef FLUIDSYNTH_NOT_A_DLL
 /* Dll entry point */
 BOOL WINAPI DllMain(HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
-  FLUID_LOG(FLUID_DBG, "DllMain");
-  fluid_hinstance = hModule;
-  return TRUE;
+    FLUID_LOG(FLUID_DBG, "DllMain");
+    switch (ul_reason_for_call) {
+        /*- Process initialisation */
+        case DLL_PROCESS_ATTACH:
+	      /* register the window class */
+	      {   WNDCLASS myClass;
+		        ZeroMemory(&myClass, sizeof(myClass));
+		        myClass.lpszClassName = fluid_window_class_name;
+		        myClass.hInstance = hModule;
+		        myClass.style = CS_GLOBALCLASS;
+            /* window procedure for this class */
+	          myClass.lpfnWndProc = DefWindowProc;
+            /* window class registration */
+		        if (! RegisterClass(&myClass))
+            {
+			         FLUID_LOG(FLUID_DBG, "Error DllMain");
+       			   return FALSE;
+            }
+	      }
+        break;
+        /*- Process de-initialisation */
+        case DLL_PROCESS_DETACH:
+	          UnregisterClass(fluid_window_class_name,hModule);
+        break;
+    }
+    return TRUE;
 }
 #endif
-
-
-/**
- * Get the handle to the instance of the application on the Windows platform.
- * @return Application instance pointer or NULL if not set
- */
-void* fluid_get_hinstance(void)
-{
-  return (void*) fluid_hinstance;
-}
 
 /* sets the application window handle
  * @param hwnd the window handle
