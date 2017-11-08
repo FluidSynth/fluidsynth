@@ -125,14 +125,14 @@ new_fluid_midi_router(fluid_settings_t *settings, handle_midi_event_func_t handl
  * @return Returns #FLUID_OK on success, #FLUID_FAILED otherwise (only if NULL
  *   \a router passed really)
  */
-int
+void
 delete_fluid_midi_router (fluid_midi_router_t *router)
 {
   fluid_midi_router_rule_t *rule;
   fluid_midi_router_rule_t *next_rule;
   int i;
 
-  fluid_return_val_if_fail (router != NULL, FLUID_FAILED);
+  fluid_return_if_fail (router != NULL);
 
   for (i = 0; i < FLUID_MIDI_ROUTER_RULE_COUNT; i++)
   {
@@ -145,8 +145,6 @@ delete_fluid_midi_router (fluid_midi_router_t *router)
 
   fluid_mutex_destroy (router->rules_mutex);
   FLUID_FREE (router);
-
-  return FLUID_OK;
 }
 
 /**

@@ -38,8 +38,7 @@ fluid_rvoice_handler_t* new_fluid_rvoice_handler(void)
 
 void delete_fluid_rvoice_handler(fluid_rvoice_handler_t* handler)
 {
-  if (handler == NULL) 
-    return;
+    fluid_return_if_fail(handler != NULL);
   
 #if 0
   FLUID_FREE(handler->finished_voices);

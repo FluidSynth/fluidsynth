@@ -85,6 +85,7 @@ Changes in FluidSynth 2.0.0 concerning developers:
 - remove struct _fluid_gen_t, fluid_gen_set_default_values() and enum fluid_gen_flags from public API
 
 - all public \c fluid_settings_* functions that return an integer which is not meant to be interpreted as bool consistently return either FLUID_OK or FLUID_FAILED
+- all public delete_* functions return void
 - the shell command handler was decoupled internally, as a consequence the param list of new_fluid_server() and new_fluid_cmd_handler() was adapted
 
 - add "synth.volenv" a setting for volume envelope processing

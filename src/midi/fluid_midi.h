@@ -28,7 +28,7 @@
 typedef struct _fluid_midi_parser_t fluid_midi_parser_t;
 
 fluid_midi_parser_t* new_fluid_midi_parser(void);
-int delete_fluid_midi_parser(fluid_midi_parser_t* parser);
+void delete_fluid_midi_parser(fluid_midi_parser_t* parser);
 fluid_midi_event_t* fluid_midi_parser_parse(fluid_midi_parser_t* parser, unsigned char c);
 
 
@@ -248,7 +248,7 @@ struct _fluid_track_t {
 typedef struct _fluid_track_t fluid_track_t;
 
 fluid_track_t* new_fluid_track(int num);
-int delete_fluid_track(fluid_track_t* track);
+void delete_fluid_track(fluid_track_t* track);
 int fluid_track_set_name(fluid_track_t* track, char* name);
 char* fluid_track_get_name(fluid_track_t* track);
 int fluid_track_add_event(fluid_track_t* track, fluid_midi_event_t* evt);

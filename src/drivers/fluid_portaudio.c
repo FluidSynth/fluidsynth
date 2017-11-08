@@ -57,7 +57,7 @@ static int
 fluid_portaudio_run (const void *input, void *output, unsigned long frameCount,
                      const PaStreamCallbackTimeInfo* timeInfo,
                      PaStreamCallbackFlags statusFlags, void *userData);
-int delete_fluid_portaudio_driver (fluid_audio_driver_t *p);
+void delete_fluid_portaudio_driver (fluid_audio_driver_t *p);
 
 #define PORTAUDIO_DEFAULT_DEVICE "PortAudio Default"
 
@@ -249,14 +249,12 @@ fluid_portaudio_run (const void *input, void *output, unsigned long frameCount,
 /*
  * delete_fluid_portaudio_driver
  */
-int
+void
 delete_fluid_portaudio_driver(fluid_audio_driver_t *p)
 {
-  fluid_portaudio_driver_t* dev;
+  fluid_portaudio_driver_t* dev = (fluid_portaudio_driver_t*)p;
   PaError err;
-
-  dev = (fluid_portaudio_driver_t*)p;
-  if (dev == NULL) return FLUID_OK;
+  fluid_return_if_fail(dev != NULL);
 
   /* PortAudio section */
   if (dev->stream) Pa_CloseStream (dev->stream);
@@ -267,7 +265,6 @@ delete_fluid_portaudio_driver(fluid_audio_driver_t *p)
     printf ("PortAudio termination error: %s\n", Pa_GetErrorText (err) );
 
   FLUID_FREE (dev);
-  return FLUID_OK;
 }
 
 #endif /*#if PORTAUDIO_SUPPORT */

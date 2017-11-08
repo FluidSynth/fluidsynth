@@ -70,7 +70,7 @@ fluid_audio_driver_t* new_fluid_alsa_audio_driver(fluid_settings_t* settings,
 fluid_audio_driver_t* new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
 						   fluid_audio_func_t func, void* data);
 
-int delete_fluid_alsa_audio_driver(fluid_audio_driver_t* p);
+void delete_fluid_alsa_audio_driver(fluid_audio_driver_t* p);
 void fluid_alsa_audio_driver_settings(fluid_settings_t* settings);
 static fluid_thread_return_t fluid_alsa_audio_run_float(void* d);
 static fluid_thread_return_t fluid_alsa_audio_run_s16(void* d);
@@ -117,7 +117,7 @@ fluid_midi_driver_t* new_fluid_alsa_rawmidi_driver(fluid_settings_t* settings,
 						   handle_midi_event_func_t handler,
 						   void* event_handler_data);
 
-int delete_fluid_alsa_rawmidi_driver(fluid_midi_driver_t* p);
+void delete_fluid_alsa_rawmidi_driver(fluid_midi_driver_t* p);
 static fluid_thread_return_t fluid_alsa_midi_run(void* d);
 
 
@@ -140,7 +140,7 @@ typedef struct {
 fluid_midi_driver_t* new_fluid_alsa_seq_driver(fluid_settings_t* settings,
 					     handle_midi_event_func_t handler,
 					     void* data);
-int delete_fluid_alsa_seq_driver(fluid_midi_driver_t* p);
+void delete_fluid_alsa_seq_driver(fluid_midi_driver_t* p);
 static fluid_thread_return_t fluid_alsa_seq_run(void* d);
 
 /**************************************************************
@@ -320,13 +320,10 @@ new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
   return NULL;
 }
 
-int delete_fluid_alsa_audio_driver(fluid_audio_driver_t* p)
+void delete_fluid_alsa_audio_driver(fluid_audio_driver_t* p)
 {
   fluid_alsa_audio_driver_t* dev = (fluid_alsa_audio_driver_t*) p;
-
-  if (dev == NULL) {
-    return FLUID_OK;
-  }
+  fluid_return_if_fail(dev != NULL);
 
   dev->cont = 0;
 
@@ -337,8 +334,6 @@ int delete_fluid_alsa_audio_driver(fluid_audio_driver_t* p)
     snd_pcm_close (dev->pcm);
 
   FLUID_FREE(dev);
-
-  return FLUID_OK;
 }
 
 /* handle error after an ALSA write call */
@@ -651,15 +646,11 @@ new_fluid_alsa_rawmidi_driver(fluid_settings_t* settings,
 /*
  * delete_fluid_alsa_rawmidi_driver
  */
-int
+void
 delete_fluid_alsa_rawmidi_driver(fluid_midi_driver_t* p)
 {
-  fluid_alsa_rawmidi_driver_t* dev;
-
-  dev = (fluid_alsa_rawmidi_driver_t*) p;
-  if (dev == NULL) {
-    return FLUID_OK;
-  }
+  fluid_alsa_rawmidi_driver_t* dev = (fluid_alsa_rawmidi_driver_t*) p;
+  fluid_return_if_fail(dev != NULL);
 
   /* cancel the thread and wait for it before cleaning up */
   fluid_atomic_int_set(&dev->should_quit, 1);
@@ -674,7 +665,6 @@ delete_fluid_alsa_rawmidi_driver(fluid_midi_driver_t* p)
     delete_fluid_midi_parser(dev->parser);
   }
   FLUID_FREE(dev);
-  return FLUID_OK;
 }
 
 /*
@@ -1008,15 +998,11 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
 /*
  * delete_fluid_alsa_seq_driver
  */
-int
+void
 delete_fluid_alsa_seq_driver(fluid_midi_driver_t* p)
 {
-  fluid_alsa_seq_driver_t* dev;
-
-  dev = (fluid_alsa_seq_driver_t*) p;
-  if (dev == NULL) {
-    return FLUID_OK;
-  }
+  fluid_alsa_seq_driver_t* dev = (fluid_alsa_seq_driver_t*) p;
+  fluid_return_if_fail(dev != NULL);
 
   /* cancel the thread and wait for it before cleaning up */
   fluid_atomic_int_set(&dev->should_quit, 1);
@@ -1031,7 +1017,6 @@ delete_fluid_alsa_seq_driver(fluid_midi_driver_t* p)
   if (dev->pfd) FLUID_FREE (dev->pfd);
 
   FLUID_FREE(dev);
-  return FLUID_OK;
 }
 
 /*
