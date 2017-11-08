@@ -29,12 +29,12 @@
 /* see fluid_synth_mono.c about a description of the legato detector device
 /* Size of the monophonic list 
    - 1 is the minimum. it allows playing legato passage of any number 
-     of notes.
-   - Size above 1 allows playing legato at noteOff resulting in
-     playing fast trills (see fluid_synth_mono.c). 
-	 Choosing a size of 10 is sufficient (because most musician have
-	 only 10 fingers when playing a monophonic instrument).
-
+     of notes on noteon only.
+   - Size above 1 allows playing legato on noteon but also on noteOff.
+     This allows the  musician to play fast trills.
+     This feature is particularly usful when the MIDI input device is a keyboard.
+     Choosing a size of 10 is sufficient (because most musician have only 10
+     fingers when playing a monophonic instrument).
 */
 #define SIZE_MONOLIST  10 
 
