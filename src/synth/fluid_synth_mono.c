@@ -1000,7 +1000,7 @@ int fluid_synth_noteon_monopoly_legato(fluid_synth_t* synth, int chan,
 void legato_on_off(fluid_channel_t* chan, int value)
 {
 	/* Special handling of the monophonic list  */
-	if (!(chan->mode & MONO) && chan->nNotes) /* The monophonic list have notes */
+	if (!(chan->mode & MONO) && chan->n_notes) /* The monophonic list have notes */
 	{
 		if (value < 64 ) /* legato is released */
 		{	/* returns from monophonic to polyphonic with note in monophonic list */
