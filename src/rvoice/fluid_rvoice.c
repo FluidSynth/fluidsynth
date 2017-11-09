@@ -586,7 +586,7 @@ static void fluid_rvoice_local_retrigger_attack (fluid_rvoice_t* voice)
 }
 
 /*----------------------------------------------------------------------------
-/* Used by legato Mode : multi_retrigger   
+ * Used by legato Mode : multi_retrigger   
  *  see fluid_synth_noteon_mono_legato_multi_retrigger() 
  * @ voice the synthesis voice to be updated
 */
@@ -626,7 +626,7 @@ fluid_rvoice_multi_retrigger_attack (fluid_rvoice_t* voice)
 }
 
 /*----------------------------------------------------------------------------
-/* Used by legato Mode : single_trigger
+ * Used by legato Mode : single_trigger
  * See fluid_voice_update_single_trigger0
  * @ voice the synthesis voice to be updated
  * @dholdcount: difference hold data count with previous note.
