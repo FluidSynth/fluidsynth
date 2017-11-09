@@ -927,7 +927,7 @@ fluid_rampreset_noteon (fluid_rampreset_t* preset, fluid_synth_t* synth, int cha
 	/* check if the instrument zone doesn't be ignored and the note falls into
 	   the key and velocity range of this  instrument zone.
 	   An instrument zone must be ignored when its voice is already running
-	   played by a legato passage (see fluid_synth_noteon_mono_legato()) */
+	   played by a legato passage (see fluid_synth_noteon_monopoly_legato()) */
 	if (! ignoreInstrumentZone &&
 		fluid_inst_zone_inside_range(inst_zone, key, vel) && (sample != NULL)) {
 
