@@ -24,6 +24,7 @@
 
 extern void fluid_synth_release_voice_on_same_note_LOCAL(fluid_synth_t* synth,
                                                             int chan, int key);
+#define _ON(voice)  ((voice)->status == FLUID_VOICE_ON && !voice->has_noteoff)
 
 /* Macros interface to monophonic list variables */
 /* Returns the most recent velocity from i_last entry of the monophonic list */
@@ -546,7 +547,7 @@ static unsigned char get_fromkey_portamento_legato(fluid_channel_t* chan,
  * - On Portamento Off(in poly or mono mode), to mark prev_note invalid.
  * @param chan  fluid_channel_t.
  */
-void invalid_prev_note_staccato(fluid_channel_t* chan)
+void fluid_channel_invalid_prev_note_staccato(fluid_channel_t* chan)
 {
 	if(!(chan->mode  & LEGATO_PLAYING)) /* the monophonic list is empty */ 
 	if(! fluid_channel_portamento(chan))
@@ -924,8 +925,6 @@ int fluid_synth_noteoff_monopoly(fluid_synth_t* synth, int chan, int key,
  * Preset Zone, current fromkey' voices are released.If necessary new voices
  * are restarted when tokey enters inside new Instruent(s) Zones,Preset Zone(s).
  */
-#define _ON(voice)  ((voice)->status == FLUID_VOICE_ON && !voice->has_noteoff)
-
 int fluid_synth_noteon_monopoly_legato(fluid_synth_t* synth, int chan,
 							   int fromkey, int tokey, int vel)
 {
@@ -999,7 +998,7 @@ int fluid_synth_noteon_monopoly_legato(fluid_synth_t* synth, int chan,
  * @param chan  fluid_channel_t.
  * @param value, value of the CC legato.
  */
-void legato_on_off(fluid_channel_t* chan, int value)
+void fluid_channel_cc_legato(fluid_channel_t* chan, int value)
 {
 	/* Special handling of the monophonic list  */
 	if (!(chan->mode & MONO) && chan->n_notes) /* The monophonic list have notes */
@@ -1026,7 +1025,7 @@ void legato_on_off(fluid_channel_t* chan, int value)
  * @param chan  fluid_channel_t.
  * @param value, value of the CC Breath..
  */
-void breath_note_on_off(fluid_channel_t* chan, int value)
+void fluid_channel_cc_breath_note_on_off(fluid_channel_t* chan, int value)
 {	
 	if ((chan->mode &  BREATH_SYNC)  && is_fluid_channel_playing_mono(chan) &&
 		(chan->n_notes))
