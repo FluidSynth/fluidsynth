@@ -181,7 +181,7 @@ static const fluid_cmd_int_t fluid_commands[] = {
   { "echo", "general", fluid_handle_echo,
     "echo arg                   Print arg" },
   /* Sleep command, useful to insert a delay between commands */
-  { "sleep", "general", fluid_handle_sleep, NULL,
+  { "sleep", "general", fluid_handle_sleep,
     "sleep  duration            sleep duration(in ms)" },
 	/* LADSPA-related commands */
 #ifdef LADSPA
