@@ -1323,7 +1323,7 @@ fluid_synth_cc_LOCAL (fluid_synth_t* synth, int channum, int num)
 	if (chan->mode &  BASIC_CHANNEL)
 	{
 		int new_mode, new_val;
-		if(!IsModeMono(chan->mode)) /* channel is actually Poly On */
+		if(!(chan->mode & MONO)) /* channel is actually Poly On */
 		{new_mode = OMNIOFF_POLY; new_val= 0;} /* set channel in mode 2 */
 		else /* channel is actually Mono On */
 		/* Channel will bet set in mode 3 with only one channel enabled(ie the
