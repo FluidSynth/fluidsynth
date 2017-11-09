@@ -417,7 +417,7 @@ void fluid_channel_set_onenote_monolist(fluid_channel_t* chan, unsigned char key
  *                                                 +-----> fromkey_legato
  *
  * The functions is intended to be call on noteOn mono
- * see fluid_synth_noteon_mono_staccato(), fluid_synth_noteon_mono_legato()
+ * see fluid_synth_noteon_mono_staccato(), fluid_synth_noteon_monopoly_legato()
  * -------
  * 1)The function determines if a portamento must occur on next noteOn. 
  * The value returned is 'fromkey portamento' which is the pitchstart key 
@@ -607,7 +607,7 @@ static int fluid_synth_noteon_mono_staccato(fluid_synth_t* synth, int chan,
 int fluid_synth_noteoff_monopoly(fluid_synth_t* synth, int chan, int key,
 							 char Mono);
 
-int fluid_synth_noteon_mono_legato(fluid_synth_t* synth, int chan,
+int fluid_synth_noteon_monopoly_legato(fluid_synth_t* synth, int chan,
 							   int fromkey, int tokey, int vel);
 
 /**
@@ -657,7 +657,7 @@ int fluid_synth_noteon_mono_LOCAL(fluid_synth_t* synth, int chan,
 			/* legato from iPrev to key */
 			/* the voices from iPrev key number are to be used to play key number */
 			/* fromkey must be valid */
-			return 	fluid_synth_noteon_mono_legato(synth, chan,
+			return 	fluid_synth_noteon_monopoly_legato(synth, chan,
 				             fluid_channel_prev_note(channel), key, vel);
 		}
 		else 
@@ -722,7 +722,7 @@ int fluid_synth_noteoff_mono_LOCAL(fluid_synth_t* synth, int chan, int key)
 					/* legato from key to iPrev key */
 					/* the voices from key number are to be used to
 					play iPrev key number. */
-					status = fluid_synth_noteon_mono_legato(synth, chan,
+					status = fluid_synth_noteon_monopoly_legato(synth, chan,
 								   key, channel->monolist[iPrev].note,
 								   channel->monolist[iPrev].vel);
 				}
@@ -924,7 +924,7 @@ int fluid_synth_noteoff_monopoly(fluid_synth_t* synth, int chan, int key,
  * Preset Zone, current fromkey' voices are released.If necessary new voices
  * are restarted when tokey enters inside new Instruent(s) Zones,Preset Zone(s).
  */
-int fluid_synth_noteon_mono_legato(fluid_synth_t* synth, int chan,
+int fluid_synth_noteon_monopoly_legato(fluid_synth_t* synth, int chan,
 							   int fromkey, int tokey, int vel)
 {
 	fluid_channel_t* channel = synth->channel[chan];
