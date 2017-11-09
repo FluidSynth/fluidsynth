@@ -1058,7 +1058,7 @@ fluid_synth_noteon_LOCAL(fluid_synth_t* synth, int chan, int key, int vel)
          advance it to the release phase. */
       fluid_synth_release_voice_on_same_note_LOCAL(synth, chan, key);
 
-      return fluid_synth_noteon_mono_legato(synth, chan, INVALID_NOTE, key, vel);
+      return fluid_synth_noteon_monopoly_legato(synth, chan, INVALID_NOTE, key, vel);
   }
 }
 
