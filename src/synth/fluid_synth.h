@@ -232,7 +232,7 @@ int fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth, int basicchan,int 
 /* extern declared in fluid_synth_mono.c */
 int fluid_synth_noteon_mono_LOCAL(fluid_synth_t* synth, int chan, int key, int vel);
 int fluid_synth_noteoff_mono_LOCAL(fluid_synth_t* synth, int chan, int key);
-int fluid_synth_noteon_mono_legato(fluid_synth_t* synth, int chan, int fromkey, int tokey, int vel);
+int fluid_synth_noteon_monopoly_legato(fluid_synth_t* synth, int chan, int fromkey, int tokey, int vel);
 int fluid_synth_noteoff_monopoly(fluid_synth_t* synth, int chan, int key, char Mono);
 
 void fluid_channel_set_onenote_monolist(fluid_channel_t* chan, unsigned char key, unsigned char vel);
