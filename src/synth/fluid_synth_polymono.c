@@ -314,7 +314,7 @@ int fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth,
 		/* LastEndRange: next basic channel  or midi_channels count  */
 		for (LastEndRange = basicchan +1; LastEndRange < nChan; LastEndRange++)
 		{
-			if (IsModeBasicChan(synth->channel[LastEndRange]->mode)) break;
+			if (synth->channel[LastEndRange]->mode &  BASIC_CHANNEL) break;
 		}
 		/* Now LastBeginRange is set */
 		switch (mode = mode &  MASKMODE)
