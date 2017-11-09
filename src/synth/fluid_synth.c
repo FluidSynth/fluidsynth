@@ -1339,7 +1339,7 @@ fluid_synth_cc_LOCAL (fluid_synth_t* synth, int channum, int num)
 
   case LEGATO_SWITCH:
 	/* handle Poly/mono commutation on Legato pedal On/Off.*/
-	legato_on_off(chan,value);
+	fluid_channel_cc_legato(chan,value);
     break;
 
   case PORTAMENTO_SWITCH:
