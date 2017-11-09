@@ -1221,7 +1221,7 @@ fluid_synth_add_default_mod(fluid_synth_t* synth, fluid_mod_t* mod, int mode)
 int
 fluid_synth_cc(fluid_synth_t* synth, int chan, int num, int val)
 {
-  int result;
+  int result = FLUID_FAILED;
   fluid_channel_t* channel;
   fluid_return_val_if_fail (num >= 0 && num <= 127, FLUID_FAILED);
   fluid_return_val_if_fail (val >= 0 && val <= 127, FLUID_FAILED);
