@@ -924,6 +924,8 @@ int fluid_synth_noteoff_monopoly(fluid_synth_t* synth, int chan, int key,
  * Preset Zone, current fromkey' voices are released.If necessary new voices
  * are restarted when tokey enters inside new Instruent(s) Zones,Preset Zone(s).
  */
+#define _ON(voice)  ((voice)->status == FLUID_VOICE_ON && !voice->has_noteoff)
+
 int fluid_synth_noteon_monopoly_legato(fluid_synth_t* synth, int chan,
 							   int fromkey, int tokey, int vel)
 {
