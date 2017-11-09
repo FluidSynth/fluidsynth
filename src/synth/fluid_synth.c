@@ -1103,7 +1103,7 @@ fluid_synth_noteoff_LOCAL(fluid_synth_t* synth, int chan, int key)
   }
   /* Change the state (Valid/Invalid) of the most recent note played in a 
      staccato manner */
-  invalid_prev_note_staccato(channel);
+  fluid_channel_invalid_prev_note_staccato(channel);
   return status;
 }
 
@@ -1345,7 +1345,7 @@ fluid_synth_cc_LOCAL (fluid_synth_t* synth, int channum, int num)
   case PORTAMENTO_SWITCH:
       /* Special handling of the monophonic list  */
       /* Invalid) the most recent note played in a staccato manner */
-	  invalid_prev_note_staccato(chan);
+	  fluid_channel_invalid_prev_note_staccato(chan);
     break;
 
   case SUSTAIN_SWITCH:
@@ -1458,7 +1458,7 @@ fluid_synth_cc_LOCAL (fluid_synth_t* synth, int channum, int num)
     break;
   default:
 	/* handle CC Breath On/Off noteOn/noteOff mode */
-	if (num == BREATH_MSB) breath_note_on_off(chan, value);
+	if (num == BREATH_MSB) fluid_channel_cc_breath_note_on_off(chan, value);
 
     return fluid_synth_modulate_voices_LOCAL (synth, channum, 1, num);
   }
