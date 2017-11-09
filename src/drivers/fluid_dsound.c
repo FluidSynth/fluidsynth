@@ -38,9 +38,6 @@ DWORD WINAPI fluid_dsound_audio_run(LPVOID lpParameter);
 HWND fluid_win32_get_window(void);
 char* fluid_win32_error(HRESULT hr);
 
-
-#define FLUID_HINSTANCE  ((HINSTANCE)fluid_get_hinstance())
-
 typedef struct {
   fluid_audio_driver_t driver;
   LPDIRECTSOUND direct_sound;
@@ -66,40 +63,21 @@ typedef struct {
 /***
   Window creation functions needed for dsound.
 ***/
-const char *fluid_window_class_name = "FluidSynth";
-
-/* window procedure */
-static long FAR PASCAL fluid_win32_wndproc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-    return DefWindowProc(hWnd, message, wParam, lParam);
-}
+/* class name */
+extern const char fluid_window_class_name[];
 
 /* window creation 
  * @return handle of window if success NULL otherwise
 */
-HWND fluid_win32_create_window(void)
+static HWND fluid_win32_create_window(void)
 {
-  HWND hwnd = NULL; /* handle to return */
-  WNDCLASS myClass;
-  /* register the window class */
-  myClass.hCursor = LoadCursor( NULL, IDC_ARROW );
-  myClass.hIcon = NULL;
-  myClass.lpszMenuName = (LPSTR) NULL;
-  myClass.lpszClassName = (LPSTR) fluid_window_class_name;
-  myClass.hbrBackground = (HBRUSH)(COLOR_WINDOW);
-  myClass.hInstance = fluid_get_hinstance();
-  myClass.style = CS_GLOBALCLASS;
-  myClass.lpfnWndProc = fluid_win32_wndproc;
-  myClass.cbClsExtra = 0;
-  myClass.cbWndExtra = 0;
-  if (RegisterClass(&myClass))
-  { /* now create the window */
-    hwnd = CreateWindow((LPSTR) fluid_window_class_name, (LPSTR) "FluidSynth", WS_OVERLAPPEDWINDOW,
+
+  /* create the window */
+  /* As the window in invisible, the title is not necessary */
+   return = CreateWindow((LPSTR) fluid_window_class_name,NULL, WS_OVERLAPPEDWINDOW,
               CW_USEDEFAULT, CW_USEDEFAULT, 400, 300, (HWND) NULL, (HMENU) NULL,
-              fluid_get_hinstance(), (LPSTR) NULL);
-  }
-  return hwnd;
-}
+              NULL, NULL);
+ }
 
 BOOL CALLBACK
 fluid_dsound_enum_callback(LPGUID guid, LPCTSTR description, LPCTSTR module, LPVOID context)
@@ -149,12 +127,6 @@ new_fluid_dsound_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
   int periods, period_size;
   fluid_dsound_devsel_t devsel;
   HWND hwnd; /* window handle needed for dsound */
-
-  /* check if the globals are initialized */
-  if (FLUID_HINSTANCE == NULL) {
-    FLUID_LOG(FLUID_ERR, "FluidSynth hinstance not set, which is needed for DirectSound");
-    return NULL;
-  }
 
   /* create and clear the driver data */
   dev = FLUID_NEW(fluid_dsound_audio_driver_t);
@@ -363,7 +335,6 @@ int delete_fluid_dsound_audio_driver(fluid_audio_driver_t* d)
   if(dev->hwnd ) 
   {
 	  DestroyWindow(dev->hwnd);
-	  UnregisterClass(fluid_window_class_name,fluid_get_hinstance());
   }
   FLUID_FREE(dev);
 
