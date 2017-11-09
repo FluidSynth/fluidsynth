@@ -29,13 +29,27 @@
 #include <mmsystem.h>
 #include <dsound.h>
 
+static HWND fluid_wnd = NULL;
+/* sets the application window handle
+ * @param hwnd the window handle
+ *
+ * If an application set a window handle this window will
+ * be used by dsound driver for cooperative use.
+ *
+ * It is not mandatory for an application to set a window handle
+ * in this case dsound driver will use its own window.
+*/
+void fluid_win32_set_window(HWND hwnd)
+{
+    fluid_wnd = hwnd;
+}
+
 fluid_audio_driver_t*
 new_fluid_dsound_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth);
 
 int delete_fluid_dsound_audio_driver(fluid_audio_driver_t* data);
 DWORD WINAPI fluid_dsound_audio_run(LPVOID lpParameter);
 
-HWND fluid_win32_get_window(void);
 char* fluid_win32_error(HRESULT hr);
 
 typedef struct {
@@ -45,7 +59,6 @@ typedef struct {
   LPDIRECTSOUNDBUFFER sec_buffer;
   WAVEFORMATEX* format;
   HANDLE thread;
-  HWND hwnd; /* local window used by dsound */
   DWORD threadID;
   fluid_synth_t* synth;
   fluid_audio_callback_t write;
@@ -59,25 +72,6 @@ typedef struct {
   LPGUID devGUID;
   char* devname;
 } fluid_dsound_devsel_t;
-
-/***
-  Window creation functions needed for dsound.
-***/
-/* class name */
-extern const char fluid_window_class_name[];
-
-/* window creation 
- * @return handle of window if success NULL otherwise
-*/
-static HWND fluid_win32_create_window(void)
-{
-
-  /* create the window */
-  /* As the window in invisible, the title is not necessary */
-   return = CreateWindow((LPSTR) fluid_window_class_name,NULL, WS_OVERLAPPEDWINDOW,
-              CW_USEDEFAULT, CW_USEDEFAULT, 400, 300, (HWND) NULL, (HMENU) NULL,
-              NULL, NULL);
- }
 
 BOOL CALLBACK
 fluid_dsound_enum_callback(LPGUID guid, LPCTSTR description, LPCTSTR module, LPVOID context)
@@ -135,28 +129,6 @@ new_fluid_dsound_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
     return NULL;
   }
   FLUID_MEMSET(dev, 0, sizeof(fluid_dsound_audio_driver_t));
-  /* Create a local window if the application window doesn't exist */
-  /* The window handle returned by fluid_win32_create_window()
-     is any window handle set by the application using fluid_win32_set_window()
-     function given for convenience (see fluid_dll.c) 
-	 
-     It isn't mandatory for an application to set a window handle
-     in this case dsound driver will create its own window.
-   */
-  hwnd = fluid_win32_get_window(); /* window application handle */
-  if (! hwnd)
-  {	/* the window application doesn't exist, dsound driver create a
-       local window   needed for dsound */
-     dev->hwnd = fluid_win32_create_window();
-     if (!dev->hwnd)
-     {
-         FLUID_LOG(FLUID_ERR, "Couldn't create window needed for DirectSound");
-         goto error_recovery;
-     }
-     /* dsound will use this local hwnd(see IDirectSound_SetCooperativeLevel() */
-     else hwnd = dev->hwnd; 
-  }
-
   dev->synth = synth;
   dev->cont = 1;
 
@@ -207,7 +179,16 @@ new_fluid_dsound_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
     FLUID_LOG(FLUID_ERR, "Failed to create the DirectSound object");
     goto error_recovery;
   }
-
+  /* The window handle returned by fluid_wnd is any window handle set by
+  the application using fluid_win32_set_window() function given for convenience. 
+  */
+  hwnd = fluid_wnd; /* window application handle */
+  if (! hwnd)
+  {
+     /* It isn'tmandatory for an application to set a window handle,
+     in this case dsound driver will use the desktop window). */
+     hwnd = GetDesktopWindow();
+  }
   hr = IDirectSound_SetCooperativeLevel(dev->direct_sound, hwnd, DSSCL_PRIORITY);
   if (hr != DS_OK) {
     FLUID_LOG(FLUID_ERR, "Failed to set the cooperative level");
@@ -330,11 +311,6 @@ int delete_fluid_dsound_audio_driver(fluid_audio_driver_t* d)
   }
   if (dev->direct_sound != NULL) {
     IDirectSound_Release(dev->direct_sound);
-  }
-  /* destroy local window if it exists */
-  if(dev->hwnd ) 
-  {
-	  DestroyWindow(dev->hwnd);
   }
   FLUID_FREE(dev);
 
