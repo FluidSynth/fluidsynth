@@ -111,7 +111,7 @@ struct _fluid_voice_t
 
 
 fluid_voice_t* new_fluid_voice(fluid_real_t output_rate);
-int delete_fluid_voice(fluid_voice_t* voice);
+void delete_fluid_voice(fluid_voice_t* voice);
 
 void fluid_voice_start(fluid_voice_t* voice);
 void  fluid_voice_calculate_gen_pitch(fluid_voice_t* voice);

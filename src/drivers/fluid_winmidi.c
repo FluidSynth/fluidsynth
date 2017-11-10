@@ -72,7 +72,7 @@ static char fluid_winmidi_error_buffer[256];
 fluid_midi_driver_t* new_fluid_winmidi_driver(fluid_settings_t* settings,
 					    handle_midi_event_func_t handler, void* data);
 
-int delete_fluid_winmidi_driver(fluid_midi_driver_t* p);
+void delete_fluid_winmidi_driver(fluid_midi_driver_t* p);
 
 void CALLBACK fluid_winmidi_callback(HMIDIIN hmi, UINT wMsg, DWORD_PTR dwInstance,
 				    DWORD_PTR msg, DWORD_PTR extra);
@@ -243,10 +243,12 @@ new_fluid_winmidi_driver(fluid_settings_t* settings,
 /*
  * delete_fluid_winmidi_driver
  */
-int
+void
 delete_fluid_winmidi_driver(fluid_midi_driver_t* p)
 {
   fluid_winmidi_driver_t* dev = (fluid_winmidi_driver_t*) p;
+  fluid_return_if_fail (dev != NULL);
+  
   if (dev->hmidiin != NULL) {
     fluid_atomic_int_set (&dev->closing, TRUE);
 
@@ -268,7 +270,6 @@ delete_fluid_winmidi_driver(fluid_midi_driver_t* p)
   if (dev->cond) delete_fluid_cond (dev->cond);
 
   FLUID_FREE(dev);
-  return 0;
 }
 
 void CALLBACK

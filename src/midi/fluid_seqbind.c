@@ -53,9 +53,7 @@ void fluid_seq_fluidsynth_callback(unsigned int time, fluid_event_t* event, flui
 void 
 delete_fluid_seqbind(fluid_seqbind_t* seqbind) 
 {
-	if (seqbind == NULL) {
-		return;
-	}
+	fluid_return_if_fail(seqbind != NULL);
 
 	if ((seqbind->client_id != -1) && (seqbind->seq != NULL)) {
 		fluid_sequencer_unregister_client(seqbind->seq, seqbind->client_id);

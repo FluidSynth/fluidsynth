@@ -62,7 +62,7 @@ static ULONG (APIENTRY *m_pfnmciSendCommand)(USHORT, USHORT, ULONG, PVOID, USHOR
 fluid_audio_driver_t* new_fluid_dart_audio_driver(fluid_settings_t* settings,
                           fluid_synth_t* synth);
 
-int delete_fluid_dart_audio_driver(fluid_audio_driver_t* p);
+void delete_fluid_dart_audio_driver(fluid_audio_driver_t* p);
 void fluid_dart_audio_driver_settings(fluid_settings_t* settings);
 
 static LONG APIENTRY fluid_dart_audio_run( ULONG ulStatus, PMCI_MIX_BUFFER pBuffer, ULONG ulFlags );
@@ -212,13 +212,10 @@ error_recovery:
     return NULL;
 }
 
-int delete_fluid_dart_audio_driver(fluid_audio_driver_t* p)
+void delete_fluid_dart_audio_driver(fluid_audio_driver_t* p)
 {
     fluid_dart_audio_driver_t* dev = (fluid_dart_audio_driver_t*) p;
-
-    if (dev == NULL) {
-        return FLUID_OK;
-    }
+    fluid_return_if_fail(dev != NULL);
 
     if (dev->usDeviceID != 0) {
         MCI_GENERIC_PARMS    GenericParms;
@@ -241,7 +238,6 @@ int delete_fluid_dart_audio_driver(fluid_audio_driver_t* p)
     }
 
     FLUID_FREE(dev);
-    return FLUID_OK;
 }
 
 static LONG APIENTRY fluid_dart_audio_run( ULONG ulStatus, PMCI_MIX_BUFFER pBuffer, ULONG ulFlags )

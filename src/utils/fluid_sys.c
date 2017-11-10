@@ -741,10 +741,13 @@ new_fluid_timer (int msec, fluid_timer_callback_t callback, void* data,
   return timer;
 }
 
-int
+void
 delete_fluid_timer (fluid_timer_t *timer)
 {
-  int auto_destroy = timer->auto_destroy;
+  int auto_destroy;
+  fluid_return_if_fail(timer != NULL);
+  
+  auto_destroy = timer->auto_destroy;
 
   timer->cont = 0;
   fluid_timer_join (timer);
@@ -752,8 +755,6 @@ delete_fluid_timer (fluid_timer_t *timer)
   /* Shouldn't access timer now if auto_destroy enabled, since it has been destroyed */
 
   if (!auto_destroy) FLUID_FREE (timer);
-
-  return FLUID_OK;
 }
 
 int
@@ -1087,8 +1088,10 @@ new_fluid_server_socket(int port, fluid_server_func_t func, void* data)
   return server_socket;
 }
 
-int delete_fluid_server_socket(fluid_server_socket_t* server_socket)
+void delete_fluid_server_socket(fluid_server_socket_t* server_socket)
 {
+  fluid_return_if_fail(server_socket != NULL);
+  
   server_socket->cont = 0;
   if (server_socket->socket != INVALID_SOCKET) {
     fluid_socket_close(server_socket->socket);
@@ -1097,7 +1100,6 @@ int delete_fluid_server_socket(fluid_server_socket_t* server_socket)
     delete_fluid_thread(server_socket->thread);
   }
   FLUID_FREE(server_socket);
-  return FLUID_OK;
 }
 
 
@@ -1279,8 +1281,10 @@ new_fluid_server_socket(int port, fluid_server_func_t func, void* data)
   return server_socket;
 }
 
-int delete_fluid_server_socket(fluid_server_socket_t *server_socket)
+void delete_fluid_server_socket(fluid_server_socket_t *server_socket)
 {
+  fluid_return_if_fail(server_socket != NULL);
+  
   server_socket->cont = 0;
 
   if (server_socket->socket != INVALID_SOCKET)
@@ -1292,8 +1296,6 @@ int delete_fluid_server_socket(fluid_server_socket_t *server_socket)
   FLUID_FREE (server_socket);
 
   WSACleanup ();        // Should be called the same number of times as WSAStartup
-
-  return FLUID_OK;
 }
 
 #endif

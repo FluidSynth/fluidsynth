@@ -219,17 +219,19 @@ fluid_ladspa_fx_t *new_fluid_ladspa_fx(fluid_real_t sample_rate, int buffer_size
     fx->run_finished_mutex = new_fluid_cond_mutex();
     if (fx->run_finished_mutex == NULL)
     {
-        delete_fluid_ladspa_fx(fx);
-        return NULL;
+        goto error_recovery;
     }
     fx->run_finished_cond = new_fluid_cond();
     if (fx->run_finished_cond == NULL)
     {
-        delete_fluid_ladspa_fx(fx);
-        return NULL;
+        goto error_recovery;
     }
 
     return fx;
+
+error_recovery:
+    delete_fluid_ladspa_fx(fx);
+    return NULL;
 }
 
 /**
@@ -246,6 +248,7 @@ fluid_ladspa_fx_t *new_fluid_ladspa_fx(fluid_real_t sample_rate, int buffer_size
 void delete_fluid_ladspa_fx(fluid_ladspa_fx_t *fx)
 {
     int i;
+    fluid_return_if_fail (fx != NULL);
 
     clear_ladspa(fx);
 
@@ -1209,26 +1212,16 @@ new_fluid_ladspa_effect(fluid_ladspa_fx_t *fx, const fluid_ladspa_lib_t *lib, co
 
 static void delete_fluid_ladspa_effect(fluid_ladspa_effect_t *effect)
 {
-    if (effect == NULL)
-    {
-        return;
-    }
+    fluid_return_if_fail (effect != NULL);
 
-    if (effect->port_nodes != NULL)
-    {
-        FLUID_FREE(effect->port_nodes);
-    }
+    FLUID_FREE(effect->port_nodes);
 
     if (effect->handle != NULL && effect->desc != NULL && effect->desc->cleanup != NULL)
     {
         effect->desc->cleanup(effect->handle);
     }
 
-    if (effect->name != NULL)
-    {
-        FLUID_FREE(effect->name);
-    }
-
+    FLUID_FREE(effect->name);
     FLUID_FREE(effect);
 }
 
@@ -1319,6 +1312,8 @@ static fluid_ladspa_node_t *new_fluid_ladspa_node(fluid_ladspa_fx_t *fx, const c
 
 static void delete_fluid_ladspa_node(fluid_ladspa_node_t *node)
 {
+    fluid_return_if_fail(node != NULL);
+
     /* If effect_buffer the same as host_buffer, then the effect_buffer has been
      * provided externally, so don't free */
     if ((node->effect_buffer != NULL) && ((void *)node->effect_buffer != (void *)node->host_buffer))
@@ -1326,11 +1321,7 @@ static void delete_fluid_ladspa_node(fluid_ladspa_node_t *node)
         FLUID_FREE(node->effect_buffer);
     }
 
-    if (node->name != NULL)
-    {
-        FLUID_FREE(node->name);
-    }
-
+    FLUID_FREE(node->name);
     FLUID_FREE(node);
 }
 
@@ -1396,11 +1387,9 @@ static fluid_ladspa_lib_t *new_fluid_ladspa_lib(fluid_ladspa_fx_t *fx, const cha
 
 static void delete_fluid_ladspa_lib(fluid_ladspa_lib_t *lib)
 {
-    if (lib->filename != NULL)
-    {
-        FLUID_FREE(lib->filename);
-    }
+    fluid_return_if_fail(lib != NULL);
 
+    FLUID_FREE(lib->filename);
     FLUID_FREE(lib);
 }
 
