@@ -25,11 +25,6 @@
 extern void fluid_synth_release_voice_on_same_note_LOCAL(fluid_synth_t* synth,
                                                             int chan, int key);
 
-// fluid_voice_is_on() is a replacement of _ON(voice). It isn't yet in fluid_voice.h,
-//, so we define it here
-int fluid_voice_is_on(const fluid_voice_t* voice);
-//#define _ON(voice)  ((voice)->status == FLUID_VOICE_ON && !voice->has_noteoff)
-
 /* Macros interface to monophonic list variables */
 /* Returns the most recent velocity from i_last entry of the monophonic list */
 #define fluid_channel_last_vel(chan)	(chan->monolist[chan->i_last].vel)
@@ -943,7 +938,7 @@ int fluid_synth_noteon_monopoly_legato(fluid_synth_t* synth, int chan,
 	{
 		/* search fromkey voices: only those who don't have 'note off' */
 		voice = synth->voice[i];
-		if (fluid_voice_is_on() && (voice->chan == chan) && (voice->key == fromkey))
+		if (fluid_voice_is_on(voice) && (voice->chan == chan) && (voice->key == fromkey))
 		{
 			/* Checks if tokey is inside the range of the running voice */
 			if (fluid_inst_zone_inside_range(voice->inst_zone, tokey, vel))
