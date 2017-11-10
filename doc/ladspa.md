@@ -8,11 +8,8 @@ of LADSPA plugins.
 
 To configure and compile FluidSynth with LADSPA support, make sure you have the
 LADSPA SDK installed (or at least the ladspa.h header file available in an
-include path). Then enable LADSPA when calling cmake:
-
-    cmake -Denable-ladspa=1 <path-to-source>
-
-You should see `LADSPA support: yes` in the cmake output.
+include path). Then compile FluidSynth in the usual way. You should see
+`LADSPA support: yes` in the cmake output.
 
 To enable the LADSPA engine, use the `synth.ladspa.active` setting when
 starting FluidSynth:
