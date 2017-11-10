@@ -3450,7 +3450,7 @@ fluid_synth_alloc_voice(fluid_synth_t* synth, fluid_inst_zone_t *inst_zone,
   unsigned int ticks;
 
 //  fluid_return_val_if_fail (sample != NULL, NULL);
-  fluid_return_val_if_fail (fluid_inst_zone_get_sample != NULL, NULL);
+  fluid_return_val_if_fail (fluid_inst_zone_get_sample(inst_zone) != NULL, NULL);
   FLUID_API_ENTRY_CHAN(NULL);
 
   /* check if there's an available synthesis process */
