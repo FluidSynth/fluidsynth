@@ -46,7 +46,7 @@ struct _fluid_sequencer_t {
 	int useSystemTimer;
 	double scale; // ticks per second
 	fluid_list_t* clients;
-	short clientsID;
+	fluid_seq_id_t clientsID;
 	/* for queue + heap */
 	fluid_evt_entry* preQueue;
 	fluid_evt_entry* preQueueLast;
@@ -67,7 +67,7 @@ struct _fluid_sequencer_t {
 
 /* Private data for clients */
 typedef struct _fluid_sequencer_client_t {
-	short id;
+	fluid_seq_id_t id;
 	char* name;
 	fluid_event_callback_t callback;
 	void* data;
@@ -77,7 +77,7 @@ typedef struct _fluid_sequencer_client_t {
 static short _fluid_seq_queue_init(fluid_sequencer_t* seq, int nbEvents);
 static void _fluid_seq_queue_end(fluid_sequencer_t* seq);
 static short _fluid_seq_queue_pre_insert(fluid_sequencer_t* seq, fluid_event_t * evt);
-static void _fluid_seq_queue_pre_remove(fluid_sequencer_t* seq, short src, short dest, int type);
+static void _fluid_seq_queue_pre_remove(fluid_sequencer_t* seq, fluid_seq_id_t src, fluid_seq_id_t dest, int type);
 static int _fluid_seq_queue_process(void* data, unsigned int msec); // callback from timer
 static void _fluid_seq_queue_insert_entry(fluid_sequencer_t* seq, fluid_evt_entry * evtentry);
 static void _fluid_seq_queue_remove_entries_matching(fluid_sequencer_t* seq, fluid_evt_entry* temp);
@@ -262,7 +262,7 @@ void fluid_seq_dotrace(fluid_sequencer_t* seq, char *fmt, ...) {}
  * Clients can be sources or destinations of events.  Sources don't need to
  * register a callback.
  */
-short
+fluid_seq_id_t
 fluid_sequencer_register_client (fluid_sequencer_t* seq, const char *name,
                                  fluid_event_callback_t callback, void* data)
 {
@@ -300,7 +300,7 @@ fluid_sequencer_register_client (fluid_sequencer_t* seq, const char *name,
  * @param id Client ID as returned by fluid_sequencer_register_client().
  */
 void
-fluid_sequencer_unregister_client (fluid_sequencer_t* seq, short id)
+fluid_sequencer_unregister_client (fluid_sequencer_t* seq, fluid_seq_id_t id)
 {
 	fluid_list_t *tmp;
 	fluid_event_t* evt;
@@ -355,7 +355,7 @@ fluid_sequencer_count_clients(fluid_sequencer_t* seq)
  * @param index Index of register client
  * @return Client ID or #FLUID_FAILED if not found
  */
-short fluid_sequencer_get_client_id (fluid_sequencer_t* seq, int index)
+fluid_seq_id_t fluid_sequencer_get_client_id (fluid_sequencer_t* seq, int index)
 {
 	fluid_list_t *tmp = fluid_list_nth(seq->clients, index);
 	if (tmp == NULL) {
@@ -374,7 +374,7 @@ short fluid_sequencer_get_client_id (fluid_sequencer_t* seq, int index)
  *   be modified or freed.
  */
 char *
-fluid_sequencer_get_client_name(fluid_sequencer_t* seq, int id)
+fluid_sequencer_get_client_name(fluid_sequencer_t* seq, fluid_seq_id_t id)
 {
 	fluid_list_t *tmp;
 
@@ -400,7 +400,7 @@ fluid_sequencer_get_client_name(fluid_sequencer_t* seq, int id)
  * @return TRUE if client is a destination client, FALSE otherwise or if not found
  */
 int
-fluid_sequencer_client_is_dest(fluid_sequencer_t* seq, int id)
+fluid_sequencer_client_is_dest(fluid_sequencer_t* seq, fluid_seq_id_t id)
 {
 	fluid_list_t *tmp;
 
@@ -427,7 +427,7 @@ fluid_sequencer_client_is_dest(fluid_sequencer_t* seq, int id)
 void
 fluid_sequencer_send_now(fluid_sequencer_t* seq, fluid_event_t* evt)
 {
-	short destID = fluid_event_get_dest(evt);
+	fluid_seq_id_t destID = fluid_event_get_dest(evt);
 
 	/* find callback */
 	fluid_list_t *tmp = seq->clients;
@@ -478,8 +478,8 @@ fluid_sequencer_send_at (fluid_sequencer_t* seq, fluid_event_t* evt,
  * @param type Event type to match or -1 for wildcard (#fluid_seq_event_type)
  */
 void
-fluid_sequencer_remove_events (fluid_sequencer_t* seq, short source,
-                               short dest, int type)
+fluid_sequencer_remove_events (fluid_sequencer_t* seq, fluid_seq_id_t source,
+                               fluid_seq_id_t dest, int type)
 {
 	_fluid_seq_queue_pre_remove(seq, source, dest, type);
 }
@@ -747,7 +747,7 @@ _fluid_seq_queue_pre_insert(fluid_sequencer_t* seq, fluid_event_t * evt)
  * May be called from the main thread (usually) but also recursively
  * from the queue thread, when a callback itself does an insert... */
 static void
-_fluid_seq_queue_pre_remove(fluid_sequencer_t* seq, short src, short dest, int type)
+_fluid_seq_queue_pre_remove(fluid_sequencer_t* seq, fluid_seq_id_t src, fluid_seq_id_t dest, int type)
 {
 	fluid_evt_entry * evtentry = _fluid_seq_heap_get_free(seq->heap);
 	if (evtentry == NULL) {
@@ -979,7 +979,7 @@ _fluid_seq_queue_insert_entry(fluid_sequencer_t* seq, fluid_evt_entry * evtentry
 }
 
 static int
-_fluid_seq_queue_matchevent(fluid_event_t* evt, int templType, short templSrc, short templDest)
+_fluid_seq_queue_matchevent(fluid_event_t* evt, int templType, fluid_seq_id_t templSrc, fluid_seq_id_t templDest)
 {
 	int eventType;
 
@@ -1016,7 +1016,7 @@ _fluid_seq_queue_remove_entries_matching(fluid_sequencer_t* seq, fluid_evt_entry
 {
 	/* we walk everything : this is slow, but that is life */
 	int i, type;
-	short src, dest;
+	fluid_seq_id_t src, dest;
 
 	src = templ->evt.src;
 	dest = templ->evt.dest;
