@@ -17,7 +17,7 @@ starting FluidSynth:
     fluidsynth -o synth.ladspa.active=1 ...
 
 
-# Quckstart Tutorial
+# Quickstart Tutorial
 
 The following walks you through the process of adding a LADSPA plugin into your
 FluidSynth configuration. It assumes that you are running FluidSynth on Linux,
@@ -86,7 +86,7 @@ the following four ports are automatically created:
 - Main:L
 - Main:R
 - Reverb:Send
-- Chrous:Send 
+- Chorus:Send
 
 The "Main:L" and "Main:R" ports can be connected to effect input and output
 ports. They carry the main audio signals into the LADSPA effects and the
@@ -96,12 +96,12 @@ modified signals back into FluidSynth.
 mono effect send signals (as determined by the reverb and chorus send
 generators for each voice) into the LADSPA effects.
 
-Please note that if you run FluidSynth with the internal reverb and chorus 
+Please note that if you run FluidSynth with the internal reverb and chorus
 effects active (which is the default), then those effects are already mixed
 into the Main:L and Main:R channels. Fore more details, please see the "Signal
 Flow" section below.
 
-For host port setups in mutli-channel configurations, please see the
+For host port setups in multi-channel configurations, please see the
 "Multi-Channel Output" section below.
 
 ## Creating a Configuration File
@@ -195,7 +195,7 @@ shorter version: "Delay".
 When specifying a port name for the `ladspa_link` and `ladspa_set` commands,
 the system will look for any port that *starts with* the name you gave it. If
 there is only one match, then that port is chosen. If there are multiple
-matches (meaning your port name is ambiguious), you will see an error asking
+matches (meaning your port name is ambiguous), you will see an error asking
 you to be more specific. So the configuration for the "e1" effect could also
 have been written with much shorter port names:
 ```
@@ -227,7 +227,7 @@ send amount specified in the SoundFont.
 
 If you want to replace the internal reverb or chorus effects with a LADSPA
 plugin and you want to honour the decisions made by the SoundFont designer, you
-should use the `Reverb:Send` or `Chrous:Send` ports as effect input and
+should use the `Reverb:Send` or `Chorus:Send` ports as effect input and
 `Main:L` and `Main:R` ports as effect outputs. (See the "Example Setups" section
 below for an example on how to replace the internal reverb with a LADSPA plugin.)
 
@@ -374,7 +374,7 @@ lower volume on the left with a delay effect of 1 second on top.
 ## Replacing the FluidSynth Reverb Effect
 
 If you would like a different reverb implementation than the one built-in to
-FluidSynth, you can use a LADSPA reverb plugin like the "TAP Reverb" from 
+FluidSynth, you can use a LADSPA reverb plugin like the "TAP Reverb" from
 [Tom's Audio Processing plugins](http://tap-plugins.sourceforge.net/ladspa.html).
 
 Here is the analyseplugin output for the `tap_reverb.so` plugin:
@@ -447,7 +447,7 @@ following ports will be created:
 - Main:L2
 - Main:R2
 - Reverb:Send
-- Chrous:Send
+- Chorus:Send
 
 If you want all main ports to act as outputs as well as inputs to the effects,
-then you also need to increate the `synth.audio-channels` setting.
+then you also need to increase the `synth.audio-channels` setting.
