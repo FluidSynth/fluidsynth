@@ -21,7 +21,11 @@ int main()
     for(int i=0; i<sizeof(DRV)/sizeof(DRV[0]); i++)
     {
         adrivers[0] = DRV[i];
-        adrivers[1] = NULL;
+        /* register any other driver you need
+         * 
+         * adrivers[X] = "whatever";
+         */
+        adrivers[1] = NULL; /* NULL terminate the array */
 
         int res = fluid_audio_driver_register(adrivers);
         if(res != FLUID_OK)
@@ -41,9 +45,15 @@ int main()
         fluid_synth_t* synth = new_fluid_synth(settings);
         fluid_audio_driver_t* ad = new_fluid_audio_driver(settings, synth);
 
+        /*
+         * ~~~ Do your daily business here ~~~
+         */
+        
         delete_fluid_audio_driver(ad);
         delete_fluid_synth(synth);
         delete_fluid_settings(settings);
+        
+        /* everything cleaned up, fluid_audio_driver_register() can be called again if needed */
     }
     return 0;
 }
