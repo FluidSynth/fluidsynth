@@ -41,7 +41,7 @@ struct _fluid_seqbind_t {
 	fluid_synth_t* synth;
 	fluid_sequencer_t* seq;
 	fluid_sample_timer_t* sample_timer;
-	short client_id;
+	fluid_seq_id_t client_id;
 };
 typedef struct _fluid_seqbind_t fluid_seqbind_t;
 
@@ -77,7 +77,7 @@ delete_fluid_seqbind(fluid_seqbind_t* seqbind)
  * @param synth Synthesizer instance
  * @returns Sequencer client ID, or #FLUID_FAILED on error.
  */
-short 
+fluid_seq_id_t 
 fluid_sequencer_register_fluidsynth (fluid_sequencer_t* seq, fluid_synth_t* synth)
 {
 	fluid_seqbind_t* seqbind;
@@ -259,9 +259,10 @@ fluid_seq_fluidsynth_callback(unsigned int time, fluid_event_t* evt, fluid_seque
 	}
 }
 
-static int get_fluidsynth_dest(fluid_sequencer_t* seq) 
+static fluid_seq_id_t get_fluidsynth_dest(fluid_sequencer_t* seq) 
 {
-	int i, id;
+	int i;
+	fluid_seq_id_t id;
 	char* name;
 	int j = fluid_sequencer_count_clients(seq);
 	for (i = 0; i < j; i++) {
