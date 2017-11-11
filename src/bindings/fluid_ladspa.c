@@ -29,11 +29,9 @@
 
 #include "fluid_ladspa.h"
 #include "fluid_sys.h"
-#include <dlfcn.h>
 #include <math.h>
 #include <ladspa.h>
 
-#define FLUID_LADSPA_MAX_LIBS 100
 #define FLUID_LADSPA_MAX_EFFECTS 100
 #define FLUID_LADSPA_MAX_NODES 100
 #define FLUID_LADSPA_MAX_PATH_LENGTH 512
@@ -60,14 +58,6 @@ typedef enum _fluid_ladspa_node_type_t {
 
 } fluid_ladspa_node_type_t;
 
-typedef struct _fluid_ladspa_lib_t
-{
-    char *filename;
-    void *dlib;
-    LADSPA_Descriptor_Function descriptor;
-
-} fluid_ladspa_lib_t;
-
 typedef struct _fluid_ladspa_node_t
 {
     char *name;
@@ -91,6 +81,9 @@ typedef struct _fluid_ladspa_effect_t
 {
     char *name;
 
+    /* Pointer to the library that this effect was loaded from */
+    fluid_module_t *lib;
+
     /* The descriptor defines the plugin implementation, the
      * handle points to an instance of that plugin */
     const LADSPA_Descriptor *desc;
@@ -113,9 +106,6 @@ struct _fluid_ladspa_fx_t
 
     /* The buffer size for all audio buffers */
     int buffer_size;
-
-    fluid_ladspa_lib_t *libs[FLUID_LADSPA_MAX_LIBS];
-    int num_libs;
 
     fluid_ladspa_node_t *nodes[FLUID_LADSPA_MAX_NODES];
     int num_nodes;
@@ -157,7 +147,7 @@ static fluid_ladspa_node_t *get_node(fluid_ladspa_fx_t *fx, const char *name);
 
 /* Effect helpers */
 static fluid_ladspa_effect_t *
-new_fluid_ladspa_effect(fluid_ladspa_fx_t *fx, const fluid_ladspa_lib_t *lib, const char *plugin_name);
+new_fluid_ladspa_effect(fluid_ladspa_fx_t *fx, const char *lib_name, const char *plugin_name);
 static void delete_fluid_ladspa_effect(fluid_ladspa_effect_t *effect);
 static void activate_effect(fluid_ladspa_effect_t *effect);
 static void deactivate_effect(fluid_ladspa_effect_t *effect);
@@ -169,13 +159,8 @@ static void connect_node_to_port(fluid_ladspa_node_t *node, fluid_ladspa_dir_t d
         fluid_ladspa_effect_t *effect, int port_idx);
 static int create_control_port_nodes(fluid_ladspa_fx_t *fx, fluid_ladspa_effect_t *effect);
 
-/* LADSPA library and plugin helpers */
-static fluid_ladspa_lib_t *new_fluid_ladspa_lib(fluid_ladspa_fx_t *fx, const char *filename);
-static void delete_fluid_ladspa_lib(fluid_ladspa_lib_t *lib);
-static fluid_ladspa_lib_t *get_ladspa_library(fluid_ladspa_fx_t *fx, const char *filename);
-static int load_plugin_library(fluid_ladspa_lib_t *lib);
-static void unload_plugin_library(fluid_ladspa_lib_t *lib);
-static const LADSPA_Descriptor *get_plugin_descriptor(const fluid_ladspa_lib_t *lib, const char *name);
+/* Plugin helpers */
+static const LADSPA_Descriptor *get_plugin_descriptor(fluid_module_t *lib, const char *name);
 
 /* Sanity checks */
 static int check_all_ports_connected(fluid_ladspa_effect_t *effect, const char **name);
@@ -648,14 +633,6 @@ static void clear_ladspa(fluid_ladspa_fx_t *fx)
     }
     fx->num_effects = 0;
 
-    /* Unload and free all libraries */
-    for (i = 0; i < fx->num_libs; i++)
-    {
-        unload_plugin_library(fx->libs[i]);
-        delete_fluid_ladspa_lib(fx->libs[i]);
-    }
-    fx->num_libs = 0;
-
     /* Delete all nodes (but not the host audio nodes) */
     for (i = 0; i < fx->num_nodes; i++)
     {
@@ -846,7 +823,6 @@ int fluid_ladspa_effect_set_control(fluid_ladspa_fx_t *fx, const char *effect_na
 int fluid_ladspa_add_effect(fluid_ladspa_fx_t *fx, const char *effect_name,
         const char *lib_name, const char *plugin_name)
 {
-    fluid_ladspa_lib_t *lib;
     fluid_ladspa_effect_t *effect;
 
     LADSPA_API_ENTER(fx);
@@ -861,13 +837,7 @@ int fluid_ladspa_add_effect(fluid_ladspa_fx_t *fx, const char *effect_name,
         LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
 
-    lib = get_ladspa_library(fx, lib_name);
-    if (lib == NULL)
-    {
-        LADSPA_API_RETURN(fx, FLUID_FAILED);
-    }
-
-    effect = new_fluid_ladspa_effect(fx, lib, plugin_name);
+    effect = new_fluid_ladspa_effect(fx, lib_name, plugin_name);
     if (effect == NULL)
     {
         LADSPA_API_RETURN(fx, FLUID_FAILED);
@@ -1121,19 +1091,27 @@ static int get_effect_port_idx(const fluid_ladspa_effect_t *effect, const char *
  *
  * If name is optional if the library contains only one plugin.
  *
- * @param lib pointer to fluid_ladspa_lib_t instance
+ * @param lib pointer to the dynamically loaded library
  * @param name name (LADSPA Label) of the plugin
  * @return pointer to LADSPA_Descriptor, NULL on error or if not found
  */
-static const LADSPA_Descriptor *get_plugin_descriptor(const fluid_ladspa_lib_t *lib, const char *name)
+static const LADSPA_Descriptor *get_plugin_descriptor(fluid_module_t *lib, const char *name)
 {
     const LADSPA_Descriptor *desc;
     const LADSPA_Descriptor *last_desc = NULL;
-    int i = 0;
+    LADSPA_Descriptor_Function ladspa_descriptor;
+    int i;
+
+    if (!fluid_module_symbol(lib, "ladspa_descriptor", (void *)&ladspa_descriptor))
+    {
+        FLUID_LOG(FLUID_ERR, "Unable to find ladspa_descriptor in '%s'. "
+                "Is this really a LADSPA plugin?", fluid_module_name(lib));
+        return NULL;
+    }
 
     for (i = 0; /* endless */; i++)
     {
-        desc = lib->descriptor(i);
+        desc = ladspa_descriptor(i);
         if (desc == NULL)
             break;
 
@@ -1166,12 +1144,12 @@ static const LADSPA_Descriptor *get_plugin_descriptor(const fluid_ladspa_lib_t *
  * Plugins are identified by their "Label" in the plugin descriptor structure.
  *
  * @param fx LADSPA fx instance
- * @param lib pointer to fluid_ladspa_lib_t
- * @param name (optional) string name of the plugin (the LADSPA Label)
+ * @param lib_name file path of the plugin library
+ * @param plugin_name (optional) string name of the plugin (the LADSPA Label)
  * @return pointer to the new ladspa_plugin_t structure or NULL on error
  */
 static fluid_ladspa_effect_t *
-new_fluid_ladspa_effect(fluid_ladspa_fx_t *fx, const fluid_ladspa_lib_t *lib, const char *plugin_name)
+new_fluid_ladspa_effect(fluid_ladspa_fx_t *fx, const char *lib_name, const char *plugin_name)
 {
     fluid_ladspa_effect_t *effect;
 
@@ -1183,7 +1161,16 @@ new_fluid_ladspa_effect(fluid_ladspa_fx_t *fx, const fluid_ladspa_lib_t *lib, co
     }
     FLUID_MEMSET(effect, 0, sizeof(fluid_ladspa_effect_t));
 
-    effect->desc = get_plugin_descriptor(lib, plugin_name);
+    effect->lib = fluid_module_open(lib_name);
+    if (effect->lib == NULL)
+    {
+        FLUID_LOG(FLUID_ERR, "Unable to load LADSPA library '%s': %s", lib_name,
+                fluid_module_error());
+        delete_fluid_ladspa_effect(effect);
+        return NULL;
+    }
+
+    effect->desc = get_plugin_descriptor(effect->lib, plugin_name);
     if (effect->desc == NULL)
     {
         delete_fluid_ladspa_effect(effect);
@@ -1194,7 +1181,7 @@ new_fluid_ladspa_effect(fluid_ladspa_fx_t *fx, const fluid_ladspa_lib_t *lib, co
     if (effect->handle == NULL)
     {
         delete_fluid_ladspa_effect(effect);
-        FLUID_LOG(FLUID_ERR, "Unable to instantiate plugin '%s' from '%s'", plugin_name, lib->filename);
+        FLUID_LOG(FLUID_ERR, "Unable to instantiate plugin '%s' from '%s'", plugin_name, lib_name);
         return NULL;
     }
 
@@ -1220,6 +1207,8 @@ static void delete_fluid_ladspa_effect(fluid_ladspa_effect_t *effect)
     {
         effect->desc->cleanup(effect->handle);
     }
+
+    fluid_module_close(effect->lib);
 
     FLUID_FREE(effect->name);
     FLUID_FREE(effect);
@@ -1323,135 +1312,6 @@ static void delete_fluid_ladspa_node(fluid_ladspa_node_t *node)
 
     FLUID_FREE(node->name);
     FLUID_FREE(node);
-}
-
-static fluid_ladspa_lib_t *get_ladspa_library(fluid_ladspa_fx_t *fx, const char *filename)
-{
-    int i;
-    fluid_ladspa_lib_t *lib;
-
-    /* check if we have loaded this lib before and return it if found */
-    for (i = 0; i < fx->num_libs; i++)
-    {
-        if (FLUID_STRCMP(fx->libs[i]->filename, filename) == 0)
-        {
-            return fx->libs[i];
-        }
-    }
-
-    if (fx->num_libs >= FLUID_LADSPA_MAX_LIBS)
-    {
-        FLUID_LOG(FLUID_ERR, "Maximum number of LADSPA libraries reached");
-        return NULL;
-    }
-
-    lib = new_fluid_ladspa_lib(fx, filename);
-    if (lib == NULL)
-    {
-        return NULL;
-    }
-
-    if (load_plugin_library(lib) != FLUID_OK)
-    {
-        delete_fluid_ladspa_lib(lib);
-        return NULL;
-    }
-
-    fx->libs[fx->num_libs++] = lib;
-
-    return lib;
-}
-
-static fluid_ladspa_lib_t *new_fluid_ladspa_lib(fluid_ladspa_fx_t *fx, const char *filename)
-{
-    fluid_ladspa_lib_t *lib;
-
-    lib = FLUID_NEW(fluid_ladspa_lib_t);
-    if (lib == NULL)
-    {
-        FLUID_LOG(FLUID_ERR, "Out of memory");
-        return NULL;
-    }
-    FLUID_MEMSET(lib, 0, sizeof(fluid_ladspa_lib_t));
-
-    lib->filename = FLUID_STRDUP(filename);
-    if (lib->filename == NULL)
-    {
-        delete_fluid_ladspa_lib(lib);
-        FLUID_LOG(FLUID_ERR, "Out of memory");
-        return NULL;
-    }
-
-    return lib;
-}
-
-static void delete_fluid_ladspa_lib(fluid_ladspa_lib_t *lib)
-{
-    fluid_return_if_fail(lib != NULL);
-
-    FLUID_FREE(lib->filename);
-    FLUID_FREE(lib);
-}
-
-static int load_plugin_library(fluid_ladspa_lib_t *lib)
-{
-    char filepath[FLUID_LADSPA_MAX_PATH_LENGTH];
-    char *error;
-    char *ladspa_path;
-
-    /* If the library name does not contain a slash, then try to load from
-     * LADSPA_PATH */
-    if (FLUID_STRCHR(lib->filename, '/') == NULL)
-    {
-        ladspa_path = getenv("LADSPA_PATH");
-        if (ladspa_path == NULL)
-        {
-            FLUID_LOG(FLUID_ERR, "Unable to load LADSPA library '%s'. Use slashes in the "
-                                 "LADSPA library filename or set the LADSPA_PATH variable.",
-                      lib->filename);
-            return FLUID_FAILED;
-        }
-        FLUID_SNPRINTF(filepath, FLUID_LADSPA_MAX_PATH_LENGTH, "%s/%s", ladspa_path, lib->filename);
-    }
-    else
-    {
-        FLUID_SNPRINTF(filepath, FLUID_LADSPA_MAX_PATH_LENGTH, "%s", lib->filename);
-    }
-
-    dlerror();
-    lib->dlib = dlopen(filepath, RTLD_NOW);
-    error = dlerror();
-    if (lib->dlib == NULL || error)
-    {
-        if (error == NULL)
-        {
-            error = "Unknown error";
-        }
-        FLUID_LOG(FLUID_ERR, "Unable to load LADSPA library '%s': %d", filepath, error);
-        return FLUID_FAILED;
-    }
-
-    lib->descriptor = (LADSPA_Descriptor_Function)dlsym(lib->dlib, "ladspa_descriptor");
-    error = dlerror();
-    if (lib->descriptor == NULL || error)
-    {
-        if (error == NULL)
-        {
-            error = "Unknown error";
-        }
-        dlclose(lib->dlib);
-        FLUID_LOG(FLUID_ERR, "Unable to find ladspa_descriptor in '%': %s", filepath, error);
-        return FLUID_FAILED;
-    }
-
-    return FLUID_OK;
-}
-
-static void unload_plugin_library(fluid_ladspa_lib_t *lib)
-{
-    dlclose(lib->dlib);
-    lib->dlib = NULL;
-    lib->descriptor = NULL;
 }
 
 /**

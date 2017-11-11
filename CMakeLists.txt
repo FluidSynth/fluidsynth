@@ -305,18 +305,20 @@ if(NOT enable-pkgconfig)
 
     FIND_LIBRARY( GLIB_LIB NAMES glib glib-2.0 PATH GLIB_LIBRARY_DIR NO_DEFAULT_PATH)
     FIND_LIBRARY( GTHREAD_LIB NAMES gthread gthread-2.0 PATH GTHREAD_LIBRARY_DIR NO_DEFAULT_PATH )
+    FIND_LIBRARY( GMODULE_LIB NAMES gmodule gmodule-2.0 PATH GMODULE_LIBRARY_DIR NO_DEFAULT_PATH )
     FIND_PATH( GLIBH_DIR glib.h PATH GLIB_INCLUDE_DIR NO_DEFAULT_PATH )
     FIND_PATH( GLIBCONF_DIR glibconfig.h PATH GLIBCONF_INCLUDE_DIR NO_DEFAULT_PATH )
     
     IF( GLIB_LIB MATCHES "GLIB_LIB-NOTFOUND" OR
             GTHREAD_LIB MATCHES "GTHREAD_LIB-NOTFOUND" OR
+            GMODULE_LIB MATCHES "GMODULE_LIB-NOTFOUND" OR
             GLIBH_DIR MATCHES "GLIBH_DIR-NOTFOUND" OR
             GLIBCONF_DIR MATCHES "GLIBCONF_DIR-NOTFOUND")
             message( WARNING "Not sure if I found GLIB, continuing anyway.")
     ENDIF()
     
     SET( GLIB_INCLUDE_DIRS ${GLIBH_DIR} ${GLIBCONF_DIR} )
-    SET( GLIB_LIBRARIES ${GLIB_LIB} ${GTHREAD_LIB} )
+    SET( GLIB_LIBRARIES ${GLIB_LIB} ${GTHREAD_LIB} ${GMODULE_LIB} )
     
     message( STATUS "GLIB_INCLUDE_DIRS: " ${GLIB_INCLUDE_DIRS} )
     message( STATUS "GLIB_LIBRARIES: " ${GLIB_LIBRARIES} )
@@ -326,7 +328,7 @@ else(NOT enable-pkgconfig)
     find_package ( PkgConfig REQUIRED )
 
     # Mandatory libraries: glib and gthread
-    pkg_check_modules ( GLIB REQUIRED glib-2.0>=2.6.5 gthread-2.0>=2.6.5 )
+    pkg_check_modules ( GLIB REQUIRED glib-2.0>=2.6.5 gthread-2.0>=2.6.5 gmodule-2.0>=2.6.5 )
 
     include ( UnsetPkgConfig )
 
