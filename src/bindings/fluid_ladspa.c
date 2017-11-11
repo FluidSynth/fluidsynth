@@ -1335,7 +1335,6 @@ static fluid_ladspa_effect_t *get_effect(fluid_ladspa_fx_t *fx, const char *name
         }
     }
 
-    printf("Effect '%s' not found!\n", name);
     LADSPA_API_RETURN(fx, NULL);
 }
 
