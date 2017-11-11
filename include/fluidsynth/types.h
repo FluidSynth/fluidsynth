@@ -60,7 +60,7 @@ typedef struct _fluid_rampreset_t fluid_rampreset_t;            /**< RAM SoundFo
 typedef int fluid_istream_t;    /**< Input stream descriptor */
 typedef int fluid_ostream_t;    /**< Output stream descriptor */
 
-typedef short fluid_seq_id_t; /**< Type used for unique client IDs by the sequencer and #fluid_event_t */
+typedef short fluid_seq_id_t; /**< Unique client IDs use by the sequencer and #fluid_event_t, obtained by fluid_sequencer_register_client() and fluid_sequencer_register_fluidsynth() */
 
 #ifdef __cplusplus
 }
