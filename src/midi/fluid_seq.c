@@ -374,7 +374,7 @@ fluid_seq_id_t fluid_sequencer_get_client_id (fluid_sequencer_t* seq, int index)
  *   be modified or freed.
  */
 char *
-fluid_sequencer_get_client_name(fluid_sequencer_t* seq, int id)
+fluid_sequencer_get_client_name(fluid_sequencer_t* seq, fluid_seq_id_t id)
 {
 	fluid_list_t *tmp;
 
@@ -400,7 +400,7 @@ fluid_sequencer_get_client_name(fluid_sequencer_t* seq, int id)
  * @return TRUE if client is a destination client, FALSE otherwise or if not found
  */
 int
-fluid_sequencer_client_is_dest(fluid_sequencer_t* seq, int id)
+fluid_sequencer_client_is_dest(fluid_sequencer_t* seq, fluid_seq_id_t id)
 {
 	fluid_list_t *tmp;
 
