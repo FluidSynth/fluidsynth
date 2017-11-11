@@ -98,7 +98,8 @@ generators for each voice) into the LADSPA effects.
 
 Please note that if you run FluidSynth with the internal reverb and chorus 
 effects active (which is the default), then those effects are already mixed
-into the Main:L and Main:R channels.
+into the Main:L and Main:R channels. Fore more details, please see the "Signal
+Flow" section below.
 
 For host port setups in mutli-channel configurations, please see the
 "Multi-Channel Output" section below.
@@ -214,6 +215,24 @@ When at least one effect is configured and the engine is activated, the rendered
 audio is passed into the LADSPA effects engine, the effects are run in the order
 that they were created and the resulting audio is passed back into FluidSynth
 (and from there to the sound card or other output).
+
+## Effect Sends
+
+Please note that SoundFont designers can specify how much signal each
+instrument should add to the reverb and chorus effect sends. When FluidSynth
+renders a block of audio, all currently sounding instruments are mixed into the
+`Main` output channels. In addition, all instruments add their signal to the
+effect send ports (`Reverb:Send` and `Chorus:Send`) according to the effect
+send amount specified in the SoundFont.
+
+If you want to replace the internal reverb or chorus effects with a LADSPA
+plugin and you want to honour the decisions made by the SoundFont designer, you
+should use the `Reverb:Send` or `Chrous:Send` ports as effect input and
+`Main:L` and `Main:R` ports as effect outputs. (See the "Example Setups" section
+below for an example on how to replace the internal reverb with a LADSPA plugin.)
+
+Please note that FluidSynth uses a mono signal for both effects, that is why
+there is only a single send port for reverb and chorus.
 
 
 # LADSPA Command Reference
