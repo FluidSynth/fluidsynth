@@ -193,7 +193,7 @@ FLUIDSYNTH_API char *fluid_settings_option_concat (fluid_settings_t* settings,
  * @param name Setting name
  * @param type Setting type (#fluid_types_enum)
  */
-typedef void (*fluid_settings_foreach_t)(void *data, char *name, int type);
+typedef void (*fluid_settings_foreach_t)(void *data, const char *name, int type);
 
 FLUIDSYNTH_API
 void fluid_settings_foreach(fluid_settings_t* settings, void* data,

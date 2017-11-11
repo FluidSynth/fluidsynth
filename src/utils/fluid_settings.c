@@ -1613,7 +1613,7 @@ fluid_settings_foreach (fluid_settings_t* settings, void* data,
   {
     if (fluid_settings_get (settings, (const char *)(p->data), &node) == FLUID_OK
         && node)
-        (*func) (data, (char *)(p->data), node->type);
+        (*func) (data, (const char *)(p->data), node->type);
     FLUID_FREE (p->data);       /* -- Free name */
   }
 
