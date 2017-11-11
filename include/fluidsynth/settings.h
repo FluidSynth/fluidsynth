@@ -175,7 +175,7 @@ int fluid_settings_getint_range(fluid_settings_t* settings, const char *name,
  * @param name Setting name
  * @param option A string option for this setting (iterates through the list)
  */
-typedef void (*fluid_settings_foreach_option_t)(void *data, char *name, char *option);
+typedef void (*fluid_settings_foreach_option_t)(void *data, const char *name, const char *option);
 
 FLUIDSYNTH_API
 void fluid_settings_foreach_option(fluid_settings_t* settings,

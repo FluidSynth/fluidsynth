@@ -1421,7 +1421,7 @@ fluid_settings_foreach_option (fluid_settings_t* settings, const char *name,
   newlist = fluid_list_sort (newlist, fluid_list_str_compare_func);
 
   for (p = newlist; p; p = p->next)
-    (*func)(data, (char *)name, (char *)fluid_list_get (p));
+    (*func)(data, name, (const char *)fluid_list_get (p));
 
   fluid_rec_mutex_unlock (settings->mutex);   /* -- unlock */
 
@@ -1611,7 +1611,7 @@ fluid_settings_foreach (fluid_settings_t* settings, void* data,
   /* Loop over names and call the callback */
   for (p = bag.names; p; p = p->next)
   {
-    if (fluid_settings_get (settings, (char *)(p->data), &node) == FLUID_OK
+    if (fluid_settings_get (settings, (const char *)(p->data), &node) == FLUID_OK
         && node)
         (*func) (data, (char *)(p->data), node->type);
     FLUID_FREE (p->data);       /* -- Free name */

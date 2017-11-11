@@ -141,7 +141,7 @@ typedef struct
 
 /* Function to display each string option value */
 static void
-settings_option_foreach_func (void *data, char *name, char *option)
+settings_option_foreach_func (void *data, const char *name, const char *option)
 {
   OptionBag *bag = data;
 
