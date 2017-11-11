@@ -1828,3 +1828,8 @@ Example of a simple metronome using the MIDI sequencer API
 \example fluidsynth_arpeggio.c
 Example of an arpeggio generated using the MIDI sequencer API
 */
+
+/*!
+\example fluidsynth_register_adriver.c
+Example of how to register audio drivers using fluid_audio_driver_register() (advanced users only)
+*/
