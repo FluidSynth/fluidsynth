@@ -133,6 +133,12 @@
 /* Define to 1 if you have the inet_ntop() function. */
 #cmakedefine HAVE_INETNTOP @HAVE_INETNTOP@
 
+/* Define to 1 if you have the alloca() function. */
+#cmakedefine HAVE_ALLOCA @HAVE_ALLOCA@
+
+/* Define to 1 if you have the _alloca() function. */
+#cmakedefine HAVE__ALLOCA @HAVE__ALLOCA@
+
 /* Define to enable JACK driver */
 #cmakedefine JACK_SUPPORT @JACK_SUPPORT@
 
