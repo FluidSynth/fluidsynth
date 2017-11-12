@@ -39,10 +39,6 @@
 
 #include "fluidsynth.h"
 
-#if defined(WIN32) && !defined(MINGW32)
-#include "config_win32.h"
-#endif
-
 #include "fluid_lash.h"
 
 #ifndef WITH_MIDI

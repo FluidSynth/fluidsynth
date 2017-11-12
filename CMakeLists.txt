@@ -433,12 +433,6 @@ configure_file ( ${CMAKE_SOURCE_DIR}/src/config.cmake
                  ${CMAKE_BINARY_DIR}/config.h )
 add_definitions ( -DHAVE_CONFIG_H )
 
-# Extra configuration file for MS VisualC compiler
-if ( MSVC )
-  configure_file ( ${CMAKE_SOURCE_DIR}/src/config_win32.cmake
-                   ${CMAKE_BINARY_DIR}/config_win32.h )
-endif ( MSVC )
-
 # Process subdirectories
 add_subdirectory ( src )
 add_subdirectory ( include )

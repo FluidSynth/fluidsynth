@@ -32,10 +32,6 @@
 #include "config_maxmsp43.h"
 #endif
 
-#if defined(WIN32) && !defined(MINGW32)
-#include "config_win32.h"
-#endif
-
 #if HAVE_STRING_H
 #include <string.h>
 #endif
@@ -132,18 +128,22 @@ typedef guint64  uint64_t;
 
 #if defined(WIN32) &&  HAVE_WINDOWS_H
 #include <winsock2.h>
-#include <ws2tcpip.h>
+#include <ws2tcpip.h>	/* Provides also socklen_t */
 #include <windows.h>
-#endif
 
-/* MinGW32 special defines */
-#ifdef MINGW32
-
+/* WIN32 special defines */
 #define DSOUND_SUPPORT 1
 #define WINMIDI_SUPPORT 1
 #define STDIN_FILENO 0
 #define STDOUT_FILENO 1
 #define STDERR_FILENO 2
+
+#ifdef _MSC_VER
+#pragma warning(disable : 4244)
+#pragma warning(disable : 4101)
+#pragma warning(disable : 4305)
+#pragma warning(disable : 4996)
+#endif
 
 #endif
 
