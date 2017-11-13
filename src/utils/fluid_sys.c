@@ -585,14 +585,25 @@ new_fluid_timer (int msec, fluid_timer_callback_t callback, void* data,
   timer->thread = NULL;
   timer->auto_destroy = auto_destroy;
 
-  if (new_thread) {
+  if (new_thread)
+  {
     timer->thread = new_fluid_thread ("timer", fluid_timer_run, timer, high_priority
                                       ? FLUID_SYS_TIMER_HIGH_PRIO_LEVEL : 0, false);
-    if (!timer->thread) {
+    if (!timer->thread)
+    {
       FLUID_FREE (timer);
       return NULL;
     }
-  } else fluid_timer_run (timer); /* Run directly, instead of as a separate thread */
+  }
+  else
+  {
+    fluid_timer_run (timer); /* Run directly, instead of as a separate thread */
+    if(auto_destroy)
+    {
+      /* do NOT return freed memory */
+      return NULL;
+    }
+  }
 
   return timer;
 }
