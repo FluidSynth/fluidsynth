@@ -1987,6 +1987,8 @@ fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defs
     {
         FLUID_LOG (FLUID_WARN, _("Vorbis sample '%s' has invalid loop points"), sample->name);
     }
+#else
+    return FLUID_FAILED;
 #endif
   }
 
