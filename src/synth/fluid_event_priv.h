@@ -30,8 +30,8 @@
 struct _fluid_event_t {
 	unsigned int time;
 	int type;
-	short src;
-	short dest;
+	fluid_seq_id_t src;
+	fluid_seq_id_t dest;
 	int channel;
 	short key;
 	short vel;

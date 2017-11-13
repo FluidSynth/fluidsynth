@@ -268,6 +268,15 @@ elseif ( OS2 )
         VERSION ${LIB_VERSION_INFO}
         SOVERSION ${LIB_VERSION_CURRENT}
     )
+elseif ( WIN32 )
+  set_target_properties ( libfluidsynth
+    PROPERTIES
+      ARCHIVE_OUTPUT_NAME "fluidsynth"
+      PREFIX "lib"
+      OUTPUT_NAME "fluidsynth-${LIB_VERSION_CURRENT}"
+      VERSION ${LIB_VERSION_INFO}
+      SOVERSION ${LIB_VERSION_CURRENT}
+    )
 else ( MACOSX_FRAMEWORK )
   set_target_properties ( libfluidsynth
     PROPERTIES

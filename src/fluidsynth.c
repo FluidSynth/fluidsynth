@@ -141,7 +141,7 @@ typedef struct
 
 /* Function to display each string option value */
 static void
-settings_option_foreach_func (void *data, char *name, char *option)
+settings_option_foreach_func (void *data, const char *name, const char *option)
 {
   OptionBag *bag = data;
 
@@ -154,7 +154,7 @@ settings_option_foreach_func (void *data, char *name, char *option)
 
 /* fluid_settings_foreach function for displaying option help  "-o help" */
 static void
-settings_foreach_func (void *data, char *name, int type)
+settings_foreach_func (void *data, const char *name, int type)
 {
   fluid_settings_t *settings = (fluid_settings_t *)data;
   double dmin, dmax, ddef;

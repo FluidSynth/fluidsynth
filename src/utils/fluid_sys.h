@@ -70,13 +70,15 @@ void fluid_time_config(void);
 #define FLUID_LE16TOH(x)          GINT16_FROM_LE(x)
 
 
-#define fluid_return_val_if_fail(cond, val) \
+#define fluid_return_if_fail(cond) \
 if(cond) \
     ; \
 else \
-    return val
-    
-#define fluid_return_if_fail(cond)  fluid_return_val_if_fail(cond, ((void)(0)))
+    return
+
+#define fluid_return_val_if_fail(cond, val) \
+ fluid_return_if_fail(cond) (val)
+
 
 /*
  * Utility functions
