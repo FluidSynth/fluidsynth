@@ -6,10 +6,6 @@ build:
 
 configuration:
   - Release
-
-branches:
-  only:
-  - av-test
   
 environment:
   matrix:
