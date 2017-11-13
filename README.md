@@ -1,4 +1,5 @@
-[![Build Status](https://travis-ci.org/FluidSynth/fluidsynth.svg?branch=master)](https://travis-ci.org/FluidSynth/fluidsynth)
+[![Build Status Travis](https://travis-ci.org/FluidSynth/fluidsynth.svg?branch=master)](https://travis-ci.org/FluidSynth/fluidsynth)
+[![Build status Appveyor](https://ci.appveyor.com/api/projects/status/n24ybk0dmttjwdk2?svg=true)](https://ci.appveyor.com/project/derselbst/fluidsynth)
 
 # Introduction
 
