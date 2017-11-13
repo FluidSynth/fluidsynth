@@ -346,17 +346,17 @@ fluid_is_soundfont(const char *filename)
  */
 unsigned int fluid_curtime(void)
 {
-    static long initial_seconds = 0;
-    struct timespec timeval;
+  static long initial_seconds = 0;
+  struct timespec timeval;
 
-    if (initial_seconds == 0) {
-        clock_gettime(CLOCK_REALTIME, &timeval);
-        initial_seconds = timeval.tv_sec;
-    }
-
+  if (initial_seconds == 0) {
     clock_gettime(CLOCK_REALTIME, &timeval);
+    initial_seconds = timeval.tv_sec;
+  }
 
-    return (unsigned int)((timeval.tv_sec - initial_seconds) * 1000.0 + timeval.tv_nsec / 1000000.0);
+  clock_gettime(CLOCK_REALTIME, &timeval);
+
+  return (unsigned int)((timeval.tv_sec - initial_seconds) * 1000.0 + timeval.tv_nsec / 1000000.0);
 }
 
 /**
@@ -366,29 +366,29 @@ unsigned int fluid_curtime(void)
 double
 fluid_utime (void)
 {
-    struct timespec timeval;
+  struct timespec timeval;
 
-    clock_gettime(CLOCK_REALTIME, &timeval);
+  clock_gettime(CLOCK_REALTIME, &timeval);
 
-    return (timeval.tv_sec * 1000000.0 + timeval.tv_nsec / 1000.0);
+  return (timeval.tv_sec * 1000000.0 + timeval.tv_nsec / 1000.0);
 }
 
 
 void
 fluid_thread_self_set_prio (int prio_level)
 {
-    struct sched_param priority;
+  struct sched_param priority;
 
-    if (prio_level > 0) {
+  if (prio_level > 0) {
 
-        memset(&priority, 0, sizeof(priority));
-        priority.sched_priority = prio_level;
+    memset(&priority, 0, sizeof(priority));
+    priority.sched_priority = prio_level;
 
-        if (pthread_setschedparam (pthread_self (), SCHED_FIFO, &priority) == 0) {
-            return;
-        }
-        FLUID_LOG(FLUID_WARN, "Failed to set thread to high priority");
+    if (pthread_setschedparam (pthread_self (), SCHED_FIFO, &priority) == 0) {
+      return;
     }
+    FLUID_LOG(FLUID_WARN, "Failed to set thread to high priority");
+  }
 }
 
 /***************************************************************
@@ -415,23 +415,23 @@ fluid_profile_data_t fluid_profile_data[] = {
 
 void fluid_profiling_print(void)
 {
-    int i;
+  int i;
 
-    printf("fluid_profiling_print\n");
+  printf("fluid_profiling_print\n");
 
-    FLUID_LOG(FLUID_INFO, "Estimated times: min/avg/max (micro seconds)");
+  FLUID_LOG(FLUID_INFO, "Estimated times: min/avg/max (micro seconds)");
 
-    for (i = 0; i < FLUID_PROF_LAST; i++) {
-        if (fluid_profile_data[i].count > 0) {
-            FLUID_LOG(FLUID_INFO, "%s: %.3f/%.3f/%.3f",
-                      fluid_profile_data[i].description,
-                      fluid_profile_data[i].min,
-                      fluid_profile_data[i].total / fluid_profile_data[i].count,
-                      fluid_profile_data[i].max);
-        } else {
-            FLUID_LOG(FLUID_DBG, "%s: no profiling available", fluid_profile_data[i].description);
-        }
+  for (i = 0; i < FLUID_PROF_LAST; i++) {
+    if (fluid_profile_data[i].count > 0) {
+      FLUID_LOG(FLUID_INFO, "%s: %.3f/%.3f/%.3f",
+              fluid_profile_data[i].description,
+              fluid_profile_data[i].min,
+              fluid_profile_data[i].total / fluid_profile_data[i].count,
+              fluid_profile_data[i].max);
+    } else {
+      FLUID_LOG(FLUID_DBG, "%s: no profiling available", fluid_profile_data[i].description);
     }
+  }
 }
 
 
@@ -445,30 +445,17 @@ void fluid_profiling_print(void)
  *
  */
 
-#if OLD_GLIB_THREAD_API
-
-/* Rather than inline this one, we just declare it as a function, to prevent
- * GCC warning about inline failure. */
-fluid_cond_t *
-new_fluid_cond (void)
-{
-    if (!g_thread_supported ()) g_thread_init (NULL);
-    return g_cond_new ();
-}
-
-#endif
-
 static fluid_thread_return_t
 fluid_thread_high_prio (void *data)
 {
-    fluid_thread_info_t *info = data;
+  fluid_thread_info_t *info = data;
 
-    fluid_thread_self_set_prio (info->prio_level);
+  fluid_thread_self_set_prio (info->prio_level);
 
-    info->func (info->data);
-    FLUID_FREE (info);
+  info->func (info->data);
+  FLUID_FREE (info);
 
-    return FLUID_THREAD_RETURN_VALUE;
+  return FLUID_THREAD_RETURN_VALUE;
 }
 
 /**
@@ -483,39 +470,39 @@ fluid_thread_high_prio (void *data)
 fluid_thread_t *
 new_fluid_thread (const char *name, fluid_thread_func_t func, void *data, int prio_level, int detach)
 {
-    fluid_thread_t *thread;
-    fluid_thread_info_t *info;
+  fluid_thread_t *thread;
+  fluid_thread_info_t *info;
 
-    fluid_return_val_if_fail (func != NULL, NULL);
+  fluid_return_val_if_fail (func != NULL, NULL);
 
-    thread = FLUID_NEW(fluid_thread_t);
-    if (prio_level > 0) {
-        info = FLUID_NEW (fluid_thread_info_t);
+  thread = FLUID_NEW(fluid_thread_t);
+  if (prio_level > 0) {
+    info = FLUID_NEW (fluid_thread_info_t);
 
-        if (!info) {
-            FLUID_LOG(FLUID_ERR, "Out of memory");
-            return NULL;
-        }
-
-        info->func = func;
-        info->data = data;
-        info->prio_level = prio_level;
-        data = info;
-        func = fluid_thread_high_prio;
+    if (!info) {
+      FLUID_LOG(FLUID_ERR, "Out of memory");
+      return NULL;
     }
 
-    pthread_create(thread, NULL, func, data);
+    info->func = func;
+    info->data = data;
+    info->prio_level = prio_level;
+    data = info;
+    func = fluid_thread_high_prio;
+  }
 
-    if (!thread) {
-        FLUID_LOG(FLUID_ERR, "Failed to create the thread");
-        return NULL;
-    }
+  pthread_create(thread, NULL, func, data);
 
-    if (detach) {
-        pthread_detach(*thread);
-    }
+  if (!thread) {
+    FLUID_LOG(FLUID_ERR, "Failed to create the thread");
+    return NULL;
+  }
 
-    return thread;
+  if (detach) {
+    pthread_detach(*thread);
+  }
+
+  return thread;
 }
 
 /**
@@ -536,9 +523,9 @@ delete_fluid_thread(fluid_thread_t* thread)
 int
 fluid_thread_join(fluid_thread_t* thread)
 {
-    pthread_join(*thread, NULL);
+  pthread_join(*thread, NULL);
 
-    return FLUID_OK;
+  return FLUID_OK;
 }
 
 
@@ -564,8 +551,8 @@ fluid_timer_run (void *data)
     if (!cont) break;
 
     /* to avoid incremental time errors, calculate the delay between
-       two callbacks bringing in the "absolute" time (count *
-       timer->msec) */
+        two callbacks bringing in the "absolute" time (count *
+        timer->msec) */
     delay = (count * timer->msec) - (fluid_curtime() - start);
     if (delay > 0) usleep (delay * 1000);
   }
@@ -582,32 +569,32 @@ fluid_timer_t*
 new_fluid_timer (int msec, fluid_timer_callback_t callback, void* data,
                  int new_thread, int auto_destroy, int high_priority)
 {
-    fluid_timer_t *timer;
+  fluid_timer_t *timer;
 
-    timer = FLUID_NEW (fluid_timer_t);
+  timer = FLUID_NEW (fluid_timer_t);
 
-    if (timer == NULL) {
-        FLUID_LOG (FLUID_ERR, "Out of memory");
-        return NULL;
+  if (timer == NULL) {
+    FLUID_LOG (FLUID_ERR, "Out of memory");
+    return NULL;
+  }
+
+  timer->msec = msec;
+  timer->callback = callback;
+  timer->data = data;
+  timer->cont = TRUE ;
+  timer->thread = NULL;
+  timer->auto_destroy = auto_destroy;
+
+  if (new_thread) {
+    timer->thread = new_fluid_thread ("timer", fluid_timer_run, timer, high_priority
+                                      ? FLUID_SYS_TIMER_HIGH_PRIO_LEVEL : 0, false);
+    if (!timer->thread) {
+      FLUID_FREE (timer);
+      return NULL;
     }
+  } else fluid_timer_run (timer); /* Run directly, instead of as a separate thread */
 
-    timer->msec = msec;
-    timer->callback = callback;
-    timer->data = data;
-    timer->cont = TRUE ;
-    timer->thread = NULL;
-    timer->auto_destroy = auto_destroy;
-
-    if (new_thread) {
-        timer->thread = new_fluid_thread ("timer", fluid_timer_run, timer, high_priority
-                                          ? FLUID_SYS_TIMER_HIGH_PRIO_LEVEL : 0, false);
-        if (!timer->thread) {
-            FLUID_FREE (timer);
-            return NULL;
-        }
-    } else fluid_timer_run (timer); /* Run directly, instead of as a separate thread */
-
-    return timer;
+  return timer;
 }
 
 void
@@ -629,16 +616,16 @@ delete_fluid_timer (fluid_timer_t *timer)
 int
 fluid_timer_join (fluid_timer_t *timer)
 {
-    int auto_destroy;
+  int auto_destroy;
 
-    if (timer->thread) {
-        auto_destroy = timer->auto_destroy;
-        fluid_thread_join (timer->thread);
+  if (timer->thread) {
+    auto_destroy = timer->auto_destroy;
+    fluid_thread_join (timer->thread);
 
-        if (!auto_destroy) timer->thread = NULL;
-    }
+    if (!auto_destroy) timer->thread = NULL;
+  }
 
-    return FLUID_OK;
+  return FLUID_OK;
 }
 
 
@@ -655,7 +642,7 @@ fluid_timer_join (fluid_timer_t *timer)
 fluid_istream_t
 fluid_get_stdin (void)
 {
-    return STDIN_FILENO;
+  return STDIN_FILENO;
 }
 
 /**
@@ -665,7 +652,7 @@ fluid_get_stdin (void)
 fluid_ostream_t
 fluid_get_stdout (void)
 {
-    return STDOUT_FILENO;
+  return STDOUT_FILENO;
 }
 
 /**
@@ -676,26 +663,8 @@ int
 fluid_istream_readline (fluid_istream_t in, fluid_ostream_t out, char* prompt,
                         char* buf, int len)
 {
-#if WITH_READLINE
-    if (in == fluid_get_stdin ()) {
-        char *line;
-
-        line = readline (prompt);
-
-        if (line == NULL)
-            return -1;
-
-        snprintf(buf, len, "%s", line);
-        buf[len - 1] = 0;
-
-        free(line);
-        return 1;
-    } else
-#endif
-    {
-        fluid_ostream_printf (out, "%s", prompt);
-        return fluid_istream_gets (in, buf, len);
-    }
+  fluid_ostream_printf (out, "%s", prompt);
+  return fluid_istream_gets (in, buf, len);
 }
 
 /**
@@ -708,30 +677,30 @@ fluid_istream_readline (fluid_istream_t in, fluid_ostream_t out, char* prompt,
 static int
 fluid_istream_gets (fluid_istream_t in, char* buf, int len)
 {
-    char c;
-    int n;
+  char c;
+  int n;
 
-    buf[len - 1] = 0;
+  buf[len - 1] = 0;
 
-    while (--len > 0) {
-        n = read(in, &c, 1);
-        if (n == -1) return -1;
+  while (--len > 0) {
+    n = read(in, &c, 1);
+    if (n == -1) return -1;
 
-        if (n == 0) {
-            *buf++ = 0;
-            return 0;
-        }
-
-        if (c == '\n') {
-            *buf++ = 0;
-            return 1;
-        }
-
-        /* Store all characters excluding CR */
-        if (c != '\r') *buf++ = c;
+    if (n == 0) {
+        *buf++ = 0;
+        return 0;
     }
 
-    return -1;
+    if (c == '\n') {
+        *buf++ = 0;
+        return 1;
+    }
+
+    /* Store all characters excluding CR */
+    if (c != '\r') *buf++ = c;
+  }
+
+  return -1;
 }
 
 /**
