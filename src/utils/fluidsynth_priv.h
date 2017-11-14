@@ -182,10 +182,10 @@ typedef int fluid_socket_t;
      _type _name[_len]
 #elif defined HAVE_ALLOCA
 #  define FLUID_DECLARE_VLA(_type, _name, _len) \
-     _type * _name = (_type *)alloca((_len) * sizeof(_type))
+     _type * _name = (_type *)alloca(_len * sizeof(_type))
 #elif defined HAVE__ALLOCA
 #  define FLUID_DECLARE_VLA(_type, _name, _len) \
-     _type * _name = (_type *)_alloca((_len) * sizeof(_type))
+     _type * _name = (_type *)_alloca(_len * sizeof(_type))
 #else
 #  define FLUID_DECLARE_VLA(_type, _name, _len) \
      _type* _name = g_newa(_type, (_len))
