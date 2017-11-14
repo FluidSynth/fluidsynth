@@ -133,18 +133,6 @@ include ( TestVLA )
 include ( TestBigEndian )
 test_big_endian ( WORDS_BIGENDIAN )
 
-unset ( HAVE_ALLOCA CACHE )
-CHECK_FUNCTION_EXISTS ( "alloca" HAVE_ALLOCA )
-if ( HAVE_ALLOCA )
-  set ( HAVE_ALLOCA 1 )
-endif ( HAVE_ALLOCA )
-
-unset ( HAVE__ALLOCA CACHE )
-CHECK_FUNCTION_EXISTS ( "_alloca" HAVE__ALLOCA )
-if ( HAVE__ALLOCA )
-  set ( HAVE__ALLOCA 1 )
-endif ( HAVE__ALLOCA )
-
 unset ( LIBFLUID_CPPFLAGS CACHE )
 unset ( LIBFLUID_LIBS CACHE )
 unset ( FLUID_CPPFLAGS CACHE )
