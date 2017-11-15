@@ -31,7 +31,7 @@ extern "C" {
  */
 
 FLUIDSYNTH_API fluid_midi_event_t* new_fluid_midi_event(void);
-FLUIDSYNTH_API int delete_fluid_midi_event(fluid_midi_event_t* event);
+FLUIDSYNTH_API void delete_fluid_midi_event(fluid_midi_event_t* event);
 
 FLUIDSYNTH_API int fluid_midi_event_set_type(fluid_midi_event_t* evt, int type);
 FLUIDSYNTH_API int fluid_midi_event_get_type(fluid_midi_event_t* evt);
@@ -84,7 +84,7 @@ typedef int (*handle_midi_event_func_t)(void* data, fluid_midi_event_t* event);
 FLUIDSYNTH_API fluid_midi_router_t* new_fluid_midi_router(fluid_settings_t* settings,
 						       handle_midi_event_func_t handler, 
 						       void* event_handler_data); 
-FLUIDSYNTH_API int delete_fluid_midi_router(fluid_midi_router_t* handler); 
+FLUIDSYNTH_API void delete_fluid_midi_router(fluid_midi_router_t* handler); 
 FLUIDSYNTH_API int fluid_midi_router_set_default_rules (fluid_midi_router_t *router);
 FLUIDSYNTH_API int fluid_midi_router_clear_rules (fluid_midi_router_t *router);
 FLUIDSYNTH_API int fluid_midi_router_add_rule (fluid_midi_router_t *router,
@@ -122,7 +122,7 @@ enum fluid_player_status
 };
 
 FLUIDSYNTH_API fluid_player_t* new_fluid_player(fluid_synth_t* synth);
-FLUIDSYNTH_API int delete_fluid_player(fluid_player_t* player);
+FLUIDSYNTH_API void delete_fluid_player(fluid_player_t* player);
 FLUIDSYNTH_API int fluid_player_add(fluid_player_t* player, const char *midifile);
 FLUIDSYNTH_API int fluid_player_add_mem(fluid_player_t* player, const void *buffer, size_t len);
 FLUIDSYNTH_API int fluid_player_play(fluid_player_t* player);
@@ -138,7 +138,8 @@ FLUIDSYNTH_API int fluid_player_get_current_tick(fluid_player_t * player);
 FLUIDSYNTH_API int fluid_player_get_total_ticks(fluid_player_t * player);
 FLUIDSYNTH_API int fluid_player_get_bpm(fluid_player_t * player);
 FLUIDSYNTH_API int fluid_player_get_midi_tempo(fluid_player_t * player);
-    
+FLUIDSYNTH_API int fluid_player_seek(fluid_player_t *player, int ticks);
+
 ///
     
 #ifdef __cplusplus

@@ -57,8 +57,8 @@ new_fluid_ringbuffer (int count, int elementsize)
 
   if (!queue->array)
   {
-    FLUID_FREE (queue);
     FLUID_LOG (FLUID_ERR, "Out of memory");
+    delete_fluid_ringbuffer(queue);
     return NULL;
   }
 
@@ -84,6 +84,7 @@ new_fluid_ringbuffer (int count, int elementsize)
 void
 delete_fluid_ringbuffer (fluid_ringbuffer_t *queue)
 {
+  fluid_return_if_fail(queue != NULL);
   FLUID_FREE (queue->array);
   FLUID_FREE (queue);
 }

@@ -56,7 +56,7 @@ enum fluid_seq_event_type {
   FLUID_SEQ_TIMER,		/**< Timer event (useful for giving a callback at a certain time) */
   FLUID_SEQ_ANYCONTROLCHANGE,	/**< DOCME (used for remove_events only) */
   FLUID_SEQ_CHANNELPRESSURE,    /**< Channel aftertouch event @since 1.1.0 */
-  FLUID_SEQ_KEYPRESSURE,        /**< Polyphonic aftertouch event @since @NEXT_RELEASE@ */
+  FLUID_SEQ_KEYPRESSURE,        /**< Polyphonic aftertouch event @since 2.0.0 */
   FLUID_SEQ_SYSTEMRESET,        /**< System reset event @since 1.1.0 */
   FLUID_SEQ_UNREGISTERING,      /**< Called when a sequencer client is being unregistered. @since 1.1.0 */
   FLUID_SEQ_LASTEVENT		/**< Defines the count of event enums @deprecated As of 1.1.7 this enum value is deprecated and will be removed in a future release, because it prevents adding new enum values without breaking ABI compatibility. */
@@ -67,8 +67,8 @@ FLUIDSYNTH_API fluid_event_t* new_fluid_event(void);
 FLUIDSYNTH_API void delete_fluid_event(fluid_event_t* evt);
 
 /* Initializing events */
-FLUIDSYNTH_API void fluid_event_set_source(fluid_event_t* evt, short src);
-FLUIDSYNTH_API void fluid_event_set_dest(fluid_event_t* evt, short dest);
+FLUIDSYNTH_API void fluid_event_set_source(fluid_event_t* evt, fluid_seq_id_t src);
+FLUIDSYNTH_API void fluid_event_set_dest(fluid_event_t* evt, fluid_seq_id_t dest);
 
 /* Timer events */
 FLUIDSYNTH_API void fluid_event_timer(fluid_event_t* evt, void* data);
@@ -115,8 +115,8 @@ FLUIDSYNTH_API void fluid_event_unregistering(fluid_event_t* evt);
 
 /* Accessing event data */
 FLUIDSYNTH_API int fluid_event_get_type(fluid_event_t* evt);
-FLUIDSYNTH_API short fluid_event_get_source(fluid_event_t* evt);
-FLUIDSYNTH_API short fluid_event_get_dest(fluid_event_t* evt);
+FLUIDSYNTH_API fluid_seq_id_t fluid_event_get_source(fluid_event_t* evt);
+FLUIDSYNTH_API fluid_seq_id_t fluid_event_get_dest(fluid_event_t* evt);
 FLUIDSYNTH_API int fluid_event_get_channel(fluid_event_t* evt);
 FLUIDSYNTH_API short fluid_event_get_key(fluid_event_t* evt);
 FLUIDSYNTH_API short fluid_event_get_velocity(fluid_event_t* evt);

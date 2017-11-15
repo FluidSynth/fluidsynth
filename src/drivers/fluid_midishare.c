@@ -69,7 +69,7 @@ fluid_midi_driver_t* new_fluid_midishare_midi_driver(fluid_settings_t* settings,
 						   handle_midi_event_func_t handler,
 						   void* data);
 
-int delete_fluid_midishare_midi_driver(fluid_midi_driver_t* p);
+void delete_fluid_midishare_midi_driver(fluid_midi_driver_t* p);
 int fluid_midishare_midi_driver_status(fluid_midi_driver_t* p);
 
 static void fluid_midishare_midi_driver_receive(short ref);
@@ -156,14 +156,10 @@ new_fluid_midishare_midi_driver(fluid_settings_t* settings,
 /*
  * delete_fluid_midishare_midi_driver
  */
-int delete_fluid_midishare_midi_driver(fluid_midi_driver_t* p)
+void delete_fluid_midishare_midi_driver(fluid_midi_driver_t* p)
 {
-  fluid_midishare_midi_driver_t* dev;
-
-  dev = (fluid_midishare_midi_driver_t*) p;
-  if (dev == NULL) {
-    return FLUID_OK;
-  }
+  fluid_midishare_midi_driver_t* dev = (fluid_midishare_midi_driver_t*) p;
+  fluid_return_if_fail(dev != NULL);
 
   if (dev->filter) MidiFreeFilter(dev->filter);
 
@@ -183,7 +179,6 @@ int delete_fluid_midishare_midi_driver(fluid_midi_driver_t* p)
   dev->status = FLUID_MIDI_DONE;
 
   FLUID_FREE(dev);
-  return FLUID_OK;
 }
 
 
