@@ -515,7 +515,13 @@ fluid_revmodel_set(fluid_revmodel_t* rev, int set, float roomsize,
                    float damping, float width, float level)
 {
   if (set & FLUID_REVMODEL_SET_ROOMSIZE)
-    rev->roomsize = (roomsize * scaleroom) + offsetroom;
+  {
+        /* With upper limit above 1.07, the output amplitude will grow
+	exponentially. So, keeping this upper limit to 1.0 seems sufficient
+	as it produces yet a long reverb time */
+	fluid_clip(roomsize, 0.0f, 1.0f);
+	rev->roomsize = (roomsize * scaleroom) + offsetroom;
+  }
 
   if (set & FLUID_REVMODEL_SET_DAMPING)
     rev->damp = damping * scaledamp;
