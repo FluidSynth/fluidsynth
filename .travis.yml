@@ -6,7 +6,6 @@ env:
     - CMAKE_FLAGS="-Denable-floats=1 -Denable-profiling=1"
     - CMAKE_FLAGS="-Denable-trap-on-fpe=1"
     - CMAKE_FLAGS="-Denable-fpe-check=1"
-    - CMAKE_FLAGS="-Denable-debug=1"
 matrix:
   include:
     - os: linux
@@ -25,6 +24,7 @@ matrix:
             - portaudio19-dev
             - libpulse-dev
             - libdbus-glib-1-dev
+            - ladspa-sdk
       env:
          - MATRIX_EVAL="CC=gcc-4.8 && CXX=g++-4.8"
          - CMAKE_FLAGS="-Denable-floats=1"
@@ -45,6 +45,7 @@ matrix:
             - portaudio19-dev
             - libpulse-dev
             - libdbus-glib-1-dev
+            - ladspa-sdk
       env:
          - MATRIX_EVAL="CC=gcc-4.8 && CXX=g++-4.8"
          - CMAKE_FLAGS="-Denable-floats=0"
@@ -59,6 +60,7 @@ matrix:
             - cmake-data
             - cmake
             - libglib2.0-0
+            - ladspa-sdk
       env:
          - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9"
 
@@ -73,8 +75,10 @@ matrix:
             - cmake-data
             - cmake
             - libglib2.0-0
+            - ladspa-sdk
       env:
          - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5"
+         - CMAKE_FLAGS="-Denable-debug=1"
 
     # works on Precise and Trusty
     - os: linux
@@ -87,6 +91,7 @@ matrix:
             - cmake-data
             - cmake
             - libglib2.0-0
+            - ladspa-sdk
       env:
         - MATRIX_EVAL="CC=gcc-6 && CXX=g++-6"
 
@@ -96,13 +101,28 @@ matrix:
         apt:
           sources:
             - ubuntu-toolchain-r-test
+          packages:
+            - g++-7
+            - cmake-data
+            - cmake
+            - libglib2.0-0
+            - ladspa-sdk
+      env:
+        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+
+    # works on Precise and Trusty
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
             - llvm-toolchain-precise-3.8
-            - george-edison55-precise-backports
           packages:
             - clang-3.8
             - cmake-data
             - cmake
             - libglib2.0-0
+            - ladspa-sdk
       env:
         - MATRIX_EVAL="CC=clang-3.8 && CXX=clang++-3.8"
 
@@ -112,12 +132,12 @@ matrix:
         apt:
           sources:
             - llvm-toolchain-trusty-3.9
-            - george-edison55-precise-backports
           packages:
             - clang-3.9
             - cmake-data
             - cmake
             - libglib2.0-0
+            - ladspa-sdk
       env:
         - MATRIX_EVAL="CC=clang-3.9 && CXX=clang++-3.9"
 
@@ -127,51 +147,52 @@ matrix:
         apt:
           sources:
             - llvm-toolchain-trusty-4.0
-            - george-edison55-precise-backports
           packages:
             - clang-4.0
             - cmake-data
             - cmake
             - libglib2.0-0
+            - ladspa-sdk
       env:
         - MATRIX_EVAL="CC=clang-4.0 && CXX=clang++-4.0"
 
-    ## works on Trusty
-    #- os: linux
-      #addons:
-        #apt:
-          #sources:
-            #- llvm-toolchain-trusty
-            #- george-edison55-precise-backports
-          #packages:
-            #- clang-5.0
-            #- cmake-data
-            #- cmake
-            #- libglib2.0-0
-      #env:
-        #- MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0"
-    
-    #- os: osx
-      #osx_image: xcode8
-      #env:
-        #- MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9"
+    # works on Trusty
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - llvm-toolchain-trusty-5.0
+          packages:
+            - clang-5.0
+            - cmake-data
+            - cmake
+            - libglib2.0-0
+            - ladspa-sdk
+      env:
+        - MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0"
+        
+    - os: osx
+      osx_image: xcode8
+      env:
+        - MATRIX_EVAL="brew install gcc5 glib && CC=gcc-5 && CXX=g++-5"
 
-    #- os: osx
-      #osx_image: xcode8
-      #env:
-        #- MATRIX_EVAL="brew install gcc5 && CC=gcc-5 && CXX=g++-5"
+    - os: osx
+      osx_image: xcode8
+      env:
+        - MATRIX_EVAL="brew install gcc6 glib && CC=gcc-6 && CXX=g++-6"
 
-    #- os: osx
-      #osx_image: xcode8
-      #env:
-        #- MATRIX_EVAL="brew install gcc && CC=gcc-6 && CXX=g++-6"
+    - os: osx
+      osx_image: xcode8
+      env:
+        - MATRIX_EVAL="brew install gcc glib libsndfile jack dbus-glib pulseaudio portaudio && CC=gcc-7 && CXX=g++-7"
 
 before_install:
+    - if [ $TRAVIS_OS_NAME = linux ]; then sudo apt-get update; else brew update; fi
     - eval "${MATRIX_EVAL}"
     
 before_script:
     - mkdir build && cd build
     
 script:
-    - cmake ${CMAKE_FLAGS} "-DCMAKE_BUILD_TYPE=RelWithDebInfo" ..
+    - cmake ${CMAKE_FLAGS} "-Denable-portaudio=1" "-Denable-ladspa=1" "-DCMAKE_BUILD_TYPE=RelWithDebInfo" ..
     - make -j4

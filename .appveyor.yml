@@ -1,0 +1,58 @@
+os:
+  - Visual Studio 2015
+
+build:
+  verbosity: detailed
+
+configuration:
+  - Release
+  
+environment:
+  matrix:
+    - platform: x86
+      generator: Visual Studio 14 2015
+      glib-url: http://ftp.gnome.org/pub/gnome/binaries/win32/glib/2.28/glib_2.28.8-1_win32.zip
+      glib-dev-url: http://ftp.gnome.org/pub/gnome/binaries/win32/glib/2.28/glib-dev_2.28.8-1_win32.zip
+      pkg-config-url: http://ftp.gnome.org/pub/gnome/binaries/win32/dependencies/pkg-config_0.26-1_win32.zip
+      gettext-url: http://ftp.gnome.org/pub/gnome/binaries/win32/dependencies/gettext-runtime_0.18.1.1-2_win32.zip
+      proxy-libintl-dev-url: http://ftp.gnome.org/pub/gnome/binaries/win32/dependencies/proxy-libintl-dev_20100902_win32.zip
+
+    - platform: x64
+      generator: Visual Studio 14 2015 Win64
+      glib-url: http://ftp.gnome.org/pub/gnome/binaries/win64/glib/2.26/glib_2.26.1-1_win64.zip
+      glib-dev-url: http://ftp.gnome.org/pub/gnome/binaries/win64/glib/2.26/glib-dev_2.26.1-1_win64.zip
+      pkg-config-url: http://ftp.gnome.org/pub/gnome/binaries/win64/dependencies/pkg-config_0.23-2_win64.zip
+      gettext-url: http://ftp.gnome.org/pub/gnome/binaries/win64/dependencies/gettext-runtime_0.18.1.1-2_win64.zip
+      proxy-libintl-dev-url: http://ftp.gnome.org/pub/gnome/binaries/win64/dependencies/proxy-libintl-dev_20100902_win64.zip
+      
+  
+install:
+  - mkdir c:\deps
+  - cd c:\deps
+  - curl -fsS -o glib.zip %glib-url%
+  - curl -fsS -o glib-dev.zip %glib-dev-url%
+  - curl -fsS -o pkg-config.zip %pkg-config-url%
+  - curl -fsS -o gettext.zip %gettext-url%
+  - curl -fsS -o libintl-dev.zip %proxy-libintl-dev-url%
+  - 7z x glib.zip > NUL
+  - 7z x glib-dev.zip > NUL
+  - 7z x pkg-config.zip > NUL
+  - 7z x gettext.zip > NUL
+  - 7z x libintl-dev.zip > NUL
+  - SET PATH=C:\deps\bin;%PATH%
+
+build_script:
+#  - call "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /x64
+#  - call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86_amd64
+  - cd C:\projects\fluidsynth
+  - mkdir build
+  - cd build
+  - cmake -G "%generator%" ..
+  - cmake --build . --config Release
+  
+after_build:
+  - 7z a fluidsynth.zip %APPVEYOR_BUILD_FOLDER%\build\src\Release\* c:\deps\bin\libglib*.dll c:\deps\bin\libgthread*.dll c:\deps\bin\*intl*.dll
+
+artifacts:
+  - path: build/fluidsynth.zip
+    name: FluidSynth
