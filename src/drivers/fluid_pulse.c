@@ -30,6 +30,8 @@
 
 #include "config.h"
 
+#if PULSE_SUPPORT
+
 #include <pulse/simple.h>
 #include <pulse/error.h>
 
@@ -282,3 +284,6 @@ fluid_pulse_audio_run2(void* d)
 
   return FLUID_THREAD_RETURN_VALUE;
 }
+
+#endif /* PULSE_SUPPORT */
+

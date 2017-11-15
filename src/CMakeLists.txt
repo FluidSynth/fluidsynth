@@ -108,11 +108,6 @@ if ( MIDISHARE_SUPPORT )
 endif ( MIDISHARE_SUPPORT )
 
 set ( config_SOURCES ${CMAKE_BINARY_DIR}/config.h )
-if ( MSVC )
-    set ( config_SOURCES
-          ${config_SOURCES}
-          ${CMAKE_BINARY_DIR}/config_win32.h )
-endif ( MSVC )
 
 set ( libfluidsynth_SOURCES
     utils/fluid_conv.c

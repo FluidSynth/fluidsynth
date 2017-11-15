@@ -868,13 +868,13 @@ fluid_istream_gets (fluid_istream_t in, char* buf, int len)
 
     if (n == 0)
     {
-      *buf++ = 0;
+      *buf = 0;
       return 0;
     }
 
     if (c == '\n')
     {
-      *buf++ = 0;
+      *buf = 0;
       return 1;
     }
 

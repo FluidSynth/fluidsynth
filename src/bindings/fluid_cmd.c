@@ -18,8 +18,6 @@
  * 02110-1301, USA
  */
 
-#include <glib.h>
-
 #include "fluidsynth_priv.h"
 #include "fluid_cmd.h"
 #include "fluid_synth.h"
