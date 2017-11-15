@@ -19,14 +19,12 @@ Synthesis
 Drivers
 -------
 - libao audio output driver
-- MacOS X MidiCore component
 - Windows DirectMusic component
 - ASIO driver
 - DirectSound 3D and EAX
 
 Bugs to mash
 ------------
-- Fix warnings on 64 bit platforms and type-puned pointer warning
 - Add byte swapping support (on synthesis or sample load?)
 - Investigate why MIDI rendering causes burst of notes at start
 
@@ -41,8 +39,6 @@ Validation
 Documentation
 -------------
 - Write documention on tuning
-- fluid_synth_program_select2() with name of soundfont instead of font_id
-- fluid_synth_set_gen2()
 - Add usage scenarios in the documentation
 - User and system configuration file
 
@@ -76,10 +72,6 @@ Top of the list
 - Redo sfloader api using "interface" api
 - 3D audio output
 
-Design
-- turn ladspa fx unit and router in indepedent 
-  objects, remove their dependencies from the synth object
-
 MIDI player
 - Add API to manipulate and query MIDI file list
 - generalize use of fluid_event_t, remove fluid_midi_event_t
@@ -87,7 +79,6 @@ MIDI player
 Shell & command handler
 - Add "note" command that plays a note with a duration (sequencer)
 - MIDI file player commands (load/play/stop)
-- Relax dependency of the command handler on the synthesizer
 - Allow settings to be loaded before the synthesizer is created
 
 SoundFont Specs:
@@ -100,7 +91,6 @@ MIDI Specs
 
 
 Unsorted
-- include readline in project
 - additional aux buses
 - rewrite midi file using new sequencer
 - direct access to audio buffer

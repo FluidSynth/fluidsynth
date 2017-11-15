@@ -399,17 +399,18 @@ fluid_thread_self_set_prio (int prio_level)
 
 #if WITH_PROFILING
 
-fluid_profile_data_t fluid_profile_data[] = {
-    { FLUID_PROF_WRITE,            "fluid_synth_write_*             ", 1e10, 0.0, 0.0, 0},
-    { FLUID_PROF_ONE_BLOCK,        "fluid_synth_one_block           ", 1e10, 0.0, 0.0, 0},
-    { FLUID_PROF_ONE_BLOCK_CLEAR,  "fluid_synth_one_block:clear     ", 1e10, 0.0, 0.0, 0},
-    { FLUID_PROF_ONE_BLOCK_VOICE,  "fluid_synth_one_block:one voice ", 1e10, 0.0, 0.0, 0},
-    { FLUID_PROF_ONE_BLOCK_VOICES, "fluid_synth_one_block:all voices", 1e10, 0.0, 0.0, 0},
-    { FLUID_PROF_ONE_BLOCK_REVERB, "fluid_synth_one_block:reverb    ", 1e10, 0.0, 0.0, 0},
-    { FLUID_PROF_ONE_BLOCK_CHORUS, "fluid_synth_one_block:chorus    ", 1e10, 0.0, 0.0, 0},
-    { FLUID_PROF_VOICE_NOTE,       "fluid_voice:note                ", 1e10, 0.0, 0.0, 0},
-    { FLUID_PROF_VOICE_RELEASE,    "fluid_voice:release             ", 1e10, 0.0, 0.0, 0},
-    { FLUID_PROF_LAST, "last", 1e100, 0.0, 0.0, 0}
+fluid_profile_data_t fluid_profile_data[] =
+{
+  { FLUID_PROF_WRITE,            "fluid_synth_write_*             ", 1e10, 0.0, 0.0, 0},
+  { FLUID_PROF_ONE_BLOCK,        "fluid_synth_one_block           ", 1e10, 0.0, 0.0, 0},
+  { FLUID_PROF_ONE_BLOCK_CLEAR,  "fluid_synth_one_block:clear     ", 1e10, 0.0, 0.0, 0},
+  { FLUID_PROF_ONE_BLOCK_VOICE,  "fluid_synth_one_block:one voice ", 1e10, 0.0, 0.0, 0},
+  { FLUID_PROF_ONE_BLOCK_VOICES, "fluid_synth_one_block:all voices", 1e10, 0.0, 0.0, 0},
+  { FLUID_PROF_ONE_BLOCK_REVERB, "fluid_synth_one_block:reverb    ", 1e10, 0.0, 0.0, 0},
+  { FLUID_PROF_ONE_BLOCK_CHORUS, "fluid_synth_one_block:chorus    ", 1e10, 0.0, 0.0, 0},
+  { FLUID_PROF_VOICE_NOTE,       "fluid_voice:note                ", 1e10, 0.0, 0.0, 0},
+  { FLUID_PROF_VOICE_RELEASE,    "fluid_voice:release             ", 1e10, 0.0, 0.0, 0},
+  { FLUID_PROF_LAST, "last", 1e100, 0.0, 0.0, 0}
 };
 
 
@@ -424,10 +425,10 @@ void fluid_profiling_print(void)
   for (i = 0; i < FLUID_PROF_LAST; i++) {
     if (fluid_profile_data[i].count > 0) {
       FLUID_LOG(FLUID_INFO, "%s: %.3f/%.3f/%.3f",
-              fluid_profile_data[i].description,
-              fluid_profile_data[i].min,
-              fluid_profile_data[i].total / fluid_profile_data[i].count,
-              fluid_profile_data[i].max);
+	       fluid_profile_data[i].description,
+	       fluid_profile_data[i].min,
+	       fluid_profile_data[i].total / fluid_profile_data[i].count,
+	       fluid_profile_data[i].max);
     } else {
       FLUID_LOG(FLUID_DBG, "%s: no profiling available", fluid_profile_data[i].description);
     }
@@ -551,8 +552,8 @@ fluid_timer_run (void *data)
     if (!cont) break;
 
     /* to avoid incremental time errors, calculate the delay between
-        two callbacks bringing in the "absolute" time (count *
-        timer->msec) */
+       two callbacks bringing in the "absolute" time (count *
+       timer->msec) */
     delay = (count * timer->msec) - (fluid_curtime() - start);
     if (delay > 0) usleep (delay * 1000);
   }
@@ -573,7 +574,8 @@ new_fluid_timer (int msec, fluid_timer_callback_t callback, void* data,
 
   timer = FLUID_NEW (fluid_timer_t);
 
-  if (timer == NULL) {
+  if (timer == NULL)
+  {
     FLUID_LOG (FLUID_ERR, "Out of memory");
     return NULL;
   }
@@ -588,7 +590,7 @@ new_fluid_timer (int msec, fluid_timer_callback_t callback, void* data,
   if (new_thread)
   {
     timer->thread = new_fluid_thread ("timer", fluid_timer_run, timer, high_priority
-                                      ? FLUID_SYS_TIMER_HIGH_PRIO_LEVEL : 0, false);
+                                      ? FLUID_SYS_TIMER_HIGH_PRIO_LEVEL : 0, FALSE);
     if (!timer->thread)
     {
       FLUID_FREE (timer);
@@ -597,12 +599,12 @@ new_fluid_timer (int msec, fluid_timer_callback_t callback, void* data,
   }
   else
   {
-    fluid_timer_run (timer); /* Run directly, instead of as a separate thread */
-    if(auto_destroy)
-    {
-      /* do NOT return freed memory */
-      return NULL;
-    }
+      fluid_timer_run (timer);  /* Run directly, instead of as a separate thread */
+      if(auto_destroy)
+      {
+          /* do NOT return freed memory */
+          return NULL;
+      }
   }
 
   return timer;
@@ -629,7 +631,8 @@ fluid_timer_join (fluid_timer_t *timer)
 {
   int auto_destroy;
 
-  if (timer->thread) {
+  if (timer->thread)
+  {
     auto_destroy = timer->auto_destroy;
     fluid_thread_join (timer->thread);
 
@@ -697,14 +700,16 @@ fluid_istream_gets (fluid_istream_t in, char* buf, int len)
     n = read(in, &c, 1);
     if (n == -1) return -1;
 
-    if (n == 0) {
-        *buf++ = 0;
-        return 0;
+    if (n == 0)
+    {
+      *buf = 0;
+      return 0;
     }
 
-    if (c == '\n') {
-        *buf++ = 0;
-        return 1;
+    if (c == '\n')
+    {
+      *buf = 0;
+      return 1;
     }
 
     /* Store all characters excluding CR */
@@ -729,11 +734,12 @@ fluid_ostream_printf (fluid_ostream_t out, char* format, ...)
   int len;
 
   va_start (args, format);
-  len = vsnprintf (buf, 4095, format, args);
+  len = FLUID_VSNPRINTF (buf, 4095, format, args);
   va_end (args);
 
-  if (len == 0) {
-      return 0;
+  if (len == 0)
+  {
+    return 0;
   }
 
   if (len < 0)

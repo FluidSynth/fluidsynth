@@ -55,8 +55,6 @@ void fluid_time_config(void);
 
 /* Misc */
 
-#define fluid_return_val_if_fail(expr, val) if (!(expr)) return (val)
-#define fluid_return_if_fail(expr)          if (!(expr)) return
 #define FLUID_INLINE                        inline
 #define FLUID_POINTER_TO_UINT(x)            ((size_t)(x))
 #define FLUID_POINTER_TO_INT(x)             ((intptr_t)(x))
@@ -68,6 +66,17 @@ void fluid_time_config(void);
 
 #define FLUID_LE32TOH(x)          le32toh(x)
 #define FLUID_LE16TOH(x)          le16toh(x)
+
+
+#define fluid_return_if_fail(cond) \
+if(cond) \
+    ; \
+else \
+    return
+
+#define fluid_return_val_if_fail(cond, val) \
+ fluid_return_if_fail(cond) (val)
+
 
 /*
  * Utility functions
