@@ -151,7 +151,7 @@ fluid_seq_fluidsynth_callback(unsigned int time, fluid_event_t* evt, fluid_seque
   	break;
 
 	case FLUID_SEQ_ALLSOUNDSOFF:
-		/* NYI */
+        fluid_synth_all_sounds_off(synth, fluid_event_get_channel(evt));
   	break;
 
   case FLUID_SEQ_ALLNOTESOFF:

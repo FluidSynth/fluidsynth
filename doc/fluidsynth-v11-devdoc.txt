@@ -22,6 +22,7 @@ All the source code examples in this document are in the public domain; you can 
 - \ref Disclaimer
 - \ref Introduction
 - \ref NewIn2_0_0
+- \ref NewIn1_1_9
 - \ref NewIn1_1_8
 - \ref NewIn1_1_7
 - \ref NewIn1_1_6
@@ -96,6 +97,16 @@ Changes in FluidSynth 2.0.0 concerning developers:
 - add individual chorus setters: fluid_synth_set_chorus_nr(), fluid_synth_set_chorus_level(), fluid_synth_set_chorus_speed(), fluid_synth_set_chorus_depth(), fluid_synth_set_chorus_type()
 - introduce a separate data type for sequencer client IDs: #fluid_seq_id_t
 
+
+\section NewIn1_1_9 Whats new in 1.1.9?
+
+Changes in FluidSynth 1.1.9 concerning developers:
+
+- implement handling of #FLUID_SEQ_ALLSOUNDSOFF events in fluid_seq_fluidsynth_callback()
+- fix return value of fluid_file_set_encoding_quality()
+
+- For a full list of bug fixes, see
+  https://github.com/FluidSynth/fluidsynth/wiki/ChangeLog#fluidsynth-119
 
 \section NewIn1_1_8 Whats new in 1.1.8?
 
