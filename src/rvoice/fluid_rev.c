@@ -284,7 +284,7 @@ fluid_comb_getfeedback(fluid_comb* comb)
 struct _fluid_revmodel_t {
   fluid_real_t roomsize;
   fluid_real_t damp;
-  fluid_real_t wet, wet1, wet2;
+  fluid_real_t level, wet, wet1, wet2;
   fluid_real_t width;
   fluid_real_t gain;
   /*
@@ -481,11 +481,31 @@ fluid_revmodel_processmix(fluid_revmodel_t* rev, fluid_real_t *in,
 }
 
 static void
+/* scalelevelwidth is compensation weigth factor to get output
+   amplitude rather  independent of width setting.
+   0: the output amplitude is fully dependant of width setting.
+   >0: the output amplitude is less dependant of width setting.
+   With a scalelevelwidthof of 0.2 the output amplitude is 
+   rather independent of width setting.
+*/
+#define scalelevelwidth 0.2f 
 fluid_revmodel_update(fluid_revmodel_t* rev)
 {
   /* Recalculate internal values after parameter change */
   int i;
-
+  
+  /* The stereo amplitude equation  (wet1 and wet1 below) have a 
+  tendency to produce high amplitude with high width value ( 1 < width < 100).
+  This result in a unwanted output clipped by the audio card.
+  To avoid this dependency, we divide by (1 + rev->width * scalelevelwidth)
+  Actually, with a scalelevelwidthof 0.2, (regardless of level setting), 
+  the output amplitude (wet) seems rather independent of width setting */	
+  rev->wet = (rev->level * scalewet) / 
+             (1.0f + rev->width * scalelevelwidth);
+  
+  /* wet1 and wet2 are used by the stereo effect controled by the width setting
+  for producing a stereo ouptput from a monophonic reverbered signal.
+  Please see the note above about a side effect tendency */
   rev->wet1 = rev->wet * (rev->width / 2.0f + 0.5f);
   rev->wet2 = rev->wet * ((1.0f - rev->width) / 2.0f);
 
@@ -532,7 +552,7 @@ fluid_revmodel_set(fluid_revmodel_t* rev, int set, float roomsize,
   if (set & FLUID_REVMODEL_SET_LEVEL)
   {
     fluid_clip(level, 0.0f, 1.0f);
-    rev->wet = level * scalewet;
+    rev->level = level;
   }
 
   fluid_revmodel_update (rev);
