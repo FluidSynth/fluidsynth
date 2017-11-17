@@ -155,6 +155,7 @@ enum midi_rpn_event {
 };
 
 enum midi_meta_event {
+  MIDI_TEXT = 0x01,
   MIDI_COPYRIGHT = 0x02,
   MIDI_TRACK_NAME = 0x03,
   MIDI_INST_NAME = 0x04,
@@ -308,6 +309,9 @@ struct _fluid_player_t {
 
   handle_midi_event_func_t playback_callback; /* function fired on each midi event as it is played */
   void* playback_userdata; /* pointer to user-defined data passed to playback_callback function */
+  
+  handle_onload_func_t onload_callback; /* function fired when new MIDI data is loaded, such as a new file */
+  void* onload_userdata; /* pointer to user-defined data passed to onload_callback function */
 };
 
 int fluid_player_add_track(fluid_player_t* player, fluid_track_t* track);

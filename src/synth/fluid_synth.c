@@ -5078,6 +5078,12 @@ fluid_synth_handle_midi_event(void* data, fluid_midi_event_t* event)
   int chan = fluid_midi_event_get_channel(event);
 
   switch(type) {
+     case MIDI_TEXT:
+       return  FLUID_OK;
+
+     case MIDI_LYRIC:
+       return  FLUID_OK;
+
       case NOTE_ON:
 	return fluid_synth_noteon(synth, chan,
                                   fluid_midi_event_get_key(event),
