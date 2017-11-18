@@ -27,10 +27,6 @@
 #include "fluid_sys.h"
 #include "fluidsynth_priv.h"
 
-#ifdef LADSPA
-
-typedef struct _fluid_ladspa_fx_t fluid_ladspa_fx_t;
-
 fluid_ladspa_fx_t *new_fluid_ladspa_fx(fluid_real_t sample_rate, int buffer_size);
 void delete_fluid_ladspa_fx(fluid_ladspa_fx_t *fx);
 fluid_ladspa_fx_t *fluid_synth_get_ladspa_fx(fluid_synth_t *synth);
@@ -62,6 +58,4 @@ int fluid_ladspa_effect_set_control(fluid_ladspa_fx_t *fx, const char *effect_na
 int fluid_ladspa_effect_link(fluid_ladspa_fx_t *fx, const char *effect_name,
         const char *port_name, const char *name);
 
-
-#endif /* LADSPA */
 #endif /* _FLUID_LADSPA_H */

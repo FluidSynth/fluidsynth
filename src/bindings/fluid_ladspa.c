@@ -25,10 +25,13 @@
  * Author: Marcus Weseloh
  */
 
+#include "fluid_ladspa.h"
 #include "fluid_synth.h"
+
+#ifdef LADSPA
+
 #include "fluidsynth_priv.h"
 
-#include "fluid_ladspa.h"
 #include "fluid_sys.h"
 #include <math.h>
 #include <ladspa.h>
@@ -1665,3 +1668,88 @@ static FLUID_INLINE void copy_effect_to_host_buffers(fluid_ladspa_fx_t *fx, int 
     }
 }
 #endif /* WITH_FLOAT */
+
+#else /* ifdef LADSPA */
+
+/* Dummy functions to use if LADSPA is not compiled in, to keep the
+ * FluidSynth library ABI stable */
+
+fluid_ladspa_fx_t *fluid_synth_get_ladspa_fx(fluid_synth_t *synth)
+{
+    return NULL;
+}
+
+int fluid_ladspa_is_active(fluid_ladspa_fx_t *fx)
+{
+    return FALSE;
+}
+
+int fluid_ladspa_activate(fluid_ladspa_fx_t *fx)
+{
+    return FLUID_FAILED;
+}
+
+int fluid_ladspa_deactivate(fluid_ladspa_fx_t *fx)
+{
+    return FLUID_FAILED;
+}
+
+int fluid_ladspa_reset(fluid_ladspa_fx_t *fx)
+{
+    return FLUID_FAILED;
+}
+
+int fluid_ladspa_check(fluid_ladspa_fx_t *fx, char *err, int err_size)
+{
+    return FLUID_FAILED;
+}
+
+int fluid_ladspa_host_port_exists(fluid_ladspa_fx_t *fx, const char *name)
+{
+    return FALSE;
+}
+
+int fluid_ladspa_add_buffer(fluid_ladspa_fx_t *fx, const char *name)
+{
+    return FLUID_FAILED;
+}
+
+int fluid_ladspa_buffer_exists(fluid_ladspa_fx_t *fx, const char *name)
+{
+    return FALSE;
+}
+
+int fluid_ladspa_add_effect(fluid_ladspa_fx_t *fx, const char *effect_name,
+        const char *lib_name, const char *plugin_name)
+{
+    return FLUID_FAILED;
+}
+
+int fluid_ladspa_effect_can_mix(fluid_ladspa_fx_t *fx, const char *name)
+{
+    return FALSE;
+}
+
+int fluid_ladspa_effect_set_mix(fluid_ladspa_fx_t *fx, const char *name, int mix, float gain)
+{
+    return FLUID_FAILED;
+}
+
+int fluid_ladspa_effect_port_exists(fluid_ladspa_fx_t *fx, const char *effect_name, const char *port_name)
+{
+    return FALSE;
+}
+
+int fluid_ladspa_effect_set_control(fluid_ladspa_fx_t *fx, const char *effect_name,
+        const char *port_name, float val)
+{
+    return FLUID_FAILED;
+}
+
+int fluid_ladspa_effect_link(fluid_ladspa_fx_t *fx, const char *effect_name,
+        const char *port_name, const char *name)
+{
+    return FLUID_FAILED;
+}
+
+#endif /* ifdef LADSPA */
