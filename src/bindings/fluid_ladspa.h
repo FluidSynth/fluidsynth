@@ -33,6 +33,7 @@ typedef struct _fluid_ladspa_fx_t fluid_ladspa_fx_t;
 
 fluid_ladspa_fx_t *new_fluid_ladspa_fx(fluid_real_t sample_rate, int buffer_size);
 void delete_fluid_ladspa_fx(fluid_ladspa_fx_t *fx);
+fluid_ladspa_fx_t *fluid_synth_get_ladspa_fx(fluid_synth_t *synth);
 
 int fluid_ladspa_set_sample_rate(fluid_ladspa_fx_t *fx, fluid_real_t sample_rate);
 

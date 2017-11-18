@@ -25,6 +25,7 @@
  * Author: Marcus Weseloh
  */
 
+#include "fluid_synth.h"
 #include "fluidsynth_priv.h"
 
 #include "fluid_ladspa.h"
@@ -256,6 +257,17 @@ void delete_fluid_ladspa_fx(fluid_ladspa_fx_t *fx)
     fluid_rec_mutex_destroy(fx->api_mutex);
 
     FLUID_FREE(fx);
+}
+
+/**
+ * Return the LADSPA effects instance used by FluidSynth
+ *
+ * @param synth FluidSynth instance
+ * @return pointer to LADSPA fx or NULL
+ */
+fluid_ladspa_fx_t *fluid_synth_get_ladspa_fx(fluid_synth_t *synth)
+{
+    return synth->ladspa_fx;
 }
 
 /**
