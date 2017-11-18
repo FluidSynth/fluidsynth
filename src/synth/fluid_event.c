@@ -75,10 +75,7 @@ new_fluid_event()
 void
 delete_fluid_event(fluid_event_t* evt)
 {
-
-  if (evt == NULL) {
-    return;
-  }
+  fluid_return_if_fail(evt != NULL);
 
   FLUID_FREE(evt);
 }
@@ -96,23 +93,23 @@ fluid_event_set_time(fluid_event_t* evt, unsigned int time)
 }
 
 /**
- * Set source of a sequencer event (DOCME).
+ * Set source of a sequencer event. \c src must be a unique sequencer ID or -1 if not set.
  * @param evt Sequencer event structure
- * @param src DOCME
+ * @param src Unique sequencer ID
  */
 void
-fluid_event_set_source(fluid_event_t* evt, short src)
+fluid_event_set_source(fluid_event_t* evt, fluid_seq_id_t src)
 {
 	evt->src = src;
 }
 
 /**
- * Set destination of a sequencer event (DOCME).
+ * Set destination of this sequencer event, i.e. the sequencer client this event will be sent to. \c dest must be a unique sequencer ID.
  * @param evt Sequencer event structure
- * @param dest DOCME
+ * @param dest The destination unique sequencer ID
  */
 void
-fluid_event_set_dest(fluid_event_t* evt, short dest)
+fluid_event_set_dest(fluid_event_t* evt, fluid_seq_id_t dest)
 {
 	evt->dest = dest;
 }
@@ -491,21 +488,21 @@ unsigned int fluid_event_get_time(fluid_event_t* evt)
 }
 
 /**
- * Get the source field from a sequencer event structure.
+ * Get the source sequencer client from a sequencer event structure.
  * @param evt Sequencer event structure
- * @return DOCME
+ * @return source field of the sequencer event
  */
-short fluid_event_get_source(fluid_event_t* evt)
+fluid_seq_id_t fluid_event_get_source(fluid_event_t* evt)
 {
 	return evt->src;
 }
 
 /**
- * Get the dest field from a sequencer event structure.
+ * Get the dest sequencer client from a sequencer event structure.
  * @param evt Sequencer event structure
- * @return DOCME
+ * @return dest field of the sequencer event
  */
-short fluid_event_get_dest(fluid_event_t* evt)
+fluid_seq_id_t fluid_event_get_dest(fluid_event_t* evt)
 {
 	return evt->dest;
 }

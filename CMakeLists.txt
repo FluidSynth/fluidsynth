@@ -127,6 +127,7 @@ check_include_file ( limits.h  HAVE_LIMITS_H )
 check_include_file ( pthread.h HAVE_PTHREAD_H )
 check_include_file ( signal.h HAVE_SIGNAL_H )
 check_include_file ( getopt.h HAVE_GETOPT_H )
+check_include_file ( stdint.h HAVE_STDINT_H )
 include ( TestInline )
 include ( TestVLA )
 include ( TestBigEndian )
@@ -138,7 +139,7 @@ unset ( FLUID_CPPFLAGS CACHE )
 unset ( FLUID_LIBS CACHE )
 
 # Options for the GNU C compiler only
-if ( CMAKE_COMPILER_IS_GNUCC OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" )
+if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang" )
   if ( NOT APPLE AND NOT OS2 )
     set ( CMAKE_EXE_LINKER_FLAGS
           "${CMAKE_EXE_LINKER_FLAGS} -Wl,--as-needed" )
@@ -156,7 +157,7 @@ if ( CMAKE_COMPILER_IS_GNUCC OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" )
   set ( CMAKE_C_FLAGS_DEBUG "-std=gnu89 -g ${GNUCC_VISIBILITY_FLAG} -DDEBUG ${GNUCC_WARNING_FLAGS} -fsanitize=undefined" )
   set ( CMAKE_C_FLAGS_RELEASE "-std=gnu89 -O2 -fomit-frame-pointer -finline-functions ${GNUCC_VISIBILITY_FLAG} -DNDEBUG ${GNUCC_WARNING_FLAGS}" )
   set ( CMAKE_C_FLAGS_RELWITHDEBINFO "-std=gnu89 -O2 -g -fomit-frame-pointer -finline-functions ${GNUCC_VISIBILITY_FLAG} -DNDEBUG ${GNUCC_WARNING_FLAGS}" )
-endif ( CMAKE_COMPILER_IS_GNUCC OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" )
+endif ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang" )
 
 # Windows
 unset ( WINDOWS_SUPPORT CACHE )
@@ -431,12 +432,6 @@ endif ( enable-readline )
 configure_file ( ${CMAKE_SOURCE_DIR}/src/config.cmake
                  ${CMAKE_BINARY_DIR}/config.h )
 add_definitions ( -DHAVE_CONFIG_H )
-
-# Extra configuration file for MS VisualC compiler
-if ( MSVC )
-  configure_file ( ${CMAKE_SOURCE_DIR}/src/config_win32.cmake
-                   ${CMAKE_BINARY_DIR}/config_win32.h )
-endif ( MSVC )
 
 # Process subdirectories
 add_subdirectory ( src )

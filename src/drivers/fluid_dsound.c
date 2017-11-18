@@ -32,7 +32,7 @@
 fluid_audio_driver_t*
 new_fluid_dsound_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth);
 
-int delete_fluid_dsound_audio_driver(fluid_audio_driver_t* data);
+void delete_fluid_dsound_audio_driver(fluid_audio_driver_t* data);
 DWORD WINAPI fluid_dsound_audio_run(LPVOID lpParameter);
 
 char* fluid_win32_error(HRESULT hr);
@@ -251,13 +251,10 @@ new_fluid_dsound_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
 }
 
 
-int delete_fluid_dsound_audio_driver(fluid_audio_driver_t* d)
+void delete_fluid_dsound_audio_driver(fluid_audio_driver_t* d)
 {
   fluid_dsound_audio_driver_t* dev = (fluid_dsound_audio_driver_t*) d;
-
-  if (dev == NULL) {
-    return FLUID_OK;
-  }
+  fluid_return_if_fail(dev != NULL);
 
   /* tell the audio thread to stop its loop */
   dev->cont = 0;
@@ -273,9 +270,7 @@ int delete_fluid_dsound_audio_driver(fluid_audio_driver_t* d)
 
   /* release all the allocated ressources */
 
-  if (dev->format != NULL) {
     FLUID_FREE(dev->format);
-  }
 
   if (dev->sec_buffer != NULL) {
     IDirectSoundBuffer_Stop(dev->sec_buffer);
@@ -288,8 +283,6 @@ int delete_fluid_dsound_audio_driver(fluid_audio_driver_t* d)
     IDirectSound_Release(dev->direct_sound);
   }
   FLUID_FREE(dev);
-
-  return 0;
 }
 
 DWORD WINAPI fluid_dsound_audio_run(LPVOID lpParameter)

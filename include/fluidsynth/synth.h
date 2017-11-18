@@ -63,7 +63,7 @@ struct _fluid_synth_channel_info_t
 };
 
 FLUIDSYNTH_API fluid_synth_t* new_fluid_synth(fluid_settings_t* settings);
-FLUIDSYNTH_API int delete_fluid_synth(fluid_synth_t* synth);
+FLUIDSYNTH_API void delete_fluid_synth(fluid_synth_t* synth);
 FLUIDSYNTH_API fluid_settings_t* fluid_synth_get_settings(fluid_synth_t* synth);
 
 
@@ -295,6 +295,7 @@ enum fluid_synth_add_mod {
 };
 
 FLUIDSYNTH_API int fluid_synth_add_default_mod(fluid_synth_t* synth, fluid_mod_t* mod, int mode);
+FLUIDSYNTH_API int fluid_synth_remove_default_mod(fluid_synth_t* synth, const fluid_mod_t* mod);
 
 
 /*

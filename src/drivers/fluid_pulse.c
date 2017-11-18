@@ -30,6 +30,8 @@
 
 #include "config.h"
 
+#if PULSE_SUPPORT
+
 #include <pulse/simple.h>
 #include <pulse/error.h>
 
@@ -53,7 +55,7 @@ fluid_audio_driver_t* new_fluid_pulse_audio_driver(fluid_settings_t* settings,
 						   fluid_synth_t* synth);
 fluid_audio_driver_t* new_fluid_pulse_audio_driver2(fluid_settings_t* settings,
 						    fluid_audio_func_t func, void* data);
-int delete_fluid_pulse_audio_driver(fluid_audio_driver_t* p);
+void delete_fluid_pulse_audio_driver(fluid_audio_driver_t* p);
 void fluid_pulse_audio_driver_settings(fluid_settings_t* settings);
 static fluid_thread_return_t fluid_pulse_audio_run(void* d);
 static fluid_thread_return_t fluid_pulse_audio_run2(void* d);
@@ -174,13 +176,10 @@ new_fluid_pulse_audio_driver2(fluid_settings_t* settings,
   return NULL;
 }
 
-int delete_fluid_pulse_audio_driver(fluid_audio_driver_t* p)
+void delete_fluid_pulse_audio_driver(fluid_audio_driver_t* p)
 {
   fluid_pulse_audio_driver_t* dev = (fluid_pulse_audio_driver_t*) p;
-
-  if (dev == NULL) {
-    return FLUID_OK;
-  }
+  fluid_return_if_fail(dev != NULL);
 
   dev->cont = 0;
 
@@ -191,8 +190,6 @@ int delete_fluid_pulse_audio_driver(fluid_audio_driver_t* p)
     pa_simple_free(dev->pa_handle);
 
   FLUID_FREE(dev);
-
-  return FLUID_OK;
 }
 
 /* Thread without audio callback, more efficient */
@@ -287,3 +284,6 @@ fluid_pulse_audio_run2(void* d)
 
   return FLUID_THREAD_RETURN_VALUE;
 }
+
+#endif /* PULSE_SUPPORT */
+

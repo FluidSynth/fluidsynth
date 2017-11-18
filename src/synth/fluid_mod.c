@@ -29,7 +29,7 @@
  * @note The \c next member of \c mod will be left unchanged.
  */
 void
-fluid_mod_clone(fluid_mod_t* mod, fluid_mod_t* src)
+fluid_mod_clone(fluid_mod_t* mod, const fluid_mod_t* src)
 {
   mod->dest = src->dest;
   mod->src1 = src->src1;
@@ -97,7 +97,7 @@ fluid_mod_set_amount(fluid_mod_t* mod, double amount)
  * @return The primary source value (#fluid_mod_src or a MIDI CC controller value).
  */
 int
-fluid_mod_get_source1(fluid_mod_t* mod)
+fluid_mod_get_source1(const fluid_mod_t* mod)
 {
   return mod->src1;
 }
@@ -108,7 +108,7 @@ fluid_mod_get_source1(fluid_mod_t* mod)
  * @return The primary source flags (#fluid_mod_flags).
  */
 int
-fluid_mod_get_flags1(fluid_mod_t* mod)
+fluid_mod_get_flags1(const fluid_mod_t* mod)
 {
   return mod->flags1;
 }
@@ -119,7 +119,7 @@ fluid_mod_get_flags1(fluid_mod_t* mod)
  * @return The secondary source value (#fluid_mod_src or a MIDI CC controller value).
  */
 int
-fluid_mod_get_source2(fluid_mod_t* mod)
+fluid_mod_get_source2(const fluid_mod_t* mod)
 {
   return mod->src2;
 }
@@ -130,7 +130,7 @@ fluid_mod_get_source2(fluid_mod_t* mod)
  * @return The secondary source flags (#fluid_mod_flags).
  */
 int
-fluid_mod_get_flags2(fluid_mod_t* mod)
+fluid_mod_get_flags2(const fluid_mod_t* mod)
 {
   return mod->flags2;
 }
@@ -141,7 +141,7 @@ fluid_mod_get_flags2(fluid_mod_t* mod)
  * @return Destination generator (#fluid_gen_type)
  */
 int
-fluid_mod_get_dest(fluid_mod_t* mod)
+fluid_mod_get_dest(const fluid_mod_t* mod)
 {
   return mod->dest;
 }
@@ -152,7 +152,7 @@ fluid_mod_get_dest(fluid_mod_t* mod)
  * @return Scale amount
  */
 double
-fluid_mod_get_amount(fluid_mod_t* mod)
+fluid_mod_get_amount(const fluid_mod_t* mod)
 {
   return (double) mod->amount;
 }
@@ -412,7 +412,7 @@ fluid_mod_delete (fluid_mod_t *mod)
  * SF2.01 section 9.5.1 page 69, 'bullet' 3 defines 'identical'.
  */
 int
-fluid_mod_test_identity (fluid_mod_t *mod1, fluid_mod_t *mod2)
+fluid_mod_test_identity (const fluid_mod_t *mod1, const fluid_mod_t *mod2)
 {
   return mod1->dest == mod2->dest
     && mod1->src1 == mod2->src1
@@ -429,7 +429,7 @@ fluid_mod_test_identity (fluid_mod_t *mod1, fluid_mod_t *mod2)
  * 
  * @return TRUE if the modulator has the given source, FALSE otherwise.
  */
-int fluid_mod_has_source(fluid_mod_t * mod, int cc, int ctrl)
+int fluid_mod_has_source(const fluid_mod_t * mod, int cc, int ctrl)
 {
     return
     (
@@ -450,7 +450,7 @@ int fluid_mod_has_source(fluid_mod_t * mod, int cc, int ctrl)
  * @param gen The destination generator of type #fluid_gen_type to check for
  * @return TRUE if the modulator has the given destination, FALSE otherwise.
  */
-int fluid_mod_has_dest(fluid_mod_t * mod, int gen)
+int fluid_mod_has_dest(const fluid_mod_t * mod, int gen)
 {
     return mod->dest == gen;
 }

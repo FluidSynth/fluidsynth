@@ -67,8 +67,8 @@ FLUIDSYNTH_API fluid_event_t* new_fluid_event(void);
 FLUIDSYNTH_API void delete_fluid_event(fluid_event_t* evt);
 
 /* Initializing events */
-FLUIDSYNTH_API void fluid_event_set_source(fluid_event_t* evt, short src);
-FLUIDSYNTH_API void fluid_event_set_dest(fluid_event_t* evt, short dest);
+FLUIDSYNTH_API void fluid_event_set_source(fluid_event_t* evt, fluid_seq_id_t src);
+FLUIDSYNTH_API void fluid_event_set_dest(fluid_event_t* evt, fluid_seq_id_t dest);
 
 /* Timer events */
 FLUIDSYNTH_API void fluid_event_timer(fluid_event_t* evt, void* data);
@@ -115,8 +115,8 @@ FLUIDSYNTH_API void fluid_event_unregistering(fluid_event_t* evt);
 
 /* Accessing event data */
 FLUIDSYNTH_API int fluid_event_get_type(fluid_event_t* evt);
-FLUIDSYNTH_API short fluid_event_get_source(fluid_event_t* evt);
-FLUIDSYNTH_API short fluid_event_get_dest(fluid_event_t* evt);
+FLUIDSYNTH_API fluid_seq_id_t fluid_event_get_source(fluid_event_t* evt);
+FLUIDSYNTH_API fluid_seq_id_t fluid_event_get_dest(fluid_event_t* evt);
 FLUIDSYNTH_API int fluid_event_get_channel(fluid_event_t* evt);
 FLUIDSYNTH_API short fluid_event_get_key(fluid_event_t* evt);
 FLUIDSYNTH_API short fluid_event_get_velocity(fluid_event_t* evt);
