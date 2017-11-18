@@ -29,21 +29,6 @@
 #include <mmsystem.h>
 #include <dsound.h>
 
-static HWND fluid_wnd = NULL;
-/* sets the application window handle
- * @param hwnd the window handle
- *
- * If an application set a window handle this window will
- * be used by dsound driver for cooperative use.
- *
- * It is not mandatory for an application to set a window handle
- * in this case dsound driver will use its own window.
-*/
-void fluid_win32_set_window(HWND hwnd)
-{
-    fluid_wnd = hwnd;
-}
-
 fluid_audio_driver_t*
 new_fluid_dsound_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth);
 
@@ -120,8 +105,7 @@ new_fluid_dsound_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
   double sample_rate;
   int periods, period_size;
   fluid_dsound_devsel_t devsel;
-  HWND hwnd; /* window handle needed for dsound */
-
+  
   /* create and clear the driver data */
   dev = FLUID_NEW(fluid_dsound_audio_driver_t);
   if (dev == NULL) {
@@ -179,17 +163,8 @@ new_fluid_dsound_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
     FLUID_LOG(FLUID_ERR, "Failed to create the DirectSound object");
     goto error_recovery;
   }
-  /* The window handle returned by fluid_wnd is any window handle set by
-  the application using fluid_win32_set_window() function given for convenience. 
-  */
-  hwnd = fluid_wnd; /* window application handle */
-  if (! hwnd)
-  {
-     /* It isn'tmandatory for an application to set a window handle,
-     in this case dsound driver will use the desktop window). */
-     hwnd = GetDesktopWindow();
-  }
-  hr = IDirectSound_SetCooperativeLevel(dev->direct_sound, hwnd, DSSCL_PRIORITY);
+  
+  hr = IDirectSound_SetCooperativeLevel(dev->direct_sound, GetDesktopWindow(), DSSCL_PRIORITY);
   if (hr != DS_OK) {
     FLUID_LOG(FLUID_ERR, "Failed to set the cooperative level");
     goto error_recovery;
