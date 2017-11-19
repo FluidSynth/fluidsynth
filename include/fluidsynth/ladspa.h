@@ -25,10 +25,6 @@
 extern "C" {
 #endif
 
-typedef struct _fluid_ladspa_fx_t fluid_ladspa_fx_t;
-
-FLUIDSYNTH_API fluid_ladspa_fx_t *fluid_synth_get_ladspa_fx(fluid_synth_t *synth);
-
 FLUIDSYNTH_API int fluid_ladspa_is_active(fluid_ladspa_fx_t *fx);
 FLUIDSYNTH_API int fluid_ladspa_activate(fluid_ladspa_fx_t *fx);
 FLUIDSYNTH_API int fluid_ladspa_deactivate(fluid_ladspa_fx_t *fx);

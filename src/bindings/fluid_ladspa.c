@@ -263,17 +263,6 @@ void delete_fluid_ladspa_fx(fluid_ladspa_fx_t *fx)
 }
 
 /**
- * Return the LADSPA effects instance used by FluidSynth
- *
- * @param synth FluidSynth instance
- * @return pointer to LADSPA fx or NULL
- */
-fluid_ladspa_fx_t *fluid_synth_get_ladspa_fx(fluid_synth_t *synth)
-{
-    return synth->ladspa_fx;
-}
-
-/**
  * Add host buffers to the LADSPA engine.
  *
  * @note The size of the buffers pointed to by the buffers array must be
@@ -1673,11 +1662,6 @@ static FLUID_INLINE void copy_effect_to_host_buffers(fluid_ladspa_fx_t *fx, int 
 
 /* Dummy functions to use if LADSPA is not compiled in, to keep the
  * FluidSynth library ABI stable */
-
-fluid_ladspa_fx_t *fluid_synth_get_ladspa_fx(fluid_synth_t *synth)
-{
-    return NULL;
-}
 
 int fluid_ladspa_is_active(fluid_ladspa_fx_t *fx)
 {

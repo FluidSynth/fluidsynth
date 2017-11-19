@@ -5288,3 +5288,14 @@ int fluid_synth_set_channel_type(fluid_synth_t* synth, int chan, int type)
 
   FLUID_API_RETURN(FLUID_OK);
 }
+
+/**
+ * Return the LADSPA effects instance used by FluidSynth
+ *
+ * @param synth FluidSynth instance
+ * @return pointer to LADSPA fx or NULL
+ */
+fluid_ladspa_fx_t *fluid_synth_get_ladspa_fx(fluid_synth_t *synth)
+{
+    return synth->ladspa_fx;
+}
