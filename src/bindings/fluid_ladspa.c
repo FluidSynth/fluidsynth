@@ -26,7 +26,6 @@
  */
 
 #include "fluid_ladspa.h"
-#include "fluid_synth.h"
 
 #ifdef LADSPA
 
