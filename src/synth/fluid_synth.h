@@ -211,6 +211,4 @@ void fluid_synth_process_event_queue(fluid_synth_t* synth);
 
 void fluid_synth_settings(fluid_settings_t* settings);
 
-fluid_ladspa_fx_t *fluid_synth_get_ladspa_fx(fluid_synth_t *synth);
-
 #endif  /* _FLUID_SYNTH_H */
