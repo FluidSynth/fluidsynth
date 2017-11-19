@@ -1,8 +1,11 @@
 # FluidSynth LADSPA Interface
 
 The [LADSPA](http://ladspa.org/) (Linux Audio Developer's Simple Plugin API)
-binding can be used to route the FluidSynth audio output through any number
-of LADSPA plugins.
+binding can be used to route the FluidSynth audio output through any number of
+LADSPA plugins. Please note that even though the "L" in LADSPA stands for
+"Linux", it can also be used on different platforms, for example Windows or
+MacOS. Check the "LADSPA on other Platforms" section at the end of this guide
+for more information.
 
 ## Configuration
 
@@ -405,7 +408,7 @@ Ports:	"Decay [ms]" input, control, 0 to 10000, default 2500
 	"Output Right" output, audio
 ```
 
-Using this information, we can create a LADSPA configuration.
+Using this information we can create a LADSPA configuration:
 
 effects.txt
 ```
@@ -417,9 +420,9 @@ ladspa_link e1 "Output Right" Main:R
 ladspa_start
 ```
 
-And start FluidSynth with the internal reverb disabled. (You will need to
-replace the `test.mid` with your own MIDI file and maybe change the paths to
-the effects.txt file and the SoundFont)
+Start FluidSynth with the internal reverb disabled. (You will need to replace
+the `test.mid` with your own MIDI file and maybe change the paths to the
+effects.txt file and the SoundFont)
 
 ```
 user@host:$ fluidsynth -a alsa -R0 -o synth.ladspa.active=1 -f effects.txt FluidR3_GM.sf2 test.mid
@@ -451,3 +454,30 @@ following ports will be created:
 
 If you want all main ports to act as outputs as well as inputs to the effects,
 then you also need to increase the `synth.audio-channels` setting.
+
+
+# LADSPA on other Platforms
+
+LADSPA is a very simple plugin architecture and only requires the ladspa.h
+header file as compile-time dependency. To build FluidSynth on non-Linux
+platform with LADSPA support, download the ladspa.h file from
+http://www.ladspa.org and place it somewhere in your compiler include path. Then
+configure and build LADSPA as you normally would.
+
+All information in the above documentation is valid for all other platforms as
+well. Just make sure you use the file path format specific to your platform in
+the `ladspa_effect` calls. For example, on Windows you should use
+```
+ladspa_effect c:\path\to\ladspa\plugin.dll
+```
+instead of
+```
+ladspa_effect /path/to/ladspa/plugin.so
+```
+
+Audacity provides a large number of precompiled LADSPA plugins for Windows and
+MacOS: http://www.audacityteam.org/download/plug-ins/
+
+To get the `analyseplugin` and `listplugins` commands on Windows, you can either
+compile them yourself using the LADSPA-SDK source code from ladspa.org or install
+ladspa-sdk via Cygwin.
