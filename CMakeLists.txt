@@ -256,19 +256,6 @@ if ( enable-profiling )
     set ( WITH_PROFILING 1 )
 endif ( enable-profiling )
 
-unset ( HAVE_LIBDL CACHE )
-unset ( LADSPA_SUPPORT CACHE )
-if ( enable-ladspa )
-  check_include_file ( ladspa.h LADSPA_SUPPORT )
-  if ( LADSPA_SUPPORT )
-    set ( LADSPA 1 )
-    if ( CMAKE_DL_LIBS )
-      set ( HAVE_LIBDL 1 )
-      set ( LIBFLUID_LIBS "${LIBFLUID_LIBS};${CMAKE_DL_LIBS}" )
-    endif ( CMAKE_DL_LIBS )
-  endif ( LADSPA_SUPPORT )
-endif ( enable-ladspa )
-
 unset ( ENABLE_TRAPONFPE CACHE )
 unset ( TRAP_ON_FPE CACHE )
 if ( enable-trap-on-fpe AND NOT APPLE AND NOT WIN32 )
@@ -303,22 +290,20 @@ endif ( CMAKE_BUILD_TYPE MATCHES "Debug" )
 
 if(NOT enable-pkgconfig)
 
-    FIND_LIBRARY( GLIB_LIB NAMES glib glib-2.0 PATH GLIB_LIBRARY_DIR NO_DEFAULT_PATH)
-    FIND_LIBRARY( GTHREAD_LIB NAMES gthread gthread-2.0 PATH GTHREAD_LIBRARY_DIR NO_DEFAULT_PATH )
-    FIND_LIBRARY( GMODULE_LIB NAMES gmodule gmodule-2.0 PATH GMODULE_LIBRARY_DIR NO_DEFAULT_PATH )
-    FIND_PATH( GLIBH_DIR glib.h PATH GLIB_INCLUDE_DIR NO_DEFAULT_PATH )
-    FIND_PATH( GLIBCONF_DIR glibconfig.h PATH GLIBCONF_INCLUDE_DIR NO_DEFAULT_PATH )
+    FIND_LIBRARY( GLIB_LIB NAMES glib glib-2.0 PATH GLIB_LIBRARY_DIR )
+    FIND_LIBRARY( GTHREAD_LIB NAMES gthread gthread-2.0 PATH GTHREAD_LIBRARY_DIR )
+    FIND_PATH( GLIBH_DIR glib.h PATH GLIB_INCLUDE_DIR )
+    FIND_PATH( GLIBCONF_DIR glibconfig.h PATH GLIBCONF_INCLUDE_DIR )
     
     IF( GLIB_LIB MATCHES "GLIB_LIB-NOTFOUND" OR
             GTHREAD_LIB MATCHES "GTHREAD_LIB-NOTFOUND" OR
-            GMODULE_LIB MATCHES "GMODULE_LIB-NOTFOUND" OR
             GLIBH_DIR MATCHES "GLIBH_DIR-NOTFOUND" OR
             GLIBCONF_DIR MATCHES "GLIBCONF_DIR-NOTFOUND")
             message( WARNING "Not sure if I found GLIB, continuing anyway.")
     ENDIF()
     
     SET( GLIB_INCLUDE_DIRS ${GLIBH_DIR} ${GLIBCONF_DIR} )
-    SET( GLIB_LIBRARIES ${GLIB_LIB} ${GTHREAD_LIB} ${GMODULE_LIB} )
+    SET( GLIB_LIBRARIES ${GLIB_LIB} ${GTHREAD_LIB} )
     
     message( STATUS "GLIB_INCLUDE_DIRS: " ${GLIB_INCLUDE_DIRS} )
     message( STATUS "GLIB_LIBRARIES: " ${GLIB_LIBRARIES} )
@@ -328,7 +313,7 @@ else(NOT enable-pkgconfig)
     find_package ( PkgConfig REQUIRED )
 
     # Mandatory libraries: glib and gthread
-    pkg_check_modules ( GLIB REQUIRED glib-2.0>=2.6.5 gthread-2.0>=2.6.5 gmodule-2.0>=2.6.5 )
+    pkg_check_modules ( GLIB REQUIRED glib-2.0>=2.6.5 gthread-2.0>=2.6.5 )
 
     include ( UnsetPkgConfig )
 
@@ -398,6 +383,15 @@ else(NOT enable-pkgconfig)
     else ( enable-dbus )
     unset_pkg_config ( DBUS )
     endif ( enable-dbus )
+
+    unset ( LADSPA_SUPPORT CACHE )
+    if ( enable-ladspa )
+    check_include_file ( ladspa.h LADSPA_SUPPORT )
+    if ( LADSPA_SUPPORT )
+        pkg_check_modules ( GMODULE REQUIRED gmodule-2.0>=2.6.5 )
+        set ( LADSPA 1 )
+    endif ( LADSPA_SUPPORT )
+    endif ( enable-ladspa )
     
 endif(NOT enable-pkgconfig)
 

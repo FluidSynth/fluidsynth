@@ -292,6 +292,7 @@ endif ( LIBFLUID_CPPFLAGS )
 
 target_link_libraries ( libfluidsynth
     ${GLIB_LIBRARIES}
+    ${GMODULE_LIBRARIES}
     ${LASH_LIBRARIES}
     ${JACK_LIBRARIES}
     ${ALSA_LIBRARIES}
