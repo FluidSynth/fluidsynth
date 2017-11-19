@@ -37,7 +37,6 @@
 
 #define FLUID_LADSPA_MAX_EFFECTS 100
 #define FLUID_LADSPA_MAX_NODES 100
-#define FLUID_LADSPA_MAX_PATH_LENGTH 512
 
 typedef enum _fluid_ladspa_state_t {
     FLUID_LADSPA_INACTIVE = 0,
