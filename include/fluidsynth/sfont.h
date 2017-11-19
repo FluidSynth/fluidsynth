@@ -77,11 +77,14 @@ enum {
 struct _fluid_sfloader_t {
   void* data;           /**< User defined data pointer */
 
-  /**
-   * The free method should free the memory allocated for the loader in
-   * addition to any private data.
-   * @param loader SoundFont loader
-   * @return Should return 0 if no error occured, non-zero otherwise
+  /** File operation callbacks to allow custom loading, such as from memory */
+  fluid_file_callbacks_t* file_callbacks;
+
+  /**                                                                                                                                                                                                                               
+   * The free method should free the memory allocated for the loader in                                                                                                                                                             
+   * addition to any private data.                                                                                                                                                                                                  
+   * @param loader SoundFont loader                                                                                                                                                                                                 
+   * @return Should return 0 if no error occured, non-zero otherwise                                                                                                                                                                
    */
   int (*free)(fluid_sfloader_t* loader);
 
@@ -95,7 +98,24 @@ struct _fluid_sfloader_t {
   fluid_sfont_t* (*load)(fluid_sfloader_t* loader, const char* filename);
 };
 
-/**
+struct _fluid_file_callbacks_t {
+  /** Accepts UTF-8 encoding, returns file handle */
+  void * (* fopen )(const char *);
+
+  /** Reads to specified buffer, returns count of size bytes read */
+  size_t (* fread )(void *, size_t size, size_t count, void * handle);
+
+  /** Returns zero on success, -1 on error */
+  int (* fseek )(void * handle, long, int);
+
+  /** Returns zero on success, -1 on error */
+  int (* fclose)(void * handle);
+
+  /** Returns current file offset */
+  long (* ftell )(void * handle);
+};
+
+/*
  * Virtual SoundFont instance structure.
  */
 struct _fluid_sfont_t {
