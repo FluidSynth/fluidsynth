@@ -89,11 +89,15 @@ if ( CMAKE_SYSTEM MATCHES "OS2" )
 endif ( CMAKE_SYSTEM MATCHES "OS2" )
 
 # Initialize the library directory name suffix.
+if (NOT MINGW)
 if ( CMAKE_SIZEOF_VOID_P EQUAL 8 )
   set ( _init_lib_suffix "64" )
 else ( CMAKE_SIZEOF_VOID_P EQUAL 8 )
   set ( _init_lib_suffix "" )
 endif ( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+else ()
+  set ( _init_lib_suffix "" )
+endif()
 set ( LIB_SUFFIX ${_init_lib_suffix} CACHE STRING
       "library directory name suffix (32/64/nothing)" )
 mark_as_advanced ( LIB_SUFFIX )
