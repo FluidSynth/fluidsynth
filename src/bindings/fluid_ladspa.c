@@ -270,7 +270,7 @@ void delete_fluid_ladspa_fx(fluid_ladspa_fx_t *fx)
  * @return FLUID_OK on success, otherwise FLUID_FAILED
  */
 int fluid_ladspa_add_host_ports(fluid_ladspa_fx_t *fx, const char *prefix,
-        int buffer_count, fluid_real_t *buffers[])
+        int num_buffers, fluid_real_t *buffers[])
 {
     int i;
     char name[99];
@@ -283,10 +283,10 @@ int fluid_ladspa_add_host_ports(fluid_ladspa_fx_t *fx, const char *prefix,
     }
 
     /* Create nodes for all channels */
-    for (i = 0; i < buffer_count; i++)
+    for (i = 0; i < num_buffers; i++)
     {
         /* If there is more than one buffer, then append a 1-based index to each node name */
-        if (buffer_count > 1) {
+        if (num_buffers > 1) {
             FLUID_SNPRINTF(name, sizeof(name), "%s%d", prefix, (i + 1));
         }
         else
