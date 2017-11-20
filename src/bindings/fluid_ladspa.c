@@ -1004,7 +1004,7 @@ static void activate_effect(fluid_ladspa_effect_t *effect)
 {
     if (!effect->active)
     {
-        effect->active = 1;
+        effect->active = TRUE;
         if (effect->desc->activate != NULL)
         {
             effect->desc->activate(effect->handle);
@@ -1016,7 +1016,7 @@ static void deactivate_effect(fluid_ladspa_effect_t *effect)
 {
     if (effect->active)
     {
-        effect->active = 0;
+        effect->active = FALSE;
         if (effect->desc->deactivate != NULL)
         {
             effect->desc->deactivate(effect->handle);
