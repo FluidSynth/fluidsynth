@@ -239,13 +239,13 @@ fluid_comb_getfeedback(fluid_comb* comb)
 #define numcombs 8
 #define numallpasses 4
 #define	fixedgain 0.015f
-/* scale_wet_width is a compensation weigth factor to get an output
-   amplitude (wet) rather  independent of width setting.
-    0: the output amplitude is fully dependant of width setting.
-    >0: the output amplitude is less dependant of width setting.
+/* scale_wet_width is a compensation weight factor to get an output
+   amplitude (wet) rather independent of the width setting.
+    0: the output amplitude is fully dependant on the width setting.
+   >0: the output amplitude is less dependant on the width setting.
    With a scale_wet_width of 0.2 the output amplitude is rather 
-   independent of width setting.(see fluid_revmodel_update()).
-*/
+   independent of width setting (see fluid_revmodel_update()).
+ */
 #define scale_wet_width 0.2f 
 #define scalewet 3.0f
 #define scaledamp 1.0f
@@ -493,9 +493,10 @@ fluid_revmodel_update(fluid_revmodel_t* rev)
 {
   /* Recalculate internal values after parameter change */
   int i;
-  /* The stereo amplitude equation  (wet1 and wet1 below) have a 
-  tendency to produce high amplitude with high width value ( 1 < width < 100).
-  This result in a unwanted output clipped by the audio card.
+
+  /* The stereo amplitude equation (wet1 and wet2 below) have a 
+  tendency to produce high amplitude with high width values ( 1 < width < 100).
+  This results in an unwanted noisy output clipped by the audio card.
   To avoid this dependency, we divide by (1 + rev->width * scale_wet_width)
   Actually, with a scale_wet_width of 0.2, (regardless of level setting), 
   the output amplitude (wet) seems rather independent of width setting */	
@@ -503,7 +504,7 @@ fluid_revmodel_update(fluid_revmodel_t* rev)
                      (1.0f + rev->width * scale_wet_width);
   
   /* wet1 and wet2 are used by the stereo effect controled by the width setting
-  for producing a stereo ouptput from a monophonic reverbered signal.
+  for producing a stereo ouptput from a monophonic reverb signal.
   Please see the note above about a side effect tendency */
   rev->wet1 = wet * (rev->width / 2.0f + 0.5f);
   rev->wet2 = wet * ((1.0f - rev->width) / 2.0f);
