@@ -103,7 +103,7 @@ struct _fluid_ladspa_fx_t
 {
     unsigned long sample_rate;
 
-    /* The buffer size for all audio buffers */
+    /* The buffer size for all audio buffers (in samples) */
     int buffer_size;
 
     fluid_ladspa_node_t *nodes[FLUID_LADSPA_MAX_NODES];
@@ -583,7 +583,7 @@ int fluid_ladspa_effect_can_mix(fluid_ladspa_fx_t *fx, const char *name)
  *
  * @param fx LADSPA fx instance
  * @param name the name of the effect
- * @param mix (boolen) if to enable mix mode
+ * @param mix (boolean) if to enable mix mode
  * @param gain the gain to apply to the effect output before adding to output.
  * @return FLUID_OK on success, otherwise FLUID_FAILED
  */
@@ -946,7 +946,7 @@ int fluid_ladspa_effect_link(fluid_ladspa_fx_t *fx, const char *effect_name,
  * @param fx LADSPA fx instance
  * @param err pointer to string that should be filled with an error message, if applicable
  * @param err_size size of the error buffer
- * @return FLUID_OK on success, otherwise FLUID_FAILED
+ * @return FLUID_OK if setup is valid, otherwise FLUID_FAILED (err will contain the error message)
  */
 int fluid_ladspa_check(fluid_ladspa_fx_t *fx, char *err, int err_size)
 {
