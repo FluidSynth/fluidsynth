@@ -5297,5 +5297,7 @@ int fluid_synth_set_channel_type(fluid_synth_t* synth, int chan, int type)
  */
 fluid_ladspa_fx_t *fluid_synth_get_ladspa_fx(fluid_synth_t *synth)
 {
+    fluid_return_val_if_fail(synth != NULL, NULL);
+
     return synth->ladspa_fx;
 }

@@ -359,6 +359,8 @@ int fluid_ladspa_is_active(fluid_ladspa_fx_t *fx)
 {
     int is_active;
 
+    fluid_return_val_if_fail(fx != NULL, FALSE);
+
     LADSPA_API_ENTER(fx);
 
     is_active = (fluid_atomic_int_get(&fx->state) != FLUID_LADSPA_INACTIVE);
@@ -375,6 +377,8 @@ int fluid_ladspa_is_active(fluid_ladspa_fx_t *fx)
 int fluid_ladspa_activate(fluid_ladspa_fx_t *fx)
 {
     int i;
+
+    fluid_return_val_if_fail(fx != NULL, FLUID_FAILED);
 
     LADSPA_API_ENTER(fx);
 
@@ -418,6 +422,8 @@ int fluid_ladspa_deactivate(fluid_ladspa_fx_t *fx)
 {
     int i;
 
+    fluid_return_val_if_fail(fx != NULL, FLUID_FAILED);
+
     LADSPA_API_ENTER(fx);
 
     /* If we are already inactive, then simply return success */
@@ -457,6 +463,8 @@ int fluid_ladspa_deactivate(fluid_ladspa_fx_t *fx)
  */
 int fluid_ladspa_reset(fluid_ladspa_fx_t *fx)
 {
+    fluid_return_val_if_fail(fx != NULL, FLUID_FAILED);
+
     LADSPA_API_ENTER(fx);
 
     if (fluid_ladspa_is_active(fx))
@@ -563,6 +571,9 @@ int fluid_ladspa_effect_can_mix(fluid_ladspa_fx_t *fx, const char *name)
     int can_mix;
     fluid_ladspa_effect_t *effect;
 
+    fluid_return_val_if_fail(fx != NULL, FALSE);
+    fluid_return_val_if_fail(name != NULL, FALSE);
+
     LADSPA_API_ENTER(fx);
 
     effect = get_effect(fx, name);
@@ -590,6 +601,9 @@ int fluid_ladspa_effect_can_mix(fluid_ladspa_fx_t *fx, const char *name)
 int fluid_ladspa_effect_set_mix(fluid_ladspa_fx_t *fx, const char *name, int mix, float gain)
 {
     fluid_ladspa_effect_t *effect;
+
+    fluid_return_val_if_fail(fx != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(name != NULL, FLUID_FAILED);
 
     LADSPA_API_ENTER(fx);
 
@@ -668,6 +682,9 @@ int fluid_ladspa_host_port_exists(fluid_ladspa_fx_t *fx, const char *name)
 {
     fluid_ladspa_node_t *node;
 
+    fluid_return_val_if_fail(fx != NULL, FALSE);
+    fluid_return_val_if_fail(name != NULL, FALSE);
+
     LADSPA_API_ENTER(fx);
 
     node = get_node(fx, name);
@@ -695,6 +712,9 @@ int fluid_ladspa_buffer_exists(fluid_ladspa_fx_t *fx, const char *name)
 {
     int exists;
     fluid_ladspa_node_t *node;
+
+    fluid_return_val_if_fail(fx != NULL, FALSE);
+    fluid_return_val_if_fail(name != NULL, FALSE);
 
     LADSPA_API_ENTER(fx);
 
@@ -724,6 +744,10 @@ int fluid_ladspa_effect_port_exists(fluid_ladspa_fx_t *fx, const char *effect_na
     fluid_ladspa_effect_t *effect;
     int port_exists;
 
+    fluid_return_val_if_fail(fx != NULL, FALSE);
+    fluid_return_val_if_fail(effect_name != NULL, FALSE);
+    fluid_return_val_if_fail(port_name != NULL, FALSE);
+
     LADSPA_API_ENTER(fx);
 
     effect = get_effect(fx, effect_name);
@@ -747,6 +771,9 @@ int fluid_ladspa_effect_port_exists(fluid_ladspa_fx_t *fx, const char *effect_na
 int fluid_ladspa_add_buffer(fluid_ladspa_fx_t *fx, const char *name)
 {
     fluid_ladspa_node_t *node;
+
+    fluid_return_val_if_fail(fx != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(name != NULL, FLUID_FAILED);
 
     LADSPA_API_ENTER(fx);
     if (fluid_ladspa_is_active(fx))
@@ -779,6 +806,10 @@ int fluid_ladspa_effect_set_control(fluid_ladspa_fx_t *fx, const char *effect_na
     fluid_ladspa_node_t *node;
     fluid_ladspa_effect_t *effect;
     int port_idx;
+
+    fluid_return_val_if_fail(fx != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(effect_name != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(port_name != NULL, FLUID_FAILED);
 
     LADSPA_API_ENTER(fx);
 
@@ -823,6 +854,10 @@ int fluid_ladspa_add_effect(fluid_ladspa_fx_t *fx, const char *effect_name,
         const char *lib_name, const char *plugin_name)
 {
     fluid_ladspa_effect_t *effect;
+
+    fluid_return_val_if_fail(fx != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(effect_name != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(lib_name != NULL, FLUID_FAILED);
 
     LADSPA_API_ENTER(fx);
     if (fluid_ladspa_is_active(fx))
@@ -881,6 +916,11 @@ int fluid_ladspa_effect_link(fluid_ladspa_fx_t *fx, const char *effect_name,
     int port_idx;
     int port_flags;
     int dir;
+
+    fluid_return_val_if_fail(fx != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(effect_name != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(port_name != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(name != NULL, FLUID_FAILED);
 
     LADSPA_API_ENTER(fx);
 
@@ -954,6 +994,13 @@ int fluid_ladspa_check(fluid_ladspa_fx_t *fx, char *err, int err_size)
     const char *str;
     const char *str2;
     fluid_ladspa_effect_t *effect;
+
+    fluid_return_val_if_fail(fx != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(err_size >= 0, FLUID_FAILED);
+    if (err_size > 0 && err == NULL)
+    {
+        return FLUID_FAILED;
+    }
 
     LADSPA_API_ENTER(fx);
 
