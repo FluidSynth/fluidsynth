@@ -298,11 +298,11 @@ int fluid_ladspa_add_host_ports(fluid_ladspa_fx_t *fx, const char *prefix,
                     FLUID_LADSPA_NODE_AUDIO | FLUID_LADSPA_NODE_HOST,
                     buffers[i]) == NULL)
         {
-            return FLUID_FAILED;
+            LADSPA_API_RETURN(fx, FLUID_FAILED);
         }
     }
 
-    return FLUID_OK;
+    LADSPA_API_RETURN(fx, FLUID_OK);
 }
 
 
