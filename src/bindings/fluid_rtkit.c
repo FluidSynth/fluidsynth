@@ -29,8 +29,6 @@
 
 #ifdef DBUS_SUPPORT
 
-#include <errno.h>
-
 #include "fluid_rtkit.h"
 
 
@@ -41,9 +39,6 @@
 
 #endif
 
-#include <string.h>
-#include <unistd.h>
-#include <sys/types.h>
 #include <sys/syscall.h>
 #include <sys/resource.h>
 

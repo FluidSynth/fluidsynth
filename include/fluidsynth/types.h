@@ -61,6 +61,7 @@ typedef struct _fluid_cmd_handler_t fluid_cmd_handler_t;        /**< Shell Comma
 typedef int fluid_istream_t;    /**< Input stream descriptor */
 typedef int fluid_ostream_t;    /**< Output stream descriptor */
 
+typedef short fluid_seq_id_t; /**< Unique client IDs use by the sequencer and #fluid_event_t, obtained by fluid_sequencer_register_client() and fluid_sequencer_register_fluidsynth() */
 
 #ifdef __cplusplus
 }

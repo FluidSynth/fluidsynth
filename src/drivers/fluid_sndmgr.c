@@ -52,7 +52,7 @@ fluid_audio_driver_t* new_fluid_sndmgr_audio_driver2(fluid_settings_t* settings,
 						     fluid_audio_func_t func,
 						     void* data);
 
-int delete_fluid_sndmgr_audio_driver(fluid_audio_driver_t* p);
+void delete_fluid_sndmgr_audio_driver(fluid_audio_driver_t* p);
 void  pascal fluid_sndmgr_callback(SndChannelPtr chan, SndDoubleBufferPtr doubleBuffer);
 Fixed fluid_sndmgr_double_to_fix(long double theLD);
 
@@ -226,36 +226,29 @@ new_fluid_sndmgr_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t fu
 /*
  * delete_fluid_sndmgr_audio_driver
  */
-int delete_fluid_sndmgr_audio_driver(fluid_audio_driver_t* p)
+void delete_fluid_sndmgr_audio_driver(fluid_audio_driver_t* p)
 {
   fluid_sndmgr_audio_driver_t* dev = (fluid_sndmgr_audio_driver_t*) p;
+  fluid_return_if_fail(dev != NULL);
 
-  if (dev != NULL) {
     if (dev->channel != NULL) {
       SndDisposeChannel(dev->channel, 1);
     }
+    
     if (dev->doubleCallbackProc != NULL) {
       DisposeRoutineDescriptor(dev->doubleCallbackProc);
     }
-    if (dev->doubleHeader != NULL) {
-      if(dev->doubleHeader->dbhBufferPtr[0] != NULL) {
-	FLUID_FREE(dev->doubleHeader->dbhBufferPtr[0]);
-      }
-      if (dev->doubleHeader->dbhBufferPtr[1] != NULL) {
-	FLUID_FREE(dev->doubleHeader->dbhBufferPtr[1]);
-      }
-      FLUID_FREE(dev->doubleHeader);
+    
+    if (dev->doubleHeader != NULL)
+    {
+        FLUID_FREE(dev->doubleHeader->dbhBufferPtr[0]);
+        FLUID_FREE(dev->doubleHeader->dbhBufferPtr[1]);
+        FLUID_FREE(dev->doubleHeader);
     }
-    if (dev->convbuffers[0] != NULL) {
-      FLUID_FREE(dev->convbuffers[0]);
-    }
-    if (dev->convbuffers[1] != NULL) {
-      FLUID_FREE(dev->convbuffers[1]);
-    }
-
+    
+    FLUID_FREE(dev->convbuffers[0]);
+    FLUID_FREE(dev->convbuffers[1]);
     FLUID_FREE(dev);
-  }
-  return 0;
 }
 
 /*

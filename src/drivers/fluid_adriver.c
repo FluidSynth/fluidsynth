@@ -32,7 +32,7 @@ typedef struct _fluid_audriver_definition_t
   fluid_audio_driver_t* (*new2)(fluid_settings_t* settings,
 				fluid_audio_func_t func,
 				void* data);
-  int (*free)(fluid_audio_driver_t* driver);
+  void (*free)(fluid_audio_driver_t* driver);
   void (*settings)(fluid_settings_t* settings);
 } fluid_audriver_definition_t;
 
@@ -42,7 +42,7 @@ fluid_audio_driver_t* new_fluid_pulse_audio_driver(fluid_settings_t* settings,
 						   fluid_synth_t* synth);
 fluid_audio_driver_t* new_fluid_pulse_audio_driver2(fluid_settings_t* settings,
 						    fluid_audio_func_t func, void* data);
-int delete_fluid_pulse_audio_driver(fluid_audio_driver_t* p);
+void delete_fluid_pulse_audio_driver(fluid_audio_driver_t* p);
 void fluid_pulse_audio_driver_settings(fluid_settings_t* settings);
 #endif
 
@@ -51,7 +51,7 @@ fluid_audio_driver_t* new_fluid_alsa_audio_driver(fluid_settings_t* settings,
 						  fluid_synth_t* synth);
 fluid_audio_driver_t* new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
 						 fluid_audio_func_t func, void* data);
-int delete_fluid_alsa_audio_driver(fluid_audio_driver_t* p);
+void delete_fluid_alsa_audio_driver(fluid_audio_driver_t* p);
 void fluid_alsa_audio_driver_settings(fluid_settings_t* settings);
 #endif
 
@@ -60,7 +60,7 @@ fluid_audio_driver_t* new_fluid_oss_audio_driver(fluid_settings_t* settings,
 						 fluid_synth_t* synth);
 fluid_audio_driver_t* new_fluid_oss_audio_driver2(fluid_settings_t* settings,
 						fluid_audio_func_t func, void* data);
-int delete_fluid_oss_audio_driver(fluid_audio_driver_t* p);
+void delete_fluid_oss_audio_driver(fluid_audio_driver_t* p);
 void fluid_oss_audio_driver_settings(fluid_settings_t* settings);
 #endif
 
@@ -70,14 +70,14 @@ fluid_audio_driver_t* new_fluid_core_audio_driver(fluid_settings_t* settings,
 fluid_audio_driver_t* new_fluid_core_audio_driver2(fluid_settings_t* settings,
 						      fluid_audio_func_t func,
 						      void* data);
-int delete_fluid_core_audio_driver(fluid_audio_driver_t* p);
+void delete_fluid_core_audio_driver(fluid_audio_driver_t* p);
 void fluid_core_audio_driver_settings(fluid_settings_t* settings);
 #endif
 
 #if DSOUND_SUPPORT
 fluid_audio_driver_t* new_fluid_dsound_audio_driver(fluid_settings_t* settings,
 						  fluid_synth_t* synth);
-int delete_fluid_dsound_audio_driver(fluid_audio_driver_t* p);
+void delete_fluid_dsound_audio_driver(fluid_audio_driver_t* p);
 void fluid_dsound_audio_driver_settings(fluid_settings_t* settings);
 #endif
 
@@ -85,14 +85,14 @@ void fluid_dsound_audio_driver_settings(fluid_settings_t* settings);
 void fluid_portaudio_driver_settings (fluid_settings_t *settings);
 fluid_audio_driver_t* new_fluid_portaudio_driver(fluid_settings_t* settings,
 						 fluid_synth_t* synth);
-int delete_fluid_portaudio_driver(fluid_audio_driver_t* p);
+void delete_fluid_portaudio_driver(fluid_audio_driver_t* p);
 #endif
 
 #if JACK_SUPPORT
 fluid_audio_driver_t* new_fluid_jack_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth);
 fluid_audio_driver_t* new_fluid_jack_audio_driver2(fluid_settings_t* settings,
 						 fluid_audio_func_t func, void* data);
-int delete_fluid_jack_audio_driver(fluid_audio_driver_t* p);
+void delete_fluid_jack_audio_driver(fluid_audio_driver_t* p);
 void fluid_jack_audio_driver_settings(fluid_settings_t* settings);
 #endif
 
@@ -102,20 +102,20 @@ fluid_audio_driver_t* new_fluid_sndmgr_audio_driver(fluid_settings_t* settings,
 fluid_audio_driver_t* new_fluid_sndmgr_audio_driver2(fluid_settings_t* settings,
 						   fluid_audio_func_t func,
 						   void* data);
-int delete_fluid_sndmgr_audio_driver(fluid_audio_driver_t* p);
+void delete_fluid_sndmgr_audio_driver(fluid_audio_driver_t* p);
 #endif
 
 #if DART_SUPPORT
 fluid_audio_driver_t* new_fluid_dart_audio_driver(fluid_settings_t* settings,
                           fluid_synth_t* synth);
-int delete_fluid_dart_audio_driver(fluid_audio_driver_t* p);
+void delete_fluid_dart_audio_driver(fluid_audio_driver_t* p);
 void fluid_dart_audio_driver_settings(fluid_settings_t* settings);
 #endif
 
 #if AUFILE_SUPPORT
 fluid_audio_driver_t* new_fluid_file_audio_driver(fluid_settings_t* settings,
 						  fluid_synth_t* synth);
-int delete_fluid_file_audio_driver(fluid_audio_driver_t* p);
+void delete_fluid_file_audio_driver(fluid_audio_driver_t* p);
 #endif
 
 
@@ -438,6 +438,7 @@ void
 delete_fluid_audio_driver(fluid_audio_driver_t* driver)
 {
   unsigned int i;
+  fluid_return_if_fail(driver != NULL);
 
   /* iterate over fluid_audio_drivers_template to ensure deleting even drivers currently not registered */
   for (i = 0; i < FLUID_N_ELEMENTS(fluid_audio_drivers_template); i++) {

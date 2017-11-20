@@ -80,7 +80,6 @@ fluid_conversion_config(void)
   /* convex unipolar positive transform curve */
   fluid_convex_tab[0] = 0;
   fluid_convex_tab[127] = 1.0;
-  x = log10(128.0 / 127.0);
 
   /* There seems to be an error in the specs. The equations are
      implemented according to the pictures on SF2.01 page 73. */

@@ -1,5 +1,5 @@
 /*! 
-\mainpage FluidSynth 1.1 Developer Documentation 
+\mainpage FluidSynth 2.0 Developer Documentation 
 \author Peter Hanappe
 \author Conrad Berhörster
 \author Antoine Schmitt
@@ -8,7 +8,7 @@
 \author David Henningsson
 \author Tom Moebert
 \author Copyright &copy; 2003-2017 Peter Hanappe, Conrad Berhörster, Antoine Schmitt, Pedro López-Cabanillas, Josh Green, David Henningsson, Tom Moebert
-\version Revision 1.1.8
+\version Revision 2.0.0ALPHA
 \date 2017-10-14
 
 All the source code examples in this document are in the public domain; you can use them as you please. This document is licensed under the Creative Commons Attribution-Share Alike 3.0 Unported License. To view a copy of this license, visit http://creativecommons.org/licenses/by-sa/3.0/ . The FluidSynth library is distributed under the GNU Lesser General Public License. A copy of the GNU Lesser General Public License is contained in the FluidSynth package; if not, visit http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt or write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
@@ -21,7 +21,8 @@ All the source code examples in this document are in the public domain; you can 
 
 - \ref Disclaimer
 - \ref Introduction
-- \ref NewIn@NEXT_RELEASE@
+- \ref NewIn2_0_0
+- \ref NewIn1_1_9
 - \ref NewIn1_1_8
 - \ref NewIn1_1_7
 - \ref NewIn1_1_6
@@ -67,11 +68,11 @@ What is FluidSynth?
 
 - FluidSynth is open source, in active development. For more details, take a look at http://www.fluidsynth.org
 
-\section NewIn@NEXT_RELEASE@ Whats new in @NEXT_RELEASE@?
+\section NewIn2_0_0 Whats new in 2.0.0?
 
 FluidSynths SOVERSION was bumped. The API was reworked, deprecated functions were removed. Functions that were doing (nearly) the same were fused together.
 
-Changes in FluidSynth @NEXT_RELEASE@ concerning developers:
+Changes in FluidSynth 2.0.0 concerning developers:
 
 - remove deprecated fluid_synth_get_program() and fluid_synth_get_channel_preset(), use fluid_synth_get_channel_info() instead
 - remove deprecated fluid_settings_getstr()
@@ -85,15 +86,28 @@ Changes in FluidSynth @NEXT_RELEASE@ concerning developers:
 - remove struct _fluid_gen_t, fluid_gen_set_default_values() and enum fluid_gen_flags from public API
 
 - all public \c fluid_settings_* functions that return an integer which is not meant to be interpreted as bool consistently return either FLUID_OK or FLUID_FAILED
+- all public delete_* functions return void and are safe when called with NULL
 - the shell command handler was decoupled internally, as a consequence the param list of new_fluid_server() and new_fluid_cmd_handler() was adapted
 
 - add "synth.volenv" a setting for volume envelope processing
+- add "midi.autoconnect" a setting for automatically connecting fluidsynth to available MIDI input ports
 - add support for polyonic key pressure events, see fluid_event_key_pressure()
 - add fluid_synth_add_default_mod() for manipulating default modulators
 - add individual reverb setters: fluid_synth_set_reverb_roomsize(), fluid_synth_set_reverb_damp(), fluid_synth_set_reverb_width(), fluid_synth_set_reverb_level()
 - add individual chorus setters: fluid_synth_set_chorus_nr(), fluid_synth_set_chorus_level(), fluid_synth_set_chorus_speed(), fluid_synth_set_chorus_depth(), fluid_synth_set_chorus_type()
 - add a function for registering audio drivers based on acutal needs: fluid_audio_driver_register()
+- introduce a separate data type for sequencer client IDs: #fluid_seq_id_t
 
+
+\section NewIn1_1_9 Whats new in 1.1.9?
+
+Changes in FluidSynth 1.1.9 concerning developers:
+
+- implement handling of #FLUID_SEQ_ALLSOUNDSOFF events in fluid_seq_fluidsynth_callback()
+- fix return value of fluid_file_set_encoding_quality()
+
+- For a full list of bug fixes, see
+  https://github.com/FluidSynth/fluidsynth/wiki/ChangeLog#fluidsynth-119
 
 \section NewIn1_1_8 Whats new in 1.1.8?
 

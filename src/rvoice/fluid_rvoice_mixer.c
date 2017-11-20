@@ -603,8 +603,8 @@ fluid_mixer_buffers_free(fluid_mixer_buffers_t* buffers)
 
 void delete_fluid_rvoice_mixer(fluid_rvoice_mixer_t* mixer)
 {
-  if (!mixer)
-    return;
+  fluid_return_if_fail(mixer != NULL);
+  
   fluid_rvoice_mixer_set_threads(mixer, 0, 0);
 #ifdef ENABLE_MIXER_THREADS
   if (mixer->thread_ready)
