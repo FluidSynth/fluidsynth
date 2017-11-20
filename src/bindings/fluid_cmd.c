@@ -805,7 +805,7 @@ fluid_handle_reverbsetroomsize(void* data, int ac, char** av, fluid_ostream_t ou
     fluid_ostream_printf(out, "rev_setroomsize: Room size must be positive!\n");
     return FLUID_FAILED;
   }
-  if (room_size > 1.2){
+  if (room_size > 1.0){
     fluid_ostream_printf(out, "rev_setroomsize: Room size too big!\n");
     return FLUID_FAILED;
   }
