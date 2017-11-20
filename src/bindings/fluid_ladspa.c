@@ -29,9 +29,6 @@
 
 #ifdef LADSPA
 
-#include "fluidsynth_priv.h"
-
-#include "fluid_sys.h"
 #include <math.h>
 #include <ladspa.h>
 
