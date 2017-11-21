@@ -334,7 +334,7 @@ static int fluid_cached_sampledata_load(char *filename,
   }
 
   /* Lock the memory to disable paging. It's okay if this fails. It
-     probably means that the user doesn't have to required permission.  */
+     probably means that the user doesn't have the required permission.  */
   cached_sampledata->mlock = 0;
   if (try_mlock) {
     if (fluid_mlock(loaded_sampledata, samplesize) != 0)
@@ -358,13 +358,12 @@ static int fluid_cached_sampledata_load(char *filename,
     }
   }
 
-  cached_sampledata->filename = (char*) FLUID_MALLOC(strlen(filename) + 1);
+  cached_sampledata->filename = FLUID_STRDUP(filename);
   if (cached_sampledata->filename == NULL) {
     FLUID_LOG(FLUID_ERR, "Out of memory.");
     goto error_exit;
   }
 
-  sprintf(cached_sampledata->filename, "%s", filename);
   cached_sampledata->modification_time = modification_time;
   cached_sampledata->num_references = 1;
   cached_sampledata->sampledata = loaded_sampledata;
