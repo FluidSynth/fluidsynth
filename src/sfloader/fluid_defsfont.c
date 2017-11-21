@@ -313,6 +313,16 @@ static int fluid_cached_sampledata_load(char *filename,
     goto error_exit;
   }
 
+  loaded_sample24data = (char*) FLUID_MALLOC(sample24size);
+  if (loaded_sampledata == NULL) {
+    FLUID_LOG(FLUID_ERR, "Out of memory when allocating 24bit sample, ignoring");
+  }
+  else if (FLUID_FREAD(loaded_sample24data, 1, sample24size, fd) < sample24size) {
+    FLUID_LOG(FLUID_ERR, "Failed to read sample24 data");
+    FLUID_FREE(loaded_sample24data);
+    loaded_sample24data = NULL;
+  }
+  
   FLUID_FCLOSE(fd);
   fd = NULL;
 
@@ -359,6 +369,8 @@ static int fluid_cached_sampledata_load(char *filename,
   cached_sampledata->num_references = 1;
   cached_sampledata->sampledata = loaded_sampledata;
   cached_sampledata->samplesize = samplesize;
+  cached_sampledata->sample24data = loaded_sample24data;
+  cached_sampledata->sample24size = sample24size;
 
   cached_sampledata->next = all_cached_sampledata;
   all_cached_sampledata = cached_sampledata;
@@ -367,25 +379,25 @@ static int fluid_cached_sampledata_load(char *filename,
  success_exit:
   fluid_mutex_unlock(cached_sampledata_mutex);
   *sampledata = loaded_sampledata;
+  *sample24data = loaded_sample24data;
   return FLUID_OK;
 
  error_exit:
   if (fd != NULL) {
     FLUID_FCLOSE(fd);
   }
-  if (loaded_sampledata != NULL) {
-    FLUID_FREE(loaded_sampledata);
-  }
+  
+  FLUID_FREE(loaded_sampledata);
+  FLUID_FREE(loaded_sample24data);
 
   if (cached_sampledata != NULL) {
-    if (cached_sampledata->filename != NULL) {
       FLUID_FREE(cached_sampledata->filename);
-    }
-    FLUID_FREE(cached_sampledata);
   }
+    FLUID_FREE(cached_sampledata);
 
   fluid_mutex_unlock(cached_sampledata_mutex);
   *sampledata = NULL;
+  *sample24data = NULL;
   return FLUID_FAILED;
 }
 
@@ -678,8 +690,10 @@ int fluid_defsfont_add_preset(fluid_defsfont_t* sfont, fluid_defpreset_t* preset
 int
 fluid_defsfont_load_sampledata(fluid_defsfont_t* sfont)
 {
-  return fluid_cached_sampledata_load(sfont->filename, sfont->samplepos,
-    sfont->samplesize, &sfont->sampledata, sfont->mlock);
+  return fluid_cached_sampledata_load(sfont->filename,
+                                      sfont->samplepos, sfont->samplesize, &sfont->sampledata,
+                                      sfont->sample24pos, sfont->sample24size, &sfont->sample24data,
+                                      sfont->mlock);
 }
 
 /*
