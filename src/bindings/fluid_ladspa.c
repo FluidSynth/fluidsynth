@@ -983,9 +983,12 @@ int fluid_ladspa_effect_link(fluid_ladspa_fx_t *fx, const char *effect_name,
 /**
  * Do a sanity check for problems in the LADSPA setup
  *
+ * If the check detects problems and the err pointer is not NULL, a description of the first found
+ * problem is written to that string (up to err_size - 1 characters).
+ *
  * @param fx LADSPA fx instance
- * @param err pointer to string that should be filled with an error message, if applicable
- * @param err_size size of the error buffer
+ * @param err externally provided buffer for the error message. Set to NULL if you don't need an error message.
+ * @param err_size size of the err buffer
  * @return FLUID_OK if setup is valid, otherwise FLUID_FAILED (err will contain the error message)
  */
 int fluid_ladspa_check(fluid_ladspa_fx_t *fx, char *err, int err_size)
@@ -996,11 +999,7 @@ int fluid_ladspa_check(fluid_ladspa_fx_t *fx, char *err, int err_size)
     fluid_ladspa_effect_t *effect;
 
     fluid_return_val_if_fail(fx != NULL, FLUID_FAILED);
-    fluid_return_val_if_fail(err_size >= 0, FLUID_FAILED);
-    if (err_size > 0 && err == NULL)
-    {
-        return FLUID_FAILED;
-    }
+    fluid_return_val_if_fail(err == NULL || err_size >= 0, FLUID_FAILED);
 
     LADSPA_API_ENTER(fx);
 
@@ -1017,29 +1016,41 @@ int fluid_ladspa_check(fluid_ladspa_fx_t *fx, char *err, int err_size)
 
         if (check_all_ports_connected(effect, &str) == FLUID_FAILED)
         {
-            FLUID_SNPRINTF(err, err_size, "Port '%s' on effect '%s' is not connected\n",
-                            str, effect->name);
+            if (err != NULL)
+            {
+                FLUID_SNPRINTF(err, err_size, "Port '%s' on effect '%s' is not connected\n",
+                        str, effect->name);
+            }
             LADSPA_API_RETURN(fx, FLUID_FAILED);
         }
 
         if (check_no_inplace_broken(effect, &str, &str2) == FLUID_FAILED)
         {
+            if (err != NULL)
+            {
                 FLUID_SNPRINTF(err, err_size,
                         "effect '%s' is in-place broken, '%s' and '%s' are not allowed "
                         "to connect to the same node\n", effect->name, str, str2);
-                LADSPA_API_RETURN(fx, FLUID_FAILED);
+            }
+            LADSPA_API_RETURN(fx, FLUID_FAILED);
         }
     }
 
     if (check_host_output_used(fx) == FLUID_FAILED)
     {
-        FLUID_SNPRINTF(err, err_size, "No effect outputs to one the host nodes\n");
+        if (err != NULL)
+        {
+            FLUID_SNPRINTF(err, err_size, "No effect outputs to one the host nodes\n");
+        }
         LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
 
     if (check_all_audio_nodes_connected(fx, &str) == FLUID_FAILED)
     {
-        FLUID_SNPRINTF(err, err_size, "Audio node '%s' is not fully connected\n", str);
+        if (err != NULL)
+        {
+            FLUID_SNPRINTF(err, err_size, "Audio node '%s' is not fully connected\n", str);
+        }
         LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
 
