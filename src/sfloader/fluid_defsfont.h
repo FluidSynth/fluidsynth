@@ -147,8 +147,7 @@ typedef struct _SFData
   unsigned int samplepos;		/* position within sffd of the sample chunk */
   unsigned int samplesize;		/* length within sffd of the sample chunk */
   
-  int hassample24;		/* TRUE if valid 24 bit samples are available (i.e. the two members below are set */
-  unsigned int sample24pos;		/* position within sffd of the sm24 chunk */
+  unsigned int sample24pos;		/* position within sffd of the sm24 chunk, set to zero if no 24 bit sample support */
   unsigned int sample24size;		/* length within sffd of the sm24 chunk */
   
   char *fname;			/* file name */
@@ -384,8 +383,7 @@ struct _fluid_defsfont_t
   unsigned int samplesize;  /* the size of the sample data in bytes */
   short* sampledata;        /* the sample data, loaded in ram */
   
-  int hassample24;		/* TRUE if valid 24 bit samples are available (i.e. the two members below are set */
-  unsigned int sample24pos;		/* position within sffd of the sm24 chunk */
+  unsigned int sample24pos;		/* position within sffd of the sm24 chunk, set to zero if no 24 bit sample support */
   unsigned int sample24size;		/* length within sffd of the sm24 chunk */
   char* sample24data;        /* if not NULL, the least significant byte of the 24bit sample data, loaded in ram */
   

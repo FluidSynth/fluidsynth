@@ -272,7 +272,7 @@ static int fluid_cached_sampledata_load(char *filename,
       continue;
     if (cached_sampledata->modification_time != modification_time)
       continue;
-    if (cached_sampledata->samplesize != samplesize) {
+    if (cached_sampledata->samplesize != samplesize || cached_sampledata->sample24size != sample24size) {
       FLUID_LOG(FLUID_ERR, "Cached size of soundfont doesn't match actual size of soundfont (cached: %u. actual: %u)",
         cached_sampledata->samplesize, samplesize);
       continue;
@@ -283,6 +283,10 @@ static int fluid_cached_sampledata_load(char *filename,
         FLUID_LOG(FLUID_WARN, "Failed to pin the sample data to RAM; swapping is possible.");
       else
         cached_sampledata->mlock = try_mlock;
+      
+      if (cached_sampledata->sample24data != NULL)
+          if(fluid_mlock(cached_sampledata->sample24data, sample24size) != 0)
+            FLUID_LOG(FLUID_WARN, "Failed to pin the sample24 data to RAM; swapping is possible.");
     }
 
     cached_sampledata->num_references++;
@@ -296,12 +300,12 @@ static int fluid_cached_sampledata_load(char *filename,
     FLUID_LOG(FLUID_ERR, "Can't open soundfont file");
     goto error_exit;
   }
+  
   if (FLUID_FSEEK(fd, samplepos, SEEK_SET) == -1) {
     perror("error");
     FLUID_LOG(FLUID_ERR, "Failed to seek position in data file");
     goto error_exit;
   }
-
 
   loaded_sampledata = (short*) FLUID_MALLOC(samplesize);
   if (loaded_sampledata == NULL) {
@@ -313,14 +317,23 @@ static int fluid_cached_sampledata_load(char *filename,
     goto error_exit;
   }
 
-  loaded_sample24data = (char*) FLUID_MALLOC(sample24size);
-  if (loaded_sampledata == NULL) {
-    FLUID_LOG(FLUID_ERR, "Out of memory when allocating 24bit sample, ignoring");
-  }
-  else if (FLUID_FREAD(loaded_sample24data, 1, sample24size, fd) < sample24size) {
-    FLUID_LOG(FLUID_ERR, "Failed to read sample24 data");
-    FLUID_FREE(loaded_sample24data);
-    loaded_sample24data = NULL;
+  if(sample24pos > 0)
+  {
+    if (FLUID_FSEEK(fd, sample24pos, SEEK_SET) == -1) {
+        perror("error");
+        FLUID_LOG(FLUID_ERR, "Failed to seek position in data file");
+        goto error_exit;
+    }
+    
+    loaded_sample24data = (char*) FLUID_MALLOC(sample24size);
+    if (loaded_sample24data == NULL) {
+        FLUID_LOG(FLUID_ERR, "Out of memory when allocating 24bit sample, ignoring");
+    }
+    else if (FLUID_FREAD(loaded_sample24data, 1, sample24size, fd) < sample24size) {
+        FLUID_LOG(FLUID_ERR, "Failed to read sample24 data");
+        FLUID_FREE(loaded_sample24data);
+        loaded_sample24data = NULL;
+    }
   }
   
   FLUID_FCLOSE(fd);
@@ -415,8 +428,12 @@ static int fluid_cached_sampledata_unload(const short *sampledata)
 
       if (cached_sampledata->num_references == 0) {
         if (cached_sampledata->mlock)
+        {
           fluid_munlock(cached_sampledata->sampledata, cached_sampledata->samplesize);
-        FLUID_FREE((short*) cached_sampledata->sampledata);
+          fluid_munlock(cached_sampledata->sample24data, cached_sampledata->sample24size);
+        }
+        FLUID_FREE(cached_sampledata->sampledata);
+        FLUID_FREE(cached_sampledata->sample24data);
         FLUID_FREE(cached_sampledata->filename);
 
         if (prev != NULL) {
@@ -588,7 +605,6 @@ int fluid_defsfont_load(fluid_defsfont_t* sfont, const char* file)
      it's loaded separately (and might be unoaded/reloaded in future) */
   sfont->samplepos = sfdata->samplepos;
   sfont->samplesize = sfdata->samplesize;
-  sfont->hassample24 = sfdata->hassample24;
   sfont->sample24pos = sfdata->sample24pos;
   sfont->sample24size = sfdata->sample24size;
 
@@ -1902,6 +1918,7 @@ fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defs
 {
   FLUID_STRCPY(sample->name, sfsample->name);
   sample->data = sfont->sampledata;
+  sample->data24 = sfont->sample24data;
   sample->start = sfsample->start;
   sample->end = sfsample->start + sfsample->end;
   sample->loopstart = sfsample->start + sfsample->loopstart;
@@ -2421,7 +2438,7 @@ process_sdta (unsigned int size, SFData * sf, FILE * fd)
             sdtahalfsize = sf->samplesize/2;
             /* + 1 byte in the case that half the size of smpl chunk is an odd value */
             sdtahalfsize += sdtahalfsize%2;
-            sm24size =  chunk.size;
+            sm24size = chunk.size;
             
             if (sdtahalfsize != sm24size)
             {
@@ -2430,9 +2447,8 @@ process_sdta (unsigned int size, SFData * sf, FILE * fd)
             }
             
             /* sample data24 follows */
-            sf->hassample24 = TRUE;
             sf->sample24pos = ftell (fd);
-            sf->sample24size = chunk.size;
+            sf->sample24size = sm24size;
         }
     }
   }
