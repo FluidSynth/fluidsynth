@@ -43,6 +43,8 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
  * @param Application instance pointer
  *
  * The handle is needed to open DirectSound.
+ * 
+ * @deprecated As of 1.1.9 DirectSound driver uses the desktop window handle, making this function redundant.
  */
 void fluid_set_hinstance(void* hinstance)
 {
@@ -55,6 +57,8 @@ void fluid_set_hinstance(void* hinstance)
 /**
  * Get the handle to the instance of the application on the Windows platform.
  * @return Application instance pointer or NULL if not set
+ * 
+ * @deprecated As of 1.1.9 DirectSound driver uses the desktop window handle, making this function redundant.
  */
 void* fluid_get_hinstance(void)
 {

@@ -65,8 +65,8 @@ FLUIDSYNTH_API int fluid_is_midifile (const char *filename);
 
 
 #ifdef WIN32
-FLUIDSYNTH_API void* fluid_get_hinstance(void);
-FLUIDSYNTH_API void fluid_set_hinstance(void* hinstance);
+FLUIDSYNTH_API FLUID_DEPRECATED void* fluid_get_hinstance(void);
+FLUIDSYNTH_API FLUID_DEPRECATED void fluid_set_hinstance(void* hinstance);
 #endif
 
 
