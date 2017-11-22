@@ -3940,7 +3940,7 @@ fluid_synth_set_reverb_preset(fluid_synth_t* synth, unsigned int num)
 /**
  * Set reverb parameters.
  * @param synth FluidSynth instance
- * @param roomsize Reverb room size value (0.0-1.2)
+ * @param roomsize Reverb room size value (0.0-1.0)
  * @param damping Reverb damping value (0.0-1.0)
  * @param width Reverb width value (0.0-100.0)
  * @param level Reverb level value (0.0-1.0)
