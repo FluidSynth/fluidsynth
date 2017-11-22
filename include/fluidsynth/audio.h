@@ -69,6 +69,8 @@ FLUIDSYNTH_API int fluid_file_renderer_process_block(fluid_file_renderer_t* dev)
 FLUIDSYNTH_API void delete_fluid_file_renderer(fluid_file_renderer_t* dev);
 FLUIDSYNTH_API int fluid_file_set_encoding_quality(fluid_file_renderer_t* dev, double q);
 
+FLUIDSYNTH_API int fluid_audio_driver_register(const char** adrivers);
+
 #ifdef __cplusplus
 }
 #endif
