@@ -27,6 +27,7 @@ int main()
          */
         adrivers[1] = NULL; /* NULL terminate the array */
 
+        /* register those audio drivers. Note that at this time no fluidsynth objects are alive! */
         int res = fluid_audio_driver_register(adrivers);
         if(res != FLUID_OK)
         {
