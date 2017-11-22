@@ -266,7 +266,7 @@ static fluid_audriver_definition_t fluid_audio_drivers[] =
 
 void fluid_audio_driver_settings(fluid_settings_t* settings)
 {
-  int i;
+  unsigned int i;
 
   fluid_settings_register_str(settings, "audio.sample-format", "16bits", 0, NULL, NULL);
   fluid_settings_add_option(settings, "audio.sample-format", "16bits");
@@ -370,7 +370,7 @@ void fluid_audio_driver_settings(fluid_settings_t* settings)
 fluid_audio_driver_t*
 new_fluid_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
 {
-  int i;
+  unsigned int i;
   fluid_audio_driver_t* driver = NULL;
   char* name;
   char *allnames;
@@ -412,7 +412,7 @@ new_fluid_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
 fluid_audio_driver_t*
 new_fluid_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func, void* data)
 {
-  int i;
+  unsigned int i;
   fluid_audio_driver_t* driver = NULL;
   char* name;
 
@@ -444,7 +444,7 @@ new_fluid_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func, voi
 void
 delete_fluid_audio_driver(fluid_audio_driver_t* driver)
 {
-  int i;
+  unsigned int i;
 
   /* iterate over fluid_audio_drivers_template to ensure deleting even drivers currently not registered */
   for (i = 0; i < FLUID_N_ELEMENTS(fluid_audio_drivers_template); i++) {

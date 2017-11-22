@@ -21,7 +21,7 @@
 #ifndef _FLUID_AUDRIVER_H
 #define _FLUID_AUDRIVER_H
 
-#include "fluidsynth_priv.h"
+#include "fluid_sys.h"
 
 void fluid_audio_driver_settings(fluid_settings_t* settings);
 
