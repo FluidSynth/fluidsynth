@@ -100,20 +100,6 @@ fluid_allpass_getfeedback(fluid_allpass* allpass)
   _input = output; \
 }
 
-/*  fluid_real_t fluid_allpass_process(fluid_allpass* allpass, fluid_real_t input) */
-/*  { */
-/*    fluid_real_t output; */
-/*    fluid_real_t bufout; */
-/*    bufout = allpass->buffer[allpass->bufidx]; */
-/*    undenormalise(bufout); */
-/*    output = -input + bufout; */
-/*    allpass->buffer[allpass->bufidx] = input + (bufout * allpass->feedback); */
-/*    if (++allpass->bufidx >= allpass->bufsize) { */
-/*      allpass->bufidx = 0; */
-/*    } */
-/*    return output; */
-/*  } */
-
 struct _fluid_comb {
   fluid_real_t feedback;
   fluid_real_t filterstore;
@@ -193,22 +179,6 @@ fluid_comb_getfeedback(fluid_comb* comb)
   } \
   _output += _tmp; \
 }
-
-/* fluid_real_t fluid_comb_process(fluid_comb* comb, fluid_real_t input) */
-/* { */
-/*    fluid_real_t output; */
-
-/*    output = comb->buffer[comb->bufidx]; */
-/*    undenormalise(output); */
-/*    comb->filterstore = (output * comb->damp2) + (comb->filterstore * comb->damp1); */
-/*    undenormalise(comb->filterstore); */
-/*    comb->buffer[comb->bufidx] = input + (comb->filterstore * comb->feedback); */
-/*    if (++comb->bufidx >= comb->bufsize) { */
-/*      comb->bufidx = 0; */
-/*    } */
-
-/*    return output; */
-/* } */
 
 #define numcombs 8
 #define numallpasses 4
