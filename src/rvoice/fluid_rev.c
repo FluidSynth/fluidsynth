@@ -239,6 +239,14 @@ fluid_comb_getfeedback(fluid_comb* comb)
 #define numcombs 8
 #define numallpasses 4
 #define	fixedgain 0.015f
+/* scale_wet_width is a compensation weight factor to get an output
+   amplitude (wet) rather independent of the width setting.
+    0: the output amplitude is fully dependant on the width setting.
+   >0: the output amplitude is less dependant on the width setting.
+   With a scale_wet_width of 0.2 the output amplitude is rather 
+   independent of width setting (see fluid_revmodel_update()).
+ */
+#define scale_wet_width 0.2f 
 #define scalewet 3.0f
 #define scaledamp 1.0f
 #define scaleroom 0.28f
@@ -284,7 +292,7 @@ fluid_comb_getfeedback(fluid_comb* comb)
 struct _fluid_revmodel_t {
   fluid_real_t roomsize;
   fluid_real_t damp;
-  fluid_real_t wet, wet1, wet2;
+  fluid_real_t level, wet1, wet2;
   fluid_real_t width;
   fluid_real_t gain;
   /*
@@ -486,8 +494,20 @@ fluid_revmodel_update(fluid_revmodel_t* rev)
   /* Recalculate internal values after parameter change */
   int i;
 
-  rev->wet1 = rev->wet * (rev->width / 2.0f + 0.5f);
-  rev->wet2 = rev->wet * ((1.0f - rev->width) / 2.0f);
+  /* The stereo amplitude equation (wet1 and wet2 below) have a 
+  tendency to produce high amplitude with high width values ( 1 < width < 100).
+  This results in an unwanted noisy output clipped by the audio card.
+  To avoid this dependency, we divide by (1 + rev->width * scale_wet_width)
+  Actually, with a scale_wet_width of 0.2, (regardless of level setting), 
+  the output amplitude (wet) seems rather independent of width setting */	
+  fluid_real_t wet = (rev->level * scalewet) / 
+                     (1.0f + rev->width * scale_wet_width);
+  
+  /* wet1 and wet2 are used by the stereo effect controled by the width setting
+  for producing a stereo ouptput from a monophonic reverb signal.
+  Please see the note above about a side effect tendency */
+  rev->wet1 = wet * (rev->width / 2.0f + 0.5f);
+  rev->wet2 = wet * ((1.0f - rev->width) / 2.0f);
 
   for (i = 0; i < numcombs; i++) {
     fluid_comb_setfeedback(&rev->combL[i], rev->roomsize);
@@ -515,7 +535,13 @@ fluid_revmodel_set(fluid_revmodel_t* rev, int set, float roomsize,
                    float damping, float width, float level)
 {
   if (set & FLUID_REVMODEL_SET_ROOMSIZE)
-    rev->roomsize = (roomsize * scaleroom) + offsetroom;
+  {
+        /* With upper limit above 1.07, the output amplitude will grow
+	exponentially. So, keeping this upper limit to 1.0 seems sufficient
+	as it produces yet a long reverb time */
+	fluid_clip(roomsize, 0.0f, 1.0f);
+	rev->roomsize = (roomsize * scaleroom) + offsetroom;
+  }
 
   if (set & FLUID_REVMODEL_SET_DAMPING)
     rev->damp = damping * scaledamp;
@@ -526,7 +552,7 @@ fluid_revmodel_set(fluid_revmodel_t* rev, int set, float roomsize,
   if (set & FLUID_REVMODEL_SET_LEVEL)
   {
     fluid_clip(level, 0.0f, 1.0f);
-    rev->wet = level * scalewet;
+    rev->level = level;
   }
 
   fluid_revmodel_update (rev);

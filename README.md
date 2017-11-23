@@ -1,7 +1,12 @@
-[![Build Status Travis](https://travis-ci.org/FluidSynth/fluidsynth.svg?branch=master)](https://travis-ci.org/FluidSynth/fluidsynth)
-[![Build status Appveyor](https://ci.appveyor.com/api/projects/status/n24ybk0dmttjwdk2/branch/master?svg=true)](https://ci.appveyor.com/project/derselbst/fluidsynth)
 
-# Introduction
+# FluidSynth
+
+|  | Build Status |
+|---|---|
+| Linux/MacOSX| [![Build Status Travis](https://travis-ci.org/FluidSynth/fluidsynth.svg?branch=master)](https://travis-ci.org/FluidSynth/fluidsynth) |
+| Windows | [![Build status Appveyor](https://ci.appveyor.com/api/projects/status/n24ybk0dmttjwdk2/branch/master?svg=true)](https://ci.appveyor.com/project/derselbst/fluidsynth) |
+
+
 
 FluidSynth is a software real-time synthesizer based on the
 Soundfont 2 specifications.
@@ -11,13 +16,13 @@ device. It is the software analogue of a MIDI synthesizer. FluidSynth
 can also play midifiles using a Soundfont.
 
 
-# Information on the web
+## Information on the web
 
 The place to look if you are looking for the latest information on
 FluidSynth is the web site at http://www.fluidsynth.org/.
 
 
-# Why did we do it
+## Why did we do it
 
 The synthesizer grew out of a project, started by Samuel Bianchini and
 Peter Hanappe, and later joined by Johnathan Lee, that aimed at
@@ -51,7 +56,7 @@ synthesizer. That is why we developed FluidSynth.
 
 
 
-# Design decisions
+## Design decisions
 
 The synthesizer was designed to be as self-contained as possible for
 several reasons:
@@ -71,13 +76,17 @@ several reasons:
   on external code.
 
 
-# Links
+## Links
 
 ### Home Page
 
 - http://www.fluidsynth.org
 
 ### Documentation
+
+- FluidSynth's wiki, https://github.com/FluidSynth/fluidsynth/wiki
+
+- FluidSynth's API documentation, http://www.fluidsynth.org/api/
 
 - Introduction to SoundFonts, by Josh Green,
   http://smurf.sourceforge.net/sfont_intro.php
