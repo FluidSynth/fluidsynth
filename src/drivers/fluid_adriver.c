@@ -472,6 +472,7 @@ delete_fluid_audio_driver(fluid_audio_driver_t* driver)
  * successfully registered. Otherwise #FLUID_FAILED is returned and ALL available audio drivers are registered instead.
  * 
  * @note This function is not thread safe and will never be!
+ * @since 1.1.9
  */
 int fluid_audio_driver_register(const char** adrivers)
 {
