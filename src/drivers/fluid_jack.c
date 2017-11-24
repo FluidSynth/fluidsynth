@@ -673,7 +673,7 @@ delete_fluid_jack_midi_driver(fluid_midi_driver_t *p)
   if (dev->client_ref != NULL)
     fluid_jack_client_close (dev->client_ref, dev);
 
-    delete_fluid_midi_parser (dev->parser);
+  delete_fluid_midi_parser (dev->parser);
   
   FLUID_FREE (dev);
 }
