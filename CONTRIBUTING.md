@@ -5,8 +5,8 @@ any huge new feature, consider bringing up your ideas on our mailing list:
 https://lists.nongnu.org/mailman/listinfo/fluid-dev
 
 Contributing can be done by
-* submitting pull requests on Github:
-https://help.github.com/articles/proposing-changes-to-your-work-with-pull-requests/
+* [submitting pull requests on Github](
+https://help.github.com/articles/proposing-changes-to-your-work-with-pull-requests/) or
 * submitting patches to the mailing list.
 
 Patches should be created with `git format-patch`, so in every case you should be familiar with the basics of git.
@@ -16,7 +16,7 @@ Some things that will increase the chance that your pull request or patch is acc
 * Give a reasoning / motivation for any changes or proposals you make.
 * Follow our style guide.
 * Keep your commits "atomic".
-* Write a meaningful commit messages.
+* Write meaningful commit messages.
 
 ## Style Guide
 

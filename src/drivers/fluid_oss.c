@@ -73,7 +73,7 @@ typedef struct {
   float* buffers[2];
 } fluid_oss_audio_driver_t;
 
-int delete_fluid_oss_audio_driver(fluid_audio_driver_t* p);
+void delete_fluid_oss_audio_driver(fluid_audio_driver_t* p);
 
 /* local utilities */
 static int fluid_oss_set_queue_size(fluid_oss_audio_driver_t* dev, int ss, int ch, int qs, int bs);
@@ -93,7 +93,7 @@ typedef struct {
 fluid_midi_driver_t*
 new_fluid_oss_midi_driver(fluid_settings_t* settings,
 			 handle_midi_event_func_t handler, void* data);
-int delete_fluid_oss_midi_driver(fluid_midi_driver_t* p);
+void delete_fluid_oss_midi_driver(fluid_midi_driver_t* p);
 int fluid_oss_midi_driver_status(fluid_midi_driver_t* p);
 static fluid_thread_return_t fluid_oss_midi_run(void* d);
 
@@ -368,14 +368,11 @@ error_recovery:
 /*
  * delete_fluid_oss_audio_driver
  */
-int
+void
 delete_fluid_oss_audio_driver(fluid_audio_driver_t* p)
 {
   fluid_oss_audio_driver_t* dev = (fluid_oss_audio_driver_t*) p;
-
-  if (dev == NULL) {
-    return FLUID_OK;
-  }
+  fluid_return_if_fail(dev != NULL);
 
   dev->cont = 0;
 
@@ -385,11 +382,9 @@ delete_fluid_oss_audio_driver(fluid_audio_driver_t* p)
   if (dev->dspfd >= 0) {
     close(dev->dspfd);
   }
-  if (dev->buffer != NULL) {
-    FLUID_FREE(dev->buffer);
-  }
+  
+  FLUID_FREE(dev->buffer);
   FLUID_FREE(dev);
-  return FLUID_OK;
 }
 
 /**
@@ -596,15 +591,11 @@ new_fluid_oss_midi_driver(fluid_settings_t* settings,
 /*
  * delete_fluid_oss_midi_driver
  */
-int
+void
 delete_fluid_oss_midi_driver(fluid_midi_driver_t* p)
 {
-  fluid_oss_midi_driver_t* dev;
-
-  dev = (fluid_oss_midi_driver_t*) p;
-  if (dev == NULL) {
-    return FLUID_OK;
-  }
+  fluid_oss_midi_driver_t* dev = (fluid_oss_midi_driver_t*) p;
+  fluid_return_if_fail(dev != NULL);
 
   /* cancel the thread and wait for it before cleaning up */
   dev->status = FLUID_MIDI_DONE;
@@ -615,11 +606,9 @@ delete_fluid_oss_midi_driver(fluid_midi_driver_t* p)
   if (dev->fd >= 0) {
     close(dev->fd);
   }
-  if (dev->parser != NULL) {
-    delete_fluid_midi_parser(dev->parser);
-  }
+  
+  delete_fluid_midi_parser(dev->parser);
   FLUID_FREE(dev);
-  return FLUID_OK;
 }
 
 /*

@@ -58,7 +58,7 @@ int fluid_ramsfont_izone_set_loop(fluid_ramsfont_t* sfont,
 				int on, float loopstart, float loopend);
 
 FLUIDSYNTH_API fluid_sample_t* new_fluid_ramsample(void);
-FLUIDSYNTH_API int delete_fluid_ramsample(fluid_sample_t* sample);
+FLUIDSYNTH_API void delete_fluid_ramsample(fluid_sample_t* sample);
 FLUIDSYNTH_API int fluid_sample_set_name(fluid_sample_t* sample, const char *name);
 FLUIDSYNTH_API 
 int fluid_sample_set_sound_data(fluid_sample_t* sample, short *data, 

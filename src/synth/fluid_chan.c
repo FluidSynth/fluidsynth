@@ -194,12 +194,13 @@ fluid_channel_init_ctrl(fluid_channel_t* chan, int is_all_ctrl_off)
 }
 
 /* Only called by delete_fluid_synth(), so no need to queue a preset free event */
-int
+void
 delete_fluid_channel(fluid_channel_t* chan)
 {
-  if (chan->preset) delete_fluid_preset (chan->preset);
+  fluid_return_if_fail(chan != NULL);
+  
+  delete_fluid_preset (chan->preset);
   FLUID_FREE(chan);
-  return FLUID_OK;
 }
 
 /* FIXME - Calls fluid_channel_init() potentially in synthesis context */

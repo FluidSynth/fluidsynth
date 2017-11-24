@@ -43,6 +43,9 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #cmakedefine HAVE_INTTYPES_H @HAVE_INTTYPES_H@
 
+/* Define to 1 if you have the <io.h> header file. */
+#cmakedefine HAVE_IO_H @HAVE_IO_H@
+
 /* whether or not we are supporting lash */
 #cmakedefine HAVE_LASH @HAVE_LASH@
 

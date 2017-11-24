@@ -263,7 +263,7 @@ fluid_rvoice_check_sample_sanity(fluid_rvoice_t* voice)
  * quiet, 0 .. #FLUID_BUFSIZE-1 means voice finished.)
  *
  * Panning, reverb and chorus are processed separately. The dsp interpolation
- * routine is in (fluid_dsp_float.c).
+ * routine is in (fluid_rvoice_dsp.c).
  */
 int
 fluid_rvoice_write (fluid_rvoice_t* voice, fluid_real_t *dsp_buf)

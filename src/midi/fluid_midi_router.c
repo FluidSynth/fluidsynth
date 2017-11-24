@@ -32,8 +32,6 @@
  * fluid_midi_router
  */
 struct _fluid_midi_router_t {
-  fluid_synth_t* synth;
-
   fluid_mutex_t rules_mutex;
   fluid_midi_router_rule_t *rules[FLUID_MIDI_ROUTER_RULE_COUNT];        /* List of rules for each rule type */
   fluid_midi_router_rule_t *free_rules;      /* List of rules to free (was waiting for final events which were received) */
@@ -100,8 +98,7 @@ new_fluid_midi_router(fluid_settings_t *settings, handle_midi_event_func_t handl
   fluid_settings_getint(settings, "synth.midi-channels", &router->nr_midi_channels);
 
   fluid_mutex_init (router->rules_mutex);
-
-  router->synth = (fluid_synth_t *)event_handler_data;
+  
   router->event_handler = handler;
   router->event_handler_data = event_handler_data;
 
@@ -125,14 +122,14 @@ new_fluid_midi_router(fluid_settings_t *settings, handle_midi_event_func_t handl
  * @return Returns #FLUID_OK on success, #FLUID_FAILED otherwise (only if NULL
  *   \a router passed really)
  */
-int
+void
 delete_fluid_midi_router (fluid_midi_router_t *router)
 {
   fluid_midi_router_rule_t *rule;
   fluid_midi_router_rule_t *next_rule;
   int i;
 
-  fluid_return_val_if_fail (router != NULL, FLUID_FAILED);
+  fluid_return_if_fail (router != NULL);
 
   for (i = 0; i < FLUID_MIDI_ROUTER_RULE_COUNT; i++)
   {
@@ -145,8 +142,6 @@ delete_fluid_midi_router (fluid_midi_router_t *router)
 
   fluid_mutex_destroy (router->rules_mutex);
   FLUID_FREE (router);
-
-  return FLUID_OK;
 }
 
 /**

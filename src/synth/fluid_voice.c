@@ -218,20 +218,17 @@ new_fluid_voice(fluid_real_t output_rate)
 /*
  * delete_fluid_voice
  */
-int
+void
 delete_fluid_voice(fluid_voice_t* voice)
 {
-  if (voice == NULL) {
-    return FLUID_OK;
-  }
+  fluid_return_if_fail(voice != NULL);
+  
   if (!voice->can_access_rvoice || !voice->can_access_overflow_rvoice) {
-    /* stop rvoice before deleting voice! */
-    return FLUID_FAILED;
+    FLUID_LOG(FLUID_WARN, "Deleting voice %u which has locked rvoices!", voice->id);
   }
   FLUID_FREE(voice->overflow_rvoice);
   FLUID_FREE(voice->rvoice);
   FLUID_FREE(voice);
-  return FLUID_OK;
 }
 
 /* fluid_voice_init
@@ -400,7 +397,7 @@ fluid_real_t fluid_voice_gen_value(fluid_voice_t* voice, int num)
  * @return Count of samples written to dsp_buf (can be 0)
  *
  * Panning, reverb and chorus are processed separately. The dsp interpolation
- * routine is in (fluid_dsp_float.c).
+ * routine is in (fluid_rvoice_dsp.c).
  */
 int
 fluid_voice_write (fluid_voice_t* voice, fluid_real_t *dsp_buf)

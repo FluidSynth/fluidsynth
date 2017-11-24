@@ -1227,7 +1227,7 @@ fluid_str_hash (const void *v)
 {
   /* 31 bit hash function */
   const signed char *p = v;
-  uint32 h = *p;
+  uint32_t h = *p;
 
   if (h)
     for (p += 1; *p != '\0'; p++)

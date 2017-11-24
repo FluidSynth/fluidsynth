@@ -112,7 +112,7 @@ struct _fluid_voice_t
 
 
 fluid_voice_t* new_fluid_voice(fluid_real_t output_rate);
-int delete_fluid_voice(fluid_voice_t* voice);
+void delete_fluid_voice(fluid_voice_t* voice);
 
 void fluid_voice_start(fluid_voice_t* voice);
 void  fluid_voice_calculate_gen_pitch(fluid_voice_t* voice);
@@ -207,12 +207,5 @@ fluid_real_t fluid_voice_gen_value(fluid_voice_t* voice, int num);
    + (fluid_real_t)(_voice)->gen[_n].mod \
    + (fluid_real_t)(_voice)->gen[_n].nrpn)
 
-/* defined in fluid_dsp_float.c */
-
-void fluid_dsp_float_config (void);
-int fluid_dsp_float_interpolate_none (fluid_voice_t *voice);
-int fluid_dsp_float_interpolate_linear (fluid_voice_t *voice);
-int fluid_dsp_float_interpolate_4th_order (fluid_voice_t *voice);
-int fluid_dsp_float_interpolate_7th_order (fluid_voice_t *voice);
 
 #endif /* _FLUID_VOICE_H */

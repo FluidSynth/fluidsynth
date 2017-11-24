@@ -3,7 +3,7 @@ Before submitting an issue, consider looking into our
 wiki ( https://github.com/FluidSynth/fluidsynth/wiki ) or the
 developer resources ( http://www.fluidsynth.org/api/ )
 
-Please do not submit support requests or "How to" questions here. Instead, please use FluidSynth's
+Please do not submit support requests or "How to" questions here. Instead, use FluidSynth's
 mailing list: https://lists.nongnu.org/mailman/listinfo/fluid-dev
 
 Below is a form that shall help getting relevant information for bugs and feature requests together.

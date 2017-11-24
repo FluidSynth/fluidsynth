@@ -41,7 +41,7 @@ struct _fluid_seqbind_t {
 	fluid_synth_t* synth;
 	fluid_sequencer_t* seq;
 	fluid_sample_timer_t* sample_timer;
-	short client_id;
+	fluid_seq_id_t client_id;
 };
 typedef struct _fluid_seqbind_t fluid_seqbind_t;
 
@@ -53,9 +53,7 @@ void fluid_seq_fluidsynth_callback(unsigned int time, fluid_event_t* event, flui
 void 
 delete_fluid_seqbind(fluid_seqbind_t* seqbind) 
 {
-	if (seqbind == NULL) {
-		return;
-	}
+	fluid_return_if_fail(seqbind != NULL);
 
 	if ((seqbind->client_id != -1) && (seqbind->seq != NULL)) {
 		fluid_sequencer_unregister_client(seqbind->seq, seqbind->client_id);
@@ -77,7 +75,7 @@ delete_fluid_seqbind(fluid_seqbind_t* seqbind)
  * @param synth Synthesizer instance
  * @returns Sequencer client ID, or #FLUID_FAILED on error.
  */
-short 
+fluid_seq_id_t 
 fluid_sequencer_register_fluidsynth (fluid_sequencer_t* seq, fluid_synth_t* synth)
 {
 	fluid_seqbind_t* seqbind;
@@ -153,11 +151,11 @@ fluid_seq_fluidsynth_callback(unsigned int time, fluid_event_t* evt, fluid_seque
   	break;
 
 	case FLUID_SEQ_ALLSOUNDSOFF:
-		/* NYI */
+        fluid_synth_all_sounds_off(synth, fluid_event_get_channel(evt));
   	break;
 
   case FLUID_SEQ_ALLNOTESOFF:
-  	fluid_synth_cc(synth, fluid_event_get_channel(evt), ALL_NOTES_OFF, 0);
+  	fluid_synth_all_notes_off(synth, fluid_event_get_channel(evt));
   	break;
 
   case FLUID_SEQ_BANKSELECT:
@@ -245,9 +243,10 @@ fluid_seq_fluidsynth_callback(unsigned int time, fluid_event_t* evt, fluid_seque
 	}
 }
 
-static int get_fluidsynth_dest(fluid_sequencer_t* seq) 
+static fluid_seq_id_t get_fluidsynth_dest(fluid_sequencer_t* seq) 
 {
-	int i, id;
+	int i;
+	fluid_seq_id_t id;
 	char* name;
 	int j = fluid_sequencer_count_clients(seq);
 	for (i = 0; i < j; i++) {

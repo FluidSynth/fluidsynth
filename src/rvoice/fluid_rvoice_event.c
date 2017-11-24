@@ -284,7 +284,8 @@ fluid_rvoice_eventhandler_dispatch_all(fluid_rvoice_eventhandler_t* handler)
 void 
 delete_fluid_rvoice_eventhandler(fluid_rvoice_eventhandler_t* handler)
 {
-  if (handler == NULL) return;
+  fluid_return_if_fail(handler != NULL);
+  
   delete_fluid_rvoice_mixer(handler->mixer);
   delete_fluid_ringbuffer(handler->queue);
   delete_fluid_ringbuffer(handler->finished_voices);
