@@ -1094,15 +1094,6 @@ fluid_track_set_name(fluid_track_t *track, char *name)
 }
 
 /*
- * fluid_track_get_name
- */
-char *
-fluid_track_get_name(fluid_track_t *track)
-{
-    return track->name;
-}
-
-/*
  * fluid_track_get_duration
  */
 int
@@ -1115,24 +1106,6 @@ fluid_track_get_duration(fluid_track_t *track)
         evt = evt->next;
     }
     return time;
-}
-
-/*
- * fluid_track_count_events
- */
-int
-fluid_track_count_events(fluid_track_t *track, int *on, int *off)
-{
-    fluid_midi_event_t *evt = track->first;
-    while (evt != NULL) {
-        if (evt->type == NOTE_ON) {
-            (*on)++;
-        } else if (evt->type == NOTE_OFF) {
-            (*off)++;
-        }
-        evt = evt->next;
-    }
-    return FLUID_OK;
 }
 
 /*
@@ -1151,16 +1124,6 @@ fluid_track_add_event(fluid_track_t *track, fluid_midi_event_t *evt)
         track->last = evt;
     }
     return FLUID_OK;
-}
-
-/*
- * fluid_track_first_event
- */
-fluid_midi_event_t *
-fluid_track_first_event(fluid_track_t *track)
-{
-    track->cur = track->first;
-    return track->cur;
 }
 
 /*
