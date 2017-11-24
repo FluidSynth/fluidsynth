@@ -240,7 +240,7 @@ fluid_midi_file_read_mthd(fluid_midi_file *mf)
     mf->type = mthd[9];
     mf->ntracks = (unsigned) mthd[11];
     mf->ntracks += (unsigned int) (mthd[10]) << 16;
-    if ((mthd[12]) < 0) {
+    if ((mthd[12]) & (1 << 7)) {
         mf->uses_smpte = 1;
         mf->smpte_fps = -mthd[12];
         mf->smpte_res = (unsigned) mthd[13];
