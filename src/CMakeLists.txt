@@ -32,6 +32,10 @@ include_directories (
     ${CMAKE_SOURCE_DIR}/include
     ${CMAKE_BINARY_DIR}/include
     ${PTHREADS_INCLUDE_DIR}
+)
+
+include_directories (
+    SYSTEM
     ${GLIB_INCLUDEDIR}
     ${GLIB_INCLUDE_DIRS}
 )
