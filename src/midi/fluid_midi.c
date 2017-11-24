@@ -1377,28 +1377,6 @@ fluid_player_add_track(fluid_player_t *player, fluid_track_t *track)
     }
 }
 
-/*
- * fluid_player_count_tracks
- */
-int
-fluid_player_count_tracks(fluid_player_t *player)
-{
-    return player->ntracks;
-}
-
-/*
- * fluid_player_get_track
- */
-fluid_track_t *
-fluid_player_get_track(fluid_player_t *player, int i)
-{
-    if ((i >= 0) && (i < MAX_NUMBER_OF_TRACKS)) {
-        return player->track[i];
-    } else {
-        return NULL;
-    }
-}
-
 /**
  * Change the MIDI callback function. This is usually set to 
  * fluid_synth_handle_midi_event, but can optionally be changed

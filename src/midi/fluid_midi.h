@@ -312,8 +312,6 @@ struct _fluid_player_t {
 
 int fluid_player_add_track(fluid_player_t* player, fluid_track_t* track);
 int fluid_player_callback(void* data, unsigned int msec);
-int fluid_player_count_tracks(fluid_player_t* player);
-fluid_track_t* fluid_player_get_track(fluid_player_t* player, int i);
 int fluid_player_reset(fluid_player_t* player);
 int fluid_player_load(fluid_player_t* player, fluid_playlist_item *item);
 
