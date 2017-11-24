@@ -409,38 +409,6 @@ fluid_voice_write (fluid_voice_t* voice, fluid_real_t *dsp_buf)
   return result;
 }
 
-
-/**
- * Mix voice data to left/right (panning), reverb and chorus buffers.
- * @param count Number of samples
- * @param dsp_buf Source buffer
- * @param voice Voice to mix
- * @param left_buf Left audio buffer
- * @param right_buf Right audio buffer
- * @param reverb_buf Reverb buffer
- * @param chorus_buf Chorus buffer
- *
- */
-void
-fluid_voice_mix (fluid_voice_t *voice, int count, fluid_real_t* dsp_buf,
-		 fluid_real_t* left_buf, fluid_real_t* right_buf,
-		 fluid_real_t* reverb_buf, fluid_real_t* chorus_buf)
-{
-  fluid_rvoice_buffers_t buffers;
-  fluid_real_t* dest_buf[4] = {left_buf, right_buf, reverb_buf, chorus_buf};
-
-  fluid_rvoice_buffers_set_amp(&buffers, 0, voice->amp_left);
-  fluid_rvoice_buffers_set_amp(&buffers, 1, voice->amp_right);
-  fluid_rvoice_buffers_set_amp(&buffers, 2, voice->amp_reverb);
-  fluid_rvoice_buffers_set_amp(&buffers, 3, voice->amp_chorus);
- 
-  fluid_rvoice_buffers_mix(&buffers, dsp_buf, count, dest_buf, 4);
-
-  fluid_check_fpe ("voice_mix");
-}
-
-
-
 /*
  * fluid_voice_start
  */

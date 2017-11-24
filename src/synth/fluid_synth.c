@@ -865,7 +865,7 @@ delete_fluid_synth(fluid_synth_t* synth)
     for (i = 0; i < synth->midi_channels; i++)
         fluid_channel_set_preset(synth->channel[i], NULL);
 
-    delete_fluid_rvoice_eventhandler(synth->eventhandler);
+  delete_fluid_rvoice_eventhandler(synth->eventhandler);
 
   /* delete all the SoundFonts */
   for (list = synth->sfont_info; list; list = fluid_list_next (list)) {

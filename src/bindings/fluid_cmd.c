@@ -2182,18 +2182,6 @@ fluid_is_number(char* a)
   return TRUE;
 }
 
-int
-fluid_is_empty(char* a)
-{
-  while (*a != 0) {
-    if ((*a != ' ') && (*a != '\t') && (*a != '\n') && (*a != '\r')) {
-      return FALSE;
-    }
-    a++;
-  }
-  return TRUE;
-}
-
 char*
 fluid_expand_path(char* path, char* new_path, int len)
 {

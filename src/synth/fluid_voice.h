@@ -146,9 +146,6 @@ int fluid_voice_noteoff(fluid_voice_t* voice);
 void fluid_voice_off(fluid_voice_t* voice);
 void fluid_voice_stop(fluid_voice_t* voice);
 void fluid_voice_overflow_rvoice_finished(fluid_voice_t* voice);
-void fluid_voice_mix (fluid_voice_t *voice, int count, fluid_real_t* dsp_buf,
-		 fluid_real_t* left_buf, fluid_real_t* right_buf,
-		 fluid_real_t* reverb_buf, fluid_real_t* chorus_buf);
 
 int fluid_voice_kill_excl(fluid_voice_t* voice);
 fluid_real_t fluid_voice_get_overflow_prio(fluid_voice_t* voice, 

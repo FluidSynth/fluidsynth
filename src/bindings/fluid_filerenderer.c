@@ -100,25 +100,6 @@ static int fluid_file_renderer_parse_options (char *filetype, char *format,
 static int fluid_file_renderer_find_file_type (char *extension, int *type);
 static int fluid_file_renderer_find_valid_format (SF_INFO *info);
 
-
-#else   /* No libsndfile support */
-
-
-/* File type names. */
-static const char * const type_names[] = {
-  "raw"
-};
-
-/* File audio format names. */
-static const char * const format_names[] = {
-  "s16"
-};
-
-/* File endian byte order names. */
-static const char * const endian_names[] = {
-  "cpu"
-};
-
 #endif
 
 

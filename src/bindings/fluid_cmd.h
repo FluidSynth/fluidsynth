@@ -29,7 +29,6 @@ void fluid_shell_settings(fluid_settings_t* settings);
 
 /** some help functions */
 int fluid_is_number(char* a);
-int fluid_is_empty(char* a);
 char* fluid_expand_path(char* path, char* new_path, int len);
 
 /** the handlers for the command lines */
