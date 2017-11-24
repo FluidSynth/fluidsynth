@@ -145,11 +145,6 @@ char* fluid_tuning_get_name(fluid_tuning_t* tuning)
   return tuning->name;
 }
 
-void fluid_tuning_set_key(fluid_tuning_t* tuning, int key, double pitch)
-{
-  tuning->pitch[key] = pitch;
-}
-
 void fluid_tuning_set_octave(fluid_tuning_t* tuning, const double* pitch_deriv)
 {
   int i;
