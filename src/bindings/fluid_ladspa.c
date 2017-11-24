@@ -607,11 +607,6 @@ int fluid_ladspa_effect_set_mix(fluid_ladspa_fx_t *fx, const char *name, int mix
 
     LADSPA_API_ENTER(fx);
 
-    if (fluid_ladspa_is_active(fx))
-    {
-        LADSPA_API_RETURN(fx, FLUID_FAILED);
-    }
-
     effect = get_effect(fx, name);
     if (effect == NULL)
     {
