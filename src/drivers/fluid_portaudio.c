@@ -86,7 +86,7 @@ void delete_fluid_portaudio_driver (fluid_audio_driver_t *p);
  * When FLUID_OK, the name is returned in allocated memory. The caller must check
  * the name pointer for a valid memory allocation and should free the memory.
  */
-static int get_valid_portaudio_device_name(int device_num, char **name_ptr)
+static int fluid_portaudio_get_device_name(int device_num, char **name_ptr)
 {
   	const PaDeviceInfo *deviceInfo =  Pa_GetDeviceInfo (device_num);
 
@@ -145,7 +145,7 @@ fluid_portaudio_driver_settings (fluid_settings_t *settings)
   else   for (i = 0; i < numDevices; i++)
   {
 	char * name;
-	if( get_valid_portaudio_device_name(i,&name) == FLUID_OK)
+	if( fluid_portaudio_get_device_name(i,&name) == FLUID_OK)
 	{   /* the device i is a valid output device */
 	    if(name)
 	    {
@@ -235,7 +235,7 @@ new_fluid_portaudio_driver (fluid_settings_t *settings, fluid_synth_t *synth)
     for (i = 0; i < numDevices; i++)
     {
 	char * name;
-	if( get_valid_portaudio_device_name(i,&name) == FLUID_OK )
+	if( fluid_portaudio_get_device_name(i,&name) == FLUID_OK )
 	{	/* the device i is a valid output device */
             if(name)
 	    {
