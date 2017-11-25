@@ -78,7 +78,7 @@ struct _fluid_sfloader_t {
   void* data;           /**< User defined data pointer */
 
   /** File operation callbacks to allow custom loading, such as from memory */
-  fluid_file_callbacks_t* file_callbacks;
+  const fluid_file_callbacks_t* file_callbacks;
 
   /**                                                                                                                                                                                                                               
    * The free method should free the memory allocated for the loader in                                                                                                                                                             
@@ -99,16 +99,21 @@ struct _fluid_sfloader_t {
 };
 
 struct _fluid_file_callbacks_t {
-  /** Accepts UTF-8 encoding, returns file handle */
-  void * (* fopen )(const char *);
+  /**
+   * Opens the file indicated by \c path in binary read mode.
+   * Accepts UTF-8 encoding
+   *
+   * @return returns a file handle on success, NULL otherwise
+   */
+  void * (* fopen )(const char * path);
 
   /** Reads to specified buffer, returns count of size bytes read */
-  size_t (* fread )(void *, size_t size, size_t count, void * handle);
+  int (* fread )(void *, int count, void * handle);
 
-  /** Returns zero on success, -1 on error */
+  /** Returns zero on success, #FLUID_FAILED on error */
   int (* fseek )(void * handle, long, int);
 
-  /** Returns zero on success, -1 on error */
+  /** Returns zero on success, #FLUID_FAILED on error */
   int (* fclose)(void * handle);
 
   /** Returns current file offset */

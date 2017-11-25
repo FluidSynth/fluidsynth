@@ -232,6 +232,7 @@ typedef FILE*  fluid_file;
 #define FLUID_FCLOSE(_f)             fclose(_f)
 #define FLUID_FREAD(_p,_s,_n,_f)     fread(_p,_s,_n,_f)
 #define FLUID_FSEEK(_f,_n,_set)      fseek(_f,_n,_set)
+#define FLUID_FTELL(_f)              ftell(_f)
 #define FLUID_MEMCPY(_dst,_src,_n)   memcpy(_dst,_src,_n)
 #define FLUID_MEMSET(_s,_c,_n)       memset(_s,_c,_n)
 #define FLUID_STRLEN(_s)             strlen(_s)
