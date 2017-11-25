@@ -82,6 +82,14 @@ static const fluid_file_callbacks_t def_file_callbacks =
         default_ftell
 };
 
+/**
+ * Creates a default soundfont2 loader that can be used with fluid_synth_add_sfloader().
+ * By default every synth instance has an initial default soundfont loader instance.
+ * Calling this function is usually only necessary to load a soundfont from memory, by overriding \c fluid_sfloader_t::file_callbacks member.
+ * 
+ * @param settings A settings instance obtained by new_fluid_settings()
+ * @return A default soundfont2 loader struct
+ */
 fluid_sfloader_t* new_fluid_defsfloader(fluid_settings_t* settings)
 {
   fluid_sfloader_t* loader;
