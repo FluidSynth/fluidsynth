@@ -36,7 +36,6 @@
 #ifndef _FLUID_SYS_H
 #define _FLUID_SYS_H
 
-#include <glib.h>
 #include "fluidsynth_priv.h"
 
 #ifdef LADSPA
