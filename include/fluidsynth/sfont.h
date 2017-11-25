@@ -97,6 +97,9 @@ struct _fluid_sfloader_t {
   fluid_sfont_t* (*load)(fluid_sfloader_t* loader, const char* filename);
 };
 
+/**
+ * File callback structure to enable custom soundfont loading (e.g. from memory).
+ */
 struct _fluid_file_callbacks_t {
   /**
    * Opens the file indicated by \c path in binary read mode.
