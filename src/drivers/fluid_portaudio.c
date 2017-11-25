@@ -82,11 +82,11 @@ void delete_fluid_portaudio_driver (fluid_audio_driver_t *p);
  *   MME: is the host API name.
  *   SB PCI: is the host device name.
  * 
- * @return: TRUE if device_num is a valid output device, FALSE otherwise.
- * When TRUE, the name is returned in allocated memory. The caller must check
+ * @return: FLUID_OK if device_num is a valid output device, FLUID_FAILED otherwise.
+ * When FLUID_OK, the name is returned in allocated memory. The caller must check
  * the name pointer for a valid memory allocation and should free the memory.
  */
-int get_valid_portaudio_device_name(int device_num, char **name_ptr)
+static int get_valid_portaudio_device_name(int device_num, char **name_ptr)
 {
   	const PaDeviceInfo *deviceInfo =  Pa_GetDeviceInfo (device_num);
 
@@ -107,9 +107,9 @@ int get_valid_portaudio_device_name(int device_num, char **name_ptr)
 			FLUID_SPRINTF(*name_ptr,"%d:%s:%s",device_num, 
 							hostInfo->name, deviceInfo->name);
 		}
-		return TRUE; /* device_num is a valid device */
+		return FLUID_OK; /* device_num is a valid device */
 	}
-	else return FALSE; /* device_num is an invalid device */
+	else return FLUID_FAILED; /* device_num is an invalid device */
 }
 
 /*
@@ -145,7 +145,7 @@ fluid_portaudio_driver_settings (fluid_settings_t *settings)
   else   for (i = 0; i < numDevices; i++)
   {
 	char * name;
-	if( get_valid_portaudio_device_name(i,&name))
+	if( get_valid_portaudio_device_name(i,&name) == FLUID_OK)
 	{   /* the device i is a valid output device */
 	    if(name)
 	    {
@@ -235,7 +235,7 @@ new_fluid_portaudio_driver (fluid_settings_t *settings, fluid_synth_t *synth)
     for (i = 0; i < numDevices; i++)
     {
 	char * name;
-	if( get_valid_portaudio_device_name(i,&name))
+	if( get_valid_portaudio_device_name(i,&name) == FLUID_OK )
 	{	/* the device i is a valid output device */
             if(name)
 	    {
