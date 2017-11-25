@@ -81,12 +81,11 @@ struct _fluid_sfloader_t {
   const fluid_file_callbacks_t* file_callbacks;
 
   /**                                                                                                                                                                                                                               
-   * The free method should free the memory allocated for the loader in                                                                                                                                                             
-   * addition to any private data.                                                                                                                                                                                                  
-   * @param loader SoundFont loader                                                                                                                                                                                                 
-   * @return Should return 0 if no error occured, non-zero otherwise                                                                                                                                                                
+   * The free method should free the memory allocated for the loader in
+   * addition to any private data.
+   * @param loader SoundFont loader
    */
-  int (*free)(fluid_sfloader_t* loader);
+  void (*free)(fluid_sfloader_t* loader);
 
   /**
    * Method to load an instrument file (does not actually need to be a real file name,
@@ -134,7 +133,7 @@ struct _fluid_file_callbacks_t {
 
 
 FLUIDSYNTH_API fluid_sfloader_t* new_fluid_defsfloader(fluid_settings_t* settings);
-FLUIDSYNTH_API int delete_fluid_defsfloader(fluid_sfloader_t* loader);
+FLUIDSYNTH_API void delete_fluid_defsfloader(fluid_sfloader_t* loader);
 
 /*
  * Virtual SoundFont instance structure.

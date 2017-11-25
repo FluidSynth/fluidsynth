@@ -100,12 +100,11 @@ fluid_sfloader_t* new_fluid_defsfloader(fluid_settings_t* settings)
   return loader;
 }
 
-int delete_fluid_defsfloader(fluid_sfloader_t* loader)
+void delete_fluid_defsfloader(fluid_sfloader_t* loader)
 {
-    fluid_return_val_if_fail(loader != NULL, 0);
+    fluid_return_if_fail(loader != NULL);
     
     FLUID_FREE(loader);
-    return 0;
 }
 
 fluid_sfont_t* fluid_defsfloader_load(fluid_sfloader_t* loader, const char* filename)
