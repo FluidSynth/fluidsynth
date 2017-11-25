@@ -1260,7 +1260,10 @@ static void delete_fluid_ladspa_effect(fluid_ladspa_effect_t *effect)
         effect->desc->cleanup(effect->handle);
     }
 
-    fluid_module_close(effect->lib);
+    if(effect->lib != NULL)
+    {
+        fluid_module_close(effect->lib);
+    }
 
     FLUID_FREE(effect->name);
     FLUID_FREE(effect);
