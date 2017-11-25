@@ -88,7 +88,7 @@ void delete_fluid_portaudio_driver (fluid_audio_driver_t *p);
  */
 char get_valid_portaudio_device_name(int num_device, char **name_ptr)
 {
-  const PaDeviceInfo *deviceInfo =  Pa_GetDeviceInfo (num_device);
+  	const PaDeviceInfo *deviceInfo =  Pa_GetDeviceInfo (num_device);
 	/* here we limit the upper limit range of index: [0..999] */
 	if( num_device <  pow(10,max_device_digit) &&
 		  deviceInfo->maxOutputChannels >= 2 )
@@ -149,21 +149,21 @@ fluid_portaudio_driver_settings (fluid_settings_t *settings)
   }
   else   for (i = 0; i < numDevices; i++)
   {
-	    char * name;
-		  if( get_valid_portaudio_device_name(i,&name))
-		  {   /* the device i is a valid output device */
-			    if(name)
-			    {
-				      /* registers this name in the option list */
-				      fluid_settings_add_option (settings, "audio.portaudio.device",name);
-				      FLUID_FREE (name);
-			    }
-			    else
-			    {
-				      FLUID_LOG (FLUID_ERR, "Out of memory");
-				      break;
-			    }
-		  }
+	char * name;
+	if( get_valid_portaudio_device_name(i,&name))
+	{   /* the device i is a valid output device */
+	    if(name)
+	    {
+	      /* registers this name in the option list */
+	      fluid_settings_add_option (settings, "audio.portaudio.device",name);
+	      FLUID_FREE (name);
+	    }
+	    else
+	    {
+	      FLUID_LOG (FLUID_ERR, "Out of memory");
+	      break;
+	    }
+	}
   }
 
   /* done with PortAudio for now, may get reopened later */
@@ -239,14 +239,14 @@ new_fluid_portaudio_driver (fluid_settings_t *settings, fluid_synth_t *synth)
 
     for (i = 0; i < numDevices; i++)
     {
-		    char * name;
-		    if( get_valid_portaudio_device_name(i,&name))
-		    {	/* the device i is a valid output device */
+	char * name;
+	if( get_valid_portaudio_device_name(i,&name))
+	{	/* the device i is a valid output device */
             if(name)
-			      {
-				        /* We see if the name correspond to audio.portaudio.device */
-				        char found = (strcmp (device, name) == 0);
-				        FLUID_FREE (name);
+	    {
+	        /* We see if the name correspond to audio.portaudio.device */
+	        char found = (strcmp (device, name) == 0);
+	        FLUID_FREE (name);
 
                 if(found)
                 { /* the device index is found */
@@ -256,12 +256,12 @@ new_fluid_portaudio_driver (fluid_settings_t *settings, fluid_synth_t *synth)
                 }
             }
             else
-			      {
-				        FLUID_LOG (FLUID_ERR, "Out of memory");
-			          goto error_recovery;
-			      }
-		    }
-	  }
+	    {
+	        FLUID_LOG (FLUID_ERR, "Out of memory");
+	          goto error_recovery;
+	    }
+	}
+    }
     
     if (i == numDevices)
     {
