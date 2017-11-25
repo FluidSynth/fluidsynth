@@ -18,14 +18,10 @@
  * 02110-1301, USA
  */
 
-/* Author: Markus Nentwig, nentwig@users.sourceforge.net
- */
-
 #ifndef _FLUID_LADSPA_H
 #define _FLUID_LADSPA_H
 
 #include "fluid_sys.h"
-#include "fluidsynth_priv.h"
 
 fluid_ladspa_fx_t *new_fluid_ladspa_fx(fluid_real_t sample_rate, int buffer_size);
 void delete_fluid_ladspa_fx(fluid_ladspa_fx_t *fx);
