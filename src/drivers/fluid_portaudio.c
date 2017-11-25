@@ -62,13 +62,13 @@ void delete_fluid_portaudio_driver (fluid_audio_driver_t *p);
 #define PORTAUDIO_DEFAULT_DEVICE "PortAudio Default"
 
 /*
- * Checks if num_device number is a valid device and returns the name of the
+ * Checks if device_num number is a valid device and returns the name of the
  * portaudio device.
  * A device is valid if it is an output device with more than 2 channels.
  * 
- * @param num_device: index of the portaudio device to check.
- * @name_ptr: address of the pointer on returned name,if num_device is valid
- * otherwise the name is not returned.
+ * @param device_num: index of the portaudio device to check.
+ * @name_ptr: if device_num is valid, address of the pointer on returned name,
+ * otherwise name_ptr is ignored (the name has no meaning and is not returned).
  *
  * The name returned is unique for each num_device index, so this 
  * name is useful to identify any available host audio device.
@@ -86,9 +86,9 @@ void delete_fluid_portaudio_driver (fluid_audio_driver_t *p);
  * When TRUE, the name is returned in allocated memory. The caller must check
  * the name pointer for a valid memory allocation and should free the memory.
  */
-char get_valid_portaudio_device_name(int num_device, char **name_ptr)
+int get_valid_portaudio_device_name(int device_num, char **name_ptr)
 {
-  	const PaDeviceInfo *deviceInfo =  Pa_GetDeviceInfo (num_device);
+  	const PaDeviceInfo *deviceInfo =  Pa_GetDeviceInfo (device_num);
 
 	if( deviceInfo->maxOutputChannels >= 2 )
 	{
@@ -96,7 +96,7 @@ char get_valid_portaudio_device_name(int num_device, char **name_ptr)
 		/* The size of the buffer name for the following format:
 		   device_index:host_api_name:host_device_name.
 		*/
-		int i =  num_device;
+		int i =  device_num;
 		int size = 0;
 		do {size++; i = i/10 ;} while(i);		/*  index size */ 
 		/* host API size +  host device size + 3 separators */
@@ -104,7 +104,7 @@ char get_valid_portaudio_device_name(int num_device, char **name_ptr)
 		*name_ptr = FLUID_MALLOC (size);
 		if (*name_ptr)
 		{   /* the name is filled if allocation is successful */
-			FLUID_SPRINTF(*name_ptr,"%d:%s:%s",num_device, 
+			FLUID_SPRINTF(*name_ptr,"%d:%s:%s",device_num, 
 							hostInfo->name, deviceInfo->name);
 		}
 		return TRUE; /* device_num is a valid device */
@@ -113,10 +113,8 @@ char get_valid_portaudio_device_name(int num_device, char **name_ptr)
 }
 
 /*
- * Initializes audio.portaudio.device setting with the default.
- *   value = PortAudio Default.
- *   default = PortAudio Default.
- *   options list= list of unique device names of available devices.
+ * Initializes "audio.portaudio.device" setting with an options list of unique device names
+ * of available sound card devices.
  * @param settings pointer on settings.
  */
 void
@@ -135,7 +133,7 @@ fluid_portaudio_driver_settings (fluid_settings_t *settings)
   {
     FLUID_LOG (FLUID_ERR, "Error initializing PortAudio driver: %s",
                Pa_GetErrorText (err));
-    goto pa_terminate;
+    return;
   }
 
   numDevices = Pa_GetDeviceCount();
@@ -163,7 +161,6 @@ fluid_portaudio_driver_settings (fluid_settings_t *settings)
 	}
   }
 
-pa_terminate:
   /* done with PortAudio for now, may get reopened later */
   err = Pa_Terminate();
 
@@ -172,11 +169,12 @@ pa_terminate:
 }
 
 /*
- * Creates the portaudio driver.
- * The driver opens the portaudio device designed by audio.portaudio.device setting.
- * @param settings pointer on settings.
- * @param synth the synthesizer instance.
- * @return pointer on the driver if success, NULL otherwise.
+ * Creates the portaudio driver and opens the portaudio device
+ * indicated by audio.portaudio.device setting.
+ *
+ * @param settings pointer to settings
+ * @param synth the synthesizer instance
+ * @return pointer to the driver on success, NULL otherwise.
  */
 fluid_audio_driver_t *
 new_fluid_portaudio_driver (fluid_settings_t *settings, fluid_synth_t *synth)
