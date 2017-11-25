@@ -133,7 +133,6 @@ struct _fluid_file_callbacks_t {
 
 
 FLUIDSYNTH_API fluid_sfloader_t* new_fluid_defsfloader(fluid_settings_t* settings);
-FLUIDSYNTH_API void delete_fluid_defsfloader(fluid_sfloader_t* loader);
 
 /*
  * Virtual SoundFont instance structure.

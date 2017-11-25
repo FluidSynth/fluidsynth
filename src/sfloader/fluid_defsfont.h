@@ -345,6 +345,7 @@ typedef struct _fluid_inst_zone_t fluid_inst_zone_t;
 
  */
 
+void delete_fluid_defsfloader(fluid_sfloader_t* loader);
 fluid_sfont_t* fluid_defsfloader_load(fluid_sfloader_t* loader, const char* filename);
 
 
