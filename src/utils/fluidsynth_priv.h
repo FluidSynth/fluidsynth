@@ -275,7 +275,7 @@ do { strncpy(_dst,_src,_n); \
 #endif
 
 #if defined(WIN32) && !defined(MINGW32)
-    #define FLUID_STRNCASECMP         _strincmp
+    #define FLUID_STRNCASECMP         _strnicmp
 #else
     #define FLUID_STRNCASECMP         strncasecmp
 #endif

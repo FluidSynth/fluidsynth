@@ -102,10 +102,6 @@ if ( LIBSNDFILE_SUPPORT )
   include_directories ( ${LIBSNDFILE_INCLUDEDIR} ${LIBSNDFILE_INCLUDE_DIRS} )
 endif ( LIBSNDFILE_SUPPORT )
 
-if ( LADSPA_SUPPORT )
-  set ( fluid_ladspa_SOURCES bindings/fluid_ladspa.c bindings/fluid_ladspa.h )
-endif ( LADSPA_SUPPORT )
-
 if ( MIDISHARE_SUPPORT )
   set ( fluid_midishare_SOURCES drivers/fluid_midishare.c )
   include_directories ( ${MidiShare_INCLUDE_DIRS} )
@@ -178,12 +174,15 @@ set ( libfluidsynth_SOURCES
     bindings/fluid_cmd.c
     bindings/fluid_cmd.h
     bindings/fluid_filerenderer.c
+    bindings/fluid_ladspa.c
+    bindings/fluid_ladspa.h
 )
 
 set ( public_HEADERS
     ${CMAKE_SOURCE_DIR}/include/fluidsynth/audio.h
     ${CMAKE_SOURCE_DIR}/include/fluidsynth/event.h
     ${CMAKE_SOURCE_DIR}/include/fluidsynth/gen.h
+    ${CMAKE_SOURCE_DIR}/include/fluidsynth/ladspa.h
     ${CMAKE_SOURCE_DIR}/include/fluidsynth/log.h
     ${CMAKE_SOURCE_DIR}/include/fluidsynth/midi.h
     ${CMAKE_SOURCE_DIR}/include/fluidsynth/misc.h
@@ -235,7 +234,6 @@ add_library ( libfluidsynth
     ${fluid_dbus_SOURCES}
     ${fluid_jack_SOURCES}
     ${fluid_lash_SOURCES}
-    ${fluid_ladspa_SOURCES}
     ${fluid_midishare_SOURCES}
     ${fluid_oss_SOURCES}
     ${fluid_portaudio_SOURCES}
@@ -293,6 +291,7 @@ endif ( LIBFLUID_CPPFLAGS )
 
 target_link_libraries ( libfluidsynth
     ${GLIB_LIBRARIES}
+    ${GMODULE_LIBRARIES}
     ${LASH_LIBRARIES}
     ${JACK_LIBRARIES}
     ${ALSA_LIBRARIES}
