@@ -66,7 +66,7 @@ static int safe_fread (void *buf, int count, void * fd)
 
 static int safe_fseek (void * fd, long ofs, int whence)
 {
-  if (FLUID_FSEEK((FILE *)fd, ofs, whence) == -1) {
+  if (FLUID_FSEEK((FILE *)fd, ofs, whence) != 0) {
     FLUID_LOG (FLUID_ERR, _("File seek failed with offset = %ld and whence = %d"), ofs, whence);
     return FLUID_FAILED;
   }
