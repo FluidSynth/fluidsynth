@@ -101,22 +101,34 @@ struct _fluid_sfloader_t {
 struct _fluid_file_callbacks_t {
   /**
    * Opens the file indicated by \c path in binary read mode.
-   * Accepts UTF-8 encoding
+   * Accepts UTF-8 encoding.
    *
    * @return returns a file handle on success, NULL otherwise
    */
   void * (* fopen )(const char * path);
 
-  /** Reads to specified buffer, returns count of size bytes read */
-  int (* fread )(void *, int count, void * handle);
+  /**
+   * Reads \c count bytes to the specified buffer \c buf.
+   * 
+   * @return returns #FLUID_OK if exactly \c count bytes were successfully read, else #FLUID_FAILED
+   */
+  int (* fread )(void *buf, int count, void * handle);
 
-  /** Returns zero on success, #FLUID_FAILED on error */
-  int (* fseek )(void * handle, long, int);
+  /**
+   * Same purpose and behaviour as fseek.
+   * 
+   * @param origin either \c SEEK_SET, \c SEEK_CUR or \c SEEK_END
+   * 
+   * @return returns #FLUID_OK if the seek was successfully performed while not seeking beyond a buffer or file, #FLUID_FAILED otherwise */
+  int (* fseek )(void * handle, long offset, int origin);
 
-  /** Returns zero on success, #FLUID_FAILED on error */
+  /** 
+   * Closes the handle and frees used ressources.
+   * 
+   * @return returns #FLUID_OK on success, #FLUID_FAILED on error */
   int (* fclose)(void * handle);
 
-  /** Returns current file offset */
+  /** @return returns current file offset or #FLUID_FAILED on error */
   long (* ftell )(void * handle);
 };
 
