@@ -2060,7 +2060,6 @@ fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defs
 
 #define READCHUNK(var,fd, fcbs)	do {		\
 	if (!safe_fread(var, 8, fd, fcbs))			\
-<<<<<<< HEAD:src/sfloader/fluid_defsfont.c
 		return(FAIL);				\
 	((SFChunk *)(var))->size = FLUID_LE32TOH(((SFChunk *)(var))->size);  \
 } while(0)
@@ -2117,7 +2116,7 @@ static int chunkid (unsigned int id);
 static int load_body (unsigned int size, SFData * sf, void * fd, fluid_file_callbacks_t* fcbs);
 static int read_listchunk (SFChunk * chunk, void * fd, fluid_file_callbacks_t* fcbs);
 static int process_info (int size, SFData * sf, void* fd, fluid_file_callbacks_t* fcbs);
-static int process_sdta (int size, SFData * sf, void * fd, fluid_file_callbacks_t* fcbs);
+static int process_sdta (unsigned int size, SFData * sf, void * fd, fluid_file_callbacks_t* fcbs);
 static int pdtahelper (unsigned int expid, unsigned int reclen, SFChunk * chunk,
   int * size, void * fd, fluid_file_callbacks_t* fcbs);
 static int process_pdta (int size, SFData * sf, void * fd, fluid_file_callbacks_t* fcbs);
@@ -2385,7 +2384,7 @@ process_info (int size, SFData * sf, void * fd, fluid_file_callbacks_t* fcbs)
 }
 
 static int
-process_sdta (int size, SFData * sf, void * fd, fluid_file_callbacks_t* fcbs)
+process_sdta (unsigned int size, SFData * sf, void * fd, fluid_file_callbacks_t* fcbs)
 {
   SFChunk chunk;
 
