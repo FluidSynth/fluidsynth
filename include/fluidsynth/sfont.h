@@ -81,7 +81,7 @@ struct _fluid_sfloader_t {
   const fluid_file_callbacks_t* file_callbacks;
 
   /**                                                                                                                                                                                                                               
-   * The free method should free the memory allocated for the loader in
+   * The free method should free the memory allocated for this loader instance in
    * addition to any private data.
    * @param loader SoundFont loader
    */
