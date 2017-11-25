@@ -225,8 +225,8 @@ int fluid_midi_file_eof(fluid_midi_file* mf)
 int
 fluid_midi_file_read_mthd(fluid_midi_file *mf)
 {
-    char mthd[15];
-    if (fluid_midi_file_read(mf, mthd, 14) != FLUID_OK) {
+    signed char mthd[14];
+    if (fluid_midi_file_read(mf, mthd, sizeof(mthd)) != FLUID_OK) {
         return FLUID_FAILED;
     }
     if ((FLUID_STRNCMP(mthd, "MThd", 4) != 0) || (mthd[7] != 6)
@@ -238,7 +238,7 @@ fluid_midi_file_read_mthd(fluid_midi_file *mf)
     mf->type = mthd[9];
     mf->ntracks = (unsigned) mthd[11];
     mf->ntracks += (unsigned int) (mthd[10]) << 16;
-    if ((mthd[12]) & (1 << 7)) {
+    if ((mthd[12]) < 0) {
         mf->uses_smpte = 1;
         mf->smpte_fps = -mthd[12];
         mf->smpte_res = (unsigned) mthd[13];
@@ -246,7 +246,7 @@ fluid_midi_file_read_mthd(fluid_midi_file *mf)
         return FLUID_FAILED;
     } else {
         mf->uses_smpte = 0;
-        mf->division = (mthd[12] << 8) | (mthd[13] & 0xff);
+        mf->division = ((unsigned)mthd[12] << 8) | ((unsigned)mthd[13] & 0xff);
         FLUID_LOG(FLUID_DBG, "Division=%d", mf->division);
     }
     return FLUID_OK;
