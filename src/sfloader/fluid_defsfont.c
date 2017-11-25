@@ -58,18 +58,19 @@ static int safe_fread (void *buf, int count, void * fd)
 	gerr (ErrEof, _("EOF while attemping to read %d bytes"), count);
       else
 	FLUID_LOG (FLUID_ERR, _("File read failed"));
-      return (FAIL);
+  
+      return FLUID_FAILED;
     }
-  return (OK);
+  return FLUID_OK;
 }
 
 static int safe_fseek (void * fd, long ofs, int whence)
 {
   if (FLUID_FSEEK((FILE *)fd, ofs, whence) == -1) {
     FLUID_LOG (FLUID_ERR, _("File seek failed with offset = %ld and whence = %d"), ofs, whence);
-    return (FAIL);
+    return FLUID_FAILED;
   }
-  return (OK);
+  return FLUID_OK;
 }
 
 static const fluid_file_callbacks_t def_file_callbacks =
@@ -332,7 +333,7 @@ static int fluid_cached_sampledata_load(char *filename, unsigned int samplepos,
     FLUID_LOG(FLUID_ERR, "Can't open soundfont file");
     goto error_exit;
   }
-  if (fcbs->fseek(fd, samplepos, SEEK_SET) == -1) {
+  if (fcbs->fseek(fd, samplepos, SEEK_SET) == FLUID_FAILED) {
     perror("error");
     FLUID_LOG(FLUID_ERR, "Failed to seek position in data file");
     goto error_exit;
@@ -344,7 +345,7 @@ static int fluid_cached_sampledata_load(char *filename, unsigned int samplepos,
     FLUID_LOG(FLUID_ERR, "Out of memory");
     goto error_exit;
   }
-  if (fcbs->fread(loaded_sampledata, samplesize, fd) != FLUID_OK) {
+  if (fcbs->fread(loaded_sampledata, samplesize, fd) == FLUID_FAILED) {
     FLUID_LOG(FLUID_ERR, "Failed to read sample data");
     goto error_exit;
   }
@@ -2069,48 +2070,48 @@ fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defs
 */
 
 #define READCHUNK(var,fd, fcbs)	do {		\
-	if (!fcbs->fread(var, 8, fd))			\
+	if (fcbs->fread(var, 8, fd) == FLUID_FAILED)			\
 		return(FAIL);				\
 	((SFChunk *)(var))->size = FLUID_LE32TOH(((SFChunk *)(var))->size);  \
 } while(0)
 
 #define READD(var,fd, fcbs)		do {		\
 	uint32_t _temp;				\
-	if (!fcbs->fread(&_temp, 4, fd))			\
+	if (fcbs->fread(&_temp, 4, fd) == FLUID_FAILED)			\
 		return(FAIL);				\
 	var = FLUID_LE32TOH(_temp);			\
 } while(0)
 
 #define READW(var,fd, fcbs)		do {		\
 	uint16_t _temp;				\
-	if (!fcbs->fread(&_temp, 2, fd))			\
+	if (fcbs->fread(&_temp, 2, fd) == FLUID_FAILED)			\
 		return(FAIL);				\
 	var = FLUID_LE16TOH(_temp);			\
 } while(0)
 
 #define READID(var,fd, fcbs)		do {		\
-    if (!fcbs->fread(var, 4, fd))			\
+    if (fcbs->fread(var, 4, fd) == FLUID_FAILED)			\
 	return(FAIL);					\
 } while(0)
 
 #define READSTR(var,fd, fcbs)		do {		\
-    if (!fcbs->fread(var, 20, fd))			\
+    if (fcbs->fread(var, 20, fd) == FLUID_FAILED)			\
 	return(FAIL);					\
     (*var)[20] = '\0';					\
 } while(0)
 
 #define READB(var,fd, fcbs)		do {		\
-    if (!fcbs->fread(&var, 1, fd))			\
+    if (fcbs->fread(&var, 1, fd) == FLUID_FAILED)			\
 	return(FAIL);					\
 } while(0)
 
 #define FSKIP(size,fd, fcbs)		do {		\
-    if (!fcbs->fseek(fd, size, SEEK_CUR))		\
+    if (fcbs->fseek(fd, size, SEEK_CUR) == FLUID_FAILED)		\
 	return(FAIL);					\
 } while(0)
 
 #define FSKIPW(fd, fcbs)		do {		\
-    if (!fcbs->fseek(fd, 2, SEEK_CUR))			\
+    if (fcbs->fseek(fd, 2, SEEK_CUR) == FLUID_FAILED)			\
 	return(FAIL);					\
 } while(0)
 
@@ -2173,7 +2174,7 @@ sfload_file (const char * fname, const fluid_file_callbacks_t* fcbs)
   int fsize = 0;
   int err = FALSE;
 
-  if (!(fd = fcbs->fopen (fname)))
+  if ((fd = fcbs->fopen (fname)) == NULL)
     {
       FLUID_LOG (FLUID_ERR, _("Unable to open file \"%s\""), fname);
       return (NULL);
@@ -2194,12 +2195,12 @@ sfload_file (const char * fname, const fluid_file_callbacks_t* fcbs)
     }
 
   /* get size of file */
-  if (!err && fcbs->fseek (fd, 0L, SEEK_END) == -1)
+  if (!err && fcbs->fseek (fd, 0L, SEEK_END) == FLUID_FAILED)
     {				/* seek to end of file */
       err = TRUE;
       FLUID_LOG (FLUID_ERR, _("Seek to end of file failed"));
     }
-  if (!err && (fsize = fcbs->ftell (fd)) == -1)
+  if (!err && (fsize = fcbs->ftell (fd)) == FLUID_FAILED)
     {				/* position = size */
       err = TRUE;
       FLUID_LOG (FLUID_ERR, _("Get end of file position failed"));
@@ -2376,7 +2377,7 @@ process_info (int size, SFData * sf, void * fd, const fluid_file_callbacks_t* fc
 	  sf->info = fluid_list_append (sf->info, item);
 
 	  *(unsigned char *) item = id;
-	  if (!fcbs->fread(&item[1], chunk.size, fd))
+	  if (fcbs->fread(&item[1], chunk.size, fd) == FLUID_FAILED)
 	    return (FAIL);
 
 	  /* force terminate info item (don't forget uint8 info ID) */
