@@ -98,7 +98,7 @@ char get_valid_portaudio_device_name(int num_device, char **name_ptr)
 		*/
 		int i =  num_device;
 		int size = 0;
-		do size++; while(i = i/10);	/*  index size */ 
+		do {size++; i = i/10 ;} while(i);		/*  index size */ 
 		/* host API size +  host device size + 3 separators */
 		size += strlen(hostInfo->name) + strlen(deviceInfo->name) + 3;
 		*name_ptr = FLUID_MALLOC (size);
@@ -223,7 +223,6 @@ new_fluid_portaudio_driver (fluid_settings_t *settings, fluid_synth_t *synth)
   if (strcmp (device, PORTAUDIO_DEFAULT_DEVICE) != 0)
   { /* The intended device is not the default device name, so we search
     a device among available devices */
-    const PaDeviceInfo *deviceInfo;
     int numDevices;
     int i;
 
