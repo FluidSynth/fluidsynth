@@ -100,25 +100,6 @@ static int fluid_file_renderer_parse_options (char *filetype, char *format,
 static int fluid_file_renderer_find_file_type (char *extension, int *type);
 static int fluid_file_renderer_find_valid_format (SF_INFO *info);
 
-
-#else   /* No libsndfile support */
-
-
-/* File type names. */
-static const char * const type_names[] = {
-  "raw"
-};
-
-/* File audio format names. */
-static const char * const format_names[] = {
-  "s16"
-};
-
-/* File endian byte order names. */
-static const char * const endian_names[] = {
-  "cpu"
-};
-
 #endif
 
 
@@ -326,9 +307,7 @@ fluid_file_set_encoding_quality(fluid_file_renderer_t* r, double q)
  */
 void delete_fluid_file_renderer(fluid_file_renderer_t* dev)
 {
-	if (dev == NULL) {
-		return;
-	}
+	fluid_return_if_fail(dev != NULL);
 
 #if LIBSNDFILE_SUPPORT
 	if (dev->sndfile != NULL) {
@@ -342,12 +321,8 @@ void delete_fluid_file_renderer(fluid_file_renderer_t* dev)
 	}
 #endif
 
-	if (dev->buf != NULL) {
-		FLUID_FREE(dev->buf);
-	}
-
+    FLUID_FREE(dev->buf);
 	FLUID_FREE(dev);
-	return;
 }
 
 /**

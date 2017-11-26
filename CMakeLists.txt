@@ -52,7 +52,6 @@ set ( LIB_VERSION_INFO
 # Options disabled by default
 option ( enable-floats "enable type float instead of double for DSP samples" off )
 option ( enable-profiling "profile the dsp code" off )
-option ( enable-ladspa "enable LADSPA effect units" off )
 option ( enable-portaudio "compile PortAudio support" off )
 option ( enable-trap-on-fpe "enable SIGFPE trap on Floating Point Exceptions" off )
 option ( enable-fpe-check "enable Floating Point Exception checks and debug messages" off )
@@ -68,6 +67,7 @@ option ( enable-midishare "compile MidiShare support (if it is available)" on )
 option ( enable-readline "compile readline lib line editing (if it is available)" on )
 option ( enable-dbus "compile DBUS support (if it is available)" on )
 option ( BUILD_SHARED_LIBS "Build a shared object or DLL" on )
+option ( enable-ladspa "enable LADSPA effect units" on )
 option ( enable-ipv6  "enable ipv6 support " on )
 
 # Platform specific options
@@ -89,11 +89,15 @@ if ( CMAKE_SYSTEM MATCHES "OS2" )
 endif ( CMAKE_SYSTEM MATCHES "OS2" )
 
 # Initialize the library directory name suffix.
+if (NOT MINGW)
 if ( CMAKE_SIZEOF_VOID_P EQUAL 8 )
   set ( _init_lib_suffix "64" )
 else ( CMAKE_SIZEOF_VOID_P EQUAL 8 )
   set ( _init_lib_suffix "" )
 endif ( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+else ()
+  set ( _init_lib_suffix "" )
+endif()
 set ( LIB_SUFFIX ${_init_lib_suffix} CACHE STRING
       "library directory name suffix (32/64/nothing)" )
 mark_as_advanced ( LIB_SUFFIX )
@@ -127,6 +131,7 @@ check_include_file ( limits.h  HAVE_LIMITS_H )
 check_include_file ( pthread.h HAVE_PTHREAD_H )
 check_include_file ( signal.h HAVE_SIGNAL_H )
 check_include_file ( getopt.h HAVE_GETOPT_H )
+check_include_file ( stdint.h HAVE_STDINT_H )
 include ( TestInline )
 include ( TestVLA )
 include ( TestBigEndian )
@@ -138,7 +143,7 @@ unset ( FLUID_CPPFLAGS CACHE )
 unset ( FLUID_LIBS CACHE )
 
 # Options for the GNU C compiler only
-if ( CMAKE_COMPILER_IS_GNUCC OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" )
+if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang" )
   if ( NOT APPLE AND NOT OS2 )
     set ( CMAKE_EXE_LINKER_FLAGS
           "${CMAKE_EXE_LINKER_FLAGS} -Wl,--as-needed" )
@@ -156,7 +161,7 @@ if ( CMAKE_COMPILER_IS_GNUCC OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" )
   set ( CMAKE_C_FLAGS_DEBUG "-std=gnu89 -g ${GNUCC_VISIBILITY_FLAG} -DDEBUG ${GNUCC_WARNING_FLAGS} -fsanitize=undefined" )
   set ( CMAKE_C_FLAGS_RELEASE "-std=gnu89 -O2 -fomit-frame-pointer -finline-functions ${GNUCC_VISIBILITY_FLAG} -DNDEBUG ${GNUCC_WARNING_FLAGS}" )
   set ( CMAKE_C_FLAGS_RELWITHDEBINFO "-std=gnu89 -O2 -g -fomit-frame-pointer -finline-functions ${GNUCC_VISIBILITY_FLAG} -DNDEBUG ${GNUCC_WARNING_FLAGS}" )
-endif ( CMAKE_COMPILER_IS_GNUCC OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" )
+endif ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang" )
 
 # Windows
 unset ( WINDOWS_SUPPORT CACHE )
@@ -255,19 +260,6 @@ if ( enable-profiling )
     set ( WITH_PROFILING 1 )
 endif ( enable-profiling )
 
-unset ( HAVE_LIBDL CACHE )
-unset ( LADSPA_SUPPORT CACHE )
-if ( enable-ladspa )
-  check_include_file ( ladspa.h LADSPA_SUPPORT )
-  if ( LADSPA_SUPPORT )
-    set ( LADSPA 1 )
-    if ( CMAKE_DL_LIBS )
-      set ( HAVE_LIBDL 1 )
-      set ( LIBFLUID_LIBS "${LIBFLUID_LIBS};${CMAKE_DL_LIBS}" )
-    endif ( CMAKE_DL_LIBS )
-  endif ( LADSPA_SUPPORT )
-endif ( enable-ladspa )
-
 unset ( ENABLE_TRAPONFPE CACHE )
 unset ( TRAP_ON_FPE CACHE )
 if ( enable-trap-on-fpe AND NOT APPLE AND NOT WIN32 )
@@ -302,10 +294,10 @@ endif ( CMAKE_BUILD_TYPE MATCHES "Debug" )
 
 if(NOT enable-pkgconfig)
 
-    FIND_LIBRARY( GLIB_LIB NAMES glib glib-2.0 PATH GLIB_LIBRARY_DIR NO_DEFAULT_PATH)
-    FIND_LIBRARY( GTHREAD_LIB NAMES gthread gthread-2.0 PATH GTHREAD_LIBRARY_DIR NO_DEFAULT_PATH )
-    FIND_PATH( GLIBH_DIR glib.h PATH GLIB_INCLUDE_DIR NO_DEFAULT_PATH )
-    FIND_PATH( GLIBCONF_DIR glibconfig.h PATH GLIBCONF_INCLUDE_DIR NO_DEFAULT_PATH )
+    FIND_LIBRARY( GLIB_LIB NAMES glib glib-2.0 PATH GLIB_LIBRARY_DIR )
+    FIND_LIBRARY( GTHREAD_LIB NAMES gthread gthread-2.0 PATH GTHREAD_LIBRARY_DIR )
+    FIND_PATH( GLIBH_DIR glib.h PATH GLIB_INCLUDE_DIR )
+    FIND_PATH( GLIBCONF_DIR glibconfig.h PATH GLIBCONF_INCLUDE_DIR )
     
     IF( GLIB_LIB MATCHES "GLIB_LIB-NOTFOUND" OR
             GTHREAD_LIB MATCHES "GTHREAD_LIB-NOTFOUND" OR
@@ -395,6 +387,15 @@ else(NOT enable-pkgconfig)
     else ( enable-dbus )
     unset_pkg_config ( DBUS )
     endif ( enable-dbus )
+
+    unset ( LADSPA_SUPPORT CACHE )
+    if ( enable-ladspa )
+    check_include_file ( ladspa.h LADSPA_SUPPORT )
+    if ( LADSPA_SUPPORT )
+        pkg_check_modules ( GMODULE REQUIRED gmodule-2.0>=2.6.5 )
+        set ( LADSPA 1 )
+    endif ( LADSPA_SUPPORT )
+    endif ( enable-ladspa )
     
 endif(NOT enable-pkgconfig)
 
@@ -431,12 +432,6 @@ endif ( enable-readline )
 configure_file ( ${CMAKE_SOURCE_DIR}/src/config.cmake
                  ${CMAKE_BINARY_DIR}/config.h )
 add_definitions ( -DHAVE_CONFIG_H )
-
-# Extra configuration file for MS VisualC compiler
-if ( MSVC )
-  configure_file ( ${CMAKE_SOURCE_DIR}/src/config_win32.cmake
-                   ${CMAKE_BINARY_DIR}/config_win32.h )
-endif ( MSVC )
 
 # Process subdirectories
 add_subdirectory ( src )

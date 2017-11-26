@@ -70,7 +70,7 @@ fluid_audio_driver_t* new_fluid_alsa_audio_driver(fluid_settings_t* settings,
 fluid_audio_driver_t* new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
 						   fluid_audio_func_t func, void* data);
 
-int delete_fluid_alsa_audio_driver(fluid_audio_driver_t* p);
+void delete_fluid_alsa_audio_driver(fluid_audio_driver_t* p);
 void fluid_alsa_audio_driver_settings(fluid_settings_t* settings);
 static fluid_thread_return_t fluid_alsa_audio_run_float(void* d);
 static fluid_thread_return_t fluid_alsa_audio_run_s16(void* d);
@@ -107,7 +107,7 @@ typedef struct {
   struct pollfd *pfd;
   int npfd;
   fluid_thread_t *thread;
-  gint should_quit;
+  fluid_atomic_int_t should_quit;
   unsigned char buffer[BUFFER_LENGTH];
   fluid_midi_parser_t* parser;
 } fluid_alsa_rawmidi_driver_t;
@@ -117,7 +117,7 @@ fluid_midi_driver_t* new_fluid_alsa_rawmidi_driver(fluid_settings_t* settings,
 						   handle_midi_event_func_t handler,
 						   void* event_handler_data);
 
-int delete_fluid_alsa_rawmidi_driver(fluid_midi_driver_t* p);
+void delete_fluid_alsa_rawmidi_driver(fluid_midi_driver_t* p);
 static fluid_thread_return_t fluid_alsa_midi_run(void* d);
 
 
@@ -131,14 +131,16 @@ typedef struct {
   struct pollfd *pfd;
   int npfd;
   fluid_thread_t *thread;
-  gint should_quit;
+  fluid_atomic_int_t should_quit;
   int port_count;
+  int autoconn_inputs;
+  snd_seq_addr_t autoconn_dest;
 } fluid_alsa_seq_driver_t;
 
 fluid_midi_driver_t* new_fluid_alsa_seq_driver(fluid_settings_t* settings,
 					     handle_midi_event_func_t handler,
 					     void* data);
-int delete_fluid_alsa_seq_driver(fluid_midi_driver_t* p);
+void delete_fluid_alsa_seq_driver(fluid_midi_driver_t* p);
 static fluid_thread_return_t fluid_alsa_seq_run(void* d);
 
 /**************************************************************
@@ -243,7 +245,7 @@ new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
     if (tmp != sample_rate) {
       /* There's currently no way to change the sampling rate of the
 	 synthesizer after it's been created. */
-      FLUID_LOG(FLUID_WARN, "Requested sample rate of %d, got %d instead, "
+      FLUID_LOG(FLUID_WARN, "Requested sample rate of %u, got %u instead, "
 		"synthesizer likely out of tune!", (unsigned int) sample_rate, tmp);
     }
 
@@ -318,13 +320,10 @@ new_fluid_alsa_audio_driver2(fluid_settings_t* settings,
   return NULL;
 }
 
-int delete_fluid_alsa_audio_driver(fluid_audio_driver_t* p)
+void delete_fluid_alsa_audio_driver(fluid_audio_driver_t* p)
 {
   fluid_alsa_audio_driver_t* dev = (fluid_alsa_audio_driver_t*) p;
-
-  if (dev == NULL) {
-    return FLUID_OK;
-  }
+  fluid_return_if_fail(dev != NULL);
 
   dev->cont = 0;
 
@@ -335,8 +334,6 @@ int delete_fluid_alsa_audio_driver(fluid_audio_driver_t* p)
     snd_pcm_close (dev->pcm);
 
   FLUID_FREE(dev);
-
-  return FLUID_OK;
 }
 
 /* handle error after an ALSA write call */
@@ -627,7 +624,7 @@ new_fluid_alsa_rawmidi_driver(fluid_settings_t* settings,
   }
   FLUID_FREE(pfd);
 
-  g_atomic_int_set(&dev->should_quit, 0);
+  fluid_atomic_int_set(&dev->should_quit, 0);
 
   /* create the MIDI thread */
   dev->thread = new_fluid_thread ("alsa-midi-raw", fluid_alsa_midi_run, dev, realtime_prio, FALSE);
@@ -649,18 +646,14 @@ new_fluid_alsa_rawmidi_driver(fluid_settings_t* settings,
 /*
  * delete_fluid_alsa_rawmidi_driver
  */
-int
+void
 delete_fluid_alsa_rawmidi_driver(fluid_midi_driver_t* p)
 {
-  fluid_alsa_rawmidi_driver_t* dev;
-
-  dev = (fluid_alsa_rawmidi_driver_t*) p;
-  if (dev == NULL) {
-    return FLUID_OK;
-  }
+  fluid_alsa_rawmidi_driver_t* dev = (fluid_alsa_rawmidi_driver_t*) p;
+  fluid_return_if_fail(dev != NULL);
 
   /* cancel the thread and wait for it before cleaning up */
-  g_atomic_int_set(&dev->should_quit, 1);
+  fluid_atomic_int_set(&dev->should_quit, 1);
 
   if (dev->thread)
     fluid_thread_join (dev->thread);
@@ -672,7 +665,6 @@ delete_fluid_alsa_rawmidi_driver(fluid_midi_driver_t* p)
     delete_fluid_midi_parser(dev->parser);
   }
   FLUID_FREE(dev);
-  return FLUID_OK;
 }
 
 /*
@@ -686,7 +678,7 @@ fluid_alsa_midi_run(void* d)
   int n, i;
 
   /* go into a loop until someone tells us to stop */
-  while (!g_atomic_int_get(&dev->should_quit)) {
+  while (!fluid_atomic_int_get(&dev->should_quit)) {
 
     /* is there something to read? */
     n = poll(dev->pfd, dev->npfd, 100); /* use a 100 milliseconds timeout */
@@ -698,7 +690,7 @@ fluid_alsa_midi_run(void* d)
       n = snd_rawmidi_read(dev->rawmidi_in, dev->buffer, BUFFER_LENGTH);
       if ((n < 0) && (n != -EAGAIN)) {
 	FLUID_LOG(FLUID_ERR, "Failed to read the midi input");
-        g_atomic_int_set(&dev->should_quit, 1);
+        fluid_atomic_int_set(&dev->should_quit, 1);
       }
 
       /* let the parser convert the data into events */
@@ -757,47 +749,75 @@ static char* fluid_alsa_seq_full_name(char* id, int port, char* buf, int len)
   return buf;
 }
 
-// Connect available ALSA MIDI inputs to port_info
-static void fluid_alsa_seq_autoconnect(fluid_alsa_seq_driver_t* dev, const snd_seq_port_info_t *port_info)
+// Connect a single port_info to autoconnect_dest if it has right type/capabilities
+static void fluid_alsa_seq_autoconnect_port_info(fluid_alsa_seq_driver_t* dev, snd_seq_port_info_t *pinfo)
 {
-  snd_seq_t *seq = dev->seq_handle;
   snd_seq_port_subscribe_t *subs;
+  snd_seq_t *seq = dev->seq_handle;
+  const unsigned int needed_type = SND_SEQ_PORT_TYPE_MIDI_GENERIC;
+  const unsigned int needed_cap = SND_SEQ_PORT_CAP_READ|SND_SEQ_PORT_CAP_SUBS_READ;
+  const snd_seq_addr_t *sender = snd_seq_port_info_get_addr(pinfo);
+  const char *pname = snd_seq_port_info_get_name(pinfo);
+  if ((snd_seq_port_info_get_type(pinfo) & needed_type) != needed_type)
+    return;
+  if ((snd_seq_port_info_get_capability(pinfo) & needed_cap) != needed_cap)
+    return;
+  snd_seq_port_subscribe_alloca(&subs);
+  snd_seq_port_subscribe_set_sender(subs, sender);
+  snd_seq_port_subscribe_set_dest(subs, &dev->autoconn_dest);
+
+  if (snd_seq_get_port_subscription(seq, subs) == 0) {
+    FLUID_LOG(FLUID_WARN, "Connection %s is already subscribed", pname);
+    return;
+  }
+  if (snd_seq_subscribe_port(seq, subs) < 0) {
+    FLUID_LOG(FLUID_ERR, "Connection of %s failed (%s)", pname, snd_strerror(errno));
+    return;
+  }
+  FLUID_LOG(FLUID_INFO, "Connection of %s succeeded", pname);
+}
+
+// Autoconnect a single client port (by id) to autoconnect_dest if it has right type/capabilities
+static void fluid_alsa_seq_autoconnect_port(fluid_alsa_seq_driver_t* dev, int client_id, int port_id)
+{
+  int err;
+  snd_seq_t *seq = dev->seq_handle;
+  snd_seq_port_info_t *pinfo;
+
+  snd_seq_port_info_alloca(&pinfo);
+
+  if ((err = snd_seq_get_any_port_info(seq, client_id, port_id, pinfo)) < 0) {
+    FLUID_LOG(FLUID_ERR, "snd_seq_get_any_port_info() failed: %s", snd_strerror(err));
+    return;
+  }
+  fluid_alsa_seq_autoconnect_port_info(dev, pinfo);
+}
+
+// Connect available ALSA MIDI inputs to the provided port_info
+static void fluid_alsa_seq_autoconnect(fluid_alsa_seq_driver_t* dev, const snd_seq_port_info_t *dest_pinfo)
+{
+  int err;
+  snd_seq_t *seq = dev->seq_handle;
   snd_seq_client_info_t *cinfo;
   snd_seq_port_info_t *pinfo;
 
-  snd_seq_port_subscribe_alloca(&subs);
+  // subscribe to future new clients/ports showing up
+  if ((err = snd_seq_connect_from(seq, snd_seq_port_info_get_port(dest_pinfo),
+	  SND_SEQ_CLIENT_SYSTEM, SND_SEQ_PORT_SYSTEM_ANNOUNCE)) < 0) {
+    FLUID_LOG(FLUID_ERR, "snd_seq_connect_from() failed: %s", snd_strerror(err));
+  }
+
   snd_seq_client_info_alloca(&cinfo);
   snd_seq_port_info_alloca(&pinfo);
 
+  dev->autoconn_dest = *snd_seq_port_info_get_addr(dest_pinfo);
+
   snd_seq_client_info_set_client(cinfo, -1);
   while (snd_seq_query_next_client(seq, cinfo) >= 0) {
-    const snd_seq_addr_t *dest = snd_seq_port_info_get_addr(port_info);
-
     snd_seq_port_info_set_client(pinfo, snd_seq_client_info_get_client(cinfo));
     snd_seq_port_info_set_port(pinfo, -1);
     while (snd_seq_query_next_port(seq, pinfo) >= 0) {
-      const unsigned int needed_type = SND_SEQ_PORT_TYPE_MIDI_GENERIC;
-      const unsigned int needed_cap = SND_SEQ_PORT_CAP_READ|SND_SEQ_PORT_CAP_SUBS_READ;
-      const snd_seq_addr_t *sender = snd_seq_port_info_get_addr(pinfo);
-      const char *pname = snd_seq_port_info_get_name(pinfo);
-      
-      if ((snd_seq_port_info_get_type(pinfo) & needed_type) != needed_type)
-	continue;
-      if ((snd_seq_port_info_get_capability(pinfo) & needed_cap) != needed_cap)
-	continue;
-
-      snd_seq_port_subscribe_set_sender(subs, sender);
-      snd_seq_port_subscribe_set_dest(subs, dest);
-
-      if (snd_seq_get_port_subscription(seq, subs) == 0) {
-	FLUID_LOG(FLUID_WARN, "Connection %s is already subscribed\n", pname);
-	continue;
-      }
-      if (snd_seq_subscribe_port(seq, subs) < 0) {
-	FLUID_LOG(FLUID_ERR, "Connection of %s failed (%s)\n", pname, snd_strerror(errno));
-	continue;
-      }
-      FLUID_LOG(FLUID_INFO, "Connection of %s succeeded\n", pname);
+      fluid_alsa_seq_autoconnect_port_info(dev, pinfo);
     }
   }
 }
@@ -810,7 +830,6 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
 			 handle_midi_event_func_t handler, void* data)
 {
   int i, err;
-  int autoconn_inputs = 0;
   fluid_alsa_seq_driver_t* dev;
   int realtime_prio = 0;
   int count;
@@ -940,8 +959,8 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
     }
   }
 
-  fluid_settings_getint(settings, "midi.autoconnect", &autoconn_inputs);
-  if (autoconn_inputs)
+  fluid_settings_getint(settings, "midi.autoconnect", &dev->autoconn_inputs);
+  if (dev->autoconn_inputs)
     fluid_alsa_seq_autoconnect(dev, port_info);
 
   /* tell the lash server our client id */
@@ -954,7 +973,7 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
   }
 #endif /* LASH_ENABLED */
 
-  g_atomic_int_set(&dev->should_quit, 0);
+  fluid_atomic_int_set(&dev->should_quit, 0);
 
   /* create the MIDI thread */
   dev->thread = new_fluid_thread ("alsa-midi-seq", fluid_alsa_seq_run, dev, realtime_prio, FALSE);
@@ -979,18 +998,14 @@ new_fluid_alsa_seq_driver(fluid_settings_t* settings,
 /*
  * delete_fluid_alsa_seq_driver
  */
-int
+void
 delete_fluid_alsa_seq_driver(fluid_midi_driver_t* p)
 {
-  fluid_alsa_seq_driver_t* dev;
-
-  dev = (fluid_alsa_seq_driver_t*) p;
-  if (dev == NULL) {
-    return FLUID_OK;
-  }
+  fluid_alsa_seq_driver_t* dev = (fluid_alsa_seq_driver_t*) p;
+  fluid_return_if_fail(dev != NULL);
 
   /* cancel the thread and wait for it before cleaning up */
-  g_atomic_int_set(&dev->should_quit, 1);
+  fluid_atomic_int_set(&dev->should_quit, 1);
 
   if (dev->thread)
     fluid_thread_join (dev->thread);
@@ -1002,7 +1017,6 @@ delete_fluid_alsa_seq_driver(fluid_midi_driver_t* p)
   if (dev->pfd) FLUID_FREE (dev->pfd);
 
   FLUID_FREE(dev);
-  return FLUID_OK;
 }
 
 /*
@@ -1017,7 +1031,7 @@ fluid_alsa_seq_run(void* d)
   fluid_alsa_seq_driver_t* dev = (fluid_alsa_seq_driver_t*) d;
 
   /* go into a loop until someone tells us to stop */
-  while (!g_atomic_int_get(&dev->should_quit)) {
+  while (!fluid_atomic_int_get(&dev->should_quit)) {
 
     /* is there something to read? */
     n = poll(dev->pfd, dev->npfd, 100); /* use a 100 milliseconds timeout */
@@ -1037,7 +1051,7 @@ fluid_alsa_seq_run(void* d)
 		if (ev != -EPERM && ev != -ENOSPC)
 		{
 		  FLUID_LOG(FLUID_ERR, "Error while reading ALSA sequencer (code=%d)", ev);
-                  g_atomic_int_set(&dev->should_quit, 1);
+                  fluid_atomic_int_set(&dev->should_quit, 1);
 		}
 		break;
 	    }
@@ -1090,6 +1104,12 @@ fluid_alsa_seq_run(void* d)
 
 	      fluid_midi_event_set_sysex (&evt, (char *)(seq_ev->data.ext.ptr) + 1,
 					  seq_ev->data.ext.len - 2, FALSE);
+	      break;
+	    case SND_SEQ_EVENT_PORT_START: {
+	      if (dev->autoconn_inputs) {
+		fluid_alsa_seq_autoconnect_port(dev, seq_ev->data.addr.client, seq_ev->data.addr.port);
+	      }
+	    }
 	      break;
 	    default:
 	      continue;		/* unhandled event, next loop iteration */

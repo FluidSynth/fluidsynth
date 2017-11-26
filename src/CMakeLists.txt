@@ -32,6 +32,10 @@ include_directories (
     ${CMAKE_SOURCE_DIR}/include
     ${CMAKE_BINARY_DIR}/include
     ${PTHREADS_INCLUDE_DIR}
+)
+
+include_directories (
+    SYSTEM
     ${GLIB_INCLUDEDIR}
     ${GLIB_INCLUDE_DIRS}
 )
@@ -76,7 +80,7 @@ if ( PORTAUDIO_SUPPORT )
 endif ( PORTAUDIO_SUPPORT )
 
 if ( WINDOWS_SUPPORT )
-  set ( fluid_windows_SOURCES fluid_dll.c drivers/fluid_dsound.c drivers/fluid_winmidi.c )
+  set ( fluid_windows_SOURCES drivers/fluid_dsound.c drivers/fluid_winmidi.c )
 endif ( WINDOWS_SUPPORT )
 
 if ( OSS_SUPPORT )
@@ -98,21 +102,12 @@ if ( LIBSNDFILE_SUPPORT )
   include_directories ( ${LIBSNDFILE_INCLUDEDIR} ${LIBSNDFILE_INCLUDE_DIRS} )
 endif ( LIBSNDFILE_SUPPORT )
 
-if ( LADSPA_SUPPORT )
-  set ( fluid_ladspa_SOURCES bindings/fluid_ladspa.c bindings/fluid_ladspa.h )
-endif ( LADSPA_SUPPORT )
-
 if ( MIDISHARE_SUPPORT )
   set ( fluid_midishare_SOURCES drivers/fluid_midishare.c )
   include_directories ( ${MidiShare_INCLUDE_DIRS} )
 endif ( MIDISHARE_SUPPORT )
 
 set ( config_SOURCES ${CMAKE_BINARY_DIR}/config.h )
-if ( MSVC )
-    set ( config_SOURCES
-          ${config_SOURCES}
-          ${CMAKE_BINARY_DIR}/config_win32.h )
-endif ( MSVC )
 
 set ( libfluidsynth_SOURCES
     utils/fluid_conv.c
@@ -179,12 +174,15 @@ set ( libfluidsynth_SOURCES
     bindings/fluid_cmd.c
     bindings/fluid_cmd.h
     bindings/fluid_filerenderer.c
+    bindings/fluid_ladspa.c
+    bindings/fluid_ladspa.h
 )
 
 set ( public_HEADERS
     ${CMAKE_SOURCE_DIR}/include/fluidsynth/audio.h
     ${CMAKE_SOURCE_DIR}/include/fluidsynth/event.h
     ${CMAKE_SOURCE_DIR}/include/fluidsynth/gen.h
+    ${CMAKE_SOURCE_DIR}/include/fluidsynth/ladspa.h
     ${CMAKE_SOURCE_DIR}/include/fluidsynth/log.h
     ${CMAKE_SOURCE_DIR}/include/fluidsynth/midi.h
     ${CMAKE_SOURCE_DIR}/include/fluidsynth/misc.h
@@ -236,7 +234,6 @@ add_library ( libfluidsynth
     ${fluid_dbus_SOURCES}
     ${fluid_jack_SOURCES}
     ${fluid_lash_SOURCES}
-    ${fluid_ladspa_SOURCES}
     ${fluid_midishare_SOURCES}
     ${fluid_oss_SOURCES}
     ${fluid_portaudio_SOURCES}
@@ -268,6 +265,15 @@ elseif ( OS2 )
         VERSION ${LIB_VERSION_INFO}
         SOVERSION ${LIB_VERSION_CURRENT}
     )
+elseif ( WIN32 )
+  set_target_properties ( libfluidsynth
+    PROPERTIES
+      ARCHIVE_OUTPUT_NAME "fluidsynth"
+      PREFIX "lib"
+      OUTPUT_NAME "fluidsynth-${LIB_VERSION_CURRENT}"
+      VERSION ${LIB_VERSION_INFO}
+      SOVERSION ${LIB_VERSION_CURRENT}
+    )
 else ( MACOSX_FRAMEWORK )
   set_target_properties ( libfluidsynth
     PROPERTIES
@@ -285,6 +291,7 @@ endif ( LIBFLUID_CPPFLAGS )
 
 target_link_libraries ( libfluidsynth
     ${GLIB_LIBRARIES}
+    ${GMODULE_LIBRARIES}
     ${LASH_LIBRARIES}
     ${JACK_LIBRARIES}
     ${ALSA_LIBRARIES}

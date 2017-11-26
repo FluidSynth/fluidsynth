@@ -39,6 +39,9 @@
 #include <glib.h>
 #include "fluidsynth_priv.h"
 
+#ifdef LADSPA
+#include <gmodule.h>
+#endif
 
 /**
  * Macro used for safely accessing a message from a GError and using a default
@@ -56,8 +59,6 @@ void fluid_time_config(void);
 
 /* Misc */
 
-#define fluid_return_val_if_fail  g_return_val_if_fail
-#define fluid_return_if_fail      g_return_if_fail
 #define FLUID_INLINE              inline
 #define FLUID_POINTER_TO_UINT     GPOINTER_TO_UINT
 #define FLUID_UINT_TO_POINTER     GUINT_TO_POINTER
@@ -69,6 +70,17 @@ void fluid_time_config(void);
 
 #define FLUID_LE32TOH(x)          GINT32_FROM_LE(x)
 #define FLUID_LE16TOH(x)          GINT16_FROM_LE(x)
+
+
+#define fluid_return_if_fail(cond) \
+if(cond) \
+    ; \
+else \
+    return
+
+#define fluid_return_val_if_fail(cond, val) \
+ fluid_return_if_fail(cond) (val)
+
 
 /*
  * Utility functions
@@ -102,7 +114,7 @@ fluid_timer_t* new_fluid_timer(int msec, fluid_timer_callback_t callback,
                                void* data, int new_thread, int auto_destroy,
                                int high_priority);
 
-int delete_fluid_timer(fluid_timer_t* timer);
+void delete_fluid_timer(fluid_timer_t* timer);
 int fluid_timer_join(fluid_timer_t* timer);
 int fluid_timer_stop(fluid_timer_t* timer);
 
@@ -148,6 +160,7 @@ new_fluid_cond_mutex (void)
 static FLUID_INLINE void
 delete_fluid_cond_mutex (fluid_cond_mutex_t *m)
 {
+  fluid_return_if_fail(m != NULL);
   g_mutex_clear (m);
   g_free (m);
 }
@@ -170,6 +183,7 @@ new_fluid_cond (void)
 static FLUID_INLINE void
 delete_fluid_cond (fluid_cond_t *cond)
 {
+  fluid_return_if_fail(cond != NULL);
   g_cond_clear (cond);
   g_free (cond);
 }
@@ -273,7 +287,7 @@ typedef GStaticPrivate fluid_private_t;
 static FLUID_INLINE void
 fluid_atomic_float_set(volatile float *fptr, float val)
 {
-  sint32 ival;
+  int32_t ival;
   memcpy (&ival, &val, 4);
   fluid_atomic_int_set ((volatile int *)fptr, ival);
 }
@@ -281,7 +295,7 @@ fluid_atomic_float_set(volatile float *fptr, float val)
 static FLUID_INLINE float
 fluid_atomic_float_get(volatile float *fptr)
 {
-  sint32 ival;
+  int32_t ival;
   float fval;
   ival = fluid_atomic_int_get ((volatile int *)fptr);
   memcpy (&fval, &ival, 4);
@@ -309,6 +323,19 @@ void delete_fluid_thread(fluid_thread_t* thread);
 void fluid_thread_self_set_prio (int prio_level);
 int fluid_thread_join(fluid_thread_t* thread);
 
+/* Dynamic Module Loading, currently only used by LADSPA subsystem */
+#ifdef LADSPA
+
+typedef GModule fluid_module_t;
+
+#define fluid_module_open(_name)        g_module_open((_name), G_MODULE_BIND_LOCAL)
+#define fluid_module_close(_mod)        g_module_close(_mod)
+#define fluid_module_error()            g_module_error()
+#define fluid_module_name(_mod)         g_module_name(_mod)
+#define fluid_module_symbol(_mod, _name, _ptr) g_module_symbol((_mod), (_name), (_ptr))
+
+#endif /* LADSPA */
+
 /* Sockets and I/O */
 
 fluid_istream_t fluid_get_stdin (void);
@@ -322,7 +349,7 @@ int fluid_ostream_printf (fluid_ostream_t out, char* format, ...);
 typedef int (*fluid_server_func_t)(void* data, fluid_socket_t client_socket, char* addr);
 
 fluid_server_socket_t* new_fluid_server_socket(int port, fluid_server_func_t func, void* data);
-int delete_fluid_server_socket(fluid_server_socket_t* sock);
+void delete_fluid_server_socket(fluid_server_socket_t* sock);
 int fluid_server_socket_join(fluid_server_socket_t* sock);
 void fluid_socket_close(fluid_socket_t sock);
 fluid_istream_t fluid_socket_get_istream(fluid_socket_t sock);

@@ -172,9 +172,7 @@ struct _fluid_synth_t
 
   fluid_mod_t* default_mod;          /**< the (dynamic) list of default modulators */
 
-#ifdef LADSPA
-  fluid_ladspa_fx_t* ladspa_fx; /**< Effects unit for LADSPA support */
-#endif
+  fluid_ladspa_fx_t* ladspa_fx;      /**< Effects unit for LADSPA support */
 };
 
 fluid_preset_t* fluid_synth_find_preset(fluid_synth_t* synth,
@@ -203,7 +201,7 @@ int fluid_synth_set_chorus_full(fluid_synth_t* synth, int set, int nr, double le
                                 double speed, double depth_ms, int type);
 
 fluid_sample_timer_t* new_fluid_sample_timer(fluid_synth_t* synth, fluid_timer_callback_t callback, void* data);
-int delete_fluid_sample_timer(fluid_synth_t* synth, fluid_sample_timer_t* timer);
+void delete_fluid_sample_timer(fluid_synth_t* synth, fluid_sample_timer_t* timer);
 
 void fluid_synth_api_enter(fluid_synth_t* synth);
 void fluid_synth_api_exit(fluid_synth_t* synth);

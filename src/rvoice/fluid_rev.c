@@ -9,6 +9,7 @@
   Translated to C by Peter Hanappe, Mai 2001
 */
 
+#include "fluid_sys.h"
 #include "fluid_rev.h"
 
 /***************************************************************
@@ -18,49 +19,23 @@
 
 /* Denormalising:
  *
- * According to music-dsp thread 'Denormalise', Pentium processors
- * have a hardware 'feature', that is of interest here, related to
- * numeric underflow.  We have a recursive filter. The output decays
- * exponentially, if the input stops.  So the numbers get smaller and
- * smaller... At some point, they reach 'denormal' level.  This will
- * lead to drastic spikes in the CPU load.  The effect was reproduced
- * with the reverb - sometimes the average load over 10 s doubles!!.
+ * We have a recursive filter. The output decays exponentially, if the input
+ * stops. So the numbers get smaller and smaller... At some point, they reach
+ * 'denormal' level. On some platforms this will lead to drastic spikes in the
+ * CPU load. This is especially noticable on some older Pentium (especially
+ * Pentium 3) processors, but even more modern Intel Core processors still show
+ * reduced performance with denormals. While there are compile-time switches to
+ * treat denormals as zero for a lot of processors, those are not available or
+ * effective on all platforms.
  *
- * The 'undenormalise' macro fixes the problem: As soon as the number
- * is close enough to denormal level, the macro forces the number to
- * 0.0f.  The original macro is:
- *
- * #define undenormalise(sample) if(((*(unsigned int*)&sample)&0x7f800000)==0) sample=0.0f
- *
- * This will zero out a number when it reaches the denormal level.
- * Advantage: Maximum dynamic range Disadvantage: We'll have to check
- * every sample, expensive.  The alternative macro comes from a later
- * mail from Jon Watte. It will zap a number before it reaches
- * denormal level. Jon suggests to run it once per block instead of
- * every sample.
+ * The fix used here: Use a small DC-offset in the filter calculations.  Now
+ * the signals converge not against 0, but against the offset.  The constant
+ * offset is invisible from the outside world (i.e. it does not appear at the
+ * output.  There is a very small turn-on transient response, which should not
+ * cause problems.
  */
-
-# if defined(WITH_FLOATX)
-# define zap_almost_zero(sample) (((*(unsigned int*)&(sample))&0x7f800000) < 0x08000000)?0.0f:(sample)
-# else
-/* 1e-20 was chosen as an arbitrary (small) threshold. */
-#define zap_almost_zero(sample) fabs(sample)<1e-10 ? 0 : sample;
-#endif
-
-/* Denormalising part II:
- *
- * Another method fixes the problem cheaper: Use a small DC-offset in
- * the filter calculations.  Now the signals converge not against 0,
- * but against the offset.  The constant offset is invisible from the
- * outside world (i.e. it does not appear at the output.  There is a
- * very small turn-on transient response, which should not cause
- * problems.
- */
-
-
-//#define DC_OFFSET 0
 #define DC_OFFSET 1e-8
-//#define DC_OFFSET 0.001f
+
 typedef struct _fluid_allpass fluid_allpass;
 typedef struct _fluid_comb fluid_comb;
 
@@ -124,20 +99,6 @@ fluid_allpass_getfeedback(fluid_allpass* allpass)
   } \
   _input = output; \
 }
-
-/*  fluid_real_t fluid_allpass_process(fluid_allpass* allpass, fluid_real_t input) */
-/*  { */
-/*    fluid_real_t output; */
-/*    fluid_real_t bufout; */
-/*    bufout = allpass->buffer[allpass->bufidx]; */
-/*    undenormalise(bufout); */
-/*    output = -input + bufout; */
-/*    allpass->buffer[allpass->bufidx] = input + (bufout * allpass->feedback); */
-/*    if (++allpass->bufidx >= allpass->bufsize) { */
-/*      allpass->bufidx = 0; */
-/*    } */
-/*    return output; */
-/*  } */
 
 struct _fluid_comb {
   fluid_real_t feedback;
@@ -219,25 +180,17 @@ fluid_comb_getfeedback(fluid_comb* comb)
   _output += _tmp; \
 }
 
-/* fluid_real_t fluid_comb_process(fluid_comb* comb, fluid_real_t input) */
-/* { */
-/*    fluid_real_t output; */
-
-/*    output = comb->buffer[comb->bufidx]; */
-/*    undenormalise(output); */
-/*    comb->filterstore = (output * comb->damp2) + (comb->filterstore * comb->damp1); */
-/*    undenormalise(comb->filterstore); */
-/*    comb->buffer[comb->bufidx] = input + (comb->filterstore * comb->feedback); */
-/*    if (++comb->bufidx >= comb->bufsize) { */
-/*      comb->bufidx = 0; */
-/*    } */
-
-/*    return output; */
-/* } */
-
 #define numcombs 8
 #define numallpasses 4
 #define	fixedgain 0.015f
+/* scale_wet_width is a compensation weight factor to get an output
+   amplitude (wet) rather independent of the width setting.
+    0: the output amplitude is fully dependant on the width setting.
+   >0: the output amplitude is less dependant on the width setting.
+   With a scale_wet_width of 0.2 the output amplitude is rather 
+   independent of width setting (see fluid_revmodel_update()).
+ */
+#define scale_wet_width 0.2f 
 #define scalewet 3.0f
 #define scaledamp 1.0f
 #define scaleroom 0.28f
@@ -283,7 +236,7 @@ fluid_comb_getfeedback(fluid_comb* comb)
 struct _fluid_revmodel_t {
   fluid_real_t roomsize;
   fluid_real_t damp;
-  fluid_real_t wet, wet1, wet2;
+  fluid_real_t level, wet1, wet2;
   fluid_real_t width;
   fluid_real_t gain;
   /*
@@ -334,6 +287,8 @@ void
 delete_fluid_revmodel(fluid_revmodel_t* rev)
 {
   int i;
+  fluid_return_if_fail(rev != NULL);
+  
   for (i = 0; i < numcombs;i++) {
     fluid_comb_release(&rev->combL[i]);
     fluid_comb_release(&rev->combR[i]);
@@ -483,8 +438,20 @@ fluid_revmodel_update(fluid_revmodel_t* rev)
   /* Recalculate internal values after parameter change */
   int i;
 
-  rev->wet1 = rev->wet * (rev->width / 2.0f + 0.5f);
-  rev->wet2 = rev->wet * ((1.0f - rev->width) / 2.0f);
+  /* The stereo amplitude equation (wet1 and wet2 below) have a 
+  tendency to produce high amplitude with high width values ( 1 < width < 100).
+  This results in an unwanted noisy output clipped by the audio card.
+  To avoid this dependency, we divide by (1 + rev->width * scale_wet_width)
+  Actually, with a scale_wet_width of 0.2, (regardless of level setting), 
+  the output amplitude (wet) seems rather independent of width setting */	
+  fluid_real_t wet = (rev->level * scalewet) / 
+                     (1.0f + rev->width * scale_wet_width);
+  
+  /* wet1 and wet2 are used by the stereo effect controled by the width setting
+  for producing a stereo ouptput from a monophonic reverb signal.
+  Please see the note above about a side effect tendency */
+  rev->wet1 = wet * (rev->width / 2.0f + 0.5f);
+  rev->wet2 = wet * ((1.0f - rev->width) / 2.0f);
 
   for (i = 0; i < numcombs; i++) {
     fluid_comb_setfeedback(&rev->combL[i], rev->roomsize);
@@ -512,7 +479,13 @@ fluid_revmodel_set(fluid_revmodel_t* rev, int set, float roomsize,
                    float damping, float width, float level)
 {
   if (set & FLUID_REVMODEL_SET_ROOMSIZE)
-    rev->roomsize = (roomsize * scaleroom) + offsetroom;
+  {
+        /* With upper limit above 1.07, the output amplitude will grow
+	exponentially. So, keeping this upper limit to 1.0 seems sufficient
+	as it produces yet a long reverb time */
+	fluid_clip(roomsize, 0.0f, 1.0f);
+	rev->roomsize = (roomsize * scaleroom) + offsetroom;
+  }
 
   if (set & FLUID_REVMODEL_SET_DAMPING)
     rev->damp = damping * scaledamp;
@@ -523,7 +496,7 @@ fluid_revmodel_set(fluid_revmodel_t* rev, int set, float roomsize,
   if (set & FLUID_REVMODEL_SET_LEVEL)
   {
     fluid_clip(level, 0.0f, 1.0f);
-    rev->wet = level * scalewet;
+    rev->level = level;
   }
 
   fluid_revmodel_update (rev);

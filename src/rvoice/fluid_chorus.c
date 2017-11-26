@@ -205,19 +205,11 @@ new_fluid_chorus(fluid_real_t sample_rate)
 void
 delete_fluid_chorus(fluid_chorus_t* chorus)
 {
-  if (chorus == NULL) {
-    return;
-  }
-
-  if (chorus->chorusbuf != NULL) {
+  fluid_return_if_fail(chorus != NULL);
+  
     FLUID_FREE(chorus->chorusbuf);
-  }
-
-  if (chorus->lookup_tab != NULL) {
     FLUID_FREE(chorus->lookup_tab);
-  }
-
-  FLUID_FREE(chorus);
+    FLUID_FREE(chorus);
 }
 
 int

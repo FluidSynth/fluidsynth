@@ -28,7 +28,7 @@
 typedef struct _fluid_midi_parser_t fluid_midi_parser_t;
 
 fluid_midi_parser_t* new_fluid_midi_parser(void);
-int delete_fluid_midi_parser(fluid_midi_parser_t* parser);
+void delete_fluid_midi_parser(fluid_midi_parser_t* parser);
 fluid_midi_event_t* fluid_midi_parser_parse(fluid_midi_parser_t* parser, unsigned char c);
 
 
@@ -248,11 +248,9 @@ struct _fluid_track_t {
 typedef struct _fluid_track_t fluid_track_t;
 
 fluid_track_t* new_fluid_track(int num);
-int delete_fluid_track(fluid_track_t* track);
+void delete_fluid_track(fluid_track_t* track);
 int fluid_track_set_name(fluid_track_t* track, char* name);
-char* fluid_track_get_name(fluid_track_t* track);
 int fluid_track_add_event(fluid_track_t* track, fluid_midi_event_t* evt);
-fluid_midi_event_t* fluid_track_first_event(fluid_track_t* track);
 fluid_midi_event_t* fluid_track_next_event(fluid_track_t* track);
 int fluid_track_get_duration(fluid_track_t* track);
 int fluid_track_reset(fluid_track_t* track);
@@ -296,6 +294,7 @@ struct _fluid_player_t {
   char send_program_change; /* should we ignore the program changes? */
   char use_system_timer;   /* if zero, use sample timers, otherwise use system clock timer */
   char reset_synth_between_songs; /* 1 if system reset should be sent to the synth between songs. */
+  int seek_ticks;           /* new position in tempo ticks (midi ticks) for seeking */
   int start_ticks;          /* the number of tempo ticks passed at the last tempo change */
   int cur_ticks;            /* the number of tempo ticks passed */
   int begin_msec;           /* the time (msec) of the beginning of the file */
@@ -311,8 +310,6 @@ struct _fluid_player_t {
 
 int fluid_player_add_track(fluid_player_t* player, fluid_track_t* track);
 int fluid_player_callback(void* data, unsigned int msec);
-int fluid_player_count_tracks(fluid_player_t* player);
-fluid_track_t* fluid_player_get_track(fluid_player_t* player, int i);
 int fluid_player_reset(fluid_player_t* player);
 int fluid_player_load(fluid_player_t* player, fluid_playlist_item *item);
 

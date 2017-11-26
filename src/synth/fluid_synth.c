@@ -551,19 +551,21 @@ fluid_sample_timer_t* new_fluid_sample_timer(fluid_synth_t* synth, fluid_timer_c
 	return result;		
 }
 
-int delete_fluid_sample_timer(fluid_synth_t* synth, fluid_sample_timer_t* timer)
+void delete_fluid_sample_timer(fluid_synth_t* synth, fluid_sample_timer_t* timer)
 {
-	fluid_sample_timer_t** ptr = &synth->sample_timers;
+    fluid_sample_timer_t** ptr;
+    fluid_return_if_fail(synth != NULL);
+    fluid_return_if_fail(timer != NULL);
+    
+	ptr = &synth->sample_timers;
 	while (*ptr) {
 		if (*ptr == timer) {
 			*ptr = timer->next; 
 			FLUID_FREE(timer);
-			return FLUID_OK;
+            return;
 		}
 		ptr = &((*ptr)->next);
 	}
-	FLUID_LOG(FLUID_ERR,"delete_fluid_sample_timer failed, no timer found");
-	return FLUID_FAILED;
 }
 
 
@@ -762,14 +764,14 @@ new_fluid_synth(fluid_settings_t *settings)
   fluid_settings_getint(settings, "synth.ladspa.active", &with_ladspa);
   if (with_ladspa) {
 #ifdef LADSPA
-    synth->ladspa_fx = new_fluid_ladspa_fx(synth->sample_rate, synth->audio_groups,
-            synth->effects_channels, synth->audio_channels,
+    synth->ladspa_fx = new_fluid_ladspa_fx(synth->sample_rate,
             FLUID_MIXER_MAX_BUFFERS_DEFAULT * FLUID_BUFSIZE);
     if(synth->ladspa_fx == NULL) {
       FLUID_LOG(FLUID_ERR, "Out of memory");
       goto error_recovery;
     }
-    fluid_rvoice_mixer_set_ladspa(synth->eventhandler->mixer, synth->ladspa_fx);
+    fluid_rvoice_mixer_set_ladspa(synth->eventhandler->mixer, synth->ladspa_fx,
+            synth->audio_groups);
 #else /* LADSPA */
     FLUID_LOG(FLUID_WARN, "FluidSynth has not been compiled with LADSPA support");
 #endif /* LADSPA */
@@ -884,7 +886,7 @@ new_fluid_synth(fluid_settings_t *settings)
  * @note Other users of a synthesizer instance, such as audio and MIDI drivers,
  * should be deleted prior to freeing the FluidSynth instance.
  */
-int
+void
 delete_fluid_synth(fluid_synth_t* synth)
 {
   int i, k;
@@ -894,9 +896,7 @@ delete_fluid_synth(fluid_synth_t* synth)
   fluid_mod_t* default_mod;
   fluid_mod_t* mod;
 
-  if (synth == NULL) {
-    return FLUID_OK;
-  }
+  fluid_return_if_fail(synth != NULL);
 
   fluid_profiling_print();
 
@@ -926,11 +926,9 @@ delete_fluid_synth(fluid_synth_t* synth)
   /* also unset all presets for clean SoundFont unload */
   if (synth->channel != NULL)
     for (i = 0; i < synth->midi_channels; i++)
-      if (synth->channel[i] != NULL)
         fluid_channel_set_preset(synth->channel[i], NULL);
 
-  if (synth->eventhandler)
-    delete_fluid_rvoice_eventhandler(synth->eventhandler);
+  delete_fluid_rvoice_eventhandler(synth->eventhandler);
 
   /* delete all the SoundFonts */
   for (list = synth->sfont_info; list; list = fluid_list_next (list)) {
@@ -943,7 +941,7 @@ delete_fluid_synth(fluid_synth_t* synth)
 
 
   /* Delete the SoundFont info hash */
-  if (synth->sfont_hash) delete_fluid_hashtable (synth->sfont_hash);
+  delete_fluid_hashtable (synth->sfont_hash);
 
 
   /* delete all the SoundFont loaders */
@@ -958,18 +956,14 @@ delete_fluid_synth(fluid_synth_t* synth)
 
   if (synth->channel != NULL) {
     for (i = 0; i < synth->midi_channels; i++) {
-      if (synth->channel[i] != NULL) {
 	delete_fluid_channel(synth->channel[i]);
-      }
     }
     FLUID_FREE(synth->channel);
   }
 
   if (synth->voice != NULL) {
     for (i = 0; i < synth->nvoice; i++) {
-      if (synth->voice[i] != NULL) {
 	delete_fluid_voice(synth->voice[i]);
-      }
     }
     FLUID_FREE(synth->voice);
   }
@@ -980,9 +974,7 @@ delete_fluid_synth(fluid_synth_t* synth)
     for (i = 0; i < 128; i++) {
       if (synth->tuning[i] != NULL) {
 	for (k = 0; k < 128; k++) {
-	  if (synth->tuning[i][k] != NULL) {
 	    delete_fluid_tuning(synth->tuning[i][k]);
-	  }
 	}
 	FLUID_FREE(synth->tuning[i]);
       }
@@ -994,9 +986,7 @@ delete_fluid_synth(fluid_synth_t* synth)
 
 #ifdef LADSPA
   /* Release the LADSPA effects unit */
-  if (synth->ladspa_fx) {
     delete_fluid_ladspa_fx(synth->ladspa_fx);
-  }
 #endif
 
   /* delete all default modulators */
@@ -1010,8 +1000,6 @@ delete_fluid_synth(fluid_synth_t* synth)
   fluid_rec_mutex_destroy(synth->mutex);
 
   FLUID_FREE(synth);
-
-  return FLUID_OK;
 }
 
 /**
@@ -1218,6 +1206,46 @@ fluid_synth_add_default_mod(fluid_synth_t* synth, fluid_mod_t* mod, int mode)
     last_mod->next = new_mod;
 
   FLUID_API_RETURN(FLUID_OK);
+}
+
+/**
+ * Removes the specified modulator \c mod from the synth's default modulator list.
+ * fluid_mod_test_identity() will be used to test modulator matching.
+ * @param synth synth instance
+ * @param mod The modulator to remove
+ * @return FLUID_OK if a matching modulator was found and successfully removed, FLUID_FAILED otherwise
+ */
+int
+fluid_synth_remove_default_mod(fluid_synth_t* synth, const fluid_mod_t* mod)
+{
+  fluid_mod_t* default_mod;
+  fluid_mod_t* last_mod;
+
+  fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
+  fluid_return_val_if_fail (mod != NULL, FLUID_FAILED);
+  fluid_synth_api_enter(synth);
+
+  last_mod = default_mod = synth->default_mod;
+
+  while (default_mod != NULL) {
+    if (fluid_mod_test_identity(default_mod, mod))
+    {
+        if(synth->default_mod == default_mod)
+        {
+            synth->default_mod = synth->default_mod->next;
+        }
+        else
+        {
+            last_mod->next = default_mod->next;
+        }
+        fluid_mod_delete(default_mod);
+        FLUID_API_RETURN(FLUID_OK);
+    }
+    last_mod = default_mod;
+    default_mod = default_mod->next;
+  }
+
+  FLUID_API_RETURN(FLUID_FAILED);
 }
 
 
@@ -1473,7 +1501,7 @@ fluid_synth_sysex_midi_tuning (fluid_synth_t *synth, const char *data, int len,
   int keys[128];
   char name[17];
   int note, frac, frac2;
-  uint8 chksum;
+  uint8_t chksum;
   int i, count, index;
   const char *dataptr;
   char *resptr;;
@@ -1897,7 +1925,7 @@ fluid_synth_update_channel_pressure_LOCAL(fluid_synth_t* synth, int chan)
  * @param key MIDI key number (0-127)
  * @param val MIDI key pressure value (0-127)
  * @return FLUID_OK on success, FLUID_FAILED otherwise
- * @since @NEXT_RELEASE@
+ * @since 2.0.0
  */
 int
 fluid_synth_key_pressure(fluid_synth_t* synth, int chan, int key, int val)
@@ -3979,7 +4007,7 @@ fluid_synth_set_reverb_preset(fluid_synth_t* synth, unsigned int num)
 /**
  * Set reverb parameters.
  * @param synth FluidSynth instance
- * @param roomsize Reverb room size value (0.0-1.2)
+ * @param roomsize Reverb room size value (0.0-1.0)
  * @param damping Reverb damping value (0.0-1.0)
  * @param width Reverb width value (0.0-100.0)
  * @param level Reverb level value (0.0-1.0)
@@ -5041,7 +5069,7 @@ fluid_synth_get_settings(fluid_synth_t* synth)
  *   TRUE to take the value as a 0.0-1.0 range and apply it to the valid
  *   generator effect range (scaled and shifted as necessary).
  * @return FLUID_OK on success, FLUID_FAILED otherwise
- * @since @NEXT_RELEASE@
+ * @since 2.0.0
  *
  * This function allows for setting all effect parameters in real time on a
  * MIDI channel.  Setting absolute to non-zero will cause the value to override
@@ -5326,4 +5354,17 @@ int fluid_synth_set_channel_type(fluid_synth_t* synth, int chan, int type)
   synth->channel[chan]->channel_type = type;
 
   FLUID_API_RETURN(FLUID_OK);
+}
+
+/**
+ * Return the LADSPA effects instance used by FluidSynth
+ *
+ * @param synth FluidSynth instance
+ * @return pointer to LADSPA fx or NULL if compiled without LADSPA support or LADSPA is not active
+ */
+fluid_ladspa_fx_t *fluid_synth_get_ladspa_fx(fluid_synth_t *synth)
+{
+    fluid_return_val_if_fail(synth != NULL, NULL);
+
+    return synth->ladspa_fx;
 }

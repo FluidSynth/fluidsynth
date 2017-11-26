@@ -118,11 +118,9 @@ fluid_file_read_full(fluid_file fp, size_t* length)
 void
 delete_fluid_midi_file (fluid_midi_file *mf)
 {
-    if (mf == NULL) {
-        return;
-    }
+    fluid_return_if_fail(mf != NULL);
+    
     FLUID_FREE(mf);
-    return;
 }
 
 /*
@@ -227,8 +225,8 @@ int fluid_midi_file_eof(fluid_midi_file* mf)
 int
 fluid_midi_file_read_mthd(fluid_midi_file *mf)
 {
-    char mthd[15];
-    if (fluid_midi_file_read(mf, mthd, 14) != FLUID_OK) {
+    char mthd[14];
+    if (fluid_midi_file_read(mf, mthd, sizeof(mthd)) != FLUID_OK) {
         return FLUID_FAILED;
     }
     if ((FLUID_STRNCMP(mthd, "MThd", 4) != 0) || (mthd[7] != 6)
@@ -240,15 +238,15 @@ fluid_midi_file_read_mthd(fluid_midi_file *mf)
     mf->type = mthd[9];
     mf->ntracks = (unsigned) mthd[11];
     mf->ntracks += (unsigned int) (mthd[10]) << 16;
-    if ((mthd[12]) < 0) {
+    if ((signed char)mthd[12] < 0) {
         mf->uses_smpte = 1;
-        mf->smpte_fps = -mthd[12];
+        mf->smpte_fps = -(signed char)mthd[12];
         mf->smpte_res = (unsigned) mthd[13];
         FLUID_LOG(FLUID_ERR, "File uses SMPTE timing -- Not implemented yet");
         return FLUID_FAILED;
     } else {
         mf->uses_smpte = 0;
-        mf->division = (mthd[12] << 8) | (mthd[13] & 0xff);
+        mf->division = ((unsigned)mthd[12] << 8) | ((unsigned)mthd[13] & 0xff);
         FLUID_LOG(FLUID_DBG, "Division=%d", mf->division);
     }
     return FLUID_OK;
@@ -801,10 +799,11 @@ new_fluid_midi_event ()
  * @param evt MIDI event structure
  * @return Always returns #FLUID_OK
  */
-int
+void
 delete_fluid_midi_event(fluid_midi_event_t *evt)
 {
     fluid_midi_event_t *temp;
+    fluid_return_if_fail(evt != NULL);
 
     while (evt) {
         temp = evt->next;
@@ -816,7 +815,6 @@ delete_fluid_midi_event(fluid_midi_event_t *evt)
         FLUID_FREE(evt);
         evt = temp;
     }
-    return FLUID_OK;
 }
 
 /**
@@ -1061,17 +1059,14 @@ new_fluid_track(int num)
 /*
  * delete_fluid_track
  */
-int
+void
 delete_fluid_track(fluid_track_t *track)
 {
-    if (track->name != NULL) {
-        FLUID_FREE(track->name);
-    }
-    if (track->first != NULL) {
-        delete_fluid_midi_event(track->first);
-    }
+    fluid_return_if_fail(track != NULL);
+    
+    FLUID_FREE(track->name);
+    delete_fluid_midi_event(track->first);
     FLUID_FREE(track);
-    return FLUID_OK;
 }
 
 /*
@@ -1099,15 +1094,6 @@ fluid_track_set_name(fluid_track_t *track, char *name)
 }
 
 /*
- * fluid_track_get_name
- */
-char *
-fluid_track_get_name(fluid_track_t *track)
-{
-    return track->name;
-}
-
-/*
  * fluid_track_get_duration
  */
 int
@@ -1120,24 +1106,6 @@ fluid_track_get_duration(fluid_track_t *track)
         evt = evt->next;
     }
     return time;
-}
-
-/*
- * fluid_track_count_events
- */
-int
-fluid_track_count_events(fluid_track_t *track, int *on, int *off)
-{
-    fluid_midi_event_t *evt = track->first;
-    while (evt != NULL) {
-        if (evt->type == NOTE_ON) {
-            (*on)++;
-        } else if (evt->type == NOTE_OFF) {
-            (*off)++;
-        }
-        evt = evt->next;
-    }
-    return FLUID_OK;
 }
 
 /*
@@ -1156,16 +1124,6 @@ fluid_track_add_event(fluid_track_t *track, fluid_midi_event_t *evt)
         track->last = evt;
     }
     return FLUID_OK;
-}
-
-/*
- * fluid_track_first_event
- */
-fluid_midi_event_t *
-fluid_track_first_event(fluid_track_t *track)
-{
-    track->cur = track->first;
-    return track->cur;
 }
 
 /*
@@ -1202,6 +1160,13 @@ fluid_track_send_events(fluid_track_t *track,
 {
     int status = FLUID_OK;
     fluid_midi_event_t *event;
+    int seeking = player->seek_ticks >= 0;
+
+    if (seeking) {
+        ticks = player->seek_ticks; /* update target ticks */
+        if (track->ticks > ticks)
+            fluid_track_reset (track); /* reset track if seeking backwards */
+    }
 
     while (1) {
 
@@ -1227,6 +1192,9 @@ fluid_track_send_events(fluid_track_t *track,
         }
         else if (event->type == MIDI_SET_TEMPO) {
             fluid_player_set_midi_tempo(player, event->param1);
+        }
+        else if (seeking && (event->type == NOTE_ON || event->type == NOTE_OFF)) {
+            /* skip on/off messages */
         }
         else {
             if (player->playback_callback)
@@ -1276,6 +1244,7 @@ new_fluid_player(fluid_synth_t *synth)
     player->deltatime = 4.0;
     player->cur_msec = 0;
     player->cur_ticks = 0;
+    player->seek_ticks = -1;    
     fluid_player_set_playback_callback(player, fluid_synth_handle_midi_event, synth);
 
     player->use_system_timer = fluid_settings_str_equal(synth->settings,
@@ -1292,15 +1261,14 @@ new_fluid_player(fluid_synth_t *synth)
  * @param player MIDI player instance
  * @return Always returns #FLUID_OK
  */
-int
+void
 delete_fluid_player(fluid_player_t *player)
 {
     fluid_list_t *q;
     fluid_playlist_item* pi;
 
-    if (player == NULL) {
-        return FLUID_OK;
-    }
+    fluid_return_if_fail(player != NULL);
+    
     fluid_player_stop(player);
     fluid_player_reset(player);
 
@@ -1315,7 +1283,6 @@ delete_fluid_player(fluid_player_t *player)
     }
 
     FLUID_FREE(player);
-    return FLUID_OK;
 }
 
 /**
@@ -1370,28 +1337,6 @@ fluid_player_add_track(fluid_player_t *player, fluid_track_t *track)
         return FLUID_OK;
     } else {
         return FLUID_FAILED;
-    }
-}
-
-/*
- * fluid_player_count_tracks
- */
-int
-fluid_player_count_tracks(fluid_player_t *player)
-{
-    return player->ntracks;
-}
-
-/*
- * fluid_player_get_track
- */
-fluid_track_t *
-fluid_player_get_track(fluid_player_t *player, int i)
-{
-    if ((i >= 0) && (i < MAX_NUMBER_OF_TRACKS)) {
-        return player->track[i];
-    } else {
-        return NULL;
     }
 }
 
@@ -1596,7 +1541,6 @@ fluid_player_playlist_load(fluid_player_t *player, unsigned int msec)
     }
 }
 
-
 /*
  * fluid_player_callback
  */
@@ -1626,6 +1570,10 @@ fluid_player_callback(void *data, unsigned int msec)
                 + (int) ((double) (player->cur_msec - player->start_msec)
                         / player->deltatime + 0.5)); /* 0.5 to average overall error when casting */
 
+        if (player->seek_ticks >= 0) {
+            fluid_synth_all_sounds_off(synth, -1); /* avoid hanging notes */
+        }
+
         for (i = 0; i < player->ntracks; i++) {
             if (!fluid_track_eot(player->track[i])) {
                 status = FLUID_PLAYER_PLAYING;
@@ -1634,6 +1582,14 @@ fluid_player_callback(void *data, unsigned int msec)
                     /* */
                 }
             }
+        }
+
+        if (player->seek_ticks >= 0) {
+            player->start_ticks = player->seek_ticks;   /* tick position of last tempo value (which is now) */
+            player->cur_ticks = player->seek_ticks;
+            player->begin_msec = msec;      /* only used to calculate the duration of playing */
+            player->start_msec = msec;      /* should be the (synth)-time of the last tempo change */        
+            player->seek_ticks = -1;        /* clear seek_ticks */
         }
 
         if (status == FLUID_PLAYER_DONE) {
@@ -1714,6 +1670,26 @@ fluid_player_get_status(fluid_player_t *player)
 {
     return player->status;
 }
+
+/**
+ * Seek in the currently playing file.
+ * @param player MIDI player instance
+ * @param ticks the position to seek to in the current file
+ * @return #FLUID_FAILED if ticks is negative or after the latest tick of the file,
+ *   #FLUID_OK otherwise
+ * @since 2.0.0
+ * 
+ * The actual seek is performed during the player_callback.
+ */
+int fluid_player_seek(fluid_player_t *player, int ticks)
+{
+    if (ticks < 0 || ticks > fluid_player_get_total_ticks(player)) {
+        return FLUID_FAILED;
+    }
+    player->seek_ticks = ticks;
+    return FLUID_OK;
+}
+
 
 /**
  * Enable looping of a MIDI player 
@@ -1862,11 +1838,12 @@ new_fluid_midi_parser ()
 /*
  * delete_fluid_midi_parser
  */
-int
+void
 delete_fluid_midi_parser(fluid_midi_parser_t *parser)
 {
+    fluid_return_if_fail(parser != NULL);
+    
     FLUID_FREE(parser);
-    return FLUID_OK;
 }
 
 /**
