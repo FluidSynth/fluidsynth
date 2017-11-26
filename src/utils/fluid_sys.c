@@ -1010,8 +1010,8 @@ static fluid_thread_return_t fluid_server_socket_run (void *data)
   char straddr[INET6_ADDRSTRLEN];
 #else
   char straddr[INET_ADDRSTRLEN];
-#endif /* HAVE_INETNTOP */
 #endif /* IPV6_SUPPORT */
+#endif /* HAVE_INETNTOP */
 
   socklen_t addrlen = sizeof (addr);
   int r;
