@@ -104,8 +104,8 @@ enum fluid_gen_type {
   GEN_HPFILTERFC,		/**< High-pass filter cutoff */
   GEN_HPFILTERQ,		/**< High-pass filter Q */
 
-  /* non-standard generator for an additional band-pass filter */
-  GEN_BPFILTERFC,		/**< Band-pass filter cutoff */
+  /* non-standard generator for the low-pass filter */
+  GEN_CUSTOM_FILTERFC,		/**< Custom Low-pass filter cutoff */
   GEN_BPFILTERQ,		/**< Band-pass filter Q */
   
   GEN_LAST			/**< Value defines the count of generators (#fluid_gen_type) @deprecated As of 1.1.7 this enum value is deprecated and will be removed in a future release, because it prevents adding new enum values without breaking ABI compatibility. */

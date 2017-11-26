@@ -526,7 +526,7 @@ fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t* voice)
     GEN_PITCH,                           /*                ---  */
     GEN_HPFILTERFC,                      /*                ---  */
     GEN_HPFILTERQ,                       /*                ---  */
-    GEN_BPFILTERFC,                      /*                ---  */
+    GEN_CUSTOM_FILTERFC,                      /*                ---  */
     GEN_BPFILTERQ,                       /*                ---  */
   };
 
@@ -756,13 +756,14 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
 
     break;
 
+  case GEN_CUSTOM_FILTERFC:
   case GEN_FILTERFC:
     /* The resonance frequency is converted from absolute cents to
      * midicents .val and .mod are both used, this permits real-time
      * modulation.  The allowed range is tested in the 'fluid_ct2hz'
      * function [PH,20021214]
      */
-    x = _GEN(voice, GEN_FILTERFC);
+    x = _GEN(voice, gen);
     UPDATE_RVOICE_FILTER1(fluid_iir_filter_set_fres, x);
     break;
 
@@ -809,14 +810,6 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
     UPDATE_RVOICE_HPFILTER1(fluid_iir_filter_set_q_dB, q_dB);
     break;
 
-  case GEN_BPFILTERFC:
-    x = _GEN(voice, GEN_BPFILTERFC);
-    q_dB = 8-_GEN(voice, GEN_BPFILTERQ);
-    q_dB *= 1000;
-    
-    UPDATE_RVOICE_HPFILTER1(fluid_iir_filter_set_fres, x-q_dB);
-    UPDATE_RVOICE_FILTER1(fluid_iir_filter_set_fres, x/*+q_dB*/);
-    break;
 
   case GEN_BPFILTERQ:
     x = _GEN(voice, GEN_BPFILTERQ);

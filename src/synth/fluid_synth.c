@@ -140,7 +140,6 @@ fluid_mod_t default_chorus_mod;         /* SF2.01 section 8.4.9  */
 fluid_mod_t default_pitch_bend_mod;     /* SF2.01 section 8.4.10 */
 
 fluid_mod_t custom_cc2hpfilterfc_mod;
-fluid_mod_t custom_cc2bpfilterfc_mod;
 fluid_mod_t custom_cc2bpfilterq_mod;
 
 /* reverb presets */
@@ -458,24 +457,7 @@ fluid_synth_init(void)
 //   fluid_mod_set_dest(&custom_cc2hpfilterfc_mod, GEN_HPFILTERFC);
 //   fluid_mod_set_amount(&custom_cc2hpfilterfc_mod, 8000);
 //   
-  /* Custom CC34 -> Band-Pass Filter Cutoff */
-  fluid_mod_set_source1(&custom_cc2bpfilterfc_mod, 34,
-		       FLUID_MOD_CC
-		       | FLUID_MOD_SIN
-		       | FLUID_MOD_UNIPOLAR
-		       | FLUID_MOD_POSITIVE
-		       );
-//   fluid_mod_set_source2(&custom_cc2bpfilterfc_mod, 33,
-// 		       FLUID_MOD_CC
-// 		       | FLUID_MOD_CONVEX
-// 		       | FLUID_MOD_UNIPOLAR
-// 		       | FLUID_MOD_POSITIVE
-// 		       );
-  fluid_mod_set_source2(&custom_cc2bpfilterfc_mod, 0, 0);
-  
-  fluid_mod_set_dest(&custom_cc2bpfilterfc_mod, GEN_BPFILTERFC);
-  fluid_mod_set_amount(&custom_cc2bpfilterfc_mod, 9700);
-  
+
   /* Custom CC33 -> Band-Pass Filter Q */
   fluid_mod_set_source1(&custom_cc2bpfilterq_mod, 33,
 		       FLUID_MOD_CC
@@ -3365,7 +3347,6 @@ fluid_synth_alloc_voice(fluid_synth_t* synth, fluid_sample_t* sample, int chan, 
   }
 
   fluid_voice_add_mod(voice, &custom_cc2hpfilterfc_mod, FLUID_VOICE_DEFAULT);
-  fluid_voice_add_mod(voice, &custom_cc2bpfilterfc_mod, FLUID_VOICE_DEFAULT);
   fluid_voice_add_mod(voice, &custom_cc2bpfilterq_mod, FLUID_VOICE_DEFAULT);
 
   FLUID_API_RETURN(voice);
