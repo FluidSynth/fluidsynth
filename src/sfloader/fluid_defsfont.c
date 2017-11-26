@@ -93,6 +93,8 @@ static const fluid_file_callbacks_t def_file_callbacks =
 fluid_sfloader_t* new_fluid_defsfloader(fluid_settings_t* settings)
 {
   fluid_sfloader_t* loader;
+  
+  fluid_return_val_if_fail(settings != NULL, NULL);
 
   loader = FLUID_NEW(fluid_sfloader_t);
   if (loader == NULL) {
