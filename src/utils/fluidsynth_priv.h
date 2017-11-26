@@ -174,7 +174,6 @@ typedef double fluid_real_t;
 typedef SOCKET fluid_socket_t;
 #else
 typedef int fluid_socket_t;
-#define INVALID_SOCKET -1
 #endif
 
 #if defined(SUPPORTS_VLA)
