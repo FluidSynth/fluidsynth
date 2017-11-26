@@ -98,7 +98,7 @@ Changes in FluidSynth 2.0.0 concerning developers:
 - add individual reverb setters: fluid_synth_set_reverb_roomsize(), fluid_synth_set_reverb_damp(), fluid_synth_set_reverb_width(), fluid_synth_set_reverb_level()
 - add individual chorus setters: fluid_synth_set_chorus_nr(), fluid_synth_set_chorus_level(), fluid_synth_set_chorus_speed(), fluid_synth_set_chorus_depth(), fluid_synth_set_chorus_type()
 - introduce a separate data type for sequencer client IDs: #fluid_seq_id_t
-- add file callback struct to _fluid_sfloader_t and expose new_fluid_defsfloader() to enable soundfont loading from memory
+- add file callback struct to _fluid_sfloader_t and expose new_fluid_defsfloader() to enable soundfont loading from memory ( see fluid_sfload_mem.c )
 
 
 \section NewIn1_1_9 Whats new in 1.1.9?
@@ -796,4 +796,9 @@ Example of an arpeggio generated using the MIDI sequencer API
 /*!
 \example fluidsynth_register_adriver.c
 Example of how to register audio drivers using fluid_audio_driver_register() (advanced users only)
+*/
+
+/*!
+\example fluidsynth_sfload_mem.c
+Example of how read a soundfont from memory (advanced users only)
 */
