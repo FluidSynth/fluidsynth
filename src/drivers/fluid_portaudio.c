@@ -61,14 +61,12 @@ void delete_fluid_portaudio_driver (fluid_audio_driver_t *p);
 
 #define PORTAUDIO_DEFAULT_DEVICE "PortAudio Default"
 
-/*
- * Checks if device_num number is a valid device and returns the name of the
- * portaudio device.
- * A device is valid if it is an output device with more than 2 channels.
+/**
+ * Checks if device_num is a valid device and returns the name of the portaudio device.
+ * A device is valid if it is an output device with at least 2 channels.
  * 
- * @param device_num: index of the portaudio device to check.
- * @name_ptr: if device_num is valid, address of the pointer on returned name,
- * otherwise name_ptr is ignored (the name has no meaning and is not returned).
+ * @param device_num index of the portaudio device to check.
+ * @param name_ptr if device_num is valid, set to a unique device name, ignored otherwise
  *
  * The name returned is unique for each num_device index, so this 
  * name is useful to identify any available host audio device.
@@ -82,8 +80,8 @@ void delete_fluid_portaudio_driver (fluid_audio_driver_t *p);
  *   MME: is the host API name.
  *   SB PCI: is the host device name.
  * 
- * @return: FLUID_OK if device_num is a valid output device, FLUID_FAILED otherwise.
- * When FLUID_OK, the name is returned in allocated memory. The caller must check
+ * @return #FLUID_OK if device_num is a valid output device, #FLUID_FAILED otherwise.
+ * When #FLUID_OK, the name is returned in allocated memory. The caller must check
  * the name pointer for a valid memory allocation and should free the memory.
  */
 static int fluid_portaudio_get_device_name(int device_num, char **name_ptr)
@@ -99,7 +97,7 @@ static int fluid_portaudio_get_device_name(int device_num, char **name_ptr)
 		int i =  device_num;
 		int size = 0;
 		do {size++; i = i/10 ;} while(i);		/*  index size */ 
-		/* host API size +  host device size + 3 separators */
+		/* host API size +  host device size + 2 separators + zero termination */
 		size += strlen(hostInfo->name) + strlen(deviceInfo->name) + 3;
 		*name_ptr = FLUID_MALLOC (size);
 		if (*name_ptr)
@@ -112,10 +110,10 @@ static int fluid_portaudio_get_device_name(int device_num, char **name_ptr)
 	else return FLUID_FAILED; /* device_num is an invalid device */
 }
 
-/*
+/**
  * Initializes "audio.portaudio.device" setting with an options list of unique device names
  * of available sound card devices.
- * @param settings pointer on settings.
+ * @param settings pointer to settings.
  */
 void
 fluid_portaudio_driver_settings (fluid_settings_t *settings)
@@ -144,22 +142,23 @@ fluid_portaudio_driver_settings (fluid_settings_t *settings)
   }
   else   for (i = 0; i < numDevices; i++)
   {
-	char * name;
-	if( fluid_portaudio_get_device_name(i,&name) == FLUID_OK)
-	{   /* the device i is a valid output device */
-	    if(name)
-	    {
-	      /* registers this name in the option list */
-	      fluid_settings_add_option (settings, "audio.portaudio.device",name);
-	      FLUID_FREE (name);
-	    }
-	    else
-	    {
-	      FLUID_LOG (FLUID_ERR, "Out of memory");
-	      break;
-	    }
-	}
-  }
+    char * name;
+    if(fluid_portaudio_get_device_name(i, &name) == FLUID_OK)
+    {
+        /* the device i is a valid output device */
+        if(name)
+        {
+            /* registers this name in the option list */
+            fluid_settings_add_option (settings, "audio.portaudio.device", name);
+            FLUID_FREE (name);
+        }
+        else
+        {
+            FLUID_LOG (FLUID_ERR, "Out of memory");
+            break;
+        }
+    }
+    }
 
   /* done with PortAudio for now, may get reopened later */
   err = Pa_Terminate();
@@ -168,7 +167,7 @@ fluid_portaudio_driver_settings (fluid_settings_t *settings)
     printf ("PortAudio termination error: %s\n", Pa_GetErrorText (err) );
 }
 
-/*
+/**
  * Creates the portaudio driver and opens the portaudio device
  * indicated by audio.portaudio.device setting.
  *
@@ -234,28 +233,30 @@ new_fluid_portaudio_driver (fluid_settings_t *settings, fluid_synth_t *synth)
 
     for (i = 0; i < numDevices; i++)
     {
-	char * name;
-	if( fluid_portaudio_get_device_name(i,&name) == FLUID_OK )
-	{	/* the device i is a valid output device */
+        char * name;
+        if(fluid_portaudio_get_device_name(i, &name) == FLUID_OK )
+        {
+            /* the device i is a valid output device */
             if(name)
-	    {
-	        /* We see if the name corresponds to audio.portaudio.device */
-	        char found = (strcmp (device, name) == 0);
-	        FLUID_FREE (name);
+            {
+                /* We see if the name corresponds to audio.portaudio.device */
+                char found = (strcmp (device, name) == 0);
+                FLUID_FREE (name);
 
                 if(found)
-                { /* the device index is found */
-                  outputParams.device = i;
-                  /* The search is finished */
-                  break;
+                {
+                    /* the device index is found */
+                    outputParams.device = i;
+                    /* The search is finished */
+                    break;
                 }
             }
             else
-	    {
-	        FLUID_LOG (FLUID_ERR, "Out of memory");
-	          goto error_recovery;
-	    }
-	}
+            {
+                FLUID_LOG (FLUID_ERR, "Out of memory");
+                goto error_recovery;
+            }
+        }
     }
     
     if (i == numDevices)
