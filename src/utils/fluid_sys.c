@@ -37,6 +37,7 @@
 #else
  #define FLUID_SOCKET_FLAG      0x00000000
  #define SOCKET_ERROR           -1
+ #define INVALID_SOCKET         -1
 #endif
 
 /* SCHED_FIFO priority for high priority timer threads */
