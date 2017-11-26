@@ -77,7 +77,7 @@ enum {
 struct _fluid_sfloader_t {
   void* data;           /**< User defined data pointer */
 
-  /** File operation callbacks to allow custom loading, such as from memory */
+  /** Callback structure specifying file operations used during soundfont loading to allow custom loading, such as from memory */
   const fluid_file_callbacks_t* file_callbacks;
 
   /**                                                                                                                                                                                                                               
@@ -102,12 +102,12 @@ struct _fluid_sfloader_t {
  */
 struct _fluid_file_callbacks_t {
   /**
-   * Opens the file indicated by \c path in binary read mode.
-   * Accepts UTF-8 encoding.
+   * Opens the file or memory indicated by \c filename in binary read mode.
+   * \c filename matches the one provided during the fluid_synth_sfload() call.
    *
    * @return returns a file handle on success, NULL otherwise
    */
-  void * (* fopen )(const char * path);
+  void * (* fopen )(const char * filename);
 
   /**
    * Reads \c count bytes to the specified buffer \c buf.
