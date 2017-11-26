@@ -364,7 +364,7 @@ https://stackoverflow.com/a/6251757
             <type>str</type>
             <def>PortAudio Default</def>
             <desc>
-                Device to use for PortAudio driver output. Note that 'PortAudio Default' is a special value which outputs to the default PortAudio device.
+                Device to use for PortAudio driver output. Note that 'PortAudio Default' is a special value which outputs to the default PortAudio device. The format of the device name is: "&lt;device_index&gt;:&lt;host_api_name&gt;:&lt;host_device_name&gt;" e.g. "11:Windows DirectSound:SB PCI"
             </desc>
         </setting>
         <setting>
