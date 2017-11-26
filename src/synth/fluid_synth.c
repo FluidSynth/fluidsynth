@@ -2574,10 +2574,10 @@ fluid_synth_nwrite_float(fluid_synth_t* synth, int len,
     {
 #ifdef WITH_FLOAT
       if(fx_left != NULL)
-        FLUID_MEMCPY(fx_left[i + count], fx_left_in[i], bytes);
+        FLUID_MEMCPY(fx_left[i] + count, fx_left_in[i], bytes);
       
       if(fx_right != NULL)
-        FLUID_MEMCPY(fx_right[i + count], fx_right_in[i], bytes);
+        FLUID_MEMCPY(fx_right[i] + count, fx_right_in[i], bytes);
 #else //WITH_FLOAT
       int j;
       if(fx_left != NULL) {
