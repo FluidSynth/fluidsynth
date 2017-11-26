@@ -945,7 +945,7 @@ int fluid_server_socket_join(fluid_server_socket_t *server_socket)
   return fluid_thread_join (server_socket->thread);
 }
 
-int fluid_socket_init(void)
+static int fluid_socket_init(void)
 {
 #ifdef _WIN32
   WSADATA wsaData;
@@ -960,14 +960,14 @@ int fluid_socket_init(void)
   return FLUID_OK;
 }
 
-void fluid_socket_cleanup(void)
+static void fluid_socket_cleanup(void)
 {
 #ifdef _WIN32
   WSACleanup();
 #endif
 }
 
-int fluid_socket_get_error(void)
+static int fluid_socket_get_error(void)
 {
 #ifdef _WIN32
   return (int)WSAGetLastError();
