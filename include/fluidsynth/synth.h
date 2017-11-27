@@ -228,10 +228,6 @@ FLUIDSYNTH_API float fluid_synth_get_gen(fluid_synth_t* synth, int chan, int par
 FLUIDSYNTH_API
 int fluid_synth_activate_key_tuning(fluid_synth_t* synth, int bank, int prog,
                                     const char* name, const double* pitch, int apply);
-FLUIDSYNTH_API 
-FLUID_DEPRECATED 
-int fluid_synth_create_octave_tuning(fluid_synth_t* synth, int bank, int prog,
-                                     const char* name, const double* pitch);
 FLUIDSYNTH_API
 int fluid_synth_activate_octave_tuning(fluid_synth_t* synth, int bank, int prog,
                                        const char* name, const double* pitch, int apply);

@@ -4541,30 +4541,6 @@ fluid_synth_activate_key_tuning(fluid_synth_t* synth, int bank, int prog,
 }
 
 /**
- * Apply an octave tuning to every octave in the MIDI note scale.
- * @param synth FluidSynth instance
- * @param bank Tuning bank number (0-127), not related to MIDI instrument bank
- * @param prog Tuning preset number (0-127), not related to MIDI instrument program
- * @param name Label name for this tuning
- * @param pitch Array of pitch values (length of 12 for each note of an octave
- *   starting at note C, values are number of offset cents to add to the normal
- *   tuning amount)
- * @return FLUID_OK on success, FLUID_FAILED otherwise
- *
- * @note Tuning is not applied in realtime to existing notes of the replaced
- * tuning (if any), use fluid_synth_activate_octave_tuning() instead to specify
- * this behavior.
- * 
- * @deprecated Use fluid_synth_activate_octave_tuning(synth, bank, prog, name, pitch, FALSE) instead.
- */
-int
-fluid_synth_create_octave_tuning(fluid_synth_t* synth, int bank, int prog,
-                                 const char* name, const double* pitch)
-{
-  return fluid_synth_activate_octave_tuning (synth, bank, prog, name, pitch, FALSE);
-}
-
-/**
  * Activate an octave tuning on every octave in the MIDI note scale.
  * @param synth FluidSynth instance
  * @param bank Tuning bank number (0-127), not related to MIDI instrument bank
