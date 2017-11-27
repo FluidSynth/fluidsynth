@@ -290,7 +290,7 @@ struct _fluid_sample_t
   int amplitude_that_reaches_noise_floor_is_valid;      /**< Indicates if \a amplitude_that_reaches_noise_floor is valid (TRUE), set to FALSE initially to calculate. */
   double amplitude_that_reaches_noise_floor;            /**< The amplitude at which the sample's loop will be below the noise floor.  For voice off optimization, calculated automatically. */
 
-  unsigned int refcount;        /**< Count of voices using this sample (use #fluid_sample_refcount to access this field) */
+  unsigned int refcount;        /**< Count of voices using this sample */
 
   /**
    * Implement this function to receive notification when sample is no longer used.
@@ -304,7 +304,6 @@ struct _fluid_sample_t
 };
 
 
-#define fluid_sample_refcount(_sample) ((_sample)->refcount)    /**< Get the reference count of a sample.  Should only be called from within synthesis context (noteon method for example) */
 
 
 #define FLUID_SAMPLETYPE_MONO	1       /**< Flag for #fluid_sample_t \a sampletype field for mono samples */

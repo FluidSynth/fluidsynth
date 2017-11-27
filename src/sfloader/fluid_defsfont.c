@@ -552,7 +552,7 @@ int delete_fluid_defsfont(fluid_defsfont_t* sfont)
   /* Check that no samples are currently used */
   for (list = sfont->sample; list; list = fluid_list_next(list)) {
     sample = (fluid_sample_t*) fluid_list_get(list);
-    if (fluid_sample_refcount(sample) != 0) {
+    if (sample->refcount != 0) {
       return FLUID_FAILED;
     }
   }
