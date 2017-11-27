@@ -75,7 +75,7 @@ enum {
  * SoundFont loader structure.
  */
 struct _fluid_sfloader_t {
-  void* data;           /**< User defined data pointer */
+  void* data;           /**< User defined data pointer used by _fluid_sfloader_t::load() */
 
   /** Callback structure specifying file operations used during soundfont loading to allow custom loading, such as from memory */
   const fluid_file_callbacks_t* file_callbacks;
