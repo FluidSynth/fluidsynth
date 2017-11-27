@@ -45,22 +45,6 @@ extern "C" {
  * fluid_synth_noteon(), fluid_synth_noteoff(), ...
  */
 
-#define FLUID_SYNTH_CHANNEL_INFO_NAME_SIZE   32    /**< Length of channel info name field (including zero terminator) */
-
-/**
- * Channel information structure for fluid_synth_get_channel_info().
- * @since 2.0.0
- */
-struct _fluid_synth_channel_info_t
-{
-  int assigned : 1;     /**< TRUE if a preset is assigned, FALSE otherwise */
-  /* Reserved flag bits (at the least 31) */
-  int sfont_id;         /**< ID of parent SoundFont */
-  int bank;             /**< MIDI bank number (0-16383) */
-  int program;          /**< MIDI program number (0-127) */
-  char name[FLUID_SYNTH_CHANNEL_INFO_NAME_SIZE];     /**< Channel preset name */
-  char reserved[32];    /**< Reserved data for future expansion */
-};
 
 FLUIDSYNTH_API fluid_synth_t* new_fluid_synth(fluid_settings_t* settings);
 FLUIDSYNTH_API void delete_fluid_synth(fluid_synth_t* synth);
@@ -95,9 +79,6 @@ FLUIDSYNTH_API
 int fluid_synth_get_program(fluid_synth_t* synth, int chan, unsigned int* sfont_id, 
                             unsigned int* bank_num, unsigned int* preset_num);
 FLUIDSYNTH_API int fluid_synth_unset_program (fluid_synth_t *synth, int chan);
-FLUIDSYNTH_API 
-FLUID_DEPRECATED 
-int fluid_synth_get_channel_info (fluid_synth_t *synth, int chan, fluid_synth_channel_info_t *info);
 FLUIDSYNTH_API int fluid_synth_program_reset(fluid_synth_t* synth);
 FLUIDSYNTH_API int fluid_synth_system_reset(fluid_synth_t* synth);
 
