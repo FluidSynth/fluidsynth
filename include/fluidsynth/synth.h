@@ -310,9 +310,6 @@ FLUIDSYNTH_API void fluid_synth_start_voice(fluid_synth_t* synth, fluid_voice_t*
 FLUIDSYNTH_API void fluid_synth_get_voicelist(fluid_synth_t* synth,
                                               fluid_voice_t* buf[], int bufsize, int ID);
 FLUIDSYNTH_API int fluid_synth_handle_midi_event(void* data, fluid_midi_event_t* event);
-FLUIDSYNTH_API 
-FLUID_DEPRECATED 
-void fluid_synth_set_midi_router(fluid_synth_t* synth, fluid_midi_router_t* router);
 
 /* LADSPA */
 
