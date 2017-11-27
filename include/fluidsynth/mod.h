@@ -30,7 +30,6 @@ extern "C" {
  * @brief SoundFont modulator functions and constants.
  */
 
-#define FLUID_NUM_MOD           64      /**< Maximum number of modulators in a voice */
 
 /**
  * Flags defining the polarity, mapping function and type of a modulator source.

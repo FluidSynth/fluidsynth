@@ -35,6 +35,7 @@ extern "C" {
  * such as the SoundFont loader's noteon method.
  */
 
+#define FLUID_NUM_MOD           64      /**< Maximum number of modulators in a voice */
 
 FLUIDSYNTH_API void fluid_voice_update_param(fluid_voice_t* voice, int gen); 
 
