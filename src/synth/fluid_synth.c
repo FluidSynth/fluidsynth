@@ -3365,10 +3365,10 @@ fluid_synth_start_voice(fluid_synth_t* synth, fluid_voice_t* voice)
 }
 
 /**
- * Add a SoundFont loader interface.
+ * Add a SoundFont loader to the synth. This function takes ownership of \c loader
+ * and frees it automatically upon \c synth destruction.
  * @param synth FluidSynth instance
- * @param loader Loader API structure, used directly and should remain allocated
- *   as long as the synth instance is used.
+ * @param loader Loader API structure
  *
  * SoundFont loaders are used to add custom instrument loading to FluidSynth.
  * The caller supplied functions for loading files, allocating presets,
@@ -3397,7 +3397,7 @@ fluid_synth_add_sfloader(fluid_synth_t* synth, fluid_sfloader_t* loader)
  * stack. Presets are searched starting from the SoundFont on the
  * top of the stack, working the way down the stack until a preset is found.
  *
- * @param synth SoundFont instance
+ * @param synth FluidSynth instance
  * @param filename File to load
  * @param reset_presets TRUE to re-assign presets for all MIDI channels
  * @return SoundFont ID on success, FLUID_FAILED on error
@@ -3470,7 +3470,7 @@ new_fluid_sfont_info (fluid_synth_t *synth, fluid_sfont_t *sfont)
 
 /**
  * Unload a SoundFont.
- * @param synth SoundFont instance
+ * @param synth FluidSynth instance
  * @param id ID of SoundFont to unload
  * @param reset_presets TRUE to re-assign presets for all MIDI channels
  * @return FLUID_OK on success, FLUID_FAILED on error
@@ -3559,7 +3559,7 @@ fluid_synth_sfunload_callback(void* data, unsigned int msec)
 
 /**
  * Reload a SoundFont.  The SoundFont retains its ID and index on the SoundFont stack.
- * @param synth SoundFont instance
+ * @param synth FluidSynth instance
  * @param id ID of SoundFont to reload
  * @return SoundFont ID on success, FLUID_FAILED on error
  */
