@@ -48,7 +48,7 @@ fluid_tuning_t *fluid_tuning_duplicate (fluid_tuning_t *tuning);
 void fluid_tuning_ref (fluid_tuning_t *tuning);
 int fluid_tuning_unref (fluid_tuning_t *tuning, int count);
 
-void fluid_tuning_set_name(fluid_tuning_t* tuning, char* name);
+int fluid_tuning_set_name(fluid_tuning_t* tuning, const char* name);
 char* fluid_tuning_get_name(fluid_tuning_t* tuning);
 
 #define fluid_tuning_get_bank(_t) ((_t)->bank)

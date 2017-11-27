@@ -29,7 +29,6 @@ void fluid_shell_settings(fluid_settings_t* settings);
 
 /** some help functions */
 int fluid_is_number(char* a);
-int fluid_is_empty(char* a);
 char* fluid_expand_path(char* path, char* new_path, int len);
 
 /** the handlers for the command lines */
@@ -86,15 +85,14 @@ int fluid_handle_router_par1(void* data, int ac, char** av, fluid_ostream_t out)
 int fluid_handle_router_par2(void* data, int ac, char** av, fluid_ostream_t out);
 
 #ifdef LADSPA
-int fluid_handle_ladspa_plugin(void* data, int ac, char **av, fluid_ostream_t out);
-int fluid_handle_ladspa_port(void* data, int ac, char **av, fluid_ostream_t out);
-int fluid_handle_ladspa_node(void* data, int ac, char **av, fluid_ostream_t out);
-int fluid_handle_ladspa_control(void* data, int ac, char **av, fluid_ostream_t out);
-int fluid_handle_ladspa_control_defaults(void* data, int ac, char **av, fluid_ostream_t out);
-int fluid_handle_ladspa_check(void* data, int ac, char **av, fluid_ostream_t out);
-int fluid_handle_ladspa_start(void* data, int ac, char **av, fluid_ostream_t out);
-int fluid_handle_ladspa_stop(void* data, int ac, char **av, fluid_ostream_t out);
-int fluid_handle_ladspa_reset(void* data, int ac, char **av, fluid_ostream_t out);
+int fluid_handle_ladspa_effect(void *data, int ac, char **av, fluid_ostream_t out);
+int fluid_handle_ladspa_link(void *data, int ac, char **av, fluid_ostream_t out);
+int fluid_handle_ladspa_buffer(void *data, int ac, char **av, fluid_ostream_t out);
+int fluid_handle_ladspa_set(void *data, int ac, char **av, fluid_ostream_t out);
+int fluid_handle_ladspa_check(void *data, int ac, char **av, fluid_ostream_t out);
+int fluid_handle_ladspa_start(void *data, int ac, char **av, fluid_ostream_t out);
+int fluid_handle_ladspa_stop(void *data, int ac, char **av, fluid_ostream_t out);
+int fluid_handle_ladspa_reset(void *data, int ac, char **av, fluid_ostream_t out);
 #endif
 
 fluid_cmd_t* fluid_cmd_copy(fluid_cmd_t* cmd);

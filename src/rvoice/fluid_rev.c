@@ -19,49 +19,23 @@
 
 /* Denormalising:
  *
- * According to music-dsp thread 'Denormalise', Pentium processors
- * have a hardware 'feature', that is of interest here, related to
- * numeric underflow.  We have a recursive filter. The output decays
- * exponentially, if the input stops.  So the numbers get smaller and
- * smaller... At some point, they reach 'denormal' level.  This will
- * lead to drastic spikes in the CPU load.  The effect was reproduced
- * with the reverb - sometimes the average load over 10 s doubles!!.
+ * We have a recursive filter. The output decays exponentially, if the input
+ * stops. So the numbers get smaller and smaller... At some point, they reach
+ * 'denormal' level. On some platforms this will lead to drastic spikes in the
+ * CPU load. This is especially noticable on some older Pentium (especially
+ * Pentium 3) processors, but even more modern Intel Core processors still show
+ * reduced performance with denormals. While there are compile-time switches to
+ * treat denormals as zero for a lot of processors, those are not available or
+ * effective on all platforms.
  *
- * The 'undenormalise' macro fixes the problem: As soon as the number
- * is close enough to denormal level, the macro forces the number to
- * 0.0f.  The original macro is:
- *
- * #define undenormalise(sample) if(((*(unsigned int*)&sample)&0x7f800000)==0) sample=0.0f
- *
- * This will zero out a number when it reaches the denormal level.
- * Advantage: Maximum dynamic range Disadvantage: We'll have to check
- * every sample, expensive.  The alternative macro comes from a later
- * mail from Jon Watte. It will zap a number before it reaches
- * denormal level. Jon suggests to run it once per block instead of
- * every sample.
+ * The fix used here: Use a small DC-offset in the filter calculations.  Now
+ * the signals converge not against 0, but against the offset.  The constant
+ * offset is invisible from the outside world (i.e. it does not appear at the
+ * output.  There is a very small turn-on transient response, which should not
+ * cause problems.
  */
-
-# if defined(WITH_FLOATX)
-# define zap_almost_zero(sample) (((*(unsigned int*)&(sample))&0x7f800000) < 0x08000000)?0.0f:(sample)
-# else
-/* 1e-20 was chosen as an arbitrary (small) threshold. */
-#define zap_almost_zero(sample) fabs(sample)<1e-10 ? 0 : sample;
-#endif
-
-/* Denormalising part II:
- *
- * Another method fixes the problem cheaper: Use a small DC-offset in
- * the filter calculations.  Now the signals converge not against 0,
- * but against the offset.  The constant offset is invisible from the
- * outside world (i.e. it does not appear at the output.  There is a
- * very small turn-on transient response, which should not cause
- * problems.
- */
-
-
-//#define DC_OFFSET 0
 #define DC_OFFSET 1e-8
-//#define DC_OFFSET 0.001f
+
 typedef struct _fluid_allpass fluid_allpass;
 typedef struct _fluid_comb fluid_comb;
 
@@ -125,20 +99,6 @@ fluid_allpass_getfeedback(fluid_allpass* allpass)
   } \
   _input = output; \
 }
-
-/*  fluid_real_t fluid_allpass_process(fluid_allpass* allpass, fluid_real_t input) */
-/*  { */
-/*    fluid_real_t output; */
-/*    fluid_real_t bufout; */
-/*    bufout = allpass->buffer[allpass->bufidx]; */
-/*    undenormalise(bufout); */
-/*    output = -input + bufout; */
-/*    allpass->buffer[allpass->bufidx] = input + (bufout * allpass->feedback); */
-/*    if (++allpass->bufidx >= allpass->bufsize) { */
-/*      allpass->bufidx = 0; */
-/*    } */
-/*    return output; */
-/*  } */
 
 struct _fluid_comb {
   fluid_real_t feedback;
@@ -219,22 +179,6 @@ fluid_comb_getfeedback(fluid_comb* comb)
   } \
   _output += _tmp; \
 }
-
-/* fluid_real_t fluid_comb_process(fluid_comb* comb, fluid_real_t input) */
-/* { */
-/*    fluid_real_t output; */
-
-/*    output = comb->buffer[comb->bufidx]; */
-/*    undenormalise(output); */
-/*    comb->filterstore = (output * comb->damp2) + (comb->filterstore * comb->damp1); */
-/*    undenormalise(comb->filterstore); */
-/*    comb->buffer[comb->bufidx] = input + (comb->filterstore * comb->feedback); */
-/*    if (++comb->bufidx >= comb->bufsize) { */
-/*      comb->bufidx = 0; */
-/*    } */
-
-/*    return output; */
-/* } */
 
 #define numcombs 8
 #define numallpasses 4

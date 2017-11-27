@@ -20,6 +20,26 @@
 
 #include "fluid_sys.h"
 
+
+#if WITH_READLINE
+#include <readline/readline.h>
+#include <readline/history.h>
+#endif
+
+#ifdef DBUS_SUPPORT
+#include "fluid_rtkit.h"
+#endif
+
+/* WIN32 HACK - Flag used to differentiate between a file descriptor and a socket.
+ * Should work, so long as no SOCKET or file descriptor ends up with this bit set. - JG */
+#ifdef _WIN32
+ #define FLUID_SOCKET_FLAG      0x40000000
+#else
+ #define FLUID_SOCKET_FLAG      0x00000000
+ #define SOCKET_ERROR           -1
+ #define INVALID_SOCKET         -1
+#endif
+
 /* SCHED_FIFO priority for high priority timer threads */
 #define FLUID_SYS_TIMER_HIGH_PRIO_LEVEL         10
 
@@ -379,7 +399,8 @@ fluid_thread_self_set_prio (int prio_level)
 {
   struct sched_param priority;
 
-  if (prio_level > 0) {
+  if (prio_level > 0)
+  {
 
     memset(&priority, 0, sizeof(priority));
     priority.sched_priority = prio_level;
