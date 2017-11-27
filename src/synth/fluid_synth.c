@@ -4509,30 +4509,6 @@ fluid_synth_update_voice_tuning_LOCAL (fluid_synth_t *synth, fluid_channel_t *ch
  * @param pitch Array of pitch values (length of 128, each value is number of
  *   cents, for example normally note 0 is 0.0, 1 is 100.0, 60 is 6000.0, etc).
  *   Pass NULL to create a equal tempered (normal) scale.
- * @return FLUID_OK on success, FLUID_FAILED otherwise
- *
- * @note Tuning is not applied in realtime to existing notes of the replaced
- * tuning (if any), use fluid_synth_activate_key_tuning() instead to specify
- * this behavior.
- * 
- * @deprecated Use fluid_synth_activate_key_tuning(synth, bank, prog, name, pitch, FALSE) instead.
- */
-int
-fluid_synth_create_key_tuning(fluid_synth_t* synth, int bank, int prog,
-                              const char* name, const double* pitch)
-{
-  return fluid_synth_activate_key_tuning (synth, bank, prog, name, pitch, FALSE);
-}
-
-/**
- * Set the tuning of the entire MIDI note scale.
- * @param synth FluidSynth instance
- * @param bank Tuning bank number (0-127), not related to MIDI instrument bank
- * @param prog Tuning preset number (0-127), not related to MIDI instrument program
- * @param name Label name for this tuning
- * @param pitch Array of pitch values (length of 128, each value is number of
- *   cents, for example normally note 0 is 0.0, 1 is 100.0, 60 is 6000.0, etc).
- *   Pass NULL to create a equal tempered (normal) scale.
  * @param apply TRUE to apply new tuning in realtime to existing notes which
  *   are using the replaced tuning (if any), FALSE otherwise
  * @return FLUID_OK on success, FLUID_FAILED otherwise
