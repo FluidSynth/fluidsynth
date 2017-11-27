@@ -106,6 +106,7 @@ Changes in FluidSynth 2.0.0 concerning developers:
 - add individual chorus setters: fluid_synth_set_chorus_nr(), fluid_synth_set_chorus_level(), fluid_synth_set_chorus_speed(), fluid_synth_set_chorus_depth(), fluid_synth_set_chorus_type()
 - introduce a separate data type for sequencer client IDs: #fluid_seq_id_t
 - add file callback struct to _fluid_sfloader_t and expose new_fluid_defsfloader() to enable soundfont loading from memory ( see fluid_sfload_mem.c )
+- expose functions to manipulate the ladspa effects unit (see ladspa.h)
 
 
 \section NewIn1_1_9 Whats new in 1.1.9?
