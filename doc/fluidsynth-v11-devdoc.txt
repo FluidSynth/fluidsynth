@@ -80,6 +80,7 @@ Changes in FluidSynth 2.0.0 concerning developers:
 - remove deprecated fluid_get_hinstance() and fluid_set_hinstance() (dsound driver now uses the desktop window)
 - remove deprecated fluid_synth_create_key_tuning(), use fluid_synth_activate_key_tuning(synth, bank, prog, name, pitch, FALSE) instead
 - remove deprecated fluid_synth_create_octave_tuning(), use fluid_synth_activate_octave_tuning(synth, bank, prog, name, pitch, FALSE) instead
+- remove deprecated fluid_synth_select_tuning(), use fluid_synth_activate_tuning(synth, chan, bank, prog, FALSE) instead
 - remove deprecated FLUID_HINT_INTEGER
 - remove misspelled FLUID_SEQ_PITCHWHHELSENS macro
 - remove obsolete "audio.[out|in]put-channels" settings

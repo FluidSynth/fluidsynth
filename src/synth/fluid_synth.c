@@ -4635,30 +4635,6 @@ fluid_synth_tune_notes(fluid_synth_t* synth, int bank, int prog,
 }
 
 /**
- * Select a tuning scale on a MIDI channel.
- * @param synth FluidSynth instance
- * @param chan MIDI channel number (0 to MIDI channel count - 1)
- * @param bank Tuning bank number (0-127), not related to MIDI instrument bank
- * @param prog Tuning preset number (0-127), not related to MIDI instrument program
- * @return FLUID_OK on success, FLUID_FAILED otherwise
- *
- * @note This function does NOT activate tuning in realtime, use
- * fluid_synth_activate_tuning() instead to specify whether tuning change
- * should cause existing notes to update.
- *
- * @note Prior to version 1.1.0 it was an error to select a tuning that didn't
- * already exist. Starting with 1.1.0, a default equal tempered scale will be
- * created, if no tuning exists for the given bank and prog.
- * 
- * @deprecated Use fluid_synth_activate_tuning(synth, chan, bank, prog, FALSE) instead.
- */
-int
-fluid_synth_select_tuning(fluid_synth_t* synth, int chan, int bank, int prog)
-{
-  return fluid_synth_activate_tuning (synth, chan, bank, prog, FALSE);
-}
-
-/**
  * Activate a tuning scale on a MIDI channel.
  * @param synth FluidSynth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1)

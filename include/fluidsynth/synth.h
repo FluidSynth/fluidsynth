@@ -234,9 +234,6 @@ int fluid_synth_activate_octave_tuning(fluid_synth_t* synth, int bank, int prog,
 FLUIDSYNTH_API 
 int fluid_synth_tune_notes(fluid_synth_t* synth, int bank, int prog,
 			   int len, const int *keys, const double* pitch, int apply);
-FLUIDSYNTH_API 
-FLUID_DEPRECATED 
-int fluid_synth_select_tuning(fluid_synth_t* synth, int chan, int bank, int prog);
 FLUIDSYNTH_API
 int fluid_synth_activate_tuning(fluid_synth_t* synth, int chan, int bank, int prog,
                                 int apply);
