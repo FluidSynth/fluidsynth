@@ -4710,24 +4710,6 @@ fluid_synth_set_tuning_LOCAL (fluid_synth_t *synth, int chan,
 }
 
 /**
- * Clear tuning scale on a MIDI channel (set it to the default equal tempered scale).
- * @param synth FluidSynth instance
- * @param chan MIDI channel number (0 to MIDI channel count - 1)
- * @return FLUID_OK on success, FLUID_FAILED otherwise
- *
- * @note This function does NOT activate tuning change in realtime, use
- * fluid_synth_deactivate_tuning() instead to specify whether tuning change
- * should cause existing notes to update.
- * 
- * @deprecated Use fluid_synth_deactivate_tuning(synth, chan, FALSE) instead.
- */
-int
-fluid_synth_reset_tuning(fluid_synth_t* synth, int chan)
-{
-  return fluid_synth_deactivate_tuning (synth, chan, FALSE);
-}
-
-/**
  * Clear tuning scale on a MIDI channel (use default equal tempered scale).
  * @param synth FluidSynth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1)

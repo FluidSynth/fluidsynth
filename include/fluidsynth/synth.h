@@ -238,9 +238,6 @@ FLUIDSYNTH_API
 int fluid_synth_activate_tuning(fluid_synth_t* synth, int chan, int bank, int prog,
                                 int apply);
 FLUIDSYNTH_API
-FLUID_DEPRECATED 
-int fluid_synth_reset_tuning(fluid_synth_t* synth, int chan);
-FLUIDSYNTH_API
 int fluid_synth_deactivate_tuning(fluid_synth_t* synth, int chan, int apply);
 FLUIDSYNTH_API void fluid_synth_tuning_iteration_start(fluid_synth_t* synth);
 FLUIDSYNTH_API 
