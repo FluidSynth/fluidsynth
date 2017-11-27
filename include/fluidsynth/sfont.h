@@ -75,7 +75,7 @@ enum {
  * SoundFont loader structure.
  */
 struct _fluid_sfloader_t {
-  void* data;           /**< User defined data pointer */
+  void* data;           /**< User defined data pointer used by _fluid_sfloader_t::load() */
 
   /**
    * The free method should free the memory allocated for the loader in
