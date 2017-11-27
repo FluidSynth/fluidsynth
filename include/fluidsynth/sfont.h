@@ -191,7 +191,6 @@ struct _fluid_sfont_t {
   int (*iteration_next)(fluid_sfont_t* sfont, fluid_preset_t* preset);
 };
 
-#define fluid_sfont_get_id(_sf) ((_sf)->id)
 
 /**
  * Virtual SoundFont preset.
