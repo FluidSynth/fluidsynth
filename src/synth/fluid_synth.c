@@ -931,7 +931,7 @@ delete_fluid_synth(fluid_synth_t* synth)
   while (default_mod != NULL) {
     mod = default_mod;
     default_mod = mod->next;
-    fluid_mod_delete(mod);
+    delete_fluid_mod(mod);
   }
 
   fluid_rec_mutex_destroy(synth->mutex);
@@ -1130,7 +1130,7 @@ fluid_synth_add_default_mod(fluid_synth_t* synth, fluid_mod_t* mod, int mode)
   }
 
   /* Add a new modulator (no existing modulator to add / overwrite). */
-  new_mod = fluid_mod_new();
+  new_mod = new_fluid_mod();
   if (new_mod == NULL)
     FLUID_API_RETURN(FLUID_FAILED);
 
@@ -1175,7 +1175,7 @@ fluid_synth_remove_default_mod(fluid_synth_t* synth, const fluid_mod_t* mod)
         {
             last_mod->next = default_mod->next;
         }
-        fluid_mod_delete(default_mod);
+        delete_fluid_mod(default_mod);
         FLUID_API_RETURN(FLUID_OK);
     }
     last_mod = default_mod;

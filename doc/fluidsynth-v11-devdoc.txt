@@ -91,6 +91,7 @@ Changes in FluidSynth 2.0.0 concerning developers:
 - the shell command handler was decoupled internally, as a consequence the param list of new_fluid_server() and new_fluid_cmd_handler() was adapted
 - reverb: roomsize is now limited to an upper threshold of 1.0
 - use unique device names for the "audio.portaudio.device" setting
+- rename fluid_mod_new() and fluid_mod_delete() to match naming conventions: new_fluid_mod() and delete_fluid_mod()
 <br /><br />
 - add "synth.volenv" a setting for volume envelope processing
 - add "midi.autoconnect" a setting for automatically connecting fluidsynth to available MIDI input ports

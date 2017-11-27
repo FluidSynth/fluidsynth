@@ -1221,7 +1221,7 @@ delete_fluid_preset_zone(fluid_preset_zone_t* zone)
     {
       tmp = mod;
       mod = mod->next;
-      fluid_mod_delete (tmp);
+      delete_fluid_mod (tmp);
     }
 
   FLUID_FREE (zone->name);
@@ -1272,7 +1272,7 @@ fluid_preset_zone_import_sfont(fluid_preset_zone_t* zone, SFZone *sfzone, fluid_
   for (count = 0, r = sfzone->mod; r != NULL; count++) {
 
     SFMod* mod_src = (SFMod *)r->data;
-    fluid_mod_t * mod_dest = fluid_mod_new();
+    fluid_mod_t * mod_dest = new_fluid_mod();
     int type;
 
     if (mod_dest == NULL){
@@ -1613,7 +1613,7 @@ delete_fluid_inst_zone(fluid_inst_zone_t* zone)
     {
       tmp = mod;
       mod = mod->next;
-      fluid_mod_delete (tmp);
+      delete_fluid_mod (tmp);
     }
 
   FLUID_FREE (zone->name);
@@ -1675,7 +1675,7 @@ fluid_inst_zone_import_sfont(fluid_inst_zone_t* zone, SFZone *sfzone, fluid_defs
     int type;
     fluid_mod_t* mod_dest;
 
-    mod_dest = fluid_mod_new();
+    mod_dest = new_fluid_mod();
     if (mod_dest == NULL){
       return FLUID_FAILED;
     }
