@@ -585,8 +585,9 @@ void fluid_channel_invalid_prev_note_staccato(fluid_channel_t* chan)
  *                                      |  fromkey | fromkey   |
  *                                      |  legato  | portamento|
  *                                      |    _____\|/_______   |
- *                                      *-->| noteon        |--/
- *                                      |   | mono_legato   |----> voices
+ *                                      *-->|    noteon     |--/
+ *                                      |   |    monopoly   |
+ *                                      |   |    legato     |----> voices
  *                legato modes >------- | ->|_______________|      triggering
  *                                      |                          (with or without)
  *                                      |                          (portamento)
@@ -629,7 +630,8 @@ int fluid_synth_noteon_monopoly_legato(fluid_synth_t* synth, int chan,
  *                                     |                      
  *                                     |    _______________   
  *                                     |   |   noteon      |
- *                                     +-->| mono_legato   |---> voices
+ *                                     +-->|  monopoly     |
+ *                                         |   legato      |---> voices
  *                                         |_______________|     triggering
  * 
  * The function uses the legato detector (see above) to determine if the note must
@@ -674,7 +676,8 @@ int fluid_synth_noteon_mono_LOCAL(fluid_synth_t* synth, int chan,
  *
  *                                           _______________    
  *                                          |   noteon      |
- *                                      +-->|mono_legato    |----> voices
+ *                                      +-->|  monopoly     |
+ *                                      |   |   legato      |----> voices
  *                                      |   |_______________|      triggering
  *                                      |                          (with or without)
  *                                      |                          (portamento)
@@ -893,8 +896,9 @@ int fluid_synth_noteoff_monopoly(fluid_synth_t* synth, int chan, int key,
  *                                       legato  | portamento|  (portamento) 
  *                                         _____\|/_______   |
  *                                        |   noteon      |--+  
- *  noteon_mono >------------------------>| mono_legato   |----->voices
- *  LOCAL                                 |_______________|      triggering
+ *  noteon_mono >------------------------>|  monopoly     |
+ *  LOCAL                                 |   legato      |----->voices
+ *                                        |_______________|      triggering
  *                                              /|\              (with or without)
  *                                               |               (portamento)
  *                legato modes >-----------------+         
@@ -940,10 +944,12 @@ int fluid_synth_noteon_monopoly_legato(fluid_synth_t* synth, int chan,
 		voice = synth->voice[i];
 		if (fluid_voice_is_on(voice) && (voice->chan == chan) && (voice->key == fromkey))
 		{
+			fluid_inst_zone_range_t * zone_range = voice->zone_range;
 			/* Ignore voices when there is no instrument zone. Otherwise
 			   checks if tokey is inside the range of the running voice */
-			if (voice->inst_zone &&
-			    fluid_inst_zone_inside_range(voice->inst_zone, tokey, vel))
+			if (zone_range &&
+				((zone_range->keylo <= tokey) && (zone_range->keyhi >= tokey) &&
+			   	(zone_range->vello <= vel) &&  (zone_range->velhi >= vel)))
 			{
 				switch (legatomode) 
 				{
@@ -980,7 +986,7 @@ int fluid_synth_noteon_monopoly_legato(fluid_synth_t* synth, int chan,
 					/* The voice is now used to play tokey in legato manner */
 					/* Marks this Instrument Zone to be ignored during next
 					   fluid_preset_noteon() */
-					SetIgnoreInstZone (voice->inst_zone);
+					zone_range->flags |= IGNORE_INST_Z0NE;
 				}
 			}
 			else  
