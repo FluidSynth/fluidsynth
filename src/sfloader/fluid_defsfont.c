@@ -386,7 +386,7 @@ static int fluid_cached_sampledata_load(char *filename,
     if (loaded_sample24data == NULL) {
         FLUID_LOG(FLUID_ERR, "Out of memory when allocating 24bit sample, ignoring");
     }
-    else if (fcbs->fread(loaded_sample24data, 1, sample24size, fd) == FLUID_FAILED) {
+    else if (fcbs->fread(loaded_sample24data, sample24size, fd) == FLUID_FAILED) {
         FLUID_LOG(FLUID_ERR, "Failed to read sample24 data");
         FLUID_FREE(loaded_sample24data);
         loaded_sample24data = NULL;
