@@ -439,7 +439,7 @@ typedef int (*fluid_audio_callback_t)(fluid_synth_t* synth, int len,
 
 FLUIDSYNTH_API void fluid_synth_add_sfloader(fluid_synth_t* synth, fluid_sfloader_t* loader);
 FLUIDSYNTH_API fluid_voice_t* fluid_synth_alloc_voice(fluid_synth_t* synth, 
-													  fluid_inst_zone_t* inst_zone,
+                                                      fluid_sample_t* sample,
                                                       int channum, int key, int vel);
 FLUIDSYNTH_API void fluid_synth_start_voice(fluid_synth_t* synth, fluid_voice_t* voice);
 FLUIDSYNTH_API void fluid_synth_get_voicelist(fluid_synth_t* synth,
