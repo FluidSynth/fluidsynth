@@ -695,7 +695,10 @@ new_fluid_synth(fluid_settings_t *settings)
   synth->sfont_info = NULL;
   synth->sfont_hash = new_fluid_hashtable (NULL, NULL);
   synth->noteid = 0;
+  
   synth->fromkey_portamento = INVALID_NOTE;		/* disable portamento */
+  synth->zone_range = NULL; /* no intrument zone range */
+
   fluid_atomic_int_set(&synth->ticks_since_start, 0);
   synth->tuning = NULL;
   fluid_private_init(synth->tuning_iter);
@@ -3454,8 +3457,7 @@ fluid_synth_free_voice_by_kill_LOCAL(fluid_synth_t* synth)
 /**
  * Allocate a synthesis voice.
  * @param synth FluidSynth instance
-// * @param sample Sample to assign to the voice
- * @param inst_zone Instrument Zone to assign to the voice
+ * @param sample Sample to assign to the voice
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
  * @param key MIDI note number for the voice (0-127)
  * @param vel MIDI velocity for the voice (0-127)
@@ -3469,7 +3471,7 @@ fluid_synth_free_voice_by_kill_LOCAL(fluid_synth_t* synth)
  * SoundFont loader preset noteon method.
  */
 fluid_voice_t*
-fluid_synth_alloc_voice(fluid_synth_t* synth, fluid_inst_zone_t *inst_zone,
+fluid_synth_alloc_voice(fluid_synth_t* synth, fluid_sample_t* sample,
 						int chan, int key, int vel)
 {
   int i, k;
@@ -3477,8 +3479,7 @@ fluid_synth_alloc_voice(fluid_synth_t* synth, fluid_inst_zone_t *inst_zone,
   fluid_channel_t* channel = NULL;
   unsigned int ticks;
 
-//  fluid_return_val_if_fail (sample != NULL, NULL);
-  fluid_return_val_if_fail (fluid_inst_zone_get_sample(inst_zone) != NULL, NULL);
+  fluid_return_val_if_fail (sample != NULL, NULL);
   FLUID_API_ENTRY_CHAN(NULL);
 
   /* check if there's an available synthesis process */
@@ -3521,11 +3522,12 @@ fluid_synth_alloc_voice(fluid_synth_t* synth, fluid_inst_zone_t *inst_zone,
 	  channel = synth->channel[chan];
   }
 
-  if (fluid_voice_init (voice, inst_zone, channel, key, vel,
+  if (fluid_voice_init (voice, synth->zone_range, channel, key, vel,
                         synth->storeid, ticks, synth->gain) != FLUID_OK) {
     FLUID_LOG(FLUID_WARN, "Failed to initialize voice");
     FLUID_API_RETURN(NULL);
   }
+  synth->zone_range = NULL; /* Reset zone_range parameter */
 
   /* add the default modulators to the synthesis process. */
   /* custom_breath2att_modulator is not a default modulator specified in SF
