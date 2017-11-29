@@ -3522,7 +3522,7 @@ fluid_synth_alloc_voice(fluid_synth_t* synth, fluid_sample_t* sample,
 	  channel = synth->channel[chan];
   }
 
-  if (fluid_voice_init (voice, synth->zone_range, channel, key, vel,
+  if (fluid_voice_init (voice, sample, synth->zone_range, channel, key, vel,
                         synth->storeid, ticks, synth->gain) != FLUID_OK) {
     FLUID_LOG(FLUID_WARN, "Failed to initialize voice");
     FLUID_API_RETURN(NULL);
