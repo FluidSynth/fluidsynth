@@ -651,8 +651,8 @@ fluid_rampreset_add_sample (fluid_rampreset_t* preset, fluid_sample_t* sample,
 		}
 
 		izone->sample = sample;
-		izone->keylo = lokey;
-		izone->keyhi = hikey;
+		izone->zone_range.keylo = lokey;
+		izone->zone_range.keyhi = hikey;
 
 		// give the preset the name of the sample
 		FLUID_MEMCPY(preset->name, sample->name, 20);
@@ -910,8 +910,9 @@ fluid_rampreset_noteon (fluid_rampreset_t* preset, fluid_synth_t* synth, int cha
       inst_zone = fluid_inst_get_zone(inst);
       while (inst_zone != NULL) {
 		  /* ignoreInstrumentZone is set in mono legato playing */
-		  unsigned char ignoreInstrumentZone = IsIgnoreInstZone(inst_zone);
-		  ResetIgnoreInstZone(inst_zone); /* Reset the 'ignore' request */
+		  unsigned char ignore_inst_zone = inst_zone->zone_range.flags & IGNORE_INST_Z0NE;
+		  /* Reset the 'ignore' request */
+		  inst_zone->zone_range.flags &= ~IGNORE_INST_Z0NE; 
 
 	/* make sure this instrument zone has a valid sample */
 	sample = fluid_inst_zone_get_sample(inst_zone);
@@ -924,13 +925,14 @@ fluid_rampreset_noteon (fluid_rampreset_t* preset, fluid_synth_t* synth, int cha
 	   the key and velocity range of this  instrument zone.
 	   An instrument zone must be ignored when its voice is already running
 	   played by a legato passage (see fluid_synth_noteon_monopoly_legato()) */
-	if (! ignoreInstrumentZone &&
+	if (! ignore_inst_zone &&
 		fluid_inst_zone_inside_range(inst_zone, key, vel) && (sample != NULL)) {
 
 	  /* this is a good zone. allocate a new synthesis process and
              initialize it */
 
-	  voice = fluid_synth_alloc_voice(synth, inst_zone, chan, key, vel);
+	  synth->zone_range = &inst_zone->zone_range;
+	  voice = fluid_synth_alloc_voice(synth, sample, chan, key, vel);
 	  if (voice == NULL) {
 	    return FLUID_FAILED;
 	  }
