@@ -340,6 +340,7 @@ typedef struct _fluid_defsfont_t fluid_defsfont_t;
 typedef struct _fluid_defpreset_t fluid_defpreset_t;
 typedef struct _fluid_preset_zone_t fluid_preset_zone_t;
 typedef struct _fluid_inst_t fluid_inst_t;
+typedef struct _fluid_inst_zone_t fluid_inst_zone_t;            /**< Soundfont Instrument Zone */
 
 /*
 
@@ -469,6 +470,22 @@ int fluid_inst_add_zone(fluid_inst_t* inst, fluid_inst_zone_t* zone);
 fluid_inst_zone_t* fluid_inst_get_zone(fluid_inst_t* inst);
 fluid_inst_zone_t* fluid_inst_get_global_zone(fluid_inst_t* inst);
 
+/* 
+ * fluid_inst_zone_range_t
+ * structure accessed by fluid_synth_noteon_monopoly_legato() 
+ */
+struct _fluid_inst_zone_range_t
+{
+  int keylo;
+  int keyhi;
+  int vello;
+  int velhi;
+  /* flags
+  0: This instrument zone must not ignored.
+  1: This instrument zone must ignored   */
+  unsigned char flags;	/* for legato playing */
+};
+
 /*
  * fluid_inst_zone_t
  */
@@ -477,23 +494,13 @@ struct _fluid_inst_zone_t
   fluid_inst_zone_t* next;
   char* name;
   fluid_sample_t* sample;
-  int keylo;
-  int keyhi;
-  int vello;
-  int velhi;
-  unsigned char flags;	/* for legato playing */
+  fluid_inst_zone_range_t zone_range;
   fluid_gen_t gen[GEN_LAST];
   fluid_mod_t * mod; /* List of modulators */
 };
 
-/* Flag IGNORE_IZ is set on legato playing to ignore an Instrument Zone */
+/* Flag IGNORE_IZ is set on legato playing to ignore an instrument zone */
 #define IGNORE_IZ 0x01
-/* IsIgnoreInstZone return True when an Instrument Zone must be ignored */
-#define IsIgnoreInstZone(iz)	(iz->flags & IGNORE_IZ)
-/* SetIgnoreInstZone set a request when an Instrument Zone must be ignored */
-#define SetIgnoreInstZone(iz)	(iz->flags |= IGNORE_IZ)
-/* ResetgnoreInstZone reset the request to ignore an Instrument Zone */
-#define ResetIgnoreInstZone(iz)	(iz->flags &= ~IGNORE_IZ)
 
 fluid_inst_zone_t* new_fluid_inst_zone(char* name);
 void delete_fluid_inst_zone(fluid_inst_zone_t* zone);
