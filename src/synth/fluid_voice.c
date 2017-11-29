@@ -240,7 +240,8 @@ delete_fluid_voice(fluid_voice_t* voice)
  * as far as n2 still enters in Keyrange,Velrange of n1.
  */
 int
-fluid_voice_init(fluid_voice_t* voice, fluid_inst_zone_t *inst_zone,
+fluid_voice_init(fluid_voice_t* voice, fluid_sample_t* sample, 
+		 fluid_inst_zone_range_t *inst_zone_range,
 		 fluid_channel_t* channel, int key, int vel, unsigned int id,
 		 unsigned int start_time, fluid_real_t gain)
 {
@@ -249,7 +250,6 @@ fluid_voice_init(fluid_voice_t* voice, fluid_inst_zone_t *inst_zone,
    * the 'working memory' of the voice (position in envelopes, history
    * of IIR filters, position in sample etc) is initialized. */
   int i;
-  fluid_sample_t* sample;
 
   if (!voice->can_access_rvoice) {
     if (voice->can_access_overflow_rvoice) 
@@ -264,8 +264,7 @@ fluid_voice_init(fluid_voice_t* voice, fluid_inst_zone_t *inst_zone,
   if (voice->sample)
     fluid_voice_off(voice);
 
-  sample = fluid_inst_zone_get_sample(inst_zone);
-  voice->inst_zone = inst_zone; /* Instrument Zone for legato */
+  voice->zone_range = inst_zone_range; /* Instrument zone range for legato */
   voice->id = id;
   voice->chan = fluid_channel_get_num(channel);
   voice->key = (unsigned char) key;
