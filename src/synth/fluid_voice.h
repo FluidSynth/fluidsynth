@@ -69,7 +69,7 @@ struct _fluid_voice_t
 	fluid_gen_t gen[GEN_LAST];
 	fluid_mod_t mod[FLUID_NUM_MOD];
 	int mod_count;
-	fluid_inst_zone_t *inst_zone;	/* Instrument Zone */
+	fluid_inst_zone_range_t * zone_range; /* instrument zone range*/
 	fluid_sample_t* sample;         /* Pointer to sample (dupe in rvoice) */
 
 	/* basic parameters */
@@ -119,8 +119,8 @@ void  fluid_voice_calculate_gen_pitch(fluid_voice_t* voice);
 
 int fluid_voice_write (fluid_voice_t* voice, fluid_real_t *dsp_buf);
 
-//int fluid_voice_init(fluid_voice_t* voice, fluid_sample_t* sample,
-int fluid_voice_init(fluid_voice_t* voice, fluid_inst_zone_t *inst_zone,
+fluid_voice_init(fluid_voice_t* voice, fluid_sample_t* sample, 
+		     fluid_inst_zone_range_t *inst_zone_range,
 		     fluid_channel_t* channel, int key, int vel,
 		     unsigned int id, unsigned int time, fluid_real_t gain);
 
