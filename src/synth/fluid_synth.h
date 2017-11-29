@@ -169,9 +169,7 @@ struct _fluid_synth_t
 
   fluid_mod_t* default_mod;          /**< the (dynamic) list of default modulators */
 
-#ifdef LADSPA
-  fluid_ladspa_fx_t* ladspa_fx; /**< Effects unit for LADSPA support */
-#endif
+  fluid_ladspa_fx_t* ladspa_fx;      /**< Effects unit for LADSPA support */
 };
 
 fluid_preset_t* fluid_synth_find_preset(fluid_synth_t* synth,

@@ -225,8 +225,8 @@ int fluid_midi_file_eof(fluid_midi_file* mf)
 int
 fluid_midi_file_read_mthd(fluid_midi_file *mf)
 {
-    char mthd[15];
-    if (fluid_midi_file_read(mf, mthd, 14) != FLUID_OK) {
+    char mthd[14];
+    if (fluid_midi_file_read(mf, mthd, sizeof(mthd)) != FLUID_OK) {
         return FLUID_FAILED;
     }
     if ((FLUID_STRNCMP(mthd, "MThd", 4) != 0) || (mthd[7] != 6)
@@ -238,15 +238,15 @@ fluid_midi_file_read_mthd(fluid_midi_file *mf)
     mf->type = mthd[9];
     mf->ntracks = (unsigned) mthd[11];
     mf->ntracks += (unsigned int) (mthd[10]) << 16;
-    if ((mthd[12]) < 0) {
+    if ((signed char)mthd[12] < 0) {
         mf->uses_smpte = 1;
-        mf->smpte_fps = -mthd[12];
+        mf->smpte_fps = -(signed char)mthd[12];
         mf->smpte_res = (unsigned) mthd[13];
         FLUID_LOG(FLUID_ERR, "File uses SMPTE timing -- Not implemented yet");
         return FLUID_FAILED;
     } else {
         mf->uses_smpte = 0;
-        mf->division = (mthd[12] << 8) | (mthd[13] & 0xff);
+        mf->division = ((unsigned)mthd[12] << 8) | ((unsigned)mthd[13] & 0xff);
         FLUID_LOG(FLUID_DBG, "Division=%d", mf->division);
     }
     return FLUID_OK;
@@ -1094,15 +1094,6 @@ fluid_track_set_name(fluid_track_t *track, char *name)
 }
 
 /*
- * fluid_track_get_name
- */
-char *
-fluid_track_get_name(fluid_track_t *track)
-{
-    return track->name;
-}
-
-/*
  * fluid_track_get_duration
  */
 int
@@ -1115,24 +1106,6 @@ fluid_track_get_duration(fluid_track_t *track)
         evt = evt->next;
     }
     return time;
-}
-
-/*
- * fluid_track_count_events
- */
-int
-fluid_track_count_events(fluid_track_t *track, int *on, int *off)
-{
-    fluid_midi_event_t *evt = track->first;
-    while (evt != NULL) {
-        if (evt->type == NOTE_ON) {
-            (*on)++;
-        } else if (evt->type == NOTE_OFF) {
-            (*off)++;
-        }
-        evt = evt->next;
-    }
-    return FLUID_OK;
 }
 
 /*
@@ -1151,16 +1124,6 @@ fluid_track_add_event(fluid_track_t *track, fluid_midi_event_t *evt)
         track->last = evt;
     }
     return FLUID_OK;
-}
-
-/*
- * fluid_track_first_event
- */
-fluid_midi_event_t *
-fluid_track_first_event(fluid_track_t *track)
-{
-    track->cur = track->first;
-    return track->cur;
 }
 
 /*
@@ -1374,28 +1337,6 @@ fluid_player_add_track(fluid_player_t *player, fluid_track_t *track)
         return FLUID_OK;
     } else {
         return FLUID_FAILED;
-    }
-}
-
-/*
- * fluid_player_count_tracks
- */
-int
-fluid_player_count_tracks(fluid_player_t *player)
-{
-    return player->ntracks;
-}
-
-/*
- * fluid_player_get_track
- */
-fluid_track_t *
-fluid_player_get_track(fluid_player_t *player, int i)
-{
-    if ((i >= 0) && (i < MAX_NUMBER_OF_TRACKS)) {
-        return player->track[i];
-    } else {
-        return NULL;
     }
 }
 

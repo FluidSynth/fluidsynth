@@ -711,14 +711,14 @@ new_fluid_synth(fluid_settings_t *settings)
   fluid_settings_getint(settings, "synth.ladspa.active", &with_ladspa);
   if (with_ladspa) {
 #ifdef LADSPA
-    synth->ladspa_fx = new_fluid_ladspa_fx(synth->sample_rate, synth->audio_groups,
-            synth->effects_channels, synth->audio_channels,
+    synth->ladspa_fx = new_fluid_ladspa_fx(synth->sample_rate,
             FLUID_MIXER_MAX_BUFFERS_DEFAULT * FLUID_BUFSIZE);
     if(synth->ladspa_fx == NULL) {
       FLUID_LOG(FLUID_ERR, "Out of memory");
       goto error_recovery;
     }
-    fluid_rvoice_mixer_set_ladspa(synth->eventhandler->mixer, synth->ladspa_fx);
+    fluid_rvoice_mixer_set_ladspa(synth->eventhandler->mixer, synth->ladspa_fx,
+            synth->audio_groups);
 #else /* LADSPA */
     FLUID_LOG(FLUID_WARN, "FluidSynth has not been compiled with LADSPA support");
 #endif /* LADSPA */
@@ -865,7 +865,7 @@ delete_fluid_synth(fluid_synth_t* synth)
     for (i = 0; i < synth->midi_channels; i++)
         fluid_channel_set_preset(synth->channel[i], NULL);
 
-    delete_fluid_rvoice_eventhandler(synth->eventhandler);
+  delete_fluid_rvoice_eventhandler(synth->eventhandler);
 
   /* delete all the SoundFonts */
   for (list = synth->sfont_info; list; list = fluid_list_next (list)) {
@@ -2752,10 +2752,10 @@ fluid_synth_nwrite_float(fluid_synth_t* synth, int len,
     {
 #ifdef WITH_FLOAT
       if(fx_left != NULL)
-        FLUID_MEMCPY(fx_left[i + count], fx_left_in[i], bytes);
+        FLUID_MEMCPY(fx_left[i] + count, fx_left_in[i], bytes);
       
       if(fx_right != NULL)
-        FLUID_MEMCPY(fx_right[i + count], fx_right_in[i], bytes);
+        FLUID_MEMCPY(fx_right[i] + count, fx_right_in[i], bytes);
 #else //WITH_FLOAT
       int j;
       if(fx_left != NULL) {
@@ -3365,10 +3365,10 @@ fluid_synth_start_voice(fluid_synth_t* synth, fluid_voice_t* voice)
 }
 
 /**
- * Add a SoundFont loader interface.
+ * Add a SoundFont loader to the synth. This function takes ownership of \c loader
+ * and frees it automatically upon \c synth destruction.
  * @param synth FluidSynth instance
- * @param loader Loader API structure, used directly and should remain allocated
- *   as long as the synth instance is used.
+ * @param loader Loader API structure
  *
  * SoundFont loaders are used to add custom instrument loading to FluidSynth.
  * The caller supplied functions for loading files, allocating presets,
@@ -3397,7 +3397,7 @@ fluid_synth_add_sfloader(fluid_synth_t* synth, fluid_sfloader_t* loader)
  * stack. Presets are searched starting from the SoundFont on the
  * top of the stack, working the way down the stack until a preset is found.
  *
- * @param synth SoundFont instance
+ * @param synth FluidSynth instance
  * @param filename File to load
  * @param reset_presets TRUE to re-assign presets for all MIDI channels
  * @return SoundFont ID on success, FLUID_FAILED on error
@@ -3470,7 +3470,7 @@ new_fluid_sfont_info (fluid_synth_t *synth, fluid_sfont_t *sfont)
 
 /**
  * Unload a SoundFont.
- * @param synth SoundFont instance
+ * @param synth FluidSynth instance
  * @param id ID of SoundFont to unload
  * @param reset_presets TRUE to re-assign presets for all MIDI channels
  * @return FLUID_OK on success, FLUID_FAILED on error
@@ -3559,7 +3559,7 @@ fluid_synth_sfunload_callback(void* data, unsigned int msec)
 
 /**
  * Reload a SoundFont.  The SoundFont retains its ID and index on the SoundFont stack.
- * @param synth SoundFont instance
+ * @param synth FluidSynth instance
  * @param id ID of SoundFont to reload
  * @return SoundFont ID on success, FLUID_FAILED on error
  */
@@ -3940,7 +3940,7 @@ fluid_synth_set_reverb_preset(fluid_synth_t* synth, unsigned int num)
 /**
  * Set reverb parameters.
  * @param synth FluidSynth instance
- * @param roomsize Reverb room size value (0.0-1.2)
+ * @param roomsize Reverb room size value (0.0-1.0)
  * @param damping Reverb damping value (0.0-1.0)
  * @param width Reverb width value (0.0-100.0)
  * @param level Reverb level value (0.0-1.0)
@@ -5287,4 +5287,17 @@ int fluid_synth_set_channel_type(fluid_synth_t* synth, int chan, int type)
   synth->channel[chan]->channel_type = type;
 
   FLUID_API_RETURN(FLUID_OK);
+}
+
+/**
+ * Return the LADSPA effects instance used by FluidSynth
+ *
+ * @param synth FluidSynth instance
+ * @return pointer to LADSPA fx or NULL if compiled without LADSPA support or LADSPA is not active
+ */
+fluid_ladspa_fx_t *fluid_synth_get_ladspa_fx(fluid_synth_t *synth)
+{
+    fluid_return_val_if_fail(synth != NULL, NULL);
+
+    return synth->ladspa_fx;
 }

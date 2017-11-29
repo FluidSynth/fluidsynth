@@ -99,7 +99,6 @@ fluid_iir_filter_apply(fluid_iir_filter_t* iir_filter,
         /* Compensate history to avoid the filter going havoc with large frequency changes */
 	if (iir_filter->compensate_incr && fabs(dsp_b02) > 0.001) {
           fluid_real_t compensate = old_b02 / dsp_b02;
-          dsp_centernode *= compensate;
           dsp_hist1 *= compensate;
           dsp_hist2 *= compensate;
         }
