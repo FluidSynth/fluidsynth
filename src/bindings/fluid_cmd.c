@@ -80,8 +80,8 @@ static int fluid_handle_voice_count (void* data, int ac, char **av,
 
 void fluid_shell_settings(fluid_settings_t* settings)
 {
-  fluid_settings_register_str(settings, "shell.prompt", "", 0, NULL, NULL);
-  fluid_settings_register_int(settings, "shell.port", 9800, 1, 65535, 0, NULL, NULL);
+  fluid_settings_register_str(settings, "shell.prompt", "", 0);
+  fluid_settings_register_int(settings, "shell.port", 9800, 1, 65535, 0);
 }
 
 

@@ -101,7 +101,7 @@ static fluid_thread_return_t fluid_oss_midi_run(void* d);
 void
 fluid_oss_audio_driver_settings(fluid_settings_t* settings)
 {
-  fluid_settings_register_str(settings, "audio.oss.device", "/dev/dsp", 0, NULL, NULL);
+  fluid_settings_register_str(settings, "audio.oss.device", "/dev/dsp", 0);
 }
 
 /*
@@ -502,7 +502,7 @@ fluid_oss_audio_run2(void* d)
 
 void fluid_oss_midi_driver_settings(fluid_settings_t* settings)
 {
-  fluid_settings_register_str(settings, "midi.oss.device", "/dev/midi", 0, NULL, NULL);
+  fluid_settings_register_str(settings, "midi.oss.device", "/dev/midi", 0);
 }
 
 /*

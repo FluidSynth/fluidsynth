@@ -84,7 +84,7 @@ fluid_dsound_enum_callback2(LPGUID guid, LPCTSTR description, LPCTSTR module, LP
 
 void fluid_dsound_audio_driver_settings(fluid_settings_t* settings)
 {
-  fluid_settings_register_str(settings, "audio.dsound.device", "default", 0, NULL, NULL);
+  fluid_settings_register_str(settings, "audio.dsound.device", "default", 0);
   fluid_settings_add_option(settings, "audio.dsound.device", "default");
   DirectSoundEnumerate((LPDSENUMCALLBACK) fluid_dsound_enum_callback, settings);
 }

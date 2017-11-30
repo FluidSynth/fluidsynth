@@ -1293,14 +1293,12 @@ fluid_player_settings(fluid_settings_t *settings)
 {
     /* player.timing-source can be either "system" (use system timer)
      or "sample" (use timer based on number of written samples) */
-    fluid_settings_register_str(settings, "player.timing-source", "sample", 0,
-            NULL, NULL);
+    fluid_settings_register_str(settings, "player.timing-source", "sample", 0);
     fluid_settings_add_option(settings, "player.timing-source", "sample");
     fluid_settings_add_option(settings, "player.timing-source", "system");
 
     /* Selects whether the player should reset the synth between songs, or not. */
-    fluid_settings_register_int(settings, "player.reset-synth", 1, 0, 1,
-            FLUID_HINT_TOGGLED, NULL, NULL);
+    fluid_settings_register_int(settings, "player.reset-synth", 1, 0, 1, FLUID_HINT_TOGGLED);
 }
 
 

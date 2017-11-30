@@ -106,10 +106,10 @@ static fluid_jack_client_t *last_client = NULL;       /* Last unpaired client. F
 void
 fluid_jack_audio_driver_settings(fluid_settings_t* settings)
 {
-  fluid_settings_register_str(settings, "audio.jack.id", "fluidsynth", 0, NULL, NULL);
-  fluid_settings_register_int(settings, "audio.jack.multi", 0, 0, 1, FLUID_HINT_TOGGLED, NULL, NULL);
-  fluid_settings_register_int(settings, "audio.jack.autoconnect", 0, 0, 1, FLUID_HINT_TOGGLED, NULL, NULL);
-  fluid_settings_register_str(settings, "audio.jack.server", "", 0, NULL, NULL);
+  fluid_settings_register_str(settings, "audio.jack.id", "fluidsynth", 0);
+  fluid_settings_register_int(settings, "audio.jack.multi", 0, 0, 1, FLUID_HINT_TOGGLED);
+  fluid_settings_register_int(settings, "audio.jack.autoconnect", 0, 0, 1, FLUID_HINT_TOGGLED);
+  fluid_settings_register_str(settings, "audio.jack.server", "", 0);
 }
 
 /*
@@ -614,8 +614,8 @@ fluid_jack_driver_shutdown(void *arg)
 
 void fluid_jack_midi_driver_settings (fluid_settings_t *settings)
 {
-  fluid_settings_register_str (settings, "midi.jack.id", "fluidsynth-midi", 0, NULL, NULL);
-  fluid_settings_register_str (settings, "midi.jack.server", "", 0, NULL, NULL);
+  fluid_settings_register_str (settings, "midi.jack.id", "fluidsynth-midi", 0);
+  fluid_settings_register_str (settings, "midi.jack.server", "", 0);
 }
 
 /*
