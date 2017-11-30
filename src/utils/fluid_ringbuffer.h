@@ -23,7 +23,7 @@
 
 #include "fluid_sys.h"
 
-/**
+/*
  * Lockless event queue instance.
  */
 struct _fluid_ringbuffer_t

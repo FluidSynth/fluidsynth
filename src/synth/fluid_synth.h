@@ -78,7 +78,7 @@ enum fluid_synth_status
 #define SYNTH_REVERB_CHANNEL 0
 #define SYNTH_CHORUS_CHANNEL 1
 
-/**
+/*
  * Structure used for sfont_info field in #fluid_synth_t for each loaded
  * SoundFont with the SoundFont instance and additional fields.
  */
