@@ -43,10 +43,6 @@ static int fluid_synth_noteon_LOCAL(fluid_synth_t* synth, int chan, int key,
                                        int vel);
 static int fluid_synth_noteoff_LOCAL(fluid_synth_t* synth, int chan, int key);
 static int fluid_synth_cc_LOCAL(fluid_synth_t* synth, int channum, int num);
-static int fluid_synth_update_device_id (fluid_synth_t *synth, char *name,
-                                         int value);
-static int fluid_synth_update_overflow (fluid_synth_t *synth, char *name,
-                                         fluid_real_t value);
 static int fluid_synth_sysex_midi_tuning (fluid_synth_t *synth, const char *data,
                                           int len, char *response,
                                           int *response_len, int avail_response,
@@ -71,13 +67,7 @@ fluid_synth_get_preset_by_sfont_name(fluid_synth_t* synth, const char *sfontname
                                      unsigned int banknum, unsigned int prognum);
 
 static void fluid_synth_update_presets(fluid_synth_t* synth);
-static int fluid_synth_update_sample_rate(fluid_synth_t* synth,
-                                   char* name, double value);
-static int fluid_synth_update_gain(fluid_synth_t* synth,
-                                   char* name, double value);
 static void fluid_synth_update_gain_LOCAL(fluid_synth_t* synth);
-static int fluid_synth_update_polyphony(fluid_synth_t* synth,
-                                        char* name, int value);
 static int fluid_synth_update_polyphony_LOCAL(fluid_synth_t* synth, int new_polyphony);
 static void init_dither(void);
 static FLUID_INLINE int roundi (float x);
@@ -108,6 +98,17 @@ static void fluid_synth_set_gen_LOCAL (fluid_synth_t* synth, int chan,
                                        int param, float value, int absolute);
 static void fluid_synth_stop_LOCAL (fluid_synth_t *synth, unsigned int id);
 
+/* Callbacks for real-time settings */
+static void fluid_synth_handle_sample_rate(fluid_settings_t *settings,
+        const char *name, void *data);
+static void fluid_synth_handle_gain(fluid_settings_t *settings,
+        const char *name, void *data);
+static void fluid_synth_handle_polyphony(fluid_settings_t *settings,
+        const char *name, void *data);
+static void fluid_synth_handle_device_id(fluid_settings_t *settings,
+        const char *name, void *data);
+static void fluid_synth_handle_overflow(fluid_settings_t *settings,
+        const char *name, void *data);
 
 
 /***************************************************************
@@ -582,24 +583,24 @@ new_fluid_synth(fluid_settings_t *settings)
   fluid_settings_getint(settings, "synth.cpu-cores", &synth->cores);
 
   /* register the callbacks */
-  fluid_settings_callback_num(settings, "synth.sample-rate",
-			      (fluid_num_update_t) fluid_synth_update_sample_rate, synth);
-  fluid_settings_callback_num(settings, "synth.gain",
-			      (fluid_num_update_t) fluid_synth_update_gain, synth);
-  fluid_settings_callback_int(settings, "synth.polyphony",
-			      (fluid_int_update_t) fluid_synth_update_polyphony, synth);
-  fluid_settings_callback_int(settings, "synth.device-id",
-                              (fluid_int_update_t) fluid_synth_update_device_id, synth);
-  fluid_settings_callback_num(settings, "synth.overflow.percussion",
-                              (fluid_num_update_t) fluid_synth_update_overflow, synth);
-  fluid_settings_callback_num(settings, "synth.overflow.sustained",
-                              (fluid_num_update_t) fluid_synth_update_overflow, synth);
-  fluid_settings_callback_num(settings, "synth.overflow.released",
-                              (fluid_num_update_t) fluid_synth_update_overflow, synth);
-  fluid_settings_callback_num(settings, "synth.overflow.age",
-                              (fluid_num_update_t) fluid_synth_update_overflow, synth);
-  fluid_settings_callback_num(settings, "synth.overflow.volume",
-                              (fluid_num_update_t) fluid_synth_update_overflow, synth);
+  fluid_settings_set_callback(settings, "synth.sample-rate",
+          fluid_synth_handle_sample_rate, synth);
+  fluid_settings_set_callback(settings, "synth.gain",
+          fluid_synth_handle_gain, synth);
+  fluid_settings_set_callback(settings, "synth.polyphony",
+          fluid_synth_handle_polyphony, synth);
+  fluid_settings_set_callback(settings, "synth.device-id",
+          fluid_synth_handle_device_id, synth);
+  fluid_settings_set_callback(settings, "synth.overflow.percussion",
+          fluid_synth_handle_overflow, synth);
+  fluid_settings_set_callback(settings, "synth.overflow.sustained",
+          fluid_synth_handle_overflow, synth);
+  fluid_settings_set_callback(settings, "synth.overflow.released",
+          fluid_synth_handle_overflow, synth);
+  fluid_settings_set_callback(settings, "synth.overflow.age",
+          fluid_synth_handle_overflow, synth);
+  fluid_settings_set_callback(settings, "synth.overflow.volume",
+          fluid_synth_handle_overflow, synth);
 
   /* do some basic sanity checking on the settings */
 
@@ -733,7 +734,7 @@ new_fluid_synth(fluid_settings_t *settings)
 
   fluid_synth_set_sample_rate(synth, synth->sample_rate);
   
-  fluid_synth_update_overflow(synth, "", 0.0f);
+  fluid_synth_handle_overflow(synth->settings, "", synth);
   fluid_synth_update_mixer(synth, fluid_rvoice_mixer_set_polyphony, 
 			   synth->polyphony, 0.0f);
   fluid_synth_set_reverb_on(synth, fluid_atomic_int_get(&synth->with_reverb));
@@ -1331,13 +1332,15 @@ fluid_synth_get_cc(fluid_synth_t* synth, int chan, int num, int* pval)
 /*
  * Handler for synth.device-id setting.
  */
-static int
-fluid_synth_update_device_id (fluid_synth_t *synth, char *name, int value)
+static void
+fluid_synth_handle_device_id(fluid_settings_t *settings, const char *name, void *data)
 {
-  fluid_synth_api_enter(synth);
-  synth->device_id = value;
-  fluid_synth_api_exit(synth);
-  return 0;
+    fluid_synth_t *synth = (fluid_synth_t *)data;
+    fluid_return_if_fail (synth != NULL);
+
+    fluid_synth_api_enter(synth);
+    fluid_settings_getint(settings, "synth.device-id", &synth->device_id);
+    fluid_synth_api_exit(synth);
 }
 
 /**
@@ -2345,11 +2348,13 @@ fluid_synth_update_presets(fluid_synth_t* synth)
 }
 
 /* Handler for synth.sample-rate setting. */
-static int
-fluid_synth_update_sample_rate(fluid_synth_t* synth, char* name, double value)
+static void
+fluid_synth_handle_sample_rate(fluid_settings_t *settings, const char *name, void *data)
 {
-  fluid_synth_set_sample_rate(synth, (float) value);
-  return 0;
+    fluid_synth_t *synth = (fluid_synth_t *)data;
+    fluid_return_if_fail(synth != NULL);
+
+    fluid_settings_getnum(settings, "synth.sample-rate", &synth->sample_rate);
 }
 
 /**
@@ -2381,11 +2386,14 @@ fluid_synth_set_sample_rate(fluid_synth_t* synth, float sample_rate)
 
 
 /* Handler for synth.gain setting. */
-static int
-fluid_synth_update_gain(fluid_synth_t* synth, char* name, double value)
+static void
+fluid_synth_handle_gain(fluid_settings_t *settings, const char *name, void *data)
 {
-  fluid_synth_set_gain(synth, (float) value);
-  return 0;
+    double gain;
+    fluid_synth_t *synth = (fluid_synth_t *)data;
+
+    fluid_settings_getnum(settings, "synth.gain", &gain);
+    fluid_synth_set_gain(synth, (float) gain);
 }
 
 /**
@@ -2442,11 +2450,14 @@ fluid_synth_get_gain(fluid_synth_t* synth)
 /*
  * Handler for synth.polyphony setting.
  */
-static int
-fluid_synth_update_polyphony(fluid_synth_t* synth, char* name, int value)
+static void
+fluid_synth_handle_polyphony(fluid_settings_t *settings, const char *name, void *data)
 {
-  fluid_synth_set_polyphony(synth, value);
-  return 0;
+    int polyphony;
+    fluid_synth_t *synth = (fluid_synth_t *)data;
+
+    fluid_settings_getint(settings, "synth.polyphony", &polyphony);
+    fluid_synth_set_polyphony(synth, polyphony);
 }
 
 /**
@@ -3129,24 +3140,27 @@ fluid_synth_render_blocks(fluid_synth_t* synth, int blockcount)
 }
 
 
-static int fluid_synth_update_overflow (fluid_synth_t *synth, char *name,
-                                         fluid_real_t value)
+static void
+fluid_synth_handle_overflow(fluid_settings_t *settings, const char *name, void *data)
 {
-  double d;
-  fluid_synth_api_enter(synth);
+    double d;
+    fluid_synth_t *synth = (fluid_synth_t *)data;
+    fluid_return_if_fail (synth != NULL);
+
+    fluid_synth_api_enter(synth);
   
-  fluid_settings_getnum(synth->settings, "synth.overflow.percussion", &d);
-  synth->overflow.percussion = d;
-  fluid_settings_getnum(synth->settings, "synth.overflow.released", &d);
-  synth->overflow.released = d;
-  fluid_settings_getnum(synth->settings, "synth.overflow.sustained", &d);
-  synth->overflow.sustained = d;
-  fluid_settings_getnum(synth->settings, "synth.overflow.volume", &d);
-  synth->overflow.volume = d;
-  fluid_settings_getnum(synth->settings, "synth.overflow.age", &d);
-  synth->overflow.age = d;
-  
-  FLUID_API_RETURN(0);
+    fluid_settings_getnum(settings, "synth.overflow.percussion", &d);
+    synth->overflow.percussion = d;
+    fluid_settings_getnum(settings, "synth.overflow.released", &d);
+    synth->overflow.released = d;
+    fluid_settings_getnum(settings, "synth.overflow.sustained", &d);
+    synth->overflow.sustained = d;
+    fluid_settings_getnum(settings, "synth.overflow.volume", &d);
+    synth->overflow.volume = d;
+    fluid_settings_getnum(settings, "synth.overflow.age", &d);
+    synth->overflow.age = d;
+
+    fluid_synth_api_exit(synth);
 }
 
 
