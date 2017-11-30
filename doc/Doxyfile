@@ -200,7 +200,7 @@ EXPAND_ONLY_PREDEF = NO
 SEARCH_INCLUDES = YES
 INCLUDE_PATH = 
 INCLUDE_FILE_PATTERNS = 
-PREDEFINED = 
+PREDEFINED = __DOXYGEN__
 EXPAND_AS_DEFINED = 
 SKIP_FUNCTION_MACROS = YES
 #---------------------------------------------------------------------------
