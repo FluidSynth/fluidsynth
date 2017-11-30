@@ -155,77 +155,47 @@ static const fluid_revmodel_presets_t revmodel_preset[] = {
  *               INITIALIZATION & UTILITIES
  */
 
-static void fluid_synth_register_overflow(fluid_settings_t* settings,
-					  fluid_num_update_t update_func,
-					  void* update_data)
-{
-  fluid_settings_register_num(settings, "synth.overflow.percussion",
-			      4000, -10000, 10000, 0, update_func, update_data);
-  fluid_settings_register_num(settings, "synth.overflow.sustained",
-			      -1000, -10000, 10000, 0, update_func, update_data);
-  fluid_settings_register_num(settings, "synth.overflow.released",
-			      -2000, -10000, 10000, 0, update_func, update_data);
-  fluid_settings_register_num(settings, "synth.overflow.age",
-			      1000, -10000, 10000, 0, update_func, update_data);
-  fluid_settings_register_num(settings, "synth.overflow.volume",
-			      500, -10000, 10000, 0, update_func, update_data);  
-}
-
 void fluid_synth_settings(fluid_settings_t* settings)
 {
-  fluid_settings_register_int(settings, "synth.verbose", 0, 0, 1,
-                              FLUID_HINT_TOGGLED, NULL, NULL);
-  fluid_settings_register_int(settings, "synth.reverb.active", 1, 0, 1,
-                              FLUID_HINT_TOGGLED, NULL, NULL);
-  fluid_settings_register_int(settings, "synth.chorus.active", 1, 0, 1,
-                              FLUID_HINT_TOGGLED, NULL, NULL);
-  fluid_settings_register_int(settings, "synth.ladspa.active", 0, 0, 1,
-                              FLUID_HINT_TOGGLED, NULL, NULL);
-  fluid_settings_register_int(settings, "synth.lock-memory", 1, 0, 1,
-                              FLUID_HINT_TOGGLED, NULL, NULL);
-  fluid_settings_register_str(settings, "midi.portname", "", 0, NULL, NULL);
+  fluid_settings_register_int(settings, "synth.verbose", 0, 0, 1, FLUID_HINT_TOGGLED);
+  fluid_settings_register_int(settings, "synth.reverb.active", 1, 0, 1, FLUID_HINT_TOGGLED);
+  fluid_settings_register_int(settings, "synth.chorus.active", 1, 0, 1, FLUID_HINT_TOGGLED);
+  fluid_settings_register_int(settings, "synth.ladspa.active", 0, 0, 1, FLUID_HINT_TOGGLED);
+  fluid_settings_register_int(settings, "synth.lock-memory", 1, 0, 1, FLUID_HINT_TOGGLED);
+  fluid_settings_register_str(settings, "midi.portname", "", 0);
 
 #ifdef DEFAULT_SOUNDFONT
-  fluid_settings_register_str(settings, "synth.default-soundfont",
-            DEFAULT_SOUNDFONT, 0, NULL, NULL);
+  fluid_settings_register_str(settings, "synth.default-soundfont", DEFAULT_SOUNDFONT, 0);
 #endif
 
-  fluid_settings_register_int(settings, "synth.polyphony",
-			      256, 1, 65535, 0, NULL, NULL);
-  fluid_settings_register_int(settings, "synth.midi-channels",
-			      16, 16, 256, 0, NULL, NULL);
-  fluid_settings_register_num(settings, "synth.gain",
-			      0.2f, 0.0f, 10.0f,
-			      0, NULL, NULL);
-  fluid_settings_register_int(settings, "synth.audio-channels",
-			      1, 1, 128, 0, NULL, NULL);
-  fluid_settings_register_int(settings, "synth.audio-groups",
-			      1, 1, 128, 0, NULL, NULL);
-  fluid_settings_register_int(settings, "synth.effects-channels",
-			      2, 2, 2, 0, NULL, NULL);
-  fluid_settings_register_num(settings, "synth.sample-rate",
-			      44100.0f, 8000.0f, 96000.0f,
-			      0, NULL, NULL);
-  fluid_settings_register_int(settings, "synth.device-id",
-			      0, 0, 126, 0, NULL, NULL);
-  fluid_settings_register_int(settings, "synth.cpu-cores", 1, 1, 256, 0, NULL, NULL);
+  fluid_settings_register_int(settings, "synth.polyphony", 256, 1, 65535, 0);
+  fluid_settings_register_int(settings, "synth.midi-channels", 16, 16, 256, 0);
+  fluid_settings_register_num(settings, "synth.gain", 0.2f, 0.0f, 10.0f, 0);
+  fluid_settings_register_int(settings, "synth.audio-channels", 1, 1, 128, 0);
+  fluid_settings_register_int(settings, "synth.audio-groups", 1, 1, 128, 0);
+  fluid_settings_register_int(settings, "synth.effects-channels", 2, 2, 2, 0);
+  fluid_settings_register_num(settings, "synth.sample-rate", 44100.0f, 8000.0f, 96000.0f, 0);
+  fluid_settings_register_int(settings, "synth.device-id", 0, 0, 126, 0);
+  fluid_settings_register_int(settings, "synth.cpu-cores", 1, 1, 256, 0);
 
-  fluid_settings_register_int(settings, "synth.min-note-length", 10, 0, 65535, 0, NULL, NULL);
+  fluid_settings_register_int(settings, "synth.min-note-length", 10, 0, 65535, 0);
   
-  fluid_settings_register_int(settings, "synth.threadsafe-api", 1, 0, 1,
-                              FLUID_HINT_TOGGLED, NULL, NULL);
-  fluid_settings_register_int(settings, "synth.parallel-render", 1, 0, 1,
-                              FLUID_HINT_TOGGLED, NULL, NULL);
+  fluid_settings_register_int(settings, "synth.threadsafe-api", 1, 0, 1, FLUID_HINT_TOGGLED);
+  fluid_settings_register_int(settings, "synth.parallel-render", 1, 0, 1, FLUID_HINT_TOGGLED);
 
-  fluid_synth_register_overflow(settings, NULL, NULL);
+  fluid_settings_register_num(settings, "synth.overflow.percussion", 4000, -10000, 10000, 0);
+  fluid_settings_register_num(settings, "synth.overflow.sustained", -1000, -10000, 10000, 0);
+  fluid_settings_register_num(settings, "synth.overflow.released", -2000, -10000, 10000, 0);
+  fluid_settings_register_num(settings, "synth.overflow.age", 1000, -10000, 10000, 0);
+  fluid_settings_register_num(settings, "synth.overflow.volume", 500, -10000, 10000, 0);
 
-  fluid_settings_register_str(settings, "synth.midi-bank-select", "gs", 0, NULL, NULL);
+  fluid_settings_register_str(settings, "synth.midi-bank-select", "gs", 0);
   fluid_settings_add_option(settings, "synth.midi-bank-select", "gm");
   fluid_settings_add_option(settings, "synth.midi-bank-select", "gs");
   fluid_settings_add_option(settings, "synth.midi-bank-select", "xg");
   fluid_settings_add_option(settings, "synth.midi-bank-select", "mma");
   
-  fluid_settings_register_str(settings, "synth.volenv", "emu", 0, NULL, NULL);
+  fluid_settings_register_str(settings, "synth.volenv", "emu", 0);
   fluid_settings_add_option(settings, "synth.volenv", "emu");
   fluid_settings_add_option(settings, "synth.volenv", "compliant");
 }
@@ -620,10 +590,17 @@ new_fluid_synth(fluid_settings_t *settings)
 			      (fluid_int_update_t) fluid_synth_update_polyphony, synth);
   fluid_settings_callback_int(settings, "synth.device-id",
                               (fluid_int_update_t) fluid_synth_update_device_id, synth);
+  fluid_settings_callback_num(settings, "synth.overflow.percussion",
+                              (fluid_num_update_t) fluid_synth_update_overflow, synth);
+  fluid_settings_callback_num(settings, "synth.overflow.sustained",
+                              (fluid_num_update_t) fluid_synth_update_overflow, synth);
+  fluid_settings_callback_num(settings, "synth.overflow.released",
+                              (fluid_num_update_t) fluid_synth_update_overflow, synth);
+  fluid_settings_callback_num(settings, "synth.overflow.age",
+                              (fluid_num_update_t) fluid_synth_update_overflow, synth);
+  fluid_settings_callback_num(settings, "synth.overflow.volume",
+                              (fluid_num_update_t) fluid_synth_update_overflow, synth);
 
-  fluid_synth_register_overflow(settings, 
-				(fluid_num_update_t) fluid_synth_update_overflow, synth);
-				
   /* do some basic sanity checking on the settings */
 
   if (synth->midi_channels % 16 != 0) {

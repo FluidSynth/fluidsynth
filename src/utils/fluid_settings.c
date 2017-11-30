@@ -87,7 +87,7 @@ typedef struct {
 } fluid_setting_node_t;
 
 static fluid_setting_node_t*
-new_fluid_str_setting(const char* value, const char* def, int hints, fluid_str_update_t fun, void* data)
+new_fluid_str_setting(const char* value, const char* def, int hints)
 {
   fluid_setting_node_t* node;
   fluid_str_setting_t* str;
@@ -101,14 +101,14 @@ new_fluid_str_setting(const char* value, const char* def, int hints, fluid_str_u
   }
 
   node->type = FLUID_STR_TYPE;
+
   str = &node->str;
-  
   str->value = value? FLUID_STRDUP(value) : NULL;
   str->def = def? FLUID_STRDUP(def) : NULL;
   str->hints = hints;
   str->options = NULL;
-  str->update = fun;
-  str->data = data;
+  str->update = NULL;
+  str->data = NULL;
   return node;
 }
 
@@ -138,8 +138,7 @@ delete_fluid_str_setting(fluid_setting_node_t* node)
 
 
 static fluid_setting_node_t*
-new_fluid_num_setting(double min, double max, double def,
-		     int hints, fluid_num_update_t fun, void* data)
+new_fluid_num_setting(double min, double max, double def, int hints)
 {
   fluid_setting_node_t* node;
   fluid_num_setting_t* num;
@@ -153,15 +152,15 @@ new_fluid_num_setting(double min, double max, double def,
   }
 
   node->type = FLUID_NUM_TYPE;
+
   num = &node->num;
-  
   num->value = def;
   num->def = def;
   num->min = min;
   num->max = max;
   num->hints = hints;
-  num->update = fun;
-  num->data = data;
+  num->update = NULL;
+  num->data = NULL;
   
   return node;
 }
@@ -176,8 +175,7 @@ delete_fluid_num_setting(fluid_setting_node_t* node)
 }
 
 static fluid_setting_node_t*
-new_fluid_int_setting(int min, int max, int def,
-		     int hints, fluid_int_update_t fun, void* data)
+new_fluid_int_setting(int min, int max, int def, int hints)
 {
   fluid_setting_node_t* node;
   fluid_int_setting_t* i;
@@ -191,15 +189,15 @@ new_fluid_int_setting(int min, int max, int def,
   }
 
   node->type = FLUID_INT_TYPE;
+
   i = &node->i;
-  
   i->value = def;
   i->def = def;
   i->min = min;
   i->max = max;
   i->hints = hints;
-  i->update = fun;
-  i->data = data;
+  i->update = NULL;
+  i->data = NULL;
   return node;
 }
 
@@ -471,13 +469,10 @@ fluid_settings_set(fluid_settings_t* settings, const char *name, fluid_setting_n
  * @param name the setting's name
  * @param def the default value for the setting
  * @param hints the hints for the setting
- * @param fun an update function for the setting
- * @param data user supplied data
  * @return #FLUID_OK if the value has been register correctly, #FLUID_FAILED otherwise
  */
 int
-fluid_settings_register_str(fluid_settings_t* settings, const char* name, const char* def, int hints,
-			    fluid_str_update_t fun, void* data)
+fluid_settings_register_str(fluid_settings_t* settings, const char* name, const char* def, int hints)
 {
   fluid_setting_node_t *node;
   int retval = FLUID_FAILED;
@@ -489,15 +484,13 @@ fluid_settings_register_str(fluid_settings_t* settings, const char* name, const 
   fluid_rec_mutex_lock (settings->mutex);
 
   if (fluid_settings_get(settings, name, &node) != FLUID_OK) {
-    node = new_fluid_str_setting(def, def, hints, fun, data);
+    node = new_fluid_str_setting(def, def, hints);
     retval = fluid_settings_set(settings, name, node);
     if (retval != FLUID_OK) delete_fluid_str_setting (node);
   } else {
     /* if variable already exists, don't change its value. */
     if (node->type == FLUID_STR_TYPE) {
       fluid_str_setting_t* setting = &node->str;
-      setting->update = fun;
-      setting->data = data;
       setting->def = def? FLUID_STRDUP(def) : NULL;
       setting->hints = hints;
       retval = FLUID_OK;
@@ -520,14 +513,11 @@ fluid_settings_register_str(fluid_settings_t* settings, const char* name, const 
  * @param min the smallest allowed value for the setting
  * @param max the largest allowed value for the setting
  * @param hints the hints for the setting
- * @param fun an update function for the setting
- * @param data user supplied data
  * @return #FLUID_OK if the value has been register correctly, #FLUID_FAILED otherwise
  */
 int
 fluid_settings_register_num(fluid_settings_t* settings, const char* name, double def,
-			    double min, double max, int hints,
-			    fluid_num_update_t fun, void* data)
+			    double min, double max, int hints)
 {
   fluid_setting_node_t *node;
   int retval = FLUID_FAILED;
@@ -543,15 +533,13 @@ fluid_settings_register_num(fluid_settings_t* settings, const char* name, double
 
   if (fluid_settings_get(settings, name, &node) != FLUID_OK) {
     /* insert a new setting */
-    node = new_fluid_num_setting(min, max, def, hints, fun, data);
+    node = new_fluid_num_setting(min, max, def, hints);
     retval = fluid_settings_set(settings, name, node);
     if (retval != FLUID_OK) delete_fluid_num_setting (node);
   } else {
     if (node->type == FLUID_NUM_TYPE) {
       /* update the existing setting but don't change its value */
       fluid_num_setting_t* setting = &node->num;
-      setting->update = fun;
-      setting->data = data;
       setting->min = min;
       setting->max = max;
       setting->def = def;
@@ -577,14 +565,11 @@ fluid_settings_register_num(fluid_settings_t* settings, const char* name, double
  * @param min the smallest allowed value for the setting
  * @param max the largest allowed value for the setting
  * @param hints the hints for the setting
- * @param fun an update function for the setting
- * @param data user supplied data
  * @return #FLUID_OK if the value has been register correctly, #FLUID_FAILED otherwise
  */
 int
 fluid_settings_register_int(fluid_settings_t* settings, const char* name, int def,
-			    int min, int max, int hints,
-			    fluid_int_update_t fun, void* data)
+			    int min, int max, int hints)
 {
   fluid_setting_node_t *node;
   int retval = FLUID_FAILED;
@@ -600,15 +585,13 @@ fluid_settings_register_int(fluid_settings_t* settings, const char* name, int de
 
   if (fluid_settings_get(settings, name, &node) != FLUID_OK) {
     /* insert a new setting */
-    node = new_fluid_int_setting(min, max, def, hints, fun, data);
+    node = new_fluid_int_setting(min, max, def, hints);
     retval = fluid_settings_set(settings, name, node);
     if (retval != FLUID_OK) delete_fluid_int_setting (node);
   } else {
     if (node->type == FLUID_INT_TYPE) {
       /* update the existing setting but don't change its value */
       fluid_int_setting_t* setting = &node->i;
-      setting->update = fun;
-      setting->data = data;
       setting->min = min;
       setting->max = max;
       setting->def = def;
@@ -890,7 +873,7 @@ fluid_settings_setstr(fluid_settings_t* settings, const char *name, const char *
     }
   } else {
     /* insert a new setting */
-    node = new_fluid_str_setting(str, NULL, 0, NULL, NULL);
+    node = new_fluid_str_setting(str, NULL, 0);
     retval = fluid_settings_set(settings, name, node);
     if (retval != FLUID_OK) delete_fluid_str_setting (node);
   }
@@ -1221,7 +1204,7 @@ fluid_settings_setnum(fluid_settings_t* settings, const char *name, double val)
     }
   } else {
     /* insert a new setting */
-    node = new_fluid_num_setting(-1e10, 1e10, 0.0f, 0, NULL, NULL);
+    node = new_fluid_num_setting(-1e10, 1e10, 0.0f, 0);
     node->num.value = val;
     retval = fluid_settings_set(settings, name, node);
     if (retval != FLUID_OK) delete_fluid_num_setting (node);
@@ -1373,7 +1356,7 @@ fluid_settings_setint(fluid_settings_t* settings, const char *name, int val)
     }
   } else {
     /* insert a new setting */
-    node = new_fluid_int_setting(INT_MIN, INT_MAX, 0, 0, NULL, NULL);
+    node = new_fluid_int_setting(INT_MIN, INT_MAX, 0, 0);
     node->i.value = val;
     retval = fluid_settings_set(settings, name, node);
     if (retval != FLUID_OK) delete_fluid_int_setting (node);

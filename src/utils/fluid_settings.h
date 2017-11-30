@@ -28,8 +28,7 @@ int fluid_settings_remove_option(fluid_settings_t* settings, const char* name, c
 
 typedef int (*fluid_str_update_t)(void* data, const char* name, const char* value);
 
-int fluid_settings_register_str(fluid_settings_t* settings, const char* name, const char* def, int hints,
-                                fluid_str_update_t fun, void* data);
+int fluid_settings_register_str(fluid_settings_t* settings, const char* name, const char* def, int hints);
 int fluid_settings_callback_str(fluid_settings_t* settings, const char* name,
                                 fluid_str_update_t fun, void* data);
 
@@ -37,16 +36,14 @@ int fluid_settings_callback_str(fluid_settings_t* settings, const char* name,
 typedef int (*fluid_num_update_t)(void* data, const char* name, double value);
 
 int fluid_settings_register_num(fluid_settings_t* settings, const char* name, double def,
-                                double min, double max, int hints,
-                                fluid_num_update_t fun, void* data);
+                                double min, double max, int hints);
 int fluid_settings_callback_num(fluid_settings_t* settings, const char* name,
                                 fluid_num_update_t fun, void* data);
 
 
 typedef int (*fluid_int_update_t)(void* data, const char* name, int value);
 int fluid_settings_register_int(fluid_settings_t* settings, const char* name, int def,
-                                int min, int max, int hints,
-                                fluid_int_update_t fun, void* data);
+                                int min, int max, int hints);
 int fluid_settings_callback_int(fluid_settings_t* settings, const char* name,
                                 fluid_int_update_t fun, void* data);
 

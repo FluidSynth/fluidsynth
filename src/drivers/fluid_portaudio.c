@@ -122,7 +122,7 @@ fluid_portaudio_driver_settings (fluid_settings_t *settings)
   PaError err;
   int i;
 
-  fluid_settings_register_str (settings, "audio.portaudio.device", PORTAUDIO_DEFAULT_DEVICE, 0, NULL, NULL);
+  fluid_settings_register_str (settings, "audio.portaudio.device", PORTAUDIO_DEFAULT_DEVICE, 0);
   fluid_settings_add_option (settings, "audio.portaudio.device", PORTAUDIO_DEFAULT_DEVICE);
 
   err = Pa_Initialize();
