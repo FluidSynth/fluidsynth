@@ -1105,7 +1105,7 @@ fluid_settings_setnum(fluid_settings_t* settings, const char *name, double val)
       if (val < setting->min || val > setting->max)
       {
           FLUID_LOG(FLUID_DBG, "requested set value for %s out of range", name);
-          return retval;
+          goto exit;
       }
 
       setting->value = val;
@@ -1124,8 +1124,8 @@ fluid_settings_setnum(fluid_settings_t* settings, const char *name, double val)
       (*node->callback)(settings, name, node->data);
   }
 
+exit:
   fluid_rec_mutex_unlock (settings->mutex);
-
   return retval;
 }
 
@@ -1259,7 +1259,7 @@ fluid_settings_setint(fluid_settings_t* settings, const char *name, int val)
       if (val < setting->min || val > setting->max)
       {
           FLUID_LOG(FLUID_DBG, "requested set value for %s out of range", name);
-          return retval;
+          goto exit;
       }
 
       setting->value = val;
@@ -1278,8 +1278,8 @@ fluid_settings_setint(fluid_settings_t* settings, const char *name, int val)
       (*node->callback)(settings, name, node->data);
   }
 
+exit:
   fluid_rec_mutex_unlock (settings->mutex);
-
   return retval;
 }
 
