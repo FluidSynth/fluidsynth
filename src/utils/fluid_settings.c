@@ -626,6 +626,114 @@ fluid_settings_register_int(fluid_settings_t* settings, const char* name, int de
 }
 
 /**
+ * Registers a callback for the specified string setting.
+ *
+ * @param settings a settings object
+ * @param name the setting's name
+ * @param callback an update function for the setting
+ * @param data user supplied data passed to the update function
+ * @return #FLUID_OK if the callback has been set, #FLUID_FAILED otherwise
+ */
+int fluid_settings_callback_str(fluid_settings_t* settings, const char* name,
+        fluid_str_update_t callback, void* data)
+{
+    fluid_setting_node_t *node;
+    fluid_str_setting_t *setting;
+
+    fluid_return_val_if_fail (settings != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail (name != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail (name[0] != '\0', FLUID_FAILED);
+
+    fluid_rec_mutex_lock (settings->mutex);
+
+    if ((fluid_settings_get(settings, name, &node) != FLUID_OK)
+        || node->type != FLUID_STR_TYPE)
+    {
+        fluid_rec_mutex_unlock(settings->mutex);
+        return FLUID_FAILED;
+    }
+
+    setting = &node->str;
+    setting->update = callback;
+    setting->data = data;
+
+    fluid_rec_mutex_unlock(settings->mutex);
+    return FLUID_OK;
+}
+
+/**
+ * Registers a callback for the specified numeric setting.
+ *
+ * @param settings a settings object
+ * @param name the setting's name
+ * @param callback an update function for the setting
+ * @param data user supplied data passed to the update function
+ * @return #FLUID_OK if the callback has been set, #FLUID_FAILED otherwise
+ */
+int fluid_settings_callback_num(fluid_settings_t* settings, const char* name,
+        fluid_num_update_t callback, void* data)
+{
+    fluid_setting_node_t *node;
+    fluid_num_setting_t *setting;
+
+    fluid_return_val_if_fail (settings != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail (name != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail (name[0] != '\0', FLUID_FAILED);
+
+    fluid_rec_mutex_lock (settings->mutex);
+
+    if ((fluid_settings_get(settings, name, &node) != FLUID_OK)
+        || node->type != FLUID_NUM_TYPE)
+    {
+        fluid_rec_mutex_unlock(settings->mutex);
+        return FLUID_FAILED;
+    }
+
+    setting = &node->num;
+    setting->update = callback;
+    setting->data = data;
+
+    fluid_rec_mutex_unlock(settings->mutex);
+    return FLUID_OK;
+}
+
+/**
+ * Registers a callback for the specified int setting.
+ *
+ * @param settings a settings object
+ * @param name the setting's name
+ * @param callback an update function for the setting
+ * @param data user supplied data passed to the update function
+ * @return #FLUID_OK if the callback has been set, #FLUID_FAILED otherwise
+ */
+int fluid_settings_callback_int(fluid_settings_t* settings, const char* name,
+        fluid_int_update_t callback, void* data)
+{
+    fluid_setting_node_t *node;
+    fluid_int_setting_t *setting;
+
+    fluid_return_val_if_fail (settings != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail (name != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail (name[0] != '\0', FLUID_FAILED);
+
+    fluid_rec_mutex_lock (settings->mutex);
+
+    if ((fluid_settings_get(settings, name, &node) != FLUID_OK)
+        || node->type != FLUID_INT_TYPE)
+    {
+        fluid_rec_mutex_unlock(settings->mutex);
+        return FLUID_FAILED;
+    }
+
+    setting = &node->i;
+    setting->update = callback;
+    setting->data = data;
+
+    fluid_rec_mutex_unlock(settings->mutex);
+    return FLUID_OK;
+}
+
+/**
  * Get the type of the setting with the given name
  *
  * @param settings a settings object

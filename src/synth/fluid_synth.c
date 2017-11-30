@@ -612,18 +612,13 @@ new_fluid_synth(fluid_settings_t *settings)
   fluid_settings_getint(settings, "synth.cpu-cores", &synth->cores);
 
   /* register the callbacks */
-  fluid_settings_register_num(settings, "synth.sample-rate",
-			      44100.0f, 8000.0f, 96000.0f, 0,
+  fluid_settings_callback_num(settings, "synth.sample-rate",
 			      (fluid_num_update_t) fluid_synth_update_sample_rate, synth);
-  fluid_settings_register_num(settings, "synth.gain",
-			      0.2f, 0.0f, 10.0f, 0,
+  fluid_settings_callback_num(settings, "synth.gain",
 			      (fluid_num_update_t) fluid_synth_update_gain, synth);
-  fluid_settings_register_int(settings, "synth.polyphony",
-			      synth->polyphony, 1, 65535, 0,
-			      (fluid_int_update_t) fluid_synth_update_polyphony,
-                              synth);
-  fluid_settings_register_int(settings, "synth.device-id",
-			      synth->device_id, 126, 0, 0,
+  fluid_settings_callback_int(settings, "synth.polyphony",
+			      (fluid_int_update_t) fluid_synth_update_polyphony, synth);
+  fluid_settings_callback_int(settings, "synth.device-id",
                               (fluid_int_update_t) fluid_synth_update_device_id, synth);
 
   fluid_synth_register_overflow(settings, 

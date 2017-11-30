@@ -30,6 +30,8 @@ typedef int (*fluid_str_update_t)(void* data, const char* name, const char* valu
 
 int fluid_settings_register_str(fluid_settings_t* settings, const char* name, const char* def, int hints,
                                 fluid_str_update_t fun, void* data);
+int fluid_settings_callback_str(fluid_settings_t* settings, const char* name,
+                                fluid_str_update_t fun, void* data);
 
 
 typedef int (*fluid_num_update_t)(void* data, const char* name, double value);
@@ -37,11 +39,15 @@ typedef int (*fluid_num_update_t)(void* data, const char* name, double value);
 int fluid_settings_register_num(fluid_settings_t* settings, const char* name, double def,
                                 double min, double max, int hints,
                                 fluid_num_update_t fun, void* data);
+int fluid_settings_callback_num(fluid_settings_t* settings, const char* name,
+                                fluid_num_update_t fun, void* data);
 
 
 typedef int (*fluid_int_update_t)(void* data, const char* name, int value);
 int fluid_settings_register_int(fluid_settings_t* settings, const char* name, int def,
                                 int min, int max, int hints,
+                                fluid_int_update_t fun, void* data);
+int fluid_settings_callback_int(fluid_settings_t* settings, const char* name,
                                 fluid_int_update_t fun, void* data);
 
 #endif /* _FLUID_SETTINGS_H */
