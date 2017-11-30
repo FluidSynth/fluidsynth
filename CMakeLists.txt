@@ -28,9 +28,9 @@ set ( CMAKE_EXPORT_COMPILE_COMMANDS 1 )
 set ( PACKAGE "fluidsynth" )
 
 # FluidSynth package version
-set ( FLUIDSYNTH_VERSION_MAJOR 1 )
-set ( FLUIDSYNTH_VERSION_MINOR 1 )
-set ( FLUIDSYNTH_VERSION_MICRO 8 )
+set ( FLUIDSYNTH_VERSION_MAJOR 2 )
+set ( FLUIDSYNTH_VERSION_MINOR 0 )
+set ( FLUIDSYNTH_VERSION_MICRO 0 )
 set ( VERSION "${FLUIDSYNTH_VERSION_MAJOR}.${FLUIDSYNTH_VERSION_MINOR}.${FLUIDSYNTH_VERSION_MICRO}" )
 set ( FLUIDSYNTH_VERSION "\"${VERSION}\"" )
 
@@ -43,9 +43,9 @@ set ( FLUIDSYNTH_VERSION "\"${VERSION}\"" )
 # if any interfaces have been added: AGE++
 # if any interfaces have been removed/changed (compatibility broken): AGE=0
 # This is not exactly the same algorithm as the libtool one, but the results are the same.
-set ( LIB_VERSION_CURRENT 1 )
-set ( LIB_VERSION_AGE 6 )
-set ( LIB_VERSION_REVISION 1 )
+set ( LIB_VERSION_CURRENT 2 )
+set ( LIB_VERSION_AGE 0 )
+set ( LIB_VERSION_REVISION 0 )
 set ( LIB_VERSION_INFO
       "${LIB_VERSION_CURRENT}.${LIB_VERSION_AGE}.${LIB_VERSION_REVISION}" )
 
