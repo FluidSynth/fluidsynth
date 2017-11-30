@@ -48,7 +48,7 @@ enum fluid_loop {
   FLUID_LOOP_UNTIL_RELEASE = 3
 };
 
-/**
+/*
  * rvoice ticks-based parameters
  * These parameters must be updated even if the voice is currently quiet.
  */
@@ -77,7 +77,7 @@ struct _fluid_rvoice_envlfo_t
 	fluid_real_t viblfo_to_pitch;
 };
 
-/**
+/*
  * rvoice parameters needed for dsp interpolation
  */
 struct _fluid_rvoice_dsp_t
@@ -129,7 +129,7 @@ struct _fluid_rvoice_dsp_t
    ever add surround positioning, or stereo reverb/chorus */
 #define FLUID_RVOICE_MAX_BUFS (4)
 
-/**
+/*
  * rvoice mixer-related parameters
  */
 struct _fluid_rvoice_buffers_t
@@ -142,7 +142,7 @@ struct _fluid_rvoice_buffers_t
 };
 
 
-/**
+/*
  * Hard real-time parameters needed to synthesize a voice
  */
 struct _fluid_rvoice_t

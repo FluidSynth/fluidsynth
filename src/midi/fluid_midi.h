@@ -265,7 +265,7 @@ int fluid_track_send_events(fluid_track_t* track,
 #define fluid_track_eot(track)  ((track)->cur == NULL)
 
 
-/**
+/*
  * fluid_playlist_item
  * Used as the `data' elements of the fluid_player.playlist.
  * Represents either a filename or a pre-loaded memory buffer.

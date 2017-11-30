@@ -42,7 +42,7 @@ struct _fluid_rvoice_event_t {
 void fluid_rvoice_event_dispatch(fluid_rvoice_event_t* event);
 
 
-/**
+/*
  * Bridge between the renderer thread and the midi state thread. 
  * If is_threadsafe is true, that means fluid_rvoice_eventhandler_fetch_all 
  * can be called in parallell with fluid_rvoice_eventhandler_push/flush
