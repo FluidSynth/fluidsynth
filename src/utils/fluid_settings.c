@@ -832,55 +832,54 @@ int
 fluid_settings_setstr(fluid_settings_t* settings, const char *name, const char *str)
 {
   fluid_setting_node_t *node;
-  int retval = FLUID_FAILED;
+  fluid_str_setting_t *setting;
+  char *new_value = NULL;
+  fluid_str_update_t callback = NULL;
+  void *data = NULL;
 
-  fluid_return_val_if_fail (settings != NULL, retval);
-  fluid_return_val_if_fail (name != NULL, retval);
-  fluid_return_val_if_fail (name[0] != '\0', retval);
+  fluid_return_val_if_fail (settings != NULL, FLUID_FAILED);
+  fluid_return_val_if_fail (name != NULL, FLUID_FAILED);
+  fluid_return_val_if_fail (name[0] != '\0', FLUID_FAILED);
 
   fluid_rec_mutex_lock (settings->mutex);
 
-  if (fluid_settings_get (settings, name, &node) == FLUID_OK) {
-    if (node->type == FLUID_STR_TYPE) {
-      fluid_str_setting_t *setting = &node->str;
-
-      if (setting->value) FLUID_FREE (setting->value);
-      setting->value = str ? FLUID_STRDUP (str) : NULL;
-
-      /* Call under lock to keep update() synchronized with the current value */
-      if (setting->update) (*setting->update)(setting->data, name, str);
-      retval = FLUID_OK;
-    }
-    else if (node->type == FLUID_INT_TYPE)      /* Handle yes/no for boolean values for backwards compatibility */
-    {
-      fluid_int_setting_t *setting = &node->i;
-
-      if (setting->hints & FLUID_HINT_TOGGLED)
-      {
-        if (FLUID_STRCMP (str, "yes") == 0)
-        {
-          setting->value = TRUE;
-          if (setting->update) (*setting->update)(setting->data, name, TRUE);
-          retval = FLUID_OK;
-        }
-        else if (FLUID_STRCMP (str, "no") == 0)
-        {
-          setting->value = FALSE;
-          if (setting->update) (*setting->update)(setting->data, name, FALSE);
-          retval = FLUID_OK;
-        }
-      }
-    }
-  } else {
-    /* insert a new setting */
-    node = new_fluid_str_setting(str, NULL, 0);
-    retval = fluid_settings_set(settings, name, node);
-    if (retval != FLUID_OK) delete_fluid_str_setting (node);
+  if ((fluid_settings_get (settings, name, &node) != FLUID_OK)
+      || (node->type != FLUID_STR_TYPE)) {
+        goto error_recovery;
   }
 
+  setting = &node->str;
+
+  if (setting->value) {
+    FLUID_FREE (setting->value);
+  }
+
+  if (str) {
+    new_value = FLUID_STRDUP (str);
+    if (new_value == NULL) {
+      FLUID_LOG (FLUID_ERR, "Out of memory");
+      goto error_recovery;
+    }
+  }
+
+  setting->value = new_value;
+
+  callback = setting->update;
+  data = setting->data;
+
+  /* Release the mutex before calling the update callback, to avoid
+   * possible deadlocks with FluidSynths API lock */
   fluid_rec_mutex_unlock (settings->mutex);
 
-  return retval;
+  if (callback) {
+    (*callback)(data, name, new_value);
+  }
+
+  return FLUID_OK;
+
+error_recovery:
+  fluid_rec_mutex_unlock (settings->mutex);
+  return FLUID_FAILED;
 }
 
 /**
@@ -1178,41 +1177,45 @@ int
 fluid_settings_setnum(fluid_settings_t* settings, const char *name, double val)
 {
   fluid_setting_node_t *node;
-  int retval = FLUID_FAILED;
+  fluid_num_setting_t *setting;
+  fluid_num_update_t callback = NULL;
+  void *data = NULL;
 
-  fluid_return_val_if_fail (settings != NULL, retval);
-  fluid_return_val_if_fail (name != NULL, retval);
-  fluid_return_val_if_fail (name[0] != '\0', retval);
+  fluid_return_val_if_fail (settings != NULL, FLUID_FAILED);
+  fluid_return_val_if_fail (name != NULL, FLUID_FAILED);
+  fluid_return_val_if_fail (name[0] != '\0', FLUID_FAILED);
 
   fluid_rec_mutex_lock (settings->mutex);
 
-  if (fluid_settings_get(settings, name, &node) == FLUID_OK) {
-    if (node->type == FLUID_NUM_TYPE) {
-      fluid_num_setting_t* setting = &node->num;
-
-      if (val < setting->min || val > setting->max)
-      {
-          FLUID_LOG(FLUID_DBG, "requested set value for %s out of range", name);
-          return retval;
-      }
-
-      setting->value = val;
-
-      /* Call under lock to keep update() synchronized with the current value */
-      if (setting->update) (*setting->update)(setting->data, name, val);
-      retval = FLUID_OK;
-    }
-  } else {
-    /* insert a new setting */
-    node = new_fluid_num_setting(-1e10, 1e10, 0.0f, 0);
-    node->num.value = val;
-    retval = fluid_settings_set(settings, name, node);
-    if (retval != FLUID_OK) delete_fluid_num_setting (node);
+  if ((fluid_settings_get (settings, name, &node) != FLUID_OK)
+      || (node->type != FLUID_NUM_TYPE)) {
+        goto error_recovery;
   }
 
+  setting = &node->num;
+  if (val < setting->min || val > setting->max) {
+    FLUID_LOG(FLUID_DBG, "requested set value for %s out of range", name);
+    goto error_recovery;
+  }
+
+  setting->value = val;
+
+  callback = setting->update;
+  data = setting->data;
+
+  /* Release the mutex before calling the update callback, to avoid
+   * possible deadlocks with FluidSynths API lock */
   fluid_rec_mutex_unlock (settings->mutex);
 
-  return retval;
+  if (callback) {
+    (*callback)(data, name, val);
+  }
+
+  return FLUID_OK;
+
+error_recovery:
+  fluid_rec_mutex_unlock (settings->mutex);
+  return FLUID_FAILED;
 }
 
 /**
@@ -1330,41 +1333,45 @@ int
 fluid_settings_setint(fluid_settings_t* settings, const char *name, int val)
 {
   fluid_setting_node_t *node;
-  int retval = FLUID_FAILED;
+  fluid_int_setting_t *setting;
+  fluid_int_update_t callback = NULL;
+  void *data = NULL;
 
-  fluid_return_val_if_fail (settings != NULL, retval);
-  fluid_return_val_if_fail (name != NULL, retval);
-  fluid_return_val_if_fail (name[0] != '\0', retval);
+  fluid_return_val_if_fail (settings != NULL, FLUID_FAILED);
+  fluid_return_val_if_fail (name != NULL, FLUID_FAILED);
+  fluid_return_val_if_fail (name[0] != '\0', FLUID_FAILED);
 
   fluid_rec_mutex_lock (settings->mutex);
 
-  if (fluid_settings_get(settings, name, &node) == FLUID_OK) {
-    if (node->type == FLUID_INT_TYPE) {
-      fluid_int_setting_t* setting = &node->i;
-
-      if (val < setting->min || val > setting->max)
-      {
-          FLUID_LOG(FLUID_DBG, "requested set value for %s out of range", name);
-          return retval;
-      }
-
-      setting->value = val;
-
-      /* Call under lock to keep update() synchronized with the current value */
-      if (setting->update) (*setting->update)(setting->data, name, val);
-      retval = FLUID_OK;
-    }
-  } else {
-    /* insert a new setting */
-    node = new_fluid_int_setting(INT_MIN, INT_MAX, 0, 0);
-    node->i.value = val;
-    retval = fluid_settings_set(settings, name, node);
-    if (retval != FLUID_OK) delete_fluid_int_setting (node);
+  if ((fluid_settings_get (settings, name, &node) != FLUID_OK)
+      || (node->type != FLUID_INT_TYPE)) {
+        goto error_recovery;
   }
 
+  setting = &node->i;
+  if (val < setting->min || val > setting->max) {
+    FLUID_LOG(FLUID_DBG, "requested set value for %s out of range", name);
+    goto error_recovery;
+  }
+
+  setting->value = val;
+
+  callback = setting->update;
+  data = setting->data;
+
+  /* Release the mutex before calling the update callback, to avoid
+   * possible deadlocks with FluidSynths API lock */
   fluid_rec_mutex_unlock (settings->mutex);
 
-  return retval;
+  if (callback) {
+    (*callback)(data, name, val);
+  }
+
+  return FLUID_OK;
+
+error_recovery:
+  fluid_rec_mutex_unlock (settings->mutex);
+  return FLUID_FAILED;
 }
 
 /**
