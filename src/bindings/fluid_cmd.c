@@ -1363,9 +1363,9 @@ fluid_handle_set(void* data, int ac, char** av, fluid_ostream_t out)
       if (fluid_settings_get_hints (handler->synth->settings, av[0], &hints) == FLUID_OK
           && hints & FLUID_HINT_TOGGLED)
       {
-          if (FLUID_STRCMP (av[1], "yes") == 0 || FLUID_STRCMP (av[1], "True") == 0
-              || FLUID_STRCMP (av[1], "TRUE") == 0 || FLUID_STRCMP (av[1], "true") == 0
-              || FLUID_STRCMP (av[1], "T") == 0)
+          if (FLUID_STRCASECMP (av[1], "yes") == 0
+              || FLUID_STRCASECMP (av[1], "true") == 0
+              || FLUID_STRCASECMP (av[1], "t") == 0)
           ival = 1;
           else ival = atoi (av[1]);
       }
