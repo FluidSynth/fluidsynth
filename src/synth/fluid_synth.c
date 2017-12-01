@@ -43,9 +43,9 @@ static int fluid_synth_noteon_LOCAL(fluid_synth_t* synth, int chan, int key,
                                        int vel);
 static int fluid_synth_noteoff_LOCAL(fluid_synth_t* synth, int chan, int key);
 static int fluid_synth_cc_LOCAL(fluid_synth_t* synth, int channum, int num);
-static int fluid_synth_update_device_id (fluid_synth_t *synth, char *name,
+static void fluid_synth_update_device_id (fluid_synth_t *synth, char *name,
                                          int value);
-static int fluid_synth_update_overflow (fluid_synth_t *synth, char *name,
+static void fluid_synth_update_overflow (fluid_synth_t *synth, char *name,
                                          fluid_real_t value);
 static int fluid_synth_sysex_midi_tuning (fluid_synth_t *synth, const char *data,
                                           int len, char *response,
@@ -71,12 +71,12 @@ fluid_synth_get_preset_by_sfont_name(fluid_synth_t* synth, const char *sfontname
                                      unsigned int banknum, unsigned int prognum);
 
 static void fluid_synth_update_presets(fluid_synth_t* synth);
-static int fluid_synth_update_sample_rate(fluid_synth_t* synth,
+static void fluid_synth_update_sample_rate(fluid_synth_t* synth,
                                    char* name, double value);
-static int fluid_synth_update_gain(fluid_synth_t* synth,
+static void fluid_synth_update_gain(fluid_synth_t* synth,
                                    char* name, double value);
 static void fluid_synth_update_gain_LOCAL(fluid_synth_t* synth);
-static int fluid_synth_update_polyphony(fluid_synth_t* synth,
+static void fluid_synth_update_polyphony(fluid_synth_t* synth,
                                         char* name, int value);
 static int fluid_synth_update_polyphony_LOCAL(fluid_synth_t* synth, int new_polyphony);
 static void init_dither(void);
@@ -1331,13 +1331,12 @@ fluid_synth_get_cc(fluid_synth_t* synth, int chan, int num, int* pval)
 /*
  * Handler for synth.device-id setting.
  */
-static int
+static void
 fluid_synth_update_device_id (fluid_synth_t *synth, char *name, int value)
 {
   fluid_synth_api_enter(synth);
   synth->device_id = value;
   fluid_synth_api_exit(synth);
-  return 0;
 }
 
 /**
@@ -2345,11 +2344,10 @@ fluid_synth_update_presets(fluid_synth_t* synth)
 }
 
 /* Handler for synth.sample-rate setting. */
-static int
+static void
 fluid_synth_update_sample_rate(fluid_synth_t* synth, char* name, double value)
 {
   fluid_synth_set_sample_rate(synth, (float) value);
-  return 0;
 }
 
 /**
@@ -2381,11 +2379,10 @@ fluid_synth_set_sample_rate(fluid_synth_t* synth, float sample_rate)
 
 
 /* Handler for synth.gain setting. */
-static int
+static void
 fluid_synth_update_gain(fluid_synth_t* synth, char* name, double value)
 {
   fluid_synth_set_gain(synth, (float) value);
-  return 0;
 }
 
 /**
@@ -2442,11 +2439,10 @@ fluid_synth_get_gain(fluid_synth_t* synth)
 /*
  * Handler for synth.polyphony setting.
  */
-static int
+static void
 fluid_synth_update_polyphony(fluid_synth_t* synth, char* name, int value)
 {
   fluid_synth_set_polyphony(synth, value);
-  return 0;
 }
 
 /**
@@ -3129,7 +3125,7 @@ fluid_synth_render_blocks(fluid_synth_t* synth, int blockcount)
 }
 
 
-static int fluid_synth_update_overflow (fluid_synth_t *synth, char *name,
+static void fluid_synth_update_overflow (fluid_synth_t *synth, char *name,
                                          fluid_real_t value)
 {
   double d;
@@ -3146,7 +3142,7 @@ static int fluid_synth_update_overflow (fluid_synth_t *synth, char *name,
   fluid_settings_getnum(synth->settings, "synth.overflow.age", &d);
   synth->overflow.age = d;
   
-  FLUID_API_RETURN(0);
+  fluid_synth_api_exit(synth);
 }
 
 
