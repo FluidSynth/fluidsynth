@@ -516,6 +516,7 @@ new_fluid_synth(fluid_settings_t *settings)
   fluid_synth_t* synth;
   fluid_sfloader_t* loader;
   double gain;
+  double num_val;
   int i, nbuf;
   int with_ladspa = 0;
   int with_reverb = 0;
@@ -576,6 +577,17 @@ new_fluid_synth(fluid_settings_t *settings)
   synth->gain = gain;
   fluid_settings_getint(settings, "synth.device-id", &synth->device_id);
   fluid_settings_getint(settings, "synth.cpu-cores", &synth->cores);
+
+  fluid_settings_getnum(settings, "synth.overflow.percussion", &num_val);
+  synth->overflow.percussion = num_val;
+  fluid_settings_getnum(settings, "synth.overflow.released", &num_val);
+  synth->overflow.released = num_val;
+  fluid_settings_getnum(settings, "synth.overflow.sustained", &num_val);
+  synth->overflow.sustained = num_val;
+  fluid_settings_getnum(settings, "synth.overflow.volume", &num_val);
+  synth->overflow.volume = num_val;
+  fluid_settings_getnum(settings, "synth.overflow.age", &num_val);
+  synth->overflow.age = num_val;
 
   /* register the callbacks */
   fluid_settings_callback_num(settings, "synth.sample-rate",
@@ -729,7 +741,6 @@ new_fluid_synth(fluid_settings_t *settings)
 
   fluid_synth_set_sample_rate(synth, synth->sample_rate);
   
-  fluid_synth_handle_overflow(synth, "", 0.0f);
   fluid_synth_update_mixer(synth, fluid_rvoice_mixer_set_polyphony, 
 			   synth->polyphony, 0.0f);
   fluid_synth_set_reverb_on(synth, fluid_atomic_int_get(&synth->with_reverb));
