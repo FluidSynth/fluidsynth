@@ -3132,22 +3132,26 @@ fluid_synth_render_blocks(fluid_synth_t* synth, int blockcount)
  */
 static void fluid_synth_handle_overflow (void *data, const char *name, double value)
 {
-  double d;
   fluid_synth_t *synth = (fluid_synth_t *)data;
   fluid_return_if_fail(synth != NULL);
 
   fluid_synth_api_enter(synth);
-  
-  fluid_settings_getnum(synth->settings, "synth.overflow.percussion", &d);
-  synth->overflow.percussion = d;
-  fluid_settings_getnum(synth->settings, "synth.overflow.released", &d);
-  synth->overflow.released = d;
-  fluid_settings_getnum(synth->settings, "synth.overflow.sustained", &d);
-  synth->overflow.sustained = d;
-  fluid_settings_getnum(synth->settings, "synth.overflow.volume", &d);
-  synth->overflow.volume = d;
-  fluid_settings_getnum(synth->settings, "synth.overflow.age", &d);
-  synth->overflow.age = d;
+
+  if (FLUID_STRCMP(name, "synth.overflow.percussion") == 0) {
+    synth->overflow.percussion = value;
+  }
+  else if (FLUID_STRCMP(name, "synth.overflow.released") == 0) {
+    synth->overflow.released = value;
+  }
+  else if (FLUID_STRCMP(name, "synth.overflow.sustained") == 0) {
+    synth->overflow.sustained = value;
+  }
+  else if (FLUID_STRCMP(name, "synth.overflow.volume") == 0) {
+    synth->overflow.volume = value;
+  }
+  else if (FLUID_STRCMP(name, "synth.overflow.age") == 0) {
+    synth->overflow.age = value;
+  }
   
   fluid_synth_api_exit(synth);
 }
