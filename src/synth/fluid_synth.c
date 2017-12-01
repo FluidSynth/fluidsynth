@@ -43,8 +43,6 @@ static int fluid_synth_noteon_LOCAL(fluid_synth_t* synth, int chan, int key,
                                        int vel);
 static int fluid_synth_noteoff_LOCAL(fluid_synth_t* synth, int chan, int key);
 static int fluid_synth_cc_LOCAL(fluid_synth_t* synth, int channum, int num);
-static void fluid_synth_update_device_id (void *data, const char *name, int value);
-static void fluid_synth_update_overflow (void *data, const char *name, double value);
 static int fluid_synth_sysex_midi_tuning (fluid_synth_t *synth, const char *data,
                                           int len, char *response,
                                           int *response_len, int avail_response,
@@ -69,10 +67,7 @@ fluid_synth_get_preset_by_sfont_name(fluid_synth_t* synth, const char *sfontname
                                      unsigned int banknum, unsigned int prognum);
 
 static void fluid_synth_update_presets(fluid_synth_t* synth);
-static void fluid_synth_update_sample_rate(void *data, const char* name, double value);
-static void fluid_synth_update_gain(void *data, const char* name, double value);
 static void fluid_synth_update_gain_LOCAL(fluid_synth_t* synth);
-static void fluid_synth_update_polyphony(void *data, const char* name, int value);
 static int fluid_synth_update_polyphony_LOCAL(fluid_synth_t* synth, int new_polyphony);
 static void init_dither(void);
 static FLUID_INLINE int roundi (float x);
@@ -103,6 +98,12 @@ static void fluid_synth_set_gen_LOCAL (fluid_synth_t* synth, int chan,
                                        int param, float value, int absolute);
 static void fluid_synth_stop_LOCAL (fluid_synth_t *synth, unsigned int id);
 
+/* Callback handlers for real-time settings */
+static void fluid_synth_handle_sample_rate(void *data, const char *name, double value);
+static void fluid_synth_handle_gain(void *data, const char *name, double value);
+static void fluid_synth_handle_polyphony(void *data, const char *name, int value);
+static void fluid_synth_handle_device_id(void *data, const char *name, int value);
+static void fluid_synth_handle_overflow(void *data, const char *name, double value);
 
 
 /***************************************************************
@@ -578,23 +579,23 @@ new_fluid_synth(fluid_settings_t *settings)
 
   /* register the callbacks */
   fluid_settings_callback_num(settings, "synth.sample-rate",
-			      fluid_synth_update_sample_rate, synth);
+			      fluid_synth_handle_sample_rate, synth);
   fluid_settings_callback_num(settings, "synth.gain",
-			      fluid_synth_update_gain, synth);
+			      fluid_synth_handle_gain, synth);
   fluid_settings_callback_int(settings, "synth.polyphony",
-			      fluid_synth_update_polyphony, synth);
+			      fluid_synth_handle_polyphony, synth);
   fluid_settings_callback_int(settings, "synth.device-id",
-                              fluid_synth_update_device_id, synth);
+                              fluid_synth_handle_device_id, synth);
   fluid_settings_callback_num(settings, "synth.overflow.percussion",
-                              fluid_synth_update_overflow, synth);
+                              fluid_synth_handle_overflow, synth);
   fluid_settings_callback_num(settings, "synth.overflow.sustained",
-                              fluid_synth_update_overflow, synth);
+                              fluid_synth_handle_overflow, synth);
   fluid_settings_callback_num(settings, "synth.overflow.released",
-                              fluid_synth_update_overflow, synth);
+                              fluid_synth_handle_overflow, synth);
   fluid_settings_callback_num(settings, "synth.overflow.age",
-                              fluid_synth_update_overflow, synth);
+                              fluid_synth_handle_overflow, synth);
   fluid_settings_callback_num(settings, "synth.overflow.volume",
-                              fluid_synth_update_overflow, synth);
+                              fluid_synth_handle_overflow, synth);
 
   /* do some basic sanity checking on the settings */
 
@@ -728,7 +729,7 @@ new_fluid_synth(fluid_settings_t *settings)
 
   fluid_synth_set_sample_rate(synth, synth->sample_rate);
   
-  fluid_synth_update_overflow(synth, "", 0.0f);
+  fluid_synth_handle_overflow(synth, "", 0.0f);
   fluid_synth_update_mixer(synth, fluid_rvoice_mixer_set_polyphony, 
 			   synth->polyphony, 0.0f);
   fluid_synth_set_reverb_on(synth, fluid_atomic_int_get(&synth->with_reverb));
@@ -1327,7 +1328,7 @@ fluid_synth_get_cc(fluid_synth_t* synth, int chan, int num, int* pval)
  * Handler for synth.device-id setting.
  */
 static void
-fluid_synth_update_device_id (void *data, const char *name, int value)
+fluid_synth_handle_device_id (void *data, const char *name, int value)
 {
   fluid_synth_t *synth = (fluid_synth_t *)data;
   fluid_return_if_fail(synth != NULL);
@@ -2343,7 +2344,7 @@ fluid_synth_update_presets(fluid_synth_t* synth)
 
 /* Handler for synth.sample-rate setting. */
 static void
-fluid_synth_update_sample_rate(void *data, const char* name, double value)
+fluid_synth_handle_sample_rate(void *data, const char* name, double value)
 {
   fluid_synth_t *synth = (fluid_synth_t *)data;
   fluid_synth_set_sample_rate(synth, (float) value);
@@ -2379,7 +2380,7 @@ fluid_synth_set_sample_rate(fluid_synth_t* synth, float sample_rate)
 
 /* Handler for synth.gain setting. */
 static void
-fluid_synth_update_gain(void *data, const char* name, double value)
+fluid_synth_handle_gain(void *data, const char* name, double value)
 {
   fluid_synth_t *synth = (fluid_synth_t *)data;
   fluid_synth_set_gain(synth, (float) value);
@@ -2440,7 +2441,7 @@ fluid_synth_get_gain(fluid_synth_t* synth)
  * Handler for synth.polyphony setting.
  */
 static void
-fluid_synth_update_polyphony(void *data, const char* name, int value)
+fluid_synth_handle_polyphony(void *data, const char* name, int value)
 {
   fluid_synth_t *synth = (fluid_synth_t *)data;
   fluid_synth_set_polyphony(synth, value);
@@ -3126,7 +3127,10 @@ fluid_synth_render_blocks(fluid_synth_t* synth, int blockcount)
 }
 
 
-static void fluid_synth_update_overflow (void *data, const char *name, double value)
+/*
+ * Handler for synth.overflow.* settings.
+ */
+static void fluid_synth_handle_overflow (void *data, const char *name, double value)
 {
   double d;
   fluid_synth_t *synth = (fluid_synth_t *)data;
