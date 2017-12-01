@@ -519,8 +519,6 @@ new_fluid_synth(fluid_settings_t *settings)
   double num_val;
   int i, nbuf;
   int with_ladspa = 0;
-  int with_reverb = 0;
-  int with_chorus = 0;
   
   /* initialize all the conversion tables and other stuff */
   if (fluid_atomic_int_compare_and_exchange(&fluid_synth_initialized, 0, 1))
@@ -561,10 +559,8 @@ new_fluid_synth(fluid_settings_t *settings)
   
   synth->settings = settings;
 
-  fluid_settings_getint(settings, "synth.reverb.active", &with_reverb);
-  fluid_atomic_int_set(&synth->with_reverb, with_reverb);
-  fluid_settings_getint(settings, "synth.chorus.active", &with_chorus);
-  fluid_atomic_int_set(&synth->with_chorus, with_chorus);
+  fluid_settings_getint(settings, "synth.reverb.active", &synth->with_reverb);
+  fluid_settings_getint(settings, "synth.chorus.active", &synth->with_chorus);
   fluid_settings_getint(settings, "synth.verbose", &synth->verbose);
 
   fluid_settings_getint(settings, "synth.polyphony", &synth->polyphony);
@@ -740,11 +736,10 @@ new_fluid_synth(fluid_settings_t *settings)
   }
 
   fluid_synth_set_sample_rate(synth, synth->sample_rate);
-  
   fluid_synth_update_mixer(synth, fluid_rvoice_mixer_set_polyphony, 
 			   synth->polyphony, 0.0f);
-  fluid_synth_set_reverb_on(synth, fluid_atomic_int_get(&synth->with_reverb));
-  fluid_synth_set_chorus_on(synth, fluid_atomic_int_get(&synth->with_chorus));
+  fluid_synth_set_reverb_on(synth, synth->with_reverb);
+  fluid_synth_set_chorus_on(synth, synth->with_chorus);
 				 
   synth->cur = FLUID_BUFSIZE;
   synth->curmax = 0;
@@ -3900,9 +3895,12 @@ fluid_synth_set_reverb_on(fluid_synth_t* synth, int on)
 {
   fluid_return_if_fail (synth != NULL);
 
-  fluid_atomic_int_set (&synth->with_reverb, on != 0);
+  fluid_synth_api_enter(synth);
+
+  synth->with_reverb = (on != 0);
   fluid_synth_update_mixer(synth, fluid_rvoice_mixer_set_reverb_enabled,
 			   on != 0, 0.0f);
+  fluid_synth_api_exit(synth);
 }
 
 /**
@@ -4104,7 +4102,7 @@ fluid_synth_set_chorus_on(fluid_synth_t* synth, int on)
   fluid_return_if_fail (synth != NULL);
   fluid_synth_api_enter(synth);
 
-  fluid_atomic_int_set (&synth->with_chorus, on != 0);
+  synth->with_chorus = (on != 0);
   fluid_synth_update_mixer(synth, fluid_rvoice_mixer_set_chorus_enabled,
 			   on != 0, 0.0f);
   fluid_synth_api_exit(synth);
