@@ -1250,6 +1250,27 @@ fluid_settings_getnum(fluid_settings_t* settings, const char *name, double* val)
 }
 
 /**
+ * float-typed wrapper for fluid_settings_getnum
+ *
+ * @param settings a settings object
+ * @param name a setting's name
+ * @param val variable pointer to receive the setting's float value
+ * @return #FLUID_OK if the value exists, #FLUID_FAILED otherwise
+ */
+int fluid_settings_getnum_float(fluid_settings_t *settings, const char *name, float *val)
+{
+    double tmp;
+
+    if (fluid_settings_getnum(settings, name, &tmp) == FLUID_OK)
+    {
+        *val = tmp;
+        return FLUID_OK;
+    }
+
+    return FLUID_FAILED;
+}
+
+/**
  * Get the range of values of a numeric setting
  *
  * @param settings a settings object

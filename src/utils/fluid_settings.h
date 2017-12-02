@@ -40,6 +40,9 @@ int fluid_settings_register_num(fluid_settings_t* settings, const char* name, do
 int fluid_settings_callback_num(fluid_settings_t* settings, const char* name,
                                 fluid_num_update_t fun, void* data);
 
+/* Type specific wrapper for fluid_settings_getnum */
+int fluid_settings_getnum_float(fluid_settings_t *settings, const char *name, float *val);
+
 
 typedef void (*fluid_int_update_t)(void* data, const char* name, int value);
 int fluid_settings_register_int(fluid_settings_t* settings, const char* name, int def,

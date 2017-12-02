@@ -515,8 +515,6 @@ new_fluid_synth(fluid_settings_t *settings)
 {
   fluid_synth_t* synth;
   fluid_sfloader_t* loader;
-  double gain;
-  double num_val;
   int i, nbuf;
   int with_ladspa = 0;
   
@@ -569,21 +567,15 @@ new_fluid_synth(fluid_settings_t *settings)
   fluid_settings_getint(settings, "synth.audio-channels", &synth->audio_channels);
   fluid_settings_getint(settings, "synth.audio-groups", &synth->audio_groups);
   fluid_settings_getint(settings, "synth.effects-channels", &synth->effects_channels);
-  fluid_settings_getnum(settings, "synth.gain", &gain);
-  synth->gain = gain;
+  fluid_settings_getnum_float(settings, "synth.gain", &synth->gain);
   fluid_settings_getint(settings, "synth.device-id", &synth->device_id);
   fluid_settings_getint(settings, "synth.cpu-cores", &synth->cores);
 
-  fluid_settings_getnum(settings, "synth.overflow.percussion", &num_val);
-  synth->overflow.percussion = num_val;
-  fluid_settings_getnum(settings, "synth.overflow.released", &num_val);
-  synth->overflow.released = num_val;
-  fluid_settings_getnum(settings, "synth.overflow.sustained", &num_val);
-  synth->overflow.sustained = num_val;
-  fluid_settings_getnum(settings, "synth.overflow.volume", &num_val);
-  synth->overflow.volume = num_val;
-  fluid_settings_getnum(settings, "synth.overflow.age", &num_val);
-  synth->overflow.age = num_val;
+  fluid_settings_getnum_float(settings, "synth.overflow.percussion", &synth->overflow.percussion);
+  fluid_settings_getnum_float(settings, "synth.overflow.released", &synth->overflow.released);
+  fluid_settings_getnum_float(settings, "synth.overflow.sustained", &synth->overflow.sustained);
+  fluid_settings_getnum_float(settings, "synth.overflow.volume", &synth->overflow.volume);
+  fluid_settings_getnum_float(settings, "synth.overflow.age", &synth->overflow.age);
 
   /* register the callbacks */
   fluid_settings_callback_num(settings, "synth.sample-rate",
