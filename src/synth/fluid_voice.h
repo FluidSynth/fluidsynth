@@ -42,6 +42,9 @@ struct _fluid_overflow_prio_t
   float sustained; /**< Is this voice sustained? Then add this score (usually negative) */
   float volume; /**< Multiply current (or future) volume (a value between 0 and 1) */
   float age; /**< This score will be divided by the number of seconds the voice has lasted */
+  float important; /**< This score will be added to all important channels */
+  char *important_channels; /**< "important" flags indexed by MIDI channel number */
+  int num_important_channels; /**< Number of elements in the important_channels array */
 };
 
 enum fluid_voice_status

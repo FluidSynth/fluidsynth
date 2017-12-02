@@ -98,12 +98,18 @@ static void fluid_synth_set_gen_LOCAL (fluid_synth_t* synth, int chan,
                                        int param, float value, int absolute);
 static void fluid_synth_stop_LOCAL (fluid_synth_t *synth, unsigned int id);
 
+
+static int fluid_synth_set_important_channels(fluid_synth_t *synth, const char *channels);
+
+
 /* Callback handlers for real-time settings */
 static void fluid_synth_handle_sample_rate(void *data, const char *name, double value);
 static void fluid_synth_handle_gain(void *data, const char *name, double value);
 static void fluid_synth_handle_polyphony(void *data, const char *name, int value);
 static void fluid_synth_handle_device_id(void *data, const char *name, int value);
 static void fluid_synth_handle_overflow(void *data, const char *name, double value);
+static void fluid_synth_handle_important_channels(void *data, const char *name,
+        const char *value);
 
 
 /***************************************************************
@@ -184,6 +190,8 @@ void fluid_synth_settings(fluid_settings_t* settings)
   fluid_settings_register_num(settings, "synth.overflow.released", -2000, -10000, 10000, 0);
   fluid_settings_register_num(settings, "synth.overflow.age", 1000, -10000, 10000, 0);
   fluid_settings_register_num(settings, "synth.overflow.volume", 500, -10000, 10000, 0);
+  fluid_settings_register_num(settings, "synth.overflow.important", 5000, -50000, 50000, 0);
+  fluid_settings_register_str(settings, "synth.overflow.important-channels", "", 0);
 
   fluid_settings_register_str(settings, "synth.midi-bank-select", "gs", 0);
   fluid_settings_add_option(settings, "synth.midi-bank-select", "gm");
@@ -515,6 +523,7 @@ new_fluid_synth(fluid_settings_t *settings)
 {
   fluid_synth_t* synth;
   fluid_sfloader_t* loader;
+  char *important_channels;
   int i, nbuf;
   int with_ladspa = 0;
   
@@ -576,6 +585,7 @@ new_fluid_synth(fluid_settings_t *settings)
   fluid_settings_getnum_float(settings, "synth.overflow.sustained", &synth->overflow.sustained);
   fluid_settings_getnum_float(settings, "synth.overflow.volume", &synth->overflow.volume);
   fluid_settings_getnum_float(settings, "synth.overflow.age", &synth->overflow.age);
+  fluid_settings_getnum_float(settings, "synth.overflow.important", &synth->overflow.important);
 
   /* register the callbacks */
   fluid_settings_callback_num(settings, "synth.sample-rate",
@@ -596,6 +606,10 @@ new_fluid_synth(fluid_settings_t *settings)
                               fluid_synth_handle_overflow, synth);
   fluid_settings_callback_num(settings, "synth.overflow.volume",
                               fluid_synth_handle_overflow, synth);
+  fluid_settings_callback_num(settings, "synth.overflow.important",
+                              fluid_synth_handle_overflow, synth);
+  fluid_settings_callback_str(settings, "synth.overflow.important-channels",
+                              fluid_synth_handle_important_channels, synth);
 
   /* do some basic sanity checking on the settings */
 
@@ -633,13 +647,22 @@ new_fluid_synth(fluid_settings_t *settings)
     synth->effects_channels = 2;
   }
 
-
   /* The number of buffers is determined by the higher number of nr
    * groups / nr audio channels.  If LADSPA is unused, they should be
    * the same. */
   nbuf = synth->audio_channels;
   if (synth->audio_groups > nbuf) {
     nbuf = synth->audio_groups;
+  }
+
+  if (fluid_settings_dupstr(settings, "synth.overflow.important-channels",
+              &important_channels) == FLUID_OK)
+  {
+      if (fluid_synth_set_important_channels(synth, important_channels) != FLUID_OK)
+      {
+          FLUID_LOG(FLUID_WARN, "Failed to set overflow important channels");
+      }
+      FLUID_FREE(important_channels);
   }
 
   /* as soon as the synth is created it starts playing. */
@@ -899,6 +922,8 @@ delete_fluid_synth(fluid_synth_t* synth)
     default_mod = mod->next;
     fluid_mod_delete(mod);
   }
+
+  FLUID_FREE(synth->overflow.important_channels);
 
   fluid_rec_mutex_destroy(synth->mutex);
 
@@ -3150,10 +3175,12 @@ static void fluid_synth_handle_overflow (void *data, const char *name, double va
   else if (FLUID_STRCMP(name, "synth.overflow.age") == 0) {
     synth->overflow.age = value;
   }
+  else if (FLUID_STRCMP(name, "synth.overflow.important") == 0) {
+    synth->overflow.important = value;
+  }
   
   fluid_synth_api_exit(synth);
 }
-
 
 /* Selects a voice for killing. */
 static fluid_voice_t*
@@ -5280,4 +5307,80 @@ fluid_ladspa_fx_t *fluid_synth_get_ladspa_fx(fluid_synth_t *synth)
     fluid_return_val_if_fail(synth != NULL, NULL);
 
     return synth->ladspa_fx;
+}
+
+/**
+ * Set the important channels for voice overflow priority calculation.
+ *
+ * @param synth FluidSynth instance
+ * @param channels comma-separated list of channel numbers
+ * @return FLUID_OK on success, otherwise FLUID_FAILED
+ */
+static int fluid_synth_set_important_channels(fluid_synth_t *synth, const char *channels)
+{
+    int i;
+    int retval = FLUID_FAILED;
+    int *values = NULL;
+    int num_values;
+    fluid_overflow_prio_t *scores;
+
+    fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
+
+    scores = &synth->overflow;
+    if (scores->num_important_channels < synth->midi_channels)
+    {
+        scores->important_channels = FLUID_REALLOC(scores->important_channels,
+                sizeof(*scores->important_channels) * synth->midi_channels);
+        if (scores->important_channels == NULL)
+        {
+            FLUID_LOG(FLUID_ERR, "Out of memory");
+            goto exit;
+        }
+        scores->num_important_channels = synth->midi_channels;
+    }
+
+    for (i = 0; i < scores->num_important_channels; i++)
+    {
+        scores->important_channels[i] = FALSE;
+    }
+
+    if (channels != NULL)
+    {
+        values = FLUID_ARRAY(int, synth->midi_channels);
+        if (values == NULL)
+        {
+            FLUID_LOG(FLUID_ERR, "Out of memory");
+            goto exit;
+        }
+        /* Every channel given in the comma-separated list of channel numbers
+         * is set to TRUE, i.e. flagging it as "important". Channel numbers are
+         * 1-based. */
+        num_values = fluid_settings_split_csv(channels, values, synth->midi_channels);
+        for (i = 0; i < num_values; i++)
+        {
+            if (values[i] > 0 && values[i] <= synth->midi_channels)
+            {
+                scores->important_channels[values[i] - 1] = TRUE;
+            }
+        }
+    }
+
+    retval = FLUID_OK;
+
+exit:
+    FLUID_FREE(values);
+    return retval;
+}
+
+/*
+ * Handler for synth.overflow.important-channels setting.
+ */
+static void fluid_synth_handle_important_channels(void *data, const char *name,
+        const char *value)
+{
+    fluid_synth_t *synth = (fluid_synth_t *)data;
+
+    fluid_synth_api_enter(synth);
+    fluid_synth_set_important_channels(synth, value);
+    fluid_synth_api_exit(synth);
 }

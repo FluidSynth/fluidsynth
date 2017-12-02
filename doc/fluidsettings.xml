@@ -128,6 +128,30 @@ https://stackoverflow.com/a/6251757
             </desc>
         </setting>
         <setting>
+            <name>overflow.important</name>
+            <type>num</type>
+            <def>5000</def>
+            <min>-50000</min>
+            <max>50000</max>
+            <desc>
+                This score is added to voices on channels marked with the
+                synth.overflow.important-channels setting.
+            </desc>
+        </setting>
+        <setting>
+            <name>overflow.important-channels</name>
+            <type>str</type>
+            <def>""</def>
+            <desc>
+                This setting is a comma-separated list of MIDI channel numbers that should
+                be treated as "important" by the overflow calculation, adding the score
+                set by synth.overflow.important to each voice on those channels. It can
+                be used to make voices on particular MIDI channels
+                less likely (synth.overflow.important &gt; 0) or more likely
+                (synth.overflow.important &lt; 0) to be killed in an overflow situation.
+            </desc>
+        </setting>
+        <setting>
             <name>overflow.percussion</name>
             <type>num</type>
             <def>4000</def>

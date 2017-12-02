@@ -50,4 +50,6 @@ int fluid_settings_register_int(fluid_settings_t* settings, const char* name, in
 int fluid_settings_callback_int(fluid_settings_t* settings, const char* name,
                                 fluid_int_update_t fun, void* data);
 
+int fluid_settings_split_csv(const char *str, int *buf, int buf_len);
+
 #endif /* _FLUID_SETTINGS_H */

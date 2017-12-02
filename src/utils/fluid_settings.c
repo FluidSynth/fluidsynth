@@ -1738,3 +1738,36 @@ fluid_settings_foreach (fluid_settings_t* settings, void* data,
 
   delete_fluid_list (bag.names);        /* -- Free names list */
 }
+
+/**
+ * Split a comma-separated list of integers and fill the passed
+ * in buffer with the parsed values.
+ *
+ * @param str the comma-separated string to split
+ * @param buf user-supplied buffer to hold the parsed numbers
+ * @param buf_len length of user-supplied buffer
+ * @return number of parsed values or -1 on failure
+ */
+int fluid_settings_split_csv(const char *str, int *buf, int buf_len)
+{
+  char *s;
+  char *tok;
+  char *tokstr;
+  int n = 0;
+
+  s = tokstr = FLUID_STRDUP(str);
+  if (s == NULL)
+  {
+      FLUID_LOG(FLUID_ERR, "Out of memory");
+      return -1;
+  }
+
+  while ((tok = fluid_strtok(&tokstr, ",")) && n < buf_len)
+  {
+      buf[n++] = atoi(tok);
+  }
+
+  FLUID_FREE(s);
+
+  return n;
+}
