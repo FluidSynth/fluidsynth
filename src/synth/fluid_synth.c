@@ -3168,8 +3168,8 @@ static fluid_voice_t*
 fluid_synth_free_voice_by_kill_LOCAL(fluid_synth_t* synth)
 {
   int i;
-  fluid_real_t best_prio = OVERFLOW_PRIO_CANNOT_KILL-1;
-  fluid_real_t this_voice_prio;
+  float best_prio = OVERFLOW_PRIO_CANNOT_KILL-1;
+  float this_voice_prio;
   fluid_voice_t* voice;
   int best_voice_index=-1;
   unsigned int ticks = fluid_synth_get_ticks(synth);

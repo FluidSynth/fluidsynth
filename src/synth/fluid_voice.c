@@ -1681,12 +1681,12 @@ fluid_voice_optimize_sample(fluid_sample_t* s)
   return FLUID_OK;
 }
 
-fluid_real_t 
+float
 fluid_voice_get_overflow_prio(fluid_voice_t* voice, 
 			       fluid_overflow_prio_t* score,
 			       unsigned int cur_time)
 {
-  fluid_real_t this_voice_prio = 0;
+  float this_voice_prio = 0;
 
   /* Are we already overflowing? */
   if (!voice->can_access_overflow_rvoice) {

@@ -37,11 +37,11 @@ typedef struct _fluid_overflow_prio_t fluid_overflow_prio_t;
 
 struct _fluid_overflow_prio_t 
 {
-  fluid_real_t percussion; /**< Is this voice on the drum channel? Then add this score */
-  fluid_real_t released; /**< Is this voice in release stage? Then add this score (usually negative) */ 
-  fluid_real_t sustained; /**< Is this voice sustained? Then add this score (usually negative) */
-  fluid_real_t volume; /**< Multiply current (or future) volume (a value between 0 and 1) */
-  fluid_real_t age; /**< This score will be divided by the number of seconds the voice has lasted */
+  float percussion; /**< Is this voice on the drum channel? Then add this score */
+  float released; /**< Is this voice in release stage? Then add this score (usually negative) */
+  float sustained; /**< Is this voice sustained? Then add this score (usually negative) */
+  float volume; /**< Multiply current (or future) volume (a value between 0 and 1) */
+  float age; /**< This score will be divided by the number of seconds the voice has lasted */
 };
 
 enum fluid_voice_status
@@ -148,7 +148,7 @@ void fluid_voice_stop(fluid_voice_t* voice);
 void fluid_voice_overflow_rvoice_finished(fluid_voice_t* voice);
 
 int fluid_voice_kill_excl(fluid_voice_t* voice);
-fluid_real_t fluid_voice_get_overflow_prio(fluid_voice_t* voice, 
+float fluid_voice_get_overflow_prio(fluid_voice_t* voice,
 					    fluid_overflow_prio_t* score,
 					    unsigned int cur_time);
 
