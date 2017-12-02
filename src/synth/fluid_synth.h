@@ -113,8 +113,8 @@ struct _fluid_synth_t
   fluid_settings_t* settings;        /**< the synthesizer settings */
   int device_id;                     /**< Device ID used for SYSEX messages */
   int polyphony;                     /**< Maximum polyphony */
-  fluid_atomic_int_t with_reverb;    /**< Should the synth use the built-in reverb unit? */
-  fluid_atomic_int_t with_chorus;    /**< Should the synth use the built-in chorus unit? */
+  int with_reverb;                   /**< Should the synth use the built-in reverb unit? */
+  int with_chorus;                   /**< Should the synth use the built-in chorus unit? */
   int verbose;                       /**< Turn verbose mode on? */
   double sample_rate;                /**< The sample rate */
   int midi_channels;                 /**< the number of MIDI channels (>= 16) */

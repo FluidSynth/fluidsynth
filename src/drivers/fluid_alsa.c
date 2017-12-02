@@ -151,7 +151,7 @@ static fluid_thread_return_t fluid_alsa_seq_run(void* d);
 
 void fluid_alsa_audio_driver_settings(fluid_settings_t* settings)
 {
-  fluid_settings_register_str(settings, "audio.alsa.device", "default", 0, NULL, NULL);
+  fluid_settings_register_str(settings, "audio.alsa.device", "default", 0);
 }
 
 
@@ -548,7 +548,7 @@ static fluid_thread_return_t fluid_alsa_audio_run_s16 (void *d)
 
 void fluid_alsa_rawmidi_driver_settings(fluid_settings_t* settings)
 {
-  fluid_settings_register_str(settings, "midi.alsa.device", "default", 0, NULL, NULL);
+  fluid_settings_register_str(settings, "midi.alsa.device", "default", 0);
 }
 
 /*
@@ -715,8 +715,8 @@ fluid_alsa_midi_run(void* d)
 
 void fluid_alsa_seq_driver_settings(fluid_settings_t* settings)
 {
-  fluid_settings_register_str(settings, "midi.alsa_seq.device", "default", 0, NULL, NULL);
-  fluid_settings_register_str(settings, "midi.alsa_seq.id", "pid", 0, NULL, NULL);
+  fluid_settings_register_str(settings, "midi.alsa_seq.device", "default", 0);
+  fluid_settings_register_str(settings, "midi.alsa_seq.id", "pid", 0);
 }
 
 

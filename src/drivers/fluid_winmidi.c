@@ -86,7 +86,7 @@ void fluid_winmidi_midi_driver_settings(fluid_settings_t* settings)
   MMRESULT res;
   MIDIINCAPS in_caps;
   UINT i, num;	
-  fluid_settings_register_str(settings, "midi.winmidi.device", "default", 0, NULL, NULL);
+  fluid_settings_register_str(settings, "midi.winmidi.device", "default", 0);
   num = midiInGetNumDevs();
   if (num > 0) {
     fluid_settings_add_option(settings, "midi.winmidi.device", "default");
