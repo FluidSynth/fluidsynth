@@ -105,8 +105,10 @@ struct _fluid_voice_t
 	char can_access_overflow_rvoice; /* False if overflow_rvoice is being rendered in separate thread */
 	char has_noteoff; /* Flag set when noteoff has been sent */
 
+#ifdef WITH_PROFILING
 	/* for debugging */
 	double ref;
+#endif
 };
 
 

@@ -420,7 +420,9 @@ void fluid_voice_start(fluid_voice_t* voice)
 
   fluid_voice_calculate_runtime_synthesis_parameters(voice);
 
+#ifdef WITH_PROFILING
   voice->ref = fluid_profile_ref();
+#endif
 
   voice->status = FLUID_VOICE_ON;
 
