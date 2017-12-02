@@ -920,7 +920,6 @@ fluid_settings_copystr(fluid_settings_t* settings, const char *name,
       if (setting->value)
       {
         FLUID_STRNCPY (str, setting->value, len);
-        str[len - 1] = 0;   /* Force terminate, in case of truncation */
       }
 
       retval = FLUID_OK;
@@ -932,7 +931,6 @@ fluid_settings_copystr(fluid_settings_t* settings, const char *name,
       if (setting->hints & FLUID_HINT_TOGGLED)
       {
         FLUID_STRNCPY (str, setting->value ? "yes" : "no", len);
-        str[len - 1] = 0;   /* Force terminate, in case of truncation */
 
         retval = FLUID_OK;
       }
