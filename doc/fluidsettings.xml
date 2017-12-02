@@ -115,6 +115,71 @@ https://stackoverflow.com/a/6251757
                 Sets the minimum note duration in milliseconds. This ensures that really short duration note events, such as percussion notes, have a better chance of sounding as intended. Set to 0 to disable this feature.</desc>
         </setting>
         <setting>
+            <name>overflow.age</name>
+            <type>num</type>
+            <def>1000</def>
+            <min>-10000</min>
+            <max>10000</max>
+            <desc>
+                This score is divided by the number of seconds this voice has been
+                active and is added to the overflow priority. It is usually a positive
+                value and gives voices which have just been started a higher priority,
+                making them less likely to be killed in an overflow situation.
+            </desc>
+        </setting>
+        <setting>
+            <name>overflow.percussion</name>
+            <type>num</type>
+            <def>4000</def>
+            <min>-10000</min>
+            <max>10000</max>
+            <desc>
+                Sets the overflow priority score added to voices on a percussion
+                channel. This is usually a positive score, to give percussion voices
+                a higher priority and less chance of being killed in an overflow
+                situation.
+            </desc>
+        </setting>
+        <setting>
+            <name>overflow.released</name>
+            <type>num</type>
+            <def>-2000</def>
+            <min>-10000</min>
+            <max>10000</max>
+            <desc>
+                Sets the overflow priority score added to voices that have already
+                received a note-off event. This is usually a negative score, to give released
+                voices a lower priority so that they are killed first in an overflow
+                situation.
+            </desc>
+        </setting>
+        <setting>
+            <name>overflow.sustained</name>
+            <type>num</type>
+            <def>-1000</def>
+            <min>-10000</min>
+            <max>10000</max>
+            <desc>
+                Sets the overflow priority score added to voices that are currently
+                sustained. With the default value, sustained voices are considered less
+                important and are more likely to be killed in an overflow situation.
+            </desc>
+        </setting>
+        <setting>
+            <name>overflow.volume</name>
+            <type>num</type>
+            <def>500</def>
+            <min>-10000</min>
+            <max>10000</max>
+            <desc>
+                Sets the overflow priority score added to voices based on their current
+                volume. The voice volume is normalized to a value between 0 and 1 and
+                multiplied with this setting. So voices with maximum volume get added
+                the full score, voices with only half that volume get added half of this
+                score.
+            </desc>
+        </setting>
+        <setting>
             <name>parallel-render</name>
             <type>bool</type>
             <def>1 (TRUE)</def>
