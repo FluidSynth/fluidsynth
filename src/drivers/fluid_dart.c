@@ -75,7 +75,7 @@ static LONG APIENTRY fluid_dart_audio_run( ULONG ulStatus, PMCI_MIX_BUFFER pBuff
 
 void fluid_dart_audio_driver_settings(fluid_settings_t* settings)
 {
-    fluid_settings_register_str(settings, "audio.dart.device", "default", 0, NULL, NULL);
+    fluid_settings_register_str(settings, "audio.dart.device", "default", 0);
 }
 
 

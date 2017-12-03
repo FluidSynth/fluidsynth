@@ -449,6 +449,10 @@ FLUIDSYNTH_API
 FLUID_DEPRECATED 
 void fluid_synth_set_midi_router(fluid_synth_t* synth, fluid_midi_router_t* router);
 
+/* LADSPA */
+
+FLUIDSYNTH_API fluid_ladspa_fx_t *fluid_synth_get_ladspa_fx(fluid_synth_t *synth);
+
 #ifdef __cplusplus
 }
 #endif

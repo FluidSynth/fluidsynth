@@ -34,11 +34,11 @@ fluid_tuning_t* new_fluid_tuning(const char* name, int bank, int prog)
     FLUID_LOG(FLUID_PANIC, "Out of memory");
     return NULL;
   }
+  FLUID_MEMSET(tuning, 0, sizeof(fluid_tuning_t));
 
-  tuning->name = NULL;
-
-  if (name != NULL) {
-    tuning->name = FLUID_STRDUP(name);
+  if (fluid_tuning_set_name(tuning, name) != FLUID_OK) {
+    delete_fluid_tuning(tuning);
+    return NULL;
   }
 
   tuning->bank = bank;
@@ -66,19 +66,12 @@ fluid_tuning_duplicate (fluid_tuning_t *tuning)
     FLUID_LOG (FLUID_PANIC, "Out of memory");
     return NULL;
   }
+  FLUID_MEMSET(new_tuning, 0, sizeof(fluid_tuning_t));
 
-  if (tuning->name)
-  {
-    new_tuning->name = FLUID_STRDUP (tuning->name);
-
-    if (!new_tuning->name)
-    {
-      FLUID_FREE (new_tuning);
-      FLUID_LOG (FLUID_PANIC, "Out of memory");
-      return NULL;
-    }
+  if (fluid_tuning_set_name(new_tuning, tuning->name) != FLUID_OK) {
+    delete_fluid_tuning(new_tuning);
+    return NULL;
   }
-  else new_tuning->name = NULL;
 
   new_tuning->bank = tuning->bank;
   new_tuning->prog = tuning->prog;
@@ -129,7 +122,7 @@ fluid_tuning_unref (fluid_tuning_t *tuning, int count)
   else return FALSE;
 }
 
-void fluid_tuning_set_name(fluid_tuning_t* tuning, char* name)
+int fluid_tuning_set_name(fluid_tuning_t* tuning, const char* name)
 {
   if (tuning->name != NULL) {
     FLUID_FREE(tuning->name);
@@ -137,17 +130,17 @@ void fluid_tuning_set_name(fluid_tuning_t* tuning, char* name)
   }
   if (name != NULL) {
     tuning->name = FLUID_STRDUP(name);
+    if (tuning->name == NULL) {
+      FLUID_LOG(FLUID_ERR, "Out of memory");
+      return FLUID_FAILED;
+    }
   }
+  return FLUID_OK;
 }
 
 char* fluid_tuning_get_name(fluid_tuning_t* tuning)
 {
   return tuning->name;
-}
-
-void fluid_tuning_set_key(fluid_tuning_t* tuning, int key, double pitch)
-{
-  tuning->pitch[key] = pitch;
 }
 
 void fluid_tuning_set_octave(fluid_tuning_t* tuning, const double* pitch_deriv)

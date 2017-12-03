@@ -250,9 +250,7 @@ typedef struct _fluid_track_t fluid_track_t;
 fluid_track_t* new_fluid_track(int num);
 void delete_fluid_track(fluid_track_t* track);
 int fluid_track_set_name(fluid_track_t* track, char* name);
-char* fluid_track_get_name(fluid_track_t* track);
 int fluid_track_add_event(fluid_track_t* track, fluid_midi_event_t* evt);
-fluid_midi_event_t* fluid_track_first_event(fluid_track_t* track);
 fluid_midi_event_t* fluid_track_next_event(fluid_track_t* track);
 int fluid_track_get_duration(fluid_track_t* track);
 int fluid_track_reset(fluid_track_t* track);
@@ -312,8 +310,6 @@ struct _fluid_player_t {
 
 int fluid_player_add_track(fluid_player_t* player, fluid_track_t* track);
 int fluid_player_callback(void* data, unsigned int msec);
-int fluid_player_count_tracks(fluid_player_t* player);
-fluid_track_t* fluid_player_get_track(fluid_player_t* player, int i);
 int fluid_player_reset(fluid_player_t* player);
 int fluid_player_load(fluid_player_t* player, fluid_playlist_item *item);
 

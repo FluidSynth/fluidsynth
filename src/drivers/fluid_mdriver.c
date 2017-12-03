@@ -144,26 +144,26 @@ void fluid_midi_driver_settings(fluid_settings_t* settings)
 {
   unsigned int i;
 
-  fluid_settings_register_int (settings, "midi.autoconnect", 0, 0, 1, FLUID_HINT_TOGGLED, NULL, NULL);
+  fluid_settings_register_int (settings, "midi.autoconnect", 0, 0, 1, FLUID_HINT_TOGGLED);
   
   fluid_settings_register_int (settings, "midi.realtime-prio",
-                               FLUID_DEFAULT_MIDI_RT_PRIO, 0, 99, 0, NULL, NULL);
+                               FLUID_DEFAULT_MIDI_RT_PRIO, 0, 99, 0);
 
   /* Set the default driver */
 #if ALSA_SUPPORT
-  fluid_settings_register_str(settings, "midi.driver", "alsa_seq", 0, NULL, NULL);
+  fluid_settings_register_str(settings, "midi.driver", "alsa_seq", 0);
 #elif JACK_SUPPORT
-  fluid_settings_register_str(settings, "midi.driver", "jack", 0, NULL, NULL);
+  fluid_settings_register_str(settings, "midi.driver", "jack", 0);
 #elif OSS_SUPPORT
-  fluid_settings_register_str(settings, "midi.driver", "oss", 0, NULL, NULL);
+  fluid_settings_register_str(settings, "midi.driver", "oss", 0);
 #elif WINMIDI_SUPPORT
-  fluid_settings_register_str(settings, "midi.driver", "winmidi", 0, NULL, NULL);
+  fluid_settings_register_str(settings, "midi.driver", "winmidi", 0);
 #elif MIDISHARE_SUPPORT
-  fluid_settings_register_str(settings, "midi.driver", "midishare", 0, NULL, NULL);
+  fluid_settings_register_str(settings, "midi.driver", "midishare", 0);
 #elif COREMIDI_SUPPORT
-  fluid_settings_register_str(settings, "midi.driver", "coremidi", 0, NULL, NULL);
+  fluid_settings_register_str(settings, "midi.driver", "coremidi", 0);
 #else
-  fluid_settings_register_str(settings, "midi.driver", "", 0, NULL, NULL);
+  fluid_settings_register_str(settings, "midi.driver", "", 0);
 #endif
 
   /* Add all drivers to the list of options */

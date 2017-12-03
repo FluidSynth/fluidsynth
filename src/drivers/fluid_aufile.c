@@ -24,11 +24,9 @@
  *
  */
 
+#include "fluid_sys.h"
 #include "fluid_adriver.h"
 #include "fluid_settings.h"
-#include "fluid_sys.h"
-#include "config.h"
-#include <stdio.h>
 
 
 /** fluid_file_audio_driver_t

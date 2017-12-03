@@ -268,47 +268,47 @@ void fluid_audio_driver_settings(fluid_settings_t* settings)
 {
   unsigned int i;
 
-  fluid_settings_register_str(settings, "audio.sample-format", "16bits", 0, NULL, NULL);
+  fluid_settings_register_str(settings, "audio.sample-format", "16bits", 0);
   fluid_settings_add_option(settings, "audio.sample-format", "16bits");
   fluid_settings_add_option(settings, "audio.sample-format", "float");
 
 #if defined(WIN32)
-  fluid_settings_register_int(settings, "audio.period-size", 512, 64, 8192, 0, NULL, NULL);
-  fluid_settings_register_int(settings, "audio.periods", 8, 2, 64, 0, NULL, NULL);
+  fluid_settings_register_int(settings, "audio.period-size", 512, 64, 8192, 0);
+  fluid_settings_register_int(settings, "audio.periods", 8, 2, 64, 0);
 #elif defined(MACOS9)
-  fluid_settings_register_int(settings, "audio.period-size", 64, 64, 8192, 0, NULL, NULL);
-  fluid_settings_register_int(settings, "audio.periods", 8, 2, 64, 0, NULL, NULL);
+  fluid_settings_register_int(settings, "audio.period-size", 64, 64, 8192, 0);
+  fluid_settings_register_int(settings, "audio.periods", 8, 2, 64, 0);
 #else
-  fluid_settings_register_int(settings, "audio.period-size", 64, 64, 8192, 0, NULL, NULL);
-  fluid_settings_register_int(settings, "audio.periods", 16, 2, 64, 0, NULL, NULL);
+  fluid_settings_register_int(settings, "audio.period-size", 64, 64, 8192, 0);
+  fluid_settings_register_int(settings, "audio.periods", 16, 2, 64, 0);
 #endif
 
   fluid_settings_register_int (settings, "audio.realtime-prio",
-                               FLUID_DEFAULT_AUDIO_RT_PRIO, 0, 99, 0, NULL, NULL);
+                               FLUID_DEFAULT_AUDIO_RT_PRIO, 0, 99, 0);
 
   /* Set the default driver */
 #if JACK_SUPPORT
-  fluid_settings_register_str(settings, "audio.driver", "jack", 0, NULL, NULL);
+  fluid_settings_register_str(settings, "audio.driver", "jack", 0);
 #elif ALSA_SUPPORT
-  fluid_settings_register_str(settings, "audio.driver", "alsa", 0, NULL, NULL);
+  fluid_settings_register_str(settings, "audio.driver", "alsa", 0);
 #elif PULSE_SUPPORT
-  fluid_settings_register_str(settings, "audio.driver", "pulseaudio", 0, NULL, NULL);
+  fluid_settings_register_str(settings, "audio.driver", "pulseaudio", 0);
 #elif OSS_SUPPORT
-  fluid_settings_register_str(settings, "audio.driver", "oss", 0, NULL, NULL);
+  fluid_settings_register_str(settings, "audio.driver", "oss", 0);
 #elif COREAUDIO_SUPPORT
-  fluid_settings_register_str(settings, "audio.driver", "coreaudio", 0, NULL, NULL);
+  fluid_settings_register_str(settings, "audio.driver", "coreaudio", 0);
 #elif DSOUND_SUPPORT
-  fluid_settings_register_str(settings, "audio.driver", "dsound", 0, NULL, NULL);
+  fluid_settings_register_str(settings, "audio.driver", "dsound", 0);
 #elif SNDMAN_SUPPORT
-  fluid_settings_register_str(settings, "audio.driver", "sndman", 0, NULL, NULL);
+  fluid_settings_register_str(settings, "audio.driver", "sndman", 0);
 #elif PORTAUDIO_SUPPORT
-  fluid_settings_register_str(settings, "audio.driver", "portaudio", 0, NULL, NULL);
+  fluid_settings_register_str(settings, "audio.driver", "portaudio", 0);
 #elif DART_SUPPORT
-  fluid_settings_register_str(settings, "audio.driver", "dart", 0, NULL, NULL);
+  fluid_settings_register_str(settings, "audio.driver", "dart", 0);
 #elif AUFILE_SUPPORT
-  fluid_settings_register_str(settings, "audio.driver", "file", 0, NULL, NULL);
+  fluid_settings_register_str(settings, "audio.driver", "file", 0);
 #else
-  fluid_settings_register_str(settings, "audio.driver", "", 0, NULL, NULL);
+  fluid_settings_register_str(settings, "audio.driver", "", 0);
 #endif
 
   /* Add all drivers to the list of options */
@@ -472,6 +472,7 @@ delete_fluid_audio_driver(fluid_audio_driver_t* driver)
  * successfully registered. Otherwise #FLUID_FAILED is returned and ALL available audio drivers are registered instead.
  * 
  * @note This function is not thread safe and will never be!
+ * @since 1.1.9
  */
 int fluid_audio_driver_register(const char** adrivers)
 {

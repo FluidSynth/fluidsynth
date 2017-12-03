@@ -27,6 +27,7 @@ if ( NOT MACOSX_FRAMEWORK )
     audio.h 
     event.h 
     gen.h 
+    ladspa.h
     log.h 
     midi.h 
     misc.h 
