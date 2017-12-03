@@ -90,6 +90,7 @@ Changes in FluidSynth 2.0.0 concerning developers:
 - remove struct _fluid_mod_t from public API, use the getters and setters of mod.h instead
 - remove struct _fluid_gen_t, fluid_gen_set_default_values() and enum fluid_gen_flags from public API
 - remove macros fluid_sfont_get_id() and fluid_sample_refcount() from public API
+- remove FLUID_NUM_MOD macro from public API
 - remove the following deprecated enum values:
   - GEN_LAST
   - LAST_LOG_LEVEL
