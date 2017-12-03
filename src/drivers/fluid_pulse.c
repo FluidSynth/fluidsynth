@@ -28,8 +28,6 @@
 #include "fluid_adriver.h"
 #include "fluid_settings.h"
 
-#include "config.h"
-
 #if PULSE_SUPPORT
 
 #include <pulse/simple.h>
