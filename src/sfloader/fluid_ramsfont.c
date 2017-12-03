@@ -651,8 +651,8 @@ fluid_rampreset_add_sample (fluid_rampreset_t* preset, fluid_sample_t* sample,
 		}
 
 		izone->sample = sample;
-		izone->zone_range.keylo = lokey;
-		izone->zone_range.keyhi = hikey;
+		izone->range.keylo = lokey;
+		izone->range.keyhi = hikey;
 
 		// give the preset the name of the sample
 		FLUID_MEMCPY(preset->name, sample->name, 20);
@@ -901,7 +901,7 @@ fluid_rampreset_noteon (fluid_rampreset_t* preset, fluid_synth_t* synth, int cha
 
     /* check if the note falls into the key and velocity range of this
        preset */
-    if (fluid_preset_zone_inside_range(preset_zone, key, vel)) {
+    if (fluid_zone_inside_range(&preset_zone->range, key, vel)) {
 
       inst = fluid_preset_zone_get_inst(preset_zone);
       global_inst_zone = fluid_inst_get_global_zone(inst);
@@ -910,9 +910,9 @@ fluid_rampreset_noteon (fluid_rampreset_t* preset, fluid_synth_t* synth, int cha
       inst_zone = fluid_inst_get_zone(inst);
       while (inst_zone != NULL) {
 		  /* ignoreInstrumentZone is set in mono legato playing */
-		  unsigned char ignore_inst_zone = inst_zone->zone_range.flags & IGNORE_INST_Z0NE;
+		  unsigned char ignore_inst_zone = inst_zone->range.flags & IGNORE_INST_Z0NE;
 		  /* Reset the 'ignore' request */
-		  inst_zone->zone_range.flags &= ~IGNORE_INST_Z0NE; 
+		  inst_zone->range.flags &= ~IGNORE_INST_Z0NE; 
 
 	/* make sure this instrument zone has a valid sample */
 	sample = fluid_inst_zone_get_sample(inst_zone);
@@ -926,10 +926,10 @@ fluid_rampreset_noteon (fluid_rampreset_t* preset, fluid_synth_t* synth, int cha
 	   An instrument zone must be ignored when its voice is already running
 	   played by a legato passage (see fluid_synth_noteon_monopoly_legato()) */
 	if (! ignore_inst_zone &&
-		fluid_inst_zone_inside_range(inst_zone, key, vel) && (sample != NULL)) {
+		fluid_zone_inside_range(&inst_zone->range, key, vel) && (sample != NULL)) {
 
 	  /* this is a good zone. allocate a new synthesis process and initialize it */
-	  voice = fluid_synth_alloc_voice_LOCAL(synth, sample, chan, key, vel, &inst_zone->zone_range);
+	  voice = fluid_synth_alloc_voice_LOCAL(synth, sample, chan, key, vel, &inst_zone->range);
 	  if (voice == NULL) {
 	    return FLUID_FAILED;
 	  }

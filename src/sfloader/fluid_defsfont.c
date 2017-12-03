@@ -867,7 +867,7 @@ fluid_defpreset_noteon(fluid_defpreset_t* preset, fluid_synth_t* synth, int chan
 
     /* check if the note falls into the key and velocity range of this
        preset */
-    if (fluid_preset_zone_inside_range(preset_zone, key, vel)) {
+    if (fluid_zone_inside_range(&preset_zone->range, key, vel)) {
 
       inst = fluid_preset_zone_get_inst(preset_zone);
       global_inst_zone = fluid_inst_get_global_zone(inst);
@@ -876,9 +876,9 @@ fluid_defpreset_noteon(fluid_defpreset_t* preset, fluid_synth_t* synth, int chan
       inst_zone = fluid_inst_get_zone(inst);
 	  while (inst_zone != NULL) {
 		  /* ignoreInstrumentZone is set in mono legato playing */
-		  unsigned char ignore_inst_zone = inst_zone->zone_range.flags & IGNORE_INST_Z0NE;
+		  unsigned char ignore_inst_zone = inst_zone->range.flags & IGNORE_INST_Z0NE;
 		  /* Reset the 'ignore' request */
-		  inst_zone->zone_range.flags &= ~IGNORE_INST_Z0NE; 
+		  inst_zone->range.flags &= ~IGNORE_INST_Z0NE; 
 	/* make sure this instrument zone has a valid sample */
 	sample = fluid_inst_zone_get_sample(inst_zone);
 	if ((sample == NULL) || fluid_sample_in_rom(sample)) {
@@ -886,15 +886,15 @@ fluid_defpreset_noteon(fluid_defpreset_t* preset, fluid_synth_t* synth, int chan
 	  continue;
 	}
 
-	/* check if the instrument zone doesn't be ignored and the note falls into
+	/* check if the instrument zone is ignored and the note falls into
 	   the key and velocity range of this  instrument zone.
 	   An instrument zone must be ignored when its voice is already running
 	   played by a legato passage (see fluid_synth_noteon_monopoly_legato()) */
 	if (! ignore_inst_zone &&
-		fluid_inst_zone_inside_range(inst_zone, key, vel) && (sample != NULL)) {
+		fluid_zone_inside_range(&inst_zone->range, key, vel) && (sample != NULL)) {
 
 	  /* this is a good zone. allocate a new synthesis process and initialize it */
-	  voice = fluid_synth_alloc_voice_LOCAL(synth, sample, chan, key, vel, &inst_zone->zone_range);
+	  voice = fluid_synth_alloc_voice_LOCAL(synth, sample, chan, key, vel, &inst_zone->range);
 	  if (voice == NULL) {
 	    return FLUID_FAILED;
 	  }
@@ -1192,10 +1192,10 @@ new_fluid_preset_zone(char *name)
   }
   FLUID_STRCPY(zone->name, name);
   zone->inst = NULL;
-  zone->keylo = 0;
-  zone->keyhi = 128;
-  zone->vello = 0;
-  zone->velhi = 128;
+  zone->range.keylo = 0;
+  zone->range.keyhi = 128;
+  zone->range.vello = 0;
+  zone->range.velhi = 128;
 
   /* Flag all generators as unused (default, they will be set when they are found
    * in the sound font).
@@ -1246,12 +1246,12 @@ fluid_preset_zone_import_sfont(fluid_preset_zone_t* zone, SFZone *sfzone, fluid_
     sfgen = (SFGen *) r->data;
     switch (sfgen->id) {
     case GEN_KEYRANGE:
-      zone->keylo = (int) sfgen->amount.range.lo;
-      zone->keyhi = (int) sfgen->amount.range.hi;
+      zone->range.keylo = sfgen->amount.range.lo;
+      zone->range.keyhi = sfgen->amount.range.hi;
       break;
     case GEN_VELRANGE:
-      zone->vello = (int) sfgen->amount.range.lo;
-      zone->velhi = (int) sfgen->amount.range.hi;
+      zone->range.vello = sfgen->amount.range.lo;
+      zone->range.velhi = sfgen->amount.range.hi;
       break;
     default:
       /* FIXME: some generators have an unsigne word amount value but i don't know which ones */
@@ -1415,17 +1415,6 @@ fluid_preset_zone_get_inst(fluid_preset_zone_t* zone)
   return zone->inst;
 }
 
-/*
- * fluid_preset_zone_inside_range
- */
-int
-fluid_preset_zone_inside_range(fluid_preset_zone_t* zone, int key, int vel)
-{
-  return ((zone->keylo <= key) &&
-	  (zone->keyhi >= key) &&
-	  (zone->vello <= vel) &&
-	  (zone->velhi >= vel));
-}
 
 /***************************************************************
  *
@@ -1592,14 +1581,14 @@ new_fluid_inst_zone(char* name)
   }
   FLUID_STRCPY(zone->name, name);
   zone->sample = NULL;
-  zone->zone_range.keylo = 0;
-  zone->zone_range.keyhi = 128;
-  zone->zone_range.vello = 0;
-  zone->zone_range.velhi = 128;
+  zone->range.keylo = 0;
+  zone->range.keyhi = 128;
+  zone->range.vello = 0;
+  zone->range.velhi = 128;
   /* flags
   0: This instrument zone must not ignored.
   1: This instrument zone must ignored   */
-  zone->zone_range.flags = 0; 
+  zone->range.flags = 0; 
   /* Flag the generators as unused.
    * This also sets the generator values to default, but they will be overwritten anyway, if used.*/
   fluid_gen_set_default_values(&zone->gen[0]);
@@ -1653,12 +1642,12 @@ fluid_inst_zone_import_sfont(fluid_preset_zone_t* preset_zone, fluid_inst_zone_t
     sfgen = (SFGen *) r->data;
     switch (sfgen->id) {
     case GEN_KEYRANGE:
-      zone->zone_range.keylo = (int) sfgen->amount.range.lo;
-      zone->zone_range.keyhi = (int) sfgen->amount.range.hi;
+      zone->range.keylo = sfgen->amount.range.lo;
+      zone->range.keyhi = sfgen->amount.range.hi;
       break;
     case GEN_VELRANGE:
-      zone->zone_range.keylo = (int) sfgen->amount.range.lo;
-      zone->zone_range.keyhi = (int) sfgen->amount.range.hi;
+      zone->range.keylo = sfgen->amount.range.lo;
+      zone->range.keyhi = sfgen->amount.range.hi;
       break;
     default:
       /* FIXME: some generators have an unsigned word amount value but
@@ -1671,11 +1660,11 @@ fluid_inst_zone_import_sfont(fluid_preset_zone_t* preset_zone, fluid_inst_zone_t
   }
   
   /* adjust instrument zone keyrange to integrate preset zone keyrange */
-  if (preset_zone->keylo > zone->zone_range.keylo) zone->zone_range.keylo = preset_zone->keylo;
-  if (preset_zone->keyhi < zone->zone_range.keyhi) zone->zone_range.keyhi = preset_zone->keyhi;
+  if (preset_zone->range.keylo > zone->range.keylo) zone->range.keylo = preset_zone->range.keylo;
+  if (preset_zone->range.keyhi < zone->range.keyhi) zone->range.keyhi = preset_zone->range.keyhi;
   /* adjust instrument zone to integrate  preset zone velrange */
-  if (preset_zone->vello > zone->zone_range.vello) zone->zone_range.vello = preset_zone->vello;
-  if (preset_zone->velhi < zone->zone_range.velhi) zone->zone_range.velhi = preset_zone->velhi;
+  if (preset_zone->range.vello > zone->range.vello) zone->range.vello = preset_zone->range.vello;
+  if (preset_zone->range.velhi < zone->range.velhi) zone->range.velhi = preset_zone->range.velhi;
 
   /* FIXME */
 /*    if (zone->gen[GEN_EXCLUSIVECLASS].flags == GEN_SET) { */
@@ -1825,16 +1814,14 @@ fluid_inst_zone_get_sample(fluid_inst_zone_t* zone)
   return zone->sample;
 }
 
-/*
- * fluid_inst_zone_inside_range
- */
+
 int
-fluid_inst_zone_inside_range(fluid_inst_zone_t* zone, int key, int vel)
+fluid_zone_inside_range(fluid_inst_zone_range_t* range, int key, int vel)
 {
-  return ((zone->zone_range.keylo <= key) &&
-	  (zone->zone_range.keyhi >= key) &&
-	  (zone->zone_range.vello <= vel) &&
-	  (zone->zone_range.velhi >= vel));
+  return ((range->keylo <= key) &&
+	  (range->keyhi >= key) &&
+	  (range->vello <= vel) &&
+	  (range->velhi >= vel));
 }
 
 /***************************************************************

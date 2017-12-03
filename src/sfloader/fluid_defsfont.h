@@ -338,6 +338,21 @@ typedef struct _fluid_defpreset_t fluid_defpreset_t;
 typedef struct _fluid_preset_zone_t fluid_preset_zone_t;
 typedef struct _fluid_inst_t fluid_inst_t;
 typedef struct _fluid_inst_zone_t fluid_inst_zone_t;            /**< Soundfont Instrument Zone */
+typedef struct _fluid_inst_zone_range_t fluid_inst_zone_range_t;/**< instrument zone range */
+
+/* defines the velocity and key range for a zone */
+struct _fluid_inst_zone_range_t
+{
+  int keylo;
+  int keyhi;
+  int vello;
+  int velhi;
+  /* flags
+  0: This instrument zone is not ignored.
+  1: This instrument zone is ignored   */
+  unsigned char flags;	/* for legato playing */
+};
+
 
 /*
 
@@ -362,6 +377,7 @@ int fluid_defpreset_preset_get_banknum(fluid_preset_t* preset);
 int fluid_defpreset_preset_get_num(fluid_preset_t* preset);
 int fluid_defpreset_preset_noteon(fluid_preset_t* preset, fluid_synth_t* synth, int chan, int key, int vel);
 
+int fluid_zone_inside_range(fluid_inst_zone_range_t* zone_range, int key, int vel);
 
 /*
  * fluid_defsfont_t
@@ -432,10 +448,7 @@ struct _fluid_preset_zone_t
   fluid_preset_zone_t* next;
   char* name;
   fluid_inst_t* inst;
-  int keylo;
-  int keyhi;
-  int vello;
-  int velhi;
+  fluid_inst_zone_range_t range;
   fluid_gen_t gen[GEN_LAST];
   fluid_mod_t * mod; /* List of modulators */
 };
@@ -444,7 +457,6 @@ fluid_preset_zone_t* new_fluid_preset_zone(char* name);
 void delete_fluid_preset_zone(fluid_preset_zone_t* zone);
 fluid_preset_zone_t* fluid_preset_zone_next(fluid_preset_zone_t* preset);
 int fluid_preset_zone_import_sfont(fluid_preset_zone_t* zone, SFZone* sfzone, fluid_defsfont_t* sfont);
-int fluid_preset_zone_inside_range(fluid_preset_zone_t* zone, int key, int vel);
 fluid_inst_t* fluid_preset_zone_get_inst(fluid_preset_zone_t* zone);
 
 /*
@@ -466,22 +478,6 @@ int fluid_inst_add_zone(fluid_inst_t* inst, fluid_inst_zone_t* zone);
 fluid_inst_zone_t* fluid_inst_get_zone(fluid_inst_t* inst);
 fluid_inst_zone_t* fluid_inst_get_global_zone(fluid_inst_t* inst);
 
-/* 
- * fluid_inst_zone_range_t
- * structure accessed by fluid_synth_noteon_monopoly_legato() 
- */
-struct _fluid_inst_zone_range_t
-{
-  int keylo;
-  int keyhi;
-  int vello;
-  int velhi;
-  /* flags
-  0: This instrument zone must not ignored.
-  1: This instrument zone must ignored   */
-  unsigned char flags;	/* for legato playing */
-};
-
 /*
  * fluid_inst_zone_t
  */
@@ -490,7 +486,7 @@ struct _fluid_inst_zone_t
   fluid_inst_zone_t* next;
   char* name;
   fluid_sample_t* sample;
-  fluid_inst_zone_range_t zone_range;
+  fluid_inst_zone_range_t range;
   fluid_gen_t gen[GEN_LAST];
   fluid_mod_t * mod; /* List of modulators */
 };
@@ -503,7 +499,6 @@ void delete_fluid_inst_zone(fluid_inst_zone_t* zone);
 fluid_inst_zone_t* fluid_inst_zone_next(fluid_inst_zone_t* zone);
 int fluid_inst_zone_import_sfont(fluid_preset_zone_t* zonePZ,
 								 fluid_inst_zone_t* zone, SFZone *sfzone, fluid_defsfont_t* sfont);
-int fluid_inst_zone_inside_range(fluid_inst_zone_t* zone, int key, int vel);
 fluid_sample_t* fluid_inst_zone_get_sample(fluid_inst_zone_t* zone);
 
 
