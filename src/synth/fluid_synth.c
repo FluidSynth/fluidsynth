@@ -3296,7 +3296,7 @@ static void
 fluid_synth_kill_by_exclusive_class_LOCAL(fluid_synth_t* synth,
                                           fluid_voice_t* new_voice)
 {
-  int excl_class = _GEN(new_voice,GEN_EXCLUSIVECLASS);
+  int excl_class = fluid_voice_gen_value(new_voice,GEN_EXCLUSIVECLASS);
   fluid_voice_t* existing_voice;
   int i;
 

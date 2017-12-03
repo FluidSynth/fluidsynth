@@ -186,10 +186,5 @@ fluid_real_t fluid_voice_gen_value(fluid_voice_t* voice, int num);
 
 #define fluid_voice_get_loudness(voice) (fluid_adsr_env_get_max_val(&voice->volenv))
 
-#define _GEN(_voice, _n) \
-  ((fluid_real_t)(_voice)->gen[_n].val \
-   + (fluid_real_t)(_voice)->gen[_n].mod \
-   + (fluid_real_t)(_voice)->gen[_n].nrpn)
-
 
 #endif /* _FLUID_VOICE_H */
