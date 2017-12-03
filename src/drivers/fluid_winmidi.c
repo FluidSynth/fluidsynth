@@ -44,22 +44,17 @@
 typedef struct {
   fluid_midi_driver_t driver;
   HMIDIIN hmidiin;
-  fluid_atomic_int_t closing;                  /* Set to TRUE when closing driver, to prevent endless SYSEX lockup loop */
-
-  fluid_thread_t *sysExAddThread;       /* Thread for SYSEX re-add thread */
-  fluid_cond_mutex_t *mutex;    /* Lock for condition */
-  fluid_cond_t *cond;           /* Condition to signal MIDI event thread of available events */
 
   /* MIDI HDR for SYSEX buffer */
   MIDIHDR sysExHdrs[MIDI_SYSEX_BUF_COUNT];
 
-  /* TRUE for each MIDIHDR buffer which should be re-added to MIDI device */
-  fluid_atomic_int_t sysExHdrAdd[MIDI_SYSEX_BUF_COUNT];
+  /* Thread for SYSEX re-add thread */
+  HANDLE hThread;
+  DWORD  dwThread;
 
   /* Sysex data buffer */
   unsigned char sysExBuf[MIDI_SYSEX_BUF_COUNT * MIDI_SYSEX_MAX_SIZE];
 
-  int sysExOffset;              /* Current offset in sysex buffer (for message continuation) */
 } fluid_winmidi_driver_t;
 
 static char fluid_winmidi_error_buffer[256];
@@ -76,7 +71,6 @@ void delete_fluid_winmidi_driver(fluid_midi_driver_t* p);
 
 void CALLBACK fluid_winmidi_callback(HMIDIIN hmi, UINT wMsg, DWORD_PTR dwInstance,
 				    DWORD_PTR msg, DWORD_PTR extra);
-static fluid_thread_return_t fluid_winmidi_add_sysex_thread (void *data);
 static char* fluid_winmidi_input_error(int no);
 int fluid_winmidi_driver_status(fluid_midi_driver_t* p);
 
@@ -97,6 +91,34 @@ void fluid_winmidi_midi_driver_settings(fluid_settings_t* settings)
       }
     }
   }
+}
+
+/* Thread for re-adding SYSEX buffers */
+static DWORD WINAPI fluid_winmidi_add_sysex_thread(void *data)
+{
+  fluid_winmidi_driver_t *dev = (fluid_winmidi_driver_t *)data;
+  MSG msg;
+  int code;
+
+  for (;;) {
+    code = GetMessage(&msg, NULL, 0, 0);
+
+    if (code < 0) {
+      FLUID_LOG(FLUID_ERR, "fluid_winmidi_add_sysex_thread: GetMessage() failed.");
+      break;
+    }
+
+    if (msg.message == WM_CLOSE)
+      break;
+
+    switch (msg.message) {
+    case MM_MIM_LONGDATA:
+      midiInAddBuffer(dev->hmidiin, (LPMIDIHDR)msg.lParam, sizeof(MIDIHDR));
+      break;
+    }
+  }
+
+  return 0;
 }
 
 /*
@@ -129,7 +151,6 @@ new_fluid_winmidi_driver(fluid_settings_t* settings,
   dev->hmidiin = NULL;
   dev->driver.handler = handler;
   dev->driver.data = data;
-  fluid_atomic_int_set (&dev->closing, FALSE);
 
   /* get the device name. if none is specified, use the default device. */
   if(fluid_settings_dupstr(settings, "midi.winmidi.device", &devname) != FLUID_OK || !devname) {
@@ -181,10 +202,9 @@ new_fluid_winmidi_driver(fluid_settings_t* settings,
   /* Prepare and add SYSEX buffers */
   for (i = 0; i < MIDI_SYSEX_BUF_COUNT; i++)
   {
-    fluid_atomic_int_set (&dev->sysExHdrAdd[i], FALSE);
     hdr = &dev->sysExHdrs[i];
 
-    hdr->lpData = &dev->sysExBuf[i * MIDI_SYSEX_MAX_SIZE];
+    hdr->lpData = (LPSTR)&dev->sysExBuf[i * MIDI_SYSEX_MAX_SIZE];
     hdr->dwBufferLength = MIDI_SYSEX_MAX_SIZE;
 
     /* Prepare a buffer for SYSEX data and add it */
@@ -205,28 +225,25 @@ new_fluid_winmidi_driver(fluid_settings_t* settings,
                     fluid_winmidi_input_error (err), err);
   }
 
+  /* Create thread which processes re-adding SYSEX buffers */
+  dev->hThread = CreateThread(
+                            NULL,
+                            0,
+                            (LPTHREAD_START_ROUTINE)
+                            fluid_winmidi_add_sysex_thread,
+                            dev,
+                            0,
+                            &dev->dwThread);
+
+  if (dev->hThread == NULL)
+  {
+    FLUID_LOG(FLUID_ERR, "Failed to create SYSEX buffer processing thread");
+    goto error_recovery;
+  }
+
   /* Start the MIDI input interface */
   if (midiInStart(dev->hmidiin) != MMSYSERR_NOERROR) {
     FLUID_LOG(FLUID_ERR, "Failed to start the MIDI input. MIDI input not available.");
-    goto error_recovery;
-  }
-
-  /* Create mutex and condition */
-  dev->mutex = new_fluid_cond_mutex ();
-  dev->cond = new_fluid_cond ();
-
-  if (!dev->mutex || !dev->cond)
-  {
-    FLUID_LOG(FLUID_ERR, "Out of memory");
-    goto error_recovery;
-  }
-
-  /* Create thread which processes re-adding SYSEX buffers */
-  dev->sysExAddThread = new_fluid_thread ("winmidi-sysex", fluid_winmidi_add_sysex_thread,
-                                          dev, 0, FALSE);
-  if (!dev->sysExAddThread)
-  {
-    FLUID_LOG(FLUID_ERR, "Failed to create SYSEX buffer processing thread");
     goto error_recovery;
   }
 
@@ -248,26 +265,21 @@ delete_fluid_winmidi_driver(fluid_midi_driver_t* p)
 {
   fluid_winmidi_driver_t* dev = (fluid_winmidi_driver_t*) p;
   fluid_return_if_fail (dev != NULL);
-  
-  if (dev->hmidiin != NULL) {
-    fluid_atomic_int_set (&dev->closing, TRUE);
 
-    if (dev->sysExAddThread)
-    {
-      fluid_cond_mutex_lock (dev->mutex);         /* ++ lock */
-      fluid_cond_signal (dev->cond);
-      fluid_cond_mutex_unlock (dev->mutex);       /* -- unlock */
+  if (dev->hThread != NULL)
+  {
+    PostThreadMessage(dev->dwThread, WM_CLOSE, 0, 0);
+    WaitForSingleObject(dev->hThread, INFINITE);
 
-      fluid_thread_join (dev->sysExAddThread);
-    }
+    dev->hThread = NULL;
+  }
 
+  if (dev->hmidiin != NULL)
+  {
     midiInStop(dev->hmidiin);
     midiInReset(dev->hmidiin);
     midiInClose(dev->hmidiin);
   }
-
-  if (dev->mutex) delete_fluid_cond_mutex (dev->mutex);
-  if (dev->cond) delete_fluid_cond (dev->cond);
 
   FLUID_FREE(dev);
 }
@@ -280,7 +292,6 @@ fluid_winmidi_callback(HMIDIIN hmi, UINT wMsg, DWORD_PTR dwInstance,
   fluid_midi_event_t event;
   LPMIDIHDR pMidiHdr;
   unsigned char *data;
-  int index;
   unsigned int msg_param = (unsigned int) dwParam1;
 
   switch (wMsg) {
@@ -306,7 +317,8 @@ fluid_winmidi_callback(HMIDIIN hmi, UINT wMsg, DWORD_PTR dwInstance,
     break;
 
   case MIM_LONGDATA:    /* SYSEX data */
-    if (fluid_atomic_int_get (&dev->closing)) break;    /* Prevent MIM_LONGDATA endless loop, don't re-add buffer if closing */
+    if (dev->hThread == NULL)
+      break;
 
     pMidiHdr = (LPMIDIHDR)dwParam1;
     data = (unsigned char *)(pMidiHdr->lpData);
@@ -320,12 +332,7 @@ fluid_winmidi_callback(HMIDIIN hmi, UINT wMsg, DWORD_PTR dwInstance,
       (*dev->driver.handler)(dev->driver.data, &event);
     }
 
-    index = (pMidiHdr - dev->sysExHdrs) / sizeof (MIDIHDR);
-    fluid_atomic_int_set (&dev->sysExHdrAdd[index], TRUE);
-
-    fluid_cond_mutex_lock (dev->mutex);         /* ++ lock */
-    fluid_cond_signal (dev->cond);
-    fluid_cond_mutex_unlock (dev->mutex);       /* -- unlock */
+    PostThreadMessage(dev->dwThread, MM_MIM_LONGDATA, 0, dwParam1);
     break;
 
   case MIM_ERROR:
@@ -337,32 +344,6 @@ fluid_winmidi_callback(HMIDIIN hmi, UINT wMsg, DWORD_PTR dwInstance,
   case MIM_MOREDATA:
     break;
   }
-}
-
-/* Thread for re-adding SYSEX buffers */
-static fluid_thread_return_t
-fluid_winmidi_add_sysex_thread (void *data)
-{
-  fluid_winmidi_driver_t *dev = data;
-  int i;
-
-  while (!fluid_atomic_int_get (&dev->closing))
-  {
-    fluid_cond_mutex_lock (dev->mutex);         /* ++ lock */
-    fluid_cond_wait (dev->cond, dev->mutex);
-    fluid_cond_mutex_unlock (dev->mutex);       /* -- unlock */
-
-    for (i = 0; i < MIDI_SYSEX_BUF_COUNT; i++)
-    {
-      if (fluid_atomic_int_get (&dev->sysExHdrAdd[i]))
-      {
-        fluid_atomic_int_set (&dev->sysExHdrAdd[i], FALSE);
-        midiInAddBuffer (dev->hmidiin, &dev->sysExHdrs[i], sizeof (MIDIHDR));
-      }
-    }
-  }
-
-  return FLUID_THREAD_RETURN_VALUE;
 }
 
 int
