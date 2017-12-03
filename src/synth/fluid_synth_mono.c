@@ -794,8 +794,7 @@ fluid_synth_noteon_mono_staccato(fluid_synth_t* synth,int chan,int key,int vel)
 	
 	/* Before playing a new note, if a previous monophonic note is currently
 	   sustained it needs to be released */
-	fluid_synth_release_voice_on_same_note_LOCAL(synth,chan,
-												channel->key_sustained);
+	fluid_synth_release_voice_on_same_note_LOCAL(synth,chan, channel->key_sustained);
 	/* Get possible 'fromkey portamento'   */
 	get_fromkey_portamento_legato( channel, INVALID_NOTE);
 	/* The note needs to be played by voices allocation  */
@@ -848,7 +847,10 @@ int fluid_synth_noteoff_monopoly(fluid_synth_t* synth, int chan, int key,
     /* noteoff for all voices with same chan and same key */
     for (i = 0; i < synth->polyphony; i++) {
         voice = synth->voice[i];
-        if (fluid_voice_is_on(voice) && (fluid_voice_get_channel(voice) == chan) && (fluid_voice_get_key(voice) == key)) {
+        if (fluid_voice_is_on(voice) &&
+            fluid_voice_get_channel(voice) == chan &&
+            fluid_voice_get_key(voice) == key)
+        {
             if (synth->verbose) {
                 int used_voices = 0;
                 int k;
@@ -903,7 +905,7 @@ int fluid_synth_noteoff_monopoly(fluid_synth_t* synth, int chan, int key,
  *                                               |               (portamento)
  *                legato modes >-----------------+         
  *
- * We are in legato situation (where a previous note have been depressed).
+ * We are in legato situation (where a previous note has been depressed).
  * The function must determine the from_key_portamento and from_key_legato parameters
  * used by fluid_preset_noteon() function or the voices triggering functions.
  *
@@ -942,7 +944,9 @@ int fluid_synth_noteon_monopoly_legato(fluid_synth_t* synth, int chan,
 	{
 		/* search fromkey voices: only those who don't have 'note off' */
 		voice = synth->voice[i];
-		if (fluid_voice_is_on(voice) && (voice->chan == chan) && (voice->key == fromkey))
+		if (fluid_voice_is_on(voice) &&
+                    fluid_voice_get_channel(voice) == chan &&
+                    fluid_voice_get_key(voice) == fromkey)
 		{
 			fluid_zone_range_t * zone_range = voice->zone_range;
 			/* Ignore voices when there is no instrument zone. Otherwise
@@ -978,8 +982,7 @@ int fluid_synth_noteon_monopoly_legato(fluid_synth_t* synth, int chan,
 					if(	is_valid_note(synth->fromkey_portamento))
 					{
 						/* Sends portamento parameters to the voice dsp */
-						fluid_voice_update_portamento(voice,
-											synth->fromkey_portamento,tokey);
+						fluid_voice_update_portamento(voice, synth->fromkey_portamento,tokey);
 					}
 					/* The voice is now used to play tokey in legato manner */
 					/* Marks this Instrument Zone to be ignored during next
