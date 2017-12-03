@@ -790,7 +790,6 @@ new_fluid_synth(fluid_settings_t *settings)
 /**
  * Delete a FluidSynth instance.
  * @param synth FluidSynth instance to delete
- * @return FLUID_OK
  *
  * @note Other users of a synthesizer instance, such as audio and MIDI drivers,
  * should be deleted prior to freeing the FluidSynth instance.

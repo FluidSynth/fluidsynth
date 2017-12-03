@@ -288,10 +288,10 @@ new_fluid_file_renderer(fluid_synth_t* synth)
  * @since 1.1.7
  */
 int
-fluid_file_set_encoding_quality(fluid_file_renderer_t* r, double q)
+fluid_file_set_encoding_quality(fluid_file_renderer_t* dev, double q)
 {
 #if LIBSNDFILE_SUPPORT
-	if (sf_command (r->sndfile, SFC_SET_VBR_ENCODING_QUALITY, &q, sizeof (double)) == SF_TRUE)
+	if (sf_command (dev->sndfile, SFC_SET_VBR_ENCODING_QUALITY, &q, sizeof (double)) == SF_TRUE)
 		return FLUID_OK;
 	else
 #endif
@@ -453,7 +453,6 @@ fluid_file_renderer_parse_options (char *filetype, char *format, char *endian,
 /**
  * Searches for a supported libsndfile file type by extension.
  * @param extension The extension string
- * @param ext_len Length of the extension string
  * @param type Location to store the type (unmodified if not found)
  * @return TRUE if found, FALSE otherwise
  */

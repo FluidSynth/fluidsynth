@@ -797,7 +797,6 @@ new_fluid_midi_event ()
 /**
  * Delete MIDI event structure.
  * @param evt MIDI event structure
- * @return Always returns #FLUID_OK
  */
 void
 delete_fluid_midi_event(fluid_midi_event_t *evt)
@@ -1259,7 +1258,6 @@ new_fluid_player(fluid_synth_t *synth)
 /**
  * Delete a MIDI player instance.
  * @param player MIDI player instance
- * @return Always returns #FLUID_OK
  */
 void
 delete_fluid_player(fluid_player_t *player)
