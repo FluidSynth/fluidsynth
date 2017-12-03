@@ -28,17 +28,13 @@
  *                         INCLUDES
  */
 
-#if HAVE_CONFIG_H
-#include "config.h"
-#endif
-#include "fluidsynth_priv.h"
+#include "fluid_sys.h"
 #include "fluid_list.h"
 #include "fluid_rev.h"
 #include "fluid_voice.h"
 #include "fluid_chorus.h"
 #include "fluid_ladspa.h"
 #include "fluid_midi_router.h"
-#include "fluid_sys.h"
 #include "fluid_rvoice_event.h"
 
 /***************************************************************

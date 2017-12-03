@@ -28,7 +28,6 @@
  *
  */
 
-#include "fluidsynth_priv.h"
 #include "fluid_sys.h"
 #include "fluid_synth.h"
 #include "fluid_adriver.h"
@@ -38,7 +37,6 @@
 #include <jack/jack.h>
 #include <jack/midiport.h>
 
-#include "config.h"
 #include "fluid_lash.h"
 
 
