@@ -669,7 +669,6 @@ new_fluid_synth(fluid_settings_t *settings)
   synth->noteid = 0;
   
   synth->fromkey_portamento = INVALID_NOTE;		/* disable portamento */
-  synth->zone_range = NULL; /* no intrument zone range */
 
   fluid_atomic_int_set(&synth->ticks_since_start, 0);
   synth->tuning = NULL;
@@ -3455,6 +3454,12 @@ fluid_voice_t*
 fluid_synth_alloc_voice(fluid_synth_t* synth, fluid_sample_t* sample,
 						int chan, int key, int vel)
 {
+    return fluid_synth_alloc_voice_LOCAL(synth, sample, chan, key, vel, NULL);
+}
+
+fluid_voice_t*
+fluid_synth_alloc_voice_LOCAL(fluid_synth_t* synth, fluid_sample_t* sample, int chan, int key, int vel, fluid_inst_zone_range_t* zone_range)
+{
   int i, k;
   fluid_voice_t* voice = NULL;
   fluid_channel_t* channel = NULL;
@@ -3503,12 +3508,11 @@ fluid_synth_alloc_voice(fluid_synth_t* synth, fluid_sample_t* sample,
 	  channel = synth->channel[chan];
   }
 
-  if (fluid_voice_init (voice, sample, synth->zone_range, channel, key, vel,
+  if (fluid_voice_init (voice, sample, zone_range, channel, key, vel,
                         synth->storeid, ticks, synth->gain) != FLUID_OK) {
     FLUID_LOG(FLUID_WARN, "Failed to initialize voice");
     FLUID_API_RETURN(NULL);
   }
-  synth->zone_range = NULL; /* Reset zone_range parameter */
 
   /* add the default modulators to the synthesis process. */
   /* custom_breath2att_modulator is not a default modulator specified in SF

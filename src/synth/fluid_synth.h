@@ -150,7 +150,6 @@ struct _fluid_synth_t
   unsigned int noteid;               /**< the id is incremented for every new note. it's used for noteoff's  */
   unsigned int storeid;
   int fromkey_portamento;			 /**< fromkey portamento */
-  fluid_inst_zone_range_t * zone_range;  /**< zone range for fluid_voice_init. */
   fluid_rvoice_eventhandler_t* eventhandler;
 
   double reverb_roomsize;             /**< Shadow of reverb roomsize */
@@ -229,6 +228,9 @@ int fluid_synth_noteon_mono_LOCAL(fluid_synth_t* synth, int chan, int key, int v
 int fluid_synth_noteoff_mono_LOCAL(fluid_synth_t* synth, int chan, int key);
 int fluid_synth_noteon_monopoly_legato(fluid_synth_t* synth, int chan, int fromkey, int tokey, int vel);
 int fluid_synth_noteoff_monopoly(fluid_synth_t* synth, int chan, int key, char Mono);
+
+fluid_voice_t*
+fluid_synth_alloc_voice_LOCAL(fluid_synth_t* synth, fluid_sample_t* sample, int chan, int key, int vel, fluid_inst_zone_range_t* zone_range);
 
 void fluid_channel_set_onenote_monolist(fluid_channel_t* chan, unsigned char key, unsigned char vel);
 void fluid_channel_clear_monolist(fluid_channel_t* chan);

@@ -893,11 +893,8 @@ fluid_defpreset_noteon(fluid_defpreset_t* preset, fluid_synth_t* synth, int chan
 	if (! ignore_inst_zone &&
 		fluid_inst_zone_inside_range(inst_zone, key, vel) && (sample != NULL)) {
 
-	  /* this is a good zone. allocate a new synthesis process and
-             initialize it */
-	  /* zone range is passed to fluid_synth_alloc_voice */
-	  synth->zone_range = &inst_zone->zone_range;
-	  voice = fluid_synth_alloc_voice(synth, sample, chan, key, vel);
+	  /* this is a good zone. allocate a new synthesis process and initialize it */
+	  voice = fluid_synth_alloc_voice_LOCAL(synth, sample, chan, key, vel, &inst_zone->zone_range);
 	  if (voice == NULL) {
 	    return FLUID_FAILED;
 	  }
