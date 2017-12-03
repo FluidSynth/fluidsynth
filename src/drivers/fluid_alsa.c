@@ -34,13 +34,7 @@
 
 #define ALSA_PCM_NEW_HW_PARAMS_API
 #include <alsa/asoundlib.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <errno.h>
 #include <sys/poll.h>
-#include <glib.h>
-
-#include "config.h"
 
 #include "fluid_lash.h"
 
