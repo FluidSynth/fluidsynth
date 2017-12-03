@@ -87,16 +87,12 @@ struct _fluid_voice_t
 
 	/* pan */
 	fluid_real_t pan;
-	fluid_real_t amp_left;
-	fluid_real_t amp_right;
 
 	/* reverb */
 	fluid_real_t reverb_send;
-	fluid_real_t amp_reverb;
 
 	/* chorus */
 	fluid_real_t chorus_send;
-	fluid_real_t amp_chorus;
 
 	/* rvoice control */
 	fluid_rvoice_t* rvoice;

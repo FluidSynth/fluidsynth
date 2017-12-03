@@ -430,6 +430,17 @@ void fluid_voice_start(fluid_voice_t* voice)
   voice->channel->synth->active_voice_count++;
 }
 
+/**
+ * Calculate the amplitude of a voice.
+ * 
+ * @param gain The gain value in the range [0.0 ; 1.0]
+ * @return An amplitude used by rvoice_mixer's buffers
+ */
+static fluid_real_t fluid_voice_calculate_gain_amplitude(const fluid_voice_t* voice, fluid_real_t gain)
+{
+    return gain * voice->synth_gain / 32768.0f;
+}
+
 void 
 fluid_voice_calculate_gen_pitch(fluid_voice_t* voice)
 {
@@ -677,10 +688,12 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
   case GEN_PAN:
     /* range checking is done in the fluid_pan function */
     voice->pan = x;
-    voice->amp_left = fluid_pan(x, 1) * voice->synth_gain / 32768.0f;
-    voice->amp_right = fluid_pan(x, 0) * voice->synth_gain / 32768.0f;
-    UPDATE_RVOICE_BUFFERS2(fluid_rvoice_buffers_set_amp, 0, voice->amp_left);
-    UPDATE_RVOICE_BUFFERS2(fluid_rvoice_buffers_set_amp, 1, voice->amp_right);
+    
+    /* left amp */
+    UPDATE_RVOICE_BUFFERS2(fluid_rvoice_buffers_set_amp, 0, fluid_voice_calculate_gain_amplitude(voice, fluid_pan(x, 1)));
+    
+    /* right amp */
+    UPDATE_RVOICE_BUFFERS2(fluid_rvoice_buffers_set_amp, 1, fluid_voice_calculate_gain_amplitude(voice, fluid_pan(x, 0)));
     break;
 
   case GEN_ATTENUATION:
@@ -711,16 +724,14 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
     /* The generator unit is 'tenths of a percent'. */
     voice->reverb_send = x / 1000.0f;
     fluid_clip(voice->reverb_send, 0.0, 1.0);
-    voice->amp_reverb = voice->reverb_send * voice->synth_gain / 32768.0f;
-    UPDATE_RVOICE_BUFFERS2(fluid_rvoice_buffers_set_amp, 2, voice->amp_reverb);
+    UPDATE_RVOICE_BUFFERS2(fluid_rvoice_buffers_set_amp, 2, fluid_voice_calculate_gain_amplitude(voice, voice->reverb_send));
     break;
 
   case GEN_CHORUSSEND:
     /* The generator unit is 'tenths of a percent'. */
     voice->chorus_send = x / 1000.0f;
     fluid_clip(voice->chorus_send, 0.0, 1.0);
-    voice->amp_chorus = voice->chorus_send * voice->synth_gain / 32768.0f;
-    UPDATE_RVOICE_BUFFERS2(fluid_rvoice_buffers_set_amp, 3, voice->amp_chorus);
+    UPDATE_RVOICE_BUFFERS2(fluid_rvoice_buffers_set_amp, 3, fluid_voice_calculate_gain_amplitude(voice, voice->chorus_send));
     break;
 
   case GEN_OVERRIDEROOTKEY:
@@ -1581,22 +1592,24 @@ int fluid_voice_set_param(fluid_voice_t* voice, int gen, fluid_real_t nrpn_value
 
 int fluid_voice_set_gain(fluid_voice_t* voice, fluid_real_t gain)
 {
+  fluid_real_t left, right, reverb, chorus;
+    
   /* avoid division by zero*/
   if (gain < 0.0000001){
     gain = 0.0000001;
   }
 
   voice->synth_gain = gain;
-  voice->amp_left = fluid_pan(voice->pan, 1) * gain / 32768.0f;
-  voice->amp_right = fluid_pan(voice->pan, 0) * gain / 32768.0f;
-  voice->amp_reverb = voice->reverb_send * gain / 32768.0f;
-  voice->amp_chorus = voice->chorus_send * gain / 32768.0f;
+  left = fluid_voice_calculate_gain_amplitude(voice, fluid_pan(voice->pan, 1));
+  right = fluid_voice_calculate_gain_amplitude(voice, fluid_pan(voice->pan, 0));
+  reverb = fluid_voice_calculate_gain_amplitude(voice, voice->reverb_send);
+  chorus = fluid_voice_calculate_gain_amplitude(voice, voice->chorus_send);
 
   UPDATE_RVOICE_R1(fluid_rvoice_set_synth_gain, gain);
-  UPDATE_RVOICE_BUFFERS2(fluid_rvoice_buffers_set_amp, 0, voice->amp_left);
-  UPDATE_RVOICE_BUFFERS2(fluid_rvoice_buffers_set_amp, 1, voice->amp_right);
-  UPDATE_RVOICE_BUFFERS2(fluid_rvoice_buffers_set_amp, 2, voice->amp_reverb);
-  UPDATE_RVOICE_BUFFERS2(fluid_rvoice_buffers_set_amp, 3, voice->amp_chorus);
+  UPDATE_RVOICE_BUFFERS2(fluid_rvoice_buffers_set_amp, 0, left);
+  UPDATE_RVOICE_BUFFERS2(fluid_rvoice_buffers_set_amp, 1, right);
+  UPDATE_RVOICE_BUFFERS2(fluid_rvoice_buffers_set_amp, 2, reverb);
+  UPDATE_RVOICE_BUFFERS2(fluid_rvoice_buffers_set_amp, 3, chorus);
 
   return FLUID_OK;
 }
