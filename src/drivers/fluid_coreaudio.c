@@ -30,8 +30,6 @@
 #include "fluid_mdriver.h"
 #include "fluid_settings.h"
 
-#include "config.h"
-
 #if COREAUDIO_SUPPORT
 #include <CoreServices/CoreServices.h>
 #include <CoreAudio/CoreAudioTypes.h>
