@@ -368,7 +368,7 @@ fluid_voice_gen_get(fluid_voice_t* voice, int gen)
   return voice->gen[gen].val;
 }
 
-fluid_real_t fluid_voice_gen_value(fluid_voice_t* voice, int num)
+fluid_real_t fluid_voice_gen_value(const fluid_voice_t* voice, int num)
 {
 	/* This is an extension to the SoundFont standard. More
 	 * documentation is available at the fluid_synth_set_gen2()
@@ -665,20 +665,20 @@ calculate_hold_decay_buffers(fluid_voice_t* voice, int gen_base,
 void
 fluid_voice_update_param(fluid_voice_t* voice, int gen)
 {
-  double q_dB;
-  fluid_real_t x;
-  fluid_real_t y;
-  unsigned int count, z;
   // Alternate attenuation scale used by EMU10K1 cards when setting the attenuation at the preset or instrument level within the SoundFont bank.
   static const float ALT_ATTENUATION_SCALE = 0.4f;
+  unsigned int count, z;
+  fluid_real_t q_dB;
+  fluid_real_t x = fluid_voice_gen_value(voice, gen);
+  
 
   switch (gen) {
 
   case GEN_PAN:
     /* range checking is done in the fluid_pan function */
-    voice->pan = fluid_voice_gen_value(voice, GEN_PAN);
-    voice->amp_left = fluid_pan(voice->pan, 1) * voice->synth_gain / 32768.0f;
-    voice->amp_right = fluid_pan(voice->pan, 0) * voice->synth_gain / 32768.0f;
+    voice->pan = x;
+    voice->amp_left = fluid_pan(x, 1) * voice->synth_gain / 32768.0f;
+    voice->amp_right = fluid_pan(x, 0) * voice->synth_gain / 32768.0f;
     UPDATE_RVOICE_BUFFERS2(fluid_rvoice_buffers_set_amp, 0, voice->amp_left);
     UPDATE_RVOICE_BUFFERS2(fluid_rvoice_buffers_set_amp, 1, voice->amp_right);
     break;
@@ -709,7 +709,7 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
 
   case GEN_REVERBSEND:
     /* The generator unit is 'tenths of a percent'. */
-    voice->reverb_send = fluid_voice_gen_value(voice, GEN_REVERBSEND) / 1000.0f;
+    voice->reverb_send = x / 1000.0f;
     fluid_clip(voice->reverb_send, 0.0, 1.0);
     voice->amp_reverb = voice->reverb_send * voice->synth_gain / 32768.0f;
     UPDATE_RVOICE_BUFFERS2(fluid_rvoice_buffers_set_amp, 2, voice->amp_reverb);
@@ -717,7 +717,7 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
 
   case GEN_CHORUSSEND:
     /* The generator unit is 'tenths of a percent'. */
-    voice->chorus_send = fluid_voice_gen_value(voice, GEN_CHORUSSEND) / 1000.0f;
+    voice->chorus_send = x / 1000.0f;
     fluid_clip(voice->chorus_send, 0.0, 1.0);
     voice->amp_chorus = voice->chorus_send * voice->synth_gain / 32768.0f;
     UPDATE_RVOICE_BUFFERS2(fluid_rvoice_buffers_set_amp, 3, voice->amp_chorus);
@@ -756,14 +756,13 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
      * modulation.  The allowed range is tested in the 'fluid_ct2hz'
      * function [PH,20021214]
      */
-    x = fluid_voice_gen_value(voice, GEN_FILTERFC);
     UPDATE_RVOICE_FILTER1(fluid_iir_filter_set_fres, x);
     break;
 
   case GEN_FILTERQ:
     /* The generator contains 'centibels' (1/10 dB) => divide by 10 to
      * obtain dB */
-    q_dB = fluid_voice_gen_value(voice, GEN_FILTERQ) / 10.0f;
+    q_dB = x / 10.0f;
 
     /* Range: SF2.01 section 8.1.3 # 8 (convert from cB to dB => /10) */
     fluid_clip(q_dB, 0.0f, 96.0f);
@@ -789,25 +788,21 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
     break;
 
   case GEN_MODLFOTOPITCH:
-    x = fluid_voice_gen_value(voice, GEN_MODLFOTOPITCH);
     fluid_clip(x, -12000.0, 12000.0);
     UPDATE_RVOICE_R1(fluid_rvoice_set_modlfo_to_pitch, x);
     break;
 
   case GEN_MODLFOTOVOL:
-    x = fluid_voice_gen_value(voice, GEN_MODLFOTOVOL);
     fluid_clip(x, -960.0, 960.0);
     UPDATE_RVOICE_R1(fluid_rvoice_set_modlfo_to_vol, x);
     break;
 
   case GEN_MODLFOTOFILTERFC:
-    x = fluid_voice_gen_value(voice, GEN_MODLFOTOFILTERFC);
     fluid_clip(x, -12000, 12000);
     UPDATE_RVOICE_R1(fluid_rvoice_set_modlfo_to_fc, x);
     break;
 
   case GEN_MODLFODELAY:
-    x = fluid_voice_gen_value(voice, GEN_MODLFODELAY);
     fluid_clip(x, -12000.0f, 5000.0f);
     z = (unsigned int) (voice->output_rate * fluid_tc2sec_delay(x));
     UPDATE_RVOICE_ENVLFO_I1(fluid_lfo_set_delay, modlfo, z);
@@ -817,7 +812,6 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
     /* - the frequency is converted into a delta value, per buffer of FLUID_BUFSIZE samples
      * - the delay into a sample delay
      */
-    x = fluid_voice_gen_value(voice, GEN_MODLFOFREQ);
     fluid_clip(x, -16000.0f, 4500.0f);
     x = (4.0f * FLUID_BUFSIZE * fluid_act2hz(x) / voice->output_rate);
     UPDATE_RVOICE_ENVLFO_R1(fluid_lfo_set_incr, modlfo, x);
@@ -829,21 +823,18 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
      * - the frequency is converted into a delta value, per buffer of FLUID_BUFSIZE samples
      * - the delay into a sample delay
      */
-    x = fluid_voice_gen_value(voice, GEN_VIBLFOFREQ);
     fluid_clip(x, -16000.0f, 4500.0f);
     x = 4.0f * FLUID_BUFSIZE * fluid_act2hz(x) / voice->output_rate;
     UPDATE_RVOICE_ENVLFO_R1(fluid_lfo_set_incr, viblfo, x); 
     break;
 
   case GEN_VIBLFODELAY:
-    x = fluid_voice_gen_value(voice,GEN_VIBLFODELAY);
     fluid_clip(x, -12000.0f, 5000.0f);
     z = (unsigned int) (voice->output_rate * fluid_tc2sec_delay(x)); 
     UPDATE_RVOICE_ENVLFO_I1(fluid_lfo_set_delay, viblfo, z); 
     break;
 
   case GEN_VIBLFOTOPITCH:
-    x = fluid_voice_gen_value(voice, GEN_VIBLFOTOPITCH);
     fluid_clip(x, -12000.0, 12000.0);
     UPDATE_RVOICE_R1(fluid_rvoice_set_viblfo_to_pitch, x); 
     break;
@@ -891,14 +882,11 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
     break;
 
   case GEN_MODENVTOPITCH:
-    x = fluid_voice_gen_value(voice, GEN_MODENVTOPITCH);
     fluid_clip(x, -12000.0, 12000.0);
     UPDATE_RVOICE_R1(fluid_rvoice_set_modenv_to_pitch, x);
     break;
 
   case GEN_MODENVTOFILTERFC:
-    x = fluid_voice_gen_value(voice,GEN_MODENVTOFILTERFC);
-
     /* Range: SF2.01 section 8.1.3 # 1
      * Motivation for range checking:
      * Filter is reported to make funny noises now and then
@@ -921,39 +909,47 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
      */
   case GEN_STARTADDROFS:              /* SF2.01 section 8.1.3 # 0 */
   case GEN_STARTADDRCOARSEOFS:        /* SF2.01 section 8.1.3 # 4 */
-    if (voice->sample != NULL) {
-      z = (voice->sample->start
-			     + (int) fluid_voice_gen_value(voice, GEN_STARTADDROFS)
-			     + 32768 * (int) fluid_voice_gen_value(voice, GEN_STARTADDRCOARSEOFS));
-      UPDATE_RVOICE_I1(fluid_rvoice_set_start, z);
+    if (voice->sample != NULL)
+    {
+        fluid_real_t start_fine = fluid_voice_gen_value(voice, GEN_STARTADDROFS);
+        fluid_real_t start_coar = fluid_voice_gen_value(voice, GEN_STARTADDRCOARSEOFS);
+        
+        z = voice->sample->start + (int)start_fine + 32768 * (int)start_coar;
+        UPDATE_RVOICE_I1(fluid_rvoice_set_start, z);
     }
     break;
   case GEN_ENDADDROFS:                 /* SF2.01 section 8.1.3 # 1 */
   case GEN_ENDADDRCOARSEOFS:           /* SF2.01 section 8.1.3 # 12 */
-    if (voice->sample != NULL) {
-      z = (voice->sample->end
-			   + (int) fluid_voice_gen_value(voice, GEN_ENDADDROFS)
-			   + 32768 * (int) fluid_voice_gen_value(voice, GEN_ENDADDRCOARSEOFS));
-      UPDATE_RVOICE_I1(fluid_rvoice_set_end, z);
+    if (voice->sample != NULL)
+    {
+        fluid_real_t end_fine = fluid_voice_gen_value(voice, GEN_ENDADDROFS);
+        fluid_real_t end_coar = fluid_voice_gen_value(voice, GEN_ENDADDRCOARSEOFS);
+        
+        z = voice->sample->end + (int)end_fine + 32768 * (int)end_coar;
+        UPDATE_RVOICE_I1(fluid_rvoice_set_end, z);
     }
     break;
   case GEN_STARTLOOPADDROFS:           /* SF2.01 section 8.1.3 # 2 */
   case GEN_STARTLOOPADDRCOARSEOFS:     /* SF2.01 section 8.1.3 # 45 */
-    if (voice->sample != NULL) {
-      z = (voice->sample->loopstart
-				  + (int) fluid_voice_gen_value(voice, GEN_STARTLOOPADDROFS)
-				  + 32768 * (int) fluid_voice_gen_value(voice, GEN_STARTLOOPADDRCOARSEOFS));
-      UPDATE_RVOICE_I1(fluid_rvoice_set_loopstart, z);
+    if (voice->sample != NULL)
+    {
+        fluid_real_t lstart_fine = fluid_voice_gen_value(voice, GEN_STARTLOOPADDROFS);
+        fluid_real_t lstart_coar = fluid_voice_gen_value(voice, GEN_STARTLOOPADDRCOARSEOFS);
+        
+        z = voice->sample->loopstart + (int)lstart_fine + 32768 * (int)lstart_coar;
+        UPDATE_RVOICE_I1(fluid_rvoice_set_loopstart, z);
     }
     break;
 
   case GEN_ENDLOOPADDROFS:             /* SF2.01 section 8.1.3 # 3 */
   case GEN_ENDLOOPADDRCOARSEOFS:       /* SF2.01 section 8.1.3 # 50 */
-    if (voice->sample != NULL) {
-      z = (voice->sample->loopend
-				+ (int) fluid_voice_gen_value(voice, GEN_ENDLOOPADDROFS)
-				+ 32768 * (int) fluid_voice_gen_value(voice, GEN_ENDLOOPADDRCOARSEOFS));
-      UPDATE_RVOICE_I1(fluid_rvoice_set_loopend, z);
+    if (voice->sample != NULL)
+    {
+        fluid_real_t lend_fine = fluid_voice_gen_value(voice, GEN_ENDLOOPADDROFS);
+        fluid_real_t lend_coar = fluid_voice_gen_value(voice, GEN_ENDLOOPADDRCOARSEOFS);
+        
+        z = voice->sample->loopend + (int)lend_fine + 32768 * (int)lend_coar;
+        UPDATE_RVOICE_I1(fluid_rvoice_set_loopend, z);
     }
     break;
 
@@ -969,7 +965,6 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
      * - attack, decay and release are converted to their increment per sample
      */
   case GEN_VOLENVDELAY:                /* SF2.01 section 8.1.3 # 33 */
-    x = fluid_voice_gen_value(voice, GEN_VOLENVDELAY);
     fluid_clip(x, -12000.0f, 5000.0f);
     count = NUM_BUFFERS_DELAY(x);
     fluid_voice_update_volenv(voice, FLUID_VOICE_ENVDELAY,
@@ -977,7 +972,6 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
     break;
 
   case GEN_VOLENVATTACK:               /* SF2.01 section 8.1.3 # 34 */
-    x = fluid_voice_gen_value(voice, GEN_VOLENVATTACK);
     fluid_clip(x, -12000.0f, 8000.0f);
     count = 1 + NUM_BUFFERS_ATTACK(x);
     fluid_voice_update_volenv(voice, FLUID_VOICE_ENVATTACK,
@@ -994,15 +988,14 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
   case GEN_VOLENVDECAY:               /* SF2.01 section 8.1.3 # 36 */
   case GEN_VOLENVSUSTAIN:             /* SF2.01 section 8.1.3 # 37 */
   case GEN_KEYTOVOLENVDECAY:          /* SF2.01 section 8.1.3 # 40 */
-    y = 1.0f - 0.001f * fluid_voice_gen_value(voice, GEN_VOLENVSUSTAIN);
-    fluid_clip(y, 0.0f, 1.0f);
+    x = 1.0f - 0.001f * fluid_voice_gen_value(voice, GEN_VOLENVSUSTAIN);
+    fluid_clip(x , 0.0f, 1.0f);
     count = calculate_hold_decay_buffers(voice, GEN_VOLENVDECAY, GEN_KEYTOVOLENVDECAY, 1); /* 1 for decay */
     fluid_voice_update_volenv(voice, FLUID_VOICE_ENVDECAY,
-                            count, 1.0f, count ? -1.0f / count : 0.0f, y, 2.0f);
+                            count, 1.0f, count ? -1.0f / count : 0.0f, x, 2.0f);
     break;
 
   case GEN_VOLENVRELEASE:             /* SF2.01 section 8.1.3 # 38 */
-    x = fluid_voice_gen_value(voice, GEN_VOLENVRELEASE);
     fluid_clip(x, FLUID_MIN_VOLENVRELEASE, 8000.0f);
     count = 1 + NUM_BUFFERS_RELEASE(x);
     fluid_voice_update_volenv(voice, FLUID_VOICE_ENVRELEASE,
@@ -1011,14 +1004,12 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
 
     /* Modulation envelope */
   case GEN_MODENVDELAY:               /* SF2.01 section 8.1.3 # 25 */
-    x = fluid_voice_gen_value(voice, GEN_MODENVDELAY);
     fluid_clip(x, -12000.0f, 5000.0f);
     fluid_voice_update_modenv(voice, FLUID_VOICE_ENVDELAY,
                             NUM_BUFFERS_DELAY(x), 0.0f, 0.0f, -1.0f, 1.0f);
     break;
 
   case GEN_MODENVATTACK:               /* SF2.01 section 8.1.3 # 26 */
-    x = fluid_voice_gen_value(voice, GEN_MODENVATTACK);
     fluid_clip(x, -12000.0f, 8000.0f);
     count = 1 + NUM_BUFFERS_ATTACK(x);
     fluid_voice_update_modenv(voice, FLUID_VOICE_ENVATTACK,
@@ -1036,14 +1027,13 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
   case GEN_MODENVSUSTAIN:                                 /* SF 2.01 section 8.1.3 # 29 */
   case GEN_KEYTOMODENVDECAY:                              /* SF 2.01 section 8.1.3 # 32 */
     count = calculate_hold_decay_buffers(voice, GEN_MODENVDECAY, GEN_KEYTOMODENVDECAY, 1); /* 1 for decay */
-    y = 1.0f - 0.001f * fluid_voice_gen_value(voice, GEN_MODENVSUSTAIN);
-    fluid_clip(y, 0.0f, 1.0f);
+    x = 1.0f - 0.001f * fluid_voice_gen_value(voice, GEN_MODENVSUSTAIN);
+    fluid_clip(x, 0.0f, 1.0f);
     fluid_voice_update_modenv(voice, FLUID_VOICE_ENVDECAY,
-                            count, 1.0f, count ? -1.0f / count : 0.0f, y, 2.0f);
+                            count, 1.0f, count ? -1.0f / count : 0.0f, x, 2.0f);
     break;
 
   case GEN_MODENVRELEASE:                                  /* SF 2.01 section 8.1.3 # 30 */
-    x = fluid_voice_gen_value(voice, GEN_MODENVRELEASE);
     fluid_clip(x, -12000.0f, 8000.0f);
     count = 1 + NUM_BUFFERS_RELEASE(x);
     fluid_voice_update_modenv(voice, FLUID_VOICE_ENVRELEASE,

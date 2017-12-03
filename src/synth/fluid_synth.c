@@ -3296,8 +3296,7 @@ static void
 fluid_synth_kill_by_exclusive_class_LOCAL(fluid_synth_t* synth,
                                           fluid_voice_t* new_voice)
 {
-  int excl_class = fluid_voice_gen_value(new_voice,GEN_EXCLUSIVECLASS);
-  fluid_voice_t* existing_voice;
+  int excl_class = fluid_voice_gen_value(new_voice, GEN_EXCLUSIVECLASS);
   int i;
 
   /* Excl. class 0: No exclusive class */
@@ -3305,14 +3304,15 @@ fluid_synth_kill_by_exclusive_class_LOCAL(fluid_synth_t* synth,
 
   /* Kill all notes on the same channel with the same exclusive class */
   for (i = 0; i < synth->polyphony; i++) {
-    existing_voice = synth->voice[i];
+    fluid_voice_t* existing_voice = synth->voice[i];
+    int existing_excl_class = fluid_voice_gen_value(existing_voice, GEN_EXCLUSIVECLASS);
 
     /* If voice is playing, on the same channel, has same exclusive
      * class and is not part of the same noteon event (voice group), then kill it */
 
     if (fluid_voice_is_playing(existing_voice)
         && fluid_voice_get_channel(existing_voice) == fluid_voice_get_channel(new_voice)
-        && (int)_GEN (existing_voice, GEN_EXCLUSIVECLASS) == excl_class
+        && existing_excl_class == excl_class
         && fluid_voice_get_id (existing_voice) != fluid_voice_get_id(new_voice))
       fluid_voice_kill_excl(existing_voice);
   }

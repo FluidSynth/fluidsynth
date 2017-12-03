@@ -181,8 +181,7 @@ fluid_voice_unlock_rvoice(fluid_voice_t* voice)
 #define _SAMPLEMODE(voice) ((int)(voice)->gen[GEN_SAMPLEMODE].val)
 
 
-/* FIXME - This doesn't seem to be used anywhere - JG */
-fluid_real_t fluid_voice_gen_value(fluid_voice_t* voice, int num);
+fluid_real_t fluid_voice_gen_value(const fluid_voice_t* voice, int num);
 
 #define fluid_voice_get_loudness(voice) (fluid_adsr_env_get_max_val(&voice->volenv))
 
