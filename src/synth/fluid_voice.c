@@ -241,7 +241,7 @@ delete_fluid_voice(fluid_voice_t* voice)
  */
 int
 fluid_voice_init(fluid_voice_t* voice, fluid_sample_t* sample, 
-		 fluid_inst_zone_range_t *inst_zone_range,
+		 fluid_zone_range_t *inst_zone_range,
 		 fluid_channel_t* channel, int key, int vel, unsigned int id,
 		 unsigned int start_time, fluid_real_t gain)
 {

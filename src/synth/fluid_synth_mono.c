@@ -944,7 +944,7 @@ int fluid_synth_noteon_monopoly_legato(fluid_synth_t* synth, int chan,
 		voice = synth->voice[i];
 		if (fluid_voice_is_on(voice) && (voice->chan == chan) && (voice->key == fromkey))
 		{
-			fluid_inst_zone_range_t * zone_range = voice->zone_range;
+			fluid_zone_range_t * zone_range = voice->zone_range;
 			/* Ignore voices when there is no instrument zone. Otherwise
 			   checks if tokey is inside the range of the running voice */
 			if (zone_range && fluid_zone_inside_range(zone_range, tokey, vel))

@@ -1816,7 +1816,7 @@ fluid_inst_zone_get_sample(fluid_inst_zone_t* zone)
 
 
 int
-fluid_zone_inside_range(fluid_inst_zone_range_t* range, int key, int vel)
+fluid_zone_inside_range(fluid_zone_range_t* range, int key, int vel)
 {
   return ((range->keylo <= key) &&
 	  (range->keyhi >= key) &&

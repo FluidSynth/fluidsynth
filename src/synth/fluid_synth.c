@@ -3458,7 +3458,7 @@ fluid_synth_alloc_voice(fluid_synth_t* synth, fluid_sample_t* sample,
 }
 
 fluid_voice_t*
-fluid_synth_alloc_voice_LOCAL(fluid_synth_t* synth, fluid_sample_t* sample, int chan, int key, int vel, fluid_inst_zone_range_t* zone_range)
+fluid_synth_alloc_voice_LOCAL(fluid_synth_t* synth, fluid_sample_t* sample, int chan, int key, int vel, fluid_zone_range_t* zone_range)
 {
   int i, k;
   fluid_voice_t* voice = NULL;

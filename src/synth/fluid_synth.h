@@ -230,7 +230,7 @@ int fluid_synth_noteon_monopoly_legato(fluid_synth_t* synth, int chan, int fromk
 int fluid_synth_noteoff_monopoly(fluid_synth_t* synth, int chan, int key, char Mono);
 
 fluid_voice_t*
-fluid_synth_alloc_voice_LOCAL(fluid_synth_t* synth, fluid_sample_t* sample, int chan, int key, int vel, fluid_inst_zone_range_t* zone_range);
+fluid_synth_alloc_voice_LOCAL(fluid_synth_t* synth, fluid_sample_t* sample, int chan, int key, int vel, fluid_zone_range_t* zone_range);
 
 void fluid_channel_set_onenote_monolist(fluid_channel_t* chan, unsigned char key, unsigned char vel);
 void fluid_channel_clear_monolist(fluid_channel_t* chan);
