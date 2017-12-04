@@ -1646,8 +1646,8 @@ fluid_inst_zone_import_sfont(fluid_preset_zone_t* preset_zone, fluid_inst_zone_t
       zone->range.keyhi = sfgen->amount.range.hi;
       break;
     case GEN_VELRANGE:
-      zone->range.keylo = sfgen->amount.range.lo;
-      zone->range.keyhi = sfgen->amount.range.hi;
+      zone->range.vello = sfgen->amount.range.lo;
+      zone->range.velhi = sfgen->amount.range.hi;
       break;
     default:
       /* FIXME: some generators have an unsigned word amount value but
