@@ -148,7 +148,8 @@ https://stackoverflow.com/a/6251757
                 set by synth.overflow.important to each voice on those channels. It can
                 be used to make voices on particular MIDI channels
                 less likely (synth.overflow.important &gt; 0) or more likely
-                (synth.overflow.important &lt; 0) to be killed in an overflow situation.
+                (synth.overflow.important &lt; 0) to be killed in an overflow situation. Channel
+                numbers are 1-based, so the first MIDI channel is number 1.
             </desc>
         </setting>
         <setting>
