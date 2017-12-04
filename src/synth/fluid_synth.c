@@ -5339,10 +5339,8 @@ static int fluid_synth_set_important_channels(fluid_synth_t *synth, const char *
         scores->num_important_channels = synth->midi_channels;
     }
 
-    for (i = 0; i < scores->num_important_channels; i++)
-    {
-        scores->important_channels[i] = FALSE;
-    }
+    FLUID_MEMSET(scores->important_channels, FALSE,
+            sizeof(*scores->important_channels) * scores->num_important_channels);
 
     if (channels != NULL)
     {
