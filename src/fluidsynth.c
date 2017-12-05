@@ -94,9 +94,9 @@ void process_o_cmd_line_option(fluid_settings_t* settings, char* optarg)
     if (fluid_settings_get_hints (settings, optarg, &hints) == FLUID_OK
         && hints & FLUID_HINT_TOGGLED)
     {
-      if (FLUID_STRCMP (val, "yes") == 0 || FLUID_STRCMP (val, "True") == 0
-          || FLUID_STRCMP (val, "TRUE") == 0 || FLUID_STRCMP (val, "true") == 0
-          || FLUID_STRCMP (val, "T") == 0)
+      if (FLUID_STRCASECMP (val, "yes") == 0
+          || FLUID_STRCASECMP (val, "true") == 0
+          || FLUID_STRCASECMP (val, "t") == 0)
         ival = 1;
       else ival = atoi (val);
     }

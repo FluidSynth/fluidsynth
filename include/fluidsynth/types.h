@@ -58,7 +58,7 @@ typedef struct _fluid_ramsfont_t fluid_ramsfont_t;              /**< RAM SoundFo
 typedef struct _fluid_rampreset_t fluid_rampreset_t;            /**< RAM SoundFont preset */
 typedef struct _fluid_cmd_handler_t fluid_cmd_handler_t;        /**< Shell Command Handler */
 typedef struct _fluid_ladspa_fx_t fluid_ladspa_fx_t;            /**< LADSPA effects instance */
-
+typedef struct _fluid_file_callbacks_t fluid_file_callbacks_t;  /**< Callback struct to perform custom file loading of soundfonts */
 
 typedef int fluid_istream_t;    /**< Input stream descriptor */
 typedef int fluid_ostream_t;    /**< Output stream descriptor */

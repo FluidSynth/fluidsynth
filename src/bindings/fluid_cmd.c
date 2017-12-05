@@ -80,8 +80,8 @@ static int fluid_handle_voice_count (void* data, int ac, char **av,
 
 void fluid_shell_settings(fluid_settings_t* settings)
 {
-  fluid_settings_register_str(settings, "shell.prompt", "", 0, NULL, NULL);
-  fluid_settings_register_int(settings, "shell.port", 9800, 1, 65535, 0, NULL, NULL);
+  fluid_settings_register_str(settings, "shell.prompt", "", 0);
+  fluid_settings_register_int(settings, "shell.port", 9800, 1, 65535, 0);
 }
 
 
@@ -1363,9 +1363,9 @@ fluid_handle_set(void* data, int ac, char** av, fluid_ostream_t out)
       if (fluid_settings_get_hints (handler->synth->settings, av[0], &hints) == FLUID_OK
           && hints & FLUID_HINT_TOGGLED)
       {
-          if (FLUID_STRCMP (av[1], "yes") == 0 || FLUID_STRCMP (av[1], "True") == 0
-              || FLUID_STRCMP (av[1], "TRUE") == 0 || FLUID_STRCMP (av[1], "true") == 0
-              || FLUID_STRCMP (av[1], "T") == 0)
+          if (FLUID_STRCASECMP (av[1], "yes") == 0
+              || FLUID_STRCASECMP (av[1], "true") == 0
+              || FLUID_STRCASECMP (av[1], "t") == 0)
           ival = 1;
           else ival = atoi (av[1]);
       }

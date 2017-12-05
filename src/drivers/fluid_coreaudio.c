@@ -30,8 +30,6 @@
 #include "fluid_mdriver.h"
 #include "fluid_settings.h"
 
-#include "config.h"
-
 #if COREAUDIO_SUPPORT
 #include <CoreServices/CoreServices.h>
 #include <CoreAudio/CoreAudioTypes.h>
@@ -111,7 +109,7 @@ fluid_core_audio_driver_settings(fluid_settings_t* settings)
   pa.mScope = kAudioObjectPropertyScopeWildcard;
   pa.mElement = kAudioObjectPropertyElementMaster;
 
-  fluid_settings_register_str (settings, "audio.coreaudio.device", "default", 0, NULL, NULL);
+  fluid_settings_register_str (settings, "audio.coreaudio.device", "default", 0);
   fluid_settings_add_option (settings, "audio.coreaudio.device", "default");
   if (OK (AudioObjectGetPropertyDataSize (kAudioObjectSystemObject, &pa, 0, 0, &size))) {
     int num = size / (int) sizeof (AudioDeviceID);
