@@ -26,8 +26,7 @@
  * NOTE: Unfortunately midiInAddBuffer(), for SYSEX data, should not be called
  * from within the MIDI input callback, despite many examples contrary to that
  * on the Internet.  Some MIDI devices will deadlock.  Therefore we add MIDIHDR
- * pointers to a queue and re-add them in a separate thread, using a mutex and
- * conditional to wake up the thread.  Lame-o API! :(
+ * pointers to a queue and re-add them in a separate thread.  Lame-o API! :(
  */
 
 #include "fluidsynth_priv.h"
@@ -71,8 +70,7 @@ void delete_fluid_winmidi_driver(fluid_midi_driver_t* p);
 
 void CALLBACK fluid_winmidi_callback(HMIDIIN hmi, UINT wMsg, DWORD_PTR dwInstance,
 				    DWORD_PTR msg, DWORD_PTR extra);
-static char* fluid_winmidi_input_error(int no);
-int fluid_winmidi_driver_status(fluid_midi_driver_t* p);
+static char* fluid_winmidi_input_error(MMRESULT no);
 
 
 void fluid_winmidi_midi_driver_settings(fluid_settings_t* settings)
@@ -131,7 +129,7 @@ new_fluid_winmidi_driver(fluid_settings_t* settings,
   fluid_winmidi_driver_t* dev;
   MIDIHDR *hdr;
   MMRESULT res;
-  UINT i, err, num, midi_num = 0;
+  UINT i, num, midi_num = 0;
   MIDIINCAPS in_caps;
   char* devname = NULL;
 
@@ -146,7 +144,7 @@ new_fluid_winmidi_driver(fluid_settings_t* settings,
     return NULL;
   }
 
-  memset (dev, 0, sizeof (fluid_winmidi_driver_t));
+  FLUID_MEMSET (dev, 0, sizeof (fluid_winmidi_driver_t));
 
   dev->hmidiin = NULL;
   dev->driver.handler = handler;
@@ -190,12 +188,12 @@ new_fluid_winmidi_driver(fluid_settings_t* settings,
   }
 
   /* try opening the device */
-  err = midiInOpen(&dev->hmidiin, midi_num,
+  res = midiInOpen(&dev->hmidiin, midi_num,
 		   (DWORD_PTR) fluid_winmidi_callback,
 		   (DWORD_PTR) dev, CALLBACK_FUNCTION);
-  if (err != MMSYSERR_NOERROR) {
+  if (res != MMSYSERR_NOERROR) {
     FLUID_LOG(FLUID_ERR, "Couldn't open MIDI input: %s (error %d)",
-	     fluid_winmidi_input_error(err), err);
+	     fluid_winmidi_input_error(res), res);
     goto error_recovery;
   }
 
@@ -208,21 +206,21 @@ new_fluid_winmidi_driver(fluid_settings_t* settings,
     hdr->dwBufferLength = MIDI_SYSEX_MAX_SIZE;
 
     /* Prepare a buffer for SYSEX data and add it */
-    err = midiInPrepareHeader (dev->hmidiin, hdr, sizeof (MIDIHDR));
+    res = midiInPrepareHeader (dev->hmidiin, hdr, sizeof (MIDIHDR));
 
-    if (err == MMSYSERR_NOERROR)
+    if (res == MMSYSERR_NOERROR)
     {
-      err = midiInAddBuffer (dev->hmidiin, hdr, sizeof (MIDIHDR));
+      res = midiInAddBuffer (dev->hmidiin, hdr, sizeof (MIDIHDR));
 
-      if (err != MMSYSERR_NOERROR)
+      if (res != MMSYSERR_NOERROR)
       {
         FLUID_LOG (FLUID_WARN, "Failed to prepare MIDI SYSEX buffer: %s (error %d)",
-                   fluid_winmidi_input_error (err), err);
+                   fluid_winmidi_input_error (res), res);
         midiInUnprepareHeader (dev->hmidiin, hdr, sizeof (MIDIHDR));
       }
     }
     else FLUID_LOG (FLUID_WARN, "Failed to prepare MIDI SYSEX buffer: %s (error %d)",
-                    fluid_winmidi_input_error (err), err);
+                    fluid_winmidi_input_error (res), res);
   }
 
   /* Create thread which processes re-adding SYSEX buffers */
@@ -346,14 +344,8 @@ fluid_winmidi_callback(HMIDIIN hmi, UINT wMsg, DWORD_PTR dwInstance,
   }
 }
 
-int
-fluid_winmidi_driver_status(fluid_midi_driver_t* p)
-{
-  return 0;
-}
-
 static char*
-fluid_winmidi_input_error(int no)
+fluid_winmidi_input_error(MMRESULT no)
 {
   midiInGetErrorText(no, fluid_winmidi_error_buffer, 256);
   return fluid_winmidi_error_buffer;
