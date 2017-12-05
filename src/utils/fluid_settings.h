@@ -40,11 +40,16 @@ int fluid_settings_register_num(fluid_settings_t* settings, const char* name, do
 int fluid_settings_callback_num(fluid_settings_t* settings, const char* name,
                                 fluid_num_update_t fun, void* data);
 
+/* Type specific wrapper for fluid_settings_getnum */
+int fluid_settings_getnum_float(fluid_settings_t *settings, const char *name, float *val);
+
 
 typedef void (*fluid_int_update_t)(void* data, const char* name, int value);
 int fluid_settings_register_int(fluid_settings_t* settings, const char* name, int def,
                                 int min, int max, int hints);
 int fluid_settings_callback_int(fluid_settings_t* settings, const char* name,
                                 fluid_int_update_t fun, void* data);
+
+int fluid_settings_split_csv(const char *str, int *buf, int buf_len);
 
 #endif /* _FLUID_SETTINGS_H */
