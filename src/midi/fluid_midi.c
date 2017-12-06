@@ -576,25 +576,13 @@ fluid_midi_file_read_event(fluid_midi_file *mf, fluid_track_t *track)
                 break;
 
             case MIDI_LYRIC:
+            case MIDI_TEXT:
+            {
+                void* tmp;
+                int size = mf->varlen+1;
+                
                 /* NULL terminate strings for safety */
-                metadata[mf->varlen] = '\0';
-                evt = new_fluid_midi_event();
-                if (evt == NULL) {
-                    FLUID_LOG(FLUID_ERR, "Out of memory");
-                    result = FLUID_FAILED;
-                    break;
-                }
-                evt->dtime = mf->dtime;
-
-                fluid_midi_event_set_text(evt, MIDI_LYRIC, metadata, mf->varlen+1, TRUE);
-                fluid_track_add_event(track, evt);
-                mf->dtime = 0;
-
-                break;
-
-             case MIDI_TEXT:
-                /* NULL terminate strings for safety */
-                metadata[mf->varlen] = '\0';
+                metadata[size-1] = '\0';
 
                 evt = new_fluid_midi_event();
                 if (evt == NULL) {
@@ -603,10 +591,22 @@ fluid_midi_file_read_event(fluid_midi_file *mf, fluid_track_t *track)
                     break;
                 }
                 evt->dtime = mf->dtime;
-
-                fluid_midi_event_set_text(evt, MIDI_TEXT, metadata, mf->varlen+1, TRUE);
-                fluid_track_add_event(track, evt);
-                mf->dtime = 0;
+                            
+                tmp = FLUID_MALLOC(size);
+                if (tmp == NULL)
+                {
+                    FLUID_LOG(FLUID_PANIC, "Out of memory");
+                    result = FLUID_FAILED;
+                    break;
+                }
+                FLUID_MEMCPY(tmp, metadata, size);
+                
+                if (fluid_midi_event_set_text(evt, type, tmp, size, TRUE) == FLUID_OK)
+                {
+                    fluid_track_add_event(track, evt);
+                    mf->dtime = 0;
+                }
+            }
                 break;
 
             case MIDI_MARKER:
@@ -840,13 +840,9 @@ delete_fluid_midi_event(fluid_midi_event_t *evt)
         temp = evt->next;
 
         /* Dynamic SYSEX event? - free (param2 indicates if dynamic) */
-        if (evt->type == MIDI_SYSEX && evt->paramptr && evt->param2)
+        if ((evt->type == MIDI_SYSEX || (evt-> type == MIDI_TEXT) || (evt->type == MIDI_LYRIC)) &&
+            evt->paramptr && evt->param2)
             FLUID_FREE (evt->paramptr);
-	/* text or lyric event needs text always free'd */
-	
-	if ((evt-> type == MIDI_TEXT) || (evt->type == MIDI_LYRIC)) {
-            FLUID_FREE (evt->paramptr);
-	}
 	
         FLUID_FREE(evt);
         evt = temp;
@@ -1070,23 +1066,18 @@ fluid_midi_event_set_sysex(fluid_midi_event_t *evt, void *data, int size, int dy
 /**
  * Assign text/lyric data to a MIDI event structure.
  * @param evt MIDI event structure
- * @param data Pointer to text data data, a copy is made of this
+ * @param type either MIDI_TEXT or MIDI_LYRIC
+ * @param data Pointer to text data
  * @param size Size of text data
- * @return Always returns #FLUID_OK
- *
- * NOTE: Unlike most other event assignment functions, this one sets evt->type
- * and also allocates memory for a copy of the data.
+ * @param dynamic TRUE if the data has been dynamically allocated and
+ *   should be freed when the event is freed via delete_fluid_midi_event()
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int
 fluid_midi_event_set_text(fluid_midi_event_t *evt, int type, void *data, int size, int dynamic)
 {
-    evt->type = MIDI_SYSEX;
-    evt->paramptr = FLUID_MALLOC(size);
-    if (evt->paramptr == NULL) {
-      FLUID_LOG(FLUID_PANIC, "Out of memory");
-      return FLUID_FAILED;
-    }
-    FLUID_MEMCPY(evt->paramptr, data, size);
+    fluid_return_val_if_fail(type==MIDI_TEXT || type==MIDI_LYRIC, FLUID_FAILED);
+    evt->paramptr = data
     evt->type = type;
     evt->param1 = size;
     evt->param2 = dynamic;
