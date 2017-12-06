@@ -32,6 +32,7 @@ static int fluid_midi_event_length(unsigned char event);
  * Returns NULL if there was an error reading or allocating memory.
  */
 static char* fluid_file_read_full(fluid_file fp, size_t* length);
+static void fluid_midi_event_set_sysex_LOCAL(fluid_midi_event_t *evt, int type, void *data, int size, int dynamic);
 #define READ_FULL_INITIAL_BUFLEN 1024
 
 
@@ -601,11 +602,9 @@ fluid_midi_file_read_event(fluid_midi_file *mf, fluid_track_t *track)
                 }
                 FLUID_MEMCPY(tmp, metadata, size);
                 
-                if (fluid_midi_event_set_text(evt, type, tmp, size, TRUE) == FLUID_OK)
-                {
-                    fluid_track_add_event(track, evt);
-                    mf->dtime = 0;
-                }
+                fluid_midi_event_set_sysex_LOCAL(evt, type, tmp, size, TRUE);
+                fluid_track_add_event(track, evt);
+                mf->dtime = 0;
             }
                 break;
 
@@ -1056,35 +1055,54 @@ fluid_midi_event_set_pitch(fluid_midi_event_t *evt, int val)
 int
 fluid_midi_event_set_sysex(fluid_midi_event_t *evt, void *data, int size, int dynamic)
 {
-    evt->type = MIDI_SYSEX;
-    evt->paramptr = data;
-    evt->param1 = size;
-    evt->param2 = dynamic;
+    fluid_midi_event_set_sysex_LOCAL(evt, MIDI_SYSEX, data, size, dynamic);
     return FLUID_OK;
 }
 
 /**
- * Assign text/lyric data to a MIDI event structure.
+ * Assign text data to a MIDI event structure.
  * @param evt MIDI event structure
- * @param type either MIDI_TEXT or MIDI_LYRIC
  * @param data Pointer to text data
  * @param size Size of text data
  * @param dynamic TRUE if the data has been dynamically allocated and
  *   should be freed when the event is freed via delete_fluid_midi_event()
- * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ * @return Always returns #FLUID_OK
  * 
  * @since 2.0.0
  */
 int
-fluid_midi_event_set_text(fluid_midi_event_t *evt, int type, void *data, int size, int dynamic)
+fluid_midi_event_set_text(fluid_midi_event_t *evt, void *data, int size, int dynamic)
 {
-    fluid_return_val_if_fail(type==MIDI_TEXT || type==MIDI_LYRIC, FLUID_FAILED);
-    evt->paramptr = data;
-    evt->type = type;
-    evt->param1 = size;
-    evt->param2 = dynamic;
+    fluid_midi_event_set_sysex_LOCAL(evt, MIDI_TEXT, data, size, dynamic);
     return FLUID_OK;
 }
+
+/**
+ * Assign lyric data to a MIDI event structure.
+ * @param evt MIDI event structure
+ * @param data Pointer to text data
+ * @param size Size of text data
+ * @param dynamic TRUE if the data has been dynamically allocated and
+ *   should be freed when the event is freed via delete_fluid_midi_event()
+ * @return Always returns #FLUID_OK
+ * 
+ * @since 2.0.0
+ */
+int
+fluid_midi_event_set_lyrics(fluid_midi_event_t *evt, void *data, int size, int dynamic)
+{
+    fluid_midi_event_set_sysex_LOCAL(evt, MIDI_LYRIC, data, size, dynamic);
+    return FLUID_OK;
+}
+
+static void fluid_midi_event_set_sysex_LOCAL(fluid_midi_event_t *evt, int type, void *data, int size, int dynamic)
+{
+    evt->type = type;
+    evt->paramptr = data;
+    evt->param1 = size;
+    evt->param2 = dynamic;
+}
+
 /******************************************************
  *
  *     fluid_track_t
