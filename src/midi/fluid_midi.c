@@ -1299,15 +1299,17 @@ fluid_track_send_events(fluid_track_t *track,
 
         if (!player || event->type == MIDI_EOT) {
         }
-        else if (event->type == MIDI_SET_TEMPO) {
-            fluid_player_set_midi_tempo(player, event->param1);
-        }
         else if (seeking && (event->type == NOTE_ON || event->type == NOTE_OFF)) {
             /* skip on/off messages */
         }
         else {
             if (player->playback_callback)
                 player->playback_callback(player->playback_userdata, event);
+        }
+        
+        if (event->type == MIDI_SET_TEMPO)
+        {
+            fluid_player_set_midi_tempo(player, event->param1);
         }
 
         fluid_track_next_event(track);
