@@ -1072,12 +1072,14 @@ fluid_midi_event_set_sysex(fluid_midi_event_t *evt, void *data, int size, int dy
  * @param dynamic TRUE if the data has been dynamically allocated and
  *   should be freed when the event is freed via delete_fluid_midi_event()
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ * 
+ * @since 2.0.0
  */
 int
 fluid_midi_event_set_text(fluid_midi_event_t *evt, int type, void *data, int size, int dynamic)
 {
     fluid_return_val_if_fail(type==MIDI_TEXT || type==MIDI_LYRIC, FLUID_FAILED);
-    evt->paramptr = data
+    evt->paramptr = data;
     evt->type = type;
     evt->param1 = size;
     evt->param2 = dynamic;
@@ -1335,8 +1337,6 @@ new_fluid_player(fluid_synth_t *synth)
     player->cur_ticks = 0;
     player->seek_ticks = -1;    
     fluid_player_set_playback_callback(player, fluid_synth_handle_midi_event, synth);
-    player->onload_callback = NULL;
-    player->onload_userdata = NULL;
     player->use_system_timer = fluid_settings_str_equal(synth->settings,
             "player.timing-source", "system");
 
@@ -1475,28 +1475,6 @@ fluid_player_set_playback_callback(fluid_player_t* player,
 }
 
 /**
- * Change the MIDI callback function. This is usually set to 
- * fluid_synth_handle_midi_event, but can optionally be changed
- * to a user-defined function instead, for intercepting all MIDI
- * messages sent to the synth. You can also use a midi router as 
- * the callback function to modify the MIDI messages before sending
- * them to the synth. 
- * @param player MIDI player instance
- * @param handler Pointer to callback function
- * @param handler_data Parameter sent to the callback function
- * @returns FLUID_OK
- * @since 1.1.4
- */
-int 
-fluid_player_set_onload_callback(fluid_player_t* player, 
-    handle_onload_func_t handler, void* handler_data)
-{
-    player->onload_callback = handler;
-    player->onload_userdata = handler_data;
-    return FLUID_OK;
-}
-
-/**
  * Add a MIDI file to a player queue.
  * @param player MIDI player instance
  * @param midifile File name of the MIDI file to add
@@ -1616,11 +1594,7 @@ fluid_player_load(fluid_player_t *player, fluid_playlist_item *item)
     if (buffer_owned) {
         FLUID_FREE(buffer);
     }
-
-    /* Callback for new source loaded */
-    if (player->onload_callback != NULL) {
-	player->onload_callback(player->onload_userdata, player);
-    }
+    
     return FLUID_OK;
 }
 

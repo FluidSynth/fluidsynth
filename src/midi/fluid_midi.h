@@ -309,9 +309,6 @@ struct _fluid_player_t {
 
   handle_midi_event_func_t playback_callback; /* function fired on each midi event as it is played */
   void* playback_userdata; /* pointer to user-defined data passed to playback_callback function */
-  
-  handle_onload_func_t onload_callback; /* function fired when new MIDI data is loaded, such as a new file */
-  void* onload_userdata; /* pointer to user-defined data passed to onload_callback function */
 };
 
 int fluid_player_add_track(fluid_player_t* player, fluid_track_t* track);
