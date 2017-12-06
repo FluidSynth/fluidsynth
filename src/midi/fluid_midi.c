@@ -576,8 +576,8 @@ fluid_midi_file_read_event(fluid_midi_file *mf, fluid_track_t *track)
                 break;
 
             case MIDI_LYRIC:
-		 /* NULL terminate strings for safety */
- 	        metadata[mf->varlen] = '\0';
+                /* NULL terminate strings for safety */
+                metadata[mf->varlen] = '\0';
                 evt = new_fluid_midi_event();
                 if (evt == NULL) {
                     FLUID_LOG(FLUID_ERR, "Out of memory");
@@ -586,15 +586,15 @@ fluid_midi_file_read_event(fluid_midi_file *mf, fluid_track_t *track)
                 }
                 evt->dtime = mf->dtime;
 
-		fluid_midi_event_set_text(evt, MIDI_LYRIC, metadata, mf->varlen+1, TRUE);
+                fluid_midi_event_set_text(evt, MIDI_LYRIC, metadata, mf->varlen+1, TRUE);
                 fluid_track_add_event(track, evt);
-		mf->dtime = 0;
+                mf->dtime = 0;
 
                 break;
 
              case MIDI_TEXT:
-		 /* NULL terminate strings for safety */
-	        metadata[mf->varlen] = '\0';
+                /* NULL terminate strings for safety */
+                metadata[mf->varlen] = '\0';
 
                 evt = new_fluid_midi_event();
                 if (evt == NULL) {
@@ -604,9 +604,9 @@ fluid_midi_file_read_event(fluid_midi_file *mf, fluid_track_t *track)
                 }
                 evt->dtime = mf->dtime;
 
-		fluid_midi_event_set_text(evt, MIDI_TEXT, metadata, mf->varlen+1, TRUE);
+                fluid_midi_event_set_text(evt, MIDI_TEXT, metadata, mf->varlen+1, TRUE);
                 fluid_track_add_event(track, evt);
-		mf->dtime = 0;
+                mf->dtime = 0;
                 break;
 
             case MIDI_MARKER:
