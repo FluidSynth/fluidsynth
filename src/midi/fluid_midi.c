@@ -1069,6 +1069,7 @@ fluid_midi_event_set_sysex(fluid_midi_event_t *evt, void *data, int size, int dy
  * @return Always returns #FLUID_OK
  * 
  * @since 2.0.0
+ * @note Unlike the other event assignment functions, this one sets evt->type.
  */
 int
 fluid_midi_event_set_text(fluid_midi_event_t *evt, void *data, int size, int dynamic)
@@ -1087,6 +1088,7 @@ fluid_midi_event_set_text(fluid_midi_event_t *evt, void *data, int size, int dyn
  * @return Always returns #FLUID_OK
  * 
  * @since 2.0.0
+ * @note Unlike the other event assignment functions, this one sets evt->type.
  */
 int
 fluid_midi_event_set_lyrics(fluid_midi_event_t *evt, void *data, int size, int dynamic)
