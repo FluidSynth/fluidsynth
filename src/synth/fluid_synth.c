@@ -4831,6 +4831,14 @@ fluid_synth_get_settings(fluid_synth_t* synth)
   return synth->settings;
 }
 
+/**
+ * Same as calling \c fluid_synth_set_gen2(synth, chan, param, value, FALSE, FALSE)
+ * @return FLUID_OK on success, FLUID_FAILED otherwise
+ */
+int fluid_synth_set_gen(fluid_synth_t* synth, int chan, int param, float value)
+{
+    return fluid_synth_set_gen2(synth, chan, param, value, FALSE, FALSE);
+}
 
 /**
  * Set a SoundFont generator (effect) value on a MIDI channel in real-time.
@@ -4843,19 +4851,15 @@ fluid_synth_get_settings(fluid_synth_t* synth)
  *   TRUE to take the value as a 0.0-1.0 range and apply it to the valid
  *   generator effect range (scaled and shifted as necessary).
  * @return FLUID_OK on success, FLUID_FAILED otherwise
- * @since 2.0.0
  *
  * This function allows for setting all effect parameters in real time on a
- * MIDI channel.  Setting absolute to non-zero will cause the value to override
+ * MIDI channel. Setting absolute to non-zero will cause the value to override
  * any generator values set in the instruments played on the MIDI channel.
  * See SoundFont 2.01 spec, paragraph 8.1.3, page 48 for details on SoundFont
  * generator parameters and valid ranges.
- * 
- * @note The old behaviour of fluid_synth_set_gen() assumed \c absolute and \c normalized to
- * be FALSE.
  */
 int
-fluid_synth_set_gen(fluid_synth_t* synth, int chan, int param,
+fluid_synth_set_gen2(fluid_synth_t* synth, int chan, int param,
 		     float value, int absolute, int normalized)
 {
   float v;
