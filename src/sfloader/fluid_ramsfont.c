@@ -256,7 +256,7 @@ delete_fluid_ramsfont (fluid_ramsfont_t* sfont)
   /* Check that no samples are currently used */
   for (list = sfont->sample; list; list = fluid_list_next(list)) {
     fluid_sample_t* sam = (fluid_sample_t*) fluid_list_get(list);
-    if (fluid_sample_refcount(sam) != 0) {
+    if (sam->refcount != 0) {
       return -1;
     }
   }

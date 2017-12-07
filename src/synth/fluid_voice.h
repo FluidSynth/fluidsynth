@@ -33,6 +33,7 @@
 
 #define NO_CHANNEL             0xff
 
+
 typedef struct _fluid_overflow_prio_t fluid_overflow_prio_t;
 
 struct _fluid_overflow_prio_t 
@@ -90,16 +91,12 @@ struct _fluid_voice_t
 
 	/* pan */
 	fluid_real_t pan;
-	fluid_real_t amp_left;
-	fluid_real_t amp_right;
 
 	/* reverb */
 	fluid_real_t reverb_send;
-	fluid_real_t amp_reverb;
 
 	/* chorus */
 	fluid_real_t chorus_send;
-	fluid_real_t amp_chorus;
 
 	/* rvoice control */
 	fluid_rvoice_t* rvoice;
@@ -108,8 +105,10 @@ struct _fluid_voice_t
 	char can_access_overflow_rvoice; /* False if overflow_rvoice is being rendered in separate thread */
 	char has_noteoff; /* Flag set when noteoff has been sent */
 
+#ifdef WITH_PROFILING
 	/* for debugging */
 	double ref;
+#endif
 };
 
 
@@ -182,15 +181,9 @@ fluid_voice_unlock_rvoice(fluid_voice_t* voice)
 #define _SAMPLEMODE(voice) ((int)(voice)->gen[GEN_SAMPLEMODE].val)
 
 
-/* FIXME - This doesn't seem to be used anywhere - JG */
-fluid_real_t fluid_voice_gen_value(fluid_voice_t* voice, int num);
+fluid_real_t fluid_voice_gen_value(const fluid_voice_t* voice, int num);
 
 #define fluid_voice_get_loudness(voice) (fluid_adsr_env_get_max_val(&voice->volenv))
-
-#define _GEN(_voice, _n) \
-  ((fluid_real_t)(_voice)->gen[_n].val \
-   + (fluid_real_t)(_voice)->gen[_n].mod \
-   + (fluid_real_t)(_voice)->gen[_n].nrpn)
 
 
 #endif /* _FLUID_VOICE_H */
