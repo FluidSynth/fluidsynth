@@ -4892,6 +4892,9 @@ fluid_synth_set_gen_LOCAL (fluid_synth_t* synth, int chan, int param, float valu
  *   generator effect range (scaled and shifted as necessary).
  * @return FLUID_OK on success, FLUID_FAILED otherwise
  * @since 1.1.0
+ * 
+ * @deprecated As of 1.1.9 this function is deprecated, because there doesn't seem
+ * to be a use-case for it.
  *
  * This function allows for setting all effect parameters in real time on a
  * MIDI channel.  Setting absolute to non-zero will cause the value to override

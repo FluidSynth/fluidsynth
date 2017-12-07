@@ -75,6 +75,7 @@ Changes in FluidSynth 1.1.9 concerning developers:
 - dsound driver now uses the desktop window handle, fluid_get_hinstance() and fluid_set_hinstance() are deprecated
 - implement handling of #FLUID_SEQ_ALLSOUNDSOFF events in fluid_seq_fluidsynth_callback()
 - fix return value of fluid_file_set_encoding_quality()
+- deprecate fluid_synth_set_gen2()
 
 - For a full list of bug fixes, see
   https://github.com/FluidSynth/fluidsynth/wiki/ChangeLog#fluidsynth-119
