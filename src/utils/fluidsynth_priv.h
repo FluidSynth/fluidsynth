@@ -129,7 +129,6 @@ typedef guint64  uint64_t;
 #if defined(WIN32) &&  HAVE_WINDOWS_H
 #include <winsock2.h>
 #include <ws2tcpip.h>	/* Provides also socklen_t */
-#include <windows.h>
 
 /* WIN32 special defines */
 #define DSOUND_SUPPORT 1

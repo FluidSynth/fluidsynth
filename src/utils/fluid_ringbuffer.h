@@ -46,7 +46,7 @@ void delete_fluid_ringbuffer (fluid_ringbuffer_t *queue);
 /**
  * Get pointer to next input array element in queue.
  * @param queue Lockless queue instance
- * @param count Normally zero, or more if you need to push several items at once
+ * @param offset Normally zero, or more if you need to push several items at once
  * @return Pointer to array element in queue to store data to or NULL if queue is full
  *
  * This function along with fluid_ringbuffer_next_inptr() form a queue "push"

@@ -126,7 +126,7 @@ delete_fluid_midi_file (fluid_midi_file *mf)
 /*
  * Gets the next byte in a MIDI file, taking into account previous running status.
  *
- * returns FLUID_FAILED if EOF or read error
+ * returns -1 if EOF or read error
  */
 int
 fluid_midi_file_getc (fluid_midi_file *mf)
@@ -138,7 +138,7 @@ fluid_midi_file_getc (fluid_midi_file *mf)
     } else {
         if (mf->buf_pos >= mf->buf_len) {
             mf->eof = TRUE;
-            return FLUID_FAILED;
+            return -1;
         }
         c = mf->buffer[mf->buf_pos++];
         mf->trackpos++;
@@ -797,7 +797,6 @@ new_fluid_midi_event ()
 /**
  * Delete MIDI event structure.
  * @param evt MIDI event structure
- * @return Always returns #FLUID_OK
  */
 void
 delete_fluid_midi_event(fluid_midi_event_t *evt)
@@ -1259,7 +1258,6 @@ new_fluid_player(fluid_synth_t *synth)
 /**
  * Delete a MIDI player instance.
  * @param player MIDI player instance
- * @return Always returns #FLUID_OK
  */
 void
 delete_fluid_player(fluid_player_t *player)

@@ -1211,7 +1211,6 @@ new_fluid_ramsample (void)
 /**
  * Delete a RAM SoundFont sample.
  * @param sample Sample to delete
- * @return #FLUID_OK
  */
 void
 delete_fluid_ramsample (fluid_sample_t* sample)

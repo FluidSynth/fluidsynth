@@ -1686,12 +1686,13 @@ fluid_voice_optimize_sample(fluid_sample_t* s)
   return FLUID_OK;
 }
 
-fluid_real_t 
+float
 fluid_voice_get_overflow_prio(fluid_voice_t* voice, 
 			       fluid_overflow_prio_t* score,
 			       unsigned int cur_time)
 {
-  fluid_real_t this_voice_prio = 0;
+  float this_voice_prio = 0;
+  int channel;
 
   /* Are we already overflowing? */
   if (!voice->can_access_overflow_rvoice) {
@@ -1738,6 +1739,13 @@ fluid_voice_get_overflow_prio(fluid_voice_t* voice,
       a = 0.1; // Avoid div by zero
     }
     this_voice_prio += score->volume / a;
+  }
+
+  /* Check if this voice is on an important channel. If so, then add the
+   * score for important channels */
+  channel = fluid_voice_get_channel(voice);
+  if (channel < score->num_important_channels && score->important_channels[channel]) {
+      this_voice_prio += score->important;
   }
     
   return this_voice_prio;

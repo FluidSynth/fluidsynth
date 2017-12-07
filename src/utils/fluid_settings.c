@@ -18,7 +18,6 @@
  * 02110-1301, USA
  */
 
-#include "fluidsynth_priv.h"
 #include "fluid_sys.h"
 #include "fluid_hash.h"
 #include "fluid_synth.h"
@@ -1250,6 +1249,27 @@ fluid_settings_getnum(fluid_settings_t* settings, const char *name, double* val)
 }
 
 /**
+ * float-typed wrapper for fluid_settings_getnum
+ *
+ * @param settings a settings object
+ * @param name a setting's name
+ * @param val variable pointer to receive the setting's float value
+ * @return #FLUID_OK if the value exists, #FLUID_FAILED otherwise
+ */
+int fluid_settings_getnum_float(fluid_settings_t *settings, const char *name, float *val)
+{
+    double tmp;
+
+    if (fluid_settings_getnum(settings, name, &tmp) == FLUID_OK)
+    {
+        *val = tmp;
+        return FLUID_OK;
+    }
+
+    return FLUID_FAILED;
+}
+
+/**
  * Get the range of values of a numeric setting
  *
  * @param settings a settings object
@@ -1716,4 +1736,37 @@ fluid_settings_foreach (fluid_settings_t* settings, void* data,
   fluid_rec_mutex_unlock (settings->mutex);
 
   delete_fluid_list (bag.names);        /* -- Free names list */
+}
+
+/**
+ * Split a comma-separated list of integers and fill the passed
+ * in buffer with the parsed values.
+ *
+ * @param str the comma-separated string to split
+ * @param buf user-supplied buffer to hold the parsed numbers
+ * @param buf_len length of user-supplied buffer
+ * @return number of parsed values or -1 on failure
+ */
+int fluid_settings_split_csv(const char *str, int *buf, int buf_len)
+{
+  char *s;
+  char *tok;
+  char *tokstr;
+  int n = 0;
+
+  s = tokstr = FLUID_STRDUP(str);
+  if (s == NULL)
+  {
+      FLUID_LOG(FLUID_ERR, "Out of memory");
+      return -1;
+  }
+
+  while ((tok = fluid_strtok(&tokstr, ",")) && n < buf_len)
+  {
+      buf[n++] = atoi(tok);
+  }
+
+  FLUID_FREE(s);
+
+  return n;
 }
