@@ -66,7 +66,7 @@ void fluid_coremidi_callback(const MIDIPacketList *list, void *p, void *src);
 
 void fluid_coremidi_driver_settings(fluid_settings_t* settings)
 {
-  fluid_settings_register_str(settings, "midi.coremidi.id", "pid", 0, NULL, NULL);
+  fluid_settings_register_str(settings, "midi.coremidi.id", "pid", 0);
 }
 
 /*

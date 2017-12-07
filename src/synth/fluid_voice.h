@@ -33,15 +33,19 @@
 
 #define NO_CHANNEL             0xff
 
+
 typedef struct _fluid_overflow_prio_t fluid_overflow_prio_t;
 
 struct _fluid_overflow_prio_t 
 {
-  fluid_real_t percussion; /**< Is this voice on the drum channel? Then add this score */
-  fluid_real_t released; /**< Is this voice in release stage? Then add this score (usually negative) */ 
-  fluid_real_t sustained; /**< Is this voice sustained? Then add this score (usually negative) */
-  fluid_real_t volume; /**< Multiply current (or future) volume (a value between 0 and 1) */
-  fluid_real_t age; /**< This score will be divided by the number of seconds the voice has lasted */
+  float percussion; /**< Is this voice on the drum channel? Then add this score */
+  float released; /**< Is this voice in release stage? Then add this score (usually negative) */
+  float sustained; /**< Is this voice sustained? Then add this score (usually negative) */
+  float volume; /**< Multiply current (or future) volume (a value between 0 and 1) */
+  float age; /**< This score will be divided by the number of seconds the voice has lasted */
+  float important; /**< This score will be added to all important channels */
+  char *important_channels; /**< "important" flags indexed by MIDI channel number */
+  int num_important_channels; /**< Number of elements in the important_channels array */
 };
 
 enum fluid_voice_status
@@ -87,16 +91,12 @@ struct _fluid_voice_t
 
 	/* pan */
 	fluid_real_t pan;
-	fluid_real_t amp_left;
-	fluid_real_t amp_right;
 
 	/* reverb */
 	fluid_real_t reverb_send;
-	fluid_real_t amp_reverb;
 
 	/* chorus */
 	fluid_real_t chorus_send;
-	fluid_real_t amp_chorus;
 
 	/* rvoice control */
 	fluid_rvoice_t* rvoice;
@@ -105,8 +105,10 @@ struct _fluid_voice_t
 	char can_access_overflow_rvoice; /* False if overflow_rvoice is being rendered in separate thread */
 	char has_noteoff; /* Flag set when noteoff has been sent */
 
+#ifdef WITH_PROFILING
 	/* for debugging */
 	double ref;
+#endif
 };
 
 
@@ -148,7 +150,7 @@ void fluid_voice_stop(fluid_voice_t* voice);
 void fluid_voice_overflow_rvoice_finished(fluid_voice_t* voice);
 
 int fluid_voice_kill_excl(fluid_voice_t* voice);
-fluid_real_t fluid_voice_get_overflow_prio(fluid_voice_t* voice, 
+float fluid_voice_get_overflow_prio(fluid_voice_t* voice,
 					    fluid_overflow_prio_t* score,
 					    unsigned int cur_time);
 
@@ -179,15 +181,9 @@ fluid_voice_unlock_rvoice(fluid_voice_t* voice)
 #define _SAMPLEMODE(voice) ((int)(voice)->gen[GEN_SAMPLEMODE].val)
 
 
-/* FIXME - This doesn't seem to be used anywhere - JG */
-fluid_real_t fluid_voice_gen_value(fluid_voice_t* voice, int num);
+fluid_real_t fluid_voice_gen_value(const fluid_voice_t* voice, int num);
 
 #define fluid_voice_get_loudness(voice) (fluid_adsr_env_get_max_val(&voice->volenv))
-
-#define _GEN(_voice, _n) \
-  ((fluid_real_t)(_voice)->gen[_n].val \
-   + (fluid_real_t)(_voice)->gen[_n].mod \
-   + (fluid_real_t)(_voice)->gen[_n].nrpn)
 
 
 #endif /* _FLUID_VOICE_H */

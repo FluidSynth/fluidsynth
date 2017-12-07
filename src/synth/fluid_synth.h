@@ -28,17 +28,13 @@
  *                         INCLUDES
  */
 
-#if HAVE_CONFIG_H
-#include "config.h"
-#endif
-#include "fluidsynth_priv.h"
+#include "fluid_sys.h"
 #include "fluid_list.h"
 #include "fluid_rev.h"
 #include "fluid_voice.h"
 #include "fluid_chorus.h"
 #include "fluid_ladspa.h"
 #include "fluid_midi_router.h"
-#include "fluid_sys.h"
 #include "fluid_rvoice_event.h"
 
 /***************************************************************
@@ -78,7 +74,7 @@ enum fluid_synth_status
 #define SYNTH_REVERB_CHANNEL 0
 #define SYNTH_CHORUS_CHANNEL 1
 
-/**
+/*
  * Structure used for sfont_info field in #fluid_synth_t for each loaded
  * SoundFont with the SoundFont instance and additional fields.
  */
@@ -113,8 +109,8 @@ struct _fluid_synth_t
   fluid_settings_t* settings;        /**< the synthesizer settings */
   int device_id;                     /**< Device ID used for SYSEX messages */
   int polyphony;                     /**< Maximum polyphony */
-  fluid_atomic_int_t with_reverb;    /**< Should the synth use the built-in reverb unit? */
-  fluid_atomic_int_t with_chorus;    /**< Should the synth use the built-in chorus unit? */
+  int with_reverb;                   /**< Should the synth use the built-in reverb unit? */
+  int with_chorus;                   /**< Should the synth use the built-in chorus unit? */
   int verbose;                       /**< Turn verbose mode on? */
   double sample_rate;                /**< The sample rate */
   int midi_channels;                 /**< the number of MIDI channels (>= 16) */

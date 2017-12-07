@@ -27,7 +27,7 @@
 
 #include "fluid_ladspa.h"
 
-#ifdef LADSPA
+#if defined(LADSPA) || defined(__DOXYGEN__)
 
 #include <math.h>
 #include <ladspa.h>

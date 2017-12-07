@@ -129,7 +129,6 @@ typedef guint64  uint64_t;
 #if defined(WIN32) &&  HAVE_WINDOWS_H
 #include <winsock2.h>
 #include <ws2tcpip.h>	/* Provides also socklen_t */
-#include <windows.h>
 
 /* WIN32 special defines */
 #define DSOUND_SUPPORT 1
@@ -215,6 +214,7 @@ typedef struct _fluid_sample_timer_t fluid_sample_timer_t;
 #define FLUID_MAX_EVENT_QUEUES       16         /**< Maximum number of unique threads queuing events */
 #define FLUID_DEFAULT_AUDIO_RT_PRIO  60         /**< Default setting for audio.realtime-prio */
 #define FLUID_DEFAULT_MIDI_RT_PRIO   50         /**< Default setting for midi.realtime-prio */
+#define FLUID_NUM_MOD                64         /**< Maximum number of modulators in a voice */
 
 /***************************************************************
  *
