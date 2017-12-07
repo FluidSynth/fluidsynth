@@ -1044,7 +1044,7 @@ fluid_midi_event_set_pitch(fluid_midi_event_t *evt, int val)
  * Assign sysex data to a MIDI event structure.
  * @param evt MIDI event structure
  * @param data Pointer to SYSEX data
- * @param size Size of SYSEX data
+ * @param size Size of SYSEX data in bytes
  * @param dynamic TRUE if the SYSEX data has been dynamically allocated and
  *   should be freed when the event is freed (only applies if event gets destroyed
  *   with delete_fluid_midi_event())
@@ -1063,7 +1063,7 @@ fluid_midi_event_set_sysex(fluid_midi_event_t *evt, void *data, int size, int dy
  * Assign text data to a MIDI event structure.
  * @param evt MIDI event structure
  * @param data Pointer to text data
- * @param size Size of text data
+ * @param size Size of text data in bytes
  * @param dynamic TRUE if the data has been dynamically allocated and
  *   should be freed when the event is freed via delete_fluid_midi_event()
  * @return Always returns #FLUID_OK
@@ -1081,8 +1081,8 @@ fluid_midi_event_set_text(fluid_midi_event_t *evt, void *data, int size, int dyn
 /**
  * Assign lyric data to a MIDI event structure.
  * @param evt MIDI event structure
- * @param data Pointer to text data
- * @param size Size of text data
+ * @param data Pointer to lyric data
+ * @param size Size of lyric data in bytes
  * @param dynamic TRUE if the data has been dynamically allocated and
  *   should be freed when the event is freed via delete_fluid_midi_event()
  * @return Always returns #FLUID_OK
