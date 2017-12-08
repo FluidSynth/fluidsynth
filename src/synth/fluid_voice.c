@@ -438,7 +438,11 @@ void fluid_voice_start(fluid_voice_t* voice)
  */
 static fluid_real_t fluid_voice_calculate_gain_amplitude(const fluid_voice_t* voice, fluid_real_t gain)
 {
-    return gain * voice->synth_gain / 32768.0f;
+    /* we use 24bit samples in fluid_rvoice_dsp. in order to normalize float
+     * samples to [0.0;1.0] divide samples by the max. value of an int24 and
+     * amplify them with the gain */
+    const fluid_real_t INT24_MAX = (1 << (16+8-1)) * 1.0f;
+    return gain * voice->synth_gain / INT24_MAX;
 }
 
 void 
