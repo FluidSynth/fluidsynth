@@ -22,10 +22,8 @@
   * Low-level routines for file output.
   */
 
-#include <stdio.h>
-#include "fluidsynth_priv.h"
-#include "fluid_synth.h"
 #include "fluid_sys.h"
+#include "fluid_synth.h"
 #include "fluid_settings.h"
 
 #if LIBSNDFILE_SUPPORT
@@ -100,25 +98,6 @@ static int fluid_file_renderer_parse_options (char *filetype, char *format,
 static int fluid_file_renderer_find_file_type (char *extension, int *type);
 static int fluid_file_renderer_find_valid_format (SF_INFO *info);
 
-
-#else   /* No libsndfile support */
-
-
-/* File type names. */
-static const char * const type_names[] = {
-  "raw"
-};
-
-/* File audio format names. */
-static const char * const format_names[] = {
-  "s16"
-};
-
-/* File endian byte order names. */
-static const char * const endian_names[] = {
-  "cpu"
-};
-
 #endif
 
 
@@ -132,10 +111,10 @@ fluid_file_renderer_settings (fluid_settings_t* settings)
   unsigned int n;
 
   fluid_settings_register_str(settings, "audio.file.name", "fluidsynth.wav",
-                              FLUID_HINT_FILENAME, NULL, NULL);
-  fluid_settings_register_str(settings, "audio.file.type", "auto", 0, NULL, NULL);
-  fluid_settings_register_str(settings, "audio.file.format", "s16", 0, NULL, NULL);
-  fluid_settings_register_str(settings, "audio.file.endian", "auto", 0, NULL, NULL);
+                              FLUID_HINT_FILENAME);
+  fluid_settings_register_str(settings, "audio.file.type", "auto", 0);
+  fluid_settings_register_str(settings, "audio.file.format", "s16", 0);
+  fluid_settings_register_str(settings, "audio.file.endian", "auto", 0);
 
   fluid_settings_add_option (settings, "audio.file.type", "auto");
 
@@ -168,12 +147,12 @@ fluid_file_renderer_settings (fluid_settings_t* settings)
 
 #else
 
-  fluid_settings_register_str(settings, "audio.file.name", "fluidsynth.raw", 0, NULL, NULL);
-  fluid_settings_register_str(settings, "audio.file.type", "raw", 0, NULL, NULL);
+  fluid_settings_register_str(settings, "audio.file.name", "fluidsynth.raw", 0);
+  fluid_settings_register_str(settings, "audio.file.type", "raw", 0);
   fluid_settings_add_option (settings, "audio.file.type", "raw");
-  fluid_settings_register_str(settings, "audio.file.format", "s16", 0, NULL, NULL);
+  fluid_settings_register_str(settings, "audio.file.format", "s16", 0);
   fluid_settings_add_option (settings, "audio.file.format", "s16");
-  fluid_settings_register_str(settings, "audio.file.endian", "cpu", 0, NULL, NULL);
+  fluid_settings_register_str(settings, "audio.file.endian", "cpu", 0);
   fluid_settings_add_option (settings, "audio.file.endian", "cpu");
 #endif
 }
@@ -309,10 +288,10 @@ new_fluid_file_renderer(fluid_synth_t* synth)
  * @since 1.1.7
  */
 int
-fluid_file_set_encoding_quality(fluid_file_renderer_t* r, double q)
+fluid_file_set_encoding_quality(fluid_file_renderer_t* dev, double q)
 {
 #if LIBSNDFILE_SUPPORT
-	if (sf_command (r->sndfile, SFC_SET_VBR_ENCODING_QUALITY, &q, sizeof (double)) == SF_TRUE)
+	if (sf_command (dev->sndfile, SFC_SET_VBR_ENCODING_QUALITY, &q, sizeof (double)) == SF_TRUE)
 		return FLUID_OK;
 	else
 #endif
@@ -474,7 +453,6 @@ fluid_file_renderer_parse_options (char *filetype, char *format, char *endian,
 /**
  * Searches for a supported libsndfile file type by extension.
  * @param extension The extension string
- * @param ext_len Length of the extension string
  * @param type Location to store the type (unmodified if not found)
  * @return TRUE if found, FALSE otherwise
  */

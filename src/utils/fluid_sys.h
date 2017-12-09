@@ -36,9 +36,11 @@
 #ifndef _FLUID_SYS_H
 #define _FLUID_SYS_H
 
-#include <glib.h>
 #include "fluidsynth_priv.h"
 
+#ifdef LADSPA
+#include <gmodule.h>
+#endif
 
 /**
  * Macro used for safely accessing a message from a GError and using a default
@@ -320,6 +322,19 @@ void delete_fluid_thread(fluid_thread_t* thread);
 void fluid_thread_self_set_prio (int prio_level);
 int fluid_thread_join(fluid_thread_t* thread);
 
+/* Dynamic Module Loading, currently only used by LADSPA subsystem */
+#ifdef LADSPA
+
+typedef GModule fluid_module_t;
+
+#define fluid_module_open(_name)        g_module_open((_name), G_MODULE_BIND_LOCAL)
+#define fluid_module_close(_mod)        g_module_close(_mod)
+#define fluid_module_error()            g_module_error()
+#define fluid_module_name(_mod)         g_module_name(_mod)
+#define fluid_module_symbol(_mod, _name, _ptr) g_module_symbol((_mod), (_name), (_ptr))
+
+#endif /* LADSPA */
+
 /* Sockets and I/O */
 
 fluid_istream_t fluid_get_stdin (void);
@@ -338,7 +353,6 @@ int fluid_server_socket_join(fluid_server_socket_t* sock);
 void fluid_socket_close(fluid_socket_t sock);
 fluid_istream_t fluid_socket_get_istream(fluid_socket_t sock);
 fluid_ostream_t fluid_socket_get_ostream(fluid_socket_t sock);
-
 
 
 /* Profiling */

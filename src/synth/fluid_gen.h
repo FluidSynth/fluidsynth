@@ -33,7 +33,7 @@ typedef struct _fluid_gen_info_t {
 	float def;		/* The default value (cfr. fluid_gen_set_default_values()) */
 } fluid_gen_info_t;
 
-/**
+/*
  * SoundFont generator structure.
  */
 typedef struct _fluid_gen_t
@@ -44,7 +44,7 @@ typedef struct _fluid_gen_t
   double nrpn;         /**< Change by NRPN messages */
 } fluid_gen_t;
 
-/**
+/*
  * Enum value for 'flags' field of #fluid_gen_t (not really flags).
  */
 enum fluid_gen_flags

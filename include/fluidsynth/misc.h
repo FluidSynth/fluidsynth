@@ -64,12 +64,6 @@ FLUIDSYNTH_API int fluid_is_soundfont (const char *filename);
 FLUIDSYNTH_API int fluid_is_midifile (const char *filename);
 
 
-#ifdef WIN32
-FLUIDSYNTH_API void* fluid_get_hinstance(void);
-FLUIDSYNTH_API void fluid_set_hinstance(void* hinstance);
-#endif
-
-
 #ifdef __cplusplus
 }
 #endif

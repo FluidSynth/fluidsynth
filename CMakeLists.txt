@@ -28,9 +28,9 @@ set ( CMAKE_EXPORT_COMPILE_COMMANDS 1 )
 set ( PACKAGE "fluidsynth" )
 
 # FluidSynth package version
-set ( FLUIDSYNTH_VERSION_MAJOR 1 )
-set ( FLUIDSYNTH_VERSION_MINOR 1 )
-set ( FLUIDSYNTH_VERSION_MICRO 8 )
+set ( FLUIDSYNTH_VERSION_MAJOR 2 )
+set ( FLUIDSYNTH_VERSION_MINOR 0 )
+set ( FLUIDSYNTH_VERSION_MICRO 0 )
 set ( VERSION "${FLUIDSYNTH_VERSION_MAJOR}.${FLUIDSYNTH_VERSION_MINOR}.${FLUIDSYNTH_VERSION_MICRO}" )
 set ( FLUIDSYNTH_VERSION "\"${VERSION}\"" )
 
@@ -43,16 +43,15 @@ set ( FLUIDSYNTH_VERSION "\"${VERSION}\"" )
 # if any interfaces have been added: AGE++
 # if any interfaces have been removed/changed (compatibility broken): AGE=0
 # This is not exactly the same algorithm as the libtool one, but the results are the same.
-set ( LIB_VERSION_CURRENT 1 )
-set ( LIB_VERSION_AGE 6 )
-set ( LIB_VERSION_REVISION 1 )
+set ( LIB_VERSION_CURRENT 2 )
+set ( LIB_VERSION_AGE 0 )
+set ( LIB_VERSION_REVISION 0 )
 set ( LIB_VERSION_INFO
       "${LIB_VERSION_CURRENT}.${LIB_VERSION_AGE}.${LIB_VERSION_REVISION}" )
 
 # Options disabled by default
 option ( enable-floats "enable type float instead of double for DSP samples" off )
 option ( enable-profiling "profile the dsp code" off )
-option ( enable-ladspa "enable LADSPA effect units" off )
 option ( enable-portaudio "compile PortAudio support" off )
 option ( enable-trap-on-fpe "enable SIGFPE trap on Floating Point Exceptions" off )
 option ( enable-fpe-check "enable Floating Point Exception checks and debug messages" off )
@@ -68,6 +67,7 @@ option ( enable-midishare "compile MidiShare support (if it is available)" on )
 option ( enable-readline "compile readline lib line editing (if it is available)" on )
 option ( enable-dbus "compile DBUS support (if it is available)" on )
 option ( BUILD_SHARED_LIBS "Build a shared object or DLL" on )
+option ( enable-ladspa "enable LADSPA effect units" on )
 option ( enable-ipv6  "enable ipv6 support " on )
 
 # Platform specific options
@@ -89,11 +89,15 @@ if ( CMAKE_SYSTEM MATCHES "OS2" )
 endif ( CMAKE_SYSTEM MATCHES "OS2" )
 
 # Initialize the library directory name suffix.
+if (NOT MINGW)
 if ( CMAKE_SIZEOF_VOID_P EQUAL 8 )
   set ( _init_lib_suffix "64" )
 else ( CMAKE_SIZEOF_VOID_P EQUAL 8 )
   set ( _init_lib_suffix "" )
 endif ( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+else ()
+  set ( _init_lib_suffix "" )
+endif()
 set ( LIB_SUFFIX ${_init_lib_suffix} CACHE STRING
       "library directory name suffix (32/64/nothing)" )
 mark_as_advanced ( LIB_SUFFIX )
@@ -154,9 +158,9 @@ if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang" )
   endif ( OS2 )
 
   set ( GNUCC_WARNING_FLAGS "-Wall -W -Wpointer-arith -Wbad-function-cast -Wno-cast-qual -Wcast-align -Wstrict-prototypes -Wno-unused-parameter -Wdeclaration-after-statement" )
-  set ( CMAKE_C_FLAGS_DEBUG "-std=gnu89 -g ${GNUCC_VISIBILITY_FLAG} -DDEBUG ${GNUCC_WARNING_FLAGS} -fsanitize=undefined" )
-  set ( CMAKE_C_FLAGS_RELEASE "-std=gnu89 -O2 -fomit-frame-pointer -finline-functions ${GNUCC_VISIBILITY_FLAG} -DNDEBUG ${GNUCC_WARNING_FLAGS}" )
-  set ( CMAKE_C_FLAGS_RELWITHDEBINFO "-std=gnu89 -O2 -g -fomit-frame-pointer -finline-functions ${GNUCC_VISIBILITY_FLAG} -DNDEBUG ${GNUCC_WARNING_FLAGS}" )
+  set ( CMAKE_C_FLAGS_DEBUG "-std=gnu89 -g ${GNUCC_VISIBILITY_FLAG} -DDEBUG ${GNUCC_WARNING_FLAGS} -fsanitize=undefined ${CMAKE_C_FLAGS_DEBUG}" )
+  set ( CMAKE_C_FLAGS_RELEASE "-std=gnu89 -O2 -fomit-frame-pointer -finline-functions ${GNUCC_VISIBILITY_FLAG} -DNDEBUG ${GNUCC_WARNING_FLAGS} ${CMAKE_C_FLAGS_RELEASE}" )
+  set ( CMAKE_C_FLAGS_RELWITHDEBINFO "-std=gnu89 -O2 -g -fomit-frame-pointer -finline-functions ${GNUCC_VISIBILITY_FLAG} -DNDEBUG ${GNUCC_WARNING_FLAGS} ${CMAKE_C_FLAGS_RELWITHDEBINFO}" )
 endif ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang" )
 
 # Windows
@@ -256,19 +260,6 @@ if ( enable-profiling )
     set ( WITH_PROFILING 1 )
 endif ( enable-profiling )
 
-unset ( HAVE_LIBDL CACHE )
-unset ( LADSPA_SUPPORT CACHE )
-if ( enable-ladspa )
-  check_include_file ( ladspa.h LADSPA_SUPPORT )
-  if ( LADSPA_SUPPORT )
-    set ( LADSPA 1 )
-    if ( CMAKE_DL_LIBS )
-      set ( HAVE_LIBDL 1 )
-      set ( LIBFLUID_LIBS "${LIBFLUID_LIBS};${CMAKE_DL_LIBS}" )
-    endif ( CMAKE_DL_LIBS )
-  endif ( LADSPA_SUPPORT )
-endif ( enable-ladspa )
-
 unset ( ENABLE_TRAPONFPE CACHE )
 unset ( TRAP_ON_FPE CACHE )
 if ( enable-trap-on-fpe AND NOT APPLE AND NOT WIN32 )
@@ -303,10 +294,10 @@ endif ( CMAKE_BUILD_TYPE MATCHES "Debug" )
 
 if(NOT enable-pkgconfig)
 
-    FIND_LIBRARY( GLIB_LIB NAMES glib glib-2.0 PATH GLIB_LIBRARY_DIR NO_DEFAULT_PATH)
-    FIND_LIBRARY( GTHREAD_LIB NAMES gthread gthread-2.0 PATH GTHREAD_LIBRARY_DIR NO_DEFAULT_PATH )
-    FIND_PATH( GLIBH_DIR glib.h PATH GLIB_INCLUDE_DIR NO_DEFAULT_PATH )
-    FIND_PATH( GLIBCONF_DIR glibconfig.h PATH GLIBCONF_INCLUDE_DIR NO_DEFAULT_PATH )
+    FIND_LIBRARY( GLIB_LIB NAMES glib glib-2.0 PATH GLIB_LIBRARY_DIR )
+    FIND_LIBRARY( GTHREAD_LIB NAMES gthread gthread-2.0 PATH GTHREAD_LIBRARY_DIR )
+    FIND_PATH( GLIBH_DIR glib.h PATH GLIB_INCLUDE_DIR )
+    FIND_PATH( GLIBCONF_DIR glibconfig.h PATH GLIBCONF_INCLUDE_DIR )
     
     IF( GLIB_LIB MATCHES "GLIB_LIB-NOTFOUND" OR
             GTHREAD_LIB MATCHES "GTHREAD_LIB-NOTFOUND" OR
@@ -396,6 +387,15 @@ else(NOT enable-pkgconfig)
     else ( enable-dbus )
     unset_pkg_config ( DBUS )
     endif ( enable-dbus )
+
+    unset ( LADSPA_SUPPORT CACHE )
+    if ( enable-ladspa )
+    check_include_file ( ladspa.h LADSPA_SUPPORT )
+    if ( LADSPA_SUPPORT )
+        pkg_check_modules ( GMODULE REQUIRED gmodule-2.0>=2.6.5 )
+        set ( LADSPA 1 )
+    endif ( LADSPA_SUPPORT )
+    endif ( enable-ladspa )
     
 endif(NOT enable-pkgconfig)
 

@@ -129,7 +129,6 @@ typedef guint64  uint64_t;
 #if defined(WIN32) &&  HAVE_WINDOWS_H
 #include <winsock2.h>
 #include <ws2tcpip.h>	/* Provides also socklen_t */
-#include <windows.h>
 
 /* WIN32 special defines */
 #define DSOUND_SUPPORT 1
@@ -174,7 +173,6 @@ typedef double fluid_real_t;
 typedef SOCKET fluid_socket_t;
 #else
 typedef int fluid_socket_t;
-#define INVALID_SOCKET -1
 #endif
 
 #if defined(SUPPORTS_VLA)
@@ -216,6 +214,7 @@ typedef struct _fluid_sample_timer_t fluid_sample_timer_t;
 #define FLUID_MAX_EVENT_QUEUES       16         /**< Maximum number of unique threads queuing events */
 #define FLUID_DEFAULT_AUDIO_RT_PRIO  60         /**< Default setting for audio.realtime-prio */
 #define FLUID_DEFAULT_MIDI_RT_PRIO   50         /**< Default setting for midi.realtime-prio */
+#define FLUID_NUM_MOD                64         /**< Maximum number of modulators in a voice */
 
 /***************************************************************
  *
@@ -232,6 +231,7 @@ typedef FILE*  fluid_file;
 #define FLUID_FCLOSE(_f)             fclose(_f)
 #define FLUID_FREAD(_p,_s,_n,_f)     fread(_p,_s,_n,_f)
 #define FLUID_FSEEK(_f,_n,_set)      fseek(_f,_n,_set)
+#define FLUID_FTELL(_f)              ftell(_f)
 #define FLUID_MEMCPY(_dst,_src,_n)   memcpy(_dst,_src,_n)
 #define FLUID_MEMSET(_s,_c,_n)       memset(_s,_c,_n)
 #define FLUID_STRLEN(_s)             strlen(_s)
@@ -275,7 +275,7 @@ do { strncpy(_dst,_src,_n); \
 #endif
 
 #if defined(WIN32) && !defined(MINGW32)
-    #define FLUID_STRNCASECMP         _strincmp
+    #define FLUID_STRNCASECMP         _strnicmp
 #else
     #define FLUID_STRNCASECMP         strncasecmp
 #endif

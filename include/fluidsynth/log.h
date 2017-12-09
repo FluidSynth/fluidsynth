@@ -58,7 +58,9 @@ enum fluid_log_level {
   FLUID_WARN,    /**< Warning */
   FLUID_INFO,    /**< Verbose informational messages */
   FLUID_DBG,     /**< Debugging messages */
-  LAST_LOG_LEVEL /**< @deprecated As of 1.1.7 this enum value is deprecated and will be removed in a future release, because it prevents adding new enum values without breaking ABI compatibility. */
+#ifndef __DOXYGEN__
+  LAST_LOG_LEVEL /**< @warning This symbol is not part of the public API and ABI stability guarantee and may change at any time! */
+#endif
 };
 
 /**

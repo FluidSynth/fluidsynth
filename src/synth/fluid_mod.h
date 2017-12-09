@@ -24,7 +24,7 @@
 #include "fluidsynth_priv.h"
 #include "fluid_conv.h"
 
-/**
+/*
  * Modulator structure.  See SoundFont 2.04 PDF section 8.2.
  */
 struct _fluid_mod_t

@@ -74,34 +74,51 @@ FluidSynths SOVERSION was bumped. The API was reworked, deprecated functions wer
 
 Changes in FluidSynth 2.0.0 concerning developers:
 
-- remove deprecated fluid_synth_get_program() and fluid_synth_get_channel_preset(), use fluid_synth_get_channel_info() instead
+- remove deprecated fluid_synth_get_channel_info() in favour of fluid_synth_get_program() and fluid_synth_get_channel_preset()
 - remove deprecated fluid_settings_getstr()
 - remove deprecated fluid_synth_set_midi_router()
+- remove deprecated fluid_get_hinstance() and fluid_set_hinstance() (dsound driver now uses the desktop window)
+- remove deprecated fluid_synth_create_key_tuning(), use fluid_synth_activate_key_tuning(synth, bank, prog, name, pitch, FALSE) instead
+- remove deprecated fluid_synth_create_octave_tuning(), use fluid_synth_activate_octave_tuning(synth, bank, prog, name, pitch, FALSE) instead
+- remove deprecated fluid_synth_select_tuning(), use fluid_synth_activate_tuning(synth, chan, bank, prog, FALSE) instead
+- remove deprecated fluid_synth_reset_tuning(), use fluid_synth_deactivate_tuning(synth, chan, FALSE) instead
 - remove deprecated FLUID_HINT_INTEGER
 - remove misspelled FLUID_SEQ_PITCHWHHELSENS macro
 - remove obsolete "audio.[out|in]put-channels" settings
 - remove unimplemented "synth.dump" setting
-- remove fluid_synth_set_gen2(), fluid_synth_set_gen() now behaves as fluid_synth_set_gen2()
-- remove struct fluid_mod_t from public API, use the getters and setters of mod.h instead
+- remove struct _fluid_mod_t from public API, use the getters and setters of mod.h instead
 - remove struct _fluid_gen_t, fluid_gen_set_default_values() and enum fluid_gen_flags from public API
-
+- remove macros fluid_sfont_get_id() and fluid_sample_refcount() from public API
+- remove FLUID_NUM_MOD macro from public API
+- remove the following deprecated enum values:
+  - GEN_LAST
+  - LAST_LOG_LEVEL
+  - FLUID_SEQ_LASTEVENT
+  - FLUID_MIDI_ROUTER_RULE_COUNT
+<br /><br />
 - all public \c fluid_settings_* functions that return an integer which is not meant to be interpreted as bool consistently return either FLUID_OK or FLUID_FAILED
 - all public delete_* functions return void and are safe when called with NULL
 - the shell command handler was decoupled internally, as a consequence the param list of new_fluid_server() and new_fluid_cmd_handler() was adapted
-
+- reverb: roomsize is now limited to an upper threshold of 1.0
+- use unique device names for the "audio.portaudio.device" setting
+- rename fluid_mod_new() and fluid_mod_delete() to match naming conventions: new_fluid_mod() and delete_fluid_mod()
+<br /><br />
 - add "synth.volenv" a setting for volume envelope processing
 - add "midi.autoconnect" a setting for automatically connecting fluidsynth to available MIDI input ports
-- add support for polyonic key pressure events, see fluid_event_key_pressure()
-- add fluid_synth_add_default_mod() for manipulating default modulators
+- add support for polyphonic key pressure events, see fluid_event_key_pressure() and fluid_synth_key_pressure()
+- add fluid_synth_add_default_mod() and fluid_synth_remove_default_mod() for manipulating default modulators
 - add individual reverb setters: fluid_synth_set_reverb_roomsize(), fluid_synth_set_reverb_damp(), fluid_synth_set_reverb_width(), fluid_synth_set_reverb_level()
 - add individual chorus setters: fluid_synth_set_chorus_nr(), fluid_synth_set_chorus_level(), fluid_synth_set_chorus_speed(), fluid_synth_set_chorus_depth(), fluid_synth_set_chorus_type()
 - introduce a separate data type for sequencer client IDs: #fluid_seq_id_t
-
+- add file callback struct to _fluid_sfloader_t and expose new_fluid_defsfloader() to enable soundfont loading from memory ( see fluid_sfload_mem.c )
+- add seek support to midi-player, see fluid_player_seek()
+- expose functions to manipulate the ladspa effects unit (see ladspa.h)
 
 \section NewIn1_1_9 Whats new in 1.1.9?
 
 Changes in FluidSynth 1.1.9 concerning developers:
 
+- add a function for registering audio drivers based on acutal needs: fluid_audio_driver_register()
 - implement handling of #FLUID_SEQ_ALLSOUNDSOFF events in fluid_seq_fluidsynth_callback()
 - fix return value of fluid_file_set_encoding_quality()
 
@@ -787,4 +804,14 @@ Example of a simple metronome using the MIDI sequencer API
 /*!
 \example fluidsynth_arpeggio.c
 Example of an arpeggio generated using the MIDI sequencer API
+*/
+
+/*!
+\example fluidsynth_register_adriver.c
+Example of how to register audio drivers using fluid_audio_driver_register() (advanced users only)
+*/
+
+/*!
+\example fluidsynth_sfload_mem.c
+Example of how read a soundfont from memory (advanced users only)
 */

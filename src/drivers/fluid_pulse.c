@@ -28,8 +28,6 @@
 #include "fluid_adriver.h"
 #include "fluid_settings.h"
 
-#include "config.h"
-
 #if PULSE_SUPPORT
 
 #include <pulse/simple.h>
@@ -63,11 +61,11 @@ static fluid_thread_return_t fluid_pulse_audio_run2(void* d);
 
 void fluid_pulse_audio_driver_settings(fluid_settings_t* settings)
 {
-  fluid_settings_register_str(settings, "audio.pulseaudio.server", "default", 0, NULL, NULL);
-  fluid_settings_register_str(settings, "audio.pulseaudio.device", "default", 0, NULL, NULL);
-  fluid_settings_register_str(settings, "audio.pulseaudio.media-role", "music", 0, NULL, NULL);
+  fluid_settings_register_str(settings, "audio.pulseaudio.server", "default", 0);
+  fluid_settings_register_str(settings, "audio.pulseaudio.device", "default", 0);
+  fluid_settings_register_str(settings, "audio.pulseaudio.media-role", "music", 0);
   fluid_settings_register_int(settings, "audio.pulseaudio.adjust-latency", 1, 0, 1,
-                              FLUID_HINT_TOGGLED, NULL, NULL);
+                              FLUID_HINT_TOGGLED);
 }
 
 

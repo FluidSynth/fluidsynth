@@ -33,9 +33,11 @@
 #include <readline/history.h>
 #endif
 
-#define MAX_TOKENS 100 /* LADSPA plugins need lots of parameters */
+/* FIXME: LADSPA used to need a lot of parameters on a single line. This is not
+ * necessary anymore, so the limits below could probably be reduced */
+#define MAX_TOKENS 100
 #define MAX_COMMAND_LEN 1024	/* max command length accepted by fluid_command() */
-#define FLUID_WORKLINELENGTH 1024 /* LADSPA plugins use long command lines */
+#define FLUID_WORKLINELENGTH 1024
 
 #define FLUID_ENTRY_COMMAND(data) fluid_cmd_handler_t* handler=(fluid_cmd_handler_t*)(data)
 
@@ -47,11 +49,6 @@ struct _fluid_cmd_handler_t {
 
   fluid_midi_router_rule_t *cmd_rule;        /* Rule currently being processed by shell command handler */
   int cmd_rule_type;                         /* Type of the rule (#fluid_midi_router_rule_type) */
-
-#ifdef LADSPA
- /* Instance id of the LADSPA plugin currently being processed by shell command handler */
-  int ladspa_plugin_id;
-#endif
 };
 
 
@@ -83,8 +80,8 @@ static int fluid_handle_voice_count (void* data, int ac, char **av,
 
 void fluid_shell_settings(fluid_settings_t* settings)
 {
-  fluid_settings_register_str(settings, "shell.prompt", "", 0, NULL, NULL);
-  fluid_settings_register_int(settings, "shell.port", 9800, 1, 65535, 0, NULL, NULL);
+  fluid_settings_register_str(settings, "shell.prompt", "", 0);
+  fluid_settings_register_int(settings, "shell.port", 9800, 1, 65535, 0);
 }
 
 
@@ -180,16 +177,14 @@ static const fluid_cmd_int_t fluid_commands[] = {
     "echo arg                   Print arg" },
   /* LADSPA-related commands */
 #ifdef LADSPA
-  { "ladspa_plugin", "ladspa", fluid_handle_ladspa_plugin,
-    "ladspa_plugin              Instantiate a new LADSPA plugin"},
-  { "ladspa_port", "ladspa", fluid_handle_ladspa_port,
-    "ladspa_port                Connect a LADSPA plugin port"},
-  { "ladspa_node", "ladspa", fluid_handle_ladspa_node,
-    "ladspa_node                Create a LADSPA audio or control node"},
-  { "ladspa_control", "ladspa", fluid_handle_ladspa_control,
-    "ladspa_control             Set the value of a LADSPA control node"},
-  { "ladspa_control_defaults", "ladspa", fluid_handle_ladspa_control_defaults,
-    "ladspa_control_defaults    Assign all unconnected controls on all plugins their default value"},
+  { "ladspa_effect", "ladspa", fluid_handle_ladspa_effect,
+    "ladspa_effect              Create a new effect from a LADSPA plugin"},
+  { "ladspa_link", "ladspa", fluid_handle_ladspa_link,
+    "ladspa_link                Connect an effect port to a host port or buffer"},
+  { "ladspa_buffer", "ladspa", fluid_handle_ladspa_buffer,
+    "ladspa_buffer              Create a LADSPA buffer"},
+  { "ladspa_set", "ladspa", fluid_handle_ladspa_set,
+    "ladspa_set                 Set the value of an effect control port"},
   { "ladspa_check", "ladspa", fluid_handle_ladspa_check,
     "ladspa_check               Check LADSPA configuration"},
   { "ladspa_start", "ladspa", fluid_handle_ladspa_start,
@@ -805,7 +800,7 @@ fluid_handle_reverbsetroomsize(void* data, int ac, char** av, fluid_ostream_t ou
     fluid_ostream_printf(out, "rev_setroomsize: Room size must be positive!\n");
     return FLUID_FAILED;
   }
-  if (room_size > 1.2){
+  if (room_size > 1.0){
     fluid_ostream_printf(out, "rev_setroomsize: Room size too big!\n");
     return FLUID_FAILED;
   }
@@ -1368,9 +1363,9 @@ fluid_handle_set(void* data, int ac, char** av, fluid_ostream_t out)
       if (fluid_settings_get_hints (handler->synth->settings, av[0], &hints) == FLUID_OK
           && hints & FLUID_HINT_TOGGLED)
       {
-          if (FLUID_STRCMP (av[1], "yes") == 0 || FLUID_STRCMP (av[1], "True") == 0
-              || FLUID_STRCMP (av[1], "TRUE") == 0 || FLUID_STRCMP (av[1], "true") == 0
-              || FLUID_STRCMP (av[1], "T") == 0)
+          if (FLUID_STRCASECMP (av[1], "yes") == 0
+              || FLUID_STRCASECMP (av[1], "true") == 0
+              || FLUID_STRCASECMP (av[1], "t") == 0)
           ival = 1;
           else ival = atoi (av[1]);
       }
@@ -1893,26 +1888,36 @@ int fluid_handle_router_par2(void* data, int ac, char** av, fluid_ostream_t out)
     return FLUID_FAILED; \
   }
 
+#define CHECK_LADSPA_INACTIVE(_fx, _out) \
+  if (fluid_ladspa_is_active(_fx)) \
+  { \
+    fluid_ostream_printf(_out, "LADSPA already started.\n"); \
+    return FLUID_FAILED; \
+  }
+
 #define LADSPA_ERR_LEN (1024)
 
+/**
+ * ladspa_start
+ */
 int fluid_handle_ladspa_start(void* data, int ac, char **av, fluid_ostream_t out)
 {
   FLUID_ENTRY_COMMAND(data);
     fluid_ladspa_fx_t *fx = handler->synth->ladspa_fx;
     char error[LADSPA_ERR_LEN];
 
-    CHECK_LADSPA_ENABLED(fx, out);
-
-    if (fluid_ladspa_is_active(fx))
+    if (ac != 0)
     {
-        fluid_ostream_printf(out, "LADSPA already started.\n");
+        fluid_ostream_printf(out, "ladspa_start does not accept any arguments\n");
         return FLUID_FAILED;
     }
 
+    CHECK_LADSPA_ENABLED(fx, out);
+    CHECK_LADSPA_INACTIVE(fx, out);
+
     if (fluid_ladspa_check(fx, error, LADSPA_ERR_LEN) != FLUID_OK)
     {
-        fluid_ostream_printf(out, "LADSPA check failed: %s", error);
-        fluid_ostream_printf(out, "LADSPA not started.\n");
+        fluid_ostream_printf(out, "Unable to start LADSPA: %s", error);
         return FLUID_FAILED;
     }
 
@@ -1925,10 +1930,19 @@ int fluid_handle_ladspa_start(void* data, int ac, char **av, fluid_ostream_t out
     return FLUID_OK;
 }
 
+/**
+ * ladspa_stop
+ */
 int fluid_handle_ladspa_stop(void* data, int ac, char **av, fluid_ostream_t out)
 {
   FLUID_ENTRY_COMMAND(data);
     fluid_ladspa_fx_t *fx = handler->synth->ladspa_fx;
+
+    if (ac != 0)
+    {
+        fluid_ostream_printf(out, "ladspa_stop does not accept any arguments\n");
+        return FLUID_FAILED;
+    }
 
     CHECK_LADSPA_ENABLED(fx, out);
 
@@ -1946,10 +1960,19 @@ int fluid_handle_ladspa_stop(void* data, int ac, char **av, fluid_ostream_t out)
     return FLUID_OK;
 }
 
+/**
+ * ladspa_reset
+ */
 int fluid_handle_ladspa_reset(void* data, int ac, char **av, fluid_ostream_t out)
 {
   FLUID_ENTRY_COMMAND(data);
     fluid_ladspa_fx_t *fx = handler->synth->ladspa_fx;
+
+    if (ac != 0)
+    {
+        fluid_ostream_printf(out, "ladspa_reset does not accept any arguments\n");
+        return FLUID_FAILED;
+    }
 
     CHECK_LADSPA_ENABLED(fx, out);
 
@@ -1958,29 +1981,20 @@ int fluid_handle_ladspa_reset(void* data, int ac, char **av, fluid_ostream_t out
     return FLUID_OK;
 }
 
-int fluid_handle_ladspa_control_defaults(void* data, int ac, char **av, fluid_ostream_t out)
-{
-  FLUID_ENTRY_COMMAND(data);
-    fluid_ladspa_fx_t *fx = handler->synth->ladspa_fx;
-
-    CHECK_LADSPA_ENABLED(fx, out);
-
-    if (fluid_ladspa_control_defaults(fx) != FLUID_OK)
-    {
-        fluid_ostream_printf(out, "Error while setting default values for control ports\n");
-        return FLUID_FAILED;
-    }
-
-    fluid_ostream_printf(out, "Control port defaults set\n");
-
-    return FLUID_OK;
-}
-
+/**
+ * ladspa_check
+ */
 int fluid_handle_ladspa_check(void* data, int ac, char **av, fluid_ostream_t out)
 {
   FLUID_ENTRY_COMMAND(data);
     fluid_ladspa_fx_t *fx = handler->synth->ladspa_fx;
     char error[LADSPA_ERR_LEN];
+
+    if (ac != 0)
+    {
+        fluid_ostream_printf(out, "ladspa_reset does not accept any arguments\n");
+        return FLUID_FAILED;
+    }
 
     CHECK_LADSPA_ENABLED(fx, out);
 
@@ -1995,173 +2009,163 @@ int fluid_handle_ladspa_check(void* data, int ac, char **av, fluid_ostream_t out
     return FLUID_OK;
 }
 
-int fluid_handle_ladspa_control(void* data, int ac, char **av, fluid_ostream_t out)
+/**
+ * ladspa_set <effect> <port> <value>
+ */
+int fluid_handle_ladspa_set(void *data, int ac, char **av, fluid_ostream_t out)
 {
   FLUID_ENTRY_COMMAND(data);
     fluid_ladspa_fx_t *fx = handler->synth->ladspa_fx;
 
-    CHECK_LADSPA_ENABLED(fx, out);
-
-    if (ac != 2)
+    if (ac != 3)
     {
-        fluid_ostream_printf(out, "ladspa_control needs two arguments: node name and value.\n");
+        fluid_ostream_printf(out, "ladspa_set needs three arguments: <effect> <port> <value>\n");
         return FLUID_FAILED;
     };
+
+    CHECK_LADSPA_ENABLED(fx, out);
 
     /* Redundant check, just here to give a more detailed error message */
-    if (!fluid_ladspa_node_exists(fx, av[0]))
+    if (!fluid_ladspa_effect_port_exists(fx, av[0], av[1]))
     {
-        fluid_ostream_printf(out, "Node '%s' not found.\n", av[0]);
+        fluid_ostream_printf(out, "Port '%s' not found on effect '%s'\n", av[1], av[0]);
         return FLUID_FAILED;
     }
 
-    if (fluid_ladspa_set_control_node(fx, av[0], atof(av[1])) != FLUID_OK)
+    if (fluid_ladspa_effect_set_control(fx, av[0], av[1], atof(av[2])) != FLUID_OK)
     {
-        fluid_ostream_printf(out, "Failed to set node '%s', maybe it's not a control node?\n",
-                             av[0]);
+        fluid_ostream_printf(out, "Failed to set port '%s' on effect '%s', "
+                "maybe it is not a control port?\n", av[1], av[0]);
         return FLUID_FAILED;
     }
 
     return FLUID_OK;
 };
 
-int fluid_handle_ladspa_node(void* data, int ac, char **av, fluid_ostream_t out)
+/**
+ * ladspa_buffer <name>
+ */
+int fluid_handle_ladspa_buffer(void *data, int ac, char **av, fluid_ostream_t out)
 {
   FLUID_ENTRY_COMMAND(data);
     fluid_ladspa_fx_t *fx = handler->synth->ladspa_fx;
-    char *name;
-    char *type;
 
-    CHECK_LADSPA_ENABLED(fx, out);
-
-    if (ac < 2)
+    if (ac != 1)
     {
-        fluid_ostream_printf(out, "ladspa_node needs at least two arguments: node name and type.\n");
+        fluid_ostream_printf(out, "ladspa_buffer needs one argument: <name>\n");
         return FLUID_FAILED;
     };
 
-    name = av[0];
-    type = av[1];
+    CHECK_LADSPA_ENABLED(fx, out);
+    CHECK_LADSPA_INACTIVE(fx, out);
 
-    /* audio node - additional no arguments */
-    if (FLUID_STRCMP(type, "audio") == 0)
+    if (fluid_ladspa_add_buffer(fx, av[0]) != FLUID_OK)
     {
-        if (fluid_ladspa_add_audio_node(fx, name) != FLUID_OK)
-        {
-            fluid_ostream_printf(out, "Failed to add audio node.\n");
-            return FLUID_FAILED;
-        }
-    }
-    /* control node - arguments: <val> */
-    else if (FLUID_STRCMP(type, "control") == 0)
-    {
-        if (ac != 3)
-        {
-            fluid_ostream_printf(out, "Control nodes need 3 arguments.\n");
-            return FLUID_FAILED;
-        }
-
-        if (fluid_ladspa_add_control_node(fx, name, atof(av[2])) != FLUID_OK)
-        {
-            fluid_ostream_printf(out, "Failed to add contrl node.\n");
-            return FLUID_FAILED;
-        }
-    }
-    else {
-            fluid_ostream_printf(out, "Invalid node type.\n");
-            return FLUID_FAILED;
+        fluid_ostream_printf(out, "Failed to add buffer\n");
+        return FLUID_FAILED;
     }
 
     return FLUID_OK;
 };
 
-int fluid_handle_ladspa_plugin(void* data, int ac, char **av, fluid_ostream_t out)
+/**
+ * ladspa_effect <name> <library> [plugin] [--mix [gain]]
+ */
+int fluid_handle_ladspa_effect(void* data, int ac, char **av, fluid_ostream_t out)
 {
   FLUID_ENTRY_COMMAND(data);
     fluid_ladspa_fx_t *fx = handler->synth->ladspa_fx;
-    int plugin_id;
+    char *plugin_name = NULL;
+    int pos;
+    int mix = FALSE;
+    float gain = 1.0f;
+
+    if (ac < 2 || ac > 5)
+    {
+        fluid_ostream_printf(out, "ladspa_effect invalid arguments: "
+                "<name> <library> [plugin] [--mix [gain]]\n");
+        return FLUID_FAILED;
+    }
+
+    pos = 2;
+    /* If the first optional arg is not --mix, then it must be the plugin label */
+    if ((pos < ac) && (FLUID_STRCMP(av[pos], "--mix") != 0))
+    {
+        plugin_name = av[pos];
+        pos++;
+    }
+
+    /* If this optional arg is --mix and there's an argument after it, that that
+     * must be the gain */
+    if ((pos < ac) && (FLUID_STRCMP(av[pos], "--mix") == 0))
+    {
+        mix = TRUE;
+        if (pos + 1 < ac)
+        {
+            gain = atof(av[pos + 1]);
+        }
+    }
 
     CHECK_LADSPA_ENABLED(fx, out);
+    CHECK_LADSPA_INACTIVE(fx, out);
 
-    if (ac != 2)
+    if (fluid_ladspa_add_effect(fx, av[0], av[1], plugin_name) != FLUID_OK)
     {
-        fluid_ostream_printf(out, "ladspa_plugin needs 2 arguments: library and plugin id.\n");
+        fluid_ostream_printf(out, "Failed to create effect\n");
         return FLUID_FAILED;
     }
 
-    plugin_id = fluid_ladspa_add_plugin(fx, av[0], av[1]);
-    if (plugin_id < 0)
+    if (mix)
     {
-        fluid_ostream_printf(out, "Failed to add plugin.\n");
-        return FLUID_FAILED;
-    }
+        if (!fluid_ladspa_effect_can_mix(fx, av[0]))
+        {
+            fluid_ostream_printf(out, "Effect '%s' does not support --mix mode\n", av[0]);
+            return FLUID_FAILED;
+        }
 
-    /* store current plugin in the handler, so that subsequent ladspa_port
-     * commands know which plugin to configure */
-    handler->ladspa_plugin_id = plugin_id;
+        if (fluid_ladspa_effect_set_mix(fx, av[0], mix, gain) != FLUID_OK)
+        {
+            fluid_ostream_printf(out, "Failed to set --mix mode\n");
+            return FLUID_FAILED;
+        }
+    }
 
     return FLUID_OK;
 }
 
-int fluid_handle_ladspa_port(void* data, int ac, char **av, fluid_ostream_t out)
+/*
+ * ladspa_link <effect> <port> <buffer or host port>
+ */
+int fluid_handle_ladspa_link(void* data, int ac, char **av, fluid_ostream_t out)
 {
   FLUID_ENTRY_COMMAND(data);
     fluid_ladspa_fx_t *fx = handler->synth->ladspa_fx;
-    int dir;
-
-    CHECK_LADSPA_ENABLED(fx, out);
 
     if (ac != 3)
     {
-        fluid_ostream_printf(out, "ladspa_port needs 3 arguments: "
-                                  "port name, direction and node name.\n");
+        fluid_ostream_printf(out, "ladspa_link needs 3 arguments: "
+                "<effect> <port> <buffer or host name>\n");
         return FLUID_FAILED;
     }
 
-    if (handler->ladspa_plugin_id == -1)
+    CHECK_LADSPA_ENABLED(fx, out);
+    CHECK_LADSPA_INACTIVE(fx, out);
+
+    if (!fluid_ladspa_effect_port_exists(fx, av[0], av[1]))
     {
-        fluid_ostream_printf(out, "Please choose a plugin with ladspa_plugin first.\n");
+        fluid_ostream_printf(out, "Port '%s' not found on effect '%s'\n", av[1], av[0]);
         return FLUID_FAILED;
     }
 
-    if (FLUID_STRCMP(av[1], "<") == 0)
+    if (!fluid_ladspa_host_port_exists(fx, av[2]) && !fluid_ladspa_buffer_exists(fx, av[2]))
     {
-        dir = FLUID_LADSPA_INPUT;
-    }
-    else if (FLUID_STRCMP(av[1], ">") == 0)
-    {
-        dir = FLUID_LADSPA_OUTPUT;
-    }
-    else if (FLUID_STRCMP(av[1], "=") == 0)
-    {
-        dir = FLUID_LADSPA_FIXED;
-    }
-    else
-    {
-        fluid_ostream_printf(out, "Invalid direction, please use <, > or =\n");
+        fluid_ostream_printf(out, "Host port or buffer '%s' not found.\n", av[2]);
         return FLUID_FAILED;
     }
 
-    /* Check port and node name before trying to connect them by name. This is
-     * redundant, as fluid_ladspa_connect checks them as well, but we do it
-     * here anyway to give the user better feedback in case a port or node
-     * could not be found.
-     */
-    if (!fluid_ladspa_port_exists(fx, handler->ladspa_plugin_id, av[0]))
+    if (fluid_ladspa_effect_link(fx, av[0], av[1], av[2]) != FLUID_OK)
     {
-        fluid_ostream_printf(out, "Port '%s' not found.\n", av[0]);
-        return FLUID_FAILED;
-    }
-
-    if (dir != FLUID_LADSPA_FIXED && !fluid_ladspa_node_exists(fx, av[2]))
-    {
-        fluid_ostream_printf(out, "Node '%s' not found.\n", av[2]);
-        return FLUID_FAILED;
-    }
-
-    if (fluid_ladspa_connect(fx, handler->ladspa_plugin_id, dir, av[0], av[2]) != FLUID_OK)
-    {
-        fluid_ostream_printf(out, "Failed to connect plugin port.\n");
+        fluid_ostream_printf(out, "Failed to link port\n");
         return FLUID_FAILED;
     }
 
@@ -2175,18 +2179,6 @@ fluid_is_number(char* a)
 {
   while (*a != 0) {
     if (((*a < '0') || (*a > '9')) && (*a != '-') && (*a != '+') && (*a != '.')) {
-      return FALSE;
-    }
-    a++;
-  }
-  return TRUE;
-}
-
-int
-fluid_is_empty(char* a)
-{
-  while (*a != 0) {
-    if ((*a != ' ') && (*a != '\t') && (*a != '\n') && (*a != '\r')) {
       return FALSE;
     }
     a++;
@@ -2296,10 +2288,6 @@ fluid_cmd_handler_t* new_fluid_cmd_handler(fluid_synth_t* synth, fluid_midi_rout
         fluid_cmd_handler_register(handler, &cmd);
     }
   }
-
-#ifdef LADSPA
-  handler->ladspa_plugin_id = -1;
-#endif
 
   return handler;
 }
