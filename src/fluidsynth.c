@@ -48,6 +48,7 @@
 void print_usage(void);
 void print_help(fluid_settings_t *settings);
 void print_welcome(void);
+void print_configure(void);
 
 /*
  * the globals
@@ -504,7 +505,7 @@ int main(int argc, char** argv)
       else fluid_settings_setstr(settings, "audio.file.type", optarg);
       break;
     case 'V':
-      printf("FluidSynth %s\n", FLUIDSYNTH_VERSION);
+      print_configure();
       exit (0);
       break;
     case 'v':
@@ -808,6 +809,17 @@ print_welcome()
 	 "Distributed under the LGPL license.\n"
 	 "SoundFont(R) is a registered trademark of E-mu Systems, Inc.\n\n",
 	 FLUIDSYNTH_VERSION);
+}
+
+void print_configure()
+{
+    puts("Sample type="
+#ifdef WITH_FLOAT
+    "float"
+#else
+    "double"
+#endif
+    );
 }
 
 /*
