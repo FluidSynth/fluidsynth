@@ -113,6 +113,7 @@ Changes in FluidSynth 2.0.0 concerning developers:
 - add file callback struct to _fluid_sfloader_t and expose new_fluid_defsfloader() to enable soundfont loading from memory ( see fluid_sfload_mem.c )
 - add seek support to midi-player, see fluid_player_seek()
 - expose functions to manipulate the ladspa effects unit (see ladspa.h)
+- add 24 bit sample support, see _fluid_sample_t::data24
 
 \section NewIn1_1_9 Whats new in 1.1.9?
 
