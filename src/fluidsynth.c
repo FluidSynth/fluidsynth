@@ -504,7 +504,7 @@ int main(int argc, char** argv)
       else fluid_settings_setstr(settings, "audio.file.type", optarg);
       break;
     case 'V':
-      printf("FluidSynth %s\n", VERSION);
+      printf("FluidSynth %s\n", FLUIDSYNTH_VERSION);
       exit (0);
       break;
     case 'v':
