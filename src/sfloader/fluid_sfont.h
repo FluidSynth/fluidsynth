@@ -32,6 +32,8 @@
 
 
 #define delete_fluid_sfont(_sf)   ( ((_sf) && (_sf)->free)? (*(_sf)->free)(_sf) : 0)
+
+#define fluid_sfont_get_id(_sf) ((_sf)->id)
 #define fluid_sfont_get_name(_sf) (*(_sf)->get_name)(_sf)
 #define fluid_sfont_get_preset(_sf,_bank,_prenum) (*(_sf)->get_preset)(_sf,_bank,_prenum)
 #define fluid_sfont_iteration_start(_sf) (*(_sf)->iteration_start)(_sf)

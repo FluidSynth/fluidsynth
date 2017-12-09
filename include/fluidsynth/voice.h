@@ -36,8 +36,6 @@ extern "C" {
  */
 
 
-FLUIDSYNTH_API void fluid_voice_update_param(fluid_voice_t* voice, int gen); 
-
 /**
  * Enum used with fluid_voice_add_mod() to specify how to handle duplicate modulators.
  */
@@ -48,21 +46,22 @@ enum fluid_voice_add_mod {
 };
 
 FLUIDSYNTH_API void fluid_voice_add_mod(fluid_voice_t* voice, fluid_mod_t* mod, int mode);
-FLUIDSYNTH_API void fluid_voice_gen_set(fluid_voice_t* voice, int gen, float val);
 FLUIDSYNTH_API float fluid_voice_gen_get(fluid_voice_t* voice, int gen);
+FLUIDSYNTH_API void fluid_voice_gen_set(fluid_voice_t* voice, int gen, float val);
 FLUIDSYNTH_API void fluid_voice_gen_incr(fluid_voice_t* voice, int gen, float val);
 
 FLUIDSYNTH_API unsigned int fluid_voice_get_id(const fluid_voice_t* voice);
+FLUIDSYNTH_API int fluid_voice_get_channel(const fluid_voice_t* voice);
+FLUIDSYNTH_API int fluid_voice_get_key(const fluid_voice_t* voice);
+FLUIDSYNTH_API int fluid_voice_get_actual_key(const fluid_voice_t* voice);
+FLUIDSYNTH_API int fluid_voice_get_velocity(const fluid_voice_t* voice);
+FLUIDSYNTH_API int fluid_voice_get_actual_velocity(const fluid_voice_t* voice);
 FLUIDSYNTH_API int fluid_voice_is_playing(const fluid_voice_t* voice);
 FLUIDSYNTH_API int fluid_voice_is_on(const fluid_voice_t* voice);
 FLUIDSYNTH_API int fluid_voice_is_sustained(const fluid_voice_t* voice);
 FLUIDSYNTH_API int fluid_voice_is_sostenuto(const fluid_voice_t* voice);
-FLUIDSYNTH_API int fluid_voice_get_channel(const fluid_voice_t* voice);
-FLUIDSYNTH_API int fluid_voice_get_actual_key(const fluid_voice_t* voice);
-FLUIDSYNTH_API int fluid_voice_get_key(const fluid_voice_t* voice);
-FLUIDSYNTH_API int fluid_voice_get_actual_velocity(const fluid_voice_t* voice);
-FLUIDSYNTH_API int fluid_voice_get_velocity(const fluid_voice_t* voice);
-FLUIDSYNTH_API int fluid_voice_optimize_sample(fluid_sample_t* s);       
+FLUIDSYNTH_API int fluid_voice_optimize_sample(fluid_sample_t* s);
+FLUIDSYNTH_API void fluid_voice_update_param(fluid_voice_t* voice, int gen);
     
 
 #ifdef __cplusplus

@@ -70,6 +70,18 @@ enum {
   FLUID_SAMPLE_DONE                     /**< Sample no longer needed notify */
 };
 
+/**
+ * Indicates the type of a sample used by the _fluid_sample_t::sampletype field.
+ */
+enum fluid_sample_type
+{
+    FLUID_SAMPLETYPE_MONO = 0x1, /**< Used for mono samples */
+    FLUID_SAMPLETYPE_RIGHT = 0x2, /**< Used for right samples of a stereo pair */
+    FLUID_SAMPLETYPE_LEFT = 0x4, /**< Used for left samples of a stereo pair */
+    FLUID_SAMPLETYPE_LINKED = 0x8, /**< Currently not used */
+    FLUID_SAMPLETYPE_OGG_VORBIS = 0x10, /**< Used for Ogg Vorbis compressed samples @since 1.1.7 */
+    FLUID_SAMPLETYPE_ROM = 0x8000 /**< Indicates ROM samples, causes sample to be ignored */
+};
 
 /**
  * SoundFont loader structure.
@@ -191,7 +203,6 @@ struct _fluid_sfont_t {
   int (*iteration_next)(fluid_sfont_t* sfont, fluid_preset_t* preset);
 };
 
-#define fluid_sfont_get_id(_sf) ((_sf)->id)
 
 /**
  * Virtual SoundFont preset.
@@ -284,14 +295,14 @@ struct _fluid_sample_t
   unsigned int samplerate;      /**< Sample rate */
   int origpitch;                /**< Original pitch (MIDI note number, 0-127) */
   int pitchadj;                 /**< Fine pitch adjustment (+/- 99 cents) */
-  int sampletype;               /**< Values: #FLUID_SAMPLETYPE_MONO, FLUID_SAMPLETYPE_RIGHT, FLUID_SAMPLETYPE_LEFT, FLUID_SAMPLETYPE_ROM */
+  int sampletype;               /**< Specifies the type of this sample as indicated by the #fluid_sample_type enum */
   int valid;                    /**< Should be TRUE if sample data is valid, FALSE otherwise (in which case it will not be synthesized) */
   short* data;                  /**< Pointer to the sample's data */
 
   int amplitude_that_reaches_noise_floor_is_valid;      /**< Indicates if \a amplitude_that_reaches_noise_floor is valid (TRUE), set to FALSE initially to calculate. */
   double amplitude_that_reaches_noise_floor;            /**< The amplitude at which the sample's loop will be below the noise floor.  For voice off optimization, calculated automatically. */
 
-  unsigned int refcount;        /**< Count of voices using this sample (use #fluid_sample_refcount to access this field) */
+  unsigned int refcount;        /**< Count of voices using this sample */
 
   /**
    * Implement this function to receive notification when sample is no longer used.
@@ -303,18 +314,6 @@ struct _fluid_sample_t
 
   void* userdata;       /**< User defined data */
 };
-
-
-#define fluid_sample_refcount(_sample) ((_sample)->refcount)    /**< Get the reference count of a sample.  Should only be called from within synthesis context (noteon method for example) */
-
-
-#define FLUID_SAMPLETYPE_MONO	1       /**< Flag for #fluid_sample_t \a sampletype field for mono samples */
-#define FLUID_SAMPLETYPE_RIGHT	2       /**< Flag for #fluid_sample_t \a sampletype field for right samples of a stereo pair */
-#define FLUID_SAMPLETYPE_LEFT	4       /**< Flag for #fluid_sample_t \a sampletype field for left samples of a stereo pair */
-#define FLUID_SAMPLETYPE_LINKED	8       /**< Flag for #fluid_sample_t \a sampletype field, not used currently */
-#define FLUID_SAMPLETYPE_OGG_VORBIS	0x10 /**< Flag for #fluid_sample_t \a sampletype field for Ogg Vorbis compressed samples @since 1.1.7 */
-#define FLUID_SAMPLETYPE_ROM	0x8000  /**< Flag for #fluid_sample_t \a sampletype field, ROM sample, causes sample to be ignored */
-
 
 
 #ifdef __cplusplus

@@ -99,7 +99,9 @@ enum fluid_gen_type {
    * is used, however, as the destination for the default pitch wheel
    * modulator. */
   GEN_PITCH,			/**< Pitch @note Not a real SoundFont generator */
-  GEN_LAST			/**< Value defines the count of generators (#fluid_gen_type) @deprecated As of 1.1.7 this enum value is deprecated and will be removed in a future release, because it prevents adding new enum values without breaking ABI compatibility. */
+#ifndef __DOXYGEN__
+  GEN_LAST			/**< @internal Value defines the count of generators (#fluid_gen_type) @warning This symbol is not part of the public API and ABI stability guarantee and may change at any time! */
+#endif
 };
 
 

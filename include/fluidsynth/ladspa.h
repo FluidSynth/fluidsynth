@@ -25,6 +25,17 @@
 extern "C" {
 #endif
 
+/**
+ * @file ladspa.h
+ * @brief Functions for manipulating the ladspa effects unit
+ *  
+ * This header defines useful functions for programatically manipulating the ladspa 
+ * effects unit of the synth that can be retrieved via fluid_synth_get_ladspa_fx().
+ * 
+ * Using any of those functions requires fluidsynth to be compiled with ladspa support.
+ * Else all of those functions are useless dummies.
+ */
+
 FLUIDSYNTH_API int fluid_ladspa_is_active(fluid_ladspa_fx_t *fx);
 FLUIDSYNTH_API int fluid_ladspa_activate(fluid_ladspa_fx_t *fx);
 FLUIDSYNTH_API int fluid_ladspa_deactivate(fluid_ladspa_fx_t *fx);
