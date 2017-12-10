@@ -2436,7 +2436,7 @@ process_sdta (unsigned int size, SFData * sf, void * fd, const fluid_file_callba
   sdtachunk_size = chunk.size;
   sf->samplesize = chunk.size;
 
-  FSKIP (chunk.size, fd, fcbs);
+  FSKIP (size, fd, fcbs);
 
   return (OK);
 }

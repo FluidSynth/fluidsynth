@@ -190,9 +190,6 @@
 /* Define to enable SIGFPE assertions */
 #cmakedefine TRAP_ON_FPE @TRAP_ON_FPE@
 
-/* Version number of package */
-#cmakedefine VERSION @FLUIDSYNTH_VERSION@
-
 /* Define to do all DSP in single floating point precision */
 #cmakedefine WITH_FLOAT @WITH_FLOAT@
 
