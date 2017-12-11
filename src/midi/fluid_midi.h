@@ -155,6 +155,7 @@ enum midi_rpn_event {
 };
 
 enum midi_meta_event {
+  MIDI_TEXT = 0x01,
   MIDI_COPYRIGHT = 0x02,
   MIDI_TRACK_NAME = 0x03,
   MIDI_INST_NAME = 0x04,
