@@ -436,7 +436,8 @@ void fluid_voice_start(fluid_voice_t* voice)
  * @param gain The gain value in the range [0.0 ; 1.0]
  * @return An amplitude used by rvoice_mixer's buffers
  */
-static fluid_real_t fluid_voice_calculate_gain_amplitude(const fluid_voice_t* voice, fluid_real_t gain)
+static FLUID_INLINE fluid_real_t
+fluid_voice_calculate_gain_amplitude(const fluid_voice_t* voice, fluid_real_t gain)
 {
     /* we use 24bit samples in fluid_rvoice_dsp. in order to normalize float
      * samples to [0.0;1.0] divide samples by the max. value of an int24 and

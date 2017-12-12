@@ -123,7 +123,8 @@ void fluid_rvoice_dsp_config (void)
  * Combines the most significant 16 bit part of a sample with a potentially present
  * least sig. 8 bit part in order to create a 24 bit sample.
  */
-static int32_t fluid_rvoice_get_sample(const short int* dsp_msb, const char* dsp_lsb, unsigned int idx)
+static FLUID_INLINE int32_t
+fluid_rvoice_get_sample(const short int* dsp_msb, const char* dsp_lsb, unsigned int idx)
 {
     /* cast sample to unsigned type, so we can safely shift and bitwise or
      * without relying on undefined behaviour (should never happen anyway ofc...) */
