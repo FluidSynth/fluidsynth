@@ -123,7 +123,7 @@ void fluid_rvoice_dsp_config (void)
  * Combines the most significant 16 bit part of a sample with a potentially present
  * least sig. 8 bit part in order to create a 24 bit sample.
  */
-static FLUID_INLINE int32_t
+static FLUID_INLINE fluid_real_t
 fluid_rvoice_get_sample(const short int* dsp_msb, const char* dsp_lsb, unsigned int idx)
 {
     /* cast sample to unsigned type, so we can safely shift and bitwise or
@@ -138,7 +138,7 @@ fluid_rvoice_get_sample(const short int* dsp_msb, const char* dsp_lsb, unsigned 
         lsb = (uint8_t)dsp_lsb[idx];
     }
     
-    return (int32_t)((msb << 8) | lsb);
+    return (fluid_real_t)((int32_t)((msb << 8) | lsb));
 }
 
 /* No interpolation. Just take the sample, which is closest to
@@ -219,7 +219,7 @@ fluid_rvoice_dsp_interpolate_linear (fluid_rvoice_dsp_t *voice)
   unsigned int dsp_i = 0;
   unsigned int dsp_phase_index;
   unsigned int end_index;
-  int32_t point;
+  fluid_real_t point;
   fluid_real_t *coeffs;
   int looping;
 
@@ -309,7 +309,7 @@ fluid_rvoice_dsp_interpolate_4th_order (fluid_rvoice_dsp_t *voice)
   unsigned int dsp_i = 0;
   unsigned int dsp_phase_index;
   unsigned int start_index, end_index;
-  int32_t start_point, end_point1, end_point2;
+  fluid_real_t start_point, end_point1, end_point2;
   fluid_real_t *coeffs;
   int looping;
 
@@ -464,7 +464,7 @@ fluid_rvoice_dsp_interpolate_7th_order (fluid_rvoice_dsp_t *voice)
   unsigned int dsp_i = 0;
   unsigned int dsp_phase_index;
   unsigned int start_index, end_index;
-  int32_t start_points[3], end_points[3];
+  fluid_real_t start_points[3], end_points[3];
   fluid_real_t *coeffs;
   int looping;
 
