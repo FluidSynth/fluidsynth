@@ -979,7 +979,7 @@ int fluid_synth_noteon_monopoly_legato(fluid_synth_t* synth, int chan,
 				if (legatomode >= MULTI_RETRIGGER)	
 				{
 					/* Starts portamento if enabled */
-					if(	is_valid_note(synth->fromkey_portamento))
+					if(is_valid_note(synth->fromkey_portamento))
 					{
 						/* Sends portamento parameters to the voice dsp */
 						fluid_voice_update_portamento(voice, synth->fromkey_portamento,tokey);
@@ -987,7 +987,7 @@ int fluid_synth_noteon_monopoly_legato(fluid_synth_t* synth, int chan,
 					/* The voice is now used to play tokey in legato manner */
 					/* Marks this Instrument Zone to be ignored during next
 					   fluid_preset_noteon() */
-					zone_range->flags |= IGNORE_INST_ZONE;
+					zone_range->ignore = TRUE;
 				}
 			}
 			else  

@@ -347,10 +347,7 @@ struct _fluid_zone_range_t
   int keyhi;
   int vello;
   int velhi;
-  /* flags
-  0: This instrument zone is not ignored.
-  1: This instrument zone is ignored   */
-  unsigned char flags;	/* for legato playing */
+  unsigned char ignore;	/* set to TRUE for legato playing to ignore this range zone */
 };
 
 
@@ -491,8 +488,6 @@ struct _fluid_inst_zone_t
   fluid_mod_t * mod; /* List of modulators */
 };
 
-/* Flag IGNORE_INST_ZONE is set on legato playing to ignore an instrument zone */
-#define IGNORE_INST_ZONE 0x01
 
 fluid_inst_zone_t* new_fluid_inst_zone(char* name);
 void delete_fluid_inst_zone(fluid_inst_zone_t* zone);
