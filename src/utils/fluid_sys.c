@@ -1307,8 +1307,10 @@ int delete_fluid_server_socket(fluid_server_socket_t *server_socket)
   if (server_socket->socket != INVALID_SOCKET)
     fluid_socket_close (server_socket->socket);
 
-  if (server_socket->thread)
+  if (server_socket->thread) {
+    fluid_thread_join(server_socket->thread);
     delete_fluid_thread (server_socket->thread);
+  }
 
   FLUID_FREE (server_socket);
 
