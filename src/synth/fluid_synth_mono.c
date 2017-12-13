@@ -987,7 +987,7 @@ int fluid_synth_noteon_monopoly_legato(fluid_synth_t* synth, int chan,
 					/* The voice is now used to play tokey in legato manner */
 					/* Marks this Instrument Zone to be ignored during next
 					   fluid_preset_noteon() */
-					zone_range->flags |= IGNORE_INST_Z0NE;
+					zone_range->flags |= IGNORE_INST_ZONE;
 				}
 			}
 			else  

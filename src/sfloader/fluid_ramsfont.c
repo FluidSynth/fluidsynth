@@ -910,9 +910,9 @@ fluid_rampreset_noteon (fluid_rampreset_t* preset, fluid_synth_t* synth, int cha
       inst_zone = fluid_inst_get_zone(inst);
       while (inst_zone != NULL) {
 		  /* ignoreInstrumentZone is set in mono legato playing */
-		  unsigned char ignore_inst_zone = inst_zone->range.flags & IGNORE_INST_Z0NE;
+		  unsigned char ignore_inst_zone = inst_zone->range.flags & IGNORE_INST_ZONE;
 		  /* Reset the 'ignore' request */
-		  inst_zone->range.flags &= ~IGNORE_INST_Z0NE; 
+		  inst_zone->range.flags &= ~IGNORE_INST_ZONE; 
 
 	/* make sure this instrument zone has a valid sample */
 	sample = fluid_inst_zone_get_sample(inst_zone);

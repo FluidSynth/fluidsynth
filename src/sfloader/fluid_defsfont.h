@@ -491,8 +491,8 @@ struct _fluid_inst_zone_t
   fluid_mod_t * mod; /* List of modulators */
 };
 
-/* Flag IGNORE_INST_Z0NE is set on legato playing to ignore an instrument zone */
-#define IGNORE_INST_Z0NE 0x01
+/* Flag IGNORE_INST_ZONE is set on legato playing to ignore an instrument zone */
+#define IGNORE_INST_ZONE 0x01
 
 fluid_inst_zone_t* new_fluid_inst_zone(char* name);
 void delete_fluid_inst_zone(fluid_inst_zone_t* zone);
