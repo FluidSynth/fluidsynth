@@ -4970,6 +4970,11 @@ fluid_synth_handle_midi_event(void* data, fluid_midi_event_t* event)
 	return fluid_synth_system_reset(synth);
       case MIDI_SYSEX:
         return fluid_synth_sysex (synth, event->paramptr, event->param1, NULL, NULL, NULL, FALSE);
+                
+     case MIDI_TEXT:
+     case MIDI_LYRIC:
+     case MIDI_SET_TEMPO:
+       return FLUID_OK;
   }
   return FLUID_FAILED;
 }

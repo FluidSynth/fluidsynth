@@ -30,9 +30,6 @@
 
 #if DART_SUPPORT
 
-/* To avoid name conflict */
-#undef VERSION
-
 #define INCL_DOS
 #include <os2.h>
 
