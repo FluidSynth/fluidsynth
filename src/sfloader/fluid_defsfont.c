@@ -891,7 +891,7 @@ fluid_defpreset_noteon(fluid_defpreset_t* preset, fluid_synth_t* synth, int chan
 	   An instrument zone must be ignored when its voice is already running
 	   played by a legato passage (see fluid_synth_noteon_monopoly_legato()) */
 	if (! ignore_inst_zone &&
-		fluid_zone_inside_range(&inst_zone->range, key, vel) && (sample != NULL)) {
+		fluid_zone_inside_range(&inst_zone->range, key, vel)) {
 
 	  /* this is a good zone. allocate a new synthesis process and initialize it */
 	  voice = fluid_synth_alloc_voice_LOCAL(synth, sample, chan, key, vel, &inst_zone->range);
