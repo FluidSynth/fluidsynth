@@ -736,7 +736,7 @@ int main(int argc, char** argv)
 
  cleanup:
 
-#if !defined(MACINTOSH) && !defined(WIN32)
+#if !defined(MACINTOSH)
   if (server != NULL) {
     /* if the user typed 'quit' in the shell, kill the server */
     if (!interactive) {
