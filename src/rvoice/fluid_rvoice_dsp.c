@@ -133,7 +133,7 @@ fluid_rvoice_get_sample(const short int* dsp_msb, const char* dsp_lsb, unsigned 
     
     /* most soundfonts have 16 bit samples, assume that it's unlikely we
      * experience 24 bit samples here */
-    if(G_UNLIKELY(dsp_lsb != NULL))
+    if(FLUID_UNLIKELY(dsp_lsb != NULL))
     {
         lsb = (uint8_t)dsp_lsb[idx];
     }
