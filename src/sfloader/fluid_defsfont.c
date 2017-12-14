@@ -275,8 +275,11 @@ typedef struct _fluid_cached_sampledata_t {
   int num_references;
   int mlock;
 
-  const short* sampledata;
+  short* sampledata;
   unsigned int samplesize;
+  
+  char* sample24data;
+  unsigned int sample24size;
 } fluid_cached_sampledata_t;
 
 static fluid_cached_sampledata_t* all_cached_sampledata = NULL;
@@ -299,11 +302,19 @@ static int fluid_get_file_modification_time(char *filename, time_t *modification
 #endif
 }
 
-static int fluid_cached_sampledata_load(char *filename, unsigned int samplepos,
-  unsigned int samplesize, short **sampledata, int try_mlock, const fluid_file_callbacks_t* fcbs)
+static int fluid_cached_sampledata_load(char *filename,
+                                        unsigned int samplepos,
+                                        unsigned int samplesize,
+                                        short **sampledata,
+                                        unsigned int sample24pos,
+                                        unsigned int sample24size,
+                                        char **sample24data,
+                                        int try_mlock,
+                                        const fluid_file_callbacks_t* fcbs)
 {
   fluid_file fd = NULL;
   short *loaded_sampledata = NULL;
+  char  *loaded_sample24data = NULL;
   fluid_cached_sampledata_t* cached_sampledata = NULL;
   time_t modification_time;
 
@@ -319,7 +330,7 @@ static int fluid_cached_sampledata_load(char *filename, unsigned int samplepos,
       continue;
     if (cached_sampledata->modification_time != modification_time)
       continue;
-    if (cached_sampledata->samplesize != samplesize) {
+    if (cached_sampledata->samplesize != samplesize || cached_sampledata->sample24size != sample24size) {
       FLUID_LOG(FLUID_ERR, "Cached size of soundfont doesn't match actual size of soundfont (cached: %u. actual: %u)",
         cached_sampledata->samplesize, samplesize);
       continue;
@@ -330,10 +341,15 @@ static int fluid_cached_sampledata_load(char *filename, unsigned int samplepos,
         FLUID_LOG(FLUID_WARN, "Failed to pin the sample data to RAM; swapping is possible.");
       else
         cached_sampledata->mlock = try_mlock;
+      
+      if (cached_sampledata->sample24data != NULL)
+          if(fluid_mlock(cached_sampledata->sample24data, sample24size) != 0)
+            FLUID_LOG(FLUID_WARN, "Failed to pin the sample24 data to RAM; swapping is possible.");
     }
 
     cached_sampledata->num_references++;
-    loaded_sampledata = (short*) cached_sampledata->sampledata;
+    loaded_sampledata = cached_sampledata->sampledata;
+    loaded_sample24data = cached_sampledata->sample24data;
     goto success_exit;
   }
 
@@ -348,7 +364,6 @@ static int fluid_cached_sampledata_load(char *filename, unsigned int samplepos,
     goto error_exit;
   }
 
-
   loaded_sampledata = (short*) FLUID_MALLOC(samplesize);
   if (loaded_sampledata == NULL) {
     FLUID_LOG(FLUID_ERR, "Out of memory");
@@ -359,6 +374,25 @@ static int fluid_cached_sampledata_load(char *filename, unsigned int samplepos,
     goto error_exit;
   }
 
+  if(sample24pos > 0)
+  {
+    if (fcbs->fseek(fd, sample24pos, SEEK_SET) == FLUID_FAILED) {
+        perror("error");
+        FLUID_LOG(FLUID_ERR, "Failed to seek position in data file");
+        goto error_exit;
+    }
+    
+    loaded_sample24data = (char*) FLUID_MALLOC(sample24size);
+    if (loaded_sample24data == NULL) {
+        FLUID_LOG(FLUID_ERR, "Out of memory when allocating 24bit sample, ignoring");
+    }
+    else if (fcbs->fread(loaded_sample24data, sample24size, fd) == FLUID_FAILED) {
+        FLUID_LOG(FLUID_ERR, "Failed to read sample24 data");
+        FLUID_FREE(loaded_sample24data);
+        loaded_sample24data = NULL;
+    }
+  }
+  
   fcbs->fclose(fd);
   fd = NULL;
 
@@ -370,7 +404,7 @@ static int fluid_cached_sampledata_load(char *filename, unsigned int samplepos,
   }
 
   /* Lock the memory to disable paging. It's okay if this fails. It
-     probably means that the user doesn't have to required permission.  */
+     probably means that the user doesn't have the required permission.  */
   cached_sampledata->mlock = 0;
   if (try_mlock) {
     if (fluid_mlock(loaded_sampledata, samplesize) != 0)
@@ -394,17 +428,18 @@ static int fluid_cached_sampledata_load(char *filename, unsigned int samplepos,
     }
   }
 
-  cached_sampledata->filename = (char*) FLUID_MALLOC(strlen(filename) + 1);
+  cached_sampledata->filename = FLUID_STRDUP(filename);
   if (cached_sampledata->filename == NULL) {
     FLUID_LOG(FLUID_ERR, "Out of memory.");
     goto error_exit;
   }
 
-  sprintf(cached_sampledata->filename, "%s", filename);
   cached_sampledata->modification_time = modification_time;
   cached_sampledata->num_references = 1;
   cached_sampledata->sampledata = loaded_sampledata;
   cached_sampledata->samplesize = samplesize;
+  cached_sampledata->sample24data = loaded_sample24data;
+  cached_sampledata->sample24size = sample24size;
 
   cached_sampledata->next = all_cached_sampledata;
   all_cached_sampledata = cached_sampledata;
@@ -413,25 +448,25 @@ static int fluid_cached_sampledata_load(char *filename, unsigned int samplepos,
  success_exit:
   fluid_mutex_unlock(cached_sampledata_mutex);
   *sampledata = loaded_sampledata;
+  *sample24data = loaded_sample24data;
   return FLUID_OK;
 
  error_exit:
   if (fd != NULL) {
     fcbs->fclose(fd);
   }
-  if (loaded_sampledata != NULL) {
-    FLUID_FREE(loaded_sampledata);
-  }
+  
+  FLUID_FREE(loaded_sampledata);
+  FLUID_FREE(loaded_sample24data);
 
   if (cached_sampledata != NULL) {
-    if (cached_sampledata->filename != NULL) {
       FLUID_FREE(cached_sampledata->filename);
-    }
-    FLUID_FREE(cached_sampledata);
   }
+    FLUID_FREE(cached_sampledata);
 
   fluid_mutex_unlock(cached_sampledata_mutex);
   *sampledata = NULL;
+  *sample24data = NULL;
   return FLUID_FAILED;
 }
 
@@ -450,8 +485,12 @@ static int fluid_cached_sampledata_unload(const short *sampledata)
 
       if (cached_sampledata->num_references == 0) {
         if (cached_sampledata->mlock)
+        {
           fluid_munlock(cached_sampledata->sampledata, cached_sampledata->samplesize);
-        FLUID_FREE((short*) cached_sampledata->sampledata);
+          fluid_munlock(cached_sampledata->sample24data, cached_sampledata->sample24size);
+        }
+        FLUID_FREE(cached_sampledata->sampledata);
+        FLUID_FREE(cached_sampledata->sample24data);
         FLUID_FREE(cached_sampledata->filename);
 
         if (prev != NULL) {
@@ -504,12 +543,8 @@ fluid_defsfont_t* new_fluid_defsfont(fluid_settings_t* settings)
     return NULL;
   }
 
-  sfont->filename = NULL;
-  sfont->samplepos = 0;
-  sfont->samplesize = 0;
-  sfont->sample = NULL;
-  sfont->sampledata = NULL;
-  sfont->preset = NULL;
+  FLUID_MEMSET(sfont, 0, sizeof(*sfont));
+  
   fluid_settings_getint(settings, "synth.lock-memory", &sfont->mlock);
 
   /* Initialise preset cache, so we don't have to call malloc on program changes.
@@ -517,7 +552,7 @@ fluid_defsfont_t* new_fluid_defsfont(fluid_settings_t* settings)
      so optimise for that case. */
   fluid_settings_getint(settings, "synth.midi-channels", &sfont->preset_stack_capacity);
   sfont->preset_stack_capacity++;
-  sfont->preset_stack_size = 0;
+  
   sfont->preset_stack = FLUID_ARRAY(fluid_preset_t*, sfont->preset_stack_capacity);
   if (!sfont->preset_stack) {
     FLUID_LOG(FLUID_ERR, "Out of memory");
@@ -627,6 +662,8 @@ int fluid_defsfont_load(fluid_defsfont_t* sfont, const fluid_file_callbacks_t* f
      it's loaded separately (and might be unoaded/reloaded in future) */
   sfont->samplepos = sfdata->samplepos;
   sfont->samplesize = sfdata->samplesize;
+  sfont->sample24pos = sfdata->sample24pos;
+  sfont->sample24size = sfdata->sample24size;
 
   /* load sample data in one block */
   if (fluid_defsfont_load_sampledata(sfont, fcbs) != FLUID_OK)
@@ -725,8 +762,11 @@ int fluid_defsfont_add_preset(fluid_defsfont_t* sfont, fluid_defpreset_t* preset
 int
 fluid_defsfont_load_sampledata(fluid_defsfont_t* sfont, const fluid_file_callbacks_t* fcbs)
 {
-  return fluid_cached_sampledata_load(sfont->filename, sfont->samplepos,
-    sfont->samplesize, &sfont->sampledata, sfont->mlock, fcbs);
+  return fluid_cached_sampledata_load(sfont->filename,
+                                      sfont->samplepos, sfont->samplesize, &sfont->sampledata,
+                                      sfont->sample24pos, sfont->sample24size, &sfont->sample24data,
+                                      sfont->mlock,
+                                      fcbs);
 }
 
 /*
@@ -1936,6 +1976,7 @@ fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defs
 {
   FLUID_STRCPY(sample->name, sfsample->name);
   sample->data = sfont->sampledata;
+  sample->data24 = sfont->sample24data;
   sample->start = sfsample->start;
   sample->end = sfsample->start + sfsample->end;
   sample->loopstart = sfsample->start + sfsample->loopstart;
@@ -2155,10 +2196,8 @@ static int fixup_sample (SFData * sf);
 
 static const char idlist[] = {
   "RIFFLISTsfbkINFOsdtapdtaifilisngINAMiromiverICRDIENGIPRD"
-    "ICOPICMTISFTsnamsmplphdrpbagpmodpgeninstibagimodigenshdr"
+    "ICOPICMTISFTsnamsmplphdrpbagpmodpgeninstibagimodigenshdrsm24"
 };
-
-static unsigned int sdtachunk_size;
 
 /* sound font file load functions */
 static int
@@ -2429,11 +2468,52 @@ process_sdta (unsigned int size, SFData * sf, void * fd, const fluid_file_callba
   sf->samplepos = fcbs->ftell (fd);
 
   /* used in fixup_sample() to check validity of sample headers */
-  sdtachunk_size = chunk.size;
   sf->samplesize = chunk.size;
 
+  FSKIP (chunk.size, fd, fcbs);
+  size -= chunk.size;
+  
+  if(sf->version.major >= 2 && sf->version.minor >= 4)
+  {
+    /* any chance to find another chunk here? */
+    if(size > 8)
+    {
+        /* read sub chunk */
+        READCHUNK (&chunk, fd, fcbs);
+        size -= 8;
+        
+        if (chunkid (chunk.id) == SM24_ID)
+        {
+            int sm24size, sdtahalfsize;
+            
+            FLUID_LOG(FLUID_DBG, "Found SM24 chunk");
+            if (chunk.size > size)
+            {
+                FLUID_LOG(FLUID_WARN, "SM24 exeeds SDTA chunk, ignoring SM24");
+                goto ret; // no error
+            }
+            
+            sdtahalfsize = sf->samplesize/2;
+            /* + 1 byte in the case that half the size of smpl chunk is an odd value */
+            sdtahalfsize += sdtahalfsize%2;
+            sm24size = chunk.size;
+            
+            if (sdtahalfsize != sm24size)
+            {
+                FLUID_LOG(FLUID_WARN, "SM24 not equal to half the size of SMPL chunk (0x%X != 0x%X), ignoring SM24", sm24size, sdtahalfsize);
+                goto ret; // no error
+            }
+            
+            /* sample data24 follows */
+            sf->sample24pos = fcbs->ftell (fd);
+            sf->sample24size = sm24size;
+        }
+    }
+  }
+  
+ret:
   FSKIP (size, fd, fcbs);
-
+  
   return (OK);
 }
 
@@ -3352,6 +3432,7 @@ fixup_sample (SFData * sf)
   int invalid_loops=FALSE;
   int invalid_loopstart;
   int invalid_loopend, loopend_end_mismatch;
+  unsigned int sdtachunk_size = sf->samplesize;
 
   p = sf->sample;
   while (p)

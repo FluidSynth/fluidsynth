@@ -1,6 +1,5 @@
 New features
 ------------
-- 24 bit sample support
 - Non-realtime MIDI file rendering
 - Sample streaming, load/unload sample on demand
 - Synth sample rate change after initial creation
