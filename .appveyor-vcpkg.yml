@@ -1,0 +1,38 @@
+os:
+  - Visual Studio 2015
+
+build:
+  verbosity: detailed
+
+configuration:
+  - Release
+
+environment:
+  # update the vcpkg cache even if build fails
+  APPVEYOR_SAVE_CACHE_ON_ERROR: true
+
+  matrix:
+      - platform: x86
+        generator: Visual Studio 14 2015
+
+      - platform: x64
+        generator: Visual Studio 14 2015 Win64
+
+cache:
+  - c:\Tools\vcpkg\installed
+
+install:
+  - vcpkg install glib:%platform%-windows
+
+build_script:
+  - mkdir build
+  - cd build
+  - cmake -G "%generator%" -Denable-pkgconfig=0 -DCMAKE_TOOLCHAIN_FILE=c:/Tools/vcpkg/scripts/buildsystems/vcpkg.cmake ..
+  - cmake --build . --config Release
+
+after_build:
+  - 7z a fluidsynth.zip %APPVEYOR_BUILD_FOLDER%\build\src\Release\*
+
+artifacts:
+  - path: build/fluidsynth.zip
+    name: FluidSynth
