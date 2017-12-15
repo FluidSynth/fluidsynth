@@ -22,7 +22,7 @@ Linux and other systems at:
 How to use it?
 ==============
 
-1. You need CMake 2.6.3 or later to build FluidSynth
+1. You need CMake 3.0.2 or later to build FluidSynth
 
 2. Unpack the FluidSynth sources somewhere, or checkout the repository, 
    and create a build directory. For instance, using a command line shell:
