@@ -219,6 +219,19 @@ fluid_ostream_t fluid_get_stdout (void);
 int fluid_istream_readline(fluid_istream_t in, fluid_ostream_t out, char* prompt, char* buf, int len);
 int fluid_ostream_printf (fluid_ostream_t out, char* format, ...);
 
+/* The function should return 0 if no error occured, non-zero
+   otherwise. If the function return non-zero, the socket will be
+   closed by the server. */
+typedef int (*fluid_server_func_t)(void* data, fluid_socket_t client_socket, char* addr);
+
+fluid_server_socket_t* new_fluid_server_socket(int port, fluid_server_func_t func, void* data);
+void delete_fluid_server_socket(fluid_server_socket_t* sock);
+int fluid_server_socket_join(fluid_server_socket_t* sock);
+void fluid_socket_close(fluid_socket_t sock);
+fluid_istream_t fluid_socket_get_istream(fluid_socket_t sock);
+fluid_ostream_t fluid_socket_get_ostream(fluid_socket_t sock);
+
+
 /* Profiling */
 
 
