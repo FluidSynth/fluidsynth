@@ -1,10 +1,12 @@
 Select build system
 ===================
 
-   We currently have two different build systems and you can choose 
-which one works best for you. If you want to use the CMake build 
-system, please see the README.cmake file. For the autotools build 
-system, see below.
+fluidsynth currently provides two different build systems, one based
+on autotools, the other based on cmake. The autotools build system
+has been deprected, is unmaintained and will be removed in a future
+release. The recommend way to build is using cmake, please see the 
+README.cmake file. If you still want to use the unsupported 
+autotools build system, see below.
 
 Basic Installation
 ==================
