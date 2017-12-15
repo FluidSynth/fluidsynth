@@ -1155,6 +1155,11 @@ fluid_defpreset_get_global_zone(fluid_defpreset_t* preset)
   return preset->global_zone;
 }
 
+/***************************************************************
+ *
+ *                           PRESET_ZONE
+ */
+
 /*
  * fluid_preset_zone_next
  */
@@ -1191,6 +1196,7 @@ new_fluid_preset_zone(char *name)
   zone->range.keyhi = 128;
   zone->range.vello = 0;
   zone->range.velhi = 128;
+  zone->range.ignore = FALSE; 
 
   /* Flag all generators as unused (default, they will be set when they are found
    * in the sound font).
@@ -1199,11 +1205,6 @@ new_fluid_preset_zone(char *name)
   zone->mod = NULL; /* list of modulators */
   return zone;
 }
-
-/***************************************************************
- *
- *                           PRESET_ZONE
- */
 
 /*
  * delete_fluid_preset_zone
