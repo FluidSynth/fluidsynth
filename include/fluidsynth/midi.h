@@ -51,6 +51,10 @@ FLUIDSYNTH_API int fluid_midi_event_get_pitch(fluid_midi_event_t* evt);
 FLUIDSYNTH_API int fluid_midi_event_set_pitch(fluid_midi_event_t* evt, int val);
 FLUIDSYNTH_API int fluid_midi_event_set_sysex(fluid_midi_event_t* evt, void *data,
                                               int size, int dynamic);
+FLUIDSYNTH_API int fluid_midi_event_set_text(fluid_midi_event_t *evt,
+                                             void *data, int size, int dynamic);
+FLUIDSYNTH_API int fluid_midi_event_set_lyrics(fluid_midi_event_t *evt,
+                                             void *data, int size, int dynamic);
 
 /**
  * MIDI router rule type.
@@ -64,7 +68,9 @@ typedef enum
   FLUID_MIDI_ROUTER_RULE_PITCH_BEND,            /**< MIDI pitch bend rule */
   FLUID_MIDI_ROUTER_RULE_CHANNEL_PRESSURE,      /**< MIDI channel pressure rule */
   FLUID_MIDI_ROUTER_RULE_KEY_PRESSURE,          /**< MIDI key pressure rule */
-  FLUID_MIDI_ROUTER_RULE_COUNT                  /**< Total count of rule types */
+#ifndef __DOXYGEN__
+  FLUID_MIDI_ROUTER_RULE_COUNT                  /**< @internal Total count of rule types @warning This symbol is not part of the public API and ABI stability guarantee and may change at any time!*/
+#endif
 } fluid_midi_router_rule_type;
 
 /**

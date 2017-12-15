@@ -170,6 +170,7 @@ typedef struct _fluid_sample_timer_t fluid_sample_timer_t;
 #define FLUID_MAX_EVENT_QUEUES       16         /**< Maximum number of unique threads queuing events */
 #define FLUID_DEFAULT_AUDIO_RT_PRIO  60         /**< Default setting for audio.realtime-prio */
 #define FLUID_DEFAULT_MIDI_RT_PRIO   50         /**< Default setting for midi.realtime-prio */
+#define FLUID_NUM_MOD                64         /**< Maximum number of modulators in a voice */
 
 /***************************************************************
  *
@@ -263,6 +264,9 @@ do { strncpy(_dst,_src,_n); \
 
 #define FLUID_ASSERT(a,b)
 #define FLUID_ASSERT_P(a,b)
+
+#define FLUID_LIKELY G_LIKELY
+#define FLUID_UNLIKELY G_UNLIKELY
 
 char* fluid_error(void);
 

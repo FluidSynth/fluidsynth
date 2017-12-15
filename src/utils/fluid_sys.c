@@ -61,6 +61,15 @@ struct _fluid_timer_t
   int auto_destroy;
 };
 
+struct _fluid_server_socket_t
+{
+  fluid_socket_t socket;
+  fluid_thread_t *thread;
+  int cont;
+  fluid_server_func_t func;
+  void *data;
+};
+
 
 static int fluid_istream_gets(fluid_istream_t in, char* buf, int len);
 
@@ -534,7 +543,7 @@ new_fluid_thread (const char *name, fluid_thread_func_t func, void *data, int pr
 void
 delete_fluid_thread(fluid_thread_t* thread)
 {
-    /* Threads free themselves when they quit, nothing to do */
+  /* Threads free themselves when they quit, nothing to do */
 }
 
 /**
@@ -717,7 +726,8 @@ fluid_istream_gets (fluid_istream_t in, char* buf, int len)
 
   buf[len - 1] = 0;
 
-  while (--len > 0) {
+  while (--len > 0)
+  {
     n = read(in, &c, 1);
     if (n == -1) return -1;
 
@@ -772,4 +782,236 @@ fluid_ostream_printf (fluid_ostream_t out, char* format, ...)
   buf[4095] = 0;
   
   return write (out, buf, strlen (buf));
+}
+
+int fluid_server_socket_join(fluid_server_socket_t *server_socket)
+{
+  return fluid_thread_join (server_socket->thread);
+}
+
+static int fluid_socket_init(void)
+{
+#ifdef _WIN32
+  WSADATA wsaData;
+  int res = WSAStartup(MAKEWORD(2,2), &wsaData);
+
+  if (res != 0) {
+    FLUID_LOG(FLUID_ERR, "Server socket creation error: WSAStartup failed: %d", res);
+    return FLUID_FAILED;
+  }
+#endif
+
+  return FLUID_OK;
+}
+
+static void fluid_socket_cleanup(void)
+{
+#ifdef _WIN32
+  WSACleanup();
+#endif
+}
+
+static int fluid_socket_get_error(void)
+{
+#ifdef _WIN32
+  return (int)WSAGetLastError();
+#else
+  return errno; 
+#endif
+}
+
+fluid_istream_t fluid_socket_get_istream (fluid_socket_t sock)
+{
+  return sock | FLUID_SOCKET_FLAG;
+}
+
+fluid_ostream_t fluid_socket_get_ostream (fluid_socket_t sock)
+{
+  return sock | FLUID_SOCKET_FLAG;
+}
+
+void fluid_socket_close (fluid_socket_t sock)
+{
+  if (sock != INVALID_SOCKET)
+#ifdef _WIN32
+    closesocket(sock);
+#else
+    close(sock);
+#endif
+}
+
+static fluid_thread_return_t fluid_server_socket_run (void *data)
+{
+  fluid_server_socket_t *server_socket = (fluid_server_socket_t *)data;
+  fluid_socket_t client_socket;
+#ifdef IPV6_SUPPORT
+  struct sockaddr_in6 addr;
+#else
+  struct sockaddr_in addr;
+#endif
+
+#ifdef HAVE_INETNTOP
+#ifdef IPV6_SUPPORT
+  char straddr[INET6_ADDRSTRLEN];
+#else
+  char straddr[INET_ADDRSTRLEN];
+#endif /* IPV6_SUPPORT */
+#endif /* HAVE_INETNTOP */
+
+  socklen_t addrlen = sizeof (addr);
+  int r;
+  FLUID_MEMSET((char *)&addr, 0, sizeof(addr));
+
+  FLUID_LOG(FLUID_DBG, "Server listening for connections");
+
+  while (server_socket->cont)
+  {
+    client_socket = accept (server_socket->socket, (struct sockaddr *)&addr, &addrlen);
+
+    FLUID_LOG (FLUID_DBG, "New client connection");
+
+    if (client_socket == INVALID_SOCKET)
+    {
+      if (server_socket->cont)
+	FLUID_LOG (FLUID_ERR, "Failed to accept connection: %ld", fluid_socket_get_error());
+
+      server_socket->cont = 0;
+      return FLUID_THREAD_RETURN_VALUE;
+    }
+    else
+    {
+#ifdef HAVE_INETNTOP
+
+#ifdef IPV6_SUPPORT
+      inet_ntop(AF_INET6, &addr.sin6_addr, straddr, sizeof(straddr));
+#else
+      inet_ntop(AF_INET, &addr.sin_addr, straddr, sizeof(straddr));
+#endif
+
+      r = server_socket->func (server_socket->data, client_socket,
+                               straddr);
+#else
+      r = server_socket->func (server_socket->data, client_socket,
+                               inet_ntoa (addr.sin_addr));
+#endif
+      if (r != 0)
+	fluid_socket_close (client_socket);
+    }
+  }
+
+  FLUID_LOG (FLUID_DBG, "Server closing");
+  
+  return FLUID_THREAD_RETURN_VALUE;
+}
+
+fluid_server_socket_t*
+new_fluid_server_socket(int port, fluid_server_func_t func, void* data)
+{
+  fluid_server_socket_t* server_socket;
+#ifdef IPV6_SUPPORT
+  struct sockaddr_in6 addr;
+#else
+  struct sockaddr_in addr;
+#endif
+
+  fluid_socket_t sock;
+
+  fluid_return_val_if_fail (func != NULL, NULL);
+
+  if (fluid_socket_init() != FLUID_OK)
+  {
+    return NULL;
+  }
+#ifdef IPV6_SUPPORT
+  sock = socket (AF_INET6, SOCK_STREAM, 0);
+  if (sock == INVALID_SOCKET)
+  {
+    FLUID_LOG (FLUID_ERR, "Failed to create server socket: %ld", fluid_socket_get_error());
+    fluid_socket_cleanup();
+    return NULL;
+  }
+
+  FLUID_MEMSET(&addr, 0, sizeof(addr));
+  addr.sin6_family = AF_INET6;
+  addr.sin6_port = htons ((uint16_t)port);
+  addr.sin6_addr = in6addr_any;
+#else
+
+  sock = socket (AF_INET, SOCK_STREAM, 0);
+
+  if (sock == INVALID_SOCKET)
+  {
+    FLUID_LOG (FLUID_ERR, "Failed to create server socket: %ld", fluid_socket_get_error());
+    fluid_socket_cleanup();
+    return NULL;
+  }
+
+  FLUID_MEMSET(&addr, 0, sizeof(addr));
+  addr.sin_family = AF_INET;
+  addr.sin_port = htons ((uint16_t)port);
+  addr.sin_addr.s_addr = htonl (INADDR_ANY);
+#endif
+
+  if (bind(sock, (const struct sockaddr *) &addr, sizeof(addr)) == SOCKET_ERROR)
+  {
+    FLUID_LOG (FLUID_ERR, "Failed to bind server socket: %ld", fluid_socket_get_error());
+    fluid_socket_close (sock);
+    fluid_socket_cleanup();
+    return NULL;
+  }
+
+  if (listen (sock, SOMAXCONN) == SOCKET_ERROR)
+  {
+    FLUID_LOG (FLUID_ERR, "Failed to listen on server socket: %ld", fluid_socket_get_error());
+    fluid_socket_close (sock);
+    fluid_socket_cleanup();
+    return NULL;
+  }
+
+  server_socket = FLUID_NEW (fluid_server_socket_t);
+
+  if (server_socket == NULL)
+  {
+    FLUID_LOG (FLUID_ERR, "Out of memory");
+    fluid_socket_close (sock);
+    fluid_socket_cleanup();
+    return NULL;
+  }
+
+  server_socket->socket = sock;
+  server_socket->func = func;
+  server_socket->data = data;
+  server_socket->cont = 1;
+
+  server_socket->thread = new_fluid_thread("server", fluid_server_socket_run, server_socket,
+                                           0, FALSE);
+  if (server_socket->thread == NULL)
+  {
+    FLUID_FREE (server_socket);
+    fluid_socket_close (sock);
+    fluid_socket_cleanup();
+    return NULL;
+  }
+
+  return server_socket;
+}
+
+void delete_fluid_server_socket(fluid_server_socket_t *server_socket)
+{
+  fluid_return_if_fail(server_socket != NULL);
+  
+  server_socket->cont = 0;
+
+  if (server_socket->socket != INVALID_SOCKET)
+    fluid_socket_close (server_socket->socket);
+
+  if (server_socket->thread) {
+    fluid_thread_join(server_socket->thread);
+    delete_fluid_thread (server_socket->thread);
+  }
+
+  FLUID_FREE (server_socket);
+
+  // Should be called the same number of times as fluid_socket_init()
+  fluid_socket_cleanup();
 }

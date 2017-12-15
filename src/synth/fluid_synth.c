@@ -917,7 +917,7 @@ delete_fluid_synth(fluid_synth_t* synth)
   while (default_mod != NULL) {
     mod = default_mod;
     default_mod = mod->next;
-    fluid_mod_delete(mod);
+    delete_fluid_mod(mod);
   }
 
   FLUID_FREE(synth->overflow.important_channels);
@@ -1118,7 +1118,7 @@ fluid_synth_add_default_mod(fluid_synth_t* synth, fluid_mod_t* mod, int mode)
   }
 
   /* Add a new modulator (no existing modulator to add / overwrite). */
-  new_mod = fluid_mod_new();
+  new_mod = new_fluid_mod();
   if (new_mod == NULL)
     FLUID_API_RETURN(FLUID_FAILED);
 
@@ -1163,7 +1163,7 @@ fluid_synth_remove_default_mod(fluid_synth_t* synth, const fluid_mod_t* mod)
         {
             last_mod->next = default_mod->next;
         }
-        fluid_mod_delete(default_mod);
+        delete_fluid_mod(default_mod);
         FLUID_API_RETURN(FLUID_OK);
     }
     last_mod = default_mod;
@@ -3312,8 +3312,7 @@ static void
 fluid_synth_kill_by_exclusive_class_LOCAL(fluid_synth_t* synth,
                                           fluid_voice_t* new_voice)
 {
-  int excl_class = _GEN(new_voice,GEN_EXCLUSIVECLASS);
-  fluid_voice_t* existing_voice;
+  int excl_class = fluid_voice_gen_value(new_voice, GEN_EXCLUSIVECLASS);
   int i;
 
   /* Excl. class 0: No exclusive class */
@@ -3321,14 +3320,15 @@ fluid_synth_kill_by_exclusive_class_LOCAL(fluid_synth_t* synth,
 
   /* Kill all notes on the same channel with the same exclusive class */
   for (i = 0; i < synth->polyphony; i++) {
-    existing_voice = synth->voice[i];
+    fluid_voice_t* existing_voice = synth->voice[i];
+    int existing_excl_class = fluid_voice_gen_value(existing_voice, GEN_EXCLUSIVECLASS);
 
     /* If voice is playing, on the same channel, has same exclusive
      * class and is not part of the same noteon event (voice group), then kill it */
 
     if (fluid_voice_is_playing(existing_voice)
         && fluid_voice_get_channel(existing_voice) == fluid_voice_get_channel(new_voice)
-        && (int)_GEN (existing_voice, GEN_EXCLUSIVECLASS) == excl_class
+        && existing_excl_class == excl_class
         && fluid_voice_get_id (existing_voice) != fluid_voice_get_id(new_voice))
       fluid_voice_kill_excl(existing_voice);
   }
@@ -3809,63 +3809,6 @@ fluid_synth_get_channel_preset(fluid_synth_t* synth, int chan)
   result = channel->preset;
   fluid_synth_api_exit(synth);
   return result;
-}
-
-/**
- * Get information on the currently selected preset on a MIDI channel.
- * @param synth FluidSynth instance
- * @param chan MIDI channel number (0 to MIDI channel count - 1)
- * @param info Caller supplied structure to fill with preset information
- * @return #FLUID_OK on success, #FLUID_FAILED otherwise
- * @deprecated Provides redundant functionality that can be achieved with
- * fluid_synth_get_channel_preset() or fluid_synth_get_program().
- * @since 1.1.1
- */
-int
-fluid_synth_get_channel_info (fluid_synth_t *synth, int chan,
-                              fluid_synth_channel_info_t *info)
-{
-  fluid_channel_t *channel;
-  fluid_preset_t *preset;
-  const char *name;
-
-  if (info)
-  {
-    info->assigned = FALSE;
-    info->name[0] = '\0';
-  }
-
-  fluid_return_val_if_fail (info != NULL, FLUID_FAILED);
-  FLUID_API_ENTRY_CHAN(FLUID_FAILED);
-  
-  channel = synth->channel[chan];
-  preset = channel->preset;
-
-  if (preset)
-  {
-    info->assigned = TRUE;
-    name = fluid_preset_get_name (preset);
-
-    if (name)
-    {
-      strncpy (info->name, name, FLUID_SYNTH_CHANNEL_INFO_NAME_SIZE);
-      info->name[FLUID_SYNTH_CHANNEL_INFO_NAME_SIZE - 1] = '\0';
-    }
-    else info->name[0] = '\0';
-
-    info->sfont_id = preset->sfont->id;
-    info->bank = fluid_preset_get_banknum (preset);
-    info->program = fluid_preset_get_num (preset);
-  }
-  else
-  {
-    info->assigned = FALSE;
-    fluid_channel_get_sfont_bank_prog (channel, &info->sfont_id, &info->bank, &info->program);
-    info->name[0] = '\0';
-  }
-
-  fluid_synth_api_exit(synth);
-  return FLUID_OK;
 }
 
 /**
@@ -4570,30 +4513,6 @@ fluid_synth_update_voice_tuning_LOCAL (fluid_synth_t *synth, fluid_channel_t *ch
  * @param pitch Array of pitch values (length of 128, each value is number of
  *   cents, for example normally note 0 is 0.0, 1 is 100.0, 60 is 6000.0, etc).
  *   Pass NULL to create a equal tempered (normal) scale.
- * @return FLUID_OK on success, FLUID_FAILED otherwise
- *
- * @note Tuning is not applied in realtime to existing notes of the replaced
- * tuning (if any), use fluid_synth_activate_key_tuning() instead to specify
- * this behavior.
- * 
- * @deprecated Use fluid_synth_activate_key_tuning(synth, bank, prog, name, pitch, FALSE) instead.
- */
-int
-fluid_synth_create_key_tuning(fluid_synth_t* synth, int bank, int prog,
-                              const char* name, const double* pitch)
-{
-  return fluid_synth_activate_key_tuning (synth, bank, prog, name, pitch, FALSE);
-}
-
-/**
- * Set the tuning of the entire MIDI note scale.
- * @param synth FluidSynth instance
- * @param bank Tuning bank number (0-127), not related to MIDI instrument bank
- * @param prog Tuning preset number (0-127), not related to MIDI instrument program
- * @param name Label name for this tuning
- * @param pitch Array of pitch values (length of 128, each value is number of
- *   cents, for example normally note 0 is 0.0, 1 is 100.0, 60 is 6000.0, etc).
- *   Pass NULL to create a equal tempered (normal) scale.
  * @param apply TRUE to apply new tuning in realtime to existing notes which
  *   are using the replaced tuning (if any), FALSE otherwise
  * @return FLUID_OK on success, FLUID_FAILED otherwise
@@ -4623,30 +4542,6 @@ fluid_synth_activate_key_tuning(fluid_synth_t* synth, int bank, int prog,
   }
   else retval = FLUID_FAILED;
   FLUID_API_RETURN(retval);
-}
-
-/**
- * Apply an octave tuning to every octave in the MIDI note scale.
- * @param synth FluidSynth instance
- * @param bank Tuning bank number (0-127), not related to MIDI instrument bank
- * @param prog Tuning preset number (0-127), not related to MIDI instrument program
- * @param name Label name for this tuning
- * @param pitch Array of pitch values (length of 12 for each note of an octave
- *   starting at note C, values are number of offset cents to add to the normal
- *   tuning amount)
- * @return FLUID_OK on success, FLUID_FAILED otherwise
- *
- * @note Tuning is not applied in realtime to existing notes of the replaced
- * tuning (if any), use fluid_synth_activate_octave_tuning() instead to specify
- * this behavior.
- * 
- * @deprecated Use fluid_synth_activate_octave_tuning(synth, bank, prog, name, pitch, FALSE) instead.
- */
-int
-fluid_synth_create_octave_tuning(fluid_synth_t* synth, int bank, int prog,
-                                 const char* name, const double* pitch)
-{
-  return fluid_synth_activate_octave_tuning (synth, bank, prog, name, pitch, FALSE);
 }
 
 /**
@@ -4744,30 +4639,6 @@ fluid_synth_tune_notes(fluid_synth_t* synth, int bank, int prog,
 }
 
 /**
- * Select a tuning scale on a MIDI channel.
- * @param synth FluidSynth instance
- * @param chan MIDI channel number (0 to MIDI channel count - 1)
- * @param bank Tuning bank number (0-127), not related to MIDI instrument bank
- * @param prog Tuning preset number (0-127), not related to MIDI instrument program
- * @return FLUID_OK on success, FLUID_FAILED otherwise
- *
- * @note This function does NOT activate tuning in realtime, use
- * fluid_synth_activate_tuning() instead to specify whether tuning change
- * should cause existing notes to update.
- *
- * @note Prior to version 1.1.0 it was an error to select a tuning that didn't
- * already exist. Starting with 1.1.0, a default equal tempered scale will be
- * created, if no tuning exists for the given bank and prog.
- * 
- * @deprecated Use fluid_synth_activate_tuning(synth, chan, bank, prog, FALSE) instead.
- */
-int
-fluid_synth_select_tuning(fluid_synth_t* synth, int chan, int bank, int prog)
-{
-  return fluid_synth_activate_tuning (synth, chan, bank, prog, FALSE);
-}
-
-/**
  * Activate a tuning scale on a MIDI channel.
  * @param synth FluidSynth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
@@ -4840,24 +4711,6 @@ fluid_synth_set_tuning_LOCAL (fluid_synth_t *synth, int chan,
 
 
   return FLUID_OK;
-}
-
-/**
- * Clear tuning scale on a MIDI channel (set it to the default equal tempered scale).
- * @param synth FluidSynth instance
- * @param chan MIDI channel number (0 to MIDI channel count - 1)
- * @return FLUID_OK on success, FLUID_FAILED otherwise
- *
- * @note This function does NOT activate tuning change in realtime, use
- * fluid_synth_deactivate_tuning() instead to specify whether tuning change
- * should cause existing notes to update.
- * 
- * @deprecated Use fluid_synth_deactivate_tuning(synth, chan, FALSE) instead.
- */
-int
-fluid_synth_reset_tuning(fluid_synth_t* synth, int chan)
-{
-  return fluid_synth_deactivate_tuning (synth, chan, FALSE);
 }
 
 /**
@@ -4994,6 +4847,14 @@ fluid_synth_get_settings(fluid_synth_t* synth)
   return synth->settings;
 }
 
+/**
+ * Same as calling \c fluid_synth_set_gen2(synth, chan, param, value, FALSE, FALSE)
+ * @return FLUID_OK on success, FLUID_FAILED otherwise
+ */
+int fluid_synth_set_gen(fluid_synth_t* synth, int chan, int param, float value)
+{
+    return fluid_synth_set_gen2(synth, chan, param, value, FALSE, FALSE);
+}
 
 /**
  * Set a SoundFont generator (effect) value on a MIDI channel in real-time.
@@ -5006,19 +4867,15 @@ fluid_synth_get_settings(fluid_synth_t* synth)
  *   TRUE to take the value as a 0.0-1.0 range and apply it to the valid
  *   generator effect range (scaled and shifted as necessary).
  * @return FLUID_OK on success, FLUID_FAILED otherwise
- * @since 2.0.0
  *
  * This function allows for setting all effect parameters in real time on a
- * MIDI channel.  Setting absolute to non-zero will cause the value to override
+ * MIDI channel. Setting absolute to non-zero will cause the value to override
  * any generator values set in the instruments played on the MIDI channel.
  * See SoundFont 2.01 spec, paragraph 8.1.3, page 48 for details on SoundFont
  * generator parameters and valid ranges.
- * 
- * @note The old behaviour of fluid_synth_set_gen() assumed \c absolute and \c normalized to
- * be FALSE.
  */
 int
-fluid_synth_set_gen(fluid_synth_t* synth, int chan, int param,
+fluid_synth_set_gen2(fluid_synth_t* synth, int chan, int param,
 		     float value, int absolute, int normalized)
 {
   float v;
@@ -5113,6 +4970,11 @@ fluid_synth_handle_midi_event(void* data, fluid_midi_event_t* event)
 	return fluid_synth_system_reset(synth);
       case MIDI_SYSEX:
         return fluid_synth_sysex (synth, event->paramptr, event->param1, NULL, NULL, NULL, FALSE);
+                
+     case MIDI_TEXT:
+     case MIDI_LYRIC:
+     case MIDI_SET_TEMPO:
+       return FLUID_OK;
   }
   return FLUID_FAILED;
 }

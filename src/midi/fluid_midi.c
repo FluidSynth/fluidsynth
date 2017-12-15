@@ -32,6 +32,7 @@ static int fluid_midi_event_length(unsigned char event);
  * Returns NULL if there was an error reading or allocating memory.
  */
 static char* fluid_file_read_full(fluid_file fp, size_t* length);
+static void fluid_midi_event_set_sysex_LOCAL(fluid_midi_event_t *evt, int type, void *data, int size, int dynamic);
 #define READ_FULL_INITIAL_BUFLEN 1024
 
 
@@ -576,6 +577,35 @@ fluid_midi_file_read_event(fluid_midi_file *mf, fluid_track_t *track)
                 break;
 
             case MIDI_LYRIC:
+            case MIDI_TEXT:
+            {
+                void* tmp;
+                int size = mf->varlen+1;
+                
+                /* NULL terminate strings for safety */
+                metadata[size-1] = '\0';
+
+                evt = new_fluid_midi_event();
+                if (evt == NULL) {
+                    FLUID_LOG(FLUID_ERR, "Out of memory");
+                    result = FLUID_FAILED;
+                    break;
+                }
+                evt->dtime = mf->dtime;
+                            
+                tmp = FLUID_MALLOC(size);
+                if (tmp == NULL)
+                {
+                    FLUID_LOG(FLUID_PANIC, "Out of memory");
+                    result = FLUID_FAILED;
+                    break;
+                }
+                FLUID_MEMCPY(tmp, metadata, size);
+                
+                fluid_midi_event_set_sysex_LOCAL(evt, type, tmp, size, TRUE);
+                fluid_track_add_event(track, evt);
+                mf->dtime = 0;
+            }
                 break;
 
             case MIDI_MARKER:
@@ -808,9 +838,10 @@ delete_fluid_midi_event(fluid_midi_event_t *evt)
         temp = evt->next;
 
         /* Dynamic SYSEX event? - free (param2 indicates if dynamic) */
-        if (evt->type == MIDI_SYSEX && evt->paramptr && evt->param2)
+        if ((evt->type == MIDI_SYSEX || (evt-> type == MIDI_TEXT) || (evt->type == MIDI_LYRIC)) &&
+            evt->paramptr && evt->param2)
             FLUID_FREE (evt->paramptr);
-
+	
         FLUID_FREE(evt);
         evt = temp;
     }
@@ -1012,7 +1043,7 @@ fluid_midi_event_set_pitch(fluid_midi_event_t *evt, int val)
  * Assign sysex data to a MIDI event structure.
  * @param evt MIDI event structure
  * @param data Pointer to SYSEX data
- * @param size Size of SYSEX data
+ * @param size Size of SYSEX data in bytes
  * @param dynamic TRUE if the SYSEX data has been dynamically allocated and
  *   should be freed when the event is freed (only applies if event gets destroyed
  *   with delete_fluid_midi_event())
@@ -1023,11 +1054,54 @@ fluid_midi_event_set_pitch(fluid_midi_event_t *evt, int val)
 int
 fluid_midi_event_set_sysex(fluid_midi_event_t *evt, void *data, int size, int dynamic)
 {
-    evt->type = MIDI_SYSEX;
+    fluid_midi_event_set_sysex_LOCAL(evt, MIDI_SYSEX, data, size, dynamic);
+    return FLUID_OK;
+}
+
+/**
+ * Assign text data to a MIDI event structure.
+ * @param evt MIDI event structure
+ * @param data Pointer to text data
+ * @param size Size of text data in bytes
+ * @param dynamic TRUE if the data has been dynamically allocated and
+ *   should be freed when the event is freed via delete_fluid_midi_event()
+ * @return Always returns #FLUID_OK
+ * 
+ * @since 2.0.0
+ * @note Unlike the other event assignment functions, this one sets evt->type.
+ */
+int
+fluid_midi_event_set_text(fluid_midi_event_t *evt, void *data, int size, int dynamic)
+{
+    fluid_midi_event_set_sysex_LOCAL(evt, MIDI_TEXT, data, size, dynamic);
+    return FLUID_OK;
+}
+
+/**
+ * Assign lyric data to a MIDI event structure.
+ * @param evt MIDI event structure
+ * @param data Pointer to lyric data
+ * @param size Size of lyric data in bytes
+ * @param dynamic TRUE if the data has been dynamically allocated and
+ *   should be freed when the event is freed via delete_fluid_midi_event()
+ * @return Always returns #FLUID_OK
+ * 
+ * @since 2.0.0
+ * @note Unlike the other event assignment functions, this one sets evt->type.
+ */
+int
+fluid_midi_event_set_lyrics(fluid_midi_event_t *evt, void *data, int size, int dynamic)
+{
+    fluid_midi_event_set_sysex_LOCAL(evt, MIDI_LYRIC, data, size, dynamic);
+    return FLUID_OK;
+}
+
+static void fluid_midi_event_set_sysex_LOCAL(fluid_midi_event_t *evt, int type, void *data, int size, int dynamic)
+{
+    evt->type = type;
     evt->paramptr = data;
     evt->param1 = size;
     evt->param2 = dynamic;
-    return FLUID_OK;
 }
 
 /******************************************************
@@ -1189,15 +1263,17 @@ fluid_track_send_events(fluid_track_t *track,
 
         if (!player || event->type == MIDI_EOT) {
         }
-        else if (event->type == MIDI_SET_TEMPO) {
-            fluid_player_set_midi_tempo(player, event->param1);
-        }
         else if (seeking && (event->type == NOTE_ON || event->type == NOTE_OFF)) {
             /* skip on/off messages */
         }
         else {
             if (player->playback_callback)
                 player->playback_callback(player->playback_userdata, event);
+        }
+        
+        if (event->type == MIDI_SET_TEMPO)
+        {
+            fluid_player_set_midi_tempo(player, event->param1);
         }
 
         fluid_track_next_event(track);
@@ -1245,7 +1321,6 @@ new_fluid_player(fluid_synth_t *synth)
     player->cur_ticks = 0;
     player->seek_ticks = -1;    
     fluid_player_set_playback_callback(player, fluid_synth_handle_midi_event, synth);
-
     player->use_system_timer = fluid_settings_str_equal(synth->settings,
             "player.timing-source", "system");
 
@@ -1478,6 +1553,7 @@ fluid_player_load(fluid_player_t *player, fluid_playlist_item *item)
     if (buffer_owned) {
         FLUID_FREE(buffer);
     }
+    
     return FLUID_OK;
 }
 
