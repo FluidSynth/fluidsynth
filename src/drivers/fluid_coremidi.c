@@ -174,7 +174,6 @@ delete_fluid_coremidi_driver(fluid_midi_driver_t* p)
     delete_fluid_midi_parser(dev->parser);
   }
   FLUID_FREE(dev);
-  return 0;
 }
 
 void
