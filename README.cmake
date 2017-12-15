@@ -53,8 +53,8 @@ Valid values for boolean (enable-xxxx) options: 1, 0, yes, no, on, off.
    in Linux and other Unix systems) then execute make, gmake or mingw32-make.
    If you generated a project file, use your IDE to build it.
 
-You may find more information in the project Wiki: 
-    http://sourceforge.net/apps/trac/fluidsynth/wiki/BuildingWithCMake
+You may find more up-to-date information in the project Wiki: 
+    https://github.com/FluidSynth/fluidsynth/wiki/BuildingWithCMake
 
 Compiling with make
 ===================
