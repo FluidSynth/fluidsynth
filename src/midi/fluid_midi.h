@@ -25,12 +25,6 @@
 #include "fluid_sys.h"
 #include "fluid_list.h"
 
-typedef struct _fluid_midi_parser_t fluid_midi_parser_t;
-
-fluid_midi_parser_t* new_fluid_midi_parser(void);
-int delete_fluid_midi_parser(fluid_midi_parser_t* parser);
-fluid_midi_event_t* fluid_midi_parser_parse(fluid_midi_parser_t* parser, unsigned char c);
-
 
 /***************************************************************
  *

@@ -1843,8 +1843,10 @@ int fluid_player_get_midi_tempo(fluid_player_t * player)
  *
  */
 
-/*
- * new_fluid_midi_parser
+/**
+ * Create a MIDI parser.
+ * @return New MIDI parser or NULL when out of memory.
+ * @since 1.1.9
  */
 fluid_midi_parser_t *
 new_fluid_midi_parser ()
@@ -1859,22 +1861,37 @@ new_fluid_midi_parser ()
     return parser;
 }
 
-/*
- * delete_fluid_midi_parser
+/**
+ * Delete a MIDI parser.
+ * @param parser The MIDI parser to delete
+ * @since 1.1.9
  */
-int
+void
 delete_fluid_midi_parser(fluid_midi_parser_t *parser)
 {
     FLUID_FREE(parser);
-    return FLUID_OK;
 }
 
 /**
- * Parse a MIDI stream one character at a time.
+ * Parse one character of a MIDI byte stream at a time.
  * @param parser Parser instance
  * @param c Next character in MIDI stream
- * @return A parsed MIDI event or NULL if none.  Event is internal and should
- *   not be modified or freed and is only valid until next call to this function.
+ * @return A parsed MIDI event or NULL if more data required. Event is owned internally, should
+ * not be modified or freed and is only valid until next call to this function.
+ * @since 1.1.9
+ * 
+ * Usage example:
+ * @code
+ * int ret=FLUID_OK;
+ * for (i = 0; i < length_of_byte_stream && ret == FLUID_OK; i++)
+ * {
+ *     fluid_midi_event_t* event = fluid_midi_parser_parse(parser, my_byte_stream[i]);
+ *     if (event != NULL)
+ *     {
+ *         ret = fluid_sequencer_add_midi_event_to_buffer(seq, event);
+ *     }
+ * }
+ * @endcode
  */
 fluid_midi_event_t *
 fluid_midi_parser_parse(fluid_midi_parser_t *parser, unsigned char c)
