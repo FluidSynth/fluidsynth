@@ -51,21 +51,20 @@ extern "C" {
  */
 
 /* Macros interface to poly/mono mode variables */
-enum PolyMonoMode
+enum fluid_basic_channel_mode_flags
 {
-	OMNION_POLY,  /* MIDI mode 0 */
-	OMNION_MONO,  /* MIDI mode 1 */
-	OMNIOFF_POLY, /* MIDI mode 2 */
-	OMNIOFF_MONO, /* MIDI mode 3 */
-	MODE_NBR
+    MONO = 0x01, /* bit 0, 0: poly on , 1: mono on */
+    OMNI = 0x02, /* bit 1, 0: omni on, 1:omni off */
+    BASIC_CHANNEL = 0x04, /* bit 2, 1: channel is basic channel */
+    ENABLED = 0x08,         /* bit 3, 1: channel is listened */
+    MASKMODE = (OMNI | MONO),
+    
+    OMNION_POLY = MASKMODE & (~OMNI & ~MONO), /* MIDI mode 0 */
+    OMNION_MONO = MASKMODE & (~OMNI & MONO), /* MIDI mode 1 */
+    OMNIOFF_POLY = MASKMODE & (OMNI & ~MONO), /* MIDI mode 2 */
+    OMNIOFF_MONO = MASKMODE & (OMNI | MONO), /* MIDI mode 3 */
+    MODE_NBR
 };
-
-/* bits basic channel infos */
-#define MONO 0x01            /* b0, 0: poly on , 1: mono on */
-#define OMNI 0x02            /* b1, 0: omni on, 1:omni off */
-#define MASKMODE (OMNI|MONO)
-#define BASIC_CHANNEL  0x04  /* b2, 1: channel is basic channel */
-#define ENABLED 0x08         /* b3, 1: channel is listened */
 
 struct _fluid_basic_channel_infos_t
 {
