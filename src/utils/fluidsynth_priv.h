@@ -309,6 +309,9 @@ do { strncpy(_dst,_src,_n); \
 #define FLUID_ASSERT(a,b)
 #define FLUID_ASSERT_P(a,b)
 
+#define FLUID_LIKELY G_LIKELY
+#define FLUID_UNLIKELY G_UNLIKELY
+
 char* fluid_error(void);
 
 

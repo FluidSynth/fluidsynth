@@ -1,10 +1,10 @@
 
 # FluidSynth
 
-|  | Build Status |
-|---|---|
-| Linux/MacOSX| [![Build Status Travis](https://travis-ci.org/FluidSynth/fluidsynth.svg?branch=master)](https://travis-ci.org/FluidSynth/fluidsynth) |
-| Windows | [![Build status Appveyor](https://ci.appveyor.com/api/projects/status/n24ybk0dmttjwdk2/branch/master?svg=true)](https://ci.appveyor.com/project/derselbst/fluidsynth) |
+| Build Status | glib < 2.30 | glib >= 2.30 |
+|---|---|---|
+| Linux/MacOSX| n.a. | [![Build Status Travis](https://travis-ci.org/FluidSynth/fluidsynth.svg?branch=master)](https://travis-ci.org/FluidSynth/fluidsynth) |
+| Windows | [![Build status Appveyor](https://ci.appveyor.com/api/projects/status/n24ybk0dmttjwdk2/branch/master?svg=true)](https://ci.appveyor.com/project/derselbst/fluidsynth) | [![Build status](https://ci.appveyor.com/api/projects/status/anbmtebt5uk4q1it/branch/master?svg=true)](https://ci.appveyor.com/project/derselbst/fluidsynth-g2ouw) |
 
 
 

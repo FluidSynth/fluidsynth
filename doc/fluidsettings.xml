@@ -462,7 +462,7 @@ https://stackoverflow.com/a/6251757
             <type>bool</type>
             <def>1 (TRUE)</def>
             <desc>
-                If TRUE increases the latency dynamically if PulseAudio suggests so. Else uses a buffer with length of "audio.period-size".
+                If TRUE initializes the maximum length of the audio buffer to the highest supported value and increases the latency dynamically if PulseAudio suggests so. Else uses a buffer with length of "audio.period-size".
             </desc>
         </setting>
         <setting>

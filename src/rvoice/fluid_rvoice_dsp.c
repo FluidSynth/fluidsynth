@@ -119,6 +119,28 @@ void fluid_rvoice_dsp_config (void)
   fluid_check_fpe("interpolation table calculation");
 }
 
+/*
+ * Combines the most significant 16 bit part of a sample with a potentially present
+ * least sig. 8 bit part in order to create a 24 bit sample.
+ */
+static FLUID_INLINE fluid_real_t
+fluid_rvoice_get_sample(const short int* dsp_msb, const char* dsp_lsb, unsigned int idx)
+{
+    /* cast sample to unsigned type, so we can safely shift and bitwise or
+     * without relying on undefined behaviour (should never happen anyway ofc...) */
+    uint32_t msb = (uint32_t)dsp_msb[idx];
+    uint8_t lsb = 0U;
+    
+    /* most soundfonts have 16 bit samples, assume that it's unlikely we
+     * experience 24 bit samples here */
+    if(FLUID_UNLIKELY(dsp_lsb != NULL))
+    {
+        lsb = (uint8_t)dsp_lsb[idx];
+    }
+    
+    return (fluid_real_t)((int32_t)((msb << 8) | lsb));
+}
+
 /* No interpolation. Just take the sample, which is closest to
   * the playback pointer.  Questionable quality, but very
   * efficient. */
@@ -128,6 +150,7 @@ fluid_rvoice_dsp_interpolate_none (fluid_rvoice_dsp_t *voice)
   fluid_phase_t dsp_phase = voice->phase;
   fluid_phase_t dsp_phase_incr;
   short int *dsp_data = voice->sample->data;
+  char *dsp_data24 = voice->sample->data24;
   fluid_real_t *dsp_buf = voice->dsp_buf;
   fluid_real_t dsp_amp = voice->amp;
   fluid_real_t dsp_amp_incr = voice->amp_incr;
@@ -151,7 +174,7 @@ fluid_rvoice_dsp_interpolate_none (fluid_rvoice_dsp_t *voice)
     /* interpolate sequence of sample points */
     for ( ; dsp_i < FLUID_BUFSIZE && dsp_phase_index <= end_index; dsp_i++)
     {
-      dsp_buf[dsp_i] = dsp_amp * dsp_data[dsp_phase_index];
+      dsp_buf[dsp_i] = dsp_amp * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index);
 
       /* increment phase and amplitude */
       fluid_phase_incr (dsp_phase, dsp_phase_incr);
@@ -189,13 +212,14 @@ fluid_rvoice_dsp_interpolate_linear (fluid_rvoice_dsp_t *voice)
   fluid_phase_t dsp_phase = voice->phase;
   fluid_phase_t dsp_phase_incr;
   short int *dsp_data = voice->sample->data;
+  char *dsp_data24 = voice->sample->data24;
   fluid_real_t *dsp_buf = voice->dsp_buf;
   fluid_real_t dsp_amp = voice->amp;
   fluid_real_t dsp_amp_incr = voice->amp_incr;
   unsigned int dsp_i = 0;
   unsigned int dsp_phase_index;
   unsigned int end_index;
-  short int point;
+  fluid_real_t point;
   fluid_real_t *coeffs;
   int looping;
 
@@ -209,8 +233,8 @@ fluid_rvoice_dsp_interpolate_linear (fluid_rvoice_dsp_t *voice)
   end_index = (looping ? voice->loopend - 1 : voice->end) - 1;
 
   /* 2nd interpolation point to use at end of loop or sample */
-  if (looping) point = dsp_data[voice->loopstart];	/* loop start */
-  else point = dsp_data[voice->end];			/* duplicate end for samples no longer looping */
+  if (looping) point = fluid_rvoice_get_sample(dsp_data, dsp_data24, voice->loopstart);	/* loop start */
+  else point = fluid_rvoice_get_sample(dsp_data, dsp_data24, voice->end);			/* duplicate end for samples no longer looping */
 
   while (1)
   {
@@ -220,8 +244,8 @@ fluid_rvoice_dsp_interpolate_linear (fluid_rvoice_dsp_t *voice)
     for ( ; dsp_i < FLUID_BUFSIZE && dsp_phase_index <= end_index; dsp_i++)
     {
       coeffs = interp_coeff_linear[fluid_phase_fract_to_tablerow (dsp_phase)];
-      dsp_buf[dsp_i] = dsp_amp * (coeffs[0] * dsp_data[dsp_phase_index]
-				  + coeffs[1] * dsp_data[dsp_phase_index+1]);
+      dsp_buf[dsp_i] = dsp_amp * (coeffs[0] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index)
+                                + coeffs[1] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index+1));
 
       /* increment phase and amplitude */
       fluid_phase_incr (dsp_phase, dsp_phase_incr);
@@ -238,8 +262,8 @@ fluid_rvoice_dsp_interpolate_linear (fluid_rvoice_dsp_t *voice)
     for (; dsp_phase_index <= end_index && dsp_i < FLUID_BUFSIZE; dsp_i++)
     {
       coeffs = interp_coeff_linear[fluid_phase_fract_to_tablerow (dsp_phase)];
-      dsp_buf[dsp_i] = dsp_amp * (coeffs[0] * dsp_data[dsp_phase_index]
-				  + coeffs[1] * point);
+      dsp_buf[dsp_i] = dsp_amp * (coeffs[0] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index)
+                                + coeffs[1] * point);
 
       /* increment phase and amplitude */
       fluid_phase_incr (dsp_phase, dsp_phase_incr);
@@ -278,13 +302,14 @@ fluid_rvoice_dsp_interpolate_4th_order (fluid_rvoice_dsp_t *voice)
   fluid_phase_t dsp_phase = voice->phase;
   fluid_phase_t dsp_phase_incr;
   short int *dsp_data = voice->sample->data;
+  char *dsp_data24 = voice->sample->data24;
   fluid_real_t *dsp_buf = voice->dsp_buf;
   fluid_real_t dsp_amp = voice->amp;
   fluid_real_t dsp_amp_incr = voice->amp_incr;
   unsigned int dsp_i = 0;
   unsigned int dsp_phase_index;
   unsigned int start_index, end_index;
-  short int start_point, end_point1, end_point2;
+  fluid_real_t start_point, end_point1, end_point2;
   fluid_real_t *coeffs;
   int looping;
 
@@ -300,23 +325,23 @@ fluid_rvoice_dsp_interpolate_4th_order (fluid_rvoice_dsp_t *voice)
   if (voice->has_looped)	/* set start_index and start point if looped or not */
   {
     start_index = voice->loopstart;
-    start_point = dsp_data[voice->loopend - 1];	/* last point in loop (wrap around) */
+    start_point = fluid_rvoice_get_sample(dsp_data, dsp_data24, voice->loopend - 1);	/* last point in loop (wrap around) */
   }
   else
   {
     start_index = voice->start;
-    start_point = dsp_data[voice->start];	/* just duplicate the point */
+    start_point = fluid_rvoice_get_sample(dsp_data, dsp_data24, voice->start);	/* just duplicate the point */
   }
 
   /* get points off the end (loop start if looping, duplicate point if end) */
   if (looping)
   {
-    end_point1 = dsp_data[voice->loopstart];
-    end_point2 = dsp_data[voice->loopstart + 1];
+    end_point1 = fluid_rvoice_get_sample(dsp_data, dsp_data24, voice->loopstart);
+    end_point2 = fluid_rvoice_get_sample(dsp_data, dsp_data24, voice->loopstart + 1);
   }
   else
   {
-    end_point1 = dsp_data[voice->end];
+    end_point1 = fluid_rvoice_get_sample(dsp_data, dsp_data24, voice->end);
     end_point2 = end_point1;
   }
 
@@ -328,10 +353,11 @@ fluid_rvoice_dsp_interpolate_4th_order (fluid_rvoice_dsp_t *voice)
     for ( ; dsp_phase_index == start_index && dsp_i < FLUID_BUFSIZE; dsp_i++)
     {
       coeffs = interp_coeff[fluid_phase_fract_to_tablerow (dsp_phase)];
-      dsp_buf[dsp_i] = dsp_amp * (coeffs[0] * start_point
-				  + coeffs[1] * dsp_data[dsp_phase_index]
-				  + coeffs[2] * dsp_data[dsp_phase_index+1]
-				  + coeffs[3] * dsp_data[dsp_phase_index+2]);
+      dsp_buf[dsp_i] = dsp_amp *
+                    ( coeffs[0] * start_point
+                    + coeffs[1] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index)
+                    + coeffs[2] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index+1)
+                    + coeffs[3] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index+2));
 
       /* increment phase and amplitude */
       fluid_phase_incr (dsp_phase, dsp_phase_incr);
@@ -343,10 +369,11 @@ fluid_rvoice_dsp_interpolate_4th_order (fluid_rvoice_dsp_t *voice)
     for ( ; dsp_i < FLUID_BUFSIZE && dsp_phase_index <= end_index; dsp_i++)
     {
       coeffs = interp_coeff[fluid_phase_fract_to_tablerow (dsp_phase)];
-      dsp_buf[dsp_i] = dsp_amp * (coeffs[0] * dsp_data[dsp_phase_index-1]
-				  + coeffs[1] * dsp_data[dsp_phase_index]
-				  + coeffs[2] * dsp_data[dsp_phase_index+1]
-				  + coeffs[3] * dsp_data[dsp_phase_index+2]);
+      dsp_buf[dsp_i] = dsp_amp *
+                    ( coeffs[0] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index-1)
+                    + coeffs[1] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index)
+                    + coeffs[2] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index+1)
+                    + coeffs[3] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index+2));
 
       /* increment phase and amplitude */
       fluid_phase_incr (dsp_phase, dsp_phase_incr);
@@ -363,10 +390,11 @@ fluid_rvoice_dsp_interpolate_4th_order (fluid_rvoice_dsp_t *voice)
     for (; dsp_phase_index <= end_index && dsp_i < FLUID_BUFSIZE; dsp_i++)
     {
       coeffs = interp_coeff[fluid_phase_fract_to_tablerow (dsp_phase)];
-      dsp_buf[dsp_i] = dsp_amp * (coeffs[0] * dsp_data[dsp_phase_index-1]
-				  + coeffs[1] * dsp_data[dsp_phase_index]
-				  + coeffs[2] * dsp_data[dsp_phase_index+1]
-				  + coeffs[3] * end_point1);
+      dsp_buf[dsp_i] = dsp_amp *
+                        ( coeffs[0] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index-1)
+                        + coeffs[1] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index)
+                        + coeffs[2] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index+1)
+                        + coeffs[3] * end_point1);
 
       /* increment phase and amplitude */
       fluid_phase_incr (dsp_phase, dsp_phase_incr);
@@ -380,10 +408,11 @@ fluid_rvoice_dsp_interpolate_4th_order (fluid_rvoice_dsp_t *voice)
     for (; dsp_phase_index <= end_index && dsp_i < FLUID_BUFSIZE; dsp_i++)
     {
       coeffs = interp_coeff[fluid_phase_fract_to_tablerow (dsp_phase)];
-      dsp_buf[dsp_i] = dsp_amp * (coeffs[0] * dsp_data[dsp_phase_index-1]
-				  + coeffs[1] * dsp_data[dsp_phase_index]
-				  + coeffs[2] * end_point1
-				  + coeffs[3] * end_point2);
+      dsp_buf[dsp_i] = dsp_amp *
+                    ( coeffs[0] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index-1)
+                    + coeffs[1] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index)
+                    + coeffs[2] * end_point1
+                    + coeffs[3] * end_point2);
 
       /* increment phase and amplitude */
       fluid_phase_incr (dsp_phase, dsp_phase_incr);
@@ -402,7 +431,7 @@ fluid_rvoice_dsp_interpolate_4th_order (fluid_rvoice_dsp_t *voice)
       {
 	voice->has_looped = 1;
 	start_index = voice->loopstart;
-	start_point = dsp_data[voice->loopend - 1];
+	start_point = fluid_rvoice_get_sample(dsp_data, dsp_data24, voice->loopend-1);
       }
     }
 
@@ -428,14 +457,14 @@ fluid_rvoice_dsp_interpolate_7th_order (fluid_rvoice_dsp_t *voice)
   fluid_phase_t dsp_phase = voice->phase;
   fluid_phase_t dsp_phase_incr;
   short int *dsp_data = voice->sample->data;
+  char *dsp_data24 = voice->sample->data24;
   fluid_real_t *dsp_buf = voice->dsp_buf;
   fluid_real_t dsp_amp = voice->amp;
   fluid_real_t dsp_amp_incr = voice->amp_incr;
   unsigned int dsp_i = 0;
   unsigned int dsp_phase_index;
   unsigned int start_index, end_index;
-  short int start_points[3];
-  short int end_points[3];
+  fluid_real_t start_points[3], end_points[3];
   fluid_real_t *coeffs;
   int looping;
 
@@ -455,14 +484,14 @@ fluid_rvoice_dsp_interpolate_7th_order (fluid_rvoice_dsp_t *voice)
   if (voice->has_looped)	/* set start_index and start point if looped or not */
   {
     start_index = voice->loopstart;
-    start_points[0] = dsp_data[voice->loopend - 1];
-    start_points[1] = dsp_data[voice->loopend - 2];
-    start_points[2] = dsp_data[voice->loopend - 3];
+    start_points[0] = fluid_rvoice_get_sample(dsp_data, dsp_data24, voice->loopend - 1);
+    start_points[1] = fluid_rvoice_get_sample(dsp_data, dsp_data24, voice->loopend - 2);
+    start_points[2] = fluid_rvoice_get_sample(dsp_data, dsp_data24, voice->loopend - 3);
   }
   else
   {
     start_index = voice->start;
-    start_points[0] = dsp_data[voice->start];	/* just duplicate the start point */
+    start_points[0] = fluid_rvoice_get_sample(dsp_data, dsp_data24, voice->start);	/* just duplicate the start point */
     start_points[1] = start_points[0];
     start_points[2] = start_points[0];
   }
@@ -470,13 +499,13 @@ fluid_rvoice_dsp_interpolate_7th_order (fluid_rvoice_dsp_t *voice)
   /* get the 3 points off the end (loop start if looping, duplicate point if end) */
   if (looping)
   {
-    end_points[0] = dsp_data[voice->loopstart];
-    end_points[1] = dsp_data[voice->loopstart + 1];
-    end_points[2] = dsp_data[voice->loopstart + 2];
+    end_points[0] = fluid_rvoice_get_sample(dsp_data, dsp_data24, voice->loopstart);
+    end_points[1] = fluid_rvoice_get_sample(dsp_data, dsp_data24, voice->loopstart + 1);
+    end_points[2] = fluid_rvoice_get_sample(dsp_data, dsp_data24, voice->loopstart + 2);
   }
   else
   {
-    end_points[0] = dsp_data[voice->end];
+    end_points[0] = fluid_rvoice_get_sample(dsp_data, dsp_data24, voice->end);
     end_points[1] = end_points[0];
     end_points[2] = end_points[0];
   }
@@ -491,13 +520,13 @@ fluid_rvoice_dsp_interpolate_7th_order (fluid_rvoice_dsp_t *voice)
       coeffs = sinc_table7[fluid_phase_fract_to_tablerow (dsp_phase)];
 
       dsp_buf[dsp_i] = dsp_amp
-	* (coeffs[0] * (fluid_real_t)start_points[2]
-	   + coeffs[1] * (fluid_real_t)start_points[1]
-	   + coeffs[2] * (fluid_real_t)start_points[0]
-	   + coeffs[3] * (fluid_real_t)dsp_data[dsp_phase_index]
-	   + coeffs[4] * (fluid_real_t)dsp_data[dsp_phase_index+1]
-	   + coeffs[5] * (fluid_real_t)dsp_data[dsp_phase_index+2]
-	   + coeffs[6] * (fluid_real_t)dsp_data[dsp_phase_index+3]);
+	* (coeffs[0] * start_points[2]
+	   + coeffs[1] * start_points[1]
+	   + coeffs[2] * start_points[0]
+	   + coeffs[3] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index)
+	   + coeffs[4] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index+1)
+	   + coeffs[5] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index+2)
+	   + coeffs[6] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index+3));
 
       /* increment phase and amplitude */
       fluid_phase_incr (dsp_phase, dsp_phase_incr);
@@ -513,13 +542,13 @@ fluid_rvoice_dsp_interpolate_7th_order (fluid_rvoice_dsp_t *voice)
       coeffs = sinc_table7[fluid_phase_fract_to_tablerow (dsp_phase)];
 
       dsp_buf[dsp_i] = dsp_amp
-	* (coeffs[0] * (fluid_real_t)start_points[1]
-	   + coeffs[1] * (fluid_real_t)start_points[0]
-	   + coeffs[2] * (fluid_real_t)dsp_data[dsp_phase_index-1]
-	   + coeffs[3] * (fluid_real_t)dsp_data[dsp_phase_index]
-	   + coeffs[4] * (fluid_real_t)dsp_data[dsp_phase_index+1]
-	   + coeffs[5] * (fluid_real_t)dsp_data[dsp_phase_index+2]
-	   + coeffs[6] * (fluid_real_t)dsp_data[dsp_phase_index+3]);
+	* (coeffs[0] * start_points[1]
+	   + coeffs[1] * start_points[0]
+	   + coeffs[2] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index-1)
+	   + coeffs[3] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index)
+	   + coeffs[4] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index+1)
+	   + coeffs[5] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index+2)
+	   + coeffs[6] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index+3));
 
       /* increment phase and amplitude */
       fluid_phase_incr (dsp_phase, dsp_phase_incr);
@@ -535,13 +564,13 @@ fluid_rvoice_dsp_interpolate_7th_order (fluid_rvoice_dsp_t *voice)
       coeffs = sinc_table7[fluid_phase_fract_to_tablerow (dsp_phase)];
 
       dsp_buf[dsp_i] = dsp_amp
-	* (coeffs[0] * (fluid_real_t)start_points[0]
-	   + coeffs[1] * (fluid_real_t)dsp_data[dsp_phase_index-2]
-	   + coeffs[2] * (fluid_real_t)dsp_data[dsp_phase_index-1]
-	   + coeffs[3] * (fluid_real_t)dsp_data[dsp_phase_index]
-	   + coeffs[4] * (fluid_real_t)dsp_data[dsp_phase_index+1]
-	   + coeffs[5] * (fluid_real_t)dsp_data[dsp_phase_index+2]
-	   + coeffs[6] * (fluid_real_t)dsp_data[dsp_phase_index+3]);
+	* (coeffs[0] * start_points[0]
+	   + coeffs[1] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index-2)
+	   + coeffs[2] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index-1)
+	   + coeffs[3] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index)
+	   + coeffs[4] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index+1)
+	   + coeffs[5] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index+2)
+	   + coeffs[6] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index+3));
 
       /* increment phase and amplitude */
       fluid_phase_incr (dsp_phase, dsp_phase_incr);
@@ -558,13 +587,13 @@ fluid_rvoice_dsp_interpolate_7th_order (fluid_rvoice_dsp_t *voice)
       coeffs = sinc_table7[fluid_phase_fract_to_tablerow (dsp_phase)];
 
       dsp_buf[dsp_i] = dsp_amp
-	* (coeffs[0] * (fluid_real_t)dsp_data[dsp_phase_index-3]
-	   + coeffs[1] * (fluid_real_t)dsp_data[dsp_phase_index-2]
-	   + coeffs[2] * (fluid_real_t)dsp_data[dsp_phase_index-1]
-	   + coeffs[3] * (fluid_real_t)dsp_data[dsp_phase_index]
-	   + coeffs[4] * (fluid_real_t)dsp_data[dsp_phase_index+1]
-	   + coeffs[5] * (fluid_real_t)dsp_data[dsp_phase_index+2]
-	   + coeffs[6] * (fluid_real_t)dsp_data[dsp_phase_index+3]);
+	* (coeffs[0] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index-3)
+	   + coeffs[1] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index-2)
+	   + coeffs[2] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index-1)
+	   + coeffs[3] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index)
+	   + coeffs[4] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index+1)
+	   + coeffs[5] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index+2)
+	   + coeffs[6] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index+3));
 
       /* increment phase and amplitude */
       fluid_phase_incr (dsp_phase, dsp_phase_incr);
@@ -583,13 +612,13 @@ fluid_rvoice_dsp_interpolate_7th_order (fluid_rvoice_dsp_t *voice)
       coeffs = sinc_table7[fluid_phase_fract_to_tablerow (dsp_phase)];
 
       dsp_buf[dsp_i] = dsp_amp
-	* (coeffs[0] * (fluid_real_t)dsp_data[dsp_phase_index-3]
-	   + coeffs[1] * (fluid_real_t)dsp_data[dsp_phase_index-2]
-	   + coeffs[2] * (fluid_real_t)dsp_data[dsp_phase_index-1]
-	   + coeffs[3] * (fluid_real_t)dsp_data[dsp_phase_index]
-	   + coeffs[4] * (fluid_real_t)dsp_data[dsp_phase_index+1]
-	   + coeffs[5] * (fluid_real_t)dsp_data[dsp_phase_index+2]
-	   + coeffs[6] * (fluid_real_t)end_points[0]);
+	* (coeffs[0] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index-3)
+	   + coeffs[1] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index-2)
+	   + coeffs[2] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index-1)
+	   + coeffs[3] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index)
+	   + coeffs[4] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index+1)
+	   + coeffs[5] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index+2)
+	   + coeffs[6] * end_points[0]);
 
       /* increment phase and amplitude */
       fluid_phase_incr (dsp_phase, dsp_phase_incr);
@@ -605,13 +634,13 @@ fluid_rvoice_dsp_interpolate_7th_order (fluid_rvoice_dsp_t *voice)
       coeffs = sinc_table7[fluid_phase_fract_to_tablerow (dsp_phase)];
 
       dsp_buf[dsp_i] = dsp_amp
-	* (coeffs[0] * (fluid_real_t)dsp_data[dsp_phase_index-3]
-	   + coeffs[1] * (fluid_real_t)dsp_data[dsp_phase_index-2]
-	   + coeffs[2] * (fluid_real_t)dsp_data[dsp_phase_index-1]
-	   + coeffs[3] * (fluid_real_t)dsp_data[dsp_phase_index]
-	   + coeffs[4] * (fluid_real_t)dsp_data[dsp_phase_index+1]
-	   + coeffs[5] * (fluid_real_t)end_points[0]
-	   + coeffs[6] * (fluid_real_t)end_points[1]);
+	* (coeffs[0] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index-3)
+	   + coeffs[1] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index-2)
+	   + coeffs[2] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index-1)
+	   + coeffs[3] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index)
+	   + coeffs[4] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index+1)
+	   + coeffs[5] * end_points[0]
+	   + coeffs[6] * end_points[1]);
 
       /* increment phase and amplitude */
       fluid_phase_incr (dsp_phase, dsp_phase_incr);
@@ -627,13 +656,13 @@ fluid_rvoice_dsp_interpolate_7th_order (fluid_rvoice_dsp_t *voice)
       coeffs = sinc_table7[fluid_phase_fract_to_tablerow (dsp_phase)];
 
       dsp_buf[dsp_i] = dsp_amp
-	* (coeffs[0] * (fluid_real_t)dsp_data[dsp_phase_index-3]
-	   + coeffs[1] * (fluid_real_t)dsp_data[dsp_phase_index-2]
-	   + coeffs[2] * (fluid_real_t)dsp_data[dsp_phase_index-1]
-	   + coeffs[3] * (fluid_real_t)dsp_data[dsp_phase_index]
-	   + coeffs[4] * (fluid_real_t)end_points[0]
-	   + coeffs[5] * (fluid_real_t)end_points[1]
-	   + coeffs[6] * (fluid_real_t)end_points[2]);
+	* (coeffs[0] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index-3)
+	   + coeffs[1] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index-2)
+	   + coeffs[2] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index-1)
+	   + coeffs[3] * fluid_rvoice_get_sample(dsp_data, dsp_data24, dsp_phase_index)
+	   + coeffs[4] * end_points[0]
+	   + coeffs[5] * end_points[1]
+	   + coeffs[6] * end_points[2]);
 
       /* increment phase and amplitude */
       fluid_phase_incr (dsp_phase, dsp_phase_incr);
@@ -652,9 +681,9 @@ fluid_rvoice_dsp_interpolate_7th_order (fluid_rvoice_dsp_t *voice)
       {
 	voice->has_looped = 1;
 	start_index = voice->loopstart;
-	start_points[0] = dsp_data[voice->loopend - 1];
-	start_points[1] = dsp_data[voice->loopend - 2];
-	start_points[2] = dsp_data[voice->loopend - 3];
+	start_points[0] = fluid_rvoice_get_sample(dsp_data, dsp_data24, voice->loopend - 1);
+	start_points[1] = fluid_rvoice_get_sample(dsp_data, dsp_data24, voice->loopend - 2);
+	start_points[2] = fluid_rvoice_get_sample(dsp_data, dsp_data24, voice->loopend - 3);
       }
     }
 
