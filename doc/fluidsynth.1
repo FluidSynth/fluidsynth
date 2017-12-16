@@ -298,7 +298,7 @@ OSS driver output device.
 PortAudio driver output device. Available options depends on system.
 .TP
 .B audio.pulseaudio.adjust-latency BOOL  [def=True]
-Increases the latency dynamically if PulseAudio suggests so.
+If TRUE initializes the maximum length of the audio buffer to the highest supported value and increases the latency dynamically if PulseAudio suggests so. Else uses a buffer with length of audio.period-size.
 .TP
 .B audio.pulseaudio.device  STR   [def='default']
 PulseAudio driver output device.
