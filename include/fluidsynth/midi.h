@@ -146,7 +146,11 @@ FLUIDSYNTH_API int fluid_player_get_bpm(fluid_player_t * player);
 FLUIDSYNTH_API int fluid_player_get_midi_tempo(fluid_player_t * player);
 FLUIDSYNTH_API int fluid_player_seek(fluid_player_t *player, int ticks);
 
-///
+
+
+FLUIDSYNTH_API fluid_midi_parser_t* new_fluid_midi_parser(void);
+FLUIDSYNTH_API void delete_fluid_midi_parser(fluid_midi_parser_t* parser);
+FLUIDSYNTH_API fluid_midi_event_t* fluid_midi_parser_parse(fluid_midi_parser_t* parser, unsigned char c);
     
 #ifdef __cplusplus
 }
