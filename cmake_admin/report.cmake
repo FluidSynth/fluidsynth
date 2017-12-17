@@ -97,6 +97,12 @@ else ( AUFILE_SUPPORT )
   message ( "Audio to file driver:  no" )
 endif ( AUFILE_SUPPORT )
 
+if ( NETWORK_SUPPORT )
+  message ( "NETWORK Support :      yes" )
+else ( NETWORK_SUPPORT )
+  message ( "NETWORK Support :      no" )
+endif ( NETWORK_SUPPORT )
+
 if ( IPV6_SUPPORT )
   message ( "IPV6 Support :         yes" )
 else ( IPV6_SUPPORT )

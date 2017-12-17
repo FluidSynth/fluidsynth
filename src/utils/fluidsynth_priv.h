@@ -148,9 +148,8 @@ typedef guint64  uint64_t;
 
 /* Darwin special defines (taken from config_macosx.h) */
 #ifdef DARWIN
-#define MACINTOSH
-#define __Types__
-#define WITHOUT_SERVER 1
+# define MACINTOSH
+# define __Types__
 #endif
 
 
