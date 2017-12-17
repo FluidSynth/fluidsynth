@@ -2553,8 +2553,6 @@ delete_fluid_server(fluid_server_t* server)
   fluid_server_close(server);
 
   FLUID_FREE(server);
-#else
-  FLUID_LOG(FLUID_WARN, "Network support disabled on this platform.");
 #endif
 }
 
@@ -2568,7 +2566,6 @@ int fluid_server_join(fluid_server_t* server)
 #ifdef NETWORK_SUPPORT
   return fluid_server_socket_join(server->socket);
 #else
-  FLUID_LOG(FLUID_WARN, "Network support disabled on this platform.");
   return FLUID_OK;
 #endif
 }
