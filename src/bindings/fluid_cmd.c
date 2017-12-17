@@ -2566,6 +2566,6 @@ int fluid_server_join(fluid_server_t* server)
 #ifdef NETWORK_SUPPORT
   return fluid_server_socket_join(server->socket);
 #else
-  return FLUID_OK;
+  return FLUID_FAILED;
 #endif
 }
