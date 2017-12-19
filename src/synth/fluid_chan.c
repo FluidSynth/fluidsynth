@@ -83,7 +83,7 @@ fluid_channel_init(fluid_channel_t* chan)
   fluid_channel_clear_prev_note(chan); /* Mark previous note invalid */
   /*---*/
   chan->key_sustained = -1;				/* No previous mono note sustained */
-  chan->legatomode = RETRIGGER_1;		/* Default mode */
+  chan->legatomode = MULTI_RETRIGGER;		/* Default mode */
   chan->portamentomode = LEGATO_ONLY;	/* Default mode */
 /*--- End of poly/mono initialization --------------------------------------*/
   
