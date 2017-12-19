@@ -1972,7 +1972,7 @@ char *TooFewArg = " too few argument, chan mode val [chan mode val]...";
 /*-----------------------------------------------------------------------------
   resetbasicchannels [chan1 Mode1 nbr1   chan2 Mode2 nbr2 ...]
   
-  Set the list of MIDI basic channels with mode
+  Sets the list of MIDI basic channels with mode
   This list replace any previous basic channels list.
 
   With no parameters the function set one channel basic at
@@ -2024,7 +2024,7 @@ int fluid_handle_resetbasicchannels (void* data, int ac, char** av,
 /*-----------------------------------------------------------------------------
   setbasicchannels chan1 Mode1 nbr1    [chan2 Mode2 nbr2..]
   
-  Change or add basic channel 1 and 2
+  Changes or adds basic channel 1 and 2
   
   -if chan is already a basic channel, his mode is changed.
   -If chan is not a basic channel, a new basic channel part is inserted
@@ -2172,18 +2172,16 @@ int fluid_handle_channelsmode (void* data, int ac, char** av,
      Print legato mode of all MIDI channels
      example 
 
-     channel:  0, (2)single-trigger_0
-     channel:  1, (1)multi-retrigger
-     channel:  2, (0)retrigger_0
-     channel:  3, (3)single-trigger_1
+     channel:  0, (1)multi-retrigger
+     channel:  1, (1)retrigger
+     channel:  2, (1)multi-retrigger
      .....
   
  legatomode chan1 chan2
      Print only legato mode of MIDI channel chan1, chan2
 */
 char * nameLegatomode[LEGATOMODE_NBR]={
-	"(0)retrigger_0 (fast release)","(1)retrigger_1 (normal release)",
-	"(2)multi-retrigger","(3)single-trigger_0","(4)single-trigger_1"
+	"(0)retrigger","(1)multi-retrigger"
 };
 
 int fluid_handle_legatomode(void* data, int ac, char** av, 
@@ -2221,9 +2219,9 @@ int fluid_handle_legatomode(void* data, int ac, char** av,
 
 
 /*-----------------------------------------------------------------------------
-  setlegatomode chan1 Mode1 [chan2 Mode2 ..]
+  setlegatomode chan0 Mode1 [chan1 Mode0 ..]
   
-  Change legato mode for channels chan1 and [chan2]
+  Changes legato mode for channels chan0 and [chan1]
 */
 char *TooFewArgChanMode = " too few argument, chan mode [chan mode]...";
 int fluid_handle_setlegatomode(void* data, int ac, char** av, 
@@ -2323,7 +2321,7 @@ int fluid_handle_portamentomode(void* data, int ac, char** av,
 /*-----------------------------------------------------------------------------
   setportamentomode chan1 Mode1 [chan2 Mode2 ..]
   
-  Change portamento mode for channels chan1 and [chan2]
+  Changes portamento mode for channels chan1 and [chan2]
 */
 int fluid_handle_setportamentomode(void* data, int ac, char** av, 
 								fluid_ostream_t out)
@@ -2432,7 +2430,7 @@ int fluid_handle_breathmode(void* data, int ac, char** av,
 /*-----------------------------------------------------------------------------
   setbreathmode chan1 poly_breath_mod(1/0) mono_breath_mod mono_breath_sync(1/0)
   
-  Change breath options for channels chan1 and [chan2...]
+  Changes breath options for channels chan1 and [chan2...]
 */
 char *TooFewArgBreath = 
 " too few argument:\nchan 1/0(breath poly) 1/0(breath mono) 1/0(breath sync mono)[..]";
