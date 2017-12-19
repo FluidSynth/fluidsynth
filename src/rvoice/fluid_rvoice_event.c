@@ -77,7 +77,6 @@ fluid_rvoice_event_dispatch(fluid_rvoice_event_t* event)
   EVENTFUNC_0(fluid_rvoice_reset, fluid_rvoice_t*);
   
   EVENTFUNC_0(fluid_rvoice_multi_retrigger_attack, fluid_rvoice_t*);
-  EVENTFUNC_IR(fluid_rvoice_single_trigger, fluid_rvoice_t*);
   EVENTFUNC_IR(fluid_rvoice_set_portamento, fluid_rvoice_t*);
 
   EVENTFUNC_ALL(fluid_adsr_env_set_data, fluid_adsr_env_t*);
