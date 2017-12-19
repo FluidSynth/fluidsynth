@@ -84,25 +84,16 @@ FLUIDSYNTH_API int fluid_synth_set_basic_channel(fluid_synth_t* synth,
 												 int basicchan, int mode, int val);
 /* Interface to mono legato mode  */
 /* n1,n2,n3,.. is a legato passage. n1 is the first note, and n2,n3,n4 are played
- legato with previous note. n2,n3,..make use of previous voices if any.
+ legato with previous note. 
 */
 enum LegatoMode
 {
-	/* Release previous note (fast release), start a new note */
-	RETRIGGER_0, /* mode 0 */
-
-	/* Release previous note (normal release), start a new note */
-	RETRIGGER_1, /* mode 1 */
+	/* Release previous note , start a new note */
+	RETRIGGER, /* mode 0 */
 	/* On n2,n3,.. retrigger in attack section using  current value and 
-	  shape attack using current dynamic  */ 
-	MULTI_RETRIGGER, /* mode 2 */
-
-	/* On n2,n3,.stay in current value section and shape current section
-	using current dynamic  */
-	SINGLE_TRIGGER_0, /* mode 3 */
-
-	/* On n2,n3,.stay in current value section using current dynamic (don't shape adsr)  */
-	SINGLE_TRIGGER_1, /* mode 4 */
+	  shape attack using current dynamic.
+	  n2,n3,..make use of previous voices if any.*/
+	MULTI_RETRIGGER, /* mode 1 */
 	LEGATOMODE_NBR
 };
 
