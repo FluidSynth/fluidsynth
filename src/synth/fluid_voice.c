@@ -1228,7 +1228,7 @@ extern fluid_gen_info_t fluid_gen_info[];
  *
  * @voice voice the synthesis voice
 */
-void fluid_voice_update_release(fluid_voice_t* voice, unsigned char flags)
+void fluid_voice_update_release(fluid_voice_t* voice)
 {
 	/* Skip immediately in release section */
 	UPDATE_RVOICE_I1(fluid_rvoice_noteoff, 0);
