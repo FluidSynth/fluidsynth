@@ -955,21 +955,12 @@ int fluid_synth_noteon_monopoly_legato(fluid_synth_t* synth, int chan,
 			{
 				switch (legatomode) 
 				{
-					case RETRIGGER_0: /* mode 0 */
-						fluid_voice_update_release(voice,0); /* fast release */
+					case RETRIGGER: /* mode 0 */
+						fluid_voice_update_release(voice); /* normal release */
 					break;
-					case RETRIGGER_1: /* mode 1 */
-						fluid_voice_update_release(voice,1); /* normal release */
-					break;
-					case MULTI_RETRIGGER: /* mode 2 */
+					case MULTI_RETRIGGER: /* mode 1 */
 						/* Skip in attack section */
 						fluid_voice_update_multi_retrigger_attack(voice,tokey,vel);
-					break;
-					case SINGLE_TRIGGER_0: /* mode 3 */
-						fluid_voice_update_single_trigger0(voice,fromkey,tokey,vel);
-					break;
-					case SINGLE_TRIGGER_1: /* mode 4 */
-						fluid_voice_update_single_trigger1(voice,fromkey,tokey,vel);
 					break;
 					default: /* Invalid mode */
 					FLUID_LOG(FLUID_WARN, 
@@ -992,7 +983,7 @@ int fluid_synth_noteon_monopoly_legato(fluid_synth_t* synth, int chan,
 			}
 			else  
 			{ /* tokey note is outside the voice range, so the voice is released */
-				fluid_voice_update_release(voice,legatomode);
+				fluid_voice_update_release(voice);
 			}
 		}
 	}
