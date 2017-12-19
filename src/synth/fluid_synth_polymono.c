@@ -414,9 +414,7 @@ int fluid_synth_get_channel_mode(fluid_synth_t* synth, int chan,
  * @param synth the synth instance.
  * @param chan MIDI channel number (0 to MIDI channel count - 1).
  * @param legatomode
- *    0: RETRIGGER_0 (fast release). 1: RETRIGGER_1 (normal release).
- *    2: MULTI_RETRIGGER.            3: SINGLE_TRIGGER_0.
- *    4: SINGLE_TRIGGER_1.
+ *    0: RETRIGGER    1: MULTI_RETRIGGER.
  *
  * @return
  * - FLUID_OK on success.
@@ -443,9 +441,7 @@ int fluid_synth_set_legato_mode(fluid_synth_t* synth, int chan, int legatomode)
  * @param synth the synth instance.
  * @param chan MIDI channel number (0 to MIDI channel count - 1).
  * @param legatomode, pointer to the returned mode .
- *    0: RETRIGGER_0 (fast release). 1: RETRIGGER_1 (normal release).
- *    2: MULTI_RETRIGGER.            3: SINGLE_TRIGGER_0.
- *    4: SINGLE_TRIGGER_1.
+ *    0: RETRIGGER    1: MULTI_RETRIGGER.
  *
  * @return
  * - FLUID_OK on success.
