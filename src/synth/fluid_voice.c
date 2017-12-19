@@ -1227,26 +1227,12 @@ extern fluid_gen_info_t fluid_gen_info[];
 /* forces the voice envelopes release section for legato mode retrigger 0 and 1:
  *
  * @voice voice the synthesis voice
- * @flags:
- *   0: fast release.  
- *   1: normal release. RELEASE generators are forced to the minimum possible
 */
 void fluid_voice_update_release(fluid_voice_t* voice, unsigned char flags)
 {
-	if (!flags)
-	{
-		/* force possible minimum Release value */
-		fluid_voice_gen_set(voice, GEN_MODENVRELEASE,
-							fluid_gen_info[GEN_MODENVRELEASE].min);
-		fluid_voice_gen_set(voice, GEN_VOLENVRELEASE, FLUID_MIN_VOLENVRELEASE);
-		/* update */
-		fluid_voice_update_param(voice, GEN_MODENVRELEASE);
-		fluid_voice_update_param(voice, GEN_VOLENVRELEASE);
-	}
-	/* Skip in release section */
 	/* Skip immediately in release section */
 	UPDATE_RVOICE_I1(fluid_rvoice_noteoff, 0);
-	voice->has_noteoff = 1; // voice is marked as noteoff occured
+	voice->has_noteoff = 1; /* voice is marked as noteoff occured */
 }
 
 /*---------------------------------------------------------------*/
@@ -1277,81 +1263,6 @@ void fluid_voice_update_multi_retrigger_attack(fluid_voice_t* voice,
 	/* update adrs generator */
 	UPDATE_RVOICE0(fluid_rvoice_multi_retrigger_attack); 
 }
-
-/*---------------------------------------------------------------*/
-/* forces the voice envelopes current section for legato mode: single_trigger_0 
- *
- * @voice voice the synthesis voice
- * @fromkey the key prior to key tokey.
- * @tokey the new key to be applied to this voice.
- * @vel the new velocity to be applied to this voice.
-*/
-void fluid_voice_update_single_trigger0(fluid_voice_t* voice,int fromkey,
-								 int tokey, int vel)
-{
-	int decaycount; /* decay data count */
-	int dholdcount; /* difference hold data count with fromkey */
-
-	voice->key = tokey;  /* new note */
-	voice->vel = vel; /* new velocity */
-	/* Update dependent generator of velocity */
-	/* Modulate GEN_ATTENUATION (and others ) before calling
-	   fluid_rvoice_single_trigger().*/
-	fluid_voice_modulate(voice, FALSE, FLUID_MOD_VELOCITY);
-
-	/* Update dependent generator of key for tokey*/
-	fluid_voice_update_param(voice, GEN_KEYTOMODENVHOLD);
-	fluid_voice_update_param(voice, GEN_KEYTOMODENVDECAY);
-	/* Attention GEN_KEYTOVOLENVHOLD, GEN_KEYTOVOLENVDECAY
-	   fluid_update_single_trigger0() need only get data count
-	   section HOLD et DECAY updated.
-	   (max,min, increment, must not be changed !) */
-        /* calculate decaycount for tokey  (1 for decay )*/
-	decaycount = calculate_hold_decay_buffers(voice, GEN_VOLENVDECAY, 
-									GEN_KEYTOVOLENVDECAY, 1); 
-
-	/* calculate dholdcount for tokey  (0 for hold) */
-	dholdcount = calculate_hold_decay_buffers(voice, GEN_VOLENVHOLD,
-									GEN_KEYTOVOLENVHOLD, 0); 
-	/* now the difference with hold count for fromkey (0 for hold)*/
-	voice->key = fromkey;  /* fromkey note */
-	dholdcount -= calculate_hold_decay_buffers(voice, GEN_VOLENVHOLD,
-									GEN_KEYTOVOLENVHOLD, 0);
-	voice->key = tokey;  /* come back to tokey */
-	/* update Pitch */
-	fluid_voice_calculate_gen_pitch(voice);
-	fluid_voice_update_param(voice, GEN_PITCH);
-	/* update adsr envelope generator */
-	UPDATE_RVOICE2(fluid_rvoice_single_trigger, dholdcount, decaycount); 
-}
-
-/*---------------------------------------------------------------*/
-/* force the voice envelopes current section for 
- * legato mode single_trigger_1: 
- *
- * @voice voice the synthesis voice
- * @fromkey the key prior to key tokey.
- * @tokey the new key to be applied to this voice.
- * @vel the new velocity to be applied to this voice.
-*/
-void fluid_voice_update_single_trigger1(fluid_voice_t* voice,int fromkey,
-								 int tokey, int vel)
-{
-	voice->key = tokey;  /* new note */
-	voice->vel = vel; /* new velocity */
-	/* Update dependent generator of velocity */
-	/* Modulate GEN_ATTENUATION (and others ) */
-	fluid_voice_modulate(voice,0,FLUID_MOD_VELOCITY);			
-		
-	/* Update dependent generator of key */
-	fluid_voice_update_param(voice, GEN_KEYTOMODENVHOLD);
-	fluid_voice_update_param(voice, GEN_KEYTOMODENVDECAY);
-	fluid_voice_update_param(voice, GEN_KEYTOVOLENVHOLD);
-	fluid_voice_update_param(voice, GEN_KEYTOVOLENVDECAY);
-	fluid_voice_calculate_gen_pitch(voice);
-	fluid_voice_update_param(voice, GEN_PITCH);
-}
-
 /** end of legato update functions */
 
 /*
