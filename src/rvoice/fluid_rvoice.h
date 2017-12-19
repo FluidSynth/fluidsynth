@@ -110,9 +110,7 @@ struct _fluid_rvoice_dsp_t
 	int has_looped;                 /* Flag that is set as soon as the first loop is completed. */
 	fluid_real_t attenuation;        /* the attenuation in centibels */
 	fluid_real_t prev_attenuation;   /* the previous attenuation in centibels 
-									    used by fluid_rvoice_multi_retrigger_attack() */
-	fluid_real_t prev_sav_attenuation;   /* the previous attenuation in centibels 
-									    used by fluid_rvoice_single_trigger() */
+					used by fluid_rvoice_multi_retrigger_attack() */
 	fluid_real_t min_attenuation_cB; /* Estimate on the smallest possible attenuation
 					  * during the lifetime of the voice */
 	fluid_real_t amplitude_that_reaches_noise_floor_nonloop;
@@ -176,7 +174,6 @@ void fluid_rvoice_buffers_set_mapping(fluid_rvoice_buffers_t* buffers,
 void fluid_rvoice_set_portamento(fluid_rvoice_t * voice, unsigned int countinc,
 								 fluid_real_t pitchoffset);
 void fluid_rvoice_multi_retrigger_attack(fluid_rvoice_t* voice);
-void fluid_rvoice_single_trigger(fluid_rvoice_t* voice, int holdcount, int decaycount);
 void fluid_rvoice_noteoff(fluid_rvoice_t* voice, unsigned int min_ticks);
 void fluid_rvoice_voiceoff(fluid_rvoice_t* voice);
 void fluid_rvoice_reset(fluid_rvoice_t* voice);
