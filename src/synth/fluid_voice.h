@@ -147,14 +147,10 @@ int fluid_voice_set_output_rate(fluid_voice_t* voice, fluid_real_t value);
 void fluid_voice_update_param(fluid_voice_t* voice, int gen);
 
 /** legato modes */
-/* force in the release section for legato mode retrigger: 0 and 1 */
-void fluid_voice_update_release(fluid_voice_t* voice, unsigned char flags);
+/* force in the release section for legato mode retrigger: 0  */
+void fluid_voice_update_release(fluid_voice_t* voice);
 /* force in the attack section for legato mode multi_retrigger: 1 */
 void fluid_voice_update_multi_retrigger_attack(fluid_voice_t* voice,int tokey, int vel);
-/* force in the current section for legato mode single_trigger: 2*/
-void fluid_voice_update_single_trigger0(fluid_voice_t* voice, int fromkey, int tokey, int vel);
-/* force in the current section for legato mode single_trigger: 2*/
-void fluid_voice_update_single_trigger1(fluid_voice_t* voice, int fromkey, int tokey, int vel);
 /* Update portamento parameter */
 void fluid_voice_update_portamento (fluid_voice_t* voice, int fromkey, int tokey);
 
