@@ -1,6 +1,6 @@
 /fluidSynth/doc/polymono directory contains:
 
-1) PatchFluidPolyMono-0004.pdf, the documentation of poly/mono functionalities.
+1) FluidPolyMono-0004.pdf, the documentation of poly/mono functionalities.
 2) tutorials examples files:
 2.1) tutorials chapter 2.1
      poly_mono_0.txt
