@@ -69,6 +69,7 @@ option ( enable-dbus "compile DBUS support (if it is available)" on )
 option ( BUILD_SHARED_LIBS "Build a shared object or DLL" on )
 option ( enable-ladspa "enable LADSPA effect units" on )
 option ( enable-ipv6  "enable ipv6 support " on )
+option ( enable-network "enable network support (requires BSD sockets) " on )
 
 # Platform specific options
 if ( CMAKE_SYSTEM MATCHES "Linux" )
@@ -81,6 +82,7 @@ if ( CMAKE_SYSTEM MATCHES "Darwin" )
     option ( enable-coreaudio "compile CoreAudio support (if it is available)" on )
     option ( enable-coremidi "compile CoreMIDI support (if it is available)" on )
     option ( enable-framework "create a Mac OSX style FluidSynth.framework" on )
+    set ( enable-network off )
 endif ( CMAKE_SYSTEM MATCHES "Darwin" )
 
 if ( CMAKE_SYSTEM MATCHES "OS2" )
@@ -249,6 +251,11 @@ if ( enable-ipv6 )
     set ( IPV6_SUPPORT 1 )
   endif ( HAVE_INETNTOP )
 endif ( enable-ipv6 )
+
+unset ( NETWORK_SUPPORT )
+if ( enable-network )
+    set ( NETWORK_SUPPORT 1 )
+endif ( enable-network )
 
 unset ( WITH_FLOAT CACHE )
 if ( enable-floats )

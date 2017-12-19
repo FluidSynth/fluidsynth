@@ -2347,8 +2347,7 @@ fluid_cmd_handler_handle(void* data, int ac, char** av, fluid_ostream_t out)
 }
 
 
-#if !defined(WITHOUT_SERVER)
-
+#ifdef NETWORK_SUPPORT
 
 struct _fluid_server_t {
   fluid_server_socket_t* socket;
@@ -2358,65 +2357,6 @@ struct _fluid_server_t {
   fluid_list_t* clients;
   fluid_mutex_t mutex;
 };
-
-static int fluid_server_handle_connection(fluid_server_t* server,
-					  fluid_socket_t client_socket,
-					  char* addr);
-static void fluid_server_close(fluid_server_t* server);
-
-/**
- * Create a new TCP/IP command shell server.
- * @param settings Settings instance to use for the shell
- * @param synth If not NULL, the synth instance for the command handler to be used by the client
- * @param router If not NULL, the midi_router instance for the command handler to be used by the client
- * @return New shell server instance or NULL on error
- */
-fluid_server_t*
-new_fluid_server(fluid_settings_t* settings,
-		fluid_synth_t* synth, fluid_midi_router_t* router)
-{
-  fluid_server_t* server;
-  int port;
-
-  server = FLUID_NEW(fluid_server_t);
-  if (server == NULL) {
-    FLUID_LOG(FLUID_ERR, "Out of memory");
-    return NULL;
-  }
-
-  server->settings = settings;
-  server->clients = NULL;
-  server->synth = synth;
-  server->router = router;
-
-  fluid_mutex_init(server->mutex);
-
-  fluid_settings_getint(settings, "shell.port", &port);
-
-  server->socket = new_fluid_server_socket(port,
-					  (fluid_server_func_t) fluid_server_handle_connection,
-					  server);
-  if (server->socket == NULL) {
-    FLUID_FREE(server);
-    return NULL;
-  }
-
-  return server;
-}
-
-/**
- * Delete a TCP/IP shell server.
- * @param server Shell server instance
- */
-void
-delete_fluid_server(fluid_server_t* server)
-{
-  fluid_return_if_fail(server != NULL);
-
-  fluid_server_close(server);
-
-  FLUID_FREE(server);
-}
 
 static void fluid_server_close(fluid_server_t* server)
 {
@@ -2474,17 +2414,6 @@ void fluid_server_remove_client(fluid_server_t* server, fluid_client_t* client)
   server->clients = fluid_list_remove(server->clients, client);
   fluid_mutex_unlock(server->mutex);
 }
-
-/**
- * Join a shell server thread (wait until it quits).
- * @param server Shell server instance
- * @return #FLUID_OK on success, #FLUID_FAILED otherwise
- */
-int fluid_server_join(fluid_server_t* server)
-{
-  return fluid_server_socket_join(server->socket);
-}
-
 
 struct _fluid_client_t {
   fluid_server_t* server;
@@ -2564,5 +2493,79 @@ void delete_fluid_client(fluid_client_t* client)
   FLUID_FREE(client);
 }
 
+#endif /* NETWORK_SUPPORT */
 
-#endif /* WITHOUT_SERVER */
+/**
+ * Create a new TCP/IP command shell server.
+ * @param settings Settings instance to use for the shell
+ * @param synth If not NULL, the synth instance for the command handler to be used by the client
+ * @param router If not NULL, the midi_router instance for the command handler to be used by the client
+ * @return New shell server instance or NULL on error
+ */
+fluid_server_t*
+new_fluid_server(fluid_settings_t* settings,
+		fluid_synth_t* synth, fluid_midi_router_t* router)
+{
+#ifdef NETWORK_SUPPORT
+  fluid_server_t* server;
+  int port;
+
+  server = FLUID_NEW(fluid_server_t);
+  if (server == NULL) {
+    FLUID_LOG(FLUID_ERR, "Out of memory");
+    return NULL;
+  }
+
+  server->settings = settings;
+  server->clients = NULL;
+  server->synth = synth;
+  server->router = router;
+
+  fluid_mutex_init(server->mutex);
+
+  fluid_settings_getint(settings, "shell.port", &port);
+
+  server->socket = new_fluid_server_socket(port,
+					  (fluid_server_func_t) fluid_server_handle_connection,
+					  server);
+  if (server->socket == NULL) {
+    FLUID_FREE(server);
+    return NULL;
+  }
+
+  return server;
+#else
+  FLUID_LOG(FLUID_WARN, "Network support disabled on this platform.");
+  return NULL;
+#endif
+}
+
+/**
+ * Delete a TCP/IP shell server.
+ * @param server Shell server instance
+ */
+void
+delete_fluid_server(fluid_server_t* server)
+{
+#ifdef NETWORK_SUPPORT
+  fluid_return_if_fail(server != NULL);
+
+  fluid_server_close(server);
+
+  FLUID_FREE(server);
+#endif
+}
+
+/**
+ * Join a shell server thread (wait until it quits).
+ * @param server Shell server instance
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ */
+int fluid_server_join(fluid_server_t* server)
+{
+#ifdef NETWORK_SUPPORT
+  return fluid_server_socket_join(server->socket);
+#else
+  return FLUID_FAILED;
+#endif
+}
