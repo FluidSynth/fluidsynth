@@ -82,7 +82,7 @@ int fluid_synth_get_basic_channels(	fluid_synth_t* synth,
 	fluid_synth_api_enter(synth);
 	nChan = synth->midi_channels; /* MIDI Channels number */
 
-	/* count basic channels */
+	/* counts basic channels */
 	for(i = 0, nBasicChan = 0; i <  nChan; i++)
 	{
 		if (synth->channel[i]->mode &  BASIC_CHANNEL) nBasicChan++;
@@ -90,7 +90,7 @@ int fluid_synth_get_basic_channels(	fluid_synth_t* synth,
 
 	if (basicChannelInfos && nBasicChan) 
 	{	
-		/* allocate table for Basic Channel only */
+		/* allocates table for Basic Channel only */
 		fluid_basic_channel_infos_t * bci;	/* basics channels information table */
 		int b; /* index in bci */
 		bci = FLUID_ARRAY(fluid_basic_channel_infos_t, nBasicChan );
@@ -111,7 +111,7 @@ int fluid_synth_get_basic_channels(	fluid_synth_t* synth,
 			nBasicChan = FLUID_FAILED; /* allocation error */
 			FLUID_LOG(FLUID_ERR, "Out of memory");
 		}
-		*basicChannelInfos = bci; /* return table */
+		*basicChannelInfos = bci; /* returns table */
 	}
 	fluid_synth_api_exit(synth);
 	return nBasicChan;
@@ -121,7 +121,7 @@ int fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth,
 					int basicchan,int mode, int val);
 /**
  * Sets a new list of basic channel informations into the synth instance.
- * This list replace the previous list. 
+ * This list replaces the previous list. 
  *
  * @param synth the synth instance.
  * @param n Number of entries in basicChannelInfos.
@@ -157,6 +157,7 @@ int fluid_synth_reset_basic_channels(fluid_synth_t* synth,
 {
     int i,nChan;
     int result;
+    /* checks parameters first */
     fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
     fluid_return_val_if_fail (n >= 0, FLUID_FAILED);
     fluid_synth_api_enter(synth);
@@ -167,7 +168,7 @@ int fluid_synth_reset_basic_channels(fluid_synth_t* synth,
         FLUID_API_RETURN(FLUID_FAILED);
     }
     
-    /* Check if information are valid  */
+    /* Checks if information are valid  */
     if(n && basicChannelInfos ) for (i = 0; i < n; i++)
     {
 	if (	basicChannelInfos[i].basicchan < 0 || 
@@ -181,7 +182,7 @@ int fluid_synth_reset_basic_channels(fluid_synth_t* synth,
         }
     }
 
-    /* Clear previous list of basic channel */
+    /* Clears previous list of basic channel */
     for(i = 0; i <  nChan; i++) {
 	reset_fluid_channel_basic_channel_infos(synth->channel[i]);
 	synth->channel[i]->mode_val = 0; 
@@ -190,7 +191,7 @@ int fluid_synth_reset_basic_channels(fluid_synth_t* synth,
     {
 	result = FLUID_OK;
 
-	/* Set the new list of basic channel */
+	/* Sets the new list of basic channel */
 	for (i = 0; i < n; i++)
 	{
 	    int bchan = basicChannelInfos[i].basicchan;
@@ -301,7 +302,7 @@ int fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth,
 			if (synth->channel[basicchan]->mode &  ENABLED)
 			{ /* val value of the previous basic channel need to be narrowed */
 				for (i = basicchan - 1; i >=0; i--)
-				{	/* search previous basic channel */
+				{	/* searchs previous basic channel */
 					if (synth->channel[i]->mode &  BASIC_CHANNEL)
 					{	/* i is the previous basic channel */
 						prevbasicchan = i;
@@ -452,7 +453,7 @@ int fluid_synth_set_legato_mode(fluid_synth_t* synth, int chan, int legatomode)
  */
 int fluid_synth_get_legato_mode(fluid_synth_t* synth, int chan, int *legatomode)
 {
-	/* check parameters first */
+	/* checks parameters first */
 	fluid_return_val_if_fail (legatomode!= NULL, FLUID_FAILED);
 	FLUID_API_ENTRY_CHAN(FLUID_FAILED);
 	/**/
@@ -481,7 +482,7 @@ int fluid_synth_get_legato_mode(fluid_synth_t* synth, int chan, int *legatomode)
 int fluid_synth_set_portamento_mode(fluid_synth_t* synth, int chan,
 					int portamentomode)
 {
-	/* check parameters first */
+	/* checks parameters first */
 	fluid_return_val_if_fail (portamentomode >= 0, FLUID_FAILED);
 	fluid_return_val_if_fail (portamentomode < PORTAMENTOMODE_NBR, FLUID_FAILED);
 	FLUID_API_ENTRY_CHAN(FLUID_FAILED);
@@ -510,7 +511,7 @@ int fluid_synth_set_portamento_mode(fluid_synth_t* synth, int chan,
 int fluid_synth_get_portamento_mode(fluid_synth_t* synth, int chan,
 					int *portamentomode)
 {
-	/* check parameters first */
+	/* checks parameters first */
 	fluid_return_val_if_fail (portamentomode!= NULL, FLUID_FAILED);
 	FLUID_API_ENTRY_CHAN(FLUID_FAILED);
 	/**/
