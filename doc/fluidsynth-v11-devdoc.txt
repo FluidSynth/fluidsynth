@@ -73,7 +73,6 @@ Changes in FluidSynth 1.1.9 concerning developers:
 
 - add a function for registering audio drivers based on acutal needs: fluid_audio_driver_register()
 - dsound driver now uses the desktop window handle, fluid_get_hinstance() and fluid_set_hinstance() are deprecated
-- make fluid_midi_parser_parse() public to enable realtime byte to #fluid_midi_event_t parsing
 - implement handling of #FLUID_SEQ_ALLSOUNDSOFF events in fluid_seq_fluidsynth_callback()
 - fix return value of fluid_file_set_encoding_quality()
 - deprecate fluid_synth_set_gen2()
