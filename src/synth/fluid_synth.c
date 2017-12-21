@@ -936,7 +936,7 @@ delete_fluid_synth(fluid_synth_t* synth)
  */
 /* FIXME - The error messages are not thread-safe, yet. They are still stored
  * in a global message buffer (see fluid_sys.c). */
-char*
+const char*
 fluid_synth_error(fluid_synth_t* synth)
 {
   return fluid_error();
