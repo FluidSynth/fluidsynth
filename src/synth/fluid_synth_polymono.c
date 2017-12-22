@@ -25,7 +25,7 @@ extern int fluid_synth_all_notes_off_LOCAL(fluid_synth_t* synth, int chan);
 extern int fluid_is_number(char* a);
 
 /* Macros interface to poly/mono mode variables */
-#define MASK_BASICCHANINFOS  (MASKMODE|BASIC_CHANNEL|ENABLED)
+#define MASK_BASICCHANINFOS  (FLUID_CHANNEL_MODE_MASK|FLUID_CHANNEL_BASIC|FLUID_CHANNEL_ENABLED)
 /* access to channel mode */
 /* Set the basic channel infos for a MIDI basic channel */
 #define set_fluid_channel_basic_channel_infos(chan,Infos) \
@@ -35,7 +35,7 @@ extern int fluid_is_number(char* a);
 /* End of macros interface to poly/mono mode variables */
 
 /* Macros interface to breath variables */
-#define MASK_BREATH_MODE  (BREATH_POLY|BREATH_MONO|BREATH_SYNC)
+#define MASK_BREATH_MODE  (FLUID_CHANNEL_BREATH_POLY|FLUID_CHANNEL_BREATH_MONO|FLUID_CHANNEL_BREATH_SYNC)
 /* access to default breath infos */
 /* Set the breath infos for a MIDI  channel */
 #define set_fluid_channel_breath_infos(chan,BreathInfos) \
@@ -85,7 +85,7 @@ int fluid_synth_get_basic_channels(	fluid_synth_t* synth,
 	/* counts basic channels */
 	for(i = 0, nBasicChan = 0; i <  nChan; i++)
 	{
-		if (synth->channel[i]->mode &  BASIC_CHANNEL) nBasicChan++;
+		if (synth->channel[i]->mode &  FLUID_CHANNEL_BASIC) nBasicChan++;
 	}
 
 	if (basicChannelInfos && nBasicChan) 
@@ -98,10 +98,10 @@ int fluid_synth_get_basic_channels(	fluid_synth_t* synth,
 		if (bci) for(i = 0, b=0; i <  nChan; i++)
 		{	
 			fluid_channel_t* chan = synth->channel[i];
-			if (chan->mode &  BASIC_CHANNEL)
+			if (chan->mode &  FLUID_CHANNEL_BASIC)
 			{	/* This channel is a basic channel */
 				bci[b].basicchan = i;	/* channel number */
-				bci[b].mode = chan->mode &  MASKMODE; /* MIDI mode:0,1,2,3 */
+				bci[b].mode = chan->mode &  FLUID_CHANNEL_MODE_MASK; /* MIDI mode:0,1,2,3 */
 				bci[b].val = chan->mode_val;	/* value (for mode 3 only) */
 				b++;
 			}
@@ -174,7 +174,7 @@ int fluid_synth_reset_basic_channels(fluid_synth_t* synth,
 	if (	basicChannelInfos[i].basicchan < 0 || 
 		basicChannelInfos[i].basicchan >= nChan ||
 		basicChannelInfos[i].mode < 0 ||
-		basicChannelInfos[i].mode >= MODE_NBR ||
+		basicChannelInfos[i].mode >= FLUID_CHANNEL_MODE_LAST ||
 		basicChannelInfos[i].val < 0 ||
 		basicChannelInfos[i].basicchan + basicChannelInfos[i].val > nChan)
         {
@@ -195,13 +195,13 @@ int fluid_synth_reset_basic_channels(fluid_synth_t* synth,
 	for (i = 0; i < n; i++)
 	{
 	    int bchan = basicChannelInfos[i].basicchan;
-            if (synth->channel[bchan]->mode &  BASIC_CHANNEL)
+            if (synth->channel[bchan]->mode &  FLUID_CHANNEL_BASIC)
 		/* Different entries have the same basic channel. 
 		 An entry supersedes a previous entry with the same 
 		 basic channel.*/
 		FLUID_LOG(FLUID_INFO, WarningMsg);
 	    /* Set Basic channel first */
-            else synth->channel[bchan]->mode |= BASIC_CHANNEL;
+            else synth->channel[bchan]->mode |= FLUID_CHANNEL_BASIC;
 	}
 
 	for (i = 0; i < n; i++)
@@ -213,7 +213,7 @@ int fluid_synth_reset_basic_channels(fluid_synth_t* synth,
 	    if (result == FLUID_OK) result = r;
 	}
     }
-    else result = fluid_synth_set_basic_channel_LOCAL( synth, 0, OMNION_POLY,0);
+    else result = fluid_synth_set_basic_channel_LOCAL( synth, 0, FLUID_CHANNEL_MODE_OMNION_POLY,0);
     FLUID_API_RETURN(result);
 }
 
@@ -244,7 +244,7 @@ int fluid_synth_set_basic_channel(fluid_synth_t* synth, int basicchan, int mode,
     const int chan = basicchan;
 
     fluid_return_val_if_fail (mode >= 0, FLUID_FAILED);
-    fluid_return_val_if_fail (mode < MODE_NBR, FLUID_FAILED);
+    fluid_return_val_if_fail (mode < FLUID_CHANNEL_MODE_LAST, FLUID_FAILED);
     fluid_return_val_if_fail (val >= 0, FLUID_FAILED);
     FLUID_API_ENTRY_CHAN(FLUID_FAILED);
     /**/
@@ -296,14 +296,14 @@ int fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth,
 		int prevbasicchan = -1 ; // Previous basic channel
 		int i;
 		result = FLUID_OK;
-		if ( !(synth->channel[basicchan]->mode &  BASIC_CHANNEL))
+		if ( !(synth->channel[basicchan]->mode &  FLUID_CHANNEL_BASIC))
 		{	/* a new basic channel is inserted between previous basic channel 
 			and the next basic channel.	*/
-			if (synth->channel[basicchan]->mode &  ENABLED)
+			if (synth->channel[basicchan]->mode &  FLUID_CHANNEL_ENABLED)
 			{ /* val value of the previous basic channel need to be narrowed */
 				for (i = basicchan - 1; i >=0; i--)
 				{	/* searchs previous basic channel */
-					if (synth->channel[i]->mode &  BASIC_CHANNEL)
+					if (synth->channel[i]->mode &  FLUID_CHANNEL_BASIC)
 					{	/* i is the previous basic channel */
 						prevbasicchan = i;
 						break;
@@ -315,19 +315,19 @@ int fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth,
 		/* LastEndRange: next basic channel  or midi_channels count  */
 		for (LastEndRange = basicchan +1; LastEndRange < nChan; LastEndRange++)
 		{
-			if (synth->channel[LastEndRange]->mode &  BASIC_CHANNEL) break;
+			if (synth->channel[LastEndRange]->mode &  FLUID_CHANNEL_BASIC) break;
 		}
 		/* Now LastBeginRange is set */
-		switch (mode = mode &  MASKMODE)
+		switch (mode = mode &  FLUID_CHANNEL_MODE_MASK)
 		{
-			case OMNION_POLY:	/* Mode 0 and 1 */
-			case OMNION_MONO:
+			case FLUID_CHANNEL_MODE_OMNION_POLY:	/* Mode 0 and 1 */
+			case FLUID_CHANNEL_MODE_OMNION_MONO:
 				LastBeginRange = LastEndRange;
 				break;
-			case OMNIOFF_POLY:		/* Mode 2 */
+			case FLUID_CHANNEL_MODE_OMNIOFF_POLY:		/* Mode 2 */
 				LastBeginRange = basicchan + 1;
 				break;
-			case OMNIOFF_MONO:		/* Mode 3 */
+			case FLUID_CHANNEL_MODE_OMNIOFF_MONO:		/* Mode 3 */
 				if (val) LastBeginRange = basicchan + val;
 				else LastBeginRange = LastEndRange;
 		}
@@ -355,10 +355,10 @@ int fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth,
 			 ALL_NOTES_OFF */
 			fluid_synth_all_notes_off_LOCAL (synth, i);
 			/* basicchan only is marked Basic Channel */
-			if (i == basicchan)	newmode |= BASIC_CHANNEL; 
+			if (i == basicchan)	newmode |= FLUID_CHANNEL_BASIC; 
 			else val =0; /* val is 0 for other channel than basic channel */
 			/* Channel in beginning zone are enabled */
-			if (i < LastBeginRange) newmode |= ENABLED; 
+			if (i < LastBeginRange) newmode |= FLUID_CHANNEL_ENABLED; 
 			/* Channel in ending zone are disabled */
 			else newmode = 0;
 			/* Now mode is OMNI OFF/ON,MONO/POLY, BASIC_CHANNEL or not
@@ -378,10 +378,10 @@ int fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth,
  * @param  modeInfos, pointer on a fluid_basic_channels_infos_t informations. 
  *     - basicchan , chan.
  *     - mode MIDI mode infos of chan:
- *       bit 0: MONO:	0,Polyphonic;	1,Monophonic.
- *       bit 1: OMNI:	0,Omni  On;		1,Omni Off.
- *       bit 2: BASIC_CHANNEL:	1, chan is a Basic Channel.
- *       bit 3: ENABLED: 1,chan is listening. 
+ *       bit 0: FLUID_CHANNEL_POLY_OFF:	0,Polyphonic;	1,Monophonic.
+ *       bit 1: FLUID_CHANNEL_OMNI_OFF:	0,Omni  On;		1,Omni Off.
+ *       bit 2: FLUID_CHANNEL_BASIC:	1, chan is a Basic Channel.
+ *       bit 3: FLUID_CHANNEL_ENABLED: 1,chan is enabled. 
  *                       0,chan ignores voices messages (MIDI note on/of, cc).
  *     - val, Number of channels in the group from basic channel (if bit 2 is set)
  *     or 0 if bit 2 is 0.
@@ -527,9 +527,9 @@ int fluid_synth_get_portamento_mode(fluid_synth_t* synth, int chan,
  * @param synth the synth instance.
  * @param chan MIDI channel number (0 to MIDI channel count - 1).
  * @param breathmode bits:
- *    BREATH_POLY   default breath poly On/Off.
- *    BREATH_MONO   default breath mono On/Off.
- *    BREATH_SYNC   breath noteOn/noteOff triggering On/Off.
+ *    FLUID_CHANNEL_BREATH_POLY   default breath poly On/Off.
+ *    FLUID_CHANNEL_BREATH_MONO   default breath mono On/Off.
+ *    FLUID_CHANNEL_BREATH_SYNC   breath noteOn/noteOff triggering On/Off.
  *
  * @return
  * - FLUID_OK on success.
@@ -553,9 +553,9 @@ int fluid_synth_set_breath_mode(fluid_synth_t* synth, int chan, int breathmode)
  * @param synth the synth instance.
  * @param chan MIDI channel number (0 to MIDI channel count - 1).
  * @param breathmode, pointer to the returned breath mode.
- *    BREATH_POLY   default breath poly On/Off. 
- *    BREATH_MONO   default breath mono On/Off.
- *    BREATH_SYNC   breath noteOn/noteOff triggering On/Off.
+ *    FLUID_CHANNEL_BREATH_POLY   default breath poly On/Off.
+ *    FLUID_CHANNEL_BREATH_MONO   default breath mono On/Off.
+ *    FLUID_CHANNEL_BREATH_SYNC   breath noteOn/noteOff triggering On/Off.
  *
  * @return
  * - FLUID_OK on success.
