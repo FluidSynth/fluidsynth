@@ -651,7 +651,7 @@ int fluid_synth_noteon_mono_LOCAL(fluid_synth_t* synth, int chan,
 	/* Adds note to the monophonic list */
 	fluid_channel_add_monolist(channel,(unsigned char)key,(unsigned char)vel,0);
 
-	if (!(channel->mode &  BREATH_SYNC) || fluid_channel_breath_msb(channel) )
+	if (!(channel->mode &  FLUID_CHANNEL_BREATH_SYNC) || fluid_channel_breath_msb(channel) )
 	{
 		/* legato/staccato playing detection */
 		if(channel->mode  & LEGATO_PLAYING)
@@ -715,7 +715,8 @@ int fluid_synth_noteoff_mono_LOCAL(fluid_synth_t* synth, int chan, int key)
 		/* Remove note out of the monophonic list */
 		iPrev = fluid_channel_remove_monolist(channel,i);
 
-		if (!(channel->mode &  BREATH_SYNC) || fluid_channel_breath_msb(channel) )
+		if (!(channel->mode &  FLUID_CHANNEL_BREATH_SYNC) ||
+		    fluid_channel_breath_msb(channel) )
 		{
 			/* legato playing detection */
 			if(channel->mode  & LEGATO_PLAYING) 
@@ -1000,7 +1001,7 @@ int fluid_synth_noteon_monopoly_legato(fluid_synth_t* synth, int chan,
 void fluid_channel_cc_legato(fluid_channel_t* chan, int value)
 {
 	/* Special handling of the monophonic list  */
-	if (!(chan->mode & MONO) && chan->n_notes) /* The monophonic list have notes */
+	if (!(chan->mode & FLUID_CHANNEL_POLY_OFF) && chan->n_notes) /* The monophonic list have notes */
 	{
 		if (value < 64 ) /* legato is released */
 		{	/* returns from monophonic to polyphonic with note in monophonic list */
@@ -1009,7 +1010,7 @@ void fluid_channel_cc_legato(fluid_channel_t* chan, int value)
 		else /* legato is depressed */
 		{	/* Inters in monophonic from polyphonic with note in monophonic list */
 			/* Stops the running note to remain coherent with Breath Sync mode */
-			if ((chan->mode &  BREATH_SYNC) && !fluid_channel_breath_msb(chan))
+			if ((chan->mode &  FLUID_CHANNEL_BREATH_SYNC) && !fluid_channel_breath_msb(chan))
 				fluid_synth_noteoff_monopoly(chan->synth,chan->channum,
 				                        fluid_channel_last_note(chan),1);
 		}
@@ -1026,7 +1027,7 @@ void fluid_channel_cc_legato(fluid_channel_t* chan, int value)
  */
 void fluid_channel_cc_breath_note_on_off(fluid_channel_t* chan, int value)
 {	
-	if ((chan->mode &  BREATH_SYNC)  && is_fluid_channel_playing_mono(chan) &&
+	if ((chan->mode &  FLUID_CHANNEL_BREATH_SYNC)  && is_fluid_channel_playing_mono(chan) &&
 		(chan->n_notes))
 	{	
 		/* The monophonic list isn't empty */
