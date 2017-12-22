@@ -415,7 +415,8 @@ int fluid_synth_get_channel_mode(fluid_synth_t* synth, int chan,
  * @param synth the synth instance.
  * @param chan MIDI channel number (0 to MIDI channel count - 1).
  * @param legatomode
- *    0: RETRIGGER    1: MULTI_RETRIGGER.
+ *    0: FLUID_CHANNEL_LEGATO_MODE_RETRIGGER.
+ *    1: FLUID_CHANNEL_LEGATO_MODE_MULTI_RETRIGGER.
  *
  * @return
  * - FLUID_OK on success.
@@ -428,7 +429,7 @@ int fluid_synth_set_legato_mode(fluid_synth_t* synth, int chan, int legatomode)
 {
 	/* check parameters first */
 	fluid_return_val_if_fail (legatomode >= 0, FLUID_FAILED);
-	fluid_return_val_if_fail (legatomode < LEGATOMODE_NBR, FLUID_FAILED);
+	fluid_return_val_if_fail (legatomode < FLUID_CHANNEL_LEGATO_MODE_LAST, FLUID_FAILED);
 	FLUID_API_ENTRY_CHAN(FLUID_FAILED);
 	/**/
 	synth->channel[chan]->legatomode = legatomode;
@@ -442,7 +443,8 @@ int fluid_synth_set_legato_mode(fluid_synth_t* synth, int chan, int legatomode)
  * @param synth the synth instance.
  * @param chan MIDI channel number (0 to MIDI channel count - 1).
  * @param legatomode, pointer to the returned mode .
- *    0: RETRIGGER    1: MULTI_RETRIGGER.
+ *    0: FLUID_CHANNEL_LEGATO_MODE_RETRIGGER.
+ *    1: FLUID_CHANNEL_LEGATO_MODE_MULTI_RETRIGGER.
  *
  * @return
  * - FLUID_OK on success.
@@ -469,8 +471,9 @@ int fluid_synth_get_legato_mode(fluid_synth_t* synth, int chan, int *legatomode)
  * @param synth the synth instance.
  * @param chan MIDI channel number (0 to MIDI channel count - 1).
  * @param portamentomode .
- *    0: EACH_NOTE.	    1: LEGATO_ONLY.
- *    2: STACCATO_ONLY
+ *    0: FLUID_CHANNEL_PORTAMENTO_MODE_EACH_NOTE.
+ *    1: FLUID_CHANNEL_PORTAMENTO_MODE_LEGATO_ONLY.
+ *    2: FLUID_CHANNEL_PORTAMENTO_MODE_STACCATO_ONLY.
  *
  * @return
  * - FLUID_OK on success.
@@ -484,7 +487,7 @@ int fluid_synth_set_portamento_mode(fluid_synth_t* synth, int chan,
 {
 	/* checks parameters first */
 	fluid_return_val_if_fail (portamentomode >= 0, FLUID_FAILED);
-	fluid_return_val_if_fail (portamentomode < PORTAMENTOMODE_NBR, FLUID_FAILED);
+	fluid_return_val_if_fail (portamentomode < FLUID_CHANNEL_PORTAMENTO_MODE_LAST, FLUID_FAILED);
 	FLUID_API_ENTRY_CHAN(FLUID_FAILED);
 	/**/
 	synth->channel[chan]->portamentomode = portamentomode;
@@ -498,8 +501,9 @@ int fluid_synth_set_portamento_mode(fluid_synth_t* synth, int chan,
  * @param synth the synth instance.
  * @param chan MIDI channel number (0 to MIDI channel count - 1).
  * @param portamentomode pointer to the returned mode.
- *    0: EACH_NOTE.     1: LEGATO_ONLY.
- *    2: STACCATO_ONLY.
+ *    0: FLUID_CHANNEL_PORTAMENTO_MODE_EACH_NOTE.
+ *    1: FLUID_CHANNEL_PORTAMENTO_MODE_LEGATO_ONLY.
+ *    2: FLUID_CHANNEL_PORTAMENTO_MODE_STACCATO_ONLY.
  *
  * @return
  * - FLUID_OK on success.
