@@ -158,7 +158,7 @@ struct _fluid_channel_t
 
 /* Macros interface to poly/mono mode variables */
 /* Returns true when channel is mono or legato is on */
-#define is_fluid_channel_playing_mono(chan) ((chan->mode & MONO) ||\
+#define is_fluid_channel_playing_mono(chan) ((chan->mode & FLUID_CHANNEL_POLY_OFF) ||\
                                              fluid_channel_legato(chan))
 void fluid_channel_set_onenote_monolist(fluid_channel_t* chan, unsigned char key, unsigned char vel);
 void fluid_channel_clear_monolist(fluid_channel_t* chan);
