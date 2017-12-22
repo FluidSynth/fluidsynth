@@ -2126,7 +2126,7 @@ int fluid_handle_channelsmode (void* data, int ac, char** av,
 		result = fluid_synth_get_channel_mode(synth, chan, &bci);
 		if (result == FLUID_OK)
 		{
-			if(bci.mode &  ENABLED)
+			if(bci.mode &  FLUID_CHANNEL_ENABLED)
 			{	/* This channel is enabled */
 				char * basicchannel1="basic channel"; /* field basic channel */
 				char * bcmsg; /* field basic channel */
@@ -2136,8 +2136,8 @@ int fluid_handle_channelsmode (void* data, int ac, char** av,
 				char * blank="--";
 				char nbr1[10]; /* field Nbr */
 				char *pNbr; /* field Nbr */
-				int mode = bci.mode &  MASKMODE;
-				if (bci.mode &  BASIC_CHANNEL)
+				int mode = bci.mode &  FLUID_CHANNEL_MODE_MASK;
+				if (bci.mode &  FLUID_CHANNEL_BASIC)
 				{	/* This channel is a basic channel */
 					bcmsg = basicchannel1;
 					sprintf(nbr1,"nbr:%3d",bci.val);
@@ -2147,7 +2147,7 @@ int fluid_handle_channelsmode (void* data, int ac, char** av,
 				else
 				{	/* This channel is member of a part */
 					bcmsg = blank;		pNbr = blank;
-					if(mode & MONO) pMode = monomsg;
+					if(mode & FLUID_CHANNEL_POLY_OFF) pMode = monomsg;
 					else pMode = polymsg;
 				}
 				fluid_ostream_printf(out,
@@ -2408,13 +2408,13 @@ int fluid_handle_breathmode(void* data, int ac, char** av,
 		if (result == FLUID_OK)
 		{
 				char * msgPolyBreath, * msgMonoBreath, * msgBreathSync; 
-				if (breathmode &  BREATH_POLY)
+				if (breathmode &  FLUID_CHANNEL_BREATH_POLY)
 					msgPolyBreath =Onmsg;
 				else msgPolyBreath = Offmsg;
-				if (breathmode &  BREATH_MONO)
+				if (breathmode &  FLUID_CHANNEL_BREATH_MONO)
 					msgMonoBreath =Onmsg;
 				else msgMonoBreath = Offmsg;
-				if (breathmode &  BREATH_SYNC)
+				if (breathmode &  FLUID_CHANNEL_BREATH_SYNC)
 					msgBreathSync =Onmsg;
 				else msgBreathSync = Offmsg;
 				fluid_ostream_printf(out,"channel:%3d, %-12s, %-12s, %-11s\n",chan,
@@ -2469,9 +2469,9 @@ int fluid_handle_setbreathmode(void* data, int ac, char** av,
 		int breath_sync = atoi(av[(i * 4)+3]);
 		int breath_infos = 0;
 		/* changes default breath  */
-		if(poly_breath) breath_infos |= BREATH_POLY;
-		if(mono_breath) breath_infos |= BREATH_MONO;
-		if(breath_sync) breath_infos |= BREATH_SYNC;
+		if(poly_breath) breath_infos |= FLUID_CHANNEL_BREATH_POLY;
+		if(mono_breath) breath_infos |= FLUID_CHANNEL_BREATH_MONO;
+		if(breath_sync) breath_infos |= FLUID_CHANNEL_BREATH_SYNC;
 		result = fluid_synth_set_breath_mode(synth,chan,breath_infos);
 		if (result == FLUID_FAILED)  
 				fluid_ostream_printf(out,
