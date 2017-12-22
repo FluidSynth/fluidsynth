@@ -496,14 +496,14 @@ static unsigned char get_fromkey_portamento_legato(fluid_channel_t* chan,
 				fromkey_portamento = default_fromkey; /* on each note */
 			}
 			else fromkey_portamento = fluid_channel_prev_note(chan); /* on each note */
-			if(portamentomode == LEGATO_ONLY)
+			if(portamentomode == FLUID_CHANNEL_PORTAMENTO_MODE_LEGATO_ONLY)
 			{   /* Mode portamento:legato only */
 				if(!(chan->mode  & LEGATO_PLAYING))
 				{	
 					fromkey_portamento = INVALID_NOTE;
 				}
 			}
-			else if(portamentomode == STACCATO_ONLY)
+			else if(portamentomode == FLUID_CHANNEL_PORTAMENTO_MODE_STACCATO_ONLY)
 			{	/* Mode portamento:staccato only */
 				if(chan->mode  & LEGATO_PLAYING) 
 				{
@@ -956,10 +956,10 @@ int fluid_synth_noteon_monopoly_legato(fluid_synth_t* synth, int chan,
 			{
 				switch (legatomode) 
 				{
-					case RETRIGGER: /* mode 0 */
+					case FLUID_CHANNEL_LEGATO_MODE_RETRIGGER: /* mode 0 */
 						fluid_voice_update_release(voice); /* normal release */
 					break;
-					case MULTI_RETRIGGER: /* mode 1 */
+					case FLUID_CHANNEL_LEGATO_MODE_MULTI_RETRIGGER: /* mode 1 */
 						/* Skip in attack section */
 						fluid_voice_update_multi_retrigger_attack(voice,tokey,vel);
 					break;
@@ -968,7 +968,7 @@ int fluid_synth_noteon_monopoly_legato(fluid_synth_t* synth, int chan,
 						"Failed to execute legato mode: %d",legatomode);
 					return FLUID_FAILED;
 				}
-				if (legatomode >= MULTI_RETRIGGER)	
+				if (legatomode >= FLUID_CHANNEL_LEGATO_MODE_MULTI_RETRIGGER)	
 				{
 					/* Starts portamento if enabled */
 					if(is_valid_note(synth->fromkey_portamento))
