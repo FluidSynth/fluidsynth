@@ -2180,7 +2180,7 @@ int fluid_handle_channelsmode (void* data, int ac, char** av,
  legatomode chan1 chan2
      Prints only legato mode of MIDI channel chan1, chan2
 */
-char * nameLegatomode[LEGATOMODE_NBR]={
+char * nameLegatomode[FLUID_CHANNEL_LEGATO_MODE_LAST]={
 	"(0)retrigger","(1)multi-retrigger"
 };
 
@@ -2279,7 +2279,7 @@ int fluid_handle_setlegatomode(void* data, int ac, char** av,
  portamentotomode chan1 chan2
      Prints only portamentoto mode of MIDI channel chan1, chan2
 */
-char * namePortamentomode[PORTAMENTOMODE_NBR]={
+char * namePortamentomode[FLUID_CHANNEL_PORTAMENTO_MODE_LAST]={
 	"(0)each note","(1)legato only",
 	"(2)staccato only"
 };
