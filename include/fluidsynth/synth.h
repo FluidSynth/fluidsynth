@@ -94,15 +94,15 @@ FLUIDSYNTH_API int fluid_synth_set_basic_channel(fluid_synth_t* synth,
 /* n1,n2,n3,.. is a legato passage. n1 is the first note, and n2,n3,n4 are played
  legato with previous note. 
 */
-enum LegatoMode
+enum fluid__channel_legato_mode
 {
-	/* Release previous note , start a new note */
-	RETRIGGER, /* mode 0 */
+	/* Release previous note (normal release), start a new note */
+	FLUID_CHANNEL_LEGATO_MODE_RETRIGGER, /* mode 0 */
 	/* On n2,n3,.. retrigger in attack section using  current value and 
-	  shape attack using current dynamic.
-	  n2,n3,..make use of previous voices if any.*/
-	MULTI_RETRIGGER, /* mode 1 */
-	LEGATOMODE_NBR
+	  shape attack using current dynamic  
+	  n2,n3,..make use of previous voices if any.*/ 
+	FLUID_CHANNEL_LEGATO_MODE_MULTI_RETRIGGER, /* mode 1 */
+	FLUID_CHANNEL_LEGATO_MODE_LAST
 };
 
 FLUIDSYNTH_API int fluid_synth_set_legato_mode(fluid_synth_t* synth, 
@@ -113,15 +113,15 @@ FLUIDSYNTH_API int fluid_synth_get_legato_mode(fluid_synth_t* synth,
 
 /* Interface to portamento mode  */
 /* Macros interface to portamento mode variable */
-enum PortamentoMode
+enum fluid__channel_portamento_mode
 {
 	/* Portamento on each note (staccato or legato) */
-	EACH_NOTE,		/* mode 0 */
+	FLUID_CHANNEL_PORTAMENTO_MODE_EACH_NOTE,      /* mode 0 */
 	/* Portamento only on legato note  */ 
-	LEGATO_ONLY,	/* mode 1 */
+	FLUID_CHANNEL_PORTAMENTO_MODE_LEGATO_ONLY,    /* mode 1 */
 	/* Portamento only on staccato note  */ 
-	STACCATO_ONLY,	/* mode 2 */
-	PORTAMENTOMODE_NBR
+	FLUID_CHANNEL_PORTAMENTO_MODE_STACCATO_ONLY,  /* mode 2 */
+	FLUID_CHANNEL_PORTAMENTO_MODE_LAST
 };
 
 FLUIDSYNTH_API int fluid_synth_set_portamento_mode(fluid_synth_t* synth,
