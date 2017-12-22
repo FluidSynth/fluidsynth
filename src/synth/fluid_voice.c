@@ -1215,7 +1215,7 @@ void fluid_voice_update_portamento (fluid_voice_t* voice, int fromkey,int tokey)
 	fluid_real_t PitchEnd = fluid_voice_calculate_pitch(voice,tokey);
 	fluid_real_t pitchoffset = PitchBeg - PitchEnd;
 	/* Increment number is function of PortamentoTime (ms)*/
-	unsigned int countinc = (int)(((fluid_real_t)voice->output_rate * 
+	unsigned int countinc = (unsigned int)(((fluid_real_t)voice->output_rate * 
 					0.001f *
 			        (fluid_real_t)fluid_channel_portamentotime(channel))  /
 					(fluid_real_t)FLUID_BUFSIZE  +0.5);
@@ -1223,7 +1223,6 @@ void fluid_voice_update_portamento (fluid_voice_t* voice, int fromkey,int tokey)
 }
 
 /*---------------------------------------------------------------*/
-extern fluid_gen_info_t fluid_gen_info[];
 /* forces the voice envelopes release section for legato mode retrigger 0 and 1:
  *
  * @voice voice the synthesis voice
