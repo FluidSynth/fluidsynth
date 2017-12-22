@@ -53,17 +53,25 @@ extern "C" {
 /* Macros interface to poly/mono mode variables */
 enum fluid_basic_channel_mode_flags
 {
-    MONO = 0x01, /* bit 0, 0: poly on , 1: mono on */
-    OMNI = 0x02, /* bit 1, 0: omni on, 1:omni off */
-    BASIC_CHANNEL = 0x04, /* bit 2, 1: channel is basic channel */
-    ENABLED = 0x08,         /* bit 3, 1: channel is listened */
-    MASKMODE = (OMNI | MONO),
+    /* channel mode bits */
+    FLUID_CHANNEL_POLY_OFF = 0x01, /* bit 0, 0: poly on(i.e mono off) , 1: poly_off(i.e mono on  ) */
+    FLUID_CHANNEL_OMNI_OFF = 0x02, /* bit 1, 0: omni on, 1:omni off */
     
-    OMNION_POLY = MASKMODE & (~OMNI & ~MONO), /* MIDI mode 0 */
-    OMNION_MONO = MASKMODE & (~OMNI & MONO), /* MIDI mode 1 */
-    OMNIOFF_POLY = MASKMODE & (OMNI & ~MONO), /* MIDI mode 2 */
-    OMNIOFF_MONO = MASKMODE & (OMNI | MONO), /* MIDI mode 3 */
-    MODE_NBR
+    FLUID_CHANNEL_BASIC = 0x04,    /* bit 2, 1: channel is basic channel */
+    FLUID_CHANNEL_ENABLED = 0x08,  /* bit 3, 1: channel is enabled */
+    
+    /* breath mode bits infos */
+    FLUID_CHANNEL_BREATH_POLY = 0x10,  /* b4, 1: default breath poly On */
+    FLUID_CHANNEL_BREATH_MONO = 0x20,  /* b5, 1: default breath mono On */
+    FLUID_CHANNEL_BREATH_SYNC = 0x40,  /* b6, 1: BreathSyn On */
+    
+    /* MIDI Modes number 0 to 3 */    
+    FLUID_CHANNEL_MODE_MASK = (FLUID_CHANNEL_OMNI_OFF | FLUID_CHANNEL_POLY_OFF),
+    FLUID_CHANNEL_MODE_OMNION_POLY = FLUID_CHANNEL_MODE_MASK & (~FLUID_CHANNEL_OMNI_OFF & ~FLUID_CHANNEL_POLY_OFF), /* MIDI mode 0 */
+    FLUID_CHANNEL_MODE_OMNION_MONO = FLUID_CHANNEL_MODE_MASK & (~FLUID_CHANNEL_OMNI_OFF & FLUID_CHANNEL_POLY_OFF), /* MIDI mode 1 */
+    FLUID_CHANNEL_MODE_OMNIOFF_POLY = FLUID_CHANNEL_MODE_MASK & (FLUID_CHANNEL_OMNI_OFF & ~FLUID_CHANNEL_POLY_OFF), /* MIDI mode 2 */
+    FLUID_CHANNEL_MODE_OMNIOFF_MONO = FLUID_CHANNEL_MODE_MASK & (FLUID_CHANNEL_OMNI_OFF | FLUID_CHANNEL_POLY_OFF), /* MIDI mode 3 */
+    FLUID_CHANNEL_MODE_LAST /* NOT PART OF PUBLIC API/ABI stability guarantee */
 };
 
 struct _fluid_basic_channel_infos_t
@@ -124,16 +132,10 @@ FLUIDSYNTH_API int fluid_synth_get_portamento_mode(fluid_synth_t* synth,
 /* End of API: portamento mode */
 
 /* Interface to breath mode   */
-/* breath mode bits infos */
-#define BREATH_POLY 0x10     /* b4, 1: default breath poly On */
-#define BREATH_MONO 0x20     /* b5, 1: default breath mono On */
-#define BREATH_SYNC 0x40     /* b6, 1: BreathSyn On */
-
 FLUIDSYNTH_API int fluid_synth_set_breath_mode(fluid_synth_t* synth, 
 						int chan, int breathmode);
 FLUIDSYNTH_API int fluid_synth_get_breath_mode(fluid_synth_t* synth,
 						int chan, int  *breathmode);
-
 /* End of API: breath mode */
 
 
