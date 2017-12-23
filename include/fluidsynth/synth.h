@@ -50,7 +50,7 @@ extern "C" {
  API: Poly mono mode 
  */
 
-/* Macros interface to poly/mono mode variables */
+/* Interface to poly/mono mode variables */
 enum fluid_basic_channel_mode_flags
 {
     /* channel mode bits */
@@ -82,14 +82,14 @@ struct _fluid_basic_channel_infos_t
 };
 typedef struct  _fluid_basic_channel_infos_t   fluid_basic_channel_infos_t;
 
-FLUIDSYNTH_API int fluid_synth_get_basic_channels(	fluid_synth_t* synth,
-								   fluid_basic_channel_infos_t **basicChannelInfos);
+FLUIDSYNTH_API int fluid_synth_get_basic_channels( fluid_synth_t* synth,
+                                                   fluid_basic_channel_infos_t **basicChannelInfos);
 FLUIDSYNTH_API int fluid_synth_reset_basic_channels(fluid_synth_t* synth, int n, 
-                                          fluid_basic_channel_infos_t *basicChannelInfos);
+                                                    fluid_basic_channel_infos_t *basicChannelInfos);
 FLUIDSYNTH_API int fluid_synth_get_channel_mode(fluid_synth_t* synth, int chan,
-												fluid_basic_channel_infos_t  *modeInfos);
+                                                fluid_basic_channel_infos_t  *modeInfos);
 FLUIDSYNTH_API int fluid_synth_set_basic_channel(fluid_synth_t* synth, 
-												 int basicchan, int mode, int val);
+                                                 int basicchan, int mode, int val);
 /* Interface to mono legato mode  */
 /* n1,n2,n3,.. is a legato passage. n1 is the first note, and n2,n3,n4 are played
  legato with previous note. 
@@ -99,20 +99,15 @@ enum fluid__channel_legato_mode
 	/* Release previous note (normal release), start a new note */
 	FLUID_CHANNEL_LEGATO_MODE_RETRIGGER, /* mode 0 */
 	/* On n2,n3,.. retrigger in attack section using  current value and 
-	  shape attack using current dynamic  
-	  n2,n3,..make use of previous voices if any.*/ 
+	  shape attack using current dynamic. n2,n3,..make use of previous voices if any.*/ 
 	FLUID_CHANNEL_LEGATO_MODE_MULTI_RETRIGGER, /* mode 1 */
-	FLUID_CHANNEL_LEGATO_MODE_LAST
+	FLUID_CHANNEL_LEGATO_MODE_LAST /* NOT PART OF PUBLIC API/ABI stability guarantee */
 };
 
-FLUIDSYNTH_API int fluid_synth_set_legato_mode(fluid_synth_t* synth, 
-												int chan, int legatomode);
-FLUIDSYNTH_API int fluid_synth_get_legato_mode(fluid_synth_t* synth,
-												int chan, int  *legatomode);
-/* End of API: Poly mono mode */
+FLUIDSYNTH_API int fluid_synth_set_legato_mode(fluid_synth_t* synth, int chan, int legatomode);
+FLUIDSYNTH_API int fluid_synth_get_legato_mode(fluid_synth_t* synth, int chan, int  *legatomode);
 
 /* Interface to portamento mode  */
-/* Macros interface to portamento mode variable */
 enum fluid__channel_portamento_mode
 {
 	/* Portamento on each note (staccato or legato) */
@@ -121,7 +116,7 @@ enum fluid__channel_portamento_mode
 	FLUID_CHANNEL_PORTAMENTO_MODE_LEGATO_ONLY,    /* mode 1 */
 	/* Portamento only on staccato note  */ 
 	FLUID_CHANNEL_PORTAMENTO_MODE_STACCATO_ONLY,  /* mode 2 */
-	FLUID_CHANNEL_PORTAMENTO_MODE_LAST
+	FLUID_CHANNEL_PORTAMENTO_MODE_LAST /* NOT PART OF PUBLIC API/ABI stability guarantee */
 };
 
 FLUIDSYNTH_API int fluid_synth_set_portamento_mode(fluid_synth_t* synth,
@@ -129,20 +124,16 @@ FLUIDSYNTH_API int fluid_synth_set_portamento_mode(fluid_synth_t* synth,
 FLUIDSYNTH_API int fluid_synth_get_portamento_mode(fluid_synth_t* synth,
 						int chan, int  * portamentomode);
 
-/* End of API: portamento mode */
-
 /* Interface to breath mode   */
 FLUIDSYNTH_API int fluid_synth_set_breath_mode(fluid_synth_t* synth, 
 						int chan, int breathmode);
 FLUIDSYNTH_API int fluid_synth_get_breath_mode(fluid_synth_t* synth,
 						int chan, int  *breathmode);
-/* End of API: breath mode */
-
+/* End of API: Poly mono mode */
 
 FLUIDSYNTH_API fluid_synth_t* new_fluid_synth(fluid_settings_t* settings);
 FLUIDSYNTH_API void delete_fluid_synth(fluid_synth_t* synth);
 FLUIDSYNTH_API fluid_settings_t* fluid_synth_get_settings(fluid_synth_t* synth);
-
 
 /* MIDI channel messages */
 
