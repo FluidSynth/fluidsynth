@@ -203,11 +203,11 @@ static const fluid_audriver_definition_t fluid_audio_drivers[] =
 #endif
 };
 
-#define ENABLE_AUDIO_DRIVER(_drv, _idx)     _drv[(_idx) / 32] |= 1 << ((_idx) % 32)
-#define IS_AUDIO_DRIVER_ENABLED(_drv, _idx) (_drv[(_idx) / 32] & (1 << ((_idx) % 32)))
+#define ENABLE_AUDIO_DRIVER(_drv, _idx)     _drv[(_idx) / 32] &= ~(1 << ((_idx) % 32))
+#define IS_AUDIO_DRIVER_ENABLED(_drv, _idx) (!(_drv[(_idx) / 32] & (1 << ((_idx) % 32))))
 
 static fluid_mutex_t fluid_adriver_mutex = FLUID_MUTEX_INIT;
-static uint32_t      fluid_adriver_enabled[FLUID_N_ELEMENTS(fluid_audio_drivers)];
+static uint32_t      fluid_adriver_enabled[FLUID_N_ELEMENTS(fluid_audio_drivers)] = {0};
 
 void fluid_audio_driver_settings(fluid_settings_t* settings)
 {
@@ -290,13 +290,10 @@ void fluid_audio_driver_settings(fluid_settings_t* settings)
 
   fluid_mutex_lock(fluid_adriver_mutex);
 
-  FLUID_MEMSET(fluid_adriver_enabled, 0, sizeof(fluid_adriver_enabled));
-
   for (i = 0; i < FLUID_N_ELEMENTS(fluid_audio_drivers); i++) {
-    if (fluid_audio_drivers[i].settings != NULL) {
+    if (fluid_audio_drivers[i].settings != NULL &&
+        IS_AUDIO_DRIVER_ENABLED(fluid_adriver_enabled, i)) {
       fluid_audio_drivers[i].settings(settings);
-
-      ENABLE_AUDIO_DRIVER(fluid_adriver_enabled, i);
     }
   }
 
@@ -461,7 +458,7 @@ int fluid_audio_driver_register(const char** adrivers)
     if (adrivers == NULL)
       return FLUID_OK;
 
-    FLUID_MEMSET(adriver_enabled, 0, sizeof(adriver_enabled));
+    FLUID_MEMSET(adriver_enabled, 0xFF, sizeof(adriver_enabled));
 
     for(i=0; adrivers[i] != NULL; i++)
     {
