@@ -325,7 +325,7 @@ fluid_rvoice_write (fluid_rvoice_t* voice, fluid_real_t *dsp_buf)
      + fluid_adsr_env_get_val(&voice->envlfo.modenv) * voice->envlfo.modenv_to_pitch) 
      / voice->dsp.root_pitch_hz;
 
-  /******************* Update portamento **************/
+  /******************* portamento ****************/
   /* pitchoffset is updated if enabled.
      Pitchoffset will be added to dsp pitch at
 	 phase calculation time */
@@ -618,13 +618,13 @@ fluid_rvoice_multi_retrigger_attack (fluid_rvoice_t* voice)
 	fluid_adsr_env_set_section(&voice->envlfo.modenv, FLUID_VOICE_ENVATTACK);
 	/* Actually (v 1.1.6) all sections are linear, so there is no need to
 	 correct val value. However soundfont 2.01/2.4 spec. says that Attack should
-	 be convex (see ticket 155 from Christian Collins). In the case Attack
+	 be convex (see issue #153  from Christian Collins). In the case Attack
 	 section would be changed to a non linear shape it will be necessary to do
 	 a correction for seamless val transition. Here is the place */
 }
 
 /*----------------------------------------------------------------------------
- * set the portamento dsp parameters. 
+ * sets the portamento dsp parameters: dsp.pitchoffset, dsp.pitchinc
  * @voice, rvoice to set portamento.
  * @countinc, increment count number.
  * @pitchoffset, pitch offset to apply to voice dsp.pitch.
@@ -635,15 +635,16 @@ fluid_rvoice_multi_retrigger_attack (fluid_rvoice_t* voice)
  * 2) And to get constant portamento duration, dsp pitch increment is updated.
 */  
 void fluid_rvoice_set_portamento(fluid_rvoice_t * voice, unsigned int countinc,
-								 fluid_real_t pitchoffset)
+                                 fluid_real_t pitchoffset)
 {
 	if (countinc)
 	{
 		voice->dsp.pitchoffset += pitchoffset;
 		voice->dsp.pitchinc = - voice->dsp.pitchoffset/ countinc; 
 	}
+        /* Then during the voice processing (in fluid_rvoice_write()),
+	  dsp.pitchoffset will be incremented by dsp pitchinc. */
 }
-
 
 void 
 fluid_rvoice_set_output_rate(fluid_rvoice_t* voice, fluid_real_t value)
