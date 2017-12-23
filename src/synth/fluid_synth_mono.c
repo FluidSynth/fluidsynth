@@ -957,7 +957,7 @@ int fluid_synth_noteon_monopoly_legato(fluid_synth_t* synth, int chan,
 				switch (legatomode) 
 				{
 					case FLUID_CHANNEL_LEGATO_MODE_RETRIGGER: /* mode 0 */
-						fluid_voice_update_release(voice); /* normal release */
+						fluid_voice_release(voice); /* normal release */
 					break;
 					case FLUID_CHANNEL_LEGATO_MODE_MULTI_RETRIGGER: /* mode 1 */
 						/* Skip in attack section */
@@ -984,7 +984,7 @@ int fluid_synth_noteon_monopoly_legato(fluid_synth_t* synth, int chan,
 			}
 			else  
 			{ /* tokey note is outside the voice range, so the voice is released */
-				fluid_voice_update_release(voice);
+				fluid_voice_release(voice);
 			}
 		}
 	}
