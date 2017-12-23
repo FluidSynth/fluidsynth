@@ -1198,68 +1198,67 @@ int fluid_voice_modulate_all(fluid_voice_t* voice)
 }
 
 /** legato update functions --------------------------------------------------*/
-/* Updates voice portamento parameter
+/* Updates voice portamento parameters
  *
  * @voice voice the synthesis voice
- * @fromkey the begining pitch of portamento.
+ * @fromkey the beginning pitch of portamento.
  * @tokey the ending pitch of portamento.
  *
- * The function calculates pitch offset and increment, then the parameters
- * are send to the dsp 
+ * The function calculates pitch offset and increment, then these parameters
+ * are send to the dsp.
 */
 void fluid_voice_update_portamento (fluid_voice_t* voice, int fromkey,int tokey)
 									
 {
 	fluid_channel_t* channel= voice->channel;
+
+	/* calculates pitch offset */
 	fluid_real_t PitchBeg = fluid_voice_calculate_pitch(voice,fromkey);
 	fluid_real_t PitchEnd = fluid_voice_calculate_pitch(voice,tokey);
 	fluid_real_t pitchoffset = PitchBeg - PitchEnd;
-	/* Increment number is function of PortamentoTime (ms)*/
+
+	/* Calculates increment countinc */
+	/* Increment is function of PortamentoTime (ms)*/
 	unsigned int countinc = (unsigned int)(((fluid_real_t)voice->output_rate * 
 					0.001f *
 			        (fluid_real_t)fluid_channel_portamentotime(channel))  /
 					(fluid_real_t)FLUID_BUFSIZE  +0.5);
+
+	/* Sends portamento parameters to the voice dsp */
 	UPDATE_RVOICE2(fluid_rvoice_set_portamento, countinc, pitchoffset); 
 }
 
 /*---------------------------------------------------------------*/
-/* forces the voice envelopes release section for legato mode retrigger 0 and 1:
+/*legato mode 1: multi_retrigger
  *
- * @voice voice the synthesis voice
-*/
-void fluid_voice_update_release(fluid_voice_t* voice)
-{
-	/* Skip immediately in release section */
-	UPDATE_RVOICE_I1(fluid_rvoice_noteoff, 0);
-	voice->has_noteoff = 1; /* voice is marked as noteoff occured */
-}
-
-/*---------------------------------------------------------------*/
-/* forces the voice envelopes in the attack section for 
- * legato mode: multi_retrigger
+ * Modulates all generators dependent of key,vel.
+ * Forces the voice envelopes in the attack section (legato mode 1).
  *
  * @voice voice the synthesis voice
  * @tokey the new key to be applied to this voice.
  * @vel the new velocity to be applied to this voice.
  */
 void fluid_voice_update_multi_retrigger_attack(fluid_voice_t* voice,
-										 int tokey, int vel)
+                                               int tokey, int vel)
 {
 	voice->key = tokey;  /* new note */
 	voice->vel = vel; /* new velocity */
-	/* Update dependent generator of velocity */
+	/* Update generators dependent of velocity */
 	/* Modulate GEN_ATTENUATION (and others ) before calling
 	   fluid_rvoice_multi_retrigger_attack().*/
 	fluid_voice_modulate(voice, FALSE, FLUID_MOD_VELOCITY);
 		
-	/* Update dependent generator of key */
+	/* Update generator dependent of voice->key */
 	fluid_voice_update_param(voice, GEN_KEYTOMODENVHOLD);
 	fluid_voice_update_param(voice, GEN_KEYTOMODENVDECAY);
 	fluid_voice_update_param(voice, GEN_KEYTOVOLENVHOLD);
 	fluid_voice_update_param(voice, GEN_KEYTOVOLENVDECAY);
+
+	/* Update pitch generator  */
 	fluid_voice_calculate_gen_pitch(voice);
 	fluid_voice_update_param(voice, GEN_PITCH);
-	/* update adrs generator */
+
+	/* update adsr generator */
 	UPDATE_RVOICE0(fluid_rvoice_multi_retrigger_attack); 
 }
 /** end of legato update functions */
