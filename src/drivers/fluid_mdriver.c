@@ -21,6 +21,13 @@
 #include "fluid_mdriver.h"
 #include "fluid_settings.h"
 
+#undef FLUID_MIDI_SUPPORT
+
+#if ALSA_SUPPORT || JACK_SUPPORT || OSS_SUPPORT || \
+    WINMIDI_SUPPORT || MIDISHARE_SUPPORT || COREMIDI_SUPPORT
+/* At least an input driver exits */
+#define FLUID_MIDI_SUPPORT  1
+#endif
 
 /* ALSA */
 #if ALSA_SUPPORT
@@ -82,6 +89,8 @@ void fluid_coremidi_driver_settings(fluid_settings_t* settings);
 #endif
 
 
+#ifdef FLUID_MIDI_SUPPORT
+
 /*
  * fluid_mdriver_definition
  */
@@ -139,7 +148,7 @@ struct fluid_mdriver_definition_t fluid_midi_drivers[] = {
   { NULL, NULL, NULL, NULL }
 };
 
-
+#endif /* FLUID_MIDI_SUPPORT */
 
 void fluid_midi_driver_settings(fluid_settings_t* settings)
 {
@@ -186,11 +195,13 @@ void fluid_midi_driver_settings(fluid_settings_t* settings)
   fluid_settings_add_option(settings, "midi.driver", "coremidi");
 #endif
 
+#ifdef FLUID_MIDI_SUPPORT
   for (i = 0; fluid_midi_drivers[i].name != NULL; i++) {
     if (fluid_midi_drivers[i].settings != NULL) {
       fluid_midi_drivers[i].settings(settings);
     }
   }
+#endif
 }
 
 /**
@@ -203,6 +214,7 @@ void fluid_midi_driver_settings(fluid_settings_t* settings)
  */
 fluid_midi_driver_t* new_fluid_midi_driver(fluid_settings_t* settings, handle_midi_event_func_t handler, void* event_handler_data)
 {
+#ifdef FLUID_MIDI_SUPPORT
   fluid_midi_driver_t* driver = NULL;
   char *allnames;
   int i;
@@ -222,7 +234,7 @@ fluid_midi_driver_t* new_fluid_midi_driver(fluid_settings_t* settings, handle_mi
   FLUID_LOG(FLUID_ERR, "Couldn't find the requested midi driver. Valid drivers are: %s.",
             allnames ? allnames : "ERROR");
   if (allnames) FLUID_FREE (allnames);
-
+#endif
   return NULL;
 }
 
@@ -232,6 +244,7 @@ fluid_midi_driver_t* new_fluid_midi_driver(fluid_settings_t* settings, handle_mi
  */
 void delete_fluid_midi_driver(fluid_midi_driver_t* driver)
 {
+#ifdef FLUID_MIDI_SUPPORT
   int i;
 
   for (i = 0; fluid_midi_drivers[i].name != NULL; i++) {
@@ -240,4 +253,5 @@ void delete_fluid_midi_driver(fluid_midi_driver_t* driver)
       return;
     }
   }
+#endif
 }
