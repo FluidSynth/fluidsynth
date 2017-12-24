@@ -437,8 +437,12 @@ int fluid_audio_driver_register(const char** adrivers)
     unsigned int i;
     uint8_t      disable_mask[(FLUID_N_ELEMENTS(fluid_audio_drivers)+7)/8];
     
-    if (adrivers == NULL)
+    if (adrivers == NULL) {
+      /* Pass NULL to register all available drivers. */
+      FLUID_MEMSET(fluid_adriver_disable_mask, 0, sizeof(fluid_adriver_disable_mask));
+
       return FLUID_OK;
+    }
 
     FLUID_MEMSET(disable_mask, 0xFF, sizeof(disable_mask));
 
