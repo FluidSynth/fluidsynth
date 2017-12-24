@@ -28,7 +28,6 @@
  *
  */
 
-#include "fluid_sys.h"
 #include "fluid_synth.h"
 #include "fluid_adriver.h"
 #include "fluid_mdriver.h"
