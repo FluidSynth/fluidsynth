@@ -33,6 +33,8 @@
 #include "fluid_mdriver.h"
 #include "fluid_settings.h"
 
+#if JACK_SUPPORT
+
 #include <jack/jack.h>
 #include <jack/midiport.h>
 
@@ -674,3 +676,5 @@ delete_fluid_jack_midi_driver(fluid_midi_driver_t *p)
   
   FLUID_FREE (dev);
 }
+
+#endif /* JACK_SUPPORT */
