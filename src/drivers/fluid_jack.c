@@ -28,11 +28,12 @@
  *
  */
 
-#include "fluid_sys.h"
 #include "fluid_synth.h"
 #include "fluid_adriver.h"
 #include "fluid_mdriver.h"
 #include "fluid_settings.h"
+
+#if JACK_SUPPORT
 
 #include <jack/jack.h>
 #include <jack/midiport.h>
@@ -97,7 +98,7 @@ int fluid_jack_driver_process(jack_nframes_t nframes, void *arg);
 void delete_fluid_jack_midi_driver(fluid_midi_driver_t *p);
 
 
-static fluid_mutex_t last_client_mutex = G_STATIC_MUTEX_INIT;     /* Probably not necessary, but just in case drivers are created by multiple threads */
+static fluid_mutex_t last_client_mutex = FLUID_MUTEX_INIT;     /* Probably not necessary, but just in case drivers are created by multiple threads */
 static fluid_jack_client_t *last_client = NULL;       /* Last unpaired client. For audio/MIDI driver pairing. */
 
 
@@ -675,3 +676,5 @@ delete_fluid_jack_midi_driver(fluid_midi_driver_t *p)
   
   FLUID_FREE (dev);
 }
+
+#endif /* JACK_SUPPORT */
