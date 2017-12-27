@@ -345,6 +345,19 @@ fluid_is_soundfont(const char *filename)
 }
 
 /**
+ * Suspend the execution of the current thread for the specified amount of time.
+ * @param milliseconds to wait.
+ */
+void fluid_msleep(unsigned int msecs)
+{
+#ifdef _WIN32
+  Sleep(msecs);
+#else
+  g_usleep(msecs * 1000);
+#endif
+}
+
+/**
  * Get time in milliseconds to be used in relative timing operations.
  * @return Unix time in milliseconds.
  */
@@ -692,7 +705,7 @@ fluid_timer_run (void *data)
        two callbacks bringing in the "absolute" time (count *
        timer->msec) */
     delay = (count * timer->msec) - (fluid_curtime() - start);
-    if (delay > 0) g_usleep (delay * 1000);
+    if (delay > 0) fluid_msleep(delay);
   }
 
   FLUID_LOG (FLUID_DBG, "Timer thread finished");
