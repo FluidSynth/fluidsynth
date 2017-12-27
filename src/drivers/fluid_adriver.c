@@ -457,7 +457,7 @@ int fluid_audio_driver_register(const char** adrivers)
         {
             if (FLUID_STRCMP(adrivers[i], fluid_audio_drivers[j].name) == 0)
             {
-                ENABLE_AUDIO_DRIVER(disable_mask, i);
+                ENABLE_AUDIO_DRIVER(disable_mask, j);
                 break;
             }
         }
