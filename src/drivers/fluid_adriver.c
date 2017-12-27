@@ -209,7 +209,7 @@ static const fluid_audriver_definition_t fluid_audio_drivers[] =
 #define IS_AUDIO_DRIVER_ENABLED(_drv, _idx) \
     (!(_drv[(_idx) / (sizeof(*(_drv))*8)] & (1 << ((_idx) % (sizeof((*_drv))*8)))))
 
-static uint8_t fluid_adriver_disable_mask[(FLUID_N_ELEMENTS(fluid_audio_drivers)+7)/8] = {0};
+static uint8 fluid_adriver_disable_mask[(FLUID_N_ELEMENTS(fluid_audio_drivers)+7)/8] = {0};
 
 void fluid_audio_driver_settings(fluid_settings_t* settings)
 {
@@ -444,7 +444,7 @@ delete_fluid_audio_driver(fluid_audio_driver_t* driver)
 int fluid_audio_driver_register(const char** adrivers)
 {
     unsigned int i;
-    uint8_t      disable_mask[FLUID_N_ELEMENTS(fluid_adriver_disable_mask)];
+    uint8      disable_mask[FLUID_N_ELEMENTS(fluid_adriver_disable_mask)];
     
     if (adrivers == NULL) {
       /* Pass NULL to register all available drivers. */
