@@ -350,11 +350,7 @@ fluid_is_soundfont(const char *filename)
  */
 void fluid_msleep(unsigned int msecs)
 {
-#ifdef _WIN32
-  Sleep(msecs);
-#else
   g_usleep(msecs * 1000);
-#endif
 }
 
 /**
