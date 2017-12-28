@@ -1967,8 +1967,8 @@ int fluid_handle_basicchannels (void* data, int ac, char** av,
 	return 0;
 }
 
-char *InvalidArg =" invalid argument";
-char *TooFewArg = " too few argument, chan mode val [chan mode val]...";
+char *InvalidArg =" invalid argument\n";
+char *TooFewArg = " too few argument, chan mode val [chan mode val]...\n";
 /*-----------------------------------------------------------------------------
   resetbasicchannels [chan1 Mode1 nbr1   chan2 Mode2 nbr2 ...]
   
@@ -1993,7 +1993,7 @@ int fluid_handle_resetbasicchannels (void* data, int ac, char** av,
 		{
 			if (!fluid_is_number(av[i]))
 			{
-				fluid_ostream_printf(out, "resetbasicchannels:%s\n",InvalidArg);
+				fluid_ostream_printf(out, "resetbasicchannels:%s",InvalidArg);
 				return -1;	
 			}
 		}
@@ -2017,7 +2017,7 @@ int fluid_handle_resetbasicchannels (void* data, int ac, char** av,
 	result = fluid_synth_reset_basic_channels(synth,n, bci);
 	if(bci) free(bci);
 	if (result == FLUID_FAILED)  
-		fluid_ostream_printf(out, "resetbasicchannels:%s\n",InvalidArg);
+		fluid_ostream_printf(out, "resetbasicchannels:%s",InvalidArg);
 	return 0;
 }
 
@@ -2046,15 +2046,20 @@ int fluid_handle_setbasicchannels (void* data, int ac, char** av,
 		{
 			if (!fluid_is_number(av[i]))
 			{
-				fluid_ostream_printf(out, "setbasicchannels:%s\n",InvalidArg);
+				fluid_ostream_printf(out, "setbasicchannels:%s",InvalidArg);
 				return -1;	
 			}
 		}
 	}
 	n = ac / 3; /* number of basic channel information */
-	if(!ac || ac % 3) 
+	if (!ac)
+	{
+		fluid_ostream_printf(out, "setbasicchannels:%s",TooFewArg);
+		return -1;	
+	}
+	else if(ac % 3)
 	{	/* each entry needs 3 parameters: basicchan,mode,val */
-		fluid_ostream_printf(out, "setbasicchannels:chan %d,%s\n",
+		fluid_ostream_printf(out, "setbasicchannels:chan %d,%s",
 					atoi(av[(n * 3)]),TooFewArg);
 		return -1;	
 	}
@@ -2068,7 +2073,7 @@ int fluid_handle_setbasicchannels (void* data, int ac, char** av,
 	
 		result = fluid_synth_set_basic_channel(synth,basicchan,mode,val);
 		if (result == FLUID_FAILED)  
-			fluid_ostream_printf(out,"channel:%3d, mode:%3d, nbr:%3d, %s\n",
+			fluid_ostream_printf(out,"channel:%3d, mode:%3d, nbr:%3d, %s",
 				basicchan,mode, val, InvalidArg);
 	}
 	return 0;
@@ -2112,7 +2117,7 @@ int fluid_handle_channelsmode (void* data, int ac, char** av,
 	{
 		if (!fluid_is_number(av[i]))
 		{
-			fluid_ostream_printf(out, "channelsmode:%s\n",InvalidArg);
+			fluid_ostream_printf(out, "channelsmode:%s",InvalidArg);
 			return -1;
 		}
 	}
@@ -2195,7 +2200,7 @@ int fluid_handle_legatomode(void* data, int ac, char** av,
 	
 	for (i = 0; i < ac; i++)	{
 		if (!fluid_is_number(av[i]))		{
-			fluid_ostream_printf(out, "legatomode:%s\n",InvalidArg);
+			fluid_ostream_printf(out, "legatomode:%s",InvalidArg);
 			return -1;
 		}
 	}
@@ -2223,7 +2228,7 @@ int fluid_handle_legatomode(void* data, int ac, char** av,
   
   Changes legato mode for channels chan0 and [chan1]
 */
-char *TooFewArgChanMode = " too few argument, chan mode [chan mode]...";
+char *TooFewArgChanMode = " too few argument, chan mode [chan mode]...\n";
 int fluid_handle_setlegatomode(void* data, int ac, char** av, 
 								fluid_ostream_t out)
 {
@@ -2238,17 +2243,23 @@ int fluid_handle_setlegatomode(void* data, int ac, char** av,
 		{
 			if (!fluid_is_number(av[i]))
 			{
-				fluid_ostream_printf(out, "setlegatomode:%s\n",InvalidArg);
+				fluid_ostream_printf(out, "setlegatomode:%s",InvalidArg);
 				return -1;	
 			}
 		}
 	}
 	n = ac / 2; /* number of legato information */
-	if(!ac || ac % 2) 
-	{	/* each entry needs 2 parameters: chan,mode */
-		fluid_ostream_printf(out, "setlegatomode:chan %d,%s\n",
+	if (!ac)
+	{
+		fluid_ostream_printf(out, "setlegatomode:%s",TooFewArgChanMode);
+		return -1;
+	}
+	else if(ac % 2)
+	{
+		/* each entry needs 2 parameters: chan,mode */
+		fluid_ostream_printf(out, "setlegatomode:chan %d,%s",
 					atoi(av[(n * 2)]),TooFewArgChanMode);
-		return -1;	
+		return -1;
 	}
 
 	for (i = 0; i < n; i++)
@@ -2259,7 +2270,7 @@ int fluid_handle_setlegatomode(void* data, int ac, char** av,
 	
 		result = fluid_synth_set_legato_mode(synth,chan,mode);
 		if (result == FLUID_FAILED)  
-			fluid_ostream_printf(out,"chan:%3d, mode:%3d, %s\n",
+			fluid_ostream_printf(out,"chan:%3d, mode:%3d, %s",
 									chan,mode, InvalidArg);
 	}
 	return 0;
@@ -2295,7 +2306,7 @@ int fluid_handle_portamentomode(void* data, int ac, char** av,
 	
 	for (i = 0; i < ac; i++)	{
 		if (!fluid_is_number(av[i]))		{
-			fluid_ostream_printf(out, "portamentomode:%s\n",InvalidArg);
+			fluid_ostream_printf(out, "portamentomode:%s",InvalidArg);
 			return -1;
 		}
 	}
@@ -2337,17 +2348,23 @@ int fluid_handle_setportamentomode(void* data, int ac, char** av,
 		{
 			if (!fluid_is_number(av[i]))
 			{
-				fluid_ostream_printf(out, "setportamentomode:%s\n",InvalidArg);
+				fluid_ostream_printf(out, "setportamentomode:%s",InvalidArg);
 				return -1;	
 			}
 		}
 	}
 	n = ac / 2; /* number of portamento information */
-	if(!ac || ac % 2) 
-	{	/* each entry needs 2 parameters: chan,mode */
-		fluid_ostream_printf(out, "setportamentomode:chan %d,%s\n",
+	if (!ac)
+	{
+		fluid_ostream_printf(out, "setportamentomode:%s",TooFewArgChanMode);
+		return -1;
+	}
+	else if(ac % 2)
+	{
+		/* each entry needs 2 parameters: chan,mode */
+		fluid_ostream_printf(out, "setportamentomode:chan %d,%s",
 					atoi(av[(n * 2)]),TooFewArgChanMode);
-		return -1;	
+		return -1;
 	}
 
 	for (i = 0; i < n; i++)
@@ -2358,7 +2375,7 @@ int fluid_handle_setportamentomode(void* data, int ac, char** av,
 	
 		result = fluid_synth_set_portamento_mode(synth,chan,mode);
 		if (result == FLUID_FAILED)  
-			fluid_ostream_printf(out,"chan:%3d, mode:%3d, %s\n",
+			fluid_ostream_printf(out,"chan:%3d, mode:%3d, %s",
 									chan,mode, InvalidArg);
 	}
 	return 0;
@@ -2393,7 +2410,7 @@ int fluid_handle_breathmode(void* data, int ac, char** av,
 	
 	for (i = 0; i < ac; i++)	{
 		if (!fluid_is_number(av[i]))		{
-			fluid_ostream_printf(out, "breathmode:%s\n",InvalidArg);
+			fluid_ostream_printf(out, "breathmode:%s",InvalidArg);
 			return -1;
 		}
 	}
@@ -2433,7 +2450,7 @@ int fluid_handle_breathmode(void* data, int ac, char** av,
   Changes breath options for channels chan1 and [chan2...]
 */
 char *TooFewArgBreath = 
-" too few argument:\nchan 1/0(breath poly) 1/0(breath mono) 1/0(breath sync mono)[..]";
+" too few argument:\nchan 1/0(breath poly) 1/0(breath mono) 1/0(breath sync mono)[..]\n";
 int fluid_handle_setbreathmode(void* data, int ac, char** av, 
 								fluid_ostream_t out)
 {
@@ -2448,17 +2465,24 @@ int fluid_handle_setbreathmode(void* data, int ac, char** av,
 		{
 			if (!fluid_is_number(av[i]))
 			{
-				fluid_ostream_printf(out, "setbreathmode:%s\n",InvalidArg);
+				fluid_ostream_printf(out, "setbreathmode:%s",InvalidArg);
 				return -1;	
 			}
 		}
 	}
 	n = ac / 4; /* number of default breath informations */
-	if(!ac || ac % 4) 
-	{	/* each entry needs 3 parameters: chan,chan1 poly_breath(1/0) mono_breath(1/0) */
-		fluid_ostream_printf(out, "setbreathmode:chan %d,%s\n",
-					atoi(av[(n * 3)]),TooFewArgBreath);
-		return -1;	
+	if (!ac)
+	{
+		fluid_ostream_printf(out, "setbreathmode:%s",TooFewArgBreath);
+		return -1;
+	}
+	else if(ac % 4)
+	{
+		/* each entry needs 4 parameters: chan,poly_breath(1/0) mono_breath(1/0) 
+		   breath sync (1/0) */
+		fluid_ostream_printf(out, "setbreathmode:chan %d,%s",
+					atoi(av[(n * 4)]),TooFewArgBreath);
+		return -1;
 	}
 
 	for (i = 0; i < n; i++)
