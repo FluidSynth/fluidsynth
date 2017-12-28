@@ -44,21 +44,15 @@ extern int fluid_is_number(char* a);
 #define get_fluid_channel_breath_infos(chan) (chan->mode & MASK_BREATH_MODE)
 
 /**  API Poly/mono mode ******************************************************/
+
 /**
  * Gets the list of basic channel informations from the synth instance.
  *
- * @param synth the synth instance.
- * @param basicChannelInfos, 
- * - If non NULL the function returns a pointer to an allocated table of 
- * fluid_basic_channels_infos or NULL on allocation error.
- * The caller must free this table when finished with it.
- * 
- * - If NULL the function return only the count of basic channel.
- *      
- * - Each entry in the table is a fluid_basic_channels_infos_t information: 
- *     -basicchan the Basic Channel number (0 to MIDI channel count-1).
- *     -mode the MIDI mode to use for basicchan (0 to 3).
- *     -val Number of channels (0 to MIDI channel count).
+ * @param synth the synth instance
+ * @param basicChannelInfos
+ *  - If not NULL the function returns a pointer to an allocated array of #fluid_basic_channel_infos_t or NULL on allocation error. The caller must free this array when finished with it
+ *  - If NULL the function returns only the count of basic channel
+ *  - Each entry in the array is a fluid_basic_channels_infos_t information
  * 
  * @return 
  *  - Count of basic channel informations in the returned table. 
@@ -66,11 +60,8 @@ extern int fluid_is_number(char* a);
  *    - synth is NULL.
  *    - allocation error.
  *
- * Remark: by default a synth instance have only one basic channel
- * on MIDI channel 0 in Poly Omni On (i.e all MIDI channels are polyphonic).
- * 
- * Note: default shell has an equivalent command "basicchannels" to display
- * the list of basics channels. 
+ * @note By default a synth instance has only one basic channel
+ * on MIDI channel 0 in Poly Omni On state (i.e all MIDI channels are polyphonic).
  */
 int fluid_synth_get_basic_channels(	fluid_synth_t* synth,
 					fluid_basic_channel_infos_t **basicChannelInfos)
@@ -125,15 +116,9 @@ int fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth,
  *
  * @param synth the synth instance.
  * @param n Number of entries in basicChannelInfos.
- * @param basicChannelInfos the list of basic channel infos to set. 
- *      
+ * @param basicChannelInfos the list of basic channel infos to set.
  * If n is 0 or basicChannelInfos is NULL the function set one channel basic at
  * basicchan 0 in Omni On Poly (i.e all the MIDI channels are polyphonic).
- *      
- * Each entry in the table is a fluid_basic_channels_infos_t information: 
- *     -basicchan the Basic Channel number (0 to MIDI channel count-1).
- *     -mode the MIDI mode to use for basicchan (0 to 3).
- *     -val the value (for mode 3 only) (0 to MIDI channel count).
  * 
  * @return
  *  - FLUID_OK on success.
@@ -143,10 +128,8 @@ int fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth,
  *    - mode is invalid. 
  *    - val has a number of channels overlapping the next basic channel.
  * 
- * Note:This API is the only one to replace all the basics channels in the 
+ * @note This API is the only one to replace all the basics channels in the 
  * synth instance.
- * The default shell has an equivalent command "resetbasicchannels" to set one
- * or more basic channels.
  */
 char * WarningMsg ="resetbasicchannels: Different entries have the same basic channel.\n\
 An entry supersedes a previous entry with the same basic channel.\n";
@@ -264,7 +247,7 @@ int fluid_synth_set_basic_channel(fluid_synth_t* synth, int basicchan, int mode,
  * the previous basic channel and the next basic channel. val value of the previous
  * basic channel will be narrowed if necessary. 
  * 
- * The function is used internally by API  fluid_synth_reset_basic_channels() and
+ * The function is used internally by API fluid_synth_reset_basic_channels() and
  * fluid_synth_set_basic_channel().
  * 
  * @param synth the synth instance.
@@ -277,8 +260,6 @@ int fluid_synth_set_basic_channel(fluid_synth_t* synth, int basicchan, int mode,
  * - FLUID_FAILED
  *   - basicchan is outside MIDI channel count.
  *   - val has a number of channels overlapping the next basic channel.
- * 
- * Note: default shell has an equivalent command "setbasicchannels".
  */
 char * WarningMsg1 = "Basic channel %d has been narrowed to %d channels.";
 char * WarningMsg2 = "Basic channel %d have number of channels that overlaps.\n\
@@ -373,18 +354,9 @@ int fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth,
 /**
  * Returns poly mono mode informations from any MIDI channel.
  *
- * @param synth the synth instance.
- * @param chan MIDI channel number (0 to MIDI channel count - 1).
- * @param  modeInfos, pointer on a fluid_basic_channels_infos_t informations. 
- *     - basicchan , chan.
- *     - mode MIDI mode infos of chan:
- *       bit 0: FLUID_CHANNEL_POLY_OFF:	0,Polyphonic;	1,Monophonic.
- *       bit 1: FLUID_CHANNEL_OMNI_OFF:	0,Omni  On;		1,Omni Off.
- *       bit 2: FLUID_CHANNEL_BASIC:	1, chan is a Basic Channel.
- *       bit 3: FLUID_CHANNEL_ENABLED: 1,chan is enabled. 
- *                       0,chan ignores voices messages (MIDI note on/of, cc).
- *     - val, Number of channels in the group from basic channel (if bit 2 is set)
- *     or 0 if bit 2 is 0.
+ * @param synth the synth instance
+ * @param chan MIDI channel number (0 to MIDI channel count - 1)
+ * @param modeInfos Pointer to a #fluid_basic_channel_infos_t struct
  *
  * @return
  * - FLUID_OK on success.
@@ -392,8 +364,6 @@ int fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth,
  *   - synth is NULL.
  *   - chan is outside MIDI channel count.
  *   - modeInfos is NULL.
- *
- * Note: default shell has an equivalent command "channelsmode".
  */
 int fluid_synth_get_channel_mode(fluid_synth_t* synth, int chan,
 				fluid_basic_channel_infos_t  *modeInfos)
@@ -409,14 +379,13 @@ int fluid_synth_get_channel_mode(fluid_synth_t* synth, int chan,
 	FLUID_API_RETURN(FLUID_OK);
 }
 /**  API legato mode *********************************************************/
+
 /**
  * Sets the legato mode of a channel.
  * 
- * @param synth the synth instance.
- * @param chan MIDI channel number (0 to MIDI channel count - 1).
- * @param legatomode
- *    0: FLUID_CHANNEL_LEGATO_MODE_RETRIGGER.
- *    1: FLUID_CHANNEL_LEGATO_MODE_MULTI_RETRIGGER.
+ * @param synth the synth instance
+ * @param chan MIDI channel number (0 to MIDI channel count - 1)
+ * @param legatomode The legato mode as indicated by #fluid_channel_legato_mode
  *
  * @return
  * - FLUID_OK on success.
@@ -440,11 +409,9 @@ int fluid_synth_set_legato_mode(fluid_synth_t* synth, int chan, int legatomode)
 /**
  * Gets the legato mode of a channel.
  *
- * @param synth the synth instance.
- * @param chan MIDI channel number (0 to MIDI channel count - 1).
- * @param legatomode, pointer to the returned mode .
- *    0: FLUID_CHANNEL_LEGATO_MODE_RETRIGGER.
- *    1: FLUID_CHANNEL_LEGATO_MODE_MULTI_RETRIGGER.
+ * @param synth the synth instance
+ * @param chan MIDI channel number (0 to MIDI channel count - 1)
+ * @param legatomode The legato mode as indicated by #fluid_channel_legato_mode
  *
  * @return
  * - FLUID_OK on success.
@@ -465,16 +432,13 @@ int fluid_synth_get_legato_mode(fluid_synth_t* synth, int chan, int *legatomode)
 }
 
 /**  API portamento mode *********************************************************/
+
 /**
  * Sets the portamento mode of a channel.
  *
- * @param synth the synth instance.
- * @param chan MIDI channel number (0 to MIDI channel count - 1).
- * @param portamentomode .
- *    0: FLUID_CHANNEL_PORTAMENTO_MODE_EACH_NOTE.
- *    1: FLUID_CHANNEL_PORTAMENTO_MODE_LEGATO_ONLY.
- *    2: FLUID_CHANNEL_PORTAMENTO_MODE_STACCATO_ONLY.
- *
+ * @param synth the synth instance
+ * @param chan MIDI channel number (0 to MIDI channel count - 1)
+ * @param portamentomode The portamento mode as indicated by #fluid_channel_portamento_mode
  * @return
  * - FLUID_OK on success.
  * - FLUID_FAILED 
@@ -498,13 +462,9 @@ int fluid_synth_set_portamento_mode(fluid_synth_t* synth, int chan,
 /**
  * Gets the portamento mode of a channel.
  *
- * @param synth the synth instance.
- * @param chan MIDI channel number (0 to MIDI channel count - 1).
- * @param portamentomode pointer to the returned mode.
- *    0: FLUID_CHANNEL_PORTAMENTO_MODE_EACH_NOTE.
- *    1: FLUID_CHANNEL_PORTAMENTO_MODE_LEGATO_ONLY.
- *    2: FLUID_CHANNEL_PORTAMENTO_MODE_STACCATO_ONLY.
- *
+ * @param synth the synth instance
+ * @param chan MIDI channel number (0 to MIDI channel count - 1)
+ * @param portamentomode Pointer to the portamento mode as indicated by #fluid_channel_portamento_mode
  * @return
  * - FLUID_OK on success.
  * - FLUID_FAILED 
@@ -525,15 +485,13 @@ int fluid_synth_get_portamento_mode(fluid_synth_t* synth, int chan,
 }
 
 /**  API breath mode *********************************************************/
+
 /**
- * Sets the breath mode of a channel. 
+ * Sets the breath mode of a channel.
  *
- * @param synth the synth instance.
- * @param chan MIDI channel number (0 to MIDI channel count - 1).
- * @param breathmode bits:
- *    FLUID_CHANNEL_BREATH_POLY   default breath poly On/Off.
- *    FLUID_CHANNEL_BREATH_MONO   default breath mono On/Off.
- *    FLUID_CHANNEL_BREATH_SYNC   breath noteOn/noteOff triggering On/Off.
+ * @param synth the synth instance
+ * @param chan MIDI channel number (0 to MIDI channel count - 1)
+ * @param breathmode The breath mode as indicated by #fluid_channel_breath_flags
  *
  * @return
  * - FLUID_OK on success.
@@ -554,12 +512,9 @@ int fluid_synth_set_breath_mode(fluid_synth_t* synth, int chan, int breathmode)
 /**
  * Gets the breath mode of a channel.
  *
- * @param synth the synth instance.
- * @param chan MIDI channel number (0 to MIDI channel count - 1).
- * @param breathmode, pointer to the returned breath mode.
- *    FLUID_CHANNEL_BREATH_POLY   default breath poly On/Off.
- *    FLUID_CHANNEL_BREATH_MONO   default breath mono On/Off.
- *    FLUID_CHANNEL_BREATH_SYNC   breath noteOn/noteOff triggering On/Off.
+ * @param synth the synth instance
+ * @param chan MIDI channel number (0 to MIDI channel count - 1)
+ * @param breathmode Pointer to the returned breath mode as indicated by #fluid_channel_breath_flags
  *
  * @return
  * - FLUID_OK on success.

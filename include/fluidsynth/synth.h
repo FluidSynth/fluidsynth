@@ -51,34 +51,39 @@ extern "C" {
  */
 
 /* Interface to poly/mono mode variables */
-enum fluid_basic_channel_mode_flags
+enum fluid_channel_mode_flags
 {
     /* channel mode bits */
-    FLUID_CHANNEL_POLY_OFF = 0x01, /* bit 0, 0: poly on(i.e mono off) , 1: poly_off(i.e mono on  ) */
-    FLUID_CHANNEL_OMNI_OFF = 0x02, /* bit 1, 0: omni on, 1:omni off */
+    FLUID_CHANNEL_POLY_OFF = 0x01, /**< if flag set the basic channel is in mono on state, if not set poly is on */
+    FLUID_CHANNEL_OMNI_OFF = 0x02, /**< if flag set the basic channel is in omni on state, if not set omni is off */
     
-    FLUID_CHANNEL_BASIC = 0x04,    /* bit 2, 1: channel is basic channel */
-    FLUID_CHANNEL_ENABLED = 0x08,  /* bit 3, 1: channel is enabled */
-    
-    /* breath mode bits infos */
-    FLUID_CHANNEL_BREATH_POLY = 0x10,  /* b4, 1: default breath poly On */
-    FLUID_CHANNEL_BREATH_MONO = 0x20,  /* b5, 1: default breath mono On */
-    FLUID_CHANNEL_BREATH_SYNC = 0x40,  /* b6, 1: BreathSyn On */
-    
-    /* MIDI Modes number 0 to 3 */    
-    FLUID_CHANNEL_MODE_MASK = (FLUID_CHANNEL_OMNI_OFF | FLUID_CHANNEL_POLY_OFF),
-    FLUID_CHANNEL_MODE_OMNION_POLY = FLUID_CHANNEL_MODE_MASK & (~FLUID_CHANNEL_OMNI_OFF & ~FLUID_CHANNEL_POLY_OFF), /* MIDI mode 0 */
-    FLUID_CHANNEL_MODE_OMNION_MONO = FLUID_CHANNEL_MODE_MASK & (~FLUID_CHANNEL_OMNI_OFF & FLUID_CHANNEL_POLY_OFF), /* MIDI mode 1 */
-    FLUID_CHANNEL_MODE_OMNIOFF_POLY = FLUID_CHANNEL_MODE_MASK & (FLUID_CHANNEL_OMNI_OFF & ~FLUID_CHANNEL_POLY_OFF), /* MIDI mode 2 */
-    FLUID_CHANNEL_MODE_OMNIOFF_MONO = FLUID_CHANNEL_MODE_MASK & (FLUID_CHANNEL_OMNI_OFF | FLUID_CHANNEL_POLY_OFF), /* MIDI mode 3 */
-    FLUID_CHANNEL_MODE_LAST /* NOT PART OF PUBLIC API/ABI stability guarantee */
+    FLUID_CHANNEL_BASIC = 0x04,    /**< if flag set the corresponding midi channel is a basic channel */
+    FLUID_CHANNEL_ENABLED = 0x08,  /**< if flag set the corresponding midi channel is enabled, else disabled, i.e. channel ignores any MIDI messages */
+};
+
+/* breath mode bits infos */
+enum fluid_channel_breath_flags
+{
+    FLUID_CHANNEL_BREATH_POLY = 0x10,  /**< bit 4, 1: default breath poly On */
+    FLUID_CHANNEL_BREATH_MONO = 0x20,  /**< bit 5, 1: default breath mono On */
+    FLUID_CHANNEL_BREATH_SYNC = 0x40,  /**< bit 6, 1: BreathSyn On */
+};
+
+enum fluid_basic_channel_modes
+{  
+    FLUID_CHANNEL_MODE_MASK = (FLUID_CHANNEL_OMNI_OFF | FLUID_CHANNEL_POLY_OFF), /**< Mask Poly and Omni bits of #fluid_basic_channel_flags */
+    FLUID_CHANNEL_MODE_OMNION_POLY = FLUID_CHANNEL_MODE_MASK & (~FLUID_CHANNEL_OMNI_OFF & ~FLUID_CHANNEL_POLY_OFF), /**< MIDI mode 0 */
+    FLUID_CHANNEL_MODE_OMNION_MONO = FLUID_CHANNEL_MODE_MASK & (~FLUID_CHANNEL_OMNI_OFF & FLUID_CHANNEL_POLY_OFF), /**< MIDI mode 1 */
+    FLUID_CHANNEL_MODE_OMNIOFF_POLY = FLUID_CHANNEL_MODE_MASK & (FLUID_CHANNEL_OMNI_OFF & ~FLUID_CHANNEL_POLY_OFF), /**< MIDI mode 2 */
+    FLUID_CHANNEL_MODE_OMNIOFF_MONO = FLUID_CHANNEL_MODE_MASK & (FLUID_CHANNEL_OMNI_OFF | FLUID_CHANNEL_POLY_OFF), /**< MIDI mode 3 */
+    FLUID_CHANNEL_MODE_LAST /**< @internal Value defines the count of basic channel modes (#fluid_basic_channel_modes) @warning This symbol is not part of the public API and ABI stability guarantee and may change at any time! */
 };
 
 struct _fluid_basic_channel_infos_t
 {
-	int basicchan;  /* MIDI channel numer to set as basic channel */
-	int mode;       /* 0:OmniOn_Poly	 1:OmniOn_Mono	2:OmniOff_Poly	3 OmniOff_Mono */
-	int val;        /* Number of monophonic channel (Mode 3) */
+	int basicchan;  /**< MIDI channel numer to set as basic channel */
+	int mode;       /**< indicates the mode this basic channel is set to (see #fluid_channel_mode_flags) */
+	int val;        /**< Number of monophonic channel (Mode 3) */
 };
 typedef struct  _fluid_basic_channel_infos_t   fluid_basic_channel_infos_t;
 
@@ -94,29 +99,23 @@ FLUIDSYNTH_API int fluid_synth_set_basic_channel(fluid_synth_t* synth,
 /* n1,n2,n3,.. is a legato passage. n1 is the first note, and n2,n3,n4 are played
  legato with previous note. 
 */
-enum fluid__channel_legato_mode
+enum fluid_channel_legato_mode
 {
-	/* Release previous note (normal release), start a new note */
-	FLUID_CHANNEL_LEGATO_MODE_RETRIGGER, /* mode 0 */
-	/* On n2,n3,.. retrigger in attack section using  current value and 
-	  shape attack using current dynamic. n2,n3,..make use of previous voices if any.*/ 
-	FLUID_CHANNEL_LEGATO_MODE_MULTI_RETRIGGER, /* mode 1 */
-	FLUID_CHANNEL_LEGATO_MODE_LAST /* NOT PART OF PUBLIC API/ABI stability guarantee */
+	FLUID_CHANNEL_LEGATO_MODE_RETRIGGER, /**< Mode 0 - Release previous note, start a new note */
+	FLUID_CHANNEL_LEGATO_MODE_MULTI_RETRIGGER, /**< Mode 1 - On contiguous notes retrigger in attack section using current value, shape attack using current dynamic and make use of previous voices if any */
+	FLUID_CHANNEL_LEGATO_MODE_LAST /**< @internal Value defines the count of legato modes (#fluid_channel_legato_mode) @warning This symbol is not part of the public API and ABI stability guarantee and may change at any time! */
 };
 
 FLUIDSYNTH_API int fluid_synth_set_legato_mode(fluid_synth_t* synth, int chan, int legatomode);
 FLUIDSYNTH_API int fluid_synth_get_legato_mode(fluid_synth_t* synth, int chan, int  *legatomode);
 
 /* Interface to portamento mode  */
-enum fluid__channel_portamento_mode
+enum fluid_channel_portamento_mode
 {
-	/* Portamento on each note (staccato or legato) */
-	FLUID_CHANNEL_PORTAMENTO_MODE_EACH_NOTE,      /* mode 0 */
-	/* Portamento only on legato note  */ 
-	FLUID_CHANNEL_PORTAMENTO_MODE_LEGATO_ONLY,    /* mode 1 */
-	/* Portamento only on staccato note  */ 
-	FLUID_CHANNEL_PORTAMENTO_MODE_STACCATO_ONLY,  /* mode 2 */
-	FLUID_CHANNEL_PORTAMENTO_MODE_LAST /* NOT PART OF PUBLIC API/ABI stability guarantee */
+	FLUID_CHANNEL_PORTAMENTO_MODE_EACH_NOTE, /**< Mode 0 - Portamento on each note (staccato or legato) */
+	FLUID_CHANNEL_PORTAMENTO_MODE_LEGATO_ONLY, /**< Mode 1 - Portamento only on legato note */
+	FLUID_CHANNEL_PORTAMENTO_MODE_STACCATO_ONLY, /**< Mode 2 - Portamento only on staccato note */
+	FLUID_CHANNEL_PORTAMENTO_MODE_LAST /**< @internal Value defines the count of portamento modes (#fluid_channel_portamento_mode) @warning This symbol is not part of the public API and ABI stability guarantee and may change at any time! */
 };
 
 FLUIDSYNTH_API int fluid_synth_set_portamento_mode(fluid_synth_t* synth,
@@ -208,11 +207,6 @@ FLUIDSYNTH_API int fluid_synth_get_bank_offset(fluid_synth_t* synth, int sfont_i
 
 /* Reverb  */
 
-  /*
-   * 
-   * Reverb 
-   *
-   */
 
 FLUIDSYNTH_API int fluid_synth_set_reverb(fluid_synth_t* synth, double roomsize, 
 					 double damping, double width, double level);
