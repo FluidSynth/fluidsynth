@@ -1020,7 +1020,7 @@ fluid_synth_noteon_LOCAL(fluid_synth_t* synth, int chan, int key, int vel)
     return FLUID_FAILED;
   }
   
-  if(is_fluid_channel_playing_mono(channel)) /* channel is mono or legato On) */
+  if(fluid_channel_is_playing_mono(channel)) /* channel is mono or legato On) */
   {		/* play the noteOn in monophonic */
 		return fluid_synth_noteon_mono_LOCAL(synth, chan, key, vel);
   }
@@ -1076,7 +1076,7 @@ fluid_synth_noteoff_LOCAL(fluid_synth_t* synth, int chan, int key)
 {
   int status;
   fluid_channel_t* channel = synth->channel[chan];
-  if(is_fluid_channel_playing_mono(channel)) /* channel is mono or legato On) */
+  if(fluid_channel_is_playing_mono(channel)) /* channel is mono or legato On) */
   {		/* play the noteOff in monophonic */
 		status = fluid_synth_noteoff_mono_LOCAL(synth, chan, key);
   }
@@ -3551,7 +3551,7 @@ fluid_synth_alloc_voice_LOCAL(fluid_synth_t* synth, fluid_sample_t* sample, int 
     API fluid_synth_set_breath_mode() or shell command setbreathmode for this channel.
   */
   {
-    int mono = is_fluid_channel_playing_mono(channel);
+    int mono = fluid_channel_is_playing_mono(channel);
     fluid_mod_t* default_mod =synth->default_mod; 
     while (default_mod != NULL)
     {
