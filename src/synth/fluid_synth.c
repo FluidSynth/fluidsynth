@@ -1494,10 +1494,12 @@ fluid_synth_cc_LOCAL (fluid_synth_t* synth, int channum, int num)
   case RPN_LSB:
     chan->nrpn_active = 0;
     break;
+    
+  case BREATH_MSB:
+    /* handles CC Breath On/Off noteOn/noteOff mode */
+    fluid_channel_cc_breath_note_on_off(chan, value);
+    /* fall-through */
   default:
-	/* handles CC Breath On/Off noteOn/noteOff mode */
-	if (num == BREATH_MSB) fluid_channel_cc_breath_note_on_off(chan, value);
-
     return fluid_synth_modulate_voices_LOCAL (synth, channum, 1, num);
   }
 
