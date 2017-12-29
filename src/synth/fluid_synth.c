@@ -992,9 +992,11 @@ fluid_synth_noteon(fluid_synth_t* synth, int chan, int key, int vel)
   fluid_return_val_if_fail (key >= 0 && key <= 127, FLUID_FAILED);
   fluid_return_val_if_fail (vel >= 0 && vel <= 127, FLUID_FAILED);
   FLUID_API_ENTRY_CHAN(FLUID_FAILED);
+  
   /* Allowed only on MIDI channel enabled */
-  if(! (synth->channel[chan]->mode &  FLUID_CHANNEL_ENABLED)) result = FLUID_FAILED;
-  else result = fluid_synth_noteon_LOCAL (synth, chan, key, vel);
+  FLUID_API_RETURN_IF_CHAN_DISABLED(FLUID_FAILED);
+    
+  result = fluid_synth_noteon_LOCAL (synth, chan, key, vel);
   FLUID_API_RETURN(result);
 }
 
@@ -1063,10 +1065,11 @@ fluid_synth_noteoff(fluid_synth_t* synth, int chan, int key)
   int result;
   fluid_return_val_if_fail (key >= 0 && key <= 127, FLUID_FAILED);
   FLUID_API_ENTRY_CHAN(FLUID_FAILED);
-  /* Allowed only on MIDI channel enabled */
-  if(! (synth->channel[chan]->mode &  FLUID_CHANNEL_ENABLED)) result = FLUID_FAILED;
-  else result = fluid_synth_noteoff_LOCAL (synth, chan, key);
   
+  /* Allowed only on MIDI channel enabled */
+  FLUID_API_RETURN_IF_CHAN_DISABLED(FLUID_FAILED);
+  
+  result = fluid_synth_noteoff_LOCAL (synth, chan, key);
   FLUID_API_RETURN(result);
 }
 
@@ -1522,13 +1525,12 @@ fluid_synth_get_cc(fluid_synth_t* synth, int chan, int num, int* pval)
   fluid_return_val_if_fail (pval != NULL, FLUID_FAILED);
 
   FLUID_API_ENTRY_CHAN(FLUID_FAILED);
+  
   /* Allowed only on MIDI channel enabled */
-  if(!(synth->channel[chan]->mode &  FLUID_CHANNEL_ENABLED)) result = FLUID_FAILED;
-  else{
-	*pval = fluid_channel_get_cc (synth->channel[chan], num);
-	result = FLUID_OK;
-  }
-  FLUID_API_RETURN(result);
+  FLUID_API_RETURN_IF_CHAN_DISABLED(FLUID_FAILED);
+  
+  *pval = fluid_channel_get_cc (synth->channel[chan], num);
+  FLUID_API_RETURN(FLUID_OK);
 }
 
 /*
@@ -1838,9 +1840,11 @@ fluid_synth_all_notes_off(fluid_synth_t* synth, int chan)
   if (chan >= synth->midi_channels) 
     result = FLUID_FAILED;
   else
+  {
     /* Allowed only on MIDI channel enabled */
-    if(!(synth->channel[chan]->mode &  FLUID_CHANNEL_ENABLED)) result = FLUID_FAILED;
-    else result = fluid_synth_all_notes_off_LOCAL (synth, chan);
+    FLUID_API_RETURN_IF_CHAN_DISABLED(FLUID_FAILED);
+    result = fluid_synth_all_notes_off_LOCAL (synth, chan);
+  }
   FLUID_API_RETURN(result);
 }
 
@@ -1879,9 +1883,11 @@ fluid_synth_all_sounds_off(fluid_synth_t* synth, int chan)
   if (chan >= synth->midi_channels) 
     result = FLUID_FAILED;
   else
+  {
     /* Allowed only on MIDI channel enabled */
-    if(! (synth->channel[chan]->mode &  FLUID_CHANNEL_ENABLED)) result = FLUID_FAILED;
-    else result = fluid_synth_all_sounds_off_LOCAL (synth, chan);
+    FLUID_API_RETURN_IF_CHAN_DISABLED(FLUID_FAILED);
+    result = fluid_synth_all_sounds_off_LOCAL (synth, chan);
+  }
   FLUID_API_RETURN(result);
 }
 
@@ -2024,16 +2030,16 @@ fluid_synth_channel_pressure(fluid_synth_t* synth, int chan, int val)
   fluid_return_val_if_fail (val >= 0 && val <= 127, FLUID_FAILED);
 
   FLUID_API_ENTRY_CHAN(FLUID_FAILED);
+  
   /* Allowed only on MIDI channel enabled */
-  if(! (synth->channel[chan]->mode &  FLUID_CHANNEL_ENABLED)) result = FLUID_FAILED;
-  else  {
-	  if (synth->verbose)
-		FLUID_LOG(FLUID_INFO, "channelpressure\t%d\t%d", chan, val);
+  FLUID_API_RETURN_IF_CHAN_DISABLED(FLUID_FAILED);
+  
+  if (synth->verbose)
+    FLUID_LOG(FLUID_INFO, "channelpressure\t%d\t%d", chan, val);
 
-	  fluid_channel_set_channel_pressure (synth->channel[chan], val);
+  fluid_channel_set_channel_pressure (synth->channel[chan], val);
+  result = fluid_synth_update_channel_pressure_LOCAL (synth, chan);
 
-	  result = fluid_synth_update_channel_pressure_LOCAL (synth, chan);
-  }
   FLUID_API_RETURN(result);
 }
 
@@ -2061,16 +2067,16 @@ fluid_synth_key_pressure(fluid_synth_t* synth, int chan, int key, int val)
   fluid_return_val_if_fail (val >= 0 && val <= 127, FLUID_FAILED);
 
   FLUID_API_ENTRY_CHAN(FLUID_FAILED);
+  
   /* Allowed only on MIDI channel enabled */
-  if(! (synth->channel[chan]->mode &  FLUID_CHANNEL_ENABLED)) result = FLUID_FAILED;
-  else {
-  	if (synth->verbose)
-    		FLUID_LOG(FLUID_INFO, "keypressure\t%d\t%d\t%d", chan, key, val);
+  FLUID_API_RETURN_IF_CHAN_DISABLED(FLUID_FAILED);
+  
+  if (synth->verbose)
+    FLUID_LOG(FLUID_INFO, "keypressure\t%d\t%d\t%d", chan, key, val);
 
-  	fluid_channel_set_key_pressure (synth->channel[chan], key, val);
+  fluid_channel_set_key_pressure (synth->channel[chan], key, val);
+  result = fluid_synth_update_key_pressure_LOCAL (synth, chan, key);
 
-  	result = fluid_synth_update_key_pressure_LOCAL (synth, chan, key);
-  }
   FLUID_API_RETURN(result);
 }
 
@@ -2109,15 +2115,14 @@ fluid_synth_pitch_bend(fluid_synth_t* synth, int chan, int val)
   FLUID_API_ENTRY_CHAN(FLUID_FAILED);
   
   /* Allowed only on MIDI channel enabled */
-  if(! (synth->channel[chan]->mode &  FLUID_CHANNEL_ENABLED)) result = FLUID_FAILED;
-  else {
-	  if (synth->verbose)
-		FLUID_LOG(FLUID_INFO, "pitchb\t%d\t%d", chan, val);
+  FLUID_API_RETURN_IF_CHAN_DISABLED(FLUID_FAILED);
+  
+  if (synth->verbose)
+    FLUID_LOG(FLUID_INFO, "pitchb\t%d\t%d", chan, val);
 
-	  fluid_channel_set_pitch_bend (synth->channel[chan], val);
-
-	  result = fluid_synth_update_pitch_bend_LOCAL (synth, chan);
-  }
+  fluid_channel_set_pitch_bend (synth->channel[chan], val);
+  result = fluid_synth_update_pitch_bend_LOCAL (synth, chan);
+  
   FLUID_API_RETURN(result);
 }
 
@@ -2144,11 +2149,11 @@ fluid_synth_get_pitch_bend(fluid_synth_t* synth, int chan, int* ppitch_bend)
   FLUID_API_ENTRY_CHAN(FLUID_FAILED);
   
   /* Allowed only on MIDI channel enabled */
-  if(! (synth->channel[chan]->mode &  FLUID_CHANNEL_ENABLED)) result = FLUID_FAILED;
-  else {
+  FLUID_API_RETURN_IF_CHAN_DISABLED(FLUID_FAILED);
+  
 	  *ppitch_bend = fluid_channel_get_pitch_bend (synth->channel[chan]);
 	  result = FLUID_OK;
-  }
+  
   FLUID_API_RETURN(result);
 }
 
@@ -2167,15 +2172,14 @@ fluid_synth_pitch_wheel_sens(fluid_synth_t* synth, int chan, int val)
   FLUID_API_ENTRY_CHAN(FLUID_FAILED);
   
   /* Allowed only on MIDI channel enabled */
-  if(! (synth->channel[chan]->mode &  FLUID_CHANNEL_ENABLED)) result = FLUID_FAILED;
-  else {
-	if (synth->verbose)
-		FLUID_LOG(FLUID_INFO, "pitchsens\t%d\t%d", chan, val);
+  FLUID_API_RETURN_IF_CHAN_DISABLED(FLUID_FAILED);
+  
+  if (synth->verbose)
+    FLUID_LOG(FLUID_INFO, "pitchsens\t%d\t%d", chan, val);
 
-	fluid_channel_set_pitch_wheel_sensitivity (synth->channel[chan], val);
-
-    result = fluid_synth_update_pitch_wheel_sens_LOCAL (synth, chan);
-  }
+  fluid_channel_set_pitch_wheel_sensitivity (synth->channel[chan], val);
+  result = fluid_synth_update_pitch_wheel_sens_LOCAL (synth, chan);
+  
   FLUID_API_RETURN(result);
 }
 
@@ -2202,11 +2206,11 @@ fluid_synth_get_pitch_wheel_sens(fluid_synth_t* synth, int chan, int* pval)
   FLUID_API_ENTRY_CHAN(FLUID_FAILED);
   
   /* Allowed only on MIDI channel enabled */
-  if(! (synth->channel[chan]->mode &  FLUID_CHANNEL_ENABLED)) result = FLUID_FAILED;
-  else {
+  FLUID_API_RETURN_IF_CHAN_DISABLED(FLUID_FAILED);
+  
 	*pval = fluid_channel_get_pitch_wheel_sensitivity (synth->channel[chan]);
 	result = FLUID_OK;
-  }
+  
   FLUID_API_RETURN(result);
 }
 
@@ -2341,10 +2345,11 @@ fluid_synth_program_change(fluid_synth_t* synth, int chan, int prognum)
   fluid_return_val_if_fail (prognum >= 0 && prognum <= 128, FLUID_FAILED);
   FLUID_API_ENTRY_CHAN(FLUID_FAILED);
   
-  channel = synth->channel[chan];
   /* Allowed only on MIDI channel enabled */
-  if(channel->mode &  FLUID_CHANNEL_ENABLED)
-  {
+  FLUID_API_RETURN_IF_CHAN_DISABLED(FLUID_FAILED);
+  
+  channel = synth->channel[chan];
+  
     if (channel->channel_type == CHANNEL_TYPE_DRUM) 
         banknum = DRUM_INST_BANK;
     else
@@ -2401,7 +2406,6 @@ fluid_synth_program_change(fluid_synth_t* synth, int chan, int prognum)
     fluid_channel_set_sfont_bank_prog (channel, preset ? fluid_sfont_get_id (preset->sfont) : 0,
                                         -1, prognum);
     result = fluid_synth_set_preset (synth, chan, preset);
-  }
   
   FLUID_API_RETURN(result);
 }
@@ -2419,12 +2423,13 @@ fluid_synth_bank_select(fluid_synth_t* synth, int chan, unsigned int bank)
   int result;
   fluid_return_val_if_fail (bank <= 16383, FLUID_FAILED);
   FLUID_API_ENTRY_CHAN(FLUID_FAILED);
+  
   /* Allowed only on MIDI channel enabled */
-  if(! (synth->channel[chan]->mode &  FLUID_CHANNEL_ENABLED)) result = FLUID_FAILED;
-  else {
+  FLUID_API_RETURN_IF_CHAN_DISABLED(FLUID_FAILED);
+  
 	fluid_channel_set_sfont_bank_prog (synth->channel[chan], -1, bank, -1);
 	result = FLUID_OK;
-  }
+  
   FLUID_API_RETURN(result);
 }
 
@@ -2442,11 +2447,11 @@ fluid_synth_sfont_select(fluid_synth_t* synth, int chan, unsigned int sfont_id)
   FLUID_API_ENTRY_CHAN(FLUID_FAILED);
   
   /* Allowed only on MIDI channel enabled */
-  if(! (synth->channel[chan]->mode &  FLUID_CHANNEL_ENABLED)) result = FLUID_FAILED;
-  else {
+  FLUID_API_RETURN_IF_CHAN_DISABLED(FLUID_FAILED);
+
     fluid_channel_set_sfont_bank_prog(synth->channel[chan], sfont_id, -1, -1);
 	result = FLUID_OK;
-  }
+  
   FLUID_API_RETURN(result);
 }
 
@@ -2489,17 +2494,17 @@ fluid_synth_get_program(fluid_synth_t* synth, int chan, unsigned int* sfont_id,
   fluid_return_val_if_fail (preset_num != NULL, FLUID_FAILED);
   FLUID_API_ENTRY_CHAN(FLUID_FAILED);
 
-  channel = synth->channel[chan];
   /* Allowed only on MIDI channel enabled */
-  if(! (channel->mode &  FLUID_CHANNEL_ENABLED)) result = FLUID_FAILED;
-  else {
+  FLUID_API_RETURN_IF_CHAN_DISABLED(FLUID_FAILED);
+  
+  channel = synth->channel[chan];
 	  fluid_channel_get_sfont_bank_prog(channel, (int *)sfont_id, (int *)bank_num,
 										(int *)preset_num);
 
 	  /* 128 indicates that the preset is unset.  Set to 0 to be backwards compatible. */
 	  if (*preset_num == FLUID_UNSET_PROGRAM) *preset_num = 0;
 	  result = FLUID_OK;
-  }
+  
   FLUID_API_RETURN(result);
 }
 
@@ -2521,11 +2526,11 @@ fluid_synth_program_select(fluid_synth_t* synth, int chan, unsigned int sfont_id
   int result;
   FLUID_API_ENTRY_CHAN(FLUID_FAILED);
 
-  channel = synth->channel[chan];
   /* Allowed only on MIDI channel enabled */
-  if(! (channel->mode & FLUID_CHANNEL_ENABLED)) result = FLUID_FAILED;
-  else {
-	  /* ++ Allocate preset */
+  FLUID_API_RETURN_IF_CHAN_DISABLED(FLUID_FAILED);
+  
+  channel = synth->channel[chan];
+  	  /* ++ Allocate preset */
 	  preset = fluid_synth_get_preset (synth, sfont_id, bank_num, preset_num);
 
 	  if (preset == NULL) {
@@ -2538,7 +2543,7 @@ fluid_synth_program_select(fluid_synth_t* synth, int chan, unsigned int sfont_id
 	  /* Assign the new SoundFont ID, bank and program number to the channel */
 	  fluid_channel_set_sfont_bank_prog (channel, sfont_id, bank_num, preset_num);
 	  result = fluid_synth_set_preset (synth, chan, preset);
-  }
+  
   FLUID_API_RETURN(result);
 }
 
@@ -2563,10 +2568,10 @@ fluid_synth_program_select_by_sfont_name (fluid_synth_t* synth, int chan,
   fluid_return_val_if_fail (sfont_name != NULL, FLUID_FAILED);
   FLUID_API_ENTRY_CHAN(FLUID_FAILED);
 
-  channel = synth->channel[chan];
   /* Allowed only on MIDI channel enabled */
-  if(! (channel->mode &  FLUID_CHANNEL_ENABLED)) result = FLUID_FAILED;
-  else {
+  FLUID_API_RETURN_IF_CHAN_DISABLED(FLUID_FAILED);
+  
+  channel = synth->channel[chan];
 	  /* ++ Allocate preset */
 	  preset = fluid_synth_get_preset_by_sfont_name (synth, sfont_name, bank_num,
 													 preset_num);
@@ -2581,7 +2586,7 @@ fluid_synth_program_select_by_sfont_name (fluid_synth_t* synth, int chan,
 	  fluid_channel_set_sfont_bank_prog (channel, fluid_sfont_get_id (preset->sfont),
 										 bank_num, preset_num);
 	  result = fluid_synth_set_preset (synth, chan, preset);
-  }
+  
   FLUID_API_RETURN(result);  
 }
 

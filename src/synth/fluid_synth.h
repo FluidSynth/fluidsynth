@@ -60,6 +60,13 @@
   do { fluid_synth_api_exit(synth); \
   return return_value; } while (0)
   
+#define FLUID_API_RETURN_IF_CHAN_DISABLED(return_value) \
+  do { if (FLUID_LIKELY(synth->channel[chan]->mode & FLUID_CHANNEL_ENABLED)) \
+       {} \
+       else \
+       { FLUID_API_RETURN(return_value); } \
+  } while (0)
+  
 /***************************************************************
  *
  *                         ENUM
