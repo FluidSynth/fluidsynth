@@ -5053,7 +5053,9 @@ fluid_synth_stop_LOCAL (fluid_synth_t *synth, unsigned int id)
 }
 
 /**
- * Offset the bank numbers of a loaded SoundFont.
+ * Offset the bank numbers of a loaded SoundFont, i.e.\ subtract
+ * \c offset from any bank number when assigning instruments.
+ * 
  * @param synth FluidSynth instance
  * @param sfont_id ID of a loaded SoundFont
  * @param offset Bank offset value to apply to all instruments
