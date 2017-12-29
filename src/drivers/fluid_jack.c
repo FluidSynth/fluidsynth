@@ -391,7 +391,7 @@ fluid_jack_client_close (fluid_jack_client_t *client_ref, void *driver)
 
   if (client_ref->audio_driver || client_ref->midi_driver)
   {
-    g_usleep (100000);  /* FIXME - Hack to make sure that resources don't get freed while Jack callback is active */
+    fluid_msleep(100);  /* FIXME - Hack to make sure that resources don't get freed while Jack callback is active */
     return;
   }
 
