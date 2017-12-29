@@ -329,9 +329,9 @@ enum fluid_channel_mode_flags
 /* breath mode bits infos */
 enum fluid_channel_breath_flags
 {
-    FLUID_CHANNEL_BREATH_POLY = 0x10,  /**< bit 4, 1: default breath poly On */
-    FLUID_CHANNEL_BREATH_MONO = 0x20,  /**< bit 5, 1: default breath mono On */
-    FLUID_CHANNEL_BREATH_SYNC = 0x40,  /**< bit 6, 1: BreathSyn On */
+    FLUID_CHANNEL_BREATH_POLY = 0x10,  /**< when channel is poly, if flag set the default velocity to initial Attenuation modulator is replaced by a breath modulator */
+    FLUID_CHANNEL_BREATH_MONO = 0x20,  /**< when channel is mono, if flag set the default velocity to initial Attenuation modulator is replaced by a breath modulator */
+    FLUID_CHANNEL_BREATH_SYNC = 0x40,  /**< when channel is mono, if flag set the breath controler(MSB)triggers noteon/noteoff on the running note */
 };
 
 enum fluid_basic_channel_modes
