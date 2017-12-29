@@ -2417,7 +2417,7 @@ fluid_synth_get_internal_bufsize(fluid_synth_t* synth)
 }
 
 /**
- * Resend a bank select and a program change for every channel.
+ * Resend a bank select and a program change for every channel and assign corresponding instruments.
  * @param synth FluidSynth instance
  * @return FLUID_OK on success, FLUID_FAILED otherwise
  *
@@ -2428,6 +2428,7 @@ int
 fluid_synth_program_reset(fluid_synth_t* synth)
 {
   int i, prog;
+  fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
   fluid_synth_api_enter(synth);
   /* try to set the correct presets */
   for (i = 0; i < synth->midi_channels; i++){
@@ -3235,7 +3236,7 @@ fluid_synth_add_sfloader(fluid_synth_t* synth, fluid_sfloader_t* loader)
  *
  * @param synth FluidSynth instance
  * @param filename File to load
- * @param reset_presets TRUE to re-assign presets for all MIDI channels
+ * @param reset_presets TRUE to re-assign presets for all MIDI channels (equivalent to calling fluid_synth_program_reset())
  * @return SoundFont ID on success, FLUID_FAILED on error
  */
 int
