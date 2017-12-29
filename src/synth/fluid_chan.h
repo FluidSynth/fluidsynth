@@ -158,7 +158,7 @@ struct _fluid_channel_t
 
 /* Macros interface to poly/mono mode variables */
 /* Returns true when channel is mono or legato is on */
-#define is_fluid_channel_playing_mono(chan) ((chan->mode & FLUID_CHANNEL_POLY_OFF) ||\
+#define fluid_channel_is_playing_mono(chan) ((chan->mode & FLUID_CHANNEL_POLY_OFF) ||\
                                              fluid_channel_legato(chan))
 void fluid_channel_set_onenote_monolist(fluid_channel_t* chan, unsigned char key, unsigned char vel);
 void fluid_channel_clear_monolist(fluid_channel_t* chan);
@@ -224,8 +224,8 @@ int fluid_channel_get_interp_method(fluid_channel_t* chan);
     ((_c)->cc[PORTAMENTO_TIME_MSB] * 128 + (_c)->cc[PORTAMENTO_TIME_LSB])
 #define fluid_channel_portamento(_c)			((_c)->cc[PORTAMENTO_SWITCH] >= 64)
 #define fluid_channel_breath_msb(_c)			((_c)->cc[BREATH_MSB] > 0)
-#define clearPortamentoCtrl(_c)		((_c)->cc[PORTAMENTO_CTRL] = INVALID_NOTE)
-#define portamentoCtrl(_c)			((unsigned char)(_c)->cc[PORTAMENTO_CTRL])
+#define fluid_channel_clear_portamento(_c)		((_c)->cc[PORTAMENTO_CTRL] = INVALID_NOTE)
+#define fluid_channel_get_cc_portamento(_c)			((unsigned char)(_c)->cc[PORTAMENTO_CTRL])
 #define fluid_channel_legato(_c)			    ((_c)->cc[LEGATO_SWITCH] >= 64)
 #define fluid_channel_sustained(_c)             ((_c)->cc[SUSTAIN_SWITCH] >= 64)
 #define fluid_channel_sostenuto(_c)             ((_c)->cc[SOSTENUTO_SWITCH] >= 64)

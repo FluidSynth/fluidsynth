@@ -475,10 +475,10 @@ void fluid_channel_set_onenote_monolist(fluid_channel_t* chan, unsigned char key
 static unsigned char get_fromkey_portamento_legato(fluid_channel_t* chan, 
 								   unsigned char default_fromkey)
 {
-	unsigned char ptc =  portamentoCtrl(chan);
+	unsigned char ptc =  fluid_channel_get_cc_portamento(chan);
 	if(is_valid_note(ptc))
 	{	/* CC PTC has been received */
-		clearPortamentoCtrl(chan);	/* clear the CC PTC receive */
+		fluid_channel_clear_portamento(chan);	/* clear the CC PTC receive */
 		chan->synth->fromkey_portamento =  ptc;/* return fromkey portamento */
 		/* returns fromkey legato */
 		if(!is_valid_note(default_fromkey)) default_fromkey= ptc;
@@ -520,7 +520,7 @@ static unsigned char get_fromkey_portamento_legato(fluid_channel_t* chan,
 			/* in staccato (poly/Mono) returns INVALID_NOTE */
 			/* In mono mode legato playing returns the note prior most 
 			   recent note played */
-			if (is_fluid_channel_playing_mono(chan) && (chan->mode  & LEGATO_PLAYING))
+			if (fluid_channel_is_playing_mono(chan) && (chan->mode  & LEGATO_PLAYING))
 			{
 				default_fromkey = fluid_channel_prev_note(chan); /* note prior last note */
 			}
@@ -1027,7 +1027,7 @@ void fluid_channel_cc_legato(fluid_channel_t* chan, int value)
  */
 void fluid_channel_cc_breath_note_on_off(fluid_channel_t* chan, int value)
 {	
-	if ((chan->mode &  FLUID_CHANNEL_BREATH_SYNC)  && is_fluid_channel_playing_mono(chan) &&
+	if ((chan->mode &  FLUID_CHANNEL_BREATH_SYNC)  && fluid_channel_is_playing_mono(chan) &&
 		(chan->n_notes))
 	{	
 		/* The monophonic list isn't empty */
