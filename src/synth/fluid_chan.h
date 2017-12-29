@@ -225,7 +225,6 @@ int fluid_channel_get_interp_method(fluid_channel_t* chan);
 #define fluid_channel_portamento(_c)			((_c)->cc[PORTAMENTO_SWITCH] >= 64)
 #define fluid_channel_breath_msb(_c)			((_c)->cc[BREATH_MSB] > 0)
 #define fluid_channel_clear_portamento(_c)		((_c)->cc[PORTAMENTO_CTRL] = INVALID_NOTE)
-#define fluid_channel_get_cc_portamento(_c)			((unsigned char)(_c)->cc[PORTAMENTO_CTRL])
 #define fluid_channel_legato(_c)			    ((_c)->cc[LEGATO_SWITCH] >= 64)
 #define fluid_channel_sustained(_c)             ((_c)->cc[SUSTAIN_SWITCH] >= 64)
 #define fluid_channel_sostenuto(_c)             ((_c)->cc[SOSTENUTO_SWITCH] >= 64)

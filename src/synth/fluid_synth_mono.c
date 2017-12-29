@@ -475,7 +475,7 @@ void fluid_channel_set_onenote_monolist(fluid_channel_t* chan, unsigned char key
 static unsigned char get_fromkey_portamento_legato(fluid_channel_t* chan, 
 								   unsigned char default_fromkey)
 {
-	unsigned char ptc =  fluid_channel_get_cc_portamento(chan);
+	unsigned char ptc =  fluid_channel_get_cc(chan, PORTAMENTO_CTRL);
 	if(is_valid_note(ptc))
 	{	/* CC PTC has been received */
 		fluid_channel_clear_portamento(chan);	/* clear the CC PTC receive */
