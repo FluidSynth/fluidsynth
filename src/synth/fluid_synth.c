@@ -1250,10 +1250,10 @@ fluid_synth_remove_default_mod(fluid_synth_t* synth, const fluid_mod_t* mod)
  * @param num MIDI controller number (0-127)
  * @param val MIDI controller value (0-127)
  * @return FLUID_OK on success, FLUID_FAILED otherwise
- * Note: The function support MIDI CC global which will be send to
- * all channels when the basic channel is in mode (OmniOn,Mono).
- * The CC needs to be send on MIDI channel one below the 'basic Channel'
- * of the receiver. 
+ * @note This function supports MIDI Global Controllers which will be sent to
+ * all channels of the basic channel if this basic channel is in mode OmniOff/Mono.
+ * This is accomplished by sending the CC one MIDI channel below the basic 
+ * channel of the receiver.
  */
 int
 fluid_synth_cc(fluid_synth_t* synth, int chan, int num, int val)
