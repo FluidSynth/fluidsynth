@@ -172,15 +172,6 @@ void fluid_synth_settings(fluid_settings_t* settings)
 #ifdef DEFAULT_SOUNDFONT
   fluid_settings_register_str(settings, "synth.default-soundfont", DEFAULT_SOUNDFONT, 0);
 #endif
-
-  /* basic channel settings for poly/mono mode */
-  /* synth.basic-channel: default: 0, min:0, max:255, no hint,no callback function */
-  fluid_settings_register_int(settings, "synth.basic-channel", 0, 0, 255, 0);
-  /* synth.basic-channel.mode: default: 0, min:0, max:3, no hint,no callback */
-  fluid_settings_register_int(settings, "synth.basic-channel-mode", 0, 0, 3, 0);
-  /* synth.basic-channel.modeval: default: 0, min:0, max:255, no hint,no callback*/
-  fluid_settings_register_int(settings, "synth.basic-channel-modeval", 0, 0, 255, 0);
-  /* End of settings for poly/mono mode */
   
   fluid_settings_register_int(settings, "synth.polyphony", 256, 1, 65535, 0);
   fluid_settings_register_int(settings, "synth.midi-channels", 16, 16, 256, 0);
@@ -766,23 +757,11 @@ new_fluid_synth(fluid_settings_t *settings)
   }
 
   /* set basic channel */
-  {
- 	int basicchan, mode,val;
+  /* Set one basic channel: basic channel 0, mode 0 (Omni On - Poly) */
+  /* (i.e all channels are polyphonic) */
+  /* Must be called after channel objects allocation */
+  fluid_synth_set_basic_channel(synth, 0, FLUID_CHANNEL_MODE_OMNION_POLY,0);
 
-	fluid_settings_getint(settings, "synth.basic-channel", &basicchan);
-	fluid_settings_getint(settings, "synth.basic-channel-mode", &mode);
-	fluid_settings_getint(settings, "synth.basic-channel-modeval", &val);
-    if (basicchan >= synth->midi_channels ||
-		basicchan + val > synth->midi_channels)
-	{
-		/* Set basic channel 0, mode 0 (Poly Omni On) */
-		/* (i.e all channels are polyphonic */
-		basicchan = 0; mode = FLUID_CHANNEL_MODE_OMNION_POLY; val = 0;
-	    FLUID_LOG(FLUID_WARN, "Requested basic channel, mode, modeval is incorrect.\n"
-	     "basic channel:0 , poly omni on (mode 0) has been set");
-	}
-	fluid_synth_set_basic_channel(synth, basicchan, mode, val);
-  }
   fluid_synth_set_sample_rate(synth, synth->sample_rate);
   fluid_synth_update_mixer(synth, fluid_rvoice_mixer_set_polyphony, 
 			   synth->polyphony, 0.0f);
