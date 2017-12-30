@@ -221,20 +221,24 @@ int fluid_synth_reset_basic_channels(fluid_synth_t* synth,
  *   - mode is invalid.
  *   - val has a number of channels overlapping the next basic channel.
  */
-int fluid_synth_set_basic_channel(fluid_synth_t* synth, int basicchan, int mode, int val)
+//int fluid_synth_set_basic_channel(fluid_synth_t* synth, int basicchan, int mode, int val)
+int fluid_synth_set_basic_channel(fluid_synth_t* synth, 
+								fluid_basic_channel_infos_t *basicChannelInfos)
 {
     int result;
-    const int chan = basicchan;
+    const int chan = basicChannelInfos->basicchan;
+    const int mode = basicChannelInfos->mode;
+    const int val = basicChannelInfos->val;
 
     fluid_return_val_if_fail (mode >= 0, FLUID_FAILED);
     fluid_return_val_if_fail (mode < FLUID_CHANNEL_MODE_LAST, FLUID_FAILED);
     fluid_return_val_if_fail (val >= 0, FLUID_FAILED);
     FLUID_API_ENTRY_CHAN(FLUID_FAILED);
     /**/
-    if (basicchan + val > synth->midi_channels)
+    if (chan + val > synth->midi_channels)
         FLUID_API_RETURN(FLUID_FAILED);
 
-    result = fluid_synth_set_basic_channel_LOCAL(synth, basicchan,mode,val);
+    result = fluid_synth_set_basic_channel_LOCAL(synth,chan,mode,val);
     /**/
     FLUID_API_RETURN(result);
 }
@@ -261,9 +265,6 @@ int fluid_synth_set_basic_channel(fluid_synth_t* synth, int basicchan, int mode,
  *   - basicchan is outside MIDI channel count.
  *   - val has a number of channels overlapping the next basic channel.
  */
-char * warning_msg1 = "Basic channel %d has been narrowed to %d channels.";
-char * warning_msg2 = "Basic channel %d have number of channels that overlaps.\n\
-the next basic channel\n";
 
 int fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth, 
 					int basicchan,int mode, int val)
@@ -272,6 +273,9 @@ int fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth,
 	int result = FLUID_FAILED; /* default return */
 	if (basicchan < n_chan)
 	{
+		static const char * warning_msg1 = "Basic channel %d has been narrowed to %d channels.";
+		static const char * warning_msg2 = "Basic channel %d have number of channels that overlaps\n\
+the next basic channel\n";
 		int last_begin_range; /* Last channel num inside the beginning range + 1. */
 		int last_end_range; /* Last channel num inside the ending range + 1. */
 		int prev_basic_chan = -1 ; // Previous basic channel
@@ -357,7 +361,12 @@ int fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth,
  * @param synth the synth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
  * @param modeInfos Pointer to a #fluid_basic_channel_infos_t struct
- *
+ * @note about information returned in #fluid_basic_channel_infos_t struct: 
+ *   - chan is returned in basicchan field.
+ *   - fluid_channel_mode_flags are returned in mode field.
+ *   - if chan is a basic channel, the number of MIDI channels belonging to
+ *     this basic channel is returned in nbr field, otherwise this field is 0.
+ * 
  * @return
  * - FLUID_OK on success.
  * - FLUID_FAILED 

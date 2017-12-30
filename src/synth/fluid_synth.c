@@ -760,7 +760,7 @@ new_fluid_synth(fluid_settings_t *settings)
   /* Set one basic channel: basic channel 0, mode 0 (Omni On - Poly) */
   /* (i.e all channels are polyphonic) */
   /* Must be called after channel objects allocation */
-  fluid_synth_set_basic_channel(synth, 0, FLUID_CHANNEL_MODE_OMNION_POLY,0);
+  fluid_synth_set_basic_channel_LOCAL(synth, 0, FLUID_CHANNEL_MODE_OMNION_POLY,0);
 
   fluid_synth_set_sample_rate(synth, synth->sample_rate);
   fluid_synth_update_mixer(synth, fluid_rvoice_mixer_set_polyphony, 
@@ -1942,8 +1942,7 @@ fluid_synth_system_reset_LOCAL(fluid_synth_t* synth)
     fluid_channel_reset(synth->channel[i]);
 
   /* Basic channel 0, Mode Omni On Poly */
-  fluid_synth_set_basic_channel(synth, 0, FLUID_CHANNEL_MODE_OMNION_POLY, 0);
-
+  fluid_synth_set_basic_channel_LOCAL(synth, 0, FLUID_CHANNEL_MODE_OMNION_POLY,0);
 
   fluid_synth_update_mixer(synth, fluid_rvoice_mixer_reset_fx, 0, 0.0f); 
 

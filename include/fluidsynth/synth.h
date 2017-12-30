@@ -359,7 +359,8 @@ FLUIDSYNTH_API int fluid_synth_reset_basic_channels(fluid_synth_t* synth, int n,
 FLUIDSYNTH_API int fluid_synth_get_channel_mode(fluid_synth_t* synth, int chan,
                                                 fluid_basic_channel_infos_t  *modeInfos);
 FLUIDSYNTH_API int fluid_synth_set_basic_channel(fluid_synth_t* synth, 
-                                                 int basicchan, int mode, int val);
+                                                   fluid_basic_channel_infos_t *basicChannelInfos);
+
 /* Interface to mono legato mode  */
 /* n1,n2,n3,.. is a legato passage. n1 is the first note, and n2,n3,n4 are played
  legato with previous note. 
