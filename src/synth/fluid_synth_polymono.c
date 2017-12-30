@@ -209,9 +209,11 @@ int fluid_synth_reset_basic_channels(fluid_synth_t* synth,
  * basic channel will be narrowed if necessary. 
  * 
  * @param synth the synth instance.
- * @param basicchan the Basic Channel number (0 to MIDI channel count-1).
- * @param mode the MIDI mode to use for basicchan (0 to 3).
- * @param val Number of monophonic channels (for mode 3 only) (0 to MIDI channel count).
+ * @param modeInfos pointer to a #fluid_basic_channel_infos_t struct.
+ * @note about information in #fluid_basic_channel_infos_t struct:  
+ *   - basicchan, the basic bhannel number (0 to MIDI channel count-1).
+ *   - mode, the MIDI mode to use for basicchan (0 to 3).
+ *   - val, number of monophonic channels (for mode 3 only) (0 to MIDI channel count).
  * 
  * @return 
  * - FLUID_OK on success.
@@ -384,7 +386,7 @@ int fluid_synth_get_channel_mode(fluid_synth_t* synth, int chan,
 	/**/
 	/* if chan is enabled , we search the basic channel chan belongs to 
 	  otherwise chan doesn't belong to any basic channel part*/
-	modeInfos->basicchan= -1; /* means no basic channel */
+	modeInfos->basicchan= -1; /* means no basic channel found */
 	if (synth->channel[chan]->mode &  FLUID_CHANNEL_ENABLED)
 	{ /* chan is enabled , we search the basic channel chan belongs to */
 		int i;
