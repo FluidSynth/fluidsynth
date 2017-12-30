@@ -361,11 +361,12 @@ the next basic channel\n";
  * @param synth the synth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
  * @param modeInfos Pointer to a #fluid_basic_channel_infos_t struct
- * @note about information returned in #fluid_basic_channel_infos_t struct: 
- *   - chan is returned in basicchan field.
- *   - fluid_channel_mode_flags are returned in mode field.
- *   - if chan is a basic channel, the number of MIDI channels belonging to
- *     this basic channel is returned in nbr field, otherwise this field is 0.
+ * @note about informations returned in #fluid_basic_channel_infos_t struct: 
+ *   - basicchan, the basic channel chan belongs to. ( -1 if chan is
+ *      disabled).
+ *   - mode, the flags (see enum fluid_channel_mode_flags) of chan.
+ *   - val, if chan is a basic channel, the number of MIDI channels belonging
+ *          to this basic channel is returned , otherwise this field is 0.
  * 
  * @return
  * - FLUID_OK on success.
@@ -381,7 +382,21 @@ int fluid_synth_get_channel_mode(fluid_synth_t* synth, int chan,
 	fluid_return_val_if_fail (modeInfos!= NULL, FLUID_FAILED);
 	FLUID_API_ENTRY_CHAN(FLUID_FAILED);
 	/**/
-	modeInfos->basicchan= chan;
+	/* if chan is enabled , we search the basic channel chan belongs to 
+	  otherwise chan doesn't belong to any basic channel part*/
+	modeInfos->basicchan= -1; /* means no basic channel */
+	if (synth->channel[chan]->mode &  FLUID_CHANNEL_ENABLED)
+	{ /* chan is enabled , we search the basic channel chan belongs to */
+		int i;
+		for (i = chan ; i >=0; i--)
+		{
+			if (synth->channel[i]->mode &  FLUID_CHANNEL_BASIC)
+			{	/* i is the basic channel */
+				modeInfos->basicchan = i;
+				break;
+			}
+		}
+	}	
 	modeInfos->mode = synth->channel[chan]->mode;
 	modeInfos->val = synth->channel[chan]->mode_val;
 	/**/

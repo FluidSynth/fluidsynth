@@ -2157,12 +2157,12 @@ int fluid_handle_channelsmode (void* data, int ac, char** av,
 				}
 				fluid_ostream_printf(out,
 						"channel:%3d, enabled, %-13s, %-16s, %s\n", 
-						bci.basicchan,
+						chan,
 						bc_msg,
 						p_mode,
 						p_nbr);
 			}
-			else fluid_ostream_printf(out, "channel:%3d, disabled\n",bci.basicchan);
+			else fluid_ostream_printf(out, "channel:%3d, disabled\n", chan);
 		}
 		else fluid_ostream_printf(out,
 							"channel:%3d is is outside MIDI channel count(%d)\n",
