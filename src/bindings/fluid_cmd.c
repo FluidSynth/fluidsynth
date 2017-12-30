@@ -1938,7 +1938,7 @@ int fluid_handle_router_par2(void* data, int ac, char** av, fluid_ostream_t out)
 	"Basic channel:  8, mono omni off(3), nbr:  2"
 	"Basic channel: 13, mono omni on (1), nbr:  3"
 */
-char * modename[]={	"poly omni on (0)","mono omni on (1)",
+char * mode_name[]={"poly omni on (0)","mono omni on (1)",
 					"poly omni off(2)","mono omni off(3)"};
 int fluid_handle_basicchannels (void* data, int ac, char** av, 
 								fluid_ostream_t out)
@@ -1955,7 +1955,7 @@ int fluid_handle_basicchannels (void* data, int ac, char** av,
 		{
 			fluid_ostream_printf(out,
 		            "Basic channel:%3d, %s, nbr:%3d\n", bci[i].basicchan, 
-					modename[bci[i].mode], 
+					mode_name[bci[i].mode], 
 					bci[i].val);
 		}
 		/* bci has been allocated by fluid_synth_get_basic_channels() */ 
@@ -1967,8 +1967,8 @@ int fluid_handle_basicchannels (void* data, int ac, char** av,
 	return 0;
 }
 
-char *InvalidArg =" invalid argument\n";
-char *TooFewArg = " too few argument, chan mode val [chan mode val]...\n";
+char *invalid_arg_msg =" invalid argument\n";
+char *too_few_arg_msg = " too few argument, chan mode val [chan mode val]...\n";
 /*-----------------------------------------------------------------------------
   resetbasicchannels [chan1 Mode1 nbr1   chan2 Mode2 nbr2 ...]
   
@@ -1993,7 +1993,7 @@ int fluid_handle_resetbasicchannels (void* data, int ac, char** av,
 		{
 			if (!fluid_is_number(av[i]))
 			{
-				fluid_ostream_printf(out, "resetbasicchannels:%s",InvalidArg);
+				fluid_ostream_printf(out, "resetbasicchannels:%s",invalid_arg_msg);
 				return -1;	
 			}
 		}
@@ -2001,7 +2001,7 @@ int fluid_handle_resetbasicchannels (void* data, int ac, char** av,
 		if (ac % 3)
 		{	/* each entry needs 3 parameters: basicchan,mode,val */
 			fluid_ostream_printf(out, "resetbasicchannels:chan %d,%s\n",
-						atoi(av[(n * 3)]),TooFewArg);
+						atoi(av[(n * 3)]),too_few_arg_msg);
 			return -1;	
 		}
 		/* allocates bci table and fills  */
@@ -2017,7 +2017,7 @@ int fluid_handle_resetbasicchannels (void* data, int ac, char** av,
 	result = fluid_synth_reset_basic_channels(synth,n, bci);
 	if(bci) free(bci);
 	if (result == FLUID_FAILED)  
-		fluid_ostream_printf(out, "resetbasicchannels:%s",InvalidArg);
+		fluid_ostream_printf(out, "resetbasicchannels:%s",invalid_arg_msg);
 	return 0;
 }
 
@@ -2046,7 +2046,7 @@ int fluid_handle_setbasicchannels (void* data, int ac, char** av,
 		{
 			if (!fluid_is_number(av[i]))
 			{
-				fluid_ostream_printf(out, "setbasicchannels:%s",InvalidArg);
+				fluid_ostream_printf(out, "setbasicchannels:%s",invalid_arg_msg);
 				return -1;	
 			}
 		}
@@ -2054,13 +2054,13 @@ int fluid_handle_setbasicchannels (void* data, int ac, char** av,
 	n = ac / 3; /* number of basic channel information */
 	if (!ac)
 	{
-		fluid_ostream_printf(out, "setbasicchannels:%s",TooFewArg);
+		fluid_ostream_printf(out, "setbasicchannels:%s",too_few_arg_msg);
 		return -1;	
 	}
 	else if(ac % 3)
 	{	/* each entry needs 3 parameters: basicchan,mode,val */
 		fluid_ostream_printf(out, "setbasicchannels:chan %d,%s",
-					atoi(av[(n * 3)]),TooFewArg);
+					atoi(av[(n * 3)]),too_few_arg_msg);
 		return -1;	
 	}
 
@@ -2074,7 +2074,7 @@ int fluid_handle_setbasicchannels (void* data, int ac, char** av,
 		result = fluid_synth_set_basic_channel(synth,basicchan,mode,val);
 		if (result == FLUID_FAILED)  
 			fluid_ostream_printf(out,"channel:%3d, mode:%3d, nbr:%3d, %s",
-				basicchan,mode, val, InvalidArg);
+				basicchan,mode, val, invalid_arg_msg);
 	}
 	return 0;
 }
@@ -2111,18 +2111,18 @@ int fluid_handle_channelsmode (void* data, int ac, char** av,
     fluid_synth_t* synth = cmd_hdlr->synth;
 	fluid_basic_channel_infos_t bci; /* basic channels infos */
 	int i,result;
-    int n,nChan= synth->midi_channels; 
+    int n,n_chan= synth->midi_channels; 
 	
 	for (i = 0; i < ac; i++)
 	{
 		if (!fluid_is_number(av[i]))
 		{
-			fluid_ostream_printf(out, "channelsmode:%s",InvalidArg);
+			fluid_ostream_printf(out, "channelsmode:%s",invalid_arg_msg);
 			return -1;
 		}
 	}
 	if (ac ) n = ac; /* prints ac MIDI channels number */
-	else n= nChan; /* prints all MIDI channels number */
+	else n= n_chan; /* prints all MIDI channels number */
 	/* prints header */	
 	fluid_ostream_printf(out,"Channel    , Status , Type         , Mode            , Nbr of channels\n");
 	for (i = 0; i < n; i++)
@@ -2133,40 +2133,40 @@ int fluid_handle_channelsmode (void* data, int ac, char** av,
 		{
 			if(bci.mode &  FLUID_CHANNEL_ENABLED)
 			{	/* This channel is enabled */
-				char * basicchannel1="basic channel"; /* field basic channel */
-				char * bcmsg; /* field basic channel */
-				char * polymsg ="poly"; /* field mode */
-				char * monomsg ="mono"; /* field mode */
-				char * pMode; /* field mode */
+				char * basic_channel="basic channel"; /* field basic channel */
+				char * bc_msg; /* field basic channel */
+				char * poly_msg ="poly"; /* field mode */
+				char * mono_msg ="mono"; /* field mode */
+				char * p_mode; /* field mode */
 				char * blank="--";
-				char nbr1[10]; /* field Nbr */
-				char *pNbr; /* field Nbr */
+				char nbr[10]; /* field Nbr */
+				char *p_nbr; /* field Nbr */
 				int mode = bci.mode &  FLUID_CHANNEL_MODE_MASK;
 				if (bci.mode &  FLUID_CHANNEL_BASIC)
 				{	/* This channel is a basic channel */
-					bcmsg = basicchannel1;
-					sprintf(nbr1,"nbr:%3d",bci.val);
-					pNbr = nbr1;
-					pMode = modename[mode];
+					bc_msg = basic_channel;
+					sprintf(nbr,"nbr:%3d",bci.val);
+					p_nbr = nbr;
+					p_mode = mode_name[mode];
 				}
 				else
 				{	/* This channel is member of a part */
-					bcmsg = blank;		pNbr = blank;
-					if(mode & FLUID_CHANNEL_POLY_OFF) pMode = monomsg;
-					else pMode = polymsg;
+					bc_msg = blank;		p_nbr = blank;
+					if(mode & FLUID_CHANNEL_POLY_OFF) p_mode = mono_msg;
+					else p_mode = poly_msg;
 				}
 				fluid_ostream_printf(out,
 						"channel:%3d, enabled, %-13s, %-16s, %s\n", 
 						bci.basicchan,
-						bcmsg,
-						pMode,
-						pNbr);
+						bc_msg,
+						p_mode,
+						p_nbr);
 			}
 			else fluid_ostream_printf(out, "channel:%3d, disabled\n",bci.basicchan);
 		}
 		else fluid_ostream_printf(out,
 							"channel:%3d is is outside MIDI channel count(%d)\n",
-							chan,nChan); 
+							chan,n_chan); 
 	}
 	return 0;
 }
@@ -2185,7 +2185,7 @@ int fluid_handle_channelsmode (void* data, int ac, char** av,
  legatomode chan1 chan2
      Prints only legato mode of MIDI channel chan1, chan2
 */
-char * nameLegatomode[FLUID_CHANNEL_LEGATO_MODE_LAST]={
+char * name_legato_mode[FLUID_CHANNEL_LEGATO_MODE_LAST]={
 	"(0)retrigger","(1)multi-retrigger"
 };
 
@@ -2196,16 +2196,16 @@ int fluid_handle_legatomode(void* data, int ac, char** av,
     fluid_synth_t* synth = cmd_hdlr->synth;
 	int mode;
 	int i,result;
-    int n,nChan= synth->midi_channels; 
+    int n,n_chan= synth->midi_channels; 
 	
 	for (i = 0; i < ac; i++)	{
 		if (!fluid_is_number(av[i]))		{
-			fluid_ostream_printf(out, "legatomode:%s",InvalidArg);
+			fluid_ostream_printf(out, "legatomode:%s",invalid_arg_msg);
 			return -1;
 		}
 	}
 	if (ac ) n = ac; /* prints ac MIDI channels number */
-	else n= nChan; /* prints all MIDI channels number */
+	else n= n_chan; /* prints all MIDI channels number */
 	/* prints header */	
 	fluid_ostream_printf(out,"Channel    , legato mode\n");
 	for (i = 0; i < n; i++)
@@ -2214,10 +2214,10 @@ int fluid_handle_legatomode(void* data, int ac, char** av,
 		result = fluid_synth_get_legato_mode(synth, chan, &mode);
 		if (result == FLUID_OK)
 				fluid_ostream_printf(out,"channel:%3d, %s\n",chan,
-										nameLegatomode[mode]);
+										name_legato_mode[mode]);
 		else fluid_ostream_printf(out,
 							"channel:%3d is is outside MIDI channel count(%d)\n",
-							chan,nChan); 
+							chan,n_chan); 
 	}
 	return 0;
 }
@@ -2228,7 +2228,7 @@ int fluid_handle_legatomode(void* data, int ac, char** av,
   
   Changes legato mode for channels chan0 and [chan1]
 */
-char *TooFewArgChanMode = " too few argument, chan mode [chan mode]...\n";
+char *too_few_arg_chan_mode_msg = " too few argument, chan mode [chan mode]...\n";
 int fluid_handle_setlegatomode(void* data, int ac, char** av, 
 								fluid_ostream_t out)
 {
@@ -2243,7 +2243,7 @@ int fluid_handle_setlegatomode(void* data, int ac, char** av,
 		{
 			if (!fluid_is_number(av[i]))
 			{
-				fluid_ostream_printf(out, "setlegatomode:%s",InvalidArg);
+				fluid_ostream_printf(out, "setlegatomode:%s",invalid_arg_msg);
 				return -1;	
 			}
 		}
@@ -2251,14 +2251,14 @@ int fluid_handle_setlegatomode(void* data, int ac, char** av,
 	n = ac / 2; /* number of legato information */
 	if (!ac)
 	{
-		fluid_ostream_printf(out, "setlegatomode:%s",TooFewArgChanMode);
+		fluid_ostream_printf(out, "setlegatomode:%s",too_few_arg_chan_mode_msg);
 		return -1;
 	}
 	else if(ac % 2)
 	{
 		/* each entry needs 2 parameters: chan,mode */
 		fluid_ostream_printf(out, "setlegatomode:chan %d,%s",
-					atoi(av[(n * 2)]),TooFewArgChanMode);
+					atoi(av[(n * 2)]),too_few_arg_chan_mode_msg);
 		return -1;
 	}
 
@@ -2271,7 +2271,7 @@ int fluid_handle_setlegatomode(void* data, int ac, char** av,
 		result = fluid_synth_set_legato_mode(synth,chan,mode);
 		if (result == FLUID_FAILED)  
 			fluid_ostream_printf(out,"chan:%3d, mode:%3d, %s",
-									chan,mode, InvalidArg);
+									chan,mode, invalid_arg_msg);
 	}
 	return 0;
 }
@@ -2290,7 +2290,7 @@ int fluid_handle_setlegatomode(void* data, int ac, char** av,
  portamentotomode chan1 chan2
      Prints only portamentoto mode of MIDI channel chan1, chan2
 */
-char * namePortamentomode[FLUID_CHANNEL_PORTAMENTO_MODE_LAST]={
+char * name_portamento_mode[FLUID_CHANNEL_PORTAMENTO_MODE_LAST]={
 	"(0)each note","(1)legato only",
 	"(2)staccato only"
 };
@@ -2302,16 +2302,16 @@ int fluid_handle_portamentomode(void* data, int ac, char** av,
     fluid_synth_t* synth = cmd_hdlr->synth;
 	int mode;
 	int i,result;
-    int n,nChan= synth->midi_channels; 
+    int n,n_chan= synth->midi_channels; 
 	
 	for (i = 0; i < ac; i++)	{
 		if (!fluid_is_number(av[i]))		{
-			fluid_ostream_printf(out, "portamentomode:%s",InvalidArg);
+			fluid_ostream_printf(out, "portamentomode:%s",invalid_arg_msg);
 			return -1;
 		}
 	}
 	if (ac ) n = ac; /* prints ac MIDI channels number */
-	else n= nChan; /* prints all MIDI channels number */
+	else n= n_chan; /* prints all MIDI channels number */
 	/* prints header */	
 	fluid_ostream_printf(out,"Channel    , portamentoto mode\n");
 	for (i = 0; i < n; i++)
@@ -2320,10 +2320,10 @@ int fluid_handle_portamentomode(void* data, int ac, char** av,
 		result = fluid_synth_get_portamento_mode(synth, chan, &mode);
 		if (result == FLUID_OK)
 				fluid_ostream_printf(out,"channel:%3d, %s\n",chan,
-										namePortamentomode[mode]);
+										name_portamento_mode[mode]);
 		else fluid_ostream_printf(out,
 							"channel:%3d is is outside MIDI channel count(%d)\n",
-							chan,nChan); 
+							chan,n_chan); 
 	}
 	return 0;
 }
@@ -2348,7 +2348,7 @@ int fluid_handle_setportamentomode(void* data, int ac, char** av,
 		{
 			if (!fluid_is_number(av[i]))
 			{
-				fluid_ostream_printf(out, "setportamentomode:%s",InvalidArg);
+				fluid_ostream_printf(out, "setportamentomode:%s",invalid_arg_msg);
 				return -1;	
 			}
 		}
@@ -2356,14 +2356,14 @@ int fluid_handle_setportamentomode(void* data, int ac, char** av,
 	n = ac / 2; /* number of portamento information */
 	if (!ac)
 	{
-		fluid_ostream_printf(out, "setportamentomode:%s",TooFewArgChanMode);
+		fluid_ostream_printf(out, "setportamentomode:%s",too_few_arg_chan_mode_msg);
 		return -1;
 	}
 	else if(ac % 2)
 	{
 		/* each entry needs 2 parameters: chan,mode */
 		fluid_ostream_printf(out, "setportamentomode:chan %d,%s",
-					atoi(av[(n * 2)]),TooFewArgChanMode);
+					atoi(av[(n * 2)]),too_few_arg_chan_mode_msg);
 		return -1;
 	}
 
@@ -2376,7 +2376,7 @@ int fluid_handle_setportamentomode(void* data, int ac, char** av,
 		result = fluid_synth_set_portamento_mode(synth,chan,mode);
 		if (result == FLUID_FAILED)  
 			fluid_ostream_printf(out,"chan:%3d, mode:%3d, %s",
-									chan,mode, InvalidArg);
+									chan,mode, invalid_arg_msg);
 	}
 	return 0;
 }
@@ -2397,8 +2397,8 @@ int fluid_handle_setportamentomode(void* data, int ac, char** av,
  breathmode chan1 chan2
      Prints only breath mode of MIDI channel chan1, chan2
 */
-char * Onmsg ="on";
-char * Offmsg ="off";
+char * on_msg ="on";
+char * off_msg ="off";
 int fluid_handle_breathmode(void* data, int ac, char** av, 
 								fluid_ostream_t out)
 {
@@ -2406,16 +2406,16 @@ int fluid_handle_breathmode(void* data, int ac, char** av,
     fluid_synth_t* synth = cmd_hdlr->synth;
 	int breathmode;
 	int i,result;
-    int n,nChan= synth->midi_channels; 
+    int n,n_chan= synth->midi_channels; 
 	
 	for (i = 0; i < ac; i++)	{
 		if (!fluid_is_number(av[i]))		{
-			fluid_ostream_printf(out, "breathmode:%s",InvalidArg);
+			fluid_ostream_printf(out, "breathmode:%s",invalid_arg_msg);
 			return -1;
 		}
 	}
 	if (ac ) n = ac; /* prints ac MIDI channels number */
-	else n= nChan; /* prints all MIDI channels number */
+	else n= n_chan; /* prints all MIDI channels number */
 	/* prints header */	
 	fluid_ostream_printf(out,"Channel    , poly breath , mono breath , breath sync\n");
 	for (i = 0; i < n; i++)
@@ -2424,22 +2424,22 @@ int fluid_handle_breathmode(void* data, int ac, char** av,
 		result = fluid_synth_get_breath_mode(synth, chan, &breathmode);
 		if (result == FLUID_OK)
 		{
-				char * msgPolyBreath, * msgMonoBreath, * msgBreathSync; 
+				char * msg_poly_breath, * msg_mono_breath, * msg_breath_sync; 
 				if (breathmode &  FLUID_CHANNEL_BREATH_POLY)
-					msgPolyBreath =Onmsg;
-				else msgPolyBreath = Offmsg;
+					msg_poly_breath =on_msg;
+				else msg_poly_breath = off_msg;
 				if (breathmode &  FLUID_CHANNEL_BREATH_MONO)
-					msgMonoBreath =Onmsg;
-				else msgMonoBreath = Offmsg;
+					msg_mono_breath =on_msg;
+				else msg_mono_breath = off_msg;
 				if (breathmode &  FLUID_CHANNEL_BREATH_SYNC)
-					msgBreathSync =Onmsg;
-				else msgBreathSync = Offmsg;
+					msg_breath_sync =on_msg;
+				else msg_breath_sync = off_msg;
 				fluid_ostream_printf(out,"channel:%3d, %-12s, %-12s, %-11s\n",chan,
-										msgPolyBreath, msgMonoBreath, msgBreathSync);
+										msg_poly_breath, msg_mono_breath, msg_breath_sync);
 		}
 		else fluid_ostream_printf(out,
 							"channel:%3d is is outside MIDI channel count(%d)\n",
-							chan,nChan); 
+							chan,n_chan); 
 	}
 	return 0;
 }
@@ -2449,7 +2449,7 @@ int fluid_handle_breathmode(void* data, int ac, char** av,
   
   Changes breath options for channels chan1 and [chan2...]
 */
-char *TooFewArgBreath = 
+char *too_few_arg_breath_msg = 
 " too few argument:\nchan 1/0(breath poly) 1/0(breath mono) 1/0(breath sync mono)[..]\n";
 int fluid_handle_setbreathmode(void* data, int ac, char** av, 
 								fluid_ostream_t out)
@@ -2457,7 +2457,7 @@ int fluid_handle_setbreathmode(void* data, int ac, char** av,
     fluid_cmd_handler_t* cmd_hdlr = (fluid_cmd_handler_t*)data;
     fluid_synth_t* synth = cmd_hdlr->synth;
     int result;
-	int i,n, nChan= synth->midi_channels;
+	int i,n, n_chan= synth->midi_channels;
 
 	if (ac )
 	{	/* parameters for list entries */
@@ -2465,7 +2465,7 @@ int fluid_handle_setbreathmode(void* data, int ac, char** av,
 		{
 			if (!fluid_is_number(av[i]))
 			{
-				fluid_ostream_printf(out, "setbreathmode:%s",InvalidArg);
+				fluid_ostream_printf(out, "setbreathmode:%s",invalid_arg_msg);
 				return -1;	
 			}
 		}
@@ -2473,7 +2473,7 @@ int fluid_handle_setbreathmode(void* data, int ac, char** av,
 	n = ac / 4; /* number of default breath informations */
 	if (!ac)
 	{
-		fluid_ostream_printf(out, "setbreathmode:%s",TooFewArgBreath);
+		fluid_ostream_printf(out, "setbreathmode:%s",too_few_arg_breath_msg);
 		return -1;
 	}
 	else if(ac % 4)
@@ -2481,7 +2481,7 @@ int fluid_handle_setbreathmode(void* data, int ac, char** av,
 		/* each entry needs 4 parameters: chan,poly_breath(1/0) mono_breath(1/0) 
 		   breath sync (1/0) */
 		fluid_ostream_printf(out, "setbreathmode:chan %d,%s",
-					atoi(av[(n * 4)]),TooFewArgBreath);
+					atoi(av[(n * 4)]),too_few_arg_breath_msg);
 		return -1;
 	}
 
@@ -2500,7 +2500,7 @@ int fluid_handle_setbreathmode(void* data, int ac, char** av,
 		if (result == FLUID_FAILED)  
 				fluid_ostream_printf(out,
 							"channel:%3d is is outside MIDI channel count(%d)\n",
-							chan,nChan); 
+							chan,n_chan); 
 	}
 	return 0;
 }

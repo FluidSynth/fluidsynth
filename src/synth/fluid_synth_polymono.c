@@ -22,7 +22,7 @@
 #include "fluid_chan.h"
 
 extern int fluid_synth_all_notes_off_LOCAL(fluid_synth_t* synth, int chan);
-extern int fluid_is_number(char* a);
+
 
 /* Macros interface to poly/mono mode variables */
 #define MASK_BASICCHANINFOS  (FLUID_CHANNEL_MODE_MASK|FLUID_CHANNEL_BASIC|FLUID_CHANNEL_ENABLED)
@@ -66,27 +66,27 @@ extern int fluid_is_number(char* a);
 int fluid_synth_get_basic_channels(	fluid_synth_t* synth,
 					fluid_basic_channel_infos_t **basicChannelInfos)
 {
-	int i,nChan;	/* MIDI channel index and number */
-	int nBasicChan; /* Basic Channel number to return */
+	int i,n_chan;	/* MIDI channel index and number */
+	int n_basic_chan; /* Basic Channel number to return */
 	/* check parameters first */
 	fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
 	fluid_synth_api_enter(synth);
-	nChan = synth->midi_channels; /* MIDI Channels number */
+	n_chan = synth->midi_channels; /* MIDI Channels number */
 
 	/* counts basic channels */
-	for(i = 0, nBasicChan = 0; i <  nChan; i++)
+	for(i = 0, n_basic_chan = 0; i <  n_chan; i++)
 	{
-		if (synth->channel[i]->mode &  FLUID_CHANNEL_BASIC) nBasicChan++;
+		if (synth->channel[i]->mode &  FLUID_CHANNEL_BASIC) n_basic_chan++;
 	}
 
-	if (basicChannelInfos && nBasicChan) 
+	if (basicChannelInfos && n_basic_chan) 
 	{	
 		/* allocates table for Basic Channel only */
 		fluid_basic_channel_infos_t * bci;	/* basics channels information table */
 		int b; /* index in bci */
-		bci = FLUID_ARRAY(fluid_basic_channel_infos_t, nBasicChan );
+		bci = FLUID_ARRAY(fluid_basic_channel_infos_t, n_basic_chan );
 		/* fill table */
-		if (bci) for(i = 0, b=0; i <  nChan; i++)
+		if (bci) for(i = 0, b=0; i <  n_chan; i++)
 		{	
 			fluid_channel_t* chan = synth->channel[i];
 			if (chan->mode &  FLUID_CHANNEL_BASIC)
@@ -99,13 +99,13 @@ int fluid_synth_get_basic_channels(	fluid_synth_t* synth,
 		}
 		else 
 		{
-			nBasicChan = FLUID_FAILED; /* allocation error */
+			n_basic_chan = FLUID_FAILED; /* allocation error */
 			FLUID_LOG(FLUID_ERR, "Out of memory");
 		}
 		*basicChannelInfos = bci; /* returns table */
 	}
 	fluid_synth_api_exit(synth);
-	return nBasicChan;
+	return n_basic_chan;
 }
 
 int fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth, 
@@ -131,22 +131,22 @@ int fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth,
  * @note This API is the only one to replace all the basics channels in the 
  * synth instance.
  */
-char * WarningMsg ="resetbasicchannels: Different entries have the same basic channel.\n\
+char * warning_msg ="resetbasicchannels: Different entries have the same basic channel.\n\
 An entry supersedes a previous entry with the same basic channel.\n";
 
 int fluid_synth_reset_basic_channels(fluid_synth_t* synth, 
                              int n, 
                              fluid_basic_channel_infos_t *basicChannelInfos)
 {
-    int i,nChan;
+    int i,n_chan;
     int result;
     /* checks parameters first */
     fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
     fluid_return_val_if_fail (n >= 0, FLUID_FAILED);
     fluid_synth_api_enter(synth);
     
-    nChan = synth->midi_channels; /* MIDI Channels number */
-    if (n > nChan)
+    n_chan = synth->midi_channels; /* MIDI Channels number */
+    if (n > n_chan)
     {
         FLUID_API_RETURN(FLUID_FAILED);
     }
@@ -155,18 +155,18 @@ int fluid_synth_reset_basic_channels(fluid_synth_t* synth,
     if(n && basicChannelInfos ) for (i = 0; i < n; i++)
     {
 	if (	basicChannelInfos[i].basicchan < 0 || 
-		basicChannelInfos[i].basicchan >= nChan ||
+		basicChannelInfos[i].basicchan >= n_chan ||
 		basicChannelInfos[i].mode < 0 ||
 		basicChannelInfos[i].mode >= FLUID_CHANNEL_MODE_LAST ||
 		basicChannelInfos[i].val < 0 ||
-		basicChannelInfos[i].basicchan + basicChannelInfos[i].val > nChan)
+		basicChannelInfos[i].basicchan + basicChannelInfos[i].val > n_chan)
         {
             FLUID_API_RETURN(FLUID_FAILED);
         }
     }
 
     /* Clears previous list of basic channel */
-    for(i = 0; i <  nChan; i++) {
+    for(i = 0; i <  n_chan; i++) {
 	reset_fluid_channel_basic_channel_infos(synth->channel[i]);
 	synth->channel[i]->mode_val = 0; 
     }
@@ -177,14 +177,14 @@ int fluid_synth_reset_basic_channels(fluid_synth_t* synth,
 	/* Sets the new list of basic channel */
 	for (i = 0; i < n; i++)
 	{
-	    int bchan = basicChannelInfos[i].basicchan;
-            if (synth->channel[bchan]->mode &  FLUID_CHANNEL_BASIC)
+	    int basic_chan = basicChannelInfos[i].basicchan;
+        if (synth->channel[basic_chan]->mode &  FLUID_CHANNEL_BASIC)
 		/* Different entries have the same basic channel. 
 		 An entry supersedes a previous entry with the same 
 		 basic channel.*/
-		FLUID_LOG(FLUID_INFO, WarningMsg);
+	        FLUID_LOG(FLUID_INFO, warning_msg);
 	    /* Set Basic channel first */
-            else synth->channel[bchan]->mode |= FLUID_CHANNEL_BASIC;
+        else synth->channel[basic_chan]->mode |= FLUID_CHANNEL_BASIC;
 	}
 
 	for (i = 0; i < n; i++)
@@ -261,20 +261,20 @@ int fluid_synth_set_basic_channel(fluid_synth_t* synth, int basicchan, int mode,
  *   - basicchan is outside MIDI channel count.
  *   - val has a number of channels overlapping the next basic channel.
  */
-char * WarningMsg1 = "Basic channel %d has been narrowed to %d channels.";
-char * WarningMsg2 = "Basic channel %d have number of channels that overlaps.\n\
+char * warning_msg1 = "Basic channel %d has been narrowed to %d channels.";
+char * warning_msg2 = "Basic channel %d have number of channels that overlaps.\n\
 the next basic channel\n";
 
 int fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth, 
 					int basicchan,int mode, int val)
 {
-	int nChan = synth->midi_channels; /* MIDI Channels number */
+	int n_chan = synth->midi_channels; /* MIDI Channels number */
 	int result = FLUID_FAILED; /* default return */
-	if (basicchan < nChan)
+	if (basicchan < n_chan)
 	{
-		int LastBeginRange; /* Last channel num inside the beginning range + 1. */
-		int LastEndRange; /* Last channel num inside the ending range + 1. */
-		int prevbasicchan = -1 ; // Previous basic channel
+		int last_begin_range; /* Last channel num inside the beginning range + 1. */
+		int last_end_range; /* Last channel num inside the ending range + 1. */
+		int prev_basic_chan = -1 ; // Previous basic channel
 		int i;
 		result = FLUID_OK;
 		if ( !(synth->channel[basicchan]->mode &  FLUID_CHANNEL_BASIC))
@@ -286,65 +286,65 @@ int fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth,
 				{	/* searchs previous basic channel */
 					if (synth->channel[i]->mode &  FLUID_CHANNEL_BASIC)
 					{	/* i is the previous basic channel */
-						prevbasicchan = i;
+						prev_basic_chan = i;
 						break;
 					}
 				}
 			}	
 		}
 
-		/* LastEndRange: next basic channel  or midi_channels count  */
-		for (LastEndRange = basicchan +1; LastEndRange < nChan; LastEndRange++)
+		/* last_end_range: next basic channel  or midi_channels count  */
+		for (last_end_range = basicchan +1; last_end_range < n_chan; last_end_range++)
 		{
-			if (synth->channel[LastEndRange]->mode &  FLUID_CHANNEL_BASIC) break;
+			if (synth->channel[last_end_range]->mode &  FLUID_CHANNEL_BASIC) break;
 		}
-		/* Now LastBeginRange is set */
+		/* Now last_begin_range is set */
 		switch (mode = mode &  FLUID_CHANNEL_MODE_MASK)
 		{
 			case FLUID_CHANNEL_MODE_OMNION_POLY:	/* Mode 0 and 1 */
 			case FLUID_CHANNEL_MODE_OMNION_MONO:
-				LastBeginRange = LastEndRange;
+				last_begin_range = last_end_range;
 				break;
 			case FLUID_CHANNEL_MODE_OMNIOFF_POLY:		/* Mode 2 */
-				LastBeginRange = basicchan + 1;
+				last_begin_range = basicchan + 1;
 				break;
 			case FLUID_CHANNEL_MODE_OMNIOFF_MONO:		/* Mode 3 */
-				if (val) LastBeginRange = basicchan + val;
-				else LastBeginRange = LastEndRange;
+				if (val) last_begin_range = basicchan + val;
+				else last_begin_range = last_end_range;
 		}
 		/* Check if val overlaps the next basic channel */
-		if (LastBeginRange > LastEndRange)
+		if (last_begin_range > last_end_range)
 		{	
 			/* val have number of channels that overlaps the next basic channel */
-			FLUID_LOG(FLUID_INFO,WarningMsg2,basicchan);
+			FLUID_LOG(FLUID_INFO,warning_msg2,basicchan);
 			return FLUID_FAILED;
 		}
 		/* if previous basic channel exists, val is narrowed */
-		if(prevbasicchan >= 0)
+		if(prev_basic_chan >= 0)
 		{
-			synth->channel[prevbasicchan]->mode_val = basicchan - prevbasicchan;
-			FLUID_LOG(FLUID_INFO,WarningMsg1,prevbasicchan,basicchan - prevbasicchan);
+			synth->channel[prev_basic_chan]->mode_val = basicchan - prev_basic_chan;
+			FLUID_LOG(FLUID_INFO,warning_msg1,prev_basic_chan,basicchan - prev_basic_chan);
 		}
 
 		/* val is limited up to LastBeginRange */
-		val = LastBeginRange - basicchan;
+		val = last_begin_range - basicchan;
 		/* Set the Mode to the range zone: Beginning range + Ending range */
-		for (i = basicchan; i < LastEndRange; i++)
+		for (i = basicchan; i < last_end_range; i++)
 		{	
-			int newmode = mode; /* OMNI_OFF/ON, MONO/POLY ,others bits are zero */
+			int new_mode = mode; /* OMNI_OFF/ON, MONO/POLY ,others bits are zero */
 			/* MIDI specs: when mode is changed, channel must receive
 			 ALL_NOTES_OFF */
 			fluid_synth_all_notes_off_LOCAL (synth, i);
 			/* basicchan only is marked Basic Channel */
-			if (i == basicchan)	newmode |= FLUID_CHANNEL_BASIC; 
+			if (i == basicchan)	new_mode |= FLUID_CHANNEL_BASIC; 
 			else val =0; /* val is 0 for other channel than basic channel */
 			/* Channel in beginning zone are enabled */
-			if (i < LastBeginRange) newmode |= FLUID_CHANNEL_ENABLED; 
+			if (i < last_begin_range) new_mode |= FLUID_CHANNEL_ENABLED; 
 			/* Channel in ending zone are disabled */
-			else newmode = 0;
+			else new_mode = 0;
 			/* Now mode is OMNI OFF/ON,MONO/POLY, BASIC_CHANNEL or not
 			   ENABLED or not */	
-			set_fluid_channel_basic_channel_infos(synth->channel[i],newmode);
+			set_fluid_channel_basic_channel_infos(synth->channel[i],new_mode);
 			synth->channel[i]->mode_val = val;
 		}
 	}

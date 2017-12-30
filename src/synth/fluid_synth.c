@@ -1499,7 +1499,6 @@ fluid_synth_cc_LOCAL (fluid_synth_t* synth, int channum, int num)
 int
 fluid_synth_get_cc(fluid_synth_t* synth, int chan, int num, int* pval)
 {
-  int result;
   fluid_return_val_if_fail (num >= 0 && num < 128, FLUID_FAILED);
   fluid_return_val_if_fail (pval != NULL, FLUID_FAILED);
 
