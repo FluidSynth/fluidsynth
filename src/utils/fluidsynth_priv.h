@@ -122,8 +122,8 @@
 #ifdef MINGW32
 
 #include <stdint.h>
-#define snprintf _snprintf
-#define vsnprintf _vsnprintf
+#define snprintf g_snprintf
+#define vsnprintf g_vsnprintf
 
 #define DSOUND_SUPPORT 1
 #define WINMIDI_SUPPORT 1
