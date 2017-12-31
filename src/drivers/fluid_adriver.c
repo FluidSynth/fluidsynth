@@ -123,82 +123,82 @@ void delete_fluid_file_audio_driver(fluid_audio_driver_t* p);
 static const fluid_audriver_definition_t fluid_audio_drivers[] =
 {
 #if JACK_SUPPORT
-    { "jack", \
-        new_fluid_jack_audio_driver, \
-        new_fluid_jack_audio_driver2, \
-        delete_fluid_jack_audio_driver, \
+    { "jack",
+        new_fluid_jack_audio_driver,
+        new_fluid_jack_audio_driver2,
+        delete_fluid_jack_audio_driver,
         fluid_jack_audio_driver_settings },
 #endif
 
 #if ALSA_SUPPORT
-    { "alsa", \
-        new_fluid_alsa_audio_driver, \
-        new_fluid_alsa_audio_driver2, \
-        delete_fluid_alsa_audio_driver, \
+    { "alsa",
+        new_fluid_alsa_audio_driver,
+        new_fluid_alsa_audio_driver2,
+        delete_fluid_alsa_audio_driver,
         fluid_alsa_audio_driver_settings },
 #endif
 
 #if OSS_SUPPORT
-    { "oss", \
-        new_fluid_oss_audio_driver, \
-        new_fluid_oss_audio_driver2, \
-        delete_fluid_oss_audio_driver, \
+    { "oss",
+        new_fluid_oss_audio_driver,
+        new_fluid_oss_audio_driver2,
+        delete_fluid_oss_audio_driver,
         fluid_oss_audio_driver_settings },
 #endif
 
 #if PULSE_SUPPORT
-    { "pulseaudio", \
-        new_fluid_pulse_audio_driver, \
-        new_fluid_pulse_audio_driver2, \
-        delete_fluid_pulse_audio_driver, \
+    { "pulseaudio",
+        new_fluid_pulse_audio_driver,
+        new_fluid_pulse_audio_driver2,
+        delete_fluid_pulse_audio_driver,
         fluid_pulse_audio_driver_settings },
 #endif
 
 #if COREAUDIO_SUPPORT
-    { "coreaudio", \
-        new_fluid_core_audio_driver, \
-        new_fluid_core_audio_driver2, \
-        delete_fluid_core_audio_driver, \
+    { "coreaudio",
+        new_fluid_core_audio_driver,
+        new_fluid_core_audio_driver2,
+        delete_fluid_core_audio_driver,
         fluid_core_audio_driver_settings },
 #endif
 
 #if DSOUND_SUPPORT
-    { "dsound", \
-        new_fluid_dsound_audio_driver, \
-        NULL, \
-        delete_fluid_dsound_audio_driver, \
+    { "dsound",
+        new_fluid_dsound_audio_driver,
+        NULL,
+        delete_fluid_dsound_audio_driver,
         fluid_dsound_audio_driver_settings },
 #endif
 
 #if PORTAUDIO_SUPPORT
-    { "portaudio", \
-        new_fluid_portaudio_driver, \
-        NULL, \
-        delete_fluid_portaudio_driver, \
+    { "portaudio",
+        new_fluid_portaudio_driver,
+        NULL,
+        delete_fluid_portaudio_driver,
         fluid_portaudio_driver_settings },
 #endif
 
 #if SNDMAN_SUPPORT
-    { "sndman", \
-        new_fluid_sndmgr_audio_driver, \
-        new_fluid_sndmgr_audio_driver2, \
-        delete_fluid_sndmgr_audio_driver, \
+    { "sndman",
+        new_fluid_sndmgr_audio_driver,
+        new_fluid_sndmgr_audio_driver2,
+        delete_fluid_sndmgr_audio_driver,
         NULL },
 #endif
 
 #if DART_SUPPORT
-    { "dart", \
-        new_fluid_dart_audio_driver, \
-        NULL, \
-        delete_fluid_dart_audio_driver, \
+    { "dart",
+        new_fluid_dart_audio_driver,
+        NULL,
+        delete_fluid_dart_audio_driver,
         fluid_dart_audio_driver_settings },
 #endif
 
 #if AUFILE_SUPPORT
-    { "file", \
-        new_fluid_file_audio_driver, \
-        NULL, \
-        delete_fluid_file_audio_driver, \
+    { "file",
+        new_fluid_file_audio_driver,
+        NULL,
+        delete_fluid_file_audio_driver,
         NULL },
 #endif
 };
