@@ -299,9 +299,6 @@ void fluid_audio_driver_settings(fluid_settings_t* settings)
         IS_AUDIO_DRIVER_ENABLED(fluid_adriver_disable_mask, i)) {
       fluid_audio_drivers[i].settings(settings);
     }
-    if (fluid_audio_drivers[i].settings != NULL) {
-      fluid_audio_drivers[i].settings(settings);
-    }
   }
 }
 
