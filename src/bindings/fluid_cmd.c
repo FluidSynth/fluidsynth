@@ -1970,19 +1970,18 @@ int fluid_handle_basicchannels (void* data, int ac, char** av,
 static const char *invalid_arg_msg ="invalid argument\n";
 static const char *too_few_arg_msg = "too few argument, chan mode val [chan mode val]...\n";
 
-/* argument names for channel mode parameter (see resetbasicchannels and 
-  setbasicchannels commands*/
-static const char * name_channel_mode [FLUID_CHANNEL_MODE_LAST]=
-{"poly_omnion","mono_omnion","poly_omnioff","mono_omnioff"};
-
 /*
-  Searchs a nmode name and returns the channel mode num.
+  Searchs a mode name and returns the channel mode num.
   name must be: poly_omnion,  mono_omnion, poly_omnioff, mono_omnioff.
   @name name to search.
   @ On return: channel mode number (0 to 3) if name is valid, -1 otherwise.
 */
 static int get_channel_mode_num(char * name)
 {
+    /* argument names for channel mode parameter (see resetbasicchannels and 
+       setbasicchannels commands*/
+    static const char * name_channel_mode [FLUID_CHANNEL_MODE_LAST]=
+    {"poly_omnion","mono_omnion","poly_omnioff","mono_omnioff"};
 	int i;
 	for (i = 0 ; i <  FLUID_CHANNEL_MODE_LAST;i++)
 	{
