@@ -223,7 +223,6 @@ int fluid_synth_reset_basic_channels(fluid_synth_t* synth,
  *   - mode is invalid.
  *   - val has a number of channels overlapping the next basic channel.
  */
-//int fluid_synth_set_basic_channel(fluid_synth_t* synth, int basicchan, int mode, int val)
 int fluid_synth_set_basic_channel(fluid_synth_t* synth, 
 								fluid_basic_channel_infos_t *basicChannelInfos)
 {
@@ -276,7 +275,7 @@ int fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth,
 	if (basicchan < n_chan)
 	{
 		static const char * warning_msg1 = "Basic channel %d has been narrowed to %d channels.";
-		static const char * warning_msg2 = "Basic channel %d have number of channels that overlaps\n\
+		static const char * warning_msg2 = "Basic channel %d has number of channels that overlaps\n\
 the next basic channel\n";
 		int last_begin_range; /* Last channel num inside the beginning range + 1. */
 		int last_end_range; /* Last channel num inside the ending range + 1. */
