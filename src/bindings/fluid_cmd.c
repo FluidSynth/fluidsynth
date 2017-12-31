@@ -1969,14 +1969,45 @@ int fluid_handle_basicchannels (void* data, int ac, char** av,
 
 static const char *invalid_arg_msg ="invalid argument\n";
 static const char *too_few_arg_msg = "too few argument, chan mode val [chan mode val]...\n";
+
+/* argument names for channel mode parameter (see resetbasicchannels and 
+  setbasicchannels commands*/
+static const char * name_channel_mode [FLUID_CHANNEL_MODE_LAST]=
+{"poly_omnion","mono_omnion","poly_omnioff","mono_omnioff"};
+
+/*
+  Returns the channel mode num from a name
+  name must be: poly_omnion,  mono_omnion, poly_omnioff, mono_omnioff
+  @name name to search 
+  @ On return: channel mode number (0 to 3) if name is valid, -1 otherwise
+
+*/
+static int get_channel_mode_num(char * name)
+{
+	int i;
+	for (i = 0 ; i <  FLUID_CHANNEL_MODE_LAST;i++)
+	{
+		if ( ! strcmp (name, name_channel_mode[i]))
+		{
+			return i;
+		}
+	}
+	return -1;
+}
+
 /*-----------------------------------------------------------------------------
   resetbasicchannels [chan1 Mode1 nbr1   chan2 Mode2 nbr2 ...]
-  
   Sets the list of MIDI basic channels with mode
+
   This list replaces any previous basic channels list.
 
   With no parameters the function set one channel basic at
   basicchan 0 mode 0 (Omni On Poly) (i.e all the MIDI channel are polyphonic).
+
+  Mode can be: 
+      numeric: 0 to 3 or
+	  name: poly_omnion , mono_omnion, poly_omni_off, mono_omnioff
+
 */
 int fluid_handle_resetbasicchannels (void* data, int ac, char** av, 
 								fluid_ostream_t out)
@@ -1991,10 +2022,11 @@ int fluid_handle_resetbasicchannels (void* data, int ac, char** av,
 	{	/* parameters for list entries */
 		for (i = 0; i < ac; i++)
 		{
-			if (!fluid_is_number(av[i]))
-			{
-				fluid_ostream_printf(out, "resetbasicchannels: %s",invalid_arg_msg);
-				return -1;	
+			if (!fluid_is_number(av[i]) &&
+			    ( (i % 3 != 1) || get_channel_mode_num(av[i]) < 0 ))
+			{  
+				fluid_ostream_printf(out, "resetbasicchannels:%s",invalid_arg_msg);
+				return -1;
 			}
 		}
 		n = ac / 3; /* number of basic channel information */
@@ -2006,10 +2038,22 @@ int fluid_handle_resetbasicchannels (void* data, int ac, char** av,
 		}
 		/* allocates bci table and fills  */
 		bci = FLUID_ARRAY(fluid_basic_channel_infos_t, n );
+		if (! bci )
+		{
+			fluid_ostream_printf(out, "memory error\n");
+			return -1;
+		}
 		for (i = 0; i < n; i++)
 		{
 			bci[i].basicchan = atoi(av[(i * 3)]); 
-			bci[i].mode = atoi(av[(i * 3)+1]); 
+			if (fluid_is_number(av[(i * 3)+1]))
+			{		
+				bci[i].mode = atoi(av[(i * 3)+1]); 
+			}
+			else
+			{
+				bci[i].mode = get_channel_mode_num(av[(i * 3)+1]);
+			}
 			bci[i].val = atoi(av[(i * 3)+2]); 
 		}
 	}
@@ -2031,6 +2075,10 @@ int fluid_handle_resetbasicchannels (void* data, int ac, char** av,
   between the previous basic channel and the next basic channel.
   val value of the previous basic channel will be narrowed if necessary.
 
+  Mode can be: 
+      numeric: 0 to 3 or
+	  name: poly_omnion , mono_omnion, poly_omni_off, mono_omnioff
+
 */
 int fluid_handle_setbasicchannels (void* data, int ac, char** av, 
 								fluid_ostream_t out)
@@ -2044,10 +2092,11 @@ int fluid_handle_setbasicchannels (void* data, int ac, char** av,
 	{	/* parameters for list entries */
 		for (i = 0; i < ac; i++)
 		{
-			if (!fluid_is_number(av[i]))
-			{
-				fluid_ostream_printf(out, "setbasicchannels: %s",invalid_arg_msg);
-				return -1;	
+			if (!fluid_is_number(av[i]) &&
+			    ( (i % 3 != 1) || get_channel_mode_num(av[i]) < 0 ))
+			{  
+				fluid_ostream_printf(out, "setbasicchannels:%s",invalid_arg_msg);
+				return -1;
 			}
 		}
 	}
@@ -2069,7 +2118,10 @@ int fluid_handle_setbasicchannels (void* data, int ac, char** av,
 		fluid_basic_channel_infos_t bci;
 
 		bci.basicchan = atoi(av[(i * 3)]); 
-		bci.mode = atoi(av[(i * 3)+1]); 
+		if (fluid_is_number(av[(i * 3)+1]))
+			bci.mode = atoi(av[(i * 3)+1]); 
+		else
+			bci.mode = get_channel_mode_num(av[(i * 3)+1]);
 		bci.val = atoi(av[(i * 3)+2]); 
 
 		/* changes basic channels */
