@@ -2196,11 +2196,10 @@ int fluid_handle_channelsmode (void* data, int ac, char** av,
 				if (bci.mode &  FLUID_CHANNEL_BASIC)
 				{	/* This channel is a basic channel */
 					char nbr[10]; /* field Nbr */
-					p_basicchan = "basic channel";
-					nbr[sizeof(nbr)-1] = 0;
-					FLUID_SNPRINTF(nbr,sizeof(nbr)-1,"nbr:%3d",bci.val);
+					FLUID_SNPRINTF(nbr,sizeof(nbr),"nbr:%3d",bci.val);
 					p_nbr = nbr;
 					p_mode = mode_name[mode];
+					p_basicchan = "basic channel";
 				}
 				else
 				{	/* This channel is member of a part */
