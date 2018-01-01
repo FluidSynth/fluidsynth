@@ -3477,7 +3477,10 @@ fluid_voice_t*
 fluid_synth_alloc_voice(fluid_synth_t* synth, fluid_sample_t* sample,
 						int chan, int key, int vel)
 {
-    return fluid_synth_alloc_voice_LOCAL(synth, sample, chan, key, vel, NULL);
+  fluid_return_val_if_fail (sample != NULL, NULL);
+  FLUID_API_ENTRY_CHAN(NULL);
+  FLUID_API_RETURN (fluid_synth_alloc_voice_LOCAL(synth, sample, chan, key, vel, NULL));
+
 }
 
 fluid_voice_t*
@@ -3487,9 +3490,6 @@ fluid_synth_alloc_voice_LOCAL(fluid_synth_t* synth, fluid_sample_t* sample, int 
   fluid_voice_t* voice = NULL;
   fluid_channel_t* channel = NULL;
   unsigned int ticks;
-
-  fluid_return_val_if_fail (sample != NULL, NULL);
-  FLUID_API_ENTRY_CHAN(NULL);
 
   /* check if there's an available synthesis process */
   for (i = 0; i < synth->polyphony; i++) {
@@ -3507,7 +3507,7 @@ fluid_synth_alloc_voice_LOCAL(fluid_synth_t* synth, fluid_sample_t* sample, int 
 
   if (voice == NULL) {
     FLUID_LOG(FLUID_WARN, "Failed to allocate a synthesis process. (chan=%d,key=%d)", chan, key);
-    FLUID_API_RETURN(NULL);
+	return NULL;
   }
   ticks = fluid_synth_get_ticks(synth);
 
@@ -3527,14 +3527,12 @@ fluid_synth_alloc_voice_LOCAL(fluid_synth_t* synth, fluid_sample_t* sample, int 
 	     k);
   }
 
-  if (chan >= 0) {
-	  channel = synth->channel[chan];
-  }
+  channel = synth->channel[chan];
 
   if (fluid_voice_init (voice, sample, zone_range, channel, key, vel,
                         synth->storeid, ticks, synth->gain) != FLUID_OK) {
     FLUID_LOG(FLUID_WARN, "Failed to initialize voice");
-    FLUID_API_RETURN(NULL);
+	return NULL;
   }
 
   /* add the default modulators to the synthesis process. */
@@ -3570,7 +3568,7 @@ fluid_synth_alloc_voice_LOCAL(fluid_synth_t* synth, fluid_sample_t* sample, int 
     }
   }
 
-  FLUID_API_RETURN(voice);
+  return voice;
 }
 
 /* Kill all voices on a given channel, which have the same exclusive class
