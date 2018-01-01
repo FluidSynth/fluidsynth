@@ -62,7 +62,7 @@ typedef struct _fluid_file_callbacks_t fluid_file_callbacks_t;  /**< Callback st
 typedef int fluid_istream_t;    /**< Input stream descriptor */
 typedef int fluid_ostream_t;    /**< Output stream descriptor */
 
-typedef short fluid_seq_id_t; /**< Unique client IDs use by the sequencer and #fluid_event_t, obtained by fluid_sequencer_register_client() and fluid_sequencer_register_fluidsynth() */
+typedef short fluid_seq_id_t; /**< Unique client IDs used by the sequencer and #fluid_event_t, obtained by fluid_sequencer_register_client() and fluid_sequencer_register_fluidsynth() */
 
 #ifdef __cplusplus
 }

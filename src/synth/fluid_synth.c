@@ -950,7 +950,7 @@ delete_fluid_synth(fluid_synth_t* synth)
  */
 /* FIXME - The error messages are not thread-safe, yet. They are still stored
  * in a global message buffer (see fluid_sys.c). */
-char*
+const char*
 fluid_synth_error(fluid_synth_t* synth)
 {
   return fluid_error();
@@ -2393,6 +2393,11 @@ fluid_synth_program_change(fluid_synth_t* synth, int chan, int prognum)
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
  * @param bank MIDI bank number
  * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @note This function does not change the instrument currently assigned to \c chan,
+ * as it is usually called prior to fluid_synth_program_change(). If you still want
+ * instrument changes to take effect immediately, call fluid_synth_program_reset()
+ * after having set up the bank configuration.
+ * 
  */
 int
 fluid_synth_bank_select(fluid_synth_t* synth, int chan, unsigned int bank)
@@ -2416,6 +2421,10 @@ fluid_synth_bank_select(fluid_synth_t* synth, int chan, unsigned int bank)
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
  * @param sfont_id ID of a loaded SoundFont
  * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @note This function does not change the instrument currently assigned to \c chan,
+ * as it is usually called prior to fluid_synth_bank_select() or fluid_synth_program_change().
+ * If you still want instrument changes to take effect immediately, call fluid_synth_program_reset()
+ * after having selected the soundfont.
  */
 int
 fluid_synth_sfont_select(fluid_synth_t* synth, int chan, unsigned int sfont_id)
@@ -2802,7 +2811,7 @@ fluid_synth_get_internal_bufsize(fluid_synth_t* synth)
 }
 
 /**
- * Resend a bank select and a program change for every channel.
+ * Resend a bank select and a program change for every channel and assign corresponding instruments.
  * @param synth FluidSynth instance
  * @return FLUID_OK on success, FLUID_FAILED otherwise
  *
@@ -2813,6 +2822,7 @@ int
 fluid_synth_program_reset(fluid_synth_t* synth)
 {
   int i, prog;
+  fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
   fluid_synth_api_enter(synth);
   /* try to set the correct presets */
   for (i = 0; i < synth->midi_channels; i++){
@@ -3658,7 +3668,7 @@ fluid_synth_add_sfloader(fluid_synth_t* synth, fluid_sfloader_t* loader)
  *
  * @param synth FluidSynth instance
  * @param filename File to load
- * @param reset_presets TRUE to re-assign presets for all MIDI channels
+ * @param reset_presets TRUE to re-assign presets for all MIDI channels (equivalent to calling fluid_synth_program_reset())
  * @return SoundFont ID on success, FLUID_FAILED on error
  */
 int
@@ -5307,7 +5317,9 @@ fluid_synth_stop_LOCAL (fluid_synth_t *synth, unsigned int id)
 }
 
 /**
- * Offset the bank numbers of a loaded SoundFont.
+ * Offset the bank numbers of a loaded SoundFont, i.e.\ subtract
+ * \c offset from any bank number when assigning instruments.
+ * 
  * @param synth FluidSynth instance
  * @param sfont_id ID of a loaded SoundFont
  * @param offset Bank offset value to apply to all instruments

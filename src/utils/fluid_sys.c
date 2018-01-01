@@ -345,6 +345,15 @@ fluid_is_soundfont(const char *filename)
 }
 
 /**
+ * Suspend the execution of the current thread for the specified amount of time.
+ * @param milliseconds to wait.
+ */
+void fluid_msleep(unsigned int msecs)
+{
+  g_usleep(msecs * 1000);
+}
+
+/**
  * Get time in milliseconds to be used in relative timing operations.
  * @return Unix time in milliseconds.
  */
@@ -692,7 +701,7 @@ fluid_timer_run (void *data)
        two callbacks bringing in the "absolute" time (count *
        timer->msec) */
     delay = (count * timer->msec) - (fluid_curtime() - start);
-    if (delay > 0) g_usleep (delay * 1000);
+    if (delay > 0) fluid_msleep(delay);
   }
 
   FLUID_LOG (FLUID_DBG, "Timer thread finished");
@@ -940,6 +949,8 @@ fluid_ostream_printf (fluid_ostream_t out, char* format, ...)
 #endif
 }
 
+#ifdef NETWORK_SUPPORT
+
 int fluid_server_socket_join(fluid_server_socket_t *server_socket)
 {
   return fluid_thread_join (server_socket->thread);
@@ -1171,3 +1182,5 @@ void delete_fluid_server_socket(fluid_server_socket_t *server_socket)
   // Should be called the same number of times as fluid_socket_init()
   fluid_socket_cleanup();
 }
+
+#endif // NETWORK_SUPPORT

@@ -31,7 +31,6 @@
  */
 
 #include "fluid_synth.h"
-#include "fluid_sys.h"
 #include "fluid_settings.h"
 #include "fluid_adriver.h"
 
@@ -362,4 +361,4 @@ delete_fluid_portaudio_driver(fluid_audio_driver_t *p)
   FLUID_FREE (dev);
 }
 
-#endif /*#if PORTAUDIO_SUPPORT */
+#endif /* PORTAUDIO_SUPPORT */
