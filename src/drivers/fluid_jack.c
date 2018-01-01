@@ -28,17 +28,16 @@
  *
  */
 
-#include "fluidsynth_priv.h"
-#include "fluid_sys.h"
 #include "fluid_synth.h"
 #include "fluid_adriver.h"
 #include "fluid_mdriver.h"
 #include "fluid_settings.h"
 
+#if JACK_SUPPORT
+
 #include <jack/jack.h>
 #include <jack/midiport.h>
 
-#include "config.h"
 #include "fluid_lash.h"
 
 
@@ -99,17 +98,17 @@ int fluid_jack_driver_process(jack_nframes_t nframes, void *arg);
 void delete_fluid_jack_midi_driver(fluid_midi_driver_t *p);
 
 
-static fluid_mutex_t last_client_mutex = G_STATIC_MUTEX_INIT;     /* Probably not necessary, but just in case drivers are created by multiple threads */
+static fluid_mutex_t last_client_mutex = FLUID_MUTEX_INIT;     /* Probably not necessary, but just in case drivers are created by multiple threads */
 static fluid_jack_client_t *last_client = NULL;       /* Last unpaired client. For audio/MIDI driver pairing. */
 
 
 void
 fluid_jack_audio_driver_settings(fluid_settings_t* settings)
 {
-  fluid_settings_register_str(settings, "audio.jack.id", "fluidsynth", 0, NULL, NULL);
-  fluid_settings_register_int(settings, "audio.jack.multi", 0, 0, 1, FLUID_HINT_TOGGLED, NULL, NULL);
-  fluid_settings_register_int(settings, "audio.jack.autoconnect", 0, 0, 1, FLUID_HINT_TOGGLED, NULL, NULL);
-  fluid_settings_register_str(settings, "audio.jack.server", "", 0, NULL, NULL);
+  fluid_settings_register_str(settings, "audio.jack.id", "fluidsynth", 0);
+  fluid_settings_register_int(settings, "audio.jack.multi", 0, 0, 1, FLUID_HINT_TOGGLED);
+  fluid_settings_register_int(settings, "audio.jack.autoconnect", 0, 0, 1, FLUID_HINT_TOGGLED);
+  fluid_settings_register_str(settings, "audio.jack.server", "", 0);
 }
 
 /*
@@ -392,7 +391,7 @@ fluid_jack_client_close (fluid_jack_client_t *client_ref, void *driver)
 
   if (client_ref->audio_driver || client_ref->midi_driver)
   {
-    g_usleep (100000);  /* FIXME - Hack to make sure that resources don't get freed while Jack callback is active */
+    fluid_msleep(100);  /* FIXME - Hack to make sure that resources don't get freed while Jack callback is active */
     return;
   }
 
@@ -614,8 +613,8 @@ fluid_jack_driver_shutdown(void *arg)
 
 void fluid_jack_midi_driver_settings (fluid_settings_t *settings)
 {
-  fluid_settings_register_str (settings, "midi.jack.id", "fluidsynth-midi", 0, NULL, NULL);
-  fluid_settings_register_str (settings, "midi.jack.server", "", 0, NULL, NULL);
+  fluid_settings_register_str (settings, "midi.jack.id", "fluidsynth-midi", 0);
+  fluid_settings_register_str (settings, "midi.jack.server", "", 0);
 }
 
 /*
@@ -677,3 +676,5 @@ delete_fluid_jack_midi_driver(fluid_midi_driver_t *p)
   
   FLUID_FREE (dev);
 }
+
+#endif /* JACK_SUPPORT */

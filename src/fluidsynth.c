@@ -48,6 +48,7 @@
 void print_usage(void);
 void print_help(fluid_settings_t *settings);
 void print_welcome(void);
+void print_configure(void);
 
 /*
  * the globals
@@ -94,9 +95,9 @@ void process_o_cmd_line_option(fluid_settings_t* settings, char* optarg)
     if (fluid_settings_get_hints (settings, optarg, &hints) == FLUID_OK
         && hints & FLUID_HINT_TOGGLED)
     {
-      if (FLUID_STRCMP (val, "yes") == 0 || FLUID_STRCMP (val, "True") == 0
-          || FLUID_STRCMP (val, "TRUE") == 0 || FLUID_STRCMP (val, "true") == 0
-          || FLUID_STRCMP (val, "T") == 0)
+      if (FLUID_STRCASECMP (val, "yes") == 0
+          || FLUID_STRCASECMP (val, "true") == 0
+          || FLUID_STRCASECMP (val, "t") == 0)
         ival = 1;
       else ival = atoi (val);
     }
@@ -260,7 +261,7 @@ int main(int argc, char** argv)
   fluid_midi_driver_t* mdriver = NULL;
   fluid_audio_driver_t* adriver = NULL;
   fluid_synth_t* synth = NULL;
-#if !defined(MACINTOSH)
+#ifdef NETWORK_SUPPORT
   fluid_server_t* server = NULL;
 #endif
   char* config_file = NULL;
@@ -269,11 +270,9 @@ int main(int argc, char** argv)
   int with_server = 0;
   int dump = 0;
   int fast_render = 0;
+  static const char optchars[] = "a:C:c:dE:f:F:G:g:hijK:L:lm:nO:o:p:R:r:sT:Vvz:";
 #ifdef LASH_ENABLED
   int connect_lash = 1;
-#endif
-  char *optchars = "a:C:c:dE:f:F:G:g:hijK:L:lm:nO:o:p:R:r:sT:Vvz:";
-#ifdef LASH_ENABLED
   int enabled_lash = 0;		/* set to TRUE if lash gets enabled */
   fluid_lash_args_t *lash_args;
 
@@ -504,7 +503,7 @@ int main(int argc, char** argv)
       else fluid_settings_setstr(settings, "audio.file.type", optarg);
       break;
     case 'V':
-      printf("FluidSynth %s\n", VERSION);
+      print_configure();
       exit (0);
       break;
     case 'v':
@@ -690,7 +689,7 @@ int main(int argc, char** argv)
   }
   
   /* run the server, if requested */
-#if !defined(MACINTOSH)
+#ifdef NETWORK_SUPPORT
   if (with_server) {
     server = new_fluid_server(settings, synth, router);
     if (server == NULL) {
@@ -735,7 +734,7 @@ int main(int argc, char** argv)
 
  cleanup:
 
-#if !defined(MACINTOSH) && !defined(WIN32)
+#ifdef NETWORK_SUPPORT
   if (server != NULL) {
     /* if the user typed 'quit' in the shell, kill the server */
     if (!interactive) {
@@ -808,6 +807,17 @@ print_welcome()
 	 "Distributed under the LGPL license.\n"
 	 "SoundFont(R) is a registered trademark of E-mu Systems, Inc.\n\n",
 	 FLUIDSYNTH_VERSION);
+}
+
+void print_configure()
+{
+    puts("Sample type="
+#ifdef WITH_FLOAT
+    "float"
+#else
+    "double"
+#endif
+    );
 }
 
 /*

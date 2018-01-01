@@ -66,7 +66,7 @@ void fluid_coremidi_callback(const MIDIPacketList *list, void *p, void *src);
 
 void fluid_coremidi_driver_settings(fluid_settings_t* settings)
 {
-  fluid_settings_register_str(settings, "midi.coremidi.id", "pid", 0, NULL, NULL);
+  fluid_settings_register_str(settings, "midi.coremidi.id", "pid", 0);
 }
 
 /*
@@ -174,7 +174,6 @@ delete_fluid_coremidi_driver(fluid_midi_driver_t* p)
     delete_fluid_midi_parser(dev->parser);
   }
   FLUID_FREE(dev);
-  return 0;
 }
 
 void

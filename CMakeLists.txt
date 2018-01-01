@@ -28,9 +28,9 @@ set ( CMAKE_EXPORT_COMPILE_COMMANDS 1 )
 set ( PACKAGE "fluidsynth" )
 
 # FluidSynth package version
-set ( FLUIDSYNTH_VERSION_MAJOR 1 )
-set ( FLUIDSYNTH_VERSION_MINOR 1 )
-set ( FLUIDSYNTH_VERSION_MICRO 8 )
+set ( FLUIDSYNTH_VERSION_MAJOR 2 )
+set ( FLUIDSYNTH_VERSION_MINOR 0 )
+set ( FLUIDSYNTH_VERSION_MICRO 0 )
 set ( VERSION "${FLUIDSYNTH_VERSION_MAJOR}.${FLUIDSYNTH_VERSION_MINOR}.${FLUIDSYNTH_VERSION_MICRO}" )
 set ( FLUIDSYNTH_VERSION "\"${VERSION}\"" )
 
@@ -43,9 +43,9 @@ set ( FLUIDSYNTH_VERSION "\"${VERSION}\"" )
 # if any interfaces have been added: AGE++
 # if any interfaces have been removed/changed (compatibility broken): AGE=0
 # This is not exactly the same algorithm as the libtool one, but the results are the same.
-set ( LIB_VERSION_CURRENT 1 )
-set ( LIB_VERSION_AGE 6 )
-set ( LIB_VERSION_REVISION 1 )
+set ( LIB_VERSION_CURRENT 2 )
+set ( LIB_VERSION_AGE 0 )
+set ( LIB_VERSION_REVISION 0 )
 set ( LIB_VERSION_INFO
       "${LIB_VERSION_CURRENT}.${LIB_VERSION_AGE}.${LIB_VERSION_REVISION}" )
 
@@ -69,6 +69,7 @@ option ( enable-dbus "compile DBUS support (if it is available)" on )
 option ( BUILD_SHARED_LIBS "Build a shared object or DLL" on )
 option ( enable-ladspa "enable LADSPA effect units" on )
 option ( enable-ipv6  "enable ipv6 support " on )
+option ( enable-network "enable network support (requires BSD sockets) " on )
 
 # Platform specific options
 if ( CMAKE_SYSTEM MATCHES "Linux" )
@@ -81,6 +82,7 @@ if ( CMAKE_SYSTEM MATCHES "Darwin" )
     option ( enable-coreaudio "compile CoreAudio support (if it is available)" on )
     option ( enable-coremidi "compile CoreMIDI support (if it is available)" on )
     option ( enable-framework "create a Mac OSX style FluidSynth.framework" on )
+    set ( enable-network off )
 endif ( CMAKE_SYSTEM MATCHES "Darwin" )
 
 if ( CMAKE_SYSTEM MATCHES "OS2" )
@@ -158,9 +160,9 @@ if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang" )
   endif ( OS2 )
 
   set ( GNUCC_WARNING_FLAGS "-Wall -W -Wpointer-arith -Wbad-function-cast -Wno-cast-qual -Wcast-align -Wstrict-prototypes -Wno-unused-parameter -Wdeclaration-after-statement" )
-  set ( CMAKE_C_FLAGS_DEBUG "-std=gnu89 -g ${GNUCC_VISIBILITY_FLAG} -DDEBUG ${GNUCC_WARNING_FLAGS} -fsanitize=undefined" )
-  set ( CMAKE_C_FLAGS_RELEASE "-std=gnu89 -O2 -fomit-frame-pointer -finline-functions ${GNUCC_VISIBILITY_FLAG} -DNDEBUG ${GNUCC_WARNING_FLAGS}" )
-  set ( CMAKE_C_FLAGS_RELWITHDEBINFO "-std=gnu89 -O2 -g -fomit-frame-pointer -finline-functions ${GNUCC_VISIBILITY_FLAG} -DNDEBUG ${GNUCC_WARNING_FLAGS}" )
+  set ( CMAKE_C_FLAGS_DEBUG "-std=gnu89 -g ${GNUCC_VISIBILITY_FLAG} -DDEBUG ${GNUCC_WARNING_FLAGS} -fsanitize=undefined ${CMAKE_C_FLAGS_DEBUG}" )
+  set ( CMAKE_C_FLAGS_RELEASE "-std=gnu89 -O2 -fomit-frame-pointer -finline-functions ${GNUCC_VISIBILITY_FLAG} -DNDEBUG ${GNUCC_WARNING_FLAGS} ${CMAKE_C_FLAGS_RELEASE}" )
+  set ( CMAKE_C_FLAGS_RELWITHDEBINFO "-std=gnu89 -O2 -g -fomit-frame-pointer -finline-functions ${GNUCC_VISIBILITY_FLAG} -DNDEBUG ${GNUCC_WARNING_FLAGS} ${CMAKE_C_FLAGS_RELWITHDEBINFO}" )
 endif ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang" )
 
 # Windows
@@ -249,6 +251,11 @@ if ( enable-ipv6 )
     set ( IPV6_SUPPORT 1 )
   endif ( HAVE_INETNTOP )
 endif ( enable-ipv6 )
+
+unset ( NETWORK_SUPPORT )
+if ( enable-network )
+    set ( NETWORK_SUPPORT 1 )
+endif ( enable-network )
 
 unset ( WITH_FLOAT CACHE )
 if ( enable-floats )

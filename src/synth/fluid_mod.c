@@ -418,7 +418,7 @@ fluid_mod_get_value(fluid_mod_t* mod, fluid_channel_t* chan, fluid_voice_t* voic
  * @return New allocated modulator or NULL if out of memory
  */
 fluid_mod_t*
-fluid_mod_new()
+new_fluid_mod()
 {
   fluid_mod_t* mod = FLUID_NEW (fluid_mod_t);
   if (mod == NULL) {
@@ -433,7 +433,7 @@ fluid_mod_new()
  * @param mod Modulator to free
  */
 void
-fluid_mod_delete (fluid_mod_t *mod)
+delete_fluid_mod (fluid_mod_t *mod)
 {
   FLUID_FREE(mod);
 }

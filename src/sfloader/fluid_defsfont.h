@@ -143,8 +143,13 @@ typedef struct _SFData
 {				/* Sound font data structure */
   SFVersion version;		/* sound font version */
   SFVersion romver;		/* ROM version */
+  
   unsigned int samplepos;		/* position within sffd of the sample chunk */
   unsigned int samplesize;		/* length within sffd of the sample chunk */
+  
+  unsigned int sample24pos;		/* position within sffd of the sm24 chunk, set to zero if no 24 bit sample support */
+  unsigned int sample24size;		/* length within sffd of the sm24 chunk */
+  
   char *fname;			/* file name */
   FILE *sffd;			/* loaded sfont file descriptor */
   fluid_list_t *info;		     /* linked list of info strings (1st byte is ID) */
@@ -166,7 +171,8 @@ enum
   SNAM_ID, SMPL_ID,		/* sample ids */
   PHDR_ID, PBAG_ID, PMOD_ID, PGEN_ID,	/* preset ids */
   IHDR_ID, IBAG_ID, IMOD_ID, IGEN_ID,	/* instrument ids */
-  SHDR_ID			/* sample info */
+  SHDR_ID,			/* sample info */
+  SM24_ID
 };
 
 /* generator types */
@@ -215,7 +221,7 @@ Gen_Unit;
 /* functions */
 void sfont_init_chunks (void);
 
-void sfont_close (SFData * sf);
+void sfont_close (SFData * sf, const fluid_file_callbacks_t* fcbs);
 void sfont_free_zone (SFZone * zone);
 int sfont_preset_compare_func (void* a, void* b);
 
@@ -291,7 +297,7 @@ typedef struct _SFShdr
 SFShdr;
 
 /* functions */
-SFData *sfload_file (const char * fname);
+SFData *sfload_file (const char * fname, const fluid_file_callbacks_t* fcbs);
 
 
 
@@ -319,9 +325,6 @@ enum
 #define ErrnoEnd	ErrWrite
 
 int gerr (int ev, char * fmt, ...);
-int safe_fread (void *buf, int count, FILE * fd);
-int safe_fwrite (void *buf, int count, FILE * fd);
-int safe_fseek (FILE * fd, long ofs, int whence);
 
 
 /********************************************************************************/
@@ -348,8 +351,7 @@ typedef struct _fluid_inst_zone_t fluid_inst_zone_t;
 
  */
 
-fluid_sfloader_t* new_fluid_defsfloader(fluid_settings_t* settings);
-int delete_fluid_defsfloader(fluid_sfloader_t* loader);
+void delete_fluid_defsfloader(fluid_sfloader_t* loader);
 fluid_sfont_t* fluid_defsfloader_load(fluid_sfloader_t* loader, const char* filename);
 
 
@@ -374,13 +376,17 @@ struct _fluid_defsfont_t
 {
   char* filename;           /* the filename of this soundfont */
   unsigned int samplepos;   /* the position in the file at which the sample data starts */
-  unsigned int samplesize;  /* the size of the sample data */
+  unsigned int samplesize;  /* the size of the sample data in bytes */
   short* sampledata;        /* the sample data, loaded in ram */
+  
+  unsigned int sample24pos;		/* position within sffd of the sm24 chunk, set to zero if no 24 bit sample support */
+  unsigned int sample24size;		/* length within sffd of the sm24 chunk */
+  char* sample24data;        /* if not NULL, the least significant byte of the 24bit sample data, loaded in ram */
+  
   fluid_list_t* sample;      /* the samples in this soundfont */
   fluid_defpreset_t* preset; /* the presets of this soundfont */
   int mlock;                 /* Should we try memlock (avoid swapping)? */
 
-  fluid_preset_t iter_preset;        /* preset interface used in the iteration */
   fluid_defpreset_t* iter_cur;       /* the current preset in the iteration */
 
   fluid_preset_t** preset_stack; /* List of presets that are available to use */
@@ -391,12 +397,12 @@ struct _fluid_defsfont_t
 
 fluid_defsfont_t* new_fluid_defsfont(fluid_settings_t* settings);
 int delete_fluid_defsfont(fluid_defsfont_t* sfont);
-int fluid_defsfont_load(fluid_defsfont_t* sfont, const char* file);
+int fluid_defsfont_load(fluid_defsfont_t* sfont, const fluid_file_callbacks_t* file_callbacks, const char* file);
 const char* fluid_defsfont_get_name(fluid_defsfont_t* sfont);
 fluid_defpreset_t* fluid_defsfont_get_preset(fluid_defsfont_t* sfont, unsigned int bank, unsigned int prenum);
 void fluid_defsfont_iteration_start(fluid_defsfont_t* sfont);
 int fluid_defsfont_iteration_next(fluid_defsfont_t* sfont, fluid_preset_t* preset);
-int fluid_defsfont_load_sampledata(fluid_defsfont_t* sfont);
+int fluid_defsfont_load_sampledata(fluid_defsfont_t* sfont, const fluid_file_callbacks_t* file_callbacks);
 int fluid_defsfont_add_sample(fluid_defsfont_t* sfont, fluid_sample_t* sample);
 int fluid_defsfont_add_preset(fluid_defsfont_t* sfont, fluid_defpreset_t* preset);
 

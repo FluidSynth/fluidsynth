@@ -142,6 +142,9 @@
 /* Define to enable IPV6 support */
 #cmakedefine IPV6_SUPPORT @IPV6_SUPPORT@
 
+/* Define to enable network support */
+#cmakedefine NETWORK_SUPPORT @NETWORK_SUPPORT@
+
 /* libsndfile has ogg vorbis support */
 #cmakedefine LIBSNDFILE_HASVORBIS @LIBSNDFILE_HASVORBIS@
 
@@ -189,9 +192,6 @@
 
 /* Define to enable SIGFPE assertions */
 #cmakedefine TRAP_ON_FPE @TRAP_ON_FPE@
-
-/* Version number of package */
-#cmakedefine VERSION @FLUIDSYNTH_VERSION@
 
 /* Define to do all DSP in single floating point precision */
 #cmakedefine WITH_FLOAT @WITH_FLOAT@

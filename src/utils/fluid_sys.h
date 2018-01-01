@@ -36,7 +36,6 @@
 #ifndef _FLUID_SYS_H
 #define _FLUID_SYS_H
 
-#include <glib.h>
 #include "fluidsynth_priv.h"
 
 #ifdef LADSPA
@@ -356,7 +355,6 @@ fluid_istream_t fluid_socket_get_istream(fluid_socket_t sock);
 fluid_ostream_t fluid_socket_get_ostream(fluid_socket_t sock);
 
 
-
 /* Profiling */
 
 
@@ -461,5 +459,8 @@ extern fluid_profile_data_t fluid_profile_data[];
 
 unsigned int fluid_check_fpe_i386(char * explanation_in_case_of_fpe);
 void fluid_clear_fpe_i386(void);
+
+/* System control */
+void fluid_msleep(unsigned int msecs);
 
 #endif /* _FLUID_SYS_H */

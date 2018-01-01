@@ -155,6 +155,7 @@ enum midi_rpn_event {
 };
 
 enum midi_meta_event {
+  MIDI_TEXT = 0x01,
   MIDI_COPYRIGHT = 0x02,
   MIDI_TRACK_NAME = 0x03,
   MIDI_INST_NAME = 0x04,
@@ -263,7 +264,7 @@ int fluid_track_send_events(fluid_track_t* track,
 #define fluid_track_eot(track)  ((track)->cur == NULL)
 
 
-/**
+/*
  * fluid_playlist_item
  * Used as the `data' elements of the fluid_player.playlist.
  * Represents either a filename or a pre-loaded memory buffer.

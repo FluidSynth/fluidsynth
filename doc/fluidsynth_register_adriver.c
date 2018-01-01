@@ -1,4 +1,4 @@
-/**
+/*
  * This is a simple C99 program that demonstrates the usage of fluid_audio_driver_register()
  * 
  * There are 3 calls to fluid_audio_driver_register(), i.e. 3 iterations:
