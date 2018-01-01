@@ -430,7 +430,7 @@ delete_fluid_audio_driver(fluid_audio_driver_t* driver)
  * 
  * @param adrivers NULL-terminated array of audio drivers to register. Pass NULL to register all available drivers.
  * @return #FLUID_OK if all the audio drivers requested by the user are supported by fluidsynth and have been
- * successfully registered. Otherwise #FLUID_FAILED is returned and ALL available audio drivers are registered instead.
+ * successfully registered. Otherwise #FLUID_FAILED is returned and this function has no effect.
  * 
  * @note This function is not thread safe and will never be!
  * @since 1.1.9
