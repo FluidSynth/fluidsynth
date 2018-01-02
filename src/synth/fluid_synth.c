@@ -128,16 +128,16 @@ static void init_dither(void);
  * explicitly overridden by the sound font in order to turn them off.
  */
 
-fluid_mod_t default_vel2att_mod;        /* SF2.01 section 8.4.1  */
-fluid_mod_t default_vel2filter_mod;     /* SF2.01 section 8.4.2  */
-fluid_mod_t default_at2viblfo_mod;      /* SF2.01 section 8.4.3  */
-fluid_mod_t default_mod2viblfo_mod;     /* SF2.01 section 8.4.4  */
-fluid_mod_t default_att_mod;            /* SF2.01 section 8.4.5  */
-fluid_mod_t default_pan_mod;            /* SF2.01 section 8.4.6  */
-fluid_mod_t default_expr_mod;           /* SF2.01 section 8.4.7  */
-fluid_mod_t default_reverb_mod;         /* SF2.01 section 8.4.8  */
-fluid_mod_t default_chorus_mod;         /* SF2.01 section 8.4.9  */
-fluid_mod_t default_pitch_bend_mod;     /* SF2.01 section 8.4.10 */
+static fluid_mod_t default_vel2att_mod;        /* SF2.01 section 8.4.1  */
+/*not static */ fluid_mod_t default_vel2filter_mod;     /* SF2.01 section 8.4.2  */
+static fluid_mod_t default_at2viblfo_mod;      /* SF2.01 section 8.4.3  */
+static fluid_mod_t default_mod2viblfo_mod;     /* SF2.01 section 8.4.4  */
+static fluid_mod_t default_att_mod;            /* SF2.01 section 8.4.5  */
+static fluid_mod_t default_pan_mod;            /* SF2.01 section 8.4.6  */
+static fluid_mod_t default_expr_mod;           /* SF2.01 section 8.4.7  */
+static fluid_mod_t default_reverb_mod;         /* SF2.01 section 8.4.8  */
+static fluid_mod_t default_chorus_mod;         /* SF2.01 section 8.4.9  */
+static fluid_mod_t default_pitch_bend_mod;     /* SF2.01 section 8.4.10 */
 
 /* reverb presets */
 static const fluid_revmodel_presets_t revmodel_preset[] = {
