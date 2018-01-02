@@ -37,7 +37,15 @@ int main()
 
         fluid_settings_t* settings = new_fluid_settings();
         res = fluid_settings_setstr(settings, "audio.driver", DRV[i]);
+        
+        /* settings API will be refactored to return FLUID_OK|FAILED next major release
+         * returning TRUE or FALSE is deprecated
+         */
+#if FLUIDSYNTH_VERSION_MAJOR >= 2
         if(res != FLUID_OK)
+#else
+        if(res == 0)
+#endif
         {
             puts("audio.driver set err");
             return -1;
