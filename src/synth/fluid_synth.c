@@ -139,6 +139,12 @@ static fluid_mod_t default_reverb_mod;         /* SF2.01 section 8.4.8  */
 static fluid_mod_t default_chorus_mod;         /* SF2.01 section 8.4.9  */
 static fluid_mod_t default_pitch_bend_mod;     /* SF2.01 section 8.4.10 */
 
+/* custom_breath2att_modulator is not a default modulator specified in SF
+it is intended to replace default_vel2att_mod on demand using
+API fluid_set_breath_mode() or command shell setbreathmode.
+*/
+static fluid_mod_t custom_breath2att_mod;
+
 /* reverb presets */
 static const fluid_revmodel_presets_t revmodel_preset[] = {
   /* name */    /* roomsize */ /* damp */ /* width */ /* level */
