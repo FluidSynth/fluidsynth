@@ -92,6 +92,9 @@ struct _fluid_voice_t
 	/* pan */
 	fluid_real_t pan;
 
+    /* balance */
+    fluid_real_t balance;
+
 	/* reverb */
 	fluid_real_t reverb_send;
 

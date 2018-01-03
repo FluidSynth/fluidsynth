@@ -302,6 +302,41 @@ fluid_pan(fluid_real_t c, int left)
 }
 
 /*
+ * Return the amount of attenuation based on the balance for the specified
+ * channel. If balance is negative (turned toward left channel, only the right
+ * channel is attenuated. If balance is positive, only the left channel is
+ * attenuated.
+ *
+ * @params balance left/right balance, range [-1000;1000] in tens of percent
+ * @return amount of attenuation [0.0;1.0]
+ */
+fluid_real_t fluid_balance(fluid_real_t balance, int left)
+{
+    /* This is the most common case */
+    if (balance == 0)
+    {
+        return 1.0f;
+    }
+
+    if ((left && balance < 0) || (!left && balance > 0))
+    {
+        return 1.0f;
+    }
+
+    if (balance < 0)
+    {
+        balance = -balance;
+    }
+
+    if (balance >= 1000)
+    {
+        return 0.0f;
+    }
+
+    return 1.0f - balance * 0.001f;
+}
+
+/*
  * fluid_concave
  */
 fluid_real_t

@@ -46,6 +46,7 @@ fluid_real_t fluid_tc2sec_release(fluid_real_t tc);
 fluid_real_t fluid_act2hz(fluid_real_t c);
 fluid_real_t fluid_hz2ct(fluid_real_t c);
 fluid_real_t fluid_pan(fluid_real_t c, int left);
+fluid_real_t fluid_balance(fluid_real_t balance, int left);
 fluid_real_t fluid_concave(fluid_real_t val);
 fluid_real_t fluid_convex(fluid_real_t val);
 

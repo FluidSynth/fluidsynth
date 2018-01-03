@@ -537,7 +537,8 @@ fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t* voice)
     /* GEN_COARSETUNE           [1]                        #51  */
     /* GEN_FINETUNE             [1]                        #52  */
     GEN_OVERRIDEROOTKEY,                 /*                #58  */
-    GEN_PITCH                            /*                ---  */
+    GEN_PITCH,                           /*                ---  */
+    GEN_BALANCE                          /*                ---  */
   };
 
   /* When the voice is made ready for the synthesis process, a lot of
@@ -691,14 +692,20 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
   switch (gen) {
 
   case GEN_PAN:
-    /* range checking is done in the fluid_pan function */
-    voice->pan = x;
-    
+  case GEN_BALANCE:
+    /* range checking is done in the fluid_pan and fluid_balance functions */
+    voice->pan = fluid_voice_gen_value(voice, GEN_PAN);
+    voice->balance = fluid_voice_gen_value(voice, GEN_BALANCE);
+
     /* left amp */
-    UPDATE_RVOICE_BUFFERS2(fluid_rvoice_buffers_set_amp, 0, fluid_voice_calculate_gain_amplitude(voice, fluid_pan(x, 1)));
+    UPDATE_RVOICE_BUFFERS2(fluid_rvoice_buffers_set_amp, 0,
+            fluid_voice_calculate_gain_amplitude(voice,
+                fluid_pan(voice->pan, 1) * fluid_balance(voice->balance, 1)));
     
     /* right amp */
-    UPDATE_RVOICE_BUFFERS2(fluid_rvoice_buffers_set_amp, 1, fluid_voice_calculate_gain_amplitude(voice, fluid_pan(x, 0)));
+    UPDATE_RVOICE_BUFFERS2(fluid_rvoice_buffers_set_amp, 1,
+        fluid_voice_calculate_gain_amplitude(voice,
+                fluid_pan(voice->pan, 0) * fluid_balance(voice->balance, 0)));
     break;
 
   case GEN_ATTENUATION:
@@ -1605,8 +1612,10 @@ int fluid_voice_set_gain(fluid_voice_t* voice, fluid_real_t gain)
   }
 
   voice->synth_gain = gain;
-  left = fluid_voice_calculate_gain_amplitude(voice, fluid_pan(voice->pan, 1));
-  right = fluid_voice_calculate_gain_amplitude(voice, fluid_pan(voice->pan, 0));
+  left = fluid_voice_calculate_gain_amplitude(voice,
+          fluid_pan(voice->pan, 1) * fluid_balance(voice->balance, 1));
+  right = fluid_voice_calculate_gain_amplitude(voice,
+          fluid_pan(voice->pan, 0) * fluid_balance(voice->balance, 0));
   reverb = fluid_voice_calculate_gain_amplitude(voice, voice->reverb_send);
   chorus = fluid_voice_calculate_gain_amplitude(voice, voice->chorus_send);
 
