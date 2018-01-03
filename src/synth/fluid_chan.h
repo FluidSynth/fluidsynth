@@ -231,4 +231,21 @@ int fluid_channel_get_interp_method(fluid_channel_t* chan);
 #define fluid_channel_get_gen_abs(_c, _n)       ((_c)->gen_abs[_n])
 #define fluid_channel_get_min_note_length_ticks(chan) \
   ((chan)->synth->min_note_length_ticks)
+
+/* Macros interface to poly/mono mode variables */
+#define MASK_BASICCHANINFOS  (FLUID_CHANNEL_MODE_MASK|FLUID_CHANNEL_BASIC|FLUID_CHANNEL_ENABLED)
+/* Set the basic channel infos for a MIDI basic channel */
+#define fluid_channel_set_basic_channel_info(chan,Infos) \
+    (chan->mode = (chan->mode & ~MASK_BASICCHANINFOS) | (Infos & MASK_BASICCHANINFOS))
+/* Reset the basic channel infos for a MIDI basic channel */
+#define fluid_channel_reset_basic_channel_info(chan) (chan->mode &=  ~MASK_BASICCHANINFOS)
+
+/* Macros interface to breath variables */
+#define FLUID_CHANNEL_BREATH_MASK  (FLUID_CHANNEL_BREATH_POLY|FLUID_CHANNEL_BREATH_MONO|FLUID_CHANNEL_BREATH_SYNC)
+/* Set the breath infos for a MIDI  channel */
+#define fluid_channel_set_breath_info(chan,BreathInfos) \
+(chan->mode = (chan->mode & ~FLUID_CHANNEL_BREATH_MASK) | (BreathInfos & FLUID_CHANNEL_BREATH_MASK))
+/* Get the breath infos for a MIDI  channel */
+#define fluid_channel_get_breath_info(chan) (chan->mode & FLUID_CHANNEL_BREATH_MASK)
+
 #endif /* _FLUID_CHAN_H */

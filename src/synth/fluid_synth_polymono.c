@@ -24,25 +24,6 @@
 extern int fluid_synth_all_notes_off_LOCAL(fluid_synth_t* synth, int chan);
 
 
-/* Macros interface to poly/mono mode variables */
-#define MASK_BASICCHANINFOS  (FLUID_CHANNEL_MODE_MASK|FLUID_CHANNEL_BASIC|FLUID_CHANNEL_ENABLED)
-/* access to channel mode */
-/* Set the basic channel infos for a MIDI basic channel */
-#define fluid_channel_set_basic_channel_info(chan,Infos) \
-(chan->mode = (chan->mode & ~MASK_BASICCHANINFOS) | (Infos & MASK_BASICCHANINFOS))
-/* Reset the basic channel infos for a MIDI basic channel */
-#define fluid_channel_reset_basic_channel_info(chan) (chan->mode &=  ~MASK_BASICCHANINFOS)
-/* End of macros interface to poly/mono mode variables */
-
-/* Macros interface to breath variables */
-#define FLUID_CHANNEL_BREATH_MASK  (FLUID_CHANNEL_BREATH_POLY|FLUID_CHANNEL_BREATH_MONO|FLUID_CHANNEL_BREATH_SYNC)
-/* access to default breath infos */
-/* Set the breath infos for a MIDI  channel */
-#define fluid_channel_set_breath_info(chan,BreathInfos) \
-(chan->mode = (chan->mode & ~FLUID_CHANNEL_BREATH_MASK) | (BreathInfos & FLUID_CHANNEL_BREATH_MASK))
-/* Get the breath infos for a MIDI  channel */
-#define fluid_channel_get_breath_info(chan) (chan->mode & FLUID_CHANNEL_BREATH_MASK)
-
 /**  API Poly/mono mode ******************************************************/
 
 /**
