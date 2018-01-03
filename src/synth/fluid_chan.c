@@ -466,7 +466,7 @@ fluid_channel_remove_monolist(fluid_channel_t* chan, short i)
 	unsigned char i_prev = INVALID_NOTE;
 	unsigned char i_last = chan->i_last;
 	/* check if index is valid */
-	if(!is_valid_note(i) || i >= SIZE_MONOLIST || !chan->n_notes)
+	if(!fluid_channel_is_valid_note(i) || i >= SIZE_MONOLIST || !chan->n_notes)
 	{
 		return INVALID_NOTE;
 	}

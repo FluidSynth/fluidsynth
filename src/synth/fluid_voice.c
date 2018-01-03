@@ -609,7 +609,7 @@ fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t* voice)
 	When fromkey is set to ValidNote , portamento is started */
 	  /* Return fromkey portamento */
 	  int fromkey = voice->channel->synth->fromkey_portamento;
-      if(is_valid_note(fromkey))
+      if(fluid_channel_is_valid_note(fromkey))
 	  {		/* Send portamento parameters to the voice dsp */
 			fluid_voice_update_portamento(voice,fromkey, fluid_voice_get_actual_key(voice));
 	  }

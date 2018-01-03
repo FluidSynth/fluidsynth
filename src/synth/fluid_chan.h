@@ -233,7 +233,7 @@ int fluid_channel_get_interp_method(fluid_channel_t* chan);
 /* Macros interface to monophonic list variables */
 #define INVALID_NOTE 255
 /* Returns true when a note is a valid note */
-#define is_valid_note(n)    (n != INVALID_NOTE)
+#define fluid_channel_is_valid_note(n)    (n != INVALID_NOTE)
 /* Marks prev_note as invalid. */
 #define fluid_channel_clear_prev_note(chan)	(chan->prev_note = INVALID_NOTE)
 

@@ -166,12 +166,12 @@ static unsigned char fluid_synth_get_fromkey_portamento_legato(fluid_channel_t* 
 								   unsigned char default_fromkey)
 {
 	unsigned char ptc =  fluid_channel_get_cc(chan, PORTAMENTO_CTRL);
-	if(is_valid_note(ptc))
+	if(fluid_channel_is_valid_note(ptc))
 	{	/* CC PTC has been received */
 		fluid_channel_clear_portamento(chan);	/* clear the CC PTC receive */
 		chan->synth->fromkey_portamento =  ptc;/* return fromkey portamento */
 		/* returns fromkey legato */
-		if(!is_valid_note(default_fromkey)) default_fromkey= ptc;
+		if(!fluid_channel_is_valid_note(default_fromkey)) default_fromkey= ptc;
 	}
 	else 
 	{	/* determines and returns fromkey portamento */
@@ -181,7 +181,7 @@ static unsigned char fluid_synth_get_fromkey_portamento_legato(fluid_channel_t* 
 			/* 'fromkey portamento'is determined from the portamento mode
 			 and the most recent note played (prev_note)*/
 			unsigned char portamentomode = chan->portamentomode;
-			if(is_valid_note(default_fromkey))
+			if(fluid_channel_is_valid_note(default_fromkey))
 			{	
 				fromkey_portamento = default_fromkey; /* on each note */
 			}
@@ -205,7 +205,7 @@ static unsigned char fluid_synth_get_fromkey_portamento_legato(fluid_channel_t* 
 		/* Returns fromkey portamento */
 		chan->synth->fromkey_portamento = fromkey_portamento;
 		/* Determines and returns fromkey legato */
-		if(!is_valid_note(default_fromkey))
+		if(!fluid_channel_is_valid_note(default_fromkey))
 		{
 			/* in staccato (poly/Mono) returns INVALID_NOTE */
 			/* In mono mode legato playing returns the note prior most 
@@ -374,7 +374,7 @@ int fluid_synth_noteoff_mono_LOCAL(fluid_synth_t* synth, int chan, int key)
 	/* search the note in monophonic list */
 	i=fluid_channel_search_monolist(channel, (unsigned char)key);
 
-	if (is_valid_note(i))
+	if (fluid_channel_is_valid_note(i))
 	{ /* the note is in monophonic list */
 		/* Remove note out of the monophonic list */
 		iPrev = fluid_channel_remove_monolist(channel,i);
@@ -385,7 +385,7 @@ int fluid_synth_noteoff_mono_LOCAL(fluid_synth_t* synth, int chan, int key)
 			/* legato playing detection */
 			if(channel->mode  & FLUID_CHANNEL_LEGATO_PLAYING) 
 			{ /* the list contains others notes */
-				if(is_valid_note(iPrev)) 
+				if(fluid_channel_is_valid_note(iPrev)) 
 				{ /* legato playing detection */
 					/* legato from key to iPrev key */
 					/* the voices from key number are to be used to
@@ -605,7 +605,7 @@ int fluid_synth_noteon_monopoly_legato(fluid_synth_t* synth, int chan,
 	/* Gets possible 'fromkey portamento' and possible 'fromkey legato' note  */
 	fromkey = fluid_synth_get_fromkey_portamento_legato( channel, (unsigned char)fromkey);
 
-	if (is_valid_note(fromkey)) for (i = 0; i < synth->polyphony; i++) 
+	if (fluid_channel_is_valid_note(fromkey)) for (i = 0; i < synth->polyphony; i++) 
 	{
 		/* search fromkey voices: only those who don't have 'note off' */
 		voice = synth->voice[i];
@@ -635,7 +635,7 @@ int fluid_synth_noteon_monopoly_legato(fluid_synth_t* synth, int chan,
 				if (legatomode >= FLUID_CHANNEL_LEGATO_MODE_MULTI_RETRIGGER)	
 				{
 					/* Starts portamento if enabled */
-					if(is_valid_note(synth->fromkey_portamento))
+					if(fluid_channel_is_valid_note(synth->fromkey_portamento))
 					{
 						/* Sends portamento parameters to the voice dsp */
 						fluid_voice_update_portamento(voice, synth->fromkey_portamento,tokey);
