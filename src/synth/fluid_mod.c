@@ -172,7 +172,26 @@ fluid_mod_get_source_value(const unsigned char mod_src,
     
     if (mod_flags & FLUID_MOD_CC)
     {
-        val = fluid_channel_get_cc(chan, mod_src);
+        /* From MIDI Recommended Practice (RP-036) Default Pan Formula:
+         * "Since MIDI controller values range from 0 to 127, the exact center
+         * of the range, 63.5, cannot be represented. Therefore, the effective
+         * range for CC#10 is modified to be 1 to 127, and values 0 and 1 both
+         * pan hard left. The recommended method is to subtract 1 from the 
+         * value of CC#10, and saturate the result to be non-negative."
+         *
+         * We treat the balance control in exactly the same way, as the same
+         * problem applies here as well.
+         */
+        if (mod_src == PAN_MSB || mod_src == BALANCE_MSB) {
+            *range = 126;
+            val = fluid_channel_get_cc(chan, mod_src) - 1;
+            if (val < 0) {
+                val = 0;
+            }
+        }
+        else {
+            val = fluid_channel_get_cc(chan, mod_src);
+        }
     }
     else
     {

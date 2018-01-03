@@ -292,9 +292,9 @@ fluid_pan(fluid_real_t c, int left)
   if (left) {
     c = -c;
   }
-  if (c < -500) {
+  if (c <= -500) {
     return (fluid_real_t) 0.0;
-  } else if (c > 500) {
+  } else if (c >= 500) {
     return (fluid_real_t) 1.0;
   } else {
     return fluid_pan_tab[(int) (c + 500)];
