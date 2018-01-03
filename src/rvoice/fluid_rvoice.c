@@ -327,23 +327,14 @@ fluid_rvoice_write (fluid_rvoice_t* voice, fluid_real_t *dsp_buf)
 
   /******************* portamento ****************/
   /* pitchoffset is updated if enabled.
-     Pitchoffset will be added to dsp pitch at
-	 phase calculation time */
-  if (voice->dsp.pitchinc > 0.0f)
-  {	/* portamento is enabled, so update pitchoffset */
-	voice->dsp.pitchoffset += voice->dsp.pitchinc;
-	/* when pitchoffset reaches 0.0f, portamento is disabled */
-	if (voice->dsp.pitchoffset > 0.0f) 
-		voice->dsp.pitchoffset = voice->dsp.pitchinc = 0.0f;
+     Pitchoffset will be added to dsp pitch at phase calculation time */
+  voice->dsp.pitchoffset += voice->dsp.pitchinc;
+  /* when pitchoffset reaches 0.0f, portamento is disabled */
+  if ((voice->dsp.pitchinc > 0.0f && voice->dsp.pitchoffset > 0.0f) ||
+		(voice->dsp.pitchinc < 0.0f && voice->dsp.pitchoffset < 0.0f))
+  {
+      voice->dsp.pitchoffset = voice->dsp.pitchinc = 0.0f;
   }
-  else if (voice->dsp.pitchinc < 0.0f)
-  {	/* portamento is enabled, so update pitchoffset */
-	voice->dsp.pitchoffset += voice->dsp.pitchinc;
-	/* when pitchoffset reaches 0.0f, portamento is disabled */
-	if (voice->dsp.pitchoffset < 0.0f) 
-		voice->dsp.pitchoffset = voice->dsp.pitchinc = 0.0f;
-  }
-  /*--*/
 
   fluid_check_fpe ("voice_write phase calculation");
 
