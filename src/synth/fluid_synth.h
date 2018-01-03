@@ -193,8 +193,6 @@ fluid_preset_t* fluid_synth_find_preset(fluid_synth_t* synth,
 void fluid_synth_sfont_unref (fluid_synth_t *synth, fluid_sfont_t *sfont);
 				      
 
-int fluid_synth_all_notes_off(fluid_synth_t* synth, int chan);
-int fluid_synth_all_sounds_off(fluid_synth_t* synth, int chan);
 int fluid_synth_kill_voice(fluid_synth_t* synth, fluid_voice_t * voice);
 
 void fluid_synth_print_voice(fluid_synth_t* synth);
@@ -233,6 +231,7 @@ int fluid_synth_noteon_mono_LOCAL(fluid_synth_t* synth, int chan, int key, int v
 int fluid_synth_noteoff_mono_LOCAL(fluid_synth_t* synth, int chan, int key);
 int fluid_synth_noteon_monopoly_legato(fluid_synth_t* synth, int chan, int fromkey, int tokey, int vel);
 int fluid_synth_noteoff_monopoly(fluid_synth_t* synth, int chan, int key, char Mono);
+int fluid_synth_all_notes_off_LOCAL(fluid_synth_t* synth, int chan);
 
 fluid_voice_t*
 fluid_synth_alloc_voice_LOCAL(fluid_synth_t* synth, fluid_sample_t* sample, int chan, int key, int vel, fluid_zone_range_t* zone_range);

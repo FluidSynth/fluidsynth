@@ -21,7 +21,6 @@
 #include "fluid_synth.h"
 #include "fluid_chan.h"
 
-extern int fluid_synth_all_notes_off_LOCAL(fluid_synth_t* synth, int chan);
 
 
 /**  API Poly/mono mode ******************************************************/
