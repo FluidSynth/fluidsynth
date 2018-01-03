@@ -549,12 +549,13 @@ fluid_rvoice_noteoff(fluid_rvoice_t* voice, unsigned int min_ticks)
   fluid_adsr_env_set_section(&voice->envlfo.modenv, FLUID_VOICE_ENVRELEASE);
 }
 
-/*----------------------------------------------------------------------------*/
-/* skips to Attack section 
- * Update vol and  attack data 
+/**
+ * skips to Attack section
+ * 
+ * Update vol and attack data 
  * Correction on volume val to achieve equivalent amplitude at noteOn legato
  * 
- * @ voice the synthesis voice to be updated
+ * @param voice the synthesis voice to be updated
 */
 static void fluid_rvoice_local_retrigger_attack (fluid_rvoice_t* voice)
 {
@@ -583,10 +584,10 @@ static void fluid_rvoice_local_retrigger_attack (fluid_rvoice_t* voice)
 	}
 }
 
-/*----------------------------------------------------------------------------
+/**
  * Used by legato Mode : multi_retrigger   
  *  see fluid_synth_noteon_mono_legato_multi_retrigger() 
- * @ voice the synthesis voice to be updated
+ * @param voice the synthesis voice to be updated
 */
 void 
 fluid_rvoice_multi_retrigger_attack (fluid_rvoice_t* voice)
@@ -623,11 +624,11 @@ fluid_rvoice_multi_retrigger_attack (fluid_rvoice_t* voice)
 	 a correction for seamless val transition. Here is the place */
 }
 
-/*----------------------------------------------------------------------------
+/**
  * sets the portamento dsp parameters: dsp.pitchoffset, dsp.pitchinc
- * @voice, rvoice to set portamento.
- * @countinc, increment count number.
- * @pitchoffset, pitch offset to apply to voice dsp.pitch.
+ * @param voice rvoice to set portamento.
+ * @param countinc increment count number.
+ * @param pitchoffset pitch offset to apply to voice dsp.pitch.
  *
  * Notes:
  * 1) To get continuous portamento between consecutive noteOn (n1,n2,n3...),
