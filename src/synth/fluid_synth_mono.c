@@ -31,7 +31,7 @@ extern void fluid_synth_release_voice_on_same_note_LOCAL(fluid_synth_t* synth,
 
 /* 
   prev_note is used to determine fromkey_portamento as well as 
-  fromkey_legato (see get_fromkey_portamento_legato()).
+  fromkey_legato (see fluid_synth_get_fromkey_portamento_legato()).
 
   prev_note is updated on noteOn/noteOff mono by the legato detector as this:
   - On noteOn mono, before adding a new note into the monolist,the most
@@ -42,9 +42,9 @@ extern void fluid_synth_release_voice_on_same_note_LOCAL(fluid_synth_t* synth,
 #define fluid_channel_prev_note(chan)	(chan->prev_note)
 
 /* 
-  LEGATO_PLAYING bit of channel mode keeps trace of the legato /staccato 
+  FLUID_CHANNEL_LEGATO_PLAYING bit of channel mode keeps trace of the legato /staccato 
   state playing.
-  LEGATO_PLAYING bit is updated on noteOn/noteOff mono by the legato detector:
+  FLUID_CHANNEL_LEGATO_PLAYING bit is updated on noteOn/noteOff mono by the legato detector:
   - On noteOn, before inserting a new note into the monolist.
   - On noteOff, after removing a note out of the monolist.
 
@@ -54,7 +54,7 @@ extern void fluid_synth_release_voice_on_same_note_LOCAL(fluid_synth_t* synth,
   to play the current noteOff legato with the most recent note.
 */
 /* b7, 1: means legato playing , 0: means staccato playing */
-#define LEGATO_PLAYING  0x80 
+#define FLUID_CHANNEL_LEGATO_PLAYING  0x80 
 /* End of interface to monophonic list variables */
 
 /****************************************************************************** 
@@ -114,7 +114,7 @@ extern void fluid_synth_release_voice_on_same_note_LOCAL(fluid_synth_t* synth,
   (when enabled) is triggered at noteOn (like legato). Like in legato
   situation it is usual to have a portamento from a note 'fromkey' to another
   note 'tokey'. Portamento fromkey note choice is determined at noteOn by
-  get_fromkey_portamento_legato() (see below).
+  fluid_synth_get_fromkey_portamento_legato() (see below).
   
   More informations in FluidPolyMono-0003.pdf chapter 4 (Appendices).
 ******************************************************************************/
@@ -148,7 +148,7 @@ extern void fluid_synth_release_voice_on_same_note_LOCAL(fluid_synth_t* synth,
  *                 that keeps only one note (used on noteOn poly).
  * Note: i_last index keeps a trace of the most recent note added.
  *       prev_note keeps a trace of the note prior i_last note.
- *       LEGATO_PLAYING bit keeps trace of legato/staccato playing state.
+ *       FLUID_CHANNEL_LEGATO_PLAYING bit keeps trace of legato/staccato playing state.
  * 
  * More informations in FluidPolyMono-0003.pdf chapter 4 (Appendices).
 */
@@ -160,8 +160,8 @@ fluid_channel_add_monolist(fluid_channel_t* chan, unsigned char key,
 {
 	unsigned char i_last = chan->i_last;
 	/* Update legato/ sataccato playing state */
-	if (chan->n_notes) chan->mode |= LEGATO_PLAYING; /* Legato state */
-	else chan->mode &= ~ LEGATO_PLAYING; /* Staccato state */
+	if (chan->n_notes) chan->mode |= FLUID_CHANNEL_LEGATO_PLAYING; /* Legato state */
+	else chan->mode &= ~ FLUID_CHANNEL_LEGATO_PLAYING; /* Staccato state */
 	/* keeps trace of the note prior last note */
 	if(chan->n_notes) chan->prev_note = chan->monolist[i_last].note;
 	/* moves i_last forward before writing new note */
@@ -262,7 +262,7 @@ fluid_channel_search_monolist(fluid_channel_t* chan, unsigned char key)
  *       - i_last index keeps a trace of the most recent note played even if
  *       the list is empty.
  *       - prev_note keeps a trace of the note removed if it is i_last.
- *       - LEGATO_PLAYING bit keeps a trace of legato/staccato playing state.
+ *       - FLUID_CHANNEL_LEGATO_PLAYING bit keeps a trace of legato/staccato playing state.
  * 
  * More informations in FluidPolyMono-0003.pdf chapter 4 (Appendices).
  */
@@ -316,11 +316,11 @@ fluid_channel_remove_monolist(fluid_channel_t* chan, short i)
 	/* Update legato/ staccato playing state */
 	if (chan->n_notes)
 	{
-		chan->mode |= LEGATO_PLAYING; /* Legato state */
+		chan->mode |= FLUID_CHANNEL_LEGATO_PLAYING; /* Legato state */
 	}
 	else
 	{
-		chan->mode &= ~ LEGATO_PLAYING; /* Staccato state */
+		chan->mode &= ~ FLUID_CHANNEL_LEGATO_PLAYING; /* Staccato state */
 	}
 	return i_prev;
 }
@@ -343,7 +343,7 @@ fluid_channel_remove_monolist(fluid_channel_t* chan, short i)
  * Note: i_last index keeps a trace of the most recent note played even if
  *       the list is empty.
  *       prev_note keeps a trace of the note .
- *       LEGATO_PLAYING bit keeps a trace of legato/staccato playing.
+ *       FLUID_CHANNEL_LEGATO_PLAYING bit keeps a trace of legato/staccato playing.
  */
 void fluid_channel_clear_monolist(fluid_channel_t* chan)
 {
@@ -354,7 +354,7 @@ void fluid_channel_clear_monolist(fluid_channel_t* chan)
 	chan->i_first = chan->monolist[chan->i_last].next;
 	chan->n_notes = 0;
 	/* Update legato/ sataccato playing state */
-	chan->mode &= ~ LEGATO_PLAYING; /* Staccato state */
+	chan->mode &= ~ FLUID_CHANNEL_LEGATO_PLAYING; /* Staccato state */
 }
 
 /**
@@ -376,7 +376,7 @@ void fluid_channel_clear_monolist(fluid_channel_t* chan)
  * @param chan  fluid_channel_t.
  * Note: i_last index keeps a trace of the most recent note played.
  *       prev_note keeps a trace of the note .
- *       LEGATO_PLAYING bit keeps trace of legato/staccato playing.
+ *       FLUID_CHANNEL_LEGATO_PLAYING bit keeps trace of legato/staccato playing.
  */
 static void fluid_channel_keep_lastnote_monolist(fluid_channel_t* chan)
 {
@@ -392,7 +392,7 @@ static void fluid_channel_keep_lastnote_monolist(fluid_channel_t* chan)
  *   key, vel, note and velocity added in the monolist
  * Note: i_last index keeps a trace of the most recent note inserted.
  *       prev_note keeps a trace of the note prior i_last note.
- *       LEGATO_PLAYING bit keeps trace of legato/staccato playing.
+ *       FLUID_CHANNEL_LEGATO_PLAYING bit keeps trace of legato/staccato playing.
  */
 void fluid_channel_set_onenote_monolist(fluid_channel_t* chan, unsigned char key,
 								            unsigned char vel)
@@ -405,7 +405,7 @@ void fluid_channel_set_onenote_monolist(fluid_channel_t* chan, unsigned char key
 ******************************************************************************/
 
 /**
- * get_fromkey_portamento_legato returns two informations:
+ * fluid_synth_get_fromkey_portamento_legato returns two informations:
  *    - fromkey note for portamento.
  *    - fromkey note for legato.
  *                                                 +-----> fromkey_portamento
@@ -444,7 +444,7 @@ void fluid_channel_set_onenote_monolist(fluid_channel_t* chan, unsigned char key
  *   2.1) If valid, default_fromkey have precedence over any other value.
  *   2.2) Otherwise if CC PTC has been received its value is returned.
  *   2.3) Otherwise fromkey legato is determined from the mono/poly mode,
- *        the actual 'staccato/legato' playing state (LEGATO_PLAYING) and prev_note
+ *        the actual 'staccato/legato' playing state (FLUID_CHANNEL_LEGATO_PLAYING) and prev_note
  *        as this:
  *        - in (poly/Mono) staccato , INVALID_NOTE is returned.
  *        - in poly  legato , actually we don't want playing legato. So
@@ -472,7 +472,7 @@ void fluid_channel_set_onenote_monolist(fluid_channel_t* chan, unsigned char key
  * - In mono staccato playing,default_fromkey must be INVALID_NOTE.
  * - In mono legato playing,default_fromkey must be valid.
  */
-static unsigned char get_fromkey_portamento_legato(fluid_channel_t* chan, 
+static unsigned char fluid_synth_get_fromkey_portamento_legato(fluid_channel_t* chan, 
 								   unsigned char default_fromkey)
 {
 	unsigned char ptc =  fluid_channel_get_cc(chan, PORTAMENTO_CTRL);
@@ -498,14 +498,14 @@ static unsigned char get_fromkey_portamento_legato(fluid_channel_t* chan,
 			else fromkey_portamento = fluid_channel_prev_note(chan); /* on each note */
 			if(portamentomode == FLUID_CHANNEL_PORTAMENTO_MODE_LEGATO_ONLY)
 			{   /* Mode portamento:legato only */
-				if(!(chan->mode  & LEGATO_PLAYING))
+				if(!(chan->mode  & FLUID_CHANNEL_LEGATO_PLAYING))
 				{	
 					fromkey_portamento = INVALID_NOTE;
 				}
 			}
 			else if(portamentomode == FLUID_CHANNEL_PORTAMENTO_MODE_STACCATO_ONLY)
 			{	/* Mode portamento:staccato only */
-				if(chan->mode  & LEGATO_PLAYING) 
+				if(chan->mode  & FLUID_CHANNEL_LEGATO_PLAYING) 
 				{
 					fromkey_portamento = INVALID_NOTE;
 				}
@@ -520,7 +520,7 @@ static unsigned char get_fromkey_portamento_legato(fluid_channel_t* chan,
 			/* in staccato (poly/Mono) returns INVALID_NOTE */
 			/* In mono mode legato playing returns the note prior most 
 			   recent note played */
-			if (fluid_channel_is_playing_mono(chan) && (chan->mode  & LEGATO_PLAYING))
+			if (fluid_channel_is_playing_mono(chan) && (chan->mode  & FLUID_CHANNEL_LEGATO_PLAYING))
 			{
 				default_fromkey = fluid_channel_prev_note(chan); /* note prior last note */
 			}
@@ -548,7 +548,7 @@ static unsigned char get_fromkey_portamento_legato(fluid_channel_t* chan,
  */
 void fluid_channel_invalid_prev_note_staccato(fluid_channel_t* chan)
 {
-	if(!(chan->mode  & LEGATO_PLAYING)) /* the monophonic list is empty */ 
+	if(!(chan->mode  & FLUID_CHANNEL_LEGATO_PLAYING)) /* the monophonic list is empty */ 
 	if(! fluid_channel_portamento(chan))
 	{	/* mark prev_note invalid */
 		fluid_channel_clear_prev_note(chan);
@@ -654,7 +654,7 @@ int fluid_synth_noteon_mono_LOCAL(fluid_synth_t* synth, int chan,
 	if (!(channel->mode &  FLUID_CHANNEL_BREATH_SYNC) || fluid_channel_breath_msb(channel) )
 	{
 		/* legato/staccato playing detection */
-		if(channel->mode  & LEGATO_PLAYING)
+		if(channel->mode  & FLUID_CHANNEL_LEGATO_PLAYING)
 		{ /* legato playing */
 			/* legato from iPrev to key */
 			/* the voices from iPrev key number are to be used to play key number */
@@ -719,7 +719,7 @@ int fluid_synth_noteoff_mono_LOCAL(fluid_synth_t* synth, int chan, int key)
 		    fluid_channel_breath_msb(channel) )
 		{
 			/* legato playing detection */
-			if(channel->mode  & LEGATO_PLAYING) 
+			if(channel->mode  & FLUID_CHANNEL_LEGATO_PLAYING) 
 			{ /* the list contains others notes */
 				if(is_valid_note(iPrev)) 
 				{ /* legato playing detection */
@@ -777,7 +777,7 @@ int fluid_synth_noteoff_mono_LOCAL(fluid_synth_t* synth, int chan, int key)
  * Before the note been passed to fluid_preset_noteon(), the function must determine
  * the from_key_portamento parameter used by fluid_preset_noteon().
  * 
- * from_key_portamento is returned by get_fromkey_portamento_legato() function.
+ * from_key_portamento is returned by fluid_synth_get_fromkey_portamento_legato() function.
  * fromkey_portamento is set to valid/invalid  key value depending of the portamento
  * modes (see portamento mode API) , CC portamento On/Off , and CC portamento control
  * (PTC).
@@ -797,7 +797,7 @@ fluid_synth_noteon_mono_staccato(fluid_synth_t* synth,int chan,int key,int vel)
 	   sustained it needs to be released */
 	fluid_synth_release_voice_on_same_note_LOCAL(synth,chan, channel->key_sustained);
 	/* Get possible 'fromkey portamento'   */
-	get_fromkey_portamento_legato( channel, INVALID_NOTE);
+	fluid_synth_get_fromkey_portamento_legato( channel, INVALID_NOTE);
 	/* The note needs to be played by voices allocation  */
 	return fluid_preset_noteon(channel->preset, synth, chan, key, vel);
 }
@@ -911,7 +911,7 @@ int fluid_synth_noteoff_monopoly(fluid_synth_t* synth, int chan, int key,
  * used by fluid_preset_noteon() function or the voices triggering functions.
  *
  * from_key_portamento and from_key_legato are returned by 
- * get_fromkey_portamento_legato() function.
+ * fluid_synth_get_fromkey_portamento_legato() function.
  * fromkey_portamento is set to valid/invalid  key value depending of the portamento
  * modes (see portamento mode API) , CC portamento On/Off , and CC portamento control
  * (PTC).
@@ -939,7 +939,7 @@ int fluid_synth_noteon_monopoly_legato(fluid_synth_t* synth, int chan,
 	fluid_voice_t* voice;
 	int i ;
 	/* Gets possible 'fromkey portamento' and possible 'fromkey legato' note  */
-	fromkey = get_fromkey_portamento_legato( channel, (unsigned char)fromkey);
+	fromkey = fluid_synth_get_fromkey_portamento_legato( channel, (unsigned char)fromkey);
 
 	if (is_valid_note(fromkey)) for (i = 0; i < synth->polyphony; i++) 
 	{
