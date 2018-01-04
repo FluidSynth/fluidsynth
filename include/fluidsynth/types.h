@@ -58,12 +58,11 @@ typedef struct _fluid_rampreset_t fluid_rampreset_t;            /**< RAM SoundFo
 typedef struct _fluid_cmd_handler_t fluid_cmd_handler_t;        /**< Shell Command Handler */
 typedef struct _fluid_ladspa_fx_t fluid_ladspa_fx_t;            /**< LADSPA effects instance */
 typedef struct _fluid_file_callbacks_t fluid_file_callbacks_t;  /**< Callback struct to perform custom file loading of soundfonts */
-typedef struct _fluid_midi_parser_t fluid_midi_parser_t;        /**< MIDI parser struct */
 
 typedef int fluid_istream_t;    /**< Input stream descriptor */
 typedef int fluid_ostream_t;    /**< Output stream descriptor */
 
-typedef short fluid_seq_id_t; /**< Unique client IDs use by the sequencer and #fluid_event_t, obtained by fluid_sequencer_register_client() and fluid_sequencer_register_fluidsynth() */
+typedef short fluid_seq_id_t; /**< Unique client IDs used by the sequencer and #fluid_event_t, obtained by fluid_sequencer_register_client() and fluid_sequencer_register_fluidsynth() */
 
 #ifdef __cplusplus
 }

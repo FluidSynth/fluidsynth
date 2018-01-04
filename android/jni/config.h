@@ -194,7 +194,7 @@
 /* #undef TRAP_ON_FPE */
 
 /* Version number of package */
-#define VERSION "1.1.8"
+#define VERSION "1.1.9"
 
 /* Define to do all DSP in single floating point precision */
 /* #undef WITH_FLOAT */

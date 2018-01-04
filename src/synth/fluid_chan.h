@@ -33,8 +33,6 @@
  */
 struct _fluid_channel_t
 {
-  fluid_mutex_t mutex;                  /* Lock for thread sensitive parameters */
-
   fluid_synth_t* synth;                 /**< Parent synthesizer instance */
   int channum;                          /**< MIDI channel number */
 

@@ -54,10 +54,10 @@ LOCAL_SRC_FILES := \
 	src/utils/fluid_ringbuffer.c \
 	src/utils/fluid_settings.c \
 	src/bindings/fluid_filerenderer.c \
-	src/drivers/fluid_adriver.c \
-	src/drivers/fluid_mdriver.c \
 	src/utils/fluid_sys.c \
-	android/jni/src/bindings/fluid_cmd.c
+	android/jni/src/bindings/fluid_cmd.c \
+	android/jni/src/drivers/fluid_adriver.c \
+	android/jni/src/drivers/fluid_mdriver.c
 
 include $(BUILD_SHARED_LIBRARY)
 

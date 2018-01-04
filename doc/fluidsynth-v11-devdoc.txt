@@ -70,7 +70,7 @@ What is FluidSynth?
 
 \section NewIn2_0_0 Whats new in 2.0.0?
 
-FluidSynths SOVERSION was bumped. The API was reworked, deprecated functions were removed. Functions that were doing (nearly) the same were fused together.
+FluidSynths SOVERSION was bumped. The API was reworked, deprecated functions were removed.
 
 Changes in FluidSynth 2.0.0 concerning developers:
 
@@ -90,7 +90,7 @@ Changes in FluidSynth 2.0.0 concerning developers:
 - remove struct _fluid_gen_t, fluid_gen_set_default_values() and enum fluid_gen_flags from public API
 - remove macros fluid_sfont_get_id() and fluid_sample_refcount() from public API
 - remove FLUID_NUM_MOD macro from public API
-- remove the following deprecated enum values:
+- remove the following deprecated enum values from public API:
   - GEN_LAST
   - LAST_LOG_LEVEL
   - FLUID_SEQ_LASTEVENT
@@ -99,12 +99,13 @@ Changes in FluidSynth 2.0.0 concerning developers:
 - all public \c fluid_settings_* functions that return an integer which is not meant to be interpreted as bool consistently return either FLUID_OK or FLUID_FAILED
 - all public delete_* functions return void and are safe when called with NULL
 - the shell command handler was decoupled internally, as a consequence the param list of new_fluid_server() and new_fluid_cmd_handler() was adapted
-- reverb: roomsize is now limited to an upper threshold of 1.0
+- reverb: roomsize is now limited to an upper threshold of 1.0 to avoid exponential volume increase
 - use unique device names for the "audio.portaudio.device" setting
 - rename fluid_mod_new() and fluid_mod_delete() to match naming conventions: new_fluid_mod() and delete_fluid_mod()
 <br /><br />
 - add <a href="fluidsettings.xml#synth.volenv">"synth.volenv"</a> a setting for volume envelope processing
 - add <a href="fluidsettings.xml#midi.autoconnect">"midi.autoconnect"</a> a setting for automatically connecting fluidsynth to available MIDI input ports
+- add <a href="fluidsettings.xml#synth.overflow.important">"synth.overflow.important"</a> and <a href="fluidsettings.xml#synth.overflow.important-channels">"synth.overflow.important-channels"</a> settings to take midi channels during overflow calculation into account that are considered to be "important"
 - add support for polyphonic key pressure events, see fluid_event_key_pressure() and fluid_synth_key_pressure()
 - add fluid_synth_add_default_mod() and fluid_synth_remove_default_mod() for manipulating default modulators
 - add individual reverb setters: fluid_synth_set_reverb_roomsize(), fluid_synth_set_reverb_damp(), fluid_synth_set_reverb_width(), fluid_synth_set_reverb_level()
@@ -121,7 +122,6 @@ Changes in FluidSynth 2.0.0 concerning developers:
 Changes in FluidSynth 1.1.9 concerning developers:
 
 - add a function for registering audio drivers based on acutal needs: fluid_audio_driver_register()
-- make fluid_midi_parser_parse() public to enable realtime byte to #fluid_midi_event_t parsing
 - implement handling of #FLUID_SEQ_ALLSOUNDSOFF events in fluid_seq_fluidsynth_callback()
 - fix return value of fluid_file_set_encoding_quality()
 

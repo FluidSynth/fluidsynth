@@ -329,4 +329,7 @@ extern fluid_profile_data_t fluid_profile_data[];
 #define fluid_check_fpe(expl)
 #define fluid_clear_fpe()
 
+/* System control */
+void fluid_msleep(unsigned int msecs);
+
 #endif /* _FLUID_SYS_H */

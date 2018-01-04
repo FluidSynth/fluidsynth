@@ -215,13 +215,17 @@ do { strncpy(_dst,_src,_n); \
 #define FLUID_FPRINTF                fprintf
 
 #if (defined(WIN32) && _MSC_VER < 1900) || defined(MINGW32)
-    #define FLUID_SNPRINTF           _snprintf
+    /* need to make sure we use a C99 compliant implementation of (v)snprintf(),
+     * i.e. not microsofts non compliant extension _snprintf() as it doesnt
+     * reliably null-terminates the buffer
+     */
+    #define FLUID_SNPRINTF           g_snprintf
 #else
     #define FLUID_SNPRINTF           snprintf
 #endif
 
 #if (defined(WIN32) && _MSC_VER < 1500) || defined(MINGW32)
-    #define FLUID_VSNPRINTF          _vsnprintf
+    #define FLUID_VSNPRINTF          g_vsnprintf
 #else
     #define FLUID_VSNPRINTF          vsnprintf
 #endif
