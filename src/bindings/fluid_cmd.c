@@ -1938,7 +1938,7 @@ int fluid_handle_router_par2(void* data, int ac, char** av, fluid_ostream_t out)
 	Basic channel:  8, mono omni off(3), nbr:  2
 	Basic channel: 13, mono omni on (1), nbr:  3
 */
-char * mode_name[]={"poly omni on (0)","mono omni on (1)",
+static const char * mode_name[]={"poly omni on (0)","mono omni on (1)",
 					"poly omni off(2)","mono omni off(3)"};
 int fluid_handle_basicchannels (void* data, int ac, char** av, 
 								fluid_ostream_t out)
@@ -2238,7 +2238,7 @@ int fluid_handle_channelsmode (void* data, int ac, char** av,
  legatomode chan1 chan2
      Prints only legato mode of MIDI channels chan1, chan2
 */
-char * name_legato_mode[FLUID_CHANNEL_LEGATO_MODE_LAST]={
+static const char * name_legato_mode[FLUID_CHANNEL_LEGATO_MODE_LAST]={
 	"(0)retrigger","(1)multi-retrigger"
 };
 
@@ -2343,7 +2343,7 @@ int fluid_handle_setlegatomode(void* data, int ac, char** av,
  portamentotomode chan1 chan2
      Prints only portamentoto mode of MIDI channels chan1, chan2
 */
-char * name_portamento_mode[FLUID_CHANNEL_PORTAMENTO_MODE_LAST]={
+static const char * name_portamento_mode[FLUID_CHANNEL_PORTAMENTO_MODE_LAST]={
 	"(0)each note","(1)legato only",
 	"(2)staccato only"
 };
@@ -2511,8 +2511,8 @@ int fluid_handle_breathmode(void* data, int ac, char** av,
   Parameter 4 is "breath sync noteOn/Off" enable/disable for mono mode only (i.e enabled)
 
 */
-char *too_few_arg_breath_msg = 
-" too few argument:\nchan 1/0(breath poly) 1/0(breath mono) 1/0(breath sync mono)[..]\n";
+static const char *too_few_arg_breath_msg = 
+"too few argument:\nchan 1/0(breath poly) 1/0(breath mono) 1/0(breath sync mono)[..]\n";
 int fluid_handle_setbreathmode(void* data, int ac, char** av, 
 								fluid_ostream_t out)
 {
@@ -2535,14 +2535,14 @@ int fluid_handle_setbreathmode(void* data, int ac, char** av,
 	n = ac / 4; /* number of default breath informations */
 	if (!ac)
 	{
-		fluid_ostream_printf(out, "setbreathmode:%s",too_few_arg_breath_msg);
+		fluid_ostream_printf(out, "setbreathmode: %s",too_few_arg_breath_msg);
 		return -1;
 	}
 	else if(ac % 4)
 	{
 		/* each entry needs 4 parameters: chan,poly_breath(1/0) mono_breath(1/0) 
 		   breath sync (1/0) */
-		fluid_ostream_printf(out, "setbreathmode:chan %d,%s",
+		fluid_ostream_printf(out, "setbreathmode:chan %d, %s",
 					atoi(av[(n * 4)]),too_few_arg_breath_msg);
 		return -1;
 	}
