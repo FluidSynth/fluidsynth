@@ -414,13 +414,14 @@ fluid_synth_init(void)
   /* Non-standard MIDI continuous controller 8 to channel stereo balance */
   fluid_mod_set_source1(&custom_balance_mod, BALANCE_MSB, /* Index=8 */
 		       FLUID_MOD_CC                              /* CC=1 */
-		       | FLUID_MOD_LINEAR                        /* type=0 */
+		       | FLUID_MOD_CONCAVE                       /* type=1 */
 		       | FLUID_MOD_BIPOLAR                       /* P=1 */
 		       | FLUID_MOD_POSITIVE                      /* D=0 */
 		       );
   fluid_mod_set_source2(&custom_balance_mod, 0, 0);
   fluid_mod_set_dest(&custom_balance_mod, GEN_BALANCE);                  /* Destination: stereo balance */
-  fluid_mod_set_amount(&custom_balance_mod, 1000.0);                     /* Amount: 1000 tens of a percent */
+  /* Amount: 96 dB of attenuation (on the opposite channel) */
+  fluid_mod_set_amount(&custom_balance_mod, 960.0);
 }
 
 static FLUID_INLINE unsigned int fluid_synth_get_ticks(fluid_synth_t* synth)
