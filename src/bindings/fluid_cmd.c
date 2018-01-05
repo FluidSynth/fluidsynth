@@ -1968,7 +1968,6 @@ int fluid_handle_basicchannels (void* data, int ac, char** av,
 }
 
 static const char *invalid_arg_msg ="invalid argument\n";
-static const char *too_few_arg_msg = "too few argument, chan mode val [chan mode val]...\n";
 
 /*
   Searchs a mode name and returns the channel mode num.
@@ -2006,22 +2005,31 @@ static int get_channel_mode_num(char * name)
 static int check_basicchannels_arguments(int ac, char** av, 
 								fluid_ostream_t out, char const * name_cde)
 {
-	int i;
-	for (i = 0; i < ac; i++)
+	static const char *too_few_arg_msg = "too few argument, chan mode val [chan mode val]...\n";
+	if (ac)
 	{
-		/* checks parameters for list entries: 	chan1 mode1 val  chan2 mode2 val2  ...*/
-		/* all parameters can be numeric. mode parameter can be a name. */
-		if (!fluid_is_number(av[i]) &&
-		    ( (i % 3 != 1) || get_channel_mode_num(av[i]) < 0 ))
-		{  
-			fluid_ostream_printf(out, "%s: %s",name_cde, invalid_arg_msg);
-			return -1;
+		int i;
+		for (i = 0; i < ac; i++)
+		{
+			/* checks parameters for list entries: 	chan1 mode1 val  chan2 mode2 val2  ...*/
+			/* all parameters can be numeric. mode parameter can be a name. */
+			if (!fluid_is_number(av[i]) &&
+				( (i % 3 != 1) || get_channel_mode_num(av[i]) < 0 ))
+			{  
+				fluid_ostream_printf(out, "%s: %s",name_cde, invalid_arg_msg);
+				return -1;
+			}
+		}
+		if (ac % 3)
+		{	/* each entry needs 3 parameters: basicchan,mode,val */
+			fluid_ostream_printf(out, "%s: chan %d, %s\n",name_cde,
+							atoi(av[((ac/3) * 3)]),too_few_arg_msg);
+			return -1;	
 		}
 	}
-	if (ac % 3)
-	{	/* each entry needs 3 parameters: basicchan,mode,val */
-		fluid_ostream_printf(out, "%s: chan %d, %s\n",name_cde,
-						atoi(av[((ac/3) * 3)]),too_few_arg_msg);
+	else
+	{
+		fluid_ostream_printf(out, "%s: %s",name_cde,too_few_arg_msg);
 		return -1;	
 	}
 	return 0;
@@ -2114,16 +2122,10 @@ int fluid_handle_setbasicchannels (void* data, int ac, char** av,
     int result;
 	int i,n ;
 
-	if (ac )
+	/* checks parameters: 	chan1 mode1 val  chan2 mode2 val2 */
+	if (check_basicchannels_arguments(ac,av,out,name_cde) < 0)
 	{
-		/* checks parameters: 	chan1 mode1 val  chan2 mode2 val2 */
-		if (check_basicchannels_arguments(ac,av,out,name_cde) < 0)
-			return -1;
-	}
-	else
-	{
-		fluid_ostream_printf(out, "%s: %s",name_cde,too_few_arg_msg);
-		return -1;	
+		return -1;
 	}
 
 	n = ac / 3; /* number of basic channel information */
@@ -2227,7 +2229,7 @@ int fluid_handle_channelsmode (void* data, int ac, char** av,
 				const char * p_basicchan; /* field basic channel */
 				const char * p_mode; /* field mode */
 				const char *p_nbr; /* field Nbr */
-				const char * blank="--"; /* field empty */
+				static const char * blank="--"; /* field empty */
 				int mode = bci.mode &  FLUID_CHANNEL_MODE_MASK;
 				if (bci.mode &  FLUID_CHANNEL_BASIC)
 				{	/* This channel is a basic channel */
@@ -2274,13 +2276,12 @@ int fluid_handle_channelsmode (void* data, int ac, char** av,
  legatomode chan1 chan2
      Prints only legato mode of MIDI channels chan1, chan2
 */
-static const char * name_legato_mode[FLUID_CHANNEL_LEGATO_MODE_LAST]={
-	"(0)retrigger","(1)multi-retrigger"
-};
-
 int fluid_handle_legatomode(void* data, int ac, char** av, 
 								fluid_ostream_t out)
 {
+	static const char * name_legato_mode[FLUID_CHANNEL_LEGATO_MODE_LAST]=
+	{	"(0)retrigger","(1)multi-retrigger"	};
+
 	FLUID_ENTRY_COMMAND(data);
     fluid_synth_t* synth = handler->synth;
 	int mode;
@@ -2332,26 +2333,35 @@ static int check_channels_group_arguments(int ac, char** av, int nbr_arg_group,
 								char const * nbr_arg_group_msg
 								)
 {
-	if (check_channels_arguments(ac,av,out,name_cde) < 0)
+	if (ac)
 	{
-		return -1;
+		/* checks channels numeric arguments */
+		if (check_channels_arguments(ac,av,out,name_cde) < 0)
+		{
+			return -1;
+		}
+		if (ac % nbr_arg_group)
+		{	/* each entry needs nbr_arg_group parameters */
+			fluid_ostream_printf(out, "%s: chan %d, %s\n",name_cde,
+							atoi(av[((ac/nbr_arg_group) * nbr_arg_group)]),
+							nbr_arg_group_msg);
+			return -1;	
+		}
 	}
-	if (ac % nbr_arg_group)
-	{	/* each entry needs 3 parameters: basicchan,mode,val */
-		fluid_ostream_printf(out, "%s: chan %d, %s\n",name_cde,
-						atoi(av[((ac/nbr_arg_group) * nbr_arg_group)]),
-						nbr_arg_group_msg);
-		return -1;	
+	else
+	{
+		fluid_ostream_printf(out, "%s: %s",name_cde, nbr_arg_group_msg);
+		return -1;
 	}
 	return 0;
 }
 
+static const char *too_few_arg_chan_mode_msg = "too few argument, chan mode [chan mode]...\n";
 /*-----------------------------------------------------------------------------
   setlegatomode chan0 mode1 [chan1 mode0] ..  ..
   
   Changes legato mode for channels chan0 and [chan1]
 */
-static const char *too_few_arg_chan_mode_msg = "too few argument, chan mode [chan mode]...\n";
 int fluid_handle_setlegatomode(void* data, int ac, char** av, 
 								fluid_ostream_t out)
 {
@@ -2361,17 +2371,9 @@ int fluid_handle_setlegatomode(void* data, int ac, char** av,
     int result;
 	int i,n ;
 
-	if (ac )
-	{	
-		/* checks channels arguments by group of 2: chan1 val1 chan2 val1 ..  ..*/
-		if (check_channels_group_arguments(ac,av,2,out,	name_cde, too_few_arg_chan_mode_msg) < 0)
-		{
-			return -1;
-		}
-	}
-	else
+	/* checks channels arguments by group of 2: chan1 val1 chan2 val1 ..  ..*/
+	if (check_channels_group_arguments(ac,av,2,out,	name_cde, too_few_arg_chan_mode_msg) < 0)
 	{
-		fluid_ostream_printf(out, "%s: %s",name_cde, too_few_arg_chan_mode_msg);
 		return -1;
 	}
 
@@ -2404,20 +2406,19 @@ int fluid_handle_setlegatomode(void* data, int ac, char** av,
  portamentomode chan1 chan2
      Prints only portamento mode of MIDI channels chan1, chan2
 */
-static const char * name_portamento_mode[FLUID_CHANNEL_PORTAMENTO_MODE_LAST]={
-	"(0)each note","(1)legato only",
-	"(2)staccato only"
-};
-
 int fluid_handle_portamentomode(void* data, int ac, char** av, 
 								fluid_ostream_t out)
 {
+	static const char * name_portamento_mode[FLUID_CHANNEL_PORTAMENTO_MODE_LAST]=
+	{ "(0)each note", "(1)legato only", "(2)staccato only"	};
+
 	FLUID_ENTRY_COMMAND(data);
     fluid_synth_t* synth = handler->synth;
 	int mode;
 	int i,result;
     int n,n_chan= synth->midi_channels; 
 	
+	/* checks channels arguments: chan1 chan2 . . . */
 	if (check_channels_arguments(ac,av,out,"portamentomode") < 0)
 	{
 		return -1;
@@ -2454,17 +2455,9 @@ int fluid_handle_setportamentomode(void* data, int ac, char** av,
     int result;
 	int i,n ;
 
-	if (ac )
-	{	
-		/* checks channels arguments by group of 2: chan1 val1 chan2 val1 ..  ..*/
-		if (check_channels_group_arguments(ac,av,2,out,	name_cde, too_few_arg_chan_mode_msg) < 0)
-		{
-			return -1;
-		}
-	}
-	else
+	/* checks channels arguments by group of 2: chan1 val1 chan2 val1 ..  .. */
+	if (check_channels_group_arguments(ac,av,2,out,	name_cde, too_few_arg_chan_mode_msg) < 0)
 	{
-		fluid_ostream_printf(out, "%s: %s",name_cde, too_few_arg_chan_mode_msg);
 		return -1;
 	}
 
@@ -2508,7 +2501,7 @@ int fluid_handle_breathmode(void* data, int ac, char** av,
 	int i,result;
     int n,n_chan= synth->midi_channels; 
 	
-	/* checks channels arguments: chan1 chan2 .... */
+	/* checks channels arguments: chan1 chan2 . . . */
 	if (check_channels_arguments(ac,av,out,"breathmode") < 0)
 	{	
 		return -1;
@@ -2559,29 +2552,22 @@ int fluid_handle_breathmode(void* data, int ac, char** av,
   Parameter 4 is "breath sync noteOn/Off" enable/disable for mono mode only (i.e enabled)
 
 */
-static const char *too_few_arg_breath_msg = 
-"too few argument:\nchan 1/0(breath poly) 1/0(breath mono) 1/0(breath sync mono)[..]\n";
 int fluid_handle_setbreathmode(void* data, int ac, char** av, 
 								fluid_ostream_t out)
 {
+	static const char *too_few_arg_breath_msg = 
+	"too few argument:\nchan 1/0(breath poly) 1/0(breath mono) 1/0(breath sync mono)[..]\n";
     static const char * name_cde="setbreathmode";
+
 	FLUID_ENTRY_COMMAND(data);
     fluid_synth_t* synth = handler->synth;
     int result;
 	int i,n, n_chan= synth->midi_channels;
 
-	if (ac )
-	{	
-		/* checks channels arguments by group of 4: 
-		  chan1 val1 val2 val3   chan2 val1 val2 val3 ..  ..*/
-		if (check_channels_group_arguments(ac,av,4,out,name_cde,too_few_arg_breath_msg) < 0)
-		{
-			return -1;
-		}
-	}
-	else
+	/* checks channels arguments by group of 4:
+	chan1 val1 val2 val3   chan2 val1 val2 val3 ....  ....*/
+	if (check_channels_group_arguments(ac,av,4,out,name_cde,too_few_arg_breath_msg) < 0)
 	{
-		fluid_ostream_printf(out, "%s: %s",name_cde, too_few_arg_breath_msg);
 		return -1;
 	}
 
