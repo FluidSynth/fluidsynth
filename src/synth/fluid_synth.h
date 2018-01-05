@@ -238,4 +238,5 @@ int fluid_synth_all_notes_off_LOCAL(fluid_synth_t* synth, int chan);
 fluid_voice_t*
 fluid_synth_alloc_voice_LOCAL(fluid_synth_t* synth, fluid_sample_t* sample, int chan, int key, int vel, fluid_zone_range_t* zone_range);
 
+void fluid_synth_release_voice_on_same_note_LOCAL(fluid_synth_t* synth, int chan, int key);
 #endif  /* _FLUID_SYNTH_H */

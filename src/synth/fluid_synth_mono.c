@@ -22,10 +22,6 @@
 #include "fluid_chan.h"
 #include "fluid_defsfont.h"
 
-extern void fluid_synth_release_voice_on_same_note_LOCAL(fluid_synth_t* synth,
-                                                            int chan, int key);
-
-
 
 /****************************************************************************** 
   The legato detector is composed as this: 
