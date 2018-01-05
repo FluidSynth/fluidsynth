@@ -1237,6 +1237,11 @@ fluid_synth_remove_default_mod(fluid_synth_t* synth, const fluid_mod_t* mod)
  * all channels of the basic channel if this basic channel is in mode OmniOff/Mono.
  * This is accomplished by sending the CC one MIDI channel below the basic 
  * channel of the receiver.
+ * Examples: let a synthesizer with 16 MIDI channels:
+ * - Let a basic channel 7 in mode 3 (Omni Off – Mono). If MIDI channel 6 is disabled it
+ *    could be used as CC global for all channels belonging to basic channel 7.
+ * - Let a basic channel 0 in mode 3. If MIDI channel 15  is disabled it could be used 
+ *   as CC global for all channels belonging to basic channel 0.
  */
 int
 fluid_synth_cc(fluid_synth_t* synth, int chan, int num, int val)
@@ -1266,8 +1271,8 @@ fluid_synth_cc(fluid_synth_t* synth, int chan, int num, int val)
 	if ((channel->mode &  FLUID_CHANNEL_BASIC) &&  
 	    ((channel->mode & FLUID_CHANNEL_MODE_MASK) == FLUID_CHANNEL_MODE_OMNIOFF_MONO))
 	{	/* sends cc to all channels in this basic channel */
-		int i,val = channel->mode_val;
-		for (i = basicchan; i < basicchan+val; i++)
+		int i,nbr = channel->mode_val;
+		for (i = basicchan; i < basicchan+nbr; i++)
 		{ 
 			if (synth->verbose)
 				FLUID_LOG(FLUID_INFO, "cc\t%d\t%d\t%d", i, num, val);
