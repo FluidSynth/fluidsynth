@@ -1973,8 +1973,8 @@ static const char *too_few_arg_msg = "too few argument, chan mode val [chan mode
 /*
   Searchs a mode name and returns the channel mode num.
   name must be: poly_omnion,  mono_omnion, poly_omnioff, mono_omnioff.
-  @name name to search.
-  @ On return: channel mode number (0 to 3) if name is valid, -1 otherwise.
+  @param name to search.
+  @return channel mode number (0 to 3) if name is valid, -1 otherwise.
 */
 static int get_channel_mode_num(char * name)
 {
@@ -2332,7 +2332,6 @@ static int check_channels_group_arguments(int ac, char** av, int nbr_arg_group,
 								char const * nbr_arg_group_msg
 								)
 {
-	int i;
 	if (check_channels_arguments(ac,av,out,name_cde) < 0)
 	{
 		return -1;
