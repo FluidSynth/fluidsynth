@@ -653,7 +653,7 @@ fluid_handle_channels(void* data, int ac, char** av, fluid_ostream_t out)
   int verbose = 0;
   int i;
 
-  if (ac > 0 && strcmp( av[0], "-verbose") == 0) verbose = 1;
+  if (ac > 0 && FLUID_STRCMP( av[0], "-verbose") == 0) verbose = 1;
 
   for (i = 0; i < fluid_synth_count_midi_channels(handler->synth); i++) {
     preset = fluid_synth_get_channel_preset(handler->synth, i);
@@ -907,9 +907,9 @@ fluid_handle_reverb(void* data, int ac, char** av, fluid_ostream_t out)
     return FLUID_FAILED;
   }
 
-  if ((strcmp(av[0], "0") == 0) || (strcmp(av[0], "off") == 0)) {
+  if ((FLUID_STRCMP(av[0], "0") == 0) || (FLUID_STRCMP(av[0], "off") == 0)) {
     fluid_synth_set_reverb_on(handler->synth,0);
-  } else if ((strcmp(av[0], "1") == 0) || (strcmp(av[0], "on") == 0)) {
+  } else if ((FLUID_STRCMP(av[0], "1") == 0) || (FLUID_STRCMP(av[0], "on") == 0)) {
     fluid_synth_set_reverb_on(handler->synth,1);
   } else {
     fluid_ostream_printf(out, "reverb: invalid arguments %s [0|1|on|off]", av[0]);
@@ -994,9 +994,9 @@ fluid_handle_chorus(void* data, int ac, char** av, fluid_ostream_t out)
     return FLUID_FAILED;
   }
 
-  if ((strcmp(av[0], "0") == 0) || (strcmp(av[0], "off") == 0)) {
+  if ((FLUID_STRCMP(av[0], "0") == 0) || (FLUID_STRCMP(av[0], "off") == 0)) {
     fluid_synth_set_chorus_on(handler->synth,0);
-  } else if ((strcmp(av[0], "1") == 0) || (strcmp(av[0], "on") == 0)) {
+  } else if ((FLUID_STRCMP(av[0], "1") == 0) || (FLUID_STRCMP(av[0], "on") == 0)) {
     fluid_synth_set_chorus_on(handler->synth,1);
   } else {
     fluid_ostream_printf(out, "chorus: invalid arguments %s [0|1|on|off]", av[0]);
@@ -1707,7 +1707,7 @@ fluid_handle_help(void* data, int ac, char** av, fluid_ostream_t out)
   if (ac >= 1) {
     topic = av[0];
   }
-  if (strcmp(topic,"help") == 0){
+  if (FLUID_STRCMP(topic,"help") == 0){
     /* "help help": Print a list of all topics */
     fluid_ostream_printf(out,
 			"*** Help topics:***\n"
@@ -1716,7 +1716,7 @@ fluid_handle_help(void* data, int ac, char** av, fluid_ostream_t out)
       int listed_first_time = 1;
       unsigned int ii;
       for (ii = 0; ii < i; ii++){
-	if (strcmp(fluid_commands[i].topic, fluid_commands[ii].topic) == 0){
+	if (FLUID_STRCMP(fluid_commands[i].topic, fluid_commands[ii].topic) == 0){
 	  listed_first_time = 0;
 	}; /* if topic has already been listed */
       }; /* for all topics (inner loop) */
@@ -1728,7 +1728,7 @@ fluid_handle_help(void* data, int ac, char** av, fluid_ostream_t out)
     /* help (arbitrary topic or "all") */
     for (i = 0; i < FLUID_N_ELEMENTS(fluid_commands); i++) {
       if (fluid_commands[i].help != NULL) {
-	if (strcmp(topic,"all") == 0 || strcmp(topic,fluid_commands[i].topic) == 0){
+	if (FLUID_STRCMP(topic,"all") == 0 || FLUID_STRCMP(topic,fluid_commands[i].topic) == 0){
 	  fluid_ostream_printf(out, "%s\n", fluid_commands[i].help);
 	  count++;
 	}; /* if it matches the topic */
@@ -1984,7 +1984,7 @@ static int get_channel_mode_num(char * name)
 	int i;
 	for (i = 0 ; i <  FLUID_CHANNEL_MODE_LAST;i++)
 	{
-		if ( ! strcmp (name, name_channel_mode[i]))
+		if ( ! FLUID_STRCMP (name, name_channel_mode[i]))
 		{
 			return i;
 		}

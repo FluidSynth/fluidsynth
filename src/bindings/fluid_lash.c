@@ -145,7 +145,7 @@ fluid_lash_run (void * data)
 
       while ( (config = lash_get_config (fluid_lash_client)) )
         {
-	  if (strcmp (lash_config_get_key (config), "soundfont count") == 0)
+	  if (FLUID_STRCMP (lash_config_get_key (config), "soundfont count") == 0)
 	      pending_restores = lash_config_get_value_int (config);
 	  else
 	    {

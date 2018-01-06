@@ -327,7 +327,7 @@ static int fluid_cached_sampledata_load(char *filename,
   }
 
   for (cached_sampledata = all_cached_sampledata; cached_sampledata; cached_sampledata = cached_sampledata->next) {
-    if (strcmp(filename, cached_sampledata->filename))
+    if (FLUID_STRCMP(filename, cached_sampledata->filename))
       continue;
     if (cached_sampledata->modification_time != modification_time)
       continue;

@@ -108,19 +108,19 @@ new_fluid_pulse_audio_driver2(fluid_settings_t* settings,
   fluid_settings_getint(settings, "audio.pulseaudio.adjust-latency", &adjust_latency);
 
   if (media_role != NULL) {
-    if (strcmp(media_role, "") != 0) {
+    if (FLUID_STRCMP(media_role, "") != 0) {
       g_setenv("PULSE_PROP_media.role", media_role, TRUE);
     }
     FLUID_FREE (media_role);      /* -- free media_role string */
   }
 
-  if (server && strcmp (server, "default") == 0)
+  if (server && FLUID_STRCMP (server, "default") == 0)
   {
     FLUID_FREE (server);        /* -- free server string */
     server = NULL;
   }
 
-  if (device && strcmp (device, "default") == 0)
+  if (device && FLUID_STRCMP (device, "default") == 0)
   {
     FLUID_FREE (device);        /* -- free device string */
     device = NULL;
