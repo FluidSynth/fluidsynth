@@ -36,6 +36,11 @@
 /* min vol envelope release (to stop clicks) in SoundFont timecents */
 #define FLUID_MIN_VOLENVRELEASE -7200.0f /* ~16ms */
 
+/* This is the scaling factor that EMU8k/10k hardware applies to the
+ * initial value of the attenuation generator (but not to attenuation
+ * calculated from modulator changes) */
+#define EMU_ATTENUATION_SCALE (0.4)
+
 static int fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t* voice);
 static int calculate_hold_decay_buffers(fluid_voice_t* voice, int gen_base,
                                         int gen_key2base, int is_decay);
@@ -389,12 +394,10 @@ fluid_real_t fluid_voice_gen_value(const fluid_voice_t* voice, int num)
      */
     if (num == GEN_ATTENUATION) {
         if (voice->attenuation_mode == FLUID_ATTENUATION_MODE_EMU) {
-            val *= 0.4;
+            return (val * EMU_ATTENUATION_SCALE) + mod + nrpn;
         }
         else if (voice->attenuation_mode == FLUID_ATTENUATION_MODE_TIMIDITY) {
-            val *= 0.4;
-            mod *= 0.4;
-            nrpn *= 0.4;
+            return (val + mod + nrpn) * EMU_ATTENUATION_SCALE;
         }
     }
 
