@@ -315,7 +315,7 @@ fluid_is_midifile(const char *filename)
   }
   fclose(fp);
 
-  return strncmp(id, "MThd", 4) == 0;
+  return FLUID_STRNCMP(id, "MThd", 4) == 0;
 }
 
 /**
@@ -341,7 +341,7 @@ fluid_is_soundfont(const char *filename)
   }
   fclose(fp);
 
-  return strncmp(id, "RIFF", 4) == 0;
+  return FLUID_STRNCMP(id, "RIFF", 4) == 0;
 }
 
 /**
