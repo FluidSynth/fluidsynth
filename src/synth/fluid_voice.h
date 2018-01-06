@@ -114,7 +114,7 @@ struct _fluid_voice_t
 };
 
 
-fluid_voice_t* new_fluid_voice(fluid_synth_t *synth);
+fluid_voice_t* new_fluid_voice(fluid_real_t output_rate, char attenuation_mode);
 void delete_fluid_voice(fluid_voice_t* voice);
 
 void fluid_voice_start(fluid_voice_t* voice);

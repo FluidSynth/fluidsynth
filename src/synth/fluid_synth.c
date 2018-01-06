@@ -733,7 +733,7 @@ new_fluid_synth(fluid_settings_t *settings)
     goto error_recovery;
   }
   for (i = 0; i < synth->nvoice; i++) {
-    synth->voice[i] = new_fluid_voice(synth);
+    synth->voice[i] = new_fluid_voice(synth->sample_rate, synth->attenuation_mode);
     if (synth->voice[i] == NULL) {
       goto error_recovery;
     }
@@ -2502,7 +2502,7 @@ fluid_synth_update_polyphony_LOCAL(fluid_synth_t* synth, int new_polyphony)
       return FLUID_FAILED;
     synth->voice = new_voices;
     for (i = synth->nvoice; i < new_polyphony; i++) {
-      synth->voice[i] = new_fluid_voice(synth);
+      synth->voice[i] = new_fluid_voice(synth->sample_rate, synth->attenuation_mode);
       if (synth->voice[i] == NULL) 
 	return FLUID_FAILED;
     }

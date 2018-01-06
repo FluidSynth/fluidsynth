@@ -178,7 +178,7 @@ static void fluid_voice_initialize_rvoice(fluid_voice_t* voice)
  * new_fluid_voice
  */
 fluid_voice_t*
-new_fluid_voice(fluid_synth_t *synth)
+new_fluid_voice(fluid_real_t output_rate, char attenuation_mode)
 {
   fluid_voice_t* voice;
   voice = FLUID_NEW(fluid_voice_t);
@@ -201,7 +201,7 @@ new_fluid_voice(fluid_synth_t *synth)
   voice->vel = 0;
   voice->channel = NULL;
   voice->sample = NULL;
-  voice->attenuation_mode = synth->attenuation_mode;
+  voice->attenuation_mode = attenuation_mode;
 
   /* Initialize both the rvoice and overflow_rvoice */
   voice->can_access_rvoice = 1; 
@@ -210,7 +210,7 @@ new_fluid_voice(fluid_synth_t *synth)
   fluid_voice_swap_rvoice(voice);
   fluid_voice_initialize_rvoice(voice);
 
-  fluid_voice_set_output_rate(voice, synth->sample_rate);
+  fluid_voice_set_output_rate(voice, output_rate);
 
   return voice;
 }
