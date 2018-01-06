@@ -378,7 +378,7 @@ fluid_real_t fluid_voice_gen_value(const fluid_voice_t* voice, int num)
 	 * documentation is available at the fluid_synth_set_gen2()
 	 * function. */
 	if (voice->gen[num].flags == GEN_ABS_NRPN) {
-        mod = nrpn = 0;
+        val = mod = 0;
 	}
 
     /* Attenuation is calculated based on the synth.attenuation-mode setting:
