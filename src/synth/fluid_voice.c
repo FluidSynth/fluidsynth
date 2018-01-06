@@ -178,7 +178,7 @@ static void fluid_voice_initialize_rvoice(fluid_voice_t* voice)
  * new_fluid_voice
  */
 fluid_voice_t*
-new_fluid_voice(fluid_real_t output_rate)
+new_fluid_voice(fluid_synth_t *synth)
 {
   fluid_voice_t* voice;
   voice = FLUID_NEW(fluid_voice_t);
@@ -201,6 +201,7 @@ new_fluid_voice(fluid_real_t output_rate)
   voice->vel = 0;
   voice->channel = NULL;
   voice->sample = NULL;
+  voice->attenuation_mode = synth->attenuation_mode;
 
   /* Initialize both the rvoice and overflow_rvoice */
   voice->can_access_rvoice = 1; 
@@ -209,7 +210,7 @@ new_fluid_voice(fluid_real_t output_rate)
   fluid_voice_swap_rvoice(voice);
   fluid_voice_initialize_rvoice(voice);
 
-  fluid_voice_set_output_rate(voice, output_rate);
+  fluid_voice_set_output_rate(voice, synth->sample_rate);
 
   return voice;
 }
@@ -387,10 +388,10 @@ fluid_real_t fluid_voice_gen_value(const fluid_voice_t* voice, int num)
      *  standard compliant mode: no damping factor is used
      */
     if (num == GEN_ATTENUATION) {
-        if (voice->channel->synth->attenuation_mode == FLUID_ATTENUATION_MODE_EMU) {
+        if (voice->attenuation_mode == FLUID_ATTENUATION_MODE_EMU) {
             val *= 0.4;
         }
-        if (voice->channel->synth->attenuation_mode == FLUID_ATTENUATION_MODE_TIMIDITY) {
+        else if (voice->attenuation_mode == FLUID_ATTENUATION_MODE_TIMIDITY) {
             val *= 0.4;
             mod *= 0.4;
             nrpn *= 0.4;

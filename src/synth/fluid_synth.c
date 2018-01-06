@@ -717,6 +717,15 @@ new_fluid_synth(fluid_settings_t *settings)
     }
   }
 
+  if (fluid_settings_str_equal (settings, "synth.attenuation-mode", "emu"))
+    synth->attenuation_mode = FLUID_ATTENUATION_MODE_EMU;
+  else if (fluid_settings_str_equal (settings, "synth.attenuation-mode", "timidity"))
+    synth->attenuation_mode = FLUID_ATTENUATION_MODE_TIMIDITY;
+  else if (fluid_settings_str_equal (settings, "synth.attenuation-mode", "compliant"))
+    synth->attenuation_mode = FLUID_ATTENUATION_MODE_COMPLIANT;
+  else
+    synth->attenuation_mode = FLUID_ATTENUATION_MODE_EMU;
+
   /* allocate all synthesis processes */
   synth->nvoice = synth->polyphony;
   synth->voice = FLUID_ARRAY(fluid_voice_t*, synth->nvoice);
@@ -724,7 +733,7 @@ new_fluid_synth(fluid_settings_t *settings)
     goto error_recovery;
   }
   for (i = 0; i < synth->nvoice; i++) {
-    synth->voice[i] = new_fluid_voice(synth->sample_rate);
+    synth->voice[i] = new_fluid_voice(synth);
     if (synth->voice[i] == NULL) {
       goto error_recovery;
     }
@@ -770,15 +779,6 @@ new_fluid_synth(fluid_settings_t *settings)
     synth->bank_select = FLUID_BANK_STYLE_XG;
   else if (fluid_settings_str_equal (settings, "synth.midi-bank-select", "mma"))
     synth->bank_select = FLUID_BANK_STYLE_MMA;
-
-  if (fluid_settings_str_equal (settings, "synth.attenuation-mode", "emu"))
-    synth->attenuation_mode = FLUID_ATTENUATION_MODE_EMU;
-  else if (fluid_settings_str_equal (settings, "synth.attenuation-mode", "timidity"))
-    synth->attenuation_mode = FLUID_ATTENUATION_MODE_TIMIDITY;
-  else if (fluid_settings_str_equal (settings, "synth.attenuation-mode", "compliant"))
-    synth->attenuation_mode = FLUID_ATTENUATION_MODE_COMPLIANT;
-  else
-    synth->attenuation_mode = FLUID_ATTENUATION_MODE_EMU;
 
   fluid_synth_process_event_queue(synth);
 
@@ -2502,7 +2502,7 @@ fluid_synth_update_polyphony_LOCAL(fluid_synth_t* synth, int new_polyphony)
       return FLUID_FAILED;
     synth->voice = new_voices;
     for (i = synth->nvoice; i < new_polyphony; i++) {
-      synth->voice[i] = new_fluid_voice(synth->sample_rate);
+      synth->voice[i] = new_fluid_voice(synth);
       if (synth->voice[i] == NULL) 
 	return FLUID_FAILED;
     }
