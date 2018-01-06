@@ -370,14 +370,34 @@ fluid_voice_gen_get(fluid_voice_t* voice, int gen)
 
 fluid_real_t fluid_voice_gen_value(const fluid_voice_t* voice, int num)
 {
+    fluid_real_t val = voice->gen[num].val;
+    fluid_real_t mod = voice->gen[num].mod;
+    fluid_real_t nrpn = voice->gen[num].nrpn;
+
 	/* This is an extension to the SoundFont standard. More
 	 * documentation is available at the fluid_synth_set_gen2()
 	 * function. */
 	if (voice->gen[num].flags == GEN_ABS_NRPN) {
-		return (fluid_real_t) voice->gen[num].nrpn;
-	} else {
-		return (fluid_real_t) (voice->gen[num].val + voice->gen[num].mod + voice->gen[num].nrpn);
+        mod = nrpn = 0;
 	}
+
+    /* Attenuation is calculated based on the synth.attenuation-mode setting:
+     *  emu mode (default): damping factor is added only to the initial generator value
+     *  timidity mode: damping factor is added to all attenuation sources
+     *  standard compliant mode: no damping factor is used
+     */
+    if (num == GEN_ATTENUATION) {
+        if (voice->channel->synth->attenuation_mode == FLUID_ATTENUATION_MODE_EMU) {
+            val *= 0.4;
+        }
+        if (voice->channel->synth->attenuation_mode == FLUID_ATTENUATION_MODE_TIMIDITY) {
+            val *= 0.4;
+            mod *= 0.4;
+            nrpn *= 0.4;
+        }
+    }
+
+    return val + mod + nrpn;
 }
 
 
@@ -681,8 +701,6 @@ calculate_hold_decay_buffers(fluid_voice_t* voice, int gen_base,
 void
 fluid_voice_update_param(fluid_voice_t* voice, int gen)
 {
-  // Alternate attenuation scale used by EMU10K1 cards when setting the attenuation at the preset or instrument level within the SoundFont bank.
-  static const float ALT_ATTENUATION_SCALE = 0.4f;
   unsigned int count, z;
   fluid_real_t q_dB;
   fluid_real_t x = fluid_voice_gen_value(voice, gen);
@@ -702,8 +720,7 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
     break;
 
   case GEN_ATTENUATION:
-    voice->attenuation = ((fluid_real_t)(voice)->gen[GEN_ATTENUATION].val*ALT_ATTENUATION_SCALE) +
-    (fluid_real_t)(voice)->gen[GEN_ATTENUATION].mod + (fluid_real_t)(voice)->gen[GEN_ATTENUATION].nrpn;
+    voice->attenuation = x;
 
     /* Range: SF2.01 section 8.1.3 # 48
      * Motivation for range checking:
