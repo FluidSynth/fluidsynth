@@ -2256,7 +2256,7 @@ int fluid_handle_channelsmode (void* data, int ac, char** av,
 			else fluid_ostream_printf(out, "channel:%3d, disabled\n", chan);
 		}
 		else fluid_ostream_printf(out,
-							"channel:%3d is is outside MIDI channel count(%d)\n",
+							"channel:%3d is outside MIDI channel count(%d)\n",
 							chan,n_chan); 
 	}
 	return 0;
@@ -2306,7 +2306,7 @@ int fluid_handle_legatomode(void* data, int ac, char** av,
 				fluid_ostream_printf(out,"channel:%3d, %s\n",chan,
 										name_legato_mode[mode]);
 		else fluid_ostream_printf(out,
-							"channel:%3d is is outside MIDI channel count(%d)\n",
+							"channel:%3d is outside MIDI channel count(%d)\n",
 							chan,n_chan); 
 	}
 	return 0;
@@ -2435,7 +2435,7 @@ int fluid_handle_portamentomode(void* data, int ac, char** av,
 				fluid_ostream_printf(out,"channel:%3d, %s\n",chan,
 										name_portamento_mode[mode]);
 		else fluid_ostream_printf(out,
-							"channel:%3d is is outside MIDI channel count(%d)\n",
+							"channel:%3d is outside MIDI channel count(%d)\n",
 							chan,n_chan); 
 	}
 	return 0;
@@ -2533,7 +2533,7 @@ int fluid_handle_breathmode(void* data, int ac, char** av,
 										msg_poly_breath, msg_mono_breath, msg_breath_sync);
 		}
 		else fluid_ostream_printf(out,
-							"channel:%3d is is outside MIDI channel count(%d)\n",
+							"channel:%3d is outside MIDI channel count(%d)\n",
 							chan,n_chan); 
 	}
 	return 0;
@@ -2586,7 +2586,7 @@ int fluid_handle_setbreathmode(void* data, int ac, char** av,
 		result = fluid_synth_set_breath_mode(synth,chan,breath_infos);
 		if (result == FLUID_FAILED)  
 				fluid_ostream_printf(out,
-							"channel:%3d is is outside MIDI channel count(%d)\n",
+							"channel:%3d is outside MIDI channel count(%d)\n",
 							chan,n_chan); 
 	}
 	return 0;
