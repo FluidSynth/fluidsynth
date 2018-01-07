@@ -263,11 +263,11 @@ int main(int argc, char** argv)
   fluid_synth_t* synth = NULL;
 #ifdef NETWORK_SUPPORT
   fluid_server_t* server = NULL;
+  int with_server = 0;
 #endif
   char* config_file = NULL;
   int audio_groups = 0;
   int audio_channels = 0;
-  int with_server = 0;
   int dump = 0;
   int fast_render = 0;
   static const char optchars[] = "a:C:c:dE:f:F:G:g:hijK:L:lm:nO:o:p:R:r:sT:Vvz:";
@@ -485,7 +485,9 @@ int main(int argc, char** argv)
       fluid_settings_setnum(settings, "synth.sample-rate", atof(optarg));
       break;
     case 's':
+#ifdef NETWORK_SUPPORT
       with_server = 1;
+#endif
       break;
     case 'T':
       if (FLUID_STRCMP (optarg, "help") == 0)
@@ -574,7 +576,9 @@ int main(int argc, char** argv)
   if (fast_render) {
     midi_in = 0;
     interactive = 0;
+#ifdef NETWORK_SUPPORT
     with_server = 0;
+#endif
     fluid_settings_setstr(settings, "player.timing-source", "sample");
     fluid_settings_setint(settings, "synth.lock-memory", 0);
     fluid_settings_setint(settings, "synth.parallel-render", 1); /* TODO: Fast_render should not need this, but currently do */
