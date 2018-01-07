@@ -28,7 +28,7 @@
   - monophonic list variable.
   and functions
   - fluid_channel_add_monolist(), for inserting a new note
-  - fluid_channel_search_monolist(), for seraching the position of a note
+  - fluid_channel_search_monolist(), for searching the position of a note
     into the list.
   - fluid_channel_remove_monolist(), for removing a note out of the list.
 
@@ -49,7 +49,7 @@
   or evi (electronic valve instrument) and these instruments are unable to send
   MIDI CC legato on/off.
   
-  The list remembers the notes in playing order. 
+  The list memorizes the notes in playing order. 
   - (a) On noteOn n2, if a previous note n1 exists, there is a legato
      detection with n1 (with or without portamento from n1 to n2 See note below).
   - (b) On noteOff of the running note n2, if a previous note n1 exists,
@@ -146,7 +146,7 @@
  *  1)'fromkey portamento' is returned in fluid_synth_t.fromkey_portamento.
  *  If valid,it means that portamento is enabled .
  *
- *  2) The 'fromkey legato' note is returned.
+ *  2)The 'fromkey legato' note is returned.
  *
  * Notes about usage:
  * The function is intended to be called when the following event occurs:
@@ -460,7 +460,7 @@ fluid_synth_noteon_mono_staccato(fluid_synth_t* synth,int chan,int key,int vel)
 	
 	/* Before playing a new note, if a previous monophonic note is currently
 	   sustained it needs to be released */
-	fluid_synth_release_voice_on_same_note_LOCAL(synth,chan, channel->key_sustained);
+	fluid_synth_release_voice_on_same_note_LOCAL(synth,chan, channel->key_mono_sustained);
 	/* Get possible 'fromkey portamento'   */
 	fluid_synth_get_fromkey_portamento_legato( channel, INVALID_NOTE);
 	/* The note needs to be played by voices allocation  */
@@ -499,7 +499,7 @@ fluid_synth_noteon_mono_staccato(fluid_synth_t* synth,int chan,int key,int vel)
  * @return FLUID_OK on success, FLUID_FAILED otherwise.
  *
  * Note: On return, on monophonic, possible sustained note is memorized in
- * key_sustained. Memorization is done here on noteOff.
+ * key_mono_sustained. Memorization is done here on noteOff.
  */
 int fluid_synth_noteoff_monopoly(fluid_synth_t* synth, int chan, int key,
                             char Mono)
@@ -509,24 +509,29 @@ int fluid_synth_noteoff_monopoly(fluid_synth_t* synth, int chan, int key,
     int i;
     fluid_channel_t* channel = synth->channel[chan];
     /* Key_sustained is prepared to return no note sustained (-1) */
-    if (Mono) channel->key_sustained = -1; /* no mono note sustained */
+    if (Mono) channel->key_mono_sustained = -1; /* no mono note sustained */
     /* noteoff for all voices with same chan and same key */
-    for (i = 0; i < synth->polyphony; i++) {
+    for (i = 0; i < synth->polyphony; i++)
+	{
         voice = synth->voice[i];
         if (fluid_voice_is_on(voice) &&
             fluid_voice_get_channel(voice) == chan &&
             fluid_voice_get_key(voice) == key)
         {
-            if (synth->verbose) {
+            if (synth->verbose)
+			{
                 int used_voices = 0;
                 int k;
-                for (k = 0; k < synth->polyphony; k++) {
-                    if (!_AVAILABLE(synth->voice[k])) {
-                    used_voices++;
+                for (k = 0; k < synth->polyphony; k++) 
+				{
+                    if (!_AVAILABLE(synth->voice[k])) 
+					{
+						used_voices++;
                     }
                 }
                 FLUID_LOG(FLUID_INFO, "noteoff\t%d\t%d\t%d\t%05d\t%.3f\t%d",
-                    fluid_voice_get_channel(voice), fluid_voice_get_key(voice), 0, fluid_voice_get_id(voice),
+                    fluid_voice_get_channel(voice), fluid_voice_get_key(voice), 0, 
+					fluid_voice_get_id(voice),
                     (fluid_curtime() - synth->start) / 1000.0f,
                     used_voices);
             } /* if verbose */
@@ -537,7 +542,7 @@ int fluid_synth_noteoff_monopoly(fluid_synth_t* synth, int chan, int key,
             if(Mono &&
             (fluid_voice_is_sustained(voice) || fluid_voice_is_sostenuto(voice)))
             {
-                channel->key_sustained = key;
+                channel->key_mono_sustained = key;
             }
             
             status = FLUID_OK;
@@ -573,7 +578,7 @@ int fluid_synth_noteoff_monopoly(fluid_synth_t* synth, int chan, int key,
  *
  * We are in legato situation (where a previous note has been depressed).
  * The function must determine the from_key_portamento and from_key_legato parameters
- * used respectively by fluid_preset_noteon() function and the voices triggering functions.
+ * used respectively by fluid_preset_noteon() function and voices triggering functions.
  *
  * from_key_portamento and from_key_legato are returned by 
  * fluid_synth_get_fromkey_portamento_legato() function.

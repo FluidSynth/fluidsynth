@@ -990,9 +990,11 @@ fluid_synth_noteon_LOCAL(fluid_synth_t* synth, int chan, int key, int vel)
 
   channel = synth->channel[chan];
 
-  /* make sure this channel has a preset */
-  if (channel->preset == NULL) {
-    if (synth->verbose) {
+  /* makes sure this channel has a preset */
+  if (channel->preset == NULL) 
+  {
+    if (synth->verbose) 
+	{
       FLUID_LOG(FLUID_INFO, "noteon\t%d\t%d\t%d\t%05d\t%.3f\t%.3f\t%.3f\t%d\t%s",
 	       chan, key, vel, 0,
 	       fluid_synth_get_ticks(synth) / 44100.0f,
@@ -1002,14 +1004,15 @@ fluid_synth_noteon_LOCAL(fluid_synth_t* synth, int chan, int key, int vel)
     return FLUID_FAILED;
   }
   
-  if(fluid_channel_is_playing_mono(channel)) /* channel is mono or legato On) */
+  if(fluid_channel_is_playing_mono(channel)) /* channel is mono or legato CC is On) */
   {		/* play the noteOn in monophonic */
 		return fluid_synth_noteon_mono_LOCAL(synth, chan, key, vel);
   }
-  else { /* channel is poly and legato Off) */
+  else 
+  { /* channel is poly and legato CC is Off) */
 
-	  /* play the noteOn in polyphonic */
-      /* Set the note at first position in monophonic list */
+	  /* plays the noteOn in polyphonic */
+      /* Sets the note at first position in monophonic list */
       /* In the case where the musician intends to inter the channel in monophonic
 	 (by depressing the CC legato on), the next noteOn mono could be played legato
 	 with the previous note poly (if the musician choose this).
@@ -1032,7 +1035,7 @@ fluid_synth_noteon_LOCAL(fluid_synth_t* synth, int chan, int key, int vel)
 }
 
 /**
- * Send a note-off event to a FluidSynth object.
+ * Sends a note-off event to a FluidSynth object.
  * @param synth FluidSynth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
  * @param key MIDI note number (0-127)
@@ -1059,25 +1062,26 @@ fluid_synth_noteoff_LOCAL(fluid_synth_t* synth, int chan, int key)
 {
   int status;
   fluid_channel_t* channel = synth->channel[chan];
-  if(fluid_channel_is_playing_mono(channel)) /* channel is mono or legato On) */
+  if(fluid_channel_is_playing_mono(channel)) /* channel is mono or legato CC is On) */
   {		/* play the noteOff in monophonic */
 		status = fluid_synth_noteoff_mono_LOCAL(synth, chan, key);
   }
-  else { /* channel is poly and legato Off) */
-	  /* remove the note from the monophonic list */
+  else
+  {	  /* channel is poly and legato CC is Off) */
+	  /* removes the note from the monophonic list */
       if(key == fluid_channel_last_note(channel))
       {
 		  fluid_channel_clear_monolist(channel);
       }
 	  status = fluid_synth_noteoff_monopoly(synth, chan, key, 0);
   }
-  /* Change the state (Valid/Invalid) of the most recent note played in a 
+  /* Changes the state (Valid/Invalid) of the most recent note played in a 
      staccato manner */
   fluid_channel_invalid_prev_note_staccato(channel);
   return status;
 }
 
-/* Damp voices on a channel (turn notes off), if they're sustained by
+/* Damps voices on a channel (turn notes off), if they're sustained by
    sustain pedal */
 static int
 fluid_synth_damp_voices_by_sustain_LOCAL(fluid_synth_t* synth, int chan)
@@ -1086,18 +1090,19 @@ fluid_synth_damp_voices_by_sustain_LOCAL(fluid_synth_t* synth, int chan)
   fluid_voice_t* voice;
   int i;
 
-  for (i = 0; i < synth->polyphony; i++) {
+  for (i = 0; i < synth->polyphony; i++)
+  {
     voice = synth->voice[i];
 
     if ((fluid_voice_get_channel(voice) == chan) && fluid_voice_is_sustained(voice))                                                                                                                                                                                 
     {
-	if(voice->key == channel->key_sustained)
-	{
-		/* key_sustained is the possible mono note sustainted
-		(by sustain or sostenuto pedal). It must be marked released
-		(-1) here because it is released only by sustain pedal */
-		channel->key_sustained = -1;
-	}
+		if(voice->key == channel->key_mono_sustained)
+		{
+			/* key_mono_sustained is a possible mono note sustainted
+			(by sustain or sostenuto pedal). It must be marked released
+			(-1) here because it is released only by sustain pedal */
+			channel->key_mono_sustained = -1;
+		}
      	fluid_voice_release(voice);                                                                                                                                                                                         
     }
   }
@@ -1105,7 +1110,7 @@ fluid_synth_damp_voices_by_sustain_LOCAL(fluid_synth_t* synth, int chan)
   return FLUID_OK;
 }
 
-/* Damp voices on a channel (turn notes off), if they're sustained by
+/* Damps voices on a channel (turn notes off), if they're sustained by
    sostenuto pedal */
 static int
 fluid_synth_damp_voices_by_sostenuto_LOCAL(fluid_synth_t* synth, int chan)
@@ -1114,18 +1119,19 @@ fluid_synth_damp_voices_by_sostenuto_LOCAL(fluid_synth_t* synth, int chan)
   fluid_voice_t* voice;
   int i;
 
-  for (i = 0; i < synth->polyphony; i++) {
+  for (i = 0; i < synth->polyphony; i++)
+  {
     voice = synth->voice[i];
 
     if ((fluid_voice_get_channel(voice) == chan) && fluid_voice_is_sostenuto(voice))                                                                                                                                                                         
     {
-	if(voice->key == channel->key_sustained)
-	{
-		/* key_sustained is the possible mono note sustainted
-		(by sustain or sostenuto pedal). It must be marked released
-		(-1) here because it is released only by sostenuto pedal */
-		channel->key_sustained = -1;
-	}
+		if(voice->key == channel->key_mono_sustained)
+		{
+			/* key_mono_sustained is a possible mono note sustainted
+			(by sustain or sostenuto pedal). It must be marked released
+			(-1) here because it is released only by sostenuto pedal */
+			channel->key_mono_sustained = -1;
+		}
     	fluid_voice_release(voice);                                                                                                                                                                                         
     }
   }

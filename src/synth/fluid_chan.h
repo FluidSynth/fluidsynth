@@ -91,7 +91,7 @@ struct _fluid_channel_t
   unsigned char prev_note;        /**< previous note of the most recent add */
   unsigned char n_notes;          /**< actual number of notes in the list */
   /*--*/
-  int key_sustained;              /**< previous sustained monophonic note */
+  int key_mono_sustained;         /**< previous sustained monophonic note */
   unsigned char legatomode;       /**< legato mode */
   unsigned char portamentomode;   /**< portamento mode */
   int previous_cc_breath;		  /**< Previous Breath */

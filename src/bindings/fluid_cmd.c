@@ -1994,7 +1994,8 @@ static int get_channel_mode_num(char * name)
 
 /*
  checks basic channels arguments: chan1 mode1 val  chan2 mode2 val2  ...
- all arguments can be numeric. mode parameter can be a name.
+ All arguments can be numeric. mode parameter can be a name.
+ Each group entry must have 3 parameters (chan,mode,val).
 
  @param ac argument count
  @param av argument table
@@ -2021,7 +2022,7 @@ static int check_basicchannels_arguments(int ac, char** av,
 			}
 		}
 		if (ac % 3)
-		{	/* each entry needs 3 parameters: basicchan,mode,val */
+		{	/* each group entry needs 3 parameters: basicchan,mode,val */
 			fluid_ostream_printf(out, "%s: chan %d, %s\n",name_cde,
 							atoi(av[((ac/3) * 3)]),too_few_arg_msg);
 			return -1;	
@@ -2080,12 +2081,12 @@ int fluid_handle_resetbasicchannels (void* data, int ac, char** av,
 		{
 			bci[i].basicchan = atoi(av[(i * 3)]); /* chan is numeric */
 			if (fluid_is_number(av[(i * 3)+1]))
-			{		
-				bci[i].mode = atoi(av[(i * 3)+1]); /* mode is numeric */
+			{	/* mode is numeric */
+				bci[i].mode = atoi(av[(i * 3)+1]);
 			}
 			else
-			{
-				bci[i].mode = get_channel_mode_num(av[(i * 3)+1]); /* mode is a name */
+			{	/* mode is a name */
+				bci[i].mode = get_channel_mode_num(av[(i * 3)+1]);
 			}
 			bci[i].val = atoi(av[(i * 3)+2]); /* val is numeric */
 		}
@@ -2122,7 +2123,7 @@ int fluid_handle_setbasicchannels (void* data, int ac, char** av,
     int result;
 	int i,n ;
 
-	/* checks parameters: 	chan1 mode1 val  chan2 mode2 val2 */
+	/* checks parameters: 	chan1 mode1 val1  chan2 mode2 val2 */
 	if (check_basicchannels_arguments(ac,av,out,name_cde) < 0)
 	{
 		return -1;
@@ -2135,9 +2136,13 @@ int fluid_handle_setbasicchannels (void* data, int ac, char** av,
 
 		bci.basicchan = atoi(av[(i * 3)]);  /* chan is numeric */
 		if (fluid_is_number(av[(i * 3)+1]))
-			bci.mode = atoi(av[(i * 3)+1]); /* mode is numeric */
+		{	/* mode is a name */
+			bci.mode = atoi(av[(i * 3)+1]);
+		}
 		else
-			bci.mode = get_channel_mode_num(av[(i * 3)+1]); /* mode is a name */
+		{	/* mode is a name */
+			bci.mode = get_channel_mode_num(av[(i * 3)+1]);
+		}
 		bci.val = atoi(av[(i * 3)+2]);      /* val is numeric */
 
 		/* changes basic channels */
@@ -2240,7 +2245,7 @@ int fluid_handle_channelsmode (void* data, int ac, char** av,
 					p_basicchan = "basic channel";
 				}
 				else
-				{	/* This channel is member of a part */
+				{	/* This channel is member of a basic channel group */
 					p_basicchan = blank;
 					if(mode & FLUID_CHANNEL_POLY_OFF) p_mode = "mono";
 					else p_mode = "poly";
@@ -2341,7 +2346,7 @@ static int check_channels_group_arguments(int ac, char** av, int nbr_arg_group,
 			return -1;
 		}
 		if (ac % nbr_arg_group)
-		{	/* each entry needs nbr_arg_group parameters */
+		{	/* each group entry needs nbr_arg_group parameters */
 			fluid_ostream_printf(out, "%s: chan %d, %s\n",name_cde,
 							atoi(av[((ac/nbr_arg_group) * nbr_arg_group)]),
 							nbr_arg_group_msg);
@@ -2377,7 +2382,7 @@ int fluid_handle_setlegatomode(void* data, int ac, char** av,
 		return -1;
 	}
 
-	n = ac / 2; /* number of legato information */
+	n = ac / 2; /* number of legato groups informations */
 	for (i = 0; i < n; i++)
 	{
 		int chan = atoi(av[(i * 2)]); 
@@ -2461,7 +2466,7 @@ int fluid_handle_setportamentomode(void* data, int ac, char** av,
 		return -1;
 	}
 
-	n = ac / 2; /* number of portamento information */
+	n = ac / 2; /* number of portamento groups informations */
 	for (i = 0; i < n; i++)
 	{
 		int chan = atoi(av[(i * 2)]); 
@@ -2571,7 +2576,7 @@ int fluid_handle_setbreathmode(void* data, int ac, char** av,
 		return -1;
 	}
 
-	n = ac / 4; /* number of default breath informations */
+	n = ac / 4; /* number of breath groups informations */
 	for (i = 0; i < n; i++)
 	{
 		int chan = atoi(av[(i * 4)]); 
@@ -2579,7 +2584,7 @@ int fluid_handle_setbreathmode(void* data, int ac, char** av,
 		int mono_breath = atoi(av[(i * 4)+2]);
 		int breath_sync = atoi(av[(i * 4)+3]);
 		int breath_infos = 0;
-		/* changes default breath  */
+		/* changes  breath infos */
 		if(poly_breath) breath_infos |= FLUID_CHANNEL_BREATH_POLY;
 		if(mono_breath) breath_infos |= FLUID_CHANNEL_BREATH_MONO;
 		if(breath_sync) breath_infos |= FLUID_CHANNEL_BREATH_SYNC;
