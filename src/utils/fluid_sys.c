@@ -342,8 +342,9 @@ fluid_is_midifile(const char *filename)
  * @param filename Path to the file to check
  * @return TRUE if it could be a SoundFont, FALSE otherwise
  *
- * @note The current implementation only checks for the "RIFF" and "sfbk" headers in
- * the file. It is useful to distinguish between SoundFont and other (e.g. MIDI) files.
+ * @note The current implementation only checks for the "RIFF" header in the file.
+ * Version >1.1.9 also checks for "sfbk" header.
+ * It is useful to distinguish between SoundFont and other (e.g. MIDI) files.
  */
 int
 fluid_is_soundfont(const char *filename)
