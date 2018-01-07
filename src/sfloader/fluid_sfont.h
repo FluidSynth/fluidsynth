@@ -22,6 +22,7 @@
 #ifndef _PRIV_FLUID_SFONT_H
 #define _PRIV_FLUID_SFONT_H
 
+#include "fluidsynth.h"
 
 /*
  * Utility macros to access soundfonts, presets, and samples
@@ -64,6 +65,34 @@
   (_sample)->refcount--; \
   if (((_sample)->refcount == 0) && ((_sample)->notify)) \
     (*(_sample)->notify)(_sample, FLUID_SAMPLE_DONE);
+
+
+
+/**
+ * File callback structure to enable custom soundfont loading (e.g. from memory).
+ */
+struct _fluid_file_callbacks_t
+{
+  fluid_sfloader_callback_open  fopen;
+  fluid_sfloader_callback_read  fread;
+  fluid_sfloader_callback_seek  fseek;
+  fluid_sfloader_callback_close fclose;
+  fluid_sfloader_callback_tell  ftell;
+};
+
+/**
+ * SoundFont loader structure.
+ */
+struct _fluid_sfloader_t {
+  void* data;           /**< User defined data pointer used by _fluid_sfloader_t::load() */
+
+  /** Callback structure specifying file operations used during soundfont loading to allow custom loading, such as from memory */
+  fluid_file_callbacks_t file_callbacks;
+
+  fluid_sfloader_free_t free;
+
+  fluid_sfloader_load_t load;
+};
 
 
 

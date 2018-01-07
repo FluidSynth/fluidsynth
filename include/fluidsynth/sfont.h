@@ -83,68 +83,73 @@ enum fluid_sample_type
     FLUID_SAMPLETYPE_ROM = 0x8000 /**< Indicates ROM samples, causes sample to be ignored */
 };
 
-/**
- * SoundFont loader structure.
- */
-struct _fluid_sfloader_t {
-  void* data;           /**< User defined data pointer used by _fluid_sfloader_t::load() */
-
-  /** Callback structure specifying file operations used during soundfont loading to allow custom loading, such as from memory */
-  const fluid_file_callbacks_t* file_callbacks;
-
-  /**                                                                                                                                                                                                                               
-   * The free method should free the memory allocated for this loader instance in
-   * addition to any private data.
-   * @param loader SoundFont loader
-   */
-  void (*free)(fluid_sfloader_t* loader);
-
-  /**
-   * Method to load an instrument file (does not actually need to be a real file name,
-   * could be another type of string identifier that the \a loader understands).
-   * @param loader SoundFont loader
-   * @param filename File name or other string identifier
-   * @return The loaded instrument file (SoundFont) or NULL if an error occured.
-   */
-  fluid_sfont_t* (*load)(fluid_sfloader_t* loader, const char* filename);
-};
 
 /**
- * File callback structure to enable custom soundfont loading (e.g. from memory).
+ * Method to load an instrument file (does not actually need to be a real file name,
+ * could be another type of string identifier that the \a loader understands).
+ * @param loader SoundFont loader
+ * @param filename File name or other string identifier
+ * @return The loaded instrument file (SoundFont) or NULL if an error occured.
  */
-struct _fluid_file_callbacks_t {
-  /**
-   * Opens the file or memory indicated by \c filename in binary read mode.
-   * \c filename matches the one provided during the fluid_synth_sfload() call.
-   *
-   * @return returns a file handle on success, NULL otherwise
-   */
-  void * (* fopen )(const char * filename);
+typedef fluid_sfont_t* (*fluid_sfloader_load_t)(fluid_sfloader_t* loader, const char* filename);
 
-  /**
-   * Reads \c count bytes to the specified buffer \c buf.
-   * 
-   * @return returns #FLUID_OK if exactly \c count bytes were successfully read, else #FLUID_FAILED
-   */
-  int (* fread )(void *buf, int count, void * handle);
+/**
+ * The free method should free the memory allocated for a fluid_sfloader_t instance in
+ * addition to any private data. Any custom user provided cleanup function must ultimately call
+ * delete_fluid_sfloader() to ensure proper cleanup of the #fluid_sfloader_t struct. If no private data
+ * needs to be freed, setting this to delete_fluid_sfloader() is sufficient.
+ * @param loader SoundFont loader
+ */
+typedef void (*fluid_sfloader_free_t)(fluid_sfloader_t* loader);
 
-  /**
-   * Same purpose and behaviour as fseek.
-   * 
-   * @param origin either \c SEEK_SET, \c SEEK_CUR or \c SEEK_END
-   * 
-   * @return returns #FLUID_OK if the seek was successfully performed while not seeking beyond a buffer or file, #FLUID_FAILED otherwise */
-  int (* fseek )(void * handle, long offset, int origin);
 
-  /** 
-   * Closes the handle and frees used ressources.
-   * 
-   * @return returns #FLUID_OK on success, #FLUID_FAILED on error */
-  int (* fclose)(void * handle);
+fluid_sfloader_t* new_fluid_sfloader(fluid_sfloader_load_t load, fluid_sfloader_free_t free);
+void delete_fluid_sfloader(fluid_sfloader_t* loader);
 
-  /** @return returns current file offset or #FLUID_FAILED on error */
-  long (* ftell )(void * handle);
-};
+
+/**
+ * Opens the file or memory indicated by \c filename in binary read mode.
+ * \c filename matches the one provided during the fluid_synth_sfload() call.
+ *
+ * @return returns a file handle on success, NULL otherwise
+ */
+typedef void * (* fluid_sfloader_callback_open )(const char * filename);
+
+/**
+ * Reads \c count bytes to the specified buffer \c buf.
+ * 
+ * @return returns #FLUID_OK if exactly \c count bytes were successfully read, else #FLUID_FAILED
+ */
+typedef int (* fluid_sfloader_callback_read )(void *buf, int count, void * handle);
+
+/**
+ * Same purpose and behaviour as fseek.
+ * 
+ * @param origin either \c SEEK_SET, \c SEEK_CUR or \c SEEK_END
+ * 
+ * @return returns #FLUID_OK if the seek was successfully performed while not seeking beyond a buffer or file, #FLUID_FAILED otherwise
+ */
+typedef int (* fluid_sfloader_callback_seek )(void * handle, long offset, int origin);
+
+/** 
+ * Closes the handle returned by #fluid_sfloader_callback_open and frees used ressources.
+ * 
+ * @return returns #FLUID_OK on success, #FLUID_FAILED on error
+ */
+typedef int (* fluid_sfloader_callback_close )(void * handle);
+
+/** @return returns current file offset or #FLUID_FAILED on error */
+typedef long (* fluid_sfloader_callback_tell )(void * handle);
+
+
+FLUIDSYNTH_API void fluid_sfloader_set_callbacks(fluid_sfloader_t* loader,
+                                  fluid_sfloader_callback_open open,
+                                  fluid_sfloader_callback_read read,
+                                  fluid_sfloader_callback_seek seek,
+                                  fluid_sfloader_callback_tell tell,
+                                  fluid_sfloader_callback_close close);
+
+FLUIDSYNTH_API void fluid_sfloader_set_data(fluid_sfloader_t* loader, void* data);
 
 
 FLUIDSYNTH_API fluid_sfloader_t* new_fluid_defsfloader(fluid_settings_t* settings);

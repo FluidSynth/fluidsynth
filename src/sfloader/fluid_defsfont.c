@@ -23,6 +23,7 @@
 
 
 #include "fluid_defsfont.h"
+#include "fluid_sfont.h"
 /* Todo: Get rid of that 'include' */
 #include "fluid_sys.h"
 
@@ -73,48 +74,36 @@ static int safe_fseek (void * fd, long ofs, int whence)
   return FLUID_OK;
 }
 
-static const fluid_file_callbacks_t def_file_callbacks =
-{
-        default_fopen,
-        safe_fread,
-        safe_fseek,
-        default_fclose,
-        default_ftell
-};
-
 /**
  * Creates a default soundfont2 loader that can be used with fluid_synth_add_sfloader().
  * By default every synth instance has an initial default soundfont loader instance.
- * Calling this function is usually only necessary to load a soundfont from memory, by overriding \c fluid_sfloader_t::file_callbacks member.
+ * Calling this function is usually only necessary to load a soundfont from memory, by providing custom callback functions via fluid_sfloader_set_callbacks().
  * 
  * @param settings A settings instance obtained by new_fluid_settings()
  * @return A default soundfont2 loader struct
  */
 fluid_sfloader_t* new_fluid_defsfloader(fluid_settings_t* settings)
 {
-  fluid_sfloader_t* loader;
-  
+  fluid_sfloader_t* loader;  
   fluid_return_val_if_fail(settings != NULL, NULL);
 
-  loader = FLUID_NEW(fluid_sfloader_t);
-  if (loader == NULL) {
+  loader = new_fluid_sfloader(fluid_defsfloader_load, delete_fluid_sfloader);
+  
+  if (loader == NULL)
+  {
     FLUID_LOG(FLUID_ERR, "Out of memory");
     return NULL;
   }
 
-  loader->data = settings;
-  loader->file_callbacks = &def_file_callbacks;
-  loader->free = delete_fluid_defsfloader;
-  loader->load = fluid_defsfloader_load;
-
+  fluid_sfloader_set_data(loader, settings);
+  fluid_sfloader_set_callbacks(loader,
+                               default_fopen,
+                               safe_fread,
+                               safe_fseek,
+                               default_ftell,
+                               default_fclose);
+  
   return loader;
-}
-
-void delete_fluid_defsfloader(fluid_sfloader_t* loader)
-{
-    fluid_return_if_fail(loader != NULL);
-    
-    FLUID_FREE(loader);
 }
 
 fluid_sfont_t* fluid_defsfloader_load(fluid_sfloader_t* loader, const char* filename)
@@ -128,7 +117,7 @@ fluid_sfont_t* fluid_defsfloader_load(fluid_sfloader_t* loader, const char* file
     return NULL;
   }
 
-  if (fluid_defsfont_load(defsfont, loader->file_callbacks, filename) == FLUID_FAILED) {
+  if (fluid_defsfont_load(defsfont, &loader->file_callbacks, filename) == FLUID_FAILED) {
     delete_fluid_defsfont(defsfont);
     return NULL;
   }
