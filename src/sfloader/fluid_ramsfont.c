@@ -264,7 +264,7 @@ delete_fluid_ramsfont (fluid_ramsfont_t* sfont)
   for (list = sfont->sample; list; list = fluid_list_next(list)) {
   	/* in ram soundfonts, the samples hold their data : so we should free it ourselves */
   	fluid_sample_t* sam = (fluid_sample_t*)fluid_list_get(list);
-    delete_fluid_ramsample(sam);
+    delete_fluid_sample(sam);
   }
 
   if (sfont->sample) {
@@ -1106,118 +1106,114 @@ fluid_rampreset_noteon (fluid_rampreset_t* preset, fluid_synth_t* synth, int cha
 
 
 /**
- * Set the name of a RAM SoundFont sample.
- * @param sample RAM SoundFont sample
- * @param name Name to assign to sample (20 chars in length, 0 terminated)
- * @return #FLUID_OK
+ * Set the name of a SoundFont sample.
+ * @param sample SoundFont sample
+ * @param name Name to assign to sample (20 chars in length + zero terminator)
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
-int
-fluid_sample_set_name(fluid_sample_t* sample, const char *name)
+int fluid_sample_set_name(fluid_sample_t* sample, const char *name)
 {
-  FLUID_MEMCPY(sample->name, name, 20);
-  return FLUID_OK;
+    fluid_return_val_if_fail(sample != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(name != NULL, FLUID_FAILED);
+    
+    FLUID_STRNCPY(sample->name, name, sizeof(sample->name));
+    return FLUID_OK;
 }
 
 /**
- * Assign sample data to a RAM SoundFont sample.
- * @param sample RAM SoundFont sample
+ * Assign sample data to a SoundFont sample.
+ * @param sample SoundFont sample
  * @param data Buffer containing 16 bit audio sample data
+ * @param data24 If not NULL, pointer to the least significant byte counterparts of each sample data point in order to create 24 bit audio samples
  * @param nbframes Number of samples in \a data
- * @param copy_data TRUE to copy the data, FALSE to use it directly
+ * @param copy_data TRUE to copy the sample data (and automatically free it upon delete_fluid_sample()), FALSE to use it directly (and not free it)
  * @param rootkey Root MIDI note of sample (0-127)
+ * @param sample_rate Sampling rate of the sample data
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  *
- * WARNING: If \a copy_data is FALSE, data should have 8 unused frames at start
- * and 8 unused frames at the end.
+ * @note If \a copy_data is FALSE, data should have 8 unused frames at start
+ * and 8 unused frames at the end and \a nbframes should be >=48
  */
 int
-fluid_sample_set_sound_data (fluid_sample_t* sample, short *data,
-                             unsigned int nbframes, short copy_data, int rootkey)
+fluid_sample_set_sound_data (fluid_sample_t* sample,
+                             short *data,
+                             char *data24,
+                             unsigned int nbframes,
+                             short copy_data,
+                             int rootkey,
+                             unsigned int sample_rate
+                            )
 {
-	/* 16 bit mono 44.1KHz data in */
-	/* in all cases, the sample has ownership of the data : it will release it in the end */
-	unsigned int storedNbFrames;
-
-	/* in case we already have some data */
-  if (sample->data != NULL) {
-  	FLUID_FREE(sample->data);
-  }
-
-	if (copy_data) {
-
-		/* nbframes should be >= 48 (SoundFont specs) */
-		storedNbFrames = nbframes;
-		if (storedNbFrames < 48) storedNbFrames = 48;
-
-	  sample->data = FLUID_MALLOC(storedNbFrames*2 + 4*SAMPLE_LOOP_MARGIN);
-	  if (sample->data == NULL) {
-	    FLUID_LOG(FLUID_ERR, "Out of memory");
-	    return FLUID_FAILED;
-	  }
-	  FLUID_MEMSET(sample->data, 0, storedNbFrames*2 + 4*SAMPLE_LOOP_MARGIN);
-	  FLUID_MEMCPY((char*)(sample->data) + 2*SAMPLE_LOOP_MARGIN, data, nbframes*2);
-
-#if 0
-	  /* this would do the fill of the margins */
-	  FLUID_MEMCPY((char*)(sample->data) + 2*SAMPLE_LOOP_MARGIN + storedNbFrames*2, (char*)data, 2*SAMPLE_LOOP_MARGIN);
-	  FLUID_MEMCPY((char*)(sample->data), (char*)data + nbframes*2 - 2*SAMPLE_LOOP_MARGIN, 2*SAMPLE_LOOP_MARGIN);
-#endif
-
-	  /* pointers */
-	  /* all from the start of data */
-	  sample->start = SAMPLE_LOOP_MARGIN;
-	  sample->end = SAMPLE_LOOP_MARGIN + storedNbFrames;
-  } else {
-  	/* we cannot assure the SAMPLE_LOOP_MARGIN */
-  	sample->data = data;
-	  sample->start = 0;
-	  sample->end = nbframes;
-  }
-
-  /* only used as markers for the LOOP generators : set them on the first real frame */
-  sample->loopstart = sample->start;
-  sample->loopend = sample->end;
-
-  sample->samplerate = 44100;
-  sample->origpitch = rootkey;
-  sample->pitchadj = 0;
-  sample->sampletype = FLUID_SAMPLETYPE_MONO;
-  sample->valid = 1;
-
-  return FLUID_OK;
-}
-
-/**
- * Create new RAM SoundFont sample.
- * @return New RAM SoundFont sample or NULL if out of memory
- */
-fluid_sample_t *
-new_fluid_ramsample (void)
-{
-	/* same as new_fluid_sample. Only here so that it is exported */
-  fluid_sample_t* sample = NULL;
-
-  sample = FLUID_NEW(fluid_sample_t);
-  if (sample == NULL) {
-    FLUID_LOG(FLUID_ERR, "Out of memory");
-    return NULL;
-  }
-
-  memset(sample, 0, sizeof(fluid_sample_t));
-
-  return sample;
-}
-
-/**
- * Delete a RAM SoundFont sample.
- * @param sample Sample to delete
- */
-void
-delete_fluid_ramsample (fluid_sample_t* sample)
-{
-    fluid_return_if_fail(sample != NULL);
+    fluid_return_val_if_fail(sample != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(data != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(0<=rootkey && rootkey<=127, FLUID_FAILED);
     
-	/* same as delete_fluid_sample, plus frees the data */
-  	FLUID_FREE(sample->data);
-  FLUID_FREE(sample);
+    /* in case we already have some data */
+    if ((sample->data != NULL || sample->data24 != NULL) && sample->auto_free)
+    {
+        FLUID_FREE(sample->data);
+        FLUID_FREE(sample->data24);
+    }
+
+    if (copy_data)
+    {
+        unsigned int storedNbFrames;
+
+        /* nbframes should be >= 48 (SoundFont specs) */
+        storedNbFrames = nbframes;
+        if (storedNbFrames < 48) storedNbFrames = 48;
+        
+        storedNbFrames += 2*SAMPLE_LOOP_MARGIN;
+        
+        sample->data = FLUID_ARRAY(short, storedNbFrames);
+        if (sample->data == NULL)
+        {
+            goto error_rec;
+        }
+        FLUID_MEMSET(sample->data, 0, storedNbFrames);
+        FLUID_MEMCPY(sample->data + SAMPLE_LOOP_MARGIN, data, nbframes*sizeof(short));
+        
+        if(data24 != NULL)
+        {
+            sample->data24 = FLUID_ARRAY(char, storedNbFrames);
+            if (sample->data24 == NULL)
+            {
+                goto error_rec;
+            }
+            FLUID_MEMSET(sample->data24, 0, storedNbFrames);
+            FLUID_MEMCPY(sample->data24 + SAMPLE_LOOP_MARGIN, data24, nbframes*sizeof(char));
+        }
+        
+        /* pointers */
+        /* all from the start of data */
+        sample->start = SAMPLE_LOOP_MARGIN;
+        sample->end = SAMPLE_LOOP_MARGIN + storedNbFrames;
+    }
+    else
+    {
+        /* we cannot assure the SAMPLE_LOOP_MARGIN */
+        sample->data = data;
+        sample->data24 = data24;
+        sample->start = 0;
+        sample->end = nbframes;
+    }
+
+    /* only used as markers for the LOOP generators : set them on the first real frame */
+    sample->loopstart = sample->start;
+    sample->loopend = sample->end;
+
+    sample->samplerate = sample_rate;
+    sample->origpitch = rootkey;
+    sample->pitchadj = 0;
+    sample->sampletype = FLUID_SAMPLETYPE_MONO;
+    sample->valid = 1;
+    sample->auto_free = copy_data;
+
+    return FLUID_OK;
+    
+error_rec:
+    FLUID_LOG(FLUID_ERR, "Out of memory");
+    FLUID_FREE(sample->data);
+    FLUID_FREE(sample->data24);
+    return FLUID_FAILED;
 }

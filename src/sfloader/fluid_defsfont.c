@@ -1860,18 +1860,17 @@ fluid_inst_zone_inside_range(fluid_inst_zone_t* zone, int key, int vel)
 fluid_sample_t*
 new_fluid_sample()
 {
-  fluid_sample_t* sample = NULL;
+    fluid_sample_t* sample = NULL;
 
-  sample = FLUID_NEW(fluid_sample_t);
-  if (sample == NULL) {
-    FLUID_LOG(FLUID_ERR, "Out of memory");
-    return NULL;
-  }
+    sample = FLUID_NEW(fluid_sample_t);
+    if (sample == NULL)
+    {
+        FLUID_LOG(FLUID_ERR, "Out of memory");
+        return NULL;
+    }
+    FLUID_MEMSET(sample, 0, sizeof(*sample));
 
-  memset(sample, 0, sizeof(fluid_sample_t));
-  sample->valid = 1;
-
-  return sample;
+    return sample;
 }
 
 /*
@@ -1880,16 +1879,15 @@ new_fluid_sample()
 void
 delete_fluid_sample(fluid_sample_t* sample)
 {
-  fluid_return_if_fail(sample != NULL);
-    
-  if (sample->sampletype & FLUID_SAMPLETYPE_OGG_VORBIS)
-  {
-#if LIBSNDFILE_SUPPORT
-      FLUID_FREE(sample->data);
-#endif
-  }
+    fluid_return_if_fail(sample != NULL);
+        
+    if (sample->auto_free)
+    {
+        FLUID_FREE(sample->data);
+        FLUID_FREE(sample->data24);
+    }
 
-  FLUID_FREE(sample);
+    FLUID_FREE(sample);
 }
 
 /*
@@ -2034,6 +2032,7 @@ fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defs
 
     // point sample data to uncompressed data stream
     sample->data = sampledata_ogg;
+    sample->auto_free = TRUE;
     sample->start = 0;
     sample->end = sfinfo.frames - 1;
 
@@ -2085,6 +2084,8 @@ fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defs
 /*        sample->loopend = sample->end - 8; */
 /*      } */
   }
+  
+  sample->valid = TRUE;
   return FLUID_OK;
 }
 

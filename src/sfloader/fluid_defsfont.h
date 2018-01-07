@@ -499,8 +499,6 @@ fluid_sample_t* fluid_inst_zone_get_sample(fluid_inst_zone_t* zone);
 
 
 
-fluid_sample_t* new_fluid_sample(void);
-void delete_fluid_sample(fluid_sample_t* sample);
 int fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defsfont_t* sfont);
 int fluid_sample_in_rom(fluid_sample_t* sample);
 
