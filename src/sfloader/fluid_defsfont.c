@@ -1855,42 +1855,6 @@ fluid_inst_zone_inside_range(fluid_inst_zone_t* zone, int key, int vel)
  */
 
 /*
- * new_fluid_sample
- */
-fluid_sample_t*
-new_fluid_sample()
-{
-    fluid_sample_t* sample = NULL;
-
-    sample = FLUID_NEW(fluid_sample_t);
-    if (sample == NULL)
-    {
-        FLUID_LOG(FLUID_ERR, "Out of memory");
-        return NULL;
-    }
-    FLUID_MEMSET(sample, 0, sizeof(*sample));
-
-    return sample;
-}
-
-/*
- * delete_fluid_sample
- */
-void
-delete_fluid_sample(fluid_sample_t* sample)
-{
-    fluid_return_if_fail(sample != NULL);
-        
-    if (sample->auto_free)
-    {
-        FLUID_FREE(sample->data);
-        FLUID_FREE(sample->data24);
-    }
-
-    FLUID_FREE(sample);
-}
-
-/*
  * fluid_sample_in_rom
  */
 int
