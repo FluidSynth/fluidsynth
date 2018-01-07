@@ -2136,7 +2136,7 @@ int fluid_handle_setbasicchannels (void* data, int ac, char** av,
 
 		bci.basicchan = atoi(av[(i * 3)]);  /* chan is numeric */
 		if (fluid_is_number(av[(i * 3)+1]))
-		{	/* mode is a name */
+		{	/* chan is numeric */
 			bci.mode = atoi(av[(i * 3)+1]);
 		}
 		else
