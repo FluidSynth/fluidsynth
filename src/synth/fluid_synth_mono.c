@@ -308,7 +308,7 @@ int fluid_synth_noteon_mono_LOCAL(fluid_synth_t* synth, int chan,
 {
 	fluid_channel_t* channel = synth->channel[chan];
 
-	/* Adds note the into the monophonic list */
+	/* Adds the note into the monophonic list */
 	fluid_channel_add_monolist(channel,(unsigned char)key,(unsigned char)vel,0);
 
 	/* in Breath Sync mode, the noteon triggering is postponed 

@@ -317,7 +317,7 @@ fluid_channel_get_sfont_bank_prog(fluid_channel_t* chan, int *sfont,
 
 
 /**
- * Adds a note into monophonic list. The function is part of the legato 
+ * Adds a note into the monophonic list. The function is part of the legato 
  * detector. fluid_channel_add_monolist() is intended to be called by
  * fluid_synth_noteon_mono_LOCAL().
  *
