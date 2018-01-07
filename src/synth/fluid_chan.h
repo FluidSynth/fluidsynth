@@ -273,10 +273,9 @@ int fluid_channel_get_interp_method(fluid_channel_t* chan);
 /* End of interface to monophonic list variables */
 
 void fluid_channel_add_monolist(fluid_channel_t* chan, unsigned char key, unsigned char vel, unsigned char onenote);
-unsigned short fluid_channel_search_monolist(fluid_channel_t* chan, unsigned char key);
-unsigned char fluid_channel_remove_monolist(fluid_channel_t* chan, short i);
+int fluid_channel_search_monolist(fluid_channel_t* chan, unsigned char key);
+int fluid_channel_remove_monolist(fluid_channel_t* chan, short i);
 void fluid_channel_clear_monolist(fluid_channel_t* chan);
-void fluid_channel_keep_lastnote_monolist(fluid_channel_t* chan);
 void fluid_channel_set_onenote_monolist(fluid_channel_t* chan, unsigned char key, unsigned char vel);
 void fluid_channel_invalid_prev_note_staccato(fluid_channel_t* chan);
 void fluid_channel_cc_legato(fluid_channel_t* chan, int value);

@@ -87,7 +87,7 @@
 
 
 /*****************************************************************************
- Portamemto related functions in Poly or Mono mode
+ Portamento related functions in Poly or Mono mode
 ******************************************************************************/
 
 /**
@@ -127,7 +127,7 @@
  *  'fromkey legato note' is returned as a function of default_fromkey, PTC,
  *   current mono/poly mode,actual 'staccato/legato' playing state and prev_note.
  *   By order of precedence the result is:
- *   2.1) If valid, default_fromkey have precedence over any other value.
+ *   2.1) If valid, default_fromkey have precedence over any others values.
  *   2.2) Otherwise if CC PTC has been received its value is returned.
  *   2.3) Otherwise fromkey legato is determined from the mono/poly mode,
  *        the actual 'staccato/legato' playing state (FLUID_CHANNEL_LEGATO_PLAYING) and prev_note
@@ -164,8 +164,8 @@ static unsigned char fluid_synth_get_fromkey_portamento_legato(fluid_channel_t* 
 	unsigned char ptc =  fluid_channel_get_cc(chan, PORTAMENTO_CTRL);
 	if(fluid_channel_is_valid_note(ptc))
 	{	/* CC PTC has been received */
-		fluid_channel_clear_portamento(chan);	/* clear the CC PTC receive */
-		chan->synth->fromkey_portamento =  ptc;/* return fromkey portamento */
+		fluid_channel_clear_portamento(chan);	/* clears the CC PTC receive */
+		chan->synth->fromkey_portamento =  ptc;/* returns fromkey portamento */
 		/* returns fromkey legato */
 		if(!fluid_channel_is_valid_note(default_fromkey)) default_fromkey= ptc;
 	}
@@ -211,10 +211,10 @@ static unsigned char fluid_synth_get_fromkey_portamento_legato(fluid_channel_t* 
 				default_fromkey = fluid_channel_prev_note(chan); /* note prior last note */
 			}
 			/* In poly mode legato playing, actually we don't want playing legato.
-			So return INVALID_NOTE */
+			So returns INVALID_NOTE */
 		}
 	}
-	return default_fromkey; /* Return legato fromkey */
+	return default_fromkey; /* Returns legato fromkey */
 }
 
 /*****************************************************************************
@@ -241,7 +241,7 @@ static unsigned char fluid_synth_get_fromkey_portamento_legato(fluid_channel_t* 
  *                                      |          |           | 
  *                                      |    _____ |________   |
  *                portamento modes >--- | ->|               |  |
- *                                      |   |  get-fromkey  |  |
+ *                                      |   |  get_fromkey  |  |
  *  Porta.on/off >--------------------- | ->|_______________|  | 
  *  (PTC)                               |          |           |
  *                                      |  fromkey | fromkey   |
@@ -308,10 +308,13 @@ int fluid_synth_noteon_mono_LOCAL(fluid_synth_t* synth, int chan,
 {
 	fluid_channel_t* channel = synth->channel[chan];
 
-	/* Adds note to the monophonic list */
+	/* Adds note the into the monophonic list */
 	fluid_channel_add_monolist(channel,(unsigned char)key,(unsigned char)vel,0);
 
-	if (!(channel->mode &  FLUID_CHANNEL_BREATH_SYNC) || fluid_channel_breath_msb(channel) )
+	/* in Breath Sync mode, the noteon triggering is postponed 
+	   until the musician starts blowing in the breath controller */
+	if (!(channel->mode &  FLUID_CHANNEL_BREATH_SYNC) || 
+		fluid_channel_breath_msb(channel) )
 	{
 		/* legato/staccato playing detection */
 		if(channel->mode  & FLUID_CHANNEL_LEGATO_PLAYING)
@@ -365,23 +368,25 @@ int fluid_synth_noteon_mono_LOCAL(fluid_synth_t* synth, int chan,
 int fluid_synth_noteoff_mono_LOCAL(fluid_synth_t* synth, int chan, int key)
 {
 	int status;
-	unsigned char i,iPrev;
+	int i,iPrev;
 	fluid_channel_t* channel = synth->channel[chan];
-	/* search the note in monophonic list */
+	/* searching the note in the monophonic list */
 	i=fluid_channel_search_monolist(channel, (unsigned char)key);
 
-	if (fluid_channel_is_valid_note(i))
-	{ /* the note is in monophonic list */
-		/* Remove note out of the monophonic list */
+	if (i >= 0)
+	{ /* the note is in the monophonic list */
+		/* Removes the note out of the monophonic list */
 		iPrev = fluid_channel_remove_monolist(channel,i);
 
+		/* in Breath Sync mode, the noteoff triggering is done 
+		   if the musician is blowing in the breath controller */
 		if (!(channel->mode &  FLUID_CHANNEL_BREATH_SYNC) ||
 		    fluid_channel_breath_msb(channel) )
 		{
 			/* legato playing detection */
 			if(channel->mode  & FLUID_CHANNEL_LEGATO_PLAYING) 
 			{ /* the list contains others notes */
-				if(fluid_channel_is_valid_note(iPrev)) 
+				if(iPrev >= 0) 
 				{ /* legato playing detection */
 					/* legato from key to iPrev key */
 					/* the voices from key number are to be used to
@@ -405,7 +410,7 @@ int fluid_synth_noteoff_mono_LOCAL(fluid_synth_t* synth, int chan, int key)
 	else 
 	{ /* the note is not found in the list so the note was 
 		   played On when the channel was in polyphonic playing */
-			/* play the noteoff as for polyphonic  */
+			/* plays the noteoff as for polyphonic  */
 			status = fluid_synth_noteoff_monopoly(synth, chan, key, 0);
 	}
 	return status;
@@ -528,7 +533,7 @@ int fluid_synth_noteoff_monopoly(fluid_synth_t* synth, int chan, int key,
             
             fluid_voice_noteoff(voice);
             /* noteoff on monophonic note */
-            /* Key remembering if the note is sustained  */
+            /* Key memorization if the note is sustained  */
             if(Mono &&
             (fluid_voice_is_sustained(voice) || fluid_voice_is_sostenuto(voice)))
             {
@@ -568,15 +573,15 @@ int fluid_synth_noteoff_monopoly(fluid_synth_t* synth, int chan, int key,
  *
  * We are in legato situation (where a previous note has been depressed).
  * The function must determine the from_key_portamento and from_key_legato parameters
- * used by fluid_preset_noteon() function or the voices triggering functions.
+ * used respectively by fluid_preset_noteon() function and the voices triggering functions.
  *
  * from_key_portamento and from_key_legato are returned by 
  * fluid_synth_get_fromkey_portamento_legato() function.
  * fromkey_portamento is set to valid/invalid  key value depending of the portamento
- * modes (see portamento mode API) , CC portamento On/Off , and CC portamento control
+ * modes (see portamento mode API), CC portamento On/Off, and CC portamento control
  * (PTC).
  * Then, depending of the legato modes (see legato mode API), the function will call
- * the appropriate triggering functions: 
+ * the appropriate triggering functions.
  * @param synth instance.
  * @param chan MIDI channel number (0 to MIDI channel count - 1).
  * @param fromkey MIDI note number (0-127).
@@ -585,11 +590,11 @@ int fluid_synth_noteoff_monopoly(fluid_synth_t* synth, int chan, int key,
  * @return FLUID_OK on success, FLUID_FAILED otherwise.
  *
  * Note: The voices with key 'fromkey' are to be used to play key 'tokey'.
- * The fonction is able to play legato through Preset Zone(s) (PZ) and
+ * The function is able to play legato through Preset Zone(s) (PZ) and
  * Instrument Zone(s) (IZ) as far as possible.
- * When key tokey is outside the current Instrument Zone,
- * Preset Zone, current fromkey' voices are released.If necessary new voices
- * are restarted when tokey enters inside new Instruent(s) Zones,Preset Zone(s).
+ * When key tokey is outside the current Instrument Zone, Preset Zone, 
+ * current 'fromkey' voices are released. If necessary new voices
+ * are restarted when tokey enters inside new Instrument(s) Zones,Preset Zone(s).
  */
 int fluid_synth_noteon_monopoly_legato(fluid_synth_t* synth, int chan,
 							   int fromkey, int tokey, int vel)
@@ -603,14 +608,14 @@ int fluid_synth_noteon_monopoly_legato(fluid_synth_t* synth, int chan,
 
 	if (fluid_channel_is_valid_note(fromkey)) for (i = 0; i < synth->polyphony; i++) 
 	{
-		/* search fromkey voices: only those who don't have 'note off' */
+		/* searching fromkey voices: only those who don't have 'note off' */
 		voice = synth->voice[i];
 		if (fluid_voice_is_on(voice) &&
                     fluid_voice_get_channel(voice) == chan &&
                     fluid_voice_get_key(voice) == fromkey)
 		{
 			fluid_zone_range_t * zone_range = voice->zone_range;
-			/* Ignore voices when there is no instrument zone. Otherwise
+			/* Ignores voice when there is no instrument zone (i.e zone_range). Otherwise
 			   checks if tokey is inside the range of the running voice */
 			if (zone_range && fluid_zone_inside_range(zone_range, tokey, vel))
 			{
@@ -648,7 +653,7 @@ int fluid_synth_noteon_monopoly_legato(fluid_synth_t* synth, int chan,
 			}
 		}
 	}
-	/* May be,tokey will enter in other Insrument Zone(s),Preset Zone(s), in
+	/* May be,tokey will enter in new others Insrument Zone(s),Preset Zone(s), in
 	   this case it needs to be played by voices allocation  */
 	return fluid_preset_noteon(channel->preset,synth,chan,tokey,vel);
 }

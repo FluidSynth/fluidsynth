@@ -1041,7 +1041,7 @@ fluid_handle_sleep(void *data, int ac, char** av, fluid_ostream_t out)
     fluid_ostream_printf(out, "sleep: argument should be a number in ms.\n");
     return -1;
   }
-  g_usleep(atoi(av[0]) * 1000);	/* delay in micro second.*/	
+  fluid_msleep(atoi(av[0]));	/* delay in milliseconds */	
 
   return 0;
 }

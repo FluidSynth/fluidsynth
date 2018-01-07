@@ -353,7 +353,7 @@ fluid_channel_add_monolist(fluid_channel_t* chan, unsigned char key,
 						   unsigned char vel, unsigned char onenote)
 {
 	unsigned char i_last = chan->i_last;
-	/* Update legato/ sataccato playing state */
+	/* Updates legato/ sataccato playing state */
 	if (chan->n_notes) chan->mode |= FLUID_CHANNEL_LEGATO_PLAYING; /* Legato state */
 	else chan->mode &= ~ FLUID_CHANNEL_LEGATO_PLAYING; /* Staccato state */
 	/* keeps trace of the note prior last note */
@@ -364,7 +364,7 @@ fluid_channel_add_monolist(fluid_channel_t* chan, unsigned char key,
 	chan->monolist[i_last].note = key; /* we save note and velocity */
 	chan->monolist[i_last].vel = vel; 	
 	if (onenote) 
-	{ /* clear monolist to one note addition */
+	{ /* clears monolist before one note addition */
 		chan->i_first = i_last;
 		chan->n_notes = 0;
 	}
@@ -383,7 +383,7 @@ fluid_channel_add_monolist(fluid_channel_t* chan, unsigned char key,
  * detector. fluid_channel_search_monolist() is intended to be called by 
  * fluid_synth_noteoff_mono_LOCAL().
  *
- * The search start from the first note in the list indexed by i_first
+ * The search starts from the first note in the list indexed by i_first
  *
  *                The monophonic list
  *  +------------------------------------------------+
@@ -398,28 +398,23 @@ fluid_channel_add_monolist(fluid_channel_t* chan, unsigned char key,
  * 
  * @param chan  fluid_channel_t.
  * @param key MIDI note number (0-127) to search.
- * @return index of the note if find, INVALID_NOTE otherwise.
+ * @return index of the note if find, FLUID_FAILED otherwise.
  * 
  */
-unsigned short
+int
 fluid_channel_search_monolist(fluid_channel_t* chan, unsigned char key)
 {
 	short n = chan->n_notes; /* number of notes in monophonic list */
 	short i= chan->i_first; /* searching starts from i_first included */
-	while(n) 
+	for ( ;n ; n--) 
 	{
-		if(chan->monolist[i].note == key) break; /* found */
+		if(chan->monolist[i].note == key)
+		{	
+			return i; /* found */
+		}
 		i = chan->monolist[i].next; /* next element */
-		n--;
 	}
-	if (n)
-	{
-		return i;/* found i */
-	}
-	else
-	{
-		return INVALID_NOTE; /* not found */
-	}
+	return FLUID_FAILED; /* not found */
 }
 
 /**
@@ -447,10 +442,10 @@ fluid_channel_search_monolist(fluid_channel_t* chan, unsigned char key)
  * @param chan  fluid_channel_t.
  * @param 
  *   i, index of the note to remove. If i is invalid or the list is 
- *      empty, the function do nothing and returns INVALID_NOTE.
+ *      empty, the function do nothing and returns FLUID_FAILED.
  * @return prev index prior the last note if i is the last note in the list,
- *        INVALID_NOTE otherwise. When the returned index is valid it means
- *        a legato dectection.
+ *        FLUID_FAILED otherwise. When the returned index is valid it means
+ *        a legato detection.
  *
  * Note: the following variables in Channel keeps trace of the situation.
  *       - i_last index keeps a trace of the most recent note played even if
@@ -460,38 +455,38 @@ fluid_channel_search_monolist(fluid_channel_t* chan, unsigned char key)
  * 
  * More informations in FluidPolyMono-0003.pdf chapter 4 (Appendices).
  */
-unsigned char
+int
 fluid_channel_remove_monolist(fluid_channel_t* chan, short i)
 {
-	unsigned char i_prev = INVALID_NOTE;
+	int i_prev = FLUID_FAILED;
 	unsigned char i_last = chan->i_last;
-	/* check if index is valid */
-	if(!fluid_channel_is_valid_note(i) || i >= SIZE_MONOLIST || !chan->n_notes)
+	/* checks if index is valid */
+	if( i < 0 || i >= SIZE_MONOLIST || !chan->n_notes)
 	{
-		return INVALID_NOTE;
+		return FLUID_FAILED;
 	}
 	/* The element is about to be removed and inserted between i_last and next */
-	/* Note: when i is egal to i_last or egal to i_first, Removing/Inserting
+	/* Note: when i is egal to i_last or egal to i_first, removing/inserting
 	   isn't necessary */
 	if (i == i_last) 
 	{ /* Removing/Inserting isn't necessary */
-		/* keep trace of the note prior last note */
+		/* keeps trace of the note prior last note */
 		chan->prev_note= chan->monolist[i_last].note;
 		/* moves i_last backward to the previous  */
-		i_prev = chan->monolist[i].prev; /* return the note prior i_last */
+		i_prev = chan->monolist[i].prev; /* returns the note prior i_last */
 		chan->i_last = i_prev; /* i_last index is moved backward */
 	}
 	else 
 	{ /* i is before i_last */
 		if(i == chan->i_first)
 		{
-			/* Removing/Inserting isn't necessary */
+			/* Removing/inserting isn't necessary */
 			/* i_first index is moved forward to the next element*/
 			chan->i_first = chan->monolist[i].next;
 		}
 		else 
-		{ /* i is between i_first ans i_last */
-			/* Unlink element i and inserting between i_last and next */
+		{ /* i is between i_first and i_last */
+			/* Unlinks element i and inserts it between i_last and next */
 			unsigned char next,prev,nextend;
 			/* removing by chaining prev and next */
 			next = chan->monolist[i].next;
@@ -506,8 +501,8 @@ fluid_channel_remove_monolist(fluid_channel_t* chan, short i)
 			chan->monolist[i_last].next = i;
 		}
 	}
-	chan->n_notes--; /* update the number of note in the list */
-	/* Update legato/ staccato playing state */
+	chan->n_notes--; /* updates the number of note in the list */
+	/* Updates legato/ staccato playing state */
 	if (chan->n_notes)
 	{
 		chan->mode |= FLUID_CHANNEL_LEGATO_PLAYING; /* Legato state */
@@ -536,7 +531,7 @@ fluid_channel_remove_monolist(fluid_channel_t* chan, short i)
  * @param chan  fluid_channel_t.
  * Note: i_last index keeps a trace of the most recent note played even if
  *       the list is empty.
- *       prev_note keeps a trace of the note .
+ *       prev_note keeps a trace of the note i_last .
  *       FLUID_CHANNEL_LEGATO_PLAYING bit keeps a trace of legato/staccato playing.
  */
 void fluid_channel_clear_monolist(fluid_channel_t* chan)
@@ -544,7 +539,7 @@ void fluid_channel_clear_monolist(fluid_channel_t* chan)
 	/* keeps trace off the most recent note played */
 	chan->prev_note= chan->monolist[chan->i_last].note;
 
-	/* flush the monolist */
+	/* flushes the monolist */
 	chan->i_first = chan->monolist[chan->i_last].next;
 	chan->n_notes = 0;
 	/* Update legato/ sataccato playing state */
@@ -554,7 +549,7 @@ void fluid_channel_clear_monolist(fluid_channel_t* chan)
 /**
  * The monophonic list is flushed keeping last note only.
  * The function is entended to be called on legato Off when the
- * monolist have notes.
+ * monolist has notes.
  *
  *            The monophonic list
  *  +------------------------------------------------+
@@ -569,10 +564,10 @@ void fluid_channel_clear_monolist(fluid_channel_t* chan)
  *
  * @param chan  fluid_channel_t.
  * Note: i_last index keeps a trace of the most recent note played.
- *       prev_note keeps a trace of the note .
+ *       prev_note keeps a trace of the note i_last.
  *       FLUID_CHANNEL_LEGATO_PLAYING bit keeps trace of legato/staccato playing.
  */
-void fluid_channel_keep_lastnote_monolist(fluid_channel_t* chan)
+static void fluid_channel_keep_lastnote_monolist(fluid_channel_t* chan)
 {
 	chan->i_first = chan->i_last;
 	chan->n_notes = 1;
@@ -597,12 +592,12 @@ void fluid_channel_set_onenote_monolist(fluid_channel_t* chan, unsigned char key
 /**
  * The function changes the state (Valid/Invalid) of the previous note played in
  * a staccato manner (fluid_channel_prev_note()).
- * When potamento mode: 'each note' or 'staccato only' is selected, on next 
+ * When potamento mode 'each note' or 'staccato only' is selected, on next 
  * noteOn a portamento will be started from the most recent note played 
- * staccato fluid_channel_last_note.
+ * staccato.
  * It will be possible that it isn't appropriate. To give the musician the 
- * possibility to choose this note , prev_note will be marked invalid on noteOff
- * if portamento pedal is Off.
+ * possibility to choose a portamento from this note , prev_note will be forced
+ * to invalid state on noteOff if portamento pedal is Off.
  *
  * The function is intended to be called when the following event occurs:
  * - On noteOff (in poly or mono mode), to mark prev_note invalid.
@@ -611,16 +606,18 @@ void fluid_channel_set_onenote_monolist(fluid_channel_t* chan, unsigned char key
  */
 void fluid_channel_invalid_prev_note_staccato(fluid_channel_t* chan)
 {
-	if(!(chan->mode  & FLUID_CHANNEL_LEGATO_PLAYING)) /* the monophonic list is empty */ 
+	/* checks if the playing is staccato */
+	if(!(chan->mode  & FLUID_CHANNEL_LEGATO_PLAYING)) 
+	/* checks if portamento pedal is off */
 	if(! fluid_channel_portamento(chan))
-	{	/* mark prev_note invalid */
+	{	/* forces prev_note invalid */
 		fluid_channel_clear_prev_note(chan);
 	}
 	/* else prev_note still remains valid for next fromkey portamento */
 }
 
 /**
- * The function handles Poly/mono commutation on Legato pedal On/Off.
+ * The function handles poly/mono commutation on legato pedal On/Off.
  * @param chan  fluid_channel_t.
  * @param value, value of the CC legato.
  */
@@ -646,7 +643,7 @@ void fluid_channel_cc_legato(fluid_channel_t* chan, int value)
 /**
  * The function handles CC Breath On/Off detection. When a channel is in 
  * Breath Sync mode and in monophonic playing, the breath controller allows
- * to tigger noteon/noteoff note when the musician starts to breath (noteon) and
+ * to trigger noteon/noteoff note when the musician starts to breath (noteon) and
  * stops to breath (noteoff).
  * @param chan  fluid_channel_t.
  * @param value, value of the CC Breath..
