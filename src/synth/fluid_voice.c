@@ -1243,22 +1243,22 @@ void fluid_voice_update_multi_retrigger_attack(fluid_voice_t* voice,
 {
 	voice->key = tokey;  /* new note */
 	voice->vel = vel; /* new velocity */
-	/* Update generators dependent of velocity */
-	/* Modulate GEN_ATTENUATION (and others ) before calling
+	/* Updates generators dependent of velocity */
+	/* Modulates GEN_ATTENUATION (and others ) before calling
 	   fluid_rvoice_multi_retrigger_attack().*/
 	fluid_voice_modulate(voice, FALSE, FLUID_MOD_VELOCITY);
 		
-	/* Update generator dependent of voice->key */
+	/* Updates generator dependent of voice->key */
 	fluid_voice_update_param(voice, GEN_KEYTOMODENVHOLD);
 	fluid_voice_update_param(voice, GEN_KEYTOMODENVDECAY);
 	fluid_voice_update_param(voice, GEN_KEYTOVOLENVHOLD);
 	fluid_voice_update_param(voice, GEN_KEYTOVOLENVDECAY);
 
-	/* Update pitch generator  */
+	/* Updates pitch generator  */
 	fluid_voice_calculate_gen_pitch(voice);
 	fluid_voice_update_param(voice, GEN_PITCH);
 
-	/* update adsr generator */
+	/* updates adsr generator */
 	UPDATE_RVOICE0(fluid_rvoice_multi_retrigger_attack); 
 }
 /** end of legato update functions */

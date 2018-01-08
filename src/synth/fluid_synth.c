@@ -994,7 +994,7 @@ fluid_synth_noteon_LOCAL(fluid_synth_t* synth, int chan, int key, int vel)
   if (channel->preset == NULL) 
   {
     if (synth->verbose) 
-	{
+    {
       FLUID_LOG(FLUID_INFO, "noteon\t%d\t%d\t%d\t%05d\t%.3f\t%.3f\t%.3f\t%d\t%s",
 	       chan, key, vel, 0,
 	       fluid_synth_get_ticks(synth) / 44100.0f,
@@ -1011,7 +1011,7 @@ fluid_synth_noteon_LOCAL(fluid_synth_t* synth, int chan, int key, int vel)
   else 
   { /* channel is poly and legato CC is Off) */
 
-	  /* plays the noteOn in polyphonic */
+      /* plays the noteOn in polyphonic */
       /* Sets the note at first position in monophonic list */
       /* In the case where the musician intends to inter the channel in monophonic
 	 (by depressing the CC legato on), the next noteOn mono could be played legato
@@ -1020,16 +1020,16 @@ fluid_synth_noteon_LOCAL(fluid_synth_t* synth, int chan, int key, int vel)
       fluid_channel_set_onenote_monolist(channel, (unsigned char) key,
 								            (unsigned char) vel);
 
-	  /* If there is another voice process on the same channel and key,
+      /* If there is another voice process on the same channel and key,
          advance it to the release phase. */
       fluid_synth_release_voice_on_same_note_LOCAL(synth, chan, key);
       
-       /* a noteon poly is passed to fluid_synth_noteon_monopoly_legato().
+      /* a noteon poly is passed to fluid_synth_noteon_monopoly_legato().
         This allows an opportunity to get this note played legato with a previous
         note if a CC PTC have been received before this noteon. This behavior is
         a MIDI specification (see FluidPolymono-0003.pdf chapter 4.3-a ,3.4.11
         for details).
-       */
+      */
       return fluid_synth_noteon_monopoly_legato(synth, chan, INVALID_NOTE, key, vel);
   }
 }
@@ -1063,17 +1063,17 @@ fluid_synth_noteoff_LOCAL(fluid_synth_t* synth, int chan, int key)
   int status;
   fluid_channel_t* channel = synth->channel[chan];
   if(fluid_channel_is_playing_mono(channel)) /* channel is mono or legato CC is On) */
-  {		/* play the noteOff in monophonic */
-		status = fluid_synth_noteoff_mono_LOCAL(synth, chan, key);
+  {	/* play the noteOff in monophonic */
+	 status = fluid_synth_noteoff_mono_LOCAL(synth, chan, key);
   }
   else
-  {	  /* channel is poly and legato CC is Off) */
-	  /* removes the note from the monophonic list */
-      if(key == fluid_channel_last_note(channel))
-      {
-		  fluid_channel_clear_monolist(channel);
-      }
-	  status = fluid_synth_noteoff_monopoly(synth, chan, key, 0);
+  {	 /* channel is poly and legato CC is Off) */
+     /* removes the note from the monophonic list */
+     if(key == fluid_channel_last_note(channel))
+     {
+         fluid_channel_clear_monolist(channel);
+     }
+     status = fluid_synth_noteoff_monopoly(synth, chan, key, 0);
   }
   /* Changes the state (Valid/Invalid) of the most recent note played in a 
      staccato manner */
@@ -1093,20 +1093,18 @@ fluid_synth_damp_voices_by_sustain_LOCAL(fluid_synth_t* synth, int chan)
   for (i = 0; i < synth->polyphony; i++)
   {
     voice = synth->voice[i];
-
     if ((fluid_voice_get_channel(voice) == chan) && fluid_voice_is_sustained(voice))                                                                                                                                                                                 
     {
-		if(voice->key == channel->key_mono_sustained)
-		{
-			/* key_mono_sustained is a possible mono note sustainted
-			(by sustain or sostenuto pedal). It must be marked released
-			(-1) here because it is released only by sustain pedal */
-			channel->key_mono_sustained = -1;
-		}
-     	fluid_voice_release(voice);                                                                                                                                                                                         
+       if(voice->key == channel->key_mono_sustained)
+       {
+           /* key_mono_sustained is a possible mono note sustainted
+           (by sustain or sostenuto pedal). It must be marked released
+           (-1) here because it is released only by sustain pedal */
+           channel->key_mono_sustained = -1;
+       }
+       fluid_voice_release(voice);                                                                                                                                                                                         
     }
   }
-
   return FLUID_OK;
 }
 
@@ -1125,17 +1123,16 @@ fluid_synth_damp_voices_by_sostenuto_LOCAL(fluid_synth_t* synth, int chan)
 
     if ((fluid_voice_get_channel(voice) == chan) && fluid_voice_is_sostenuto(voice))                                                                                                                                                                         
     {
-		if(voice->key == channel->key_mono_sustained)
-		{
-			/* key_mono_sustained is a possible mono note sustainted
-			(by sustain or sostenuto pedal). It must be marked released
-			(-1) here because it is released only by sostenuto pedal */
-			channel->key_mono_sustained = -1;
-		}
-    	fluid_voice_release(voice);                                                                                                                                                                                         
+        if(voice->key == channel->key_mono_sustained)
+        {
+            /* key_mono_sustained is a possible mono note sustainted
+            (by sustain or sostenuto pedal). It must be marked released
+            (-1) here because it is released only by sostenuto pedal */
+            channel->key_mono_sustained = -1;
+        }
+        fluid_voice_release(voice);                                                                                                                                                                                         
     }
   }
-
   return FLUID_OK;
 }
 

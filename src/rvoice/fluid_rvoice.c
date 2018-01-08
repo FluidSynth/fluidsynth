@@ -543,14 +543,14 @@ fluid_rvoice_noteoff(fluid_rvoice_t* voice, unsigned int min_ticks)
 /**
  * skips to Attack section
  * 
- * Update vol and attack data 
+ * Updates vol and attack data 
  * Correction on volume val to achieve equivalent amplitude at noteOn legato
  * 
  * @param voice the synthesis voice to be updated
 */
 static void fluid_rvoice_local_retrigger_attack (fluid_rvoice_t* voice)
 {
-	/* skip to Attack section */
+	/* skips to Attack section */
 	/* Once in Attack section, current count must be reset, to be sure
 	that the section will be not be prematurely finished. */
 	fluid_adsr_env_set_section(&voice->envlfo.volenv, FLUID_VOICE_ENVATTACK);
@@ -589,24 +589,23 @@ fluid_rvoice_multi_retrigger_attack (fluid_rvoice_t* voice)
 	--------------------------------------------------------------------------*/
 	if (section >= FLUID_VOICE_ENVHOLD)
 	{
-		/* DECAY, SUSTAIN,RELEASE section use logarithmic scaling. Calculate new
+		/* DECAY, SUSTAIN,RELEASE section use logarithmic scaling. Calculates new
         volenv_val to achieve equivalent amplitude during the attack phase
 		for seamless volume transition. */
 		fluid_real_t amp_cb, env_value;
 		amp_cb = 960.0f * (1.0f - fluid_adsr_env_get_val(&voice->envlfo.volenv));
-//		env_value = pow (10.0, amp_cb / -200);
 		env_value = fluid_cb2amp(amp_cb); /* a bit of optimization */
 		fluid_clip (env_value, 0.0, 1.0);
 		fluid_adsr_env_set_val(&voice->envlfo.volenv, env_value);
-		/* next, skip to Attack section */
+		/* next, skips to Attack section */
 	}
-	/* skip to Attack section from any section */
+	/* skips to Attack section from any section */
 	/* Update vol and  attack data */
 	fluid_rvoice_local_retrigger_attack(voice);
 	/*-------------------------------------------------------------------------
 	 Section skip for modulation envelope 
 	--------------------------------------------------------------------------*/
-	/* Skip from any section to ATTACK section */
+	/* Skips from any section to ATTACK section */
 	fluid_adsr_env_set_section(&voice->envlfo.modenv, FLUID_VOICE_ENVATTACK);
 	/* Actually (v 1.1.6) all sections are linear, so there is no need to
 	 correct val value. However soundfont 2.01/2.4 spec. says that Attack should
@@ -634,8 +633,8 @@ void fluid_rvoice_set_portamento(fluid_rvoice_t * voice, unsigned int countinc,
 		voice->dsp.pitchoffset += pitchoffset;
 		voice->dsp.pitchinc = - voice->dsp.pitchoffset/ countinc; 
 	}
-        /* Then during the voice processing (in fluid_rvoice_write()),
-	  dsp.pitchoffset will be incremented by dsp pitchinc. */
+	/* Then during the voice processing (in fluid_rvoice_write()),
+	dsp.pitchoffset will be incremented by dsp pitchinc. */
 }
 
 void 
