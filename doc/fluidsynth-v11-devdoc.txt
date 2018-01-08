@@ -103,7 +103,7 @@ Changes in FluidSynth 2.0.0 concerning developers:
 - use unique device names for the "audio.portaudio.device" setting
 - rename fluid_mod_new() and fluid_mod_delete() to match naming conventions: new_fluid_mod() and delete_fluid_mod()
 <br /><br />
-- add <a href="fluidsettings.xml#synth.volenv">"synth.volenv"</a> a setting for volume envelope processing
+- add <a href="fluidsettings.xml#synth.attenuation-mode">"synth.attenuation-mode"</a> a setting for changing the volume response to attenuation
 - add <a href="fluidsettings.xml#midi.autoconnect">"midi.autoconnect"</a> a setting for automatically connecting fluidsynth to available MIDI input ports
 - add <a href="fluidsettings.xml#synth.overflow.important">"synth.overflow.important"</a> and <a href="fluidsettings.xml#synth.overflow.important-channels">"synth.overflow.important-channels"</a> settings to take midi channels during overflow calculation into account that are considered to be "important"
 - add support for polyphonic key pressure events, see fluid_event_key_pressure() and fluid_synth_key_pressure()

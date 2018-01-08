@@ -36,6 +36,11 @@
 /* min vol envelope release (to stop clicks) in SoundFont timecents */
 #define FLUID_MIN_VOLENVRELEASE -7200.0f /* ~16ms */
 
+/* This is the scaling factor that EMU8k/10k hardware applies to the
+ * initial value of the attenuation generator (but not to attenuation
+ * calculated from modulator changes) */
+#define EMU_ATTENUATION_SCALE (0.4)
+
 static int fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t* voice);
 static int calculate_hold_decay_buffers(fluid_voice_t* voice, int gen_base,
                                         int gen_key2base, int is_decay);
@@ -178,7 +183,7 @@ static void fluid_voice_initialize_rvoice(fluid_voice_t* voice)
  * new_fluid_voice
  */
 fluid_voice_t*
-new_fluid_voice(fluid_real_t output_rate)
+new_fluid_voice(fluid_real_t output_rate, char attenuation_mode)
 {
   fluid_voice_t* voice;
   voice = FLUID_NEW(fluid_voice_t);
@@ -201,6 +206,7 @@ new_fluid_voice(fluid_real_t output_rate)
   voice->vel = 0;
   voice->channel = NULL;
   voice->sample = NULL;
+  voice->attenuation_mode = attenuation_mode;
 
   /* Initialize both the rvoice and overflow_rvoice */
   voice->can_access_rvoice = 1; 
@@ -370,14 +376,32 @@ fluid_voice_gen_get(fluid_voice_t* voice, int gen)
 
 fluid_real_t fluid_voice_gen_value(const fluid_voice_t* voice, int num)
 {
+    fluid_real_t val = voice->gen[num].val;
+    fluid_real_t mod = voice->gen[num].mod;
+    fluid_real_t nrpn = voice->gen[num].nrpn;
+
 	/* This is an extension to the SoundFont standard. More
 	 * documentation is available at the fluid_synth_set_gen2()
 	 * function. */
 	if (voice->gen[num].flags == GEN_ABS_NRPN) {
-		return (fluid_real_t) voice->gen[num].nrpn;
-	} else {
-		return (fluid_real_t) (voice->gen[num].val + voice->gen[num].mod + voice->gen[num].nrpn);
+        val = mod = 0;
 	}
+
+    /* Attenuation is calculated based on the synth.attenuation-mode setting:
+     *  emu mode (default): damping factor is added only to the initial generator value
+     *  timidity mode: damping factor is added to all attenuation sources
+     *  standard compliant mode: no damping factor is used
+     */
+    if (num == GEN_ATTENUATION) {
+        if (voice->attenuation_mode == FLUID_ATTENUATION_MODE_EMU) {
+            return (val * EMU_ATTENUATION_SCALE) + mod + nrpn;
+        }
+        else if (voice->attenuation_mode == FLUID_ATTENUATION_MODE_TIMIDITY) {
+            return (val + mod + nrpn) * EMU_ATTENUATION_SCALE;
+        }
+    }
+
+    return val + mod + nrpn;
 }
 
 
@@ -681,8 +705,6 @@ calculate_hold_decay_buffers(fluid_voice_t* voice, int gen_base,
 void
 fluid_voice_update_param(fluid_voice_t* voice, int gen)
 {
-  // Alternate attenuation scale used by EMU10K1 cards when setting the attenuation at the preset or instrument level within the SoundFont bank.
-  static const float ALT_ATTENUATION_SCALE = 0.4f;
   unsigned int count, z;
   fluid_real_t q_dB;
   fluid_real_t x = fluid_voice_gen_value(voice, gen);
@@ -702,8 +724,7 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
     break;
 
   case GEN_ATTENUATION:
-    voice->attenuation = ((fluid_real_t)(voice)->gen[GEN_ATTENUATION].val*ALT_ATTENUATION_SCALE) +
-    (fluid_real_t)(voice)->gen[GEN_ATTENUATION].mod + (fluid_real_t)(voice)->gen[GEN_ATTENUATION].nrpn;
+    voice->attenuation = x;
 
     /* Range: SF2.01 section 8.1.3 # 48
      * Motivation for range checking:

@@ -105,6 +105,8 @@ struct _fluid_voice_t
 	char can_access_overflow_rvoice; /* False if overflow_rvoice is being rendered in separate thread */
 	char has_noteoff; /* Flag set when noteoff has been sent */
 
+    char attenuation_mode;             /**< The mode used to calculate the attenuation */
+
 #ifdef WITH_PROFILING
 	/* for debugging */
 	double ref;
@@ -112,7 +114,7 @@ struct _fluid_voice_t
 };
 
 
-fluid_voice_t* new_fluid_voice(fluid_real_t output_rate);
+fluid_voice_t* new_fluid_voice(fluid_real_t output_rate, char attenuation_mode);
 void delete_fluid_voice(fluid_voice_t* voice);
 
 void fluid_voice_start(fluid_voice_t* voice);

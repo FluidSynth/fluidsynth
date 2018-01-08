@@ -197,9 +197,10 @@ void fluid_synth_settings(fluid_settings_t* settings)
   fluid_settings_add_option(settings, "synth.midi-bank-select", "xg");
   fluid_settings_add_option(settings, "synth.midi-bank-select", "mma");
   
-  fluid_settings_register_str(settings, "synth.volenv", "emu", 0);
-  fluid_settings_add_option(settings, "synth.volenv", "emu");
-  fluid_settings_add_option(settings, "synth.volenv", "compliant");
+  fluid_settings_register_str(settings, "synth.attenuation-mode", "emu", 0);
+  fluid_settings_add_option(settings, "synth.attenuation-mode", "emu");
+  fluid_settings_add_option(settings, "synth.attenuation-mode", "timidity");
+  fluid_settings_add_option(settings, "synth.attenuation-mode", "compliant");
 }
 
 /**
@@ -528,25 +529,6 @@ new_fluid_synth(fluid_settings_t *settings)
   /* initialize all the conversion tables and other stuff */
   if (fluid_atomic_int_compare_and_exchange(&fluid_synth_initialized, 0, 1))
   {
-    char buf[64];
-    if (fluid_settings_str_equal (settings, "synth.volenv", "compliant"))
-    {
-            fluid_conversion_set_atten_power(FLUID_ATTEN_POWER_DEFAULT_COMPLIANT);
-    }
-    else if (fluid_settings_str_equal (settings, "synth.volenv", "emu"))
-    {
-            fluid_conversion_set_atten_power(FLUID_ATTEN_POWER_DEFAULT_EMU);
-    }
-    else
-    {
-        if (fluid_settings_copystr(settings, "synth.volenv", buf, sizeof(buf)) == FLUID_OK)
-        {
-            double atten = atof(buf);
-            if(atten != 0.0)
-                fluid_conversion_set_atten_power(atten);
-        }
-    }
-    
     fluid_synth_init();
   }
 
@@ -735,6 +717,15 @@ new_fluid_synth(fluid_settings_t *settings)
     }
   }
 
+  if (fluid_settings_str_equal (settings, "synth.attenuation-mode", "emu"))
+    synth->attenuation_mode = FLUID_ATTENUATION_MODE_EMU;
+  else if (fluid_settings_str_equal (settings, "synth.attenuation-mode", "timidity"))
+    synth->attenuation_mode = FLUID_ATTENUATION_MODE_TIMIDITY;
+  else if (fluid_settings_str_equal (settings, "synth.attenuation-mode", "compliant"))
+    synth->attenuation_mode = FLUID_ATTENUATION_MODE_COMPLIANT;
+  else
+    synth->attenuation_mode = FLUID_ATTENUATION_MODE_EMU;
+
   /* allocate all synthesis processes */
   synth->nvoice = synth->polyphony;
   synth->voice = FLUID_ARRAY(fluid_voice_t*, synth->nvoice);
@@ -742,7 +733,7 @@ new_fluid_synth(fluid_settings_t *settings)
     goto error_recovery;
   }
   for (i = 0; i < synth->nvoice; i++) {
-    synth->voice[i] = new_fluid_voice(synth->sample_rate);
+    synth->voice[i] = new_fluid_voice(synth->sample_rate, synth->attenuation_mode);
     if (synth->voice[i] == NULL) {
       goto error_recovery;
     }
@@ -2511,7 +2502,7 @@ fluid_synth_update_polyphony_LOCAL(fluid_synth_t* synth, int new_polyphony)
       return FLUID_FAILED;
     synth->voice = new_voices;
     for (i = synth->nvoice; i < new_polyphony; i++) {
-      synth->voice[i] = new_fluid_voice(synth->sample_rate);
+      synth->voice[i] = new_fluid_voice(synth->sample_rate, synth->attenuation_mode);
       if (synth->voice[i] == NULL) 
 	return FLUID_FAILED;
     }

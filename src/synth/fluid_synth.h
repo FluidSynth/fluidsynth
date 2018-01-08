@@ -71,6 +71,13 @@ enum fluid_synth_status
   FLUID_SYNTH_STOPPED
 };
 
+enum fluid_attenuation_mode
+{
+  FLUID_ATTENUATION_MODE_EMU,
+  FLUID_ATTENUATION_MODE_TIMIDITY,
+  FLUID_ATTENUATION_MODE_COMPLIANT
+};
+
 #define SYNTH_REVERB_CHANNEL 0
 #define SYNTH_CHORUS_CHANNEL 1
 
@@ -148,6 +155,8 @@ struct _fluid_synth_t
   double chorus_speed;                /**< Shadow of chorus speed */
   double chorus_depth;                /**< Shadow of chorus depth */
   int chorus_type;                   /**< Shadow of chorus type */
+
+  char attenuation_mode;             /**< The mode used to calculate the attenuation */
 
   int cur;                           /**< the current sample in the audio buffers to be output */
   int curmax;                        /**< current amount of samples present in the audio buffers */

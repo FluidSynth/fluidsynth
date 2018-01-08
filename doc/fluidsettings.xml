@@ -259,12 +259,12 @@ https://stackoverflow.com/a/6251757
             </desc>
         </setting>
         <setting>
-            <name>volenv</name>
+            <name>attenuation-mode</name>
             <type>str</type>
             <def>emu</def>
-            <vals>compliant, emu</vals>
+            <vals>compliant, emu, timidity</vals>
             <desc>
-                Specifies the kind of volume envelope processing. This esp. influences the way fluidsynth responses to noteon velocity. The default setting 'emu' causes the envelope to be highly dynamic (i.e. compatible with the EMU10K1). Alternatively this may be set to 'compliant' for a less dynamic envelope, as it was done before fluidsynth 1.0.9. Note that this setting can only be changed until the first synth has been created. Changing it afterwards will have no effect for the rest of fluidsynths lifetime.
+                Specifies how fluidsynth interprets the attenuation of voices based on the initially set value and in response to modulators changing the initial attenuation. The default setting 'emu' causes fluidsynth to be compatible with the EMU10K1, multiplying the initially set attenuation of instruments by a factor of 0.4 but leaving attenuation changes by modulators unchanged.  The setting 'timidity' applies the factor of 0.4 to all attenuation changes (effectively giving fluidsynth less dynamic range).  The setting 'compliant' does not apply a factor at all, making fluidsynth conform to the Sound Font specification.  Please note that most existing Sound Fonts assume the 'emu' mode.
             </desc>
         </setting>
     </synth>
