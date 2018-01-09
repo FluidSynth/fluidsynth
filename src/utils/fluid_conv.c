@@ -134,7 +134,7 @@ fluid_ct2hz(fluid_real_t cents)
 /*
  * fluid_cb2amp
  *
- * in: a value between 0 and 960, 0 is no attenuation
+ * in: a value between 0 and 1440, 0 is no attenuation
  * out: a value between 1 and 0
  */
 fluid_real_t
