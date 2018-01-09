@@ -106,6 +106,7 @@ typedef void (*fluid_sfloader_free_t)(fluid_sfloader_t* loader);
 FLUIDSYNTH_API fluid_sfloader_t* new_fluid_sfloader(fluid_sfloader_load_t load, fluid_sfloader_free_t free);
 FLUIDSYNTH_API void delete_fluid_sfloader(fluid_sfloader_t* loader);
 
+FLUIDSYNTH_API fluid_sfloader_t* new_fluid_defsfloader(fluid_settings_t* settings);
 
 /**
  * Opens the file or memory indicated by \c filename in binary read mode.
@@ -113,14 +114,14 @@ FLUIDSYNTH_API void delete_fluid_sfloader(fluid_sfloader_t* loader);
  *
  * @return returns a file handle on success, NULL otherwise
  */
-typedef void * (* fluid_sfloader_callback_open )(const char * filename);
+typedef void * (* fluid_sfloader_callback_open_t )(const char * filename);
 
 /**
  * Reads \c count bytes to the specified buffer \c buf.
  * 
  * @return returns #FLUID_OK if exactly \c count bytes were successfully read, else #FLUID_FAILED
  */
-typedef int (* fluid_sfloader_callback_read )(void *buf, int count, void * handle);
+typedef int (* fluid_sfloader_callback_read_t )(void *buf, int count, void * handle);
 
 /**
  * Same purpose and behaviour as fseek.
@@ -129,164 +130,151 @@ typedef int (* fluid_sfloader_callback_read )(void *buf, int count, void * handl
  * 
  * @return returns #FLUID_OK if the seek was successfully performed while not seeking beyond a buffer or file, #FLUID_FAILED otherwise
  */
-typedef int (* fluid_sfloader_callback_seek )(void * handle, long offset, int origin);
+typedef int (* fluid_sfloader_callback_seek_t )(void * handle, long offset, int origin);
 
 /** 
  * Closes the handle returned by #fluid_sfloader_callback_open and frees used ressources.
  * 
  * @return returns #FLUID_OK on success, #FLUID_FAILED on error
  */
-typedef int (* fluid_sfloader_callback_close )(void * handle);
+typedef int (* fluid_sfloader_callback_close_t )(void * handle);
 
 /** @return returns current file offset or #FLUID_FAILED on error */
-typedef long (* fluid_sfloader_callback_tell )(void * handle);
+typedef long (* fluid_sfloader_callback_tell_t )(void * handle);
 
 
 FLUIDSYNTH_API void fluid_sfloader_set_callbacks(fluid_sfloader_t* loader,
-                                  fluid_sfloader_callback_open open,
-                                  fluid_sfloader_callback_read read,
-                                  fluid_sfloader_callback_seek seek,
-                                  fluid_sfloader_callback_tell tell,
-                                  fluid_sfloader_callback_close close);
+                                  fluid_sfloader_callback_open_t open,
+                                  fluid_sfloader_callback_read_t read,
+                                  fluid_sfloader_callback_seek_t seek,
+                                  fluid_sfloader_callback_tell_t tell,
+                                  fluid_sfloader_callback_close_t close);
 
 FLUIDSYNTH_API void fluid_sfloader_set_data(fluid_sfloader_t* loader, void* data);
+FLUIDSYNTH_API void* fluid_sfloader_get_data(fluid_sfloader_t* loader);
 
-
-FLUIDSYNTH_API fluid_sfloader_t* new_fluid_defsfloader(fluid_settings_t* settings);
-
-/**
- * Virtual SoundFont instance structure.
- */
-struct _fluid_sfont_t {
-  void* data;           /**< User defined data */
-  unsigned int id;      /**< SoundFont ID */
-
-  /**
-   * Method to free a virtual SoundFont bank.
-   * @param sfont Virtual SoundFont to free.
-   * @return Should return 0 when it was able to free all resources or non-zero
-   *   if some of the samples could not be freed because they are still in use,
-   *   in which case the free will be tried again later, until success.
-   */
-  int (*free)(fluid_sfont_t* sfont);
-
-  /**
-   * Method to return the name of a virtual SoundFont.
-   * @param sfont Virtual SoundFont
-   * @return The name of the virtual SoundFont.
-   */
-  const char* (*get_name)(fluid_sfont_t* sfont);
-
-  /**
-   * Get a virtual SoundFont preset by bank and program numbers.
-   * @param sfont Virtual SoundFont
-   * @param bank MIDI bank number (0-16384)
-   * @param prenum MIDI preset number (0-127)
-   * @return Should return an allocated virtual preset or NULL if it could not
-   *   be found.
-   */
-  fluid_preset_t* (*get_preset)(fluid_sfont_t* sfont, unsigned int bank, unsigned int prenum);
-
-  /**
-   * Start virtual SoundFont preset iteration method.
-   * @param sfont Virtual SoundFont
-   *
-   * Starts/re-starts virtual preset iteration in a SoundFont.
-   */
-  void (*iteration_start)(fluid_sfont_t* sfont);
-
-  /**
-   * Virtual SoundFont preset iteration function.
-   * @param sfont Virtual SoundFont
-   * @param preset Caller supplied preset to fill in with current preset information
-   * @return 0 when no more presets are available, 1 otherwise
-   *
-   * Should store preset information to the caller supplied \a preset structure
-   * and advance the internal iteration state to the next preset for subsequent
-   * calls.
-   */
-  int (*iteration_next)(fluid_sfont_t* sfont, fluid_preset_t* preset);
-};
 
 
 /**
- * Virtual SoundFont preset.
+ * Method to return the name of a virtual SoundFont.
+ * @param sfont Virtual SoundFont
+ * @return The name of the virtual SoundFont.
  */
-struct _fluid_preset_t {
-  void* data;                                   /**< User supplied data */
-  fluid_sfont_t* sfont;                         /**< Parent virtual SoundFont */
+typedef const char* (*fluid_sfont_get_name_t)(fluid_sfont_t* sfont);
+  
+/**
+ * Get a virtual SoundFont preset by bank and program numbers.
+ * @param sfont Virtual SoundFont
+ * @param bank MIDI bank number (0-16384)
+ * @param prenum MIDI preset number (0-127)
+ * @return Should return an allocated virtual preset or NULL if it could not
+ *   be found.
+ */
+typedef fluid_preset_t* (*fluid_sfont_get_preset_t)(fluid_sfont_t* sfont, unsigned int bank, unsigned int prenum);
 
-  /**
-   * Method to free a virtual SoundFont preset.
-   * @param preset Virtual SoundFont preset
-   * @return Should return 0
-   */
-  int (*free)(fluid_preset_t* preset);
+/**
+ * Start virtual SoundFont preset iteration method.
+ * @param sfont Virtual SoundFont
+ *
+ * Starts/re-starts virtual preset iteration in a SoundFont.
+ */
+typedef void (*fluid_sfont_iteration_start_t)(fluid_sfont_t* sfont);
 
-  /**
-   * Method to get a virtual SoundFont preset name.
-   * @param preset Virtual SoundFont preset
-   * @return Should return the name of the preset.  The returned string must be
-   *   valid for the duration of the virtual preset (or the duration of the
-   *   SoundFont, in the case of preset iteration).
-   */
-  const char* (*get_name)(fluid_preset_t* preset);
+/**
+ * Virtual SoundFont preset iteration function.
+ * @param sfont Virtual SoundFont
+ * @param preset Caller supplied preset to fill in with current preset information
+ * @return 0 when no more presets are available, 1 otherwise
+ *
+ * Should store preset information to the caller supplied \a preset structure
+ * and advance the internal iteration state to the next preset for subsequent
+ * calls.
+ */
+typedef int (*fluid_sfont_iteration_next_t)(fluid_sfont_t* sfont, fluid_preset_t* preset);
 
-  /**
-   * Method to get a virtual SoundFont preset MIDI bank number.
-   * @param preset Virtual SoundFont preset
-   * @param return The bank number of the preset
-   */
-  int (*get_banknum)(fluid_preset_t* preset);
+/**
+ * Method to free a virtual SoundFont bank.
+ * @param sfont Virtual SoundFont to free.
+ * @return Should return 0 when it was able to free all resources or non-zero
+ *   if some of the samples could not be freed because they are still in use,
+ *   in which case the free will be tried again later, until success.
+ */
+typedef int (*fluid_sfont_free_t)(fluid_sfont_t* sfont);
 
-  /**
-   * Method to get a virtual SoundFont preset MIDI program number.
-   * @param preset Virtual SoundFont preset
-   * @param return The program number of the preset
-   */
-  int (*get_num)(fluid_preset_t* preset);
 
-  /**
-   * Method to handle a noteon event (synthesize the instrument).
-   * @param preset Virtual SoundFont preset
-   * @param synth Synthesizer instance
-   * @param chan MIDI channel number of the note on event
-   * @param key MIDI note number (0-127)
-   * @param vel MIDI velocity (0-127)
-   * @return #FLUID_OK on success (0) or #FLUID_FAILED (-1) otherwise
-   *
-   * This method may be called from within synthesis context and therefore
-   * should be as efficient as possible and not perform any operations considered
-   * bad for realtime audio output (memory allocations and other OS calls).
-   *
-   * Call fluid_synth_alloc_voice() for every sample that has
-   * to be played. fluid_synth_alloc_voice() expects a pointer to a
-   * #fluid_sample_t structure and returns a pointer to the opaque
-   * #fluid_voice_t structure. To set or increment the values of a
-   * generator, use fluid_voice_gen_set() or fluid_voice_gen_incr(). When you are
-   * finished initializing the voice call fluid_voice_start() to
-   * start playing the synthesis voice.  Starting with FluidSynth 1.1.0 all voices
-   * created will be started at the same time.
-   */
-  int (*noteon)(fluid_preset_t* preset, fluid_synth_t* synth, int chan, int key, int vel);
+FLUIDSYNTH_API fluid_sfont_t* new_fluid_sfont(fluid_sfont_get_name_t get_name,
+                                              fluid_sfont_get_preset_t get_preset,
+                                              fluid_sfont_iteration_start_t iter_start,
+                                              fluid_sfont_iteration_next_t iter_next,
+                                              fluid_sfont_free_t free);
 
-  /**
-   * Virtual SoundFont preset notify method.
-   * @param preset Virtual SoundFont preset
-   * @param reason #FLUID_PRESET_SELECTED or #FLUID_PRESET_UNSELECTED
-   * @param chan MIDI channel number
-   * @return Should return #FLUID_OK
-   *
-   * Implement this optional method if the preset needs to be notified about
-   * preset select and unselect events.
-   *
-   * This method may be called from within synthesis context and therefore
-   * should be as efficient as possible and not perform any operations considered
-   * bad for realtime audio output (memory allocations and other OS calls).
-   */
-  int (*notify)(fluid_preset_t* preset, int reason, int chan);
-};
+FLUIDSYNTH_API void fluid_sfont_set_data(fluid_sfont_t* sfont, void* data);
+FLUIDSYNTH_API void* fluid_sfont_get_data(fluid_sfont_t* sfont);
 
+
+/**
+ * Method to get a virtual SoundFont preset name.
+ * @param preset Virtual SoundFont preset
+ * @return Should return the name of the preset.  The returned string must be
+ *   valid for the duration of the virtual preset (or the duration of the
+ *   SoundFont, in the case of preset iteration).
+ */
+typedef const char* (*fluid_preset_get_name_t)(fluid_preset_t* preset);
+
+/**
+ * Method to get a virtual SoundFont preset MIDI bank number.
+ * @param preset Virtual SoundFont preset
+ * @param return The bank number of the preset
+ */
+typedef int (*fluid_preset_get_banknum_t)(fluid_preset_t* preset);
+
+/**
+ * Method to get a virtual SoundFont preset MIDI program number.
+ * @param preset Virtual SoundFont preset
+ * @param return The program number of the preset
+ */
+typedef int (*fluid_preset_get_num_t)(fluid_preset_t* preset);
+
+/**
+ * Method to handle a noteon event (synthesize the instrument).
+ * @param preset Virtual SoundFont preset
+ * @param synth Synthesizer instance
+ * @param chan MIDI channel number of the note on event
+ * @param key MIDI note number (0-127)
+ * @param vel MIDI velocity (0-127)
+ * @return #FLUID_OK on success (0) or #FLUID_FAILED (-1) otherwise
+ *
+ * This method may be called from within synthesis context and therefore
+ * should be as efficient as possible and not perform any operations considered
+ * bad for realtime audio output (memory allocations and other OS calls).
+ *
+ * Call fluid_synth_alloc_voice() for every sample that has
+ * to be played. fluid_synth_alloc_voice() expects a pointer to a
+ * #fluid_sample_t structure and returns a pointer to the opaque
+ * #fluid_voice_t structure. To set or increment the values of a
+ * generator, use fluid_voice_gen_set() or fluid_voice_gen_incr(). When you are
+ * finished initializing the voice call fluid_voice_start() to
+ * start playing the synthesis voice.  Starting with FluidSynth 1.1.0 all voices
+ * created will be started at the same time.
+ */
+typedef int (*fluid_preset_noteon_t)(fluid_preset_t* preset, fluid_synth_t* synth, int chan, int key, int vel);
+
+/**
+ * Method to free a virtual SoundFont preset.
+ * @param preset Virtual SoundFont preset
+ * @return Should return 0
+ */
+typedef int (*fluid_preset_free_t)(fluid_preset_t* preset);
+
+FLUIDSYNTH_API fluid_preset_t* new_fluid_preset(fluid_sfont_t* parent_sfont,
+                                                fluid_preset_get_name_t get_name,
+                                                fluid_preset_get_banknum_t get_bank,
+                                                fluid_preset_get_num_t get_num,
+                                                fluid_preset_noteon_t noteon,
+                                                fluid_preset_free_t free);
+
+FLUIDSYNTH_API void fluid_preset_set_data(fluid_preset_t* preset, void* data);
+FLUIDSYNTH_API void* fluid_preset_get_data(fluid_preset_t* preset);
 
 FLUIDSYNTH_API fluid_sample_t* new_fluid_sample(void);
 FLUIDSYNTH_API void delete_fluid_sample(fluid_sample_t* sample);

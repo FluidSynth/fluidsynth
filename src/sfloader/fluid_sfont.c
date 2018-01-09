@@ -69,12 +69,17 @@ void fluid_sfloader_set_data(fluid_sfloader_t* loader, void* data)
     loader->data = data;
 }
 
+void* fluid_sfloader_get_data(fluid_sfloader_t* loader)
+{
+    return loader->data;
+}
+
 void fluid_sfloader_set_callbacks(fluid_sfloader_t* loader,
-                                  fluid_sfloader_callback_open open,
-                                  fluid_sfloader_callback_read read,
-                                  fluid_sfloader_callback_seek seek,
-                                  fluid_sfloader_callback_tell tell,
-                                  fluid_sfloader_callback_close close)
+                                  fluid_sfloader_callback_open_t open,
+                                  fluid_sfloader_callback_read_t read,
+                                  fluid_sfloader_callback_seek_t seek,
+                                  fluid_sfloader_callback_tell_t tell,
+                                  fluid_sfloader_callback_close_t close)
 {
     fluid_file_callbacks_t *cb = &loader->file_callbacks;
     
@@ -84,6 +89,9 @@ void fluid_sfloader_set_callbacks(fluid_sfloader_t* loader,
     cb->ftell = tell;
     cb->fclose = close;
 }
+
+
+
 
 /*
  * new_fluid_sample

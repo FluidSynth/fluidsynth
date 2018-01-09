@@ -73,11 +73,11 @@
  */
 struct _fluid_file_callbacks_t
 {
-  fluid_sfloader_callback_open  fopen;
-  fluid_sfloader_callback_read  fread;
-  fluid_sfloader_callback_seek  fseek;
-  fluid_sfloader_callback_close fclose;
-  fluid_sfloader_callback_tell  ftell;
+  fluid_sfloader_callback_open_t  fopen;
+  fluid_sfloader_callback_read_t  fread;
+  fluid_sfloader_callback_seek_t  fseek;
+  fluid_sfloader_callback_close_t fclose;
+  fluid_sfloader_callback_tell_t  ftell;
 };
 
 /**
@@ -93,10 +93,58 @@ struct _fluid_sfloader_t {
 
   fluid_sfloader_load_t load;
 };
+  
+/**
+ * Virtual SoundFont instance structure.
+ */
+struct _fluid_sfont_t {
+  void* data;           /**< User defined data */
+  unsigned int id;      /**< SoundFont ID */
 
+  fluid_sfont_free_t free;
 
+  fluid_sfont_get_name_t get_name;
 
+  fluid_sfont_get_preset_t get_preset;
 
+  fluid_sfont_iteration_start_t iteration_start;
+
+  fluid_sfont_iteration_next_t iteration_next;
+};
+
+/**
+ * Virtual SoundFont preset.
+ */
+struct _fluid_preset_t {
+  void* data;                                   /**< User supplied data */
+  fluid_sfont_t* sfont;                         /**< Parent virtual SoundFont */
+
+  fluid_preset_free_t free;
+
+  fluid_preset_get_name_t get_name;
+
+  fluid_preset_get_banknum_t get_banknum;
+
+  fluid_preset_get_num_t get_num;
+
+  fluid_preset_noteon_t noteon;
+
+  /**
+   * Virtual SoundFont preset notify method.
+   * @param preset Virtual SoundFont preset
+   * @param reason #FLUID_PRESET_SELECTED or #FLUID_PRESET_UNSELECTED
+   * @param chan MIDI channel number
+   * @return Should return #FLUID_OK
+   *
+   * Implement this optional method if the preset needs to be notified about
+   * preset select and unselect events.
+   *
+   * This method may be called from within synthesis context and therefore
+   * should be as efficient as possible and not perform any operations considered
+   * bad for realtime audio output (memory allocations and other OS calls).
+   */
+  int (*notify)(fluid_preset_t* preset, int reason, int chan);
+};
 
 /**
  * Virtual SoundFont sample.
