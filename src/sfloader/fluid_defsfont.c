@@ -32,7 +32,8 @@
 
 
 /* EMU8k/10k hardware applies this factor to initial attenuation generator values set at preset and
- * instrument level in a soundfont. We apply this factor when loading the generator values. */
+ * instrument level in a soundfont. We apply this factor when loading the generator values to stay
+ * compatible as most existing soundfonts expect exactly this (strange, non-standard) behaviour. */
 #define EMU_ATTENUATION_FACTOR (0.4f)
 
 
