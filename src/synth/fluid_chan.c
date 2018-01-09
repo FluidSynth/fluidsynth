@@ -354,17 +354,23 @@ fluid_channel_add_monolist(fluid_channel_t* chan, unsigned char key,
 {
 	unsigned char i_last = chan->i_last;
 	/* Updates legato/ sataccato playing state */
-	if (chan->n_notes) chan->mode |= FLUID_CHANNEL_LEGATO_PLAYING; /* Legato state */
-	else chan->mode &= ~ FLUID_CHANNEL_LEGATO_PLAYING; /* Staccato state */
-	/* keeps trace of the note prior last note */
-	if(chan->n_notes) chan->prev_note = chan->monolist[i_last].note;
+	if (chan->n_notes)
+	{
+		chan->mode |= FLUID_CHANNEL_LEGATO_PLAYING; /* Legato state */
+		/* keeps trace of the note prior last note */
+		chan->prev_note = chan->monolist[i_last].note;
+	}
+	else
+	{
+		chan->mode &= ~ FLUID_CHANNEL_LEGATO_PLAYING; /* Staccato state */
+	}
 	/* moves i_last forward before writing new note */
 	i_last = chan->monolist[i_last].next; 
 	chan->i_last = i_last; 			/* now ilast indexes the last note */
 	chan->monolist[i_last].note = key; /* we save note and velocity */
 	chan->monolist[i_last].vel = vel; 	
 	if (onenote) 
-	{ /* clears monolist before one note addition */
+	{	/* clears monolist before one note addition */
 		chan->i_first = i_last;
 		chan->n_notes = 0;
 	}
@@ -372,7 +378,8 @@ fluid_channel_add_monolist(fluid_channel_t* chan, unsigned char key,
 	{
 		chan->n_notes++; /* update n_notes */
 	}
-	else { /* The end of buffer is reach. So circular motion for i_first */
+	else
+	{	/* The end of buffer is reach. So circular motion for i_first */
 		/* i_first index is moved forward */
 		chan->i_first = chan->monolist[i_last].next;
 	}
@@ -634,8 +641,10 @@ void fluid_channel_cc_legato(fluid_channel_t* chan, int value)
 		{	/* Inters in monophonic from polyphonic with note in monophonic list */
 			/* Stops the running note to remain coherent with Breath Sync mode */
 			if ((chan->mode &  FLUID_CHANNEL_BREATH_SYNC) && !fluid_channel_breath_msb(chan))
+			{
 				fluid_synth_noteoff_monopoly(chan->synth,chan->channum,
 				                        fluid_channel_last_note(chan),1);
+			}
 		}
 	}
 }

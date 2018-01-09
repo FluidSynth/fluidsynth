@@ -56,7 +56,10 @@ int fluid_synth_get_basic_channels(	fluid_synth_t* synth,
 	/* counts basic channels */
 	for(i = 0, n_basic_chan = 0; i <  n_chan; i++)
 	{
-		if (synth->channel[i]->mode &  FLUID_CHANNEL_BASIC) n_basic_chan++;
+		if (synth->channel[i]->mode &  FLUID_CHANNEL_BASIC)
+		{
+			n_basic_chan++;
+		}
 	}
 
 	if (basicChannelInfos && n_basic_chan) 
@@ -160,12 +163,16 @@ int fluid_synth_reset_basic_channels(fluid_synth_t* synth,
 		{
 			int basic_chan = basicChannelInfos[i].basicchan;
 			if (synth->channel[basic_chan]->mode &  FLUID_CHANNEL_BASIC)
-			/* Different entries have the same basic channel. 
-			 An entry supersedes a previous entry with the same 
-			 basic channel.*/
+			{
+				/* Different entries have the same basic channel. 
+				An entry supersedes a previous entry with the same 
+				basic channel.*/
 				FLUID_LOG(FLUID_INFO, warning_msg);
-			/* Set Basic channel first */
-			else synth->channel[basic_chan]->mode |= FLUID_CHANNEL_BASIC;
+			}
+			else
+			{	/* Set Basic channel first */
+				synth->channel[basic_chan]->mode |= FLUID_CHANNEL_BASIC;
+			}
 		}
 
 		for (i = 0; i < n; i++)
@@ -174,10 +181,16 @@ int fluid_synth_reset_basic_channels(fluid_synth_t* synth,
 					basicChannelInfos[i].basicchan,
 					basicChannelInfos[i].mode,
 					basicChannelInfos[i].val);
-			if (result == FLUID_OK) result = r;
+			if (result == FLUID_OK)
+			{
+				result = r;
+			}
 		}
     }
-    else result = fluid_synth_set_basic_channel_LOCAL( synth, 0, FLUID_CHANNEL_MODE_OMNION_POLY,0);
+    else 
+	{
+		result = fluid_synth_set_basic_channel_LOCAL( synth, 0, FLUID_CHANNEL_MODE_OMNION_POLY,0);
+	}
     FLUID_API_RETURN(result);
 }
 
@@ -218,7 +231,9 @@ int fluid_synth_set_basic_channel(fluid_synth_t* synth,
     FLUID_API_ENTRY_CHAN(FLUID_FAILED);
     /**/
     if (chan + val > synth->midi_channels)
+	{
         FLUID_API_RETURN(FLUID_FAILED);
+	}
 
     result = fluid_synth_set_basic_channel_LOCAL(synth,chan,mode,val);
     /**/
@@ -295,8 +310,14 @@ the next basic channel\n";
 				last_begin_range = basicchan + 1;
 				break;
 			case FLUID_CHANNEL_MODE_OMNIOFF_MONO:		/* Mode 3 */
-				if (val) last_begin_range = basicchan + val;
-				else last_begin_range = last_end_range;
+				if (val)
+				{
+					last_begin_range = basicchan + val;
+				}
+				else
+				{
+					last_begin_range = last_end_range;
+				}
 		}
 		/* Check if val overlaps the next basic channel */
 		if (last_begin_range > last_end_range)
@@ -322,12 +343,24 @@ the next basic channel\n";
 			 ALL_NOTES_OFF */
 			fluid_synth_all_notes_off_LOCAL (synth, i);
 			/* basicchan only is marked Basic Channel */
-			if (i == basicchan)	new_mode |= FLUID_CHANNEL_BASIC; 
-			else val =0; /* val is 0 for other channel than basic channel */
+			if (i == basicchan)
+			{
+				new_mode |= FLUID_CHANNEL_BASIC; 
+			}
+			else
+			{
+				val =0; /* val is 0 for other channel than basic channel */
+			}
 			/* Channel in beginning zone are enabled */
-			if (i < last_begin_range) new_mode |= FLUID_CHANNEL_ENABLED; 
+			if (i < last_begin_range)
+			{
+				new_mode |= FLUID_CHANNEL_ENABLED;
+			}
 			/* Channel in ending zone are disabled */
-			else new_mode = 0;
+			else
+			{
+				new_mode = 0;
+			}
 			/* Now mode is OMNI OFF/ON,MONO/POLY, BASIC_CHANNEL or not
 			   ENABLED or not */	
 			fluid_channel_set_basic_channel_info(synth->channel[i],new_mode);

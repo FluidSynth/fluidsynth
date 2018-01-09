@@ -1308,13 +1308,20 @@ fluid_synth_cc_LOCAL (fluid_synth_t* synth, int channum, int num)
 	{
 		int new_mode, new_val;
 		if(!(chan->mode & FLUID_CHANNEL_OMNI_OFF)) /* channel is actually Omni On */
-		{new_mode = FLUID_CHANNEL_MODE_OMNION_MONO; new_val=0;} /* sets channel in mode 1 */
+		{	/* sets channel in mode 1 */
+			new_mode = FLUID_CHANNEL_MODE_OMNION_MONO; new_val=0;
+		} 
 		else /* channel is actually Omni Off */
-		{new_mode = FLUID_CHANNEL_MODE_OMNIOFF_MONO; new_val= value;} /* sets channel in mode 3 */
+		{	/* sets channel in mode 3 */
+			new_mode = FLUID_CHANNEL_MODE_OMNIOFF_MONO; new_val= value;
+		} 
 		return fluid_synth_set_basic_channel_LOCAL(synth,channum, 
 											new_mode, new_val);
 	}
-	else  return FLUID_FAILED;
+	else  
+	{
+		return FLUID_FAILED;
+	}
     break;
 
   case POLY_ON: /* Mono Off */
@@ -1323,13 +1330,20 @@ fluid_synth_cc_LOCAL (fluid_synth_t* synth, int channum, int num)
 	{
 		int new_mode, new_val;
 		if(!(chan->mode & FLUID_CHANNEL_OMNI_OFF)) /* channel is actually Omni On */
-		{new_mode = FLUID_CHANNEL_MODE_OMNION_POLY; new_val=0;} /* sets channel in mode 0 */
+		{	/* sets channel in mode 0 */
+			new_mode = FLUID_CHANNEL_MODE_OMNION_POLY; new_val=0;
+		}
 		else /* channel is actually Omni Off */
-		{new_mode = FLUID_CHANNEL_MODE_OMNIOFF_POLY; new_val= 0;} /* sets channel in mode 2 */
+		{	/* sets channel in mode 2 */
+			new_mode = FLUID_CHANNEL_MODE_OMNIOFF_POLY; new_val= 0;
+		}
 		return fluid_synth_set_basic_channel_LOCAL(synth,channum, 
 											new_mode, new_val);
 	}
-	else  return FLUID_FAILED;
+	else
+	{
+		return FLUID_FAILED;
+	}
 	break;
   
   case OMNI_ON: /* Omni On */
@@ -1338,13 +1352,20 @@ fluid_synth_cc_LOCAL (fluid_synth_t* synth, int channum, int num)
 	{
 		int new_mode, new_val;
 		if(!(chan->mode & FLUID_CHANNEL_POLY_OFF)) /* channel is actually Poly On */
-		{new_mode = FLUID_CHANNEL_MODE_OMNION_POLY; new_val=0;} /* sets channel in mode 0 */
+		{	/* sets channel in mode 0 */
+			new_mode = FLUID_CHANNEL_MODE_OMNION_POLY; new_val=0;
+		}
 		else /* channel is actually Mono On */
-		{new_mode = FLUID_CHANNEL_MODE_OMNION_MONO; new_val=0;} /* sets channel in mode 1 */
+		{	/* sets channel in mode 1 */
+			new_mode = FLUID_CHANNEL_MODE_OMNION_MONO; new_val=0;
+		}
 		return fluid_synth_set_basic_channel_LOCAL(synth,channum, 
 											new_mode, new_val);
 	}
-	else  return FLUID_FAILED;
+	else
+	{
+		return FLUID_FAILED;
+	}
 	break;
   
   case OMNI_OFF: /* Omni Off */
@@ -1353,17 +1374,24 @@ fluid_synth_cc_LOCAL (fluid_synth_t* synth, int channum, int num)
 	{
 		int new_mode, new_val;
 		if(!(chan->mode & FLUID_CHANNEL_POLY_OFF)) /* channel is actually Poly On */
-		{new_mode = FLUID_CHANNEL_MODE_OMNIOFF_POLY; new_val= 0;} /* sets channel in mode 2 */
+		{	/* sets channel in mode 2 */
+			new_mode = FLUID_CHANNEL_MODE_OMNIOFF_POLY; new_val= 0;
+		}
 		else /* channel is actually Mono On */
 		/* Channel will bet set in mode 3 with only one channel enabled(ie the
 		basic channel). After sending cc OMNI OFF, the sending MIDI transmitter
 		have to send cc MONO ON next to OMNI_OFF to change the number of 
 		monophonic channel that need to be enabled */
-		{new_mode = FLUID_CHANNEL_MODE_OMNIOFF_MONO; new_val= 1;} /* sets channel in mode 3 */
+		{	/* sets channel in mode 3 */
+			new_mode = FLUID_CHANNEL_MODE_OMNIOFF_MONO; new_val= 1;
+		}
 		return fluid_synth_set_basic_channel_LOCAL(synth,channum, 
 											new_mode, new_val);
 	}
-	else  return FLUID_FAILED;
+	else
+	{
+		return FLUID_FAILED;
+	}
 	break;
 
   case LEGATO_SWITCH:

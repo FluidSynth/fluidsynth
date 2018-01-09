@@ -167,7 +167,10 @@ static unsigned char fluid_synth_get_fromkey_portamento_legato(fluid_channel_t* 
 		fluid_channel_clear_portamento(chan);	/* clears the CC PTC receive */
 		chan->synth->fromkey_portamento =  ptc;/* returns fromkey portamento */
 		/* returns fromkey legato */
-		if(!fluid_channel_is_valid_note(default_fromkey)) default_fromkey= ptc;
+		if(!fluid_channel_is_valid_note(default_fromkey))
+		{
+			default_fromkey= ptc;
+		}
 	}
 	else 
 	{	/* determines and returns fromkey portamento */
@@ -181,7 +184,10 @@ static unsigned char fluid_synth_get_fromkey_portamento_legato(fluid_channel_t* 
 			{	
 				fromkey_portamento = default_fromkey; /* on each note */
 			}
-			else fromkey_portamento = fluid_channel_prev_note(chan); /* on each note */
+			else
+			{
+				fromkey_portamento = fluid_channel_prev_note(chan); /* on each note */
+			}
 			if(portamentomode == FLUID_CHANNEL_PORTAMENTO_MODE_LEGATO_ONLY)
 			{   /* Mode portamento:legato only */
 				if(!(chan->mode  & FLUID_CHANNEL_LEGATO_PLAYING))
@@ -396,7 +402,10 @@ int fluid_synth_noteoff_mono_LOCAL(fluid_synth_t* synth, int chan, int key)
 								   channel->monolist[iPrev].vel);
 				}
 				/* else the note doesn't need to be played off */
-				else	status = FLUID_OK;
+				else
+				{
+					status = FLUID_OK;
+				}
 			}
 			else 
 			{ /* the monophonic list is empty */
@@ -405,7 +414,10 @@ int fluid_synth_noteoff_mono_LOCAL(fluid_synth_t* synth, int chan, int key)
 				status = fluid_synth_noteoff_monopoly(synth, chan, key, 1);
 			}
 		}
-		else	status = FLUID_OK;
+		else
+		{
+			status = FLUID_OK;
+		}
 	}
 	else 
 	{	/* the note is not found in the list so the note was 
@@ -509,7 +521,10 @@ int fluid_synth_noteoff_monopoly(fluid_synth_t* synth, int chan, int key,
 	int i;
 	fluid_channel_t* channel = synth->channel[chan];
 	/* Key_sustained is prepared to return no note sustained (-1) */
-	if (Mono) channel->key_mono_sustained = -1; /* no mono note sustained */
+	if (Mono)
+	{
+		channel->key_mono_sustained = -1; /* no mono note sustained */
+	}
 	/* noteoff for all voices with same chan and same key */
 	for (i = 0; i < synth->polyphony; i++)
 	{
