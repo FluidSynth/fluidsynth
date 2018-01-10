@@ -208,7 +208,7 @@ fluid_iir_filter_calculate_coefficients(fluid_iir_filter_t* iir_filter,
   fluid_real_t a1_temp, a2_temp;
   fluid_real_t b02_temp, b1_temp;
   
-  /* if Q==0 temporarily disables the filter, else we would get some inf and nan values for our coefficients. */
+  /* GEN_CUSTOM_FILTERQ_LIN may switch the filter off by setting Q==0 */
   if(iir_filter->q_lin == 0)
   {
       return;
