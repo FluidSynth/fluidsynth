@@ -1776,9 +1776,3 @@ fluid_voice_get_overflow_prio(fluid_voice_t* voice,
     
   return this_voice_prio;
 }
-
-void fluid_voice_enable_high_pass_filter(fluid_voice_t *voice, int enabled)
-{
-  fluid_iir_filter_init(&voice->rvoice->resonant_hp_filter, FLUID_IIR_HIGHPASS, enabled);
-  fluid_iir_filter_init(&voice->overflow_rvoice->resonant_hp_filter, FLUID_IIR_HIGHPASS, enabled);
-}
