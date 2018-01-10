@@ -128,16 +128,16 @@ static void init_dither(void);
  * explicitly overridden by the sound font in order to turn them off.
  */
 
-fluid_mod_t default_vel2att_mod;        /* SF2.01 section 8.4.1  */
-fluid_mod_t default_vel2filter_mod;     /* SF2.01 section 8.4.2  */
-fluid_mod_t default_at2viblfo_mod;      /* SF2.01 section 8.4.3  */
-fluid_mod_t default_mod2viblfo_mod;     /* SF2.01 section 8.4.4  */
-fluid_mod_t default_att_mod;            /* SF2.01 section 8.4.5  */
-fluid_mod_t default_pan_mod;            /* SF2.01 section 8.4.6  */
-fluid_mod_t default_expr_mod;           /* SF2.01 section 8.4.7  */
-fluid_mod_t default_reverb_mod;         /* SF2.01 section 8.4.8  */
-fluid_mod_t default_chorus_mod;         /* SF2.01 section 8.4.9  */
-fluid_mod_t default_pitch_bend_mod;     /* SF2.01 section 8.4.10 */
+static fluid_mod_t default_vel2att_mod;        /* SF2.01 section 8.4.1  */
+/*not static */ fluid_mod_t default_vel2filter_mod;     /* SF2.01 section 8.4.2  */
+static fluid_mod_t default_at2viblfo_mod;      /* SF2.01 section 8.4.3  */
+static fluid_mod_t default_mod2viblfo_mod;     /* SF2.01 section 8.4.4  */
+static fluid_mod_t default_att_mod;            /* SF2.01 section 8.4.5  */
+static fluid_mod_t default_pan_mod;            /* SF2.01 section 8.4.6  */
+static fluid_mod_t default_expr_mod;           /* SF2.01 section 8.4.7  */
+static fluid_mod_t default_reverb_mod;         /* SF2.01 section 8.4.8  */
+static fluid_mod_t default_chorus_mod;         /* SF2.01 section 8.4.9  */
+static fluid_mod_t default_pitch_bend_mod;     /* SF2.01 section 8.4.10 */
 
 fluid_mod_t custom_cc2hpfilterfc_mod;
 fluid_mod_t custom_cc2bpfilterq_mod;
@@ -204,10 +204,6 @@ void fluid_synth_settings(fluid_settings_t* settings)
                               FLUID_HINT_TOGGLED, NULL, NULL);
   fluid_settings_register_int(settings, "synth.band-pass-filter", 0, 0, 1,
                               FLUID_HINT_TOGGLED, NULL, NULL);
-  
-  fluid_settings_register_str(settings, "synth.volenv", "emu", 0);
-  fluid_settings_add_option(settings, "synth.volenv", "emu");
-  fluid_settings_add_option(settings, "synth.volenv", "compliant");
 }
 
 /**
@@ -560,25 +556,6 @@ new_fluid_synth(fluid_settings_t *settings)
   /* initialize all the conversion tables and other stuff */
   if (fluid_atomic_int_compare_and_exchange(&fluid_synth_initialized, 0, 1))
   {
-    char buf[64];
-    if (fluid_settings_str_equal (settings, "synth.volenv", "compliant"))
-    {
-            fluid_conversion_set_atten_power(FLUID_ATTEN_POWER_DEFAULT_COMPLIANT);
-    }
-    else if (fluid_settings_str_equal (settings, "synth.volenv", "emu"))
-    {
-            fluid_conversion_set_atten_power(FLUID_ATTEN_POWER_DEFAULT_EMU);
-    }
-    else
-    {
-        if (fluid_settings_copystr(settings, "synth.volenv", buf, sizeof(buf)) == FLUID_OK)
-        {
-            double atten = atof(buf);
-            if(atten != 0.0)
-                fluid_conversion_set_atten_power(atten);
-        }
-    }
-    
     fluid_synth_init();
   }
 

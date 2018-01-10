@@ -38,7 +38,7 @@ fluid_rvoice_calc_amp(fluid_rvoice_t* voice)
     /* the envelope is in the attack section: ramp linearly to max value.
      * A positive modlfo_to_vol should increase volume (negative attenuation).
      */
-    target_amp = fluid_atten2amp (voice->dsp.attenuation)
+    target_amp = fluid_cb2amp (voice->dsp.attenuation)
       * fluid_cb2amp (fluid_lfo_get_val(&voice->envlfo.modlfo) * -voice->envlfo.modlfo_to_vol)
       * fluid_adsr_env_get_val(&voice->envlfo.volenv);
   }
@@ -47,7 +47,7 @@ fluid_rvoice_calc_amp(fluid_rvoice_t* voice)
     fluid_real_t amplitude_that_reaches_noise_floor;
     fluid_real_t amp_max;
 
-    target_amp = fluid_atten2amp (voice->dsp.attenuation)
+    target_amp = fluid_cb2amp (voice->dsp.attenuation)
       * fluid_cb2amp (960.0f * (1.0f - fluid_adsr_env_get_val(&voice->envlfo.volenv))
 		      + fluid_lfo_get_val(&voice->envlfo.modlfo) * -voice->envlfo.modlfo_to_vol);
 
@@ -74,7 +74,7 @@ fluid_rvoice_calc_amp(fluid_rvoice_t* voice)
      * volenv_val can only drop):
      */
 
-    amp_max = fluid_atten2amp (voice->dsp.min_attenuation_cB) * 
+    amp_max = fluid_cb2amp (voice->dsp.min_attenuation_cB) *
               fluid_adsr_env_get_val(&voice->envlfo.volenv);
 
     /* And if amp_max is already smaller than the known amplitude,

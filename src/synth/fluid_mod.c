@@ -331,6 +331,8 @@ fluid_mod_transform_source_value(fluid_real_t val, unsigned char mod_flags, cons
 fluid_real_t
 fluid_mod_get_value(fluid_mod_t* mod, fluid_channel_t* chan, fluid_voice_t* voice)
 {
+  extern fluid_mod_t default_vel2filter_mod;
+  
   fluid_real_t v1 = 0.0, v2 = 1.0;
   fluid_real_t range1 = 127.0, range2 = 127.0;
 
@@ -359,13 +361,7 @@ fluid_mod_get_value(fluid_mod_t* mod, fluid_channel_t* chan, fluid_voice_t* voic
    * described in section 8.4.2, but it matches the definition used in
    * several SF2.1 sound fonts (where it is used only to turn it off).
    * */
-  if ((mod->src2 == FLUID_MOD_VELOCITY) &&
-      (mod->src1 == FLUID_MOD_VELOCITY) &&
-      (mod->flags1 == (FLUID_MOD_GC | FLUID_MOD_UNIPOLAR
-		       | FLUID_MOD_NEGATIVE | FLUID_MOD_LINEAR)) &&
-      (mod->flags2 == (FLUID_MOD_GC | FLUID_MOD_UNIPOLAR
-		       | FLUID_MOD_POSITIVE | FLUID_MOD_SWITCH)) &&
-      (mod->dest == GEN_FILTERFC)) {
+  if (fluid_mod_test_identity(mod, &default_vel2filter_mod)) {
 // S. Christian Collins' mod, to stop forcing velocity based filtering
 /*
     if (voice->vel < 64){

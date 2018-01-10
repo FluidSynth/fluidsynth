@@ -145,7 +145,7 @@ unset ( FLUID_CPPFLAGS CACHE )
 unset ( FLUID_LIBS CACHE )
 
 # Options for the GNU C compiler only
-if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang" )
+if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang" OR CMAKE_C_COMPILER_ID STREQUAL "Intel" )
   if ( NOT APPLE AND NOT OS2 )
     set ( CMAKE_EXE_LINKER_FLAGS
           "${CMAKE_EXE_LINKER_FLAGS} -Wl,--as-needed" )
@@ -163,7 +163,7 @@ if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang" )
   set ( CMAKE_C_FLAGS_DEBUG "-std=gnu89 -g ${GNUCC_VISIBILITY_FLAG} -DDEBUG ${GNUCC_WARNING_FLAGS} -fsanitize=undefined ${CMAKE_C_FLAGS_DEBUG}" )
   set ( CMAKE_C_FLAGS_RELEASE "-std=gnu89 -O2 -fomit-frame-pointer -finline-functions ${GNUCC_VISIBILITY_FLAG} -DNDEBUG ${GNUCC_WARNING_FLAGS} ${CMAKE_C_FLAGS_RELEASE}" )
   set ( CMAKE_C_FLAGS_RELWITHDEBINFO "-std=gnu89 -O2 -g -fomit-frame-pointer -finline-functions ${GNUCC_VISIBILITY_FLAG} -DNDEBUG ${GNUCC_WARNING_FLAGS} ${CMAKE_C_FLAGS_RELWITHDEBINFO}" )
-endif ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang" )
+endif ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang" OR CMAKE_C_COMPILER_ID STREQUAL "Intel" )
 
 # Windows
 unset ( WINDOWS_SUPPORT CACHE )
@@ -265,6 +265,15 @@ endif ( enable-floats )
 unset ( WITH_PROFILING CACHE )
 if ( enable-profiling )
     set ( WITH_PROFILING 1 )
+    if ( CMAKE_C_COMPILER_ID STREQUAL "Clang" )
+      set ( OPT_FLAGS "-Rpass=loop-vectorize -Rpass-analysis=loop-vectorize" )
+    elseif ( CMAKE_C_COMPILER_ID STREQUAL "Intel" )
+      set ( OPT_FLAGS "-qopt-report=3" )
+    endif ( )
+    
+    set ( CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} ${OPT_FLAGS}" )
+    set ( CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} ${OPT_FLAGS}" )
+    set ( CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} ${OPT_FLAGS}" )
 endif ( enable-profiling )
 
 unset ( ENABLE_TRAPONFPE CACHE )
