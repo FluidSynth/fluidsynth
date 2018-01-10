@@ -164,7 +164,6 @@ struct _fluid_synth_t
   int cores;                         /**< Number of CPU cores (1 by default) */
 
   int with_high_pass;              /**< Flag to enable custom high-pass filter */
-  int with_band_pass;              /**< Flag to enable custom band-pass filter */
 
   fluid_mod_t* default_mod;          /**< the (dynamic) list of default modulators */
 

@@ -201,9 +201,7 @@ void fluid_synth_settings(fluid_settings_t* settings)
   fluid_settings_add_option(settings, "synth.midi-bank-select", "mma");
 
   fluid_settings_register_int(settings, "synth.high-pass-filter", 0, 0, 1,
-                              FLUID_HINT_TOGGLED, NULL, NULL);
-  fluid_settings_register_int(settings, "synth.band-pass-filter", 0, 0, 1,
-                              FLUID_HINT_TOGGLED, NULL, NULL);
+                              FLUID_HINT_TOGGLED);
 }
 
 /**
@@ -426,16 +424,6 @@ fluid_synth_init(void)
 //   fluid_mod_set_amount(&custom_cc2hpfilterfc_mod, 8000);
 //   
 
-  /* Custom CC33 -> Band-Pass Filter Q */
-  fluid_mod_set_source1(&custom_cc2bpfilterq_mod, 33,
-		       FLUID_MOD_CC
-		       | FLUID_MOD_LINEAR
-		       | FLUID_MOD_UNIPOLAR
-		       | FLUID_MOD_POSITIVE
-		       );
-  fluid_mod_set_source2(&custom_cc2bpfilterq_mod, 0, 0);
-  fluid_mod_set_dest(&custom_cc2bpfilterq_mod, GEN_BPFILTERQ);
-  fluid_mod_set_amount(&custom_cc2bpfilterq_mod, 8);
 }
 
 static FLUID_INLINE unsigned int fluid_synth_get_ticks(fluid_synth_t* synth)
@@ -588,7 +576,6 @@ new_fluid_synth(fluid_settings_t *settings)
   fluid_settings_getint(settings, "synth.cpu-cores", &synth->cores);
 
   fluid_settings_getint(settings, "synth.high-pass-filter", &synth->with_high_pass);
-  fluid_settings_getint(settings, "synth.band-pass-filter", &synth->with_band_pass);
   
   fluid_settings_getnum_float(settings, "synth.overflow.percussion", &synth->overflow.percussion);
   fluid_settings_getnum_float(settings, "synth.overflow.released", &synth->overflow.released);
@@ -763,11 +750,6 @@ new_fluid_synth(fluid_settings_t *settings)
   /* enable high-pass filter */
   for (i = 0; i < synth->nvoice; i++) {
 		fluid_voice_enable_high_pass_filter(synth->voice[i], synth->with_high_pass);
-  }
-  
-  /* enable band-pass filter */
-  for (i = 0; i < synth->nvoice; i++) {
-		fluid_voice_enable_high_pass_filter(synth->voice[i], synth->with_band_pass);
   }
   
   fluid_synth_set_sample_rate(synth, synth->sample_rate);

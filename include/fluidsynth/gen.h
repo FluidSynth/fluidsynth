@@ -106,7 +106,7 @@ enum fluid_gen_type {
 
   /* non-standard generator for the low-pass filter */
   GEN_CUSTOM_FILTERFC,		/**< Custom Low-pass filter cutoff */
-  GEN_BPFILTERQ,		/**< Band-pass filter Q */
+  GEN_CUSTOM_FILTERQ_LIN,		/**< Band-pass filter Q */
   
 #ifndef __DOXYGEN__
   GEN_LAST			/**< @internal Value defines the count of generators (#fluid_gen_type) @warning This symbol is not part of the public API and ABI stability guarantee and may change at any time! */

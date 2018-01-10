@@ -544,8 +544,8 @@ fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t* voice)
     GEN_PITCH,                           /*                ---  */
     GEN_HPFILTERFC,                      /*                ---  */
     GEN_HPFILTERQ,                       /*                ---  */
-    GEN_CUSTOM_FILTERFC,                      /*                ---  */
-    GEN_BPFILTERQ,                       /*                ---  */
+    GEN_CUSTOM_FILTERFC,                 /*                ---  */
+    GEN_CUSTOM_FILTERQ_LIN,              /*                ---  */
   };
 
   /* When the voice is made ready for the synthesis process, a lot of
@@ -806,33 +806,22 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
      * follows: */
     q_dB -= 3.01f;
     UPDATE_RVOICE_FILTER1(fluid_iir_filter_set_q_dB, q_dB);
-		/* FIXME: setting the high-pass Q to a fixed amount here is just
-		 * ugly. Find a better way to do that! */
-    UPDATE_RVOICE_HPFILTER1(fluid_iir_filter_set_q_dB, -3.01f);
     break;
 
   /* same as the two above, only for the high-pass filter */
   case GEN_HPFILTERFC:
-    x = _GEN(voice, GEN_HPFILTERFC);
     UPDATE_RVOICE_HPFILTER1(fluid_iir_filter_set_fres, x);
     break;
 
   case GEN_HPFILTERQ:
-    q_dB = _GEN(voice, GEN_HPFILTERQ) / 10.0f;
+    q_dB = x / 10.0f;
     fluid_clip(q_dB, 0.0f, 96.0f);
     q_dB -= 3.01f;
     UPDATE_RVOICE_HPFILTER1(fluid_iir_filter_set_q_dB, q_dB);
     break;
 
-
-  case GEN_BPFILTERQ:
-    x = _GEN(voice, GEN_BPFILTERQ);
-    if(x == 0.0){
-    UPDATE_RVOICE_HPFILTER1(fluid_iir_filter_set_q_linear, 0);
-    UPDATE_RVOICE_FILTER1(fluid_iir_filter_set_q_linear, 0);}
-        else{
-//     UPDATE_RVOICE_HPFILTER1(fluid_iir_filter_set_q_linear, x+1);
-    UPDATE_RVOICE_FILTER1(fluid_iir_filter_set_q_linear, x+1);}
+  case GEN_CUSTOM_FILTERQ_LIN:
+    UPDATE_RVOICE_FILTER1(fluid_iir_filter_set_q_linear, (x==0.0 ? 0 : x+1));
     break;
     
   case GEN_MODLFOTOPITCH:
