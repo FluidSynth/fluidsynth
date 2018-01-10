@@ -105,7 +105,6 @@ enum fluid_gen_type {
   GEN_HPFILTERQ,		/**< High-pass filter Q */
 
   /* non-standard generator for the low-pass filter */
-  GEN_CUSTOM_FILTERFC,		/**< Custom Low-pass filter cutoff */
   GEN_CUSTOM_FILTERQ_LIN,		/**< Custom linear filter Q */
   
 #ifndef __DOXYGEN__

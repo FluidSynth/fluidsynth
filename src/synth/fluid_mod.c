@@ -507,7 +507,6 @@ void fluid_dump_modulator(fluid_mod_t * mod){
   switch(dest){
       case GEN_FILTERQ: printf("Q"); break;
       case GEN_FILTERFC: printf("fc"); break;
-      case GEN_CUSTOM_FILTERFC: printf("custom-fc"); break;
       case GEN_HPFILTERQ: printf("HP-Q"); break;
       case GEN_HPFILTERFC: printf("HP-fc"); break;
       case GEN_CUSTOM_FILTERQ_LIN: printf("custom-Q-lin"); break;

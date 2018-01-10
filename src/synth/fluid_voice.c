@@ -544,7 +544,6 @@ fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t* voice)
     GEN_PITCH,                           /*                ---  */
     GEN_HPFILTERFC,                      /*                ---  */
     GEN_HPFILTERQ,                       /*                ---  */
-    GEN_CUSTOM_FILTERFC,                 /*                ---  */
     GEN_CUSTOM_FILTERQ_LIN,              /*                ---  */
   };
 
@@ -771,7 +770,6 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
 
     break;
 
-  case GEN_CUSTOM_FILTERFC:
   case GEN_FILTERFC:
     /* The resonance frequency is converted from absolute cents to
      * midicents .val and .mod are both used, this permits real-time

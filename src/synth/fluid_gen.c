@@ -88,7 +88,6 @@ static const fluid_gen_info_t fluid_gen_info[] = {
         { GEN_PITCH,                  1,     0,       0.0f,    127.0f,       0.0f },
         { GEN_HPFILTERFC,             1,     2,    1500.0f,  13500.0f,    1500.0f },
         { GEN_HPFILTERQ,              1,     1,       0.0f,    960.0f,       0.0f },
-        { GEN_CUSTOM_FILTERFC,        1,     2,       0.0f,  22050.0f,       0.0f },
         { GEN_CUSTOM_FILTERQ_LIN,     1,     1,       0.0f,     20.0f,       0.0f }
 };
 
