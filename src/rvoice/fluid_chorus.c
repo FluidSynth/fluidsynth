@@ -479,13 +479,22 @@ static void
 fluid_chorus_sine(int *buf, int len, int depth)
 {
   int i;
-  double val;
+  double angle, incr, mult;
 
+  /* Pre-calculate increment between angles. */
+  incr = (2. * M_PI) / (double)len;
+
+  /* Pre-calculate 'depth' multiplier. */
+  mult = (double) depth / 2.0 * (double) INTERPOLATION_SUBSAMPLES;
+
+  /* Initialize to zero degrees. */
+  angle = 0.;
+
+  /* Build sine modulation waveform */
   for (i = 0; i < len; i++) {
-    val = sin((double) i / (double)len * 2.0 * M_PI);
-    buf[i] = (int) ((1.0 + val) * (double) depth / 2.0 * (double) INTERPOLATION_SUBSAMPLES);
-    buf[i] -= 3* MAX_SAMPLES * INTERPOLATION_SUBSAMPLES;
-    //    printf("%i %i\n",i,buf[i]);
+    buf[i] = (int) ((1. + sin(angle)) * mult) - 3 * MAX_SAMPLES * INTERPOLATION_SUBSAMPLES;
+
+    angle += incr;
   }
 }
 
@@ -496,15 +505,24 @@ fluid_chorus_sine(int *buf, int len, int depth)
 static void
 fluid_chorus_triangle(int *buf, int len, int depth)
 {
-  int i=0;
-  int ii=len-1;
-  double val;
-  double val2;
+  int *il = buf;
+  int *ir = buf + len-1;
+  int ival;
+  double val, incr;
 
-  while (i <= ii){
-    val = i * 2.0 / len * (double)depth * (double) INTERPOLATION_SUBSAMPLES;
-    val2= (int) (val + 0.5) - 3 * MAX_SAMPLES * INTERPOLATION_SUBSAMPLES;
-    buf[i++] = (int) val2;
-    buf[ii--] = (int) val2;
+  /* Pre-calculate increment for the ramp. */
+  incr = 2.0 / len * (double)depth * (double) INTERPOLATION_SUBSAMPLES;
+
+  /* Initialize first value */
+  val = 0.;
+
+  /* Build triangular modulation waveform */
+  while (il <= ir) {
+    ival= (int)(val + 0.5) - 3 * MAX_SAMPLES * INTERPOLATION_SUBSAMPLES;
+
+    *il++ = ival;
+    *ir-- = ival;
+
+    val += incr;
   }
 }

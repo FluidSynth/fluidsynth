@@ -31,6 +31,13 @@
 #include <sndfile.h>
 #endif
 
+
+/* EMU8k/10k hardware applies this factor to initial attenuation generator values set at preset and
+ * instrument level in a soundfont. We apply this factor when loading the generator values to stay
+ * compatible as most existing soundfonts expect exactly this (strange, non-standard) behaviour. */
+#define EMU_ATTENUATION_FACTOR (0.4f)
+
+
 /***************************************************************
  *
  *                           SFONT LOADER
@@ -1289,6 +1296,12 @@ fluid_preset_zone_import_sfont(fluid_preset_zone_t* zone, SFZone *sfzone, fluid_
       zone->range.vello = sfgen->amount.range.lo;
       zone->range.velhi = sfgen->amount.range.hi;
       break;
+    case GEN_ATTENUATION:
+      /* EMU8k/10k hardware applies a scale factor to initial attenuation generator values set at
+       * preset and instrument level */
+      zone->gen[sfgen->id].val = (fluid_real_t) sfgen->amount.sword * EMU_ATTENUATION_FACTOR;
+      zone->gen[sfgen->id].flags = GEN_SET;
+      break;
     default:
       /* FIXME: some generators have an unsigne word amount value but i don't know which ones */
       zone->gen[sfgen->id].val = (fluid_real_t) sfgen->amount.sword;
@@ -1681,6 +1694,12 @@ fluid_inst_zone_import_sfont(fluid_preset_zone_t* preset_zone, fluid_inst_zone_t
     case GEN_VELRANGE:
       zone->range.vello = sfgen->amount.range.lo;
       zone->range.velhi = sfgen->amount.range.hi;
+      break;
+    case GEN_ATTENUATION:
+      /* EMU8k/10k hardware applies a scale factor to initial attenuation generator values set at
+       * preset and instrument level */
+      zone->gen[sfgen->id].val = (fluid_real_t) sfgen->amount.sword * EMU_ATTENUATION_FACTOR;
+      zone->gen[sfgen->id].flags = GEN_SET;
       break;
     default:
       /* FIXME: some generators have an unsigned word amount value but

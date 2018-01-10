@@ -710,8 +710,6 @@ calculate_hold_decay_buffers(fluid_voice_t* voice, int gen_base,
 void
 fluid_voice_update_param(fluid_voice_t* voice, int gen)
 {
-  // Alternate attenuation scale used by EMU10K1 cards when setting the attenuation at the preset or instrument level within the SoundFont bank.
-  static const float ALT_ATTENUATION_SCALE = 0.4f;
   unsigned int count, z;
   fluid_real_t q_dB;
   fluid_real_t x = fluid_voice_gen_value(voice, gen);
@@ -731,8 +729,7 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
     break;
 
   case GEN_ATTENUATION:
-    voice->attenuation = ((fluid_real_t)(voice)->gen[GEN_ATTENUATION].val*ALT_ATTENUATION_SCALE) +
-    (fluid_real_t)(voice)->gen[GEN_ATTENUATION].mod + (fluid_real_t)(voice)->gen[GEN_ATTENUATION].nrpn;
+    voice->attenuation = x;
 
     /* Range: SF2.01 section 8.1.3 # 48
      * Motivation for range checking:
