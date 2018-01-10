@@ -192,13 +192,7 @@ fluid_iir_filter_set_q_linear(fluid_iir_filter_t* iir_filter,
      *  (numerator of the filter equation).  This gain factor depends
      *  only on Q, so this is the right place to calculate it.
      */
-    /*
-     * However if Q is between [0;1], using sqrt would increase the value
-     * again, resulting in a much more silent signal, shouldnt affect 
-     * SF2 lowpass filter, since Q is in dB range and never gets <1
-     */
-    iir_filter->filter_gain  = 1.0f;
-    iir_filter->filter_gain /= q_linear<=1.0f ? q_linear : sqrt(q_linear);
+    iir_filter->filter_gain = (fluid_real_t) (1.0 / sqrt(iir_filter->q_lin));
 
     /* The synthesis loop will have to recalculate the filter coefficients. */
     iir_filter->last_fres = -1.;
