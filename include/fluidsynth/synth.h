@@ -353,13 +353,13 @@ struct _fluid_basic_channel_infos_t
 typedef struct  _fluid_basic_channel_infos_t   fluid_basic_channel_infos_t;
 
 FLUIDSYNTH_API int fluid_synth_get_basic_channels( fluid_synth_t* synth,
-                                                   fluid_basic_channel_infos_t **basicChannelInfos);
+                                                   fluid_basic_channel_infos_t **basic_channel_infos);
 FLUIDSYNTH_API int fluid_synth_reset_basic_channels(fluid_synth_t* synth, int n, 
-                                                    fluid_basic_channel_infos_t *basicChannelInfos);
+                                                    fluid_basic_channel_infos_t *basic_channel_infos);
 FLUIDSYNTH_API int fluid_synth_get_channel_mode(fluid_synth_t* synth, int chan,
-                                                fluid_basic_channel_infos_t  *modeInfos);
+                                                fluid_basic_channel_infos_t  *mode_infos);
 FLUIDSYNTH_API int fluid_synth_set_basic_channel(fluid_synth_t* synth, 
-                                                   fluid_basic_channel_infos_t *basicChannelInfos);
+                                                   fluid_basic_channel_infos_t *basic_channel_infos);
 
 /* Interface to mono legato mode  */
 /* n1,n2,n3,.. is a legato passage. n1 is the first note, and n2,n3,n4 are played

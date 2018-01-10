@@ -29,7 +29,7 @@
  * Gets the list of basic channel informations from the synth instance.
  *
  * @param synth the synth instance
- * @param basicChannelInfos
+ * @param basic_channel_infos
  *  - If not NULL the function returns a pointer to an allocated array of #fluid_basic_channel_infos_t or NULL on allocation error. The caller must free this array when finished with it
  *  - If NULL the function returns only the count of basic channel
  *  - Each entry in the array is a fluid_basic_channels_infos_t information
@@ -44,7 +44,7 @@
  * on MIDI channel 0 in Poly Omni On state (i.e all MIDI channels are polyphonic).
  */
 int fluid_synth_get_basic_channels(	fluid_synth_t* synth,
-					fluid_basic_channel_infos_t **basicChannelInfos)
+					fluid_basic_channel_infos_t **basic_channel_infos)
 {
 	int i,n_chan;	/* MIDI channel index and number */
 	int n_basic_chan; /* Basic Channel number to return */
@@ -62,7 +62,7 @@ int fluid_synth_get_basic_channels(	fluid_synth_t* synth,
 		}
 	}
 
-	if (basicChannelInfos && n_basic_chan) 
+	if (basic_channel_infos && n_basic_chan) 
 	{	
 		/* allocates table for Basic Channel group only */
 		fluid_basic_channel_infos_t * bci;	/* basics channels information table */
@@ -85,7 +85,7 @@ int fluid_synth_get_basic_channels(	fluid_synth_t* synth,
 			n_basic_chan = FLUID_FAILED; /* allocation error */
 			FLUID_LOG(FLUID_ERR, "Out of memory");
 		}
-		*basicChannelInfos = bci; /* returns table */
+		*basic_channel_infos = bci; /* returns table */
 	}
 	fluid_synth_api_exit(synth);
 	return n_basic_chan;
@@ -98,9 +98,9 @@ int fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth,
  * This list replaces the previous list. 
  *
  * @param synth the synth instance.
- * @param n Number of entries in basicChannelInfos.
- * @param basicChannelInfos the list of basic channel infos to set.
- * If n is 0 or basicChannelInfos is NULL the function set one channel basic at
+ * @param n Number of entries in basic_channel_infos.
+ * @param basic_channel_infos the list of basic channel infos to set.
+ * If n is 0 or basic_channel_infos is NULL the function set one channel basic at
  * basicchan 0 in Omni On Poly (i.e all the MIDI channels are polyphonic).
  * 
  * @return
@@ -119,7 +119,7 @@ An entry supersedes a previous entry with the same basic channel.\n";
 
 int fluid_synth_reset_basic_channels(fluid_synth_t* synth, 
                              int n, 
-                             fluid_basic_channel_infos_t *basicChannelInfos)
+                             fluid_basic_channel_infos_t *basic_channel_infos)
 {
     int i,n_chan;
     int result;
@@ -135,14 +135,14 @@ int fluid_synth_reset_basic_channels(fluid_synth_t* synth,
     }
     
     /* Checks if information are valid  */
-    if(n && basicChannelInfos ) for (i = 0; i < n; i++)
+    if(n && basic_channel_infos ) for (i = 0; i < n; i++)
     {
-		if (	basicChannelInfos[i].basicchan < 0 || 
-			basicChannelInfos[i].basicchan >= n_chan ||
-			basicChannelInfos[i].mode < 0 ||
-			basicChannelInfos[i].mode >= FLUID_CHANNEL_MODE_LAST ||
-			basicChannelInfos[i].val < 0 ||
-			basicChannelInfos[i].basicchan + basicChannelInfos[i].val > n_chan)
+		if (	basic_channel_infos[i].basicchan < 0 || 
+			basic_channel_infos[i].basicchan >= n_chan ||
+			basic_channel_infos[i].mode < 0 ||
+			basic_channel_infos[i].mode >= FLUID_CHANNEL_MODE_LAST ||
+			basic_channel_infos[i].val < 0 ||
+			basic_channel_infos[i].basicchan + basic_channel_infos[i].val > n_chan)
 			{
 				FLUID_API_RETURN(FLUID_FAILED);
 			}
@@ -154,14 +154,14 @@ int fluid_synth_reset_basic_channels(fluid_synth_t* synth,
 		fluid_channel_reset_basic_channel_info(synth->channel[i]);
 		synth->channel[i]->mode_val = 0; 
     }
-    if(n && basicChannelInfos)
+    if(n && basic_channel_infos)
     {
 		result = FLUID_OK;
 
 		/* Sets the new list of basic channel */
 		for (i = 0; i < n; i++)
 		{
-			int basic_chan = basicChannelInfos[i].basicchan;
+			int basic_chan = basic_channel_infos[i].basicchan;
 			if (synth->channel[basic_chan]->mode &  FLUID_CHANNEL_BASIC)
 			{
 				/* Different entries have the same basic channel. 
@@ -178,9 +178,9 @@ int fluid_synth_reset_basic_channels(fluid_synth_t* synth,
 		for (i = 0; i < n; i++)
 		{
 			int r =fluid_synth_set_basic_channel_LOCAL( synth, 
-					basicChannelInfos[i].basicchan,
-					basicChannelInfos[i].mode,
-					basicChannelInfos[i].val);
+					basic_channel_infos[i].basicchan,
+					basic_channel_infos[i].mode,
+					basic_channel_infos[i].val);
 			if (result == FLUID_OK)
 			{
 				result = r;
@@ -218,13 +218,17 @@ int fluid_synth_reset_basic_channels(fluid_synth_t* synth,
  *   - val has a number of channels overlapping the next basic channel.
  */
 int fluid_synth_set_basic_channel(fluid_synth_t* synth, 
-								fluid_basic_channel_infos_t *basicChannelInfos)
+								fluid_basic_channel_infos_t *basic_channel_infos)
 {
     int result;
-    const int chan = basicChannelInfos->basicchan;
-    const int mode = basicChannelInfos->mode;
-    const int val = basicChannelInfos->val;
+    int chan ;
+    int mode ;
+    int val ;
 
+	fluid_return_val_if_fail (basic_channel_infos!= NULL, FLUID_FAILED);
+    chan = basic_channel_infos->basicchan;
+    mode = basic_channel_infos->mode;
+    val = basic_channel_infos->val;
     fluid_return_val_if_fail (mode >= 0, FLUID_FAILED);
     fluid_return_val_if_fail (mode < FLUID_CHANNEL_MODE_LAST, FLUID_FAILED);
     fluid_return_val_if_fail (val >= 0, FLUID_FAILED);
@@ -391,15 +395,15 @@ the next basic channel\n";
  *   - modeInfos is NULL.
  */
 int fluid_synth_get_channel_mode(fluid_synth_t* synth, int chan,
-				fluid_basic_channel_infos_t  *modeInfos)
+				fluid_basic_channel_infos_t  *mode_infos)
 {
 	/* checks parameters first */
-	fluid_return_val_if_fail (modeInfos!= NULL, FLUID_FAILED);
+	fluid_return_val_if_fail (mode_infos!= NULL, FLUID_FAILED);
 	FLUID_API_ENTRY_CHAN(FLUID_FAILED);
 	/**/
 	/* if chan is enabled , we search the basic channel chan belongs to 
 	  otherwise chan doesn't belong to any basic channel part*/
-	modeInfos->basicchan= -1; /* means no basic channel found */
+	mode_infos->basicchan= -1; /* means no basic channel found */
 	if (synth->channel[chan]->mode &  FLUID_CHANNEL_ENABLED)
 	{ /* chan is enabled , we search the basic channel chan belongs to */
 		int i;
@@ -407,13 +411,13 @@ int fluid_synth_get_channel_mode(fluid_synth_t* synth, int chan,
 		{
 			if (synth->channel[i]->mode &  FLUID_CHANNEL_BASIC)
 			{	/* i is the basic channel */
-				modeInfos->basicchan = i;
+				mode_infos->basicchan = i;
 				break;
 			}
 		}
 	}	
-	modeInfos->mode = synth->channel[chan]->mode;
-	modeInfos->val = synth->channel[chan]->mode_val;
+	mode_infos->mode = synth->channel[chan]->mode;
+	mode_infos->val = synth->channel[chan]->mode_val;
 	/**/
 	FLUID_API_RETURN(FLUID_OK);
 }
