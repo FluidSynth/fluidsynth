@@ -806,15 +806,16 @@ print_usage()
 void
 print_welcome()
 {
-  printf("FluidSynth version %s\n"
+  printf("FluidSynth runtime version %s\n"
 	 "Copyright (C) 2000-2017 Peter Hanappe and others.\n"
 	 "Distributed under the LGPL license.\n"
 	 "SoundFont(R) is a registered trademark of E-mu Systems, Inc.\n\n",
-	 FLUIDSYNTH_VERSION);
+	 fluid_version_str());
 }
 
 void print_configure()
 {
+    printf("FluidSynth executable version %s\n", FLUIDSYNTH_VERSION);
     puts("Sample type="
 #ifdef WITH_FLOAT
     "float"
