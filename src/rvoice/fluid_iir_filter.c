@@ -204,14 +204,15 @@ fluid_iir_filter_calculate_coefficients(fluid_iir_filter_t* iir_filter,
                                         int transition_samples, 
                                         fluid_real_t output_rate)
 {
+  fluid_real_t omega, sin_coeff, cos_coeff, alpha_coeff, a0_inv;
+  fluid_real_t a1_temp, a2_temp;
+  fluid_real_t b02_temp, b1_temp;
+  
   /* if Q==0 temporarily disables the filter, else we would get some inf and nan values for our coefficients. */
   if(iir_filter->q_lin == 0)
   {
       return;
   }
-  
-  fluid_real_t a1_temp, a2_temp;
-  fluid_real_t b02_temp, b1_temp;
   
   /*
    * Those equations from Robert Bristow-Johnson's `Cookbook
@@ -222,12 +223,12 @@ fluid_iir_filter_calculate_coefficients(fluid_iir_filter_t* iir_filter,
    * into account for both significant frequency relocation and for
    * bandwidth readjustment'. */
 
-  fluid_real_t omega = (fluid_real_t) (2.0 * M_PI * 
-                      (iir_filter->last_fres / ((float) output_rate)));
-  fluid_real_t sin_coeff = (fluid_real_t) sin(omega);
-  fluid_real_t cos_coeff = (fluid_real_t) cos(omega);
-  fluid_real_t alpha_coeff = sin_coeff / (2.0f * iir_filter->q_lin);
-  fluid_real_t a0_inv = 1.0f / (1.0f + alpha_coeff);
+  omega = (fluid_real_t) (2.0 * M_PI * 
+                       (iir_filter->last_fres / ((float) output_rate)));
+  sin_coeff = (fluid_real_t) sin(omega);
+  cos_coeff = (fluid_real_t) cos(omega);
+  alpha_coeff = sin_coeff / (2.0f * iir_filter->q_lin);
+  a0_inv = 1.0f / (1.0f + alpha_coeff);
 
   /* Calculate the filter coefficients. All coefficients are
    * normalized by a0. Think of `a1' as `a1/a0'.
