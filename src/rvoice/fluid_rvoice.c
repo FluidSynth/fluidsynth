@@ -557,8 +557,8 @@ static void fluid_rvoice_local_retrigger_attack (fluid_rvoice_t* voice)
 	{
 		/* Correction on volume val to achieve equivalent amplitude at noteOn legato */
 		fluid_env_data_t* env_data;
-		fluid_real_t peak = fluid_atten2amp (voice->dsp.attenuation);
-		fluid_real_t prev_peak = fluid_atten2amp (voice->dsp.prev_attenuation);
+		fluid_real_t peak = fluid_cb2amp (voice->dsp.attenuation);
+		fluid_real_t prev_peak = fluid_cb2amp (voice->dsp.prev_attenuation);
 		voice->envlfo.volenv.val = (voice->envlfo.volenv.val  * prev_peak) / peak;
 		/* Correction on slope direction for Attack section */
 		env_data = &voice->envlfo.volenv.data[FLUID_VOICE_ENVATTACK];
