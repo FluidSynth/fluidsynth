@@ -156,7 +156,7 @@ static void fluid_voice_swap_rvoice(fluid_voice_t* voice)
   voice->can_access_overflow_rvoice = ctemp;
 }
 
-static void fluid_voice_initialize_rvoice(fluid_voice_t* voice)
+static void fluid_voice_initialize_rvoice(fluid_voice_t* voice, int enable_highpass)
 {
   FLUID_MEMSET(voice->rvoice, 0, sizeof(fluid_rvoice_t));
 
@@ -175,14 +175,14 @@ static void fluid_voice_initialize_rvoice(fluid_voice_t* voice)
                           0xffffffff, 0.0f, 0.0f, -1.0f, 1.0f);
   
   fluid_iir_filter_init(&voice->rvoice->resonant_filter,    FLUID_IIR_LOWPASS, TRUE);
-  fluid_iir_filter_init(&voice->rvoice->resonant_hp_filter, FLUID_IIR_HIGHPASS, FALSE);
+  fluid_iir_filter_init(&voice->rvoice->resonant_hp_filter, FLUID_IIR_HIGHPASS, enable_highpass);
 }
 
 /*
  * new_fluid_voice
  */
 fluid_voice_t*
-new_fluid_voice(fluid_real_t output_rate)
+new_fluid_voice(fluid_real_t output_rate, int enable_highpass)
 {
   fluid_voice_t* voice;
   voice = FLUID_NEW(fluid_voice_t);
@@ -209,9 +209,9 @@ new_fluid_voice(fluid_real_t output_rate)
   /* Initialize both the rvoice and overflow_rvoice */
   voice->can_access_rvoice = TRUE; 
   voice->can_access_overflow_rvoice = TRUE; 
-  fluid_voice_initialize_rvoice(voice);
+  fluid_voice_initialize_rvoice(voice, enable_highpass);
   fluid_voice_swap_rvoice(voice);
-  fluid_voice_initialize_rvoice(voice);
+  fluid_voice_initialize_rvoice(voice, enable_highpass);
 
   fluid_voice_set_output_rate(voice, output_rate);
 

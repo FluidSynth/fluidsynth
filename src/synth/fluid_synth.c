@@ -139,8 +139,7 @@ static fluid_mod_t default_reverb_mod;         /* SF2.01 section 8.4.8  */
 static fluid_mod_t default_chorus_mod;         /* SF2.01 section 8.4.9  */
 static fluid_mod_t default_pitch_bend_mod;     /* SF2.01 section 8.4.10 */
 
-fluid_mod_t custom_cc2hpfilterfc_mod;
-fluid_mod_t custom_cc2bpfilterq_mod;
+static fluid_mod_t custom_cc2hpfilterfc_mod;
 
 /* reverb presets */
 static const fluid_revmodel_presets_t revmodel_preset[] = {
@@ -412,18 +411,16 @@ fluid_synth_init(void)
   fluid_mod_set_amount(&default_pitch_bend_mod, 12700.0);                 /* Amount: 12700 cents */
 
 
-//   /* Custom CC16 -> High-Pass Filter Cutoff */
-//   fluid_mod_set_source1(&custom_cc2hpfilterfc_mod, 16,
-// 		       FLUID_MOD_CC
-// 		       | FLUID_MOD_LINEAR
-// 		       | FLUID_MOD_UNIPOLAR
-// 		       | FLUID_MOD_POSITIVE
-// 		       );
-//   fluid_mod_set_source2(&custom_cc2hpfilterfc_mod, 0, 0);
-//   fluid_mod_set_dest(&custom_cc2hpfilterfc_mod, GEN_HPFILTERFC);
-//   fluid_mod_set_amount(&custom_cc2hpfilterfc_mod, 8000);
-//   
-
+  /* Custom CC16 -> High-Pass Filter Cutoff */
+  fluid_mod_set_source1(&custom_cc2hpfilterfc_mod, 16,
+		       FLUID_MOD_CC
+		       | FLUID_MOD_LINEAR
+		       | FLUID_MOD_UNIPOLAR
+		       | FLUID_MOD_POSITIVE
+		       );
+  fluid_mod_set_source2(&custom_cc2hpfilterfc_mod, 0, 0);
+  fluid_mod_set_dest(&custom_cc2hpfilterfc_mod, GEN_HPFILTERFC);
+  fluid_mod_set_amount(&custom_cc2hpfilterfc_mod, 8000);
 }
 
 static FLUID_INLINE unsigned int fluid_synth_get_ticks(fluid_synth_t* synth)
@@ -741,15 +738,10 @@ new_fluid_synth(fluid_settings_t *settings)
     goto error_recovery;
   }
   for (i = 0; i < synth->nvoice; i++) {
-    synth->voice[i] = new_fluid_voice(synth->sample_rate);
+    synth->voice[i] = new_fluid_voice(synth->sample_rate, synth->with_high_pass);
     if (synth->voice[i] == NULL) {
       goto error_recovery;
     }
-  }
-
-  /* enable high-pass filter */
-  for (i = 0; i < synth->nvoice; i++) {
-		fluid_voice_enable_high_pass_filter(synth->voice[i], synth->with_high_pass);
   }
   
   fluid_synth_set_sample_rate(synth, synth->sample_rate);
@@ -2515,7 +2507,7 @@ fluid_synth_update_polyphony_LOCAL(fluid_synth_t* synth, int new_polyphony)
       return FLUID_FAILED;
     synth->voice = new_voices;
     for (i = synth->nvoice; i < new_polyphony; i++) {
-      synth->voice[i] = new_fluid_voice(synth->sample_rate);
+      synth->voice[i] = new_fluid_voice(synth->sample_rate, synth->with_high_pass);
       if (synth->voice[i] == NULL) 
 	return FLUID_FAILED;
     }
@@ -3317,7 +3309,6 @@ fluid_synth_alloc_voice(fluid_synth_t* synth, fluid_sample_t* sample, int chan, 
   }
 
   fluid_voice_add_mod(voice, &custom_cc2hpfilterfc_mod, FLUID_VOICE_DEFAULT);
-  fluid_voice_add_mod(voice, &custom_cc2bpfilterq_mod, FLUID_VOICE_DEFAULT);
 
   FLUID_API_RETURN(voice);
 }
