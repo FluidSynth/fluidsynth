@@ -204,16 +204,13 @@ fluid_iir_filter_calculate_coefficients(fluid_iir_filter_t* iir_filter,
                                         int transition_samples, 
                                         fluid_real_t output_rate)
 {
-  fluid_real_t omega, sin_coeff, cos_coeff, alpha_coeff, a0_inv;
-  fluid_real_t a1_temp, a2_temp;
-  fluid_real_t b02_temp, b1_temp;
-  
   /* GEN_CUSTOM_FILTERQ_LIN may switch the filter off by setting Q==0 */
   if(iir_filter->q_lin == 0)
   {
       return;
   }
-  
+  else
+  {
   /*
    * Those equations from Robert Bristow-Johnson's `Cookbook
    * formulae for audio EQ biquad filter coefficients', obtained
@@ -223,12 +220,12 @@ fluid_iir_filter_calculate_coefficients(fluid_iir_filter_t* iir_filter,
    * into account for both significant frequency relocation and for
    * bandwidth readjustment'. */
 
-  omega = (fluid_real_t) (2.0 * M_PI * 
+  fluid_real_t omega = (fluid_real_t) (2.0 * M_PI * 
                        (iir_filter->last_fres / ((float) output_rate)));
-  sin_coeff = (fluid_real_t) sin(omega);
-  cos_coeff = (fluid_real_t) cos(omega);
-  alpha_coeff = sin_coeff / (2.0f * iir_filter->q_lin);
-  a0_inv = 1.0f / (1.0f + alpha_coeff);
+  fluid_real_t sin_coeff = (fluid_real_t) sin(omega);
+  fluid_real_t cos_coeff = (fluid_real_t) cos(omega);
+  fluid_real_t alpha_coeff = sin_coeff / (2.0f * iir_filter->q_lin);
+  fluid_real_t a0_inv = 1.0f / (1.0f + alpha_coeff);
 
   /* Calculate the filter coefficients. All coefficients are
    * normalized by a0. Think of `a1' as `a1/a0'.
@@ -240,10 +237,10 @@ fluid_iir_filter_calculate_coefficients(fluid_iir_filter_t* iir_filter,
    *  iir_filter->b2=(1.-cos_coeff)*a0_inv*0.5*iir_filter->filter_gain; */
 
   /* "a" coeffs are same for all 3 available filter types */
-  a1_temp = -2.0f * cos_coeff * a0_inv;
-  a2_temp = (1.0f - alpha_coeff) * a0_inv;
+  fluid_real_t a1_temp = -2.0f * cos_coeff * a0_inv;
+  fluid_real_t a2_temp = (1.0f - alpha_coeff) * a0_inv;
   
-  
+  fluid_real_t b02_temp, b1_temp;
   switch(iir_filter->type)
   {
       case FLUID_IIR_HIGHPASS:
@@ -303,6 +300,7 @@ fluid_iir_filter_calculate_coefficients(fluid_iir_filter_t* iir_filter,
     iir_filter->filter_coeff_incr_count = transition_samples;
   }
   fluid_check_fpe ("voice_write filter calculation");
+  }
 }
 
 
