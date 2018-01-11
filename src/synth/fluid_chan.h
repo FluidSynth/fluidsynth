@@ -42,17 +42,16 @@
 
             The monophonic list
    +------------------------------------------------+
-   | +--------------------------------------------+ |
-   | |  +----+   +----+          +----+   +----+  | |
-   | +--|note|<--|note|<--....<--|note|<--|note|<-+ |
+   |    +----+   +----+          +----+   +----+    |
+   |    |note|   |note|          |note|   |note|    |
    +--->|vel |-->|vel |-->....-->|vel |-->|vel |----+
         +----+   +----+          +----+   +----+
          /|\                      /|\
-          |                        |
-        i_first                   i_last
+		  |                        |
+		i_first                   i_last
  
  The monophonic list is a circular buffer of SIZE_MONOLIST elements
- Each element is linked forward and backward at initialisation time.
+ Each element is linked forward at initialisation time.
  - when a note is added at noteOn  (see fluid_channel_add_monolist()) each
    element is use in the forward direction and indexed by i_last variable. 
  - when a note is removed at noteOff (see fluid_channel_remove_monolist()),
@@ -65,7 +64,6 @@
 */
 struct mononote
 {
-    unsigned char prev; /* previous note */
     unsigned char next; /* next note */
     unsigned char note; /* note */
     unsigned char vel;  /* velocity */
@@ -273,8 +271,8 @@ int fluid_channel_get_interp_method(fluid_channel_t* chan);
 /* End of interface to monophonic list variables */
 
 void fluid_channel_add_monolist(fluid_channel_t* chan, unsigned char key, unsigned char vel, unsigned char onenote);
-int fluid_channel_search_monolist(fluid_channel_t* chan, unsigned char key);
-int fluid_channel_remove_monolist(fluid_channel_t* chan, short i);
+int fluid_channel_search_monolist(fluid_channel_t* chan, unsigned char key , int * i_prev);
+void fluid_channel_remove_monolist(fluid_channel_t* chan, int i, int * i_prev);
 void fluid_channel_clear_monolist(fluid_channel_t* chan);
 void fluid_channel_set_onenote_monolist(fluid_channel_t* chan, unsigned char key, unsigned char vel);
 void fluid_channel_invalid_prev_note_staccato(fluid_channel_t* chan);

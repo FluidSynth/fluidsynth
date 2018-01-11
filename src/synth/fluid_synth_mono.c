@@ -34,14 +34,13 @@
 
             The monophonic list
    +------------------------------------------------+
-   | +--------------------------------------------+ |
-   | |  +----+   +----+          +----+   +----+  | |
-   | +--|note|<--|note|<--....<--|note|<--|note|<-+ |
+   |    +----+   +----+          +----+   +----+    |
+   |    |note|   |note|          |note|   |note|    |
    +--->|vel |-->|vel |-->....-->|vel |-->|vel |----+
         +----+   +----+          +----+   +----+
          /|\                      /|\
-          |                        |
-        i_first                   i_last
+		  |                        |
+		i_first                   i_last
  
   The list allows an easy automatic detection of a legato passage when it is
   played on a MIDI keyboard input device.
@@ -374,15 +373,15 @@ int fluid_synth_noteon_mono_LOCAL(fluid_synth_t* synth, int chan,
 int fluid_synth_noteoff_mono_LOCAL(fluid_synth_t* synth, int chan, int key)
 {
 	int status;
-	int i,iPrev;
+	int i,i_prev;
 	fluid_channel_t* channel = synth->channel[chan];
 	/* searching the note in the monophonic list */
-	i=fluid_channel_search_monolist(channel, (unsigned char)key);
+	i=fluid_channel_search_monolist(channel, (unsigned char)key , &i_prev);
 
 	if (i >= 0)
 	{ /* the note is in the monophonic list */
 		/* Removes the note out of the monophonic list */
-		iPrev = fluid_channel_remove_monolist(channel,i);
+		fluid_channel_remove_monolist(channel,i , &i_prev);
 
 		/* in Breath Sync mode, the noteoff triggering is done 
 		   if the musician is blowing in the breath controller */
@@ -392,14 +391,14 @@ int fluid_synth_noteoff_mono_LOCAL(fluid_synth_t* synth, int chan, int key)
 			/* legato playing detection */
 			if(channel->mode  & FLUID_CHANNEL_LEGATO_PLAYING) 
 			{ /* the list contains others notes */
-				if(iPrev >= 0) 
+				if(i_prev >= 0) 
 				{ /* legato playing detection */
 					/* legato from key to iPrev key */
 					/* the voices from key number are to be used to
 					play iPrev key number. */
 					status = fluid_synth_noteon_monopoly_legato(synth, chan,
-								   key, channel->monolist[iPrev].note,
-								   channel->monolist[iPrev].vel);
+								   key, channel->monolist[i_prev].note,
+								   channel->monolist[i_prev].vel);
 				}
 				/* else the note doesn't need to be played off */
 				else

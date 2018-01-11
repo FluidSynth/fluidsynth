@@ -72,12 +72,11 @@ fluid_channel_init(fluid_channel_t* chan)
   chan->mode = 0;
   chan->mode_val = 0;
   /* monophonic list initialization */
-   for (i=0; i < SIZE_MONOLIST; i++)  {
+  for (i=0; i < SIZE_MONOLIST; i++)
+  {
      chan->monolist[i].next = i+1;
-     chan->monolist[i].prev = i-1;
   }
   chan->monolist[SIZE_MONOLIST -1].next = 0; /* ending element chained to the 1st */
-  chan->monolist[0].prev = SIZE_MONOLIST -1; /* first element chained to the ending */
   chan->i_last = chan->n_notes = 0; /* list is clear */
   chan->i_first = chan->monolist[chan->i_last].next; /* first note index in the list */
   fluid_channel_clear_prev_note(chan); /* Mark previous note invalid */
@@ -323,17 +322,16 @@ fluid_channel_get_sfont_bank_prog(fluid_channel_t* chan, int *sfont,
  *
  *            The monophonic list
  *  +------------------------------------------------+
- *  | +--------------------------------------------+ |
- *  | |  +----+   +----+          +----+   +----+  | |
- *  | +--|note|<--|note|<--....<--|note|<--|note|<-+ |
+ *  |    +----+   +----+          +----+   +----+    |
+ *  |    |note|   |note|          |note|   |note|    |
  *  +--->|vel |-->|vel |-->....-->|vel |-->|vel |----+
  *       +----+   +----+          +----+   +----+
  *        /|\                      /|\
- *         |                        |
+ * 	       |                        |
  *      i_first                   i_last
  *
  * The monophonic list is a circular buffer of  SIZE_MONOLIST elements
- * Each element is linked forward and backward at initialisation time.
+ * Each element is linked forward at initialisation time.
  * when a note is added at noteOn each element is use in the forward direction
  * and indexed by i_last variable. 
  *
@@ -392,33 +390,42 @@ fluid_channel_add_monolist(fluid_channel_t* chan, unsigned char key,
  *
  * The search starts from the first note in the list indexed by i_first
  *
- *                The monophonic list
+ *            The monophonic list
  *  +------------------------------------------------+
- *  | +--------------------------------------------+ |
- *  | |  +----+   +----+          +----+   +----+  | |
- *  | +--|note|<--|note|<--....<--|note|<--|note|<-+ |
+ *  |    +----+   +----+          +----+   +----+    |
+ *  |    |note|   |note|          |note|   |note|    |
  *  +--->|vel |-->|vel |-->....-->|vel |-->|vel |----+
  *       +----+   +----+          +----+   +----+
  *        /|\                      /|\
- *         |                        |
+ * 	       |                        |
  *      i_first                   i_last
  * 
  * @param chan  fluid_channel_t.
  * @param key MIDI note number (0-127) to search.
+ * @param i_prev pointer on returned index of the note prior the note to search.
  * @return index of the note if find, FLUID_FAILED otherwise.
  * 
  */
 int
-fluid_channel_search_monolist(fluid_channel_t* chan, unsigned char key)
+fluid_channel_search_monolist(fluid_channel_t* chan, unsigned char key , int * i_prev)
 {
 	short n = chan->n_notes; /* number of notes in monophonic list */
-	short i= chan->i_first; /* searching starts from i_first included */
-	for ( ;n ; n--) 
+	short j,i= chan->i_first; /* searching starts from i_first included */
+	for (j=0 ; j < n ; j++) 
 	{
 		if(chan->monolist[i].note == key)
 		{	
-			return i; /* found */
+			if (i == chan->i_first)
+			{	/* tracking i_prev */
+				for (j = chan->i_last ; n < SIZE_MONOLIST; n++)
+				{
+					j =chan->monolist[j].next;
+				}
+				* i_prev = j; /* returns index of the previous note */
+			}
+			return i; /* return index of the note to search */
 		}
+		* i_prev = i; /* tracking i_prev */
 		i = chan->monolist[i].next; /* next element */
 	}
 	return FLUID_FAILED; /* not found */
@@ -432,17 +439,16 @@ fluid_channel_search_monolist(fluid_channel_t* chan, unsigned char key)
  *
  *            The monophonic list
  *  +------------------------------------------------+
- *  | +--------------------------------------------+ |
- *  | |  +----+   +----+          +----+   +----+  | |
- *  | +--|note|<--|note|<--....<--|note|<--|note|<-+ |
+ *  |    +----+   +----+          +----+   +----+    |
+ *  |    |note|   |note|          |note|   |note|    |
  *  +--->|vel |-->|vel |-->....-->|vel |-->|vel |----+
  *       +----+   +----+          +----+   +----+
  *        /|\                      /|\
- *         |                        |
+ * 	       |                        |
  *      i_first                   i_last
  *
  * The monophonic list is a circular buffer of  SIZE_MONOLIST elements
- * Each element is linked forward and backward at initialisation time.
+ * Each element is linked forward at initialisation time.
  * when a note is removed at noteOff the element concerned is fast unlinked
  * and relinked after the i_last element.
  *
@@ -450,9 +456,11 @@ fluid_channel_search_monolist(fluid_channel_t* chan, unsigned char key)
  * @param 
  *   i, index of the note to remove. If i is invalid or the list is 
  *      empty, the function do nothing and returns FLUID_FAILED.
- * @return prev index prior the last note if i is the last note in the list,
- *        FLUID_FAILED otherwise. When the returned index is valid it means
- *        a legato detection.
+ * @param 
+ *   On input, i_prev is a pointer on index of the note previous i.
+ *   On output i_prev is a pointer on index of the note previous i if i is the last note 
+ *   in the list,FLUID_FAILED otherwise. When the returned index is valid it means
+ *   a legato dectection.
  *
  * Note: the following variables in Channel keeps trace of the situation.
  *       - i_last index keeps a trace of the most recent note played even if
@@ -462,15 +470,14 @@ fluid_channel_search_monolist(fluid_channel_t* chan, unsigned char key)
  * 
  * More informations in FluidPolyMono-0003.pdf chapter 4 (Appendices).
  */
-int
-fluid_channel_remove_monolist(fluid_channel_t* chan, short i)
+void
+fluid_channel_remove_monolist(fluid_channel_t* chan, int i, int * i_prev)
 {
-	int i_prev = FLUID_FAILED;
 	unsigned char i_last = chan->i_last;
 	/* checks if index is valid */
 	if( i < 0 || i >= SIZE_MONOLIST || !chan->n_notes)
 	{
-		return FLUID_FAILED;
+		* i_prev =  FLUID_FAILED;
 	}
 	/* The element is about to be removed and inserted between i_last and next */
 	/* Note: when i is egal to i_last or egal to i_first, removing/inserting
@@ -480,8 +487,7 @@ fluid_channel_remove_monolist(fluid_channel_t* chan, short i)
 		/* keeps trace of the note prior last note */
 		chan->prev_note= chan->monolist[i_last].note;
 		/* moves i_last backward to the previous  */
-		i_prev = chan->monolist[i].prev; /* returns the note prior i_last */
-		chan->i_last = i_prev; /* i_last index is moved backward */
+		chan->i_last = *i_prev; /* i_last index is moved backward */
 	}
 	else 
 	{ /* i is before i_last */
@@ -493,20 +499,13 @@ fluid_channel_remove_monolist(fluid_channel_t* chan, short i)
 		}
 		else 
 		{ /* i is between i_first and i_last */
-			/* Unlinks element i and inserts it between i_last and next */
-			unsigned char next,prev,nextend;
-			/* removing by chaining prev and next */
-			next = chan->monolist[i].next;
-			prev = chan->monolist[i].prev;
-			chan->monolist[next].prev = prev;
-			chan->monolist[prev].next = next;
-			/* inserting element i after i_last */
-			nextend = chan->monolist[i_last].next;
-			chan->monolist[i].next = nextend; 
-			chan->monolist[nextend].prev = i;
-			chan->monolist[i].prev = i_last;
+			/* Unlinks element i and inserts after i_last */
+			chan->monolist[* i_prev].next = chan->monolist[i].next; /* unlinks i */
+			 /*inserts i after i_last */
+			chan->monolist[i].next = chan->monolist[i_last].next;
 			chan->monolist[i_last].next = i;
 		}
+		* i_prev =  FLUID_FAILED;
 	}
 	chan->n_notes--; /* updates the number of note in the list */
 	/* Updates legato/ staccato playing state */
@@ -518,7 +517,6 @@ fluid_channel_remove_monolist(fluid_channel_t* chan, short i)
 	{
 		chan->mode &= ~ FLUID_CHANNEL_LEGATO_PLAYING; /* Staccato state */
 	}
-	return i_prev;
 }
 
 /**
@@ -526,13 +524,12 @@ fluid_channel_remove_monolist(fluid_channel_t* chan, short i)
  *
  *            The monophonic list
  *  +------------------------------------------------+
- *  | +--------------------------------------------+ |
- *  | |  +----+   +----+          +----+   +----+  | |
- *  | +--|note|<--|note|<--....<--|note|<--|note|<-+ |
+ *  |    +----+   +----+          +----+   +----+    |
+ *  |    |note|   |note|          |note|   |note|    |
  *  +--->|vel |-->|vel |-->....-->|vel |-->|vel |----+
  *       +----+   +----+          +----+   +----+
  *        /|\                      /|\
- *         |                        |
+ * 	       |                        |
  *      i_first                   i_last
  *
  * @param chan  fluid_channel_t.
@@ -560,13 +557,12 @@ void fluid_channel_clear_monolist(fluid_channel_t* chan)
  *
  *            The monophonic list
  *  +------------------------------------------------+
- *  | +--------------------------------------------+ |
- *  | |  +----+   +----+          +----+   +----+  | |
- *  | +--|note|<--|note|<--....<--|note|<--|note|<-+ |
+ *  |    +----+   +----+          +----+   +----+    |
+ *  |    |note|   |note|          |note|   |note|    |
  *  +--->|vel |-->|vel |-->....-->|vel |-->|vel |----+
  *       +----+   +----+          +----+   +----+
  *        /|\                      /|\
- *         |                        |
+ * 	       |                        |
  *      i_first                   i_last
  *
  * @param chan  fluid_channel_t.
