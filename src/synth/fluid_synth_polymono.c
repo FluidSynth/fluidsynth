@@ -212,6 +212,7 @@ int fluid_synth_reset_basic_channels(fluid_synth_t* synth,
  * @return 
  * - FLUID_OK on success.
  * - FLUID_FAILED
+ *   - basic_channel_infos is NULL.
  *   - synth is NULL.
  *   - chan or val is outside MIDI channel count.
  *   - mode is invalid.
