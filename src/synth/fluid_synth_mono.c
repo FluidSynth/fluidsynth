@@ -39,8 +39,8 @@
    +--->|vel |-->|vel |-->....-->|vel |-->|vel |----+
         +----+   +----+          +----+   +----+
          /|\                      /|\
-		  |                        |
-		i_first                   i_last
+          |                        |
+       i_first                   i_last
  
   The list allows an easy automatic detection of a legato passage when it is
   played on a MIDI keyboard input device.
@@ -392,7 +392,7 @@ int fluid_synth_noteoff_mono_LOCAL(fluid_synth_t* synth, int chan, int key)
 			if(channel->mode  & FLUID_CHANNEL_LEGATO_PLAYING) 
 			{ /* the list contains others notes */
 				if(i_prev >= 0) 
-				{ /* legato playing detection */
+				{ /* legato playing detection on noteoff */
 					/* legato from key to iPrev key */
 					/* the voices from key number are to be used to
 					play iPrev key number. */

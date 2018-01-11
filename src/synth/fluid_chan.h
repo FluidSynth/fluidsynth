@@ -47,8 +47,8 @@
    +--->|vel |-->|vel |-->....-->|vel |-->|vel |----+
         +----+   +----+          +----+   +----+
          /|\                      /|\
-		  |                        |
-		i_first                   i_last
+          |                        |
+       i_first                   i_last
  
  The monophonic list is a circular buffer of SIZE_MONOLIST elements
  Each element is linked forward at initialisation time.
