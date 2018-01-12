@@ -551,32 +551,6 @@ void fluid_channel_clear_monolist(fluid_channel_t* chan)
 }
 
 /**
- * The monophonic list is flushed keeping last note only.
- * The function is entended to be called on legato Off when the
- * monolist has notes.
- *
- *            The monophonic list
- *  +------------------------------------------------+
- *  |    +----+   +----+          +----+   +----+    |
- *  |    |note|   |note|          |note|   |note|    |
- *  +--->|vel |-->|vel |-->....-->|vel |-->|vel |----+
- *       +----+   +----+          +----+   +----+
- *        /|\                      /|\
- *         |                        |
- *      i_first                   i_last
- *
- * @param chan  fluid_channel_t.
- * Note: i_last index keeps a trace of the most recent note played.
- *       prev_note keeps a trace of the note i_last.
- *       FLUID_CHANNEL_LEGATO_PLAYING bit keeps trace of legato/staccato playing.
- */
-static void fluid_channel_keep_lastnote_monolist(fluid_channel_t* chan)
-{
-	chan->i_first = chan->i_last;
-	chan->n_notes = 1;
-}
-
-/**
  * On noteOn on a polyphonic channel,adds the note into the monophonic list
  * keeping only this note.
  * @param 
@@ -630,8 +604,15 @@ void fluid_channel_cc_legato(fluid_channel_t* chan, int value)
 	if (!(chan->mode & FLUID_CHANNEL_POLY_OFF) && chan->n_notes) /* The monophonic list have notes */
 	{
 		if (value < 64 ) /* legato is released */
-		{	/* returns from monophonic to polyphonic with note in monophonic list */
-			fluid_channel_keep_lastnote_monolist(chan);
+		{	/* returns from monophonic to polyphonic with notes in the monophonic list */
+			
+			/* The monophonic list is flushed keeping last note only 
+			   Note: i_last index keeps a trace of the most recent note played.
+			   prev_note keeps a trace of the note i_last.
+			   FLUID_CHANNEL_LEGATO_PLAYING bit keeps trace of legato/staccato playing.
+			*/
+			chan->i_first = chan->i_last;
+			chan->n_notes = 1;
 		}
 		else /* legato is depressed */
 		{	/* Inters in monophonic from polyphonic with note in monophonic list */
