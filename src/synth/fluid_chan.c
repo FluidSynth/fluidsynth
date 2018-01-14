@@ -314,6 +314,26 @@ fluid_channel_get_sfont_bank_prog(fluid_channel_t* chan, int *sfont,
   if (prog) *prog = (sfont_bank_prog & PROG_MASKVAL) >> PROG_SHIFTVAL;
 }
 
+/**
+ * Updates legato/ sataccato playing state 
+ * The function is called:
+ * - on noteon before adding a note into the monolist.
+ * - on noteoff after removing a note out of the monolist.
+ * @param chan  fluid_channel_t.
+*/
+static void 
+fluid_channel_update_legato_staccato_state(fluid_channel_t* chan)
+{
+	/* Updates legato/ staccato playing state */
+	if (chan->n_notes)
+	{
+		chan->mode |= FLUID_CHANNEL_LEGATO_PLAYING; /* Legato state */
+	}
+	else
+	{
+		chan->mode &= ~ FLUID_CHANNEL_LEGATO_PLAYING; /* Staccato state */
+	}
+}
 
 /**
  * Adds a note into the monophonic list. The function is part of the legato 
@@ -352,15 +372,11 @@ fluid_channel_add_monolist(fluid_channel_t* chan, unsigned char key,
 {
 	unsigned char i_last = chan->i_last;
 	/* Updates legato/ sataccato playing state */
+	fluid_channel_update_legato_staccato_state(chan);
 	if (chan->n_notes)
 	{
-		chan->mode |= FLUID_CHANNEL_LEGATO_PLAYING; /* Legato state */
 		/* keeps trace of the note prior last note */
 		chan->prev_note = chan->monolist[i_last].note;
-	}
-	else
-	{
-		chan->mode &= ~ FLUID_CHANNEL_LEGATO_PLAYING; /* Staccato state */
 	}
 	/* moves i_last forward before writing new note */
 	i_last = chan->monolist[i_last].next; 
@@ -509,14 +525,7 @@ fluid_channel_remove_monolist(fluid_channel_t* chan, int i, int * i_prev)
 	}
 	chan->n_notes--; /* updates the number of note in the list */
 	/* Updates legato/ staccato playing state */
-	if (chan->n_notes)
-	{
-		chan->mode |= FLUID_CHANNEL_LEGATO_PLAYING; /* Legato state */
-	}
-	else
-	{
-		chan->mode &= ~ FLUID_CHANNEL_LEGATO_PLAYING; /* Staccato state */
-	}
+	fluid_channel_update_legato_staccato_state(chan);
 }
 
 /**
