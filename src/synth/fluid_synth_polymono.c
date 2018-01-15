@@ -246,6 +246,25 @@ int fluid_synth_set_basic_channel(fluid_synth_t* synth,
 }
 
 /**
+ * Searchs a previous basic channel.
+ * 
+ * @param synth the synth instance.
+ * @param chan starting index of the search (including chan).
+ * @return index of the basic channel if found , FLUID_FAILED otherwise 
+ */
+static int fluid_synth_get_previous_basic_channel(fluid_synth_t* synth, int chan)
+{
+	for (; chan >=0; chan--)
+	{	/* searchs previous basic channel */
+		if (synth->channel[chan]->mode &  FLUID_CHANNEL_BASIC)
+		{	/* chan is the previous basic channel */
+			return chan;
+		}
+	}
+	return FLUID_FAILED;
+}
+
+/**
  * Changes the mode of an existing basic channel or inserts a new basic channel part.
  *
  * - If basicchan is already a basic channel, the mode is changed.
@@ -280,7 +299,7 @@ int fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth,
 the next basic channel\n";
 		int last_begin_range; /* Last channel num inside the beginning range + 1. */
 		int last_end_range; /* Last channel num inside the ending range + 1. */
-		int prev_basic_chan = -1 ; // Previous basic channel
+		int prev_basic_chan = FLUID_FAILED ; // Previous basic channel
 		int i;
 		result = FLUID_OK;
 		if ( !(synth->channel[basicchan]->mode &  FLUID_CHANNEL_BASIC))
@@ -288,21 +307,17 @@ the next basic channel\n";
 			and the next basic channel.	*/
 			if (synth->channel[basicchan]->mode &  FLUID_CHANNEL_ENABLED)
 			{ /* val value of the previous basic channel need to be narrowed */
-				for (i = basicchan - 1; i >=0; i--)
-				{	/* searchs previous basic channel */
-					if (synth->channel[i]->mode &  FLUID_CHANNEL_BASIC)
-					{	/* i is the previous basic channel */
-						prev_basic_chan = i;
-						break;
-					}
-				}
+				prev_basic_chan = fluid_synth_get_previous_basic_channel(synth, basicchan - 1);
 			}	
 		}
 
 		/* last_end_range: next basic channel  or midi channels count  */
 		for (last_end_range = basicchan +1; last_end_range < n_chan; last_end_range++)
 		{
-			if (synth->channel[last_end_range]->mode &  FLUID_CHANNEL_BASIC) break;
+			if (synth->channel[last_end_range]->mode &  FLUID_CHANNEL_BASIC)
+			{
+				break;
+			}
 		}
 		/* Now last_begin_range is set */
 		switch (mode = mode &  FLUID_CHANNEL_MODE_MASK)
@@ -404,18 +419,10 @@ int fluid_synth_get_channel_mode(fluid_synth_t* synth, int chan,
 	/**/
 	/* if chan is enabled , we search the basic channel chan belongs to 
 	  otherwise chan doesn't belong to any basic channel part*/
-	mode_infos->basicchan= -1; /* means no basic channel found */
+	mode_infos->basicchan = FLUID_FAILED; /* means no basic channel found */
 	if (synth->channel[chan]->mode &  FLUID_CHANNEL_ENABLED)
 	{ /* chan is enabled , we search the basic channel chan belongs to */
-		int i;
-		for (i = chan ; i >=0; i--)
-		{
-			if (synth->channel[i]->mode &  FLUID_CHANNEL_BASIC)
-			{	/* i is the basic channel */
-				mode_infos->basicchan = i;
-				break;
-			}
-		}
+		mode_infos->basicchan = fluid_synth_get_previous_basic_channel(synth, chan);
 	}	
 	mode_infos->mode = synth->channel[chan]->mode;
 	mode_infos->val = synth->channel[chan]->mode_val;
