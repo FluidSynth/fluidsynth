@@ -110,7 +110,7 @@ FLUIDSYNTH_API fluid_sfloader_t* new_fluid_defsfloader(fluid_settings_t* setting
 
 /**
  * Opens the file or memory indicated by \c filename in binary read mode.
- * \c filename matches the one provided during the fluid_synth_sfload() call.
+ * \c filename matches the string provided during the fluid_synth_sfload() call.
  *
  * @return returns a file handle on success, NULL otherwise
  */
