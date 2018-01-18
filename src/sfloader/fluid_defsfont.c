@@ -3513,8 +3513,7 @@ fixup_sample (SFData * sf)
              * valid sample will be played */
             sam->loopend = sam->end;
 	        }
-	  
-          if(loopend_end_mismatch)
+          else if(loopend_end_mismatch)
 	        {
             FLUID_LOG (FLUID_DBG, _("Sample '%s' has invalid loop stop '%d',"
               " sample stop at '%d', using it anyway"), sam->name, sam->loopend, sam->end);
