@@ -3451,7 +3451,7 @@ fixup_sample (SFData * sf)
   int invalid_loops=FALSE;
   int invalid_loopstart;
   int invalid_loopend, loopend_end_mismatch;
-  unsigned int sdtachunk_size = sf->samplesize;
+  unsigned int total_samples = sf->samplesize / FLUID_MEMBER_SIZE(fluid_defsfont_t, sampledata[0]);
 
   p = sf->sample;
   while (p)
@@ -3464,14 +3464,14 @@ fixup_sample (SFData * sf)
        * this is as it should be. however we cannot be sure whether any of sam.loopend or sam.end
        * is correct. hours of thinking through this have concluded, that it would be best practice 
        * to mangle with loops as little as necessary by only making sure loopend is within
-       * sdtachunk_size. incorrect soundfont shall preferably fail loudly. */
-      invalid_loopend = (sam->loopend > sdtachunk_size) || (sam->loopstart >= sam->loopend);
+       * total_samples. incorrect soundfont shall preferably fail loudly. */
+      invalid_loopend = (sam->loopend > total_samples) || (sam->loopstart >= sam->loopend);
       
       loopend_end_mismatch = (sam->loopend > sam->end);
 	  
       /* if sample is not a ROM sample and end is over the sample data chunk
          or sam start is greater than 4 less than the end (at least 4 samples) */
-      if ((!(sam->sampletype & FLUID_SAMPLETYPE_ROM) && sam->end > sdtachunk_size)
+      if ((!(sam->sampletype & FLUID_SAMPLETYPE_ROM) && sam->end > total_samples)
           || sam->start > (sam->end - 4))
       {
           FLUID_LOG (FLUID_WARN, _("Sample '%s' start/end file positions are invalid,"
