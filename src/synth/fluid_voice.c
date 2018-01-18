@@ -36,6 +36,9 @@
 /* min vol envelope release (to stop clicks) in SoundFont timecents */
 #define FLUID_MIN_VOLENVRELEASE -7200.0f /* ~16ms */
 
+
+static const int32_t INT24_MAX = (1 << (16+8-1));
+
 static int fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t* voice);
 static int calculate_hold_decay_buffers(fluid_voice_t* voice, int gen_base,
                                         int gen_key2base, int is_decay);
@@ -442,8 +445,7 @@ fluid_voice_calculate_gain_amplitude(const fluid_voice_t* voice, fluid_real_t ga
     /* we use 24bit samples in fluid_rvoice_dsp. in order to normalize float
      * samples to [0.0;1.0] divide samples by the max. value of an int24 and
      * amplify them with the gain */
-    const fluid_real_t INT24_MAX = (1 << (16+8-1)) * 1.0f;
-    return gain * voice->synth_gain / INT24_MAX;
+    return gain * voice->synth_gain / (INT24_MAX * 1.0f);
 }
 
 void 
@@ -1635,20 +1637,21 @@ int fluid_voice_set_gain(fluid_voice_t* voice, fluid_real_t gain)
 int
 fluid_voice_optimize_sample(fluid_sample_t* s)
 {
-  signed short peak_max = 0;
-  signed short peak_min = 0;
-  signed short peak;
+  int32_t peak_max = 0;
+  int32_t peak_min = 0;
+  int32_t peak;
   fluid_real_t normalized_amplitude_during_loop;
   double result;
-  int i;
+  unsigned int i;
 
   /* ignore ROM and other(?) invalid samples */
   if (!s->valid) return (FLUID_OK);
 
   if (!s->amplitude_that_reaches_noise_floor_is_valid) { /* Only once */
     /* Scan the loop */
-    for (i = (int)s->loopstart; i < (int)s->loopend; i++){
-      signed short val = s->data[i];
+    for (i = s->loopstart; i < s->loopend; i++){
+      int32_t val = fluid_rvoice_get_sample(s->data, s->data24, i);
+
       if (val > peak_max) {
         peak_max = val;
       } else if (val < peak_min) {
@@ -1675,7 +1678,7 @@ fluid_voice_optimize_sample(fluid_sample_t* s)
      */
 
     /* 16 bits => 96+4=100 dB dynamic range => 0.00001 */
-    normalized_amplitude_during_loop = ((fluid_real_t)peak)/32768.;
+    normalized_amplitude_during_loop = ((fluid_real_t)peak)/ (INT24_MAX * 1.0f);
     result = FLUID_NOISE_FLOOR / normalized_amplitude_during_loop;
 
     /* Store in sample */
