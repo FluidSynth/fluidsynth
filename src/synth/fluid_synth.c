@@ -1004,7 +1004,7 @@ fluid_synth_noteon_LOCAL(fluid_synth_t* synth, int chan, int key, int vel)
       /* a noteon poly is passed to fluid_synth_noteon_monopoly_legato().
         This allows an opportunity to get this note played legato with a previous
         note if a CC PTC have been received before this noteon. This behavior is
-        a MIDI specification (see FluidPolymono-0003.pdf chapter 4.3-a ,3.4.11
+        a MIDI specification (see FluidPolymono-0004.pdf chapter 4.3-a ,3.4.11
         for details).
       */
       return fluid_synth_noteon_monopoly_legato(synth, chan, INVALID_NOTE, key, vel);

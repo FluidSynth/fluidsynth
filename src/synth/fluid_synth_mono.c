@@ -81,7 +81,7 @@
   note 'tokey'. Portamento fromkey note choice is determined at noteOn by
   fluid_synth_get_fromkey_portamento_legato() (see below).
   
-  More informations in FluidPolyMono-0003.pdf chapter 4 (Appendices).
+  More informations in FluidPolyMono-0004.pdf chapter 4 (Appendices).
 ******************************************************************************/
 
 
@@ -234,7 +234,7 @@ static unsigned char fluid_synth_get_fromkey_portamento_legato(fluid_channel_t* 
  *  polyphonic mode and legato pedal is On during the playing.
  *  When a channel is in "monophonic playing" state, only one note at a time can be
  *  played in a staccato or legato manner (with or without portamento).
- *  More informations in FluidPolyMono-0003.pdf chapter 4 (Appendices).
+ *  More informations in FluidPolyMono-0004.pdf chapter 4 (Appendices).
  *                                           _______________                                     
  *                 ________________         |    noteon     |
  *                | legato detector|    O-->| mono_staccato |--*-> preset_noteon
@@ -393,9 +393,9 @@ int fluid_synth_noteoff_mono_LOCAL(fluid_synth_t* synth, int chan, int key)
 			{ /* the list contains others notes */
 				if(i_prev >= 0) 
 				{ /* legato playing detection on noteoff */
-					/* legato from key to iPrev key */
+					/* legato from key to i_prev key */
 					/* the voices from key number are to be used to
-					play iPrev key number. */
+					play i_prev key number. */
 					status = fluid_synth_noteon_monopoly_legato(synth, chan,
 								   key, channel->monolist[i_prev].note,
 								   channel->monolist[i_prev].vel);
@@ -613,6 +613,7 @@ int fluid_synth_noteoff_monopoly(fluid_synth_t* synth, int chan, int key,
  * When key tokey is outside the current Instrument Zone, Preset Zone, 
  * current 'fromkey' voices are released. If necessary new voices
  * are restarted when tokey enters inside new Instrument(s) Zones,Preset Zone(s).
+ * More informations in FluidPolyMono-0004.pdf chapter 4.7 (Appendices).
  */
 int fluid_synth_noteon_monopoly_legato(fluid_synth_t* synth, int chan,
 							   int fromkey, int tokey, int vel)

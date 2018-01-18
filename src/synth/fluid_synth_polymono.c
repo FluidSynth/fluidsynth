@@ -109,7 +109,10 @@ int fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth,
  *    - synth is NULL.
  *    - n, basicchan or val is outside MIDI channel count.
  *    - mode is invalid. 
- *    - val has a number of channels overlapping the next basic channel.
+ *    - val, number of monophonic channels (for mode 3 only).
+ *      0 for mode 0,1,2.
+ *      0 to MIDI channel count for mode 3. A 0 value means all channels from 
+ *      basicchan to the next basic channel - 1.
  * 
  * @note This API is the only one to replace all the basics channels in the 
  * synth instance.
@@ -207,7 +210,10 @@ int fluid_synth_reset_basic_channels(fluid_synth_t* synth,
  * @note about information in #fluid_basic_channel_infos_t struct:  
  *   - basicchan, the basic bhannel number (0 to MIDI channel count-1).
  *   - mode, the MIDI mode to use for basicchan (0 to 3).
- *   - val, number of monophonic channels (for mode 3 only) (0 to MIDI channel count).
+ *   - val, number of monophonic channels (for mode 3 only).
+ *     0 for mode 0,1,2.
+ *     0 to MIDI channel count for mode 3. A 0 value means all channels from 
+ *     basicchan to the next basic channel - 1.
  * 
  * @return 
  * - FLUID_OK on success.
@@ -278,8 +284,10 @@ static int fluid_synth_get_previous_basic_channel(fluid_synth_t* synth, int chan
  * @param synth the synth instance.
  * @param basicchan the Basic Channel number (0 to MIDI channel count-1).
  * @param mode the MIDI mode to use for basicchan (0 to 3).
- * @param val Number of monophonic channels (for mode 3 only) (0 to MIDI channel count).
- * 
+ * @param val Number of monophonic channels (for mode 3 only.
+ *        0 for mode 0,1,2.
+ *        0 to MIDI channel count for mode 3. A 0 value means all channels from 
+ *        basicchan to the next basic channel - 1.
  * @return 
  * - FLUID_OK on success.
  * - FLUID_FAILED
