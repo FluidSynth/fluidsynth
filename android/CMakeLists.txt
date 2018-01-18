@@ -32,9 +32,9 @@ set (fluidsynth_sources
         ${src_DIR}/utils/fluid_settings.c
         ${src_DIR}/bindings/fluid_filerenderer.c
         ${src_DIR}/utils/fluid_sys.c
-        jni/src/bindings/fluid_cmd.c
-        jni/src/drivers/fluid_adriver.c
-        jni/src/drivers/fluid_mdriver.c
+        src/bindings/fluid_cmd.c
+        src/drivers/fluid_adriver.c
+        src/drivers/fluid_mdriver.c
         )
 
 add_library(fluidsynth SHARED ${fluidsynth_sources})
