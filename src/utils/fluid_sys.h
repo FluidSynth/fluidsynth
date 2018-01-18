@@ -64,6 +64,7 @@ void fluid_time_config(void);
 #define FLUID_POINTER_TO_INT      GPOINTER_TO_INT
 #define FLUID_INT_TO_POINTER      GINT_TO_POINTER
 #define FLUID_N_ELEMENTS(struct)  (sizeof (struct) / sizeof (struct[0]))
+#define FLUID_MEMBER_SIZE(struct, member)  ( sizeof (((struct *)0)->member) )
 
 #define FLUID_IS_BIG_ENDIAN       (G_BYTE_ORDER == G_BIG_ENDIAN)
 
