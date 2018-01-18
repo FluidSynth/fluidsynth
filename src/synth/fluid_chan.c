@@ -72,11 +72,11 @@ fluid_channel_init(fluid_channel_t* chan)
   chan->mode = 0;
   chan->mode_val = 0;
   /* monophonic list initialization */
-  for (i=0; i < SIZE_MONOLIST; i++)
+  for (i=0; i < FLUID_CHANNEL_SIZE_MONOLIST; i++)
   {
      chan->monolist[i].next = i+1;
   }
-  chan->monolist[SIZE_MONOLIST -1].next = 0; /* ending element chained to the 1st */
+  chan->monolist[FLUID_CHANNEL_SIZE_MONOLIST -1].next = 0; /* ending element chained to the 1st */
   chan->i_last = chan->n_notes = 0; /* list is clear */
   chan->i_first = chan->monolist[chan->i_last].next; /* first note index in the list */
   fluid_channel_clear_prev_note(chan); /* Mark previous note invalid */
@@ -350,7 +350,7 @@ fluid_channel_update_legato_staccato_state(fluid_channel_t* chan)
  *         |                        |
  *      i_first                   i_last
  *
- * The monophonic list is a circular buffer of  SIZE_MONOLIST elements
+ * The monophonic list is a circular buffer of  FLUID_CHANNEL_SIZE_MONOLIST elements
  * Each element is linked forward at initialisation time.
  * when a note is added at noteOn each element is use in the forward direction
  * and indexed by i_last variable. 
@@ -388,7 +388,7 @@ fluid_channel_add_monolist(fluid_channel_t* chan, unsigned char key,
 		chan->i_first = i_last;
 		chan->n_notes = 0;
 	}
-	if(chan->n_notes < SIZE_MONOLIST) 
+	if(chan->n_notes < FLUID_CHANNEL_SIZE_MONOLIST) 
 	{
 		chan->n_notes++; /* update n_notes */
 	}
@@ -433,7 +433,7 @@ fluid_channel_search_monolist(fluid_channel_t* chan, unsigned char key , int * i
 		{	
 			if (i == chan->i_first)
 			{	/* tracking index of the previous note (i_prev) */
-				for (j = chan->i_last ; n < SIZE_MONOLIST; n++)
+				for (j = chan->i_last ; n < FLUID_CHANNEL_SIZE_MONOLIST; n++)
 				{
 					j =chan->monolist[j].next;
 				}
@@ -463,7 +463,7 @@ fluid_channel_search_monolist(fluid_channel_t* chan, unsigned char key , int * i
  *         |                        |
  *      i_first                   i_last
  *
- * The monophonic list is a circular buffer of  SIZE_MONOLIST elements
+ * The monophonic list is a circular buffer of  FLUID_CHANNEL_SIZE_MONOLIST elements
  * Each element is linked forward at initialisation time.
  * when a note is removed at noteOff the element concerned is fast unlinked
  * and relinked after the i_last element.
@@ -491,7 +491,7 @@ fluid_channel_remove_monolist(fluid_channel_t* chan, int i, int * i_prev)
 {
 	unsigned char i_last = chan->i_last;
 	/* checks if index is valid */
-	if( i < 0 || i >= SIZE_MONOLIST || !chan->n_notes)
+	if( i < 0 || i >= FLUID_CHANNEL_SIZE_MONOLIST || !chan->n_notes)
 	{
 		* i_prev =  FLUID_FAILED;
 	}

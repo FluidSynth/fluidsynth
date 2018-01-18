@@ -36,7 +36,7 @@
      Choosing a size of 10 is sufficient (because most musician have only 10
      fingers when playing a monophonic instrument).
 */
-#define SIZE_MONOLIST  10 
+#define FLUID_CHANNEL_SIZE_MONOLIST  10 
 
 /* 
 
@@ -50,7 +50,7 @@
           |                        |
        i_first                   i_last
  
- The monophonic list is a circular buffer of SIZE_MONOLIST elements
+ The monophonic list is a circular buffer of FLUID_CHANNEL_SIZE_MONOLIST elements
  Each element is linked forward at initialisation time.
  - when a note is added at noteOn  (see fluid_channel_add_monolist()) each
    element is use in the forward direction and indexed by i_last variable. 
@@ -83,7 +83,7 @@ struct _fluid_channel_t
   int mode;								/**< Poly Mono mode */
   int mode_val;							/**< number of monophonic channel (for mode 3) */
   /* monophonic list - legato detector */
-  struct mononote monolist[SIZE_MONOLIST];   /**< monophonic list */
+  struct mononote monolist[FLUID_CHANNEL_SIZE_MONOLIST];   /**< monophonic list */
   unsigned char i_first;          /**< First note index */
   unsigned char i_last;           /**< most recent note index since the most recent add */
   unsigned char prev_note;        /**< previous note of the most recent add */
