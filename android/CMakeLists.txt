@@ -39,6 +39,13 @@ set (fluidsynth_sources
 
 add_library(fluidsynth SHARED ${fluidsynth_sources})
 
+if(CMAKE_ANDROID_ARCH_ABI STREQUAL "armeabi-v7a")
+        target_compile_options(fluidsynth PRIVATE -DWITH_FLOAT)
+endif()
+if(CMAKE_ANDROID_ARCH_ABI STREQUAL "x86")
+        target_compile_options(fluidsynth PRIVATE -DWITH_FLOAT)
+endif()
+
 # Specify directories which the compiler should look for headers
 target_include_directories(fluidsynth PRIVATE
                             . include
