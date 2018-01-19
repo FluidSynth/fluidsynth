@@ -77,7 +77,7 @@ fluid_channel_init(fluid_channel_t* chan)
      chan->monolist[i].next = i+1;
   }
   chan->monolist[FLUID_CHANNEL_SIZE_MONOLIST -1].next = 0; /* ending element chained to the 1st */
-  chan->i_last = chan->n_notes = 0; /* list is clear */
+  chan->i_last = chan->n_notes = 0; /* clears the list */
   chan->i_first = chan->monolist[chan->i_last].next; /* first note index in the list */
   fluid_channel_clear_prev_note(chan); /* Mark previous note invalid */
   /*---*/
@@ -350,7 +350,7 @@ fluid_channel_update_legato_staccato_state(fluid_channel_t* chan)
  *         |                        |
  *      i_first                   i_last
  *
- * The monophonic list is a circular buffer of  FLUID_CHANNEL_SIZE_MONOLIST elements
+ * The monophonic list is a circular buffer of  FLUID_CHANNEL_SIZE_MONOLIST elements.
  * Each element is linked forward at initialisation time.
  * when a note is added at noteOn each element is use in the forward direction
  * and indexed by i_last variable. 
@@ -390,7 +390,7 @@ fluid_channel_add_monolist(fluid_channel_t* chan, unsigned char key,
 	}
 	if(chan->n_notes < FLUID_CHANNEL_SIZE_MONOLIST) 
 	{
-		chan->n_notes++; /* update n_notes */
+		chan->n_notes++; /* updates n_notes */
 	}
 	else
 	{	/* The end of buffer is reach. So circular motion for i_first */
@@ -439,7 +439,7 @@ fluid_channel_search_monolist(fluid_channel_t* chan, unsigned char key , int * i
 				}
 				* i_prev = j; /* returns index of the previous note */
 			}
-			return i; /* return index of the note to search */
+			return i; /* returns index of the note to search */
 		}
 		* i_prev = i; /* tracking index of the previous note (i_prev) */
 		i = chan->monolist[i].next; /* next element */
@@ -463,7 +463,7 @@ fluid_channel_search_monolist(fluid_channel_t* chan, unsigned char key , int * i
  *         |                        |
  *      i_first                   i_last
  *
- * The monophonic list is a circular buffer of  FLUID_CHANNEL_SIZE_MONOLIST elements
+ * The monophonic list is a circular buffer of  FLUID_CHANNEL_SIZE_MONOLIST elements.
  * Each element is linked forward at initialisation time.
  * when a note is removed at noteOff the element concerned is fast unlinked
  * and relinked after the i_last element.

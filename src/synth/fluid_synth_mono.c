@@ -27,7 +27,7 @@
   The legato detector is composed as this: 
   - monophonic list variable.
   and functions
-  - fluid_channel_add_monolist(), for inserting a new note
+  - fluid_channel_add_monolist(), for inserting a new note.
   - fluid_channel_search_monolist(), for searching the position of a note
     into the list.
   - fluid_channel_remove_monolist(), for removing a note out of the list.

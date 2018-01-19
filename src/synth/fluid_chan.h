@@ -33,7 +33,7 @@
    - Size above 1 allows playing legato on noteon but also on noteOff.
      This allows the  musician to play fast trills.
      This feature is particularly usful when the MIDI input device is a keyboard.
-     Choosing a size of 10 is sufficient (because most musician have only 10
+     Choosing a size of 10 is sufficient (because most musicians have only 10
      fingers when playing a monophonic instrument).
 */
 #define FLUID_CHANNEL_SIZE_MONOLIST  10 
@@ -50,7 +50,7 @@
           |                        |
        i_first                   i_last
  
- The monophonic list is a circular buffer of FLUID_CHANNEL_SIZE_MONOLIST elements
+ The monophonic list is a circular buffer of FLUID_CHANNEL_SIZE_MONOLIST elements.
  Each element is linked forward at initialisation time.
  - when a note is added at noteOn  (see fluid_channel_add_monolist()) each
    element is use in the forward direction and indexed by i_last variable. 

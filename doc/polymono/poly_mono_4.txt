@@ -11,8 +11,10 @@
 # Then adds a new group:
 # -Group 0:Basic channel:  2, mono omni on(mode 1), composed of all channels in this group 
 
-# Use command setbasicchannels to change a group and add a new one 
-setbasicchannels    5  2  0    2  1  0   
+# Use command setbasicchannels to change a group and add a new one, using numbered mode:
+setbasicchannels    5  2  0    2  1  0
+# or using named mode:
+setbasicchannels    5  poly_omnioff 0    2  mono_omnion 0
 
 # Use basicchannels command to verify your settings
 basicchannels
