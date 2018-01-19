@@ -50,7 +50,7 @@ void
 fluid_iir_filter_apply(fluid_iir_filter_t* iir_filter,
                        fluid_real_t *dsp_buf, int count)
 {
-  if(!iir_filter->enabled || iir_filter->q_lin == 0)
+  if(iir_filter->type == FLUID_IIR_DISABLED || iir_filter->q_lin == 0)
   {
       return;
   }
@@ -138,11 +138,10 @@ fluid_iir_filter_apply(fluid_iir_filter_t* iir_filter,
 }
 
 
-void fluid_iir_filter_init(fluid_iir_filter_t* iir_filter, enum fluid_iir_filter_type type, int is_enabled)
+void fluid_iir_filter_init(fluid_iir_filter_t* iir_filter, enum fluid_iir_filter_type type)
 {
     iir_filter->type = type;
-    iir_filter->enabled = is_enabled;
-    if(is_enabled)
+    if(type != FLUID_IIR_DISABLED)
     {
         fluid_iir_filter_reset(iir_filter);
     }
@@ -253,12 +252,15 @@ fluid_iir_filter_calculate_coefficients(fluid_iir_filter_t* iir_filter,
       break;
       
       case FLUID_IIR_LOWPASS:
-      default:
       b1_temp = (1.0f - cos_coeff) * a0_inv * iir_filter->filter_gain;
       
       /* both b0 -and- b2 */
       b02_temp = b1_temp * 0.5f;
       break;
+      
+      default:
+          /* filter disabled, should never get here */
+          return;
   }
 
   iir_filter->compensate_incr = 0;
@@ -332,7 +334,7 @@ void fluid_iir_filter_calc(fluid_iir_filter_t* iir_filter,
     fres = 5;
 
   /* if filter enabled and there is a significant frequency change.. */
-  if (iir_filter->enabled && fabs (fres - iir_filter->last_fres) > 0.01)
+  if (iir_filter->type != FLUID_IIR_DISABLED && fabs (fres - iir_filter->last_fres) > 0.01)
   {
    /* The filter coefficients have to be recalculated (filter
     * parameters have changed). Recalculation for various reasons is

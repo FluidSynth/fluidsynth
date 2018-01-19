@@ -163,11 +163,10 @@ struct _fluid_synth_t
 
   int cores;                         /**< Number of CPU cores (1 by default) */
 
-  int with_high_pass;              /**< Flag to enable custom high-pass filter */
-
   fluid_mod_t* default_mod;          /**< the (dynamic) list of default modulators */
 
   fluid_ladspa_fx_t* ladspa_fx;      /**< Effects unit for LADSPA support */
+  enum fluid_iir_filter_type custom_filter_type; /**< filter type of the user-defined filter currently used for all voices */
 };
 
 fluid_preset_t* fluid_synth_find_preset(fluid_synth_t* synth,

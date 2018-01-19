@@ -100,12 +100,9 @@ enum fluid_gen_type {
    * modulator. */
   GEN_PITCH,			/**< Pitch @note Not a real SoundFont generator */
 
-  /* non-standard generator for an additional high-pass filter */
-  GEN_HPFILTERFC,		/**< High-pass filter cutoff */
-  GEN_HPFILTERQ,		/**< High-pass filter Q */
-
-  /* non-standard generator for the low-pass filter */
-  GEN_CUSTOM_FILTERQ_LIN,		/**< Custom linear filter Q */
+  /* non-standard generator for an additional custom high- or low-pass filter */
+  GEN_CUSTOM_FILTERFC,		/**< Custom filter cutoff frequency */
+  GEN_CUSTOM_FILTERQ,		/**< Custom filter Q */
   
 #ifndef __DOXYGEN__
   GEN_LAST			/**< @internal Value defines the count of generators (#fluid_gen_type) @warning This symbol is not part of the public API and ABI stability guarantee and may change at any time! */

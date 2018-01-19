@@ -409,18 +409,6 @@ fluid_synth_init(void)
 		       );
   fluid_mod_set_dest(&default_pitch_bend_mod, GEN_PITCH);                 /* Destination: Initial pitch */
   fluid_mod_set_amount(&default_pitch_bend_mod, 12700.0);                 /* Amount: 12700 cents */
-
-
-  /* Custom CC16 -> High-Pass Filter Cutoff */
-  fluid_mod_set_source1(&custom_cc2hpfilterfc_mod, 16,
-		       FLUID_MOD_CC
-		       | FLUID_MOD_LINEAR
-		       | FLUID_MOD_UNIPOLAR
-		       | FLUID_MOD_POSITIVE
-		       );
-  fluid_mod_set_source2(&custom_cc2hpfilterfc_mod, 0, 0);
-  fluid_mod_set_dest(&custom_cc2hpfilterfc_mod, GEN_HPFILTERFC);
-  fluid_mod_set_amount(&custom_cc2hpfilterfc_mod, 8000);
 }
 
 static FLUID_INLINE unsigned int fluid_synth_get_ticks(fluid_synth_t* synth)
@@ -571,8 +559,6 @@ new_fluid_synth(fluid_settings_t *settings)
   fluid_settings_getnum_float(settings, "synth.gain", &synth->gain);
   fluid_settings_getint(settings, "synth.device-id", &synth->device_id);
   fluid_settings_getint(settings, "synth.cpu-cores", &synth->cores);
-
-  fluid_settings_getint(settings, "synth.high-pass-filter", &synth->with_high_pass);
   
   fluid_settings_getnum_float(settings, "synth.overflow.percussion", &synth->overflow.percussion);
   fluid_settings_getnum_float(settings, "synth.overflow.released", &synth->overflow.released);
@@ -738,7 +724,7 @@ new_fluid_synth(fluid_settings_t *settings)
     goto error_recovery;
   }
   for (i = 0; i < synth->nvoice; i++) {
-    synth->voice[i] = new_fluid_voice(synth->sample_rate, synth->with_high_pass);
+    synth->voice[i] = new_fluid_voice(synth->sample_rate);
     if (synth->voice[i] == NULL) {
       goto error_recovery;
     }
@@ -2507,9 +2493,11 @@ fluid_synth_update_polyphony_LOCAL(fluid_synth_t* synth, int new_polyphony)
       return FLUID_FAILED;
     synth->voice = new_voices;
     for (i = synth->nvoice; i < new_polyphony; i++) {
-      synth->voice[i] = new_fluid_voice(synth->sample_rate, synth->with_high_pass);
+      synth->voice[i] = new_fluid_voice(synth->sample_rate);
       if (synth->voice[i] == NULL) 
 	return FLUID_FAILED;
+    
+      fluid_voice_set_custom_filter(synth->voice[i], synth->custom_filter_type);
     }
     synth->nvoice = new_polyphony;
   }
@@ -5176,6 +5164,26 @@ fluid_ladspa_fx_t *fluid_synth_get_ladspa_fx(fluid_synth_t *synth)
     fluid_return_val_if_fail(synth != NULL, NULL);
 
     return synth->ladspa_fx;
+}
+
+int fluid_synth_custom_filter(fluid_synth_t* synth, int type)
+{
+    int i;
+    fluid_voice_t *voice;
+    
+    fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(type >= FLUID_IIR_DISABLED && type < FLUID_IIR_LAST, FLUID_FAILED);
+    
+    synth->custom_filter_type = type;
+    
+    for (i = 0; i < synth->polyphony; i++)
+    {
+        voice = synth->voice[i];
+        
+        fluid_voice_set_custom_filter(voice, type);
+    }
+    
+    return FLUID_OK;
 }
 
 /**

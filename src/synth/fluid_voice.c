@@ -98,7 +98,7 @@ fluid_voice_get_lower_boundary_for_attenuation(fluid_voice_t* voice);
 #define UPDATE_RVOICE_R1(proc, arg1) UPDATE_RVOICE_GENERIC_R1(proc, voice->rvoice, arg1)
 #define UPDATE_RVOICE_I1(proc, arg1) UPDATE_RVOICE_GENERIC_I1(proc, voice->rvoice, arg1)
 #define UPDATE_RVOICE_FILTER1(proc, arg1) UPDATE_RVOICE_GENERIC_R1(proc, &voice->rvoice->resonant_filter, arg1)
-#define UPDATE_RVOICE_HPFILTER1(proc, arg1) UPDATE_RVOICE_GENERIC_R1(proc, &voice->rvoice->resonant_hp_filter, arg1)
+#define UPDATE_RVOICE_CUSTOM_FILTER1(proc, arg1) UPDATE_RVOICE_GENERIC_R1(proc, &voice->rvoice->resonant_custom_filter, arg1)
 
 #define UPDATE_RVOICE2(proc, iarg, rarg) UPDATE_RVOICE_GENERIC_IR(proc, voice->rvoice, iarg, rarg)
 #define UPDATE_RVOICE_BUFFERS2(proc, iarg, rarg) UPDATE_RVOICE_GENERIC_IR(proc, &voice->rvoice->buffers, iarg, rarg)
@@ -156,7 +156,7 @@ static void fluid_voice_swap_rvoice(fluid_voice_t* voice)
   voice->can_access_overflow_rvoice = ctemp;
 }
 
-static void fluid_voice_initialize_rvoice(fluid_voice_t* voice, int enable_highpass)
+static void fluid_voice_initialize_rvoice(fluid_voice_t* voice)
 {
   FLUID_MEMSET(voice->rvoice, 0, sizeof(fluid_rvoice_t));
 
@@ -174,15 +174,15 @@ static void fluid_voice_initialize_rvoice(fluid_voice_t* voice, int enable_highp
   fluid_voice_update_modenv(voice, FLUID_VOICE_ENVFINISHED, 
                           0xffffffff, 0.0f, 0.0f, -1.0f, 1.0f);
   
-  fluid_iir_filter_init(&voice->rvoice->resonant_filter,    FLUID_IIR_LOWPASS, TRUE);
-  fluid_iir_filter_init(&voice->rvoice->resonant_hp_filter, FLUID_IIR_HIGHPASS, enable_highpass);
+  fluid_iir_filter_init(&voice->rvoice->resonant_filter, FLUID_IIR_LOWPASS);
+  fluid_iir_filter_init(&voice->rvoice->resonant_custom_filter, FLUID_IIR_DISABLED);
 }
 
 /*
  * new_fluid_voice
  */
 fluid_voice_t*
-new_fluid_voice(fluid_real_t output_rate, int enable_highpass)
+new_fluid_voice(fluid_real_t output_rate)
 {
   fluid_voice_t* voice;
   voice = FLUID_NEW(fluid_voice_t);
@@ -209,9 +209,9 @@ new_fluid_voice(fluid_real_t output_rate, int enable_highpass)
   /* Initialize both the rvoice and overflow_rvoice */
   voice->can_access_rvoice = TRUE; 
   voice->can_access_overflow_rvoice = TRUE; 
-  fluid_voice_initialize_rvoice(voice, enable_highpass);
+  fluid_voice_initialize_rvoice(voice);
   fluid_voice_swap_rvoice(voice);
-  fluid_voice_initialize_rvoice(voice, enable_highpass);
+  fluid_voice_initialize_rvoice(voice);
 
   fluid_voice_set_output_rate(voice, output_rate);
 
@@ -542,9 +542,8 @@ fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t* voice)
     /* GEN_FINETUNE             [1]                        #52  */
     GEN_OVERRIDEROOTKEY,                 /*                #58  */
     GEN_PITCH,                           /*                ---  */
-    GEN_HPFILTERFC,                      /*                ---  */
-    GEN_HPFILTERQ,                       /*                ---  */
-    GEN_CUSTOM_FILTERQ_LIN,              /*                ---  */
+    GEN_CUSTOM_FILTERFC,                 /*                ---  */
+    GEN_CUSTOM_FILTERQ,                  /*                ---  */
   };
 
   /* When the voice is made ready for the synthesis process, a lot of
@@ -806,21 +805,21 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
     UPDATE_RVOICE_FILTER1(fluid_iir_filter_set_q_dB, q_dB);
     break;
 
-  /* same as the two above, only for the high-pass filter */
-  case GEN_HPFILTERFC:
-    UPDATE_RVOICE_HPFILTER1(fluid_iir_filter_set_fres, x);
+  /* same as the two above, only for the custom filter */
+  case GEN_CUSTOM_FILTERFC:
+    UPDATE_RVOICE_CUSTOM_FILTER1(fluid_iir_filter_set_fres, x);
     break;
 
-  case GEN_HPFILTERQ:
+  case GEN_CUSTOM_FILTERQ:
     q_dB = x / 10.0f;
     fluid_clip(q_dB, 0.0f, 96.0f);
     q_dB -= 3.01f;
-    UPDATE_RVOICE_HPFILTER1(fluid_iir_filter_set_q_dB, q_dB);
+    UPDATE_RVOICE_CUSTOM_FILTER1(fluid_iir_filter_set_q_dB, q_dB);
     break;
 
-  case GEN_CUSTOM_FILTERQ_LIN:
-    UPDATE_RVOICE_FILTER1(fluid_iir_filter_set_q_linear, (x==0.0 ? 0 : x+1));
-    break;
+//   case GEN_CUSTOM_FILTERQ_LIN:
+//     UPDATE_RVOICE_FILTER1(fluid_iir_filter_set_q_linear, (x==0.0 ? 0 : x+1));
+//     break;
     
   case GEN_MODLFOTOPITCH:
     fluid_clip(x, -12000.0, 12000.0);
@@ -1774,3 +1773,10 @@ fluid_voice_get_overflow_prio(fluid_voice_t* voice,
     
   return this_voice_prio;
 }
+
+
+void fluid_voice_set_custom_filter(fluid_voice_t* voice, enum fluid_iir_filter_type type)
+{
+    UPDATE_RVOICE_CUSTOM_FILTER1(fluid_iir_filter_init, type);
+}
+

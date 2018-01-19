@@ -313,6 +313,15 @@ FLUIDSYNTH_API void fluid_synth_get_voicelist(fluid_synth_t* synth,
                                               fluid_voice_t* buf[], int bufsize, int ID);
 FLUIDSYNTH_API int fluid_synth_handle_midi_event(void* data, fluid_midi_event_t* event);
 
+enum fluid_iir_filter_type {
+    FLUID_IIR_DISABLED=0,
+    FLUID_IIR_LOWPASS,
+    FLUID_IIR_HIGHPASS,
+    FLUID_IIR_LAST
+};
+FLUIDSYNTH_API int fluid_synth_custom_filter(fluid_synth_t*, int type);
+
+
 /* LADSPA */
 
 FLUIDSYNTH_API fluid_ladspa_fx_t *fluid_synth_get_ladspa_fx(fluid_synth_t *synth);

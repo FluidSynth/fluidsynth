@@ -25,12 +25,8 @@
 
 typedef struct _fluid_iir_filter_t fluid_iir_filter_t;
 
-enum fluid_iir_filter_type {
-    FLUID_IIR_LOWPASS=0,
-    FLUID_IIR_HIGHPASS,
-};
 
-void fluid_iir_filter_init(fluid_iir_filter_t* iir_filter, enum fluid_iir_filter_type, int is_enabled);
+void fluid_iir_filter_init(fluid_iir_filter_t* iir_filter, enum fluid_iir_filter_type);
 
 void fluid_iir_filter_apply(fluid_iir_filter_t* iir_filter,
                             fluid_real_t *dsp_buf, int dsp_buf_count);
@@ -54,7 +50,6 @@ void fluid_iir_filter_calc(fluid_iir_filter_t* iir_filter,
    without a pointer. */
 struct _fluid_iir_filter_t
 {
-	int enabled;
 	enum fluid_iir_filter_type type; /* specifies the type of this filter (highpass, lowpass or bandpass) */
     
 	/* filter coefficients */
