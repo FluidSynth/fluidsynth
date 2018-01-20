@@ -5166,7 +5166,19 @@ fluid_ladspa_fx_t *fluid_synth_get_ladspa_fx(fluid_synth_t *synth)
     return synth->ladspa_fx;
 }
 
-int fluid_synth_custom_filter(fluid_synth_t* synth, int type, int flags)
+/**
+ * Configure a general-purpose IIR biquad filter.
+ * 
+ * This is an optional, additional filter that operates independently from the default low-pass filter required by the Soundfont2 standard.
+ * By default this filter is off (#FLUID_IIR_DISABLED).
+ * 
+ * @param synth FluidSynth instance
+ * @param type Type of the IIR filter to use (see #fluid_iir_filter_type)
+ * @param flags Additional flags to customize this filter or zero to stay with the default (see #fluid_iir_filter_flags)
+ * 
+ * @return #FLUID_OK if the settings have been successfully applied, otherwise #FLUID_FAILED
+ */
+int fluid_synth_set_custom_filter(fluid_synth_t* synth, int type, int flags)
 {
     int i;
     fluid_voice_t *voice;
