@@ -518,7 +518,8 @@ fluid_chorus_triangle(int *buf, int len, int depth)
 
   /* Build triangular modulation waveform */
   while (il <= ir) {
-    ival= (int)(val + 0.5);
+    /* Assume 'val' to be always negative for rounding mode */
+    ival = (int)(val - 0.5);
 
     *il++ = ival;
     *ir-- = ival;
