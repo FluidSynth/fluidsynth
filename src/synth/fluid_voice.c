@@ -789,10 +789,6 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
   case GEN_CUSTOM_FILTERQ:
     UPDATE_RVOICE_CUSTOM_FILTER1(fluid_iir_filter_set_q, x);
     break;
-
-//   case GEN_CUSTOM_FILTERQ_LIN:
-//     UPDATE_RVOICE_FILTER1(fluid_iir_filter_set_q_linear, (x==0.0 ? 0 : x+1));
-//     break;
     
   case GEN_MODLFOTOPITCH:
     fluid_clip(x, -12000.0, 12000.0);

@@ -51,7 +51,7 @@ enum fluid_mod_flags
   FLUID_MOD_GC = 0,             /**< General controller source type (#fluid_mod_src) */
   FLUID_MOD_CC = 16,             /**< MIDI CC controller (source will be a MIDI CC number) */
     
-  FLUID_MOD_SIN = 0x80,            /**< custom non-standard sinus mapping function */
+  FLUID_MOD_SIN = 0x80,            /**< Custom non-standard sinus mapping function */
 };
 
 /**
