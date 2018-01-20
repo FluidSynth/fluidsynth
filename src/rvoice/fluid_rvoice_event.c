@@ -109,9 +109,9 @@ fluid_rvoice_event_dispatch(fluid_rvoice_event_t* event)
   EVENTFUNC_I1(fluid_lfo_set_delay, fluid_lfo_t*);
   EVENTFUNC_R1(fluid_lfo_set_incr, fluid_lfo_t*);
 
+  EVENTFUNC_II(fluid_iir_filter_init, fluid_iir_filter_t*);
   EVENTFUNC_R1(fluid_iir_filter_set_fres, fluid_iir_filter_t*);
-  EVENTFUNC_R1(fluid_iir_filter_set_q_dB, fluid_iir_filter_t*);
-  EVENTFUNC_R1(fluid_iir_filter_set_q_linear, fluid_iir_filter_t*);
+  EVENTFUNC_R1(fluid_iir_filter_set_q, fluid_iir_filter_t*);
 
   EVENTFUNC_II(fluid_rvoice_buffers_set_mapping, fluid_rvoice_buffers_t*);
   EVENTFUNC_IR(fluid_rvoice_buffers_set_amp, fluid_rvoice_buffers_t*);

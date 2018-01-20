@@ -26,18 +26,14 @@
 typedef struct _fluid_iir_filter_t fluid_iir_filter_t;
 
 
-void fluid_iir_filter_init(fluid_iir_filter_t* iir_filter, enum fluid_iir_filter_type);
+void fluid_iir_filter_init(fluid_iir_filter_t* iir_filter, enum fluid_iir_filter_type, enum fluid_iir_filter_flags flags);
 
 void fluid_iir_filter_apply(fluid_iir_filter_t* iir_filter,
                             fluid_real_t *dsp_buf, int dsp_buf_count);
 
 void fluid_iir_filter_reset(fluid_iir_filter_t* iir_filter);
 
-void fluid_iir_filter_set_q_dB(fluid_iir_filter_t* iir_filter, 
-                               fluid_real_t q_dB);
-
-void fluid_iir_filter_set_q_linear(fluid_iir_filter_t* iir_filter, 
-                               fluid_real_t q_linear);
+void fluid_iir_filter_set_q(fluid_iir_filter_t* iir_filter, fluid_real_t q);
 
 void fluid_iir_filter_set_fres(fluid_iir_filter_t* iir_filter, 
                                fluid_real_t fres);
@@ -51,6 +47,7 @@ void fluid_iir_filter_calc(fluid_iir_filter_t* iir_filter,
 struct _fluid_iir_filter_t
 {
 	enum fluid_iir_filter_type type; /* specifies the type of this filter (highpass, lowpass or bandpass) */
+	enum fluid_iir_filter_flags flags;
     
 	/* filter coefficients */
 	/* The coefficients are normalized to a0. */

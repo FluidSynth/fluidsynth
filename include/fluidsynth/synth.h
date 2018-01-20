@@ -319,7 +319,13 @@ enum fluid_iir_filter_type {
     FLUID_IIR_HIGHPASS,
     FLUID_IIR_LAST
 };
-FLUIDSYNTH_API int fluid_synth_custom_filter(fluid_synth_t*, int type);
+
+enum fluid_iir_filter_flags {
+    FLUID_IIR_Q_LINEAR = 1 << 0,
+    FLUID_IIR_NO_GAIN_AMP = 1 << 1
+};
+
+FLUIDSYNTH_API int fluid_synth_custom_filter(fluid_synth_t*, int type, int flags);
 
 
 /* LADSPA */

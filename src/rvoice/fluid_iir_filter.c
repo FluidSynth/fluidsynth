@@ -138,9 +138,10 @@ fluid_iir_filter_apply(fluid_iir_filter_t* iir_filter,
 }
 
 
-void fluid_iir_filter_init(fluid_iir_filter_t* iir_filter, enum fluid_iir_filter_type type)
+void fluid_iir_filter_init(fluid_iir_filter_t* iir_filter, enum fluid_iir_filter_type type, enum fluid_iir_filter_flags flags)
 {
     iir_filter->type = type;
+    iir_filter->flags = flags;
     if(type != FLUID_IIR_DISABLED)
     {
         fluid_iir_filter_reset(iir_filter);
@@ -165,38 +166,72 @@ fluid_iir_filter_set_fres(fluid_iir_filter_t* iir_filter,
   iir_filter->last_fres = -1.;
 }
 
-void 
-fluid_iir_filter_set_q_dB(fluid_iir_filter_t* iir_filter, 
-                          fluid_real_t q_dB)
+static fluid_real_t fluid_iir_filter_q_from_dB(fluid_real_t q_dB)
 {
+    /* The generator contains 'centibels' (1/10 dB) => divide by 10 to
+     * obtain dB */
+    q_dB /= 10.0f;
+
+    /* Range: SF2.01 section 8.1.3 # 8 (convert from cB to dB => /10) */
+    fluid_clip(q_dB, 0.0f, 96.0f);
+
+    /* Short version: Modify the Q definition in a way, that a Q of 0
+     * dB leads to no resonance hump in the freq. response.
+     *
+     * Long version: From SF2.01, page 39, item 9 (initialFilterQ):
+     * "The gain at the cutoff frequency may be less than zero when
+     * zero is specified".  Assume q_dB=0 / q_lin=1: If we would leave
+     * q as it is, then this results in a 3 dB hump slightly below
+     * fc. At fc, the gain is exactly the DC gain (0 dB).  What is
+     * (probably) meant here is that the filter does not show a
+     * resonance hump for q_dB=0. In this case, the corresponding
+     * q_lin is 1/sqrt(2)=0.707.  The filter should have 3 dB of
+     * attenuation at fc now.  In this case Q_dB is the height of the
+     * resonance peak not over the DC gain, but over the frequency
+     * response of a non-resonant filter.  This idea is implemented as
+     * follows: */
+    q_dB -= 3.01f;
+    
     /* The 'sound font' Q is defined in dB. The filter needs a linear
        q. Convert. */
-    fluid_iir_filter_set_q_linear(iir_filter, pow(10.0f, q_dB / 20.0f));
+    return pow(10.0f, q_dB / 20.0f);
 }
 
 void 
-fluid_iir_filter_set_q_linear(fluid_iir_filter_t* iir_filter, 
-                          fluid_real_t q_linear)
+fluid_iir_filter_set_q(fluid_iir_filter_t* iir_filter, fluid_real_t q)
 {
-    iir_filter->q_lin = q_linear;
+    if(iir_filter->flags | FLUID_IIR_Q_LINEAR)
+    {
+        /* q is linear (only for user-defined filter) */
+        q = (q <= 0.0) ? 0 : q+1;
+    }
+    else
+    {
+        q = fluid_iir_filter_q_from_dB(q);
+    }
     
-    /* SF 2.01 page 59:
-     *
-     *  The SoundFont specs ask for a gain reduction equal to half the
-     *  height of the resonance peak (Q).  For example, for a 10 dB
-     *  resonance peak, the gain is reduced by 5 dB.  This is done by
-     *  multiplying the total gain with sqrt(1/Q).  `Sqrt' divides dB
-     *  by 2 (100 lin = 40 dB, 10 lin = 20 dB, 3.16 lin = 10 dB etc)
-     *  The gain is later factored into the 'b' coefficients
-     *  (numerator of the filter equation).  This gain factor depends
-     *  only on Q, so this is the right place to calculate it.
-     */
-    iir_filter->filter_gain = (fluid_real_t) (1.0 / sqrt(iir_filter->q_lin));
-
+    iir_filter->q_lin = q;
+    iir_filter->filter_gain = 1.0;
+    
+    if(!(iir_filter->flags | FLUID_IIR_NO_GAIN_AMP))
+    {
+        /* SF 2.01 page 59:
+         *
+         *  The SoundFont specs ask for a gain reduction equal to half the
+         *  height of the resonance peak (Q).  For example, for a 10 dB
+         *  resonance peak, the gain is reduced by 5 dB.  This is done by
+         *  multiplying the total gain with sqrt(1/Q).  `Sqrt' divides dB
+         *  by 2 (100 lin = 40 dB, 10 lin = 20 dB, 3.16 lin = 10 dB etc)
+         *  The gain is later factored into the 'b' coefficients
+         *  (numerator of the filter equation).  This gain factor depends
+         *  only on Q, so this is the right place to calculate it.
+         */
+        iir_filter->filter_gain /= sqrt(q);
+    }
+    
     /* The synthesis loop will have to recalculate the filter coefficients. */
     iir_filter->last_fres = -1.;
 }
-
 
 static FLUID_INLINE void 
 fluid_iir_filter_calculate_coefficients(fluid_iir_filter_t* iir_filter, 

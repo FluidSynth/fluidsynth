@@ -2497,7 +2497,7 @@ fluid_synth_update_polyphony_LOCAL(fluid_synth_t* synth, int new_polyphony)
       if (synth->voice[i] == NULL) 
 	return FLUID_FAILED;
     
-      fluid_voice_set_custom_filter(synth->voice[i], synth->custom_filter_type);
+      fluid_voice_set_custom_filter(synth->voice[i], synth->custom_filter_type, synth->custom_filter_flags);
     }
     synth->nvoice = new_polyphony;
   }
@@ -5166,7 +5166,7 @@ fluid_ladspa_fx_t *fluid_synth_get_ladspa_fx(fluid_synth_t *synth)
     return synth->ladspa_fx;
 }
 
-int fluid_synth_custom_filter(fluid_synth_t* synth, int type)
+int fluid_synth_custom_filter(fluid_synth_t* synth, int type, int flags)
 {
     int i;
     fluid_voice_t *voice;
@@ -5175,12 +5175,13 @@ int fluid_synth_custom_filter(fluid_synth_t* synth, int type)
     fluid_return_val_if_fail(type >= FLUID_IIR_DISABLED && type < FLUID_IIR_LAST, FLUID_FAILED);
     
     synth->custom_filter_type = type;
+    synth->custom_filter_flags = flags;
     
     for (i = 0; i < synth->polyphony; i++)
     {
         voice = synth->voice[i];
         
-        fluid_voice_set_custom_filter(voice, type);
+        fluid_voice_set_custom_filter(voice, type, flags);
     }
     
     return FLUID_OK;
