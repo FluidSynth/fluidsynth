@@ -6,7 +6,7 @@ if ( WIN32 )
   set (DEFAULT_SOUNDFONT "C:\\\\soundfonts\\\\default.sf2" CACHE STRING
        "Default soundfont file")
 else ( WIN32 )
-  set (DEFAULT_SOUNDFONT "share/soundfonts/default.sf2" CACHE STRING
+  set (DEFAULT_SOUNDFONT "${CMAKE_INSTALL_PREFIX}/share/soundfonts/default.sf2" CACHE STRING
        "Default soundfont file")
 endif ( WIN32 )
 mark_as_advanced (DEFAULT_SOUNDFONT)
