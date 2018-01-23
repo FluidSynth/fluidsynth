@@ -344,22 +344,13 @@ enum fluid_basic_channel_modes
     FLUID_CHANNEL_MODE_LAST /**< @internal Value defines the count of basic channel modes (#fluid_basic_channel_modes) @warning This symbol is not part of the public API and ABI stability guarantee and may change at any time! */
 };
 
-struct _fluid_basic_channel_infos_t
-{
-	int basicchan;  /**< MIDI channel numer to set as basic channel */
-	int mode;       /**< indicates the mode this basic channel is set to (see #fluid_channel_mode_flags) */
-	int val;        /**< Number of monophonic channel (Mode 3) */
-};
-typedef struct  _fluid_basic_channel_infos_t   fluid_basic_channel_infos_t;
+FLUIDSYNTH_API int fluid_synth_reset_basic_channels(fluid_synth_t* synth, int chan);
 
-FLUIDSYNTH_API int fluid_synth_get_basic_channels( fluid_synth_t* synth,
-                                                   fluid_basic_channel_infos_t **basic_channel_infos);
-FLUIDSYNTH_API int fluid_synth_reset_basic_channels(fluid_synth_t* synth, int n, 
-                                                    fluid_basic_channel_infos_t *basic_channel_infos);
-FLUIDSYNTH_API int fluid_synth_get_channel_mode(fluid_synth_t* synth, int chan,
-                                                fluid_basic_channel_infos_t  *mode_infos);
-FLUIDSYNTH_API int fluid_synth_set_basic_channel(fluid_synth_t* synth, 
-                                                   fluid_basic_channel_infos_t *basic_channel_infos);
+FLUIDSYNTH_API int  fluid_synth_get_basic_channel(fluid_synth_t* synth, int chan,
+					int *basic_chan_out, 
+					int *mode_chan_out,
+					int *basic_val_out );
+FLUIDSYNTH_API int fluid_synth_set_basic_channel(fluid_synth_t* synth, int chan, int mode, int val);
 
 /* Interface to mono legato mode  */
 /* n1,n2,n3,.. is a legato passage. n1 is the first note, and n2,n3,n4 are played

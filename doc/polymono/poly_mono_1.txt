@@ -10,10 +10,13 @@
 # Group 2 should have the following settings:
 # basic channel 10, mode mono, omni off, (mode 3), composed of one channel.
 
-# Use command resetbasicchannels using numbered mode:
-resetbasicchannels  5 2 0   10 3 1
-# or Using named mode:
-resetbasicchannels  5 poly_omnioff 0   10 mono_omnioff 1
+# First use the command resetbasicchannels to  reset all basic channels
+resetbasicchannels 
+
+# Then use command setbasicchannels using numbered mode:
+setbasicchannels  5 2 0   10 3 1
+# or using named mode:
+setbasicchannels  5 poly_omnioff 0   10 mono_omnioff 1
 
 # Use basicchannels command to verify your settings
 basicchannels

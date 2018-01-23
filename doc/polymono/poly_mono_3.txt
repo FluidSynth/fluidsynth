@@ -10,12 +10,12 @@
 
 # Now we want to change  group 1: 
 # Group 1 should have the following settings:
-# -basic channel 5, mode poly, omni on, (mode 0) composed of all channels in this group.
+# -basic channel 5, mode poly, omni on, (mode 0) composed of 4 channels in this group.
 
 # Use command setbasicchannels using numbered mode:
-setbasicchannels  5  0  0
+setbasicchannels  5  0  4
 # or Using named mode:
-setbasicchannels  5  poly_omnion 0
+setbasicchannels  5  poly_omnion 4
 
 # Use basicchannels command to verify your settings
 basicchannels
