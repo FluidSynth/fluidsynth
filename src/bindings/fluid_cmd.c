@@ -2086,7 +2086,6 @@ int fluid_handle_resetbasicchannels (void* data, int ac, char** av,
 								fluid_ostream_t out)
 {
 	static const char * name_cde="resetbasicchannels";
-	static const char * warning_msg="Warning: now all MIDI channels are disabled\n";
 	FLUID_ENTRY_COMMAND(data);
 	fluid_synth_t* synth = handler->synth;
 
