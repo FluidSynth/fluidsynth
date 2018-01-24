@@ -139,7 +139,6 @@ static fluid_mod_t default_reverb_mod;         /* SF2.01 section 8.4.8  */
 static fluid_mod_t default_chorus_mod;         /* SF2.01 section 8.4.9  */
 static fluid_mod_t default_pitch_bend_mod;     /* SF2.01 section 8.4.10 */
 
-static fluid_mod_t custom_cc2hpfilterfc_mod;
 
 /* reverb presets */
 static const fluid_revmodel_presets_t revmodel_preset[] = {
@@ -198,9 +197,6 @@ void fluid_synth_settings(fluid_settings_t* settings)
   fluid_settings_add_option(settings, "synth.midi-bank-select", "gs");
   fluid_settings_add_option(settings, "synth.midi-bank-select", "xg");
   fluid_settings_add_option(settings, "synth.midi-bank-select", "mma");
-
-  fluid_settings_register_int(settings, "synth.high-pass-filter", 0, 0, 1,
-                              FLUID_HINT_TOGGLED);
 }
 
 /**
@@ -3295,8 +3291,6 @@ fluid_synth_alloc_voice(fluid_synth_t* synth, fluid_sample_t* sample, int chan, 
     fluid_voice_add_mod(voice, default_mod, FLUID_VOICE_DEFAULT);
     default_mod = default_mod->next;
   }
-
-  fluid_voice_add_mod(voice, &custom_cc2hpfilterfc_mod, FLUID_VOICE_DEFAULT);
 
   FLUID_API_RETURN(voice);
 }

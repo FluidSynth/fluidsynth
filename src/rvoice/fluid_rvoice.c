@@ -368,7 +368,7 @@ fluid_rvoice_write (fluid_rvoice_t* voice, fluid_real_t *dsp_buf)
 
   fluid_iir_filter_apply(&voice->resonant_filter, dsp_buf, count);
   
-  /* additonal high-pass filter - only uses the fixed modulator, no lfos... */
+  /* additional custom filter - only uses the fixed modulator, no lfos... */
   fluid_iir_filter_calc(&voice->resonant_custom_filter, voice->dsp.output_rate, 0);
   fluid_iir_filter_apply(&voice->resonant_custom_filter, dsp_buf, count);
   

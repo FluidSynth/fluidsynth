@@ -46,8 +46,8 @@ void fluid_iir_filter_calc(fluid_iir_filter_t* iir_filter,
    without a pointer. */
 struct _fluid_iir_filter_t
 {
-	enum fluid_iir_filter_type type; /* specifies the type of this filter (highpass, lowpass or bandpass) */
-	enum fluid_iir_filter_flags flags;
+	enum fluid_iir_filter_type type; /* specifies the type of this filter */
+	enum fluid_iir_filter_flags flags; /* additional flags to customize this filter */
     
 	/* filter coefficients */
 	/* The coefficients are normalized to a0. */
