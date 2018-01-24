@@ -1942,7 +1942,7 @@ static int fluid_synth_print_basic_channels(fluid_synth_t* synth, fluid_ostream_
 Make use of setbasicchannels to set at least a default basic channel.\n";
 	int n_chan= synth->midi_channels; 
 	int i , n= 0;
-	/* displays all basic channels */
+	/* prints all basic channels */
 	for (i =0; i< n_chan; i++)
 	{
 		int mode_chan,val;
@@ -1961,6 +1961,7 @@ Make use of setbasicchannels to set at least a default basic channel.\n";
 			return FLUID_FAILED; /* error */
 		}
 	}
+	/* prints a warning if there is no basic channel */
 	if (n == 0)
 	{
 		fluid_ostream_printf(out, (char *)warning_msg);
@@ -2096,7 +2097,7 @@ int fluid_handle_resetbasicchannels (void* data, int ac, char** av,
 	}
 
 	if (ac )
-	{
+	{	/* resetbasicchannels chan1  [chan2  .  .  .] */
 		int i;
 		for (i = 0; i < ac; i++)
 		{
@@ -2120,7 +2121,7 @@ int fluid_handle_resetbasicchannels (void* data, int ac, char** av,
 /*-----------------------------------------------------------------------------
   setbasicchannels
   
-  With no parameters the commands set one channel basic at basicchan 0 in
+  With no parameters the command sets one channel basic at basic channel 0 in
   Omni On Poly (i.e all the MIDI channels are polyphonic).
 
   setbasicchannels chan1 mode1 nbr1    [chan2 mode2 nbr2]  ...  ...

@@ -42,7 +42,7 @@ static void fluid_synth_reset_basic_channel_LOCAL(fluid_synth_t* synth, int chan
 }
 
 /**
- * Resets a basic channel group designed by basicchan.
+ * Resets a basic channel group designed by chan.
  *
  * @param synth the synth instance.
  * @param chan the basic channel of the group to reset. -1 means reset all basic channels. 
@@ -91,7 +91,7 @@ int fluid_synth_reset_basic_channels(fluid_synth_t* synth, int chan)
  *
  * - If chan is already a basic channel, the mode is changed.
  * - If chan is not a basic channel, a new basic channel group is set.
- * In all case the function fails if any channels overlaps existing neighbour basic 
+ * In all case the function fails if any channel overlaps existing neighbour basic 
  * channel groups. To make room if necessary, existing basic channel groups can be
  * cleared using fluid_synth_reset_basic_channels API.
  * 
@@ -137,9 +137,9 @@ int fluid_synth_set_basic_channel(fluid_synth_t* synth, int chan, int mode, int 
  *
  * - If basicchan is already a basic channel, the mode is changed.
  * - If basicchan is not a basic channel, a new basic channel part is set.
- * In all case the function fail if any channels overlaps existing neighbour basic 
+ * In all case the function fail if any channel overlaps existing neighbour basic 
  * channel groups. To make room if necessary, existing basic channel groups can be
- * cleared using resetbasicchannels API.
+ * cleared using fluid_synth_reset_basic_channels API.
  * 
  * The function is used internally by fluid_synth_set_basic_channel().
  * 
@@ -155,7 +155,8 @@ int fluid_synth_set_basic_channel(fluid_synth_t* synth, int chan, int mode, int 
  * @return 
  * - FLUID_OK on success.
  * - FLUID_FAILED
- *   - val has a number of channels overlapping another basic channel group or above MIDI channel count.
+ *   - val has a number of channels overlapping another basic channel group or been
+ *     above MIDI channel count.
  */
 int fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth, int basicchan, int mode, int val)
 {

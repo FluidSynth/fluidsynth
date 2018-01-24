@@ -318,9 +318,9 @@ FLUIDSYNTH_API fluid_ladspa_fx_t *fluid_synth_get_ladspa_fx(fluid_synth_t *synth
 /* Interface to poly/mono mode variables */
 enum fluid_channel_mode_flags
 {
-    /* channel mode bits */
+    /* channel mode bits: poly omnion (0), mono omnion (1), poly omnioff (2), mono omnioff (3) */
     FLUID_CHANNEL_POLY_OFF = 0x01, /**< if flag set the basic channel is in mono on state, if not set poly is on */
-    FLUID_CHANNEL_OMNI_OFF = 0x02, /**< if flag set the basic channel is in omni on state, if not set omni is off */
+    FLUID_CHANNEL_OMNI_OFF = 0x02, /**< if flag set the basic channel is in omni off state, if not set omni is on */
     
     FLUID_CHANNEL_BASIC = 0x04,    /**< if flag set the corresponding midi channel is a basic channel */
     FLUID_CHANNEL_ENABLED = 0x08,  /**< if flag set the corresponding midi channel is enabled, else disabled, i.e. channel ignores any MIDI messages */
