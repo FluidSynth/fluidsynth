@@ -42,20 +42,20 @@ static void fluid_synth_reset_basic_channel_LOCAL(fluid_synth_t* synth, int chan
 }
 
 /**
- * Resets a basic channel group designed by chan.
+ * Disables and unassigns all channels from a basic channel group.
  *
- * @param synth the synth instance.
- * @param chan the basic channel of the group to reset. -1 means reset all basic channels. 
- * @Note: Be aware than when a synth instance has no basic channel, all channels are disabled.
+ * @param synth The synth instance.
+ * @param chan The basic channel of the group to reset or -1 to reset all basic channels.
+ * @note When a synth instance has no basic channel, all channels are disabled.
  * In the intend to get some MIDI channels enabled, the application have to set at least 
- * one basic channel using fluid_synth_set_basic_channel API.
+ * one basic channel using fluid_synth_set_basic_channel() API.
  *  
  * @return
- *  - FLUID_OK on success.
- *  - FLUID_FAILED 
- *    - synth is NULL.
- *    - chan is outside MIDI channel count.
- *    - chan isn't a basic channel. 
+ *  - #FLUID_OK on success.
+ *  - #FLUID_FAILED 
+ *    - \a synth is NULL.
+ *    - \a chan is outside MIDI channel count.
+ *    - \a chan isn't a basic channel. 
  */
 int fluid_synth_reset_basic_channels(fluid_synth_t* synth, int chan)
 {
@@ -89,27 +89,25 @@ int fluid_synth_reset_basic_channels(fluid_synth_t* synth, int chan)
 /**
  * Changes the mode of an existing basic channel or sets a new basic channel group.
  *
- * - If chan is already a basic channel, the mode is changed.
- * - If chan is not a basic channel, a new basic channel group is set.
- * In all case the function fails if any channel overlaps existing neighbour basic 
+ * - If \a chan is already a basic channel, the mode is changed.
+ * - If \a chan is not a basic channel, a new basic channel group is set.
+ * The function fails if any channel overlaps existing neighbour basic 
  * channel groups. To make room if necessary, existing basic channel groups can be
- * cleared using fluid_synth_reset_basic_channels API.
+ * cleared using fluid_synth_reset_basic_channels().
  * 
  * @param synth the synth instance.
  * @param chan the basic Channel number (0 to MIDI channel count-1).
- * @param mode the MIDI mode to use for chan (0 to 3).
- * @param val number of channels in the group(for mode 0,1,3 only).
- * @ Note:
- *   - val is relevant only for mode poly omnion (0), mono omnion (1), mono omni off (3). 
- *     a value -1 (or 0) means all channels from basicchan to MIDI channel count -1.
- *   - val is ignored for mode poly omnioff (2) as this mode implies a group of only
- *     one channel.
+ * @param mode the MIDI mode to use for chan (see #fluid_basic_channel_modes).
+ * @param val number of channels in the group.
+ * @note \a val is only relevant for mode #FLUID_CHANNEL_MODE_OMNION_POLY, #FLUID_CHANNEL_MODE_OMNION_MONO
+ * and #FLUID_CHANNEL_MODE_OMNIOFF_MONO, i.e. it is ignored for #FLUID_CHANNEL_MODE_OMNIOFF_POLY as this 
+ * mode implies a group of only one channel. A value of -1 (or 0) means all channels from basicchan to MIDI channel count -1.
  * @return 
- * - FLUID_OK on success.
- * - FLUID_FAILED
- *   - chan is outside MIDI channel count.
- *   - mode is invalid.
- *   - val has a number of channels overlapping another basic channel group or been
+ * - #FLUID_OK on success.
+ * - #FLUID_FAILED
+ *   - \a chan is outside MIDI channel count.
+ *   - \a mode is invalid.
+ *   - \a val has a number of channels overlapping another basic channel group or been
  *     above MIDI channel count.
  */
 int fluid_synth_set_basic_channel(fluid_synth_t* synth, int chan, int mode, int val)
@@ -132,32 +130,6 @@ int fluid_synth_set_basic_channel(fluid_synth_t* synth, int chan, int mode, int 
     FLUID_API_RETURN(result);
 }
 
-/**
- * Changes the mode of an existing basic channel or set a new basic channel group.
- *
- * - If basicchan is already a basic channel, the mode is changed.
- * - If basicchan is not a basic channel, a new basic channel part is set.
- * In all case the function fail if any channel overlaps existing neighbour basic 
- * channel groups. To make room if necessary, existing basic channel groups can be
- * cleared using fluid_synth_reset_basic_channels API.
- * 
- * The function is used internally by fluid_synth_set_basic_channel().
- * 
- * @param synth the synth instance.
- * @param basicchan the Basic Channel number (0 to MIDI channel count-1).
- * @param mode the MIDI mode to use for basicchan (0 to 3).
- * @param val number of monophonic channels.(for mode 0,1,3 only)
- * @ Note:
- *   - val is relevant only for mode poly omnion (0), mono omnion (1), mono omni off (3). 
- *     a value 0 (or -1) means all channels from basicchan to MIDI channel count -1.
- *   - val is ignored for mode poly omnioff (2) as this mode implies a group of only
- *     one channel.
- * @return 
- * - FLUID_OK on success.
- * - FLUID_FAILED
- *   - val has a number of channels overlapping another basic channel group or been
- *     above MIDI channel count.
- */
 int fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth, int basicchan, int mode, int val)
 {
 	static const char * warning_msg = "channel %d overlaps other channel";
@@ -243,27 +215,26 @@ static int fluid_synth_get_previous_basic_channel(fluid_synth_t* synth, int chan
 }
 
 /**
- * Returns poly mono mode informations from any MIDI channel.
+ * Returns poly mono mode information of any MIDI channel.
  *
  * @param synth the synth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
- * @param basic_chan_out pointer to returned basic channel chan belongs to ( -1
- *        if chan is disabled).
- * @param mode_chan_out pointer to the returned mode of chan.
- * @param basic_val_out pointer to the returned val of basic channel.
- * @note if any of basic_chan_out, mode_chan_out, basic_val_out pointer is NULL
- *  the corresponding information isn't returned. 
+ * @param basic_chan_out Buffer to store the basic channel \a chan belongs to or #FLUID_FAILED if \a chan is disabled.
+ * @param mode_out Buffer to store the mode of \a chan (see #fluid_basic_channel_modes) or #FLUID_FAILED if \a chan is disabled.
+ * @param val_out Buffer to store the total number of channels in this basic channel group or #FLUID_FAILED if \a chan is disabled.
+ * @note If any of \a basic_chan_out, \a mode_out, \a val_out pointer is NULL
+ *  the corresponding information isn't returned.
  * 
  * @return
- * - FLUID_OK on success.
- * - FLUID_FAILED 
- *   - synth is NULL.
- *   - chan is outside MIDI channel count.
+ * - #FLUID_OK on success.
+ * - #FLUID_FAILED 
+ *   - \a synth is NULL.
+ *   - \a chan is outside MIDI channel count.
  */
 int fluid_synth_get_basic_channel(fluid_synth_t* synth, int chan,
 					int *basic_chan_out, 
-					int *mode_chan_out,
-					int *basic_val_out )
+					int *mode_out,
+					int *val_out )
 {
 	int basic_chan;
 	/* checks parameters first */
@@ -280,17 +251,17 @@ int fluid_synth_get_basic_channel(fluid_synth_t* synth, int chan,
 		* basic_chan_out = basic_chan;
 	}
 	/* returns mode of chan */ 
-	if (mode_chan_out)
+	if (mode_out)
 	{
-		* mode_chan_out = synth->channel[chan]->mode;
+		* mode_out = synth->channel[chan]->mode;
 	}
 	/* returns val of basic channel */ 
-	if (basic_val_out)
+	if (val_out)
 	{
-		* basic_val_out = 0;
+		* val_out = 0;
 		if (basic_chan >= 0)
 		{
-			* basic_val_out = synth->channel[basic_chan]->mode_val;
+			* val_out = synth->channel[basic_chan]->mode_val;
 		}
 	}
 	/**/
@@ -307,11 +278,11 @@ int fluid_synth_get_basic_channel(fluid_synth_t* synth, int chan,
  * @param legatomode The legato mode as indicated by #fluid_channel_legato_mode
  *
  * @return
- * - FLUID_OK on success.
- * - FLUID_FAILED 
- *   - synth is NULL.
- *   - chan is outside MIDI channel count.
- *   - legatomode is invalid.
+ * - #FLUID_OK on success.
+ * - #FLUID_FAILED 
+ *   - \a synth is NULL.
+ *   - \a chan is outside MIDI channel count.
+ *   - \a legatomode is invalid.
  */
 int fluid_synth_set_legato_mode(fluid_synth_t* synth, int chan, int legatomode)
 {
@@ -333,11 +304,11 @@ int fluid_synth_set_legato_mode(fluid_synth_t* synth, int chan, int legatomode)
  * @param legatomode The legato mode as indicated by #fluid_channel_legato_mode
  *
  * @return
- * - FLUID_OK on success.
- * - FLUID_FAILED 
- *   - synth is NULL.
- *   - chan is outside MIDI channel count.
- *   - legatomode is NULL.
+ * - #FLUID_OK on success.
+ * - #FLUID_FAILED 
+ *   - \a synth is NULL.
+ *   - \a chan is outside MIDI channel count.
+ *   - \a legatomode is NULL.
  */
 int fluid_synth_get_legato_mode(fluid_synth_t* synth, int chan, int *legatomode)
 {
@@ -359,11 +330,11 @@ int fluid_synth_get_legato_mode(fluid_synth_t* synth, int chan, int *legatomode)
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
  * @param portamentomode The portamento mode as indicated by #fluid_channel_portamento_mode
  * @return
- * - FLUID_OK on success.
- * - FLUID_FAILED 
- *   - synth is NULL.
- *   - chan is outside MIDI channel count.
- *   - portamentomode is invalid.
+ * - #FLUID_OK on success.
+ * - #FLUID_FAILED 
+ *   - \a synth is NULL.
+ *   - \a chan is outside MIDI channel count.
+ *   - \a portamentomode is invalid.
  */
 int fluid_synth_set_portamento_mode(fluid_synth_t* synth, int chan,
 					int portamentomode)
@@ -385,11 +356,11 @@ int fluid_synth_set_portamento_mode(fluid_synth_t* synth, int chan,
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
  * @param portamentomode Pointer to the portamento mode as indicated by #fluid_channel_portamento_mode
  * @return
- * - FLUID_OK on success.
- * - FLUID_FAILED 
- *   - synth is NULL.
- *   - chan is outside MIDI channel count.
- *   - portamentomode is NULL.
+ * - #FLUID_OK on success.
+ * - #FLUID_FAILED 
+ *   - \a synth is NULL.
+ *   - \a chan is outside MIDI channel count.
+ *   - \a portamentomode is NULL.
  */
 int fluid_synth_get_portamento_mode(fluid_synth_t* synth, int chan,
 					int *portamentomode)
@@ -413,10 +384,10 @@ int fluid_synth_get_portamento_mode(fluid_synth_t* synth, int chan,
  * @param breathmode The breath mode as indicated by #fluid_channel_breath_flags
  *
  * @return
- * - FLUID_OK on success.
- * - FLUID_FAILED 
- *   - synth is NULL.
- *   - chan is outside MIDI channel count.
+ * - #FLUID_OK on success.
+ * - #FLUID_FAILED 
+ *   - \a synth is NULL.
+ *   - \a chan is outside MIDI channel count.
  */
 int fluid_synth_set_breath_mode(fluid_synth_t* synth, int chan, int breathmode)
 {
@@ -436,11 +407,11 @@ int fluid_synth_set_breath_mode(fluid_synth_t* synth, int chan, int breathmode)
  * @param breathmode Pointer to the returned breath mode as indicated by #fluid_channel_breath_flags
  *
  * @return
- * - FLUID_OK on success.
- * - FLUID_FAILED 
- *   - synth is NULL.
- *   - chan is outside MIDI channel count.
- *   - breathmode is NULL.
+ * - #FLUID_OK on success.
+ * - #FLUID_FAILED 
+ *   - \a synth is NULL.
+ *   - \a chan is outside MIDI channel count.
+ *   - \a breathmode is NULL.
  */
 int fluid_synth_get_breath_mode(fluid_synth_t* synth, int chan, int *breathmode)
 {
