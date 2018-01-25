@@ -236,35 +236,36 @@ int fluid_synth_get_basic_channel(fluid_synth_t* synth, int chan,
 					int *mode_out,
 					int *val_out )
 {
-	int basic_chan;
+    int basic_chan = FLUID_FAILED;
+    int mode = FLUID_FAILED;
+    int val = FLUID_FAILED;
+    
 	/* checks parameters first */
 	FLUID_API_ENTRY_CHAN(FLUID_FAILED);
-	/**/
-	basic_chan = FLUID_FAILED;
-	if (synth->channel[chan]->mode &  FLUID_CHANNEL_ENABLED)
-	{ /* chan is enabled , we search the basic channel chan belongs to */
-		basic_chan = fluid_synth_get_previous_basic_channel(synth, chan);
-	}	
-	/* returns basic channel */ 
+    
+	if ((synth->channel[chan]->mode &  FLUID_CHANNEL_ENABLED) &&
+        /* chan is enabled , we search the basic channel chan belongs to */
+        (basic_chan = fluid_synth_get_previous_basic_channel(synth, chan)) != FLUID_FAILED)
+	{ 
+        mode = synth->channel[chan]->mode & FLUID_CHANNEL_MODE_MASK;
+        val = synth->channel[basic_chan]->mode_val;
+	}
+	
 	if (basic_chan_out)
 	{
 		* basic_chan_out = basic_chan;
 	}
-	/* returns mode of chan */ 
+	
 	if (mode_out)
 	{
-		* mode_out = synth->channel[chan]->mode;
+		* mode_out = mode;
 	}
-	/* returns val of basic channel */ 
+	
 	if (val_out)
 	{
-		* val_out = 0;
-		if (basic_chan >= 0)
-		{
-			* val_out = synth->channel[basic_chan]->mode_val;
-		}
+		* val_out = val;
 	}
-	/**/
+	
 	FLUID_API_RETURN(FLUID_OK);
 }
 

@@ -1945,10 +1945,10 @@ Make use of setbasicchannels to set at least a default basic channel.\n";
 	/* prints all basic channels */
 	for (i =0; i< n_chan; i++)
 	{
-		int mode_chan,val;
-		if( fluid_synth_get_basic_channel(synth, i ,NULL,&mode_chan,&val) == FLUID_OK)
+		int basic_chan, mode_chan,val;
+		if( fluid_synth_get_basic_channel(synth, i, &basic_chan, &mode_chan, &val) == FLUID_OK)
 		{
-			if (mode_chan &  FLUID_CHANNEL_BASIC)
+			if (basic_chan == i)
 			{
 				n++;
 				fluid_ostream_printf(out,"Basic channel:%3d, %s, nbr:%3d\n", i, 
@@ -2257,19 +2257,18 @@ int fluid_handle_channelsmode (void* data, int ac, char** av,
 	fluid_ostream_printf(out, (char*)header);
 	for (i = 0; i < n; i++)
 	{
-		int mode_chan, val;
+		int basic_chan, mode, val;
 		int chan = ac ? atoi(av[i]): i;
-		int result = fluid_synth_get_basic_channel(synth, chan, NULL, &mode_chan, &val);
+		int result = fluid_synth_get_basic_channel(synth, chan, &basic_chan, &mode, &val);
 		if (result == FLUID_OK)
 		{
-			if(mode_chan &  FLUID_CHANNEL_ENABLED)
+			if(basic_chan != FLUID_FAILED)
 			{	/* This channel is enabled */
 				const char * p_basicchan; /* field basic channel */
 				const char * p_mode; /* field mode */
 				const char *p_nbr; /* field Nbr */
 				static const char * blank="--"; /* field empty */
-				int mode = mode_chan &  FLUID_CHANNEL_MODE_MASK;
-				if (mode_chan &  FLUID_CHANNEL_BASIC)
+				if (chan == basic_chan)
 				{	/* This channel is a basic channel */
 					char nbr[10]; /* field Nbr */
 					FLUID_SNPRINTF(nbr,sizeof(nbr),"nbr:%3d",val);
