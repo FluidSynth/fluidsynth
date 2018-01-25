@@ -516,7 +516,7 @@ void fluid_dump_modulator(fluid_mod_t * mod){
       case GEN_CHORUSSEND: printf("Chorus send"); break;
       case GEN_REVERBSEND: printf("Reverb send"); break;
       case GEN_PAN: printf("pan"); break;
-      case GEN_BALANCE: printf("balance"); break;
+      case GEN_CUSTOM_BALANCE: printf("balance"); break;
       case GEN_ATTENUATION: printf("att"); break;
       default: printf("dest %i",dest);
   }; /* switch dest */

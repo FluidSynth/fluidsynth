@@ -419,7 +419,7 @@ fluid_synth_init(void)
 		       | FLUID_MOD_POSITIVE                      /* D=0 */
 		       );
   fluid_mod_set_source2(&custom_balance_mod, 0, 0);
-  fluid_mod_set_dest(&custom_balance_mod, GEN_BALANCE);                  /* Destination: stereo balance */
+  fluid_mod_set_dest(&custom_balance_mod, GEN_CUSTOM_BALANCE);                  /* Destination: stereo balance */
   /* Amount: 96 dB of attenuation (on the opposite channel) */
   fluid_mod_set_amount(&custom_balance_mod, 960.0);
 }

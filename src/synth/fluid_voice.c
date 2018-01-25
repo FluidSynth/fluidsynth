@@ -538,7 +538,7 @@ fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t* voice)
     /* GEN_FINETUNE             [1]                        #52  */
     GEN_OVERRIDEROOTKEY,                 /*                #58  */
     GEN_PITCH,                           /*                ---  */
-    GEN_BALANCE                          /*                ---  */
+    GEN_CUSTOM_BALANCE                          /*                ---  */
   };
 
   /* When the voice is made ready for the synthesis process, a lot of
@@ -692,10 +692,10 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
   switch (gen) {
 
   case GEN_PAN:
-  case GEN_BALANCE:
+  case GEN_CUSTOM_BALANCE:
     /* range checking is done in the fluid_pan and fluid_balance functions */
     voice->pan = fluid_voice_gen_value(voice, GEN_PAN);
-    voice->balance = fluid_voice_gen_value(voice, GEN_BALANCE);
+    voice->balance = fluid_voice_gen_value(voice, GEN_CUSTOM_BALANCE);
 
     /* left amp */
     UPDATE_RVOICE_BUFFERS2(fluid_rvoice_buffers_set_amp, 0,
