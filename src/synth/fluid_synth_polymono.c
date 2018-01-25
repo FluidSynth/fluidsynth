@@ -101,7 +101,7 @@ int fluid_synth_reset_basic_channel(fluid_synth_t* synth, int chan)
  * @param val number of channels in the group.
  * @note \a val is only relevant for mode #FLUID_CHANNEL_MODE_OMNION_POLY, #FLUID_CHANNEL_MODE_OMNION_MONO
  * and #FLUID_CHANNEL_MODE_OMNIOFF_MONO, i.e. it is ignored for #FLUID_CHANNEL_MODE_OMNIOFF_POLY as this 
- * mode implies a group of only one channel. A value of -1 (or 0) means all channels from basicchan to MIDI channel count -1.
+ * mode implies a group of only one channel. A value of 0 means all channels from \a chan to MIDI channel count-1.
  * @return 
  * - #FLUID_OK on success.
  * - #FLUID_FAILED
@@ -116,7 +116,7 @@ int fluid_synth_set_basic_channel(fluid_synth_t* synth, int chan, int mode, int 
 	/* checks parameters */
     fluid_return_val_if_fail (mode >= 0, FLUID_FAILED);
     fluid_return_val_if_fail (mode < FLUID_CHANNEL_MODE_LAST, FLUID_FAILED);
-    fluid_return_val_if_fail (val >= -1, FLUID_FAILED);
+    fluid_return_val_if_fail (val >= 0, FLUID_FAILED);
     FLUID_API_ENTRY_CHAN(FLUID_FAILED);
     /**/
     if (val > 0 && chan + val > synth->midi_channels)
@@ -141,10 +141,10 @@ int fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth, int basicchan, int
 	{
 		val = 1; /* mode poly ominioff implies a group of only one channel.*/
 	}
-	else if (val <= 0)
+	else if (val == 0)
 	{  
 		/* mode poly omnion (0), mono omnion (1), mono omni off (3) */
-		/* value 0 (or -1) means all channels from basicchan to MIDI channel count -1.*/
+		/* value 0 means all channels from basicchan to MIDI channel count -1.*/
 		val = n_chan - basicchan;
 	}
 	/* checks val range */
