@@ -253,6 +253,12 @@ int fluid_channel_get_interp_method(fluid_channel_t* chan);
 */
 #define fluid_channel_prev_note(chan)	(chan->prev_note)
 
+/* Interface to poly/mono mode variables */
+enum fluid_channel_mode_flags_internal
+{
+    FLUID_CHANNEL_BASIC = 0x04,    /**< if flag set the corresponding midi channel is a basic channel */
+    FLUID_CHANNEL_ENABLED = 0x08,  /**< if flag set the corresponding midi channel is enabled, else disabled, i.e. channel ignores any MIDI messages */
+    
 /* 
   FLUID_CHANNEL_LEGATO_PLAYING bit of channel mode keeps trace of the legato /staccato 
   state playing.
@@ -266,7 +272,8 @@ int fluid_channel_get_interp_method(fluid_channel_t* chan);
   to play the current noteOff legato with the most recent note.
 */
 /* bit7, 1: means legato playing , 0: means staccato playing */
-#define FLUID_CHANNEL_LEGATO_PLAYING  0x80 
+    FLUID_CHANNEL_LEGATO_PLAYING = 0x80
+};
 
 /* End of interface to monophonic list variables */
 
