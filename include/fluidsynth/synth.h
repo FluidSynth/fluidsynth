@@ -344,7 +344,7 @@ enum fluid_basic_channel_modes
     FLUID_CHANNEL_MODE_LAST /**< @internal Value defines the count of basic channel modes (#fluid_basic_channel_modes) @warning This symbol is not part of the public API and ABI stability guarantee and may change at any time! */
 };
 
-FLUIDSYNTH_API int fluid_synth_reset_basic_channels(fluid_synth_t* synth, int chan);
+FLUIDSYNTH_API int fluid_synth_reset_basic_channel(fluid_synth_t* synth, int chan);
 
 FLUIDSYNTH_API int  fluid_synth_get_basic_channel(fluid_synth_t* synth, int chan,
 					int *basic_chan_out, 

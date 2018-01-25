@@ -57,7 +57,7 @@ static void fluid_synth_reset_basic_channel_LOCAL(fluid_synth_t* synth, int chan
  *    - \a chan is outside MIDI channel count.
  *    - \a chan isn't a basic channel. 
  */
-int fluid_synth_reset_basic_channels(fluid_synth_t* synth, int chan)
+int fluid_synth_reset_basic_channel(fluid_synth_t* synth, int chan)
 {
     int nbr_chan;
   
@@ -93,7 +93,7 @@ int fluid_synth_reset_basic_channels(fluid_synth_t* synth, int chan)
  * - If \a chan is not a basic channel, a new basic channel group is set.
  * The function fails if any channel overlaps existing neighbour basic 
  * channel groups. To make room if necessary, existing basic channel groups can be
- * cleared using fluid_synth_reset_basic_channels().
+ * cleared using fluid_synth_reset_basic_channel().
  * 
  * @param synth the synth instance.
  * @param chan the basic Channel number (0 to MIDI channel count-1).

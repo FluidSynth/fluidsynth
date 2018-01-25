@@ -2102,7 +2102,7 @@ int fluid_handle_resetbasicchannels (void* data, int ac, char** av,
 		for (i = 0; i < ac; i++)
 		{
 			int chan = atoi(av[i]);
-			int result = fluid_synth_reset_basic_channels(synth, chan);
+			int result = fluid_synth_reset_basic_channel(synth, chan);
 			if (result == FLUID_FAILED)
 			{
 				fluid_ostream_printf(out,"%s: channel %3d, %s", name_cde, chan,invalid_arg_msg);
@@ -2112,7 +2112,7 @@ int fluid_handle_resetbasicchannels (void* data, int ac, char** av,
 	else
 	{
 		/* resets all basic channels */
-		fluid_synth_reset_basic_channels(synth, -1); 
+		fluid_synth_reset_basic_channel(synth, -1); 
 	}
 	/* prints result */
 	return fluid_synth_print_basic_channels(synth, out);
@@ -2149,7 +2149,7 @@ int fluid_handle_setbasicchannels (void* data, int ac, char** av,
 	if(!ac)
 	{
 		/* sets one default basic channel */
-		fluid_synth_reset_basic_channels(synth, -1); /* reset all basic channels */
+		fluid_synth_reset_basic_channel(synth, -1); /* reset all basic channels */
 		/* sets one basic channel Omni On Poly (i.e all the MIDI channels are polyphonic) */
 		fluid_synth_set_basic_channel( synth, 0, FLUID_CHANNEL_MODE_OMNION_POLY,0);
 		return 0;
