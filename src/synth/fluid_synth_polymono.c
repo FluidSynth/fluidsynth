@@ -45,10 +45,10 @@ static void fluid_synth_reset_basic_channel_LOCAL(fluid_synth_t* synth, int chan
  * Disables and unassigns all channels from a basic channel group.
  *
  * @param synth The synth instance.
- * @param chan The basic channel of the group to reset or -1 to reset all basic channels.
- * @note When a synth instance has no basic channel, all channels are disabled.
- * In the intend to get some MIDI channels enabled, the application have to set at least 
- * one basic channel using fluid_synth_set_basic_channel() API.
+ * @param chan The basic channel of the group to reset or -1 to reset all channels.
+ * @note By default (i.e. on creation after new_fluid_synth() and after fluid_synth_system_reset())
+ * a synth instance has one basic channel at channel 0 in mode #FLUID_CHANNEL_MODE_OMNION_POLY.
+ * All other channels belong to this basic channel group.
  *  
  * @return
  *  - #FLUID_OK on success.
