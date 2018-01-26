@@ -31,6 +31,13 @@
 #include <sndfile.h>
 #endif
 
+
+/* EMU8k/10k hardware applies this factor to initial attenuation generator values set at preset and
+ * instrument level in a soundfont. We apply this factor when loading the generator values to stay
+ * compatible as most existing soundfonts expect exactly this (strange, non-standard) behaviour. */
+#define EMU_ATTENUATION_FACTOR (0.4f)
+
+
 /***************************************************************
  *
  *                           SFONT LOADER
@@ -1277,6 +1284,12 @@ fluid_preset_zone_import_sfont(fluid_preset_zone_t* zone, SFZone *sfzone, fluid_
       zone->vello = (int) sfgen->amount.range.lo;
       zone->velhi = (int) sfgen->amount.range.hi;
       break;
+    case GEN_ATTENUATION:
+      /* EMU8k/10k hardware applies a scale factor to initial attenuation generator values set at
+       * preset and instrument level */
+      zone->gen[sfgen->id].val = (fluid_real_t) sfgen->amount.sword * EMU_ATTENUATION_FACTOR;
+      zone->gen[sfgen->id].flags = GEN_SET;
+      break;
     default:
       /* FIXME: some generators have an unsigne word amount value but i don't know which ones */
       zone->gen[sfgen->id].val = (fluid_real_t) sfgen->amount.sword;
@@ -1677,6 +1690,12 @@ fluid_inst_zone_import_sfont(fluid_inst_zone_t* zone, SFZone *sfzone, fluid_defs
     case GEN_VELRANGE:
       zone->vello = (int) sfgen->amount.range.lo;
       zone->velhi = (int) sfgen->amount.range.hi;
+      break;
+    case GEN_ATTENUATION:
+      /* EMU8k/10k hardware applies a scale factor to initial attenuation generator values set at
+       * preset and instrument level */
+      zone->gen[sfgen->id].val = (fluid_real_t) sfgen->amount.sword * EMU_ATTENUATION_FACTOR;
+      zone->gen[sfgen->id].flags = GEN_SET;
       break;
     default:
       /* FIXME: some generators have an unsigned word amount value but
@@ -3385,7 +3404,7 @@ fixup_sample (SFData * sf)
   int invalid_loops=FALSE;
   int invalid_loopstart;
   int invalid_loopend, loopend_end_mismatch;
-  unsigned int sdtachunk_size = sf->samplesize;
+  unsigned int total_samples = sf->samplesize / FLUID_MEMBER_SIZE(fluid_defsfont_t, sampledata[0]);
 
   p = sf->sample;
   while (p)
@@ -3398,14 +3417,14 @@ fixup_sample (SFData * sf)
        * this is as it should be. however we cannot be sure whether any of sam.loopend or sam.end
        * is correct. hours of thinking through this have concluded, that it would be best practice 
        * to mangle with loops as little as necessary by only making sure loopend is within
-       * sdtachunk_size. incorrect soundfont shall preferably fail loudly. */
-      invalid_loopend = (sam->loopend > sdtachunk_size) || (sam->loopstart >= sam->loopend);
+       * total_samples. incorrect soundfont shall preferably fail loudly. */
+      invalid_loopend = (sam->loopend > total_samples) || (sam->loopstart >= sam->loopend);
       
       loopend_end_mismatch = (sam->loopend > sam->end);
 	  
       /* if sample is not a ROM sample and end is over the sample data chunk
          or sam start is greater than 4 less than the end (at least 4 samples) */
-      if ((!(sam->sampletype & FLUID_SAMPLETYPE_ROM) && sam->end > sdtachunk_size)
+      if ((!(sam->sampletype & FLUID_SAMPLETYPE_ROM) && sam->end > total_samples)
           || sam->start > (sam->end - 4))
       {
           FLUID_LOG (FLUID_WARN, _("Sample '%s' start/end file positions are invalid,"
@@ -3447,8 +3466,7 @@ fixup_sample (SFData * sf)
              * valid sample will be played */
             sam->loopend = sam->end;
 	        }
-	  
-          if(loopend_end_mismatch)
+          else if(loopend_end_mismatch)
 	        {
             FLUID_LOG (FLUID_DBG, _("Sample '%s' has invalid loop stop '%d',"
               " sample stop at '%d', using it anyway"), sam->name, sam->loopend, sam->end);

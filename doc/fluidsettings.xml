@@ -258,15 +258,6 @@ https://stackoverflow.com/a/6251757
                 When set to 1 (TRUE) the synthesizer will print out information about the received MIDI events to the stdout. This can be helpful for debugging. This setting cannot be changed after the synthesizer has started.
             </desc>
         </setting>
-        <setting>
-            <name>volenv</name>
-            <type>str</type>
-            <def>emu</def>
-            <vals>compliant, emu</vals>
-            <desc>
-                Specifies the kind of volume envelope processing. This esp. influences the way fluidsynth responses to noteon velocity. The default setting 'emu' causes the envelope to be highly dynamic (i.e. compatible with the EMU10K1). Alternatively this may be set to 'compliant' for a less dynamic envelope, as it was done before fluidsynth 1.0.9. Note that this setting can only be changed until the first synth has been created. Changing it afterwards will have no effect for the rest of fluidsynths lifetime.
-            </desc>
-        </setting>
     </synth>
         
     

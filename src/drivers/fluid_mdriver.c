@@ -151,7 +151,9 @@ static const struct fluid_mdriver_definition_t fluid_midi_drivers[] = {
 
 void fluid_midi_driver_settings(fluid_settings_t* settings)
 {
+#ifdef FLUID_MIDI_SUPPORT
   unsigned int i;
+#endif
 
   fluid_settings_register_int (settings, "midi.autoconnect", 0, 0, 1, FLUID_HINT_TOGGLED);
   

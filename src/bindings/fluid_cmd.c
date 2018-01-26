@@ -1602,8 +1602,8 @@ fluid_handle_info(void* d, int ac, char** av, fluid_ostream_t out)
     fluid_ostream_printf(out, "%s:\n", av[0]);
     fluid_ostream_printf(out, "Type:          string\n");
     fluid_ostream_printf(out, "Value:         %s\n", s ? s : "NULL");
-    fluid_ostream_printf(out, "Default value: %s\n",
-			fluid_settings_getstr_default(settings, av[0]));
+    fluid_settings_getstr_default(settings, av[0], &s);
+    fluid_ostream_printf(out, "Default value: %s\n", s);
 
     if (s) FLUID_FREE (s);
 
