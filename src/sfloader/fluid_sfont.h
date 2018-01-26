@@ -37,8 +37,8 @@
 #define fluid_sfont_get_id(_sf) ((_sf)->id)
 #define fluid_sfont_get_name(_sf) (*(_sf)->get_name)(_sf)
 #define fluid_sfont_get_preset(_sf,_bank,_prenum) (*(_sf)->get_preset)(_sf,_bank,_prenum)
-#define fluid_sfont_iteration_start(_sf) (*(_sf)->iteration_start)(_sf)
-#define fluid_sfont_iteration_next(_sf,_pr) (*(_sf)->iteration_next)(_sf,_pr)
+#define fluid_sfont_iteration_start(_sf) { if((_sf) && (_sf)->iteration_start) (*(_sf)->iteration_start)(_sf); }
+#define fluid_sfont_iteration_next(_sf,_pr) (((_sf) && (_sf)->iteration_start) ? (*(_sf)->iteration_next)(_sf,_pr) : 0)
 
 
 #define fluid_preset_delete_internal(_preset) \
