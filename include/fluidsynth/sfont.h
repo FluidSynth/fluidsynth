@@ -270,9 +270,11 @@ FLUIDSYNTH_API int fluid_sample_set_sound_data (fluid_sample_t* sample,
                                                 short *data,
                                                 char *data24,
                                                 unsigned int nbframes,
-                                                short copy_data,
-                                                int rootkey,
-                                                unsigned int sample_rate);
+                                                unsigned int sample_rate,
+                                                short copy_data);
+
+FLUIDSYNTH_API int fluid_sample_set_loop(fluid_sample_t* sample, unsigned int loop_start, unsigned int loop_end);
+FLUIDSYNTH_API int fluid_sample_set_pitch(fluid_sample_t* sample, int root_key, int fine_tune);
 
 #ifdef __cplusplus
 }

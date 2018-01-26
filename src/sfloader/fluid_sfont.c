@@ -337,9 +337,8 @@ fluid_sample_set_sound_data (fluid_sample_t* sample,
                              short *data,
                              char *data24,
                              unsigned int nbframes,
-                             short copy_data,
-                             int rootkey,
-                             unsigned int sample_rate
+                             unsigned int sample_rate,
+                             short copy_data
                             )
 {
     /* the number of samples before the start and after the end */
@@ -347,7 +346,6 @@ fluid_sample_set_sound_data (fluid_sample_t* sample,
 
     fluid_return_val_if_fail(sample != NULL, FLUID_FAILED);
     fluid_return_val_if_fail(data != NULL, FLUID_FAILED);
-    fluid_return_val_if_fail(0<=rootkey && rootkey<=127, FLUID_FAILED);
     
     /* in case we already have some data */
     if ((sample->data != NULL || sample->data24 != NULL) && sample->auto_free)
@@ -388,7 +386,7 @@ fluid_sample_set_sound_data (fluid_sample_t* sample,
         /* pointers */
         /* all from the start of data */
         sample->start = SAMPLE_LOOP_MARGIN;
-        sample->end = SAMPLE_LOOP_MARGIN + storedNbFrames;
+        sample->end = SAMPLE_LOOP_MARGIN + storedNbFrames - 1;
     }
     else
     {
@@ -396,16 +394,10 @@ fluid_sample_set_sound_data (fluid_sample_t* sample,
         sample->data = data;
         sample->data24 = data24;
         sample->start = 0;
-        sample->end = nbframes;
+        sample->end = nbframes - 1;
     }
 
-    /* only used as markers for the LOOP generators : set them on the first real frame */
-    sample->loopstart = sample->start;
-    sample->loopend = sample->end;
-
     sample->samplerate = sample_rate;
-    sample->origpitch = rootkey;
-    sample->pitchadj = 0;
     sample->sampletype = FLUID_SAMPLETYPE_MONO;
     sample->valid = 1;
     sample->auto_free = copy_data;
@@ -422,3 +414,23 @@ error_rec:
 }
 
 
+int fluid_sample_set_loop(fluid_sample_t* sample, unsigned int loop_start, unsigned int loop_end)
+{
+    fluid_return_val_if_fail(sample != NULL, FLUID_FAILED);
+    
+    sample->loopstart = loop_start;
+    sample->loopend = loop_end;
+    
+    return FLUID_OK;
+}
+
+int fluid_sample_set_pitch(fluid_sample_t* sample, int root_key, int fine_tune)
+{
+    fluid_return_val_if_fail(sample != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(0<=root_key && root_key<=127, FLUID_FAILED);
+    
+    sample->origpitch = root_key;
+    sample->pitchadj = fine_tune;
+    
+    return FLUID_OK;
+}
