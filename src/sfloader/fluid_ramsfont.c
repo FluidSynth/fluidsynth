@@ -32,7 +32,6 @@ static fluid_preset_t *fluid_ramsfont_sfont_get_preset(fluid_sfont_t* sfont,
 static void fluid_ramsfont_sfont_iteration_start(fluid_sfont_t* sfont);
 static int fluid_ramsfont_sfont_iteration_next(fluid_sfont_t* sfont,
                                                fluid_preset_t* preset);
-static int fluid_rampreset_preset_delete(fluid_preset_t* preset);
 static const char *fluid_rampreset_preset_get_name(fluid_preset_t* preset);
 static int fluid_rampreset_preset_get_banknum(fluid_preset_t* preset);
 static int fluid_rampreset_preset_get_num(fluid_preset_t* preset);
@@ -92,21 +91,19 @@ fluid_ramsfont_create_sfont()
   if (ramsfont == NULL) {
     return NULL;
   }
-
-  sfont = FLUID_NEW(fluid_sfont_t);
-  if (sfont == NULL) {
-    FLUID_LOG(FLUID_ERR, "Out of memory");
-    delete_fluid_ramsfont(ramsfont);
+  
+  sfont = new_fluid_sfont(fluid_ramsfont_sfont_get_name,
+                          fluid_ramsfont_sfont_get_preset,
+                          fluid_ramsfont_sfont_delete);
+  if (sfont == NULL)
+  {
     return NULL;
   }
-
-  sfont->data = ramsfont;
-  sfont->free = fluid_ramsfont_sfont_delete;
-  sfont->get_name = fluid_ramsfont_sfont_get_name;
-  sfont->get_preset = fluid_ramsfont_sfont_get_preset;
-  sfont->iteration_start = fluid_ramsfont_sfont_iteration_start;
-  sfont->iteration_next = fluid_ramsfont_sfont_iteration_next;
-
+  
+  fluid_sfont_set_iteration_start(sfont, fluid_ramsfont_sfont_iteration_start);
+  fluid_sfont_set_iteration_next(sfont, fluid_ramsfont_sfont_iteration_next);
+  fluid_sfont_set_data(sfont, ramsfont);
+  
   return sfont;
 }
 
@@ -116,7 +113,7 @@ fluid_ramsfont_sfont_delete(fluid_sfont_t* sfont)
 {
   if (delete_fluid_ramsfont(sfont->data) != 0)
     return -1;
-  FLUID_FREE(sfont);
+  delete_fluid_sfont(sfont);
   return 0;
 }
 
@@ -140,20 +137,16 @@ fluid_ramsfont_sfont_get_preset(fluid_sfont_t* sfont, unsigned int bank, unsigne
     return NULL;
   }
 
-  preset = FLUID_NEW(fluid_preset_t);
+  preset = new_fluid_preset(sfont,
+                            fluid_rampreset_preset_get_name,
+                            fluid_rampreset_preset_get_banknum,
+                            fluid_rampreset_preset_get_num,
+                            fluid_rampreset_preset_noteon,
+                            delete_fluid_preset); /* TODO: free modulators */
   if (preset == NULL) {
-    FLUID_LOG(FLUID_ERR, "Out of memory");
     return NULL;
   }
-
-  preset->sfont = sfont;
-  preset->data = rampreset;
-  preset->free = fluid_rampreset_preset_delete;
-  preset->get_name = fluid_rampreset_preset_get_name;
-  preset->get_banknum = fluid_rampreset_preset_get_banknum;
-  preset->get_num = fluid_rampreset_preset_get_num;
-  preset->noteon = fluid_rampreset_preset_noteon;
-  preset->notify = NULL;
+  fluid_preset_set_data(preset, rampreset);
 
   return preset;
 }
@@ -169,7 +162,7 @@ fluid_ramsfont_sfont_iteration_start(fluid_sfont_t* sfont)
 static int
 fluid_ramsfont_sfont_iteration_next(fluid_sfont_t* sfont, fluid_preset_t* preset)
 {
-  preset->free = fluid_rampreset_preset_delete;
+  preset->free = delete_fluid_preset;
   preset->get_name = fluid_rampreset_preset_get_name;
   preset->get_banknum = fluid_rampreset_preset_get_banknum;
   preset->get_num = fluid_rampreset_preset_get_num;
@@ -177,17 +170,6 @@ fluid_ramsfont_sfont_iteration_next(fluid_sfont_t* sfont, fluid_preset_t* preset
   preset->notify = NULL;
 
   return fluid_ramsfont_iteration_next((fluid_ramsfont_t*) sfont->data, preset);
-}
-
-/* RAM SoundFont loader delete preset method */
-static int
-fluid_rampreset_preset_delete(fluid_preset_t* preset)
-{
-  FLUID_FREE(preset);
-
-/* TODO: free modulators */
-
-  return 0;
 }
 
 /* RAM SoundFont loader get preset name method */

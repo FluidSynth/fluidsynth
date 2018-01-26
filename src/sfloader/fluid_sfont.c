@@ -53,6 +53,8 @@ fluid_sfloader_t* new_fluid_sfloader(fluid_sfloader_load_t load, fluid_sfloader_
 
 /**
  * Frees a SoundFont loader created with new_fluid_sfloader().
+ * 
+ * @param loader The SoundFont loader instance to free.
  */
 void delete_fluid_sfloader(fluid_sfloader_t* loader)
 {
@@ -63,12 +65,21 @@ void delete_fluid_sfloader(fluid_sfloader_t* loader)
 
 /**
  * Specify private data to be used by #fluid_sfloader_load_t.
+ * 
+ * @param loader The SoundFont loader instance.
+ * @param data The private data to set.
  */
 void fluid_sfloader_set_data(fluid_sfloader_t* loader, void* data)
 {
     loader->data = data;
 }
 
+/**
+ * Obtain private data previously set with fluid_sfloader_set_data().
+ * 
+ * @param loader The SoundFont loader instance.
+ * @return The private data or NULL if none explicitly set before.
+ */
 void* fluid_sfloader_get_data(fluid_sfloader_t* loader)
 {
     return loader->data;
@@ -91,7 +102,100 @@ void fluid_sfloader_set_callbacks(fluid_sfloader_t* loader,
 }
 
 
+fluid_sfont_t* new_fluid_sfont(fluid_sfont_get_name_t get_name,
+                               fluid_sfont_get_preset_t get_preset,
+                               fluid_sfont_free_t free)
+{
+    fluid_sfont_t* sfont;
+    
+    sfont = FLUID_NEW(fluid_sfont_t);
+    if (sfont == NULL)
+    {
+        FLUID_LOG(FLUID_ERR, "Out of memory");
+        return NULL;
+    }
+    FLUID_MEMSET(sfont, 0, sizeof(*sfont));
 
+    sfont->get_name = get_name;
+    sfont->get_preset = get_preset;
+    sfont->free = free;
+    
+    return sfont;
+}
+
+void fluid_sfont_set_data(fluid_sfont_t* sfont, void* data)
+{
+    sfont->data = data;
+}
+
+void* fluid_sfont_get_data(fluid_sfont_t* sfont)
+{
+    return sfont->data;
+}
+
+/**
+ * @internal KISS! No need to expose this to public API currently.
+ */
+void fluid_sfont_set_iteration_start(fluid_sfont_t* sfont, fluid_sfont_iteration_start_t iter_start)
+{
+    sfont->iteration_start = iter_start;
+}
+
+/**
+ * @internal KISS! No need to expose this to public API currently.
+ */
+void fluid_sfont_set_iteration_next(fluid_sfont_t* sfont, fluid_sfont_iteration_next_t iter_next)
+{
+    sfont->iteration_next = iter_next;
+}
+
+
+int delete_fluid_sfont(fluid_sfont_t* sfont)
+{
+    FLUID_FREE(sfont);
+    return 0;
+}
+
+fluid_preset_t* new_fluid_preset(fluid_sfont_t* parent_sfont,
+                                 fluid_preset_get_name_t get_name,
+                                 fluid_preset_get_banknum_t get_bank,
+                                 fluid_preset_get_num_t get_num,
+                                 fluid_preset_noteon_t noteon,
+                                 fluid_preset_free_t free)
+{
+    fluid_preset_t* preset = FLUID_NEW(fluid_preset_t);
+    if (preset == NULL)
+    {
+        FLUID_LOG(FLUID_ERR, "Out of memory");
+        return NULL;
+    }
+    FLUID_MEMSET(preset, 0, sizeof(*preset));
+    
+    preset->sfont = parent_sfont;
+    preset->get_name = get_name;
+    preset->get_banknum = get_bank;
+    preset->get_num = get_num;
+    preset->noteon = noteon;
+    preset->free = free;
+    
+    return preset;
+}
+
+void fluid_preset_set_data(fluid_preset_t* preset, void* data)
+{
+    preset->data = data;
+}
+
+void* fluid_preset_get_data(fluid_preset_t* preset)
+{
+    return preset->data;
+}
+
+int delete_fluid_preset(fluid_preset_t* preset)
+{
+    FLUID_FREE(preset);
+    return 0;
+}
 
 /*
  * new_fluid_sample
@@ -112,7 +216,7 @@ new_fluid_sample()
     return sample;
 }
 
-/*
+/**
  * delete_fluid_sample
  */
 void

@@ -111,7 +111,7 @@ fluid_sfont_t* fluid_defsfloader_load(fluid_sfloader_t* loader, const char* file
   fluid_defsfont_t* defsfont;
   fluid_sfont_t* sfont;
 
-  defsfont = new_fluid_defsfont(loader->data);
+  defsfont = new_fluid_defsfont(fluid_sfloader_get_data(loader));
 
   if (defsfont == NULL) {
     return NULL;
@@ -122,18 +122,17 @@ fluid_sfont_t* fluid_defsfloader_load(fluid_sfloader_t* loader, const char* file
     return NULL;
   }
 
-  sfont = FLUID_NEW(fluid_sfont_t);
-  if (sfont == NULL) {
-    FLUID_LOG(FLUID_ERR, "Out of memory");
+  sfont = new_fluid_sfont(fluid_defsfont_sfont_get_name,
+                          fluid_defsfont_sfont_get_preset,
+                          fluid_defsfont_sfont_delete);
+  if (sfont == NULL)
+  {
     return NULL;
   }
-
-  sfont->data = defsfont;
-  sfont->free = fluid_defsfont_sfont_delete;
-  sfont->get_name = fluid_defsfont_sfont_get_name;
-  sfont->get_preset = fluid_defsfont_sfont_get_preset;
-  sfont->iteration_start = fluid_defsfont_sfont_iteration_start;
-  sfont->iteration_next = fluid_defsfont_sfont_iteration_next;
+  
+  fluid_sfont_set_iteration_start(sfont, fluid_defsfont_sfont_iteration_start);
+  fluid_sfont_set_iteration_next(sfont, fluid_defsfont_sfont_iteration_next);
+  fluid_sfont_set_data(sfont, defsfont);
 
   return sfont;
 }
@@ -150,7 +149,7 @@ int fluid_defsfont_sfont_delete(fluid_sfont_t* sfont)
   if (delete_fluid_defsfont(sfont->data) != FLUID_OK) {
     return -1;
   }
-  FLUID_FREE(sfont);
+  delete_fluid_sfont(sfont);
   return 0;
 }
 
@@ -222,7 +221,7 @@ int fluid_defpreset_preset_delete(fluid_preset_t* preset)
      sfont->preset_stack_size++;
   }
   else
-    FLUID_FREE(preset);
+      delete_fluid_preset(preset);
 
   return 0;
 }

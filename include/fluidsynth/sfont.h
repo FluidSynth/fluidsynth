@@ -173,27 +173,9 @@ typedef const char* (*fluid_sfont_get_name_t)(fluid_sfont_t* sfont);
 typedef fluid_preset_t* (*fluid_sfont_get_preset_t)(fluid_sfont_t* sfont, unsigned int bank, unsigned int prenum);
 
 /**
- * Start virtual SoundFont preset iteration method.
- * @param sfont Virtual SoundFont
- *
- * Starts/re-starts virtual preset iteration in a SoundFont.
- */
-typedef void (*fluid_sfont_iteration_start_t)(fluid_sfont_t* sfont);
-
-/**
- * Virtual SoundFont preset iteration function.
- * @param sfont Virtual SoundFont
- * @param preset Caller supplied preset to fill in with current preset information
- * @return 0 when no more presets are available, 1 otherwise
- *
- * Should store preset information to the caller supplied \a preset structure
- * and advance the internal iteration state to the next preset for subsequent
- * calls.
- */
-typedef int (*fluid_sfont_iteration_next_t)(fluid_sfont_t* sfont, fluid_preset_t* preset);
-
-/**
- * Method to free a virtual SoundFont bank.
+ * Method to free a virtual SoundFont bank. Any custom user provided cleanup function must ultimately call
+ * delete_fluid_sfont() to ensure proper cleanup of the #fluid_sfont_t struct. If no private data
+ * needs to be freed, setting this to delete_fluid_sfont() is sufficient.
  * @param sfont Virtual SoundFont to free.
  * @return Should return 0 when it was able to free all resources or non-zero
  *   if some of the samples could not be freed because they are still in use,
@@ -204,9 +186,8 @@ typedef int (*fluid_sfont_free_t)(fluid_sfont_t* sfont);
 
 FLUIDSYNTH_API fluid_sfont_t* new_fluid_sfont(fluid_sfont_get_name_t get_name,
                                               fluid_sfont_get_preset_t get_preset,
-                                              fluid_sfont_iteration_start_t iter_start,
-                                              fluid_sfont_iteration_next_t iter_next,
                                               fluid_sfont_free_t free);
+FLUIDSYNTH_API int delete_fluid_sfont(fluid_sfont_t* sfont);
 
 FLUIDSYNTH_API void fluid_sfont_set_data(fluid_sfont_t* sfont, void* data);
 FLUIDSYNTH_API void* fluid_sfont_get_data(fluid_sfont_t* sfont);
@@ -260,7 +241,9 @@ typedef int (*fluid_preset_get_num_t)(fluid_preset_t* preset);
 typedef int (*fluid_preset_noteon_t)(fluid_preset_t* preset, fluid_synth_t* synth, int chan, int key, int vel);
 
 /**
- * Method to free a virtual SoundFont preset.
+ * Method to free a virtual SoundFont preset. Any custom user provided cleanup function must ultimately call
+ * delete_fluid_preset() to ensure proper cleanup of the #fluid_preset_t struct. If no private data
+ * needs to be freed, setting this to delete_fluid_preset() is sufficient.
  * @param preset Virtual SoundFont preset
  * @return Should return 0
  */
@@ -272,9 +255,12 @@ FLUIDSYNTH_API fluid_preset_t* new_fluid_preset(fluid_sfont_t* parent_sfont,
                                                 fluid_preset_get_num_t get_num,
                                                 fluid_preset_noteon_t noteon,
                                                 fluid_preset_free_t free);
+FLUIDSYNTH_API int delete_fluid_preset(fluid_preset_t* preset);
 
 FLUIDSYNTH_API void fluid_preset_set_data(fluid_preset_t* preset, void* data);
 FLUIDSYNTH_API void* fluid_preset_get_data(fluid_preset_t* preset);
+
+
 
 FLUIDSYNTH_API fluid_sample_t* new_fluid_sample(void);
 FLUIDSYNTH_API void delete_fluid_sample(fluid_sample_t* sample);
