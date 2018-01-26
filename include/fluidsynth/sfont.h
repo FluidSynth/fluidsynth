@@ -121,7 +121,7 @@ struct _fluid_sfont_t {
   /**
    * Get a virtual SoundFont preset by bank and program numbers.
    * @param sfont Virtual SoundFont
-   * @param bank MIDI bank number (0-16384)
+   * @param bank MIDI bank number (0-16383)
    * @param prenum MIDI preset number (0-127)
    * @return Should return an allocated virtual preset or NULL if it could not
    *   be found.
