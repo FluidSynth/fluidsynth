@@ -67,7 +67,7 @@ void delete_fluid_sfloader(fluid_sfloader_t* loader)
  * Specify private data to be used by #fluid_sfloader_load_t.
  * 
  * @param loader The SoundFont loader instance.
- * @param data The private data to set.
+ * @param data The private data to store.
  */
 void fluid_sfloader_set_data(fluid_sfloader_t* loader, void* data)
 {
@@ -85,6 +85,18 @@ void* fluid_sfloader_get_data(fluid_sfloader_t* loader)
     return loader->data;
 }
 
+/**
+ * Set custom callbacks to be used upon soundfont loading.
+ * 
+ * Useful for loading a soundfont from memory, see \a doc/fluidsynth_sfload_mem.c as an example.
+ * 
+ * @param loader The SoundFont loader instance.
+ * @param open A function implementing #fluid_sfloader_callback_open_t.
+ * @param read A function implementing #fluid_sfloader_callback_read_t.
+ * @param seek A function implementing #fluid_sfloader_callback_seek_t.
+ * @param tell A function implementing #fluid_sfloader_callback_tell_t.
+ * @param close A function implementing #fluid_sfloader_callback_close_t.
+ */
 void fluid_sfloader_set_callbacks(fluid_sfloader_t* loader,
                                   fluid_sfloader_callback_open_t open,
                                   fluid_sfloader_callback_read_t read,
@@ -101,7 +113,13 @@ void fluid_sfloader_set_callbacks(fluid_sfloader_t* loader,
     cb->fclose = close;
 }
 
-
+/**
+ * Creates a new virtual SoundFont instance structure.
+ * @param get_name A function implementing #fluid_sfont_get_name_t.
+ * @param get_preset A function implementing #fluid_sfont_get_preset_t.
+ * @param free A function implementing #fluid_sfont_free_t.
+ * @return The soundfont instance on success or NULL otherwise.
+ */
 fluid_sfont_t* new_fluid_sfont(fluid_sfont_get_name_t get_name,
                                fluid_sfont_get_preset_t get_preset,
                                fluid_sfont_free_t free)
@@ -123,11 +141,23 @@ fluid_sfont_t* new_fluid_sfont(fluid_sfont_get_name_t get_name,
     return sfont;
 }
 
+/**
+ * Set private data to use with a SoundFont instance.
+ * 
+ * @param sfont The SoundFont instance.
+ * @param data The private data to store.
+ */
 void fluid_sfont_set_data(fluid_sfont_t* sfont, void* data)
 {
     sfont->data = data;
 }
 
+/**
+ * Retrieve the private data of a SoundFont instance.
+ * 
+ * @param sfont The SoundFont instance.
+ * @return The private data or NULL if none explicitly set before.
+ */
 void* fluid_sfont_get_data(fluid_sfont_t* sfont)
 {
     return sfont->data;
@@ -149,13 +179,31 @@ void fluid_sfont_set_iteration_next(fluid_sfont_t* sfont, fluid_sfont_iteration_
     sfont->iteration_next = iter_next;
 }
 
-
+/**
+ * Destroys a SoundFont instance created with new_fluid_sfont().
+ * 
+ * Implements #fluid_sfont_free_t.
+ * 
+ * @param sfont The SoundFont instance to destroy.
+ * @return Always returns 0.
+ */
 int delete_fluid_sfont(fluid_sfont_t* sfont)
 {
     FLUID_FREE(sfont);
     return 0;
 }
 
+/**
+ * Create a virtual SoundFont preset instance.
+ * 
+ * @param parent_sfont The SoundFont instance this preset shall belong to
+ * @param get_name A function implementing #fluid_preset_get_name_t
+ * @param get_bank A function implementing #fluid_preset_get_banknum_t
+ * @param get_num A function implementing #fluid_preset_get_num_t
+ * @param noteon A function implementing #fluid_preset_noteon_t
+ * @param free A function implementing #fluid_preset_free_t
+ * @return The preset instance on success, NULL otherwise.
+ */
 fluid_preset_t* new_fluid_preset(fluid_sfont_t* parent_sfont,
                                  fluid_preset_get_name_t get_name,
                                  fluid_preset_get_banknum_t get_bank,
@@ -181,24 +229,45 @@ fluid_preset_t* new_fluid_preset(fluid_sfont_t* parent_sfont,
     return preset;
 }
 
+/**
+ * Set private data to use with a SoundFont preset instance.
+ * 
+ * @param preset The SoundFont preset instance.
+ * @param data The private data to store.
+ */
 void fluid_preset_set_data(fluid_preset_t* preset, void* data)
 {
     preset->data = data;
 }
 
+/**
+ * Retrieve the private data of a SoundFont preset instance.
+ * 
+ * @param sfont The SoundFont preset instance.
+ * @return The private data or NULL if none explicitly set before.
+ */
 void* fluid_preset_get_data(fluid_preset_t* preset)
 {
     return preset->data;
 }
 
+/**
+ * Destroys a SoundFont preset instance created with new_fluid_preset().
+ * 
+ * Implements #fluid_preset_free_t.
+ * 
+ * @param preset The SoundFont preset instance to destroy.
+ * @return Always returns 0.
+ */
 int delete_fluid_preset(fluid_preset_t* preset)
 {
     FLUID_FREE(preset);
     return 0;
 }
 
-/*
- * new_fluid_sample
+/**
+ * Create a new sample instance.
+ * @return  The sample on success, NULL otherwise.
  */
 fluid_sample_t*
 new_fluid_sample()
@@ -217,7 +286,8 @@ new_fluid_sample()
 }
 
 /**
- * delete_fluid_sample
+ * Destroy a sample instance previously created with new_fluid_sample().
+ * @param sample The sample to destroy.
  */
 void
 delete_fluid_sample(fluid_sample_t* sample)

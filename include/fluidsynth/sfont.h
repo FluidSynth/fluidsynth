@@ -119,7 +119,7 @@ typedef void * (* fluid_sfloader_callback_open_t )(const char * filename);
 /**
  * Reads \c count bytes to the specified buffer \c buf.
  * 
- * @return returns #FLUID_OK if exactly \c count bytes were successfully read, else #FLUID_FAILED
+ * @return returns #FLUID_OK if exactly \c count bytes were successfully read, else returns #FLUID_FAILED and leaves \a buf unmodified.
  */
 typedef int (* fluid_sfloader_callback_read_t )(void *buf, int count, void * handle);
 
@@ -165,7 +165,7 @@ typedef const char* (*fluid_sfont_get_name_t)(fluid_sfont_t* sfont);
 /**
  * Get a virtual SoundFont preset by bank and program numbers.
  * @param sfont Virtual SoundFont
- * @param bank MIDI bank number (0-16384)
+ * @param bank MIDI bank number (0-16383)
  * @param prenum MIDI preset number (0-127)
  * @return Should return an allocated virtual preset or NULL if it could not
  *   be found.
