@@ -46,15 +46,6 @@ long my_tell(void * handle)
     return 0;
 }
 
-fluid_file_callbacks_t my_cb =
-{
-    .fopen = my_open,
-    .fread = my_read,
-    .fseek = my_seek,
-    .fclose = my_close,
-    .ftell = my_tell
-};
-
 int main()
 {
     int err = 0;
@@ -63,7 +54,12 @@ int main()
     fluid_synth_t* synth = new_fluid_synth(settings);
     
     fluid_sfloader_t* my_sfloader = new_fluid_defsfloader(settings);
-    my_sfloader->file_callbacks = &my_cb;
+    fluid_sfloader_set_callbacks(my_sfloader,
+                                 my_open,
+                                 my_read,
+                                 my_seek,
+                                 my_tell,
+                                 my_close);
     fluid_synth_add_sfloader(synth, my_sfloader);
     
     
