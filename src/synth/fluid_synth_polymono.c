@@ -103,7 +103,7 @@ int fluid_synth_reset_basic_channel(fluid_synth_t* synth, int chan)
  * @note \a val is only relevant for mode #FLUID_CHANNEL_MODE_OMNION_POLY, #FLUID_CHANNEL_MODE_OMNION_MONO
  * and #FLUID_CHANNEL_MODE_OMNIOFF_MONO, i.e. it is ignored for #FLUID_CHANNEL_MODE_OMNIOFF_POLY as this 
  * mode implies a group of only one channel. A value of 0 means all possible channels from \a chan to 
- * to next basic channel -1 (if any) or to MIDI channel count-1.
+ * to next basic channel minus 1 (if any) or to MIDI channel count minus 1.
  * @return 
  * - #FLUID_OK on success.
  * - #FLUID_FAILED
@@ -133,7 +133,7 @@ int fluid_synth_set_basic_channel(fluid_synth_t* synth, int chan, int mode, int 
 }
 /*
   Called internally:
-  - by fluid_synth_set_basic_channel() to change or set a basic channel group.
+  - by fluid_synth_set_basic_channel() to change or set a new basic channel group.
   - on CC reset to set a default basic channel group.
   - on CC ominoff, CC omnion, CC poly on , CC mono on to change a basic channel
     group.
@@ -142,7 +142,7 @@ int fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth, int basicchan, int
 {
 	static const char * warning_msg = "channel %d overlaps other channel";
 	int i, n_chan = synth->midi_channels; /* MIDI Channels number */
-	int real_val = val; /* real number of channnels in the group */
+	int real_val = val; /* real number of channels in the group */
 	mode = mode &  FLUID_CHANNEL_MODE_MASK;
 
 
@@ -154,7 +154,7 @@ int fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth, int basicchan, int
 	else if (val == 0)
 	{  
 		/* mode poly omnion (0), mono omnion (1), mono omni off (3) */
-		/* value 0 means all ll possible channels from basicchan to MIDI channel count -1.*/
+		/* value 0 means all possible channels from basicchan to MIDI channel count -1.*/
 		real_val = n_chan - basicchan;
 	}
 	/* checks val range */
@@ -177,9 +177,9 @@ int fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth, int basicchan, int
 		{
 			/* this an overlap detection */
 			/* A value of 0 for val means all possible channels from basicchan to 
-               to next basic channel -1 (if any).
+		       to the next basic channel -1 (if any).
 			   When i reachs the next basic channel group (if any), real_val will be
-			   limited if this is possible */
+			   limited if it is possible */
 			if (synth->channel[i]->mode &  FLUID_CHANNEL_BASIC && val == 0)
 			{
 				/* limitation of real_val */
