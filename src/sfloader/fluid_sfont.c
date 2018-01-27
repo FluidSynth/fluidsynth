@@ -321,7 +321,7 @@ int fluid_sample_set_name(fluid_sample_t* sample, const char *name)
 /**
  * Assign sample data to a SoundFont sample.
  * @param sample SoundFont sample
- * @param data Buffer containing 16 bit audio sample data
+ * @param data Buffer containing 16 bit (mono-)audio sample data
  * @param data24 If not NULL, pointer to the least significant byte counterparts of each sample data point in order to create 24 bit audio samples
  * @param nbframes Number of samples in \a data
  * @param copy_data TRUE to copy the sample data (and automatically free it upon delete_fluid_sample()), FALSE to use it directly (and not free it)

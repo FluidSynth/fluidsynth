@@ -114,7 +114,9 @@ Changes in FluidSynth 2.0.0 concerning developers:
 - add seek support to midi-player, see fluid_player_seek()
 - expose functions to manipulate the ladspa effects unit (see ladspa.h)
 - add support for text and lyrics midi events, see fluid_midi_event_set_lyrics() and fluid_midi_event_set_text()
-- add 24 bit sample support, see _fluid_sample_t::data24
+- complete rewrite of the soundfont loader API, see sfont.h
+  - support for 24 bit audio samples, see fluid_sample_set_sound_data()
+  - support for loading soundfonts from memory, see <a href="fluidsynth_sfload_mem_8c-example.html">fluidsynth_sfload_mem.c</a>
 
 \section NewIn1_1_9 Whats new in 1.1.9?
 

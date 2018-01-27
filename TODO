@@ -68,7 +68,6 @@ FluidSynth Next Generation
 
 Top of the list
 - Use FIFOs to send events to the audio thread
-- Redo sfloader api using "interface" api
 - 3D audio output
 
 MIDI player
