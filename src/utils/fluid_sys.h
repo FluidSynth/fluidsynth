@@ -55,11 +55,12 @@ void fluid_time_config(void);
 
 /* Misc */
 
-#define FLUID_INLINE                        inline
-#define FLUID_POINTER_TO_UINT(x)            ((size_t)(x))
-#define FLUID_POINTER_TO_INT(x)             ((intptr_t)(x))
-#define FLUID_INT_TO_POINTER(val)           ((void*) (((char*) 0) + (val)))
-#define FLUID_N_ELEMENTS(struct)            (sizeof (struct) / sizeof (struct[0]))
+#define FLUID_INLINE              inline
+#define FLUID_POINTER_TO_UINT(x)  ((size_t)(x))
+#define FLUID_POINTER_TO_INT(x)   ((intptr_t)(x))
+#define FLUID_INT_TO_POINTER(val) ((void*) (((char*) 0) + (val)))
+#define FLUID_N_ELEMENTS(struct)  (sizeof (struct) / sizeof (struct[0]))
+#define FLUID_MEMBER_SIZE(struct, member)  ( sizeof (((struct *)0)->member) )
 
 // TODO: Add proper big endianess check
 #define FLUID_IS_BIG_ENDIAN       false

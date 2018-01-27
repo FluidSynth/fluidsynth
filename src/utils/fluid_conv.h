@@ -25,20 +25,14 @@
 
 #define FLUID_CENTS_HZ_SIZE     1200
 #define FLUID_VEL_CB_SIZE       128
-#define FLUID_CB_AMP_SIZE       961
-#define FLUID_ATTEN_AMP_SIZE    1441
+#define FLUID_CB_AMP_SIZE       1441
 #define FLUID_PAN_SIZE          1002
 
-#define FLUID_ATTEN_POWER_DEFAULT_EMU (-200.0)
-#define FLUID_ATTEN_POWER_DEFAULT_COMPLIANT (-531.509)
-
 void fluid_conversion_config(void);
-void fluid_conversion_set_atten_power(double atten);
 
 fluid_real_t fluid_ct2hz_real(fluid_real_t cents);
 fluid_real_t fluid_ct2hz(fluid_real_t cents);
 fluid_real_t fluid_cb2amp(fluid_real_t cb);
-fluid_real_t fluid_atten2amp(fluid_real_t atten);
 fluid_real_t fluid_tc2sec(fluid_real_t tc);
 fluid_real_t fluid_tc2sec_delay(fluid_real_t tc);
 fluid_real_t fluid_tc2sec_attack(fluid_real_t tc);

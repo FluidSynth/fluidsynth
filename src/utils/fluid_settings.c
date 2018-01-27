@@ -1048,17 +1048,18 @@ fluid_settings_str_equal (fluid_settings_t* settings, const char *name, const ch
  *
  * @param settings a settings object
  * @param name a setting's name
- * @return the default string value of the setting if it exists, NULL otherwise
+ * @param def the default string value of the setting if it exists
+ * @return FLUID_OK on success, FLUID_FAILED otherwise
  */
-char*
-fluid_settings_getstr_default(fluid_settings_t* settings, const char *name)
+int
+fluid_settings_getstr_default(fluid_settings_t* settings, const char *name, char** def)
 {
   fluid_setting_node_t *node;
   char *retval = NULL;
 
-  fluid_return_val_if_fail (settings != NULL, NULL);
-  fluid_return_val_if_fail (name != NULL, NULL);
-  fluid_return_val_if_fail (name[0] != '\0', NULL);
+  fluid_return_val_if_fail (settings != NULL, FLUID_FAILED);
+  fluid_return_val_if_fail (name != NULL, FLUID_FAILED);
+  fluid_return_val_if_fail (name[0] != '\0', FLUID_FAILED);
 
   fluid_rec_mutex_lock (settings->mutex);
 
@@ -1078,9 +1079,10 @@ fluid_settings_getstr_default(fluid_settings_t* settings, const char *name)
     }
   }
 
+  *def = retval;
   fluid_rec_mutex_unlock (settings->mutex);
 
-  return retval;
+  return retval != NULL ? FLUID_OK : FLUID_FAILED;
 }
 
 /**
