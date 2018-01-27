@@ -188,7 +188,7 @@ settings_foreach_func (void *data, const char *name, int type)
   case FLUID_STR_TYPE:
     printf ("%-24s STR", name);
 
-    defstr = fluid_settings_getstr_default (settings, name);
+    fluid_settings_getstr_default (settings, name, &defstr);
     count = fluid_settings_option_count (settings, name);
 
     if (defstr || count > 0)

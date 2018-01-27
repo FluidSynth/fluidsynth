@@ -36,9 +36,10 @@ typedef struct _fluid_rvoice_t fluid_rvoice_t;
 
 /* Smallest amplitude that can be perceived (full scale is +/- 0.5)
  * 16 bits => 96+4=100 dB dynamic range => 0.00001
- * 0.00001 * 2 is approximately 0.00003 :)
+ * 24 bits => 144-4 = 140 dB dynamic range => 1.e-7
+ * 1.e-7 * 2 == 2.e-7 :)
  */
-#define FLUID_NOISE_FLOOR 0.00003
+#define FLUID_NOISE_FLOOR 2.e-7
 
 
 enum fluid_loop {
@@ -204,5 +205,28 @@ int fluid_rvoice_dsp_interpolate_none (fluid_rvoice_dsp_t *voice);
 int fluid_rvoice_dsp_interpolate_linear (fluid_rvoice_dsp_t *voice);
 int fluid_rvoice_dsp_interpolate_4th_order (fluid_rvoice_dsp_t *voice);
 int fluid_rvoice_dsp_interpolate_7th_order (fluid_rvoice_dsp_t *voice);
+
+
+/*
+ * Combines the most significant 16 bit part of a sample with a potentially present
+ * least sig. 8 bit part in order to create a 24 bit sample.
+ */
+static FLUID_INLINE int32_t
+fluid_rvoice_get_sample(const short int* dsp_msb, const char* dsp_lsb, unsigned int idx)
+{
+    /* cast sample to unsigned type, so we can safely shift and bitwise or
+     * without relying on undefined behaviour (should never happen anyway ofc...) */
+    uint32_t msb = (uint32_t)dsp_msb[idx];
+    uint8_t lsb = 0U;
+    
+    /* most soundfonts have 16 bit samples, assume that it's unlikely we
+     * experience 24 bit samples here */
+    if(FLUID_UNLIKELY(dsp_lsb != NULL))
+    {
+        lsb = (uint8_t)dsp_lsb[idx];
+    }
+    
+    return (int32_t)((msb << 8) | lsb);
+}
 
 #endif
