@@ -68,10 +68,14 @@ void delete_fluid_sfloader(fluid_sfloader_t* loader)
  * 
  * @param loader The SoundFont loader instance.
  * @param data The private data to store.
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise.
  */
-void fluid_sfloader_set_data(fluid_sfloader_t* loader, void* data)
+int fluid_sfloader_set_data(fluid_sfloader_t* loader, void* data)
 {
+    fluid_return_val_if_fail(loader != NULL, FLUID_FAILED);
+    
     loader->data = data;
+    return FLUID_OK;
 }
 
 /**
@@ -82,6 +86,8 @@ void fluid_sfloader_set_data(fluid_sfloader_t* loader, void* data)
  */
 void* fluid_sfloader_get_data(fluid_sfloader_t* loader)
 {
+    fluid_return_val_if_fail(loader != NULL, NULL);
+    
     return loader->data;
 }
 
@@ -96,14 +102,22 @@ void* fluid_sfloader_get_data(fluid_sfloader_t* loader)
  * @param seek A function implementing #fluid_sfloader_callback_seek_t.
  * @param tell A function implementing #fluid_sfloader_callback_tell_t.
  * @param close A function implementing #fluid_sfloader_callback_close_t.
+ * @return #FLUID_OK if the callbacks have been successfully set, #FLUID_FAILED otherwise.
  */
-void fluid_sfloader_set_callbacks(fluid_sfloader_t* loader,
+int fluid_sfloader_set_callbacks(fluid_sfloader_t* loader,
                                   fluid_sfloader_callback_open_t open,
                                   fluid_sfloader_callback_read_t read,
                                   fluid_sfloader_callback_seek_t seek,
                                   fluid_sfloader_callback_tell_t tell,
                                   fluid_sfloader_callback_close_t close)
 {
+    fluid_return_val_if_fail(loader != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(open != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(read != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(seek != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(tell != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(close != NULL, FLUID_FAILED);
+    
     fluid_file_callbacks_t *cb = &loader->file_callbacks;
     
     cb->fopen = open;
@@ -111,6 +125,8 @@ void fluid_sfloader_set_callbacks(fluid_sfloader_t* loader,
     cb->fseek = seek;
     cb->ftell = tell;
     cb->fclose = close;
+    
+    return FLUID_OK;
 }
 
 /**
@@ -125,6 +141,10 @@ fluid_sfont_t* new_fluid_sfont(fluid_sfont_get_name_t get_name,
                                fluid_sfont_free_t free)
 {
     fluid_sfont_t* sfont;
+    
+    fluid_return_val_if_fail(get_name != NULL, NULL);
+    fluid_return_val_if_fail(get_preset != NULL, NULL);
+    fluid_return_val_if_fail(free != NULL, NULL);
     
     sfont = FLUID_NEW(fluid_sfont_t);
     if (sfont == NULL)
@@ -146,10 +166,14 @@ fluid_sfont_t* new_fluid_sfont(fluid_sfont_get_name_t get_name,
  * 
  * @param sfont The SoundFont instance.
  * @param data The private data to store.
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise.
  */
-void fluid_sfont_set_data(fluid_sfont_t* sfont, void* data)
+int fluid_sfont_set_data(fluid_sfont_t* sfont, void* data)
 {
+    fluid_return_val_if_fail(sfont != NULL, FLUID_FAILED);
+    
     sfont->data = data;
+    return FLUID_OK;
 }
 
 /**
@@ -160,6 +184,8 @@ void fluid_sfont_set_data(fluid_sfont_t* sfont, void* data)
  */
 void* fluid_sfont_get_data(fluid_sfont_t* sfont)
 {
+    fluid_return_val_if_fail(sfont != NULL, NULL);
+    
     return sfont->data;
 }
 
@@ -189,6 +215,8 @@ void fluid_sfont_set_iteration_next(fluid_sfont_t* sfont, fluid_sfont_iteration_
  */
 int delete_fluid_sfont(fluid_sfont_t* sfont)
 {
+    fluid_return_val_if_fail(sfont != NULL, 0)
+    
     FLUID_FREE(sfont);
     return 0;
 }
@@ -211,7 +239,16 @@ fluid_preset_t* new_fluid_preset(fluid_sfont_t* parent_sfont,
                                  fluid_preset_noteon_t noteon,
                                  fluid_preset_free_t free)
 {
-    fluid_preset_t* preset = FLUID_NEW(fluid_preset_t);
+    fluid_preset_t* preset;
+ 
+    fluid_return_val_if_fail(parent_sfont != NULL, NULL);
+    fluid_return_val_if_fail(get_name != NULL, NULL);
+    fluid_return_val_if_fail(get_bank != NULL, NULL);
+    fluid_return_val_if_fail(get_num != NULL, NULL);
+    fluid_return_val_if_fail(noteon != NULL, NULL);
+    fluid_return_val_if_fail(free != NULL, NULL);
+    
+    preset = FLUID_NEW(fluid_preset_t);
     if (preset == NULL)
     {
         FLUID_LOG(FLUID_ERR, "Out of memory");
@@ -234,10 +271,14 @@ fluid_preset_t* new_fluid_preset(fluid_sfont_t* parent_sfont,
  * 
  * @param preset The SoundFont preset instance.
  * @param data The private data to store.
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise.
  */
-void fluid_preset_set_data(fluid_preset_t* preset, void* data)
+int fluid_preset_set_data(fluid_preset_t* preset, void* data)
 {
+    fluid_return_if_fail(preset != NULL, FLUID_FAILED);
+    
     preset->data = data;
+    return FLUID_OK;
 }
 
 /**
@@ -248,6 +289,8 @@ void fluid_preset_set_data(fluid_preset_t* preset, void* data)
  */
 void* fluid_preset_get_data(fluid_preset_t* preset)
 {
+    fluid_return_val_if_fail(preset != NULL, NULL);
+    
     return preset->data;
 }
 
@@ -261,6 +304,8 @@ void* fluid_preset_get_data(fluid_preset_t* preset)
  */
 int delete_fluid_preset(fluid_preset_t* preset)
 {
+    fluid_return_val_if_fail(preset != NULL, 0);
+    
     FLUID_FREE(preset);
     return 0;
 }
@@ -342,10 +387,11 @@ fluid_sample_set_sound_data (fluid_sample_t* sample,
                             )
 {
     /* the number of samples before the start and after the end */
-    #define SAMPLE_LOOP_MARGIN 8
+    #define SAMPLE_LOOP_MARGIN 8U
 
     fluid_return_val_if_fail(sample != NULL, FLUID_FAILED);
     fluid_return_val_if_fail(data != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(nbframes == 0, FLUID_FAILED);
     
     /* in case we already have some data */
     if ((sample->data != NULL || sample->data24 != NULL) && sample->auto_free)

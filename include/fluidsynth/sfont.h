@@ -143,7 +143,7 @@ typedef int (* fluid_sfloader_callback_close_t )(void * handle);
 typedef long (* fluid_sfloader_callback_tell_t )(void * handle);
 
 
-FLUIDSYNTH_API void fluid_sfloader_set_callbacks(fluid_sfloader_t* loader,
+FLUIDSYNTH_API int fluid_sfloader_set_callbacks(fluid_sfloader_t* loader,
                                   fluid_sfloader_callback_open_t open,
                                   fluid_sfloader_callback_read_t read,
                                   fluid_sfloader_callback_seek_t seek,
@@ -189,7 +189,7 @@ FLUIDSYNTH_API fluid_sfont_t* new_fluid_sfont(fluid_sfont_get_name_t get_name,
                                               fluid_sfont_free_t free);
 FLUIDSYNTH_API int delete_fluid_sfont(fluid_sfont_t* sfont);
 
-FLUIDSYNTH_API void fluid_sfont_set_data(fluid_sfont_t* sfont, void* data);
+FLUIDSYNTH_API int fluid_sfont_set_data(fluid_sfont_t* sfont, void* data);
 FLUIDSYNTH_API void* fluid_sfont_get_data(fluid_sfont_t* sfont);
 
 
@@ -257,7 +257,7 @@ FLUIDSYNTH_API fluid_preset_t* new_fluid_preset(fluid_sfont_t* parent_sfont,
                                                 fluid_preset_free_t free);
 FLUIDSYNTH_API int delete_fluid_preset(fluid_preset_t* preset);
 
-FLUIDSYNTH_API void fluid_preset_set_data(fluid_preset_t* preset, void* data);
+FLUIDSYNTH_API int fluid_preset_set_data(fluid_preset_t* preset, void* data);
 FLUIDSYNTH_API void* fluid_preset_get_data(fluid_preset_t* preset);
 
 
