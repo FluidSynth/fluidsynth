@@ -111,6 +111,8 @@ int fluid_sfloader_set_callbacks(fluid_sfloader_t* loader,
                                   fluid_sfloader_callback_tell_t tell,
                                   fluid_sfloader_callback_close_t close)
 {
+    fluid_file_callbacks_t *cb;
+    
     fluid_return_val_if_fail(loader != NULL, FLUID_FAILED);
     fluid_return_val_if_fail(open != NULL, FLUID_FAILED);
     fluid_return_val_if_fail(read != NULL, FLUID_FAILED);
@@ -118,7 +120,7 @@ int fluid_sfloader_set_callbacks(fluid_sfloader_t* loader,
     fluid_return_val_if_fail(tell != NULL, FLUID_FAILED);
     fluid_return_val_if_fail(close != NULL, FLUID_FAILED);
     
-    fluid_file_callbacks_t *cb = &loader->file_callbacks;
+    cb = &loader->file_callbacks;
     
     cb->fopen = open;
     cb->fread = read;
@@ -215,7 +217,7 @@ void fluid_sfont_set_iteration_next(fluid_sfont_t* sfont, fluid_sfont_iteration_
  */
 int delete_fluid_sfont(fluid_sfont_t* sfont)
 {
-    fluid_return_val_if_fail(sfont != NULL, 0)
+    fluid_return_val_if_fail(sfont != NULL, 0);
     
     FLUID_FREE(sfont);
     return 0;
@@ -275,7 +277,7 @@ fluid_preset_t* new_fluid_preset(fluid_sfont_t* parent_sfont,
  */
 int fluid_preset_set_data(fluid_preset_t* preset, void* data)
 {
-    fluid_return_if_fail(preset != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(preset != NULL, FLUID_FAILED);
     
     preset->data = data;
     return FLUID_OK;
@@ -369,9 +371,8 @@ int fluid_sample_set_name(fluid_sample_t* sample, const char *name)
  * @param data Buffer containing 16 bit (mono-)audio sample data
  * @param data24 If not NULL, pointer to the least significant byte counterparts of each sample data point in order to create 24 bit audio samples
  * @param nbframes Number of samples in \a data
- * @param copy_data TRUE to copy the sample data (and automatically free it upon delete_fluid_sample()), FALSE to use it directly (and not free it)
- * @param rootkey Root MIDI note of sample (0-127)
  * @param sample_rate Sampling rate of the sample data
+ * @param copy_data TRUE to copy the sample data (and automatically free it upon delete_fluid_sample()), FALSE to use it directly (and not free it)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  *
  * @note If \a copy_data is FALSE, data should have 8 unused frames at start
@@ -459,7 +460,13 @@ error_rec:
 #undef SAMPLE_LOOP_MARGIN
 }
 
-
+/**
+ * Set the loop of a sample.
+ * 
+ * @param loop_start Start sample index of the loop.
+ * @param loop_end End index of the loop (must be a valid sample as it marks the last sample to be played).
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise.
+ */
 int fluid_sample_set_loop(fluid_sample_t* sample, unsigned int loop_start, unsigned int loop_end)
 {
     fluid_return_val_if_fail(sample != NULL, FLUID_FAILED);
@@ -470,6 +477,13 @@ int fluid_sample_set_loop(fluid_sample_t* sample, unsigned int loop_start, unsig
     return FLUID_OK;
 }
 
+/**
+ * Set the pitch of a sample.
+ * 
+ * @param rootkey Root MIDI note of sample (0-127)
+ * @param fine_tune Fine tune in cents
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise.
+ */
 int fluid_sample_set_pitch(fluid_sample_t* sample, int root_key, int fine_tune)
 {
     fluid_return_val_if_fail(sample != NULL, FLUID_FAILED);

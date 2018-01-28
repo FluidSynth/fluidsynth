@@ -150,7 +150,7 @@ FLUIDSYNTH_API int fluid_sfloader_set_callbacks(fluid_sfloader_t* loader,
                                   fluid_sfloader_callback_tell_t tell,
                                   fluid_sfloader_callback_close_t close);
 
-FLUIDSYNTH_API void fluid_sfloader_set_data(fluid_sfloader_t* loader, void* data);
+FLUIDSYNTH_API int fluid_sfloader_set_data(fluid_sfloader_t* loader, void* data);
 FLUIDSYNTH_API void* fluid_sfloader_get_data(fluid_sfloader_t* loader);
 
 
