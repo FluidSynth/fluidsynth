@@ -200,7 +200,7 @@ static fluid_real_t fluid_iir_filter_q_from_dB(fluid_real_t q_dB)
 void 
 fluid_iir_filter_set_q(fluid_iir_filter_t* iir_filter, fluid_real_t q)
 {
-    if(iir_filter->flags | FLUID_IIR_Q_LINEAR)
+    if(iir_filter->flags & FLUID_IIR_Q_LINEAR)
     {
         /* q is linear (only for user-defined filter) */
         q = (q <= 0.0) ? 0 : q+1;
@@ -213,7 +213,7 @@ fluid_iir_filter_set_q(fluid_iir_filter_t* iir_filter, fluid_real_t q)
     iir_filter->q_lin = q;
     iir_filter->filter_gain = 1.0;
     
-    if(!(iir_filter->flags | FLUID_IIR_NO_GAIN_AMP))
+    if(!(iir_filter->flags & FLUID_IIR_NO_GAIN_AMP))
     {
         /* SF 2.01 page 59:
          *
@@ -238,7 +238,7 @@ fluid_iir_filter_calculate_coefficients(fluid_iir_filter_t* iir_filter,
                                         int transition_samples, 
                                         fluid_real_t output_rate)
 {
-  /* GEN_CUSTOM_FILTERQ_LIN may switch the filter off by setting Q==0 */
+  /* FLUID_IIR_Q_LINEAR may switch the filter off by setting Q==0 */
   if(iir_filter->q_lin == 0)
   {
       return;
