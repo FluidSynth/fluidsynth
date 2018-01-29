@@ -87,14 +87,11 @@ int fluid_synth_reset_basic_channel(fluid_synth_t* synth, int chan)
 }
 
 /**
- * Changes an existing basic channel group or sets a new basic channel group.
+ * Sets a new basic channel group.
  *
- * - If \a chan is already a basic channel, the corresponding group is cleared
- *   before applying the changes.
- * - If \a chan is not a basic channel, a new basic channel group is set.
- * The function fails if any channel overlaps existing neighbour basic 
- * channel groups. To make room if necessary, neighbour basic channel groups can be
- * cleared using fluid_synth_reset_basic_channel().
+ * The function fails if any channel overlaps any existing basic channel group. 
+ * To make room if necessary, basic channel groups can be cleared using
+ * fluid_synth_reset_basic_channel().
  * 
  * @param synth the synth instance.
  * @param chan the basic Channel number (0 to MIDI channel count-1).
@@ -125,26 +122,40 @@ int fluid_synth_set_basic_channel(fluid_synth_t* synth, int chan, int mode, int 
 	{
         FLUID_API_RETURN(FLUID_FAILED);
 	}
-
-    result = fluid_synth_set_basic_channel_LOCAL(synth,chan,mode,val);
+	/* set a new basic channel group (changing an existing basic channel is disabled */
+    result = fluid_synth_set_basic_channel_LOCAL(synth,chan,mode,val,0);
     /**/
 
     FLUID_API_RETURN(result);
 }
 /*
-  Called internally:
-  - by fluid_synth_set_basic_channel() to change or set a new basic channel group.
-  - on CC reset to set a default basic channel group.
-  - on CC ominoff, CC omnion, CC poly on , CC mono on to change a basic channel
-    group.
+ * Called internally:
+ * - by fluid_synth_set_basic_channel() to set a new basic channel group (changing
+ *   an existing basic channel is disabled).
+ * - during creation new_fluid_synth() or on CC reset to set a default basic channel group.
+ * - on CC ominoff, CC omnion, CC poly on , CC mono on to change a basic channel group
+ *   (changing an existing basic channel is enabled).
+ * @param synth the synth instance.
+ * @param chan the basic Channel number (0 to MIDI channel count-1).
+ * @param mode the MIDI mode to use for chan (see #fluid_basic_channel_modes).
+ * @param val number of channels in the group.
+ * @param enable_change, when true the function is enabled to change an existing basic channel.
+ * @return 
+ * - #FLUID_OK on success.
+ * - #FLUID_FAILED
+ *   - basichan is a group that overlaps existing basic channel group
+ *   - has a number of channels above MIDI channel count.
+ *
+ * When the function fails any existing basic channels aren't modified.
 */
-int fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth, int basicchan, int mode, int val)
+int fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth, 
+                                        int basicchan, int mode, int val,
+										char enable_change)
 {
 	static const char * warning_msg = "channel %d overlaps other channel";
 	int i, n_chan = synth->midi_channels; /* MIDI Channels number */
 	int real_val = val; /* real number of channels in the group */
 	mode = mode &  FLUID_CHANNEL_MODE_MASK;
-
 
 	/* adjusts val range */
 	if (mode == FLUID_CHANNEL_MODE_OMNIOFF_POLY)
@@ -163,6 +174,38 @@ int fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth, int basicchan, int
 		return FLUID_FAILED;
 	}
 
+	/* checks if this basic channel group overlaps a previous basic channel group 
+	   or checks if the change of an existing basic channel is disabled */
+	if ( !(synth->channel[basicchan]->mode &  FLUID_CHANNEL_BASIC)|| !enable_change)
+	{
+		if (synth->channel[basicchan]->mode &  FLUID_CHANNEL_ENABLED)
+		{
+			/* overlap with the previous basic channel group 
+			or basicchan is an existing basic channel not allowed to be changed*/
+			FLUID_LOG(FLUID_INFO,warning_msg,basicchan);
+			return FLUID_FAILED;
+		}
+	}
+	/* checks if this basic channel group overlaps next basic channel group */
+	for (i = basicchan+1; i < basicchan + real_val; i++)
+	{
+		if (synth->channel[i]->mode &  FLUID_CHANNEL_BASIC)
+		{
+			/* A value of 0 for val means all possible channels from basicchan to 
+			to the next basic channel -1 (if any).
+			When i reachs the next basic channel group, real_val will be
+			limited if it is possible */
+			if (val == 0)
+			{	/* limitation of real_val */
+				real_val = i - basicchan;
+				break;
+			}
+			/* overlap with the next basic channel group */
+			FLUID_LOG(FLUID_INFO,warning_msg,i);
+			return FLUID_FAILED;
+		}
+	}
+
 	/* if basicchan is an existing basic channel group, it is cleared */
 	if ( synth->channel[basicchan]->mode &  FLUID_CHANNEL_BASIC)
 	{
@@ -170,28 +213,6 @@ int fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth, int basicchan, int
 		fluid_synth_reset_basic_channel_LOCAL(synth, basicchan, nbr_chan);
 	}
 
-	/* checks if this basic channel group overlaps another basic channel group */
-	for (i = basicchan; i < basicchan + real_val; i++)
-	{
-		if (synth->channel[i]->mode &  FLUID_CHANNEL_ENABLED)
-		{
-			/* this an overlap detection */
-			/* A value of 0 for val means all possible channels from basicchan to 
-		       to the next basic channel -1 (if any).
-			   When i reachs the next basic channel group (if any), real_val will be
-			   limited if it is possible */
-			if (synth->channel[i]->mode &  FLUID_CHANNEL_BASIC && val == 0)
-			{
-				/* limitation of real_val */
-				real_val = i - basicchan;
-				break;
-			}
-			/* this is an unacceptable overlap with the previous or next basic channel
-			   group */
-			FLUID_LOG(FLUID_INFO,warning_msg,i);
-			return FLUID_FAILED;
-		}
-	}
 	/* sets the basic channel group */
 	for (i = basicchan; i < basicchan + real_val; i++)
 	{
