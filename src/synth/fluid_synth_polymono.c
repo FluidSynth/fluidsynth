@@ -87,7 +87,8 @@ int fluid_synth_reset_basic_channel(fluid_synth_t* synth, int chan)
 }
 
 /**
- * Sets a new basic channel group.
+ * Sets a new basic channel group only. The function doesn't allow to change an
+ * existing basic channel.
  *
  * The function fails if any channel overlaps any existing basic channel group. 
  * To make room if necessary, basic channel groups can be cleared using
@@ -104,10 +105,12 @@ int fluid_synth_reset_basic_channel(fluid_synth_t* synth, int chan)
  * @return 
  * - #FLUID_OK on success.
  * - #FLUID_FAILED
+ *   - \a synth is NULL.
  *   - \a chan is outside MIDI channel count.
  *   - \a mode is invalid.
  *   - \a val has a number of channels overlapping another basic channel group or been
  *     above MIDI channel count.
+ *   - When the function fails, any existing basic channels aren't modified.
  */
 int fluid_synth_set_basic_channel(fluid_synth_t* synth, int chan, int mode, int val)
 {
@@ -129,24 +132,20 @@ int fluid_synth_set_basic_channel(fluid_synth_t* synth, int chan, int mode, int 
     FLUID_API_RETURN(result);
 }
 /*
- * Called internally:
+ * Local version of fluid_synth_set_basic_channel(), called internally:
  * - by fluid_synth_set_basic_channel() to set a new basic channel group (changing
  *   an existing basic channel is disabled).
  * - during creation new_fluid_synth() or on CC reset to set a default basic channel group.
- * - on CC ominoff, CC omnion, CC poly on , CC mono on to change a basic channel group
- *   (changing an existing basic channel is enabled).
- * @param synth the synth instance.
- * @param chan the basic Channel number (0 to MIDI channel count-1).
- * @param mode the MIDI mode to use for chan (see #fluid_basic_channel_modes).
- * @param val number of channels in the group.
+ * - on CC ominoff, CC omnion, CC poly , CC mono to change an existing basic channel group.
+ *
+ * @param synth , chan, mode, val see fluid_synth_set_basic_channel()
  * @param enable_change, when true the function is enabled to change an existing basic channel.
  * @return 
  * - #FLUID_OK on success.
  * - #FLUID_FAILED
- *   - basichan is a group that overlaps existing basic channel group
- *   - has a number of channels above MIDI channel count.
- *
- * When the function fails any existing basic channels aren't modified.
+ *   - basichan is a group that overlaps existing basic channel group or been
+ *     above MIDI channel count.
+ *   - When the function fails, any existing basic channels aren't modified.
 */
 int fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth, 
                                         int basicchan, int mode, int val,
@@ -187,7 +186,7 @@ int fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth,
 		}
 	}
 	/* checks if this basic channel group overlaps next basic channel group */
-	for (i = basicchan+1; i < basicchan + real_val; i++)
+	for (i = basicchan + 1; i < basicchan + real_val; i++)
 	{
 		if (synth->channel[i]->mode &  FLUID_CHANNEL_BASIC)
 		{

@@ -2166,7 +2166,8 @@ int fluid_handle_setbasicchannels (void* data, int ac, char** av,
 		}
 		val = atoi(av[(i * 3)+2]);      /* val is numeric */
 
-		/* changes basic channels */
+		/* changes or sets basic channels */
+		if (basicchan >=0) fluid_synth_reset_basic_channel(synth, basicchan); 
 		result = fluid_synth_set_basic_channel(synth, basicchan, mode, val);
 		if (result == FLUID_FAILED)
 		{
