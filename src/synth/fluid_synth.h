@@ -228,9 +228,10 @@ void fluid_synth_settings(fluid_settings_t* settings);
 
 
 /* extern declared fluid_synth_polymono.c */
-int fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth, 
-                                        int basicchan, int mode, int val,
-                                        char enable_change);
+void fluid_synth_reset_basic_channel_LOCAL(fluid_synth_t* synth, int chan, int nbr_chan);
+int fluid_synth_check_next_basic_channel(fluid_synth_t* synth, int basicchan, int mode, int val);
+int fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth, int basicchan, int mode, int val);
+
 /* extern declared in fluid_synth_mono.c */
 
 int fluid_synth_noteon_mono_staccato(fluid_synth_t* synth,int chan,int key,int vel);

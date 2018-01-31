@@ -14,7 +14,7 @@
 # Use command setbasicchannels using numbered mode:
 setbasicchannels 13 3 2
 # or using named mode:
-setbasicchannels 13 mono_omnioff 2
+# setbasicchannels 13 mono_omnioff 2
 
 Use basicchannels command to verify your settings
 basicchannels

@@ -16,7 +16,7 @@ resetbasicchannels
 # Then use command setbasicchannels using numbered mode:
 setbasicchannels  5 2 0   10 3 1
 # or using named mode:
-setbasicchannels  5 poly_omnioff 0   10 mono_omnioff 1
+# setbasicchannels  5 poly_omnioff 0   10 mono_omnioff 1
 
 # Use basicchannels command to verify your settings
 basicchannels

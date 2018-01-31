@@ -2116,13 +2116,11 @@ int fluid_handle_resetbasicchannels (void* data, int ac, char** av,
 
   setbasicchannels chan1 mode1 nbr1    [chan2 mode2 nbr2]  ...  ...
   
-  Changes or adds basic channel 1 and 2
+  Adds basic channel 1 and 2
   
-  -if chan is already a basic channel, his mode is changed.
-  -If chan is not a basic channel, a new basic channel part is set.
-  The command fails if any channels overlaps existing neighbour basic 
-  channel groups. To make room if necessary, existing basic channel groups can be
-  cleared using resetbasicchannels command.
+  The command fails if any channels overlaps any existing basic channel groups.
+  To make room if necessary, existing basic channel groups can be cleared using
+  resetbasicchannels command.
   Mode can be a numeric value or a name: 
       numeric: 0 to 3 or
       name: poly_omnion , mono_omnion, poly_omnioff, mono_omnioff.
@@ -2167,7 +2165,6 @@ int fluid_handle_setbasicchannels (void* data, int ac, char** av,
 		val = atoi(av[(i * 3)+2]);      /* val is numeric */
 
 		/* changes or sets basic channels */
-		if (basicchan >=0) fluid_synth_reset_basic_channel(synth, basicchan); 
 		result = fluid_synth_set_basic_channel(synth, basicchan, mode, val);
 		if (result == FLUID_FAILED)
 		{
