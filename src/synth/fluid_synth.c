@@ -1297,7 +1297,7 @@ fluid_synth_cc_LOCAL (fluid_synth_t* synth, int channum, int num)
 			/* MIDI specs: value is the number of channels for mode mono omnioff */
 			new_mode = FLUID_CHANNEL_MODE_OMNIOFF_MONO;
 		}
-		/* Ckecks and changes this exisisting basic channel group */
+		/* Ckecks and changes this existing basic channel group */
 		value = fluid_synth_check_next_basic_channel(synth, channum, new_mode, value);
 		if( value != FLUID_FAILED )
 		{
@@ -1330,7 +1330,7 @@ fluid_synth_cc_LOCAL (fluid_synth_t* synth, int channum, int num)
 		{	/* sets channel channum in mode poly omnioff (2) */
 			new_mode = FLUID_CHANNEL_MODE_OMNIOFF_POLY;
 		}
-		/* Ckecks and changes this exisisting basic channel group */
+		/* Ckecks and changes this existing basic channel group */
 		value = fluid_synth_check_next_basic_channel(synth, channum, new_mode, value);
 		if( value != FLUID_FAILED )
 		{
@@ -1366,7 +1366,7 @@ fluid_synth_cc_LOCAL (fluid_synth_t* synth, int channum, int num)
 			   limited to 4. */
 			new_mode = FLUID_CHANNEL_MODE_OMNION_MONO;
 		}
-		/* Ckecks and changes this exisisting basic channel group */
+		/* Ckecks and changes this existing basic channel group */
 		value = fluid_synth_check_next_basic_channel(synth, channum, new_mode, value);
 		if( value != FLUID_FAILED )
 		{
@@ -1402,7 +1402,7 @@ fluid_synth_cc_LOCAL (fluid_synth_t* synth, int channum, int num)
 		{	/* sets channel channum in mode mono omnioff (3) */
 			new_mode = FLUID_CHANNEL_MODE_OMNIOFF_MONO;
 		}
-		/* Ckecks and changes this exisisting basic channel group */
+		/* Ckecks and changes this existing basic channel group */
 		value = fluid_synth_check_next_basic_channel(synth, channum, new_mode, value);
 		if( value != FLUID_FAILED )
 		{
