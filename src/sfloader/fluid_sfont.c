@@ -21,6 +21,44 @@
 #include "fluid_sfont.h"
 #include "fluid_sys.h"
 
+void * default_fopen(const char * path)
+{
+    return FLUID_FOPEN(path, "rb");
+}
+
+int default_fclose(void * handle)
+{
+    return FLUID_FCLOSE((FILE *)handle);
+}
+
+long default_ftell(void * handle)
+{
+    return FLUID_FTELL((FILE *)handle);
+}
+
+int safe_fread (void *buf, int count, void * fd)
+{
+  if (FLUID_FREAD(buf, count, 1, (FILE *)fd) != 1)
+    {
+      if (feof ((FILE *)fd))
+	gerr (ErrEof, _("EOF while attemping to read %d bytes"), count);
+      else
+	FLUID_LOG (FLUID_ERR, _("File read failed"));
+  
+      return FLUID_FAILED;
+    }
+  return FLUID_OK;
+}
+
+int safe_fseek (void * fd, long ofs, int whence)
+{
+  if (FLUID_FSEEK((FILE *)fd, ofs, whence) != 0) {
+    FLUID_LOG (FLUID_ERR, _("File seek failed with offset = %ld and whence = %d"), ofs, whence);
+    return FLUID_FAILED;
+  }
+  return FLUID_OK;
+}
+
 /**
  * Creates a new SoundFont loader.
  * 
@@ -47,6 +85,12 @@ fluid_sfloader_t* new_fluid_sfloader(fluid_sfloader_load_t load, fluid_sfloader_
     
     loader->load = load;
     loader->free = free;
+    fluid_sfloader_set_callbacks(loader,
+                                 default_fopen,
+                                 safe_fread,
+                                 safe_fseek,
+                                 default_ftell,
+                                 default_fclose);
     
     return loader;
 }
