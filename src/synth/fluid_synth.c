@@ -738,7 +738,8 @@ new_fluid_synth(fluid_settings_t *settings)
   /* Sets one basic channel: basic channel 0, mode 0 (Omni On - Poly) */
   /* (i.e all channels are polyphonic) */
   /* Must be called after channel objects allocation */
-  fluid_synth_set_basic_channel_LOCAL(synth, 0, FLUID_CHANNEL_MODE_OMNION_POLY, 0);
+  fluid_synth_set_basic_channel_LOCAL(synth, 0, FLUID_CHANNEL_MODE_OMNION_POLY,
+                                      synth->midi_channels);
 
   fluid_synth_set_sample_rate(synth, synth->sample_rate);
   fluid_synth_update_mixer(synth, fluid_rvoice_mixer_set_polyphony, 
@@ -1296,12 +1297,14 @@ fluid_synth_cc_LOCAL (fluid_synth_t* synth, int channum, int num)
 			/* MIDI specs: value is the number of channels for mode mono omnioff */
 			new_mode = FLUID_CHANNEL_MODE_OMNIOFF_MONO;
 		}
-		/* Changes an existing basic channel group */
-		if( fluid_synth_check_next_basic_channel(synth, channum, new_mode, value) != FLUID_FAILED )
+		/* Ckecks and changes this exisisting basic channel group */
+		value = fluid_synth_check_next_basic_channel(synth, channum, new_mode, value);
+		if( value != FLUID_FAILED )
 		{
 			/* reset the current basic channel before changing it */
 			fluid_synth_reset_basic_channel_LOCAL(synth, channum, chan->mode_val);
-			return fluid_synth_set_basic_channel_LOCAL(synth, channum, new_mode, value);
+			fluid_synth_set_basic_channel_LOCAL(synth, channum, new_mode, value);
+			return FLUID_OK;
 		}
 		return FLUID_FAILED;
 	}
@@ -1327,12 +1330,14 @@ fluid_synth_cc_LOCAL (fluid_synth_t* synth, int channum, int num)
 		{	/* sets channel channum in mode poly omnioff (2) */
 			new_mode = FLUID_CHANNEL_MODE_OMNIOFF_POLY;
 		}
-		/* Changes an existing basic channel group */
-		if( fluid_synth_check_next_basic_channel(synth, channum, new_mode, value) != FLUID_FAILED )
+		/* Ckecks and changes this exisisting basic channel group */
+		value = fluid_synth_check_next_basic_channel(synth, channum, new_mode, value);
+		if( value != FLUID_FAILED )
 		{
 			/* reset the current basic channel before changing it */
 			fluid_synth_reset_basic_channel_LOCAL(synth, channum, chan->mode_val);
-			return fluid_synth_set_basic_channel_LOCAL(synth, channum, new_mode, value);
+			fluid_synth_set_basic_channel_LOCAL(synth, channum, new_mode, value);
+			return FLUID_OK;
 		}
 		return FLUID_FAILED;
 	}
@@ -1361,12 +1366,14 @@ fluid_synth_cc_LOCAL (fluid_synth_t* synth, int channum, int num)
 			   limited to 4. */
 			new_mode = FLUID_CHANNEL_MODE_OMNION_MONO;
 		}
-		/* Changes an existing basic channel group */
-		if( fluid_synth_check_next_basic_channel(synth, channum, new_mode, value) != FLUID_FAILED )
+		/* Ckecks and changes this exisisting basic channel group */
+		value = fluid_synth_check_next_basic_channel(synth, channum, new_mode, value);
+		if( value != FLUID_FAILED )
 		{
 			/* reset the current basic channel before changing it */
 			fluid_synth_reset_basic_channel_LOCAL(synth, channum, chan->mode_val);
-			return fluid_synth_set_basic_channel_LOCAL(synth, channum, new_mode, value);
+			fluid_synth_set_basic_channel_LOCAL(synth, channum, new_mode, value);
+			return FLUID_OK;
 		}
 		return FLUID_FAILED;
 	}
@@ -1395,12 +1402,14 @@ fluid_synth_cc_LOCAL (fluid_synth_t* synth, int channum, int num)
 		{	/* sets channel channum in mode mono omnioff (3) */
 			new_mode = FLUID_CHANNEL_MODE_OMNIOFF_MONO;
 		}
-		/* Changes an existing basic channel group */
-		if( fluid_synth_check_next_basic_channel(synth, channum, new_mode, value) != FLUID_FAILED )
+		/* Ckecks and changes this exisisting basic channel group */
+		value = fluid_synth_check_next_basic_channel(synth, channum, new_mode, value);
+		if( value != FLUID_FAILED )
 		{
 			/* reset the current basic channel before changing it */
 			fluid_synth_reset_basic_channel_LOCAL(synth, channum, chan->mode_val);
-			return fluid_synth_set_basic_channel_LOCAL(synth, channum, new_mode, value);
+			fluid_synth_set_basic_channel_LOCAL(synth, channum, new_mode, value);
+			return FLUID_OK;
 		}
 		return FLUID_FAILED;
 	}
@@ -1995,7 +2004,8 @@ fluid_synth_system_reset_LOCAL(fluid_synth_t* synth)
     fluid_channel_reset(synth->channel[i]);
 
   /* Basic channel 0, Mode Omni On Poly */
-  fluid_synth_set_basic_channel_LOCAL(synth, 0, FLUID_CHANNEL_MODE_OMNION_POLY, 0);
+  fluid_synth_set_basic_channel(synth, 0, FLUID_CHANNEL_MODE_OMNION_POLY, 
+                                synth->midi_channels);
 
   fluid_synth_update_mixer(synth, fluid_rvoice_mixer_reset_fx, 0, 0.0f); 
 
