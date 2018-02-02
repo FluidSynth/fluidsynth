@@ -41,7 +41,7 @@ int safe_fread (void *buf, int count, void * fd)
   if (FLUID_FREAD(buf, count, 1, (FILE *)fd) != 1)
     {
       if (feof ((FILE *)fd))
-	gerr (ErrEof, _("EOF while attemping to read %d bytes"), count);
+	FLUID_LOG (FLUID_ERR, _("EOF while attemping to read %d bytes"), count);
       else
 	FLUID_LOG (FLUID_ERR, _("File read failed"));
   
