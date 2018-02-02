@@ -28,7 +28,7 @@ void * default_fopen(const char * path)
 
 int default_fclose(void * handle)
 {
-    return FLUID_FCLOSE((FILE *)handle);
+    return FLUID_FCLOSE((FILE *)handle) == 0 ? FLUID_OK : FLUID_FAILED;
 }
 
 long default_ftell(void * handle)
