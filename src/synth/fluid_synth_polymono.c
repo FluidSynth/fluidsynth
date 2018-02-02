@@ -187,7 +187,7 @@ int fluid_synth_set_basic_channel(fluid_synth_t* synth, int chan, int mode, int 
 	{
 		/* overlap with the next or previous channel group */
 		FLUID_LOG(FLUID_INFO,warning_msg,chan);
-		return FLUID_FAILED;
+		FLUID_API_RETURN(FLUID_FAILED);
 	}
 
 	/* sets a new basic channel group */
