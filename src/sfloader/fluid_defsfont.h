@@ -361,7 +361,7 @@ void fluid_defsfont_sfont_iteration_start(fluid_sfont_t* sfont);
 int fluid_defsfont_sfont_iteration_next(fluid_sfont_t* sfont, fluid_preset_t* preset);
 
 
-int fluid_defpreset_preset_delete(fluid_preset_t* preset);
+void fluid_defpreset_preset_delete(fluid_preset_t* preset);
 const char* fluid_defpreset_preset_get_name(fluid_preset_t* preset);
 int fluid_defpreset_preset_get_banknum(fluid_preset_t* preset);
 int fluid_defpreset_preset_get_num(fluid_preset_t* preset);

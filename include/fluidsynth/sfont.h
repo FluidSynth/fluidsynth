@@ -247,7 +247,7 @@ typedef int (*fluid_preset_noteon_t)(fluid_preset_t* preset, fluid_synth_t* synt
  * @param preset Virtual SoundFont preset
  * @return Should return 0
  */
-typedef int (*fluid_preset_free_t)(fluid_preset_t* preset);
+typedef void (*fluid_preset_free_t)(fluid_preset_t* preset);
 
 FLUIDSYNTH_API fluid_preset_t* new_fluid_preset(fluid_sfont_t* parent_sfont,
                                                 fluid_preset_get_name_t get_name,
@@ -255,7 +255,7 @@ FLUIDSYNTH_API fluid_preset_t* new_fluid_preset(fluid_sfont_t* parent_sfont,
                                                 fluid_preset_get_num_t get_num,
                                                 fluid_preset_noteon_t noteon,
                                                 fluid_preset_free_t free);
-FLUIDSYNTH_API int delete_fluid_preset(fluid_preset_t* preset);
+FLUIDSYNTH_API void delete_fluid_preset(fluid_preset_t* preset);
 
 FLUIDSYNTH_API int fluid_preset_set_data(fluid_preset_t* preset, void* data);
 FLUIDSYNTH_API void* fluid_preset_get_data(fluid_preset_t* preset);

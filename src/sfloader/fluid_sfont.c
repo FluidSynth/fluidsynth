@@ -346,14 +346,12 @@ void* fluid_preset_get_data(fluid_preset_t* preset)
  * Implements #fluid_preset_free_t.
  * 
  * @param preset The SoundFont preset instance to destroy.
- * @return Always returns 0.
  */
-int delete_fluid_preset(fluid_preset_t* preset)
+void delete_fluid_preset(fluid_preset_t* preset)
 {
-    fluid_return_val_if_fail(preset != NULL, 0);
+    fluid_return_if_fail(preset != NULL);
     
     FLUID_FREE(preset);
-    return 0;
 }
 
 /**

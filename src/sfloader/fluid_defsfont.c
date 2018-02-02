@@ -173,7 +173,7 @@ int fluid_defsfont_sfont_iteration_next(fluid_sfont_t* sfont, fluid_preset_t* pr
   return fluid_defsfont_iteration_next(fluid_sfont_get_data(sfont), preset);
 }
 
-int fluid_defpreset_preset_delete(fluid_preset_t* preset)
+void fluid_defpreset_preset_delete(fluid_preset_t* preset)
 {
   fluid_defpreset_t* defpreset = fluid_preset_get_data(preset);
   fluid_defsfont_t* sfont = defpreset ? defpreset->sfont : NULL;
@@ -184,8 +184,6 @@ int fluid_defpreset_preset_delete(fluid_preset_t* preset)
   }
   else
       delete_fluid_preset(preset);
-
-  return 0;
 }
 
 const char* fluid_defpreset_preset_get_name(fluid_preset_t* preset)
