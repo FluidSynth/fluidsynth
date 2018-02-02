@@ -1279,7 +1279,7 @@ fluid_synth_cc_LOCAL (fluid_synth_t* synth, int channum, int num)
 
   switch (num) {
 
-  /* Poly Mono mode */
+  /* CC omnioff, omnion, mono, poly */
   case POLY_OFF:
   case POLY_ON:
   case OMNI_OFF:
@@ -1287,7 +1287,8 @@ fluid_synth_cc_LOCAL (fluid_synth_t* synth, int channum, int num)
 	/* allowed only if channum is a basic channel */
 	if (chan->mode &  FLUID_CHANNEL_BASIC)
 	{
-		int new_mode = chan->mode;
+		/* Construction of new_mode from current channel mode and this CC mode */
+		int new_mode = chan->mode & FLUID_CHANNEL_MODE_MASK;
         switch(num)
         {
             case POLY_OFF:
@@ -1306,24 +1307,24 @@ fluid_synth_cc_LOCAL (fluid_synth_t* synth, int channum, int num)
                 new_mode &= ~FLUID_CHANNEL_OMNI_OFF;
                 break;
                 
-            default:
+            default: /* should never happen */
                 return FLUID_FAILED;
         }
-        /* MIDI specs: if value is 0 that means all channels to MIDI channel count -1.
+        /* MIDI specs: if value is 0 it means all channels from channum to next 
+            basic channel minus 1 (if any) or to MIDI channel count minus 1.
             However, if value is > 0 (e.g. 4), the group of channels will be be
             limited to 4.
-            After sending
-                cc OMNI OFF, the sending MIDI transmitter has to send cc MONO ON next to
-                cc OMNI_OFF to change the number of monophonic channels that need to be enabled.
+			value is ignored for #FLUID_CHANNEL_MODE_OMNIOFF_POLY as this mode
+            implies a group of only one channel.
         */
-        /* Checks and changes this existing basic channel group */
+        /* Checks value range and changes this existing basic channel group */
 		value = fluid_synth_check_next_basic_channel(synth, channum, new_mode, value);
 		if( value != FLUID_FAILED )
 		{
 			/* reset the current basic channel before changing it */
 			fluid_synth_reset_basic_channel_LOCAL(synth, channum, chan->mode_val);
 			fluid_synth_set_basic_channel_LOCAL(synth, channum, new_mode, value);
-            break;
+            break; /* FLUID_OK */
 		}
 	}
     return FLUID_FAILED;
