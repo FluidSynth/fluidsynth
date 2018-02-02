@@ -1280,144 +1280,53 @@ fluid_synth_cc_LOCAL (fluid_synth_t* synth, int channum, int num)
   switch (num) {
 
   /* Poly Mono mode */
-  case POLY_OFF: /* Mono On */
+  case POLY_OFF:
+  case POLY_ON:
+  case OMNI_OFF:
+  case OMNI_ON:
 	/* allowed only if channum is a basic channel */
 	if (chan->mode &  FLUID_CHANNEL_BASIC)
 	{
-		int new_mode;
-		if(!(chan->mode & FLUID_CHANNEL_OMNI_OFF)) /* channel is actually Omni On */
-		{	/* sets channel channum in mode mono omnion (1) */
-			/* MIDI specs: value is 0 that means all channels to MIDI channel count -1.
-			   However, if value is > 0 (i.e 4) , the group of channels will be be
-			   limited to 4. */
-			new_mode = FLUID_CHANNEL_MODE_OMNION_MONO; 
-		} 
-		else /* channel is actually Omni Off */
-		{	/* sets channel channum in mode mono omnioff (3) */
-			/* MIDI specs: value is the number of channels for mode mono omnioff */
-			new_mode = FLUID_CHANNEL_MODE_OMNIOFF_MONO;
-		}
-		/* Ckecks and changes this existing basic channel group */
+		int new_mode = chan->mode;
+        switch(num)
+        {
+            case POLY_OFF:
+                new_mode |= FLUID_CHANNEL_POLY_OFF;
+                break;
+                
+            case POLY_ON:
+                new_mode &= ~FLUID_CHANNEL_POLY_OFF;
+                break;
+                
+            case OMNI_OFF:
+                new_mode |= FLUID_CHANNEL_OMNI_OFF;
+                break;
+                
+            case OMNI_ON:
+                new_mode &= ~FLUID_CHANNEL_OMNI_OFF;
+                break;
+                
+            default:
+                return FLUID_FAILED;
+        }
+        /* MIDI specs: if value is 0 that means all channels to MIDI channel count -1.
+            However, if value is > 0 (e.g. 4), the group of channels will be be
+            limited to 4.
+            After sending
+                cc OMNI OFF, the sending MIDI transmitter has to send cc MONO ON next to
+                cc OMNI_OFF to change the number of monophonic channels that need to be enabled.
+        */
+        /* Checks and changes this existing basic channel group */
 		value = fluid_synth_check_next_basic_channel(synth, channum, new_mode, value);
 		if( value != FLUID_FAILED )
 		{
 			/* reset the current basic channel before changing it */
 			fluid_synth_reset_basic_channel_LOCAL(synth, channum, chan->mode_val);
 			fluid_synth_set_basic_channel_LOCAL(synth, channum, new_mode, value);
-			return FLUID_OK;
+            break;
 		}
-		return FLUID_FAILED;
 	}
-	else  
-	{
-		return FLUID_FAILED;
-	}
-    break;
-
-  case POLY_ON: /* Mono Off */
-	/* allowed only if channum is a basic channel */
-	if (chan->mode &  FLUID_CHANNEL_BASIC)
-	{
-		int new_mode ;
-		if(!(chan->mode & FLUID_CHANNEL_OMNI_OFF)) /* channel is actually Omni On */
-		{	/* sets channel channum in mode poly omnion (0) */
-			/* MIDI specs: value is 0 that means all channels to MIDI channel count -1.
-			   However, if value is > 0 (i.e 4) , the group of channels will be be
-			   limited to 4. */
-			new_mode = FLUID_CHANNEL_MODE_OMNION_POLY;
-		}
-		else /* channel is actually Omni Off */
-		{	/* sets channel channum in mode poly omnioff (2) */
-			new_mode = FLUID_CHANNEL_MODE_OMNIOFF_POLY;
-		}
-		/* Ckecks and changes this existing basic channel group */
-		value = fluid_synth_check_next_basic_channel(synth, channum, new_mode, value);
-		if( value != FLUID_FAILED )
-		{
-			/* reset the current basic channel before changing it */
-			fluid_synth_reset_basic_channel_LOCAL(synth, channum, chan->mode_val);
-			fluid_synth_set_basic_channel_LOCAL(synth, channum, new_mode, value);
-			return FLUID_OK;
-		}
-		return FLUID_FAILED;
-	}
-	else
-	{
-		return FLUID_FAILED;
-	}
-	break;
-  
-  case OMNI_ON: /* Omni On */
-	/* allowed only if channum is a basic channel */
-	if (chan->mode &  FLUID_CHANNEL_BASIC)
-	{
-		int new_mode;
-		if(!(chan->mode & FLUID_CHANNEL_POLY_OFF)) /* channel is actually Poly On */
-		{	/* sets channel channum in mode poly omnion (0)  */
-			/* MIDI specs: value is 0 that means all channels to MIDI channel count -1.
-			   However if value is > 0 (i.e 4) , the group of channels will be be
-			   limited to 4. */
-			new_mode = FLUID_CHANNEL_MODE_OMNION_POLY;
-		}
-		else /* channel is actually Mono On */
-		{	/* sets channel in mode channum in mode mono omnion (1) */
-			/* MIDI specs: value is 0 that means all channels to MIDI channel count -1.
-			   However, if value is > 0 (i.e 4) , the group of channels will be be
-			   limited to 4. */
-			new_mode = FLUID_CHANNEL_MODE_OMNION_MONO;
-		}
-		/* Ckecks and changes this existing basic channel group */
-		value = fluid_synth_check_next_basic_channel(synth, channum, new_mode, value);
-		if( value != FLUID_FAILED )
-		{
-			/* reset the current basic channel before changing it */
-			fluid_synth_reset_basic_channel_LOCAL(synth, channum, chan->mode_val);
-			fluid_synth_set_basic_channel_LOCAL(synth, channum, new_mode, value);
-			return FLUID_OK;
-		}
-		return FLUID_FAILED;
-	}
-	else
-	{
-		return FLUID_FAILED;
-	}
-	break;
-  
-  case OMNI_OFF: /* Omni Off */
-	/* allowed only if channum is a basic channel */
-	if (chan->mode &  FLUID_CHANNEL_BASIC)
-	{
-		int new_mode;
-		if(!(chan->mode & FLUID_CHANNEL_POLY_OFF)) /* channel is actually Poly On */
-		{	/* sets channel channum in mode poly omnioff (2) */
-			new_mode = FLUID_CHANNEL_MODE_OMNIOFF_POLY;
-		}
-		else /* channel is actually Mono On */
-		/* MIDI specs: value is 0 that means all channels to MIDI channel count -1.
-		   However, if value is > 0 (i.e 4) , the group of channels will be be limited to 4.
-		   Channel will bet set in mode 3 with value channels enabled. After sending
-		   cc OMNI OFF, the sending MIDI transmitter have to send cc MONO ON next to
-		   cc OMNI_OFF to change the number of monophonic channels that need to be enabled.
-		*/
-		{	/* sets channel channum in mode mono omnioff (3) */
-			new_mode = FLUID_CHANNEL_MODE_OMNIOFF_MONO;
-		}
-		/* Ckecks and changes this existing basic channel group */
-		value = fluid_synth_check_next_basic_channel(synth, channum, new_mode, value);
-		if( value != FLUID_FAILED )
-		{
-			/* reset the current basic channel before changing it */
-			fluid_synth_reset_basic_channel_LOCAL(synth, channum, chan->mode_val);
-			fluid_synth_set_basic_channel_LOCAL(synth, channum, new_mode, value);
-			return FLUID_OK;
-		}
-		return FLUID_FAILED;
-	}
-	else
-	{
-		return FLUID_FAILED;
-	}
-	break;
+    return FLUID_FAILED;
 
   case LEGATO_SWITCH:
 	/* handles Poly/mono commutation on Legato pedal On/Off.*/
