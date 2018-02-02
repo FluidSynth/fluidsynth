@@ -169,8 +169,7 @@ int fluid_synth_check_next_basic_channel(fluid_synth_t* synth, int basicchan, in
  */
 int fluid_synth_set_basic_channel(fluid_synth_t* synth, int chan, int mode, int val)
 {
-	static const char * warning_msg = "basic channel %d overlaps another group";
-	/* checks parameters */
+	/* check parameters */
     fluid_return_val_if_fail (mode >= 0, FLUID_FAILED);
     fluid_return_val_if_fail (mode < FLUID_CHANNEL_MODE_LAST, FLUID_FAILED);
     fluid_return_val_if_fail (val >= 0, FLUID_FAILED);
@@ -186,7 +185,7 @@ int fluid_synth_set_basic_channel(fluid_synth_t* synth, int chan, int mode, int 
 	if( val == FLUID_FAILED || synth->channel[chan]->mode &  FLUID_CHANNEL_ENABLED)
 	{
 		/* overlap with the next or previous channel group */
-		FLUID_LOG(FLUID_INFO,warning_msg,chan);
+		FLUID_LOG(FLUID_INFO, "basic channel %d overlaps another group", chan);
 		FLUID_API_RETURN(FLUID_FAILED);
 	}
 
