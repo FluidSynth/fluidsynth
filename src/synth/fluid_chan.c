@@ -340,19 +340,7 @@ fluid_channel_update_legato_staccato_state(fluid_channel_t* chan)
  * detector. fluid_channel_add_monolist() is intended to be called by
  * fluid_synth_noteon_mono_LOCAL().
  *
- *            The monophonic list
- *  +------------------------------------------------+
- *  |    +----+   +----+          +----+   +----+    |
- *  |    |note|   |note|          |note|   |note|    |
- *  +--->|vel |-->|vel |-->....-->|vel |-->|vel |----+
- *       +----+   +----+          +----+   +----+
- *        /|\                      /|\
- *         |                        |
- *      i_first                   i_last
- *
- * The monophonic list is a circular buffer of  FLUID_CHANNEL_SIZE_MONOLIST elements.
- * Each element is linked forward at initialisation time.
- * when a note is added at noteOn each element is use in the forward direction
+ * When a note is added at noteOn each element is use in the forward direction
  * and indexed by i_last variable. 
  *
  * @param chan  fluid_channel_t.
@@ -405,17 +393,7 @@ fluid_channel_add_monolist(fluid_channel_t* chan, unsigned char key,
  * fluid_synth_noteoff_mono_LOCAL().
  *
  * The search starts from the first note in the list indexed by i_first
- *
- *            The monophonic list
- *  +------------------------------------------------+
- *  |    +----+   +----+          +----+   +----+    |
- *  |    |note|   |note|          |note|   |note|    |
- *  +--->|vel |-->|vel |-->....-->|vel |-->|vel |----+
- *       +----+   +----+          +----+   +----+
- *        /|\                      /|\
- *         |                        |
- *      i_first                   i_last
- * 
+
  * @param chan  fluid_channel_t.
  * @param key MIDI note number (0-127) to search.
  * @param i_prev pointer on returned index of the note prior the note to search.
@@ -448,24 +426,12 @@ fluid_channel_search_monolist(fluid_channel_t* chan, unsigned char key , int * i
 }
 
 /**
- * removes a note out of the monophonic list. The function is part of 
+ * removes a note from the monophonic list. The function is part of 
  * the legato detector. 
  * fluid_channel_remove_monolist() is intended to be called by 
  * fluid_synth_noteoff_mono_LOCAL().
  *
- *            The monophonic list
- *  +------------------------------------------------+
- *  |    +----+   +----+          +----+   +----+    |
- *  |    |note|   |note|          |note|   |note|    |
- *  +--->|vel |-->|vel |-->....-->|vel |-->|vel |----+
- *       +----+   +----+          +----+   +----+
- *        /|\                      /|\
- *         |                        |
- *      i_first                   i_last
- *
- * The monophonic list is a circular buffer of  FLUID_CHANNEL_SIZE_MONOLIST elements.
- * Each element is linked forward at initialisation time.
- * when a note is removed at noteOff the element concerned is fast unlinked
+ * When a note is removed at noteOff the element concerned is fast unlinked
  * and relinked after the i_last element.
  *
  * @param chan  fluid_channel_t.
@@ -530,16 +496,6 @@ fluid_channel_remove_monolist(fluid_channel_t* chan, int i, int * i_prev)
 
 /**
  * On noteOff on a polyphonic channel,the monophonic list is fully flushed.
- *
- *            The monophonic list
- *  +------------------------------------------------+
- *  |    +----+   +----+          +----+   +----+    |
- *  |    |note|   |note|          |note|   |note|    |
- *  +--->|vel |-->|vel |-->....-->|vel |-->|vel |----+
- *       +----+   +----+          +----+   +----+
- *        /|\                      /|\
- *         |                        |
- *      i_first                   i_last
  *
  * @param chan  fluid_channel_t.
  * Note: i_last index keeps a trace of the most recent note played even if
