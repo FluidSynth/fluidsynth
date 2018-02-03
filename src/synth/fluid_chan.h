@@ -79,6 +79,7 @@ struct _fluid_channel_t
 {
   fluid_synth_t* synth;                 /**< Parent synthesizer instance */
   int channum;                          /**< MIDI channel number */
+  
   /* Poly Mono variables see macro access description */
   int mode;								/**< Poly Mono mode */
   int mode_val;							/**< number of monophonic channel (for mode 3) */
@@ -90,10 +91,11 @@ struct _fluid_channel_t
   unsigned char n_notes;          /**< actual number of notes in the list */
   /*--*/
   int key_mono_sustained;         /**< previous sustained monophonic note */
-  unsigned char legatomode;       /**< legato mode */
-  unsigned char portamentomode;   /**< portamento mode */
+  enum fluid_channel_legato_mode legatomode;       /**< legato mode */
+  enum fluid_channel_portamento_mode portamentomode;   /**< portamento mode */
   int previous_cc_breath;		  /**< Previous Breath */
   /*- End of Poly/mono variables description */
+  
   int sfont_bank_prog;                  /**< SoundFont ID (bit 21-31), bank (bit 7-20), program (bit 0-6) */
   fluid_preset_t* preset;               /**< Selected preset */
 
