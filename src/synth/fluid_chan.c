@@ -315,7 +315,7 @@ fluid_channel_get_sfont_bank_prog(fluid_channel_t* chan, int *sfont,
 }
 
 /**
- * Updates legato/ sataccato playing state 
+ * Updates legato/ staccato playing state 
  * The function is called:
  * - on noteon before adding a note into the monolist.
  * - on noteoff after removing a note out of the monolist.
@@ -347,7 +347,7 @@ fluid_channel_update_legato_staccato_state(fluid_channel_t* chan)
  * @param key MIDI note number (0-127).
  * @param vel MIDI velocity (0-127, 0=noteoff).
  * @param onenote. When 1 the function adds the note but the monophonic list
- *                 that keeps only one note (used on noteOn poly).
+ *                 keeps only one note (used on noteOn poly).
  * Note: i_last index keeps a trace of the most recent note added.
  *       prev_note keeps a trace of the note prior i_last note.
  *       FLUID_CHANNEL_LEGATO_PLAYING bit keeps trace of legato/staccato playing state.
@@ -359,7 +359,7 @@ fluid_channel_add_monolist(fluid_channel_t* chan, unsigned char key,
 						   unsigned char vel, unsigned char onenote)
 {
 	unsigned char i_last = chan->i_last;
-	/* Updates legato/ sataccato playing state */
+	/* Updates legato/ staccato playing state */
 	fluid_channel_update_legato_staccato_state(chan);
 	if (chan->n_notes)
 	{
@@ -442,7 +442,7 @@ fluid_channel_search_monolist(fluid_channel_t* chan, unsigned char key , int * i
  *   On input, i_prev is a pointer on index of the note previous i.
  *   On output i_prev is a pointer on index of the note previous i if i is the last note 
  *   in the list,FLUID_FAILED otherwise. When the returned index is valid it means
- *   a legato dectection on noteoff.
+ *   a legato detection on noteoff.
  *
  * Note: the following variables in Channel keeps trace of the situation.
  *       - i_last index keeps a trace of the most recent note played even if

@@ -82,12 +82,12 @@ struct _fluid_channel_t
   
   /* Poly Mono variables see macro access description */
   int mode;								/**< Poly Mono mode */
-  int mode_val;							/**< number of monophonic channel (for mode 3) */
+  int mode_val;							/**< number of channel in basic channel group */
   /* monophonic list - legato detector */
   struct mononote monolist[FLUID_CHANNEL_SIZE_MONOLIST];   /**< monophonic list */
   unsigned char i_first;          /**< First note index */
   unsigned char i_last;           /**< most recent note index since the most recent add */
-  unsigned char prev_note;        /**< previous note of the most recent add */
+  unsigned char prev_note;        /**< previous note of the most recent add/remove */
   unsigned char n_notes;          /**< actual number of notes in the list */
   /*--*/
   int key_mono_sustained;         /**< previous sustained monophonic note */

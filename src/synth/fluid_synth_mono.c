@@ -24,13 +24,18 @@
 
 
 /****************************************************************************** 
-  The legato detector is composed as this: 
-  - monophonic list variable.
-  and functions
+  The legato detector is composed as this,
+  variables:
+  - monolist: monophonic list variable.
+  - prev_note: to store the most recent note before adding on noteon or before
+               removing on noteoff.
+  - FLUID_CHANNEL_LEGATO_PLAYING: legato/staccato state bit that informs on
+               legato or staccato playing.
+  functions:
   - fluid_channel_add_monolist(), for inserting a new note.
   - fluid_channel_search_monolist(), for searching the position of a note
     into the list.
-  - fluid_channel_remove_monolist(), for removing a note out of the list.
+  - fluid_channel_remove_monolist(), for removing a note from the list.
 
             The monophonic list
    +------------------------------------------------+
@@ -61,7 +66,7 @@
   1) It is always possible to play an infinite legato passage in
      direct order (n1_On,n2_On,n3_On,....).
   
-  2) Playing legato in the reverse order (n10_Off, n9_Off,,...) results in
+  2) Playing legato in the reverse order (n10_Off, n9_Off,,...) helps in
      fast trills playing as the list memorizes 10 most recent notes.
   
   3) Playing an infinite lagato passage in ascendant or descendant order, 
@@ -324,8 +329,8 @@ int fluid_synth_noteon_mono_LOCAL(fluid_synth_t* synth, int chan,
 		/* legato/staccato playing detection */
 		if(channel->mode  & FLUID_CHANNEL_LEGATO_PLAYING)
 		{ /* legato playing */
-			/* legato from iPrev to key */
-			/* the voices from iPrev key number are to be used to play key number */
+			/* legato from prev_note to key */
+			/* the voices from prev_note key number are to be used to play key number */
 			/* fromkey must be valid */
 			return 	fluid_synth_noteon_monopoly_legato(synth, chan,
 				             fluid_channel_prev_note(channel), key, vel);
@@ -380,7 +385,7 @@ int fluid_synth_noteoff_mono_LOCAL(fluid_synth_t* synth, int chan, int key)
 
 	if (i >= 0)
 	{ /* the note is in the monophonic list */
-		/* Removes the note out of the monophonic list */
+		/* Removes the note from the monophonic list */
 		fluid_channel_remove_monolist(channel,i , &i_prev);
 
 		/* in Breath Sync mode, the noteoff triggering is done 
@@ -493,7 +498,7 @@ fluid_synth_noteon_mono_staccato(fluid_synth_t* synth,int chan,int key,int vel)
  *  Sust.on/off  >------------------------->|_______________|
  *  Sost.on/off										        
  *
- * The function has the same behavior when the noteoff is poly of mono, except
+ * The function has the same behaviour when the noteoff is poly of mono, except
  * that for mono noteoff, if any pedal (sustain or sostenuto ) is depressed, the
  * key is memorized. This is neccessary when the next mono note will be played
  * staccato, as any current mono note currently sustained will need to be released 
