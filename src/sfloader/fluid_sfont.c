@@ -393,6 +393,16 @@ delete_fluid_sample(fluid_sample_t* sample)
 }
 
 /**
+ * Returns the size of the fluid_sample_t structure.
+ * 
+ * Useful in low latency scenarios e.g. to allocate a sample on the stack.
+ */
+size_t fluid_sample_sizeof()
+{
+    return sizeof(fluid_sample_t);
+}
+
+/**
  * Set the name of a SoundFont sample.
  * @param sample SoundFont sample
  * @param name Name to assign to sample (20 chars in length + zero terminator)

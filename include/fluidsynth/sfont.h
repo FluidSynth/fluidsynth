@@ -264,6 +264,7 @@ FLUIDSYNTH_API void* fluid_preset_get_data(fluid_preset_t* preset);
 
 FLUIDSYNTH_API fluid_sample_t* new_fluid_sample(void);
 FLUIDSYNTH_API void delete_fluid_sample(fluid_sample_t* sample);
+FLUIDSYNTH_API size_t fluid_sample_sizeof(void);
 
 FLUIDSYNTH_API int fluid_sample_set_name(fluid_sample_t* sample, const char *name);
 FLUIDSYNTH_API int fluid_sample_set_sound_data (fluid_sample_t* sample,

@@ -400,6 +400,16 @@ delete_fluid_mod (fluid_mod_t *mod)
 }
 
 /**
+ * Returns the size of the fluid_mod_t structure.
+ * 
+ * Useful in low latency scenarios e.g. to allocate a modulator on the stack.
+ */
+size_t fluid_mod_sizeof()
+{
+    return sizeof(fluid_mod_t);
+}
+
+/**
  * Checks if two modulators are identical in sources, flags and destination.
  * @param mod1 First modulator
  * @param mod2 Second modulator
