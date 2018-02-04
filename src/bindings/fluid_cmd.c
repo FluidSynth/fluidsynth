@@ -1926,10 +1926,11 @@ static const char * mode_name[]={"poly omni on (0)","mono omni on (1)",
   @param synth the synth instance.
   @param out output stream.
 */
-static int fluid_synth_print_basic_channels(fluid_synth_t* synth, fluid_ostream_t out)
+static int print_basic_channels(fluid_synth_t* synth, fluid_ostream_t out)
 {
-	static const char * warning_msg = "Warning: no basic channels. All MIDI channels are disabled.\n\
-Make use of setbasicchannels to set at least a default basic channel.\n";
+	static const char * warning_msg = "Warning: no basic channels. All MIDI channels are disabled.\n"
+    "Make use of setbasicchannels to set at least a default basic channel.\n";
+    
 	int n_chan= synth->midi_channels; 
 	int i , n= 0;
 	/* prints all basic channels */
@@ -1974,7 +1975,7 @@ int fluid_handle_basicchannels (void* data, int ac, char** av,
 {
 	FLUID_ENTRY_COMMAND(data);
 	fluid_synth_t* synth = handler->synth;
-	return fluid_synth_print_basic_channels(synth, out);
+	return print_basic_channels(synth, out);
 }
 
 /*
@@ -2105,7 +2106,7 @@ int fluid_handle_resetbasicchannels (void* data, int ac, char** av,
 		fluid_synth_reset_basic_channel(synth, -1); 
 	}
 	/* prints result */
-	return fluid_synth_print_basic_channels(synth, out);
+	return print_basic_channels(synth, out);
 }
 
 /*-----------------------------------------------------------------------------
