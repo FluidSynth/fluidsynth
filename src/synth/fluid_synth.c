@@ -1077,8 +1077,8 @@ fluid_synth_damp_voices_by_sustain_LOCAL(fluid_synth_t* synth, int chan)
        {
            /* key_mono_sustained is a possible mono note sustainted
            (by sustain or sostenuto pedal). It must be marked released
-           (-1) here because it is released only by sustain pedal */
-           channel->key_mono_sustained = -1;
+           (INVALID_NOTE) here because it is released only by sustain pedal */
+           channel->key_mono_sustained = INVALID_NOTE;
        }
        fluid_voice_release(voice);                                                                                                                                                                                         
     }
@@ -1105,8 +1105,8 @@ fluid_synth_damp_voices_by_sostenuto_LOCAL(fluid_synth_t* synth, int chan)
         {
             /* key_mono_sustained is a possible mono note sustainted
             (by sustain or sostenuto pedal). It must be marked released
-            (-1) here because it is released only by sostenuto pedal */
-            channel->key_mono_sustained = -1;
+            (INVALID_NOTE) here because it is released only by sostenuto pedal */
+            channel->key_mono_sustained = INVALID_NOTE;
         }
         fluid_voice_release(voice);                                                                                                                                                                                         
     }
@@ -4519,8 +4519,8 @@ fluid_synth_release_voice_on_same_note_LOCAL(fluid_synth_t* synth, int chan,
   synth->storeid = synth->noteid++; 
 
   /* for "monophonic playing" key is the previous sustained note 
-    if it exists (0 to 127) or -1 otherwise */
-  if(key < 0) return;
+    if it exists (0 to 127) or INVALID_NOTE otherwise */
+  if(key == INVALID_NOTE) return;
   
   for (i = 0; i < synth->polyphony; i++) {
     voice = synth->voice[i];

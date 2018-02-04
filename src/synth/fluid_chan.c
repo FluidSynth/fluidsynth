@@ -81,7 +81,7 @@ fluid_channel_init(fluid_channel_t* chan)
   chan->i_first = chan->monolist[chan->i_last].next; /* first note index in the list */
   fluid_channel_clear_prev_note(chan); /* Mark previous note invalid */
   /*---*/
-  chan->key_mono_sustained = -1;				/* No previous mono note sustained */
+  chan->key_mono_sustained = INVALID_NOTE; /* No previous mono note sustained */
   chan->legatomode = FLUID_CHANNEL_LEGATO_MODE_MULTI_RETRIGGER;		/* Default mode */
   chan->portamentomode = FLUID_CHANNEL_PORTAMENTO_MODE_LEGATO_ONLY;	/* Default mode */
 /*--- End of poly/mono initialization --------------------------------------*/

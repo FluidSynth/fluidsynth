@@ -524,10 +524,10 @@ int fluid_synth_noteoff_monopoly(fluid_synth_t* synth, int chan, int key,
 	fluid_voice_t* voice;
 	int i;
 	fluid_channel_t* channel = synth->channel[chan];
-	/* Key_sustained is prepared to return no note sustained (-1) */
+	/* Key_sustained is prepared to return no note sustained (INVALID_NOTE) */
 	if (Mono)
 	{
-		channel->key_mono_sustained = -1; /* no mono note sustained */
+		channel->key_mono_sustained = INVALID_NOTE; /* no mono note sustained */
 	}
 	/* noteoff for all voices with same chan and same key */
 	for (i = 0; i < synth->polyphony; i++)
@@ -639,7 +639,7 @@ int fluid_synth_noteon_monopoly_legato(fluid_synth_t* synth, int chan,
                     fluid_voice_get_key(voice) == fromkey)
 		{
 			fluid_zone_range_t * zone_range = voice->zone_range;
-			/* Ignores voice when there is no instrument zone (i.e zone_range). Otherwise
+			/* Ignores voice when there is no instrument zone (i.e no zone_range). Otherwise
 			   checks if tokey is inside the range of the running voice */
 			if (zone_range && fluid_zone_inside_range(zone_range, tokey, vel))
 			{
@@ -648,27 +648,29 @@ int fluid_synth_noteon_monopoly_legato(fluid_synth_t* synth, int chan,
 					case FLUID_CHANNEL_LEGATO_MODE_RETRIGGER: /* mode 0 */
 						fluid_voice_release(voice); /* normal release */
 					break;
+
 					case FLUID_CHANNEL_LEGATO_MODE_MULTI_RETRIGGER: /* mode 1 */
 						/* Skip in attack section */
 						fluid_voice_update_multi_retrigger_attack(voice,tokey,vel);
+						
+						/* Starts portamento if enabled */
+						if(fluid_channel_is_valid_note(synth->fromkey_portamento))
+						{
+							/* Sends portamento parameters to the voice dsp */
+							fluid_voice_update_portamento(voice, 
+							                              synth->fromkey_portamento,
+							                              tokey);
+						}
+						/* The voice is now used to play tokey in legato manner */
+						/* Marks this Instrument Zone to be ignored during next
+						fluid_preset_noteon() */
+						zone_range->ignore = TRUE;
 					break;
-					default: /* Invalid mode */
-					FLUID_LOG(FLUID_WARN, 
-						"Failed to execute legato mode: %d",legatomode);
+
+					default: /* Invalid mode: this should never happen */
+						FLUID_LOG(FLUID_WARN, "Failed to execute legato mode: %d",
+						          legatomode);
 					return FLUID_FAILED;
-				}
-				if (legatomode >= FLUID_CHANNEL_LEGATO_MODE_MULTI_RETRIGGER)	
-				{
-					/* Starts portamento if enabled */
-					if(fluid_channel_is_valid_note(synth->fromkey_portamento))
-					{
-						/* Sends portamento parameters to the voice dsp */
-						fluid_voice_update_portamento(voice, synth->fromkey_portamento,tokey);
-					}
-					/* The voice is now used to play tokey in legato manner */
-					/* Marks this Instrument Zone to be ignored during next
-					   fluid_preset_noteon() */
-					zone_range->ignore = TRUE;
 				}
 			}
 			else  
