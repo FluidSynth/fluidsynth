@@ -1929,7 +1929,7 @@ static const char * mode_name[]={"poly omni on (0)","mono omni on (1)",
 static int print_basic_channels(fluid_synth_t* synth, fluid_ostream_t out)
 {
 	static const char * warning_msg = "Warning: no basic channels. All MIDI channels are disabled.\n"
-    "Make use of setbasicchannels to set at least a default basic channel.\n";
+	"Make use of setbasicchannels to set at least a default basic channel.\n";
     
 	int n_chan= synth->midi_channels; 
 	int i , n= 0;
@@ -1955,7 +1955,7 @@ static int print_basic_channels(fluid_synth_t* synth, fluid_ostream_t out)
 	/* prints a warning if there is no basic channel */
 	if (n == 0)
 	{
-		fluid_ostream_printf(out, (char *)warning_msg);
+		fluid_ostream_printf(out, warning_msg);
 	}
 	return FLUID_OK;
 }
@@ -2243,7 +2243,7 @@ int fluid_handle_channelsmode (void* data, int ac, char** av,
 		n= n_chan; /* prints all MIDI channels number */
 	}
 	/* prints header */	
-	fluid_ostream_printf(out, (char*)header);
+	fluid_ostream_printf(out, header);
 	for (i = 0; i < n; i++)
 	{
 		int basic_chan, mode, val;
@@ -2289,7 +2289,7 @@ int fluid_handle_channelsmode (void* data, int ac, char** av,
 			print_channel_is_outside_count(out, name_cde, chan, n_chan);
 			if(i < n-1)
 			{
-				fluid_ostream_printf(out, (char*)header);
+				fluid_ostream_printf(out, header);
 			}
 		}
 	}
@@ -2591,7 +2591,7 @@ int fluid_handle_breathmode(void* data, int ac, char** av,
 		n= n_chan; /* prints all MIDI channels number */
 	}
 	/* prints header */	
-	fluid_ostream_printf(out, (char*)header);
+	fluid_ostream_printf(out, header);
 	for (i = 0; i < n; i++)
 	{
 		int chan = ac ? atoi(av[i]): i;
@@ -2633,7 +2633,7 @@ int fluid_handle_breathmode(void* data, int ac, char** av,
 			print_channel_is_outside_count(out, name_cde, chan, n_chan);
 			if(i < n-1) 
 			{
-				fluid_ostream_printf(out, (char*)header);
+				fluid_ostream_printf(out, header);
 			}
 		}
 	}
