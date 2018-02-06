@@ -5677,7 +5677,8 @@ int fluid_synth_get_breath_mode(fluid_synth_t* synth, int chan, int *breathmode)
  * @param chan the beginning channel of the group.
  * @param nbr_chan the number of channel in the group. 
 */
-void fluid_synth_reset_basic_channel_LOCAL(fluid_synth_t* synth, int chan, int nbr_chan)
+static void
+fluid_synth_reset_basic_channel_LOCAL(fluid_synth_t* synth, int chan, int nbr_chan)
 {
 	int i;
 	for (i = chan; i < chan + nbr_chan; i++)
@@ -5747,7 +5748,8 @@ int fluid_synth_reset_basic_channel(fluid_synth_t* synth, int chan)
  *   - \a val has a number of channels overlapping next basic channel group or been
  *     above MIDI channel count.
  */
-int fluid_synth_check_next_basic_channel(fluid_synth_t* synth, int basicchan, int mode, int val)
+static int
+fluid_synth_check_next_basic_channel(fluid_synth_t* synth, int basicchan, int mode, int val)
 {
 	int i, n_chan = synth->midi_channels; /* MIDI Channels count */
 	int real_val = val; /* real number of channels in the group */
@@ -5851,7 +5853,8 @@ int fluid_synth_set_basic_channel(fluid_synth_t* synth, int chan, int mode, int 
  *
  * @param see fluid_synth_set_basic_channel()
 */
-void fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth, int basicchan, int mode, int val)
+static void
+fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth, int basicchan, int mode, int val)
 {
 	int i;
 
