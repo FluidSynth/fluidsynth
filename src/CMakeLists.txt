@@ -156,8 +156,7 @@ set ( libfluidsynth_SOURCES
     synth/fluid_mod.h
     synth/fluid_synth.c
     synth/fluid_synth.h
-    synth/fluid_synth_mono.c
-    synth/fluid_synth_polymono.c
+    synth/fluid_synth_monopoly.c
     synth/fluid_tuning.c
     synth/fluid_tuning.h
     synth/fluid_voice.c

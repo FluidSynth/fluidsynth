@@ -26,7 +26,7 @@
 #include "fluid_tuning.h"
 
 /* The mononophonic list is part of the legato detector for monophonic mode */
-/* see fluid_synth_mono.c about a description of the legato detector device */
+/* see fluid_synth_monopoly.c about a description of the legato detector device */
 /* Size of the monophonic list 
    - 1 is the minimum. it allows playing legato passage of any number 
      of notes on noteon only.

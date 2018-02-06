@@ -227,14 +227,13 @@ int fluid_synth_set_gen2 (fluid_synth_t* synth, int chan,
 void fluid_synth_settings(fluid_settings_t* settings);
 
 
-/* extern declared in fluid_synth_mono.c */
+/* extern declared in fluid_synth_monopoly.c */
 
 int fluid_synth_noteon_mono_staccato(fluid_synth_t* synth,int chan,int key,int vel);
 int fluid_synth_noteon_mono_LOCAL(fluid_synth_t* synth, int chan, int key, int vel);
 int fluid_synth_noteoff_mono_LOCAL(fluid_synth_t* synth, int chan, int key);
 int fluid_synth_noteon_monopoly_legato(fluid_synth_t* synth, int chan, int fromkey, int tokey, int vel);
 int fluid_synth_noteoff_monopoly(fluid_synth_t* synth, int chan, int key, char Mono);
-int fluid_synth_all_notes_off_LOCAL(fluid_synth_t* synth, int chan);
 
 fluid_voice_t*
 fluid_synth_alloc_voice_LOCAL(fluid_synth_t* synth, fluid_sample_t* sample, int chan, int key, int vel, fluid_zone_range_t* zone_range);
