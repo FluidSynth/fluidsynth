@@ -53,8 +53,10 @@ extern int feenableexcept (int excepts);
   if (chan >= synth->midi_channels) { \
     FLUID_API_RETURN(fail_value); \
   } \
-  
+
 static void fluid_synth_init(void);
+static void fluid_synth_api_enter(fluid_synth_t* synth);
+static void fluid_synth_api_exit(fluid_synth_t* synth);
 
 static int fluid_synth_noteon_LOCAL(fluid_synth_t* synth, int chan, int key,
                                        int vel);

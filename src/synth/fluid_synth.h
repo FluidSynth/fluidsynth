@@ -172,11 +172,6 @@ fluid_preset_t* fluid_synth_find_preset(fluid_synth_t* synth,
 				      unsigned int banknum,
 				      unsigned int prognum);
 void fluid_synth_sfont_unref (fluid_synth_t *synth, fluid_sfont_t *sfont);
-				      
-
-int fluid_synth_kill_voice(fluid_synth_t* synth, fluid_voice_t * voice);
-
-void fluid_synth_print_voice(fluid_synth_t* synth);
 
 void fluid_synth_dither_s16(int *dither_index, int len, float* lin, float* rin,
 			    void* lout, int loff, int lincr,
@@ -194,8 +189,6 @@ int fluid_synth_set_chorus_full(fluid_synth_t* synth, int set, int nr, double le
 fluid_sample_timer_t* new_fluid_sample_timer(fluid_synth_t* synth, fluid_timer_callback_t callback, void* data);
 void delete_fluid_sample_timer(fluid_synth_t* synth, fluid_sample_timer_t* timer);
 
-void fluid_synth_api_enter(fluid_synth_t* synth);
-void fluid_synth_api_exit(fluid_synth_t* synth);
 
 void fluid_synth_process_event_queue(fluid_synth_t* synth);
 
