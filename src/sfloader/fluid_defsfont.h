@@ -344,7 +344,6 @@ typedef struct _fluid_defpreset_t fluid_defpreset_t;
 typedef struct _fluid_preset_zone_t fluid_preset_zone_t;
 typedef struct _fluid_inst_t fluid_inst_t;
 typedef struct _fluid_inst_zone_t fluid_inst_zone_t;            /**< Soundfont Instrument Zone */
-typedef struct _fluid_zone_range_t fluid_zone_range_t;/**< instrument zone range */
 
 /* defines the velocity and key range for a zone */
 struct _fluid_zone_range_t
