@@ -3520,8 +3520,7 @@ fluid_synth_alloc_voice_LOCAL(fluid_synth_t* synth, fluid_sample_t* sample, int 
     {
         if(
             /* See if default_mod is the velocity_to_attenuation modulator */
-            fluid_mod_has_source(default_mod, FALSE, FLUID_MOD_VELOCITY) &&
-            fluid_mod_has_dest(default_mod, GEN_ATTENUATION) &&
+            fluid_mod_test_identity(default_mod, &default_vel2att_mod) &&
             // See if a replacement by custom_breath2att_modulator has been demanded
             // for this channel
             ((!mono && (channel->mode &  FLUID_CHANNEL_BREATH_POLY)) || 
