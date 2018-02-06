@@ -80,7 +80,8 @@ struct _fluid_jack_midi_driver_t
 {
   fluid_midi_driver_t driver;
   fluid_jack_client_t *client_ref;
-  jack_port_t *midi_port;
+  int midi_port_count;
+  jack_port_t **midi_port; // array of midi port handles
   fluid_midi_parser_t *parser;
 };
 
@@ -259,15 +260,32 @@ fluid_jack_client_register_ports (void *driver, int isaudio, jack_client_t *clie
   if (!isaudio)
   {
     fluid_jack_midi_driver_t *dev = driver;
-
-    dev->midi_port = jack_port_register (client, "midi", JACK_DEFAULT_MIDI_TYPE,
-				         JackPortIsInput | JackPortIsTerminal, 0);
-    if (!dev->midi_port)
+    int midi_channels, ports;
+    
+    fluid_settings_getint(settings, "synth.midi-channels", &midi_channels);
+    ports = midi_channels / 16;
+    if((dev->midi_port = FLUID_ARRAY(jack_port_t*, ports)) == NULL)
     {
-      FLUID_LOG (FLUID_ERR, "Failed to create Jack MIDI port");
-      return FLUID_FAILED;
+        FLUID_LOG (FLUID_ERR, "Out of memory");
+        return FLUID_FAILED;
     }
-
+    
+    for (i = 0; i < ports; i++)
+    {
+        snprintf(name, sizeof(name), "midi_%02d", i);
+        dev->midi_port[i] = jack_port_register (client, name, JACK_DEFAULT_MIDI_TYPE,
+                            JackPortIsInput | JackPortIsTerminal, 0);
+        
+        if (dev->midi_port[i] == NULL)
+        {
+            FLUID_LOG (FLUID_ERR, "Failed to create Jack MIDI port");
+            FLUID_FREE(dev->midi_port);
+            dev->midi_port = NULL;
+            return FLUID_FAILED;
+        }
+    }
+    
+    dev->midi_port_count = ports;
     return FLUID_OK;
   }
 
@@ -536,21 +554,28 @@ fluid_jack_driver_process (jack_nframes_t nframes, void *arg)
 
   if (midi_driver)
   {
-    midi_buffer = jack_port_get_buffer (midi_driver->midi_port, 0);
-    event_count = jack_midi_get_event_count (midi_buffer);
-
-    for (event_index = 0; event_index < event_count; event_index++)
+    for (i = 0; i < midi_driver->midi_port_count; i++)
     {
-      jack_midi_event_get (&midi_event, midi_buffer, event_index);
+        midi_buffer = jack_port_get_buffer (midi_driver->midi_port[i], 0);
+        event_count = jack_midi_get_event_count (midi_buffer);
 
-      /* let the parser convert the data into events */
-      for (u = 0; u < midi_event.size; u++)
-      {
-        evt = fluid_midi_parser_parse (midi_driver->parser, midi_event.buffer[u]);
+        for (event_index = 0; event_index < event_count; event_index++)
+        {
+            jack_midi_event_get (&midi_event, midi_buffer, event_index);
 
-        /* send the event to the next link in the chain */
-        if (evt != NULL) midi_driver->driver.handler (midi_driver->driver.data, evt);
-      }
+            /* let the parser convert the data into events */
+            for (u = 0; u < midi_event.size; u++)
+            {
+                evt = fluid_midi_parser_parse (midi_driver->parser, midi_event.buffer[u]);
+
+                /* send the event to the next link in the chain */
+                if (evt != NULL)
+                {
+                    fluid_midi_event_set_channel(evt, fluid_midi_event_get_channel(evt) + i * 16);
+                    midi_driver->driver.handler (midi_driver->driver.data, evt);
+                }
+            }
+        }
     }
   }
 
@@ -684,6 +709,7 @@ delete_fluid_jack_midi_driver(fluid_midi_driver_t *p)
   if (dev->parser != NULL)
     delete_fluid_midi_parser (dev->parser);
 
+  FLUID_FREE(dev->midi_port);
   FLUID_FREE (dev);
 
   return FLUID_OK;
