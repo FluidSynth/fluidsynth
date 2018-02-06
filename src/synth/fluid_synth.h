@@ -46,25 +46,6 @@
 
 #define FLUID_UNSET_PROGRAM     128     /* Program number used to unset a preset */
 
-#define FLUID_API_RETURN(return_value) \
-  do { fluid_synth_api_exit(synth); \
-  return return_value; } while (0)
-  
-#define FLUID_API_RETURN_IF_CHAN_DISABLED(return_value) \
-  do { if (FLUID_LIKELY(synth->channel[chan]->mode & FLUID_CHANNEL_ENABLED)) \
-       {} \
-       else \
-       { FLUID_API_RETURN(return_value); } \
-  } while (0)
-
-#define FLUID_API_ENTRY_CHAN(fail_value)  \
-  fluid_return_val_if_fail (synth != NULL, fail_value); \
-  fluid_return_val_if_fail (chan >= 0, fail_value); \
-  fluid_synth_api_enter(synth); \
-  if (chan >= synth->midi_channels) { \
-    FLUID_API_RETURN(fail_value); \
-  } \
-  
 /***************************************************************
  *
  *                         ENUM
