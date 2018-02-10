@@ -200,10 +200,19 @@ static fluid_real_t fluid_iir_filter_q_from_dB(fluid_real_t q_dB)
 void 
 fluid_iir_filter_set_q(fluid_iir_filter_t* iir_filter, fluid_real_t q)
 {
-    if(iir_filter->flags & FLUID_IIR_Q_LINEAR)
+    int flags = iir_filter->flags;
+    
+    if(flags & FLUID_IIR_Q_ZERO_OFF && q<=0.0)
     {
-        /* q is linear (only for user-defined filter) */
-        q = (q <= 0.0) ? 0 : q+1;
+        q = 0;
+    }
+    else if(flags & FLUID_IIR_Q_LINEAR)
+    {
+        /* q is linear (only for user-defined filter)
+         * increase to avoid Q being somewhere between zero and one,
+         * which results in some strange amplified lowpass signal
+         */
+        q++;
     }
     else
     {
@@ -213,7 +222,7 @@ fluid_iir_filter_set_q(fluid_iir_filter_t* iir_filter, fluid_real_t q)
     iir_filter->q_lin = q;
     iir_filter->filter_gain = 1.0;
     
-    if(!(iir_filter->flags & FLUID_IIR_NO_GAIN_AMP))
+    if(!(flags & FLUID_IIR_NO_GAIN_AMP))
     {
         /* SF 2.01 page 59:
          *
