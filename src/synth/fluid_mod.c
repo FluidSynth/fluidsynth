@@ -282,11 +282,19 @@ fluid_mod_transform_source_value(fluid_real_t val, unsigned char mod_flags, cons
       val = (val_norm >= 0.5f)? -1.0f : 1.0f;
       break;
       
+      /*
+       * MIDI CCs only have a resolution of 7 bits. The closer val_norm gets to 1, 
+       * the less will be the resulting change of the sinus. When using this sin()
+       * for scaling the cutoff frequency, there will be no audible difference between
+       * MIDI CCs 118 to 127. To avoid this waste of CCs multiply with 0.87
+       * (at least for unipolar) which makes sin() never get to 1.0 but to 0.98 which
+       * is close enough.
+       */
     case FLUID_MOD_SIN | FLUID_MOD_UNIPOLAR | FLUID_MOD_POSITIVE: /* custom sin(x) */
-      val = sin(M_PI/2 * val_norm);
+      val = sin(M_PI/2 * val_norm * 0.87);
       break;
     case FLUID_MOD_SIN | FLUID_MOD_UNIPOLAR | FLUID_MOD_NEGATIVE: /* custom */
-      val = sin(M_PI/2 * (1.0f - val_norm));
+      val = sin(M_PI/2 * (1.0f - val_norm) * 0.87);
       break;
     case FLUID_MOD_SIN | FLUID_MOD_BIPOLAR | FLUID_MOD_POSITIVE: /* custom */
       val = (val_norm > 0.5f) ?  sin(M_PI/2 * 2 * (val_norm - 0.5f)) 
