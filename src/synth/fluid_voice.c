@@ -101,6 +101,8 @@ fluid_voice_get_lower_boundary_for_attenuation(fluid_voice_t* voice);
 #define UPDATE_RVOICE_R1(proc, arg1) UPDATE_RVOICE_GENERIC_R1(proc, voice->rvoice, arg1)
 #define UPDATE_RVOICE_I1(proc, arg1) UPDATE_RVOICE_GENERIC_I1(proc, voice->rvoice, arg1)
 #define UPDATE_RVOICE_FILTER1(proc, arg1) UPDATE_RVOICE_GENERIC_R1(proc, &voice->rvoice->resonant_filter, arg1)
+#define UPDATE_RVOICE_CUSTOM_FILTER1(proc, arg1) UPDATE_RVOICE_GENERIC_R1(proc, &voice->rvoice->resonant_custom_filter, arg1)
+#define UPDATE_RVOICE_CUSTOM_FILTER_I2(proc, arg1, arg2) UPDATE_RVOICE_GENERIC_IR(proc, &voice->rvoice->resonant_custom_filter, arg1, arg2)
 
 #define UPDATE_RVOICE2(proc, iarg, rarg) UPDATE_RVOICE_GENERIC_IR(proc, voice->rvoice, iarg, rarg)
 #define UPDATE_RVOICE_BUFFERS2(proc, iarg, rarg) UPDATE_RVOICE_GENERIC_IR(proc, &voice->rvoice->buffers, iarg, rarg)
@@ -175,6 +177,9 @@ static void fluid_voice_initialize_rvoice(fluid_voice_t* voice)
                           0xffffffff, 1.0f, 0.0f, -1.0f, 2.0f);
   fluid_voice_update_modenv(voice, FLUID_VOICE_ENVFINISHED, 
                           0xffffffff, 0.0f, 0.0f, -1.0f, 1.0f);
+  
+  fluid_iir_filter_init(&voice->rvoice->resonant_filter, FLUID_IIR_LOWPASS, 0);
+  fluid_iir_filter_init(&voice->rvoice->resonant_custom_filter, FLUID_IIR_DISABLED, 0);
 }
 
 /*
@@ -206,8 +211,8 @@ new_fluid_voice(fluid_real_t output_rate)
   voice->sample = NULL;
 
   /* Initialize both the rvoice and overflow_rvoice */
-  voice->can_access_rvoice = 1; 
-  voice->can_access_overflow_rvoice = 1; 
+  voice->can_access_rvoice = TRUE; 
+  voice->can_access_overflow_rvoice = TRUE; 
   fluid_voice_initialize_rvoice(voice);
   fluid_voice_swap_rvoice(voice);
   fluid_voice_initialize_rvoice(voice);
@@ -539,7 +544,9 @@ fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t* voice)
     /* GEN_COARSETUNE           [1]                        #51  */
     /* GEN_FINETUNE             [1]                        #52  */
     GEN_OVERRIDEROOTKEY,                 /*                #58  */
-    GEN_PITCH                            /*                ---  */
+    GEN_PITCH,                           /*                ---  */
+    GEN_CUSTOM_FILTERFC,                 /*                ---  */
+    GEN_CUSTOM_FILTERQ,                  /*                ---  */
   };
 
   /* When the voice is made ready for the synthesis process, a lot of
@@ -684,10 +691,8 @@ void
 fluid_voice_update_param(fluid_voice_t* voice, int gen)
 {
   unsigned int count, z;
-  fluid_real_t q_dB;
   fluid_real_t x = fluid_voice_gen_value(voice, gen);
   
-
   switch (gen) {
 
   case GEN_PAN:
@@ -775,33 +780,18 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
     break;
 
   case GEN_FILTERQ:
-    /* The generator contains 'centibels' (1/10 dB) => divide by 10 to
-     * obtain dB */
-    q_dB = x / 10.0f;
-
-    /* Range: SF2.01 section 8.1.3 # 8 (convert from cB to dB => /10) */
-    fluid_clip(q_dB, 0.0f, 96.0f);
-
-    /* Short version: Modify the Q definition in a way, that a Q of 0
-     * dB leads to no resonance hump in the freq. response.
-     *
-     * Long version: From SF2.01, page 39, item 9 (initialFilterQ):
-     * "The gain at the cutoff frequency may be less than zero when
-     * zero is specified".  Assume q_dB=0 / q_lin=1: If we would leave
-     * q as it is, then this results in a 3 dB hump slightly below
-     * fc. At fc, the gain is exactly the DC gain (0 dB).  What is
-     * (probably) meant here is that the filter does not show a
-     * resonance hump for q_dB=0. In this case, the corresponding
-     * q_lin is 1/sqrt(2)=0.707.  The filter should have 3 dB of
-     * attenuation at fc now.  In this case Q_dB is the height of the
-     * resonance peak not over the DC gain, but over the frequency
-     * response of a non-resonant filter.  This idea is implemented as
-     * follows: */
-    q_dB -= 3.01f;
-    UPDATE_RVOICE_FILTER1(fluid_iir_filter_set_q_dB, q_dB);
-
+    UPDATE_RVOICE_FILTER1(fluid_iir_filter_set_q, x);
     break;
 
+  /* same as the two above, only for the custom filter */
+  case GEN_CUSTOM_FILTERFC:
+    UPDATE_RVOICE_CUSTOM_FILTER1(fluid_iir_filter_set_fres, x);
+    break;
+
+  case GEN_CUSTOM_FILTERQ:
+    UPDATE_RVOICE_CUSTOM_FILTER1(fluid_iir_filter_set_q, x);
+    break;
+    
   case GEN_MODLFOTOPITCH:
     fluid_clip(x, -12000.0, 12000.0);
     UPDATE_RVOICE_R1(fluid_rvoice_set_modlfo_to_pitch, x);
@@ -1755,3 +1745,10 @@ fluid_voice_get_overflow_prio(fluid_voice_t* voice,
     
   return this_voice_prio;
 }
+
+
+void fluid_voice_set_custom_filter(fluid_voice_t* voice, enum fluid_iir_filter_type type, enum fluid_iir_filter_flags flags)
+{
+    UPDATE_RVOICE_CUSTOM_FILTER_I2(fluid_iir_filter_init, type, flags);
+}
+

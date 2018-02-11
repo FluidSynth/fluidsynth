@@ -117,6 +117,8 @@ Changes in FluidSynth 2.0.0 concerning developers:
 - expose functions to manipulate the ladspa effects unit (see ladspa.h)
 - add support for text and lyrics midi events, see fluid_midi_event_set_lyrics() and fluid_midi_event_set_text()
 - add 24 bit sample support, see _fluid_sample_t::data24
+- add an additional general-purpose IIR filter, see fluid_synth_set_custom_filter()
+- add a custom sinusoidal modulator mapping function, see #FLUID_MOD_SIN
 
 \section NewIn1_1_9 Whats new in 1.1.9?
 

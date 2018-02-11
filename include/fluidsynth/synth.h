@@ -310,6 +310,22 @@ FLUIDSYNTH_API void fluid_synth_get_voicelist(fluid_synth_t* synth,
                                               fluid_voice_t* buf[], int bufsize, int ID);
 FLUIDSYNTH_API int fluid_synth_handle_midi_event(void* data, fluid_midi_event_t* event);
 
+enum fluid_iir_filter_type {
+    FLUID_IIR_DISABLED = 0, /**< Custom IIR filter is not operating */
+    FLUID_IIR_LOWPASS, /**< Custom IIR filter is operating as low-pass filter */
+    FLUID_IIR_HIGHPASS, /**< Custom IIR filter is operating as high-pass filter */
+    FLUID_IIR_LAST /**< @internal Value defines the count of filter types (#fluid_iir_filter_type) @warning This symbol is not part of the public API and ABI stability guarantee and may change at any time! */
+};
+
+enum fluid_iir_filter_flags {
+    FLUID_IIR_Q_LINEAR = 1 << 0, /**< The Soundfont spec requires the filter Q to be interpreted in dB. If this flag is set the filter Q is instead assumed to be in a linear range */
+    FLUID_IIR_Q_ZERO_OFF = 1 << 1, /**< If this flag the filter is switched off if Q == 0 (prior to any transformation) */
+    FLUID_IIR_NO_GAIN_AMP = 1 << 2 /**< The Soundfont spec requires to correct the gain of the filter depending on the filter's Q. If this flag is set the filter gain will not be corrected. */
+};
+
+FLUIDSYNTH_API int fluid_synth_set_custom_filter(fluid_synth_t*, int type, int flags);
+
+
 /* LADSPA */
 
 FLUIDSYNTH_API fluid_ladspa_fx_t *fluid_synth_get_ladspa_fx(fluid_synth_t *synth);
