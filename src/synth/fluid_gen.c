@@ -85,7 +85,10 @@ static const fluid_gen_info_t fluid_gen_info[] = {
         { GEN_SCALETUNE,              0,     1,       0.0f,   1200.0f,     100.0f },
         { GEN_EXCLUSIVECLASS,         0,     0,       0.0f,      0.0f,       0.0f },
         { GEN_OVERRIDEROOTKEY,        1,     0,       0.0f,    127.0f,      -1.0f },
-        { GEN_PITCH,                  1,     0,       0.0f,    127.0f,       0.0f }
+        { GEN_PITCH,                  1,     0,       0.0f,    127.0f,       0.0f },
+        { GEN_CUSTOM_BALANCE,         1,     0,    -960.0f,    960.0f,       0.0f },
+        { GEN_CUSTOM_FILTERFC,        1,     2,       0.0f,  22050.0f,       0.0f },
+        { GEN_CUSTOM_FILTERQ,         1,     1,       0.0f,    960.0f,       0.0f }
 };
 
 

@@ -23,7 +23,12 @@
 #include "fluid_conv.h"
 
 /**
- * Applies a lowpass filter with variable cutoff frequency and quality factor.
+ * Applies a low- or high-pass filter with variable cutoff frequency and quality factor
+ * for a given biquad transfer function:
+ *          b0 + b1*z^-1 + b2*z^-2
+ *  H(z) = ------------------------
+ *          a0 + a1*z^-1 + a2*z^-2
+ *
  * Also modifies filter state accordingly.
  * @param iir_filter Filter parameter
  * @param dsp_buf Pointer to the synthesized audio data
@@ -31,14 +36,12 @@
  */
 /*
  * Variable description:
- * - dsp_a1, dsp_a2, dsp_b0, dsp_b1, dsp_b2: Filter coefficients
+ * - dsp_a1, dsp_a2: Filter coefficients for the the previously filtered output signal
+ * - dsp_b0, dsp_b1, dsp_b2: Filter coefficients for input signal
+ * - coefficients normalized to a0
  *
  * A couple of variables are used internally, their results are discarded:
  * - dsp_i: Index through the output buffer
- * - dsp_phase_fractional: The fractional part of dsp_phase
- * - dsp_coeff: A table of four coefficients, depending on the fractional phase.
- *              Used to interpolate between samples.
- * - dsp_process_buffer: Holds the processed signal between stages
  * - dsp_centernode: delay line for the IIR filter
  * - dsp_hist1: same
  * - dsp_hist2: same
@@ -47,6 +50,12 @@ void
 fluid_iir_filter_apply(fluid_iir_filter_t* iir_filter,
                        fluid_real_t *dsp_buf, int count)
 {
+  if(iir_filter->type == FLUID_IIR_DISABLED || iir_filter->q_lin == 0)
+  {
+      return;
+  }
+  else
+  {
   /* IIR filter sample history */
   fluid_real_t dsp_hist1 = iir_filter->hist1;
   fluid_real_t dsp_hist2 = iir_filter->hist2;
@@ -91,10 +100,10 @@ fluid_iir_filter_apply(fluid_iir_filter_t* iir_filter,
       if (dsp_filter_coeff_incr_count-- > 0)
       {
         fluid_real_t old_b02 = dsp_b02;
-	dsp_a1 += dsp_a1_incr;
-	dsp_a2 += dsp_a2_incr;
-	dsp_b02 += dsp_b02_incr;
-	dsp_b1 += dsp_b1_incr;
+        dsp_a1 += dsp_a1_incr;
+        dsp_a2 += dsp_a2_incr;
+        dsp_b02 += dsp_b02_incr;
+        dsp_b1 += dsp_b1_incr;
 
         /* Compensate history to avoid the filter going havoc with large frequency changes */
 	if (iir_filter->compensate_incr && fabs(dsp_b02) > 0.001) {
@@ -125,8 +134,19 @@ fluid_iir_filter_apply(fluid_iir_filter_t* iir_filter,
   iir_filter->filter_coeff_incr_count = dsp_filter_coeff_incr_count;
 
   fluid_check_fpe ("voice_filter");
+  }
 }
 
+
+void fluid_iir_filter_init(fluid_iir_filter_t* iir_filter, enum fluid_iir_filter_type type, enum fluid_iir_filter_flags flags)
+{
+    iir_filter->type = type;
+    iir_filter->flags = flags;
+    if(type != FLUID_IIR_DISABLED)
+    {
+        fluid_iir_filter_reset(iir_filter);
+    }
+}
 
 void 
 fluid_iir_filter_reset(fluid_iir_filter_t* iir_filter)
@@ -134,6 +154,7 @@ fluid_iir_filter_reset(fluid_iir_filter_t* iir_filter)
   iir_filter->hist1 = 0;
   iir_filter->hist2 = 0;
   iir_filter->last_fres = -1.;
+  iir_filter->q_lin = 0;
   iir_filter->filter_startup = 1;
 }
 
@@ -145,48 +166,102 @@ fluid_iir_filter_set_fres(fluid_iir_filter_t* iir_filter,
   iir_filter->last_fres = -1.;
 }
 
-
-void 
-fluid_iir_filter_set_q_dB(fluid_iir_filter_t* iir_filter, 
-                          fluid_real_t q_dB)
+static fluid_real_t fluid_iir_filter_q_from_dB(fluid_real_t q_dB)
 {
+    /* The generator contains 'centibels' (1/10 dB) => divide by 10 to
+     * obtain dB */
+    q_dB /= 10.0f;
+
+    /* Range: SF2.01 section 8.1.3 # 8 (convert from cB to dB => /10) */
+    fluid_clip(q_dB, 0.0f, 96.0f);
+
+    /* Short version: Modify the Q definition in a way, that a Q of 0
+     * dB leads to no resonance hump in the freq. response.
+     *
+     * Long version: From SF2.01, page 39, item 9 (initialFilterQ):
+     * "The gain at the cutoff frequency may be less than zero when
+     * zero is specified".  Assume q_dB=0 / q_lin=1: If we would leave
+     * q as it is, then this results in a 3 dB hump slightly below
+     * fc. At fc, the gain is exactly the DC gain (0 dB).  What is
+     * (probably) meant here is that the filter does not show a
+     * resonance hump for q_dB=0. In this case, the corresponding
+     * q_lin is 1/sqrt(2)=0.707.  The filter should have 3 dB of
+     * attenuation at fc now.  In this case Q_dB is the height of the
+     * resonance peak not over the DC gain, but over the frequency
+     * response of a non-resonant filter.  This idea is implemented as
+     * follows: */
+    q_dB -= 3.01f;
+    
     /* The 'sound font' Q is defined in dB. The filter needs a linear
        q. Convert. */
-    iir_filter->q_lin = (fluid_real_t) (pow(10.0f, q_dB / 20.0f));
-
-    /* SF 2.01 page 59:
-     *
-     *  The SoundFont specs ask for a gain reduction equal to half the
-     *  height of the resonance peak (Q).  For example, for a 10 dB
-     *  resonance peak, the gain is reduced by 5 dB.  This is done by
-     *  multiplying the total gain with sqrt(1/Q).  `Sqrt' divides dB
-     *  by 2 (100 lin = 40 dB, 10 lin = 20 dB, 3.16 lin = 10 dB etc)
-     *  The gain is later factored into the 'b' coefficients
-     *  (numerator of the filter equation).  This gain factor depends
-     *  only on Q, so this is the right place to calculate it.
-     */
-    iir_filter->filter_gain = (fluid_real_t) (1.0 / sqrt(iir_filter->q_lin));
-
-    /* The synthesis loop will have to recalculate the filter coefficients. */
-    iir_filter->last_fres = -1.;
-
+    return pow(10.0f, q_dB / 20.0f);
 }
 
+void 
+fluid_iir_filter_set_q(fluid_iir_filter_t* iir_filter, fluid_real_t q)
+{
+    int flags = iir_filter->flags;
+    
+    if(flags & FLUID_IIR_Q_ZERO_OFF && q<=0.0)
+    {
+        q = 0;
+    }
+    else if(flags & FLUID_IIR_Q_LINEAR)
+    {
+        /* q is linear (only for user-defined filter)
+         * increase to avoid Q being somewhere between zero and one,
+         * which results in some strange amplified lowpass signal
+         */
+        q++;
+    }
+    else
+    {
+        q = fluid_iir_filter_q_from_dB(q);
+    }
+    
+    iir_filter->q_lin = q;
+    iir_filter->filter_gain = 1.0;
+    
+    if(!(flags & FLUID_IIR_NO_GAIN_AMP))
+    {
+        /* SF 2.01 page 59:
+         *
+         *  The SoundFont specs ask for a gain reduction equal to half the
+         *  height of the resonance peak (Q).  For example, for a 10 dB
+         *  resonance peak, the gain is reduced by 5 dB.  This is done by
+         *  multiplying the total gain with sqrt(1/Q).  `Sqrt' divides dB
+         *  by 2 (100 lin = 40 dB, 10 lin = 20 dB, 3.16 lin = 10 dB etc)
+         *  The gain is later factored into the 'b' coefficients
+         *  (numerator of the filter equation).  This gain factor depends
+         *  only on Q, so this is the right place to calculate it.
+         */
+        iir_filter->filter_gain /= sqrt(q);
+    }
+    
+    /* The synthesis loop will have to recalculate the filter coefficients. */
+    iir_filter->last_fres = -1.;
+}
 
 static FLUID_INLINE void 
 fluid_iir_filter_calculate_coefficients(fluid_iir_filter_t* iir_filter, 
                                         int transition_samples, 
                                         fluid_real_t output_rate)
 {
-
+  /* FLUID_IIR_Q_LINEAR may switch the filter off by setting Q==0 */
+  if(iir_filter->q_lin == 0)
+  {
+      return;
+  }
+  else
+  {
   /*
-    * Those equations from Robert Bristow-Johnson's `Cookbook
-    * formulae for audio EQ biquad filter coefficients', obtained
-    * from Harmony-central.com / Computer / Programming. They are
-    * the result of the bilinear transform on an analogue filter
-    * prototype. To quote, `BLT frequency warping has been taken
-    * into account for both significant frequency relocation and for
-    * bandwidth readjustment'. */
+   * Those equations from Robert Bristow-Johnson's `Cookbook
+   * formulae for audio EQ biquad filter coefficients', obtained
+   * from Harmony-central.com / Computer / Programming. They are
+   * the result of the bilinear transform on an analogue filter
+   * prototype. To quote, `BLT frequency warping has been taken
+   * into account for both significant frequency relocation and for
+   * bandwidth readjustment'. */
 
   fluid_real_t omega = (fluid_real_t) (2.0 * M_PI * 
                        (iir_filter->last_fres / ((float) output_rate)));
@@ -204,11 +279,33 @@ fluid_iir_filter_calculate_coefficients(fluid_iir_filter_t* iir_filter,
    *  iir_filter->b1=(1.-cos_coeff)*a0_inv*iir_filter->filter_gain;
    *  iir_filter->b2=(1.-cos_coeff)*a0_inv*0.5*iir_filter->filter_gain; */
 
+  /* "a" coeffs are same for all 3 available filter types */
   fluid_real_t a1_temp = -2.0f * cos_coeff * a0_inv;
   fluid_real_t a2_temp = (1.0f - alpha_coeff) * a0_inv;
-  fluid_real_t b1_temp = (1.0f - cos_coeff) * a0_inv * iir_filter->filter_gain;
-   /* both b0 -and- b2 */
-  fluid_real_t b02_temp = b1_temp * 0.5f;
+  
+  fluid_real_t b02_temp, b1_temp;
+  switch(iir_filter->type)
+  {
+      case FLUID_IIR_HIGHPASS:
+      b1_temp = (1.0f + cos_coeff) * a0_inv * iir_filter->filter_gain;
+      
+      /* both b0 -and- b2 */
+      b02_temp = b1_temp * 0.5f;
+      
+      b1_temp *= -1.0f;
+      break;
+      
+      case FLUID_IIR_LOWPASS:
+      b1_temp = (1.0f - cos_coeff) * a0_inv * iir_filter->filter_gain;
+      
+      /* both b0 -and- b2 */
+      b02_temp = b1_temp * 0.5f;
+      break;
+      
+      default:
+          /* filter disabled, should never get here */
+          return;
+  }
 
   iir_filter->compensate_incr = 0;
 
@@ -249,6 +346,7 @@ fluid_iir_filter_calculate_coefficients(fluid_iir_filter_t* iir_filter,
     iir_filter->filter_coeff_incr_count = transition_samples;
   }
   fluid_check_fpe ("voice_write filter calculation");
+  }
 }
 
 
@@ -280,7 +378,7 @@ void fluid_iir_filter_calc(fluid_iir_filter_t* iir_filter,
     fres = 5;
 
   /* if filter enabled and there is a significant frequency change.. */
-  if (fabs (fres - iir_filter->last_fres) > 0.01)
+  if (iir_filter->type != FLUID_IIR_DISABLED && fabs (fres - iir_filter->last_fres) > 0.01)
   {
    /* The filter coefficients have to be recalculated (filter
     * parameters have changed). Recalculation for various reasons is

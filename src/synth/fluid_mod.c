@@ -172,7 +172,26 @@ fluid_mod_get_source_value(const unsigned char mod_src,
     
     if (mod_flags & FLUID_MOD_CC)
     {
-        val = fluid_channel_get_cc(chan, mod_src);
+        /* From MIDI Recommended Practice (RP-036) Default Pan Formula:
+         * "Since MIDI controller values range from 0 to 127, the exact center
+         * of the range, 63.5, cannot be represented. Therefore, the effective
+         * range for CC#10 is modified to be 1 to 127, and values 0 and 1 both
+         * pan hard left. The recommended method is to subtract 1 from the 
+         * value of CC#10, and saturate the result to be non-negative."
+         *
+         * We treat the balance control in exactly the same way, as the same
+         * problem applies here as well.
+         */
+        if (mod_src == PAN_MSB || mod_src == BALANCE_MSB) {
+            *range = 126;
+            val = fluid_channel_get_cc(chan, mod_src) - 1;
+            if (val < 0) {
+                val = 0;
+            }
+        }
+        else {
+            val = fluid_channel_get_cc(chan, mod_src);
+        }
     }
     else
     {
@@ -281,6 +300,30 @@ fluid_mod_transform_source_value(fluid_real_t val, unsigned char mod_flags, cons
     case FLUID_MOD_SWITCH | FLUID_MOD_BIPOLAR | FLUID_MOD_NEGATIVE: /* =15 */
       val = (val_norm >= 0.5f)? -1.0f : 1.0f;
       break;
+      
+      /*
+       * MIDI CCs only have a resolution of 7 bits. The closer val_norm gets to 1, 
+       * the less will be the resulting change of the sinus. When using this sin()
+       * for scaling the cutoff frequency, there will be no audible difference between
+       * MIDI CCs 118 to 127. To avoid this waste of CCs multiply with 0.87
+       * (at least for unipolar) which makes sin() never get to 1.0 but to 0.98 which
+       * is close enough.
+       */
+    case FLUID_MOD_SIN | FLUID_MOD_UNIPOLAR | FLUID_MOD_POSITIVE: /* custom sin(x) */
+      val = sin(M_PI/2 * val_norm * 0.87);
+      break;
+    case FLUID_MOD_SIN | FLUID_MOD_UNIPOLAR | FLUID_MOD_NEGATIVE: /* custom */
+      val = sin(M_PI/2 * (1.0f - val_norm) * 0.87);
+      break;
+    case FLUID_MOD_SIN | FLUID_MOD_BIPOLAR | FLUID_MOD_POSITIVE: /* custom */
+      val = (val_norm > 0.5f) ?  sin(M_PI/2 * 2 * (val_norm - 0.5f)) 
+                              : -sin(M_PI/2 * 2 * (0.5f - val_norm));
+      break;
+    case FLUID_MOD_SIN | FLUID_MOD_BIPOLAR | FLUID_MOD_NEGATIVE: /* custom */
+      val = (val_norm > 0.5f) ? -sin(M_PI/2 * 2 * (val_norm - 0.5f)) 
+                              :  sin(M_PI/2 * 2 * (0.5f - val_norm));
+      break;
+      
     default:
       FLUID_LOG(FLUID_ERR, "Unknown modulator type '%d', disabling modulator.", mod_flags);
       val = 0.0f;
@@ -501,12 +544,15 @@ void fluid_dump_modulator(fluid_mod_t * mod){
   switch(dest){
       case GEN_FILTERQ: printf("Q"); break;
       case GEN_FILTERFC: printf("fc"); break;
+      case GEN_CUSTOM_FILTERQ: printf("custom-Q"); break;
+      case GEN_CUSTOM_FILTERFC: printf("custom-fc"); break;
       case GEN_VIBLFOTOPITCH: printf("VibLFO-to-pitch"); break;
       case GEN_MODENVTOPITCH: printf("ModEnv-to-pitch"); break;
       case GEN_MODLFOTOPITCH: printf("ModLFO-to-pitch"); break;
       case GEN_CHORUSSEND: printf("Chorus send"); break;
       case GEN_REVERBSEND: printf("Reverb send"); break;
       case GEN_PAN: printf("pan"); break;
+      case GEN_CUSTOM_BALANCE: printf("balance"); break;
       case GEN_ATTENUATION: printf("att"); break;
       default: printf("dest %i",dest);
   }; /* switch dest */

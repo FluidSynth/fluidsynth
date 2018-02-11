@@ -6,10 +6,9 @@
 | Linux/MacOSX| n.a. | [![Build Status Travis](https://travis-ci.org/FluidSynth/fluidsynth.svg?branch=master)](https://travis-ci.org/FluidSynth/fluidsynth) |
 | Windows | [![Build status Appveyor](https://ci.appveyor.com/api/projects/status/n24ybk0dmttjwdk2/branch/master?svg=true)](https://ci.appveyor.com/project/derselbst/fluidsynth) | [![Build status](https://ci.appveyor.com/api/projects/status/anbmtebt5uk4q1it/branch/master?svg=true)](https://ci.appveyor.com/project/derselbst/fluidsynth-g2ouw) |
 
+### FluidSynth is a software real-time synthesizer based on the Soundfont 2 specifications.
 
-
-FluidSynth is a software real-time synthesizer based on the
-Soundfont 2 specifications.
+[![OHLOH Project Stats](https://www.openhub.net/p/fluidsynth/widgets/project_thin_badge?format=gif)](https://www.openhub.net/p/fluidsynth)
 
 FluidSynth reads and handles MIDI events from the MIDI input
 device. It is the software analogue of a MIDI synthesizer. FluidSynth

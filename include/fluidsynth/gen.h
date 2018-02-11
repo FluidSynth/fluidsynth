@@ -99,6 +99,12 @@ enum fluid_gen_type {
    * is used, however, as the destination for the default pitch wheel
    * modulator. */
   GEN_PITCH,			/**< Pitch @note Not a real SoundFont generator */
+
+  GEN_CUSTOM_BALANCE,          /**< Balance @note Not a real SoundFont generator */
+  /* non-standard generator for an additional custom high- or low-pass filter */
+  GEN_CUSTOM_FILTERFC,		/**< Custom filter cutoff frequency */
+  GEN_CUSTOM_FILTERQ,		/**< Custom filter Q */
+  
 #ifndef __DOXYGEN__
   GEN_LAST			/**< @internal Value defines the count of generators (#fluid_gen_type) @warning This symbol is not part of the public API and ABI stability guarantee and may change at any time! */
 #endif

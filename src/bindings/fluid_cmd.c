@@ -60,16 +60,6 @@ struct _fluid_shell_t {
   fluid_ostream_t out;
 };
 
-/**
- * Reduced command information structure for constant data.
- * For internal use only.
- */
-typedef struct {
-  const char *name;             /**< The name of the command, as typed in the shell */
-  const char *topic;            /**< The help topic group of this command */
-  fluid_cmd_func_t handler;     /**< Pointer to the handler for this command */
-  const char *help;             /**< A help string */
-} fluid_cmd_int_t;
 
 static fluid_thread_return_t fluid_shell_run(void* data);
 static void fluid_shell_init(fluid_shell_t* shell,
@@ -87,7 +77,7 @@ void fluid_shell_settings(fluid_settings_t* settings)
 
 /** the table of all handled commands */
 
-static const fluid_cmd_int_t fluid_commands[] = {
+static const fluid_cmd_t fluid_commands[] = {
   { "help", "general", fluid_handle_help,
     "help                       Show help topics ('help TOPIC' for more info)" },
   { "quit", "general", fluid_handle_quit,
@@ -2214,7 +2204,7 @@ fluid_expand_path(char* path, char* new_path, int len)
  * Command
  */
 
-fluid_cmd_t* fluid_cmd_copy(fluid_cmd_t* cmd)
+fluid_cmd_t* fluid_cmd_copy(const fluid_cmd_t* cmd)
 {
   fluid_cmd_t* copy = FLUID_NEW(fluid_cmd_t);
   if (copy == NULL) {
@@ -2226,7 +2216,6 @@ fluid_cmd_t* fluid_cmd_copy(fluid_cmd_t* cmd)
   copy->topic = FLUID_STRDUP(cmd->topic);
   copy->help = FLUID_STRDUP(cmd->help);
   copy->handler = cmd->handler;
-  copy->data = cmd->data;
   return copy;
 }
 
@@ -2277,15 +2266,7 @@ fluid_cmd_handler_t* new_fluid_cmd_handler(fluid_synth_t* synth, fluid_midi_rout
   if (synth != NULL) {
     for (i = 0; i < FLUID_N_ELEMENTS(fluid_commands); i++)
     {
-        fluid_cmd_t cmd = {
-            (char *)fluid_commands[i].name,
-            (char *)fluid_commands[i].topic,
-            fluid_commands[i].handler,
-            handler,
-            (char *)fluid_commands[i].help
-        };
-
-        fluid_cmd_handler_register(handler, &cmd);
+        fluid_cmd_handler_register(handler, &fluid_commands[i]);
     }
   }
 
@@ -2312,7 +2293,7 @@ delete_fluid_cmd_handler(fluid_cmd_handler_t* handler)
  * @return #FLUID_OK if command was inserted, #FLUID_FAILED otherwise
  */
 int
-fluid_cmd_handler_register(fluid_cmd_handler_t* handler, fluid_cmd_t* cmd)
+fluid_cmd_handler_register(fluid_cmd_handler_t* handler, const fluid_cmd_t* cmd)
 {
   fluid_cmd_t* copy = fluid_cmd_copy(cmd);
   fluid_hashtable_insert(handler->commands, copy->name, copy);
@@ -2340,7 +2321,7 @@ fluid_cmd_handler_handle(void* data, int ac, char** av, fluid_ostream_t out)
   cmd = fluid_hashtable_lookup(handler->commands, av[0]);
 
   if (cmd && cmd->handler)
-    return (*cmd->handler)(cmd->data, ac - 1, av + 1, out);
+    return (*cmd->handler)(handler, ac - 1, av + 1, out);
 
   fluid_ostream_printf(out, "unknown command: %s (try help)\n", av[0]);
   return FLUID_FAILED;

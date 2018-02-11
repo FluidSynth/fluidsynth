@@ -138,6 +138,8 @@ static fluid_mod_t default_expr_mod;           /* SF2.01 section 8.4.7  */
 static fluid_mod_t default_reverb_mod;         /* SF2.01 section 8.4.8  */
 static fluid_mod_t default_chorus_mod;         /* SF2.01 section 8.4.9  */
 static fluid_mod_t default_pitch_bend_mod;     /* SF2.01 section 8.4.10 */
+static fluid_mod_t custom_balance_mod;         /* Non-standard modulator */
+
 
 /* reverb presets */
 static const fluid_revmodel_presets_t revmodel_preset[] = {
@@ -404,6 +406,19 @@ fluid_synth_init(void)
 		       );
   fluid_mod_set_dest(&default_pitch_bend_mod, GEN_PITCH);                 /* Destination: Initial pitch */
   fluid_mod_set_amount(&default_pitch_bend_mod, 12700.0);                 /* Amount: 12700 cents */
+
+
+  /* Non-standard MIDI continuous controller 8 to channel stereo balance */
+  fluid_mod_set_source1(&custom_balance_mod, BALANCE_MSB, /* Index=8 */
+		       FLUID_MOD_CC                              /* CC=1 */
+		       | FLUID_MOD_CONCAVE                       /* type=1 */
+		       | FLUID_MOD_BIPOLAR                       /* P=1 */
+		       | FLUID_MOD_POSITIVE                      /* D=0 */
+		       );
+  fluid_mod_set_source2(&custom_balance_mod, 0, 0);
+  fluid_mod_set_dest(&custom_balance_mod, GEN_CUSTOM_BALANCE);                  /* Destination: stereo balance */
+  /* Amount: 96 dB of attenuation (on the opposite channel) */
+  fluid_mod_set_amount(&custom_balance_mod, 960.0);
 }
 
 static FLUID_INLINE unsigned int fluid_synth_get_ticks(fluid_synth_t* synth)
@@ -554,7 +569,7 @@ new_fluid_synth(fluid_settings_t *settings)
   fluid_settings_getnum_float(settings, "synth.gain", &synth->gain);
   fluid_settings_getint(settings, "synth.device-id", &synth->device_id);
   fluid_settings_getint(settings, "synth.cpu-cores", &synth->cores);
-
+  
   fluid_settings_getnum_float(settings, "synth.overflow.percussion", &synth->overflow.percussion);
   fluid_settings_getnum_float(settings, "synth.overflow.released", &synth->overflow.released);
   fluid_settings_getnum_float(settings, "synth.overflow.sustained", &synth->overflow.sustained);
@@ -671,7 +686,7 @@ new_fluid_synth(fluid_settings_t *settings)
   fluid_synth_add_default_mod(synth, &default_reverb_mod, FLUID_SYNTH_ADD);
   fluid_synth_add_default_mod(synth, &default_chorus_mod, FLUID_SYNTH_ADD);
   fluid_synth_add_default_mod(synth, &default_pitch_bend_mod, FLUID_SYNTH_ADD);
-
+  fluid_synth_add_default_mod(synth, &custom_balance_mod, FLUID_SYNTH_ADD);
 
   /* Create and initialize the Fx unit.*/
   fluid_settings_getint(settings, "synth.ladspa.active", &with_ladspa);
@@ -724,7 +739,7 @@ new_fluid_synth(fluid_settings_t *settings)
       goto error_recovery;
     }
   }
-
+  
   fluid_synth_set_sample_rate(synth, synth->sample_rate);
   fluid_synth_update_mixer(synth, fluid_rvoice_mixer_set_polyphony, 
 			   synth->polyphony, 0.0f);
@@ -2491,6 +2506,8 @@ fluid_synth_update_polyphony_LOCAL(fluid_synth_t* synth, int new_polyphony)
       synth->voice[i] = new_fluid_voice(synth->sample_rate);
       if (synth->voice[i] == NULL) 
 	return FLUID_FAILED;
+    
+      fluid_voice_set_custom_filter(synth->voice[i], synth->custom_filter_type, synth->custom_filter_flags);
     }
     synth->nvoice = new_polyphony;
   }
@@ -5155,6 +5172,41 @@ fluid_ladspa_fx_t *fluid_synth_get_ladspa_fx(fluid_synth_t *synth)
     fluid_return_val_if_fail(synth != NULL, NULL);
 
     return synth->ladspa_fx;
+}
+
+/**
+ * Configure a general-purpose IIR biquad filter.
+ * 
+ * This is an optional, additional filter that operates independently from the default low-pass filter required by the Soundfont2 standard.
+ * By default this filter is off (#FLUID_IIR_DISABLED).
+ * 
+ * @param synth FluidSynth instance
+ * @param type Type of the IIR filter to use (see #fluid_iir_filter_type)
+ * @param flags Additional flags to customize this filter or zero to stay with the default (see #fluid_iir_filter_flags)
+ * 
+ * @return #FLUID_OK if the settings have been successfully applied, otherwise #FLUID_FAILED
+ */
+int fluid_synth_set_custom_filter(fluid_synth_t* synth, int type, int flags)
+{
+    int i;
+    fluid_voice_t *voice;
+    
+    fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(type >= FLUID_IIR_DISABLED && type < FLUID_IIR_LAST, FLUID_FAILED);
+    
+    fluid_synth_api_enter(synth);
+    
+    synth->custom_filter_type = type;
+    synth->custom_filter_flags = flags;
+    
+    for (i = 0; i < synth->polyphony; i++)
+    {
+        voice = synth->voice[i];
+        
+        fluid_voice_set_custom_filter(voice, type, flags);
+    }
+    
+    FLUID_API_RETURN(FLUID_OK);
 }
 
 /**

@@ -166,6 +166,8 @@ struct _fluid_synth_t
   fluid_mod_t* default_mod;          /**< the (dynamic) list of default modulators */
 
   fluid_ladspa_fx_t* ladspa_fx;      /**< Effects unit for LADSPA support */
+  enum fluid_iir_filter_type custom_filter_type; /**< filter type of the user-defined filter currently used for all voices */
+  enum fluid_iir_filter_flags custom_filter_flags; /**< filter type of the user-defined filter currently used for all voices */
 };
 
 fluid_preset_t* fluid_synth_find_preset(fluid_synth_t* synth,
@@ -201,6 +203,9 @@ void fluid_synth_api_exit(fluid_synth_t* synth);
 
 void fluid_synth_process_event_queue(fluid_synth_t* synth);
 
+int fluid_synth_set_gen2 (fluid_synth_t* synth, int chan,
+                                         int param, float value,
+                                         int absolute, int normalized);
 /*
  * misc
  */

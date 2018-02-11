@@ -50,6 +50,14 @@ https://stackoverflow.com/a/6251757
                 (Experimental) Sets the number of synthesis CPU cores. If set to a value greater than 1, then additional synthesis threads will be created to take advantage of a multi CPU or CPU core system. This has the affect of utilizing more of the total CPU for voices or decreasing render times when synthesizing audio to a file.</desc>
         </setting>
         <setting>
+            <name>default-soundfont</name>
+            <type>str</type>
+            <def>C:\soundfonts\default.sf2 (Windows),<br />
+                 ${CMAKE_INSTALL_PREFIX}/share/soundfonts/default.sf2 (all others)</def>
+            <desc>
+                The default soundfont file to use by the fluidsynth executable. The default value can be overridden during compilation time by setting the DEFAULT_SOUNDFONT cmake variable.</desc>
+        </setting>
+        <setting>
             <name>device-id</name>
             <type>int</type>
             <def>0</def>
@@ -80,6 +88,13 @@ https://stackoverflow.com/a/6251757
             <def>0 (FALSE)</def>
             <desc>
                 When set to "yes" the LADSPA subsystem will be enabled. This subsystem allows to load and interconnect LADSPA plug-ins. The output of the synthesizer is processed by the LADSPA subsystem. Note that the synthesizer has to be compiled with LADSPA support. More information about the LADSPA subsystem later.</desc>
+        </setting>
+        <setting>
+            <name>lock-memory</name>
+            <type>bool</type>
+            <def>1 (TRUE)</def>
+            <desc>
+                Page-lock memory that contains audio sample data, if true.</desc>
         </setting>
         <setting>
             <name>midi-channels</name>
