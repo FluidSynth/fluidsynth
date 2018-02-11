@@ -185,6 +185,7 @@ fluid_voice_unlock_rvoice(fluid_voice_t* voice)
 
 
 fluid_real_t fluid_voice_gen_value(const fluid_voice_t* voice, int num);
+void fluid_voice_set_custom_filter(fluid_voice_t* voice, enum fluid_iir_filter_type type, enum fluid_iir_filter_flags flags);
 
 #define fluid_voice_get_loudness(voice) (fluid_adsr_env_get_max_val(&voice->volenv))
 

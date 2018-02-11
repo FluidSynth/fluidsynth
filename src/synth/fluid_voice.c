@@ -36,6 +36,9 @@
 /* min vol envelope release (to stop clicks) in SoundFont timecents */
 #define FLUID_MIN_VOLENVRELEASE -7200.0f /* ~16ms */
 
+
+static const int32_t INT24_MAX = (1 << (16+8-1));
+
 static int fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t* voice);
 static int calculate_hold_decay_buffers(fluid_voice_t* voice, int gen_base,
                                         int gen_key2base, int is_decay);
@@ -98,6 +101,8 @@ fluid_voice_get_lower_boundary_for_attenuation(fluid_voice_t* voice);
 #define UPDATE_RVOICE_R1(proc, arg1) UPDATE_RVOICE_GENERIC_R1(proc, voice->rvoice, arg1)
 #define UPDATE_RVOICE_I1(proc, arg1) UPDATE_RVOICE_GENERIC_I1(proc, voice->rvoice, arg1)
 #define UPDATE_RVOICE_FILTER1(proc, arg1) UPDATE_RVOICE_GENERIC_R1(proc, &voice->rvoice->resonant_filter, arg1)
+#define UPDATE_RVOICE_CUSTOM_FILTER1(proc, arg1) UPDATE_RVOICE_GENERIC_R1(proc, &voice->rvoice->resonant_custom_filter, arg1)
+#define UPDATE_RVOICE_CUSTOM_FILTER_I2(proc, arg1, arg2) UPDATE_RVOICE_GENERIC_IR(proc, &voice->rvoice->resonant_custom_filter, arg1, arg2)
 
 #define UPDATE_RVOICE2(proc, iarg, rarg) UPDATE_RVOICE_GENERIC_IR(proc, voice->rvoice, iarg, rarg)
 #define UPDATE_RVOICE_BUFFERS2(proc, iarg, rarg) UPDATE_RVOICE_GENERIC_IR(proc, &voice->rvoice->buffers, iarg, rarg)
@@ -172,6 +177,9 @@ static void fluid_voice_initialize_rvoice(fluid_voice_t* voice)
                           0xffffffff, 1.0f, 0.0f, -1.0f, 2.0f);
   fluid_voice_update_modenv(voice, FLUID_VOICE_ENVFINISHED, 
                           0xffffffff, 0.0f, 0.0f, -1.0f, 1.0f);
+  
+  fluid_iir_filter_init(&voice->rvoice->resonant_filter, FLUID_IIR_LOWPASS, 0);
+  fluid_iir_filter_init(&voice->rvoice->resonant_custom_filter, FLUID_IIR_DISABLED, 0);
 }
 
 /*
@@ -203,8 +211,8 @@ new_fluid_voice(fluid_real_t output_rate)
   voice->sample = NULL;
 
   /* Initialize both the rvoice and overflow_rvoice */
-  voice->can_access_rvoice = 1; 
-  voice->can_access_overflow_rvoice = 1; 
+  voice->can_access_rvoice = TRUE; 
+  voice->can_access_overflow_rvoice = TRUE; 
   fluid_voice_initialize_rvoice(voice);
   fluid_voice_swap_rvoice(voice);
   fluid_voice_initialize_rvoice(voice);
@@ -442,8 +450,7 @@ fluid_voice_calculate_gain_amplitude(const fluid_voice_t* voice, fluid_real_t ga
     /* we use 24bit samples in fluid_rvoice_dsp. in order to normalize float
      * samples to [0.0;1.0] divide samples by the max. value of an int24 and
      * amplify them with the gain */
-    const fluid_real_t INT24_MAX = (1 << (16+8-1)) * 1.0f;
-    return gain * voice->synth_gain / INT24_MAX;
+    return gain * voice->synth_gain / (INT24_MAX * 1.0f);
 }
 
 void 
@@ -538,7 +545,9 @@ fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t* voice)
     /* GEN_FINETUNE             [1]                        #52  */
     GEN_OVERRIDEROOTKEY,                 /*                #58  */
     GEN_PITCH,                           /*                ---  */
-    GEN_CUSTOM_BALANCE                          /*                ---  */
+    GEN_CUSTOM_BALANCE,                  /*                ---  */
+    GEN_CUSTOM_FILTERFC,                 /*                ---  */
+    GEN_CUSTOM_FILTERQ                   /*                ---  */
   };
 
   /* When the voice is made ready for the synthesis process, a lot of
@@ -682,13 +691,9 @@ calculate_hold_decay_buffers(fluid_voice_t* voice, int gen_base,
 void
 fluid_voice_update_param(fluid_voice_t* voice, int gen)
 {
-  // Alternate attenuation scale used by EMU10K1 cards when setting the attenuation at the preset or instrument level within the SoundFont bank.
-  static const float ALT_ATTENUATION_SCALE = 0.4f;
   unsigned int count, z;
-  fluid_real_t q_dB;
   fluid_real_t x = fluid_voice_gen_value(voice, gen);
   
-
   switch (gen) {
 
   case GEN_PAN:
@@ -709,8 +714,7 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
     break;
 
   case GEN_ATTENUATION:
-    voice->attenuation = ((fluid_real_t)(voice)->gen[GEN_ATTENUATION].val*ALT_ATTENUATION_SCALE) +
-    (fluid_real_t)(voice)->gen[GEN_ATTENUATION].mod + (fluid_real_t)(voice)->gen[GEN_ATTENUATION].nrpn;
+    voice->attenuation = x;
 
     /* Range: SF2.01 section 8.1.3 # 48
      * Motivation for range checking:
@@ -783,33 +787,18 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
     break;
 
   case GEN_FILTERQ:
-    /* The generator contains 'centibels' (1/10 dB) => divide by 10 to
-     * obtain dB */
-    q_dB = x / 10.0f;
-
-    /* Range: SF2.01 section 8.1.3 # 8 (convert from cB to dB => /10) */
-    fluid_clip(q_dB, 0.0f, 96.0f);
-
-    /* Short version: Modify the Q definition in a way, that a Q of 0
-     * dB leads to no resonance hump in the freq. response.
-     *
-     * Long version: From SF2.01, page 39, item 9 (initialFilterQ):
-     * "The gain at the cutoff frequency may be less than zero when
-     * zero is specified".  Assume q_dB=0 / q_lin=1: If we would leave
-     * q as it is, then this results in a 3 dB hump slightly below
-     * fc. At fc, the gain is exactly the DC gain (0 dB).  What is
-     * (probably) meant here is that the filter does not show a
-     * resonance hump for q_dB=0. In this case, the corresponding
-     * q_lin is 1/sqrt(2)=0.707.  The filter should have 3 dB of
-     * attenuation at fc now.  In this case Q_dB is the height of the
-     * resonance peak not over the DC gain, but over the frequency
-     * response of a non-resonant filter.  This idea is implemented as
-     * follows: */
-    q_dB -= 3.01f;
-    UPDATE_RVOICE_FILTER1(fluid_iir_filter_set_q_dB, q_dB);
-
+    UPDATE_RVOICE_FILTER1(fluid_iir_filter_set_q, x);
     break;
 
+  /* same as the two above, only for the custom filter */
+  case GEN_CUSTOM_FILTERFC:
+    UPDATE_RVOICE_CUSTOM_FILTER1(fluid_iir_filter_set_fres, x);
+    break;
+
+  case GEN_CUSTOM_FILTERQ:
+    UPDATE_RVOICE_CUSTOM_FILTER1(fluid_iir_filter_set_q, x);
+    break;
+    
   case GEN_MODLFOTOPITCH:
     fluid_clip(x, -12000.0, 12000.0);
     UPDATE_RVOICE_R1(fluid_rvoice_set_modlfo_to_pitch, x);
@@ -1647,20 +1636,21 @@ int fluid_voice_set_gain(fluid_voice_t* voice, fluid_real_t gain)
 int
 fluid_voice_optimize_sample(fluid_sample_t* s)
 {
-  signed short peak_max = 0;
-  signed short peak_min = 0;
-  signed short peak;
+  int32_t peak_max = 0;
+  int32_t peak_min = 0;
+  int32_t peak;
   fluid_real_t normalized_amplitude_during_loop;
   double result;
-  int i;
+  unsigned int i;
 
   /* ignore ROM and other(?) invalid samples */
   if (!s->valid) return (FLUID_OK);
 
   if (!s->amplitude_that_reaches_noise_floor_is_valid) { /* Only once */
     /* Scan the loop */
-    for (i = (int)s->loopstart; i < (int)s->loopend; i++){
-      signed short val = s->data[i];
+    for (i = s->loopstart; i < s->loopend; i++){
+      int32_t val = fluid_rvoice_get_sample(s->data, s->data24, i);
+
       if (val > peak_max) {
         peak_max = val;
       } else if (val < peak_min) {
@@ -1687,7 +1677,7 @@ fluid_voice_optimize_sample(fluid_sample_t* s)
      */
 
     /* 16 bits => 96+4=100 dB dynamic range => 0.00001 */
-    normalized_amplitude_during_loop = ((fluid_real_t)peak)/32768.;
+    normalized_amplitude_during_loop = ((fluid_real_t)peak)/ (INT24_MAX * 1.0f);
     result = FLUID_NOISE_FLOOR / normalized_amplitude_during_loop;
 
     /* Store in sample */
@@ -1764,3 +1754,10 @@ fluid_voice_get_overflow_prio(fluid_voice_t* voice,
     
   return this_voice_prio;
 }
+
+
+void fluid_voice_set_custom_filter(fluid_voice_t* voice, enum fluid_iir_filter_type type, enum fluid_iir_filter_flags flags)
+{
+    UPDATE_RVOICE_CUSTOM_FILTER_I2(fluid_iir_filter_init, type, flags);
+}
+

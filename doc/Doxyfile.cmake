@@ -82,7 +82,7 @@ WARN_LOGFILE =
 #---------------------------------------------------------------------------
 # configuration options related to the input files
 #---------------------------------------------------------------------------
-INPUT = @CMAKE_SOURCE_DIR@/doc/fluidsynth-v11-devdoc.txt @CMAKE_SOURCE_DIR@/include @CMAKE_SOURCE_DIR@/include/fluidsynth @CMAKE_SOURCE_DIR@/src
+INPUT = @CMAKE_SOURCE_DIR@/doc/fluidsynth-v11-devdoc.txt @CMAKE_SOURCE_DIR@/include @CMAKE_SOURCE_DIR@/include/fluidsynth @CMAKE_SOURCE_DIR@/src @CMAKE_BINARY_DIR@/include/fluidsynth
 INPUT_ENCODING = UTF-8
 FILE_PATTERNS = *.c *.h
 RECURSIVE = YES
