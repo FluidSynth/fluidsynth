@@ -5180,6 +5180,8 @@ int fluid_synth_set_custom_filter(fluid_synth_t* synth, int type, int flags)
     fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
     fluid_return_val_if_fail(type >= FLUID_IIR_DISABLED && type < FLUID_IIR_LAST, FLUID_FAILED);
     
+    fluid_synth_api_enter(synth);
+    
     synth->custom_filter_type = type;
     synth->custom_filter_flags = flags;
     
@@ -5190,7 +5192,7 @@ int fluid_synth_set_custom_filter(fluid_synth_t* synth, int type, int flags)
         fluid_voice_set_custom_filter(voice, type, flags);
     }
     
-    return FLUID_OK;
+    FLUID_API_RETURN(FLUID_OK);
 }
 
 /**
