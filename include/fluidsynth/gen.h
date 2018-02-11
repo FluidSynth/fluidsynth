@@ -100,6 +100,7 @@ enum fluid_gen_type {
    * modulator. */
   GEN_PITCH,			/**< Pitch @note Not a real SoundFont generator */
 
+  GEN_CUSTOM_BALANCE,          /**< Balance @note Not a real SoundFont generator */
   /* non-standard generator for an additional custom high- or low-pass filter */
   GEN_CUSTOM_FILTERFC,		/**< Custom filter cutoff frequency */
   GEN_CUSTOM_FILTERQ,		/**< Custom filter Q */

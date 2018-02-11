@@ -118,7 +118,9 @@ fluid_channel_init_ctrl(fluid_channel_t* chan, int is_all_ctrl_off)
         continue;
       }
       if (i == BANK_SELECT_MSB || i == BANK_SELECT_LSB || i == VOLUME_MSB || 
-          i == VOLUME_LSB || i == PAN_MSB || i == PAN_LSB) {
+          i == VOLUME_LSB || i == PAN_MSB || i == PAN_LSB ||
+          i == BALANCE_MSB || i == BALANCE_LSB
+          ) {
         continue;
       }
 
@@ -164,6 +166,10 @@ fluid_channel_init_ctrl(fluid_channel_t* chan, int is_all_ctrl_off)
     /* Pan (MSB & LSB) */
     fluid_channel_set_cc (chan, PAN_MSB, 64);
     fluid_channel_set_cc (chan, PAN_LSB, 0);
+
+    /* Balance (MSB & LSB) */
+    fluid_channel_set_cc (chan, BALANCE_MSB, 64);
+    fluid_channel_set_cc (chan, BALANCE_LSB, 0);
 
     /* Reverb */
     /* fluid_channel_set_cc (chan, EFFECTS_DEPTH1, 40); */

@@ -138,6 +138,7 @@ static fluid_mod_t default_expr_mod;           /* SF2.01 section 8.4.7  */
 static fluid_mod_t default_reverb_mod;         /* SF2.01 section 8.4.8  */
 static fluid_mod_t default_chorus_mod;         /* SF2.01 section 8.4.9  */
 static fluid_mod_t default_pitch_bend_mod;     /* SF2.01 section 8.4.10 */
+static fluid_mod_t custom_balance_mod;         /* Non-standard modulator */
 
 
 /* reverb presets */
@@ -405,6 +406,19 @@ fluid_synth_init(void)
 		       );
   fluid_mod_set_dest(&default_pitch_bend_mod, GEN_PITCH);                 /* Destination: Initial pitch */
   fluid_mod_set_amount(&default_pitch_bend_mod, 12700.0);                 /* Amount: 12700 cents */
+
+
+  /* Non-standard MIDI continuous controller 8 to channel stereo balance */
+  fluid_mod_set_source1(&custom_balance_mod, BALANCE_MSB, /* Index=8 */
+		       FLUID_MOD_CC                              /* CC=1 */
+		       | FLUID_MOD_CONCAVE                       /* type=1 */
+		       | FLUID_MOD_BIPOLAR                       /* P=1 */
+		       | FLUID_MOD_POSITIVE                      /* D=0 */
+		       );
+  fluid_mod_set_source2(&custom_balance_mod, 0, 0);
+  fluid_mod_set_dest(&custom_balance_mod, GEN_CUSTOM_BALANCE);                  /* Destination: stereo balance */
+  /* Amount: 96 dB of attenuation (on the opposite channel) */
+  fluid_mod_set_amount(&custom_balance_mod, 960.0);
 }
 
 static FLUID_INLINE unsigned int fluid_synth_get_ticks(fluid_synth_t* synth)
@@ -672,7 +686,7 @@ new_fluid_synth(fluid_settings_t *settings)
   fluid_synth_add_default_mod(synth, &default_reverb_mod, FLUID_SYNTH_ADD);
   fluid_synth_add_default_mod(synth, &default_chorus_mod, FLUID_SYNTH_ADD);
   fluid_synth_add_default_mod(synth, &default_pitch_bend_mod, FLUID_SYNTH_ADD);
-
+  fluid_synth_add_default_mod(synth, &custom_balance_mod, FLUID_SYNTH_ADD);
 
   /* Create and initialize the Fx unit.*/
   fluid_settings_getint(settings, "synth.ladspa.active", &with_ladspa);
