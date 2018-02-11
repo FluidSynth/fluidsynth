@@ -71,6 +71,7 @@ enum fluid_mod_src
 
 FLUIDSYNTH_API fluid_mod_t* new_fluid_mod(void);
 FLUIDSYNTH_API void delete_fluid_mod(fluid_mod_t * mod);
+FLUIDSYNTH_API size_t fluid_mod_sizeof(void);
 
 FLUIDSYNTH_API void fluid_mod_set_source1(fluid_mod_t* mod, int src, int flags); 
 FLUIDSYNTH_API void fluid_mod_set_source2(fluid_mod_t* mod, int src, int flags); 
