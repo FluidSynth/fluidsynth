@@ -55,10 +55,8 @@ Misc
 ----
 - Remove dependency of settings on audio driver and other (see
   fluid_settings_init())
-- Add "unselect" command to shell to set a MIDI channel to not sound.
 - When specifying -i -s (no console and TCP server) log to TCP clients
   with easier parsable messages ("warning:", "error:", etc)
-- add function to get initial soundfont generator value
 - Pause and resume the synthesizer/audio thread (run synthesizer as a daemon)
 - set loop on/off on a sample (set_gen GEN_SAMPLEMODE?)
 
@@ -68,7 +66,6 @@ FluidSynth Next Generation
 
 Top of the list
 - Use FIFOs to send events to the audio thread
-- Redo sfloader api using "interface" api
 - 3D audio output
 
 MIDI player
@@ -79,8 +76,6 @@ Shell & command handler
 - Add "note" command that plays a note with a duration (sequencer)
 - MIDI file player commands (load/play/stop)
 - Allow settings to be loaded before the synthesizer is created
-
-SoundFont Specs:
 
 MIDI Specs
 - Omni and poly modes

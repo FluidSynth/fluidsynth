@@ -46,6 +46,10 @@ typedef struct {
   int buffer_size;
   fluid_thread_t *thread;
   int cont;
+  
+  float *left;
+  float *right;
+  float *buf;
 } fluid_pulse_audio_driver_t;
 
 
@@ -90,6 +94,9 @@ new_fluid_pulse_audio_driver2(fluid_settings_t* settings,
   char *media_role = NULL;
   int realtime_prio = 0;
   int err;
+  float *left = NULL,
+        *right = NULL,
+        *buf = NULL;
 
   dev = FLUID_NEW(fluid_pulse_audio_driver_t);
   if (dev == NULL) {
@@ -156,6 +163,29 @@ new_fluid_pulse_audio_driver2(fluid_settings_t* settings,
 
   FLUID_LOG(FLUID_INFO, "Using PulseAudio driver");
 
+  if(func != NULL)
+  {
+    left = FLUID_ARRAY(float, period_size);
+    right = FLUID_ARRAY(float, period_size);
+
+    if (left == NULL || right == NULL)
+    {
+        FLUID_LOG(FLUID_ERR, "Out of memory.");
+        goto error_recovery;
+    }
+  }
+  
+  buf = FLUID_ARRAY(float, period_size * 2);
+  if(buf == NULL)
+  {
+      FLUID_LOG(FLUID_ERR, "Out of memory.");
+      goto error_recovery;
+  }
+  
+  dev->left = left;
+  dev->right = right;
+  dev->buf = buf;
+  
   /* Create the audio thread */
   dev->thread = new_fluid_thread ("pulse-audio", func ? fluid_pulse_audio_run2 : fluid_pulse_audio_run,
                                   dev, realtime_prio, FALSE);
@@ -187,6 +217,10 @@ void delete_fluid_pulse_audio_driver(fluid_audio_driver_t* p)
   if (dev->pa_handle)
     pa_simple_free(dev->pa_handle);
 
+  FLUID_FREE(dev->left);
+  FLUID_FREE(dev->right);
+  FLUID_FREE(dev->buf);
+  
   FLUID_FREE(dev);
 }
 
@@ -195,20 +229,11 @@ static fluid_thread_return_t
 fluid_pulse_audio_run(void* d)
 {
   fluid_pulse_audio_driver_t* dev = (fluid_pulse_audio_driver_t*) d;
-  float *buf;
+  float *buf = dev->buf;
   int buffer_size;
   int err;
 
   buffer_size = dev->buffer_size;
-
-  /* FIXME - Probably shouldn't alloc in run() */
-  buf = FLUID_ARRAY(float, buffer_size * 2);
-
-  if (buf == NULL)
-  {
-    FLUID_LOG(FLUID_ERR, "Out of memory.");
-    return FLUID_THREAD_RETURN_VALUE;
-  }
 
   while (dev->cont)
   {
@@ -222,8 +247,6 @@ fluid_pulse_audio_run(void* d)
     }
   }	/* while (dev->cont) */
 
-  FLUID_FREE(buf);
-
   return FLUID_THREAD_RETURN_VALUE;
 }
 
@@ -232,27 +255,15 @@ fluid_pulse_audio_run2(void* d)
 {
   fluid_pulse_audio_driver_t* dev = (fluid_pulse_audio_driver_t*) d;
   fluid_synth_t *synth = (fluid_synth_t *)(dev->data);
-  float *left, *right, *buf;
+  float *left = dev->left,
+        *right = dev->right,
+        *buf = dev->buf;
   float* handle[2];
   int buffer_size;
   int err;
   int i;
 
   buffer_size = dev->buffer_size;
-
-  /* FIXME - Probably shouldn't alloc in run() */
-  left = FLUID_ARRAY(float, buffer_size);
-  right = FLUID_ARRAY(float, buffer_size);
-  buf = FLUID_ARRAY(float, buffer_size * 2);
-
-  if (left == NULL || right == NULL || buf == NULL)
-  {
-    FLUID_FREE(left);
-    FLUID_FREE(right);
-    FLUID_FREE(buf);
-    FLUID_LOG(FLUID_ERR, "Out of memory.");
-    return FLUID_THREAD_RETURN_VALUE;
-  }
 
   handle[0] = left;
   handle[1] = right;
@@ -275,10 +286,6 @@ fluid_pulse_audio_run2(void* d)
       break;
     }
   }	/* while (dev->cont) */
-
-  FLUID_FREE(left);
-  FLUID_FREE(right);
-  FLUID_FREE(buf);
 
   return FLUID_THREAD_RETURN_VALUE;
 }
