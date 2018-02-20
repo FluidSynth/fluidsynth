@@ -224,7 +224,7 @@ unset ( MACOSX_FRAMEWORK CACHE )
 if ( CMAKE_SYSTEM MATCHES "Darwin" )
   set ( DARWIN 1 )
   set ( CMAKE_INSTALL_NAME_DIR
-        ${CMAKE_INSTALL_PREFIX}/${LIB_INSTALL_DIR}${LIB_SUFFIX} )
+        ${CMAKE_INSTALL_PREFIX}/${LIB_INSTALL_DIR} )
   if ( enable-coreaudio )
     check_include_file ( CoreAudio/AudioHardware.h COREAUDIO_FOUND )
     if ( COREAUDIO_FOUND )
@@ -462,12 +462,12 @@ add_subdirectory ( doc )
 # pkg-config support
 set ( prefix "${CMAKE_INSTALL_PREFIX}" )
 set ( exec_prefix "\${prefix}" )
-set ( libdir "\${exec_prefix}/${LIB_INSTALL_DIR}${LIB_SUFFIX}" )
+set ( libdir "\${exec_prefix}/${LIB_INSTALL_DIR}" )
 set ( includedir "\${prefix}/${INCLUDE_INSTALL_DIR}" )
 configure_file ( fluidsynth.pc.in
 	${CMAKE_BINARY_DIR}/fluidsynth.pc IMMEDIATE @ONLY )
 install ( FILES ${CMAKE_BINARY_DIR}/fluidsynth.pc
-	DESTINATION ${LIB_INSTALL_DIR}${LIB_SUFFIX}/pkgconfig )
+	DESTINATION ${LIB_INSTALL_DIR}/pkgconfig )
 
 # Extra targets for Unix build environments
 if ( UNIX )
