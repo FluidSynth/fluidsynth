@@ -474,6 +474,15 @@ if ( UNIX )
     configure_file ( fluidsynth.spec.in
         ${CMAKE_BINARY_DIR}/fluidsynth.spec IMMEDIATE @ONLY )
 
+    if ( DEFINED FLUID_DAEMON_ENV_FILE)
+        configure_file ( fluidsynth.service.in
+        ${CMAKE_BINARY_DIR}/fluidsynth.service @ONLY )
+
+        configure_file ( fluidsynth.conf.in
+        ${CMAKE_BINARY_DIR}/fluidsynth.conf @ONLY )
+
+    endif ( DEFINED FLUID_DAEMON_ENV_FILE )
+
     # uninstall custom target
     configure_file ( "${CMAKE_SOURCE_DIR}/cmake_admin/cmake_uninstall.cmake.in"
       "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake" IMMEDIATE @ONLY)
