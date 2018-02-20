@@ -24,9 +24,7 @@
 
 #include <glib.h>
 
-#if HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #if defined(__POWERPC__) && !(defined(__APPLE__) && defined(__MACH__))
 #include "config_maxmsp43.h"
