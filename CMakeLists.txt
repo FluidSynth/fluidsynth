@@ -451,6 +451,8 @@ endif ( enable-readline )
 # General configuration file
 configure_file ( ${CMAKE_SOURCE_DIR}/src/config.cmake
                  ${CMAKE_BINARY_DIR}/config.h )
+configure_file ( ${CMAKE_SOURCE_DIR}/include/fluidsynth.cmake
+                 ${CMAKE_BINARY_DIR}/include/fluidsynth.h )
 add_definitions ( -DHAVE_CONFIG_H )
 
 # Process subdirectories

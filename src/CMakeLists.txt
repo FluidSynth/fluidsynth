@@ -201,7 +201,7 @@ set ( public_HEADERS
 )
 
 set ( public_main_HEADER
-    ${CMAKE_SOURCE_DIR}/include/fluidsynth.h
+    ${CMAKE_BINARY_DIR}/include/fluidsynth.h
 )
 
 if ( WIN32 AND NOT MINGW )
