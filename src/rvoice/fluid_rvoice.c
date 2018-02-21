@@ -327,7 +327,7 @@ fluid_rvoice_write (fluid_rvoice_t* voice, fluid_real_t *dsp_buf)
 
   /******************* portamento ****************/
   /* pitchoffset is updated if enabled.
-     Pitchoffset will be added to dsp pitch at phase calculation time */
+     Pitchoffset will be added to dsp pitch at next phase calculation time */
   voice->dsp.pitchoffset += voice->dsp.pitchinc;
   /* when pitchoffset reaches 0.0f, portamento is disabled */
   if ((voice->dsp.pitchinc > 0.0f && voice->dsp.pitchoffset > 0.0f) ||
@@ -554,7 +554,7 @@ fluid_rvoice_noteoff(fluid_rvoice_t* voice, unsigned int min_ticks)
  * 
  * @param voice the synthesis voice to be updated
 */
-static void fluid_rvoice_local_retrigger_attack (fluid_rvoice_t* voice)
+static FLUID_INLINE void fluid_rvoice_local_retrigger_attack (fluid_rvoice_t* voice)
 {
 	/* skips to Attack section */
 	/* Once in Attack section, current count must be reset, to be sure
@@ -617,7 +617,7 @@ fluid_rvoice_multi_retrigger_attack (fluid_rvoice_t* voice)
 	 correct val value. However soundfont 2.01/2.4 spec. says that Attack should
 	 be convex (see issue #153  from Christian Collins). In the case Attack
 	 section would be changed to a non linear shape it will be necessary to do
-	 a correction for seamless val transition. Here is the place */
+	 a correction for seamless val transition. Here is the place to do this */
 }
 
 /**
@@ -627,8 +627,8 @@ fluid_rvoice_multi_retrigger_attack (fluid_rvoice_t* voice)
  * @param pitchoffset pitch offset to apply to voice dsp.pitch.
  *
  * Notes:
- * 1) To get continuous portamento between consecutive noteOn (n1,n2,n3...),
- *   pitchoffet is accumulated in current dsp pitchoffset.
+ * 1) To get continuous portamento between consecutives noteOn (n1,n2,n3...),
+ *   pitchoffset is accumulated in current dsp pitchoffset.
  * 2) And to get constant portamento duration, dsp pitch increment is updated.
 */  
 void fluid_rvoice_set_portamento(fluid_rvoice_t * voice, unsigned int countinc,
@@ -637,7 +637,7 @@ void fluid_rvoice_set_portamento(fluid_rvoice_t * voice, unsigned int countinc,
 	if (countinc)
 	{
 		voice->dsp.pitchoffset += pitchoffset;
-		voice->dsp.pitchinc = - voice->dsp.pitchoffset/ countinc; 
+		voice->dsp.pitchinc = - voice->dsp.pitchoffset / countinc; 
 	}
 	/* Then during the voice processing (in fluid_rvoice_write()),
 	dsp.pitchoffset will be incremented by dsp pitchinc. */

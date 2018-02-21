@@ -207,7 +207,7 @@ static const fluid_cmd_t fluid_commands[] = {
   { "resetbasicchannels", "polymono", fluid_handle_resetbasicchannels,
     "resetbasicchannels [chan1 chan2..]    Resets all or some basic channels"},
   { "setbasicchannels", "polymono", fluid_handle_setbasicchannels,
-    "setbasicchannels [chan mode val...]   Sets default, changes, adds basic channels"},
+    "setbasicchannels [chan mode val...]   Sets default, adds basic channels"},
   { "channelsmode", "polymono", fluid_handle_channelsmode,
     "channelsmode [chan1 chan2..]          Prints channels mode"},
   { "legatomode", "polymono", fluid_handle_legatomode,
@@ -1979,7 +1979,7 @@ int fluid_handle_basicchannels (void* data, int ac, char** av,
 }
 
 /*
-  Searchs a mode name and returns the channel mode num.
+  Searchs a mode name and returns the channel mode number.
   name must be: poly_omnion,  mono_omnion, poly_omnioff, mono_omnioff.
   @param name to search.
   @return channel mode number (0 to 3) if name is valid, -1 otherwise.
@@ -2007,11 +2007,11 @@ static const char *invalid_arg_msg ="invalid argument\n";
  All arguments can be numeric. mode parameter can be a name.
  Each group entry must have 3 parameters (chan,mode,val).
 
- @param ac argument count
- @param av argument table
- @param out output stream
+ @param ac argument count.
+ @param av argument table.
+ @param out output stream.
  @param name_cde command name prefix.
- @return 0 if arguments are valid, -1 otherwise
+ @return 0 if arguments are valid, -1 otherwise.
 */
 static int check_basicchannels_arguments(int ac, char** av, 
                                   fluid_ostream_t out, char const * name_cde)
@@ -2042,11 +2042,11 @@ static int check_basicchannels_arguments(int ac, char** av,
  checks channels arguments: chan1  chan2   ...
  all arguments must be numeric.
 
- @param ac argument count
- @param av argument table
- @param out output stream
+ @param ac argument count.
+ @param av argument table.
+ @param out output stream.
  @param name_cde command name prefix.
- @return 0 if arguments are valid, -1 otherwise
+ @return 0 if arguments are valid, -1 otherwise.
 */
 static int check_channels_arguments(int ac, char** av, 
                                     fluid_ostream_t out, char const * name_cde)
@@ -2377,13 +2377,13 @@ int fluid_handle_legatomode(void* data, int ac, char** av,
 
  all arguments must be numeric.
 
- @param ac argument count
- @param av argument table
+ @param ac argument count.
+ @param av argument table.
  @param nbr_arg_group number of arguments by group expected.
  @param out output stream.
  @param name_cde command name prefix.
  @param nbr_arg_group_msg message when the number of argument by group is invalid.
- @return 0 if arguments are valid, -1 otherwise
+ @return 0 if arguments are valid, -1 otherwise.
 */
 static int check_channels_group_arguments(int ac, char** av, int nbr_arg_group,
                                 fluid_ostream_t out, 
@@ -2647,10 +2647,10 @@ int fluid_handle_breathmode(void* data, int ac, char** av,
 
   Example:  setbreathmode  4 0 1 1
   
-  Parameter 1 is the channel number (i.e 4)
-  Parameter 2 is the " Breath modulator " enable/disable  for poly mode (i.e disabled)
-  Parameter 3 is the " Breath modulator " enabe/disable for mono mode (i.e enabled)
-  Parameter 4 is "breath sync noteOn/Off" enable/disable for mono mode only (i.e enabled)
+  Parameter 1 is the channel number (i.e 4).
+  Parameter 2 is the " Breath modulator " enable/disable  for poly mode (i.e disabled).
+  Parameter 3 is the " Breath modulator " enabe/disable for mono mode (i.e enabled).
+  Parameter 4 is "breath sync noteOn/Off" enable/disable for mono mode only (i.e enabled).
 
 */
 int fluid_handle_setbreathmode(void* data, int ac, char** av, 

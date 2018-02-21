@@ -5570,9 +5570,9 @@ static void fluid_synth_handle_important_channels(void *data, const char *name,
 /**
  * Sets the legato mode of a channel.
  * 
- * @param synth the synth instance
- * @param chan MIDI channel number (0 to MIDI channel count - 1)
- * @param legatomode The legato mode as indicated by #fluid_channel_legato_mode
+ * @param synth the synth instance.
+ * @param chan MIDI channel number (0 to MIDI channel count - 1).
+ * @param legatomode The legato mode as indicated by #fluid_channel_legato_mode.
  *
  * @return
  * - #FLUID_OK on success.
@@ -5596,9 +5596,9 @@ int fluid_synth_set_legato_mode(fluid_synth_t* synth, int chan, int legatomode)
 /**
  * Gets the legato mode of a channel.
  *
- * @param synth the synth instance
- * @param chan MIDI channel number (0 to MIDI channel count - 1)
- * @param legatomode The legato mode as indicated by #fluid_channel_legato_mode
+ * @param synth the synth instance.
+ * @param chan MIDI channel number (0 to MIDI channel count - 1).
+ * @param legatomode The legato mode as indicated by #fluid_channel_legato_mode.
  *
  * @return
  * - #FLUID_OK on success.
@@ -5623,9 +5623,9 @@ int fluid_synth_get_legato_mode(fluid_synth_t* synth, int chan, int *legatomode)
 /**
  * Sets the portamento mode of a channel.
  *
- * @param synth the synth instance
- * @param chan MIDI channel number (0 to MIDI channel count - 1)
- * @param portamentomode The portamento mode as indicated by #fluid_channel_portamento_mode
+ * @param synth the synth instance.
+ * @param chan MIDI channel number (0 to MIDI channel count - 1).
+ * @param portamentomode The portamento mode as indicated by #fluid_channel_portamento_mode.
  * @return
  * - #FLUID_OK on success.
  * - #FLUID_FAILED 
@@ -5649,9 +5649,9 @@ int fluid_synth_set_portamento_mode(fluid_synth_t* synth, int chan,
 /**
  * Gets the portamento mode of a channel.
  *
- * @param synth the synth instance
- * @param chan MIDI channel number (0 to MIDI channel count - 1)
- * @param portamentomode Pointer to the portamento mode as indicated by #fluid_channel_portamento_mode
+ * @param synth the synth instance.
+ * @param chan MIDI channel number (0 to MIDI channel count - 1).
+ * @param portamentomode Pointer to the portamento mode as indicated by #fluid_channel_portamento_mode.
  * @return
  * - #FLUID_OK on success.
  * - #FLUID_FAILED 
@@ -5676,9 +5676,9 @@ int fluid_synth_get_portamento_mode(fluid_synth_t* synth, int chan,
 /**
  * Sets the breath mode of a channel.
  *
- * @param synth the synth instance
- * @param chan MIDI channel number (0 to MIDI channel count - 1)
- * @param breathmode The breath mode as indicated by #fluid_channel_breath_flags
+ * @param synth the synth instance.
+ * @param chan MIDI channel number (0 to MIDI channel count - 1).
+ * @param breathmode The breath mode as indicated by #fluid_channel_breath_flags.
  *
  * @return
  * - #FLUID_OK on success.
@@ -5699,9 +5699,9 @@ int fluid_synth_set_breath_mode(fluid_synth_t* synth, int chan, int breathmode)
 /**
  * Gets the breath mode of a channel.
  *
- * @param synth the synth instance
- * @param chan MIDI channel number (0 to MIDI channel count - 1)
- * @param breathmode Pointer to the returned breath mode as indicated by #fluid_channel_breath_flags
+ * @param synth the synth instance.
+ * @param chan MIDI channel number (0 to MIDI channel count - 1).
+ * @param breathmode Pointer to the returned breath mode as indicated by #fluid_channel_breath_flags.
  *
  * @return
  * - #FLUID_OK on success.
@@ -5809,7 +5809,7 @@ fluid_synth_check_next_basic_channel(fluid_synth_t* synth, int basicchan, int mo
 	/* adjusts val range */
 	if (mode == FLUID_CHANNEL_MODE_OMNIOFF_POLY)
 	{
-		real_val = 1; /* mode poly ominioff implies a group of only one channel.*/
+		real_val = 1; /* mode poly omnioff implies a group of only one channel.*/
 	}
 	else if (val == 0)
 	{  
@@ -5855,10 +5855,11 @@ fluid_synth_check_next_basic_channel(fluid_synth_t* synth, int basicchan, int mo
  * @param chan the basic Channel number (0 to MIDI channel count-1).
  * @param mode the MIDI mode to use for chan (see #fluid_basic_channel_modes).
  * @param val number of channels in the group.
- * @note \a val is only relevant for mode #FLUID_CHANNEL_MODE_OMNION_POLY, #FLUID_CHANNEL_MODE_OMNION_MONO
- * and #FLUID_CHANNEL_MODE_OMNIOFF_MONO, i.e. it is ignored for #FLUID_CHANNEL_MODE_OMNIOFF_POLY as this 
- * mode implies a group of only one channel. A value of 0 means all possible channels from \a chan to 
- * to next basic channel minus 1 (if any) or to MIDI channel count minus 1.
+ * @note \a val is only relevant for mode #FLUID_CHANNEL_MODE_OMNION_POLY, 
+ * #FLUID_CHANNEL_MODE_OMNION_MONO and #FLUID_CHANNEL_MODE_OMNIOFF_MONO. A value
+ * of 0 means all possible channels from \a chan to to next basic channel minus 1 (if any)
+ * or to MIDI channel count minus 1. Val is ignored for #FLUID_CHANNEL_MODE_OMNIOFF_POLY
+ * as this mode implies a group of only one channel. 
  * @return 
  * - #FLUID_OK on success.
  * - #FLUID_FAILED
@@ -5936,11 +5937,11 @@ fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth, int basicchan, int mod
 }
 
 /**
- * Searchs a previous basic channel.
+ * Searchs a previous basic channel starting from chan.
  * 
  * @param synth the synth instance.
  * @param chan starting index of the search (including chan).
- * @return index of the basic channel if found , FLUID_FAILED otherwise 
+ * @return index of the basic channel if found , FLUID_FAILED otherwise.
  */
 static int fluid_synth_get_previous_basic_channel(fluid_synth_t* synth, int chan)
 {
@@ -5991,6 +5992,7 @@ int fluid_synth_get_basic_channel(fluid_synth_t* synth, int chan,
         val = synth->channel[basic_chan]->mode_val;
 	}
 	
+	/* returns the informations if they are requested */
 	if (basic_chan_out)
 	{
 		* basic_chan_out = basic_chan;
