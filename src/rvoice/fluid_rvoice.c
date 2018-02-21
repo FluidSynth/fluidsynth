@@ -627,7 +627,7 @@ fluid_rvoice_multi_retrigger_attack (fluid_rvoice_t* voice)
  * @param pitchoffset pitch offset to apply to voice dsp.pitch.
  *
  * Notes:
- * 1) To get continuous portamento between consecutives noteOn (n1,n2,n3...),
+ * 1) To get continuous portamento between consecutive noteOn (n1,n2,n3...),
  *   pitchoffset is accumulated in current dsp pitchoffset.
  * 2) And to get constant portamento duration, dsp pitch increment is updated.
 */  

@@ -78,12 +78,14 @@ void fluid_shell_settings(fluid_settings_t* settings)
 /** the table of all handled commands */
 
 static const fluid_cmd_t fluid_commands[] = {
+    /* general commands */
   { "help", "general", fluid_handle_help,
     "help                       Shows help topics ('help TOPIC' for more info)" },
   { "quit", "general", fluid_handle_quit,
     "quit                       Quit the synthesizer" },
   { "source", "general", fluid_handle_source,
     "source filename            Loads a file and parse every line as a command" },
+    /* event commands */
   { "noteon", "event", fluid_handle_noteon,
     "noteon chan key vel        Sends noteon" },
   { "noteoff", "event", fluid_handle_noteoff,
@@ -114,6 +116,28 @@ static const fluid_cmd_t fluid_commands[] = {
     "interp num                 Choose interpolation method for all channels" },
   { "interpc", "general", fluid_handle_interpc,
     "interpc chan num           Choose interpolation method for one channel" },
+    /* polymono commands */
+  { "basicchannels", "polymono", fluid_handle_basicchannels,
+    "basicchannels                         Prints the list of basic channels"},
+  { "resetbasicchannels", "polymono", fluid_handle_resetbasicchannels,
+    "resetbasicchannels [chan1 chan2..]    Resets all or some basic channels"},
+  { "setbasicchannels", "polymono", fluid_handle_setbasicchannels,
+    "setbasicchannels [chan mode val...]   Sets default, adds basic channels"},
+  { "channelsmode", "polymono", fluid_handle_channelsmode,
+    "channelsmode [chan1 chan2..]          Prints channels mode"},
+  { "legatomode", "polymono", fluid_handle_legatomode,
+    "legatomode [chan1 chan2..]            Prints channels legato mode"},
+  { "setlegatomode", "polymono", fluid_handle_setlegatomode,
+    "setlegatomode chan mode [chan mode..] Sets legato mode"},
+  { "portamentomode", "polymono", fluid_handle_portamentomode,
+    "portamentomode [chan1 chan2..]        Prints channels portamento mode"},
+  { "setportamentomode", "polymono", fluid_handle_setportamentomode,
+    "setportamentomode chan mode [chan mode..] Sets portamento mode"},
+  { "breathmode", "polymono", fluid_handle_breathmode,
+    "breathmode [chan1 chan2..]            Prints channels breath mode"},
+  { "setbreathmode", "polymono", fluid_handle_setbreathmode,
+    "setbreathmode chan poly(1/0) mono(1/0) breath_sync(1/0) [..] Sets breath mode"},
+    /* reverb commands */
   { "rev_preset", "reverb", fluid_handle_reverbpreset,
     "rev_preset num             Load preset num into the reverb unit" },
   { "rev_setroomsize", "reverb", fluid_handle_reverbsetroomsize,
@@ -126,6 +150,7 @@ static const fluid_cmd_t fluid_commands[] = {
     "rev_setlevel num           Change reverb level" },
   { "reverb", "reverb", fluid_handle_reverb,
     "reverb [0|1|on|off]        Turn the reverb on or off" },
+    /* chorus commands */
   { "cho_set_nr", "chorus", fluid_handle_chorusnr,
     "cho_set_nr n               Use n delay lines (default 3)" },
   { "cho_set_level", "chorus", fluid_handle_choruslevel,
@@ -140,6 +165,7 @@ static const fluid_cmd_t fluid_commands[] = {
     "gain value                 Set the master gain (0 < gain < 5)" },
   { "voice_count", "general", fluid_handle_voice_count,
     "voice_count                Get number of active synthesis voices" },
+    /* tuning commands */
   { "tuning", "tuning", fluid_handle_tuning,
     "tuning name bank prog      Create a tuning with name, bank number, \n"
     "                           and program number (0 <= bank,prog <= 127)" },
@@ -155,6 +181,7 @@ static const fluid_cmd_t fluid_commands[] = {
     "dumptuning bank prog       Print the pitch details of the tuning" },
   { "reset", "general", fluid_handle_reset,
     "reset                      System reset (all notes off, reset controllers)" },
+    /* settings commands */
   { "set", "settings", fluid_handle_set,
     "set name value             Set the value of a controller or settings" },
   { "get", "settings", fluid_handle_get,
@@ -187,6 +214,7 @@ static const fluid_cmd_t fluid_commands[] = {
   { "ladspa_reset", "ladspa", fluid_handle_ladspa_reset,
     "ladspa_reset               Stop and reset LADSPA effects"},
 #endif
+    /* router commands */
   { "router_clear", "router", fluid_handle_router_clear,
     "router_clear               Clears all routing rules from the midi router"},
   { "router_default", "router", fluid_handle_router_default,
@@ -200,28 +228,7 @@ static const fluid_cmd_t fluid_commands[] = {
   { "router_par2", "router", fluid_handle_router_par2,
     "router_par2 min max mul add      filters and maps parameter 2 (vel/cc val)"},
   { "router_end", "router", fluid_handle_router_end,
-    "router_end                 closes and commits the current routing rule"},
-  /* Poly Mono mode commands */
-  { "basicchannels", "polymono", fluid_handle_basicchannels,
-    "basicchannels                         Prints the list of basic channels"},
-  { "resetbasicchannels", "polymono", fluid_handle_resetbasicchannels,
-    "resetbasicchannels [chan1 chan2..]    Resets all or some basic channels"},
-  { "setbasicchannels", "polymono", fluid_handle_setbasicchannels,
-    "setbasicchannels [chan mode val...]   Sets default, adds basic channels"},
-  { "channelsmode", "polymono", fluid_handle_channelsmode,
-    "channelsmode [chan1 chan2..]          Prints channels mode"},
-  { "legatomode", "polymono", fluid_handle_legatomode,
-    "legatomode [chan1 chan2..]            Prints channels legato mode"},
-  { "setlegatomode", "polymono", fluid_handle_setlegatomode,
-    "setlegatomode chan mode [chan mode..] Sets legato mode"},
-  { "portamentomode", "polymono", fluid_handle_portamentomode,
-    "portamentomode [chan1 chan2..]        Prints channels portamento mode"},
-  { "setportamentomode", "polymono", fluid_handle_setportamentomode,
-    "setportamentomode chan mode [chan mode..] Sets portamento mode"},
-  { "breathmode", "polymono", fluid_handle_breathmode,
-    "breathmode [chan1 chan2..]            Prints channels breath mode"},
-  { "setbreathmode", "polymono", fluid_handle_setbreathmode,
-    "setbreathmode chan poly(1/0) mono(1/0) breath_sync(1/0) [..] Sets breath mode"}
+    "router_end                 closes and commits the current routing rule"}
 };
 
 /**
