@@ -6,6 +6,7 @@ env:
     - CMAKE_FLAGS="-Denable-floats=1 -Denable-profiling=1"
     - CMAKE_FLAGS="-Denable-trap-on-fpe=1"
     - CMAKE_FLAGS="-Denable-fpe-check=1"
+    - CMAKE_FLAGS="-DBUILD_SHARED_LIBS=0"
 matrix:
   include:
     - os: linux
