@@ -197,3 +197,4 @@ before_script:
 script:
     - cmake ${CMAKE_FLAGS} "-Denable-portaudio=1" "-Denable-ladspa=1" "-DCMAKE_BUILD_TYPE=RelWithDebInfo" ..
     - make -j4
+    - make install
