@@ -22,7 +22,8 @@ Feel free to use it, modify it or remove inapplicable/unneeded parts.
 
 ### Steps to reproduce
 <!--  Please explain the steps required to duplicate the issue,
-      esp. if you are able to provide a sample application. -->
+      esp. if you are able to provide a sample application.
+      E.g. how to start fluidsynth, what shell commands to enter, what midi events to send, etc. -->
 
 ### Other information
 <!-- If you are able to illustrate the bug or feature request with an example, please provide simple
@@ -35,5 +36,5 @@ source code below or as attatched file. List any other information that is relev
   etc. 
 -->
 ```
-insert code snippets or anything relevant here, or attach it as extra file(s) if it's too much
+insert code snippets, soundfonts or anything relevant here, or attach it as extra file(s) if it's too much
 ```
