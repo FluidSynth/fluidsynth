@@ -7,7 +7,7 @@ Please do not submit support requests or "How to" questions here. Instead, use F
 mailing list: https://lists.nongnu.org/mailman/listinfo/fluid-dev
 
 Below is a form that shall help getting relevant information for bugs and feature requests together.
-Feel free to use it, modify it or remove inapplicable/unneeded parts.
+We strongly recommend to use it! Feel free to edit or remove inapplicable/unneeded parts.
 -->
 
 ### FluidSynth version <!-- enter FluidSynths version you're using -->
