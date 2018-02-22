@@ -204,8 +204,8 @@ set ( public_main_HEADER
     ${CMAKE_BINARY_DIR}/include/fluidsynth.h
 )
 
-configure_file ( ${CMAKE_SOURCE_DIR}/include/version.h.in 
-                 ${CMAKE_BINARY_DIR}/include/version.h )
+configure_file ( ${CMAKE_SOURCE_DIR}/include/fluidsynth/version.h.in 
+                 ${CMAKE_BINARY_DIR}/include/fluidsynth/version.h )
 configure_file ( ${CMAKE_SOURCE_DIR}/include/fluidsynth.cmake
                  ${public_main_HEADER} )
 
@@ -365,6 +365,6 @@ else ( MACOSX_FRAMEWORK )
     ARCHIVE DESTINATION ${LIB_INSTALL_DIR}
     PUBLIC_HEADER DESTINATION ${INCLUDE_INSTALL_DIR}/fluidsynth 
 )
-   install ( FILES fluidsynth.h DESTINATION ${INCLUDE_INSTALL_DIR} )
+   install ( FILES ${public_main_HEADER} DESTINATION ${INCLUDE_INSTALL_DIR} )
 endif ( MACOSX_FRAMEWORK )
 
