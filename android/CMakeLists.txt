@@ -18,6 +18,7 @@ set (fluidsynth_sources
         ${src_DIR}/rvoice/fluid_rvoice_mixer.c
         ${src_DIR}/sfloader/fluid_defsfont.c
         ${src_DIR}/sfloader/fluid_ramsfont.c
+	${src_DIR}/sfloader/fluid_sfont.c
         ${src_DIR}/synth/fluid_chan.c
         ${src_DIR}/synth/fluid_event.c
         ${src_DIR}/synth/fluid_gen.c
