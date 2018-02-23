@@ -22,8 +22,6 @@
 #include "fluid_sys.h"
 #include "fluid_synth.h"
 
-/* thenumber of samples before the start and after the end */
-#define SAMPLE_LOOP_MARGIN 8
 
 /* Prototypes */
 static int fluid_ramsfont_sfont_delete(fluid_sfont_t* sfont);
@@ -34,7 +32,6 @@ static fluid_preset_t *fluid_ramsfont_sfont_get_preset(fluid_sfont_t* sfont,
 static void fluid_ramsfont_sfont_iteration_start(fluid_sfont_t* sfont);
 static int fluid_ramsfont_sfont_iteration_next(fluid_sfont_t* sfont,
                                                fluid_preset_t* preset);
-static int fluid_rampreset_preset_delete(fluid_preset_t* preset);
 static const char *fluid_rampreset_preset_get_name(fluid_preset_t* preset);
 static int fluid_rampreset_preset_get_banknum(fluid_preset_t* preset);
 static int fluid_rampreset_preset_get_num(fluid_preset_t* preset);
@@ -94,21 +91,19 @@ fluid_ramsfont_create_sfont()
   if (ramsfont == NULL) {
     return NULL;
   }
-
-  sfont = FLUID_NEW(fluid_sfont_t);
-  if (sfont == NULL) {
-    FLUID_LOG(FLUID_ERR, "Out of memory");
-    delete_fluid_ramsfont(ramsfont);
+  
+  sfont = new_fluid_sfont(fluid_ramsfont_sfont_get_name,
+                          fluid_ramsfont_sfont_get_preset,
+                          fluid_ramsfont_sfont_delete);
+  if (sfont == NULL)
+  {
     return NULL;
   }
-
-  sfont->data = ramsfont;
-  sfont->free = fluid_ramsfont_sfont_delete;
-  sfont->get_name = fluid_ramsfont_sfont_get_name;
-  sfont->get_preset = fluid_ramsfont_sfont_get_preset;
-  sfont->iteration_start = fluid_ramsfont_sfont_iteration_start;
-  sfont->iteration_next = fluid_ramsfont_sfont_iteration_next;
-
+  
+  fluid_sfont_set_iteration_start(sfont, fluid_ramsfont_sfont_iteration_start);
+  fluid_sfont_set_iteration_next(sfont, fluid_ramsfont_sfont_iteration_next);
+  fluid_sfont_set_data(sfont, ramsfont);
+  
   return sfont;
 }
 
@@ -118,7 +113,7 @@ fluid_ramsfont_sfont_delete(fluid_sfont_t* sfont)
 {
   if (delete_fluid_ramsfont(sfont->data) != 0)
     return -1;
-  FLUID_FREE(sfont);
+  delete_fluid_sfont(sfont);
   return 0;
 }
 
@@ -142,20 +137,16 @@ fluid_ramsfont_sfont_get_preset(fluid_sfont_t* sfont, unsigned int bank, unsigne
     return NULL;
   }
 
-  preset = FLUID_NEW(fluid_preset_t);
+  preset = new_fluid_preset(sfont,
+                            fluid_rampreset_preset_get_name,
+                            fluid_rampreset_preset_get_banknum,
+                            fluid_rampreset_preset_get_num,
+                            fluid_rampreset_preset_noteon,
+                            delete_fluid_preset); /* TODO: free modulators */
   if (preset == NULL) {
-    FLUID_LOG(FLUID_ERR, "Out of memory");
     return NULL;
   }
-
-  preset->sfont = sfont;
-  preset->data = rampreset;
-  preset->free = fluid_rampreset_preset_delete;
-  preset->get_name = fluid_rampreset_preset_get_name;
-  preset->get_banknum = fluid_rampreset_preset_get_banknum;
-  preset->get_num = fluid_rampreset_preset_get_num;
-  preset->noteon = fluid_rampreset_preset_noteon;
-  preset->notify = NULL;
+  fluid_preset_set_data(preset, rampreset);
 
   return preset;
 }
@@ -171,7 +162,7 @@ fluid_ramsfont_sfont_iteration_start(fluid_sfont_t* sfont)
 static int
 fluid_ramsfont_sfont_iteration_next(fluid_sfont_t* sfont, fluid_preset_t* preset)
 {
-  preset->free = fluid_rampreset_preset_delete;
+  preset->free = delete_fluid_preset;
   preset->get_name = fluid_rampreset_preset_get_name;
   preset->get_banknum = fluid_rampreset_preset_get_banknum;
   preset->get_num = fluid_rampreset_preset_get_num;
@@ -179,17 +170,6 @@ fluid_ramsfont_sfont_iteration_next(fluid_sfont_t* sfont, fluid_preset_t* preset
   preset->notify = NULL;
 
   return fluid_ramsfont_iteration_next((fluid_ramsfont_t*) sfont->data, preset);
-}
-
-/* RAM SoundFont loader delete preset method */
-static int
-fluid_rampreset_preset_delete(fluid_preset_t* preset)
-{
-  FLUID_FREE(preset);
-
-/* TODO: free modulators */
-
-  return 0;
 }
 
 /* RAM SoundFont loader get preset name method */
@@ -264,7 +244,7 @@ delete_fluid_ramsfont (fluid_ramsfont_t* sfont)
   for (list = sfont->sample; list; list = fluid_list_next(list)) {
   	/* in ram soundfonts, the samples hold their data : so we should free it ourselves */
   	fluid_sample_t* sam = (fluid_sample_t*)fluid_list_get(list);
-    delete_fluid_ramsample(sam);
+    delete_fluid_sample(sam);
   }
 
   if (sfont->sample) {
@@ -1095,129 +1075,4 @@ fluid_rampreset_noteon (fluid_rampreset_t* preset, fluid_synth_t* synth, int cha
   }
 
   return FLUID_OK;
-}
-
-
-
-/***************************************************************
- *
- *                           SAMPLE
- */
-
-
-/**
- * Set the name of a RAM SoundFont sample.
- * @param sample RAM SoundFont sample
- * @param name Name to assign to sample (20 chars in length, 0 terminated)
- * @return #FLUID_OK
- */
-int
-fluid_sample_set_name(fluid_sample_t* sample, const char *name)
-{
-  FLUID_MEMCPY(sample->name, name, 20);
-  return FLUID_OK;
-}
-
-/**
- * Assign sample data to a RAM SoundFont sample.
- * @param sample RAM SoundFont sample
- * @param data Buffer containing 16 bit audio sample data
- * @param nbframes Number of samples in \a data
- * @param copy_data TRUE to copy the data, FALSE to use it directly
- * @param rootkey Root MIDI note of sample (0-127)
- * @return #FLUID_OK on success, #FLUID_FAILED otherwise
- *
- * WARNING: If \a copy_data is FALSE, data should have 8 unused frames at start
- * and 8 unused frames at the end.
- */
-int
-fluid_sample_set_sound_data (fluid_sample_t* sample, short *data,
-                             unsigned int nbframes, short copy_data, int rootkey)
-{
-	/* 16 bit mono 44.1KHz data in */
-	/* in all cases, the sample has ownership of the data : it will release it in the end */
-	unsigned int storedNbFrames;
-
-	/* in case we already have some data */
-  if (sample->data != NULL) {
-  	FLUID_FREE(sample->data);
-  }
-
-	if (copy_data) {
-
-		/* nbframes should be >= 48 (SoundFont specs) */
-		storedNbFrames = nbframes;
-		if (storedNbFrames < 48) storedNbFrames = 48;
-
-	  sample->data = FLUID_MALLOC(storedNbFrames*2 + 4*SAMPLE_LOOP_MARGIN);
-	  if (sample->data == NULL) {
-	    FLUID_LOG(FLUID_ERR, "Out of memory");
-	    return FLUID_FAILED;
-	  }
-	  FLUID_MEMSET(sample->data, 0, storedNbFrames*2 + 4*SAMPLE_LOOP_MARGIN);
-	  FLUID_MEMCPY((char*)(sample->data) + 2*SAMPLE_LOOP_MARGIN, data, nbframes*2);
-
-#if 0
-	  /* this would do the fill of the margins */
-	  FLUID_MEMCPY((char*)(sample->data) + 2*SAMPLE_LOOP_MARGIN + storedNbFrames*2, (char*)data, 2*SAMPLE_LOOP_MARGIN);
-	  FLUID_MEMCPY((char*)(sample->data), (char*)data + nbframes*2 - 2*SAMPLE_LOOP_MARGIN, 2*SAMPLE_LOOP_MARGIN);
-#endif
-
-	  /* pointers */
-	  /* all from the start of data */
-	  sample->start = SAMPLE_LOOP_MARGIN;
-	  sample->end = SAMPLE_LOOP_MARGIN + storedNbFrames;
-  } else {
-  	/* we cannot assure the SAMPLE_LOOP_MARGIN */
-  	sample->data = data;
-	  sample->start = 0;
-	  sample->end = nbframes;
-  }
-
-  /* only used as markers for the LOOP generators : set them on the first real frame */
-  sample->loopstart = sample->start;
-  sample->loopend = sample->end;
-
-  sample->samplerate = 44100;
-  sample->origpitch = rootkey;
-  sample->pitchadj = 0;
-  sample->sampletype = FLUID_SAMPLETYPE_MONO;
-  sample->valid = 1;
-
-  return FLUID_OK;
-}
-
-/**
- * Create new RAM SoundFont sample.
- * @return New RAM SoundFont sample or NULL if out of memory
- */
-fluid_sample_t *
-new_fluid_ramsample (void)
-{
-	/* same as new_fluid_sample. Only here so that it is exported */
-  fluid_sample_t* sample = NULL;
-
-  sample = FLUID_NEW(fluid_sample_t);
-  if (sample == NULL) {
-    FLUID_LOG(FLUID_ERR, "Out of memory");
-    return NULL;
-  }
-
-  memset(sample, 0, sizeof(fluid_sample_t));
-
-  return sample;
-}
-
-/**
- * Delete a RAM SoundFont sample.
- * @param sample Sample to delete
- */
-void
-delete_fluid_ramsample (fluid_sample_t* sample)
-{
-    fluid_return_if_fail(sample != NULL);
-    
-	/* same as delete_fluid_sample, plus frees the data */
-  	FLUID_FREE(sample->data);
-  FLUID_FREE(sample);
 }

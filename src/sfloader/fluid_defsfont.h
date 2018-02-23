@@ -351,7 +351,6 @@ typedef struct _fluid_inst_zone_t fluid_inst_zone_t;
 
  */
 
-void delete_fluid_defsfloader(fluid_sfloader_t* loader);
 fluid_sfont_t* fluid_defsfloader_load(fluid_sfloader_t* loader, const char* filename);
 
 
@@ -362,7 +361,7 @@ void fluid_defsfont_sfont_iteration_start(fluid_sfont_t* sfont);
 int fluid_defsfont_sfont_iteration_next(fluid_sfont_t* sfont, fluid_preset_t* preset);
 
 
-int fluid_defpreset_preset_delete(fluid_preset_t* preset);
+void fluid_defpreset_preset_delete(fluid_preset_t* preset);
 const char* fluid_defpreset_preset_get_name(fluid_preset_t* preset);
 int fluid_defpreset_preset_get_banknum(fluid_preset_t* preset);
 int fluid_defpreset_preset_get_num(fluid_preset_t* preset);
@@ -500,8 +499,6 @@ fluid_sample_t* fluid_inst_zone_get_sample(fluid_inst_zone_t* zone);
 
 
 
-fluid_sample_t* new_fluid_sample(void);
-void delete_fluid_sample(fluid_sample_t* sample);
 int fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defsfont_t* sfont);
 int fluid_sample_in_rom(fluid_sample_t* sample);
 

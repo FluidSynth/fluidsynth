@@ -2253,6 +2253,8 @@ fluid_cmd_handler_t* new_fluid_cmd_handler(fluid_synth_t* synth, fluid_midi_rout
   if (handler == NULL) {
     return NULL;
   }
+  FLUID_MEMSET(handler, 0, sizeof(*handler));
+
   handler->commands = new_fluid_hashtable_full (fluid_str_hash, fluid_str_equal,
                                         NULL, fluid_cmd_handler_destroy_hash_value);
   if (handler->commands == NULL) {

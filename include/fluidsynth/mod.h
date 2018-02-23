@@ -49,7 +49,9 @@ enum fluid_mod_flags
   FLUID_MOD_CONVEX = 8,         /**< Convex mapping function */
   FLUID_MOD_SWITCH = 12,        /**< Switch (on/off) mapping function */
   FLUID_MOD_GC = 0,             /**< General controller source type (#fluid_mod_src) */
-  FLUID_MOD_CC = 16             /**< MIDI CC controller (source will be a MIDI CC number) */
+  FLUID_MOD_CC = 16,             /**< MIDI CC controller (source will be a MIDI CC number) */
+    
+  FLUID_MOD_SIN = 0x80,            /**< Custom non-standard sinus mapping function */
 };
 
 /**
@@ -69,6 +71,7 @@ enum fluid_mod_src
 
 FLUIDSYNTH_API fluid_mod_t* new_fluid_mod(void);
 FLUIDSYNTH_API void delete_fluid_mod(fluid_mod_t * mod);
+FLUIDSYNTH_API size_t fluid_mod_sizeof(void);
 
 FLUIDSYNTH_API void fluid_mod_set_source1(fluid_mod_t* mod, int src, int flags); 
 FLUIDSYNTH_API void fluid_mod_set_source2(fluid_mod_t* mod, int src, int flags); 

@@ -128,6 +128,7 @@ set ( libfluidsynth_SOURCES
     sfloader/fluid_ramsfont.c
     sfloader/fluid_ramsfont.h
     sfloader/fluid_sfont.h
+    sfloader/fluid_sfont.c
     rvoice/fluid_adsr_env.c
     rvoice/fluid_adsr_env.h
     rvoice/fluid_chorus.c
@@ -203,6 +204,23 @@ set ( public_main_HEADER
     ${CMAKE_SOURCE_DIR}/include/fluidsynth.h
 )
 
+if ( WIN32 AND NOT MINGW )
+include(generate_product_version)
+generate_product_version(
+    VersionFilesOutputVariable
+    NAME "Fluidsynth"
+    BUNDLE "Fluidsynth"
+    VERSION_MAJOR ${FLUIDSYNTH_VERSION_MAJOR}
+    VERSION_MINOR ${FLUIDSYNTH_VERSION_MINOR}
+    VERSION_PATCH ${FLUIDSYNTH_VERSION_MICRO}
+    VERSION_REVISION 0
+    COMMENTS "Fluidsynth"
+    COMPANY_NAME "Fluidsynth LGPL"
+    ORIGINAL_FILENAME "libfluidsynth.dll"
+    FILE_DESCRIPTION "Fluidsynth"
+)
+endif ( WIN32 AND NOT MINGW )
+
 link_directories (
     ${GLIB_LIBDIR}
     ${GLIB_LIBRARY_DIRS}
@@ -242,6 +260,7 @@ add_library ( libfluidsynth
     ${libfluidsynth_SOURCES}
     ${public_HEADERS}
     ${public_main_HEADER}
+    ${VersionFilesOutputVariable}
 )
 
 if ( MACOSX_FRAMEWORK )

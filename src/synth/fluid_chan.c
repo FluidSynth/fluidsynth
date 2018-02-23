@@ -118,7 +118,9 @@ fluid_channel_init_ctrl(fluid_channel_t* chan, int is_all_ctrl_off)
         continue;
       }
       if (i == BANK_SELECT_MSB || i == BANK_SELECT_LSB || i == VOLUME_MSB || 
-          i == VOLUME_LSB || i == PAN_MSB || i == PAN_LSB) {
+          i == VOLUME_LSB || i == PAN_MSB || i == PAN_LSB ||
+          i == BALANCE_MSB || i == BALANCE_LSB
+          ) {
         continue;
       }
 
@@ -165,6 +167,10 @@ fluid_channel_init_ctrl(fluid_channel_t* chan, int is_all_ctrl_off)
     fluid_channel_set_cc (chan, PAN_MSB, 64);
     fluid_channel_set_cc (chan, PAN_LSB, 0);
 
+    /* Balance (MSB & LSB) */
+    fluid_channel_set_cc (chan, BALANCE_MSB, 64);
+    fluid_channel_set_cc (chan, BALANCE_LSB, 0);
+
     /* Reverb */
     /* fluid_channel_set_cc (chan, EFFECTS_DEPTH1, 40); */
     /* Note: although XG standard specifies the default amount of reverb to 
@@ -179,7 +185,7 @@ delete_fluid_channel(fluid_channel_t* chan)
 {
   fluid_return_if_fail(chan != NULL);
   
-  delete_fluid_preset (chan->preset);
+  fluid_preset_delete_internal (chan->preset);
   FLUID_FREE(chan);
 }
 
@@ -201,7 +207,7 @@ fluid_channel_set_preset(fluid_channel_t* chan, fluid_preset_t* preset)
   if (chan->preset) {
     fluid_sfont_t *sfont;
     sfont = chan->preset->sfont;
-    delete_fluid_preset (chan->preset);
+    fluid_preset_delete_internal (chan->preset);
     fluid_synth_sfont_unref (chan->synth, sfont); /* -- unref preset's SoundFont */
   }
   

@@ -23,7 +23,7 @@
 
 
 #include "fluid_defsfont.h"
-/* Todo: Get rid of that 'include' */
+#include "fluid_sfont.h"
 #include "fluid_sys.h"
 
 #if LIBSNDFILE_SUPPORT
@@ -42,86 +42,30 @@
  *                           SFONT LOADER
  */
 
-static void * default_fopen(const char * path)
-{
-    return FLUID_FOPEN(path, "rb");
-}
-
-static int default_fclose(void * handle)
-{
-    return FLUID_FCLOSE((FILE *)handle);
-}
-
-static long default_ftell(void * handle)
-{
-    return FLUID_FTELL((FILE *)handle);
-}
-
-static int safe_fread (void *buf, int count, void * fd)
-{
-  if (FLUID_FREAD(buf, count, 1, (FILE *)fd) != 1)
-    {
-      if (feof ((FILE *)fd))
-	gerr (ErrEof, _("EOF while attemping to read %d bytes"), count);
-      else
-	FLUID_LOG (FLUID_ERR, _("File read failed"));
-  
-      return FLUID_FAILED;
-    }
-  return FLUID_OK;
-}
-
-static int safe_fseek (void * fd, long ofs, int whence)
-{
-  if (FLUID_FSEEK((FILE *)fd, ofs, whence) != 0) {
-    FLUID_LOG (FLUID_ERR, _("File seek failed with offset = %ld and whence = %d"), ofs, whence);
-    return FLUID_FAILED;
-  }
-  return FLUID_OK;
-}
-
-static const fluid_file_callbacks_t def_file_callbacks =
-{
-        default_fopen,
-        safe_fread,
-        safe_fseek,
-        default_fclose,
-        default_ftell
-};
-
 /**
  * Creates a default soundfont2 loader that can be used with fluid_synth_add_sfloader().
  * By default every synth instance has an initial default soundfont loader instance.
- * Calling this function is usually only necessary to load a soundfont from memory, by overriding \c fluid_sfloader_t::file_callbacks member.
+ * Calling this function is usually only necessary to load a soundfont from memory, by providing custom callback functions via fluid_sfloader_set_callbacks().
  * 
  * @param settings A settings instance obtained by new_fluid_settings()
  * @return A default soundfont2 loader struct
  */
 fluid_sfloader_t* new_fluid_defsfloader(fluid_settings_t* settings)
 {
-  fluid_sfloader_t* loader;
-  
+  fluid_sfloader_t* loader;  
   fluid_return_val_if_fail(settings != NULL, NULL);
 
-  loader = FLUID_NEW(fluid_sfloader_t);
-  if (loader == NULL) {
+  loader = new_fluid_sfloader(fluid_defsfloader_load, delete_fluid_sfloader);
+  
+  if (loader == NULL)
+  {
     FLUID_LOG(FLUID_ERR, "Out of memory");
     return NULL;
   }
 
-  loader->data = settings;
-  loader->file_callbacks = &def_file_callbacks;
-  loader->free = delete_fluid_defsfloader;
-  loader->load = fluid_defsfloader_load;
-
+  fluid_sfloader_set_data(loader, settings);
+  
   return loader;
-}
-
-void delete_fluid_defsfloader(fluid_sfloader_t* loader)
-{
-    fluid_return_if_fail(loader != NULL);
-    
-    FLUID_FREE(loader);
 }
 
 fluid_sfont_t* fluid_defsfloader_load(fluid_sfloader_t* loader, const char* filename)
@@ -129,29 +73,28 @@ fluid_sfont_t* fluid_defsfloader_load(fluid_sfloader_t* loader, const char* file
   fluid_defsfont_t* defsfont;
   fluid_sfont_t* sfont;
 
-  defsfont = new_fluid_defsfont(loader->data);
+  defsfont = new_fluid_defsfont(fluid_sfloader_get_data(loader));
 
   if (defsfont == NULL) {
     return NULL;
   }
 
-  if (fluid_defsfont_load(defsfont, loader->file_callbacks, filename) == FLUID_FAILED) {
+  if (fluid_defsfont_load(defsfont, &loader->file_callbacks, filename) == FLUID_FAILED) {
     delete_fluid_defsfont(defsfont);
     return NULL;
   }
 
-  sfont = FLUID_NEW(fluid_sfont_t);
-  if (sfont == NULL) {
-    FLUID_LOG(FLUID_ERR, "Out of memory");
+  sfont = new_fluid_sfont(fluid_defsfont_sfont_get_name,
+                          fluid_defsfont_sfont_get_preset,
+                          fluid_defsfont_sfont_delete);
+  if (sfont == NULL)
+  {
     return NULL;
   }
-
-  sfont->data = defsfont;
-  sfont->free = fluid_defsfont_sfont_delete;
-  sfont->get_name = fluid_defsfont_sfont_get_name;
-  sfont->get_preset = fluid_defsfont_sfont_get_preset;
-  sfont->iteration_start = fluid_defsfont_sfont_iteration_start;
-  sfont->iteration_next = fluid_defsfont_sfont_iteration_next;
+  
+  fluid_sfont_set_iteration_start(sfont, fluid_defsfont_sfont_iteration_start);
+  fluid_sfont_set_iteration_next(sfont, fluid_defsfont_sfont_iteration_next);
+  fluid_sfont_set_data(sfont, defsfont);
 
   return sfont;
 }
@@ -165,16 +108,16 @@ fluid_sfont_t* fluid_defsfloader_load(fluid_sfloader_t* loader, const char* file
 
 int fluid_defsfont_sfont_delete(fluid_sfont_t* sfont)
 {
-  if (delete_fluid_defsfont(sfont->data) != FLUID_OK) {
+  if (delete_fluid_defsfont(fluid_sfont_get_data(sfont)) != FLUID_OK) {
     return -1;
   }
-  FLUID_FREE(sfont);
+  delete_fluid_sfont(sfont);
   return 0;
 }
 
 const char* fluid_defsfont_sfont_get_name(fluid_sfont_t* sfont)
 {
-  return fluid_defsfont_get_name((fluid_defsfont_t*) sfont->data);
+  return fluid_defsfont_get_name(fluid_sfont_get_data(sfont));
 }
 
 fluid_preset_t*
@@ -182,7 +125,7 @@ fluid_defsfont_sfont_get_preset(fluid_sfont_t* sfont, unsigned int bank, unsigne
 {
   fluid_preset_t* preset = NULL;
   fluid_defpreset_t* defpreset;
-  fluid_defsfont_t* defsfont = sfont->data;
+  fluid_defsfont_t* defsfont = fluid_sfont_get_data(sfont);
 
   defpreset = fluid_defsfont_get_preset(defsfont, bank, prenum);
 
@@ -215,7 +158,7 @@ fluid_defsfont_sfont_get_preset(fluid_sfont_t* sfont, unsigned int bank, unsigne
 
 void fluid_defsfont_sfont_iteration_start(fluid_sfont_t* sfont)
 {
-  fluid_defsfont_iteration_start((fluid_defsfont_t*) sfont->data);
+  fluid_defsfont_iteration_start(fluid_sfont_get_data(sfont));
 }
 
 int fluid_defsfont_sfont_iteration_next(fluid_sfont_t* sfont, fluid_preset_t* preset)
@@ -227,12 +170,12 @@ int fluid_defsfont_sfont_iteration_next(fluid_sfont_t* sfont, fluid_preset_t* pr
   preset->noteon = fluid_defpreset_preset_noteon;
   preset->notify = NULL;
 
-  return fluid_defsfont_iteration_next((fluid_defsfont_t*) sfont->data, preset);
+  return fluid_defsfont_iteration_next(fluid_sfont_get_data(sfont), preset);
 }
 
-int fluid_defpreset_preset_delete(fluid_preset_t* preset)
+void fluid_defpreset_preset_delete(fluid_preset_t* preset)
 {
-  fluid_defpreset_t* defpreset = preset ? preset->data : NULL;
+  fluid_defpreset_t* defpreset = fluid_preset_get_data(preset);
   fluid_defsfont_t* sfont = defpreset ? defpreset->sfont : NULL;
 
   if (sfont && sfont->preset_stack_size < sfont->preset_stack_capacity) {
@@ -240,30 +183,28 @@ int fluid_defpreset_preset_delete(fluid_preset_t* preset)
      sfont->preset_stack_size++;
   }
   else
-    FLUID_FREE(preset);
-
-  return 0;
+      delete_fluid_preset(preset);
 }
 
 const char* fluid_defpreset_preset_get_name(fluid_preset_t* preset)
 {
-  return fluid_defpreset_get_name((fluid_defpreset_t*) preset->data);
+  return fluid_defpreset_get_name(fluid_preset_get_data(preset));
 }
 
 int fluid_defpreset_preset_get_banknum(fluid_preset_t* preset)
 {
-  return fluid_defpreset_get_banknum((fluid_defpreset_t*) preset->data);
+  return fluid_defpreset_get_banknum(fluid_preset_get_data(preset));
 }
 
 int fluid_defpreset_preset_get_num(fluid_preset_t* preset)
 {
-  return fluid_defpreset_get_num((fluid_defpreset_t*) preset->data);
+  return fluid_defpreset_get_num(fluid_preset_get_data(preset));
 }
 
 int fluid_defpreset_preset_noteon(fluid_preset_t* preset, fluid_synth_t* synth,
 				 int chan, int key, int vel)
 {
-  return fluid_defpreset_noteon((fluid_defpreset_t*) preset->data, synth, chan, key, vel);
+  return fluid_defpreset_noteon(fluid_preset_get_data(preset), synth, chan, key, vel);
 }
 
 
@@ -1885,44 +1826,6 @@ fluid_inst_zone_inside_range(fluid_inst_zone_t* zone, int key, int vel)
  */
 
 /*
- * new_fluid_sample
- */
-fluid_sample_t*
-new_fluid_sample()
-{
-  fluid_sample_t* sample = NULL;
-
-  sample = FLUID_NEW(fluid_sample_t);
-  if (sample == NULL) {
-    FLUID_LOG(FLUID_ERR, "Out of memory");
-    return NULL;
-  }
-
-  memset(sample, 0, sizeof(fluid_sample_t));
-  sample->valid = 1;
-
-  return sample;
-}
-
-/*
- * delete_fluid_sample
- */
-void
-delete_fluid_sample(fluid_sample_t* sample)
-{
-  fluid_return_if_fail(sample != NULL);
-    
-  if (sample->sampletype & FLUID_SAMPLETYPE_OGG_VORBIS)
-  {
-#if LIBSNDFILE_SUPPORT
-      FLUID_FREE(sample->data);
-#endif
-  }
-
-  FLUID_FREE(sample);
-}
-
-/*
  * fluid_sample_in_rom
  */
 int
@@ -2064,6 +1967,7 @@ fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defs
 
     // point sample data to uncompressed data stream
     sample->data = sampledata_ogg;
+    sample->auto_free = TRUE;
     sample->start = 0;
     sample->end = sfinfo.frames - 1;
 
@@ -2115,6 +2019,8 @@ fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defs
 /*        sample->loopend = sample->end - 8; */
 /*      } */
   }
+  
+  sample->valid = TRUE;
   return FLUID_OK;
 }
 

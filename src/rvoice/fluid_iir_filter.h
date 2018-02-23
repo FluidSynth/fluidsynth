@@ -26,28 +26,32 @@
 typedef struct _fluid_iir_filter_t fluid_iir_filter_t;
 
 
+void fluid_iir_filter_init(fluid_iir_filter_t* iir_filter, enum fluid_iir_filter_type, enum fluid_iir_filter_flags flags);
+
 void fluid_iir_filter_apply(fluid_iir_filter_t* iir_filter,
-                            fluid_real_t *dsp_buf, int dsp_buf_count); 
+                            fluid_real_t *dsp_buf, int dsp_buf_count);
 
 void fluid_iir_filter_reset(fluid_iir_filter_t* iir_filter);
 
-void fluid_iir_filter_set_q_dB(fluid_iir_filter_t* iir_filter, 
-                               fluid_real_t q_dB);
+void fluid_iir_filter_set_q(fluid_iir_filter_t* iir_filter, fluid_real_t q);
 
 void fluid_iir_filter_set_fres(fluid_iir_filter_t* iir_filter, 
                                fluid_real_t fres);
 
 void fluid_iir_filter_calc(fluid_iir_filter_t* iir_filter, 
                            fluid_real_t output_rate, 
-                           fluid_real_t fres_mod); 
+                           fluid_real_t fres_mod);
 
 /* We can't do information hiding here, as fluid_voice_t includes the struct
    without a pointer. */
 struct _fluid_iir_filter_t
 {
+	enum fluid_iir_filter_type type; /* specifies the type of this filter */
+	enum fluid_iir_filter_flags flags; /* additional flags to customize this filter */
+    
 	/* filter coefficients */
 	/* The coefficients are normalized to a0. */
-	/* b0 and b2 are identical => b02 */
+    /* b0 and b2 are identical => b02 */
 	fluid_real_t b02;              /* b0 / a0 */
 	fluid_real_t b1;              /* b1 / a0 */
 	fluid_real_t a1;              /* a0 / a0 */
