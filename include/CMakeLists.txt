@@ -22,5 +22,5 @@
 add_subdirectory ( fluidsynth )
 
 IF (NOT MACOSX_FRAMEWORK )
-    install ( FILES fluidsynth.h DESTINATION ${INCLUDE_INSTALL_DIR} )
+    install ( FILES ${CMAKE_CURRENT_BINARY_DIR}/fluidsynth.h DESTINATION ${INCLUDE_INSTALL_DIR} )
 ENDIF (NOT MACOSX_FRAMEWORK )
