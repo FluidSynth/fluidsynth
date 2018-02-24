@@ -224,7 +224,7 @@ unset ( MACOSX_FRAMEWORK CACHE )
 if ( CMAKE_SYSTEM MATCHES "Darwin" )
   set ( DARWIN 1 )
   set ( CMAKE_INSTALL_NAME_DIR
-        ${CMAKE_INSTALL_PREFIX}/${LIB_INSTALL_DIR}${LIB_SUFFIX} )
+        ${CMAKE_INSTALL_PREFIX}/${LIB_INSTALL_DIR} )
   if ( enable-coreaudio )
     check_include_file ( CoreAudio/AudioHardware.h COREAUDIO_FOUND )
     if ( COREAUDIO_FOUND )
@@ -451,28 +451,35 @@ endif ( enable-readline )
 # General configuration file
 configure_file ( ${CMAKE_SOURCE_DIR}/src/config.cmake
                  ${CMAKE_BINARY_DIR}/config.h )
-add_definitions ( -DHAVE_CONFIG_H )
 
 # Process subdirectories
 add_subdirectory ( src )
-add_subdirectory ( include )
 add_subdirectory ( doc )
 
 # pkg-config support
 set ( prefix "${CMAKE_INSTALL_PREFIX}" )
 set ( exec_prefix "\${prefix}" )
-set ( libdir "\${exec_prefix}/${LIB_INSTALL_DIR}${LIB_SUFFIX}" )
+set ( libdir "\${exec_prefix}/${LIB_INSTALL_DIR}" )
 set ( includedir "\${prefix}/${INCLUDE_INSTALL_DIR}" )
 configure_file ( fluidsynth.pc.in
 	${CMAKE_BINARY_DIR}/fluidsynth.pc IMMEDIATE @ONLY )
 install ( FILES ${CMAKE_BINARY_DIR}/fluidsynth.pc
-	DESTINATION ${LIB_INSTALL_DIR}${LIB_SUFFIX}/pkgconfig )
+	DESTINATION ${LIB_INSTALL_DIR}/pkgconfig )
 
 # Extra targets for Unix build environments
 if ( UNIX )
     # RPM spec
     configure_file ( fluidsynth.spec.in
         ${CMAKE_BINARY_DIR}/fluidsynth.spec IMMEDIATE @ONLY )
+
+    if ( DEFINED FLUID_DAEMON_ENV_FILE)
+        configure_file ( fluidsynth.service.in
+        ${CMAKE_BINARY_DIR}/fluidsynth.service @ONLY )
+
+        configure_file ( fluidsynth.conf.in
+        ${CMAKE_BINARY_DIR}/fluidsynth.conf @ONLY )
+
+    endif ( DEFINED FLUID_DAEMON_ENV_FILE )
 
     # uninstall custom target
     configure_file ( "${CMAKE_SOURCE_DIR}/cmake_admin/cmake_uninstall.cmake.in"

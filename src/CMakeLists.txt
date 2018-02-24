@@ -201,8 +201,13 @@ set ( public_HEADERS
 )
 
 set ( public_main_HEADER
-    ${CMAKE_SOURCE_DIR}/include/fluidsynth.h
+    ${CMAKE_BINARY_DIR}/include/fluidsynth.h
 )
+
+configure_file ( ${CMAKE_SOURCE_DIR}/include/fluidsynth/version.h.in 
+                 ${CMAKE_BINARY_DIR}/include/fluidsynth/version.h )
+configure_file ( ${CMAKE_SOURCE_DIR}/include/fluidsynth.cmake
+                 ${public_main_HEADER} )
 
 if ( WIN32 AND NOT MINGW )
 include(generate_product_version)
@@ -280,6 +285,7 @@ if ( MACOSX_FRAMEWORK )
 elseif ( OS2 )
     set_target_properties ( libfluidsynth
       PROPERTIES
+        PUBLIC_HEADER "${public_HEADERS}"
         OUTPUT_NAME "fluidsynth"
         VERSION ${LIB_VERSION_INFO}
         SOVERSION ${LIB_VERSION_CURRENT}
@@ -287,6 +293,7 @@ elseif ( OS2 )
 elseif ( WIN32 )
   set_target_properties ( libfluidsynth
     PROPERTIES
+      PUBLIC_HEADER "${public_HEADERS}"
       ARCHIVE_OUTPUT_NAME "fluidsynth"
       PREFIX "lib"
       OUTPUT_NAME "fluidsynth-${LIB_VERSION_CURRENT}"
@@ -296,6 +303,7 @@ elseif ( WIN32 )
 else ( MACOSX_FRAMEWORK )
   set_target_properties ( libfluidsynth
     PROPERTIES
+      PUBLIC_HEADER "${public_HEADERS}"
       PREFIX "lib"
       OUTPUT_NAME "fluidsynth"
       VERSION ${LIB_VERSION_INFO}
@@ -353,8 +361,10 @@ if ( MACOSX_FRAMEWORK )
 else ( MACOSX_FRAMEWORK )
   install ( TARGETS fluidsynth libfluidsynth
     RUNTIME DESTINATION ${BIN_INSTALL_DIR}
-    LIBRARY DESTINATION ${LIB_INSTALL_DIR}${LIB_SUFFIX}
-    ARCHIVE DESTINATION ${LIB_INSTALL_DIR}${LIB_SUFFIX}
+    LIBRARY DESTINATION ${LIB_INSTALL_DIR}
+    ARCHIVE DESTINATION ${LIB_INSTALL_DIR}
+    PUBLIC_HEADER DESTINATION ${INCLUDE_INSTALL_DIR}/fluidsynth 
 )
+   install ( FILES ${public_main_HEADER} DESTINATION ${INCLUDE_INSTALL_DIR} )
 endif ( MACOSX_FRAMEWORK )
 
