@@ -328,14 +328,27 @@ fluid_rvoice_write (fluid_rvoice_t* voice, fluid_real_t *dsp_buf)
   /******************* portamento ****************/
   /* pitchoffset is updated if enabled.
      Pitchoffset will be added to dsp pitch at next phase calculation time */
-  voice->dsp.pitchoffset += voice->dsp.pitchinc;
-  /* when pitchoffset reaches 0.0f, portamento is disabled */
-  if ((voice->dsp.pitchinc > 0.0f && voice->dsp.pitchoffset > 0.0f) ||
-		(voice->dsp.pitchinc < 0.0f && voice->dsp.pitchoffset < 0.0f))
-  {
-      voice->dsp.pitchoffset = voice->dsp.pitchinc = 0.0f;
-  }
 
+  /* This algorithm first verifying that portamento is enabled before
+     updating pitchoffset and before disabling portamento when necessary.
+	 This leads in a lost of performance of only 0.5% */
+  /* If the algorithm would first update pitchoffset and than verify if
+     portamento need to be disabled, the lost of performance will be 12% */
+  if (voice->dsp.pitchinc > 0.0f)
+  {	/* portamento is enabled, so update pitchoffset */
+	voice->dsp.pitchoffset += voice->dsp.pitchinc;
+	/* when pitchoffset reaches 0.0f, portamento is disabled */
+	if (voice->dsp.pitchoffset > 0.0f) 
+		voice->dsp.pitchoffset = voice->dsp.pitchinc = 0.0f;
+  }
+  else if (voice->dsp.pitchinc < 0.0f)
+  {	/* portamento is enabled, so update pitchoffset */
+	voice->dsp.pitchoffset += voice->dsp.pitchinc;
+	/* when pitchoffset reaches 0.0f, portamento is disabled */
+	if (voice->dsp.pitchoffset < 0.0f) 
+		voice->dsp.pitchoffset = voice->dsp.pitchinc = 0.0f;
+  }
+  
   fluid_check_fpe ("voice_write phase calculation");
 
   /* if phase_incr is not advancing, set it to the minimum fraction value (prevent stuckage) */
