@@ -981,7 +981,7 @@ fluid_synth_error(fluid_synth_t* synth)
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
  * @param key MIDI note number (0-127)
  * @param vel MIDI velocity (0-127, 0=noteoff)
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int
 fluid_synth_noteon(fluid_synth_t* synth, int chan, int key, int vel)
@@ -1057,7 +1057,7 @@ fluid_synth_noteon_LOCAL(fluid_synth_t* synth, int chan, int key, int vel)
  * @param synth FluidSynth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
  * @param key MIDI note number (0-127)
- * @return FLUID_OK on success, FLUID_FAILED otherwise (may just mean that no
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise (may just mean that no
  *   voices matched the note off event)
  */
 int
@@ -1161,7 +1161,7 @@ fluid_synth_damp_voices_by_sostenuto_LOCAL(fluid_synth_t* synth, int chan)
  * @param synth FluidSynth instance
  * @param mod Modulator info (values copied, passed in object can be freed again immediately)
  * @param mode Determines how to handle an existing identical modulator (#fluid_synth_add_mod)
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int
 fluid_synth_add_default_mod(fluid_synth_t* synth, fluid_mod_t* mod, int mode)
@@ -1211,7 +1211,7 @@ fluid_synth_add_default_mod(fluid_synth_t* synth, fluid_mod_t* mod, int mode)
  * fluid_mod_test_identity() will be used to test modulator matching.
  * @param synth synth instance
  * @param mod The modulator to remove
- * @return FLUID_OK if a matching modulator was found and successfully removed, FLUID_FAILED otherwise
+ * @return #FLUID_OK if a matching modulator was found and successfully removed, #FLUID_FAILED otherwise
  */
 int
 fluid_synth_remove_default_mod(fluid_synth_t* synth, const fluid_mod_t* mod)
@@ -1253,13 +1253,13 @@ fluid_synth_remove_default_mod(fluid_synth_t* synth, const fluid_mod_t* mod)
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
  * @param num MIDI controller number (0-127)
  * @param val MIDI controller value (0-127)
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  * @note This function supports MIDI Global Controllers which will be sent to
  * all channels of the basic channel if this basic channel is in mode OmniOff/Mono.
  * This is accomplished by sending the CC one MIDI channel below the basic 
  * channel of the receiver.
  * Examples: let a synthesizer with 16 MIDI channels:
- * - Let a basic channel 7 in mode 3 (Omni Off – Mono). If MIDI channel 6 is disabled it
+ * - Let a basic channel 7 in mode 3 (Omni Off, Mono). If MIDI channel 6 is disabled it
  *    could be used as CC global for all channels belonging to basic channel 7.
  * - Let a basic channel 0 in mode 3. If MIDI channel 15  is disabled it could be used 
  *   as CC global for all channels belonging to basic channel 0.
@@ -1506,7 +1506,7 @@ fluid_synth_cc_LOCAL (fluid_synth_t* synth, int channum, int num)
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
  * @param num MIDI controller number (0-127)
  * @param pval Location to store MIDI controller value (0-127)
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int
 fluid_synth_get_cc(fluid_synth_t* synth, int chan, int num, int* pval)
@@ -1550,7 +1550,7 @@ fluid_synth_handle_device_id (void *data, const char *name, int value)
  *   recognized and handled or not (set to TRUE if it was handled)
  * @param dryrun TRUE to just do a dry run but not actually execute the SYSEX
  *   command (useful for checking if a SYSEX message would be handled)
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  * @since 1.1.0
  */
 /* SYSEX format (0xF0 and 0xF7 not passed to this function):
@@ -1816,7 +1816,7 @@ fluid_synth_sysex_midi_tuning (fluid_synth_t *synth, const char *data, int len,
  * Turn off all notes on a MIDI channel (put them into release phase).
  * @param synth FluidSynth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1), (chan=-1 selects all channels)
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  * @since 1.1.4
  */
 int
@@ -1859,7 +1859,7 @@ fluid_synth_all_notes_off_LOCAL(fluid_synth_t* synth, int chan)
  * Immediately stop all notes on a MIDI channel (skips release phase).
  * @param synth FluidSynth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1), (chan=-1 selects all channels)
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  * @since 1.1.4
  */
 int
@@ -1900,7 +1900,7 @@ fluid_synth_all_sounds_off_LOCAL(fluid_synth_t* synth, int chan)
 /**
  * Reset reverb engine
  * @param synth FluidSynth instance
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int
 fluid_synth_reset_reverb(fluid_synth_t* synth)
@@ -1914,7 +1914,7 @@ fluid_synth_reset_reverb(fluid_synth_t* synth)
 /**
  * Reset chorus engine
  * @param synth FluidSynth instance
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int
 fluid_synth_reset_chorus(fluid_synth_t* synth)
@@ -1927,10 +1927,10 @@ fluid_synth_reset_chorus(fluid_synth_t* synth)
 
 
 /**
- * Send MIDI system reset command (big red 'panic' button), turns off notes and
- *   resets controllers.
+ * Send MIDI system reset command (big red 'panic' button), turns off notes, resets 
+ * controllers and restores initial basic channel configuration.
  * @param synth FluidSynth instance
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int
 fluid_synth_system_reset(fluid_synth_t* synth)
@@ -1968,7 +1968,7 @@ fluid_synth_system_reset_LOCAL(fluid_synth_t* synth)
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
  * @param is_cc Boolean value indicating if ctrl is a CC controller or not
  * @param ctrl MIDI controller value
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 static int
 fluid_synth_modulate_voices_LOCAL(fluid_synth_t* synth, int chan, int is_cc, int ctrl)
@@ -1989,7 +1989,7 @@ fluid_synth_modulate_voices_LOCAL(fluid_synth_t* synth, int chan, int is_cc, int
  * Update voices on a MIDI channel after all MIDI controllers have been changed.
  * @param synth FluidSynth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 static int
 fluid_synth_modulate_voices_all_LOCAL(fluid_synth_t* synth, int chan)
@@ -2011,7 +2011,7 @@ fluid_synth_modulate_voices_all_LOCAL(fluid_synth_t* synth, int chan)
  * @param synth FluidSynth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
  * @param val MIDI channel pressure value (0-127)
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int
 fluid_synth_channel_pressure(fluid_synth_t* synth, int chan, int val)
@@ -2046,7 +2046,7 @@ fluid_synth_update_channel_pressure_LOCAL(fluid_synth_t* synth, int chan)
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
  * @param key MIDI key number (0-127)
  * @param val MIDI key pressure value (0-127)
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  * @since 2.0.0
  */
 int
@@ -2095,7 +2095,7 @@ fluid_synth_update_key_pressure_LOCAL(fluid_synth_t* synth, int chan, int key)
  * @param synth FluidSynth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
  * @param val MIDI pitch bend value (0-16383 with 8192 being center)
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int
 fluid_synth_pitch_bend(fluid_synth_t* synth, int chan, int val)
@@ -2129,7 +2129,7 @@ fluid_synth_update_pitch_bend_LOCAL(fluid_synth_t* synth, int chan)
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
  * @param ppitch_bend Location to store MIDI pitch bend value (0-16383 with
  *   8192 being center)
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int
 fluid_synth_get_pitch_bend(fluid_synth_t* synth, int chan, int* ppitch_bend)
@@ -2152,7 +2152,7 @@ fluid_synth_get_pitch_bend(fluid_synth_t* synth, int chan, int* ppitch_bend)
  * @param synth FluidSynth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
  * @param val Pitch wheel sensitivity value in semitones
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int
 fluid_synth_pitch_wheel_sens(fluid_synth_t* synth, int chan, int val)
@@ -2185,7 +2185,7 @@ fluid_synth_update_pitch_wheel_sens_LOCAL(fluid_synth_t* synth, int chan)
  * @param synth FluidSynth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
  * @param pval Location to store pitch wheel sensitivity value in semitones
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  * @since Sometime AFTER v1.0 API freeze.
  */
 int
@@ -2209,7 +2209,7 @@ fluid_synth_get_pitch_wheel_sens(fluid_synth_t* synth, int chan, int* pval)
  * @param synth FluidSynth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
  * @param preset Preset to assign to channel or NULL to clear (ownership is taken over)
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 static int
 fluid_synth_set_preset (fluid_synth_t *synth, int chan, fluid_preset_t *preset)
@@ -2318,7 +2318,7 @@ fluid_synth_find_preset(fluid_synth_t* synth, unsigned int banknum,
  * @param synth FluidSynth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
  * @param prognum MIDI program number (0-127)
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 /* FIXME - Currently not real-time safe, due to preset allocation and mutex lock,
  * and may be called from within synthesis context. */
@@ -2405,7 +2405,7 @@ fluid_synth_program_change(fluid_synth_t* synth, int chan, int prognum)
  * @param synth FluidSynth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
  * @param bank MIDI bank number
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  * @note This function does not change the instrument currently assigned to \c chan,
  * as it is usually called prior to fluid_synth_program_change(). If you still want
  * instrument changes to take effect immediately, call fluid_synth_program_reset()
@@ -2433,7 +2433,7 @@ fluid_synth_bank_select(fluid_synth_t* synth, int chan, unsigned int bank)
  * @param synth FluidSynth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
  * @param sfont_id ID of a loaded SoundFont
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  * @note This function does not change the instrument currently assigned to \c chan,
  * as it is usually called prior to fluid_synth_bank_select() or fluid_synth_program_change().
  * If you still want instrument changes to take effect immediately, call fluid_synth_program_reset()
@@ -2479,7 +2479,7 @@ fluid_synth_unset_program (fluid_synth_t *synth, int chan)
  * @param sfont_id Location to store SoundFont ID
  * @param bank_num Location to store MIDI bank number
  * @param preset_num Location to store MIDI program number
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int
 fluid_synth_get_program(fluid_synth_t* synth, int chan, unsigned int* sfont_id,
@@ -2514,7 +2514,7 @@ fluid_synth_get_program(fluid_synth_t* synth, int chan, unsigned int* sfont_id,
  * @param sfont_id ID of a loaded SoundFont
  * @param bank_num MIDI bank number
  * @param preset_num MIDI program number
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int
 fluid_synth_program_select(fluid_synth_t* synth, int chan, unsigned int sfont_id,
@@ -2553,7 +2553,7 @@ fluid_synth_program_select(fluid_synth_t* synth, int chan, unsigned int sfont_id
  * @param sfont_name Name of a loaded SoundFont
  * @param bank_num MIDI bank number
  * @param preset_num MIDI program number
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  * @since 1.1.0
  */
 int
@@ -2719,7 +2719,7 @@ fluid_synth_handle_polyphony(void *data, const char* name, int value)
  * Set synthesizer polyphony (max number of voices).
  * @param synth FluidSynth instance
  * @param polyphony Polyphony to assign
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  * @since 1.0.6
  */
 int
@@ -2828,7 +2828,7 @@ fluid_synth_get_internal_bufsize(fluid_synth_t* synth)
 /**
  * Resend a bank select and a program change for every channel and assign corresponding instruments.
  * @param synth FluidSynth instance
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  *
  * This function is called mainly after a SoundFont has been loaded,
  * unloaded or reloaded.
@@ -2855,7 +2855,7 @@ fluid_synth_program_reset(fluid_synth_t* synth)
  * @param right Array of float buffers to store right channel of planar audio (size: dito)
  * @param fx_left Since 1.1.7: If not \c NULL, array of float buffers to store left effect channels (as many as \c synth.effects-channels buffers, each of \c len in size)
  * @param fx_right Since 1.1.7: If not \c NULL, array of float buffers to store right effect channels (size: dito)
- * @return FLUID_OK on success, FLUID_FAIL otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  *
  * @note Should only be called from synthesis thread.
  * 
@@ -3034,7 +3034,7 @@ fluid_synth_nwrite_float(fluid_synth_t* synth, int len,
  * @param in Ignored
  * @param nout Count of arrays in 'out'
  * @param out Array of arrays to store audio to
- * @return FLUID_OK on success, FLUID_FAIL otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  *
  * This function implements the default interface defined in fluidsynth/audio.h.
  * 
@@ -3082,7 +3082,7 @@ fluid_synth_process(fluid_synth_t* synth, int len, int nin, float** in,
  * @param rout Array of floats to store right channel of audio
  * @param roff Offset index in 'rout' for first sample
  * @param rincr Increment between samples stored to 'rout'
- * @return FLUID_OK on success, FLUID_FAIL otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  *
  * Useful for storing interleaved stereo (lout = rout, loff = 0, roff = 1,
  * lincr = 2, rincr = 2).
@@ -3181,7 +3181,7 @@ roundi (float x)
  * @param rout Array of 16 bit words to store right channel of audio
  * @param roff Offset index in 'rout' for first sample
  * @param rincr Increment between samples stored to 'rout'
- * @return FLUID_OK on success, FLUID_FAIL otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  *
  * Useful for storing interleaved stereo (lout = rout, loff = 0, roff = 1,
  * lincr = 2, rincr = 2).
@@ -3754,7 +3754,7 @@ new_fluid_sfont_info (fluid_synth_t *synth, fluid_sfont_t *sfont)
  * @param synth FluidSynth instance
  * @param id ID of SoundFont to unload
  * @param reset_presets TRUE to re-assign presets for all MIDI channels
- * @return FLUID_OK on success, FLUID_FAILED on error
+ * @return #FLUID_OK on success, FLUID_FAILED on error
  */
 int
 fluid_synth_sfunload(fluid_synth_t* synth, unsigned int id, int reset_presets)
@@ -4146,7 +4146,7 @@ fluid_synth_set_reverb_on(fluid_synth_t* synth, int on)
  * Activate a reverb preset.
  * @param synth FluidSynth instance
  * @param num Reverb preset number
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  *
  * @note Currently private to libfluidsynth.
  */
@@ -4171,7 +4171,7 @@ fluid_synth_set_reverb_preset(fluid_synth_t* synth, unsigned int num)
  * @param damping Reverb damping value (0.0-1.0)
  * @param width Reverb width value (0.0-100.0)
  * @param level Reverb level value (0.0-1.0)
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  *
  * @note Not realtime safe and therefore should not be called from synthesis
  * context at the risk of stalling audio output.
@@ -4186,7 +4186,7 @@ fluid_synth_set_reverb(fluid_synth_t* synth, double roomsize, double damping,
 
 /**
  * Set reverb roomsize. See fluid_synth_set_reverb() for further info.
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int fluid_synth_set_reverb_roomsize(fluid_synth_t* synth, double roomsize)
 {
@@ -4195,7 +4195,7 @@ int fluid_synth_set_reverb_roomsize(fluid_synth_t* synth, double roomsize)
 
 /**
  * Set reverb damping. See fluid_synth_set_reverb() for further info.
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int fluid_synth_set_reverb_damp(fluid_synth_t* synth, double damping)
 {
@@ -4204,7 +4204,7 @@ int fluid_synth_set_reverb_damp(fluid_synth_t* synth, double damping)
 
 /**
  * Set reverb width. See fluid_synth_set_reverb() for further info.
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int fluid_synth_set_reverb_width(fluid_synth_t* synth, double width)
 {
@@ -4213,7 +4213,7 @@ int fluid_synth_set_reverb_width(fluid_synth_t* synth, double width)
 
 /**
  * Set reverb level. See fluid_synth_set_reverb() for further info.
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int fluid_synth_set_reverb_level(fluid_synth_t* synth, double level)
 {
@@ -4228,7 +4228,7 @@ int fluid_synth_set_reverb_level(fluid_synth_t* synth, double level)
  * @param damping Reverb damping value (0.0-1.0)
  * @param width Reverb width value (0.0-100.0)
  * @param level Reverb level value (0.0-1.0)
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  *
  * @note Not realtime safe and therefore should not be called from synthesis
  * context at the risk of stalling audio output.
@@ -4358,7 +4358,7 @@ fluid_synth_set_chorus_on(fluid_synth_t* synth, int on)
  * @param depth_ms Chorus depth (max value depends on synth sample rate,
  *   0.0-21.0 is safe for sample rate values up to 96KHz)
  * @param type Chorus waveform type (#fluid_chorus_mod)
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int fluid_synth_set_chorus(fluid_synth_t* synth, int nr, double level,
                        double speed, double depth_ms, int type)
@@ -4369,7 +4369,7 @@ int fluid_synth_set_chorus(fluid_synth_t* synth, int nr, double level,
 
 /**
  * Set the chorus voice count. See fluid_synth_set_chorus() for further info.
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int fluid_synth_set_chorus_nr(fluid_synth_t* synth, int nr)
 {
@@ -4378,7 +4378,7 @@ int fluid_synth_set_chorus_nr(fluid_synth_t* synth, int nr)
 
 /**
  * Set the chorus level. See fluid_synth_set_chorus() for further info.
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int fluid_synth_set_chorus_level(fluid_synth_t* synth, double level)
 {
@@ -4387,7 +4387,7 @@ int fluid_synth_set_chorus_level(fluid_synth_t* synth, double level)
 
 /**
  * Set the chorus speed. See fluid_synth_set_chorus() for further info.
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int fluid_synth_set_chorus_speed(fluid_synth_t* synth, double speed)
 {
@@ -4396,7 +4396,7 @@ int fluid_synth_set_chorus_speed(fluid_synth_t* synth, double speed)
 
 /**
  * Set the chorus depth. See fluid_synth_set_chorus() for further info.
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int fluid_synth_set_chorus_depth(fluid_synth_t* synth, double depth_ms)
 {
@@ -4405,7 +4405,7 @@ int fluid_synth_set_chorus_depth(fluid_synth_t* synth, double depth_ms)
 
 /**
  * Set the chorus type. See fluid_synth_set_chorus() for further info.
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int fluid_synth_set_chorus_type(fluid_synth_t* synth, int type)
 {
@@ -4423,7 +4423,7 @@ int fluid_synth_set_chorus_type(fluid_synth_t* synth, int type)
  * @param depth_ms Chorus depth (max value depends on synth sample rate,
  *   0.0-21.0 is safe for sample rate values up to 96KHz)
  * @param type Chorus waveform type (#fluid_chorus_mod)
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int
 fluid_synth_set_chorus_full(fluid_synth_t* synth, int set, int nr, double level,
@@ -4583,7 +4583,7 @@ fluid_synth_release_voice_on_same_note_LOCAL(fluid_synth_t* synth, int chan,
  * @param synth FluidSynth instance
  * @param chan MIDI channel to set interpolation method on or -1 for all channels
  * @param interp_method Interpolation method (#fluid_interp)
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int
 fluid_synth_set_interp_method(fluid_synth_t* synth, int chan, int interp_method)
@@ -4800,7 +4800,7 @@ fluid_synth_update_voice_tuning_LOCAL (fluid_synth_t *synth, fluid_channel_t *ch
  *   Pass NULL to create a equal tempered (normal) scale.
  * @param apply TRUE to apply new tuning in realtime to existing notes which
  *   are using the replaced tuning (if any), FALSE otherwise
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  * @since 1.1.0
  */
 int
@@ -4840,7 +4840,7 @@ fluid_synth_activate_key_tuning(fluid_synth_t* synth, int bank, int prog,
  *   tuning amount)
  * @param apply TRUE to apply new tuning in realtime to existing notes which
  *   are using the replaced tuning (if any), FALSE otherwise
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  * @since 1.1.0
  */
 int
@@ -4881,7 +4881,7 @@ fluid_synth_activate_octave_tuning(fluid_synth_t* synth, int bank, int prog,
  *   cents from MIDI note 0)
  * @param apply TRUE to apply tuning change in realtime to existing notes using
  *   the specified tuning, FALSE otherwise
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  *
  * @note Prior to version 1.1.0 it was an error to specify a tuning that didn't
  * already exist. Starting with 1.1.0, the default equal tempered scale will be
@@ -4930,7 +4930,7 @@ fluid_synth_tune_notes(fluid_synth_t* synth, int bank, int prog,
  * @param bank Tuning bank number (0-127), not related to MIDI instrument bank
  * @param prog Tuning preset number (0-127), not related to MIDI instrument program
  * @param apply TRUE to apply tuning change to active notes, FALSE otherwise
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  * @since 1.1.0
  *
  * @note A default equal tempered scale will be created, if no tuning exists
@@ -5003,7 +5003,7 @@ fluid_synth_set_tuning_LOCAL (fluid_synth_t *synth, int chan,
  * @param synth FluidSynth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
  * @param apply TRUE to apply tuning change to active notes, FALSE otherwise
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  * @since 1.1.0
  */
 int
@@ -5091,7 +5091,7 @@ fluid_synth_tuning_iteration_next(fluid_synth_t* synth, int* bank, int* prog)
  * @param name Location to store tuning name or NULL to ignore
  * @param len Maximum number of chars to store to 'name' (including NULL byte)
  * @param pitch Array to store tuning scale to or NULL to ignore (len of 128)
- * @return FLUID_OK if matching tuning was found, FLUID_FAILED otherwise
+ * @return #FLUID_OK if matching tuning was found, #FLUID_FAILED otherwise
  */
 int
 fluid_synth_tuning_dump(fluid_synth_t* synth, int bank, int prog,
@@ -5134,7 +5134,7 @@ fluid_synth_get_settings(fluid_synth_t* synth)
 
 /**
  * Same as calling \c fluid_synth_set_gen2(synth, chan, param, value, FALSE, FALSE)
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int fluid_synth_set_gen(fluid_synth_t* synth, int chan, int param, float value)
 {
@@ -5151,7 +5151,7 @@ int fluid_synth_set_gen(fluid_synth_t* synth, int chan, int param, float value)
  * @param normalized FALSE if value is specified in the native units of the generator,
  *   TRUE to take the value as a 0.0-1.0 range and apply it to the valid
  *   generator effect range (scaled and shifted as necessary).
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  *
  * This function allows for setting all effect parameters in real time on a
  * MIDI channel. Setting absolute to non-zero will cause the value to override
@@ -5214,7 +5214,7 @@ fluid_synth_get_gen(fluid_synth_t* synth, int chan, int param)
  * Handle MIDI event from MIDI router, used as a callback function.
  * @param data FluidSynth instance
  * @param event MIDI event to handle
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int
 fluid_synth_handle_midi_event(void* data, fluid_midi_event_t* event)
@@ -5273,7 +5273,7 @@ fluid_synth_handle_midi_event(void* data, fluid_midi_event_t* event)
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
  * @param key MIDI note number (0-127)
  * @param vel MIDI velocity number (1-127)
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  *
  * @note Should only be called from within synthesis thread, which includes
  * SoundFont loader preset noteon method.
@@ -5296,7 +5296,7 @@ fluid_synth_start(fluid_synth_t* synth, unsigned int id, fluid_preset_t* preset,
  * Stop notes for a given note event voice ID.
  * @param synth FluidSynth instance
  * @param id Voice note event ID
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  *
  * @note In FluidSynth versions prior to 1.1.0 #FLUID_FAILED would be returned
  * if no matching voice note event ID was found.  Versions after 1.1.0 only
@@ -5429,7 +5429,7 @@ void fluid_synth_api_exit(fluid_synth_t* synth)
  * @param synth FluidSynth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
  * @param type MIDI channel type (#fluid_midi_channel_type)
- * @return FLUID_OK on success, FLUID_FAILED otherwise
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  * @since 1.1.4
  */
 int fluid_synth_set_channel_type(fluid_synth_t* synth, int chan, int type)
@@ -5495,7 +5495,7 @@ int fluid_synth_set_custom_filter(fluid_synth_t* synth, int type, int flags)
  *
  * @param synth FluidSynth instance
  * @param channels comma-separated list of channel numbers
- * @return FLUID_OK on success, otherwise FLUID_FAILED
+ * @return #FLUID_OK on success, otherwise #FLUID_FAILED
  */
 static int fluid_synth_set_important_channels(fluid_synth_t *synth, const char *channels)
 {
@@ -5747,7 +5747,8 @@ fluid_synth_reset_basic_channel_LOCAL(fluid_synth_t* synth, int chan, int nbr_ch
  * @param chan The basic channel of the group to reset or -1 to reset all channels.
  * @note By default (i.e. on creation after new_fluid_synth() and after fluid_synth_system_reset())
  * a synth instance has one basic channel at channel 0 in mode #FLUID_CHANNEL_MODE_OMNION_POLY.
- * All other channels belong to this basic channel group.
+ * All other channels belong to this basic channel group. Make sure to call this function before
+ * setting any custom basic channel setup.
  *  
  * @return
  *  - #FLUID_OK on success.
@@ -5795,7 +5796,7 @@ int fluid_synth_reset_basic_channel(fluid_synth_t* synth, int chan)
  * @param see fluid_synth_set_basic_channel.
  * @return 
  * - On success, the effective number of channels for this new basic channel group,
- *   FLUID_FAILED otherwise.
+ *   #FLUID_FAILED otherwise.
  * - #FLUID_FAILED
  *   - \a val has a number of channels overlapping next basic channel group or been
  *     above MIDI channel count.

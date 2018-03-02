@@ -328,29 +328,32 @@ FLUIDSYNTH_API fluid_ladspa_fx_t *fluid_synth_get_ladspa_fx(fluid_synth_t *synth
 
 /* API: Poly mono mode */
 
-/* Interface to poly/mono mode variables */
+/** Interface to poly/mono mode variables
+ * 
+ * Channel mode bits OR-ed together so that it matches with the midi spec: poly omnion (0), mono omnion (1), poly omnioff (2), mono omnioff (3)
+ */
 enum fluid_channel_mode_flags
 {
-    /* channel mode bits: poly omnion (0), mono omnion (1), poly omnioff (2), mono omnioff (3) */
-    FLUID_CHANNEL_POLY_OFF = 0x01, /**< if flag set the basic channel is in mono on state, if not set poly is on */
-    FLUID_CHANNEL_OMNI_OFF = 0x02, /**< if flag set the basic channel is in omni off state, if not set omni is on */
+    FLUID_CHANNEL_POLY_OFF = 0x01, /**< if flag is set, the basic channel is in mono on state, if not set poly is on */
+    FLUID_CHANNEL_OMNI_OFF = 0x02, /**< if flag is set, the basic channel is in omni off state, if not set omni is on */
 };
 
-/* breath mode bits infos */
+/** Indicates the breath mode a channel is set to */
 enum fluid_channel_breath_flags
 {
-    FLUID_CHANNEL_BREATH_POLY = 0x10,  /**< when channel is poly, if flag set the default velocity to initial Attenuation modulator is replaced by a breath modulator */
-    FLUID_CHANNEL_BREATH_MONO = 0x20,  /**< when channel is mono, if flag set the default velocity to initial Attenuation modulator is replaced by a breath modulator */
-    FLUID_CHANNEL_BREATH_SYNC = 0x40,  /**< when channel is mono, if flag set the breath controler(MSB)triggers noteon/noteoff on the running note */
+    FLUID_CHANNEL_BREATH_POLY = 0x10,  /**< when channel is poly, this flag indicates that the default velocity to initial attenuation modulator is replaced by a breath to initial attenuation modulator */
+    FLUID_CHANNEL_BREATH_MONO = 0x20,  /**< when channel is mono, this flag indicates that the default velocity to initial attenuation modulator is replaced by a breath modulator */
+    FLUID_CHANNEL_BREATH_SYNC = 0x40,  /**< when channel is mono, this flag indicates that the breath controler(MSB)triggers noteon/noteoff on the running note */
 };
 
+/** Indicates the mode a basic channel is set to */
 enum fluid_basic_channel_modes
 {  
-    FLUID_CHANNEL_MODE_MASK = (FLUID_CHANNEL_OMNI_OFF | FLUID_CHANNEL_POLY_OFF), /**< Mask Poly and Omni bits of #fluid_channel_mode_flags */
-    FLUID_CHANNEL_MODE_OMNION_POLY = FLUID_CHANNEL_MODE_MASK & (~FLUID_CHANNEL_OMNI_OFF & ~FLUID_CHANNEL_POLY_OFF), /**< MIDI mode 0 */
-    FLUID_CHANNEL_MODE_OMNION_MONO = FLUID_CHANNEL_MODE_MASK & (~FLUID_CHANNEL_OMNI_OFF & FLUID_CHANNEL_POLY_OFF), /**< MIDI mode 1 */
-    FLUID_CHANNEL_MODE_OMNIOFF_POLY = FLUID_CHANNEL_MODE_MASK & (FLUID_CHANNEL_OMNI_OFF & ~FLUID_CHANNEL_POLY_OFF), /**< MIDI mode 2 */
-    FLUID_CHANNEL_MODE_OMNIOFF_MONO = FLUID_CHANNEL_MODE_MASK & (FLUID_CHANNEL_OMNI_OFF | FLUID_CHANNEL_POLY_OFF), /**< MIDI mode 3 */
+    FLUID_CHANNEL_MODE_MASK = (FLUID_CHANNEL_OMNI_OFF | FLUID_CHANNEL_POLY_OFF), /**< Mask Poly and Omni bits of #fluid_channel_mode_flags, usually only used internally */
+    FLUID_CHANNEL_MODE_OMNION_POLY = FLUID_CHANNEL_MODE_MASK & (~FLUID_CHANNEL_OMNI_OFF & ~FLUID_CHANNEL_POLY_OFF), /**< corresponds to MIDI mode 0 */
+    FLUID_CHANNEL_MODE_OMNION_MONO = FLUID_CHANNEL_MODE_MASK & (~FLUID_CHANNEL_OMNI_OFF & FLUID_CHANNEL_POLY_OFF), /**< corresponds to MIDI mode 1 */
+    FLUID_CHANNEL_MODE_OMNIOFF_POLY = FLUID_CHANNEL_MODE_MASK & (FLUID_CHANNEL_OMNI_OFF & ~FLUID_CHANNEL_POLY_OFF), /**< corresponds to MIDI mode 2 */
+    FLUID_CHANNEL_MODE_OMNIOFF_MONO = FLUID_CHANNEL_MODE_MASK & (FLUID_CHANNEL_OMNI_OFF | FLUID_CHANNEL_POLY_OFF), /**< corresponds to MIDI mode 3 */
     FLUID_CHANNEL_MODE_LAST /**< @internal Value defines the count of basic channel modes (#fluid_basic_channel_modes) @warning This symbol is not part of the public API and ABI stability guarantee and may change at any time! */
 };
 
@@ -362,10 +365,10 @@ FLUIDSYNTH_API int  fluid_synth_get_basic_channel(fluid_synth_t* synth, int chan
 					int *basic_val_out );
 FLUIDSYNTH_API int fluid_synth_set_basic_channel(fluid_synth_t* synth, int chan, int mode, int val);
 
-/* Interface to mono legato mode  */
-/* n1,n2,n3,.. is a legato passage. n1 is the first note, and n2,n3,n4 are played
- legato with previous note. 
-*/
+/** Interface to mono legato mode
+ * 
+ * Indicates the legato mode a channel is set to
+ * n1,n2,n3,.. is a legato passage. n1 is the first note, and n2,n3,n4 are played legato with previous note. */
 enum fluid_channel_legato_mode
 {
 	FLUID_CHANNEL_LEGATO_MODE_RETRIGGER, /**< Mode 0 - Release previous note, start a new note */
@@ -376,7 +379,10 @@ enum fluid_channel_legato_mode
 FLUIDSYNTH_API int fluid_synth_set_legato_mode(fluid_synth_t* synth, int chan, int legatomode);
 FLUIDSYNTH_API int fluid_synth_get_legato_mode(fluid_synth_t* synth, int chan, int  *legatomode);
 
-/* Interface to portamento mode  */
+/** Interface to portamento mode
+ *
+ * Indicates the portamento mode a channel is set to
+ */
 enum fluid_channel_portamento_mode
 {
 	FLUID_CHANNEL_PORTAMENTO_MODE_EACH_NOTE, /**< Mode 0 - Portamento on each note (staccato or legato) */
