@@ -357,62 +357,192 @@ fluid_ostream_t fluid_socket_get_ostream(fluid_socket_t sock);
 
 
 /* Profiling */
-
-
-/**
- * Profile numbers. List all the pieces of code you want to profile
- * here. Be sure to add an entry in the fluid_profile_data table in
- * fluid_sys.c
- */
-enum {
-  FLUID_PROF_WRITE,
-  FLUID_PROF_ONE_BLOCK,
-  FLUID_PROF_ONE_BLOCK_CLEAR,
-  FLUID_PROF_ONE_BLOCK_VOICE,
-  FLUID_PROF_ONE_BLOCK_VOICES,
-  FLUID_PROF_ONE_BLOCK_REVERB,
-  FLUID_PROF_ONE_BLOCK_CHORUS,
-  FLUID_PROF_VOICE_NOTE,
-  FLUID_PROF_VOICE_RELEASE,
-  FLUID_PROF_LAST
-};
-
-
 #if WITH_PROFILING
+/** profiling interface beetween Profiling command shell and Audio
+    rendering  API (FluidProfile.pdf- 3.2.2)
+*/
 
+/*
+  -----------------------------------------------------------------------------
+  Shell task side |    Profiling interface              |  Audio task side
+  -----------------------------------------------------------------------------
+  profiling       |    Internal    |      |             |      Audio
+  command   <---> |<-- profling -->| Data |<--macros -->| <--> rendering
+  shell           |    API         |      |             |      API
+
+*/
+
+/* default parameters for shell command "prof_start" in fluid_sys.c */
+#define FLUID_PROFILE_DEFAULT_BANK 0       /* default bank */
+#define FLUID_PROFILE_DEFAULT_PROG 16      /* default prog (organ) */
+#define FLUID_PROFILE_FIRST_KEY 12         /* first key generated */
+#define FLUID_PROFILE_LAST_KEY 108         /* last key generated */
+#define FLUID_PROFILE_DEFAULT_VEL 64       /* default note velocity */
+#define FLUID_PROFILE_VOICE_ATTEN -0.04f   /* gain attenuation per voice (dB) */
+
+
+#define FLUID_PROFILE_DEFAULT_PRINT 0      /* default print mode */
+#define FLUID_PROFILE_DEFAULT_N_PROF 1     /* default number of measures */
+#define FLUID_PROFILE_DEFAULT_DURATION 500 /* default duration (ms)  */
+
+
+extern unsigned short fluid_profile_notes; /* number of generated notes */
+extern unsigned char fluid_profile_bank;   /* bank,prog preset used by */
+extern unsigned char fluid_profile_prog;   /* generated notes */
+extern unsigned char fluid_profile_print;  /* print mode */
+
+extern unsigned short fluid_profile_n_prof;/* number of measures */
+extern unsigned short fluid_profile_dur;   /* measure duration in ms */
+extern int fluid_profile_lock ;		       /* lock between multiple shell */
+/**/
+
+/*----------------------------------------------
+  Internal profiling API (in fluid_sys.c)
+-----------------------------------------------*/
+/* Starts a profiling measure used in shell command "prof_start" */
+void fluid_profile_start_stop(unsigned int end_ticks, short clear_data);
+
+/* Returns status used in shell command "prof_start" */
+int fluid_profile_get_status(void);
+
+/* Prints profiling data used in shell command "prof_start" */
+void fluid_profiling_print_data(double sample_rate, fluid_ostream_t out);
+
+/* Returns True if profiling cancellation has been requested */
+int fluid_profile_is_cancel_req(void);
+
+/* For OS that implement <cr> key for profile cancellation:
+ 1) Adds #define FLUID_PROFILE_CANCEL
+ 2) Adds the necessary code inside fluid_profile_is_cancel() see fluid_sys.c
+*/
+#if defined(WIN32)      /* Profile cancellation is supported for Windows */
+#define FLUID_PROFILE_CANCEL
+
+#elif defined(__OS2__)  /* OS/2 specific stuff */
+/* Profile cancellation isn't yet supported for OS2 */
+
+#else   /* POSIX stuff */
+#define FLUID_PROFILE_CANCEL /* Profile cancellation is supported for linux */
+#include <unistd.h> /* STDIN_FILENO */
+#include <sys/select.h> /* select() */
+#endif /* posix */
+
+/* logging profiling data (used on FluidSynth instance deletion) */
 void fluid_profiling_print(void);
 
-
-/** Profiling data. Keep track of min/avg/max values to execute a
+/*----------------------------------------------
+  Profiling Data (in fluid_sys.c)
+-----------------------------------------------*/
+/** Profiling data. Keep track of min/avg/max values to profile a
     piece of code. */
-typedef struct _fluid_profile_data_t {
-  int num;
-  char* description;
-  double min, max, total;
-  unsigned int count;
+typedef struct _fluid_profile_data_t
+{
+	char* description;        /* name of the piece of code under profiling */
+	double min, max, total;   /* duration (microsecond) */
+	unsigned int count;       /* total count */
+	unsigned int n_voices;    /* voices number */
+	unsigned int n_samples;   /* audio samples number */
 } fluid_profile_data_t;
 
-extern fluid_profile_data_t fluid_profile_data[];
+enum
+{
+	/* commands/status  (profiling interface) */
+	PROFILE_STOP,    /* command to stop a profiling measure */
+	PROFILE_START,   /* command to start a profile measure */
+	PROFILE_READY,   /* status to signal that a profiling measure has finished
+	                    and ready to be printed */
+	/*- State returned by fluid_profile_get_status() -*/
+	/* between profiling commands and internal profiling API */
+	PROFILE_RUNNING, /* a profiling measure is running */
+	PROFILE_CANCELED,/* a profiling measure has been canceled */
+};
 
-/** Macro to obtain a time refence used for the profiling */
+/* Data interface */
+extern unsigned char fluid_profile_status ;       /* command and status */
+extern unsigned int fluid_profile_end_ticks;      /* ending position (in ticks) */
+extern fluid_profile_data_t fluid_profile_data[]; /* Profiling data */
+
+/*----------------------------------------------
+  Macros
+-----------------------------------------------*/
+/** Macro to obtain a time reference used for the profiling */
 #define fluid_profile_ref() fluid_utime()
 
 /** Macro to create a variable and assign the current reference time for profiling.
  * So we don't get unused variable warnings when profiling is disabled. */
 #define fluid_profile_ref_var(name)     double name = fluid_utime()
 
-/** Macro to calculate the min/avg/max. Needs a time refence and a
-    profile number. */
-#define fluid_profile(_num,_ref) { \
-  double _now = fluid_utime(); \
-  double _delta = _now - _ref; \
-  fluid_profile_data[_num].min = _delta < fluid_profile_data[_num].min ? _delta : fluid_profile_data[_num].min; \
-  fluid_profile_data[_num].max = _delta > fluid_profile_data[_num].max ? _delta : fluid_profile_data[_num].max; \
-  fluid_profile_data[_num].total += _delta; \
-  fluid_profile_data[_num].count++; \
-  _ref = _now; \
+/**
+ * Profile numbers. List all the pieces of code you want to profile
+ * here. Be sure to add an entry in the fluid_profile_data table in
+ * fluid_sys.c
+ */
+enum
+{
+	FLUID_PROF_WRITE,
+	FLUID_PROF_ONE_BLOCK,
+	FLUID_PROF_ONE_BLOCK_CLEAR,
+	FLUID_PROF_ONE_BLOCK_VOICE,
+	FLUID_PROF_ONE_BLOCK_VOICES,
+	FLUID_PROF_ONE_BLOCK_REVERB,
+	FLUID_PROF_ONE_BLOCK_CHORUS,
+	FLUID_PROF_VOICE_NOTE,
+	FLUID_PROF_VOICE_RELEASE,
+	FLUID_PROF_LAST
+};
+/** Those macros are used to calculate the min/avg/max. Needs a profile number, a
+    time reference, the voices and samples number. */
+
+/** Macro to collect data, called from internal functions inside audio
+    rendering API */
+#define fluid_profile(_num, _ref, voices, samples)\
+{\
+	if ( fluid_profile_status == PROFILE_START)\
+	{\
+		double _now = fluid_utime();\
+		double _delta = _now - _ref;\
+		fluid_profile_data[_num].min = _delta < fluid_profile_data[_num].min ?\
+                                       _delta :\
+                                       fluid_profile_data[_num].min;\
+		fluid_profile_data[_num].max = _delta > fluid_profile_data[_num].max ?\
+                                       _delta :\
+                                       fluid_profile_data[_num].max;\
+		fluid_profile_data[_num].total += _delta;\
+		fluid_profile_data[_num].count++;\
+		fluid_profile_data[_num].n_voices += voices;\
+		fluid_profile_data[_num].n_samples += samples;\
+		_ref = _now;\
+	}\
 }
 
+/** Macro to collect data, called from audio rendering API (fluid_write_xxxx()).
+ This macro control profiling ending position (in ticks).
+*/
+#define fluid_profile_write(_num, _ref, voices, samples)\
+{\
+	if (fluid_profile_status == PROFILE_START)\
+	{\
+		if (fluid_synth_get_ticks(synth) >= fluid_profile_end_ticks)\
+		{\
+			/* profiling is finished */\
+			fluid_profile_status = PROFILE_READY;\
+		}\
+		else\
+		{ /* acquires data */\
+			double _now = fluid_utime();\
+			double _delta = _now - _ref;\
+			fluid_profile_data[_num].min = _delta < fluid_profile_data[_num].min ?\
+			                               _delta : fluid_profile_data[_num].min;\
+			fluid_profile_data[_num].max = _delta > fluid_profile_data[_num].max ?\
+			                               _delta : fluid_profile_data[_num].max;\
+			fluid_profile_data[_num].total += _delta;\
+			fluid_profile_data[_num].count++;\
+			fluid_profile_data[_num].n_voices += voices;\
+			fluid_profile_data[_num].n_samples += samples;\
+			_ref = _now;\
+		}\
+	}\
+}
 
 #else
 
@@ -420,11 +550,9 @@ extern fluid_profile_data_t fluid_profile_data[];
 #define fluid_profiling_print()
 #define fluid_profile_ref()  0
 #define fluid_profile_ref_var(name)
-#define fluid_profile(_num,_ref)
-
-#endif
-
-
+#define fluid_profile(_num,_ref,voices, samples)
+#define fluid_profile_write(_num,_ref, voices, samples)
+#endif /* WITH_PROFILING */
 
 /**
 
