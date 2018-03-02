@@ -329,11 +329,12 @@ fluid_rvoice_write (fluid_rvoice_t* voice, fluid_real_t *dsp_buf)
   /* pitchoffset is updated if enabled.
      Pitchoffset will be added to dsp pitch at next phase calculation time */
 
-  /* This algorithm first verifying that portamento is enabled before
-     updating pitchoffset and before disabling portamento when necessary.
-	 This leads in a lost of performance of only 0.5% */
-  /* If the algorithm would first update pitchoffset and than verify if
-     portamento need to be disabled, the lost of performance will be 12% */
+  /* In most cases portamento will be disabled. Thus first verify that portamento is
+   * enabled before updating pitchoffset and before disabling portamento when necessary,
+   * in order to keep the performance loss at minimum.
+   * If the algorithm would first update pitchoffset and then verify if portamento
+   * needs to be disabled, there would be a significant performance drop on a x87 FPU
+   */
   if (voice->dsp.pitchinc > 0.0f)
   {	/* portamento is enabled, so update pitchoffset */
 	voice->dsp.pitchoffset += voice->dsp.pitchinc;
