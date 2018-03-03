@@ -3042,7 +3042,7 @@ static void fluid_profile_unlock_command(void)
 */
 
 int
-fluid_handle_profile(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out)
+fluid_handle_profile(void* data, int ac, char** av, fluid_ostream_t out)
 {
 	/* locks to prevent simultaneous changes by an other shell  */
 	/* (may be a server shell (tcp)) */
@@ -3072,7 +3072,7 @@ fluid_handle_profile(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t ou
 	bank, prog: preset bank and program number (default value if not specified)
  */
 int
-fluid_handle_prof_set_notes(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out)
+fluid_handle_prof_set_notes(void* data, int ac, char** av, fluid_ostream_t out)
 {
 	unsigned short nbr;  /* previous parameters */
 	unsigned char bank, prog;  /* previous parameters */
@@ -3141,7 +3141,7 @@ fluid_handle_prof_set_notes(fluid_synth_t* synth, int ac, char** av, fluid_ostre
     0: simple printing, >0: full printing
 */
 int
-fluid_handle_prof_set_print(fluid_synth_t* synth, int ac, char** av, fluid_ostream_t out)
+fluid_handle_prof_set_print(void* data, int ac, char** av, fluid_ostream_t out)
 {
 	int r;
 	/* locks to prevent simultaneous changes by an other shell  */
