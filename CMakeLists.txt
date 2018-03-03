@@ -73,7 +73,6 @@ option ( enable-network "enable network support (requires BSD sockets) " on )
 
 # Platform specific options
 if ( CMAKE_SYSTEM MATCHES "Linux" )
-    option ( enable-ladcca "compile LADCCA support if it is available (deprecated)" off )
     option ( enable-lash "compile LASH support (if it is available)" on )
     option ( enable-alsa "compile ALSA support (if it is available)" on )
 endif ( CMAKE_SYSTEM MATCHES "Linux" )
