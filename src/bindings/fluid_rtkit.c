@@ -48,13 +48,13 @@ static pid_t _gettid(void) {
 }
 
 static int translate_error(const char *name) {
-        if (strcmp(name, DBUS_ERROR_NO_MEMORY) == 0)
+        if (FLUID_STRCMP(name, DBUS_ERROR_NO_MEMORY) == 0)
                 return -ENOMEM;
-        if (strcmp(name, DBUS_ERROR_SERVICE_UNKNOWN) == 0 ||
-            strcmp(name, DBUS_ERROR_NAME_HAS_NO_OWNER) == 0)
+        if (FLUID_STRCMP(name, DBUS_ERROR_SERVICE_UNKNOWN) == 0 ||
+            FLUID_STRCMP(name, DBUS_ERROR_NAME_HAS_NO_OWNER) == 0)
                 return -ENOENT;
-        if (strcmp(name, DBUS_ERROR_ACCESS_DENIED) == 0 ||
-            strcmp(name, DBUS_ERROR_AUTH_FAILED) == 0)
+        if (FLUID_STRCMP(name, DBUS_ERROR_ACCESS_DENIED) == 0 ||
+            FLUID_STRCMP(name, DBUS_ERROR_AUTH_FAILED) == 0)
                 return -EACCES;
 
         return -EIO;

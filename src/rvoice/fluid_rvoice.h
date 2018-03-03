@@ -96,6 +96,10 @@ struct _fluid_rvoice_dsp_t
 	int loopend;	/* Note: first point following the loop (superimposed on loopstart) */
 	enum fluid_loop samplemode;
 
+	/* Stuff needed for portamento calculations */
+	fluid_real_t pitchoffset;        /* the portamento range in midicents */
+	fluid_real_t pitchinc;           /* the portamento increment in midicents */
+
 	/* Stuff needed for phase calculations */
 
 	fluid_real_t pitch;              /* the pitch in midicents */
@@ -106,6 +110,8 @@ struct _fluid_rvoice_dsp_t
 
 	int has_looped;                 /* Flag that is set as soon as the first loop is completed. */
 	fluid_real_t attenuation;        /* the attenuation in centibels */
+	fluid_real_t prev_attenuation;   /* the previous attenuation in centibels 
+					used by fluid_rvoice_multi_retrigger_attack() */
 	fluid_real_t min_attenuation_cB; /* Estimate on the smallest possible attenuation
 					  * during the lifetime of the voice */
 	fluid_real_t amplitude_that_reaches_noise_floor_nonloop;
@@ -167,7 +173,9 @@ void fluid_rvoice_buffers_set_mapping(fluid_rvoice_buffers_t* buffers,
                                       unsigned int bufnum, int mapping);
 
 /* Dynamic update functions */
-
+void fluid_rvoice_set_portamento(fluid_rvoice_t * voice, unsigned int countinc,
+								 fluid_real_t pitchoffset);
+void fluid_rvoice_multi_retrigger_attack(fluid_rvoice_t* voice);
 void fluid_rvoice_noteoff(fluid_rvoice_t* voice, unsigned int min_ticks);
 void fluid_rvoice_voiceoff(fluid_rvoice_t* voice);
 void fluid_rvoice_reset(fluid_rvoice_t* voice);

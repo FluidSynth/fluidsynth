@@ -216,7 +216,7 @@ new_fluid_portaudio_driver (fluid_settings_t *settings, fluid_synth_t *synth)
   outputParams.suggestedLatency = (PaTime)period_size / sample_rate;
 
   /* Locate the device if specified */
-  if (strcmp (device, PORTAUDIO_DEFAULT_DEVICE) != 0)
+  if (FLUID_STRCMP (device, PORTAUDIO_DEFAULT_DEVICE) != 0)
   { /* The intended device is not the default device name, so we search
     a device among available devices */
     int numDevices;
@@ -239,7 +239,7 @@ new_fluid_portaudio_driver (fluid_settings_t *settings, fluid_synth_t *synth)
             if(name)
             {
                 /* We see if the name corresponds to audio.portaudio.device */
-                char found = (strcmp (device, name) == 0);
+                char found = (FLUID_STRCMP (device, name) == 0);
                 FLUID_FREE (name);
 
                 if(found)

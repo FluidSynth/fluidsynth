@@ -125,6 +125,13 @@ Changes in FluidSynth 2.0.0 concerning developers:
     - struct _fluid_preset_t
 - add an additional general-purpose IIR filter, see fluid_synth_set_custom_filter()
 - add a custom sinusoidal modulator mapping function, see #FLUID_MOD_SIN
+- implement polymono support according to MIDI specs:
+  - add basic channel support, see fluid_synth_reset_basic_channel(), fluid_synth_set_basic_channel(), fluid_synth_get_basic_channel()
+  - implement MIDI modes Omni On, Omni Off, Poly, Mono, see #fluid_basic_channel_modes
+  - implement portamento control, see fluid_synth_set_portamento_mode(), fluid_synth_get_portamento_mode()
+  - implement legato control, see fluid_synth_set_legato_mode(), fluid_synth_get_legato_mode()
+  - implement breath control, see fluid_synth_set_breath_mode(), fluid_synth_get_breath_mode()
+
 
 \section NewIn1_1_9 Whats new in 1.1.9?
 
