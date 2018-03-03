@@ -393,7 +393,7 @@ extern unsigned char fluid_profile_print;  /* print mode */
 
 extern unsigned short fluid_profile_n_prof;/* number of measures */
 extern unsigned short fluid_profile_dur;   /* measure duration in ms */
-extern int fluid_profile_lock ;		       /* lock between multiple shell */
+extern fluid_atomic_int_t fluid_profile_lock ;		       /* lock between multiple shell */
 /**/
 
 /*----------------------------------------------
