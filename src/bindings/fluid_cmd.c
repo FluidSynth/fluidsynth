@@ -78,30 +78,32 @@ void fluid_shell_settings(fluid_settings_t* settings)
 /** the table of all handled commands */
 
 static const fluid_cmd_t fluid_commands[] = {
+    /* general commands */
   { "help", "general", fluid_handle_help,
-    "help                       Show help topics ('help TOPIC' for more info)" },
+    "help                       Shows help topics ('help TOPIC' for more info)" },
   { "quit", "general", fluid_handle_quit,
     "quit                       Quit the synthesizer" },
   { "source", "general", fluid_handle_source,
-    "source filename            Load a file and parse every line as a command" },
+    "source filename            Loads a file and parse every line as a command" },
+    /* event commands */
   { "noteon", "event", fluid_handle_noteon,
-    "noteon chan key vel        Send noteon" },
+    "noteon chan key vel        Sends noteon" },
   { "noteoff", "event", fluid_handle_noteoff,
-    "noteoff chan key           Send noteoff"  },
+    "noteoff chan key           Sends noteoff"  },
   { "pitch_bend", "event", fluid_handle_pitch_bend,
-    "pitch_bend chan offset           Bend pitch"  },
+    "pitch_bend chan offset     Bends pitch"  },
   { "pitch_bend_range", "event", fluid_handle_pitch_bend_range,
-    "pitch_bend chan range           Set bend pitch range"  },
+    "pitch_bend chan range      Sets bend pitch range"  },
   { "cc", "event", fluid_handle_cc,
-    "cc chan ctrl value         Send control-change message" },
+    "cc chan ctrl value         Sends control-change message" },
   { "prog", "event", fluid_handle_prog,
-    "prog chan num              Send program-change message" },
+    "prog chan num              Sends program-change message" },
   { "select", "event", fluid_handle_select,
     "select chan sfont bank prog  Combination of bank-select and program-change" },
   { "load", "general", fluid_handle_load,
-    "load file [reset] [bankofs] Load SoundFont (reset=0|1, def 1; bankofs=n, def 0)" },
+    "load file [reset] [bankofs] Loads SoundFont (reset=0|1, def 1; bankofs=n, def 0)" },
   { "unload", "general", fluid_handle_unload,
-    "unload id [reset]          Unload SoundFont by ID (reset=0|1, default 1)"},
+    "unload id [reset]          Unloads SoundFont by ID (reset=0|1, default 1)"},
   { "reload", "general", fluid_handle_reload,
     "reload id                  Reload the SoundFont with the specified ID" },
   { "fonts", "general", fluid_handle_fonts,
@@ -114,6 +116,28 @@ static const fluid_cmd_t fluid_commands[] = {
     "interp num                 Choose interpolation method for all channels" },
   { "interpc", "general", fluid_handle_interpc,
     "interpc chan num           Choose interpolation method for one channel" },
+    /* polymono commands */
+  { "basicchannels", "polymono", fluid_handle_basicchannels,
+    "basicchannels                         Prints the list of basic channels"},
+  { "resetbasicchannels", "polymono", fluid_handle_resetbasicchannels,
+    "resetbasicchannels [chan1 chan2..]    Resets all or some basic channels"},
+  { "setbasicchannels", "polymono", fluid_handle_setbasicchannels,
+    "setbasicchannels [chan mode val...]   Sets default, adds basic channels"},
+  { "channelsmode", "polymono", fluid_handle_channelsmode,
+    "channelsmode [chan1 chan2..]          Prints channels mode"},
+  { "legatomode", "polymono", fluid_handle_legatomode,
+    "legatomode [chan1 chan2..]            Prints channels legato mode"},
+  { "setlegatomode", "polymono", fluid_handle_setlegatomode,
+    "setlegatomode chan mode [chan mode..] Sets legato mode"},
+  { "portamentomode", "polymono", fluid_handle_portamentomode,
+    "portamentomode [chan1 chan2..]        Prints channels portamento mode"},
+  { "setportamentomode", "polymono", fluid_handle_setportamentomode,
+    "setportamentomode chan mode [chan mode..] Sets portamento mode"},
+  { "breathmode", "polymono", fluid_handle_breathmode,
+    "breathmode [chan1 chan2..]            Prints channels breath mode"},
+  { "setbreathmode", "polymono", fluid_handle_setbreathmode,
+    "setbreathmode chan poly(1/0) mono(1/0) breath_sync(1/0) [..] Sets breath mode"},
+    /* reverb commands */
   { "rev_preset", "reverb", fluid_handle_reverbpreset,
     "rev_preset num             Load preset num into the reverb unit" },
   { "rev_setroomsize", "reverb", fluid_handle_reverbsetroomsize,
@@ -126,6 +150,7 @@ static const fluid_cmd_t fluid_commands[] = {
     "rev_setlevel num           Change reverb level" },
   { "reverb", "reverb", fluid_handle_reverb,
     "reverb [0|1|on|off]        Turn the reverb on or off" },
+    /* chorus commands */
   { "cho_set_nr", "chorus", fluid_handle_chorusnr,
     "cho_set_nr n               Use n delay lines (default 3)" },
   { "cho_set_level", "chorus", fluid_handle_choruslevel,
@@ -140,6 +165,7 @@ static const fluid_cmd_t fluid_commands[] = {
     "gain value                 Set the master gain (0 < gain < 5)" },
   { "voice_count", "general", fluid_handle_voice_count,
     "voice_count                Get number of active synthesis voices" },
+    /* tuning commands */
   { "tuning", "tuning", fluid_handle_tuning,
     "tuning name bank prog      Create a tuning with name, bank number, \n"
     "                           and program number (0 <= bank,prog <= 127)" },
@@ -155,6 +181,7 @@ static const fluid_cmd_t fluid_commands[] = {
     "dumptuning bank prog       Print the pitch details of the tuning" },
   { "reset", "general", fluid_handle_reset,
     "reset                      System reset (all notes off, reset controllers)" },
+    /* settings commands */
   { "set", "settings", fluid_handle_set,
     "set name value             Set the value of a controller or settings" },
   { "get", "settings", fluid_handle_get,
@@ -165,6 +192,9 @@ static const fluid_cmd_t fluid_commands[] = {
     "settings                   Print out all settings" },
   { "echo", "general", fluid_handle_echo,
     "echo arg                   Print arg" },
+  /* Sleep command, useful to insert a delay between commands */
+  { "sleep", "general", fluid_handle_sleep,
+    "sleep  duration            sleep duration(in ms)" },
   /* LADSPA-related commands */
 #ifdef LADSPA
   { "ladspa_effect", "ladspa", fluid_handle_ladspa_effect,
@@ -184,6 +214,7 @@ static const fluid_cmd_t fluid_commands[] = {
   { "ladspa_reset", "ladspa", fluid_handle_ladspa_reset,
     "ladspa_reset               Stop and reset LADSPA effects"},
 #endif
+    /* router commands */
   { "router_clear", "router", fluid_handle_router_clear,
     "router_clear               Clears all routing rules from the midi router"},
   { "router_default", "router", fluid_handle_router_default,
@@ -630,7 +661,7 @@ fluid_handle_channels(void* data, int ac, char** av, fluid_ostream_t out)
   int verbose = 0;
   int i;
 
-  if (ac > 0 && strcmp( av[0], "-verbose") == 0) verbose = 1;
+  if (ac > 0 && FLUID_STRCMP( av[0], "-verbose") == 0) verbose = 1;
 
   for (i = 0; i < fluid_synth_count_midi_channels(handler->synth); i++) {
     preset = fluid_synth_get_channel_preset(handler->synth, i);
@@ -884,9 +915,9 @@ fluid_handle_reverb(void* data, int ac, char** av, fluid_ostream_t out)
     return FLUID_FAILED;
   }
 
-  if ((strcmp(av[0], "0") == 0) || (strcmp(av[0], "off") == 0)) {
+  if ((FLUID_STRCMP(av[0], "0") == 0) || (FLUID_STRCMP(av[0], "off") == 0)) {
     fluid_synth_set_reverb_on(handler->synth,0);
-  } else if ((strcmp(av[0], "1") == 0) || (strcmp(av[0], "on") == 0)) {
+  } else if ((FLUID_STRCMP(av[0], "1") == 0) || (FLUID_STRCMP(av[0], "on") == 0)) {
     fluid_synth_set_reverb_on(handler->synth,1);
   } else {
     fluid_ostream_printf(out, "reverb: invalid arguments %s [0|1|on|off]", av[0]);
@@ -971,9 +1002,9 @@ fluid_handle_chorus(void* data, int ac, char** av, fluid_ostream_t out)
     return FLUID_FAILED;
   }
 
-  if ((strcmp(av[0], "0") == 0) || (strcmp(av[0], "off") == 0)) {
+  if ((FLUID_STRCMP(av[0], "0") == 0) || (FLUID_STRCMP(av[0], "off") == 0)) {
     fluid_synth_set_chorus_on(handler->synth,0);
-  } else if ((strcmp(av[0], "1") == 0) || (strcmp(av[0], "on") == 0)) {
+  } else if ((FLUID_STRCMP(av[0], "1") == 0) || (FLUID_STRCMP(av[0], "on") == 0)) {
     fluid_synth_set_chorus_on(handler->synth,1);
   } else {
     fluid_ostream_printf(out, "chorus: invalid arguments %s [0|1|on|off]", av[0]);
@@ -999,6 +1030,28 @@ fluid_handle_echo(void* data, int ac, char** av, fluid_ostream_t out)
   fluid_ostream_printf(out, "%s\n",av[0]);
 
   return FLUID_OK;
+}
+
+/* Purpose:
+ * Sleep during a time in ms
+ * The command itself is useful to insert a delay between commands.
+ * It can help for exemple to build a small song using noteon/noteoff commands
+ * in a command file.
+ */
+int
+fluid_handle_sleep(void *data, int ac, char** av, fluid_ostream_t out)
+{
+  if (ac < 1) {
+    fluid_ostream_printf(out, "sleep: too few arguments.\n");
+    return -1;
+  }
+  if (!fluid_is_number(av[0])) {
+    fluid_ostream_printf(out, "sleep: argument should be a number in ms.\n");
+    return -1;
+  }
+  fluid_msleep(atoi(av[0]));	/* delay in milliseconds */	
+
+  return 0;
 }
 
 int
@@ -1662,7 +1715,7 @@ fluid_handle_help(void* data, int ac, char** av, fluid_ostream_t out)
   if (ac >= 1) {
     topic = av[0];
   }
-  if (strcmp(topic,"help") == 0){
+  if (FLUID_STRCMP(topic,"help") == 0){
     /* "help help": Print a list of all topics */
     fluid_ostream_printf(out,
 			"*** Help topics:***\n"
@@ -1671,7 +1724,7 @@ fluid_handle_help(void* data, int ac, char** av, fluid_ostream_t out)
       int listed_first_time = 1;
       unsigned int ii;
       for (ii = 0; ii < i; ii++){
-	if (strcmp(fluid_commands[i].topic, fluid_commands[ii].topic) == 0){
+	if (FLUID_STRCMP(fluid_commands[i].topic, fluid_commands[ii].topic) == 0){
 	  listed_first_time = 0;
 	}; /* if topic has already been listed */
       }; /* for all topics (inner loop) */
@@ -1683,7 +1736,7 @@ fluid_handle_help(void* data, int ac, char** av, fluid_ostream_t out)
     /* help (arbitrary topic or "all") */
     for (i = 0; i < FLUID_N_ELEMENTS(fluid_commands); i++) {
       if (fluid_commands[i].help != NULL) {
-	if (strcmp(topic,"all") == 0 || strcmp(topic,fluid_commands[i].topic) == 0){
+	if (FLUID_STRCMP(topic,"all") == 0 || FLUID_STRCMP(topic,fluid_commands[i].topic) == 0){
 	  fluid_ostream_printf(out, "%s\n", fluid_commands[i].help);
 	  count++;
 	}; /* if it matches the topic */
@@ -1878,6 +1931,784 @@ int fluid_handle_router_par2(void* data, int ac, char** av, fluid_ostream_t out)
   fluid_midi_router_rule_set_param2 (handler->cmd_rule, atoi (av[0]), atoi (av[1]),
                                      atof (av[2]), atoi (av[3]));
   return FLUID_OK;
+}
+
+/**  commands Poly/mono mode *************************************************/
+
+static const char * mode_name[]={"poly omni on (0)","mono omni on (1)",
+					"poly omni off(2)","mono omni off(3)"};
+/*
+  Prints result message for commands: basicchannels, resetbasicchannels.
+  Prints all basic channels and print a warning if there is no basic channel.
+
+  @param synth the synth instance.
+  @param out output stream.
+*/
+static int print_basic_channels(fluid_synth_t* synth, fluid_ostream_t out)
+{
+	static const char * warning_msg = "Warning: no basic channels. All MIDI channels are disabled.\n"
+	"Make use of setbasicchannels to set at least a default basic channel.\n";
+    
+	int n_chan= synth->midi_channels; 
+	int i , n= 0;
+	/* prints all basic channels */
+	for (i =0; i< n_chan; i++)
+	{
+		int basic_chan, mode_chan,val;
+		if( fluid_synth_get_basic_channel(synth, i, &basic_chan, &mode_chan, &val) == FLUID_OK)
+		{
+			if (basic_chan == i)
+			{
+				n++;
+				fluid_ostream_printf(out,"Basic channel:%3d, %s, nbr:%3d\n", i, 
+									mode_name[mode_chan &  FLUID_CHANNEL_MODE_MASK ],
+									val);
+			}
+		}
+		else
+		{
+			return FLUID_FAILED; /* error */
+		}
+	}
+	/* prints a warning if there is no basic channel */
+	if (n == 0)
+	{
+		fluid_ostream_printf(out, warning_msg);
+	}
+	return FLUID_OK;
+}
+
+/*-----------------------------------------------------------------------------
+  basicchannels 
+   Prints the list of all MIDI basic channels informations 
+   example:
+
+	Basic channel:  0, poly omni on (0), nbr:  3
+	Basic channel:  3, poly omni off(2), nbr:  1
+	Basic channel:  8, mono omni off(3), nbr:  2
+	Basic channel: 13, mono omni on (1), nbr:  3
+*/
+int fluid_handle_basicchannels (void* data, int ac, char** av, 
+								fluid_ostream_t out)
+{
+	FLUID_ENTRY_COMMAND(data);
+	fluid_synth_t* synth = handler->synth;
+	return print_basic_channels(synth, out);
+}
+
+/*
+  Searchs a mode name and returns the channel mode number.
+  name must be: poly_omnion,  mono_omnion, poly_omnioff, mono_omnioff.
+  @param name to search.
+  @return channel mode number (0 to 3) if name is valid, -1 otherwise.
+*/
+static int get_channel_mode_num(char * name)
+{
+	/* argument names for channel mode parameter (see resetbasicchannels and 
+	   setbasicchannels commands*/
+	static const char * name_channel_mode [FLUID_CHANNEL_MODE_LAST]=
+	{"poly_omnion","mono_omnion","poly_omnioff","mono_omnioff"};
+	int i;
+	for (i = 0 ; i <  FLUID_CHANNEL_MODE_LAST;i++)
+	{
+		if ( ! FLUID_STRCMP (name, name_channel_mode[i]))
+		{
+			return i;
+		}
+	}
+	return -1;
+}
+
+static const char *invalid_arg_msg ="invalid argument\n";
+/*
+ checks basic channels arguments: chan1 mode1 val  chan2 mode2 val2  ...
+ All arguments can be numeric. mode parameter can be a name.
+ Each group entry must have 3 parameters (chan,mode,val).
+
+ @param ac argument count.
+ @param av argument table.
+ @param out output stream.
+ @param name_cde command name prefix.
+ @return 0 if arguments are valid, -1 otherwise.
+*/
+static int check_basicchannels_arguments(int ac, char** av, 
+                                  fluid_ostream_t out, char const * name_cde)
+{
+	static const char *too_few_arg_msg = "too few argument, chan mode val [chan mode val]...\n";
+	int i;
+	for (i = 0; i < ac; i++)
+	{
+		/* checks parameters for list entries: 	chan1 mode1 val  chan2 mode2 val2  ...*/
+		/* all parameters can be numeric. mode parameter can be a name. */
+		if (!fluid_is_number(av[i]) &&
+		   ( (i % 3 != 1) || get_channel_mode_num(av[i]) < 0 ))
+		{  
+			fluid_ostream_printf(out, "%s: %s",name_cde, invalid_arg_msg);
+			return -1;
+		}
+	}
+	if (ac % 3)
+	{	/* each group entry needs 3 parameters: basicchan,mode,val */
+		fluid_ostream_printf(out, "%s: channel %d, %s\n",name_cde,
+		                     atoi(av[((ac/3) * 3)]),too_few_arg_msg);
+		return -1;	
+	}
+	return 0;
+}
+
+/*
+ checks channels arguments: chan1  chan2   ...
+ all arguments must be numeric.
+
+ @param ac argument count.
+ @param av argument table.
+ @param out output stream.
+ @param name_cde command name prefix.
+ @return 0 if arguments are valid, -1 otherwise.
+*/
+static int check_channels_arguments(int ac, char** av, 
+                                    fluid_ostream_t out, char const * name_cde)
+{
+	int i;
+	for (i = 0; i < ac; i++)
+	{
+		if (!fluid_is_number(av[i]))
+		{
+			fluid_ostream_printf(out, "%s: %s",name_cde, invalid_arg_msg);
+			return -1;
+		}
+	}
+	return 0;
+}
+
+/*-----------------------------------------------------------------------------
+  resetbasicchannels
+  
+  With no parameters the command resets all basic channels.
+  Note: Be aware than when a synth instance has no basic channels, all channels 
+  are disabled.
+  In the intend to get some MIDI channels enabled, use the command setbasicchannels.
+
+  resetbasicchannels chan1  [chan2  .  .  .]
+  Resets basic channel group chan1, basic channel group chan2 . . .
+*/
+int fluid_handle_resetbasicchannels (void* data, int ac, char** av, 
+								fluid_ostream_t out)
+{
+	static const char * name_cde="resetbasicchannels";
+	FLUID_ENTRY_COMMAND(data);
+	fluid_synth_t* synth = handler->synth;
+
+	/* checks channels arguments: chan1 chan2 .... */
+	if (check_channels_arguments(ac,av,out,name_cde ) < 0)
+	{
+		return -1;
+	}
+
+	if (ac )
+	{	/* resetbasicchannels chan1  [chan2  .  .  .] */
+		int i;
+		for (i = 0; i < ac; i++)
+		{
+			int chan = atoi(av[i]);
+			int result = fluid_synth_reset_basic_channel(synth, chan);
+			if (result == FLUID_FAILED)
+			{
+				fluid_ostream_printf(out,"%s: channel %3d, %s", name_cde, chan,invalid_arg_msg);
+			}
+		}
+	}
+	else
+	{
+		/* resets all basic channels */
+		fluid_synth_reset_basic_channel(synth, -1); 
+	}
+	/* prints result */
+	return print_basic_channels(synth, out);
+}
+
+/*-----------------------------------------------------------------------------
+  setbasicchannels
+  
+  With no parameters the command sets one channel basic at basic channel 0 in
+  Omni On Poly (i.e all the MIDI channels are polyphonic).
+
+  setbasicchannels chan1 mode1 nbr1    [chan2 mode2 nbr2]  ...  ...
+  
+  Adds basic channel 1 and 2
+  
+  The command fails if any channels overlaps any existing basic channel groups.
+  To make room if necessary, existing basic channel groups can be cleared using
+  resetbasicchannels command.
+  Mode can be a numeric value or a name: 
+      numeric: 0 to 3 or
+      name: poly_omnion , mono_omnion, poly_omnioff, mono_omnioff.
+*/
+int fluid_handle_setbasicchannels (void* data, int ac, char** av, 
+                                   fluid_ostream_t out)
+{
+	static const char * name_cde="setbasicchannels";
+	FLUID_ENTRY_COMMAND(data);
+	fluid_synth_t* synth = handler->synth;
+	int result;
+	int i,n ;
+
+	if(!ac)
+	{
+		/* sets one default basic channel */
+		fluid_synth_reset_basic_channel(synth, -1); /* reset all basic channels */
+		/* sets one basic channel Omni On Poly (i.e all the MIDI channels are polyphonic) */
+		fluid_synth_set_basic_channel( synth, 0, FLUID_CHANNEL_MODE_OMNION_POLY,0);
+		return 0;
+	}
+	/* checks parameters: 	chan1 mode1 val1  chan2 mode2 val2 */
+	if (check_basicchannels_arguments(ac,av,out,name_cde) < 0)
+	{
+		return -1;
+	}
+
+	n = ac / 3; /* number of basic channel information */
+	for (i = 0; i < n; i++)
+	{
+		int basicchan, mode, val;
+
+		basicchan = atoi(av[(i * 3)]);  /* chan is numeric */
+		if (fluid_is_number(av[(i * 3)+1]))
+		{	/* chan is numeric */
+			mode = atoi(av[(i * 3)+1]);
+		}
+		else
+		{	/* mode is a name */
+			mode = get_channel_mode_num(av[(i * 3)+1]);
+		}
+		val = atoi(av[(i * 3)+2]);      /* val is numeric */
+
+		/* changes or sets basic channels */
+		result = fluid_synth_set_basic_channel(synth, basicchan, mode, val);
+		if (result == FLUID_FAILED)
+		{
+			fluid_ostream_printf(out,"%s: channel %3d, mode %3d, nbr %3d, %s",
+			                     name_cde, basicchan, mode, val, invalid_arg_msg);
+		}
+	}
+	return 0;
+}
+
+/*
+ Print result message : "channel:x is outside MIDI channel count(y)"
+ for commands: channelsmode, portamentomode, legatomode, breathmode,setbreathmode.
+ @param out output stream.
+ @param name_cde command name prefix.
+ @param chan, MIDI channel number x.
+ @param n_chan, number of MIDI channels y.
+*/
+static void print_channel_is_outside_count(fluid_ostream_t out, char const * name_cde,
+                                           int chan, int n_chan)
+{
+	fluid_ostream_printf(out,"%s: channel %3d is outside MIDI channel count(%d)\n",
+		                 name_cde, chan, n_chan); 
+}
+
+
+/*-----------------------------------------------------------------------------
+  channelsmode
+     Prints channel mode of all MIDI channels (Poly/mono, Enabled, Basic Channel)
+     example 
+
+     Channel    , Status , Type         , Mode            , Nbr of channels
+     channel:  0, disabled
+     channel:  1, disabled
+     channel:  2, disabled
+     channel:  3, disabled
+     channel:  4, disabled
+     channel:  5, enabled, basic channel, mono omni off(3), nbr:  2
+     channel:  6, enabled, --           , mono            , --
+     channel:  7, disabled
+     channel:  8, disabled
+     channel:  9, disabled
+     channel: 10, enabled, basic channel, mono omni off(3), nbr:  4
+     channel: 11, enabled, --           , mono            , --
+     channel: 12, enabled, --           , mono            , --
+     channel: 13, enabled, --           , mono            , --
+     channel: 14, disabled
+     channel: 15, disabled
+  
+  channelsmode chan1 chan2
+     Prints only channel mode of MIDI channels chan1, chan2
+*/
+int fluid_handle_channelsmode (void* data, int ac, char** av, 
+								fluid_ostream_t out)
+{
+	static const char * header =
+	"Channel    , Status , Type         , Mode            , Nbr of channels\n";
+	static const char * name_cde="channelsmode";
+	FLUID_ENTRY_COMMAND(data);
+	fluid_synth_t* synth = handler->synth;
+	
+	int i, n, n_chan= synth->midi_channels; 
+	
+	/* checks parameters: 	chan1 chan2 .... */
+	if (check_channels_arguments(ac,av,out,name_cde) < 0)
+	{
+		return -1;
+	}
+	if (ac )
+	{
+		n = ac; /* prints ac MIDI channels number */
+	}
+	else
+	{
+		n= n_chan; /* prints all MIDI channels number */
+	}
+	/* prints header */	
+	fluid_ostream_printf(out, header);
+	for (i = 0; i < n; i++)
+	{
+		int basic_chan, mode, val;
+		int chan = ac ? atoi(av[i]): i;
+		int result = fluid_synth_get_basic_channel(synth, chan, &basic_chan, &mode, &val);
+		if (result == FLUID_OK)
+		{
+			if(basic_chan != FLUID_FAILED)
+			{	/* This channel is enabled */
+				const char * p_basicchan; /* field basic channel */
+				const char * p_mode; /* field mode */
+				const char *p_nbr; /* field Nbr */
+				static const char * blank="--"; /* field empty */
+				if (chan == basic_chan)
+				{	/* This channel is a basic channel */
+					char nbr[10]; /* field Nbr */
+					FLUID_SNPRINTF(nbr,sizeof(nbr),"nbr:%3d",val);
+					p_nbr = nbr;
+					p_mode = mode_name[mode];
+					p_basicchan = "basic channel";
+				}
+				else
+				{	/* This channel is member of a basic channel group */
+					p_basicchan = blank;
+					if(mode & FLUID_CHANNEL_POLY_OFF) p_mode = "mono";
+					else p_mode = "poly";
+					p_nbr = blank;
+				}
+				fluid_ostream_printf(out,
+						"channel:%3d, enabled, %-13s, %-16s, %s\n", 
+						chan,
+						p_basicchan,
+						p_mode,
+						p_nbr);
+			}
+			else
+			{
+				fluid_ostream_printf(out, "channel:%3d, disabled\n", chan);
+			}
+		}
+		else
+		{
+			print_channel_is_outside_count(out, name_cde, chan, n_chan);
+			if(i < n-1)
+			{
+				fluid_ostream_printf(out, header);
+			}
+		}
+	}
+	return 0;
+}
+
+/**  commands mono legato mode ***********************************************/
+/*
+ Prints result message for commands: legatomode, portamentomode.
+ @param result result from the command (FLUID_OK,FLUID_FAILED).
+ @param out output stream.
+ @param name_cde command name prefix.
+ @param chan MIDI channel number to display.
+ @param name_mode name of the mode to display.
+ @param n_chan, number of MIDI channels.
+*/
+static void print_result_get_channel_mode(int result, fluid_ostream_t out,
+                                char const * name_cde, int chan,
+                                char const * name_mode,	int n_chan )
+{
+	if (result == FLUID_OK)
+	{
+		fluid_ostream_printf(out,"%s: channel %3d, %s\n", name_cde, chan, name_mode);
+	}
+	else
+	{
+		print_channel_is_outside_count(out, name_cde, chan, n_chan);
+	}
+}
+
+/*-----------------------------------------------------------------------------
+ legatomode
+     Prints legato mode of all MIDI channels
+     example 
+
+     channel:  0, (1)multi-retrigger
+     channel:  1, (0)retrigger
+     channel:  2, (1)multi-retrigger
+     .....
+  
+ legatomode chan1 chan2
+     Prints only legato mode of MIDI channels chan1, chan2
+*/
+int fluid_handle_legatomode(void* data, int ac, char** av, 
+								fluid_ostream_t out)
+{
+	static const char * name_cde="legatomode";
+	static const char * name_legato_mode[FLUID_CHANNEL_LEGATO_MODE_LAST]=
+	{	"(0)retrigger","(1)multi-retrigger"	};
+
+	FLUID_ENTRY_COMMAND(data);
+	fluid_synth_t* synth = handler->synth;
+	int mode = 0;
+	int i, n, n_chan= synth->midi_channels; 
+	
+	/* checks channels arguments: chan1 chan2 .... */
+	if (check_channels_arguments(ac, av, out, name_cde) < 0)
+	{
+		return -1;
+	}
+
+	if (ac )
+	{
+		n = ac; /* prints ac MIDI channels number */
+	}
+	else
+	{
+		n= n_chan; /* prints all MIDI channels number */
+	}
+	/* prints header */	
+	fluid_ostream_printf(out,"Channel    , legato mode\n");
+	for (i = 0; i < n; i++)
+	{
+		int chan = ac ? atoi(av[i]): i;
+		int result = fluid_synth_get_legato_mode(synth, chan, &mode);
+		print_result_get_channel_mode(result, out, name_cde, chan, name_legato_mode[mode], n_chan);
+	}
+	return 0;
+}
+
+/*
+ checks channels arguments by group:
+ -example by group of 2 arguments: chan1 val1  chan2 val2  .. ..
+ -example by group of 4 arguments: chan1 val1 val2 val3   chan2 val1 val2 val3  ....
+
+ all arguments must be numeric.
+
+ @param ac argument count.
+ @param av argument table.
+ @param nbr_arg_group number of arguments by group expected.
+ @param out output stream.
+ @param name_cde command name prefix.
+ @param nbr_arg_group_msg message when the number of argument by group is invalid.
+ @return 0 if arguments are valid, -1 otherwise.
+*/
+static int check_channels_group_arguments(int ac, char** av, int nbr_arg_group,
+                                fluid_ostream_t out, 
+                                char const * name_cde,
+                                char const * nbr_arg_group_msg
+                                )
+{
+	if (ac)
+	{
+		/* checks channels numeric arguments */
+		if (check_channels_arguments(ac, av, out, name_cde) < 0)
+		{
+			return -1;
+		}
+		if (ac % nbr_arg_group)
+		{	/* each group entry needs nbr_arg_group parameters */
+			fluid_ostream_printf(out, "%s: channel %d, %s\n",name_cde,
+			                    atoi(av[((ac/nbr_arg_group) * nbr_arg_group)]),
+			                    nbr_arg_group_msg);
+			return -1;	
+		}
+	}
+	else
+	{
+		fluid_ostream_printf(out, "%s: %s",name_cde, nbr_arg_group_msg);
+		return -1;
+	}
+	return 0;
+}
+
+/*
+ Prints result message for commands: setlegatomode, setportamentomode.
+ @param result result from the command (FLUID_FAILED).
+ @param out output stream.
+ @param name_cde command name prefix.
+ @param chan, MIDI channel number to display.
+ @param mode, mode value to display.
+*/
+static void print_result_set_channel_mode(int result, fluid_ostream_t out, 
+                                          char const * name_cde,
+										  int chan, int mode)
+{
+	if (result == FLUID_FAILED)
+	{
+		fluid_ostream_printf(out,"%s: channel %3d, mode %3d, %s", name_cde, chan, mode, invalid_arg_msg);
+	}
+}
+
+static const char *too_few_arg_chan_mode_msg = "too few argument, chan mode [chan mode]...\n";
+/*-----------------------------------------------------------------------------
+  setlegatomode chan0 mode1 [chan1 mode0] ..  ..
+  
+  Changes legato mode for channels chan0 and [chan1]
+*/
+int fluid_handle_setlegatomode(void* data, int ac, char** av, 
+								fluid_ostream_t out)
+{
+	static const char * name_cde="setlegatomode";
+	FLUID_ENTRY_COMMAND(data);
+	fluid_synth_t* synth = handler->synth;
+	int i,n ;
+
+	/* checks channels arguments by group of 2: chan1 val1 chan2 val1 ..  ..*/
+	if (check_channels_group_arguments(ac, av, 2, out, name_cde, too_few_arg_chan_mode_msg) < 0)
+	{
+		return -1;
+	}
+
+	n = ac / 2; /* number of legato groups informations */
+	for (i = 0; i < n; i++)
+	{
+		int chan = atoi(av[(i * 2)]); 
+		int mode = atoi(av[(i * 2)+1]); 
+		/* changes legato mode */
+	
+		int result = fluid_synth_set_legato_mode(synth,chan,mode);
+		print_result_set_channel_mode(result, out, name_cde, chan, mode);
+	}
+	return 0;
+}
+
+/**  commands mono/poly portamento mode **************************************/
+
+/*-----------------------------------------------------------------------------
+ portamentomode
+     Prints portamento mode of all MIDI channels
+     example 
+
+     channel:  0, (2)staccato only
+     channel:  1, (1)legato only
+     channel:  2, (0)each note
+     channel:  3, (1)legato only
+     .....
+  
+ portamentomode chan1 chan2
+     Prints only portamento mode of MIDI channels chan1, chan2
+*/
+int fluid_handle_portamentomode(void* data, int ac, char** av, 
+								fluid_ostream_t out)
+{
+	static const char * name_cde="portamentomode";
+	static const char * name_portamento_mode[FLUID_CHANNEL_PORTAMENTO_MODE_LAST]=
+	{ "(0)each note", "(1)legato only", "(2)staccato only"	};
+
+	FLUID_ENTRY_COMMAND(data);
+	fluid_synth_t* synth = handler->synth;
+	int mode = 0;
+	int i, n, n_chan= synth->midi_channels; 
+	
+	/* checks channels arguments: chan1 chan2 . . . */
+	if (check_channels_arguments(ac, av, out, name_cde) < 0)
+	{
+		return -1;
+	}
+	if (ac )
+	{
+		n = ac; /* prints ac MIDI channels number */
+	}
+	else
+	{
+		n= n_chan; /* prints all MIDI channels number */
+	}
+	/* prints header */	
+	fluid_ostream_printf(out,"Channel    , portamento mode\n");
+	for (i = 0; i < n; i++)
+	{
+		int chan = ac ? atoi(av[i]): i;
+		int result = fluid_synth_get_portamento_mode(synth, chan, &mode);
+		print_result_get_channel_mode(result, out, name_cde, chan, name_portamento_mode[mode], n_chan);
+	}
+	return 0;
+}
+
+/*-----------------------------------------------------------------------------
+  setportamentomode chan1 mode1 [chan2 mode2] ..  ..
+  
+  Changes portamento mode for channels chan1 and [chan2]
+*/
+int fluid_handle_setportamentomode(void* data, int ac, char** av, 
+								fluid_ostream_t out)
+{
+	static const char * name_cde="setportamentomode";
+	FLUID_ENTRY_COMMAND(data);
+	fluid_synth_t* synth = handler->synth;
+	int i,n ;
+
+	/* checks channels arguments by group of 2: chan1 val1 chan2 val1 ..  .. */
+	if (check_channels_group_arguments(ac, av, 2, out, name_cde, too_few_arg_chan_mode_msg) < 0)
+	{
+		return -1;
+	}
+
+	n = ac / 2; /* number of portamento groups informations */
+	for (i = 0; i < n; i++)
+	{
+		int chan = atoi(av[(i * 2)]); 
+		int mode = atoi(av[(i * 2)+1]); 
+		/* changes portamento mode */
+	
+		int result = fluid_synth_set_portamento_mode(synth,chan,mode);
+		print_result_set_channel_mode(result, out, name_cde, chan, mode);
+	}
+	return 0;
+}
+
+/**  commands mono/poly breath mode *******************************************/
+/*-----------------------------------------------------------------------------
+ breathmode
+    Prints breath options of all MIDI channels.
+	poly breath on/off, mono breath on/off, breath sync on/off
+	
+    example 
+
+	Channel    , poly breath , mono breath , breath sync
+	channel:  0, off         , off         , off
+	channel:  1, off         , off         , off
+	channel:  2, off         , off         , off
+	.....
+  
+ breathmode chan1 chan2
+     Prints only breath mode of MIDI channels chan1, chan2
+*/
+int fluid_handle_breathmode(void* data, int ac, char** av, 
+								fluid_ostream_t out)
+{
+	static const char * name_cde="breathmode";
+	static const char * header="Channel    , poly breath , mono breath , breath sync\n";
+	FLUID_ENTRY_COMMAND(data);
+	fluid_synth_t* synth = handler->synth;
+	int breathmode;
+	int i, n, n_chan= synth->midi_channels; 
+	
+	/* checks channels arguments: chan1 chan2 . . . */
+	if (check_channels_arguments(ac, av, out, name_cde) < 0)
+	{	
+		return -1;
+	}
+
+	if (ac )
+	{
+		n = ac; /* prints ac MIDI channels number */
+	}
+	else
+	{
+		n= n_chan; /* prints all MIDI channels number */
+	}
+	/* prints header */	
+	fluid_ostream_printf(out, header);
+	for (i = 0; i < n; i++)
+	{
+		int chan = ac ? atoi(av[i]): i;
+		int result = fluid_synth_get_breath_mode(synth, chan, &breathmode);
+		if (result == FLUID_OK)
+		{
+			static const char * on_msg ="on";
+			static const char * off_msg ="off";
+			const char * msg_poly_breath, * msg_mono_breath, * msg_breath_sync; 
+			if (breathmode &  FLUID_CHANNEL_BREATH_POLY)
+			{
+				msg_poly_breath =on_msg;
+			}
+			else
+			{
+				msg_poly_breath = off_msg;
+			}
+			if (breathmode &  FLUID_CHANNEL_BREATH_MONO)
+			{
+				msg_mono_breath =on_msg;
+			}
+			else
+			{
+				msg_mono_breath = off_msg;
+			}
+			if (breathmode &  FLUID_CHANNEL_BREATH_SYNC)
+			{
+				msg_breath_sync =on_msg;
+			}
+			else
+			{
+				msg_breath_sync = off_msg;
+			}
+			fluid_ostream_printf(out,"channel:%3d, %-12s, %-12s, %-11s\n",chan,
+			                     msg_poly_breath, msg_mono_breath, msg_breath_sync);
+		}
+		else 
+		{
+			print_channel_is_outside_count(out, name_cde, chan, n_chan);
+			if(i < n-1) 
+			{
+				fluid_ostream_printf(out, header);
+			}
+		}
+	}
+	return 0;
+}
+
+/*-----------------------------------------------------------------------------
+  setbreathmode chan1 poly_breath_mode(1/0) mono_breath_mode(1/0) mono_breath_sync(1/0)
+
+  Changes breath options for channels chan1 [chan2] ..  ..
+
+  Example:  setbreathmode  4 0 1 1
+  
+  Parameter 1 is the channel number (i.e 4).
+  Parameter 2 is the " Breath modulator " enable/disable  for poly mode (i.e disabled).
+  Parameter 3 is the " Breath modulator " enabe/disable for mono mode (i.e enabled).
+  Parameter 4 is "breath sync noteOn/Off" enable/disable for mono mode only (i.e enabled).
+
+*/
+int fluid_handle_setbreathmode(void* data, int ac, char** av, 
+								fluid_ostream_t out)
+{
+	static const char * name_cde="setbreathmode";
+	static const char *too_few_arg_breath_msg = 
+	"too few argument:\nchan 1/0(breath poly) 1/0(breath mono) 1/0(breath sync mono)[..]\n";
+
+	FLUID_ENTRY_COMMAND(data);
+	fluid_synth_t* synth = handler->synth;
+	int i,n, n_chan= synth->midi_channels;
+
+	/* checks channels arguments by group of 4:
+	chan1 val1 val2 val3   chan2 val1 val2 val3 ....  ....*/
+	if (check_channels_group_arguments(ac, av, 4, out, name_cde, too_few_arg_breath_msg) < 0)
+	{
+		return -1;
+	}
+
+	n = ac / 4; /* number of breath groups informations */
+	for (i = 0; i < n; i++)
+	{
+		int result;
+		int chan = atoi(av[(i * 4)]); 
+		int poly_breath = atoi(av[(i * 4)+1]); 
+		int mono_breath = atoi(av[(i * 4)+2]);
+		int breath_sync = atoi(av[(i * 4)+3]);
+		int breath_infos = 0;
+		/* changes  breath infos */
+		if(poly_breath) breath_infos |= FLUID_CHANNEL_BREATH_POLY;
+		if(mono_breath) breath_infos |= FLUID_CHANNEL_BREATH_MONO;
+		if(breath_sync) breath_infos |= FLUID_CHANNEL_BREATH_SYNC;
+		result = fluid_synth_set_breath_mode(synth,chan,breath_infos);
+		if (result == FLUID_FAILED)
+		{
+			print_channel_is_outside_count(out, name_cde, chan, n_chan);
+		}
+	}
+	return 0;
 }
 
 

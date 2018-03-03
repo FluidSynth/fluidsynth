@@ -1,0 +1,26 @@
+# How to change an actual basic channel ?
+# ---------------------------------------
+# Perhaps you have already set several groups of basics channels 
+# and you want change the settings of one.
+
+# Assuming following actual groups:
+# -Group 1:Basic channel:  5, poly omni off(mode 2), nbr:  1
+# -Group 2:Basic channel: 10, mono omni off(mode 3), nbr:  1
+# -Group 3:Basic channel: 13, mono omni off(mode 3), nbr:  2
+
+# Now we want to change  group 1: 
+# Group 1 should have the following settings:
+# -basic channel 5, mode poly, omni on, (mode 0) composed of 4 channels in this group.
+
+#First use the command resetbasicchannels to clear the group intended to be changed.
+resetbasicchannels 5
+
+# Then use command setbasicchannels using numbered mode:
+setbasicchannels  5  0  4
+# or Using named mode:
+# setbasicchannels  5  poly_omnion 4
+
+# Use basicchannels command to verify your settings
+basicchannels
+
+# end

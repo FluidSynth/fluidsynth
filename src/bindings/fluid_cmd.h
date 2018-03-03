@@ -91,6 +91,18 @@ int fluid_handle_prof_set_print(void *data, int ac, char** av, fluid_ostream_t o
 int fluid_handle_prof_start(void *data, int ac, char** av, fluid_ostream_t out);
 #endif
 
+int fluid_handle_basicchannels (void* data, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_resetbasicchannels (void* data, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_setbasicchannels (void* data, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_channelsmode (void* data, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_legatomode(void* data, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_setlegatomode(void* data, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_portamentomode(void* data, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_setportamentomode(void* data, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_breathmode(void* data, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_setbreathmode(void* data, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_sleep(void *data, int ac, char** av, fluid_ostream_t out);
+
 #ifdef LADSPA
 int fluid_handle_ladspa_effect(void *data, int ac, char **av, fluid_ostream_t out);
 int fluid_handle_ladspa_link(void *data, int ac, char **av, fluid_ostream_t out);
@@ -101,6 +113,7 @@ int fluid_handle_ladspa_start(void *data, int ac, char **av, fluid_ostream_t out
 int fluid_handle_ladspa_stop(void *data, int ac, char **av, fluid_ostream_t out);
 int fluid_handle_ladspa_reset(void *data, int ac, char **av, fluid_ostream_t out);
 #endif
+
 
 /**
  * Command handler function prototype.

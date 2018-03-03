@@ -70,13 +70,13 @@ void process_o_cmd_line_option(fluid_settings_t* settings, char* optarg)
   }
 
   /* did user request list of settings */
-  if (strcmp (optarg, "help") == 0)
+  if (FLUID_STRCMP (optarg, "help") == 0)
   {
     option_help = 1;
     return;
   }
 
-  if (strcmp (optarg, "") == 0) {
+  if (FLUID_STRCMP (optarg, "") == 0) {
     fprintf (stderr, "Invalid -o option (name part is empty)\n");
     return;
   }
@@ -374,7 +374,7 @@ int main(int argc, char** argv)
       else fluid_settings_setstr(settings, "audio.driver", optarg);
       break;
     case 'C':
-      if ((optarg != NULL) && ((strcmp(optarg, "0") == 0) || (strcmp(optarg, "no") == 0))) {
+      if ((optarg != NULL) && ((FLUID_STRCMP(optarg, "0") == 0) || (FLUID_STRCMP(optarg, "no") == 0))) {
 	fluid_settings_setint(settings, "synth.chorus.active", FALSE);
       } else {
 	fluid_settings_setint(settings, "synth.chorus.active", TRUE);
@@ -473,7 +473,7 @@ int main(int argc, char** argv)
       fluid_settings_setstr(settings, "midi.portname", optarg);
       break;
     case 'R':
-      if ((optarg != NULL) && ((strcmp(optarg, "0") == 0) || (strcmp(optarg, "no") == 0))) {
+      if ((optarg != NULL) && ((FLUID_STRCMP(optarg, "0") == 0) || (FLUID_STRCMP(optarg, "no") == 0))) {
 	fluid_settings_setint(settings, "synth.reverb.active", FALSE);
       } else {
 	fluid_settings_setint(settings, "synth.reverb.active", TRUE);

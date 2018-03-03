@@ -46,7 +46,6 @@
 
 #define FLUID_UNSET_PROGRAM     128     /* Program number used to unset a preset */
 
-
 /***************************************************************
  *
  *                         ENUM
@@ -136,6 +135,7 @@ struct _fluid_synth_t
   int active_voice_count;            /**< count of active voices */
   unsigned int noteid;               /**< the id is incremented for every new note. it's used for noteoff's  */
   unsigned int storeid;
+  int fromkey_portamento;			 /**< fromkey portamento */
   fluid_rvoice_eventhandler_t* eventhandler;
 
   double reverb_roomsize;             /**< Shadow of reverb roomsize */
@@ -174,13 +174,6 @@ fluid_preset_t* fluid_synth_find_preset(fluid_synth_t* synth,
 				      unsigned int banknum,
 				      unsigned int prognum);
 void fluid_synth_sfont_unref (fluid_synth_t *synth, fluid_sfont_t *sfont);
-				      
-
-int fluid_synth_all_notes_off(fluid_synth_t* synth, int chan);
-int fluid_synth_all_sounds_off(fluid_synth_t* synth, int chan);
-int fluid_synth_kill_voice(fluid_synth_t* synth, fluid_voice_t * voice);
-
-void fluid_synth_print_voice(fluid_synth_t* synth);
 
 void fluid_synth_dither_s16(int *dither_index, int len, float* lin, float* rin,
 			    void* lout, int loff, int lincr,
@@ -198,8 +191,6 @@ int fluid_synth_set_chorus_full(fluid_synth_t* synth, int set, int nr, double le
 fluid_sample_timer_t* new_fluid_sample_timer(fluid_synth_t* synth, fluid_timer_callback_t callback, void* data);
 void delete_fluid_sample_timer(fluid_synth_t* synth, fluid_sample_timer_t* timer);
 
-void fluid_synth_api_enter(fluid_synth_t* synth);
-void fluid_synth_api_exit(fluid_synth_t* synth);
 
 void fluid_synth_process_event_queue(fluid_synth_t* synth);
 
@@ -209,7 +200,19 @@ int fluid_synth_set_gen2 (fluid_synth_t* synth, int chan,
 /*
  * misc
  */
-
 void fluid_synth_settings(fluid_settings_t* settings);
 
+
+/* extern declared in fluid_synth_monopoly.c */
+
+int fluid_synth_noteon_mono_staccato(fluid_synth_t* synth,int chan,int key,int vel);
+int fluid_synth_noteon_mono_LOCAL(fluid_synth_t* synth, int chan, int key, int vel);
+int fluid_synth_noteoff_mono_LOCAL(fluid_synth_t* synth, int chan, int key);
+int fluid_synth_noteon_monopoly_legato(fluid_synth_t* synth, int chan, int fromkey, int tokey, int vel);
+int fluid_synth_noteoff_monopoly(fluid_synth_t* synth, int chan, int key, char Mono);
+
+fluid_voice_t*
+fluid_synth_alloc_voice_LOCAL(fluid_synth_t* synth, fluid_sample_t* sample, int chan, int key, int vel, fluid_zone_range_t* zone_range);
+
+void fluid_synth_release_voice_on_same_note_LOCAL(fluid_synth_t* synth, int chan, int key);
 #endif  /* _FLUID_SYNTH_H */

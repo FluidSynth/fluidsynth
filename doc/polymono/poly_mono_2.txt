@@ -1,0 +1,22 @@
+# How to add a new basic channel among others actual basic channels ?
+# -------------------------------------------------------------------
+# Perhaps you have already set several groups of basics channels and
+# you want add a new one without modifying actual groups.
+# Assuming following actual groups:
+
+# Basic channel:  5, poly omni off(mode 2), nbr:  1
+# Basic channel: 10, mono omni off(mode 3), nbr:  1
+
+# Now we want to add  a new group 3: 
+# Group 3 should have the following settings:
+# basic channel 13, mode mono, omni off, (mode 3) composed of 2 channels.
+
+# Use command setbasicchannels using numbered mode:
+setbasicchannels 13 3 2
+# or using named mode:
+# setbasicchannels 13 mono_omnioff 2
+
+Use basicchannels command to verify your settings
+basicchannels
+
+# end

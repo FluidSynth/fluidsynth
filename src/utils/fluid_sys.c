@@ -1275,7 +1275,7 @@ fluid_istream_gets (fluid_istream_t in, char* buf, int len)
  * @return Number of bytes written or -1 on error
  */
 int
-fluid_ostream_printf (fluid_ostream_t out, char* format, ...)
+fluid_ostream_printf (fluid_ostream_t out, const char* format, ...)
 {
   char buf[4096];
   va_list args;
