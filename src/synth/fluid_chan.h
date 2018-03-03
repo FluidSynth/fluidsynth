@@ -25,6 +25,50 @@
 #include "fluid_midi.h"
 #include "fluid_tuning.h"
 
+/* The mononophonic list is part of the legato detector for monophonic mode */
+/* see fluid_synth_monopoly.c about a description of the legato detector device */
+/* Size of the monophonic list 
+   - 1 is the minimum. it allows playing legato passage of any number 
+     of notes on noteon only.
+   - Size above 1 allows playing legato on noteon but also on noteOff.
+     This allows the  musician to play fast trills.
+     This feature is particularly usful when the MIDI input device is a keyboard.
+     Choosing a size of 10 is sufficient (because most musicians have only 10
+     fingers when playing a monophonic instrument).
+*/
+#define FLUID_CHANNEL_SIZE_MONOLIST  10 
+
+/* 
+
+            The monophonic list
+   +------------------------------------------------+
+   |    +----+   +----+          +----+   +----+    |
+   |    |note|   |note|          |note|   |note|    |
+   +--->|vel |-->|vel |-->....-->|vel |-->|vel |----+
+        +----+   +----+          +----+   +----+
+         /|\                      /|\
+          |                        |
+       i_first                   i_last
+ 
+ The monophonic list is a circular buffer of FLUID_CHANNEL_SIZE_MONOLIST elements.
+ Each element is linked forward at initialisation time.
+ - when a note is added at noteOn  (see fluid_channel_add_monolist()) each
+   element is use in the forward direction and indexed by i_last variable. 
+ - when a note is removed at noteOff (see fluid_channel_remove_monolist()),
+   the element concerned is fast unlinked and relinked after the i_last element.
+ 
+ The most recent note added is indexed by i_last.
+ The most ancient note added is the first note indexed by i_first. i_first is
+ moving in the forward direction in a circular manner.
+
+*/
+struct mononote
+{
+    unsigned char next; /* next note */
+    unsigned char note; /* note */
+    unsigned char vel;  /* velocity */
+};
+
 /*
  * fluid_channel_t
  *
@@ -35,7 +79,23 @@ struct _fluid_channel_t
 {
   fluid_synth_t* synth;                 /**< Parent synthesizer instance */
   int channum;                          /**< MIDI channel number */
-
+  
+  /* Poly Mono variables see macro access description */
+  int mode;								/**< Poly Mono mode */
+  int mode_val;							/**< number of channel in basic channel group */
+  /* monophonic list - legato detector */
+  struct mononote monolist[FLUID_CHANNEL_SIZE_MONOLIST];   /**< monophonic list */
+  unsigned char i_first;          /**< First note index */
+  unsigned char i_last;           /**< most recent note index since the most recent add */
+  unsigned char prev_note;        /**< previous note of the most recent add/remove */
+  unsigned char n_notes;          /**< actual number of notes in the list */
+  /*--*/
+  int key_mono_sustained;         /**< previous sustained monophonic note */
+  enum fluid_channel_legato_mode legatomode;       /**< legato mode */
+  enum fluid_channel_portamento_mode portamentomode;   /**< portamento mode */
+  int previous_cc_breath;		  /**< Previous Breath */
+  /*- End of Poly/mono variables description */
+  
   int sfont_bank_prog;                  /**< SoundFont ID (bit 21-31), bank (bit 7-20), program (bit 0-6) */
   fluid_preset_t* preset;               /**< Selected preset */
 
@@ -136,6 +196,12 @@ int fluid_channel_get_interp_method(fluid_channel_t* chan);
   ((chan)->tuning_prog)
 #define fluid_channel_set_tuning_prog(chan, prog) \
   ((chan)->tuning_prog = (prog))
+#define fluid_channel_portamentotime(_c) \
+    ((_c)->cc[PORTAMENTO_TIME_MSB] * 128 + (_c)->cc[PORTAMENTO_TIME_LSB])
+#define fluid_channel_portamento(_c)			((_c)->cc[PORTAMENTO_SWITCH] >= 64)
+#define fluid_channel_breath_msb(_c)			((_c)->cc[BREATH_MSB] > 0)
+#define fluid_channel_clear_portamento(_c)		((_c)->cc[PORTAMENTO_CTRL] = INVALID_NOTE)
+#define fluid_channel_legato(_c)			    ((_c)->cc[LEGATO_SWITCH] >= 64)
 #define fluid_channel_sustained(_c)             ((_c)->cc[SUSTAIN_SWITCH] >= 64)
 #define fluid_channel_sostenuto(_c)             ((_c)->cc[SOSTENUTO_SWITCH] >= 64)
 #define fluid_channel_set_gen(_c, _n, _v, _a)   { (_c)->gen[_n] = _v; (_c)->gen_abs[_n] = _a; }
@@ -143,5 +209,84 @@ int fluid_channel_get_interp_method(fluid_channel_t* chan);
 #define fluid_channel_get_gen_abs(_c, _n)       ((_c)->gen_abs[_n])
 #define fluid_channel_get_min_note_length_ticks(chan) \
   ((chan)->synth->min_note_length_ticks)
+
+/* Macros interface to poly/mono mode variables */
+#define MASK_BASICCHANINFOS  (FLUID_CHANNEL_MODE_MASK|FLUID_CHANNEL_BASIC|FLUID_CHANNEL_ENABLED)
+/* Set the basic channel infos for a MIDI basic channel */
+#define fluid_channel_set_basic_channel_info(chan,Infos) \
+    (chan->mode = (chan->mode & ~MASK_BASICCHANINFOS) | (Infos & MASK_BASICCHANINFOS))
+/* Reset the basic channel infos for a MIDI basic channel */
+#define fluid_channel_reset_basic_channel_info(chan) (chan->mode &=  ~MASK_BASICCHANINFOS)
+
+/* Macros interface to breath variables */
+#define FLUID_CHANNEL_BREATH_MASK  (FLUID_CHANNEL_BREATH_POLY|FLUID_CHANNEL_BREATH_MONO|FLUID_CHANNEL_BREATH_SYNC)
+/* Set the breath infos for a MIDI  channel */
+#define fluid_channel_set_breath_info(chan,BreathInfos) \
+(chan->mode = (chan->mode & ~FLUID_CHANNEL_BREATH_MASK) | (BreathInfos & FLUID_CHANNEL_BREATH_MASK))
+/* Get the breath infos for a MIDI  channel */
+#define fluid_channel_get_breath_info(chan) (chan->mode & FLUID_CHANNEL_BREATH_MASK)
+
+/* Returns true when channel is mono or legato is on */
+#define fluid_channel_is_playing_mono(chan) ((chan->mode & FLUID_CHANNEL_POLY_OFF) ||\
+                                             fluid_channel_legato(chan))
+
+/* Macros interface to monophonic list variables */
+#define INVALID_NOTE 255
+/* Returns true when a note is a valid note */
+#define fluid_channel_is_valid_note(n)    (n != INVALID_NOTE)
+/* Marks prev_note as invalid. */
+#define fluid_channel_clear_prev_note(chan)	(chan->prev_note = INVALID_NOTE)
+
+/* Returns the most recent note from i_last entry of the monophonic list */
+#define fluid_channel_last_note(chan)	(chan->monolist[chan->i_last].note)
+
+/* Returns the most recent velocity from i_last entry of the monophonic list */
+#define fluid_channel_last_vel(chan)	(chan->monolist[chan->i_last].vel)
+
+/* 
+  prev_note is used to determine fromkey_portamento as well as 
+  fromkey_legato (see fluid_synth_get_fromkey_portamento_legato()).
+
+  prev_note is updated on noteOn/noteOff mono by the legato detector as this:
+  - On noteOn mono, before adding a new note into the monolist,the most
+    recent  note in the list (i.e at i_last position) is kept in prev_note.
+  - Similarly, on  noteOff mono , before removing a note out of the monolist, 
+    the most recent note (i.e those at i_last position) is kept in prev_note.
+*/
+#define fluid_channel_prev_note(chan)	(chan->prev_note)
+
+/* Interface to poly/mono mode variables */
+enum fluid_channel_mode_flags_internal
+{
+    FLUID_CHANNEL_BASIC = 0x04,    /**< if flag set the corresponding midi channel is a basic channel */
+    FLUID_CHANNEL_ENABLED = 0x08,  /**< if flag set the corresponding midi channel is enabled, else disabled, i.e. channel ignores any MIDI messages */
+    
+/* 
+  FLUID_CHANNEL_LEGATO_PLAYING bit of channel mode keeps trace of the legato /staccato 
+  state playing.
+  FLUID_CHANNEL_LEGATO_PLAYING bit is updated on noteOn/noteOff mono by the legato detector:
+  - On noteOn, before inserting a new note into the monolist.
+  - On noteOff, after removing a note out of the monolist.
+
+  - On noteOn, this state is used by fluid_synth_noteon_mono_LOCAL()
+  to play the current  note legato or staccato.
+  - On noteOff, this state is used by fluid_synth_noteoff_mono_LOCAL()
+  to play the current noteOff legato with the most recent note.
+*/
+/* bit7, 1: means legato playing , 0: means staccato playing */
+    FLUID_CHANNEL_LEGATO_PLAYING = 0x80
+};
+
+/* End of interface to monophonic list variables */
+
+void fluid_channel_add_monolist(fluid_channel_t* chan, unsigned char key, unsigned char vel, unsigned char onenote);
+int fluid_channel_search_monolist(fluid_channel_t* chan, unsigned char key , int * i_prev);
+void fluid_channel_remove_monolist(fluid_channel_t* chan, int i, int * i_prev);
+void fluid_channel_clear_monolist(fluid_channel_t* chan);
+void fluid_channel_set_onenote_monolist(fluid_channel_t* chan, unsigned char key, unsigned char vel);
+void fluid_channel_invalid_prev_note_staccato(fluid_channel_t* chan);
+void fluid_channel_cc_legato(fluid_channel_t* chan, int value);
+void fluid_channel_cc_breath_note_on_off(fluid_channel_t* chan, int value);
+
 
 #endif /* _FLUID_CHAN_H */

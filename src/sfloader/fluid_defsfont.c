@@ -25,6 +25,7 @@
 #include "fluid_defsfont.h"
 #include "fluid_sfont.h"
 #include "fluid_sys.h"
+#include "fluid_synth.h"
 
 #if LIBSNDFILE_SUPPORT
 #include <sndfile.h>
@@ -52,7 +53,7 @@
  */
 fluid_sfloader_t* new_fluid_defsfloader(fluid_settings_t* settings)
 {
-  fluid_sfloader_t* loader;  
+  fluid_sfloader_t* loader;
   fluid_return_val_if_fail(settings != NULL, NULL);
 
   loader = new_fluid_sfloader(fluid_defsfloader_load, delete_fluid_sfloader);
@@ -64,7 +65,7 @@ fluid_sfloader_t* new_fluid_defsfloader(fluid_settings_t* settings)
   }
 
   fluid_sfloader_set_data(loader, settings);
-  
+
   return loader;
 }
 
@@ -91,7 +92,7 @@ fluid_sfont_t* fluid_defsfloader_load(fluid_sfloader_t* loader, const char* file
   {
     return NULL;
   }
-  
+
   fluid_sfont_set_iteration_start(sfont, fluid_defsfont_sfont_iteration_start);
   fluid_sfont_set_iteration_next(sfont, fluid_defsfont_sfont_iteration_next);
   fluid_sfont_set_data(sfont, defsfont);
@@ -274,7 +275,7 @@ static int fluid_cached_sampledata_load(char *filename,
   }
 
   for (cached_sampledata = all_cached_sampledata; cached_sampledata; cached_sampledata = cached_sampledata->next) {
-    if (strcmp(filename, cached_sampledata->filename))
+    if (FLUID_STRCMP(filename, cached_sampledata->filename))
       continue;
     if (cached_sampledata->modification_time != modification_time)
       continue;
@@ -854,7 +855,7 @@ fluid_defpreset_noteon(fluid_defpreset_t* preset, fluid_synth_t* synth, int chan
 
     /* check if the note falls into the key and velocity range of this
        preset */
-    if (fluid_preset_zone_inside_range(preset_zone, key, vel)) {
+    if (fluid_zone_inside_range(&preset_zone->range, key, vel)) {
 
       inst = fluid_preset_zone_get_inst(preset_zone);
       global_inst_zone = fluid_inst_get_global_zone(inst);
@@ -862,7 +863,6 @@ fluid_defpreset_noteon(fluid_defpreset_t* preset, fluid_synth_t* synth, int chan
       /* run thru all the zones of this instrument */
       inst_zone = fluid_inst_get_zone(inst);
 	  while (inst_zone != NULL) {
-
 	/* make sure this instrument zone has a valid sample */
 	sample = fluid_inst_zone_get_sample(inst_zone);
 	if ((sample == NULL) || fluid_sample_in_rom(sample)) {
@@ -870,15 +870,14 @@ fluid_defpreset_noteon(fluid_defpreset_t* preset, fluid_synth_t* synth, int chan
 	  continue;
 	}
 
-	/* check if the note falls into the key and velocity range of this
-	   instrument */
+	/* check if the instrument zone is ignored and the note falls into
+	   the key and velocity range of this  instrument zone.
+	   An instrument zone must be ignored when its voice is already running
+	   played by a legato passage (see fluid_synth_noteon_monopoly_legato()) */
+	if (fluid_zone_inside_range(&inst_zone->range, key, vel)) {
 
-	if (fluid_inst_zone_inside_range(inst_zone, key, vel) && (sample != NULL)) {
-
-	  /* this is a good zone. allocate a new synthesis process and
-             initialize it */
-
-	  voice = fluid_synth_alloc_voice(synth, sample, chan, key, vel);
+	  /* this is a good zone. allocate a new synthesis process and initialize it */
+	  voice = fluid_synth_alloc_voice_LOCAL(synth, sample, chan, key, vel, &inst_zone->range);
 	  if (voice == NULL) {
 	    return FLUID_FAILED;
 	  }
@@ -1144,6 +1143,11 @@ fluid_defpreset_get_global_zone(fluid_defpreset_t* preset)
   return preset->global_zone;
 }
 
+/***************************************************************
+ *
+ *                           PRESET_ZONE
+ */
+
 /*
  * fluid_preset_zone_next
  */
@@ -1176,10 +1180,11 @@ new_fluid_preset_zone(char *name)
   }
   FLUID_STRCPY(zone->name, name);
   zone->inst = NULL;
-  zone->keylo = 0;
-  zone->keyhi = 128;
-  zone->vello = 0;
-  zone->velhi = 128;
+  zone->range.keylo = 0;
+  zone->range.keyhi = 128;
+  zone->range.vello = 0;
+  zone->range.velhi = 128;
+  zone->range.ignore = FALSE; 
 
   /* Flag all generators as unused (default, they will be set when they are found
    * in the sound font).
@@ -1188,11 +1193,6 @@ new_fluid_preset_zone(char *name)
   zone->mod = NULL; /* list of modulators */
   return zone;
 }
-
-/***************************************************************
- *
- *                           PRESET_ZONE
- */
 
 /*
  * delete_fluid_preset_zone
@@ -1230,12 +1230,12 @@ fluid_preset_zone_import_sfont(fluid_preset_zone_t* zone, SFZone *sfzone, fluid_
     sfgen = (SFGen *) r->data;
     switch (sfgen->id) {
     case GEN_KEYRANGE:
-      zone->keylo = (int) sfgen->amount.range.lo;
-      zone->keyhi = (int) sfgen->amount.range.hi;
+      zone->range.keylo = sfgen->amount.range.lo;
+      zone->range.keyhi = sfgen->amount.range.hi;
       break;
     case GEN_VELRANGE:
-      zone->vello = (int) sfgen->amount.range.lo;
-      zone->velhi = (int) sfgen->amount.range.hi;
+      zone->range.vello = sfgen->amount.range.lo;
+      zone->range.velhi = sfgen->amount.range.hi;
       break;
     case GEN_ATTENUATION:
       /* EMU8k/10k hardware applies a scale factor to initial attenuation generator values set at
@@ -1257,7 +1257,8 @@ fluid_preset_zone_import_sfont(fluid_preset_zone_t* zone, SFZone *sfzone, fluid_
       FLUID_LOG(FLUID_ERR, "Out of memory");
       return FLUID_FAILED;
     }
-    if (fluid_inst_import_sfont(zone->inst, (SFInst *) sfzone->instsamp->data, sfont) != FLUID_OK) {
+    if (fluid_inst_import_sfont(zone, zone->inst, 
+							(SFInst *) sfzone->instsamp->data, sfont) != FLUID_OK) {
       return FLUID_FAILED;
     }
   }
@@ -1404,17 +1405,6 @@ fluid_preset_zone_get_inst(fluid_preset_zone_t* zone)
   return zone->inst;
 }
 
-/*
- * fluid_preset_zone_inside_range
- */
-int
-fluid_preset_zone_inside_range(fluid_preset_zone_t* zone, int key, int vel)
-{
-  return ((zone->keylo <= key) &&
-	  (zone->keyhi >= key) &&
-	  (zone->vello <= vel) &&
-	  (zone->velhi >= vel));
-}
 
 /***************************************************************
  *
@@ -1474,7 +1464,8 @@ fluid_inst_set_global_zone(fluid_inst_t* inst, fluid_inst_zone_t* zone)
  * fluid_inst_import_sfont
  */
 int
-fluid_inst_import_sfont(fluid_inst_t* inst, SFInst *sfinst, fluid_defsfont_t* sfont)
+fluid_inst_import_sfont(fluid_preset_zone_t* zonePZ, fluid_inst_t* inst, 
+						SFInst *sfinst, fluid_defsfont_t* sfont)
 {
   fluid_list_t *p;
   SFZone* sfzone;
@@ -1500,7 +1491,7 @@ fluid_inst_import_sfont(fluid_inst_t* inst, SFInst *sfinst, fluid_defsfont_t* sf
       return FLUID_FAILED;
     }
 
-    if (fluid_inst_zone_import_sfont(zone, sfzone, sfont) != FLUID_OK) {
+    if (fluid_inst_zone_import_sfont(zonePZ,zone, sfzone, sfont) != FLUID_OK) {
       delete_fluid_inst_zone(zone);
       return FLUID_FAILED;
     }
@@ -1580,11 +1571,11 @@ new_fluid_inst_zone(char* name)
   }
   FLUID_STRCPY(zone->name, name);
   zone->sample = NULL;
-  zone->keylo = 0;
-  zone->keyhi = 128;
-  zone->vello = 0;
-  zone->velhi = 128;
-
+  zone->range.keylo = 0;
+  zone->range.keyhi = 128;
+  zone->range.vello = 0;
+  zone->range.velhi = 128;
+  zone->range.ignore = FALSE;
   /* Flag the generators as unused.
    * This also sets the generator values to default, but they will be overwritten anyway, if used.*/
   fluid_gen_set_default_values(&zone->gen[0]);
@@ -1627,7 +1618,8 @@ fluid_inst_zone_next(fluid_inst_zone_t* zone)
  * fluid_inst_zone_import_sfont
  */
 int
-fluid_inst_zone_import_sfont(fluid_inst_zone_t* zone, SFZone *sfzone, fluid_defsfont_t* sfont)
+fluid_inst_zone_import_sfont(fluid_preset_zone_t* preset_zone, fluid_inst_zone_t* zone,
+							 SFZone *sfzone, fluid_defsfont_t* sfont)
 {
   fluid_list_t *r;
   SFGen* sfgen;
@@ -1637,12 +1629,12 @@ fluid_inst_zone_import_sfont(fluid_inst_zone_t* zone, SFZone *sfzone, fluid_defs
     sfgen = (SFGen *) r->data;
     switch (sfgen->id) {
     case GEN_KEYRANGE:
-      zone->keylo = (int) sfgen->amount.range.lo;
-      zone->keyhi = (int) sfgen->amount.range.hi;
+      zone->range.keylo = sfgen->amount.range.lo;
+      zone->range.keyhi = sfgen->amount.range.hi;
       break;
     case GEN_VELRANGE:
-      zone->vello = (int) sfgen->amount.range.lo;
-      zone->velhi = (int) sfgen->amount.range.hi;
+      zone->range.vello = sfgen->amount.range.lo;
+      zone->range.velhi = sfgen->amount.range.hi;
       break;
     case GEN_ATTENUATION:
       /* EMU8k/10k hardware applies a scale factor to initial attenuation generator values set at
@@ -1659,6 +1651,13 @@ fluid_inst_zone_import_sfont(fluid_inst_zone_t* zone, SFZone *sfzone, fluid_defs
     }
     r = fluid_list_next(r);
   }
+  
+  /* adjust instrument zone keyrange to integrate preset zone keyrange */
+  if (preset_zone->range.keylo > zone->range.keylo) zone->range.keylo = preset_zone->range.keylo;
+  if (preset_zone->range.keyhi < zone->range.keyhi) zone->range.keyhi = preset_zone->range.keyhi;
+  /* adjust instrument zone to integrate  preset zone velrange */
+  if (preset_zone->range.vello > zone->range.vello) zone->range.vello = preset_zone->range.vello;
+  if (preset_zone->range.velhi < zone->range.velhi) zone->range.velhi = preset_zone->range.velhi;
 
   /* FIXME */
 /*    if (zone->gen[GEN_EXCLUSIVECLASS].flags == GEN_SET) { */
@@ -1808,16 +1807,20 @@ fluid_inst_zone_get_sample(fluid_inst_zone_t* zone)
   return zone->sample;
 }
 
-/*
- * fluid_inst_zone_inside_range
- */
+
 int
-fluid_inst_zone_inside_range(fluid_inst_zone_t* zone, int key, int vel)
+fluid_zone_inside_range(fluid_zone_range_t* range, int key, int vel)
 {
-  return ((zone->keylo <= key) &&
-	  (zone->keyhi >= key) &&
-	  (zone->vello <= vel) &&
-	  (zone->velhi >= vel));
+    /* ignoreInstrumentZone is set in mono legato playing */
+    int ignore_zone = range->ignore;
+    
+    /* Reset the 'ignore' request */
+    range->ignore = FALSE;
+    
+  return !ignore_zone && ((range->keylo <= key) &&
+	  (range->keyhi >= key) &&
+	  (range->vello <= vel) &&
+	  (range->velhi >= vel));
 }
 
 /***************************************************************
