@@ -118,6 +118,11 @@ Changes in FluidSynth 2.0.0 concerning developers:
 - complete rewrite of the soundfont loader API, see sfont.h
   - support for 24 bit audio samples, see fluid_sample_set_sound_data()
   - expose new_fluid_defsfloader() to support loading soundfonts from memory, see fluid_sfloader_set_callbacks() and <a href="fluidsynth_sfload_mem_8c-example.html">fluidsynth_sfload_mem.c</a>
+  - remove these structs from the public API and provide proper getter and setter functions instead:
+    - struct _fluid_sfloader_t
+    - struct _fluid_sample_t
+    - struct _fluid_sfont_t
+    - struct _fluid_preset_t
 - add an additional general-purpose IIR filter, see fluid_synth_set_custom_filter()
 - add a custom sinusoidal modulator mapping function, see #FLUID_MOD_SIN
 
