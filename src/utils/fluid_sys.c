@@ -573,8 +573,7 @@ fluid_profile_data_t fluid_profile_data[] =
   {"synth_one_block:reverb --->", 1e10, 0.0, 0.0, 0},
   {"synth_one_block:chorus --->", 1e10, 0.0, 0.0, 0},
   {"voice:note --------------->", 1e10, 0.0, 0.0, 0},
-  {"voice:release ------------>", 1e10, 0.0, 0.0, 0},
-  {"last"                       ,1e100, 0.0, 0.0, 0}
+  {"voice:release ------------>", 1e10, 0.0, 0.0, 0}
 };
 
 
@@ -590,7 +589,7 @@ void fluid_profiling_print(void)
 
 	FLUID_LOG(FLUID_INFO, "Estimated times: min/avg/max (micro seconds)");
 
-	for (i = 0; i < FLUID_PROF_LAST; i++)
+	for (i = 0; i < FLUID_PROFILE_NBR; i++)
 	{
 		if (fluid_profile_data[i].count > 0)
 		{
@@ -753,7 +752,7 @@ void fluid_profiling_print_data(double sample_rate, fluid_ostream_t out)
 		fluid_ostream_printf(out,
 		" ---------------------------|------|--------------------------------|----------\n");
 
-		for (i = 0; i < FLUID_PROF_LAST; i++)
+		for (i = 0; i < FLUID_PROFILE_NBR; i++)
 		{
 			unsigned int count = fluid_profile_data[i].count;
 			if (count > 0)
@@ -900,7 +899,7 @@ void fluid_profile_start_stop(unsigned int end_ticks, short clear_data)
 			short i;
 			fluid_profile_end_ticks = end_ticks;
 			/* Clears profile data */
-			if (clear_data == 0)	for (i = 0; i < FLUID_PROF_LAST; i++)
+			if (clear_data == 0)	for (i = 0; i < FLUID_PROFILE_NBR; i++)
 			{
 				fluid_profile_data[i].min = 1e10;/* min sets to max value */	
 				fluid_profile_data[i].max = 0;   /* maximum sets to min value */

@@ -473,7 +473,7 @@ extern fluid_profile_data_t fluid_profile_data[]; /* Profiling data */
 #define fluid_profile_ref_var(name)     double name = fluid_utime()
 
 /**
- * Profile numbers. List all the pieces of code you want to profile
+ * Profile identifier numbers. List all the pieces of code you want to profile
  * here. Be sure to add an entry in the fluid_profile_data table in
  * fluid_sys.c
  */
@@ -488,7 +488,7 @@ enum
 	FLUID_PROF_ONE_BLOCK_CHORUS,
 	FLUID_PROF_VOICE_NOTE,
 	FLUID_PROF_VOICE_RELEASE,
-	FLUID_PROF_LAST
+	FLUID_PROFILE_NBR	/* number of profile probes */
 };
 /** Those macros are used to calculate the min/avg/max. Needs a profile number, a
     time reference, the voices and samples number. */
