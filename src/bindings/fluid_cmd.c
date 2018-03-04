@@ -3368,7 +3368,7 @@ fluid_handle_prof_start(void *data, int ac, char** av, fluid_ostream_t out)
 		/* checks if the measurement has been cancelled */
 		else if( status == PROFILE_CANCELED || status == PROFILE_STOP )
 		{
-			fluid_ostream_printf(out, "Profiling cancelled. ");
+			fluid_ostream_printf(out, "Profiling cancelled.\n");
 			break; /* cancel the command */
 		}
 	}
