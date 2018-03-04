@@ -3016,7 +3016,7 @@ int fluid_handle_ladspa_link(void* data, int ac, char **av, fluid_ostream_t out)
 */
 static int fluid_profile_lock_command(fluid_ostream_t out)
 {
-	if(! fluid_atomic_int_compare_and_exchange(&fluid_profile_lock,0,1))
+	if (! fluid_atomic_int_compare_and_exchange(&fluid_profile_lock,0,1))
 	{
 		fluid_ostream_printf(out,
 		                    "profile command in use in another shell. Try later!\n");
@@ -3046,7 +3046,7 @@ fluid_handle_profile(void* data, int ac, char** av, fluid_ostream_t out)
 {
 	/* locks to prevent simultaneous changes by an other shell  */
 	/* (may be a server shell (tcp)) */
-	if( fluid_profile_lock_command(out) == FLUID_FAILED)
+	if ( fluid_profile_lock_command(out) == FLUID_FAILED )
 	{
 		return -1;
 	}
@@ -3078,13 +3078,13 @@ fluid_handle_prof_set_notes(void* data, int ac, char** av, fluid_ostream_t out)
 	unsigned char bank, prog;  /* previous parameters */
 	int r; /* return */
 	/* locks to prevent simultaneous changes by an other shell  */
-	if( fluid_profile_lock_command(out) == FLUID_FAILED)
+	if( fluid_profile_lock_command(out) == FLUID_FAILED )
 	{
 		return -1;
 	}
 
 	/* checks parameters */
-	if (ac <1 )
+	if ( ac < 1 )
 	{
 		fluid_ostream_printf(out, "profile_notes: too few arguments\n");
 		fluid_profile_unlock_command();
@@ -3095,14 +3095,16 @@ fluid_handle_prof_set_notes(void* data, int ac, char** av, fluid_ostream_t out)
 	nbr = fluid_profile_notes, bank = fluid_profile_bank;
 	prog = fluid_profile_prog;
 
-	if(r = fluid_is_number(av[0]))
+	r = fluid_is_number(av[0]);
+	if ( r )
 	{ /* checks nbr */
 		nbr= atoi(av[0]);	/* get nbr parameter */
-		if (ac >= 2 )
-		{ /* [bank prog] optional */
-			if (ac >= 3)
+		if ( ac >= 2 )
+		{ /* [bank prog] are optional */
+			if ( ac >= 3 )
 			{
-				if( r = fluid_is_number(av[1]) && fluid_is_number(av[2]))
+				r = fluid_is_number(av[1]) && fluid_is_number(av[2]);
+				if( r )
 				{
 					bank= atoi(av[1]);	/* get bank parameter */
 					prog= atoi(av[2]);	/* get prog parameter */
@@ -3117,7 +3119,7 @@ fluid_handle_prof_set_notes(void* data, int ac, char** av, fluid_ostream_t out)
 		}
 	}
 
-	if (!r)
+	if ( !r )
 	{
 		fluid_ostream_printf(out, "profile_set_notes: invalid argument\n");
 		fluid_profile_unlock_command();
@@ -3145,13 +3147,13 @@ fluid_handle_prof_set_print(void* data, int ac, char** av, fluid_ostream_t out)
 {
 	int r;
 	/* locks to prevent simultaneous changes by an other shell  */
-	if( fluid_profile_lock_command(out) == FLUID_FAILED)
+	if ( fluid_profile_lock_command(out) == FLUID_FAILED )
 	{
 		return -1;
 	}
 
 	/* checks parameters */
-	if (ac <1 )
+	if ( ac < 1 )
 	{
 		fluid_ostream_printf(out, "profile_set_print: too few arguments\n");
 		fluid_profile_unlock_command();
@@ -3159,7 +3161,7 @@ fluid_handle_prof_set_print(void* data, int ac, char** av, fluid_ostream_t out)
 	}
 
 	/* gets parameters */
-	if(fluid_is_number(av[0]))
+	if ( fluid_is_number(av[0]) )
 	{	/* checks and gets mode */
 		fluid_profile_print =  atoi(av[0]);	/* gets and saves mode parameter */
 		r = 0;
@@ -3199,7 +3201,7 @@ static unsigned short fluid_profile_send_notes(fluid_synth_t* synth, int notes,
 
 	for (n = 0 , key = FLUID_PROFILE_LAST_KEY+1, chan = -1; n < notes; n++, key++)
 	{
-		if (key > FLUID_PROFILE_LAST_KEY)
+		if ( key > FLUID_PROFILE_LAST_KEY )
 		{	/* next channel */
 			chan++;
 			if (chan >= n_chan) break; /* stops generation */
@@ -3210,7 +3212,7 @@ static unsigned short fluid_profile_send_notes(fluid_synth_t* synth, int notes,
 		}
 		fluid_synth_noteon(synth, chan, key, FLUID_PROFILE_DEFAULT_VEL);
 		n_actives = fluid_synth_get_active_voice_count(synth); /* running voices */
-		if (n_actives >= n_voices)
+		if ( n_actives >= n_voices )
 		{
 			fluid_ostream_printf(out,"max polyphony reached:%d, ", n_voices);
 			break;  /* stops generation */
@@ -3248,7 +3250,7 @@ fluid_handle_prof_start(void *data, int ac, char** av, fluid_ostream_t out)
 	int r = 1;	/* result */
 
 	/* locks to prevent simultaneous command by an other shell */
-	if( fluid_profile_lock_command(out) == FLUID_FAILED)
+	if ( fluid_profile_lock_command(out) == FLUID_FAILED)
 	{
 		return -1;
 	}
@@ -3257,15 +3259,23 @@ fluid_handle_prof_start(void *data, int ac, char** av, fluid_ostream_t out)
 	n_prof = fluid_profile_n_prof;  /* number of measuses */
 	dur = fluid_profile_dur;        /* duration of one measure (ms) */
 	/* check parameters */
-	if (ac >= 1  && (r = fluid_is_number(av[0])))
+	if (ac >= 1 )
 	{
-		n_prof= atoi(av[0]);	/* get n_prof parameter */
-		if (ac >=2 &&  (r = fluid_is_number(av[1])))
+		r = fluid_is_number(av[0]);
+		if (r)
 		{
-			dur = atoi(av[1]);/* get dur parameter */
+			n_prof= atoi(av[0]);	/* get n_prof parameter */
+			if (ac >= 2 )
+			{
+				r = fluid_is_number(av[1]);
+				if (r)
+				{
+					dur = atoi(av[1]);/* get dur parameter */
+				}
+			}
 		}
 	}
-	if (!r || n_prof < 1 || dur < 1)
+	if ( !r || n_prof < 1 || dur < 1 )
 	{
 		fluid_ostream_printf(out, "profile_start: invalid argument\n");
 		fluid_profile_unlock_command();
@@ -3280,7 +3290,8 @@ fluid_handle_prof_start(void *data, int ac, char** av, fluid_ostream_t out)
 	gain = fluid_synth_get_gain(synth);
 
 	/* Generate notes if any */
-	if (notes =  fluid_profile_notes)
+	notes =  fluid_profile_notes;
+	if (notes )
 	{
 		/* checks if the synth is playing */
 		/* Warn the user */
@@ -3311,7 +3322,7 @@ fluid_handle_prof_start(void *data, int ac, char** av, fluid_ostream_t out)
 	fluid_profile_is_cancel_req();
 
 	total_dur = rem_dur = n_prof * dur;
-	for (n = 0 ; n < n_prof; rem_dur -= dur, n++)
+	for ( n = 0 ; n < n_prof; rem_dur -= dur, n++ )
 	{
 		unsigned int end_ticks;/* ending position (in ticks) */
 		unsigned int tm, ts, rm, rs;
@@ -3340,11 +3351,13 @@ fluid_handle_prof_start(void *data, int ac, char** av, fluid_ostream_t out)
 		fluid_profile_start_stop(end_ticks, n);
 
 		/* waits while running */
-		while ((status = fluid_profile_get_status()) == PROFILE_RUNNING)
+		do
 		{
 			/* passive waiting */
 			fluid_msleep(500); /* wait 500 ms */
+			status = fluid_profile_get_status();
 		}
+		while ( status  == PROFILE_RUNNING );
 
 		/* checks if data are ready */
 		if( status == PROFILE_READY)
@@ -3353,7 +3366,7 @@ fluid_handle_prof_start(void *data, int ac, char** av, fluid_ostream_t out)
 			fluid_profiling_print_data(synth->sample_rate,out);
 		}
 		/* checks if the measurement has been cancelled */
-		else if( status == PROFILE_CANCELED || status == PROFILE_STOP)
+		else if( status == PROFILE_CANCELED || status == PROFILE_STOP )
 		{
 			fluid_ostream_printf(out, "Profiling cancelled. ");
 			break; /* cancel the command */
@@ -3361,15 +3374,17 @@ fluid_handle_prof_start(void *data, int ac, char** av, fluid_ostream_t out)
 	}
 
 	/* Stops voices if any had been generated */
-	if (n_actives)
+	if ( n_actives )
 	{
 		fluid_ostream_printf(out, "Stopping %d voices...", n_actives);
 		fluid_synth_system_reset(synth);
 		/* waits until all voices become inactives */
-		while (n_actives = fluid_synth_get_active_voice_count(synth))
+		do
 		{
-			fluid_msleep(10); /* wait 10 ms */
+			fluid_msleep( 10 ); /* wait 10 ms */
+			n_actives = fluid_synth_get_active_voice_count(synth);
 		}
+		while ( n_actives );
 		fluid_ostream_printf(out, "voices stopped.\n");
 	}
 
