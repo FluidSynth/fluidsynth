@@ -391,7 +391,7 @@ fluid_utime (void)
 	LARGE_INTEGER PerfCpt;
 	QueryPerformanceFrequency(&Freq);  /* Frequency value */
 	QueryPerformanceCounter(&PerfCpt); /* Counter value */
-	return PerfCpt.QuadPart * 1000000.0/Freq.QuadPart; // time in micros
+	return PerfCpt.QuadPart * 1000000.0/Freq.QuadPart; /* time in micros */
 #else
   GTimeVal timeval;
 

@@ -120,7 +120,7 @@ fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t* mixer)
 				  &mixer->buffers.fx_right_buf[SYNTH_REVERB_CHANNEL][i]);
     }
     fluid_profile(FLUID_PROF_ONE_BLOCK_REVERB, prof_ref,0,
-					mixer->current_blockcount * FLUID_BUFSIZE);
+	              mixer->current_blockcount * FLUID_BUFSIZE);
   }
   
   if (mixer->fx.with_chorus) {
@@ -139,7 +139,7 @@ fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t* mixer)
 				&mixer->buffers.fx_right_buf[SYNTH_CHORUS_CHANNEL][i]);
     }
     fluid_profile(FLUID_PROF_ONE_BLOCK_CHORUS, prof_ref,0,
-					mixer->current_blockcount * FLUID_BUFSIZE);
+	              mixer->current_blockcount * FLUID_BUFSIZE);
   }
   
 #ifdef LADSPA
@@ -402,7 +402,7 @@ fluid_render_loop_singlethread(fluid_rvoice_mixer_t* mixer)
     fluid_mixer_buffers_render_one(&mixer->buffers, mixer->rvoices[i], bufs, 
 				   bufcount);
     fluid_profile(FLUID_PROF_ONE_BLOCK_VOICE, prof_ref,1,
-					mixer->current_blockcount * FLUID_BUFSIZE);
+	              mixer->current_blockcount * FLUID_BUFSIZE);
   }
 }
 
@@ -878,7 +878,7 @@ fluid_render_loop_multithread(fluid_rvoice_mixer_t* mixer)
       fluid_profile_ref_var(prof_ref);
       fluid_mixer_buffers_render_one(&mixer->buffers, rvoice, bufs, bufcount);
       fluid_profile(FLUID_PROF_ONE_BLOCK_VOICE, prof_ref,1,
-					mixer->current_blockcount * FLUID_BUFSIZE);
+                    mixer->current_blockcount * FLUID_BUFSIZE);
       //test++;
     }
     else {
@@ -978,7 +978,7 @@ fluid_rvoice_mixer_render(fluid_rvoice_mixer_t* mixer, int blockcount)
   // Zero buffers
   fluid_mixer_buffers_zero(&mixer->buffers);
   fluid_profile(FLUID_PROF_ONE_BLOCK_CLEAR, prof_ref, mixer->active_voices,
-				mixer->current_blockcount * FLUID_BUFSIZE);
+                mixer->current_blockcount * FLUID_BUFSIZE);
   
 #ifdef ENABLE_MIXER_THREADS
   if (mixer->thread_count > 0)
@@ -987,7 +987,7 @@ fluid_rvoice_mixer_render(fluid_rvoice_mixer_t* mixer, int blockcount)
 #endif
     fluid_render_loop_singlethread(mixer);
   fluid_profile(FLUID_PROF_ONE_BLOCK_VOICES, prof_ref, mixer->active_voices,
-				mixer->current_blockcount * FLUID_BUFSIZE);
+                mixer->current_blockcount * FLUID_BUFSIZE);
     
 
   // Process reverb & chorus

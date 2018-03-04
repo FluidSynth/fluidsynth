@@ -1285,7 +1285,7 @@ fluid_voice_noteoff(fluid_voice_t* voice)
 {
   fluid_channel_t* channel;
 
-  fluid_profile(FLUID_PROF_VOICE_NOTE, voice->ref,0,0);
+  fluid_profile(FLUID_PROF_VOICE_NOTE, voice->ref, 0, 0);
 
   channel = voice->channel;
 
@@ -1376,7 +1376,7 @@ void fluid_voice_off(fluid_voice_t* voice)
 void
 fluid_voice_stop(fluid_voice_t* voice)
 {
-  fluid_profile(FLUID_PROF_VOICE_RELEASE, voice->ref,0,0);
+  fluid_profile(FLUID_PROF_VOICE_RELEASE, voice->ref, 0, 0);
 
   voice->chan = NO_CHANNEL;
   
