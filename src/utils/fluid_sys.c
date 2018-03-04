@@ -529,7 +529,7 @@ void fluid_clear_fpe_i386 (void)
 
 #if WITH_PROFILING
 /* Profiling interface beetween profiling command shell and audio rendering API
-  (FluidProfile.pdf- 3.2.2).
+  (FluidProfile_0004.pdf- 3.2.2).
   Macros are in defined in fluid_sys.h.
 */
 
@@ -555,7 +555,7 @@ unsigned short fluid_profile_n_prof = FLUID_PROFILE_DEFAULT_N_PROF;
 /* measure duration in ms */
 unsigned short fluid_profile_dur = FLUID_PROFILE_DEFAULT_DURATION;
 /* lock between multiple-shell */
-int fluid_profile_lock = 0;
+fluid_atomic_int_t fluid_profile_lock = 0;
 /**/
 
 /*----------------------------------------------
@@ -563,7 +563,7 @@ int fluid_profile_lock = 0;
 -----------------------------------------------*/
 unsigned char fluid_profile_status = PROFILE_STOP; /* command and status */
 unsigned int fluid_profile_end_ticks = 0;          /* ending position (in ticks) */
-fluid_profile_data_t fluid_profile_data[] =
+fluid_profile_data_t fluid_profile_data[] =        /* Data duration */
 {
   {"synth_write_* ------------>", 1e10, 0.0, 0.0, 0},
   {"synth_one_block ---------->", 1e10, 0.0, 0.0, 0},
@@ -580,7 +580,7 @@ fluid_profile_data_t fluid_profile_data[] =
 /*----------------------------------------------
   Internal profiling API
 -----------------------------------------------*/
-/* logging profiling data (used on FluidSynth instance deletion) */
+/* logging profiling data (used on synthesizer instance deletion) */
 void fluid_profiling_print(void)
 {
 	int i;
@@ -608,9 +608,9 @@ void fluid_profiling_print(void)
 }
 
 /* Macro that returns cpu load in percent (%)
- * dur: duration (micro second).
- * sample_rate: sample_rate used in audio driver (Hz).
- * nSamples: number of samples collected during 'dur' duration.
+ * @dur: duration (micro second).
+ * @sample_rate: sample_rate used in audio driver (Hz).
+ * @n_amples: number of samples collected during 'dur' duration.
 */
 #define fluid_profile_load(dur,sample_rate,n_samples) \
         (dur * sample_rate / n_samples / 10000.0)
@@ -702,7 +702,7 @@ static void fluid_profiling_print_load(double sample_rate, fluid_ostream_t out)
 /*
 * prints profiling data (used by profile shell command: prof_start).
 * The function is an internal profiling API between the "profile" command
-* prof_start and audio rendering API (see FluidProfile.pdf - 3.2.2).
+* prof_start and audio rendering API (see FluidProfile_0004.pdf - 3.2.2).
 *
 * @param sample_rate the sample rate of audio output.
 * @param out output stream device.
@@ -737,7 +737,7 @@ void fluid_profiling_print_data(double sample_rate, fluid_ostream_t out)
 	int i;
 	if (fluid_profile_print)
 	{
-		/* print all details:  Duration(microsecond) and cpu loads(%)*/
+		/* print all details: Duration(microsecond) and cpu loads(%) */
 		fluid_ostream_printf(out,
 		" ------------------------------------------------------------------------------\n");
 		fluid_ostream_printf(out,
@@ -792,7 +792,7 @@ void fluid_profiling_print_data(double sample_rate, fluid_ostream_t out)
 }
 
 /*
- Returns true if the user asks to cancel the current profiling measurement.
+ Returns true if the user cancels the current profiling measurement.
  Actually this is implemented using the <cr> key. To add this functionality:
  1) Adds #define FLUID_PROFILE_CANCEL in fluid_sys.h.
  2) Adds the necessary code inside fluid_profile_is_cancel().
@@ -841,7 +841,7 @@ int fluid_profile_is_cancel_req(void)
 /**
 * Returns status used in shell command "prof_start".
 * The function is an internal profiling API between the "profile" command
-* prof_start and audio rendering API (see FluidProfile.pdf - 3.2.2).
+* prof_start and audio rendering API (see FluidProfile_0004.pdf - 3.2.2).
 *
 * @return status
 * - PROFILE_READY profiling data are ready.
@@ -877,7 +877,7 @@ int fluid_profile_get_status(void)
 /**
 *  Starts or stops profiling measurement.
 *  The function is an internal profiling API between the "profile" command
-*  prof_start and audio rendering API (see FluidProfile.pdf - 3.2.2).
+*  prof_start and audio rendering API (see FluidProfile_0004.pdf - 3.2.2).
 *
 *  @param end_tick end position of the measure (in ticks).
 *  - If end_tick is greater then 0, the function starts a measure if a measure

@@ -359,7 +359,7 @@ fluid_ostream_t fluid_socket_get_ostream(fluid_socket_t sock);
 /* Profiling */
 #if WITH_PROFILING
 /** profiling interface beetween Profiling command shell and Audio
-    rendering  API (FluidProfile.pdf- 3.2.2)
+    rendering  API (FluidProfile_0004.pdf- 3.2.2)
 */
 
 /*
@@ -393,7 +393,7 @@ extern unsigned char fluid_profile_print;  /* print mode */
 
 extern unsigned short fluid_profile_n_prof;/* number of measures */
 extern unsigned short fluid_profile_dur;   /* measure duration in ms */
-extern fluid_atomic_int_t fluid_profile_lock ;		       /* lock between multiple shell */
+extern fluid_atomic_int_t fluid_profile_lock ; /* lock between multiple shell */
 /**/
 
 /*----------------------------------------------
@@ -427,7 +427,7 @@ int fluid_profile_is_cancel_req(void);
 #include <sys/select.h> /* select() */
 #endif /* posix */
 
-/* logging profiling data (used on FluidSynth instance deletion) */
+/* logging profiling data (used on synthesizer instance deletion) */
 void fluid_profiling_print(void);
 
 /*----------------------------------------------
@@ -463,7 +463,7 @@ extern unsigned int fluid_profile_end_ticks;      /* ending position (in ticks) 
 extern fluid_profile_data_t fluid_profile_data[]; /* Profiling data */
 
 /*----------------------------------------------
-  Macros
+  Probes macros
 -----------------------------------------------*/
 /** Macro to obtain a time reference used for the profiling */
 #define fluid_profile_ref() fluid_utime()
