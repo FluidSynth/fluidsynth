@@ -3133,7 +3133,7 @@ fluid_synth_write_float(fluid_synth_t* synth, int len,
   fluid_atomic_float_set (&synth->cpu_load, cpu_load);
 
   fluid_profile_write(FLUID_PROF_WRITE, prof_ref,
-                      fluid_atomic_int_get(&synth->active_voice_count),len);
+                      fluid_synth_get_active_voice_count(synth),len);
 
   if (!synth->eventhandler->is_threadsafe)
     fluid_synth_api_exit(synth);
@@ -3255,7 +3255,7 @@ fluid_synth_write_s16(fluid_synth_t* synth, int len,
   fluid_atomic_float_set (&synth->cpu_load, cpu_load);
 
   fluid_profile_write(FLUID_PROF_WRITE, prof_ref,
-                      fluid_atomic_int_get(&synth->active_voice_count),len);
+                      fluid_synth_get_active_voice_count(synth),len);
 
   if (!synth->eventhandler->is_threadsafe)
     fluid_synth_api_exit(synth);
@@ -3395,7 +3395,7 @@ fluid_synth_render_blocks(fluid_synth_t* synth, int blockcount)
 #endif
   fluid_check_fpe("??? Remainder of synth_one_block ???");
   fluid_profile(FLUID_PROF_ONE_BLOCK, prof_ref,
-                fluid_atomic_int_get(&synth->active_voice_count),
+                fluid_synth_get_active_voice_count(synth),
                 blockcount * FLUID_BUFSIZE);
   return blockcount;
 }
