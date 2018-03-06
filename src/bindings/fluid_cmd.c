@@ -3239,7 +3239,7 @@ static unsigned short fluid_profile_send_notes(fluid_synth_t* synth, int notes,
 * The result of each measure is displayed.
 *
 * Note: The command ends when the last measure ends or when the user
-* cancels the command using <cr> key (cancellation using <cr>
+* cancels the command using <ENTER> key (cancellation using <ENTER>
 * is implemented using FLUID_PROFILE_CANCEL macro in fluid_sys.h).
 *
 * @return FLUID_OK if success , otherwise FLUID_FAILED.
@@ -3326,7 +3326,7 @@ fluid_handle_prof_start(void *data, int ac, char** av, fluid_ostream_t out)
 	fluid_ostream_printf(out,"Number of measures(n_prof):%d, duration of one mesure(dur):%dms\n",
 	                     n_prof,dur);
 
-	/* Clears any previous <cr> pending key */
+	/* Clears any previous <ENTER> pending key */
 	fluid_profile_is_cancel_req();
 
 	total_dur = rem_dur = n_prof * dur;
@@ -3344,11 +3344,11 @@ fluid_handle_prof_start(void *data, int ac, char** av, fluid_ostream_t out)
 		/* Prints total and remainder duration */
 #ifdef FLUID_PROFILE_CANCEL
 		fluid_ostream_printf(out,
-		  "\nProfiling time(mn:s): Total=%dmn:%ds  Remainder=%dmn:%ds, press <cr> to cancel\n",
+		  "\nProfiling time(mm:ss): Total=%d:%d  Remainder=%d:%d, press <ENTER> to cancel\n",
 		  tm,ts,rm,rs);
 #else
 		fluid_ostream_printf(out,
-		  "\nProfiling time(mn:s): Total=%dmn:%ds  Remainder=%dmn:%ds\n",
+		  "\nProfiling time(mm:ss): Total=%d:%d  Remainder=%d:%d\n",
 		  tm,ts,rm,rs);
 #endif
 
