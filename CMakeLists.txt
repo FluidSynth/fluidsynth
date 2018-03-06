@@ -73,7 +73,6 @@ option ( enable-network "enable network support (requires BSD sockets) " on )
 
 # Platform specific options
 if ( CMAKE_SYSTEM MATCHES "Linux" )
-    option ( enable-ladcca "compile LADCCA support if it is available (deprecated)" off )
     option ( enable-lash "compile LASH support (if it is available)" on )
     option ( enable-alsa "compile ALSA support (if it is available)" on )
 endif ( CMAKE_SYSTEM MATCHES "Linux" )
@@ -459,8 +458,16 @@ add_subdirectory ( doc )
 # pkg-config support
 set ( prefix "${CMAKE_INSTALL_PREFIX}" )
 set ( exec_prefix "\${prefix}" )
-set ( libdir "\${exec_prefix}/${LIB_INSTALL_DIR}" )
-set ( includedir "\${prefix}/${INCLUDE_INSTALL_DIR}" )
+if ( IS_ABSOLUTE "${LIB_INSTALL_DIR}" )
+  set ( libdir "${LIB_INSTALL_DIR}" )
+else ()
+  set ( libdir "\${exec_prefix}/${LIB_INSTALL_DIR}" )
+endif ()
+if ( IS_ABSOLUTE "${INCLUDE_INSTALL_DIR}" )
+  set ( includedir "${INCLUDE_INSTALL_DIR}" )
+else ()
+  set ( includedir "\${prefix}/${INCLUDE_INSTALL_DIR}" )
+endif ()
 configure_file ( fluidsynth.pc.in
 	${CMAKE_BINARY_DIR}/fluidsynth.pc IMMEDIATE @ONLY )
 install ( FILES ${CMAKE_BINARY_DIR}/fluidsynth.pc
