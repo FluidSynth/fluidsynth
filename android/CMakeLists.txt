@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.4.1)
 
 set(src_DIR ../src)
 
-set (fluidsynth_sources
+set(fluidsynth_sources
         ${src_DIR}/midi/fluid_midi.c
         ${src_DIR}/midi/fluid_midi_router.c
         ${src_DIR}/midi/fluid_seq.c
@@ -18,7 +18,7 @@ set (fluidsynth_sources
         ${src_DIR}/rvoice/fluid_rvoice_mixer.c
         ${src_DIR}/sfloader/fluid_defsfont.c
         ${src_DIR}/sfloader/fluid_ramsfont.c
-	${src_DIR}/sfloader/fluid_sfont.c
+        ${src_DIR}/sfloader/fluid_sfont.c
         ${src_DIR}/synth/fluid_chan.c
         ${src_DIR}/synth/fluid_event.c
         ${src_DIR}/synth/fluid_gen.c
@@ -26,6 +26,7 @@ set (fluidsynth_sources
         ${src_DIR}/synth/fluid_synth.c
         ${src_DIR}/synth/fluid_tuning.c
         ${src_DIR}/synth/fluid_voice.c
+        ${src_DIR}/synth/fluid_synth_monopoly.c
         ${src_DIR}/utils/fluid_conv.c
         ${src_DIR}/utils/fluid_hash.c
         ${src_DIR}/utils/fluid_list.c
@@ -36,7 +37,14 @@ set (fluidsynth_sources
         src/bindings/fluid_cmd.c
         src/drivers/fluid_adriver.c
         src/drivers/fluid_mdriver.c
-        )
+)
+
+set ( public_main_HEADER
+    ${CMAKE_BINARY_DIR}/include/fluidsynth.h
+)
+
+configure_file ( ../include/fluidsynth.cmake
+                 ${public_main_HEADER} )
 
 add_library(fluidsynth SHARED ${fluidsynth_sources})
 
@@ -58,11 +66,13 @@ target_include_directories(fluidsynth PRIVATE
                             ${src_DIR}/utils
                             ${src_DIR}/bindings
                             ${src_DIR}/drivers
+                            ${CMAKE_BINARY_DIR}/include
                             )
 
 target_include_directories(fluidsynth INTERFACE
                             . include
                             ${src_DIR}/../include
+                            ${CMAKE_BINARY_DIR}/include
                             )
 
 target_compile_options(fluidsynth PRIVATE -std=gnu11
