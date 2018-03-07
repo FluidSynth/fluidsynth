@@ -725,6 +725,13 @@ int fluid_rvoice_mixer_get_bufcount(fluid_rvoice_mixer_t* mixer)
     return mixer->buffers.buf_blocks;
 }
 
+#if WITH_PROFILING
+int fluid_rvoice_mixer_get_active_voices(fluid_rvoice_mixer_t* mixer)
+{
+	return mixer->active_voices;
+}
+#endif
+
 #ifdef ENABLE_MIXER_THREADS
 
 static FLUID_INLINE fluid_rvoice_t* 
