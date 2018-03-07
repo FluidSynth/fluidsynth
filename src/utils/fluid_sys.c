@@ -565,15 +565,15 @@ unsigned char fluid_profile_status = PROFILE_STOP; /* command and status */
 unsigned int fluid_profile_end_ticks = 0;          /* ending position (in ticks) */
 fluid_profile_data_t fluid_profile_data[] =        /* Data duration */
 {
-  {"synth_write_* ------------>", 1e10, 0.0, 0.0, 0},
-  {"synth_one_block ---------->", 1e10, 0.0, 0.0, 0},
-  {"synth_one_block:clear ---->", 1e10, 0.0, 0.0, 0},
-  {"synth_one_block:one voice->", 1e10, 0.0, 0.0, 0},
-  {"synth_one_block:all voices>", 1e10, 0.0, 0.0, 0},
-  {"synth_one_block:reverb --->", 1e10, 0.0, 0.0, 0},
-  {"synth_one_block:chorus --->", 1e10, 0.0, 0.0, 0},
-  {"voice:note --------------->", 1e10, 0.0, 0.0, 0},
-  {"voice:release ------------>", 1e10, 0.0, 0.0, 0}
+  {"synth_write_* ------------>", 1e10, 0.0, 0.0, 0, 0, 0},
+  {"synth_one_block ---------->", 1e10, 0.0, 0.0, 0, 0, 0},
+  {"synth_one_block:clear ---->", 1e10, 0.0, 0.0, 0, 0, 0},
+  {"synth_one_block:one voice->", 1e10, 0.0, 0.0, 0, 0, 0},
+  {"synth_one_block:all voices>", 1e10, 0.0, 0.0, 0, 0, 0},
+  {"synth_one_block:reverb --->", 1e10, 0.0, 0.0, 0, 0, 0},
+  {"synth_one_block:chorus --->", 1e10, 0.0, 0.0, 0, 0, 0},
+  {"voice:note --------------->", 1e10, 0.0, 0.0, 0, 0, 0},
+  {"voice:release ------------>", 1e10, 0.0, 0.0, 0, 0, 0}
 };
 
 
