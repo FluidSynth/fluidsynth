@@ -1209,7 +1209,7 @@ fluid_str_equal (const void *v1, const void *v2)
   const char *string1 = v1;
   const char *string2 = v2;
   
-  return strcmp (string1, string2) == 0;
+  return FLUID_STRCMP (string1, string2) == 0;
 }
 
 /**

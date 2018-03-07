@@ -319,11 +319,37 @@ fluid_rvoice_write (fluid_rvoice_t* voice, fluid_real_t *dsp_buf)
    * buffer. It is the ratio between the frequencies of original
    * waveform and output waveform.*/
   voice->dsp.phase_incr = fluid_ct2hz_real(voice->dsp.pitch + 
+	  voice->dsp.pitchoffset +
      fluid_lfo_get_val(&voice->envlfo.modlfo) * voice->envlfo.modlfo_to_pitch
      + fluid_lfo_get_val(&voice->envlfo.viblfo) * voice->envlfo.viblfo_to_pitch
      + fluid_adsr_env_get_val(&voice->envlfo.modenv) * voice->envlfo.modenv_to_pitch) 
      / voice->dsp.root_pitch_hz;
 
+  /******************* portamento ****************/
+  /* pitchoffset is updated if enabled.
+     Pitchoffset will be added to dsp pitch at next phase calculation time */
+
+  /* In most cases portamento will be disabled. Thus first verify that portamento is
+   * enabled before updating pitchoffset and before disabling portamento when necessary,
+   * in order to keep the performance loss at minimum.
+   * If the algorithm would first update pitchoffset and then verify if portamento
+   * needs to be disabled, there would be a significant performance drop on a x87 FPU
+   */
+  if (voice->dsp.pitchinc > 0.0f)
+  {	/* portamento is enabled, so update pitchoffset */
+	voice->dsp.pitchoffset += voice->dsp.pitchinc;
+	/* when pitchoffset reaches 0.0f, portamento is disabled */
+	if (voice->dsp.pitchoffset > 0.0f) 
+		voice->dsp.pitchoffset = voice->dsp.pitchinc = 0.0f;
+  }
+  else if (voice->dsp.pitchinc < 0.0f)
+  {	/* portamento is enabled, so update pitchoffset */
+	voice->dsp.pitchoffset += voice->dsp.pitchinc;
+	/* when pitchoffset reaches 0.0f, portamento is disabled */
+	if (voice->dsp.pitchoffset < 0.0f) 
+		voice->dsp.pitchoffset = voice->dsp.pitchinc = 0.0f;
+  }
+  
   fluid_check_fpe ("voice_write phase calculation");
 
   /* if phase_incr is not advancing, set it to the minimum fraction value (prevent stuckage) */
@@ -363,11 +389,11 @@ fluid_rvoice_write (fluid_rvoice_t* voice, fluid_real_t *dsp_buf)
   /*************** resonant filter ******************/
   
   fluid_iir_filter_calc(&voice->resonant_filter, voice->dsp.output_rate,
-                    fluid_lfo_get_val(&voice->envlfo.modlfo) * voice->envlfo.modlfo_to_fc +
-                    fluid_adsr_env_get_val(&voice->envlfo.modenv) * voice->envlfo.modenv_to_fc);
+  		        fluid_lfo_get_val(&voice->envlfo.modlfo) * voice->envlfo.modlfo_to_fc +
+ 		        fluid_adsr_env_get_val(&voice->envlfo.modenv) * voice->envlfo.modenv_to_fc);
 
   fluid_iir_filter_apply(&voice->resonant_filter, dsp_buf, count);
-  
+
   /* additional custom filter - only uses the fixed modulator, no lfos... */
   fluid_iir_filter_calc(&voice->resonant_custom_filter, voice->dsp.output_rate, 0);
   fluid_iir_filter_apply(&voice->resonant_custom_filter, dsp_buf, count);
@@ -478,7 +504,11 @@ fluid_rvoice_reset(fluid_rvoice_t* voice)
                             calculate the volume increment during
                             processing */
 
-  /* mod env initialization*/
+  /* legato initialization */
+  voice->dsp.pitchoffset = 0.0;   /* portamento initialization */
+  voice->dsp.pitchinc = 0.0;
+  
+	  /* mod env initialization*/
   fluid_adsr_env_reset(&voice->envlfo.modenv);
 
   /* vol env initialization */
@@ -530,6 +560,102 @@ fluid_rvoice_noteoff(fluid_rvoice_t* voice, unsigned int min_ticks)
   fluid_adsr_env_set_section(&voice->envlfo.modenv, FLUID_VOICE_ENVRELEASE);
 }
 
+/**
+ * skips to Attack section
+ * 
+ * Updates vol and attack data 
+ * Correction on volume val to achieve equivalent amplitude at noteOn legato
+ * 
+ * @param voice the synthesis voice to be updated
+*/
+static FLUID_INLINE void fluid_rvoice_local_retrigger_attack (fluid_rvoice_t* voice)
+{
+	/* skips to Attack section */
+	/* Once in Attack section, current count must be reset, to be sure
+	that the section will be not be prematurely finished. */
+	fluid_adsr_env_set_section(&voice->envlfo.volenv, FLUID_VOICE_ENVATTACK);
+	{
+		/* Correction on volume val to achieve equivalent amplitude at noteOn legato */
+		fluid_env_data_t* env_data;
+		fluid_real_t peak = fluid_cb2amp (voice->dsp.attenuation);
+		fluid_real_t prev_peak = fluid_cb2amp (voice->dsp.prev_attenuation);
+		voice->envlfo.volenv.val = (voice->envlfo.volenv.val  * prev_peak) / peak;
+		/* Correction on slope direction for Attack section */
+		env_data = &voice->envlfo.volenv.data[FLUID_VOICE_ENVATTACK];
+		if(voice->envlfo.volenv.val <=1.0f)
+		{ /* slope attack for legato note needs to be positive from val  up to 1 */
+			env_data->increment = 1.0f / env_data->count;
+			env_data->min = -1.0f; env_data->max =  1.0f;
+		}
+		else
+		{ /* slope attack for legato note needs to be negative: from val  down to 1 */
+			env_data->increment = -voice->envlfo.volenv.val / env_data->count;
+			env_data->min = 1.0f; env_data->max = voice->envlfo.volenv.val;
+		}
+	}
+}
+
+/**
+ * Used by legato Mode : multi_retrigger   
+ *  see fluid_synth_noteon_mono_legato_multi_retrigger() 
+ * @param voice the synthesis voice to be updated
+*/
+void 
+fluid_rvoice_multi_retrigger_attack (fluid_rvoice_t* voice)
+{
+	int section = fluid_adsr_env_get_section(&voice->envlfo.volenv);
+	/*-------------------------------------------------------------------------
+	 Section skip for volume envelope 
+	--------------------------------------------------------------------------*/
+	if (section >= FLUID_VOICE_ENVHOLD)
+	{
+		/* DECAY, SUSTAIN,RELEASE section use logarithmic scaling. Calculates new
+        volenv_val to achieve equivalent amplitude during the attack phase
+		for seamless volume transition. */
+		fluid_real_t amp_cb, env_value;
+		amp_cb = 960.0f * (1.0f - fluid_adsr_env_get_val(&voice->envlfo.volenv));
+		env_value = fluid_cb2amp(amp_cb); /* a bit of optimization */
+		fluid_clip (env_value, 0.0, 1.0);
+		fluid_adsr_env_set_val(&voice->envlfo.volenv, env_value);
+		/* next, skips to Attack section */
+	}
+	/* skips to Attack section from any section */
+	/* Update vol and  attack data */
+	fluid_rvoice_local_retrigger_attack(voice);
+	/*-------------------------------------------------------------------------
+	 Section skip for modulation envelope 
+	--------------------------------------------------------------------------*/
+	/* Skips from any section to ATTACK section */
+	fluid_adsr_env_set_section(&voice->envlfo.modenv, FLUID_VOICE_ENVATTACK);
+	/* Actually (v 1.1.6) all sections are linear, so there is no need to
+	 correct val value. However soundfont 2.01/2.4 spec. says that Attack should
+	 be convex (see issue #153  from Christian Collins). In the case Attack
+	 section would be changed to a non linear shape it will be necessary to do
+	 a correction for seamless val transition. Here is the place to do this */
+}
+
+/**
+ * sets the portamento dsp parameters: dsp.pitchoffset, dsp.pitchinc
+ * @param voice rvoice to set portamento.
+ * @param countinc increment count number.
+ * @param pitchoffset pitch offset to apply to voice dsp.pitch.
+ *
+ * Notes:
+ * 1) To get continuous portamento between consecutive noteOn (n1,n2,n3...),
+ *   pitchoffset is accumulated in current dsp pitchoffset.
+ * 2) And to get constant portamento duration, dsp pitch increment is updated.
+*/  
+void fluid_rvoice_set_portamento(fluid_rvoice_t * voice, unsigned int countinc,
+                                 fluid_real_t pitchoffset)
+{
+	if (countinc)
+	{
+		voice->dsp.pitchoffset += pitchoffset;
+		voice->dsp.pitchinc = - voice->dsp.pitchoffset / countinc; 
+	}
+	/* Then during the voice processing (in fluid_rvoice_write()),
+	dsp.pitchoffset will be incremented by dsp pitchinc. */
+}
 
 void 
 fluid_rvoice_set_output_rate(fluid_rvoice_t* voice, fluid_real_t value)
@@ -559,6 +685,7 @@ fluid_rvoice_set_pitch(fluid_rvoice_t* voice, fluid_real_t value)
 void 
 fluid_rvoice_set_attenuation(fluid_rvoice_t* voice, fluid_real_t value)
 {
+  voice->dsp.prev_attenuation = voice->dsp.attenuation;
   voice->dsp.attenuation = value;
 }
 

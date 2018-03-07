@@ -1,0 +1,103 @@
+echo "legato mode 1 (multi-retrigger), egal velocity on n1,n2,n3..."
+echo "-------------------------------------------------------------"
+# Sounfont:  GeneralUser GS 1.471  S. Christian Collins
+# Some presets
+# 0: Piano 0       ; short release
+# 16:organ          24:guitar
+# 52: Choir Aahs    53: Voice Oohs
+#
+# 56:trumpet        57:trombone       58:tuba       59:muted trumpet
+# 60:French horn    61:Brass section
+# 62:Synth brass 1  63:Synth Brass 2
+# 64:Soprano sax    65:Alto sax       66:Tenor sax  67:Baritone sax.
+# 68:Oboe           69:English horn   70:Bassoon    71:Clarinet
+# 72:piccolo        73:Flute          74:Recorder   75:Pan flute
+#
+# 99:atmosphere; attack longer than organ, release longer than piano
+# 100:brillance , 101:gobelin
+
+echo "preset 73:flute"
+prog 0 73
+echo "legato mode:1"
+setlegatomode 0 1
+echo "legato On"
+cc 0 68 127
+echo "noteon C 60 vel=127, during 1000 ms"
+noteon  0 60 127
+sleep 1000
+echo "noteon D,legato up C->D (60->62, vel=127), during 1000 ms"
+echo "noteoff C"
+noteon  0 62 127
+noteoff 0 60
+sleep 1000
+echo "noteon E,legato up D->E (62->64, vel=127), during 1000 ms"
+echo "noteoff D"
+noteon  0 64 127
+noteoff 0 62
+sleep 1000
+echo "noteon F,legato up E->F (64->65, vel=127), during 1000 ms"
+echo "noteoff E"
+noteon  0 65 127
+noteoff 0 64
+sleep 1000
+echo "noteon G,legato up F->G (65->67, vel=127), during 1000 ms"
+echo "noteoff F"
+noteon  0 67 127
+noteoff 0 65
+sleep 1000
+echo "noteon A,legato up G->A (67->69, vel=127), during 1000 ms"
+echo "noteoff G"
+noteon  0 69 127
+noteoff 0 67
+sleep 1000
+echo "noteon B,legato up A->B (69->71, vel=127), during 1000 ms"
+echo "noteoff A"
+noteon  0 71 127
+noteoff 0 69
+sleep 1000
+echo "noteon C,legato up B->C (71->72, vel=127), during 1000 ms"
+echo "noteoff B"
+noteon  0 72 127
+noteoff 0 71
+sleep 1000
+echo "noteon B,legato down C->B (72->71, vel=127), during 1000 ms"
+echo "noteoff C"
+noteon  0 71 127
+noteoff 0 72
+sleep 1000
+echo "noteon A,legato down B->A (71->69, vel=127), during 1000 ms"
+echo "noteoff B"
+noteon  0 69 127
+noteoff 0 71
+sleep 1000
+echo "noteon G,legato down A->G (69->67, vel=127), during 1000 ms"
+echo "noteoff A"
+noteon  0 67 127
+noteoff 0 69
+sleep 1000
+echo "noteon F,legato down G->F (67->65, vel=127), during 1000 ms"
+echo "noteoff G"
+noteon  0 65 127
+noteoff 0 67
+sleep 1000
+echo "noteon E,legato down F->E (65->64, vel=127), during 1000 ms"
+echo "noteoff F"
+noteon  0 64 127
+noteoff 0 65
+sleep 1000
+echo "noteon D,legato down E->D (64->62, vel=127), during 1000 ms"
+echo "noteoff E"
+noteon  0 62 127
+noteoff 0 64
+sleep 1000
+echo "noteon C,legato down D->C (62->60, vel=127), during 1000 ms"
+echo "noteoff D"
+noteon  0 60 127
+noteoff 0 62
+sleep 1000
+echo "noteoff C"
+noteoff 0 60
+sleep 1000
+echo "legato Off"
+cc 0 68 0
+echo "End legato mode 2 (multi-retrigger)"

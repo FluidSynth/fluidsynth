@@ -349,7 +349,7 @@ fluid_midi_file_read_track(fluid_midi_file *mf, fluid_player_t *player, int num)
                     "An non-ascii track header found, corrupt file");
             return FLUID_FAILED;
 
-        } else if (strcmp((char *) id, "MTrk") == 0) {
+        } else if (FLUID_STRCMP((char *) id, "MTrk") == 0) {
 
             found_track = 1;
 
