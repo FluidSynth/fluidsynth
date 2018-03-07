@@ -411,7 +411,7 @@ void fluid_profiling_print_data(double sample_rate, fluid_ostream_t out);
 /* Returns True if profiling cancellation has been requested */
 int fluid_profile_is_cancel_req(void);
 
-/* For OS that implement <cr> key for profile cancellation:
+/* For OS that implement <ENTER> key for profile cancellation:
  1) Adds #define FLUID_PROFILE_CANCEL
  2) Adds the necessary code inside fluid_profile_is_cancel() see fluid_sys.c
 */

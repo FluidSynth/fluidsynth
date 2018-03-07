@@ -793,7 +793,7 @@ void fluid_profiling_print_data(double sample_rate, fluid_ostream_t out)
 
 /*
  Returns true if the user cancels the current profiling measurement.
- Actually this is implemented using the <cr> key. To add this functionality:
+ Actually this is implemented using the <ENTER> key. To add this functionality:
  1) Adds #define FLUID_PROFILE_CANCEL in fluid_sys.h.
  2) Adds the necessary code inside fluid_profile_is_cancel().
 
@@ -805,22 +805,22 @@ int fluid_profile_is_cancel_req(void)
 
 #if defined(WIN32)      /* Windows specific stuff */
 	/* Profile cancellation is supported for Windows */
-	/* returns TRUE if key <cr> is depressed */
+	/* returns TRUE if key <ENTER> is depressed */
 	return(GetAsyncKeyState(VK_RETURN) & 0x1);
 
 #elif defined(__OS2__)  /* OS/2 specific stuff */
 	/* Profile cancellation isn't yet supported for OS2 */
 	/* For OS2, replaces the following  line with the function that returns
-	true when the keyboard key <cr> is depressed */
+	true when the keyboard key <ENTER> is depressed */
 	return FALSE; /* default value */
 
 #else   /* POSIX stuff */
-	/* Profile cancellation is supported for linux */
-	/* returns true is <cr> is depressed */
+	/* Profile cancellation is supported for Linux */
+	/* returns true is <ENTER> is depressed */
 	{
 		/* Here select() is used to poll the standard input to see if an input
 		 is ready. As the standard input is usually buffered, the user
-		 needs to depress <cr> to set the input to a "ready" state.
+		 needs to depress <ENTER> to set the input to a "ready" state.
 		*/
 		struct timeval tv;
 		fd_set fds;    /* just one fds need to be polled */
