@@ -3319,6 +3319,12 @@ fluid_handle_prof_start(void *data, int ac, char** av, fluid_ostream_t out)
 			/* compensates gain to avoid a loud sound */
 			send_gain =  1.0 * pow(10, (n_actives * FLUID_PROFILE_VOICE_ATTEN)/20 );
 			fluid_synth_set_gain(synth, send_gain);
+			
+			/* Before starting profiling immediately we wait to ensures that voices are 
+			   currently synthesized by audio rendering API. This ensure that macro
+			   probes will register the expected number of actives voices.
+			*/
+			fluid_msleep(200); /* wait 200 ms */
 		}
 	}
 
