@@ -9,7 +9,7 @@ Contributing can be done by
 https://help.github.com/articles/proposing-changes-to-your-work-with-pull-requests/) or
 * submitting patches to the mailing list.
 
-Patches should be created with `git format-patch`, so in every case you should be familiar with the basics of git.
+Patches should be created with `git format-patch`, so in every case you should be familiar with the basics of git. Make sure you develop against the master branch, i.e. **not** against any FluidSynth release.
 
 Some things that will increase the chance that your pull request or patch is accepted:
 
