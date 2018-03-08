@@ -493,25 +493,29 @@ enum
 /** Those macros are used to calculate the min/avg/max. Needs a profile number, a
     time reference, the voices and samples number. */
 
-/** Macro to collect data, called from internal functions inside audio
+/* local macro : acquiere data */
+#define fluid_profile_data(_num, _ref, voices, samples)\
+{\
+	double _now = fluid_utime();\
+	double _delta = _now - _ref;\
+	fluid_profile_data[_num].min = _delta < fluid_profile_data[_num].min ?\
+                                   _delta : fluid_profile_data[_num].min; \
+	fluid_profile_data[_num].max = _delta > fluid_profile_data[_num].max ?\
+                                   _delta : fluid_profile_data[_num].max;\
+	fluid_profile_data[_num].total += _delta;\
+	fluid_profile_data[_num].count++;\
+	fluid_profile_data[_num].n_voices += voices;\
+	fluid_profile_data[_num].n_samples += samples;\
+	_ref = _now;\
+}
+
+/** Macro to collect data, called from inner functions inside audio
     rendering API */
 #define fluid_profile(_num, _ref, voices, samples)\
 {\
 	if ( fluid_profile_status == PROFILE_START)\
-	{\
-		double _now = fluid_utime();\
-		double _delta = _now - _ref;\
-		fluid_profile_data[_num].min = _delta < fluid_profile_data[_num].min ?\
-                                       _delta :\
-                                       fluid_profile_data[_num].min;\
-		fluid_profile_data[_num].max = _delta > fluid_profile_data[_num].max ?\
-                                       _delta :\
-                                       fluid_profile_data[_num].max;\
-		fluid_profile_data[_num].total += _delta;\
-		fluid_profile_data[_num].count++;\
-		fluid_profile_data[_num].n_voices += voices;\
-		fluid_profile_data[_num].n_samples += samples;\
-		_ref = _now;\
+	{	/* acquires data */\
+		fluid_profile_data(_num, _ref, voices, samples)\
 	}\
 }
 
@@ -522,24 +526,14 @@ enum
 {\
 	if (fluid_profile_status == PROFILE_START)\
 	{\
+		/* acquires data first: must be done before checking that profile is
+           finished to ensure at least one valid data sample.
+		*/\
+		fluid_profile_data(_num, _ref, voices, samples)\
 		if (fluid_synth_get_ticks(synth) >= fluid_profile_end_ticks)\
 		{\
 			/* profiling is finished */\
 			fluid_profile_status = PROFILE_READY;\
-		}\
-		else\
-		{ /* acquires data */\
-			double _now = fluid_utime();\
-			double _delta = _now - _ref;\
-			fluid_profile_data[_num].min = _delta < fluid_profile_data[_num].min ?\
-			                               _delta : fluid_profile_data[_num].min;\
-			fluid_profile_data[_num].max = _delta > fluid_profile_data[_num].max ?\
-			                               _delta : fluid_profile_data[_num].max;\
-			fluid_profile_data[_num].total += _delta;\
-			fluid_profile_data[_num].count++;\
-			fluid_profile_data[_num].n_voices += voices;\
-			fluid_profile_data[_num].n_samples += samples;\
-			_ref = _now;\
 		}\
 	}\
 }

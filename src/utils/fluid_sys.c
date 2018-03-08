@@ -854,19 +854,19 @@ int fluid_profile_is_cancel_req(void)
 */
 int fluid_profile_get_status(void)
 {
+	/* Checks if user has requested to cancel the current measurement */
+	/* Cancellation must have precedence over other status */
+	if(fluid_profile_is_cancel_req())
+	{
+		fluid_profile_start_stop(0,0); /* stops the measurement */
+		return PROFILE_CANCELED;
+	}
 	switch(fluid_profile_status)
 	{
 		case PROFILE_READY:
-			/* profiling data are ready */
-			return PROFILE_READY;
+			return PROFILE_READY; /* profiling data are ready */
 
 		case PROFILE_START:
-			/* Checks if user has requested to cancel the current measurement */
-			if(fluid_profile_is_cancel_req())
-			{
-				fluid_profile_start_stop(0,0); /* stops the measurement */
-				return PROFILE_CANCELED;
-			}
 			return PROFILE_RUNNING;/* profiling data are under acquisition */
 
 		default:
