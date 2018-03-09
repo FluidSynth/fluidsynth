@@ -79,7 +79,6 @@ struct _fluid_voice_t
 	fluid_real_t output_rate;        /* the sample rate of the synthesizer (dupe in rvoice) */
 
 	unsigned int start_time;
-	fluid_adsr_env_t volenv;         /* Volume envelope (dupe in rvoice) */
 
 	/* basic parameters */
 	fluid_real_t pitch;              /* the pitch in midicents (dupe in rvoice) */
@@ -194,8 +193,6 @@ fluid_voice_unlock_rvoice(fluid_voice_t* voice)
 
 fluid_real_t fluid_voice_gen_value(const fluid_voice_t* voice, int num);
 void fluid_voice_set_custom_filter(fluid_voice_t* voice, enum fluid_iir_filter_type type, enum fluid_iir_filter_flags flags);
-
-#define fluid_voice_get_loudness(voice) (fluid_adsr_env_get_max_val(&voice->volenv))
 
 
 #endif /* _FLUID_VOICE_H */
