@@ -2382,15 +2382,22 @@ fluid_synth_get_polyphony(fluid_synth_t* synth)
 }
 
 /**
- * Get current number of active voices.
+ * @brief Get current number of active voices.
+ *
+ * I.e. the no. of voices that have been
+ * started and have not yet finished. Unless called from synthesis context,
+ * this number does not necessarily have to be equal to the number of voices 
+ * currently processed by the DSP loop, see below.
  * @param synth FluidSynth instance
  * @return Number of currently active voices.
  * @since 1.1.0
  *
  * Note: To generate accurate continuous statistics of the voice count, caller
  * should ensure this function is called synchronously with the audio synthesis
- * process.  This can be done in the new_fluid_audio_driver2() audio callback
- * function for example.
+ * process. This can be done in the new_fluid_audio_driver2() audio callback
+ * function for example. Otherwise every call to this function may return different
+ * voice counts as it may change after any (concurrent) call to fluid_synth_write_*() made by
+ * e.g. an audio driver or the applications audio rendering thread.
  */
 int
 fluid_synth_get_active_voice_count(fluid_synth_t* synth)
