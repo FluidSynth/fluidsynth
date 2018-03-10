@@ -387,11 +387,14 @@ double
 fluid_utime (void)
 {
 #if defined(WIN32)      /* Window using intel performance counters  */
-	LARGE_INTEGER Freq;	/* Performance Frequency */
+	static LARGE_INTEGER Freq_static = {0,0};	/* Performance Frequency */
 	LARGE_INTEGER PerfCpt;
-	QueryPerformanceFrequency(&Freq);  /* Frequency value */
+	if (! Freq_static.QuadPart)
+	{
+		QueryPerformanceFrequency(&Freq_static);  /* Frequency value */
+	}
 	QueryPerformanceCounter(&PerfCpt); /* Counter value */
-	return PerfCpt.QuadPart * 1000000.0/Freq.QuadPart; /* time in micros */
+	return PerfCpt.QuadPart * 1000000.0/Freq_static.QuadPart; /* time in micros */
 #else
   GTimeVal timeval;
 
