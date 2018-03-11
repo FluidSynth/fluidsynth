@@ -3197,7 +3197,7 @@ static unsigned short fluid_profile_send_notes(fluid_synth_t* synth, int notes,
                                         fluid_ostream_t out)
 {
 	int n;         /* number of notes generated */
-	int n_voices,n_actives; /* Maximum voices, voices generated */
+	int n_voices,n_actives=0; /* Maximum voices, voices generated */
 	int n_chan, chan, key ;
 	/* MIDI channels count and maximum polyphony */
 	n_chan = fluid_synth_count_midi_channels(synth); /* channels count */
