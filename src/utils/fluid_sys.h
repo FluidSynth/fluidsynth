@@ -437,7 +437,7 @@ void fluid_profiling_print(void);
     piece of code. */
 typedef struct _fluid_profile_data_t
 {
-	char* description;        /* name of the piece of code under profiling */
+	const char* description;        /* name of the piece of code under profiling */
 	double min, max, total;   /* duration (microsecond) */
 	unsigned int count;       /* total count */
 	unsigned int n_voices;    /* voices number */
