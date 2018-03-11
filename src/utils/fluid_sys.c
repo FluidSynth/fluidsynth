@@ -386,7 +386,15 @@ unsigned int fluid_curtime(void)
 double
 fluid_utime (void)
 {
-#if defined(WIN32)      /* Window using intel performance counters  */
+#if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION >= 28
+  /* use high precision monotonic clock if available and warn
+   * if this clock is actually implemented as low prec. clock,
+   * i.e. in case glib is too old,
+   * see: https://bugzilla.gnome.org/show_bug.cgi?id=783340
+   */
+#if defined(WITH_PROFILING) &&  defined(WIN32) &&\
+	/* glib < 2.53.3 */\
+	(GLIB_MINOR_VERSION <= 53 && (GLIB_MINOR_VERSION < 53 || GLIB_MICRO_VERSION < 3))
 	static LARGE_INTEGER Freq_static = {0,0};	/* Performance Frequency */
 	LARGE_INTEGER PerfCpt;
 	if (! Freq_static.QuadPart)
@@ -396,13 +404,16 @@ fluid_utime (void)
 	QueryPerformanceCounter(&PerfCpt); /* Counter value */
 	return PerfCpt.QuadPart * 1000000.0/Freq_static.QuadPart; /* time in micros */
 #else
+	return (double) g_get_monotonic_time();
+#endif
+#else
+  /* fallback to less precise clock */
   GTimeVal timeval;
-
   g_get_current_time (&timeval);
-
   return (timeval.tv_sec * 1000000.0 + timeval.tv_usec);
 #endif
 }
+
 
 
 #if defined(WIN32)      /* Windoze specific stuff */
