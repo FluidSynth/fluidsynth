@@ -381,28 +381,34 @@ unsigned int fluid_curtime(void)
 
 /**
  * Get time in microseconds to be used in relative timing operations.
- * @return Unix time in microseconds.
+ * @return time in microseconds.
+ * Note: When used for profiling we need high precision clock given
+ * by g_get_monotonic_time()if available (glib version >= 2.53.3).
+ * If glib version is too old and in the case of Windows the function
+ * uses high precision performance counter instead of g_getmonotic_time().
  */
 double
 fluid_utime (void)
 {
 #if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION >= 28
-  /* use high precision monotonic clock if available and warn
-   * if this clock is actually implemented as low prec. clock,
-   * i.e. in case glib is too old,
+  /* use high precision monotonic clock if available (g_monotonic_time().
+   * For Winfdows, if this clock is actually implemented as low prec. clock
+   * (i.e. in case glib is too old), high precision performance counter are
+   * used instead.
    * see: https://bugzilla.gnome.org/show_bug.cgi?id=783340
    */
 #if defined(WITH_PROFILING) &&  defined(WIN32) &&\
 	/* glib < 2.53.3 */\
 	(GLIB_MINOR_VERSION <= 53 && (GLIB_MINOR_VERSION < 53 || GLIB_MICRO_VERSION < 3))
-	static LARGE_INTEGER Freq_static = {0,0};	/* Performance Frequency */
-	LARGE_INTEGER PerfCpt;
-	if (! Freq_static.QuadPart)
+	/* use high precision performance counter. */
+	static LARGE_INTEGER freq_cache = {0,0};	/* Performance Frequency */
+	LARGE_INTEGER perf_cpt;
+	if (! freq_cache.QuadPart)
 	{
-		QueryPerformanceFrequency(&Freq_static);  /* Frequency value */
+		QueryPerformanceFrequency(&freq_cache);  /* Frequency value */
 	}
-	QueryPerformanceCounter(&PerfCpt); /* Counter value */
-	return PerfCpt.QuadPart * 1000000.0/Freq_static.QuadPart; /* time in micros */
+	QueryPerformanceCounter(&perf_cpt); /* Counter value */
+	return perf_cpt.QuadPart * 1000000.0/freq_cache.QuadPart; /* time in micros */
 #else
 	return (double) g_get_monotonic_time();
 #endif
