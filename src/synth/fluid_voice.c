@@ -90,15 +90,6 @@ fluid_voice_get_lower_boundary_for_attenuation(fluid_voice_t* voice);
   } while (0)
 
 
-#define UPDATE_RVOICE_VOLENV(section, arg1, arg2, arg3, arg4, arg5) \
-  do { \
-    fluid_adsr_env_set_data(&voice->volenv, section, arg1, arg2, arg3, arg4, arg5) \
-    UPDATE_RVOICE_GENERIC_ALL(fluid_adsr_env_set_data, &voice->rvoice->envlfo.volenv, section, arg1, arg2, arg3, arg4, arg5) \
-  } while(0)
-
-#define UPDATE_RVOICE_MODENV(section, arg1, arg2, arg3, arg4, arg5) \
-  UPDATE_RVOICE_GENERIC_ALL(fluid_adsr_env_set_data, &voice->rvoice->envlfo.modenv, section, arg1, arg2, arg3, arg4, arg5)
-
 #define UPDATE_RVOICE_R1(proc, arg1) UPDATE_RVOICE_GENERIC_R1(proc, voice->rvoice, arg1)
 #define UPDATE_RVOICE_I1(proc, arg1) UPDATE_RVOICE_GENERIC_I1(proc, voice->rvoice, arg1)
 #define UPDATE_RVOICE_FILTER1(proc, arg1) UPDATE_RVOICE_GENERIC_R1(proc, &voice->rvoice->resonant_filter, arg1)
@@ -119,8 +110,6 @@ fluid_voice_update_volenv(fluid_voice_t* voice,
                           fluid_real_t min,
                           fluid_real_t max)
 {
-  fluid_adsr_env_set_data(&voice->volenv, section, count, coeff, increment, 
-			  min, max);
   UPDATE_RVOICE_GENERIC_ALL(fluid_adsr_env_set_data, 
 			    &voice->rvoice->envlfo.volenv, section, count, 
 			    coeff, increment, min, max);
