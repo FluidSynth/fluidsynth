@@ -84,6 +84,13 @@ int fluid_handle_router_chan(void* data, int ac, char** av, fluid_ostream_t out)
 int fluid_handle_router_par1(void* data, int ac, char** av, fluid_ostream_t out);
 int fluid_handle_router_par2(void* data, int ac, char** av, fluid_ostream_t out);
 
+#if WITH_PROFILING
+int fluid_handle_profile(void *data, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_prof_set_notes(void *data, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_prof_set_print(void *data, int ac, char** av, fluid_ostream_t out);
+int fluid_handle_prof_start(void *data, int ac, char** av, fluid_ostream_t out);
+#endif
+
 int fluid_handle_basicchannels (void* data, int ac, char** av, fluid_ostream_t out);
 int fluid_handle_resetbasicchannels (void* data, int ac, char** av, fluid_ostream_t out);
 int fluid_handle_setbasicchannels (void* data, int ac, char** av, fluid_ostream_t out);
@@ -95,7 +102,6 @@ int fluid_handle_setportamentomode(void* data, int ac, char** av, fluid_ostream_
 int fluid_handle_breathmode(void* data, int ac, char** av, fluid_ostream_t out);
 int fluid_handle_setbreathmode(void* data, int ac, char** av, fluid_ostream_t out);
 int fluid_handle_sleep(void *data, int ac, char** av, fluid_ostream_t out);
-
 
 #ifdef LADSPA
 int fluid_handle_ladspa_effect(void *data, int ac, char **av, fluid_ostream_t out);

@@ -3111,6 +3111,7 @@ fluid_synth_write_float(fluid_synth_t* synth, int len,
   float cpu_load;
 
   fluid_profile_ref_var (prof_ref);
+  
   if (!synth->eventhandler->is_threadsafe)
     fluid_synth_api_enter(synth);
   
@@ -3140,8 +3141,10 @@ fluid_synth_write_float(fluid_synth_t* synth, int len,
 
   if (!synth->eventhandler->is_threadsafe)
     fluid_synth_api_exit(synth);
-  fluid_profile(FLUID_PROF_WRITE, prof_ref);
-  
+ 
+  fluid_profile_write(FLUID_PROF_WRITE, prof_ref,
+                      fluid_rvoice_mixer_get_active_voices(synth->eventhandler->mixer),
+                      len);
   return FLUID_OK;
 }
 
@@ -3212,8 +3215,8 @@ fluid_synth_write_s16(fluid_synth_t* synth, int len,
   fluid_real_t right_sample;
   double time = fluid_utime();
   int di; 
-  //double prof_ref_on_block;
   float cpu_load;
+
   fluid_profile_ref_var (prof_ref);
   
   if (!synth->eventhandler->is_threadsafe)
@@ -3230,12 +3233,9 @@ fluid_synth_write_s16(fluid_synth_t* synth, int len,
     /* fill up the buffers as needed */
     if (cur >= synth->curmax) { 
       int blocksleft = (len-i+FLUID_BUFSIZE-1) / FLUID_BUFSIZE;
-      //prof_ref_on_block = fluid_profile_ref();
       synth->curmax = FLUID_BUFSIZE * fluid_synth_render_blocks(synth, blocksleft);
       fluid_rvoice_mixer_get_bufs(synth->eventhandler->mixer, &left_in, &right_in);
       cur = 0;
-
-      //fluid_profile(FLUID_PROF_ONE_BLOCK, prof_ref_on_block);
     }
 
     left_sample = roundi (left_in[0][cur] * 32766.0f + rand_table[0][di]);
@@ -3257,8 +3257,6 @@ fluid_synth_write_s16(fluid_synth_t* synth, int len,
   synth->cur = cur;
   synth->dither_index = di;	/* keep dither buffer continous */
 
-  fluid_profile(FLUID_PROF_WRITE, prof_ref);
-
   time = fluid_utime() - time;
   cpu_load = 0.5 * (fluid_atomic_float_get(&synth->cpu_load) + time * synth->sample_rate / len / 10000.0);
   fluid_atomic_float_set (&synth->cpu_load, cpu_load);
@@ -3266,6 +3264,9 @@ fluid_synth_write_s16(fluid_synth_t* synth, int len,
   if (!synth->eventhandler->is_threadsafe)
     fluid_synth_api_exit(synth);
   
+  fluid_profile_write(FLUID_PROF_WRITE, prof_ref,
+                      fluid_rvoice_mixer_get_active_voices(synth->eventhandler->mixer),
+                      len);
   return 0;
 }
 
@@ -3319,7 +3320,7 @@ fluid_synth_dither_s16(int *dither_index, int len, float* lin, float* rin,
 
   *dither_index = di;	/* keep dither buffer continous */
 
-  fluid_profile(FLUID_PROF_WRITE, prof_ref);
+  fluid_profile(FLUID_PROF_WRITE, prof_ref,0,len);
 }
 
 static void
@@ -3400,7 +3401,9 @@ fluid_synth_render_blocks(fluid_synth_t* synth, int blockcount)
   {float num=1;while (num != 0){num*=0.5;};};
 #endif
   fluid_check_fpe("??? Remainder of synth_one_block ???");
-  fluid_profile(FLUID_PROF_ONE_BLOCK, prof_ref);
+  fluid_profile(FLUID_PROF_ONE_BLOCK, prof_ref,
+                fluid_rvoice_mixer_get_active_voices(synth->eventhandler->mixer),
+                blockcount * FLUID_BUFSIZE);
   return blockcount;
 }
 

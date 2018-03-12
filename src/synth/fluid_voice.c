@@ -237,7 +237,7 @@ delete_fluid_voice(fluid_voice_t* voice)
  * as far as n2 still enters in Keyrange,Velrange of n1.
  */
 int
-fluid_voice_init(fluid_voice_t* voice, fluid_sample_t* sample, 
+fluid_voice_init(fluid_voice_t* voice, fluid_sample_t* sample,
 		 fluid_zone_range_t *inst_zone_range,
 		 fluid_channel_t* channel, int key, int vel, unsigned int id,
 		 unsigned int start_time, fluid_real_t gain)
@@ -476,7 +476,7 @@ fluid_real_t fluid_voice_calculate_pitch(fluid_voice_t* voice, int key)
       * (key - voice->root_pitch / 100.0f) + voice->root_pitch;
   }
   return pitch;
-}
+  }
 
 void
 fluid_voice_calculate_gen_pitch(fluid_voice_t* voice)
@@ -719,7 +719,7 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
     /* range checking is done in the fluid_pan and fluid_balance functions */
     voice->pan = fluid_voice_gen_value(voice, GEN_PAN);
     voice->balance = fluid_voice_gen_value(voice, GEN_CUSTOM_BALANCE);
-    
+
     /* left amp */
     UPDATE_RVOICE_BUFFERS2(fluid_rvoice_buffers_set_amp, 0,
             fluid_voice_calculate_gain_amplitude(voice,
@@ -816,7 +816,7 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
   case GEN_CUSTOM_FILTERQ:
     UPDATE_RVOICE_CUSTOM_FILTER1(fluid_iir_filter_set_q, x);
     break;
-
+    
   case GEN_MODLFOTOPITCH:
     fluid_clip(x, -12000.0, 12000.0);
     UPDATE_RVOICE_R1(fluid_rvoice_set_modlfo_to_pitch, x);
@@ -1274,7 +1274,7 @@ fluid_voice_noteoff(fluid_voice_t* voice)
 {
   fluid_channel_t* channel;
 
-  fluid_profile(FLUID_PROF_VOICE_NOTE, voice->ref);
+  fluid_profile(FLUID_PROF_VOICE_NOTE, voice->ref, 0, 0);
 
   channel = voice->channel;
 
@@ -1286,7 +1286,7 @@ fluid_voice_noteoff(fluid_voice_t* voice)
   }
   /* Or sustain a note under Sustain pedal */
   else if (fluid_channel_sustained(channel)) {
-    voice->status = FLUID_VOICE_SUSTAINED;
+     voice->status = FLUID_VOICE_SUSTAINED;
   }
   /* Or force the voice to release stage */
   else
@@ -1365,7 +1365,7 @@ void fluid_voice_off(fluid_voice_t* voice)
 void
 fluid_voice_stop(fluid_voice_t* voice)
 {
-  fluid_profile(FLUID_PROF_VOICE_RELEASE, voice->ref);
+  fluid_profile(FLUID_PROF_VOICE_RELEASE, voice->ref, 0, 0);
 
   voice->chan = NO_CHANNEL;
   

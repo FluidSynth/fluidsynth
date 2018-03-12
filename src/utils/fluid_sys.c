@@ -381,17 +381,45 @@ unsigned int fluid_curtime(void)
 
 /**
  * Get time in microseconds to be used in relative timing operations.
- * @return Unix time in microseconds.
+ * @return time in microseconds.
+ * Note: When used for profiling we need high precision clock given
+ * by g_get_monotonic_time()if available (glib version >= 2.53.3).
+ * If glib version is too old and in the case of Windows the function
+ * uses high precision performance counter instead of g_getmonotic_time().
  */
 double
 fluid_utime (void)
 {
+#if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION >= 28
+  /* use high precision monotonic clock if available (g_monotonic_time().
+   * For Winfdows, if this clock is actually implemented as low prec. clock
+   * (i.e. in case glib is too old), high precision performance counter are
+   * used instead.
+   * see: https://bugzilla.gnome.org/show_bug.cgi?id=783340
+   */
+#if defined(WITH_PROFILING) &&  defined(WIN32) &&\
+	/* glib < 2.53.3 */\
+	(GLIB_MINOR_VERSION <= 53 && (GLIB_MINOR_VERSION < 53 || GLIB_MICRO_VERSION < 3))
+	/* use high precision performance counter. */
+	static LARGE_INTEGER freq_cache = {0,0};	/* Performance Frequency */
+	LARGE_INTEGER perf_cpt;
+	if (! freq_cache.QuadPart)
+	{
+		QueryPerformanceFrequency(&freq_cache);  /* Frequency value */
+	}
+	QueryPerformanceCounter(&perf_cpt); /* Counter value */
+	return perf_cpt.QuadPart * 1000000.0/freq_cache.QuadPart; /* time in micros */
+#else
+	return (double) g_get_monotonic_time();
+#endif
+#else
+  /* fallback to less precise clock */
   GTimeVal timeval;
-
   g_get_current_time (&timeval);
-
   return (timeval.tv_sec * 1000000.0 + timeval.tv_usec);
+#endif
 }
+
 
 
 #if defined(WIN32)      /* Windoze specific stuff */
@@ -520,47 +548,398 @@ void fluid_clear_fpe_i386 (void)
  */
 
 #if WITH_PROFILING
+/* Profiling interface beetween profiling command shell and audio rendering API
+  (FluidProfile_0004.pdf- 3.2.2).
+  Macros are in defined in fluid_sys.h.
+*/
 
-fluid_profile_data_t fluid_profile_data[] =
+/*
+  -----------------------------------------------------------------------------
+  Shell task side |    Profiling interface              |  Audio task side
+  -----------------------------------------------------------------------------
+  profiling       |    Internal    |      |             |      Audio
+  command   <---> |<-- profling -->| Data |<--macros -->| <--> rendering
+  shell           |    API         |      |             |      API
+
+*/
+/* default parameters for shell command "prof_start" in fluid_sys.c */
+unsigned short fluid_profile_notes = 0; /* number of generated notes */
+/* preset bank:0 prog:16 (organ) */
+unsigned char fluid_profile_bank = FLUID_PROFILE_DEFAULT_BANK;
+unsigned char fluid_profile_prog = FLUID_PROFILE_DEFAULT_PROG;
+
+/* print mode */
+unsigned char fluid_profile_print= FLUID_PROFILE_DEFAULT_PRINT;
+/* number of measures */
+unsigned short fluid_profile_n_prof = FLUID_PROFILE_DEFAULT_N_PROF;
+/* measure duration in ms */
+unsigned short fluid_profile_dur = FLUID_PROFILE_DEFAULT_DURATION;
+/* lock between multiple-shell */
+fluid_atomic_int_t fluid_profile_lock = 0;
+/**/
+
+/*----------------------------------------------
+  Profiling Data
+-----------------------------------------------*/
+unsigned char fluid_profile_status = PROFILE_STOP; /* command and status */
+unsigned int fluid_profile_end_ticks = 0;          /* ending position (in ticks) */
+fluid_profile_data_t fluid_profile_data[] =        /* Data duration */
 {
-  { FLUID_PROF_WRITE,            "fluid_synth_write_*             ", 1e10, 0.0, 0.0, 0},
-  { FLUID_PROF_ONE_BLOCK,        "fluid_synth_one_block           ", 1e10, 0.0, 0.0, 0},
-  { FLUID_PROF_ONE_BLOCK_CLEAR,  "fluid_synth_one_block:clear     ", 1e10, 0.0, 0.0, 0},
-  { FLUID_PROF_ONE_BLOCK_VOICE,  "fluid_synth_one_block:one voice ", 1e10, 0.0, 0.0, 0},
-  { FLUID_PROF_ONE_BLOCK_VOICES, "fluid_synth_one_block:all voices", 1e10, 0.0, 0.0, 0},
-  { FLUID_PROF_ONE_BLOCK_REVERB, "fluid_synth_one_block:reverb    ", 1e10, 0.0, 0.0, 0},
-  { FLUID_PROF_ONE_BLOCK_CHORUS, "fluid_synth_one_block:chorus    ", 1e10, 0.0, 0.0, 0},
-  { FLUID_PROF_VOICE_NOTE,       "fluid_voice:note                ", 1e10, 0.0, 0.0, 0},
-  { FLUID_PROF_VOICE_RELEASE,    "fluid_voice:release             ", 1e10, 0.0, 0.0, 0},
-  { FLUID_PROF_LAST, "last", 1e100, 0.0, 0.0, 0}
+  {"synth_write_* ------------>", 1e10, 0.0, 0.0, 0, 0, 0},
+  {"synth_one_block ---------->", 1e10, 0.0, 0.0, 0, 0, 0},
+  {"synth_one_block:clear ---->", 1e10, 0.0, 0.0, 0, 0, 0},
+  {"synth_one_block:one voice->", 1e10, 0.0, 0.0, 0, 0, 0},
+  {"synth_one_block:all voices>", 1e10, 0.0, 0.0, 0, 0, 0},
+  {"synth_one_block:reverb --->", 1e10, 0.0, 0.0, 0, 0, 0},
+  {"synth_one_block:chorus --->", 1e10, 0.0, 0.0, 0, 0, 0},
+  {"voice:note --------------->", 1e10, 0.0, 0.0, 0, 0, 0},
+  {"voice:release ------------>", 1e10, 0.0, 0.0, 0, 0, 0}
 };
 
 
+/*----------------------------------------------
+  Internal profiling API
+-----------------------------------------------*/
+/* logging profiling data (used on synthesizer instance deletion) */
 void fluid_profiling_print(void)
 {
-  int i;
+	int i;
 
-  printf("fluid_profiling_print\n");
+	printf("fluid_profiling_print\n");
 
-  FLUID_LOG(FLUID_INFO, "Estimated times: min/avg/max (micro seconds)");
+	FLUID_LOG(FLUID_INFO, "Estimated times: min/avg/max (micro seconds)");
 
-  for (i = 0; i < FLUID_PROF_LAST; i++) {
-    if (fluid_profile_data[i].count > 0) {
-      FLUID_LOG(FLUID_INFO, "%s: %.3f/%.3f/%.3f",
-	       fluid_profile_data[i].description,
-	       fluid_profile_data[i].min,
-	       fluid_profile_data[i].total / fluid_profile_data[i].count,
-	       fluid_profile_data[i].max);
-    } else {
-      FLUID_LOG(FLUID_DBG, "%s: no profiling available", fluid_profile_data[i].description);
-    }
-  }
+	for (i = 0; i < FLUID_PROFILE_NBR; i++)
+	{
+		if (fluid_profile_data[i].count > 0)
+		{
+			FLUID_LOG(FLUID_INFO, "%s: %.3f/%.3f/%.3f",
+			fluid_profile_data[i].description,
+			fluid_profile_data[i].min,
+			fluid_profile_data[i].total / fluid_profile_data[i].count,
+			fluid_profile_data[i].max);
+		}
+		else
+		{
+			FLUID_LOG(FLUID_DBG, "%s: no profiling available",
+			          fluid_profile_data[i].description);
+		}
+	}
 }
 
+/* Macro that returns cpu load in percent (%)
+ * @dur: duration (micro second).
+ * @sample_rate: sample_rate used in audio driver (Hz).
+ * @n_amples: number of samples collected during 'dur' duration.
+*/
+#define fluid_profile_load(dur,sample_rate,n_samples) \
+        (dur * sample_rate / n_samples / 10000.0)
+
+
+/* prints cpu loads only
+*
+* @param sample_rate the sample rate of audio output.
+* @param out output stream device.
+*
+* ------------------------------------------------------------------------------
+* Cpu loads(%) (sr: 44100 Hz, sp: 22.68 microsecond) and maximum voices
+* ------------------------------------------------------------------------------
+* nVoices| total(%)|voices(%)| reverb(%)|chorus(%)| voice(%)|estimated maxVoices
+* -------|---------|---------|----------|---------|---------|-------------------
+*     250|   41.544|   41.544|     0.000|    0.000|    0.163|              612
+*/
+static void fluid_profiling_print_load(double sample_rate, fluid_ostream_t out)
+{
+	unsigned int n_voices; /* voices number */
+	static const char max_voices_not_available[]="      not available";
+	const char * pmax_voices;
+	char max_voices_available[20];
+
+	/* First computes data to be printed */
+	double  total, voices, reverb, chorus, all_voices, voice;
+	/* voices number */
+	n_voices = fluid_profile_data[FLUID_PROF_ONE_BLOCK_VOICES].count ?
+	           fluid_profile_data[FLUID_PROF_ONE_BLOCK_VOICES].n_voices/
+	           fluid_profile_data[FLUID_PROF_ONE_BLOCK_VOICES].count: 0;
+
+	/* total load (%) */
+	total =  fluid_profile_data[FLUID_PROF_WRITE].count ?
+	         fluid_profile_load(fluid_profile_data[FLUID_PROF_WRITE].total,sample_rate,
+	                 fluid_profile_data[FLUID_PROF_WRITE].n_samples) : 0;
+
+	/* reverb load (%) */
+	reverb = fluid_profile_data[FLUID_PROF_ONE_BLOCK_REVERB].count ?
+	         fluid_profile_load(fluid_profile_data[FLUID_PROF_ONE_BLOCK_REVERB].total,
+	                 sample_rate,
+	                 fluid_profile_data[FLUID_PROF_ONE_BLOCK_REVERB].n_samples) : 0;
+
+	/* chorus load (%) */
+	chorus = fluid_profile_data[FLUID_PROF_ONE_BLOCK_CHORUS].count ?
+	         fluid_profile_load(fluid_profile_data[FLUID_PROF_ONE_BLOCK_CHORUS].total,
+	                 sample_rate,
+	                 fluid_profile_data[FLUID_PROF_ONE_BLOCK_CHORUS].n_samples) : 0;
+
+	/* total voices load: total - reverb - chorus (%) */
+	voices = total - reverb - chorus;
+
+	/* One voice load (%): all_voices / n_voices. */
+	all_voices = fluid_profile_data[FLUID_PROF_ONE_BLOCK_VOICES].count ?
+	             fluid_profile_load(fluid_profile_data[FLUID_PROF_ONE_BLOCK_VOICES].total,
+	                 sample_rate,
+	                 fluid_profile_data[FLUID_PROF_ONE_BLOCK_VOICES].n_samples) : 0;
+
+	voice = n_voices ?  all_voices / n_voices : 0;
+
+	/* estimated maximum voices number */
+	if(voice > 0)
+	{
+		FLUID_SNPRINTF(max_voices_available,sizeof(max_voices_available),
+		               "%17d",(unsigned int) ((100.0 - reverb - chorus)/voice));
+		pmax_voices = max_voices_available;
+	}
+	else
+	{
+		pmax_voices = max_voices_not_available;
+	}
+
+	/* Now prints data */
+	fluid_ostream_printf(out,
+		" ------------------------------------------------------------------------------\n");
+	fluid_ostream_printf(out,
+		" Cpu loads(%%) (sr:%6.0f Hz, sp:%6.2f microsecond) and maximum voices\n",
+		sample_rate, 1000000.0/sample_rate);
+	fluid_ostream_printf(out,
+		" ------------------------------------------------------------------------------\n");
+	fluid_ostream_printf(out,
+		" nVoices| total(%%)|voices(%%)| reverb(%%)|chorus(%%)| voice(%%)|estimated maxVoices\n");
+	fluid_ostream_printf(out,
+		" -------|---------|---------|----------|---------|---------|-------------------\n");
+		fluid_ostream_printf(out,
+		"%8d|%9.3f|%9.3f|%10.3f|%9.3f|%9.3f|%s\n", n_voices, total, voices,
+		reverb, chorus, voice, pmax_voices);
+}
+
+/*
+* prints profiling data (used by profile shell command: prof_start).
+* The function is an internal profiling API between the "profile" command
+* prof_start and audio rendering API (see FluidProfile_0004.pdf - 3.2.2).
+*
+* @param sample_rate the sample rate of audio output.
+* @param out output stream device.
+*
+* When print mode is 1, the function prints all the informations (see below).
+* When print mode is 0, the fonction prints only the cpu loads.
+*
+* ------------------------------------------------------------------------------
+* Duration(microsecond) and cpu loads(%) (sr: 44100 Hz, sp: 22.68 microsecond)
+* ------------------------------------------------------------------------------
+* Code under profiling       |Voices|       Duration (microsecond)   |  Load(%)
+*                            |   nbr|       min|       avg|       max|
+* ---------------------------|------|--------------------------------|----------
+* synth_write_* ------------>|   250|      3.91|   2188.82|   3275.00|  41.544
+* synth_one_block ---------->|   250|   1150.70|   2273.56|   3241.47|  41.100
+* synth_one_block:clear ---->|   250|      3.07|      4.62|     61.18|   0.084
+* synth_one_block:one voice->|     1|      4.19|      9.02|   1044.27|   0.163
+* synth_one_block:all voices>|   250|   1138.41|   2259.11|   3217.73|  40.839
+* synth_one_block:reverb --->| no profiling available
+* synth_one_block:chorus --->| no profiling available
+* voice:note --------------->| no profiling available
+* voice:release ------------>| no profiling available
+* ------------------------------------------------------------------------------
+* Cpu loads(%) (sr: 44100 Hz, sp: 22.68 microsecond) and maximum voices
+* ------------------------------------------------------------------------------
+* nVoices| total(%)|voices(%)| reverb(%)|chorus(%)| voice(%)|estimated maxVoices
+* -------|---------|---------|----------|---------|---------|-------------------
+*     250|   41.544|   41.544|     0.000|    0.000|    0.163|              612
+*/
+void fluid_profiling_print_data(double sample_rate, fluid_ostream_t out)
+{
+	int i;
+	if (fluid_profile_print)
+	{
+		/* print all details: Duration(microsecond) and cpu loads(%) */
+		fluid_ostream_printf(out,
+		" ------------------------------------------------------------------------------\n");
+		fluid_ostream_printf(out,
+		" Duration(microsecond) and cpu loads(%%) (sr:%6.0f Hz, sp:%6.2f microsecond)\n",
+		      sample_rate, 1000000.0/sample_rate);
+		fluid_ostream_printf(out,
+		" ------------------------------------------------------------------------------\n");
+		fluid_ostream_printf(out,
+		" Code under profiling       |Voices|       Duration (microsecond)   |  Load(%%)\n");
+		fluid_ostream_printf(out,
+		"                            |   nbr|       min|       avg|       max|\n");
+		fluid_ostream_printf(out,
+		" ---------------------------|------|--------------------------------|----------\n");
+
+		for (i = 0; i < FLUID_PROFILE_NBR; i++)
+		{
+			unsigned int count = fluid_profile_data[i].count;
+			if (count > 0)
+			{	/* data are available */
+
+				if(FLUID_PROF_WRITE <= i && i <= FLUID_PROF_ONE_BLOCK_CHORUS )
+				{
+					double load = fluid_profile_load(fluid_profile_data[i].total,sample_rate,
+										fluid_profile_data[i].n_samples);
+					fluid_ostream_printf(out," %s|%6d|%10.2f|%10.2f|%10.2f|%8.3f\n",
+					fluid_profile_data[i].description, /* code under profiling */
+					fluid_profile_data[i].n_voices / count, /* voices number */
+					fluid_profile_data[i].min,              /* minimum duration */
+					fluid_profile_data[i].total / count,    /* average duration */
+					fluid_profile_data[i].max,              /* maximum duration */
+					load  );                                /* cpu load */
+				}
+				else
+				{	/* note and release duration */
+					fluid_ostream_printf(out," %s|%6d|%10.0f|%10.0f|%10.0f|\n",
+					fluid_profile_data[i].description, /* code under profiling */
+					fluid_profile_data[i].n_voices / count,
+					fluid_profile_data[i].min,              /* minimum duration */
+					fluid_profile_data[i].total / count,    /* average duration */
+					fluid_profile_data[i].max);             /* maximum duration */
+				}
+			}
+			else
+			{	/* data aren't available */
+				fluid_ostream_printf(out,
+			       " %s| no profiling available\n", fluid_profile_data[i].description);
+			}
+		}
+	}
+	/* prints cpu loads only */
+	fluid_profiling_print_load(sample_rate, out);/* prints cpu loads */
+}
+
+/*
+ Returns true if the user cancels the current profiling measurement.
+ Actually this is implemented using the <ENTER> key. To add this functionality:
+ 1) Adds #define FLUID_PROFILE_CANCEL in fluid_sys.h.
+ 2) Adds the necessary code inside fluid_profile_is_cancel().
+
+ When FLUID_PROFILE_CANCEL is not defined, the function return FALSE.
+*/
+int fluid_profile_is_cancel_req(void)
+{
+#ifdef FLUID_PROFILE_CANCEL
+
+#if defined(WIN32)      /* Windows specific stuff */
+	/* Profile cancellation is supported for Windows */
+	/* returns TRUE if key <ENTER> is depressed */
+	return(GetAsyncKeyState(VK_RETURN) & 0x1);
+
+#elif defined(__OS2__)  /* OS/2 specific stuff */
+	/* Profile cancellation isn't yet supported for OS2 */
+	/* For OS2, replaces the following  line with the function that returns
+	true when the keyboard key <ENTER> is depressed */
+	return FALSE; /* default value */
+
+#else   /* POSIX stuff */
+	/* Profile cancellation is supported for Linux */
+	/* returns true is <ENTER> is depressed */
+	{
+		/* Here select() is used to poll the standard input to see if an input
+		 is ready. As the standard input is usually buffered, the user
+		 needs to depress <ENTER> to set the input to a "ready" state.
+		*/
+		struct timeval tv;
+		fd_set fds;    /* just one fds need to be polled */
+		tv.tv_sec = 0; /* Setting both values to 0, means a 0 timeout */
+		tv.tv_usec = 0;
+		FD_ZERO(&fds); /* reset fds */
+		FD_SET(STDIN_FILENO, &fds); /* sets fds to poll standard input only */
+		select(STDIN_FILENO + 1, &fds, NULL, NULL, &tv); /* polling */
+		return (FD_ISSET(0, &fds)); /* returns true if standard input is ready */
+	}
+#endif /* OS stuff */
+
+#else /* FLUID_PROFILE_CANCEL not defined */
+	return FALSE; /* default value */
+#endif /* FLUID_PROFILE_CANCEL */
+}
+
+/**
+* Returns status used in shell command "prof_start".
+* The function is an internal profiling API between the "profile" command
+* prof_start and audio rendering API (see FluidProfile_0004.pdf - 3.2.2).
+*
+* @return status
+* - PROFILE_READY profiling data are ready.
+* - PROFILE_RUNNING, profiling data are still under acquisition.
+* - PROFILE_CANCELED, acquisition has been cancelled by the user.
+* - PROFILE_STOP, no acquisition in progress.
+*
+* When status is PROFILE_RUNNING, the caller can do passive waiting, or other
+* work before recalling the function later.
+*/
+int fluid_profile_get_status(void)
+{
+	/* Checks if user has requested to cancel the current measurement */
+	/* Cancellation must have precedence over other status */
+	if(fluid_profile_is_cancel_req())
+	{
+		fluid_profile_start_stop(0,0); /* stops the measurement */
+		return PROFILE_CANCELED;
+	}
+	switch(fluid_profile_status)
+	{
+		case PROFILE_READY:
+			return PROFILE_READY; /* profiling data are ready */
+
+		case PROFILE_START:
+			return PROFILE_RUNNING;/* profiling data are under acquisition */
+
+		default:
+			return PROFILE_STOP;
+	}
+}
+
+/**
+*  Starts or stops profiling measurement.
+*  The function is an internal profiling API between the "profile" command
+*  prof_start and audio rendering API (see FluidProfile_0004.pdf - 3.2.2).
+*
+*  @param end_tick end position of the measure (in ticks).
+*  - If end_tick is greater then 0, the function starts a measure if a measure
+*    isn't running. If a measure is already running, the function does nothing
+*    and returns.
+*  - If end_tick is 0, the function stops a measure.
+*  @param clear_data,
+*  - If clear_data is 0, the function clears fluid_profile_data before starting
+*    a measure, otherwise, the data from the started measure will be accumulated
+*    within fluid_profile_data.
+*/
+void fluid_profile_start_stop(unsigned int end_ticks, short clear_data)
+{
+	if ( end_ticks ) /* This is a "start" request */
+	{
+		/* Checks if a measure is already running */
+		if (fluid_profile_status != PROFILE_START )
+		{
+			short i;
+			fluid_profile_end_ticks = end_ticks;
+			/* Clears profile data */
+			if (clear_data == 0)	for (i = 0; i < FLUID_PROFILE_NBR; i++)
+			{
+				fluid_profile_data[i].min = 1e10;/* min sets to max value */	
+				fluid_profile_data[i].max = 0;   /* maximum sets to min value */
+				fluid_profile_data[i].total = 0; /* total duration microsecond */
+				fluid_profile_data[i].count = 0;    /* data count */
+				fluid_profile_data[i].n_voices = 0; /* voices number */
+				fluid_profile_data[i].n_samples = 0;/* audio samples number */
+			}
+			fluid_profile_status = PROFILE_START;	/* starts profiling */
+		}
+		/* else do nothing when profiling is already started */
+	}
+	else /* This is a "stop" request */
+	{
+		/* forces the current running profile (if any) to stop */
+		fluid_profile_status = PROFILE_STOP;	/* stops profiling */
+	}
+}
 
 #endif /* WITH_PROFILING */
-
-
 
 /***************************************************************
  *
