@@ -428,7 +428,7 @@ unset ( OSS_SUPPORT CACHE )
 if ( enable-oss )
   find_package ( OSS QUIET )
   set ( OSS_SUPPORT ${OSS_FOUND} )
-enif ( enable-oss )
+endif ( enable-oss )
 
 unset ( MIDISHARE_SUPPORT CACHE )
 if ( enable_midishare )
