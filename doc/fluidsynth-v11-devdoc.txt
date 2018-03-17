@@ -76,7 +76,7 @@ Changes in FluidSynth 2.0.0 concerning developers:
 
 - remove deprecated fluid_synth_get_channel_info() in favour of fluid_synth_get_program() and fluid_synth_get_channel_preset()
 - remove deprecated fluid_settings_getstr()
-- remove deprecated fluid_synth_set_midi_router()
+- remove deprecated fluid_synth_set_midi_router(), instead supply the midi-router instance when creating a command handler with new_fluid_cmd_handler()
 - remove deprecated fluid_get_hinstance() and fluid_set_hinstance() (dsound driver now uses the desktop window)
 - remove deprecated fluid_synth_create_key_tuning(), use fluid_synth_activate_key_tuning(synth, bank, prog, name, pitch, FALSE) instead
 - remove deprecated fluid_synth_create_octave_tuning(), use fluid_synth_activate_octave_tuning(synth, bank, prog, name, pitch, FALSE) instead
