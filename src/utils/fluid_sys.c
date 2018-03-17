@@ -390,6 +390,8 @@ unsigned int fluid_curtime(void)
 double
 fluid_utime (void)
 {
+    double utime;
+    
 #if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION >= 28
   /* use high precision monotonic clock if available (g_monotonic_time().
    * For Winfdows, if this clock is actually implemented as low prec. clock
@@ -408,16 +410,18 @@ fluid_utime (void)
 		QueryPerformanceFrequency(&freq_cache);  /* Frequency value */
 	}
 	QueryPerformanceCounter(&perf_cpt); /* Counter value */
-	return perf_cpt.QuadPart * 1000000.0/freq_cache.QuadPart; /* time in micros */
+	utime = perf_cpt.QuadPart * 1000000.0/freq_cache.QuadPart; /* time in micros */
 #else
-	return (double) g_get_monotonic_time();
+	utime = g_get_monotonic_time();
 #endif
 #else
   /* fallback to less precise clock */
   GTimeVal timeval;
   g_get_current_time (&timeval);
-  return (timeval.tv_sec * 1000000.0 + timeval.tv_usec);
+  utime = (timeval.tv_sec * 1000000.0 + timeval.tv_usec);
 #endif
+  
+  return utime;
 }
 
 
