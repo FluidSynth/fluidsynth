@@ -3389,9 +3389,11 @@ fixup_sample (SFData * sf)
 	        /* disable sample by setting all sample markers to 0 */
 	        sam->start = sam->end = sam->loopstart = sam->loopend = 0;
 
-	        return (OK);
+          p = fluid_list_next (p);
+          continue;
 	    }
-      else if (sam->sampletype & FLUID_SAMPLETYPE_OGG_VORBIS)
+
+      if (sam->sampletype & FLUID_SAMPLETYPE_OGG_VORBIS)
 	    {
             /*
              * compressed samples get fixed up after decompression
