@@ -279,20 +279,6 @@ FLUIDSYNTH_API int fluid_synth_process(fluid_synth_t* synth, int len,
 				     int nin, float** in, 
 				     int nout, float** out);
 
-/**
- * Type definition of the synthesizer's audio callback function.
- * @param synth FluidSynth instance
- * @param len Count of audio frames to synthesize
- * @param out1 Array to store left channel of audio to
- * @param loff Offset index in 'out1' for first sample
- * @param lincr Increment between samples stored to 'out1'
- * @param out2 Array to store right channel of audio to
- * @param roff Offset index in 'out2' for first sample
- * @param rincr Increment between samples stored to 'out2'
- */
-typedef int (*fluid_audio_callback_t)(fluid_synth_t* synth, int len, 
-				     void* out1, int loff, int lincr, 
-				     void* out2, int roff, int rincr);
 
 /* Synthesizer's interface to handle SoundFont loaders */
 

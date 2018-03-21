@@ -170,6 +170,21 @@ struct _fluid_synth_t
   enum fluid_iir_filter_flags custom_filter_flags; /**< filter type of the user-defined filter currently used for all voices */
 };
 
+/**
+ * Type definition of the synthesizer's audio callback function.
+ * @param synth FluidSynth instance
+ * @param len Count of audio frames to synthesize
+ * @param out1 Array to store left channel of audio to
+ * @param loff Offset index in 'out1' for first sample
+ * @param lincr Increment between samples stored to 'out1'
+ * @param out2 Array to store right channel of audio to
+ * @param roff Offset index in 'out2' for first sample
+ * @param rincr Increment between samples stored to 'out2'
+ */
+typedef int (*fluid_audio_callback_t)(fluid_synth_t* synth, int len, 
+				     void* out1, int loff, int lincr, 
+				     void* out2, int roff, int rincr);
+
 fluid_preset_t* fluid_synth_find_preset(fluid_synth_t* synth,
 				      unsigned int banknum,
 				      unsigned int prognum);
