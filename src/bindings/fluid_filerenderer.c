@@ -110,8 +110,7 @@ fluid_file_renderer_settings (fluid_settings_t* settings)
   int i, i2;
   unsigned int n;
 
-  fluid_settings_register_str(settings, "audio.file.name", "fluidsynth.wav",
-                              FLUID_HINT_FILENAME);
+  fluid_settings_register_str(settings, "audio.file.name", "fluidsynth.wav", 0);
   fluid_settings_register_str(settings, "audio.file.type", "auto", 0);
   fluid_settings_register_str(settings, "audio.file.format", "s16", 0);
   fluid_settings_register_str(settings, "audio.file.endian", "auto", 0);

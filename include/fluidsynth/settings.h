@@ -78,25 +78,6 @@ extern "C" {
  */
 #define FLUID_HINT_TOGGLED         0x4
 
-/**
- * Hint FLUID_HINT_SAMPLE_RATE indicates that any bounds specified
- * should be interpreted as multiples of the sample rate. For
- * instance, a frequency range from 0Hz to the Nyquist frequency (half
- * the sample rate) could be requested by this hint in conjunction
- * with LowerBound = 0 and UpperBound = 0.5. Hosts that support bounds
- * at all must support this hint to retain meaning.
- */
-#define FLUID_HINT_SAMPLE_RATE     0x8
-
-/**
- * Hint FLUID_HINT_LOGARITHMIC indicates that it is likely that the
- * user will find it more intuitive to view values using a logarithmic
- * scale. This is particularly useful for frequencies and gains.
- */
-#define FLUID_HINT_LOGARITHMIC     0x10
-
-
-#define FLUID_HINT_FILENAME        0x01         /**< String setting is a file name */
 #define FLUID_HINT_OPTIONLIST      0x02         /**< Setting is a list of string options */
 
 
