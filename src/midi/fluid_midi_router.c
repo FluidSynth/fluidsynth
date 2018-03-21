@@ -170,7 +170,7 @@ fluid_midi_router_set_default_rules (fluid_midi_router_t *router)
     if (!new_rules[i])
     { /* Free already allocated rules */
       for (i2 = 0; i2 < i; i2++)
-        delete_fluid_midi_router_rule (new_rules[i]);
+        delete_fluid_midi_router_rule (new_rules[i2]);
 
       return FLUID_FAILED;
     }
