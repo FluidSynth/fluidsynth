@@ -19,7 +19,7 @@
 
 # CMake based build system. Pedro Lopez-Cabanillas <plcl@users.sf.net>
 
-cmake_minimum_required ( VERSION 3.0.2 )
+cmake_minimum_required ( VERSION 3.1.0 ) # because of CMAKE_C_STANDARD
 project ( FluidSynth C )
 set ( CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake_admin )
 set ( CMAKE_EXPORT_COMPILE_COMMANDS 1 )
@@ -104,6 +104,9 @@ set ( LIB_SUFFIX ${_init_lib_suffix} CACHE STRING
       "library directory name suffix (32/64/nothing)" )
 mark_as_advanced ( LIB_SUFFIX )
 
+# the default C standard to use for all targets
+set(CMAKE_C_STANDARD 90)
+
 # Default install directory names
 include ( DefaultDirs )
 
@@ -160,9 +163,9 @@ if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang" OR CMAKE_C_
   endif ( OS2 )
 
   set ( GNUCC_WARNING_FLAGS "-Wall -W -Wpointer-arith -Wbad-function-cast -Wno-cast-qual -Wcast-align -Wstrict-prototypes -Wno-unused-parameter -Wdeclaration-after-statement" )
-  set ( CMAKE_C_FLAGS_DEBUG "-std=gnu89 -g ${GNUCC_VISIBILITY_FLAG} -DDEBUG ${GNUCC_WARNING_FLAGS} -fsanitize=undefined ${CMAKE_C_FLAGS_DEBUG}" )
-  set ( CMAKE_C_FLAGS_RELEASE "-std=gnu89 -O2 -fomit-frame-pointer -finline-functions ${GNUCC_VISIBILITY_FLAG} -DNDEBUG ${GNUCC_WARNING_FLAGS} ${CMAKE_C_FLAGS_RELEASE}" )
-  set ( CMAKE_C_FLAGS_RELWITHDEBINFO "-std=gnu89 -O2 -g -fomit-frame-pointer -finline-functions ${GNUCC_VISIBILITY_FLAG} -DNDEBUG ${GNUCC_WARNING_FLAGS} ${CMAKE_C_FLAGS_RELWITHDEBINFO}" )
+  set ( CMAKE_C_FLAGS_DEBUG "-g ${GNUCC_VISIBILITY_FLAG} -DDEBUG ${GNUCC_WARNING_FLAGS} -fsanitize=undefined ${CMAKE_C_FLAGS_DEBUG}" )
+  set ( CMAKE_C_FLAGS_RELEASE "-O2 -fomit-frame-pointer -finline-functions ${GNUCC_VISIBILITY_FLAG} -DNDEBUG ${GNUCC_WARNING_FLAGS} ${CMAKE_C_FLAGS_RELEASE}" )
+  set ( CMAKE_C_FLAGS_RELWITHDEBINFO "-O2 -g -fomit-frame-pointer -finline-functions ${GNUCC_VISIBILITY_FLAG} -DNDEBUG ${GNUCC_WARNING_FLAGS} ${CMAKE_C_FLAGS_RELWITHDEBINFO}" )
 endif ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang" OR CMAKE_C_COMPILER_ID STREQUAL "Intel" )
 
 # Windows
