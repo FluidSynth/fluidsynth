@@ -311,6 +311,48 @@ if ( CMAKE_BUILD_TYPE MATCHES "Debug" )
     set ( DEBUG 1 )
 endif ( CMAKE_BUILD_TYPE MATCHES "Debug" )
 
+if ( CMAKE_VERSION VERSION_GREATER "3.6.0" )
+find_program( CLANG_TIDY
+            NAMES "clang-tidy"
+            DOC "Path to clang-tidy executable" )
+
+    if ( CLANG_TIDY )
+    message ( STATUS "Found clang-tidy" )
+        # whenever clang-tidy is available, use it to automatically add braces after ever "make"
+        if ( WITH_PROFILING )
+            set ( CMAKE_C_CLANG_TIDY "clang-tidy;-style=file" )
+        else ( WITH_PROFILING )
+            set ( CMAKE_C_CLANG_TIDY "clang-tidy;-checks=-*,readability-braces-around-statements" )
+        endif ( WITH_PROFILING )
+    endif ( CLANG_TIDY )
+endif ( CMAKE_VERSION VERSION_GREATER "3.6.0" )
+
+# Additional targets to perform clang-format/clang-tidy
+# Get all project files
+file(GLOB_RECURSE
+     ALL_SOURCE_FILES
+     LIST_DIRECTORIES false
+     ${CMAKE_SOURCE_DIR}/*.[chi]
+     ${CMAKE_SOURCE_DIR}/*.[chi]pp
+     ${CMAKE_SOURCE_DIR}/*.[chi]xx
+     ${CMAKE_SOURCE_DIR}/*.cc
+     ${CMAKE_SOURCE_DIR}/*.hh
+     ${CMAKE_SOURCE_DIR}/*.ii
+     ${CMAKE_SOURCE_DIR}/*.[CHI]
+     )
+
+# Adding clang-format target if executable is found
+find_program ( CLANG_FORMAT "clang-format" )
+if ( CLANG_FORMAT )
+  add_custom_target(
+    format
+    COMMAND ${CLANG_FORMAT}
+    -i
+    -style=file
+    ${ALL_SOURCE_FILES}
+    )
+endif(CLANG_FORMAT)
+
 
 if(NOT enable-pkgconfig)
 
