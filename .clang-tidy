@@ -3,6 +3,7 @@ Checks:          'clang-diagnostic-*,clang-analyzer-*,-*,cert-*,clang-analyzer-*
 WarningsAsErrors: ''
 HeaderFilterRegex: ''
 AnalyzeTemporaryDtors: false
+FormatStyle: file
 User:            tom
 CheckOptions:    
   - key:             cert-dcl59-cpp.HeaderFileExtensions
