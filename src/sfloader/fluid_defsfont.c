@@ -1872,17 +1872,8 @@ fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defs
   if (sample->end - sample->start < 8) {
     sample->valid = 0;
     FLUID_LOG(FLUID_WARN, "Ignoring sample '%s': too few sample data points", sample->name);
-  } else {
-/*      if (sample->loopstart < sample->start + 8) { */
-/*        FLUID_LOG(FLUID_WARN, "Fixing sample %s: at least 8 data points required before loop start", sample->name);     */
-/*        sample->loopstart = sample->start + 8; */
-/*      } */
-/*      if (sample->loopend > sample->end - 8) { */
-/*        FLUID_LOG(FLUID_WARN, "Fixing sample %s: at least 8 data points required after loop end", sample->name);     */
-/*        sample->loopend = sample->end - 8; */
-/*      } */
   }
-  
+
   sample->valid = TRUE;
   return FLUID_OK;
 }
