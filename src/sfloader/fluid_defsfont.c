@@ -1861,6 +1861,7 @@ fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defs
     int ret = uncompress_vorbis_sample(sample);
     if (sample->data == NULL || ret == FLUID_FAILED)
     {
+      sample->valid = 0;
       return ret;
     }
   }
@@ -1869,12 +1870,14 @@ fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defs
     sample->valid = 0;
     FLUID_LOG(FLUID_WARN, "Ignoring sample '%s': can't use ROM samples", sample->name);
   }
-  if (sample->end - sample->start < 8) {
+  else if (sample->end - sample->start < 8) {
     sample->valid = 0;
     FLUID_LOG(FLUID_WARN, "Ignoring sample '%s': too few sample data points", sample->name);
   }
+  else {
+    sample->valid = TRUE;
+  }
 
-  sample->valid = TRUE;
   return FLUID_OK;
 }
 
