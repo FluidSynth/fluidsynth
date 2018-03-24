@@ -3373,6 +3373,26 @@ fixup_sample (SFData * sf)
   while (p)
     {
       sam = (SFSample *) (p->data);
+
+      /* ROM samples are unusable for us by definition, so simply ignore them. */
+      if (sam->sampletype & FLUID_SAMPLETYPE_ROM)
+      {
+        sam->start = sam->end = sam->loopstart = sam->loopend = 0;
+        p = fluid_list_next (p);
+        continue;
+      }
+
+      /* If end is over the sample data chunk or sam start is greater than 4
+       * less than the end (at least 4 samples).
+       * FIXME: where does this number 4 come from? */
+      if ((sam->end > total_samples) || (sam->start > (sam->end - 4)))
+      {
+        FLUID_LOG (FLUID_WARN, _("Sample '%s' start/end file positions are invalid,"
+                   " disabling and will not be saved"), sam->name);
+        sam->start = sam->end = sam->loopstart = sam->loopend = 0;
+        p = fluid_list_next (p);
+        continue;
+      }
       
       /* The SoundFont 2.4 spec defines the loopstart index as the first sample point of the loop */
       invalid_loopstart = (sam->loopstart < sam->start) || (sam->loopstart >= sam->loopend);
@@ -3384,21 +3404,6 @@ fixup_sample (SFData * sf)
       invalid_loopend = (sam->loopend > total_samples) || (sam->loopstart >= sam->loopend);
       
       loopend_end_mismatch = (sam->loopend > sam->end);
-	  
-      /* if sample is not a ROM sample and end is over the sample data chunk
-         or sam start is greater than 4 less than the end (at least 4 samples) */
-      if ((!(sam->sampletype & FLUID_SAMPLETYPE_ROM) && sam->end > total_samples)
-          || sam->start > (sam->end - 4))
-      {
-          FLUID_LOG (FLUID_WARN, _("Sample '%s' start/end file positions are invalid,"
-          " disabling and will not be saved"), sam->name);
-
-	        /* disable sample by setting all sample markers to 0 */
-	        sam->start = sam->end = sam->loopstart = sam->loopend = 0;
-
-          p = fluid_list_next (p);
-          continue;
-	    }
 
       if (sam->sampletype & FLUID_SAMPLETYPE_OGG_VORBIS)
 	    {
