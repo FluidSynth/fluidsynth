@@ -3367,11 +3367,16 @@ fixup_sample (SFData * sf)
   int invalid_loops=FALSE;
   int invalid_loopstart;
   int invalid_loopend, loopend_end_mismatch;
-  unsigned int total_samples = sf->samplesize / FLUID_MEMBER_SIZE(fluid_defsfont_t, sampledata[0]);
+  unsigned int total_bytes = sf->samplesize;
+  unsigned int total_samples = total_bytes / FLUID_MEMBER_SIZE(fluid_defsfont_t, sampledata[0]);
 
   p = sf->sample;
   while (p)
     {
+      /* Standard SoundFont files (SF2) use sample word indices for sample start and end pointers,
+       * but SF3 files with Ogg Vorbis compression use byte indices for start and end. */
+      unsigned int max_end = (sam->sampletype & FLUID_SAMPLETYPE_OGG_VORBIS) ? total_bytes : total_samples;
+
       sam = (SFSample *) (p->data);
 
       /* ROM samples are unusable for us by definition, so simply ignore them. */
@@ -3384,8 +3389,10 @@ fixup_sample (SFData * sf)
 
       /* If end is over the sample data chunk or sam start is greater than 4
        * less than the end (at least 4 samples).
-       * FIXME: where does this number 4 come from? */
-      if ((sam->end > total_samples) || (sam->start > (sam->end - 4)))
+       *
+       * FIXME: where does this number 4 come from? And do we need a different number for SF3 files?
+       * Maybe we should check for the minimum Ogg Vorbis headers size? */
+      if ((sam->end > max_end) || (sam->start > (sam->end - 4)))
       {
         FLUID_LOG (FLUID_WARN, _("Sample '%s' start/end file positions are invalid,"
                    " disabling and will not be saved"), sam->name);
@@ -3400,8 +3407,8 @@ fixup_sample (SFData * sf)
        * this is as it should be. however we cannot be sure whether any of sam.loopend or sam.end
        * is correct. hours of thinking through this have concluded, that it would be best practice 
        * to mangle with loops as little as necessary by only making sure loopend is within
-       * total_samples. incorrect soundfont shall preferably fail loudly. */
-      invalid_loopend = (sam->loopend > total_samples) || (sam->loopstart >= sam->loopend);
+       * max_end. incorrect soundfont shall preferably fail loudly. */
+      invalid_loopend = (sam->loopend > max_end) || (sam->loopstart >= sam->loopend);
       
       loopend_end_mismatch = (sam->loopend > sam->end);
 
