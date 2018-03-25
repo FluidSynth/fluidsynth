@@ -1827,6 +1827,7 @@ fluid_zone_inside_range(fluid_zone_range_t* range, int key, int vel)
  *
  *                           SAMPLE
  */
+static int uncompress_vorbis_sample(fluid_sample_t *sample);
 
 /*
  * fluid_sample_in_rom
@@ -1840,6 +1841,46 @@ fluid_sample_in_rom(fluid_sample_t* sample)
 /*
  * fluid_sample_import_sfont
  */
+int
+fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defsfont_t* sfont)
+{
+  FLUID_STRCPY(sample->name, sfsample->name);
+  sample->data = sfont->sampledata;
+  sample->data24 = sfont->sample24data;
+  sample->start = sfsample->start;
+  sample->end = sfsample->start + sfsample->end;
+  sample->loopstart = sfsample->start + sfsample->loopstart;
+  sample->loopend = sfsample->start + sfsample->loopend;
+  sample->samplerate = sfsample->samplerate;
+  sample->origpitch = sfsample->origpitch;
+  sample->pitchadj = sfsample->pitchadj;
+  sample->sampletype = sfsample->sampletype;
+
+  if (sample->sampletype & FLUID_SAMPLETYPE_OGG_VORBIS)
+  {
+    int ret = uncompress_vorbis_sample(sample);
+    if (sample->data == NULL || ret == FLUID_FAILED)
+    {
+      sample->valid = 0;
+      return ret;
+    }
+  }
+
+  if (sample->sampletype & FLUID_SAMPLETYPE_ROM) {
+    sample->valid = 0;
+    FLUID_LOG(FLUID_WARN, "Ignoring sample '%s': can't use ROM samples", sample->name);
+  }
+  else if (sample->end - sample->start < 8) {
+    sample->valid = 0;
+    FLUID_LOG(FLUID_WARN, "Ignoring sample '%s': too few sample data points", sample->name);
+  }
+  else {
+    sample->valid = TRUE;
+  }
+
+  return FLUID_OK;
+}
+
 #if LIBSNDFILE_SUPPORT
 // virtual file access rountines to allow for handling
 // samples as virtual files in memory
@@ -1894,26 +1935,9 @@ sfvio_tell (void* user_data)
 
   return (sf_count_t)sample->userdata;
 }
-#endif
 
-int
-fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defsfont_t* sfont)
+static int uncompress_vorbis_sample(fluid_sample_t *sample)
 {
-  FLUID_STRCPY(sample->name, sfsample->name);
-  sample->data = sfont->sampledata;
-  sample->data24 = sfont->sample24data;
-  sample->start = sfsample->start;
-  sample->end = sfsample->start + sfsample->end;
-  sample->loopstart = sfsample->start + sfsample->loopstart;
-  sample->loopend = sfsample->start + sfsample->loopend;
-  sample->samplerate = sfsample->samplerate;
-  sample->origpitch = sfsample->origpitch;
-  sample->pitchadj = sfsample->pitchadj;
-  sample->sampletype = sfsample->sampletype;
-
-  if (sample->sampletype & FLUID_SAMPLETYPE_OGG_VORBIS)
-  {
-#if LIBSNDFILE_SUPPORT
     SNDFILE *sndfile;
     SF_INFO sfinfo;
     SF_VIRTUAL_IO sfvio = {
@@ -2000,32 +2024,15 @@ fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defs
     {
         FLUID_LOG (FLUID_WARN, _("Vorbis sample '%s' has invalid loop points"), sample->name);
     }
-#else
-    return FLUID_FAILED;
-#endif
-  }
 
-  if (sample->sampletype & FLUID_SAMPLETYPE_ROM) {
-    sample->valid = 0;
-    FLUID_LOG(FLUID_WARN, "Ignoring sample '%s': can't use ROM samples", sample->name);
-  }
-  if (sample->end - sample->start < 8) {
-    sample->valid = 0;
-    FLUID_LOG(FLUID_WARN, "Ignoring sample '%s': too few sample data points", sample->name);
-  } else {
-/*      if (sample->loopstart < sample->start + 8) { */
-/*        FLUID_LOG(FLUID_WARN, "Fixing sample %s: at least 8 data points required before loop start", sample->name);     */
-/*        sample->loopstart = sample->start + 8; */
-/*      } */
-/*      if (sample->loopend > sample->end - 8) { */
-/*        FLUID_LOG(FLUID_WARN, "Fixing sample %s: at least 8 data points required after loop end", sample->name);     */
-/*        sample->loopend = sample->end - 8; */
-/*      } */
-  }
-  
-  sample->valid = TRUE;
-  return FLUID_OK;
+    return FLUID_OK;
 }
+#else
+static int uncompress_vorbis_sample(fluid_sample_t *sample)
+{
+    return FLUID_FAILED;
+}
+#endif
 
 
 
@@ -3360,12 +3367,39 @@ fixup_sample (SFData * sf)
   int invalid_loops=FALSE;
   int invalid_loopstart;
   int invalid_loopend, loopend_end_mismatch;
-  unsigned int total_samples = sf->samplesize / FLUID_MEMBER_SIZE(fluid_defsfont_t, sampledata[0]);
+  unsigned int total_bytes = sf->samplesize;
+  unsigned int total_samples = total_bytes / FLUID_MEMBER_SIZE(fluid_defsfont_t, sampledata[0]);
 
   p = sf->sample;
   while (p)
     {
+      unsigned int max_end;
+
       sam = (SFSample *) (p->data);
+
+      /* Standard SoundFont files (SF2) use sample word indices for sample start and end pointers,
+       * but SF3 files with Ogg Vorbis compression use byte indices for start and end. */
+      max_end = (sam->sampletype & FLUID_SAMPLETYPE_OGG_VORBIS) ? total_bytes : total_samples;
+
+      /* ROM samples are unusable for us by definition, so simply ignore them. */
+      if (sam->sampletype & FLUID_SAMPLETYPE_ROM)
+      {
+        sam->start = sam->end = sam->loopstart = sam->loopend = 0;
+        goto next_sample;
+      }
+
+      /* If end is over the sample data chunk or sam start is greater than 4
+       * less than the end (at least 4 samples).
+       *
+       * FIXME: where does this number 4 come from? And do we need a different number for SF3 files?
+       * Maybe we should check for the minimum Ogg Vorbis headers size? */
+      if ((sam->end > max_end) || (sam->start > (sam->end - 4)))
+      {
+        FLUID_LOG (FLUID_WARN, _("Sample '%s' start/end file positions are invalid,"
+                   " disabling and will not be saved"), sam->name);
+        sam->start = sam->end = sam->loopstart = sam->loopend = 0;
+        goto next_sample;
+      }
       
       /* The SoundFont 2.4 spec defines the loopstart index as the first sample point of the loop */
       invalid_loopstart = (sam->loopstart < sam->start) || (sam->loopstart >= sam->loopend);
@@ -3373,25 +3407,12 @@ fixup_sample (SFData * sf)
        * this is as it should be. however we cannot be sure whether any of sam.loopend or sam.end
        * is correct. hours of thinking through this have concluded, that it would be best practice 
        * to mangle with loops as little as necessary by only making sure loopend is within
-       * total_samples. incorrect soundfont shall preferably fail loudly. */
-      invalid_loopend = (sam->loopend > total_samples) || (sam->loopstart >= sam->loopend);
+       * max_end. incorrect soundfont shall preferably fail loudly. */
+      invalid_loopend = (sam->loopend > max_end) || (sam->loopstart >= sam->loopend);
       
       loopend_end_mismatch = (sam->loopend > sam->end);
-	  
-      /* if sample is not a ROM sample and end is over the sample data chunk
-         or sam start is greater than 4 less than the end (at least 4 samples) */
-      if ((!(sam->sampletype & FLUID_SAMPLETYPE_ROM) && sam->end > total_samples)
-          || sam->start > (sam->end - 4))
-      {
-          FLUID_LOG (FLUID_WARN, _("Sample '%s' start/end file positions are invalid,"
-          " disabling and will not be saved"), sam->name);
 
-	        /* disable sample by setting all sample markers to 0 */
-	        sam->start = sam->end = sam->loopstart = sam->loopend = 0;
-
-	        return (OK);
-	    }
-      else if (sam->sampletype & FLUID_SAMPLETYPE_OGG_VORBIS)
+      if (sam->sampletype & FLUID_SAMPLETYPE_OGG_VORBIS)
 	    {
             /*
              * compressed samples get fixed up after decompression
@@ -3434,6 +3455,7 @@ fixup_sample (SFData * sf)
       sam->loopstart -= sam->start;
       sam->loopend -= sam->start;
 
+next_sample:
       p = fluid_list_next (p);
     }
 
