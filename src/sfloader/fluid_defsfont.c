@@ -3373,11 +3373,13 @@ fixup_sample (SFData * sf)
   p = sf->sample;
   while (p)
     {
-      /* Standard SoundFont files (SF2) use sample word indices for sample start and end pointers,
-       * but SF3 files with Ogg Vorbis compression use byte indices for start and end. */
-      unsigned int max_end = (sam->sampletype & FLUID_SAMPLETYPE_OGG_VORBIS) ? total_bytes : total_samples;
+      unsigned int max_end;
 
       sam = (SFSample *) (p->data);
+
+      /* Standard SoundFont files (SF2) use sample word indices for sample start and end pointers,
+       * but SF3 files with Ogg Vorbis compression use byte indices for start and end. */
+      max_end = (sam->sampletype & FLUID_SAMPLETYPE_OGG_VORBIS) ? total_bytes : total_samples;
 
       /* ROM samples are unusable for us by definition, so simply ignore them. */
       if (sam->sampletype & FLUID_SAMPLETYPE_ROM)
