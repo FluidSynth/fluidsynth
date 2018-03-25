@@ -106,6 +106,10 @@
 #include <io.h>
 #endif
 
+#if HAVE_SIGNAL_H
+#include <signal.h>
+#endif
+
 /** Integer types  */
 #if HAVE_STDINT_H
 #include <stdint.h>

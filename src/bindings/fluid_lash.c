@@ -18,14 +18,8 @@
  * 02110-1301, USA
  */
 #include "fluid_lash.h"
-#include "fluid_synth.h"
 
-#include <unistd.h>		/* for usleep() */
-#include <sys/types.h>
-#include <signal.h>
-#include <string.h>
-#include <errno.h>
-#include <pthread.h>
+#ifdef HAVE_LASH
 
 static void fluid_lash_save (fluid_synth_t * synth);
 static void fluid_lash_load (fluid_synth_t * synth, const char * filename);
@@ -35,14 +29,10 @@ static void *fluid_lash_run (void * data);
  * lash client - this symbol needs to be in the library else
  * all clients would need a fluid_lash_client symbol.
  */
-#ifdef HAVE_LASH
 lash_client_t * fluid_lash_client;
-#endif
 
 static pthread_t fluid_lash_thread;
 
-
-#ifdef HAVE_LASH
 
 fluid_lash_args_t *
 fluid_lash_extract_args (int * pargc, char *** pargv)

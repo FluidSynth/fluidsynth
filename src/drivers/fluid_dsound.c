@@ -19,13 +19,14 @@
  */
 
 
-#define INITGUID
-
-#include "fluidsynth_priv.h"
 #include "fluid_synth.h"
-#include "fluid_sys.h"
 #include "fluid_adriver.h"
 #include "fluid_settings.h"
+
+#if DSOUND_SUPPORT
+
+#define INITGUID
+
 #include <mmsystem.h>
 #include <dsound.h>
 
@@ -368,3 +369,5 @@ char* fluid_win32_error(HRESULT hr) {
   }
   return s;
 }
+
+#endif /* DSOUND_SUPPORT */
