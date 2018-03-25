@@ -3385,8 +3385,7 @@ fixup_sample (SFData * sf)
       if (sam->sampletype & FLUID_SAMPLETYPE_ROM)
       {
         sam->start = sam->end = sam->loopstart = sam->loopend = 0;
-        p = fluid_list_next (p);
-        continue;
+        goto next_sample;
       }
 
       /* If end is over the sample data chunk or sam start is greater than 4
@@ -3399,8 +3398,7 @@ fixup_sample (SFData * sf)
         FLUID_LOG (FLUID_WARN, _("Sample '%s' start/end file positions are invalid,"
                    " disabling and will not be saved"), sam->name);
         sam->start = sam->end = sam->loopstart = sam->loopend = 0;
-        p = fluid_list_next (p);
-        continue;
+        goto next_sample;
       }
       
       /* The SoundFont 2.4 spec defines the loopstart index as the first sample point of the loop */
@@ -3457,6 +3455,7 @@ fixup_sample (SFData * sf)
       sam->loopstart -= sam->start;
       sam->loopend -= sam->start;
 
+next_sample:
       p = fluid_list_next (p);
     }
 
