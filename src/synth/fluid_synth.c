@@ -1831,8 +1831,7 @@ fluid_synth_all_notes_off(fluid_synth_t* synth, int chan)
     result = FLUID_FAILED;
   else
   {
-    /* Allowed only on MIDI channel enabled */
-    FLUID_API_RETURN_IF_CHAN_DISABLED(FLUID_FAILED);
+    /* Allowed (even for channel disabled) as chan = -1 selects all channels */
     result = fluid_synth_all_notes_off_LOCAL (synth, chan);
   }
   FLUID_API_RETURN(result);
@@ -1874,8 +1873,7 @@ fluid_synth_all_sounds_off(fluid_synth_t* synth, int chan)
     result = FLUID_FAILED;
   else
   {
-    /* Allowed only on MIDI channel enabled */
-    FLUID_API_RETURN_IF_CHAN_DISABLED(FLUID_FAILED);
+    /* Allowed (even for channel disabled) as chan = -1 selects all channels */
     result = fluid_synth_all_sounds_off_LOCAL (synth, chan);
   }
   FLUID_API_RETURN(result);
