@@ -813,7 +813,7 @@ print_welcome()
 
 void print_configure()
 {
-    printf("FluidSynth executable version %s\n", FLUIDSYNTH_VERSION);
+    puts("FluidSynth executable version " FLUIDSYNTH_VERSION);
     puts("Sample type="
 #ifdef WITH_FLOAT
     "float"
