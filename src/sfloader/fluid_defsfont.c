@@ -325,12 +325,11 @@ int fluid_defsfont_load(fluid_defsfont_t* sfont, const fluid_file_callbacks_t* f
   fluid_sample_t* sample;
   fluid_defpreset_t* preset = NULL;
 
-  sfont->filename = FLUID_MALLOC(1 + FLUID_STRLEN(file));
+  sfont->filename = FLUID_STRDUP(file);
   if (sfont->filename == NULL) {
     FLUID_LOG(FLUID_ERR, "Out of memory");
     return FLUID_FAILED;
   }
-  FLUID_STRCPY(sfont->filename, file);
 
   /* The actual loading is done in the sfont and sffile files */
   sfdata = fluid_sffile_load(file, fcbs);
@@ -908,7 +907,6 @@ fluid_preset_zone_next(fluid_preset_zone_t* preset)
 fluid_preset_zone_t*
 new_fluid_preset_zone(char *name)
 {
-  int size;
   fluid_preset_zone_t* zone = NULL;
   zone = FLUID_NEW(fluid_preset_zone_t);
   if (zone == NULL) {
@@ -916,14 +914,12 @@ new_fluid_preset_zone(char *name)
     return NULL;
   }
   zone->next = NULL;
-  size = 1 + FLUID_STRLEN(name);
-  zone->name = FLUID_MALLOC(size);
+  zone->name = FLUID_STRDUP(name);
   if (zone->name == NULL) {
     FLUID_LOG(FLUID_ERR, "Out of memory");
     FLUID_FREE(zone);
     return NULL;
   }
-  FLUID_STRCPY(zone->name, name);
   zone->inst = NULL;
   zone->range.keylo = 0;
   zone->range.keyhi = 128;
@@ -1299,7 +1295,6 @@ fluid_inst_get_global_zone(fluid_inst_t* inst)
 fluid_inst_zone_t*
 new_fluid_inst_zone(char* name)
 {
-  int size;
   fluid_inst_zone_t* zone = NULL;
   zone = FLUID_NEW(fluid_inst_zone_t);
   if (zone == NULL) {
@@ -1307,14 +1302,12 @@ new_fluid_inst_zone(char* name)
     return NULL;
   }
   zone->next = NULL;
-  size = 1 + FLUID_STRLEN(name);
-  zone->name = FLUID_MALLOC(size);
+  zone->name = FLUID_STRDUP(name);
   if (zone->name == NULL) {
     FLUID_LOG(FLUID_ERR, "Out of memory");
     FLUID_FREE(zone);
     return NULL;
   }
-  FLUID_STRCPY(zone->name, name);
   zone->sample = NULL;
   zone->range.keylo = 0;
   zone->range.keyhi = 128;
