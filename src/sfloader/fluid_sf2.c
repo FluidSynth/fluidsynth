@@ -267,7 +267,6 @@ static int load_shdr(unsigned int size, SFData *sf, void *fd, const fluid_file_c
 static int fixup_pgen(SFData *sf);
 static int fixup_igen(SFData *sf);
 static int fixup_sample(SFData *sf);
-static void sfont_zone_delete(SFData *sf, fluid_list_t **zlist, SFZone *zone);
 static void sfont_free_zone(SFZone *zone);
 static int sfont_preset_compare_func(void *a, void *b);
 static fluid_list_t *gen_inlist(int gen, fluid_list_t *genlist);
@@ -1064,7 +1063,8 @@ static int load_pgen(int size, SFData *sf, void *fd, const fluid_file_callbacks_
                 { /* previous global zone exists, discard */
                     FLUID_LOG(FLUID_WARN, _("Preset \"%s\": Discarding invalid global zone"),
                               ((SFPreset *)(p->data))->name);
-                    sfont_zone_delete(sf, hz, (SFZone *)(p2->data));
+                    *hz = fluid_list_remove(*hz, p2->data);
+                    sfont_free_zone((SFZone *)fluid_list_get(p2));
                 }
             }
 
@@ -1444,7 +1444,8 @@ static int load_igen(int size, SFData *sf, void *fd, const fluid_file_callbacks_
                 { /* previous global zone exists, discard */
                     FLUID_LOG(FLUID_WARN, _("Instrument \"%s\": Discarding invalid global zone"),
                               ((SFInst *)(p->data))->name);
-                    sfont_zone_delete(sf, hz, (SFZone *)(p2->data));
+                    *hz = fluid_list_remove(*hz, p2->data);
+                    sfont_free_zone((SFZone *)fluid_list_get(p2));
                 }
             }
 
@@ -1814,13 +1815,6 @@ static int sfont_preset_compare_func(void *a, void *b)
     bval = (int)(((SFPreset *)b)->bank) << 16 | ((SFPreset *)b)->prenum;
 
     return (aval - bval);
-}
-
-/* delete zone from zone list */
-static void sfont_zone_delete(SFData *sf, fluid_list_t **zlist, SFZone *zone)
-{
-    *zlist = fluid_list_remove(*zlist, (void *)zone);
-    sfont_free_zone(zone);
 }
 
 /* Find generator in gen list */
