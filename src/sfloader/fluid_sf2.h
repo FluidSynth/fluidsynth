@@ -34,22 +34,39 @@
 
 /* Sound Font structure defines */
 
-typedef struct _SFVersion
+/* Forward declarations */
+typedef union _SFGenAmount SFGenAmount;
+typedef struct _SFVersion SFVersion;
+typedef struct _SFMod SFMod;
+typedef struct _SFGen SFGen;
+typedef struct _SFZone SFZone;
+typedef struct _SFSample SFSample;
+typedef struct _SFInst SFInst;
+typedef struct _SFPreset SFPreset;
+typedef struct _SFData SFData;
+typedef struct _SFChunk SFChunk;
+typedef struct _SFPhdr SFPhdr;
+typedef struct _SFBag SFBag;
+typedef struct _SFIhdr SFIhdr;
+typedef struct _SFShdr SFShdr;
+
+
+struct _SFVersion
 { /* version structure */
     unsigned short major;
     unsigned short minor;
-} SFVersion;
+};
 
-typedef struct _SFMod
+struct _SFMod
 { /* Modulator structure */
     unsigned short src; /* source modulator */
     unsigned short dest; /* destination generator */
     signed short amount; /* signed, degree of modulation */
     unsigned short amtsrc; /* second source controls amnt of first */
     unsigned short trans; /* transform applied to source */
-} SFMod;
+};
 
-typedef union _SFGenAmount { /* Generator amount structure */
+union _SFGenAmount { /* Generator amount structure */
     signed short sword; /* signed 16 bit value */
     unsigned short uword; /* unsigned 16 bit value */
     struct
@@ -57,22 +74,22 @@ typedef union _SFGenAmount { /* Generator amount structure */
         unsigned char lo; /* low value for ranges */
         unsigned char hi; /* high value for ranges */
     } range;
-} SFGenAmount;
+};
 
-typedef struct _SFGen
+struct _SFGen
 { /* Generator structure */
     unsigned short id; /* generator ID */
     SFGenAmount amount; /* generator value */
-} SFGen;
+};
 
-typedef struct _SFZone
+struct _SFZone
 { /* Sample/instrument zone structure */
     fluid_list_t *instsamp; /* instrument/sample pointer for zone */
     fluid_list_t *gen; /* list of generators */
     fluid_list_t *mod; /* list of modulators */
-} SFZone;
+};
 
-typedef struct _SFSample
+struct _SFSample
 { /* Sample structure */
     char name[21]; /* Name of sample */
     unsigned char samfile; /* Loaded sfont/sample buffer = 0/1 */
@@ -92,15 +109,15 @@ typedef struct _SFSample
     signed char pitchadj; /* pitch correction in cents */
     unsigned short sampletype; /* 1 mono,2 right,4 left,linked 8,0x8000=ROM */
     fluid_sample_t *fluid_sample; /* Imported sample (fixed up in fluid_defsfont_load) */
-} SFSample;
+};
 
-typedef struct _SFInst
+struct _SFInst
 { /* Instrument structure */
     char name[21]; /* Name of instrument */
     fluid_list_t *zone; /* list of instrument zones */
-} SFInst;
+};
 
-typedef struct _SFPreset
+struct _SFPreset
 { /* Preset structure */
     char name[21]; /* preset name */
     unsigned short prenum; /* preset number */
@@ -109,10 +126,10 @@ typedef struct _SFPreset
     unsigned int genre; /* Not used (preserved) */
     unsigned int morph; /* Not used (preserved) */
     fluid_list_t *zone; /* list of preset zones */
-} SFPreset;
+};
 
 /* NOTE: sffd is also used to determine if sound font is new (NULL) */
-typedef struct _SFData
+struct _SFData
 { /* Sound font data structure */
     SFVersion version; /* sound font version */
     SFVersion romver; /* ROM version */
@@ -130,7 +147,7 @@ typedef struct _SFData
     fluid_list_t *preset; /* linked list of preset info */
     fluid_list_t *inst; /* linked list of instrument info */
     fluid_list_t *sample; /* linked list of sample info */
-} SFData;
+};
 
 /* functions */
 
@@ -141,13 +158,13 @@ typedef struct _SFData
 */
 
 /* sfont file data structures */
-typedef struct _SFChunk
+struct _SFChunk
 { /* RIFF file chunk structure */
     unsigned int id; /* chunk id */
     unsigned int size; /* size of the following chunk */
-} SFChunk;
+};
 
-typedef struct _SFPhdr
+struct _SFPhdr
 {
     unsigned char name[20]; /* preset name */
     unsigned short preset; /* preset number */
@@ -156,21 +173,21 @@ typedef struct _SFPhdr
     unsigned int library; /* just for preserving them */
     unsigned int genre; /* Not used */
     unsigned int morphology; /* Not used */
-} SFPhdr;
+};
 
-typedef struct _SFBag
+struct _SFBag
 {
     unsigned short genndx; /* index into generator list */
     unsigned short modndx; /* index into modulator list */
-} SFBag;
+};
 
-typedef struct _SFIhdr
+struct _SFIhdr
 {
     char name[20]; /* Name of instrument */
     unsigned short ibagndx; /* Instrument bag index */
-} SFIhdr;
+};
 
-typedef struct _SFShdr
+struct _SFShdr
 { /* Sample header loading struct */
     char name[20]; /* Sample name */
     unsigned int start; /* Offset to start of sample */
@@ -182,7 +199,7 @@ typedef struct _SFShdr
     signed char pitchadj; /* pitch correction in cents */
     unsigned short samplelink; /* Not used */
     unsigned short sampletype; /* 1 mono,2 right,4 left,linked 8,0x8000=ROM */
-} SFShdr;
+};
 
 /* Public functions  */
 SFData *fluid_sf2_load(const char *fname, const fluid_file_callbacks_t *fcbs);
