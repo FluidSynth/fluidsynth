@@ -178,12 +178,12 @@ static const unsigned short invalid_preset_gen[] = {
 #define CHNKIDSTR(id) &idlist[(id - 1) * 4]
 
 /* sfont file chunk sizes */
-#define SFPHDRSIZE 38
-#define SFBAGSIZE 4
-#define SFMODSIZE 10
-#define SFGENSIZE 4
-#define SFIHDRSIZE 22
-#define SFSHDRSIZE 46
+#define SF_PHDR_SIZE (38)
+#define SF_BAG_SIZE  (4)
+#define SF_MOD_SIZE  (10)
+#define SF_GEN_SIZE  (4)
+#define SF_IHDR_SIZE (22)
+#define SF_SHDR_SIZE (46)
 
 
 #define READCHUNK(sf, var)                                                  \
@@ -744,47 +744,47 @@ static int process_pdta(SFData *sf, int size)
 {
     SFChunk chunk;
 
-    if (!pdtahelper(sf, PHDR_ID, SFPHDRSIZE, &chunk, &size))
+    if (!pdtahelper(sf, PHDR_ID, SF_PHDR_SIZE, &chunk, &size))
         return FALSE;
     if (!load_phdr(sf, chunk.size))
         return FALSE;
 
-    if (!pdtahelper(sf, PBAG_ID, SFBAGSIZE, &chunk, &size))
+    if (!pdtahelper(sf, PBAG_ID, SF_BAG_SIZE, &chunk, &size))
         return FALSE;
     if (!load_pbag(sf, chunk.size))
         return FALSE;
 
-    if (!pdtahelper(sf, PMOD_ID, SFMODSIZE, &chunk, &size))
+    if (!pdtahelper(sf, PMOD_ID, SF_MOD_SIZE, &chunk, &size))
         return FALSE;
     if (!load_pmod(sf, chunk.size))
         return FALSE;
 
-    if (!pdtahelper(sf, PGEN_ID, SFGENSIZE, &chunk, &size))
+    if (!pdtahelper(sf, PGEN_ID, SF_GEN_SIZE, &chunk, &size))
         return FALSE;
     if (!load_pgen(sf, chunk.size))
         return FALSE;
 
-    if (!pdtahelper(sf, IHDR_ID, SFIHDRSIZE, &chunk, &size))
+    if (!pdtahelper(sf, IHDR_ID, SF_IHDR_SIZE, &chunk, &size))
         return FALSE;
     if (!load_ihdr(sf, chunk.size))
         return FALSE;
 
-    if (!pdtahelper(sf, IBAG_ID, SFBAGSIZE, &chunk, &size))
+    if (!pdtahelper(sf, IBAG_ID, SF_BAG_SIZE, &chunk, &size))
         return FALSE;
     if (!load_ibag(sf, chunk.size))
         return FALSE;
 
-    if (!pdtahelper(sf, IMOD_ID, SFMODSIZE, &chunk, &size))
+    if (!pdtahelper(sf, IMOD_ID, SF_MOD_SIZE, &chunk, &size))
         return FALSE;
     if (!load_imod(sf, chunk.size))
         return FALSE;
 
-    if (!pdtahelper(sf, IGEN_ID, SFGENSIZE, &chunk, &size))
+    if (!pdtahelper(sf, IGEN_ID, SF_GEN_SIZE, &chunk, &size))
         return FALSE;
     if (!load_igen(sf, chunk.size))
         return FALSE;
 
-    if (!pdtahelper(sf, SHDR_ID, SFSHDRSIZE, &chunk, &size))
+    if (!pdtahelper(sf, SHDR_ID, SF_SHDR_SIZE, &chunk, &size))
         return FALSE;
     if (!load_shdr(sf, chunk.size))
         return FALSE;
@@ -799,17 +799,17 @@ static int load_phdr(SFData *sf, int size)
     SFPreset *preset, *prev_preset = NULL;
     unsigned short pbag_idx, prev_pbag_idx = 0;
 
-    if (size % SFPHDRSIZE || size == 0)
+    if (size % SF_PHDR_SIZE || size == 0)
     {
         FLUID_LOG(FLUID_ERR, _("Preset header chunk size is invalid"));
         return FALSE;
     }
 
-    i = size / SFPHDRSIZE - 1;
+    i = size / SF_PHDR_SIZE - 1;
     if (i == 0)
     { /* at least one preset + term record */
         FLUID_LOG(FLUID_WARN, _("File contains no presets"));
-        FSKIP(sf, SFPHDRSIZE);
+        FSKIP(sf, SF_PHDR_SIZE);
         return TRUE;
     }
 
@@ -872,7 +872,7 @@ static int load_pbag(SFData *sf, int size)
     unsigned short pgenndx = 0, pmodndx = 0;
     unsigned short i;
 
-    if (size % SFBAGSIZE || size == 0) /* size is multiple of SFBAGSIZE? */
+    if (size % SF_BAG_SIZE || size == 0) /* size is multiple of SF_BAG_SIZE? */
     {
         FLUID_LOG(FLUID_ERR, _("Preset bag chunk size is invalid"));
         return FALSE;
@@ -884,7 +884,7 @@ static int load_pbag(SFData *sf, int size)
         p2 = ((SFPreset *)(p->data))->zone;
         while (p2)
         { /* traverse preset's zones */
-            if ((size -= SFBAGSIZE) < 0)
+            if ((size -= SF_BAG_SIZE) < 0)
             {
                 FLUID_LOG(FLUID_ERR, _("Preset bag chunk size mismatch"));
                 return FALSE;
@@ -924,7 +924,7 @@ static int load_pbag(SFData *sf, int size)
         p = fluid_list_next(p);
     }
 
-    size -= SFBAGSIZE;
+    size -= SF_BAG_SIZE;
     if (size != 0)
     {
         FLUID_LOG(FLUID_ERR, _("Preset bag chunk size mismatch"));
@@ -978,7 +978,7 @@ static int load_pmod(SFData *sf, int size)
             p3 = ((SFZone *)(p2->data))->mod;
             while (p3)
             { /* load zone's modulators */
-                if ((size -= SFMODSIZE) < 0)
+                if ((size -= SF_MOD_SIZE) < 0)
                 {
                     FLUID_LOG(FLUID_ERR, _("Preset modulator chunk size mismatch"));
                     return FALSE;
@@ -1004,13 +1004,13 @@ static int load_pmod(SFData *sf, int size)
     if (size == 0)
         return TRUE;
 
-    size -= SFMODSIZE;
+    size -= SF_MOD_SIZE;
     if (size != 0)
     {
         FLUID_LOG(FLUID_ERR, _("Preset modulator chunk size mismatch"));
         return FALSE;
     }
-    FSKIP(sf, SFMODSIZE); /* terminal mod */
+    FSKIP(sf, SF_MOD_SIZE); /* terminal mod */
 
     return TRUE;
 }
@@ -1054,7 +1054,7 @@ static int load_pgen(SFData *sf, int size)
                 dup = NULL;
                 skip = FALSE;
                 drop = FALSE;
-                if ((size -= SFGENSIZE) < 0)
+                if ((size -= SF_GEN_SIZE) < 0)
                 {
                     FLUID_LOG(FLUID_ERR, _("Preset generator chunk size mismatch"));
                     return FALSE;
@@ -1163,12 +1163,12 @@ static int load_pgen(SFData *sf, int size)
             while (p3)
             { /* Kill any zones following an instrument */
                 discarded = TRUE;
-                if ((size -= SFGENSIZE) < 0)
+                if ((size -= SF_GEN_SIZE) < 0)
                 {
                     FLUID_LOG(FLUID_ERR, _("Preset generator chunk size mismatch"));
                     return FALSE;
                 }
-                FSKIP(sf, SFGENSIZE);
+                FSKIP(sf, SF_GEN_SIZE);
                 SLADVREM(z->gen, p3);
             }
 
@@ -1184,13 +1184,13 @@ static int load_pgen(SFData *sf, int size)
     if (size == 0)
         return TRUE;
 
-    size -= SFGENSIZE;
+    size -= SF_GEN_SIZE;
     if (size != 0)
     {
         FLUID_LOG(FLUID_ERR, _("Preset generator chunk size mismatch"));
         return FALSE;
     }
-    FSKIP(sf, SFGENSIZE); /* terminal gen */
+    FSKIP(sf, SF_GEN_SIZE); /* terminal gen */
 
     return TRUE;
 }
@@ -1202,17 +1202,17 @@ static int load_ihdr(SFData *sf, int size)
     SFInst *p, *pr = NULL; /* ptr to current & previous instrument */
     unsigned short zndx, pzndx = 0;
 
-    if (size % SFIHDRSIZE || size == 0) /* chunk size is valid? */
+    if (size % SF_IHDR_SIZE || size == 0) /* chunk size is valid? */
     {
         FLUID_LOG(FLUID_ERR, _("Instrument header has invalid size"));
         return FALSE;
     }
 
-    size = size / SFIHDRSIZE - 1;
+    size = size / SF_IHDR_SIZE - 1;
     if (size == 0)
     { /* at least one preset + term record */
         FLUID_LOG(FLUID_WARN, _("File contains no instruments"));
-        FSKIP(sf, SFIHDRSIZE);
+        FSKIP(sf, SF_IHDR_SIZE);
         return TRUE;
     }
 
@@ -1264,7 +1264,7 @@ static int load_ibag(SFData *sf, int size)
     unsigned short genndx, modndx, pgenndx = 0, pmodndx = 0;
     int i;
 
-    if (size % SFBAGSIZE || size == 0) /* size is multiple of SFBAGSIZE? */
+    if (size % SF_BAG_SIZE || size == 0) /* size is multiple of SF_BAG_SIZE? */
     {
         FLUID_LOG(FLUID_ERR, _("Instrument bag chunk size is invalid"));
         return FALSE;
@@ -1276,7 +1276,7 @@ static int load_ibag(SFData *sf, int size)
         p2 = ((SFInst *)(p->data))->zone;
         while (p2)
         { /* load this inst's zones */
-            if ((size -= SFBAGSIZE) < 0)
+            if ((size -= SF_BAG_SIZE) < 0)
             {
                 FLUID_LOG(FLUID_ERR, _("Instrument bag chunk size mismatch"));
                 return FALSE;
@@ -1316,7 +1316,7 @@ static int load_ibag(SFData *sf, int size)
         p = fluid_list_next(p);
     }
 
-    size -= SFBAGSIZE;
+    size -= SF_BAG_SIZE;
     if (size != 0)
     {
         FLUID_LOG(FLUID_ERR, _("Instrument chunk size mismatch"));
@@ -1370,7 +1370,7 @@ static int load_imod(SFData *sf, int size)
             p3 = ((SFZone *)(p2->data))->mod;
             while (p3)
             { /* load zone's modulators */
-                if ((size -= SFMODSIZE) < 0)
+                if ((size -= SF_MOD_SIZE) < 0)
                 {
                     FLUID_LOG(FLUID_ERR, _("Instrument modulator chunk size mismatch"));
                     return FALSE;
@@ -1396,13 +1396,13 @@ static int load_imod(SFData *sf, int size)
     if (size == 0)
         return TRUE;
 
-    size -= SFMODSIZE;
+    size -= SF_MOD_SIZE;
     if (size != 0)
     {
         FLUID_LOG(FLUID_ERR, _("Instrument modulator chunk size mismatch"));
         return FALSE;
     }
-    FSKIP(sf, SFMODSIZE); /* terminal mod */
+    FSKIP(sf, SF_MOD_SIZE); /* terminal mod */
 
     return TRUE;
 }
@@ -1435,7 +1435,7 @@ static int load_igen(SFData *sf, int size)
                 dup = NULL;
                 skip = FALSE;
                 drop = FALSE;
-                if ((size -= SFGENSIZE) < 0)
+                if ((size -= SF_GEN_SIZE) < 0)
                 {
                     FLUID_LOG(FLUID_ERR, _("IGEN chunk size mismatch"));
                     return FALSE;
@@ -1544,12 +1544,12 @@ static int load_igen(SFData *sf, int size)
             while (p3)
             { /* Kill any zones following a sample */
                 discarded = TRUE;
-                if ((size -= SFGENSIZE) < 0)
+                if ((size -= SF_GEN_SIZE) < 0)
                 {
                     FLUID_LOG(FLUID_ERR, _("Instrument generator chunk size mismatch"));
                     return FALSE;
                 }
-                FSKIP(sf, SFGENSIZE);
+                FSKIP(sf, SF_GEN_SIZE);
                 SLADVREM(z->gen, p3);
             }
 
@@ -1565,13 +1565,13 @@ static int load_igen(SFData *sf, int size)
     if (size == 0)
         return TRUE;
 
-    size -= SFGENSIZE;
+    size -= SF_GEN_SIZE;
     if (size != 0)
     {
         FLUID_LOG(FLUID_ERR, _("IGEN chunk size mismatch"));
         return FALSE;
     }
-    FSKIP(sf, SFGENSIZE); /* terminal gen */
+    FSKIP(sf, SF_GEN_SIZE); /* terminal gen */
 
     return TRUE;
 }
@@ -1582,17 +1582,17 @@ static int load_shdr(SFData *sf, unsigned int size)
     unsigned int i;
     SFSample *p;
 
-    if (size % SFSHDRSIZE || size == 0) /* size is multiple of SHDR size? */
+    if (size % SF_SHDR_SIZE || size == 0) /* size is multiple of SHDR size? */
     {
         FLUID_LOG(FLUID_ERR, _("Sample header has invalid size"));
         return FALSE;
     }
 
-    size = size / SFSHDRSIZE - 1;
+    size = size / SF_SHDR_SIZE - 1;
     if (size == 0)
     { /* at least one sample + term record? */
         FLUID_LOG(FLUID_WARN, _("File contains no samples"));
-        FSKIP(sf, SFSHDRSIZE);
+        FSKIP(sf, SF_SHDR_SIZE);
         return TRUE;
     }
 
@@ -1614,7 +1614,7 @@ static int load_shdr(SFData *sf, unsigned int size)
         p->samfile = 0;
     }
 
-    FSKIP(sf, SFSHDRSIZE); /* skip terminal shdr */
+    FSKIP(sf, SF_SHDR_SIZE); /* skip terminal shdr */
 
     return TRUE;
 }
