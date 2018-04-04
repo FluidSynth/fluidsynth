@@ -389,7 +389,6 @@ int fluid_sffile_read_sample_data(SFData *sf, unsigned int start, unsigned int c
     /* Load 16-bit sample data */
     if (sf->fcbs->fseek(sf->sffd, sf->samplepos + (start * 2), SEEK_SET) == FLUID_FAILED)
     {
-        perror("error");
         FLUID_LOG(FLUID_ERR, "Failed to seek position in data file");
         goto error_exit;
     }
@@ -422,7 +421,6 @@ int fluid_sffile_read_sample_data(SFData *sf, unsigned int start, unsigned int c
     {
         if (sf->fcbs->fseek(sf->sffd, sf->sample24pos + start, SEEK_SET) == FLUID_FAILED)
         {
-            perror("error");
             FLUID_LOG(FLUID_ERR, "Failed to seek position in data file");
             goto error_exit;
         }
