@@ -278,8 +278,8 @@ static int load_shdr(unsigned int size, SFData *sf, void *fd, const fluid_file_c
 static int fixup_pgen(SFData *sf);
 static int fixup_igen(SFData *sf);
 static int fixup_sample(SFData *sf);
-static void sfont_free_zone(SFZone *zone);
-static int sfont_preset_compare_func(void *a, void *b);
+static void free_zone(SFZone *zone);
+static int preset_compare_func(void *a, void *b);
 static fluid_list_t *find_gen_by_id(int gen, fluid_list_t *genlist);
 static int valid_inst_genid(unsigned short genid);
 static int valid_preset_genid(unsigned short genid);
@@ -299,7 +299,7 @@ static int chunkid(unsigned int id)
     return UNKN_ID;
 }
 
-SFData *sfload_file(const char *fname, const fluid_file_callbacks_t *fcbs)
+SFData *fluid_sf2_load(const char *fname, const fluid_file_callbacks_t *fcbs)
 {
     SFData *sf = NULL;
     void *fd;
@@ -346,7 +346,7 @@ SFData *sfload_file(const char *fname, const fluid_file_callbacks_t *fcbs)
     if (err)
     {
         if (sf)
-            sfont_close(sf, fcbs);
+            fluid_sf2_close(sf, fcbs);
         return NULL;
     }
 
@@ -418,7 +418,7 @@ static int load_body(unsigned int size, SFData *sf, void *fd, const fluid_file_c
         return FALSE;
 
     /* sort preset list by bank, preset # */
-    sf->preset = fluid_list_sort(sf->preset, (fluid_compare_func_t)sfont_preset_compare_func);
+    sf->preset = fluid_list_sort(sf->preset, (fluid_compare_func_t)preset_compare_func);
 
     return TRUE;
 }
@@ -519,7 +519,7 @@ static int process_info(int size, SFData *sf, void *fd, const fluid_file_callbac
                 return FALSE;
             }
 
-            /* attach to INFO list, sfont_close will cleanup if FAIL occurs */
+            /* attach to INFO list, fluid_sf2_close will cleanup if FAIL occurs */
             sf->info = fluid_list_append(sf->info, item);
 
             *(unsigned char *)item = id;
@@ -733,7 +733,7 @@ static int load_phdr(int size, SFData *sf, void *fd, const fluid_file_callbacks_
     { /* load all preset headers */
         p = FLUID_NEW(SFPreset);
         sf->preset = fluid_list_append(sf->preset, p);
-        p->zone = NULL; /* In case of failure, sfont_close can cleanup */
+        p->zone = NULL; /* In case of failure, fluid_sf2_close can cleanup */
         READSTR(&p->name, fd, fcbs); /* possible read failure ^ */
         READW(p->prenum, fd, fcbs);
         READW(p->bank, fd, fcbs);
@@ -808,7 +808,7 @@ static int load_pbag(int size, SFData *sf, void *fd, const fluid_file_callbacks_
             z = FLUID_NEW(SFZone);
             p2->data = z;
             z->gen = NULL; /* Init gen and mod before possible failure, */
-            z->mod = NULL; /* to ensure proper cleanup (sfont_close) */
+            z->mod = NULL; /* to ensure proper cleanup (fluid_sf2_close) */
             READW(genndx, fd, fcbs); /* possible read failure ^ */
             READW(modndx, fd, fcbs);
             z->instsamp = NULL;
@@ -1072,7 +1072,7 @@ static int load_pgen(int size, SFData *sf, void *fd, const fluid_file_callbacks_
                     FLUID_LOG(FLUID_WARN, _("Preset \"%s\": Discarding invalid global zone"),
                               ((SFPreset *)(p->data))->name);
                     *hz = fluid_list_remove(*hz, p2->data);
-                    sfont_free_zone((SFZone *)fluid_list_get(p2));
+                    free_zone((SFZone *)fluid_list_get(p2));
                 }
             }
 
@@ -1136,7 +1136,7 @@ static int load_ihdr(int size, SFData *sf, void *fd, const fluid_file_callbacks_
     { /* load all instrument headers */
         p = FLUID_NEW(SFInst);
         sf->inst = fluid_list_append(sf->inst, p);
-        p->zone = NULL; /* For proper cleanup if fail (sfont_close) */
+        p->zone = NULL; /* For proper cleanup if fail (fluid_sf2_close) */
         READSTR(&p->name, fd, fcbs); /* Possible read failure ^ */
         READW(zndx, fd, fcbs);
 
@@ -1200,7 +1200,7 @@ static int load_ibag(int size, SFData *sf, void *fd, const fluid_file_callbacks_
             z = FLUID_NEW(SFZone);
             p2->data = z;
             z->gen = NULL; /* In case of failure, */
-            z->mod = NULL; /* sfont_close can clean up */
+            z->mod = NULL; /* fluid_sf2_close can clean up */
             READW(genndx, fd, fcbs); /* READW = possible read failure */
             READW(modndx, fd, fcbs);
             z->instsamp = NULL;
@@ -1453,7 +1453,7 @@ static int load_igen(int size, SFData *sf, void *fd, const fluid_file_callbacks_
                     FLUID_LOG(FLUID_WARN, _("Instrument \"%s\": Discarding invalid global zone"),
                               ((SFInst *)(p->data))->name);
                     *hz = fluid_list_remove(*hz, p2->data);
-                    sfont_free_zone((SFZone *)fluid_list_get(p2));
+                    free_zone((SFZone *)fluid_list_get(p2));
                 }
             }
 
@@ -1722,7 +1722,7 @@ static int fixup_sample(SFData *sf)
 }
 
 /* close SoundFont file and delete a SoundFont structure */
-void sfont_close(SFData *sf, const fluid_file_callbacks_t *fcbs)
+void fluid_sf2_close(SFData *sf, const fluid_file_callbacks_t *fcbs)
 {
     fluid_list_t *p, *p2;
 
@@ -1747,7 +1747,7 @@ void sfont_close(SFData *sf, const fluid_file_callbacks_t *fcbs)
         p2 = ((SFPreset *)(p->data))->zone;
         while (p2)
         { /* loop over preset's zones */
-            sfont_free_zone(p2->data);
+            free_zone(p2->data);
             p2 = fluid_list_next(p2);
         } /* free preset's zone list */
         delete_fluid_list(((SFPreset *)(p->data))->zone);
@@ -1763,7 +1763,7 @@ void sfont_close(SFData *sf, const fluid_file_callbacks_t *fcbs)
         p2 = ((SFInst *)(p->data))->zone;
         while (p2)
         { /* loop over inst's zones */
-            sfont_free_zone(p2->data);
+            free_zone(p2->data);
             p2 = fluid_list_next(p2);
         } /* free inst's zone list */
         delete_fluid_list(((SFInst *)(p->data))->zone);
@@ -1786,7 +1786,7 @@ void sfont_close(SFData *sf, const fluid_file_callbacks_t *fcbs)
 }
 
 /* free all elements of a zone (Preset or Instrument) */
-static void sfont_free_zone(SFZone *zone)
+static void free_zone(SFZone *zone)
 {
     fluid_list_t *p;
 
@@ -1815,7 +1815,7 @@ static void sfont_free_zone(SFZone *zone)
 }
 
 /* preset sort function, first by bank, then by preset # */
-static int sfont_preset_compare_func(void *a, void *b)
+static int preset_compare_func(void *a, void *b)
 {
     int aval, bval;
 

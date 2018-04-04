@@ -184,8 +184,8 @@ typedef struct _SFShdr
     unsigned short sampletype; /* 1 mono,2 right,4 left,linked 8,0x8000=ROM */
 } SFShdr;
 
-/* Public functions */
-SFData *sfload_file(const char *fname, const fluid_file_callbacks_t *fcbs);
-void sfont_close(SFData *sf, const fluid_file_callbacks_t *fcbs);
+/* Public functions  */
+SFData *fluid_sf2_load(const char *fname, const fluid_file_callbacks_t *fcbs);
+void fluid_sf2_close(SFData *sf, const fluid_file_callbacks_t *fcbs);
 
 #endif /* _FLUID_SF2_H */

@@ -601,7 +601,7 @@ int fluid_defsfont_load(fluid_defsfont_t* sfont, const fluid_file_callbacks_t* f
   FLUID_STRCPY(sfont->filename, file);
 
   /* The actual loading is done in the sfont and sffile files */
-  sfdata = sfload_file(file, fcbs);
+  sfdata = fluid_sf2_load(file, fcbs);
   if (sfdata == NULL) {
     FLUID_LOG(FLUID_ERR, "Couldn't load soundfont file");
     return FLUID_FAILED;
@@ -650,12 +650,12 @@ int fluid_defsfont_load(fluid_defsfont_t* sfont, const fluid_file_callbacks_t* f
     fluid_defsfont_add_preset(sfont, preset);
     p = fluid_list_next(p);
   }
-  sfont_close (sfdata, fcbs);
+  fluid_sf2_close (sfdata, fcbs);
 
   return FLUID_OK;
 
 err_exit:
-  sfont_close (sfdata, fcbs);
+  fluid_sf2_close (sfdata, fcbs);
   delete_fluid_defpreset(preset);
   return FLUID_FAILED;
 }
