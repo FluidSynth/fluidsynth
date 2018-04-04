@@ -27,7 +27,7 @@
 
 #include "fluidsynth.h"
 #include "fluidsynth_priv.h"
-#include "fluid_sf2.h"
+#include "fluid_sffile.h"
 #include "fluid_list.h"
 #include "fluid_mod.h"
 #include "fluid_gen.h"

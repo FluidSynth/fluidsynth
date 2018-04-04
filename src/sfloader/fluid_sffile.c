@@ -22,7 +22,7 @@
  */
 
 
-#include "fluid_sf2.h"
+#include "fluid_sffile.h"
 #include "fluid_sfont.h"
 #include "fluid_sys.h"
 
