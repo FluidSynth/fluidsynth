@@ -1568,7 +1568,7 @@ delete_fluid_synth(synth);
 delete_fluid_settings(settings);
 \endcode
 
-Various output files types are supported, if compiled with libsndfile. Those can be specified via the \c settings object as well. Refer to the <a href="fluidsettings.xml#audio.file.endian" target="_blank"><b>FluidSettings Documentation</b></a> for more \c audio.file\.\* options.
+Various output files types are supported, if compiled with libsndfile. Those can be specified via the \c settings object as well. Refer to the documentation of the \c audio.file\.\* options.
 
 
 \section MIDIPlayerMem Playing a MIDI file from memory
