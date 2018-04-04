@@ -387,14 +387,14 @@ int fluid_sffile_read_sample_data(SFData *sf, unsigned int start, unsigned int c
         goto error_exit;
     }
 
-    loaded_data = FLUID_MALLOC(count * 2);
+    loaded_data = FLUID_ARRAY(short, count);
     if (loaded_data == NULL)
     {
         FLUID_LOG(FLUID_ERR, "Out of memory");
         goto error_exit;
     }
 
-    if (sf->fcbs->fread(loaded_data, count * 2, sf->sffd) == FLUID_FAILED)
+    if (sf->fcbs->fread(loaded_data, count * sizeof(short), sf->sffd) == FLUID_FAILED)
     {
         FLUID_LOG(FLUID_ERR, "Failed to read sample data");
         goto error_exit;
@@ -429,7 +429,7 @@ int fluid_sffile_read_sample_data(SFData *sf, unsigned int start, unsigned int c
             goto error24_exit;
         }
 
-        loaded_data24 = FLUID_MALLOC(count);
+        loaded_data24 = FLUID_ARRAY(char, count);
         if (loaded_data24 == NULL)
         {
             FLUID_LOG(FLUID_ERR, "Out of memory reading 24-bit sample data");
