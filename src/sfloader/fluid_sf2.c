@@ -294,56 +294,57 @@ static int valid_preset_genid(unsigned short genid);
  */
 SFData *fluid_sf2_load(const char *fname, const fluid_file_callbacks_t *fcbs)
 {
-    SFData *sf = NULL;
-    void *fd;
+    SFData *sf;
     int fsize = 0;
-    int err = FALSE;
-
-    if ((fd = fcbs->fopen(fname)) == NULL)
-    {
-        FLUID_LOG(FLUID_ERR, _("Unable to open file \"%s\""), fname);
-        return NULL;
-    }
 
     if (!(sf = FLUID_NEW(SFData)))
     {
         FLUID_LOG(FLUID_ERR, "Out of memory");
-        fclose(fd);
-        err = TRUE;
-    }
-
-    if (!err)
-    {
-        memset(sf, 0, sizeof(SFData)); /* zero sfdata */
-        sf->fname = FLUID_STRDUP(fname); /* copy file name */
-        sf->sffd = fd;
-    }
-
-    /* get size of file */
-    if (!err && fcbs->fseek(fd, 0L, SEEK_END) == FLUID_FAILED)
-    { /* seek to end of file */
-        err = TRUE;
-        FLUID_LOG(FLUID_ERR, _("Seek to end of file failed"));
-    }
-    if (!err && (fsize = fcbs->ftell(fd)) == FLUID_FAILED)
-    { /* position = size */
-        err = TRUE;
-        FLUID_LOG(FLUID_ERR, _("Get end of file position failed"));
-    }
-    if (!err)
-        rewind(fd);
-
-    if (!err && !load_body(fsize, sf, fd, fcbs))
-        err = TRUE; /* load the sfont */
-
-    if (err)
-    {
-        if (sf)
-            fluid_sf2_close(sf, fcbs);
         return NULL;
+    }
+    FLUID_MEMSET(sf, 0, sizeof(SFData));
+
+    if ((sf->sffd = fcbs->fopen(fname)) == NULL)
+    {
+        FLUID_LOG(FLUID_ERR, _("Unable to open file \"%s\""), fname);
+        goto error_exit;
+    }
+
+    sf->fname = FLUID_STRDUP(fname);
+    if (sf->fname == NULL)
+    {
+        FLUID_LOG(FLUID_ERR, "Out of memory");
+        goto error_exit;
+    }
+
+    /* get size of file by seeking to end */
+    if (fcbs->fseek(sf->sffd, 0L, SEEK_END) == FLUID_FAILED)
+    {
+        FLUID_LOG(FLUID_ERR, _("Seek to end of file failed"));
+        goto error_exit;
+    }
+    if ((fsize = fcbs->ftell(sf->sffd)) == FLUID_FAILED)
+    {
+        FLUID_LOG(FLUID_ERR, _("Get end of file position failed"));
+        goto error_exit;
+    }
+
+    if (fcbs->fseek(sf->sffd, 0, SEEK_SET) == FLUID_FAILED)
+    {
+        FLUID_LOG(FLUID_ERR, _("Rewind to start of file failed"));
+        goto error_exit;
+    }
+
+    if (!load_body(fsize, sf, sf->sffd, fcbs))
+    {
+        goto error_exit;
     }
 
     return sf;
+
+error_exit:
+    fluid_sf2_close(sf, fcbs);
+    return NULL;
 }
 
 /*
