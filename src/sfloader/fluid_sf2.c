@@ -1453,15 +1453,6 @@ next_sample:
   Smurf SoundFont Editor
   ================================================================*/
 
-
-/* optimum chunk area sizes (could be more optimum) */
-#define PRESET_CHUNK_OPTIMUM_AREA	256
-#define INST_CHUNK_OPTIMUM_AREA		256
-#define SAMPLE_CHUNK_OPTIMUM_AREA	256
-#define ZONE_CHUNK_OPTIMUM_AREA		256
-#define MOD_CHUNK_OPTIMUM_AREA		256
-#define GEN_CHUNK_OPTIMUM_AREA		256
-
 static const unsigned short badgen[] = {
   Gen_Unused1, Gen_Unused2, Gen_Unused3, Gen_Unused4,
   Gen_Reserved1, Gen_Reserved2, Gen_Reserved3, 0

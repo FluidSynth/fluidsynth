@@ -185,25 +185,7 @@ Gen_Type;
 #define Gen_Count	Gen_Dummy	/* count of generators */
 #define GenArrSize sizeof(SFGenAmount)*Gen_Count	/* gen array size */
 
-/* generator unit type */
-typedef enum
-{
-  None,				/* No unit type */
-  Unit_Smpls,			/* in samples */
-  Unit_32kSmpls,		/* in 32k samples */
-  Unit_Cent,			/* in cents (1/100th of a semitone) */
-  Unit_HzCent,			/* in Hz Cents */
-  Unit_TCent,			/* in Time Cents */
-  Unit_cB,			/* in centibels (1/100th of a decibel) */
-  Unit_Percent,			/* in percentage */
-  Unit_Semitone,		/* in semitones */
-  Unit_Range			/* a range of values */
-}
-Gen_Unit;
-
 /* functions */
-void sfont_init_chunks (void);
-
 void sfont_close (SFData * sf, const fluid_file_callbacks_t* fcbs);
 void sfont_free_zone (SFZone * zone);
 int sfont_preset_compare_func (void* a, void* b);
@@ -299,13 +281,9 @@ SFData *sfload_file (const char * fname, const fluid_file_callbacks_t* fcbs);
 #define OK	1
 
 enum
-{ ErrWarn, ErrFatal, ErrStatus, ErrCorr, ErrEof, ErrMem, Errno,
-  ErrRead, ErrWrite
+{
+    ErrCorr,
 };
-
-#define ErrMax		ErrWrite
-#define ErrnoStart	Errno
-#define ErrnoEnd	ErrWrite
 
 int gerr (int ev, char * fmt, ...);
 
