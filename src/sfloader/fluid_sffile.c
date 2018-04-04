@@ -297,7 +297,7 @@ static void delete_zone(SFZone *zone);
  * @param fcbs file callback structure
  * @return the parsed SoundFont as SFData structure or NULL on error
  */
-SFData *fluid_sf2_load(const char *fname, const fluid_file_callbacks_t *fcbs)
+SFData *fluid_sffile_load(const char *fname, const fluid_file_callbacks_t *fcbs)
 {
     SFData *sf;
     int fsize = 0;
@@ -350,7 +350,7 @@ SFData *fluid_sf2_load(const char *fname, const fluid_file_callbacks_t *fcbs)
     return sf;
 
 error_exit:
-    fluid_sf2_close(sf);
+    fluid_sffile_close(sf);
     return NULL;
 }
 
@@ -360,7 +360,7 @@ error_exit:
  * @param sf pointer to SFData structure
  * @param fcbs file callback structure
  */
-void fluid_sf2_close(SFData *sf)
+void fluid_sffile_close(SFData *sf)
 {
     fluid_list_t *entry;
     SFPreset *preset;
@@ -595,7 +595,7 @@ static int process_info(SFData *sf, int size)
                 return FALSE;
             }
 
-            /* attach to INFO list, fluid_sf2_close will cleanup if FAIL occurs */
+            /* attach to INFO list, fluid_sffile_close will cleanup if FAIL occurs */
             sf->info = fluid_list_append(sf->info, item);
 
             *(unsigned char *)item = id;
@@ -809,7 +809,7 @@ static int load_phdr(SFData *sf, int size)
     { /* load all preset headers */
         preset = FLUID_NEW(SFPreset);
         sf->preset = fluid_list_append(sf->preset, preset);
-        preset->zone = NULL; /* In case of failure, fluid_sf2_close can cleanup */
+        preset->zone = NULL; /* In case of failure, fluid_sffile_close can cleanup */
         READSTR(sf, &preset->name); /* possible read failure ^ */
         READW(sf, preset->prenum);
         READW(sf, preset->bank);
@@ -884,7 +884,7 @@ static int load_pbag(SFData *sf, int size)
             z = FLUID_NEW(SFZone);
             p2->data = z;
             z->gen = NULL; /* Init gen and mod before possible failure, */
-            z->mod = NULL; /* to ensure proper cleanup (fluid_sf2_close) */
+            z->mod = NULL; /* to ensure proper cleanup (fluid_sffile_close) */
             READW(sf, genndx); /* possible read failure ^ */
             READW(sf, modndx);
             z->instsamp = NULL;
@@ -1212,7 +1212,7 @@ static int load_ihdr(SFData *sf, int size)
     { /* load all instrument headers */
         p = FLUID_NEW(SFInst);
         sf->inst = fluid_list_append(sf->inst, p);
-        p->zone = NULL; /* For proper cleanup if fail (fluid_sf2_close) */
+        p->zone = NULL; /* For proper cleanup if fail (fluid_sffile_close) */
         READSTR(sf, &p->name); /* Possible read failure ^ */
         READW(sf, zndx);
 
@@ -1276,7 +1276,7 @@ static int load_ibag(SFData *sf, int size)
             z = FLUID_NEW(SFZone);
             p2->data = z;
             z->gen = NULL; /* In case of failure, */
-            z->mod = NULL; /* fluid_sf2_close can clean up */
+            z->mod = NULL; /* fluid_sffile_close can clean up */
             READW(sf, genndx); /* READW = possible read failure */
             READW(sf, modndx);
             z->instsamp = NULL;

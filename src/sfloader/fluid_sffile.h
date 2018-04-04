@@ -21,8 +21,8 @@
  */
 
 
-#ifndef _FLUID_SF2_H
-#define _FLUID_SF2_H
+#ifndef _FLUID_SFFILE_H
+#define _FLUID_SFFILE_H
 
 
 #include "fluid_gen.h"
@@ -204,7 +204,7 @@ struct _SFShdr
 };
 
 /* Public functions  */
-SFData *fluid_sf2_load(const char *fname, const fluid_file_callbacks_t *fcbs);
-void fluid_sf2_close(SFData *sf);
+SFData *fluid_sffile_load(const char *fname, const fluid_file_callbacks_t *fcbs);
+void fluid_sffile_close(SFData *sf);
 
-#endif /* _FLUID_SF2_H */
+#endif /* _FLUID_SFFILE_H */
