@@ -796,8 +796,8 @@ static int process_pdta(int size, SFData *sf, void *fd, const fluid_file_callbac
 static int load_phdr(int size, SFData *sf, void *fd, const fluid_file_callbacks_t *fcbs)
 {
     int i, i2;
-    SFPreset *p, *pr = NULL; /* ptr to current & previous preset */
-    unsigned short zndx, pzndx = 0;
+    SFPreset *preset, *prev_preset = NULL;
+    unsigned short pbag_idx, prev_pbag_idx = 0;
 
     if (size % SFPHDRSIZE || size == 0)
     {
@@ -815,49 +815,49 @@ static int load_phdr(int size, SFData *sf, void *fd, const fluid_file_callbacks_
 
     for (; i > 0; i--)
     { /* load all preset headers */
-        p = FLUID_NEW(SFPreset);
-        sf->preset = fluid_list_append(sf->preset, p);
-        p->zone = NULL; /* In case of failure, fluid_sf2_close can cleanup */
-        READSTR(&p->name, fd, fcbs); /* possible read failure ^ */
-        READW(p->prenum, fd, fcbs);
-        READW(p->bank, fd, fcbs);
-        READW(zndx, fd, fcbs);
-        READD(p->libr, fd, fcbs);
-        READD(p->genre, fd, fcbs);
-        READD(p->morph, fd, fcbs);
+        preset = FLUID_NEW(SFPreset);
+        sf->preset = fluid_list_append(sf->preset, preset);
+        preset->zone = NULL; /* In case of failure, fluid_sf2_close can cleanup */
+        READSTR(&preset->name, fd, fcbs); /* possible read failure ^ */
+        READW(preset->prenum, fd, fcbs);
+        READW(preset->bank, fd, fcbs);
+        READW(pbag_idx, fd, fcbs);
+        READD(preset->libr, fd, fcbs);
+        READD(preset->genre, fd, fcbs);
+        READD(preset->morph, fd, fcbs);
 
-        if (pr)
+        if (prev_preset)
         { /* not first preset? */
-            if (zndx < pzndx)
+            if (pbag_idx < prev_pbag_idx)
             {
                 FLUID_LOG(FLUID_ERR, _("Preset header indices not monotonic"));
                 return FALSE;
             }
-            i2 = zndx - pzndx;
+            i2 = pbag_idx - prev_pbag_idx;
             while (i2--)
             {
-                pr->zone = fluid_list_prepend(pr->zone, NULL);
+                prev_preset->zone = fluid_list_prepend(prev_preset->zone, NULL);
             }
         }
-        else if (zndx > 0) /* 1st preset, warn if ofs >0 */
-            FLUID_LOG(FLUID_WARN, _("%d preset zones not referenced, discarding"), zndx);
-        pr = p; /* update preset ptr */
-        pzndx = zndx;
+        else if (pbag_idx > 0) /* 1st preset, warn if ofs >0 */
+            FLUID_LOG(FLUID_WARN, _("%d preset zones not referenced, discarding"), pbag_idx);
+        prev_preset = preset; /* update preset ptr */
+        prev_pbag_idx = pbag_idx;
     }
 
     FSKIP(24, fd, fcbs);
-    READW(zndx, fd, fcbs); /* Read terminal generator index */
+    READW(pbag_idx, fd, fcbs); /* Read terminal generator index */
     FSKIP(12, fd, fcbs);
 
-    if (zndx < pzndx)
+    if (pbag_idx < prev_pbag_idx)
     {
         FLUID_LOG(FLUID_ERR, _("Preset header indices not monotonic"));
         return FALSE;
     }
-    i2 = zndx - pzndx;
+    i2 = pbag_idx - prev_pbag_idx;
     while (i2--)
     {
-        pr->zone = fluid_list_prepend(pr->zone, NULL);
+        prev_preset->zone = fluid_list_prepend(prev_preset->zone, NULL);
     }
 
     return TRUE;
