@@ -93,15 +93,22 @@ int fluid_samplecache_load(SFData *sf,
     {
         /* Lock the memory to disable paging. It's okay if this fails. It
          * probably means that the user doesn't have the required permission. */
-        entry->mlocked = (fluid_mlock(entry->sample_data, entry->sample_count * 2) == 0);
-        if (entry->sample_data24 != NULL)
+        if (fluid_mlock(entry->sample_data, entry->sample_count * 2) == 0)
         {
-            entry->mlocked &= (fluid_mlock(entry->sample_data24, entry->sample_count) == 0);
-        }
+            if (entry->sample_data24 != NULL)
+            {
+                entry->mlocked = (fluid_mlock(entry->sample_data24, entry->sample_count) == 0);
+            }
+            else
+            {
+                entry->mlocked = TRUE;
+            }
 
-        if (!entry->mlocked)
-        {
-            FLUID_LOG(FLUID_WARN, "Failed to pin the sample data to RAM; swapping is possible.");
+            if (!entry->mlocked)
+            {
+                fluid_munlock(entry->sample_data, entry->sample_count * 2);
+                FLUID_LOG(FLUID_WARN, "Failed to pin the sample data to RAM; swapping is possible.");
+            }
         }
     }
 
@@ -137,7 +144,10 @@ int fluid_samplecache_unload(const short *sample_data)
                 if (entry->mlocked)
                 {
                     fluid_munlock(entry->sample_data, entry->sample_count * 2);
-                    fluid_munlock(entry->sample_data24, entry->sample_count);
+                    if (entry->sample_data24 != NULL)
+                    {
+                        fluid_munlock(entry->sample_data24, entry->sample_count);
+                    }
                 }
 
                 fluid_list_remove(samplecache_list, entry);
