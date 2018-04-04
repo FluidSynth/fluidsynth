@@ -42,6 +42,8 @@
 #include <gmodule.h>
 #endif
 
+#include <glib/gstdio.h>
+
 /**
  * Macro used for safely accessing a message from a GError and using a default
  * message if it is NULL.
@@ -354,6 +356,10 @@ int fluid_server_socket_join(fluid_server_socket_t* sock);
 void fluid_socket_close(fluid_socket_t sock);
 fluid_istream_t fluid_socket_get_istream(fluid_socket_t sock);
 fluid_ostream_t fluid_socket_get_ostream(fluid_socket_t sock);
+
+/* File access */
+typedef GStatBuf fluid_stat_buf_t;
+#define fluid_stat(_filename, _statbuf)   g_stat((_filename), (_statbuf))
 
 
 /* Profiling */

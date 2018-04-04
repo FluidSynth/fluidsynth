@@ -267,18 +267,13 @@ static fluid_samplecache_entry_t *get_samplecache_entry(SFData *sf,
 
 static int fluid_get_file_modification_time(char *filename, time_t *modification_time)
 {
-#if defined(WIN32) || defined(__OS2__)
-    *modification_time = 0;
-    return FLUID_OK;
-#else
-    struct stat buf;
+    fluid_stat_buf_t buf;
 
-    if (stat(filename, &buf) == -1)
+    if (fluid_stat(filename, &buf))
     {
         return FLUID_FAILED;
     }
 
     *modification_time = buf.st_mtime;
     return FLUID_OK;
-#endif
 }
