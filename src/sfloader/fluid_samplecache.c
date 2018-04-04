@@ -72,6 +72,7 @@ int fluid_samplecache_load(SFData *sf,
                            int try_mlock, short **sample_data, char **sample_data24)
 {
     fluid_samplecache_entry_t *entry;
+    int ret;
 
     fluid_mutex_lock(samplecache_mutex);
 
@@ -81,7 +82,8 @@ int fluid_samplecache_load(SFData *sf,
         entry = new_samplecache_entry(sf, sample_start, sample_count);
         if (entry == NULL)
         {
-            return FLUID_FAILED;
+            ret = FLUID_FAILED;
+            goto unlock_exit;
         }
 
         samplecache_list = fluid_list_prepend(samplecache_list, entry);
@@ -106,16 +108,18 @@ int fluid_samplecache_load(SFData *sf,
     entry->num_references++;
     *sample_data = entry->sample_data;
     *sample_data24 = entry->sample_data24;
+    ret = FLUID_OK;
 
+unlock_exit:
     fluid_mutex_unlock(samplecache_mutex);
-
-    return FLUID_OK;
+    return ret;
 }
 
 int fluid_samplecache_unload(const short *sample_data)
 {
     fluid_list_t *entry_list;
     fluid_samplecache_entry_t *entry;
+    int ret;
 
     fluid_mutex_lock(samplecache_mutex);
 
@@ -140,22 +144,19 @@ int fluid_samplecache_unload(const short *sample_data)
                 delete_samplecache_entry(entry);
             }
 
-            goto success_exit;
+            ret = FLUID_OK;
+            goto unlock_exit;
         }
 
         entry_list = fluid_list_next(entry_list);
     }
 
     FLUID_LOG(FLUID_ERR, "Trying to free sample data not found in cache.");
-    goto error_exit;
+    ret = FLUID_FAILED;
 
-success_exit:
+unlock_exit:
     fluid_mutex_unlock(samplecache_mutex);
-    return FLUID_OK;
-
-error_exit:
-    fluid_mutex_unlock(samplecache_mutex);
-    return FLUID_FAILED;
+    return ret;
 }
 
 
