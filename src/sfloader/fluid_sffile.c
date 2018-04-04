@@ -429,7 +429,7 @@ int fluid_sffile_read_sample_data(SFData *sf, unsigned int start, unsigned int c
         if (loaded_data24 == NULL)
         {
             FLUID_LOG(FLUID_ERR, "Out of memory");
-            return FLUID_FAILED;
+            goto error_exit;
         }
 
         if (sf->fcbs->fread(loaded_data24, count, sf->sffd) == FLUID_FAILED)
