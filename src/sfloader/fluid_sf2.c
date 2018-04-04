@@ -164,14 +164,6 @@ static const unsigned short badpgen[] = {Gen_StartAddrOfs,
 #define FAIL 0
 #define OK 1
 
-enum
-{
-    ErrCorr,
-};
-
-int gerr(int ev, char *fmt, ...);
-
-
 #define CHNKIDSTR(id) &idlist[(id - 1) * 4]
 
 /* sfont file chunk sizes */
@@ -376,7 +368,7 @@ static int load_body(unsigned int size, SFData *sf, void *fd, const fluid_file_c
 
     if (chunk.size != size - 8)
     {
-        gerr(ErrCorr, _("SoundFont file size mismatch"));
+        FLUID_LOG(FLUID_ERR, _("SoundFont file size mismatch"));
         return (FAIL);
     }
 
@@ -384,7 +376,10 @@ static int load_body(unsigned int size, SFData *sf, void *fd, const fluid_file_c
     if (!read_listchunk(&chunk, fd, fcbs))
         return (FAIL);
     if (chunkid(chunk.id) != INFO_ID)
-        return (gerr(ErrCorr, _("Invalid ID found when expecting INFO chunk")));
+    {
+        FLUID_LOG(FLUID_ERR, _("Invalid ID found when expecting INFO chunk"));
+        return (FAIL);
+    }
     if (!process_info(chunk.size, sf, fd, fcbs))
         return (FAIL);
 
@@ -392,7 +387,10 @@ static int load_body(unsigned int size, SFData *sf, void *fd, const fluid_file_c
     if (!read_listchunk(&chunk, fd, fcbs))
         return (FAIL);
     if (chunkid(chunk.id) != SDTA_ID)
-        return (gerr(ErrCorr, _("Invalid ID found when expecting SAMPLE chunk")));
+    {
+        FLUID_LOG(FLUID_ERR, _("Invalid ID found when expecting SAMPLE chunk"));
+        return (FAIL);
+    }
     if (!process_sdta(chunk.size, sf, fd, fcbs))
         return (FAIL);
 
@@ -400,7 +398,10 @@ static int load_body(unsigned int size, SFData *sf, void *fd, const fluid_file_c
     if (!read_listchunk(&chunk, fd, fcbs))
         return (FAIL);
     if (chunkid(chunk.id) != PDTA_ID)
-        return (gerr(ErrCorr, _("Invalid ID found when expecting HYDRA chunk")));
+    {
+        FLUID_LOG(FLUID_ERR, _("Invalid ID found when expecting HYDRA chunk"));
+        return (FAIL);
+    }
     if (!process_pdta(chunk.size, sf, fd, fcbs))
         return (FAIL);
 
@@ -421,7 +422,10 @@ static int read_listchunk(SFChunk *chunk, void *fd, const fluid_file_callbacks_t
 {
     READCHUNK(chunk, fd, fcbs); /* read list chunk */
     if (chunkid(chunk->id) != LIST_ID) /* error if ! list chunk */
-        return (gerr(ErrCorr, _("Invalid chunk id in level 0 parse")));
+    {
+        FLUID_LOG(FLUID_ERR, _("Invalid chunk id in level 0 parse"));
+        return (FAIL);
+    }
     READID(&chunk->id, fd, fcbs); /* read id string */
     chunk->size -= 4;
     return (OK);
@@ -444,7 +448,10 @@ static int process_info(int size, SFData *sf, void *fd, const fluid_file_callbac
         if (id == IFIL_ID)
         { /* sound font version chunk? */
             if (chunk.size != 4)
-                return (gerr(ErrCorr, _("Sound font version info chunk has invalid size")));
+            {
+                FLUID_LOG(FLUID_ERR, _("Sound font version info chunk has invalid size"));
+                return (FAIL);
+            }
 
             READW(ver, fd, fcbs);
             sf->version.major = ver;
@@ -481,7 +488,10 @@ static int process_info(int size, SFData *sf, void *fd, const fluid_file_callbac
         else if (id == IVER_ID)
         { /* ROM version chunk? */
             if (chunk.size != 4)
-                return (gerr(ErrCorr, _("ROM version info chunk has invalid size")));
+            {
+                FLUID_LOG(FLUID_ERR, _("ROM version info chunk has invalid size"));
+                return (FAIL);
+            }
 
             READW(ver, fd, fcbs);
             sf->romver.major = ver;
@@ -491,9 +501,11 @@ static int process_info(int size, SFData *sf, void *fd, const fluid_file_callbac
         else if (id != UNKN_ID)
         {
             if ((id != ICMT_ID && chunk.size > 256) || (chunk.size > 65536) || (chunk.size % 2))
-                return (gerr(ErrCorr, _("INFO sub chunk %.4s has invalid chunk size"
-                                        " of %d bytes"),
-                             &chunk.id, chunk.size));
+            {
+                FLUID_LOG(FLUID_ERR, _("INFO sub chunk %.4s has invalid chunk size of %d bytes"),
+                          &chunk.id, chunk.size);
+                return (FAIL);
+            }
 
             /* alloc for chunk id and da chunk */
             if (!(item = FLUID_MALLOC(chunk.size + 1)))
@@ -513,12 +525,18 @@ static int process_info(int size, SFData *sf, void *fd, const fluid_file_callbac
             *(item + chunk.size) = '\0';
         }
         else
-            return (gerr(ErrCorr, _("Invalid chunk id in INFO chunk")));
+        {
+            FLUID_LOG(FLUID_ERR, _("Invalid chunk id in INFO chunk"));
+            return (FAIL);
+        }
         size -= chunk.size;
     }
 
     if (size < 0)
-        return (gerr(ErrCorr, _("INFO chunk size mismatch")));
+    {
+        FLUID_LOG(FLUID_ERR, _("INFO chunk size mismatch"));
+        return (FAIL);
+    }
 
     return (OK);
 }
@@ -535,13 +553,19 @@ static int process_sdta(unsigned int size, SFData *sf, void *fd, const fluid_fil
     size -= 8;
 
     if (chunkid(chunk.id) != SMPL_ID)
-        return (gerr(ErrCorr, _("Expected SMPL chunk found invalid id instead")));
+    {
+        FLUID_LOG(FLUID_ERR, _("Expected SMPL chunk found invalid id instead"));
+        return (FAIL);
+    }
 
     /* SDTA chunk may also contain sm24 chunk for 24 bit samples
      * (not yet supported), only an error if SMPL chunk size is
      * greater than SDTA. */
     if (chunk.size > size)
-        return (gerr(ErrCorr, _("SDTA chunk size mismatch")));
+    {
+        FLUID_LOG(FLUID_ERR, _("SDTA chunk size mismatch"));
+        return (FAIL);
+    }
 
     /* sample data follows */
     sf->samplepos = fcbs->ftell(fd);
@@ -609,14 +633,21 @@ static int pdtahelper(unsigned int expid, unsigned int reclen, SFChunk *chunk, i
     *size -= 8;
 
     if ((id = chunkid(chunk->id)) != expid)
-        return (gerr(ErrCorr, _("Expected"
-                                " PDTA sub-chunk \"%.4s\" found invalid id instead"),
-                     expstr));
+    {
+        FLUID_LOG(FLUID_ERR, _("Expected PDTA sub-chunk \"%.4s\" found invalid id instead"), expstr);
+        return (FAIL);
+    }
 
     if (chunk->size % reclen) /* valid chunk size? */
-        return (gerr(ErrCorr, _("\"%.4s\" chunk size is not a multiple of %d bytes"), expstr, reclen));
+    {
+        FLUID_LOG(FLUID_ERR, _("\"%.4s\" chunk size is not a multiple of %d bytes"), expstr, reclen);
+        return (FAIL);
+    }
     if ((*size -= chunk->size) < 0)
-        return (gerr(ErrCorr, _("\"%.4s\" chunk size exceeds remaining PDTA chunk size"), expstr));
+    {
+        FLUID_LOG(FLUID_ERR, _("\"%.4s\" chunk size exceeds remaining PDTA chunk size"), expstr);
+        return (FAIL);
+    }
     return (OK);
 }
 
@@ -680,7 +711,10 @@ static int load_phdr(int size, SFData *sf, void *fd, const fluid_file_callbacks_
     unsigned short zndx, pzndx = 0;
 
     if (size % SFPHDRSIZE || size == 0)
-        return (gerr(ErrCorr, _("Preset header chunk size is invalid")));
+    {
+        FLUID_LOG(FLUID_ERR, _("Preset header chunk size is invalid"));
+        return (FAIL);
+    }
 
     i = size / SFPHDRSIZE - 1;
     if (i == 0)
@@ -706,7 +740,10 @@ static int load_phdr(int size, SFData *sf, void *fd, const fluid_file_callbacks_
         if (pr)
         { /* not first preset? */
             if (zndx < pzndx)
-                return (gerr(ErrCorr, _("Preset header indices not monotonic")));
+            {
+                FLUID_LOG(FLUID_ERR, _("Preset header indices not monotonic"));
+                return (FAIL);
+            }
             i2 = zndx - pzndx;
             while (i2--)
             {
@@ -724,7 +761,10 @@ static int load_phdr(int size, SFData *sf, void *fd, const fluid_file_callbacks_
     FSKIP(12, fd, fcbs);
 
     if (zndx < pzndx)
-        return (gerr(ErrCorr, _("Preset header indices not monotonic")));
+    {
+        FLUID_LOG(FLUID_ERR, _("Preset header indices not monotonic"));
+        return (FAIL);
+    }
     i2 = zndx - pzndx;
     while (i2--)
     {
@@ -744,7 +784,10 @@ static int load_pbag(int size, SFData *sf, void *fd, const fluid_file_callbacks_
     unsigned short i;
 
     if (size % SFBAGSIZE || size == 0) /* size is multiple of SFBAGSIZE? */
-        return (gerr(ErrCorr, _("Preset bag chunk size is invalid")));
+    {
+        FLUID_LOG(FLUID_ERR, _("Preset bag chunk size is invalid"));
+        return (FAIL);
+    }
 
     p = sf->preset;
     while (p)
@@ -753,7 +796,10 @@ static int load_pbag(int size, SFData *sf, void *fd, const fluid_file_callbacks_
         while (p2)
         { /* traverse preset's zones */
             if ((size -= SFBAGSIZE) < 0)
-                return (gerr(ErrCorr, _("Preset bag chunk size mismatch")));
+            {
+                FLUID_LOG(FLUID_ERR, _("Preset bag chunk size mismatch"));
+                return (FAIL);
+            }
             z = FLUID_NEW(SFZone);
             p2->data = z;
             z->gen = NULL; /* Init gen and mod before possible failure, */
@@ -765,9 +811,15 @@ static int load_pbag(int size, SFData *sf, void *fd, const fluid_file_callbacks_
             if (pz)
             { /* if not first zone */
                 if (genndx < pgenndx)
-                    return (gerr(ErrCorr, _("Preset bag generator indices not monotonic")));
+                {
+                    FLUID_LOG(FLUID_ERR, _("Preset bag generator indices not monotonic"));
+                    return (FAIL);
+                }
                 if (modndx < pmodndx)
-                    return (gerr(ErrCorr, _("Preset bag modulator indices not monotonic")));
+                {
+                    FLUID_LOG(FLUID_ERR, _("Preset bag modulator indices not monotonic"));
+                    return (FAIL);
+                }
                 i = genndx - pgenndx;
                 while (i--)
                     pz->gen = fluid_list_prepend(pz->gen, NULL);
@@ -785,7 +837,10 @@ static int load_pbag(int size, SFData *sf, void *fd, const fluid_file_callbacks_
 
     size -= SFBAGSIZE;
     if (size != 0)
-        return (gerr(ErrCorr, _("Preset bag chunk size mismatch")));
+    {
+        FLUID_LOG(FLUID_ERR, _("Preset bag chunk size mismatch"));
+        return (FAIL);
+    }
 
     READW(genndx, fd, fcbs);
     READW(modndx, fd, fcbs);
@@ -800,9 +855,15 @@ static int load_pbag(int size, SFData *sf, void *fd, const fluid_file_callbacks_
     }
 
     if (genndx < pgenndx)
-        return (gerr(ErrCorr, _("Preset bag generator indices not monotonic")));
+    {
+        FLUID_LOG(FLUID_ERR, _("Preset bag generator indices not monotonic"));
+        return (FAIL);
+    }
     if (modndx < pmodndx)
-        return (gerr(ErrCorr, _("Preset bag modulator indices not monotonic")));
+    {
+        FLUID_LOG(FLUID_ERR, _("Preset bag modulator indices not monotonic"));
+        return (FAIL);
+    }
     i = genndx - pgenndx;
     while (i--)
         pz->gen = fluid_list_prepend(pz->gen, NULL);
@@ -829,7 +890,10 @@ static int load_pmod(int size, SFData *sf, void *fd, const fluid_file_callbacks_
             while (p3)
             { /* load zone's modulators */
                 if ((size -= SFMODSIZE) < 0)
-                    return (gerr(ErrCorr, _("Preset modulator chunk size mismatch")));
+                {
+                    FLUID_LOG(FLUID_ERR, _("Preset modulator chunk size mismatch"));
+                    return (FAIL);
+                }
                 m = FLUID_NEW(SFMod);
                 p3->data = m;
                 READW(m->src, fd, fcbs);
@@ -853,7 +917,10 @@ static int load_pmod(int size, SFData *sf, void *fd, const fluid_file_callbacks_
 
     size -= SFMODSIZE;
     if (size != 0)
-        return (gerr(ErrCorr, _("Preset modulator chunk size mismatch")));
+    {
+        FLUID_LOG(FLUID_ERR, _("Preset modulator chunk size mismatch"));
+        return (FAIL);
+    }
     FSKIP(SFMODSIZE, fd, fcbs); /* terminal mod */
 
     return (OK);
@@ -899,7 +966,10 @@ static int load_pgen(int size, SFData *sf, void *fd, const fluid_file_callbacks_
                 skip = FALSE;
                 drop = FALSE;
                 if ((size -= SFGENSIZE) < 0)
-                    return (gerr(ErrCorr, _("Preset generator chunk size mismatch")));
+                {
+                    FLUID_LOG(FLUID_ERR, _("Preset generator chunk size mismatch"));
+                    return (FAIL);
+                }
 
                 READW(genid, fd, fcbs);
 
@@ -1004,7 +1074,10 @@ static int load_pgen(int size, SFData *sf, void *fd, const fluid_file_callbacks_
             { /* Kill any zones following an instrument */
                 discarded = TRUE;
                 if ((size -= SFGENSIZE) < 0)
-                    return (gerr(ErrCorr, _("Preset generator chunk size mismatch")));
+                {
+                    FLUID_LOG(FLUID_ERR, _("Preset generator chunk size mismatch"));
+                    return (FAIL);
+                }
                 FSKIP(SFGENSIZE, fd, fcbs);
                 SLADVREM(z->gen, p3);
             }
@@ -1023,7 +1096,10 @@ static int load_pgen(int size, SFData *sf, void *fd, const fluid_file_callbacks_
 
     size -= SFGENSIZE;
     if (size != 0)
-        return (gerr(ErrCorr, _("Preset generator chunk size mismatch")));
+    {
+        FLUID_LOG(FLUID_ERR, _("Preset generator chunk size mismatch"));
+        return (FAIL);
+    }
     FSKIP(SFGENSIZE, fd, fcbs); /* terminal gen */
 
     return (OK);
@@ -1037,7 +1113,10 @@ static int load_ihdr(int size, SFData *sf, void *fd, const fluid_file_callbacks_
     unsigned short zndx, pzndx = 0;
 
     if (size % SFIHDRSIZE || size == 0) /* chunk size is valid? */
-        return (gerr(ErrCorr, _("Instrument header has invalid size")));
+    {
+        FLUID_LOG(FLUID_ERR, _("Instrument header has invalid size"));
+        return (FAIL);
+    }
 
     size = size / SFIHDRSIZE - 1;
     if (size == 0)
@@ -1058,7 +1137,10 @@ static int load_ihdr(int size, SFData *sf, void *fd, const fluid_file_callbacks_
         if (pr)
         { /* not first instrument? */
             if (zndx < pzndx)
-                return (gerr(ErrCorr, _("Instrument header indices not monotonic")));
+            {
+                FLUID_LOG(FLUID_ERR, _("Instrument header indices not monotonic"));
+                return (FAIL);
+            }
             i2 = zndx - pzndx;
             while (i2--)
                 pr->zone = fluid_list_prepend(pr->zone, NULL);
@@ -1073,7 +1155,10 @@ static int load_ihdr(int size, SFData *sf, void *fd, const fluid_file_callbacks_
     READW(zndx, fd, fcbs);
 
     if (zndx < pzndx)
-        return (gerr(ErrCorr, _("Instrument header indices not monotonic")));
+    {
+        FLUID_LOG(FLUID_ERR, _("Instrument header indices not monotonic"));
+        return (FAIL);
+    }
     i2 = zndx - pzndx;
     while (i2--)
         pr->zone = fluid_list_prepend(pr->zone, NULL);
@@ -1090,7 +1175,10 @@ static int load_ibag(int size, SFData *sf, void *fd, const fluid_file_callbacks_
     int i;
 
     if (size % SFBAGSIZE || size == 0) /* size is multiple of SFBAGSIZE? */
-        return (gerr(ErrCorr, _("Instrument bag chunk size is invalid")));
+    {
+        FLUID_LOG(FLUID_ERR, _("Instrument bag chunk size is invalid"));
+        return (FAIL);
+    }
 
     p = sf->inst;
     while (p)
@@ -1099,7 +1187,10 @@ static int load_ibag(int size, SFData *sf, void *fd, const fluid_file_callbacks_
         while (p2)
         { /* load this inst's zones */
             if ((size -= SFBAGSIZE) < 0)
-                return (gerr(ErrCorr, _("Instrument bag chunk size mismatch")));
+            {
+                FLUID_LOG(FLUID_ERR, _("Instrument bag chunk size mismatch"));
+                return (FAIL);
+            }
             z = FLUID_NEW(SFZone);
             p2->data = z;
             z->gen = NULL; /* In case of failure, */
@@ -1111,9 +1202,15 @@ static int load_ibag(int size, SFData *sf, void *fd, const fluid_file_callbacks_
             if (pz)
             { /* if not first zone */
                 if (genndx < pgenndx)
-                    return (gerr(ErrCorr, _("Instrument generator indices not monotonic")));
+                {
+                    FLUID_LOG(FLUID_ERR, _("Instrument generator indices not monotonic"));
+                    return (FAIL);
+                }
                 if (modndx < pmodndx)
-                    return (gerr(ErrCorr, _("Instrument modulator indices not monotonic")));
+                {
+                    FLUID_LOG(FLUID_ERR, _("Instrument modulator indices not monotonic"));
+                    return (FAIL);
+                }
                 i = genndx - pgenndx;
                 while (i--)
                     pz->gen = fluid_list_prepend(pz->gen, NULL);
@@ -1131,7 +1228,10 @@ static int load_ibag(int size, SFData *sf, void *fd, const fluid_file_callbacks_
 
     size -= SFBAGSIZE;
     if (size != 0)
-        return (gerr(ErrCorr, _("Instrument chunk size mismatch")));
+    {
+        FLUID_LOG(FLUID_ERR, _("Instrument chunk size mismatch"));
+        return (FAIL);
+    }
 
     READW(genndx, fd, fcbs);
     READW(modndx, fd, fcbs);
@@ -1146,9 +1246,15 @@ static int load_ibag(int size, SFData *sf, void *fd, const fluid_file_callbacks_
     }
 
     if (genndx < pgenndx)
-        return (gerr(ErrCorr, _("Instrument generator indices not monotonic")));
+    {
+        FLUID_LOG(FLUID_ERR, _("Instrument generator indices not monotonic"));
+        return (FAIL);
+    }
     if (modndx < pmodndx)
-        return (gerr(ErrCorr, _("Instrument modulator indices not monotonic")));
+    {
+        FLUID_LOG(FLUID_ERR, _("Instrument modulator indices not monotonic"));
+        return (FAIL);
+    }
     i = genndx - pgenndx;
     while (i--)
         pz->gen = fluid_list_prepend(pz->gen, NULL);
@@ -1175,7 +1281,10 @@ static int load_imod(int size, SFData *sf, void *fd, const fluid_file_callbacks_
             while (p3)
             { /* load zone's modulators */
                 if ((size -= SFMODSIZE) < 0)
-                    return (gerr(ErrCorr, _("Instrument modulator chunk size mismatch")));
+                {
+                    FLUID_LOG(FLUID_ERR, _("Instrument modulator chunk size mismatch"));
+                    return (FAIL);
+                }
                 m = FLUID_NEW(SFMod);
                 p3->data = m;
                 READW(m->src, fd, fcbs);
@@ -1199,7 +1308,10 @@ static int load_imod(int size, SFData *sf, void *fd, const fluid_file_callbacks_
 
     size -= SFMODSIZE;
     if (size != 0)
-        return (gerr(ErrCorr, _("Instrument modulator chunk size mismatch")));
+    {
+        FLUID_LOG(FLUID_ERR, _("Instrument modulator chunk size mismatch"));
+        return (FAIL);
+    }
     FSKIP(SFMODSIZE, fd, fcbs); /* terminal mod */
 
     return (OK);
@@ -1234,7 +1346,10 @@ static int load_igen(int size, SFData *sf, void *fd, const fluid_file_callbacks_
                 skip = FALSE;
                 drop = FALSE;
                 if ((size -= SFGENSIZE) < 0)
-                    return (gerr(ErrCorr, _("IGEN chunk size mismatch")));
+                {
+                    FLUID_LOG(FLUID_ERR, _("IGEN chunk size mismatch"));
+                    return (FAIL);
+                }
 
                 READW(genid, fd, fcbs);
 
@@ -1339,7 +1454,10 @@ static int load_igen(int size, SFData *sf, void *fd, const fluid_file_callbacks_
             { /* Kill any zones following a sample */
                 discarded = TRUE;
                 if ((size -= SFGENSIZE) < 0)
-                    return (gerr(ErrCorr, _("Instrument generator chunk size mismatch")));
+                {
+                    FLUID_LOG(FLUID_ERR, _("Instrument generator chunk size mismatch"));
+                    return (FAIL);
+                }
                 FSKIP(SFGENSIZE, fd, fcbs);
                 SLADVREM(z->gen, p3);
             }
@@ -1358,7 +1476,10 @@ static int load_igen(int size, SFData *sf, void *fd, const fluid_file_callbacks_
 
     size -= SFGENSIZE;
     if (size != 0)
-        return (gerr(ErrCorr, _("IGEN chunk size mismatch")));
+    {
+        FLUID_LOG(FLUID_ERR, _("IGEN chunk size mismatch"));
+        return (FAIL);
+    }
     FSKIP(SFGENSIZE, fd, fcbs); /* terminal gen */
 
     return (OK);
@@ -1371,7 +1492,10 @@ static int load_shdr(unsigned int size, SFData *sf, void *fd, const fluid_file_c
     SFSample *p;
 
     if (size % SFSHDRSIZE || size == 0) /* size is multiple of SHDR size? */
-        return (gerr(ErrCorr, _("Sample header has invalid size")));
+    {
+        FLUID_LOG(FLUID_ERR, _("Sample header has invalid size"));
+        return (FAIL);
+    }
 
     size = size / SFSHDRSIZE - 1;
     if (size == 0)
@@ -1422,8 +1546,11 @@ static int fixup_pgen(SFData *sf)
             { /* load instrument # */
                 p3 = fluid_list_nth(sf->inst, i - 1);
                 if (!p3)
-                    return (gerr(ErrCorr, _("Preset %03d %03d: Invalid instrument reference"),
-                                 ((SFPreset *)(p->data))->bank, ((SFPreset *)(p->data))->prenum));
+                {
+                    FLUID_LOG(FLUID_ERR, _("Preset %03d %03d: Invalid instrument reference"),
+                                 ((SFPreset *)(p->data))->bank, ((SFPreset *)(p->data))->prenum);
+                    return (FAIL);
+                }
                 z->instsamp = p3;
             }
             else
@@ -1454,8 +1581,11 @@ static int fixup_igen(SFData *sf)
             { /* load sample # */
                 p3 = fluid_list_nth(sf->sample, i - 1);
                 if (!p3)
-                    return (gerr(ErrCorr, _("Instrument \"%s\": Invalid sample reference"),
-                                 ((SFInst *)(p->data))->name));
+                {
+                    FLUID_LOG(FLUID_ERR, _("Instrument \"%s\": Invalid sample reference"),
+                            ((SFInst *)(p->data))->name);
+                    return (FAIL);
+                }
                 z->instsamp = p3;
             }
             p2 = fluid_list_next(p2);
@@ -1734,20 +1864,4 @@ int gen_validp(int gen)
     while (badpgen[i] && badpgen[i] != (unsigned short)gen)
         i++;
     return (badpgen[i] == 0);
-}
-
-/*================================util.c===========================*/
-
-/* Logging function, returns FAIL to use as a return value in calling funcs */
-int gerr(int ev, char *fmt, ...)
-{
-    va_list args;
-
-    va_start(args, fmt);
-    vprintf(fmt, args);
-    va_end(args);
-
-    printf("\n");
-
-    return (FAIL);
 }
