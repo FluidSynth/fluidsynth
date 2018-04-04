@@ -380,12 +380,6 @@ int fluid_sffile_read_sample_data(SFData *sf, unsigned int start, unsigned int c
         goto error_exit;
     }
 
-    if (sf->sample24pos && ((start > sf->sample24size) || (end > sf->sample24size)))
-    {
-        FLUID_LOG(FLUID_ERR, "Sample offsets exceed 24-bit sample data chunk");
-        goto error_exit;
-    }
-
     /* Load 16-bit sample data */
     if (sf->fcbs->fseek(sf->sffd, sf->samplepos + (start * 2), SEEK_SET) == FLUID_FAILED)
     {
@@ -416,32 +410,47 @@ int fluid_sffile_read_sample_data(SFData *sf, unsigned int start, unsigned int c
         }
     }
 
-    /* Optionally load additional 8 bit sample data for 24-bit support */
+    *data = loaded_data;
+
+    /* Optionally load additional 8 bit sample data for 24-bit support. Any failures while loading
+     * the 24-bit sample data will be logged as errors but won't prevent the sample reading to
+     * fail, as sound output is still possible with the 16-bit sample data. */
     if (sf->sample24pos)
     {
+        if ((start > sf->sample24size) || (end > sf->sample24size))
+        {
+            FLUID_LOG(FLUID_ERR, "Sample offsets exceed 24-bit sample data chunk");
+            goto error24_exit;
+        }
+
         if (sf->fcbs->fseek(sf->sffd, sf->sample24pos + start, SEEK_SET) == FLUID_FAILED)
         {
-            FLUID_LOG(FLUID_ERR, "Failed to seek position in data file");
-            goto error_exit;
+            FLUID_LOG(FLUID_ERR, "Failed to seek position for 24-bit sample data in data file");
+            goto error24_exit;
         }
 
         loaded_data24 = FLUID_MALLOC(count);
         if (loaded_data24 == NULL)
         {
-            FLUID_LOG(FLUID_ERR, "Out of memory");
-            goto error_exit;
+            FLUID_LOG(FLUID_ERR, "Out of memory reading 24-bit sample data");
+            goto error24_exit;
         }
 
         if (sf->fcbs->fread(loaded_data24, count, sf->sffd) == FLUID_FAILED)
         {
             FLUID_LOG(FLUID_ERR, "Failed to read 24-bit sample data");
-            goto error_exit;
+            goto error24_exit;
         }
     }
 
-    *data = loaded_data;
     *data24 = loaded_data24;
 
+    return FLUID_OK;
+
+error24_exit:
+    FLUID_LOG(FLUID_WARN, "Ignoring 24-bit sample data, sound quality might suffer");
+    FLUID_FREE(loaded_data24);
+    *data24 = NULL;
     return FLUID_OK;
 
 error_exit:
