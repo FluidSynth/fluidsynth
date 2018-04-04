@@ -267,14 +267,12 @@ static int load_shdr(unsigned int size, SFData *sf, void *fd, const fluid_file_c
 static int fixup_pgen(SFData *sf);
 static int fixup_igen(SFData *sf);
 static int fixup_sample(SFData *sf);
-
-
-void sfont_zone_delete(SFData *sf, fluid_list_t **zlist, SFZone *zone);
-int sfont_preset_compare_func(void *a, void *b);
-void sfont_free_zone(SFZone *zone);
-fluid_list_t *gen_inlist(int gen, fluid_list_t *genlist);
-int gen_valid(int gen);
-int gen_validp(int gen);
+static void sfont_zone_delete(SFData *sf, fluid_list_t **zlist, SFZone *zone);
+static void sfont_free_zone(SFZone *zone);
+static int sfont_preset_compare_func(void *a, void *b);
+static fluid_list_t *gen_inlist(int gen, fluid_list_t *genlist);
+static int gen_valid(int gen);
+static int gen_validp(int gen);
 
 
 static const char idlist[] = {"RIFFLISTsfbkINFOsdtapdtaifilisngINAMiromiverICRDIENGIPRD"
@@ -1779,7 +1777,7 @@ void sfont_close(SFData *sf, const fluid_file_callbacks_t *fcbs)
 }
 
 /* free all elements of a zone (Preset or Instrument) */
-void sfont_free_zone(SFZone *zone)
+static void sfont_free_zone(SFZone *zone)
 {
     fluid_list_t *p;
 
@@ -1808,7 +1806,7 @@ void sfont_free_zone(SFZone *zone)
 }
 
 /* preset sort function, first by bank, then by preset # */
-int sfont_preset_compare_func(void *a, void *b)
+static int sfont_preset_compare_func(void *a, void *b)
 {
     int aval, bval;
 
@@ -1819,14 +1817,14 @@ int sfont_preset_compare_func(void *a, void *b)
 }
 
 /* delete zone from zone list */
-void sfont_zone_delete(SFData *sf, fluid_list_t **zlist, SFZone *zone)
+static void sfont_zone_delete(SFData *sf, fluid_list_t **zlist, SFZone *zone)
 {
     *zlist = fluid_list_remove(*zlist, (void *)zone);
     sfont_free_zone(zone);
 }
 
 /* Find generator in gen list */
-fluid_list_t *gen_inlist(int gen, fluid_list_t *genlist)
+static fluid_list_t *gen_inlist(int gen, fluid_list_t *genlist)
 { /* is generator in gen list? */
     fluid_list_t *p;
 
@@ -1843,7 +1841,7 @@ fluid_list_t *gen_inlist(int gen, fluid_list_t *genlist)
 }
 
 /* check validity of instrument generator */
-int gen_valid(int gen)
+static int gen_valid(int gen)
 { /* is generator id valid? */
     int i = 0;
 
@@ -1855,7 +1853,7 @@ int gen_valid(int gen)
 }
 
 /* check validity of preset generator */
-int gen_validp(int gen)
+static int gen_validp(int gen)
 { /* is preset generator valid? */
     int i = 0;
 
