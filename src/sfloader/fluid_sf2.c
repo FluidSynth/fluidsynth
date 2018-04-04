@@ -1730,12 +1730,12 @@ void fluid_sf2_close(SFData *sf, const fluid_file_callbacks_t *fcbs)
         fcbs->fclose(sf->sffd);
 
     if (sf->fname)
-        free(sf->fname);
+        FLUID_FREE(sf->fname);
 
     p = sf->info;
     while (p)
     {
-        free(p->data);
+        FLUID_FREE(p->data);
         p = fluid_list_next(p);
     }
     delete_fluid_list(sf->info);
