@@ -1848,9 +1848,9 @@ fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defs
   sample->data = sfont->sampledata;
   sample->data24 = sfont->sample24data;
   sample->start = sfsample->start;
-  sample->end = sfsample->start + sfsample->end;
-  sample->loopstart = sfsample->start + sfsample->loopstart;
-  sample->loopend = sfsample->start + sfsample->loopend;
+  sample->end = (sfsample->end > 0) ? sfsample->end - 1 : 0; /* marks last sample, contrary to SF spec. */
+  sample->loopstart = sfsample->loopstart;
+  sample->loopend = sfsample->loopend;
   sample->samplerate = sfsample->samplerate;
   sample->origpitch = sfsample->origpitch;
   sample->pitchadj = sfsample->pitchadj;

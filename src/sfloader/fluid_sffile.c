@@ -1595,9 +1595,9 @@ static int load_shdr(SFData *sf, unsigned int size)
         sf->sample = fluid_list_append(sf->sample, p);
         READSTR(sf, &p->name);
         READD(sf, p->start);
-        READD(sf, p->end); /* - end, loopstart and loopend */
-        READD(sf, p->loopstart); /* - will be checked and turned into */
-        READD(sf, p->loopend); /* - offsets in fixup_sample() */
+        READD(sf, p->end);
+        READD(sf, p->loopstart);
+        READD(sf, p->loopend);
         READD(sf, p->samplerate);
         READB(sf, p->origpitch);
         READB(sf, p->pitchadj);
@@ -1679,7 +1679,7 @@ static int fixup_igen(SFData *sf)
     return TRUE;
 }
 
-/* convert sample end, loopstart and loopend to offsets and check if valid */
+/* Make sure sample start/end and loopstart/loopend pointers are valid */
 static int fixup_sample(SFData *sf)
 {
     fluid_list_t *p;
@@ -1779,11 +1779,6 @@ static int fixup_sample(SFData *sf)
                           sam->name, sam->loopend, sam->end);
             }
         }
-
-        /* convert sample end, loopstart, loopend to offsets from sam->start */
-        sam->end -= sam->start + 1; /* marks last sample, contrary to SF spec. */
-        sam->loopstart -= sam->start;
-        sam->loopend -= sam->start;
 
     next_sample:
         p = fluid_list_next(p);
