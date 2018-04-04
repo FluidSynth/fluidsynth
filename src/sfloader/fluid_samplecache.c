@@ -30,9 +30,11 @@
  *                    CACHED SAMPLEDATA LOADER
  */
 
-typedef struct _fluid_cached_sampledata_t
+typedef struct _fluid_cached_sampledata_t fluid_cached_sampledata_t;
+
+struct _fluid_cached_sampledata_t
 {
-    struct _fluid_cached_sampledata_t *next;
+    fluid_cached_sampledata_t *next;
 
     char *filename;
     time_t modification_time;
@@ -44,28 +46,17 @@ typedef struct _fluid_cached_sampledata_t
 
     char *sample24data;
     unsigned int sample24size;
-} fluid_cached_sampledata_t;
+};
+
 
 static fluid_cached_sampledata_t *all_cached_sampledata = NULL;
 static fluid_mutex_t cached_sampledata_mutex = FLUID_MUTEX_INIT;
 
-static int fluid_get_file_modification_time(char *filename, time_t *modification_time)
-{
-#if defined(WIN32) || defined(__OS2__)
-    *modification_time = 0;
-    return FLUID_OK;
-#else
-    struct stat buf;
 
-    if (stat(filename, &buf) == -1)
-    {
-        return FLUID_FAILED;
-    }
+static int fluid_get_file_modification_time(char *filename, time_t *modification_time);
 
-    *modification_time = buf.st_mtime;
-    return FLUID_OK;
-#endif
-}
+
+/* PUBLIC INTERFACE */
 
 int fluid_cached_sampledata_load(char *filename,
                                  unsigned int samplepos,
@@ -312,4 +303,25 @@ success_exit:
 error_exit:
     fluid_mutex_unlock(cached_sampledata_mutex);
     return FLUID_FAILED;
+}
+
+
+/* Private functions */
+
+static int fluid_get_file_modification_time(char *filename, time_t *modification_time)
+{
+#if defined(WIN32) || defined(__OS2__)
+    *modification_time = 0;
+    return FLUID_OK;
+#else
+    struct stat buf;
+
+    if (stat(filename, &buf) == -1)
+    {
+        return FLUID_FAILED;
+    }
+
+    *modification_time = buf.st_mtime;
+    return FLUID_OK;
+#endif
 }
