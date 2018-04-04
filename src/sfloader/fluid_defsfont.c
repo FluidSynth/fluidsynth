@@ -1863,7 +1863,5 @@ fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defs
 
   fluid_sample_sanitize_loop(sample, sfont->samplesize);
 
-  sample->valid = TRUE;
-
   return FLUID_OK;
 }

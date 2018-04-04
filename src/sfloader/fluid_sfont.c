@@ -504,7 +504,6 @@ fluid_sample_set_sound_data (fluid_sample_t* sample,
 
     sample->samplerate = sample_rate;
     sample->sampletype = FLUID_SAMPLETYPE_MONO;
-    sample->valid = 1;
     sample->auto_free = copy_data;
 
     return FLUID_OK;
@@ -751,9 +750,8 @@ int fluid_sample_decompress_vorbis(fluid_sample_t *sample)
     // empty sample
     if (!sfinfo.frames || !sfinfo.channels)
     {
-      sample->start = sample->end =
-      sample->loopstart = sample->loopend =
-      sample->valid = 0;
+      sample->start = sample->end = 0;
+      sample->loopstart = sample->loopend = 0;
       sample->data = NULL;
       sf_close(sndfile);
       return FLUID_OK;

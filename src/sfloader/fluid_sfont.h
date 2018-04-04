@@ -183,7 +183,6 @@ struct _fluid_sample_t
   int origpitch;                /**< Original pitch (MIDI note number, 0-127) */
   int pitchadj;                 /**< Fine pitch adjustment (+/- 99 cents) */
   int sampletype;               /**< Specifies the type of this sample as indicated by the #fluid_sample_type enum */
-  int valid;                    /**< Should be TRUE if sample data is valid, FALSE otherwise (in which case it will not be synthesized) */
   int auto_free;                /**< TRUE if _fluid_sample_t::data and _fluid_sample_t::data24 should be freed upon sample destruction */
   short* data;                  /**< Pointer to the sample's 16 bit PCM data */
   char* data24;                 /**< If not NULL, pointer to the least significant byte counterparts of each sample data point in order to create 24 bit audio samples */
