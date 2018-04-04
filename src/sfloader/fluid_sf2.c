@@ -36,6 +36,19 @@
    equivalent to the matching ID list in memory regardless of LE/BE machine
 */
 
+static const unsigned short badgen[] = {
+  Gen_Unused1, Gen_Unused2, Gen_Unused3, Gen_Unused4,
+  Gen_Reserved1, Gen_Reserved2, Gen_Reserved3, 0
+};
+
+static const unsigned short badpgen[] = {
+  Gen_StartAddrOfs, Gen_EndAddrOfs, Gen_StartLoopAddrOfs,
+  Gen_EndLoopAddrOfs, Gen_StartAddrCoarseOfs, Gen_EndAddrCoarseOfs,
+  Gen_StartLoopAddrCoarseOfs, Gen_Keynum, Gen_Velocity,
+  Gen_EndLoopAddrCoarseOfs, Gen_SampleModes, Gen_ExclusiveClass,
+  Gen_OverrideRootKey, 0
+};
+
 #define READCHUNK(var,fd, fcbs)	do {		\
 	if (fcbs->fread(var, 8, fd) == FLUID_FAILED)			\
 		return(FAIL);				\
@@ -1448,23 +1461,6 @@ next_sample:
 
   return (OK);
 }
-
-/*=================================sfont.c========================
-  Smurf SoundFont Editor
-  ================================================================*/
-
-static const unsigned short badgen[] = {
-  Gen_Unused1, Gen_Unused2, Gen_Unused3, Gen_Unused4,
-  Gen_Reserved1, Gen_Reserved2, Gen_Reserved3, 0
-};
-
-static const unsigned short badpgen[] = {
-  Gen_StartAddrOfs, Gen_EndAddrOfs, Gen_StartLoopAddrOfs,
-  Gen_EndLoopAddrOfs, Gen_StartAddrCoarseOfs, Gen_EndAddrCoarseOfs,
-  Gen_StartLoopAddrCoarseOfs, Gen_Keynum, Gen_Velocity,
-  Gen_EndLoopAddrCoarseOfs, Gen_SampleModes, Gen_ExclusiveClass,
-  Gen_OverrideRootKey, 0
-};
 
 /* close SoundFont file and delete a SoundFont structure */
 void
