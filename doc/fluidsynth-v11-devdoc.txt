@@ -40,6 +40,7 @@ All the source code examples in this document are in the public domain; you can 
 - \ref SendingMIDI
 - \ref RealtimeMIDI
 - \ref MIDIPlayer
+- \ref FileRenderer
 - \ref MIDIPlayerMem
 - \ref MIDIRouter 
 - \ref Sequencer
@@ -541,6 +542,60 @@ A list of available <strong>MIDI player settings</strong> can be found in <a hre
 
 
 
+\section FileRenderer Fast file renderer for non-realtime MIDI file rendering
+
+Instead of creating an audio driver as described in section \ref MIDIPlayer one may chose to use the file renderer, which is the fastest way to synthesize MIDI files.
+
+\code
+fluid_settings_t* settings;
+fluid_synth_t* synth;
+fluid_player_t* player;
+fluid_file_renderer_t* renderer;
+
+settings = new_fluid_settings();
+
+// specify the file to store the audio to
+// make sure you compiled fluidsynth with libsndfile to get a real wave file
+// otherwise this file will only contain raw s16 stereo PCM
+fluid_settings_setstr(settings, "audio.file.name", "/path/to/output.wav");
+
+// use number of samples processed as timing source, rather than the system timer
+fluid_settings_setstr(settings, "player.timing-source", "sample");
+
+// since this is a non-realtime szenario, there is no need to pin the sample data
+fluid_settings_setint(settings, "synth.lock-memory", 0);
+
+synth = new_fluid_synth(settings);
+
+// *** loading of a soundfont omitted ***
+
+player = new_fluid_player(synth);
+fluid_player_add(player, "/path/to/midifile.mid");
+fluid_player_play(player);
+
+renderer = new_fluid_file_renderer (synth);
+
+while (fluid_player_get_status(player) == FLUID_PLAYER_PLAYING)
+{
+    if (fluid_file_renderer_process_block(renderer) != FLUID_OK)
+    {
+        break;
+    }
+}
+
+// just for sure: stop the playback explicitly and wait until finished
+fluid_player_stop(player);
+fluid_player_join(player);
+
+delete_fluid_file_renderer(renderer);
+delete_fluid_player(player);
+delete_fluid_synth(synth);
+delete_fluid_settings(settings);
+\endcode
+
+Various output files types are supported, if compiled with libsndfile. Those can be specified via the \c settings object as well. Refer to the <a href="fluidsettings.xml#audio.file.endian" target="_blank"><b>FluidSettings Documentation</b></a> for more \c audio.file\.\* options.
+
+
 \section MIDIPlayerMem Playing a MIDI file from memory
 
 FluidSynth can be also play MIDI files directly from a buffer in memory. If you need to play a file from a stream (such as stdin, a network, or a high-level file interface), you can load the entire file into a buffer first, and then use this approach. Use the same technique as above, but rather than calling fluid_player_add(), load it into memory and call fluid_player_add_mem() instead. Once you have passed a buffer to fluid_player_add_mem(), it is copied, so you may use it again or free it immediately (it is your responsibility to free it if you allocated it).
@@ -797,7 +852,6 @@ The shell interface allows you to send simple textual commands to the synthesize
 - LADSPA effects unit
 - Multi-channel audio
 - MIDI tunings
-- Fast file renderer for rendering audio to file in non-realtime
 */
 
 /*!
