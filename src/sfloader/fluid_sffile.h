@@ -206,5 +206,7 @@ struct _SFShdr
 /* Public functions  */
 SFData *fluid_sffile_load(const char *fname, const fluid_file_callbacks_t *fcbs);
 void fluid_sffile_close(SFData *sf);
+int fluid_sffile_read_sample_data(SFData *sf, unsigned int start, unsigned int count,
+                                 short **data, char **data24);
 
 #endif /* _FLUID_SFFILE_H */

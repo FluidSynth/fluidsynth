@@ -286,7 +286,7 @@ int delete_fluid_defsfont(fluid_defsfont_t* sfont)
   }
 
   if (sfont->sampledata != NULL) {
-    fluid_cached_sampledata_unload(sfont->sampledata);
+    fluid_samplecache_unload(sfont->sampledata);
   }
 
   while (sfont->preset_stack_size > 0)
@@ -347,8 +347,11 @@ int fluid_defsfont_load(fluid_defsfont_t* sfont, const fluid_file_callbacks_t* f
   sfont->sample24size = sfdata->sample24size;
 
   /* load sample data in one block */
-  if (fluid_defsfont_load_sampledata(sfont, fcbs) != FLUID_OK)
+  if (fluid_samplecache_load(sfdata, 0, sfdata->samplesize / 2, sfont->mlock,
+              &sfont->sampledata, &sfont->sample24data) == FLUID_FAILED)
+  {
     goto err_exit;
+  }
 
   /* Create all the sample headers */
   p = sfdata->sample;
@@ -443,11 +446,21 @@ int fluid_defsfont_add_preset(fluid_defsfont_t* sfont, fluid_defpreset_t* preset
 int
 fluid_defsfont_load_sampledata(fluid_defsfont_t* sfont, const fluid_file_callbacks_t* fcbs)
 {
-  return fluid_cached_sampledata_load(sfont->filename,
-                                      sfont->samplepos, sfont->samplesize, &sfont->sampledata,
-                                      sfont->sample24pos, sfont->sample24size, &sfont->sample24data,
-                                      sfont->mlock,
-                                      fcbs);
+  SFData *sfdata;
+  int ret;
+
+  sfdata = fluid_sffile_load(sfont->filename, fcbs);
+  if (sfdata == NULL) {
+    FLUID_LOG(FLUID_ERR, "Couldn't load soundfont file");
+    return FLUID_FAILED;
+  }
+
+  /* load sample data in one block */
+  ret = fluid_samplecache_load(sfdata, 0, sfdata->samplesize / 2, sfont->mlock,
+              &sfont->sampledata, &sfont->sample24data);
+
+  fluid_sffile_close (sfdata);
+  return ret;
 }
 
 /*

@@ -21,287 +21,238 @@
  * 02110-1301, USA
  */
 
+/* CACHED SAMPLE DATA LOADER
+ *
+ * This is a wrapper around fluid_sffile_read_sample_data that attempts to cache the read
+ * data across all FluidSynth instances in a global (process-wide) list.
+ */
+
 #include "fluid_samplecache.h"
 #include "fluid_sys.h"
 #include "fluidsynth.h"
+#include "fluid_list.h"
 
-/***************************************************************
- *
- *                    CACHED SAMPLEDATA LOADER
- */
 
-typedef struct _fluid_cached_sampledata_t fluid_cached_sampledata_t;
+typedef struct _fluid_samplecache_entry_t fluid_samplecache_entry_t;
 
-struct _fluid_cached_sampledata_t
+struct _fluid_samplecache_entry_t
 {
-    fluid_cached_sampledata_t *next;
-
+    /* The follwing members all form the cache key */
     char *filename;
     time_t modification_time;
+    unsigned int sf_samplepos;
+    unsigned int sf_samplesize;
+    unsigned int sf_sample24pos;
+    unsigned int sf_sample24size;
+    unsigned int sample_start;
+    unsigned int sample_count;
+    /*  End of cache key members */
+
+    short *sample_data;
+    char *sample_data24;
+
     int num_references;
-    int mlock;
-
-    short *sampledata;
-    unsigned int samplesize;
-
-    char *sample24data;
-    unsigned int sample24size;
+    int mlocked;
 };
 
+static fluid_list_t *samplecache_list = NULL;
+static fluid_mutex_t samplecache_mutex = FLUID_MUTEX_INIT;
 
-static fluid_cached_sampledata_t *all_cached_sampledata = NULL;
-static fluid_mutex_t cached_sampledata_mutex = FLUID_MUTEX_INIT;
-
+static fluid_samplecache_entry_t *new_samplecache_entry(SFData *sf, unsigned int sample_start, unsigned int sample_count);
+static fluid_samplecache_entry_t *get_samplecache_entry(SFData *sf, unsigned int sample_start, unsigned int sample_count);
+static void delete_samplecache_entry(fluid_samplecache_entry_t *entry);
 
 static int fluid_get_file_modification_time(char *filename, time_t *modification_time);
 
 
 /* PUBLIC INTERFACE */
 
-int fluid_cached_sampledata_load(char *filename,
-                                 unsigned int samplepos,
-                                 unsigned int samplesize,
-                                 short **sampledata,
-                                 unsigned int sample24pos,
-                                 unsigned int sample24size,
-                                 char **sample24data,
-                                 int try_mlock,
-                                 const fluid_file_callbacks_t *fcbs)
+int fluid_samplecache_load(SFData *sf,
+                           unsigned int sample_start, unsigned int sample_count,
+                           int try_mlock, short **sample_data, char **sample_data24)
 {
-    fluid_file fd = NULL;
-    short *loaded_sampledata = NULL;
-    char *loaded_sample24data = NULL;
-    fluid_cached_sampledata_t *cached_sampledata = NULL;
-    time_t modification_time;
+    fluid_samplecache_entry_t *entry;
 
-    fluid_mutex_lock(cached_sampledata_mutex);
+    fluid_mutex_lock(samplecache_mutex);
 
-    if (fluid_get_file_modification_time(filename, &modification_time) == FLUID_FAILED)
+    entry = get_samplecache_entry(sf, sample_start, sample_count);
+    if (entry == NULL)
     {
-        FLUID_LOG(FLUID_WARN, "Unable to read modificaton time of soundfont file.");
-        modification_time = 0;
-    }
-
-    for (cached_sampledata = all_cached_sampledata; cached_sampledata;
-         cached_sampledata = cached_sampledata->next)
-    {
-        if (FLUID_STRCMP(filename, cached_sampledata->filename))
-            continue;
-        if (cached_sampledata->modification_time != modification_time)
-            continue;
-        if (cached_sampledata->samplesize != samplesize || cached_sampledata->sample24size != sample24size)
-            continue;
-
-        if (try_mlock && !cached_sampledata->mlock)
+        entry = new_samplecache_entry(sf, sample_start, sample_count);
+        if (entry == NULL)
         {
-            if (fluid_mlock(cached_sampledata->sampledata, samplesize) != 0)
-                FLUID_LOG(FLUID_WARN,
-                          "Failed to pin the sample data to RAM; swapping is possible.");
-            else
-                cached_sampledata->mlock = try_mlock;
-
-            if (cached_sampledata->sample24data != NULL)
-                if (fluid_mlock(cached_sampledata->sample24data, sample24size) != 0)
-                    FLUID_LOG(FLUID_WARN,
-                              "Failed to pin the sample24 data to RAM; swapping is possible.");
+            return FLUID_FAILED;
         }
 
-        cached_sampledata->num_references++;
-        loaded_sampledata = cached_sampledata->sampledata;
-        loaded_sample24data = cached_sampledata->sample24data;
-        goto success_exit;
+        samplecache_list = fluid_list_prepend(samplecache_list, entry);
     }
 
-    fd = fcbs->fopen(filename);
-    if (fd == NULL)
+    if (try_mlock && !entry->mlocked)
     {
-        FLUID_LOG(FLUID_ERR, "Can't open soundfont file");
-        goto error_exit;
-    }
-    if (fcbs->fseek(fd, samplepos, SEEK_SET) == FLUID_FAILED)
-    {
-        perror("error");
-        FLUID_LOG(FLUID_ERR, "Failed to seek position in data file");
-        goto error_exit;
-    }
-
-    loaded_sampledata = (short *)FLUID_MALLOC(samplesize);
-    if (loaded_sampledata == NULL)
-    {
-        FLUID_LOG(FLUID_ERR, "Out of memory");
-        goto error_exit;
-    }
-    if (fcbs->fread(loaded_sampledata, samplesize, fd) == FLUID_FAILED)
-    {
-        FLUID_LOG(FLUID_ERR, "Failed to read sample data");
-        goto error_exit;
-    }
-
-    if (sample24pos > 0)
-    {
-        if (fcbs->fseek(fd, sample24pos, SEEK_SET) == FLUID_FAILED)
+        /* Lock the memory to disable paging. It's okay if this fails. It
+         * probably means that the user doesn't have the required permission. */
+        entry->mlocked = (fluid_mlock(entry->sample_data, entry->sample_count * 2) == 0);
+        if (entry->sample_data24 != NULL)
         {
-            perror("error");
-            FLUID_LOG(FLUID_ERR, "Failed to seek position in data file");
-            goto error_exit;
+            entry->mlocked &= (fluid_mlock(entry->sample_data24, entry->sample_count) == 0);
         }
 
-        loaded_sample24data = (char *)FLUID_MALLOC(sample24size);
-        if (loaded_sample24data == NULL)
+        if (!entry->mlocked)
         {
-            FLUID_LOG(FLUID_ERR, "Out of memory when allocating 24bit sample, ignoring");
-        }
-        else if (fcbs->fread(loaded_sample24data, sample24size, fd) == FLUID_FAILED)
-        {
-            FLUID_LOG(FLUID_ERR, "Failed to read sample24 data");
-            FLUID_FREE(loaded_sample24data);
-            loaded_sample24data = NULL;
-        }
-    }
-
-    fcbs->fclose(fd);
-    fd = NULL;
-
-
-    cached_sampledata = (fluid_cached_sampledata_t *)FLUID_MALLOC(sizeof(fluid_cached_sampledata_t));
-    if (cached_sampledata == NULL)
-    {
-        FLUID_LOG(FLUID_ERR, "Out of memory.");
-        goto error_exit;
-    }
-
-    /* Lock the memory to disable paging. It's okay if this fails. It
-       probably means that the user doesn't have the required permission.  */
-    cached_sampledata->mlock = 0;
-    if (try_mlock)
-    {
-        if (fluid_mlock(loaded_sampledata, samplesize) != 0)
             FLUID_LOG(FLUID_WARN, "Failed to pin the sample data to RAM; swapping is possible.");
-        else
-            cached_sampledata->mlock = try_mlock;
-    }
-
-    /* If this machine is big endian, the sample have to byte swapped  */
-    if (FLUID_IS_BIG_ENDIAN)
-    {
-        unsigned char *cbuf;
-        unsigned char hi, lo;
-        unsigned int i, j;
-        short s;
-        cbuf = (unsigned char *)loaded_sampledata;
-        for (i = 0, j = 0; j < samplesize; i++)
-        {
-            lo = cbuf[j++];
-            hi = cbuf[j++];
-            s = (hi << 8) | lo;
-            loaded_sampledata[i] = s;
         }
     }
 
-    cached_sampledata->filename = FLUID_STRDUP(filename);
-    if (cached_sampledata->filename == NULL)
-    {
-        FLUID_LOG(FLUID_ERR, "Out of memory.");
-        goto error_exit;
-    }
+    entry->num_references++;
+    *sample_data = entry->sample_data;
+    *sample_data24 = entry->sample_data24;
 
-    cached_sampledata->modification_time = modification_time;
-    cached_sampledata->num_references = 1;
-    cached_sampledata->sampledata = loaded_sampledata;
-    cached_sampledata->samplesize = samplesize;
-    cached_sampledata->sample24data = loaded_sample24data;
-    cached_sampledata->sample24size = sample24size;
+    fluid_mutex_unlock(samplecache_mutex);
 
-    cached_sampledata->next = all_cached_sampledata;
-    all_cached_sampledata = cached_sampledata;
-
-
-success_exit:
-    fluid_mutex_unlock(cached_sampledata_mutex);
-    *sampledata = loaded_sampledata;
-    *sample24data = loaded_sample24data;
     return FLUID_OK;
-
-error_exit:
-    if (fd != NULL)
-    {
-        fcbs->fclose(fd);
-    }
-
-    FLUID_FREE(loaded_sampledata);
-    FLUID_FREE(loaded_sample24data);
-
-    if (cached_sampledata != NULL)
-    {
-        FLUID_FREE(cached_sampledata->filename);
-    }
-    FLUID_FREE(cached_sampledata);
-
-    fluid_mutex_unlock(cached_sampledata_mutex);
-    *sampledata = NULL;
-    *sample24data = NULL;
-    return FLUID_FAILED;
 }
 
-int fluid_cached_sampledata_unload(const short *sampledata)
+int fluid_samplecache_unload(const short *sample_data)
 {
-    fluid_cached_sampledata_t *prev = NULL;
-    fluid_cached_sampledata_t *cached_sampledata;
+    fluid_list_t *entry_list;
+    fluid_samplecache_entry_t *entry;
 
-    fluid_mutex_lock(cached_sampledata_mutex);
-    cached_sampledata = all_cached_sampledata;
+    fluid_mutex_lock(samplecache_mutex);
 
-    while (cached_sampledata != NULL)
+    entry_list = samplecache_list;
+    while (entry_list)
     {
-        if (sampledata == cached_sampledata->sampledata)
+        entry = (fluid_samplecache_entry_t *)fluid_list_get(entry_list);
+
+        if (sample_data == entry->sample_data)
         {
+            entry->num_references--;
 
-            cached_sampledata->num_references--;
-
-            if (cached_sampledata->num_references == 0)
+            if (entry->num_references == 0)
             {
-                if (cached_sampledata->mlock)
+                if (entry->mlocked)
                 {
-                    fluid_munlock(cached_sampledata->sampledata, cached_sampledata->samplesize);
-                    fluid_munlock(cached_sampledata->sample24data, cached_sampledata->sample24size);
-                }
-                FLUID_FREE(cached_sampledata->sampledata);
-                FLUID_FREE(cached_sampledata->sample24data);
-                FLUID_FREE(cached_sampledata->filename);
-
-                if (prev != NULL)
-                {
-                    prev->next = cached_sampledata->next;
-                }
-                else
-                {
-                    all_cached_sampledata = cached_sampledata->next;
+                    fluid_munlock(entry->sample_data, entry->sample_count * 2);
+                    fluid_munlock(entry->sample_data24, entry->sample_count);
                 }
 
-                FLUID_FREE(cached_sampledata);
+                fluid_list_remove(samplecache_list, entry);
+                delete_samplecache_entry(entry);
             }
 
             goto success_exit;
         }
 
-        prev = cached_sampledata;
-        cached_sampledata = cached_sampledata->next;
+        entry_list = fluid_list_next(entry_list);
     }
 
-    FLUID_LOG(FLUID_ERR, "Trying to free sampledata not found in cache.");
+    FLUID_LOG(FLUID_ERR, "Trying to free sample data not found in cache.");
     goto error_exit;
 
 success_exit:
-    fluid_mutex_unlock(cached_sampledata_mutex);
+    fluid_mutex_unlock(samplecache_mutex);
     return FLUID_OK;
 
 error_exit:
-    fluid_mutex_unlock(cached_sampledata_mutex);
+    fluid_mutex_unlock(samplecache_mutex);
     return FLUID_FAILED;
 }
 
 
 /* Private functions */
+static fluid_samplecache_entry_t *new_samplecache_entry(SFData *sf,
+                                                        unsigned int sample_start,
+                                                        unsigned int sample_count)
+{
+    fluid_samplecache_entry_t *entry;
+
+    entry = FLUID_NEW(fluid_samplecache_entry_t);
+    if (entry == NULL)
+    {
+        FLUID_LOG(FLUID_ERR, "Out of memory");
+        return NULL;
+    }
+    FLUID_MEMSET(entry, 0, sizeof(*entry));
+
+    entry->filename = FLUID_STRDUP(sf->fname);
+    if (entry->filename == NULL)
+    {
+        FLUID_LOG(FLUID_ERR, "Out of memory");
+        goto error_exit;
+    }
+
+    if (fluid_get_file_modification_time(entry->filename, &entry->modification_time) == FLUID_FAILED)
+    {
+        FLUID_LOG(FLUID_WARN, "Unable to read modificaton time of soundfont file.");
+        entry->modification_time = 0;
+    }
+
+    entry->sf_samplepos = sf->samplepos;
+    entry->sf_samplesize = sf->samplesize;
+    entry->sf_sample24pos = sf->sample24pos;
+    entry->sf_sample24size = sf->sample24size;
+    entry->sample_start = sample_start;
+    entry->sample_count = sample_count;
+
+    if (fluid_sffile_read_sample_data(sf, sample_start, sample_count,
+                &entry->sample_data, &entry->sample_data24) == FLUID_FAILED)
+    {
+        goto error_exit;
+    }
+
+    return entry;
+
+error_exit:
+    delete_samplecache_entry(entry);
+    return NULL;
+}
+
+static void delete_samplecache_entry(fluid_samplecache_entry_t *entry)
+{
+    fluid_return_if_fail(entry != NULL);
+
+    FLUID_FREE(entry->filename);
+    FLUID_FREE(entry->sample_data);
+    FLUID_FREE(entry->sample_data24);
+    FLUID_FREE(entry);
+}
+
+static fluid_samplecache_entry_t *get_samplecache_entry(SFData *sf,
+                                                        unsigned int sample_start,
+                                                        unsigned int sample_count)
+{
+    time_t mtime;
+    fluid_list_t *entry_list;
+    fluid_samplecache_entry_t *entry;
+
+    if (fluid_get_file_modification_time(sf->fname, &mtime) == FLUID_FAILED)
+    {
+        FLUID_LOG(FLUID_WARN, "Unable to read modificaton time of soundfont file.");
+        mtime = 0;
+    }
+
+    entry_list = samplecache_list;
+    while (entry_list)
+    {
+        entry = (fluid_samplecache_entry_t *)fluid_list_get(entry_list);
+
+        if ((FLUID_STRCMP(sf->fname, entry->filename) == 0) &&
+            (mtime == entry->modification_time) &&
+            (sf->samplepos == entry->sf_samplepos) &&
+            (sf->samplesize == entry->sf_samplesize) &&
+            (sf->sample24pos == entry->sf_sample24pos) &&
+            (sf->sample24size == entry->sf_sample24size) &&
+            (sample_start == entry->sample_start) &&
+            (sample_count == entry->sample_count))
+        {
+            return entry;
+        }
+
+        entry_list = fluid_list_next(entry_list);
+    }
+
+    return NULL;
+}
 
 static int fluid_get_file_modification_time(char *filename, time_t *modification_time)
 {

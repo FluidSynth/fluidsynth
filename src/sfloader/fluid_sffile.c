@@ -353,6 +353,105 @@ error_exit:
     return NULL;
 }
 
+/* Load sample data from the soundfont file
+ *
+ * @param sf SFFile instance
+ * @param start start offset of sample data (in sample words from start of sample data chunk)
+ * @param count number of samples to read (in sample words)
+ * @param data pointer to sample data pointer, set on success
+ * @param data24 pointer to 24-bit sample data pointer if 24-bit data present, set on success
+ *
+ * @return FLUID_OK on success, otherwise FLUID_FAILED
+ */
+int fluid_sffile_read_sample_data(SFData *sf, unsigned int start, unsigned int count,
+                                 short **data, char **data24)
+{
+    unsigned int end;
+    short *loaded_data = NULL;
+    char *loaded_data24 = NULL;
+
+    fluid_return_val_if_fail(count != 0, FLUID_FAILED);
+
+    end = start + count;
+
+    if (((start * 2) > sf->samplesize) || ((end * 2) > sf->samplesize))
+    {
+        FLUID_LOG(FLUID_ERR, "Sample offsets exceed sample data chunk");
+        goto error_exit;
+    }
+
+    if (sf->sample24pos && ((start > sf->sample24size) || (end > sf->sample24size)))
+    {
+        FLUID_LOG(FLUID_ERR, "Sample offsets exceed 24-bit sample data chunk");
+        goto error_exit;
+    }
+
+    /* Load 16-bit sample data */
+    if (sf->fcbs->fseek(sf->sffd, sf->samplepos + (start * 2), SEEK_SET) == FLUID_FAILED)
+    {
+        perror("error");
+        FLUID_LOG(FLUID_ERR, "Failed to seek position in data file");
+        goto error_exit;
+    }
+
+    loaded_data = (short *)FLUID_MALLOC(count * 2);
+    if (loaded_data == NULL)
+    {
+        FLUID_LOG(FLUID_ERR, "Out of memory");
+        goto error_exit;
+    }
+
+    if (sf->fcbs->fread(loaded_data, count * 2, sf->sffd) == FLUID_FAILED)
+    {
+        FLUID_LOG(FLUID_ERR, "Failed to read sample data");
+        goto error_exit;
+    }
+
+    /* If this machine is big endian, byte swap the 16 bit samples */
+    if (FLUID_IS_BIG_ENDIAN)
+    {
+        unsigned int i;
+        for (i = 0; i < count; i++)
+        {
+            loaded_data[i] = FLUID_LE16TOH(loaded_data[i]);
+        }
+    }
+
+    /* Optionally load additional 8 bit sample data for 24-bit support */
+    if (sf->sample24pos)
+    {
+        if (sf->fcbs->fseek(sf->sffd, sf->sample24pos + start, SEEK_SET) == FLUID_FAILED)
+        {
+            perror("error");
+            FLUID_LOG(FLUID_ERR, "Failed to seek position in data file");
+            goto error_exit;
+        }
+
+        loaded_data24 = (char *)FLUID_MALLOC(count);
+        if (loaded_data24 == NULL)
+        {
+            FLUID_LOG(FLUID_ERR, "Out of memory");
+            return FLUID_FAILED;
+        }
+
+        if (sf->fcbs->fread(loaded_data24, count, sf->sffd) == FLUID_FAILED)
+        {
+            FLUID_LOG(FLUID_ERR, "Failed to read 24-bit sample data");
+            goto error_exit;
+        }
+    }
+
+    *data = loaded_data;
+    *data24 = loaded_data24;
+
+    return FLUID_OK;
+
+error_exit:
+    FLUID_FREE(loaded_data);
+    FLUID_FREE(loaded_data24);
+    return FLUID_FAILED;
+}
+
 /*
  * Close a SoundFont file and free the SFData structure.
  *

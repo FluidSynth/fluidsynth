@@ -23,17 +23,12 @@
 #define _FLUID_SAMPLECACHE_H
 
 #include "fluid_sfont.h"
+#include "fluid_sffile.h"
 
-int fluid_cached_sampledata_load(char *filename,
-                                 unsigned int samplepos,
-                                 unsigned int samplesize,
-                                 short **sampledata,
-                                 unsigned int sample24pos,
-                                 unsigned int sample24size,
-                                 char **sample24data,
-                                 int try_mlock,
-                                 const fluid_file_callbacks_t *fcbs);
+int fluid_samplecache_load(SFData *sf,
+                           unsigned int sample_start, unsigned int sample_count,
+                           int try_mlock, short **data, char **data24);
 
-int fluid_cached_sampledata_unload(const short *sampledata);
+int fluid_samplecache_unload(const short *sample_data);
 
 #endif /* _FLUID_SAMPLECACHE_H */
