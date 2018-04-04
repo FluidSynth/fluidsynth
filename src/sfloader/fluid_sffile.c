@@ -258,6 +258,7 @@ static const unsigned short invalid_preset_gen[] = {
         delete1_fluid_list(_temp);                  \
     } while (0)
 
+
 static int load_body(SFData *sf, unsigned int size);
 static int process_info(SFData *sf, int size);
 static int process_sdta(SFData *sf, unsigned int size);
@@ -274,7 +275,6 @@ static int load_shdr(SFData *sf, unsigned int size);
 static int fixup_pgen(SFData *sf);
 static int fixup_igen(SFData *sf);
 static int fixup_sample(SFData *sf);
-static void free_zone(SFZone *zone);
 
 static int chunkid(unsigned int id);
 static int read_listchunk(SFData *sf, SFChunk *chunk);
@@ -283,6 +283,11 @@ static int preset_compare_func(void *a, void *b);
 static fluid_list_t *find_gen_by_id(int gen, fluid_list_t *genlist);
 static int valid_inst_genid(unsigned short genid);
 static int valid_preset_genid(unsigned short genid);
+
+
+static void delete_preset(SFPreset *preset);
+static void delete_inst(SFInst *inst);
+static void delete_zone(SFZone *zone);
 
 
 /*
@@ -357,63 +362,50 @@ error_exit:
  */
 void fluid_sf2_close(SFData *sf)
 {
-    fluid_list_t *p, *p2;
+    fluid_list_t *entry;
+    SFPreset *preset;
+    SFInst *inst;
 
     if (sf->sffd)
-        sf->fcbs->fclose(sf->sffd);
-
-    if (sf->fname)
-        FLUID_FREE(sf->fname);
-
-    p = sf->info;
-    while (p)
     {
-        FLUID_FREE(p->data);
-        p = fluid_list_next(p);
+        sf->fcbs->fclose(sf->sffd);
+    }
+
+    FLUID_FREE(sf->fname);
+
+    entry = sf->info;
+    while(entry)
+    {
+        FLUID_FREE(fluid_list_get(entry));
+        entry = fluid_list_next(entry);
     }
     delete_fluid_list(sf->info);
-    sf->info = NULL;
 
-    p = sf->preset;
-    while (p)
-    { /* loop over presets */
-        p2 = ((SFPreset *)(p->data))->zone;
-        while (p2)
-        { /* loop over preset's zones */
-            free_zone(p2->data);
-            p2 = fluid_list_next(p2);
-        } /* free preset's zone list */
-        delete_fluid_list(((SFPreset *)(p->data))->zone);
-        FLUID_FREE(p->data); /* free preset chunk */
-        p = fluid_list_next(p);
+    entry = sf->preset;
+    while(entry)
+    {
+        preset = (SFPreset *)fluid_list_get(entry);
+        delete_preset(preset);
+        entry = fluid_list_next(entry);
     }
     delete_fluid_list(sf->preset);
-    sf->preset = NULL;
 
-    p = sf->inst;
-    while (p)
-    { /* loop over instruments */
-        p2 = ((SFInst *)(p->data))->zone;
-        while (p2)
-        { /* loop over inst's zones */
-            free_zone(p2->data);
-            p2 = fluid_list_next(p2);
-        } /* free inst's zone list */
-        delete_fluid_list(((SFInst *)(p->data))->zone);
-        FLUID_FREE(p->data);
-        p = fluid_list_next(p);
+    entry = sf->inst;
+    while(entry)
+    {
+        inst = (SFInst *)fluid_list_get(entry);
+        delete_inst(inst);
+        entry = fluid_list_next(entry);
     }
     delete_fluid_list(sf->inst);
-    sf->inst = NULL;
 
-    p = sf->sample;
-    while (p)
+    entry = sf->sample;
+    while(entry)
     {
-        FLUID_FREE(p->data);
-        p = fluid_list_next(p);
+        FLUID_FREE(fluid_list_get(entry));
+        entry = fluid_list_next(entry);
     }
     delete_fluid_list(sf->sample);
-    sf->sample = NULL;
 
     FLUID_FREE(sf);
 }
@@ -1156,7 +1148,7 @@ static int load_pgen(SFData *sf, int size)
                     FLUID_LOG(FLUID_WARN, _("Preset \"%s\": Discarding invalid global zone"),
                               ((SFPreset *)(p->data))->name);
                     *hz = fluid_list_remove(*hz, p2->data);
-                    free_zone((SFZone *)fluid_list_get(p2));
+                    delete_zone((SFZone *)fluid_list_get(p2));
                 }
             }
 
@@ -1537,7 +1529,7 @@ static int load_igen(SFData *sf, int size)
                     FLUID_LOG(FLUID_WARN, _("Instrument \"%s\": Discarding invalid global zone"),
                               ((SFInst *)(p->data))->name);
                     *hz = fluid_list_remove(*hz, p2->data);
-                    free_zone((SFZone *)fluid_list_get(p2));
+                    delete_zone((SFZone *)fluid_list_get(p2));
                 }
             }
 
@@ -1805,33 +1797,68 @@ static int fixup_sample(SFData *sf)
     return TRUE;
 }
 
-/* free all elements of a zone (Preset or Instrument) */
-static void free_zone(SFZone *zone)
+static void delete_preset(SFPreset *preset)
 {
-    fluid_list_t *p;
+    fluid_list_t *entry;
+    SFZone *zone;
+
+    if (!preset)
+        return;
+
+    entry = preset->zone;
+    while(entry)
+    {
+        zone = (SFZone *)fluid_list_get(entry);
+        delete_zone(zone);
+        entry = fluid_list_next(entry);
+    }
+    delete_fluid_list(preset->zone);
+}
+
+static void delete_inst(SFInst *inst)
+{
+    fluid_list_t *entry;
+    SFZone *zone;
+
+    if (!inst)
+        return;
+
+    entry = inst->zone;
+    while(entry)
+    {
+        zone = (SFZone *)fluid_list_get(entry);
+        delete_zone(zone);
+        entry = fluid_list_next(entry);
+    }
+    delete_fluid_list(inst->zone);
+}
+
+
+/* Free all elements of a zone (Preset or Instrument) */
+static void delete_zone(SFZone *zone)
+{
+    fluid_list_t *entry;
 
     if (!zone)
         return;
 
-    p = zone->gen;
-    while (p)
-    { /* Free gen chunks for this zone */
-        if (p->data)
-            FLUID_FREE(p->data);
-        p = fluid_list_next(p);
+    entry = zone->gen;
+    while(entry)
+    {
+        FLUID_FREE(fluid_list_get(entry));
+        entry = fluid_list_next(entry);
     }
-    delete_fluid_list(zone->gen); /* free genlist */
+    delete_fluid_list(zone->gen);
 
-    p = zone->mod;
-    while (p)
-    { /* Free mod chunks for this zone */
-        if (p->data)
-            FLUID_FREE(p->data);
-        p = fluid_list_next(p);
+    entry = zone->mod;
+    while(entry)
+    {
+        FLUID_FREE(fluid_list_get(entry));
+        entry = fluid_list_next(entry);
     }
-    delete_fluid_list(zone->mod); /* free modlist */
+    delete_fluid_list(zone->mod);
 
-    FLUID_FREE(zone); /* free zone chunk */
+    FLUID_FREE(zone);
 }
 
 /* preset sort function, first by bank, then by preset # */
