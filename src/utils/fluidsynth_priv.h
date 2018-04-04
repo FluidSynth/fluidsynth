@@ -316,9 +316,4 @@ do { strncpy(_dst,_src,_n); \
 
 char* fluid_error(void);
 
-
-/* Internationalization */
-#define _(s) s
-
-
 #endif /* _FLUIDSYNTH_PRIV_H */

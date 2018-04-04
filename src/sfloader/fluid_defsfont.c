@@ -2002,8 +2002,8 @@ static int uncompress_vorbis_sample(fluid_sample_t *sample)
     if (sample->loopend-1 > sample->end /* loopend may point one sample after valid sample data, as this one will never be played */
         || sample->loopstart >= sample->loopend)
     {
-        FLUID_LOG (FLUID_DBG, _("Vorbis sample '%s' has unusable loop stop '%d',"
-        " setting to sample end '%d'+1"), sample->name, sample->loopend, sample->end);
+        FLUID_LOG (FLUID_DBG, "Vorbis sample '%s' has unusable loop stop '%d',"
+        " setting to sample end '%d'+1", sample->name, sample->loopend, sample->end);
         
         /* though illegal, loopend may be set to loopstart to disable loop */
         /* is it worth informing the user? */
@@ -2014,15 +2014,15 @@ static int uncompress_vorbis_sample(fluid_sample_t *sample)
     if(sample->loopstart < sample->start
        || sample->loopstart >= sample->loopend)
     {
-        FLUID_LOG (FLUID_DBG, _("Vorbis sample '%s' has unusable loop start '%d',"
-        " setting to sample start '%d'"), sample->name, sample->loopstart, sample->start);
+        FLUID_LOG (FLUID_DBG, "Vorbis sample '%s' has unusable loop start '%d',"
+        " setting to sample start '%d'", sample->name, sample->loopstart, sample->start);
         sample->loopstart = sample->start;
         inv_loop |= TRUE;
     }
     
     if(inv_loop)
     {
-        FLUID_LOG (FLUID_WARN, _("Vorbis sample '%s' has invalid loop points"), sample->name);
+        FLUID_LOG (FLUID_WARN, "Vorbis sample '%s' has invalid loop points", sample->name);
     }
 
     return FLUID_OK;
