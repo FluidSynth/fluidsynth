@@ -393,7 +393,7 @@ int fluid_sffile_read_sample_data(SFData *sf, unsigned int start, unsigned int c
         goto error_exit;
     }
 
-    loaded_data = (short *)FLUID_MALLOC(count * 2);
+    loaded_data = FLUID_MALLOC(count * 2);
     if (loaded_data == NULL)
     {
         FLUID_LOG(FLUID_ERR, "Out of memory");
@@ -425,7 +425,7 @@ int fluid_sffile_read_sample_data(SFData *sf, unsigned int start, unsigned int c
             goto error_exit;
         }
 
-        loaded_data24 = (char *)FLUID_MALLOC(count);
+        loaded_data24 = FLUID_MALLOC(count);
         if (loaded_data24 == NULL)
         {
             FLUID_LOG(FLUID_ERR, "Out of memory");
