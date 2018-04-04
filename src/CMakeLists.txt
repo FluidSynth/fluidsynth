@@ -129,6 +129,8 @@ set ( libfluidsynth_SOURCES
     sfloader/fluid_ramsfont.h
     sfloader/fluid_sfont.h
     sfloader/fluid_sfont.c
+    sfloader/fluid_sf2.c
+    sfloader/fluid_sf2.h
     rvoice/fluid_adsr_env.c
     rvoice/fluid_adsr_env.h
     rvoice/fluid_chorus.c
