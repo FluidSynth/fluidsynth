@@ -21,6 +21,12 @@
 #include "fluid_sfont.h"
 #include "fluid_sys.h"
 
+#if LIBSNDFILE_SUPPORT
+#include <sndfile.h>
+#endif
+
+
+
 void * default_fopen(const char * path)
 {
     return FLUID_FOPEN(path, "rb");
@@ -546,3 +552,130 @@ int fluid_sample_set_pitch(fluid_sample_t* sample, int root_key, int fine_tune)
     
     return FLUID_OK;
 }
+
+
+#if LIBSNDFILE_SUPPORT
+
+// virtual file access rountines to allow for handling
+// samples as virtual files in memory
+static sf_count_t
+sfvio_get_filelen(void* user_data)
+{
+  fluid_sample_t *sample = (fluid_sample_t *)user_data;
+
+  return (sf_count_t)(sample->end + 1 - sample->start);
+}
+
+static sf_count_t
+sfvio_seek(sf_count_t offset, int whence, void* user_data)
+{
+  fluid_sample_t *sample = (fluid_sample_t *)user_data;
+
+  switch (whence)
+  {
+    case SEEK_SET:
+      sample->userdata = (void *)offset;
+      break;
+    case SEEK_CUR:
+      sample->userdata = (void *)((sf_count_t)sample->userdata + offset);
+      break;
+    case SEEK_END:
+      sample->userdata = (void *)(sfvio_get_filelen(user_data) + offset);
+      break;
+  }
+
+  return (sf_count_t)sample->userdata;
+}
+
+static sf_count_t
+sfvio_read(void* ptr, sf_count_t count, void* user_data)
+{
+  fluid_sample_t *sample = (fluid_sample_t *)user_data;
+  sf_count_t remain = sfvio_get_filelen(user_data) - (sf_count_t)sample->userdata;
+  
+  if (count > remain)
+      count = remain;
+
+  memcpy(ptr, (char *)sample->data + sample->start + (sf_count_t)sample->userdata, count);
+  sample->userdata = (void *)((sf_count_t)sample->userdata + count);
+
+  return count;
+}
+
+static sf_count_t
+sfvio_tell (void* user_data)
+{
+  fluid_sample_t *sample = (fluid_sample_t *)user_data;
+
+  return (sf_count_t)sample->userdata;
+}
+
+int fluid_sample_decompress_vorbis(fluid_sample_t *sample)
+{
+    SNDFILE *sndfile;
+    SF_INFO sfinfo;
+    SF_VIRTUAL_IO sfvio = {
+      sfvio_get_filelen,
+      sfvio_seek,
+      sfvio_read,
+      NULL,
+      sfvio_tell
+    };
+    short *sampledata_ogg;
+
+    // initialize file position indicator and SF_INFO structure
+    g_assert(sample->userdata == NULL);
+    memset(&sfinfo, 0, sizeof(sfinfo));
+
+    // open sample as a virtual file in memory
+    sndfile = sf_open_virtual(&sfvio, SFM_READ, &sfinfo, sample);
+    if (!sndfile)
+    {
+      FLUID_LOG(FLUID_ERR, sf_strerror(sndfile));
+      return FLUID_FAILED;
+    }
+
+    // empty sample
+    if (!sfinfo.frames || !sfinfo.channels)
+    {
+      sample->start = sample->end =
+      sample->loopstart = sample->loopend =
+      sample->valid = 0;
+      sample->data = NULL;
+      sf_close(sndfile);
+      return FLUID_OK;
+    }
+
+    // allocate memory for uncompressed sample data stream
+    sampledata_ogg = (short *)FLUID_MALLOC(sfinfo.frames * sfinfo.channels * sizeof(short));
+    if (!sampledata_ogg)
+    {
+      FLUID_LOG(FLUID_ERR, "Out of memory");
+      sf_close(sndfile);
+      return FLUID_FAILED;
+    }
+
+    // uncompress sample data stream
+    if (sf_readf_short(sndfile, sampledata_ogg, sfinfo.frames) < sfinfo.frames)
+    {
+      FLUID_FREE(sampledata_ogg);
+      FLUID_LOG(FLUID_ERR, sf_strerror(sndfile));
+      sf_close(sndfile);
+      return FLUID_FAILED;
+    }
+    sf_close(sndfile);
+
+    // point sample data to uncompressed data stream
+    sample->data = sampledata_ogg;
+    sample->auto_free = TRUE;
+    sample->start = 0;
+    sample->end = sfinfo.frames - 1;
+
+    return FLUID_OK;
+}
+#else
+int fluid_sample_decompress_vorbis(fluid_sample_t *sample)
+{
+    return FLUID_FAILED;
+}
+#endif

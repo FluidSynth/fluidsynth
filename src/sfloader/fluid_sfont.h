@@ -24,6 +24,7 @@
 
 #include "fluidsynth.h"
 
+FLUIDSYNTH_API int fluid_sample_decompress_vorbis(fluid_sample_t *sample);
 /*
  * Utility macros to access soundfonts, presets, and samples
  */
