@@ -25,10 +25,15 @@
 #include "fluid_sfont.h"
 
 int fluid_cached_sampledata_load(char *filename,
-        unsigned int samplepos, unsigned int samplesize, short **sampledata,
-        unsigned int sample24pos, unsigned int sample24size, char **sample24data,
-        int try_mlock, const fluid_file_callbacks_t* fcbs);
+                                 unsigned int samplepos,
+                                 unsigned int samplesize,
+                                 short **sampledata,
+                                 unsigned int sample24pos,
+                                 unsigned int sample24size,
+                                 char **sample24data,
+                                 int try_mlock,
+                                 const fluid_file_callbacks_t *fcbs);
 
 int fluid_cached_sampledata_unload(const short *sampledata);
 
-#endif  /* _FLUID_SAMPLECACHE_H */
+#endif /* _FLUID_SAMPLECACHE_H */
