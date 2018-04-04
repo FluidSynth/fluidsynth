@@ -24,7 +24,10 @@
 
 #include "fluidsynth.h"
 
+FLUIDSYNTH_API int fluid_sample_validate(fluid_sample_t *sample, unsigned int max_end);
+FLUIDSYNTH_API int fluid_sample_sanitize_loop(fluid_sample_t *sample, unsigned int max_end);
 FLUIDSYNTH_API int fluid_sample_decompress_vorbis(fluid_sample_t *sample);
+
 /*
  * Utility macros to access soundfonts, presets, and samples
  */

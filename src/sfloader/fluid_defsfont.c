@@ -1850,28 +1850,20 @@ fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defs
   sample->pitchadj = sfsample->pitchadj;
   sample->sampletype = sfsample->sampletype;
 
-  if (sample->sampletype & FLUID_SAMPLETYPE_OGG_VORBIS)
+  if (fluid_sample_validate(sample, sfont->samplesize) == FLUID_FAILED)
   {
-    int ret = fluid_sample_decompress_vorbis(sample);
-    if (sample->data == NULL || ret == FLUID_FAILED)
-    {
-      sample->valid = 0;
-      return ret;
-    }
+      return FLUID_OK;
   }
 
-  if (sample->sampletype & FLUID_SAMPLETYPE_ROM) {
-    sample->valid = 0;
-    FLUID_LOG(FLUID_WARN, "Ignoring sample '%s': can't use ROM samples", sample->name);
+  if ((sample->sampletype & FLUID_SAMPLETYPE_OGG_VORBIS)
+      && fluid_sample_decompress_vorbis(sample) == FLUID_FAILED)
+  {
+      return FLUID_FAILED;
   }
-  else if (sample->end - sample->start < 8) {
-    sample->valid = 0;
-    FLUID_LOG(FLUID_WARN, "Ignoring sample '%s': too few sample data points", sample->name);
-  }
-  else {
-    sample->valid = TRUE;
-  }
+
+  fluid_sample_sanitize_loop(sample, sfont->samplesize);
+
+  sample->valid = TRUE;
 
   return FLUID_OK;
 }
-

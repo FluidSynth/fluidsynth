@@ -274,7 +274,6 @@ static int load_igen(SFData *sf, int size);
 static int load_shdr(SFData *sf, unsigned int size);
 static int fixup_pgen(SFData *sf);
 static int fixup_igen(SFData *sf);
-static int fixup_sample(SFData *sf);
 
 static int chunkid(unsigned int id);
 static int read_listchunk(SFData *sf, SFChunk *chunk);
@@ -490,8 +489,6 @@ static int load_body(SFData *sf, unsigned int size)
         return FALSE;
     if (!fixup_igen(sf))
         return FALSE;
-    if (!fixup_sample(sf))
-        return FALSE;
 
     /* sort preset list by bank, preset # */
     sf->preset = fluid_list_sort(sf->preset, (fluid_compare_func_t)preset_compare_func);
@@ -651,7 +648,7 @@ static int process_sdta(SFData *sf, unsigned int size)
     /* sample data follows */
     sf->samplepos = sf->fcbs->ftell(sf->sffd);
 
-    /* used in fixup_sample() to check validity of sample headers */
+    /* used to check validity of sample headers */
     sf->samplesize = chunk.size;
 
     FSKIP(sf, chunk.size);
@@ -1674,119 +1671,6 @@ static int fixup_igen(SFData *sf)
             p2 = fluid_list_next(p2);
         }
         p = fluid_list_next(p);
-    }
-
-    return TRUE;
-}
-
-/* Make sure sample start/end and loopstart/loopend pointers are valid */
-static int fixup_sample(SFData *sf)
-{
-    fluid_list_t *p;
-    SFSample *sam;
-    int invalid_loops = FALSE;
-    int invalid_loopstart;
-    int invalid_loopend, loopend_end_mismatch;
-    unsigned int total_bytes = sf->samplesize;
-    unsigned int total_samples = total_bytes / sizeof(short);
-
-    p = sf->sample;
-    while (p)
-    {
-        unsigned int max_end;
-
-        sam = (SFSample *)(p->data);
-
-        /* Standard SoundFont files (SF2) use sample word indices for sample start and end pointers,
-         * but SF3 files with Ogg Vorbis compression use byte indices for start and end. */
-        max_end = (sam->sampletype & FLUID_SAMPLETYPE_OGG_VORBIS) ? total_bytes : total_samples;
-
-        /* ROM samples are unusable for us by definition, so simply ignore them. */
-        if (sam->sampletype & FLUID_SAMPLETYPE_ROM)
-        {
-            sam->start = sam->end = sam->loopstart = sam->loopend = 0;
-            goto next_sample;
-        }
-
-        /* If end is over the sample data chunk or sam start is greater than 4
-         * less than the end (at least 4 samples).
-         *
-         * FIXME: where does this number 4 come from? And do we need a different number for SF3
-         * files?
-         * Maybe we should check for the minimum Ogg Vorbis headers size? */
-        if ((sam->end > max_end) || (sam->start > (sam->end - 4)))
-        {
-            FLUID_LOG(FLUID_WARN, "Sample '%s' start/end file positions are invalid,"
-                                    " disabling and will not be saved",
-                      sam->name);
-            sam->start = sam->end = sam->loopstart = sam->loopend = 0;
-            goto next_sample;
-        }
-
-        /* The SoundFont 2.4 spec defines the loopstart index as the first sample point of the loop
-         */
-        invalid_loopstart = (sam->loopstart < sam->start) || (sam->loopstart >= sam->loopend);
-        /* while loopend is the first point AFTER the last sample of the loop.
-         * this is as it should be. however we cannot be sure whether any of sam.loopend or sam.end
-         * is correct. hours of thinking through this have concluded, that it would be best practice
-         * to mangle with loops as little as necessary by only making sure loopend is within
-         * max_end. incorrect soundfont shall preferably fail loudly. */
-        invalid_loopend = (sam->loopend > max_end) || (sam->loopstart >= sam->loopend);
-
-        loopend_end_mismatch = (sam->loopend > sam->end);
-
-        if (sam->sampletype & FLUID_SAMPLETYPE_OGG_VORBIS)
-        {
-            /*
-             * compressed samples get fixed up after decompression
-             *
-             * however we cant use the logic below, because uncompressed samples are stored in
-             * individual buffers
-             */
-        }
-        else if (invalid_loopstart || invalid_loopend ||
-                 loopend_end_mismatch) /* loop is fowled?? (cluck cluck :) */
-        {
-            /* though illegal, loopend may be set to loopstart to disable loop */
-            /* is it worth informing the user? */
-            invalid_loops |= (sam->loopend != sam->loopstart);
-
-            /* force incorrect loop points into the sample range, ignore padding */
-            if (invalid_loopstart)
-            {
-                FLUID_LOG(FLUID_DBG, "Sample '%s' has unusable loop start '%d',"
-                                       " setting to sample start at '%d'",
-                          sam->name, sam->loopstart, sam->start);
-                sam->loopstart = sam->start;
-            }
-
-            if (invalid_loopend)
-            {
-                FLUID_LOG(FLUID_DBG, "Sample '%s' has unusable loop stop '%d',"
-                                       " setting to sample stop at '%d'",
-                          sam->name, sam->loopend, sam->end);
-                /* since at this time sam->end points after valid sample data (will correct that few
-                 * lines below),
-                 * set loopend to that first invalid sample, since it should never be played, but
-                 * instead the last
-                 * valid sample will be played */
-                sam->loopend = sam->end;
-            }
-            else if (loopend_end_mismatch)
-            {
-                FLUID_LOG(FLUID_DBG, "Sample '%s' has invalid loop stop '%d',"
-                                       " sample stop at '%d', using it anyway",
-                          sam->name, sam->loopend, sam->end);
-            }
-        }
-
-    next_sample:
-        p = fluid_list_next(p);
-    }
-
-    if (invalid_loops)
-    {
-        FLUID_LOG(FLUID_WARN, "Found samples with invalid loops, audible glitches possible.");
     }
 
     return TRUE;
