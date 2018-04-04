@@ -355,7 +355,7 @@ int fluid_defsfont_load(fluid_defsfont_t* sfont, const fluid_file_callbacks_t* f
   /* Create all the sample headers */
   p = sfdata->sample;
   while (p != NULL) {
-    sfsample = (SFSample *) p->data;
+    sfsample = (SFSample *)fluid_list_get(p);
 
     sample = new_fluid_sample();
     if (sample == NULL) goto err_exit;
@@ -374,7 +374,7 @@ int fluid_defsfont_load(fluid_defsfont_t* sfont, const fluid_file_callbacks_t* f
   /* Load all the presets */
   p = sfdata->preset;
   while (p != NULL) {
-    sfpreset = (SFPreset *) p->data;
+    sfpreset = (SFPreset *)fluid_list_get(p);
     preset = new_fluid_defpreset(sfont);
     if (preset == NULL) goto err_exit;
 
@@ -832,7 +832,7 @@ fluid_defpreset_import_sfont(fluid_defpreset_t* preset,
   p = sfpreset->zone;
   count = 0;
   while (p != NULL) {
-    sfzone = (SFZone *) p->data;
+    sfzone = (SFZone *)fluid_list_get(p);
     FLUID_SNPRINTF(zone_name, sizeof(zone_name), "%s/%d", preset->name, count);
     zone = new_fluid_preset_zone(zone_name);
     if (zone == NULL) {
@@ -968,7 +968,7 @@ fluid_preset_zone_import_sfont(fluid_preset_zone_t* zone, SFZone *sfzone, fluid_
   SFGen* sfgen;
   int count;
   for (count = 0, r = sfzone->gen; r != NULL; count++) {
-    sfgen = (SFGen *) r->data;
+    sfgen = (SFGen *)fluid_list_get(r);
     switch (sfgen->id) {
     case GEN_KEYRANGE:
       zone->range.keylo = sfgen->amount.range.lo;
@@ -1007,7 +1007,7 @@ fluid_preset_zone_import_sfont(fluid_preset_zone_t* zone, SFZone *sfzone, fluid_
   /* Import the modulators (only SF2.1 and higher) */
   for (count = 0, r = sfzone->mod; r != NULL; count++) {
 
-    SFMod* mod_src = (SFMod *)r->data;
+    SFMod* mod_src = (SFMod *)fluid_list_get(r);
     fluid_mod_t * mod_dest = new_fluid_mod();
     int type;
 
@@ -1224,7 +1224,7 @@ fluid_inst_import_sfont(fluid_preset_zone_t* zonePZ, fluid_inst_t* inst,
   count = 0;
   while (p != NULL) {
 
-    sfzone = (SFZone *) p->data;
+    sfzone = (SFZone *)fluid_list_get(p);
     FLUID_SNPRINTF(zone_name, sizeof(zone_name), "%s/%d", inst->name, count);
 
     zone = new_fluid_inst_zone(zone_name);
@@ -1364,7 +1364,7 @@ fluid_inst_zone_import_sfont(fluid_preset_zone_t* preset_zone, fluid_inst_zone_t
   int count;
 
   for (count = 0, r = sfzone->gen; r != NULL; count++) {
-    sfgen = (SFGen *) r->data;
+    sfgen = (SFGen *)fluid_list_get(r);
     switch (sfgen->id) {
     case GEN_KEYRANGE:
       zone->range.keylo = sfgen->amount.range.lo;
@@ -1408,7 +1408,7 @@ fluid_inst_zone_import_sfont(fluid_preset_zone_t* preset_zone, fluid_inst_zone_t
 
   /* Import the modulators (only SF2.1 and higher) */
   for (count = 0, r = sfzone->mod; r != NULL; count++) {
-    SFMod* mod_src = (SFMod *) r->data;
+    SFMod* mod_src = (SFMod *)fluid_list_get(r);
     int type;
     fluid_mod_t* mod_dest;
 
