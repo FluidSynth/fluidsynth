@@ -90,12 +90,7 @@ int fluid_cached_sampledata_load(char *filename,
         if (cached_sampledata->modification_time != modification_time)
             continue;
         if (cached_sampledata->samplesize != samplesize || cached_sampledata->sample24size != sample24size)
-        {
-            FLUID_LOG(FLUID_ERR, "Cached size of soundfont doesn't match actual size of soundfont "
-                                 "(cached: %u. actual: %u)",
-                      cached_sampledata->samplesize, samplesize);
             continue;
-        }
 
         if (try_mlock && !cached_sampledata->mlock)
         {
