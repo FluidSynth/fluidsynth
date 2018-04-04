@@ -650,12 +650,12 @@ int fluid_defsfont_load(fluid_defsfont_t* sfont, const fluid_file_callbacks_t* f
     fluid_defsfont_add_preset(sfont, preset);
     p = fluid_list_next(p);
   }
-  fluid_sf2_close (sfdata, fcbs);
+  fluid_sf2_close (sfdata);
 
   return FLUID_OK;
 
 err_exit:
-  fluid_sf2_close (sfdata, fcbs);
+  fluid_sf2_close (sfdata);
   delete_fluid_defpreset(preset);
   return FLUID_FAILED;
 }

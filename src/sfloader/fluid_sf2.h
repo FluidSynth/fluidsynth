@@ -143,6 +143,8 @@ struct _SFData
 
     char *fname; /* file name */
     FILE *sffd; /* loaded sfont file descriptor */
+    const fluid_file_callbacks_t *fcbs; /* file callbacks used to read this file */
+
     fluid_list_t *info; /* linked list of info strings (1st byte is ID) */
     fluid_list_t *preset; /* linked list of preset info */
     fluid_list_t *inst; /* linked list of instrument info */
@@ -203,6 +205,6 @@ struct _SFShdr
 
 /* Public functions  */
 SFData *fluid_sf2_load(const char *fname, const fluid_file_callbacks_t *fcbs);
-void fluid_sf2_close(SFData *sf, const fluid_file_callbacks_t *fcbs);
+void fluid_sf2_close(SFData *sf);
 
 #endif /* _FLUID_SF2_H */

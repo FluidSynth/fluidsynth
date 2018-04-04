@@ -304,6 +304,8 @@ SFData *fluid_sf2_load(const char *fname, const fluid_file_callbacks_t *fcbs)
     }
     FLUID_MEMSET(sf, 0, sizeof(SFData));
 
+    sf->fcbs = fcbs;
+
     if ((sf->sffd = fcbs->fopen(fname)) == NULL)
     {
         FLUID_LOG(FLUID_ERR, _("Unable to open file \"%s\""), fname);
@@ -343,7 +345,7 @@ SFData *fluid_sf2_load(const char *fname, const fluid_file_callbacks_t *fcbs)
     return sf;
 
 error_exit:
-    fluid_sf2_close(sf, fcbs);
+    fluid_sf2_close(sf);
     return NULL;
 }
 
@@ -353,12 +355,12 @@ error_exit:
  * @param sf pointer to SFData structure
  * @param fcbs file callback structure
  */
-void fluid_sf2_close(SFData *sf, const fluid_file_callbacks_t *fcbs)
+void fluid_sf2_close(SFData *sf)
 {
     fluid_list_t *p, *p2;
 
     if (sf->sffd)
-        fcbs->fclose(sf->sffd);
+        sf->fcbs->fclose(sf->sffd);
 
     if (sf->fname)
         FLUID_FREE(sf->fname);
