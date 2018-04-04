@@ -1350,7 +1350,7 @@ fixup_sample (SFData * sf)
   int invalid_loopstart;
   int invalid_loopend, loopend_end_mismatch;
   unsigned int total_bytes = sf->samplesize;
-  unsigned int total_samples = total_bytes / FLUID_MEMBER_SIZE(fluid_defsfont_t, sampledata[0]);
+  unsigned int total_samples = total_bytes / sizeof(short);
 
   p = sf->sample;
   while (p)
