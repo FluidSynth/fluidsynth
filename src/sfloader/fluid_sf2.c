@@ -36,6 +36,50 @@
    equivalent to the matching ID list in memory regardless of LE/BE machine
 */
 
+/* sf file chunk IDs */
+enum
+{ UNKN_ID, RIFF_ID, LIST_ID, SFBK_ID,
+  INFO_ID, SDTA_ID, PDTA_ID,	/* info/sample/preset */
+
+  IFIL_ID, ISNG_ID, INAM_ID, IROM_ID, /* info ids (1st byte of info strings) */
+  IVER_ID, ICRD_ID, IENG_ID, IPRD_ID,	/* more info ids */
+  ICOP_ID, ICMT_ID, ISFT_ID,	/* and yet more info ids */
+
+  SNAM_ID, SMPL_ID,		/* sample ids */
+  PHDR_ID, PBAG_ID, PMOD_ID, PGEN_ID,	/* preset ids */
+  IHDR_ID, IBAG_ID, IMOD_ID, IGEN_ID,	/* instrument ids */
+  SHDR_ID,			/* sample info */
+  SM24_ID
+};
+
+/* generator types */
+typedef enum
+{ Gen_StartAddrOfs, Gen_EndAddrOfs, Gen_StartLoopAddrOfs,
+  Gen_EndLoopAddrOfs, Gen_StartAddrCoarseOfs, Gen_ModLFO2Pitch,
+  Gen_VibLFO2Pitch, Gen_ModEnv2Pitch, Gen_FilterFc, Gen_FilterQ,
+  Gen_ModLFO2FilterFc, Gen_ModEnv2FilterFc, Gen_EndAddrCoarseOfs,
+  Gen_ModLFO2Vol, Gen_Unused1, Gen_ChorusSend, Gen_ReverbSend, Gen_Pan,
+  Gen_Unused2, Gen_Unused3, Gen_Unused4,
+  Gen_ModLFODelay, Gen_ModLFOFreq, Gen_VibLFODelay, Gen_VibLFOFreq,
+  Gen_ModEnvDelay, Gen_ModEnvAttack, Gen_ModEnvHold, Gen_ModEnvDecay,
+  Gen_ModEnvSustain, Gen_ModEnvRelease, Gen_Key2ModEnvHold,
+  Gen_Key2ModEnvDecay, Gen_VolEnvDelay, Gen_VolEnvAttack,
+  Gen_VolEnvHold, Gen_VolEnvDecay, Gen_VolEnvSustain, Gen_VolEnvRelease,
+  Gen_Key2VolEnvHold, Gen_Key2VolEnvDecay, Gen_Instrument,
+  Gen_Reserved1, Gen_KeyRange, Gen_VelRange,
+  Gen_StartLoopAddrCoarseOfs, Gen_Keynum, Gen_Velocity,
+  Gen_Attenuation, Gen_Reserved2, Gen_EndLoopAddrCoarseOfs,
+  Gen_CoarseTune, Gen_FineTune, Gen_SampleId, Gen_SampleModes,
+  Gen_Reserved3, Gen_ScaleTune, Gen_ExclusiveClass, Gen_OverrideRootKey,
+  Gen_Dummy
+}
+Gen_Type;
+
+#define Gen_MaxValid 	Gen_Dummy - 1	/* maximum valid generator */
+#define Gen_Count	Gen_Dummy	/* count of generators */
+#define GenArrSize sizeof(SFGenAmount)*Gen_Count	/* gen array size */
+
+
 static const unsigned short badgen[] = {
   Gen_Unused1, Gen_Unused2, Gen_Unused3, Gen_Unused4,
   Gen_Reserved1, Gen_Reserved2, Gen_Reserved3, 0
@@ -48,6 +92,29 @@ static const unsigned short badpgen[] = {
   Gen_EndLoopAddrCoarseOfs, Gen_SampleModes, Gen_ExclusiveClass,
   Gen_OverrideRootKey, 0
 };
+
+
+#define FAIL	0
+#define OK	1
+
+enum
+{
+    ErrCorr,
+};
+
+int gerr (int ev, char * fmt, ...);
+
+
+#define CHNKIDSTR(id)           &idlist[(id - 1) * 4]
+
+/* sfont file chunk sizes */
+#define SFPHDRSIZE	38
+#define SFBAGSIZE	4
+#define SFMODSIZE	10
+#define SFGENSIZE	4
+#define SFIHDRSIZE	22
+#define SFSHDRSIZE	46
+
 
 #define READCHUNK(var,fd, fcbs)	do {		\
 	if (fcbs->fread(var, 8, fd) == FLUID_FAILED)			\
@@ -123,6 +190,16 @@ static int load_shdr (unsigned int size, SFData * sf, void * fd, const fluid_fil
 static int fixup_pgen (SFData * sf);
 static int fixup_igen (SFData * sf);
 static int fixup_sample (SFData * sf);
+
+
+void sfont_zone_delete (SFData * sf, fluid_list_t ** zlist, SFZone * zone);
+int sfont_preset_compare_func (void* a, void* b);
+void sfont_free_zone (SFZone * zone);
+fluid_list_t *gen_inlist (int gen, fluid_list_t * genlist);
+int gen_valid (int gen);
+int gen_validp (int gen);
+
+
 
 static const char idlist[] = {
   "RIFFLISTsfbkINFOsdtapdtaifilisngINAMiromiverICRDIENGIPRD"
