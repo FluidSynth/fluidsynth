@@ -116,15 +116,15 @@ struct _fluid_defsfont_t
 
 
 fluid_defsfont_t* new_fluid_defsfont(fluid_settings_t* settings);
-int delete_fluid_defsfont(fluid_defsfont_t* sfont);
-int fluid_defsfont_load(fluid_defsfont_t* sfont, const fluid_file_callbacks_t* file_callbacks, const char* file);
-const char* fluid_defsfont_get_name(fluid_defsfont_t* sfont);
-fluid_defpreset_t* fluid_defsfont_get_preset(fluid_defsfont_t* sfont, unsigned int bank, unsigned int prenum);
-void fluid_defsfont_iteration_start(fluid_defsfont_t* sfont);
-int fluid_defsfont_iteration_next(fluid_defsfont_t* sfont, fluid_preset_t* preset);
-int fluid_defsfont_load_sampledata(fluid_defsfont_t* sfont, const fluid_file_callbacks_t* file_callbacks);
-int fluid_defsfont_add_sample(fluid_defsfont_t* sfont, fluid_sample_t* sample);
-int fluid_defsfont_add_preset(fluid_defsfont_t* sfont, fluid_defpreset_t* preset);
+int delete_fluid_defsfont(fluid_defsfont_t* defsfont);
+int fluid_defsfont_load(fluid_defsfont_t* defsfont, const fluid_file_callbacks_t* file_callbacks, const char* file);
+const char* fluid_defsfont_get_name(fluid_defsfont_t* defsfont);
+fluid_defpreset_t* fluid_defsfont_get_preset(fluid_defsfont_t* defsfont, unsigned int bank, unsigned int prenum);
+void fluid_defsfont_iteration_start(fluid_defsfont_t* defsfont);
+int fluid_defsfont_iteration_next(fluid_defsfont_t* defsfont, fluid_preset_t* preset);
+int fluid_defsfont_load_sampledata(fluid_defsfont_t* defsfont, const fluid_file_callbacks_t* file_callbacks);
+int fluid_defsfont_add_sample(fluid_defsfont_t* defsfont, fluid_sample_t* sample);
+int fluid_defsfont_add_preset(fluid_defsfont_t* defsfont, fluid_defpreset_t* defpreset);
 
 
 /*
@@ -133,7 +133,7 @@ int fluid_defsfont_add_preset(fluid_defsfont_t* sfont, fluid_defpreset_t* preset
 struct _fluid_defpreset_t
 {
   fluid_defpreset_t* next;
-  fluid_defsfont_t* sfont;                  /* the soundfont this preset belongs to */
+  fluid_defsfont_t* defsfont;           /* the soundfont this preset belongs to */
   char name[21];                        /* the name of the preset */
   unsigned int bank;                    /* the bank number */
   unsigned int num;                     /* the preset number */
@@ -141,18 +141,18 @@ struct _fluid_defpreset_t
   fluid_preset_zone_t* zone;               /* the chained list of preset zones */
 };
 
-fluid_defpreset_t* new_fluid_defpreset(fluid_defsfont_t* sfont);
-void delete_fluid_defpreset(fluid_defpreset_t* preset);
-fluid_defpreset_t* fluid_defpreset_next(fluid_defpreset_t* preset);
-int fluid_defpreset_import_sfont(fluid_defpreset_t* preset, SFPreset* sfpreset, fluid_defsfont_t* sfont);
-int fluid_defpreset_set_global_zone(fluid_defpreset_t* preset, fluid_preset_zone_t* zone);
-int fluid_defpreset_add_zone(fluid_defpreset_t* preset, fluid_preset_zone_t* zone);
-fluid_preset_zone_t* fluid_defpreset_get_zone(fluid_defpreset_t* preset);
-fluid_preset_zone_t* fluid_defpreset_get_global_zone(fluid_defpreset_t* preset);
-int fluid_defpreset_get_banknum(fluid_defpreset_t* preset);
-int fluid_defpreset_get_num(fluid_defpreset_t* preset);
-const char* fluid_defpreset_get_name(fluid_defpreset_t* preset);
-int fluid_defpreset_noteon(fluid_defpreset_t* preset, fluid_synth_t* synth, int chan, int key, int vel);
+fluid_defpreset_t* new_fluid_defpreset(fluid_defsfont_t* defsfont);
+void delete_fluid_defpreset(fluid_defpreset_t* defpreset);
+fluid_defpreset_t* fluid_defpreset_next(fluid_defpreset_t* defpreset);
+int fluid_defpreset_import_sfont(fluid_defpreset_t* defpreset, SFPreset* sfpreset, fluid_defsfont_t* defsfont);
+int fluid_defpreset_set_global_zone(fluid_defpreset_t* defpreset, fluid_preset_zone_t* zone);
+int fluid_defpreset_add_zone(fluid_defpreset_t* defpreset, fluid_preset_zone_t* zone);
+fluid_preset_zone_t* fluid_defpreset_get_zone(fluid_defpreset_t* defpreset);
+fluid_preset_zone_t* fluid_defpreset_get_global_zone(fluid_defpreset_t* defpreset);
+int fluid_defpreset_get_banknum(fluid_defpreset_t* defpreset);
+int fluid_defpreset_get_num(fluid_defpreset_t* defpreset);
+const char* fluid_defpreset_get_name(fluid_defpreset_t* defpreset);
+int fluid_defpreset_noteon(fluid_defpreset_t* defpreset, fluid_synth_t* synth, int chan, int key, int vel);
 
 /*
  * fluid_preset_zone
@@ -169,8 +169,8 @@ struct _fluid_preset_zone_t
 
 fluid_preset_zone_t* new_fluid_preset_zone(char* name);
 void delete_fluid_preset_zone(fluid_preset_zone_t* zone);
-fluid_preset_zone_t* fluid_preset_zone_next(fluid_preset_zone_t* preset);
-int fluid_preset_zone_import_sfont(fluid_preset_zone_t* zone, SFZone* sfzone, fluid_defsfont_t* sfont);
+fluid_preset_zone_t* fluid_preset_zone_next(fluid_preset_zone_t* zone);
+int fluid_preset_zone_import_sfont(fluid_preset_zone_t* zone, SFZone* sfzone, fluid_defsfont_t* defssfont);
 fluid_inst_t* fluid_preset_zone_get_inst(fluid_preset_zone_t* zone);
 
 /*
@@ -184,8 +184,8 @@ struct _fluid_inst_t
 };
 
 fluid_inst_t* new_fluid_inst(void);
-int fluid_inst_import_sfont(fluid_preset_zone_t* zonePZ, fluid_inst_t* inst,
-							SFInst *sfinst, fluid_defsfont_t* sfont);
+int fluid_inst_import_sfont(fluid_preset_zone_t* preset_zone, fluid_inst_t* inst,
+							SFInst *sfinst, fluid_defsfont_t* defsfont);
 void delete_fluid_inst(fluid_inst_t* inst);
 int fluid_inst_set_global_zone(fluid_inst_t* inst, fluid_inst_zone_t* zone);
 int fluid_inst_add_zone(fluid_inst_t* inst, fluid_inst_zone_t* zone);
@@ -209,13 +209,13 @@ struct _fluid_inst_zone_t
 fluid_inst_zone_t* new_fluid_inst_zone(char* name);
 void delete_fluid_inst_zone(fluid_inst_zone_t* zone);
 fluid_inst_zone_t* fluid_inst_zone_next(fluid_inst_zone_t* zone);
-int fluid_inst_zone_import_sfont(fluid_preset_zone_t* zonePZ,
-								 fluid_inst_zone_t* zone, SFZone *sfzone, fluid_defsfont_t* sfont);
+int fluid_inst_zone_import_sfont(fluid_preset_zone_t* preset_zone,
+								 fluid_inst_zone_t* inst_zone, SFZone *sfzone, fluid_defsfont_t* defsfont);
 fluid_sample_t* fluid_inst_zone_get_sample(fluid_inst_zone_t* zone);
 
 
 
-int fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defsfont_t* sfont);
+int fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defsfont_t* defsfont);
 int fluid_sample_in_rom(fluid_sample_t* sample);
 
 

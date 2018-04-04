@@ -173,11 +173,11 @@ int fluid_defsfont_sfont_iteration_next(fluid_sfont_t* sfont, fluid_preset_t* pr
 void fluid_defpreset_preset_delete(fluid_preset_t* preset)
 {
   fluid_defpreset_t* defpreset = fluid_preset_get_data(preset);
-  fluid_defsfont_t* sfont = defpreset ? defpreset->sfont : NULL;
+  fluid_defsfont_t* defsfont = defpreset ? defpreset->defsfont : NULL;
 
-  if (sfont && sfont->preset_stack_size < sfont->preset_stack_capacity) {
-     sfont->preset_stack[sfont->preset_stack_size] = preset;
-     sfont->preset_stack_size++;
+  if (defsfont && defsfont->preset_stack_size < defsfont->preset_stack_capacity) {
+     defsfont->preset_stack[defsfont->preset_stack_size] = preset;
+     defsfont->preset_stack_size++;
   }
   else
       delete_fluid_preset(preset);
@@ -215,118 +215,118 @@ int fluid_defpreset_preset_noteon(fluid_preset_t* preset, fluid_synth_t* synth,
  */
 fluid_defsfont_t* new_fluid_defsfont(fluid_settings_t* settings)
 {
-  fluid_defsfont_t* sfont;
+  fluid_defsfont_t* defsfont;
   int i;
 
-  sfont = FLUID_NEW(fluid_defsfont_t);
-  if (sfont == NULL) {
+  defsfont = FLUID_NEW(fluid_defsfont_t);
+  if (defsfont == NULL) {
     FLUID_LOG(FLUID_ERR, "Out of memory");
     return NULL;
   }
 
-  FLUID_MEMSET(sfont, 0, sizeof(*sfont));
+  FLUID_MEMSET(defsfont, 0, sizeof(*defsfont));
   
-  fluid_settings_getint(settings, "synth.lock-memory", &sfont->mlock);
+  fluid_settings_getint(settings, "synth.lock-memory", &defsfont->mlock);
 
   /* Initialise preset cache, so we don't have to call malloc on program changes.
      Usually, we have at most one preset per channel plus one temporarily used,
      so optimise for that case. */
-  fluid_settings_getint(settings, "synth.midi-channels", &sfont->preset_stack_capacity);
-  sfont->preset_stack_capacity++;
+  fluid_settings_getint(settings, "synth.midi-channels", &defsfont->preset_stack_capacity);
+  defsfont->preset_stack_capacity++;
   
-  sfont->preset_stack = FLUID_ARRAY(fluid_preset_t*, sfont->preset_stack_capacity);
-  if (!sfont->preset_stack) {
+  defsfont->preset_stack = FLUID_ARRAY(fluid_preset_t*, defsfont->preset_stack_capacity);
+  if (!defsfont->preset_stack) {
     FLUID_LOG(FLUID_ERR, "Out of memory");
-    FLUID_FREE(sfont);
+    FLUID_FREE(defsfont);
     return NULL;
   }
 
-  for (i = 0; i < sfont->preset_stack_capacity; i++) {
-    sfont->preset_stack[i] = FLUID_NEW(fluid_preset_t);
-    if (!sfont->preset_stack[i]) {
+  for (i = 0; i < defsfont->preset_stack_capacity; i++) {
+    defsfont->preset_stack[i] = FLUID_NEW(fluid_preset_t);
+    if (!defsfont->preset_stack[i]) {
       FLUID_LOG(FLUID_ERR, "Out of memory");
-      delete_fluid_defsfont(sfont);
+      delete_fluid_defsfont(defsfont);
       return NULL;
     }
-    sfont->preset_stack_size++;
+    defsfont->preset_stack_size++;
   }
 
-  return sfont;
+  return defsfont;
 }
 
 /*
  * delete_fluid_defsfont
  */
-int delete_fluid_defsfont(fluid_defsfont_t* sfont)
+int delete_fluid_defsfont(fluid_defsfont_t* defsfont)
 {
   fluid_list_t *list;
-  fluid_defpreset_t* preset;
+  fluid_defpreset_t* defpreset;
   fluid_sample_t* sample;
 
-  fluid_return_val_if_fail(sfont != NULL, FLUID_OK);
+  fluid_return_val_if_fail(defsfont != NULL, FLUID_OK);
   
   /* Check that no samples are currently used */
-  for (list = sfont->sample; list; list = fluid_list_next(list)) {
+  for (list = defsfont->sample; list; list = fluid_list_next(list)) {
     sample = (fluid_sample_t*) fluid_list_get(list);
     if (sample->refcount != 0) {
       return FLUID_FAILED;
     }
   }
 
-  if (sfont->filename != NULL) {
-    FLUID_FREE(sfont->filename);
+  if (defsfont->filename != NULL) {
+    FLUID_FREE(defsfont->filename);
   }
 
-  for (list = sfont->sample; list; list = fluid_list_next(list)) {
+  for (list = defsfont->sample; list; list = fluid_list_next(list)) {
     delete_fluid_sample((fluid_sample_t*) fluid_list_get(list));
   }
 
-  if (sfont->sample) {
-    delete_fluid_list(sfont->sample);
+  if (defsfont->sample) {
+    delete_fluid_list(defsfont->sample);
   }
 
-  if (sfont->sampledata != NULL) {
-    fluid_samplecache_unload(sfont->sampledata);
+  if (defsfont->sampledata != NULL) {
+    fluid_samplecache_unload(defsfont->sampledata);
   }
 
-  while (sfont->preset_stack_size > 0)
-    FLUID_FREE(sfont->preset_stack[--sfont->preset_stack_size]);
-  FLUID_FREE(sfont->preset_stack);
+  while (defsfont->preset_stack_size > 0)
+    FLUID_FREE(defsfont->preset_stack[--defsfont->preset_stack_size]);
+  FLUID_FREE(defsfont->preset_stack);
 
-  preset = sfont->preset;
-  while (preset != NULL) {
-    sfont->preset = preset->next;
-    delete_fluid_defpreset(preset);
-    preset = sfont->preset;
+  defpreset = defsfont->preset;
+  while (defpreset != NULL) {
+    defsfont->preset = defpreset->next;
+    delete_fluid_defpreset(defpreset);
+    defpreset = defsfont->preset;
   }
 
-  FLUID_FREE(sfont);
+  FLUID_FREE(defsfont);
   return FLUID_OK;
 }
 
 /*
  * fluid_defsfont_get_name
  */
-const char* fluid_defsfont_get_name(fluid_defsfont_t* sfont)
+const char* fluid_defsfont_get_name(fluid_defsfont_t* defsfont)
 {
-  return sfont->filename;
+  return defsfont->filename;
 }
 
 
 /*
  * fluid_defsfont_load
  */
-int fluid_defsfont_load(fluid_defsfont_t* sfont, const fluid_file_callbacks_t* fcbs, const char* file)
+int fluid_defsfont_load(fluid_defsfont_t* defsfont, const fluid_file_callbacks_t* fcbs, const char* file)
 {
   SFData* sfdata;
   fluid_list_t *p;
   SFPreset* sfpreset;
   SFSample* sfsample;
   fluid_sample_t* sample;
-  fluid_defpreset_t* preset = NULL;
+  fluid_defpreset_t* defpreset = NULL;
 
-  sfont->filename = FLUID_STRDUP(file);
-  if (sfont->filename == NULL) {
+  defsfont->filename = FLUID_STRDUP(file);
+  if (defsfont->filename == NULL) {
     FLUID_LOG(FLUID_ERR, "Out of memory");
     return FLUID_FAILED;
   }
@@ -340,14 +340,14 @@ int fluid_defsfont_load(fluid_defsfont_t* sfont, const fluid_file_callbacks_t* f
 
   /* Keep track of the position and size of the sample data because
      it's loaded separately (and might be unoaded/reloaded in future) */
-  sfont->samplepos = sfdata->samplepos;
-  sfont->samplesize = sfdata->samplesize;
-  sfont->sample24pos = sfdata->sample24pos;
-  sfont->sample24size = sfdata->sample24size;
+  defsfont->samplepos = sfdata->samplepos;
+  defsfont->samplesize = sfdata->samplesize;
+  defsfont->sample24pos = sfdata->sample24pos;
+  defsfont->sample24size = sfdata->sample24size;
 
   /* load sample data in one block */
-  if (fluid_samplecache_load(sfdata, 0, sfdata->samplesize / 2, sfont->mlock,
-              &sfont->sampledata, &sfont->sample24data) == FLUID_FAILED)
+  if (fluid_samplecache_load(sfdata, 0, sfdata->samplesize / 2, defsfont->mlock,
+              &defsfont->sampledata, &defsfont->sample24data) == FLUID_FAILED)
   {
     goto err_exit;
   }
@@ -360,13 +360,13 @@ int fluid_defsfont_load(fluid_defsfont_t* sfont, const fluid_file_callbacks_t* f
     sample = new_fluid_sample();
     if (sample == NULL) goto err_exit;
 
-    if (fluid_sample_import_sfont(sample, sfsample, sfont) != FLUID_OK)
+    if (fluid_sample_import_sfont(sample, sfsample, defsfont) != FLUID_OK)
       goto err_exit;
 
     /* Store reference to FluidSynth sample in SFSample for later IZone fixups */
     sfsample->fluid_sample = sample;
 
-    fluid_defsfont_add_sample(sfont, sample);
+    fluid_defsfont_add_sample(defsfont, sample);
     fluid_voice_optimize_sample(sample);
     p = fluid_list_next(p);
   }
@@ -375,13 +375,13 @@ int fluid_defsfont_load(fluid_defsfont_t* sfont, const fluid_file_callbacks_t* f
   p = sfdata->preset;
   while (p != NULL) {
     sfpreset = (SFPreset *)fluid_list_get(p);
-    preset = new_fluid_defpreset(sfont);
-    if (preset == NULL) goto err_exit;
+    defpreset = new_fluid_defpreset(defsfont);
+    if (defpreset == NULL) goto err_exit;
 
-    if (fluid_defpreset_import_sfont(preset, sfpreset, sfont) != FLUID_OK)
+    if (fluid_defpreset_import_sfont(defpreset, sfpreset, defsfont) != FLUID_OK)
       goto err_exit;
 
-    fluid_defsfont_add_preset(sfont, preset);
+    fluid_defsfont_add_preset(defsfont, defpreset);
     p = fluid_list_next(p);
   }
   fluid_sffile_close (sfdata);
@@ -390,7 +390,7 @@ int fluid_defsfont_load(fluid_defsfont_t* sfont, const fluid_file_callbacks_t* f
 
 err_exit:
   fluid_sffile_close (sfdata);
-  delete_fluid_defpreset(preset);
+  delete_fluid_defpreset(defpreset);
   return FLUID_FAILED;
 }
 
@@ -398,9 +398,9 @@ err_exit:
  *
  * Add a sample to the SoundFont
  */
-int fluid_defsfont_add_sample(fluid_defsfont_t* sfont, fluid_sample_t* sample)
+int fluid_defsfont_add_sample(fluid_defsfont_t* defsfont, fluid_sample_t* sample)
 {
-  sfont->sample = fluid_list_append(sfont->sample, sample);
+  defsfont->sample = fluid_list_append(defsfont->sample, sample);
   return FLUID_OK;
 }
 
@@ -408,33 +408,33 @@ int fluid_defsfont_add_sample(fluid_defsfont_t* sfont, fluid_sample_t* sample)
  *
  * Add a preset to the SoundFont
  */
-int fluid_defsfont_add_preset(fluid_defsfont_t* sfont, fluid_defpreset_t* preset)
+int fluid_defsfont_add_preset(fluid_defsfont_t* defsfont, fluid_defpreset_t* defpreset)
 {
   fluid_defpreset_t *cur, *prev;
-  if (sfont->preset == NULL) {
-    preset->next = NULL;
-    sfont->preset = preset;
+  if (defsfont->preset == NULL) {
+    defpreset->next = NULL;
+    defsfont->preset = defpreset;
   } else {
     /* sort them as we go along. very basic sorting trick. */
-    cur = sfont->preset;
+    cur = defsfont->preset;
     prev = NULL;
     while (cur != NULL) {
-      if ((preset->bank < cur->bank)
-	  || ((preset->bank == cur->bank) && (preset->num < cur->num))) {
+      if ((defpreset->bank < cur->bank)
+	  || ((defpreset->bank == cur->bank) && (defpreset->num < cur->num))) {
 	if (prev == NULL) {
-	  preset->next = cur;
-	  sfont->preset = preset;
+	  defpreset->next = cur;
+	  defsfont->preset = defpreset;
 	} else {
-	  preset->next = cur;
-	  prev->next = preset;
+	  defpreset->next = cur;
+	  prev->next = defpreset;
 	}
 	return FLUID_OK;
       }
       prev = cur;
       cur = cur->next;
     }
-    preset->next = NULL;
-    prev->next = preset;
+    defpreset->next = NULL;
+    prev->next = defpreset;
   }
   return FLUID_OK;
 }
@@ -443,20 +443,20 @@ int fluid_defsfont_add_preset(fluid_defsfont_t* sfont, fluid_defpreset_t* preset
  * fluid_defsfont_load_sampledata
  */
 int
-fluid_defsfont_load_sampledata(fluid_defsfont_t* sfont, const fluid_file_callbacks_t* fcbs)
+fluid_defsfont_load_sampledata(fluid_defsfont_t* defsfont, const fluid_file_callbacks_t* fcbs)
 {
   SFData *sfdata;
   int ret;
 
-  sfdata = fluid_sffile_load(sfont->filename, fcbs);
+  sfdata = fluid_sffile_load(defsfont->filename, fcbs);
   if (sfdata == NULL) {
     FLUID_LOG(FLUID_ERR, "Couldn't load soundfont file");
     return FLUID_FAILED;
   }
 
   /* load sample data in one block */
-  ret = fluid_samplecache_load(sfdata, 0, sfdata->samplesize / 2, sfont->mlock,
-              &sfont->sampledata, &sfont->sample24data);
+  ret = fluid_samplecache_load(sfdata, 0, sfdata->samplesize / 2, defsfont->mlock,
+              &defsfont->sampledata, &defsfont->sample24data);
 
   fluid_sffile_close (sfdata);
   return ret;
@@ -465,14 +465,14 @@ fluid_defsfont_load_sampledata(fluid_defsfont_t* sfont, const fluid_file_callbac
 /*
  * fluid_defsfont_get_preset
  */
-fluid_defpreset_t* fluid_defsfont_get_preset(fluid_defsfont_t* sfont, unsigned int bank, unsigned int num)
+fluid_defpreset_t* fluid_defsfont_get_preset(fluid_defsfont_t* defsfont, unsigned int bank, unsigned int num)
 {
-  fluid_defpreset_t* preset = sfont->preset;
-  while (preset != NULL) {
-    if ((preset->bank == bank) && ((preset->num == num))) {
-      return preset;
+  fluid_defpreset_t* defpreset = defsfont->preset;
+  while (defpreset != NULL) {
+    if ((defpreset->bank == bank) && ((defpreset->num == num))) {
+      return defpreset;
     }
-    preset = preset->next;
+    defpreset = defpreset->next;
   }
   return NULL;
 }
@@ -480,22 +480,22 @@ fluid_defpreset_t* fluid_defsfont_get_preset(fluid_defsfont_t* sfont, unsigned i
 /*
  * fluid_defsfont_iteration_start
  */
-void fluid_defsfont_iteration_start(fluid_defsfont_t* sfont)
+void fluid_defsfont_iteration_start(fluid_defsfont_t* defsfont)
 {
-  sfont->iter_cur = sfont->preset;
+  defsfont->iter_cur = defsfont->preset;
 }
 
 /*
  * fluid_defsfont_iteration_next
  */
-int fluid_defsfont_iteration_next(fluid_defsfont_t* sfont, fluid_preset_t* preset)
+int fluid_defsfont_iteration_next(fluid_defsfont_t* defsfont, fluid_preset_t* preset)
 {
-  if (sfont->iter_cur == NULL) {
+  if (defsfont->iter_cur == NULL) {
     return 0;
   }
 
-  preset->data = (void*) sfont->iter_cur;
-  sfont->iter_cur = fluid_defpreset_next(sfont->iter_cur);
+  preset->data = (void*) defsfont->iter_cur;
+  defsfont->iter_cur = fluid_defpreset_next(defsfont->iter_cur);
   return 1;
 }
 
@@ -508,70 +508,70 @@ int fluid_defsfont_iteration_next(fluid_defsfont_t* sfont, fluid_preset_t* prese
  * new_fluid_defpreset
  */
 fluid_defpreset_t*
-new_fluid_defpreset(fluid_defsfont_t* sfont)
+new_fluid_defpreset(fluid_defsfont_t* defsfont)
 {
-  fluid_defpreset_t* preset = FLUID_NEW(fluid_defpreset_t);
-  if (preset == NULL) {
+  fluid_defpreset_t* defpreset = FLUID_NEW(fluid_defpreset_t);
+  if (defpreset == NULL) {
     FLUID_LOG(FLUID_ERR, "Out of memory");
     return NULL;
   }
-  preset->next = NULL;
-  preset->sfont = sfont;
-  preset->name[0] = 0;
-  preset->bank = 0;
-  preset->num = 0;
-  preset->global_zone = NULL;
-  preset->zone = NULL;
-  return preset;
+  defpreset->next = NULL;
+  defpreset->defsfont = defsfont;
+  defpreset->name[0] = 0;
+  defpreset->bank = 0;
+  defpreset->num = 0;
+  defpreset->global_zone = NULL;
+  defpreset->zone = NULL;
+  return defpreset;
 }
 
 /*
  * delete_fluid_defpreset
  */
 void
-delete_fluid_defpreset(fluid_defpreset_t* preset)
+delete_fluid_defpreset(fluid_defpreset_t* defpreset)
 {
   fluid_preset_zone_t* zone;
   
-  fluid_return_if_fail(preset != NULL);
+  fluid_return_if_fail(defpreset != NULL);
   
-    delete_fluid_preset_zone(preset->global_zone);
-    preset->global_zone = NULL;
+    delete_fluid_preset_zone(defpreset->global_zone);
+    defpreset->global_zone = NULL;
   
-  zone = preset->zone;
+  zone = defpreset->zone;
   while (zone != NULL) {
-    preset->zone = zone->next;
+    defpreset->zone = zone->next;
     delete_fluid_preset_zone(zone);
-    zone = preset->zone;
+    zone = defpreset->zone;
   }
-  FLUID_FREE(preset);
+  FLUID_FREE(defpreset);
 }
 
 int
-fluid_defpreset_get_banknum(fluid_defpreset_t* preset)
+fluid_defpreset_get_banknum(fluid_defpreset_t* defpreset)
 {
-  return preset->bank;
+  return defpreset->bank;
 }
 
 int
-fluid_defpreset_get_num(fluid_defpreset_t* preset)
+fluid_defpreset_get_num(fluid_defpreset_t* defpreset)
 {
-  return preset->num;
+  return defpreset->num;
 }
 
 const char*
-fluid_defpreset_get_name(fluid_defpreset_t* preset)
+fluid_defpreset_get_name(fluid_defpreset_t* defpreset)
 {
-  return preset->name;
+  return defpreset->name;
 }
 
 /*
  * fluid_defpreset_next
  */
 fluid_defpreset_t*
-fluid_defpreset_next(fluid_defpreset_t* preset)
+fluid_defpreset_next(fluid_defpreset_t* defpreset)
 {
-  return preset->next;
+  return defpreset->next;
 }
 
 
@@ -579,7 +579,7 @@ fluid_defpreset_next(fluid_defpreset_t* preset)
  * fluid_defpreset_noteon
  */
 int
-fluid_defpreset_noteon(fluid_defpreset_t* preset, fluid_synth_t* synth, int chan, int key, int vel)
+fluid_defpreset_noteon(fluid_defpreset_t* defpreset, fluid_synth_t* synth, int chan, int key, int vel)
 {
   fluid_preset_zone_t *preset_zone, *global_preset_zone;
   fluid_inst_t* inst;
@@ -591,10 +591,10 @@ fluid_defpreset_noteon(fluid_defpreset_t* preset, fluid_synth_t* synth, int chan
   int mod_list_count;
   int i;
 
-  global_preset_zone = fluid_defpreset_get_global_zone(preset);
+  global_preset_zone = fluid_defpreset_get_global_zone(defpreset);
 
   /* run thru all the zones of this preset */
-  preset_zone = fluid_defpreset_get_zone(preset);
+  preset_zone = fluid_defpreset_get_zone(defpreset);
   while (preset_zone != NULL) {
 
     /* check if the note falls into the key and velocity range of this
@@ -803,9 +803,9 @@ fluid_defpreset_noteon(fluid_defpreset_t* preset, fluid_synth_t* synth, int chan
  * fluid_defpreset_set_global_zone
  */
 int
-fluid_defpreset_set_global_zone(fluid_defpreset_t* preset, fluid_preset_zone_t* zone)
+fluid_defpreset_set_global_zone(fluid_defpreset_t* defpreset, fluid_preset_zone_t* zone)
 {
-  preset->global_zone = zone;
+  defpreset->global_zone = zone;
   return FLUID_OK;
 }
 
@@ -813,9 +813,9 @@ fluid_defpreset_set_global_zone(fluid_defpreset_t* preset, fluid_preset_zone_t* 
  * fluid_defpreset_import_sfont
  */
 int
-fluid_defpreset_import_sfont(fluid_defpreset_t* preset,
+fluid_defpreset_import_sfont(fluid_defpreset_t* defpreset,
 			     SFPreset* sfpreset,
-			     fluid_defsfont_t* sfont)
+			     fluid_defsfont_t* defsfont)
 {
   fluid_list_t *p;
   SFZone* sfzone;
@@ -823,28 +823,28 @@ fluid_defpreset_import_sfont(fluid_defpreset_t* preset,
   int count;
   char zone_name[256];
   if (FLUID_STRLEN(sfpreset->name) > 0) {
-    FLUID_STRCPY(preset->name, sfpreset->name);
+    FLUID_STRCPY(defpreset->name, sfpreset->name);
   } else {
-    FLUID_SNPRINTF(preset->name, sizeof(preset->name), "Bank%d,Pre%d", sfpreset->bank, sfpreset->prenum);
+    FLUID_SNPRINTF(defpreset->name, sizeof(defpreset->name), "Bank%d,Pre%d", sfpreset->bank, sfpreset->prenum);
   }
-  preset->bank = sfpreset->bank;
-  preset->num = sfpreset->prenum;
+  defpreset->bank = sfpreset->bank;
+  defpreset->num = sfpreset->prenum;
   p = sfpreset->zone;
   count = 0;
   while (p != NULL) {
     sfzone = (SFZone *)fluid_list_get(p);
-    FLUID_SNPRINTF(zone_name, sizeof(zone_name), "%s/%d", preset->name, count);
+    FLUID_SNPRINTF(zone_name, sizeof(zone_name), "%s/%d", defpreset->name, count);
     zone = new_fluid_preset_zone(zone_name);
     if (zone == NULL) {
       return FLUID_FAILED;
     }
-    if (fluid_preset_zone_import_sfont(zone, sfzone, sfont) != FLUID_OK) {
+    if (fluid_preset_zone_import_sfont(zone, sfzone, defsfont) != FLUID_OK) {
       delete_fluid_preset_zone(zone);
       return FLUID_FAILED;
     }
     if ((count == 0) && (fluid_preset_zone_get_inst(zone) == NULL)) {
-      fluid_defpreset_set_global_zone(preset, zone);
-    } else if (fluid_defpreset_add_zone(preset, zone) != FLUID_OK) {
+      fluid_defpreset_set_global_zone(defpreset, zone);
+    } else if (fluid_defpreset_add_zone(defpreset, zone) != FLUID_OK) {
       return FLUID_FAILED;
     }
     p = fluid_list_next(p);
@@ -857,14 +857,14 @@ fluid_defpreset_import_sfont(fluid_defpreset_t* preset,
  * fluid_defpreset_add_zone
  */
 int
-fluid_defpreset_add_zone(fluid_defpreset_t* preset, fluid_preset_zone_t* zone)
+fluid_defpreset_add_zone(fluid_defpreset_t* defpreset, fluid_preset_zone_t* zone)
 {
-  if (preset->zone == NULL) {
+  if (defpreset->zone == NULL) {
     zone->next = NULL;
-    preset->zone = zone;
+    defpreset->zone = zone;
   } else {
-    zone->next = preset->zone;
-    preset->zone = zone;
+    zone->next = defpreset->zone;
+    defpreset->zone = zone;
   }
   return FLUID_OK;
 }
@@ -873,18 +873,18 @@ fluid_defpreset_add_zone(fluid_defpreset_t* preset, fluid_preset_zone_t* zone)
  * fluid_defpreset_get_zone
  */
 fluid_preset_zone_t*
-fluid_defpreset_get_zone(fluid_defpreset_t* preset)
+fluid_defpreset_get_zone(fluid_defpreset_t* defpreset)
 {
-  return preset->zone;
+  return defpreset->zone;
 }
 
 /*
  * fluid_defpreset_get_global_zone
  */
 fluid_preset_zone_t*
-fluid_defpreset_get_global_zone(fluid_defpreset_t* preset)
+fluid_defpreset_get_global_zone(fluid_defpreset_t* defpreset)
 {
-  return preset->global_zone;
+  return defpreset->global_zone;
 }
 
 /***************************************************************
@@ -896,9 +896,9 @@ fluid_defpreset_get_global_zone(fluid_defpreset_t* preset)
  * fluid_preset_zone_next
  */
 fluid_preset_zone_t*
-fluid_preset_zone_next(fluid_preset_zone_t* preset)
+fluid_preset_zone_next(fluid_preset_zone_t* zone)
 {
-  return preset->next;
+  return zone->next;
 }
 
 /*
@@ -962,7 +962,7 @@ delete_fluid_preset_zone(fluid_preset_zone_t* zone)
  * fluid_preset_zone_import_sfont
  */
 int
-fluid_preset_zone_import_sfont(fluid_preset_zone_t* zone, SFZone *sfzone, fluid_defsfont_t* sfont)
+fluid_preset_zone_import_sfont(fluid_preset_zone_t* zone, SFZone *sfzone, fluid_defsfont_t* defsfont)
 {
   fluid_list_t *r;
   SFGen* sfgen;
@@ -999,7 +999,7 @@ fluid_preset_zone_import_sfont(fluid_preset_zone_t* zone, SFZone *sfzone, fluid_
       return FLUID_FAILED;
     }
     if (fluid_inst_import_sfont(zone, zone->inst, 
-							(SFInst *) sfzone->instsamp->data, sfont) != FLUID_OK) {
+							(SFInst *) sfzone->instsamp->data, defsfont) != FLUID_OK) {
       return FLUID_FAILED;
     }
   }
@@ -1205,12 +1205,12 @@ fluid_inst_set_global_zone(fluid_inst_t* inst, fluid_inst_zone_t* zone)
  * fluid_inst_import_sfont
  */
 int
-fluid_inst_import_sfont(fluid_preset_zone_t* zonePZ, fluid_inst_t* inst, 
-						SFInst *sfinst, fluid_defsfont_t* sfont)
+fluid_inst_import_sfont(fluid_preset_zone_t* preset_zone, fluid_inst_t* inst, 
+						SFInst *sfinst, fluid_defsfont_t* defsfont)
 {
   fluid_list_t *p;
   SFZone* sfzone;
-  fluid_inst_zone_t* zone;
+  fluid_inst_zone_t* inst_zone;
   char zone_name[256];
   int count;
 
@@ -1227,20 +1227,20 @@ fluid_inst_import_sfont(fluid_preset_zone_t* zonePZ, fluid_inst_t* inst,
     sfzone = (SFZone *)fluid_list_get(p);
     FLUID_SNPRINTF(zone_name, sizeof(zone_name), "%s/%d", inst->name, count);
 
-    zone = new_fluid_inst_zone(zone_name);
-    if (zone == NULL) {
+    inst_zone = new_fluid_inst_zone(zone_name);
+    if (inst_zone == NULL) {
       return FLUID_FAILED;
     }
 
-    if (fluid_inst_zone_import_sfont(zonePZ,zone, sfzone, sfont) != FLUID_OK) {
-      delete_fluid_inst_zone(zone);
+    if (fluid_inst_zone_import_sfont(preset_zone, inst_zone, sfzone, defsfont) != FLUID_OK) {
+      delete_fluid_inst_zone(inst_zone);
       return FLUID_FAILED;
     }
 
-    if ((count == 0) && (fluid_inst_zone_get_sample(zone) == NULL)) {
-      fluid_inst_set_global_zone(inst, zone);
+    if ((count == 0) && (fluid_inst_zone_get_sample(inst_zone) == NULL)) {
+      fluid_inst_set_global_zone(inst, inst_zone);
 
-    } else if (fluid_inst_add_zone(inst, zone) != FLUID_OK) {
+    } else if (fluid_inst_add_zone(inst, inst_zone) != FLUID_OK) {
       return FLUID_FAILED;
     }
 
@@ -1356,8 +1356,8 @@ fluid_inst_zone_next(fluid_inst_zone_t* zone)
  * fluid_inst_zone_import_sfont
  */
 int
-fluid_inst_zone_import_sfont(fluid_preset_zone_t* preset_zone, fluid_inst_zone_t* zone,
-							 SFZone *sfzone, fluid_defsfont_t* sfont)
+fluid_inst_zone_import_sfont(fluid_preset_zone_t* preset_zone, fluid_inst_zone_t* inst_zone,
+                             SFZone *sfzone, fluid_defsfont_t* defsfont)
 {
   fluid_list_t *r;
   SFGen* sfgen;
@@ -1367,35 +1367,35 @@ fluid_inst_zone_import_sfont(fluid_preset_zone_t* preset_zone, fluid_inst_zone_t
     sfgen = (SFGen *)fluid_list_get(r);
     switch (sfgen->id) {
     case GEN_KEYRANGE:
-      zone->range.keylo = sfgen->amount.range.lo;
-      zone->range.keyhi = sfgen->amount.range.hi;
+      inst_zone->range.keylo = sfgen->amount.range.lo;
+      inst_zone->range.keyhi = sfgen->amount.range.hi;
       break;
     case GEN_VELRANGE:
-      zone->range.vello = sfgen->amount.range.lo;
-      zone->range.velhi = sfgen->amount.range.hi;
+      inst_zone->range.vello = sfgen->amount.range.lo;
+      inst_zone->range.velhi = sfgen->amount.range.hi;
       break;
     case GEN_ATTENUATION:
       /* EMU8k/10k hardware applies a scale factor to initial attenuation generator values set at
        * preset and instrument level */
-      zone->gen[sfgen->id].val = (fluid_real_t) sfgen->amount.sword * EMU_ATTENUATION_FACTOR;
-      zone->gen[sfgen->id].flags = GEN_SET;
+      inst_zone->gen[sfgen->id].val = (fluid_real_t) sfgen->amount.sword * EMU_ATTENUATION_FACTOR;
+      inst_zone->gen[sfgen->id].flags = GEN_SET;
       break;
     default:
       /* FIXME: some generators have an unsigned word amount value but
 	 i don't know which ones */
-      zone->gen[sfgen->id].val = (fluid_real_t) sfgen->amount.sword;
-      zone->gen[sfgen->id].flags = GEN_SET;
+      inst_zone->gen[sfgen->id].val = (fluid_real_t) sfgen->amount.sword;
+      inst_zone->gen[sfgen->id].flags = GEN_SET;
       break;
     }
     r = fluid_list_next(r);
   }
   
   /* adjust instrument zone keyrange to integrate preset zone keyrange */
-  if (preset_zone->range.keylo > zone->range.keylo) zone->range.keylo = preset_zone->range.keylo;
-  if (preset_zone->range.keyhi < zone->range.keyhi) zone->range.keyhi = preset_zone->range.keyhi;
+  if (preset_zone->range.keylo > inst_zone->range.keylo) inst_zone->range.keylo = preset_zone->range.keylo;
+  if (preset_zone->range.keyhi < inst_zone->range.keyhi) inst_zone->range.keyhi = preset_zone->range.keyhi;
   /* adjust instrument zone to integrate  preset zone velrange */
-  if (preset_zone->range.vello > zone->range.vello) zone->range.vello = preset_zone->range.vello;
-  if (preset_zone->range.velhi < zone->range.velhi) zone->range.velhi = preset_zone->range.velhi;
+  if (preset_zone->range.vello > inst_zone->range.vello) inst_zone->range.vello = preset_zone->range.vello;
+  if (preset_zone->range.velhi < inst_zone->range.velhi) inst_zone->range.velhi = preset_zone->range.velhi;
 
   /* FIXME */
 /*    if (zone->gen[GEN_EXCLUSIVECLASS].flags == GEN_SET) { */
@@ -1404,7 +1404,7 @@ fluid_inst_zone_import_sfont(fluid_preset_zone_t* preset_zone, fluid_inst_zone_t
 
   /* fixup sample pointer */
   if ((sfzone->instsamp != NULL) && (sfzone->instsamp->data != NULL))
-    zone->sample = ((SFSample *)(sfzone->instsamp->data))->fluid_sample;
+    inst_zone->sample = ((SFSample *)(sfzone->instsamp->data))->fluid_sample;
 
   /* Import the modulators (only SF2.1 and higher) */
   for (count = 0, r = sfzone->mod; r != NULL; count++) {
@@ -1521,9 +1521,9 @@ fluid_inst_zone_import_sfont(fluid_preset_zone_t* preset_zone, fluid_inst_zone_t
      * The order of modulators will make a difference, at least in an instrument context:
      * The second modulator overwrites the first one, if they only differ in amount. */
     if (count == 0){
-      zone->mod=mod_dest;
+      inst_zone->mod=mod_dest;
     } else {
-      fluid_mod_t * last_mod=zone->mod;
+      fluid_mod_t * last_mod=inst_zone->mod;
       /* Find the end of the list */
       while (last_mod->next != NULL){
 	last_mod=last_mod->next;
@@ -1579,11 +1579,11 @@ fluid_sample_in_rom(fluid_sample_t* sample)
  * fluid_sample_import_sfont
  */
 int
-fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defsfont_t* sfont)
+fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defsfont_t* defsfont)
 {
   FLUID_STRCPY(sample->name, sfsample->name);
-  sample->data = sfont->sampledata;
-  sample->data24 = sfont->sample24data;
+  sample->data = defsfont->sampledata;
+  sample->data24 = defsfont->sample24data;
   sample->start = sfsample->start;
   sample->end = (sfsample->end > 0) ? sfsample->end - 1 : 0; /* marks last sample, contrary to SF spec. */
   sample->loopstart = sfsample->loopstart;
@@ -1593,7 +1593,7 @@ fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defs
   sample->pitchadj = sfsample->pitchadj;
   sample->sampletype = sfsample->sampletype;
 
-  if (fluid_sample_validate(sample, sfont->samplesize) == FLUID_FAILED)
+  if (fluid_sample_validate(sample, defsfont->samplesize) == FLUID_FAILED)
   {
       return FLUID_OK;
   }
@@ -1604,7 +1604,7 @@ fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defs
       return FLUID_FAILED;
   }
 
-  fluid_sample_sanitize_loop(sample, sfont->samplesize);
+  fluid_sample_sanitize_loop(sample, defsfont->samplesize);
 
   return FLUID_OK;
 }
