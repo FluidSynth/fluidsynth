@@ -285,20 +285,13 @@ static int valid_inst_genid(unsigned short genid);
 static int valid_preset_genid(unsigned short genid);
 
 
-/* sound font file load functions */
-static int chunkid(unsigned int id)
-{
-    unsigned int i;
-    unsigned int *p;
-
-    p = (unsigned int *)&idlist;
-    for (i = 0; i < sizeof(idlist) / sizeof(int); i++, p += 1)
-        if (*p == id)
-            return (i + 1);
-
-    return UNKN_ID;
-}
-
+/*
+ * Open a SoundFont file and parse it's contents into a SFData structure.
+ *
+ * @param fname filename
+ * @param fcbs file callback structure
+ * @return the parsed SoundFont as SFData structure or NULL on error
+ */
 SFData *fluid_sf2_load(const char *fname, const fluid_file_callbacks_t *fcbs)
 {
     SFData *sf = NULL;
@@ -351,6 +344,94 @@ SFData *fluid_sf2_load(const char *fname, const fluid_file_callbacks_t *fcbs)
     }
 
     return sf;
+}
+
+/*
+ * Close a SoundFont file and free the SFData structure.
+ *
+ * @param sf pointer to SFData structure
+ * @param fcbs file callback structure
+ */
+void fluid_sf2_close(SFData *sf, const fluid_file_callbacks_t *fcbs)
+{
+    fluid_list_t *p, *p2;
+
+    if (sf->sffd)
+        fcbs->fclose(sf->sffd);
+
+    if (sf->fname)
+        FLUID_FREE(sf->fname);
+
+    p = sf->info;
+    while (p)
+    {
+        FLUID_FREE(p->data);
+        p = fluid_list_next(p);
+    }
+    delete_fluid_list(sf->info);
+    sf->info = NULL;
+
+    p = sf->preset;
+    while (p)
+    { /* loop over presets */
+        p2 = ((SFPreset *)(p->data))->zone;
+        while (p2)
+        { /* loop over preset's zones */
+            free_zone(p2->data);
+            p2 = fluid_list_next(p2);
+        } /* free preset's zone list */
+        delete_fluid_list(((SFPreset *)(p->data))->zone);
+        FLUID_FREE(p->data); /* free preset chunk */
+        p = fluid_list_next(p);
+    }
+    delete_fluid_list(sf->preset);
+    sf->preset = NULL;
+
+    p = sf->inst;
+    while (p)
+    { /* loop over instruments */
+        p2 = ((SFInst *)(p->data))->zone;
+        while (p2)
+        { /* loop over inst's zones */
+            free_zone(p2->data);
+            p2 = fluid_list_next(p2);
+        } /* free inst's zone list */
+        delete_fluid_list(((SFInst *)(p->data))->zone);
+        FLUID_FREE(p->data);
+        p = fluid_list_next(p);
+    }
+    delete_fluid_list(sf->inst);
+    sf->inst = NULL;
+
+    p = sf->sample;
+    while (p)
+    {
+        FLUID_FREE(p->data);
+        p = fluid_list_next(p);
+    }
+    delete_fluid_list(sf->sample);
+    sf->sample = NULL;
+
+    FLUID_FREE(sf);
+}
+
+
+/*
+ * Private functions
+ */
+
+/* sound font file load functions */
+static int chunkid(unsigned int id)
+{
+    unsigned int i;
+    unsigned int *p;
+
+    p = (unsigned int *)&idlist;
+    for (i = 0; i < sizeof(idlist) / sizeof(int); i++, p += 1)
+        if (*p == id)
+            return (i + 1);
+
+    return UNKN_ID;
 }
 
 static int load_body(unsigned int size, SFData *sf, void *fd, const fluid_file_callbacks_t *fcbs)
@@ -1719,70 +1800,6 @@ static int fixup_sample(SFData *sf)
     }
 
     return TRUE;
-}
-
-/* close SoundFont file and delete a SoundFont structure */
-void fluid_sf2_close(SFData *sf, const fluid_file_callbacks_t *fcbs)
-{
-    fluid_list_t *p, *p2;
-
-    if (sf->sffd)
-        fcbs->fclose(sf->sffd);
-
-    if (sf->fname)
-        FLUID_FREE(sf->fname);
-
-    p = sf->info;
-    while (p)
-    {
-        FLUID_FREE(p->data);
-        p = fluid_list_next(p);
-    }
-    delete_fluid_list(sf->info);
-    sf->info = NULL;
-
-    p = sf->preset;
-    while (p)
-    { /* loop over presets */
-        p2 = ((SFPreset *)(p->data))->zone;
-        while (p2)
-        { /* loop over preset's zones */
-            free_zone(p2->data);
-            p2 = fluid_list_next(p2);
-        } /* free preset's zone list */
-        delete_fluid_list(((SFPreset *)(p->data))->zone);
-        FLUID_FREE(p->data); /* free preset chunk */
-        p = fluid_list_next(p);
-    }
-    delete_fluid_list(sf->preset);
-    sf->preset = NULL;
-
-    p = sf->inst;
-    while (p)
-    { /* loop over instruments */
-        p2 = ((SFInst *)(p->data))->zone;
-        while (p2)
-        { /* loop over inst's zones */
-            free_zone(p2->data);
-            p2 = fluid_list_next(p2);
-        } /* free inst's zone list */
-        delete_fluid_list(((SFInst *)(p->data))->zone);
-        FLUID_FREE(p->data);
-        p = fluid_list_next(p);
-    }
-    delete_fluid_list(sf->inst);
-    sf->inst = NULL;
-
-    p = sf->sample;
-    while (p)
-    {
-        FLUID_FREE(p->data);
-        p = fluid_list_next(p);
-    }
-    delete_fluid_list(sf->sample);
-    sf->sample = NULL;
-
-    FLUID_FREE(sf);
 }
 
 /* free all elements of a zone (Preset or Instrument) */
