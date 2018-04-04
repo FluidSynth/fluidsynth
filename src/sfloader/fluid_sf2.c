@@ -73,6 +73,10 @@ enum
     SM24_ID
 };
 
+static const char idlist[] = {"RIFFLISTsfbkINFOsdtapdtaifilisngINAMiromiverICRDIENGIPRD"
+                              "ICOPICMTISFTsnamsmplphdrpbagpmodpgeninstibagimodigenshdrsm24"};
+
+
 /* generator types */
 typedef enum {
     Gen_StartAddrOfs,
@@ -142,23 +146,33 @@ typedef enum {
 #define GenArrSize sizeof(SFGenAmount) * Gen_Count /* gen array size */
 
 
-static const unsigned short badgen[] = {Gen_Unused1,   Gen_Unused2,   Gen_Unused3,   Gen_Unused4,
-                                        Gen_Reserved1, Gen_Reserved2, Gen_Reserved3, 0};
+static const unsigned short invalid_inst_gen[] = {
+    Gen_Unused1,
+    Gen_Unused2,
+    Gen_Unused3,
+    Gen_Unused4,
+    Gen_Reserved1,
+    Gen_Reserved2,
+    Gen_Reserved3,
+    0
+};
 
-static const unsigned short badpgen[] = {Gen_StartAddrOfs,
-                                         Gen_EndAddrOfs,
-                                         Gen_StartLoopAddrOfs,
-                                         Gen_EndLoopAddrOfs,
-                                         Gen_StartAddrCoarseOfs,
-                                         Gen_EndAddrCoarseOfs,
-                                         Gen_StartLoopAddrCoarseOfs,
-                                         Gen_Keynum,
-                                         Gen_Velocity,
-                                         Gen_EndLoopAddrCoarseOfs,
-                                         Gen_SampleModes,
-                                         Gen_ExclusiveClass,
-                                         Gen_OverrideRootKey,
-                                         0};
+static const unsigned short invalid_preset_gen[] = {
+    Gen_StartAddrOfs,
+    Gen_EndAddrOfs,
+    Gen_StartLoopAddrOfs,
+    Gen_EndLoopAddrOfs,
+    Gen_StartAddrCoarseOfs,
+    Gen_EndAddrCoarseOfs,
+    Gen_StartLoopAddrCoarseOfs,
+    Gen_Keynum,
+    Gen_Velocity,
+    Gen_EndLoopAddrCoarseOfs,
+    Gen_SampleModes,
+    Gen_ExclusiveClass,
+    Gen_OverrideRootKey,
+    0
+};
 
 
 #define CHNKIDSTR(id) &idlist[(id - 1) * 4]
@@ -266,13 +280,10 @@ static int fixup_igen(SFData *sf);
 static int fixup_sample(SFData *sf);
 static void sfont_free_zone(SFZone *zone);
 static int sfont_preset_compare_func(void *a, void *b);
-static fluid_list_t *gen_inlist(int gen, fluid_list_t *genlist);
-static int gen_valid(int gen);
-static int gen_validp(int gen);
+static fluid_list_t *find_gen_by_id(int gen, fluid_list_t *genlist);
+static int valid_inst_genid(unsigned short genid);
+static int valid_preset_genid(unsigned short genid);
 
-
-static const char idlist[] = {"RIFFLISTsfbkINFOsdtapdtaifilisngINAMiromiverICRDIENGIPRD"
-                              "ICOPICMTISFTsnamsmplphdrpbagpmodpgeninstibagimodigenshdrsm24"};
 
 /* sound font file load functions */
 static int chunkid(unsigned int id)
@@ -999,10 +1010,10 @@ static int load_pgen(int size, SFData *sf, void *fd, const fluid_file_callbacks_
                 else
                 {
                     level = 2;
-                    if (gen_validp(genid))
+                    if (valid_preset_genid(genid))
                     { /* generator valid? */
                         READW(genval.sword, fd, fcbs);
-                        dup = gen_inlist(genid, z->gen);
+                        dup = find_gen_by_id(genid, z->gen);
                     }
                     else
                         skip = TRUE;
@@ -1380,10 +1391,10 @@ static int load_igen(int size, SFData *sf, void *fd, const fluid_file_callbacks_
                 else
                 {
                     level = 2;
-                    if (gen_valid(genid))
+                    if (valid_inst_genid(genid))
                     { /* gen valid? */
                         READW(genval.sword, fd, fcbs);
-                        dup = gen_inlist(genid, z->gen);
+                        dup = find_gen_by_id(genid, z->gen);
                     }
                     else
                         skip = TRUE;
@@ -1814,8 +1825,11 @@ static int sfont_preset_compare_func(void *a, void *b)
     return (aval - bval);
 }
 
-/* Find generator in gen list */
-static fluid_list_t *gen_inlist(int gen, fluid_list_t *genlist)
+/* Find a generator by its id in the passed in list.
+ *
+ * @return pointer to SFGen if found, otherwise NULL
+ */
+static fluid_list_t *find_gen_by_id(int gen, fluid_list_t *genlist)
 { /* is generator in gen list? */
     fluid_list_t *p;
 
@@ -1832,25 +1846,25 @@ static fluid_list_t *gen_inlist(int gen, fluid_list_t *genlist)
 }
 
 /* check validity of instrument generator */
-static int gen_valid(int gen)
-{ /* is generator id valid? */
+static int valid_inst_genid(unsigned short genid)
+{
     int i = 0;
 
-    if (gen > Gen_MaxValid)
+    if (genid > Gen_MaxValid)
         return FALSE;
-    while (badgen[i] && badgen[i] != gen)
+    while (invalid_inst_gen[i] && invalid_inst_gen[i] != genid)
         i++;
-    return (badgen[i] == 0);
+    return (invalid_inst_gen[i] == 0);
 }
 
 /* check validity of preset generator */
-static int gen_validp(int gen)
-{ /* is preset generator valid? */
+static int valid_preset_genid(unsigned short genid)
+{
     int i = 0;
 
-    if (!gen_valid(gen))
+    if (!valid_inst_genid(genid))
         return FALSE;
-    while (badpgen[i] && badpgen[i] != (unsigned short)gen)
+    while (invalid_preset_gen[i] && invalid_preset_gen[i] != genid)
         i++;
-    return (badpgen[i] == 0);
+    return (invalid_preset_gen[i] == 0);
 }
