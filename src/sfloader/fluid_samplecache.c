@@ -150,7 +150,7 @@ int fluid_samplecache_unload(const short *sample_data)
                     }
                 }
 
-                fluid_list_remove(samplecache_list, entry);
+                samplecache_list = fluid_list_remove(samplecache_list, entry);
                 delete_samplecache_entry(entry);
             }
 
