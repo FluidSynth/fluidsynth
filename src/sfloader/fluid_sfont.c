@@ -586,7 +586,7 @@ int fluid_sample_validate(fluid_sample_t *sample, unsigned int buffer_size)
         return FLUID_FAILED;
     }
 
-    return TRUE;
+    return FLUID_OK;
 }
 
 /* Check the sample loop pointers and optionally convert them to something
