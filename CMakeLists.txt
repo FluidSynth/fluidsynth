@@ -508,7 +508,6 @@ configure_file ( ${CMAKE_SOURCE_DIR}/src/config.cmake
 add_subdirectory ( src )
 add_subdirectory ( doc )
 
-ENABLE_TESTING()
 add_subdirectory ( test )
 
 # pkg-config support
