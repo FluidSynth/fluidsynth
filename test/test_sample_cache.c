@@ -23,6 +23,8 @@ int main()
         
     TEST_ASSERT_NEQ(s[0], '\0');
     
+    printf("Attempt to open %s\n", s);
+    
     // load a sfont to synth1
     TEST_SUCCESS(fluid_synth_sfload(synth1, s, 1));
     
