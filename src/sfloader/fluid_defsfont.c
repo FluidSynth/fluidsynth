@@ -368,6 +368,10 @@ int fluid_defsfont_load(fluid_defsfont_t* defsfont, const fluid_file_callbacks_t
         fluid_defsfont_add_sample(defsfont, sample);
         fluid_voice_optimize_sample(sample);
     }
+    else
+    {
+        delete_fluid_sample(sample);
+    }
     p = fluid_list_next(p);
   }
 
