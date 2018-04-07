@@ -616,9 +616,10 @@ int fluid_sample_sanitize_loop(fluid_sample_t *sample, unsigned int buffer_size)
         /* Some SoundFonts disable loops by setting loopstart = loopend. While
          * technically invalid, we decided to accept those samples anyway. Just
          * ensure that those two pointers are within the sampledata by setting
-         * them to 0. Don't set modified here, as this change has no audible
+         * them to 0. Don't report the modification, as this change has no audible
          * effect. */
         sample->loopstart = sample->loopend = 0;
+        return FALSE;
     }
     else if (sample->loopstart > sample->loopend)
     {
