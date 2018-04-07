@@ -42,7 +42,7 @@ int fluid_sample_decompress_vorbis(fluid_sample_t *sample);
 #define fluid_sfont_get_name(_sf) (*(_sf)->get_name)(_sf)
 #define fluid_sfont_get_preset(_sf,_bank,_prenum) (*(_sf)->get_preset)(_sf,_bank,_prenum)
 #define fluid_sfont_iteration_start(_sf) { if((_sf) && (_sf)->iteration_start) (*(_sf)->iteration_start)(_sf); }
-#define fluid_sfont_iteration_next(_sf,_pr) (((_sf) && (_sf)->iteration_start) ? (*(_sf)->iteration_next)(_sf,_pr) : 0)
+#define fluid_sfont_iteration_next(_sf) (((_sf) && (_sf)->iteration_start) ? (*(_sf)->iteration_next)(_sf) : 0)
 
 
 #define fluid_preset_delete_internal(_preset) \
@@ -112,7 +112,7 @@ typedef void (*fluid_sfont_iteration_start_t)(fluid_sfont_t* sfont);
  * and advance the internal iteration state to the next preset for subsequent
  * calls.
  */
-typedef int (*fluid_sfont_iteration_next_t)(fluid_sfont_t* sfont, fluid_preset_t* preset);
+typedef fluid_preset_t* (*fluid_sfont_iteration_next_t)(fluid_sfont_t* sfont);
 
 void fluid_sfont_set_iteration_start(fluid_sfont_t* sfont, fluid_sfont_iteration_start_t iter_start);
 void fluid_sfont_set_iteration_next(fluid_sfont_t* sfont, fluid_sfont_iteration_next_t iter_next);

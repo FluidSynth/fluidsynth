@@ -41,11 +41,11 @@ extern "C" {
 struct _fluid_ramsfont_t
 {
   char name[21];                        /* the name of the soundfont */
+  fluid_sfont_t* sfont;    /* parent sfont */
   fluid_list_t* sample;    /* the samples in this soundfont */
-  fluid_rampreset_t* preset;    /* the presets of this soundfont */
+  fluid_list_t* preset;    /* the presets of this soundfont */
 
-  fluid_preset_t iter_preset;        /* preset interface used in the iteration */
-  fluid_rampreset_t* iter_cur;       /* the current preset in the iteration */
+  fluid_list_t* preset_iter_cur;       /* the current preset in the iteration */
 };
 
 /*
