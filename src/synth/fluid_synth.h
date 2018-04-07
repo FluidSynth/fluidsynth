@@ -74,17 +74,6 @@ enum fluid_synth_status
 #define SYNTH_CHORUS_CHANNEL 1
 
 /*
- * Structure used for sfont_info field in #fluid_synth_t for each loaded
- * SoundFont with the SoundFont instance and additional fields.
- */
-typedef struct _fluid_sfont_info_t {
-  fluid_sfont_t *sfont; /**< Loaded SoundFont */
-  fluid_synth_t *synth; /**< Parent synth */
-  int refcount;         /**< SoundFont reference count (0 if no presets referencing it) */
-  int bankofs;          /**< Bank offset */
-} fluid_sfont_info_t;
-
-/*
  * fluid_synth_t
  *
  * Mutual exclusion notes (as of 1.1.2):
@@ -124,8 +113,7 @@ struct _fluid_synth_t
   fluid_overflow_prio_t overflow;    /**< parameters for overflow priority (aka voice-stealing) */
 
   fluid_list_t *loaders;             /**< the SoundFont loaders */
-  fluid_list_t *sfont_info;          /**< List of fluid_sfont_info_t for each loaded SoundFont (remains until SoundFont is unloaded) */
-  fluid_hashtable_t *sfont_hash;     /**< Hash of fluid_sfont_t->fluid_sfont_info_t (remains until SoundFont is deleted) */
+  fluid_list_t *sfont;          /**< List of fluid_sfont_info_t for each loaded SoundFont (remains until SoundFont is unloaded) */
   unsigned int sfont_id;             /**< Incrementing ID assigned to each loaded SoundFont */
 
   float gain;                        /**< master gain */
