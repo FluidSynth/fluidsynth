@@ -360,14 +360,14 @@ int fluid_defsfont_load(fluid_defsfont_t* defsfont, const fluid_file_callbacks_t
     sample = new_fluid_sample();
     if (sample == NULL) goto err_exit;
 
-    if (fluid_sample_import_sfont(sample, sfsample, defsfont) != FLUID_OK)
-      goto err_exit;
+    if (fluid_sample_import_sfont(sample, sfsample, defsfont) == FLUID_OK)
+    {
+        /* Store reference to FluidSynth sample in SFSample for later IZone fixups */
+        sfsample->fluid_sample = sample;
 
-    /* Store reference to FluidSynth sample in SFSample for later IZone fixups */
-    sfsample->fluid_sample = sample;
-
-    fluid_defsfont_add_sample(defsfont, sample);
-    fluid_voice_optimize_sample(sample);
+        fluid_defsfont_add_sample(defsfont, sample);
+        fluid_voice_optimize_sample(sample);
+    }
     p = fluid_list_next(p);
   }
 
