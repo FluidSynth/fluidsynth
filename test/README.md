@@ -1,0 +1,6 @@
+ 
+This directory contains small executables to verify fluidsynths correct behaviour, i.e. unit tests. Although some tests might serve as educational demonstration of how to use certain parts of fluidsynth, they are **not** intended to do so! It is most likely that those tests will consist of many hacky parts that are necessary to test fluidsynth (e.g. including fluidsynth's private headers to access internal data types and functions). For user applications this programming style is strongly discouraged! Do **not** blindly use the tests as template for your application! Keep referring to the documentation and code examples listed in the [http://www.fluidsynth.org/api/](API documentation).
+
+### Developers
+
+To add a unit test just duplicate an existing one, give it a unique name and update the CMakeLists.txt by adding a call to ADD_FLUID_TEST() and a dependency to the custom `check` target. Make sure you call cmake with `-Denable-tests=1` to build and execute the tests via `make check`.

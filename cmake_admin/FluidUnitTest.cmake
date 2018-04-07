@@ -8,6 +8,7 @@ macro ( ADD_FLUID_TEST _test )
     $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/include> # include auto generated headers
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include> # include "normal" public (sub-)headers
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/src> # include private headers
+    $<TARGET_PROPERTY:libfluidsynth,INCLUDE_DIRECTORIES> # include all other header search paths needed by libfluidsynth (esp. glib)
     )
 
     ADD_TEST(NAME ${_test} COMMAND ${_test})
