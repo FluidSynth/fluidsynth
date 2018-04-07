@@ -5,10 +5,11 @@
 
 // this test aims to make sure that sample data used by multiple synths is not freed
 // once unloaded by its parent synth
-int main()
+int main(void)
 {
     enum { FRAMES = 1024 };
     float buf[FRAMES * 2];
+    char *s;
     
     fluid_settings_t *settings = new_fluid_settings();
     fluid_synth_t *synth1 = new_fluid_synth(settings),
@@ -18,7 +19,6 @@ int main()
     TEST_ASSERT_NEQ(synth1, NULL);
     TEST_ASSERT_NEQ(synth2, NULL);
     
-    char *s;
     TEST_SUCCESS(fluid_settings_dupstr(settings, "synth.default-soundfont", &s))
         
     TEST_ASSERT_NEQ(s[0], '\0');
