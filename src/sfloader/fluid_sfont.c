@@ -21,6 +21,12 @@
 #include "fluid_sfont.h"
 #include "fluid_sys.h"
 
+#if LIBSNDFILE_SUPPORT
+#include <sndfile.h>
+#endif
+
+
+
 void * default_fopen(const char * path)
 {
     return FLUID_FOPEN(path, "rb");
@@ -41,9 +47,9 @@ int safe_fread (void *buf, int count, void * fd)
   if (FLUID_FREAD(buf, count, 1, (FILE *)fd) != 1)
     {
       if (feof ((FILE *)fd))
-	FLUID_LOG (FLUID_ERR, _("EOF while attemping to read %d bytes"), count);
+	FLUID_LOG (FLUID_ERR, "EOF while attemping to read %d bytes", count);
       else
-	FLUID_LOG (FLUID_ERR, _("File read failed"));
+	FLUID_LOG (FLUID_ERR, "File read failed");
   
       return FLUID_FAILED;
     }
@@ -53,7 +59,7 @@ int safe_fread (void *buf, int count, void * fd)
 int safe_fseek (void * fd, long ofs, int whence)
 {
   if (FLUID_FSEEK((FILE *)fd, ofs, whence) != 0) {
-    FLUID_LOG (FLUID_ERR, _("File seek failed with offset = %ld and whence = %d"), ofs, whence);
+    FLUID_LOG (FLUID_ERR, "File seek failed with offset = %ld and whence = %d", ofs, whence);
     return FLUID_FAILED;
   }
   return FLUID_OK;
@@ -498,7 +504,6 @@ fluid_sample_set_sound_data (fluid_sample_t* sample,
 
     sample->samplerate = sample_rate;
     sample->sampletype = FLUID_SAMPLETYPE_MONO;
-    sample->valid = 1;
     sample->auto_free = copy_data;
 
     return FLUID_OK;
@@ -546,3 +551,242 @@ int fluid_sample_set_pitch(fluid_sample_t* sample, int root_key, int fine_tune)
     
     return FLUID_OK;
 }
+
+
+/**
+ * Validate parameters of a sample
+ *
+ */
+int fluid_sample_validate(fluid_sample_t *sample, unsigned int buffer_size)
+{
+    /* ROM samples are unusable for us by definition */
+    if (sample->sampletype & FLUID_SAMPLETYPE_ROM)
+    {
+        FLUID_LOG(FLUID_WARN, "Sample '%s': ROM sample ignored", sample->name);
+        return FLUID_FAILED;
+    }
+
+    /* Ogg vorbis compressed samples in the SF3 format use byte indices for
+     * sample start and end pointers before decompression. Standard SF2 samples
+     * use sample word indices for all pointers, so use half the buffer_size
+     * for validation. */
+    if (!(sample->sampletype & FLUID_SAMPLETYPE_OGG_VORBIS))
+    {
+        if (buffer_size % 2)
+        {
+            FLUID_LOG(FLUID_WARN, "Sample '%s': invalid buffer size", sample->name);
+            return FLUID_FAILED;
+        }
+        buffer_size /= 2;
+    }
+
+    if ((sample->end > buffer_size) || (sample->start >= sample->end))
+    {
+        FLUID_LOG(FLUID_WARN, "Sample '%s': invalid start/end file positions", sample->name);
+        return FLUID_FAILED;
+    }
+
+    return FLUID_OK;
+}
+
+/* Check the sample loop pointers and optionally convert them to something
+ * usable in case they are broken. Return a boolean indicating if the pointers
+ * have been modified, so the user can be notified of possible audio glitches.
+ */
+int fluid_sample_sanitize_loop(fluid_sample_t *sample, unsigned int buffer_size)
+{
+    int modified = FALSE;
+    unsigned int max_end = buffer_size / 2;
+    /* In fluid_sample_t the sample end pointer points to the last sample, not
+     * to the data word after the last sample. FIXME: why? */
+    unsigned int sample_end = sample->end + 1;
+
+    /* Checking loops on compressed samples makes no sense at all and is really
+     * a programming error. Disable the loop to be on the safe side. */
+    if (sample->sampletype & FLUID_SAMPLETYPE_OGG_VORBIS)
+    {
+        FLUID_LOG(FLUID_ERR, "Sample '%s': checking loop on compressed sample, disabling loop",
+                sample->name);
+        sample->loopstart = sample->loopend = 0;
+        return TRUE;
+    }
+
+    if (sample->loopstart == sample->loopend)
+    {
+        /* Some SoundFonts disable loops by setting loopstart = loopend. While
+         * technically invalid, we decided to accept those samples anyway. Just
+         * ensure that those two pointers are within the sampledata by setting
+         * them to 0. Don't set modified here, as this change has no audible
+         * effect. */
+        sample->loopstart = sample->loopend = 0;
+    }
+    else if (sample->loopstart > sample->loopend)
+    {
+        unsigned int tmp;
+
+        /* If loop start and end are reversed, try to swap them around and
+         * continue validation */
+        FLUID_LOG(FLUID_DBG, "Sample '%s': reversed loop pointers '%d' - '%d', trying to fix",
+                sample->name, sample->loopstart, sample->loopend);
+        tmp = sample->loopstart;
+        sample->loopstart = sample->loopend;
+        sample->loopend = tmp;
+        modified = TRUE;
+    }
+
+    /* The SoundFont 2.4 spec defines the loopstart index as the first sample
+     * point of the loop while loopend is the first point AFTER the last sample
+     * of the loop. However we cannot be sure whether any of loopend or end is
+     * correct. Hours of thinking through this have concluded that it would be
+     * best practice to mangle with loops as little as necessary by only making
+     * sure the pointers are within sample->start to max_end. Incorrect
+     * soundfont shall preferably fail loudly. */
+    if ((sample->loopstart < sample->start) || (sample->loopstart > max_end))
+    {
+        FLUID_LOG(FLUID_DBG, "Sample '%s': invalid loop start '%d', setting to sample start '%d'",
+                sample->name, sample->loopstart, sample->start);
+        sample->loopstart = sample->start;
+        modified = TRUE;
+    }
+
+    if ((sample->loopend < sample->start) || (sample->loopend > max_end))
+    {
+        FLUID_LOG(FLUID_DBG, "Sample '%s': invalid loop end '%d', setting to sample end '%d'",
+                sample->name, sample->loopend, sample_end);
+        sample->loopend = sample_end;
+        modified = TRUE;
+    }
+
+    if ((sample->loopstart > sample_end) || (sample->loopend > sample_end))
+    {
+        FLUID_LOG(FLUID_DBG, "Sample '%s': loop range '%d - %d' after sample end '%d', using it anyway",
+                sample->name, sample->loopstart, sample->loopend, sample_end);
+    }
+
+    return modified;
+}
+
+#if LIBSNDFILE_SUPPORT
+
+// virtual file access rountines to allow for handling
+// samples as virtual files in memory
+static sf_count_t
+sfvio_get_filelen(void* user_data)
+{
+  fluid_sample_t *sample = (fluid_sample_t *)user_data;
+
+  return (sf_count_t)(sample->end + 1 - sample->start);
+}
+
+static sf_count_t
+sfvio_seek(sf_count_t offset, int whence, void* user_data)
+{
+  fluid_sample_t *sample = (fluid_sample_t *)user_data;
+
+  switch (whence)
+  {
+    case SEEK_SET:
+      sample->userdata = (void *)offset;
+      break;
+    case SEEK_CUR:
+      sample->userdata = (void *)((sf_count_t)sample->userdata + offset);
+      break;
+    case SEEK_END:
+      sample->userdata = (void *)(sfvio_get_filelen(user_data) + offset);
+      break;
+  }
+
+  return (sf_count_t)sample->userdata;
+}
+
+static sf_count_t
+sfvio_read(void* ptr, sf_count_t count, void* user_data)
+{
+  fluid_sample_t *sample = (fluid_sample_t *)user_data;
+  sf_count_t remain = sfvio_get_filelen(user_data) - (sf_count_t)sample->userdata;
+  
+  if (count > remain)
+      count = remain;
+
+  memcpy(ptr, (char *)sample->data + sample->start + (sf_count_t)sample->userdata, count);
+  sample->userdata = (void *)((sf_count_t)sample->userdata + count);
+
+  return count;
+}
+
+static sf_count_t
+sfvio_tell (void* user_data)
+{
+  fluid_sample_t *sample = (fluid_sample_t *)user_data;
+
+  return (sf_count_t)sample->userdata;
+}
+
+int fluid_sample_decompress_vorbis(fluid_sample_t *sample)
+{
+    SNDFILE *sndfile;
+    SF_INFO sfinfo;
+    SF_VIRTUAL_IO sfvio = {
+      sfvio_get_filelen,
+      sfvio_seek,
+      sfvio_read,
+      NULL,
+      sfvio_tell
+    };
+    short *sampledata_ogg;
+
+    // initialize file position indicator and SF_INFO structure
+    g_assert(sample->userdata == NULL);
+    memset(&sfinfo, 0, sizeof(sfinfo));
+
+    // open sample as a virtual file in memory
+    sndfile = sf_open_virtual(&sfvio, SFM_READ, &sfinfo, sample);
+    if (!sndfile)
+    {
+      FLUID_LOG(FLUID_ERR, sf_strerror(sndfile));
+      return FLUID_FAILED;
+    }
+
+    // empty sample
+    if (!sfinfo.frames || !sfinfo.channels)
+    {
+      sample->start = sample->end = 0;
+      sample->loopstart = sample->loopend = 0;
+      sample->data = NULL;
+      sf_close(sndfile);
+      return FLUID_OK;
+    }
+
+    // allocate memory for uncompressed sample data stream
+    sampledata_ogg = (short *)FLUID_MALLOC(sfinfo.frames * sfinfo.channels * sizeof(short));
+    if (!sampledata_ogg)
+    {
+      FLUID_LOG(FLUID_ERR, "Out of memory");
+      sf_close(sndfile);
+      return FLUID_FAILED;
+    }
+
+    // uncompress sample data stream
+    if (sf_readf_short(sndfile, sampledata_ogg, sfinfo.frames) < sfinfo.frames)
+    {
+      FLUID_FREE(sampledata_ogg);
+      FLUID_LOG(FLUID_ERR, sf_strerror(sndfile));
+      sf_close(sndfile);
+      return FLUID_FAILED;
+    }
+    sf_close(sndfile);
+
+    // point sample data to uncompressed data stream
+    sample->data = sampledata_ogg;
+    sample->auto_free = TRUE;
+    sample->start = 0;
+    sample->end = sfinfo.frames - 1;
+
+    return FLUID_OK;
+}
+#else
+int fluid_sample_decompress_vorbis(fluid_sample_t *sample)
+{
+    return FLUID_FAILED;
+}
+#endif
