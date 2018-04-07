@@ -1595,7 +1595,7 @@ fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defs
 
   if (fluid_sample_validate(sample, defsfont->samplesize) == FLUID_FAILED)
   {
-      return FLUID_OK;
+      return FLUID_FAILED;
   }
 
   if ((sample->sampletype & FLUID_SAMPLETYPE_OGG_VORBIS)
