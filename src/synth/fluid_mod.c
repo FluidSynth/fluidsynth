@@ -41,7 +41,7 @@ fluid_mod_clone(fluid_mod_t* mod, const fluid_mod_t* src)
 
 /**
  * Set a modulator's primary source controller and flags.
- * @param mod Modulator
+ * @param mod The modulator instance
  * @param src Modulator source (#fluid_mod_src or a MIDI controller number)
  * @param flags Flags determining mapping function and whether the source
  *   controller is a general controller (#FLUID_MOD_GC) or a MIDI CC controller
@@ -56,7 +56,7 @@ fluid_mod_set_source1(fluid_mod_t* mod, int src, int flags)
 
 /**
  * Set a modulator's secondary source controller and flags.
- * @param mod Modulator
+ * @param mod The modulator instance
  * @param src Modulator source (#fluid_mod_src or a MIDI controller number)
  * @param flags Flags determining mapping function and whether the source
  *   controller is a general controller (#FLUID_MOD_GC) or a MIDI CC controller
@@ -71,7 +71,7 @@ fluid_mod_set_source2(fluid_mod_t* mod, int src, int flags)
 
 /**
  * Set the destination effect of a modulator.
- * @param mod Modulator
+ * @param mod The modulator instance
  * @param dest Destination generator (#fluid_gen_type)
  */
 void
@@ -82,7 +82,7 @@ fluid_mod_set_dest(fluid_mod_t* mod, int dest)
 
 /**
  * Set the scale amount of a modulator.
- * @param mod Modulator
+ * @param mod The modulator instance
  * @param amount Scale amount to assign
  */
 void
@@ -93,7 +93,7 @@ fluid_mod_set_amount(fluid_mod_t* mod, double amount)
 
 /**
  * Get the primary source value from a modulator.
- * @param mod Modulator
+ * @param mod The modulator instance
  * @return The primary source value (#fluid_mod_src or a MIDI CC controller value).
  */
 int
@@ -104,7 +104,7 @@ fluid_mod_get_source1(const fluid_mod_t* mod)
 
 /**
  * Get primary source flags from a modulator.
- * @param mod Modulator
+ * @param mod The modulator instance
  * @return The primary source flags (#fluid_mod_flags).
  */
 int
@@ -115,7 +115,7 @@ fluid_mod_get_flags1(const fluid_mod_t* mod)
 
 /**
  * Get the secondary source value from a modulator.
- * @param mod Modulator
+ * @param mod The modulator instance
  * @return The secondary source value (#fluid_mod_src or a MIDI CC controller value).
  */
 int
@@ -126,7 +126,7 @@ fluid_mod_get_source2(const fluid_mod_t* mod)
 
 /**
  * Get secondary source flags from a modulator.
- * @param mod Modulator
+ * @param mod The modulator instance
  * @return The secondary source flags (#fluid_mod_flags).
  */
 int
@@ -137,7 +137,7 @@ fluid_mod_get_flags2(const fluid_mod_t* mod)
 
 /**
  * Get destination effect from a modulator.
- * @param mod Modulator
+ * @param mod The modulator instance
  * @return Destination generator (#fluid_gen_type)
  */
 int
@@ -148,7 +148,7 @@ fluid_mod_get_dest(const fluid_mod_t* mod)
 
 /**
  * Get the scale amount from a modulator.
- * @param mod Modulator
+ * @param mod The modulator instance
  * @return Scale amount
  */
 double
@@ -446,6 +446,8 @@ delete_fluid_mod (fluid_mod_t *mod)
  * Returns the size of the fluid_mod_t structure.
  * 
  * Useful in low latency scenarios e.g. to allocate a modulator on the stack.
+ * 
+ * @return Size of fluid_mod_t in bytes
  */
 size_t fluid_mod_sizeof()
 {
@@ -473,6 +475,7 @@ fluid_mod_test_identity (const fluid_mod_t *mod1, const fluid_mod_t *mod2)
 /**
  * Check if the modulator has the given source.
  * 
+ * @param mod The modulator instance
  * @param cc Boolean value indicating if ctrl is a CC controller or not
  * @param ctrl The source to check for (if \c cc == FALSE : a value of type #fluid_mod_src, else the value of the MIDI CC to check for)
  * 
@@ -496,6 +499,7 @@ int fluid_mod_has_source(const fluid_mod_t * mod, int cc, int ctrl)
 
 /**
  * Check if the modulator has the given destination.
+ * @param mod The modulator instance
  * @param gen The destination generator of type #fluid_gen_type to check for
  * @return TRUE if the modulator has the given destination, FALSE otherwise.
  */

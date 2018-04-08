@@ -336,7 +336,7 @@ int fluid_preset_set_data(fluid_preset_t* preset, void* data)
 /**
  * Retrieve the private data of a SoundFont preset instance.
  * 
- * @param sfont The SoundFont preset instance.
+ * @param preset The SoundFont preset instance.
  * @return The private data or NULL if none explicitly set before.
  */
 void* fluid_preset_get_data(fluid_preset_t* preset)
@@ -402,6 +402,8 @@ delete_fluid_sample(fluid_sample_t* sample)
  * Returns the size of the fluid_sample_t structure.
  * 
  * Useful in low latency scenarios e.g. to allocate a sample on the stack.
+ * 
+ * @return Size of fluid_sample_t in bytes
  */
 size_t fluid_sample_sizeof()
 {
@@ -520,6 +522,7 @@ error_rec:
 /**
  * Set the loop of a sample.
  * 
+ * @param sample SoundFont sample
  * @param loop_start Start sample index of the loop.
  * @param loop_end End index of the loop (must be a valid sample as it marks the last sample to be played).
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise.
@@ -537,7 +540,8 @@ int fluid_sample_set_loop(fluid_sample_t* sample, unsigned int loop_start, unsig
 /**
  * Set the pitch of a sample.
  * 
- * @param rootkey Root MIDI note of sample (0-127)
+ * @param sample SoundFont sample
+ * @param root_key Root MIDI note of sample (0-127)
  * @param fine_tune Fine tune in cents
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise.
  */

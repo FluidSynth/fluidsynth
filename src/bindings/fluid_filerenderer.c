@@ -283,6 +283,7 @@ new_fluid_file_renderer(fluid_synth_t* synth)
 /**
  * Set vbr encoding quality (only available with libsndfile support)
  * @param dev File renderer object.
+ * @param q The encoding quality, see libsndfile documentation of \c SFC_SET_VBR_ENCODING_QUALITY
  * @return #FLUID_OK if the quality has been successfully set, #FLUID_FAILED otherwise
  * @since 1.1.7
  */

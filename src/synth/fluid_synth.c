@@ -5075,8 +5075,18 @@ fluid_synth_get_settings(fluid_synth_t* synth)
 }
 
 /**
- * Same as calling \c fluid_synth_set_gen2(synth, chan, param, value, FALSE, FALSE)
+ * Set a SoundFont generator (effect) value on a MIDI channel in real-time.
+ * @param synth FluidSynth instance
+ * @param chan MIDI channel number (0 to MIDI channel count - 1)
+ * @param param SoundFont generator ID (#fluid_gen_type)
+ * @param value Offset or absolute generator value to assign to the MIDI channel
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ *
+ * This function allows for setting all effect parameters in real time on a
+ * MIDI channel. Setting absolute to non-zero will cause the value to override
+ * any generator values set in the instruments played on the MIDI channel.
+ * See SoundFont 2.01 spec, paragraph 8.1.3, page 48 for details on SoundFont
+ * generator parameters and valid ranges.
  */
 int fluid_synth_set_gen(fluid_synth_t* synth, int chan, int param, float value)
 {
@@ -5277,6 +5287,7 @@ fluid_synth_stop_LOCAL (fluid_synth_t *synth, unsigned int id)
  * @param synth FluidSynth instance
  * @param sfont_id ID of a loaded SoundFont
  * @param offset Bank offset value to apply to all instruments
+ * @return #FLUID_OK if the offset was set successfully, #FLUID_FAILED otherwise
  */
 int
 fluid_synth_set_bank_offset(fluid_synth_t* synth, int sfont_id, int offset)

@@ -133,7 +133,7 @@ typedef int (* fluid_sfloader_callback_read_t )(void *buf, int count, void * han
 typedef int (* fluid_sfloader_callback_seek_t )(void * handle, long offset, int origin);
 
 /** 
- * Closes the handle returned by #fluid_sfloader_callback_open and frees used ressources.
+ * Closes the handle returned by #fluid_sfloader_callback_open_t and frees used ressources.
  * 
  * @return returns #FLUID_OK on success, #FLUID_FAILED on error
  */
