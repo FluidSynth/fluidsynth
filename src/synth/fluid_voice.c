@@ -91,8 +91,9 @@ fluid_voice_get_lower_boundary_for_attenuation(fluid_voice_t* voice);
 #define UPDATE_RVOICE_ENVLFO_I1(proc, envp, iarg) UPDATE_RVOICE_GENERIC_I1(proc, &voice->rvoice->envlfo.envp, iarg) 
 
 static FLUID_INLINE void
-fluid_voice_update_volenv(fluid_voice_t* voice, 
-			  fluid_adsr_env_section_t section,
+fluid_voice_update_volenv(fluid_voice_t* voice,
+                          int enqueue,
+                          fluid_adsr_env_section_t section,
                           unsigned int count,
                           fluid_real_t coeff,
                           fluid_real_t increment,
@@ -108,15 +109,23 @@ fluid_voice_update_volenv(fluid_voice_t* voice,
     param[4].real = min;
     param[5].real = max;
     
+    if(enqueue)
+    {
     fluid_rvoice_eventhandler_push_param(voice->channel->synth->eventhandler,
                                     fluid_adsr_env_set_data,
                                     &voice->rvoice->envlfo.volenv,
                                     param);
+    }
+    else
+    {
+        fluid_adsr_env_set_data(&voice->rvoice->envlfo.volenv, param);
+    }
 }
 
 static FLUID_INLINE void
-fluid_voice_update_modenv(fluid_voice_t* voice, 
-			  fluid_adsr_env_section_t section,
+fluid_voice_update_modenv(fluid_voice_t* voice,
+                          int enqueue,
+                          fluid_adsr_env_section_t section,
                           unsigned int count,
                           fluid_real_t coeff,
                           fluid_real_t increment,
@@ -132,10 +141,17 @@ fluid_voice_update_modenv(fluid_voice_t* voice,
     param[4].real = min;
     param[5].real = max;
     
+    if(enqueue)
+    {
     fluid_rvoice_eventhandler_push_param(voice->channel->synth->eventhandler,
                                     fluid_adsr_env_set_data,
                                     &voice->rvoice->envlfo.modenv,
                                     param);
+    }
+    else
+    {
+       fluid_adsr_env_set_data(&voice->rvoice->envlfo.modenv, param);
+    }
 }
 
 static FLUID_INLINE void fluid_voice_sample_unref(fluid_sample_t** sample)
@@ -159,7 +175,7 @@ static void fluid_voice_swap_rvoice(fluid_voice_t* voice)
   voice->can_access_overflow_rvoice = ctemp;
 }
 
-static void fluid_voice_initialize_rvoice(fluid_voice_t* voice)
+static void fluid_voice_initialize_rvoice(fluid_voice_t* voice, fluid_real_t output_rate)
 {
   fluid_rvoice_param_t param[EVENT_PARAMS];
     
@@ -170,13 +186,13 @@ static void fluid_voice_initialize_rvoice(fluid_voice_t* voice)
    * or generator. Therefore it is enough to initialize them once
    * during the lifetime of the synth.
    */
-  fluid_voice_update_volenv(voice, FLUID_VOICE_ENVSUSTAIN, 
+  fluid_voice_update_volenv(voice, FALSE, FLUID_VOICE_ENVSUSTAIN, 
                           0xffffffff, 1.0f, 0.0f, -1.0f, 2.0f);
-  fluid_voice_update_volenv(voice, FLUID_VOICE_ENVFINISHED, 
+  fluid_voice_update_volenv(voice, FALSE, FLUID_VOICE_ENVFINISHED, 
                           0xffffffff, 0.0f, 0.0f, -1.0f, 1.0f);
-  fluid_voice_update_modenv(voice, FLUID_VOICE_ENVSUSTAIN, 
+  fluid_voice_update_modenv(voice, FALSE, FLUID_VOICE_ENVSUSTAIN, 
                           0xffffffff, 1.0f, 0.0f, -1.0f, 2.0f);
-  fluid_voice_update_modenv(voice, FLUID_VOICE_ENVFINISHED, 
+  fluid_voice_update_modenv(voice, FALSE, FLUID_VOICE_ENVFINISHED, 
                           0xffffffff, 0.0f, 0.0f, -1.0f, 1.0f);
   
   param[0].i = FLUID_IIR_LOWPASS;
@@ -185,6 +201,9 @@ static void fluid_voice_initialize_rvoice(fluid_voice_t* voice)
   
   param[0].i = FLUID_IIR_DISABLED;
   fluid_iir_filter_init(&voice->rvoice->resonant_custom_filter, param);
+  
+  param[0].real = output_rate;
+  fluid_rvoice_set_output_rate(voice->rvoice, param);
 }
 
 /*
@@ -214,15 +233,14 @@ new_fluid_voice(fluid_real_t output_rate)
   voice->vel = 0;
   voice->channel = NULL;
   voice->sample = NULL;
+  voice->output_rate = output_rate;
 
   /* Initialize both the rvoice and overflow_rvoice */
   voice->can_access_rvoice = TRUE; 
   voice->can_access_overflow_rvoice = TRUE; 
-  fluid_voice_initialize_rvoice(voice);
+  fluid_voice_initialize_rvoice(voice, output_rate);
   fluid_voice_swap_rvoice(voice);
-  fluid_voice_initialize_rvoice(voice);
-
-  fluid_voice_set_output_rate(voice, output_rate);
+  fluid_voice_initialize_rvoice(voice, output_rate);  
 
   return voice;
 }
@@ -331,7 +349,7 @@ fluid_voice_init(fluid_voice_t* voice, fluid_sample_t* sample,
  * Update sample rate. 
  * @note If the voice is active, it will be turned off.
  */
-int 
+void 
 fluid_voice_set_output_rate(fluid_voice_t* voice, fluid_real_t value)
 {
   if (fluid_voice_is_playing(voice))
@@ -343,8 +361,6 @@ fluid_voice_set_output_rate(fluid_voice_t* voice, fluid_real_t value)
   fluid_voice_swap_rvoice(voice);
   UPDATE_RVOICE_R1(fluid_rvoice_set_output_rate, value);
   fluid_voice_swap_rvoice(voice);
-
-  return FLUID_FAILED;
 }
 
 
@@ -984,21 +1000,21 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
   case GEN_VOLENVDELAY:                /* SF2.01 section 8.1.3 # 33 */
     fluid_clip(x, -12000.0f, 5000.0f);
     count = NUM_BUFFERS_DELAY(x);
-    fluid_voice_update_volenv(voice, FLUID_VOICE_ENVDELAY,
+    fluid_voice_update_volenv(voice, TRUE, FLUID_VOICE_ENVDELAY,
                             count, 0.0f, 0.0f, -1.0f, 1.0f);
     break;
 
   case GEN_VOLENVATTACK:               /* SF2.01 section 8.1.3 # 34 */
     fluid_clip(x, -12000.0f, 8000.0f);
     count = 1 + NUM_BUFFERS_ATTACK(x);
-    fluid_voice_update_volenv(voice, FLUID_VOICE_ENVATTACK,
+    fluid_voice_update_volenv(voice, TRUE, FLUID_VOICE_ENVATTACK,
                             count, 1.0f, 1.0f / count, -1.0f, 1.0f);
     break;
 
   case GEN_VOLENVHOLD:                 /* SF2.01 section 8.1.3 # 35 */
   case GEN_KEYTOVOLENVHOLD:            /* SF2.01 section 8.1.3 # 39 */
     count = calculate_hold_decay_buffers(voice, GEN_VOLENVHOLD, GEN_KEYTOVOLENVHOLD, 0); /* 0 means: hold */
-    fluid_voice_update_volenv(voice, FLUID_VOICE_ENVHOLD,
+    fluid_voice_update_volenv(voice, TRUE, FLUID_VOICE_ENVHOLD,
                             count, 1.0f, 0.0f, -1.0f, 2.0f);
     break;
 
@@ -1008,35 +1024,35 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
     x = 1.0f - 0.001f * fluid_voice_gen_value(voice, GEN_VOLENVSUSTAIN);
     fluid_clip(x , 0.0f, 1.0f);
     count = calculate_hold_decay_buffers(voice, GEN_VOLENVDECAY, GEN_KEYTOVOLENVDECAY, 1); /* 1 for decay */
-    fluid_voice_update_volenv(voice, FLUID_VOICE_ENVDECAY,
+    fluid_voice_update_volenv(voice, TRUE, FLUID_VOICE_ENVDECAY,
                             count, 1.0f, count ? -1.0f / count : 0.0f, x, 2.0f);
     break;
 
   case GEN_VOLENVRELEASE:             /* SF2.01 section 8.1.3 # 38 */
     fluid_clip(x, FLUID_MIN_VOLENVRELEASE, 8000.0f);
     count = 1 + NUM_BUFFERS_RELEASE(x);
-    fluid_voice_update_volenv(voice, FLUID_VOICE_ENVRELEASE,
+    fluid_voice_update_volenv(voice, TRUE, FLUID_VOICE_ENVRELEASE,
                             count, 1.0f, -1.0f / count, 0.0f, 1.0f);
     break;
 
     /* Modulation envelope */
   case GEN_MODENVDELAY:               /* SF2.01 section 8.1.3 # 25 */
     fluid_clip(x, -12000.0f, 5000.0f);
-    fluid_voice_update_modenv(voice, FLUID_VOICE_ENVDELAY,
+    fluid_voice_update_modenv(voice, TRUE, FLUID_VOICE_ENVDELAY,
                             NUM_BUFFERS_DELAY(x), 0.0f, 0.0f, -1.0f, 1.0f);
     break;
 
   case GEN_MODENVATTACK:               /* SF2.01 section 8.1.3 # 26 */
     fluid_clip(x, -12000.0f, 8000.0f);
     count = 1 + NUM_BUFFERS_ATTACK(x);
-    fluid_voice_update_modenv(voice, FLUID_VOICE_ENVATTACK,
+    fluid_voice_update_modenv(voice, TRUE, FLUID_VOICE_ENVATTACK,
                             count, 1.0f, 1.0f / count, -1.0f, 1.0f);
     break;
 
   case GEN_MODENVHOLD:               /* SF2.01 section 8.1.3 # 27 */
   case GEN_KEYTOMODENVHOLD:          /* SF2.01 section 8.1.3 # 31 */
     count = calculate_hold_decay_buffers(voice, GEN_MODENVHOLD, GEN_KEYTOMODENVHOLD, 0); /* 1 means: hold */
-    fluid_voice_update_modenv(voice, FLUID_VOICE_ENVHOLD,
+    fluid_voice_update_modenv(voice, TRUE, FLUID_VOICE_ENVHOLD,
                             count, 1.0f, 0.0f, -1.0f, 2.0f);
     break;
 
@@ -1046,14 +1062,14 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
     count = calculate_hold_decay_buffers(voice, GEN_MODENVDECAY, GEN_KEYTOMODENVDECAY, 1); /* 1 for decay */
     x = 1.0f - 0.001f * fluid_voice_gen_value(voice, GEN_MODENVSUSTAIN);
     fluid_clip(x, 0.0f, 1.0f);
-    fluid_voice_update_modenv(voice, FLUID_VOICE_ENVDECAY,
+    fluid_voice_update_modenv(voice, TRUE, FLUID_VOICE_ENVDECAY,
                             count, 1.0f, count ? -1.0f / count : 0.0f, x, 2.0f);
     break;
 
   case GEN_MODENVRELEASE:                                  /* SF 2.01 section 8.1.3 # 30 */
     fluid_clip(x, -12000.0f, 8000.0f);
     count = 1 + NUM_BUFFERS_RELEASE(x);
-    fluid_voice_update_modenv(voice, FLUID_VOICE_ENVRELEASE,
+    fluid_voice_update_modenv(voice, TRUE, FLUID_VOICE_ENVRELEASE,
                             count, 1.0f, -1.0f / count, 0.0f, 2.0f);
 
     break;
