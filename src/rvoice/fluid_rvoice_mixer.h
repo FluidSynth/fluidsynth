@@ -58,11 +58,11 @@ void fluid_rvoice_mixer_set_mix_fx(fluid_rvoice_mixer_t* mixer, int on);
 int fluid_rvoice_mixer_set_polyphony(fluid_rvoice_mixer_t* handler, int value);
 int fluid_rvoice_mixer_add_voice(fluid_rvoice_mixer_t* mixer, fluid_rvoice_t* voice);
 void fluid_rvoice_mixer_set_chorus_params(fluid_rvoice_mixer_t* mixer, int set, 
-				         int nr, double level, double speed, 
-				         double depth_ms, int type);
+				         int nr, fluid_real_t level, fluid_real_t speed, 
+				         fluid_real_t depth_ms, int type);
 void fluid_rvoice_mixer_set_reverb_params(fluid_rvoice_mixer_t* mixer, int set, 
-					 double roomsize, double damping, 
-					 double width, double level);
+					 fluid_real_t roomsize, fluid_real_t damping, 
+					 fluid_real_t width, fluid_real_t level);
 void fluid_rvoice_mixer_reset_fx(fluid_rvoice_mixer_t* mixer);
 void fluid_rvoice_mixer_reset_reverb(fluid_rvoice_mixer_t* mixer);
 void fluid_rvoice_mixer_reset_chorus(fluid_rvoice_mixer_t* mixer);
