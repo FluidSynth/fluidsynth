@@ -243,7 +243,7 @@ finished_voice_callback(void* userdata, fluid_rvoice_t* rvoice)
 }
 
 fluid_rvoice_eventhandler_t* 
-new_fluid_rvoice_eventhandler(int is_threadsafe, int queuesize, 
+new_fluid_rvoice_eventhandler(int queuesize, 
   int finished_voices_size, int bufs, int fx_bufs, fluid_real_t sample_rate)
 {
   fluid_rvoice_eventhandler_t* eventhandler = FLUID_NEW(fluid_rvoice_eventhandler_t);
@@ -255,12 +255,6 @@ new_fluid_rvoice_eventhandler(int is_threadsafe, int queuesize,
   eventhandler->queue = NULL;
   eventhandler->finished_voices = NULL;
   
-  /* HACK 2017-08-27: always enforce threadsafety, i.e. enforce enqueuing events
-   * otherwise we mess up rendering if more than one block is requested by the user
-   * because fluid_rvoice_eventhandler_dispatch_count() always stays zero causing
-   * that too many events are dispatched too early, causing incorrectly timed audio
-   */
-  eventhandler->is_threadsafe = TRUE;
   fluid_atomic_int_set(&eventhandler->queue_stored, 0);
   
   eventhandler->finished_voices = new_fluid_ringbuffer(finished_voices_size,

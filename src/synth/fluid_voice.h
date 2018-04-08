@@ -169,11 +169,10 @@ float fluid_voice_get_overflow_prio(fluid_voice_t* voice,
 /**
  * Locks the rvoice for rendering, so it can't be modified directly
  */
-static FLUID_INLINE fluid_rvoice_t* 
+static FLUID_INLINE void 
 fluid_voice_lock_rvoice(fluid_voice_t* voice)
 {
   voice->can_access_rvoice = 0;
-  return voice->rvoice;
 }
 
 /**
