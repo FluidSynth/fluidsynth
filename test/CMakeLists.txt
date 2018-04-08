@@ -10,7 +10,7 @@ ADD_FLUID_TEST(test_sfont_loading)
 
 
 add_custom_target(check
-COMMAND ${CMAKE_CTEST_COMMAND} -C $<CONFIG> --verbose --output-on-failure
+COMMAND ${CMAKE_CTEST_COMMAND} -C $<CONFIG>  --output-on-failure
 DEPENDS
 test_sample_cache
 test_sfont_loading
