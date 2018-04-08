@@ -3676,7 +3676,7 @@ fluid_synth_add_sfloader(fluid_synth_t* synth, fluid_sfloader_t* loader)
  * @param synth FluidSynth instance
  * @param filename File to load
  * @param reset_presets TRUE to re-assign presets for all MIDI channels (equivalent to calling fluid_synth_program_reset())
- * @return SoundFont ID on success, FLUID_FAILED on error
+ * @return SoundFont ID on success, #FLUID_FAILED on error
  */
 int
 fluid_synth_sfload(fluid_synth_t* synth, const char* filename, int reset_presets)
@@ -3719,7 +3719,7 @@ fluid_synth_sfload(fluid_synth_t* synth, const char* filename, int reset_presets
  * @param synth FluidSynth instance
  * @param id ID of SoundFont to unload
  * @param reset_presets TRUE to re-assign presets for all MIDI channels
- * @return #FLUID_OK on success, FLUID_FAILED on error
+ * @return #FLUID_OK on success, #FLUID_FAILED on error
  */
 int
 fluid_synth_sfunload(fluid_synth_t* synth, unsigned int id, int reset_presets)
@@ -3793,7 +3793,7 @@ fluid_synth_sfunload_callback(void* data, unsigned int msec)
  * Reload a SoundFont.  The SoundFont retains its ID and index on the SoundFont stack.
  * @param synth FluidSynth instance
  * @param id ID of SoundFont to reload
- * @return SoundFont ID on success, FLUID_FAILED on error
+ * @return SoundFont ID on success, #FLUID_FAILED on error
  */
 int
 fluid_synth_sfreload(fluid_synth_t* synth, unsigned int id)
@@ -3855,7 +3855,7 @@ exit:
  * Add a SoundFont.  The SoundFont will be added to the top of the SoundFont stack.
  * @param synth FluidSynth instance
  * @param sfont SoundFont to add
- * @return New assigned SoundFont ID or FLUID_FAILED on error
+ * @return New assigned SoundFont ID or #FLUID_FAILED on error
  */
 int
 fluid_synth_add_sfont(fluid_synth_t* synth, fluid_sfont_t* sfont)
@@ -3880,6 +3880,7 @@ fluid_synth_add_sfont(fluid_synth_t* synth, fluid_sfont_t* sfont)
  * Remove a SoundFont from the SoundFont stack without deleting it.
  * @param synth FluidSynth instance
  * @param sfont SoundFont to remove
+ * @return #FLUID_OK if \c sfont successfully removed, #FLUID_FAILED otherwise
  *
  * SoundFont is not freed and is left as the responsibility of the caller.
  *
@@ -3887,14 +3888,15 @@ fluid_synth_add_sfont(fluid_synth_t* synth, fluid_sfont_t* sfont)
  *   referencing it.  This can only be ensured by the SoundFont loader and
  *   therefore this function should not normally be used.
  */
-void
+int
 fluid_synth_remove_sfont(fluid_synth_t* synth, fluid_sfont_t* sfont)
 {
   fluid_sfont_t *sfont_tmp;
   fluid_list_t *list;
+  int ret = FLUID_FAILED;
 
-  fluid_return_if_fail (synth != NULL);
-  fluid_return_if_fail (sfont != NULL);
+  fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
+  fluid_return_val_if_fail (sfont != NULL, FLUID_FAILED);
   fluid_synth_api_enter(synth);
   
   /* remove the SoundFont from the list */
@@ -3904,13 +3906,15 @@ fluid_synth_remove_sfont(fluid_synth_t* synth, fluid_sfont_t* sfont)
     if (sfont_tmp == sfont)
     {
       synth->sfont = fluid_list_remove (synth->sfont, sfont_tmp);
+      ret = FLUID_OK;
       break;
     }
   }
 
   /* reset the presets for all channels */
   fluid_synth_program_reset (synth);
-  fluid_synth_api_exit(synth);
+  
+  FLUID_API_RETURN(ret);
 }
 
 /**

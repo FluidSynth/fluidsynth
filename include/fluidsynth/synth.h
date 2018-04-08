@@ -111,7 +111,7 @@ int fluid_synth_sfload(fluid_synth_t* synth, const char* filename, int reset_pre
 FLUIDSYNTH_API int fluid_synth_sfreload(fluid_synth_t* synth, unsigned int id);
 FLUIDSYNTH_API int fluid_synth_sfunload(fluid_synth_t* synth, unsigned int id, int reset_presets);
 FLUIDSYNTH_API int fluid_synth_add_sfont(fluid_synth_t* synth, fluid_sfont_t* sfont);
-FLUIDSYNTH_API void fluid_synth_remove_sfont(fluid_synth_t* synth, fluid_sfont_t* sfont);
+FLUIDSYNTH_API int fluid_synth_remove_sfont(fluid_synth_t* synth, fluid_sfont_t* sfont);
 FLUIDSYNTH_API int fluid_synth_sfcount(fluid_synth_t* synth);
 FLUIDSYNTH_API fluid_sfont_t* fluid_synth_get_sfont(fluid_synth_t* synth, unsigned int num);
 FLUIDSYNTH_API fluid_sfont_t* fluid_synth_get_sfont_by_id(fluid_synth_t* synth, unsigned int id);
