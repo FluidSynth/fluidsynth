@@ -22,6 +22,9 @@
 #include "fluid_conv.h"
 #include "fluid_sys.h"
 
+
+static void fluid_rvoice_noteoff_LOCAL(fluid_rvoice_t* voice, unsigned int min_ticks);
+
 /**
  * @return -1 if voice has finished, 0 if it's currently quiet, 1 otherwise
  */
@@ -158,7 +161,7 @@ fluid_rvoice_check_sample_sanity(fluid_rvoice_t* voice)
 
     /* Zero length? */
     if (voice->dsp.start == voice->dsp.end){
-	fluid_rvoice_voiceoff(voice);
+	fluid_rvoice_voiceoff(voice, NULL);
 	return;
     }
 
@@ -282,7 +285,7 @@ fluid_rvoice_write (fluid_rvoice_t* voice, fluid_real_t *dsp_buf)
 
   if (voice->envlfo.noteoff_ticks != 0 && 
       voice->envlfo.ticks >= voice->envlfo.noteoff_ticks) {
-    fluid_rvoice_noteoff(voice, 0);
+    fluid_rvoice_noteoff_LOCAL(voice, 0);
   }
 
   voice->envlfo.ticks += FLUID_BUFSIZE;
@@ -475,28 +478,33 @@ fluid_rvoice_buffers_check_bufnum(fluid_rvoice_buffers_t* buffers, unsigned int 
 }
 
 
-void 
-fluid_rvoice_buffers_set_amp(fluid_rvoice_buffers_t* buffers, 
-                             unsigned int bufnum, fluid_real_t value)
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_buffers_set_amp)
 {
+  fluid_rvoice_buffers_t* buffers = obj;
+  unsigned int bufnum = param[0].i;
+  fluid_real_t value = param[1].real;
+  
   if (fluid_rvoice_buffers_check_bufnum(buffers, bufnum) != FLUID_OK)
     return;
   buffers->bufs[bufnum].amp = value;
 }
 
-void 
-fluid_rvoice_buffers_set_mapping(fluid_rvoice_buffers_t* buffers, 
-                                 unsigned int bufnum, int mapping)
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_buffers_set_mapping)
 {
+  fluid_rvoice_buffers_t* buffers = obj;
+  unsigned int bufnum = param[0].i;
+  int mapping = param[1].i;
+  
   if (fluid_rvoice_buffers_check_bufnum(buffers, bufnum) != FLUID_OK)
     return;
   buffers->bufs[bufnum].mapping = mapping;
 }
 
 
-void
-fluid_rvoice_reset(fluid_rvoice_t* voice)
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_reset)
 {
+  fluid_rvoice_t* voice = obj;
+  
   voice->dsp.has_looped = 0;
   voice->envlfo.ticks = 0;
   voice->envlfo.noteoff_ticks = 0;
@@ -530,9 +538,16 @@ fluid_rvoice_reset(fluid_rvoice_t* voice)
   voice->dsp.check_sample_sanity_flag |= FLUID_SAMPLESANITY_STARTUP;
 }
 
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_noteoff)
+{
+    fluid_rvoice_t* rvoice = obj;
+    unsigned int min_ticks = param[0].i;
+    
+    fluid_rvoice_noteoff_LOCAL(rvoice, min_ticks);
+}
 
-void 
-fluid_rvoice_noteoff(fluid_rvoice_t* voice, unsigned int min_ticks)
+static void 
+fluid_rvoice_noteoff_LOCAL(fluid_rvoice_t* voice, unsigned int min_ticks)
 {
   if (min_ticks > voice->envlfo.ticks) {
     /* Delay noteoff */
@@ -600,9 +615,9 @@ static FLUID_INLINE void fluid_rvoice_local_retrigger_attack (fluid_rvoice_t* vo
  *  see fluid_synth_noteon_mono_legato_multi_retrigger() 
  * @param voice the synthesis voice to be updated
 */
-void 
-fluid_rvoice_multi_retrigger_attack (fluid_rvoice_t* voice)
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_multi_retrigger_attack)
 {
+    fluid_rvoice_t* voice = obj;
 	int section = fluid_adsr_env_get_section(&voice->envlfo.volenv);
 	/*-------------------------------------------------------------------------
 	 Section skip for volume envelope 
@@ -645,9 +660,12 @@ fluid_rvoice_multi_retrigger_attack (fluid_rvoice_t* voice)
  *   pitchoffset is accumulated in current dsp pitchoffset.
  * 2) And to get constant portamento duration, dsp pitch increment is updated.
 */  
-void fluid_rvoice_set_portamento(fluid_rvoice_t * voice, unsigned int countinc,
-                                 fluid_real_t pitchoffset)
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_portamento)
 {
+    fluid_rvoice_t * voice = obj;
+    unsigned int countinc = param[0].i;
+    fluid_real_t pitchoffset = param[1].real;
+    
 	if (countinc)
 	{
 		voice->dsp.pitchoffset += pitchoffset;
@@ -657,82 +675,110 @@ void fluid_rvoice_set_portamento(fluid_rvoice_t * voice, unsigned int countinc,
 	dsp.pitchoffset will be incremented by dsp pitchinc. */
 }
 
-void 
-fluid_rvoice_set_output_rate(fluid_rvoice_t* voice, fluid_real_t value)
+
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_output_rate)
 {
+  fluid_rvoice_t* voice = obj;
+  fluid_real_t value = param[0].real;
+  
   voice->dsp.output_rate = value;
 }
 
-void 
-fluid_rvoice_set_interp_method(fluid_rvoice_t* voice, int value)
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_interp_method)
 {
+  fluid_rvoice_t* voice = obj;
+  int value = param[0].i;
+  
   voice->dsp.interp_method = value;
 }
 
-void 
-fluid_rvoice_set_root_pitch_hz(fluid_rvoice_t* voice, fluid_real_t value)
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_root_pitch_hz)
 {
+  fluid_rvoice_t* voice = obj;
+  fluid_real_t value = param[0].real;
+  
   voice->dsp.root_pitch_hz = value;
 }
 
-void 
-fluid_rvoice_set_pitch(fluid_rvoice_t* voice, fluid_real_t value)
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_pitch)
 {
+  fluid_rvoice_t* voice = obj;
+  fluid_real_t value = param[0].real;
+  
   voice->dsp.pitch = value;
 }
 
 
-void 
-fluid_rvoice_set_attenuation(fluid_rvoice_t* voice, fluid_real_t value)
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_attenuation)
 {
+  fluid_rvoice_t* voice = obj;
+  fluid_real_t value = param[0].real;
+  
   voice->dsp.prev_attenuation = voice->dsp.attenuation;
   voice->dsp.attenuation = value;
 }
 
-void 
-fluid_rvoice_set_min_attenuation_cB(fluid_rvoice_t* voice, fluid_real_t value)
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_min_attenuation_cB)
 {
+  fluid_rvoice_t* voice = obj;
+  fluid_real_t value = param[0].real;
+  
   voice->dsp.min_attenuation_cB = value;
 }
 
-void 
-fluid_rvoice_set_viblfo_to_pitch(fluid_rvoice_t* voice, fluid_real_t value)
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_viblfo_to_pitch)
 {
+  fluid_rvoice_t* voice = obj;
+  fluid_real_t value = param[0].real;
+  
   voice->envlfo.viblfo_to_pitch = value;
 }
 
-void fluid_rvoice_set_modlfo_to_pitch(fluid_rvoice_t* voice, fluid_real_t value)
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_modlfo_to_pitch)
 {
+  fluid_rvoice_t* voice = obj;
+  fluid_real_t value = param[0].real;
+  
   voice->envlfo.modlfo_to_pitch = value;
 }
 
-void 
-fluid_rvoice_set_modlfo_to_vol(fluid_rvoice_t* voice, fluid_real_t value)
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_modlfo_to_vol)
 {
+  fluid_rvoice_t* voice = obj;
+  fluid_real_t value = param[0].real;
+  
   voice->envlfo.modlfo_to_vol = value;
 }
 
-void 
-fluid_rvoice_set_modlfo_to_fc(fluid_rvoice_t* voice, fluid_real_t value)
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_modlfo_to_fc)
 {
+  fluid_rvoice_t* voice = obj;
+  fluid_real_t value = param[0].real;
+  
   voice->envlfo.modlfo_to_fc = value;
 }
 
-void 
-fluid_rvoice_set_modenv_to_fc(fluid_rvoice_t* voice, fluid_real_t value)
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_modenv_to_fc)
 {
+  fluid_rvoice_t* voice = obj;
+  fluid_real_t value = param[0].real;
+  
   voice->envlfo.modenv_to_fc = value;
 }
 
-void 
-fluid_rvoice_set_modenv_to_pitch(fluid_rvoice_t* voice, fluid_real_t value)
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_modenv_to_pitch)
 {
+  fluid_rvoice_t* voice = obj;
+  fluid_real_t value = param[0].real;
+  
   voice->envlfo.modenv_to_pitch = value;
 }
 
-void 
-fluid_rvoice_set_synth_gain(fluid_rvoice_t* voice, fluid_real_t value)
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_synth_gain)
 {
+  fluid_rvoice_t* voice = obj;
+  fluid_real_t value = param[0].real;
+  
   voice->dsp.synth_gain = value;
 
   /* For a looped sample, this value will be overwritten as soon as the
@@ -744,52 +790,67 @@ fluid_rvoice_set_synth_gain(fluid_rvoice_t* voice, fluid_real_t value)
   voice->dsp.check_sample_sanity_flag |= FLUID_SAMPLESANITY_CHECK;
 }
 
-void 
-fluid_rvoice_set_start(fluid_rvoice_t* voice, int value)
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_start)
 {
+  fluid_rvoice_t* voice = obj;
+  int value = param[0].i;
+  
   voice->dsp.start = value;
   voice->dsp.check_sample_sanity_flag |= FLUID_SAMPLESANITY_CHECK;
 }
 
-void 
-fluid_rvoice_set_end(fluid_rvoice_t* voice, int value)
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_end)
 {
+  fluid_rvoice_t* voice = obj;
+  int value = param[0].i;
+  
   voice->dsp.end = value;
   voice->dsp.check_sample_sanity_flag |= FLUID_SAMPLESANITY_CHECK;
 }
 
-void 
-fluid_rvoice_set_loopstart(fluid_rvoice_t* voice, int value)
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_loopstart)
 {
+  fluid_rvoice_t* voice = obj;
+  int value = param[0].i;
+  
   voice->dsp.loopstart = value;
   voice->dsp.check_sample_sanity_flag |= FLUID_SAMPLESANITY_CHECK;
 }
 
-void fluid_rvoice_set_loopend(fluid_rvoice_t* voice, int value)
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_loopend)
 {
+  fluid_rvoice_t* voice = obj;
+  int value = param[0].i;
+  
   voice->dsp.loopend = value;
   voice->dsp.check_sample_sanity_flag |= FLUID_SAMPLESANITY_CHECK;
 }
 
-void fluid_rvoice_set_samplemode(fluid_rvoice_t* voice, enum fluid_loop value)
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_samplemode)
 {
+  fluid_rvoice_t* voice = obj;
+  enum fluid_loop value = param[0].i;
+  
   voice->dsp.samplemode = value;
   voice->dsp.check_sample_sanity_flag |= FLUID_SAMPLESANITY_CHECK;
 }
 
 
-void 
-fluid_rvoice_set_sample(fluid_rvoice_t* voice, fluid_sample_t* value)
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_sample)
 {
+  fluid_rvoice_t* voice = obj;
+  fluid_sample_t* value = param[0].ptr;
+  
   voice->dsp.sample = value;
   if (value) {
     voice->dsp.check_sample_sanity_flag |= FLUID_SAMPLESANITY_STARTUP;
   }
 }
 
-void 
-fluid_rvoice_voiceoff(fluid_rvoice_t* voice)
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_voiceoff)
 {
+  fluid_rvoice_t* voice = obj;
+    
   fluid_adsr_env_set_section(&voice->envlfo.volenv, FLUID_VOICE_ENVFINISHED);
   fluid_adsr_env_set_section(&voice->envlfo.modenv, FLUID_VOICE_ENVFINISHED);
 }

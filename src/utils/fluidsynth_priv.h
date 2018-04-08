@@ -205,6 +205,22 @@ typedef struct _fluid_server_socket_t fluid_server_socket_t;
 typedef struct _fluid_sample_timer_t fluid_sample_timer_t;
 typedef struct _fluid_zone_range_t fluid_zone_range_t;
 
+typedef union _fluid_rvoice_param_t
+{
+    void* ptr;
+    int i;
+    fluid_real_t real;
+} fluid_rvoice_param_t;
+typedef void (*fluid_rvoice_function_t)(void* obj, fluid_rvoice_param_t* param);
+
+enum { EVENT_PARAMS = 6 };
+
+/* macro for declaring an rvoice event function (#fluid_rvoice_function_t). the functions may only access those params that were
+ * previously set in fluid_voice.c
+ */
+#define DECLARE_FLUID_RVOICE_FUNCTION(name) void name(void* obj, fluid_rvoice_param_t param[EVENT_PARAMS])
+
+
 /***************************************************************
  *
  *                      CONSTANTS

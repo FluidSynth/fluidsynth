@@ -167,40 +167,36 @@ int fluid_rvoice_write(fluid_rvoice_t* voice, fluid_real_t *dsp_buf);
 void fluid_rvoice_buffers_mix(fluid_rvoice_buffers_t* buffers, 
                               fluid_real_t* dsp_buf, int samplecount, 
                               fluid_real_t** dest_bufs, int dest_bufcount);
-void fluid_rvoice_buffers_set_amp(fluid_rvoice_buffers_t* buffers, 
-                                  unsigned int bufnum, fluid_real_t value);
-void fluid_rvoice_buffers_set_mapping(fluid_rvoice_buffers_t* buffers,
-                                      unsigned int bufnum, int mapping);
 
-/* Dynamic update functions */
-void fluid_rvoice_set_portamento(fluid_rvoice_t * voice, unsigned int countinc,
-								 fluid_real_t pitchoffset);
-void fluid_rvoice_multi_retrigger_attack(fluid_rvoice_t* voice);
-void fluid_rvoice_noteoff(fluid_rvoice_t* voice, unsigned int min_ticks);
-void fluid_rvoice_voiceoff(fluid_rvoice_t* voice);
-void fluid_rvoice_reset(fluid_rvoice_t* voice);
-void fluid_rvoice_set_output_rate(fluid_rvoice_t* voice, fluid_real_t output_rate);
-void fluid_rvoice_set_interp_method(fluid_rvoice_t* voice, int interp_method);
-void fluid_rvoice_set_root_pitch_hz(fluid_rvoice_t* voice, fluid_real_t root_pitch_hz);
-void fluid_rvoice_set_pitch(fluid_rvoice_t* voice, fluid_real_t value);
-void fluid_rvoice_set_synth_gain(fluid_rvoice_t* voice, fluid_real_t value);
-void fluid_rvoice_set_attenuation(fluid_rvoice_t* voice, fluid_real_t value);
-void fluid_rvoice_set_min_attenuation_cB(fluid_rvoice_t* voice, fluid_real_t value);
-void fluid_rvoice_set_viblfo_to_pitch(fluid_rvoice_t* voice, fluid_real_t value);
-void fluid_rvoice_set_modlfo_to_pitch(fluid_rvoice_t* voice, fluid_real_t value);
-void fluid_rvoice_set_modlfo_to_vol(fluid_rvoice_t* voice, fluid_real_t value);
-void fluid_rvoice_set_modlfo_to_fc(fluid_rvoice_t* voice, fluid_real_t value);
-void fluid_rvoice_set_modenv_to_fc(fluid_rvoice_t* voice, fluid_real_t value);
-void fluid_rvoice_set_modenv_to_pitch(fluid_rvoice_t* voice, fluid_real_t value);
-void fluid_rvoice_set_start(fluid_rvoice_t* voice, int value);
-void fluid_rvoice_set_end(fluid_rvoice_t* voice, int value);
-void fluid_rvoice_set_loopstart(fluid_rvoice_t* voice, int value);
-void fluid_rvoice_set_loopend(fluid_rvoice_t* voice, int value);
-void fluid_rvoice_set_sample(fluid_rvoice_t* voice, fluid_sample_t* value);
-void fluid_rvoice_set_samplemode(fluid_rvoice_t* voice, enum fluid_loop value);
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_buffers_set_amp);
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_buffers_set_mapping);
+
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_noteoff);
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_voiceoff);
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_reset);
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_multi_retrigger_attack);
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_portamento);
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_output_rate);
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_interp_method);
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_root_pitch_hz);
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_pitch);
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_attenuation);
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_min_attenuation_cB);
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_viblfo_to_pitch);
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_modlfo_to_pitch);
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_modlfo_to_vol);
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_modlfo_to_fc);
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_modenv_to_fc);
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_modenv_to_pitch);
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_synth_gain);
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_start);
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_end);
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_loopstart);
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_loopend);
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_samplemode);
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_sample);
 
 /* defined in fluid_rvoice_dsp.c */
-
 void fluid_rvoice_dsp_config (void);
 int fluid_rvoice_dsp_interpolate_none (fluid_rvoice_dsp_t *voice);
 int fluid_rvoice_dsp_interpolate_linear (fluid_rvoice_dsp_t *voice);

@@ -138,8 +138,12 @@ fluid_iir_filter_apply(fluid_iir_filter_t* iir_filter,
 }
 
 
-void fluid_iir_filter_init(fluid_iir_filter_t* iir_filter, enum fluid_iir_filter_type type, enum fluid_iir_filter_flags flags)
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_iir_filter_init)
 {
+    fluid_iir_filter_t* iir_filter = obj;
+    enum fluid_iir_filter_type type = param[0].i;
+    enum fluid_iir_filter_flags flags = param[1].i;
+    
     iir_filter->type = type;
     iir_filter->flags = flags;
     if(type != FLUID_IIR_DISABLED)
@@ -158,10 +162,11 @@ fluid_iir_filter_reset(fluid_iir_filter_t* iir_filter)
   iir_filter->filter_startup = 1;
 }
 
-void 
-fluid_iir_filter_set_fres(fluid_iir_filter_t* iir_filter, 
-                          fluid_real_t fres)
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_iir_filter_set_fres)
 {
+  fluid_iir_filter_t* iir_filter = obj;
+  fluid_real_t fres = param[0].real;
+  
   iir_filter->fres = fres;
   iir_filter->last_fres = -1.;
 }
@@ -197,9 +202,10 @@ static fluid_real_t fluid_iir_filter_q_from_dB(fluid_real_t q_dB)
     return pow(10.0f, q_dB / 20.0f);
 }
 
-void 
-fluid_iir_filter_set_q(fluid_iir_filter_t* iir_filter, fluid_real_t q)
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_iir_filter_set_q)
 {
+    fluid_iir_filter_t* iir_filter = obj;
+    fluid_real_t q = param[0].real;
     int flags = iir_filter->flags;
     
     if(flags & FLUID_IIR_Q_ZERO_OFF && q<=0.0)

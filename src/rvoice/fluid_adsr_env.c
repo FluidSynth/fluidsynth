@@ -20,15 +20,16 @@
 
 #include "fluid_adsr_env.h"
 
-void 
-fluid_adsr_env_set_data(fluid_adsr_env_t* env,
-                        fluid_adsr_env_section_t section,
-                        unsigned int count,
-                        fluid_real_t coeff,
-                        fluid_real_t increment,
-                        fluid_real_t min,
-                        fluid_real_t max)
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_adsr_env_set_data)
 {
+    fluid_adsr_env_t* env = obj;
+    fluid_adsr_env_section_t section = param[0].i;
+    unsigned int count = param[1].i;
+    fluid_real_t coeff = param[2].real;
+    fluid_real_t increment = param[3].real;
+    fluid_real_t min = param[4].real;
+    fluid_real_t max = param[5].real;
+    
   env->data[section].count = count;
   env->data[section].coeff = coeff;
   env->data[section].increment = increment;

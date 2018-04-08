@@ -104,14 +104,7 @@ fluid_adsr_env_calc(fluid_adsr_env_t* env, int is_volenv)
 
 /* This one cannot be inlined since it is referenced in 
    the event queue */
-void 
-fluid_adsr_env_set_data(fluid_adsr_env_t* env,
-                        fluid_adsr_env_section_t section,
-                        unsigned int count,
-                        fluid_real_t coeff,
-                        fluid_real_t increment,
-                        fluid_real_t min,
-                        fluid_real_t max);
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_adsr_env_set_data);
 
 static FLUID_INLINE void 
 fluid_adsr_env_reset(fluid_adsr_env_t* env)

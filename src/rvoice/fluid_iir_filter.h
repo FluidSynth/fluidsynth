@@ -25,18 +25,14 @@
 
 typedef struct _fluid_iir_filter_t fluid_iir_filter_t;
 
-
-void fluid_iir_filter_init(fluid_iir_filter_t* iir_filter, enum fluid_iir_filter_type, enum fluid_iir_filter_flags flags);
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_iir_filter_init);
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_iir_filter_set_fres);
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_iir_filter_set_q);
 
 void fluid_iir_filter_apply(fluid_iir_filter_t* iir_filter,
                             fluid_real_t *dsp_buf, int dsp_buf_count);
 
 void fluid_iir_filter_reset(fluid_iir_filter_t* iir_filter);
-
-void fluid_iir_filter_set_q(fluid_iir_filter_t* iir_filter, fluid_real_t q);
-
-void fluid_iir_filter_set_fres(fluid_iir_filter_t* iir_filter, 
-                               fluid_real_t fres);
 
 void fluid_iir_filter_calc(fluid_iir_filter_t* iir_filter, 
                            fluid_real_t output_rate, 
