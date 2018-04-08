@@ -49,21 +49,21 @@ fluid_voice_get_lower_boundary_for_attenuation(fluid_voice_t* voice);
 #define UPDATE_RVOICE0(proc) \
   do { \
       fluid_rvoice_param_t param[EVENT_PARAMS]; \
-      fluid_rvoice_eventhandler_push_param(voice->channel->synth->eventhandler, proc, voice->rvoice, param); \
+      fluid_rvoice_eventhandler_push_param(voice->eventhandler, proc, voice->rvoice, param); \
   } while (0)
 
 #define UPDATE_RVOICE_GENERIC_R1(proc, obj, rarg) \
   do { \
       fluid_rvoice_param_t param[EVENT_PARAMS]; \
       param[0].real = rarg; \
-      fluid_rvoice_eventhandler_push_param(voice->channel->synth->eventhandler, proc, obj, param); \
+      fluid_rvoice_eventhandler_push_param(voice->eventhandler, proc, obj, param); \
   } while (0)
 
 #define UPDATE_RVOICE_GENERIC_I1(proc, obj, iarg) \
   do { \
       fluid_rvoice_param_t param[EVENT_PARAMS]; \
       param[0].i = iarg; \
-      fluid_rvoice_eventhandler_push_param(voice->channel->synth->eventhandler, proc, obj, param); \
+      fluid_rvoice_eventhandler_push_param(voice->eventhandler, proc, obj, param); \
   } while (0)
   
 #define UPDATE_RVOICE_GENERIC_I2(proc, obj, iarg1, iarg2) \
@@ -71,7 +71,7 @@ fluid_voice_get_lower_boundary_for_attenuation(fluid_voice_t* voice);
       fluid_rvoice_param_t param[EVENT_PARAMS]; \
       param[0].i = iarg1; \
       param[1].i = iarg2; \
-      fluid_rvoice_eventhandler_push_param(voice->channel->synth->eventhandler, proc, obj, param); \
+      fluid_rvoice_eventhandler_push_param(voice->eventhandler, proc, obj, param); \
   } while (0)
 
 #define UPDATE_RVOICE_GENERIC_IR(proc, obj, iarg, rarg) \
@@ -79,7 +79,7 @@ fluid_voice_get_lower_boundary_for_attenuation(fluid_voice_t* voice);
       fluid_rvoice_param_t param[EVENT_PARAMS]; \
       param[0].i = iarg; \
       param[1].real = rarg; \
-      fluid_rvoice_eventhandler_push_param(voice->channel->synth->eventhandler, proc, obj, param); \
+      fluid_rvoice_eventhandler_push_param(voice->eventhandler, proc, obj, param); \
   } while (0)
 
 
@@ -111,7 +111,7 @@ fluid_voice_update_volenv(fluid_voice_t* voice,
     
     if(enqueue)
     {
-    fluid_rvoice_eventhandler_push_param(voice->channel->synth->eventhandler,
+    fluid_rvoice_eventhandler_push_param(voice->eventhandler,
                                     fluid_adsr_env_set_data,
                                     &voice->rvoice->envlfo.volenv,
                                     param);
@@ -143,7 +143,7 @@ fluid_voice_update_modenv(fluid_voice_t* voice,
     
     if(enqueue)
     {
-    fluid_rvoice_eventhandler_push_param(voice->channel->synth->eventhandler,
+    fluid_rvoice_eventhandler_push_param(voice->eventhandler,
                                     fluid_adsr_env_set_data,
                                     &voice->rvoice->envlfo.modenv,
                                     param);
@@ -210,7 +210,7 @@ static void fluid_voice_initialize_rvoice(fluid_voice_t* voice, fluid_real_t out
  * new_fluid_voice
  */
 fluid_voice_t*
-new_fluid_voice(fluid_real_t output_rate)
+new_fluid_voice(fluid_rvoice_eventhandler_t* handler, fluid_real_t output_rate)
 {
   fluid_voice_t* voice;
   voice = FLUID_NEW(fluid_voice_t);
@@ -231,6 +231,7 @@ new_fluid_voice(fluid_real_t output_rate)
   voice->chan = NO_CHANNEL;
   voice->key = 0;
   voice->vel = 0;
+  voice->eventhandler = handler;
   voice->channel = NULL;
   voice->sample = NULL;
   voice->output_rate = output_rate;
@@ -309,7 +310,7 @@ fluid_voice_init(fluid_voice_t* voice, fluid_sample_t* sample,
      unloading of the soundfont while this voice is playing,
      once for us and once for the rvoice. */
   fluid_sample_incr_ref(sample);
-  fluid_rvoice_eventhandler_push_ptr(voice->channel->synth->eventhandler, fluid_rvoice_set_sample, voice->rvoice, sample);
+  fluid_rvoice_eventhandler_push_ptr(voice->eventhandler, fluid_rvoice_set_sample, voice->rvoice, sample);
   fluid_sample_incr_ref(sample);
   voice->sample = sample;
 
