@@ -131,6 +131,9 @@ static void fluid_synth_handle_important_channels(void *data, const char *name,
 static void fluid_synth_reset_basic_channel_LOCAL(fluid_synth_t* synth, int chan, int nbr_chan);
 static int fluid_synth_check_next_basic_channel(fluid_synth_t* synth, int basicchan, int mode, int val);
 static void fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth, int basicchan, int mode, int val);
+static int fluid_synth_set_reverb_full_LOCAL(fluid_synth_t* synth, int set, double roomsize,
+                                             double damping, double width, double level);
+
 
 /***************************************************************
  *
@@ -783,18 +786,13 @@ new_fluid_synth(fluid_settings_t *settings)
   synth->curmax = 0;
   synth->dither_index = 0;
 
-  synth->reverb_roomsize = FLUID_REVERB_DEFAULT_ROOMSIZE;
-  synth->reverb_damping = FLUID_REVERB_DEFAULT_DAMP;
-  synth->reverb_width = FLUID_REVERB_DEFAULT_WIDTH;
-  synth->reverb_level = FLUID_REVERB_DEFAULT_LEVEL;
-
-  fluid_rvoice_eventhandler_push5(synth->eventhandler, 
-				  fluid_rvoice_mixer_set_reverb_params,
-				  synth->eventhandler->mixer, 
-				  FLUID_REVMODEL_SET_ALL, synth->reverb_roomsize, 
-				  synth->reverb_damping, synth->reverb_width, 
-				  synth->reverb_level, 0.0f);
-
+  fluid_synth_set_reverb_full_LOCAL(synth,
+                                    FLUID_REVMODEL_SET_ALL,
+                                    FLUID_REVERB_DEFAULT_ROOMSIZE,
+                                    FLUID_REVERB_DEFAULT_DAMP,
+                                    FLUID_REVERB_DEFAULT_WIDTH,
+                                    FLUID_REVERB_DEFAULT_LEVEL);
+  
   /* Initialize multi-core variables if multiple cores enabled */
   if (synth->cores > 1)
   {
@@ -4160,7 +4158,6 @@ fluid_synth_set_reverb_full(fluid_synth_t* synth, int set, double roomsize,
                             double damping, double width, double level)
 {
   int ret;
-  fluid_rvoice_param_t param[EVENT_PARAMS];
   
   fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
   /* if non of the flags is set, fail */
@@ -4169,7 +4166,17 @@ fluid_synth_set_reverb_full(fluid_synth_t* synth, int set, double roomsize,
   /* Synth shadow values are set here so that they will be returned if querried */
 
   fluid_synth_api_enter(synth);
+  ret = fluid_synth_set_reverb_full_LOCAL(synth, set, roomsize, damping, width, level);
+  FLUID_API_RETURN(ret);
+}
 
+static int
+fluid_synth_set_reverb_full_LOCAL(fluid_synth_t* synth, int set, double roomsize,
+                            double damping, double width, double level)
+{
+  int ret;
+  fluid_rvoice_param_t param[EVENT_PARAMS];
+  
   if (set & FLUID_REVMODEL_SET_ROOMSIZE)
     synth->reverb_roomsize = roomsize;
 
@@ -4192,8 +4199,7 @@ fluid_synth_set_reverb_full(fluid_synth_t* synth, int set, double roomsize,
                                              fluid_rvoice_mixer_set_reverb_params,
                                              synth->eventhandler->mixer,
                                              param);
-  
-  FLUID_API_RETURN(ret);
+  return ret;
 }
 
 /**

@@ -78,28 +78,6 @@ fluid_rvoice_eventhandler_push_ptr(fluid_rvoice_eventhandler_t* handler,
   return fluid_rvoice_eventhandler_push_LOCAL(handler, &local_event);
 }
 
-
-int 
-fluid_rvoice_eventhandler_push5(fluid_rvoice_eventhandler_t* handler, 
-                                fluid_rvoice_function_t method, void* object, int intparam, 
-                                fluid_real_t r1, fluid_real_t r2, 
-                                fluid_real_t r3, fluid_real_t r4, fluid_real_t r5)
-{
-  fluid_rvoice_event_t local_event;
-  
-  local_event.method = method;
-  local_event.object = object;
-  local_event.param[0].i = intparam;
-  local_event.param[1].real = r1;
-  local_event.param[2].real = r2;
-  local_event.param[3].real = r3;
-  local_event.param[4].real = r4;
-  local_event.param[5].real = r5;
-  
-  return fluid_rvoice_eventhandler_push_LOCAL(handler, &local_event);
-    
-}
-
 static int fluid_rvoice_eventhandler_push_LOCAL(fluid_rvoice_eventhandler_t* handler, const fluid_rvoice_event_t* src_event)
 {
   fluid_rvoice_event_t* event;
