@@ -549,6 +549,13 @@ fluid_synth_update_mixer(fluid_synth_t* synth, fluid_rvoice_function_t method, i
 				 intparam, realparam);
 }
 
+static FLUID_INLINE unsigned int fluid_synth_get_min_note_length_LOCAL(fluid_synth_t* synth)
+{
+    int i;
+    fluid_settings_getint(synth->settings, "synth.min-note-length", &i);
+    return (unsigned int) (i*synth->sample_rate/1000.0f);
+}
+
 /**
  * Create new FluidSynth instance.
  * @param settings Configuration parameters to use (used directly).
@@ -776,7 +783,9 @@ new_fluid_synth(fluid_settings_t *settings)
   fluid_synth_set_basic_channel_LOCAL(synth, 0, FLUID_CHANNEL_MODE_OMNION_POLY,
                                       synth->midi_channels);
 
-  fluid_synth_set_sample_rate(synth, synth->sample_rate);
+  synth->min_note_length_ticks = fluid_synth_get_min_note_length_LOCAL(synth);
+  
+  
   fluid_synth_update_mixer(synth, fluid_rvoice_mixer_set_polyphony, 
 			   synth->polyphony, 0.0f);
   fluid_synth_set_reverb_on(synth, synth->with_reverb);
@@ -2600,6 +2609,7 @@ fluid_synth_handle_sample_rate(void *data, const char* name, double value)
   fluid_synth_set_sample_rate(synth, (float) value);
 }
 
+
 /**
  * Set sample rate of the synth. 
  * @note This function is currently experimental and should only be 
@@ -2617,8 +2627,7 @@ fluid_synth_set_sample_rate(fluid_synth_t* synth, float sample_rate)
   fluid_clip (sample_rate, 8000.0f, 96000.0f);
   synth->sample_rate = sample_rate;
   
-  fluid_settings_getint(synth->settings, "synth.min-note-length", &i);
-  synth->min_note_length_ticks = (unsigned int) (i*synth->sample_rate/1000.0f);
+  synth->min_note_length_ticks = fluid_synth_get_min_note_length_LOCAL(synth);
   
   for (i=0; i < synth->polyphony; i++)
     fluid_voice_set_output_rate(synth->voice[i], sample_rate);
