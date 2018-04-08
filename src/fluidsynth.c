@@ -579,7 +579,6 @@ int main(int argc, char** argv)
 #endif
     fluid_settings_setstr(settings, "player.timing-source", "sample");
     fluid_settings_setint(settings, "synth.lock-memory", 0);
-    fluid_settings_setint(settings, "synth.parallel-render", 1); /* TODO: Fast_render should not need this, but currently do */
   }
   
   /* create the synthesizer */

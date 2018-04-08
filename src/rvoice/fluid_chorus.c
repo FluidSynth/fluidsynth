@@ -247,8 +247,8 @@ fluid_chorus_reset(fluid_chorus_t* chorus)
  * @param type Chorus waveform type (#fluid_chorus_mod)
  */
 void
-fluid_chorus_set(fluid_chorus_t* chorus, int set, int nr, float level,
-                 float speed, float depth_ms, int type)
+fluid_chorus_set(fluid_chorus_t* chorus, int set, int nr, fluid_real_t level,
+                 fluid_real_t speed, fluid_real_t depth_ms, int type)
 {
   int modulation_depth_samples;
   int i;

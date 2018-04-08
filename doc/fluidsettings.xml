@@ -227,7 +227,7 @@ https://stackoverflow.com/a/6251757
                 This is the low-latency setting. If on, you're allowed to call fluid_synth_write_s16, fluid_synth_write_float, fluid_synth_nwrite_float or fluid_synth_process in parallel with the rest of the calls, and it won't be blocked by time intensive calls to the synth. Turn it off if throughput is more important than latency, e g in rendering-to-file scenarios where underruns is not an issue.
             </desc>
             <deprecated>
-                As of 1.1.7 this option is deprecated. This option enforces thread safety for rvoice_mixer, which causes rvoice_events to be queued internally. The current implementation relies on the fact that this option is set to TRUE to correctly render any amount of requested audio. Also calling fluid_synth_write_* in parallel is not considered to be a use-case. It would cause undefined audio output, as it would be unpredictable for the user which rvoice_events specifically would be dispatched to which fluid_synth_write_* call.
+                As of 1.1.7 this option is deprecated and has been removed in 2.0. This option enforces thread safety for rvoice_mixer, which causes rvoice_events to be queued internally. The current implementation relies on the fact that this option is set to TRUE to correctly render any amount of requested audio. Also calling fluid_synth_write_* in parallel is not considered to be a use-case. It would cause undefined audio output, as it would be unpredictable for the user which rvoice_events specifically would be dispatched to which fluid_synth_write_* call.
             </deprecated>
         </setting>
         <setting>
@@ -262,7 +262,7 @@ https://stackoverflow.com/a/6251757
             <type>bool</type>
             <def>1 (TRUE)</def>
             <desc>
-                Controls whether the synth's public API is protected by a mutex or not. Default is on, turn it off for slightly better performance if you know you're only accessing the synth from one thread only, this could be the case in many embedded use cases for example. Note that libfluidsynth can use many threads by itself (shell is one, midi driver is one, midi player is one etc) so you should usually leave it on. Also see synth.parallel-render.
+                Controls whether the synth's public API is protected by a mutex or not. Default is on, turn it off for slightly better performance if you know you're only accessing the synth from one thread only, this could be the case in many embedded use cases for example. Note that libfluidsynth can use many threads by itself (shell is one, midi driver is one, midi player is one etc) so you should usually leave it on.
             </desc>
         </setting>
         <setting>

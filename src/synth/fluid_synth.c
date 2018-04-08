@@ -211,7 +211,6 @@ void fluid_synth_settings(fluid_settings_t* settings)
   fluid_settings_register_int(settings, "synth.min-note-length", 10, 0, 65535, 0);
   
   fluid_settings_register_int(settings, "synth.threadsafe-api", 1, 0, 1, FLUID_HINT_TOGGLED);
-  fluid_settings_register_int(settings, "synth.parallel-render", 1, 0, 1, FLUID_HINT_TOGGLED);
 
   fluid_settings_register_num(settings, "synth.overflow.percussion", 4000, -10000, 10000, 0);
   fluid_settings_register_num(settings, "synth.overflow.sustained", -1000, -10000, 10000, 0);
@@ -693,9 +692,8 @@ new_fluid_synth(fluid_settings_t *settings)
   fluid_private_init(synth->tuning_iter);
 
   /* Allocate event queue for rvoice mixer */
-  fluid_settings_getint(settings, "synth.parallel-render", &i);
   /* In an overflow situation, a new voice takes about 50 spaces in the queue! */
-  synth->eventhandler = new_fluid_rvoice_eventhandler(i, synth->polyphony*64,
+  synth->eventhandler = new_fluid_rvoice_eventhandler(synth->polyphony*64,
 	synth->polyphony, nbuf, synth->effects_channels, synth->sample_rate);
 
   if (synth->eventhandler == NULL)
@@ -2900,9 +2898,6 @@ fluid_synth_nwrite_float(fluid_synth_t* synth, int len,
   int bytes;
 #endif
   float cpu_load;
-
-  if (!synth->eventhandler->is_threadsafe)
-    fluid_synth_api_enter(synth);
   
   /* First, take what's still available in the buffer */
   count = 0;
@@ -3011,9 +3006,6 @@ fluid_synth_nwrite_float(fluid_synth_t* synth, int len,
   time = fluid_utime() - time;
   cpu_load = 0.5 * (fluid_atomic_float_get(&synth->cpu_load) + time * synth->sample_rate / len / 10000.0);
   fluid_atomic_float_set (&synth->cpu_load, cpu_load);
-
-  if (!synth->eventhandler->is_threadsafe)
-    fluid_synth_api_exit(synth);
   
   return FLUID_OK;
 }
@@ -3096,10 +3088,7 @@ fluid_synth_write_float(fluid_synth_t* synth, int len,
   float cpu_load;
 
   fluid_profile_ref_var (prof_ref);
-  
-  if (!synth->eventhandler->is_threadsafe)
-    fluid_synth_api_enter(synth);
-  
+    
   fluid_rvoice_mixer_set_mix_fx(synth->eventhandler->mixer, 1);
   l = synth->cur;
   fluid_rvoice_mixer_get_bufs(synth->eventhandler->mixer, &left_in, &right_in);
@@ -3123,9 +3112,6 @@ fluid_synth_write_float(fluid_synth_t* synth, int len,
   time = fluid_utime() - time;
   cpu_load = 0.5 * (fluid_atomic_float_get(&synth->cpu_load) + time * synth->sample_rate / len / 10000.0);
   fluid_atomic_float_set (&synth->cpu_load, cpu_load);
-
-  if (!synth->eventhandler->is_threadsafe)
-    fluid_synth_api_exit(synth);
  
   fluid_profile_write(FLUID_PROF_WRITE, prof_ref,
                       fluid_rvoice_mixer_get_active_voices(synth->eventhandler->mixer),
@@ -3203,10 +3189,7 @@ fluid_synth_write_s16(fluid_synth_t* synth, int len,
   float cpu_load;
 
   fluid_profile_ref_var (prof_ref);
-  
-  if (!synth->eventhandler->is_threadsafe)
-    fluid_synth_api_enter(synth);
-  
+    
   fluid_rvoice_mixer_set_mix_fx(synth->eventhandler->mixer, 1);
   fluid_rvoice_mixer_get_bufs(synth->eventhandler->mixer, &left_in, &right_in);
 
@@ -3246,9 +3229,6 @@ fluid_synth_write_s16(fluid_synth_t* synth, int len,
   cpu_load = 0.5 * (fluid_atomic_float_get(&synth->cpu_load) + time * synth->sample_rate / len / 10000.0);
   fluid_atomic_float_set (&synth->cpu_load, cpu_load);
 
-  if (!synth->eventhandler->is_threadsafe)
-    fluid_synth_api_exit(synth);
-  
   fluid_profile_write(FLUID_PROF_WRITE, prof_ref,
                       fluid_rvoice_mixer_get_active_voices(synth->eventhandler->mixer),
                       len);
@@ -3634,8 +3614,7 @@ fluid_synth_start_voice(fluid_synth_t* synth, fluid_voice_t* voice)
   fluid_synth_kill_by_exclusive_class_LOCAL(synth, voice);
 
   fluid_voice_start(voice);     /* Start the new voice */
-  if (synth->eventhandler->is_threadsafe)
-    fluid_voice_lock_rvoice(voice);
+  fluid_voice_lock_rvoice(voice);
   fluid_rvoice_eventhandler_add_rvoice(synth->eventhandler, voice->rvoice);
   fluid_synth_api_exit(synth);
 }

@@ -28,7 +28,7 @@
  * Interpolates audio data (obtains values between the samples of the original
  * waveform data).
  *
- * Variables loaded from the voice structure (assigned in fluid_voice_write()):
+ * Variables loaded from the voice structure (assigned in fluid_rvoice_write()):
  * - dsp_data: Pointer to the original waveform data
  * - dsp_phase: The position in the original waveform data.
  *              This has an integer and a fractional part (between samples).

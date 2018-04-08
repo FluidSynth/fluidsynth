@@ -475,8 +475,8 @@ fluid_revmodel_update(fluid_revmodel_t* rev)
  * @param level Reverb level
  */
 void
-fluid_revmodel_set(fluid_revmodel_t* rev, int set, float roomsize,
-                   float damping, float width, float level)
+fluid_revmodel_set(fluid_revmodel_t* rev, int set, fluid_real_t roomsize,
+                   fluid_real_t damping, fluid_real_t width, fluid_real_t level)
 {
   if (set & FLUID_REVMODEL_SET_ROOMSIZE)
   {

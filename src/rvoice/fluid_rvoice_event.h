@@ -44,11 +44,10 @@ void fluid_rvoice_event_dispatch(fluid_rvoice_event_t* event);
 
 /*
  * Bridge between the renderer thread and the midi state thread. 
- * If is_threadsafe is true, that means fluid_rvoice_eventhandler_fetch_all 
- * can be called in parallell with fluid_rvoice_eventhandler_push/flush
+ * fluid_rvoice_eventhandler_fetch_all() can be called in parallell
+ * with fluid_rvoice_eventhandler_push/flush()
  */
 struct _fluid_rvoice_eventhandler_t {
-	int is_threadsafe; /* False for optimal performance, true for atomic operations */
 	fluid_ringbuffer_t* queue; /**< List of fluid_rvoice_event_t */
   fluid_atomic_int_t queue_stored; /**< Extras pushed but not flushed */
 	fluid_ringbuffer_t* finished_voices; /**< return queue from handler, list of fluid_rvoice_t* */ 
@@ -56,7 +55,7 @@ struct _fluid_rvoice_eventhandler_t {
 };
 
 fluid_rvoice_eventhandler_t* new_fluid_rvoice_eventhandler(
-  int is_threadsafe, int queuesize, int finished_voices_size, int bufs, 
+  int queuesize, int finished_voices_size, int bufs, 
   int fx_bufs, fluid_real_t sample_rate);
 
 void delete_fluid_rvoice_eventhandler(fluid_rvoice_eventhandler_t*);
@@ -105,11 +104,8 @@ static FLUID_INLINE void
 fluid_rvoice_eventhandler_add_rvoice(fluid_rvoice_eventhandler_t* handler, 
                                      fluid_rvoice_t* rvoice)
 {
-  if (handler->is_threadsafe)
     fluid_rvoice_eventhandler_push_ptr(handler, fluid_rvoice_mixer_add_voice,
                                        handler->mixer, rvoice);
-  else
-    fluid_rvoice_mixer_add_voice(handler->mixer, rvoice);
 }
 
 
