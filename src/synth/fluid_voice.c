@@ -384,35 +384,6 @@ fluid_real_t fluid_voice_gen_value(const fluid_voice_t* voice, int num)
 	}
 }
 
-
-/**
- * Synthesize a voice to a buffer.
- *
- * @param voice Voice to synthesize
- * @param dsp_buf Audio buffer to synthesize to (#FLUID_BUFSIZE in length)
- * @return Count of samples written to dsp_buf (can be 0)
- *
- * Panning, reverb and chorus are processed separately. The dsp interpolation
- * routine is in (fluid_rvoice_dsp.c).
- */
-int
-fluid_voice_write (fluid_voice_t* voice, fluid_real_t *dsp_buf)
-{
-  int result;
-  if (!voice->can_access_rvoice) 
-    return 0;
-
-  result = fluid_rvoice_write(voice->rvoice, dsp_buf);
-
-  if (result == -1)
-    return 0;
-
-  if ((result < FLUID_BUFSIZE) && fluid_voice_is_playing(voice)) /* Voice finished by itself */
-    fluid_voice_off(voice);
-
-  return result;
-}
-
 /*
  * fluid_voice_start
  */

@@ -120,8 +120,6 @@ void delete_fluid_voice(fluid_voice_t* voice);
 void fluid_voice_start(fluid_voice_t* voice);
 void  fluid_voice_calculate_gen_pitch(fluid_voice_t* voice);
 
-int fluid_voice_write (fluid_voice_t* voice, fluid_real_t *dsp_buf);
-
 int fluid_voice_init(fluid_voice_t* voice, fluid_sample_t* sample, 
 		     fluid_zone_range_t *inst_zone_range,
 		     fluid_channel_t* channel, int key, int vel,
