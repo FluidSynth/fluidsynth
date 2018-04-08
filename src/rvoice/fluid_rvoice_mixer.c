@@ -656,7 +656,7 @@ void fluid_rvoice_mixer_set_ladspa(fluid_rvoice_mixer_t* mixer,
             &mixer->buffers.fx_left_buf[SYNTH_REVERB_CHANNEL]);
 
     fluid_ladspa_add_host_ports(ladspa_fx, "Chorus:Send", 1,
-            &mixer->buffers.fx_left_buf[SYNTH_REVERB_CHANNEL]);
+            &mixer->buffers.fx_left_buf[SYNTH_CHORUS_CHANNEL]);
 }
 #endif
 
