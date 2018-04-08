@@ -55,6 +55,7 @@ option ( enable-fpe-check "enable Floating Point Exception checks and debug mess
 option ( enable-portaudio "compile PortAudio support" off )
 option ( enable-profiling "profile the dsp code" off )
 option ( enable-trap-on-fpe "enable SIGFPE trap on Floating Point Exceptions" off )
+option ( enable-tests "build unit tests (implicitly disables BUILD_SHARED_LIBS and overrides DEFAULT_SOUNDFONT)" off )
 
 # Options enabled by default
 option ( enable-aufile "compile support for sound file output" on )
@@ -500,9 +501,22 @@ else ( enable-readline )
 endif ( enable-readline )
 
 
+if(enable-tests)
+    # manipulate some variables to setup a proper test env
+    set(DEFAULT_SOUNDFONT "${CMAKE_SOURCE_DIR}/sf2/VintageDreamsWaves-v2.sf2")
+    
+    # force to build a static lib, in order to bypass the visibility control, allowing us
+    # to test fluidsynths private/internal functions
+    set(BUILD_SHARED_LIBS OFF)
+    
+    add_subdirectory ( test )
+endif(enable-tests)
+
+
 # General configuration file
 configure_file ( ${CMAKE_SOURCE_DIR}/src/config.cmake
                  ${CMAKE_BINARY_DIR}/config.h )
+
 
 # Process subdirectories
 add_subdirectory ( src )

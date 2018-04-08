@@ -178,17 +178,17 @@ matrix:
     - os: osx
       osx_image: xcode8
       env:
-        - MATRIX_EVAL="brew install gcc5 glib && CC=gcc-5 && CXX=g++-5"
+        - MATRIX_EVAL="brew install gcc5 glib gettext && brew link gettext && CC=gcc-5 && CXX=g++-5" # gettext should provide libintl, but doesnt work
 
     - os: osx
       osx_image: xcode8
       env:
-        - MATRIX_EVAL="brew install gcc6 glib && CC=gcc-6 && CXX=g++-6"
+        - MATRIX_EVAL="brew install gcc6 glib gettext && brew link gettext && CC=gcc-6 && CXX=g++-6"
 
     - os: osx
       osx_image: xcode8
       env:
-        - MATRIX_EVAL="brew install gcc glib libsndfile jack dbus-glib pulseaudio portaudio && CC=gcc-7 && CXX=g++-7"
+        - MATRIX_EVAL="brew install gcc glib gettext libsndfile jack dbus-glib pulseaudio portaudio && brew link gettext && CC=gcc-7 && CXX=g++-7"
 
 before_install:
     - if [ $TRAVIS_OS_NAME = linux ]; then sudo apt-get update; else brew update; fi
@@ -201,4 +201,4 @@ before_script:
 script:
     - cmake -DCMAKE_INSTALL_PREFIX=$HOME/fluidsynth_install ${CMAKE_FLAGS} "-Denable-portaudio=1" "-Denable-ladspa=1" "-DCMAKE_BUILD_TYPE=RelWithDebInfo" ..
     - make -j4
-    - if [ $TRAVIS_OS_NAME = linux ]; then make install; fi # install only on linux, as CMAKE_INSTALL_PREFIX is ignored for frameworks on macosx and I cant tell whether that's correct or a bug
+    - if [ $TRAVIS_OS_NAME = linux ]; then make install; cmake -Denable-tests=1 ..; make check; fi # install only on linux, as CMAKE_INSTALL_PREFIX is ignored for frameworks on macosx and I cant tell whether that's correct or a bug. also build unit test only on linux, as libintl is not found on macosx

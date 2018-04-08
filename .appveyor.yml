@@ -58,7 +58,10 @@ build_script:
   - mkdir build
   - cd build
   - cmake -G "%generator%" ..
-  - cmake --build . --config Release
+  - cmake --build . --config Release # build libfluidsynth and fluidsynth exec
+# FIXME the linker doesnt find gthread-2.0.lib in the second run, why???
+#  - cmake -Denable-tests=1 ..
+#  - cmake --build . --config Release --target check # build unittests
 
 after_build:
   - 7z a fluidsynth.zip %APPVEYOR_BUILD_FOLDER%\build\src\Release\* c:\deps\bin\libglib*.dll c:\deps\bin\libgthread*.dll c:\deps\bin\*intl*.dll
