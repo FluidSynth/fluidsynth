@@ -129,7 +129,7 @@ fluid_voice_update_modenv(fluid_voice_t* voice,
 			    coeff, increment, min, max);
 }
 
-static FLUID_INLINE void fluid_sample_null_ptr(fluid_sample_t** sample)
+static FLUID_INLINE void fluid_voice_sample_unref(fluid_sample_t** sample)
 {
   if (*sample != NULL) {
     fluid_sample_decr_ref(*sample);
@@ -1312,7 +1312,7 @@ fluid_voice_kill_excl(fluid_voice_t* voice){
 void fluid_voice_overflow_rvoice_finished(fluid_voice_t* voice)
 {
   voice->can_access_overflow_rvoice = 1;
-  fluid_sample_null_ptr(&voice->overflow_rvoice->dsp.sample);
+  fluid_voice_sample_unref(&voice->overflow_rvoice->dsp.sample);
 }
 
 /*
@@ -1341,13 +1341,13 @@ fluid_voice_stop(fluid_voice_t* voice)
   voice->chan = NO_CHANNEL;
   
   if (voice->can_access_rvoice)
-    fluid_sample_null_ptr(&voice->rvoice->dsp.sample);
+    fluid_voice_sample_unref(&voice->rvoice->dsp.sample);
 
   voice->status = FLUID_VOICE_OFF;
   voice->has_noteoff = 1;
 
   /* Decrement the reference count of the sample. */
-  fluid_sample_null_ptr(&voice->sample);
+  fluid_voice_sample_unref(&voice->sample);
 
   /* Decrement voice count */
   voice->channel->synth->active_voice_count--;
