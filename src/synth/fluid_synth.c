@@ -2209,9 +2209,6 @@ fluid_synth_set_preset (fluid_synth_t *synth, int chan, fluid_preset_t *preset)
 
 /* Get a preset by SoundFont, bank and program numbers.
  * Returns preset pointer or NULL.
- *
- * @note The returned preset has been allocated, caller owns it and should
- *       free it when finished using it.
  */
 static fluid_preset_t*
 fluid_synth_get_preset(fluid_synth_t* synth, unsigned int sfontnum,
@@ -2241,9 +2238,6 @@ fluid_synth_get_preset(fluid_synth_t* synth, unsigned int sfontnum,
 
 /* Get a preset by SoundFont name, bank and program.
  * Returns preset pointer or NULL.
- *
- * @note The returned preset has been allocated, caller owns it and should
- *       free it when finished using it.
  */
 static fluid_preset_t*
 fluid_synth_get_preset_by_sfont_name(fluid_synth_t* synth, const char *sfontname,
@@ -2270,9 +2264,7 @@ fluid_synth_get_preset_by_sfont_name(fluid_synth_t* synth, const char *sfontname
 
 /* Find a preset by bank and program numbers.
  * Returns preset pointer or NULL.
- *
- * @note The returned preset has been allocated, caller owns it and should
- *       free it when finished using it. */
+ */
 fluid_preset_t*
 fluid_synth_find_preset(fluid_synth_t* synth, unsigned int banknum,
                         unsigned int prognum)
