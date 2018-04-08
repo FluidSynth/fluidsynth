@@ -109,10 +109,6 @@ struct _fluid_defsfont_t
   int mlock;                 /* Should we try memlock (avoid swapping)? */
 
   fluid_list_t *preset_iter_cur;       /* the current preset in the iteration */
-
-  fluid_preset_t** preset_stack; /* List of presets that are available to use */
-  int preset_stack_capacity;     /* Length of preset_stack array */
-  int preset_stack_size;         /* Current number of items in the stack */
 };
 
 

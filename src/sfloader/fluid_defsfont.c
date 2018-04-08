@@ -197,29 +197,6 @@ fluid_defsfont_t* new_fluid_defsfont(fluid_settings_t* settings)
   
   fluid_settings_getint(settings, "synth.lock-memory", &defsfont->mlock);
 
-  /* Initialise preset cache, so we don't have to call malloc on program changes.
-     Usually, we have at most one preset per channel plus one temporarily used,
-     so optimise for that case. */
-  fluid_settings_getint(settings, "synth.midi-channels", &defsfont->preset_stack_capacity);
-  defsfont->preset_stack_capacity++;
-  
-  defsfont->preset_stack = FLUID_ARRAY(fluid_preset_t*, defsfont->preset_stack_capacity);
-  if (!defsfont->preset_stack) {
-    FLUID_LOG(FLUID_ERR, "Out of memory");
-    FLUID_FREE(defsfont);
-    return NULL;
-  }
-
-  for (i = 0; i < defsfont->preset_stack_capacity; i++) {
-    defsfont->preset_stack[i] = FLUID_NEW(fluid_preset_t);
-    if (!defsfont->preset_stack[i]) {
-      FLUID_LOG(FLUID_ERR, "Out of memory");
-      delete_fluid_defsfont(defsfont);
-      return NULL;
-    }
-    defsfont->preset_stack_size++;
-  }
-
   return defsfont;
 }
 
@@ -257,10 +234,6 @@ int delete_fluid_defsfont(fluid_defsfont_t* defsfont)
   if (defsfont->sampledata != NULL) {
     fluid_samplecache_unload(defsfont->sampledata);
   }
-
-  while (defsfont->preset_stack_size > 0)
-    FLUID_FREE(defsfont->preset_stack[--defsfont->preset_stack_size]);
-  FLUID_FREE(defsfont->preset_stack);
 
   for (list = defsfont->preset; list; list = fluid_list_next(list)) {
       preset = (fluid_preset_t *)fluid_list_get(list);
