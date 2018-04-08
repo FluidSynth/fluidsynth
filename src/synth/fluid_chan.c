@@ -219,15 +219,26 @@ fluid_channel_reset(fluid_channel_t* chan)
 int
 fluid_channel_set_preset(fluid_channel_t* chan, fluid_preset_t* preset)
 {
-  fluid_preset_notify (chan->preset, FLUID_PRESET_UNSELECTED, chan->channum);
+  fluid_sfont_t *sfont;
+
+  if (chan->preset == preset)
+  {
+      return FLUID_OK;
+  }
 
   if (chan->preset) {
-    fluid_sfont_t *sfont;
     sfont = chan->preset->sfont;
-    fluid_synth_sfont_unref (chan->synth, sfont); /* -- unref preset's SoundFont */
+    sfont->refcount--;
   }
-  
+
+  fluid_preset_notify (chan->preset, FLUID_PRESET_UNSELECTED, chan->channum);
+
   chan->preset = preset;
+
+  if (preset) {
+    sfont = preset->sfont;
+    sfont->refcount++;
+  }
 
   fluid_preset_notify (preset, FLUID_PRESET_SELECTED, chan->channum);
 
