@@ -211,7 +211,6 @@ void fluid_synth_settings(fluid_settings_t* settings)
   fluid_settings_register_int(settings, "synth.min-note-length", 10, 0, 65535, 0);
   
   fluid_settings_register_int(settings, "synth.threadsafe-api", 1, 0, 1, FLUID_HINT_TOGGLED);
-  fluid_settings_register_int(settings, "synth.parallel-render", 1, 0, 1, FLUID_HINT_TOGGLED);
 
   fluid_settings_register_num(settings, "synth.overflow.percussion", 4000, -10000, 10000, 0);
   fluid_settings_register_num(settings, "synth.overflow.sustained", -1000, -10000, 10000, 0);
@@ -693,7 +692,6 @@ new_fluid_synth(fluid_settings_t *settings)
   fluid_private_init(synth->tuning_iter);
 
   /* Allocate event queue for rvoice mixer */
-  fluid_settings_getint(settings, "synth.parallel-render", &i);
   /* In an overflow situation, a new voice takes about 50 spaces in the queue! */
   synth->eventhandler = new_fluid_rvoice_eventhandler(synth->polyphony*64,
 	synth->polyphony, nbuf, synth->effects_channels, synth->sample_rate);
