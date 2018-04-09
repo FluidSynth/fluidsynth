@@ -544,7 +544,7 @@ fluid_synth_update_mixer(fluid_synth_t* synth, fluid_rvoice_function_t method, i
 {
   fluid_return_if_fail(synth != NULL && synth->eventhandler != NULL);
   fluid_return_if_fail(synth->eventhandler->mixer != NULL);
-  fluid_rvoice_eventhandler_push(synth->eventhandler, method, 
+  fluid_rvoice_eventhandler_push_int_real(synth->eventhandler, method, 
 				 synth->eventhandler->mixer,
 				 intparam, realparam);
 }
@@ -4204,7 +4204,7 @@ fluid_synth_set_reverb_full_LOCAL(fluid_synth_t* synth, int set, double roomsize
   param[3].real = width;
   param[4].real = level;
   /* finally enqueue an rvoice event to the mixer to actual update reverb */
-  ret = fluid_rvoice_eventhandler_push_param(synth->eventhandler,
+  ret = fluid_rvoice_eventhandler_push(synth->eventhandler,
                                              fluid_rvoice_mixer_set_reverb_params,
                                              synth->eventhandler->mixer,
                                              param);
@@ -4404,7 +4404,7 @@ fluid_synth_set_chorus_full(fluid_synth_t* synth, int set, int nr, double level,
   param[3].real = speed;
   param[4].real = depth_ms;
   param[5].i = type;
-  ret = fluid_rvoice_eventhandler_push_param(synth->eventhandler,
+  ret = fluid_rvoice_eventhandler_push(synth->eventhandler,
                                              fluid_rvoice_mixer_set_chorus_params,
                                              synth->eventhandler->mixer,
                                              param);

@@ -39,7 +39,7 @@ fluid_rvoice_event_dispatch(fluid_rvoice_event_t* event)
  * use push for all events, then use flush to commit them to the 
  * queue. If threadsafe is false, all events are processed immediately. */
 int
-fluid_rvoice_eventhandler_push(fluid_rvoice_eventhandler_t* handler, 
+fluid_rvoice_eventhandler_push_int_real(fluid_rvoice_eventhandler_t* handler, 
                                 fluid_rvoice_function_t method, void* object, int intparam, 
                                 fluid_real_t realparam)
 {
@@ -54,7 +54,7 @@ fluid_rvoice_eventhandler_push(fluid_rvoice_eventhandler_t* handler,
 }
 
 int
-fluid_rvoice_eventhandler_push_param(fluid_rvoice_eventhandler_t* handler, fluid_rvoice_function_t method, void* object, fluid_rvoice_param_t param[MAX_EVENT_PARAMS])
+fluid_rvoice_eventhandler_push(fluid_rvoice_eventhandler_t* handler, fluid_rvoice_function_t method, void* object, fluid_rvoice_param_t param[MAX_EVENT_PARAMS])
 {
   fluid_rvoice_event_t local_event;
   

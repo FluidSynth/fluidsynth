@@ -81,14 +81,14 @@ fluid_rvoice_eventhandler_get_finished_voice(fluid_rvoice_eventhandler_t* handle
 }
 
 
-int fluid_rvoice_eventhandler_push(fluid_rvoice_eventhandler_t* handler, 
+int fluid_rvoice_eventhandler_push_int_real(fluid_rvoice_eventhandler_t* handler, 
                                 fluid_rvoice_function_t method, void* object, int intparam, 
                                 fluid_real_t realparam);
 
 int fluid_rvoice_eventhandler_push_ptr(fluid_rvoice_eventhandler_t* handler, 
                                 fluid_rvoice_function_t method, void* object, void* ptr); 
 
-int fluid_rvoice_eventhandler_push_param(fluid_rvoice_eventhandler_t* handler,
+int fluid_rvoice_eventhandler_push(fluid_rvoice_eventhandler_t* handler,
                                          fluid_rvoice_function_t method, void* object,
                                          fluid_rvoice_param_t param[MAX_EVENT_PARAMS]);
 
