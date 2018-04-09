@@ -48,27 +48,27 @@ fluid_voice_get_lower_boundary_for_attenuation(fluid_voice_t* voice);
 
 #define UPDATE_RVOICE0(proc) \
   do { \
-      fluid_rvoice_param_t param[EVENT_PARAMS]; \
+      fluid_rvoice_param_t param[MAX_EVENT_PARAMS]; \
       fluid_rvoice_eventhandler_push_param(voice->eventhandler, proc, voice->rvoice, param); \
   } while (0)
 
 #define UPDATE_RVOICE_GENERIC_R1(proc, obj, rarg) \
   do { \
-      fluid_rvoice_param_t param[EVENT_PARAMS]; \
+      fluid_rvoice_param_t param[MAX_EVENT_PARAMS]; \
       param[0].real = rarg; \
       fluid_rvoice_eventhandler_push_param(voice->eventhandler, proc, obj, param); \
   } while (0)
 
 #define UPDATE_RVOICE_GENERIC_I1(proc, obj, iarg) \
   do { \
-      fluid_rvoice_param_t param[EVENT_PARAMS]; \
+      fluid_rvoice_param_t param[MAX_EVENT_PARAMS]; \
       param[0].i = iarg; \
       fluid_rvoice_eventhandler_push_param(voice->eventhandler, proc, obj, param); \
   } while (0)
   
 #define UPDATE_RVOICE_GENERIC_I2(proc, obj, iarg1, iarg2) \
   do { \
-      fluid_rvoice_param_t param[EVENT_PARAMS]; \
+      fluid_rvoice_param_t param[MAX_EVENT_PARAMS]; \
       param[0].i = iarg1; \
       param[1].i = iarg2; \
       fluid_rvoice_eventhandler_push_param(voice->eventhandler, proc, obj, param); \
@@ -76,7 +76,7 @@ fluid_voice_get_lower_boundary_for_attenuation(fluid_voice_t* voice);
 
 #define UPDATE_RVOICE_GENERIC_IR(proc, obj, iarg, rarg) \
   do { \
-      fluid_rvoice_param_t param[EVENT_PARAMS]; \
+      fluid_rvoice_param_t param[MAX_EVENT_PARAMS]; \
       param[0].i = iarg; \
       param[1].real = rarg; \
       fluid_rvoice_eventhandler_push_param(voice->eventhandler, proc, obj, param); \
@@ -100,7 +100,7 @@ fluid_voice_update_volenv(fluid_voice_t* voice,
                           fluid_real_t min,
                           fluid_real_t max)
 {
-    fluid_rvoice_param_t param[EVENT_PARAMS];
+    fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
     
     param[0].i = section;
     param[1].i = count;
@@ -132,7 +132,7 @@ fluid_voice_update_modenv(fluid_voice_t* voice,
                           fluid_real_t min,
                           fluid_real_t max)
 {
-    fluid_rvoice_param_t param[EVENT_PARAMS];
+    fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
     
     param[0].i = section;
     param[1].i = count;
@@ -177,7 +177,7 @@ static void fluid_voice_swap_rvoice(fluid_voice_t* voice)
 
 static void fluid_voice_initialize_rvoice(fluid_voice_t* voice, fluid_real_t output_rate)
 {
-  fluid_rvoice_param_t param[EVENT_PARAMS];
+  fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
     
   FLUID_MEMSET(voice->rvoice, 0, sizeof(fluid_rvoice_t));
 

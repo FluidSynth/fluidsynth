@@ -4184,7 +4184,7 @@ fluid_synth_set_reverb_full_LOCAL(fluid_synth_t* synth, int set, double roomsize
                             double damping, double width, double level)
 {
   int ret;
-  fluid_rvoice_param_t param[EVENT_PARAMS];
+  fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
   
   if (set & FLUID_REVMODEL_SET_ROOMSIZE)
     synth->reverb_roomsize = roomsize;
@@ -4374,7 +4374,7 @@ fluid_synth_set_chorus_full(fluid_synth_t* synth, int set, int nr, double level,
                             double speed, double depth_ms, int type)
 {
   int ret;
-  fluid_rvoice_param_t param[EVENT_PARAMS];
+  fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
   
   fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
   /* if non of the flags is set, fail */

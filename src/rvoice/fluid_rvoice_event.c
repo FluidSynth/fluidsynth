@@ -54,13 +54,13 @@ fluid_rvoice_eventhandler_push(fluid_rvoice_eventhandler_t* handler,
 }
 
 int
-fluid_rvoice_eventhandler_push_param(fluid_rvoice_eventhandler_t* handler, fluid_rvoice_function_t method, void* object, fluid_rvoice_param_t param[EVENT_PARAMS])
+fluid_rvoice_eventhandler_push_param(fluid_rvoice_eventhandler_t* handler, fluid_rvoice_function_t method, void* object, fluid_rvoice_param_t param[MAX_EVENT_PARAMS])
 {
   fluid_rvoice_event_t local_event;
   
   local_event.method = method;
   local_event.object = object;
-  FLUID_MEMCPY(&local_event.param, param, sizeof(*param) * EVENT_PARAMS);
+  FLUID_MEMCPY(&local_event.param, param, sizeof(*param) * MAX_EVENT_PARAMS);
   
   return fluid_rvoice_eventhandler_push_LOCAL(handler, &local_event);
 }

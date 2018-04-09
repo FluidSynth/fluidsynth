@@ -213,12 +213,12 @@ typedef union _fluid_rvoice_param_t
 } fluid_rvoice_param_t;
 typedef void (*fluid_rvoice_function_t)(void* obj, fluid_rvoice_param_t* param);
 
-enum { EVENT_PARAMS = 6 };
+enum { MAX_EVENT_PARAMS = 6 };
 
 /* macro for declaring an rvoice event function (#fluid_rvoice_function_t). the functions may only access those params that were
  * previously set in fluid_voice.c
  */
-#define DECLARE_FLUID_RVOICE_FUNCTION(name) void name(void* obj, fluid_rvoice_param_t param[EVENT_PARAMS])
+#define DECLARE_FLUID_RVOICE_FUNCTION(name) void name(void* obj, fluid_rvoice_param_t param[MAX_EVENT_PARAMS])
 
 
 /***************************************************************

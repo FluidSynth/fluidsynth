@@ -32,7 +32,7 @@ typedef struct _fluid_rvoice_eventhandler_t fluid_rvoice_eventhandler_t;
 struct _fluid_rvoice_event_t {
 	fluid_rvoice_function_t method;
 	void* object;
-    fluid_rvoice_param_t param[EVENT_PARAMS];
+    fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
 };
 
 /*
@@ -90,7 +90,7 @@ int fluid_rvoice_eventhandler_push_ptr(fluid_rvoice_eventhandler_t* handler,
 
 int fluid_rvoice_eventhandler_push_param(fluid_rvoice_eventhandler_t* handler,
                                          fluid_rvoice_function_t method, void* object,
-                                         fluid_rvoice_param_t param[EVENT_PARAMS]);
+                                         fluid_rvoice_param_t param[MAX_EVENT_PARAMS]);
 
 static FLUID_INLINE void
 fluid_rvoice_eventhandler_add_rvoice(fluid_rvoice_eventhandler_t* handler, 
