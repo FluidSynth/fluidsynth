@@ -185,7 +185,6 @@ int fluid_defpreset_preset_noteon(fluid_preset_t* preset, fluid_synth_t* synth,
 fluid_defsfont_t* new_fluid_defsfont(fluid_settings_t* settings)
 {
   fluid_defsfont_t* defsfont;
-  int i;
 
   defsfont = FLUID_NEW(fluid_defsfont_t);
   if (defsfont == NULL) {
