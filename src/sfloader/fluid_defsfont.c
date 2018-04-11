@@ -272,10 +272,15 @@ int fluid_defsfont_load(fluid_defsfont_t* defsfont, const fluid_file_callbacks_t
   }
 
   /* The actual loading is done in the sfont and sffile files */
-  sfdata = fluid_sffile_load(file, fcbs);
+  sfdata = fluid_sffile_open(file, fcbs);
   if (sfdata == NULL) {
     FLUID_LOG(FLUID_ERR, "Couldn't load soundfont file");
     return FLUID_FAILED;
+  }
+
+  if (fluid_sffile_parse_presets(sfdata) == FLUID_FAILED) {
+    FLUID_LOG(FLUID_ERR, "Couldn't parse presets from soundfont file");
+    goto err_exit;
   }
 
   /* Keep track of the position and size of the sample data because
@@ -386,7 +391,7 @@ fluid_defsfont_load_sampledata(fluid_defsfont_t* defsfont, const fluid_file_call
   SFData *sfdata;
   int ret;
 
-  sfdata = fluid_sffile_load(defsfont->filename, fcbs);
+  sfdata = fluid_sffile_open(defsfont->filename, fcbs);
   if (sfdata == NULL) {
     FLUID_LOG(FLUID_ERR, "Couldn't load soundfont file");
     return FLUID_FAILED;

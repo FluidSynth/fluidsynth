@@ -134,12 +134,17 @@ struct _SFData
     SFVersion version; /* sound font version */
     SFVersion romver; /* ROM version */
 
+    unsigned int filesize;
+
     unsigned int samplepos; /* position within sffd of the sample chunk */
     unsigned int samplesize; /* length within sffd of the sample chunk */
 
     unsigned int sample24pos; /* position within sffd of the sm24 chunk, set to zero if no 24 bit
                                  sample support */
     unsigned int sample24size; /* length within sffd of the sm24 chunk */
+
+    unsigned int hydrapos;
+    unsigned int hydrasize;
 
     char *fname; /* file name */
     FILE *sffd; /* loaded sfont file descriptor */
@@ -204,8 +209,9 @@ struct _SFShdr
 };
 
 /* Public functions  */
-SFData *fluid_sffile_load(const char *fname, const fluid_file_callbacks_t *fcbs);
+SFData *fluid_sffile_open(const char *fname, const fluid_file_callbacks_t *fcbs);
 void fluid_sffile_close(SFData *sf);
+int fluid_sffile_parse_presets(SFData *sf);
 int fluid_sffile_read_sample_data(SFData *sf, unsigned int start, unsigned int count,
                                  short **data, char **data24);
 

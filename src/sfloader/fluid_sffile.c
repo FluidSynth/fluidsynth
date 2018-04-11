@@ -259,7 +259,8 @@ static const unsigned short invalid_preset_gen[] = {
     } while (0)
 
 
-static int load_body(SFData *sf, unsigned int size);
+static int load_header(SFData *sf);
+static int load_body(SFData *sf);
 static int process_info(SFData *sf, int size);
 static int process_sdta(SFData *sf, unsigned int size);
 static int process_pdta(SFData *sf, int size);
@@ -294,9 +295,9 @@ static void delete_zone(SFZone *zone);
  *
  * @param fname filename
  * @param fcbs file callback structure
- * @return the parsed SoundFont as SFData structure or NULL on error
+ * @return the partially parsed SoundFont as SFData structure or NULL on error
  */
-SFData *fluid_sffile_load(const char *fname, const fluid_file_callbacks_t *fcbs)
+SFData *fluid_sffile_open(const char *fname, const fluid_file_callbacks_t *fcbs)
 {
     SFData *sf;
     int fsize = 0;
@@ -334,6 +335,7 @@ SFData *fluid_sffile_load(const char *fname, const fluid_file_callbacks_t *fcbs)
         FLUID_LOG(FLUID_ERR, "Get end of file position failed");
         goto error_exit;
     }
+    sf->filesize = fsize;
 
     if (fcbs->fseek(sf->sffd, 0, SEEK_SET) == FLUID_FAILED)
     {
@@ -341,7 +343,7 @@ SFData *fluid_sffile_load(const char *fname, const fluid_file_callbacks_t *fcbs)
         goto error_exit;
     }
 
-    if (!load_body(sf, fsize))
+    if (!load_header(sf))
     {
         goto error_exit;
     }
@@ -351,6 +353,21 @@ SFData *fluid_sffile_load(const char *fname, const fluid_file_callbacks_t *fcbs)
 error_exit:
     fluid_sffile_close(sf);
     return NULL;
+}
+
+/*
+ * Parse all preset information from the soundfont
+ *
+ * @return FLUID_OK on success, otherwise FLUID_FAILED
+ */
+int fluid_sffile_parse_presets(SFData *sf)
+{
+    if (!load_body(sf))
+    {
+        return FLUID_FAILED;
+    }
+
+    return FLUID_OK;
 }
 
 /* Load sample data from the soundfont file
@@ -534,7 +551,7 @@ static int chunkid(unsigned int id)
     return UNKN_ID;
 }
 
-static int load_body(SFData *sf, unsigned int size)
+static int load_header(SFData *sf)
 {
     SFChunk chunk;
 
@@ -552,7 +569,7 @@ static int load_body(SFData *sf, unsigned int size)
         return FALSE;
     }
 
-    if (chunk.size != size - 8)
+    if (chunk.size != sf->filesize - 8)
     {
         FLUID_LOG(FLUID_ERR, "SoundFont file size mismatch");
         return FALSE;
@@ -588,11 +605,27 @@ static int load_body(SFData *sf, unsigned int size)
         FLUID_LOG(FLUID_ERR, "Invalid ID found when expecting HYDRA chunk");
         return FALSE;
     }
-    if (!process_pdta(sf, chunk.size))
+
+    sf->hydrapos = sf->fcbs->ftell(sf->sffd);
+    sf->hydrasize = chunk.size;
+
+    return TRUE;
+}
+
+static int load_body(SFData *sf)
+{
+    if (sf->fcbs->fseek(sf->sffd, sf->hydrapos, SEEK_SET) == FLUID_FAILED)
+    {
+        FLUID_LOG(FLUID_ERR, "Failed to seek to HYDRA position");
+        return FALSE;
+    }
+
+    if (!process_pdta(sf, sf->hydrasize))
         return FALSE;
 
     if (!fixup_pgen(sf))
         return FALSE;
+
     if (!fixup_igen(sf))
         return FALSE;
 
