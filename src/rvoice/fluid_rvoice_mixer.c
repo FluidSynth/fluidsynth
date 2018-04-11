@@ -502,7 +502,6 @@ fluid_mixer_buffers_init(fluid_mixer_buffers_t* buffers, fluid_rvoice_mixer_t* m
  */
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_samplerate)
 {
-  int i;
   fluid_rvoice_mixer_t* mixer = obj;
   fluid_real_t samplerate = param[1].real; // becausee fluid_synth_update_mixer() puts real into arg2
   
