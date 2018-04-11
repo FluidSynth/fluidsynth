@@ -504,6 +504,7 @@ endif ( enable-readline )
 if(enable-tests)
     # manipulate some variables to setup a proper test env
     set(TEST_SOUNDFONT "${CMAKE_SOURCE_DIR}/sf2/VintageDreamsWaves-v2.sf2")
+    set(TEST_SOUNDFONT_SF3 "${CMAKE_SOURCE_DIR}/sf2/VintageDreamsWaves-v2.sf3")
     
     # force to build a static lib, in order to bypass the visibility control, allowing us
     # to test fluidsynths private/internal functions
