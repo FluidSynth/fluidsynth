@@ -617,7 +617,7 @@ fluid_handle_inst(void* data, int ac, char** av, fluid_ostream_t out)
   FLUID_ENTRY_COMMAND(data);
   int font;
   fluid_sfont_t* sfont;
-  fluid_preset_t preset;
+  fluid_preset_t* preset;
   int offset;
 
   if (ac < 1) {
@@ -642,11 +642,11 @@ fluid_handle_inst(void* data, int ac, char** av, fluid_ostream_t out)
 
   fluid_sfont_iteration_start(sfont);
 
-  while (fluid_sfont_iteration_next(sfont, &preset)) {
+  while ((preset = fluid_sfont_iteration_next(sfont)) != NULL) {
     fluid_ostream_printf(out, "%03d-%03d %s\n",
-			fluid_preset_get_banknum(&preset) + offset,
-			fluid_preset_get_num(&preset),
-			fluid_preset_get_name(&preset));
+			fluid_preset_get_banknum(preset) + offset,
+			fluid_preset_get_num(preset),
+			fluid_preset_get_name(preset));
   }
 
   return FLUID_OK;

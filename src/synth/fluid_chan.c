@@ -204,7 +204,6 @@ delete_fluid_channel(fluid_channel_t* chan)
 {
   fluid_return_if_fail(chan != NULL);
   
-  fluid_preset_delete_internal (chan->preset);
   FLUID_FREE(chan);
 }
 
@@ -220,17 +219,26 @@ fluid_channel_reset(fluid_channel_t* chan)
 int
 fluid_channel_set_preset(fluid_channel_t* chan, fluid_preset_t* preset)
 {
+  fluid_sfont_t *sfont;
+
+  if (chan->preset == preset)
+  {
+      return FLUID_OK;
+  }
+
+  if (chan->preset) {
+    sfont = chan->preset->sfont;
+    sfont->refcount--;
+  }
 
   fluid_preset_notify (chan->preset, FLUID_PRESET_UNSELECTED, chan->channum);
 
-  if (chan->preset) {
-    fluid_sfont_t *sfont;
-    sfont = chan->preset->sfont;
-    fluid_preset_delete_internal (chan->preset);
-    fluid_synth_sfont_unref (chan->synth, sfont); /* -- unref preset's SoundFont */
-  }
-  
   chan->preset = preset;
+
+  if (preset) {
+    sfont = preset->sfont;
+    sfont->refcount++;
+  }
 
   fluid_preset_notify (preset, FLUID_PRESET_SELECTED, chan->channum);
 

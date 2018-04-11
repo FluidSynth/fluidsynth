@@ -76,16 +76,18 @@ fluid_sfont_t* fluid_defsfloader_load(fluid_sfloader_t* loader, const char* file
     return NULL;
   }
 
-  if (fluid_defsfont_load(defsfont, &loader->file_callbacks, filename) == FLUID_FAILED) {
-    delete_fluid_defsfont(defsfont);
-    return NULL;
-  }
-
   sfont = new_fluid_sfont(fluid_defsfont_sfont_get_name,
                           fluid_defsfont_sfont_get_preset,
                           fluid_defsfont_sfont_delete);
   if (sfont == NULL)
   {
+    return NULL;
+  }
+
+  defsfont->sfont = sfont;
+
+  if (fluid_defsfont_load(defsfont, &loader->file_callbacks, filename) == FLUID_FAILED) {
+    delete_fluid_defsfont(defsfont);
     return NULL;
   }
 
@@ -120,37 +122,7 @@ const char* fluid_defsfont_sfont_get_name(fluid_sfont_t* sfont)
 fluid_preset_t*
 fluid_defsfont_sfont_get_preset(fluid_sfont_t* sfont, unsigned int bank, unsigned int prenum)
 {
-  fluid_preset_t* preset = NULL;
-  fluid_defpreset_t* defpreset;
-  fluid_defsfont_t* defsfont = fluid_sfont_get_data(sfont);
-
-  defpreset = fluid_defsfont_get_preset(defsfont, bank, prenum);
-
-  if (defpreset == NULL) {
-    return NULL;
-  }
-
-  if (defsfont->preset_stack_size > 0) {
-    defsfont->preset_stack_size--;
-    preset = defsfont->preset_stack[defsfont->preset_stack_size];
-  }
-  if (!preset)
-    preset = FLUID_NEW(fluid_preset_t);
-  if (!preset) {
-    FLUID_LOG(FLUID_ERR, "Out of memory");
-    return NULL;
-  }
-
-  preset->sfont = sfont;
-  preset->data = defpreset;
-  preset->free = fluid_defpreset_preset_delete;
-  preset->get_name = fluid_defpreset_preset_get_name;
-  preset->get_banknum = fluid_defpreset_preset_get_banknum;
-  preset->get_num = fluid_defpreset_preset_get_num;
-  preset->noteon = fluid_defpreset_preset_noteon;
-  preset->notify = NULL;
-
-  return preset;
+  return fluid_defsfont_get_preset(fluid_sfont_get_data(sfont), bank, prenum);
 }
 
 void fluid_defsfont_sfont_iteration_start(fluid_sfont_t* sfont)
@@ -158,29 +130,26 @@ void fluid_defsfont_sfont_iteration_start(fluid_sfont_t* sfont)
   fluid_defsfont_iteration_start(fluid_sfont_get_data(sfont));
 }
 
-int fluid_defsfont_sfont_iteration_next(fluid_sfont_t* sfont, fluid_preset_t* preset)
+fluid_preset_t *fluid_defsfont_sfont_iteration_next(fluid_sfont_t* sfont)
 {
-  preset->free = fluid_defpreset_preset_delete;
-  preset->get_name = fluid_defpreset_preset_get_name;
-  preset->get_banknum = fluid_defpreset_preset_get_banknum;
-  preset->get_num = fluid_defpreset_preset_get_num;
-  preset->noteon = fluid_defpreset_preset_noteon;
-  preset->notify = NULL;
-
-  return fluid_defsfont_iteration_next(fluid_sfont_get_data(sfont), preset);
+  return fluid_defsfont_iteration_next(fluid_sfont_get_data(sfont));
 }
 
 void fluid_defpreset_preset_delete(fluid_preset_t* preset)
 {
-  fluid_defpreset_t* defpreset = fluid_preset_get_data(preset);
-  fluid_defsfont_t* defsfont = defpreset ? defpreset->defsfont : NULL;
+  fluid_defsfont_t* defsfont;
+  fluid_defpreset_t* defpreset;
 
-  if (defsfont && defsfont->preset_stack_size < defsfont->preset_stack_capacity) {
-     defsfont->preset_stack[defsfont->preset_stack_size] = preset;
-     defsfont->preset_stack_size++;
+  defsfont = fluid_sfont_get_data(preset->sfont);
+  defpreset = fluid_preset_get_data(preset);
+
+  if (defsfont)
+  {
+      defsfont->preset = fluid_list_remove(defsfont->preset, defpreset);
   }
-  else
-      delete_fluid_preset(preset);
+
+  delete_fluid_defpreset(defpreset);
+  delete_fluid_preset(preset);
 }
 
 const char* fluid_defpreset_preset_get_name(fluid_preset_t* preset)
@@ -216,7 +185,6 @@ int fluid_defpreset_preset_noteon(fluid_preset_t* preset, fluid_synth_t* synth,
 fluid_defsfont_t* new_fluid_defsfont(fluid_settings_t* settings)
 {
   fluid_defsfont_t* defsfont;
-  int i;
 
   defsfont = FLUID_NEW(fluid_defsfont_t);
   if (defsfont == NULL) {
@@ -228,29 +196,6 @@ fluid_defsfont_t* new_fluid_defsfont(fluid_settings_t* settings)
   
   fluid_settings_getint(settings, "synth.lock-memory", &defsfont->mlock);
 
-  /* Initialise preset cache, so we don't have to call malloc on program changes.
-     Usually, we have at most one preset per channel plus one temporarily used,
-     so optimise for that case. */
-  fluid_settings_getint(settings, "synth.midi-channels", &defsfont->preset_stack_capacity);
-  defsfont->preset_stack_capacity++;
-  
-  defsfont->preset_stack = FLUID_ARRAY(fluid_preset_t*, defsfont->preset_stack_capacity);
-  if (!defsfont->preset_stack) {
-    FLUID_LOG(FLUID_ERR, "Out of memory");
-    FLUID_FREE(defsfont);
-    return NULL;
-  }
-
-  for (i = 0; i < defsfont->preset_stack_capacity; i++) {
-    defsfont->preset_stack[i] = FLUID_NEW(fluid_preset_t);
-    if (!defsfont->preset_stack[i]) {
-      FLUID_LOG(FLUID_ERR, "Out of memory");
-      delete_fluid_defsfont(defsfont);
-      return NULL;
-    }
-    defsfont->preset_stack_size++;
-  }
-
   return defsfont;
 }
 
@@ -260,7 +205,7 @@ fluid_defsfont_t* new_fluid_defsfont(fluid_settings_t* settings)
 int delete_fluid_defsfont(fluid_defsfont_t* defsfont)
 {
   fluid_list_t *list;
-  fluid_defpreset_t* defpreset;
+  fluid_preset_t* preset;
   fluid_sample_t* sample;
 
   fluid_return_val_if_fail(defsfont != NULL, FLUID_OK);
@@ -289,16 +234,11 @@ int delete_fluid_defsfont(fluid_defsfont_t* defsfont)
     fluid_samplecache_unload(defsfont->sampledata);
   }
 
-  while (defsfont->preset_stack_size > 0)
-    FLUID_FREE(defsfont->preset_stack[--defsfont->preset_stack_size]);
-  FLUID_FREE(defsfont->preset_stack);
-
-  defpreset = defsfont->preset;
-  while (defpreset != NULL) {
-    defsfont->preset = defpreset->next;
-    delete_fluid_defpreset(defpreset);
-    defpreset = defsfont->preset;
+  for (list = defsfont->preset; list; list = fluid_list_next(list)) {
+      preset = (fluid_preset_t *)fluid_list_get(list);
+      fluid_defpreset_preset_delete(preset);
   }
+  delete_fluid_list(defsfont->preset);
 
   FLUID_FREE(defsfont);
   return FLUID_OK;
@@ -385,7 +325,10 @@ int fluid_defsfont_load(fluid_defsfont_t* defsfont, const fluid_file_callbacks_t
     if (fluid_defpreset_import_sfont(defpreset, sfpreset, defsfont) != FLUID_OK)
       goto err_exit;
 
-    fluid_defsfont_add_preset(defsfont, defpreset);
+    if (fluid_defsfont_add_preset(defsfont, defpreset) == FLUID_FAILED)
+    {
+        goto err_exit;
+    }
     p = fluid_list_next(p);
   }
   fluid_sffile_close (sfdata);
@@ -414,33 +357,24 @@ int fluid_defsfont_add_sample(fluid_defsfont_t* defsfont, fluid_sample_t* sample
  */
 int fluid_defsfont_add_preset(fluid_defsfont_t* defsfont, fluid_defpreset_t* defpreset)
 {
-  fluid_defpreset_t *cur, *prev;
-  if (defsfont->preset == NULL) {
-    defpreset->next = NULL;
-    defsfont->preset = defpreset;
-  } else {
-    /* sort them as we go along. very basic sorting trick. */
-    cur = defsfont->preset;
-    prev = NULL;
-    while (cur != NULL) {
-      if ((defpreset->bank < cur->bank)
-	  || ((defpreset->bank == cur->bank) && (defpreset->num < cur->num))) {
-	if (prev == NULL) {
-	  defpreset->next = cur;
-	  defsfont->preset = defpreset;
-	} else {
-	  defpreset->next = cur;
-	  prev->next = defpreset;
-	}
-	return FLUID_OK;
-      }
-      prev = cur;
-      cur = cur->next;
+    fluid_preset_t *preset;
+
+    preset = new_fluid_preset(defsfont->sfont,
+                              fluid_defpreset_preset_get_name,
+                              fluid_defpreset_preset_get_banknum,
+                              fluid_defpreset_preset_get_num,
+                              fluid_defpreset_preset_noteon,
+                              fluid_defpreset_preset_delete);
+
+    if (preset == NULL) {
+        return FLUID_FAILED;
     }
-    defpreset->next = NULL;
-    prev->next = defpreset;
-  }
-  return FLUID_OK;
+
+    fluid_preset_set_data(preset, defpreset);
+
+    defsfont->preset = fluid_list_append(defsfont->preset, preset);
+
+    return FLUID_OK;
 }
 
 /*
@@ -469,16 +403,22 @@ fluid_defsfont_load_sampledata(fluid_defsfont_t* defsfont, const fluid_file_call
 /*
  * fluid_defsfont_get_preset
  */
-fluid_defpreset_t* fluid_defsfont_get_preset(fluid_defsfont_t* defsfont, unsigned int bank, unsigned int num)
+fluid_preset_t* fluid_defsfont_get_preset(fluid_defsfont_t* defsfont, unsigned int bank, unsigned int num)
 {
-  fluid_defpreset_t* defpreset = defsfont->preset;
-  while (defpreset != NULL) {
-    if ((defpreset->bank == bank) && ((defpreset->num == num))) {
-      return defpreset;
+    fluid_preset_t *preset;
+    fluid_list_t *list;
+
+    for(list = defsfont->preset; list != NULL; list = fluid_list_next(list))
+    {
+        preset = (fluid_preset_t *)fluid_list_get(list);
+
+        if ((fluid_preset_get_banknum(preset) == bank) && (fluid_preset_get_num(preset) == num))
+        {
+            return preset;
+        }
     }
-    defpreset = defpreset->next;
-  }
-  return NULL;
+
+    return NULL;
 }
 
 /*
@@ -486,21 +426,19 @@ fluid_defpreset_t* fluid_defsfont_get_preset(fluid_defsfont_t* defsfont, unsigne
  */
 void fluid_defsfont_iteration_start(fluid_defsfont_t* defsfont)
 {
-  defsfont->iter_cur = defsfont->preset;
+  defsfont->preset_iter_cur = defsfont->preset;
 }
 
 /*
  * fluid_defsfont_iteration_next
  */
-int fluid_defsfont_iteration_next(fluid_defsfont_t* defsfont, fluid_preset_t* preset)
+fluid_preset_t *fluid_defsfont_iteration_next(fluid_defsfont_t* defsfont)
 {
-  if (defsfont->iter_cur == NULL) {
-    return 0;
-  }
+    fluid_preset_t *preset = (fluid_preset_t *)fluid_list_get(defsfont->preset_iter_cur);
 
-  preset->data = (void*) defsfont->iter_cur;
-  defsfont->iter_cur = fluid_defpreset_next(defsfont->iter_cur);
-  return 1;
+    defsfont->preset_iter_cur = fluid_list_next(defsfont->preset_iter_cur);
+
+    return preset;
 }
 
 /***************************************************************

@@ -78,7 +78,7 @@ int fluid_defsfont_sfont_delete(fluid_sfont_t* sfont);
 const char* fluid_defsfont_sfont_get_name(fluid_sfont_t* sfont);
 fluid_preset_t* fluid_defsfont_sfont_get_preset(fluid_sfont_t* sfont, unsigned int bank, unsigned int prenum);
 void fluid_defsfont_sfont_iteration_start(fluid_sfont_t* sfont);
-int fluid_defsfont_sfont_iteration_next(fluid_sfont_t* sfont, fluid_preset_t* preset);
+fluid_preset_t *fluid_defsfont_sfont_iteration_next(fluid_sfont_t* sfont);
 
 
 void fluid_defpreset_preset_delete(fluid_preset_t* preset);
@@ -103,15 +103,12 @@ struct _fluid_defsfont_t
   unsigned int sample24size;		/* length within sffd of the sm24 chunk */
   char* sample24data;        /* if not NULL, the least significant byte of the 24bit sample data, loaded in ram */
   
+  fluid_sfont_t *sfont;      /* pointer to parent sfont */
   fluid_list_t* sample;      /* the samples in this soundfont */
-  fluid_defpreset_t* preset; /* the presets of this soundfont */
+  fluid_list_t* preset;      /* the presets of this soundfont */
   int mlock;                 /* Should we try memlock (avoid swapping)? */
 
-  fluid_defpreset_t* iter_cur;       /* the current preset in the iteration */
-
-  fluid_preset_t** preset_stack; /* List of presets that are available to use */
-  int preset_stack_capacity;     /* Length of preset_stack array */
-  int preset_stack_size;         /* Current number of items in the stack */
+  fluid_list_t *preset_iter_cur;       /* the current preset in the iteration */
 };
 
 
@@ -119,9 +116,9 @@ fluid_defsfont_t* new_fluid_defsfont(fluid_settings_t* settings);
 int delete_fluid_defsfont(fluid_defsfont_t* defsfont);
 int fluid_defsfont_load(fluid_defsfont_t* defsfont, const fluid_file_callbacks_t* file_callbacks, const char* file);
 const char* fluid_defsfont_get_name(fluid_defsfont_t* defsfont);
-fluid_defpreset_t* fluid_defsfont_get_preset(fluid_defsfont_t* defsfont, unsigned int bank, unsigned int prenum);
+fluid_preset_t* fluid_defsfont_get_preset(fluid_defsfont_t* defsfont, unsigned int bank, unsigned int prenum);
 void fluid_defsfont_iteration_start(fluid_defsfont_t* defsfont);
-int fluid_defsfont_iteration_next(fluid_defsfont_t* defsfont, fluid_preset_t* preset);
+fluid_preset_t *fluid_defsfont_iteration_next(fluid_defsfont_t* defsfont);
 int fluid_defsfont_load_sampledata(fluid_defsfont_t* defsfont, const fluid_file_callbacks_t* file_callbacks);
 int fluid_defsfont_add_sample(fluid_defsfont_t* defsfont, fluid_sample_t* sample);
 int fluid_defsfont_add_preset(fluid_defsfont_t* defsfont, fluid_defpreset_t* defpreset);
