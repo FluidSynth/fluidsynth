@@ -38,8 +38,8 @@ fluid_lfo_reset(fluid_lfo_t* lfo)
 }
 
 // These two cannot be inlined since they're used by event_dispatch
-void fluid_lfo_set_incr(fluid_lfo_t* lfo, fluid_real_t increment);
-void fluid_lfo_set_delay(fluid_lfo_t* lfo, unsigned int delay);
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_lfo_set_incr);
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_lfo_set_delay);
 
 static FLUID_INLINE fluid_real_t
 fluid_lfo_get_val(fluid_lfo_t* lfo)

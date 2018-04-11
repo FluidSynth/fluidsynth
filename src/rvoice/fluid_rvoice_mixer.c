@@ -311,14 +311,15 @@ static int fluid_mixer_buffers_replace_voice(fluid_mixer_buffers_t* buffers,
 }
 */
 
-int 
-fluid_rvoice_mixer_add_voice(fluid_rvoice_mixer_t* mixer, fluid_rvoice_t* voice)
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_add_voice)
 {
   int i;
+  fluid_rvoice_mixer_t* mixer = obj;
+  fluid_rvoice_t* voice = param[0].ptr;
 
   if (mixer->active_voices < mixer->polyphony) {
     mixer->rvoices[mixer->active_voices++] = voice;
-    return FLUID_OK;
+    return; // success
   }
   
   /* See if any voices just finished, if so, take its place.
@@ -326,18 +327,18 @@ fluid_rvoice_mixer_add_voice(fluid_rvoice_mixer_t* mixer, fluid_rvoice_t* voice)
   for (i=0; i < mixer->active_voices; i++) {
     if (mixer->rvoices[i] == voice) {
       FLUID_LOG(FLUID_ERR, "Internal error: Trying to replace an existing rvoice in fluid_rvoice_mixer_add_voice?!");
-      return FLUID_FAILED;
+      return;
     }
     if (mixer->rvoices[i]->envlfo.volenv.section == FLUID_VOICE_ENVFINISHED) {
       fluid_finish_rvoice(&mixer->buffers, mixer->rvoices[i]);
       mixer->rvoices[i] = voice;
-      return FLUID_OK;
+      return; // success
     }
   }
 
   /* This should never happen */
   FLUID_LOG(FLUID_ERR, "Trying to exceed polyphony in fluid_rvoice_mixer_add_voice");
-  return FLUID_FAILED;
+  return;
 }
 
 static int 
@@ -359,21 +360,23 @@ fluid_mixer_buffers_update_polyphony(fluid_mixer_buffers_t* buffers, int value)
  * Update polyphony - max number of voices (NOTE: not hard real-time capable)
  * @return FLUID_OK or FLUID_FAILED
  */
-int 
-fluid_rvoice_mixer_set_polyphony(fluid_rvoice_mixer_t* handler, int value)
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_polyphony)
 {
   void* newptr;
+  fluid_rvoice_mixer_t* handler = obj;
+  int value = param[0].i;
+  
   if (handler->active_voices > value) 
-    return FLUID_FAILED;
+    return /*FLUID_FAILED*/;
 
   newptr = FLUID_REALLOC(handler->rvoices, value * sizeof(fluid_rvoice_t*));
   if (newptr == NULL) 
-    return FLUID_FAILED;
+    return /*FLUID_FAILED*/;
   handler->rvoices = newptr;
 
   if (fluid_mixer_buffers_update_polyphony(&handler->buffers, value) 
       == FLUID_FAILED)
-    return FLUID_FAILED;
+    return /*FLUID_FAILED*/;
 
 #ifdef ENABLE_MIXER_THREADS
   {
@@ -381,12 +384,12 @@ fluid_rvoice_mixer_set_polyphony(fluid_rvoice_mixer_t* handler, int value)
     for (i=0; i < handler->thread_count; i++)
       if (fluid_mixer_buffers_update_polyphony(&handler->threads[i], value) 
           == FLUID_FAILED)
-        return FLUID_FAILED;
+        return /*FLUID_FAILED*/;
   }
 #endif
 
   handler->polyphony = value;
-  return FLUID_OK;
+  return /*FLUID_OK*/;
 }
 
 
@@ -497,17 +500,18 @@ fluid_mixer_buffers_init(fluid_mixer_buffers_t* buffers, fluid_rvoice_mixer_t* m
 /**
  * Note: Not hard real-time capable (calls malloc)
  */
-void 
-fluid_rvoice_mixer_set_samplerate(fluid_rvoice_mixer_t* mixer, fluid_real_t samplerate)
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_samplerate)
 {
-  int i;
+  fluid_rvoice_mixer_t* mixer = obj;
+  fluid_real_t samplerate = param[1].real; // becausee fluid_synth_update_mixer() puts real into arg2
+  
   if (mixer->fx.chorus)
     delete_fluid_chorus(mixer->fx.chorus);
+  
   mixer->fx.chorus = new_fluid_chorus(samplerate);
   if (mixer->fx.reverb)
 	  fluid_revmodel_samplerate_change(mixer->fx.reverb, samplerate);
-  for (i=0; i < mixer->active_voices; i++)
-    fluid_rvoice_set_output_rate(mixer->rvoices[i], samplerate);
+  
 #if LADSPA
   if (mixer->ladspa_fx != NULL)
   {
@@ -612,7 +616,6 @@ void delete_fluid_rvoice_mixer(fluid_rvoice_mixer_t* mixer)
 {
   fluid_return_if_fail(mixer != NULL);
   
-  fluid_rvoice_mixer_set_threads(mixer, 0, 0);
 #ifdef ENABLE_MIXER_THREADS
   if (mixer->thread_ready)
     delete_fluid_cond(mixer->thread_ready);
@@ -660,13 +663,18 @@ void fluid_rvoice_mixer_set_ladspa(fluid_rvoice_mixer_t* mixer,
 }
 #endif
 
-void fluid_rvoice_mixer_set_reverb_enabled(fluid_rvoice_mixer_t* mixer, int on)
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_reverb_enabled)
 {
+  fluid_rvoice_mixer_t* mixer = obj;
+  int on = param[0].i;
+  
   mixer->fx.with_reverb = on;
 }
 
-void fluid_rvoice_mixer_set_chorus_enabled(fluid_rvoice_mixer_t* mixer, int on)
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_chorus_enabled)
 {
+  fluid_rvoice_mixer_t* mixer = obj;
+  int on = param[0].i;
   mixer->fx.with_chorus = on;
 }
 
@@ -675,32 +683,40 @@ void fluid_rvoice_mixer_set_mix_fx(fluid_rvoice_mixer_t* mixer, int on)
   mixer->fx.mix_fx_to_out = on;
 }
 
-void fluid_rvoice_mixer_set_chorus_params(fluid_rvoice_mixer_t* mixer, int set, 
-				         int nr, fluid_real_t level, fluid_real_t speed, 
-				         fluid_real_t depth_ms, int type)
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_chorus_params)
 {
+  fluid_rvoice_mixer_t* mixer = obj;
+  int set = param[0].i;
+  int nr = param[1].i;
+  fluid_real_t level = param[2].real;
+  fluid_real_t speed = param[3].real;
+  fluid_real_t depth_ms = param[4].real;
+  int type = param[5].i;
+  
   fluid_chorus_set(mixer->fx.chorus, set, nr, level, speed, depth_ms, type);
 }
-void fluid_rvoice_mixer_set_reverb_params(fluid_rvoice_mixer_t* mixer, int set, 
-					 fluid_real_t roomsize, fluid_real_t damping, 
-					 fluid_real_t width, fluid_real_t level)
+
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_reverb_params)
 {
+    fluid_rvoice_mixer_t* mixer = obj;
+    int set = param[0].i;
+    fluid_real_t roomsize = param[1].real;
+    fluid_real_t damping = param[2].real;
+    fluid_real_t width = param[3].real;
+    fluid_real_t level = param[4].real;
+    
   fluid_revmodel_set(mixer->fx.reverb, set, roomsize, damping, width, level); 
 }
 
-void fluid_rvoice_mixer_reset_fx(fluid_rvoice_mixer_t* mixer)
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_reset_reverb)
 {
-  fluid_revmodel_reset(mixer->fx.reverb);
-  fluid_chorus_reset(mixer->fx.chorus);
-}
-
-void fluid_rvoice_mixer_reset_reverb(fluid_rvoice_mixer_t* mixer)
-{
+  fluid_rvoice_mixer_t* mixer = obj;
   fluid_revmodel_reset(mixer->fx.reverb);
 }
 
-void fluid_rvoice_mixer_reset_chorus(fluid_rvoice_mixer_t* mixer)
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_reset_chorus)
 {
+  fluid_rvoice_mixer_t* mixer = obj;
   fluid_chorus_reset(mixer->fx.chorus);
 }
 
@@ -913,13 +929,14 @@ fluid_render_loop_multithread(fluid_rvoice_mixer_t* mixer)
  * @param thread_count Number of extra mixer threads for multi-core rendering
  * @param prio_level real-time prio level for the extra mixer threads
  */
-void 
-fluid_rvoice_mixer_set_threads(fluid_rvoice_mixer_t* mixer, int thread_count, 
-  			       int prio_level)
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_threads)
 {
 #ifdef ENABLE_MIXER_THREADS
   char name[16];
   int i;
+  fluid_rvoice_mixer_t* mixer = obj;
+  int thread_count = param[0].i;
+  int prio_level = param[1].real;
  
   // Kill all existing threads first
   if (mixer->thread_count) {

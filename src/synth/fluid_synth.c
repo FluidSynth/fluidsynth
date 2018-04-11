@@ -131,6 +131,9 @@ static void fluid_synth_handle_important_channels(void *data, const char *name,
 static void fluid_synth_reset_basic_channel_LOCAL(fluid_synth_t* synth, int chan, int nbr_chan);
 static int fluid_synth_check_next_basic_channel(fluid_synth_t* synth, int basicchan, int mode, int val);
 static void fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth, int basicchan, int mode, int val);
+static int fluid_synth_set_reverb_full_LOCAL(fluid_synth_t* synth, int set, double roomsize,
+                                             double damping, double width, double level);
+
 
 /***************************************************************
  *
@@ -536,14 +539,21 @@ void delete_fluid_sample_timer(fluid_synth_t* synth, fluid_sample_timer_t* timer
  */
 
 static FLUID_INLINE void
-fluid_synth_update_mixer(fluid_synth_t* synth, void* method, int intparam,
+fluid_synth_update_mixer(fluid_synth_t* synth, fluid_rvoice_function_t method, int intparam,
 			 fluid_real_t realparam)
 {
   fluid_return_if_fail(synth != NULL && synth->eventhandler != NULL);
   fluid_return_if_fail(synth->eventhandler->mixer != NULL);
-  fluid_rvoice_eventhandler_push(synth->eventhandler, method, 
+  fluid_rvoice_eventhandler_push_int_real(synth->eventhandler, method, 
 				 synth->eventhandler->mixer,
 				 intparam, realparam);
+}
+
+static FLUID_INLINE unsigned int fluid_synth_get_min_note_length_LOCAL(fluid_synth_t* synth)
+{
+    int i;
+    fluid_settings_getint(synth->settings, "synth.min-note-length", &i);
+    return (unsigned int) (i*synth->sample_rate/1000.0f);
 }
 
 /**
@@ -760,7 +770,7 @@ new_fluid_synth(fluid_settings_t *settings)
     goto error_recovery;
   }
   for (i = 0; i < synth->nvoice; i++) {
-    synth->voice[i] = new_fluid_voice(synth->sample_rate);
+    synth->voice[i] = new_fluid_voice(synth->eventhandler, synth->sample_rate);
     if (synth->voice[i] == NULL) {
       goto error_recovery;
     }
@@ -773,7 +783,9 @@ new_fluid_synth(fluid_settings_t *settings)
   fluid_synth_set_basic_channel_LOCAL(synth, 0, FLUID_CHANNEL_MODE_OMNION_POLY,
                                       synth->midi_channels);
 
-  fluid_synth_set_sample_rate(synth, synth->sample_rate);
+  synth->min_note_length_ticks = fluid_synth_get_min_note_length_LOCAL(synth);
+  
+  
   fluid_synth_update_mixer(synth, fluid_rvoice_mixer_set_polyphony, 
 			   synth->polyphony, 0.0f);
   fluid_synth_set_reverb_on(synth, synth->with_reverb);
@@ -783,18 +795,13 @@ new_fluid_synth(fluid_settings_t *settings)
   synth->curmax = 0;
   synth->dither_index = 0;
 
-  synth->reverb_roomsize = FLUID_REVERB_DEFAULT_ROOMSIZE;
-  synth->reverb_damping = FLUID_REVERB_DEFAULT_DAMP;
-  synth->reverb_width = FLUID_REVERB_DEFAULT_WIDTH;
-  synth->reverb_level = FLUID_REVERB_DEFAULT_LEVEL;
-
-  fluid_rvoice_eventhandler_push5(synth->eventhandler, 
-				  fluid_rvoice_mixer_set_reverb_params,
-				  synth->eventhandler->mixer, 
-				  FLUID_REVMODEL_SET_ALL, synth->reverb_roomsize, 
-				  synth->reverb_damping, synth->reverb_width, 
-				  synth->reverb_level, 0.0f);
-
+  fluid_synth_set_reverb_full_LOCAL(synth,
+                                    FLUID_REVMODEL_SET_ALL,
+                                    FLUID_REVERB_DEFAULT_ROOMSIZE,
+                                    FLUID_REVERB_DEFAULT_DAMP,
+                                    FLUID_REVERB_DEFAULT_WIDTH,
+                                    FLUID_REVERB_DEFAULT_LEVEL);
+  
   /* Initialize multi-core variables if multiple cores enabled */
   if (synth->cores > 1)
   {
@@ -1940,7 +1947,8 @@ fluid_synth_system_reset_LOCAL(fluid_synth_t* synth)
   fluid_synth_set_basic_channel(synth, 0, FLUID_CHANNEL_MODE_OMNION_POLY, 
                                 synth->midi_channels);
 
-  fluid_synth_update_mixer(synth, fluid_rvoice_mixer_reset_fx, 0, 0.0f); 
+  fluid_synth_update_mixer(synth, fluid_rvoice_mixer_reset_reverb, 0, 0.0f);
+  fluid_synth_update_mixer(synth, fluid_rvoice_mixer_reset_chorus, 0, 0.0f);
 
   return FLUID_OK;
 }
@@ -2583,6 +2591,7 @@ fluid_synth_handle_sample_rate(void *data, const char* name, double value)
   fluid_synth_set_sample_rate(synth, (float) value);
 }
 
+
 /**
  * Set sample rate of the synth. 
  * @note This function is currently experimental and should only be 
@@ -2600,8 +2609,7 @@ fluid_synth_set_sample_rate(fluid_synth_t* synth, float sample_rate)
   fluid_clip (sample_rate, 8000.0f, 96000.0f);
   synth->sample_rate = sample_rate;
   
-  fluid_settings_getint(synth->settings, "synth.min-note-length", &i);
-  synth->min_note_length_ticks = (unsigned int) (i*synth->sample_rate/1000.0f);
+  synth->min_note_length_ticks = fluid_synth_get_min_note_length_LOCAL(synth);
   
   for (i=0; i < synth->polyphony; i++)
     fluid_voice_set_output_rate(synth->voice[i], sample_rate);
@@ -2715,7 +2723,7 @@ fluid_synth_update_polyphony_LOCAL(fluid_synth_t* synth, int new_polyphony)
       return FLUID_FAILED;
     synth->voice = new_voices;
     for (i = synth->nvoice; i < new_polyphony; i++) {
-      synth->voice[i] = new_fluid_voice(synth->sample_rate);
+      synth->voice[i] = new_fluid_voice(synth->eventhandler, synth->sample_rate);
       if (synth->voice[i] == NULL) 
 	return FLUID_FAILED;
     
@@ -4141,6 +4149,7 @@ fluid_synth_set_reverb_full(fluid_synth_t* synth, int set, double roomsize,
                             double damping, double width, double level)
 {
   int ret;
+  
   fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
   /* if non of the flags is set, fail */
   fluid_return_val_if_fail (set & FLUID_REVMODEL_SET_ALL, FLUID_FAILED);
@@ -4148,7 +4157,17 @@ fluid_synth_set_reverb_full(fluid_synth_t* synth, int set, double roomsize,
   /* Synth shadow values are set here so that they will be returned if querried */
 
   fluid_synth_api_enter(synth);
+  ret = fluid_synth_set_reverb_full_LOCAL(synth, set, roomsize, damping, width, level);
+  FLUID_API_RETURN(ret);
+}
 
+static int
+fluid_synth_set_reverb_full_LOCAL(fluid_synth_t* synth, int set, double roomsize,
+                            double damping, double width, double level)
+{
+  int ret;
+  fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
+  
   if (set & FLUID_REVMODEL_SET_ROOMSIZE)
     synth->reverb_roomsize = roomsize;
 
@@ -4161,13 +4180,17 @@ fluid_synth_set_reverb_full(fluid_synth_t* synth, int set, double roomsize,
   if (set & FLUID_REVMODEL_SET_LEVEL)
     synth->reverb_level = level;
 
+  param[0].i = set;
+  param[1].real = roomsize;
+  param[2].real = damping;
+  param[3].real = width;
+  param[4].real = level;
   /* finally enqueue an rvoice event to the mixer to actual update reverb */
-  ret = fluid_rvoice_eventhandler_push5(synth->eventhandler,
-				  fluid_rvoice_mixer_set_reverb_params, 
-				  synth->eventhandler->mixer, set, 
-				  roomsize, damping, width, level, 0.0f);
-  
-  FLUID_API_RETURN(ret);
+  ret = fluid_rvoice_eventhandler_push(synth->eventhandler,
+                                             fluid_rvoice_mixer_set_reverb_params,
+                                             synth->eventhandler->mixer,
+                                             param);
+  return ret;
 }
 
 /**
@@ -4333,6 +4356,8 @@ fluid_synth_set_chorus_full(fluid_synth_t* synth, int set, int nr, double level,
                             double speed, double depth_ms, int type)
 {
   int ret;
+  fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
+  
   fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
   /* if non of the flags is set, fail */
   fluid_return_val_if_fail (set & FLUID_CHORUS_SET_ALL, FLUID_FAILED);
@@ -4355,10 +4380,16 @@ fluid_synth_set_chorus_full(fluid_synth_t* synth, int set, int nr, double level,
   if (set & FLUID_CHORUS_SET_TYPE)
     synth->chorus_type = type;
   
-  ret = fluid_rvoice_eventhandler_push5(synth->eventhandler, 
-				  fluid_rvoice_mixer_set_chorus_params,
-				  synth->eventhandler->mixer, set,
-				  nr, level, speed, depth_ms, type);
+  param[0].i = set;
+  param[1].i = nr;
+  param[2].real = level;
+  param[3].real = speed;
+  param[4].real = depth_ms;
+  param[5].i = type;
+  ret = fluid_rvoice_eventhandler_push(synth->eventhandler,
+                                             fluid_rvoice_mixer_set_chorus_params,
+                                             synth->eventhandler->mixer,
+                                             param);
 
   FLUID_API_RETURN(ret);
 }

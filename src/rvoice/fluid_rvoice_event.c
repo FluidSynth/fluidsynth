@@ -24,136 +24,13 @@
 #include "fluid_iir_filter.h"
 #include "fluid_lfo.h"
 #include "fluid_adsr_env.h"
-/* Calling proc without data parameters */
-#define EVENTFUNC_0(proc, type) \
-  if (event->method == proc) { \
-    proc((type) event->object); \
-    return; }
-
-/* Calling proc passing only one real data parameter */
-#define EVENTFUNC_R1(proc, type) \
-  if (event->method == proc) { \
-    if(event->intparam != 0) { FLUID_LOG(FLUID_DBG, "IR-mismatch"); }  \
-    proc((type) event->object, event->realparams[0]); \
-    return; }
-
-/* Calling proc passing pointer parameter */
-#define EVENTFUNC_PTR(proc, type, type2) \
-  if (event->method == proc) { \
-    proc((type) event->object, (type2) event->ptr); \
-    return; }
-
-/* Calling proc passing only int parameter */
-#define EVENTFUNC_I1(proc, type) \
-  if (event->method == proc) { \
-    if(event->realparams[0] != 0.0f) { FLUID_LOG(FLUID_DBG, "IR-mismatch"); }  \
-    proc((type) event->object, event->intparam); \
-    return; } 
-
-/* Calling proc passing: int,int data parameters */
-#define EVENTFUNC_II(proc, type) \
-  if (event->method == proc) { \
-    proc((type) event->object, event->intparam, (int) event->realparams[0]); \
-    return; } 
-
-/* Calling proc passing: int,real data parameters */
-#define EVENTFUNC_IR(proc, type) \
-  if (event->method == proc) { \
-    proc((type) event->object, event->intparam, event->realparams[0]); \
-    return; } 
-  
-/* Calling proc passing: int,real,real,real,real,real data parameters */
-#define EVENTFUNC_ALL(proc, type) \
-  if (event->method == proc) { \
-    proc((type) event->object, event->intparam, event->realparams[0], \
-      event->realparams[1], event->realparams[2], event->realparams[3], \
-      event->realparams[4]); \
-    return; }
-
-/* Calling proc passing: int,int,real,real,real,int data parameters */
-#define EVENTFUNC_IIR3I(proc, type) \
-  if (event->method == proc) { \
-    proc((type) event->object, event->intparam, (int)event->realparams[0], \
-      event->realparams[1], event->realparams[2], event->realparams[3], \
-      (int)event->realparams[4]); \
-    return; }
-
-/* Calling proc passing: int,int,real,real,real,real data parameters */
-#define EVENTFUNC_IIR4(proc, type) \
-  if (event->method == proc) { \
-    proc((type) event->object, event->intparam, (int)event->realparams[0], \
-      event->realparams[1], event->realparams[2], event->realparams[3], \
-      event->realparams[4]); \
-    return; }
-
-/* Calling proc passing: int,real,real,real,real data parameters */
-#define EVENTFUNC_R4(proc, type) \
-  if (event->method == proc) { \
-    proc((type) event->object, event->intparam, event->realparams[0], \
-      event->realparams[1], event->realparams[2], event->realparams[3]); \
-    return; }
-
 
 static int fluid_rvoice_eventhandler_push_LOCAL(fluid_rvoice_eventhandler_t* handler, const fluid_rvoice_event_t* src_event);
 
-void
+static FLUID_INLINE void
 fluid_rvoice_event_dispatch(fluid_rvoice_event_t* event)
 {
-  EVENTFUNC_PTR(fluid_rvoice_mixer_add_voice, fluid_rvoice_mixer_t*, fluid_rvoice_t*);
-  EVENTFUNC_I1(fluid_rvoice_noteoff, fluid_rvoice_t*);
-  EVENTFUNC_0(fluid_rvoice_voiceoff, fluid_rvoice_t*);
-  EVENTFUNC_0(fluid_rvoice_reset, fluid_rvoice_t*);
-  
-  EVENTFUNC_0(fluid_rvoice_multi_retrigger_attack, fluid_rvoice_t*);
-  EVENTFUNC_IR(fluid_rvoice_set_portamento, fluid_rvoice_t*);
-
-  EVENTFUNC_IIR4(fluid_adsr_env_set_data, fluid_adsr_env_t*);
-
-  EVENTFUNC_I1(fluid_lfo_set_delay, fluid_lfo_t*);
-  EVENTFUNC_R1(fluid_lfo_set_incr, fluid_lfo_t*);
-
-  EVENTFUNC_II(fluid_iir_filter_init, fluid_iir_filter_t*);
-  EVENTFUNC_R1(fluid_iir_filter_set_fres, fluid_iir_filter_t*);
-  EVENTFUNC_R1(fluid_iir_filter_set_q, fluid_iir_filter_t*);
-
-  EVENTFUNC_II(fluid_rvoice_buffers_set_mapping, fluid_rvoice_buffers_t*);
-  EVENTFUNC_IR(fluid_rvoice_buffers_set_amp, fluid_rvoice_buffers_t*);
-
-  EVENTFUNC_R1(fluid_rvoice_set_modenv_to_pitch, fluid_rvoice_t*);
-  EVENTFUNC_R1(fluid_rvoice_set_output_rate, fluid_rvoice_t*);
-  EVENTFUNC_R1(fluid_rvoice_set_root_pitch_hz, fluid_rvoice_t*);
-  EVENTFUNC_R1(fluid_rvoice_set_synth_gain, fluid_rvoice_t*);
-  EVENTFUNC_R1(fluid_rvoice_set_pitch, fluid_rvoice_t*);
-  EVENTFUNC_R1(fluid_rvoice_set_attenuation, fluid_rvoice_t*);
-  EVENTFUNC_R1(fluid_rvoice_set_min_attenuation_cB, fluid_rvoice_t*);
-  EVENTFUNC_R1(fluid_rvoice_set_viblfo_to_pitch, fluid_rvoice_t*);
-  EVENTFUNC_R1(fluid_rvoice_set_modlfo_to_pitch, fluid_rvoice_t*);
-  EVENTFUNC_R1(fluid_rvoice_set_modlfo_to_vol, fluid_rvoice_t*);
-  EVENTFUNC_R1(fluid_rvoice_set_modlfo_to_fc, fluid_rvoice_t*);
-  EVENTFUNC_R1(fluid_rvoice_set_modenv_to_fc, fluid_rvoice_t*);
-  EVENTFUNC_R1(fluid_rvoice_set_modenv_to_pitch, fluid_rvoice_t*);
-  EVENTFUNC_I1(fluid_rvoice_set_interp_method, fluid_rvoice_t*);
-  EVENTFUNC_I1(fluid_rvoice_set_start, fluid_rvoice_t*);
-  EVENTFUNC_I1(fluid_rvoice_set_end, fluid_rvoice_t*);
-  EVENTFUNC_I1(fluid_rvoice_set_loopstart, fluid_rvoice_t*);
-  EVENTFUNC_I1(fluid_rvoice_set_loopend, fluid_rvoice_t*);
-  EVENTFUNC_I1(fluid_rvoice_set_samplemode, fluid_rvoice_t*);
-  EVENTFUNC_PTR(fluid_rvoice_set_sample, fluid_rvoice_t*, fluid_sample_t*);
-
-  EVENTFUNC_R1(fluid_rvoice_mixer_set_samplerate, fluid_rvoice_mixer_t*);
-  EVENTFUNC_I1(fluid_rvoice_mixer_set_polyphony, fluid_rvoice_mixer_t*);
-  EVENTFUNC_I1(fluid_rvoice_mixer_set_reverb_enabled, fluid_rvoice_mixer_t*);
-  EVENTFUNC_I1(fluid_rvoice_mixer_set_chorus_enabled, fluid_rvoice_mixer_t*);
-  EVENTFUNC_I1(fluid_rvoice_mixer_set_mix_fx, fluid_rvoice_mixer_t*);
-  EVENTFUNC_0(fluid_rvoice_mixer_reset_fx, fluid_rvoice_mixer_t*);
-  EVENTFUNC_0(fluid_rvoice_mixer_reset_reverb, fluid_rvoice_mixer_t*);
-  EVENTFUNC_0(fluid_rvoice_mixer_reset_chorus, fluid_rvoice_mixer_t*);
-  EVENTFUNC_II(fluid_rvoice_mixer_set_threads, fluid_rvoice_mixer_t*);
- 
-  EVENTFUNC_IIR3I(fluid_rvoice_mixer_set_chorus_params, fluid_rvoice_mixer_t*);
-  EVENTFUNC_R4(fluid_rvoice_mixer_set_reverb_params, fluid_rvoice_mixer_t*);
-
-  FLUID_LOG(FLUID_ERR, "fluid_rvoice_event_dispatch: Unknown method %p to dispatch!", event->method);
+    event->method(event->object, event->param);
 }
 
 
@@ -162,54 +39,43 @@ fluid_rvoice_event_dispatch(fluid_rvoice_event_t* event)
  * use push for all events, then use flush to commit them to the 
  * queue. If threadsafe is false, all events are processed immediately. */
 int
-fluid_rvoice_eventhandler_push(fluid_rvoice_eventhandler_t* handler, 
-                                void* method, void* object, int intparam, 
+fluid_rvoice_eventhandler_push_int_real(fluid_rvoice_eventhandler_t* handler, 
+                                fluid_rvoice_function_t method, void* object, int intparam, 
                                 fluid_real_t realparam)
 {
   fluid_rvoice_event_t local_event;
   
   local_event.method = method;
   local_event.object = object;
-  local_event.intparam = intparam;
-  local_event.realparams[0] = realparam;
+  local_event.param[0].i = intparam;
+  local_event.param[1].real = realparam;
   
   return fluid_rvoice_eventhandler_push_LOCAL(handler, &local_event);
 }
 
+int
+fluid_rvoice_eventhandler_push(fluid_rvoice_eventhandler_t* handler, fluid_rvoice_function_t method, void* object, fluid_rvoice_param_t param[MAX_EVENT_PARAMS])
+{
+  fluid_rvoice_event_t local_event;
+  
+  local_event.method = method;
+  local_event.object = object;
+  FLUID_MEMCPY(&local_event.param, param, sizeof(*param) * MAX_EVENT_PARAMS);
+  
+  return fluid_rvoice_eventhandler_push_LOCAL(handler, &local_event);
+}
 
 int 
 fluid_rvoice_eventhandler_push_ptr(fluid_rvoice_eventhandler_t* handler, 
-                                   void* method, void* object, void* ptr)
+                                   fluid_rvoice_function_t method, void* object, void* ptr)
 {
   fluid_rvoice_event_t local_event;
   
   local_event.method = method;
   local_event.object = object;
-  local_event.ptr = ptr;
+  local_event.param[0].ptr = ptr;
   
   return fluid_rvoice_eventhandler_push_LOCAL(handler, &local_event);
-}
-
-
-int 
-fluid_rvoice_eventhandler_push5(fluid_rvoice_eventhandler_t* handler, 
-                                void* method, void* object, int intparam, 
-                                fluid_real_t r1, fluid_real_t r2, 
-                                fluid_real_t r3, fluid_real_t r4, fluid_real_t r5)
-{
-  fluid_rvoice_event_t local_event;
-  
-  local_event.method = method;
-  local_event.object = object;
-  local_event.intparam = intparam;
-  local_event.realparams[0] = r1;
-  local_event.realparams[1] = r2;
-  local_event.realparams[2] = r3;
-  local_event.realparams[3] = r4;
-  local_event.realparams[4] = r5;
-  
-  return fluid_rvoice_eventhandler_push_LOCAL(handler, &local_event);
-    
 }
 
 static int fluid_rvoice_eventhandler_push_LOCAL(fluid_rvoice_eventhandler_t* handler, const fluid_rvoice_event_t* src_event)
@@ -225,7 +91,7 @@ static int fluid_rvoice_eventhandler_push_LOCAL(fluid_rvoice_eventhandler_t* han
     return FLUID_FAILED; // Buffer full...
   }
 
-  memcpy(event, src_event, sizeof(*event));
+  FLUID_MEMCPY(event, src_event, sizeof(*event));
   
   return FLUID_OK;
 }

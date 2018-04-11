@@ -29,6 +29,7 @@
 #include "fluid_adsr_env.h"
 #include "fluid_lfo.h"
 #include "fluid_rvoice.h"
+#include "fluid_rvoice_event.h"
 #include "fluid_sys.h"
 
 #define NO_CHANNEL             0xff
@@ -69,6 +70,7 @@ struct _fluid_voice_t
 	unsigned char key;              /* the key of the noteon event, quick access for noteoff */
 	unsigned char vel;              /* the velocity of the noteon event */
 	fluid_channel_t* channel;
+	fluid_rvoice_eventhandler_t* eventhandler;
 	fluid_gen_t gen[GEN_LAST];
 	fluid_mod_t mod[FLUID_NUM_MOD];
 	int mod_count;
@@ -114,7 +116,7 @@ struct _fluid_voice_t
 };
 
 
-fluid_voice_t* new_fluid_voice(fluid_real_t output_rate);
+fluid_voice_t* new_fluid_voice(fluid_rvoice_eventhandler_t* handler, fluid_real_t output_rate);
 void delete_fluid_voice(fluid_voice_t* voice);
 
 void fluid_voice_start(fluid_voice_t* voice);
@@ -135,7 +137,7 @@ int fluid_voice_set_param(fluid_voice_t* voice, int gen, fluid_real_t value, int
 /** Set the gain. */
 int fluid_voice_set_gain(fluid_voice_t* voice, fluid_real_t gain);
 
-int fluid_voice_set_output_rate(fluid_voice_t* voice, fluid_real_t value);
+void fluid_voice_set_output_rate(fluid_voice_t* voice, fluid_real_t value);
 
 
 /** Update all the synthesis parameters, which depend on generator

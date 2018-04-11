@@ -26,21 +26,14 @@
 #include "fluid_rvoice_mixer.h"
 #include "fluid_ringbuffer.h"
 
-#define EVENT_REAL_PARAMS (5)
-
 typedef struct _fluid_rvoice_event_t fluid_rvoice_event_t;
 typedef struct _fluid_rvoice_eventhandler_t fluid_rvoice_eventhandler_t;
 
 struct _fluid_rvoice_event_t {
-	void* method;
+	fluid_rvoice_function_t method;
 	void* object;
-	void* ptr;
-	int intparam;
-	fluid_real_t realparams[EVENT_REAL_PARAMS];
+    fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
 };
-
-void fluid_rvoice_event_dispatch(fluid_rvoice_event_t* event);
-
 
 /*
  * Bridge between the renderer thread and the midi state thread. 
@@ -88,17 +81,16 @@ fluid_rvoice_eventhandler_get_finished_voice(fluid_rvoice_eventhandler_t* handle
 }
 
 
-int fluid_rvoice_eventhandler_push(fluid_rvoice_eventhandler_t* handler, 
-                                void* method, void* object, int intparam, 
+int fluid_rvoice_eventhandler_push_int_real(fluid_rvoice_eventhandler_t* handler, 
+                                fluid_rvoice_function_t method, void* object, int intparam, 
                                 fluid_real_t realparam);
 
 int fluid_rvoice_eventhandler_push_ptr(fluid_rvoice_eventhandler_t* handler, 
-                                void* method, void* object, void* ptr); 
+                                fluid_rvoice_function_t method, void* object, void* ptr); 
 
-int fluid_rvoice_eventhandler_push5(fluid_rvoice_eventhandler_t* handler, 
-                                void* method, void* object, int intparam, 
-                                fluid_real_t r1, fluid_real_t r2, 
-                                fluid_real_t r3, fluid_real_t r4, fluid_real_t r5);
+int fluid_rvoice_eventhandler_push(fluid_rvoice_eventhandler_t* handler,
+                                         fluid_rvoice_function_t method, void* object,
+                                         fluid_rvoice_param_t param[MAX_EVENT_PARAMS]);
 
 static FLUID_INLINE void
 fluid_rvoice_eventhandler_add_rvoice(fluid_rvoice_eventhandler_t* handler, 

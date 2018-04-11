@@ -51,26 +51,23 @@ fluid_rvoice_mixer_t* new_fluid_rvoice_mixer(int buf_count, int fx_buf_count,
 
 void delete_fluid_rvoice_mixer(fluid_rvoice_mixer_t*);
 
-void fluid_rvoice_mixer_set_samplerate(fluid_rvoice_mixer_t* mixer, fluid_real_t samplerate);
-void fluid_rvoice_mixer_set_reverb_enabled(fluid_rvoice_mixer_t* mixer, int on);
-void fluid_rvoice_mixer_set_chorus_enabled(fluid_rvoice_mixer_t* mixer, int on);
-void fluid_rvoice_mixer_set_mix_fx(fluid_rvoice_mixer_t* mixer, int on);
-int fluid_rvoice_mixer_set_polyphony(fluid_rvoice_mixer_t* handler, int value);
-int fluid_rvoice_mixer_add_voice(fluid_rvoice_mixer_t* mixer, fluid_rvoice_t* voice);
-void fluid_rvoice_mixer_set_chorus_params(fluid_rvoice_mixer_t* mixer, int set, 
-				         int nr, fluid_real_t level, fluid_real_t speed, 
-				         fluid_real_t depth_ms, int type);
-void fluid_rvoice_mixer_set_reverb_params(fluid_rvoice_mixer_t* mixer, int set, 
-					 fluid_real_t roomsize, fluid_real_t damping, 
-					 fluid_real_t width, fluid_real_t level);
-void fluid_rvoice_mixer_reset_fx(fluid_rvoice_mixer_t* mixer);
-void fluid_rvoice_mixer_reset_reverb(fluid_rvoice_mixer_t* mixer);
-void fluid_rvoice_mixer_reset_chorus(fluid_rvoice_mixer_t* mixer);
 
-void fluid_rvoice_mixer_set_threads(fluid_rvoice_mixer_t* mixer, int thread_count, 
-				    int prio_level);
-				    
-#ifdef LADSPA				    
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_add_voice);
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_samplerate);
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_polyphony);
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_chorus_enabled);
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_reverb_enabled);
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_chorus_params);
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_reverb_params);
+
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_reset_reverb);
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_reset_chorus);
+
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_threads);
+
+
+void fluid_rvoice_mixer_set_mix_fx(fluid_rvoice_mixer_t* mixer, int on);
+#ifdef LADSPA
 void fluid_rvoice_mixer_set_ladspa(fluid_rvoice_mixer_t* mixer,
         fluid_ladspa_fx_t *ladspa_fx, int audio_groups);
 #endif
