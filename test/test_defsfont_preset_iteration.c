@@ -14,8 +14,9 @@ int main(void)
     /* setup */
     fluid_settings_t *settings = new_fluid_settings();
     fluid_synth_t *synth = new_fluid_synth(settings);
+    
     /* Load the VintageDreams soundfont */
-    id = fluid_synth_sfload(synth, DEFAULT_SOUNDFONT, 1);
+    id = fluid_synth_sfload(synth, TEST_SOUNDFONT, 1);
     sfont = fluid_synth_get_sfont_by_id(synth, id);
 
     /* code under test */

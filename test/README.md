@@ -16,4 +16,6 @@ To add a unit test just duplicate an existing one, give it a unique name and upd
 * adding a call to `ADD_FLUID_TEST()` and
 * a dependency to the custom `check` target.
 
-Make sure you call cmake with `-Denable-tests=1` to build and execute the tests via `make check`.
+Make sure you call cmake with `-Denable-tests=1` to build and execute the tests via `make check`. Unit
+tests should use the `VintageDreamsWaves-v2.sf2` as test soundfont. Use the `TEST_SOUNDFONT` macro to
+access it.

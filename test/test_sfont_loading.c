@@ -9,7 +9,6 @@
 // once unloaded by its parent synth
 int main(void)
 {
-    char *s;
     int id;
     fluid_sfont_t *sfont;
     
@@ -22,20 +21,14 @@ int main(void)
     // no sfont loaded
     TEST_ASSERT(fluid_synth_sfcount(synth) == 0);
     
-    TEST_SUCCESS(fluid_settings_dupstr(settings, "synth.default-soundfont", &s))
-        
-    TEST_ASSERT(s[0] != '\0');
-    
-    FLUID_LOG(FLUID_INFO, "Attempt to open %s", s);
-    
     // load a sfont to synth
-    TEST_SUCCESS(id = fluid_synth_sfload(synth, s, 1));
+    TEST_SUCCESS(id = fluid_synth_sfload(synth, TEST_SOUNDFONT, 1));
     // one sfont loaded
     TEST_ASSERT(fluid_synth_sfcount(synth) == 1);
     TEST_ASSERT((sfont = fluid_synth_get_sfont_by_id(synth, id)) != NULL);
     
     // this is still the same filename as we've put in
-    TEST_ASSERT(FLUID_STRCMP(s, fluid_sfont_get_name(sfont)) == 0);
+    TEST_ASSERT(FLUID_STRCMP(TEST_SOUNDFONT, fluid_sfont_get_name(sfont)) == 0);
     TEST_ASSERT(fluid_sfont_get_id(sfont) == id);
     
     // still the same id?
@@ -45,7 +38,7 @@ int main(void)
     TEST_ASSERT((sfont = fluid_synth_get_sfont_by_id(synth, id)) != NULL);
     
     // still the same filename?
-    TEST_ASSERT(FLUID_STRCMP(s, fluid_sfont_get_name(sfont)) == 0);
+    TEST_ASSERT(FLUID_STRCMP(TEST_SOUNDFONT, fluid_sfont_get_name(sfont)) == 0);
     // correct id stored?
     TEST_ASSERT(fluid_sfont_get_id(sfont) == id);
     
@@ -58,6 +51,7 @@ int main(void)
     TEST_SUCCESS(id = fluid_synth_add_sfont(synth, sfont));
     // one sfont loaded
     TEST_ASSERT(fluid_synth_sfcount(synth) == 1);
+    
     
     // destroy the sfont
     TEST_SUCCESS(fluid_synth_sfunload(synth, id, 0));

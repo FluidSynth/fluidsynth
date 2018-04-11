@@ -190,6 +190,9 @@
 /* Define to 1 if you have the ANSI C header files. */
 #cmakedefine STDC_HEADERS @STDC_HEADERS@
 
+/* Soundfont to load for unit testing */
+#cmakedefine TEST_SOUNDFONT "@TEST_SOUNDFONT@"
+
 /* Define to enable SIGFPE assertions */
 #cmakedefine TRAP_ON_FPE @TRAP_ON_FPE@
 
