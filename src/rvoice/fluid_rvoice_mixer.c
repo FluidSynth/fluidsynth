@@ -504,16 +504,15 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_samplerate)
 {
   int i;
   fluid_rvoice_mixer_t* mixer = obj;
-  fluid_real_t samplerate = param[1].real;
-  param[0].real = param[1].real; // FIXME: this is needed for fluid_rvoice_set_output_rate()
+  fluid_real_t samplerate = param[1].real; // becausee fluid_synth_update_mixer() puts real into arg2
   
   if (mixer->fx.chorus)
     delete_fluid_chorus(mixer->fx.chorus);
+  
   mixer->fx.chorus = new_fluid_chorus(samplerate);
   if (mixer->fx.reverb)
 	  fluid_revmodel_samplerate_change(mixer->fx.reverb, samplerate);
-  for (i=0; i < mixer->active_voices; i++)
-    fluid_rvoice_set_output_rate(mixer->rvoices[i], param);
+  
 #if LADSPA
   if (mixer->ladspa_fx != NULL)
   {
