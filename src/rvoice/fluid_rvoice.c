@@ -272,7 +272,7 @@ int
 fluid_rvoice_write (fluid_rvoice_t* voice, fluid_real_t *dsp_buf)
 {
   int ticks = voice->envlfo.ticks;
-  int count;
+  int count, is_looping;
 
   /******************* sample sanity check **********/
 
@@ -358,7 +358,8 @@ fluid_rvoice_write (fluid_rvoice_t* voice, fluid_real_t *dsp_buf)
   /* if phase_incr is not advancing, set it to the minimum fraction value (prevent stuckage) */
   if (voice->dsp.phase_incr == 0) voice->dsp.phase_incr = 1;
 
-  voice->dsp.is_looping = voice->dsp.samplemode == FLUID_LOOP_DURING_RELEASE
+  /* voice is currently looping? */
+  is_looping = voice->dsp.samplemode == FLUID_LOOP_DURING_RELEASE
     || (voice->dsp.samplemode == FLUID_LOOP_UNTIL_RELEASE
 	&& fluid_adsr_env_get_section(&voice->envlfo.volenv) < FLUID_VOICE_ENVRELEASE);
 
@@ -371,17 +372,17 @@ fluid_rvoice_write (fluid_rvoice_t* voice, fluid_real_t *dsp_buf)
   switch (voice->dsp.interp_method)
   {
     case FLUID_INTERP_NONE:
-      count = fluid_rvoice_dsp_interpolate_none (&voice->dsp, dsp_buf);
+      count = fluid_rvoice_dsp_interpolate_none (&voice->dsp, dsp_buf, is_looping);
       break;
     case FLUID_INTERP_LINEAR:
-      count = fluid_rvoice_dsp_interpolate_linear (&voice->dsp, dsp_buf);
+      count = fluid_rvoice_dsp_interpolate_linear (&voice->dsp, dsp_buf, is_looping);
       break;
     case FLUID_INTERP_4THORDER:
     default:
-      count = fluid_rvoice_dsp_interpolate_4th_order (&voice->dsp, dsp_buf);
+      count = fluid_rvoice_dsp_interpolate_4th_order (&voice->dsp, dsp_buf, is_looping);
       break;
     case FLUID_INTERP_7THORDER:
-      count = fluid_rvoice_dsp_interpolate_7th_order (&voice->dsp, dsp_buf);
+      count = fluid_rvoice_dsp_interpolate_7th_order (&voice->dsp, dsp_buf, is_looping);
       break;
   }
   fluid_check_fpe ("voice_write interpolation");

@@ -130,7 +130,7 @@ fluid_rvoice_get_float_sample(const short int* dsp_msb, const char* dsp_lsb, uns
   * the playback pointer.  Questionable quality, but very
   * efficient. */
 int
-fluid_rvoice_dsp_interpolate_none (fluid_rvoice_dsp_t *voice, fluid_real_t *FLUID_RESTRICT dsp_buf)
+fluid_rvoice_dsp_interpolate_none (fluid_rvoice_dsp_t *voice, fluid_real_t *FLUID_RESTRICT dsp_buf, int looping)
 {
   fluid_phase_t dsp_phase = voice->phase;
   fluid_phase_t dsp_phase_incr;
@@ -141,13 +141,9 @@ fluid_rvoice_dsp_interpolate_none (fluid_rvoice_dsp_t *voice, fluid_real_t *FLUI
   unsigned int dsp_i = 0;
   unsigned int dsp_phase_index;
   unsigned int end_index;
-  int looping;
 
   /* Convert playback "speed" floating point value to phase index/fract */
   fluid_phase_set_float (dsp_phase_incr, voice->phase_incr);
-
-  /* voice is currently looping? */
-  looping = voice->is_looping;
  
   end_index = looping ? voice->loopend - 1 : voice->end;
 
@@ -191,7 +187,7 @@ fluid_rvoice_dsp_interpolate_none (fluid_rvoice_dsp_t *voice, fluid_real_t *FLUI
  * smaller if end of sample occurs).
  */
 int
-fluid_rvoice_dsp_interpolate_linear (fluid_rvoice_dsp_t *voice, fluid_real_t *FLUID_RESTRICT dsp_buf)
+fluid_rvoice_dsp_interpolate_linear (fluid_rvoice_dsp_t *voice, fluid_real_t *FLUID_RESTRICT dsp_buf, int looping)
 {
   fluid_phase_t dsp_phase = voice->phase;
   fluid_phase_t dsp_phase_incr;
@@ -204,13 +200,9 @@ fluid_rvoice_dsp_interpolate_linear (fluid_rvoice_dsp_t *voice, fluid_real_t *FL
   unsigned int end_index;
   fluid_real_t point;
   const fluid_real_t *FLUID_RESTRICT coeffs;
-  int looping;
 
   /* Convert playback "speed" floating point value to phase index/fract */
   fluid_phase_set_float (dsp_phase_incr, voice->phase_incr);
-
-  /* voice is currently looping? */
-  looping = voice->is_looping;
 
   /* last index before 2nd interpolation point must be specially handled */
   end_index = (looping ? voice->loopend - 1 : voice->end) - 1;
@@ -280,7 +272,7 @@ fluid_rvoice_dsp_interpolate_linear (fluid_rvoice_dsp_t *voice, fluid_real_t *FL
  * smaller if end of sample occurs).
  */
 int
-fluid_rvoice_dsp_interpolate_4th_order (fluid_rvoice_dsp_t *voice, fluid_real_t *FLUID_RESTRICT dsp_buf)
+fluid_rvoice_dsp_interpolate_4th_order (fluid_rvoice_dsp_t *voice, fluid_real_t *FLUID_RESTRICT dsp_buf, int looping)
 {
   fluid_phase_t dsp_phase = voice->phase;
   fluid_phase_t dsp_phase_incr;
@@ -293,13 +285,9 @@ fluid_rvoice_dsp_interpolate_4th_order (fluid_rvoice_dsp_t *voice, fluid_real_t 
   unsigned int start_index, end_index;
   fluid_real_t start_point, end_point1, end_point2;
   const fluid_real_t *FLUID_RESTRICT coeffs;
-  int looping;
 
   /* Convert playback "speed" floating point value to phase index/fract */
   fluid_phase_set_float (dsp_phase_incr, voice->phase_incr);
-
-  /* voice is currently looping? */
-  looping = voice->is_looping;
 
   /* last index before 4th interpolation point must be specially handled */
   end_index = (looping ? voice->loopend - 1 : voice->end) - 2;
@@ -434,7 +422,7 @@ fluid_rvoice_dsp_interpolate_4th_order (fluid_rvoice_dsp_t *voice, fluid_real_t 
  * smaller if end of sample occurs).
  */
 int
-fluid_rvoice_dsp_interpolate_7th_order (fluid_rvoice_dsp_t *voice, fluid_real_t *FLUID_RESTRICT dsp_buf)
+fluid_rvoice_dsp_interpolate_7th_order (fluid_rvoice_dsp_t *voice, fluid_real_t *FLUID_RESTRICT dsp_buf, int looping)
 {
   fluid_phase_t dsp_phase = voice->phase;
   fluid_phase_t dsp_phase_incr;
@@ -447,7 +435,6 @@ fluid_rvoice_dsp_interpolate_7th_order (fluid_rvoice_dsp_t *voice, fluid_real_t 
   unsigned int start_index, end_index;
   fluid_real_t start_points[3], end_points[3];
   const fluid_real_t *FLUID_RESTRICT coeffs;
-  int looping;
 
   /* Convert playback "speed" floating point value to phase index/fract */
   fluid_phase_set_float (dsp_phase_incr, voice->phase_incr);
@@ -455,9 +442,6 @@ fluid_rvoice_dsp_interpolate_7th_order (fluid_rvoice_dsp_t *voice, fluid_real_t 
   /* add 1/2 sample to dsp_phase since 7th order interpolation is centered on
    * the 4th sample point */
   fluid_phase_incr (dsp_phase, (fluid_phase_t)0x80000000);
-
-  /* voice is currently looping? */
-  looping = voice->is_looping;
 
   /* last index before 7th interpolation point must be specially handled */
   end_index = (looping ? voice->loopend - 1 : voice->end) - 3;
