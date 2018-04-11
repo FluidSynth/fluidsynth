@@ -5,8 +5,8 @@
 #include "utils/fluidsynth_priv.h"
 
 
-// this test aims to make sure that sample data used by multiple synths is not freed
-// once unloaded by its parent synth
+// this tests the soundfont loading API of the synth.
+// might be expanded to test the soundfont loader as well...
 int main(void)
 {
     int id;
