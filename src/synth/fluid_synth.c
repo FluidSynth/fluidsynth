@@ -2494,7 +2494,7 @@ fluid_synth_program_select(fluid_synth_t* synth, int chan, unsigned int sfont_id
   FLUID_API_RETURN_IF_CHAN_DISABLED(FLUID_FAILED);
   
   channel = synth->channel[chan];
-  	  /* ++ Allocate preset */
+  
 	  preset = fluid_synth_get_preset (synth, sfont_id, bank_num, preset_num);
 
 	  if (preset == NULL) {
@@ -2536,7 +2536,7 @@ fluid_synth_program_select_by_sfont_name (fluid_synth_t* synth, int chan,
   FLUID_API_RETURN_IF_CHAN_DISABLED(FLUID_FAILED);
   
   channel = synth->channel[chan];
-	  /* ++ Allocate preset */
+  
 	  preset = fluid_synth_get_preset_by_sfont_name (synth, sfont_name, bank_num,
 													 preset_num);
 	  if (preset == NULL) {
