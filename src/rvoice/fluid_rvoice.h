@@ -121,7 +121,6 @@ struct _fluid_rvoice_dsp_t
 
 	/* Dynamic input to the interpolator below */
 
-	fluid_real_t *dsp_buf;		/* buffer to store interpolated sample data to */
 
 	fluid_real_t amp;                /* current linear amplitude */
 	fluid_real_t amp_incr;		/* amplitude increment value for the next FLUID_BUFSIZE samples */
@@ -194,10 +193,10 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_sample);
 
 /* defined in fluid_rvoice_dsp.c */
 void fluid_rvoice_dsp_config (void);
-int fluid_rvoice_dsp_interpolate_none (fluid_rvoice_dsp_t *voice);
-int fluid_rvoice_dsp_interpolate_linear (fluid_rvoice_dsp_t *voice);
-int fluid_rvoice_dsp_interpolate_4th_order (fluid_rvoice_dsp_t *voice);
-int fluid_rvoice_dsp_interpolate_7th_order (fluid_rvoice_dsp_t *voice);
+int fluid_rvoice_dsp_interpolate_none (fluid_rvoice_dsp_t *voice, fluid_real_t *FLUID_RESTRICT dsp_buf);
+int fluid_rvoice_dsp_interpolate_linear (fluid_rvoice_dsp_t *voice, fluid_real_t *FLUID_RESTRICT dsp_buf);
+int fluid_rvoice_dsp_interpolate_4th_order (fluid_rvoice_dsp_t *voice, fluid_real_t *FLUID_RESTRICT dsp_buf);
+int fluid_rvoice_dsp_interpolate_7th_order (fluid_rvoice_dsp_t *voice, fluid_real_t *FLUID_RESTRICT dsp_buf);
 
 
 /*

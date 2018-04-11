@@ -130,13 +130,12 @@ fluid_rvoice_get_float_sample(const short int* dsp_msb, const char* dsp_lsb, uns
   * the playback pointer.  Questionable quality, but very
   * efficient. */
 int
-fluid_rvoice_dsp_interpolate_none (fluid_rvoice_dsp_t *voice)
+fluid_rvoice_dsp_interpolate_none (fluid_rvoice_dsp_t *voice, fluid_real_t *FLUID_RESTRICT dsp_buf)
 {
   fluid_phase_t dsp_phase = voice->phase;
   fluid_phase_t dsp_phase_incr;
   short int *dsp_data = voice->sample->data;
   char *dsp_data24 = voice->sample->data24;
-  fluid_real_t *dsp_buf = voice->dsp_buf;
   fluid_real_t dsp_amp = voice->amp;
   fluid_real_t dsp_amp_incr = voice->amp_incr;
   unsigned int dsp_i = 0;
@@ -192,20 +191,19 @@ fluid_rvoice_dsp_interpolate_none (fluid_rvoice_dsp_t *voice)
  * smaller if end of sample occurs).
  */
 int
-fluid_rvoice_dsp_interpolate_linear (fluid_rvoice_dsp_t *voice)
+fluid_rvoice_dsp_interpolate_linear (fluid_rvoice_dsp_t *voice, fluid_real_t *FLUID_RESTRICT dsp_buf)
 {
   fluid_phase_t dsp_phase = voice->phase;
   fluid_phase_t dsp_phase_incr;
   short int *dsp_data = voice->sample->data;
   char *dsp_data24 = voice->sample->data24;
-  fluid_real_t *dsp_buf = voice->dsp_buf;
   fluid_real_t dsp_amp = voice->amp;
   fluid_real_t dsp_amp_incr = voice->amp_incr;
   unsigned int dsp_i = 0;
   unsigned int dsp_phase_index;
   unsigned int end_index;
   fluid_real_t point;
-  fluid_real_t *coeffs;
+  const fluid_real_t *FLUID_RESTRICT coeffs;
   int looping;
 
   /* Convert playback "speed" floating point value to phase index/fract */
@@ -282,20 +280,19 @@ fluid_rvoice_dsp_interpolate_linear (fluid_rvoice_dsp_t *voice)
  * smaller if end of sample occurs).
  */
 int
-fluid_rvoice_dsp_interpolate_4th_order (fluid_rvoice_dsp_t *voice)
+fluid_rvoice_dsp_interpolate_4th_order (fluid_rvoice_dsp_t *voice, fluid_real_t *FLUID_RESTRICT dsp_buf)
 {
   fluid_phase_t dsp_phase = voice->phase;
   fluid_phase_t dsp_phase_incr;
   short int *dsp_data = voice->sample->data;
   char *dsp_data24 = voice->sample->data24;
-  fluid_real_t *dsp_buf = voice->dsp_buf;
   fluid_real_t dsp_amp = voice->amp;
   fluid_real_t dsp_amp_incr = voice->amp_incr;
   unsigned int dsp_i = 0;
   unsigned int dsp_phase_index;
   unsigned int start_index, end_index;
   fluid_real_t start_point, end_point1, end_point2;
-  fluid_real_t *coeffs;
+  const fluid_real_t *FLUID_RESTRICT coeffs;
   int looping;
 
   /* Convert playback "speed" floating point value to phase index/fract */
@@ -437,20 +434,19 @@ fluid_rvoice_dsp_interpolate_4th_order (fluid_rvoice_dsp_t *voice)
  * smaller if end of sample occurs).
  */
 int
-fluid_rvoice_dsp_interpolate_7th_order (fluid_rvoice_dsp_t *voice)
+fluid_rvoice_dsp_interpolate_7th_order (fluid_rvoice_dsp_t *voice, fluid_real_t *FLUID_RESTRICT dsp_buf)
 {
   fluid_phase_t dsp_phase = voice->phase;
   fluid_phase_t dsp_phase_incr;
   short int *dsp_data = voice->sample->data;
   char *dsp_data24 = voice->sample->data24;
-  fluid_real_t *dsp_buf = voice->dsp_buf;
   fluid_real_t dsp_amp = voice->amp;
   fluid_real_t dsp_amp_incr = voice->amp_incr;
   unsigned int dsp_i = 0;
   unsigned int dsp_phase_index;
   unsigned int start_index, end_index;
   fluid_real_t start_points[3], end_points[3];
-  fluid_real_t *coeffs;
+  const fluid_real_t *FLUID_RESTRICT coeffs;
   int looping;
 
   /* Convert playback "speed" floating point value to phase index/fract */

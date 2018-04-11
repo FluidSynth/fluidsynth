@@ -367,22 +367,21 @@ fluid_rvoice_write (fluid_rvoice_t* voice, fluid_real_t *dsp_buf)
    * The buffer has to be filled from 0 to FLUID_BUFSIZE-1.
    * Depending on the position in the loop and the loop size, this
    * may require several runs. */
-  voice->dsp.dsp_buf = dsp_buf; 
 
   switch (voice->dsp.interp_method)
   {
     case FLUID_INTERP_NONE:
-      count = fluid_rvoice_dsp_interpolate_none (&voice->dsp);
+      count = fluid_rvoice_dsp_interpolate_none (&voice->dsp, dsp_buf);
       break;
     case FLUID_INTERP_LINEAR:
-      count = fluid_rvoice_dsp_interpolate_linear (&voice->dsp);
+      count = fluid_rvoice_dsp_interpolate_linear (&voice->dsp, dsp_buf);
       break;
     case FLUID_INTERP_4THORDER:
     default:
-      count = fluid_rvoice_dsp_interpolate_4th_order (&voice->dsp);
+      count = fluid_rvoice_dsp_interpolate_4th_order (&voice->dsp, dsp_buf);
       break;
     case FLUID_INTERP_7THORDER:
-      count = fluid_rvoice_dsp_interpolate_7th_order (&voice->dsp);
+      count = fluid_rvoice_dsp_interpolate_7th_order (&voice->dsp, dsp_buf);
       break;
   }
   fluid_check_fpe ("voice_write interpolation");
