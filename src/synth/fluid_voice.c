@@ -218,12 +218,15 @@ new_fluid_voice(fluid_rvoice_eventhandler_t* handler, fluid_real_t output_rate)
     FLUID_LOG(FLUID_ERR, "Out of memory");
     return NULL;
   }
+  
+  voice->can_access_rvoice = TRUE;
+  voice->can_access_overflow_rvoice = TRUE;
+  
   voice->rvoice = FLUID_NEW(fluid_rvoice_t);
   voice->overflow_rvoice = FLUID_NEW(fluid_rvoice_t);
   if (voice->rvoice == NULL || voice->overflow_rvoice == NULL) {
     FLUID_LOG(FLUID_ERR, "Out of memory");
-    FLUID_FREE(voice->rvoice);
-    FLUID_FREE(voice);
+    delete_fluid_voice(voice);
     return NULL;
   }
 
@@ -237,11 +240,9 @@ new_fluid_voice(fluid_rvoice_eventhandler_t* handler, fluid_real_t output_rate)
   voice->output_rate = output_rate;
 
   /* Initialize both the rvoice and overflow_rvoice */
-  voice->can_access_rvoice = TRUE; 
-  voice->can_access_overflow_rvoice = TRUE; 
   fluid_voice_initialize_rvoice(voice, output_rate);
   fluid_voice_swap_rvoice(voice);
-  fluid_voice_initialize_rvoice(voice, output_rate);  
+  fluid_voice_initialize_rvoice(voice, output_rate);
 
   return voice;
 }
