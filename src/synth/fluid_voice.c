@@ -357,11 +357,8 @@ fluid_voice_set_output_rate(fluid_voice_t* voice, fluid_real_t value)
     fluid_voice_off(voice);
   
   voice->output_rate = value;
-  UPDATE_RVOICE_R1(fluid_rvoice_set_output_rate, value);
-  /* Update the other rvoice as well */
-  fluid_voice_swap_rvoice(voice);
-  UPDATE_RVOICE_R1(fluid_rvoice_set_output_rate, value);
-  fluid_voice_swap_rvoice(voice);
+  UPDATE_RVOICE_GENERIC_R1(fluid_rvoice_set_output_rate, voice->rvoice, value);
+  UPDATE_RVOICE_GENERIC_R1(fluid_rvoice_set_output_rate, voice->overflow_rvoice, value);
 }
 
 
