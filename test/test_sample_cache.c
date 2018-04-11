@@ -15,13 +15,13 @@ int main(void)
     fluid_synth_t *synth1 = new_fluid_synth(settings),
                   *synth2 = new_fluid_synth(settings);
     
-    TEST_ASSERT_NEQ(settings, NULL);
-    TEST_ASSERT_NEQ(synth1, NULL);
-    TEST_ASSERT_NEQ(synth2, NULL);
+    TEST_ASSERT(settings != NULL);
+    TEST_ASSERT(synth1 != NULL);
+    TEST_ASSERT(synth2 != NULL);
     
     TEST_SUCCESS(fluid_settings_dupstr(settings, "synth.default-soundfont", &s))
-        
-    TEST_ASSERT_NEQ(s[0], '\0');
+    
+    TEST_ASSERT(s[0] != '\0');
     
     printf("Attempt to open %s\n", s);
     
