@@ -602,4 +602,20 @@ void fluid_clear_fpe_i386(void);
 /* System control */
 void fluid_msleep(unsigned int msecs);
 
+/**
+ * Advances the given \c ptr to the next \c alignment byte boundary.
+ * Make sure you've allocated an extra of \c alignment bytes to avoid a buffer overflow.
+ * 
+ * @return Returned pointer is guarenteed to be aligned to \c alignment boundary and in range \f[ ptr <= returned_ptr < ptr + alignment \f].
+ */
+static FLUID_INLINE void* fluid_align_ptr(const void* ptr, unsigned int alignment)
+{
+    uintptr_t ptr_int = (uintptr_t)ptr;
+    unsigned int offset = ptr_int % alignment;
+    unsigned int add = offset == 0 ? 0 // is already aligned, dont advance, else buffer overrun
+                                   : alignment - offset; // advance the pointer to the next alignment boundary
+    ptr_int += add;
+    return (void*)ptr_int;
+}
+
 #endif /* _FLUID_SYS_H */
