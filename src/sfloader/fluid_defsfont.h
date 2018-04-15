@@ -94,6 +94,7 @@ int fluid_zone_inside_range(fluid_zone_range_t* zone_range, int key, int vel);
  */
 struct _fluid_defsfont_t
 {
+  const fluid_file_callbacks_t* fcbs; /* the file callbacks used to load this Soundfont */
   char* filename;           /* the filename of this soundfont */
   unsigned int samplepos;   /* the position in the file at which the sample data starts */
   unsigned int samplesize;  /* the size of the sample data in bytes */
@@ -107,6 +108,7 @@ struct _fluid_defsfont_t
   fluid_list_t* sample;      /* the samples in this soundfont */
   fluid_list_t* preset;      /* the presets of this soundfont */
   int mlock;                 /* Should we try memlock (avoid swapping)? */
+  int dynamic_samples;       /* Enables dynamic sample loading if set */
 
   fluid_list_t *preset_iter_cur;       /* the current preset in the iteration */
 };
@@ -211,7 +213,6 @@ fluid_inst_zone_t* fluid_inst_zone_next(fluid_inst_zone_t* zone);
 int fluid_inst_zone_import_sfont(fluid_preset_zone_t* preset_zone,
 								 fluid_inst_zone_t* inst_zone, SFZone *sfzone, fluid_defsfont_t* defsfont);
 fluid_sample_t* fluid_inst_zone_get_sample(fluid_inst_zone_t* zone);
-
 
 
 int fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defsfont_t* defsfont);
