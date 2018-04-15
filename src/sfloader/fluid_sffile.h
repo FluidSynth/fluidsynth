@@ -212,7 +212,7 @@ struct _SFShdr
 SFData *fluid_sffile_open(const char *fname, const fluid_file_callbacks_t *fcbs);
 void fluid_sffile_close(SFData *sf);
 int fluid_sffile_parse_presets(SFData *sf);
-int fluid_sffile_read_sample_data(SFData *sf, unsigned int start, unsigned int count,
-                                 short **data, char **data24);
+int fluid_sffile_read_sample_data(SFData *sf, unsigned int sample_start, unsigned int sample_end,
+        int sample_type, short **data, char **data24);
 
 #endif /* _FLUID_SFFILE_H */

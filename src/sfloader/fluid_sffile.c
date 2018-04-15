@@ -26,6 +26,10 @@
 #include "fluid_sfont.h"
 #include "fluid_sys.h"
 
+#if LIBSNDFILE_SUPPORT
+#include <sndfile.h>
+#endif
+
 /*=================================sfload.c========================
   Borrowed from Smurf SoundFont Editor by Josh Green
   =================================================================*/
@@ -289,6 +293,8 @@ static void delete_preset(SFPreset *preset);
 static void delete_inst(SFInst *inst);
 static void delete_zone(SFZone *zone);
 
+static int fluid_sffile_read_vorbis(SFData *sf, unsigned int start_byte, unsigned int end_byte, short **data);
+static int fluid_sffile_read_wav(SFData *sf, unsigned int start, unsigned int end, short **data, char **data24);
 
 /*
  * Open a SoundFont file and parse it's contents into a SFData structure.
@@ -372,108 +378,34 @@ int fluid_sffile_parse_presets(SFData *sf)
 
 /* Load sample data from the soundfont file
  *
- * @param sf SFFile instance
- * @param start start offset of sample data (in sample words from start of sample data chunk)
- * @param count number of samples to read (in sample words)
- * @param data pointer to sample data pointer, set on success
- * @param data24 pointer to 24-bit sample data pointer if 24-bit data present, set on success
+ * This function will always return the sample data in WAV format. If the sample_type specifies an
+ * Ogg Vorbis compressed sample, it will be decompressed automatically before returning.
  *
- * @return FLUID_OK on success, otherwise FLUID_FAILED
+ * @param sf SFData instance
+ * @param sample_start index of first sample point in Soundfont sample chunk
+ * @param sample_end index of last sample point in Soundfont sample chunk
+ * @param sample_type type of the sample in Soundfont
+ * @param data pointer to sample data pointer, will point to loaded sample data on success
+ * @param data24 pointer to 24-bit sample data pointer if 24-bit data present, will point to loaded
+ *               24-bit sample data on success or NULL if no 24-bit data is present in file
+ *
+ * @return The number of sample words in returned buffers or -1 on failure
  */
-int fluid_sffile_read_sample_data(SFData *sf, unsigned int start, unsigned int count,
-                                 short **data, char **data24)
+int fluid_sffile_read_sample_data(SFData *sf, unsigned int sample_start, unsigned int sample_end,
+        int sample_type, short **data, char **data24)
 {
-    unsigned int end;
-    short *loaded_data = NULL;
-    char *loaded_data24 = NULL;
+    int num_samples;
 
-    fluid_return_val_if_fail(count != 0, FLUID_FAILED);
-
-    end = start + count;
-
-    if (((start * 2) > sf->samplesize) || ((end * 2) > sf->samplesize))
+    if (sample_type & FLUID_SAMPLETYPE_OGG_VORBIS)
     {
-        FLUID_LOG(FLUID_ERR, "Sample offsets exceed sample data chunk");
-        goto error_exit;
+        num_samples = fluid_sffile_read_vorbis(sf, sample_start, sample_end, data);
+    }
+    else
+    {
+        num_samples = fluid_sffile_read_wav(sf, sample_start, sample_end, data, data24);
     }
 
-    /* Load 16-bit sample data */
-    if (sf->fcbs->fseek(sf->sffd, sf->samplepos + (start * 2), SEEK_SET) == FLUID_FAILED)
-    {
-        FLUID_LOG(FLUID_ERR, "Failed to seek position in data file");
-        goto error_exit;
-    }
-
-    loaded_data = FLUID_ARRAY(short, count);
-    if (loaded_data == NULL)
-    {
-        FLUID_LOG(FLUID_ERR, "Out of memory");
-        goto error_exit;
-    }
-
-    if (sf->fcbs->fread(loaded_data, count * sizeof(short), sf->sffd) == FLUID_FAILED)
-    {
-        FLUID_LOG(FLUID_ERR, "Failed to read sample data");
-        goto error_exit;
-    }
-
-    /* If this machine is big endian, byte swap the 16 bit samples */
-    if (FLUID_IS_BIG_ENDIAN)
-    {
-        unsigned int i;
-        for (i = 0; i < count; i++)
-        {
-            loaded_data[i] = FLUID_LE16TOH(loaded_data[i]);
-        }
-    }
-
-    *data = loaded_data;
-
-    /* Optionally load additional 8 bit sample data for 24-bit support. Any failures while loading
-     * the 24-bit sample data will be logged as errors but won't prevent the sample reading to
-     * fail, as sound output is still possible with the 16-bit sample data. */
-    if (sf->sample24pos)
-    {
-        if ((start > sf->sample24size) || (end > sf->sample24size))
-        {
-            FLUID_LOG(FLUID_ERR, "Sample offsets exceed 24-bit sample data chunk");
-            goto error24_exit;
-        }
-
-        if (sf->fcbs->fseek(sf->sffd, sf->sample24pos + start, SEEK_SET) == FLUID_FAILED)
-        {
-            FLUID_LOG(FLUID_ERR, "Failed to seek position for 24-bit sample data in data file");
-            goto error24_exit;
-        }
-
-        loaded_data24 = FLUID_ARRAY(char, count);
-        if (loaded_data24 == NULL)
-        {
-            FLUID_LOG(FLUID_ERR, "Out of memory reading 24-bit sample data");
-            goto error24_exit;
-        }
-
-        if (sf->fcbs->fread(loaded_data24, count, sf->sffd) == FLUID_FAILED)
-        {
-            FLUID_LOG(FLUID_ERR, "Failed to read 24-bit sample data");
-            goto error24_exit;
-        }
-    }
-
-    *data24 = loaded_data24;
-
-    return FLUID_OK;
-
-error24_exit:
-    FLUID_LOG(FLUID_WARN, "Ignoring 24-bit sample data, sound quality might suffer");
-    FLUID_FREE(loaded_data24);
-    *data24 = NULL;
-    return FLUID_OK;
-
-error_exit:
-    FLUID_FREE(loaded_data);
-    FLUID_FREE(loaded_data24);
-    return FLUID_FAILED;
+    return num_samples;
 }
 
 /*
@@ -1933,3 +1865,275 @@ static int valid_preset_genid(unsigned short genid)
         i++;
     return (invalid_preset_gen[i] == 0);
 }
+
+
+static int fluid_sffile_read_wav(SFData *sf, unsigned int start, unsigned int end, short **data, char **data24)
+{
+    short *loaded_data = NULL;
+    char *loaded_data24 = NULL;
+
+    int num_samples = (end + 1) - start;
+    fluid_return_val_if_fail(num_samples > 0, -1);
+
+    if ((start * sizeof(short) > sf->samplesize) || (end * sizeof(short) > sf->samplesize))
+    {
+        FLUID_LOG(FLUID_ERR, "Sample offsets exceed sample data chunk");
+        goto error_exit;
+    }
+
+    /* Load 16-bit sample data */
+    if (sf->fcbs->fseek(sf->sffd, sf->samplepos + (start * sizeof(short)), SEEK_SET) == FLUID_FAILED)
+    {
+        FLUID_LOG(FLUID_ERR, "Failed to seek to sample position");
+        goto error_exit;
+    }
+
+    loaded_data = FLUID_ARRAY(short, num_samples);
+    if (loaded_data == NULL)
+    {
+        FLUID_LOG(FLUID_ERR, "Out of memory");
+        goto error_exit;
+    }
+
+    if (sf->fcbs->fread(loaded_data, num_samples * sizeof(short), sf->sffd) == FLUID_FAILED)
+    {
+        FLUID_LOG(FLUID_ERR, "Failed to read sample data");
+        goto error_exit;
+    }
+
+    /* If this machine is big endian, byte swap the 16 bit samples */
+    if (FLUID_IS_BIG_ENDIAN)
+    {
+        int i;
+        for (i = 0; i < num_samples; i++)
+        {
+            loaded_data[i] = FLUID_LE16TOH(loaded_data[i]);
+        }
+    }
+
+    *data = loaded_data;
+
+    /* Optionally load additional 8 bit sample data for 24-bit support. Any failures while loading
+     * the 24-bit sample data will be logged as errors but won't prevent the sample reading to
+     * fail, as sound output is still possible with the 16-bit sample data. */
+    if (sf->sample24pos)
+    {
+        if ((start > sf->sample24size) || (end > sf->sample24size))
+        {
+            FLUID_LOG(FLUID_ERR, "Sample offsets exceed 24-bit sample data chunk");
+            goto error24_exit;
+        }
+
+        if (sf->fcbs->fseek(sf->sffd, sf->sample24pos + start, SEEK_SET) == FLUID_FAILED)
+        {
+            FLUID_LOG(FLUID_ERR, "Failed to seek position for 24-bit sample data in data file");
+            goto error24_exit;
+        }
+
+        loaded_data24 = FLUID_ARRAY(char, num_samples);
+        if (loaded_data24 == NULL)
+        {
+            FLUID_LOG(FLUID_ERR, "Out of memory reading 24-bit sample data");
+            goto error24_exit;
+        }
+
+        if (sf->fcbs->fread(loaded_data24, num_samples, sf->sffd) == FLUID_FAILED)
+        {
+            FLUID_LOG(FLUID_ERR, "Failed to read 24-bit sample data");
+            goto error24_exit;
+        }
+    }
+
+    *data24 = loaded_data24;
+
+    return num_samples;
+
+error24_exit:
+    FLUID_LOG(FLUID_WARN, "Ignoring 24-bit sample data, sound quality might suffer");
+    FLUID_FREE(loaded_data24);
+    *data24 = NULL;
+    return num_samples;
+
+error_exit:
+    FLUID_FREE(loaded_data);
+    FLUID_FREE(loaded_data24);
+    return -1;
+}
+
+
+/* Ogg Vorbis loading and decompression */
+#if LIBSNDFILE_SUPPORT
+
+/* Virtual file access rountines to allow loading individually compressed
+ * samples from the Soundfont sample data chunk using the file callbacks
+ * passing in during opening of the file */
+typedef struct _sfvio_data_t
+{
+    SFData *sffile;
+    sf_count_t start;  /* start byte offset of compressed data */
+    sf_count_t end;    /* end byte offset of compressed data */
+    sf_count_t offset; /* current virtual file offset from start byte offset */
+
+} sfvio_data_t;
+
+static sf_count_t sfvio_get_filelen(void *user_data)
+{
+  sfvio_data_t *data = user_data;
+
+  return (data->end + 1) - data->start;
+}
+
+static sf_count_t sfvio_seek(sf_count_t offset, int whence, void *user_data)
+{
+  sfvio_data_t *data = user_data;
+  SFData *sf = data->sffile;
+  sf_count_t new_offset;
+
+  switch (whence)
+  {
+    case SEEK_SET:
+      new_offset = offset;
+      break;
+    case SEEK_CUR:
+      new_offset = data->offset + offset;
+      break;
+    case SEEK_END:
+      new_offset = sfvio_get_filelen(user_data) + offset;
+      break;
+  }
+
+  if (sf->fcbs->fseek(sf->sffd, sf->samplepos + data->start + new_offset, SEEK_SET) != FLUID_FAILED) {
+      data->offset = new_offset;
+  }
+
+  return data->offset;
+}
+
+static sf_count_t sfvio_read(void* ptr, sf_count_t count, void* user_data)
+{
+  sfvio_data_t *data = user_data;
+  SFData *sf = data->sffile;
+  sf_count_t remain;
+
+  remain = sfvio_get_filelen(user_data) - data->offset;
+  if (count > remain)
+      count = remain;
+
+  if (count == 0)
+  {
+      return count;
+  }
+
+  if (sf->fcbs->fread(ptr, count, sf->sffd) == FLUID_FAILED)
+  {
+      FLUID_LOG(FLUID_ERR, "Failed to read compressed sample data");
+      return 0;
+  }
+
+  data->offset += count;
+
+  return count;
+}
+
+static sf_count_t sfvio_tell(void* user_data)
+{
+  sfvio_data_t *data = user_data;
+
+  return data->offset;
+}
+
+/**
+ * Read Ogg Vorbis compressed data from the Soundfont and decompress it, returning the number of samples
+ * in the decompressed WAV. Only 16-bit mono samples are supported.
+ *
+ * Note that this function takes byte indices for start and end source data. The sample headers in SF3
+ * files use byte indices, so those pointers can be passed directly to this function.
+ *
+ * This function uses a virtual file structure in order to read the Ogg Vorbis
+ * data from arbitrary locations in the source file.
+ */
+static int fluid_sffile_read_vorbis(SFData *sf, unsigned int start_byte, unsigned int end_byte, short **data)
+{
+    SNDFILE *sndfile;
+    SF_INFO sfinfo;
+    SF_VIRTUAL_IO sfvio = {
+      sfvio_get_filelen,
+      sfvio_seek,
+      sfvio_read,
+      NULL,
+      sfvio_tell
+    };
+    sfvio_data_t sfdata;
+    short *wav_data = NULL;
+
+    if ((start_byte > sf->samplesize) || (end_byte > sf->samplesize))
+    {
+        FLUID_LOG(FLUID_ERR, "Ogg Vorbis data offsets exceed sample data chunk");
+        return -1;
+    }
+
+    // Initialize file position indicator and SF_INFO structure
+    sfdata.sffile = sf;
+    sfdata.start = start_byte;
+    sfdata.end = end_byte;
+    sfdata.offset = 0;
+
+    memset(&sfinfo, 0, sizeof(sfinfo));
+
+    /* Seek to beginning of Ogg Vorbis data in Soundfont */
+    if (sf->fcbs->fseek(sf->sffd, sf->samplepos + start_byte, SEEK_SET) == FLUID_FAILED)
+    {
+        FLUID_LOG(FLUID_ERR, "Failed to seek to compressd sample position");
+        return -1;
+    }
+
+    // Open sample as a virtual file
+    sndfile = sf_open_virtual(&sfvio, SFM_READ, &sfinfo, &sfdata);
+    if (!sndfile)
+    {
+      FLUID_LOG(FLUID_ERR, sf_strerror(sndfile));
+      return -1;
+    }
+
+    // Empty sample
+    if (!sfinfo.frames || !sfinfo.channels)
+    {
+      FLUID_LOG(FLUID_DBG, "Empty decompressed sample");
+      *data = NULL;
+      sf_close(sndfile);
+      return 0;
+    }
+
+    /* FIXME: ensure that the decompressed WAV data is 16-bit mono? */
+
+    wav_data = FLUID_ARRAY(short, sfinfo.frames * sfinfo.channels);
+    if (!wav_data)
+    {
+      FLUID_LOG(FLUID_ERR, "Out of memory");
+      goto error_exit;
+    }
+
+    /* Automatically decompresses the Ogg Vorbis data to 16-bit WAV */
+    if (sf_readf_short(sndfile, wav_data, sfinfo.frames) < sfinfo.frames)
+    {
+      FLUID_LOG(FLUID_DBG, "Decompression failed!");
+      FLUID_LOG(FLUID_ERR, sf_strerror(sndfile));
+      goto error_exit;
+    }
+    sf_close(sndfile);
+
+    *data = wav_data;
+
+    return sfinfo.frames;
+
+error_exit:
+    FLUID_FREE(wav_data);
+    sf_close(sndfile);
+    return -1;
+}
+#else
+static int fluid_sffile_read_vorbis(SFData *sf, unsigned int start_byte, unsigned int end_byte, short **data)
+{
+    return -1;
+}
+#endif

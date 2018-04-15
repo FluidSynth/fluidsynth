@@ -252,6 +252,99 @@ const char* fluid_defsfont_get_name(fluid_defsfont_t* defsfont)
   return defsfont->filename;
 }
 
+/* Load sample data for a single sample from the Soundfont file.
+ * Returns FLUID_OK on error, otherwise FLUID_FAILED
+ */
+int fluid_defsfont_load_sampledata(fluid_defsfont_t *defsfont, SFData *sfdata, fluid_sample_t *sample)
+{
+    int num_samples;
+
+    num_samples = fluid_samplecache_load(
+            sfdata, sample->start, sample->end, sample->sampletype,
+            defsfont->mlock, &sample->data, &sample->data24);
+
+    if (num_samples < 0)
+    {
+        return FLUID_FAILED;
+    }
+
+    if (num_samples == 0)
+    {
+        sample->start = sample->end = 0;
+        sample->loopstart= sample->loopend = 0;
+        return FLUID_OK;
+    }
+
+    /* Ogg Vorbis samples already have loop pointers relative to the invididual decompressed sample,
+     * but SF2 samples are relative to sample chunk start, so they need to be adjusted */
+    if (!(sample->sampletype & FLUID_SAMPLETYPE_OGG_VORBIS))
+    {
+        sample->loopstart = sample->loopstart - sample->start;
+        sample->loopend = sample->loopend - sample->start;
+    }
+
+    /* As we've just loaded an individual sample into it's own buffer, we need to adjust the start
+     * and end pointers */
+    sample->start = 0;
+    sample->end = num_samples - 1;
+
+    return FLUID_OK;
+}
+
+/* Loads the sample data for all samples from the Soundfont file. For SF2 files, it loads the data in
+ * one large block. For SF3 files, each compressed sample gets loaded individually.
+ * Returns FLUID_OK on success, otherwise FLUID_FAILED
+ */
+int fluid_defsfont_load_all_sampledata(fluid_defsfont_t *defsfont, SFData *sfdata)
+{
+    fluid_list_t *list;
+    fluid_sample_t *sample;
+    int sf3_file = (sfdata->version.major == 3);
+
+    /* For SF2 files, we load the sample data in one large block */
+    if (!sf3_file)
+    {
+        int read_samples;
+        int num_samples = sfdata->samplesize / sizeof(short);
+
+        read_samples = fluid_samplecache_load(sfdata, 0, num_samples - 1, 0, defsfont->mlock,
+                    &defsfont->sampledata, &defsfont->sample24data);
+        if (read_samples != num_samples)
+        {
+            FLUID_LOG(FLUID_ERR, "Attempted to read %d words of sample data, but got %d instead",
+                    num_samples, read_samples);
+            return FLUID_FAILED;
+        }
+    }
+
+    for (list = defsfont->sample; list; list = fluid_list_next(list))
+    {
+        sample = fluid_list_get(list);
+
+        if (sf3_file)
+        {
+            /* SF3 samples get loaded individually, as most (or all) of them are in Ogg Vorbis format
+             * anyway */
+            if (fluid_defsfont_load_sampledata(defsfont, sfdata, sample) == FLUID_FAILED)
+            {
+                FLUID_LOG(FLUID_ERR, "Failed to load sample '%s'", sample->name);
+                return FLUID_FAILED;
+            }
+            fluid_sample_sanitize_loop(sample, (sample->end + 1) * sizeof(short));
+        }
+        else
+        {
+            /* Data pointers of SF2 samples point to large sample data block loaded above */
+            sample->data = defsfont->sampledata;
+            sample->data24 = defsfont->sample24data;
+            fluid_sample_sanitize_loop(sample, defsfont->samplesize);
+        }
+
+        fluid_voice_optimize_sample(sample);
+    }
+
+    return FLUID_OK;
+}
 
 /*
  * fluid_defsfont_load
@@ -290,14 +383,7 @@ int fluid_defsfont_load(fluid_defsfont_t* defsfont, const fluid_file_callbacks_t
   defsfont->sample24pos = sfdata->sample24pos;
   defsfont->sample24size = sfdata->sample24size;
 
-  /* load sample data in one block */
-  if (fluid_samplecache_load(sfdata, 0, sfdata->samplesize / 2, defsfont->mlock,
-              &defsfont->sampledata, &defsfont->sample24data) == FLUID_FAILED)
-  {
-    goto err_exit;
-  }
-
-  /* Create all the sample headers */
+  /* Create all samples from sample headers */
   p = sfdata->sample;
   while (p != NULL) {
     sfsample = (SFSample *)fluid_list_get(p);
@@ -311,13 +397,20 @@ int fluid_defsfont_load(fluid_defsfont_t* defsfont, const fluid_file_callbacks_t
         sfsample->fluid_sample = sample;
 
         fluid_defsfont_add_sample(defsfont, sample);
-        fluid_voice_optimize_sample(sample);
     }
     else
     {
         delete_fluid_sample(sample);
     }
+
     p = fluid_list_next(p);
+  }
+
+  /* Load all sample data */
+  if (fluid_defsfont_load_all_sampledata(defsfont, sfdata) == FLUID_FAILED)
+  {
+    FLUID_LOG(FLUID_ERR, "Unable to load all sample data");
+    goto err_exit;
   }
 
   /* Load all the presets */
@@ -380,29 +473,6 @@ int fluid_defsfont_add_preset(fluid_defsfont_t* defsfont, fluid_defpreset_t* def
     defsfont->preset = fluid_list_append(defsfont->preset, preset);
 
     return FLUID_OK;
-}
-
-/*
- * fluid_defsfont_load_sampledata
- */
-int
-fluid_defsfont_load_sampledata(fluid_defsfont_t* defsfont, const fluid_file_callbacks_t* fcbs)
-{
-  SFData *sfdata;
-  int ret;
-
-  sfdata = fluid_sffile_open(defsfont->filename, fcbs);
-  if (sfdata == NULL) {
-    FLUID_LOG(FLUID_ERR, "Couldn't load soundfont file");
-    return FLUID_FAILED;
-  }
-
-  /* load sample data in one block */
-  ret = fluid_samplecache_load(sfdata, 0, sfdata->samplesize / 2, defsfont->mlock,
-              &defsfont->sampledata, &defsfont->sample24data);
-
-  fluid_sffile_close (sfdata);
-  return ret;
 }
 
 /*
@@ -1522,6 +1592,7 @@ fluid_sample_in_rom(fluid_sample_t* sample)
   return (sample->sampletype & FLUID_SAMPLETYPE_ROM);
 }
 
+
 /*
  * fluid_sample_import_sfont
  */
@@ -1529,8 +1600,6 @@ int
 fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defsfont_t* defsfont)
 {
   FLUID_STRCPY(sample->name, sfsample->name);
-  sample->data = defsfont->sampledata;
-  sample->data24 = defsfont->sample24data;
   sample->start = sfsample->start;
   sample->end = (sfsample->end > 0) ? sfsample->end - 1 : 0; /* marks last sample, contrary to SF spec. */
   sample->loopstart = sfsample->loopstart;
@@ -1544,14 +1613,6 @@ fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defs
   {
       return FLUID_FAILED;
   }
-
-  if ((sample->sampletype & FLUID_SAMPLETYPE_OGG_VORBIS)
-      && fluid_sample_decompress_vorbis(sample) == FLUID_FAILED)
-  {
-      return FLUID_FAILED;
-  }
-
-  fluid_sample_sanitize_loop(sample, defsfont->samplesize);
 
   return FLUID_OK;
 }
