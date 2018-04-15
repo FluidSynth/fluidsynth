@@ -16,14 +16,24 @@ if ( LIBSNDFILE_HASVORBIS )
 endif ( LIBSNDFILE_HASVORBIS )
 
 
-add_custom_target(check
-COMMAND ${CMAKE_CTEST_COMMAND} -C $<CONFIG>  --output-on-failure
-DEPENDS
-test_sample_cache
-test_sfont_loading
-test_defsfont_preset_iteration
-test_sample_rate_change
-
-test_sf3_sfont_loading
-test_sf3_defsfont_preset_iteration
-)
+if ( LIBSNDFILE_HASVORBIS )
+    add_custom_target(check
+    COMMAND ${CMAKE_CTEST_COMMAND} -C $<CONFIG>  --output-on-failure
+    DEPENDS
+    test_sample_cache
+    test_sfont_loading
+    test_defsfont_preset_iteration
+    test_sample_rate_change
+    test_sf3_sfont_loading
+    test_sf3_defsfont_preset_iteration
+    )
+else ( LIBSNDFILE_HASVORBIS )
+    add_custom_target(check
+    COMMAND ${CMAKE_CTEST_COMMAND} -C $<CONFIG>  --output-on-failure
+    DEPENDS
+    test_sample_cache
+    test_sfont_loading
+    test_defsfont_preset_iteration
+    test_sample_rate_change
+    )
+endif ( LIBSNDFILE_HASVORBIS )
