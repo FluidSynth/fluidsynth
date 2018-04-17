@@ -348,19 +348,17 @@ fluid_file_renderer_process_block(fluid_file_renderer_t* dev)
 
 #else   /* No libsndfile support */
 
-	int n, offset;
+	size_t res, nmemb = dev->buf_size;
 
 	fluid_synth_write_s16(dev->synth, dev->period_size, dev->buf, 0, 2, dev->buf, 1, 2);
 
-	for (offset = 0; offset < dev->buf_size; offset += n) {
-
-		n = fwrite((char*) dev->buf + offset, 1, dev->buf_size - offset, dev->file);
-		if (n < 0) {
+		res = fwrite(dev->buf, 1, nmemb, dev->file);
+		if (res < nmemb) {
 			FLUID_LOG(FLUID_ERR, "Audio output file write error: %s",
 				  strerror (errno));
 			return FLUID_FAILED;
 		}
-	}
+
 	return FLUID_OK;
 #endif
 }
