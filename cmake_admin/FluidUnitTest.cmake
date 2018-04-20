@@ -11,5 +11,10 @@ macro ( ADD_FLUID_TEST _test )
     $<TARGET_PROPERTY:libfluidsynth,INCLUDE_DIRECTORIES> # include all other header search paths needed by libfluidsynth (esp. glib)
     )
 
+    # add the test to ctest
     ADD_TEST(NAME ${_test} COMMAND ${_test})
+    
+    # append the current unit test to check-target as dependency
+    add_dependencies(check ${_test})
+
 endmacro ( ADD_FLUID_TEST )
