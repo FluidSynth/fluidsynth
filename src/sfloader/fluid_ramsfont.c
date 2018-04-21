@@ -95,6 +95,7 @@ fluid_ramsfont_create_sfont()
                           fluid_ramsfont_sfont_delete);
   if (sfont == NULL)
   {
+    delete_fluid_ramsfont(ramsfont);
     return NULL;
   }
 

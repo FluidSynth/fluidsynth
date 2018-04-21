@@ -81,19 +81,19 @@ fluid_sfont_t* fluid_defsfloader_load(fluid_sfloader_t* loader, const char* file
                           fluid_defsfont_sfont_delete);
   if (sfont == NULL)
   {
-    return NULL;
-  }
-
-  defsfont->sfont = sfont;
-
-  if (fluid_defsfont_load(defsfont, &loader->file_callbacks, filename) == FLUID_FAILED) {
     delete_fluid_defsfont(defsfont);
     return NULL;
   }
-
+  
   fluid_sfont_set_iteration_start(sfont, fluid_defsfont_sfont_iteration_start);
   fluid_sfont_set_iteration_next(sfont, fluid_defsfont_sfont_iteration_next);
   fluid_sfont_set_data(sfont, defsfont);
+
+  defsfont->sfont = sfont;
+  if (fluid_defsfont_load(defsfont, &loader->file_callbacks, filename) == FLUID_FAILED) {
+    fluid_sfont_delete_internal(sfont);
+    return NULL;
+  }
 
   return sfont;
 }
