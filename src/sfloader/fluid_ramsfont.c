@@ -95,6 +95,7 @@ fluid_ramsfont_create_sfont()
                           fluid_ramsfont_sfont_delete);
   if (sfont == NULL)
   {
+    delete_fluid_ramsfont(ramsfont);
     return NULL;
   }
 
@@ -149,6 +150,7 @@ void fluid_rampreset_preset_delete(fluid_preset_t* preset)
 {
   fluid_ramsfont_t* ramsfont;
   fluid_rampreset_t* rampreset;
+  fluid_return_if_fail(preset != NULL);
 
   ramsfont = fluid_sfont_get_data(preset->sfont);
   rampreset = fluid_preset_get_data(preset);
