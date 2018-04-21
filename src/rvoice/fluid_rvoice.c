@@ -425,7 +425,7 @@ get_dest_buf(fluid_rvoice_buffers_t* buffers, int index,
  */
 void 
 fluid_rvoice_buffers_mix(fluid_rvoice_buffers_t* buffers, 
-                         fluid_real_t* dsp_buf, int samplecount, 
+                         fluid_real_t* dsp_buf, int start, int samplecount, 
                          fluid_real_t** dest_bufs, int dest_bufcount)
 {
   int bufcount = buffers->count;
@@ -444,7 +444,7 @@ fluid_rvoice_buffers_mix(fluid_rvoice_buffers_t* buffers,
        multiplication per sample */
     next_buf = (i+1 >= bufcount ? NULL : get_dest_buf(buffers, i+1, dest_bufs, dest_bufcount));
     if (next_buf && buffers->bufs[i+1].amp == amp) {
-      for (dsp_i = 0; dsp_i < samplecount; dsp_i++) {
+      for (dsp_i = start; dsp_i < samplecount; dsp_i++) {
         fluid_real_t samp = amp * dsp_buf[dsp_i]; 
         buf[dsp_i] += samp;
         next_buf[dsp_i] += samp;
@@ -452,7 +452,7 @@ fluid_rvoice_buffers_mix(fluid_rvoice_buffers_t* buffers,
       i++;
     }
     else {
-      for (dsp_i = 0; dsp_i < samplecount; dsp_i++)
+      for (dsp_i = start; dsp_i < samplecount; dsp_i++)
         buf[dsp_i] += amp * dsp_buf[dsp_i];
     }
   }

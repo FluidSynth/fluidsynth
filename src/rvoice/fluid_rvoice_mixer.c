@@ -166,36 +166,6 @@ void fluid_rvoice_mixer_set_finished_voices_callback(
 }
 
 
-
-/**
- * Synthesize one voice and add to buffer.
- * NOTE: If return value is less than blockcount*FLUID_BUFSIZE, that means 
- * voice has been finished, removed and possibly replaced with another voice.
- * @return Number of samples written 
- */
-static int
-fluid_mix_one(fluid_rvoice_t* rvoice, fluid_real_t** bufs, unsigned int bufcount, int blockcount)
-{
-  int i, result = 0;
-
-  FLUID_DECLARE_VLA(fluid_real_t, local_buf, FLUID_BUFSIZE*blockcount);
-
-  for (i=0; i < blockcount; i++) {
-    int s = fluid_rvoice_write(rvoice, &local_buf[FLUID_BUFSIZE*i]);
-    if (s == -1) {
-      s = FLUID_BUFSIZE; /* Voice is quiet, TODO: optimize away memset/mix */
-      FLUID_MEMSET(&local_buf[FLUID_BUFSIZE*i], 0, FLUID_BUFSIZE*sizeof(fluid_real_t));
-    } 
-    result += s;
-    if (s < FLUID_BUFSIZE) {
-      break;
-    }
-  }
-  fluid_rvoice_buffers_mix(&rvoice->buffers, local_buf, result, bufs, bufcount);
-
-  return result;
-}
-
 /**
  * Glue to get fluid_rvoice_buffers_mix what it wants
  * Note: Make sure outbufs has 2 * (buf_count + fx_buf_count) elements before calling
@@ -257,15 +227,17 @@ fluid_mixer_buffer_process_finished_voices(fluid_mixer_buffers_t* buffers)
   int i,j;
   for (i=0; i < buffers->finished_voice_count; i++) {
     fluid_rvoice_t* v = buffers->finished_voices[i];
-    int* av = &buffers->mixer->active_voices; 
-    for (j=0; j < *av; j++) {
+    int av = buffers->mixer->active_voices; 
+    for (j=0; j < av; j++) {
       if (v == buffers->mixer->rvoices[j]) {
-        (*av)--;
+        av--;
         /* Pack the array */
-        if (j < *av) 
-          buffers->mixer->rvoices[j] = buffers->mixer->rvoices[*av];
+        if (j < av) 
+          buffers->mixer->rvoices[j] = buffers->mixer->rvoices[av];
       }
     }
+    buffers->mixer->active_voices = av;
+    
     if (buffers->mixer->remove_voice_callback)
       buffers->mixer->remove_voice_callback(
         buffers->mixer->remove_voice_callback_userdata, v);
@@ -283,33 +255,39 @@ static FLUID_INLINE void fluid_rvoice_mixer_process_finished_voices(fluid_rvoice
   fluid_mixer_buffer_process_finished_voices(&mixer->buffers);
 }
 
+
+/**
+ * Synthesize one voice and add to buffer.
+ * NOTE: If return value is less than blockcount*FLUID_BUFSIZE, that means 
+ * voice has been finished, removed and possibly replaced with another voice.
+ */
 static FLUID_INLINE void
 fluid_mixer_buffers_render_one(fluid_mixer_buffers_t* buffers, 
-			       fluid_rvoice_t* voice, fluid_real_t** bufs, 
-			       unsigned int bufcount)
+			       fluid_rvoice_t* rvoice, fluid_real_t** dest_bufs, 
+			       unsigned int dest_bufcount)
 {
-  int s = fluid_mix_one(voice, bufs, bufcount, buffers->mixer->current_blockcount);
-  if (s < buffers->mixer->current_blockcount * FLUID_BUFSIZE) {
-    fluid_finish_rvoice(buffers, voice);
+  int blockcount = buffers->mixer->current_blockcount;
+  int i, result = 0, start = 0;
+
+  FLUID_DECLARE_VLA(fluid_real_t, local_buf, FLUID_BUFSIZE*blockcount);
+
+  for (i=0; i < blockcount; i++) {
+    int s = fluid_rvoice_write(rvoice, &local_buf[FLUID_BUFSIZE*i]);
+    if (s == -1) {
+      start += FLUID_BUFSIZE;
+      s = FLUID_BUFSIZE;
+    }
+    result += s;
+    if (s < FLUID_BUFSIZE) {
+      break;
+    }
+  }
+  fluid_rvoice_buffers_mix(&rvoice->buffers, local_buf, start, result-start, dest_bufs, dest_bufcount);
+
+  if (result < buffers->mixer->current_blockcount * FLUID_BUFSIZE) {
+    fluid_finish_rvoice(buffers, rvoice);
   }
 }
-/*
-static int fluid_mixer_buffers_replace_voice(fluid_mixer_buffers_t* buffers, 
-			                      fluid_rvoice_t* voice)
-{
-  int i, retval=0;
-  int fvc = buffers->finished_voice_count;
-  for (i=0; i < fvc; i++)
-    if (buffers->finished_voices[i] == voice) {
-      fvc--;
-      if (i < fvc)
-        buffers->finished_voices[i] =  buffers->finished_voices[fvc];
-      retval++;
-    }
-  fvc = buffers->finished_voice_count;
-  return retval;  
-}
-*/
 
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_add_voice)
 {
