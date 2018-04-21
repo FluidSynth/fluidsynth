@@ -164,10 +164,6 @@ struct _fluid_rvoice_t
 
 int fluid_rvoice_write(fluid_rvoice_t* voice, fluid_real_t *dsp_buf);
 
-void fluid_rvoice_buffers_mix(fluid_rvoice_buffers_t* buffers, 
-                              fluid_real_t* dsp_buf, int start, int samplecount, 
-                              fluid_real_t** dest_bufs, int dest_bufcount);
-
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_buffers_set_amp);
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_buffers_set_mapping);
 
