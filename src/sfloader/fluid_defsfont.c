@@ -1691,14 +1691,7 @@ static int load_preset_samples(fluid_defsfont_t *defsfont, fluid_preset_t *prese
     fluid_inst_t *inst;
     fluid_inst_zone_t *inst_zone;
     fluid_sample_t *sample;
-    SFData *sffile;
-
-    sffile = fluid_sffile_open(defsfont->filename, defsfont->fcbs);
-    if (sffile == NULL)
-    {
-        FLUID_LOG(FLUID_ERR, "Unable to open Soundfont file");
-        return FLUID_FAILED;
-    }
+    SFData *sffile = NULL;
 
     defpreset = fluid_preset_get_data(preset);
     preset_zone = fluid_defpreset_get_zone(defpreset);
@@ -1713,10 +1706,23 @@ static int load_preset_samples(fluid_defsfont_t *defsfont, fluid_preset_t *prese
             {
                 sample->preset_count++;
 
+                /* If this is the first time this sample has been selected,
+                 * load the sampledata */
                 if (sample->preset_count == 1)
                 {
-                    /* This is the first time this sample has been selected, so
-                     * load the sampledata */
+                    /* Make sure we have an open Soundfont file. Do this here
+                     * to avoid having to open the file if no loading is necessary
+                     * for a preset */
+                    if (sffile == NULL)
+                    {
+                        sffile = fluid_sffile_open(defsfont->filename, defsfont->fcbs);
+                        if (sffile == NULL)
+                        {
+                            FLUID_LOG(FLUID_ERR, "Unable to open Soundfont file");
+                            return FLUID_FAILED;
+                        }
+                    }
+
                     if (fluid_defsfont_load_sampledata(defsfont, sffile, sample) == FLUID_FAILED)
                     {
                         FLUID_LOG(FLUID_ERR, "Unable to load sample '%s', disabling", sample->name);
@@ -1730,7 +1736,10 @@ static int load_preset_samples(fluid_defsfont_t *defsfont, fluid_preset_t *prese
         preset_zone = fluid_preset_zone_next(preset_zone);
     }
 
-    fluid_sffile_close(sffile);
+    if (sffile != NULL)
+    {
+        fluid_sffile_close(sffile);
+    }
 
     return FLUID_OK;
 }
