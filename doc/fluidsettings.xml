@@ -69,7 +69,7 @@ https://stackoverflow.com/a/6251757
         <setting>
             <name>dynamic-sample-loading</name>
             <type>bool</type>
-            <def>0 (TRUE)</def>
+            <def>0 (FALSE)</def>
             <desc>
                 When set to 1 (TRUE), samples are loaded to and unloaded from memory
                 on demand.
