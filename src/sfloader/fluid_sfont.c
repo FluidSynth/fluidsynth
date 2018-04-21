@@ -459,6 +459,7 @@ fluid_sample_set_sound_data (fluid_sample_t* sample,
     {
         FLUID_FREE(sample->data);
         FLUID_FREE(sample->data24);
+        sample->data = sample->data24 = NULL;
     }
 
     if (copy_data)
