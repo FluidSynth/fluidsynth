@@ -1724,7 +1724,12 @@ static int load_preset_samples(fluid_defsfont_t *defsfont, fluid_preset_t *prese
                         }
                     }
 
-                    if (fluid_defsfont_load_sampledata(defsfont, sffile, sample) == FLUID_FAILED)
+                    if (fluid_defsfont_load_sampledata(defsfont, sffile, sample) == FLUID_OK)
+                    {
+                        fluid_sample_sanitize_loop(sample, (sample->end + 1) * sizeof(short));
+                        fluid_voice_optimize_sample(sample);
+                    }
+                    else
                     {
                         FLUID_LOG(FLUID_ERR, "Unable to load sample '%s', disabling", sample->name);
                         sample->start = sample->end = 0;
