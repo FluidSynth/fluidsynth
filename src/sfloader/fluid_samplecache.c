@@ -45,11 +45,13 @@ struct _fluid_samplecache_entry_t
     unsigned int sf_sample24pos;
     unsigned int sf_sample24size;
     unsigned int sample_start;
-    unsigned int sample_count;
+    unsigned int sample_end;
+    int sample_type;
     /*  End of cache key members */
 
     short *sample_data;
     char *sample_data24;
+    int sample_count;
 
     int num_references;
     int mlocked;
@@ -58,8 +60,8 @@ struct _fluid_samplecache_entry_t
 static fluid_list_t *samplecache_list = NULL;
 static fluid_mutex_t samplecache_mutex = FLUID_MUTEX_INIT;
 
-static fluid_samplecache_entry_t *new_samplecache_entry(SFData *sf, unsigned int sample_start, unsigned int sample_count);
-static fluid_samplecache_entry_t *get_samplecache_entry(SFData *sf, unsigned int sample_start, unsigned int sample_count);
+static fluid_samplecache_entry_t *new_samplecache_entry(SFData *sf, unsigned int sample_start, unsigned int sample_end, int sample_type);
+static fluid_samplecache_entry_t *get_samplecache_entry(SFData *sf, unsigned int sample_start, unsigned int sample_end, int sample_type);
 static void delete_samplecache_entry(fluid_samplecache_entry_t *entry);
 
 static int fluid_get_file_modification_time(char *filename, time_t *modification_time);
@@ -68,7 +70,7 @@ static int fluid_get_file_modification_time(char *filename, time_t *modification
 /* PUBLIC INTERFACE */
 
 int fluid_samplecache_load(SFData *sf,
-                           unsigned int sample_start, unsigned int sample_count,
+                           unsigned int sample_start, unsigned int sample_end, int sample_type,
                            int try_mlock, short **sample_data, char **sample_data24)
 {
     fluid_samplecache_entry_t *entry;
@@ -76,13 +78,13 @@ int fluid_samplecache_load(SFData *sf,
 
     fluid_mutex_lock(samplecache_mutex);
 
-    entry = get_samplecache_entry(sf, sample_start, sample_count);
+    entry = get_samplecache_entry(sf, sample_start, sample_end, sample_type);
     if (entry == NULL)
     {
-        entry = new_samplecache_entry(sf, sample_start, sample_count);
+        entry = new_samplecache_entry(sf, sample_start, sample_end, sample_type);
         if (entry == NULL)
         {
-            ret = FLUID_FAILED;
+            ret = -1;
             goto unlock_exit;
         }
 
@@ -93,7 +95,7 @@ int fluid_samplecache_load(SFData *sf,
     {
         /* Lock the memory to disable paging. It's okay if this fails. It
          * probably means that the user doesn't have the required permission. */
-        if (fluid_mlock(entry->sample_data, entry->sample_count * 2) == 0)
+        if (fluid_mlock(entry->sample_data, entry->sample_count * sizeof(short)) == 0)
         {
             if (entry->sample_data24 != NULL)
             {
@@ -106,7 +108,7 @@ int fluid_samplecache_load(SFData *sf,
 
             if (!entry->mlocked)
             {
-                fluid_munlock(entry->sample_data, entry->sample_count * 2);
+                fluid_munlock(entry->sample_data, entry->sample_count * sizeof(short));
                 FLUID_LOG(FLUID_WARN, "Failed to pin the sample data to RAM; swapping is possible.");
             }
         }
@@ -115,7 +117,7 @@ int fluid_samplecache_load(SFData *sf,
     entry->num_references++;
     *sample_data = entry->sample_data;
     *sample_data24 = entry->sample_data24;
-    ret = FLUID_OK;
+    ret = entry->sample_count;
 
 unlock_exit:
     fluid_mutex_unlock(samplecache_mutex);
@@ -143,7 +145,7 @@ int fluid_samplecache_unload(const short *sample_data)
             {
                 if (entry->mlocked)
                 {
-                    fluid_munlock(entry->sample_data, entry->sample_count * 2);
+                    fluid_munlock(entry->sample_data, entry->sample_count * sizeof(short));
                     if (entry->sample_data24 != NULL)
                     {
                         fluid_munlock(entry->sample_data24, entry->sample_count);
@@ -173,7 +175,8 @@ unlock_exit:
 /* Private functions */
 static fluid_samplecache_entry_t *new_samplecache_entry(SFData *sf,
                                                         unsigned int sample_start,
-                                                        unsigned int sample_count)
+                                                        unsigned int sample_end,
+                                                        int sample_type)
 {
     fluid_samplecache_entry_t *entry;
 
@@ -203,10 +206,12 @@ static fluid_samplecache_entry_t *new_samplecache_entry(SFData *sf,
     entry->sf_sample24pos = sf->sample24pos;
     entry->sf_sample24size = sf->sample24size;
     entry->sample_start = sample_start;
-    entry->sample_count = sample_count;
+    entry->sample_end = sample_end;
+    entry->sample_type = sample_type;
 
-    if (fluid_sffile_read_sample_data(sf, sample_start, sample_count,
-                &entry->sample_data, &entry->sample_data24) == FLUID_FAILED)
+    entry->sample_count = fluid_sffile_read_sample_data(sf, sample_start, sample_end, sample_type,
+            &entry->sample_data, &entry->sample_data24);
+    if (entry->sample_count < 0)
     {
         goto error_exit;
     }
@@ -230,7 +235,8 @@ static void delete_samplecache_entry(fluid_samplecache_entry_t *entry)
 
 static fluid_samplecache_entry_t *get_samplecache_entry(SFData *sf,
                                                         unsigned int sample_start,
-                                                        unsigned int sample_count)
+                                                        unsigned int sample_end,
+                                                        int sample_type)
 {
     time_t mtime;
     fluid_list_t *entry_list;
@@ -254,7 +260,8 @@ static fluid_samplecache_entry_t *get_samplecache_entry(SFData *sf,
             (sf->sample24pos == entry->sf_sample24pos) &&
             (sf->sample24size == entry->sf_sample24size) &&
             (sample_start == entry->sample_start) &&
-            (sample_count == entry->sample_count))
+            (sample_end == entry->sample_end) &&
+            (sample_type == entry->sample_type))
         {
             return entry;
         }

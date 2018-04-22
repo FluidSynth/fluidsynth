@@ -193,6 +193,9 @@
 /* Soundfont to load for unit testing */
 #cmakedefine TEST_SOUNDFONT "@TEST_SOUNDFONT@"
 
+/* SF3 Soundfont to load for unit testing */
+#cmakedefine TEST_SOUNDFONT_SF3 "@TEST_SOUNDFONT_SF3@"
+
 /* Define to enable SIGFPE assertions */
 #cmakedefine TRAP_ON_FPE @TRAP_ON_FPE@
 

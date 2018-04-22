@@ -33,6 +33,13 @@
  * compatible as most existing soundfonts expect exactly this (strange, non-standard) behaviour. */
 #define EMU_ATTENUATION_FACTOR (0.4f)
 
+/* Dynamic sample loading functions */
+static int load_preset_samples(fluid_defsfont_t *defsfont, fluid_preset_t *preset);
+static int unload_preset_samples(fluid_defsfont_t *defsfont, fluid_preset_t *preset);
+static void unload_sample(fluid_sample_t *sample);
+static int dynamic_samples_preset_notify(fluid_preset_t *preset, int reason, int chan);
+static int dynamic_samples_sample_notify(fluid_sample_t *sample, int reason);
+
 
 /***************************************************************
  *
@@ -195,6 +202,7 @@ fluid_defsfont_t* new_fluid_defsfont(fluid_settings_t* settings)
   FLUID_MEMSET(defsfont, 0, sizeof(*defsfont));
   
   fluid_settings_getint(settings, "synth.lock-memory", &defsfont->mlock);
+  fluid_settings_getint(settings, "synth.dynamic-sample-loading", &defsfont->dynamic_samples);
 
   return defsfont;
 }
@@ -252,6 +260,115 @@ const char* fluid_defsfont_get_name(fluid_defsfont_t* defsfont)
   return defsfont->filename;
 }
 
+/* Load sample data for a single sample from the Soundfont file.
+ * Returns FLUID_OK on error, otherwise FLUID_FAILED
+ */
+int fluid_defsfont_load_sampledata(fluid_defsfont_t *defsfont, SFData *sfdata, fluid_sample_t *sample)
+{
+    int num_samples;
+    int source_end = sample->source_end;
+
+    /* For uncompressed samples we want to include the 46 zero sample word area following each sample
+     * in the Soundfont. Otherwise samples with loopend > end, which we have decided not to correct, would
+     * be corrected after all in fluid_sample_sanitize_loop */
+    if (!(sample->sampletype & FLUID_SAMPLETYPE_OGG_VORBIS))
+    {
+        source_end += 46;  /* Length of zero sample word after each sample, according to SF specs */
+
+        /* Safeguard against Soundfonts that are not quite valid and don't include 46 sample words after the
+         * last sample */
+        if (source_end >= (defsfont->samplesize  / sizeof(short)))
+        {
+            source_end = defsfont->samplesize  / sizeof(short);
+        }
+    }
+
+    num_samples = fluid_samplecache_load(
+            sfdata, sample->source_start, source_end, sample->sampletype,
+            defsfont->mlock, &sample->data, &sample->data24);
+
+    if (num_samples < 0)
+    {
+        return FLUID_FAILED;
+    }
+
+    if (num_samples == 0)
+    {
+        sample->start = sample->end = 0;
+        sample->loopstart= sample->loopend = 0;
+        return FLUID_OK;
+    }
+
+    /* Ogg Vorbis samples already have loop pointers relative to the invididual decompressed sample,
+     * but SF2 samples are relative to sample chunk start, so they need to be adjusted */
+    if (!(sample->sampletype & FLUID_SAMPLETYPE_OGG_VORBIS))
+    {
+        sample->loopstart = sample->source_loopstart - sample->source_start;
+        sample->loopend = sample->source_loopend - sample->source_start;
+    }
+
+    /* As we've just loaded an individual sample into it's own buffer, we need to adjust the start
+     * and end pointers */
+    sample->start = 0;
+    sample->end = num_samples - 1;
+
+    return FLUID_OK;
+}
+
+/* Loads the sample data for all samples from the Soundfont file. For SF2 files, it loads the data in
+ * one large block. For SF3 files, each compressed sample gets loaded individually.
+ * Returns FLUID_OK on success, otherwise FLUID_FAILED
+ */
+int fluid_defsfont_load_all_sampledata(fluid_defsfont_t *defsfont, SFData *sfdata)
+{
+    fluid_list_t *list;
+    fluid_sample_t *sample;
+    int sf3_file = (sfdata->version.major == 3);
+
+    /* For SF2 files, we load the sample data in one large block */
+    if (!sf3_file)
+    {
+        int read_samples;
+        int num_samples = sfdata->samplesize / sizeof(short);
+
+        read_samples = fluid_samplecache_load(sfdata, 0, num_samples - 1, 0, defsfont->mlock,
+                    &defsfont->sampledata, &defsfont->sample24data);
+        if (read_samples != num_samples)
+        {
+            FLUID_LOG(FLUID_ERR, "Attempted to read %d words of sample data, but got %d instead",
+                    num_samples, read_samples);
+            return FLUID_FAILED;
+        }
+    }
+
+    for (list = defsfont->sample; list; list = fluid_list_next(list))
+    {
+        sample = fluid_list_get(list);
+
+        if (sf3_file)
+        {
+            /* SF3 samples get loaded individually, as most (or all) of them are in Ogg Vorbis format
+             * anyway */
+            if (fluid_defsfont_load_sampledata(defsfont, sfdata, sample) == FLUID_FAILED)
+            {
+                FLUID_LOG(FLUID_ERR, "Failed to load sample '%s'", sample->name);
+                return FLUID_FAILED;
+            }
+            fluid_sample_sanitize_loop(sample, (sample->end + 1) * sizeof(short));
+        }
+        else
+        {
+            /* Data pointers of SF2 samples point to large sample data block loaded above */
+            sample->data = defsfont->sampledata;
+            sample->data24 = defsfont->sample24data;
+            fluid_sample_sanitize_loop(sample, defsfont->samplesize);
+        }
+
+        fluid_voice_optimize_sample(sample);
+    }
+
+    return FLUID_OK;
+}
 
 /*
  * fluid_defsfont_load
@@ -271,11 +388,18 @@ int fluid_defsfont_load(fluid_defsfont_t* defsfont, const fluid_file_callbacks_t
     return FLUID_FAILED;
   }
 
+  defsfont->fcbs = fcbs;
+
   /* The actual loading is done in the sfont and sffile files */
-  sfdata = fluid_sffile_load(file, fcbs);
+  sfdata = fluid_sffile_open(file, fcbs);
   if (sfdata == NULL) {
     FLUID_LOG(FLUID_ERR, "Couldn't load soundfont file");
     return FLUID_FAILED;
+  }
+
+  if (fluid_sffile_parse_presets(sfdata) == FLUID_FAILED) {
+    FLUID_LOG(FLUID_ERR, "Couldn't parse presets from soundfont file");
+    goto err_exit;
   }
 
   /* Keep track of the position and size of the sample data because
@@ -285,14 +409,7 @@ int fluid_defsfont_load(fluid_defsfont_t* defsfont, const fluid_file_callbacks_t
   defsfont->sample24pos = sfdata->sample24pos;
   defsfont->sample24size = sfdata->sample24size;
 
-  /* load sample data in one block */
-  if (fluid_samplecache_load(sfdata, 0, sfdata->samplesize / 2, defsfont->mlock,
-              &defsfont->sampledata, &defsfont->sample24data) == FLUID_FAILED)
-  {
-    goto err_exit;
-  }
-
-  /* Create all the sample headers */
+  /* Create all samples from sample headers */
   p = sfdata->sample;
   while (p != NULL) {
     sfsample = (SFSample *)fluid_list_get(p);
@@ -303,7 +420,6 @@ int fluid_defsfont_load(fluid_defsfont_t* defsfont, const fluid_file_callbacks_t
     if (fluid_sample_import_sfont(sample, sfsample, defsfont) == FLUID_OK)
     {
         fluid_defsfont_add_sample(defsfont, sample);
-        fluid_voice_optimize_sample(sample);
     }
     else
     {
@@ -313,7 +429,18 @@ int fluid_defsfont_load(fluid_defsfont_t* defsfont, const fluid_file_callbacks_t
 
     /* Store reference to FluidSynth sample in SFSample for later IZone fixups */
     sfsample->fluid_sample = sample;
+
     p = fluid_list_next(p);
+  }
+
+  /* If dynamic sample loading is disabled, load all samples in the Soundfont */
+  if (!defsfont->dynamic_samples)
+  {
+    if (fluid_defsfont_load_all_sampledata(defsfont, sfdata) == FLUID_FAILED)
+    {
+        FLUID_LOG(FLUID_ERR, "Unable to load all sample data");
+        goto err_exit;
+    }
   }
 
   /* Load all the presets */
@@ -367,6 +494,11 @@ int fluid_defsfont_add_preset(fluid_defsfont_t* defsfont, fluid_defpreset_t* def
                               fluid_defpreset_preset_noteon,
                               fluid_defpreset_preset_delete);
 
+    if (defsfont->dynamic_samples)
+    {
+        preset->notify = dynamic_samples_preset_notify;
+    }
+
     if (preset == NULL) {
         return FLUID_FAILED;
     }
@@ -376,29 +508,6 @@ int fluid_defsfont_add_preset(fluid_defsfont_t* defsfont, fluid_defpreset_t* def
     defsfont->preset = fluid_list_append(defsfont->preset, preset);
 
     return FLUID_OK;
-}
-
-/*
- * fluid_defsfont_load_sampledata
- */
-int
-fluid_defsfont_load_sampledata(fluid_defsfont_t* defsfont, const fluid_file_callbacks_t* fcbs)
-{
-  SFData *sfdata;
-  int ret;
-
-  sfdata = fluid_sffile_load(defsfont->filename, fcbs);
-  if (sfdata == NULL) {
-    FLUID_LOG(FLUID_ERR, "Couldn't load soundfont file");
-    return FLUID_FAILED;
-  }
-
-  /* load sample data in one block */
-  ret = fluid_samplecache_load(sfdata, 0, sfdata->samplesize / 2, defsfont->mlock,
-              &defsfont->sampledata, &defsfont->sample24data);
-
-  fluid_sffile_close (sfdata);
-  return ret;
 }
 
 /*
@@ -1518,6 +1627,7 @@ fluid_sample_in_rom(fluid_sample_t* sample)
   return (sample->sampletype & FLUID_SAMPLETYPE_ROM);
 }
 
+
 /*
  * fluid_sample_import_sfont
  */
@@ -1525,29 +1635,197 @@ int
 fluid_sample_import_sfont(fluid_sample_t* sample, SFSample* sfsample, fluid_defsfont_t* defsfont)
 {
   FLUID_STRCPY(sample->name, sfsample->name);
-  sample->data = defsfont->sampledata;
-  sample->data24 = defsfont->sample24data;
-  sample->start = sfsample->start;
-  sample->end = (sfsample->end > 0) ? sfsample->end - 1 : 0; /* marks last sample, contrary to SF spec. */
-  sample->loopstart = sfsample->loopstart;
-  sample->loopend = sfsample->loopend;
+
+  sample->source_start = sfsample->start;
+  sample->source_end = (sfsample->end > 0) ? sfsample->end - 1 : 0; /* marks last sample, contrary to SF spec. */
+  sample->source_loopstart = sfsample->loopstart;
+  sample->source_loopend = sfsample->loopend;
+
+  sample->start = sample->source_start;
+  sample->end = sample->source_end;
+  sample->loopstart = sample->source_loopstart;
+  sample->loopend = sample->source_loopend;
   sample->samplerate = sfsample->samplerate;
   sample->origpitch = sfsample->origpitch;
   sample->pitchadj = sfsample->pitchadj;
   sample->sampletype = sfsample->sampletype;
+
+  if (defsfont->dynamic_samples)
+  {
+    sample->notify = dynamic_samples_sample_notify;
+  }
 
   if (fluid_sample_validate(sample, defsfont->samplesize) == FLUID_FAILED)
   {
       return FLUID_FAILED;
   }
 
-  if ((sample->sampletype & FLUID_SAMPLETYPE_OGG_VORBIS)
-      && fluid_sample_decompress_vorbis(sample) == FLUID_FAILED)
-  {
-      return FLUID_FAILED;
-  }
-
-  fluid_sample_sanitize_loop(sample, defsfont->samplesize);
-
   return FLUID_OK;
+}
+
+/* Called if a sample is no longer used by a voice. Used by dynamic sample loading
+ * to unload a sample that is not used by any loaded presets anymore but couldn't
+ * be unloaded straight away because it was still in use by a voice. */
+static int dynamic_samples_sample_notify(fluid_sample_t *sample, int reason)
+{
+    if (reason == FLUID_SAMPLE_DONE && sample->preset_count == 0)
+    {
+        unload_sample(sample);
+    }
+
+    return FLUID_OK;
+}
+
+/* Called if a preset has been selected for or unselected from a channel. Used by
+ * dynamic sample loading to load and unload samples on demand. */
+static int dynamic_samples_preset_notify(fluid_preset_t *preset, int reason, int chan)
+{
+    fluid_defsfont_t *defsfont;
+
+    if (reason == FLUID_PRESET_SELECTED)
+    {
+        FLUID_LOG(FLUID_DBG, "Selected preset '%s' on channel %d", fluid_preset_get_name(preset), chan);
+        defsfont = fluid_sfont_get_data(preset->sfont);
+        load_preset_samples(defsfont, preset);
+    }
+    else if (reason == FLUID_PRESET_UNSELECTED)
+    {
+        FLUID_LOG(FLUID_DBG, "Deselected preset '%s' from channel %d", fluid_preset_get_name(preset), chan);
+        defsfont = fluid_sfont_get_data(preset->sfont);
+        unload_preset_samples(defsfont, preset);
+    }
+
+    return FLUID_OK;
+}
+
+
+/* Walk through all samples used by the passed in preset and make sure that the
+ * sample data is loaded for each sample. Used by dynamic sample loading. */
+static int load_preset_samples(fluid_defsfont_t *defsfont, fluid_preset_t *preset)
+{
+    fluid_defpreset_t *defpreset;
+    fluid_preset_zone_t *preset_zone;
+    fluid_inst_t *inst;
+    fluid_inst_zone_t *inst_zone;
+    fluid_sample_t *sample;
+    SFData *sffile = NULL;
+
+    defpreset = fluid_preset_get_data(preset);
+    preset_zone = fluid_defpreset_get_zone(defpreset);
+    while (preset_zone != NULL)
+    {
+        inst = fluid_preset_zone_get_inst(preset_zone);
+        inst_zone = fluid_inst_get_zone(inst);
+        while (inst_zone != NULL) {
+            sample = fluid_inst_zone_get_sample(inst_zone);
+
+            if ((sample != NULL) && (sample->start != sample->end))
+            {
+                sample->preset_count++;
+
+                /* If this is the first time this sample has been selected,
+                 * load the sampledata */
+                if (sample->preset_count == 1)
+                {
+                    /* Make sure we have an open Soundfont file. Do this here
+                     * to avoid having to open the file if no loading is necessary
+                     * for a preset */
+                    if (sffile == NULL)
+                    {
+                        sffile = fluid_sffile_open(defsfont->filename, defsfont->fcbs);
+                        if (sffile == NULL)
+                        {
+                            FLUID_LOG(FLUID_ERR, "Unable to open Soundfont file");
+                            return FLUID_FAILED;
+                        }
+                    }
+
+                    if (fluid_defsfont_load_sampledata(defsfont, sffile, sample) == FLUID_OK)
+                    {
+                        fluid_sample_sanitize_loop(sample, (sample->end + 1) * sizeof(short));
+                        fluid_voice_optimize_sample(sample);
+                    }
+                    else
+                    {
+                        FLUID_LOG(FLUID_ERR, "Unable to load sample '%s', disabling", sample->name);
+                        sample->start = sample->end = 0;
+                    }
+                }
+            }
+
+            inst_zone = fluid_inst_zone_next(inst_zone);
+        }
+        preset_zone = fluid_preset_zone_next(preset_zone);
+    }
+
+    if (sffile != NULL)
+    {
+        fluid_sffile_close(sffile);
+    }
+
+    return FLUID_OK;
+}
+
+/* Walk through all samples used by the passed in preset and unload the sample data
+ * of each sample that is not used by any selected preset anymore. Used by dynamic
+ * sample loading. */
+static int unload_preset_samples(fluid_defsfont_t *defsfont, fluid_preset_t *preset)
+{
+    fluid_defpreset_t *defpreset;
+    fluid_preset_zone_t *preset_zone;
+    fluid_inst_t *inst;
+    fluid_inst_zone_t *inst_zone;
+    fluid_sample_t *sample;
+
+    defpreset = fluid_preset_get_data(preset);
+    preset_zone = fluid_defpreset_get_zone(defpreset);
+    while (preset_zone != NULL)
+    {
+        inst = fluid_preset_zone_get_inst(preset_zone);
+        inst_zone = fluid_inst_get_zone(inst);
+        while (inst_zone != NULL) {
+            sample = fluid_inst_zone_get_sample(inst_zone);
+
+            if ((sample != NULL) && (sample->preset_count > 0))
+            {
+                sample->preset_count--;
+
+                /* If the sample is not used by any preset or used by a
+                 * sounding voice, unload it from the sample cache. If it's
+                 * still in use by a voice, dynamic_samples_sample_notify will
+                 * take care of unloading the sample as soon as the voice is
+                 * finished with it (but only on the next API call). */
+                if (sample->preset_count == 0 && sample->refcount == 0)
+                {
+                    unload_sample(sample);
+                }
+            }
+
+            inst_zone = fluid_inst_zone_next(inst_zone);
+        }
+        preset_zone = fluid_preset_zone_next(preset_zone);
+    }
+
+    return FLUID_OK;
+}
+
+/* Unload an unused sample from the samplecache */
+static void unload_sample(fluid_sample_t *sample)
+{
+    fluid_return_if_fail(sample != NULL);
+    fluid_return_if_fail(sample->data != NULL);
+    fluid_return_if_fail(sample->preset_count == 0);
+    fluid_return_if_fail(sample->refcount == 0);
+
+    FLUID_LOG(FLUID_DBG, "Unloading sample '%s'", sample->name);
+
+    if (fluid_samplecache_unload(sample->data) == FLUID_FAILED)
+    {
+        FLUID_LOG(FLUID_ERR, "Unable to unload sample '%s'", sample->name);
+    }
+    else
+    {
+        sample->data = NULL;
+        sample->data24 = NULL;
+    }
 }

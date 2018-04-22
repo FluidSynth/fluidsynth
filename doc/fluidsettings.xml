@@ -67,6 +67,15 @@ https://stackoverflow.com/a/6251757
                 Device identifier used for SYSEX commands, such as MIDI Tuning Standard commands. Only those SYSEX commands destined for this ID or to all devices will be acted upon.</desc>
         </setting>
         <setting>
+            <name>dynamic-sample-loading</name>
+            <type>bool</type>
+            <def>0 (FALSE)</def>
+            <desc>
+                When set to 1 (TRUE), samples are loaded to and unloaded from memory
+                on demand.
+            </desc>
+        </setting>
+        <setting>
             <name>effects-channels</name>
             <type>int</type>
             <def>2</def>

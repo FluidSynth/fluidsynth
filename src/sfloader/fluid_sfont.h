@@ -26,7 +26,6 @@
 
 int fluid_sample_validate(fluid_sample_t *sample, unsigned int max_end);
 int fluid_sample_sanitize_loop(fluid_sample_t *sample, unsigned int max_end);
-int fluid_sample_decompress_vorbis(fluid_sample_t *sample);
 
 /*
  * Utility macros to access soundfonts, presets, and samples
@@ -177,10 +176,22 @@ struct _fluid_preset_t {
 struct _fluid_sample_t
 {
   char name[21];                /**< Sample name */
+
+  /* The following for sample pointers store the original pointers from the Soundfont
+   * file. They are never changed after loading and are used to re-create the
+   * actual sample pointers after a sample has been unloaded and loaded again. The
+   * actual sample pointers get modified during loading for SF3 (compressed) samples
+   * and individually loaded SF2 samples. */
+  unsigned int source_start;
+  unsigned int source_end;
+  unsigned int source_loopstart;
+  unsigned int source_loopend;
+
   unsigned int start;           /**< Start index */
   unsigned int end;	        /**< End index, index of last valid sample point (contrary to SF spec) */
   unsigned int loopstart;       /**< Loop start index */
   unsigned int loopend;         /**< Loop end index, first point following the loop (superimposed on loopstart) */
+
   unsigned int samplerate;      /**< Sample rate */
   int origpitch;                /**< Original pitch (MIDI note number, 0-127) */
   int pitchadj;                 /**< Fine pitch adjustment (+/- 99 cents) */
@@ -193,6 +204,7 @@ struct _fluid_sample_t
   double amplitude_that_reaches_noise_floor;            /**< The amplitude at which the sample's loop will be below the noise floor.  For voice off optimization, calculated automatically. */
 
   unsigned int refcount;        /**< Count of voices using this sample */
+  int preset_count;             /**< Count of selected presets using this sample (used for dynamic sample loading) */
 
   /**
    * Implement this function to receive notification when sample is no longer used.
