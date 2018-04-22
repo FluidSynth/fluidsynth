@@ -53,6 +53,7 @@ typedef struct _fluid_defpreset_t fluid_defpreset_t;
 typedef struct _fluid_preset_zone_t fluid_preset_zone_t;
 typedef struct _fluid_inst_t fluid_inst_t;
 typedef struct _fluid_inst_zone_t fluid_inst_zone_t;            /**< Soundfont Instrument Zone */
+typedef struct _fluid_voice_zone_t fluid_voice_zone_t;
 
 /* defines the velocity and key range for a zone */
 struct _fluid_zone_range_t
@@ -64,6 +65,13 @@ struct _fluid_zone_range_t
   unsigned char ignore;	/* set to TRUE for legato playing to ignore this range zone */
 };
 
+/* Stored on a preset zone to keep track of the inst zones that could start a voice
+ * and their combined preset zone/instument zone ranges */
+struct _fluid_voice_zone_t
+{
+    fluid_inst_zone_t *inst_zone;
+    fluid_zone_range_t range;
+};
 
 /*
 
@@ -163,6 +171,7 @@ struct _fluid_preset_zone_t
   fluid_preset_zone_t* next;
   char* name;
   fluid_inst_t* inst;
+  fluid_list_t* voice_zone;
   fluid_zone_range_t range;
   fluid_gen_t gen[GEN_LAST];
   fluid_mod_t * mod; /* List of modulators */
@@ -210,8 +219,7 @@ struct _fluid_inst_zone_t
 fluid_inst_zone_t* new_fluid_inst_zone(char* name);
 void delete_fluid_inst_zone(fluid_inst_zone_t* zone);
 fluid_inst_zone_t* fluid_inst_zone_next(fluid_inst_zone_t* zone);
-int fluid_inst_zone_import_sfont(fluid_preset_zone_t* preset_zone,
-								 fluid_inst_zone_t* inst_zone, SFZone *sfzone, fluid_defsfont_t* defsfont);
+int fluid_inst_zone_import_sfont(fluid_inst_zone_t* inst_zone, SFZone *sfzone, fluid_defsfont_t* defsfont);
 fluid_sample_t* fluid_inst_zone_get_sample(fluid_inst_zone_t* zone);
 
 

@@ -636,7 +636,8 @@ fluid_defpreset_noteon(fluid_defpreset_t* defpreset, fluid_synth_t* synth, int c
   fluid_preset_zone_t *preset_zone, *global_preset_zone;
   fluid_inst_t* inst;
   fluid_inst_zone_t *inst_zone, *global_inst_zone;
-  fluid_sample_t* sample;
+  fluid_voice_zone_t *voice_zone;
+  fluid_list_t *list;
   fluid_voice_t* voice;
   fluid_mod_t * mod;
   fluid_mod_t * mod_list[FLUID_NUM_MOD]; /* list for 'sorting' preset modulators */
@@ -656,24 +657,20 @@ fluid_defpreset_noteon(fluid_defpreset_t* defpreset, fluid_synth_t* synth, int c
       inst = fluid_preset_zone_get_inst(preset_zone);
       global_inst_zone = fluid_inst_get_global_zone(inst);
 
-      /* run thru all the zones of this instrument */
-      inst_zone = fluid_inst_get_zone(inst);
-	  while (inst_zone != NULL) {
-	/* make sure this instrument zone has a valid sample */
-	sample = fluid_inst_zone_get_sample(inst_zone);
-	if ((sample == NULL) || fluid_sample_in_rom(sample)) {
-	  inst_zone = fluid_inst_zone_next(inst_zone);
-	  continue;
-	}
+      /* run thru all the zones of this instrument that could start a voice */
+      for (list = preset_zone->voice_zone; list != NULL; list = fluid_list_next(list)) {
+        voice_zone = fluid_list_get(list);
 
 	/* check if the instrument zone is ignored and the note falls into
 	   the key and velocity range of this  instrument zone.
 	   An instrument zone must be ignored when its voice is already running
 	   played by a legato passage (see fluid_synth_noteon_monopoly_legato()) */
-	if (fluid_zone_inside_range(&inst_zone->range, key, vel)) {
+	if (fluid_zone_inside_range(&voice_zone->range, key, vel)) {
+
+        inst_zone = voice_zone->inst_zone;
 
 	  /* this is a good zone. allocate a new synthesis process and initialize it */
-	  voice = fluid_synth_alloc_voice_LOCAL(synth, sample, chan, key, vel, &inst_zone->range);
+	  voice = fluid_synth_alloc_voice_LOCAL(synth, inst_zone->sample, chan, key, vel, &voice_zone->range);
 	  if (voice == NULL) {
 	    return FLUID_FAILED;
 	  }
@@ -842,7 +839,6 @@ fluid_defpreset_noteon(fluid_defpreset_t* defpreset, fluid_synth_t* synth, int c
 	   */
 	}
 
-	inst_zone = fluid_inst_zone_next(inst_zone);
       }
 	}
     preset_zone = fluid_preset_zone_next(preset_zone);
@@ -994,6 +990,7 @@ void
 delete_fluid_preset_zone(fluid_preset_zone_t* zone)
 {
   fluid_mod_t *mod, *tmp;
+  fluid_list_t *list;
 
   fluid_return_if_fail(zone != NULL);
   
@@ -1005,9 +1002,61 @@ delete_fluid_preset_zone(fluid_preset_zone_t* zone)
       delete_fluid_mod (tmp);
     }
 
+  for (list = zone->voice_zone; list != NULL; list = fluid_list_next(list))
+  {
+      FLUID_FREE(fluid_list_get(list));
+  }
+  delete_fluid_list(zone->voice_zone);
+
   FLUID_FREE (zone->name);
   delete_fluid_inst (zone->inst);
   FLUID_FREE(zone);
+}
+
+static int fluid_preset_zone_create_voice_zones(fluid_preset_zone_t* preset_zone)
+{
+    fluid_inst_zone_t *inst_zone;
+    fluid_sample_t *sample;
+    fluid_voice_zone_t *voice_zone;
+    fluid_zone_range_t *irange;
+    fluid_zone_range_t *prange = &preset_zone->range;
+
+    fluid_return_val_if_fail(preset_zone->inst != NULL, FLUID_FAILED);
+
+    inst_zone = fluid_inst_get_zone(preset_zone->inst);
+    while (inst_zone != NULL) {
+
+        /* We only create voice ranges for zones that could actually start a voice,
+         * i.e. that have a sample and don't point to ROM */
+        sample = fluid_inst_zone_get_sample(inst_zone);
+        if ((sample == NULL) || fluid_sample_in_rom(sample))
+        {
+            inst_zone = fluid_inst_zone_next(inst_zone);
+            continue;
+        }
+
+        voice_zone = FLUID_NEW(fluid_voice_zone_t);
+        if (voice_zone == NULL)
+        {
+            FLUID_LOG(FLUID_ERR, "Out of memory");
+            return FLUID_FAILED;
+        }
+
+        voice_zone->inst_zone = inst_zone;
+
+        irange = &inst_zone->range;
+
+        voice_zone->range.keylo = (prange->keylo > irange->keylo) ? prange->keylo : irange->keylo;
+        voice_zone->range.keyhi = (prange->keyhi < irange->keyhi) ? prange->keyhi : irange->keyhi;
+        voice_zone->range.vello = (prange->vello > irange->vello) ? prange->vello : irange->vello;
+        voice_zone->range.velhi = (prange->velhi < irange->velhi) ? prange->velhi : irange->velhi;
+
+        preset_zone->voice_zone = fluid_list_append(preset_zone->voice_zone, voice_zone);
+
+        inst_zone = fluid_inst_zone_next(inst_zone);
+    }
+
+    return FLUID_OK;
 }
 
 /*
@@ -1053,6 +1102,11 @@ fluid_preset_zone_import_sfont(fluid_preset_zone_t* zone, SFZone *sfzone, fluid_
     if (fluid_inst_import_sfont(zone, zone->inst, 
 							(SFInst *) sfzone->instsamp->data, defsfont) != FLUID_OK) {
       return FLUID_FAILED;
+    }
+
+    if (fluid_preset_zone_create_voice_zones(zone) == FLUID_FAILED)
+    {
+        return FLUID_FAILED;
     }
   }
 
@@ -1284,7 +1338,7 @@ fluid_inst_import_sfont(fluid_preset_zone_t* preset_zone, fluid_inst_t* inst,
       return FLUID_FAILED;
     }
 
-    if (fluid_inst_zone_import_sfont(preset_zone, inst_zone, sfzone, defsfont) != FLUID_OK) {
+    if (fluid_inst_zone_import_sfont(inst_zone, sfzone, defsfont) != FLUID_OK) {
       delete_fluid_inst_zone(inst_zone);
       return FLUID_FAILED;
     }
@@ -1408,8 +1462,7 @@ fluid_inst_zone_next(fluid_inst_zone_t* zone)
  * fluid_inst_zone_import_sfont
  */
 int
-fluid_inst_zone_import_sfont(fluid_preset_zone_t* preset_zone, fluid_inst_zone_t* inst_zone,
-                             SFZone *sfzone, fluid_defsfont_t* defsfont)
+fluid_inst_zone_import_sfont(fluid_inst_zone_t* inst_zone, SFZone *sfzone, fluid_defsfont_t* defsfont)
 {
   fluid_list_t *r;
   SFGen* sfgen;
@@ -1441,13 +1494,6 @@ fluid_inst_zone_import_sfont(fluid_preset_zone_t* preset_zone, fluid_inst_zone_t
     }
     r = fluid_list_next(r);
   }
-  
-  /* adjust instrument zone keyrange to integrate preset zone keyrange */
-  if (preset_zone->range.keylo > inst_zone->range.keylo) inst_zone->range.keylo = preset_zone->range.keylo;
-  if (preset_zone->range.keyhi < inst_zone->range.keyhi) inst_zone->range.keyhi = preset_zone->range.keyhi;
-  /* adjust instrument zone to integrate  preset zone velrange */
-  if (preset_zone->range.vello > inst_zone->range.vello) inst_zone->range.vello = preset_zone->range.vello;
-  if (preset_zone->range.velhi < inst_zone->range.velhi) inst_zone->range.velhi = preset_zone->range.velhi;
 
   /* FIXME */
 /*    if (zone->gen[GEN_EXCLUSIVECLASS].flags == GEN_SET) { */
