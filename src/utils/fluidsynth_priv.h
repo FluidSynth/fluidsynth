@@ -204,6 +204,7 @@ typedef struct _fluid_client_t fluid_client_t;
 typedef struct _fluid_server_socket_t fluid_server_socket_t;
 typedef struct _fluid_sample_timer_t fluid_sample_timer_t;
 typedef struct _fluid_zone_range_t fluid_zone_range_t;
+typedef struct _fluid_rvoice_eventhandler_t fluid_rvoice_eventhandler_t;
 
 /* Declare rvoice related typedefs here instead of fluid_rvoice.h, as it's needed
  * in fluid_lfo.c and fluid_adsr.c as well */

@@ -70,8 +70,7 @@ struct _fluid_rvoice_mixer_t {
   fluid_mixer_fx_t fx;
 
   fluid_mixer_buffers_t buffers; /**< Used by mixer only: own buffers */
-  void (*remove_voice_callback)(void*, fluid_rvoice_t*); /**< Used by mixer only: Receive this callback every time a voice is removed */
-  void* remove_voice_callback_userdata;
+  fluid_rvoice_eventhandler_t* eventhandler;
 
   fluid_rvoice_t** rvoices; /**< Read-only: Voices array, sorted so that all nulls are last */
   int polyphony; /**< Read-only: Length of voices array */
@@ -151,20 +150,6 @@ fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t* mixer)
 }
 
 /**
- * During rendering, rvoices might be finished. Set this callback
- * for getting a callback any time the rvoice is finished.
- */
-void fluid_rvoice_mixer_set_finished_voices_callback(
-  fluid_rvoice_mixer_t* mixer,
-  void (*func)(void*, fluid_rvoice_t*),
-  void* userdata)
-{
-  mixer->remove_voice_callback_userdata = userdata;
-  mixer->remove_voice_callback = func;
-}
-
-
-/**
  * Glue to get fluid_rvoice_buffers_mix what it wants
  * Note: Make sure outbufs has 2 * (buf_count + fx_buf_count) elements before calling
  */
@@ -236,9 +221,7 @@ fluid_mixer_buffer_process_finished_voices(fluid_mixer_buffers_t* buffers)
     }
     buffers->mixer->active_voices = av;
     
-    if (buffers->mixer->remove_voice_callback)
-      buffers->mixer->remove_voice_callback(
-        buffers->mixer->remove_voice_callback_userdata, v);
+    fluid_rvoice_eventhandler_finished_voice_callback(buffers->mixer->eventhandler, v);
   }
   buffers->finished_voice_count = 0;
 }
@@ -554,7 +537,7 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_samplerate)
  * @param fx_buf_count number of stereo effect buffers
  */
 fluid_rvoice_mixer_t* 
-new_fluid_rvoice_mixer(int buf_count, int fx_buf_count, fluid_real_t sample_rate)
+new_fluid_rvoice_mixer(int buf_count, int fx_buf_count, fluid_real_t sample_rate, fluid_rvoice_eventhandler_t* evthandler)
 {
   fluid_rvoice_mixer_t* mixer = FLUID_NEW(fluid_rvoice_mixer_t);
   if (mixer == NULL) {
@@ -562,6 +545,7 @@ new_fluid_rvoice_mixer(int buf_count, int fx_buf_count, fluid_real_t sample_rate
     return NULL;
   }
   FLUID_MEMSET(mixer, 0, sizeof(fluid_rvoice_mixer_t));
+  mixer->eventhandler = evthandler;
   mixer->buffers.buf_count = buf_count;
   mixer->buffers.fx_buf_count = fx_buf_count;
   

@@ -27,7 +27,6 @@
 #include "fluid_ringbuffer.h"
 
 typedef struct _fluid_rvoice_event_t fluid_rvoice_event_t;
-typedef struct _fluid_rvoice_eventhandler_t fluid_rvoice_eventhandler_t;
 
 struct _fluid_rvoice_event_t {
 	fluid_rvoice_function_t method;
@@ -55,6 +54,8 @@ void delete_fluid_rvoice_eventhandler(fluid_rvoice_eventhandler_t*);
 
 int fluid_rvoice_eventhandler_dispatch_all(fluid_rvoice_eventhandler_t*);
 int fluid_rvoice_eventhandler_dispatch_count(fluid_rvoice_eventhandler_t*);
+void fluid_rvoice_eventhandler_finished_voice_callback(fluid_rvoice_eventhandler_t* eventhandler,
+                                                       fluid_rvoice_t* rvoice);
 
 static FLUID_INLINE void 
 fluid_rvoice_eventhandler_flush(fluid_rvoice_eventhandler_t* handler)

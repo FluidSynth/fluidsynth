@@ -31,12 +31,6 @@ typedef struct _fluid_rvoice_mixer_t fluid_rvoice_mixer_t;
 #define FLUID_MIXER_MAX_BUFFERS_DEFAULT (8192/FLUID_BUFSIZE) 
 
 
-void fluid_rvoice_mixer_set_finished_voices_callback(
-  fluid_rvoice_mixer_t* mixer,
-  void (*func)(void*, fluid_rvoice_t*),
-  void* userdata);
-
-
 int fluid_rvoice_mixer_render(fluid_rvoice_mixer_t* mixer, int blockcount);
 int fluid_rvoice_mixer_get_bufs(fluid_rvoice_mixer_t* mixer, 
                                fluid_real_t*** left, fluid_real_t*** right);
@@ -47,7 +41,7 @@ int fluid_rvoice_mixer_get_bufcount(fluid_rvoice_mixer_t* mixer);
 int fluid_rvoice_mixer_get_active_voices(fluid_rvoice_mixer_t* mixer);
 #endif
 fluid_rvoice_mixer_t* new_fluid_rvoice_mixer(int buf_count, int fx_buf_count, 
-					     fluid_real_t sample_rate);
+					     fluid_real_t sample_rate, fluid_rvoice_eventhandler_t*);
 
 void delete_fluid_rvoice_mixer(fluid_rvoice_mixer_t*);
 
