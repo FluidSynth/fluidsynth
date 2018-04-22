@@ -114,6 +114,7 @@ struct _SFSample
 struct _SFInst
 { /* Instrument structure */
     char name[21]; /* Name of instrument */
+    int idx; /* Index of this instrument in the Soundfont */
     fluid_list_t *zone; /* list of instrument zones */
 };
 

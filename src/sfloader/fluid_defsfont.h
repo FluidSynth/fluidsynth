@@ -115,6 +115,7 @@ struct _fluid_defsfont_t
   fluid_sfont_t *sfont;      /* pointer to parent sfont */
   fluid_list_t* sample;      /* the samples in this soundfont */
   fluid_list_t* preset;      /* the presets of this soundfont */
+  fluid_list_t* inst;        /* the instruments of this soundfont */
   int mlock;                 /* Should we try memlock (avoid swapping)? */
   int dynamic_samples;       /* Enables dynamic sample loading if set */
 
@@ -189,13 +190,13 @@ fluid_inst_t* fluid_preset_zone_get_inst(fluid_preset_zone_t* zone);
 struct _fluid_inst_t
 {
   char name[21];
+  int source_idx; /* Index of instrument in source Soundfont */
   fluid_inst_zone_t* global_zone;
   fluid_inst_zone_t* zone;
 };
 
 fluid_inst_t* new_fluid_inst(void);
-int fluid_inst_import_sfont(fluid_preset_zone_t* preset_zone, fluid_inst_t* inst,
-							SFInst *sfinst, fluid_defsfont_t* defsfont);
+fluid_inst_t* fluid_inst_import_sfont(fluid_preset_zone_t* preset_zone, SFInst *sfinst, fluid_defsfont_t* defsfont);
 void delete_fluid_inst(fluid_inst_t* inst);
 int fluid_inst_set_global_zone(fluid_inst_t* inst, fluid_inst_zone_t* zone);
 int fluid_inst_add_zone(fluid_inst_t* inst, fluid_inst_zone_t* zone);

@@ -39,6 +39,8 @@ static int unload_preset_samples(fluid_defsfont_t *defsfont, fluid_preset_t *pre
 static void unload_sample(fluid_sample_t *sample);
 static int dynamic_samples_preset_notify(fluid_preset_t *preset, int reason, int chan);
 static int dynamic_samples_sample_notify(fluid_sample_t *sample, int reason);
+static int fluid_preset_zone_create_voice_zones(fluid_preset_zone_t* preset_zone);
+static fluid_inst_t *find_inst_by_idx(fluid_defsfont_t *defsfont, int idx);
 
 
 /***************************************************************
@@ -247,6 +249,11 @@ int delete_fluid_defsfont(fluid_defsfont_t* defsfont)
       fluid_defpreset_preset_delete(preset);
   }
   delete_fluid_list(defsfont->preset);
+
+  for (list = defsfont->inst; list; list = fluid_list_next(list)) {
+      delete_fluid_inst(fluid_list_get(list));
+  }
+  delete_fluid_list(defsfont->inst);
 
   FLUID_FREE(defsfont);
   return FLUID_OK;
@@ -962,6 +969,7 @@ new_fluid_preset_zone(char *name)
     return NULL;
   }
   zone->next = NULL;
+  zone->voice_zone = NULL;
   zone->name = FLUID_STRDUP(name);
   if (zone->name == NULL) {
     FLUID_LOG(FLUID_ERR, "Out of memory");
@@ -1009,7 +1017,6 @@ delete_fluid_preset_zone(fluid_preset_zone_t* zone)
   delete_fluid_list(zone->voice_zone);
 
   FLUID_FREE (zone->name);
-  delete_fluid_inst (zone->inst);
   FLUID_FREE(zone);
 }
 
@@ -1067,6 +1074,7 @@ fluid_preset_zone_import_sfont(fluid_preset_zone_t* zone, SFZone *sfzone, fluid_
 {
   fluid_list_t *r;
   SFGen* sfgen;
+  SFInst* sfinst;
   int count;
   for (count = 0, r = sfzone->gen; r != NULL; count++) {
     sfgen = (SFGen *)fluid_list_get(r);
@@ -1094,13 +1102,16 @@ fluid_preset_zone_import_sfont(fluid_preset_zone_t* zone, SFZone *sfzone, fluid_
     r = fluid_list_next(r);
   }
   if ((sfzone->instsamp != NULL) && (sfzone->instsamp->data != NULL)) {
-    zone->inst = (fluid_inst_t*) new_fluid_inst();
-    if (zone->inst == NULL) {
-      FLUID_LOG(FLUID_ERR, "Out of memory");
-      return FLUID_FAILED;
+    sfinst = sfzone->instsamp->data;
+
+    zone->inst = find_inst_by_idx(defsfont, sfinst->idx);
+    if (zone->inst == NULL)
+    {
+        zone->inst = fluid_inst_import_sfont(zone, sfinst, defsfont);
     }
-    if (fluid_inst_import_sfont(zone, zone->inst, 
-							(SFInst *) sfzone->instsamp->data, defsfont) != FLUID_OK) {
+
+    if (zone->inst == NULL)
+    {
       return FLUID_FAILED;
     }
 
@@ -1310,15 +1321,23 @@ fluid_inst_set_global_zone(fluid_inst_t* inst, fluid_inst_zone_t* zone)
 /*
  * fluid_inst_import_sfont
  */
-int
-fluid_inst_import_sfont(fluid_preset_zone_t* preset_zone, fluid_inst_t* inst, 
-						SFInst *sfinst, fluid_defsfont_t* defsfont)
+fluid_inst_t *
+fluid_inst_import_sfont(fluid_preset_zone_t* preset_zone, SFInst *sfinst, fluid_defsfont_t* defsfont)
 {
   fluid_list_t *p;
+  fluid_inst_t *inst;
   SFZone* sfzone;
   fluid_inst_zone_t* inst_zone;
   char zone_name[256];
   int count;
+
+  inst = (fluid_inst_t*) new_fluid_inst();
+  if (inst == NULL) {
+    FLUID_LOG(FLUID_ERR, "Out of memory");
+    return NULL;
+  }
+
+  inst->source_idx = sfinst->idx;
 
   p = sfinst->zone;
   if (FLUID_STRLEN(sfinst->name) > 0) {
@@ -1335,25 +1354,27 @@ fluid_inst_import_sfont(fluid_preset_zone_t* preset_zone, fluid_inst_t* inst,
 
     inst_zone = new_fluid_inst_zone(zone_name);
     if (inst_zone == NULL) {
-      return FLUID_FAILED;
+      return NULL;
     }
 
     if (fluid_inst_zone_import_sfont(inst_zone, sfzone, defsfont) != FLUID_OK) {
       delete_fluid_inst_zone(inst_zone);
-      return FLUID_FAILED;
+      return NULL;
     }
 
     if ((count == 0) && (fluid_inst_zone_get_sample(inst_zone) == NULL)) {
       fluid_inst_set_global_zone(inst, inst_zone);
 
     } else if (fluid_inst_add_zone(inst, inst_zone) != FLUID_OK) {
-      return FLUID_FAILED;
+      return NULL;
     }
 
     p = fluid_list_next(p);
     count++;
   }
-  return FLUID_OK;
+
+  defsfont->inst = fluid_list_append(defsfont->inst, inst);
+  return inst;
 }
 
 /*
@@ -1874,4 +1895,22 @@ static void unload_sample(fluid_sample_t *sample)
         sample->data = NULL;
         sample->data24 = NULL;
     }
+}
+
+static fluid_inst_t *find_inst_by_idx(fluid_defsfont_t *defsfont, int idx)
+{
+    fluid_list_t *list;
+    fluid_inst_t *inst;
+
+    for (list = defsfont->inst; list != NULL; list = fluid_list_next(list))
+    {
+        inst = fluid_list_get(list);
+
+        if (inst->source_idx == idx)
+        {
+            return inst;
+        }
+    }
+
+    return NULL;
 }
