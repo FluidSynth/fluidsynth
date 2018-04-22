@@ -46,9 +46,7 @@ struct _fluid_mixer_buffers_t {
   int finished_voice_count;
 
   fluid_atomic_int_t ready;             /**< Atomic: buffers are ready for mixing */
-
-  int buf_blocks;             /**< Number of blocks allocated in the buffers */
-
+  
   int buf_count;
   fluid_real_t** left_buf;
   fluid_real_t** right_buf;
@@ -467,8 +465,7 @@ fluid_mixer_buffers_init(fluid_mixer_buffers_t* buffers, fluid_rvoice_mixer_t* m
   buffers->mixer = mixer;
   buffers->buf_count = buffers->mixer->buffers.buf_count;
   buffers->fx_buf_count = buffers->mixer->buffers.fx_buf_count;
-  buffers->buf_blocks = buffers->mixer->buffers.buf_blocks;
-  samplecount = FLUID_BUFSIZE * buffers->buf_blocks;
+  samplecount = FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT;
   
  
   /* Left and right audio buffers */
@@ -567,7 +564,6 @@ new_fluid_rvoice_mixer(int buf_count, int fx_buf_count, fluid_real_t sample_rate
   FLUID_MEMSET(mixer, 0, sizeof(fluid_rvoice_mixer_t));
   mixer->buffers.buf_count = buf_count;
   mixer->buffers.fx_buf_count = fx_buf_count;
-  mixer->buffers.buf_blocks = FLUID_MIXER_MAX_BUFFERS_DEFAULT;
   
   /* allocate the reverb module */
   mixer->fx.reverb = new_fluid_revmodel(sample_rate);
@@ -769,7 +765,7 @@ int fluid_rvoice_mixer_get_fx_bufs(fluid_rvoice_mixer_t* mixer,
 
 int fluid_rvoice_mixer_get_bufcount(fluid_rvoice_mixer_t* mixer)
 {
-    return mixer->buffers.buf_blocks;
+    return FLUID_MIXER_MAX_BUFFERS_DEFAULT;
 }
 
 #if WITH_PROFILING
@@ -1027,8 +1023,7 @@ fluid_rvoice_mixer_render(fluid_rvoice_mixer_t* mixer, int blockcount)
 {
   fluid_profile_ref_var(prof_ref);
   
-  mixer->current_blockcount = blockcount > mixer->buffers.buf_blocks ? 
-      mixer->buffers.buf_blocks : blockcount;
+  mixer->current_blockcount = blockcount;
 
   // Zero buffers
   fluid_mixer_buffers_zero(&mixer->buffers);
