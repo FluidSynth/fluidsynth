@@ -241,6 +241,27 @@ typedef int (*fluid_preset_get_num_t)(fluid_preset_t* preset);
 typedef int (*fluid_preset_noteon_t)(fluid_preset_t* preset, fluid_synth_t* synth, int chan, int key, int vel);
 
 /**
+ * Method to load a virtual SoundFont preset when using dynamic sample loading
+ * @param preset Virtual SoundFont preset
+ * @return #FLUID_OK on success (0) or #FLUID_FAILED (-1) otherwise
+ */
+typedef int (*fluid_preset_load_t)(fluid_preset_t* preset);
+
+/**
+ * Method to unload a virtual SoundFont preset when using dynamic sample loading
+ * @param preset Virtual SoundFont preset
+ * @return #FLUID_OK on success (0) or #FLUID_FAILED (-1) otherwise
+ */
+typedef int (*fluid_preset_unload_t)(fluid_preset_t* preset);
+
+/**
+ * Method to check if a virtual SoundFont preset has been loaded
+ * @param preset Virtual SoundFont preset
+ * @return TRUE if loaded, otherwise FALSE
+ */
+typedef int (*fluid_preset_is_loaded_t)(fluid_preset_t* preset);
+
+/**
  * Method to free a virtual SoundFont preset. Any custom user provided cleanup function must ultimately call
  * delete_fluid_preset() to ensure proper cleanup of the #fluid_preset_t struct. If no private data
  * needs to be freed, setting this to delete_fluid_preset() is sufficient.

@@ -140,6 +140,7 @@ struct _fluid_defpreset_t
   unsigned int num;                     /* the preset number */
   fluid_preset_zone_t* global_zone;        /* the global zone of the preset */
   fluid_preset_zone_t* zone;               /* the chained list of preset zones */
+  char loaded_manually;                 /* Flag to indicate if preset has been manually loaded */
 };
 
 fluid_defpreset_t* new_fluid_defpreset(fluid_defsfont_t* defsfont);

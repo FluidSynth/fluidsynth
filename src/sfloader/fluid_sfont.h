@@ -57,6 +57,10 @@ int fluid_sample_sanitize_loop(fluid_sample_t *sample, unsigned int max_end);
 #define fluid_preset_notify(_preset,_reason,_chan) \
   { if ((_preset) && (_preset)->notify) { (*(_preset)->notify)(_preset,_reason,_chan); }}
 
+#define fluid_preset_load(_preset) (((_preset) && (_preset)->load) ? (*(_preset)->load)(_preset) : FLUID_FAILED)
+#define fluid_preset_unload(_preset) (((_preset) && (_preset)->unload) ? (*(_preset)->unload)(_preset) : FLUID_FAILED)
+#define fluid_preset_is_loaded(_preset) (((_preset) && (_preset)->is_loaded) ? (*(_preset)->is_loaded)(_preset) : TRUE)
+
 
 #define fluid_sample_incr_ref(_sample) { (_sample)->refcount++; }
 
@@ -152,6 +156,12 @@ struct _fluid_preset_t {
   fluid_preset_get_num_t get_num;
 
   fluid_preset_noteon_t noteon;
+
+  fluid_preset_load_t load;
+
+  fluid_preset_unload_t unload;
+
+  fluid_preset_is_loaded_t is_loaded;
 
   /**
    * Virtual SoundFont preset notify method.

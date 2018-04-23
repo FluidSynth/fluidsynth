@@ -37,8 +37,12 @@
 static int load_preset_samples(fluid_defsfont_t *defsfont, fluid_preset_t *preset);
 static int unload_preset_samples(fluid_defsfont_t *defsfont, fluid_preset_t *preset);
 static void unload_sample(fluid_sample_t *sample);
-static int dynamic_samples_preset_notify(fluid_preset_t *preset, int reason, int chan);
 static int dynamic_samples_sample_notify(fluid_sample_t *sample, int reason);
+
+static int dynamic_samples_preset_notify(fluid_preset_t *preset, int reason, int chan);
+static int dynamic_samples_preset_load(fluid_preset_t *preset);
+static int dynamic_samples_preset_unload(fluid_preset_t *preset);
+static int dynamic_samples_preset_is_loaded(fluid_preset_t *preset);
 
 
 /***************************************************************
@@ -223,6 +227,18 @@ int delete_fluid_defsfont(fluid_defsfont_t* defsfont)
     sample = (fluid_sample_t*) fluid_list_get(list);
     if (sample->refcount != 0) {
       return FLUID_FAILED;
+    }
+  }
+
+  /* Unload any manually loaded presets */
+  if (defsfont->dynamic_samples)
+  {
+    for (list = defsfont->preset; list; list = fluid_list_next(list)) {
+        preset = fluid_list_get(list);
+        if (fluid_preset_is_loaded(preset))
+        {
+            fluid_preset_unload(preset);
+        }
     }
   }
 
@@ -497,6 +513,9 @@ int fluid_defsfont_add_preset(fluid_defsfont_t* defsfont, fluid_defpreset_t* def
     if (defsfont->dynamic_samples)
     {
         preset->notify = dynamic_samples_preset_notify;
+        preset->load = dynamic_samples_preset_load;
+        preset->unload = dynamic_samples_preset_unload;
+        preset->is_loaded = dynamic_samples_preset_is_loaded;
     }
 
     if (preset == NULL) {
@@ -574,6 +593,7 @@ new_fluid_defpreset(fluid_defsfont_t* defsfont)
   defpreset->num = 0;
   defpreset->global_zone = NULL;
   defpreset->zone = NULL;
+  defpreset->loaded_manually = FALSE;
   return defpreset;
 }
 
@@ -1696,6 +1716,54 @@ static int dynamic_samples_preset_notify(fluid_preset_t *preset, int reason, int
     }
 
     return FLUID_OK;
+}
+
+/* Manually loads all samples used by a preset. */
+static int dynamic_samples_preset_load(fluid_preset_t *preset)
+{
+    fluid_defpreset_t *defpreset = fluid_preset_get_data(preset);
+    fluid_return_val_if_fail(defpreset != NULL, FLUID_FAILED);
+
+    if (fluid_preset_is_loaded(preset))
+    {
+        return FLUID_OK;
+    }
+
+    if (load_preset_samples(defpreset->defsfont, preset) == FLUID_FAILED)
+    {
+        return FLUID_FAILED;
+    }
+
+    defpreset->loaded_manually = TRUE;
+    return FLUID_OK;
+}
+
+/* Manually unloads all samples used by a preset. */
+static int dynamic_samples_preset_unload(fluid_preset_t *preset)
+{
+    fluid_defpreset_t *defpreset = fluid_preset_get_data(preset);
+    fluid_return_val_if_fail(defpreset != NULL, FLUID_FAILED);
+
+    if (!defpreset->loaded_manually)
+    {
+        return FLUID_FAILED;
+    }
+
+    if (unload_preset_samples(defpreset->defsfont, preset) == FLUID_FAILED)
+    {
+        return FLUID_FAILED;
+    }
+
+    defpreset->loaded_manually = FALSE;
+    return FLUID_OK;
+}
+
+/* Checks if a preset has been manuall loaded. */
+static int dynamic_samples_preset_is_loaded(fluid_preset_t *preset)
+{
+    fluid_defpreset_t *defpreset = fluid_preset_get_data(preset);
+    fluid_return_val_if_fail(defpreset != NULL, FALSE);
+    return defpreset->loaded_manually;
 }
 
 
