@@ -162,10 +162,10 @@
  * - In mono staccato playing,default_fromkey must be INVALID_NOTE.
  * - In mono legato playing,default_fromkey must be valid.
  */
-static unsigned char fluid_synth_get_fromkey_portamento_legato(fluid_channel_t* chan, 
-								   unsigned char default_fromkey)
+static char fluid_synth_get_fromkey_portamento_legato(fluid_channel_t* chan, 
+								   char default_fromkey)
 {
-	unsigned char ptc =  fluid_channel_get_cc(chan, PORTAMENTO_CTRL);
+	char ptc =  fluid_channel_get_cc(chan, PORTAMENTO_CTRL);
 	if(fluid_channel_is_valid_note(ptc))
 	{	/* CC PTC has been received */
 		fluid_channel_clear_portamento(chan);	/* clears the CC PTC receive */
@@ -178,12 +178,12 @@ static unsigned char fluid_synth_get_fromkey_portamento_legato(fluid_channel_t* 
 	}
 	else 
 	{	/* determines and returns fromkey portamento */
-		unsigned char fromkey_portamento = INVALID_NOTE;
+		char fromkey_portamento = INVALID_NOTE;
 		if(fluid_channel_portamento(chan))
 		{	/* Portamento when Portamento pedal is On */
 			/* 'fromkey portamento'is determined from the portamento mode
 			 and the most recent note played (prev_note)*/
-			unsigned char portamentomode = chan->portamentomode;
+			enum fluid_channel_portamento_mode portamentomode = chan->portamentomode;
 			if(fluid_channel_is_valid_note(default_fromkey))
 			{	
 				fromkey_portamento = default_fromkey; /* on each note */
@@ -319,7 +319,7 @@ int fluid_synth_noteon_mono_LOCAL(fluid_synth_t* synth, int chan,
 	fluid_channel_t* channel = synth->channel[chan];
 
 	/* Adds the note into the monophonic list */
-	fluid_channel_add_monolist(channel,(unsigned char)key,(unsigned char)vel,0);
+	fluid_channel_add_monolist(channel, key, vel, 0);
 
 	/* in Breath Sync mode, the noteon triggering is postponed 
 	   until the musician starts blowing in the breath controller */
@@ -381,7 +381,7 @@ int fluid_synth_noteoff_mono_LOCAL(fluid_synth_t* synth, int chan, int key)
 	int i,i_prev;
 	fluid_channel_t* channel = synth->channel[chan];
 	/* searching the note in the monophonic list */
-	i=fluid_channel_search_monolist(channel, (unsigned char)key , &i_prev);
+	i=fluid_channel_search_monolist(channel, key , &i_prev);
 
 	if (i >= 0)
 	{ /* the note is in the monophonic list */
@@ -624,11 +624,11 @@ int fluid_synth_noteon_monopoly_legato(fluid_synth_t* synth, int chan,
 							   int fromkey, int tokey, int vel)
 {
 	fluid_channel_t* channel = synth->channel[chan];
-	unsigned char legatomode = channel->legatomode;
+	enum fluid_channel_legato_mode legatomode = channel->legatomode;
 	fluid_voice_t* voice;
 	int i ;
 	/* Gets possible 'fromkey portamento' and possible 'fromkey legato' note  */
-	fromkey = fluid_synth_get_fromkey_portamento_legato( channel, (unsigned char)fromkey);
+	fromkey = fluid_synth_get_fromkey_portamento_legato( channel, fromkey);
 
 	if (fluid_channel_is_valid_note(fromkey)) for (i = 0; i < synth->polyphony; i++) 
 	{

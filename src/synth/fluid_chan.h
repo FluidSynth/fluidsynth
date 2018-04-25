@@ -65,8 +65,8 @@
 struct mononote
 {
     unsigned char next; /* next note */
-    unsigned char note; /* note */
-    unsigned char vel;  /* velocity */
+    char note; /* note */
+    char vel;  /* velocity */
 };
 
 /*
@@ -83,42 +83,46 @@ struct _fluid_channel_t
   /* Poly Mono variables see macro access description */
   int mode;								/**< Poly Mono mode */
   int mode_val;							/**< number of channel in basic channel group */
+  
   /* monophonic list - legato detector */
-  struct mononote monolist[FLUID_CHANNEL_SIZE_MONOLIST];   /**< monophonic list */
   unsigned char i_first;          /**< First note index */
   unsigned char i_last;           /**< most recent note index since the most recent add */
-  unsigned char prev_note;        /**< previous note of the most recent add/remove */
+  char prev_note;                 /**< previous note of the most recent add/remove */
   unsigned char n_notes;          /**< actual number of notes in the list */
-  /*--*/
-  int key_mono_sustained;         /**< previous sustained monophonic note */
+  struct mononote monolist[FLUID_CHANNEL_SIZE_MONOLIST];   /**< monophonic list */
+  
+  char key_mono_sustained;         /**< previous sustained monophonic note */
+  char previous_cc_breath;		  /**< Previous Breath */
   enum fluid_channel_legato_mode legatomode;       /**< legato mode */
   enum fluid_channel_portamento_mode portamentomode;   /**< portamento mode */
-  int previous_cc_breath;		  /**< Previous Breath */
   /*- End of Poly/mono variables description */
   
-  int sfont_bank_prog;                  /**< SoundFont ID (bit 21-31), bank (bit 7-20), program (bit 0-6) */
-  fluid_preset_t* preset;               /**< Selected preset */
-
+  char cc[128];                         /**< MIDI controller values */
   char key_pressure[128];               /**< MIDI polyphonic key pressure */
-  int channel_pressure;                 /**< MIDI channel pressure */
-  int pitch_bend;                       /**< Current pitch bend value */
-  int pitch_wheel_sensitivity;          /**< Current pitch wheel sensitivity */
+  
+  /* Drum channel flag, CHANNEL_TYPE_MELODIC, or CHANNEL_TYPE_DRUM. */
+  enum fluid_midi_channel_type channel_type;
+  enum fluid_interp interp_method;                    /**< Interpolation method (enum fluid_interp) */
 
-  int cc[128];                          /**< MIDI controller values */
-
+  char channel_pressure;                 /**< MIDI channel pressure */
+  char pitch_wheel_sensitivity;          /**< Current pitch wheel sensitivity */
+  short pitch_bend;                      /**< Current pitch bend value */
   /* Sostenuto order id gives the order of SostenutoOn event.
-     This value is useful to known when the sostenuto pedal is depressed
-     (before or after a key note). We need to compare SostenutoOrderId with voice id.
+   * This value is useful to known when the sostenuto pedal is depressed
+   * (before or after a key note). We need to compare SostenutoOrderId with voice id.
    */
   unsigned int  sostenuto_orderid;
-  int interp_method;                    /**< Interpolation method (enum fluid_interp) */
-  fluid_tuning_t* tuning;               /**< Micro tuning */
+  
   int tuning_bank;                      /**< Current tuning bank number */
   int tuning_prog;                      /**< Current tuning program number */
+  fluid_tuning_t* tuning;               /**< Micro tuning */
 
+  fluid_preset_t* preset;               /**< Selected preset */
+  int sfont_bank_prog;                  /**< SoundFont ID (bit 21-31), bank (bit 7-20), program (bit 0-6) */
+  
   /* NRPN system */
-  int nrpn_select;      /* Generator ID of SoundFont NRPN message */
-  int nrpn_active;      /* 1 if data entry CCs are for NRPN, 0 if RPN */
+  enum fluid_gen_type nrpn_select;      /* Generator ID of SoundFont NRPN message */
+  char nrpn_active;      /* 1 if data entry CCs are for NRPN, 0 if RPN */
 
   /* The values of the generators, set by NRPN messages, or by
    * fluid_synth_set_gen(), are cached in the channel so they can be
@@ -137,10 +141,6 @@ struct _fluid_channel_t
    * flag indicating whether the NRPN value is absolute or not.
    */
   char gen_abs[GEN_LAST];
-
-  /* Drum channel flag, CHANNEL_TYPE_MELODIC, or CHANNEL_TYPE_DRUM. */
-  int channel_type;
-
 };
 
 fluid_channel_t* new_fluid_channel(fluid_synth_t* synth, int num);
@@ -231,7 +231,7 @@ int fluid_channel_get_interp_method(fluid_channel_t* chan);
                                              fluid_channel_legato(chan))
 
 /* Macros interface to monophonic list variables */
-#define INVALID_NOTE 255
+#define INVALID_NOTE (-1)
 /* Returns true when a note is a valid note */
 #define fluid_channel_is_valid_note(n)    (n != INVALID_NOTE)
 /* Marks prev_note as invalid. */
