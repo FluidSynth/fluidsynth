@@ -618,4 +618,6 @@ static FLUID_INLINE void* fluid_align_ptr(const void* ptr, unsigned int alignmen
     return (void*)ptr_int;
 }
 
+#define FLUID_DEFAULT_ALIGNMENT (64U)
+
 #endif /* _FLUID_SYS_H */

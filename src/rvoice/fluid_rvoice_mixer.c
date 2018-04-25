@@ -47,6 +47,8 @@ struct _fluid_mixer_buffers_t {
 
   fluid_atomic_int_t ready;             /**< Atomic: buffers are ready for mixing */
   
+  fluid_real_t* local_buf;
+  
   int buf_count;
   fluid_real_t** left_buf;
   fluid_real_t** right_buf;
@@ -257,7 +259,7 @@ get_dest_buf(fluid_rvoice_buffers_t* buffers, int index,
  */
 static void 
 fluid_rvoice_buffers_mix(fluid_rvoice_buffers_t* buffers, 
-                         fluid_real_t* dsp_buf, int start, int samplecount, 
+                         fluid_real_t *FLUID_RESTRICT dsp_buf, int start, int samplecount, 
                          fluid_real_t** dest_bufs, int dest_bufcount)
 {
   int bufcount = buffers->count;
@@ -284,8 +286,12 @@ fluid_rvoice_buffers_mix(fluid_rvoice_buffers_t* buffers,
       i++;
     }
     else {
+      #pragma omp simd aligned(dsp_buf:FLUID_DEFAULT_ALIGNMENT)
+      #pragma vector aligned(dsp_buf)
       for (dsp_i = start; dsp_i < samplecount; dsp_i++)
+      {
         buf[dsp_i] += amp * dsp_buf[dsp_i];
+      }
     }
   }
 }
@@ -303,7 +309,7 @@ fluid_mixer_buffers_render_one(fluid_mixer_buffers_t* buffers,
   int blockcount = buffers->mixer->current_blockcount;
   int i, result = 0, start = 0;
 
-  FLUID_DECLARE_VLA(fluid_real_t, local_buf, FLUID_BUFSIZE*blockcount);
+  fluid_real_t* local_buf = fluid_align_ptr(buffers->local_buf, FLUID_DEFAULT_ALIGNMENT);
 
   for (i=0; i < blockcount; i++) {
     int s = fluid_rvoice_write(rvoice, &local_buf[FLUID_BUFSIZE*i]);
@@ -439,7 +445,6 @@ fluid_mixer_buffers_zero(fluid_mixer_buffers_t* buffers)
 }
 
 
-
 static int 
 fluid_mixer_buffers_init(fluid_mixer_buffers_t* buffers, fluid_rvoice_mixer_t* mixer)
 {
@@ -449,14 +454,16 @@ fluid_mixer_buffers_init(fluid_mixer_buffers_t* buffers, fluid_rvoice_mixer_t* m
   buffers->buf_count = buffers->mixer->buffers.buf_count;
   buffers->fx_buf_count = buffers->mixer->buffers.fx_buf_count;
   samplecount = FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT;
-  
+
+  /* Local mono voice buf */
+  buffers->local_buf = FLUID_ARRAY_ALIGNED(fluid_real_t, samplecount, FLUID_DEFAULT_ALIGNMENT);
  
   /* Left and right audio buffers */
 
   buffers->left_buf = FLUID_ARRAY(fluid_real_t*, buffers->buf_count);
   buffers->right_buf = FLUID_ARRAY(fluid_real_t*, buffers->buf_count);
 
-  if ((buffers->left_buf == NULL) || (buffers->right_buf == NULL)) {
+  if ((buffers->local_buf == NULL) || (buffers->left_buf == NULL) || (buffers->right_buf == NULL)) {
     FLUID_LOG(FLUID_ERR, "Out of memory");
     return 0;
   }
@@ -586,6 +593,8 @@ fluid_mixer_buffers_free(fluid_mixer_buffers_t* buffers)
   FLUID_FREE(buffers->finished_voices);
   
   /* free all the sample buffers */
+  FLUID_FREE(buffers->local_buf);
+  
   if (buffers->left_buf != NULL) {
     for (i = 0; i < buffers->buf_count; i++) {
       if (buffers->left_buf[i] != NULL) {
