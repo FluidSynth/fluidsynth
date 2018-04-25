@@ -8,12 +8,12 @@
 // load our sf2 and sf3 test soundfonts, with and without dynamic sample loading
 int main(void)
 {
-    int id[2], sfcount;
+    int id[2], sfcount, dyn_sample, i;
     
     /* setup */
     fluid_settings_t *settings = new_fluid_settings();
     
-    for(int dyn_sample=0; dyn_sample <= 1; dyn_sample++)
+    for(dyn_sample=0; dyn_sample <= 1; dyn_sample++)
     {
         fluid_synth_t *synth;
         fluid_settings_setint(settings, "synth.dynamic-sample-loading", dyn_sample);
@@ -32,7 +32,7 @@ int main(void)
         TEST_ASSERT(sfcount == 1);
 #endif
         
-        for(int i=0; i<sfcount; i++)
+        for(i=0; i<sfcount; i++)
         {
             fluid_preset_t *preset;
             fluid_list_t *list;
