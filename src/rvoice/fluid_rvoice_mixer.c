@@ -99,6 +99,8 @@ struct _fluid_rvoice_mixer_t {
 #endif
 };
 
+static void delete_rvoice_mixer_threads(fluid_rvoice_mixer_t* mixer);
+
 static FLUID_INLINE void 
 fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t* mixer)
 {
@@ -616,6 +618,7 @@ void delete_fluid_rvoice_mixer(fluid_rvoice_mixer_t* mixer)
 {
   fluid_return_if_fail(mixer != NULL);
   
+  delete_rvoice_mixer_threads(mixer);
 #ifdef ENABLE_MIXER_THREADS
   if (mixer->thread_ready)
     delete_fluid_cond(mixer->thread_ready);
@@ -922,24 +925,9 @@ fluid_render_loop_multithread(fluid_rvoice_mixer_t* mixer)
   //	    mixer->current_blockcount, test, mixer->active_voices, waits);
 }
 
-#endif
-
-/**
- * Update amount of extra mixer threads. 
- * @param thread_count Number of extra mixer threads for multi-core rendering
- * @param prio_level real-time prio level for the extra mixer threads
- */
-DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_threads)
+static void delete_rvoice_mixer_threads(fluid_rvoice_mixer_t* mixer)
 {
-#ifdef ENABLE_MIXER_THREADS
-  char name[16];
-  int i;
-  fluid_rvoice_mixer_t* mixer = obj;
-  int thread_count = param[0].i;
-  int prio_level = param[1].real;
- 
-  // Kill all existing threads first
-  if (mixer->thread_count) {
+    int i;
     fluid_atomic_int_set(&mixer->threads_should_terminate, 1);
     // Signal threads to wake up
     fluid_cond_mutex_lock(mixer->wakeup_threads_m);
@@ -958,6 +946,27 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_threads)
     FLUID_FREE(mixer->threads);
     mixer->thread_count = 0;
     mixer->threads = NULL;
+}
+#endif
+
+/**
+ * Update amount of extra mixer threads. 
+ * @param thread_count Number of extra mixer threads for multi-core rendering
+ * @param prio_level real-time prio level for the extra mixer threads
+ */
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_threads)
+{
+#ifdef ENABLE_MIXER_THREADS
+  char name[16];
+  int i;
+  fluid_rvoice_mixer_t* mixer = obj;
+  int thread_count = param[0].i;
+  int prio_level = param[1].real;
+ 
+  // Kill all existing threads first
+  if (mixer->thread_count)
+  {
+      delete_rvoice_mixer_threads(mixer);
   }
   
   if (thread_count == 0) 
