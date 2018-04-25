@@ -416,8 +416,7 @@ fluid_rvoice_buffers_check_bufnum(fluid_rvoice_buffers_t* buffers, unsigned int 
   if (bufnum >= FLUID_RVOICE_MAX_BUFS) return FLUID_FAILED;
 
   for (i = buffers->count; i <= bufnum; i++) {
-    buffers->bufs[bufnum].amp = 0.0f;  
-    buffers->bufs[bufnum].mapping = i;  
+    buffers->bufs[i].amp = 0.0f;
   }
   buffers->count = bufnum+1;
   return FLUID_OK;
