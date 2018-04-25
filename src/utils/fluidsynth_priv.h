@@ -102,6 +102,10 @@
 #include <pthread.h>
 #endif
 
+#if HAVE_OPENMP
+#include <omp.h>
+#endif
+
 #if HAVE_IO_H
 #include <io.h>
 #endif

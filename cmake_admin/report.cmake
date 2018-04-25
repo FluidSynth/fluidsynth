@@ -127,6 +127,12 @@ else ( WITH_PROFILING )
   message ( "Profiling:             no" )
 endif ( WITH_PROFILING )
 
+if ( HAVE_OPENMP )
+  message ( "OpenMP 4.0:            yes" )
+else ( HAVE_OPENMP )
+  message ( "OpenMP 4.0:            no" )
+endif ( HAVE_OPENMP )
+
 if ( ENABLE_DEBUG )
   message ( "Debug:                 yes" )
 else ( ENABLE_DEBUG )

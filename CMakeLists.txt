@@ -500,6 +500,20 @@ else ( enable-readline )
   unset ( READLINE_LIBS CACHE )
 endif ( enable-readline )
 
+unset ( HAVE_OPENMP CACHE )
+find_package ( OpenMP QUIET )
+if ( OpenMP_FOUND OR OpenMP_C_FOUND )
+    message(STATUS "Found OpenMP ${OpenMP_C_SPEC_DATE}")
+    # require at least OMP 4.0
+    if ( ( NOT OpenMP_C_SPEC_DATE LESS "201307" ) OR NOT ( OpenMP_C_VERSION VERSION_LESS "4.0" ) )
+        set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}" )
+        set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}" )
+        set ( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}" )
+        set ( LIBFLUID_LIBS "${OpenMP_C_LIBRARIES};${LIBFLUID_LIBS}" )
+        set ( HAVE_OPENMP 1 )
+    endif()
+endif()
+
 
 if(enable-tests)
     # manipulate some variables to setup a proper test env

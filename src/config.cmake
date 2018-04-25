@@ -76,6 +76,9 @@
 /* Define to 1 if you have the <netinet/tcp.h> header file. */
 #cmakedefine HAVE_NETINET_TCP_H @HAVE_NETINET_TCP_H@
 
+/* Define if compiling with openMP to enable parallel audio rendering */
+#cmakedefine HAVE_OPENMP @HAVE_OPENMP@
+
 /* Define to 1 if you have the <pthread.h> header file. */
 #cmakedefine HAVE_PTHREAD_H @HAVE_PTHREAD_H@
 
