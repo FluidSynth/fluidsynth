@@ -1281,6 +1281,7 @@ static int load_ihdr(SFData *sf, int size)
         p = FLUID_NEW(SFInst);
         sf->inst = fluid_list_append(sf->inst, p);
         p->zone = NULL; /* For proper cleanup if fail (fluid_sffile_close) */
+        p->idx = i;
         READSTR(sf, &p->name); /* Possible read failure ^ */
         READW(sf, zndx);
 
