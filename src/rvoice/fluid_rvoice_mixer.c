@@ -253,29 +253,31 @@ get_dest_buf(fluid_rvoice_buffers_t* buffers, int index,
  *
  * @param buffers Destination buffer(s)
  * @param dsp_buf Mono sample source
- * @param samplecount Number of samples to process (no FLUID_BUFSIZE restriction)
+ * @param start_block Block to start mixing at
+ * @param sample_count number of samples to mix following \c start_block
  * @param dest_bufs Array of buffers to mixdown to
  * @param dest_bufcount Length of dest_bufs
  */
 static void 
 fluid_rvoice_buffers_mix(fluid_rvoice_buffers_t* buffers, 
-                         fluid_real_t *FLUID_RESTRICT dsp_buf, int start, int samplecount, 
+                         fluid_real_t *FLUID_RESTRICT dsp_buf,
+                         int start_block, int sample_count, 
                          fluid_real_t** dest_bufs, int dest_bufcount)
 {
   int bufcount = buffers->count;
   int i, dsp_i;
-  if (!samplecount || !bufcount || !dest_bufcount) 
+  if (sample_count <= 0 || dest_bufcount <= 0) 
     return;
 
   for (i=0; i < bufcount; i++) {
-    fluid_real_t* buf = get_dest_buf(buffers, i, dest_bufs, dest_bufcount);
+    fluid_real_t *FLUID_RESTRICT buf = get_dest_buf(buffers, i, dest_bufs, dest_bufcount);
     fluid_real_t amp = buffers->bufs[i].amp;
+    
     if (buf == NULL || amp == 0.0f)
       continue;
 
       #pragma omp simd aligned(dsp_buf:FLUID_DEFAULT_ALIGNMENT)
-      #pragma vector aligned(dsp_buf)
-      for (dsp_i = start; dsp_i < samplecount; dsp_i++)
+      for (dsp_i = (start_block * FLUID_BUFSIZE); dsp_i < sample_count; dsp_i++)
       {
         buf[dsp_i] += amp * dsp_buf[dsp_i];
       }
@@ -293,24 +295,25 @@ fluid_mixer_buffers_render_one(fluid_mixer_buffers_t* buffers,
 			       unsigned int dest_bufcount)
 {
   int blockcount = buffers->mixer->current_blockcount;
-  int i, result = 0, start = 0;
+  int i, total_samples = 0, start_block = 0;
 
   fluid_real_t* local_buf = fluid_align_ptr(buffers->local_buf, FLUID_DEFAULT_ALIGNMENT);
 
   for (i=0; i < blockcount; i++) {
     int s = fluid_rvoice_write(rvoice, &local_buf[FLUID_BUFSIZE*i]);
     if (s == -1) {
-      start += FLUID_BUFSIZE;
+      start_block += s;
       s = FLUID_BUFSIZE;
     }
-    result += s;
+    total_samples += s;
+    
     if (s < FLUID_BUFSIZE) {
-      break;
+        break;
     }
   }
-  fluid_rvoice_buffers_mix(&rvoice->buffers, local_buf, start, result-start, dest_bufs, dest_bufcount);
+  fluid_rvoice_buffers_mix(&rvoice->buffers, local_buf, -start_block, total_samples-((-start_block)*FLUID_BUFSIZE), dest_bufs, dest_bufcount);
 
-  if (result < buffers->mixer->current_blockcount * FLUID_BUFSIZE) {
+  if (total_samples < buffers->mixer->current_blockcount * FLUID_BUFSIZE) {
     fluid_finish_rvoice(buffers, rvoice);
   }
 }
