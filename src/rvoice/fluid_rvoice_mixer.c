@@ -103,40 +103,49 @@ fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t* mixer)
 {
   int i;
   fluid_profile_ref_var(prof_ref);
-  if (mixer->fx.with_reverb) {
-    if (mixer->fx.mix_fx_to_out) {
-      for (i=0; i < mixer->current_blockcount * FLUID_BUFSIZE; i += FLUID_BUFSIZE)
-        fluid_revmodel_processmix(mixer->fx.reverb, 
-                                  &mixer->buffers.fx_left_buf[SYNTH_REVERB_CHANNEL][i],
-				  &mixer->buffers.left_buf[0][i],
-				  &mixer->buffers.right_buf[0][i]);
-    } 
-    else {
-      for (i=0; i < mixer->current_blockcount * FLUID_BUFSIZE; i += FLUID_BUFSIZE)
-        fluid_revmodel_processreplace(mixer->fx.reverb, 
-                                  &mixer->buffers.fx_left_buf[SYNTH_REVERB_CHANNEL][i],
-				  &mixer->buffers.fx_left_buf[SYNTH_REVERB_CHANNEL][i],
-				  &mixer->buffers.fx_right_buf[SYNTH_REVERB_CHANNEL][i]);
+  
+    fluid_real_t* in_rev = mixer->buffers.fx_left_buf[SYNTH_REVERB_CHANNEL];
+    fluid_real_t* in_ch = mixer->buffers.fx_left_buf[SYNTH_CHORUS_CHANNEL];
+    
+    fluid_real_t *out_rev_l, *out_rev_r, *out_ch_l, *out_ch_r;
+    
+    void (*reverb_process_func)(fluid_revmodel_t* rev, fluid_real_t *in, fluid_real_t *left_out, fluid_real_t *right_out);
+    void (*chorus_process_func)(fluid_chorus_t* chorus, fluid_real_t *in, fluid_real_t *left_out, fluid_real_t *right_out);
+
+    if (mixer->fx.mix_fx_to_out)
+    {
+        out_ch_l = out_rev_l = mixer->buffers.left_buf[0];
+        out_ch_r = out_rev_r = mixer->buffers.right_buf[0];
+        
+        reverb_process_func = fluid_revmodel_processmix;
+        chorus_process_func = fluid_chorus_processmix;
+        
     }
+    else
+    {
+        out_rev_l = mixer->buffers.fx_left_buf[SYNTH_REVERB_CHANNEL];
+        out_rev_r = mixer->buffers.fx_right_buf[SYNTH_REVERB_CHANNEL];
+        
+        out_ch_l = mixer->buffers.fx_left_buf[SYNTH_CHORUS_CHANNEL];
+        out_ch_r = mixer->buffers.fx_right_buf[SYNTH_CHORUS_CHANNEL];
+        
+        reverb_process_func = fluid_revmodel_processreplace;
+        chorus_process_func = fluid_chorus_processreplace;
+    }
+    
+  
+  if (mixer->fx.with_reverb) {
+      for (i=0; i < mixer->current_blockcount * FLUID_BUFSIZE; i += FLUID_BUFSIZE)
+        reverb_process_func(mixer->fx.reverb, &in_rev[i], &out_rev_l[i], &out_rev_r[i]);
+      
     fluid_profile(FLUID_PROF_ONE_BLOCK_REVERB, prof_ref,0,
 	              mixer->current_blockcount * FLUID_BUFSIZE);
   }
   
   if (mixer->fx.with_chorus) {
-    if (mixer->fx.mix_fx_to_out) {
       for (i=0; i < mixer->current_blockcount * FLUID_BUFSIZE; i += FLUID_BUFSIZE)
-        fluid_chorus_processmix(mixer->fx.chorus, 
-                                &mixer->buffers.fx_left_buf[SYNTH_CHORUS_CHANNEL][i],
-			        &mixer->buffers.left_buf[0][i],
-				&mixer->buffers.right_buf[0][i]);
-    } 
-    else {
-      for (i=0; i < mixer->current_blockcount * FLUID_BUFSIZE; i += FLUID_BUFSIZE)
-        fluid_chorus_processreplace(mixer->fx.chorus, 
-                                &mixer->buffers.fx_left_buf[SYNTH_CHORUS_CHANNEL][i],
-				&mixer->buffers.fx_left_buf[SYNTH_CHORUS_CHANNEL][i],
-				&mixer->buffers.fx_right_buf[SYNTH_CHORUS_CHANNEL][i]);
-    }
+        chorus_process_func(mixer->fx.chorus, &in_ch[i], &out_ch_l[i], &out_ch_r[i]);
+      
     fluid_profile(FLUID_PROF_ONE_BLOCK_CHORUS, prof_ref,0,
 	              mixer->current_blockcount * FLUID_BUFSIZE);
   }
