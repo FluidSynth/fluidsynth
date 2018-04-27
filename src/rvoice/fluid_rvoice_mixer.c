@@ -460,22 +460,28 @@ fluid_render_loop_singlethread(fluid_rvoice_mixer_t* mixer)
 }
 
 static FLUID_INLINE void
-fluid_mixer_buffers_zero(fluid_mixer_buffers_t* buffers)
+fluid_mixer_buffers_zero(fluid_mixer_buffers_t* buffers, int current_blockcount)
 {
-    int size = FLUID_MIXER_MAX_BUFFERS_DEFAULT * FLUID_BUFSIZE * sizeof(fluid_real_t);
-    fluid_real_t* buf;
+    int i, size = current_blockcount * FLUID_BUFSIZE * sizeof(fluid_real_t);
     
-    buf = fluid_align_ptr(buffers->left_buf, FLUID_DEFAULT_ALIGNMENT);
-    FLUID_MEMSET(buf, 0, buffers->buf_count * size);
+    /* TODO: Optimize by only zero out the buffers we actually use later on. */
+    int buf_count = buffers->buf_count, fx_buf_count = buffers->fx_buf_count;
     
-    buf = fluid_align_ptr(buffers->right_buf, FLUID_DEFAULT_ALIGNMENT);
-    FLUID_MEMSET(buf, 0, buffers->buf_count * size);
+    fluid_real_t *FLUID_RESTRICT buf_l = fluid_align_ptr(buffers->left_buf, FLUID_DEFAULT_ALIGNMENT);
+    fluid_real_t *FLUID_RESTRICT buf_r = fluid_align_ptr(buffers->right_buf, FLUID_DEFAULT_ALIGNMENT);
     
-    buf = fluid_align_ptr(buffers->fx_left_buf, FLUID_DEFAULT_ALIGNMENT);
-    FLUID_MEMSET(buf, 0, buffers->fx_buf_count * size);
+    for (i=0; i < buf_count; i++) {
+        FLUID_MEMSET(&buf_l[i * FLUID_MIXER_MAX_BUFFERS_DEFAULT * FLUID_BUFSIZE], 0, size);
+        FLUID_MEMSET(&buf_r[i * FLUID_MIXER_MAX_BUFFERS_DEFAULT * FLUID_BUFSIZE], 0, size);
+    }
     
-    buf = fluid_align_ptr(buffers->fx_right_buf, FLUID_DEFAULT_ALIGNMENT);
-    FLUID_MEMSET(buf, 0, buffers->fx_buf_count * size);
+    buf_l = fluid_align_ptr(buffers->fx_left_buf, FLUID_DEFAULT_ALIGNMENT);
+    buf_r = fluid_align_ptr(buffers->fx_right_buf, FLUID_DEFAULT_ALIGNMENT);
+    
+    for (i=0; i < fx_buf_count; i++) {
+        FLUID_MEMSET(&buf_l[i * FLUID_MIXER_MAX_BUFFERS_DEFAULT * FLUID_BUFSIZE], 0, size);
+        FLUID_MEMSET(&buf_r[i * FLUID_MIXER_MAX_BUFFERS_DEFAULT * FLUID_BUFSIZE], 0, size);
+    }
 }
 
 static int 
@@ -783,6 +789,7 @@ fluid_mixer_thread_func (void* data)
   int hasValidData = 0;
   FLUID_DECLARE_VLA(fluid_real_t*, bufs, buffers->buf_count*2 + buffers->fx_buf_count*2);
   int bufcount = 0;
+  int current_blockcount = buffers->mixer->current_blockcount;
   
   while (!fluid_atomic_int_get(&mixer->threads_should_terminate)) {
     fluid_rvoice_t* rvoice = fluid_mixer_get_mt_rvoice(mixer);
@@ -807,7 +814,7 @@ fluid_mixer_thread_func (void* data)
     else {
       // else: if buffer is not zeroed, zero buffers
       if (!hasValidData) {
-        fluid_mixer_buffers_zero(buffers);
+        fluid_mixer_buffers_zero(buffers, current_blockcount);
 	bufcount = fluid_mixer_buffers_prepare(buffers, bufs);
 	hasValidData = 1;
       }
@@ -1047,7 +1054,7 @@ fluid_rvoice_mixer_render(fluid_rvoice_mixer_t* mixer, int blockcount)
   mixer->current_blockcount = blockcount;
 
   // Zero buffers
-  fluid_mixer_buffers_zero(&mixer->buffers);
+  fluid_mixer_buffers_zero(&mixer->buffers, blockcount);
   fluid_profile(FLUID_PROF_ONE_BLOCK_CLEAR, prof_ref, mixer->active_voices,
                 mixer->current_blockcount * FLUID_BUFSIZE);
   
