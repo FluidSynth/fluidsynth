@@ -50,12 +50,27 @@ struct _fluid_mixer_buffers_t {
   fluid_real_t* local_buf;
   
   int buf_count;
-  fluid_real_t** left_buf;
-  fluid_real_t** right_buf;
-
   int fx_buf_count;
-  fluid_real_t** fx_left_buf;
-  fluid_real_t** fx_right_buf;
+  
+  /** buffer to store the left part of a stereo channel to.
+   * Specifically a two dimensional array, containing \c buf_count buffers
+   * (i.e. for each synth.audio-channels), of which each buffer contains
+   * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT audio items (=samples) 
+   * @note the beginning of the array is aligned to the FLUID_DEFAULT_ALIGNMENT
+   * boundary, so make sure to access all those pointers using fluid_align_ptr()
+   */
+  fluid_real_t* left_buf;
+  
+  /** dito, but for right part of a stereo channel */
+  fluid_real_t* right_buf;
+
+  /** buffer to store the left part of a stereo effects channel to.
+   * Specifically a two dimensional array, containing \c fx_buf_count buffers
+   * (i.e. for each synth.effects-channels), of which each buffer contains
+   * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT audio items (=samples) 
+   */
+  fluid_real_t* fx_left_buf;
+  fluid_real_t* fx_right_buf;
 };
 
 typedef struct _fluid_mixer_fx_t fluid_mixer_fx_t;
@@ -104,18 +119,24 @@ fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t* mixer)
   int i;
   fluid_profile_ref_var(prof_ref);
   
-    fluid_real_t* in_rev = mixer->buffers.fx_left_buf[SYNTH_REVERB_CHANNEL];
-    fluid_real_t* in_ch = mixer->buffers.fx_left_buf[SYNTH_CHORUS_CHANNEL];
+    void (*reverb_process_func)(fluid_revmodel_t* rev, fluid_real_t *in, fluid_real_t *left_out, fluid_real_t *right_out);
+    void (*chorus_process_func)(fluid_chorus_t* chorus, fluid_real_t *in, fluid_real_t *left_out, fluid_real_t *right_out);
     
     fluid_real_t *out_rev_l, *out_rev_r, *out_ch_l, *out_ch_r;
     
-    void (*reverb_process_func)(fluid_revmodel_t* rev, fluid_real_t *in, fluid_real_t *left_out, fluid_real_t *right_out);
-    void (*chorus_process_func)(fluid_chorus_t* chorus, fluid_real_t *in, fluid_real_t *left_out, fluid_real_t *right_out);
+    fluid_real_t* in_rev = fluid_align_ptr(mixer->buffers.fx_left_buf, FLUID_DEFAULT_ALIGNMENT);
+    fluid_real_t* in_ch = in_rev;
+    
+    in_rev = &in_rev[SYNTH_REVERB_CHANNEL * FLUID_MIXER_MAX_BUFFERS_DEFAULT * FLUID_BUFSIZE];
+    in_ch  = &in_ch [SYNTH_CHORUS_CHANNEL * FLUID_MIXER_MAX_BUFFERS_DEFAULT * FLUID_BUFSIZE];
 
     if (mixer->fx.mix_fx_to_out)
     {
-        out_ch_l = out_rev_l = mixer->buffers.left_buf[0];
-        out_ch_r = out_rev_r = mixer->buffers.right_buf[0];
+        out_rev_l = fluid_align_ptr(mixer->buffers.left_buf, FLUID_DEFAULT_ALIGNMENT);
+        out_rev_r = fluid_align_ptr(mixer->buffers.right_buf, FLUID_DEFAULT_ALIGNMENT);
+        
+        out_ch_l = &out_rev_l[0 * FLUID_MIXER_MAX_BUFFERS_DEFAULT * FLUID_BUFSIZE];
+        out_ch_r = &out_rev_r[0 * FLUID_MIXER_MAX_BUFFERS_DEFAULT * FLUID_BUFSIZE];
         
         reverb_process_func = fluid_revmodel_processmix;
         chorus_process_func = fluid_chorus_processmix;
@@ -123,11 +144,14 @@ fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t* mixer)
     }
     else
     {
-        out_rev_l = mixer->buffers.fx_left_buf[SYNTH_REVERB_CHANNEL];
-        out_rev_r = mixer->buffers.fx_right_buf[SYNTH_REVERB_CHANNEL];
+        out_ch_l = out_rev_l = fluid_align_ptr(mixer->buffers.fx_left_buf, FLUID_DEFAULT_ALIGNMENT);
+        out_ch_r = out_rev_r = fluid_align_ptr(mixer->buffers.fx_right_buf, FLUID_DEFAULT_ALIGNMENT);
         
-        out_ch_l = mixer->buffers.fx_left_buf[SYNTH_CHORUS_CHANNEL];
-        out_ch_r = mixer->buffers.fx_right_buf[SYNTH_CHORUS_CHANNEL];
+        out_rev_l = &out_rev_l[SYNTH_REVERB_CHANNEL * FLUID_MIXER_MAX_BUFFERS_DEFAULT * FLUID_BUFSIZE];
+        out_rev_r = &out_rev_r[SYNTH_REVERB_CHANNEL * FLUID_MIXER_MAX_BUFFERS_DEFAULT * FLUID_BUFSIZE];
+        
+        out_ch_l = &out_ch_l[SYNTH_CHORUS_CHANNEL * FLUID_MIXER_MAX_BUFFERS_DEFAULT * FLUID_BUFSIZE];
+        out_ch_r = &out_ch_r[SYNTH_CHORUS_CHANNEL * FLUID_MIXER_MAX_BUFFERS_DEFAULT * FLUID_BUFSIZE];
         
         reverb_process_func = fluid_revmodel_processreplace;
         chorus_process_func = fluid_chorus_processreplace;
@@ -167,7 +191,7 @@ fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t* mixer)
 static FLUID_INLINE int 
 fluid_mixer_buffers_prepare(fluid_mixer_buffers_t* buffers, fluid_real_t** outbufs)
 {
-  fluid_real_t *reverb_buf, *chorus_buf;
+  fluid_real_t *base_ptr;
   int i;
   int with_reverb = buffers->mixer->fx.with_reverb;
   int with_chorus = buffers->mixer->fx.with_chorus;
@@ -180,10 +204,11 @@ fluid_mixer_buffers_prepare(fluid_mixer_buffers_t* buffers, fluid_real_t** outbu
   with_reverb = (with_reverb | with_ladspa);
   with_chorus = (with_chorus | with_ladspa);
 #endif
-  reverb_buf = (with_reverb) ? buffers->fx_left_buf[SYNTH_REVERB_CHANNEL] : NULL;
-  chorus_buf = (with_chorus) ? buffers->fx_left_buf[SYNTH_CHORUS_CHANNEL] : NULL;
-  outbufs[buffers->buf_count*2 + SYNTH_REVERB_CHANNEL] = reverb_buf;
-  outbufs[buffers->buf_count*2 + SYNTH_CHORUS_CHANNEL] = chorus_buf;
+  
+  base_ptr = fluid_align_ptr(buffers->fx_left_buf, FLUID_DEFAULT_ALIGNMENT);
+  
+  outbufs[buffers->buf_count*2 + SYNTH_REVERB_CHANNEL] = (with_reverb) ? &base_ptr[SYNTH_REVERB_CHANNEL * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT] : NULL;
+  outbufs[buffers->buf_count*2 + SYNTH_CHORUS_CHANNEL] = (with_chorus) ? &base_ptr[SYNTH_CHORUS_CHANNEL * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT] : NULL;
 
       /* The output associated with a MIDI channel is wrapped around
        * using the number of audio groups as modulo divider.  This is
@@ -197,10 +222,14 @@ fluid_mixer_buffers_prepare(fluid_mixer_buffers_t* buffers, fluid_real_t** outbu
        * channels 1, 4, 7, 10 etc go to output 1; 2, 5, 8, 11 etc to
        * output 2, 3, 6, 9, 12 etc to output 3.
        */
-
+  base_ptr = fluid_align_ptr(buffers->left_buf, FLUID_DEFAULT_ALIGNMENT);
   for (i = 0; i < buffers->buf_count; i++) {
-    outbufs[i*2] = buffers->left_buf[i];
-    outbufs[i*2+1] = buffers->right_buf[i];
+    outbufs[i*2] = &base_ptr[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT];
+  }
+  
+  base_ptr = fluid_align_ptr(buffers->right_buf, FLUID_DEFAULT_ALIGNMENT);
+  for (i = 0; i < buffers->buf_count; i++) {
+    outbufs[i*2+1] = &base_ptr[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT];
   }
   return buffers->buf_count*2 + 2;
 }
@@ -278,6 +307,9 @@ fluid_rvoice_buffers_mix(fluid_rvoice_buffers_t* buffers,
   if (sample_count <= 0 || dest_bufcount <= 0) 
     return;
 
+  FLUID_ASSERT((uintptr_t)dsp_buf % FLUID_DEFAULT_ALIGNMENT == 0);
+  FLUID_ASSERT((uintptr_t)(&dsp_buf[start_block * FLUID_BUFSIZE]) % FLUID_DEFAULT_ALIGNMENT == 0);
+  
   for (i=0; i < bufcount; i++) {
     fluid_real_t *FLUID_RESTRICT buf = get_dest_buf(buffers, i, dest_bufs, dest_bufcount);
     fluid_real_t amp = buffers->bufs[i].amp;
@@ -285,7 +317,9 @@ fluid_rvoice_buffers_mix(fluid_rvoice_buffers_t* buffers,
     if (buf == NULL || amp == 0.0f)
       continue;
 
-      #pragma omp simd aligned(dsp_buf:FLUID_DEFAULT_ALIGNMENT)
+    FLUID_ASSERT((uintptr_t)buf % FLUID_DEFAULT_ALIGNMENT == 0);
+    
+      #pragma omp simd aligned(dsp_buf,buf:FLUID_DEFAULT_ALIGNMENT)
       for (dsp_i = (start_block * FLUID_BUFSIZE); dsp_i < sample_count; dsp_i++)
       {
         buf[dsp_i] += amp * dsp_buf[dsp_i];
@@ -425,23 +459,24 @@ fluid_render_loop_singlethread(fluid_rvoice_mixer_t* mixer)
   }
 }
 
-
 static FLUID_INLINE void
 fluid_mixer_buffers_zero(fluid_mixer_buffers_t* buffers)
 {
-  int i;
-  int size = buffers->mixer->current_blockcount * FLUID_BUFSIZE * sizeof(fluid_real_t);
-  /* TODO: Optimize by only zero out the buffers we actually use later on. */
-  for (i=0; i < buffers->buf_count; i++) {
-    FLUID_MEMSET(buffers->left_buf[i], 0, size);
-    FLUID_MEMSET(buffers->right_buf[i], 0, size);
-  }
-  for (i=0; i < buffers->fx_buf_count; i++) {
-    FLUID_MEMSET(buffers->fx_left_buf[i], 0, size);
-    FLUID_MEMSET(buffers->fx_right_buf[i], 0, size);
-  }
+    int size = FLUID_MIXER_MAX_BUFFERS_DEFAULT * FLUID_BUFSIZE * sizeof(fluid_real_t);
+    fluid_real_t* buf;
+    
+    buf = fluid_align_ptr(buffers->left_buf, FLUID_DEFAULT_ALIGNMENT);
+    FLUID_MEMSET(buf, 0, buffers->buf_count * size);
+    
+    buf = fluid_align_ptr(buffers->right_buf, FLUID_DEFAULT_ALIGNMENT);
+    FLUID_MEMSET(buf, 0, buffers->buf_count * size);
+    
+    buf = fluid_align_ptr(buffers->fx_left_buf, FLUID_DEFAULT_ALIGNMENT);
+    FLUID_MEMSET(buf, 0, buffers->fx_buf_count * size);
+    
+    buf = fluid_align_ptr(buffers->fx_right_buf, FLUID_DEFAULT_ALIGNMENT);
+    FLUID_MEMSET(buf, 0, buffers->fx_buf_count * size);
 }
-
 
 static int 
 fluid_mixer_buffers_init(fluid_mixer_buffers_t* buffers, fluid_rvoice_mixer_t* mixer)
@@ -458,51 +493,24 @@ fluid_mixer_buffers_init(fluid_mixer_buffers_t* buffers, fluid_rvoice_mixer_t* m
  
   /* Left and right audio buffers */
 
-  buffers->left_buf = FLUID_ARRAY(fluid_real_t*, buffers->buf_count);
-  buffers->right_buf = FLUID_ARRAY(fluid_real_t*, buffers->buf_count);
+  buffers->left_buf = FLUID_ARRAY_ALIGNED(fluid_real_t, buffers->buf_count * samplecount, FLUID_DEFAULT_ALIGNMENT);
+  buffers->right_buf = FLUID_ARRAY_ALIGNED(fluid_real_t, buffers->buf_count * samplecount, FLUID_DEFAULT_ALIGNMENT);
 
   if ((buffers->local_buf == NULL) || (buffers->left_buf == NULL) || (buffers->right_buf == NULL)) {
     FLUID_LOG(FLUID_ERR, "Out of memory");
     return 0;
   }
 
-  FLUID_MEMSET(buffers->left_buf, 0, buffers->buf_count * sizeof(fluid_real_t*));
-  FLUID_MEMSET(buffers->right_buf, 0, buffers->buf_count * sizeof(fluid_real_t*));
-
-  for (i = 0; i < buffers->buf_count; i++) {
-
-    buffers->left_buf[i] = FLUID_ARRAY(fluid_real_t, samplecount);
-    buffers->right_buf[i] = FLUID_ARRAY(fluid_real_t, samplecount);
-
-    if ((buffers->left_buf[i] == NULL) || (buffers->right_buf[i] == NULL)) {
-      FLUID_LOG(FLUID_ERR, "Out of memory");
-      return 0;
-    }
-  }
-
   /* Effects audio buffers */
 
-  buffers->fx_left_buf = FLUID_ARRAY(fluid_real_t*, buffers->fx_buf_count);
-  buffers->fx_right_buf = FLUID_ARRAY(fluid_real_t*, buffers->fx_buf_count);
+  buffers->fx_left_buf = FLUID_ARRAY_ALIGNED(fluid_real_t, buffers->fx_buf_count * samplecount, FLUID_DEFAULT_ALIGNMENT);
+  buffers->fx_right_buf = FLUID_ARRAY_ALIGNED(fluid_real_t, buffers->fx_buf_count * samplecount, FLUID_DEFAULT_ALIGNMENT);
 
   if ((buffers->fx_left_buf == NULL) || (buffers->fx_right_buf == NULL)) {
     FLUID_LOG(FLUID_ERR, "Out of memory");
     return 0;
   }
 
-  FLUID_MEMSET(buffers->fx_left_buf, 0, buffers->fx_buf_count * sizeof(fluid_real_t*));
-  FLUID_MEMSET(buffers->fx_right_buf, 0, buffers->fx_buf_count * sizeof(fluid_real_t*));
-
-  for (i = 0; i < buffers->fx_buf_count; i++) {
-    buffers->fx_left_buf[i] = FLUID_ARRAY(fluid_real_t, samplecount);
-    buffers->fx_right_buf[i] = FLUID_ARRAY(fluid_real_t, samplecount);
-
-    if ((buffers->fx_left_buf[i] == NULL) || (buffers->fx_right_buf[i] == NULL)) {
-      FLUID_LOG(FLUID_ERR, "Out of memory");
-      return 0;
-    }
-  }
-  
   buffers->finished_voices = NULL;
   if (fluid_mixer_buffers_update_polyphony(buffers, mixer->polyphony) 
       == FLUID_FAILED) {
@@ -592,42 +600,10 @@ fluid_mixer_buffers_free(fluid_mixer_buffers_t* buffers)
   
   /* free all the sample buffers */
   FLUID_FREE(buffers->local_buf);
-  
-  if (buffers->left_buf != NULL) {
-    for (i = 0; i < buffers->buf_count; i++) {
-      if (buffers->left_buf[i] != NULL) {
-	FLUID_FREE(buffers->left_buf[i]);
-      }
-    }
-    FLUID_FREE(buffers->left_buf);
-  }
-
-  if (buffers->right_buf != NULL) {
-    for (i = 0; i < buffers->buf_count; i++) {
-      if (buffers->right_buf[i] != NULL) {
-	FLUID_FREE(buffers->right_buf[i]);
-      }
-    }
-    FLUID_FREE(buffers->right_buf);
-  }
-
-  if (buffers->fx_left_buf != NULL) {
-    for (i = 0; i < buffers->fx_buf_count; i++) {
-      if (buffers->fx_left_buf[i] != NULL) {
-	FLUID_FREE(buffers->fx_left_buf[i]);
-      }
-    }
-    FLUID_FREE(buffers->fx_left_buf);
-  }
-
-  if (buffers->fx_right_buf != NULL) {
-    for (i = 0; i < buffers->fx_buf_count; i++) {
-      if (buffers->fx_right_buf[i] != NULL) {
-	FLUID_FREE(buffers->fx_right_buf[i]);
-      }
-    }
-    FLUID_FREE(buffers->fx_right_buf);
-  }  
+  FLUID_FREE(buffers->left_buf);
+  FLUID_FREE(buffers->right_buf);
+  FLUID_FREE(buffers->fx_left_buf);
+  FLUID_FREE(buffers->fx_right_buf);
 }
 
 void delete_fluid_rvoice_mixer(fluid_rvoice_mixer_t* mixer)
@@ -649,6 +625,7 @@ void delete_fluid_rvoice_mixer(fluid_rvoice_mixer_t* mixer)
     delete_fluid_revmodel(mixer->fx.reverb);
   if (mixer->fx.chorus)
     delete_fluid_chorus(mixer->fx.chorus);
+    
   FLUID_FREE(mixer->rvoices);
   FLUID_FREE(mixer);
 }
@@ -666,18 +643,33 @@ void fluid_rvoice_mixer_set_ladspa(fluid_rvoice_mixer_t* mixer,
     {
         return;
     }
+    else
+    {
+        fluid_real_t* main_l = fluid_align_ptr(mixer->buffers.left_buf, FLUID_DEFAULT_ALIGNMENT);
+        fluid_real_t* main_r = fluid_align_ptr(mixer->buffers.right_buf, FLUID_DEFAULT_ALIGNMENT);
+        
+        fluid_real_t* rev = fluid_align_ptr(mixer->buffers.fx_left_buf, FLUID_DEFAULT_ALIGNMENT);
+        fluid_real_t* chor = rev;
+        
+        rev = &rev[SYNTH_REVERB_CHANNEL * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT];
+        chor = &chor[SYNTH_CHORUS_CHANNEL * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT];
 
-    fluid_ladspa_add_host_ports(ladspa_fx, "Main:L", audio_groups,
-            mixer->buffers.left_buf);
+        fluid_ladspa_add_host_ports(ladspa_fx, "Main:L", audio_groups,
+                                    main_l,
+                                    FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT);
 
-    fluid_ladspa_add_host_ports(ladspa_fx, "Main:R", audio_groups,
-            mixer->buffers.right_buf);
+        fluid_ladspa_add_host_ports(ladspa_fx, "Main:R", audio_groups,
+                                    main_r,
+                                    FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT);
 
-    fluid_ladspa_add_host_ports(ladspa_fx, "Reverb:Send", 1,
-            &mixer->buffers.fx_left_buf[SYNTH_REVERB_CHANNEL]);
+        fluid_ladspa_add_host_ports(ladspa_fx, "Reverb:Send", 1,
+                                    rev,
+                                    FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT);
 
-    fluid_ladspa_add_host_ports(ladspa_fx, "Chorus:Send", 1,
-            &mixer->buffers.fx_left_buf[SYNTH_CHORUS_CHANNEL]);
+        fluid_ladspa_add_host_ports(ladspa_fx, "Chorus:Send", 1,
+                                    chor,
+                                    FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT);
+    }
 }
 #endif
 
@@ -739,18 +731,18 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_reset_chorus)
 }
 
 int fluid_rvoice_mixer_get_bufs(fluid_rvoice_mixer_t* mixer, 
-				  fluid_real_t*** left, fluid_real_t*** right)
+				  fluid_real_t** left, fluid_real_t** right)
 {
-  *left = mixer->buffers.left_buf;
-  *right = mixer->buffers.right_buf;
+  *left = fluid_align_ptr(mixer->buffers.left_buf, FLUID_DEFAULT_ALIGNMENT);
+  *right = fluid_align_ptr(mixer->buffers.right_buf, FLUID_DEFAULT_ALIGNMENT);
   return mixer->buffers.buf_count;
 }
 
 int fluid_rvoice_mixer_get_fx_bufs(fluid_rvoice_mixer_t* mixer, 
-                  fluid_real_t*** fx_left, fluid_real_t*** fx_right)
+                  fluid_real_t** fx_left, fluid_real_t** fx_right)
 {
-  *fx_left = mixer->buffers.fx_left_buf;
-  *fx_right = mixer->buffers.fx_right_buf;
+  *fx_left = fluid_align_ptr(mixer->buffers.fx_left_buf, FLUID_DEFAULT_ALIGNMENT);
+  *fx_right = fluid_align_ptr(mixer->buffers.fx_right_buf, FLUID_DEFAULT_ALIGNMENT);
   return mixer->buffers.fx_buf_count;
 }
 
@@ -828,29 +820,63 @@ fluid_mixer_thread_func (void* data)
 }
 
 static void
-fluid_mixer_buffers_mix(fluid_mixer_buffers_t* dest, fluid_mixer_buffers_t* src)
+fluid_mixer_buffers_mix(fluid_mixer_buffers_t* dst, fluid_mixer_buffers_t* src)
 {
   int i,j;
-  int scount = dest->mixer->current_blockcount * FLUID_BUFSIZE;
+  int scount = dst->mixer->current_blockcount * FLUID_BUFSIZE;
   int minbuf;
+  fluid_real_t *FLUID_RESTRICT base_src;
+  fluid_real_t *FLUID_RESTRICT base_dst;
   
-  minbuf = dest->buf_count;
+  minbuf = dst->buf_count;
   if (minbuf > src->buf_count)
     minbuf = src->buf_count;
-  for (i=0; i < minbuf; i++) {
-    for (j=0; j < scount; j++) {
-      dest->left_buf[i][j] += src->left_buf[i][j];
-      dest->right_buf[i][j] += src->right_buf[i][j];
+  
+  base_src = fluid_align_ptr(src->left_buf, FLUID_DEFAULT_ALIGNMENT);
+  base_dst = fluid_align_ptr(dst->left_buf, FLUID_DEFAULT_ALIGNMENT);
+  for (i=0; i < minbuf; i++)
+  {
+    for (j=0; j < scount; j++)
+    {
+        int dsp_i = i * FLUID_MIXER_MAX_BUFFERS_DEFAULT * FLUID_BUFSIZE + j;
+        base_dst[dsp_i] += base_src[dsp_i];
+    }
+  }
+  
+  base_src = fluid_align_ptr(src->right_buf, FLUID_DEFAULT_ALIGNMENT);
+  base_dst = fluid_align_ptr(dst->right_buf, FLUID_DEFAULT_ALIGNMENT);
+  for (i=0; i < minbuf; i++)
+  {
+    for (j=0; j < scount; j++)
+    {
+        int dsp_i = i * FLUID_MIXER_MAX_BUFFERS_DEFAULT * FLUID_BUFSIZE + j;
+        base_dst[dsp_i] += base_src[dsp_i];
     }
   }
 
-  minbuf = dest->fx_buf_count;
+  minbuf = dst->fx_buf_count;
   if (minbuf > src->fx_buf_count)
     minbuf = src->fx_buf_count;
-  for (i=0; i < minbuf; i++) {
-    for (j=0; j < scount; j++) {
-      dest->fx_left_buf[i][j] += src->fx_left_buf[i][j];
-      dest->fx_right_buf[i][j] += src->fx_right_buf[i][j];
+  
+  base_src = fluid_align_ptr(src->fx_left_buf, FLUID_DEFAULT_ALIGNMENT);
+  base_dst = fluid_align_ptr(dst->fx_left_buf, FLUID_DEFAULT_ALIGNMENT);
+  for (i=0; i < minbuf; i++)
+  {
+    for (j=0; j < scount; j++)
+    {
+        int dsp_i = i * FLUID_MIXER_MAX_BUFFERS_DEFAULT * FLUID_BUFSIZE + j;
+        base_dst[dsp_i] += base_src[dsp_i];
+    }
+  }
+  
+  base_src = fluid_align_ptr(src->fx_right_buf, FLUID_DEFAULT_ALIGNMENT);
+  base_dst = fluid_align_ptr(dst->fx_right_buf, FLUID_DEFAULT_ALIGNMENT);
+  for (i=0; i < minbuf; i++)
+  {
+    for (j=0; j < scount; j++)
+    {
+        int dsp_i = i * FLUID_MIXER_MAX_BUFFERS_DEFAULT * FLUID_BUFSIZE + j;
+        base_dst[dsp_i] += base_src[dsp_i];
     }
   }
 }

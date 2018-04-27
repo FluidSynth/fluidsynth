@@ -2882,8 +2882,8 @@ fluid_synth_nwrite_float(fluid_synth_t* synth, int len,
                          float** left, float** right,
                          float** fx_left, float** fx_right)
 {
-  fluid_real_t** left_in, **fx_left_in;
-  fluid_real_t** right_in, **fx_right_in;
+  fluid_real_t* left_in, *fx_left_in;
+  fluid_real_t* right_in, *fx_right_in;
   double time = fluid_utime();
   int i, num, available, count;
 #ifdef WITH_FLOAT
@@ -2906,13 +2906,13 @@ fluid_synth_nwrite_float(fluid_synth_t* synth, int len,
 
     for (i = 0; i < synth->audio_channels; i++) {
 #ifdef WITH_FLOAT
-      FLUID_MEMCPY(left[i], left_in[i] + synth->cur, bytes);
-      FLUID_MEMCPY(right[i], right_in[i] + synth->cur, bytes);
+      FLUID_MEMCPY(left[i], &left_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT] + synth->cur, bytes);
+      FLUID_MEMCPY(right[i], &right_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT] + synth->cur, bytes);
 #else //WITH_FLOAT
       int j;
       for (j = 0; j < num; j++) {
-          left[i][j] = (float) left_in[i][j + synth->cur];
-          right[i][j] = (float) right_in[i][j + synth->cur];
+          left[i][j] = (float) left_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + j + synth->cur];
+          right[i][j] = (float) right_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + j + synth->cur];
       }
 #endif //WITH_FLOAT
     }
@@ -2921,20 +2921,20 @@ fluid_synth_nwrite_float(fluid_synth_t* synth, int len,
     {
 #ifdef WITH_FLOAT
       if(fx_left != NULL)
-        FLUID_MEMCPY(fx_left[i], fx_left_in[i] + synth->cur, bytes);
+        FLUID_MEMCPY(fx_left[i], &fx_left_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT] + synth->cur, bytes);
       
       if(fx_right != NULL)
-        FLUID_MEMCPY(fx_right[i], fx_right_in[i] + synth->cur, bytes);
+        FLUID_MEMCPY(fx_right[i], &fx_right_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT] + synth->cur, bytes);
 #else //WITH_FLOAT
       int j;
       if(fx_left != NULL) {
         for (j = 0; j < num; j++)
-          fx_left[i][j] = (float) fx_left_in[i][j + synth->cur];
+          fx_left[i][j] = (float) fx_left_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + j + synth->cur];
       }
       
       if(fx_right != NULL) {
         for (j = 0; j < num; j++)
-          fx_right[i][j] = (float) fx_right_in[i][j + synth->cur];
+          fx_right[i][j] = (float) fx_right_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + j + synth->cur];
       }
 #endif //WITH_FLOAT
     }
@@ -2957,13 +2957,13 @@ fluid_synth_nwrite_float(fluid_synth_t* synth, int len,
 
     for (i = 0; i < synth->audio_channels; i++) {
 #ifdef WITH_FLOAT
-      FLUID_MEMCPY(left[i] + count, left_in[i], bytes);
-      FLUID_MEMCPY(right[i] + count, right_in[i], bytes);
+      FLUID_MEMCPY(left[i] + count, &left_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT], bytes);
+      FLUID_MEMCPY(right[i] + count, &right_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT], bytes);
 #else //WITH_FLOAT
       int j;
       for (j = 0; j < num; j++) {
-          left[i][j + count] = (float) left_in[i][j];
-          right[i][j + count] = (float) right_in[i][j];
+          left[i][j + count] = (float) left_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + j];
+          right[i][j + count] = (float) right_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + j];
       }
 #endif //WITH_FLOAT
     }
@@ -2972,20 +2972,20 @@ fluid_synth_nwrite_float(fluid_synth_t* synth, int len,
     {
 #ifdef WITH_FLOAT
       if(fx_left != NULL)
-        FLUID_MEMCPY(fx_left[i] + count, fx_left_in[i], bytes);
+        FLUID_MEMCPY(fx_left[i] + count, &fx_left_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT], bytes);
       
       if(fx_right != NULL)
-        FLUID_MEMCPY(fx_right[i] + count, fx_right_in[i], bytes);
+        FLUID_MEMCPY(fx_right[i] + count, &fx_right_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT], bytes);
 #else //WITH_FLOAT
       int j;
       if(fx_left != NULL) {
         for (j = 0; j < num; j++)
-          fx_left[i][j + count] = (float) fx_left_in[i][j];
+          fx_left[i][j + count] = (float) fx_left_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + j];
       }
       
       if(fx_right != NULL) {
         for (j = 0; j < num; j++)
-          fx_right[i][j + count] = (float) fx_right_in[i][j];
+          fx_right[i][j + count] = (float) fx_right_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + j];
       }
 #endif //WITH_FLOAT
     }
@@ -3074,8 +3074,8 @@ fluid_synth_write_float(fluid_synth_t* synth, int len,
   int i, j, k, l;
   float* left_out = (float*) lout;
   float* right_out = (float*) rout;
-  fluid_real_t** left_in;
-  fluid_real_t** right_in;
+  fluid_real_t* left_in;
+  fluid_real_t* right_in;
   double time = fluid_utime();
   float cpu_load;
 
@@ -3095,8 +3095,8 @@ fluid_synth_write_float(fluid_synth_t* synth, int len,
 	l = 0;
       }
 
-      left_out[j] = (float) left_in[0][l];
-      right_out[k] = (float) right_in[0][l];
+      left_out[j] = (float) left_in[0 * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + l];
+      right_out[k] = (float) right_in[0 * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + l];
   }
 
   synth->cur = l;
@@ -3172,8 +3172,8 @@ fluid_synth_write_s16(fluid_synth_t* synth, int len,
   int i, j, k, cur;
   signed short* left_out = (signed short*) lout;
   signed short* right_out = (signed short*) rout;
-  fluid_real_t** left_in;
-  fluid_real_t** right_in;
+  fluid_real_t* left_in;
+  fluid_real_t* right_in;
   fluid_real_t left_sample;
   fluid_real_t right_sample;
   double time = fluid_utime();
@@ -3198,8 +3198,8 @@ fluid_synth_write_s16(fluid_synth_t* synth, int len,
       cur = 0;
     }
 
-    left_sample = roundi (left_in[0][cur] * 32766.0f + rand_table[0][di]);
-    right_sample = roundi (right_in[0][cur] * 32766.0f + rand_table[1][di]);
+    left_sample = roundi (left_in[0 * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + cur] * 32766.0f + rand_table[0][di]);
+    right_sample = roundi (right_in[0 * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + cur] * 32766.0f + rand_table[1][di]);
 
     di++;
     if (di >= DITHER_SIZE) di = 0;

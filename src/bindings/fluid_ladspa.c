@@ -266,11 +266,12 @@ void delete_fluid_ladspa_fx(fluid_ladspa_fx_t *fx)
  * @param fx LADSPA fx instance
  * @param prefix common name prefix for the created nodes
  * @param num_buffers number of of buffers buffer array
- * @param buffers array of pointers to buffers
+ * @param buffers array of sample buffers
+ * @param buf_stride number of samples contained in one buffer
  * @return FLUID_OK on success, otherwise FLUID_FAILED
  */
 int fluid_ladspa_add_host_ports(fluid_ladspa_fx_t *fx, const char *prefix,
-        int num_buffers, fluid_real_t *buffers[])
+        int num_buffers, fluid_real_t buffers[], int buf_stride)
 {
     int i;
     char name[99];
@@ -296,7 +297,7 @@ int fluid_ladspa_add_host_ports(fluid_ladspa_fx_t *fx, const char *prefix,
 
         if (new_fluid_ladspa_node(fx, name,
                     FLUID_LADSPA_NODE_AUDIO | FLUID_LADSPA_NODE_HOST,
-                    buffers[i]) == NULL)
+                    &buffers[i * buf_stride]) == NULL)
         {
             LADSPA_API_RETURN(fx, FLUID_FAILED);
         }
