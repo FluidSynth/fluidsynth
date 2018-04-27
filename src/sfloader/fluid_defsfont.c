@@ -273,7 +273,7 @@ const char* fluid_defsfont_get_name(fluid_defsfont_t* defsfont)
 int fluid_defsfont_load_sampledata(fluid_defsfont_t *defsfont, SFData *sfdata, fluid_sample_t *sample)
 {
     int num_samples;
-    int source_end = sample->source_end;
+    unsigned int source_end = sample->source_end;
 
     /* For uncompressed samples we want to include the 46 zero sample word area following each sample
      * in the Soundfont. Otherwise samples with loopend > end, which we have decided not to correct, would
