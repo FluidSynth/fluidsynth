@@ -836,6 +836,7 @@ fluid_mixer_buffers_mix(fluid_mixer_buffers_t* dst, fluid_mixer_buffers_t* src)
   base_dst = fluid_align_ptr(dst->left_buf, FLUID_DEFAULT_ALIGNMENT);
   for (i=0; i < minbuf; i++)
   {
+    #pragma omp simd aligned(base_dst,base_src:FLUID_DEFAULT_ALIGNMENT)
     for (j=0; j < scount; j++)
     {
         int dsp_i = i * FLUID_MIXER_MAX_BUFFERS_DEFAULT * FLUID_BUFSIZE + j;
@@ -847,6 +848,7 @@ fluid_mixer_buffers_mix(fluid_mixer_buffers_t* dst, fluid_mixer_buffers_t* src)
   base_dst = fluid_align_ptr(dst->right_buf, FLUID_DEFAULT_ALIGNMENT);
   for (i=0; i < minbuf; i++)
   {
+    #pragma omp simd aligned(base_dst,base_src:FLUID_DEFAULT_ALIGNMENT)
     for (j=0; j < scount; j++)
     {
         int dsp_i = i * FLUID_MIXER_MAX_BUFFERS_DEFAULT * FLUID_BUFSIZE + j;
@@ -862,6 +864,7 @@ fluid_mixer_buffers_mix(fluid_mixer_buffers_t* dst, fluid_mixer_buffers_t* src)
   base_dst = fluid_align_ptr(dst->fx_left_buf, FLUID_DEFAULT_ALIGNMENT);
   for (i=0; i < minbuf; i++)
   {
+    #pragma omp simd aligned(base_dst,base_src:FLUID_DEFAULT_ALIGNMENT)
     for (j=0; j < scount; j++)
     {
         int dsp_i = i * FLUID_MIXER_MAX_BUFFERS_DEFAULT * FLUID_BUFSIZE + j;
@@ -873,6 +876,7 @@ fluid_mixer_buffers_mix(fluid_mixer_buffers_t* dst, fluid_mixer_buffers_t* src)
   base_dst = fluid_align_ptr(dst->fx_right_buf, FLUID_DEFAULT_ALIGNMENT);
   for (i=0; i < minbuf; i++)
   {
+    #pragma omp simd aligned(base_dst,base_src:FLUID_DEFAULT_ALIGNMENT)
     for (j=0; j < scount; j++)
     {
         int dsp_i = i * FLUID_MIXER_MAX_BUFFERS_DEFAULT * FLUID_BUFSIZE + j;
