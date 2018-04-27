@@ -335,15 +335,12 @@ fluid_rvoice_buffers_mix(fluid_rvoice_buffers_t* buffers,
 static FLUID_INLINE void
 fluid_mixer_buffers_render_one(fluid_mixer_buffers_t* buffers, 
 			       fluid_rvoice_t* rvoice, fluid_real_t** dest_bufs, 
-			       unsigned int dest_bufcount)
+			       unsigned int dest_bufcount, fluid_real_t* src_buf, int blockcount)
 {
-  int blockcount = buffers->mixer->current_blockcount;
   int i, total_samples = 0, start_block = 0;
 
-  fluid_real_t* local_buf = fluid_align_ptr(buffers->local_buf, FLUID_DEFAULT_ALIGNMENT);
-
   for (i=0; i < blockcount; i++) {
-    int s = fluid_rvoice_write(rvoice, &local_buf[FLUID_BUFSIZE*i]);
+    int s = fluid_rvoice_write(rvoice, &src_buf[FLUID_BUFSIZE*i]);
     if (s == -1) {
       start_block += s;
       s = FLUID_BUFSIZE;
@@ -354,7 +351,7 @@ fluid_mixer_buffers_render_one(fluid_mixer_buffers_t* buffers,
         break;
     }
   }
-  fluid_rvoice_buffers_mix(&rvoice->buffers, local_buf, -start_block, total_samples-((-start_block)*FLUID_BUFSIZE), dest_bufs, dest_bufcount);
+  fluid_rvoice_buffers_mix(&rvoice->buffers, src_buf, -start_block, total_samples-((-start_block)*FLUID_BUFSIZE), dest_bufs, dest_bufcount);
 
   if (total_samples < buffers->mixer->current_blockcount * FLUID_BUFSIZE) {
     fluid_finish_rvoice(buffers, rvoice);
@@ -444,16 +441,19 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_polyphony)
 
 
 static void 
-fluid_render_loop_singlethread(fluid_rvoice_mixer_t* mixer)
+fluid_render_loop_singlethread(fluid_rvoice_mixer_t* mixer, int blockcount)
 {
   int i;
   FLUID_DECLARE_VLA(fluid_real_t*, bufs, 
 		    mixer->buffers.buf_count * 2 + mixer->buffers.fx_buf_count * 2);
   int bufcount = fluid_mixer_buffers_prepare(&mixer->buffers, bufs);
+  
+  fluid_real_t* local_buf = fluid_align_ptr(mixer->buffers.local_buf, FLUID_DEFAULT_ALIGNMENT);
+  
   fluid_profile_ref_var(prof_ref);
   for (i=0; i < mixer->active_voices; i++) {
     fluid_mixer_buffers_render_one(&mixer->buffers, mixer->rvoices[i], bufs, 
-				   bufcount);
+				   bufcount, local_buf, blockcount);
     fluid_profile(FLUID_PROF_ONE_BLOCK_VOICE, prof_ref,1,
 	              mixer->current_blockcount * FLUID_BUFSIZE);
   }
@@ -790,6 +790,7 @@ fluid_mixer_thread_func (void* data)
   FLUID_DECLARE_VLA(fluid_real_t*, bufs, buffers->buf_count*2 + buffers->fx_buf_count*2);
   int bufcount = 0;
   int current_blockcount = buffers->mixer->current_blockcount;
+  fluid_real_t* local_buf = fluid_align_ptr(buffers->local_buf, FLUID_DEFAULT_ALIGNMENT);
   
   while (!fluid_atomic_int_get(&mixer->threads_should_terminate)) {
     fluid_rvoice_t* rvoice = fluid_mixer_get_mt_rvoice(mixer);
@@ -819,7 +820,7 @@ fluid_mixer_thread_func (void* data)
 	hasValidData = 1;
       }
       // then render voice to buffers
-      fluid_mixer_buffers_render_one(buffers, rvoice, bufs, bufcount);
+      fluid_mixer_buffers_render_one(buffers, rvoice, bufs, bufcount, local_buf, current_blockcount);
     }
   }
 
@@ -924,7 +925,9 @@ static void
 fluid_render_loop_multithread(fluid_rvoice_mixer_t* mixer)
 {
   int i, bufcount;
-  //int scount = mixer->current_blockcount * FLUID_BUFSIZE;
+  int current_blockcount = mixer->current_blockcount;
+  fluid_real_t* local_buf = fluid_align_ptr(mixer->buffers.local_buf, FLUID_DEFAULT_ALIGNMENT);
+  
   FLUID_DECLARE_VLA(fluid_real_t*, bufs, 
 		    mixer->buffers.buf_count * 2 + mixer->buffers.fx_buf_count * 2);
   // How many threads should we start this time?
@@ -933,7 +936,7 @@ fluid_render_loop_multithread(fluid_rvoice_mixer_t* mixer)
     extra_threads = mixer->thread_count;
   if (extra_threads == 0) {
     // No extra threads? No thread overhead!
-    fluid_render_loop_singlethread(mixer);
+    fluid_render_loop_singlethread(mixer, current_blockcount);
     return;
   }
 
@@ -954,9 +957,9 @@ fluid_render_loop_multithread(fluid_rvoice_mixer_t* mixer)
     fluid_rvoice_t* rvoice = fluid_mixer_get_mt_rvoice(mixer);
     if (rvoice != NULL) {
       fluid_profile_ref_var(prof_ref);
-      fluid_mixer_buffers_render_one(&mixer->buffers, rvoice, bufs, bufcount);
+      fluid_mixer_buffers_render_one(&mixer->buffers, rvoice, bufs, bufcount, local_buf, current_blockcount);
       fluid_profile(FLUID_PROF_ONE_BLOCK_VOICE, prof_ref,1,
-                    mixer->current_blockcount * FLUID_BUFSIZE);
+                    current_blockcount * FLUID_BUFSIZE);
       //test++;
     }
     else {
@@ -1063,7 +1066,7 @@ fluid_rvoice_mixer_render(fluid_rvoice_mixer_t* mixer, int blockcount)
     fluid_render_loop_multithread(mixer);
   else
 #endif
-    fluid_render_loop_singlethread(mixer);
+    fluid_render_loop_singlethread(mixer, blockcount);
   fluid_profile(FLUID_PROF_ONE_BLOCK_VOICES, prof_ref, mixer->active_voices,
                 mixer->current_blockcount * FLUID_BUFSIZE);
     
