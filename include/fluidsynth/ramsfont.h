@@ -43,18 +43,18 @@ FLUIDSYNTH_API fluid_sfont_t* fluid_ramsfont_create_sfont(void);
 FLUIDSYNTH_API int fluid_ramsfont_set_name(fluid_ramsfont_t* sfont, const char *name);
 FLUIDSYNTH_API 
 int fluid_ramsfont_add_izone(fluid_ramsfont_t* sfont,
-				unsigned int bank, unsigned int num, fluid_sample_t* sample,
+				int bank, int num, fluid_sample_t* sample,
 				int lokey, int hikey);
 FLUIDSYNTH_API
 int fluid_ramsfont_remove_izone(fluid_ramsfont_t* sfont,
-				unsigned int bank, unsigned int num, fluid_sample_t* sample);
+				int bank, int num, fluid_sample_t* sample);
 FLUIDSYNTH_API
 int fluid_ramsfont_izone_set_gen(fluid_ramsfont_t* sfont,
-				unsigned int bank, unsigned int num, fluid_sample_t* sample,
+				int bank, int num, fluid_sample_t* sample,
 				int gen_type, float value);
 FLUIDSYNTH_API
 int fluid_ramsfont_izone_set_loop(fluid_ramsfont_t* sfont,
-				unsigned int bank, unsigned int num, fluid_sample_t* sample,
+				int bank, int num, fluid_sample_t* sample,
 				int on, float loopstart, float loopend);
 
 

@@ -129,7 +129,7 @@ const char* fluid_defsfont_sfont_get_name(fluid_sfont_t* sfont)
 }
 
 fluid_preset_t*
-fluid_defsfont_sfont_get_preset(fluid_sfont_t* sfont, unsigned int bank, unsigned int prenum)
+fluid_defsfont_sfont_get_preset(fluid_sfont_t* sfont, int bank, int prenum)
 {
   return fluid_defsfont_get_preset(fluid_sfont_get_data(sfont), bank, prenum);
 }
@@ -520,7 +520,7 @@ int fluid_defsfont_add_preset(fluid_defsfont_t* defsfont, fluid_defpreset_t* def
 /*
  * fluid_defsfont_get_preset
  */
-fluid_preset_t* fluid_defsfont_get_preset(fluid_defsfont_t* defsfont, unsigned int bank, unsigned int num)
+fluid_preset_t* fluid_defsfont_get_preset(fluid_defsfont_t* defsfont, int bank, int num)
 {
     fluid_preset_t *preset;
     fluid_list_t *list;

@@ -84,7 +84,7 @@ fluid_sfont_t* fluid_defsfloader_load(fluid_sfloader_t* loader, const char* file
 
 int fluid_defsfont_sfont_delete(fluid_sfont_t* sfont);
 const char* fluid_defsfont_sfont_get_name(fluid_sfont_t* sfont);
-fluid_preset_t* fluid_defsfont_sfont_get_preset(fluid_sfont_t* sfont, unsigned int bank, unsigned int prenum);
+fluid_preset_t* fluid_defsfont_sfont_get_preset(fluid_sfont_t* sfont, int bank, int prenum);
 void fluid_defsfont_sfont_iteration_start(fluid_sfont_t* sfont);
 fluid_preset_t *fluid_defsfont_sfont_iteration_next(fluid_sfont_t* sfont);
 
@@ -127,7 +127,7 @@ fluid_defsfont_t* new_fluid_defsfont(fluid_settings_t* settings);
 int delete_fluid_defsfont(fluid_defsfont_t* defsfont);
 int fluid_defsfont_load(fluid_defsfont_t* defsfont, const fluid_file_callbacks_t* file_callbacks, const char* file);
 const char* fluid_defsfont_get_name(fluid_defsfont_t* defsfont);
-fluid_preset_t* fluid_defsfont_get_preset(fluid_defsfont_t* defsfont, unsigned int bank, unsigned int prenum);
+fluid_preset_t* fluid_defsfont_get_preset(fluid_defsfont_t* defsfont, int bank, int prenum);
 void fluid_defsfont_iteration_start(fluid_defsfont_t* defsfont);
 fluid_preset_t *fluid_defsfont_iteration_next(fluid_defsfont_t* defsfont);
 int fluid_defsfont_load_sampledata(fluid_defsfont_t *defsfont, SFData *sfdata, fluid_sample_t *sample);

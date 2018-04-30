@@ -101,6 +101,7 @@ Changes in FluidSynth 2.0.0 concerning developers:
 <br /><br />
 - all public \c fluid_settings_* functions that return an integer which is not meant to be interpreted as bool consistently return either FLUID_OK or FLUID_FAILED
 - all public delete_* functions return void and are safe when called with NULL
+- all public functions consistently receive signed integers for soundfont ids, bank and program numbers
 - the shell command handler was decoupled internally, as a consequence the param list of new_fluid_server() and new_fluid_cmd_handler() was adapted
 - reverb: roomsize is now limited to an upper threshold of 1.0 to avoid exponential volume increase
 - use unique device names for the "audio.portaudio.device" setting

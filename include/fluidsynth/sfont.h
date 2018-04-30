@@ -170,7 +170,7 @@ typedef const char* (*fluid_sfont_get_name_t)(fluid_sfont_t* sfont);
  * @return Should return an allocated virtual preset or NULL if it could not
  *   be found.
  */
-typedef fluid_preset_t* (*fluid_sfont_get_preset_t)(fluid_sfont_t* sfont, unsigned int bank, unsigned int prenum);
+typedef fluid_preset_t* (*fluid_sfont_get_preset_t)(fluid_sfont_t* sfont, int bank, int prenum);
 
 /**
  * Method to free a virtual SoundFont bank. Any custom user provided cleanup function must ultimately call
