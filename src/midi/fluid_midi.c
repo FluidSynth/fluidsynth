@@ -22,6 +22,7 @@
 #include "fluid_sys.h"
 #include "fluid_synth.h"
 #include "fluid_settings.h"
+#include "fluid_chan.h"
 
 
 static int fluid_midi_event_length(unsigned char event);
@@ -35,6 +36,191 @@ static char* fluid_file_read_full(fluid_file fp, size_t* length);
 static void fluid_midi_event_set_sysex_LOCAL(fluid_midi_event_t *evt, int type, void *data, int size, int dynamic);
 #define READ_FULL_INITIAL_BUFLEN 1024
 
+static int record_preset_info(fluid_list_t **list, int sfont_id, int bank, int prog)
+{
+    fluid_player_preset_info_t *pinfo;
+
+    pinfo = FLUID_NEW(fluid_player_preset_info_t);
+    if (pinfo == NULL)
+    {
+        FLUID_LOG(FLUID_ERR, "Out of memory");
+        return FLUID_FAILED;
+    }
+    pinfo->sfont_id = sfont_id;
+    pinfo->bank = bank;
+    pinfo->prog = prog;
+
+    *list = fluid_list_append(*list, pinfo);
+
+    return FLUID_OK;
+}
+
+static int fluid_player_unload_presets(fluid_player_t *player)
+{
+    fluid_player_preset_info_t *preloaded;
+    fluid_list_t *list;
+    fluid_sfont_t *sfont;
+    fluid_preset_t *preset;
+    int unloaded;
+
+    for (list = player->preloaded; list != NULL; list = fluid_list_next(list))
+    {
+        preloaded = fluid_list_get(list);
+
+        unloaded = FALSE;
+
+        /* FIXME: ideally we should use fluid_synth_get_preset here, but it's declared static */
+        sfont = fluid_synth_get_sfont_by_id(player->synth, preloaded->sfont_id);
+        if (sfont)
+        {
+            preset = fluid_sfont_get_preset(sfont, preloaded->bank - sfont->bankofs, preloaded->prog);
+            if (preset && fluid_preset_is_loaded(preset))
+            {
+                if (fluid_preset_unload(preset) == FLUID_OK)
+                {
+                    unloaded = TRUE;
+                }
+            }
+        }
+
+        if (!unloaded)
+        {
+            FLUID_LOG(FLUID_WARN, "Unable to unload preset %d:%d of Soundfont %d",
+                    preloaded->bank, preloaded->prog, preloaded->sfont_id);
+        }
+
+        FLUID_FREE(preloaded);
+    }
+
+    delete_fluid_list(player->preloaded);
+    player->preloaded = NULL;
+
+    return FLUID_OK;
+}
+
+static int fluid_player_preload_presets(fluid_player_t *player)
+{
+    int i;
+    int ret = FLUID_FAILED;
+    fluid_synth_t *synth;
+    fluid_preset_t *preset;
+    fluid_track_t *track;
+    fluid_midi_event_t *event;
+    fluid_list_t *prev_presets = NULL;
+    fluid_list_t *list;
+    fluid_player_preset_info_t *pinfo;
+
+    synth = player->synth;
+
+    /* First we store the current channel bank and program so we can reset the synth
+     * after we're done here */
+    for (i = 0; i < synth->midi_channels; i++)
+    {
+        unsigned int sfont_id = 0, bank = 0, prog = 0;
+        if (fluid_synth_get_program(synth, i, &sfont_id, &bank, &prog) == FLUID_FAILED)
+        {
+            goto exit_reset;
+        }
+        if (record_preset_info(&prev_presets, sfont_id + 1, bank, prog) == FLUID_FAILED)
+        {
+            goto exit_reset;
+        }
+    }
+
+    /* Now we go through all events on all tracks and execute all program change and
+     * bank change events. Whenever a new preset is selected, we preload it and record
+     * the soundfont id, bank and program so we can unload it again after the player has stopped.
+     *
+     * The reason why we can't simulate the program and bank change events but need to execute
+     * them on the synth instead is that there is quite a bit of logic in the synth with regard to
+     * bank and program changes which we don't want to (or can't) duplicate here.
+     */
+    for (i = 0; i < player->ntracks; i++) {
+        track = player->track[i];
+        fluid_track_reset(track);
+
+        for (event = track->cur; event != NULL;  event = fluid_track_next_event(track))
+        {
+            int type = fluid_midi_event_get_type(event);
+
+            if (type == MIDI_EOT)
+            {
+                break;
+            }
+
+            if (type == CONTROL_CHANGE)
+            {
+                /* We only care about bank select CCs */
+                int control = fluid_midi_event_get_control(event);
+                if (control == BANK_SELECT_MSB || control == BANK_SELECT_LSB)
+                {
+                    ret = fluid_synth_cc(synth,
+                            fluid_midi_event_get_channel(event),
+                            control,
+                            fluid_midi_event_get_value(event));
+                    if (ret == FLUID_FAILED)
+                    {
+                        goto exit_reset;
+                    }
+                }
+            }
+            else if (type == PROGRAM_CHANGE)
+            {
+                int chan = fluid_midi_event_get_channel(event);
+
+                ret = fluid_synth_program_change(synth, chan, fluid_midi_event_get_program(event));
+                if (ret == FLUID_FAILED)
+                {
+                    goto exit_reset;
+                }
+
+                preset = fluid_synth_get_channel_preset(synth, chan);
+                if (preset && !fluid_preset_is_loaded(preset))
+                {
+                    if (fluid_preset_load(preset) == FLUID_FAILED)
+                    {
+                        goto exit_reset;
+                    }
+
+                    /* Record the presets sfont id, bank and program so we can unload it
+                     * later. Can't store pointers here, as soundfonts might be unloaded during playback */
+                    if (record_preset_info(&player->preloaded, fluid_sfont_get_id(preset->sfont),
+                            fluid_preset_get_banknum(preset), fluid_preset_get_num(preset)) == FLUID_FAILED)
+                    {
+                        goto exit_reset;
+                    }
+                }
+            }
+        }
+
+        fluid_track_reset(track);
+    }
+
+    ret = FLUID_OK;
+
+exit_reset:
+    if (ret == FLUID_FAILED)
+    {
+        FLUID_LOG(FLUID_WARN, "Unable to preload presets for MIDI file");
+        fluid_player_unload_presets(player);
+    }
+
+    /* Reset the channels back to their original preset setup */
+    for (list = prev_presets, i = 0; list != NULL; list = fluid_list_next(list), i++)
+    {
+        pinfo = fluid_list_get(list);
+
+        if (fluid_synth_program_select(synth, i, pinfo->sfont_id, pinfo->bank, pinfo->prog) == FLUID_FAILED)
+        {
+            FLUID_LOG(FLUID_WARN, "Unable to reset channel %d after preset preload");
+        }
+
+        FLUID_FREE(pinfo);
+    }
+    delete_fluid_list(prev_presets);
+
+    return ret;
+}
 
 /***************************************************************
  *
@@ -1320,12 +1506,15 @@ new_fluid_player(fluid_synth_t *synth)
     player->cur_msec = 0;
     player->cur_ticks = 0;
     player->seek_ticks = -1;    
+    player->preloaded = NULL;
     fluid_player_set_playback_callback(player, fluid_synth_handle_midi_event, synth);
     player->use_system_timer = fluid_settings_str_equal(synth->settings,
             "player.timing-source", "system");
 
     fluid_settings_getint(synth->settings, "player.reset-synth", &i);
     player->reset_synth_between_songs = i;
+
+    fluid_settings_getint(synth->settings, "synth.dynamic-sample-loading", &player->preload_presets);
 
     return player;
 }
@@ -1611,6 +1800,10 @@ fluid_player_playlist_load(fluid_player_t *player, unsigned int msec)
             fluid_track_reset(player->track[i]);
         }
     }
+
+    if (player->preload_presets) {
+        fluid_player_preload_presets(player);
+    }
 }
 
 /*
@@ -1668,7 +1861,11 @@ fluid_player_callback(void *data, unsigned int msec)
             FLUID_LOG(FLUID_DBG, "%s: %d: Duration=%.3f sec", __FILE__,
                     __LINE__, (msec - player->begin_msec) / 1000.0);
             loadnextfile = 1;
+            if (player->preload_presets) {
+                fluid_player_unload_presets(player);
+            }
         }
+
     } while (loadnextfile);
 
     player->status = status;

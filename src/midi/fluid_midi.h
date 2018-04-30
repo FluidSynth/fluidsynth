@@ -26,6 +26,7 @@
 #include "fluid_list.h"
 
 typedef struct _fluid_midi_parser_t fluid_midi_parser_t;
+typedef struct _fluid_player_preset_info_t fluid_player_preset_info_t;
 
 fluid_midi_parser_t* new_fluid_midi_parser(void);
 void delete_fluid_midi_parser(fluid_midi_parser_t* parser);
@@ -277,6 +278,17 @@ typedef struct
     size_t buffer_len;  /** Number of bytes in buffer; 0 if filename */
 } fluid_playlist_item;
 
+
+/* Stores information about selected presets. Used by the preset
+ * preloading function of fluid_player if dynamic sample loading is enabled */
+struct _fluid_player_preset_info_t
+{
+    int sfont_id;
+    int bank;
+    int prog;
+};
+
+
 /*
  * fluid_player
  */
@@ -291,6 +303,9 @@ struct _fluid_player_t {
   int loop; /* -1 = loop infinitely, otherwise times left to loop the playlist */
   fluid_list_t* playlist; /* List of fluid_playlist_item* objects */
   fluid_list_t* currentfile; /* points to an item in files, or NULL if not playing */
+
+  int preload_presets;    /* If we should attempt to preload all presets used in MIDI files */
+  fluid_list_t* preloaded; /* List of preloaded preset info */
 
   char send_program_change; /* should we ignore the program changes? */
   char use_system_timer;   /* if zero, use sample timers, otherwise use system clock timer */
