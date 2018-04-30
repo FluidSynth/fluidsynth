@@ -2001,12 +2001,15 @@ static sf_count_t sfvio_seek(sf_count_t offset, int whence, void *user_data)
     case SEEK_END:
       new_offset = sfvio_get_filelen(user_data) + offset;
       break;
+    default:
+      goto fail; /* proper error handling not possible?? */
   }
 
   if (sf->fcbs->fseek(sf->sffd, sf->samplepos + data->start + new_offset, SEEK_SET) != FLUID_FAILED) {
       data->offset = new_offset;
   }
 
+fail:
   return data->offset;
 }
 
