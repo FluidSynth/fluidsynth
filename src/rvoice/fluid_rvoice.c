@@ -272,7 +272,7 @@ int
 fluid_rvoice_write (fluid_rvoice_t* voice, fluid_real_t *dsp_buf)
 {
   int ticks = voice->envlfo.ticks;
-  int count;
+  int count, is_looping;
 
   /******************* sample sanity check **********/
 
@@ -358,7 +358,8 @@ fluid_rvoice_write (fluid_rvoice_t* voice, fluid_real_t *dsp_buf)
   /* if phase_incr is not advancing, set it to the minimum fraction value (prevent stuckage) */
   if (voice->dsp.phase_incr == 0) voice->dsp.phase_incr = 1;
 
-  voice->dsp.is_looping = voice->dsp.samplemode == FLUID_LOOP_DURING_RELEASE
+  /* voice is currently looping? */
+  is_looping = voice->dsp.samplemode == FLUID_LOOP_DURING_RELEASE
     || (voice->dsp.samplemode == FLUID_LOOP_UNTIL_RELEASE
 	&& fluid_adsr_env_get_section(&voice->envlfo.volenv) < FLUID_VOICE_ENVRELEASE);
 
@@ -367,22 +368,21 @@ fluid_rvoice_write (fluid_rvoice_t* voice, fluid_real_t *dsp_buf)
    * The buffer has to be filled from 0 to FLUID_BUFSIZE-1.
    * Depending on the position in the loop and the loop size, this
    * may require several runs. */
-  voice->dsp.dsp_buf = dsp_buf; 
 
   switch (voice->dsp.interp_method)
   {
     case FLUID_INTERP_NONE:
-      count = fluid_rvoice_dsp_interpolate_none (&voice->dsp);
+      count = fluid_rvoice_dsp_interpolate_none (&voice->dsp, dsp_buf, is_looping);
       break;
     case FLUID_INTERP_LINEAR:
-      count = fluid_rvoice_dsp_interpolate_linear (&voice->dsp);
+      count = fluid_rvoice_dsp_interpolate_linear (&voice->dsp, dsp_buf, is_looping);
       break;
     case FLUID_INTERP_4THORDER:
     default:
-      count = fluid_rvoice_dsp_interpolate_4th_order (&voice->dsp);
+      count = fluid_rvoice_dsp_interpolate_4th_order (&voice->dsp, dsp_buf, is_looping);
       break;
     case FLUID_INTERP_7THORDER:
-      count = fluid_rvoice_dsp_interpolate_7th_order (&voice->dsp);
+      count = fluid_rvoice_dsp_interpolate_7th_order (&voice->dsp, dsp_buf, is_looping);
       break;
   }
   fluid_check_fpe ("voice_write interpolation");
@@ -404,60 +404,6 @@ fluid_rvoice_write (fluid_rvoice_t* voice, fluid_real_t *dsp_buf)
   return count;
 }
 
-
-static FLUID_INLINE fluid_real_t* 
-get_dest_buf(fluid_rvoice_buffers_t* buffers, int index,
-             fluid_real_t** dest_bufs, int dest_bufcount)
-{
-  int j = buffers->bufs[index].mapping;
-  if (j >= dest_bufcount || j < 0) return NULL;
-  return dest_bufs[j];
-}
-
-/**
- * Mix data down to buffers
- *
- * @param buffers Destination buffer(s)
- * @param dsp_buf Mono sample source
- * @param samplecount Number of samples to process (no FLUID_BUFSIZE restriction)
- * @param dest_bufs Array of buffers to mixdown to
- * @param dest_bufcount Length of dest_bufs
- */
-void 
-fluid_rvoice_buffers_mix(fluid_rvoice_buffers_t* buffers, 
-                         fluid_real_t* dsp_buf, int samplecount, 
-                         fluid_real_t** dest_bufs, int dest_bufcount)
-{
-  int bufcount = buffers->count;
-  int i, dsp_i;
-  if (!samplecount || !bufcount || !dest_bufcount) 
-    return;
-
-  for (i=0; i < bufcount; i++) {
-    fluid_real_t* buf = get_dest_buf(buffers, i, dest_bufs, dest_bufcount);
-    fluid_real_t* next_buf;
-    fluid_real_t amp = buffers->bufs[i].amp;
-    if (buf == NULL || amp == 0.0f)
-      continue;
-
-    /* Optimization for centered stereo samples - we can save one 
-       multiplication per sample */
-    next_buf = (i+1 >= bufcount ? NULL : get_dest_buf(buffers, i+1, dest_bufs, dest_bufcount));
-    if (next_buf && buffers->bufs[i+1].amp == amp) {
-      for (dsp_i = 0; dsp_i < samplecount; dsp_i++) {
-        fluid_real_t samp = amp * dsp_buf[dsp_i]; 
-        buf[dsp_i] += samp;
-        next_buf[dsp_i] += samp;
-      }
-      i++;
-    }
-    else {
-      for (dsp_i = 0; dsp_i < samplecount; dsp_i++)
-        buf[dsp_i] += amp * dsp_buf[dsp_i];
-    }
-  }
-}
-
 /**
  * Initialize buffers up to (and including) bufnum
  */
@@ -470,8 +416,7 @@ fluid_rvoice_buffers_check_bufnum(fluid_rvoice_buffers_t* buffers, unsigned int 
   if (bufnum >= FLUID_RVOICE_MAX_BUFS) return FLUID_FAILED;
 
   for (i = buffers->count; i <= bufnum; i++) {
-    buffers->bufs[bufnum].amp = 0.0f;  
-    buffers->bufs[bufnum].mapping = i;  
+    buffers->bufs[i].amp = 0.0f;
   }
   buffers->count = bufnum+1;
   return FLUID_OK;

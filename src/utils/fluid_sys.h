@@ -59,6 +59,16 @@ void fluid_time_config(void);
 
 
 /* Misc */
+#if defined(__INTEL_COMPILER)
+#define FLUID_RESTRICT restrict
+#elif defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
+#define FLUID_RESTRICT __restrict__
+#elif defined(_MSC_VER)
+#define FLUID_RESTRICT __restrict
+#else
+#warning "Dont know how this compiler handles restrict pointers, refuse to use them."
+#define FLUID_RESTRICT
+#endif
 
 #define FLUID_INLINE              inline
 #define FLUID_POINTER_TO_UINT     GPOINTER_TO_UINT

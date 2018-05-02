@@ -71,16 +71,16 @@ struct _fluid_voice_t
 	unsigned char vel;              /* the velocity of the noteon event */
 	fluid_channel_t* channel;
 	fluid_rvoice_eventhandler_t* eventhandler;
-	fluid_gen_t gen[GEN_LAST];
-	fluid_mod_t mod[FLUID_NUM_MOD];
-	int mod_count;
 	fluid_zone_range_t * zone_range; /* instrument zone range*/
 	fluid_sample_t* sample;         /* Pointer to sample (dupe in rvoice) */
+    
+	unsigned int start_time;
+	int mod_count;
+	fluid_mod_t mod[FLUID_NUM_MOD];
+	fluid_gen_t gen[GEN_LAST];
 
 	/* basic parameters */
 	fluid_real_t output_rate;        /* the sample rate of the synthesizer (dupe in rvoice) */
-
-	unsigned int start_time;
 
 	/* basic parameters */
 	fluid_real_t pitch;              /* the pitch in midicents (dupe in rvoice) */

@@ -84,17 +84,22 @@ struct _fluid_rvoice_envlfo_t
 struct _fluid_rvoice_dsp_t
 {
 	/* interpolation method, as in fluid_interp in fluidsynth.h */
-	int interp_method;
+	enum fluid_interp interp_method;
+	enum fluid_loop samplemode;
+    
+    /* Flag that is set as soon as the first loop is completed. */
+	char has_looped;
+    
+    /* Flag that initiates, that sample-related parameters have to be checked. */
+	char check_sample_sanity_flag;
+	
 	fluid_sample_t* sample;
-	int check_sample_sanity_flag;   /* Flag that initiates, that sample-related parameters
-					   have to be checked. */
 
 	/* sample and loop start and end points (offset in sample memory).  */
 	int start;
 	int end;
 	int loopstart;
 	int loopend;	/* Note: first point following the loop (superimposed on loopstart) */
-	enum fluid_loop samplemode;
 
 	/* Stuff needed for portamento calculations */
 	fluid_real_t pitchoffset;        /* the portamento range in midicents */
@@ -108,7 +113,6 @@ struct _fluid_rvoice_dsp_t
 
 	/* Stuff needed for amplitude calculations */
 
-	int has_looped;                 /* Flag that is set as soon as the first loop is completed. */
 	fluid_real_t attenuation;        /* the attenuation in centibels */
 	fluid_real_t prev_attenuation;   /* the previous attenuation in centibels 
 					used by fluid_rvoice_multi_retrigger_attack() */
@@ -118,18 +122,13 @@ struct _fluid_rvoice_dsp_t
 	fluid_real_t amplitude_that_reaches_noise_floor_loop;
 	fluid_real_t synth_gain; 	/* master gain */
 
-
 	/* Dynamic input to the interpolator below */
-
-	fluid_real_t *dsp_buf;		/* buffer to store interpolated sample data to */
-
+    
 	fluid_real_t amp;                /* current linear amplitude */
 	fluid_real_t amp_incr;		/* amplitude increment value for the next FLUID_BUFSIZE samples */
 
 	fluid_phase_t phase;             /* the phase (current sample offset) of the sample wave */
 	fluid_real_t phase_incr;	/* the phase increment for the next FLUID_BUFSIZE samples */
-	int is_looping;
-
 };
 
 /* Currently left, right, reverb, chorus. To be changed if we
@@ -164,10 +163,6 @@ struct _fluid_rvoice_t
 
 int fluid_rvoice_write(fluid_rvoice_t* voice, fluid_real_t *dsp_buf);
 
-void fluid_rvoice_buffers_mix(fluid_rvoice_buffers_t* buffers, 
-                              fluid_real_t* dsp_buf, int samplecount, 
-                              fluid_real_t** dest_bufs, int dest_bufcount);
-
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_buffers_set_amp);
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_buffers_set_mapping);
 
@@ -198,10 +193,10 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_set_sample);
 
 /* defined in fluid_rvoice_dsp.c */
 void fluid_rvoice_dsp_config (void);
-int fluid_rvoice_dsp_interpolate_none (fluid_rvoice_dsp_t *voice);
-int fluid_rvoice_dsp_interpolate_linear (fluid_rvoice_dsp_t *voice);
-int fluid_rvoice_dsp_interpolate_4th_order (fluid_rvoice_dsp_t *voice);
-int fluid_rvoice_dsp_interpolate_7th_order (fluid_rvoice_dsp_t *voice);
+int fluid_rvoice_dsp_interpolate_none (fluid_rvoice_dsp_t *voice, fluid_real_t *FLUID_RESTRICT dsp_buf, int is_looping);
+int fluid_rvoice_dsp_interpolate_linear (fluid_rvoice_dsp_t *voice, fluid_real_t *FLUID_RESTRICT dsp_buf, int is_looping);
+int fluid_rvoice_dsp_interpolate_4th_order (fluid_rvoice_dsp_t *voice, fluid_real_t *FLUID_RESTRICT dsp_buf, int is_looping);
+int fluid_rvoice_dsp_interpolate_7th_order (fluid_rvoice_dsp_t *voice, fluid_real_t *FLUID_RESTRICT dsp_buf, int is_looping);
 
 
 /*
