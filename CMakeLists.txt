@@ -156,16 +156,26 @@ if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang" OR CMAKE_C_
           "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-undefined" )
   endif ( NOT APPLE AND NOT OS2 )
   
-  if ( OS2 )
-    set ( GNUCC_VISIBILITY_FLAG "" )
-  else ( OS2 )
-    set ( GNUCC_VISIBILITY_FLAG "-fvisibility=hidden" )
+  # define some warning flags
+  set ( ADDITIONAL_FLAGS "-Wall -W -Wpointer-arith -Wno-cast-qual -Wstrict-prototypes -Wno-unused-parameter -Wdeclaration-after-statement" )
+    
+  # no visibility support on OS2
+  if ( NOT OS2 )
+    set ( ADDITIONAL_FLAGS "${ADDITIONAL_FLAGS} -fvisibility=hidden" )
   endif ( OS2 )
+  
+  if ( CMAKE_C_COMPILER_ID STREQUAL "Intel" )
+    # icc needs the restrict flag to recognize C99 restrict pointers
+    set ( ADDITIONAL_FLAGS "${ADDITIONAL_FLAGS} -restrict" )
+  else () # not intel
+    # gcc and clang support bad function cast and alignment warnings; add them as well.
+    set ( ADDITIONAL_FLAGS "${ADDITIONAL_FLAGS} -Wbad-function-cast -Wcast-align" )
+  endif (CMAKE_C_COMPILER_ID STREQUAL "Intel" )
 
-  set ( GNUCC_WARNING_FLAGS "-Wall -W -Wpointer-arith -Wbad-function-cast -Wno-cast-qual -Wcast-align -Wstrict-prototypes -Wno-unused-parameter -Wdeclaration-after-statement" )
-  set ( CMAKE_C_FLAGS_DEBUG "-g ${GNUCC_VISIBILITY_FLAG} -DDEBUG ${GNUCC_WARNING_FLAGS} -fsanitize=undefined ${CMAKE_C_FLAGS_DEBUG}" )
-  set ( CMAKE_C_FLAGS_RELEASE "-O2 -fomit-frame-pointer -finline-functions ${GNUCC_VISIBILITY_FLAG} -DNDEBUG ${GNUCC_WARNING_FLAGS} ${CMAKE_C_FLAGS_RELEASE}" )
-  set ( CMAKE_C_FLAGS_RELWITHDEBINFO "-O2 -g -fomit-frame-pointer -finline-functions ${GNUCC_VISIBILITY_FLAG} -DNDEBUG ${GNUCC_WARNING_FLAGS} ${CMAKE_C_FLAGS_RELWITHDEBINFO}" )
+  set ( CMAKE_C_FLAGS_DEBUG "-g ${ADDITIONAL_FLAGS} -DDEBUG -fsanitize=undefined ${CMAKE_C_FLAGS_DEBUG}" )
+  set ( CMAKE_C_FLAGS_RELEASE "-O2 -fomit-frame-pointer -finline-functions ${ADDITIONAL_FLAGS} -DNDEBUG ${CMAKE_C_FLAGS_RELEASE}" )
+  set ( CMAKE_C_FLAGS_RELWITHDEBINFO "-O2 -g -fomit-frame-pointer -finline-functions ${ADDITIONAL_FLAGS} -DNDEBUG ${CMAKE_C_FLAGS_RELWITHDEBINFO}" )
+  
 endif ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang" OR CMAKE_C_COMPILER_ID STREQUAL "Intel" )
 
 # Windows
