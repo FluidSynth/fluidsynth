@@ -162,7 +162,7 @@ if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang" OR CMAKE_C_
   # no visibility support on OS2
   if ( NOT OS2 )
     set ( ADDITIONAL_FLAGS "${ADDITIONAL_FLAGS} -fvisibility=hidden" )
-  endif ( OS2 )
+  endif ( NOT OS2 )
   
   if ( CMAKE_C_COMPILER_ID STREQUAL "Intel" )
     # icc needs the restrict flag to recognize C99 restrict pointers

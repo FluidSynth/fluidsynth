@@ -53,11 +53,13 @@ struct _fluid_mixer_buffers_t {
   int fx_buf_count;
   
   /** buffer to store the left part of a stereo channel to.
-   * Specifically a two dimensional array, containing \c buf_count buffers
-   * (i.e. for each synth.audio-channels), of which each buffer contains
-   * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT audio items (=samples) 
-   * @note the beginning of the array is aligned to the FLUID_DEFAULT_ALIGNMENT
-   * boundary, so make sure to access all those pointers using fluid_align_ptr()
+   * Specifically a two dimensional array, containing \c buf_count sample buffers
+   * (i.e. for each synth.audio-channels), of which each contains
+   * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT audio items (=samples)
+   * @note Each sample buffer is aligned to the FLUID_DEFAULT_ALIGNMENT
+   * boundary provided that this pointer points to an aligned buffer.
+   * So make sure to access the sample buffer by first aligning this
+   * pointer using fluid_align_ptr()
    */
   fluid_real_t* left_buf;
   
@@ -117,7 +119,6 @@ static FLUID_INLINE void
 fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t* mixer)
 {
   int i;
-  fluid_profile_ref_var(prof_ref);
   
     void (*reverb_process_func)(fluid_revmodel_t* rev, fluid_real_t *in, fluid_real_t *left_out, fluid_real_t *right_out);
     void (*chorus_process_func)(fluid_chorus_t* chorus, fluid_real_t *in, fluid_real_t *left_out, fluid_real_t *right_out);
@@ -126,6 +127,8 @@ fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t* mixer)
     
     fluid_real_t* in_rev = fluid_align_ptr(mixer->buffers.fx_left_buf, FLUID_DEFAULT_ALIGNMENT);
     fluid_real_t* in_ch = in_rev;
+    
+    fluid_profile_ref_var(prof_ref);
     
     in_rev = &in_rev[SYNTH_REVERB_CHANNEL * FLUID_MIXER_MAX_BUFFERS_DEFAULT * FLUID_BUFSIZE];
     in_ch  = &in_ch [SYNTH_CHORUS_CHANNEL * FLUID_MIXER_MAX_BUFFERS_DEFAULT * FLUID_BUFSIZE];
@@ -487,7 +490,7 @@ fluid_mixer_buffers_zero(fluid_mixer_buffers_t* buffers, int current_blockcount)
 static int 
 fluid_mixer_buffers_init(fluid_mixer_buffers_t* buffers, fluid_rvoice_mixer_t* mixer)
 {
-  int i, samplecount;
+  int samplecount;
   
   buffers->mixer = mixer;
   buffers->buf_count = buffers->mixer->buffers.buf_count;
@@ -600,8 +603,6 @@ new_fluid_rvoice_mixer(int buf_count, int fx_buf_count, fluid_real_t sample_rate
 static void
 fluid_mixer_buffers_free(fluid_mixer_buffers_t* buffers)
 {
-  int i;
-  
   FLUID_FREE(buffers->finished_voices);
   
   /* free all the sample buffers */
