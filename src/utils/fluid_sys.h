@@ -606,15 +606,19 @@ void fluid_msleep(unsigned int msecs);
  * Advances the given \c ptr to the next \c alignment byte boundary.
  * Make sure you've allocated an extra of \c alignment bytes to avoid a buffer overflow.
  * 
+ * @note \c alignment must be a power of two
  * @return Returned pointer is guarenteed to be aligned to \c alignment boundary and in range \f[ ptr <= returned_ptr < ptr + alignment \f].
  */
 static FLUID_INLINE void* fluid_align_ptr(const void* ptr, unsigned int alignment)
 {
     uintptr_t ptr_int = (uintptr_t)ptr;
-    unsigned int offset = ptr_int % alignment;
-    unsigned int add = offset == 0 ? 0 // is already aligned, dont advance, else buffer overrun
-                                   : alignment - offset; // advance the pointer to the next alignment boundary
+    unsigned int offset = ptr_int & (alignment-1);
+    unsigned int add = (alignment - offset) & (alignment-1); // advance the pointer to the next alignment boundary
     ptr_int += add;
+    
+    /* assert alignment is power of two */
+    FLUID_ASSERT(!(alignment == 0) && !(alignment & (alignment - 1)));
+    
     return (void*)ptr_int;
 }
 
