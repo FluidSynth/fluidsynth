@@ -126,10 +126,6 @@ fluid_rvoice_check_sample_sanity(fluid_rvoice_t* voice)
     int max_index_loop=(int) voice->dsp.sample->end - FLUID_MIN_LOOP_PAD + 1;	/* 'end' is last valid sample, loopend can be + 1 */
     fluid_check_fpe("voice_check_sample_sanity start");
 
-    if (!voice->dsp.check_sample_sanity_flag){
-	return;
-    }
-
 #if 0
     printf("Sample from %i to %i\n",voice->dsp.sample->start, voice->dsp.sample->end);
     printf("Sample loop from %i %i\n",voice->dsp.sample->loopstart, voice->dsp.sample->loopend);
