@@ -154,7 +154,6 @@ void fluid_channel_set_bank_lsb(fluid_channel_t* chan, int banklsb);
 void fluid_channel_set_bank_msb(fluid_channel_t* chan, int bankmsb);
 void fluid_channel_get_sfont_bank_prog(fluid_channel_t* chan, int *sfont,
                                        int *bank, int *prog);
-int fluid_channel_get_num(fluid_channel_t* chan);
 
 #define fluid_channel_get_preset(chan)          ((chan)->preset)
 #define fluid_channel_set_cc(chan, num, val) \
