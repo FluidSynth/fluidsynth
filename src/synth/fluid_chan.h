@@ -157,7 +157,6 @@ void fluid_channel_get_sfont_bank_prog(fluid_channel_t* chan, int *sfont,
                                        int *bank, int *prog);
 int fluid_channel_get_num(fluid_channel_t* chan);
 void fluid_channel_set_interp_method(fluid_channel_t* chan, int new_method);
-int fluid_channel_get_interp_method(fluid_channel_t* chan);
 
 #define fluid_channel_get_preset(chan)          ((chan)->preset)
 #define fluid_channel_set_cc(chan, num, val) \
