@@ -82,7 +82,7 @@ matrix:
             - ladspa-sdk
       env:
          - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5"
-         - CMAKE_FLAGS="-Denable-debug=1"
+         - CMAKE_FLAGS="-Denable-debug=1 -DCMAKE_C_FLAGS_DEBUG=-fuse-ld=gold"
 
     # works on Precise and Trusty
     - os: linux
