@@ -30,8 +30,8 @@
  *
  * It takes a monophonic input and produces a stereo output.
  * 
- * The parameters are the same that for Freeverb.
- * Also the default response of these parameters are the same that for Freeverb:
+ * The parameters are the same than for Freeverb.
+ * Also the default response of these parameters are the same than for Freeverb:
  *  - roomsize (0 to 1): control the reverb time from 0.7 to 12.5 s.
  *    This reverberation time is ofen called T60DC.
  *
@@ -55,9 +55,9 @@
  * using only 8 delays lines (NBR_DELAYS = 8) (default).
  *
  * Although 8 lines give good result, using 12 delays lines brings the overall 
- * frequency density quality a bit higher. This quality augmentation is noticable
+ * frequency density quality a bit higher. This quality augmentation is noticeable
  * particularly when using long reverb time (roomsize = 1) on solo instrument with
- * long realease time. Of course the cpu load augmentation is +50% relatively 
+ * long release time. Of course the cpu load augmentation is +50% relatively 
  * to 8 lines.
  *
  * As a general rule the reverberation tail quality is easier to perceive by ear
