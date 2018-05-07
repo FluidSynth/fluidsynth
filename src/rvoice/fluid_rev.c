@@ -10,23 +10,25 @@
  * https://ccrma.stanford.edu/~jos/Reverb/FDN_Late_Reverberation.html
  * Like Freeverb it is a late reverb which is convenient for Fluidsynth.
  *
- *                                         -------------------
- *                       -----------------|                   |
+ *
+ *                                        .-------------------.
+ *                      .-----------------|                   |
  *                      |              -  |      Feedback     |
- *                      |   --------------|       Matrix      |
- *       ---------      |  |               -------------------
- *      |Tone     |    \|/ |    ---------   -------  /|\ - /|\   ------
- * In ->|corrector|--*->+ ---->| Delay 0 |-|L.P.F 0|--*-------->|      |-> out
- * mono  ---------   |     |    ---------   -------         |   |      |  left
- *                   |     |       -           -            |   |Stereo|
- *                   |     |       -           -            |   | unit | 
- *                   |    \|/   ---------   -------         |   |      |-> out
+ *                      |  .--------------|       Matrix      |
+ *                      |  |              |___________________|
+ *                      |  |                         /|\   /|\
+ *                     \|/ |   .---------. .-------.  |  -  |   .------.
+.*                   .->+ ---->| Delay 0 |-|L.P.F 0|--*-------->|      |-> out
+ *      .---------.  |     |   |_________| |_______|        |   |      |  left
+ *      |Tone     |  |     |       -           -            |   |Stereo|
+ * In ->|corrector|--*     |       -           -            |   | unit | 
+ * mono |_________|  |    \|/  .---------. .-------.        |   |      |-> out
  *                    ---->+ ->| Delay 7 |-|L.P.F 7|--------*-->|      |  right
- *                              ---------   -------              ------  
+ *                             |_________| |_______|            |______|  
  *                                          /|\ /|\              /|\ /|\
  *                                           |   |                |   | 
- *                                roomsize --    |       width  --    |
- *                                    damp ------        level  ------ 
+ *                                roomsize --/   |       width  --/   |
+ *                                    damp ------/       level  ------/ 
  *
  * It takes a monophonic input and produces a stereo output.
  * 
@@ -1146,7 +1148,7 @@ fluid_revmodel_processreplace(fluid_revmodel_t* rev, fluid_real_t *in,
 
 			As wet1 is integrated in stereo coefficient wet 1 is now
 			integrated in out_left and out_right we simplify previous 
-			relation by	suppression of one multiply as this:
+			relation by suppression of one multiply as this:
 
 			left_out[k]  = out_left  + out_right * rev->wet2;
 			right_out[k] = out_right + out_left * rev->wet2;
@@ -1260,7 +1262,7 @@ void fluid_revmodel_processmix(fluid_revmodel_t* rev, fluid_real_t *in,
 
 			As wet1 is integrated in stereo coefficient wet 1 is now
 			integrated in out_left and out_right we simplify previous 
-			relation by	suppression of one multiply as this:
+			relation by suppression of one multiply as this:
 
 			left_out[k] += out_left  + out_right * rev->wet2;
 			right_out[k] += out_right + out_left * rev->wet2;
