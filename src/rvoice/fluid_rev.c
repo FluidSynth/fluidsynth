@@ -202,15 +202,15 @@
  T60 = -3 * Li * T / log10(gi) 
  T60 = -3 * Li *  / (log10(gi) * sr) 
  
-  - Li, the length of comb filter delay line.
-  - sr the sample rate.
-  - gi the feedback gain.
+  - Li: length of comb filter delay line.
+  - sr: sample rate.
+  - gi: the feedback gain.
 
  The minimum value for freeverb correspond to gi = 0.7.
- with Mi = 1617, fs at 44100 Hz, and gi = 0.7 => MIN_DC_REV_TIME = 0.7 s
+ with Mi = 1617, sr at 44100 Hz, and gi = 0.7 => MIN_DC_REV_TIME = 0.7 s
 
  The maximum value for freeverb correspond to gi = 0.98.
- with Mi = 1617, fs at 44100 Hz, and gi = 0.98 => MAX_DC_REV_TIME = 12.5 s
+ with Mi = 1617, sr at 44100 Hz, and gi = 0.98 => MAX_DC_REV_TIME = 12.5 s
 */
 
 #define MIN_DC_REV_TIME 0.7f	/* minimum T60DC reverb time: seconds */
@@ -276,9 +276,9 @@ long    delay_length[NBR_DELAYS] =
   A   = P  -  2 / N * u  * u 
    N     N             N    N
 
-  N: the matrix dimension (i.e NBR_DELAYS)
+  N: the matrix dimension (i.e NBR_DELAYS).
   P: permutation matrix.
-  u: is a colomn vector of 1
+  u: is a colomn vector of 1.
 
 */
 #define FDN_MATRIX_FACTOR (fluid_real_t)(-2.0 / NBR_DELAYS)
@@ -298,7 +298,7 @@ typedef struct
 }fdn_delay_lpf;
 
 /*-----------------------------------------------------------------------------
- Sets coefficients for delay absorbent low pass filter;
+ Sets coefficients for delay absorbent low pass filter.
  @param lpf pointer on low pass filter structure.
  @param b0,a1 coefficients.
 -----------------------------------------------------------------------------*/
@@ -310,16 +310,16 @@ static void set_fdn_delay_lpf(fdn_delay_lpf * lpf ,
 }
 
 /*-----------------------------------------------------------------------------
- Process delay absorbent low pass filter
- mod_delay modulated delay line
- in, input sample.
- out output sample.
+ Process delay absorbent low pass filter.
+ @param mod_delay modulated delay line.
+ @param in, input sample.
+ @param out output sample.
 -----------------------------------------------------------------------------*/
 /* process low pass damping filter (input, output, delay) */
 #define process_damping_filter(in,out,mod_delay) \
 {\
 	out = in * mod_delay->dl.damping.b0 -  mod_delay->dl.damping.buffer * \
-				mod_delay->dl.damping.a1;\
+	                                       mod_delay->dl.damping.a1;\
 	mod_delay->dl.damping.buffer = out;\
 }\
 
@@ -333,11 +333,11 @@ typedef struct
 {
 	fluid_real_t *line; /* buffer line */
 	int   size;    /* effective internal size (in samples) */
-   /*-------------*/
+	/*-------------*/
 	int line_in;  /* line in position */
 	int line_out; /* line out position */
-   /*-------------*/
-   fdn_delay_lpf damping; /* damping low pass filter */
+	/*-------------*/
+	fdn_delay_lpf damping; /* damping low pass filter */
 }delay_line;
 
 
@@ -381,10 +381,10 @@ typedef struct
 /*-----------------------------------------------------------------------------
  Sets the frequency of sinus oscillator.
 
- @param pointer on modulator structure.
- @freq frequency of the oscillator in Hz.
- @sample_rate sample rate on audio output in Hz.
- @phase initial phase of the oscillator in degree (0 to 360).
+ @param mod pointer on modulator structure.
+ @param freq frequency of the oscillator in Hz.
+ @param sample_rate sample rate on audio output in Hz.
+ @param phase initial phase of the oscillator in degree (0 to 360).
 -----------------------------------------------------------------------------*/
 static void set_mod_frequency(sinus_modulator * mod, 
                               float freq, float sample_rate, float phase)
@@ -413,15 +413,15 @@ static inline fluid_real_t get_mod_sinus(sinus_modulator * mod)
 	if(out >= 1.0) /* reset in case of instability near PI/2 */
 	{
 		out = 1.0; /* forces output to the right value */
- 		mod->buffer2 = mod->reset_buffer2;
-    }
-    if(out <= -1.0) /* reset in case of instability near -PI/2 */
+		mod->buffer2 = mod->reset_buffer2;
+	}
+	if(out <= -1.0) /* reset in case of instability near -PI/2 */
 	{ 
-    	out = -1.0; /* forces output to the right value */
-    	mod->buffer2 = - mod->reset_buffer2;
-    }
-    mod->buffer1 = out;
-    return  out;
+		out = -1.0; /* forces output to the right value */
+		mod->buffer2 = - mod->reset_buffer2;
+	}
+	mod->buffer1 = out;
+	return  out;
 }
 
 /*-----------------------------------------------------------------------------
@@ -463,10 +463,10 @@ typedef struct
  As the delay line is a modulated line, its internal size is augmented by mod_depth.
  The size is also augmented by INTERP_SAMPLES_NBR to take account of interpolation.
 
- @mdl, pointer on modulated delay line.
- @delay_lenght the length of the delay line in samples.
- @mod_depth depth of the modulation in samples (amplitude of the sine wave).
- @mod_rate the rate of the modulation in samples.
+ @param mdl, pointer on modulated delay line.
+ @param delay_lenght the length of the delay line in samples.
+ @param mod_depth depth of the modulation in samples (amplitude of the sine wave).
+ @param mod_rate the rate of the modulation in samples.
  @return FLUID_OK if success , FLUID_FAILED if memory error.
  
  Return FLUID_OK if success, FLUID_FAILED if memory error.
@@ -517,10 +517,10 @@ static int set_mod_delay_line (mod_delay_line * mdl,
 	mdl->dl.damping.buffer = 0;
 	/*------------------------------------------------------------------------
 	 Initializes modulation members:
-		- modulated center position: center_pos_mod
-		- index rate to know when to update center_pos_mod:index_rate
-		- modulation rate (the speed at which center_pos_mod is modulated: mod_rate
-		- interpolator member: buffer, frac_pos_mod  
+	 - modulated center position: center_pos_mod
+	 - index rate to know when to update center_pos_mod:index_rate
+	 - modulation rate (the speed at which center_pos_mod is modulated: mod_rate
+	 - interpolator member: buffer, frac_pos_mod  
 	 -------------------------------------------------------------------------*/
 	/* Sets the modulation rate. This rate defines how often 
 	 the  center position (center_pos_mod ) is modulated .
@@ -555,7 +555,7 @@ static int set_mod_delay_line (mod_delay_line * mdl,
 
 /*-----------------------------------------------------------------------------
  The function reads the sample value out of the modulated delay line
- @mdl, pointer on modulated delay line.
+ @param mdl, pointer on modulated delay line.
  @return the sample value.
 -----------------------------------------------------------------------------*/
 static inline fluid_real_t get_mod_delay(mod_delay_line * mdl)
@@ -761,7 +761,7 @@ static void update_rev_time_damping(fluid_late * late,
 /*-----------------------------------------------------------------------------
  Updates stereo coefficients
  @param late pointer on late structure
- @param wet1 wet1 level integrated in stereo coefficients.
+ @param wet1 level integrated in stereo coefficients.
 -----------------------------------------------------------------------------*/
 static void update_stereo_coefficient(fluid_late * late, fluid_real_t wet1)
 {
@@ -809,7 +809,7 @@ static void update_stereo_coefficient(fluid_late * late, fluid_real_t wet1)
 
 /*-----------------------------------------------------------------------------
  fluid_late destructor
- @param pointer on late structure.
+ @param late pointer on late structure.
 -----------------------------------------------------------------------------*/
 static void delete_fluid_rev_late(fluid_late * late)
 {
@@ -823,6 +823,7 @@ static void delete_fluid_rev_late(fluid_late * late)
 /*-----------------------------------------------------------------------------
  Creates the fdn reverb
  @param late, pointer on the fnd late reverb to initialize.
+ @param sample_rate the sample rate.
  @return FLUID_OK if success, FLUID_FAILED otherwise.
 -----------------------------------------------------------------------------*/
 static int create_fluid_rev_late(fluid_late * late, fluid_real_t sample_rate)
@@ -842,7 +843,7 @@ static int create_fluid_rev_late(fluid_late * late, fluid_real_t sample_rate)
 	{
 		/* sets local delay lines's parameters */
 		result = set_mod_delay_line(&late->mod_delay_lines[i], 
-									delay_length[i], MOD_DEPTH,	MOD_RATE );
+		                             delay_length[i], MOD_DEPTH, MOD_RATE );
 		if (result == FLUID_FAILED)
 		{
 			delete_fluid_rev_late(late);
@@ -852,9 +853,9 @@ static int create_fluid_rev_late(fluid_late * late, fluid_real_t sample_rate)
 		 Each modulateur are shifted of MOD_PHASE degree
 		*/
 		set_mod_frequency(&late->mod_delay_lines[i].mod,
-					MOD_FREQ * MOD_RATE,
-					sample_rate,
-					(float)(MOD_PHASE *i));
+		                   MOD_FREQ * MOD_RATE,
+		                   sample_rate,
+		                   (float)(MOD_PHASE * i));
  	}
 
 	/*-----------------------------------------------------------------------*/
@@ -955,8 +956,8 @@ new_fluid_revmodel(fluid_real_t sample_rate)
 void
 delete_fluid_revmodel(fluid_revmodel_t* rev)
 {
-   delete_fluid_rev_late(&rev->late);
-   FLUID_FREE(rev);
+	delete_fluid_rev_late(&rev->late);
+	FLUID_FREE(rev);
 }
 
 /*
@@ -1041,12 +1042,12 @@ fluid_revmodel_samplerate_change(fluid_revmodel_t* rev, fluid_real_t sample_rate
 void
 fluid_revmodel_reset(fluid_revmodel_t* rev)
 {
-  fluid_revmodel_init(rev);
+	fluid_revmodel_init(rev);
 }
 
 /*-----------------------------------------------------------------------------
 * fdn reverb process replace.
-* @param pointer on rev.
+* @param rev pointer on reverb.
 * @param in monophonic buffer input (FLUID_BUFSIZE sample).
 * @param left_out stereo left processed output (FLUID_BUFSIZE sample).
 * @param right_out stereo right processed output (FLUID_BUFSIZE sample).
@@ -1141,17 +1142,17 @@ fluid_revmodel_processreplace(fluid_revmodel_t* rev, fluid_real_t *in,
 		out_left -= DC_OFFSET;
 		out_right -= DC_OFFSET;
 
-	    /* Calculates stereo output REPLACING anything already there: 
+		/* Calculates stereo output REPLACING anything already there: 
 
-			left_out[k]  = out_left * rev->wet1 + out_right * rev->wet2;
-			right_out[k] = out_right * rev->wet1 + out_left * rev->wet2;
+		    left_out[k]  = out_left * rev->wet1 + out_right * rev->wet2;
+		    right_out[k] = out_right * rev->wet1 + out_left * rev->wet2;
 
-			As wet1 is integrated in stereo coefficient wet 1 is now
-			integrated in out_left and out_right we simplify previous 
-			relation by suppression of one multiply as this:
+		    As wet1 is integrated in stereo coefficient wet 1 is now
+		    integrated in out_left and out_right we simplify previous 
+		    relation by suppression of one multiply as this:
 
-			left_out[k]  = out_left  + out_right * rev->wet2;
-			right_out[k] = out_right + out_left * rev->wet2;
+		    left_out[k]  = out_left  + out_right * rev->wet2;
+		    right_out[k] = out_right + out_left * rev->wet2;
 		*/
 		left_out[k]  = out_left  + out_right * rev->wet2;
 		right_out[k] = out_right  + out_left * rev->wet2;
@@ -1161,7 +1162,7 @@ fluid_revmodel_processreplace(fluid_revmodel_t* rev, fluid_real_t *in,
 
 /*-----------------------------------------------------------------------------
 * fdn reverb process mix.
-* @param pointer on rev.
+* @param rev pointer on reverb.
 * @param in monophonic buffer input (FLUID_BUFSIZE samples).
 * @param left_out stereo left processed output (FLUID_BUFSIZE samples).
 * @param right_out stereo right processed output (FLUID_BUFSIZE samples).
@@ -1255,17 +1256,17 @@ void fluid_revmodel_processmix(fluid_revmodel_t* rev, fluid_real_t *in,
 		out_left -= DC_OFFSET;
 		out_right -= DC_OFFSET;
 
-	    /* Calculates stereo output REPLACING anything already there:
+		/* Calculates stereo output REPLACING anything already there: 
 
-			left_out[k] += out_left * rev->wet1 + out_right * rev->wet2;
-			right_out[k] += out_right * rev->wet1 + out_left * rev->wet2;
+		    left_out[k]  = out_left * rev->wet1 + out_right * rev->wet2;
+		    right_out[k] = out_right * rev->wet1 + out_left * rev->wet2;
 
-			As wet1 is integrated in stereo coefficient wet 1 is now
-			integrated in out_left and out_right we simplify previous 
-			relation by suppression of one multiply as this:
+		    As wet1 is integrated in stereo coefficient wet 1 is now
+		    integrated in out_left and out_right we simplify previous 
+		    relation by suppression of one multiply as this:
 
-			left_out[k] += out_left  + out_right * rev->wet2;
-			right_out[k] += out_right + out_left * rev->wet2;
+		    left_out[k]  += out_left  + out_right * rev->wet2;
+		    right_out[k] += out_right + out_left * rev->wet2;
 		*/
 		left_out[k]  += out_left  + out_right * rev->wet2;
 		right_out[k] += out_right  + out_left * rev->wet2;
