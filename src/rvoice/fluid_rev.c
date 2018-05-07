@@ -36,7 +36,7 @@
  *    This reverberation time is ofen called T60DC.
  *
  *  - damp (0 to 1): controls the reverb time frequency dependency.
- *    This control the reverb time for the frequency sample rate/2
+ *    This controls the reverb time for the frequency sample rate/2
  *
  *    When 0, the reverb time for high frequencies is the same as
  *    for DC frequency.
@@ -89,7 +89,7 @@
  *   This linear response is convenient when using GUI controls.
  *
  * --------------------------------------------------------------------------
- * Comparaison table:
+ * Compare table:
  * Note: the cpu load in % are relative each to other. These values are
  * given by the fluidsynth profile commands.
  * --------------------------------------------------------------------------
@@ -390,8 +390,8 @@ static void set_mod_frequency(sinus_modulator * mod,
 	fluid_real_t w = TWO_PI * freq/sample_rate; /* intial angle */
 	
 	mod->a1 = 2 * cos(w);
-	mod->buffer2 = sin(TWO_PI * phase/360 - w); /* y(n-1) = - intial value */
-	mod->buffer1 = sin(TWO_PI * phase/360); /* y(n) = initial phase */
+	mod->buffer2 = sin(TWO_PI * phase/360 - w); /* y(n-1) = sin(-intial angle) */
+	mod->buffer1 = sin(TWO_PI * phase/360); /* y(n) = sin(initial phase) */
 	mod->reset_buffer2 = sin(PI_DIVIDED_BY_2 - w); /* reset value for PI/2 */
 }
 
@@ -636,7 +636,7 @@ struct _fluid_late
 	fluid_real_t tone_buffer;
 	fluid_real_t b1,b2;
 	/*--------Delay lines ---------------------------------------------------*/
-	// modulated delay lines
+	/* modulated delay lines */
 	mod_delay_line mod_delay_lines[NBR_DELAYS];
 	/*-----------------------------------------------------------------------*/
 	/* Output coefficients for separate Left and right stereo outputs */
@@ -655,7 +655,7 @@ struct _fluid_revmodel_t
   fluid_real_t damp;		/* acting on frequency dependent reverb time */
   fluid_real_t level, wet1, wet2; /* output level */
   fluid_real_t width;		/* width stereo separation */
-  //--------------------------------------
+  /*--------------------------------------*/
   /* fdn reverberation structure */
   fluid_late  late;
 };
@@ -740,7 +740,7 @@ static void update_rev_time_damping(fluid_late * late,
 		late->tone_buffer = 0.0f;
 	}
 
-	/* updates damping  coefficients of all line (gi , ai) from dc_rev_time, alpha */
+	/* updates damping  coefficients of all lines (gi , ai) from dc_rev_time, alpha */
 	for(i = 0; i <NBR_DELAYS;i++)
 	{
 		/* iir low pass filter gain */
@@ -846,8 +846,8 @@ static int create_fluid_rev_late(fluid_late * late, fluid_real_t sample_rate)
 			delete_fluid_rev_late(late);
 			return FLUID_FAILED;
 		}
-		/* Set local Modulators parameters: frequency and phase
-		 Each modulateur are shifted of phase degree
+		/* Sets local Modulators parameters: frequency and phase
+		 Each modulateur are shifted of MOD_PHASE degree
 		*/
 		set_mod_frequency(&late->mod_delay_lines[i].mod,
 					MOD_FREQ * MOD_RATE,
@@ -885,7 +885,7 @@ fluid_revmodel_init(fluid_revmodel_t* rev)
 static void
 fluid_revmodel_update(fluid_revmodel_t* rev)
 {
-	/* Recalculate internal values after parameter change */
+	/* Recalculate internal values after parameters change */
 
 	/* The stereo amplitude equation (wet1 and wet2 below) have a 
 	tendency to produce high amplitude with high width values ( 1 < width < 100).
@@ -901,12 +901,12 @@ fluid_revmodel_update(fluid_revmodel_t* rev)
 	Please see the note above about a side effect tendency */
 
 	rev->wet1 = wet * (rev->width / 2.0f + 0.5f);
-	/* integrate wet1 in stereo coefficient (this will save one multiply) */
+	/* integrates wet1 in stereo coefficient (this will save one multiply) */
 	update_stereo_coefficient(&rev->late,rev->wet1); 
 	rev->wet2 = wet * ((1.0f - rev->width) / 2.0f);
 	if(rev->wet1 > 0.0) rev->wet2 /= rev->wet1; 
 
-	/* Reverberation time */
+	/* Reverberation time and damping */
 	update_rev_time_damping(&rev->late, rev->roomsize, rev->damp );
 }
 
@@ -915,9 +915,9 @@ fluid_revmodel_update(fluid_revmodel_t* rev)
 -----------------------------------------------------------------------------*/
 
 /*
-* Creates a reverb
+* Creates a reverb.
 * @param sample_rate sample rate in Hz.
-* @return pointer on the new reverb or NULL if memory error
+* @return pointer on the new reverb or NULL if memory error.
 * Reverb API.
 */
 fluid_revmodel_t*
@@ -946,8 +946,8 @@ new_fluid_revmodel(fluid_real_t sample_rate)
 }
 
 /*
-* free the reverb
-* @param rev to free
+* free the reverb.
+* @param rev to free.
 * Reverb API.
 */
 void
@@ -959,13 +959,13 @@ delete_fluid_revmodel(fluid_revmodel_t* rev)
 
 /*
 * Sets one or more reverb parameters.
-* @param rev Reverb instance
+* @param rev Reverb instance.
 * @param set One or more flags from #fluid_revmodel_set_t indicating what
-*   parameters to set (#FLUID_REVMODEL_SET_ALL to set all parameters)
-* @param roomsize Reverb room size
-* @param damping Reverb damping
-* @param width Reverb width
-* @param level Reverb level
+*   parameters to set (#FLUID_REVMODEL_SET_ALL to set all parameters).
+* @param roomsize Reverb room size.
+* @param damping Reverb damping.
+* @param width Reverb width.
+* @param level Reverb level.
 *
 * Reverb API.
 */
@@ -1003,7 +1003,7 @@ fluid_revmodel_set(fluid_revmodel_t* rev, int set, fluid_real_t roomsize,
 }
 
 /*
-* Applies a sample rate change on the reverb
+* Applies a sample rate change on the reverb.
 * @param rev the reverb.
 * @param sample_rate new sample rate value.
 *
@@ -1043,14 +1043,14 @@ fluid_revmodel_reset(fluid_revmodel_t* rev)
 }
 
 /*-----------------------------------------------------------------------------
-* fdn reverb process replace
-* @param pointer on rev
-* @param in monophonic buffer input (FLUID_BUFSIZE sample)
-* @param left_out stereo left processed output (FLUID_BUFSIZE sample)
-* @param right_out stereo right processed output (FLUID_BUFSIZE sample)
+* fdn reverb process replace.
+* @param pointer on rev.
+* @param in monophonic buffer input (FLUID_BUFSIZE sample).
+* @param left_out stereo left processed output (FLUID_BUFSIZE sample).
+* @param right_out stereo right processed output (FLUID_BUFSIZE sample).
 *
 * The processed reverb is replacing anything there in out.
-* Reverb API
+* Reverb API.
 -----------------------------------------------------------------------------*/
 void
 fluid_revmodel_processreplace(fluid_revmodel_t* rev, fluid_real_t *in,
@@ -1080,15 +1080,13 @@ fluid_revmodel_processreplace(fluid_revmodel_t* rev, fluid_real_t *in,
 		rev->late.tone_buffer = xn;
 		xn = out_tone_filter; 
 		/*--------------------------------------------------------------------
-		 process  feedback delayed network
+		 process  feedback delayed network:
 		  - xn is the input signal
 		  - before inserting in the line input we first we get the delay lines
 		    output, filter them and compute output in delay_out[].
 		  - also matrix_factor is computed (to simplify further matrix product)
 		---------------------------------------------------------------------*/
 		/* We begin with the modulated output delay line + damping filter */
-		/* optimisation 0: matrix_factor est calculé après damping */
-
 		matrix_factor = 0;
 		for(i = 0; i < NBR_DELAYS; i++)
 		{
@@ -1141,7 +1139,7 @@ fluid_revmodel_processreplace(fluid_revmodel_t* rev, fluid_real_t *in,
 		out_left -= DC_OFFSET;
 		out_right -= DC_OFFSET;
 
-	    /* Calculates stereo output REPLACING anything already there 
+	    /* Calculates stereo output REPLACING anything already there: 
 
 			left_out[k]  = out_left * rev->wet1 + out_right * rev->wet2;
 			right_out[k] = out_right * rev->wet1 + out_left * rev->wet2;
@@ -1149,7 +1147,7 @@ fluid_revmodel_processreplace(fluid_revmodel_t* rev, fluid_real_t *in,
 			As wet1 is integrated in stereo coefficient wet 1 is now
 			integrated in out_left and out_right we simplify previous 
 			relation by	suppression of one multiply as this:
-	.
+
 			left_out[k]  = out_left  + out_right * rev->wet2;
 			right_out[k] = out_right + out_left * rev->wet2;
 		*/
@@ -1160,14 +1158,14 @@ fluid_revmodel_processreplace(fluid_revmodel_t* rev, fluid_real_t *in,
 
 
 /*-----------------------------------------------------------------------------
-* fdn reverb process mix
-* @param pointer on rev
-* @param in monophonic buffer input (FLUID_BUFSIZE sample)
-* @param left_out stereo left processed output (FLUID_BUFSIZE sample)
-* @param right_out stereo right processed output (FLUID_BUFSIZE sample)
+* fdn reverb process mix.
+* @param pointer on rev.
+* @param in monophonic buffer input (FLUID_BUFSIZE samples).
+* @param left_out stereo left processed output (FLUID_BUFSIZE samples).
+* @param right_out stereo right processed output (FLUID_BUFSIZE samples).
 *
 * The processed reverb is mixed in out with samples already there in out.
-* Reverb API
+* Reverb API.
 -----------------------------------------------------------------------------*/
 void fluid_revmodel_processmix(fluid_revmodel_t* rev, fluid_real_t *in,
 			 fluid_real_t *left_out, fluid_real_t *right_out)
@@ -1196,15 +1194,13 @@ void fluid_revmodel_processmix(fluid_revmodel_t* rev, fluid_real_t *in,
 		rev->late.tone_buffer = xn;
 		xn = out_tone_filter; 
 		/*--------------------------------------------------------------------
-		 process  feedback delayed network
-		  - xn is the input signal
+		 process  feedback delayed network:
+		  - xn is the input signal.
 		  - before inserting in the line input we first we get the delay lines
 		    output, filter them and compute output in delay_out[].
-		  - also matrix_factor is computed (to simplify further matrix product)
+		  - also matrix_factor is computed (to simplify further matrix product).
 		---------------------------------------------------------------------*/
 		/* We begin with the modulated output delay line + damping filter */
-		/* optimisation 0: matrix_factor est calculé après damping */
-
 		matrix_factor = 0;
 		for(i = 0; i < NBR_DELAYS; i++)
 		{
@@ -1228,7 +1224,7 @@ void fluid_revmodel_processmix(fluid_revmodel_t* rev, fluid_real_t *in,
 			out_right += rev->late.out_right_gain[i]* delay_out_s;
 		}
 	  
-		/* now we process the input delay line.Each input is a combination of
+		/* now we process the input delay line.Each input is a combination of:
 	       - xn: input signal
 	       - delay_out[] the output of a delay line given by a permutation matrix P
 	       - and matrix_factor.
@@ -1257,7 +1253,7 @@ void fluid_revmodel_processmix(fluid_revmodel_t* rev, fluid_real_t *in,
 		out_left -= DC_OFFSET;
 		out_right -= DC_OFFSET;
 
-	    /* Calculates stereo output REPLACING anything already there 
+	    /* Calculates stereo output REPLACING anything already there:
 
 			left_out[k] += out_left * rev->wet1 + out_right * rev->wet2;
 			right_out[k] += out_right * rev->wet1 + out_left * rev->wet2;
@@ -1265,7 +1261,7 @@ void fluid_revmodel_processmix(fluid_revmodel_t* rev, fluid_real_t *in,
 			As wet1 is integrated in stereo coefficient wet 1 is now
 			integrated in out_left and out_right we simplify previous 
 			relation by	suppression of one multiply as this:
-	.
+
 			left_out[k] += out_left  + out_right * rev->wet2;
 			right_out[k] += out_right + out_left * rev->wet2;
 		*/
