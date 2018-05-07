@@ -345,7 +345,6 @@ typedef struct
 -----------------------------------------------------------------------------*/
 static void clear_delay_line(delay_line * dl)
 {
-	int i;
 	FLUID_MEMSET(dl->line, DC_OFFSET, dl->size * sizeof(fluid_real_t));
 }
 
