@@ -157,7 +157,7 @@
 /* Number of delay lines (must be only 8 or 12) 
   8 is the default.
  12 produces a better quality but is +50% cpu expensive
- */
+*/
 #define NBR_DELAYS        8	/* default*/
 
 /* response curve of parameter roomsize  */
@@ -193,9 +193,9 @@
  Internal FDN late reverb settings
 -----------------------------------------------------------------------------*/
 
-/*-- Reverberation time settings ----------------------------------*/
-/* MIN_DC_REV_TIME est defined egal to the minimum value of freeverb:
-/* MAX_DC_REV_TIME est defined egal to the maximum value of freeverb:
+/*-- Reverberation time settings ----------------------------------
+ MIN_DC_REV_TIME est defined egal to the minimum value of freeverb:
+ MAX_DC_REV_TIME est defined egal to the maximum value of freeverb:
  T60DC is computed from gi and the longuest delay line in freeverb: L8 = 1617
  T60 = -3 * Li * T / log10(gi) 
  T60 = -3 * Li *  / (log10(gi) * sr) 
@@ -391,7 +391,7 @@ static void set_mod_frequency(sinus_modulator * mod,
 	fluid_real_t w = TWO_PI * freq/sample_rate; /* intial angle */
 	
 	mod->a1 = 2 * cos(w);
-	mod->buffer2 = sin(TWO_PI * phase/360 - w); /* y(n-1) = - intial value
+	mod->buffer2 = sin(TWO_PI * phase/360 - w); /* y(n-1) = - intial value */
 	mod->buffer1 = sin(TWO_PI * phase/360); /* y(n) = initial phase */
 	mod->reset_buffer2 = sin(PI_DIVIDED_BY_2 - w); /* reset value for PI/2 */
 }
@@ -827,7 +827,7 @@ static void delete_fluid_rev_late(fluid_late * late)
 static int create_fluid_rev_late(fluid_late * late, fluid_real_t sample_rate)
 {
 	int result ; /* return value */
-	long i,j ;
+	long i ;
 
 	FLUID_MEMSET(late, 0,  sizeof(fluid_late));
 
