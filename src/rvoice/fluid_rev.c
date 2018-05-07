@@ -145,8 +145,6 @@
  */
 #include "fluid_rev.h"
 
-//#define DC_OFFSET 0.0f
-#define DC_OFFSET 1e-8
 
 /*----------------------------------------------------------------------------
                         Configuration macros at compiler time.
@@ -171,6 +169,14 @@
 	- roomsize (0 to 1) controls reverb time linearly  (0.7 to 12.5 s).
 */
 //#define	ROOMSIZE_RESPONSE_LINEAR
+
+/* WITH_DENORMALISING enable denormalising handling */
+#define WITH_DENORMALISING
+
+#ifdef WITH_DENORMALISING
+//#define DC_OFFSET 0.0f
+#define DC_OFFSET 1e-8
+#endif
 
 /*----------------------------------------------------------------------------
  Initial internal reverb settings (at reverb creation time)
@@ -347,7 +353,11 @@ typedef struct
 -----------------------------------------------------------------------------*/
 static void clear_delay_line(delay_line * dl)
 {
+#ifdef WITH_DENORMALISING
 	FLUID_MEMSET(dl->line, DC_OFFSET, dl->size * sizeof(fluid_real_t));
+#else
+	FLUID_MEMSET(dl->line, 0, dl->size * sizeof(fluid_real_t));
+#endif
 }
 
 /*-----------------------------------------------------------------------------
@@ -1074,7 +1084,11 @@ fluid_revmodel_processreplace(fluid_revmodel_t* rev, fluid_real_t *in,
 		out_left = out_right = 0;
 
 		/* Input is adjusted by internal gain. */
+#ifdef WITH_DENORMALISING
 		xn = ( in[k] + DC_OFFSET) * FIXED_GAIN;
+#else
+		xn = ( in[k] ) * FIXED_GAIN;
+#endif
 
 		/*--------------------------------------------------------------------
 		 tone correction
@@ -1138,9 +1152,11 @@ fluid_revmodel_processreplace(fluid_revmodel_t* rev, fluid_real_t *in,
 		}
 
 		/*-------------------------------------------------------------------*/
+#ifdef WITH_DENORMALISING
 		/* Removes the DC offset */
 		out_left -= DC_OFFSET;
 		out_right -= DC_OFFSET;
+#endif
 
 		/* Calculates stereo output REPLACING anything already there: 
 
@@ -1188,7 +1204,11 @@ void fluid_revmodel_processmix(fluid_revmodel_t* rev, fluid_real_t *in,
 		out_left = out_right = 0;
 
 		/* Input is adjusted by internal gain. */
+#ifdef WITH_DENORMALISING
 		xn = ( in[k] + DC_OFFSET) * FIXED_GAIN;
+#else
+		xn = ( in[k] ) * FIXED_GAIN;
+#endif
 
 		/*--------------------------------------------------------------------
 		 tone correction
@@ -1252,10 +1272,11 @@ void fluid_revmodel_processmix(fluid_revmodel_t* rev, fluid_real_t *in,
 		}
 
 		/*-------------------------------------------------------------------*/
+#ifdef WITH_DENORMALISING
 		/* Removes the DC offset */
 		out_left -= DC_OFFSET;
 		out_right -= DC_OFFSET;
-
+#endif
 		/* Calculates stereo output REPLACING anything already there: 
 
 		    left_out[k]  = out_left * rev->wet1 + out_right * rev->wet2;
