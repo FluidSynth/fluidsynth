@@ -137,11 +137,6 @@ FLUIDSYNTH_API double fluid_synth_get_reverb_damp(fluid_synth_t* synth);
 FLUIDSYNTH_API double fluid_synth_get_reverb_level(fluid_synth_t* synth);
 FLUIDSYNTH_API double fluid_synth_get_reverb_width(fluid_synth_t* synth);
 
-#define FLUID_REVERB_DEFAULT_ROOMSIZE 0.2f      /**< Default reverb room size */
-#define FLUID_REVERB_DEFAULT_DAMP 0.0f          /**< Default reverb damping */
-#define FLUID_REVERB_DEFAULT_WIDTH 0.5f         /**< Default reverb width */
-#define FLUID_REVERB_DEFAULT_LEVEL 0.9f         /**< Default reverb level */
-
 
 /* Chorus */
 
@@ -167,12 +162,6 @@ FLUIDSYNTH_API double fluid_synth_get_chorus_level(fluid_synth_t* synth);
 FLUIDSYNTH_API double fluid_synth_get_chorus_speed_Hz(fluid_synth_t* synth);
 FLUIDSYNTH_API double fluid_synth_get_chorus_depth_ms(fluid_synth_t* synth);
 FLUIDSYNTH_API int fluid_synth_get_chorus_type(fluid_synth_t* synth); /* see fluid_chorus_mod */
-
-#define FLUID_CHORUS_DEFAULT_N 3                                /**< Default chorus voice count */
-#define FLUID_CHORUS_DEFAULT_LEVEL 2.0f                         /**< Default chorus level */
-#define FLUID_CHORUS_DEFAULT_SPEED 0.3f                         /**< Default chorus speed */
-#define FLUID_CHORUS_DEFAULT_DEPTH 8.0f                         /**< Default chorus depth */
-#define FLUID_CHORUS_DEFAULT_TYPE FLUID_CHORUS_MOD_SINE         /**< Default chorus waveform type */
 
 
 /* Audio and MIDI channels */
