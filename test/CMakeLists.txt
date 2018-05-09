@@ -14,6 +14,7 @@ ADD_FLUID_TEST(test_sfont_loading)
 ADD_FLUID_TEST(test_sample_rate_change)
 ADD_FLUID_TEST(test_preset_sample_loading)
 ADD_FLUID_TEST(test_seqbind_unregister)
+ADD_FLUID_TEST(test_synth_chorus_reverb)
 
 if ( LIBSNDFILE_HASVORBIS )
     ADD_FLUID_TEST(test_sf3_sfont_loading)
