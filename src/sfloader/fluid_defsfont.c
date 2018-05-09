@@ -1057,6 +1057,7 @@ static int fluid_preset_zone_create_voice_zones(fluid_preset_zone_t* preset_zone
         voice_zone->range.keyhi = (prange->keyhi < irange->keyhi) ? prange->keyhi : irange->keyhi;
         voice_zone->range.vello = (prange->vello > irange->vello) ? prange->vello : irange->vello;
         voice_zone->range.velhi = (prange->velhi < irange->velhi) ? prange->velhi : irange->velhi;
+        voice_zone->range.ignore = FALSE;
 
         preset_zone->voice_zone = fluid_list_append(preset_zone->voice_zone, voice_zone);
 
