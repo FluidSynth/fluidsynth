@@ -85,10 +85,11 @@ Changes in FluidSynth 2.0.0 concerning developers:
 - remove deprecated fluid_synth_reset_tuning(), use fluid_synth_deactivate_tuning(synth, chan, FALSE) instead
 - remove deprecated FLUID_HINT_INTEGER
 - remove deprecated fluid_synth_set_gen2() as there doesnt seem to be a use case for absolute generator values
-- remove fluid_cmd_handler_register() and fluid_cmd_handler_unregister() from public API, as they seem to be unused downstream
-- remove misspelled FLUID_SEQ_PITCHWHHELSENS macro
+- remove deprecated "synth.parallel-render" setting
 - remove obsolete "audio.[out|in]put-channels" settings
 - remove unimplemented "synth.dump" setting
+- remove fluid_cmd_handler_register() and fluid_cmd_handler_unregister() from public API, as they seem to be unused downstream
+- remove misspelled FLUID_SEQ_PITCHWHHELSENS macro
 - remove struct _fluid_mod_t from public API, use the getters and setters of mod.h instead
 - remove struct _fluid_gen_t, fluid_gen_set_default_values() and enum fluid_gen_flags from public API
 - remove macros fluid_sfont_get_id() and fluid_sample_refcount() from public API
