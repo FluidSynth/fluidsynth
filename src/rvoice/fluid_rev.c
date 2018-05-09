@@ -1,4 +1,23 @@
 /******************************************************************************
+/* FluidSynth - A Software Synthesizer
+ *
+ * Copyright (C) 2003  Peter Hanappe and others.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301, USA
+ *
  *
  *                           FDN REVERB
  *
@@ -81,12 +100,11 @@
  * - NBR_DELAYS: number of delay lines. 8 (default) or 12.
  * - ROOMSIZE_RESPONSE_LINEAR: allows to choose an alternate response of
  *   roomsize parameter.
- *
- *   when ROOMSIZE_RESPONSE_LINEAR is not defined (the default), roomsize
- *   has the same response that Freeverb, that is:
+ *   When this macro is not defined (the default), roomsize has the same
+ *   response that Freeverb, that is:
  *   - roomsize (0 to 1) controls concave reverb time (0.7 to 12.5 s).
  * 
- *   when ROOMSIZE_RESPONSE_LINEAR is defined, roomsize behaves linearly:
+ *   When this macro is defined, roomsize behaves linearly:
  *   - roomsize (0 to 1) controls reverb time linearly  (0.7 to 12.5 s).
  *   This linear response is convenient when using GUI controls.
  *
@@ -469,12 +487,12 @@ typedef struct
  modulated delay line initialization.
  
  Sets the length line ( alloc delay samples).
- Remark: the function set the internal size accordling to the length delay_length.
+ Remark: the function sets the internal size accordling to the length delay_length.
  As the delay line is a modulated line, its internal size is augmented by mod_depth.
  The size is also augmented by INTERP_SAMPLES_NBR to take account of interpolation.
 
  @param mdl, pointer on modulated delay line.
- @param delay_lenght the length of the delay line in samples.
+ @param delay_length the length of the delay line in samples.
  @param mod_depth depth of the modulation in samples (amplitude of the sine wave).
  @param mod_rate the rate of the modulation in samples.
  @return FLUID_OK if success , FLUID_FAILED if memory error.
