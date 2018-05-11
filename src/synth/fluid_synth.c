@@ -78,11 +78,11 @@ static int fluid_synth_update_pitch_wheel_sens_LOCAL(fluid_synth_t* synth, int c
 static int fluid_synth_set_preset (fluid_synth_t *synth, int chan,
                                    fluid_preset_t *preset);
 static fluid_preset_t*
-fluid_synth_get_preset(fluid_synth_t* synth, unsigned int sfontnum,
-                       unsigned int banknum, unsigned int prognum);
+fluid_synth_get_preset(fluid_synth_t* synth, int sfontnum,
+                       int banknum, int prognum);
 static fluid_preset_t*
 fluid_synth_get_preset_by_sfont_name(fluid_synth_t* synth, const char *sfontname,
-                                     unsigned int banknum, unsigned int prognum);
+                                     int banknum, int prognum);
 
 static void fluid_synth_update_presets(fluid_synth_t* synth);
 static void fluid_synth_update_gain_LOCAL(fluid_synth_t* synth);
@@ -2221,8 +2221,8 @@ fluid_synth_set_preset (fluid_synth_t *synth, int chan, fluid_preset_t *preset)
  * Returns preset pointer or NULL.
  */
 static fluid_preset_t*
-fluid_synth_get_preset(fluid_synth_t* synth, unsigned int sfontnum,
-                       unsigned int banknum, unsigned int prognum)
+fluid_synth_get_preset(fluid_synth_t* synth, int sfontnum,
+                       int banknum, int prognum)
 {
   fluid_sfont_t *sfont;
   fluid_list_t *list;
@@ -2247,7 +2247,7 @@ fluid_synth_get_preset(fluid_synth_t* synth, unsigned int sfontnum,
  */
 static fluid_preset_t*
 fluid_synth_get_preset_by_sfont_name(fluid_synth_t* synth, const char *sfontname,
-                                     unsigned int banknum, unsigned int prognum)
+                                     int banknum, int prognum)
 {
   fluid_sfont_t *sfont;
   fluid_list_t *list;
@@ -2268,8 +2268,8 @@ fluid_synth_get_preset_by_sfont_name(fluid_synth_t* synth, const char *sfontname
  * Returns preset pointer or NULL.
  */
 fluid_preset_t*
-fluid_synth_find_preset(fluid_synth_t* synth, unsigned int banknum,
-                        unsigned int prognum)
+fluid_synth_find_preset(fluid_synth_t* synth, int banknum,
+                        int prognum)
 {
   fluid_preset_t *preset;
   fluid_sfont_t *sfont;
@@ -2388,10 +2388,11 @@ fluid_synth_program_change(fluid_synth_t* synth, int chan, int prognum)
  * 
  */
 int
-fluid_synth_bank_select(fluid_synth_t* synth, int chan, unsigned int bank)
+fluid_synth_bank_select(fluid_synth_t* synth, int chan, int bank)
 {
   int result;
   fluid_return_val_if_fail (bank <= 16383, FLUID_FAILED);
+  fluid_return_val_if_fail (bank >= 0, FLUID_FAILED);
   FLUID_API_ENTRY_CHAN(FLUID_FAILED);
   
   /* Allowed only on MIDI channel enabled */
@@ -2415,7 +2416,7 @@ fluid_synth_bank_select(fluid_synth_t* synth, int chan, unsigned int bank)
  * after having selected the soundfont.
  */
 int
-fluid_synth_sfont_select(fluid_synth_t* synth, int chan, unsigned int sfont_id)
+fluid_synth_sfont_select(fluid_synth_t* synth, int chan, int sfont_id)
 {
   int result;
   FLUID_API_ENTRY_CHAN(FLUID_FAILED);
@@ -2457,8 +2458,8 @@ fluid_synth_unset_program (fluid_synth_t *synth, int chan)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int
-fluid_synth_get_program(fluid_synth_t* synth, int chan, unsigned int* sfont_id,
-                        unsigned int* bank_num, unsigned int* preset_num)
+fluid_synth_get_program(fluid_synth_t* synth, int chan, int* sfont_id,
+                        int* bank_num, int* preset_num)
 {
   int result;
   fluid_channel_t* channel;
@@ -2472,8 +2473,7 @@ fluid_synth_get_program(fluid_synth_t* synth, int chan, unsigned int* sfont_id,
   FLUID_API_RETURN_IF_CHAN_DISABLED(FLUID_FAILED);
   
   channel = synth->channel[chan];
-	  fluid_channel_get_sfont_bank_prog(channel, (int *)sfont_id, (int *)bank_num,
-										(int *)preset_num);
+	  fluid_channel_get_sfont_bank_prog(channel, sfont_id, bank_num, preset_num);
 
 	  /* 128 indicates that the preset is unset.  Set to 0 to be backwards compatible. */
 	  if (*preset_num == FLUID_UNSET_PROGRAM) *preset_num = 0;
@@ -2492,12 +2492,15 @@ fluid_synth_get_program(fluid_synth_t* synth, int chan, unsigned int* sfont_id,
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int
-fluid_synth_program_select(fluid_synth_t* synth, int chan, unsigned int sfont_id,
-			   unsigned int bank_num, unsigned int preset_num)
+fluid_synth_program_select(fluid_synth_t* synth, int chan, int sfont_id,
+			   int bank_num, int preset_num)
 {
   fluid_preset_t* preset = NULL;
   fluid_channel_t* channel;
   int result;
+  fluid_return_val_if_fail(bank_num >= 0, FLUID_FAILED);
+  fluid_return_val_if_fail(preset_num >= 0, FLUID_FAILED);
+  
   FLUID_API_ENTRY_CHAN(FLUID_FAILED);
 
   /* Allowed only on MIDI channel enabled */
@@ -2533,8 +2536,8 @@ fluid_synth_program_select(fluid_synth_t* synth, int chan, unsigned int sfont_id
  */
 int
 fluid_synth_program_select_by_sfont_name (fluid_synth_t* synth, int chan,
-                                          const char *sfont_name, unsigned int bank_num,
-                                          unsigned int preset_num)
+                                          const char *sfont_name, int bank_num,
+                                          int preset_num)
 {
   fluid_preset_t* preset = NULL;
   fluid_channel_t* channel;
@@ -3655,12 +3658,15 @@ fluid_synth_sfload(fluid_synth_t* synth, const char* filename, int reset_presets
   fluid_sfont_t *sfont;
   fluid_list_t *list;
   fluid_sfloader_t *loader;
-  unsigned int sfont_id;
+  int sfont_id;
 
   fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
   fluid_return_val_if_fail (filename != NULL, FLUID_FAILED);
   fluid_synth_api_enter(synth);
   
+  sfont_id = synth->sfont_id;
+  if(++sfont_id != FLUID_FAILED)
+  {
   /* MT NOTE: Loaders list should not change. */
 
   for (list = synth->loaders; list; list = fluid_list_next(list)) {
@@ -3670,17 +3676,17 @@ fluid_synth_sfload(fluid_synth_t* synth, const char* filename, int reset_presets
 
     if (sfont != NULL) {
       sfont->refcount++;
-      sfont->id = sfont_id = ++synth->sfont_id;
+      synth->sfont_id = sfont->id = sfont_id;
       
       synth->sfont = fluid_list_prepend(synth->sfont, sfont);   /* prepend to list */
 
       /* reset the presets for all channels if requested */
       if (reset_presets) fluid_synth_program_reset(synth);
 
-      FLUID_API_RETURN((int)sfont_id);
+      FLUID_API_RETURN(sfont_id);
     }
   }
-
+  }
   FLUID_LOG(FLUID_ERR, "Failed to load SoundFont \"%s\"", filename);
   FLUID_API_RETURN(FLUID_FAILED);
 }
@@ -3693,7 +3699,7 @@ fluid_synth_sfload(fluid_synth_t* synth, const char* filename, int reset_presets
  * @return #FLUID_OK on success, #FLUID_FAILED on error
  */
 int
-fluid_synth_sfunload(fluid_synth_t* synth, unsigned int id, int reset_presets)
+fluid_synth_sfunload(fluid_synth_t* synth, int id, int reset_presets)
 {
   fluid_sfont_t *sfont = NULL;
   fluid_list_t *list;
@@ -3767,7 +3773,7 @@ fluid_synth_sfunload_callback(void* data, unsigned int msec)
  * @return SoundFont ID on success, #FLUID_FAILED on error
  */
 int
-fluid_synth_sfreload(fluid_synth_t* synth, unsigned int id)
+fluid_synth_sfreload(fluid_synth_t* synth, int id)
 {
   char *filename = NULL;
   fluid_sfont_t *sfont;
@@ -3831,18 +3837,21 @@ exit:
 int
 fluid_synth_add_sfont(fluid_synth_t* synth, fluid_sfont_t* sfont)
 {
-  unsigned int sfont_id;
+  int sfont_id;
 
   fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
   fluid_return_val_if_fail (sfont != NULL, FLUID_FAILED);
   fluid_synth_api_enter(synth);
   
-
-  sfont->id = sfont_id = ++synth->sfont_id;
+  sfont_id = synth->sfont_id;
+  if(++sfont_id != FLUID_FAILED)
+  {
+  synth->sfont_id = sfont->id = sfont_id;
   synth->sfont = fluid_list_prepend (synth->sfont, sfont);       /* prepend to list */
 
   /* reset the presets for all channels */
   fluid_synth_program_reset (synth);
+  }
 
   FLUID_API_RETURN(sfont_id);
 }
@@ -3936,7 +3945,7 @@ fluid_synth_get_sfont(fluid_synth_t* synth, unsigned int num)
  * the duration of use of the returned pointer.
  */
 fluid_sfont_t *
-fluid_synth_get_sfont_by_id(fluid_synth_t* synth, unsigned int id)
+fluid_synth_get_sfont_by_id(fluid_synth_t* synth, int id)
 {
   fluid_sfont_t* sfont = NULL;
   fluid_list_t* list;
@@ -5295,7 +5304,7 @@ fluid_synth_set_bank_offset(fluid_synth_t* synth, int sfont_id, int offset)
   for (list = synth->sfont; list; list = fluid_list_next(list)) {
     sfont = fluid_list_get (list);
 
-    if (fluid_sfont_get_id (sfont) == (unsigned int)sfont_id)
+    if (fluid_sfont_get_id (sfont) == sfont_id)
     {
       sfont->bankofs = offset;
       break;
@@ -5330,7 +5339,7 @@ fluid_synth_get_bank_offset(fluid_synth_t* synth, int sfont_id)
   for (list = synth->sfont; list; list = fluid_list_next(list)) {
     sfont = fluid_list_get (list);
 
-    if (fluid_sfont_get_id (sfont) == (unsigned int)sfont_id)
+    if (fluid_sfont_get_id (sfont) == sfont_id)
     {
       offset = sfont->bankofs;
       break;

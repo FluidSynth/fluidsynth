@@ -163,9 +163,9 @@
  * - In mono legato playing,default_fromkey must be valid.
  */
 static char fluid_synth_get_fromkey_portamento_legato(fluid_channel_t* chan, 
-								   char default_fromkey)
+								   int default_fromkey)
 {
-	char ptc =  fluid_channel_get_cc(chan, PORTAMENTO_CTRL);
+	unsigned char ptc = fluid_channel_get_cc(chan, PORTAMENTO_CTRL);
 	if(fluid_channel_is_valid_note(ptc))
 	{	/* CC PTC has been received */
 		fluid_channel_clear_portamento(chan);	/* clears the CC PTC receive */
@@ -178,7 +178,7 @@ static char fluid_synth_get_fromkey_portamento_legato(fluid_channel_t* chan,
 	}
 	else 
 	{	/* determines and returns fromkey portamento */
-		char fromkey_portamento = INVALID_NOTE;
+		unsigned char fromkey_portamento = INVALID_NOTE;
 		if(fluid_channel_portamento(chan))
 		{	/* Portamento when Portamento pedal is On */
 			/* 'fromkey portamento'is determined from the portamento mode

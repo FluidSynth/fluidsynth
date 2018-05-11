@@ -27,8 +27,8 @@
 static int fluid_ramsfont_sfont_delete(fluid_sfont_t* sfont);
 static const char *fluid_ramsfont_sfont_get_name(fluid_sfont_t* sfont);
 static fluid_preset_t *fluid_ramsfont_sfont_get_preset(fluid_sfont_t* sfont,
-                                                       unsigned int bank,
-                                                       unsigned int prenum);
+                                                       int bank,
+                                                       int prenum);
 static void fluid_ramsfont_sfont_iteration_start(fluid_sfont_t* sfont);
 static fluid_preset_t *fluid_ramsfont_sfont_iteration_next(fluid_sfont_t* sfont);
 static void fluid_rampreset_preset_delete(fluid_preset_t* preset);
@@ -44,7 +44,7 @@ static const char *fluid_ramsfont_get_name(fluid_ramsfont_t* sfont);
 static int fluid_ramsfont_add_preset (fluid_ramsfont_t* sfont,
                                       fluid_rampreset_t* rampreset);
 static fluid_preset_t *fluid_ramsfont_get_preset (fluid_ramsfont_t* sfont,
-                                                     unsigned int bank, unsigned int num);
+                                                     int bank, int num);
 static void fluid_ramsfont_iteration_start (fluid_ramsfont_t* sfont);
 static fluid_preset_t *fluid_ramsfont_iteration_next (fluid_ramsfont_t* sfont);
 static fluid_rampreset_t* new_fluid_rampreset(fluid_ramsfont_t* sfont);
@@ -127,7 +127,7 @@ fluid_ramsfont_sfont_get_name(fluid_sfont_t* sfont)
 
 /* RAM SoundFont loader method to get a preset */
 static fluid_preset_t *
-fluid_ramsfont_sfont_get_preset(fluid_sfont_t* sfont, unsigned int bank, unsigned int prenum)
+fluid_ramsfont_sfont_get_preset(fluid_sfont_t* sfont, int bank, int prenum)
 {
   return fluid_ramsfont_get_preset((fluid_ramsfont_t*) sfont->data, bank, prenum);
 }
@@ -307,8 +307,8 @@ fluid_ramsfont_add_preset (fluid_ramsfont_t* sfont, fluid_rampreset_t* rampreset
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int
-fluid_ramsfont_add_izone(fluid_ramsfont_t* sfont, unsigned int bank,
-                         unsigned int num, fluid_sample_t* sample,
+fluid_ramsfont_add_izone(fluid_ramsfont_t* sfont, int bank,
+                         int num, fluid_sample_t* sample,
                          int lokey, int hikey)
 {
 	/*- find or create a preset
@@ -363,8 +363,8 @@ fluid_ramsfont_add_izone(fluid_ramsfont_t* sfont, unsigned int bank,
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int
-fluid_ramsfont_remove_izone (fluid_ramsfont_t* sfont, unsigned int bank,
-                             unsigned int num, fluid_sample_t* sample)
+fluid_ramsfont_remove_izone (fluid_ramsfont_t* sfont, int bank,
+                             int num, fluid_sample_t* sample)
 {
 	int err;
     fluid_rampreset_t *rampreset;
@@ -398,8 +398,8 @@ fluid_ramsfont_remove_izone (fluid_ramsfont_t* sfont, unsigned int bank,
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int
-fluid_ramsfont_izone_set_gen (fluid_ramsfont_t* sfont, unsigned int bank,
-                              unsigned int num, fluid_sample_t* sample,
+fluid_ramsfont_izone_set_gen (fluid_ramsfont_t* sfont, int bank,
+                              int num, fluid_sample_t* sample,
                               int gen_type, float value)
 {
     fluid_rampreset_t* rampreset;
@@ -427,8 +427,8 @@ fluid_ramsfont_izone_set_gen (fluid_ramsfont_t* sfont, unsigned int bank,
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int
-fluid_ramsfont_izone_set_loop (fluid_ramsfont_t *sfont, unsigned int bank,
-                               unsigned int num, fluid_sample_t* sample,
+fluid_ramsfont_izone_set_loop (fluid_ramsfont_t *sfont, int bank,
+                               int num, fluid_sample_t* sample,
                                int on, float loopstart, float loopend)
 {
     fluid_rampreset_t* rampreset;
@@ -444,7 +444,7 @@ fluid_ramsfont_izone_set_loop (fluid_ramsfont_t *sfont, unsigned int bank,
 
 /* Get a preset from a RAM SoundFont */
 static fluid_preset_t *
-fluid_ramsfont_get_preset (fluid_ramsfont_t* sfont, unsigned int bank, unsigned int num)
+fluid_ramsfont_get_preset (fluid_ramsfont_t* sfont, int bank, int num)
 {
     fluid_preset_t *preset;
     fluid_list_t *list;

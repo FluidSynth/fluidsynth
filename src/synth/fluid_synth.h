@@ -114,7 +114,7 @@ struct _fluid_synth_t
 
   fluid_list_t *loaders;             /**< the SoundFont loaders */
   fluid_list_t *sfont;          /**< List of fluid_sfont_info_t for each loaded SoundFont (remains until SoundFont is unloaded) */
-  unsigned int sfont_id;             /**< Incrementing ID assigned to each loaded SoundFont */
+  int sfont_id;             /**< Incrementing ID assigned to each loaded SoundFont */
 
   float gain;                        /**< master gain */
   fluid_channel_t** channel;         /**< the channels */
@@ -174,8 +174,8 @@ typedef int (*fluid_audio_callback_t)(fluid_synth_t* synth, int len,
 				     void* out2, int roff, int rincr);
 
 fluid_preset_t* fluid_synth_find_preset(fluid_synth_t* synth,
-				      unsigned int banknum,
-				      unsigned int prognum);
+				      int banknum,
+				      int prognum);
 void fluid_synth_sfont_unref (fluid_synth_t *synth, fluid_sfont_t *sfont);
 
 void fluid_synth_dither_s16(int *dither_index, int len, float* lin, float* rin,

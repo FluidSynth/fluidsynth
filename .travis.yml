@@ -82,7 +82,7 @@ matrix:
             - ladspa-sdk
       env:
          - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5"
-         - CMAKE_FLAGS="-Denable-debug=1"
+         - CMAKE_FLAGS="-Denable-debug=1 -DCMAKE_C_FLAGS_DEBUG=-fuse-ld=gold"
 
     # works on Precise and Trusty
     - os: linux
@@ -113,6 +113,21 @@ matrix:
             - ladspa-sdk
       env:
         - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+
+    # works on Precise and Trusty
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-8
+            - cmake-data
+            - cmake
+            - libglib2.0-0
+            - ladspa-sdk
+      env:
+        - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
 
     # works on Precise and Trusty
     - os: linux
@@ -188,7 +203,7 @@ matrix:
     - os: osx
       osx_image: xcode8
       env:
-        - MATRIX_EVAL="brew install gcc glib gettext libsndfile jack dbus-glib pulseaudio portaudio && brew link gettext && CC=gcc-7 && CXX=g++-7"
+        - MATRIX_EVAL="brew install gcc glib gettext libsndfile jack dbus-glib pulseaudio portaudio && brew link gettext && CC=gcc-8 && CXX=g++-8"
 
 before_install:
     - if [ $TRAVIS_OS_NAME = linux ]; then sudo apt-get update; else brew update; fi

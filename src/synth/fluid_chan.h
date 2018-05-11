@@ -65,8 +65,8 @@
 struct mononote
 {
     unsigned char next; /* next note */
-    char note; /* note */
-    char vel;  /* velocity */
+    unsigned char note; /* note */
+    unsigned char vel;  /* velocity */
 };
 
 /*
@@ -87,25 +87,25 @@ struct _fluid_channel_t
   /* monophonic list - legato detector */
   unsigned char i_first;          /**< First note index */
   unsigned char i_last;           /**< most recent note index since the most recent add */
-  char prev_note;                 /**< previous note of the most recent add/remove */
+  unsigned char prev_note;        /**< previous note of the most recent add/remove */
   unsigned char n_notes;          /**< actual number of notes in the list */
   struct mononote monolist[FLUID_CHANNEL_SIZE_MONOLIST];   /**< monophonic list */
   
-  char key_mono_sustained;         /**< previous sustained monophonic note */
-  char previous_cc_breath;		  /**< Previous Breath */
+  unsigned char key_mono_sustained;         /**< previous sustained monophonic note */
+  unsigned char previous_cc_breath;		  /**< Previous Breath */
   enum fluid_channel_legato_mode legatomode;       /**< legato mode */
   enum fluid_channel_portamento_mode portamentomode;   /**< portamento mode */
   /*- End of Poly/mono variables description */
   
-  char cc[128];                         /**< MIDI controller values */
-  char key_pressure[128];               /**< MIDI polyphonic key pressure */
+  unsigned char cc[128];                         /**< MIDI controller values from [0;127] */
+  unsigned char key_pressure[128];               /**< MIDI polyphonic key pressure from [0;127] */
   
   /* Drum channel flag, CHANNEL_TYPE_MELODIC, or CHANNEL_TYPE_DRUM. */
   enum fluid_midi_channel_type channel_type;
   enum fluid_interp interp_method;                    /**< Interpolation method (enum fluid_interp) */
 
-  char channel_pressure;                 /**< MIDI channel pressure */
-  char pitch_wheel_sensitivity;          /**< Current pitch wheel sensitivity */
+  unsigned char channel_pressure;                 /**< MIDI channel pressure from [0;127] */
+  unsigned char pitch_wheel_sensitivity;          /**< Current pitch wheel sensitivity */
   short pitch_bend;                      /**< Current pitch bend value */
   /* Sostenuto order id gives the order of SostenutoOn event.
    * This value is useful to known when the sostenuto pedal is depressed
@@ -148,16 +148,12 @@ void fluid_channel_init_ctrl(fluid_channel_t* chan, int is_all_ctrl_off);
 void delete_fluid_channel(fluid_channel_t* chan);
 void fluid_channel_reset(fluid_channel_t* chan);
 int fluid_channel_set_preset(fluid_channel_t* chan, fluid_preset_t* preset);
-fluid_preset_t* fluid_channel_get_preset(fluid_channel_t* chan);
 void fluid_channel_set_sfont_bank_prog(fluid_channel_t* chan, int sfont,
                                        int bank, int prog);
 void fluid_channel_set_bank_lsb(fluid_channel_t* chan, int banklsb);
 void fluid_channel_set_bank_msb(fluid_channel_t* chan, int bankmsb);
 void fluid_channel_get_sfont_bank_prog(fluid_channel_t* chan, int *sfont,
                                        int *bank, int *prog);
-int fluid_channel_get_num(fluid_channel_t* chan);
-void fluid_channel_set_interp_method(fluid_channel_t* chan, int new_method);
-int fluid_channel_get_interp_method(fluid_channel_t* chan);
 
 #define fluid_channel_get_preset(chan)          ((chan)->preset)
 #define fluid_channel_set_cc(chan, num, val) \
@@ -231,7 +227,7 @@ int fluid_channel_get_interp_method(fluid_channel_t* chan);
                                              fluid_channel_legato(chan))
 
 /* Macros interface to monophonic list variables */
-#define INVALID_NOTE (-1)
+#define INVALID_NOTE (255)
 /* Returns true when a note is a valid note */
 #define fluid_channel_is_valid_note(n)    (n != INVALID_NOTE)
 /* Marks prev_note as invalid. */

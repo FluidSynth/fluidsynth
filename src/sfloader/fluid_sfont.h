@@ -121,7 +121,7 @@ void fluid_sfont_set_iteration_next(fluid_sfont_t* sfont, fluid_sfont_iteration_
  */
 struct _fluid_sfont_t {
   void* data;           /**< User defined data */
-  unsigned int id;      /**< SoundFont ID */
+  int id;               /**< SoundFont ID */
   int refcount;         /**< SoundFont reference count (1 if no presets referencing it) */
   int bankofs;          /**< Bank offset */
 

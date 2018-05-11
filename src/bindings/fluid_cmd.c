@@ -1402,10 +1402,11 @@ fluid_handle_set(void* data, int ac, char** av, fluid_ostream_t out)
   FLUID_ENTRY_COMMAND(data);
   int hints;
   int ival;
+  int ret = FLUID_FAILED;
 
   if (ac < 2) {
     fluid_ostream_printf(out, "set: Too few arguments.\n");
-    return FLUID_FAILED;
+    return ret;
   }
 
   switch (fluid_settings_get_type (handler->synth->settings, av[0]))
@@ -1425,20 +1426,23 @@ fluid_handle_set(void* data, int ac, char** av, fluid_ostream_t out)
       }
       else ival = atoi (av[1]);
 
-      fluid_settings_setint (handler->synth->settings, av[0], ival);
+      ret = fluid_settings_setint (handler->synth->settings, av[0], ival);
       break;
     case FLUID_NUM_TYPE:
-      fluid_settings_setnum (handler->synth->settings, av[0], atof (av[1]));
+      ret = fluid_settings_setnum (handler->synth->settings, av[0], atof (av[1]));
       break;
     case FLUID_STR_TYPE:
-      fluid_settings_setstr(handler->synth->settings, av[0], av[1]);
+      ret = fluid_settings_setstr(handler->synth->settings, av[0], av[1]);
       break;
     case FLUID_SET_TYPE:
       fluid_ostream_printf (out, "set: Parameter '%s' is a node.\n", av[0]);
-      break;
+      return FLUID_FAILED;
   }
 
-  return FLUID_OK;
+  if(ret == FLUID_FAILED)
+    fluid_ostream_printf(out, "set: Value out of range.\n");
+  
+  return ret;
 }
 
 int
@@ -1458,27 +1462,27 @@ fluid_handle_get(void* data, int ac, char** av, fluid_ostream_t out)
   case FLUID_NUM_TYPE: {
     double value;
     fluid_settings_getnum(handler->synth->settings, av[0], &value);
-    fluid_ostream_printf(out, "%.3f", value);
+    fluid_ostream_printf(out, "%.3f\n", value);
     break;
   }
 
   case FLUID_INT_TYPE: {
     int value;
     fluid_settings_getint(handler->synth->settings, av[0], &value);
-    fluid_ostream_printf(out, "%d", value);
+    fluid_ostream_printf(out, "%d\n", value);
     break;
   }
 
   case FLUID_STR_TYPE: {
     char* s;
     fluid_settings_dupstr(handler->synth->settings, av[0], &s);       /* ++ alloc string */
-    fluid_ostream_printf(out, "%s", s ? s : "NULL");
+    fluid_ostream_printf(out, "%s\n", s ? s : "NULL");
     if (s) FLUID_FREE (s);      /* -- free string */
     break;
   }
 
   case FLUID_SET_TYPE:
-    fluid_ostream_printf(out, "%s is a node", av[0]);
+    fluid_ostream_printf(out, "%s is a node\n", av[0]);
     break;
   }
 

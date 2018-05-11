@@ -85,10 +85,11 @@ Changes in FluidSynth 2.0.0 concerning developers:
 - remove deprecated fluid_synth_reset_tuning(), use fluid_synth_deactivate_tuning(synth, chan, FALSE) instead
 - remove deprecated FLUID_HINT_INTEGER
 - remove deprecated fluid_synth_set_gen2() as there doesnt seem to be a use case for absolute generator values
-- remove fluid_cmd_handler_register() and fluid_cmd_handler_unregister() from public API, as they seem to be unused downstream
-- remove misspelled FLUID_SEQ_PITCHWHHELSENS macro
+- remove deprecated "synth.parallel-render" setting
 - remove obsolete "audio.[out|in]put-channels" settings
 - remove unimplemented "synth.dump" setting
+- remove fluid_cmd_handler_register() and fluid_cmd_handler_unregister() from public API, as they seem to be unused downstream
+- remove misspelled FLUID_SEQ_PITCHWHHELSENS macro
 - remove struct _fluid_mod_t from public API, use the getters and setters of mod.h instead
 - remove struct _fluid_gen_t, fluid_gen_set_default_values() and enum fluid_gen_flags from public API
 - remove macros fluid_sfont_get_id() and fluid_sample_refcount() from public API
@@ -101,6 +102,7 @@ Changes in FluidSynth 2.0.0 concerning developers:
 <br /><br />
 - all public \c fluid_settings_* functions that return an integer which is not meant to be interpreted as bool consistently return either FLUID_OK or FLUID_FAILED
 - all public delete_* functions return void and are safe when called with NULL
+- all public functions consistently receive signed integers for soundfont ids, bank and program numbers
 - the shell command handler was decoupled internally, as a consequence the param list of new_fluid_server() and new_fluid_cmd_handler() was adapted
 - reverb: roomsize is now limited to an upper threshold of 1.0 to avoid exponential volume increase
 - use unique device names for the "audio.portaudio.device" setting
@@ -109,6 +111,7 @@ Changes in FluidSynth 2.0.0 concerning developers:
 <br /><br />
 - add <a href="fluidsettings.xml#midi.autoconnect">"midi.autoconnect"</a> a setting for automatically connecting fluidsynth to available MIDI input ports
 - add <a href="fluidsettings.xml#synth.overflow.important">"synth.overflow.important"</a> and <a href="fluidsettings.xml#synth.overflow.important-channels">"synth.overflow.important-channels"</a> settings to take midi channels during overflow calculation into account that are considered to be "important"
+- add <a href="fluidsettings.xml#synth.dynamic-sample-loading">"synth.dynamic-sample-loading"</a> a setting for enabling on demand sample loading
 - add support for polyphonic key pressure events, see fluid_event_key_pressure() and fluid_synth_key_pressure()
 - add fluid_synth_add_default_mod() and fluid_synth_remove_default_mod() for manipulating default modulators
 - add individual reverb setters: fluid_synth_set_reverb_roomsize(), fluid_synth_set_reverb_damp(), fluid_synth_set_reverb_width(), fluid_synth_set_reverb_level()
