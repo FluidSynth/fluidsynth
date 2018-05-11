@@ -192,8 +192,9 @@
 #define WITH_DENORMALISING
 
 #ifdef WITH_DENORMALISING
-//#define DC_OFFSET 0.0f
 #define DC_OFFSET 1e-8
+#else
+#define DC_OFFSET  0.0
 #endif
 
 /*----------------------------------------------------------------------------
@@ -251,7 +252,7 @@
 /* 
  Number of samples to add to the desired length of a delay line. This
  allow to take account of modulation interpolation. 
- 1 is sufficient with MOD_DEPTH egal to 6.
+ 1 is sufficient with MOD_DEPTH equal to 6.
 */
 #define INTERP_SAMPLES_NBR 1
 
@@ -366,16 +367,16 @@ typedef struct
 
 
 /*-----------------------------------------------------------------------------
- Clears a delay line to zero float value.
+ Clears a delay line to DC_OFFSET float value.
  @param dl pointer on delay line structure
 -----------------------------------------------------------------------------*/
 static void clear_delay_line(delay_line * dl)
 {
-#ifdef WITH_DENORMALISING
-	FLUID_MEMSET(dl->line, DC_OFFSET, dl->size * sizeof(fluid_real_t));
-#else
-	FLUID_MEMSET(dl->line, 0, dl->size * sizeof(fluid_real_t));
-#endif
+	int i;
+	for(i = 0 ; i < dl->size; i++)
+	{
+		dl->line[i] = DC_OFFSET;
+	}
 }
 
 /*-----------------------------------------------------------------------------
@@ -391,8 +392,6 @@ static void clear_delay_line(delay_line * dl)
 /*-----------------------------------------------------------------------------
  Modulator for modulated delay line 
 -----------------------------------------------------------------------------*/
-#define TWO_PI            6.28318530717958647692528676655901
-#define PI_DIVIDED_BY_2   1.57079632679489661923132169163975
 
 /*-----------------------------------------------------------------------------
  Sinusoidal modulator
@@ -417,12 +416,12 @@ typedef struct
 static void set_mod_frequency(sinus_modulator * mod, 
                               float freq, float sample_rate, float phase)
 {
-	fluid_real_t w = TWO_PI * freq/sample_rate; /* intial angle */
+	fluid_real_t w = 2 * M_PI * freq/sample_rate; /* intial angle */
 	
 	mod->a1 = 2 * cos(w);
-	mod->buffer2 = sin(TWO_PI * phase/360 - w); /* y(n-1) = sin(-intial angle) */
-	mod->buffer1 = sin(TWO_PI * phase/360); /* y(n) = sin(initial phase) */
-	mod->reset_buffer2 = sin(PI_DIVIDED_BY_2 - w); /* reset value for PI/2 */
+	mod->buffer2 = sin(2 * M_PI * phase/360 - w); /* y(n-1) = sin(-intial angle) */
+	mod->buffer1 = sin(2 * M_PI * phase/360); /* y(n) = sin(initial phase) */
+	mod->reset_buffer2 = sin(M_PI/2.0 - w); /* reset value for PI/2 */
 }
 
 /*-----------------------------------------------------------------------------
@@ -470,11 +469,11 @@ typedef struct
 	/*-------------------------*/
 	/* center output position members */
 	fluid_real_t  center_pos_mod; /* center output position modulated by modulator */
-	long          mod_depth;   /* modulation depth (in samples) */
+	int          mod_depth;   /* modulation depth (in samples) */
 	/*-------------------------*/
 	/* variable rate control of center output position */
-	long index_rate;  	   /* index rate to know when to update center_pos_mod */
-	long mod_rate; 	       /* rate at which center_pos_mod is updated */
+	int index_rate;  /* index rate to know when to update center_pos_mod */
+	int mod_rate;    /* rate at which center_pos_mod is updated */
 	/*-------------------------*/
 	/* first order All-Pass interpolator members */
 	fluid_real_t  frac_pos_mod; /* fractional position part between samples) */
@@ -500,9 +499,9 @@ typedef struct
  Return FLUID_OK if success, FLUID_FAILED if memory error.
 -----------------------------------------------------------------------------*/
 static int set_mod_delay_line (mod_delay_line * mdl,
-										   long delay_length,
-										   long mod_depth,
-										   long mod_rate
+										   int delay_length,
+										   int mod_depth,
+										   int mod_rate
 										   )
 {
 	/*-----------------------------------------------------------------------*/
@@ -841,7 +840,7 @@ static void update_stereo_coefficient(fluid_late * late, fluid_real_t wet1)
 -----------------------------------------------------------------------------*/
 static void delete_fluid_rev_late(fluid_late * late)
 {
-	long i;
+	int i;
 	for(i =0; i < NBR_DELAYS; i++)
 	{
 		FLUID_FREE(late->mod_delay_lines[i].dl.line);
@@ -857,7 +856,7 @@ static void delete_fluid_rev_late(fluid_late * late)
 static int create_fluid_rev_late(fluid_late * late, fluid_real_t sample_rate)
 {
 	int result ; /* return value */
-	long i ;
+	int i ;
 
 	FLUID_MEMSET(late, 0,  sizeof(fluid_late));
 
@@ -970,7 +969,7 @@ new_fluid_revmodel(fluid_real_t sample_rate)
 	}
 	else
 	{
-		FLUID_FREE(rev);
+		delete_fluid_revmodel(rev);
 		return NULL;
 	}
 	return rev;
@@ -984,8 +983,11 @@ new_fluid_revmodel(fluid_real_t sample_rate)
 void
 delete_fluid_revmodel(fluid_revmodel_t* rev)
 {
-	delete_fluid_rev_late(&rev->late);
-	FLUID_FREE(rev);
+	if (rev)
+	{
+		delete_fluid_rev_late(&rev->late);
+		FLUID_FREE(rev);
+	}
 }
 
 /*
