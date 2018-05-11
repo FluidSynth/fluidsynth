@@ -873,7 +873,6 @@ static int create_fluid_rev_late(fluid_late * late, fluid_real_t sample_rate)
 		                             delay_length[i], MOD_DEPTH, MOD_RATE );
 		if (result == FLUID_FAILED)
 		{
-			delete_fluid_rev_late(late);
 			return FLUID_FAILED;
 		}
 		/* Sets local Modulators parameters: frequency and phase
