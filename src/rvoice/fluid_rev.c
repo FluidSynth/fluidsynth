@@ -426,7 +426,7 @@ static void set_mod_frequency(sinus_modulator * mod,
 }
 
 /*-----------------------------------------------------------------------------
- Get current value of sinus modulator:
+ Gets current value of sinus modulator:
    y(n) = a1 . y(n-1)  -  y(n-2)
    out = a1 . buffer1  -  buffer2
 
@@ -484,7 +484,7 @@ typedef struct
 
 
 /*-----------------------------------------------------------------------------
- modulated delay line initialization.
+ Modulated delay line initialization.
  
  Sets the length line ( alloc delay samples).
  Remark: the function sets the internal size accordling to the length delay_length.
@@ -582,7 +582,7 @@ static int set_mod_delay_line (mod_delay_line * mdl,
 }
 
 /*-----------------------------------------------------------------------------
- The function reads the sample value out of the modulated delay line
+ Reads the sample value out of the modulated delay line.
  @param mdl, pointer on modulated delay line.
  @return the sample value.
 -----------------------------------------------------------------------------*/
@@ -691,8 +691,8 @@ struct _fluid_revmodel_t
 /*-----------------------------------------------------------------------------
  Updates Reverb time and absorbent filters coefficients from parameters:
  
- @param late pointer on late structure
- @param roomsize (0 to 1): acting on reverb time
+ @param late pointer on late structure.
+ @param roomsize (0 to 1): acting on reverb time.
  @param damping (0 to 1): acting on absorbent damping filter.
 
  Design formulas:
@@ -785,8 +785,8 @@ static void update_rev_time_damping(fluid_late * late,
 }
 
 /*-----------------------------------------------------------------------------
- Updates stereo coefficients
- @param late pointer on late structure
+ Updates stereo coefficients.
+ @param late pointer on late structure.
  @param wet1 level integrated in stereo coefficients.
 -----------------------------------------------------------------------------*/
 static void update_stereo_coefficient(fluid_late * late, fluid_real_t wet1)
@@ -819,22 +819,22 @@ static void update_stereo_coefficient(fluid_late * late, fluid_real_t wet1)
 		{
 			late->out_left_gain[i] *= -1.0 ;
 		}
-		/* Now sets right gain as function of Left */
-		/* for right line 1,2, 5,6, 9,10, 13,14, right = - left */
+		/* Now sets right gain as function of left gain */
+		/* for right line 1,2, 5,6, 9,10,  right = - left */
 		if((i==1)||(i==2)||(i==5)||(i==6)||(i==9)||(i==10))
 		{
-			/* Right is reverse of Left */
+			/* Right is reverse of left */
 			late->out_right_gain[i] = -1.0 * late->out_left_gain[i]; 
 		}
 		else /* for Right : line 0,3, 4,7, 8,11 */
-		{   /* Right is same as Left */
+		{   /* Right is same as left */
 			late->out_right_gain[i] = late->out_left_gain[i];  
 		}
 	}
 }
 
 /*-----------------------------------------------------------------------------
- fluid_late destructor
+ fluid_late destructor.
  @param late pointer on late structure.
 -----------------------------------------------------------------------------*/
 static void delete_fluid_rev_late(fluid_late * late)
@@ -849,7 +849,7 @@ static void delete_fluid_rev_late(fluid_late * late)
 }
 
 /*-----------------------------------------------------------------------------
- Creates the fdn reverb
+ Creates the fdn reverb.
  @param late, pointer on the fnd late reverb to initialize.
  @param sample_rate the sample rate.
  @return FLUID_OK if success, FLUID_FAILED otherwise.
@@ -893,7 +893,7 @@ static int create_fluid_rev_late(fluid_late * late, fluid_real_t sample_rate)
 /*
  Clears the delay lines.
  
- @param rev pointer on the reverb
+ @param rev pointer on the reverb.
 */
 static void
 fluid_revmodel_init(fluid_revmodel_t* rev)
@@ -908,9 +908,9 @@ fluid_revmodel_init(fluid_revmodel_t* rev)
 
 
 /* 
- updates internal parameters 
+ updates internal parameters.
 
- @param rev pointer on the reverb
+ @param rev pointer on the reverb.
 */
 static void
 fluid_revmodel_update(fluid_revmodel_t* rev)
@@ -1111,14 +1111,14 @@ fluid_revmodel_processreplace(fluid_revmodel_t* rev, fluid_real_t *in,
 #endif
 
 		/*--------------------------------------------------------------------
-		 tone correction
+		 tone correction.
 		*/
 		out_tone_filter = xn * rev->late.b1 - rev->late.b2 * rev->late.tone_buffer;
 		rev->late.tone_buffer = xn;
 		xn = out_tone_filter; 
 		/*--------------------------------------------------------------------
 		 process  feedback delayed network:
-		  - xn is the input signal
+		  - xn is the input signal.
 		  - before inserting in the line input we first we get the delay lines
 		    output, filter them and compute output in delay_out[].
 		  - also matrix_factor is computed (to simplify further matrix product)
