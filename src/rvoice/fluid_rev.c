@@ -589,7 +589,7 @@ static int set_mod_delay_line (mod_delay_line * mdl,
 static inline fluid_real_t get_mod_delay(mod_delay_line * mdl)
 {
 	fluid_real_t out_index;  /* new modulated index position */
-	long int_out_index; /* integer part of out_index */
+	int int_out_index; /* integer part of out_index */
 	fluid_real_t out; /* value to return */
    
 	/* Checks if the modulator must be updated (every mod_rate samples). */ 
@@ -608,7 +608,7 @@ static inline fluid_real_t get_mod_delay(mod_delay_line * mdl)
 		/* extracts integer part in int_out_index */
 		if(out_index >= 0.0f)
 		{
-			int_out_index = (long)out_index; /* current integer part */
+			int_out_index = (int)out_index; /* current integer part */
 			/* forces read index (line_out)  with integer modulation value  */ 
 			/* Boundary check and circular motion as needed */
 			if((mdl->dl.line_out = int_out_index) >= mdl->dl.size)
@@ -618,7 +618,7 @@ static inline fluid_real_t get_mod_delay(mod_delay_line * mdl)
 		}
 		else /* negative */	
 		{
-			int_out_index = (long)(out_index -1 ); /* previous integer part */
+			int_out_index = (int)(out_index -1 ); /* previous integer part */
 			/* forces read index (line_out) with integer modulation value  */ 
 			/* circular motion as needed */
 			mdl->dl.line_out   = int_out_index + mdl->dl.size;
