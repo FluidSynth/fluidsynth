@@ -162,15 +162,16 @@
  * problems.
  */
 #include "fluid_rev.h"
-
+#include "fluid_sys.h"
 
 /*----------------------------------------------------------------------------
                         Configuration macros at compiler time.
 
  Two macros are usable at compiler time:
   - NBR_DELAYs: number of delay lines. 8 (default) or 12.
-  - ROOMSIZE_DAMP_RESPONSE: allows to choose an alternate response for
+  - ROOMSIZE_RESPONSE_LINEAR: allows to choose an alternate response for
     roomsize parameter.
+  - DENORMALISING enable denormalising handling.
 -----------------------------------------------------------------------------*/
 /* Number of delay lines (must be only 8 or 12) 
   8 is the default.
@@ -189,9 +190,9 @@
 //#define	ROOMSIZE_RESPONSE_LINEAR
 
 /* WITH_DENORMALISING enable denormalising handling */
-#define WITH_DENORMALISING
+#define DENORMALISING
 
-#ifdef WITH_DENORMALISING
+#ifdef DENORMALISING
 #define DC_OFFSET 1e-8
 #else
 #define DC_OFFSET  0.0
@@ -285,7 +286,7 @@
 #endif
 
 /* Delay lines length table (in samples) */
-long    delay_length[NBR_DELAYS] = 
+static const int delay_length[NBR_DELAYS] = 
 {
 	DELAY_L0, DELAY_L1, DELAY_L2, DELAY_L3, 
 	DELAY_L4, DELAY_L5, DELAY_L6, DELAY_L7,
@@ -532,9 +533,9 @@ static int set_mod_delay_line (mod_delay_line * mdl,
 		}
 		clear_delay_line(&mdl->dl); /* clears the buffer */
 
-		/* Initialize line_in to the start of the buffer */
+		/* Initializes line_in to the start of the buffer */
 		mdl->dl.line_in = 0;
-   		/*  Initialize line_out index INTERP_SAMPLES_NBR samples after line_in */
+   		/*  Initializes line_out index INTERP_SAMPLES_NBR samples after line_in */
 	   	/*  so that the delay between line_out and line_in is:
 		    mod_depth + delay_length */
 		mdl->dl.line_out = mdl->dl.line_in + INTERP_SAMPLES_NBR;
@@ -661,14 +662,12 @@ static inline fluid_real_t get_mod_delay(mod_delay_line * mdl)
 struct _fluid_late
 {
 	fluid_real_t samplerate;       /* sample rate */
-	/*-------- High pass tone corrector -------------------------------------*/
+	/*----- High pass tone corrector -------------------------------------*/
 	fluid_real_t tone_buffer;
 	fluid_real_t b1,b2;
-	/*--------Delay lines ---------------------------------------------------*/
-	/* modulated delay lines */
+	/*----- Modulated delay lines lines ----------------------------------*/
 	mod_delay_line mod_delay_lines[NBR_DELAYS];
-	/*-----------------------------------------------------------------------*/
-	/* Output coefficients for separate Left and right stereo outputs */
+	/*----- Output coefficients for separate Left and right stereo outputs ---*/
 	fluid_real_t   out_left_gain[NBR_DELAYS]; /* Left delay lines' output gains */
 	fluid_real_t   out_right_gain[NBR_DELAYS];/* Right delay lines' output gains*/
 };
@@ -684,7 +683,7 @@ struct _fluid_revmodel_t
   fluid_real_t damp;		/* acting on frequency dependent reverb time */
   fluid_real_t level, wet1, wet2; /* output level */
   fluid_real_t width;		/* width stereo separation */
-  /*--------------------------------------*/
+
   /* fdn reverberation structure */
   fluid_late  late;
 };
@@ -797,37 +796,37 @@ static void update_stereo_coefficient(fluid_late * late, fluid_real_t wet1)
 	{
 		/*  delay lines output gains vectors Left and Right
 
-                           L    R
-                       0 | 1    1| 
-                       1 |-1    1|
-                       2 | 1   -1| 
-                       3 |-1   -1|
+                           L       R
+                       0 | wet1    wet1| 
+                       1 |-wet1    wet1|
+                       2 | wet1   -wet1| 
+                       3 |-wet1   -wet1|
 
-                       4 | 1    1| 
-                       5 |-1    1| 
-         stereo gain = 6 | 1   -1|
-                       7 |-1   -1|
+                       4 | wet1    wet1| 
+                       5 |-wet1    wet1| 
+         stereo gain = 6 | wet1   -wet1|
+                       7 |-wet1   -wet1|
  
-                       8 | 1    1| 
-                       9 |-1    1| 
-                       10| 1   -1|
-                       11|-1   -1|
+                       8 | wet1    wet1| 
+                       9 |-wet1    wet1| 
+                       10| wet1   -wet1|
+                       11|-wet1   -wet1|
 		*/ 
       
 		late->out_left_gain[i] = wet1;
 		/*  Sets Left coefficients first */
-		if(i%2) /* Left is 1,-1, 1,-1, 1,-1,.... */
+		if(i%2) /* Left line odd */
 		{
-			late->out_left_gain[i] *= -1 ;
+			late->out_left_gain[i] *= -1.0 ;
 		}
 		/* Now sets right gain as function of Left */
-		/* for right line 1,2,5,6,9,10,13,14, right = - left */
-		if((i==1)||(i==2)||(i==5)||(i==6)||(i==9)||(i==10)||(i==13)||(i==14))
+		/* for right line 1,2, 5,6, 9,10, 13,14, right = - left */
+		if((i==1)||(i==2)||(i==5)||(i==6)||(i==9)||(i==10))
 		{
 			/* Right is reverse of Left */
-			late->out_right_gain[i] = -1 * late->out_left_gain[i]; 
+			late->out_right_gain[i] = -1.0 * late->out_left_gain[i]; 
 		}
-		else /* for Right : line 0,3,4,7,8,11,12,15 */
+		else /* for Right : line 0,3, 4,7, 8,11 */
 		{   /* Right is same as Left */
 			late->out_right_gain[i] = late->out_left_gain[i];  
 		}
@@ -841,6 +840,8 @@ static void update_stereo_coefficient(fluid_late * late, fluid_real_t wet1)
 static void delete_fluid_rev_late(fluid_late * late)
 {
 	int i;
+	fluid_return_if_fail(late != NULL);
+	/* free the delay lines */
 	for(i =0; i < NBR_DELAYS; i++)
 	{
 		FLUID_FREE(late->mod_delay_lines[i].dl.line);
@@ -976,13 +977,13 @@ new_fluid_revmodel(fluid_real_t sample_rate)
 
 /*
 * free the reverb.
-* @param rev to free.
+* @param pointer on rev to free.
 * Reverb API.
 */
 void
 delete_fluid_revmodel(fluid_revmodel_t* rev)
 {
-	if (rev)
+	fluid_return_if_fail(rev != NULL);
 	{
 		delete_fluid_rev_late(&rev->late);
 		FLUID_FREE(rev);
@@ -1103,8 +1104,8 @@ fluid_revmodel_processreplace(fluid_revmodel_t* rev, fluid_real_t *in,
 		out_left = out_right = 0;
 
 		/* Input is adjusted by internal gain. */
-#ifdef WITH_DENORMALISING
-		xn = ( in[k] + DC_OFFSET) * FIXED_GAIN;
+#ifdef DENORMALISING
+		xn = ( in[k] ) * FIXED_GAIN + DC_OFFSET;
 #else
 		xn = ( in[k] ) * FIXED_GAIN;
 #endif
@@ -1171,7 +1172,7 @@ fluid_revmodel_processreplace(fluid_revmodel_t* rev, fluid_real_t *in,
 		}
 
 		/*-------------------------------------------------------------------*/
-#ifdef WITH_DENORMALISING
+#ifdef DENORMALISING
 		/* Removes the DC offset */
 		out_left -= DC_OFFSET;
 		out_right -= DC_OFFSET;
@@ -1212,8 +1213,8 @@ void fluid_revmodel_processmix(fluid_revmodel_t* rev, fluid_real_t *in,
 
 	fluid_real_t xn;                   /* mono input x(n) */
 	fluid_real_t out_tone_filter;      /* tone corrector output */
-	fluid_real_t out_left, out_right;  /* output stereo Left  and Right  */
-	fluid_real_t matrix_factor;        /* partial matrix computation */
+	fluid_real_t out_left, out_right;  /* output stereo Left  and Right */
+	fluid_real_t matrix_factor;        /* partial matrix term */
 	fluid_real_t delay_out_s;          /* sample */
 	fluid_real_t delay_out[NBR_DELAYS]; /* Line output + damper output */
 
@@ -1223,8 +1224,8 @@ void fluid_revmodel_processmix(fluid_revmodel_t* rev, fluid_real_t *in,
 		out_left = out_right = 0;
 
 		/* Input is adjusted by internal gain. */
-#ifdef WITH_DENORMALISING
-		xn = ( in[k] + DC_OFFSET) * FIXED_GAIN;
+#ifdef DENORMALISING
+		xn = ( in[k] ) * FIXED_GAIN + DC_OFFSET;
 #else
 		xn = ( in[k] ) * FIXED_GAIN;
 #endif
@@ -1236,10 +1237,10 @@ void fluid_revmodel_processmix(fluid_revmodel_t* rev, fluid_real_t *in,
 		rev->late.tone_buffer = xn;
 		xn = out_tone_filter; 
 		/*--------------------------------------------------------------------
-		 process  feedback delayed network:
+		 process feedback delayed network:
 		  - xn is the input signal.
 		  - before inserting in the line input we first we get the delay lines
-		    output, filter them and compute output in delay_out[].
+		    output, filter them and compute output in local delay_out[].
 		  - also matrix_factor is computed (to simplify further matrix product).
 		---------------------------------------------------------------------*/
 		/* We begin with the modulated output delay line + damping filter */
@@ -1266,7 +1267,7 @@ void fluid_revmodel_processmix(fluid_revmodel_t* rev, fluid_real_t *in,
 			out_right += rev->late.out_right_gain[i]* delay_out_s;
 		}
 	  
-		/* now we process the input delay line.Each input is a combination of:
+		/* now we process the input delay line. Each input is a combination of:
 	       - xn: input signal
 	       - delay_out[] the output of a delay line given by a permutation matrix P
 	       - and matrix_factor.
@@ -1291,12 +1292,12 @@ void fluid_revmodel_processmix(fluid_revmodel_t* rev, fluid_real_t *in,
 		}
 
 		/*-------------------------------------------------------------------*/
-#ifdef WITH_DENORMALISING
+#ifdef DENORMALISING
 		/* Removes the DC offset */
 		out_left -= DC_OFFSET;
 		out_right -= DC_OFFSET;
 #endif
-		/* Calculates stereo output REPLACING anything already there: 
+		/* Calculates stereo output mixing in out with samples already there: 
 
 		    left_out[k]  = out_left * rev->wet1 + out_right * rev->wet2;
 		    right_out[k] = out_right * rev->wet1 + out_left * rev->wet2;
