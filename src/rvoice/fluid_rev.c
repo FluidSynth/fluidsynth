@@ -189,7 +189,7 @@
 */
 //#define	ROOMSIZE_RESPONSE_LINEAR
 
-/* WITH_DENORMALISING enable denormalising handling */
+/* DENORMALISING enable denormalising handling */
 #define DENORMALISING
 
 #ifdef DENORMALISING
