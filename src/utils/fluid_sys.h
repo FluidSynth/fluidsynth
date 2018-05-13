@@ -63,7 +63,7 @@ void fluid_time_config(void);
 #define FLUID_RESTRICT restrict
 #elif defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
 #define FLUID_RESTRICT __restrict__
-#elif defined(_MSC_VER)
+#elif defined(_MSC_VER) && _MSC_VER >= 1400
 #define FLUID_RESTRICT __restrict
 #else
 #warning "Dont know how this compiler handles restrict pointers, refuse to use them."
