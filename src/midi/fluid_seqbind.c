@@ -230,7 +230,6 @@ fluid_seq_fluidsynth_callback(unsigned int time, fluid_event_t* evt, fluid_seque
 	break;
 
   case FLUID_SEQ_UNREGISTERING: /* free ourselves */
-    seqbind->client_id = -1; /* avoid recursive call to fluid_sequencer_unregister_client */
     delete_fluid_seqbind(seqbind);
 	break;
 

@@ -302,36 +302,23 @@ void
 fluid_sequencer_unregister_client (fluid_sequencer_t* seq, fluid_seq_id_t id)
 {
 	fluid_list_t *tmp;
-	fluid_event_t* evt;
 
 	if (seq->clients == NULL) return;
-
-	evt = new_fluid_event();
-	if (evt != NULL) {
-		fluid_event_unregistering(evt);
-		fluid_event_set_dest(evt, id);
-	}
 
 	tmp = seq->clients;
 	while (tmp) {
   		fluid_sequencer_client_t *client = (fluid_sequencer_client_t*)tmp->data;
 
   		if (client->id == id) {
-			/* What should we really do if evt is null due to out-of-memory? */
-			if (client->callback != NULL && evt != NULL)
-				(client->callback)(fluid_sequencer_get_tick(seq),
-						 evt, seq, client->data);
    			if (client->name)
 				FLUID_FREE(client->name);
 			seq->clients = fluid_list_remove_link(seq->clients, tmp);
 			delete1_fluid_list(tmp);
 			FLUID_FREE(client);
-			delete_fluid_event(evt);
 			return;
   		}
    		tmp = tmp->next;
 	}
-	delete_fluid_event(evt);
 	return;
 }
 
