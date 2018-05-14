@@ -483,17 +483,19 @@ struct _fluid_sample_timer_t
  */
 void fluid_sample_timer_process(fluid_synth_t* synth)
 {
-	fluid_sample_timer_t* st;
+	fluid_sample_timer_t* st, *stnext;
 	long msec;
 	int cont;
         unsigned int ticks = fluid_synth_get_ticks(synth);
 	
-	for (st=synth->sample_timers; st; st=st->next) {
+	for (st=synth->sample_timers; st; st=stnext) {
 		if (st->isfinished) {
 			continue;
 		}
 
 		msec = (long) (1000.0*((double) (ticks - st->starttick))/synth->sample_rate);
+		/* st may be freed in the callback below. cache it's successor now to avoid use after free */
+		stnext = st->next;
 		cont = (*st->callback)(st->data, msec);
 		if (cont == 0) {
 			st->isfinished = 1;
