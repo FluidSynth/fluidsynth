@@ -892,3 +892,8 @@ Example of how to register audio drivers using fluid_audio_driver_register() (ad
 \example fluidsynth_sfload_mem.c
 Example of how read a soundfont from memory (advanced users only)
 */
+
+/*!
+\example fluidsynth_process.c
+Usage examples of how to render audio using fluid_synth_process() (advanced users only)
+*/

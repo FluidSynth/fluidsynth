@@ -2845,7 +2845,7 @@ fluid_synth_program_reset(fluid_synth_t* synth)
  * @note Should only be called from synthesis thread.
  * 
  * Usage example:
- * @code
+ * @code{.cpp}
     const int FramesToRender = 64;
     int channels;
     // retrieve number of stereo audio channels
@@ -3006,25 +3006,64 @@ fluid_synth_nwrite_float(fluid_synth_t* synth, int len,
 }
 
 /**
- * Synthesize floating point audio to audio buffers.
- * @param synth FluidSynth instance
- * @param len Count of audio frames to synthesize
- * @param nin Ignored
- * @param in Ignored
- * @param nout Count of arrays in 'out'
- * @param out Array of arrays to store audio to
- * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ * @brief Synthesize floating point audio to planar audio buffers.
  *
- * This function implements the default interface defined in fluidsynth/audio.h.
- * 
+ * Synthesize and <strong>mix</strong> audio to a given number of stereo audio channels.
+ * Therefore pass <code>nout = i*2</code> float buffers to \p out in order to render
+ * the synthesized audio to \p i stereo channels. Each float buffer must be
+ * able to hold \p len elements.
+ *
+ * \p out contains an array of planar buffers for normal, dry, stereo
+ * audio (alternating left and right). Like:
+@code{.cpp}
+out[0]  = left_buffer_channel_1
+out[1]  = right_buffer_channel_1
+out[2]  = left_buffer_channel_2
+out[3]  = right_buffer_channel_2
+...
+out[ (i-1) * 2 + 0 ]  = left_buffer_channel_i
+out[ (i-1) * 2 + 1 ]  = right_buffer_channel_i
+@endcode
+ *
+ * for one-based channel index \p i.
+ * Same buffer layout is used for \p fx for storing effects
+ * like reverb and chorus audio.
+ * This function implements the default interface #fluid_audio_func_t.
+ *
+ * @param synth FluidSynth instance
+ * @param len Count of audio frames to synthesize.
+ * @param nfx Count of arrays in \c fx. Must be a multiple of 2 (because of stereo)
+ * and in the range <code>0 <= nfx/2 <= fluid_synth_count_effects_channels()</code>.
+ * @param fx Array of buffers to store effects audio to. Buffers may
+alias with buffers of \c out.
+ * @param nout Count of arrays in \c out. Must be a multiple of 2
+(because of stereo) and in the range <code>0 <= nout/2 <= fluid_synth_count_audio_channels()</code>.
+ * @param out Array of buffers to store (dry) audio to. Buffers may
+alias with buffers of \c fx.
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise.
+ *
+ * @parblock
+ * @note Make sure to zero out the sample buffers before calling this
+ * function as any synthesized audio is mixed (i.e. added) to the buffers.
+ * @endparblock
+ *
+ * @parblock
+ * @note No matter how many buffers you pass in, fluid_synth_process()
+ * will always render all fluid_synth_count_audio_channels() to the
+ * buffers in \c out and all fluid_synth_count_effects_channels() to the
+ * buffers in \c fx, provided that <code>nout > 0</code> and <code>nfx > 0</code> respectively. If
+ * <code>nout/2 < fluid_synth_count_audio_channels()</code> it will wrap around. Same
+ * is true for effects audio if <code>nfx/2 < fluid_synth_count_effects_channels()</code>.
+ * See usage examples below.
+ * @endparblock
+ *
+ * @parblock
  * @note Should only be called from synthesis thread.
- */
-/*
- * FIXME: Currently if nout != 2 memory allocation will occur!
+ * @endparblock
  */
 int
-fluid_synth_process(fluid_synth_t* synth, int len, int nin, float** in,
-                    int nout, float** out)
+fluid_synth_process(fluid_synth_t* synth, int len, int nfx, float* fx[],
+                    int nout, float* out[])
 {
   if (nout==2) {
     return fluid_synth_write_float(synth, len, out[0], 0, 1, out[1], 0, 1);

@@ -276,8 +276,8 @@ FLUIDSYNTH_API int fluid_synth_nwrite_float(fluid_synth_t* synth, int len,
 					  float** left, float** right, 
 					  float** fx_left, float** fx_right);
 FLUIDSYNTH_API int fluid_synth_process(fluid_synth_t* synth, int len,
-				     int nin, float** in, 
-				     int nout, float** out);
+				     int nfx, float* fx[], 
+				     int nout, float* out[]);
 
 
 /* Synthesizer's interface to handle SoundFont loaders */
