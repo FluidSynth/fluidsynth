@@ -260,6 +260,9 @@ void fluid_seq_dotrace(fluid_sequencer_t* seq, char *fmt, ...) {}
  *
  * Clients can be sources or destinations of events.  Sources don't need to
  * register a callback.
+ * 
+ * @note The user must explicitly unregister any registered client with fluid_sequencer_unregister_client()
+ * before deleting the sequencer!
  */
 fluid_seq_id_t
 fluid_sequencer_register_client (fluid_sequencer_t* seq, const char *name,

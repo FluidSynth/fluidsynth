@@ -71,6 +71,27 @@ delete_fluid_seqbind(fluid_seqbind_t* seqbind)
 /** 
  * Registers a synthesizer as a destination client of the given sequencer.
  * The \a synth is registered with the name "fluidsynth".
+ * 
+ * @warning Due to internal memory allocation, the user must explicitly unregister
+ * the client by sending a fluid_event_unregistering(). Otherwise the behaviour is 
+ * undefined after either \p seq or \p synth is destroyed.
+@code{.cpp}
+fluid_seq_id_t seqid = fluid_sequencer_register_fluidsynth(seq, synth);
+
+// ... do work
+
+fluid_event_t* evt = new_fluid_event();
+fluid_event_set_source(evt, -1);
+fluid_event_set_dest(evt, seqid);
+fluid_event_unregistering(evt);
+
+// unregister the "fluidsynth" client immediately
+fluid_sequencer_send_now(seq, evt);
+delete_fluid_event(evt);
+delete_fluid_synth(synth);
+delete_fluid_sequencer(seq);
+@endcode
+ * 
  * @param seq Sequencer instance
  * @param synth Synthesizer instance
  * @returns Sequencer client ID, or #FLUID_FAILED on error.
