@@ -9,7 +9,7 @@ int main(void)
     fluid_settings_t *settings = new_fluid_settings();
     TEST_ASSERT(settings != NULL);
     
-    TEST_SUCCESS(fluid_settings_setnum(settings, "synth.reverb.roomsize", 0.1));
+    TEST_SUCCESS(fluid_settings_setnum(settings, "synth.reverb.room-size", 0.1));
     TEST_SUCCESS(fluid_settings_setnum(settings, "synth.reverb.damp", 0.2));
     TEST_SUCCESS(fluid_settings_setnum(settings, "synth.reverb.width", 0.3));
     TEST_SUCCESS(fluid_settings_setnum(settings, "synth.reverb.level", 0.4));
@@ -34,7 +34,7 @@ int main(void)
     TEST_ASSERT(fluid_synth_get_chorus_depth(synth) == 0.7);
     
     // update the realtime settings afterward
-    TEST_SUCCESS(fluid_settings_setnum(settings, "synth.reverb.roomsize", 0.11));
+    TEST_SUCCESS(fluid_settings_setnum(settings, "synth.reverb.room-size", 0.11));
     TEST_SUCCESS(fluid_settings_setnum(settings, "synth.reverb.damp", 0.22));
     TEST_SUCCESS(fluid_settings_setnum(settings, "synth.reverb.width", 0.33));
     TEST_SUCCESS(fluid_settings_setnum(settings, "synth.reverb.level", 0.44));

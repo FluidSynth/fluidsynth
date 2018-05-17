@@ -302,7 +302,7 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
                 Sets the reverb output amplitude.</desc>
         </setting>
         <setting>
-            <name>reverb.roomsize</name>
+            <name>reverb.room-size</name>
             <type>num</type>
             <def>0.2</def>
             <min>0</min>

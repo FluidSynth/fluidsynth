@@ -832,7 +832,7 @@ fluid_handle_reverbsetroomsize(void* data, int ac, char** av, fluid_ostream_t ou
     return FLUID_FAILED;
   }
   
-  fluid_ostream_printf(out, "rev_setroomsize is deprecated! Use 'set synth.reverb.roomsize %s' instead.\n", av[0]);
+  fluid_ostream_printf(out, "rev_setroomsize is deprecated! Use 'set synth.reverb.room-size %s' instead.\n", av[0]);
   
   room_size = atof(av[0]);
   if (room_size < 0){

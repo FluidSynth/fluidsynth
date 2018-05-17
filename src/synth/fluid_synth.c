@@ -197,7 +197,7 @@ void fluid_synth_settings(fluid_settings_t* settings)
   fluid_settings_register_int(settings, "synth.verbose", 0, 0, 1, FLUID_HINT_TOGGLED);
   
   fluid_settings_register_int(settings, "synth.reverb.active", 1, 0, 1, FLUID_HINT_TOGGLED);
-  fluid_settings_register_num(settings, "synth.reverb.roomsize", FLUID_REVERB_DEFAULT_ROOMSIZE, 0.0f, 1.0f, 0);
+  fluid_settings_register_num(settings, "synth.reverb.room-size", FLUID_REVERB_DEFAULT_ROOMSIZE, 0.0f, 1.0f, 0);
   fluid_settings_register_num(settings, "synth.reverb.damp", FLUID_REVERB_DEFAULT_DAMP, 0.0f, 1.0f, 0);
   fluid_settings_register_num(settings, "synth.reverb.width", FLUID_REVERB_DEFAULT_WIDTH, 0.0f, 100.0f, 0);
   fluid_settings_register_num(settings, "synth.reverb.level", FLUID_REVERB_DEFAULT_LEVEL, 0.0f, 1.0f, 0);
@@ -654,7 +654,7 @@ new_fluid_synth(fluid_settings_t *settings)
                               fluid_synth_handle_overflow, synth);
   fluid_settings_callback_str(settings, "synth.overflow.important-channels",
                               fluid_synth_handle_important_channels, synth);
-  fluid_settings_callback_num(settings, "synth.reverb.roomsize",
+  fluid_settings_callback_num(settings, "synth.reverb.room-size",
                               fluid_synth_handle_reverb_chorus_num, synth);
   fluid_settings_callback_num(settings, "synth.reverb.damp",
                               fluid_synth_handle_reverb_chorus_num, synth);
@@ -835,7 +835,7 @@ new_fluid_synth(fluid_settings_t *settings)
   {
       double room, damp, width, level;
       
-      fluid_settings_getnum(settings, "synth.reverb.roomsize", &room);
+      fluid_settings_getnum(settings, "synth.reverb.room-size", &room);
       fluid_settings_getnum(settings, "synth.reverb.damp", &damp);
       fluid_settings_getnum(settings, "synth.reverb.width", &width);
       fluid_settings_getnum(settings, "synth.reverb.level", &level);
@@ -3436,7 +3436,7 @@ static void fluid_synth_handle_reverb_chorus_num (void *data, const char *name, 
   fluid_synth_t *synth = (fluid_synth_t *)data;
   fluid_return_if_fail(synth != NULL);
 
-  if (FLUID_STRCMP(name, "synth.reverb.roomsize") == 0) {
+  if (FLUID_STRCMP(name, "synth.reverb.room-size") == 0) {
       fluid_synth_set_reverb_roomsize(synth, value);
   }
   else if (FLUID_STRCMP(name, "synth.reverb.damp") == 0) {
