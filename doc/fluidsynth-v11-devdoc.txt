@@ -103,6 +103,7 @@ Changes in FluidSynth 2.0.0 concerning developers:
 - all public \c fluid_settings_* functions that return an integer which is not meant to be interpreted as bool consistently return either FLUID_OK or FLUID_FAILED
 - all public delete_* functions return void and are safe when called with NULL
 - all public functions consistently receive signed integers for soundfont ids, bank and program numbers
+- explicit client unregistering is required for fluid_sequencer_register_client() and fluid_sequencer_register_fluidsynth()
 - the shell command handler was decoupled internally, as a consequence the param list of new_fluid_server() and new_fluid_cmd_handler() was adapted
 - reverb: roomsize is now limited to an upper threshold of 1.0 to avoid exponential volume increase
 - use unique device names for the "audio.portaudio.device" setting
@@ -893,4 +894,9 @@ Example of how to register audio drivers using fluid_audio_driver_register() (ad
 /*!
 \example fluidsynth_sfload_mem.c
 Example of how read a soundfont from memory (advanced users only)
+*/
+
+/*!
+\example fluidsynth_process.c
+Usage examples of how to render audio using fluid_synth_process() (advanced users only)
 */
