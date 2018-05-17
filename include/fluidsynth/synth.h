@@ -159,8 +159,8 @@ FLUIDSYNTH_API int fluid_synth_set_chorus_type(fluid_synth_t* synth, int type);
 FLUIDSYNTH_API void fluid_synth_set_chorus_on(fluid_synth_t* synth, int on);
 FLUIDSYNTH_API int fluid_synth_get_chorus_nr(fluid_synth_t* synth);
 FLUIDSYNTH_API double fluid_synth_get_chorus_level(fluid_synth_t* synth);
-FLUIDSYNTH_API double fluid_synth_get_chorus_speed_Hz(fluid_synth_t* synth);
-FLUIDSYNTH_API double fluid_synth_get_chorus_depth_ms(fluid_synth_t* synth);
+FLUIDSYNTH_API double fluid_synth_get_chorus_speed(fluid_synth_t* synth);
+FLUIDSYNTH_API double fluid_synth_get_chorus_depth(fluid_synth_t* synth);
 FLUIDSYNTH_API int fluid_synth_get_chorus_type(fluid_synth_t* synth); /* see fluid_chorus_mod */
 
 

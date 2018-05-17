@@ -4564,7 +4564,7 @@ fluid_synth_get_chorus_level(fluid_synth_t* synth)
  * @return Chorus speed in Hz (0.29-5.0)
  */
 double
-fluid_synth_get_chorus_speed_Hz(fluid_synth_t* synth)
+fluid_synth_get_chorus_speed(fluid_synth_t* synth)
 {
   double result;
   fluid_return_val_if_fail (synth != NULL, 0.0);
@@ -4580,7 +4580,7 @@ fluid_synth_get_chorus_speed_Hz(fluid_synth_t* synth)
  * @return Chorus depth
  */
 double
-fluid_synth_get_chorus_depth_ms(fluid_synth_t* synth)
+fluid_synth_get_chorus_depth(fluid_synth_t* synth)
 {
   double result;
   fluid_return_val_if_fail (synth != NULL, 0.0);
