@@ -3429,7 +3429,7 @@ fluid_synth_render_blocks(fluid_synth_t* synth, int blockcount)
 }
 
 /*
- * Handler for synth.reverb.* settings.
+ * Handler for synth.reverb.* and synth.chorus.* double settings.
  */
 static void fluid_synth_handle_reverb_chorus_num (void *data, const char *name, double value)
 {
@@ -3459,7 +3459,9 @@ static void fluid_synth_handle_reverb_chorus_num (void *data, const char *name, 
   }
 }
 
-
+/*
+ * Handler for synth.reverb.* and synth.chorus.* integer settings.
+ */
 static void fluid_synth_handle_reverb_chorus_int (void *data, const char *name, int value)
 {
     fluid_synth_t *synth = (fluid_synth_t *)data;
