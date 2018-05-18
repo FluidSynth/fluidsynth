@@ -13,6 +13,7 @@ ADD_FLUID_TEST(test_sample_cache)
 ADD_FLUID_TEST(test_sfont_loading)
 ADD_FLUID_TEST(test_sample_rate_change)
 ADD_FLUID_TEST(test_preset_sample_loading)
+ADD_FLUID_TEST(test_pointer_alignment)
 ADD_FLUID_TEST(test_seqbind_unregister)
 ADD_FLUID_TEST(test_snprintf)
 
