@@ -126,6 +126,8 @@ static void fluid_synth_handle_device_id(void *data, const char *name, int value
 static void fluid_synth_handle_overflow(void *data, const char *name, double value);
 static void fluid_synth_handle_important_channels(void *data, const char *name,
         const char *value);
+static void fluid_synth_handle_reverb_chorus_num (void *data, const char *name, double value);
+static void fluid_synth_handle_reverb_chorus_int (void *data, const char *name, int value);
 
 
 static void fluid_synth_reset_basic_channel_LOCAL(fluid_synth_t* synth, int chan, int nbr_chan);
@@ -134,6 +136,8 @@ static void fluid_synth_set_basic_channel_LOCAL(fluid_synth_t* synth, int basicc
 static int fluid_synth_set_reverb_full_LOCAL(fluid_synth_t* synth, int set, double roomsize,
                                              double damping, double width, double level);
 
+static int fluid_synth_set_chorus_full_LOCAL(fluid_synth_t* synth, int set, int nr, double level,
+                            double speed, double depth_ms, int type);
 
 /***************************************************************
  *
@@ -191,8 +195,19 @@ static const fluid_revmodel_presets_t revmodel_preset[] = {
 void fluid_synth_settings(fluid_settings_t* settings)
 {
   fluid_settings_register_int(settings, "synth.verbose", 0, 0, 1, FLUID_HINT_TOGGLED);
+  
   fluid_settings_register_int(settings, "synth.reverb.active", 1, 0, 1, FLUID_HINT_TOGGLED);
+  fluid_settings_register_num(settings, "synth.reverb.room-size", FLUID_REVERB_DEFAULT_ROOMSIZE, 0.0f, 1.0f, 0);
+  fluid_settings_register_num(settings, "synth.reverb.damp", FLUID_REVERB_DEFAULT_DAMP, 0.0f, 1.0f, 0);
+  fluid_settings_register_num(settings, "synth.reverb.width", FLUID_REVERB_DEFAULT_WIDTH, 0.0f, 100.0f, 0);
+  fluid_settings_register_num(settings, "synth.reverb.level", FLUID_REVERB_DEFAULT_LEVEL, 0.0f, 1.0f, 0);
+  
   fluid_settings_register_int(settings, "synth.chorus.active", 1, 0, 1, FLUID_HINT_TOGGLED);
+  fluid_settings_register_int(settings, "synth.chorus.nr", FLUID_CHORUS_DEFAULT_N, 0, 99, 0);
+  fluid_settings_register_num(settings, "synth.chorus.level", FLUID_CHORUS_DEFAULT_LEVEL, 0.0f, 10.0f, 0);
+  fluid_settings_register_num(settings, "synth.chorus.speed", FLUID_CHORUS_DEFAULT_SPEED, 0.29f, 5.0f, 0);
+  fluid_settings_register_num(settings, "synth.chorus.depth", FLUID_CHORUS_DEFAULT_DEPTH, 0.0f, 21.0f, 0);
+  
   fluid_settings_register_int(settings, "synth.ladspa.active", 0, 0, 1, FLUID_HINT_TOGGLED);
   fluid_settings_register_int(settings, "synth.lock-memory", 1, 0, 1, FLUID_HINT_TOGGLED);
   fluid_settings_register_str(settings, "midi.portname", "", 0);
@@ -641,6 +656,26 @@ new_fluid_synth(fluid_settings_t *settings)
                               fluid_synth_handle_overflow, synth);
   fluid_settings_callback_str(settings, "synth.overflow.important-channels",
                               fluid_synth_handle_important_channels, synth);
+  fluid_settings_callback_num(settings, "synth.reverb.room-size",
+                              fluid_synth_handle_reverb_chorus_num, synth);
+  fluid_settings_callback_num(settings, "synth.reverb.damp",
+                              fluid_synth_handle_reverb_chorus_num, synth);
+  fluid_settings_callback_num(settings, "synth.reverb.width",
+                              fluid_synth_handle_reverb_chorus_num, synth);
+  fluid_settings_callback_num(settings, "synth.reverb.level",
+                              fluid_synth_handle_reverb_chorus_num, synth);
+  fluid_settings_callback_int(settings, "synth.reverb.active",
+			      fluid_synth_handle_reverb_chorus_int, synth);
+  fluid_settings_callback_int(settings, "synth.chorus.active",
+			      fluid_synth_handle_reverb_chorus_int, synth);
+  fluid_settings_callback_int(settings, "synth.chorus.nr",
+			      fluid_synth_handle_reverb_chorus_int, synth);
+  fluid_settings_callback_num(settings, "synth.chorus.level",
+                              fluid_synth_handle_reverb_chorus_num, synth);
+  fluid_settings_callback_num(settings, "synth.chorus.depth",
+                              fluid_synth_handle_reverb_chorus_num, synth);
+  fluid_settings_callback_num(settings, "synth.chorus.speed",
+                              fluid_synth_handle_reverb_chorus_num, synth);
 
   /* do some basic sanity checking on the settings */
 
@@ -799,12 +834,38 @@ new_fluid_synth(fluid_settings_t *settings)
   synth->curmax = 0;
   synth->dither_index = 0;
 
-  fluid_synth_set_reverb_full_LOCAL(synth,
+  {
+      double room, damp, width, level;
+      
+      fluid_settings_getnum(settings, "synth.reverb.room-size", &room);
+      fluid_settings_getnum(settings, "synth.reverb.damp", &damp);
+      fluid_settings_getnum(settings, "synth.reverb.width", &width);
+      fluid_settings_getnum(settings, "synth.reverb.level", &level);
+  
+      fluid_synth_set_reverb_full_LOCAL(synth,
                                     FLUID_REVMODEL_SET_ALL,
-                                    FLUID_REVERB_DEFAULT_ROOMSIZE,
-                                    FLUID_REVERB_DEFAULT_DAMP,
-                                    FLUID_REVERB_DEFAULT_WIDTH,
-                                    FLUID_REVERB_DEFAULT_LEVEL);
+                                    room,
+                                    damp,
+                                    width,
+                                    level);
+  }
+  
+  {
+      double level, speed, depth;
+      
+      fluid_settings_getint(settings, "synth.chorus.nr", &i);
+      fluid_settings_getnum(settings, "synth.chorus.level", &level);
+      fluid_settings_getnum(settings, "synth.chorus.speed", &speed);
+      fluid_settings_getnum(settings, "synth.chorus.depth", &depth);
+
+      fluid_synth_set_chorus_full_LOCAL(synth,
+                                    FLUID_CHORUS_SET_ALL,
+                                    i,
+                                    level,
+                                    speed,
+                                    depth,
+                                    FLUID_CHORUS_DEFAULT_TYPE);
+  }
   
   /* Initialize multi-core variables if multiple cores enabled */
   if (synth->cores > 1)
@@ -3408,6 +3469,55 @@ fluid_synth_render_blocks(fluid_synth_t* synth, int blockcount)
   return blockcount;
 }
 
+/*
+ * Handler for synth.reverb.* and synth.chorus.* double settings.
+ */
+static void fluid_synth_handle_reverb_chorus_num (void *data, const char *name, double value)
+{
+  fluid_synth_t *synth = (fluid_synth_t *)data;
+  fluid_return_if_fail(synth != NULL);
+
+  if (FLUID_STRCMP(name, "synth.reverb.room-size") == 0) {
+      fluid_synth_set_reverb_roomsize(synth, value);
+  }
+  else if (FLUID_STRCMP(name, "synth.reverb.damp") == 0) {
+      fluid_synth_set_reverb_damp(synth, value);
+  }
+  else if (FLUID_STRCMP(name, "synth.reverb.width") == 0) {
+      fluid_synth_set_reverb_width(synth, value);
+  }
+  else if (FLUID_STRCMP(name, "synth.reverb.level") == 0) {
+      fluid_synth_set_reverb_level(synth, value);
+  }
+  else if (FLUID_STRCMP(name, "synth.chorus.depth") == 0) {
+      fluid_synth_set_chorus_depth(synth, value);
+  }
+  else if (FLUID_STRCMP(name, "synth.chorus.speed") == 0) {
+      fluid_synth_set_chorus_speed(synth, value);
+  }
+  else if (FLUID_STRCMP(name, "synth.chorus.level") == 0) {
+      fluid_synth_set_chorus_level(synth, value);
+  }
+}
+
+/*
+ * Handler for synth.reverb.* and synth.chorus.* integer settings.
+ */
+static void fluid_synth_handle_reverb_chorus_int (void *data, const char *name, int value)
+{
+    fluid_synth_t *synth = (fluid_synth_t *)data;
+    fluid_return_if_fail(synth != NULL);
+
+    if (FLUID_STRCMP(name, "synth.reverb.active") == 0) {
+        fluid_synth_set_reverb_on(synth, value);
+    }
+    else if (FLUID_STRCMP(name, "synth.chorus.active") == 0) {
+        fluid_synth_set_chorus_on(synth, value);
+    }
+    else if (FLUID_STRCMP(name, "synth.chorus.nr") == 0) {
+        fluid_synth_set_chorus_nr(synth, value);
+    }
+}
 
 /*
  * Handler for synth.overflow.* settings.
@@ -4408,7 +4518,6 @@ fluid_synth_set_chorus_full(fluid_synth_t* synth, int set, int nr, double level,
                             double speed, double depth_ms, int type)
 {
   int ret;
-  fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
   
   fluid_return_val_if_fail (synth != NULL, FLUID_FAILED);
   /* if non of the flags is set, fail */
@@ -4417,6 +4526,18 @@ fluid_synth_set_chorus_full(fluid_synth_t* synth, int set, int nr, double level,
   /* Synth shadow values are set here so that they will be returned if queried */
   fluid_synth_api_enter(synth);
 
+  ret = fluid_synth_set_chorus_full_LOCAL(synth, set, nr, level, speed, depth_ms, type);
+  
+  FLUID_API_RETURN(ret);
+}
+
+static int
+fluid_synth_set_chorus_full_LOCAL(fluid_synth_t* synth, int set, int nr, double level,
+                            double speed, double depth_ms, int type)
+{
+  int ret;
+  fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
+  
   if (set & FLUID_CHORUS_SET_NR)
     synth->chorus_nr = nr;
 
@@ -4443,7 +4564,7 @@ fluid_synth_set_chorus_full(fluid_synth_t* synth, int set, int nr, double level,
                                              synth->eventhandler->mixer,
                                              param);
 
-  FLUID_API_RETURN(ret);
+  return (ret);
 }
 
 /**
@@ -4484,7 +4605,7 @@ fluid_synth_get_chorus_level(fluid_synth_t* synth)
  * @return Chorus speed in Hz (0.29-5.0)
  */
 double
-fluid_synth_get_chorus_speed_Hz(fluid_synth_t* synth)
+fluid_synth_get_chorus_speed(fluid_synth_t* synth)
 {
   double result;
   fluid_return_val_if_fail (synth != NULL, 0.0);
@@ -4500,7 +4621,7 @@ fluid_synth_get_chorus_speed_Hz(fluid_synth_t* synth)
  * @return Chorus depth
  */
 double
-fluid_synth_get_chorus_depth_ms(fluid_synth_t* synth)
+fluid_synth_get_chorus_depth(fluid_synth_t* synth)
 {
   double result;
   fluid_return_val_if_fail (synth != NULL, 0.0);

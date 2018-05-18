@@ -195,11 +195,6 @@ fluid_comb_getfeedback(fluid_comb* comb)
 #define scaledamp 1.0f
 #define scaleroom 0.28f
 #define offsetroom 0.7f
-#define initialroom 0.5f
-#define initialdamp 0.2f
-#define initialwet 1
-#define initialdry 0
-#define initialwidth 1
 #define stereospread 23
 
 /*
@@ -278,7 +273,6 @@ new_fluid_revmodel(fluid_real_t sample_rate)
   fluid_allpass_setfeedback(&rev->allpassR[3], 0.5f);
 
   rev->gain = fixedgain;
-  fluid_revmodel_set(rev,FLUID_REVMODEL_SET_ALL,initialroom,initialdamp,initialwidth,initialwet);
 
   return rev;
 }

@@ -821,8 +821,8 @@ fluidmax_chorus(t_object *o, Symbol *s, short ac, Atom *at)
   }
   else if(ftmax_is_number(at))
   {
-    double speed = fluid_synth_get_chorus_speed_Hz(self->synth);
-    double depth = fluid_synth_get_chorus_depth_ms(self->synth);
+    double speed = fluid_synth_get_chorus_speed(self->synth);
+    double depth = fluid_synth_get_chorus_depth(self->synth);
     int type = fluid_synth_get_chorus_type(self->synth);
     int nr = fluid_synth_get_chorus_nr(self->synth);
 
@@ -1267,8 +1267,8 @@ fluidmax_print(t_object *o, Symbol *s, short ac, Atom *at)
         if(self->chorus != 0)
         {
           double level = fluid_synth_get_chorus_level(self->synth);
-          double speed = fluid_synth_get_chorus_speed_Hz(self->synth);
-          double depth = fluid_synth_get_chorus_depth_ms(self->synth);
+          double speed = fluid_synth_get_chorus_speed(self->synth);
+          double depth = fluid_synth_get_chorus_depth(self->synth);
           int type = fluid_synth_get_chorus_type(self->synth);
           int nr = fluid_synth_get_chorus_nr(self->synth);
           
@@ -1477,8 +1477,8 @@ fluidmax_info(t_object *o, Symbol *s, short ac, Atom *at)
         if(self->chorus != 0)
         {
           double level = fluid_synth_get_chorus_level(self->synth);
-          double speed = fluid_synth_get_chorus_speed_Hz(self->synth);
-          double depth = fluid_synth_get_chorus_depth_ms(self->synth);
+          double speed = fluid_synth_get_chorus_speed(self->synth);
+          double depth = fluid_synth_get_chorus_depth(self->synth);
           int type = fluid_synth_get_chorus_type(self->synth);
           int nr = fluid_synth_get_chorus_nr(self->synth);
           ftmax_atom_t a[5];
