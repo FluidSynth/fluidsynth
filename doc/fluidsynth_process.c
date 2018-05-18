@@ -29,8 +29,10 @@ int main()
         dry[0] = left;
         dry[1] = right;
 
-        // setup channel mapping for a single effects channel to which to render reverb and chorus to
-        // just using the same sample buffers as for dry audio is fine here, will cause the effects to be mixed with dry output
+        // Setup channel mapping for a single stereo channel to which to render effects to.
+        // Just using the same sample buffers as for dry audio is fine here, as it will cause the effects to be mixed with dry output.
+        // Note: reverb and chorus together make up two stereo channels. Setting up only one stereo channel is sufficient 
+        // as the channels warp around (i.e. chorus will be mixed with reverb channel).
         fx[0] = left;
         fx[1] = right;
 
