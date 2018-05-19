@@ -22,8 +22,8 @@ int main()
         float *dry[1*2], *fx[1*2];
 
         // first make sure to zero out the sample buffers
-        memset(left, 0, sizeof(left1));
-        memset(right, 0, sizeof(right1));
+        memset(left, 0, sizeof(left));
+        memset(right, 0, sizeof(right));
 
         // setup channel mapping for a single stereo channel to which to render all dry audio to
         dry[0] = left;
@@ -72,7 +72,7 @@ int main()
         float *dry[n_aud_chan * 2], *fx[n_fx_chan * 2];
 
         // setup buffers to mix dry stereo audio to
-        // buffers are alternating left and right for each audio channel, i.e.:
+        // buffers are alternating left and right for each n_aud_chan, i.e.:
         // dry[0] = first audio channel left
         // dry[1] = first audio channel right
         // dry[2] = second audio channel left
