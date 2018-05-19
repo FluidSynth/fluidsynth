@@ -3,7 +3,7 @@
 #include "fluidsynth.h" // use local fluidsynth header
 
 // simple test to ensure that manually unregistering and deleting the internal fluid_seqbind_t works without crashing
-int main()
+int main(void)
 {
     fluid_settings_t* settings = new_fluid_settings();
     fluid_synth_t* synth = new_fluid_synth(settings);
