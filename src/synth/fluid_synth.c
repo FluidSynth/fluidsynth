@@ -589,7 +589,7 @@ new_fluid_synth(fluid_settings_t *settings)
   fluid_synth_t* synth;
   fluid_sfloader_t* loader;
   char *important_channels;
-  int i, nbuf;
+  int i, nbuf, prio_level = 0;
   int with_ladspa = 0;
   
   /* initialize all the conversion tables and other stuff */
@@ -739,11 +739,17 @@ new_fluid_synth(fluid_settings_t *settings)
   fluid_atomic_int_set(&synth->ticks_since_start, 0);
   synth->tuning = NULL;
   fluid_private_init(synth->tuning_iter);
-
+  
+  /* Initialize multi-core variables if multiple cores enabled */
+  if (synth->cores > 1)
+  {
+    fluid_settings_getint (synth->settings, "audio.realtime-prio", &prio_level);
+  }
+  
   /* Allocate event queue for rvoice mixer */
   /* In an overflow situation, a new voice takes about 50 spaces in the queue! */
   synth->eventhandler = new_fluid_rvoice_eventhandler(synth->polyphony*64,
-	synth->polyphony, nbuf, synth->effects_channels, synth->sample_rate);
+	synth->polyphony, nbuf, synth->effects_channels, synth->sample_rate, synth->cores-1, prio_level);
 
   if (synth->eventhandler == NULL)
     goto error_recovery; 
@@ -866,15 +872,7 @@ new_fluid_synth(fluid_settings_t *settings)
                                     depth,
                                     FLUID_CHORUS_DEFAULT_TYPE);
   }
-  
-  /* Initialize multi-core variables if multiple cores enabled */
-  if (synth->cores > 1)
-  {
-    int prio_level = 0;
-    fluid_settings_getint (synth->settings, "audio.realtime-prio", &prio_level);
-    fluid_synth_update_mixer(synth, fluid_rvoice_mixer_set_threads, 
-			     synth->cores-1, prio_level);
-  }
+
 
   synth->bank_select = FLUID_BANK_STYLE_GS;
   if (fluid_settings_str_equal (settings, "synth.midi-bank-select", "gm"))
