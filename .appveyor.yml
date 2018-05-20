@@ -64,8 +64,8 @@ build_script:
 #  - cmake --build . --config Release --target check # build unittests
 
 after_build:
-  - 7z a fluidsynth.zip %APPVEYOR_BUILD_FOLDER%\build\src\Release\* c:\deps\bin\libglib*.dll c:\deps\bin\libgthread*.dll c:\deps\bin\*intl*.dll
+  - 7z a fluidsynth-%platform%.zip %APPVEYOR_BUILD_FOLDER%\build\src\Release\* c:\deps\bin\libglib*.dll c:\deps\bin\libgthread*.dll c:\deps\bin\*intl*.dll
 
 artifacts:
-  - path: build/fluidsynth.zip
+  - path: build/fluidsynth-%platform%.zip
     name: FluidSynth
