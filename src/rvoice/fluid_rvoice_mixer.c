@@ -801,8 +801,8 @@ fluid_mixer_thread_func (void* data)
   fluid_rvoice_mixer_t* mixer = buffers->mixer;
   int hasValidData = 0;
   FLUID_DECLARE_VLA(fluid_real_t*, bufs, buffers->buf_count*2 + buffers->fx_buf_count*2);
-  int bufcount;
-  int current_blockcount;
+  int bufcount=0;
+  int current_blockcount=0;
   fluid_real_t* local_buf = fluid_align_ptr(buffers->local_buf, FLUID_DEFAULT_ALIGNMENT);
   
   while (!fluid_atomic_int_get(&mixer->threads_should_terminate)) {
