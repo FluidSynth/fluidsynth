@@ -667,9 +667,6 @@ struct _fluid_late
 	fluid_real_t b1,b2;
 	/*----- Modulated delay lines lines ----------------------------------*/
 	mod_delay_line mod_delay_lines[NBR_DELAYS];
-	/*----- Output coefficients for separate Left and right stereo outputs ---*/
-	fluid_real_t   out_left_gain[NBR_DELAYS]; /* Left delay lines' output gains */
-	fluid_real_t   out_right_gain[NBR_DELAYS];/* Right delay lines' output gains*/
 };
 
 typedef struct _fluid_late   fluid_late;
@@ -785,55 +782,6 @@ static void update_rev_time_damping(fluid_late * late,
 }
 
 /*-----------------------------------------------------------------------------
- Updates stereo coefficients.
- @param late pointer on late structure.
- @param wet1 level integrated in stereo coefficients.
------------------------------------------------------------------------------*/
-static void update_stereo_coefficient(fluid_late * late, fluid_real_t wet1)
-{
-	int i;
-	for(i = 0; i < NBR_DELAYS; i++)
-	{
-		/*  delay lines output gains vectors Left and Right
-
-                           L       R
-                       0 | wet1    wet1| 
-                       1 |-wet1    wet1|
-                       2 | wet1   -wet1| 
-                       3 |-wet1   -wet1|
-
-                       4 | wet1    wet1| 
-                       5 |-wet1    wet1| 
-         stereo gain = 6 | wet1   -wet1|
-                       7 |-wet1   -wet1|
- 
-                       8 | wet1    wet1| 
-                       9 |-wet1    wet1| 
-                       10| wet1   -wet1|
-                       11|-wet1   -wet1|
-		*/ 
-      
-		late->out_left_gain[i] = wet1;
-		/*  Sets Left coefficients first */
-		if(i%2) /* Left line odd */
-		{
-			late->out_left_gain[i] *= -1.0 ;
-		}
-		/* Now sets right gain as function of left gain */
-		/* for right line 1,2, 5,6, 9,10,  right = - left */
-		if((i==1)||(i==2)||(i==5)||(i==6)||(i==9)||(i==10))
-		{
-			/* Right is reverse of left */
-			late->out_right_gain[i] = -1.0 * late->out_left_gain[i]; 
-		}
-		else /* for Right : line 0,3, 4,7, 8,11 */
-		{   /* Right is same as left */
-			late->out_right_gain[i] = late->out_left_gain[i];  
-		}
-	}
-}
-
-/*-----------------------------------------------------------------------------
  fluid_late destructor.
  @param late pointer on late structure.
 -----------------------------------------------------------------------------*/
@@ -884,9 +832,6 @@ static int create_fluid_rev_late(fluid_late * late, fluid_real_t sample_rate)
 		                   sample_rate,
 		                   (float)(MOD_PHASE * i));
  	}
-
-	/*-----------------------------------------------------------------------*/
-	update_stereo_coefficient(late, 1.0f);
 	return FLUID_OK;
 }
 
@@ -931,10 +876,7 @@ fluid_revmodel_update(fluid_revmodel_t* rev)
 	Please see the note above about a side effect tendency */
 
 	rev->wet1 = wet * (rev->width / 2.0f + 0.5f);
-	/* integrates wet1 in stereo coefficient (this will save one multiply) */
-	update_stereo_coefficient(&rev->late,rev->wet1); 
 	rev->wet2 = wet * ((1.0f - rev->width) / 2.0f);
-	if(rev->wet1 > 0.0) rev->wet2 /= rev->wet1; 
 
 	/* Reverberation time and damping */
 	update_rev_time_damping(&rev->late, rev->roomsize, rev->damp );
@@ -1089,11 +1031,11 @@ void
 fluid_revmodel_processreplace(fluid_revmodel_t* rev, fluid_real_t *in,
 			     fluid_real_t *left_out, fluid_real_t *right_out)
 {
-	int i, k = 0;
+	int i, k ;
 
 	fluid_real_t xn;                   /* mono input x(n) */
 	fluid_real_t out_tone_filter;      /* tone corrector output */
-	fluid_real_t out_left, out_right;  /* output stereo Left  and Right  */
+	fluid_real_t out[2];               /* output stereo Left and Right  */
 	fluid_real_t matrix_factor;        /* partial matrix computation */
 	fluid_real_t delay_out_s;          /* sample */
 	fluid_real_t delay_out[NBR_DELAYS]; /* Line output + damper output */
@@ -1101,7 +1043,7 @@ fluid_revmodel_processreplace(fluid_revmodel_t* rev, fluid_real_t *in,
 	for (k = 0; k < FLUID_BUFSIZE; k++)
 	{
 		/* stereo output */
-		out_left = out_right = 0;
+		out[0] = out[1] = 0.0;
 
 		/* Input is adjusted by internal gain. */
 #ifdef DENORMALISING
@@ -1141,10 +1083,7 @@ fluid_revmodel_processreplace(fluid_revmodel_t* rev, fluid_real_t *in,
 			matrix_factor += delay_out_s; /* result in matrix_factor */
 			
 			/* Process stereo output */
-			/* stereo left = left + out_left_gain * delay_out */
-			out_left += rev->late.out_left_gain[i] * delay_out_s;
-			/* stereo right= right+ out_right_gain * delay_out */
-			out_right += rev->late.out_right_gain[i]* delay_out_s;
+			out[i & 1] += delay_out_s;
 		}
 	  
 		/* now we process the input delay line.Each input is a combination of
@@ -1174,24 +1113,13 @@ fluid_revmodel_processreplace(fluid_revmodel_t* rev, fluid_real_t *in,
 		/*-------------------------------------------------------------------*/
 #ifdef DENORMALISING
 		/* Removes the DC offset */
-		out_left -= DC_OFFSET;
-		out_right -= DC_OFFSET;
+		out[0] -= DC_OFFSET;
+		out[1] -= DC_OFFSET;
 #endif
 
-		/* Calculates stereo output REPLACING anything already there: 
-
-		    left_out[k]  = out_left * rev->wet1 + out_right * rev->wet2;
-		    right_out[k] = out_right * rev->wet1 + out_left * rev->wet2;
-
-		    As wet1 is integrated in stereo coefficient wet 1 is now
-		    integrated in out_left and out_right we simplify previous 
-		    relation by suppression of one multiply as this:
-
-		    left_out[k]  = out_left  + out_right * rev->wet2;
-		    right_out[k] = out_right + out_left * rev->wet2;
-		*/
-		left_out[k]  = out_left  + out_right * rev->wet2;
-		right_out[k] = out_right  + out_left * rev->wet2;
+		/* Calculates stereo output REPLACING anything already there: */
+		left_out[k]  = out[0] * rev->wet1 + out[1] * rev->wet2;
+		right_out[k] = out[1] * rev->wet1  + out[0] * rev->wet2;
 	}
 }
 
@@ -1209,11 +1137,11 @@ fluid_revmodel_processreplace(fluid_revmodel_t* rev, fluid_real_t *in,
 void fluid_revmodel_processmix(fluid_revmodel_t* rev, fluid_real_t *in,
 			 fluid_real_t *left_out, fluid_real_t *right_out)
 {
-	int i, k = 0;
+	int i, k;
 
 	fluid_real_t xn;                   /* mono input x(n) */
 	fluid_real_t out_tone_filter;      /* tone corrector output */
-	fluid_real_t out_left, out_right;  /* output stereo Left  and Right */
+	fluid_real_t out[2];               /* output stereo Left and Right  */
 	fluid_real_t matrix_factor;        /* partial matrix term */
 	fluid_real_t delay_out_s;          /* sample */
 	fluid_real_t delay_out[NBR_DELAYS]; /* Line output + damper output */
@@ -1221,8 +1149,7 @@ void fluid_revmodel_processmix(fluid_revmodel_t* rev, fluid_real_t *in,
 	for (k = 0; k < FLUID_BUFSIZE; k++)
 	{
 		/* stereo output */
-		out_left = out_right = 0;
-
+		out[0] = out[1] = 0.0;
 		/* Input is adjusted by internal gain. */
 #ifdef DENORMALISING
 		xn = ( in[k] ) * FIXED_GAIN + DC_OFFSET;
@@ -1261,10 +1188,7 @@ void fluid_revmodel_processmix(fluid_revmodel_t* rev, fluid_real_t *in,
 			matrix_factor += delay_out_s; /* result in matrix_factor */
 			
 			/* Process stereo output */
-			/* stereo left = left + out_left_gain * delay_out */
-			out_left += rev->late.out_left_gain[i] * delay_out_s;
-			/* stereo right= right+ out_right_gain * delay_out */
-			out_right += rev->late.out_right_gain[i]* delay_out_s;
+			out[i & 1] += delay_out_s;
 		}
 	  
 		/* now we process the input delay line. Each input is a combination of:
@@ -1294,22 +1218,11 @@ void fluid_revmodel_processmix(fluid_revmodel_t* rev, fluid_real_t *in,
 		/*-------------------------------------------------------------------*/
 #ifdef DENORMALISING
 		/* Removes the DC offset */
-		out_left -= DC_OFFSET;
-		out_right -= DC_OFFSET;
+		out[0] -= DC_OFFSET;
+		out[1] -= DC_OFFSET;
 #endif
-		/* Calculates stereo output mixing in out with samples already there: 
-
-		    left_out[k]  += out_left * rev->wet1 + out_right * rev->wet2;
-		    right_out[k] += out_right * rev->wet1 + out_left * rev->wet2;
-
-		    As wet1 is integrated in stereo coefficient wet 1 is now
-		    integrated in out_left and out_right we simplify previous 
-		    relation by suppression of one multiply as this:
-
-		    left_out[k]  += out_left  + out_right * rev->wet2;
-		    right_out[k] += out_right + out_left * rev->wet2;
-		*/
-		left_out[k]  += out_left  + out_right * rev->wet2;
-		right_out[k] += out_right  + out_left * rev->wet2;
+		/* Calculates stereo output MIXING anything already there: */
+		left_out[k]  += out[0] * rev->wet1 + out[1] * rev->wet2;
+		right_out[k] += out[1] * rev->wet1  + out[0] * rev->wet2;
 	}
 }
