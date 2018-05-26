@@ -37,7 +37,7 @@
  *                      |  |              |___________________|
  *                      |  |                         /|\   /|\
  *                     \|/ |   .---------. .-------.  |  -  |   .------.
-.*                   .->+ ---->| Delay 0 |-|L.P.F 0|--*-------->|      |-> out
+ *                   .->+ ---->| Delay 0 |-|L.P.F 0|--*-------->|      |-> out
  *      .---------.  |     |   |_________| |_______|        |   |      |  left
  *      |Tone     |  |     |       -           -            |   |Stereo|
  * In ->|corrector|--*     |       -           -            |   | unit | 
@@ -247,7 +247,7 @@
 #define GET_DC_REV_TIME(roomsize) (MIN_DC_REV_TIME + RANGE_REV_TIME * roomsize)
 
 /*-- Modulation related settings ----------------------------------*/
-#define MOD_DEPTH 6		/* modulation depth (samples)*/
+#define MOD_DEPTH 5		/* modulation depth (samples)*/
 #define MOD_RATE 50		/* modulation rate  (samples)*/
 #define MOD_FREQ 1.0f	/* modulation frequency (Hz) */
 /* 
@@ -1299,8 +1299,8 @@ void fluid_revmodel_processmix(fluid_revmodel_t* rev, fluid_real_t *in,
 #endif
 		/* Calculates stereo output mixing in out with samples already there: 
 
-		    left_out[k]  = out_left * rev->wet1 + out_right * rev->wet2;
-		    right_out[k] = out_right * rev->wet1 + out_left * rev->wet2;
+		    left_out[k]  += out_left * rev->wet1 + out_right * rev->wet2;
+		    right_out[k] += out_right * rev->wet1 + out_left * rev->wet2;
 
 		    As wet1 is integrated in stereo coefficient wet 1 is now
 		    integrated in out_left and out_right we simplify previous 
