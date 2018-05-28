@@ -368,7 +368,11 @@ fluid_istream_t fluid_socket_get_istream(fluid_socket_t sock);
 fluid_ostream_t fluid_socket_get_ostream(fluid_socket_t sock);
 
 /* File access */
+#if !GLIB_CHECK_VERSION(2, 26, 0)
+typedef struct stat fluid_stat_buf_t; /* GStatBuf has not been introduced yet */
+#else
 typedef GStatBuf fluid_stat_buf_t;
+#endif
 #define fluid_stat(_filename, _statbuf)   g_stat((_filename), (_statbuf))
 
 
