@@ -25,6 +25,20 @@ environment:
       gettext-url: http://ftp.gnome.org/pub/gnome/binaries/win64/dependencies/gettext-runtime_0.18.1.1-2_win64.zip
       proxy-libintl-dev-url: http://ftp.gnome.org/pub/gnome/binaries/win64/dependencies/proxy-libintl-dev_20100902_win64.zip
       
+    - platform: x86
+      glib-url: http://ftp.gnome.org/pub/gnome/binaries/win32/glib/2.16/glib_2.16.6-1_win32.zip
+      glib-dev-url: http://ftp.gnome.org/pub/gnome/binaries/win32/glib/2.16/glib-dev_2.16.6-1_win32.zip
+      pkg-config-url: http://ftp.gnome.org/pub/gnome/binaries/win32/dependencies/pkg-config_0.26-1_win32.zip
+      gettext-url: http://ftp.gnome.org/pub/gnome/binaries/win32/dependencies/gettext-runtime_0.18.1.1-2_win32.zip
+      proxy-libintl-dev-url: http://ftp.gnome.org/pub/gnome/binaries/win32/dependencies/proxy-libintl-dev_20100902_win32.zip
+
+    - platform: x64
+      glib-url: http://ftp.acc.umu.se/pub/gnome/binaries/win64/glib/2.24/glib_2.24.2-2_win64.zip
+      glib-dev-url: http://ftp.acc.umu.se/pub/gnome/binaries/win64/glib/2.24/glib-dev_2.24.0-1_win64.zip
+      pkg-config-url: http://ftp.gnome.org/pub/gnome/binaries/win64/dependencies/pkg-config_0.23-2_win64.zip
+      gettext-url: http://ftp.gnome.org/pub/gnome/binaries/win64/dependencies/gettext-runtime_0.18.1.1-2_win64.zip
+      proxy-libintl-dev-url: http://ftp.gnome.org/pub/gnome/binaries/win64/dependencies/proxy-libintl-dev_20100902_win64.zip
+      
 init:
   - set TARGET_PLATFORM=
   - if "%platform%"=="x64" ( set TARGET_PLATFORM= Win64)
