@@ -167,7 +167,7 @@
 /*----------------------------------------------------------------------------
                         Configuration macros at compiler time.
 
- Two macros are usable at compiler time:
+ 3 macros are usable at compiler time:
   - NBR_DELAYs: number of delay lines. 8 (default) or 12.
   - ROOMSIZE_RESPONSE_LINEAR: allows to choose an alternate response for
     roomsize parameter.
@@ -201,8 +201,6 @@
 /*----------------------------------------------------------------------------
  Initial internal reverb settings (at reverb creation time)
 -----------------------------------------------------------------------------*/
-#define	FIXED_GAIN (0.1f) /* input gain */
-
 /* SCALE_WET_WIDTH is a compensation weight factor to get an output
    amplitude (wet) rather independent of the width setting.
     0: the output amplitude is fully dependant on the width setting.
@@ -211,7 +209,8 @@
    independent of width setting (see fluid_revmodel_update()).
  */
 #define SCALE_WET_WIDTH 0.2f 
-#define SCALE_WET 3.0f
+/* SCALE_WET is adjusted to 0.6 to get internal level equivalent to freeverb */
+#define SCALE_WET 0.6f
 #define INITIAL_ROOMSIZE 0.5f
 #define INITIAL_DAMP 0.2f
 #define INITIAL_LEVEL 1
@@ -247,6 +246,20 @@
 #define GET_DC_REV_TIME(roomsize) (MIN_DC_REV_TIME + RANGE_REV_TIME * roomsize)
 
 /*-- Modulation related settings ----------------------------------*/
+/* For many instruments, the range for MOD_FREQ and MOD_DEPTH should be:
+
+ MOD_DEPTH: [3..6] (in samples).
+ MOD_FREQ: [0.5 ..2.0] (in Hz).
+
+ Values below the lower limits are often not sufficient to cancel unwanted
+ "ringing"(resonant frequency).
+ Values above upper limits augment the unwanted "chorus".
+
+ With NBR_DELAYS to 8:
+  MOD_DEPTH must be >= 4 to cancel the unwanted "ringing".[4..6].
+ With NBR_DELAYS to 12: 
+  MOD_DEPTH to 3 is sufficient to cancel the unwanted "ringing".[3..6]
+*/
 #define MOD_DEPTH 5		/* modulation depth (samples)*/
 #define MOD_RATE 50		/* modulation rate  (samples)*/
 #define MOD_FREQ 1.0f	/* modulation frequency (Hz) */
@@ -256,7 +269,6 @@
  1 is sufficient with MOD_DEPTH equal to 6.
 */
 #define INTERP_SAMPLES_NBR 1
-
 
 /* phase offset between modulators waveform */
 #define MOD_PHASE  (360.0/(float) NBR_DELAYS) 
@@ -624,7 +636,7 @@ static inline fluid_real_t get_mod_delay(mod_delay_line * mdl)
 			mdl->dl.line_out   = int_out_index + mdl->dl.size;
 		}
 
-		/* extracts fractionnal part. (it will be use when interpolating
+		/* extracts fractionnal part. (it will be used when interpolating
 		  between line_out and line_out +1) and memorize it.
 		  Memorizing is necessary for modulation rate above 1 */
 		mdl->frac_pos_mod = out_index - int_out_index;
@@ -1045,11 +1057,11 @@ fluid_revmodel_processreplace(fluid_revmodel_t* rev, fluid_real_t *in,
 		/* stereo output */
 		out[0] = out[1] = 0.0;
 
-		/* Input is adjusted by internal gain. */
 #ifdef DENORMALISING
-		xn = ( in[k] ) * FIXED_GAIN + DC_OFFSET;
+		/* Input is adjusted by DC_OFFSET. */
+		xn = ( in[k] ) + DC_OFFSET;
 #else
-		xn = ( in[k] ) * FIXED_GAIN;
+		xn = ( in[k] );
 #endif
 
 		/*--------------------------------------------------------------------
@@ -1150,11 +1162,11 @@ void fluid_revmodel_processmix(fluid_revmodel_t* rev, fluid_real_t *in,
 	{
 		/* stereo output */
 		out[0] = out[1] = 0.0;
-		/* Input is adjusted by internal gain. */
 #ifdef DENORMALISING
-		xn = ( in[k] ) * FIXED_GAIN + DC_OFFSET;
+		/* Input is adjusted by DC_OFFSET. */
+		xn = ( in[k] ) + DC_OFFSET;
 #else
-		xn = ( in[k] ) * FIXED_GAIN;
+		xn = ( in[k] );
 #endif
 
 		/*--------------------------------------------------------------------
