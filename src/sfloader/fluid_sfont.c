@@ -342,6 +342,42 @@ void* fluid_preset_get_data(fluid_preset_t* preset)
 }
 
 /**
+ * Retrieves the presets name by executing the \p get_name function
+ * provided on its creation.
+ * 
+ * @param preset The SoundFont preset instance.
+ * @return Pointer to a NULL-terminated string containing the presets name.
+ */
+const char* fluid_preset_get_name(fluid_preset_t* preset)
+{
+    return preset->get_name(preset);
+}
+
+/**
+ * Retrieves the presets bank number by executing the \p get_bank function
+ * provided on its creation.
+ * 
+ * @param preset The SoundFont preset instance.
+ * @return The bank number of \p preset.
+ */
+int fluid_preset_get_banknum(fluid_preset_t* preset)
+{
+    return preset->get_banknum(preset);
+}
+
+/**
+ * Retrieves the presets (instrument) number by executing the \p get_num function
+ * provided on its creation.
+ * 
+ * @param preset The SoundFont preset instance.
+ * @return The number of \p preset.
+ */
+int fluid_preset_get_num(fluid_preset_t* preset)
+{
+    return preset->get_num(preset);
+}
+
+/**
  * Destroys a SoundFont preset instance created with new_fluid_preset().
  * 
  * Implements #fluid_preset_free_t.

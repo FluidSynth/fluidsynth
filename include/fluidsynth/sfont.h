@@ -260,6 +260,9 @@ FLUIDSYNTH_API void delete_fluid_preset(fluid_preset_t* preset);
 FLUIDSYNTH_API int fluid_preset_set_data(fluid_preset_t* preset, void* data);
 FLUIDSYNTH_API void* fluid_preset_get_data(fluid_preset_t* preset);
 
+FLUIDSYNTH_API const char* fluid_preset_get_name(fluid_preset_t* preset);
+FLUIDSYNTH_API int fluid_preset_get_banknum(fluid_preset_t* preset);
+FLUIDSYNTH_API int fluid_preset_get_num(fluid_preset_t* preset);
 
 
 FLUIDSYNTH_API fluid_sample_t* new_fluid_sample(void);

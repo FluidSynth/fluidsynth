@@ -47,10 +47,6 @@ int fluid_sample_sanitize_loop(fluid_sample_t *sample, unsigned int max_end);
 #define fluid_preset_delete_internal(_preset) \
   { if ((_preset) && (_preset)->free) { (*(_preset)->free)(_preset); }}
 
-#define fluid_preset_get_name(_preset) (*(_preset)->get_name)(_preset)
-#define fluid_preset_get_banknum(_preset) (*(_preset)->get_banknum)(_preset)
-#define fluid_preset_get_num(_preset) (*(_preset)->get_num)(_preset)
-
 #define fluid_preset_noteon(_preset,_synth,_ch,_key,_vel) \
   (*(_preset)->noteon)(_preset,_synth,_ch,_key,_vel)
 
