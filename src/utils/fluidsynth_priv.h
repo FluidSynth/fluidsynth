@@ -335,10 +335,10 @@ do { strncpy(_dst,_src,_n); \
 #define M_LN10 2.3025850929940456840179914546844
 #endif
 
-#ifdef NDEBUG
-#define FLUID_ASSERT(a) 
-#else
+#ifdef DEBUG
 #define FLUID_ASSERT(a) g_assert(a)
+#else
+#define FLUID_ASSERT(a) 
 #endif
 
 #define FLUID_LIKELY G_LIKELY
