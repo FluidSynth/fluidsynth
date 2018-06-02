@@ -211,10 +211,6 @@
 #define SCALE_WET_WIDTH 0.2f 
 /* SCALE_WET is adjusted to 0.6 to get internal level equivalent to freeverb */
 #define SCALE_WET 0.6f
-#define INITIAL_ROOMSIZE 0.5f
-#define INITIAL_DAMP 0.2f
-#define INITIAL_LEVEL 1
-#define INITIAL_WIDTH 1
 
 /*----------------------------------------------------------------------------
  Internal FDN late reverb settings
@@ -921,14 +917,7 @@ new_fluid_revmodel(fluid_real_t sample_rate)
 		return NULL;
 	}
 	/* create fdn reverb */
-	if( create_fluid_rev_late(&rev->late,sample_rate) == FLUID_OK)
-	{
-		/* sets intial parameters */
-		fluid_revmodel_set(rev,FLUID_REVMODEL_SET_ALL,
-		                   INITIAL_ROOMSIZE,INITIAL_DAMP,
-		                   INITIAL_WIDTH,INITIAL_LEVEL);
-	}
-	else
+	if( create_fluid_rev_late(&rev->late,sample_rate) != FLUID_OK)
 	{
 		delete_fluid_revmodel(rev);
 		return NULL;
