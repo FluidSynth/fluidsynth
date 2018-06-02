@@ -102,6 +102,10 @@
 #include <pthread.h>
 #endif
 
+#if HAVE_OPENMP
+#include <omp.h>
+#endif
+
 #if HAVE_IO_H
 #include <io.h>
 #endif
@@ -245,7 +249,8 @@ typedef FILE*  fluid_file;
 #define FLUID_MALLOC(_n)             malloc(_n)
 #define FLUID_REALLOC(_p,_n)         realloc(_p,_n)
 #define FLUID_NEW(_t)                (_t*)malloc(sizeof(_t))
-#define FLUID_ARRAY(_t,_n)           (_t*)malloc((_n)*sizeof(_t))
+#define FLUID_ARRAY_ALIGNED(_t,_n,_a) (_t*)malloc((_n)*sizeof(_t) + ((unsigned int)_a - 1u))
+#define FLUID_ARRAY(_t,_n)           FLUID_ARRAY_ALIGNED(_t,_n,1u)
 #define FLUID_FREE(_p)               free(_p)
 #define FLUID_FOPEN(_f,_m)           fopen(_f,_m)
 #define FLUID_FCLOSE(_f)             fclose(_f)
@@ -330,8 +335,11 @@ do { strncpy(_dst,_src,_n); \
 #define M_LN10 2.3025850929940456840179914546844
 #endif
 
-#define FLUID_ASSERT(a,b)
-#define FLUID_ASSERT_P(a,b)
+#ifdef NDEBUG
+#define FLUID_ASSERT(a) 
+#else
+#define FLUID_ASSERT(a) g_assert(a)
+#endif
 
 #define FLUID_LIKELY G_LIKELY
 #define FLUID_UNLIKELY G_UNLIKELY

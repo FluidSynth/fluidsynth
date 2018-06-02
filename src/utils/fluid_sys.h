@@ -63,7 +63,7 @@ void fluid_time_config(void);
 #define FLUID_RESTRICT restrict
 #elif defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
 #define FLUID_RESTRICT __restrict__
-#elif defined(_MSC_VER)
+#elif defined(_MSC_VER) && _MSC_VER >= 1400
 #define FLUID_RESTRICT __restrict
 #else
 #warning "Dont know how this compiler handles restrict pointers, refuse to use them."
@@ -368,7 +368,11 @@ fluid_istream_t fluid_socket_get_istream(fluid_socket_t sock);
 fluid_ostream_t fluid_socket_get_ostream(fluid_socket_t sock);
 
 /* File access */
+#if !GLIB_CHECK_VERSION(2, 26, 0)
+typedef struct stat fluid_stat_buf_t; /* GStatBuf has not been introduced yet */
+#else
 typedef GStatBuf fluid_stat_buf_t;
+#endif
 #define fluid_stat(_filename, _statbuf)   g_stat((_filename), (_statbuf))
 
 
@@ -601,5 +605,27 @@ void fluid_clear_fpe_i386(void);
 
 /* System control */
 void fluid_msleep(unsigned int msecs);
+
+/**
+ * Advances the given \c ptr to the next \c alignment byte boundary.
+ * Make sure you've allocated an extra of \c alignment bytes to avoid a buffer overflow.
+ * 
+ * @note \c alignment must be a power of two
+ * @return Returned pointer is guarenteed to be aligned to \c alignment boundary and in range \f[ ptr <= returned_ptr < ptr + alignment \f].
+ */
+static FLUID_INLINE void* fluid_align_ptr(const void* ptr, unsigned int alignment)
+{
+    uintptr_t ptr_int = (uintptr_t)ptr;
+    unsigned int offset = ptr_int & (alignment-1);
+    unsigned int add = (alignment - offset) & (alignment-1); // advance the pointer to the next alignment boundary
+    ptr_int += add;
+    
+    /* assert alignment is power of two */
+    FLUID_ASSERT(!(alignment == 0) && !(alignment & (alignment - 1)));
+    
+    return (void*)ptr_int;
+}
+
+#define FLUID_DEFAULT_ALIGNMENT (64U)
 
 #endif /* _FLUID_SYS_H */

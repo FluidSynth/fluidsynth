@@ -156,6 +156,12 @@ matrix:
             - cmake-data
             - cmake
             - libglib2.0-0
+            - libsndfile-dev
+            - libasound2-dev
+            - libjack-dev
+            - portaudio19-dev
+            - libpulse-dev
+            - libdbus-glib-1-dev
             - ladspa-sdk
       env:
         - MATRIX_EVAL="CC=clang-3.9 && CXX=clang++-3.9"

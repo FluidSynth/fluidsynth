@@ -10,6 +10,8 @@ NOTE: You're not expected to look at this raw XML file. Please open it in a webb
 
 https://stackoverflow.com/a/3839054
 https://stackoverflow.com/a/6251757
+
+Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</deprecated>
 -->
 <?xml-stylesheet type="text/xsl" href="fluidsettings.xsl"?>
 <fluidsettings>
@@ -39,6 +41,42 @@ https://stackoverflow.com/a/6251757
             <def>1 (TRUE)</def>
             <desc>
                 When set to 1 (TRUE) the chorus effects module is activated. Otherwise, no chorus will be added to the output signal. Note that the amount of signal sent to the chorus module depends on the "chorus send" generator defined in the SoundFont.</desc>
+        </setting>
+        <setting>
+            <name>chorus.depth</name>
+            <type>num</type>
+            <def>8</def>
+            <min>0</min>
+            <max>21</max>
+            <desc>
+                Specifies the modulation depth of the chorus.</desc>
+        </setting>
+        <setting>
+            <name>chorus.level</name>
+            <type>num</type>
+            <def>2</def>
+            <min>0</min>
+            <max>10</max>
+            <desc>
+                Specifies the output amplitude of the chorus signal.</desc>
+        </setting>
+        <setting>
+            <name>chorus.nr</name>
+            <type>int</type>
+            <def>3</def>
+            <min>0</min>
+            <max>99</max>
+            <desc>
+                Sets the voice count of the chorus.</desc>
+        </setting>
+        <setting>
+            <name>chorus.speed</name>
+            <type>num</type>
+            <def>0.3</def>
+            <min>0.29</min>
+            <max>5</max>
+            <desc>
+                Sets the modulation speed in Hz.</desc>
         </setting>
         <setting>
             <name>cpu-cores</name>
@@ -229,17 +267,6 @@ https://stackoverflow.com/a/6251757
             </desc>
         </setting>
         <setting>
-            <name>parallel-render</name>
-            <type>bool</type>
-            <def>1 (TRUE)</def>
-            <desc>
-                This is the low-latency setting. If on, you're allowed to call fluid_synth_write_s16, fluid_synth_write_float, fluid_synth_nwrite_float or fluid_synth_process in parallel with the rest of the calls, and it won't be blocked by time intensive calls to the synth. Turn it off if throughput is more important than latency, e g in rendering-to-file scenarios where underruns is not an issue.
-            </desc>
-            <deprecated>
-                As of 1.1.7 this option is deprecated and has been removed in 2.0. This option enforces thread safety for rvoice_mixer, which causes rvoice_events to be queued internally. The current implementation relies on the fact that this option is set to TRUE to correctly render any amount of requested audio. Also calling fluid_synth_write_* in parallel is not considered to be a use-case. It would cause undefined audio output, as it would be unpredictable for the user which rvoice_events specifically would be dispatched to which fluid_synth_write_* call.
-            </deprecated>
-        </setting>
-        <setting>
             <name>polyphony</name>
             <type>int</type>
             <def>256</def>
@@ -255,6 +282,42 @@ https://stackoverflow.com/a/6251757
             <desc>
                 When set to 1 (TRUE) the reverb effects module is activated. Otherwise, no reverb will be added to the output signal. Note that the amount of signal sent to the reverb module depends on the "reverb send" generator defined in the SoundFont.
             </desc>
+        </setting>
+        <setting>
+            <name>reverb.damp</name>
+            <type>num</type>
+            <def>0</def>
+            <min>0</min>
+            <max>1</max>
+            <desc>
+                Sets the amount of reverb damping.</desc>
+        </setting>
+        <setting>
+            <name>reverb.level</name>
+            <type>num</type>
+            <def>0.9</def>
+            <min>0</min>
+            <max>1</max>
+            <desc>
+                Sets the reverb output amplitude.</desc>
+        </setting>
+        <setting>
+            <name>reverb.room-size</name>
+            <type>num</type>
+            <def>0.2</def>
+            <min>0</min>
+            <max>1</max>
+            <desc>
+                Sets the room size (i.e. amount of wet) reverb.</desc>
+        </setting>
+        <setting>
+            <name>reverb.width</name>
+            <type>num</type>
+            <def>0.5</def>
+            <min>0</min>
+            <max>100</max>
+            <desc>
+                Sets the stereo spread of the reverb signal.</desc>
         </setting>
         <setting>
             <name>sample-rate</name>

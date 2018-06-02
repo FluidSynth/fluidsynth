@@ -7,9 +7,9 @@
 \author Josh Green
 \author David Henningsson
 \author Tom Moebert
-\author Copyright &copy; 2003-2017 Peter Hanappe, Conrad Berhörster, Antoine Schmitt, Pedro López-Cabanillas, Josh Green, David Henningsson, Tom Moebert
-\version Revision 2.0.0ALPHA
-\date 2017-10-14
+\author Copyright &copy; 2003-2018 Peter Hanappe, Conrad Berhörster, Antoine Schmitt, Pedro López-Cabanillas, Josh Green, David Henningsson, Tom Moebert
+\version Revision 2.0.0BETA
+\date 2018-05-19
 
 All the source code examples in this document are in the public domain; you can use them as you please. This document is licensed under the Creative Commons Attribution-Share Alike 3.0 Unported License. To view a copy of this license, visit http://creativecommons.org/licenses/by-sa/3.0/ . The FluidSynth library is distributed under the GNU Lesser General Public License. A copy of the GNU Lesser General Public License is contained in the FluidSynth package; if not, visit http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt or write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
@@ -22,16 +22,6 @@ All the source code examples in this document are in the public domain; you can 
 - \ref Disclaimer
 - \ref Introduction
 - \ref NewIn2_0_0
-- \ref NewIn1_1_9
-- \ref NewIn1_1_8
-- \ref NewIn1_1_7
-- \ref NewIn1_1_6
-- \ref NewIn1_1_5
-- \ref NewIn1_1_4
-- \ref NewIn1_1_3
-- \ref NewIn1_1_2
-- \ref NewIn1_1_1
-- \ref NewIn1_1_0
 - \ref CreatingSettings 
 - \ref CreatingSynth 
 - \ref CreatingAudioDriver 
@@ -71,43 +61,27 @@ What is FluidSynth?
 
 \section NewIn2_0_0 Whats new in 2.0.0?
 
-FluidSynths SOVERSION was bumped. The API was reworked, deprecated functions were removed.
+FluidSynths major version was bumped. The API was reworked, deprecated functions were removed.
 
-Changes in FluidSynth 2.0.0 concerning developers:
+<strong><span style="color:red">Important changes that may not result in a compilation error but may cause your app to misbehave:</span></strong>
 
-- remove deprecated fluid_synth_get_channel_info() in favour of fluid_synth_get_program() and fluid_synth_get_channel_preset()
-- remove deprecated fluid_settings_getstr()
-- remove deprecated fluid_synth_set_midi_router(), instead supply the midi-router instance when creating a command handler with new_fluid_cmd_handler()
-- remove deprecated fluid_get_hinstance() and fluid_set_hinstance() (dsound driver now uses the desktop window)
-- remove deprecated fluid_synth_create_key_tuning(), use fluid_synth_activate_key_tuning(synth, bank, prog, name, pitch, FALSE) instead
-- remove deprecated fluid_synth_create_octave_tuning(), use fluid_synth_activate_octave_tuning(synth, bank, prog, name, pitch, FALSE) instead
-- remove deprecated fluid_synth_select_tuning(), use fluid_synth_activate_tuning(synth, chan, bank, prog, FALSE) instead
-- remove deprecated fluid_synth_reset_tuning(), use fluid_synth_deactivate_tuning(synth, chan, FALSE) instead
-- remove deprecated FLUID_HINT_INTEGER
-- remove deprecated fluid_synth_set_gen2() as there doesnt seem to be a use case for absolute generator values
-- remove fluid_cmd_handler_register() and fluid_cmd_handler_unregister() from public API, as they seem to be unused downstream
-- remove misspelled FLUID_SEQ_PITCHWHHELSENS macro
-- remove obsolete "audio.[out|in]put-channels" settings
-- remove unimplemented "synth.dump" setting
-- remove struct _fluid_mod_t from public API, use the getters and setters of mod.h instead
-- remove struct _fluid_gen_t, fluid_gen_set_default_values() and enum fluid_gen_flags from public API
-- remove macros fluid_sfont_get_id() and fluid_sample_refcount() from public API
-- remove FLUID_NUM_MOD macro from public API
-- remove the following deprecated enum values from public API:
-  - GEN_LAST
-  - LAST_LOG_LEVEL
-  - FLUID_SEQ_LASTEVENT
-  - FLUID_MIDI_ROUTER_RULE_COUNT
-<br /><br />
 - all public \c fluid_settings_* functions that return an integer which is not meant to be interpreted as bool consistently return either FLUID_OK or FLUID_FAILED
-- all public delete_* functions return void and are safe when called with NULL
+- explicit client unregistering is required for fluid_sequencer_register_client() and fluid_sequencer_register_fluidsynth()
 - all public functions consistently receive signed integers for soundfont ids, bank and program numbers
+- use unique device names for the "audio.portaudio.device" setting
+
+<strong>Other changes in FluidSynth 2.0.0 concerning developers:</strong>
+
+- all public \c delete_* functions return void and are safe when called with NULL
 - the shell command handler was decoupled internally, as a consequence the param list of new_fluid_server() and new_fluid_cmd_handler() was adapted
 - reverb: roomsize is now limited to an upper threshold of 1.0 to avoid exponential volume increase
-- use unique device names for the "audio.portaudio.device" setting
 - rename fluid_mod_new() and fluid_mod_delete() to match naming conventions: new_fluid_mod() and delete_fluid_mod()
+- rename chorus getters to match naming conventions: fluid_synth_get_chorus_speed() and fluid_synth_get_chorus_depth()
 - fluid_synth_remove_sfont() returns FLUID_OK or FLUID_FAILED
-<br /><br />
+- introduce a separate data type for sequencer client IDs: #fluid_seq_id_t
+
+<strong>New Features and API additions:</strong>
+
 - add <a href="fluidsettings.xml#midi.autoconnect">"midi.autoconnect"</a> a setting for automatically connecting fluidsynth to available MIDI input ports
 - add <a href="fluidsettings.xml#synth.overflow.important">"synth.overflow.important"</a> and <a href="fluidsettings.xml#synth.overflow.important-channels">"synth.overflow.important-channels"</a> settings to take midi channels during overflow calculation into account that are considered to be "important"
 - add <a href="fluidsettings.xml#synth.dynamic-sample-loading">"synth.dynamic-sample-loading"</a> a setting for enabling on demand sample loading
@@ -115,7 +89,7 @@ Changes in FluidSynth 2.0.0 concerning developers:
 - add fluid_synth_add_default_mod() and fluid_synth_remove_default_mod() for manipulating default modulators
 - add individual reverb setters: fluid_synth_set_reverb_roomsize(), fluid_synth_set_reverb_damp(), fluid_synth_set_reverb_width(), fluid_synth_set_reverb_level()
 - add individual chorus setters: fluid_synth_set_chorus_nr(), fluid_synth_set_chorus_level(), fluid_synth_set_chorus_speed(), fluid_synth_set_chorus_depth(), fluid_synth_set_chorus_type()
-- introduce a separate data type for sequencer client IDs: #fluid_seq_id_t
+- add realtime settings for <a href="fluidsettings.xml#synth.reverb.damp">reverb</a> and <a href="fluidsettings.xml#synth.chorus.depth">chorus</a> parameters
 - add seek support to midi-player, see fluid_player_seek()
 - expose functions to manipulate the ladspa effects unit (see ladspa.h)
 - add support for text and lyrics midi events, see fluid_midi_event_set_lyrics() and fluid_midi_event_set_text()
@@ -136,175 +110,32 @@ Changes in FluidSynth 2.0.0 concerning developers:
   - implement legato control, see fluid_synth_set_legato_mode(), fluid_synth_get_legato_mode()
   - implement breath control, see fluid_synth_set_breath_mode(), fluid_synth_get_breath_mode()
 
-
-\section NewIn1_1_9 Whats new in 1.1.9?
-
-Changes in FluidSynth 1.1.9 concerning developers:
-
-- add a function for registering audio drivers based on acutal needs: fluid_audio_driver_register()
-- implement handling of #FLUID_SEQ_ALLSOUNDSOFF events in fluid_seq_fluidsynth_callback()
-- fix return value of fluid_file_set_encoding_quality()
-
-- For a full list of bug fixes, see
-  https://github.com/FluidSynth/fluidsynth/wiki/ChangeLog#fluidsynth-119
-
-\section NewIn1_1_8 Whats new in 1.1.8?
-
-Changes in FluidSynth 1.1.8 concerning developers:
-
-- fluid_synth_get_channel_preset() is not deprecated anymore
-- deprecate fluid_synth_get_channel_info()
-- deprecate fluid_synth_set_midi_router()
-- deprecate redundant tuning functions
-- deprecate fluid_gen_set_default_values()
-- deprecate struct _fluid_mod_t, use the respective getter and setter functions
-
-- For a full list of bug fixes, see
-  https://github.com/FluidSynth/fluidsynth/wiki/ChangeLog#fluidsynth-118
-
-\section NewIn1_1_7 Whats new in 1.1.7?
-
-Changes in FluidSynth 1.1.7 concerning developers:
-
-- "synth.parallel-render" has been deprecated
-- fluid_synth_set_channel_type() was not exported properly
-- "audio.jack.multi" had inverse logic
-- fluid_synth_write_*() had timing issues when requesting more than 64 audio frames
-- reverb and chorus are routed to distinct buffers in fluid_synth_nwrite_float()
-- vorbis-compressed sf3 sound fonts are supported
-- the following getters have been added: fluid_voice_is_on(), fluid_voice_is_sustained(), fluid_voice_is_sostenuto(), fluid_voice_get_channel(), fluid_voice_get_key(), fluid_voice_get_actual_key(), fluid_voice_get_velocity(), fluid_voice_get_actual_velocity(), fluid_player_get_current_tick(), fluid_player_get_total_ticks(), fluid_player_get_bpm(), fluid_player_get_midi_tempo()
-- the following enum values have been deprecated: \c FLUID_SEQ_LASTEVENT, \c GEN_LAST, \c LAST_LOG_LEVEL
-
-- For a full list of bug fixes, see
-  https://github.com/FluidSynth/fluidsynth/wiki/ChangeLog#fluidsynth-117
-
-
-\section NewIn1_1_6 Whats new in 1.1.6?
-
-Changes in FluidSynth 1.1.6 concerning developers:
-
-- The player will not continue to the next song until all EOT (end of track events) have been reached.
-- Enable long arguments on all platforms where getopt.h is available
-- Windows: Fluidsynth.pc (pkg-config spec) is now installed.
-- Mac OS X Lion: A build failure was fixed.
-
-- For a full list of bug fixes, see
-  https://github.com/FluidSynth/fluidsynth/wiki/ChangeLog#fluidsynth-116
-
-
-\section NewIn1_1_5 Whats new in 1.1.5?
-
-Changes in FluidSynth 1.1.5 concerning developers:
-- A change in the Jack driver might require a newer Jack version compared to 1.1.4.
-- For a full list of bug fixes, see
-  https://github.com/FluidSynth/fluidsynth/wiki/ChangeLog#fluidsynth-115
-
-\section NewIn1_1_4 Whats new in 1.1.4?
-
-Changes in FluidSynth 1.1.4 concerning developers:
-
-- You can now play MIDI files that reside in memory (instead of specifying a filename). See \ref MIDIPlayerMem for an example.
-- A hook can be inserted for MIDI file playback, at playback time. This is done through the new fluid_player_set_playback_callback API function. You can use this to both inspect and modify MIDI events as they are being played (or add a MIDI router), just as you can for MIDI input drivers.
-- Channel 10 used to be the one and only drum channel, this can now be changed using the fluid_synth_set_channel_type. 
-- fluid_synth_all_sounds_off and fluid_synth_all_notes_off are new public API functions. You can use them to turn notes off (i e releasing all keys, voices advance to release phase) or sounds off (more like pressing the mute button), for one channel or all channels.
-- For Mac OS X users: The CoreAudio driver has been adapted to use AuHAL, and the default build style has changed to "FluidSynth.framework".
-- For a full list of other enhancements and bug fixes, see
-  https://github.com/FluidSynth/fluidsynth/wiki/ChangeLog#fluidsynth-114
-
-\section NewIn1_1_3 Whats new in 1.1.3?
-
-Changes in FluidSynth 1.1.3 concerning developers:
-
-- There are no new API additions in 1.1.3, this is a pure bug-fix release.
-  For a list of bugs fixed, see 
-  https://github.com/FluidSynth/fluidsynth/wiki/ChangeLog#fluidsynth-113
-
-\section NewIn1_1_2 Whats new in 1.1.2?
-
-Changes in FluidSynth 1.1.2 concerning developers:
-
-- Build system has switched from autotools to CMake. For more information, see
-  README.cmake. The autotools build system is still working, but it is 
-  deprecated. The "winbuild" and "macbuild" directories have been dropped in 
-  favor of CMake's ability to create project files on demand.
-- Thread safety has been reworked to overcome the limitations and bugs in 
-  version 1.1.0 and 1.1.1. There are two new settings controlling the thread 
-  safety, synth.threadsafe-api and synth.parallel-render. More information 
-  about these settings is in the \ref CreatingSettings section. Please look
-  them through and set them appropriately according to your use case.
-- Voice overflow, i e what voice to kill when polyphony is exceeded, is now
-  configurable.
-- Possibility to update polyphony and sample rate real-time. Note that 
-  updating polyphony is not hard real-time safe, and updating sample rate will 
-  kill all currently sounding voices.
-- MIDI Bank Select handling is now configurable. See the synth.midi-bank-select
-  setting in the \ref CreatingSettings section for more information.
-- Can use RealTimeKit (on Linux) to get real-time priority, if the original 
-  attempt fails. Note that you'll need development headers for DBus to enable 
-  this functionality.
-- Shell commands for pitch bend and pitch bend range.
-- PulseAudio driver: two new settings allows you to specify media role, 
-  and control whether pulseaudio can adjust latency.
-
-\section NewIn1_1_1 Whats new in 1.1.1?
-
-Changes in FluidSynth 1.1.1 concerning developers:
-
-- fluid_synth_get_channel_preset() marked as deprecated.  New function
-  fluid_synth_get_channel_info() added which is thread safe and should replace
-  most uses of the older function.
-- Added fluid_synth_unset_program() to unset the active preset on a channel.
-
-\section NewIn1_1_0 Whats new in 1.1.0?
-
-Overview of changes in FluidSynth 1.1.0 concerning developers:
-
-- Extensive work to make FluidSynth thread safe.  Previous versions had many multi-thread
-  issues which could lead to crashes or synthesis glitches.  Some of the API additions,
-  deprecations and function recommended conditions of use are related to this work.
-- File renderer object for rendering audio to files.
-- Sequencer objects can now use the system timer or the sample clock.  When using the sample
-  clock, events are triggered based on the current output audio sample position.  This means
-  that MIDI is synchronized with the audio and identical output will be achieved for the same
-  MIDI event input.
-- libsndfile support for rendering audio to different formats and file types.
-- API for using the MIDI router subsystem.
-- MIDI Tuning Standard functions were added for specifying whether to activate tuning changes
-  in realtime or not.
-- SYSEX support (MIDI Tuning Standard only at the moment).
-- Changed all yes/no boolean string settings to integer #FLUID_HINT_TOGGLED settings with
-  backwards compatibility (assignment and query of boolean values as strings).
-- Many other improvements and bug fixes.
-
-API additions:
-
-- A file renderer can be created with new_fluid_file_renderer(), deleted with
-  delete_fluid_file_renderer() and a block of audio processed with fluid_file_renderer_process_block().
-- Additional functions were added for using the MIDI router subsystem.
-  To clear all rules from a router use fluid_midi_router_clear_rules() and to set a router to default rules
-  use fluid_midi_router_set_default_rules().
-  To create a router rule use new_fluid_midi_router_rule() and to delete a rule use
-  delete_fluid_midi_router_rule() (seldom used).  Set values of a router rule with
-  fluid_midi_router_rule_set_chan(), fluid_midi_router_rule_set_param1() and fluid_midi_router_rule_set_param2().
-  fluid_midi_router_add_rule() can be used to add a rule to a router.
-- New MIDI event functions were added, including fluid_event_channel_pressure(), fluid_event_system_reset(),
-  and fluid_event_unregistering().  
-- Additional sequencer functions include fluid_sequencer_add_midi_event_to_buffer(),
-  fluid_sequencer_get_use_system_timer() and fluid_sequencer_process().  new_fluid_sequencer2() was added to
-  allow for the timer type to be specified (system or sample clock). 
-- The settings subsystem has some new functions for thread safety: fluid_settings_copystr() and fluid_settings_dupstr().
-  Also there are new convenience functions to count the number of string options for a setting: fluid_settings_option_count()
-  and for concatenating setting options with a separator: fluid_settings_option_concat().
-- MIDI Tuning Standard functions added include: fluid_synth_activate_key_tuning(), fluid_synth_activate_octave_tuning(),
-  fluid_synth_activate_tuning() and fluid_synth_deactivate_tuning().  All of which provide a parameter for specifying if
-  tuning changes should occur in realtime (affect existing voices) or not.
-- Additional synthesizer API: fluid_synth_get_sfont_by_name() to get a SoundFont by name,
-  fluid_synth_program_select_by_sfont_name() to select an instrument by SoundFont name/bank/program,
-  fluid_synth_set_gen2() for specifying additional parameters when assigning a generator value,
-  fluid_synth_sysex() for sending SYSEX messages to the synth and fluid_synth_get_active_voice_count() to
-  get the current number of active synthesis voices.
-- Miscellaneous additions: fluid_player_set_loop() to set playlist loop count and fluid_player_get_status() to get current player state.
-
+<strong>API cleanups:</strong>
+  
+- remove deprecated fluid_synth_get_channel_info() in favour of fluid_synth_get_program() and fluid_synth_get_channel_preset()
+- remove deprecated fluid_settings_getstr()
+- remove deprecated fluid_synth_set_midi_router(), instead supply the midi-router instance when creating a command handler with new_fluid_cmd_handler()
+- remove deprecated fluid_get_hinstance() and fluid_set_hinstance() (dsound driver now uses the desktop window)
+- remove deprecated fluid_synth_create_key_tuning(), use fluid_synth_activate_key_tuning(synth, bank, prog, name, pitch, FALSE) instead
+- remove deprecated fluid_synth_create_octave_tuning(), use fluid_synth_activate_octave_tuning(synth, bank, prog, name, pitch, FALSE) instead
+- remove deprecated fluid_synth_select_tuning(), use fluid_synth_activate_tuning(synth, chan, bank, prog, FALSE) instead
+- remove deprecated fluid_synth_reset_tuning(), use fluid_synth_deactivate_tuning(synth, chan, FALSE) instead
+- remove deprecated FLUID_HINT_INTEGER
+- remove deprecated fluid_synth_set_gen2() as there doesnt seem to be a use case for absolute generator values
+- remove deprecated "synth.parallel-render" setting
+- remove obsolete "audio.[out|in]put-channels" settings
+- remove unimplemented "synth.dump" setting
+- remove fluid_cmd_handler_register() and fluid_cmd_handler_unregister() from public API, as they seem to be unused downstream
+- remove misspelled FLUID_SEQ_PITCHWHHELSENS macro
+- remove struct _fluid_mod_t from public API, use the getters and setters of mod.h instead
+- remove struct _fluid_gen_t, fluid_gen_set_default_values() and enum fluid_gen_flags from public API
+- remove macros fluid_sfont_get_id() and fluid_sample_refcount() from public API
+- remove FLUID_NUM_MOD macro from public API
+- remove the following deprecated enum values from public API:
+  - GEN_LAST
+  - LAST_LOG_LEVEL
+  - FLUID_SEQ_LASTEVENT
+  - FLUID_MIDI_ROUTER_RULE_COUNT
 
 
 \section CreatingSettings Creating and changing the settings
@@ -890,4 +721,9 @@ Example of how to register audio drivers using fluid_audio_driver_register() (ad
 /*!
 \example fluidsynth_sfload_mem.c
 Example of how read a soundfont from memory (advanced users only)
+*/
+
+/*!
+\example fluidsynth_process.c
+Usage examples of how to render audio using fluid_synth_process() (advanced users only)
 */

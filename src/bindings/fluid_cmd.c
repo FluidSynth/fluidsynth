@@ -803,6 +803,9 @@ fluid_handle_reverbpreset(void* data, int ac, char** av, fluid_ostream_t out)
 {
   FLUID_ENTRY_COMMAND(data);
   int reverb_preset_number;
+  
+  fluid_ostream_printf(out, "rev_preset is deprecated and will be removed in a future release!\n");
+  
   if (ac < 1) {
     fluid_ostream_printf(out, "rev_preset: too few arguments\n");
     return FLUID_FAILED;
@@ -823,10 +826,14 @@ fluid_handle_reverbsetroomsize(void* data, int ac, char** av, fluid_ostream_t ou
 {
   FLUID_ENTRY_COMMAND(data);
   fluid_real_t room_size;
+  
   if (ac < 1) {
     fluid_ostream_printf(out, "rev_setroomsize: too few arguments.\n");
     return FLUID_FAILED;
   }
+  
+  fluid_ostream_printf(out, "rev_setroomsize is deprecated! Use 'set synth.reverb.room-size %s' instead.\n", av[0]);
+  
   room_size = atof(av[0]);
   if (room_size < 0){
     fluid_ostream_printf(out, "rev_setroomsize: Room size must be positive!\n");
@@ -852,6 +859,9 @@ fluid_handle_reverbsetdamp(void* data, int ac, char** av, fluid_ostream_t out)
     fluid_ostream_printf(out, "rev_setdamp: too few arguments.\n");
     return FLUID_FAILED;
   }
+  
+  fluid_ostream_printf(out, "rev_setdamp is deprecated! Use 'set synth.reverb.damp %s' instead.\n", av[0]);
+  
   damp = atof(av[0]);
   if ((damp < 0.0f) || (damp > 1)){
     fluid_ostream_printf(out, "rev_setdamp: damp must be between 0 and 1!\n");
@@ -873,6 +883,9 @@ fluid_handle_reverbsetwidth(void* data, int ac, char** av, fluid_ostream_t out)
     fluid_ostream_printf(out, "rev_setwidth: too few arguments.\n");
     return FLUID_FAILED;
   }
+  
+  fluid_ostream_printf(out, "rev_setroomsize is deprecated! Use 'set synth.reverb.width %s' instead.\n", av[0]);
+  
   width = atof(av[0]);
   if ((width < 0) || (width > 100)){
     fluid_ostream_printf(out, "rev_setroomsize: Too wide! (0..100)\n");
@@ -894,6 +907,9 @@ fluid_handle_reverbsetlevel(void* data, int ac, char** av, fluid_ostream_t out)
     fluid_ostream_printf(out, "rev_setlevel: too few arguments.\n");
     return FLUID_FAILED;
   }
+  
+  fluid_ostream_printf(out, "rev_setlevel is deprecated! Use 'set synth.reverb.level %s' instead.\n", av[0]);
+  
   level = atof(av[0]);
   if (fabs(level) > 30){
     fluid_ostream_printf(out, "rev_setlevel: Value too high! (Value of 10 =+20 dB)\n");
@@ -914,7 +930,9 @@ fluid_handle_reverb(void* data, int ac, char** av, fluid_ostream_t out)
     fluid_ostream_printf(out, "reverb: too few arguments.\n");
     return FLUID_FAILED;
   }
-
+  
+  fluid_ostream_printf(out, "reverb is deprecated! Use 'set synth.reverb.active %s' instead.\n", av[0]);
+  
   if ((FLUID_STRCMP(av[0], "0") == 0) || (FLUID_STRCMP(av[0], "off") == 0)) {
     fluid_synth_set_reverb_on(handler->synth,0);
   } else if ((FLUID_STRCMP(av[0], "1") == 0) || (FLUID_STRCMP(av[0], "on") == 0)) {
@@ -939,6 +957,9 @@ fluid_handle_chorusnr(void* data, int ac, char** av, fluid_ostream_t out)
     fluid_ostream_printf(out, "cho_set_nr: too few arguments.\n");
     return FLUID_FAILED;
   }
+  
+  fluid_ostream_printf(out, "cho_set_nr is deprecated! Use 'set synth.chorus.nr %s' instead.\n", av[0]);
+  
   nr = atoi(av[0]);
   fluid_synth_set_chorus_nr(handler->synth, nr);
   return FLUID_OK;
@@ -955,6 +976,9 @@ fluid_handle_choruslevel(void* data, int ac, char** av, fluid_ostream_t out)
     fluid_ostream_printf(out, "cho_set_level: too few arguments.\n");
     return FLUID_FAILED;
   }
+  
+  fluid_ostream_printf(out, "cho_set_level is deprecated! Use 'set synth.chorus.level %s' instead.\n", av[0]);
+  
   level = atof(av[0]);
   fluid_synth_set_chorus_level(handler->synth, level);
   return FLUID_OK;
@@ -972,6 +996,9 @@ fluid_handle_chorusspeed(void* data, int ac, char** av, fluid_ostream_t out)
     fluid_ostream_printf(out, "cho_set_speed: too few arguments.\n");
     return FLUID_FAILED;
   }
+  
+  fluid_ostream_printf(out, "cho_set_speed is deprecated! Use 'set synth.chorus.speed %s' instead.\n", av[0]);
+  
   speed = atof(av[0]);
   fluid_synth_set_chorus_speed(handler->synth, speed);
   return FLUID_OK;
@@ -988,6 +1015,9 @@ fluid_handle_chorusdepth(void* data, int ac, char** av, fluid_ostream_t out)
     fluid_ostream_printf(out, "cho_set_depth: too few arguments.\n");
     return FLUID_FAILED;
   }
+  
+  fluid_ostream_printf(out, "cho_set_depth is deprecated! Use 'set synth.chorus.depth %s' instead.\n", av[0]);
+  
   depth = atof(av[0]);
   fluid_synth_set_chorus_depth(handler->synth, depth);
   return FLUID_OK;
@@ -1001,7 +1031,9 @@ fluid_handle_chorus(void* data, int ac, char** av, fluid_ostream_t out)
     fluid_ostream_printf(out, "chorus: too few arguments\n");
     return FLUID_FAILED;
   }
-
+  
+  fluid_ostream_printf(out, "chorus is deprecated! Use 'set synth.chorus.active %s' instead.\n", av[0]);
+  
   if ((FLUID_STRCMP(av[0], "0") == 0) || (FLUID_STRCMP(av[0], "off") == 0)) {
     fluid_synth_set_chorus_on(handler->synth,0);
   } else if ((FLUID_STRCMP(av[0], "1") == 0) || (FLUID_STRCMP(av[0], "on") == 0)) {

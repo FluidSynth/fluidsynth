@@ -33,15 +33,15 @@ typedef struct _fluid_rvoice_mixer_t fluid_rvoice_mixer_t;
 
 int fluid_rvoice_mixer_render(fluid_rvoice_mixer_t* mixer, int blockcount);
 int fluid_rvoice_mixer_get_bufs(fluid_rvoice_mixer_t* mixer, 
-                               fluid_real_t*** left, fluid_real_t*** right);
+                               fluid_real_t** left, fluid_real_t** right);
 int fluid_rvoice_mixer_get_fx_bufs(fluid_rvoice_mixer_t* mixer, 
-                                  fluid_real_t*** fx_left, fluid_real_t*** fx_right);
+                                  fluid_real_t** fx_left, fluid_real_t** fx_right);
 int fluid_rvoice_mixer_get_bufcount(fluid_rvoice_mixer_t* mixer);
 #if WITH_PROFILING
 int fluid_rvoice_mixer_get_active_voices(fluid_rvoice_mixer_t* mixer);
 #endif
 fluid_rvoice_mixer_t* new_fluid_rvoice_mixer(int buf_count, int fx_buf_count, 
-					     fluid_real_t sample_rate, fluid_rvoice_eventhandler_t*);
+					     fluid_real_t sample_rate, fluid_rvoice_eventhandler_t*, int, int);
 
 void delete_fluid_rvoice_mixer(fluid_rvoice_mixer_t*);
 
@@ -57,7 +57,6 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_reverb_params);
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_reset_reverb);
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_reset_chorus);
 
-DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_threads);
 
 
 void fluid_rvoice_mixer_set_mix_fx(fluid_rvoice_mixer_t* mixer, int on);

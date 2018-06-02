@@ -220,11 +220,7 @@ fluid_chorus_init(fluid_chorus_t* chorus)
   for (i = 0; i < MAX_SAMPLES; i++) {
     chorus->chorusbuf[i] = 0.0;
   }
-
-  /* initialize the chorus with the default settings */
-  fluid_chorus_set (chorus, FLUID_CHORUS_SET_ALL, FLUID_CHORUS_DEFAULT_N,
-                    FLUID_CHORUS_DEFAULT_LEVEL, FLUID_CHORUS_DEFAULT_SPEED,
-                    FLUID_CHORUS_DEFAULT_DEPTH, FLUID_CHORUS_DEFAULT_TYPE);
+  
   return FLUID_OK;
 }
 

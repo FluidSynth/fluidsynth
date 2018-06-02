@@ -116,7 +116,7 @@ delete_fluid_str_setting(fluid_setting_node_t* node)
 {
   fluid_return_if_fail(node != NULL);
   
-  FLUID_ASSERT(node->type, FLUID_STR_TYPE);
+  FLUID_ASSERT(node->type == FLUID_STR_TYPE);
 
   FLUID_FREE(node->str.value);
   FLUID_FREE(node->str.def);
@@ -169,7 +169,7 @@ delete_fluid_num_setting(fluid_setting_node_t* node)
 {
   fluid_return_if_fail(node != NULL);
   
-  FLUID_ASSERT (node->type, FLUID_NUM_TYPE);
+  FLUID_ASSERT (node->type == FLUID_NUM_TYPE);
   FLUID_FREE(node);
 }
 
@@ -205,7 +205,7 @@ delete_fluid_int_setting(fluid_setting_node_t* node)
 {
     fluid_return_if_fail(node != NULL);
   
-  FLUID_ASSERT (node->type, FLUID_INT_TYPE);
+  FLUID_ASSERT (node->type == FLUID_INT_TYPE);
   FLUID_FREE(node);
 }
 
@@ -243,7 +243,7 @@ delete_fluid_set_setting(fluid_setting_node_t* node)
 {
     fluid_return_if_fail(node != NULL);
     
-    FLUID_ASSERT (node->type, FLUID_SET_TYPE);
+    FLUID_ASSERT (node->type == FLUID_SET_TYPE);
     delete_fluid_hashtable(node->set.hashtable);
     FLUID_FREE(node);
 }

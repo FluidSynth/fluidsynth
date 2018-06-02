@@ -904,6 +904,13 @@ fluid_revmodel_update(fluid_revmodel_t* rev)
 * @return pointer on the new reverb or NULL if memory error.
 * Reverb API.
 */
+
+/*
+* Creates a reverb.
+* @param sample_rate sample rate in Hz.
+* @return pointer on the new reverb or NULL if memory error.
+* Reverb API.
+*/
 fluid_revmodel_t*
 new_fluid_revmodel(fluid_real_t sample_rate)
 {

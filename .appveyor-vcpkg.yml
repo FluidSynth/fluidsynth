@@ -61,8 +61,8 @@ build_script:
   - cmake --build . --config Release --target check # build unittests
 
 after_build:
-  - 7z a fluidsynth.zip %APPVEYOR_BUILD_FOLDER%\build\src\Release\*
+  - 7z a fluidsynth-vcpkg-%platform%.zip %APPVEYOR_BUILD_FOLDER%\build\src\Release\*
 
 artifacts:
-  - path: build/fluidsynth.zip
+  - path: build/fluidsynth-vcpkg-%platform%.zip
     name: FluidSynth
