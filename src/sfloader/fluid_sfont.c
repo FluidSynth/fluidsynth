@@ -253,6 +253,69 @@ void fluid_sfont_set_iteration_next(fluid_sfont_t* sfont, fluid_sfont_iteration_
 }
 
 /**
+ * Retrieve the unique ID of a SoundFont instance.
+ * 
+ * @param sfont The SoundFont instance.
+ * @return The SoundFont ID.
+ */
+int fluid_sfont_get_id(fluid_sfont_t* sfont)
+{
+    return sfont->id;
+}
+
+/**
+ * Retrieve the name of a SoundFont instance.
+ * 
+ * @param sfont The SoundFont instance.
+ * @return The name of the SoundFont.
+ */
+const char* fluid_sfont_get_name(fluid_sfont_t* sfont)
+{
+    return sfont->get_name(sfont);
+}
+
+/**
+ * Retrieve the preset assigned the a SoundFont instance
+ * for the given bank and preset number.
+ * @param bank bank number of the preset
+ * @param prenum program number of the preset
+ * @return The preset instance or NULL if none found.
+ */
+fluid_preset_t* fluid_sfont_get_preset(fluid_sfont_t* sfont, int bank, int prenum)
+{
+    return sfont->get_preset(sfont, bank, prenum);
+}
+
+
+/**
+ * Starts / re-starts virtual preset iteration in a SoundFont.
+ * @param sfont Virtual SoundFont instance
+ */
+void fluid_sfont_iteration_start(fluid_sfont_t* sfont)
+{
+    fluid_return_if_fail(sfont != NULL);
+    fluid_return_if_fail(sfont->iteration_start != NULL);
+    
+    sfont->iteration_start(sfont);
+}
+
+/**
+ * Virtual SoundFont preset iteration function.
+ * 
+ * Returns preset information to the caller and advances the
+ * internal iteration state to the next preset for subsequent calls.
+ * @param sfont The SoundFont instance.
+ * @return NULL when no more presets are available, otherwise the a pointer to the current preset
+ */
+fluid_preset_t* fluid_sfont_iteration_next(fluid_sfont_t* sfont)
+{
+    fluid_return_val_if_fail(sfont != NULL, NULL);
+    fluid_return_val_if_fail(sfont->iteration_next != NULL, NULL);
+    
+    return sfont->iteration_next(sfont);    
+}
+
+/**
  * Destroys a SoundFont instance created with new_fluid_sfont().
  * 
  * Implements #fluid_sfont_free_t.

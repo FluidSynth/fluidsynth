@@ -192,6 +192,11 @@ FLUIDSYNTH_API int delete_fluid_sfont(fluid_sfont_t* sfont);
 FLUIDSYNTH_API int fluid_sfont_set_data(fluid_sfont_t* sfont, void* data);
 FLUIDSYNTH_API void* fluid_sfont_get_data(fluid_sfont_t* sfont);
 
+FLUIDSYNTH_API int fluid_sfont_get_id(fluid_sfont_t* sfont);
+FLUIDSYNTH_API const char* fluid_sfont_get_name(fluid_sfont_t* sfont);
+FLUIDSYNTH_API fluid_preset_t* fluid_sfont_get_preset(fluid_sfont_t* sfont, int bank, int prenum);
+FLUIDSYNTH_API void fluid_sfont_iteration_start(fluid_sfont_t* sfont);
+FLUIDSYNTH_API fluid_preset_t* fluid_sfont_iteration_next(fluid_sfont_t* sfont);
 
 /**
  * Method to get a virtual SoundFont preset name.
