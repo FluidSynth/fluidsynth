@@ -84,29 +84,6 @@ struct _fluid_sfloader_t {
 };
 
 /**
- * Start virtual SoundFont preset iteration method.
- * @param sfont Virtual SoundFont
- *
- * Starts/re-starts virtual preset iteration in a SoundFont.
- */
-typedef void (*fluid_sfont_iteration_start_t)(fluid_sfont_t* sfont);
-
-/**
- * Virtual SoundFont preset iteration function.
- * @param sfont Virtual SoundFont
- * @param preset Caller supplied uninitialized buffer to fill in with current preset information
- * @return NULL when no more presets are available, otherwise the a pointer to the current preset
- *
- * Should store preset information to the caller supplied \a preset structure
- * and advance the internal iteration state to the next preset for subsequent
- * calls.
- */
-typedef fluid_preset_t* (*fluid_sfont_iteration_next_t)(fluid_sfont_t* sfont);
-
-void fluid_sfont_set_iteration_start(fluid_sfont_t* sfont, fluid_sfont_iteration_start_t iter_start);
-void fluid_sfont_set_iteration_next(fluid_sfont_t* sfont, fluid_sfont_iteration_next_t iter_next);
-
-/**
  * Virtual SoundFont instance structure.
  */
 struct _fluid_sfont_t {

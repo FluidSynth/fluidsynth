@@ -180,11 +180,15 @@ int fluid_sfloader_set_callbacks(fluid_sfloader_t* loader,
  * Creates a new virtual SoundFont instance structure.
  * @param get_name A function implementing #fluid_sfont_get_name_t.
  * @param get_preset A function implementing #fluid_sfont_get_preset_t.
+ * @param iter_start A function implementing #fluid_sfont_iteration_start_t, or NULL if preset iteration not needed.
+ * @param iter_next A function implementing #fluid_sfont_iteration_next_t, or NULL if preset iteration not needed.
  * @param free A function implementing #fluid_sfont_free_t.
  * @return The soundfont instance on success or NULL otherwise.
  */
 fluid_sfont_t* new_fluid_sfont(fluid_sfont_get_name_t get_name,
                                fluid_sfont_get_preset_t get_preset,
+                               fluid_sfont_iteration_start_t iter_start,
+                               fluid_sfont_iteration_next_t iter_next,
                                fluid_sfont_free_t free)
 {
     fluid_sfont_t* sfont;
@@ -203,6 +207,8 @@ fluid_sfont_t* new_fluid_sfont(fluid_sfont_get_name_t get_name,
 
     sfont->get_name = get_name;
     sfont->get_preset = get_preset;
+    sfont->iteration_start = iter_start;
+    sfont->iteration_next = iter_next;
     sfont->free = free;
     
     return sfont;
@@ -237,22 +243,6 @@ void* fluid_sfont_get_data(fluid_sfont_t* sfont)
 }
 
 /**
- * @internal KISS! No need to expose this to public API currently.
- */
-void fluid_sfont_set_iteration_start(fluid_sfont_t* sfont, fluid_sfont_iteration_start_t iter_start)
-{
-    sfont->iteration_start = iter_start;
-}
-
-/**
- * @internal KISS! No need to expose this to public API currently.
- */
-void fluid_sfont_set_iteration_next(fluid_sfont_t* sfont, fluid_sfont_iteration_next_t iter_next)
-{
-    sfont->iteration_next = iter_next;
-}
-
-/**
  * Retrieve the unique ID of a SoundFont instance.
  * 
  * @param sfont The SoundFont instance.
@@ -277,6 +267,7 @@ const char* fluid_sfont_get_name(fluid_sfont_t* sfont)
 /**
  * Retrieve the preset assigned the a SoundFont instance
  * for the given bank and preset number.
+ * @param sfont The SoundFont instance.
  * @param bank bank number of the preset
  * @param prenum program number of the preset
  * @return The preset instance or NULL if none found.
