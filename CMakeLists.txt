@@ -107,6 +107,15 @@ mark_as_advanced ( LIB_SUFFIX )
 # the default C standard to use for all targets
 set(CMAKE_C_STANDARD 90)
 
+# the default global visibility level for all target
+# no visibility support on OS2
+if ( NOT OS2 )
+    set ( CMAKE_C_VISIBILITY_PRESET hidden )
+endif ( NOT OS2 )
+# enforce visibility control for all types of cmake targets
+cmake_policy ( SET CMP0063 NEW )
+
+
 # Default install directory names
 include ( DefaultDirs )
 
@@ -157,24 +166,18 @@ if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang" OR CMAKE_C_
   endif ( NOT APPLE AND NOT OS2 )
   
   # define some warning flags
-  set ( ADDITIONAL_FLAGS "-Wall -W -Wpointer-arith -Wno-cast-qual -Wstrict-prototypes -Wno-unused-parameter -Wdeclaration-after-statement" )
-    
-  # no visibility support on OS2
-  if ( NOT OS2 )
-    set ( ADDITIONAL_FLAGS "${ADDITIONAL_FLAGS} -fvisibility=hidden" )
-  endif ( NOT OS2 )
+  set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -W -Wpointer-arith -Wno-cast-qual -Wstrict-prototypes -Wno-unused-parameter -Wdeclaration-after-statement" )
   
   if ( CMAKE_C_COMPILER_ID STREQUAL "Intel" )
     # icc needs the restrict flag to recognize C99 restrict pointers
-    set ( ADDITIONAL_FLAGS "${ADDITIONAL_FLAGS} -restrict" )
+    set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -restrict" )
   else () # not intel
     # gcc and clang support bad function cast and alignment warnings; add them as well.
-    set ( ADDITIONAL_FLAGS "${ADDITIONAL_FLAGS} -Wbad-function-cast -Wcast-align" )
+    set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wbad-function-cast -Wcast-align" )
   endif (CMAKE_C_COMPILER_ID STREQUAL "Intel" )
 
-  set ( CMAKE_C_FLAGS_DEBUG "-g ${ADDITIONAL_FLAGS} -DDEBUG -fsanitize=undefined ${CMAKE_C_FLAGS_DEBUG}" )
-  set ( CMAKE_C_FLAGS_RELEASE "-O2 -fomit-frame-pointer -finline-functions ${ADDITIONAL_FLAGS} -DNDEBUG ${CMAKE_C_FLAGS_RELEASE}" )
-  set ( CMAKE_C_FLAGS_RELWITHDEBINFO "-O2 -g -fomit-frame-pointer -finline-functions ${ADDITIONAL_FLAGS} -DNDEBUG ${CMAKE_C_FLAGS_RELWITHDEBINFO}" )
+  # prepend to build type specific flags, to allow users to override
+  set ( CMAKE_C_FLAGS_DEBUG "-g -DDEBUG -fsanitize=undefined ${CMAKE_C_FLAGS_DEBUG}" )
   
 endif ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang" OR CMAKE_C_COMPILER_ID STREQUAL "Intel" )
 
@@ -288,9 +291,7 @@ if ( enable-profiling )
       set ( OPT_FLAGS "" )
     endif ( )
     
-    set ( CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} ${OPT_FLAGS}" )
-    set ( CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} ${OPT_FLAGS}" )
-    set ( CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} ${OPT_FLAGS}" )
+    set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OPT_FLAGS}" )
 endif ( enable-profiling )
 
 unset ( ENABLE_TRAPONFPE CACHE )
@@ -309,12 +310,12 @@ endif ( enable-fpe-check )
 
 if ( enable-debug )
     set ( CMAKE_BUILD_TYPE "Debug" CACHE STRING
-          "Choose the build type, options: Debug Release RelWithDebInfo" FORCE )
+          "Choose the build type, options: Debug Release RelWithDebInfo MinSizeRel" FORCE )
 endif ( enable-debug )
 
 if ( NOT CMAKE_BUILD_TYPE )
     set ( CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING
-          "Choose the build type, options: Debug Release RelWithDebInfo" FORCE )
+          "Choose the build type, options: Debug Release RelWithDebInfo MinSizeRel" FORCE )
 endif ( NOT CMAKE_BUILD_TYPE )
 
 unset ( ENABLE_DEBUG CACHE )
