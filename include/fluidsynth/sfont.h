@@ -31,30 +31,30 @@ extern "C" {
  * @brief SoundFont plugins
  *
  * It is possible to add new SoundFont loaders to the
- * synthesizer. The API uses a couple of "interfaces" (structures
- * with callback functions): #fluid_sfloader_t, #fluid_sfont_t, and
- * #fluid_preset_t.  This API allows for virtual SoundFont files to be loaded
+ * synthesizer. This API allows for virtual SoundFont files to be loaded
  * and synthesized, which may not actually be SoundFont files, as long as they
  * can be represented by the SoundFont synthesis model.
  *
  * To add a new SoundFont loader to the synthesizer, call
  * fluid_synth_add_sfloader() and pass a pointer to an
- * fluid_sfloader_t structure. The important callback function in
- * this structure is "load", which should try to load a file and
- * returns a #fluid_sfont_t structure, or NULL if it fails.
+ * #fluid_sfloader_t instance created by new_fluid_sfloader().
+ * On creation, you must specify a callback function \p load 
+ * that will be called for every file attempting to load it and
+ * if successful returns a #fluid_sfont_t instance, or NULL if it fails.
  *
  * The #fluid_sfont_t structure contains a callback to obtain the
  * name of the SoundFont. It contains two functions to iterate
  * though the contained presets, and one function to obtain a
  * preset corresponding to a bank and preset number. This
- * function should return a #fluid_preset_t structure.
+ * function should return a #fluid_preset_t instance.
  *
- * The #fluid_preset_t structure contains some functions to obtain
+ * The #fluid_preset_t instance contains some functions to obtain
  * information from the preset (name, bank, number). The most
  * important callback is the noteon function. The noteon function
+ * is called by fluidsynth internally and 
  * should call fluid_synth_alloc_voice() for every sample that has
  * to be played. fluid_synth_alloc_voice() expects a pointer to a
- * #fluid_sample_t structure and returns a pointer to the opaque
+ * #fluid_sample_t instance and returns a pointer to the opaque
  * #fluid_voice_t structure. To set or increment the values of a
  * generator, use fluid_voice_gen_set() or fluid_voice_gen_incr(). When you are
  * finished initializing the voice call fluid_voice_start() to
