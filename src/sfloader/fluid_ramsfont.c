@@ -92,18 +92,17 @@ fluid_ramsfont_create_sfont()
 
   sfont = new_fluid_sfont(fluid_ramsfont_sfont_get_name,
                           fluid_ramsfont_sfont_get_preset,
+                          fluid_ramsfont_sfont_iteration_start,
+                          fluid_ramsfont_sfont_iteration_next,
                           fluid_ramsfont_sfont_delete);
   if (sfont == NULL)
   {
     delete_fluid_ramsfont(ramsfont);
     return NULL;
   }
-
-  ramsfont->sfont = sfont;
-
-  fluid_sfont_set_iteration_start(sfont, fluid_ramsfont_sfont_iteration_start);
-  fluid_sfont_set_iteration_next(sfont, fluid_ramsfont_sfont_iteration_next);
+  
   fluid_sfont_set_data(sfont, ramsfont);
+  ramsfont->sfont = sfont;
 
   return sfont;
 }

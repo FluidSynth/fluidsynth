@@ -37,19 +37,9 @@ int fluid_sample_sanitize_loop(fluid_sample_t *sample, unsigned int max_end);
 
 #define fluid_sfont_delete_internal(_sf)   ( ((_sf) && (_sf)->free)? (*(_sf)->free)(_sf) : 0)
 
-#define fluid_sfont_get_id(_sf) ((_sf)->id)
-#define fluid_sfont_get_name(_sf) (*(_sf)->get_name)(_sf)
-#define fluid_sfont_get_preset(_sf,_bank,_prenum) (*(_sf)->get_preset)(_sf,_bank,_prenum)
-#define fluid_sfont_iteration_start(_sf) { if((_sf) && (_sf)->iteration_start) (*(_sf)->iteration_start)(_sf); }
-#define fluid_sfont_iteration_next(_sf) (((_sf) && (_sf)->iteration_start) ? (*(_sf)->iteration_next)(_sf) : 0)
-
 
 #define fluid_preset_delete_internal(_preset) \
   { if ((_preset) && (_preset)->free) { (*(_preset)->free)(_preset); }}
-
-#define fluid_preset_get_name(_preset) (*(_preset)->get_name)(_preset)
-#define fluid_preset_get_banknum(_preset) (*(_preset)->get_banknum)(_preset)
-#define fluid_preset_get_num(_preset) (*(_preset)->get_num)(_preset)
 
 #define fluid_preset_noteon(_preset,_synth,_ch,_key,_vel) \
   (*(_preset)->noteon)(_preset,_synth,_ch,_key,_vel)
@@ -92,29 +82,6 @@ struct _fluid_sfloader_t {
 
   fluid_sfloader_load_t load;
 };
-
-/**
- * Start virtual SoundFont preset iteration method.
- * @param sfont Virtual SoundFont
- *
- * Starts/re-starts virtual preset iteration in a SoundFont.
- */
-typedef void (*fluid_sfont_iteration_start_t)(fluid_sfont_t* sfont);
-
-/**
- * Virtual SoundFont preset iteration function.
- * @param sfont Virtual SoundFont
- * @param preset Caller supplied uninitialized buffer to fill in with current preset information
- * @return 0 when no more presets are available, 1 otherwise
- *
- * Should store preset information to the caller supplied \a preset structure
- * and advance the internal iteration state to the next preset for subsequent
- * calls.
- */
-typedef fluid_preset_t* (*fluid_sfont_iteration_next_t)(fluid_sfont_t* sfont);
-
-void fluid_sfont_set_iteration_start(fluid_sfont_t* sfont, fluid_sfont_iteration_start_t iter_start);
-void fluid_sfont_set_iteration_next(fluid_sfont_t* sfont, fluid_sfont_iteration_next_t iter_next);
 
 /**
  * Virtual SoundFont instance structure.

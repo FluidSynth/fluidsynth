@@ -31,30 +31,30 @@ extern "C" {
  * @brief SoundFont plugins
  *
  * It is possible to add new SoundFont loaders to the
- * synthesizer. The API uses a couple of "interfaces" (structures
- * with callback functions): #fluid_sfloader_t, #fluid_sfont_t, and
- * #fluid_preset_t.  This API allows for virtual SoundFont files to be loaded
+ * synthesizer. This API allows for virtual SoundFont files to be loaded
  * and synthesized, which may not actually be SoundFont files, as long as they
  * can be represented by the SoundFont synthesis model.
  *
  * To add a new SoundFont loader to the synthesizer, call
  * fluid_synth_add_sfloader() and pass a pointer to an
- * fluid_sfloader_t structure. The important callback function in
- * this structure is "load", which should try to load a file and
- * returns a #fluid_sfont_t structure, or NULL if it fails.
+ * #fluid_sfloader_t instance created by new_fluid_sfloader().
+ * On creation, you must specify a callback function \p load 
+ * that will be called for every file attempting to load it and
+ * if successful returns a #fluid_sfont_t instance, or NULL if it fails.
  *
  * The #fluid_sfont_t structure contains a callback to obtain the
  * name of the SoundFont. It contains two functions to iterate
  * though the contained presets, and one function to obtain a
  * preset corresponding to a bank and preset number. This
- * function should return a #fluid_preset_t structure.
+ * function should return a #fluid_preset_t instance.
  *
- * The #fluid_preset_t structure contains some functions to obtain
+ * The #fluid_preset_t instance contains some functions to obtain
  * information from the preset (name, bank, number). The most
  * important callback is the noteon function. The noteon function
+ * is called by fluidsynth internally and 
  * should call fluid_synth_alloc_voice() for every sample that has
  * to be played. fluid_synth_alloc_voice() expects a pointer to a
- * #fluid_sample_t structure and returns a pointer to the opaque
+ * #fluid_sample_t instance and returns a pointer to the opaque
  * #fluid_voice_t structure. To set or increment the values of a
  * generator, use fluid_voice_gen_set() or fluid_voice_gen_incr(). When you are
  * finished initializing the voice call fluid_voice_start() to
@@ -173,6 +173,26 @@ typedef const char* (*fluid_sfont_get_name_t)(fluid_sfont_t* sfont);
 typedef fluid_preset_t* (*fluid_sfont_get_preset_t)(fluid_sfont_t* sfont, int bank, int prenum);
 
 /**
+ * Start virtual SoundFont preset iteration method.
+ * @param sfont Virtual SoundFont
+ *
+ * Starts/re-starts virtual preset iteration in a SoundFont.
+ */
+typedef void (*fluid_sfont_iteration_start_t)(fluid_sfont_t* sfont);
+
+/**
+ * Virtual SoundFont preset iteration function.
+ * @param sfont Virtual SoundFont
+ * @param preset Caller supplied uninitialized buffer to fill in with current preset information
+ * @return NULL when no more presets are available, otherwise the a pointer to the current preset
+ *
+ * Should store preset information to the caller supplied \a preset structure
+ * and advance the internal iteration state to the next preset for subsequent
+ * calls.
+ */
+typedef fluid_preset_t* (*fluid_sfont_iteration_next_t)(fluid_sfont_t* sfont);
+
+/**
  * Method to free a virtual SoundFont bank. Any custom user provided cleanup function must ultimately call
  * delete_fluid_sfont() to ensure proper cleanup of the #fluid_sfont_t struct. If no private data
  * needs to be freed, setting this to delete_fluid_sfont() is sufficient.
@@ -185,13 +205,21 @@ typedef int (*fluid_sfont_free_t)(fluid_sfont_t* sfont);
 
 
 FLUIDSYNTH_API fluid_sfont_t* new_fluid_sfont(fluid_sfont_get_name_t get_name,
-                                              fluid_sfont_get_preset_t get_preset,
-                                              fluid_sfont_free_t free);
+                               fluid_sfont_get_preset_t get_preset,
+                               fluid_sfont_iteration_start_t iter_start,
+                               fluid_sfont_iteration_next_t iter_next,
+                               fluid_sfont_free_t free);
+
 FLUIDSYNTH_API int delete_fluid_sfont(fluid_sfont_t* sfont);
 
 FLUIDSYNTH_API int fluid_sfont_set_data(fluid_sfont_t* sfont, void* data);
 FLUIDSYNTH_API void* fluid_sfont_get_data(fluid_sfont_t* sfont);
 
+FLUIDSYNTH_API int fluid_sfont_get_id(fluid_sfont_t* sfont);
+FLUIDSYNTH_API const char* fluid_sfont_get_name(fluid_sfont_t* sfont);
+FLUIDSYNTH_API fluid_preset_t* fluid_sfont_get_preset(fluid_sfont_t* sfont, int bank, int prenum);
+FLUIDSYNTH_API void fluid_sfont_iteration_start(fluid_sfont_t* sfont);
+FLUIDSYNTH_API fluid_preset_t* fluid_sfont_iteration_next(fluid_sfont_t* sfont);
 
 /**
  * Method to get a virtual SoundFont preset name.
@@ -260,6 +288,9 @@ FLUIDSYNTH_API void delete_fluid_preset(fluid_preset_t* preset);
 FLUIDSYNTH_API int fluid_preset_set_data(fluid_preset_t* preset, void* data);
 FLUIDSYNTH_API void* fluid_preset_get_data(fluid_preset_t* preset);
 
+FLUIDSYNTH_API const char* fluid_preset_get_name(fluid_preset_t* preset);
+FLUIDSYNTH_API int fluid_preset_get_banknum(fluid_preset_t* preset);
+FLUIDSYNTH_API int fluid_preset_get_num(fluid_preset_t* preset);
 
 
 FLUIDSYNTH_API fluid_sample_t* new_fluid_sample(void);

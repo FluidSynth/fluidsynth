@@ -87,6 +87,8 @@ fluid_sfont_t* fluid_defsfloader_load(fluid_sfloader_t* loader, const char* file
 
   sfont = new_fluid_sfont(fluid_defsfont_sfont_get_name,
                           fluid_defsfont_sfont_get_preset,
+                          fluid_defsfont_sfont_iteration_start,
+                          fluid_defsfont_sfont_iteration_next,
                           fluid_defsfont_sfont_delete);
   if (sfont == NULL)
   {
@@ -94,8 +96,6 @@ fluid_sfont_t* fluid_defsfloader_load(fluid_sfloader_t* loader, const char* file
     return NULL;
   }
   
-  fluid_sfont_set_iteration_start(sfont, fluid_defsfont_sfont_iteration_start);
-  fluid_sfont_set_iteration_next(sfont, fluid_defsfont_sfont_iteration_next);
   fluid_sfont_set_data(sfont, defsfont);
 
   defsfont->sfont = sfont;

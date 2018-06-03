@@ -180,11 +180,15 @@ int fluid_sfloader_set_callbacks(fluid_sfloader_t* loader,
  * Creates a new virtual SoundFont instance structure.
  * @param get_name A function implementing #fluid_sfont_get_name_t.
  * @param get_preset A function implementing #fluid_sfont_get_preset_t.
+ * @param iter_start A function implementing #fluid_sfont_iteration_start_t, or NULL if preset iteration not needed.
+ * @param iter_next A function implementing #fluid_sfont_iteration_next_t, or NULL if preset iteration not needed.
  * @param free A function implementing #fluid_sfont_free_t.
  * @return The soundfont instance on success or NULL otherwise.
  */
 fluid_sfont_t* new_fluid_sfont(fluid_sfont_get_name_t get_name,
                                fluid_sfont_get_preset_t get_preset,
+                               fluid_sfont_iteration_start_t iter_start,
+                               fluid_sfont_iteration_next_t iter_next,
                                fluid_sfont_free_t free)
 {
     fluid_sfont_t* sfont;
@@ -203,6 +207,8 @@ fluid_sfont_t* new_fluid_sfont(fluid_sfont_get_name_t get_name,
 
     sfont->get_name = get_name;
     sfont->get_preset = get_preset;
+    sfont->iteration_start = iter_start;
+    sfont->iteration_next = iter_next;
     sfont->free = free;
     
     return sfont;
@@ -237,19 +243,67 @@ void* fluid_sfont_get_data(fluid_sfont_t* sfont)
 }
 
 /**
- * @internal KISS! No need to expose this to public API currently.
+ * Retrieve the unique ID of a SoundFont instance.
+ * 
+ * @param sfont The SoundFont instance.
+ * @return The SoundFont ID.
  */
-void fluid_sfont_set_iteration_start(fluid_sfont_t* sfont, fluid_sfont_iteration_start_t iter_start)
+int fluid_sfont_get_id(fluid_sfont_t* sfont)
 {
-    sfont->iteration_start = iter_start;
+    return sfont->id;
 }
 
 /**
- * @internal KISS! No need to expose this to public API currently.
+ * Retrieve the name of a SoundFont instance.
+ * 
+ * @param sfont The SoundFont instance.
+ * @return The name of the SoundFont.
  */
-void fluid_sfont_set_iteration_next(fluid_sfont_t* sfont, fluid_sfont_iteration_next_t iter_next)
+const char* fluid_sfont_get_name(fluid_sfont_t* sfont)
 {
-    sfont->iteration_next = iter_next;
+    return sfont->get_name(sfont);
+}
+
+/**
+ * Retrieve the preset assigned the a SoundFont instance
+ * for the given bank and preset number.
+ * @param sfont The SoundFont instance.
+ * @param bank bank number of the preset
+ * @param prenum program number of the preset
+ * @return The preset instance or NULL if none found.
+ */
+fluid_preset_t* fluid_sfont_get_preset(fluid_sfont_t* sfont, int bank, int prenum)
+{
+    return sfont->get_preset(sfont, bank, prenum);
+}
+
+
+/**
+ * Starts / re-starts virtual preset iteration in a SoundFont.
+ * @param sfont Virtual SoundFont instance
+ */
+void fluid_sfont_iteration_start(fluid_sfont_t* sfont)
+{
+    fluid_return_if_fail(sfont != NULL);
+    fluid_return_if_fail(sfont->iteration_start != NULL);
+    
+    sfont->iteration_start(sfont);
+}
+
+/**
+ * Virtual SoundFont preset iteration function.
+ * 
+ * Returns preset information to the caller and advances the
+ * internal iteration state to the next preset for subsequent calls.
+ * @param sfont The SoundFont instance.
+ * @return NULL when no more presets are available, otherwise the a pointer to the current preset
+ */
+fluid_preset_t* fluid_sfont_iteration_next(fluid_sfont_t* sfont)
+{
+    fluid_return_val_if_fail(sfont != NULL, NULL);
+    fluid_return_val_if_fail(sfont->iteration_next != NULL, NULL);
+    
+    return sfont->iteration_next(sfont);    
 }
 
 /**
@@ -339,6 +393,42 @@ void* fluid_preset_get_data(fluid_preset_t* preset)
     fluid_return_val_if_fail(preset != NULL, NULL);
     
     return preset->data;
+}
+
+/**
+ * Retrieves the presets name by executing the \p get_name function
+ * provided on its creation.
+ * 
+ * @param preset The SoundFont preset instance.
+ * @return Pointer to a NULL-terminated string containing the presets name.
+ */
+const char* fluid_preset_get_name(fluid_preset_t* preset)
+{
+    return preset->get_name(preset);
+}
+
+/**
+ * Retrieves the presets bank number by executing the \p get_bank function
+ * provided on its creation.
+ * 
+ * @param preset The SoundFont preset instance.
+ * @return The bank number of \p preset.
+ */
+int fluid_preset_get_banknum(fluid_preset_t* preset)
+{
+    return preset->get_banknum(preset);
+}
+
+/**
+ * Retrieves the presets (instrument) number by executing the \p get_num function
+ * provided on its creation.
+ * 
+ * @param preset The SoundFont preset instance.
+ * @return The number of \p preset.
+ */
+int fluid_preset_get_num(fluid_preset_t* preset)
+{
+    return preset->get_num(preset);
 }
 
 /**
