@@ -432,6 +432,17 @@ int fluid_preset_get_num(fluid_preset_t* preset)
 }
 
 /**
+ * Retrieves the presets parent SoundFont instance.
+ * 
+ * @param preset The SoundFont preset instance.
+ * @return The parent SoundFont of \p preset.
+ */
+fluid_sfont_t* fluid_preset_get_sfont(fluid_preset_t* preset)
+{
+    return preset->sfont;
+}
+
+/**
  * Destroys a SoundFont preset instance created with new_fluid_preset().
  * 
  * Implements #fluid_preset_free_t.
