@@ -256,7 +256,7 @@
  With NBR_DELAYS to 12: 
   MOD_DEPTH to 3 is sufficient to cancel the unwanted "ringing".[3..6]
 */
-#define MOD_DEPTH 5		/* modulation depth (samples)*/
+#define MOD_DEPTH 4		/* modulation depth (samples)*/
 #define MOD_RATE 50		/* modulation rate  (samples)*/
 #define MOD_FREQ 1.0f	/* modulation frequency (Hz) */
 /* 
