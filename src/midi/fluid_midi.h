@@ -215,11 +215,6 @@ enum fluid_driver_status
  *         TYPE DEFINITIONS & FUNCTION DECLARATIONS
  */
 
-/* From ctype.h */
-#define fluid_isascii(c)    (((c) & ~0x7f) == 0)
-
-
-
 /*
  * fluid_midi_event_t
  */
@@ -247,19 +242,6 @@ struct _fluid_track_t {
 };
 
 typedef struct _fluid_track_t fluid_track_t;
-
-fluid_track_t* new_fluid_track(int num);
-void delete_fluid_track(fluid_track_t* track);
-int fluid_track_set_name(fluid_track_t* track, char* name);
-int fluid_track_add_event(fluid_track_t* track, fluid_midi_event_t* evt);
-fluid_midi_event_t* fluid_track_next_event(fluid_track_t* track);
-int fluid_track_get_duration(fluid_track_t* track);
-int fluid_track_reset(fluid_track_t* track);
-
-int fluid_track_send_events(fluid_track_t* track,
-			   fluid_synth_t* synth,
-			   fluid_player_t* player,
-			   unsigned int ticks);
 
 #define fluid_track_eot(track)  ((track)->cur == NULL)
 
@@ -309,11 +291,6 @@ struct _fluid_player_t {
   void* playback_userdata; /* pointer to user-defined data passed to playback_callback function */
 };
 
-int fluid_player_add_track(fluid_player_t* player, fluid_track_t* track);
-int fluid_player_callback(void* data, unsigned int msec);
-int fluid_player_reset(fluid_player_t* player);
-int fluid_player_load(fluid_player_t* player, fluid_playlist_item *item);
-
 void fluid_player_settings(fluid_settings_t* settings);
 
 
@@ -342,21 +319,6 @@ typedef struct {
   int dtime;
 } fluid_midi_file;
 
-fluid_midi_file* new_fluid_midi_file(const char* buffer, size_t length);
-void delete_fluid_midi_file(fluid_midi_file* mf);
-int fluid_midi_file_read_mthd(fluid_midi_file* midifile);
-int fluid_midi_file_load_tracks(fluid_midi_file* midifile, fluid_player_t* player);
-int fluid_midi_file_read_track(fluid_midi_file* mf, fluid_player_t* player, int num);
-int fluid_midi_file_read_event(fluid_midi_file* mf, fluid_track_t* track);
-int fluid_midi_file_read_varlen(fluid_midi_file* mf);
-int fluid_midi_file_getc(fluid_midi_file* mf);
-int fluid_midi_file_push(fluid_midi_file* mf, int c);
-int fluid_midi_file_read(fluid_midi_file* mf, void* buf, int len);
-int fluid_midi_file_skip(fluid_midi_file* mf, int len);
-int fluid_midi_file_eof(fluid_midi_file* mf);
-int fluid_midi_file_read_tracklen(fluid_midi_file* mf);
-int fluid_midi_file_eot(fluid_midi_file* mf);
-int fluid_midi_file_get_division(fluid_midi_file* midifile);
 
 
 #define FLUID_MIDI_PARSER_MAX_DATA_SIZE 1024    /**< Maximum size of MIDI parameters/data (largest is SYSEX data) */
@@ -372,9 +334,6 @@ struct _fluid_midi_parser_t {
   unsigned char data[FLUID_MIDI_PARSER_MAX_DATA_SIZE]; /* The parameters or SYSEX data */
   fluid_midi_event_t event;        /* The event, that is returned to the MIDI driver. */
 };
-
-int fluid_isasciistring(char* s);
-long fluid_getlength(unsigned char *s);
 
 
 #endif /* _FLUID_MIDI_H */
