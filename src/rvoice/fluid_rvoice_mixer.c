@@ -310,6 +310,21 @@ fluid_rvoice_buffers_mix(fluid_rvoice_buffers_t* buffers,
                          int start_block, int sample_count, 
                          fluid_real_t** dest_bufs, int dest_bufcount)
 {
+  /*
+   * SF2.04 9.1.7 Envelope Generators:
+   * 
+   * "When 96 dB of attenuation is reached in the final gain amplifier,
+   *  an abrupt jump to zero gain (infinite dB of attenuation) occurs."
+   * 
+   * fluidsynth is a 24 bit synth, it could (should??) use 144 dB of attenuation.
+   * However the spec makes no distinction between 16 or 24 bit synths, so use
+   * 96 dB here.
+   * 
+   * This magic number was obtained by
+   * powl(10.0L, -96.0L / 20.0L);
+   */
+  static const fluid_real_t MIN_GAIN = 0.000015848931924611135L;
+    
   int bufcount = buffers->count;
   int i, dsp_i;
   if (sample_count <= 0 || dest_bufcount <= 0) 
@@ -322,7 +337,7 @@ fluid_rvoice_buffers_mix(fluid_rvoice_buffers_t* buffers,
     fluid_real_t *FLUID_RESTRICT buf = get_dest_buf(buffers, i, dest_bufs, dest_bufcount);
     fluid_real_t amp = buffers->bufs[i].amp;
     
-    if (buf == NULL || amp == 0.0f)
+    if (buf == NULL || amp <= MIN_GAIN)
       continue;
 
     FLUID_ASSERT((uintptr_t)buf % FLUID_DEFAULT_ALIGNMENT == 0);
