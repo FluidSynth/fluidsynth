@@ -49,7 +49,7 @@ typedef struct _fluid_rvoice_t fluid_rvoice_t;
  However the spec makes no distinction between 16 or 24 bit synths, so use
  96 dB here. 
  
- Note about usefullnes of 24 bits:
+ Note about usefulness of 24 bits:
  1)Even fluidsynth is a 24 bit synth, this format is only relevant if
  the sample format coming from the soundfont is 24 bits and the audio sample format
  choosen by the application (audio.sample.format) is not 16 bits.
@@ -64,10 +64,10 @@ typedef struct _fluid_rvoice_t fluid_rvoice_t;
  audio driver will make use of a 16 bit DAC, and the dynamic will be reduced to 96 dB
  even if the initial sample comes from a 24 bits soundfont.
 
- In both cases (2) and (3). The real dynamic range is only 96 dB.
+ In both cases (2) and (3), the real dynamic range is only 96 dB.
 
- Also for case (1) FLUID_NOISE_FLOOR should be the noise floor for 24 bits (i.e -138 dB).
- for case (2) and (3) FLUID_NOISE_FLOOR should be the noise floor for 16 bits (i.e -90 dB).
+ Also for case (1), FLUID_NOISE_FLOOR should be the noise floor for 24 bits (i.e -138 dB).
+ for case (2) and (3), FLUID_NOISE_FLOOR should be the noise floor for 16 bits (i.e -90 dB).
  */
 #define ATTENUATION_RANGE_CB  960.0f
 
