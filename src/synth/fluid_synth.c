@@ -305,7 +305,7 @@ fluid_synth_init(void)
 		       );
   fluid_mod_set_source2(&custom_breath2att_mod, 0, 0); /* No 2nd source */
   fluid_mod_set_dest(&custom_breath2att_mod, GEN_ATTENUATION);  /* Target: Initial attenuation */
-  fluid_mod_set_amount(&custom_breath2att_mod, ATTENUATION_RANGE_CB); /* Modulation amount: 960 */
+  fluid_mod_set_amount(&custom_breath2att_mod, FLUID_PEAK_ATTENUATION); /* Modulation amount: 960 */
 
   /* SF2.01 page 53 section 8.4.1: MIDI Note-On Velocity to Initial Attenuation */
   fluid_mod_set_source1(&default_vel2att_mod, /* The modulator we are programming here */
@@ -317,7 +317,7 @@ fluid_synth_init(void)
 		       );
   fluid_mod_set_source2(&default_vel2att_mod, 0, 0); /* No 2nd source */
   fluid_mod_set_dest(&default_vel2att_mod, GEN_ATTENUATION);  /* Target: Initial attenuation */
-  fluid_mod_set_amount(&default_vel2att_mod, ATTENUATION_RANGE_CB); /* Modulation amount: 960 */
+  fluid_mod_set_amount(&default_vel2att_mod, FLUID_PEAK_ATTENUATION); /* Modulation amount: 960 */
 
 
 
@@ -381,7 +381,7 @@ fluid_synth_init(void)
 		       );
   fluid_mod_set_source2(&default_att_mod, 0, 0);                 /* No second source */
   fluid_mod_set_dest(&default_att_mod, GEN_ATTENUATION);         /* Target: Initial attenuation */
-  fluid_mod_set_amount(&default_att_mod, ATTENUATION_RANGE_CB);  /* Amount: 960 */
+  fluid_mod_set_amount(&default_att_mod, FLUID_PEAK_ATTENUATION);  /* Amount: 960 */
 
 
 
@@ -409,7 +409,7 @@ fluid_synth_init(void)
 		       );
   fluid_mod_set_source2(&default_expr_mod, 0, 0);                 /* No second source */
   fluid_mod_set_dest(&default_expr_mod, GEN_ATTENUATION);         /* Target: Initial attenuation */
-  fluid_mod_set_amount(&default_expr_mod, ATTENUATION_RANGE_CB);  /* Amount: 960 */
+  fluid_mod_set_amount(&default_expr_mod, FLUID_PEAK_ATTENUATION);  /* Amount: 960 */
 
 
 
@@ -466,7 +466,7 @@ fluid_synth_init(void)
   fluid_mod_set_source2(&custom_balance_mod, 0, 0);
   fluid_mod_set_dest(&custom_balance_mod, GEN_CUSTOM_BALANCE);     /* Destination: stereo balance */
   /* Amount: 96 dB of attenuation (on the opposite channel) */
-  fluid_mod_set_amount(&custom_balance_mod, ATTENUATION_RANGE_CB); /* Amount: 960 */
+  fluid_mod_set_amount(&custom_balance_mod, FLUID_PEAK_ATTENUATION); /* Amount: 960 */
 }
 
 static FLUID_INLINE unsigned int fluid_synth_get_ticks(fluid_synth_t* synth)

@@ -57,7 +57,7 @@
  - for case (1), FLUID_NOISE_FLOOR should be the noise floor for 24 bits (i.e -138 dB).
  - for case (2) or (3), FLUID_NOISE_FLOOR should be the noise floor for 16 bits (i.e -90 dB).
  */
-#define ATTENUATION_RANGE_CB  960.0f
+#define FLUID_PEAK_ATTENUATION  960.0f
 
 void fluid_conversion_config(void);
 
