@@ -67,7 +67,7 @@ fluid_conversion_config(void)
      implemented according to the pictures on SF2.01 page 73. */
 
   for (i = 1; i < 127; i++) {
-    x = -20.0 / 96.0 * log((i * i) / (127.0 * 127.0)) / M_LN10;
+    x = (-200.0 / ATTENUATION_RANGE_CB) * log((i * i) / (127.0 * 127.0)) / M_LN10;
     fluid_convex_tab[i] = (fluid_real_t) (1.0 - x);
     fluid_concave_tab[127 - i] = (fluid_real_t) x;
   }
