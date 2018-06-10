@@ -1066,7 +1066,7 @@ fluid_thread_join(fluid_thread_t* thread)
 }
 
 
-fluid_thread_return_t
+static fluid_thread_return_t
 fluid_timer_run (void *data)
 {
   fluid_timer_t *timer;

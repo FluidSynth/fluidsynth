@@ -25,6 +25,9 @@
 
 
 static int fluid_midi_event_length(unsigned char event);
+static int fluid_isasciistring(char* s);
+static long fluid_getlength(unsigned char *s);
+
 
 /* Read the entire contents of a file into memory, allocating enough memory
  * for the file, and returning the length and the buffer.
@@ -34,6 +37,43 @@ static int fluid_midi_event_length(unsigned char event);
 static char* fluid_file_read_full(fluid_file fp, size_t* length);
 static void fluid_midi_event_set_sysex_LOCAL(fluid_midi_event_t *evt, int type, void *data, int size, int dynamic);
 #define READ_FULL_INITIAL_BUFLEN 1024
+
+static fluid_track_t* new_fluid_track(int num);
+static void delete_fluid_track(fluid_track_t* track);
+static int fluid_track_set_name(fluid_track_t* track, char* name);
+static int fluid_track_add_event(fluid_track_t* track, fluid_midi_event_t* evt);
+static fluid_midi_event_t* fluid_track_next_event(fluid_track_t* track);
+static int fluid_track_get_duration(fluid_track_t* track);
+static int fluid_track_reset(fluid_track_t* track);
+
+static int fluid_track_send_events(fluid_track_t* track,
+			   fluid_synth_t* synth,
+			   fluid_player_t* player,
+			   unsigned int ticks);
+
+
+static int fluid_player_add_track(fluid_player_t* player, fluid_track_t* track);
+static int fluid_player_callback(void* data, unsigned int msec);
+static int fluid_player_reset(fluid_player_t* player);
+static int fluid_player_load(fluid_player_t* player, fluid_playlist_item *item);
+static void fluid_player_advancefile(fluid_player_t *player);
+static void fluid_player_playlist_load(fluid_player_t *player, unsigned int msec);
+
+static fluid_midi_file* new_fluid_midi_file(const char* buffer, size_t length);
+static void delete_fluid_midi_file(fluid_midi_file* mf);
+static int fluid_midi_file_read_mthd(fluid_midi_file* midifile);
+static int fluid_midi_file_load_tracks(fluid_midi_file* midifile, fluid_player_t* player);
+static int fluid_midi_file_read_track(fluid_midi_file* mf, fluid_player_t* player, int num);
+static int fluid_midi_file_read_event(fluid_midi_file* mf, fluid_track_t* track);
+static int fluid_midi_file_read_varlen(fluid_midi_file* mf);
+static int fluid_midi_file_getc(fluid_midi_file* mf);
+static int fluid_midi_file_push(fluid_midi_file* mf, int c);
+static int fluid_midi_file_read(fluid_midi_file* mf, void* buf, int len);
+static int fluid_midi_file_skip(fluid_midi_file* mf, int len);
+static int fluid_midi_file_eof(fluid_midi_file* mf);
+static int fluid_midi_file_read_tracklen(fluid_midi_file* mf);
+static int fluid_midi_file_eot(fluid_midi_file* mf);
+static int fluid_midi_file_get_division(fluid_midi_file* midifile);
 
 
 /***************************************************************
@@ -274,6 +314,9 @@ fluid_midi_file_load_tracks(fluid_midi_file *mf, fluid_player_t *player)
 int
 fluid_isasciistring(char *s)
 {
+    /* From ctype.h */
+    #define fluid_isascii(c)    (((c) & ~0x7f) == 0)
+
     int i;
     int len = (int) FLUID_STRLEN(s);
     for (i = 0; i < len; i++) {
@@ -282,6 +325,8 @@ fluid_isasciistring(char *s)
         }
     }
     return 1;
+    
+    #undef fluid_isascii
 }
 
 /*
