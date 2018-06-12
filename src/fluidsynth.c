@@ -39,9 +39,6 @@
 
 #include "fluid_lash.h"
 
-#ifndef WITH_MIDI
-#define WITH_MIDI 1
-#endif
 
 void print_usage(void);
 void print_help(fluid_settings_t *settings);
@@ -621,7 +618,6 @@ int main(int argc, char** argv)
     } 
 
   /* start the midi router and link it to the synth */
-#if WITH_MIDI
   if (midi_in && router != NULL) {
     /* In dump mode, text output is generated for events going into and out of the router.
      * The example dump functions are put into the chain before and after the router..
@@ -637,7 +633,6 @@ int main(int argc, char** argv)
 		"through the console.\n");
       }
     }
-#endif
 
   /* play the midi files, if any */
   for (i = arg1; i < argc; i++) {
@@ -763,13 +758,12 @@ int main(int argc, char** argv)
     delete_fluid_player(player);
   }
 
-  if (router) {
-#if WITH_MIDI
     if (mdriver) {
       delete_fluid_midi_driver(mdriver);
     }
+    
+  if (router) {
     delete_fluid_midi_router(router);
-#endif
   }
 
   /*if (sequencer) {
