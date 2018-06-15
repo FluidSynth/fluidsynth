@@ -51,7 +51,7 @@ fluid_rvoice_calc_amp(fluid_rvoice_t* voice)
     fluid_real_t amp_max;
 
     target_amp = fluid_cb2amp (voice->dsp.attenuation)
-      * fluid_cb2amp (960.0f * (1.0f - fluid_adsr_env_get_val(&voice->envlfo.volenv))
+      * fluid_cb2amp (FLUID_PEAK_ATTENUATION * (1.0f - fluid_adsr_env_get_val(&voice->envlfo.volenv))
 		      + fluid_lfo_get_val(&voice->envlfo.modlfo) * -voice->envlfo.modlfo_to_vol);
 
     /* We turn off a voice, if the volume has dropped low enough. */
@@ -507,7 +507,7 @@ fluid_rvoice_noteoff_LOCAL(fluid_rvoice_t* voice, unsigned int min_ticks)
     if (fluid_adsr_env_get_val(&voice->envlfo.volenv) > 0){
       fluid_real_t lfo = fluid_lfo_get_val(&voice->envlfo.modlfo) * -voice->envlfo.modlfo_to_vol;
       fluid_real_t amp = fluid_adsr_env_get_val(&voice->envlfo.volenv) * fluid_cb2amp(lfo);
-      fluid_real_t env_value = - ((-200 * log (amp) / log (10.0) - lfo) / 960.0 - 1);
+      fluid_real_t env_value = - ((-200 * log (amp) / log (10.0) - lfo) / FLUID_PEAK_ATTENUATION - 1);
       fluid_clip (env_value, 0.0, 1.0);
       fluid_adsr_env_set_val(&voice->envlfo.volenv, env_value);
     }
@@ -569,7 +569,8 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_multi_retrigger_attack)
         volenv_val to achieve equivalent amplitude during the attack phase
 		for seamless volume transition. */
 		fluid_real_t amp_cb, env_value;
-		amp_cb = 960.0f * (1.0f - fluid_adsr_env_get_val(&voice->envlfo.volenv));
+		amp_cb = FLUID_PEAK_ATTENUATION * 
+		        (1.0f - fluid_adsr_env_get_val(&voice->envlfo.volenv));
 		env_value = fluid_cb2amp(amp_cb); /* a bit of optimization */
 		fluid_clip (env_value, 0.0, 1.0);
 		fluid_adsr_env_set_val(&voice->envlfo.volenv, env_value);
