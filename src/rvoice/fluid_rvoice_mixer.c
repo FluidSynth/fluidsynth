@@ -321,7 +321,7 @@ fluid_rvoice_buffers_mix(fluid_rvoice_buffers_t* buffers,
    * 96 dB here.
    * 
    * This magic number was obtained by
-   * powl(10.0L, -96.0L / 20.0L);
+   * powl(10.0L, -FLUID_PEAK_ATTENUATION / 200.0L);
    */
   static const fluid_real_t MIN_GAIN = 0.000015848931924611135L;
     
