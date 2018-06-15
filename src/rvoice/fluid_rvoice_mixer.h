@@ -28,7 +28,8 @@
 
 typedef struct _fluid_rvoice_mixer_t fluid_rvoice_mixer_t;
 
-#define FLUID_MIXER_MAX_BUFFERS_DEFAULT (8192/FLUID_BUFSIZE) 
+#define FLUID_SAMPLECOUNT               8192
+#define FLUID_MIXER_MAX_BUFFERS_DEFAULT (FLUID_SAMPLECOUNT/FLUID_BUFSIZE) 
 
 
 int fluid_rvoice_mixer_render(fluid_rvoice_mixer_t* mixer, int blockcount);

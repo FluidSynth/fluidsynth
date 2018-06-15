@@ -773,8 +773,7 @@ new_fluid_synth(fluid_settings_t *settings)
   fluid_settings_getint(settings, "synth.ladspa.active", &with_ladspa);
   if (with_ladspa) {
 #ifdef LADSPA
-    synth->ladspa_fx = new_fluid_ladspa_fx(synth->sample_rate,
-            FLUID_MIXER_MAX_BUFFERS_DEFAULT * FLUID_BUFSIZE);
+    synth->ladspa_fx = new_fluid_ladspa_fx(synth->sample_rate, FLUID_SAMPLECOUNT);
     if(synth->ladspa_fx == NULL) {
       FLUID_LOG(FLUID_ERR, "Out of memory");
       goto error_recovery;
@@ -2970,13 +2969,13 @@ fluid_synth_nwrite_float(fluid_synth_t* synth, int len,
 
     for (i = 0; i < synth->audio_channels; i++) {
 #ifdef WITH_FLOAT
-      FLUID_MEMCPY(left[i], &left_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + synth->cur], bytes);
-      FLUID_MEMCPY(right[i], &right_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + synth->cur], bytes);
+      FLUID_MEMCPY(left[i], &left_in[i * FLUID_SAMPLECOUNT + synth->cur], bytes);
+      FLUID_MEMCPY(right[i], &right_in[i * FLUID_SAMPLECOUNT + synth->cur], bytes);
 #else //WITH_FLOAT
       int j;
       for (j = 0; j < num; j++) {
-          left[i][j] = (float) left_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + j + synth->cur];
-          right[i][j] = (float) right_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + j + synth->cur];
+          left[i][j] = (float) left_in[i * FLUID_SAMPLECOUNT + j + synth->cur];
+          right[i][j] = (float) right_in[i * FLUID_SAMPLECOUNT + j + synth->cur];
       }
 #endif //WITH_FLOAT
     }
@@ -2985,20 +2984,20 @@ fluid_synth_nwrite_float(fluid_synth_t* synth, int len,
     {
 #ifdef WITH_FLOAT
       if(fx_left != NULL)
-        FLUID_MEMCPY(fx_left[i], &fx_left_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + synth->cur], bytes);
+        FLUID_MEMCPY(fx_left[i], &fx_left_in[i * FLUID_SAMPLECOUNT + synth->cur], bytes);
       
       if(fx_right != NULL)
-        FLUID_MEMCPY(fx_right[i], &fx_right_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + synth->cur], bytes);
+        FLUID_MEMCPY(fx_right[i], &fx_right_in[i * FLUID_SAMPLECOUNT + synth->cur], bytes);
 #else //WITH_FLOAT
       int j;
       if(fx_left != NULL) {
         for (j = 0; j < num; j++)
-          fx_left[i][j] = (float) fx_left_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + j + synth->cur];
+          fx_left[i][j] = (float) fx_left_in[i * FLUID_SAMPLECOUNT + j + synth->cur];
       }
       
       if(fx_right != NULL) {
         for (j = 0; j < num; j++)
-          fx_right[i][j] = (float) fx_right_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + j + synth->cur];
+          fx_right[i][j] = (float) fx_right_in[i * FLUID_SAMPLECOUNT + j + synth->cur];
       }
 #endif //WITH_FLOAT
     }
@@ -3021,13 +3020,13 @@ fluid_synth_nwrite_float(fluid_synth_t* synth, int len,
 
     for (i = 0; i < synth->audio_channels; i++) {
 #ifdef WITH_FLOAT
-      FLUID_MEMCPY(left[i] + count, &left_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT], bytes);
-      FLUID_MEMCPY(right[i] + count, &right_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT], bytes);
+      FLUID_MEMCPY(left[i] + count, &left_in[i * FLUID_SAMPLECOUNT], bytes);
+      FLUID_MEMCPY(right[i] + count, &right_in[i * FLUID_SAMPLECOUNT], bytes);
 #else //WITH_FLOAT
       int j;
       for (j = 0; j < num; j++) {
-          left[i][j + count] = (float) left_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + j];
-          right[i][j + count] = (float) right_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + j];
+          left[i][j + count] = (float) left_in[i * FLUID_SAMPLECOUNT + j];
+          right[i][j + count] = (float) right_in[i * FLUID_SAMPLECOUNT + j];
       }
 #endif //WITH_FLOAT
     }
@@ -3036,20 +3035,20 @@ fluid_synth_nwrite_float(fluid_synth_t* synth, int len,
     {
 #ifdef WITH_FLOAT
       if(fx_left != NULL)
-        FLUID_MEMCPY(fx_left[i] + count, &fx_left_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT], bytes);
+        FLUID_MEMCPY(fx_left[i] + count, &fx_left_in[i * FLUID_SAMPLECOUNT], bytes);
       
       if(fx_right != NULL)
-        FLUID_MEMCPY(fx_right[i] + count, &fx_right_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT], bytes);
+        FLUID_MEMCPY(fx_right[i] + count, &fx_right_in[i * FLUID_SAMPLECOUNT], bytes);
 #else //WITH_FLOAT
       int j;
       if(fx_left != NULL) {
         for (j = 0; j < num; j++)
-          fx_left[i][j + count] = (float) fx_left_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + j];
+          fx_left[i][j + count] = (float) fx_left_in[i * FLUID_SAMPLECOUNT + j];
       }
       
       if(fx_right != NULL) {
         for (j = 0; j < num; j++)
-          fx_right[i][j + count] = (float) fx_right_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + j];
+          fx_right[i][j + count] = (float) fx_right_in[i * FLUID_SAMPLECOUNT + j];
       }
 #endif //WITH_FLOAT
     }
@@ -3198,8 +3197,8 @@ fluid_synth_write_float(fluid_synth_t* synth, int len,
 	l = 0;
       }
 
-      left_out[j] = (float) left_in[0 * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + l];
-      right_out[k] = (float) right_in[0 * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + l];
+      left_out[j] = (float) left_in[0 * FLUID_SAMPLECOUNT + l];
+      right_out[k] = (float) right_in[0 * FLUID_SAMPLECOUNT + l];
   }
 
   synth->cur = l;
@@ -3301,8 +3300,8 @@ fluid_synth_write_s16(fluid_synth_t* synth, int len,
       cur = 0;
     }
 
-    left_sample = roundi (left_in[0 * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + cur] * 32766.0f + rand_table[0][di]);
-    right_sample = roundi (right_in[0 * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + cur] * 32766.0f + rand_table[1][di]);
+    left_sample = roundi (left_in[0 * FLUID_SAMPLECOUNT + cur] * 32766.0f + rand_table[0][di]);
+    right_sample = roundi (right_in[0 * FLUID_SAMPLECOUNT + cur] * 32766.0f + rand_table[1][di]);
 
     di++;
     if (di >= DITHER_SIZE) di = 0;
