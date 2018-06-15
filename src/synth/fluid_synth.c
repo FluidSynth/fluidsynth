@@ -496,7 +496,7 @@ struct _fluid_sample_timer_t
 /*
  * fluid_sample_timer_process - called when synth->ticks is updated
  */
-void fluid_sample_timer_process(fluid_synth_t* synth)
+static void fluid_sample_timer_process(fluid_synth_t* synth)
 {
 	fluid_sample_timer_t* st, *stnext;
 	long msec;
