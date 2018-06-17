@@ -28,9 +28,6 @@
 
 typedef struct _fluid_rvoice_mixer_t fluid_rvoice_mixer_t;
 
-#define FLUID_MIXER_MAX_BUFFERS_DEFAULT (8192/FLUID_BUFSIZE) 
-
-
 int fluid_rvoice_mixer_render(fluid_rvoice_mixer_t* mixer, int blockcount);
 int fluid_rvoice_mixer_get_bufs(fluid_rvoice_mixer_t* mixer, 
                                fluid_real_t** left, fluid_real_t** right);
