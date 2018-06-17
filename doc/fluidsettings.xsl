@@ -103,7 +103,14 @@ td
                     <th class="first-row">Type</th>
                     
                      <td class="cell-type first-row">
-                        <xsl:value-of select="type" />
+                        <xsl:choose>
+                            <xsl:when test="type = 'bool'">
+                                int (bool)
+                            </xsl:when>
+                            <xsl:otherwise>
+                                <xsl:value-of select="type" />
+                            </xsl:otherwise>
+                        </xsl:choose>
                      </td>
                   </tr>
                   
@@ -163,7 +170,7 @@ td
                               <xsl:value-of select="vals" />
                         </xsl:when>
                         <xsl:when test="type = 'bool'">
-                              1, "yes", 0, "no"
+                              1, 0
                         </xsl:when>
                         <xsl:otherwise>
                               <xsl:value-of select="min" />
