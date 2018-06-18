@@ -481,6 +481,9 @@ fluid_oss_audio_run2(void* d)
   /* it's as simple as that: */
   while (dev->cont)
   {
+      FLUID_MEMSET(left, 0, buffer_size * sizeof(float));
+      FLUID_MEMSET(right, 0, buffer_size * sizeof(float));
+      
     (*dev->callback)(dev->data, buffer_size, 0, NULL, 2, dev->buffers);
 
     fluid_synth_dither_s16 (&dither_index, buffer_size, left, right,

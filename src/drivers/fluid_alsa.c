@@ -396,6 +396,9 @@ static fluid_thread_return_t fluid_alsa_audio_run_float (void *d)
   if (dev->callback)
   {
     while (dev->cont) {
+      FLUID_MEMSET(left, 0, buffer_size * sizeof(float));
+      FLUID_MEMSET(right, 0, buffer_size * sizeof(float));
+      
       handle[0] = left;
       handle[1] = right;
 

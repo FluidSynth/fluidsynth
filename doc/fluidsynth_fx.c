@@ -38,7 +38,7 @@ struct fx_data_t {
  * zero, or the buffers will be filled with zero samples.
  */
 int fx_function(void* data, int len, 
-		int nin, float** in, 
+		int nfx, float** fx, 
 		int nout, float** out)
 {
 	struct fx_data_t* fx_data = (struct fx_data_t*) data;
@@ -47,9 +47,9 @@ int fx_function(void* data, int len,
 
 	/* Call the synthesizer to fill the output buffers with its
 	 * audio output. */
-	if (fluid_synth_process(fx_data->synth, len, nin, in, nout, out) != 0) {
+	if (fluid_synth_process(fx_data->synth, len, nfx, fx, nout, out) != FLUID_OK) {
 		/* Some error occured. Very unlikely to happen, though. */
-		return -1;
+		return FLUID_FAILED;
 	}
 
 	/* Apply your effects here. In this example, the gain is
@@ -61,7 +61,7 @@ int fx_function(void* data, int len,
 		}
 	}
 
-	return 0;
+	return FLUID_OK;
 }
 
 
