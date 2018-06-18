@@ -3104,8 +3104,10 @@ alias with buffers of \c fx.
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise.
  *
  * @parblock
- * @note Make sure to zero out the sample buffers before calling this
- * function as any synthesized audio is mixed (i.e. added) to the buffers.
+ * @note The owner of the sample buffers must zero them out before calling this
+ * function, because any synthesized audio is mixed (i.e. added) to the buffers.
+ * E.g. if fluid_synth_process() is called from a custom audio driver process function
+ * (see new_fluid_audio_driver2()), the audio driver takes care of zeroing the buffers.
  * @endparblock
  *
  * @parblock
