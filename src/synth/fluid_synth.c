@@ -2940,6 +2940,8 @@ fluid_synth_program_reset(fluid_synth_t* synth)
     
     fluid_synth_nwrite_float(synth, FramesToRender, mix_buf_l, mix_buf_r, fx_buf_l, fx_buf_r)
  * @endcode
+ *
+ * @deprecated fluid_synth_nwrite_float() is deprecated. Consider using the more powerful and flexible fluid_synth_process().
  */
 int
 fluid_synth_nwrite_float(fluid_synth_t* synth, int len,
