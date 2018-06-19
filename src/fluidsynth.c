@@ -287,6 +287,24 @@ fast_render_loop(fluid_settings_t* settings, fluid_synth_t* synth, fluid_player_
 
 /******************************************************************************
  * main
+ * Process initialization steps in the following order:
+ 
+    1)creating the settings.
+    2)reading/setting all options in command line.
+    3)creating the synth.
+    4)loading the soundfonts specified in command line 
+	  (multiple soundfonts loading is possible).
+    5)create the audio driver (if not fast rendering).
+    6)create the router.
+    7)create the midi driver connected to the router.
+    8)create a player and add it any midifile specified in command line.
+	  (multiple midifiles loading is possible).
+    9)loading a default soundfont if needed before starting the player.
+    10)create a command handler.
+    11)reading the configuration file and submit it to the command handler.
+    12)create a tcp shell if any requested.
+    13)create a synchronous user shell if interactive.
+    14)entering fast rendering loop if requested.
  */
 int main(int argc, char** argv)
 {
