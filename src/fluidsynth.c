@@ -62,7 +62,7 @@ void process_o_cmd_line_option(fluid_settings_t* settings, char* optarg)
   for (val = optarg; *val != '\0'; val++)
   {
     if (*val == '=')
-	{
+    {
       *val++ = 0;
       break;
     }
@@ -99,7 +99,7 @@ void process_o_cmd_line_option(fluid_settings_t* settings, char* optarg)
             || FLUID_STRCASECMP (val, "t") == 0)
         {
 		  ival = 1;
-		}
+        }
         else
         {
           ival = atoi (val);
@@ -108,7 +108,7 @@ void process_o_cmd_line_option(fluid_settings_t* settings, char* optarg)
       else
       {
         ival = atoi (val);
-	  }
+      }
 
       if (fluid_settings_setint (settings, optarg, ival) != FLUID_OK)
       {
@@ -243,7 +243,7 @@ settings_foreach_func (void *data, const char *name, int type)
       else
       {
         printf ("\n");
-	  }
+      }
       break;
     case FLUID_SET_TYPE:
       printf ("%-24s SET\n", name);
@@ -504,7 +504,7 @@ int main(int argc, char** argv)
         }
         else
         {
-		  fluid_settings_setstr(settings, "midi.driver", optarg);
+          fluid_settings_setstr(settings, "midi.driver", optarg);
         }
         break;
       case 'n':
@@ -527,7 +527,7 @@ int main(int argc, char** argv)
         }
         else
         {
-		  fluid_settings_setstr(settings, "audio.file.format", optarg);
+          fluid_settings_setstr(settings, "audio.file.format", optarg);
         }
         break;
       case 'o':
@@ -541,7 +541,7 @@ int main(int argc, char** argv)
         {
           fluid_settings_setint(settings, "synth.reverb.active", FALSE);
         }
-		else
+        else
         {
           fluid_settings_setint(settings, "synth.reverb.active", TRUE);
         }
@@ -569,7 +569,7 @@ int main(int argc, char** argv)
         }
         else
         {
-		  fluid_settings_setstr(settings, "audio.file.type", optarg);
+          fluid_settings_setstr(settings, "audio.file.type", optarg);
         }
         break;
       case 'V':
@@ -670,10 +670,10 @@ int main(int argc, char** argv)
       fprintf(stderr, "Failed to load the SoundFont %s\n", argv[i]);
     }
     else if (!fluid_is_midifile(argv[i]))
-	{
+    {
       fprintf (stderr, "Parameter '%s' not a SoundFont or MIDI file or error occurred identifying it.\n",
                argv[i]);
-	}
+    }
   }
 
   /* start the synthesis thread */
@@ -708,7 +708,7 @@ int main(int argc, char** argv)
                                     dump ? fluid_midi_dump_prerouter : fluid_midi_router_handle_midi_event,
                                     (void*) router);
     if (mdriver == NULL)
-	{
+    {
 	    fprintf(stderr, "Failed to create the MIDI thread; no MIDI input\n"
                         "will be available. You can access the synthesizer \n"
                         "through the console.\n");
@@ -719,7 +719,7 @@ int main(int argc, char** argv)
   for (i = arg1; i < argc; i++)
   {
     if ((argv[i][0] != '-') && fluid_is_midifile(argv[i]))
-	{
+    {
       if (player == NULL)
       {
         player = new_fluid_player(synth);
