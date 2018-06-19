@@ -98,7 +98,7 @@ void process_o_cmd_line_option(fluid_settings_t* settings, char* optarg)
             || FLUID_STRCASECMP (val, "true") == 0
             || FLUID_STRCASECMP (val, "t") == 0)
         {
-		  ival = 1;
+          ival = 1;
         }
         else
         {
@@ -321,8 +321,10 @@ int main(int argc, char** argv)
 
   print_welcome ();
 
+  /* create the settings */
   settings = new_fluid_settings();
 
+  /* reading / setting options from the command line */
 #ifdef GETOPT_SUPPORT	/* pre section of GETOPT supported argument handling */
   opterr = 0;
 
@@ -422,7 +424,7 @@ int main(int argc, char** argv)
         }
         else
         {
-		  fluid_settings_setstr(settings, "audio.driver", optarg);
+          fluid_settings_setstr(settings, "audio.driver", optarg);
         }
         break;
       case 'C':
@@ -644,10 +646,10 @@ int main(int argc, char** argv)
 
   if (fast_render)
   {
-    midi_in = 0;
-    interactive = 0;
+    midi_in = 0;		/* disable MIDI driver creation */
+    interactive = 0;	/* disable user shell creation */
 #ifdef NETWORK_SUPPORT
-    with_server = 0;
+    with_server = 0;	/* disable tcp server shell creation */
 #endif
     fluid_settings_setstr(settings, "player.timing-source", "sample");
     fluid_settings_setint(settings, "synth.lock-memory", 0);
@@ -737,12 +739,12 @@ int main(int argc, char** argv)
       fluid_player_add(player, argv[i]);
     }
   }
-
+  /* start the player */
   if (player != NULL)
   {
+    /* Try to load the default soundfont, if no soundfont specified */
     if (fluid_synth_get_sfont(synth, 0) == NULL)
     {
-      /* Try to load the default soundfont if no soundfont specified */
       char *s;
       if (fluid_settings_dupstr(settings, "synth.default-soundfont", &s) != FLUID_OK)
       {
@@ -759,6 +761,7 @@ int main(int argc, char** argv)
     fluid_player_play(player);
   }
 
+  /* try to load and execute the user or system configuration file */
   cmd_handler = new_fluid_cmd_handler(synth, router);
   if (cmd_handler == NULL)
   {
@@ -766,7 +769,6 @@ int main(int argc, char** argv)
     goto cleanup;
   }
   
-  /* try to load the user or system configuration */
   if (config_file != NULL) 
   {
     fluid_source(cmd_handler, config_file);
@@ -812,9 +814,9 @@ int main(int argc, char** argv)
      * 0.
      */
     fluid_settings_setstr(settings, "shell.prompt", dump ? "" : "> ");
-    fluid_usershell(settings, cmd_handler);
+    fluid_usershell(settings, cmd_handler); /* this is a synchronous shell */
   }
-
+  /* fast rendering audio file, if requested */ 
   if (fast_render)
   {
     char *filename;
