@@ -20,13 +20,17 @@
 
 #include "fluid_conv.h"
 
+#define FLUID_CENTS_HZ_SIZE     1200
+#define FLUID_VEL_CB_SIZE       128
+#define FLUID_CB_AMP_SIZE       1441
+#define FLUID_PAN_SIZE          1002
 
 /* conversion tables */
-fluid_real_t fluid_ct2hz_tab[FLUID_CENTS_HZ_SIZE];
-fluid_real_t fluid_cb2amp_tab[FLUID_CB_AMP_SIZE];
-fluid_real_t fluid_concave_tab[128];
-fluid_real_t fluid_convex_tab[128];
-fluid_real_t fluid_pan_tab[FLUID_PAN_SIZE];
+static fluid_real_t fluid_ct2hz_tab[FLUID_CENTS_HZ_SIZE];
+static fluid_real_t fluid_cb2amp_tab[FLUID_CB_AMP_SIZE];
+static fluid_real_t fluid_concave_tab[FLUID_VEL_CB_SIZE];
+static fluid_real_t fluid_convex_tab[FLUID_VEL_CB_SIZE];
+static fluid_real_t fluid_pan_tab[FLUID_PAN_SIZE];
 
 /*
  * void fluid_synth_init
@@ -57,19 +61,19 @@ fluid_conversion_config(void)
 
   /* concave unipolar positive transform curve */
   fluid_concave_tab[0] = 0.0;
-  fluid_concave_tab[127] = 1.0;
+  fluid_concave_tab[FLUID_VEL_CB_SIZE - 1] = 1.0;
 
   /* convex unipolar positive transform curve */
   fluid_convex_tab[0] = 0;
-  fluid_convex_tab[127] = 1.0;
+  fluid_convex_tab[FLUID_VEL_CB_SIZE - 1] = 1.0;
 
   /* There seems to be an error in the specs. The equations are
      implemented according to the pictures on SF2.01 page 73. */
 
-  for (i = 1; i < 127; i++) {
-    x = -20.0 / 96.0 * log((i * i) / (127.0 * 127.0)) / M_LN10;
+  for (i = 1; i < FLUID_VEL_CB_SIZE - 1; i++) {
+    x = (-200.0 / FLUID_PEAK_ATTENUATION) * log((i * i) / (fluid_real_t)((FLUID_VEL_CB_SIZE-1) * (FLUID_VEL_CB_SIZE-1))) / M_LN10;
     fluid_convex_tab[i] = (fluid_real_t) (1.0 - x);
-    fluid_concave_tab[127 - i] = (fluid_real_t) x;
+    fluid_concave_tab[(FLUID_VEL_CB_SIZE-1) - i] = (fluid_real_t) x;
   }
 
   /* initialize the pan conversion table */
@@ -299,7 +303,7 @@ fluid_concave(fluid_real_t val)
 {
   if (val < 0) {
     return 0;
-  } else if (val > 127) {
+  } else if (val >= FLUID_VEL_CB_SIZE) {
     return 1;
   }
   return fluid_concave_tab[(int) val];
@@ -313,7 +317,7 @@ fluid_convex(fluid_real_t val)
 {
   if (val < 0) {
     return 0;
-  } else if (val > 127) {
+  } else if (val >= FLUID_VEL_CB_SIZE) {
     return 1;
   }
   return fluid_convex_tab[(int) val];

@@ -233,6 +233,7 @@ typedef void (*fluid_rvoice_function_t)(void* obj, const fluid_rvoice_param_t pa
  */
 
 #define FLUID_BUFSIZE                64         /**< FluidSynth internal buffer size (in samples) */
+#define FLUID_MIXER_MAX_BUFFERS_DEFAULT (8192/FLUID_BUFSIZE) /**< Number of buffers that can be processed in one rendering run */
 #define FLUID_MAX_EVENTS_PER_BUFSIZE 1024       /**< Maximum queued MIDI events per #FLUID_BUFSIZE */
 #define FLUID_MAX_RETURN_EVENTS      1024       /**< Maximum queued synthesis thread return events */
 #define FLUID_MAX_EVENT_QUEUES       16         /**< Maximum number of unique threads queuing events */
@@ -335,10 +336,10 @@ do { strncpy(_dst,_src,_n); \
 #define M_LN10 2.3025850929940456840179914546844
 #endif
 
-#ifdef NDEBUG
-#define FLUID_ASSERT(a) 
-#else
+#ifdef DEBUG
 #define FLUID_ASSERT(a) g_assert(a)
+#else
+#define FLUID_ASSERT(a) 
 #endif
 
 #define FLUID_LIKELY G_LIKELY

@@ -93,7 +93,7 @@ static const unsigned int primes[] =
 
 static const unsigned int nprimes = FLUID_N_ELEMENTS(primes);
 
-unsigned int
+static unsigned int
 spaced_primes_closest (unsigned int num)
 {
   unsigned int i;
@@ -984,6 +984,7 @@ fluid_hashtable_foreach_remove_or_steal (fluid_hashtable_t *hashtable,
   return deleted;
 }
 
+#if 0
 /**
  * fluid_hashtable_foreach_remove:
  * @hashtable: a #fluid_hashtable_t.
@@ -1001,7 +1002,7 @@ fluid_hashtable_foreach_remove_or_steal (fluid_hashtable_t *hashtable,
  *
  * Return value: the number of key/value pairs removed.
  **/
-unsigned int
+static unsigned int
 fluid_hashtable_foreach_remove (fluid_hashtable_t *hashtable,
                                 fluid_hr_func_t func, void *user_data)
 {
@@ -1010,6 +1011,7 @@ fluid_hashtable_foreach_remove (fluid_hashtable_t *hashtable,
 
   return fluid_hashtable_foreach_remove_or_steal (hashtable, func, user_data, TRUE);
 }
+#endif
 
 /**
  * fluid_hashtable_foreach_steal:

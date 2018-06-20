@@ -3548,12 +3548,19 @@ fluid_cmd_handler_t* new_fluid_cmd_handler(fluid_synth_t* synth, fluid_midi_rout
   handler->synth = synth;
   handler->router = router;
 
-  if (synth != NULL) {
     for (i = 0; i < FLUID_N_ELEMENTS(fluid_commands); i++)
     {
+        const fluid_cmd_t* cmd = &fluid_commands[i];
+        int is_router_cmd = FLUID_STRCMP(cmd->topic, "router") == 0;
+        
+        if((is_router_cmd && router == NULL) || (!is_router_cmd && synth == NULL))
+        {
+            /* omit registering router and synth commands if they were not requested */
+            continue;
+        }
+        
         fluid_cmd_handler_register(handler, &fluid_commands[i]);
     }
-  }
 
   return handler;
 }

@@ -2,6 +2,7 @@ message( "\n**************************************************************\n"
          "Summary:" )
 
 message( "Build type:            " ${CMAKE_BUILD_TYPE} )
+message( "Install Prefix:        " ${CMAKE_INSTALL_PREFIX} )
 
 if ( LIBSNDFILE_SUPPORT )
   if ( LIBSNDFILE_HASVORBIS )

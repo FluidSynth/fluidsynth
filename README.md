@@ -20,6 +20,10 @@ can also play midifiles using a Soundfont.
 The place to look if you are looking for the latest information on
 FluidSynth is the web site at http://www.fluidsynth.org/.
 
+For documentation, please [see the links below](#documentation).
+
+For information on how to build FluidSynth from source, please [see our wiki page](https://github.com/FluidSynth/fluidsynth/wiki/BuildingWithCMake).
+
 
 ## Why did we do it
 
