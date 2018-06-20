@@ -59,8 +59,10 @@ void process_o_cmd_line_option(fluid_settings_t* settings, char* optarg)
   int hints;
   int ival;
 
-  for (val = optarg; *val != '\0'; val++) {
-    if (*val == '=') {
+  for (val = optarg; *val != '\0'; val++)
+  {
+    if (*val == '=')
+    {
       *val++ = 0;
       break;
     }
@@ -73,56 +75,75 @@ void process_o_cmd_line_option(fluid_settings_t* settings, char* optarg)
     return;
   }
 
-  if (FLUID_STRCMP (optarg, "") == 0) {
+  if (FLUID_STRCMP (optarg, "") == 0)
+  {
     fprintf (stderr, "Invalid -o option (name part is empty)\n");
     return;
   }
 
-  switch(fluid_settings_get_type(settings, optarg)){
-  case FLUID_NUM_TYPE:
-    if (fluid_settings_setnum (settings, optarg, atof (val)) != FLUID_OK)
-    {
-      fprintf (stderr, "Failed to set floating point parameter '%s'\n", optarg);
-      exit (1);
-    }
-    break;
-  case FLUID_INT_TYPE:
-    if (fluid_settings_get_hints (settings, optarg, &hints) == FLUID_OK
-        && hints & FLUID_HINT_TOGGLED)
-    {
-      if (FLUID_STRCASECMP (val, "yes") == 0
-          || FLUID_STRCASECMP (val, "true") == 0
-          || FLUID_STRCASECMP (val, "t") == 0)
-        ival = 1;
-      else ival = atoi (val);
-    }
-    else ival = atoi (val);
+  switch(fluid_settings_get_type(settings, optarg))
+  {
+    case FLUID_NUM_TYPE:
+      if (fluid_settings_setnum (settings, optarg, atof (val)) != FLUID_OK)
+      {
+        fprintf (stderr, "Failed to set floating point parameter '%s'\n", optarg);
+        exit (1);
+      }
+      break;
+    case FLUID_INT_TYPE:
+      if (fluid_settings_get_hints (settings, optarg, &hints) == FLUID_OK
+          && hints & FLUID_HINT_TOGGLED)
+      {
+        if (FLUID_STRCASECMP (val, "yes") == 0
+            || FLUID_STRCASECMP (val, "true") == 0
+            || FLUID_STRCASECMP (val, "t") == 0)
+        {
+          ival = 1;
+        }
+        else
+        {
+          ival = atoi (val);
+        }
+      }
+      else
+      {
+        ival = atoi (val);
+      }
 
-    if (fluid_settings_setint (settings, optarg, ival) != FLUID_OK)
-    {
-      fprintf (stderr, "Failed to set integer parameter '%s'\n", optarg);
+      if (fluid_settings_setint (settings, optarg, ival) != FLUID_OK)
+      {
+        fprintf (stderr, "Failed to set integer parameter '%s'\n", optarg);
+        exit (1);
+      }
+      break;
+    case FLUID_STR_TYPE:
+      if (fluid_settings_setstr (settings, optarg, val) != FLUID_OK)
+      {
+        fprintf (stderr, "Failed to set string parameter '%s'\n", optarg);
+        exit (1);
+      }
+      break;
+    default:
+      fprintf (stderr, "Setting parameter '%s' not found\n", optarg);
       exit (1);
-    }
-    break;
-  case FLUID_STR_TYPE:
-    if (fluid_settings_setstr (settings, optarg, val) != FLUID_OK)
-    {
-      fprintf (stderr, "Failed to set string parameter '%s'\n", optarg);
-      exit (1);
-    }
-    break;
-  default:
-    fprintf (stderr, "Setting parameter '%s' not found\n", optarg);
-    exit (1);
   }
 }
 
 static void
 print_pretty_int (int i)
 {
-  if (i == INT_MAX) printf ("MAXINT");
-  else if (i == INT_MIN) printf ("MININT");
-  else printf ("%d", i);
+  if (i == INT_MAX)
+  {
+    printf ("MAXINT");
+  }
+  else if (i == INT_MIN)
+  {
+    printf ("MININT");
+  }
+  else
+  {
+    printf ("%d", i);
+  }
 }
 
 typedef struct
@@ -140,8 +161,13 @@ settings_option_foreach_func (void *data, const char *name, const char *option)
   bag->curindex++;
 
   if (bag->curindex < bag->count)
+  {
     printf ("'%s',", option);
-  else printf ("'%s'", option);
+  }
+  else
+  {
+    printf ("'%s'", option);
+  }
 }
 
 /* fluid_settings_foreach function for displaying option help  "-o help" */
@@ -157,56 +183,71 @@ settings_foreach_func (void *data, const char *name, int type)
 
   switch (type)
   {
-  case FLUID_NUM_TYPE:
-    fluid_settings_getnum_range (settings, name, &dmin, &dmax);
-    fluid_settings_getnum_default (settings, name, &ddef);
-    printf ("%-24s FLOAT [min=%0.3f, max=%0.3f, def=%0.3f]\n",
-	    name, dmin, dmax, ddef);
-    break;
-  case FLUID_INT_TYPE:
-    fluid_settings_getint_range (settings, name, &imin, &imax);
-    fluid_settings_getint_default (settings, name, &idef);
-    fluid_settings_get_hints (settings, name, &hints);
+    case FLUID_NUM_TYPE:
+      fluid_settings_getnum_range (settings, name, &dmin, &dmax);
+      fluid_settings_getnum_default (settings, name, &ddef);
+      printf ("%-24s FLOAT [min=%0.3f, max=%0.3f, def=%0.3f]\n",
+              name, dmin, dmax, ddef);
+      break;
+    case FLUID_INT_TYPE:
+      fluid_settings_getint_range (settings, name, &imin, &imax);
+      fluid_settings_getint_default (settings, name, &idef);
+      fluid_settings_get_hints (settings, name, &hints);
 
-    if (!(hints & FLUID_HINT_TOGGLED))
-    {
-      printf ("%-24s INT   [min=", name);
-      print_pretty_int (imin);
-      printf (", max=");
-      print_pretty_int (imax);
-      printf (", def=");
-      print_pretty_int (idef);
-      printf ("]\n");
-    }
-    else printf ("%-24s BOOL  [def=%s]\n", name, idef ? "True" : "False");
-    break;
-  case FLUID_STR_TYPE:
-    printf ("%-24s STR", name);
-
-    fluid_settings_getstr_default (settings, name, &defstr);
-    count = fluid_settings_option_count (settings, name);
-
-    if (defstr || count > 0)
-    {
-      if (defstr && count > 0) printf ("   [def='%s' vals:", defstr);
-      else if (defstr) printf ("   [def='%s'", defstr);
-      else printf ("   [vals:");
-
-      if (count > 0)
+      if (!(hints & FLUID_HINT_TOGGLED))
       {
-        bag.count = count;
-        bag.curindex = 0;
-        fluid_settings_foreach_option (settings, name, &bag,
-                                       settings_option_foreach_func);
+        printf ("%-24s INT   [min=", name);
+        print_pretty_int (imin);
+        printf (", max=");
+        print_pretty_int (imax);
+        printf (", def=");
+        print_pretty_int (idef);
+        printf ("]\n");
       }
+      else
+      {
+        printf ("%-24s BOOL  [def=%s]\n", name, idef ? "True" : "False");
+      }
+      break;
+    case FLUID_STR_TYPE:
+      printf ("%-24s STR", name);
 
-      printf ("]\n");
-    }
-    else printf ("\n");
-    break;
-  case FLUID_SET_TYPE:
-    printf ("%-24s SET\n", name);
-    break;
+      fluid_settings_getstr_default (settings, name, &defstr);
+      count = fluid_settings_option_count (settings, name);
+
+      if (defstr || count > 0)
+      {
+        if (defstr && count > 0)
+        {
+		  printf ("   [def='%s' vals:", defstr);
+        }
+        else if (defstr)
+        {
+          printf ("   [def='%s'", defstr);
+        }
+        else
+        {
+          printf ("   [vals:");
+        }
+
+        if (count > 0)
+        {
+          bag.count = count;
+          bag.curindex = 0;
+          fluid_settings_foreach_option (settings, name, &bag,
+                                         settings_option_foreach_func);
+        }
+
+        printf ("]\n");
+      }
+      else
+      {
+        printf ("\n");
+      }
+      break;
+    case FLUID_SET_TYPE:
+      printf ("%-24s SET\n", name);
+      break;
   }
 }
 
@@ -229,17 +270,22 @@ fast_render_loop(fluid_settings_t* settings, fluid_synth_t* synth, fluid_player_
   fluid_file_renderer_t* renderer;
 
   renderer = new_fluid_file_renderer (synth);
-  if (!renderer) return;
+  if (!renderer)
+  {
+    return;
+  }
 
-  while (fluid_player_get_status(player) == FLUID_PLAYER_PLAYING) {
-    if (fluid_file_renderer_process_block(renderer) != FLUID_OK) {
+  while (fluid_player_get_status(player) == FLUID_PLAYER_PLAYING)
+  {
+    if (fluid_file_renderer_process_block(renderer) != FLUID_OK)
+    {
       break;
     }
   }
   delete_fluid_file_renderer(renderer);
 }
 
-/*
+/******************************************************************************
  * main
  * Process initialization steps in the following order:
  
@@ -270,7 +316,6 @@ int main(int argc, char** argv)
   int midi_in = 1;
   fluid_player_t* player = NULL;
   fluid_midi_router_t* router = NULL;
-  //fluid_sequencer_t* sequencer = NULL;
   fluid_midi_driver_t* mdriver = NULL;
   fluid_audio_driver_t* adriver = NULL;
   fluid_synth_t* synth = NULL;
@@ -301,7 +346,8 @@ int main(int argc, char** argv)
 #ifdef GETOPT_SUPPORT	/* pre section of GETOPT supported argument handling */
   opterr = 0;
 
-  while (1) {
+  while (1) 
+  {
     int option_index = 0;
 
     static struct option long_options[] = {
@@ -336,11 +382,13 @@ int main(int argc, char** argv)
     };
 
     c = getopt_long(argc, argv, optchars, long_options, &option_index);
-    if (c == -1) {
+    if (c == -1)
+    {
       break;
     }
 #else	/* "pre" section to non getopt argument handling */
-  for (i = 1; i < argc; i++) {
+  for (i = 1; i < argc; i++)
+  {
     char *optarg;
 
     /* Skip non switch arguments (assume they are file names) */
@@ -353,197 +401,222 @@ int main(int argc, char** argv)
     {
       if (++i >= argc)
       {
-	printf ("Option -%c requires an argument\n", c);
-	print_usage();
-	exit(0);
+        printf ("Option -%c requires an argument\n", c);
+        print_usage();
+        exit(0);
       }
       else
       {
-	optarg = argv[i];
-	if (optarg[0] == '-')
-	{
-	  printf ("Expected argument to option -%c found switch instead\n", c);
-	  print_usage();
-	  exit(0);
-	}
+        optarg = argv[i];
+        if (optarg[0] == '-')
+        {
+          printf ("Expected argument to option -%c found switch instead\n", c);
+          print_usage();
+          exit(0);
+        }
       }
     }
-    else optarg = "";
+    else
+    {
+      optarg = "";
+    }
 #endif
-
-    switch (c) {
+    switch (c)
+    {
 #ifdef GETOPT_SUPPORT
-    case 0:	/* shouldn't normally happen, a long option's flag is set to NULL */
-      printf ("option %s", long_options[option_index].name);
-      if (optarg) {
-	printf (" with arg %s", optarg);
-      }
-      printf ("\n");
-      break;
+      case 0:	/* shouldn't normally happen, a long option's flag is set to NULL */
+        printf ("option %s", long_options[option_index].name);
+        if (optarg)
+		{
+	      printf (" with arg %s", optarg);
+        }
+        printf ("\n");
+        break;
 #endif
-    case 'a':
-      if (FLUID_STRCMP (optarg, "help") == 0)
-      {
-        printf ("-a options (audio driver):\n   ");
-        show_settings_str_options (settings, "audio.driver");
-        exit (0);
-      }
-      else fluid_settings_setstr(settings, "audio.driver", optarg);
-      break;
-    case 'C':
-      if ((optarg != NULL) && ((FLUID_STRCMP(optarg, "0") == 0) || (FLUID_STRCMP(optarg, "no") == 0))) {
-	fluid_settings_setint(settings, "synth.chorus.active", FALSE);
-      } else {
-	fluid_settings_setint(settings, "synth.chorus.active", TRUE);
-      }
-      break;
-    case 'c':
-      fluid_settings_setint(settings, "audio.periods", atoi(optarg));
-      break;
-    case 'd':
-      dump = 1;
-      break;
-    case 'E':
-      if (FLUID_STRCMP (optarg, "help") == 0)
-      {
-        printf ("-E options (audio file byte order):\n   ");
-        show_settings_str_options (settings, "audio.file.endian");
+      case 'a':
+        if (FLUID_STRCMP (optarg, "help") == 0)
+        {
+          printf ("-a options (audio driver):\n   ");
+          show_settings_str_options (settings, "audio.driver");
+          exit (0);
+        }
+        else
+        {
+          fluid_settings_setstr(settings, "audio.driver", optarg);
+        }
+        break;
+      case 'C':
+        if ((optarg != NULL) && ((FLUID_STRCMP(optarg, "0") == 0) || (FLUID_STRCMP(optarg, "no") == 0)))
+        {
+          fluid_settings_setint(settings, "synth.chorus.active", FALSE);
+        } 
+        else
+        {
+          fluid_settings_setint(settings, "synth.chorus.active", TRUE);
+        }
+        break;
+      case 'c':
+        fluid_settings_setint(settings, "audio.periods", atoi(optarg));
+        break;
+      case 'd':
+        dump = 1;
+        break;
+      case 'E':
+        if (FLUID_STRCMP (optarg, "help") == 0)
+        {
+          printf ("-E options (audio file byte order):\n   ");
+          show_settings_str_options (settings, "audio.file.endian");
 
 #if LIBSNDFILE_SUPPORT
-        printf ("\nauto: Use audio file format's default endian byte order\n"
-                "cpu: Use CPU native byte order\n");
+          printf ("\nauto: Use audio file format's default endian byte order\n"
+                  "cpu: Use CPU native byte order\n");
 #else
-        printf ("\nNOTE: No libsndfile support!\n"
-                "cpu: Use CPU native byte order\n");
+          printf ("\nNOTE: No libsndfile support!\n"
+                  "cpu: Use CPU native byte order\n");
 #endif
-        exit (0);
-      }
-      else fluid_settings_setstr(settings, "audio.file.endian", optarg);
-      break;
-    case 'f':
-      config_file = optarg;
-      break;
-    case 'F':
-      fluid_settings_setstr(settings, "audio.file.name", optarg);
-      fast_render = 1;
-      break;
-    case 'G':
-      audio_groups = atoi(optarg);
-      break;
-    case 'g':
-      fluid_settings_setnum(settings, "synth.gain", atof(optarg));
-      break;
-    case 'h':
-      print_help(settings);
-      break;
-    case 'i':
-      interactive = 0;
-      break;
-    case 'j':
-      fluid_settings_setint(settings, "audio.jack.autoconnect", 1);
-      break;
-    case 'K':
-      fluid_settings_setint(settings, "synth.midi-channels", atoi(optarg));
-      break;
-    case 'L':
-      audio_channels = atoi(optarg);
-      fluid_settings_setint(settings, "synth.audio-channels", audio_channels);
-      break;
-    case 'l':			/* disable LASH */
+          exit (0);
+        }
+        else
+        {
+          fluid_settings_setstr(settings, "audio.file.endian", optarg);
+        }
+        break;
+      case 'f':
+        config_file = optarg;
+        break;
+      case 'F':
+        fluid_settings_setstr(settings, "audio.file.name", optarg);
+        fast_render = 1;
+        break;
+      case 'G':
+        audio_groups = atoi(optarg);
+        break;
+      case 'g':
+        fluid_settings_setnum(settings, "synth.gain", atof(optarg));
+        break;
+      case 'h':
+        print_help(settings);
+        break;
+      case 'i':
+        interactive = 0;
+        break;
+      case 'j':
+        fluid_settings_setint(settings, "audio.jack.autoconnect", 1);
+        break;
+      case 'K':
+        fluid_settings_setint(settings, "synth.midi-channels", atoi(optarg));
+        break;
+      case 'L':
+        audio_channels = atoi(optarg);
+        fluid_settings_setint(settings, "synth.audio-channels", audio_channels);
+        break;
+      case 'l':			/* disable LASH */
 #ifdef LASH_ENABLED
-      connect_lash = 0;
+        connect_lash = 0;
 #endif
-      break;
-    case 'm':
-      if (FLUID_STRCMP (optarg, "help") == 0)
-      {
-        printf ("-m options (MIDI driver):\n   ");
-        show_settings_str_options (settings, "midi.driver");
-        exit (0);
-      }
-      else fluid_settings_setstr(settings, "midi.driver", optarg);
-      break;
-    case 'n':
-      midi_in = 0;
-      break;
-    case 'O':
-      if (FLUID_STRCMP (optarg, "help") == 0)
-      {
-        printf ("-O options (audio file format):\n   ");
-        show_settings_str_options (settings, "audio.file.format");
+        break;
+      case 'm':
+        if (FLUID_STRCMP (optarg, "help") == 0)
+        {
+          printf ("-m options (MIDI driver):\n   ");
+          show_settings_str_options (settings, "midi.driver");
+          exit (0);
+        }
+        else
+        {
+          fluid_settings_setstr(settings, "midi.driver", optarg);
+        }
+        break;
+      case 'n':
+        midi_in = 0;
+        break;
+      case 'O':
+        if (FLUID_STRCMP (optarg, "help") == 0)
+        {
+          printf ("-O options (audio file format):\n   ");
+          show_settings_str_options (settings, "audio.file.format");
 
 #if LIBSNDFILE_SUPPORT
-        printf ("\ns8, s16, s24, s32: Signed PCM audio of the given number of bits\n");
-        printf ("float, double: 32 bit and 64 bit floating point audio\n");
-        printf ("u8: Unsigned 8 bit audio\n");
+          printf ("\ns8, s16, s24, s32: Signed PCM audio of the given number of bits\n");
+          printf ("float, double: 32 bit and 64 bit floating point audio\n");
+          printf ("u8: Unsigned 8 bit audio\n");
 #else
-        printf ("\nNOTE: No libsndfile support!\n");
+          printf ("\nNOTE: No libsndfile support!\n");
 #endif
-        exit (0);
-      }
-      else fluid_settings_setstr(settings, "audio.file.format", optarg);
-      break;
-    case 'o':
-      process_o_cmd_line_option(settings, optarg);
-      break;
-    case 'p' :
-      fluid_settings_setstr(settings, "midi.portname", optarg);
-      break;
-    case 'R':
-      if ((optarg != NULL) && ((FLUID_STRCMP(optarg, "0") == 0) || (FLUID_STRCMP(optarg, "no") == 0))) {
-	fluid_settings_setint(settings, "synth.reverb.active", FALSE);
-      } else {
-	fluid_settings_setint(settings, "synth.reverb.active", TRUE);
-      }
-      break;
-    case 'r':
-      fluid_settings_setnum(settings, "synth.sample-rate", atof(optarg));
-      break;
-    case 's':
+          exit (0);
+        }
+        else
+        {
+          fluid_settings_setstr(settings, "audio.file.format", optarg);
+        }
+        break;
+      case 'o':
+        process_o_cmd_line_option(settings, optarg);
+        break;
+      case 'p' :
+        fluid_settings_setstr(settings, "midi.portname", optarg);
+        break;
+      case 'R':
+        if ((optarg != NULL) && ((FLUID_STRCMP(optarg, "0") == 0) || (FLUID_STRCMP(optarg, "no") == 0)))
+        {
+          fluid_settings_setint(settings, "synth.reverb.active", FALSE);
+        }
+        else
+        {
+          fluid_settings_setint(settings, "synth.reverb.active", TRUE);
+        }
+        break;
+      case 'r':
+        fluid_settings_setnum(settings, "synth.sample-rate", atof(optarg));
+        break;
+      case 's':
 #ifdef NETWORK_SUPPORT
-      with_server = 1;
+        with_server = 1;
 #endif
-      break;
-    case 'T':
-      if (FLUID_STRCMP (optarg, "help") == 0)
-      {
-        printf ("-T options (audio file type):\n   ");
-        show_settings_str_options (settings, "audio.file.type");
+        break;
+      case 'T':
+        if (FLUID_STRCMP (optarg, "help") == 0)
+        {
+          printf ("-T options (audio file type):\n   ");
+          show_settings_str_options (settings, "audio.file.type");
 
 #if LIBSNDFILE_SUPPORT
-        printf ("\nauto: Determine type from file name extension, defaults to \"wav\"\n");
+          printf ("\nauto: Determine type from file name extension, defaults to \"wav\"\n");
 #else
-        printf ("\nNOTE: No libsndfile support!\n");
+          printf ("\nNOTE: No libsndfile support!\n");
 #endif
+          exit (0);
+        }
+        else
+        {
+          fluid_settings_setstr(settings, "audio.file.type", optarg);
+        }
+        break;
+      case 'V':
+        print_configure();
         exit (0);
-      }
-      else fluid_settings_setstr(settings, "audio.file.type", optarg);
-      break;
-    case 'V':
-      print_configure();
-      exit (0);
-      break;
-    case 'v':
-      fluid_settings_setint(settings, "synth.verbose", TRUE);
-      break;
-    case 'z':
-      fluid_settings_setint(settings, "audio.period-size", atoi(optarg));
-      break;
+        break;
+      case 'v':
+        fluid_settings_setint(settings, "synth.verbose", TRUE);
+        break;
+      case 'z':
+        fluid_settings_setint(settings, "audio.period-size", atoi(optarg));
+        break;
 #ifdef GETOPT_SUPPORT
-    case '?':
-      printf ("Unknown option %c\n", optopt);
-      print_usage();
-      exit(0);
-      break;
-    default:
-      printf ("?? getopt returned character code 0%o ??\n", c);
-      break;
+      case '?':
+        printf ("Unknown option %c\n", optopt);
+        print_usage();
+        exit(0);
+        break;
+      default:
+        printf ("?? getopt returned character code 0%o ??\n", c);
+        break;
 #else			/* Non getopt default case */
-    default:
-      printf ("Unknown switch '%c'\n", c);
-      print_usage();
-      exit(0);
-      break;
+      default:
+        printf ("Unknown switch '%c'\n", c);
+        print_usage();
+        exit(0);
+        break;
 #endif
     }	/* end of switch statement */
   }	/* end of loop */
@@ -569,10 +642,10 @@ int main(int argc, char** argv)
 #ifdef LASH_ENABLED
   /* connect to the lash server */
   if (connect_lash)
-    {
-      enabled_lash = fluid_lash_connect (lash_args);
-      fluid_settings_setint (settings, "lash.enable", enabled_lash ? 1 : 0);
-    }
+  {
+    enabled_lash = fluid_lash_connect (lash_args);
+    fluid_settings_setint (settings, "lash.enable", enabled_lash ? 1 : 0);
+  }
 #endif
 
   /* The 'groups' setting is relevant for LADSPA operation and channel mapping
@@ -580,7 +653,8 @@ int main(int argc, char** argv)
    * If not given, set number groups to number of audio channels, because
    * they are the same (there is nothing between synth output and 'sound card')
    */
-  if ((audio_groups == 0) && (audio_channels != 0)) {
+  if ((audio_groups == 0) && (audio_channels != 0))
+  {
       audio_groups = audio_channels;
   }
   if (audio_groups != 0)
@@ -601,77 +675,85 @@ int main(int argc, char** argv)
   
   /* create the synthesizer */
   synth = new_fluid_synth(settings);
-  if (synth == NULL) {
+  if (synth == NULL)
+  {
     fprintf(stderr, "Failed to create the synthesizer\n");
     exit(-1);
   }
 
   /* load the soundfonts (check that all non options are SoundFont or MIDI files) */
-  for (i = arg1; i < argc; i++) {
+  for (i = arg1; i < argc; i++)
+  {
     if (fluid_is_soundfont(argv[i]))
     {
       if (fluid_synth_sfload(synth, argv[i], 1) == -1)
-	fprintf(stderr, "Failed to load the SoundFont %s\n", argv[i]);
+      fprintf(stderr, "Failed to load the SoundFont %s\n", argv[i]);
     }
     else if (!fluid_is_midifile(argv[i]))
+    {
       fprintf (stderr, "Parameter '%s' not a SoundFont or MIDI file or error occurred identifying it.\n",
-	       argv[i]);
+               argv[i]);
+    }
   }
 
   /* start the synthesis thread */
-  if (!fast_render) {
+  if (!fast_render)
+  {
     adriver = new_fluid_audio_driver(settings, synth);
-    if (adriver == NULL) {
+    if (adriver == NULL)
+    {
       fprintf(stderr, "Failed to create the audio driver\n");
       goto cleanup;
     }
   }
 
-    router = new_fluid_midi_router(
-      settings,
-      dump ? fluid_midi_dump_postrouter : fluid_synth_handle_midi_event,
-      (void*)synth);
+  router = new_fluid_midi_router( settings,
+                                  dump ? fluid_midi_dump_postrouter : fluid_synth_handle_midi_event,
+                                  (void*)synth);
 
-    if (router == NULL) {
-      fprintf(stderr, "Failed to create the MIDI input router; no MIDI input\n"
-	      "will be available. You can access the synthesizer \n"
-	      "through the console.\n");
-    } 
+  if (router == NULL)
+  {
+    fprintf(stderr, "Failed to create the MIDI input router; no MIDI input\n"
+            "will be available. You can access the synthesizer \n"
+            "through the console.\n");
+  } 
 
   /* start the midi router and link it to the synth */
-  if (midi_in && router != NULL) {
+  if (midi_in && router != NULL)
+  {
     /* In dump mode, text output is generated for events going into and out of the router.
      * The example dump functions are put into the chain before and after the router..
      */
-    //sequencer = new_fluid_sequencer2(0);
-      mdriver = new_fluid_midi_driver(
-	settings,
-	dump ? fluid_midi_dump_prerouter : fluid_midi_router_handle_midi_event,
-	(void*) router);
-      if (mdriver == NULL) {
-	fprintf(stderr, "Failed to create the MIDI thread; no MIDI input\n"
-		"will be available. You can access the synthesizer \n"
-		"through the console.\n");
-      }
+    mdriver = new_fluid_midi_driver( settings,
+                                    dump ? fluid_midi_dump_prerouter : fluid_midi_router_handle_midi_event,
+                                    (void*) router);
+    if (mdriver == NULL)
+    {
+	    fprintf(stderr, "Failed to create the MIDI thread; no MIDI input\n"
+                        "will be available. You can access the synthesizer \n"
+                        "through the console.\n");
     }
+  }
 
   /* play the midi files, if any */
-  for (i = arg1; i < argc; i++) {
-    if ((argv[i][0] != '-') && fluid_is_midifile(argv[i])) {
-
-      if (player == NULL) {
-	player = new_fluid_player(synth);
-	if (player == NULL) {
-	  fprintf(stderr, "Failed to create the midifile player.\n"
-		  "Continuing without a player.\n");
-	  break;
-	}
-	if (router != NULL)
+  for (i = arg1; i < argc; i++)
+  {
+    if ((argv[i][0] != '-') && fluid_is_midifile(argv[i]))
     {
-	fluid_player_set_playback_callback(player, fluid_midi_router_handle_midi_event, router);
-    }
+      if (player == NULL)
+      {
+        player = new_fluid_player(synth);
+        if (player == NULL) 
+        {
+          fprintf(stderr, "Failed to create the midifile player.\n"
+		                  "Continuing without a player.\n");
+          break;
+        }
+        if (router != NULL)
+        {
+           fluid_player_set_playback_callback(player, fluid_midi_router_handle_midi_event, router);
+        }
       }
-
       fluid_player_add(player, argv[i]);
     }
   }
@@ -683,9 +765,13 @@ int main(int argc, char** argv)
     {
       char *s;
       if (fluid_settings_dupstr(settings, "synth.default-soundfont", &s) != FLUID_OK)
+      {
         s = NULL;
+      }
       if ((s != NULL) && (s[0] != '\0'))
+      {
         fluid_synth_sfload(synth, s, 1);
+      }
       
       FLUID_FREE(s);
     }
@@ -695,7 +781,8 @@ int main(int argc, char** argv)
 
   /* try to load and execute the user or system configuration file */
   cmd_handler = new_fluid_cmd_handler(synth, router);
-  if (cmd_handler == NULL) {
+  if (cmd_handler == NULL)
+  {
     fprintf(stderr, "Failed to create the command handler\n");
     goto cleanup;
   }
@@ -703,30 +790,39 @@ int main(int argc, char** argv)
   if (config_file != NULL) 
   {
     fluid_source(cmd_handler, config_file);
-  } else if (fluid_get_userconf(buf, sizeof(buf)) != NULL) {
+  }
+  else if (fluid_get_userconf(buf, sizeof(buf)) != NULL)
+  {
     fluid_source(cmd_handler, buf);
-  } else if (fluid_get_sysconf(buf, sizeof(buf)) != NULL) {
+  }
+  else if (fluid_get_sysconf(buf, sizeof(buf)) != NULL)
+  {
     fluid_source(cmd_handler, buf);
   }
   
   /* run the server, if requested */
 #ifdef NETWORK_SUPPORT
-  if (with_server) {
+  if (with_server)
+  {
     server = new_fluid_server(settings, synth, router);
-    if (server == NULL) {
+    if (server == NULL)
+    {
       fprintf(stderr, "Failed to create the server.\n"
-	     "Continuing without it.\n");
+                      "Continuing without it.\n");
     }
   }
 #endif
 
 #ifdef LASH_ENABLED
   if (enabled_lash)
+  {
     fluid_lash_create_thread (synth);
+  }
 #endif
 
   /* run the shell */
-  if (interactive) {
+  if (interactive)
+  {
     printf ("Type 'help' for help topics.\n\n");
 
     /* In dump mode we set the prompt to "". The UI cannot easily
@@ -742,14 +838,18 @@ int main(int argc, char** argv)
   if (fast_render)
   {
     char *filename;
-    if (player == NULL) {
+    if (player == NULL)
+    {
       fprintf(stderr, "No midi file specified!\n");
       goto cleanup;
     } 
 
     fluid_settings_dupstr (settings, "audio.file.name", &filename);
     printf ("Rendering audio to file '%s'..\n", filename);
-    if (filename) FLUID_FREE (filename);
+    if (filename)
+    {
+	  FLUID_FREE (filename);
+    }
 
     fast_render_loop(settings, synth, player);
   }
@@ -757,52 +857,59 @@ int main(int argc, char** argv)
  cleanup:
 
 #ifdef NETWORK_SUPPORT
-  if (server != NULL) {
+  if (server != NULL)
+  {
     /* if the user typed 'quit' in the shell, kill the server */
-    if (!interactive) {
+    if (!interactive)
+    {
       fluid_server_join(server);
     }
     delete_fluid_server(server);
   }
 #endif
 
-  if (cmd_handler != NULL) {
+  if (cmd_handler != NULL)
+  {
     delete_fluid_cmd_handler(cmd_handler);
   }
 
-  if (player != NULL) {
+  if (player != NULL)
+  {
     /* if the user typed 'quit' in the shell, stop the player */
-    if (interactive) {
+    if (interactive)
+    {
       fluid_player_stop(player);
     }
-    if (adriver != NULL || !fluid_settings_str_equal(settings, "player.timing-source", "sample")) {
+    if (adriver != NULL || !fluid_settings_str_equal(settings, "player.timing-source", "sample"))
+    {
       /* if no audio driver and sample timers are used, nothing makes the player advance */  
       fluid_player_join(player);
     }
     delete_fluid_player(player);
   }
 
-    if (mdriver) {
+  if (mdriver)
+  {
       delete_fluid_midi_driver(mdriver);
-    }
+  }
     
-  if (router) {
+  if (router)
+  {
     delete_fluid_midi_router(router);
   }
 
-  /*if (sequencer) {
-    delete_fluid_sequencer(sequencer);
-  }*/
-
-  if (adriver) {
+  if (adriver)
+  {
     delete_fluid_audio_driver(adriver);
   }
 
-  if (synth) {
+  if (synth)
+  {
     delete_fluid_synth(synth);
   }
 
-  if (settings) {
+  if (settings)
+  {
     delete_fluid_settings(settings);
   }
 
@@ -824,22 +931,22 @@ void
 print_welcome()
 {
   printf("FluidSynth runtime version %s\n"
-	 "Copyright (C) 2000-2018 Peter Hanappe and others.\n"
-	 "Distributed under the LGPL license.\n"
-	 "SoundFont(R) is a registered trademark of E-mu Systems, Inc.\n\n",
-	 fluid_version_str());
+     "Copyright (C) 2000-2018 Peter Hanappe and others.\n"
+     "Distributed under the LGPL license.\n"
+     "SoundFont(R) is a registered trademark of E-mu Systems, Inc.\n\n",
+     fluid_version_str());
 }
 
 void print_configure()
 {
-    puts("FluidSynth executable version " FLUIDSYNTH_VERSION);
-    puts("Sample type="
+  puts("FluidSynth executable version " FLUIDSYNTH_VERSION);
+  puts("Sample type="
 #ifdef WITH_FLOAT
-    "float"
+  "float"
 #else
-    "double"
+  "double"
 #endif
-    );
+  );
 }
 
 /*
@@ -858,66 +965,72 @@ print_help (fluid_settings_t *settings)
   printf("  fluidsynth [options] [soundfonts] [midifiles]\n");
   printf("Possible options:\n");
   printf(" -a, --audio-driver=[label]\n"
-	 "    The name of the audio driver to use.\n"
-	 "    Valid values: %s\n", audio_options ? audio_options : "ERROR");
+         "    The name of the audio driver to use.\n"
+         "    Valid values: %s\n", audio_options ? audio_options : "ERROR");
   printf(" -c, --audio-bufcount=[count]\n"
-	 "    Number of audio buffers\n");
+         "    Number of audio buffers\n");
   printf(" -C, --chorus\n"
-	 "    Turn the chorus on or off [0|1|yes|no, default = on]\n");
+         "    Turn the chorus on or off [0|1|yes|no, default = on]\n");
   printf(" -d, --dump\n"
-	 "    Dump incoming and outgoing MIDI events to stdout\n");
+         "    Dump incoming and outgoing MIDI events to stdout\n");
   printf(" -E, --audio-file-endian\n"
-	 "    Audio file endian for fast rendering or aufile driver (\"help\" for list)\n");
+         "    Audio file endian for fast rendering or aufile driver (\"help\" for list)\n");
   printf(" -f, --load-config\n"
-	 "    Load command configuration file (shell commands)\n");
+         "    Load command configuration file (shell commands)\n");
   printf(" -F, --fast-render=[file]\n"
-	 "    Render MIDI file to raw audio data and store in [file]\n");
+         "    Render MIDI file to raw audio data and store in [file]\n");
   printf(" -g, --gain\n"
-	 "    Set the master gain [0 < gain < 10, default = 0.2]\n");
+         "    Set the master gain [0 < gain < 10, default = 0.2]\n");
   printf(" -G, --audio-groups\n"
-	 "    Defines the number of LADSPA audio nodes\n");
+         "    Defines the number of LADSPA audio nodes\n");
   printf(" -h, --help\n"
-	 "    Print out this help summary\n");
+         "    Print out this help summary\n");
   printf(" -i, --no-shell\n"
-	 "    Don't read commands from the shell [default = yes]\n");
+         "    Don't read commands from the shell [default = yes]\n");
   printf(" -j, --connect-jack-outputs\n"
-	 "    Attempt to connect the jack outputs to the physical ports\n");
+         "    Attempt to connect the jack outputs to the physical ports\n");
   printf(" -K, --midi-channels=[num]\n"
-	 "    The number of midi channels [default = 16]\n");
+         "    The number of midi channels [default = 16]\n");
 #ifdef LASH_ENABLED
   printf(" -l, --disable-lash\n"
 	 "    Don't connect to LASH server\n");
 #endif
   printf(" -L, --audio-channels=[num]\n"
-	 "    The number of stereo audio channels [default = 1]\n");
+         "    The number of stereo audio channels [default = 1]\n");
   printf(" -m, --midi-driver=[label]\n"
-	 "    The name of the midi driver to use.\n"
-	 "    Valid values: %s\n", midi_options ? midi_options : "ERROR");
+         "    The name of the midi driver to use.\n"
+         "    Valid values: %s\n", midi_options ? midi_options : "ERROR");
   printf(" -n, --no-midi-in\n"
-	 "    Don't create a midi driver to read MIDI input events [default = yes]\n");
+         "    Don't create a midi driver to read MIDI input events [default = yes]\n");
   printf(" -o\n"
-	 "    Define a setting, -o name=value (\"-o help\" to dump current values)\n");
+         "    Define a setting, -o name=value (\"-o help\" to dump current values)\n");
   printf(" -O, --audio-file-format\n"
-	 "    Audio file format for fast rendering or aufile driver (\"help\" for list)\n");
+         "    Audio file format for fast rendering or aufile driver (\"help\" for list)\n");
   printf(" -p, --portname=[label]\n"
-	 "    Set MIDI port name (alsa_seq, coremidi drivers)\n");
+         "    Set MIDI port name (alsa_seq, coremidi drivers)\n");
   printf(" -r, --sample-rate\n"
-	 "    Set the sample rate\n");
+         "    Set the sample rate\n");
   printf(" -R, --reverb\n"
-	 "    Turn the reverb on or off [0|1|yes|no, default = on]\n");
+         "    Turn the reverb on or off [0|1|yes|no, default = on]\n");
   printf(" -s, --server\n"
-	 "    Start FluidSynth as a server process\n");
+         "    Start FluidSynth as a server process\n");
   printf(" -T, --audio-file-type\n"
-	 "    Audio file type for fast rendering or aufile driver (\"help\" for list)\n");
+         "    Audio file type for fast rendering or aufile driver (\"help\" for list)\n");
   printf(" -v, --verbose\n"
-	 "    Print out verbose messages about midi events\n");
+         "    Print out verbose messages about midi events\n");
   printf(" -V, --version\n"
-	 "    Show version of program\n");
+         "    Show version of program\n");
   printf(" -z, --audio-bufsize=[size]\n"
-	 "    Size of each audio buffer\n");
+         "    Size of each audio buffer\n");
 
-  if (audio_options) FLUID_FREE (audio_options);
-  if (midi_options) FLUID_FREE (midi_options);
+  if (audio_options)
+  {
+    FLUID_FREE (audio_options);
+  }
+  if (midi_options)
+  {
+    FLUID_FREE (midi_options);
+  }
 
   delete_fluid_settings (settings);
 
