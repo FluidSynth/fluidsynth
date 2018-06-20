@@ -241,6 +241,24 @@ fast_render_loop(fluid_settings_t* settings, fluid_synth_t* synth, fluid_player_
 
 /*
  * main
+ * Process initialization steps in the following order:
+ 
+    1)creating the settings.
+    2)reading/setting all options in command line.
+    3)creating the synth.
+    4)loading the soundfonts specified in command line 
+	  (multiple soundfonts loading is possible).
+    5)create the audio driver (if not fast rendering).
+    6)create the router.
+    7)create the midi driver connected to the router.
+    8)create a player and add it any midifile specified in command line.
+	  (multiple midifiles loading is possible).
+    9)loading a default soundfont if needed before starting the player.
+    10)create a command handler.
+    11)reading the configuration file and submit it to the command handler.
+    12)create a tcp shell if any requested.
+    13)create a synchronous user shell if interactive.
+    14)entering fast rendering loop if requested.
  */
 int main(int argc, char** argv)
 {
@@ -276,8 +294,10 @@ int main(int argc, char** argv)
 
   print_welcome ();
 
+  /* create the settings */
   settings = new_fluid_settings();
 
+  /* reading / setting options from the command line */
 #ifdef GETOPT_SUPPORT	/* pre section of GETOPT supported argument handling */
   opterr = 0;
 
@@ -568,11 +588,12 @@ int main(int argc, char** argv)
       fluid_settings_setint(settings, "synth.audio-groups", audio_groups);
   }
 
-  if (fast_render) {
-    midi_in = 0;
-    interactive = 0;
+  if (fast_render)
+  {
+    midi_in = 0;		/* disable MIDI driver creation */
+    interactive = 0;	/* disable user shell creation */
 #ifdef NETWORK_SUPPORT
-    with_server = 0;
+    with_server = 0;	/* disable tcp server shell creation */
 #endif
     fluid_settings_setstr(settings, "player.timing-source", "sample");
     fluid_settings_setint(settings, "synth.lock-memory", 0);
@@ -654,11 +675,12 @@ int main(int argc, char** argv)
       fluid_player_add(player, argv[i]);
     }
   }
-
-  if (player != NULL) {
-
-    if (fluid_synth_get_sfont(synth, 0) == NULL) {
-      /* Try to load the default soundfont if no soundfont specified */
+  /* start the player */
+  if (player != NULL)
+  {
+    /* Try to load the default soundfont, if no soundfont specified */
+    if (fluid_synth_get_sfont(synth, 0) == NULL)
+    {
       char *s;
       if (fluid_settings_dupstr(settings, "synth.default-soundfont", &s) != FLUID_OK)
         s = NULL;
@@ -671,14 +693,15 @@ int main(int argc, char** argv)
     fluid_player_play(player);
   }
 
+  /* try to load and execute the user or system configuration file */
   cmd_handler = new_fluid_cmd_handler(synth, router);
   if (cmd_handler == NULL) {
     fprintf(stderr, "Failed to create the command handler\n");
     goto cleanup;
   }
   
-  /* try to load the user or system configuration */
-  if (config_file != NULL) {
+  if (config_file != NULL) 
+  {
     fluid_source(cmd_handler, config_file);
   } else if (fluid_get_userconf(buf, sizeof(buf)) != NULL) {
     fluid_source(cmd_handler, buf);
@@ -713,10 +736,11 @@ int main(int argc, char** argv)
      * 0.
      */
     fluid_settings_setstr(settings, "shell.prompt", dump ? "" : "> ");
-    fluid_usershell(settings, cmd_handler);
+    fluid_usershell(settings, cmd_handler); /* this is a synchronous shell */
   }
-
-  if (fast_render) {
+  /* fast rendering audio file, if requested */ 
+  if (fast_render)
+  {
     char *filename;
     if (player == NULL) {
       fprintf(stderr, "No midi file specified!\n");
