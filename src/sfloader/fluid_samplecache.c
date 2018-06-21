@@ -69,9 +69,7 @@ static int fluid_get_file_modification_time(char *filename, time_t *modification
 
 /* PUBLIC INTERFACE */
 
-int fluid_samplecache_load(SFData *sf,
-                           unsigned int sample_start, unsigned int sample_end, int sample_type,
-                           int try_mlock, short **sample_data, char **sample_data24)
+int fluid_samplecache_load(SFData *sf, unsigned int sample_start, unsigned int sample_end, int sample_type, int try_mlock, short **sample_data, char **sample_data24)
 {
     fluid_samplecache_entry_t *entry;
     int ret;
@@ -173,10 +171,7 @@ unlock_exit:
 
 
 /* Private functions */
-static fluid_samplecache_entry_t *new_samplecache_entry(SFData *sf,
-                                                        unsigned int sample_start,
-                                                        unsigned int sample_end,
-                                                        int sample_type)
+static fluid_samplecache_entry_t *new_samplecache_entry(SFData *sf, unsigned int sample_start, unsigned int sample_end, int sample_type)
 {
     fluid_samplecache_entry_t *entry;
 
@@ -209,8 +204,8 @@ static fluid_samplecache_entry_t *new_samplecache_entry(SFData *sf,
     entry->sample_end = sample_end;
     entry->sample_type = sample_type;
 
-    entry->sample_count = fluid_sffile_read_sample_data(sf, sample_start, sample_end, sample_type,
-            &entry->sample_data, &entry->sample_data24);
+    entry->sample_count =
+    fluid_sffile_read_sample_data(sf, sample_start, sample_end, sample_type, &entry->sample_data, &entry->sample_data24);
     if (entry->sample_count < 0)
     {
         goto error_exit;
@@ -233,10 +228,7 @@ static void delete_samplecache_entry(fluid_samplecache_entry_t *entry)
     FLUID_FREE(entry);
 }
 
-static fluid_samplecache_entry_t *get_samplecache_entry(SFData *sf,
-                                                        unsigned int sample_start,
-                                                        unsigned int sample_end,
-                                                        int sample_type)
+static fluid_samplecache_entry_t *get_samplecache_entry(SFData *sf, unsigned int sample_start, unsigned int sample_end, int sample_type)
 {
     time_t mtime;
     fluid_list_t *entry_list;
@@ -253,15 +245,10 @@ static fluid_samplecache_entry_t *get_samplecache_entry(SFData *sf,
     {
         entry = (fluid_samplecache_entry_t *)fluid_list_get(entry_list);
 
-        if ((FLUID_STRCMP(sf->fname, entry->filename) == 0) &&
-            (mtime == entry->modification_time) &&
-            (sf->samplepos == entry->sf_samplepos) &&
-            (sf->samplesize == entry->sf_samplesize) &&
-            (sf->sample24pos == entry->sf_sample24pos) &&
-            (sf->sample24size == entry->sf_sample24size) &&
-            (sample_start == entry->sample_start) &&
-            (sample_end == entry->sample_end) &&
-            (sample_type == entry->sample_type))
+        if ((FLUID_STRCMP(sf->fname, entry->filename) == 0) && (mtime == entry->modification_time) &&
+            (sf->samplepos == entry->sf_samplepos) && (sf->samplesize == entry->sf_samplesize) &&
+            (sf->sample24pos == entry->sf_sample24pos) && (sf->sample24size == entry->sf_sample24size) &&
+            (sample_start == entry->sample_start) && (sample_end == entry->sample_end) && (sample_type == entry->sample_type))
         {
             return entry;
         }

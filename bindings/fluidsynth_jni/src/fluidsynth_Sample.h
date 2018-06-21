@@ -12,16 +12,14 @@ extern "C" {
  * Method:    newSample
  * Signature: (Ljava/lang/String;I)I
  */
-JNIEXPORT jint JNICALL Java_fluidsynth_Sample_newSample
-  (JNIEnv *, jobject, jstring, jint);
+JNIEXPORT jint JNICALL Java_fluidsynth_Sample_newSample(JNIEnv *, jobject, jstring, jint);
 
 /*
  * Class:     fluidsynth_Sample
  * Method:    deleteSample
  * Signature: (I)V
  */
-JNIEXPORT void JNICALL Java_fluidsynth_Sample_deleteSample
-  (JNIEnv *, jobject, jint);
+JNIEXPORT void JNICALL Java_fluidsynth_Sample_deleteSample(JNIEnv *, jobject, jint);
 
 #ifdef __cplusplus
 }

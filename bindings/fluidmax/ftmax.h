@@ -12,14 +12,14 @@
  *  modify it under the terms of the GNU General Public License
  *  as published by the Free Software Foundation; either version 2.1
  *  of the License, or (at your option) any later version.
- *  
+ *
  *  See file COPYING.LIB for further informations on licensing terms.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02110-1301, USA.
@@ -59,8 +59,8 @@ typedef method ftmax_method_t;
 
 #define ftmax_get_int(a) ((a)->a_w.w_long)
 #define ftmax_get_float(a) ((a)->a_w.w_float)
-#define ftmax_get_number_int(a) (((a)->a_type == A_LONG)? ((a)->a_w.w_long): (int)((a)->a_w.w_float))
-#define ftmax_get_number_float(a) (((a)->a_type == A_FLOAT)? (double)((a)->a_w.w_float): (double)((a)->a_w.w_long))
+#define ftmax_get_number_int(a) (((a)->a_type == A_LONG) ? ((a)->a_w.w_long) : (int)((a)->a_w.w_float))
+#define ftmax_get_number_float(a) (((a)->a_type == A_FLOAT) ? (double)((a)->a_w.w_float) : (double)((a)->a_w.w_long))
 #define ftmax_get_symbol(a) ((a)->a_w.w_sym)
 
 #define ftmax_set_int(a, v) ((a)->a_type = A_LONG, (a)->a_w.w_long = (v))
