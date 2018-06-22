@@ -552,11 +552,11 @@ void fluid_clear_fpe_i386(void)
 #endif // #else    (its POSIX)
 
 
-    /***************************************************************
-     *
-     *               Profiling (Linux, i586 only)
-     *
-     */
+/***************************************************************
+ *
+ *               Profiling (Linux, i586 only)
+ *
+ */
 
 #if WITH_PROFILING
 /* Profiling interface beetween profiling command shell and audio rendering API
@@ -787,8 +787,7 @@ void fluid_profiling_print_data(double sample_rate, fluid_ostream_t out)
                     /* note and release duration */
                     fluid_ostream_printf(out, " %s|%6d|%10.0f|%10.0f|%10.0f|\n",
                                          fluid_profile_data[i].description, /* code under profiling */
-                                         fluid_profile_data[i].n_voices / count,
-                                         fluid_profile_data[i].min,           /* minimum duration */
+                                         fluid_profile_data[i].n_voices / count, fluid_profile_data[i].min, /* minimum duration */
                                          fluid_profile_data[i].total / count, /* average duration */
                                          fluid_profile_data[i].max);          /* maximum duration */
                 }
@@ -935,11 +934,11 @@ void fluid_profile_start_stop(unsigned int end_ticks, short clear_data)
 
 #endif /* WITH_PROFILING */
 
-    /***************************************************************
-     *
-     *               Threads
-     *
-     */
+/***************************************************************
+ *
+ *               Threads
+ *
+ */
 
 #if OLD_GLIB_THREAD_API
 

@@ -234,7 +234,7 @@ static fluid_jack_client_t *new_fluid_jack_client(fluid_settings_t *settings, in
         goto error_recovery;
     }
 
-        /* tell the lash server our client name */
+    /* tell the lash server our client name */
 #ifdef LASH_ENABLED
     {
         int enable_lash = 0;

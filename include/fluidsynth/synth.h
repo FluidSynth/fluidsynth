@@ -280,8 +280,7 @@ enum fluid_iir_filter_flags
 {
     FLUID_IIR_Q_LINEAR = 1 << 0, /**< The Soundfont spec requires the filter Q to be interpreted in dB. If this flag is
                                     set the filter Q is instead assumed to be in a linear range */
-    FLUID_IIR_Q_ZERO_OFF = 1
-                           << 1, /**< If this flag the filter is switched off if Q == 0 (prior to any transformation) */
+    FLUID_IIR_Q_ZERO_OFF = 1 << 1, /**< If this flag the filter is switched off if Q == 0 (prior to any transformation) */
     FLUID_IIR_NO_GAIN_AMP = 1 << 2 /**< The Soundfont spec requires to correct the gain of the filter depending on the
                                       filter's Q. If this flag is set the filter gain will not be corrected. */
 };
@@ -323,8 +322,7 @@ enum fluid_channel_breath_flags
 enum fluid_basic_channel_modes
 {
     FLUID_CHANNEL_MODE_MASK =
-    (FLUID_CHANNEL_OMNI_OFF |
-     FLUID_CHANNEL_POLY_OFF), /**< Mask Poly and Omni bits of #fluid_channel_mode_flags, usually only used internally */
+    (FLUID_CHANNEL_OMNI_OFF | FLUID_CHANNEL_POLY_OFF), /**< Mask Poly and Omni bits of #fluid_channel_mode_flags, usually only used internally */
     FLUID_CHANNEL_MODE_OMNION_POLY =
     FLUID_CHANNEL_MODE_MASK & (~FLUID_CHANNEL_OMNI_OFF & ~FLUID_CHANNEL_POLY_OFF), /**< corresponds to MIDI mode 0 */
     FLUID_CHANNEL_MODE_OMNION_MONO =

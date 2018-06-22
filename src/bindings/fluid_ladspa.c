@@ -35,20 +35,23 @@
 #define FLUID_LADSPA_MAX_EFFECTS 100
 #define FLUID_LADSPA_MAX_NODES 100
 
-typedef enum _fluid_ladspa_state_t {
+typedef enum _fluid_ladspa_state_t
+{
     FLUID_LADSPA_INACTIVE = 0,
     FLUID_LADSPA_ACTIVE,
     FLUID_LADSPA_RUNNING
 
 } fluid_ladspa_state_t;
 
-typedef enum _fluid_ladspa_dir_t {
+typedef enum _fluid_ladspa_dir_t
+{
     FLUID_LADSPA_INPUT,
     FLUID_LADSPA_OUTPUT,
 
 } fluid_ladspa_dir_t;
 
-typedef enum _fluid_ladspa_node_type_t {
+typedef enum _fluid_ladspa_node_type_t
+{
     FLUID_LADSPA_NODE_AUDIO = 1,
     FLUID_LADSPA_NODE_CONTROL = 2,
     FLUID_LADSPA_NODE_EFFECT = 4,

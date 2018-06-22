@@ -1428,14 +1428,13 @@ void fluid_voice_add_mod(fluid_voice_t *voice, fluid_mod_t *mod, int mode)
      * sound card.  Discard them, maybe print a warning.
      */
 
-    if (((mod->flags1 & FLUID_MOD_CC) == 0) &&
-        ((mod->src1 != FLUID_MOD_NONE)                /* SF2.01 section 8.2.1: Constant value */
-         && (mod->src1 != FLUID_MOD_VELOCITY)         /* Note-on velocity */
-         && (mod->src1 != FLUID_MOD_KEY)              /* Note-on key number */
-         && (mod->src1 != FLUID_MOD_KEYPRESSURE)      /* Poly pressure */
-         && (mod->src1 != FLUID_MOD_CHANNELPRESSURE)  /* Channel pressure */
-         && (mod->src1 != FLUID_MOD_PITCHWHEEL)       /* Pitch wheel */
-         && (mod->src1 != FLUID_MOD_PITCHWHEELSENS))) /* Pitch wheel sensitivity */
+    if (((mod->flags1 & FLUID_MOD_CC) == 0) && ((mod->src1 != FLUID_MOD_NONE) /* SF2.01 section 8.2.1: Constant value */
+                                                && (mod->src1 != FLUID_MOD_VELOCITY)        /* Note-on velocity */
+                                                && (mod->src1 != FLUID_MOD_KEY)             /* Note-on key number */
+                                                && (mod->src1 != FLUID_MOD_KEYPRESSURE)     /* Poly pressure */
+                                                && (mod->src1 != FLUID_MOD_CHANNELPRESSURE) /* Channel pressure */
+                                                && (mod->src1 != FLUID_MOD_PITCHWHEEL)      /* Pitch wheel */
+                                                && (mod->src1 != FLUID_MOD_PITCHWHEELSENS))) /* Pitch wheel sensitivity */
     {
         FLUID_LOG(FLUID_WARN, "Ignoring invalid controller, using non-CC source %i.", mod->src1);
         return;

@@ -220,8 +220,7 @@ int fluid_rvoice_dsp_interpolate_linear(fluid_rvoice_dsp_t *voice, fluid_real_t 
     }
     else
     {
-        point = fluid_rvoice_get_float_sample(dsp_data, dsp_data24,
-                                              voice->end); /* duplicate end for samples no longer looping */
+        point = fluid_rvoice_get_float_sample(dsp_data, dsp_data24, voice->end); /* duplicate end for samples no longer looping */
     }
 
     while (1)
@@ -316,8 +315,7 @@ int fluid_rvoice_dsp_interpolate_4th_order(fluid_rvoice_dsp_t *voice, fluid_real
     if (voice->has_looped) /* set start_index and start point if looped or not */
     {
         start_index = voice->loopstart;
-        start_point =
-        fluid_rvoice_get_float_sample(dsp_data, dsp_data24, voice->loopend - 1); /* last point in loop (wrap around) */
+        start_point = fluid_rvoice_get_float_sample(dsp_data, dsp_data24, voice->loopend - 1); /* last point in loop (wrap around) */
     }
     else
     {
@@ -482,8 +480,7 @@ int fluid_rvoice_dsp_interpolate_7th_order(fluid_rvoice_dsp_t *voice, fluid_real
     else
     {
         start_index = voice->start;
-        start_points[0] =
-        fluid_rvoice_get_float_sample(dsp_data, dsp_data24, voice->start); /* just duplicate the start point */
+        start_points[0] = fluid_rvoice_get_float_sample(dsp_data, dsp_data24, voice->start); /* just duplicate the start point */
         start_points[1] = start_points[0];
         start_points[2] = start_points[0];
     }

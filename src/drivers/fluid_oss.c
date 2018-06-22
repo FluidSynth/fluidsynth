@@ -166,8 +166,7 @@ fluid_audio_driver_t *new_fluid_oss_audio_driver(fluid_settings_t *settings, flu
         goto error_recovery;
     }
 
-    if (fluid_settings_dupstr(settings, "audio.oss.device", &devname) != FLUID_OK ||
-        !devname) /* ++ alloc device name */
+    if (fluid_settings_dupstr(settings, "audio.oss.device", &devname) != FLUID_OK || !devname) /* ++ alloc device name */
     {
         devname = FLUID_STRDUP("/dev/dsp");
 

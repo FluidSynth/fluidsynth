@@ -128,8 +128,7 @@ static void fluid_rvoice_check_sample_sanity(fluid_rvoice_t *voice)
 
     /* make sure we have enough samples surrounding the loop */
     int min_index_loop = (int)voice->dsp.sample->start + FLUID_MIN_LOOP_PAD;
-    int max_index_loop =
-    (int)voice->dsp.sample->end - FLUID_MIN_LOOP_PAD + 1; /* 'end' is last valid sample, loopend can be + 1 */
+    int max_index_loop = (int)voice->dsp.sample->end - FLUID_MIN_LOOP_PAD + 1; /* 'end' is last valid sample, loopend can be + 1 */
     fluid_check_fpe("voice_check_sample_sanity start");
 
 #if 0

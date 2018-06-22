@@ -2016,8 +2016,7 @@ fluid_midi_parser_t *new_fluid_midi_parser()
         FLUID_LOG(FLUID_ERR, "Out of memory");
         return NULL;
     }
-    parser->status =
-    0; /* As long as the status is 0, the parser won't do anything -> no need to initialize all the fields. */
+    parser->status = 0; /* As long as the status is 0, the parser won't do anything -> no need to initialize all the fields. */
     return parser;
 }
 

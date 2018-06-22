@@ -28,7 +28,8 @@
 typedef struct _fluid_chorus_t fluid_chorus_t;
 
 /** Flags for fluid_chorus_set() */
-typedef enum {
+typedef enum
+{
     FLUID_CHORUS_SET_NR = 1 << 0,
     FLUID_CHORUS_SET_LEVEL = 1 << 1,
     FLUID_CHORUS_SET_SPEED = 1 << 2,

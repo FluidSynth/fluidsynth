@@ -57,7 +57,8 @@ FLUIDSYNTH_API int fluid_midi_event_set_lyrics(fluid_midi_event_t *evt, void *da
  * MIDI router rule type.
  * @since 1.1.0
  */
-typedef enum {
+typedef enum
+{
     FLUID_MIDI_ROUTER_RULE_NOTE,             /**< MIDI note rule */
     FLUID_MIDI_ROUTER_RULE_CC,               /**< MIDI controller rule */
     FLUID_MIDI_ROUTER_RULE_PROG_CHANGE,      /**< MIDI program change rule */

@@ -201,8 +201,7 @@ enum midi_sysex_tuning_msg_id
     MIDI_SYSEX_TUNING_OCTAVE_DUMP_1BYTE = 0x05,  /**< Octave tuning dump using 1 byte values (non-realtime) */
     MIDI_SYSEX_TUNING_OCTAVE_DUMP_2BYTE = 0x06,  /**< Octave tuning dump using 2 byte values (non-realtime) */
     MIDI_SYSEX_TUNING_NOTE_TUNE_BANK = 0x07,     /**< Tuning note change message (with bank, realtime/non-realtime) */
-    MIDI_SYSEX_TUNING_OCTAVE_TUNE_1BYTE =
-    0x08,                                      /**< Octave tuning message using 1 byte values (realtime/non-realtime) */
+    MIDI_SYSEX_TUNING_OCTAVE_TUNE_1BYTE = 0x08, /**< Octave tuning message using 1 byte values (realtime/non-realtime) */
     MIDI_SYSEX_TUNING_OCTAVE_TUNE_2BYTE = 0x09 /**< Octave tuning message using 2 byte values (realtime/non-realtime) */
 };
 

@@ -793,7 +793,7 @@ int main(int argc, char **argv)
         fluid_source(cmd_handler, buf);
     }
 
-        /* run the server, if requested */
+    /* run the server, if requested */
 #ifdef NETWORK_SUPPORT
     if (with_server)
     {

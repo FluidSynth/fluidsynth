@@ -28,7 +28,8 @@ typedef struct _fluid_revmodel_t fluid_revmodel_t;
 
 
 /** Flags for fluid_revmodel_set() */
-typedef enum {
+typedef enum
+{
     FLUID_REVMODEL_SET_ROOMSIZE = 1 << 0,
     FLUID_REVMODEL_SET_DAMPING = 1 << 1,
     FLUID_REVMODEL_SET_WIDTH = 1 << 2,

@@ -82,7 +82,8 @@ static const char idlist[] = { "RIFFLISTsfbkINFOsdtapdtaifilisngINAMiromiverICRD
 
 
 /* generator types */
-typedef enum {
+typedef enum
+{
     Gen_StartAddrOfs,
     Gen_EndAddrOfs,
     Gen_StartLoopAddrOfs,

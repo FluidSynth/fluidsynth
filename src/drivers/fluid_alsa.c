@@ -1053,7 +1053,7 @@ fluid_midi_driver_t *new_fluid_alsa_seq_driver(fluid_settings_t *settings, handl
         fluid_alsa_seq_autoconnect(dev, port_info);
     }
 
-        /* tell the lash server our client id */
+    /* tell the lash server our client id */
 #ifdef LASH_ENABLED
     {
         int enable_lash = 0;
