@@ -303,9 +303,13 @@ fluid_audio_driver_t *new_fluid_portaudio_driver(fluid_settings_t *settings, flu
     /* PortAudio section */
 
     /* Open an audio I/O stream. */
-    err = Pa_OpenStream(&dev->stream, NULL,                                      /* Input parameters */
-                        &outputParams,                                           /* Output parameters */
-                        sample_rate, period_size, paNoFlag, fluid_portaudio_run, /* callback */
+    err = Pa_OpenStream(&dev->stream,
+                        NULL,          /* Input parameters */
+                        &outputParams, /* Output parameters */
+                        sample_rate,
+                        period_size,
+                        paNoFlag,
+                        fluid_portaudio_run, /* callback */
                         dev);
 
     if (err != paNoError)

@@ -192,8 +192,14 @@ fluid_audio_driver_t *new_fluid_dart_audio_driver(fluid_settings_t *settings, fl
         dev->MixBuffers[i].ulBufferLength = dev->BufferParms.ulBufferSize;
         dev->MixBuffers[i].ulFlags = 0;
         dev->MixBuffers[i].ulUserParm = (ULONG)dev;
-        fluid_synth_write_s16(dev->synth, dev->MixBuffers[i].ulBufferLength / dev->frame_size,
-                              dev->MixBuffers[i].pBuffer, 0, 2, dev->MixBuffers[i].pBuffer, 1, 2);
+        fluid_synth_write_s16(dev->synth,
+                              dev->MixBuffers[i].ulBufferLength / dev->frame_size,
+                              dev->MixBuffers[i].pBuffer,
+                              0,
+                              2,
+                              dev->MixBuffers[i].pBuffer,
+                              1,
+                              2);
     }
 
     /* Write buffers to kick off the amp mixer.
@@ -242,8 +248,7 @@ static LONG APIENTRY fluid_dart_audio_run(ULONG ulStatus, PMCI_MIX_BUFFER pBuffe
         case MIX_STREAM_ERROR | MIX_WRITE_COMPLETE: /* error occur in device */
         case MIX_WRITE_COMPLETE:                    /* for playback  */
             FLUID_MEMSET(pBuffer->pBuffer, 0, pBuffer->ulBufferLength);
-            fluid_synth_write_s16(dev->synth, pBuffer->ulBufferLength / dev->frame_size, pBuffer->pBuffer, 0, 2,
-                                  pBuffer->pBuffer, 1, 2);
+            fluid_synth_write_s16(dev->synth, pBuffer->ulBufferLength / dev->frame_size, pBuffer->pBuffer, 0, 2, pBuffer->pBuffer, 1, 2);
             dev->MixSetupParms.pmixWrite(dev->MixSetupParms.ulMixHandle, pBuffer, 1);
             break;
     }

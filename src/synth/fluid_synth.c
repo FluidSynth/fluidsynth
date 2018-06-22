@@ -319,16 +319,18 @@ static void fluid_synth_init(void)
      * the specs say, D=1) for the secondary source.
      * So if we change the polarity to 'positive', one of the best free sound fonts works...
      */
-    fluid_mod_set_source1(&default_vel2filter_mod, FLUID_MOD_VELOCITY, /* Index=2 */
-                          FLUID_MOD_GC                                 /* CC=0 */
-                          | FLUID_MOD_LINEAR                           /* type=0 */
-                          | FLUID_MOD_UNIPOLAR                         /* P=0 */
-                          | FLUID_MOD_NEGATIVE                         /* D=1 */
+    fluid_mod_set_source1(&default_vel2filter_mod,
+                          FLUID_MOD_VELOCITY,  /* Index=2 */
+                          FLUID_MOD_GC         /* CC=0 */
+                          | FLUID_MOD_LINEAR   /* type=0 */
+                          | FLUID_MOD_UNIPOLAR /* P=0 */
+                          | FLUID_MOD_NEGATIVE /* D=1 */
     );
-    fluid_mod_set_source2(&default_vel2filter_mod, FLUID_MOD_VELOCITY, /* Index=2 */
-                          FLUID_MOD_GC                                 /* CC=0 */
-                          | FLUID_MOD_SWITCH                           /* type=3 */
-                          | FLUID_MOD_UNIPOLAR                         /* P=0 */
+    fluid_mod_set_source2(&default_vel2filter_mod,
+                          FLUID_MOD_VELOCITY,  /* Index=2 */
+                          FLUID_MOD_GC         /* CC=0 */
+                          | FLUID_MOD_SWITCH   /* type=3 */
+                          | FLUID_MOD_UNIPOLAR /* P=0 */
                           // do not remove       | FLUID_MOD_NEGATIVE                         /* D=1 */
                           | FLUID_MOD_POSITIVE /* D=0 */
     );
@@ -337,11 +339,12 @@ static void fluid_synth_init(void)
 
 
     /* SF2.01 page 53 section 8.4.3: MIDI Channel pressure to Vibrato LFO pitch depth */
-    fluid_mod_set_source1(&default_at2viblfo_mod, FLUID_MOD_CHANNELPRESSURE, /* Index=13 */
-                          FLUID_MOD_GC                                       /* CC=0 */
-                          | FLUID_MOD_LINEAR                                 /* type=0 */
-                          | FLUID_MOD_UNIPOLAR                               /* P=0 */
-                          | FLUID_MOD_POSITIVE                               /* D=0 */
+    fluid_mod_set_source1(&default_at2viblfo_mod,
+                          FLUID_MOD_CHANNELPRESSURE, /* Index=13 */
+                          FLUID_MOD_GC               /* CC=0 */
+                          | FLUID_MOD_LINEAR         /* type=0 */
+                          | FLUID_MOD_UNIPOLAR       /* P=0 */
+                          | FLUID_MOD_POSITIVE       /* D=0 */
     );
     fluid_mod_set_source2(&default_at2viblfo_mod, 0, 0);           /* no second source */
     fluid_mod_set_dest(&default_at2viblfo_mod, GEN_VIBLFOTOPITCH); /* Target: Vib. LFO => pitch */
@@ -349,11 +352,12 @@ static void fluid_synth_init(void)
 
 
     /* SF2.01 page 53 section 8.4.4: Mod wheel (Controller 1) to Vibrato LFO pitch depth */
-    fluid_mod_set_source1(&default_mod2viblfo_mod, MODULATION_MSB, /* Index=1 */
-                          FLUID_MOD_CC                             /* CC=1 */
-                          | FLUID_MOD_LINEAR                       /* type=0 */
-                          | FLUID_MOD_UNIPOLAR                     /* P=0 */
-                          | FLUID_MOD_POSITIVE                     /* D=0 */
+    fluid_mod_set_source1(&default_mod2viblfo_mod,
+                          MODULATION_MSB,      /* Index=1 */
+                          FLUID_MOD_CC         /* CC=1 */
+                          | FLUID_MOD_LINEAR   /* type=0 */
+                          | FLUID_MOD_UNIPOLAR /* P=0 */
+                          | FLUID_MOD_POSITIVE /* D=0 */
     );
     fluid_mod_set_source2(&default_mod2viblfo_mod, 0, 0);           /* no second source */
     fluid_mod_set_dest(&default_mod2viblfo_mod, GEN_VIBLFOTOPITCH); /* Target: Vib. LFO => pitch */
@@ -361,11 +365,12 @@ static void fluid_synth_init(void)
 
 
     /* SF2.01 page 55 section 8.4.5: MIDI continuous controller 7 to initial attenuation*/
-    fluid_mod_set_source1(&default_att_mod, VOLUME_MSB, /* index=7 */
-                          FLUID_MOD_CC                  /* CC=1 */
-                          | FLUID_MOD_CONCAVE           /* type=1 */
-                          | FLUID_MOD_UNIPOLAR          /* P=0 */
-                          | FLUID_MOD_NEGATIVE          /* D=1 */
+    fluid_mod_set_source1(&default_att_mod,
+                          VOLUME_MSB,          /* index=7 */
+                          FLUID_MOD_CC         /* CC=1 */
+                          | FLUID_MOD_CONCAVE  /* type=1 */
+                          | FLUID_MOD_UNIPOLAR /* P=0 */
+                          | FLUID_MOD_NEGATIVE /* D=1 */
     );
     fluid_mod_set_source2(&default_att_mod, 0, 0);                  /* No second source */
     fluid_mod_set_dest(&default_att_mod, GEN_ATTENUATION);          /* Target: Initial attenuation */
@@ -373,11 +378,12 @@ static void fluid_synth_init(void)
 
 
     /* SF2.01 page 55 section 8.4.6 MIDI continuous controller 10 to Pan Position */
-    fluid_mod_set_source1(&default_pan_mod, PAN_MSB, /* index=10 */
-                          FLUID_MOD_CC               /* CC=1 */
-                          | FLUID_MOD_LINEAR         /* type=0 */
-                          | FLUID_MOD_BIPOLAR        /* P=1 */
-                          | FLUID_MOD_POSITIVE       /* D=0 */
+    fluid_mod_set_source1(&default_pan_mod,
+                          PAN_MSB,             /* index=10 */
+                          FLUID_MOD_CC         /* CC=1 */
+                          | FLUID_MOD_LINEAR   /* type=0 */
+                          | FLUID_MOD_BIPOLAR  /* P=1 */
+                          | FLUID_MOD_POSITIVE /* D=0 */
     );
     fluid_mod_set_source2(&default_pan_mod, 0, 0); /* No second source */
     fluid_mod_set_dest(&default_pan_mod, GEN_PAN); /* Target: pan */
@@ -388,11 +394,12 @@ static void fluid_synth_init(void)
 
 
     /* SF2.01 page 55 section 8.4.7: MIDI continuous controller 11 to initial attenuation*/
-    fluid_mod_set_source1(&default_expr_mod, EXPRESSION_MSB, /* index=11 */
-                          FLUID_MOD_CC                       /* CC=1 */
-                          | FLUID_MOD_CONCAVE                /* type=1 */
-                          | FLUID_MOD_UNIPOLAR               /* P=0 */
-                          | FLUID_MOD_NEGATIVE               /* D=1 */
+    fluid_mod_set_source1(&default_expr_mod,
+                          EXPRESSION_MSB,      /* index=11 */
+                          FLUID_MOD_CC         /* CC=1 */
+                          | FLUID_MOD_CONCAVE  /* type=1 */
+                          | FLUID_MOD_UNIPOLAR /* P=0 */
+                          | FLUID_MOD_NEGATIVE /* D=1 */
     );
     fluid_mod_set_source2(&default_expr_mod, 0, 0);                  /* No second source */
     fluid_mod_set_dest(&default_expr_mod, GEN_ATTENUATION);          /* Target: Initial attenuation */
@@ -400,11 +407,12 @@ static void fluid_synth_init(void)
 
 
     /* SF2.01 page 55 section 8.4.8: MIDI continuous controller 91 to Reverb send */
-    fluid_mod_set_source1(&default_reverb_mod, EFFECTS_DEPTH1, /* index=91 */
-                          FLUID_MOD_CC                         /* CC=1 */
-                          | FLUID_MOD_LINEAR                   /* type=0 */
-                          | FLUID_MOD_UNIPOLAR                 /* P=0 */
-                          | FLUID_MOD_POSITIVE                 /* D=0 */
+    fluid_mod_set_source1(&default_reverb_mod,
+                          EFFECTS_DEPTH1,      /* index=91 */
+                          FLUID_MOD_CC         /* CC=1 */
+                          | FLUID_MOD_LINEAR   /* type=0 */
+                          | FLUID_MOD_UNIPOLAR /* P=0 */
+                          | FLUID_MOD_POSITIVE /* D=0 */
     );
     fluid_mod_set_source2(&default_reverb_mod, 0, 0);        /* No second source */
     fluid_mod_set_dest(&default_reverb_mod, GEN_REVERBSEND); /* Target: Reverb send */
@@ -412,11 +420,12 @@ static void fluid_synth_init(void)
 
 
     /* SF2.01 page 55 section 8.4.9: MIDI continuous controller 93 to Chorus send */
-    fluid_mod_set_source1(&default_chorus_mod, EFFECTS_DEPTH3, /* index=93 */
-                          FLUID_MOD_CC                         /* CC=1 */
-                          | FLUID_MOD_LINEAR                   /* type=0 */
-                          | FLUID_MOD_UNIPOLAR                 /* P=0 */
-                          | FLUID_MOD_POSITIVE                 /* D=0 */
+    fluid_mod_set_source1(&default_chorus_mod,
+                          EFFECTS_DEPTH3,      /* index=93 */
+                          FLUID_MOD_CC         /* CC=1 */
+                          | FLUID_MOD_LINEAR   /* type=0 */
+                          | FLUID_MOD_UNIPOLAR /* P=0 */
+                          | FLUID_MOD_POSITIVE /* D=0 */
     );
     fluid_mod_set_source2(&default_chorus_mod, 0, 0);        /* No second source */
     fluid_mod_set_dest(&default_chorus_mod, GEN_CHORUSSEND); /* Target: Chorus */
@@ -424,28 +433,31 @@ static void fluid_synth_init(void)
 
 
     /* SF2.01 page 57 section 8.4.10 MIDI Pitch Wheel to Initial Pitch ... */
-    fluid_mod_set_source1(&default_pitch_bend_mod, FLUID_MOD_PITCHWHEEL, /* Index=14 */
-                          FLUID_MOD_GC                                   /* CC =0 */
-                          | FLUID_MOD_LINEAR                             /* type=0 */
-                          | FLUID_MOD_BIPOLAR                            /* P=1 */
-                          | FLUID_MOD_POSITIVE                           /* D=0 */
+    fluid_mod_set_source1(&default_pitch_bend_mod,
+                          FLUID_MOD_PITCHWHEEL, /* Index=14 */
+                          FLUID_MOD_GC          /* CC =0 */
+                          | FLUID_MOD_LINEAR    /* type=0 */
+                          | FLUID_MOD_BIPOLAR   /* P=1 */
+                          | FLUID_MOD_POSITIVE  /* D=0 */
     );
-    fluid_mod_set_source2(&default_pitch_bend_mod, FLUID_MOD_PITCHWHEELSENS, /* Index = 16 */
-                          FLUID_MOD_GC                                       /* CC=0 */
-                          | FLUID_MOD_LINEAR                                 /* type=0 */
-                          | FLUID_MOD_UNIPOLAR                               /* P=0 */
-                          | FLUID_MOD_POSITIVE                               /* D=0 */
+    fluid_mod_set_source2(&default_pitch_bend_mod,
+                          FLUID_MOD_PITCHWHEELSENS, /* Index = 16 */
+                          FLUID_MOD_GC              /* CC=0 */
+                          | FLUID_MOD_LINEAR        /* type=0 */
+                          | FLUID_MOD_UNIPOLAR      /* P=0 */
+                          | FLUID_MOD_POSITIVE      /* D=0 */
     );
     fluid_mod_set_dest(&default_pitch_bend_mod, GEN_PITCH); /* Destination: Initial pitch */
     fluid_mod_set_amount(&default_pitch_bend_mod, 12700.0); /* Amount: 12700 cents */
 
 
     /* Non-standard MIDI continuous controller 8 to channel stereo balance */
-    fluid_mod_set_source1(&custom_balance_mod, BALANCE_MSB, /* Index=8 */
-                          FLUID_MOD_CC                      /* CC=1 */
-                          | FLUID_MOD_CONCAVE               /* type=1 */
-                          | FLUID_MOD_BIPOLAR               /* P=1 */
-                          | FLUID_MOD_POSITIVE              /* D=0 */
+    fluid_mod_set_source1(&custom_balance_mod,
+                          BALANCE_MSB,         /* Index=8 */
+                          FLUID_MOD_CC         /* CC=1 */
+                          | FLUID_MOD_CONCAVE  /* type=1 */
+                          | FLUID_MOD_BIPOLAR  /* P=1 */
+                          | FLUID_MOD_POSITIVE /* D=0 */
     );
     fluid_mod_set_source2(&custom_balance_mod, 0, 0);
     fluid_mod_set_dest(&custom_balance_mod, GEN_CUSTOM_BALANCE); /* Destination: stereo balance */
@@ -649,14 +661,16 @@ fluid_synth_t *new_fluid_synth(fluid_settings_t *settings)
         int n = synth->midi_channels / 16;
         synth->midi_channels = (n + 1) * 16;
         fluid_settings_setint(settings, "synth.midi-channels", synth->midi_channels);
-        FLUID_LOG(FLUID_WARN, "Requested number of MIDI channels is not a multiple of 16. "
-                              "I'll increase the number of channels to the next multiple.");
+        FLUID_LOG(FLUID_WARN,
+                  "Requested number of MIDI channels is not a multiple of 16. "
+                  "I'll increase the number of channels to the next multiple.");
     }
 
     if (synth->audio_channels < 1)
     {
-        FLUID_LOG(FLUID_WARN, "Requested number of audio channels is smaller than 1. "
-                              "Changing this setting to 1.");
+        FLUID_LOG(FLUID_WARN,
+                  "Requested number of audio channels is smaller than 1. "
+                  "Changing this setting to 1.");
         synth->audio_channels = 1;
     }
     else if (synth->audio_channels > 128)
@@ -670,8 +684,9 @@ fluid_synth_t *new_fluid_synth(fluid_settings_t *settings)
 
     if (synth->audio_groups < 1)
     {
-        FLUID_LOG(FLUID_WARN, "Requested number of audio groups is smaller than 1. "
-                              "Changing this setting to 1.");
+        FLUID_LOG(FLUID_WARN,
+                  "Requested number of audio groups is smaller than 1. "
+                  "Changing this setting to 1.");
         synth->audio_groups = 1;
     }
     else if (synth->audio_groups > 128)
@@ -727,8 +742,8 @@ fluid_synth_t *new_fluid_synth(fluid_settings_t *settings)
 
     /* Allocate event queue for rvoice mixer */
     /* In an overflow situation, a new voice takes about 50 spaces in the queue! */
-    synth->eventhandler = new_fluid_rvoice_eventhandler(synth->polyphony * 64, synth->polyphony, nbuf, synth->effects_channels,
-                                                        synth->sample_rate, synth->cores - 1, prio_level);
+    synth->eventhandler = new_fluid_rvoice_eventhandler(
+    synth->polyphony * 64, synth->polyphony, nbuf, synth->effects_channels, synth->sample_rate, synth->cores - 1, prio_level);
 
     if (synth->eventhandler == NULL)
     {
@@ -1072,8 +1087,16 @@ static int fluid_synth_noteon_LOCAL(fluid_synth_t *synth, int chan, int key, int
     {
         if (synth->verbose)
         {
-            FLUID_LOG(FLUID_INFO, "noteon\t%d\t%d\t%d\t%05d\t%.3f\t%.3f\t%.3f\t%d\t%s", chan, key, vel, 0,
-                      fluid_synth_get_ticks(synth) / 44100.0f, (fluid_curtime() - synth->start) / 1000.0f, 0.0f, 0,
+            FLUID_LOG(FLUID_INFO,
+                      "noteon\t%d\t%d\t%d\t%05d\t%.3f\t%.3f\t%.3f\t%d\t%s",
+                      chan,
+                      key,
+                      vel,
+                      0,
+                      fluid_synth_get_ticks(synth) / 44100.0f,
+                      (fluid_curtime() - synth->start) / 1000.0f,
+                      0.0f,
+                      0,
                       "channel has no preset");
         }
         return FLUID_FAILED;
@@ -2530,8 +2553,13 @@ int fluid_synth_program_change(fluid_synth_t *synth, int chan, int prognum)
 
             if (preset)
             {
-                FLUID_LOG(FLUID_WARN, "Instrument not found on channel %d [bank=%d prog=%d], substituted [bank=%d prog=%d]",
-                          chan, banknum, prognum, subst_bank, subst_prog);
+                FLUID_LOG(FLUID_WARN,
+                          "Instrument not found on channel %d [bank=%d prog=%d], substituted [bank=%d prog=%d]",
+                          chan,
+                          banknum,
+                          prognum,
+                          subst_bank,
+                          subst_prog);
             }
             else
             {
@@ -2680,8 +2708,7 @@ int fluid_synth_program_select(fluid_synth_t *synth, int chan, int sfont_id, int
 
     if (preset == NULL)
     {
-        FLUID_LOG(FLUID_ERR, "There is no preset with bank number %d and preset number %d in SoundFont %d", bank_num,
-                  preset_num, sfont_id);
+        FLUID_LOG(FLUID_ERR, "There is no preset with bank number %d and preset number %d in SoundFont %d", bank_num, preset_num, sfont_id);
         FLUID_API_RETURN(FLUID_FAILED);
     }
 
@@ -2718,8 +2745,7 @@ int fluid_synth_program_select_by_sfont_name(fluid_synth_t *synth, int chan, con
     preset = fluid_synth_get_preset_by_sfont_name(synth, sfont_name, bank_num, preset_num);
     if (preset == NULL)
     {
-        FLUID_LOG(FLUID_ERR, "There is no preset with bank number %d and preset number %d in SoundFont %s", bank_num,
-                  preset_num, sfont_name);
+        FLUID_LOG(FLUID_ERR, "There is no preset with bank number %d and preset number %d in SoundFont %s", bank_num, preset_num, sfont_name);
         FLUID_API_RETURN(FLUID_FAILED);
     }
 
@@ -3628,8 +3654,7 @@ static int fluid_synth_render_blocks(fluid_synth_t *synth, int blockcount)
     };
 #endif
     fluid_check_fpe("??? Remainder of synth_one_block ???");
-    fluid_profile(FLUID_PROF_ONE_BLOCK, prof_ref, fluid_rvoice_mixer_get_active_voices(synth->eventhandler->mixer),
-                  blockcount * FLUID_BUFSIZE);
+    fluid_profile(FLUID_PROF_ONE_BLOCK, prof_ref, fluid_rvoice_mixer_get_active_voices(synth->eventhandler->mixer), blockcount * FLUID_BUFSIZE);
     return blockcount;
 }
 
@@ -3767,8 +3792,12 @@ static fluid_voice_t *fluid_synth_free_voice_by_kill_LOCAL(fluid_synth_t *synth)
     }
 
     voice = synth->voice[best_voice_index];
-    FLUID_LOG(FLUID_DBG, "Killing voice %d, index %d, chan %d, key %d ", fluid_voice_get_id(voice), best_voice_index,
-              fluid_voice_get_channel(voice), fluid_voice_get_key(voice));
+    FLUID_LOG(FLUID_DBG,
+              "Killing voice %d, index %d, chan %d, key %d ",
+              fluid_voice_get_id(voice),
+              best_voice_index,
+              fluid_voice_get_channel(voice),
+              fluid_voice_get_key(voice));
     fluid_voice_off(voice);
 
     return voice;
@@ -3841,8 +3870,16 @@ fluid_synth_alloc_voice_LOCAL(fluid_synth_t *synth, fluid_sample_t *sample, int 
             }
         }
 
-        FLUID_LOG(FLUID_INFO, "noteon\t%d\t%d\t%d\t%05d\t%.3f\t%.3f\t%.3f\t%d", chan, key, vel, synth->storeid,
-                  (float)ticks / 44100.0f, (fluid_curtime() - synth->start) / 1000.0f, 0.0f, k);
+        FLUID_LOG(FLUID_INFO,
+                  "noteon\t%d\t%d\t%d\t%05d\t%.3f\t%.3f\t%.3f\t%d",
+                  chan,
+                  key,
+                  vel,
+                  synth->storeid,
+                  (float)ticks / 44100.0f,
+                  (fluid_curtime() - synth->start) / 1000.0f,
+                  0.0f,
+                  k);
     }
 
     channel = synth->channel[chan];
@@ -4438,8 +4475,8 @@ int fluid_synth_set_reverb_preset(fluid_synth_t *synth, unsigned int num)
 {
     fluid_return_val_if_fail(num < FLUID_N_ELEMENTS(revmodel_preset), FLUID_FAILED);
 
-    fluid_synth_set_reverb(synth, revmodel_preset[num].roomsize, revmodel_preset[num].damp, revmodel_preset[num].width,
-                           revmodel_preset[num].level);
+    fluid_synth_set_reverb(
+    synth, revmodel_preset[num].roomsize, revmodel_preset[num].damp, revmodel_preset[num].width, revmodel_preset[num].level);
     return FLUID_OK;
 }
 

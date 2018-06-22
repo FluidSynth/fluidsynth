@@ -625,7 +625,8 @@ static int process_info(SFData *sf, int size)
                 FLUID_LOG(FLUID_ERR,
                           "Sound font version is %d.%d which is not"
                           " supported, convert to version 2.0x",
-                          sf->version.major, sf->version.minor);
+                          sf->version.major,
+                          sf->version.minor);
                 return FALSE;
             }
 
@@ -635,7 +636,8 @@ static int process_info(SFData *sf, int size)
                 FLUID_LOG(FLUID_WARN,
                           "Sound font version is %d.%d but fluidsynth was compiled without"
                           " support for (v3.x)",
-                          sf->version.major, sf->version.minor);
+                          sf->version.major,
+                          sf->version.minor);
                 return FALSE;
 #endif
             }
@@ -644,7 +646,8 @@ static int process_info(SFData *sf, int size)
                 FLUID_LOG(FLUID_WARN,
                           "Sound font version is %d.%d which is newer than"
                           " what this version of fluidsynth was designed for (v2.0x)",
-                          sf->version.major, sf->version.minor);
+                          sf->version.major,
+                          sf->version.minor);
                 return FALSE;
             }
         }
@@ -773,7 +776,8 @@ static int process_sdta(SFData *sf, unsigned int size)
                     FLUID_LOG(FLUID_WARN,
                               "SM24 not equal to half the size of SMPL chunk (0x%X != "
                               "0x%X), ignoring SM24",
-                              sm24size, sdtahalfsize);
+                              sm24size,
+                              sdtahalfsize);
                     goto ret; // no error
                 }
 
@@ -1867,8 +1871,10 @@ static int fixup_pgen(SFData *sf)
                 p3 = fluid_list_nth(sf->inst, i - 1);
                 if (!p3)
                 {
-                    FLUID_LOG(FLUID_ERR, "Preset %03d %03d: Invalid instrument reference",
-                              ((SFPreset *)(p->data))->bank, ((SFPreset *)(p->data))->prenum);
+                    FLUID_LOG(FLUID_ERR,
+                              "Preset %03d %03d: Invalid instrument reference",
+                              ((SFPreset *)(p->data))->bank,
+                              ((SFPreset *)(p->data))->prenum);
                     return FALSE;
                 }
                 z->instsamp = p3;

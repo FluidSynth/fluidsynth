@@ -115,8 +115,7 @@ static const fluid_audriver_definition_t fluid_audio_drivers[] = {
 #endif
 
 #if PULSE_SUPPORT
-    { "pulseaudio", new_fluid_pulse_audio_driver, new_fluid_pulse_audio_driver2, delete_fluid_pulse_audio_driver,
-      fluid_pulse_audio_driver_settings },
+    { "pulseaudio", new_fluid_pulse_audio_driver, new_fluid_pulse_audio_driver2, delete_fluid_pulse_audio_driver, fluid_pulse_audio_driver_settings },
 #endif
 
 #if COREAUDIO_SUPPORT
@@ -261,8 +260,7 @@ static const fluid_audriver_definition_t *find_fluid_audio_driver(fluid_settings
 
     allnames = fluid_settings_option_concat(settings, "audio.driver", NULL);
     fluid_settings_dupstr(settings, "audio.driver", &name); /* ++ alloc name */
-    FLUID_LOG(FLUID_ERR, "Couldn't find the requested audio driver %s. Valid drivers are: %s.", name ? name : "NULL",
-              allnames ? allnames : "ERROR");
+    FLUID_LOG(FLUID_ERR, "Couldn't find the requested audio driver %s. Valid drivers are: %s.", name ? name : "NULL", allnames ? allnames : "ERROR");
     if (name)
     {
         FLUID_FREE(name);

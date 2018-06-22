@@ -1903,8 +1903,12 @@ int fluid_player_set_midi_tempo(fluid_player_t *player, int tempo)
     player->start_msec = player->cur_msec;
     player->start_ticks = player->cur_ticks;
 
-    FLUID_LOG(FLUID_DBG, "tempo=%d, tick time=%f msec, cur time=%d msec, cur tick=%d", tempo, player->deltatime,
-              player->cur_msec, player->cur_ticks);
+    FLUID_LOG(FLUID_DBG,
+              "tempo=%d, tick time=%f msec, cur time=%d msec, cur tick=%d",
+              tempo,
+              player->deltatime,
+              player->cur_msec,
+              player->cur_ticks);
 
     return FLUID_OK;
 }

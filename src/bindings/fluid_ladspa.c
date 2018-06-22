@@ -943,7 +943,8 @@ int fluid_ladspa_effect_link(fluid_ladspa_fx_t *fx, const char *effect_name, con
         FLUID_LOG(FLUID_ERR,
                   "Control port '%s' on effect '%s' can only connect to "
                   "other control ports",
-                  port_name, effect_name);
+                  port_name,
+                  effect_name);
         LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
     else if (LADSPA_IS_PORT_AUDIO(port_flags) && !(node->type & FLUID_LADSPA_NODE_AUDIO))
@@ -951,7 +952,8 @@ int fluid_ladspa_effect_link(fluid_ladspa_fx_t *fx, const char *effect_name, con
         FLUID_LOG(FLUID_ERR,
                   "Audio port '%s' on effect '%s' can only connect to"
                   "other audio port or buffer",
-                  port_name, effect_name);
+                  port_name,
+                  effect_name);
         LADSPA_API_RETURN(fx, FLUID_FAILED);
     }
 
@@ -1016,10 +1018,13 @@ int fluid_ladspa_check(fluid_ladspa_fx_t *fx, char *err, int err_size)
         {
             if (err != NULL)
             {
-                FLUID_SNPRINTF(err, err_size,
+                FLUID_SNPRINTF(err,
+                               err_size,
                                "effect '%s' is in-place broken, '%s' and '%s' are not allowed "
                                "to connect to the same node\n",
-                               effect->name, str, str2);
+                               effect->name,
+                               str,
+                               str2);
             }
             LADSPA_API_RETURN(fx, FLUID_FAILED);
         }
@@ -1179,8 +1184,9 @@ static const LADSPA_Descriptor *get_plugin_descriptor(fluid_module_t *lib, const
         {
             return last_desc;
         }
-        FLUID_LOG(FLUID_ERR, "Library contains more than one plugin, please specify "
-                             "the plugin label");
+        FLUID_LOG(FLUID_ERR,
+                  "Library contains more than one plugin, please specify "
+                  "the plugin label");
     }
 
     return NULL;

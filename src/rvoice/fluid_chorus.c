@@ -311,8 +311,9 @@ void fluid_chorus_set(fluid_chorus_t *chorus, int set, int nr, fluid_real_t leve
     }
     else if (chorus->level > 10)
     {
-        fluid_log(FLUID_WARN, "chorus: level must be < 10. A reasonable level is << 1! "
-                              "Setting it to 0.1.");
+        fluid_log(FLUID_WARN,
+                  "chorus: level must be < 10. A reasonable level is << 1! "
+                  "Setting it to 0.1.");
         chorus->level = 0.1;
     }
 

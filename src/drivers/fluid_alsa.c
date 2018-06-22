@@ -77,11 +77,10 @@ struct fluid_alsa_formats_t
     fluid_thread_func_t run;
 };
 
-struct fluid_alsa_formats_t fluid_alsa_formats[] = { { "s16, rw, interleaved", SND_PCM_FORMAT_S16,
-                                                       SND_PCM_ACCESS_RW_INTERLEAVED, fluid_alsa_audio_run_s16 },
-                                                     { "float, rw, non interleaved", SND_PCM_FORMAT_FLOAT,
-                                                       SND_PCM_ACCESS_RW_NONINTERLEAVED, fluid_alsa_audio_run_float },
-                                                     { NULL, 0, 0, NULL } };
+struct fluid_alsa_formats_t fluid_alsa_formats[] =
+{ { "s16, rw, interleaved", SND_PCM_FORMAT_S16, SND_PCM_ACCESS_RW_INTERLEAVED, fluid_alsa_audio_run_s16 },
+  { "float, rw, non interleaved", SND_PCM_FORMAT_FLOAT, SND_PCM_ACCESS_RW_NONINTERLEAVED, fluid_alsa_audio_run_float },
+  { NULL, 0, 0, NULL } };
 
 
 /*
@@ -235,7 +234,8 @@ fluid_audio_driver_t *new_fluid_alsa_audio_driver2(fluid_settings_t *settings, f
             FLUID_LOG(FLUID_WARN,
                       "Requested sample rate of %u, got %u instead, "
                       "synthesizer likely out of tune!",
-                      (unsigned int)sample_rate, tmp);
+                      (unsigned int)sample_rate,
+                      tmp);
         }
 
         uframes = period_size;
@@ -1021,8 +1021,9 @@ fluid_midi_driver_t *new_fluid_alsa_seq_driver(fluid_settings_t *settings, handl
     dev->port_count = midi_channels / 16;
 
     snd_seq_port_info_set_capability(port_info, SND_SEQ_PORT_CAP_WRITE | SND_SEQ_PORT_CAP_SUBS_WRITE);
-    snd_seq_port_info_set_type(port_info, SND_SEQ_PORT_TYPE_MIDI_GM | SND_SEQ_PORT_TYPE_SYNTHESIZER |
-                                          SND_SEQ_PORT_TYPE_APPLICATION | SND_SEQ_PORT_TYPE_MIDI_GENERIC);
+    snd_seq_port_info_set_type(port_info,
+                               SND_SEQ_PORT_TYPE_MIDI_GM | SND_SEQ_PORT_TYPE_SYNTHESIZER |
+                               SND_SEQ_PORT_TYPE_APPLICATION | SND_SEQ_PORT_TYPE_MIDI_GENERIC);
     snd_seq_port_info_set_midi_channels(port_info, 16);
     snd_seq_port_info_set_port_specified(port_info, 1);
 

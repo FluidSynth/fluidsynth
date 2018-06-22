@@ -226,8 +226,8 @@ static fluid_setting_node_t *new_fluid_set_setting(void)
     node->type = FLUID_SET_TYPE;
     set = &node->set;
 
-    set->hashtable = new_fluid_hashtable_full(fluid_str_hash, fluid_str_equal, fluid_settings_key_destroy_func,
-                                              fluid_settings_value_destroy_func);
+    set->hashtable =
+    new_fluid_hashtable_full(fluid_str_hash, fluid_str_equal, fluid_settings_key_destroy_func, fluid_settings_value_destroy_func);
     if (!set->hashtable)
     {
         FLUID_FREE(node);
@@ -254,8 +254,7 @@ fluid_settings_t *new_fluid_settings(void)
 {
     fluid_settings_t *settings;
 
-    settings = new_fluid_hashtable_full(fluid_str_hash, fluid_str_equal, fluid_settings_key_destroy_func,
-                                        fluid_settings_value_destroy_func);
+    settings = new_fluid_hashtable_full(fluid_str_hash, fluid_str_equal, fluid_settings_key_destroy_func, fluid_settings_value_destroy_func);
     if (settings == NULL)
     {
         return NULL;

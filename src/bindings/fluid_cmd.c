@@ -100,8 +100,7 @@ static const fluid_cmd_t fluid_commands[] = {
     { "interpc", "general", fluid_handle_interpc, "interpc chan num           Choose interpolation method for one channel" },
     /* polymono commands */
     { "basicchannels", "polymono", fluid_handle_basicchannels, "basicchannels                         Prints the list of basic channels" },
-    { "resetbasicchannels", "polymono", fluid_handle_resetbasicchannels,
-      "resetbasicchannels [chan1 chan2..]    Resets all or some basic channels" },
+    { "resetbasicchannels", "polymono", fluid_handle_resetbasicchannels, "resetbasicchannels [chan1 chan2..]    Resets all or some basic channels" },
     { "setbasicchannels", "polymono", fluid_handle_setbasicchannels, "setbasicchannels [chan mode val...]   Sets default, adds basic channels" },
     { "channelsmode", "polymono", fluid_handle_channelsmode, "channelsmode [chan1 chan2..]          Prints channels mode" },
     { "legatomode", "polymono", fluid_handle_legatomode, "legatomode [chan1 chan2..]            Prints channels legato mode" },
@@ -126,7 +125,9 @@ static const fluid_cmd_t fluid_commands[] = {
     { "gain", "general", fluid_handle_gain, "gain value                 Set the master gain (0 < gain < 5)" },
     { "voice_count", "general", fluid_handle_voice_count, "voice_count                Get number of active synthesis voices" },
     /* tuning commands */
-    { "tuning", "tuning", fluid_handle_tuning,
+    { "tuning",
+      "tuning",
+      fluid_handle_tuning,
       "tuning name bank prog      Create a tuning with name, bank number, \n"
       "                           and program number (0 <= bank,prog <= 127)" },
     { "tune", "tuning", fluid_handle_tune, "tune bank prog key pitch   Tune a key" },
@@ -595,8 +596,11 @@ int fluid_handle_inst(void *data, int ac, char **av, fluid_ostream_t out)
 
     while ((preset = fluid_sfont_iteration_next(sfont)) != NULL)
     {
-        fluid_ostream_printf(out, "%03d-%03d %s\n", fluid_preset_get_banknum(preset) + offset,
-                             fluid_preset_get_num(preset), fluid_preset_get_name(preset));
+        fluid_ostream_printf(out,
+                             "%03d-%03d %s\n",
+                             fluid_preset_get_banknum(preset) + offset,
+                             fluid_preset_get_num(preset),
+                             fluid_preset_get_name(preset));
     }
 
     return FLUID_OK;
@@ -628,8 +632,13 @@ int fluid_handle_channels(void *data, int ac, char **av, fluid_ostream_t out)
         }
         else
         {
-            fluid_ostream_printf(out, "chan %d, sfont %d, bank %d, preset %d, %s\n", i, fluid_sfont_get_id(preset->sfont),
-                                 fluid_preset_get_banknum(preset), fluid_preset_get_num(preset), fluid_preset_get_name(preset));
+            fluid_ostream_printf(out,
+                                 "chan %d, sfont %d, bank %d, preset %d, %s\n",
+                                 i,
+                                 fluid_sfont_get_id(preset->sfont),
+                                 fluid_preset_get_banknum(preset),
+                                 fluid_preset_get_num(preset),
+                                 fluid_preset_get_name(preset));
         }
     }
 
@@ -1803,8 +1812,9 @@ int fluid_handle_help(void *data, int ac, char **av, fluid_ostream_t out)
     if (FLUID_STRCMP(topic, "help") == 0)
     {
         /* "help help": Print a list of all topics */
-        fluid_ostream_printf(out, "*** Help topics:***\n"
-                                  "help all (prints all topics)\n");
+        fluid_ostream_printf(out,
+                             "*** Help topics:***\n"
+                             "help all (prints all topics)\n");
         for (i = 0; i < FLUID_N_ELEMENTS(fluid_commands); i++)
         {
             int listed_first_time = 1;
@@ -2077,8 +2087,7 @@ static int print_basic_channels(fluid_synth_t *synth, fluid_ostream_t out)
             if (basic_chan == i)
             {
                 n++;
-                fluid_ostream_printf(out, "Basic channel:%3d, %s, nbr:%3d\n", i,
-                                     mode_name[mode_chan & FLUID_CHANNEL_MODE_MASK], val);
+                fluid_ostream_printf(out, "Basic channel:%3d, %s, nbr:%3d\n", i, mode_name[mode_chan & FLUID_CHANNEL_MODE_MASK], val);
             }
         }
         else
@@ -2522,8 +2531,7 @@ static int check_channels_group_arguments(int ac, char **av, int nbr_arg_group, 
         if (ac % nbr_arg_group)
         {
             /* each group entry needs nbr_arg_group parameters */
-            fluid_ostream_printf(out, "%s: channel %d, %s\n", name_cde,
-                                 atoi(av[((ac / nbr_arg_group) * nbr_arg_group)]), nbr_arg_group_msg);
+            fluid_ostream_printf(out, "%s: channel %d, %s\n", name_cde, atoi(av[((ac / nbr_arg_group) * nbr_arg_group)]), nbr_arg_group_msg);
             return -1;
         }
     }
@@ -2973,7 +2981,8 @@ int fluid_handle_ladspa_set(void *data, int ac, char **av, fluid_ostream_t out)
         fluid_ostream_printf(out,
                              "Failed to set port '%s' on effect '%s', "
                              "maybe it is not a control port?\n",
-                             av[1], av[0]);
+                             av[1],
+                             av[0]);
         return FLUID_FAILED;
     }
 
@@ -3020,8 +3029,9 @@ int fluid_handle_ladspa_effect(void *data, int ac, char **av, fluid_ostream_t ou
 
     if (ac < 2 || ac > 5)
     {
-        fluid_ostream_printf(out, "ladspa_effect invalid arguments: "
-                                  "<name> <library> [plugin] [--mix [gain]]\n");
+        fluid_ostream_printf(out,
+                             "ladspa_effect invalid arguments: "
+                             "<name> <library> [plugin] [--mix [gain]]\n");
         return FLUID_FAILED;
     }
 
@@ -3081,8 +3091,9 @@ int fluid_handle_ladspa_link(void *data, int ac, char **av, fluid_ostream_t out)
 
     if (ac != 3)
     {
-        fluid_ostream_printf(out, "ladspa_link needs 3 arguments: "
-                                  "<effect> <port> <buffer or host name>\n");
+        fluid_ostream_printf(out,
+                             "ladspa_link needs 3 arguments: "
+                             "<effect> <port> <buffer or host name>\n");
         return FLUID_FAILED;
     }
 
@@ -3156,8 +3167,14 @@ int fluid_handle_profile(void *data, int ac, char **av, fluid_ostream_t out)
     }
 
     /* prints default parameters */
-    fluid_ostream_printf(out, " Notes:%d, bank:%d, prog:%d, print:%d, n_prof:%d, dur:%d ms\n", fluid_profile_notes,
-                         fluid_profile_bank, fluid_profile_prog, fluid_profile_print, fluid_profile_n_prof, fluid_profile_dur);
+    fluid_ostream_printf(out,
+                         " Notes:%d, bank:%d, prog:%d, print:%d, n_prof:%d, dur:%d ms\n",
+                         fluid_profile_notes,
+                         fluid_profile_bank,
+                         fluid_profile_prog,
+                         fluid_profile_print,
+                         fluid_profile_n_prof,
+                         fluid_profile_dur);
 
     /* unlocks */
     fluid_profile_unlock_command();
@@ -3453,8 +3470,7 @@ int fluid_handle_prof_start(void *data, int ac, char **av, fluid_ostream_t out)
 
         /* Prints total and remainder duration */
 #ifdef FLUID_PROFILE_CANCEL
-        fluid_ostream_printf(out, "\nProfiling time(mm:ss): Total=%d:%d  Remainder=%d:%d, press <ENTER> to cancel\n",
-                             tm, ts, rm, rs);
+        fluid_ostream_printf(out, "\nProfiling time(mm:ss): Total=%d:%d  Remainder=%d:%d, press <ENTER> to cancel\n", tm, ts, rm, rs);
 #else
         fluid_ostream_printf(out, "\nProfiling time(mm:ss): Total=%d:%d  Remainder=%d:%d\n", tm, ts, rm, rs);
 #endif
@@ -3772,7 +3788,10 @@ static fluid_thread_return_t fluid_client_run(void *data)
     fluid_shell_t shell;
     fluid_client_t *client = (fluid_client_t *)data;
 
-    fluid_shell_init(&shell, client->settings, client->handler, fluid_socket_get_istream(client->socket),
+    fluid_shell_init(&shell,
+                     client->settings,
+                     client->handler,
+                     fluid_socket_get_istream(client->socket),
                      fluid_socket_get_ostream(client->socket));
     fluid_shell_run(&shell);
     fluid_server_remove_client(client->server, client);

@@ -529,9 +529,13 @@ unsigned int fluid_check_fpe_i386(char *explanation)
 
     if (s)
     {
-        FLUID_LOG(FLUID_WARN, "FPE exception (before or in %s): %s%s%s%s%s", explanation,
-                  (s & _FPU_STATUS_IE) ? "Invalid operation " : "", (s & _FPU_STATUS_DE) ? "Denormal number " : "",
-                  (s & _FPU_STATUS_ZE) ? "Zero divide " : "", (s & _FPU_STATUS_OE) ? "Overflow " : "",
+        FLUID_LOG(FLUID_WARN,
+                  "FPE exception (before or in %s): %s%s%s%s%s",
+                  explanation,
+                  (s & _FPU_STATUS_IE) ? "Invalid operation " : "",
+                  (s & _FPU_STATUS_DE) ? "Denormal number " : "",
+                  (s & _FPU_STATUS_ZE) ? "Zero divide " : "",
+                  (s & _FPU_STATUS_OE) ? "Overflow " : "",
                   (s & _FPU_STATUS_UE) ? "Underflow " : "");
     }
 
@@ -622,8 +626,12 @@ void fluid_profiling_print(void)
     {
         if (fluid_profile_data[i].count > 0)
         {
-            FLUID_LOG(FLUID_INFO, "%s: %.3f/%.3f/%.3f", fluid_profile_data[i].description, fluid_profile_data[i].min,
-                      fluid_profile_data[i].total / fluid_profile_data[i].count, fluid_profile_data[i].max);
+            FLUID_LOG(FLUID_INFO,
+                      "%s: %.3f/%.3f/%.3f",
+                      fluid_profile_data[i].description,
+                      fluid_profile_data[i].min,
+                      fluid_profile_data[i].total / fluid_profile_data[i].count,
+                      fluid_profile_data[i].max);
         }
         else
         {
@@ -668,20 +676,22 @@ static void fluid_profiling_print_load(double sample_rate, fluid_ostream_t out)
     0;
 
     /* total load (%) */
-    total = fluid_profile_data[FLUID_PROF_WRITE].count ?
-            fluid_profile_load(fluid_profile_data[FLUID_PROF_WRITE].total, sample_rate,
-                               fluid_profile_data[FLUID_PROF_WRITE].n_samples) :
-            0;
+    total =
+    fluid_profile_data[FLUID_PROF_WRITE].count ?
+    fluid_profile_load(fluid_profile_data[FLUID_PROF_WRITE].total, sample_rate, fluid_profile_data[FLUID_PROF_WRITE].n_samples) :
+    0;
 
     /* reverb load (%) */
     reverb = fluid_profile_data[FLUID_PROF_ONE_BLOCK_REVERB].count ?
-             fluid_profile_load(fluid_profile_data[FLUID_PROF_ONE_BLOCK_REVERB].total, sample_rate,
+             fluid_profile_load(fluid_profile_data[FLUID_PROF_ONE_BLOCK_REVERB].total,
+                                sample_rate,
                                 fluid_profile_data[FLUID_PROF_ONE_BLOCK_REVERB].n_samples) :
              0;
 
     /* chorus load (%) */
     chorus = fluid_profile_data[FLUID_PROF_ONE_BLOCK_CHORUS].count ?
-             fluid_profile_load(fluid_profile_data[FLUID_PROF_ONE_BLOCK_CHORUS].total, sample_rate,
+             fluid_profile_load(fluid_profile_data[FLUID_PROF_ONE_BLOCK_CHORUS].total,
+                                sample_rate,
                                 fluid_profile_data[FLUID_PROF_ONE_BLOCK_CHORUS].n_samples) :
              0;
 
@@ -690,7 +700,8 @@ static void fluid_profiling_print_load(double sample_rate, fluid_ostream_t out)
 
     /* One voice load (%): all_voices / n_voices. */
     all_voices = fluid_profile_data[FLUID_PROF_ONE_BLOCK_VOICES].count ?
-                 fluid_profile_load(fluid_profile_data[FLUID_PROF_ONE_BLOCK_VOICES].total, sample_rate,
+                 fluid_profile_load(fluid_profile_data[FLUID_PROF_ONE_BLOCK_VOICES].total,
+                                    sample_rate,
                                     fluid_profile_data[FLUID_PROF_ONE_BLOCK_VOICES].n_samples) :
                  0;
 
@@ -699,8 +710,7 @@ static void fluid_profiling_print_load(double sample_rate, fluid_ostream_t out)
     /* estimated maximum voices number */
     if (voice > 0)
     {
-        FLUID_SNPRINTF(max_voices_available, sizeof(max_voices_available), "%17d",
-                       (unsigned int)((100.0 - reverb - chorus) / voice));
+        FLUID_SNPRINTF(max_voices_available, sizeof(max_voices_available), "%17d", (unsigned int)((100.0 - reverb - chorus) / voice));
         pmax_voices = max_voices_available;
     }
     else
@@ -710,8 +720,7 @@ static void fluid_profiling_print_load(double sample_rate, fluid_ostream_t out)
 
     /* Now prints data */
     fluid_ostream_printf(out, " ------------------------------------------------------------------------------\n");
-    fluid_ostream_printf(out, " Cpu loads(%%) (sr:%6.0f Hz, sp:%6.2f microsecond) and maximum voices\n", sample_rate,
-                         1000000.0 / sample_rate);
+    fluid_ostream_printf(out, " Cpu loads(%%) (sr:%6.0f Hz, sp:%6.2f microsecond) and maximum voices\n", sample_rate, 1000000.0 / sample_rate);
     fluid_ostream_printf(out, " ------------------------------------------------------------------------------\n");
     fluid_ostream_printf(out, " nVoices| total(%%)|voices(%%)| reverb(%%)|chorus(%%)| voice(%%)|estimated maxVoices\n");
     fluid_ostream_printf(out, " -------|---------|---------|----------|---------|---------|-------------------\n");
@@ -758,8 +767,10 @@ void fluid_profiling_print_data(double sample_rate, fluid_ostream_t out)
     {
         /* print all details: Duration(microsecond) and cpu loads(%) */
         fluid_ostream_printf(out, " ------------------------------------------------------------------------------\n");
-        fluid_ostream_printf(out, " Duration(microsecond) and cpu loads(%%) (sr:%6.0f Hz, sp:%6.2f microsecond)\n",
-                             sample_rate, 1000000.0 / sample_rate);
+        fluid_ostream_printf(out,
+                             " Duration(microsecond) and cpu loads(%%) (sr:%6.0f Hz, sp:%6.2f microsecond)\n",
+                             sample_rate,
+                             1000000.0 / sample_rate);
         fluid_ostream_printf(out, " ------------------------------------------------------------------------------\n");
         fluid_ostream_printf(out, " Code under profiling       |Voices|       Duration (microsecond)   |  Load(%%)\n");
         fluid_ostream_printf(out, "                            |   nbr|       min|       avg|       max|\n");
@@ -775,7 +786,9 @@ void fluid_profiling_print_data(double sample_rate, fluid_ostream_t out)
                 if (FLUID_PROF_WRITE <= i && i <= FLUID_PROF_ONE_BLOCK_CHORUS)
                 {
                     double load = fluid_profile_load(fluid_profile_data[i].total, sample_rate, fluid_profile_data[i].n_samples);
-                    fluid_ostream_printf(out, " %s|%6d|%10.2f|%10.2f|%10.2f|%8.3f\n", fluid_profile_data[i].description, /* code under profiling */
+                    fluid_ostream_printf(out,
+                                         " %s|%6d|%10.2f|%10.2f|%10.2f|%8.3f\n",
+                                         fluid_profile_data[i].description,      /* code under profiling */
                                          fluid_profile_data[i].n_voices / count, /* voices number */
                                          fluid_profile_data[i].min,              /* minimum duration */
                                          fluid_profile_data[i].total / count,    /* average duration */
@@ -785,9 +798,11 @@ void fluid_profiling_print_data(double sample_rate, fluid_ostream_t out)
                 else
                 {
                     /* note and release duration */
-                    fluid_ostream_printf(out, " %s|%6d|%10.0f|%10.0f|%10.0f|\n",
+                    fluid_ostream_printf(out,
+                                         " %s|%6d|%10.0f|%10.0f|%10.0f|\n",
                                          fluid_profile_data[i].description, /* code under profiling */
-                                         fluid_profile_data[i].n_voices / count, fluid_profile_data[i].min, /* minimum duration */
+                                         fluid_profile_data[i].n_voices / count,
+                                         fluid_profile_data[i].min,           /* minimum duration */
                                          fluid_profile_data[i].total / count, /* average duration */
                                          fluid_profile_data[i].max);          /* maximum duration */
                 }

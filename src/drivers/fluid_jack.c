@@ -427,7 +427,8 @@ static int fluid_jack_client_register_ports(void *driver, int isaudio, jack_clie
         FLUID_LOG(FLUID_INFO,
                   "Jack sample rate mismatch, adjusting."
                   " (synth.sample-rate=%lu, jackd=%lu)",
-                  (int)sample_rate, jack_srate);
+                  (int)sample_rate,
+                  jack_srate);
         fluid_settings_setnum(settings, "synth.sample-rate", jack_srate);
     }
 
@@ -645,8 +646,8 @@ int fluid_jack_driver_process(jack_nframes_t nframes, void *arg)
             audio_driver->output_bufs[i] = (float *)jack_port_get_buffer(audio_driver->output_ports[i], nframes);
         }
 
-        return (*audio_driver->callback)(audio_driver->data, nframes, 0, NULL, 2 * audio_driver->num_output_ports,
-                                         audio_driver->output_bufs);
+        return (
+        *audio_driver->callback)(audio_driver->data, nframes, 0, NULL, 2 * audio_driver->num_output_ports, audio_driver->output_bufs);
     }
     else if (audio_driver->num_output_ports == 1 && audio_driver->num_fx_ports == 0) /* i.e. audio.jack.multi=no */
     {
@@ -668,8 +669,11 @@ int fluid_jack_driver_process(jack_nframes_t nframes, void *arg)
             audio_driver->fx_bufs[k] = (float *)jack_port_get_buffer(audio_driver->fx_ports[2 * i + 1], nframes);
         }
 
-        fluid_synth_nwrite_float(audio_driver->data, nframes, audio_driver->output_bufs,
-                                 audio_driver->output_bufs + audio_driver->num_output_ports, audio_driver->fx_bufs,
+        fluid_synth_nwrite_float(audio_driver->data,
+                                 nframes,
+                                 audio_driver->output_bufs,
+                                 audio_driver->output_bufs + audio_driver->num_output_ports,
+                                 audio_driver->fx_bufs,
                                  audio_driver->fx_bufs + audio_driver->num_fx_ports);
     }
 

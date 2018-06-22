@@ -87,8 +87,11 @@ fluid_sfont_t *fluid_defsfloader_load(fluid_sfloader_t *loader, const char *file
         return NULL;
     }
 
-    sfont = new_fluid_sfont(fluid_defsfont_sfont_get_name, fluid_defsfont_sfont_get_preset, fluid_defsfont_sfont_iteration_start,
-                            fluid_defsfont_sfont_iteration_next, fluid_defsfont_sfont_delete);
+    sfont = new_fluid_sfont(fluid_defsfont_sfont_get_name,
+                            fluid_defsfont_sfont_get_preset,
+                            fluid_defsfont_sfont_iteration_start,
+                            fluid_defsfont_sfont_iteration_next,
+                            fluid_defsfont_sfont_delete);
     if (sfont == NULL)
     {
         delete_fluid_defsfont(defsfont);
@@ -297,8 +300,8 @@ int fluid_defsfont_load_sampledata(fluid_defsfont_t *defsfont, SFData *sfdata, f
         }
     }
 
-    num_samples = fluid_samplecache_load(sfdata, sample->source_start, source_end, sample->sampletype, defsfont->mlock,
-                                         &sample->data, &sample->data24);
+    num_samples = fluid_samplecache_load(
+    sfdata, sample->source_start, source_end, sample->sampletype, defsfont->mlock, &sample->data, &sample->data24);
 
     if (num_samples < 0)
     {
@@ -512,8 +515,12 @@ int fluid_defsfont_add_preset(fluid_defsfont_t *defsfont, fluid_defpreset_t *def
 {
     fluid_preset_t *preset;
 
-    preset = new_fluid_preset(defsfont->sfont, fluid_defpreset_preset_get_name, fluid_defpreset_preset_get_banknum,
-                              fluid_defpreset_preset_get_num, fluid_defpreset_preset_noteon, fluid_defpreset_preset_delete);
+    preset = new_fluid_preset(defsfont->sfont,
+                              fluid_defpreset_preset_get_name,
+                              fluid_defpreset_preset_get_banknum,
+                              fluid_defpreset_preset_get_num,
+                              fluid_defpreset_preset_noteon,
+                              fluid_defpreset_preset_delete);
 
     if (defsfont->dynamic_samples)
     {

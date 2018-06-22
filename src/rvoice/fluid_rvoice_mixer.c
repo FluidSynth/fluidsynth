@@ -389,8 +389,7 @@ static FLUID_INLINE void fluid_mixer_buffers_render_one(fluid_mixer_buffers_t *b
             break;
         }
     }
-    fluid_rvoice_buffers_mix(&rvoice->buffers, src_buf, -start_block, total_samples - ((-start_block) * FLUID_BUFSIZE),
-                             dest_bufs, dest_bufcount);
+    fluid_rvoice_buffers_mix(&rvoice->buffers, src_buf, -start_block, total_samples - ((-start_block) * FLUID_BUFSIZE), dest_bufs, dest_bufcount);
 
     if (total_samples < blockcount * FLUID_BUFSIZE)
     {
@@ -416,8 +415,7 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_add_voice)
     {
         if (mixer->rvoices[i] == voice)
         {
-            FLUID_LOG(FLUID_ERR,
-                      "Internal error: Trying to replace an existing rvoice in fluid_rvoice_mixer_add_voice?!");
+            FLUID_LOG(FLUID_ERR, "Internal error: Trying to replace an existing rvoice in fluid_rvoice_mixer_add_voice?!");
             return;
         }
         if (mixer->rvoices[i]->envlfo.volenv.section == FLUID_VOICE_ENVFINISHED)

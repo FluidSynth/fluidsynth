@@ -735,14 +735,16 @@ void fluid_voice_update_param(fluid_voice_t *voice, int gen)
             voice->balance = fluid_voice_gen_value(voice, GEN_CUSTOM_BALANCE);
 
             /* left amp */
-            UPDATE_RVOICE_BUFFERS_AMP(fluid_rvoice_buffers_set_amp, 0,
-                                      fluid_voice_calculate_gain_amplitude(voice, fluid_pan(voice->pan, 1) *
-                                                                                  fluid_balance(voice->balance, 1)));
+            UPDATE_RVOICE_BUFFERS_AMP(
+            fluid_rvoice_buffers_set_amp,
+            0,
+            fluid_voice_calculate_gain_amplitude(voice, fluid_pan(voice->pan, 1) * fluid_balance(voice->balance, 1)));
 
             /* right amp */
-            UPDATE_RVOICE_BUFFERS_AMP(fluid_rvoice_buffers_set_amp, 1,
-                                      fluid_voice_calculate_gain_amplitude(voice, fluid_pan(voice->pan, 0) *
-                                                                                  fluid_balance(voice->balance, 0)));
+            UPDATE_RVOICE_BUFFERS_AMP(
+            fluid_rvoice_buffers_set_amp,
+            1,
+            fluid_voice_calculate_gain_amplitude(voice, fluid_pan(voice->pan, 0) * fluid_balance(voice->balance, 0)));
             break;
 
         case GEN_ATTENUATION:
@@ -771,16 +773,14 @@ void fluid_voice_update_param(fluid_voice_t *voice, int gen)
             /* The generator unit is 'tenths of a percent'. */
             voice->reverb_send = x / 1000.0f;
             fluid_clip(voice->reverb_send, 0.0, 1.0);
-            UPDATE_RVOICE_BUFFERS_AMP(fluid_rvoice_buffers_set_amp, 2,
-                                      fluid_voice_calculate_gain_amplitude(voice, voice->reverb_send));
+            UPDATE_RVOICE_BUFFERS_AMP(fluid_rvoice_buffers_set_amp, 2, fluid_voice_calculate_gain_amplitude(voice, voice->reverb_send));
             break;
 
         case GEN_CHORUSSEND:
             /* The generator unit is 'tenths of a percent'. */
             voice->chorus_send = x / 1000.0f;
             fluid_clip(voice->chorus_send, 0.0, 1.0);
-            UPDATE_RVOICE_BUFFERS_AMP(fluid_rvoice_buffers_set_amp, 3,
-                                      fluid_voice_calculate_gain_amplitude(voice, voice->chorus_send));
+            UPDATE_RVOICE_BUFFERS_AMP(fluid_rvoice_buffers_set_amp, 3, fluid_voice_calculate_gain_amplitude(voice, voice->chorus_send));
             break;
 
         case GEN_OVERRIDEROOTKEY:

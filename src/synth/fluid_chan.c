@@ -639,8 +639,7 @@ void fluid_channel_cc_breath_note_on_off(fluid_channel_t *chan, int value)
         if ((value > 0) && (chan->previous_cc_breath == 0))
         {
             /* CC Breath On detection */
-            fluid_synth_noteon_mono_staccato(chan->synth, chan->channum, fluid_channel_last_note(chan),
-                                             fluid_channel_last_vel(chan));
+            fluid_synth_noteon_mono_staccato(chan->synth, chan->channum, fluid_channel_last_note(chan), fluid_channel_last_vel(chan));
         }
         else if ((value == 0) && (chan->previous_cc_breath > 0))
         {

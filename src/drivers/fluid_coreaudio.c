@@ -192,8 +192,8 @@ fluid_audio_driver_t *new_fluid_core_audio_driver2(fluid_settings_t *settings, f
     AURenderCallbackStruct render;
     render.inputProc = fluid_core_audio_callback;
     render.inputProcRefCon = (void *)dev;
-    status = AudioUnitSetProperty(dev->outputUnit, kAudioUnitProperty_SetRenderCallback, kAudioUnitScope_Input, 0,
-                                  &render, sizeof(render));
+    status =
+    AudioUnitSetProperty(dev->outputUnit, kAudioUnitProperty_SetRenderCallback, kAudioUnitScope_Input, 0, &render, sizeof(render));
     if (status != noErr)
     {
         FLUID_LOG(FLUID_ERR, "Error setting the audio callback. Status=%ld\n", (long int)status);
@@ -228,8 +228,12 @@ fluid_audio_driver_t *new_fluid_core_audio_driver2(fluid_settings_t *settings, f
                         if (get_num_outputs(devs[i]) > 0 && FLUID_STRCASECMP(devname, name) == 0)
                         {
                             AudioDeviceID selectedID = devs[i];
-                            status = AudioUnitSetProperty(dev->outputUnit, kAudioOutputUnitProperty_CurrentDevice,
-                                                          kAudioUnitScope_Global, 0, &selectedID, sizeof(AudioDeviceID));
+                            status = AudioUnitSetProperty(dev->outputUnit,
+                                                          kAudioOutputUnitProperty_CurrentDevice,
+                                                          kAudioUnitScope_Global,
+                                                          0,
+                                                          &selectedID,
+                                                          sizeof(AudioDeviceID));
                             if (status != noErr)
                             {
                                 FLUID_LOG(FLUID_ERR, "Error setting the selected output device. Status=%ld\n", (long int)status);
@@ -268,16 +272,16 @@ fluid_audio_driver_t *new_fluid_core_audio_driver2(fluid_settings_t *settings, f
     FLUID_LOG(FLUID_DBG, "mBytesPerFrame %d", dev->format.mBytesPerFrame);
     FLUID_LOG(FLUID_DBG, "mBitsPerChannel %d", dev->format.mBitsPerChannel);
 
-    status = AudioUnitSetProperty(dev->outputUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Input, 0,
-                                  &dev->format, sizeof(AudioStreamBasicDescription));
+    status =
+    AudioUnitSetProperty(dev->outputUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Input, 0, &dev->format, sizeof(AudioStreamBasicDescription));
     if (status != noErr)
     {
         FLUID_LOG(FLUID_ERR, "Error setting the audio format. Status=%ld\n", (long int)status);
         goto error_recovery;
     }
 
-    status = AudioUnitSetProperty(dev->outputUnit, kAudioUnitProperty_MaximumFramesPerSlice, kAudioUnitScope_Input, 0,
-                                  &dev->buffer_size, sizeof(unsigned int));
+    status = AudioUnitSetProperty(
+    dev->outputUnit, kAudioUnitProperty_MaximumFramesPerSlice, kAudioUnitScope_Input, 0, &dev->buffer_size, sizeof(unsigned int));
     if (status != noErr)
     {
         FLUID_LOG(FLUID_ERR, "Failed to set the MaximumFramesPerSlice. Status=%ld\n", (long int)status);

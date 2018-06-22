@@ -715,8 +715,11 @@ int fluid_sample_sanitize_loop(fluid_sample_t *sample, unsigned int buffer_size)
 
         /* If loop start and end are reversed, try to swap them around and
          * continue validation */
-        FLUID_LOG(FLUID_DBG, "Sample '%s': reversed loop pointers '%d' - '%d', trying to fix", sample->name,
-                  sample->loopstart, sample->loopend);
+        FLUID_LOG(FLUID_DBG,
+                  "Sample '%s': reversed loop pointers '%d' - '%d', trying to fix",
+                  sample->name,
+                  sample->loopstart,
+                  sample->loopend);
         tmp = sample->loopstart;
         sample->loopstart = sample->loopend;
         sample->loopend = tmp;
@@ -732,24 +735,30 @@ int fluid_sample_sanitize_loop(fluid_sample_t *sample, unsigned int buffer_size)
      * soundfont shall preferably fail loudly. */
     if ((sample->loopstart < sample->start) || (sample->loopstart > max_end))
     {
-        FLUID_LOG(FLUID_DBG, "Sample '%s': invalid loop start '%d', setting to sample start '%d'", sample->name,
-                  sample->loopstart, sample->start);
+        FLUID_LOG(FLUID_DBG,
+                  "Sample '%s': invalid loop start '%d', setting to sample start '%d'",
+                  sample->name,
+                  sample->loopstart,
+                  sample->start);
         sample->loopstart = sample->start;
         modified = TRUE;
     }
 
     if ((sample->loopend < sample->start) || (sample->loopend > max_end))
     {
-        FLUID_LOG(FLUID_DBG, "Sample '%s': invalid loop end '%d', setting to sample end '%d'", sample->name,
-                  sample->loopend, sample_end);
+        FLUID_LOG(FLUID_DBG, "Sample '%s': invalid loop end '%d', setting to sample end '%d'", sample->name, sample->loopend, sample_end);
         sample->loopend = sample_end;
         modified = TRUE;
     }
 
     if ((sample->loopstart > sample_end) || (sample->loopend > sample_end))
     {
-        FLUID_LOG(FLUID_DBG, "Sample '%s': loop range '%d - %d' after sample end '%d', using it anyway", sample->name,
-                  sample->loopstart, sample->loopend, sample_end);
+        FLUID_LOG(FLUID_DBG,
+                  "Sample '%s': loop range '%d - %d' after sample end '%d', using it anyway",
+                  sample->name,
+                  sample->loopstart,
+                  sample->loopend,
+                  sample_end);
     }
 
     return modified;

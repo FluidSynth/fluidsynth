@@ -72,8 +72,11 @@ fluid_sfont_t *fluid_ramsfont_create_sfont()
         return NULL;
     }
 
-    sfont = new_fluid_sfont(fluid_ramsfont_sfont_get_name, fluid_ramsfont_sfont_get_preset, fluid_ramsfont_sfont_iteration_start,
-                            fluid_ramsfont_sfont_iteration_next, fluid_ramsfont_sfont_delete);
+    sfont = new_fluid_sfont(fluid_ramsfont_sfont_get_name,
+                            fluid_ramsfont_sfont_get_preset,
+                            fluid_ramsfont_sfont_iteration_start,
+                            fluid_ramsfont_sfont_iteration_next,
+                            fluid_ramsfont_sfont_delete);
     if (sfont == NULL)
     {
         delete_fluid_ramsfont(ramsfont);
@@ -249,8 +252,12 @@ static int fluid_ramsfont_add_preset(fluid_ramsfont_t *sfont, fluid_rampreset_t 
 {
     fluid_preset_t *preset;
 
-    preset = new_fluid_preset(sfont->sfont, fluid_rampreset_preset_get_name, fluid_rampreset_preset_get_banknum,
-                              fluid_rampreset_preset_get_num, fluid_rampreset_preset_noteon, fluid_rampreset_preset_delete); /* TODO: free modulators */
+    preset = new_fluid_preset(sfont->sfont,
+                              fluid_rampreset_preset_get_name,
+                              fluid_rampreset_preset_get_banknum,
+                              fluid_rampreset_preset_get_num,
+                              fluid_rampreset_preset_noteon,
+                              fluid_rampreset_preset_delete); /* TODO: free modulators */
     if (preset == NULL)
     {
         return FLUID_FAILED;

@@ -189,8 +189,11 @@ void fluid_seq_fluidsynth_callback(unsigned int time, fluid_event_t *evt, fluid_
             break;
 
         case FLUID_SEQ_PROGRAMSELECT:
-            fluid_synth_program_select(synth, fluid_event_get_channel(evt), fluid_event_get_sfont_id(evt),
-                                       fluid_event_get_bank(evt), fluid_event_get_program(evt));
+            fluid_synth_program_select(synth,
+                                       fluid_event_get_channel(evt),
+                                       fluid_event_get_sfont_id(evt),
+                                       fluid_event_get_bank(evt),
+                                       fluid_event_get_program(evt));
             break;
 
         case FLUID_SEQ_ANYCONTROLCHANGE:
@@ -300,12 +303,13 @@ int fluid_sequencer_add_midi_event_to_buffer(void *data, fluid_midi_event_t *eve
             fluid_event_noteoff(&evt, chan, (short)fluid_midi_event_get_key(event));
             break;
         case NOTE_ON:
-            fluid_event_noteon(&evt, fluid_midi_event_get_channel(event), (short)fluid_midi_event_get_key(event),
+            fluid_event_noteon(&evt,
+                               fluid_midi_event_get_channel(event),
+                               (short)fluid_midi_event_get_key(event),
                                (short)fluid_midi_event_get_velocity(event));
             break;
         case CONTROL_CHANGE:
-            fluid_event_control_change(&evt, chan, (short)fluid_midi_event_get_control(event),
-                                       (short)fluid_midi_event_get_value(event));
+            fluid_event_control_change(&evt, chan, (short)fluid_midi_event_get_control(event), (short)fluid_midi_event_get_value(event));
             break;
         case PROGRAM_CHANGE:
             fluid_event_program_change(&evt, chan, (short)fluid_midi_event_get_program(event));

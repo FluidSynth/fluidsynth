@@ -704,9 +704,10 @@ int main(int argc, char **argv)
 
     if (router == NULL)
     {
-        fprintf(stderr, "Failed to create the MIDI input router; no MIDI input\n"
-                        "will be available. You can access the synthesizer \n"
-                        "through the console.\n");
+        fprintf(stderr,
+                "Failed to create the MIDI input router; no MIDI input\n"
+                "will be available. You can access the synthesizer \n"
+                "through the console.\n");
     }
 
     /* start the midi router and link it to the synth */
@@ -716,13 +717,14 @@ int main(int argc, char **argv)
          * The example dump functions are put into the chain before and after the router..
          */
         // sequencer = new_fluid_sequencer2(0);
-        mdriver = new_fluid_midi_driver(settings, dump ? fluid_midi_dump_prerouter : fluid_midi_router_handle_midi_event,
-                                        (void *)router);
+        mdriver =
+        new_fluid_midi_driver(settings, dump ? fluid_midi_dump_prerouter : fluid_midi_router_handle_midi_event, (void *)router);
         if (mdriver == NULL)
         {
-            fprintf(stderr, "Failed to create the MIDI thread; no MIDI input\n"
-                            "will be available. You can access the synthesizer \n"
-                            "through the console.\n");
+            fprintf(stderr,
+                    "Failed to create the MIDI thread; no MIDI input\n"
+                    "will be available. You can access the synthesizer \n"
+                    "through the console.\n");
         }
     }
 
@@ -737,8 +739,9 @@ int main(int argc, char **argv)
                 player = new_fluid_player(synth);
                 if (player == NULL)
                 {
-                    fprintf(stderr, "Failed to create the midifile player.\n"
-                                    "Continuing without a player.\n");
+                    fprintf(stderr,
+                            "Failed to create the midifile player.\n"
+                            "Continuing without a player.\n");
                     break;
                 }
                 if (router != NULL)
@@ -800,8 +803,9 @@ int main(int argc, char **argv)
         server = new_fluid_server(settings, synth, router);
         if (server == NULL)
         {
-            fprintf(stderr, "Failed to create the server.\n"
-                            "Continuing without it.\n");
+            fprintf(stderr,
+                    "Failed to create the server.\n"
+                    "Continuing without it.\n");
         }
     }
 #endif

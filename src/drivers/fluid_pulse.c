@@ -144,8 +144,15 @@ fluid_audio_driver_t *new_fluid_pulse_audio_driver2(fluid_settings_t *settings, 
     bufattr.prebuf = -1;   /* Just initialize to same value as tlength */
     bufattr.fragsize = -1; /* Not used */
 
-    dev->pa_handle = pa_simple_new(server, "FluidSynth", PA_STREAM_PLAYBACK, device, "FluidSynth output", &samplespec, NULL, /* pa_channel_map */
-                                   &bufattr, &err);
+    dev->pa_handle = pa_simple_new(server,
+                                   "FluidSynth",
+                                   PA_STREAM_PLAYBACK,
+                                   device,
+                                   "FluidSynth output",
+                                   &samplespec,
+                                   NULL, /* pa_channel_map */
+                                   &bufattr,
+                                   &err);
 
     if (!dev->pa_handle)
     {

@@ -1281,8 +1281,11 @@ static void fluidmax_print(t_object *o, Symbol *s, short ac, Atom *at)
                                     char *preset_str = fluid_preset_get_name(preset);
                                     ftmax_symbol_t preset_name = ftmax_new_symbol(preset_str);
 
-                                    post("  '%s': soundfont '%s', bank %d, program %d", ftmax_symbol_name(preset_name),
-                                         ftmax_symbol_name(sf_name), i, j);
+                                    post("  '%s': soundfont '%s', bank %d, program %d",
+                                         ftmax_symbol_name(preset_name),
+                                         ftmax_symbol_name(sf_name),
+                                         i,
+                                         j);
                                 }
                             }
                         }
@@ -1316,8 +1319,12 @@ static void fluidmax_print(t_object *o, Symbol *s, short ac, Atom *at)
                         fluid_synth_get_program(self->synth, i, &sf_id, &bank_num, &prog_num);
                         sf = fluid_synth_get_sfont_by_id(self->synth, sf_id);
 
-                        post("  %d: soundfont '%s', bank %d, program %d: '%s'", i + 1,
-                             ftmax_symbol_name(fluidmax_sfont_get_name(sf)), bank_num, prog_num, ftmax_symbol_name(preset_name));
+                        post("  %d: soundfont '%s', bank %d, program %d: '%s'",
+                             i + 1,
+                             ftmax_symbol_name(fluidmax_sfont_get_name(sf)),
+                             bank_num,
+                             prog_num,
+                             ftmax_symbol_name(preset_name));
                     }
                     else
                     {

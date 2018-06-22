@@ -407,8 +407,8 @@ int fluid_synth_noteoff_mono_LOCAL(fluid_synth_t *synth, int chan, int key)
                     /* legato from key to i_prev key */
                     /* the voices from key number are to be used to
                     play i_prev key number. */
-                    status = fluid_synth_noteon_monopoly_legato(synth, chan, key, channel->monolist[i_prev].note,
-                                                                channel->monolist[i_prev].vel);
+                    status = fluid_synth_noteon_monopoly_legato(
+                    synth, chan, key, channel->monolist[i_prev].note, channel->monolist[i_prev].vel);
                 }
                 /* else the note doesn't need to be played off */
                 else
@@ -551,9 +551,14 @@ int fluid_synth_noteoff_monopoly(fluid_synth_t *synth, int chan, int key, char M
                         used_voices++;
                     }
                 }
-                FLUID_LOG(FLUID_INFO, "noteoff\t%d\t%d\t%d\t%05d\t%.3f\t%d", fluid_voice_get_channel(voice),
-                          fluid_voice_get_key(voice), 0, fluid_voice_get_id(voice),
-                          (fluid_curtime() - synth->start) / 1000.0f, used_voices);
+                FLUID_LOG(FLUID_INFO,
+                          "noteoff\t%d\t%d\t%d\t%05d\t%.3f\t%d",
+                          fluid_voice_get_channel(voice),
+                          fluid_voice_get_key(voice),
+                          0,
+                          fluid_voice_get_id(voice),
+                          (fluid_curtime() - synth->start) / 1000.0f,
+                          used_voices);
             } /* if verbose */
 
             fluid_voice_noteoff(voice);

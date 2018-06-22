@@ -435,7 +435,8 @@ int fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
 
     /*************** resonant filter ******************/
 
-    fluid_iir_filter_calc(&voice->resonant_filter, voice->dsp.output_rate,
+    fluid_iir_filter_calc(&voice->resonant_filter,
+                          voice->dsp.output_rate,
                           fluid_lfo_get_val(&voice->envlfo.modlfo) * voice->envlfo.modlfo_to_fc +
                           fluid_adsr_env_get_val(&voice->envlfo.modenv) * voice->envlfo.modenv_to_fc);
 
