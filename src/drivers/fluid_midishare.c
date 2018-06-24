@@ -66,7 +66,8 @@ typedef struct
 } fluid_midishare_midi_driver_t;
 
 
-fluid_midi_driver_t *new_fluid_midishare_midi_driver(fluid_settings_t *settings, handle_midi_event_func_t handler, void *data);
+fluid_midi_driver_t *
+new_fluid_midishare_midi_driver(fluid_settings_t *settings, handle_midi_event_func_t handler, void *data);
 
 void delete_fluid_midishare_midi_driver(fluid_midi_driver_t *p);
 int fluid_midishare_midi_driver_status(fluid_midi_driver_t *p);
@@ -84,7 +85,8 @@ static void fluid_midishare_close_appl(fluid_midishare_midi_driver_t *dev);
 /*
  * new_fluid_midishare_midi_driver
  */
-fluid_midi_driver_t *new_fluid_midishare_midi_driver(fluid_settings_t *settings, handle_midi_event_func_t handler, void *data)
+fluid_midi_driver_t *
+new_fluid_midishare_midi_driver(fluid_settings_t *settings, handle_midi_event_func_t handler, void *data)
 {
     fluid_midishare_midi_driver_t *dev;
     int i;
@@ -291,7 +293,8 @@ static void fluid_midishare_midi_driver_receive(short ref)
                 /* Copy the data to fluid_midi_event_t */
                 fluid_midi_event_set_type(&new_event, PITCH_BEND);
                 fluid_midi_event_set_channel(&new_event, Chan(e));
-                fluid_midi_event_set_value(&new_event, ((MidiGetField(e, 0) + (MidiGetField(e, 1) << 7)) - 8192));
+                fluid_midi_event_set_value(&new_event,
+                                           ((MidiGetField(e, 0) + (MidiGetField(e, 1) << 7)) - 8192));
                 break;
 
             case typeSysEx:

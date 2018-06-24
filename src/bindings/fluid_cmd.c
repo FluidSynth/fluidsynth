@@ -64,8 +64,11 @@ struct _fluid_shell_t
 
 
 static fluid_thread_return_t fluid_shell_run(void *data);
-static void
-fluid_shell_init(fluid_shell_t *shell, fluid_settings_t *settings, fluid_cmd_handler_t *handler, fluid_istream_t in, fluid_ostream_t out);
+static void fluid_shell_init(fluid_shell_t *shell,
+                             fluid_settings_t *settings,
+                             fluid_cmd_handler_t *handler,
+                             fluid_istream_t in,
+                             fluid_ostream_t out);
 static int fluid_handle_voice_count(void *data, int ac, char **av, fluid_ostream_t out);
 
 void fluid_shell_settings(fluid_settings_t *settings)
@@ -244,7 +247,11 @@ new_fluid_shell(fluid_settings_t *settings, fluid_cmd_handler_t *handler, fluid_
     return shell;
 }
 
-static void fluid_shell_init(fluid_shell_t *shell, fluid_settings_t *settings, fluid_cmd_handler_t *handler, fluid_istream_t in, fluid_ostream_t out)
+static void fluid_shell_init(fluid_shell_t *shell,
+                             fluid_settings_t *settings,
+                             fluid_cmd_handler_t *handler,
+                             fluid_istream_t in,
+                             fluid_ostream_t out)
 {
     shell->settings = settings;
     shell->handler = handler;
@@ -536,7 +543,8 @@ int fluid_handle_select(void *data, int ac, char **av, fluid_ostream_t out)
         fluid_ostream_printf(out, "preset: too few arguments\n");
         return FLUID_FAILED;
     }
-    if (!fluid_is_number(av[0]) || !fluid_is_number(av[1]) || !fluid_is_number(av[2]) || !fluid_is_number(av[3]))
+    if (!fluid_is_number(av[0]) || !fluid_is_number(av[1]) || !fluid_is_number(av[2]) ||
+        !fluid_is_number(av[3]))
     {
         fluid_ostream_printf(out, "preset: invalid argument\n");
         return FLUID_FAILED;
@@ -1473,7 +1481,8 @@ int fluid_handle_set(void *data, int ac, char **av, fluid_ostream_t out)
         case FLUID_INT_TYPE:
             if (fluid_settings_get_hints(handler->synth->settings, av[0], &hints) == FLUID_OK && hints & FLUID_HINT_TOGGLED)
             {
-                if (FLUID_STRCASECMP(av[1], "yes") == 0 || FLUID_STRCASECMP(av[1], "true") == 0 || FLUID_STRCASECMP(av[1], "t") == 0)
+                if (FLUID_STRCASECMP(av[1], "yes") == 0 || FLUID_STRCASECMP(av[1], "true") == 0 ||
+                    FLUID_STRCASECMP(av[1], "t") == 0)
                 {
                     ival = 1;
                 }
@@ -1699,7 +1708,9 @@ int fluid_handle_info(void *d, int ac, char **av, fluid_ostream_t out)
                 fluid_ostream_printf(out, "Minimum value: %.3f\n", min);
                 fluid_ostream_printf(out, "Maximum value: %.3f\n", max);
                 fluid_ostream_printf(out, "Default value: %.3f\n", def);
-                fluid_ostream_printf(out, "Real-time:     %s\n", fluid_settings_is_realtime(settings, av[0]) ? "yes" : "no");
+                fluid_ostream_printf(out,
+                                     "Real-time:     %s\n",
+                                     fluid_settings_is_realtime(settings, av[0]) ? "yes" : "no");
             }
             else
             {
@@ -1734,7 +1745,9 @@ int fluid_handle_info(void *d, int ac, char **av, fluid_ostream_t out)
                     fluid_ostream_printf(out, "Default value: %s\n", def ? "True" : "False");
                 }
 
-                fluid_ostream_printf(out, "Real-time:     %s\n", fluid_settings_is_realtime(settings, av[0]) ? "yes" : "no");
+                fluid_ostream_printf(out,
+                                     "Real-time:     %s\n",
+                                     fluid_settings_is_realtime(settings, av[0]) ? "yes" : "no");
             }
             else
             {
@@ -1764,7 +1777,9 @@ int fluid_handle_info(void *d, int ac, char **av, fluid_ostream_t out)
             fluid_settings_foreach_option(settings, av[0], &data, fluid_handle_print_option);
             fluid_ostream_printf(out, "\n");
 
-            fluid_ostream_printf(out, "Real-time:     %s\n", fluid_settings_is_realtime(settings, av[0]) ? "yes" : "no");
+            fluid_ostream_printf(out,
+                                 "Real-time:     %s\n",
+                                 fluid_settings_is_realtime(settings, av[0]) ? "yes" : "no");
             break;
         }
 
@@ -2073,8 +2088,9 @@ static const char *mode_name[] = { "poly omni on (0)", "mono omni on (1)", "poly
 */
 static int print_basic_channels(fluid_synth_t *synth, fluid_ostream_t out)
 {
-    static const char *warning_msg = "Warning: no basic channels. All MIDI channels are disabled.\n"
-                                     "Make use of setbasicchannels to set at least a default basic channel.\n";
+    static const char *warning_msg =
+    "Warning: no basic channels. All MIDI channels are disabled.\n"
+    "Make use of setbasicchannels to set at least a default basic channel.\n";
 
     int n_chan = synth->midi_channels;
     int i, n = 0;
@@ -2087,7 +2103,11 @@ static int print_basic_channels(fluid_synth_t *synth, fluid_ostream_t out)
             if (basic_chan == i)
             {
                 n++;
-                fluid_ostream_printf(out, "Basic channel:%3d, %s, nbr:%3d\n", i, mode_name[mode_chan & FLUID_CHANNEL_MODE_MASK], val);
+                fluid_ostream_printf(out,
+                                     "Basic channel:%3d, %s, nbr:%3d\n",
+                                     i,
+                                     mode_name[mode_chan & FLUID_CHANNEL_MODE_MASK],
+                                     val);
             }
         }
         else
@@ -2356,7 +2376,8 @@ static void print_channel_is_outside_count(fluid_ostream_t out, char const *name
 */
 int fluid_handle_channelsmode(void *data, int ac, char **av, fluid_ostream_t out)
 {
-    static const char *header = "Channel    , Status , Type         , Mode            , Nbr of channels\n";
+    static const char *header =
+    "Channel    , Status , Type         , Mode            , Nbr of channels\n";
     static const char *name_cde = "channelsmode";
     FLUID_ENTRY_COMMAND(data);
     fluid_synth_t *synth = handler->synth;
@@ -2444,7 +2465,8 @@ int fluid_handle_channelsmode(void *data, int ac, char **av, fluid_ostream_t out
  @param name_mode name of the mode to display.
  @param n_chan, number of MIDI channels.
 */
-static void print_result_get_channel_mode(int result, fluid_ostream_t out, char const *name_cde, int chan, char const *name_mode, int n_chan)
+static void
+print_result_get_channel_mode(int result, fluid_ostream_t out, char const *name_cde, int chan, char const *name_mode, int n_chan)
 {
     if (result == FLUID_OK)
     {
@@ -2519,7 +2541,12 @@ int fluid_handle_legatomode(void *data, int ac, char **av, fluid_ostream_t out)
  @param nbr_arg_group_msg message when the number of argument by group is invalid.
  @return 0 if arguments are valid, -1 otherwise.
 */
-static int check_channels_group_arguments(int ac, char **av, int nbr_arg_group, fluid_ostream_t out, char const *name_cde, char const *nbr_arg_group_msg)
+static int check_channels_group_arguments(int ac,
+                                          char **av,
+                                          int nbr_arg_group,
+                                          fluid_ostream_t out,
+                                          char const *name_cde,
+                                          char const *nbr_arg_group_msg)
 {
     if (ac)
     {
@@ -2531,7 +2558,11 @@ static int check_channels_group_arguments(int ac, char **av, int nbr_arg_group, 
         if (ac % nbr_arg_group)
         {
             /* each group entry needs nbr_arg_group parameters */
-            fluid_ostream_printf(out, "%s: channel %d, %s\n", name_cde, atoi(av[((ac / nbr_arg_group) * nbr_arg_group)]), nbr_arg_group_msg);
+            fluid_ostream_printf(out,
+                                 "%s: channel %d, %s\n",
+                                 name_cde,
+                                 atoi(av[((ac / nbr_arg_group) * nbr_arg_group)]),
+                                 nbr_arg_group_msg);
             return -1;
         }
     }
@@ -3470,7 +3501,8 @@ int fluid_handle_prof_start(void *data, int ac, char **av, fluid_ostream_t out)
 
         /* Prints total and remainder duration */
 #ifdef FLUID_PROFILE_CANCEL
-        fluid_ostream_printf(out, "\nProfiling time(mm:ss): Total=%d:%d  Remainder=%d:%d, press <ENTER> to cancel\n", tm, ts, rm, rs);
+        fluid_ostream_printf(
+        out, "\nProfiling time(mm:ss): Total=%d:%d  Remainder=%d:%d, press <ENTER> to cancel\n", tm, ts, rm, rs);
 #else
         fluid_ostream_printf(out, "\nProfiling time(mm:ss): Total=%d:%d  Remainder=%d:%d\n", tm, ts, rm, rs);
 #endif
@@ -3622,7 +3654,8 @@ fluid_cmd_handler_t *new_fluid_cmd_handler(fluid_synth_t *synth, fluid_midi_rout
     }
     FLUID_MEMSET(handler, 0, sizeof(*handler));
 
-    handler->commands = new_fluid_hashtable_full(fluid_str_hash, fluid_str_equal, NULL, fluid_cmd_handler_destroy_hash_value);
+    handler->commands =
+    new_fluid_hashtable_full(fluid_str_hash, fluid_str_equal, NULL, fluid_cmd_handler_destroy_hash_value);
     if (handler->commands == NULL)
     {
         FLUID_FREE(handler);
@@ -3882,7 +3915,8 @@ fluid_server_t *new_fluid_server(fluid_settings_t *settings, fluid_synth_t *synt
 
     fluid_settings_getint(settings, "shell.port", &port);
 
-    server->socket = new_fluid_server_socket(port, (fluid_server_func_t)fluid_server_handle_connection, server);
+    server->socket =
+    new_fluid_server_socket(port, (fluid_server_func_t)fluid_server_handle_connection, server);
     if (server->socket == NULL)
     {
         FLUID_FREE(server);

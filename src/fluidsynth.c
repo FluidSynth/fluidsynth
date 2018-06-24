@@ -93,7 +93,8 @@ void process_o_cmd_line_option(fluid_settings_t *settings, char *optarg)
         case FLUID_INT_TYPE:
             if (fluid_settings_get_hints(settings, optarg, &hints) == FLUID_OK && hints & FLUID_HINT_TOGGLED)
             {
-                if (FLUID_STRCASECMP(val, "yes") == 0 || FLUID_STRCASECMP(val, "true") == 0 || FLUID_STRCASECMP(val, "t") == 0)
+                if (FLUID_STRCASECMP(val, "yes") == 0 || FLUID_STRCASECMP(val, "true") == 0 ||
+                    FLUID_STRCASECMP(val, "t") == 0)
                 {
                     ival = 1;
                 }
@@ -573,7 +574,8 @@ int main(int argc, char **argv)
                     show_settings_str_options(settings, "audio.file.type");
 
 #if LIBSNDFILE_SUPPORT
-                    printf("\nauto: Determine type from file name extension, defaults to \"wav\"\n");
+                    printf(
+                    "\nauto: Determine type from file name extension, defaults to \"wav\"\n");
 #else
                     printf("\nNOTE: No libsndfile support!\n");
 #endif
@@ -700,7 +702,9 @@ int main(int argc, char **argv)
         }
     }
 
-    router = new_fluid_midi_router(settings, dump ? fluid_midi_dump_postrouter : fluid_synth_handle_midi_event, (void *)synth);
+    router = new_fluid_midi_router(settings,
+                                   dump ? fluid_midi_dump_postrouter : fluid_synth_handle_midi_event,
+                                   (void *)synth);
 
     if (router == NULL)
     {
@@ -717,8 +721,9 @@ int main(int argc, char **argv)
          * The example dump functions are put into the chain before and after the router..
          */
         // sequencer = new_fluid_sequencer2(0);
-        mdriver =
-        new_fluid_midi_driver(settings, dump ? fluid_midi_dump_prerouter : fluid_midi_router_handle_midi_event, (void *)router);
+        mdriver = new_fluid_midi_driver(settings,
+                                        dump ? fluid_midi_dump_prerouter : fluid_midi_router_handle_midi_event,
+                                        (void *)router);
         if (mdriver == NULL)
         {
             fprintf(stderr,

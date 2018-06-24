@@ -37,28 +37,32 @@ typedef struct _fluid_audriver_definition_t
 
 #if PULSE_SUPPORT
 fluid_audio_driver_t *new_fluid_pulse_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth);
-fluid_audio_driver_t *new_fluid_pulse_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func, void *data);
+fluid_audio_driver_t *
+new_fluid_pulse_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func, void *data);
 void delete_fluid_pulse_audio_driver(fluid_audio_driver_t *p);
 void fluid_pulse_audio_driver_settings(fluid_settings_t *settings);
 #endif
 
 #if ALSA_SUPPORT
 fluid_audio_driver_t *new_fluid_alsa_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth);
-fluid_audio_driver_t *new_fluid_alsa_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func, void *data);
+fluid_audio_driver_t *
+new_fluid_alsa_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func, void *data);
 void delete_fluid_alsa_audio_driver(fluid_audio_driver_t *p);
 void fluid_alsa_audio_driver_settings(fluid_settings_t *settings);
 #endif
 
 #if OSS_SUPPORT
 fluid_audio_driver_t *new_fluid_oss_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth);
-fluid_audio_driver_t *new_fluid_oss_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func, void *data);
+fluid_audio_driver_t *
+new_fluid_oss_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func, void *data);
 void delete_fluid_oss_audio_driver(fluid_audio_driver_t *p);
 void fluid_oss_audio_driver_settings(fluid_settings_t *settings);
 #endif
 
 #if COREAUDIO_SUPPORT
 fluid_audio_driver_t *new_fluid_core_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth);
-fluid_audio_driver_t *new_fluid_core_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func, void *data);
+fluid_audio_driver_t *
+new_fluid_core_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func, void *data);
 void delete_fluid_core_audio_driver(fluid_audio_driver_t *p);
 void fluid_core_audio_driver_settings(fluid_settings_t *settings);
 #endif
@@ -77,14 +81,16 @@ void delete_fluid_portaudio_driver(fluid_audio_driver_t *p);
 
 #if JACK_SUPPORT
 fluid_audio_driver_t *new_fluid_jack_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth);
-fluid_audio_driver_t *new_fluid_jack_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func, void *data);
+fluid_audio_driver_t *
+new_fluid_jack_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func, void *data);
 void delete_fluid_jack_audio_driver(fluid_audio_driver_t *p);
 void fluid_jack_audio_driver_settings(fluid_settings_t *settings);
 #endif
 
 #if SNDMAN_SUPPORT
 fluid_audio_driver_t *new_fluid_sndmgr_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth);
-fluid_audio_driver_t *new_fluid_sndmgr_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func, void *data);
+fluid_audio_driver_t *
+new_fluid_sndmgr_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func, void *data);
 void delete_fluid_sndmgr_audio_driver(fluid_audio_driver_t *p);
 #endif
 
@@ -143,7 +149,8 @@ static const fluid_audriver_definition_t fluid_audio_drivers[] = {
 #endif
 };
 
-#define ENABLE_AUDIO_DRIVER(_drv, _idx) _drv[(_idx) / (sizeof(*(_drv)) * 8)] &= ~(1 << ((_idx) % (sizeof((*_drv)) * 8)))
+#define ENABLE_AUDIO_DRIVER(_drv, _idx) \
+    _drv[(_idx) / (sizeof(*(_drv)) * 8)] &= ~(1 << ((_idx) % (sizeof((*_drv)) * 8)))
 
 #define IS_AUDIO_DRIVER_ENABLED(_drv, _idx) \
     (!(_drv[(_idx) / (sizeof(*(_drv)) * 8)] & (1 << ((_idx) % (sizeof((*_drv)) * 8)))))
@@ -260,7 +267,10 @@ static const fluid_audriver_definition_t *find_fluid_audio_driver(fluid_settings
 
     allnames = fluid_settings_option_concat(settings, "audio.driver", NULL);
     fluid_settings_dupstr(settings, "audio.driver", &name); /* ++ alloc name */
-    FLUID_LOG(FLUID_ERR, "Couldn't find the requested audio driver %s. Valid drivers are: %s.", name ? name : "NULL", allnames ? allnames : "ERROR");
+    FLUID_LOG(FLUID_ERR,
+              "Couldn't find the requested audio driver %s. Valid drivers are: %s.",
+              name ? name : "NULL",
+              allnames ? allnames : "ERROR");
     if (name)
     {
         FLUID_FREE(name);

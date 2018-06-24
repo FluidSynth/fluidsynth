@@ -58,8 +58,9 @@ static const char *const format_names[] = { "s8", "s16", "s24", "s32", "u8", "fl
 
 /* File audio format IDs.
  * !! Keep in sync with format_names[] */
-static const int format_ids[] = { SF_FORMAT_PCM_S8, SF_FORMAT_PCM_16, SF_FORMAT_PCM_24, SF_FORMAT_PCM_32,
-                                  SF_FORMAT_PCM_U8, SF_FORMAT_FLOAT,  SF_FORMAT_DOUBLE };
+static const int format_ids[] = { SF_FORMAT_PCM_S8, SF_FORMAT_PCM_16, SF_FORMAT_PCM_24,
+                                  SF_FORMAT_PCM_32, SF_FORMAT_PCM_U8, SF_FORMAT_FLOAT,
+                                  SF_FORMAT_DOUBLE };
 
 /* File endian byte order names.
  * !! Keep in sync with endian_ids[] */
@@ -69,7 +70,8 @@ static const char *const endian_names[] = { "auto", "little", "big", "cpu" };
  * !! Keep in sync with endian_names[] */
 static const int endian_ids[] = { SF_ENDIAN_FILE, SF_ENDIAN_LITTLE, SF_ENDIAN_BIG, SF_ENDIAN_CPU };
 
-static int fluid_file_renderer_parse_options(char *filetype, char *format, char *endian, char *filename, SF_INFO *info);
+static int
+fluid_file_renderer_parse_options(char *filetype, char *format, char *endian, char *filename, SF_INFO *info);
 static int fluid_file_renderer_find_file_type(char *extension, int *type);
 static int fluid_file_renderer_find_valid_format(SF_INFO *info);
 
@@ -240,8 +242,8 @@ fluid_file_renderer_t *new_fluid_file_renderer(fluid_synth_t *synth)
      * To handle Ogg/Vorbis and possibly future file types with new formats.
      * Checking if format is SF_FORMAT_PCM_16 isn't a fool proof way to check if
      * format was specified or not (if user specifies "s16" itself), but should suffice. */
-    if (!sf_format_check(&info) &&
-        ((info.format & SF_FORMAT_SUBMASK) != SF_FORMAT_PCM_16 || !fluid_file_renderer_find_valid_format(&info)))
+    if (!sf_format_check(&info) && ((info.format & SF_FORMAT_SUBMASK) != SF_FORMAT_PCM_16 ||
+                                    !fluid_file_renderer_find_valid_format(&info)))
     {
         FLUID_LOG(FLUID_ERR, "Invalid or unsupported audio file format settings");
         goto error_recovery;

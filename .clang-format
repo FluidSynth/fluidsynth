@@ -26,7 +26,7 @@ BraceWrapping:
   BeforeElse: true
   IndentBraces: false
 
-ColumnLimit: 120
+ColumnLimit: 100
 CommentPragmas: ''
 ConstructorInitializerAllOnOneLineOrOnePerLine: false
 ConstructorInitializerIndentWidth: 0

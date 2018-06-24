@@ -51,9 +51,12 @@ FLUIDSYNTH_API int
 fluid_ladspa_add_effect(fluid_ladspa_fx_t *fx, const char *effect_name, const char *lib_name, const char *plugin_name);
 FLUIDSYNTH_API int fluid_ladspa_effect_can_mix(fluid_ladspa_fx_t *fx, const char *name);
 FLUIDSYNTH_API int fluid_ladspa_effect_set_mix(fluid_ladspa_fx_t *fx, const char *name, int mix, float gain);
-FLUIDSYNTH_API int fluid_ladspa_effect_port_exists(fluid_ladspa_fx_t *fx, const char *effect_name, const char *port_name);
-FLUIDSYNTH_API int fluid_ladspa_effect_set_control(fluid_ladspa_fx_t *fx, const char *effect_name, const char *port_name, float val);
-FLUIDSYNTH_API int fluid_ladspa_effect_link(fluid_ladspa_fx_t *fx, const char *effect_name, const char *port_name, const char *name);
+FLUIDSYNTH_API int
+fluid_ladspa_effect_port_exists(fluid_ladspa_fx_t *fx, const char *effect_name, const char *port_name);
+FLUIDSYNTH_API int
+fluid_ladspa_effect_set_control(fluid_ladspa_fx_t *fx, const char *effect_name, const char *port_name, float val);
+FLUIDSYNTH_API int
+fluid_ladspa_effect_link(fluid_ladspa_fx_t *fx, const char *effect_name, const char *port_name, const char *name);
 
 #ifdef __cplusplus
 }

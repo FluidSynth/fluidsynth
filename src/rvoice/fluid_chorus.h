@@ -37,7 +37,8 @@ typedef enum
     FLUID_CHORUS_SET_TYPE = 1 << 4,
 
     /** Value for fluid_chorus_set() which sets all chorus parameters. */
-    FLUID_CHORUS_SET_ALL = FLUID_CHORUS_SET_NR | FLUID_CHORUS_SET_LEVEL | FLUID_CHORUS_SET_SPEED | FLUID_CHORUS_SET_DEPTH | FLUID_CHORUS_SET_TYPE,
+    FLUID_CHORUS_SET_ALL = FLUID_CHORUS_SET_NR | FLUID_CHORUS_SET_LEVEL | FLUID_CHORUS_SET_SPEED |
+                           FLUID_CHORUS_SET_DEPTH | FLUID_CHORUS_SET_TYPE,
 } fluid_chorus_set_t;
 
 /*

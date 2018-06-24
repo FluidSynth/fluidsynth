@@ -97,7 +97,8 @@ int main(int argc, char *argv[])
         /* register the synth with the sequencer */
         synth_destination = fluid_sequencer_register_fluidsynth(sequencer, synth);
         /* register the client name and callback */
-        client_destination = fluid_sequencer_register_client(sequencer, "fluidsynth_metronome", sequencer_callback, NULL);
+        client_destination =
+        fluid_sequencer_register_client(sequencer, "fluidsynth_metronome", sequencer_callback, NULL);
         /* load a SoundFont */
         n = fluid_synth_sfload(synth, argv[1], 1);
         if (n != -1)

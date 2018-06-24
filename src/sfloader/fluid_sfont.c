@@ -523,18 +523,23 @@ int fluid_sample_set_name(fluid_sample_t *sample, const char *name)
  * Assign sample data to a SoundFont sample.
  * @param sample SoundFont sample
  * @param data Buffer containing 16 bit (mono-)audio sample data
- * @param data24 If not NULL, pointer to the least significant byte counterparts of each sample data point in order to
- * create 24 bit audio samples
+ * @param data24 If not NULL, pointer to the least significant byte counterparts of each sample data
+ * point in order to create 24 bit audio samples
  * @param nbframes Number of samples in \a data
  * @param sample_rate Sampling rate of the sample data
- * @param copy_data TRUE to copy the sample data (and automatically free it upon delete_fluid_sample()), FALSE to use it
- * directly (and not free it)
+ * @param copy_data TRUE to copy the sample data (and automatically free it upon
+ * delete_fluid_sample()), FALSE to use it directly (and not free it)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  *
  * @note If \a copy_data is FALSE, data should have 8 unused frames at start
  * and 8 unused frames at the end and \a nbframes should be >=48
  */
-int fluid_sample_set_sound_data(fluid_sample_t *sample, short *data, char *data24, unsigned int nbframes, unsigned int sample_rate, short copy_data)
+int fluid_sample_set_sound_data(fluid_sample_t *sample,
+                                short *data,
+                                char *data24,
+                                unsigned int nbframes,
+                                unsigned int sample_rate,
+                                short copy_data)
 {
 /* the number of samples before the start and after the end */
 #define SAMPLE_LOOP_MARGIN 8U
@@ -746,7 +751,11 @@ int fluid_sample_sanitize_loop(fluid_sample_t *sample, unsigned int buffer_size)
 
     if ((sample->loopend < sample->start) || (sample->loopend > max_end))
     {
-        FLUID_LOG(FLUID_DBG, "Sample '%s': invalid loop end '%d', setting to sample end '%d'", sample->name, sample->loopend, sample_end);
+        FLUID_LOG(FLUID_DBG,
+                  "Sample '%s': invalid loop end '%d', setting to sample end '%d'",
+                  sample->name,
+                  sample->loopend,
+                  sample_end);
         sample->loopend = sample_end;
         modified = TRUE;
     }

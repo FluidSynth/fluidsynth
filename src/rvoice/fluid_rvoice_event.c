@@ -25,7 +25,8 @@
 #include "fluid_lfo.h"
 #include "fluid_adsr_env.h"
 
-static int fluid_rvoice_eventhandler_push_LOCAL(fluid_rvoice_eventhandler_t *handler, const fluid_rvoice_event_t *src_event);
+static int fluid_rvoice_eventhandler_push_LOCAL(fluid_rvoice_eventhandler_t *handler,
+                                                const fluid_rvoice_event_t *src_event);
 
 static FLUID_INLINE void fluid_rvoice_event_dispatch(fluid_rvoice_event_t *event)
 {
@@ -67,7 +68,10 @@ int fluid_rvoice_eventhandler_push(fluid_rvoice_eventhandler_t *handler,
     return fluid_rvoice_eventhandler_push_LOCAL(handler, &local_event);
 }
 
-int fluid_rvoice_eventhandler_push_ptr(fluid_rvoice_eventhandler_t *handler, fluid_rvoice_function_t method, void *object, void *ptr)
+int fluid_rvoice_eventhandler_push_ptr(fluid_rvoice_eventhandler_t *handler,
+                                       fluid_rvoice_function_t method,
+                                       void *object,
+                                       void *ptr)
 {
     fluid_rvoice_event_t local_event;
 
@@ -78,7 +82,8 @@ int fluid_rvoice_eventhandler_push_ptr(fluid_rvoice_eventhandler_t *handler, flu
     return fluid_rvoice_eventhandler_push_LOCAL(handler, &local_event);
 }
 
-static int fluid_rvoice_eventhandler_push_LOCAL(fluid_rvoice_eventhandler_t *handler, const fluid_rvoice_event_t *src_event)
+static int fluid_rvoice_eventhandler_push_LOCAL(fluid_rvoice_eventhandler_t *handler,
+                                                const fluid_rvoice_event_t *src_event)
 {
     fluid_rvoice_event_t *event;
     int old_queue_stored = fluid_atomic_int_add(&handler->queue_stored, 1);
@@ -98,7 +103,8 @@ static int fluid_rvoice_eventhandler_push_LOCAL(fluid_rvoice_eventhandler_t *han
 }
 
 
-void fluid_rvoice_eventhandler_finished_voice_callback(fluid_rvoice_eventhandler_t *eventhandler, fluid_rvoice_t *rvoice)
+void fluid_rvoice_eventhandler_finished_voice_callback(fluid_rvoice_eventhandler_t *eventhandler,
+                                                       fluid_rvoice_t *rvoice)
 {
     fluid_rvoice_t **vptr = fluid_ringbuffer_get_inptr(eventhandler->finished_voices, 0);
     if (vptr == NULL)
@@ -109,8 +115,13 @@ void fluid_rvoice_eventhandler_finished_voice_callback(fluid_rvoice_eventhandler
     fluid_ringbuffer_next_inptr(eventhandler->finished_voices, 1);
 }
 
-fluid_rvoice_eventhandler_t *
-new_fluid_rvoice_eventhandler(int queuesize, int finished_voices_size, int bufs, int fx_bufs, fluid_real_t sample_rate, int extra_threads, int prio)
+fluid_rvoice_eventhandler_t *new_fluid_rvoice_eventhandler(int queuesize,
+                                                           int finished_voices_size,
+                                                           int bufs,
+                                                           int fx_bufs,
+                                                           fluid_real_t sample_rate,
+                                                           int extra_threads,
+                                                           int prio)
 {
     fluid_rvoice_eventhandler_t *eventhandler = FLUID_NEW(fluid_rvoice_eventhandler_t);
     if (eventhandler == NULL)
@@ -136,7 +147,8 @@ new_fluid_rvoice_eventhandler(int queuesize, int finished_voices_size, int bufs,
         goto error_recovery;
     }
 
-    eventhandler->mixer = new_fluid_rvoice_mixer(bufs, fx_bufs, sample_rate, eventhandler, extra_threads, prio);
+    eventhandler->mixer =
+    new_fluid_rvoice_mixer(bufs, fx_bufs, sample_rate, eventhandler, extra_threads, prio);
     if (eventhandler->mixer == NULL)
     {
         goto error_recovery;

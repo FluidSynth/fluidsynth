@@ -63,7 +63,7 @@ struct _fluid_midi_router_rule_t
     int pending_events;             /* In case of noteon: How many keys are still down? */
     char keys_cc[128];              /* Flags, whether a key is down / controller is set (sustain) */
     fluid_midi_router_rule_t *next; /* next entry */
-    int waiting;                    /* Set to TRUE when rule has been deactivated but there are still pending_events */
+    int waiting; /* Set to TRUE when rule has been deactivated but there are still pending_events */
 };
 
 
@@ -79,7 +79,8 @@ struct _fluid_midi_router_rule_t
  * The function fluid_synth_handle_midi_event() can be used for \a handle and
  * a #fluid_synth_t passed as the \a event_handler_data parameter for this purpose.
  */
-fluid_midi_router_t *new_fluid_midi_router(fluid_settings_t *settings, handle_midi_event_func_t handler, void *event_handler_data)
+fluid_midi_router_t *
+new_fluid_midi_router(fluid_settings_t *settings, handle_midi_event_func_t handler, void *event_handler_data)
 {
     fluid_midi_router_t *router = NULL;
     int i;
@@ -653,7 +654,8 @@ int fluid_midi_router_handle_midi_event(void *data, fluid_midi_event_t *event)
          * Note: rule->chan_mul will probably be 0 or 1. If it's 0, input from all
          * input channels is mapped to the same synth channel.
          */
-        chan = (int)((fluid_real_t)event->channel * (fluid_real_t)rule->chan_mul + (fluid_real_t)rule->chan_add + 0.5);
+        chan = (int)((fluid_real_t)event->channel * (fluid_real_t)rule->chan_mul +
+                     (fluid_real_t)rule->chan_add + 0.5);
 
         /* Par 1 scaling / offset */
         par1 = (int)((fluid_real_t)event_par1 * (fluid_real_t)rule->par1_mul + (fluid_real_t)rule->par1_add + 0.5);
@@ -661,7 +663,8 @@ int fluid_midi_router_handle_midi_event(void *data, fluid_midi_event_t *event)
         /* Par 2 scaling / offset, if applicable */
         if (event_has_par2)
         {
-            par2 = (int)((fluid_real_t)event_par2 * (fluid_real_t)rule->par2_mul + (fluid_real_t)rule->par2_add + 0.5);
+            par2 = (int)((fluid_real_t)event_par2 * (fluid_real_t)rule->par2_mul +
+                         (fluid_real_t)rule->par2_add + 0.5);
         }
         else
         {
@@ -703,8 +706,8 @@ int fluid_midi_router_handle_midi_event(void *data, fluid_midi_event_t *event)
 
         /* At this point we have to create an event of event->type on 'chan' with par1 (maybe par2).
          * We keep track on the state of noteon and sustain pedal events. If the application tries
-         * to delete a rule, it will only be fully removed, if pending noteoff / pedal off events have
-         * arrived. In the meantime while waiting, it will only let through 'negative' events
+         * to delete a rule, it will only be fully removed, if pending noteoff / pedal off events
+         * have arrived. In the meantime while waiting, it will only let through 'negative' events
          * (noteoff or pedal up).
          */
         if (event->type == NOTE_ON || (event->type == CONTROL_CHANGE && par1 == SUSTAIN_SWITCH && par2 >= 64))
@@ -716,7 +719,8 @@ int fluid_midi_router_handle_midi_event(void *data, fluid_midi_event_t *event)
                 rule->pending_events++;
             }
         }
-        else if (event->type == NOTE_OFF || (event->type == CONTROL_CHANGE && par1 == SUSTAIN_SWITCH && par2 < 64))
+        else if (event->type == NOTE_OFF ||
+                 (event->type == CONTROL_CHANGE && par1 == SUSTAIN_SWITCH && par2 < 64))
         {
             /* Noteoff or sustain pedal up event generated */
             if (rule->keys_cc[par1] > 0)
@@ -743,8 +747,8 @@ int fluid_midi_router_handle_midi_event(void *data, fluid_midi_event_t *event)
                         rule->next = router->free_rules;
                         router->free_rules = rule;
 
-                        rule = prev_rule; /* Set rule to previous rule, which gets assigned to the next prev_rule value
-                                             (in for() statement) */
+                        rule = prev_rule; /* Set rule to previous rule, which gets assigned to the
+                                             next prev_rule value (in for() statement) */
                     }
 
                     goto send_event; /* Pass the event to complete the cycle */

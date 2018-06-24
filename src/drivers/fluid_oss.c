@@ -92,7 +92,8 @@ typedef struct
     fluid_midi_parser_t *parser;
 } fluid_oss_midi_driver_t;
 
-fluid_midi_driver_t *new_fluid_oss_midi_driver(fluid_settings_t *settings, handle_midi_event_func_t handler, void *data);
+fluid_midi_driver_t *
+new_fluid_oss_midi_driver(fluid_settings_t *settings, handle_midi_event_func_t handler, void *data);
 void delete_fluid_oss_midi_driver(fluid_midi_driver_t *p);
 int fluid_oss_midi_driver_status(fluid_midi_driver_t *p);
 static fluid_thread_return_t fluid_oss_midi_run(void *d);
@@ -546,7 +547,8 @@ void fluid_oss_midi_driver_settings(fluid_settings_t *settings)
 /*
  * new_fluid_oss_midi_driver
  */
-fluid_midi_driver_t *new_fluid_oss_midi_driver(fluid_settings_t *settings, handle_midi_event_func_t handler, void *data)
+fluid_midi_driver_t *
+new_fluid_oss_midi_driver(fluid_settings_t *settings, handle_midi_event_func_t handler, void *data)
 {
     fluid_oss_midi_driver_t *dev;
     int realtime_prio = 0;

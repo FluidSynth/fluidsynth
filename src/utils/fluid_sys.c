@@ -345,14 +345,15 @@ int fluid_is_soundfont(const char *filename)
     {
         return 0;
     }
-    if ((fread((void *)riff_id, 1, sizeof(riff_id), fp) != sizeof(riff_id)) || (fseek(fp, 4, SEEK_CUR) != 0) ||
-        (fread((void *)sfbk_id, 1, sizeof(sfbk_id), fp) != sizeof(sfbk_id)))
+    if ((fread((void *)riff_id, 1, sizeof(riff_id), fp) != sizeof(riff_id)) ||
+        (fseek(fp, 4, SEEK_CUR) != 0) || (fread((void *)sfbk_id, 1, sizeof(sfbk_id), fp) != sizeof(sfbk_id)))
     {
         goto error_rec;
     }
 
     fclose(fp);
-    return (FLUID_STRNCMP(riff_id, "RIFF", sizeof(riff_id)) == 0) && (FLUID_STRNCMP(sfbk_id, "sfbk", sizeof(sfbk_id)) == 0);
+    return (FLUID_STRNCMP(riff_id, "RIFF", sizeof(riff_id)) == 0) &&
+           (FLUID_STRNCMP(sfbk_id, "sfbk", sizeof(sfbk_id)) == 0);
 
 error_rec:
     fclose(fp);
@@ -670,16 +671,17 @@ static void fluid_profiling_print_load(double sample_rate, fluid_ostream_t out)
     /* First computes data to be printed */
     double total, voices, reverb, chorus, all_voices, voice;
     /* voices number */
-    n_voices =
-    fluid_profile_data[FLUID_PROF_ONE_BLOCK_VOICES].count ?
-    fluid_profile_data[FLUID_PROF_ONE_BLOCK_VOICES].n_voices / fluid_profile_data[FLUID_PROF_ONE_BLOCK_VOICES].count :
-    0;
+    n_voices = fluid_profile_data[FLUID_PROF_ONE_BLOCK_VOICES].count ?
+               fluid_profile_data[FLUID_PROF_ONE_BLOCK_VOICES].n_voices /
+               fluid_profile_data[FLUID_PROF_ONE_BLOCK_VOICES].count :
+               0;
 
     /* total load (%) */
-    total =
-    fluid_profile_data[FLUID_PROF_WRITE].count ?
-    fluid_profile_load(fluid_profile_data[FLUID_PROF_WRITE].total, sample_rate, fluid_profile_data[FLUID_PROF_WRITE].n_samples) :
-    0;
+    total = fluid_profile_data[FLUID_PROF_WRITE].count ?
+            fluid_profile_load(fluid_profile_data[FLUID_PROF_WRITE].total,
+                               sample_rate,
+                               fluid_profile_data[FLUID_PROF_WRITE].n_samples) :
+            0;
 
     /* reverb load (%) */
     reverb = fluid_profile_data[FLUID_PROF_ONE_BLOCK_REVERB].count ?
@@ -710,7 +712,10 @@ static void fluid_profiling_print_load(double sample_rate, fluid_ostream_t out)
     /* estimated maximum voices number */
     if (voice > 0)
     {
-        FLUID_SNPRINTF(max_voices_available, sizeof(max_voices_available), "%17d", (unsigned int)((100.0 - reverb - chorus) / voice));
+        FLUID_SNPRINTF(max_voices_available,
+                       sizeof(max_voices_available),
+                       "%17d",
+                       (unsigned int)((100.0 - reverb - chorus) / voice));
         pmax_voices = max_voices_available;
     }
     else
@@ -720,7 +725,10 @@ static void fluid_profiling_print_load(double sample_rate, fluid_ostream_t out)
 
     /* Now prints data */
     fluid_ostream_printf(out, " ------------------------------------------------------------------------------\n");
-    fluid_ostream_printf(out, " Cpu loads(%%) (sr:%6.0f Hz, sp:%6.2f microsecond) and maximum voices\n", sample_rate, 1000000.0 / sample_rate);
+    fluid_ostream_printf(out,
+                         " Cpu loads(%%) (sr:%6.0f Hz, sp:%6.2f microsecond) and maximum voices\n",
+                         sample_rate,
+                         1000000.0 / sample_rate);
     fluid_ostream_printf(out, " ------------------------------------------------------------------------------\n");
     fluid_ostream_printf(out, " nVoices| total(%%)|voices(%%)| reverb(%%)|chorus(%%)| voice(%%)|estimated maxVoices\n");
     fluid_ostream_printf(out, " -------|---------|---------|----------|---------|---------|-------------------\n");
@@ -768,7 +776,8 @@ void fluid_profiling_print_data(double sample_rate, fluid_ostream_t out)
         /* print all details: Duration(microsecond) and cpu loads(%) */
         fluid_ostream_printf(out, " ------------------------------------------------------------------------------\n");
         fluid_ostream_printf(out,
-                             " Duration(microsecond) and cpu loads(%%) (sr:%6.0f Hz, sp:%6.2f microsecond)\n",
+                             " Duration(microsecond) and cpu loads(%%) (sr:%6.0f Hz, sp:%6.2f "
+                             "microsecond)\n",
                              sample_rate,
                              1000000.0 / sample_rate);
         fluid_ostream_printf(out, " ------------------------------------------------------------------------------\n");
@@ -785,15 +794,17 @@ void fluid_profiling_print_data(double sample_rate, fluid_ostream_t out)
 
                 if (FLUID_PROF_WRITE <= i && i <= FLUID_PROF_ONE_BLOCK_CHORUS)
                 {
-                    double load = fluid_profile_load(fluid_profile_data[i].total, sample_rate, fluid_profile_data[i].n_samples);
+                    double load = fluid_profile_load(fluid_profile_data[i].total,
+                                                     sample_rate,
+                                                     fluid_profile_data[i].n_samples);
                     fluid_ostream_printf(out,
                                          " %s|%6d|%10.2f|%10.2f|%10.2f|%8.3f\n",
-                                         fluid_profile_data[i].description,      /* code under profiling */
+                                         fluid_profile_data[i].description, /* code under profiling */
                                          fluid_profile_data[i].n_voices / count, /* voices number */
-                                         fluid_profile_data[i].min,              /* minimum duration */
-                                         fluid_profile_data[i].total / count,    /* average duration */
-                                         fluid_profile_data[i].max,              /* maximum duration */
-                                         load);                                  /* cpu load */
+                                         fluid_profile_data[i].min,           /* minimum duration */
+                                         fluid_profile_data[i].total / count, /* average duration */
+                                         fluid_profile_data[i].max,           /* maximum duration */
+                                         load);                               /* cpu load */
                 }
                 else
                 {
@@ -856,7 +867,7 @@ int fluid_profile_is_cancel_req(void)
         FD_ZERO(&fds);                                   /* reset fds */
         FD_SET(STDIN_FILENO, &fds);                      /* sets fds to poll standard input only */
         select(STDIN_FILENO + 1, &fds, NULL, NULL, &tv); /* polling */
-        return (FD_ISSET(0, &fds));                      /* returns true if standard input is ready */
+        return (FD_ISSET(0, &fds)); /* returns true if standard input is ready */
     }
 #endif /* OS stuff */
 
@@ -1122,7 +1133,8 @@ static fluid_thread_return_t fluid_timer_run(void *data)
     return FLUID_THREAD_RETURN_VALUE;
 }
 
-fluid_timer_t *new_fluid_timer(int msec, fluid_timer_callback_t callback, void *data, int new_thread, int auto_destroy, int high_priority)
+fluid_timer_t *
+new_fluid_timer(int msec, fluid_timer_callback_t callback, void *data, int new_thread, int auto_destroy, int high_priority)
 {
     fluid_timer_t *timer;
 

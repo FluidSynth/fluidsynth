@@ -90,19 +90,24 @@ new_fluid_midi_router(fluid_settings_t *settings, handle_midi_event_func_t handl
 FLUIDSYNTH_API void delete_fluid_midi_router(fluid_midi_router_t *handler);
 FLUIDSYNTH_API int fluid_midi_router_set_default_rules(fluid_midi_router_t *router);
 FLUIDSYNTH_API int fluid_midi_router_clear_rules(fluid_midi_router_t *router);
-FLUIDSYNTH_API int fluid_midi_router_add_rule(fluid_midi_router_t *router, fluid_midi_router_rule_t *rule, int type);
+FLUIDSYNTH_API int
+fluid_midi_router_add_rule(fluid_midi_router_t *router, fluid_midi_router_rule_t *rule, int type);
 FLUIDSYNTH_API fluid_midi_router_rule_t *new_fluid_midi_router_rule(void);
 FLUIDSYNTH_API void delete_fluid_midi_router_rule(fluid_midi_router_rule_t *rule);
-FLUIDSYNTH_API void fluid_midi_router_rule_set_chan(fluid_midi_router_rule_t *rule, int min, int max, float mul, int add);
-FLUIDSYNTH_API void fluid_midi_router_rule_set_param1(fluid_midi_router_rule_t *rule, int min, int max, float mul, int add);
-FLUIDSYNTH_API void fluid_midi_router_rule_set_param2(fluid_midi_router_rule_t *rule, int min, int max, float mul, int add);
+FLUIDSYNTH_API void
+fluid_midi_router_rule_set_chan(fluid_midi_router_rule_t *rule, int min, int max, float mul, int add);
+FLUIDSYNTH_API void
+fluid_midi_router_rule_set_param1(fluid_midi_router_rule_t *rule, int min, int max, float mul, int add);
+FLUIDSYNTH_API void
+fluid_midi_router_rule_set_param2(fluid_midi_router_rule_t *rule, int min, int max, float mul, int add);
 FLUIDSYNTH_API int fluid_midi_router_handle_midi_event(void *data, fluid_midi_event_t *event);
 FLUIDSYNTH_API int fluid_midi_dump_prerouter(void *data, fluid_midi_event_t *event);
 FLUIDSYNTH_API int fluid_midi_dump_postrouter(void *data, fluid_midi_event_t *event);
 
 
 FLUIDSYNTH_API
-fluid_midi_driver_t *new_fluid_midi_driver(fluid_settings_t *settings, handle_midi_event_func_t handler, void *event_handler_data);
+fluid_midi_driver_t *
+new_fluid_midi_driver(fluid_settings_t *settings, handle_midi_event_func_t handler, void *event_handler_data);
 
 FLUIDSYNTH_API void delete_fluid_midi_driver(fluid_midi_driver_t *driver);
 
@@ -128,7 +133,8 @@ FLUIDSYNTH_API int fluid_player_join(fluid_player_t *player);
 FLUIDSYNTH_API int fluid_player_set_loop(fluid_player_t *player, int loop);
 FLUIDSYNTH_API int fluid_player_set_midi_tempo(fluid_player_t *player, int tempo);
 FLUIDSYNTH_API int fluid_player_set_bpm(fluid_player_t *player, int bpm);
-FLUIDSYNTH_API int fluid_player_set_playback_callback(fluid_player_t *player, handle_midi_event_func_t handler, void *handler_data);
+FLUIDSYNTH_API int
+fluid_player_set_playback_callback(fluid_player_t *player, handle_midi_event_func_t handler, void *handler_data);
 
 FLUIDSYNTH_API int fluid_player_get_status(fluid_player_t *player);
 FLUIDSYNTH_API int fluid_player_get_current_tick(fluid_player_t *player);

@@ -48,7 +48,8 @@ typedef struct
 
 fluid_audio_driver_t *new_fluid_sndmgr_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth);
 
-fluid_audio_driver_t *new_fluid_sndmgr_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func, void *data);
+fluid_audio_driver_t *
+new_fluid_sndmgr_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func, void *data);
 
 void delete_fluid_sndmgr_audio_driver(fluid_audio_driver_t *p);
 void pascal fluid_sndmgr_callback(SndChannelPtr chan, SndDoubleBufferPtr doubleBuffer);
@@ -183,7 +184,8 @@ fluid_audio_driver_t *new_fluid_sndmgr_audio_driver(fluid_settings_t *settings, 
  * This implementation used the audio_func float format, with
  * conversion from float to 16bits in the driver.
  */
-fluid_audio_driver_t *new_fluid_sndmgr_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func, void *data)
+fluid_audio_driver_t *
+new_fluid_sndmgr_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func, void *data)
 {
     fluid_sndmgr_audio_driver_t *dev = NULL;
     int period_size, periods, buffer_size;

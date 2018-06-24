@@ -147,14 +147,16 @@ static void delete_fluid_ladspa_node(fluid_ladspa_node_t *node);
 static fluid_ladspa_node_t *get_node(fluid_ladspa_fx_t *fx, const char *name);
 
 /* Effect helpers */
-static fluid_ladspa_effect_t *new_fluid_ladspa_effect(fluid_ladspa_fx_t *fx, const char *lib_name, const char *plugin_name);
+static fluid_ladspa_effect_t *
+new_fluid_ladspa_effect(fluid_ladspa_fx_t *fx, const char *lib_name, const char *plugin_name);
 static void delete_fluid_ladspa_effect(fluid_ladspa_effect_t *effect);
 static void activate_effect(fluid_ladspa_effect_t *effect);
 static void deactivate_effect(fluid_ladspa_effect_t *effect);
 static fluid_ladspa_effect_t *get_effect(fluid_ladspa_fx_t *fx, const char *name);
 static int get_effect_port_idx(const fluid_ladspa_effect_t *effect, const char *name);
 static LADSPA_Data get_default_port_value(fluid_ladspa_effect_t *effect, unsigned int port_idx, int sample_rate);
-static void connect_node_to_port(fluid_ladspa_node_t *node, fluid_ladspa_dir_t dir, fluid_ladspa_effect_t *effect, int port_idx);
+static void
+connect_node_to_port(fluid_ladspa_node_t *node, fluid_ladspa_dir_t dir, fluid_ladspa_effect_t *effect, int port_idx);
 static int create_control_port_nodes(fluid_ladspa_fx_t *fx, fluid_ladspa_effect_t *effect);
 
 /* Plugin helpers */
@@ -1009,7 +1011,8 @@ int fluid_ladspa_check(fluid_ladspa_fx_t *fx, char *err, int err_size)
         {
             if (err != NULL)
             {
-                FLUID_SNPRINTF(err, err_size, "Port '%s' on effect '%s' is not connected\n", str, effect->name);
+                FLUID_SNPRINTF(
+                err, err_size, "Port '%s' on effect '%s' is not connected\n", str, effect->name);
             }
             LADSPA_API_RETURN(fx, FLUID_FAILED);
         }
@@ -1204,7 +1207,8 @@ static const LADSPA_Descriptor *get_plugin_descriptor(fluid_module_t *lib, const
  * @param plugin_name (optional) string name of the plugin (the LADSPA Label)
  * @return pointer to the new ladspa_plugin_t structure or NULL on error
  */
-static fluid_ladspa_effect_t *new_fluid_ladspa_effect(fluid_ladspa_fx_t *fx, const char *lib_name, const char *plugin_name)
+static fluid_ladspa_effect_t *
+new_fluid_ladspa_effect(fluid_ladspa_fx_t *fx, const char *lib_name, const char *plugin_name)
 {
     fluid_ladspa_effect_t *effect;
 
@@ -1539,7 +1543,8 @@ static int create_control_port_nodes(fluid_ladspa_fx_t *fx, fluid_ladspa_effect_
     return FLUID_OK;
 }
 
-static void connect_node_to_port(fluid_ladspa_node_t *node, fluid_ladspa_dir_t dir, fluid_ladspa_effect_t *effect, int port_idx)
+static void
+connect_node_to_port(fluid_ladspa_node_t *node, fluid_ladspa_dir_t dir, fluid_ladspa_effect_t *effect, int port_idx)
 {
     effect->desc->connect_port(effect->handle, port_idx, node->effect_buffer);
     effect->port_nodes[port_idx] = node;

@@ -54,7 +54,8 @@ static int translate_error(const char *name)
     {
         return -ENOMEM;
     }
-    if (FLUID_STRCMP(name, DBUS_ERROR_SERVICE_UNKNOWN) == 0 || FLUID_STRCMP(name, DBUS_ERROR_NAME_HAS_NO_OWNER) == 0)
+    if (FLUID_STRCMP(name, DBUS_ERROR_SERVICE_UNKNOWN) == 0 ||
+        FLUID_STRCMP(name, DBUS_ERROR_NAME_HAS_NO_OWNER) == 0)
     {
         return -ENOENT;
     }

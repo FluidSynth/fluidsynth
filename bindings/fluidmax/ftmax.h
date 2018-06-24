@@ -59,8 +59,10 @@ typedef method ftmax_method_t;
 
 #define ftmax_get_int(a) ((a)->a_w.w_long)
 #define ftmax_get_float(a) ((a)->a_w.w_float)
-#define ftmax_get_number_int(a) (((a)->a_type == A_LONG) ? ((a)->a_w.w_long) : (int)((a)->a_w.w_float))
-#define ftmax_get_number_float(a) (((a)->a_type == A_FLOAT) ? (double)((a)->a_w.w_float) : (double)((a)->a_w.w_long))
+#define ftmax_get_number_int(a) \
+    (((a)->a_type == A_LONG) ? ((a)->a_w.w_long) : (int)((a)->a_w.w_float))
+#define ftmax_get_number_float(a) \
+    (((a)->a_type == A_FLOAT) ? (double)((a)->a_w.w_float) : (double)((a)->a_w.w_long))
 #define ftmax_get_symbol(a) ((a)->a_w.w_sym)
 
 #define ftmax_set_int(a, v) ((a)->a_type = A_LONG, (a)->a_w.w_long = (v))

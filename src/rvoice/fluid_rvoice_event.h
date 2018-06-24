@@ -55,7 +55,8 @@ void delete_fluid_rvoice_eventhandler(fluid_rvoice_eventhandler_t *);
 
 int fluid_rvoice_eventhandler_dispatch_all(fluid_rvoice_eventhandler_t *);
 int fluid_rvoice_eventhandler_dispatch_count(fluid_rvoice_eventhandler_t *);
-void fluid_rvoice_eventhandler_finished_voice_callback(fluid_rvoice_eventhandler_t *eventhandler, fluid_rvoice_t *rvoice);
+void fluid_rvoice_eventhandler_finished_voice_callback(fluid_rvoice_eventhandler_t *eventhandler,
+                                                       fluid_rvoice_t *rvoice);
 
 static FLUID_INLINE void fluid_rvoice_eventhandler_flush(fluid_rvoice_eventhandler_t *handler)
 {
@@ -90,14 +91,18 @@ int fluid_rvoice_eventhandler_push_int_real(fluid_rvoice_eventhandler_t *handler
                                             int intparam,
                                             fluid_real_t realparam);
 
-int fluid_rvoice_eventhandler_push_ptr(fluid_rvoice_eventhandler_t *handler, fluid_rvoice_function_t method, void *object, void *ptr);
+int fluid_rvoice_eventhandler_push_ptr(fluid_rvoice_eventhandler_t *handler,
+                                       fluid_rvoice_function_t method,
+                                       void *object,
+                                       void *ptr);
 
 int fluid_rvoice_eventhandler_push(fluid_rvoice_eventhandler_t *handler,
                                    fluid_rvoice_function_t method,
                                    void *object,
                                    fluid_rvoice_param_t param[MAX_EVENT_PARAMS]);
 
-static FLUID_INLINE void fluid_rvoice_eventhandler_add_rvoice(fluid_rvoice_eventhandler_t *handler, fluid_rvoice_t *rvoice)
+static FLUID_INLINE void
+fluid_rvoice_eventhandler_add_rvoice(fluid_rvoice_eventhandler_t *handler, fluid_rvoice_t *rvoice)
 {
     fluid_rvoice_eventhandler_push_ptr(handler, fluid_rvoice_mixer_add_voice, handler->mixer, rvoice);
 }

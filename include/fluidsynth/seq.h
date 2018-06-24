@@ -45,7 +45,10 @@ FLUIDSYNTH_API fluid_sequencer_t *new_fluid_sequencer2(int use_system_timer);
 FLUIDSYNTH_API void delete_fluid_sequencer(fluid_sequencer_t *seq);
 FLUIDSYNTH_API int fluid_sequencer_get_use_system_timer(fluid_sequencer_t *seq);
 FLUIDSYNTH_API
-fluid_seq_id_t fluid_sequencer_register_client(fluid_sequencer_t *seq, const char *name, fluid_event_callback_t callback, void *data);
+fluid_seq_id_t fluid_sequencer_register_client(fluid_sequencer_t *seq,
+                                               const char *name,
+                                               fluid_event_callback_t callback,
+                                               void *data);
 FLUIDSYNTH_API void fluid_sequencer_unregister_client(fluid_sequencer_t *seq, fluid_seq_id_t id);
 FLUIDSYNTH_API int fluid_sequencer_count_clients(fluid_sequencer_t *seq);
 FLUIDSYNTH_API fluid_seq_id_t fluid_sequencer_get_client_id(fluid_sequencer_t *seq, int index);

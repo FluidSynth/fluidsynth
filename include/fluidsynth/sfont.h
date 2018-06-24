@@ -97,8 +97,8 @@ typedef fluid_sfont_t *(*fluid_sfloader_load_t)(fluid_sfloader_t *loader, const 
 /**
  * The free method should free the memory allocated for a fluid_sfloader_t instance in
  * addition to any private data. Any custom user provided cleanup function must ultimately call
- * delete_fluid_sfloader() to ensure proper cleanup of the #fluid_sfloader_t struct. If no private data
- * needs to be freed, setting this to delete_fluid_sfloader() is sufficient.
+ * delete_fluid_sfloader() to ensure proper cleanup of the #fluid_sfloader_t struct. If no private
+ * data needs to be freed, setting this to delete_fluid_sfloader() is sufficient.
  * @param loader SoundFont loader
  */
 typedef void (*fluid_sfloader_free_t)(fluid_sfloader_t *loader);
@@ -120,8 +120,8 @@ typedef void *(*fluid_sfloader_callback_open_t)(const char *filename);
 /**
  * Reads \c count bytes to the specified buffer \c buf.
  *
- * @return returns #FLUID_OK if exactly \c count bytes were successfully read, else returns #FLUID_FAILED and leaves \a
- * buf unmodified.
+ * @return returns #FLUID_OK if exactly \c count bytes were successfully read, else returns
+ * #FLUID_FAILED and leaves \a buf unmodified.
  */
 typedef int (*fluid_sfloader_callback_read_t)(void *buf, int count, void *handle);
 
@@ -130,8 +130,8 @@ typedef int (*fluid_sfloader_callback_read_t)(void *buf, int count, void *handle
  *
  * @param origin either \c SEEK_SET, \c SEEK_CUR or \c SEEK_END
  *
- * @return returns #FLUID_OK if the seek was successfully performed while not seeking beyond a buffer or file,
- * #FLUID_FAILED otherwise
+ * @return returns #FLUID_OK if the seek was successfully performed while not seeking beyond a
+ * buffer or file, #FLUID_FAILED otherwise
  */
 typedef int (*fluid_sfloader_callback_seek_t)(void *handle, long offset, int origin);
 
@@ -195,9 +195,9 @@ typedef void (*fluid_sfont_iteration_start_t)(fluid_sfont_t *sfont);
 typedef fluid_preset_t *(*fluid_sfont_iteration_next_t)(fluid_sfont_t *sfont);
 
 /**
- * Method to free a virtual SoundFont bank. Any custom user provided cleanup function must ultimately call
- * delete_fluid_sfont() to ensure proper cleanup of the #fluid_sfont_t struct. If no private data
- * needs to be freed, setting this to delete_fluid_sfont() is sufficient.
+ * Method to free a virtual SoundFont bank. Any custom user provided cleanup function must
+ * ultimately call delete_fluid_sfont() to ensure proper cleanup of the #fluid_sfont_t struct. If no
+ * private data needs to be freed, setting this to delete_fluid_sfont() is sufficient.
  * @param sfont Virtual SoundFont to free.
  * @return Should return 0 when it was able to free all resources or non-zero
  *   if some of the samples could not be freed because they are still in use,
@@ -271,9 +271,9 @@ typedef int (*fluid_preset_get_num_t)(fluid_preset_t *preset);
 typedef int (*fluid_preset_noteon_t)(fluid_preset_t *preset, fluid_synth_t *synth, int chan, int key, int vel);
 
 /**
- * Method to free a virtual SoundFont preset. Any custom user provided cleanup function must ultimately call
- * delete_fluid_preset() to ensure proper cleanup of the #fluid_preset_t struct. If no private data
- * needs to be freed, setting this to delete_fluid_preset() is sufficient.
+ * Method to free a virtual SoundFont preset. Any custom user provided cleanup function must
+ * ultimately call delete_fluid_preset() to ensure proper cleanup of the #fluid_preset_t struct. If
+ * no private data needs to be freed, setting this to delete_fluid_preset() is sufficient.
  * @param preset Virtual SoundFont preset
  * @return Should return 0
  */
@@ -300,8 +300,12 @@ FLUIDSYNTH_API void delete_fluid_sample(fluid_sample_t *sample);
 FLUIDSYNTH_API size_t fluid_sample_sizeof(void);
 
 FLUIDSYNTH_API int fluid_sample_set_name(fluid_sample_t *sample, const char *name);
-FLUIDSYNTH_API int
-fluid_sample_set_sound_data(fluid_sample_t *sample, short *data, char *data24, unsigned int nbframes, unsigned int sample_rate, short copy_data);
+FLUIDSYNTH_API int fluid_sample_set_sound_data(fluid_sample_t *sample,
+                                               short *data,
+                                               char *data24,
+                                               unsigned int nbframes,
+                                               unsigned int sample_rate,
+                                               short copy_data);
 
 FLUIDSYNTH_API int fluid_sample_set_loop(fluid_sample_t *sample, unsigned int loop_start, unsigned int loop_end);
 FLUIDSYNTH_API int fluid_sample_set_pitch(fluid_sample_t *sample, int root_key, int fine_tune);

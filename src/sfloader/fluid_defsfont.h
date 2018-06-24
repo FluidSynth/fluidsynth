@@ -103,13 +103,13 @@ struct _fluid_defsfont_t
 {
     const fluid_file_callbacks_t *fcbs; /* the file callbacks used to load this Soundfont */
     char *filename;                     /* the filename of this soundfont */
-    unsigned int samplepos;             /* the position in the file at which the sample data starts */
-    unsigned int samplesize;            /* the size of the sample data in bytes */
-    short *sampledata;                  /* the sample data, loaded in ram */
+    unsigned int samplepos;  /* the position in the file at which the sample data starts */
+    unsigned int samplesize; /* the size of the sample data in bytes */
+    short *sampledata;       /* the sample data, loaded in ram */
 
-    unsigned int sample24pos;  /* position within sffd of the sm24 chunk, set to zero if no 24 bit sample support */
+    unsigned int sample24pos; /* position within sffd of the sm24 chunk, set to zero if no 24 bit sample support */
     unsigned int sample24size; /* length within sffd of the sm24 chunk */
-    char *sample24data;        /* if not NULL, the least significant byte of the 24bit sample data, loaded in ram */
+    char *sample24data; /* if not NULL, the least significant byte of the 24bit sample data, loaded in ram */
 
     fluid_sfont_t *sfont; /* pointer to parent sfont */
     fluid_list_t *sample; /* the samples in this soundfont */

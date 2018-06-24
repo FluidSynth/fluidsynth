@@ -151,8 +151,10 @@ typedef enum
 #define GenArrSize sizeof(SFGenAmount) * Gen_Count /* gen array size */
 
 
-static const unsigned short invalid_inst_gen[] = { Gen_Unused1,   Gen_Unused2,   Gen_Unused3,   Gen_Unused4,
-                                                   Gen_Reserved1, Gen_Reserved2, Gen_Reserved3, 0 };
+static const unsigned short invalid_inst_gen[] = { Gen_Unused1,   Gen_Unused2,
+                                                   Gen_Unused3,   Gen_Unused4,
+                                                   Gen_Reserved1, Gen_Reserved2,
+                                                   Gen_Reserved3, 0 };
 
 static const unsigned short invalid_preset_gen[] = { Gen_StartAddrOfs,
                                                      Gen_EndAddrOfs,
@@ -382,7 +384,12 @@ int fluid_sffile_parse_presets(SFData *sf)
  *
  * @return The number of sample words in returned buffers or -1 on failure
  */
-int fluid_sffile_read_sample_data(SFData *sf, unsigned int sample_start, unsigned int sample_end, int sample_type, short **data, char **data24)
+int fluid_sffile_read_sample_data(SFData *sf,
+                                  unsigned int sample_start,
+                                  unsigned int sample_end,
+                                  int sample_type,
+                                  short **data,
+                                  char **data24)
 {
     int num_samples;
 
@@ -669,7 +676,10 @@ static int process_info(SFData *sf, int size)
         {
             if ((id != ICMT_ID && chunk.size > 256) || (chunk.size > 65536) || (chunk.size % 2))
             {
-                FLUID_LOG(FLUID_ERR, "INFO sub chunk %.4s has invalid chunk size of %d bytes", &chunk.id, chunk.size);
+                FLUID_LOG(FLUID_ERR,
+                          "INFO sub chunk %.4s has invalid chunk size of %d bytes",
+                          &chunk.id,
+                          chunk.size);
                 return FALSE;
             }
 
@@ -1313,7 +1323,9 @@ static int load_pgen(SFData *sf, int size)
                     if (*hz != p2)
                     {
                         void *save = p2->data;
-                        FLUID_LOG(FLUID_WARN, "Preset '%s': Global zone is not first zone", ((SFPreset *)(p->data))->name);
+                        FLUID_LOG(FLUID_WARN,
+                                  "Preset '%s': Global zone is not first zone",
+                                  ((SFPreset *)(p->data))->name);
                         SLADVREM(*hz, p2);
                         *hz = fluid_list_prepend(*hz, save);
                         continue;
@@ -1322,7 +1334,9 @@ static int load_pgen(SFData *sf, int size)
                 else
                 {
                     /* previous global zone exists, discard */
-                    FLUID_LOG(FLUID_WARN, "Preset '%s': Discarding invalid global zone", ((SFPreset *)(p->data))->name);
+                    FLUID_LOG(FLUID_WARN,
+                              "Preset '%s': Discarding invalid global zone",
+                              ((SFPreset *)(p->data))->name);
                     *hz = fluid_list_remove(*hz, p2->data);
                     delete_zone((SFZone *)fluid_list_get(p2));
                 }
@@ -1345,7 +1359,9 @@ static int load_pgen(SFData *sf, int size)
         }
         if (discarded)
         {
-            FLUID_LOG(FLUID_WARN, "Preset '%s': Some invalid generators were discarded", ((SFPreset *)(p->data))->name);
+            FLUID_LOG(FLUID_WARN,
+                      "Preset '%s': Some invalid generators were discarded",
+                      ((SFPreset *)(p->data))->name);
         }
         p = fluid_list_next(p);
     }
@@ -1752,7 +1768,9 @@ static int load_igen(SFData *sf, int size)
                     if (*hz != p2)
                     {
                         void *save = p2->data;
-                        FLUID_LOG(FLUID_WARN, "Instrument '%s': Global zone is not first zone", ((SFPreset *)(p->data))->name);
+                        FLUID_LOG(FLUID_WARN,
+                                  "Instrument '%s': Global zone is not first zone",
+                                  ((SFPreset *)(p->data))->name);
                         SLADVREM(*hz, p2);
                         *hz = fluid_list_prepend(*hz, save);
                         continue;
@@ -1761,7 +1779,9 @@ static int load_igen(SFData *sf, int size)
                 else
                 {
                     /* previous global zone exists, discard */
-                    FLUID_LOG(FLUID_WARN, "Instrument '%s': Discarding invalid global zone", ((SFInst *)(p->data))->name);
+                    FLUID_LOG(FLUID_WARN,
+                              "Instrument '%s': Discarding invalid global zone",
+                              ((SFInst *)(p->data))->name);
                     *hz = fluid_list_remove(*hz, p2->data);
                     delete_zone((SFZone *)fluid_list_get(p2));
                 }
@@ -1784,7 +1804,9 @@ static int load_igen(SFData *sf, int size)
         }
         if (discarded)
         {
-            FLUID_LOG(FLUID_WARN, "Instrument '%s': Some invalid generators were discarded", ((SFInst *)(p->data))->name);
+            FLUID_LOG(FLUID_WARN,
+                      "Instrument '%s': Some invalid generators were discarded",
+                      ((SFInst *)(p->data))->name);
         }
         p = fluid_list_next(p);
     }
@@ -1912,7 +1934,9 @@ static int fixup_igen(SFData *sf)
                 p3 = fluid_list_nth(sf->sample, i - 1);
                 if (!p3)
                 {
-                    FLUID_LOG(FLUID_ERR, "Instrument '%s': Invalid sample reference", ((SFInst *)(p->data))->name);
+                    FLUID_LOG(FLUID_ERR,
+                              "Instrument '%s': Invalid sample reference",
+                              ((SFInst *)(p->data))->name);
                     return FALSE;
                 }
                 z->instsamp = p3;
@@ -2246,11 +2270,11 @@ static sf_count_t sfvio_tell(void *user_data)
 }
 
 /**
- * Read Ogg Vorbis compressed data from the Soundfont and decompress it, returning the number of samples
- * in the decompressed WAV. Only 16-bit mono samples are supported.
+ * Read Ogg Vorbis compressed data from the Soundfont and decompress it, returning the number of
+ * samples in the decompressed WAV. Only 16-bit mono samples are supported.
  *
- * Note that this function takes byte indices for start and end source data. The sample headers in SF3
- * files use byte indices, so those pointers can be passed directly to this function.
+ * Note that this function takes byte indices for start and end source data. The sample headers in
+ * SF3 files use byte indices, so those pointers can be passed directly to this function.
  *
  * This function uses a virtual file structure in order to read the Ogg Vorbis
  * data from arbitrary locations in the source file.

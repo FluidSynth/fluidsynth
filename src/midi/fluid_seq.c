@@ -270,10 +270,11 @@ void fluid_seq_dotrace(fluid_sequencer_t *seq, char *fmt, ...)
  * Clients can be sources or destinations of events.  Sources don't need to
  * register a callback.
  *
- * @note The user must explicitly unregister any registered client with fluid_sequencer_unregister_client()
- * before deleting the sequencer!
+ * @note The user must explicitly unregister any registered client with
+ * fluid_sequencer_unregister_client() before deleting the sequencer!
  */
-fluid_seq_id_t fluid_sequencer_register_client(fluid_sequencer_t *seq, const char *name, fluid_event_callback_t callback, void *data)
+fluid_seq_id_t
+fluid_sequencer_register_client(fluid_sequencer_t *seq, const char *name, fluid_event_callback_t callback, void *data)
 {
     fluid_sequencer_client_t *client;
     char *nameCopy;
@@ -558,7 +559,8 @@ void fluid_sequencer_set_time_scale(fluid_sequencer_t *seq, double scale)
         seq->scale = scale;
 
         // change start0 so that cellNb is preserved
-        seq->queue0StartTime = (seq->queue0StartTime + seq->prevCellNb) * (seq->scale / oldScale) - seq->prevCellNb;
+        seq->queue0StartTime =
+        (seq->queue0StartTime + seq->prevCellNb) * (seq->scale / oldScale) - seq->prevCellNb;
 
         // change all preQueue events for new scale
         {
@@ -578,7 +580,8 @@ void fluid_sequencer_set_time_scale(fluid_sequencer_t *seq, double scale)
         /* re-start timer */
         if (seq->useSystemTimer)
         {
-            seq->timer = new_fluid_timer((int)(1000 / seq->scale), _fluid_seq_queue_process, (void *)seq, TRUE, FALSE, TRUE);
+            seq->timer =
+            new_fluid_timer((int)(1000 / seq->scale), _fluid_seq_queue_process, (void *)seq, TRUE, FALSE, TRUE);
         }
     }
 }
@@ -696,7 +699,8 @@ static short _fluid_seq_queue_init(fluid_sequencer_t *seq, int maxEvents)
     /* start timer */
     if (seq->useSystemTimer)
     {
-        seq->timer = new_fluid_timer((int)(1000 / seq->scale), _fluid_seq_queue_process, (void *)seq, TRUE, FALSE, TRUE);
+        seq->timer =
+        new_fluid_timer((int)(1000 / seq->scale), _fluid_seq_queue_process, (void *)seq, TRUE, FALSE, TRUE);
     }
     return (0);
 }
@@ -1053,8 +1057,9 @@ static int _fluid_seq_queue_matchevent(fluid_event_t *evt, int templType, fluid_
 
     if (templType == FLUID_SEQ_ANYCONTROLCHANGE)
     {
-        if (eventType == FLUID_SEQ_PITCHBEND || eventType == FLUID_SEQ_MODULATION || eventType == FLUID_SEQ_SUSTAIN ||
-            eventType == FLUID_SEQ_PAN || eventType == FLUID_SEQ_VOLUME || eventType == FLUID_SEQ_REVERBSEND ||
+        if (eventType == FLUID_SEQ_PITCHBEND || eventType == FLUID_SEQ_MODULATION ||
+            eventType == FLUID_SEQ_SUSTAIN || eventType == FLUID_SEQ_PAN ||
+            eventType == FLUID_SEQ_VOLUME || eventType == FLUID_SEQ_REVERBSEND ||
             eventType == FLUID_SEQ_CONTROLCHANGE || eventType == FLUID_SEQ_CHORUSSEND)
         {
             return 1;

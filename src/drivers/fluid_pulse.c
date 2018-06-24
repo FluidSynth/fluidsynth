@@ -55,7 +55,8 @@ typedef struct
 
 
 fluid_audio_driver_t *new_fluid_pulse_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth);
-fluid_audio_driver_t *new_fluid_pulse_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func, void *data);
+fluid_audio_driver_t *
+new_fluid_pulse_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func, void *data);
 void delete_fluid_pulse_audio_driver(fluid_audio_driver_t *p);
 void fluid_pulse_audio_driver_settings(fluid_settings_t *settings);
 static fluid_thread_return_t fluid_pulse_audio_run(void *d);
@@ -76,7 +77,8 @@ fluid_audio_driver_t *new_fluid_pulse_audio_driver(fluid_settings_t *settings, f
     return new_fluid_pulse_audio_driver2(settings, NULL, synth);
 }
 
-fluid_audio_driver_t *new_fluid_pulse_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func, void *data)
+fluid_audio_driver_t *
+new_fluid_pulse_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func, void *data)
 {
     fluid_pulse_audio_driver_t *dev;
     pa_sample_spec samplespec;
@@ -101,8 +103,8 @@ fluid_audio_driver_t *new_fluid_pulse_audio_driver2(fluid_settings_t *settings, 
 
     fluid_settings_getint(settings, "audio.period-size", &period_size);
     fluid_settings_getnum(settings, "synth.sample-rate", &sample_rate);
-    fluid_settings_dupstr(settings, "audio.pulseaudio.server", &server);         /* ++ alloc server string */
-    fluid_settings_dupstr(settings, "audio.pulseaudio.device", &device);         /* ++ alloc device string */
+    fluid_settings_dupstr(settings, "audio.pulseaudio.server", &server); /* ++ alloc server string */
+    fluid_settings_dupstr(settings, "audio.pulseaudio.device", &device); /* ++ alloc device string */
     fluid_settings_dupstr(settings, "audio.pulseaudio.media-role", &media_role); /* ++ alloc media-role string */
     fluid_settings_getint(settings, "audio.realtime-prio", &realtime_prio);
     fluid_settings_getint(settings, "audio.pulseaudio.adjust-latency", &adjust_latency);

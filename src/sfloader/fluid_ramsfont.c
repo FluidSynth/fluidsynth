@@ -49,7 +49,8 @@ static const char *fluid_rampreset_get_name(fluid_rampreset_t *preset);
 static int fluid_rampreset_add_zone(fluid_rampreset_t *preset, fluid_preset_zone_t *zone);
 static int fluid_rampreset_add_sample(fluid_rampreset_t *preset, fluid_sample_t *sample, int lokey, int hikey);
 static fluid_inst_zone_t *fluid_rampreset_izoneforsample(fluid_rampreset_t *preset, fluid_sample_t *sample);
-static int fluid_rampreset_izone_set_loop(fluid_rampreset_t *preset, fluid_sample_t *sample, int on, float loopstart, float loopend);
+static int
+fluid_rampreset_izone_set_loop(fluid_rampreset_t *preset, fluid_sample_t *sample, int on, float loopstart, float loopend);
 static int fluid_rampreset_izone_set_gen(fluid_rampreset_t *preset, fluid_sample_t *sample, int gen_type, float value);
 static int fluid_rampreset_remove_izone(fluid_rampreset_t *preset, fluid_sample_t *sample);
 static int fluid_rampreset_remembervoice(fluid_rampreset_t *preset, fluid_voice_t *voice);
@@ -631,7 +632,8 @@ static fluid_inst_zone_t *fluid_rampreset_izoneforsample(fluid_rampreset_t *pres
 }
 
 /* Set loop of an instrument zone */
-static int fluid_rampreset_izone_set_loop(fluid_rampreset_t *preset, fluid_sample_t *sample, int on, float loopstart, float loopend)
+static int
+fluid_rampreset_izone_set_loop(fluid_rampreset_t *preset, fluid_sample_t *sample, int on, float loopstart, float loopend)
 {
     fluid_inst_zone_t *izone = fluid_rampreset_izoneforsample(preset, sample);
     short coarse, fine;
@@ -1014,10 +1016,10 @@ static int fluid_rampreset_noteon(fluid_rampreset_t *preset, fluid_synth_t *synt
                         /* SF 2.01 section 8.5 page 58: If some generators are
                          * encountered at preset level, they should be ignored */
                         if ((i != GEN_STARTADDROFS) && (i != GEN_ENDADDROFS) && (i != GEN_STARTLOOPADDROFS) &&
-                            (i != GEN_ENDLOOPADDROFS) && (i != GEN_STARTADDRCOARSEOFS) && (i != GEN_ENDADDRCOARSEOFS) &&
-                            (i != GEN_STARTLOOPADDRCOARSEOFS) && (i != GEN_KEYNUM) && (i != GEN_VELOCITY) &&
-                            (i != GEN_ENDLOOPADDRCOARSEOFS) && (i != GEN_SAMPLEMODE) && (i != GEN_EXCLUSIVECLASS) &&
-                            (i != GEN_OVERRIDEROOTKEY))
+                            (i != GEN_ENDLOOPADDROFS) && (i != GEN_STARTADDRCOARSEOFS) &&
+                            (i != GEN_ENDADDRCOARSEOFS) && (i != GEN_STARTLOOPADDRCOARSEOFS) &&
+                            (i != GEN_KEYNUM) && (i != GEN_VELOCITY) && (i != GEN_ENDLOOPADDRCOARSEOFS) &&
+                            (i != GEN_SAMPLEMODE) && (i != GEN_EXCLUSIVECLASS) && (i != GEN_OVERRIDEROOTKEY))
                         {
 
                             /* SF 2.01 section 9.4 'bullet' 9: A generator in a

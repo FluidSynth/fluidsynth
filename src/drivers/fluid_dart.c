@@ -161,7 +161,8 @@ fluid_audio_driver_t *new_fluid_dart_audio_driver(fluid_settings_t *settings, fl
     dev->MixSetupParms.ulDeviceType = MCI_DEVTYPE_WAVEFORM_AUDIO;
     dev->MixSetupParms.pmixEvent = fluid_dart_audio_run;
 
-    rc = m_pfnmciSendCommand(dev->usDeviceID, MCI_MIXSETUP, MCI_WAIT | MCI_MIXSETUP_INIT, (PVOID)&dev->MixSetupParms, 0);
+    rc =
+    m_pfnmciSendCommand(dev->usDeviceID, MCI_MIXSETUP, MCI_WAIT | MCI_MIXSETUP_INIT, (PVOID)&dev->MixSetupParms, 0);
 
     if (rc != MCIERR_SUCCESS)
     {
@@ -176,7 +177,8 @@ fluid_audio_driver_t *new_fluid_dart_audio_driver(fluid_settings_t *settings, fl
     dev->BufferParms.ulBufferSize = periods * period_size * dev->frame_size;
     dev->BufferParms.pBufList = dev->MixBuffers;
 
-    rc = m_pfnmciSendCommand(dev->usDeviceID, MCI_BUFFER, MCI_WAIT | MCI_ALLOCATE_MEMORY, (PVOID)&dev->BufferParms, 0);
+    rc =
+    m_pfnmciSendCommand(dev->usDeviceID, MCI_BUFFER, MCI_WAIT | MCI_ALLOCATE_MEMORY, (PVOID)&dev->BufferParms, 0);
 
     if ((USHORT)rc != MCIERR_SUCCESS)
     {
@@ -229,7 +231,8 @@ void delete_fluid_dart_audio_driver(fluid_audio_driver_t *p)
 
         /* Deallocate device buffers
          */
-        m_pfnmciSendCommand(dev->usDeviceID, MCI_BUFFER, MCI_WAIT | MCI_DEALLOCATE_MEMORY, (PVOID)&dev->BufferParms, 0);
+        m_pfnmciSendCommand(
+        dev->usDeviceID, MCI_BUFFER, MCI_WAIT | MCI_DEALLOCATE_MEMORY, (PVOID)&dev->BufferParms, 0);
 
         /* Close device the mixer device
          */
@@ -248,7 +251,8 @@ static LONG APIENTRY fluid_dart_audio_run(ULONG ulStatus, PMCI_MIX_BUFFER pBuffe
         case MIX_STREAM_ERROR | MIX_WRITE_COMPLETE: /* error occur in device */
         case MIX_WRITE_COMPLETE:                    /* for playback  */
             FLUID_MEMSET(pBuffer->pBuffer, 0, pBuffer->ulBufferLength);
-            fluid_synth_write_s16(dev->synth, pBuffer->ulBufferLength / dev->frame_size, pBuffer->pBuffer, 0, 2, pBuffer->pBuffer, 1, 2);
+            fluid_synth_write_s16(
+            dev->synth, pBuffer->ulBufferLength / dev->frame_size, pBuffer->pBuffer, 0, 2, pBuffer->pBuffer, 1, 2);
             dev->MixSetupParms.pmixWrite(dev->MixSetupParms.ulMixHandle, pBuffer, 1);
             break;
     }

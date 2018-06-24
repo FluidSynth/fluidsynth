@@ -126,7 +126,8 @@ fluid_seq_id_t fluid_sequencer_register_fluidsynth(fluid_sequencer_t *seq, fluid
     }
 
     /* register fluidsynth itself */
-    seqbind->client_id = fluid_sequencer_register_client(seq, "fluidsynth", fluid_seq_fluidsynth_callback, (void *)seqbind);
+    seqbind->client_id =
+    fluid_sequencer_register_client(seq, "fluidsynth", fluid_seq_fluidsynth_callback, (void *)seqbind);
     if (seqbind->client_id == -1)
     {
         delete_fluid_seqbind(seqbind);
@@ -241,7 +242,10 @@ void fluid_seq_fluidsynth_callback(unsigned int time, fluid_event_t *evt, fluid_
             break;
 
         case FLUID_SEQ_KEYPRESSURE:
-            fluid_synth_key_pressure(synth, fluid_event_get_channel(evt), fluid_event_get_key(evt), fluid_event_get_value(evt));
+            fluid_synth_key_pressure(synth,
+                                     fluid_event_get_channel(evt),
+                                     fluid_event_get_key(evt),
+                                     fluid_event_get_value(evt));
             break;
 
         case FLUID_SEQ_SYSTEMRESET:
@@ -309,7 +313,10 @@ int fluid_sequencer_add_midi_event_to_buffer(void *data, fluid_midi_event_t *eve
                                (short)fluid_midi_event_get_velocity(event));
             break;
         case CONTROL_CHANGE:
-            fluid_event_control_change(&evt, chan, (short)fluid_midi_event_get_control(event), (short)fluid_midi_event_get_value(event));
+            fluid_event_control_change(&evt,
+                                       chan,
+                                       (short)fluid_midi_event_get_control(event),
+                                       (short)fluid_midi_event_get_value(event));
             break;
         case PROGRAM_CHANGE:
             fluid_event_program_change(&evt, chan, (short)fluid_midi_event_get_program(event));
@@ -321,7 +328,10 @@ int fluid_sequencer_add_midi_event_to_buffer(void *data, fluid_midi_event_t *eve
             fluid_event_channel_pressure(&evt, chan, (short)fluid_midi_event_get_program(event));
             break;
         case KEY_PRESSURE:
-            fluid_event_key_pressure(&evt, chan, (short)fluid_midi_event_get_key(event), (short)fluid_midi_event_get_value(event));
+            fluid_event_key_pressure(&evt,
+                                     chan,
+                                     (short)fluid_midi_event_get_key(event),
+                                     (short)fluid_midi_event_get_value(event));
             break;
         case MIDI_SYSTEM_RESET:
             fluid_event_system_reset(&evt);

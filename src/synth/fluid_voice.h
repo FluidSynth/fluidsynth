@@ -38,11 +38,11 @@ typedef struct _fluid_overflow_prio_t fluid_overflow_prio_t;
 
 struct _fluid_overflow_prio_t
 {
-    float percussion;           /**< Is this voice on the drum channel? Then add this score */
-    float released;             /**< Is this voice in release stage? Then add this score (usually negative) */
-    float sustained;            /**< Is this voice sustained? Then add this score (usually negative) */
-    float volume;               /**< Multiply current (or future) volume (a value between 0 and 1) */
-    float age;                  /**< This score will be divided by the number of seconds the voice has lasted */
+    float percussion; /**< Is this voice on the drum channel? Then add this score */
+    float released;   /**< Is this voice in release stage? Then add this score (usually negative) */
+    float sustained;  /**< Is this voice sustained? Then add this score (usually negative) */
+    float volume;     /**< Multiply current (or future) volume (a value between 0 and 1) */
+    float age; /**< This score will be divided by the number of seconds the voice has lasted */
     float important;            /**< This score will be added to all important channels */
     char *important_channels;   /**< "important" flags indexed by MIDI channel number */
     int num_important_channels; /**< Number of elements in the important_channels array */
@@ -185,8 +185,9 @@ static FLUID_INLINE void fluid_voice_unlock_rvoice(fluid_voice_t *voice)
     voice->can_access_rvoice = 1;
 }
 
-#define _AVAILABLE(voice) \
-    ((voice)->can_access_rvoice && (((voice)->status == FLUID_VOICE_CLEAN) || ((voice)->status == FLUID_VOICE_OFF)))
+#define _AVAILABLE(voice)          \
+    ((voice)->can_access_rvoice && \
+     (((voice)->status == FLUID_VOICE_CLEAN) || ((voice)->status == FLUID_VOICE_OFF)))
 //#define _RELEASED(voice)  ((voice)->chan == NO_CHANNEL)
 #define _SAMPLEMODE(voice) ((int)(voice)->gen[GEN_SAMPLEMODE].val)
 

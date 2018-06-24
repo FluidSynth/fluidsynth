@@ -80,7 +80,7 @@ static void fluid_channel_init(fluid_channel_t *chan)
     chan->i_first = chan->monolist[chan->i_last].next;        /* first note index in the list */
     fluid_channel_clear_prev_note(chan);                      /* Mark previous note invalid */
     /*---*/
-    chan->key_mono_sustained = INVALID_NOTE;                          /* No previous mono note sustained */
+    chan->key_mono_sustained = INVALID_NOTE; /* No previous mono note sustained */
     chan->legatomode = FLUID_CHANNEL_LEGATO_MODE_MULTI_RETRIGGER;     /* Default mode */
     chan->portamentomode = FLUID_CHANNEL_PORTAMENTO_MODE_LEGATO_ONLY; /* Default mode */
     /*--- End of poly/mono initialization --------------------------------------*/
@@ -136,8 +136,8 @@ void fluid_channel_init_ctrl(fluid_channel_t *chan, int is_all_ctrl_off)
             {
                 continue;
             }
-            if (i == BANK_SELECT_MSB || i == BANK_SELECT_LSB || i == VOLUME_MSB || i == VOLUME_LSB || i == PAN_MSB ||
-                i == PAN_LSB || i == BALANCE_MSB || i == BALANCE_LSB)
+            if (i == BANK_SELECT_MSB || i == BANK_SELECT_LSB || i == VOLUME_MSB || i == VOLUME_LSB ||
+                i == PAN_MSB || i == PAN_LSB || i == BALANCE_MSB || i == BALANCE_LSB)
             {
                 continue;
             }
@@ -255,10 +255,12 @@ void fluid_channel_set_sfont_bank_prog(fluid_channel_t *chan, int sfontnum, int 
 {
     int oldval, newval, oldmask;
 
-    newval = ((sfontnum != -1) ? sfontnum << SFONT_SHIFTVAL : 0) | ((banknum != -1) ? banknum << BANK_SHIFTVAL : 0) |
+    newval = ((sfontnum != -1) ? sfontnum << SFONT_SHIFTVAL : 0) |
+             ((banknum != -1) ? banknum << BANK_SHIFTVAL : 0) |
              ((prognum != -1) ? prognum << PROG_SHIFTVAL : 0);
 
-    oldmask = ((sfontnum != -1) ? 0 : SFONT_MASKVAL) | ((banknum != -1) ? 0 : BANK_MASKVAL) | ((prognum != -1) ? 0 : PROG_MASKVAL);
+    oldmask = ((sfontnum != -1) ? 0 : SFONT_MASKVAL) | ((banknum != -1) ? 0 : BANK_MASKVAL) |
+              ((prognum != -1) ? 0 : PROG_MASKVAL);
 
     oldval = chan->sfont_bank_prog;
     newval = (newval & ~oldmask) | (oldval & oldmask);
@@ -639,7 +641,10 @@ void fluid_channel_cc_breath_note_on_off(fluid_channel_t *chan, int value)
         if ((value > 0) && (chan->previous_cc_breath == 0))
         {
             /* CC Breath On detection */
-            fluid_synth_noteon_mono_staccato(chan->synth, chan->channum, fluid_channel_last_note(chan), fluid_channel_last_vel(chan));
+            fluid_synth_noteon_mono_staccato(chan->synth,
+                                             chan->channum,
+                                             fluid_channel_last_note(chan),
+                                             fluid_channel_last_vel(chan));
         }
         else if ((value == 0) && (chan->previous_cc_breath > 0))
         {

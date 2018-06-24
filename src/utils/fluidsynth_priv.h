@@ -222,10 +222,11 @@ enum
 }; /**< Maximum number of #fluid_rvoice_param_t to be passed to an #fluid_rvoice_function_t */
 typedef void (*fluid_rvoice_function_t)(void *obj, const fluid_rvoice_param_t param[MAX_EVENT_PARAMS]);
 
-/* Macro for declaring an rvoice event function (#fluid_rvoice_function_t). The functions may only access
- * those params that were previously set in fluid_voice.c
+/* Macro for declaring an rvoice event function (#fluid_rvoice_function_t). The functions may only
+ * access those params that were previously set in fluid_voice.c
  */
-#define DECLARE_FLUID_RVOICE_FUNCTION(name) void name(void *obj, const fluid_rvoice_param_t param[MAX_EVENT_PARAMS])
+#define DECLARE_FLUID_RVOICE_FUNCTION(name) \
+    void name(void *obj, const fluid_rvoice_param_t param[MAX_EVENT_PARAMS])
 
 
 /***************************************************************
@@ -235,7 +236,7 @@ typedef void (*fluid_rvoice_function_t)(void *obj, const fluid_rvoice_param_t pa
 
 #define FLUID_BUFSIZE 64 /**< FluidSynth internal buffer size (in samples) */
 #define FLUID_MIXER_MAX_BUFFERS_DEFAULT \
-    (8192 / FLUID_BUFSIZE)                /**< Number of buffers that can be processed in one rendering run */
+    (8192 / FLUID_BUFSIZE) /**< Number of buffers that can be processed in one rendering run */
 #define FLUID_MAX_EVENTS_PER_BUFSIZE 1024 /**< Maximum queued MIDI events per #FLUID_BUFSIZE */
 #define FLUID_MAX_RETURN_EVENTS 1024      /**< Maximum queued synthesis thread return events */
 #define FLUID_MAX_EVENT_QUEUES 16         /**< Maximum number of unique threads queuing events */

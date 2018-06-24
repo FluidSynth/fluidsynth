@@ -256,10 +256,12 @@ static fluid_real_t fluid_mod_transform_source_value(fluid_real_t val, unsigned 
             val = fluid_concave(127 * (1.0f - val_norm));
             break;
         case FLUID_MOD_CONCAVE | FLUID_MOD_BIPOLAR | FLUID_MOD_POSITIVE: /* =6 */
-            val = (val_norm > 0.5f) ? fluid_concave(127 * 2 * (val_norm - 0.5f)) : -fluid_concave(127 * 2 * (0.5f - val_norm));
+            val = (val_norm > 0.5f) ? fluid_concave(127 * 2 * (val_norm - 0.5f)) :
+                                      -fluid_concave(127 * 2 * (0.5f - val_norm));
             break;
         case FLUID_MOD_CONCAVE | FLUID_MOD_BIPOLAR | FLUID_MOD_NEGATIVE: /* =7 */
-            val = (val_norm > 0.5f) ? -fluid_concave(127 * 2 * (val_norm - 0.5f)) : fluid_concave(127 * 2 * (0.5f - val_norm));
+            val = (val_norm > 0.5f) ? -fluid_concave(127 * 2 * (val_norm - 0.5f)) :
+                                      fluid_concave(127 * 2 * (0.5f - val_norm));
             break;
         case FLUID_MOD_CONVEX | FLUID_MOD_UNIPOLAR | FLUID_MOD_POSITIVE: /* =8 */
             val = fluid_convex(127 * (val_norm));
@@ -268,10 +270,12 @@ static fluid_real_t fluid_mod_transform_source_value(fluid_real_t val, unsigned 
             val = fluid_convex(127 * (1.0f - val_norm));
             break;
         case FLUID_MOD_CONVEX | FLUID_MOD_BIPOLAR | FLUID_MOD_POSITIVE: /* =10 */
-            val = (val_norm > 0.5f) ? fluid_convex(127 * 2 * (val_norm - 0.5f)) : -fluid_convex(127 * 2 * (0.5f - val_norm));
+            val = (val_norm > 0.5f) ? fluid_convex(127 * 2 * (val_norm - 0.5f)) :
+                                      -fluid_convex(127 * 2 * (0.5f - val_norm));
             break;
         case FLUID_MOD_CONVEX | FLUID_MOD_BIPOLAR | FLUID_MOD_NEGATIVE: /* =11 */
-            val = (val_norm > 0.5f) ? -fluid_convex(127 * 2 * (val_norm - 0.5f)) : fluid_convex(127 * 2 * (0.5f - val_norm));
+            val = (val_norm > 0.5f) ? -fluid_convex(127 * 2 * (val_norm - 0.5f)) :
+                                      fluid_convex(127 * 2 * (0.5f - val_norm));
             break;
         case FLUID_MOD_SWITCH | FLUID_MOD_UNIPOLAR | FLUID_MOD_POSITIVE: /* =12 */
             val = (val_norm >= 0.5f) ? 1.0f : 0.0f;
@@ -301,10 +305,12 @@ static fluid_real_t fluid_mod_transform_source_value(fluid_real_t val, unsigned 
             val = sin(M_PI / 2 * (1.0f - val_norm) * 0.87);
             break;
         case FLUID_MOD_SIN | FLUID_MOD_BIPOLAR | FLUID_MOD_POSITIVE: /* custom */
-            val = (val_norm > 0.5f) ? sin(M_PI / 2 * 2 * (val_norm - 0.5f)) : -sin(M_PI / 2 * 2 * (0.5f - val_norm));
+            val = (val_norm > 0.5f) ? sin(M_PI / 2 * 2 * (val_norm - 0.5f)) :
+                                      -sin(M_PI / 2 * 2 * (0.5f - val_norm));
             break;
         case FLUID_MOD_SIN | FLUID_MOD_BIPOLAR | FLUID_MOD_NEGATIVE: /* custom */
-            val = (val_norm > 0.5f) ? -sin(M_PI / 2 * 2 * (val_norm - 0.5f)) : sin(M_PI / 2 * 2 * (0.5f - val_norm));
+            val = (val_norm > 0.5f) ? -sin(M_PI / 2 * 2 * (val_norm - 0.5f)) :
+                                      sin(M_PI / 2 * 2 * (0.5f - val_norm));
             break;
 
         default:
@@ -457,8 +463,8 @@ int fluid_mod_test_identity(const fluid_mod_t *mod1, const fluid_mod_t *mod2)
  *
  * @param mod The modulator instance
  * @param cc Boolean value indicating if ctrl is a CC controller or not
- * @param ctrl The source to check for (if \c cc == FALSE : a value of type #fluid_mod_src, else the value of the MIDI
- * CC to check for)
+ * @param ctrl The source to check for (if \c cc == FALSE : a value of type #fluid_mod_src, else the
+ * value of the MIDI CC to check for)
  *
  * @return TRUE if the modulator has the given source, FALSE otherwise.
  */

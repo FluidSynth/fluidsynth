@@ -54,9 +54,10 @@ typedef struct
 /* Excerpt from glib gprimes.c */
 
 static const unsigned int primes[] = {
-    11,     19,     37,     73,      109,     163,     251,     367,     557,     823,      1237,   1861,
-    2777,   4177,   6247,   9371,    14057,   21089,   31627,   47431,   71143,   106721,   160073, 240101,
-    360163, 540217, 810343, 1215497, 1823231, 2734867, 4102283, 6153409, 9230113, 13845163,
+    11,      19,      37,      73,      109,     163,     251,      367,    557,
+    823,     1237,    1861,    2777,    4177,    6247,    9371,     14057,  21089,
+    31627,   47431,   71143,   106721,  160073,  240101,  360163,   540217, 810343,
+    1215497, 1823231, 2734867, 4102283, 6153409, 9230113, 13845163,
 };
 
 static const unsigned int nprimes = FLUID_N_ELEMENTS(primes);
@@ -107,7 +108,8 @@ static unsigned int spaced_primes_closest(unsigned int num)
  * save insertions from having to compute the hash record again for
  * the new record.
  */
-static FLUID_INLINE fluid_hashnode_t **fluid_hashtable_lookup_node(fluid_hashtable_t *hashtable, const void *key, unsigned int *hash_return)
+static FLUID_INLINE fluid_hashnode_t **
+fluid_hashtable_lookup_node(fluid_hashtable_t *hashtable, const void *key, unsigned int *hash_return)
 {
     fluid_hashnode_t **node_ptr, *node;
     unsigned int hash_value;
@@ -256,8 +258,9 @@ static void fluid_hashtable_resize(fluid_hashtable_t *hashtable)
     int i;
 
     new_size = spaced_primes_closest(hashtable->nnodes);
-    new_size = (new_size < HASH_TABLE_MIN_SIZE) ? HASH_TABLE_MIN_SIZE :
-                                                  ((new_size > HASH_TABLE_MAX_SIZE) ? HASH_TABLE_MAX_SIZE : new_size);
+    new_size = (new_size < HASH_TABLE_MIN_SIZE) ?
+               HASH_TABLE_MIN_SIZE :
+               ((new_size > HASH_TABLE_MAX_SIZE) ? HASH_TABLE_MAX_SIZE : new_size);
 
     new_nodes = FLUID_ARRAY(fluid_hashnode_t *, new_size);
 

@@ -165,7 +165,8 @@ fluid_chorus_t *new_fluid_chorus(fluid_real_t sample_rate)
         for (ii = 0; ii < INTERPOLATION_SUBSAMPLES; ii++)
         {
             /* Move the origin into the center of the table */
-            double i_shifted = ((double)i - ((double)INTERPOLATION_SAMPLES) / 2. + (double)ii / (double)INTERPOLATION_SUBSAMPLES);
+            double i_shifted =
+            ((double)i - ((double)INTERPOLATION_SAMPLES) / 2. + (double)ii / (double)INTERPOLATION_SUBSAMPLES);
             if (fabs(i_shifted) < 0.000001)
             {
                 /* sinc(0) cannot be calculated straightforward (limit needed
@@ -349,7 +350,8 @@ void fluid_chorus_set(fluid_chorus_t *chorus, int set, int nr, fluid_real_t leve
     for (i = 0; i < chorus->number_blocks; i++)
     {
         /* Set the phase of the chorus blocks equally spaced */
-        chorus->phase[i] = (int)((double)chorus->modulation_period_samples * (double)i / (double)chorus->number_blocks);
+        chorus->phase[i] =
+        (int)((double)chorus->modulation_period_samples * (double)i / (double)chorus->number_blocks);
     }
 
     /* Start of the circular buffer */
@@ -387,7 +389,8 @@ void fluid_chorus_processmix(fluid_chorus_t *chorus, fluid_real_t *in, fluid_rea
              * will always be positive.  It will always include a number of
              * full periods of MAX_SAMPLES*INTERPOLATION_SUBSAMPLES to
              * remain positive at all times. */
-            int pos_subsamples = (INTERPOLATION_SUBSAMPLES * chorus->counter - chorus->lookup_tab[chorus->phase[i]]);
+            int pos_subsamples =
+            (INTERPOLATION_SUBSAMPLES * chorus->counter - chorus->lookup_tab[chorus->phase[i]]);
 
             int pos_samples = pos_subsamples / INTERPOLATION_SUBSAMPLES;
 
@@ -402,7 +405,8 @@ void fluid_chorus_processmix(fluid_chorus_t *chorus, fluid_real_t *in, fluid_rea
 
                 /* The & in chorusbuf[...] is equivalent to a division modulo
                    MAX_SAMPLES, only faster. */
-                d_out += chorus->chorusbuf[pos_samples & MAX_SAMPLES_ANDMASK] * chorus->sinc_table[ii][pos_subsamples];
+                d_out += chorus->chorusbuf[pos_samples & MAX_SAMPLES_ANDMASK] *
+                         chorus->sinc_table[ii][pos_subsamples];
 
                 pos_samples--;
             };
@@ -455,7 +459,8 @@ void fluid_chorus_processreplace(fluid_chorus_t *chorus, fluid_real_t *in, fluid
              * will always be positive.  It will always include a number of
              * full periods of MAX_SAMPLES*INTERPOLATION_SUBSAMPLES to
              * remain positive at all times. */
-            int pos_subsamples = (INTERPOLATION_SUBSAMPLES * chorus->counter - chorus->lookup_tab[chorus->phase[i]]);
+            int pos_subsamples =
+            (INTERPOLATION_SUBSAMPLES * chorus->counter - chorus->lookup_tab[chorus->phase[i]]);
 
             int pos_samples = pos_subsamples / INTERPOLATION_SUBSAMPLES;
 
@@ -470,7 +475,8 @@ void fluid_chorus_processreplace(fluid_chorus_t *chorus, fluid_real_t *in, fluid
 
                 /* The & in chorusbuf[...] is equivalent to a division modulo
                    MAX_SAMPLES, only faster. */
-                d_out += chorus->chorusbuf[pos_samples & MAX_SAMPLES_ANDMASK] * chorus->sinc_table[ii][pos_subsamples];
+                d_out += chorus->chorusbuf[pos_samples & MAX_SAMPLES_ANDMASK] *
+                         chorus->sinc_table[ii][pos_subsamples];
 
                 pos_samples--;
             };

@@ -85,10 +85,10 @@ struct _fluid_channel_t
     int mode_val; /**< number of channel in basic channel group */
 
     /* monophonic list - legato detector */
-    unsigned char i_first;                                 /**< First note index */
-    unsigned char i_last;                                  /**< most recent note index since the most recent add */
-    unsigned char prev_note;                               /**< previous note of the most recent add/remove */
-    unsigned char n_notes;                                 /**< actual number of notes in the list */
+    unsigned char i_first;   /**< First note index */
+    unsigned char i_last;    /**< most recent note index since the most recent add */
+    unsigned char prev_note; /**< previous note of the most recent add/remove */
+    unsigned char n_notes;   /**< actual number of notes in the list */
     struct mononote monolist[FLUID_CHANNEL_SIZE_MONOLIST]; /**< monophonic list */
 
     unsigned char key_mono_sustained;                  /**< previous sustained monophonic note */
@@ -163,7 +163,8 @@ void fluid_channel_get_sfont_bank_prog(fluid_channel_t *chan, int *sfont, int *b
 #define fluid_channel_get_pitch_bend(chan) ((chan)->pitch_bend)
 #define fluid_channel_set_pitch_bend(chan, val) ((chan)->pitch_bend = (val))
 #define fluid_channel_get_pitch_wheel_sensitivity(chan) ((chan)->pitch_wheel_sensitivity)
-#define fluid_channel_set_pitch_wheel_sensitivity(chan, val) ((chan)->pitch_wheel_sensitivity = (val))
+#define fluid_channel_set_pitch_wheel_sensitivity(chan, val) \
+    ((chan)->pitch_wheel_sensitivity = (val))
 #define fluid_channel_get_num(chan) ((chan)->channum)
 #define fluid_channel_set_interp_method(chan, new_method) ((chan)->interp_method = (new_method))
 #define fluid_channel_get_interp_method(chan) ((chan)->interp_method);
@@ -177,7 +178,8 @@ void fluid_channel_get_sfont_bank_prog(fluid_channel_t *chan, int *sfont, int *b
 #define fluid_channel_set_tuning_bank(chan, bank) ((chan)->tuning_bank = (bank))
 #define fluid_channel_get_tuning_prog(chan) ((chan)->tuning_prog)
 #define fluid_channel_set_tuning_prog(chan, prog) ((chan)->tuning_prog = (prog))
-#define fluid_channel_portamentotime(_c) ((_c)->cc[PORTAMENTO_TIME_MSB] * 128 + (_c)->cc[PORTAMENTO_TIME_LSB])
+#define fluid_channel_portamentotime(_c) \
+    ((_c)->cc[PORTAMENTO_TIME_MSB] * 128 + (_c)->cc[PORTAMENTO_TIME_LSB])
 #define fluid_channel_portamento(_c) ((_c)->cc[PORTAMENTO_SWITCH] >= 64)
 #define fluid_channel_breath_msb(_c) ((_c)->cc[BREATH_MSB] > 0)
 #define fluid_channel_clear_portamento(_c) ((_c)->cc[PORTAMENTO_CTRL] = INVALID_NOTE)
@@ -202,7 +204,8 @@ void fluid_channel_get_sfont_bank_prog(fluid_channel_t *chan, int *sfont, int *b
 #define fluid_channel_reset_basic_channel_info(chan) (chan->mode &= ~MASK_BASICCHANINFOS)
 
 /* Macros interface to breath variables */
-#define FLUID_CHANNEL_BREATH_MASK (FLUID_CHANNEL_BREATH_POLY | FLUID_CHANNEL_BREATH_MONO | FLUID_CHANNEL_BREATH_SYNC)
+#define FLUID_CHANNEL_BREATH_MASK \
+    (FLUID_CHANNEL_BREATH_POLY | FLUID_CHANNEL_BREATH_MONO | FLUID_CHANNEL_BREATH_SYNC)
 /* Set the breath infos for a MIDI  channel */
 #define fluid_channel_set_breath_info(chan, BreathInfos) \
     (chan->mode = (chan->mode & ~FLUID_CHANNEL_BREATH_MASK) | (BreathInfos & FLUID_CHANNEL_BREATH_MASK))
@@ -210,7 +213,8 @@ void fluid_channel_get_sfont_bank_prog(fluid_channel_t *chan, int *sfont, int *b
 #define fluid_channel_get_breath_info(chan) (chan->mode & FLUID_CHANNEL_BREATH_MASK)
 
 /* Returns true when channel is mono or legato is on */
-#define fluid_channel_is_playing_mono(chan) ((chan->mode & FLUID_CHANNEL_POLY_OFF) || fluid_channel_legato(chan))
+#define fluid_channel_is_playing_mono(chan) \
+    ((chan->mode & FLUID_CHANNEL_POLY_OFF) || fluid_channel_legato(chan))
 
 /* Macros interface to monophonic list variables */
 #define INVALID_NOTE (255)
@@ -240,9 +244,9 @@ void fluid_channel_get_sfont_bank_prog(fluid_channel_t *chan, int *sfont, int *b
 /* Interface to poly/mono mode variables */
 enum fluid_channel_mode_flags_internal
 {
-    FLUID_CHANNEL_BASIC = 0x04,   /**< if flag set the corresponding midi channel is a basic channel */
-    FLUID_CHANNEL_ENABLED = 0x08, /**< if flag set the corresponding midi channel is enabled, else disabled, i.e.
-                                     channel ignores any MIDI messages */
+    FLUID_CHANNEL_BASIC = 0x04, /**< if flag set the corresponding midi channel is a basic channel */
+    FLUID_CHANNEL_ENABLED = 0x08, /**< if flag set the corresponding midi channel is enabled, else
+                                     disabled, i.e. channel ignores any MIDI messages */
 
     /*
       FLUID_CHANNEL_LEGATO_PLAYING bit of channel mode keeps trace of the legato /staccato

@@ -60,8 +60,8 @@ enum fluid_log_level
     FLUID_INFO,  /**< Verbose informational messages */
     FLUID_DBG,   /**< Debugging messages */
 #ifndef __DOXYGEN__
-    LAST_LOG_LEVEL /**< @warning This symbol is not part of the public API and ABI stability guarantee and may change at
-                      any time! */
+    LAST_LOG_LEVEL /**< @warning This symbol is not part of the public API and ABI stability
+                      guarantee and may change at any time! */
 #endif
 };
 

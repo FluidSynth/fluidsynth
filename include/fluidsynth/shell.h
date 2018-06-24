@@ -70,8 +70,11 @@ void fluid_usershell(fluid_settings_t *settings, fluid_cmd_handler_t *handler);
 /* Shell */
 
 FLUIDSYNTH_API
-fluid_shell_t *
-new_fluid_shell(fluid_settings_t *settings, fluid_cmd_handler_t *handler, fluid_istream_t in, fluid_ostream_t out, int thread);
+fluid_shell_t *new_fluid_shell(fluid_settings_t *settings,
+                               fluid_cmd_handler_t *handler,
+                               fluid_istream_t in,
+                               fluid_ostream_t out,
+                               int thread);
 
 FLUIDSYNTH_API void delete_fluid_shell(fluid_shell_t *shell);
 

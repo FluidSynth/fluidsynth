@@ -100,8 +100,8 @@ void fluid_event_set_source(fluid_event_t *evt, fluid_seq_id_t src)
 }
 
 /**
- * Set destination of this sequencer event, i.e. the sequencer client this event will be sent to. \c dest must be a
- * unique sequencer ID.
+ * Set destination of this sequencer event, i.e. the sequencer client this event will be sent to. \c
+ * dest must be a unique sequencer ID.
  * @param evt Sequencer event structure
  * @param dest The destination unique sequencer ID
  */

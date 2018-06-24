@@ -64,7 +64,8 @@ static char fluid_winmidi_error_buffer[256];
 #define msg_p1(_m) ((_m >> 8) & 0x7f)
 #define msg_p2(_m) ((_m >> 16) & 0x7f)
 
-fluid_midi_driver_t *new_fluid_winmidi_driver(fluid_settings_t *settings, handle_midi_event_func_t handler, void *data);
+fluid_midi_driver_t *
+new_fluid_winmidi_driver(fluid_settings_t *settings, handle_midi_event_func_t handler, void *data);
 
 void delete_fluid_winmidi_driver(fluid_midi_driver_t *p);
 
@@ -129,7 +130,8 @@ static DWORD WINAPI fluid_winmidi_add_sysex_thread(void *data)
 /*
  * new_fluid_winmidi_driver
  */
-fluid_midi_driver_t *new_fluid_winmidi_driver(fluid_settings_t *settings, handle_midi_event_func_t handler, void *data)
+fluid_midi_driver_t *
+new_fluid_winmidi_driver(fluid_settings_t *settings, handle_midi_event_func_t handler, void *data)
 {
     fluid_winmidi_driver_t *dev;
     MIDIHDR *hdr;
@@ -226,16 +228,23 @@ fluid_midi_driver_t *new_fluid_winmidi_driver(fluid_settings_t *settings, handle
 
             if (res != MMSYSERR_NOERROR)
             {
-                FLUID_LOG(FLUID_WARN, "Failed to prepare MIDI SYSEX buffer: %s (error %d)", fluid_winmidi_input_error(res), res);
+                FLUID_LOG(FLUID_WARN,
+                          "Failed to prepare MIDI SYSEX buffer: %s (error %d)",
+                          fluid_winmidi_input_error(res),
+                          res);
                 midiInUnprepareHeader(dev->hmidiin, hdr, sizeof(MIDIHDR));
             }
         }
         else
-            FLUID_LOG(FLUID_WARN, "Failed to prepare MIDI SYSEX buffer: %s (error %d)", fluid_winmidi_input_error(res), res);
+            FLUID_LOG(FLUID_WARN,
+                      "Failed to prepare MIDI SYSEX buffer: %s (error %d)",
+                      fluid_winmidi_input_error(res),
+                      res);
     }
 
     /* Create thread which processes re-adding SYSEX buffers */
-    dev->hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)fluid_winmidi_add_sysex_thread, dev, 0, &dev->dwThread);
+    dev->hThread =
+    CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)fluid_winmidi_add_sysex_thread, dev, 0, &dev->dwThread);
 
     if (dev->hThread == NULL)
     {

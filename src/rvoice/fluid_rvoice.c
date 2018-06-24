@@ -51,9 +51,10 @@ static FLUID_INLINE int fluid_rvoice_calc_amp(fluid_rvoice_t *voice)
         fluid_real_t amplitude_that_reaches_noise_floor;
         fluid_real_t amp_max;
 
-        target_amp = fluid_cb2amp(voice->dsp.attenuation) *
-                     fluid_cb2amp(FLUID_PEAK_ATTENUATION * (1.0f - fluid_adsr_env_get_val(&voice->envlfo.volenv)) +
-                                  fluid_lfo_get_val(&voice->envlfo.modlfo) * -voice->envlfo.modlfo_to_vol);
+        target_amp =
+        fluid_cb2amp(voice->dsp.attenuation) *
+        fluid_cb2amp(FLUID_PEAK_ATTENUATION * (1.0f - fluid_adsr_env_get_val(&voice->envlfo.volenv)) +
+                     fluid_lfo_get_val(&voice->envlfo.modlfo) * -voice->envlfo.modlfo_to_vol);
 
         /* We turn off a voice, if the volume has dropped low enough. */
 
@@ -82,7 +83,8 @@ static FLUID_INLINE int fluid_rvoice_calc_amp(fluid_rvoice_t *voice)
          * volenv_val can only drop):
          */
 
-        amp_max = fluid_cb2amp(voice->dsp.min_attenuation_cB) * fluid_adsr_env_get_val(&voice->envlfo.volenv);
+        amp_max =
+        fluid_cb2amp(voice->dsp.min_attenuation_cB) * fluid_adsr_env_get_val(&voice->envlfo.volenv);
 
         /* And if amp_max is already smaller than the known amplitude,
          * which will attenuate the sample below the noise floor, then we
@@ -128,7 +130,8 @@ static void fluid_rvoice_check_sample_sanity(fluid_rvoice_t *voice)
 
     /* make sure we have enough samples surrounding the loop */
     int min_index_loop = (int)voice->dsp.sample->start + FLUID_MIN_LOOP_PAD;
-    int max_index_loop = (int)voice->dsp.sample->end - FLUID_MIN_LOOP_PAD + 1; /* 'end' is last valid sample, loopend can be + 1 */
+    int max_index_loop = (int)voice->dsp.sample->end - FLUID_MIN_LOOP_PAD +
+                         1; /* 'end' is last valid sample, loopend can be + 1 */
     fluid_check_fpe("voice_check_sample_sanity start");
 
 #if 0
@@ -217,7 +220,8 @@ static void fluid_rvoice_check_sample_sanity(fluid_rvoice_t *voice)
             (int)voice->dsp.loopend <= (int)voice->dsp.sample->loopend)
         {
             /* Is there a valid peak amplitude available for the loop, and can we use it? */
-            if (voice->dsp.sample->amplitude_that_reaches_noise_floor_is_valid && voice->dsp.samplemode == FLUID_LOOP_DURING_RELEASE)
+            if (voice->dsp.sample->amplitude_that_reaches_noise_floor_is_valid &&
+                voice->dsp.samplemode == FLUID_LOOP_DURING_RELEASE)
             {
                 voice->dsp.amplitude_that_reaches_noise_floor_loop =
                 voice->dsp.sample->amplitude_that_reaches_noise_floor / voice->dsp.synth_gain;
@@ -225,7 +229,8 @@ static void fluid_rvoice_check_sample_sanity(fluid_rvoice_t *voice)
             else
             {
                 /* Worst case */
-                voice->dsp.amplitude_that_reaches_noise_floor_loop = voice->dsp.amplitude_that_reaches_noise_floor_nonloop;
+                voice->dsp.amplitude_that_reaches_noise_floor_loop =
+                voice->dsp.amplitude_that_reaches_noise_floor_nonloop;
             };
         };
 
@@ -236,7 +241,8 @@ static void fluid_rvoice_check_sample_sanity(fluid_rvoice_t *voice)
     {
         if (max_index_loop - min_index_loop < FLUID_MIN_LOOP_SIZE)
         {
-            if ((voice->dsp.samplemode == FLUID_LOOP_UNTIL_RELEASE) || (voice->dsp.samplemode == FLUID_LOOP_DURING_RELEASE))
+            if ((voice->dsp.samplemode == FLUID_LOOP_UNTIL_RELEASE) ||
+                (voice->dsp.samplemode == FLUID_LOOP_DURING_RELEASE))
             {
                 voice->dsp.samplemode = FLUID_UNLOOPED;
             }
@@ -271,8 +277,8 @@ static void fluid_rvoice_check_sample_sanity(fluid_rvoice_t *voice)
             fluid_phase_set_int(voice->dsp.phase, voice->dsp.loopstart);
         }
     }
-    /*    FLUID_LOG(FLUID_DBG, "Loop / sample sanity check: Sample from %i to %i, loop from %i to %i", voice->dsp.start,
-     * voice->dsp.end, voice->dsp.loopstart, voice->dsp.loopend); */
+    /*    FLUID_LOG(FLUID_DBG, "Loop / sample sanity check: Sample from %i to %i, loop from %i to
+     * %i", voice->dsp.start, voice->dsp.end, voice->dsp.loopstart, voice->dsp.loopend); */
 
     /* Sample sanity has been assured. Don't check again, until some
        sample parameter is changed by modulation. */
@@ -355,11 +361,12 @@ int fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
      * through the original waveform with each step in the output
      * buffer. It is the ratio between the frequencies of original
      * waveform and output waveform.*/
-    voice->dsp.phase_incr = fluid_ct2hz_real(voice->dsp.pitch + voice->dsp.pitchoffset +
-                                             fluid_lfo_get_val(&voice->envlfo.modlfo) * voice->envlfo.modlfo_to_pitch +
-                                             fluid_lfo_get_val(&voice->envlfo.viblfo) * voice->envlfo.viblfo_to_pitch +
-                                             fluid_adsr_env_get_val(&voice->envlfo.modenv) * voice->envlfo.modenv_to_pitch) /
-                            voice->dsp.root_pitch_hz;
+    voice->dsp.phase_incr =
+    fluid_ct2hz_real(voice->dsp.pitch + voice->dsp.pitchoffset +
+                     fluid_lfo_get_val(&voice->envlfo.modlfo) * voice->envlfo.modlfo_to_pitch +
+                     fluid_lfo_get_val(&voice->envlfo.viblfo) * voice->envlfo.viblfo_to_pitch +
+                     fluid_adsr_env_get_val(&voice->envlfo.modenv) * voice->envlfo.modenv_to_pitch) /
+    voice->dsp.root_pitch_hz;
 
     /******************* portamento ****************/
     /* pitchoffset is updated if enabled.

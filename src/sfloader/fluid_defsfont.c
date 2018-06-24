@@ -51,8 +51,8 @@ static fluid_inst_t *find_inst_by_idx(fluid_defsfont_t *defsfont, int idx);
 /**
  * Creates a default soundfont2 loader that can be used with fluid_synth_add_sfloader().
  * By default every synth instance has an initial default soundfont loader instance.
- * Calling this function is usually only necessary to load a soundfont from memory, by providing custom callback
- * functions via fluid_sfloader_set_callbacks().
+ * Calling this function is usually only necessary to load a soundfont from memory, by providing
+ * custom callback functions via fluid_sfloader_set_callbacks().
  *
  * @param settings A settings instance obtained by new_fluid_settings()
  * @return A default soundfont2 loader struct
@@ -285,23 +285,28 @@ int fluid_defsfont_load_sampledata(fluid_defsfont_t *defsfont, SFData *sfdata, f
     int num_samples;
     unsigned int source_end = sample->source_end;
 
-    /* For uncompressed samples we want to include the 46 zero sample word area following each sample
-     * in the Soundfont. Otherwise samples with loopend > end, which we have decided not to correct, would
-     * be corrected after all in fluid_sample_sanitize_loop */
+    /* For uncompressed samples we want to include the 46 zero sample word area following each
+     * sample in the Soundfont. Otherwise samples with loopend > end, which we have decided not to
+     * correct, would be corrected after all in fluid_sample_sanitize_loop */
     if (!(sample->sampletype & FLUID_SAMPLETYPE_OGG_VORBIS))
     {
         source_end += 46; /* Length of zero sample word after each sample, according to SF specs */
 
-        /* Safeguard against Soundfonts that are not quite valid and don't include 46 sample words after the
-         * last sample */
+        /* Safeguard against Soundfonts that are not quite valid and don't include 46 sample words
+         * after the last sample */
         if (source_end >= (defsfont->samplesize / sizeof(short)))
         {
             source_end = defsfont->samplesize / sizeof(short);
         }
     }
 
-    num_samples = fluid_samplecache_load(
-    sfdata, sample->source_start, source_end, sample->sampletype, defsfont->mlock, &sample->data, &sample->data24);
+    num_samples = fluid_samplecache_load(sfdata,
+                                         sample->source_start,
+                                         source_end,
+                                         sample->sampletype,
+                                         defsfont->mlock,
+                                         &sample->data,
+                                         &sample->data24);
 
     if (num_samples < 0)
     {
@@ -347,8 +352,8 @@ int fluid_defsfont_load_all_sampledata(fluid_defsfont_t *defsfont, SFData *sfdat
         int read_samples;
         int num_samples = sfdata->samplesize / sizeof(short);
 
-        read_samples =
-        fluid_samplecache_load(sfdata, 0, num_samples - 1, 0, defsfont->mlock, &defsfont->sampledata, &defsfont->sample24data);
+        read_samples = fluid_samplecache_load(
+        sfdata, 0, num_samples - 1, 0, defsfont->mlock, &defsfont->sampledata, &defsfont->sample24data);
         if (read_samples != num_samples)
         {
             FLUID_LOG(FLUID_ERR, "Attempted to read %d words of sample data, but got %d instead", num_samples, read_samples);
@@ -362,8 +367,8 @@ int fluid_defsfont_load_all_sampledata(fluid_defsfont_t *defsfont, SFData *sfdat
 
         if (sf3_file)
         {
-            /* SF3 samples get loaded individually, as most (or all) of them are in Ogg Vorbis format
-             * anyway */
+            /* SF3 samples get loaded individually, as most (or all) of them are in Ogg Vorbis
+             * format anyway */
             if (fluid_defsfont_load_sampledata(defsfont, sfdata, sample) == FLUID_FAILED)
             {
                 FLUID_LOG(FLUID_ERR, "Failed to load sample '%s'", sample->name);
@@ -698,7 +703,8 @@ int fluid_defpreset_noteon(fluid_defpreset_t *defpreset, fluid_synth_t *synth, i
                     inst_zone = voice_zone->inst_zone;
 
                     /* this is a good zone. allocate a new synthesis process and initialize it */
-                    voice = fluid_synth_alloc_voice_LOCAL(synth, inst_zone->sample, chan, key, vel, &voice_zone->range);
+                    voice = fluid_synth_alloc_voice_LOCAL(
+                    synth, inst_zone->sample, chan, key, vel, &voice_zone->range);
                     if (voice == NULL)
                     {
                         return FLUID_FAILED;
@@ -798,10 +804,10 @@ int fluid_defpreset_noteon(fluid_defpreset_t *defpreset, fluid_synth_t *synth, i
                         /* SF 2.01 section 8.5 page 58: If some generators are
                          * encountered at preset level, they should be ignored */
                         if ((i != GEN_STARTADDROFS) && (i != GEN_ENDADDROFS) && (i != GEN_STARTLOOPADDROFS) &&
-                            (i != GEN_ENDLOOPADDROFS) && (i != GEN_STARTADDRCOARSEOFS) && (i != GEN_ENDADDRCOARSEOFS) &&
-                            (i != GEN_STARTLOOPADDRCOARSEOFS) && (i != GEN_KEYNUM) && (i != GEN_VELOCITY) &&
-                            (i != GEN_ENDLOOPADDRCOARSEOFS) && (i != GEN_SAMPLEMODE) && (i != GEN_EXCLUSIVECLASS) &&
-                            (i != GEN_OVERRIDEROOTKEY))
+                            (i != GEN_ENDLOOPADDROFS) && (i != GEN_STARTADDRCOARSEOFS) &&
+                            (i != GEN_ENDADDRCOARSEOFS) && (i != GEN_STARTLOOPADDRCOARSEOFS) &&
+                            (i != GEN_KEYNUM) && (i != GEN_VELOCITY) && (i != GEN_ENDLOOPADDRCOARSEOFS) &&
+                            (i != GEN_SAMPLEMODE) && (i != GEN_EXCLUSIVECLASS) && (i != GEN_OVERRIDEROOTKEY))
                         {
 
                             /* SF 2.01 section 9.4 'bullet' 9: A generator in a
@@ -917,7 +923,8 @@ int fluid_defpreset_import_sfont(fluid_defpreset_t *defpreset, SFPreset *sfprese
     }
     else
     {
-        FLUID_SNPRINTF(defpreset->name, sizeof(defpreset->name), "Bank%d,Pre%d", sfpreset->bank, sfpreset->prenum);
+        FLUID_SNPRINTF(
+        defpreset->name, sizeof(defpreset->name), "Bank%d,Pre%d", sfpreset->bank, sfpreset->prenum);
     }
     defpreset->bank = sfpreset->bank;
     defpreset->num = sfpreset->prenum;
@@ -1133,8 +1140,8 @@ int fluid_preset_zone_import_sfont(fluid_preset_zone_t *zone, SFZone *sfzone, fl
                 zone->range.velhi = sfgen->amount.range.hi;
                 break;
             case GEN_ATTENUATION:
-                /* EMU8k/10k hardware applies a scale factor to initial attenuation generator values set at
-                 * preset and instrument level */
+                /* EMU8k/10k hardware applies a scale factor to initial attenuation generator values
+                 * set at preset and instrument level */
                 zone->gen[sfgen->id].val = (fluid_real_t)sfgen->amount.sword * EMU_ATTENUATION_FACTOR;
                 zone->gen[sfgen->id].flags = GEN_SET;
                 break;
@@ -1185,7 +1192,8 @@ int fluid_preset_zone_import_sfont(fluid_preset_zone_t *zone, SFZone *sfzone, fl
         mod_dest->amount = mod_src->amount;
 
         /* *** Source *** */
-        mod_dest->src1 = mod_src->src & 127; /* index of source 1, seven-bit value, SF2.01 section 8.2, page 50 */
+        mod_dest->src1 =
+        mod_src->src & 127; /* index of source 1, seven-bit value, SF2.01 section 8.2, page 50 */
         mod_dest->flags1 = 0;
 
         /* Bit 7: CC flag SF 2.01 section 8.2.1 page 50*/
@@ -1596,8 +1604,8 @@ int fluid_inst_zone_import_sfont(fluid_inst_zone_t *inst_zone, SFZone *sfzone, f
                 inst_zone->range.velhi = sfgen->amount.range.hi;
                 break;
             case GEN_ATTENUATION:
-                /* EMU8k/10k hardware applies a scale factor to initial attenuation generator values set at
-                 * preset and instrument level */
+                /* EMU8k/10k hardware applies a scale factor to initial attenuation generator values
+                 * set at preset and instrument level */
                 inst_zone->gen[sfgen->id].val = (fluid_real_t)sfgen->amount.sword * EMU_ATTENUATION_FACTOR;
                 inst_zone->gen[sfgen->id].flags = GEN_SET;
                 break;
@@ -1641,7 +1649,8 @@ int fluid_inst_zone_import_sfont(fluid_inst_zone_t *inst_zone, SFZone *sfzone, f
         mod_dest->amount = mod_src->amount;
 
         /* *** Source *** */
-        mod_dest->src1 = mod_src->src & 127; /* index of source 1, seven-bit value, SF2.01 section 8.2, page 50 */
+        mod_dest->src1 =
+        mod_src->src & 127; /* index of source 1, seven-bit value, SF2.01 section 8.2, page 50 */
         mod_dest->flags1 = 0;
 
         /* Bit 7: CC flag SF 2.01 section 8.2.1 page 50*/
@@ -1704,7 +1713,8 @@ int fluid_inst_zone_import_sfont(fluid_inst_zone_t *inst_zone, SFZone *sfzone, f
         mod_dest->dest = mod_src->dest; /* index of controlled generator */
 
         /* *** Amount source *** */
-        mod_dest->src2 = mod_src->amtsrc & 127; /* index of source 2, seven-bit value, SF2.01 section 8.2, page 50 */
+        mod_dest->src2 =
+        mod_src->amtsrc & 127; /* index of source 2, seven-bit value, SF2.01 section 8.2, page 50 */
         mod_dest->flags2 = 0;
 
         /* Bit 7: CC flag SF 2.01 section 8.2.1 page 50*/
@@ -1812,7 +1822,8 @@ int fluid_zone_inside_range(fluid_zone_range_t *range, int key, int vel)
     /* Reset the 'ignore' request */
     range->ignore = FALSE;
 
-    return !ignore_zone && ((range->keylo <= key) && (range->keyhi >= key) && (range->vello <= vel) && (range->velhi >= vel));
+    return !ignore_zone && ((range->keylo <= key) && (range->keyhi >= key) &&
+                            (range->vello <= vel) && (range->velhi >= vel));
 }
 
 /***************************************************************

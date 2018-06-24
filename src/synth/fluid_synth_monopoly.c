@@ -640,7 +640,8 @@ int fluid_synth_noteon_monopoly_legato(fluid_synth_t *synth, int chan, int fromk
         {
             /* searching fromkey voices: only those who don't have 'note off' */
             voice = synth->voice[i];
-            if (fluid_voice_is_on(voice) && fluid_voice_get_channel(voice) == chan && fluid_voice_get_key(voice) == fromkey)
+            if (fluid_voice_is_on(voice) && fluid_voice_get_channel(voice) == chan &&
+                fluid_voice_get_key(voice) == fromkey)
             {
                 fluid_zone_range_t *zone_range = voice->zone_range;
                 /* Ignores voice when there is no instrument zone (i.e no zone_range). Otherwise

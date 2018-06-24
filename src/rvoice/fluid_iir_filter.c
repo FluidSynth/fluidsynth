@@ -250,8 +250,9 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_iir_filter_set_q)
     iir_filter->last_fres = -1.;
 }
 
-static FLUID_INLINE void
-fluid_iir_filter_calculate_coefficients(fluid_iir_filter_t *iir_filter, int transition_samples, fluid_real_t output_rate)
+static FLUID_INLINE void fluid_iir_filter_calculate_coefficients(fluid_iir_filter_t *iir_filter,
+                                                                 int transition_samples,
+                                                                 fluid_real_t output_rate)
 {
     /* FLUID_IIR_Q_LINEAR may switch the filter off by setting Q==0 */
     if (iir_filter->q_lin == 0)

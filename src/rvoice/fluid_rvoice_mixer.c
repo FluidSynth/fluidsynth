@@ -107,10 +107,10 @@ struct _fluid_rvoice_mixer_t
     //  int sleeping_threads;        /**< Atomic: number of threads currently asleep */
     //  int active_threads;          /**< Atomic: number of threads in the thread loop */
     fluid_atomic_int_t threads_should_terminate; /**< Atomic: Set to TRUE when threads should terminate */
-    fluid_atomic_int_t current_rvoice;           /**< Atomic: for the threads to know next voice to  */
-    fluid_cond_t *wakeup_threads;                /**< Signalled when the threads should wake up */
-    fluid_cond_mutex_t *wakeup_threads_m;        /**< wakeup_threads mutex companion */
-    fluid_cond_t *thread_ready;         /**< Signalled from thread, when the thread has a buffer ready for mixing */
+    fluid_atomic_int_t current_rvoice;    /**< Atomic: for the threads to know next voice to  */
+    fluid_cond_t *wakeup_threads;         /**< Signalled when the threads should wake up */
+    fluid_cond_mutex_t *wakeup_threads_m; /**< wakeup_threads mutex companion */
+    fluid_cond_t *thread_ready; /**< Signalled from thread, when the thread has a buffer ready for mixing */
     fluid_cond_mutex_t *thread_ready_m; /**< thread_ready mutex companion */
 
     int thread_count;               /**< Number of extra mixer threads for multi-core rendering */
@@ -303,7 +303,8 @@ static FLUID_INLINE void fluid_rvoice_mixer_process_finished_voices(fluid_rvoice
 }
 
 
-static FLUID_INLINE fluid_real_t *get_dest_buf(fluid_rvoice_buffers_t *buffers, int index, fluid_real_t **dest_bufs, int dest_bufcount)
+static FLUID_INLINE fluid_real_t *
+get_dest_buf(fluid_rvoice_buffers_t *buffers, int index, fluid_real_t **dest_bufs, int dest_bufcount)
 {
     int j = buffers->bufs[index].mapping;
     if (j >= dest_bufcount || j < 0)
@@ -389,7 +390,12 @@ static FLUID_INLINE void fluid_mixer_buffers_render_one(fluid_mixer_buffers_t *b
             break;
         }
     }
-    fluid_rvoice_buffers_mix(&rvoice->buffers, src_buf, -start_block, total_samples - ((-start_block) * FLUID_BUFSIZE), dest_bufs, dest_bufcount);
+    fluid_rvoice_buffers_mix(&rvoice->buffers,
+                             src_buf,
+                             -start_block,
+                             total_samples - ((-start_block) * FLUID_BUFSIZE),
+                             dest_bufs,
+                             dest_bufcount);
 
     if (total_samples < blockcount * FLUID_BUFSIZE)
     {
@@ -549,8 +555,10 @@ static int fluid_mixer_buffers_init(fluid_mixer_buffers_t *buffers, fluid_rvoice
 
     /* Left and right audio buffers */
 
-    buffers->left_buf = FLUID_ARRAY_ALIGNED(fluid_real_t, buffers->buf_count * samplecount, FLUID_DEFAULT_ALIGNMENT);
-    buffers->right_buf = FLUID_ARRAY_ALIGNED(fluid_real_t, buffers->buf_count * samplecount, FLUID_DEFAULT_ALIGNMENT);
+    buffers->left_buf =
+    FLUID_ARRAY_ALIGNED(fluid_real_t, buffers->buf_count * samplecount, FLUID_DEFAULT_ALIGNMENT);
+    buffers->right_buf =
+    FLUID_ARRAY_ALIGNED(fluid_real_t, buffers->buf_count * samplecount, FLUID_DEFAULT_ALIGNMENT);
 
     if ((buffers->local_buf == NULL) || (buffers->left_buf == NULL) || (buffers->right_buf == NULL))
     {
@@ -560,8 +568,10 @@ static int fluid_mixer_buffers_init(fluid_mixer_buffers_t *buffers, fluid_rvoice
 
     /* Effects audio buffers */
 
-    buffers->fx_left_buf = FLUID_ARRAY_ALIGNED(fluid_real_t, buffers->fx_buf_count * samplecount, FLUID_DEFAULT_ALIGNMENT);
-    buffers->fx_right_buf = FLUID_ARRAY_ALIGNED(fluid_real_t, buffers->fx_buf_count * samplecount, FLUID_DEFAULT_ALIGNMENT);
+    buffers->fx_left_buf =
+    FLUID_ARRAY_ALIGNED(fluid_real_t, buffers->fx_buf_count * samplecount, FLUID_DEFAULT_ALIGNMENT);
+    buffers->fx_right_buf =
+    FLUID_ARRAY_ALIGNED(fluid_real_t, buffers->fx_buf_count * samplecount, FLUID_DEFAULT_ALIGNMENT);
 
     if ((buffers->fx_left_buf == NULL) || (buffers->fx_right_buf == NULL))
     {
@@ -611,8 +621,12 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_samplerate)
  * @param buf_count number of primary stereo buffers
  * @param fx_buf_count number of stereo effect buffers
  */
-fluid_rvoice_mixer_t *
-new_fluid_rvoice_mixer(int buf_count, int fx_buf_count, fluid_real_t sample_rate, fluid_rvoice_eventhandler_t *evthandler, int extra_threads, int prio)
+fluid_rvoice_mixer_t *new_fluid_rvoice_mixer(int buf_count,
+                                             int fx_buf_count,
+                                             fluid_real_t sample_rate,
+                                             fluid_rvoice_eventhandler_t *evthandler,
+                                             int extra_threads,
+                                             int prio)
 {
     fluid_rvoice_mixer_t *mixer = FLUID_NEW(fluid_rvoice_mixer_t);
     if (mixer == NULL)

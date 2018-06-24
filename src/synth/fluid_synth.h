@@ -105,35 +105,35 @@ struct _fluid_synth_t
     int use_mutex;           /**< Use mutex for all public API functions? */
     int public_api_count;    /**< How many times the mutex is currently locked */
 
-    fluid_settings_t *settings;            /**< the synthesizer settings */
-    int device_id;                         /**< Device ID used for SYSEX messages */
-    int polyphony;                         /**< Maximum polyphony */
-    int with_reverb;                       /**< Should the synth use the built-in reverb unit? */
-    int with_chorus;                       /**< Should the synth use the built-in chorus unit? */
-    int verbose;                           /**< Turn verbose mode on? */
-    double sample_rate;                    /**< The sample rate */
-    int midi_channels;                     /**< the number of MIDI channels (>= 16) */
-    int bank_select;                       /**< the style of Bank Select MIDI messages */
-    int audio_channels;                    /**< the number of audio channels (1 channel=left+right) */
-    int audio_groups;                      /**< the number of (stereo) 'sub'groups from the synth.
-                          Typically equal to audio_channels. */
-    int effects_channels;                  /**< the number of effects channels (>= 2) */
-    int state;                             /**< the synthesizer state */
+    fluid_settings_t *settings; /**< the synthesizer settings */
+    int device_id;              /**< Device ID used for SYSEX messages */
+    int polyphony;              /**< Maximum polyphony */
+    int with_reverb;            /**< Should the synth use the built-in reverb unit? */
+    int with_chorus;            /**< Should the synth use the built-in chorus unit? */
+    int verbose;                /**< Turn verbose mode on? */
+    double sample_rate;         /**< The sample rate */
+    int midi_channels;          /**< the number of MIDI channels (>= 16) */
+    int bank_select;            /**< the style of Bank Select MIDI messages */
+    int audio_channels;         /**< the number of audio channels (1 channel=left+right) */
+    int audio_groups;           /**< the number of (stereo) 'sub'groups from the synth.
+               Typically equal to audio_channels. */
+    int effects_channels;       /**< the number of effects channels (>= 2) */
+    int state;                  /**< the synthesizer state */
     fluid_atomic_uint_t ticks_since_start; /**< the number of audio samples since the start */
     unsigned int start;                    /**< the start in msec, as returned by system clock */
-    fluid_overflow_prio_t overflow;        /**< parameters for overflow priority (aka voice-stealing) */
+    fluid_overflow_prio_t overflow; /**< parameters for overflow priority (aka voice-stealing) */
 
     fluid_list_t *loaders; /**< the SoundFont loaders */
     fluid_list_t *sfont; /**< List of fluid_sfont_info_t for each loaded SoundFont (remains until SoundFont is unloaded)
                           */
-    int sfont_id;        /**< Incrementing ID assigned to each loaded SoundFont */
+    int sfont_id; /**< Incrementing ID assigned to each loaded SoundFont */
 
     float gain;                /**< master gain */
     fluid_channel_t **channel; /**< the channels */
-    int nvoice;                /**< the length of the synthesis process array (max polyphony allowed) */
-    fluid_voice_t **voice;     /**< the synthesis voices */
-    int active_voice_count;    /**< count of active voices */
-    unsigned int noteid;       /**< the id is incremented for every new note. it's used for noteoff's  */
+    int nvoice;            /**< the length of the synthesis process array (max polyphony allowed) */
+    fluid_voice_t **voice; /**< the synthesis voices */
+    int active_voice_count; /**< count of active voices */
+    unsigned int noteid; /**< the id is incremented for every new note. it's used for noteoff's  */
     unsigned int storeid;
     int fromkey_portamento; /**< fromkey portamento */
     fluid_rvoice_eventhandler_t *eventhandler;
@@ -149,8 +149,8 @@ struct _fluid_synth_t
     double chorus_depth; /**< Shadow of chorus depth */
     int chorus_type;     /**< Shadow of chorus type */
 
-    int cur;          /**< the current sample in the audio buffers to be output */
-    int curmax;       /**< current amount of samples present in the audio buffers */
+    int cur;    /**< the current sample in the audio buffers to be output */
+    int curmax; /**< current amount of samples present in the audio buffers */
     int dither_index; /**< current index in random dither value buffer: fluid_synth_(write_s16|dither_s16) */
 
     fluid_atomic_float_t cpu_load; /**< CPU load in percent (CPU time required / audio synthesized time * 100) */
@@ -159,17 +159,17 @@ struct _fluid_synth_t
     fluid_private_t tuning_iter; /**< Tuning iterators per each thread */
 
     fluid_sample_timer_t *sample_timers; /**< List of timers triggered before a block is processed */
-    unsigned int min_note_length_ticks;  /**< If note-offs are triggered just after a note-on, they will be delayed */
+    unsigned int min_note_length_ticks; /**< If note-offs are triggered just after a note-on, they will be delayed */
 
     int cores; /**< Number of CPU cores (1 by default) */
 
     fluid_mod_t *default_mod; /**< the (dynamic) list of default modulators */
 
     fluid_ladspa_fx_t *ladspa_fx;                    /**< Effects unit for LADSPA support */
-    enum fluid_iir_filter_type custom_filter_type;   /**< filter type of the user-defined filter currently used for all
-                                                        voices */
-    enum fluid_iir_filter_flags custom_filter_flags; /**< filter type of the user-defined filter currently used for all
-                                                        voices */
+    enum fluid_iir_filter_type custom_filter_type;   /**< filter type of the user-defined filter
+                                                        currently used for all   voices */
+    enum fluid_iir_filter_flags custom_filter_flags; /**< filter type of the user-defined filter
+                                                        currently used for all voices */
 };
 
 /**

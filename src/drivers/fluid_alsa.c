@@ -61,7 +61,8 @@ typedef struct
 
 
 fluid_audio_driver_t *new_fluid_alsa_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth);
-fluid_audio_driver_t *new_fluid_alsa_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func, void *data);
+fluid_audio_driver_t *
+new_fluid_alsa_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func, void *data);
 
 void delete_fluid_alsa_audio_driver(fluid_audio_driver_t *p);
 void fluid_alsa_audio_driver_settings(fluid_settings_t *settings);
@@ -100,7 +101,9 @@ typedef struct
 } fluid_alsa_rawmidi_driver_t;
 
 
-fluid_midi_driver_t *new_fluid_alsa_rawmidi_driver(fluid_settings_t *settings, handle_midi_event_func_t handler, void *event_handler_data);
+fluid_midi_driver_t *new_fluid_alsa_rawmidi_driver(fluid_settings_t *settings,
+                                                   handle_midi_event_func_t handler,
+                                                   void *event_handler_data);
 
 void delete_fluid_alsa_rawmidi_driver(fluid_midi_driver_t *p);
 static fluid_thread_return_t fluid_alsa_midi_run(void *d);
@@ -123,7 +126,8 @@ typedef struct
     snd_seq_addr_t autoconn_dest;
 } fluid_alsa_seq_driver_t;
 
-fluid_midi_driver_t *new_fluid_alsa_seq_driver(fluid_settings_t *settings, handle_midi_event_func_t handler, void *data);
+fluid_midi_driver_t *
+new_fluid_alsa_seq_driver(fluid_settings_t *settings, handle_midi_event_func_t handler, void *data);
 void delete_fluid_alsa_seq_driver(fluid_midi_driver_t *p);
 static fluid_thread_return_t fluid_alsa_seq_run(void *d);
 
@@ -592,7 +596,8 @@ void fluid_alsa_rawmidi_driver_settings(fluid_settings_t *settings)
 /*
  * new_fluid_alsa_rawmidi_driver
  */
-fluid_midi_driver_t *new_fluid_alsa_rawmidi_driver(fluid_settings_t *settings, handle_midi_event_func_t handler, void *data)
+fluid_midi_driver_t *
+new_fluid_alsa_rawmidi_driver(fluid_settings_t *settings, handle_midi_event_func_t handler, void *data)
 {
     int i, err;
     fluid_alsa_rawmidi_driver_t *dev;
@@ -878,7 +883,8 @@ static void fluid_alsa_seq_autoconnect(fluid_alsa_seq_driver_t *dev, const snd_s
     snd_seq_port_info_t *pinfo;
 
     // subscribe to future new clients/ports showing up
-    if ((err = snd_seq_connect_from(seq, snd_seq_port_info_get_port(dest_pinfo), SND_SEQ_CLIENT_SYSTEM, SND_SEQ_PORT_SYSTEM_ANNOUNCE)) < 0)
+    if ((err = snd_seq_connect_from(seq, snd_seq_port_info_get_port(dest_pinfo), SND_SEQ_CLIENT_SYSTEM, SND_SEQ_PORT_SYSTEM_ANNOUNCE)) <
+        0)
     {
         FLUID_LOG(FLUID_ERR, "snd_seq_connect_from() failed: %s", snd_strerror(err));
     }
@@ -903,7 +909,8 @@ static void fluid_alsa_seq_autoconnect(fluid_alsa_seq_driver_t *dev, const snd_s
 /*
  * new_fluid_alsa_seq_driver
  */
-fluid_midi_driver_t *new_fluid_alsa_seq_driver(fluid_settings_t *settings, handle_midi_event_func_t handler, void *data)
+fluid_midi_driver_t *
+new_fluid_alsa_seq_driver(fluid_settings_t *settings, handle_midi_event_func_t handler, void *data)
 {
     int i, err;
     fluid_alsa_seq_driver_t *dev;
@@ -1228,13 +1235,18 @@ fluid_thread_return_t fluid_alsa_seq_run(void *d)
                             continue;
                         }
 
-                        fluid_midi_event_set_sysex(&evt, (char *)(seq_ev->data.ext.ptr) + 1, seq_ev->data.ext.len - 2, FALSE);
+                        fluid_midi_event_set_sysex(&evt,
+                                                   (char *)(seq_ev->data.ext.ptr) + 1,
+                                                   seq_ev->data.ext.len - 2,
+                                                   FALSE);
                         break;
                     case SND_SEQ_EVENT_PORT_START:
                     {
                         if (dev->autoconn_inputs)
                         {
-                            fluid_alsa_seq_autoconnect_port(dev, seq_ev->data.addr.client, seq_ev->data.addr.port);
+                            fluid_alsa_seq_autoconnect_port(dev,
+                                                            seq_ev->data.addr.client,
+                                                            seq_ev->data.addr.port);
                         }
                     }
                     break;

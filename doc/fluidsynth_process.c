@@ -66,8 +66,8 @@ int main()
     }
 
 
-    // USECASE4: multi-channel rendering, i.e. render all audio and effects channels to dedicated audio buffers
-    // ofc it‘s not a good idea to allocate all the arrays on the stack
+    // USECASE4: multi-channel rendering, i.e. render all audio and effects channels to dedicated
+    // audio buffers ofc it‘s not a good idea to allocate all the arrays on the stack
     {
         // lookup number of audio and effect (stereo-)channels of the synth
         // see „synth.audio-channels“ and „synth.effects-channels“ settings respectively
@@ -94,9 +94,8 @@ int main()
         }
 
         // setup buffers to mix effects stereo audio to
-        // similar channel layout as above, but currently special as there are only 2 hardcoded effects channels:
-        // fx[0] = global reverb channel left
-        // fx[1] = global reverb channel right
+        // similar channel layout as above, but currently special as there are only 2 hardcoded
+        // effects channels: fx[0] = global reverb channel left fx[1] = global reverb channel right
         // fx[2] = global chorus channel left
         // fx[3] = global chorus channel right
         for (int i = 0; i < n_fx_chan * 2; i++)

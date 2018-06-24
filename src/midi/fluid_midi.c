@@ -46,7 +46,8 @@ static fluid_midi_event_t *fluid_track_next_event(fluid_track_t *track);
 static int fluid_track_get_duration(fluid_track_t *track);
 static int fluid_track_reset(fluid_track_t *track);
 
-static int fluid_track_send_events(fluid_track_t *track, fluid_synth_t *synth, fluid_player_t *player, unsigned int ticks);
+static int
+fluid_track_send_events(fluid_track_t *track, fluid_synth_t *synth, fluid_player_t *player, unsigned int ticks);
 
 
 static int fluid_player_add_track(fluid_player_t *player, fluid_track_t *track);
@@ -938,7 +939,8 @@ void delete_fluid_midi_event(fluid_midi_event_t *evt)
         temp = evt->next;
 
         /* Dynamic SYSEX event? - free (param2 indicates if dynamic) */
-        if ((evt->type == MIDI_SYSEX || (evt->type == MIDI_TEXT) || (evt->type == MIDI_LYRIC)) && evt->paramptr && evt->param2)
+        if ((evt->type == MIDI_SYSEX || (evt->type == MIDI_TEXT) || (evt->type == MIDI_LYRIC)) &&
+            evt->paramptr && evt->param2)
         {
             FLUID_FREE(evt->paramptr);
         }
@@ -1741,8 +1743,9 @@ int fluid_player_callback(void *data, unsigned int msec)
         }
 
         player->cur_msec = msec;
-        player->cur_ticks = (player->start_ticks + (int)((double)(player->cur_msec - player->start_msec) / player->deltatime +
-                                                         0.5)); /* 0.5 to average overall error when casting */
+        player->cur_ticks =
+        (player->start_ticks + (int)((double)(player->cur_msec - player->start_msec) / player->deltatime +
+                                     0.5)); /* 0.5 to average overall error when casting */
 
         if (player->seek_ticks >= 0)
         {
@@ -1803,7 +1806,8 @@ int fluid_player_play(fluid_player_t *player)
 
     if (player->use_system_timer)
     {
-        player->system_timer = new_fluid_timer((int)player->deltatime, fluid_player_callback, (void *)player, TRUE, FALSE, TRUE);
+        player->system_timer =
+        new_fluid_timer((int)player->deltatime, fluid_player_callback, (void *)player, TRUE, FALSE, TRUE);
         if (player->system_timer == NULL)
         {
             return FLUID_FAILED;

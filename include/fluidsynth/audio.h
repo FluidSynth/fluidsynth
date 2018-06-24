@@ -56,7 +56,8 @@ typedef int (*fluid_audio_func_t)(void *data, int len, int nfx, float *fx[], int
 
 FLUIDSYNTH_API fluid_audio_driver_t *new_fluid_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth);
 
-FLUIDSYNTH_API fluid_audio_driver_t *new_fluid_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func, void *data);
+FLUIDSYNTH_API fluid_audio_driver_t *
+new_fluid_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func, void *data);
 
 FLUIDSYNTH_API void delete_fluid_audio_driver(fluid_audio_driver_t *driver);
 

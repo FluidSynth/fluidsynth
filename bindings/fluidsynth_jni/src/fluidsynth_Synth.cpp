@@ -11,7 +11,8 @@ JNIEXPORT void JNICALL Java_fluidsynth_Synth_deleteSynth(JNIEnv *env, jobject ob
     fluid_jni_delete_synth(synth);
 }
 
-JNIEXPORT jint JNICALL Java_fluidsynth_Synth_add(JNIEnv *env, jobject obj, jint synth, jint samplenum, jint bank, jint preset, jint lokey, jint hikey)
+JNIEXPORT jint JNICALL
+Java_fluidsynth_Synth_add(JNIEnv *env, jobject obj, jint synth, jint samplenum, jint bank, jint preset, jint lokey, jint hikey)
 {
     return fluid_jni_add(samplenum, bank, preset, lokey, hikey);
 }

@@ -121,15 +121,18 @@ typedef int (*fluid_timer_callback_t)(void *data, unsigned int msec);
 
 typedef struct _fluid_timer_t fluid_timer_t;
 
-fluid_timer_t *new_fluid_timer(int msec, fluid_timer_callback_t callback, void *data, int new_thread, int auto_destroy, int high_priority);
+fluid_timer_t *
+new_fluid_timer(int msec, fluid_timer_callback_t callback, void *data, int new_thread, int auto_destroy, int high_priority);
 
 void delete_fluid_timer(fluid_timer_t *timer);
 int fluid_timer_join(fluid_timer_t *timer);
 int fluid_timer_stop(fluid_timer_t *timer);
 
 // Macros to use for pre-processor if statements to test which Glib thread API we have (pre or post 2.32)
-#define NEW_GLIB_THREAD_API (GLIB_MAJOR_VERSION > 2 || (GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION >= 32))
-#define OLD_GLIB_THREAD_API (GLIB_MAJOR_VERSION < 2 || (GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION < 32))
+#define NEW_GLIB_THREAD_API \
+    (GLIB_MAJOR_VERSION > 2 || (GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION >= 32))
+#define OLD_GLIB_THREAD_API \
+    (GLIB_MAJOR_VERSION < 2 || (GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION < 32))
 
 /* Muteces */
 
@@ -283,7 +286,8 @@ typedef GStaticPrivate fluid_private_t;
 #define fluid_atomic_int_get(_pi) g_atomic_int_get(_pi)
 #define fluid_atomic_int_set(_pi, _val) g_atomic_int_set(_pi, _val)
 #define fluid_atomic_int_dec_and_test(_pi) g_atomic_int_dec_and_test(_pi)
-#define fluid_atomic_int_compare_and_exchange(_pi, _old, _new) g_atomic_int_compare_and_exchange(_pi, _old, _new)
+#define fluid_atomic_int_compare_and_exchange(_pi, _old, _new) \
+    g_atomic_int_compare_and_exchange(_pi, _old, _new)
 
 #if GLIB_MAJOR_VERSION > 2 || (GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION >= 30)
 #define fluid_atomic_int_exchange_and_add(_pi, _add) g_atomic_int_add(_pi, _add)
@@ -329,7 +333,8 @@ typedef fluid_thread_return_t (*fluid_thread_func_t)(void *data);
 #define fluid_thread_id_t GThread *           /* Data type for a thread ID */
 #define fluid_thread_get_id() g_thread_self() /* Get unique "ID" for current thread */
 
-fluid_thread_t *new_fluid_thread(const char *name, fluid_thread_func_t func, void *data, int prio_level, int detach);
+fluid_thread_t *
+new_fluid_thread(const char *name, fluid_thread_func_t func, void *data, int prio_level, int detach);
 void delete_fluid_thread(fluid_thread_t *thread);
 void fluid_thread_self_set_prio(int prio_level);
 int fluid_thread_join(fluid_thread_t *thread);
@@ -513,17 +518,19 @@ enum
     time reference, the voices and samples number. */
 
 /* local macro : acquiere data */
-#define fluid_profile_data(_num, _ref, voices, samples)                                                               \
-    {                                                                                                                 \
-        double _now = fluid_utime();                                                                                  \
-        double _delta = _now - _ref;                                                                                  \
-        fluid_profile_data[_num].min = _delta < fluid_profile_data[_num].min ? _delta : fluid_profile_data[_num].min; \
-        fluid_profile_data[_num].max = _delta > fluid_profile_data[_num].max ? _delta : fluid_profile_data[_num].max; \
-        fluid_profile_data[_num].total += _delta;                                                                     \
-        fluid_profile_data[_num].count++;                                                                             \
-        fluid_profile_data[_num].n_voices += voices;                                                                  \
-        fluid_profile_data[_num].n_samples += samples;                                                                \
-        _ref = _now;                                                                                                  \
+#define fluid_profile_data(_num, _ref, voices, samples)                                \
+    {                                                                                  \
+        double _now = fluid_utime();                                                   \
+        double _delta = _now - _ref;                                                   \
+        fluid_profile_data[_num].min =                                                 \
+        _delta < fluid_profile_data[_num].min ? _delta : fluid_profile_data[_num].min; \
+        fluid_profile_data[_num].max =                                                 \
+        _delta > fluid_profile_data[_num].max ? _delta : fluid_profile_data[_num].max; \
+        fluid_profile_data[_num].total += _delta;                                      \
+        fluid_profile_data[_num].count++;                                              \
+        fluid_profile_data[_num].n_voices += voices;                                   \
+        fluid_profile_data[_num].n_samples += samples;                                 \
+        _ref = _now;                                                                   \
     }
 
 /** Macro to collect data, called from inner functions inside audio
@@ -607,14 +614,15 @@ void fluid_msleep(unsigned int msecs);
  * Make sure you've allocated an extra of \c alignment bytes to avoid a buffer overflow.
  *
  * @note \c alignment must be a power of two
- * @return Returned pointer is guarenteed to be aligned to \c alignment boundary and in range \f[ ptr <= returned_ptr <
- * ptr + alignment \f].
+ * @return Returned pointer is guarenteed to be aligned to \c alignment boundary and in range \f[
+ * ptr <= returned_ptr < ptr + alignment \f].
  */
 static FLUID_INLINE void *fluid_align_ptr(const void *ptr, unsigned int alignment)
 {
     uintptr_t ptr_int = (uintptr_t)ptr;
     unsigned int offset = ptr_int & (alignment - 1);
-    unsigned int add = (alignment - offset) & (alignment - 1); // advance the pointer to the next alignment boundary
+    unsigned int add =
+    (alignment - offset) & (alignment - 1); // advance the pointer to the next alignment boundary
     ptr_int += add;
 
     /* assert alignment is power of two */

@@ -365,7 +365,8 @@ static void fluidmax_load(t_object *o, Symbol *s, short ac, Atom *at)
                 long type;
                 ftmax_atom_t a;
 
-                if (locatefile_extended(string, &path, &type, 0, 0) || path_topotentialname(path, string, maxpath, 0) != 0)
+                if (locatefile_extended(string, &path, &type, 0, 0) ||
+                    path_topotentialname(path, string, maxpath, 0) != 0)
                 {
                     error("fluidsynth~: cannot find file '%s'", string);
                     return;
@@ -1156,11 +1157,12 @@ static void fluidmax_tuning_reset(t_object *o, Symbol *s, short ac, Atom *at)
 }
 
 /* more tuning ??
-fluid_synth_create_key_tuning (fluid_synth_t *synth, int tuning_bank, int tuning_prog, char *name, double *pitch)
-fluid_synth_tune_notes (fluid_synth_t *synth, int tuning_bank, int tuning_prog, int len, int *keys, double *pitch, int
-apply) fluid_synth_tuning_iteration_start (fluid_synth_t *synth) fluid_synth_tuning_iteration_next (fluid_synth_t
-*synth, int *bank, int *prog) fluid_synth_tuning_dump (fluid_synth_t *synth, int bank, int prog, char *name, int len,
-double *pitch)
+fluid_synth_create_key_tuning (fluid_synth_t *synth, int tuning_bank, int tuning_prog, char *name,
+double *pitch) fluid_synth_tune_notes (fluid_synth_t *synth, int tuning_bank, int tuning_prog, int
+len, int *keys, double *pitch, int apply) fluid_synth_tuning_iteration_start (fluid_synth_t *synth)
+fluid_synth_tuning_iteration_next (fluid_synth_t *synth, int *bank, int *prog)
+fluid_synth_tuning_dump (fluid_synth_t *synth, int bank, int prog, char *name, int len, double
+*pitch)
 */
 
 static void fluidmax_version(t_object *o)

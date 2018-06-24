@@ -85,7 +85,8 @@ typedef uint64_t fluid_phase_t;
 #define fluid_phase_fract_to_tablerow(_x) \
     ((unsigned int)(fluid_phase_fract(_x) & FLUID_INTERP_BITS_MASK) >> FLUID_INTERP_BITS_SHIFT)
 
-#define fluid_phase_double(_x) ((double)(fluid_phase_index(_x)) + ((double)fluid_phase_fract(_x) / FLUID_FRACT_MAX))
+#define fluid_phase_double(_x) \
+    ((double)(fluid_phase_index(_x)) + ((double)fluid_phase_fract(_x) / FLUID_FRACT_MAX))
 
 /* Purpose:
  * Advance a by a step of b (both are fluid_phase_t).

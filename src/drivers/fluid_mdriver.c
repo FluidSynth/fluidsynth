@@ -30,11 +30,14 @@
 
 /* ALSA */
 #if ALSA_SUPPORT
-fluid_midi_driver_t *new_fluid_alsa_rawmidi_driver(fluid_settings_t *settings, handle_midi_event_func_t handler, void *event_handler_data);
+fluid_midi_driver_t *new_fluid_alsa_rawmidi_driver(fluid_settings_t *settings,
+                                                   handle_midi_event_func_t handler,
+                                                   void *event_handler_data);
 void delete_fluid_alsa_rawmidi_driver(fluid_midi_driver_t *p);
 void fluid_alsa_rawmidi_driver_settings(fluid_settings_t *settings);
 
-fluid_midi_driver_t *new_fluid_alsa_seq_driver(fluid_settings_t *settings, handle_midi_event_func_t handler, void *event_handler_data);
+fluid_midi_driver_t *
+new_fluid_alsa_seq_driver(fluid_settings_t *settings, handle_midi_event_func_t handler, void *event_handler_data);
 void delete_fluid_alsa_seq_driver(fluid_midi_driver_t *p);
 void fluid_alsa_seq_driver_settings(fluid_settings_t *settings);
 #endif
@@ -42,34 +45,39 @@ void fluid_alsa_seq_driver_settings(fluid_settings_t *settings);
 /* JACK */
 #if JACK_SUPPORT
 void fluid_jack_midi_driver_settings(fluid_settings_t *settings);
-fluid_midi_driver_t *new_fluid_jack_midi_driver(fluid_settings_t *settings, handle_midi_event_func_t handler, void *data);
+fluid_midi_driver_t *
+new_fluid_jack_midi_driver(fluid_settings_t *settings, handle_midi_event_func_t handler, void *data);
 void delete_fluid_jack_midi_driver(fluid_midi_driver_t *p);
 #endif
 
 /* OSS */
 #if OSS_SUPPORT
-fluid_midi_driver_t *new_fluid_oss_midi_driver(fluid_settings_t *settings, handle_midi_event_func_t handler, void *event_handler_data);
+fluid_midi_driver_t *
+new_fluid_oss_midi_driver(fluid_settings_t *settings, handle_midi_event_func_t handler, void *event_handler_data);
 void delete_fluid_oss_midi_driver(fluid_midi_driver_t *p);
 void fluid_oss_midi_driver_settings(fluid_settings_t *settings);
 #endif
 
 /* Windows MIDI service */
 #if WINMIDI_SUPPORT
-fluid_midi_driver_t *new_fluid_winmidi_driver(fluid_settings_t *settings, handle_midi_event_func_t handler, void *event_handler_data);
+fluid_midi_driver_t *
+new_fluid_winmidi_driver(fluid_settings_t *settings, handle_midi_event_func_t handler, void *event_handler_data);
 void delete_fluid_winmidi_driver(fluid_midi_driver_t *p);
 void fluid_winmidi_midi_driver_settings(fluid_settings_t *settings);
 #endif
 
 /* definitions for the MidiShare driver */
 #if MIDISHARE_SUPPORT
-fluid_midi_driver_t *
-new_fluid_midishare_midi_driver(fluid_settings_t *settings, handle_midi_event_func_t handler, void *event_handler_data);
+fluid_midi_driver_t *new_fluid_midishare_midi_driver(fluid_settings_t *settings,
+                                                     handle_midi_event_func_t handler,
+                                                     void *event_handler_data);
 void delete_fluid_midishare_midi_driver(fluid_midi_driver_t *p);
 #endif
 
 /* definitions for the CoreMidi driver */
 #if COREMIDI_SUPPORT
-fluid_midi_driver_t *new_fluid_coremidi_driver(fluid_settings_t *settings, handle_midi_event_func_t handler, void *event_handler_data);
+fluid_midi_driver_t *
+new_fluid_coremidi_driver(fluid_settings_t *settings, handle_midi_event_func_t handler, void *event_handler_data);
 void delete_fluid_coremidi_driver(fluid_midi_driver_t *p);
 void fluid_coremidi_driver_settings(fluid_settings_t *settings);
 #endif
@@ -180,7 +188,8 @@ void fluid_midi_driver_settings(fluid_settings_t *settings)
  * @param event_handler_data Caller defined data to pass to 'handler'
  * @return New MIDI driver instance or NULL on error
  */
-fluid_midi_driver_t *new_fluid_midi_driver(fluid_settings_t *settings, handle_midi_event_func_t handler, void *event_handler_data)
+fluid_midi_driver_t *
+new_fluid_midi_driver(fluid_settings_t *settings, handle_midi_event_func_t handler, void *event_handler_data)
 {
 #ifdef FLUID_MIDI_SUPPORT
     fluid_midi_driver_t *driver = NULL;

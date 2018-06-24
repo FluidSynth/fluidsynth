@@ -86,7 +86,8 @@ struct _fluid_jack_midi_driver_t
 
 static fluid_jack_client_t *new_fluid_jack_client(fluid_settings_t *settings, int isaudio, void *driver);
 static int fluid_jack_client_register_ports(void *driver, int isaudio, jack_client_t *client, fluid_settings_t *settings);
-fluid_audio_driver_t *new_fluid_jack_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func, void *data);
+fluid_audio_driver_t *
+new_fluid_jack_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func, void *data);
 void delete_fluid_jack_audio_driver(fluid_audio_driver_t *p);
 void fluid_jack_driver_shutdown(void *arg);
 int fluid_jack_driver_srate(jack_nframes_t nframes, void *arg);
@@ -136,7 +137,8 @@ static fluid_jack_client_t *new_fluid_jack_client(fluid_settings_t *settings, in
 
     /* If the last client uses the same server and is not the same type (audio or MIDI),
      * then re-use the client. */
-    if (last_client && (last_client->server != NULL && server != NULL && FLUID_STRCMP(last_client->server, server) == 0) &&
+    if (last_client &&
+        (last_client->server != NULL && server != NULL && FLUID_STRCMP(last_client->server, server) == 0) &&
         ((!isaudio && last_client->midi_driver != NULL) || (isaudio && last_client->audio_driver != NULL)))
     {
         client_ref = last_client;
@@ -352,9 +354,11 @@ static int fluid_jack_client_register_ports(void *driver, int isaudio, jack_clie
         dev->output_bufs = FLUID_ARRAY(float *, 2 * dev->num_output_ports);
         FLUID_MEMSET(dev->output_ports, 0, 2 * dev->num_output_ports * sizeof(jack_port_t *));
 
-        dev->output_ports[0] = jack_port_register(client, "left", JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
+        dev->output_ports[0] =
+        jack_port_register(client, "left", JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
 
-        dev->output_ports[1] = jack_port_register(client, "right", JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
+        dev->output_ports[1] =
+        jack_port_register(client, "right", JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
     }
     else
     {
@@ -381,10 +385,12 @@ static int fluid_jack_client_register_ports(void *driver, int isaudio, jack_clie
         for (i = 0; i < dev->num_output_ports; i++)
         {
             sprintf(name, "l_%02d", i);
-            dev->output_ports[2 * i] = jack_port_register(client, name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
+            dev->output_ports[2 * i] =
+            jack_port_register(client, name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
 
             sprintf(name, "r_%02d", i);
-            dev->output_ports[2 * i + 1] = jack_port_register(client, name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
+            dev->output_ports[2 * i + 1] =
+            jack_port_register(client, name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
         }
 
         fluid_settings_getint(settings, "synth.effects-channels", &dev->num_fx_ports);
@@ -408,10 +414,12 @@ static int fluid_jack_client_register_ports(void *driver, int isaudio, jack_clie
         for (i = 0; i < dev->num_fx_ports; i++)
         {
             sprintf(name, "fx_l_%02d", i);
-            dev->fx_ports[2 * i] = jack_port_register(client, name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
+            dev->fx_ports[2 * i] =
+            jack_port_register(client, name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
 
             sprintf(name, "fx_r_%02d", i);
-            dev->fx_ports[2 * i + 1] = jack_port_register(client, name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
+            dev->fx_ports[2 * i + 1] =
+            jack_port_register(client, name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
         }
     }
 
@@ -643,11 +651,12 @@ int fluid_jack_driver_process(jack_nframes_t nframes, void *arg)
     {
         for (i = 0; i < audio_driver->num_output_ports * 2; i++)
         {
-            audio_driver->output_bufs[i] = (float *)jack_port_get_buffer(audio_driver->output_ports[i], nframes);
+            audio_driver->output_bufs[i] =
+            (float *)jack_port_get_buffer(audio_driver->output_ports[i], nframes);
         }
 
-        return (
-        *audio_driver->callback)(audio_driver->data, nframes, 0, NULL, 2 * audio_driver->num_output_ports, audio_driver->output_bufs);
+        return (*audio_driver->callback)(
+        audio_driver->data, nframes, 0, NULL, 2 * audio_driver->num_output_ports, audio_driver->output_bufs);
     }
     else if (audio_driver->num_output_ports == 1 && audio_driver->num_fx_ports == 0) /* i.e. audio.jack.multi=no */
     {
@@ -660,13 +669,16 @@ int fluid_jack_driver_process(jack_nframes_t nframes, void *arg)
     {
         for (i = 0, k = audio_driver->num_output_ports; i < audio_driver->num_output_ports; i++, k++)
         {
-            audio_driver->output_bufs[i] = (float *)jack_port_get_buffer(audio_driver->output_ports[2 * i], nframes);
-            audio_driver->output_bufs[k] = (float *)jack_port_get_buffer(audio_driver->output_ports[2 * i + 1], nframes);
+            audio_driver->output_bufs[i] =
+            (float *)jack_port_get_buffer(audio_driver->output_ports[2 * i], nframes);
+            audio_driver->output_bufs[k] =
+            (float *)jack_port_get_buffer(audio_driver->output_ports[2 * i + 1], nframes);
         }
         for (i = 0, k = audio_driver->num_fx_ports; i < audio_driver->num_fx_ports; i++, k++)
         {
             audio_driver->fx_bufs[i] = (float *)jack_port_get_buffer(audio_driver->fx_ports[2 * i], nframes);
-            audio_driver->fx_bufs[k] = (float *)jack_port_get_buffer(audio_driver->fx_ports[2 * i + 1], nframes);
+            audio_driver->fx_bufs[k] =
+            (float *)jack_port_get_buffer(audio_driver->fx_ports[2 * i + 1], nframes);
         }
 
         fluid_synth_nwrite_float(audio_driver->data,
@@ -710,7 +722,8 @@ void fluid_jack_midi_driver_settings(fluid_settings_t *settings)
 /*
  * new_fluid_jack_midi_driver
  */
-fluid_midi_driver_t *new_fluid_jack_midi_driver(fluid_settings_t *settings, handle_midi_event_func_t handler, void *data)
+fluid_midi_driver_t *
+new_fluid_jack_midi_driver(fluid_settings_t *settings, handle_midi_event_func_t handler, void *data)
 {
     fluid_jack_midi_driver_t *dev;
 

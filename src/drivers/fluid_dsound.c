@@ -345,7 +345,8 @@ DWORD WINAPI fluid_dsound_audio_run(LPVOID lpParameter)
         {
 
             /* Lock */
-            res = IDirectSoundBuffer_Lock(dev->sec_buffer, cur_position, bytes, (void *)&buf1, &bytes1, (void *)&buf2, &bytes2, 0);
+            res = IDirectSoundBuffer_Lock(
+            dev->sec_buffer, cur_position, bytes, (void *)&buf1, &bytes1, (void *)&buf2, &bytes2, 0);
 
             if ((res != DS_OK) || (buf1 == NULL))
             {
