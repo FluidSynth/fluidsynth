@@ -6,7 +6,7 @@
 
 int main(void)
 {
-    char buf[2+1];
+    char buf[2 + 1];
 
     int ret = FLUID_SNPRINTF(buf, sizeof(buf), "99");
     TEST_ASSERT(ret == 2);

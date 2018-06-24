@@ -26,8 +26,12 @@
 #include "fluid_sffile.h"
 
 int fluid_samplecache_load(SFData *sf,
-                           unsigned int sample_start, unsigned int sample_end, int sample_type,
-                           int try_mlock, short **data, char **data24);
+                           unsigned int sample_start,
+                           unsigned int sample_end,
+                           int sample_type,
+                           int try_mlock,
+                           short **data,
+                           char **data24);
 
 int fluid_samplecache_unload(const short *sample_data);
 

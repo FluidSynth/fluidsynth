@@ -42,67 +42,39 @@
 
 typedef struct
 {
-  fluid_hashtable_t *hashtable;
-  fluid_hashnode_t *prev_node;
-  fluid_hashnode_t *node;
-  int position;
-  int pre_advanced;	// Boolean
-  int version;
+    fluid_hashtable_t *hashtable;
+    fluid_hashnode_t *prev_node;
+    fluid_hashnode_t *node;
+    int position;
+    int pre_advanced; // Boolean
+    int version;
 } RealIter;
 
 
 /* Excerpt from glib gprimes.c */
 
-static const unsigned int primes[] =
-{
-  11,
-  19,
-  37,
-  73,
-  109,
-  163,
-  251,
-  367,
-  557,
-  823,
-  1237,
-  1861,
-  2777,
-  4177,
-  6247,
-  9371,
-  14057,
-  21089,
-  31627,
-  47431,
-  71143,
-  106721,
-  160073,
-  240101,
-  360163,
-  540217,
-  810343,
-  1215497,
-  1823231,
-  2734867,
-  4102283,
-  6153409,
-  9230113,
-  13845163,
+static const unsigned int primes[] = {
+    11,      19,      37,      73,      109,     163,     251,      367,    557,
+    823,     1237,    1861,    2777,    4177,    6247,    9371,     14057,  21089,
+    31627,   47431,   71143,   106721,  160073,  240101,  360163,   540217, 810343,
+    1215497, 1823231, 2734867, 4102283, 6153409, 9230113, 13845163,
 };
 
 static const unsigned int nprimes = FLUID_N_ELEMENTS(primes);
 
-static unsigned int
-spaced_primes_closest (unsigned int num)
+static unsigned int spaced_primes_closest(unsigned int num)
 {
-  unsigned int i;
+    unsigned int i;
 
-  for (i = 0; i < nprimes; i++)
-    if (primes[i] > num)
-      return primes[i];
+    for (i = 0; i < nprimes; i++)
+    {
+        if (primes[i] > num)
+        {
+            return primes[i];
+        }
+    }
 
-  return primes[nprimes - 1];
+    return primes[nprimes - 1];
 }
 
 /* End excerpt from glib gprimes.c */
@@ -137,50 +109,54 @@ spaced_primes_closest (unsigned int num)
  * the new record.
  */
 static FLUID_INLINE fluid_hashnode_t **
-fluid_hashtable_lookup_node (fluid_hashtable_t *hashtable, const void *key,
-                             unsigned int *hash_return)
+fluid_hashtable_lookup_node(fluid_hashtable_t *hashtable, const void *key, unsigned int *hash_return)
 {
-  fluid_hashnode_t **node_ptr, *node;
-  unsigned int hash_value;
+    fluid_hashnode_t **node_ptr, *node;
+    unsigned int hash_value;
 
-  hash_value = (* hashtable->hash_func)(key);
-  node_ptr = &hashtable->nodes[hash_value % hashtable->size];
+    hash_value = (*hashtable->hash_func)(key);
+    node_ptr = &hashtable->nodes[hash_value % hashtable->size];
 
-  if (hash_return)
-    *hash_return = hash_value;
-
-  /* Hash table lookup needs to be fast.
-   *  We therefore remove the extra conditional of testing
-   *  whether to call the key_equal_func or not from
-   *  the inner loop.
-   *
-   *  Additional optimisation: first check if our full hash
-   *  values are equal so we can avoid calling the full-blown
-   *  key equality function in most cases.
-   */
-  if (hashtable->key_equal_func)
+    if (hash_return)
     {
-      while ((node = *node_ptr))
-        {
-          if (node->key_hash == hash_value &&
-              hashtable->key_equal_func (node->key, key))
-            break;
-
-          node_ptr = &(*node_ptr)->next;
-        }
-    }
-  else
-    {
-      while ((node = *node_ptr))
-        {
-          if (node->key == key)
-            break;
-
-          node_ptr = &(*node_ptr)->next;
-        }
+        *hash_return = hash_value;
     }
 
-  return node_ptr;
+    /* Hash table lookup needs to be fast.
+     *  We therefore remove the extra conditional of testing
+     *  whether to call the key_equal_func or not from
+     *  the inner loop.
+     *
+     *  Additional optimisation: first check if our full hash
+     *  values are equal so we can avoid calling the full-blown
+     *  key equality function in most cases.
+     */
+    if (hashtable->key_equal_func)
+    {
+        while ((node = *node_ptr))
+        {
+            if (node->key_hash == hash_value && hashtable->key_equal_func(node->key, key))
+            {
+                break;
+            }
+
+            node_ptr = &(*node_ptr)->next;
+        }
+    }
+    else
+    {
+        while ((node = *node_ptr))
+        {
+            if (node->key == key)
+            {
+                break;
+            }
+
+            node_ptr = &(*node_ptr)->next;
+        }
+    }
+
+    return node_ptr;
 }
 
 /*
@@ -212,26 +188,28 @@ fluid_hashtable_lookup_node (fluid_hashtable_t *hashtable, const void *key,
  * appropriate, the pointer at the end of @node_ptr_ptr will never be
  * modified at all.  Stay tuned. :)
  */
-static void
-fluid_hashtable_remove_node (fluid_hashtable_t *hashtable,
-                             fluid_hashnode_t  ***node_ptr_ptr, int notify)
+static void fluid_hashtable_remove_node(fluid_hashtable_t *hashtable, fluid_hashnode_t ***node_ptr_ptr, int notify)
 {
-  fluid_hashnode_t **node_ptr, *node;
+    fluid_hashnode_t **node_ptr, *node;
 
-  node_ptr = *node_ptr_ptr;
-  node = *node_ptr;
+    node_ptr = *node_ptr_ptr;
+    node = *node_ptr;
 
-  *node_ptr = node->next;
+    *node_ptr = node->next;
 
-  if (notify && hashtable->key_destroy_func)
-    hashtable->key_destroy_func (node->key);
+    if (notify && hashtable->key_destroy_func)
+    {
+        hashtable->key_destroy_func(node->key);
+    }
 
-  if (notify && hashtable->value_destroy_func)
-    hashtable->value_destroy_func (node->value);
+    if (notify && hashtable->value_destroy_func)
+    {
+        hashtable->value_destroy_func(node->value);
+    }
 
-  FLUID_FREE (node);
+    FLUID_FREE(node);
 
-  hashtable->nnodes--;
+    hashtable->nnodes--;
 }
 
 /*
@@ -245,17 +223,20 @@ fluid_hashtable_remove_node (fluid_hashtable_t *hashtable,
  * If @notify is %TRUE then the destroy notify functions are called
  * for the key and value of the hash node.
  */
-static void
-fluid_hashtable_remove_all_nodes (fluid_hashtable_t *hashtable, int notify)
+static void fluid_hashtable_remove_all_nodes(fluid_hashtable_t *hashtable, int notify)
 {
-  fluid_hashnode_t **node_ptr;
-  int i;
+    fluid_hashnode_t **node_ptr;
+    int i;
 
-  for (i = 0; i < hashtable->size; i++)
-    for (node_ptr = &hashtable->nodes[i]; *node_ptr != NULL;)
-      fluid_hashtable_remove_node (hashtable, &node_ptr, notify);
+    for (i = 0; i < hashtable->size; i++)
+    {
+        for (node_ptr = &hashtable->nodes[i]; *node_ptr != NULL;)
+        {
+            fluid_hashtable_remove_node(hashtable, &node_ptr, notify);
+        }
+    }
 
-  hashtable->nnodes = 0;
+    hashtable->nnodes = 0;
 }
 
 /*
@@ -267,44 +248,46 @@ fluid_hashtable_remove_all_nodes (fluid_hashtable_t *hashtable, int notify)
  * occur, even if one does not need to occur.  Use
  * fluid_hashtable_maybe_resize() instead.
  */
-static void
-fluid_hashtable_resize (fluid_hashtable_t *hashtable)
+static void fluid_hashtable_resize(fluid_hashtable_t *hashtable)
 {
-  fluid_hashnode_t **new_nodes;
-  fluid_hashnode_t *node;
-  fluid_hashnode_t *next;
-  unsigned int hash_val;
-  int new_size;
-  int i;
+    fluid_hashnode_t **new_nodes;
+    fluid_hashnode_t *node;
+    fluid_hashnode_t *next;
+    unsigned int hash_val;
+    int new_size;
+    int i;
 
-  new_size = spaced_primes_closest (hashtable->nnodes);
-  new_size = (new_size < HASH_TABLE_MIN_SIZE) ? HASH_TABLE_MIN_SIZE :
-    ((new_size > HASH_TABLE_MAX_SIZE) ? HASH_TABLE_MAX_SIZE : new_size);
+    new_size = spaced_primes_closest(hashtable->nnodes);
+    new_size = (new_size < HASH_TABLE_MIN_SIZE) ?
+               HASH_TABLE_MIN_SIZE :
+               ((new_size > HASH_TABLE_MAX_SIZE) ? HASH_TABLE_MAX_SIZE : new_size);
 
-  new_nodes = FLUID_ARRAY (fluid_hashnode_t *, new_size);
+    new_nodes = FLUID_ARRAY(fluid_hashnode_t *, new_size);
 
-  if (!new_nodes)
-  {
-    FLUID_LOG (FLUID_ERR, "Out of memory");
-    return;
-  }
+    if (!new_nodes)
+    {
+        FLUID_LOG(FLUID_ERR, "Out of memory");
+        return;
+    }
 
-  FLUID_MEMSET (new_nodes, 0, new_size * sizeof (fluid_hashnode_t *));
+    FLUID_MEMSET(new_nodes, 0, new_size * sizeof(fluid_hashnode_t *));
 
-  for (i = 0; i < hashtable->size; i++)
-    for (node = hashtable->nodes[i]; node; node = next)
-      {
-	next = node->next;
+    for (i = 0; i < hashtable->size; i++)
+    {
+        for (node = hashtable->nodes[i]; node; node = next)
+        {
+            next = node->next;
 
-	hash_val = node->key_hash % new_size;
+            hash_val = node->key_hash % new_size;
 
-	node->next = new_nodes[hash_val];
-	new_nodes[hash_val] = node;
-      }
+            node->next = new_nodes[hash_val];
+            new_nodes[hash_val] = node;
+        }
+    }
 
-  FLUID_FREE (hashtable->nodes);
-  hashtable->nodes = new_nodes;
-  hashtable->size = new_size;
+    FLUID_FREE(hashtable->nodes);
+    hashtable->nodes = new_nodes;
+    hashtable->size = new_size;
 }
 
 /*
@@ -316,15 +299,15 @@ fluid_hashtable_resize (fluid_hashtable_t *hashtable)
  * Essentially, calls fluid_hashtable_resize() if the table has strayed
  * too far from its ideal size for its number of nodes.
  */
-static FLUID_INLINE void
-fluid_hashtable_maybe_resize (fluid_hashtable_t *hashtable)
+static FLUID_INLINE void fluid_hashtable_maybe_resize(fluid_hashtable_t *hashtable)
 {
-  int nnodes = hashtable->nnodes;
-  int size = hashtable->size;
+    int nnodes = hashtable->nnodes;
+    int size = hashtable->size;
 
-  if ((size >= 3 * nnodes && size > HASH_TABLE_MIN_SIZE) ||
-      (3 * size <= nnodes && size < HASH_TABLE_MAX_SIZE))
-    fluid_hashtable_resize (hashtable);
+    if ((size >= 3 * nnodes && size > HASH_TABLE_MIN_SIZE) || (3 * size <= nnodes && size < HASH_TABLE_MAX_SIZE))
+    {
+        fluid_hashtable_resize(hashtable);
+    }
 }
 
 /**
@@ -345,10 +328,9 @@ fluid_hashtable_maybe_resize (fluid_hashtable_t *hashtable)
  *
  * Return value: a new #fluid_hashtable_t.
  **/
-fluid_hashtable_t*
-new_fluid_hashtable (fluid_hash_func_t hash_func, fluid_equal_func_t key_equal_func)
+fluid_hashtable_t *new_fluid_hashtable(fluid_hash_func_t hash_func, fluid_equal_func_t key_equal_func)
 {
-  return new_fluid_hashtable_full (hash_func, key_equal_func, NULL, NULL);
+    return new_fluid_hashtable_full(hash_func, key_equal_func, NULL, NULL);
 }
 
 
@@ -369,33 +351,32 @@ new_fluid_hashtable (fluid_hash_func_t hash_func, fluid_equal_func_t key_equal_f
  *
  * Return value: a new #fluid_hashtable_t.
  **/
-fluid_hashtable_t*
-new_fluid_hashtable_full (fluid_hash_func_t hash_func,
-                          fluid_equal_func_t key_equal_func,
-                          fluid_destroy_notify_t key_destroy_func,
-                          fluid_destroy_notify_t value_destroy_func)
+fluid_hashtable_t *new_fluid_hashtable_full(fluid_hash_func_t hash_func,
+                                            fluid_equal_func_t key_equal_func,
+                                            fluid_destroy_notify_t key_destroy_func,
+                                            fluid_destroy_notify_t value_destroy_func)
 {
-  fluid_hashtable_t *hashtable;
+    fluid_hashtable_t *hashtable;
 
-  hashtable = FLUID_NEW (fluid_hashtable_t);
+    hashtable = FLUID_NEW(fluid_hashtable_t);
 
-  if (!hashtable)
-  {
-    FLUID_LOG (FLUID_ERR, "Out of memory");
-    return NULL;
-  }
+    if (!hashtable)
+    {
+        FLUID_LOG(FLUID_ERR, "Out of memory");
+        return NULL;
+    }
 
-  hashtable->size               = HASH_TABLE_MIN_SIZE;
-  hashtable->nnodes             = 0;
-  hashtable->hash_func          = hash_func ? hash_func : fluid_direct_hash;
-  hashtable->key_equal_func     = key_equal_func;
-  fluid_atomic_int_set(&hashtable->ref_count, 1);
-  hashtable->key_destroy_func   = key_destroy_func;
-  hashtable->value_destroy_func = value_destroy_func;
-  hashtable->nodes              = FLUID_ARRAY (fluid_hashnode_t*, hashtable->size);
-  FLUID_MEMSET (hashtable->nodes, 0, hashtable->size * sizeof (fluid_hashnode_t *));
+    hashtable->size = HASH_TABLE_MIN_SIZE;
+    hashtable->nnodes = 0;
+    hashtable->hash_func = hash_func ? hash_func : fluid_direct_hash;
+    hashtable->key_equal_func = key_equal_func;
+    fluid_atomic_int_set(&hashtable->ref_count, 1);
+    hashtable->key_destroy_func = key_destroy_func;
+    hashtable->value_destroy_func = value_destroy_func;
+    hashtable->nodes = FLUID_ARRAY(fluid_hashnode_t *, hashtable->size);
+    FLUID_MEMSET(hashtable->nodes, 0, hashtable->size * sizeof(fluid_hashnode_t *));
 
-  return hashtable;
+    return hashtable;
 }
 
 /**
@@ -411,7 +392,7 @@ new_fluid_hashtable_full (fluid_hash_func_t hash_func,
  * gpointer key, value;
  *
  * fluid_hashtable_iter_init (&iter, hashtable);
- * while (fluid_hashtable_iter_next (&iter, &key, &value)) 
+ * while (fluid_hashtable_iter_next (&iter, &key, &value))
  *   {
  *     /&ast; do something with key and value &ast;/
  *   }
@@ -419,20 +400,18 @@ new_fluid_hashtable_full (fluid_hash_func_t hash_func,
  *
  * Since: 2.16
  **/
-void
-fluid_hashtable_iter_init (fluid_hashtable_iter_t *iter,
-                           fluid_hashtable_t *hashtable)
+void fluid_hashtable_iter_init(fluid_hashtable_iter_t *iter, fluid_hashtable_t *hashtable)
 {
-  RealIter *ri = (RealIter *) iter;
+    RealIter *ri = (RealIter *)iter;
 
-  fluid_return_if_fail (iter != NULL);
-  fluid_return_if_fail (hashtable != NULL);
+    fluid_return_if_fail(iter != NULL);
+    fluid_return_if_fail(hashtable != NULL);
 
-  ri->hashtable = hashtable;
-  ri->prev_node = NULL;
-  ri->node = NULL;
-  ri->position = -1;
-  ri->pre_advanced = FALSE;
+    ri->hashtable = hashtable;
+    ri->prev_node = NULL;
+    ri->node = NULL;
+    ri->position = -1;
+    ri->pre_advanced = FALSE;
 }
 
 /**
@@ -449,46 +428,52 @@ fluid_hashtable_iter_init (fluid_hashtable_iter_t *iter,
  *
  * Since: 2.16
  **/
-int
-fluid_hashtable_iter_next (fluid_hashtable_iter_t *iter, void **key,
-                           void **value)
+int fluid_hashtable_iter_next(fluid_hashtable_iter_t *iter, void **key, void **value)
 {
-  RealIter *ri = (RealIter *) iter;
+    RealIter *ri = (RealIter *)iter;
 
-  fluid_return_val_if_fail (iter != NULL, FALSE);
+    fluid_return_val_if_fail(iter != NULL, FALSE);
 
-  if (ri->pre_advanced)
+    if (ri->pre_advanced)
     {
-      ri->pre_advanced = FALSE;
+        ri->pre_advanced = FALSE;
 
-      if (ri->node == NULL)
-	return FALSE;
+        if (ri->node == NULL)
+        {
+            return FALSE;
+        }
     }
-  else
+    else
     {
-      if (ri->node != NULL)
-	{
-	  ri->prev_node = ri->node;
-	  ri->node = ri->node->next;
-	}
+        if (ri->node != NULL)
+        {
+            ri->prev_node = ri->node;
+            ri->node = ri->node->next;
+        }
 
-      while (ri->node == NULL)
-	{
-	  ri->position++;
-	  if (ri->position >= ri->hashtable->size)
-	    return FALSE;
+        while (ri->node == NULL)
+        {
+            ri->position++;
+            if (ri->position >= ri->hashtable->size)
+            {
+                return FALSE;
+            }
 
-	  ri->prev_node = NULL;
-	  ri->node = ri->hashtable->nodes[ri->position];
-	}
+            ri->prev_node = NULL;
+            ri->node = ri->hashtable->nodes[ri->position];
+        }
     }
 
-  if (key != NULL)
-    *key = ri->node->key;
-  if (value != NULL)
-    *value = ri->node->value;
+    if (key != NULL)
+    {
+        *key = ri->node->key;
+    }
+    if (value != NULL)
+    {
+        *value = ri->node->value;
+    }
 
-  return TRUE;
+    return TRUE;
 }
 
 /**
@@ -501,63 +486,71 @@ fluid_hashtable_iter_next (fluid_hashtable_iter_t *iter, void **key,
  *
  * Since: 2.16
  **/
-fluid_hashtable_t *
-fluid_hashtable_iter_get_hash_table (fluid_hashtable_iter_t *iter)
+fluid_hashtable_t *fluid_hashtable_iter_get_hash_table(fluid_hashtable_iter_t *iter)
 {
-  fluid_return_val_if_fail (iter != NULL, NULL);
+    fluid_return_val_if_fail(iter != NULL, NULL);
 
-  return ((RealIter *) iter)->hashtable;
+    return ((RealIter *)iter)->hashtable;
 }
 
-static void
-iter_remove_or_steal (RealIter *ri, int notify)
+static void iter_remove_or_steal(RealIter *ri, int notify)
 {
-  fluid_hashnode_t *prev;
-  fluid_hashnode_t *node;
-  int position;
+    fluid_hashnode_t *prev;
+    fluid_hashnode_t *node;
+    int position;
 
-  fluid_return_if_fail (ri != NULL);
-  fluid_return_if_fail (ri->node != NULL);
+    fluid_return_if_fail(ri != NULL);
+    fluid_return_if_fail(ri->node != NULL);
 
-  prev = ri->prev_node;
-  node = ri->node;
-  position = ri->position;
+    prev = ri->prev_node;
+    node = ri->node;
+    position = ri->position;
 
-  /* pre-advance the iterator since we will remove the node */
+    /* pre-advance the iterator since we will remove the node */
 
-  ri->node = ri->node->next;
-  /* ri->prev_node is still the correct previous node */
+    ri->node = ri->node->next;
+    /* ri->prev_node is still the correct previous node */
 
-  while (ri->node == NULL)
+    while (ri->node == NULL)
     {
-      ri->position++;
-      if (ri->position >= ri->hashtable->size)
-	break;
+        ri->position++;
+        if (ri->position >= ri->hashtable->size)
+        {
+            break;
+        }
 
-      ri->prev_node = NULL;
-      ri->node = ri->hashtable->nodes[ri->position];
+        ri->prev_node = NULL;
+        ri->node = ri->hashtable->nodes[ri->position];
     }
 
-  ri->pre_advanced = TRUE;
+    ri->pre_advanced = TRUE;
 
-  /* remove the node */
+    /* remove the node */
 
-  if (prev != NULL)
-    prev->next = node->next;
-  else
-    ri->hashtable->nodes[position] = node->next;
-
-  if (notify)
+    if (prev != NULL)
     {
-      if (ri->hashtable->key_destroy_func)
-	ri->hashtable->key_destroy_func(node->key);
-      if (ri->hashtable->value_destroy_func)
-	ri->hashtable->value_destroy_func(node->value);
+        prev->next = node->next;
+    }
+    else
+    {
+        ri->hashtable->nodes[position] = node->next;
     }
 
-  FLUID_FREE (node);
+    if (notify)
+    {
+        if (ri->hashtable->key_destroy_func)
+        {
+            ri->hashtable->key_destroy_func(node->key);
+        }
+        if (ri->hashtable->value_destroy_func)
+        {
+            ri->hashtable->value_destroy_func(node->value);
+        }
+    }
 
-  ri->hashtable->nnodes--;
+    FLUID_FREE(node);
+
+    ri->hashtable->nnodes--;
 }
 
 /**
@@ -571,15 +564,14 @@ iter_remove_or_steal (RealIter *ri, int notify)
  *
  * If the #fluid_hashtable_t was created using fluid_hashtable_new_full(), the
  * key and value are freed using the supplied destroy functions, otherwise
- * you have to make sure that any dynamically allocated values are freed 
+ * you have to make sure that any dynamically allocated values are freed
  * yourself.
  *
  * Since: 2.16
  **/
-void
-fluid_hashtable_iter_remove (fluid_hashtable_iter_t *iter)
+void fluid_hashtable_iter_remove(fluid_hashtable_iter_t *iter)
 {
-  iter_remove_or_steal ((RealIter *) iter, TRUE);
+    iter_remove_or_steal((RealIter *)iter, TRUE);
 }
 
 /**
@@ -594,10 +586,9 @@ fluid_hashtable_iter_remove (fluid_hashtable_iter_t *iter)
  *
  * Since: 2.16
  **/
-void
-fluid_hashtable_iter_steal (fluid_hashtable_iter_t *iter)
+void fluid_hashtable_iter_steal(fluid_hashtable_iter_t *iter)
 {
-  iter_remove_or_steal ((RealIter *) iter, FALSE);
+    iter_remove_or_steal((RealIter *)iter, FALSE);
 }
 
 
@@ -612,14 +603,13 @@ fluid_hashtable_iter_steal (fluid_hashtable_iter_t *iter)
  *
  * Since: 2.10
  **/
-fluid_hashtable_t*
-fluid_hashtable_ref (fluid_hashtable_t *hashtable)
+fluid_hashtable_t *fluid_hashtable_ref(fluid_hashtable_t *hashtable)
 {
-  fluid_return_val_if_fail (hashtable != NULL, NULL);
-  fluid_return_val_if_fail (fluid_atomic_int_get(&hashtable->ref_count) > 0, hashtable);
+    fluid_return_val_if_fail(hashtable != NULL, NULL);
+    fluid_return_val_if_fail(fluid_atomic_int_get(&hashtable->ref_count) > 0, hashtable);
 
-  fluid_atomic_int_add (&hashtable->ref_count, 1);
-  return hashtable;
+    fluid_atomic_int_add(&hashtable->ref_count, 1);
+    return hashtable;
 }
 
 /**
@@ -633,17 +623,16 @@ fluid_hashtable_ref (fluid_hashtable_t *hashtable)
  *
  * Since: 2.10
  **/
-void
-fluid_hashtable_unref (fluid_hashtable_t *hashtable)
+void fluid_hashtable_unref(fluid_hashtable_t *hashtable)
 {
-  fluid_return_if_fail (hashtable != NULL);
-  fluid_return_if_fail (fluid_atomic_int_get(&hashtable->ref_count) > 0);
+    fluid_return_if_fail(hashtable != NULL);
+    fluid_return_if_fail(fluid_atomic_int_get(&hashtable->ref_count) > 0);
 
-  if (fluid_atomic_int_exchange_and_add (&hashtable->ref_count, -1) - 1 == 0)
+    if (fluid_atomic_int_exchange_and_add(&hashtable->ref_count, -1) - 1 == 0)
     {
-      fluid_hashtable_remove_all_nodes (hashtable, TRUE);
-      FLUID_FREE (hashtable->nodes);
-      FLUID_FREE (hashtable);
+        fluid_hashtable_remove_all_nodes(hashtable, TRUE);
+        FLUID_FREE(hashtable->nodes);
+        FLUID_FREE(hashtable);
     }
 }
 
@@ -658,14 +647,13 @@ fluid_hashtable_unref (fluid_hashtable_t *hashtable)
  * functions you supplied will be called on all keys and values during the
  * destruction phase.
  **/
-void
-delete_fluid_hashtable (fluid_hashtable_t *hashtable)
+void delete_fluid_hashtable(fluid_hashtable_t *hashtable)
 {
-  fluid_return_if_fail (hashtable != NULL);
-  fluid_return_if_fail (fluid_atomic_int_get(&hashtable->ref_count) > 0);
+    fluid_return_if_fail(hashtable != NULL);
+    fluid_return_if_fail(fluid_atomic_int_get(&hashtable->ref_count) > 0);
 
-  fluid_hashtable_remove_all (hashtable);
-  fluid_hashtable_unref (hashtable);
+    fluid_hashtable_remove_all(hashtable);
+    fluid_hashtable_unref(hashtable);
 }
 
 /**
@@ -680,16 +668,15 @@ delete_fluid_hashtable (fluid_hashtable_t *hashtable)
  *
  * Return value: the associated value, or %NULL if the key is not found.
  **/
-void *
-fluid_hashtable_lookup (fluid_hashtable_t *hashtable, const void *key)
+void *fluid_hashtable_lookup(fluid_hashtable_t *hashtable, const void *key)
 {
-  fluid_hashnode_t *node;
+    fluid_hashnode_t *node;
 
-  fluid_return_val_if_fail (hashtable != NULL, NULL);
+    fluid_return_val_if_fail(hashtable != NULL, NULL);
 
-  node = *fluid_hashtable_lookup_node (hashtable, key, NULL);
+    node = *fluid_hashtable_lookup_node(hashtable, key, NULL);
 
-  return node ? node->value : NULL;
+    return node ? node->value : NULL;
 }
 
 /**
@@ -706,27 +693,30 @@ fluid_hashtable_lookup (fluid_hashtable_t *hashtable, const void *key)
  *
  * Return value: %TRUE if the key was found in the #fluid_hashtable_t.
  **/
-int
-fluid_hashtable_lookup_extended (fluid_hashtable_t *hashtable,
-                                 const void *lookup_key,
-                                 void **orig_key, void **value)
+int fluid_hashtable_lookup_extended(fluid_hashtable_t *hashtable, const void *lookup_key, void **orig_key, void **value)
 {
-  fluid_hashnode_t *node;
+    fluid_hashnode_t *node;
 
-  fluid_return_val_if_fail (hashtable != NULL, FALSE);
+    fluid_return_val_if_fail(hashtable != NULL, FALSE);
 
-  node = *fluid_hashtable_lookup_node (hashtable, lookup_key, NULL);
+    node = *fluid_hashtable_lookup_node(hashtable, lookup_key, NULL);
 
-  if (node == NULL)
-    return FALSE;
+    if (node == NULL)
+    {
+        return FALSE;
+    }
 
-  if (orig_key)
-    *orig_key = node->key;
+    if (orig_key)
+    {
+        *orig_key = node->key;
+    }
 
-  if (value)
-    *value = node->value;
+    if (value)
+    {
+        *value = node->value;
+    }
 
-  return TRUE;
+    return TRUE;
 }
 
 /*
@@ -745,55 +735,59 @@ fluid_hashtable_lookup_extended (fluid_hashtable_t *hashtable,
  * @value (and perhaps the new @key).  If it is not found, create a
  * new node.
  */
-static void
-fluid_hashtable_insert_internal (fluid_hashtable_t *hashtable, void *key,
-                                 void *value, int keep_new_key)
+static void fluid_hashtable_insert_internal(fluid_hashtable_t *hashtable, void *key, void *value, int keep_new_key)
 {
-  fluid_hashnode_t **node_ptr, *node;
-  unsigned int key_hash;
+    fluid_hashnode_t **node_ptr, *node;
+    unsigned int key_hash;
 
-  fluid_return_if_fail (hashtable != NULL);
-  fluid_return_if_fail (fluid_atomic_int_get(&hashtable->ref_count) > 0);
+    fluid_return_if_fail(hashtable != NULL);
+    fluid_return_if_fail(fluid_atomic_int_get(&hashtable->ref_count) > 0);
 
-  node_ptr = fluid_hashtable_lookup_node (hashtable, key, &key_hash);
+    node_ptr = fluid_hashtable_lookup_node(hashtable, key, &key_hash);
 
-  if ((node = *node_ptr))
+    if ((node = *node_ptr))
     {
-      if (keep_new_key)
+        if (keep_new_key)
         {
-          if (hashtable->key_destroy_func)
-            hashtable->key_destroy_func (node->key);
-          node->key = key;
+            if (hashtable->key_destroy_func)
+            {
+                hashtable->key_destroy_func(node->key);
+            }
+            node->key = key;
         }
-      else
+        else
         {
-          if (hashtable->key_destroy_func)
-            hashtable->key_destroy_func (key);
+            if (hashtable->key_destroy_func)
+            {
+                hashtable->key_destroy_func(key);
+            }
         }
 
-      if (hashtable->value_destroy_func)
-        hashtable->value_destroy_func (node->value);
+        if (hashtable->value_destroy_func)
+        {
+            hashtable->value_destroy_func(node->value);
+        }
 
-      node->value = value;
+        node->value = value;
     }
-  else
+    else
     {
-      node = FLUID_NEW (fluid_hashnode_t);
+        node = FLUID_NEW(fluid_hashnode_t);
 
-      if (!node)
-      {
-        FLUID_LOG (FLUID_ERR, "Out of memory");
-        return;
-      }
+        if (!node)
+        {
+            FLUID_LOG(FLUID_ERR, "Out of memory");
+            return;
+        }
 
-      node->key = key;
-      node->value = value;
-      node->key_hash = key_hash;
-      node->next = NULL;
+        node->key = key;
+        node->value = value;
+        node->key_hash = key_hash;
+        node->next = NULL;
 
-      *node_ptr = node;
-      hashtable->nnodes++;
-      fluid_hashtable_maybe_resize (hashtable);
+        *node_ptr = node;
+        hashtable->nnodes++;
+        fluid_hashtable_maybe_resize(hashtable);
     }
 }
 
@@ -811,10 +805,9 @@ fluid_hashtable_insert_internal (fluid_hashtable_t *hashtable, void *key,
  * a @key_destroy_func when creating the #fluid_hashtable_t, the passed key is freed
  * using that function.
  **/
-void
-fluid_hashtable_insert (fluid_hashtable_t *hashtable, void *key, void *value)
+void fluid_hashtable_insert(fluid_hashtable_t *hashtable, void *key, void *value)
 {
-  fluid_hashtable_insert_internal (hashtable, key, value, FALSE);
+    fluid_hashtable_insert_internal(hashtable, key, value, FALSE);
 }
 
 /**
@@ -830,10 +823,9 @@ fluid_hashtable_insert (fluid_hashtable_t *hashtable, void *key, void *value)
  * using that function. If you supplied a @key_destroy_func when creating the
  * #fluid_hashtable_t, the old key is freed using that function.
  **/
-void
-fluid_hashtable_replace (fluid_hashtable_t *hashtable, void *key, void *value)
+void fluid_hashtable_replace(fluid_hashtable_t *hashtable, void *key, void *value)
 {
-  fluid_hashtable_insert_internal (hashtable, key, value, TRUE);
+    fluid_hashtable_insert_internal(hashtable, key, value, TRUE);
 }
 
 /*
@@ -849,22 +841,22 @@ fluid_hashtable_replace (fluid_hashtable_t *hashtable, void *key, void *value)
  * Do a lookup of @key and remove it if it is found, calling the
  * destroy notify handlers only if @notify is %TRUE.
  */
-static int
-fluid_hashtable_remove_internal (fluid_hashtable_t *hashtable, const void *key,
-                                 int notify)
+static int fluid_hashtable_remove_internal(fluid_hashtable_t *hashtable, const void *key, int notify)
 {
-  fluid_hashnode_t **node_ptr;
+    fluid_hashnode_t **node_ptr;
 
-  fluid_return_val_if_fail (hashtable != NULL, FALSE);
+    fluid_return_val_if_fail(hashtable != NULL, FALSE);
 
-  node_ptr = fluid_hashtable_lookup_node (hashtable, key, NULL);
-  if (*node_ptr == NULL)
-    return FALSE;
+    node_ptr = fluid_hashtable_lookup_node(hashtable, key, NULL);
+    if (*node_ptr == NULL)
+    {
+        return FALSE;
+    }
 
-  fluid_hashtable_remove_node (hashtable, &node_ptr, notify);
-  fluid_hashtable_maybe_resize (hashtable);
+    fluid_hashtable_remove_node(hashtable, &node_ptr, notify);
+    fluid_hashtable_maybe_resize(hashtable);
 
-  return TRUE;
+    return TRUE;
 }
 
 /**
@@ -881,10 +873,9 @@ fluid_hashtable_remove_internal (fluid_hashtable_t *hashtable, const void *key,
  *
  * Return value: %TRUE if the key was found and removed from the #fluid_hashtable_t.
  **/
-int
-fluid_hashtable_remove (fluid_hashtable_t *hashtable, const void *key)
+int fluid_hashtable_remove(fluid_hashtable_t *hashtable, const void *key)
 {
-  return fluid_hashtable_remove_internal (hashtable, key, TRUE);
+    return fluid_hashtable_remove_internal(hashtable, key, TRUE);
 }
 
 /**
@@ -897,10 +888,9 @@ fluid_hashtable_remove (fluid_hashtable_t *hashtable, const void *key)
  *
  * Return value: %TRUE if the key was found and removed from the #fluid_hashtable_t.
  **/
-int
-fluid_hashtable_steal (fluid_hashtable_t *hashtable, const void *key)
+int fluid_hashtable_steal(fluid_hashtable_t *hashtable, const void *key)
 {
-  return fluid_hashtable_remove_internal (hashtable, key, FALSE);
+    return fluid_hashtable_remove_internal(hashtable, key, FALSE);
 }
 
 /**
@@ -916,13 +906,12 @@ fluid_hashtable_steal (fluid_hashtable_t *hashtable, const void *key)
  *
  * Since: 2.12
  **/
-void
-fluid_hashtable_remove_all (fluid_hashtable_t *hashtable)
+void fluid_hashtable_remove_all(fluid_hashtable_t *hashtable)
 {
-  fluid_return_if_fail (hashtable != NULL);
+    fluid_return_if_fail(hashtable != NULL);
 
-  fluid_hashtable_remove_all_nodes (hashtable, TRUE);
-  fluid_hashtable_maybe_resize (hashtable);
+    fluid_hashtable_remove_all_nodes(hashtable, TRUE);
+    fluid_hashtable_maybe_resize(hashtable);
 }
 
 /**
@@ -934,13 +923,12 @@ fluid_hashtable_remove_all (fluid_hashtable_t *hashtable)
  *
  * Since: 2.12
  **/
-void
-fluid_hashtable_steal_all (fluid_hashtable_t *hashtable)
+void fluid_hashtable_steal_all(fluid_hashtable_t *hashtable)
 {
-  fluid_return_if_fail (hashtable != NULL);
+    fluid_return_if_fail(hashtable != NULL);
 
-  fluid_hashtable_remove_all_nodes (hashtable, FALSE);
-  fluid_hashtable_maybe_resize (hashtable);
+    fluid_hashtable_remove_all_nodes(hashtable, FALSE);
+    fluid_hashtable_maybe_resize(hashtable);
 }
 
 /*
@@ -961,27 +949,31 @@ fluid_hashtable_steal_all (fluid_hashtable_t *hashtable)
  * for each removed node.
  */
 static unsigned int
-fluid_hashtable_foreach_remove_or_steal (fluid_hashtable_t *hashtable,
-                                         fluid_hr_func_t func, void *user_data,
-                                         int notify)
+fluid_hashtable_foreach_remove_or_steal(fluid_hashtable_t *hashtable, fluid_hr_func_t func, void *user_data, int notify)
 {
-  fluid_hashnode_t *node, **node_ptr;
-  unsigned int deleted = 0;
-  int i;
+    fluid_hashnode_t *node, **node_ptr;
+    unsigned int deleted = 0;
+    int i;
 
-  for (i = 0; i < hashtable->size; i++)
-    for (node_ptr = &hashtable->nodes[i]; (node = *node_ptr) != NULL;)
-      if ((* func) (node->key, node->value, user_data))
+    for (i = 0; i < hashtable->size; i++)
+    {
+        for (node_ptr = &hashtable->nodes[i]; (node = *node_ptr) != NULL;)
         {
-          fluid_hashtable_remove_node (hashtable, &node_ptr, notify);
-          deleted++;
+            if ((*func)(node->key, node->value, user_data))
+            {
+                fluid_hashtable_remove_node(hashtable, &node_ptr, notify);
+                deleted++;
+            }
+            else
+            {
+                node_ptr = &node->next;
+            }
         }
-      else
-        node_ptr = &node->next;
+    }
 
-  fluid_hashtable_maybe_resize (hashtable);
+    fluid_hashtable_maybe_resize(hashtable);
 
-  return deleted;
+    return deleted;
 }
 
 #if 0
@@ -997,7 +989,7 @@ fluid_hashtable_foreach_remove_or_steal (fluid_hashtable_t *hashtable,
  * the #fluid_hashtable_t, they are used to free the memory allocated for the removed
  * keys and values.
  *
- * See #fluid_hashtable_iter_t for an alternative way to loop over the 
+ * See #fluid_hashtable_iter_t for an alternative way to loop over the
  * key/value pairs in the hash table.
  *
  * Return value: the number of key/value pairs removed.
@@ -1006,10 +998,10 @@ static unsigned int
 fluid_hashtable_foreach_remove (fluid_hashtable_t *hashtable,
                                 fluid_hr_func_t func, void *user_data)
 {
-  fluid_return_val_if_fail (hashtable != NULL, 0);
-  fluid_return_val_if_fail (func != NULL, 0);
+    fluid_return_val_if_fail (hashtable != NULL, 0);
+    fluid_return_val_if_fail (func != NULL, 0);
 
-  return fluid_hashtable_foreach_remove_or_steal (hashtable, func, user_data, TRUE);
+    return fluid_hashtable_foreach_remove_or_steal (hashtable, func, user_data, TRUE);
 }
 #endif
 
@@ -1023,19 +1015,17 @@ fluid_hashtable_foreach_remove (fluid_hashtable_t *hashtable,
  * If the function returns %TRUE, then the key/value pair is removed from the
  * #fluid_hashtable_t, but no key or value destroy functions are called.
  *
- * See #fluid_hashtable_iter_t for an alternative way to loop over the 
+ * See #fluid_hashtable_iter_t for an alternative way to loop over the
  * key/value pairs in the hash table.
  *
  * Return value: the number of key/value pairs removed.
  **/
-unsigned int
-fluid_hashtable_foreach_steal (fluid_hashtable_t *hashtable,
-                               fluid_hr_func_t func, void *user_data)
+unsigned int fluid_hashtable_foreach_steal(fluid_hashtable_t *hashtable, fluid_hr_func_t func, void *user_data)
 {
-  fluid_return_val_if_fail (hashtable != NULL, 0);
-  fluid_return_val_if_fail (func != NULL, 0);
+    fluid_return_val_if_fail(hashtable != NULL, 0);
+    fluid_return_val_if_fail(func != NULL, 0);
 
-  return fluid_hashtable_foreach_remove_or_steal (hashtable, func, user_data, FALSE);
+    return fluid_hashtable_foreach_remove_or_steal(hashtable, func, user_data, FALSE);
 }
 
 /**
@@ -1054,19 +1044,21 @@ fluid_hashtable_foreach_steal (fluid_hashtable_t *hashtable,
  * See fluid_hashtable_find() for performance caveats for linear
  * order searches in contrast to fluid_hashtable_lookup().
  **/
-void
-fluid_hashtable_foreach (fluid_hashtable_t *hashtable, fluid_hr_func_t func,
-                         void *user_data)
+void fluid_hashtable_foreach(fluid_hashtable_t *hashtable, fluid_hr_func_t func, void *user_data)
 {
-  fluid_hashnode_t *node;
-  int i;
+    fluid_hashnode_t *node;
+    int i;
 
-  fluid_return_if_fail (hashtable != NULL);
-  fluid_return_if_fail (func != NULL);
+    fluid_return_if_fail(hashtable != NULL);
+    fluid_return_if_fail(func != NULL);
 
-  for (i = 0; i < hashtable->size; i++)
-    for (node = hashtable->nodes[i]; node; node = node->next)
-      (* func) (node->key, node->value, user_data);
+    for (i = 0; i < hashtable->size; i++)
+    {
+        for (node = hashtable->nodes[i]; node; node = node->next)
+        {
+            (*func)(node->key, node->value, user_data);
+        }
+    }
 }
 
 /**
@@ -1095,21 +1087,25 @@ fluid_hashtable_foreach (fluid_hashtable_t *hashtable, fluid_hr_func_t func,
  *
  * Since: 2.4
  **/
-void *
-fluid_hashtable_find (fluid_hashtable_t *hashtable, fluid_hr_func_t predicate,
-                      void *user_data)
+void *fluid_hashtable_find(fluid_hashtable_t *hashtable, fluid_hr_func_t predicate, void *user_data)
 {
-  fluid_hashnode_t *node;
-  int i;
+    fluid_hashnode_t *node;
+    int i;
 
-  fluid_return_val_if_fail (hashtable != NULL, NULL);
-  fluid_return_val_if_fail (predicate != NULL, NULL);
+    fluid_return_val_if_fail(hashtable != NULL, NULL);
+    fluid_return_val_if_fail(predicate != NULL, NULL);
 
-  for (i = 0; i < hashtable->size; i++)
-    for (node = hashtable->nodes[i]; node; node = node->next)
-      if (predicate (node->key, node->value, user_data))
-        return node->value;
-  return NULL;
+    for (i = 0; i < hashtable->size; i++)
+    {
+        for (node = hashtable->nodes[i]; node; node = node->next)
+        {
+            if (predicate(node->key, node->value, user_data))
+            {
+                return node->value;
+            }
+        }
+    }
+    return NULL;
 }
 
 /**
@@ -1120,12 +1116,11 @@ fluid_hashtable_find (fluid_hashtable_t *hashtable, fluid_hr_func_t predicate,
  *
  * Return value: the number of key/value pairs in the #fluid_hashtable_t.
  **/
-unsigned int
-fluid_hashtable_size (fluid_hashtable_t *hashtable)
+unsigned int fluid_hashtable_size(fluid_hashtable_t *hashtable)
 {
-  fluid_return_val_if_fail (hashtable != NULL, 0);
+    fluid_return_val_if_fail(hashtable != NULL, 0);
 
-  return hashtable->nnodes;
+    return hashtable->nnodes;
 }
 
 /**
@@ -1142,21 +1137,24 @@ fluid_hashtable_size (fluid_hashtable_t *hashtable)
  *
  * Since: 2.14
  */
-fluid_list_t *
-fluid_hashtable_get_keys (fluid_hashtable_t *hashtable)
+fluid_list_t *fluid_hashtable_get_keys(fluid_hashtable_t *hashtable)
 {
-  fluid_hashnode_t *node;
-  int i;
-  fluid_list_t *retval;
+    fluid_hashnode_t *node;
+    int i;
+    fluid_list_t *retval;
 
-  fluid_return_val_if_fail (hashtable != NULL, NULL);
+    fluid_return_val_if_fail(hashtable != NULL, NULL);
 
-  retval = NULL;
-  for (i = 0; i < hashtable->size; i++)
-    for (node = hashtable->nodes[i]; node; node = node->next)
-      retval = fluid_list_prepend (retval, node->key);
+    retval = NULL;
+    for (i = 0; i < hashtable->size; i++)
+    {
+        for (node = hashtable->nodes[i]; node; node = node->next)
+        {
+            retval = fluid_list_prepend(retval, node->key);
+        }
+    }
 
-  return retval;
+    return retval;
 }
 
 /**
@@ -1173,21 +1171,24 @@ fluid_hashtable_get_keys (fluid_hashtable_t *hashtable)
  *
  * Since: 2.14
  */
-fluid_list_t *
-fluid_hashtable_get_values (fluid_hashtable_t *hashtable)
+fluid_list_t *fluid_hashtable_get_values(fluid_hashtable_t *hashtable)
 {
-  fluid_hashnode_t *node;
-  int i;
-  fluid_list_t *retval;
+    fluid_hashnode_t *node;
+    int i;
+    fluid_list_t *retval;
 
-  fluid_return_val_if_fail (hashtable != NULL, NULL);
+    fluid_return_val_if_fail(hashtable != NULL, NULL);
 
-  retval = NULL;
-  for (i = 0; i < hashtable->size; i++)
-    for (node = hashtable->nodes[i]; node; node = node->next)
-      retval = fluid_list_prepend (retval, node->value);
+    retval = NULL;
+    for (i = 0; i < hashtable->size; i++)
+    {
+        for (node = hashtable->nodes[i]; node; node = node->next)
+        {
+            retval = fluid_list_prepend(retval, node->value);
+        }
+    }
 
-  return retval;
+    return retval;
 }
 
 
@@ -1198,20 +1199,19 @@ fluid_hashtable_get_values (fluid_hashtable_t *hashtable)
  * fluid_str_equal:
  * @v1: a key
  * @v2: a key to compare with @v1
- * 
- * Compares two strings for byte-by-byte equality and returns %TRUE 
- * if they are equal. It can be passed to new_fluid_hashtable() as the 
+ *
+ * Compares two strings for byte-by-byte equality and returns %TRUE
+ * if they are equal. It can be passed to new_fluid_hashtable() as the
  * @key_equal_func parameter, when using strings as keys in a #Ghashtable.
  *
  * Returns: %TRUE if the two keys match
  */
-int
-fluid_str_equal (const void *v1, const void *v2)
+int fluid_str_equal(const void *v1, const void *v2)
 {
-  const char *string1 = v1;
-  const char *string2 = v2;
-  
-  return FLUID_STRCMP (string1, string2) == 0;
+    const char *string1 = v1;
+    const char *string2 = v2;
+
+    return FLUID_STRCMP(string1, string2) == 0;
 }
 
 /**
@@ -1219,23 +1219,26 @@ fluid_str_equal (const void *v1, const void *v2)
  * @v: a string key
  *
  * Converts a string to a hash value.
- * It can be passed to new_fluid_hashtable() as the @hash_func 
+ * It can be passed to new_fluid_hashtable() as the @hash_func
  * parameter, when using strings as keys in a #fluid_hashtable_t.
  *
  * Returns: a hash value corresponding to the key
  */
-unsigned int
-fluid_str_hash (const void *v)
+unsigned int fluid_str_hash(const void *v)
 {
-  /* 31 bit hash function */
-  const signed char *p = v;
-  uint32_t h = *p;
+    /* 31 bit hash function */
+    const signed char *p = v;
+    uint32_t h = *p;
 
-  if (h)
-    for (p += 1; *p != '\0'; p++)
-      h = (h << 5) - h + *p;
+    if (h)
+    {
+        for (p += 1; *p != '\0'; p++)
+        {
+            h = (h << 5) - h + *p;
+        }
+    }
 
-  return h;
+    return h;
 }
 
 
@@ -1250,13 +1253,12 @@ fluid_str_hash (const void *v)
  * Compares two #gpointer arguments and returns %TRUE if they are equal.
  * It can be passed to new_fluid_hashtable() as the @key_equal_func
  * parameter, when using pointers as keys in a #fluid_hashtable_t.
- * 
+ *
  * Returns: %TRUE if the two keys match.
  */
-int
-fluid_direct_equal (const void *v1, const void *v2)
+int fluid_direct_equal(const void *v1, const void *v2)
 {
-  return v1 == v2;
+    return v1 == v2;
 }
 
 /**
@@ -1264,15 +1266,14 @@ fluid_direct_equal (const void *v1, const void *v2)
  * @v: a void * key
  *
  * Converts a gpointer to a hash value.
- * It can be passed to g_hashtable_new() as the @hash_func parameter, 
+ * It can be passed to g_hashtable_new() as the @hash_func parameter,
  * when using pointers as keys in a #fluid_hashtable_t.
  *
  * Returns: a hash value corresponding to the key.
  */
-unsigned int
-fluid_direct_hash (const void *v)
+unsigned int fluid_direct_hash(const void *v)
 {
-  return FLUID_POINTER_TO_UINT (v);
+    return FLUID_POINTER_TO_UINT(v);
 }
 
 /**
@@ -1280,17 +1281,16 @@ fluid_direct_hash (const void *v)
  * @v1: a pointer to a int key.
  * @v2: a pointer to a int key to compare with @v1.
  *
- * Compares the two #gint values being pointed to and returns 
+ * Compares the two #gint values being pointed to and returns
  * %TRUE if they are equal.
  * It can be passed to g_hashtable_new() as the @key_equal_func
  * parameter, when using pointers to integers as keys in a #fluid_hashtable_t.
- * 
+ *
  * Returns: %TRUE if the two keys match.
  */
-int
-fluid_int_equal (const void *v1, const void *v2)
+int fluid_int_equal(const void *v1, const void *v2)
 {
-  return *((const int*) v1) == *((const int*) v2);
+    return *((const int *)v1) == *((const int *)v2);
 }
 
 /**
@@ -1298,13 +1298,12 @@ fluid_int_equal (const void *v1, const void *v2)
  * @v: a pointer to a int key
  *
  * Converts a pointer to a #gint to a hash value.
- * It can be passed to g_hashtable_new() as the @hash_func parameter, 
+ * It can be passed to g_hashtable_new() as the @hash_func parameter,
  * when using pointers to integers values as keys in a #fluid_hashtable_t.
  *
  * Returns: a hash value corresponding to the key.
  */
-unsigned int
-fluid_int_hash (const void *v)
+unsigned int fluid_int_hash(const void *v)
 {
-  return *(const int*) v;
+    return *(const int *)v;
 }

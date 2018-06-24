@@ -20,7 +20,7 @@ Some things that will increase the chance that your pull request or patch is acc
 
 ## Style Guide
 
-Find FluidSynth's style guide below. Syntax related issues, like missing braces, will be automatically taken care of when compiling fluidsynth by calling `make` (provided that cmake has found `clang-tidy >= 5.0` on your system). An explicit reformatting can be achieved using `make format` (provided that cmake has found `clang-format` on your system).
+Find FluidSynth's style guide below. Syntax related issues, like missing braces, will be automatically taken care of when compiling fluidsynth by calling `make` (provided that cmake has found `clang-tidy >= 5.0` on your system).
 
 #### General
 * Every function should have a short comment explaining it's purpose
@@ -36,5 +36,6 @@ Find FluidSynth's style guide below. Syntax related issues, like missing braces,
 
 #### Bracing
 * Every block after an if, else, while or for should be enclosed in braces
+* Every block should be indented by 4 spaces
 * **Allman-Style** braces everywhere
 
