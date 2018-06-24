@@ -31,6 +31,6 @@ int fluid_ladspa_set_sample_rate(fluid_ladspa_fx_t *fx, fluid_real_t sample_rate
 void fluid_ladspa_run(fluid_ladspa_fx_t *fx, int block_count, int block_size);
 
 int fluid_ladspa_add_host_ports(fluid_ladspa_fx_t *fx, const char *prefix,
-        int num_buffers, fluid_real_t buffers[], int buf_stride);
+                                int num_buffers, fluid_real_t buffers[], int buf_stride);
 
 #endif /* _FLUID_LADSPA_H */

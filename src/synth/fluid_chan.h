@@ -27,8 +27,8 @@
 
 /* The mononophonic list is part of the legato detector for monophonic mode */
 /* see fluid_synth_monopoly.c about a description of the legato detector device */
-/* Size of the monophonic list 
-   - 1 is the minimum. it allows playing legato passage of any number 
+/* Size of the monophonic list
+   - 1 is the minimum. it allows playing legato passage of any number
      of notes on noteon only.
    - Size above 1 allows playing legato on noteon but also on noteOff.
      This allows the  musician to play fast trills.
@@ -36,9 +36,9 @@
      Choosing a size of 10 is sufficient (because most musicians have only 10
      fingers when playing a monophonic instrument).
 */
-#define FLUID_CHANNEL_SIZE_MONOLIST  10 
+#define FLUID_CHANNEL_SIZE_MONOLIST  10
 
-/* 
+/*
 
             The monophonic list
    +------------------------------------------------+
@@ -49,14 +49,14 @@
          /|\                      /|\
           |                        |
        i_first                   i_last
- 
+
  The monophonic list is a circular buffer of FLUID_CHANNEL_SIZE_MONOLIST elements.
  Each element is linked forward at initialisation time.
  - when a note is added at noteOn  (see fluid_channel_add_monolist()) each
-   element is use in the forward direction and indexed by i_last variable. 
+   element is use in the forward direction and indexed by i_last variable.
  - when a note is removed at noteOff (see fluid_channel_remove_monolist()),
    the element concerned is fast unlinked and relinked after the i_last element.
- 
+
  The most recent note added is indexed by i_last.
  The most ancient note added is the first note indexed by i_first. i_first is
  moving in the forward direction in a circular manner.
@@ -77,82 +77,82 @@ struct mononote
  */
 struct _fluid_channel_t
 {
-  fluid_synth_t* synth;                 /**< Parent synthesizer instance */
-  int channum;                          /**< MIDI channel number */
-  
-  /* Poly Mono variables see macro access description */
-  int mode;								/**< Poly Mono mode */
-  int mode_val;							/**< number of channel in basic channel group */
-  
-  /* monophonic list - legato detector */
-  unsigned char i_first;          /**< First note index */
-  unsigned char i_last;           /**< most recent note index since the most recent add */
-  unsigned char prev_note;        /**< previous note of the most recent add/remove */
-  unsigned char n_notes;          /**< actual number of notes in the list */
-  struct mononote monolist[FLUID_CHANNEL_SIZE_MONOLIST];   /**< monophonic list */
-  
-  unsigned char key_mono_sustained;         /**< previous sustained monophonic note */
-  unsigned char previous_cc_breath;		  /**< Previous Breath */
-  enum fluid_channel_legato_mode legatomode;       /**< legato mode */
-  enum fluid_channel_portamento_mode portamentomode;   /**< portamento mode */
-  /*- End of Poly/mono variables description */
-  
-  unsigned char cc[128];                         /**< MIDI controller values from [0;127] */
-  unsigned char key_pressure[128];               /**< MIDI polyphonic key pressure from [0;127] */
-  
-  /* Drum channel flag, CHANNEL_TYPE_MELODIC, or CHANNEL_TYPE_DRUM. */
-  enum fluid_midi_channel_type channel_type;
-  enum fluid_interp interp_method;                    /**< Interpolation method (enum fluid_interp) */
+    fluid_synth_t *synth;                 /**< Parent synthesizer instance */
+    int channum;                          /**< MIDI channel number */
 
-  unsigned char channel_pressure;                 /**< MIDI channel pressure from [0;127] */
-  unsigned char pitch_wheel_sensitivity;          /**< Current pitch wheel sensitivity */
-  short pitch_bend;                      /**< Current pitch bend value */
-  /* Sostenuto order id gives the order of SostenutoOn event.
-   * This value is useful to known when the sostenuto pedal is depressed
-   * (before or after a key note). We need to compare SostenutoOrderId with voice id.
-   */
-  unsigned int  sostenuto_orderid;
-  
-  int tuning_bank;                      /**< Current tuning bank number */
-  int tuning_prog;                      /**< Current tuning program number */
-  fluid_tuning_t* tuning;               /**< Micro tuning */
+    /* Poly Mono variables see macro access description */
+    int mode;								/**< Poly Mono mode */
+    int mode_val;							/**< number of channel in basic channel group */
 
-  fluid_preset_t* preset;               /**< Selected preset */
-  int sfont_bank_prog;                  /**< SoundFont ID (bit 21-31), bank (bit 7-20), program (bit 0-6) */
-  
-  /* NRPN system */
-  enum fluid_gen_type nrpn_select;      /* Generator ID of SoundFont NRPN message */
-  char nrpn_active;      /* 1 if data entry CCs are for NRPN, 0 if RPN */
+    /* monophonic list - legato detector */
+    unsigned char i_first;          /**< First note index */
+    unsigned char i_last;           /**< most recent note index since the most recent add */
+    unsigned char prev_note;        /**< previous note of the most recent add/remove */
+    unsigned char n_notes;          /**< actual number of notes in the list */
+    struct mononote monolist[FLUID_CHANNEL_SIZE_MONOLIST];   /**< monophonic list */
 
-  /* The values of the generators, set by NRPN messages, or by
-   * fluid_synth_set_gen(), are cached in the channel so they can be
-   * applied to future notes. They are copied to a voice's generators
-   * in fluid_voice_init(), which calls fluid_gen_init().  */
-  fluid_real_t gen[GEN_LAST];
+    unsigned char key_mono_sustained;         /**< previous sustained monophonic note */
+    unsigned char previous_cc_breath;		  /**< Previous Breath */
+    enum fluid_channel_legato_mode legatomode;       /**< legato mode */
+    enum fluid_channel_portamento_mode portamentomode;   /**< portamento mode */
+    /*- End of Poly/mono variables description */
 
-  /* By default, the NRPN values are relative to the values of the
-   * generators set in the SoundFont. For example, if the NRPN
-   * specifies an attack of 100 msec then 100 msec will be added to the
-   * combined attack time of the sound font and the modulators.
-   *
-   * However, it is useful to be able to specify the generator value
-   * absolutely, completely ignoring the generators of the SoundFont
-   * and the values of modulators. The gen_abs field, is a boolean
-   * flag indicating whether the NRPN value is absolute or not.
-   */
-  char gen_abs[GEN_LAST];
+    unsigned char cc[128];                         /**< MIDI controller values from [0;127] */
+    unsigned char key_pressure[128];               /**< MIDI polyphonic key pressure from [0;127] */
+
+    /* Drum channel flag, CHANNEL_TYPE_MELODIC, or CHANNEL_TYPE_DRUM. */
+    enum fluid_midi_channel_type channel_type;
+    enum fluid_interp interp_method;                    /**< Interpolation method (enum fluid_interp) */
+
+    unsigned char channel_pressure;                 /**< MIDI channel pressure from [0;127] */
+    unsigned char pitch_wheel_sensitivity;          /**< Current pitch wheel sensitivity */
+    short pitch_bend;                      /**< Current pitch bend value */
+    /* Sostenuto order id gives the order of SostenutoOn event.
+     * This value is useful to known when the sostenuto pedal is depressed
+     * (before or after a key note). We need to compare SostenutoOrderId with voice id.
+     */
+    unsigned int  sostenuto_orderid;
+
+    int tuning_bank;                      /**< Current tuning bank number */
+    int tuning_prog;                      /**< Current tuning program number */
+    fluid_tuning_t *tuning;               /**< Micro tuning */
+
+    fluid_preset_t *preset;               /**< Selected preset */
+    int sfont_bank_prog;                  /**< SoundFont ID (bit 21-31), bank (bit 7-20), program (bit 0-6) */
+
+    /* NRPN system */
+    enum fluid_gen_type nrpn_select;      /* Generator ID of SoundFont NRPN message */
+    char nrpn_active;      /* 1 if data entry CCs are for NRPN, 0 if RPN */
+
+    /* The values of the generators, set by NRPN messages, or by
+     * fluid_synth_set_gen(), are cached in the channel so they can be
+     * applied to future notes. They are copied to a voice's generators
+     * in fluid_voice_init(), which calls fluid_gen_init().  */
+    fluid_real_t gen[GEN_LAST];
+
+    /* By default, the NRPN values are relative to the values of the
+     * generators set in the SoundFont. For example, if the NRPN
+     * specifies an attack of 100 msec then 100 msec will be added to the
+     * combined attack time of the sound font and the modulators.
+     *
+     * However, it is useful to be able to specify the generator value
+     * absolutely, completely ignoring the generators of the SoundFont
+     * and the values of modulators. The gen_abs field, is a boolean
+     * flag indicating whether the NRPN value is absolute or not.
+     */
+    char gen_abs[GEN_LAST];
 };
 
-fluid_channel_t* new_fluid_channel(fluid_synth_t* synth, int num);
-void fluid_channel_init_ctrl(fluid_channel_t* chan, int is_all_ctrl_off);
-void delete_fluid_channel(fluid_channel_t* chan);
-void fluid_channel_reset(fluid_channel_t* chan);
-int fluid_channel_set_preset(fluid_channel_t* chan, fluid_preset_t* preset);
-void fluid_channel_set_sfont_bank_prog(fluid_channel_t* chan, int sfont,
+fluid_channel_t *new_fluid_channel(fluid_synth_t *synth, int num);
+void fluid_channel_init_ctrl(fluid_channel_t *chan, int is_all_ctrl_off);
+void delete_fluid_channel(fluid_channel_t *chan);
+void fluid_channel_reset(fluid_channel_t *chan);
+int fluid_channel_set_preset(fluid_channel_t *chan, fluid_preset_t *preset);
+void fluid_channel_set_sfont_bank_prog(fluid_channel_t *chan, int sfont,
                                        int bank, int prog);
-void fluid_channel_set_bank_lsb(fluid_channel_t* chan, int banklsb);
-void fluid_channel_set_bank_msb(fluid_channel_t* chan, int bankmsb);
-void fluid_channel_get_sfont_bank_prog(fluid_channel_t* chan, int *sfont,
+void fluid_channel_set_bank_lsb(fluid_channel_t *chan, int banklsb);
+void fluid_channel_set_bank_msb(fluid_channel_t *chan, int bankmsb);
+void fluid_channel_get_sfont_bank_prog(fluid_channel_t *chan, int *sfont,
                                        int *bank, int *prog);
 
 #define fluid_channel_get_preset(chan)          ((chan)->preset)
@@ -239,14 +239,14 @@ void fluid_channel_get_sfont_bank_prog(fluid_channel_t* chan, int *sfont,
 /* Returns the most recent velocity from i_last entry of the monophonic list */
 #define fluid_channel_last_vel(chan)	(chan->monolist[chan->i_last].vel)
 
-/* 
-  prev_note is used to determine fromkey_portamento as well as 
+/*
+  prev_note is used to determine fromkey_portamento as well as
   fromkey_legato (see fluid_synth_get_fromkey_portamento_legato()).
 
   prev_note is updated on noteOn/noteOff mono by the legato detector as this:
   - On noteOn mono, before adding a new note into the monolist,the most
     recent  note in the list (i.e at i_last position) is kept in prev_note.
-  - Similarly, on  noteOff mono , before removing a note out of the monolist, 
+  - Similarly, on  noteOff mono , before removing a note out of the monolist,
     the most recent note (i.e those at i_last position) is kept in prev_note.
 */
 #define fluid_channel_prev_note(chan)	(chan->prev_note)
@@ -256,33 +256,33 @@ enum fluid_channel_mode_flags_internal
 {
     FLUID_CHANNEL_BASIC = 0x04,    /**< if flag set the corresponding midi channel is a basic channel */
     FLUID_CHANNEL_ENABLED = 0x08,  /**< if flag set the corresponding midi channel is enabled, else disabled, i.e. channel ignores any MIDI messages */
-    
-/* 
-  FLUID_CHANNEL_LEGATO_PLAYING bit of channel mode keeps trace of the legato /staccato 
-  state playing.
-  FLUID_CHANNEL_LEGATO_PLAYING bit is updated on noteOn/noteOff mono by the legato detector:
-  - On noteOn, before inserting a new note into the monolist.
-  - On noteOff, after removing a note out of the monolist.
 
-  - On noteOn, this state is used by fluid_synth_noteon_mono_LOCAL()
-  to play the current  note legato or staccato.
-  - On noteOff, this state is used by fluid_synth_noteoff_mono_LOCAL()
-  to play the current noteOff legato with the most recent note.
-*/
-/* bit7, 1: means legato playing , 0: means staccato playing */
+    /*
+      FLUID_CHANNEL_LEGATO_PLAYING bit of channel mode keeps trace of the legato /staccato
+      state playing.
+      FLUID_CHANNEL_LEGATO_PLAYING bit is updated on noteOn/noteOff mono by the legato detector:
+      - On noteOn, before inserting a new note into the monolist.
+      - On noteOff, after removing a note out of the monolist.
+
+      - On noteOn, this state is used by fluid_synth_noteon_mono_LOCAL()
+      to play the current  note legato or staccato.
+      - On noteOff, this state is used by fluid_synth_noteoff_mono_LOCAL()
+      to play the current noteOff legato with the most recent note.
+    */
+    /* bit7, 1: means legato playing , 0: means staccato playing */
     FLUID_CHANNEL_LEGATO_PLAYING = 0x80
 };
 
 /* End of interface to monophonic list variables */
 
-void fluid_channel_add_monolist(fluid_channel_t* chan, unsigned char key, unsigned char vel, unsigned char onenote);
-int fluid_channel_search_monolist(fluid_channel_t* chan, unsigned char key , int * i_prev);
-void fluid_channel_remove_monolist(fluid_channel_t* chan, int i, int * i_prev);
-void fluid_channel_clear_monolist(fluid_channel_t* chan);
-void fluid_channel_set_onenote_monolist(fluid_channel_t* chan, unsigned char key, unsigned char vel);
-void fluid_channel_invalid_prev_note_staccato(fluid_channel_t* chan);
-void fluid_channel_cc_legato(fluid_channel_t* chan, int value);
-void fluid_channel_cc_breath_note_on_off(fluid_channel_t* chan, int value);
+void fluid_channel_add_monolist(fluid_channel_t *chan, unsigned char key, unsigned char vel, unsigned char onenote);
+int fluid_channel_search_monolist(fluid_channel_t *chan, unsigned char key, int *i_prev);
+void fluid_channel_remove_monolist(fluid_channel_t *chan, int i, int *i_prev);
+void fluid_channel_clear_monolist(fluid_channel_t *chan);
+void fluid_channel_set_onenote_monolist(fluid_channel_t *chan, unsigned char key, unsigned char vel);
+void fluid_channel_invalid_prev_note_staccato(fluid_channel_t *chan);
+void fluid_channel_cc_legato(fluid_channel_t *chan, int value);
+void fluid_channel_cc_breath_note_on_off(fluid_channel_t *chan, int value);
 
 
 #endif /* _FLUID_CHAN_H */
