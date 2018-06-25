@@ -30,7 +30,7 @@
 #include "fluidsynth_priv.h"
 #include "fluid_synth.h"
 #include "fluid_midi.h"
-#include "fluid_event_priv.h"
+#include "fluid_event.h"
 
 /***************************************************************
 *

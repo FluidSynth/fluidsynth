@@ -27,7 +27,7 @@
   http://www.infiniteCD.org/
 */
 
-#include "fluid_event_priv.h"
+#include "fluid_event.h"
 #include "fluid_sys.h"	// timer, threads, etc...
 #include "fluid_list.h"
 

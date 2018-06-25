@@ -28,7 +28,7 @@
 */
 
 
-#include "fluid_event_priv.h"
+#include "fluid_event.h"
 #include "fluidsynth_priv.h"
 
 /***************************************************************
