@@ -28,74 +28,82 @@
 
 typedef struct _fluid_rvoice_event_t fluid_rvoice_event_t;
 
-struct _fluid_rvoice_event_t {
-	fluid_rvoice_function_t method;
-	void* object;
+struct _fluid_rvoice_event_t
+{
+    fluid_rvoice_function_t method;
+    void *object;
     fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
 };
 
 /*
- * Bridge between the renderer thread and the midi state thread. 
+ * Bridge between the renderer thread and the midi state thread.
  * fluid_rvoice_eventhandler_fetch_all() can be called in parallell
  * with fluid_rvoice_eventhandler_push/flush()
  */
-struct _fluid_rvoice_eventhandler_t {
-	fluid_ringbuffer_t* queue; /**< List of fluid_rvoice_event_t */
-  fluid_atomic_int_t queue_stored; /**< Extras pushed but not flushed */
-	fluid_ringbuffer_t* finished_voices; /**< return queue from handler, list of fluid_rvoice_t* */ 
-	fluid_rvoice_mixer_t* mixer;
+struct _fluid_rvoice_eventhandler_t
+{
+    fluid_ringbuffer_t *queue; /**< List of fluid_rvoice_event_t */
+    fluid_atomic_int_t queue_stored; /**< Extras pushed but not flushed */
+    fluid_ringbuffer_t *finished_voices; /**< return queue from handler, list of fluid_rvoice_t* */
+    fluid_rvoice_mixer_t *mixer;
 };
 
-fluid_rvoice_eventhandler_t* new_fluid_rvoice_eventhandler(
-  int queuesize, int finished_voices_size, int bufs, 
-  int fx_bufs, fluid_real_t sample_rate, int, int);
+fluid_rvoice_eventhandler_t *new_fluid_rvoice_eventhandler(
+    int queuesize, int finished_voices_size, int bufs,
+    int fx_bufs, fluid_real_t sample_rate, int, int);
 
-void delete_fluid_rvoice_eventhandler(fluid_rvoice_eventhandler_t*);
+void delete_fluid_rvoice_eventhandler(fluid_rvoice_eventhandler_t *);
 
-int fluid_rvoice_eventhandler_dispatch_all(fluid_rvoice_eventhandler_t*);
-int fluid_rvoice_eventhandler_dispatch_count(fluid_rvoice_eventhandler_t*);
-void fluid_rvoice_eventhandler_finished_voice_callback(fluid_rvoice_eventhandler_t* eventhandler,
-                                                       fluid_rvoice_t* rvoice);
+int fluid_rvoice_eventhandler_dispatch_all(fluid_rvoice_eventhandler_t *);
+int fluid_rvoice_eventhandler_dispatch_count(fluid_rvoice_eventhandler_t *);
+void fluid_rvoice_eventhandler_finished_voice_callback(fluid_rvoice_eventhandler_t *eventhandler,
+        fluid_rvoice_t *rvoice);
 
-static FLUID_INLINE void 
-fluid_rvoice_eventhandler_flush(fluid_rvoice_eventhandler_t* handler)
+static FLUID_INLINE void
+fluid_rvoice_eventhandler_flush(fluid_rvoice_eventhandler_t *handler)
 {
-  int queue_stored = fluid_atomic_int_get(&handler->queue_stored);
-    
-  if (queue_stored > 0) {
-    fluid_atomic_int_set(&handler->queue_stored, 0);
-    fluid_ringbuffer_next_inptr(handler->queue, queue_stored);
-  }
+    int queue_stored = fluid_atomic_int_get(&handler->queue_stored);
+
+    if(queue_stored > 0)
+    {
+        fluid_atomic_int_set(&handler->queue_stored, 0);
+        fluid_ringbuffer_next_inptr(handler->queue, queue_stored);
+    }
 }
 
 /**
  * @return next finished voice, or NULL if nothing in queue
  */
-static FLUID_INLINE fluid_rvoice_t*
-fluid_rvoice_eventhandler_get_finished_voice(fluid_rvoice_eventhandler_t* handler)
+static FLUID_INLINE fluid_rvoice_t *
+fluid_rvoice_eventhandler_get_finished_voice(fluid_rvoice_eventhandler_t *handler)
 {
-  void* result = fluid_ringbuffer_get_outptr(handler->finished_voices);
-  if (result == NULL) return NULL;
-  result = * (fluid_rvoice_t**) result;
-  fluid_ringbuffer_next_outptr(handler->finished_voices);
-  return result;
+    void *result = fluid_ringbuffer_get_outptr(handler->finished_voices);
+
+    if(result == NULL)
+    {
+        return NULL;
+    }
+
+    result = * (fluid_rvoice_t **) result;
+    fluid_ringbuffer_next_outptr(handler->finished_voices);
+    return result;
 }
 
 
-int fluid_rvoice_eventhandler_push_int_real(fluid_rvoice_eventhandler_t* handler, 
-                                fluid_rvoice_function_t method, void* object, int intparam, 
-                                fluid_real_t realparam);
+int fluid_rvoice_eventhandler_push_int_real(fluid_rvoice_eventhandler_t *handler,
+        fluid_rvoice_function_t method, void *object, int intparam,
+        fluid_real_t realparam);
 
-int fluid_rvoice_eventhandler_push_ptr(fluid_rvoice_eventhandler_t* handler, 
-                                fluid_rvoice_function_t method, void* object, void* ptr); 
+int fluid_rvoice_eventhandler_push_ptr(fluid_rvoice_eventhandler_t *handler,
+                                       fluid_rvoice_function_t method, void *object, void *ptr);
 
-int fluid_rvoice_eventhandler_push(fluid_rvoice_eventhandler_t* handler,
-                                         fluid_rvoice_function_t method, void* object,
-                                         fluid_rvoice_param_t param[MAX_EVENT_PARAMS]);
+int fluid_rvoice_eventhandler_push(fluid_rvoice_eventhandler_t *handler,
+                                   fluid_rvoice_function_t method, void *object,
+                                   fluid_rvoice_param_t param[MAX_EVENT_PARAMS]);
 
 static FLUID_INLINE void
-fluid_rvoice_eventhandler_add_rvoice(fluid_rvoice_eventhandler_t* handler, 
-                                     fluid_rvoice_t* rvoice)
+fluid_rvoice_eventhandler_add_rvoice(fluid_rvoice_eventhandler_t *handler,
+                                     fluid_rvoice_t *rvoice)
 {
     fluid_rvoice_eventhandler_push_ptr(handler, fluid_rvoice_mixer_add_voice,
                                        handler->mixer, rvoice);

@@ -13,7 +13,7 @@ extern "C" {
  * Signature: ()I
  */
 JNIEXPORT jint JNICALL Java_fluidsynth_Synth_newSynth
-  (JNIEnv *, jobject);
+(JNIEnv *, jobject);
 
 /*
  * Class:     fluidsynth_Synth
@@ -21,7 +21,7 @@ JNIEXPORT jint JNICALL Java_fluidsynth_Synth_newSynth
  * Signature: (I)V
  */
 JNIEXPORT void JNICALL Java_fluidsynth_Synth_deleteSynth
-  (JNIEnv *, jobject, jint);
+(JNIEnv *, jobject, jint);
 
 /*
  * Class:     fluidsynth_Synth
@@ -29,7 +29,7 @@ JNIEXPORT void JNICALL Java_fluidsynth_Synth_deleteSynth
  * Signature: (IIIIII)I
  */
 JNIEXPORT jint JNICALL Java_fluidsynth_Synth_add
-  (JNIEnv *, jobject, jint, jint, jint, jint, jint, jint);
+(JNIEnv *, jobject, jint, jint, jint, jint, jint, jint);
 
 /*
  * Class:     fluidsynth_Synth
@@ -37,7 +37,7 @@ JNIEXPORT jint JNICALL Java_fluidsynth_Synth_add
  * Signature: (IIII)I
  */
 JNIEXPORT jint JNICALL Java_fluidsynth_Synth_remove
-  (JNIEnv *, jobject, jint, jint, jint, jint);
+(JNIEnv *, jobject, jint, jint, jint, jint);
 
 JNIEXPORT jint JNICALL Java_fluidsynth_Synth_loadSoundFont
 (JNIEnv *env, jobject obj, jint synth, jstring filename);

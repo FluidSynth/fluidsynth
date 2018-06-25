@@ -11,7 +11,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free
  * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -28,10 +28,10 @@ extern "C" {
 /**
  * @file ladspa.h
  * @brief Functions for manipulating the ladspa effects unit
- *  
- * This header defines useful functions for programatically manipulating the ladspa 
+ *
+ * This header defines useful functions for programatically manipulating the ladspa
  * effects unit of the synth that can be retrieved via fluid_synth_get_ladspa_fx().
- * 
+ *
  * Using any of those functions requires fluidsynth to be compiled with ladspa support.
  * Else all of those functions are useless dummies.
  */
@@ -56,7 +56,7 @@ FLUIDSYNTH_API int fluid_ladspa_effect_set_control(fluid_ladspa_fx_t *fx, const 
         const char *port_name, float val);
 FLUIDSYNTH_API int fluid_ladspa_effect_link(fluid_ladspa_fx_t *fx, const char *effect_name,
         const char *port_name, const char *name);
-    
+
 #ifdef __cplusplus
 }
 #endif

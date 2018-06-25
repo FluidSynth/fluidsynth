@@ -62,79 +62,82 @@ int fluid_sample_sanitize_loop(fluid_sample_t *sample, unsigned int max_end);
  */
 struct _fluid_file_callbacks_t
 {
-  fluid_sfloader_callback_open_t  fopen;
-  fluid_sfloader_callback_read_t  fread;
-  fluid_sfloader_callback_seek_t  fseek;
-  fluid_sfloader_callback_close_t fclose;
-  fluid_sfloader_callback_tell_t  ftell;
+    fluid_sfloader_callback_open_t  fopen;
+    fluid_sfloader_callback_read_t  fread;
+    fluid_sfloader_callback_seek_t  fseek;
+    fluid_sfloader_callback_close_t fclose;
+    fluid_sfloader_callback_tell_t  ftell;
 };
 
 /**
  * SoundFont loader structure.
  */
-struct _fluid_sfloader_t {
-  void* data;           /**< User defined data pointer used by _fluid_sfloader_t::load() */
+struct _fluid_sfloader_t
+{
+    void *data;           /**< User defined data pointer used by _fluid_sfloader_t::load() */
 
-  /** Callback structure specifying file operations used during soundfont loading to allow custom loading, such as from memory */
-  fluid_file_callbacks_t file_callbacks;
+    /** Callback structure specifying file operations used during soundfont loading to allow custom loading, such as from memory */
+    fluid_file_callbacks_t file_callbacks;
 
-  fluid_sfloader_free_t free;
+    fluid_sfloader_free_t free;
 
-  fluid_sfloader_load_t load;
+    fluid_sfloader_load_t load;
 };
 
 /**
  * Virtual SoundFont instance structure.
  */
-struct _fluid_sfont_t {
-  void* data;           /**< User defined data */
-  int id;               /**< SoundFont ID */
-  int refcount;         /**< SoundFont reference count (1 if no presets referencing it) */
-  int bankofs;          /**< Bank offset */
+struct _fluid_sfont_t
+{
+    void *data;           /**< User defined data */
+    int id;               /**< SoundFont ID */
+    int refcount;         /**< SoundFont reference count (1 if no presets referencing it) */
+    int bankofs;          /**< Bank offset */
 
-  fluid_sfont_free_t free;
+    fluid_sfont_free_t free;
 
-  fluid_sfont_get_name_t get_name;
+    fluid_sfont_get_name_t get_name;
 
-  fluid_sfont_get_preset_t get_preset;
+    fluid_sfont_get_preset_t get_preset;
 
-  fluid_sfont_iteration_start_t iteration_start;
+    fluid_sfont_iteration_start_t iteration_start;
 
-  fluid_sfont_iteration_next_t iteration_next;
+    fluid_sfont_iteration_next_t iteration_next;
 };
 
 /**
  * Virtual SoundFont preset.
  */
-struct _fluid_preset_t {
-  void* data;                                   /**< User supplied data */
-  fluid_sfont_t* sfont;                         /**< Parent virtual SoundFont */
+struct _fluid_preset_t
+{
+    void *data;                                   /**< User supplied data */
+    fluid_sfont_t *sfont;                         /**< Parent virtual SoundFont */
 
-  fluid_preset_free_t free;
+    fluid_preset_free_t free;
 
-  fluid_preset_get_name_t get_name;
+    fluid_preset_get_name_t get_name;
 
-  fluid_preset_get_banknum_t get_banknum;
+    fluid_preset_get_banknum_t get_banknum;
 
-  fluid_preset_get_num_t get_num;
+    fluid_preset_get_num_t get_num;
 
-  fluid_preset_noteon_t noteon;
+    fluid_preset_noteon_t noteon;
 
-  /**
-   * Virtual SoundFont preset notify method.
-   * @param preset Virtual SoundFont preset
-   * @param reason #FLUID_PRESET_SELECTED or #FLUID_PRESET_UNSELECTED
-   * @param chan MIDI channel number
-   * @return Should return #FLUID_OK
-   *
-   * Implement this optional method if the preset needs to be notified about
-   * preset select and unselect events.
-   *
-   * This method may be called from within synthesis context and therefore
-   * should be as efficient as possible and not perform any operations considered
-   * bad for realtime audio output (memory allocations and other OS calls).
-   */
-  int (*notify)(fluid_preset_t* preset, int reason, int chan);
+    /**
+     * Virtual SoundFont preset notify method.
+     * @param preset Virtual SoundFont preset
+     * @param reason #FLUID_PRESET_SELECTED or #FLUID_PRESET_UNSELECTED
+     * @param chan MIDI channel number
+     * @return Should return #FLUID_OK
+     *
+     * Implement this optional method if the preset needs to be notified about
+     * preset select and unselect events.
+     *
+     * This method may be called from within synthesis context and therefore
+     * should be as efficient as possible and not perform any operations considered
+     * bad for realtime audio output (memory allocations and other OS calls).
+     */
+    int (*notify)(fluid_preset_t *preset, int reason, int chan);
 };
 
 /**
@@ -142,46 +145,46 @@ struct _fluid_preset_t {
  */
 struct _fluid_sample_t
 {
-  char name[21];                /**< Sample name */
+    char name[21];                /**< Sample name */
 
-  /* The following for sample pointers store the original pointers from the Soundfont
-   * file. They are never changed after loading and are used to re-create the
-   * actual sample pointers after a sample has been unloaded and loaded again. The
-   * actual sample pointers get modified during loading for SF3 (compressed) samples
-   * and individually loaded SF2 samples. */
-  unsigned int source_start;
-  unsigned int source_end;
-  unsigned int source_loopstart;
-  unsigned int source_loopend;
+    /* The following for sample pointers store the original pointers from the Soundfont
+     * file. They are never changed after loading and are used to re-create the
+     * actual sample pointers after a sample has been unloaded and loaded again. The
+     * actual sample pointers get modified during loading for SF3 (compressed) samples
+     * and individually loaded SF2 samples. */
+    unsigned int source_start;
+    unsigned int source_end;
+    unsigned int source_loopstart;
+    unsigned int source_loopend;
 
-  unsigned int start;           /**< Start index */
-  unsigned int end;	        /**< End index, index of last valid sample point (contrary to SF spec) */
-  unsigned int loopstart;       /**< Loop start index */
-  unsigned int loopend;         /**< Loop end index, first point following the loop (superimposed on loopstart) */
+    unsigned int start;           /**< Start index */
+    unsigned int end;	        /**< End index, index of last valid sample point (contrary to SF spec) */
+    unsigned int loopstart;       /**< Loop start index */
+    unsigned int loopend;         /**< Loop end index, first point following the loop (superimposed on loopstart) */
 
-  unsigned int samplerate;      /**< Sample rate */
-  int origpitch;                /**< Original pitch (MIDI note number, 0-127) */
-  int pitchadj;                 /**< Fine pitch adjustment (+/- 99 cents) */
-  int sampletype;               /**< Specifies the type of this sample as indicated by the #fluid_sample_type enum */
-  int auto_free;                /**< TRUE if _fluid_sample_t::data and _fluid_sample_t::data24 should be freed upon sample destruction */
-  short* data;                  /**< Pointer to the sample's 16 bit PCM data */
-  char* data24;                 /**< If not NULL, pointer to the least significant byte counterparts of each sample data point in order to create 24 bit audio samples */
+    unsigned int samplerate;      /**< Sample rate */
+    int origpitch;                /**< Original pitch (MIDI note number, 0-127) */
+    int pitchadj;                 /**< Fine pitch adjustment (+/- 99 cents) */
+    int sampletype;               /**< Specifies the type of this sample as indicated by the #fluid_sample_type enum */
+    int auto_free;                /**< TRUE if _fluid_sample_t::data and _fluid_sample_t::data24 should be freed upon sample destruction */
+    short *data;                  /**< Pointer to the sample's 16 bit PCM data */
+    char *data24;                 /**< If not NULL, pointer to the least significant byte counterparts of each sample data point in order to create 24 bit audio samples */
 
-  int amplitude_that_reaches_noise_floor_is_valid;      /**< Indicates if \a amplitude_that_reaches_noise_floor is valid (TRUE), set to FALSE initially to calculate. */
-  double amplitude_that_reaches_noise_floor;            /**< The amplitude at which the sample's loop will be below the noise floor.  For voice off optimization, calculated automatically. */
+    int amplitude_that_reaches_noise_floor_is_valid;      /**< Indicates if \a amplitude_that_reaches_noise_floor is valid (TRUE), set to FALSE initially to calculate. */
+    double amplitude_that_reaches_noise_floor;            /**< The amplitude at which the sample's loop will be below the noise floor.  For voice off optimization, calculated automatically. */
 
-  unsigned int refcount;        /**< Count of voices using this sample */
-  int preset_count;             /**< Count of selected presets using this sample (used for dynamic sample loading) */
+    unsigned int refcount;        /**< Count of voices using this sample */
+    int preset_count;             /**< Count of selected presets using this sample (used for dynamic sample loading) */
 
-  /**
-   * Implement this function to receive notification when sample is no longer used.
-   * @param sample Virtual SoundFont sample
-   * @param reason #FLUID_SAMPLE_DONE only currently
-   * @return Should return #FLUID_OK
-   */
-  int (*notify)(fluid_sample_t* sample, int reason);
+    /**
+     * Implement this function to receive notification when sample is no longer used.
+     * @param sample Virtual SoundFont sample
+     * @param reason #FLUID_SAMPLE_DONE only currently
+     * @return Should return #FLUID_OK
+     */
+    int (*notify)(fluid_sample_t *sample, int reason);
 
-  void* userdata;       /**< User defined data */
+    void *userdata;       /**< User defined data */
 };
 
 

@@ -75,10 +75,10 @@ enum fluid_midi_bank_select
 
 enum fluid_synth_status
 {
-  FLUID_SYNTH_CLEAN,
-  FLUID_SYNTH_PLAYING,
-  FLUID_SYNTH_QUIET,
-  FLUID_SYNTH_STOPPED
+    FLUID_SYNTH_CLEAN,
+    FLUID_SYNTH_PLAYING,
+    FLUID_SYNTH_QUIET,
+    FLUID_SYNTH_STOPPED
 };
 
 #define SYNTH_REVERB_CHANNEL 0
@@ -101,72 +101,72 @@ enum fluid_synth_status
 
 struct _fluid_synth_t
 {
-  fluid_rec_mutex_t mutex;           /**< Lock for public API */
-  int use_mutex;                     /**< Use mutex for all public API functions? */
-  int public_api_count;              /**< How many times the mutex is currently locked */
+    fluid_rec_mutex_t mutex;           /**< Lock for public API */
+    int use_mutex;                     /**< Use mutex for all public API functions? */
+    int public_api_count;              /**< How many times the mutex is currently locked */
 
-  fluid_settings_t* settings;        /**< the synthesizer settings */
-  int device_id;                     /**< Device ID used for SYSEX messages */
-  int polyphony;                     /**< Maximum polyphony */
-  int with_reverb;                   /**< Should the synth use the built-in reverb unit? */
-  int with_chorus;                   /**< Should the synth use the built-in chorus unit? */
-  int verbose;                       /**< Turn verbose mode on? */
-  double sample_rate;                /**< The sample rate */
-  int midi_channels;                 /**< the number of MIDI channels (>= 16) */
-  int bank_select;                   /**< the style of Bank Select MIDI messages */
-  int audio_channels;                /**< the number of audio channels (1 channel=left+right) */
-  int audio_groups;                  /**< the number of (stereo) 'sub'groups from the synth.
+    fluid_settings_t *settings;        /**< the synthesizer settings */
+    int device_id;                     /**< Device ID used for SYSEX messages */
+    int polyphony;                     /**< Maximum polyphony */
+    int with_reverb;                   /**< Should the synth use the built-in reverb unit? */
+    int with_chorus;                   /**< Should the synth use the built-in chorus unit? */
+    int verbose;                       /**< Turn verbose mode on? */
+    double sample_rate;                /**< The sample rate */
+    int midi_channels;                 /**< the number of MIDI channels (>= 16) */
+    int bank_select;                   /**< the style of Bank Select MIDI messages */
+    int audio_channels;                /**< the number of audio channels (1 channel=left+right) */
+    int audio_groups;                  /**< the number of (stereo) 'sub'groups from the synth.
 					  Typically equal to audio_channels. */
-  int effects_channels;              /**< the number of effects channels (>= 2) */
-  int state;                         /**< the synthesizer state */
-  fluid_atomic_uint_t ticks_since_start;    /**< the number of audio samples since the start */
-  unsigned int start;                /**< the start in msec, as returned by system clock */
-  fluid_overflow_prio_t overflow;    /**< parameters for overflow priority (aka voice-stealing) */
+    int effects_channels;              /**< the number of effects channels (>= 2) */
+    int state;                         /**< the synthesizer state */
+    fluid_atomic_uint_t ticks_since_start;    /**< the number of audio samples since the start */
+    unsigned int start;                /**< the start in msec, as returned by system clock */
+    fluid_overflow_prio_t overflow;    /**< parameters for overflow priority (aka voice-stealing) */
 
-  fluid_list_t *loaders;             /**< the SoundFont loaders */
-  fluid_list_t *sfont;          /**< List of fluid_sfont_info_t for each loaded SoundFont (remains until SoundFont is unloaded) */
-  int sfont_id;             /**< Incrementing ID assigned to each loaded SoundFont */
+    fluid_list_t *loaders;             /**< the SoundFont loaders */
+    fluid_list_t *sfont;          /**< List of fluid_sfont_info_t for each loaded SoundFont (remains until SoundFont is unloaded) */
+    int sfont_id;             /**< Incrementing ID assigned to each loaded SoundFont */
 
-  float gain;                        /**< master gain */
-  fluid_channel_t** channel;         /**< the channels */
-  int nvoice;                        /**< the length of the synthesis process array (max polyphony allowed) */
-  fluid_voice_t** voice;             /**< the synthesis voices */
-  int active_voice_count;            /**< count of active voices */
-  unsigned int noteid;               /**< the id is incremented for every new note. it's used for noteoff's  */
-  unsigned int storeid;
-  int fromkey_portamento;			 /**< fromkey portamento */
-  fluid_rvoice_eventhandler_t* eventhandler;
+    float gain;                        /**< master gain */
+    fluid_channel_t **channel;         /**< the channels */
+    int nvoice;                        /**< the length of the synthesis process array (max polyphony allowed) */
+    fluid_voice_t **voice;             /**< the synthesis voices */
+    int active_voice_count;            /**< count of active voices */
+    unsigned int noteid;               /**< the id is incremented for every new note. it's used for noteoff's  */
+    unsigned int storeid;
+    int fromkey_portamento;			 /**< fromkey portamento */
+    fluid_rvoice_eventhandler_t *eventhandler;
 
-  double reverb_roomsize;             /**< Shadow of reverb roomsize */
-  double reverb_damping;              /**< Shadow of reverb damping */
-  double reverb_width;                /**< Shadow of reverb width */
-  double reverb_level;                /**< Shadow of reverb level */
+    double reverb_roomsize;             /**< Shadow of reverb roomsize */
+    double reverb_damping;              /**< Shadow of reverb damping */
+    double reverb_width;                /**< Shadow of reverb width */
+    double reverb_level;                /**< Shadow of reverb level */
 
-  int chorus_nr;                     /**< Shadow of chorus number */
-  double chorus_level;                /**< Shadow of chorus level */
-  double chorus_speed;                /**< Shadow of chorus speed */
-  double chorus_depth;                /**< Shadow of chorus depth */
-  int chorus_type;                   /**< Shadow of chorus type */
+    int chorus_nr;                     /**< Shadow of chorus number */
+    double chorus_level;                /**< Shadow of chorus level */
+    double chorus_speed;                /**< Shadow of chorus speed */
+    double chorus_depth;                /**< Shadow of chorus depth */
+    int chorus_type;                   /**< Shadow of chorus type */
 
-  int cur;                           /**< the current sample in the audio buffers to be output */
-  int curmax;                        /**< current amount of samples present in the audio buffers */
-  int dither_index;		     /**< current index in random dither value buffer: fluid_synth_(write_s16|dither_s16) */
+    int cur;                           /**< the current sample in the audio buffers to be output */
+    int curmax;                        /**< current amount of samples present in the audio buffers */
+    int dither_index;		     /**< current index in random dither value buffer: fluid_synth_(write_s16|dither_s16) */
 
-  fluid_atomic_float_t cpu_load;                    /**< CPU load in percent (CPU time required / audio synthesized time * 100) */
+    fluid_atomic_float_t cpu_load;                    /**< CPU load in percent (CPU time required / audio synthesized time * 100) */
 
-  fluid_tuning_t*** tuning;          /**< 128 banks of 128 programs for the tunings */
-  fluid_private_t tuning_iter;       /**< Tuning iterators per each thread */
+    fluid_tuning_t ***tuning;          /**< 128 banks of 128 programs for the tunings */
+    fluid_private_t tuning_iter;       /**< Tuning iterators per each thread */
 
-  fluid_sample_timer_t* sample_timers; /**< List of timers triggered before a block is processed */
-  unsigned int min_note_length_ticks; /**< If note-offs are triggered just after a note-on, they will be delayed */
+    fluid_sample_timer_t *sample_timers; /**< List of timers triggered before a block is processed */
+    unsigned int min_note_length_ticks; /**< If note-offs are triggered just after a note-on, they will be delayed */
 
-  int cores;                         /**< Number of CPU cores (1 by default) */
+    int cores;                         /**< Number of CPU cores (1 by default) */
 
-  fluid_mod_t* default_mod;          /**< the (dynamic) list of default modulators */
+    fluid_mod_t *default_mod;          /**< the (dynamic) list of default modulators */
 
-  fluid_ladspa_fx_t* ladspa_fx;      /**< Effects unit for LADSPA support */
-  enum fluid_iir_filter_type custom_filter_type; /**< filter type of the user-defined filter currently used for all voices */
-  enum fluid_iir_filter_flags custom_filter_flags; /**< filter type of the user-defined filter currently used for all voices */
+    fluid_ladspa_fx_t *ladspa_fx;      /**< Effects unit for LADSPA support */
+    enum fluid_iir_filter_type custom_filter_type; /**< filter type of the user-defined filter currently used for all voices */
+    enum fluid_iir_filter_flags custom_filter_flags; /**< filter type of the user-defined filter currently used for all voices */
 };
 
 /**
@@ -180,53 +180,53 @@ struct _fluid_synth_t
  * @param roff Offset index in 'out2' for first sample
  * @param rincr Increment between samples stored to 'out2'
  */
-typedef int (*fluid_audio_callback_t)(fluid_synth_t* synth, int len, 
-				     void* out1, int loff, int lincr, 
-				     void* out2, int roff, int rincr);
+typedef int (*fluid_audio_callback_t)(fluid_synth_t *synth, int len,
+                                      void *out1, int loff, int lincr,
+                                      void *out2, int roff, int rincr);
 
-fluid_preset_t* fluid_synth_find_preset(fluid_synth_t* synth,
-				      int banknum,
-				      int prognum);
-void fluid_synth_sfont_unref (fluid_synth_t *synth, fluid_sfont_t *sfont);
+fluid_preset_t *fluid_synth_find_preset(fluid_synth_t *synth,
+                                        int banknum,
+                                        int prognum);
+void fluid_synth_sfont_unref(fluid_synth_t *synth, fluid_sfont_t *sfont);
 
-void fluid_synth_dither_s16(int *dither_index, int len, float* lin, float* rin,
-			    void* lout, int loff, int lincr,
-			    void* rout, int roff, int rincr);
+void fluid_synth_dither_s16(int *dither_index, int len, float *lin, float *rin,
+                            void *lout, int loff, int lincr,
+                            void *rout, int roff, int rincr);
 
-int fluid_synth_reset_reverb(fluid_synth_t* synth);
-int fluid_synth_set_reverb_preset(fluid_synth_t* synth, unsigned int num);
-int fluid_synth_set_reverb_full(fluid_synth_t* synth, int set, double roomsize,
+int fluid_synth_reset_reverb(fluid_synth_t *synth);
+int fluid_synth_set_reverb_preset(fluid_synth_t *synth, unsigned int num);
+int fluid_synth_set_reverb_full(fluid_synth_t *synth, int set, double roomsize,
                                 double damping, double width, double level);
 
-int fluid_synth_reset_chorus(fluid_synth_t* synth);
-int fluid_synth_set_chorus_full(fluid_synth_t* synth, int set, int nr, double level,
+int fluid_synth_reset_chorus(fluid_synth_t *synth);
+int fluid_synth_set_chorus_full(fluid_synth_t *synth, int set, int nr, double level,
                                 double speed, double depth_ms, int type);
 
-fluid_sample_timer_t* new_fluid_sample_timer(fluid_synth_t* synth, fluid_timer_callback_t callback, void* data);
-void delete_fluid_sample_timer(fluid_synth_t* synth, fluid_sample_timer_t* timer);
+fluid_sample_timer_t *new_fluid_sample_timer(fluid_synth_t *synth, fluid_timer_callback_t callback, void *data);
+void delete_fluid_sample_timer(fluid_synth_t *synth, fluid_sample_timer_t *timer);
 
 
-void fluid_synth_process_event_queue(fluid_synth_t* synth);
+void fluid_synth_process_event_queue(fluid_synth_t *synth);
 
-int fluid_synth_set_gen2 (fluid_synth_t* synth, int chan,
-                                         int param, float value,
-                                         int absolute, int normalized);
+int fluid_synth_set_gen2(fluid_synth_t *synth, int chan,
+                         int param, float value,
+                         int absolute, int normalized);
 /*
  * misc
  */
-void fluid_synth_settings(fluid_settings_t* settings);
+void fluid_synth_settings(fluid_settings_t *settings);
 
 
 /* extern declared in fluid_synth_monopoly.c */
 
-int fluid_synth_noteon_mono_staccato(fluid_synth_t* synth,int chan,int key,int vel);
-int fluid_synth_noteon_mono_LOCAL(fluid_synth_t* synth, int chan, int key, int vel);
-int fluid_synth_noteoff_mono_LOCAL(fluid_synth_t* synth, int chan, int key);
-int fluid_synth_noteon_monopoly_legato(fluid_synth_t* synth, int chan, int fromkey, int tokey, int vel);
-int fluid_synth_noteoff_monopoly(fluid_synth_t* synth, int chan, int key, char Mono);
+int fluid_synth_noteon_mono_staccato(fluid_synth_t *synth, int chan, int key, int vel);
+int fluid_synth_noteon_mono_LOCAL(fluid_synth_t *synth, int chan, int key, int vel);
+int fluid_synth_noteoff_mono_LOCAL(fluid_synth_t *synth, int chan, int key);
+int fluid_synth_noteon_monopoly_legato(fluid_synth_t *synth, int chan, int fromkey, int tokey, int vel);
+int fluid_synth_noteoff_monopoly(fluid_synth_t *synth, int chan, int key, char Mono);
 
-fluid_voice_t*
-fluid_synth_alloc_voice_LOCAL(fluid_synth_t* synth, fluid_sample_t* sample, int chan, int key, int vel, fluid_zone_range_t* zone_range);
+fluid_voice_t *
+fluid_synth_alloc_voice_LOCAL(fluid_synth_t *synth, fluid_sample_t *sample, int chan, int key, int vel, fluid_zone_range_t *zone_range);
 
-void fluid_synth_release_voice_on_same_note_LOCAL(fluid_synth_t* synth, int chan, int key);
+void fluid_synth_release_voice_on_same_note_LOCAL(fluid_synth_t *synth, int chan, int key);
 #endif  /* _FLUID_SYNTH_H */

@@ -33,30 +33,30 @@
 
 typedef struct _fluid_list_t fluid_list_t;
 
-typedef int (*fluid_compare_func_t)(void* a, void* b);
+typedef int (*fluid_compare_func_t)(void *a, void *b);
 
 struct _fluid_list_t
 {
-  void* data;
-  fluid_list_t *next;
+    void *data;
+    fluid_list_t *next;
 };
 
-fluid_list_t* new_fluid_list(void);
+fluid_list_t *new_fluid_list(void);
 void delete_fluid_list(fluid_list_t *list);
 void delete1_fluid_list(fluid_list_t *list);
-fluid_list_t* fluid_list_sort(fluid_list_t *list, fluid_compare_func_t compare_func);
-fluid_list_t* fluid_list_append(fluid_list_t *list, void* data);
-fluid_list_t* fluid_list_prepend(fluid_list_t *list, void* data);
-fluid_list_t* fluid_list_remove(fluid_list_t *list, void* data);
-fluid_list_t* fluid_list_remove_link(fluid_list_t *list, fluid_list_t *llink);
-fluid_list_t* fluid_list_nth(fluid_list_t *list, int n);
-fluid_list_t* fluid_list_last(fluid_list_t *list);
-fluid_list_t* fluid_list_insert_at(fluid_list_t *list, int n, void* data);
+fluid_list_t *fluid_list_sort(fluid_list_t *list, fluid_compare_func_t compare_func);
+fluid_list_t *fluid_list_append(fluid_list_t *list, void *data);
+fluid_list_t *fluid_list_prepend(fluid_list_t *list, void *data);
+fluid_list_t *fluid_list_remove(fluid_list_t *list, void *data);
+fluid_list_t *fluid_list_remove_link(fluid_list_t *list, fluid_list_t *llink);
+fluid_list_t *fluid_list_nth(fluid_list_t *list, int n);
+fluid_list_t *fluid_list_last(fluid_list_t *list);
+fluid_list_t *fluid_list_insert_at(fluid_list_t *list, int n, void *data);
 int fluid_list_size(fluid_list_t *list);
 
 #define fluid_list_next(slist)	((slist) ? (((fluid_list_t *)(slist))->next) : NULL)
 #define fluid_list_get(slist)	((slist) ? ((slist)->data) : NULL)
 
-int fluid_list_str_compare_func (void *a, void *b);
+int fluid_list_str_compare_func(void *a, void *b);
 
 #endif  /* _FLUID_LIST_H */

@@ -11,7 +11,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free
  * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -32,10 +32,10 @@ extern "C" {
  * @brief Functions for binding sequencer objects to other subsystems.
  */
 
-FLUIDSYNTH_API 
-fluid_seq_id_t fluid_sequencer_register_fluidsynth(fluid_sequencer_t* seq, fluid_synth_t* synth);
+FLUIDSYNTH_API
+fluid_seq_id_t fluid_sequencer_register_fluidsynth(fluid_sequencer_t *seq, fluid_synth_t *synth);
 FLUIDSYNTH_API int
-fluid_sequencer_add_midi_event_to_buffer(void* data, fluid_midi_event_t* event);
+fluid_sequencer_add_midi_event_to_buffer(void *data, fluid_midi_event_t *event);
 
 
 #ifdef __cplusplus
