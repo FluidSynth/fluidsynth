@@ -305,6 +305,7 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
 {
     int ticks = voice->envlfo.ticks;
     int count, is_looping;
+    fluid_real_t modenv_val;
 
     /******************* sample sanity check **********/
 
@@ -361,6 +362,12 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
 
     /******************* phase **********************/
 
+    /* SF2.04 section 8.1.2 #26:
+     * attack of modEnv is convex ?!?
+     */
+    modenv_val = (fluid_adsr_env_get_section(&voice->envlfo.modenv) == FLUID_VOICE_ENVATTACK)
+                 ? fluid_convex(127 * fluid_adsr_env_get_val(&voice->envlfo.modenv))
+                 : fluid_adsr_env_get_val(&voice->envlfo.modenv);
     /* Calculate the number of samples, that the DSP loop advances
      * through the original waveform with each step in the output
      * buffer. It is the ratio between the frequencies of original
@@ -369,7 +376,7 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
                             voice->dsp.pitchoffset +
                             fluid_lfo_get_val(&voice->envlfo.modlfo) * voice->envlfo.modlfo_to_pitch
                             + fluid_lfo_get_val(&voice->envlfo.viblfo) * voice->envlfo.viblfo_to_pitch
-                            + fluid_adsr_env_get_val(&voice->envlfo.modenv) * voice->envlfo.modenv_to_pitch)
+                            + modenv_val * voice->envlfo.modenv_to_pitch)
                             / voice->dsp.root_pitch_hz;
 
     /******************* portamento ****************/
@@ -455,7 +462,7 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
 
     fluid_iir_filter_calc(&voice->resonant_filter, voice->dsp.output_rate,
                           fluid_lfo_get_val(&voice->envlfo.modlfo) * voice->envlfo.modlfo_to_fc +
-                          fluid_adsr_env_get_val(&voice->envlfo.modenv) * voice->envlfo.modenv_to_fc);
+                          modenv_val * voice->envlfo.modenv_to_fc);
 
     fluid_iir_filter_apply(&voice->resonant_filter, dsp_buf, count);
 
