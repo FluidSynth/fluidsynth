@@ -23,7 +23,7 @@
 
 #include "fluid_sys.h"
 
-void fluid_midi_driver_settings(fluid_settings_t* settings);
+void fluid_midi_driver_settings(fluid_settings_t *settings);
 
 
 /*
@@ -32,9 +32,9 @@ void fluid_midi_driver_settings(fluid_settings_t* settings);
 
 struct _fluid_midi_driver_t
 {
-  const char* name;
-  handle_midi_event_func_t handler;
-  void* data;
+    const char *name;
+    handle_midi_event_func_t handler;
+    void *data;
 };
 
 

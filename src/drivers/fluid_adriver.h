@@ -23,7 +23,7 @@
 
 #include "fluid_sys.h"
 
-void fluid_audio_driver_settings(fluid_settings_t* settings);
+void fluid_audio_driver_settings(fluid_settings_t *settings);
 
 
 /*
@@ -32,7 +32,7 @@ void fluid_audio_driver_settings(fluid_settings_t* settings);
 
 struct _fluid_audio_driver_t
 {
-  const char* name;
+    const char *name;
 };
 
 

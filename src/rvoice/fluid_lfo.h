@@ -25,16 +25,17 @@
 
 typedef struct _fluid_lfo_t fluid_lfo_t;
 
-struct _fluid_lfo_t {
-	fluid_real_t val;          /* the current value of the LFO */
-	unsigned int delay;       /* the delay of the lfo in samples */
-	fluid_real_t increment;         /* the lfo frequency is converted to a per-buffer increment */
+struct _fluid_lfo_t
+{
+    fluid_real_t val;          /* the current value of the LFO */
+    unsigned int delay;       /* the delay of the lfo in samples */
+    fluid_real_t increment;         /* the lfo frequency is converted to a per-buffer increment */
 };
 
-static FLUID_INLINE void 
-fluid_lfo_reset(fluid_lfo_t* lfo)
+static FLUID_INLINE void
+fluid_lfo_reset(fluid_lfo_t *lfo)
 {
-  lfo->val = 0.0f;
+    lfo->val = 0.0f;
 }
 
 // These two cannot be inlined since they're used by event_dispatch
@@ -42,29 +43,31 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_lfo_set_incr);
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_lfo_set_delay);
 
 static FLUID_INLINE fluid_real_t
-fluid_lfo_get_val(fluid_lfo_t* lfo)
+fluid_lfo_get_val(fluid_lfo_t *lfo)
 {
-  return lfo->val;
+    return lfo->val;
 }
 
-static FLUID_INLINE void 
-fluid_lfo_calc(fluid_lfo_t* lfo, unsigned int cur_delay)
+static FLUID_INLINE void
+fluid_lfo_calc(fluid_lfo_t *lfo, unsigned int cur_delay)
 {
-  if (cur_delay < lfo->delay) 
-    return;
-  
-  lfo->val += lfo->increment;
-  
-  if (lfo->val > (fluid_real_t) 1.0)
-  {
-    lfo->increment = -lfo->increment;
-    lfo->val = (fluid_real_t) 2.0 - lfo->val;
-  }
-  else if (lfo->val < (fluid_real_t) -1.0)
-  {
-    lfo->increment = -lfo->increment;
-    lfo->val = (fluid_real_t) -2.0 - lfo->val;
-  }
+    if(cur_delay < lfo->delay)
+    {
+        return;
+    }
+
+    lfo->val += lfo->increment;
+
+    if(lfo->val > (fluid_real_t) 1.0)
+    {
+        lfo->increment = -lfo->increment;
+        lfo->val = (fluid_real_t) 2.0 - lfo->val;
+    }
+    else if(lfo->val < (fluid_real_t) -1.0)
+    {
+        lfo->increment = -lfo->increment;
+        lfo->val = (fluid_real_t) -2.0 - lfo->val;
+    }
 
 }
 

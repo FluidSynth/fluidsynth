@@ -19,7 +19,7 @@ int main()
         float left[SAMPLES], right[SAMPLES];
 
         // array of buffers used to setup channel mapping
-        float *dry[1*2], *fx[1*2];
+        float *dry[1 * 2], *fx[1 * 2];
 
         // first make sure to zero out the sample buffers
         memset(left, 0, sizeof(left));
@@ -31,32 +31,41 @@ int main()
 
         // Setup channel mapping for a single stereo channel to which to render effects to.
         // Just using the same sample buffers as for dry audio is fine here, as it will cause the effects to be mixed with dry output.
-        // Note: reverb and chorus together make up two stereo channels. Setting up only one stereo channel is sufficient 
+        // Note: reverb and chorus together make up two stereo channels. Setting up only one stereo channel is sufficient
         // as the channels warp around (i.e. chorus will be mixed with reverb channel).
         fx[0] = left;
         fx[1] = right;
 
         int err = fluid_synth_process(synth, SAMPLES, 2, fx, 2, dry);
+
         if(err == FLUID_FAILED)
+        {
             puts(„oops“);
+        }
 
 
         // USECASE2: only render dry audio and discard effects
         // same as above, but call fluid_synth_process() like:
         int err = fluid_synth_process(synth, SAMPLES, 0, NULL, 2, dry);
+
         if(err == FLUID_FAILED)
+        {
             puts(„oops“);
+        }
     }
-    
+
 
     // USECASE3: render audio and discard all samples
     {
         int err = fluid_synth_process(synth, SAMPLES, 0, NULL, 0, NULL);
+
         if(err == FLUID_FAILED)
+        {
             puts(„oops“);
+        }
     }
 
-    
+
     // USECASE4: multi-channel rendering, i.e. render all audio and effects channels to dedicated audio buffers
     // ofc it‘s not a good idea to allocate all the arrays on the stack
     {
@@ -79,7 +88,7 @@ int main()
         // ...
         // dry[i*2 + 0] = i‘th audio channel left
         // dry[i*2 + 1] = i‘th audio channel right
-        for(int i=0; i<n_aud_chan*2; i++)
+        for(int i = 0; i < n_aud_chan * 2; i++)
         {
             dry[i] = &samp_buf[i * SAMPLES];
         }
@@ -90,17 +99,20 @@ int main()
         // fx[1] = global reverb channel right
         // fx[2] = global chorus channel left
         // fx[3] = global chorus channel right
-        for(int i=0; i<n_fx_chan*2; i++)
+        for(int i = 0; i < n_fx_chan * 2; i++)
         {
-            fx[i] = &samp_buf[n_aud_chan*2*SAMPLES + i * SAMPLES];
+            fx[i] = &samp_buf[n_aud_chan * 2 * SAMPLES + i * SAMPLES];
         }
 
         // dont forget to zero sample buffer(s) before each rendering
         memset(samp_buf, 0, sizeof(samp_buf));
 
-        int err = fluid_synth_process(synth, SAMPLES, n_fx_chan*2, fx, n_aud_chan*2, dry);
+        int err = fluid_synth_process(synth, SAMPLES, n_fx_chan * 2, fx, n_aud_chan * 2, dry);
+
         if(err == FLUID_FAILED)
+        {
             puts(„oops“);
+        }
     }
 
     return 0;

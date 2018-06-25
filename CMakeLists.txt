@@ -334,9 +334,9 @@ find_program( CLANG_TIDY
     message ( STATUS "Found clang-tidy" )
         # whenever clang-tidy is available, use it to automatically add braces after ever "make"
         if ( WITH_PROFILING )
-#             set ( CMAKE_C_CLANG_TIDY "clang-tidy" )
+            set ( CMAKE_C_CLANG_TIDY "clang-tidy" )
         else ( WITH_PROFILING )
-#             set ( CMAKE_C_CLANG_TIDY "clang-tidy;-checks=-*,readability-braces-around-statements;-format-style=file" )
+            set ( CMAKE_C_CLANG_TIDY "clang-tidy;-checks=-*,readability-braces-*;-format-style=file" )
         endif ( WITH_PROFILING )
     endif ( CLANG_TIDY )
 endif ( CMAKE_VERSION VERSION_GREATER "3.6.0" )
@@ -356,17 +356,33 @@ file(GLOB_RECURSE
      )
 
 # Adding clang-format target if executable is found
-find_program ( CLANG_FORMAT "clang-format" )
-if ( CLANG_FORMAT )
+# find_program ( CLANG_FORMAT "clang-format" )
+# if ( CLANG_FORMAT )
+#   add_custom_target(
+#     clang-format
+#     COMMAND ${CLANG_FORMAT}
+#     -i
+#     -style=file
+#     ${ALL_SOURCE_FILES}
+#     )
+# endif(CLANG_FORMAT)
+
+find_program ( ASTYLE "astyle" )
+if ( ASTYLE )
   add_custom_target(
     format
-    COMMAND ${CLANG_FORMAT}
-    -i
-    -style=file
+    COMMAND ${ASTYLE}
+    -A1
+    -xb
+    -j
+    -k3
+    -p
+    -f
+    -n
+    -U
     ${ALL_SOURCE_FILES}
     )
-endif(CLANG_FORMAT)
-
+endif(ASTYLE)
 
 if(NOT enable-pkgconfig)
 

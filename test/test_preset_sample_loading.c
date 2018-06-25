@@ -9,11 +9,11 @@
 int main(void)
 {
     int id[2], sfcount, dyn_sample, i;
-    
+
     /* setup */
     fluid_settings_t *settings = new_fluid_settings();
-    
-    for(dyn_sample=0; dyn_sample <= 1; dyn_sample++)
+
+    for(dyn_sample = 0; dyn_sample <= 1; dyn_sample++)
     {
         fluid_synth_t *synth;
         fluid_settings_setint(settings, "synth.dynamic-sample-loading", dyn_sample);
@@ -21,9 +21,9 @@ int main(void)
         id[0] = fluid_synth_sfload(synth, TEST_SOUNDFONT, 0);
         id[1] = fluid_synth_sfload(synth, TEST_SOUNDFONT_SF3, 0);
         sfcount = fluid_synth_sfcount(synth);
-        
+
         TEST_ASSERT(id[0] != FLUID_FAILED);
-        
+
 #if LIBSNDFILE_SUPPORT
         TEST_ASSERT(id[1] != FLUID_FAILED);
         TEST_ASSERT(sfcount == 2);
@@ -31,8 +31,8 @@ int main(void)
         TEST_ASSERT(id[1] == FLUID_FAILED);
         TEST_ASSERT(sfcount == 1);
 #endif
-        
-        for(i=0; i<sfcount; i++)
+
+        for(i = 0; i < sfcount; i++)
         {
             fluid_preset_t *preset;
             fluid_list_t *list;
@@ -44,43 +44,51 @@ int main(void)
 
             /* Make sure we have the right number of presets */
             fluid_sfont_iteration_start(sfont);
-            while ((preset = fluid_sfont_iteration_next(sfont)) != NULL) {
+
+            while((preset = fluid_sfont_iteration_next(sfont)) != NULL)
+            {
                 count++;
-                
+
                 if(preset->notify != NULL)
                 {
                     preset->notify(preset, FLUID_PRESET_SELECTED, 0);
                 }
-                
+
                 /* make sure we actually got a different preset */
                 TEST_ASSERT(preset != prev_preset);
                 prev_preset = preset;
             }
+
             /* VintageDreams has 136 presets */
             TEST_ASSERT(count == 136);
 
             /* Make sure we have the right number of samples */
             count = 0;
-            for (list = defsfont->sample; list; list = fluid_list_next(list))
+
+            for(list = defsfont->sample; list; list = fluid_list_next(list))
             {
                 fluid_sample_t *sample = fluid_list_get(list);
-                if (sample->data != NULL)
+
+                if(sample->data != NULL)
                 {
                     count++;
                 }
-                
+
                 TEST_ASSERT(sample->amplitude_that_reaches_noise_floor_is_valid);
 
                 /* Make sure we actually got a different sample */
                 TEST_ASSERT(sample != prev_sample);
                 prev_sample = sample;
             }
+
             /* VintageDreams has 123 valid samples (one is a ROM sample and ignored) */
             TEST_ASSERT(count == 123);
         }
+
         /* teardown */
         delete_fluid_synth(synth);
     }
+
     delete_fluid_settings(settings);
 
     return EXIT_SUCCESS;

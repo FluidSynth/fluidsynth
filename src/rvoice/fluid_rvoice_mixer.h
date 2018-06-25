@@ -28,19 +28,19 @@
 
 typedef struct _fluid_rvoice_mixer_t fluid_rvoice_mixer_t;
 
-int fluid_rvoice_mixer_render(fluid_rvoice_mixer_t* mixer, int blockcount);
-int fluid_rvoice_mixer_get_bufs(fluid_rvoice_mixer_t* mixer, 
-                               fluid_real_t** left, fluid_real_t** right);
-int fluid_rvoice_mixer_get_fx_bufs(fluid_rvoice_mixer_t* mixer, 
-                                  fluid_real_t** fx_left, fluid_real_t** fx_right);
-int fluid_rvoice_mixer_get_bufcount(fluid_rvoice_mixer_t* mixer);
+int fluid_rvoice_mixer_render(fluid_rvoice_mixer_t *mixer, int blockcount);
+int fluid_rvoice_mixer_get_bufs(fluid_rvoice_mixer_t *mixer,
+                                fluid_real_t **left, fluid_real_t **right);
+int fluid_rvoice_mixer_get_fx_bufs(fluid_rvoice_mixer_t *mixer,
+                                   fluid_real_t **fx_left, fluid_real_t **fx_right);
+int fluid_rvoice_mixer_get_bufcount(fluid_rvoice_mixer_t *mixer);
 #if WITH_PROFILING
-int fluid_rvoice_mixer_get_active_voices(fluid_rvoice_mixer_t* mixer);
+int fluid_rvoice_mixer_get_active_voices(fluid_rvoice_mixer_t *mixer);
 #endif
-fluid_rvoice_mixer_t* new_fluid_rvoice_mixer(int buf_count, int fx_buf_count, 
-					     fluid_real_t sample_rate, fluid_rvoice_eventhandler_t*, int, int);
+fluid_rvoice_mixer_t *new_fluid_rvoice_mixer(int buf_count, int fx_buf_count,
+        fluid_real_t sample_rate, fluid_rvoice_eventhandler_t *, int, int);
 
-void delete_fluid_rvoice_mixer(fluid_rvoice_mixer_t*);
+void delete_fluid_rvoice_mixer(fluid_rvoice_mixer_t *);
 
 
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_add_voice);
@@ -56,10 +56,10 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_reset_chorus);
 
 
 
-void fluid_rvoice_mixer_set_mix_fx(fluid_rvoice_mixer_t* mixer, int on);
+void fluid_rvoice_mixer_set_mix_fx(fluid_rvoice_mixer_t *mixer, int on);
 #ifdef LADSPA
-void fluid_rvoice_mixer_set_ladspa(fluid_rvoice_mixer_t* mixer,
-        fluid_ladspa_fx_t *ladspa_fx, int audio_groups);
+void fluid_rvoice_mixer_set_ladspa(fluid_rvoice_mixer_t *mixer,
+                                   fluid_ladspa_fx_t *ladspa_fx, int audio_groups);
 #endif
 
 #endif

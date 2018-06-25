@@ -52,13 +52,15 @@ typedef struct _SFShdr SFShdr;
 
 
 struct _SFVersion
-{ /* version structure */
+{
+    /* version structure */
     unsigned short major;
     unsigned short minor;
 };
 
 struct _SFMod
-{ /* Modulator structure */
+{
+    /* Modulator structure */
     unsigned short src; /* source modulator */
     unsigned short dest; /* destination generator */
     signed short amount; /* signed, degree of modulation */
@@ -66,7 +68,8 @@ struct _SFMod
     unsigned short trans; /* transform applied to source */
 };
 
-union _SFGenAmount { /* Generator amount structure */
+union _SFGenAmount   /* Generator amount structure */
+{
     signed short sword; /* signed 16 bit value */
     unsigned short uword; /* unsigned 16 bit value */
     struct
@@ -77,20 +80,23 @@ union _SFGenAmount { /* Generator amount structure */
 };
 
 struct _SFGen
-{ /* Generator structure */
+{
+    /* Generator structure */
     unsigned short id; /* generator ID */
     SFGenAmount amount; /* generator value */
 };
 
 struct _SFZone
-{ /* Sample/instrument zone structure */
+{
+    /* Sample/instrument zone structure */
     fluid_list_t *instsamp; /* instrument/sample pointer for zone */
     fluid_list_t *gen; /* list of generators */
     fluid_list_t *mod; /* list of modulators */
 };
 
 struct _SFSample
-{ /* Sample structure */
+{
+    /* Sample structure */
     char name[21]; /* Name of sample */
     unsigned char samfile; /* Loaded sfont/sample buffer = 0/1 */
     unsigned int start; /* Offset in sample area to start of sample */
@@ -112,14 +118,16 @@ struct _SFSample
 };
 
 struct _SFInst
-{ /* Instrument structure */
+{
+    /* Instrument structure */
     char name[21]; /* Name of instrument */
     int idx; /* Index of this instrument in the Soundfont */
     fluid_list_t *zone; /* list of instrument zones */
 };
 
 struct _SFPreset
-{ /* Preset structure */
+{
+    /* Preset structure */
     char name[21]; /* preset name */
     unsigned short prenum; /* preset number */
     unsigned short bank; /* bank number */
@@ -131,7 +139,8 @@ struct _SFPreset
 
 /* NOTE: sffd is also used to determine if sound font is new (NULL) */
 struct _SFData
-{ /* Sound font data structure */
+{
+    /* Sound font data structure */
     SFVersion version; /* sound font version */
     SFVersion romver; /* ROM version */
 
@@ -167,7 +176,8 @@ struct _SFData
 
 /* sfont file data structures */
 struct _SFChunk
-{ /* RIFF file chunk structure */
+{
+    /* RIFF file chunk structure */
     unsigned int id; /* chunk id */
     unsigned int size; /* size of the following chunk */
 };
@@ -196,7 +206,8 @@ struct _SFIhdr
 };
 
 struct _SFShdr
-{ /* Sample header loading struct */
+{
+    /* Sample header loading struct */
     char name[20]; /* Sample name */
     unsigned int start; /* Offset to start of sample */
     unsigned int end; /* Offset to end of sample */
@@ -214,6 +225,6 @@ SFData *fluid_sffile_open(const char *fname, const fluid_file_callbacks_t *fcbs)
 void fluid_sffile_close(SFData *sf);
 int fluid_sffile_parse_presets(SFData *sf);
 int fluid_sffile_read_sample_data(SFData *sf, unsigned int sample_start, unsigned int sample_end,
-        int sample_type, short **data, char **data24);
+                                  int sample_type, short **data, char **data24);
 
 #endif /* _FLUID_SFFILE_H */
