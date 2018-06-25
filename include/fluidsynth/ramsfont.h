@@ -11,7 +11,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free
  * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -39,23 +39,23 @@ extern "C" {
  * ones are permitted.  This may be extensible in the future.
  */
 
-FLUIDSYNTH_API fluid_sfont_t* fluid_ramsfont_create_sfont(void);
-FLUIDSYNTH_API int fluid_ramsfont_set_name(fluid_ramsfont_t* sfont, const char *name);
-FLUIDSYNTH_API 
-int fluid_ramsfont_add_izone(fluid_ramsfont_t* sfont,
-				int bank, int num, fluid_sample_t* sample,
-				int lokey, int hikey);
+FLUIDSYNTH_API fluid_sfont_t *fluid_ramsfont_create_sfont(void);
+FLUIDSYNTH_API int fluid_ramsfont_set_name(fluid_ramsfont_t *sfont, const char *name);
 FLUIDSYNTH_API
-int fluid_ramsfont_remove_izone(fluid_ramsfont_t* sfont,
-				int bank, int num, fluid_sample_t* sample);
+int fluid_ramsfont_add_izone(fluid_ramsfont_t *sfont,
+                             int bank, int num, fluid_sample_t *sample,
+                             int lokey, int hikey);
 FLUIDSYNTH_API
-int fluid_ramsfont_izone_set_gen(fluid_ramsfont_t* sfont,
-				int bank, int num, fluid_sample_t* sample,
-				int gen_type, float value);
+int fluid_ramsfont_remove_izone(fluid_ramsfont_t *sfont,
+                                int bank, int num, fluid_sample_t *sample);
 FLUIDSYNTH_API
-int fluid_ramsfont_izone_set_loop(fluid_ramsfont_t* sfont,
-				int bank, int num, fluid_sample_t* sample,
-				int on, float loopstart, float loopend);
+int fluid_ramsfont_izone_set_gen(fluid_ramsfont_t *sfont,
+                                 int bank, int num, fluid_sample_t *sample,
+                                 int gen_type, float value);
+FLUIDSYNTH_API
+int fluid_ramsfont_izone_set_loop(fluid_ramsfont_t *sfont,
+                                  int bank, int num, fluid_sample_t *sample,
+                                  int on, float loopstart, float loopend);
 
 
 

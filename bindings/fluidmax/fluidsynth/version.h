@@ -11,7 +11,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free
  * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -34,7 +34,7 @@ extern "C" {
 
 FLUIDSYNTH_API void fluid_version(int *major, int *minor, int *micro);
 
-FLUIDSYNTH_API char* fluid_version_str(void);
+FLUIDSYNTH_API char *fluid_version_str(void);
 
 
 #ifdef __cplusplus

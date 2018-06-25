@@ -11,7 +11,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free
  * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -39,55 +39,55 @@ extern "C" {
 FLUIDSYNTH_API fluid_istream_t fluid_get_stdin(void);
 FLUIDSYNTH_API fluid_ostream_t fluid_get_stdout(void);
 
-FLUIDSYNTH_API char* fluid_get_userconf(char* buf, int len);
-FLUIDSYNTH_API char* fluid_get_sysconf(char* buf, int len);
+FLUIDSYNTH_API char *fluid_get_userconf(char *buf, int len);
+FLUIDSYNTH_API char *fluid_get_sysconf(char *buf, int len);
 
 
 /* The command handler */
 
-FLUIDSYNTH_API 
-fluid_cmd_handler_t* new_fluid_cmd_handler(fluid_synth_t* synth, fluid_midi_router_t* router);
+FLUIDSYNTH_API
+fluid_cmd_handler_t *new_fluid_cmd_handler(fluid_synth_t *synth, fluid_midi_router_t *router);
 
-FLUIDSYNTH_API 
-void delete_fluid_cmd_handler(fluid_cmd_handler_t* handler);
+FLUIDSYNTH_API
+void delete_fluid_cmd_handler(fluid_cmd_handler_t *handler);
 
-FLUIDSYNTH_API 
-void fluid_cmd_handler_set_synth(fluid_cmd_handler_t* handler, fluid_synth_t* synth);
+FLUIDSYNTH_API
+void fluid_cmd_handler_set_synth(fluid_cmd_handler_t *handler, fluid_synth_t *synth);
 
 
 
 /* Command function */
 
-FLUIDSYNTH_API 
-int fluid_command(fluid_cmd_handler_t* handler, const char *cmd, fluid_ostream_t out);
+FLUIDSYNTH_API
+int fluid_command(fluid_cmd_handler_t *handler, const char *cmd, fluid_ostream_t out);
 
-FLUIDSYNTH_API 
-int fluid_source(fluid_cmd_handler_t* handler, const char *filename);
+FLUIDSYNTH_API
+int fluid_source(fluid_cmd_handler_t *handler, const char *filename);
 
-FLUIDSYNTH_API 
-void fluid_usershell(fluid_settings_t* settings, fluid_cmd_handler_t* handler);
+FLUIDSYNTH_API
+void fluid_usershell(fluid_settings_t *settings, fluid_cmd_handler_t *handler);
 
 
 /* Shell */
 
-FLUIDSYNTH_API 
-fluid_shell_t* new_fluid_shell(fluid_settings_t* settings, fluid_cmd_handler_t* handler,
-			     fluid_istream_t in, fluid_ostream_t out, int thread);
+FLUIDSYNTH_API
+fluid_shell_t *new_fluid_shell(fluid_settings_t *settings, fluid_cmd_handler_t *handler,
+                               fluid_istream_t in, fluid_ostream_t out, int thread);
 
-FLUIDSYNTH_API void delete_fluid_shell(fluid_shell_t* shell);
+FLUIDSYNTH_API void delete_fluid_shell(fluid_shell_t *shell);
 
 
 
 /* TCP/IP server */
 
 
-FLUIDSYNTH_API 
-fluid_server_t* new_fluid_server(fluid_settings_t* settings,
-		fluid_synth_t* synth, fluid_midi_router_t* router);
+FLUIDSYNTH_API
+fluid_server_t *new_fluid_server(fluid_settings_t *settings,
+                                 fluid_synth_t *synth, fluid_midi_router_t *router);
 
-FLUIDSYNTH_API void delete_fluid_server(fluid_server_t* server);
+FLUIDSYNTH_API void delete_fluid_server(fluid_server_t *server);
 
-FLUIDSYNTH_API int fluid_server_join(fluid_server_t* server);
+FLUIDSYNTH_API int fluid_server_join(fluid_server_t *server);
 
 
 #ifdef __cplusplus

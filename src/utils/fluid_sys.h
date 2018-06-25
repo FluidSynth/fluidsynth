@@ -97,7 +97,7 @@ else \
 /*
  * Utility functions
  */
-char *fluid_strtok (char **str, char *delim);
+char *fluid_strtok(char **str, char *delim);
 
 
 #if defined(__OS2__)
@@ -118,17 +118,17 @@ double fluid_utime(void);
 
 /* if the callback function returns 1 the timer will continue; if it
    returns 0 it will stop */
-typedef int (*fluid_timer_callback_t)(void* data, unsigned int msec);
+typedef int (*fluid_timer_callback_t)(void *data, unsigned int msec);
 
 typedef struct _fluid_timer_t fluid_timer_t;
 
-fluid_timer_t* new_fluid_timer(int msec, fluid_timer_callback_t callback,
-                               void* data, int new_thread, int auto_destroy,
+fluid_timer_t *new_fluid_timer(int msec, fluid_timer_callback_t callback,
+                               void *data, int new_thread, int auto_destroy,
                                int high_priority);
 
-void delete_fluid_timer(fluid_timer_t* timer);
-int fluid_timer_join(fluid_timer_t* timer);
-int fluid_timer_stop(fluid_timer_t* timer);
+void delete_fluid_timer(fluid_timer_t *timer);
+int fluid_timer_join(fluid_timer_t *timer);
+int fluid_timer_stop(fluid_timer_t *timer);
 
 // Macros to use for pre-processor if statements to test which Glib thread API we have (pre or post 2.32)
 #define NEW_GLIB_THREAD_API  (GLIB_MAJOR_VERSION > 2 || (GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION >= 32))
@@ -161,20 +161,20 @@ typedef GMutex    fluid_cond_mutex_t;
 #define fluid_cond_mutex_unlock(m)      g_mutex_unlock(m)
 
 static FLUID_INLINE fluid_cond_mutex_t *
-new_fluid_cond_mutex (void)
+new_fluid_cond_mutex(void)
 {
-  GMutex *mutex;
-  mutex = g_new (GMutex, 1);
-  g_mutex_init (mutex);
-  return (mutex);
+    GMutex *mutex;
+    mutex = g_new(GMutex, 1);
+    g_mutex_init(mutex);
+    return (mutex);
 }
 
 static FLUID_INLINE void
-delete_fluid_cond_mutex (fluid_cond_mutex_t *m)
+delete_fluid_cond_mutex(fluid_cond_mutex_t *m)
 {
-  fluid_return_if_fail(m != NULL);
-  g_mutex_clear (m);
-  g_free (m);
+    fluid_return_if_fail(m != NULL);
+    g_mutex_clear(m);
+    g_free(m);
 }
 
 /* Thread condition signaling */
@@ -184,20 +184,20 @@ typedef GCond fluid_cond_t;
 #define fluid_cond_wait(cond, mutex)    g_cond_wait(cond, mutex)
 
 static FLUID_INLINE fluid_cond_t *
-new_fluid_cond (void)
+new_fluid_cond(void)
 {
-  GCond *cond;
-  cond = g_new (GCond, 1);
-  g_cond_init (cond);
-  return (cond);
+    GCond *cond;
+    cond = g_new(GCond, 1);
+    g_cond_init(cond);
+    return (cond);
 }
 
 static FLUID_INLINE void
-delete_fluid_cond (fluid_cond_t *cond)
+delete_fluid_cond(fluid_cond_t *cond)
 {
-  fluid_return_if_fail(cond != NULL);
-  g_cond_clear (cond);
-  g_free (cond);
+    fluid_return_if_fail(cond != NULL);
+    g_cond_clear(cond);
+    g_free(cond);
 }
 
 /* Thread private data */
@@ -242,15 +242,19 @@ typedef GMutex    fluid_cond_mutex_t;
 #define fluid_cond_mutex_unlock(m)      g_mutex_unlock(m)
 
 static FLUID_INLINE fluid_cond_mutex_t *
-new_fluid_cond_mutex (void)
+new_fluid_cond_mutex(void)
 {
-  if (!g_thread_supported ()) g_thread_init (NULL);
-  return g_mutex_new ();
+    if(!g_thread_supported())
+    {
+        g_thread_init(NULL);
+    }
+
+    return g_mutex_new();
 }
 
 /* Thread condition signaling */
 typedef GCond fluid_cond_t;
-fluid_cond_t *new_fluid_cond (void);
+fluid_cond_t *new_fluid_cond(void);
 #define delete_fluid_cond(cond)         g_cond_free(cond)
 #define fluid_cond_signal(cond)         g_cond_signal(cond)
 #define fluid_cond_broadcast(cond)      g_cond_broadcast(cond)
@@ -299,41 +303,41 @@ typedef GStaticPrivate fluid_private_t;
 static FLUID_INLINE void
 fluid_atomic_float_set(volatile float *fptr, float val)
 {
-  int32_t ival;
-  memcpy (&ival, &val, 4);
-  fluid_atomic_int_set ((volatile int *)fptr, ival);
+    int32_t ival;
+    memcpy(&ival, &val, 4);
+    fluid_atomic_int_set((volatile int *)fptr, ival);
 }
 
 static FLUID_INLINE float
 fluid_atomic_float_get(volatile float *fptr)
 {
-  int32_t ival;
-  float fval;
-  ival = fluid_atomic_int_get ((volatile int *)fptr);
-  memcpy (&fval, &ival, 4);
-  return fval;
+    int32_t ival;
+    float fval;
+    ival = fluid_atomic_int_get((volatile int *)fptr);
+    memcpy(&fval, &ival, 4);
+    return fval;
 }
 
 
 /* Threads */
 
 /* other thread implementations might change this for their needs */
-typedef void* fluid_thread_return_t;
+typedef void *fluid_thread_return_t;
 /* static return value for thread functions which requires a return value */
 #define FLUID_THREAD_RETURN_VALUE (NULL)
 
 typedef GThread fluid_thread_t;
-typedef fluid_thread_return_t (*fluid_thread_func_t)(void* data);
+typedef fluid_thread_return_t (*fluid_thread_func_t)(void *data);
 
 #define FLUID_THREAD_ID_NULL            NULL                    /* A NULL "ID" value */
 #define fluid_thread_id_t               GThread *               /* Data type for a thread ID */
 #define fluid_thread_get_id()           g_thread_self()         /* Get unique "ID" for current thread */
 
-fluid_thread_t* new_fluid_thread(const char *name, fluid_thread_func_t func, void *data,
+fluid_thread_t *new_fluid_thread(const char *name, fluid_thread_func_t func, void *data,
                                  int prio_level, int detach);
-void delete_fluid_thread(fluid_thread_t* thread);
-void fluid_thread_self_set_prio (int prio_level);
-int fluid_thread_join(fluid_thread_t* thread);
+void delete_fluid_thread(fluid_thread_t *thread);
+void fluid_thread_self_set_prio(int prio_level);
+int fluid_thread_join(fluid_thread_t *thread);
 
 /* Dynamic Module Loading, currently only used by LADSPA subsystem */
 #ifdef LADSPA
@@ -350,19 +354,19 @@ typedef GModule fluid_module_t;
 
 /* Sockets and I/O */
 
-fluid_istream_t fluid_get_stdin (void);
-fluid_ostream_t fluid_get_stdout (void);
-int fluid_istream_readline(fluid_istream_t in, fluid_ostream_t out, char* prompt, char* buf, int len);
-int fluid_ostream_printf (fluid_ostream_t out, const char* format, ...);
+fluid_istream_t fluid_get_stdin(void);
+fluid_ostream_t fluid_get_stdout(void);
+int fluid_istream_readline(fluid_istream_t in, fluid_ostream_t out, char *prompt, char *buf, int len);
+int fluid_ostream_printf(fluid_ostream_t out, const char *format, ...);
 
 /* The function should return 0 if no error occured, non-zero
    otherwise. If the function return non-zero, the socket will be
    closed by the server. */
-typedef int (*fluid_server_func_t)(void* data, fluid_socket_t client_socket, char* addr);
+typedef int (*fluid_server_func_t)(void *data, fluid_socket_t client_socket, char *addr);
 
-fluid_server_socket_t* new_fluid_server_socket(int port, fluid_server_func_t func, void* data);
-void delete_fluid_server_socket(fluid_server_socket_t* sock);
-int fluid_server_socket_join(fluid_server_socket_t* sock);
+fluid_server_socket_t *new_fluid_server_socket(int port, fluid_server_func_t func, void *data);
+void delete_fluid_server_socket(fluid_server_socket_t *sock);
+int fluid_server_socket_join(fluid_server_socket_t *sock);
 void fluid_socket_close(fluid_socket_t sock);
 fluid_istream_t fluid_socket_get_istream(fluid_socket_t sock);
 fluid_ostream_t fluid_socket_get_ostream(fluid_socket_t sock);
@@ -457,24 +461,24 @@ void fluid_profiling_print(void);
     piece of code. */
 typedef struct _fluid_profile_data_t
 {
-	const char* description;        /* name of the piece of code under profiling */
-	double min, max, total;   /* duration (microsecond) */
-	unsigned int count;       /* total count */
-	unsigned int n_voices;    /* voices number */
-	unsigned int n_samples;   /* audio samples number */
+    const char *description;        /* name of the piece of code under profiling */
+    double min, max, total;   /* duration (microsecond) */
+    unsigned int count;       /* total count */
+    unsigned int n_voices;    /* voices number */
+    unsigned int n_samples;   /* audio samples number */
 } fluid_profile_data_t;
 
 enum
 {
-	/* commands/status  (profiling interface) */
-	PROFILE_STOP,    /* command to stop a profiling measure */
-	PROFILE_START,   /* command to start a profile measure */
-	PROFILE_READY,   /* status to signal that a profiling measure has finished
+    /* commands/status  (profiling interface) */
+    PROFILE_STOP,    /* command to stop a profiling measure */
+    PROFILE_START,   /* command to start a profile measure */
+    PROFILE_READY,   /* status to signal that a profiling measure has finished
 	                    and ready to be printed */
-	/*- State returned by fluid_profile_get_status() -*/
-	/* between profiling commands and internal profiling API */
-	PROFILE_RUNNING, /* a profiling measure is running */
-	PROFILE_CANCELED,/* a profiling measure has been canceled */
+    /*- State returned by fluid_profile_get_status() -*/
+    /* between profiling commands and internal profiling API */
+    PROFILE_RUNNING, /* a profiling measure is running */
+    PROFILE_CANCELED,/* a profiling measure has been canceled */
 };
 
 /* Data interface */
@@ -499,16 +503,16 @@ extern fluid_profile_data_t fluid_profile_data[]; /* Profiling data */
  */
 enum
 {
-	FLUID_PROF_WRITE,
-	FLUID_PROF_ONE_BLOCK,
-	FLUID_PROF_ONE_BLOCK_CLEAR,
-	FLUID_PROF_ONE_BLOCK_VOICE,
-	FLUID_PROF_ONE_BLOCK_VOICES,
-	FLUID_PROF_ONE_BLOCK_REVERB,
-	FLUID_PROF_ONE_BLOCK_CHORUS,
-	FLUID_PROF_VOICE_NOTE,
-	FLUID_PROF_VOICE_RELEASE,
-	FLUID_PROFILE_NBR	/* number of profile probes */
+    FLUID_PROF_WRITE,
+    FLUID_PROF_ONE_BLOCK,
+    FLUID_PROF_ONE_BLOCK_CLEAR,
+    FLUID_PROF_ONE_BLOCK_VOICE,
+    FLUID_PROF_ONE_BLOCK_VOICES,
+    FLUID_PROF_ONE_BLOCK_REVERB,
+    FLUID_PROF_ONE_BLOCK_CHORUS,
+    FLUID_PROF_VOICE_NOTE,
+    FLUID_PROF_VOICE_RELEASE,
+    FLUID_PROFILE_NBR	/* number of profile probes */
 };
 /** Those macros are used to calculate the min/avg/max. Needs a profile number, a
     time reference, the voices and samples number. */
@@ -600,7 +604,7 @@ enum
 #define fluid_clear_fpe()
 #endif
 
-unsigned int fluid_check_fpe_i386(char * explanation_in_case_of_fpe);
+unsigned int fluid_check_fpe_i386(char *explanation_in_case_of_fpe);
 void fluid_clear_fpe_i386(void);
 
 /* System control */
@@ -609,21 +613,21 @@ void fluid_msleep(unsigned int msecs);
 /**
  * Advances the given \c ptr to the next \c alignment byte boundary.
  * Make sure you've allocated an extra of \c alignment bytes to avoid a buffer overflow.
- * 
+ *
  * @note \c alignment must be a power of two
  * @return Returned pointer is guarenteed to be aligned to \c alignment boundary and in range \f[ ptr <= returned_ptr < ptr + alignment \f].
  */
-static FLUID_INLINE void* fluid_align_ptr(const void* ptr, unsigned int alignment)
+static FLUID_INLINE void *fluid_align_ptr(const void *ptr, unsigned int alignment)
 {
     uintptr_t ptr_int = (uintptr_t)ptr;
-    unsigned int offset = ptr_int & (alignment-1);
-    unsigned int add = (alignment - offset) & (alignment-1); // advance the pointer to the next alignment boundary
+    unsigned int offset = ptr_int & (alignment - 1);
+    unsigned int add = (alignment - offset) & (alignment - 1); // advance the pointer to the next alignment boundary
     ptr_int += add;
-    
+
     /* assert alignment is power of two */
     FLUID_ASSERT(!(alignment == 0) && !(alignment & (alignment - 1)));
-    
-    return (void*)ptr_int;
+
+    return (void *)ptr_int;
 }
 
 #define FLUID_DEFAULT_ALIGNMENT (64U)
