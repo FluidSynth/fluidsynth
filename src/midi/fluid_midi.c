@@ -775,6 +775,8 @@ fluid_midi_file_read_event(fluid_midi_file *mf, fluid_track_t *track)
             if(tmp == NULL)
             {
                 FLUID_LOG(FLUID_PANIC, "Out of memory");
+                delete_fluid_midi_event(evt);
+                evt = NULL;
                 result = FLUID_FAILED;
                 break;
             }
