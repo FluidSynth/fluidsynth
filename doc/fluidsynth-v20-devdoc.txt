@@ -112,6 +112,7 @@ FluidSynths major version was bumped. The API was reworked, deprecated functions
 
 <strong>API cleanups:</strong>
   
+- the ramsfont has been removed, because it is unmaintained and believed to be unused; please get in touch with the mailing list if you still need it
 - remove deprecated fluid_synth_get_channel_info() in favour of fluid_synth_get_program() and fluid_synth_get_channel_preset()
 - remove deprecated fluid_settings_getstr()
 - remove deprecated fluid_synth_set_midi_router(), instead supply the midi-router instance when creating a command handler with new_fluid_cmd_handler()
