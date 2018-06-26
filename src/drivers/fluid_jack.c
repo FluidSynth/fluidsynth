@@ -186,11 +186,11 @@ new_fluid_jack_client(fluid_settings_t *settings, int isaudio, void *driver)
 
     if(client_name != NULL && client_name[0] != 0)
     {
-        FLUID_SNPRINTF(name, 64, "%s", client_name);
+        FLUID_SNPRINTF(name, sizeof(name), "%s", client_name);
     }
     else
     {
-        strcpy(name, "fluidsynth");
+        FLUID_STRNCPY(name, "fluidsynth", sizeof(name));
     }
 
     name[63] = '\0';
