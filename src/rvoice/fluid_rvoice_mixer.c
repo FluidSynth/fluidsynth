@@ -1290,8 +1290,8 @@ fluid_rvoice_mixer_render(fluid_rvoice_mixer_t *mixer, int blockcount)
         fluid_render_loop_multithread(mixer, blockcount);
     }
     else
-    {
 #endif
+    {
         fluid_render_loop_singlethread(mixer, blockcount);
     }
 
