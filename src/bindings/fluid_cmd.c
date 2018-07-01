@@ -283,15 +283,15 @@ static const fluid_cmd_t fluid_commands[] =
     /* settings commands */
     {
         "set", "settings", fluid_handle_set,
-        "set name value             Set the value of a controller or settings"
+        "set name value             Set the value of a setting (must be a real-time setting to take effect immediately)"
     },
     {
         "get", "settings", fluid_handle_get,
-        "get name                   Get the value of a controller or settings"
+        "get name                   Get the value of a setting"
     },
     {
         "info", "settings", fluid_handle_info,
-        "info name                  Get information about a controller or settings"
+        "info name                  Get information about a setting"
     },
     {
         "settings", "settings", fluid_handle_settings,
@@ -304,7 +304,7 @@ static const fluid_cmd_t fluid_commands[] =
     /* Sleep command, useful to insert a delay between commands */
     {
         "sleep", "general", fluid_handle_sleep,
-        "sleep  duration            sleep duration(in ms)"
+        "sleep  duration            sleep duration (in ms)"
     },
     /* LADSPA-related commands */
 #ifdef LADSPA
@@ -1875,6 +1875,11 @@ fluid_handle_set(void *data, int ac, char **av, fluid_ostream_t out)
     if(ret == FLUID_FAILED)
     {
         fluid_ostream_printf(out, "set: Value out of range.\n");
+    }
+    
+    if(!fluid_settings_is_realtime(handler->synth->settings, av[0]))
+    {
+        fluid_ostream_printf(out, "Warning: '%s' is not a realtime setting, changes won't take effect.\n", av[0]);
     }
 
     return ret;
