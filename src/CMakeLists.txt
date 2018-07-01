@@ -125,8 +125,6 @@ set ( libfluidsynth_SOURCES
     utils/fluid_sys.h
     sfloader/fluid_defsfont.c
     sfloader/fluid_defsfont.h
-    sfloader/fluid_ramsfont.c
-    sfloader/fluid_ramsfont.h
     sfloader/fluid_sfont.h
     sfloader/fluid_sfont.c
     sfloader/fluid_sffile.c
@@ -193,7 +191,6 @@ set ( public_HEADERS
     ${CMAKE_SOURCE_DIR}/include/fluidsynth/midi.h
     ${CMAKE_SOURCE_DIR}/include/fluidsynth/misc.h
     ${CMAKE_SOURCE_DIR}/include/fluidsynth/mod.h
-    ${CMAKE_SOURCE_DIR}/include/fluidsynth/ramsfont.h
     ${CMAKE_SOURCE_DIR}/include/fluidsynth/seq.h
     ${CMAKE_SOURCE_DIR}/include/fluidsynth/seqbind.h
     ${CMAKE_SOURCE_DIR}/include/fluidsynth/settings.h

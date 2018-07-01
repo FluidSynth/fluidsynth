@@ -97,7 +97,6 @@ extern "C" {
 #include "fluidsynth/synth.h"
 #include "fluidsynth/shell.h"
 #include "fluidsynth/sfont.h"
-#include "fluidsynth/ramsfont.h"
 #include "fluidsynth/audio.h"
 #include "fluidsynth/event.h"
 #include "fluidsynth/midi.h"
