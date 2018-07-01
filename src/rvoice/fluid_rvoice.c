@@ -592,7 +592,7 @@ fluid_rvoice_noteoff_LOCAL(fluid_rvoice_t *voice, unsigned int min_ticks)
         /* A voice is turned off during the attack section of the volume
          * envelope.  The attack section ramps up linearly with
          * amplitude. The other sections use logarithmic scaling. Calculate new
-         * volenv_val to achieve equievalent amplitude during the release phase
+         * volenv_val to achieve equivalent amplitude during the release phase
          * for seamless volume transition.
          */
         if(fluid_adsr_env_get_val(&voice->envlfo.volenv) > 0)
@@ -602,6 +602,24 @@ fluid_rvoice_noteoff_LOCAL(fluid_rvoice_t *voice, unsigned int min_ticks)
             fluid_real_t env_value = - ((-200 * log(amp) / log(10.0) - lfo) / FLUID_PEAK_ATTENUATION - 1);
             fluid_clip(env_value, 0.0, 1.0);
             fluid_adsr_env_set_val(&voice->envlfo.volenv, env_value);
+        }
+    }
+
+	if(fluid_adsr_env_get_section(&voice->envlfo.modenv) == FLUID_VOICE_ENVATTACK)
+    {
+        /* A voice is turned off during the attack section of the modulation
+         * envelope. The attack section use convex scaling with pitch and filter
+		 * frequency cutoff (see fluid_rvoice_write(): modenv_val = fluid_convex(127 * modenv.val)
+		 * The other sections use linear scaling: modenv_val = modenv.val
+		 * 
+		 * Calculate new modenv.val to achieve equivalent modenv_val during the release phase
+         * for seamless pitch and filter frequency cutoff transition.
+         */
+        if(fluid_adsr_env_get_val(&voice->envlfo.modenv) > 0)
+        {
+            fluid_real_t env_value = fluid_convex(127 * fluid_adsr_env_get_val(&voice->envlfo.modenv));
+            fluid_clip(env_value, 0.0, 1.0);
+            fluid_adsr_env_set_val(&voice->envlfo.modenv, env_value);
         }
     }
 
