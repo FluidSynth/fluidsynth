@@ -1543,6 +1543,14 @@ fluid_track_send_events(fluid_track_t *track,
  *
  *     fluid_player
  */
+static void
+fluid_player_handle_reset_synth(void *data, const char *name, int value)
+{
+    fluid_player_t *player = data;
+    fluid_return_if_fail(player != NULL);
+
+    player->reset_synth_between_songs = value;
+}
 
 /**
  * Create a new MIDI player.
@@ -1588,7 +1596,10 @@ new_fluid_player(fluid_synth_t *synth)
                                "player.timing-source", "system");
 
     fluid_settings_getint(synth->settings, "player.reset-synth", &i);
-    player->reset_synth_between_songs = i;
+    fluid_player_handle_reset_synth(player, NULL, i);
+    
+    fluid_settings_callback_int(synth->settings, "player.reset-synth",
+                                fluid_player_handle_reset_synth, player);
 
     return player;
 }
