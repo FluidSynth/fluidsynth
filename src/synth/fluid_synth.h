@@ -118,6 +118,7 @@ struct _fluid_synth_t
     int audio_groups;                  /**< the number of (stereo) 'sub'groups from the synth.
 					  Typically equal to audio_channels. */
     int effects_channels;              /**< the number of effects channels (>= 2) */
+    int effects_groups;                /**< the number of effects units (>= 1) */
     int state;                         /**< the synthesizer state */
     fluid_atomic_uint_t ticks_since_start;    /**< the number of audio samples since the start */
     unsigned int start;                /**< the start in msec, as returned by system clock */

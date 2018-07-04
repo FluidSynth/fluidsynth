@@ -352,11 +352,12 @@ fluid_voice_init(fluid_voice_t *voice, fluid_sample_t *sample,
     UPDATE_RVOICE_R1(fluid_rvoice_set_synth_gain, voice->synth_gain);
 
     /* Set up buffer mapping, should be done more flexible in the future. */
-    i = channel->synth->audio_groups;
-    UPDATE_RVOICE_GENERIC_I2(fluid_rvoice_buffers_set_mapping, &voice->rvoice->buffers, 2, i * 2 + SYNTH_REVERB_CHANNEL);
-    UPDATE_RVOICE_GENERIC_I2(fluid_rvoice_buffers_set_mapping, &voice->rvoice->buffers, 3, i * 2 + SYNTH_CHORUS_CHANNEL);
+    i = 2 * channel->synth->audio_groups;
+    i += (voice->chan % channel->synth->effects_groups) * channel->synth->effects_channels;
+    UPDATE_RVOICE_GENERIC_I2(fluid_rvoice_buffers_set_mapping, &voice->rvoice->buffers, 2, i + SYNTH_REVERB_CHANNEL);
+    UPDATE_RVOICE_GENERIC_I2(fluid_rvoice_buffers_set_mapping, &voice->rvoice->buffers, 3, i + SYNTH_CHORUS_CHANNEL);
 
-    i = 2 * (voice->chan % i);
+    i = 2 * (voice->chan % channel->synth->audio_groups);
     UPDATE_RVOICE_GENERIC_I2(fluid_rvoice_buffers_set_mapping, &voice->rvoice->buffers, 0, i);
     UPDATE_RVOICE_GENERIC_I2(fluid_rvoice_buffers_set_mapping, &voice->rvoice->buffers, 1, i + 1);
 

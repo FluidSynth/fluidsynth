@@ -398,7 +398,9 @@ fluid_jack_client_register_ports(void *driver, int isaudio, jack_client_t *clien
         }
 
         fluid_settings_getint(settings, "synth.effects-channels", &dev->num_fx_ports);
+        fluid_settings_getint(settings, "synth.effects-groups", &i);
 
+        dev->num_fx_ports *= i;
         dev->fx_ports = FLUID_ARRAY(jack_port_t *, 2 * dev->num_fx_ports);
 
         if(dev->fx_ports == NULL)
