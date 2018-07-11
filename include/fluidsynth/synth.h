@@ -246,7 +246,7 @@ enum fluid_synth_add_mod
     FLUID_SYNTH_ADD,              /**< Add (sum) modulator amounts */
 };
 
-FLUIDSYNTH_API int fluid_synth_add_default_mod(fluid_synth_t *synth, fluid_mod_t *mod, int mode);
+FLUIDSYNTH_API int fluid_synth_add_default_mod(fluid_synth_t *synth, const fluid_mod_t *mod, int mode);
 FLUIDSYNTH_API int fluid_synth_remove_default_mod(fluid_synth_t *synth, const fluid_mod_t *mod);
 
 

@@ -1314,16 +1314,18 @@ fluid_synth_damp_voices_by_sostenuto_LOCAL(fluid_synth_t *synth, int chan)
 }
 
 /**
- * Adds the specified modulator \c mod as default modulator to the synth. If \c mod is new it
- * will be used by any subsequently created voice. If an amount of an existing modulator is
- * changed by \c mod it will take effect for any subsequently created voice.
+ * Adds the specified modulator \c mod as default modulator to the synth. \c mod will
+ * take effect for any subsequently created voice.
  * @param synth FluidSynth instance
- * @param mod Modulator info (values copied, passed in object can be freed again immediately)
+ * @param mod Modulator info (values copied, passed in object can be freed immediately afterwards)
  * @param mode Determines how to handle an existing identical modulator (#fluid_synth_add_mod)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ * 
+ * @note Not realtime safe (due to internal memory allocation) and therefore should not be called
+ * from synthesis context at the risk of stalling audio output.
  */
 int
-fluid_synth_add_default_mod(fluid_synth_t *synth, fluid_mod_t *mod, int mode)
+fluid_synth_add_default_mod(fluid_synth_t *synth, const fluid_mod_t *mod, int mode)
 {
     fluid_mod_t *default_mod;
     fluid_mod_t *last_mod = NULL;
@@ -1388,6 +1390,9 @@ fluid_synth_add_default_mod(fluid_synth_t *synth, fluid_mod_t *mod, int mode)
  * @param synth synth instance
  * @param mod The modulator to remove
  * @return #FLUID_OK if a matching modulator was found and successfully removed, #FLUID_FAILED otherwise
+ * 
+ * @note Not realtime safe (due to internal memory allocation) and therefore should not be called
+ * from synthesis context at the risk of stalling audio output.
  */
 int
 fluid_synth_remove_default_mod(fluid_synth_t *synth, const fluid_mod_t *mod)
