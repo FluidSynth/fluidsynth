@@ -151,8 +151,8 @@ fluid_audio_driver_t *
 new_fluid_core_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
 {
     return new_fluid_core_audio_driver2(settings,
-                                        (fluid_audio_func_t) fluid_synth_process,
-                                        (void *) synth);
+                                        fluid_synth_process,
+                                        synth);
 }
 
 /*
@@ -275,7 +275,7 @@ new_fluid_core_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func
 
     if(devname)
     {
-        FLUID_FREE(devname);    /* free device name */
+        FLUID_FREE(devname);  /* free device name */
     }
 
     dev->buffer_size = period_size * periods;
@@ -397,6 +397,9 @@ fluid_core_audio_callback(void *data,
     {
         float *left = dev->buffers[0];
         float *right = dev->buffers[1];
+
+        FLUID_MEMSET(left, 0, len * sizeof(float));
+        FLUID_MEMSET(right, 0, len * sizeof(float));
 
         (*dev->callback)(dev->data, len, 0, NULL, 2, dev->buffers);
 

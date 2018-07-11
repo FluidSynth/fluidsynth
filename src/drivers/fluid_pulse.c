@@ -300,6 +300,9 @@ fluid_pulse_audio_run2(void *d)
 
     while(dev->cont)
     {
+        FLUID_MEMSET(left, 0, buffer_size * sizeof(float));
+        FLUID_MEMSET(right, 0, buffer_size * sizeof(float));
+
         (*dev->callback)(synth, buffer_size, 0, NULL, 2, handle);
 
         /* Interleave the floating point data */

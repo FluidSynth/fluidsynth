@@ -302,6 +302,9 @@ void  pascal fluid_sndmgr_callback(SndChannelPtr chan, SndDoubleBufferPtr double
         left = dev->convbuffers[0];
         right = dev->convbuffers[1];
 
+        FLUID_MEMSET(left, 0, buffer_size * sizeof(float));
+        FLUID_MEMSET(right, 0, buffer_size * sizeof(float));
+
         (*dev->callback)(dev->data, buffer_size, 0, NULL, 2, dev->convbuffers);
 
         for(i = 0, k = 0; i < buffer_size; i++)

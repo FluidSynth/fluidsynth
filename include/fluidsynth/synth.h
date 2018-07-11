@@ -264,7 +264,7 @@ FLUIDSYNTH_API int fluid_synth_write_s16(fluid_synth_t *synth, int len,
 FLUIDSYNTH_API int fluid_synth_write_float(fluid_synth_t *synth, int len,
         void *lout, int loff, int lincr,
         void *rout, int roff, int rincr);
-FLUIDSYNTH_API int fluid_synth_nwrite_float(fluid_synth_t *synth, int len,
+FLUID_DEPRECATED FLUIDSYNTH_API int fluid_synth_nwrite_float(fluid_synth_t *synth, int len,
         float **left, float **right,
         float **fx_left, float **fx_right);
 FLUIDSYNTH_API int fluid_synth_process(fluid_synth_t *synth, int len,

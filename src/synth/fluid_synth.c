@@ -223,6 +223,7 @@ void fluid_synth_settings(fluid_settings_t *settings)
     fluid_settings_register_int(settings, "synth.audio-channels", 1, 1, 128, 0);
     fluid_settings_register_int(settings, "synth.audio-groups", 1, 1, 128, 0);
     fluid_settings_register_int(settings, "synth.effects-channels", 2, 2, 2, 0);
+    fluid_settings_register_int(settings, "synth.effects-groups", 1, 1, 128, 0);
     fluid_settings_register_num(settings, "synth.sample-rate", 44100.0f, 8000.0f, 96000.0f, 0);
     fluid_settings_register_int(settings, "synth.device-id", 0, 0, 126, 0);
     fluid_settings_register_int(settings, "synth.cpu-cores", 1, 1, 256, 0);
@@ -638,6 +639,7 @@ new_fluid_synth(fluid_settings_t *settings)
     fluid_settings_getint(settings, "synth.audio-channels", &synth->audio_channels);
     fluid_settings_getint(settings, "synth.audio-groups", &synth->audio_groups);
     fluid_settings_getint(settings, "synth.effects-channels", &synth->effects_channels);
+    fluid_settings_getint(settings, "synth.effects-groups", &synth->effects_groups);
     fluid_settings_getnum_float(settings, "synth.gain", &synth->gain);
     fluid_settings_getint(settings, "synth.device-id", &synth->device_id);
     fluid_settings_getint(settings, "synth.cpu-cores", &synth->cores);
@@ -776,7 +778,7 @@ new_fluid_synth(fluid_settings_t *settings)
     /* Allocate event queue for rvoice mixer */
     /* In an overflow situation, a new voice takes about 50 spaces in the queue! */
     synth->eventhandler = new_fluid_rvoice_eventhandler(synth->polyphony * 64,
-                          synth->polyphony, nbuf, synth->effects_channels, synth->sample_rate, synth->cores - 1, prio_level);
+                          synth->polyphony, nbuf, synth->effects_channels, synth->effects_groups, synth->sample_rate, synth->cores - 1, prio_level);
 
     if(synth->eventhandler == NULL)
     {
@@ -1614,7 +1616,7 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
         else /* Sostenuto is depressed */
             /* Update sostenuto order id when pedaling on Sostenuto */
         {
-            chan->sostenuto_orderid = synth->noteid;    /* future voice id value */
+            chan->sostenuto_orderid = synth->noteid; /* future voice id value */
         }
 
         break;
@@ -3308,6 +3310,8 @@ fluid_synth_program_reset(fluid_synth_t *synth)
 
     fluid_synth_nwrite_float(synth, FramesToRender, mix_buf_l, mix_buf_r, fx_buf_l, fx_buf_r)
  * @endcode
+ *
+ * @deprecated fluid_synth_nwrite_float() is deprecated. Consider using the more powerful and flexible fluid_synth_process().
  */
 int
 fluid_synth_nwrite_float(fluid_synth_t *synth, int len,
@@ -3474,54 +3478,80 @@ fluid_synth_nwrite_float(fluid_synth_t *synth, int len,
 }
 
 /**
- * @brief Synthesize floating point audio to planar audio buffers.
+ * @brief Synthesize floating point audio to stereo audio channels (implements the default interface #fluid_audio_func_t).
  *
- * Synthesize and <strong>mix</strong> audio to a given number of stereo audio channels.
- * Therefore pass <code>nout = i*2</code> float buffers to \p out in order to render
- * the synthesized audio to \p i stereo channels. Each float buffer must be
+ * Synthesize and <strong>mix</strong> audio to a given number of planar audio buffers.
+ * Therefore pass <code>nout = N*2</code> float buffers to \p out in order to render
+ * the synthesized audio to \p N stereo channels. Each float buffer must be
  * able to hold \p len elements.
  *
  * \p out contains an array of planar buffers for normal, dry, stereo
  * audio (alternating left and right). Like:
 @code{.cpp}
-out[0]  = left_buffer_channel_1
-out[1]  = right_buffer_channel_1
-out[2]  = left_buffer_channel_2
-out[3]  = right_buffer_channel_2
+out[0]  = left_buffer_audio_channel_0
+out[1]  = right_buffer_audio_channel_0
+out[2]  = left_buffer_audio_channel_1
+out[3]  = right_buffer_audio_channel_1
 ...
-out[ (i-1) * 2 + 0 ]  = left_buffer_channel_i
-out[ (i-1) * 2 + 1 ]  = right_buffer_channel_i
+out[ (i * 2 + 0) % nout ]  = left_buffer_audio_channel_i
+out[ (i * 2 + 1) % nout ]  = right_buffer_audio_channel_i
 @endcode
  *
- * for one-based channel index \p i.
- * Same buffer layout is used for \p fx for storing effects
- * like reverb and chorus audio.
- * This function implements the default interface #fluid_audio_func_t.
+ * for zero-based channel index \p i.
+ * The buffer layout of \p fx used for storing effects
+ * like reverb and chorus looks similar:
+@code{.cpp}
+fx[0]  = left_buffer_channel_of_reverb_unit_0
+fx[1]  = right_buffer_channel_of_reverb_unit_0
+fx[2]  = left_buffer_channel_of_chorus_unit_0
+fx[3]  = right_buffer_channel_of_chorus_unit_0
+fx[4]  = left_buffer_channel_of_reverb_unit_1
+fx[5]  = right_buffer_channel_of_reverb_unit_1
+fx[6]  = left_buffer_channel_of_chorus_unit_1
+fx[7]  = right_buffer_channel_of_chorus_unit_1
+fx[8]  = left_buffer_channel_of_reverb_unit_2
+...
+fx[ ((k * fluid_synth_count_effects_channels() + j) * 2 + 0) % nfx ]  = left_buffer_for_effect_channel_j_of_unit_k
+fx[ ((k * fluid_synth_count_effects_channels() + j) * 2 + 1) % nfx ]  = right_buffer_for_effect_channel_j_of_unit_k
+@endcode
+ * where <code>0 <= k < fluid_synth_count_effects_groups()</code> is a zero-based index denoting the effects unit and
+ * <code>0 <= j < fluid_synth_count_effects_channels()</code> is a zero-based index denoting the effect channel within
+ * unit \p k.
+ *
+ * Any voice playing is assigned to audio channels based on the MIDI channel its playing on. Let \p chan be the
+ * zero-based MIDI channel index an arbitrary voice is playing on. To determine the audio channel and effects unit it is
+ * going to be rendered to use:
+ *
+ * <code>i = chan % fluid_synth_count_audio_groups()</code>
+ *
+ * <code>k = chan % fluid_synth_count_effects_groups()</code>
  *
  * @param synth FluidSynth instance
- * @param len Count of audio frames to synthesize.
+ * @param len Count of audio frames to synthesize and store in every single buffer provided by \p out and \p fx.
  * @param nfx Count of arrays in \c fx. Must be a multiple of 2 (because of stereo)
- * and in the range <code>0 <= nfx/2 <= fluid_synth_count_effects_channels()</code>.
+ * and in the range <code>0 <= nfx/2 <= (fluid_synth_count_effects_channels() * fluid_synth_count_effects_groups())</code>.
  * @param fx Array of buffers to store effects audio to. Buffers may
-alias with buffers of \c out.
+alias with buffers of \c out. NULL buffers are permitted and will cause to skip mixing any audio into that buffer.
  * @param nout Count of arrays in \c out. Must be a multiple of 2
 (because of stereo) and in the range <code>0 <= nout/2 <= fluid_synth_count_audio_channels()</code>.
  * @param out Array of buffers to store (dry) audio to. Buffers may
-alias with buffers of \c fx.
+alias with buffers of \c fx. NULL buffers are permitted and will cause to skip mixing any audio into that buffer.
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise.
  *
  * @parblock
- * @note Make sure to zero out the sample buffers before calling this
- * function as any synthesized audio is mixed (i.e. added) to the buffers.
+ * @note The owner of the sample buffers must zero them out before calling this
+ * function, because any synthesized audio is mixed (i.e. added) to the buffers.
+ * E.g. if fluid_synth_process() is called from a custom audio driver process function
+ * (see new_fluid_audio_driver2()), the audio driver takes care of zeroing the buffers.
  * @endparblock
  *
  * @parblock
  * @note No matter how many buffers you pass in, fluid_synth_process()
- * will always render all fluid_synth_count_audio_channels() to the
- * buffers in \c out and all fluid_synth_count_effects_channels() to the
+ * will always render all audio channels to the
+ * buffers in \c out and all effects channels to the
  * buffers in \c fx, provided that <code>nout > 0</code> and <code>nfx > 0</code> respectively. If
  * <code>nout/2 < fluid_synth_count_audio_channels()</code> it will wrap around. Same
- * is true for effects audio if <code>nfx/2 < fluid_synth_count_effects_channels()</code>.
+ * is true for effects audio if <code>nfx/2 < (fluid_synth_count_effects_channels() * fluid_synth_count_effects_groups())</code>.
  * See usage examples below.
  * @endparblock
  *
@@ -3533,36 +3563,182 @@ int
 fluid_synth_process(fluid_synth_t *synth, int len, int nfx, float *fx[],
                     int nout, float *out[])
 {
-    if(nout == 2)
-    {
-        return fluid_synth_write_float(synth, len, out[0], 0, 1, out[1], 0, 1);
-    }
-    else
-    {
-        float **left, **right;
-        int i;
-        left = FLUID_ARRAY(float *, nout / 2);
-        right = FLUID_ARRAY(float *, nout / 2);
+    fluid_real_t *left_in, *fx_left_in;
+    fluid_real_t *right_in, *fx_right_in;
+    int nfxchan, nfxunits, naudchan;
 
-        if((left == NULL) || (right == NULL))
+    double time = fluid_utime();
+    int i, f, num, count;
+
+    float cpu_load;
+
+    fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(nfx % 2 == 0, FLUID_FAILED);
+    fluid_return_val_if_fail(nout % 2 == 0, FLUID_FAILED);
+
+    nfxchan = synth->effects_channels;
+    nfxunits = synth->effects_groups;
+    naudchan = synth->audio_channels;
+
+    fluid_return_val_if_fail(0 <= nfx / 2 && nfx / 2 <= nfxchan * nfxunits, FLUID_FAILED);
+    fluid_return_val_if_fail(0 <= nout / 2 && nout / 2 <= naudchan, FLUID_FAILED);
+
+    fluid_rvoice_mixer_get_bufs(synth->eventhandler->mixer, &left_in, &right_in);
+    fluid_rvoice_mixer_get_fx_bufs(synth->eventhandler->mixer, &fx_left_in, &fx_right_in);
+    fluid_rvoice_mixer_set_mix_fx(synth->eventhandler->mixer, FALSE);
+
+
+    /* First, take what's still available in the buffer */
+    count = 0;
+    num = synth->cur;
+
+    if(synth->cur < FLUID_BUFSIZE)
+    {
+        int available = FLUID_BUFSIZE - synth->cur;
+        num = (available > len) ? len : available;
+
+        if(nout != 0)
         {
-            FLUID_LOG(FLUID_ERR, "Out of memory.");
-            FLUID_FREE(left);
-            FLUID_FREE(right);
-            return FLUID_FAILED;
+            for(i = 0; i < naudchan; i++)
+            {
+                int j;
+                float *out_buf = out[(i * 2) % nout];
+
+                if(out_buf != NULL)
+                {
+                    for(j = 0; j < num; j++)
+                    {
+                        out_buf[j] += (float) left_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + j + synth->cur];
+                    }
+                }
+
+                out_buf = out[(i * 2 + 1) % nout];
+
+                if(out_buf != NULL)
+                {
+                    for(j = 0; j < num; j++)
+                    {
+                        out_buf[j] += (float) right_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + j + synth->cur];
+                    }
+                }
+            }
         }
 
-        for(i = 0; i < nout / 2; i++)
+        if(nfx != 0)
         {
-            left[i] = out[2 * i];
-            right[i] = out[2 * i + 1];
+            // loop over all effects units
+            for(f = 0; f < nfxunits; f++)
+            {
+                // write out all effects (i.e. reverb and chorus)
+                for(i = 0; i < nfxchan; i++)
+                {
+                    int j;
+                    int buf_idx = f * nfxchan + i;
+                    float *out_buf = fx[(buf_idx * 2) % nfx];
+
+                    if(out_buf != NULL)
+                    {
+                        for(j = 0; j < num; j++)
+                        {
+                            out_buf[j] += (float) fx_left_in[buf_idx * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + j + synth->cur];
+                        }
+                    }
+
+                    out_buf = fx[(buf_idx * 2 + 1) % nfx];
+
+                    if(out_buf != NULL)
+                    {
+                        for(j = 0; j < num; j++)
+                        {
+                            out_buf[j] += (float) fx_right_in[buf_idx * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + j + synth->cur];
+                        }
+                    }
+                }
+            }
         }
 
-        fluid_synth_nwrite_float(synth, len, left, right, NULL, NULL);
-        FLUID_FREE(left);
-        FLUID_FREE(right);
-        return FLUID_OK;
+        count += num;
+        num += synth->cur; /* if we're now done, num becomes the new synth->cur below */
     }
+
+    /* Then, render blocks and copy till we have 'len' samples  */
+    while(count < len)
+    {
+        int blocksleft = (len - count + FLUID_BUFSIZE - 1) / FLUID_BUFSIZE;
+        int blockcount = fluid_synth_render_blocks(synth, blocksleft);
+
+        num = (blockcount * FLUID_BUFSIZE > len - count) ? len - count : blockcount * FLUID_BUFSIZE;
+
+        if(nout != 0)
+        {
+            for(i = 0; i < naudchan; i++)
+            {
+                int j;
+                float *out_buf = out[(i * 2) % nout];
+
+                if(out_buf != NULL)
+                {
+                    for(j = 0; j < num; j++)
+                    {
+                        out_buf[j + count] += (float) left_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + j];
+                    }
+                }
+
+                out_buf = out[(i * 2 + 1) % nout];
+
+                if(out_buf != NULL)
+                {
+                    for(j = 0; j < num; j++)
+                    {
+                        out_buf[j + count] += (float) right_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + j];
+                    }
+                }
+            }
+        }
+
+        if(nfx != 0)
+        {
+            // loop over all effects units
+            for(f = 0; f < nfxunits; f++)
+            {
+                // write out all effects (i.e. reverb and chorus)
+                for(i = 0; i < nfxchan; i++)
+                {
+                    int j;
+                    int buf_idx = f * nfxchan + i;
+                    float *out_buf = fx[(buf_idx * 2) % nfx];
+
+                    if(out_buf != NULL)
+                    {
+                        for(j = 0; j < num; j++)
+                        {
+                            out_buf[j + count] += (float) fx_left_in[buf_idx * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + j];
+                        }
+                    }
+
+                    out_buf = fx[(buf_idx * 2 + 1) % nfx];
+
+                    if(out_buf != NULL)
+                    {
+                        for(j = 0; j < num; j++)
+                        {
+                            out_buf[j + count] += (float) fx_right_in[buf_idx * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + j];
+                        }
+                    }
+                }
+            }
+        }
+
+        count += num;
+    }
+
+    synth->cur = num;
+
+    time = fluid_utime() - time;
+    cpu_load = 0.5 * (fluid_atomic_float_get(&synth->cpu_load) + time * synth->sample_rate / len / 10000.0);
+    fluid_atomic_float_set(&synth->cpu_load, cpu_load);
+
+    return FLUID_OK;
 }
 
 /**
