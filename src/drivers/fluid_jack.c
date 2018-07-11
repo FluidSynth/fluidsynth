@@ -658,6 +658,11 @@ fluid_jack_driver_process(jack_nframes_t nframes, void *arg)
     }
 
     audio_driver = fluid_atomic_pointer_get(&client->audio_driver);
+    if(audio_driver == NULL)
+    {
+        // shutting down
+        return FLUID_OK;
+    }
 
     if(audio_driver->callback == NULL && audio_driver->num_output_ports == 1 && audio_driver->num_fx_ports == 0)  /* i.e. audio.jack.multi=no */
     {
