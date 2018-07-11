@@ -3473,40 +3473,64 @@ fluid_synth_nwrite_float(fluid_synth_t *synth, int len,
 }
 
 /**
- * @brief Synthesize floating point audio to planar audio buffers.
+ * @brief Synthesize floating point audio to stereo audio channels (implements the default interface #fluid_audio_func_t).
  *
- * Synthesize and <strong>mix</strong> audio to a given number of stereo audio channels.
- * Therefore pass <code>nout = i*2</code> float buffers to \p out in order to render
- * the synthesized audio to \p i stereo channels. Each float buffer must be
+ * Synthesize and <strong>mix</strong> audio to a given number of planar audio buffers.
+ * Therefore pass <code>nout = N*2</code> float buffers to \p out in order to render
+ * the synthesized audio to \p N stereo channels. Each float buffer must be
  * able to hold \p len elements.
  *
  * \p out contains an array of planar buffers for normal, dry, stereo
  * audio (alternating left and right). Like:
 @code{.cpp}
-out[0]  = left_buffer_channel_1
-out[1]  = right_buffer_channel_1
-out[2]  = left_buffer_channel_2
-out[3]  = right_buffer_channel_2
+out[0]  = left_buffer_audio_channel_0
+out[1]  = right_buffer_audio_channel_0
+out[2]  = left_buffer_audio_channel_1
+out[3]  = right_buffer_audio_channel_1
 ...
-out[ (i-1) * 2 + 0 ]  = left_buffer_channel_i
-out[ (i-1) * 2 + 1 ]  = right_buffer_channel_i
+out[ (i * 2 + 0) % nout ]  = left_buffer_audio_channel_i
+out[ (i * 2 + 1) % nout ]  = right_buffer_audio_channel_i
 @endcode
  *
- * for one-based channel index \p i.
- * Same buffer layout is used for \p fx for storing effects
- * like reverb and chorus audio.
- * This function implements the default interface #fluid_audio_func_t.
+ * for zero-based channel index \p i.
+ * The buffer layout of \p fx used for storing effects
+ * like reverb and chorus looks similar:
+@code{.cpp}
+fx[0]  = left_buffer_channel_of_reverb_unit_0
+fx[1]  = right_buffer_channel_of_reverb_unit_0
+fx[2]  = left_buffer_channel_of_chorus_unit_0
+fx[3]  = right_buffer_channel_of_chorus_unit_0
+fx[4]  = left_buffer_channel_of_reverb_unit_1
+fx[5]  = right_buffer_channel_of_reverb_unit_1
+fx[6]  = left_buffer_channel_of_chorus_unit_1
+fx[7]  = right_buffer_channel_of_chorus_unit_1
+fx[8]  = left_buffer_channel_of_reverb_unit_2
+...
+fx[ ((k * fluid_synth_count_effects_channels() + j) * 2 + 0) % nfx ]  = left_buffer_for_effect_channel_j_of_unit_k
+fx[ ((k * fluid_synth_count_effects_channels() + j) * 2 + 1) % nfx ]  = right_buffer_for_effect_channel_j_of_unit_k
+@endcode
+ * where <code>0 <= k < fluid_synth_count_effects_groups()</code> is a zero-based index denoting the effects unit and
+ * <code>0 <= j < fluid_synth_count_effects_channels()</code> is a zero-based index denoting the effect channel within
+ * unit \p k.
+ *
+ * Any voice playing is assigned to audio channels based on the MIDI channel its playing on. Let \p chan be the
+ * zero-based MIDI channel index an arbitrary voice is playing on. To determine the audio channel and effects unit it is
+ * going to be rendered to use:
+ *
+ * <code>i = chan % fluid_synth_count_audio_groups()</code>
+ *
+ * <code>k = chan % fluid_synth_count_effects_groups()</code>
  *
  * @param synth FluidSynth instance
- * @param len Count of audio frames to synthesize.
+ * @param len Count of audio frames to synthesize and store in every single buffer provided by \p out and \p fx.
  * @param nfx Count of arrays in \c fx. Must be a multiple of 2 (because of stereo)
- * and in the range <code>0 <= nfx/2 <= fluid_synth_count_effects_channels()</code>.
+ * and in the range <code>0 <= nfx/2 <= (fluid_synth_count_effects_channels() * fluid_synth_count_effects_groups())</code>.
  * @param fx Array of buffers to store effects audio to. Buffers may
-alias with buffers of \c out.
+alias with buffers of \c out. NULL buffers are permitted and will cause to skip mixing any audio into that buffer.
  * @param nout Count of arrays in \c out. Must be a multiple of 2
 (because of stereo) and in the range <code>0 <= nout/2 <= fluid_synth_count_audio_channels()</code>.
  * @param out Array of buffers to store (dry) audio to. Buffers may
-alias with buffers of \c fx.
+alias with buffers of \c fx. NULL buffers are permitted and will cause to skip mixing any audio into that buffer.
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise.
  *
  * @parblock
@@ -3518,11 +3542,11 @@ alias with buffers of \c fx.
  *
  * @parblock
  * @note No matter how many buffers you pass in, fluid_synth_process()
- * will always render all fluid_synth_count_audio_channels() to the
- * buffers in \c out and all fluid_synth_count_effects_channels() to the
+ * will always render all audio channels to the
+ * buffers in \c out and all effects channels to the
  * buffers in \c fx, provided that <code>nout > 0</code> and <code>nfx > 0</code> respectively. If
  * <code>nout/2 < fluid_synth_count_audio_channels()</code> it will wrap around. Same
- * is true for effects audio if <code>nfx/2 < fluid_synth_count_effects_channels()</code>.
+ * is true for effects audio if <code>nfx/2 < (fluid_synth_count_effects_channels() * fluid_synth_count_effects_groups())</code>.
  * See usage examples below.
  * @endparblock
  *
