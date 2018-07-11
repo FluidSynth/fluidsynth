@@ -24,7 +24,7 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             <min>1</min>
             <max>128</max>
             <desc>
-                By default, the synthesizer outputs a single stereo signal. Using this option, the synthesizer can output multichannel audio. Sets the number of stereo channel pairs. So 1 is actually 2 channels (a stereo pair).</desc>
+                By default, the synthesizer outputs a single stereo signal. Using this option, the synthesizer can output multi-channel audio. Sets the number of stereo channel pairs. So 1 is actually 2 channels (a stereo pair).</desc>
         </setting>
         <setting>
             <name>audio-groups</name>
@@ -33,7 +33,7 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             <min>1</min>
             <max>128</max>
             <desc>
-                Normally the same value as synth.audio-channels. LADSPA effects subsystem can use this value though, in which case it may differ.</desc>
+                The output audio channel associated with a MIDI channel is wrapped around using the number of synth.audio-groups as modulo divider. This is typically the number of output channels on the sound card, as long as the LADSPA Fx unit is not used. In case of LADSPA unit, think of it as subgroups on a mixer.</desc>
         </setting>
         <setting>
             <name>chorus.active</name>
@@ -85,7 +85,7 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             <min>1</min>
             <max>256</max>
             <desc>
-                (Experimental) Sets the number of synthesis CPU cores. If set to a value greater than 1, then additional synthesis threads will be created to take advantage of a multi CPU or CPU core system. This has the affect of utilizing more of the total CPU for voices or decreasing render times when synthesizing audio to a file.</desc>
+                Sets the number of synthesis CPU cores. If set to a value greater than 1, then additional synthesis threads will be created to take advantage of a multi CPU or CPU core system. This has the affect of utilizing more of the total CPU for voices or decreasing render times when synthesizing audio to a file.</desc>
         </setting>
         <setting>
             <name>default-soundfont</name>
@@ -119,7 +119,15 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             <def>2</def>
             <min>2</min>
             <max>2</max>
-            <desc>Currently unused.</desc>
+            <desc>Specifies the number of effects per group. Currently there only are two effects (i.e. reverb and chorus).</desc>
+        </setting>
+        <setting>
+            <name>effects-groups</name>
+            <type>int</type>
+            <def>1</def>
+            <min>1</min>
+            <max>128</max>
+            <desc>Specifies the number of effect units. By default, the sound of all voices is rendered by one reverb unit and one chorus unit respectively (even for multi-channel rendering). This setting gives the user control which effects of a voice to render to which independent audio channels. E.g. setting synth.effects-groups == synth.midi-channels allows to render the effects of each MIDI channel to separate audio buffers. If synth.effects-groups is smaller, it will wrap around. Note that any value >1 will significantly increase CPU usage.</desc>
         </setting>
         <setting>
             <name>gain</name>
