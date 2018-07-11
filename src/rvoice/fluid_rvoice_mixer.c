@@ -154,7 +154,7 @@ fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t *mixer, int current_blockcoun
     }
     else
     {
-        // mix effects to respective stereo effects channel
+        // replace effects into respective stereo effects channel
         out_ch_l = out_rev_l = fluid_align_ptr(mixer->buffers.fx_left_buf, FLUID_DEFAULT_ALIGNMENT);
         out_ch_r = out_rev_r = fluid_align_ptr(mixer->buffers.fx_right_buf, FLUID_DEFAULT_ALIGNMENT);
 
@@ -708,6 +708,12 @@ new_fluid_rvoice_mixer(int buf_count, int fx_buf_count, int fx_units, fluid_real
 
     /* allocate the reverb module */
     mixer->fx = FLUID_ARRAY(fluid_mixer_fx_t, fx_units);
+    if(mixer->fx == NULL)
+    {
+        FLUID_LOG(FLUID_ERR, "Out of memory");
+        goto error_recovery;
+    }
+    
     FLUID_MEMSET(mixer->fx, 0, fx_units * sizeof(*mixer->fx));
     
     for(i = 0; i < fx_units; i++)
@@ -718,15 +724,13 @@ new_fluid_rvoice_mixer(int buf_count, int fx_buf_count, int fx_units, fluid_real
         if(mixer->fx[i].reverb == NULL || mixer->fx[i].chorus == NULL)
         {
             FLUID_LOG(FLUID_ERR, "Out of memory");
-            delete_fluid_rvoice_mixer(mixer);
-            return NULL;
+            goto error_recovery;
         }
     }
 
     if(!fluid_mixer_buffers_init(&mixer->buffers, mixer))
     {
-        delete_fluid_rvoice_mixer(mixer);
-        return NULL;
+        goto error_recovery;
     }
 
 #if ENABLE_MIXER_THREADS
@@ -738,19 +742,21 @@ new_fluid_rvoice_mixer(int buf_count, int fx_buf_count, int fx_units, fluid_real
     if(!mixer->thread_ready || !mixer->wakeup_threads ||
             !mixer->thread_ready_m || !mixer->wakeup_threads_m)
     {
-        delete_fluid_rvoice_mixer(mixer);
-        return NULL;
+        goto error_recovery;
     }
 
     if(fluid_rvoice_mixer_set_threads(mixer, extra_threads, prio) != FLUID_OK)
     {
-        delete_fluid_rvoice_mixer(mixer);
-        return NULL;
+        goto error_recovery;
     }
 
 #endif
 
     return mixer;
+    
+error_recovery:
+    delete_fluid_rvoice_mixer(mixer);
+    return NULL;
 }
 
 static void
