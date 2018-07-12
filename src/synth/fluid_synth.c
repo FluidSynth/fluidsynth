@@ -5565,6 +5565,22 @@ fluid_synth_count_effects_channels(fluid_synth_t *synth)
 }
 
 /**
+ * Get the total number of allocated effects units.
+ * @param synth FluidSynth instance
+ * @return Count of allocated effects units
+ */
+int
+fluid_synth_count_effects_groups(fluid_synth_t *synth)
+{
+    int result;
+    fluid_return_val_if_fail(synth != NULL, 0);
+    fluid_synth_api_enter(synth);
+
+    result = synth->effects_groups;
+    FLUID_API_RETURN(result);
+}
+
+/**
  * Get the synth CPU load value.
  * @param synth FluidSynth instance
  * @return Estimated CPU load value in percent (0-100)

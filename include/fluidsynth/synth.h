@@ -171,6 +171,7 @@ FLUIDSYNTH_API int fluid_synth_count_midi_channels(fluid_synth_t *synth);
 FLUIDSYNTH_API int fluid_synth_count_audio_channels(fluid_synth_t *synth);
 FLUIDSYNTH_API int fluid_synth_count_audio_groups(fluid_synth_t *synth);
 FLUIDSYNTH_API int fluid_synth_count_effects_channels(fluid_synth_t *synth);
+FLUIDSYNTH_API int fluid_synth_count_effects_groups(fluid_synth_t *synth);
 
 
 /* Synthesis parameters */
