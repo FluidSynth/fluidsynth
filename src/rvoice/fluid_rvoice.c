@@ -675,11 +675,12 @@ static FLUID_INLINE void fluid_rvoice_local_retrigger_attack(fluid_rvoice_t *voi
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_multi_retrigger_attack)
 {
     fluid_rvoice_t *voice = obj;
-    int section = fluid_adsr_env_get_section(&voice->envlfo.volenv);
+    int section; /* volume or modulation section */
 
     /*-------------------------------------------------------------------------
      Section skip for volume envelope
     --------------------------------------------------------------------------*/
+    section = fluid_adsr_env_get_section(&voice->envlfo.volenv);
     if(section >= FLUID_VOICE_ENVHOLD)
     {
         /* DECAY, SUSTAIN,RELEASE section use logarithmic scaling. Calculates new
@@ -697,16 +698,30 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_multi_retrigger_attack)
     /* skips to Attack section from any section */
     /* Update vol and  attack data */
     fluid_rvoice_local_retrigger_attack(voice);
+    
     /*-------------------------------------------------------------------------
      Section skip for modulation envelope
     --------------------------------------------------------------------------*/
+    section = fluid_adsr_env_get_section(&voice->envlfo.modenv);
+    if(section >= FLUID_VOICE_ENVHOLD)
+    {
+        /* DECAY, SUSTAIN,RELEASE section use linear scaling. 
+        Since v 2.1 , as recommended by soundfont 2.01/2.4 spec, ATTACK section
+        uses convex shape (see fluid_rvoice_write() - fluid_convex()).
+        Calculate new modenv value (new_value) for seamless attack transition.
+        Here we need the inverse of fluid_convex() function defined as:
+        new_value = pow(10, (1 - current_val) . FLUID_PEAK_ATTENUATION / -200 . 2.0)
+        For performance reason we use fluid_cb2amp(Val) = pow(10, val/-200) with
+        val = (1 – current_val) . FLUID_PEAK_ATTENUATION / 2.0 
+        */
+        fluid_real_t new_value; /* new modenv value */
+        new_value = fluid_cb2amp((1.0f - fluid_adsr_env_get_val(&voice->envlfo.modenv))
+                                  * FLUID_PEAK_ATTENUATION / 2.0);
+        fluid_clip(new_value, 0.0, 1.0);
+        fluid_adsr_env_set_val(&voice->envlfo.modenv, new_value);
+    }
     /* Skips from any section to ATTACK section */
     fluid_adsr_env_set_section(&voice->envlfo.modenv, FLUID_VOICE_ENVATTACK);
-    /* Actually (v 1.1.6) all sections are linear, so there is no need to
-     correct val value. However soundfont 2.01/2.4 spec. says that Attack should
-     be convex (see issue #153  from Christian Collins). In the case Attack
-     section would be changed to a non linear shape it will be necessary to do
-     a correction for seamless val transition. Here is the place to do this */
 }
 
 /**
