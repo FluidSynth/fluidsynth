@@ -3478,6 +3478,33 @@ fluid_synth_nwrite_float(fluid_synth_t *synth, int len,
 }
 
 /**
+ * mixes the samples of \p in to \p out
+ * 
+ * @param out the output sample buffer to mix to
+ * @param ooff sample offset in \p out
+ * @param in the rvoice_mixer input sample buffer to mix from
+ * @param ioff sample offset in \p in
+ * @param buf_idx the sample buffer index of \p in to mix from
+ * @param num number of samples to mix
+ */
+static FLUID_INLINE void fluid_synth_mix_single_buffer(float *FLUID_RESTRICT out,
+                                                       int ooff,
+                                                       const fluid_real_t *FLUID_RESTRICT in,
+                                                       int ioff,
+                                                       int buf_idx,
+                                                       int num)
+{
+    if(out != NULL)
+    {
+        int j;
+        for(j = 0; j < num; j++)
+        {
+            out[j + ooff] += (float) in[buf_idx * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + j + ioff];
+        }
+    }
+}
+
+/**
  * @brief Synthesize floating point audio to stereo audio channels (implements the default interface #fluid_audio_func_t).
  *
  * Synthesize and <strong>mix</strong> audio to a given number of planar audio buffers.
@@ -3601,26 +3628,11 @@ fluid_synth_process(fluid_synth_t *synth, int len, int nfx, float *fx[],
         {
             for(i = 0; i < naudchan; i++)
             {
-                int j;
                 float *out_buf = out[(i * 2) % nout];
-
-                if(out_buf != NULL)
-                {
-                    for(j = 0; j < num; j++)
-                    {
-                        out_buf[j] += (float) left_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + j + synth->cur];
-                    }
-                }
+                fluid_synth_mix_single_buffer(out_buf, 0, left_in, synth->cur, i, num);
 
                 out_buf = out[(i * 2 + 1) % nout];
-
-                if(out_buf != NULL)
-                {
-                    for(j = 0; j < num; j++)
-                    {
-                        out_buf[j] += (float) right_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + j + synth->cur];
-                    }
-                }
+                fluid_synth_mix_single_buffer(out_buf, 0, right_in, synth->cur, i, num);
             }
         }
 
@@ -3632,27 +3644,13 @@ fluid_synth_process(fluid_synth_t *synth, int len, int nfx, float *fx[],
                 // write out all effects (i.e. reverb and chorus)
                 for(i = 0; i < nfxchan; i++)
                 {
-                    int j;
                     int buf_idx = f * nfxchan + i;
+                    
                     float *out_buf = fx[(buf_idx * 2) % nfx];
-
-                    if(out_buf != NULL)
-                    {
-                        for(j = 0; j < num; j++)
-                        {
-                            out_buf[j] += (float) fx_left_in[buf_idx * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + j + synth->cur];
-                        }
-                    }
+                    fluid_synth_mix_single_buffer(out_buf, 0, fx_left_in, synth->cur, buf_idx, num);
 
                     out_buf = fx[(buf_idx * 2 + 1) % nfx];
-
-                    if(out_buf != NULL)
-                    {
-                        for(j = 0; j < num; j++)
-                        {
-                            out_buf[j] += (float) fx_right_in[buf_idx * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + j + synth->cur];
-                        }
-                    }
+                    fluid_synth_mix_single_buffer(out_buf, 0, fx_right_in, synth->cur, buf_idx, num);
                 }
             }
         }
@@ -3673,26 +3671,11 @@ fluid_synth_process(fluid_synth_t *synth, int len, int nfx, float *fx[],
         {
             for(i = 0; i < naudchan; i++)
             {
-                int j;
                 float *out_buf = out[(i * 2) % nout];
-
-                if(out_buf != NULL)
-                {
-                    for(j = 0; j < num; j++)
-                    {
-                        out_buf[j + count] += (float) left_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + j];
-                    }
-                }
+                fluid_synth_mix_single_buffer(out_buf, count, left_in, 0, i, num);
 
                 out_buf = out[(i * 2 + 1) % nout];
-
-                if(out_buf != NULL)
-                {
-                    for(j = 0; j < num; j++)
-                    {
-                        out_buf[j + count] += (float) right_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + j];
-                    }
-                }
+                fluid_synth_mix_single_buffer(out_buf, count, right_in, 0, i, num);
             }
         }
 
@@ -3704,27 +3687,13 @@ fluid_synth_process(fluid_synth_t *synth, int len, int nfx, float *fx[],
                 // write out all effects (i.e. reverb and chorus)
                 for(i = 0; i < nfxchan; i++)
                 {
-                    int j;
                     int buf_idx = f * nfxchan + i;
+                    
                     float *out_buf = fx[(buf_idx * 2) % nfx];
-
-                    if(out_buf != NULL)
-                    {
-                        for(j = 0; j < num; j++)
-                        {
-                            out_buf[j + count] += (float) fx_left_in[buf_idx * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + j];
-                        }
-                    }
-
+                    fluid_synth_mix_single_buffer(out_buf, count, fx_left_in, 0, buf_idx, num);
+                    
                     out_buf = fx[(buf_idx * 2 + 1) % nfx];
-
-                    if(out_buf != NULL)
-                    {
-                        for(j = 0; j < num; j++)
-                        {
-                            out_buf[j + count] += (float) fx_right_in[buf_idx * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + j];
-                        }
-                    }
+                    fluid_synth_mix_single_buffer(out_buf, count, fx_right_in, 0, buf_idx, num);
                 }
             }
         }
