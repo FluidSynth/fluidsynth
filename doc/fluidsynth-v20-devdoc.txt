@@ -35,6 +35,7 @@ All the source code examples in this document are in the public domain; you can 
 - \ref MIDIRouter 
 - \ref Sequencer
 - \ref Shell
+- \ref Multi-channel
 - \ref Advanced 
 
 \section Disclaimer
@@ -674,7 +675,9 @@ int main(void) {
 
 The shell interface allows you to send simple textual commands to the synthesizer, to parse a command file, or to read commands from the stdin or other input streams. To find the list of currently supported commands, please check the fluid_cmd.c file or type "help" in the fluidsynth command line shell. For a full list of available <strong>command line settings</strong>, please refer to <a href="fluidsettings.xml" target="_blank"><b>FluidSettings Documentation</b></a>.
 
+\section Multi-channel Multi-Channel audio rendering
 
+FluidSynth is capable of rendering all audio and all effects from all MIDI channels to separate stero buffers. Refer to the documentation of fluid_synth_process() and review the different use-cases in the example file for information on how to do that: \ref fluidsynth_process.c
 
 \section Advanced Advanced features, not yet documented.  API reference may contain more info.
 
@@ -684,7 +687,6 @@ The shell interface allows you to send simple textual commands to the synthesize
 - Interpolation settings (set_gen, get_gen, NRPN)
 - Voice overflow settings
 - LADSPA effects unit
-- Multi-channel audio
 - MIDI tunings
 */
 
