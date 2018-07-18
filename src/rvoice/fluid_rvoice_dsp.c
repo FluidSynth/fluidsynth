@@ -54,10 +54,7 @@ static fluid_real_t interp_coeff_linear[FLUID_INTERP_MAX][2];
 static fluid_real_t interp_coeff[FLUID_INTERP_MAX][4];
 
 /* 7th order interpolation (7 coefficients centered on 3rd) */
-static fluid_real_t sinc_table7[FLUID_INTERP_MAX][7];
-
-
-#define SINC_INTERP_ORDER 7	/* 7th order constant */
+static fluid_real_t sinc_table7[FLUID_INTERP_MAX][FLUID_INTERP_SINC_ORDER];
 
 
 /* Initializes interpolation tables */
@@ -86,13 +83,13 @@ void fluid_rvoice_dsp_config(void)
     }
 
     /* i: Offset in terms of whole samples */
-    for(i = 0; i < SINC_INTERP_ORDER; i++)
+    for(i = 0; i < FLUID_INTERP_SINC_ORDER; i++)
     {
         /* i2: Offset in terms of fractional samples ('subsamples') */
         for(i2 = 0; i2 < FLUID_INTERP_MAX; i2++)
         {
             /* center on middle of table */
-            i_shifted = (double)i - ((double)SINC_INTERP_ORDER / 2.0)
+            i_shifted = (double)i - ((double)FLUID_INTERP_SINC_ORDER / 2.0)
                         + (double)i2 / (double)FLUID_INTERP_MAX;
 
             /* sinc(0) cannot be calculated straightforward (limit needed for 0/0) */
@@ -100,7 +97,7 @@ void fluid_rvoice_dsp_config(void)
             {
                 v = (fluid_real_t)sin(i_shifted * M_PI) / (M_PI * i_shifted);
                 /* Hamming window */
-                v *= (fluid_real_t)0.5 * (1.0 + cos(2.0 * M_PI * i_shifted / (fluid_real_t)SINC_INTERP_ORDER));
+                v *= (fluid_real_t)0.5 * (1.0 + cos(2.0 * M_PI * i_shifted / (fluid_real_t)FLUID_INTERP_SINC_ORDER));
             }
             else
             {
