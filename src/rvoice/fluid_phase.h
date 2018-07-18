@@ -33,6 +33,9 @@
 #define FLUID_INTERP_BITS_SHIFT  24
 #define FLUID_INTERP_MAX         256
 
+/* 7th order constant */
+#define FLUID_INTERP_SINC_ORDER  7
+
 #define FLUID_FRACT_MAX ((double)4294967296.0)
 
 /* fluid_phase_t
