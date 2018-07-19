@@ -98,9 +98,10 @@ void fluid_rvoice_dsp_config(void)
             /* sinc(0) cannot be calculated straightforward (limit needed for 0/0) */
             if(fabs(i_shifted) > 0.000001)
             {
-                v = (fluid_real_t)sin(i_shifted * M_PI) / (M_PI * i_shifted);
-                /* Hamming window */
-                v *= (fluid_real_t)0.5 * (1.0 + cos(2.0 * M_PI * i_shifted / (fluid_real_t)SINC_INTERP_ORDER));
+                double arg = M_PI * i_shifted;
+                v = (fluid_real_t)sin(arg) / (arg);
+                /* Hanning window */
+                v *= (fluid_real_t)0.5 * (1.0 + cos(2.0 * arg / (fluid_real_t)SINC_INTERP_ORDER));
             }
             else
             {
