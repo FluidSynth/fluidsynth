@@ -291,7 +291,7 @@ fluid_synth_init(void)
 #ifndef ENABLE_CONST_TABLES
     fluid_rvoice_dsp_config();
 #endif
-  
+
     fluid_sys_config();
 
     init_dither();
