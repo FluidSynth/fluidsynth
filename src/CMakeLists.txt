@@ -142,6 +142,7 @@ set ( libfluidsynth_SOURCES
     rvoice/fluid_rvoice.h
     rvoice/fluid_rvoice.c
     rvoice/fluid_rvoice_dsp.c
+    rvoice/fluid_rvoice_dsp.h
     rvoice/fluid_rvoice_event.h
     rvoice/fluid_rvoice_event.c
     rvoice/fluid_rvoice_mixer.h
@@ -248,6 +249,15 @@ link_directories (
 )
 
 
+# add the command to generate the source code
+if (ENABLE_CONST_TABLES)
+    add_custom_command (
+        OUTPUT ${FLUID_RVOICE_TABLE_H}
+        DEPENDS ${CMAKE_BINARY_DIR}/src/rvoice/make_tables
+        COMMAND ${CMAKE_BINARY_DIR}/src/rvoice/make_tables ${FLUID_RVOICE_TABLE_H}
+    )
+endif ()
+
 # note: by default this target creates a shared object (or dll). To build a
 # static library instead, set the option BUILD_SHARED_LIBS to FALSE.
 add_library ( libfluidsynth
@@ -268,6 +278,7 @@ add_library ( libfluidsynth
     ${public_HEADERS}
     ${public_main_HEADER}
     ${VersionFilesOutputVariable}
+    ${FLUID_RVOICE_TABLE_H}
 )
 
 if ( MACOSX_FRAMEWORK )
