@@ -56,6 +56,7 @@ option ( enable-portaudio "compile PortAudio support" off )
 option ( enable-profiling "profile the dsp code" off )
 option ( enable-trap-on-fpe "enable SIGFPE trap on Floating Point Exceptions" off )
 option ( enable-tests "build unit tests (implicitly disables BUILD_SHARED_LIBS)" off )
+option ( enable-ctables "Use auto-generated constant tables" off)
 
 # Options enabled by default
 option ( enable-aufile "compile support for sound file output" on )
@@ -324,6 +325,18 @@ if ( CMAKE_BUILD_TYPE MATCHES "Debug" )
     set ( ENABLE_DEBUG 1 )
     set ( DEBUG 1 )
 endif ( CMAKE_BUILD_TYPE MATCHES "Debug" )
+
+# Add support for auto-generated tables
+unset ( ENABLE_CONST_TABLES CACHE )
+unset ( FLUID_RVOICE_TABLE_H CACHE)
+
+if (enable-ctables AND NOT CMAKE_CROSSCOMPILING)
+    include_directories ("${PROJECT_SOURCE_DIR}/src/rvoice")
+    add_subdirectory (src/rvoice)
+	set ( ENABLE_CONST_TABLES 1 )
+    set ( FLUID_RVOICE_TABLE_H ${CMAKE_BINARY_DIR}/include/fluid_rvoice_tables.h)
+    message(STATUS "Enabled support for auto-generated tables")
+endif ()
 
 if ( CMAKE_VERSION VERSION_GREATER "3.6.0" )
 find_program( CLANG_TIDY
