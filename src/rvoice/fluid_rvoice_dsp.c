@@ -23,6 +23,13 @@
 #include "fluid_rvoice.h"
 #include "fluid_sys.h"
 
+#ifdef ENABLE_CONST_TABLES
+
+#include "fluid_rvoice_dsp.h"
+#include "fluid_rvoice_tables.h"
+
+#else
+
 /* Purpose:
  *
  * Interpolates audio data (obtains values between the samples of the original
@@ -121,6 +128,8 @@ void fluid_rvoice_dsp_config(void)
 
     fluid_check_fpe("interpolation table calculation");
 }
+
+#endif /* ENABLE_CONST_TABLES */
 
 static FLUID_INLINE fluid_real_t
 fluid_rvoice_get_float_sample(const short int *dsp_msb, const char *dsp_lsb, unsigned int idx)
