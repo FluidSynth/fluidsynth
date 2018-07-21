@@ -30,10 +30,6 @@
 #include <mmsystem.h>
 #include <dsound.h>
 
-fluid_audio_driver_t *
-new_fluid_dsound_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth);
-
-void delete_fluid_dsound_audio_driver(fluid_audio_driver_t *data);
 DWORD WINAPI fluid_dsound_audio_run(LPVOID lpParameter);
 
 char *fluid_win32_error(HRESULT hr);

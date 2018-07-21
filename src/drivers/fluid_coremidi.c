@@ -60,9 +60,6 @@ typedef struct
     fluid_midi_parser_t *parser;
 } fluid_coremidi_driver_t;
 
-fluid_midi_driver_t *new_fluid_coremidi_driver(fluid_settings_t *settings,
-        handle_midi_event_func_t handler, void *data);
-void delete_fluid_coremidi_driver(fluid_midi_driver_t *p);
 void fluid_coremidi_callback(const MIDIPacketList *list, void *p, void *src);
 
 void fluid_coremidi_driver_settings(fluid_settings_t *settings)

@@ -52,11 +52,6 @@ typedef struct
     double phase;
 } fluid_core_audio_driver_t;
 
-fluid_audio_driver_t *new_fluid_core_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth);
-
-fluid_audio_driver_t *new_fluid_core_audio_driver2(fluid_settings_t *settings,
-        fluid_audio_func_t func,
-        void *data);
 
 OSStatus fluid_core_audio_callback(void *data,
                                    AudioUnitRenderActionFlags *ioActionFlags,
@@ -64,8 +59,6 @@ OSStatus fluid_core_audio_callback(void *data,
                                    UInt32 inBusNumber,
                                    UInt32 inNumberFrames,
                                    AudioBufferList *ioData);
-
-void delete_fluid_core_audio_driver(fluid_audio_driver_t *p);
 
 
 /**************************************************************

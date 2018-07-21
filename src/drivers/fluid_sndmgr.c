@@ -46,14 +46,6 @@ typedef struct
     int bufferFrameSize;
 } fluid_sndmgr_audio_driver_t;
 
-fluid_audio_driver_t *new_fluid_sndmgr_audio_driver(fluid_settings_t *settings,
-        fluid_synth_t *synth);
-
-fluid_audio_driver_t *new_fluid_sndmgr_audio_driver2(fluid_settings_t *settings,
-        fluid_audio_func_t func,
-        void *data);
-
-void delete_fluid_sndmgr_audio_driver(fluid_audio_driver_t *p);
 void  pascal fluid_sndmgr_callback(SndChannelPtr chan, SndDoubleBufferPtr doubleBuffer);
 Fixed fluid_sndmgr_double_to_fix(long double theLD);
 

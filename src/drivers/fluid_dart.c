@@ -56,13 +56,6 @@ typedef struct
 
 static HMODULE m_hmodMDM = NULLHANDLE;
 static ULONG(APIENTRY *m_pfnmciSendCommand)(USHORT, USHORT, ULONG, PVOID, USHORT) = NULL;
-
-fluid_audio_driver_t *new_fluid_dart_audio_driver(fluid_settings_t *settings,
-        fluid_synth_t *synth);
-
-void delete_fluid_dart_audio_driver(fluid_audio_driver_t *p);
-void fluid_dart_audio_driver_settings(fluid_settings_t *settings);
-
 static LONG APIENTRY fluid_dart_audio_run(ULONG ulStatus, PMCI_MIX_BUFFER pBuffer, ULONG ulFlags);
 
 /**************************************************************
