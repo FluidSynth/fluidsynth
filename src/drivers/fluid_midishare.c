@@ -66,8 +66,6 @@ typedef struct
 } fluid_midishare_midi_driver_t;
 
 
-static int fluid_midishare_midi_driver_status(fluid_midi_driver_t *p);
-
 static void fluid_midishare_midi_driver_receive(short ref);
 
 #if defined(MIDISHARE_DRIVER)
@@ -196,16 +194,6 @@ void delete_fluid_midishare_midi_driver(fluid_midi_driver_t *p)
     dev->status = FLUID_MIDI_DONE;
 
     FLUID_FREE(dev);
-}
-
-
-/*
- * fluid_midishare_midi_driver_status
- */
-int fluid_midishare_midi_driver_status(fluid_midi_driver_t *p)
-{
-    fluid_midishare_midi_driver_t *dev = (fluid_midishare_midi_driver_t *) p;
-    return dev->status;
 }
 
 

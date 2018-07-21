@@ -91,7 +91,6 @@ typedef struct
     fluid_midi_parser_t *parser;
 } fluid_oss_midi_driver_t;
 
-static int fluid_oss_midi_driver_status(fluid_midi_driver_t *p);
 static fluid_thread_return_t fluid_oss_midi_run(void *d);
 
 
@@ -780,13 +779,6 @@ fluid_oss_midi_run(void *d)
     }
 
     return FLUID_THREAD_RETURN_VALUE;
-}
-
-int
-fluid_oss_midi_driver_status(fluid_midi_driver_t *p)
-{
-    fluid_oss_midi_driver_t *dev = (fluid_oss_midi_driver_t *) p;
-    return dev->status;
 }
 
 #endif /*#if OSS_SUPPORT */
