@@ -43,7 +43,7 @@ init:
   - if "%platform%"=="ARM" ( set TARGET_PLATFORM= ARM)
   - echo %TARGET_PLATFORM%
   - echo %APPVEYOR_BUILD_WORKER_IMAGE%
-  - if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2017" ( set "generator=Visual Studio 15 2017%TARGET_PLATFORM%" && set "toolset=v150_xp" )
+  - if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2017" ( set "generator=Visual Studio 15 2017%TARGET_PLATFORM%" && set "toolset=v141_xp" )
   - if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2015" ( set "generator=Visual Studio 14 2015%TARGET_PLATFORM%" && set "toolset=v140_xp" )
   - echo %generator%
   - echo %toolset%
