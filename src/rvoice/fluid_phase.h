@@ -22,6 +22,8 @@
 #ifndef _FLUID_PHASE_H
 #define _FLUID_PHASE_H
 
+#include "config.h"
+
 /*
  *  phase
  */
@@ -30,9 +32,6 @@
 #define FLUID_INTERP_BITS_MASK   0xff000000
 #define FLUID_INTERP_BITS_SHIFT  24
 #define FLUID_INTERP_MAX         256
-
-/* 7th order constant */
-#define FLUID_INTERP_SINC_ORDER  7
 
 #define FLUID_FRACT_MAX ((double)4294967296.0)
 
