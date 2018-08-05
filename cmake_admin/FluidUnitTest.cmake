@@ -1,6 +1,10 @@
 macro ( ADD_FLUID_TEST _test )
     ADD_EXECUTABLE(${_test} ${_test}.c $<TARGET_OBJECTS:libfluidsynth-OBJ> )
-    TARGET_LINK_LIBRARIES(${_test} libfluidsynth)
+    
+    # only build this unit test when explicitly requested by "make check"
+    set_target_properties(${_test} PROPERTIES EXCLUDE_FROM_ALL TRUE)
+    
+    TARGET_LINK_LIBRARIES(${_test} $<TARGET_PROPERTY:libfluidsynth,INTERFACE_LINK_LIBRARIES>)
 
     # use the local include path to look for fluidsynth.h, as we cannot be sure fluidsynth is already installed
     target_include_directories(${_test}
