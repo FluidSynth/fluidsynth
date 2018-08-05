@@ -40,6 +40,10 @@ include_directories (
     ${GLIB_INCLUDE_DIRS}
 )
 
+if (enable-ctables AND NOT ENABLE_EXT_GEN_TABLES AND NOT CMAKE_CROSSCOMPILING)
+     add_subdirectory (tools)
+endif()
+
 # ************ library ************
 
 if ( READLINE_SUPPORT )
@@ -109,6 +113,20 @@ endif ( MIDISHARE_SUPPORT )
 
 set ( config_SOURCES ${CMAKE_BINARY_DIR}/config.h )
 
+# add the command to generate the source code
+if (ENABLE_CONST_TABLES)
+    add_custom_command (
+        OUTPUT ${FLUID_RVOICE_TABLE_H}
+        DEPENDS ${WITH_GENERATOR}
+        COMMAND ${WITH_GENERATOR} 0 ${FLUID_RVOICE_TABLE_H}
+    )
+    add_custom_command (
+        OUTPUT ${FLUID_CONV_TABLE_H}
+        DEPENDS ${WITH_GENERATOR}
+        COMMAND ${WITH_GENERATOR} 1 ${FLUID_CONV_TABLE_H}
+    )
+endif ()
+
 set ( libfluidsynth_SOURCES
     utils/fluid_conv.c
     utils/fluid_conv.h
@@ -142,7 +160,6 @@ set ( libfluidsynth_SOURCES
     rvoice/fluid_rvoice.h
     rvoice/fluid_rvoice.c
     rvoice/fluid_rvoice_dsp.c
-    rvoice/fluid_rvoice_dsp.h
     rvoice/fluid_rvoice_event.h
     rvoice/fluid_rvoice_event.c
     rvoice/fluid_rvoice_mixer.h
@@ -212,6 +229,8 @@ configure_file ( ${CMAKE_SOURCE_DIR}/include/fluidsynth/version.h.in
 configure_file ( ${CMAKE_SOURCE_DIR}/include/fluidsynth.cmake
                  ${public_main_HEADER} )
 
+if (NOT enable-generator)
+
 if ( WIN32 AND NOT MINGW )
 include(generate_product_version)
 generate_product_version(
@@ -249,15 +268,6 @@ link_directories (
 )
 
 
-# add the command to generate the source code
-if (ENABLE_CONST_TABLES)
-    add_custom_command (
-        OUTPUT ${FLUID_RVOICE_TABLE_H}
-        DEPENDS ${CMAKE_BINARY_DIR}/src/rvoice/make_tables
-        COMMAND ${CMAKE_BINARY_DIR}/src/rvoice/make_tables ${FLUID_RVOICE_TABLE_H}
-    )
-endif ()
-
 # note: by default this target creates a shared object (or dll). To build a
 # static library instead, set the option BUILD_SHARED_LIBS to FALSE.
 add_library ( libfluidsynth
@@ -279,6 +289,7 @@ add_library ( libfluidsynth
     ${public_main_HEADER}
     ${VersionFilesOutputVariable}
     ${FLUID_RVOICE_TABLE_H}
+    ${FLUID_CONV_TABLE_H}
 )
 
 if ( MACOSX_FRAMEWORK )
@@ -382,3 +393,4 @@ else ( MACOSX_FRAMEWORK )
    install ( FILES ${public_main_HEADER} DESTINATION ${INCLUDE_INSTALL_DIR} )
 endif ( MACOSX_FRAMEWORK )
 
+endif ()
