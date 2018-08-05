@@ -220,6 +220,7 @@ before_script:
     - mkdir build && cd build
     
 script:
-    - cmake -DCMAKE_INSTALL_PREFIX=$HOME/fluidsynth_install ${CMAKE_FLAGS} "-Denable-portaudio=1" "-Denable-ladspa=1" "-DCMAKE_BUILD_TYPE=RelWithDebInfo" ..
+    - cmake -DCMAKE_INSTALL_PREFIX=$HOME/fluidsynth_install ${CMAKE_FLAGS} "-Denable-portaudio=1" "-Denable-ladspa=1" "-DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_VERBOSE_MAKEFILE=1" ..
     - make -j4
-    - if [ $TRAVIS_OS_NAME = linux ]; then make install; cmake -Denable-tests=1 ..; make check; fi # install only on linux, as CMAKE_INSTALL_PREFIX is ignored for frameworks on macosx and I cant tell whether that's correct or a bug. also build unit test only on linux, as libintl is not found on macosx
+    - make check
+    - if [ $TRAVIS_OS_NAME = linux ]; then make install; fi # install only on linux, as CMAKE_INSTALL_PREFIX is ignored for frameworks on macosx and I cant tell whether that's correct or a bug.

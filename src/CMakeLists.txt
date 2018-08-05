@@ -247,10 +247,7 @@ link_directories (
     ${DBUS_LIBRARY_DIRS}
 )
 
-
-# note: by default this target creates a shared object (or dll). To build a
-# static library instead, set the option BUILD_SHARED_LIBS to FALSE.
-add_library ( libfluidsynth
+add_library ( libfluidsynth-OBJ OBJECT
     ${config_SOURCES}
     ${fluid_alsa_SOURCES}
     ${fluid_coreaudio_SOURCES}
@@ -269,6 +266,10 @@ add_library ( libfluidsynth
     ${public_main_HEADER}
     ${VersionFilesOutputVariable}
 )
+
+# note: by default this target creates a shared object (or dll). To build a
+# static library instead, set the option BUILD_SHARED_LIBS to FALSE.
+add_library ( libfluidsynth $<TARGET_OBJECTS:libfluidsynth-OBJ> )
 
 if ( MACOSX_FRAMEWORK )
      set_property ( SOURCE ${public_HEADERS}

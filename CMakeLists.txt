@@ -55,7 +55,6 @@ option ( enable-fpe-check "enable Floating Point Exception checks and debug mess
 option ( enable-portaudio "compile PortAudio support" off )
 option ( enable-profiling "profile the dsp code" off )
 option ( enable-trap-on-fpe "enable SIGFPE trap on Floating Point Exceptions" off )
-option ( enable-tests "build unit tests (implicitly disables BUILD_SHARED_LIBS)" off )
 
 # Options enabled by default
 option ( enable-aufile "compile support for sound file output" on )
@@ -106,6 +105,11 @@ mark_as_advanced ( LIB_SUFFIX )
 
 # the default C standard to use for all targets
 set(CMAKE_C_STANDARD 90)
+
+# Compile with position independent code if the user requested a shared lib, i.e. no PIC if static requested.
+# This is cmakes default behavior, but here it's explicitly required due to the use of libfluidsynth-OBJ as object library,
+# which would otherwise always be compiled without PIC.
+set ( CMAKE_POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS} )
 
 # the default global visibility level for all target
 # no visibility support on OS2
@@ -543,19 +547,11 @@ if ( OpenMP_FOUND OR OpenMP_C_FOUND )
     endif()
 endif()
 
+# manipulate some variables to setup a proper test env
+set(TEST_SOUNDFONT "${CMAKE_SOURCE_DIR}/sf2/VintageDreamsWaves-v2.sf2")
+set(TEST_SOUNDFONT_SF3 "${CMAKE_SOURCE_DIR}/sf2/VintageDreamsWaves-v2.sf3")
 
-if(enable-tests)
-    # manipulate some variables to setup a proper test env
-    set(TEST_SOUNDFONT "${CMAKE_SOURCE_DIR}/sf2/VintageDreamsWaves-v2.sf2")
-    set(TEST_SOUNDFONT_SF3 "${CMAKE_SOURCE_DIR}/sf2/VintageDreamsWaves-v2.sf3")
-    
-    # force to build a static lib, in order to bypass the visibility control, allowing us
-    # to test fluidsynths private/internal functions
-    set(BUILD_SHARED_LIBS OFF)
-    
-    add_subdirectory ( test )
-endif(enable-tests)
-
+add_subdirectory ( test )
 
 # General configuration file
 configure_file ( ${CMAKE_SOURCE_DIR}/src/config.cmake
