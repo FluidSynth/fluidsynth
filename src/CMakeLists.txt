@@ -267,6 +267,11 @@ add_library ( libfluidsynth-OBJ OBJECT
     ${VersionFilesOutputVariable}
 )
 
+if ( LIBFLUID_CPPFLAGS )
+  set_target_properties ( libfluidsynth-OBJ
+    PROPERTIES COMPILE_FLAGS ${LIBFLUID_CPPFLAGS} )
+endif ( LIBFLUID_CPPFLAGS )
+
 # note: by default this target creates a shared object (or dll). To build a
 # static library instead, set the option BUILD_SHARED_LIBS to FALSE.
 add_library ( libfluidsynth $<TARGET_OBJECTS:libfluidsynth-OBJ> )
@@ -313,11 +318,6 @@ else ( MACOSX_FRAMEWORK )
       SOVERSION ${LIB_VERSION_CURRENT}
   )
 endif ( MACOSX_FRAMEWORK )
-
-if ( LIBFLUID_CPPFLAGS )
-  set_target_properties ( libfluidsynth
-    PROPERTIES COMPILE_FLAGS ${LIBFLUID_CPPFLAGS} )
-endif ( LIBFLUID_CPPFLAGS )
 
 target_link_libraries ( libfluidsynth
     ${GLIB_LIBRARIES}
