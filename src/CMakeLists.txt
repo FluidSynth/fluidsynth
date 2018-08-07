@@ -226,17 +226,6 @@ generate_product_version(
 )
 endif ( WIN32 AND NOT MINGW )
 
-link_directories (
-    ${GLIB_LIBRARY_DIRS}
-    ${LASH_LIBRARY_DIRS}
-    ${JACK_LIBRARY_DIRS}
-    ${ALSA_LIBRARY_DIRS}
-    ${PULSE_LIBRARY_DIRS}
-    ${PORTAUDIO_LIBRARY_DIRS}
-    ${LIBSNDFILE_LIBRARY_DIRS}
-    ${DBUS_LIBRARY_DIRS}
-)
-
 add_library ( libfluidsynth-OBJ OBJECT
     ${config_SOURCES}
     ${fluid_alsa_SOURCES}

@@ -551,15 +551,25 @@ endif()
 set(TEST_SOUNDFONT "${CMAKE_SOURCE_DIR}/sf2/VintageDreamsWaves-v2.sf2")
 set(TEST_SOUNDFONT_SF3 "${CMAKE_SOURCE_DIR}/sf2/VintageDreamsWaves-v2.sf3")
 
-add_subdirectory ( test )
-
 # General configuration file
 configure_file ( ${CMAKE_SOURCE_DIR}/src/config.cmake
                  ${CMAKE_BINARY_DIR}/config.h )
 
+# Setup linker directories NOW, as the command will apply only to targets created after it has been called.
+link_directories (
+    ${GLIB_LIBRARY_DIRS}
+    ${LASH_LIBRARY_DIRS}
+    ${JACK_LIBRARY_DIRS}
+    ${ALSA_LIBRARY_DIRS}
+    ${PULSE_LIBRARY_DIRS}
+    ${PORTAUDIO_LIBRARY_DIRS}
+    ${LIBSNDFILE_LIBRARY_DIRS}
+    ${DBUS_LIBRARY_DIRS}
+)
 
 # Process subdirectories
 add_subdirectory ( src )
+add_subdirectory ( test )
 add_subdirectory ( doc )
 
 # pkg-config support
