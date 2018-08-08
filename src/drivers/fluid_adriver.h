@@ -34,6 +34,9 @@ struct _fluid_audio_driver_t
 
 void fluid_audio_driver_settings(fluid_settings_t *settings);
 
+/* Defined in fluid_filerenderer.c */
+void fluid_file_renderer_settings(fluid_settings_t *settings);
+
 #if PULSE_SUPPORT
 fluid_audio_driver_t *new_fluid_pulse_audio_driver(fluid_settings_t *settings,
         fluid_synth_t *synth);
