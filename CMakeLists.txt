@@ -56,6 +56,8 @@ option ( enable-portaudio "compile PortAudio support" off )
 option ( enable-profiling "profile the dsp code" off )
 option ( enable-trap-on-fpe "enable SIGFPE trap on Floating Point Exceptions" off )
 option ( enable-tests "build unit tests (implicitly disables BUILD_SHARED_LIBS)" off )
+option ( enable-ctables "Use auto-generated constant tables" off)
+option ( enable-generator "Build only generator tool for cross-compile" off)
 
 # Options enabled by default
 option ( enable-aufile "compile support for sound file output" on )
@@ -346,6 +348,38 @@ if ( CMAKE_BUILD_TYPE MATCHES "Debug" )
     set ( ENABLE_DEBUG 1 )
     set ( DEBUG 1 )
 endif ( CMAKE_BUILD_TYPE MATCHES "Debug" )
+
+# Add support for auto-generated tables
+unset ( ENABLE_CONST_TABLES CACHE )
+unset ( ENABLE_EXT_GEN_TABLES CACHE )
+
+if (enable-ctables)
+    # TODO: check if compiler supports C99, disable function otherwise.
+	if (WITH_GENERATOR)
+        set ( ENABLE_CONST_TABLES 1 )
+		set ( ENABLE_EXT_GEN_TABLES 1 )
+        message(STATUS "Using generator ${WITH_GENERATOR}")
+    else ()
+        if (CMAKE_CROSSCOMPILING)
+            message(WARNING "Build of table generator non supported when cross compiling, Disabled.")
+            set(enable-ctables off)
+        else ()
+            # Automatically build generators if ctables is activated
+            set ( ENABLE_CONST_TABLES 1 )
+            message(STATUS "Enabled support for auto-generated tables")
+            set ( WITH_GENERATOR ${CMAKE_BINARY_DIR}/src/tools/make_tables)
+            message(STATUS "Using generator ${WITH_GENERATOR}")
+        endif ()
+    endif ()
+endif ()
+
+unset ( FLUID_RVOICE_TABLE_H CACHE)
+unset ( FLUID_CONV_TABLE_H CACHE)
+
+if (ENABLE_CONST_TABLES)
+    set ( FLUID_RVOICE_TABLE_H ${CMAKE_BINARY_DIR}/include/fluid_rvoice_tables.h)
+    set ( FLUID_CONV_TABLE_H   ${CMAKE_BINARY_DIR}/include/fluid_conv_tables.h)
+endif ()
 
 if ( CMAKE_VERSION VERSION_GREATER "3.6.0" )
 find_program( CLANG_TIDY

@@ -286,9 +286,11 @@ fluid_synth_init(void)
     feenableexcept(FE_DIVBYZERO | FE_UNDERFLOW | FE_OVERFLOW | FE_INVALID);
 #endif
 
+#ifndef ENABLE_CONST_TABLES
     fluid_conversion_config();
 
     fluid_rvoice_dsp_config();
+#endif
 
     fluid_sys_config();
 

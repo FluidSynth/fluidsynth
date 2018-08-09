@@ -218,6 +218,9 @@
    first (like Motorola and SPARC, unlike Intel and VAX). */
 #cmakedefine WORDS_BIGENDIAN @WORDS_BIGENDIAN@
 
+/* Define to 1 if constant tables should be auto-generated */
+#cmakedefine ENABLE_CONST_TABLES @ENABLE_CONST_TABLES@
+
 /* Define to `__inline__' or `__inline' if that's what the C compiler
    calls it, or to nothing if 'inline' is not supported under any name.  */
 #ifndef __cplusplus
