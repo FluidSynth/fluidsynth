@@ -36,7 +36,6 @@ include_directories (
 
 include_directories (
     SYSTEM
-    ${GLIB_INCLUDEDIR}
     ${GLIB_INCLUDE_DIRS}
 )
 
@@ -48,12 +47,12 @@ endif ( READLINE_SUPPORT )
 
 if ( PULSE_SUPPORT )
   set ( fluid_pulse_SOURCES drivers/fluid_pulse.c )
-  include_directories ( ${PULSE_INCLUDEDIR} ${PULSE_INCLUDE_DIRS} )
+  include_directories ( ${PULSE_INCLUDE_DIRS} )
 endif ( PULSE_SUPPORT )
 
 if ( ALSA_SUPPORT )
   set ( fluid_alsa_SOURCES drivers/fluid_alsa.c )
-  include_directories ( ${ALSA_INCLUDEDIR} ${ALSA_INCLUDE_DIRS} )
+  include_directories ( ${ALSA_INCLUDE_DIRS} )
 endif ( ALSA_SUPPORT )
 
 if ( COREAUDIO_SUPPORT )
@@ -66,17 +65,17 @@ endif ( COREMIDI_SUPPORT )
 
 if ( DBUS_SUPPORT )
   set ( fluid_dbus_SOURCES bindings/fluid_rtkit.c bindings/fluid_rtkit.h )
-  include_directories ( ${DBUS_INCLUDEDIR} ${DBUS_INCLUDE_DIRS} )
+  include_directories ( ${DBUS_INCLUDE_DIRS} )
 endif ( DBUS_SUPPORT )
 
 if ( JACK_SUPPORT )
   set ( fluid_jack_SOURCES drivers/fluid_jack.c )
-  include_directories ( ${JACK_INCLUDEDIR} ${JACK_INCLUDE_DIRS} )
+  include_directories ( ${JACK_INCLUDE_DIRS} )
 endif ( JACK_SUPPORT )
 
 if ( PORTAUDIO_SUPPORT )
   set ( fluid_portaudio_SOURCES drivers/fluid_portaudio.c )
-  include_directories ( ${PORTAUDIO_INCLUDEDIR} ${PORTAUDIO_INCLUDE_DIRS} )
+  include_directories ( ${PORTAUDIO_INCLUDE_DIRS} )
 endif ( PORTAUDIO_SUPPORT )
 
 if ( WINDOWS_SUPPORT )
@@ -89,8 +88,7 @@ endif ( OSS_SUPPORT )
 
 if ( LASH_SUPPORT )
   set ( fluid_lash_SOURCES bindings/fluid_lash.c bindings/fluid_lash.h )
-  include_directories ( ${LASH_INCLUDEDIR}
-                        ${LASH_INCLUDE_DIRS})
+  include_directories ( ${LASH_INCLUDE_DIRS})
 endif ( LASH_SUPPORT )
 
 if ( DART_SUPPORT )
@@ -99,7 +97,7 @@ if ( DART_SUPPORT )
 endif ( DART_SUPPORT )
 
 if ( LIBSNDFILE_SUPPORT )
-  include_directories ( ${LIBSNDFILE_INCLUDEDIR} ${LIBSNDFILE_INCLUDE_DIRS} )
+  include_directories ( ${LIBSNDFILE_INCLUDE_DIRS} )
 endif ( LIBSNDFILE_SUPPORT )
 
 if ( MIDISHARE_SUPPORT )
@@ -228,29 +226,7 @@ generate_product_version(
 )
 endif ( WIN32 AND NOT MINGW )
 
-link_directories (
-    ${GLIB_LIBDIR}
-    ${GLIB_LIBRARY_DIRS}
-    ${LASH_LIBDIR}
-    ${LASH_LIBRARY_DIRS}
-    ${JACK_LIBDIR}
-    ${JACK_LIBRARY_DIRS}
-    ${ALSA_LIBDIR}
-    ${ALSA_LIBRARY_DIRS}
-    ${PULSE_LIBDIR}
-    ${PULSE_LIBRARY_DIRS}
-    ${PORTAUDIO_LIBDIR}
-    ${PORTAUDIO_LIBRARY_DIRS}
-    ${LIBSNDFILE_LIBDIR}
-    ${LIBSNDFILE_LIBRARY_DIRS}
-    ${DBUS_LIBDIR}
-    ${DBUS_LIBRARY_DIRS}
-)
-
-
-# note: by default this target creates a shared object (or dll). To build a
-# static library instead, set the option BUILD_SHARED_LIBS to FALSE.
-add_library ( libfluidsynth
+add_library ( libfluidsynth-OBJ OBJECT
     ${config_SOURCES}
     ${fluid_alsa_SOURCES}
     ${fluid_coreaudio_SOURCES}
@@ -269,6 +245,15 @@ add_library ( libfluidsynth
     ${public_main_HEADER}
     ${VersionFilesOutputVariable}
 )
+
+if ( LIBFLUID_CPPFLAGS )
+  set_target_properties ( libfluidsynth-OBJ
+    PROPERTIES COMPILE_FLAGS ${LIBFLUID_CPPFLAGS} )
+endif ( LIBFLUID_CPPFLAGS )
+
+# note: by default this target creates a shared object (or dll). To build a
+# static library instead, set the option BUILD_SHARED_LIBS to FALSE.
+add_library ( libfluidsynth $<TARGET_OBJECTS:libfluidsynth-OBJ> )
 
 if ( MACOSX_FRAMEWORK )
      set_property ( SOURCE ${public_HEADERS}
@@ -312,11 +297,6 @@ else ( MACOSX_FRAMEWORK )
       SOVERSION ${LIB_VERSION_CURRENT}
   )
 endif ( MACOSX_FRAMEWORK )
-
-if ( LIBFLUID_CPPFLAGS )
-  set_target_properties ( libfluidsynth
-    PROPERTIES COMPILE_FLAGS ${LIBFLUID_CPPFLAGS} )
-endif ( LIBFLUID_CPPFLAGS )
 
 target_link_libraries ( libfluidsynth
     ${GLIB_LIBRARIES}
