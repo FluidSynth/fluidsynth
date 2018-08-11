@@ -25,12 +25,6 @@
 #define FLUID_CB_AMP_SIZE       1441
 #define FLUID_PAN_SIZE          1002
 
-#if defined ENABLE_CONST_TABLES && !defined FLUID_TABLE_GENERATOR
-
-#include "fluid_conv_tables.h"
-
-#else
-
 /* conversion tables */
 static fluid_real_t fluid_ct2hz_tab[FLUID_CENTS_HZ_SIZE];
 static fluid_real_t fluid_cb2amp_tab[FLUID_CB_AMP_SIZE];
@@ -93,9 +87,6 @@ fluid_conversion_config(void)
         fluid_pan_tab[i] = (fluid_real_t) sin(i * x);
     }
 }
-#endif
-
-#ifndef FLUID_TABLE_GENERATOR
 
 /*
  * fluid_ct2hz
@@ -416,5 +407,3 @@ fluid_convex(fluid_real_t val)
 
     return fluid_convex_tab[(int) val];
 }
-
-#endif /* FLUID_TABLE_GENERATOR */
