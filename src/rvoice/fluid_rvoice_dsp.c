@@ -25,7 +25,7 @@
 
 #define SINC_INTERP_ORDER 7	/* 7th order constant */
 
-#if defined ENABLE_CONST_TABLES && !defined FLUID_TABLE_GENERATOR
+#if defined ENABLE_CONST_TABLES
 
 #include "fluid_rvoice_tables.h"
 
@@ -130,10 +130,8 @@ void fluid_rvoice_dsp_config(void)
     fluid_check_fpe("interpolation table calculation");
 }
 
-#endif /* ENABLE_CONST_TABLES && !FLUID_TABLE_GENERATOR */
+#endif /* ENABLE_CONST_TABLES */
 
-
-#ifndef FLUID_TABLE_GENERATOR
 
 static FLUID_INLINE fluid_real_t
 fluid_rvoice_get_float_sample(const short int *dsp_msb, const char *dsp_lsb, unsigned int idx)
@@ -722,5 +720,3 @@ fluid_rvoice_dsp_interpolate_7th_order(fluid_rvoice_dsp_t *voice, fluid_real_t *
 
     return (dsp_i);
 }
-
-#endif /* FLUID_TABLE_GENERATOR */
