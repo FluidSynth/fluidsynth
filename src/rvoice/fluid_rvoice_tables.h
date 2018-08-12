@@ -13,13 +13,7 @@
 #define I_SHIFTED(_i, _i2)  ((double)(_i) - ((double)SINC_INTERP_ORDER / 2.0) \
                             + (double)(_i2) / (double)FLUID_INTERP_MAX)
 
-#ifndef __GNUC__
-
-#define FSIN(_i)            AUTO_GEN_SIN(_i)
-#define FCOS(_i)            AUTO_GEN_COS(_i)
-#define FABS(_i)            (((_i) < 0) ? 0-(_i) : (_i))
-
-#else
+#if defined __GNUC__ && !defined __clang__
 
 #if defined(WITH_FLOAT)
 #define FSIN(_i)            __builtin_sinf(_i)
@@ -30,6 +24,12 @@
 #define FCOS(_i)            __builtin_cos(_i)
 #define FABS(_i)            __builtin_fabs(_i)
 #endif
+
+#else
+
+#define FSIN(_i)            AUTO_GEN_SIN(_i)
+#define FCOS(_i)            AUTO_GEN_COS(_i)
+#define FABS(_i)            (((_i) < 0) ? 0-(_i) : (_i))
 
 #endif
 
