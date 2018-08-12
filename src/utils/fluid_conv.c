@@ -74,7 +74,7 @@ fluid_conversion_config(void)
 
     for(i = 1; i < FLUID_VEL_CB_SIZE - 1; i++)
     {
-        x = (-200.0 / FLUID_PEAK_ATTENUATION) * log((i * i) / (fluid_real_t)((FLUID_VEL_CB_SIZE - 1) * (FLUID_VEL_CB_SIZE - 1))) / M_LN10;
+        x = (-200.0 / FLUID_PEAK_ATTENUATION) * 2 * log((fluid_real_t)i / (fluid_real_t)(FLUID_VEL_CB_SIZE - 1)) / M_LN10;
         fluid_convex_tab[i] = (fluid_real_t)(1.0 - x);
         fluid_concave_tab[(FLUID_VEL_CB_SIZE - 1) - i] = (fluid_real_t) x;
     }
