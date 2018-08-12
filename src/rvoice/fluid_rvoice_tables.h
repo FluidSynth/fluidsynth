@@ -13,25 +13,9 @@
 #define I_SHIFTED(_i, _i2)  ((double)(_i) - ((double)SINC_INTERP_ORDER / 2.0) \
                             + (double)(_i2) / (double)FLUID_INTERP_MAX)
 
-#if defined __GNUC__ && !defined __clang__
-
-#if defined(WITH_FLOAT)
-#define FSIN(_i)            __builtin_sinf(_i)
-#define FCOS(_i)            __builtin_cosf(_i)
-#define FABS(_i)            __builtin_fabsf(_i)
-#else
-#define FSIN(_i)            __builtin_sin(_i)
-#define FCOS(_i)            __builtin_cos(_i)
-#define FABS(_i)            __builtin_fabs(_i)
-#endif
-
-#else
-
 #define FSIN(_i)            AUTO_GEN_SIN(_i)
 #define FCOS(_i)            AUTO_GEN_COS(_i)
 #define FABS(_i)            (((_i) < 0) ? 0-(_i) : (_i))
-
-#endif
 
 #define SINC_TABLE(_i, _i2) ((FABS(I_SHIFTED(_i, _i2)) > 0.000001) ? \
                              (fluid_real_t)(FSIN(I_SHIFTED(_i, _i2) * M_PI) / (2. * M_PI * I_SHIFTED(_i, _i2)) \
