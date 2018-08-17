@@ -32,6 +32,21 @@ static fluid_real_t fluid_concave_tab[FLUID_VEL_CB_SIZE];
 static fluid_real_t fluid_convex_tab[FLUID_VEL_CB_SIZE];
 static fluid_real_t fluid_pan_tab[FLUID_PAN_SIZE];
 
+#ifdef ENABLE_CONST_TABLES
+
+#include "auto_gen_array.h"
+#include "auto_gen_math.h"
+
+#define FLUID_PAN_TAB(_i)   AUTO_GEN_SIN((M_PI / 2.0 / (FLUID_PAN_SIZE - 1.0))*(_i))
+
+static const fluid_real_t fluid_pan_tab[FLUID_PAN_SIZE] = { AUTO_GEN_ARRAY_1002(FLUID_PAN_TAB) };
+
+#else
+
+static fluid_real_t fluid_pan_tab[FLUID_PAN_SIZE];
+
+#endif /* ENABLE_CONST_TABLES */
+
 /*
  * void fluid_synth_init
  *
@@ -74,11 +89,14 @@ fluid_conversion_config(void)
 
     for(i = 1; i < FLUID_VEL_CB_SIZE - 1; i++)
     {
+        // Original code:
+        // x = (-200.0 / FLUID_PEAK_ATTENUATION) * log((i * i) / (fluid_real_t)((FLUID_VEL_CB_SIZE - 1) * (FLUID_VEL_CB_SIZE - 1))) / M_LN10;
         x = (-200.0 / FLUID_PEAK_ATTENUATION) * 2 * log((fluid_real_t)i / (fluid_real_t)(FLUID_VEL_CB_SIZE - 1)) / M_LN10;
         fluid_convex_tab[i] = (fluid_real_t)(1.0 - x);
         fluid_concave_tab[(FLUID_VEL_CB_SIZE - 1) - i] = (fluid_real_t) x;
     }
 
+#ifndef ENABLE_CONST_TABLES
     /* initialize the pan conversion table */
     x = M_PI / 2.0 / (FLUID_PAN_SIZE - 1.0);
 
@@ -86,6 +104,7 @@ fluid_conversion_config(void)
     {
         fluid_pan_tab[i] = (fluid_real_t) sin(i * x);
     }
+#endif
 }
 
 /*
