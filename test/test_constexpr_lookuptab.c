@@ -14,7 +14,7 @@ static fluid_real_t sinc_table7_runtime[FLUID_INTERP_MAX][SINC_INTERP_ORDER];
 
 static const fluid_real_t interp_coeff_linear_const[FLUID_INTERP_MAX][2] = { AUTO_GEN_ARRAY_256(INTERP_COEFF_LINEAR) };
 static const fluid_real_t interp_coeff_const[FLUID_INTERP_MAX][4] = { AUTO_GEN_ARRAY_256(INTERP_COEFF) };
-static const fluid_real_t sinc_table7_const[FLUID_INTERP_MAX][SINC_INTERP_ORDER] = { AUTO_GEN_MATRIX_7_256(SINC_TABLE) };
+static const fluid_real_t sinc_table7_const[FLUID_INTERP_MAX][SINC_INTERP_ORDER] = { AUTO_GEN_ARRAY_256(INTERP_COEFF_SINC) };
 
 #define EPS (1.e-6)
 

@@ -63,9 +63,7 @@ static const fluid_real_t interp_coeff_linear[FLUID_INTERP_MAX][2] = { AUTO_GEN_
 static const fluid_real_t interp_coeff[FLUID_INTERP_MAX][4] = { AUTO_GEN_ARRAY_256(INTERP_COEFF) };
 
 /* 7th order interpolation (7 coefficients centered on 3rd) */
-static const fluid_real_t sinc_table7[FLUID_INTERP_MAX][SINC_INTERP_ORDER] = { 
-    AUTO_GEN_MATRIX_7_256(SINC_TABLE)
-};
+static const fluid_real_t sinc_table7[FLUID_INTERP_MAX][SINC_INTERP_ORDER] = { AUTO_GEN_ARRAY_256(INTERP_COEFF_SINC) };
 
 #else
 

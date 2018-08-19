@@ -18,7 +18,7 @@
 
 #define FSIN(_i)            AUTO_GEN_SIN(_i)
 #define FCOS(_i)            AUTO_GEN_COS(_i)
-#define FABS(_i)            (((_i) < 0) ? 0-(_i) : (_i))
+#define FABS(_i)            (((_i) < 0) ? -(_i) : (_i))
 
 #define SINC_TABLE(_i, _i2) ((FABS(I_SHIFTED(_i, _i2)) > 0.000001) ? \
                              (fluid_real_t)(FSIN(I_SHIFTED(_i, _i2) * M_PI) / (I_SHIFTED(_i, _i2) * M_PI) \
@@ -30,5 +30,15 @@
 
 #define INTERP_COEFF(_i) \
     { INTERP_COEFF_0(_i), INTERP_COEFF_1(_i), INTERP_COEFF_2(_i), INTERP_COEFF_3(_i) }
+    
+#define INTERP_COEFF_SINC(_i) \
+    { SINC_TABLE(0,((FLUID_INTERP_MAX-1)-(_i))),\
+      SINC_TABLE(1,((FLUID_INTERP_MAX-1)-(_i))),\
+      SINC_TABLE(2,((FLUID_INTERP_MAX-1)-(_i))),\
+      SINC_TABLE(3,((FLUID_INTERP_MAX-1)-(_i))),\
+      SINC_TABLE(4,((FLUID_INTERP_MAX-1)-(_i))),\
+      SINC_TABLE(5,((FLUID_INTERP_MAX-1)-(_i))),\
+      SINC_TABLE(6,((FLUID_INTERP_MAX-1)-(_i))) \
+    }
 
 #endif
