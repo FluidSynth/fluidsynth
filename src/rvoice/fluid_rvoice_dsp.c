@@ -23,6 +23,28 @@
 #include "fluid_rvoice.h"
 #include "fluid_sys.h"
 
+#define SINC_INTERP_ORDER 7	/* 7th order constant */
+
+#if defined ENABLE_CONST_TABLES
+
+#include "auto_gen_array.h"
+#include "auto_gen_matrix_7.h"
+#include "auto_gen_math.h"
+#include "fluid_rvoice_tables.h"
+
+/* Linear interpolation table (2 coefficients centered on 1st) */
+static const fluid_real_t interp_coeff_linear[FLUID_INTERP_MAX][2] = { AUTO_GEN_ARRAY_256(INTERP_COEFF_LINEAR) };
+
+/* 4th order (cubic) interpolation table (4 coefficients centered on 2nd) */
+static const fluid_real_t interp_coeff[FLUID_INTERP_MAX][4] = { AUTO_GEN_ARRAY_256(INTERP_COEFF) };
+
+/* 7th order interpolation (7 coefficients centered on 3rd) */
+static const fluid_real_t sinc_table7[FLUID_INTERP_MAX][SINC_INTERP_ORDER] = { 
+    AUTO_GEN_MATRIX_7_256(SINC_TABLE)
+};
+
+#else
+
 /* Purpose:
  *
  * Interpolates audio data (obtains values between the samples of the original
@@ -54,10 +76,7 @@ static fluid_real_t interp_coeff_linear[FLUID_INTERP_MAX][2];
 static fluid_real_t interp_coeff[FLUID_INTERP_MAX][4];
 
 /* 7th order interpolation (7 coefficients centered on 3rd) */
-static fluid_real_t sinc_table7[FLUID_INTERP_MAX][7];
-
-
-#define SINC_INTERP_ORDER 7	/* 7th order constant */
+static fluid_real_t sinc_table7[FLUID_INTERP_MAX][SINC_INTERP_ORDER];
 
 
 /* Initializes interpolation tables */
@@ -125,6 +144,9 @@ void fluid_rvoice_dsp_config(void)
 
     fluid_check_fpe("interpolation table calculation");
 }
+
+#endif /* ENABLE_CONST_TABLES */
+
 
 static FLUID_INLINE fluid_real_t
 fluid_rvoice_get_float_sample(const short int *dsp_msb, const char *dsp_lsb, unsigned int idx)
