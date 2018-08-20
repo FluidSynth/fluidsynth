@@ -16,10 +16,6 @@
 #define I_SHIFTED(_i, _i2)  ((double)(_i) - ((double)SINC_INTERP_ORDER / 2.0) \
                             + (double)(_i2) / (double)FLUID_INTERP_MAX)
 
-#define FSIN(_i)            AUTO_GEN_SIN(_i)
-#define FCOS(_i)            AUTO_GEN_COS(_i)
-#define FABS(_i)            (((_i) < 0) ? -(_i) : (_i))
-
 #define SINC_TABLE(_i, _i2) ((FABS(I_SHIFTED(_i, _i2)) > 0.000001) ? \
                              (fluid_real_t)(FSIN(I_SHIFTED(_i, _i2) * M_PI) / (I_SHIFTED(_i, _i2) * M_PI) \
                              * 0.5 * (1.0 + FCOS(2.0 * M_PI * I_SHIFTED(_i, _i2) / SINC_INTERP_ORDER))) : \
