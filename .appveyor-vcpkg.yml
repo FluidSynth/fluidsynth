@@ -11,7 +11,7 @@ configuration:
 
 environment:
   # update the vcpkg cache even if build fails
-  APPVEYOR_SAVE_CACHE_ON_ERROR: true
+  #APPVEYOR_SAVE_CACHE_ON_ERROR: true
 
   matrix:
       - platform: x86
