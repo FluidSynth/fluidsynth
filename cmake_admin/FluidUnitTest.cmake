@@ -9,6 +9,9 @@ macro ( ADD_FLUID_TEST _test )
         set_target_properties ( ${_test} PROPERTIES COMPILE_FLAGS ${FLUID_CPPFLAGS} )
     endif ( FLUID_CPPFLAGS )
     TARGET_LINK_LIBRARIES(${_test} $<TARGET_PROPERTY:libfluidsynth,INTERFACE_LINK_LIBRARIES>)
+    
+    # disable clang-tidy for unit tests
+    set_target_properties(${_test} PROPERTIES C_CLANG_TIDY "")
 
     # use the local include path to look for fluidsynth.h, as we cannot be sure fluidsynth is already installed
     target_include_directories(${_test}
