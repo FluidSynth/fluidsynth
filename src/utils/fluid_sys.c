@@ -118,7 +118,7 @@ fluid_set_log_function(int level, fluid_log_function_t fun, void *data)
  * @param data User supplied data (not used)
  */
 void
-fluid_default_log_function(int level, char *message, void *data)
+fluid_default_log_function(int level, const char *message, void *data)
 {
     FILE *out;
 
