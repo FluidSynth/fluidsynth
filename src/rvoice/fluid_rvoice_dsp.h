@@ -7,15 +7,14 @@
 #define SINC_INTERP_ORDER 7	/* 7th order constant */
 
 #define _X(_i)  ((double)(_i) / (double) FLUID_INTERP_MAX)
-#define _X2(_i) (_X(_i) * _X(_i))
 
 #define INTERP_COEFF_LINEAR_0(_i) ((fluid_real_t)(1.0 - _X(_i)))
 #define INTERP_COEFF_LINEAR_1(_i) ((fluid_real_t)(      _X(_i)))
 
 #define INTERP_COEFF_0(_i)  (fluid_real_t)(_X(_i) * (-0.5 + _X(_i) * (1 - 0.5 * _X(_i))))
-#define INTERP_COEFF_1(_i)  (fluid_real_t)(1.0 + _X2(_i) * (1.5 * _X(_i) - 2.5))
+#define INTERP_COEFF_1(_i)  (fluid_real_t)(1.0 + (_X(_i) * _X(_i)) * (1.5 * _X(_i) - 2.5))
 #define INTERP_COEFF_2(_i)  (fluid_real_t)(_X(_i) * (0.5 + _X(_i) * (2.0 - 1.5 * _X(_i))))
-#define INTERP_COEFF_3(_i)  (fluid_real_t)(0.5 * _X2(_i) * (_X(_i) - 1.0))
+#define INTERP_COEFF_3(_i)  (fluid_real_t)(0.5 * (_X(_i) * _X(_i)) * (_X(_i) - 1.0))
 
 #define I_SHIFTED(_i, _i2)  ((double)(_i) - ((double)SINC_INTERP_ORDER / 2.0) \
                             + (double)(_i2) / (double)FLUID_INTERP_MAX)
