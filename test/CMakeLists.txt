@@ -15,7 +15,16 @@ ADD_FLUID_TEST(test_pointer_alignment)
 ADD_FLUID_TEST(test_seqbind_unregister)
 ADD_FLUID_TEST(test_synth_chorus_reverb)
 ADD_FLUID_TEST(test_snprintf)
-ADD_FLUID_TEST(test_constexpr_lookuptab)
+
+# MSVC - a commercial product - is unable to compile files that exploit the preprocessor for calculating and 
+# filling up lookup tables.
+# fatal error C1060: compiler is out of heap space
+# Online docs recommend to adjust the /Zm flag.
+# Tested on a x86_64 machine with 16 GB RAM, setting this flag to 1 or 2000 doesnt make a difference.
+# Higher numbers are not accepted...
+if ( NOT MSVC )
+    ADD_FLUID_TEST(test_constexpr_lookuptab)
+endif ( NOT MSVC )
 
 if ( LIBSNDFILE_HASVORBIS )
     ADD_FLUID_TEST(test_sf3_sfont_loading)
