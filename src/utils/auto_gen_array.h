@@ -1,5 +1,5 @@
 #ifndef __AUTO_GEN_ARRAY_H__
-#define __AUTO_GEN_ARRAY_H__ 1
+#define __AUTO_GEN_ARRAY_H__
 
 #define AUTO_GEN_ARRAY_X1(_m,_n) _m(_n)
 #define AUTO_GEN_ARRAY_X2(_m,_n) _m(_n),_m((_n)+1)

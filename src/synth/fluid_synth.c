@@ -288,9 +288,7 @@ fluid_synth_init(void)
 
     fluid_conversion_config();
 
-#ifndef ENABLE_CONST_TABLES
     fluid_rvoice_dsp_config();
-#endif
 
     fluid_sys_config();
 

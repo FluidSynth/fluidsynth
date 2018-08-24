@@ -49,36 +49,39 @@
 /* Interpolation (find a value between two samples of the original waveform) */
 
 
-#if defined ENABLE_CONST_TABLES
+#ifdef ENABLE_CONST_TABLES
 
 #include "auto_gen_array.h"
 #include "auto_gen_math.h"
 
-/* Linear interpolation table (2 coefficients centered on 1st) */
-static const fluid_real_t interp_coeff_linear[FLUID_INTERP_MAX][2] = { AUTO_GEN_ARRAY_256(INTERP_COEFF_LINEAR) };
-
-/* 4th order (cubic) interpolation table (4 coefficients centered on 2nd) */
-static const fluid_real_t interp_coeff[FLUID_INTERP_MAX][4] = { AUTO_GEN_ARRAY_256(INTERP_COEFF) };
-
-/* 7th order interpolation (7 coefficients centered on 3rd) */
-static const fluid_real_t sinc_table7[FLUID_INTERP_MAX][SINC_INTERP_ORDER] = { AUTO_GEN_ARRAY_256(INTERP_COEFF_SINC) };
+#define COND_INIT(x) x
 
 #else
+#define COND_INIT(x) 0
+#endif
 
+static
+#ifdef ENABLE_CONST_TABLES
+const
+#endif
+fluid_real_t
 /* Linear interpolation table (2 coefficients centered on 1st) */
-static fluid_real_t interp_coeff_linear[FLUID_INTERP_MAX][2];
+interp_coeff_linear[FLUID_INTERP_MAX][2] = { COND_INIT(AUTO_GEN_ARRAY_256(INTERP_COEFF_LINEAR)) },
 
 /* 4th order (cubic) interpolation table (4 coefficients centered on 2nd) */
-static fluid_real_t interp_coeff[FLUID_INTERP_MAX][4];
+interp_coeff[FLUID_INTERP_MAX][4] = { COND_INIT(AUTO_GEN_ARRAY_256(INTERP_COEFF)) },
 
 /* 7th order interpolation (7 coefficients centered on 3rd) */
-static fluid_real_t sinc_table7[FLUID_INTERP_MAX][SINC_INTERP_ORDER];
+sinc_table7[FLUID_INTERP_MAX][SINC_INTERP_ORDER] = { COND_INIT(AUTO_GEN_ARRAY_256(INTERP_COEFF_SINC)) };
 
+#undef COND_INIT
 
 /* Initializes interpolation tables */
 void fluid_rvoice_dsp_config(void)
 {
+#ifndef ENABLE_CONST_TABLES
     fluid_rvoice_dsp_config_LOCAL(interp_coeff_linear, interp_coeff, sinc_table7);
+#endif
 }
 
 void fluid_rvoice_dsp_config_LOCAL(fluid_real_t interp_coeff_linear[FLUID_INTERP_MAX][2],
@@ -147,9 +150,6 @@ void fluid_rvoice_dsp_config_LOCAL(fluid_real_t interp_coeff_linear[FLUID_INTERP
 
     fluid_check_fpe("interpolation table calculation");
 }
-
-#endif /* ENABLE_CONST_TABLES */
-
 
 static FLUID_INLINE fluid_real_t
 fluid_rvoice_get_float_sample(const short int *dsp_msb, const char *dsp_lsb, unsigned int idx)
