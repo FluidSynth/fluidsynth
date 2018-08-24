@@ -55,7 +55,7 @@ option ( enable-fpe-check "enable Floating Point Exception checks and debug mess
 option ( enable-portaudio "compile PortAudio support" off )
 option ( enable-profiling "profile the dsp code" off )
 option ( enable-trap-on-fpe "enable SIGFPE trap on Floating Point Exceptions" off )
-option ( enable-ctables "Use auto-generated constant tables" off)
+option ( enable-ctables "calculate lookup tables at compile-time (will significantly increase required memory and time during compilation, MSVC will fail entirely)" off)
 
 # Options enabled by default
 option ( enable-aufile "compile support for sound file output" on )
