@@ -4,7 +4,6 @@
 #include "fluid_rvoice_dsp.h"
 #include "auto_gen_array.h"
 #include "auto_gen_math.h"
-#include "fluid_rvoice_tables.h"
 #include <math.h>
 
 static fluid_real_t interp_coeff_linear_runtime[FLUID_INTERP_MAX][2];
