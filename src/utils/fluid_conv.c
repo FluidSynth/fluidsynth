@@ -36,7 +36,7 @@ static fluid_real_t fluid_convex_tab[FLUID_VEL_CB_SIZE];
 #include "auto_gen_array.h"
 #include "auto_gen_math.h"
 
-#define FLUID_PAN_TAB(_i)   AUTO_GEN_SIN((M_PI / 2.0 / (FLUID_PAN_SIZE - 1.0))*(_i))
+#define FLUID_PAN_TAB(_i)   FSIN((M_PI / 2.0 / (FLUID_PAN_SIZE - 1.0))*(_i))
 
 static const fluid_real_t fluid_pan_tab[FLUID_PAN_SIZE] = { AUTO_GEN_ARRAY_1002(FLUID_PAN_TAB) };
 
