@@ -22,19 +22,11 @@
 #include "auto_gen_array.h"
 #include "auto_gen_math.h"
 
-#define FLUID_CENTS_HZ_SIZE     1200
-#define FLUID_VEL_CB_SIZE       128
-#define FLUID_CB_AMP_SIZE       1441
-#define FLUID_PAN_SIZE          1002
-
 /* conversion tables */
 static fluid_real_t fluid_ct2hz_tab[FLUID_CENTS_HZ_SIZE];
 static fluid_real_t fluid_cb2amp_tab[FLUID_CB_AMP_SIZE];
 static fluid_real_t fluid_concave_tab[FLUID_VEL_CB_SIZE];
 static fluid_real_t fluid_convex_tab[FLUID_VEL_CB_SIZE];
-
-#define FLUID_PAN_TAB(_i)   FSIN((M_PI / 2.0 / (FLUID_PAN_SIZE - 1.0))*(_i))
-
 static TABLE_CONST fluid_real_t fluid_pan_tab[FLUID_PAN_SIZE] = { TABLE_INIT(AUTO_GEN_ARRAY_1002(FLUID_PAN_TAB)) };
 
 /*
@@ -87,14 +79,20 @@ fluid_conversion_config(void)
     }
 
 #ifndef ENABLE_CONST_TABLES
-    /* initialize the pan conversion table */
-    x = M_PI / 2.0 / (FLUID_PAN_SIZE - 1.0);
+    fluid_conversion_config_pan_tab(fluid_pan_tab);
+#endif
+}
+
+/* initializes the pan conversion table */
+void fluid_conversion_config_pan_tab(fluid_real_t fluid_pan_tab[FLUID_PAN_SIZE])
+{
+    int i;
+    double x = M_PI / 2.0 / (FLUID_PAN_SIZE - 1.0);
 
     for(i = 0; i < FLUID_PAN_SIZE; i++)
     {
         fluid_pan_tab[i] = (fluid_real_t) sin(i * x);
     }
-#endif
 }
 
 /*

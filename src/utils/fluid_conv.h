@@ -54,7 +54,14 @@
  */
 #define FLUID_PEAK_ATTENUATION  960.0f
 
+#define FLUID_CENTS_HZ_SIZE     1200
+#define FLUID_VEL_CB_SIZE       128
+#define FLUID_CB_AMP_SIZE       1441
+#define FLUID_PAN_SIZE          1002
+#define FLUID_PAN_TAB(_i)       FSIN((M_PI / 2.0 / (FLUID_PAN_SIZE - 1.0))*(_i))
+
 void fluid_conversion_config(void);
+void fluid_conversion_config_pan_tab(fluid_real_t fluid_pan_tab[FLUID_PAN_SIZE]);
 
 fluid_real_t fluid_ct2hz_real(fluid_real_t cents);
 fluid_real_t fluid_ct2hz(fluid_real_t cents);

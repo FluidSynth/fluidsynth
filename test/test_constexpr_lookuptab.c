@@ -2,6 +2,7 @@
 #include "fluidsynth.h"
 #include "fluidsynth_priv.h"
 #include "fluid_rvoice_dsp.h"
+#include "fluid_conv.h"
 #include "auto_gen_array.h"
 #include "auto_gen_math.h"
 #include <math.h>
@@ -14,6 +15,10 @@ static const fluid_real_t interp_coeff_linear_const[FLUID_INTERP_MAX][2] = { AUT
 static const fluid_real_t interp_coeff_const[FLUID_INTERP_MAX][4] = { AUTO_GEN_ARRAY_256(INTERP_COEFF) };
 static const fluid_real_t sinc_table7_const[FLUID_INTERP_MAX][SINC_INTERP_ORDER] = { AUTO_GEN_ARRAY_256(INTERP_COEFF_SINC) };
 
+
+static fluid_real_t fluid_pan_tab_runtime[FLUID_PAN_SIZE];
+static const fluid_real_t fluid_pan_tab_const[FLUID_PAN_SIZE] = { AUTO_GEN_ARRAY_1002(FLUID_PAN_TAB) };
+
 #define EPS (1.e-6)
 
 int main(void)
@@ -22,6 +27,7 @@ int main(void)
     fluid_real_t x,y;
 
     fluid_rvoice_dsp_config_LOCAL(interp_coeff_linear_runtime, interp_coeff_runtime, sinc_table7_runtime);
+    fluid_conversion_config_pan_tab(fluid_pan_tab_runtime);
         
     for(i = 0; i < FLUID_INTERP_MAX; i++)
     {
@@ -54,6 +60,14 @@ int main(void)
             
             TEST_ASSERT(fabs(x - y) <= EPS);
         }
+    }
+    
+    for(i = 0; i < FLUID_PAN_SIZE; i++)
+    {
+        x = fluid_pan_tab_runtime[i];
+        y = fluid_pan_tab_const[i];
+        
+        TEST_ASSERT(fabs(x - y) <= EPS);
     }
     
     return EXIT_SUCCESS;
