@@ -16,7 +16,6 @@ static const fluid_real_t sinc_table7_const[FLUID_INTERP_MAX][SINC_INTERP_ORDER]
 
 #define EPS (1.e-6)
 
-// load our sf2 and sf3 test soundfonts, with and without dynamic sample loading
 int main(void)
 {
     int i, j;

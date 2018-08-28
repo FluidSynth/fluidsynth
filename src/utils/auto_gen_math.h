@@ -12,7 +12,7 @@
 - (((_x)*(_x)*(_x)*(_x)*(_x)*(_x)*(_x)*(_x)*(_x)*(_x)*(_x)*(_x)*(_x)*(_x)*(_x))/1307674368000.0) \
 )
 */
-#define AUTO_GEN_SIN(_x)    ((_x) \
+#define FSIN_REDUCED(_x)    ((_x) \
                              + ((((_x)*(_x)*(_x)) * ((_x)*(_x) - 20))/120) \
                              - ((((_x)*(_x)*(_x)*(_x)*(_x)*(_x)*(_x)) * ((_x)*(_x)*(_x)*(_x) - 110*(_x)*(_x) + 7920))/39916800.0) \
                              - ((((_x)*(_x)*(_x)*(_x)*(_x)*(_x)*(_x)*(_x)*(_x)*(_x)*(_x)*(_x)*(_x)) * ((_x)*(_x) - 210))/1307674368000.0) \
@@ -22,13 +22,19 @@
 #define FABS(_i)            (((_i) < 0) ? -(_i) : (_i))
 #define FROUND(_i) ((int)((_i) + (((_i) >= 0.0f) ? 0.5f : -0.5f)))
 
-#define FSIN_REDUCED(_i)            AUTO_GEN_SIN(_i)
-
 // argument reduction needed:
 // we cannot accept arguments of any arbitrary range
 // x should be in range [-pi;pi], otherwise we become very inaccurate
 // bring x back into that range
 #define FSIN(_i)            FSIN_REDUCED((_i) - FROUND((_i) / (2*M_PI)) * (2*M_PI))
 #define FCOS(_i)            FSIN((_i) + M_PI/2)
+
+#ifdef ENABLE_CONST_TABLES
+#define TABLE_CONST const
+#define TABLE_INIT(x) x
+#else
+#define TABLE_CONST 
+#define TABLE_INIT(x) 0
+#endif
 
 #endif /* __AUTO_GEN_MATH_H__ */

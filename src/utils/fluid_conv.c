@@ -19,6 +19,8 @@
  */
 
 #include "fluid_conv.h"
+#include "auto_gen_array.h"
+#include "auto_gen_math.h"
 
 #define FLUID_CENTS_HZ_SIZE     1200
 #define FLUID_VEL_CB_SIZE       128
@@ -31,20 +33,9 @@ static fluid_real_t fluid_cb2amp_tab[FLUID_CB_AMP_SIZE];
 static fluid_real_t fluid_concave_tab[FLUID_VEL_CB_SIZE];
 static fluid_real_t fluid_convex_tab[FLUID_VEL_CB_SIZE];
 
-#ifdef ENABLE_CONST_TABLES
-
-#include "auto_gen_array.h"
-#include "auto_gen_math.h"
-
 #define FLUID_PAN_TAB(_i)   FSIN((M_PI / 2.0 / (FLUID_PAN_SIZE - 1.0))*(_i))
 
-static const fluid_real_t fluid_pan_tab[FLUID_PAN_SIZE] = { AUTO_GEN_ARRAY_1002(FLUID_PAN_TAB) };
-
-#else
-
-static fluid_real_t fluid_pan_tab[FLUID_PAN_SIZE];
-
-#endif /* ENABLE_CONST_TABLES */
+static TABLE_CONST fluid_real_t fluid_pan_tab[FLUID_PAN_SIZE] = { TABLE_INIT(AUTO_GEN_ARRAY_1002(FLUID_PAN_TAB)) };
 
 /*
  * void fluid_synth_init

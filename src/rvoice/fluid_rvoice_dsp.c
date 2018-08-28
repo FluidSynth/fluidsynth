@@ -23,6 +23,8 @@
 #include "fluid_rvoice.h"
 #include "fluid_rvoice_dsp.h"
 #include "fluid_sys.h"
+#include "auto_gen_array.h"
+#include "auto_gen_math.h"
 
 /* Purpose:
  *
@@ -48,33 +50,15 @@
 
 /* Interpolation (find a value between two samples of the original waveform) */
 
-
-#ifdef ENABLE_CONST_TABLES
-
-#include "auto_gen_array.h"
-#include "auto_gen_math.h"
-
-#define COND_INIT(x) x
-
-#else
-#define COND_INIT(x) 0
-#endif
-
-static
-#ifdef ENABLE_CONST_TABLES
-const
-#endif
-fluid_real_t
 /* Linear interpolation table (2 coefficients centered on 1st) */
-interp_coeff_linear[FLUID_INTERP_MAX][2] = { COND_INIT(AUTO_GEN_ARRAY_256(INTERP_COEFF_LINEAR)) },
+static TABLE_CONST fluid_real_t interp_coeff_linear[FLUID_INTERP_MAX][2] = { TABLE_INIT(AUTO_GEN_ARRAY_256(INTERP_COEFF_LINEAR)) };
 
 /* 4th order (cubic) interpolation table (4 coefficients centered on 2nd) */
-interp_coeff[FLUID_INTERP_MAX][4] = { COND_INIT(AUTO_GEN_ARRAY_256(INTERP_COEFF)) },
+static TABLE_CONST fluid_real_t interp_coeff[FLUID_INTERP_MAX][4] = { TABLE_INIT(AUTO_GEN_ARRAY_256(INTERP_COEFF)) };
 
 /* 7th order interpolation (7 coefficients centered on 3rd) */
-sinc_table7[FLUID_INTERP_MAX][SINC_INTERP_ORDER] = { COND_INIT(AUTO_GEN_ARRAY_256(INTERP_COEFF_SINC)) };
+static TABLE_CONST fluid_real_t sinc_table7[FLUID_INTERP_MAX][SINC_INTERP_ORDER] = { TABLE_INIT(AUTO_GEN_ARRAY_256(INTERP_COEFF_SINC)) };
 
-#undef COND_INIT
 
 /* Initializes interpolation tables */
 void fluid_rvoice_dsp_config(void)
