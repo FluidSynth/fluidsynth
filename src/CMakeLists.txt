@@ -277,6 +277,7 @@ if ( MACOSX_FRAMEWORK )
         INSTALL_NAME_DIR ""
         VERSION ${LIB_VERSION_INFO}
         SOVERSION ${LIB_VERSION_CURRENT}
+        NO_SONAME ${LIB_NO_SONAME}
     )
 elseif ( OS2 )
     set_target_properties ( libfluidsynth

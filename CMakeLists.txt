@@ -47,6 +47,7 @@ set ( LIB_VERSION_AGE 0 )
 set ( LIB_VERSION_REVISION 1 )
 set ( LIB_VERSION_INFO
       "${LIB_VERSION_CURRENT}.${LIB_VERSION_AGE}.${LIB_VERSION_REVISION}" )
+set ( LIB_NO_SONAME FALSE )
 
 # Options disabled by default
 option ( enable-debug "enable debugging (default=no)" off )
