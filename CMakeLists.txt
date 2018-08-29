@@ -354,15 +354,10 @@ endif ( CMAKE_BUILD_TYPE MATCHES "Debug" )
 
 # Add support for auto-generated tables
 unset ( ENABLE_CONST_TABLES CACHE )
-
-if (enable-ctables)
-    find_file(_filename auto_gen_array.h PATHS ${CMAKE_SOURCE_DIR}/src/utils NO_DEFAULT_PATH)
-
-    if (_filename)
-        set ( ENABLE_CONST_TABLES 1 )
-        message(STATUS "Enabled support for auto-generated tables")
-    endif ()
-endif ()
+if ( enable-ctables )
+    set ( ENABLE_CONST_TABLES 1 )
+    message ( STATUS "Enabled support for auto-generated tables" )
+endif ( enable-ctables )
 
 if ( CMAKE_VERSION VERSION_GREATER "3.6.0" )
 find_program( CLANG_TIDY

@@ -108,6 +108,8 @@ endif ( MIDISHARE_SUPPORT )
 set ( config_SOURCES ${CMAKE_BINARY_DIR}/config.h )
 
 set ( libfluidsynth_SOURCES
+    utils/auto_gen_array.h
+    utils/auto_gen_math.h
     utils/fluid_conv.c
     utils/fluid_conv.h
     utils/fluid_hash.c
