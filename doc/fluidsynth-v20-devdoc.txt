@@ -306,6 +306,7 @@ FluidSynth can process real-time MIDI events received from hardware MIDI ports o
 - winmidi: Microsoft Windows MM System (Windows)
 - midishare: MIDI Share (Linux, Mac OS X)
 - coremidi: Apple CoreMIDI (Mac OS X)
+- opensles: OpenSL ES (Android)
 
 \code
 #include <fluidsynth.h>

@@ -113,6 +113,11 @@ if ( AUFILE_SUPPORT )
   set ( fluid_aufile_SOURCES drivers/fluid_aufile.c )
 endif ( AUFILE_SUPPORT )
 
+if ( OPENSLES_SUPPORT )
+  set ( fluid_opensles_SOURCES drivers/fluid_opensles.c )
+  include_directories ( ${OpenSLES_INCLUDE_DIRS} )
+endif ( OPENSLES_SUPPORT )
+
 set ( config_SOURCES ${CMAKE_BINARY_DIR}/config.h )
 
 set ( libfluidsynth_SOURCES
@@ -244,6 +249,7 @@ add_library ( libfluidsynth-OBJ OBJECT
     ${fluid_jack_SOURCES}
     ${fluid_lash_SOURCES}
     ${fluid_midishare_SOURCES}
+    ${fluid_opensles_SOURCES}
     ${fluid_oss_SOURCES}
     ${fluid_portaudio_SOURCES}
     ${fluid_pulse_SOURCES}
@@ -324,6 +330,7 @@ target_link_libraries ( libfluidsynth
     ${COREMIDI_LIBS}
     ${WINDOWS_LIBS}
     ${MidiShare_LIBS}
+    ${OpenSLES_LIBS}
     ${LIBFLUID_LIBS}
 )
 
