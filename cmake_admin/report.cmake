@@ -50,6 +50,12 @@ else ( OSS_SUPPORT )
   message ( "OSS:                   no" )
 endif ( OSS_SUPPORT )
 
+if ( OPENSLES_SUPPORT )
+  message ( "OpenSLES:              yes" ) 
+else ( OPENSLES_SUPPORT ) 
+  message ( "OpenSLES:              no" )
+endif ( OPENSLES_SUPPORT )
+
 if ( MIDISHARE_SUPPORT )
   message ( "MidiShare:             yes" )
 else ( MIDISHARE_SUPPORT )
