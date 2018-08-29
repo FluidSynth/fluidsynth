@@ -9,6 +9,7 @@ env:
     - CMAKE_FLAGS="-Denable-ipv6=0"
     - CMAKE_FLAGS="-Denable-network=0"
     - CMAKE_FLAGS="-Denable-aufile=0"
+    - CMAKE_FLAGS="-Denable-ctables=1"
     - CMAKE_FLAGS="-DBUILD_SHARED_LIBS=0"
 matrix:
   include:
