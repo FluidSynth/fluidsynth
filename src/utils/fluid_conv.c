@@ -19,8 +19,16 @@
  */
 
 #include "fluid_conv.h"
-#include "auto_gen_array.h"
 #include "auto_gen_math.h"
+
+/* MSVC fails to compile / process all those macros even if they are never expanded anywhere:
+ * fatal error C1060: compiler is out of heap space
+ *
+ * Thus only include this file if ENABLE_CONST_TABLES is defined.
+ */
+#ifdef ENABLE_CONST_TABLES
+#include "auto_gen_array.h"
+#endif
 
 /* conversion tables */
 static fluid_real_t fluid_ct2hz_tab[FLUID_CENTS_HZ_SIZE];

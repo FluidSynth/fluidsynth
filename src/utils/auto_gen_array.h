@@ -1,3 +1,4 @@
+
 #ifndef __AUTO_GEN_ARRAY_H__
 #define __AUTO_GEN_ARRAY_H__
 

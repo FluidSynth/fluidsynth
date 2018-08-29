@@ -23,8 +23,16 @@
 #include "fluid_rvoice.h"
 #include "fluid_rvoice_dsp.h"
 #include "fluid_sys.h"
-#include "auto_gen_array.h"
 #include "auto_gen_math.h"
+
+/* MSVC fails to compile / process all those macros even if they are never expanded anywhere:
+ * fatal error C1060: compiler is out of heap space
+ *
+ * Thus only include this file if ENABLE_CONST_TABLES is defined.
+ */
+#ifdef ENABLE_CONST_TABLES
+#include "auto_gen_array.h"
+#endif
 
 /* Purpose:
  *
