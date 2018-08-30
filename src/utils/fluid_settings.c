@@ -1735,7 +1735,7 @@ fluid_settings_option_concat(fluid_settings_t *settings, const char *name,
     fluid_setting_node_t *node;
     fluid_str_setting_t *setting;
     fluid_list_t *p, *newlist = NULL;
-    int count, len;
+    size_t count, len;
     char *str, *option;
 
     fluid_return_val_if_fail(settings != NULL, NULL);
@@ -1823,7 +1823,7 @@ fluid_settings_foreach_iter(void *key, void *value, void *data)
     fluid_settings_foreach_bag_t *bag = data;
     char *keystr = key;
     fluid_setting_node_t *node = value;
-    int pathlen;
+    size_t pathlen;
     char *s;
 
     pathlen = strlen(bag->path);
