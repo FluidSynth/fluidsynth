@@ -377,11 +377,11 @@ fluid_ostream_t fluid_socket_get_ostream(fluid_socket_t sock);
      * https://github.com/GNOME/glib/blob/90815c160b1c2cc15821e0dffa44ff7c4aa2787c/glib/gstdio.h#L28-L55
      */
     #if (defined (__MINGW64_VERSION_MAJOR) || defined (_MSC_VER)) && !defined(_WIN64)
-    typedef struct _stat32 GStatBuf;
+    typedef struct _stat32 fluid_stat_buf_t;
     #elif defined(__MINGW64_VERSION_MAJOR) && defined(_WIN64)
-    typedef struct _stat64 GStatBuf;
+    typedef struct _stat64 fluid_stat_buf_t;
     #else
-    typedef struct stat GStatBuf;
+    typedef struct stat fluid_stat_buf_t;
     #endif
 #else
 typedef GStatBuf fluid_stat_buf_t;
