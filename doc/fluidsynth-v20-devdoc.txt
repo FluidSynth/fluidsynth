@@ -220,6 +220,7 @@ Creating the audio driver is straightforward: set the <code>audio.driver</code> 
 - portaudio: PortAudio Library (Mac OS 9 & X, Windows, Linux)
 - sndman: Apple SoundManager (Mac OS Classic)
 - dart: DART sound driver (OS/2)
+- opensles: OpenSL ES (Android)
 - file: Driver to output audio to a file
 - sdl2*: Simple DirectMedia Layer (Linux, Windows, Mac OS X, iOS, Android, FreeBSD, Haiku, etc.)
 
@@ -323,7 +324,6 @@ FluidSynth can process real-time MIDI events received from hardware MIDI ports o
 - winmidi: Microsoft Windows MM System (Windows)
 - midishare: MIDI Share (Linux, Mac OS X)
 - coremidi: Apple CoreMIDI (Mac OS X)
-- opensles: OpenSL ES (Android)
 
 \code
 #include <fluidsynth.h>
