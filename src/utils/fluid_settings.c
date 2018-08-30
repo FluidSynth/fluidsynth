@@ -341,7 +341,7 @@ fluid_settings_tokenize(const char *s, char *buf, char **ptr)
     char *tokstr, *tok;
     int n = 0;
 
-    if(strlen(s) > MAX_SETTINGS_LABEL)
+    if(FLUID_STRLEN(s) > MAX_SETTINGS_LABEL)
     {
         FLUID_LOG(FLUID_ERR, "Setting variable name exceeded max length of %d chars",
                   MAX_SETTINGS_LABEL);
@@ -1766,13 +1766,13 @@ fluid_settings_option_concat(fluid_settings_t *settings, const char *name,
         if(option)
         {
             newlist = fluid_list_append(newlist, option);
-            len += strlen(option);
+            len += FLUID_STRLEN(option);
         }
     }
 
     if(count > 1)
     {
-        len += (count - 1) * strlen(separator);
+        len += (count - 1) * FLUID_STRLEN(separator);
     }
 
     len++;        /* For terminator */
@@ -1826,7 +1826,7 @@ fluid_settings_foreach_iter(void *key, void *value, void *data)
     size_t pathlen;
     char *s;
 
-    pathlen = strlen(bag->path);
+    pathlen = FLUID_STRLEN(bag->path);
 
     if(pathlen > 0)
     {

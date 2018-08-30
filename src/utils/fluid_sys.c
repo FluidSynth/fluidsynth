@@ -1438,7 +1438,7 @@ fluid_ostream_printf(fluid_ostream_t out, const char *format, ...)
     buf[4095] = 0;
 
 #ifndef WIN32
-    return write(out, buf, strlen(buf));
+    return write(out, buf, FLUID_STRLEN(buf));
 #else
     {
         int retval;
@@ -1446,11 +1446,11 @@ fluid_ostream_printf(fluid_ostream_t out, const char *format, ...)
         /* Handle write differently depending on if its a socket or file descriptor */
         if(!(out & FLUID_SOCKET_FLAG))
         {
-            return write(out, buf, strlen(buf));
+            return write(out, buf, FLUID_STRLEN(buf));
         }
 
         /* Socket */
-        retval = send(out & ~FLUID_SOCKET_FLAG, buf, strlen(buf), 0);
+        retval = send(out & ~FLUID_SOCKET_FLAG, buf, FLUID_STRLEN(buf), 0);
 
         return retval != SOCKET_ERROR ? retval : -1;
     }
