@@ -1,0 +1,47 @@
+CERBERO=external/cerbero
+
+TOP=$(shell pwd)
+
+ANDROID_NDK = $(CERBERO)/build/android-ndk-16
+ANDROID_NDK_ABS = $(TOP)/$(ANDROID_NDK)
+
+ABIS_SIMPLE = x86 x86-64 armv7 arm64
+
+
+DIST_PATH=../../external/cerbero/build/dist
+
+all: prepare build
+
+.PHONY: prepare
+prepare: $(CERBERO)
+	for abi in $(ABIS_SIMPLE) ; do \
+		cd external/cerbero && ./cerbero-uninstalled -c config/cross-android-$$abi.cbc bootstrap && cd ../.. ; \
+	done
+
+$(CERBERO):
+	git checkout https://anongit.freedesktop.org/git/gstreamer/cerbero.git external/cerbero
+
+.PHONY: build
+build: build-cerbero build-fluidsynth
+
+.PHONY: build-cerbero
+build-cerbero:
+	for abi in x86 x86-64 armv7 arm64 ; do \
+		cd external/cerbero && ./cerbero-uninstalled -c config/cross-android-$$abi.cbc build glib && cd ../.. ; \
+	done
+
+.PHONY: build-fluidsynth
+build-fluidsynth:
+	make -f Makefile.android BUILD_ABI=x86    A_ABI=x86         buildone-fluidsynth
+	make -f Makefile.android BUILD_ABI=x86_64 A_ABI=x86_64      buildone-fluidsynth
+	make -f Makefile.android BUILD_ABI=armv7  A_ABI=armeabi-v7a buildone-fluidsynth
+	make -f Makefile.android BUILD_ABI=arm64  A_ABI=arm64-v8a   buildone-fluidsynth
+
+buildone-fluidsynth:
+	mkdir -p build/$(A_ABI) && cd build/$(A_ABI) && LD_RUN_PATH=$(DIST_PATH)/android-$(BUILD_ABI)/lib LD_LIBRARY_PATH=$(DIST_PATH)/android_$(BUILD_ABI)/lib PKG_CONFIG_PATH=$(DIST_PATH)/android_$(BUILD_ABI)/lib/pkgconfig/ cmake -DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_ABS)/build/cmake/android.toolchain.cmake -Denable-jack=off -Denable-oss=off -Denable-pulseaudio=off -Denable-libsndfile=off -Denable-dbus=off -DANDROID_ABI=$(A_ABI) ../.. && make
+
+.PHONY: wipe
+wipe: $(CERBERO)
+	for abi in $(ABIS_SIMPLE) ; do \
+		cd external/cerbero && ./cerbero-uninstalled -c config/cross-android-$$abi.cbc wipe && cd ../.. ; \
+	done
