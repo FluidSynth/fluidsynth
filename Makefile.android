@@ -8,7 +8,7 @@ ANDROID_NDK_ABS = $(TOP)/$(ANDROID_NDK)
 ABIS_SIMPLE = x86 x86-64 armv7 arm64
 
 
-DIST_PATH=../../external/cerbero/build/dist
+DIST_PATH=$(TOP)/external/cerbero/build/dist
 
 all: prepare build
 
@@ -30,15 +30,34 @@ build-cerbero:
 		cd external/cerbero && ./cerbero-uninstalled -c config/cross-android-$$abi.cbc build glib && cd ../.. ; \
 	done
 
+define run_make_abi_target
+	make -f Makefile.android BUILD_ABI=$(1) A_ABI=$(2) $(3)
+endef
+
+define run_make_for_all_abi
+	$(call run_make_abi_target,x86,x86,$(1) )
+	$(call run_make_abi_target,x86_64,x86_64,$(1) )
+	$(call run_make_abi_target,armv7,armeabi-v7a,$(1) )
+	$(call run_make_abi_target,arm64,arm64-v8a,$(1) )
+endef
+
+.PHONY: dist
+dist:
+	$(call run_make_for_all_abi, distone)
+
 .PHONY: build-fluidsynth
 build-fluidsynth:
-	make -f Makefile.android BUILD_ABI=x86    A_ABI=x86         buildone-fluidsynth
-	make -f Makefile.android BUILD_ABI=x86_64 A_ABI=x86_64      buildone-fluidsynth
-	make -f Makefile.android BUILD_ABI=armv7  A_ABI=armeabi-v7a buildone-fluidsynth
-	make -f Makefile.android BUILD_ABI=arm64  A_ABI=arm64-v8a   buildone-fluidsynth
+	$(call run_make_for_all_abi, buildone-fluidsynth)
+	#make -f Makefile.android BUILD_ABI=x86    A_ABI=x86         buildone-fluidsynth
+	#make -f Makefile.android BUILD_ABI=x86_64 A_ABI=x86_64      buildone-fluidsynth
+	#make -f Makefile.android BUILD_ABI=armv7  A_ABI=armeabi-v7a buildone-fluidsynth
+	#make -f Makefile.android BUILD_ABI=arm64  A_ABI=arm64-v8a   buildone-fluidsynth
 
 buildone-fluidsynth:
-	mkdir -p build/$(A_ABI) && cd build/$(A_ABI) && LD_RUN_PATH=$(DIST_PATH)/android-$(BUILD_ABI)/lib LD_LIBRARY_PATH=$(DIST_PATH)/android_$(BUILD_ABI)/lib PKG_CONFIG_PATH=$(DIST_PATH)/android_$(BUILD_ABI)/lib/pkgconfig/ cmake -DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_ABS)/build/cmake/android.toolchain.cmake -Denable-jack=off -Denable-oss=off -Denable-pulseaudio=off -Denable-libsndfile=off -Denable-dbus=off -DANDROID_ABI=$(A_ABI) ../.. && make
+	mkdir -p build/android/$(A_ABI) && cd build/android/$(A_ABI) && LD_RUN_PATH=$(DIST_PATH)/android-$(BUILD_ABI)/lib LD_LIBRARY_PATH=$(DIST_PATH)/android_$(BUILD_ABI)/lib PKG_CONFIG_PATH=$(DIST_PATH)/android_$(BUILD_ABI)/lib/pkgconfig/ cmake -DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK_ABS)/build/cmake/android.toolchain.cmake -Denable-jack=off -Denable-oss=off -Denable-pulseaudio=off -Denable-libsndfile=off -Denable-dbus=off -DANDROID_ABI=$(A_ABI) ../../.. && make
+
+distone:
+	mkdir -p dist/android/$(A_ABI) && cd dist/android/$(A_ABI) && cp $(DIST_PATH)/android_$(BUILD_ABI)/lib/*.so . && cp ../../../build/android/$(A_ABI)/src/*.so . && cd ../../..
 
 .PHONY: wipe
 wipe: $(CERBERO)
