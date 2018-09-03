@@ -81,6 +81,7 @@ FluidSynths major version was bumped. The API was reworked, deprecated functions
 - rename chorus getters to match naming conventions: fluid_synth_get_chorus_speed() and fluid_synth_get_chorus_depth()
 - fluid_synth_remove_sfont() returns FLUID_OK or FLUID_FAILED
 - introduce a separate data type for sequencer client IDs: #fluid_seq_id_t
+- fluid_get_userconf() has been implemented for Windows
 
 <strong>New Features and API additions:</strong>
 

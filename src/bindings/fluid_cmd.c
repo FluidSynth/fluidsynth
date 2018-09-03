@@ -623,22 +623,27 @@ fluid_source(fluid_cmd_handler_t *handler, const char *filename)
 char *
 fluid_get_userconf(char *buf, int len)
 {
-#if defined(WIN32) || defined(MACOS9)
-    return NULL;
-#else
-    char *home = getenv("HOME");
-
+    const char *home = NULL;
+    const char *config_file;
+#if defined(WIN32)
+    home = getenv("USERPROFILE");
+    config_file = "\\fluidsynth.ini";
+    
+#elif !defined(MACOS9)
+    home = getenv("HOME");
+    config_file = "/.fluidsynth";
+    
+#endif
+    
     if(home == NULL)
     {
         return NULL;
     }
     else
     {
-        FLUID_SNPRINTF(buf, len, "%s/.fluidsynth", home);
+        FLUID_SNPRINTF(buf, len, "%s%s", home, config_file);
         return buf;
     }
-
-#endif
 }
 
 /**
