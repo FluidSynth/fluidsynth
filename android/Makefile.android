@@ -1,0 +1,77 @@
+PWD=$(shell pwd)
+CERBERO=$(PWD)/external/cerbero
+
+ANDROID_NDK = $(CERBERO)/build/android-ndk-16
+
+ABIS_SIMPLE = x86 x86-64 armv7 arm64
+
+
+DIST_PATH=$(CERBERO)/build/dist
+
+all: prepare build
+
+.PHONY: prepare
+prepare: $(CERBERO)
+	for abi in $(ABIS_SIMPLE) ; do \
+		cd $(CERBERO) && ./cerbero-uninstalled -c config/cross-android-$$abi.cbc bootstrap && cd $(PWD) ; \
+	done
+
+$(CERBERO):
+	git clone https://anongit.freedesktop.org/git/gstreamer/cerbero.git $(CERBERO)
+
+.PHONY: build
+build: build-cerbero build-fluidsynth-dep dist-dep build-shared
+
+.PHONY: build-shared
+build-shared:
+	for abi in x86 x86_64 armeabi-v7a arm64-v8a ; do \
+		$(ANDROID_NDK)/ndk-build $(NDK_BUILD_FLAGS) APP_ABI=$$abi ; \
+		mkdir -p dist/$$abi ; \
+		cp libs/$$abi/libfluidsynth.so dist/$$abi/ ; \
+	done
+
+define build-shared-with-ndk-build
+	$(ANDROID_NDK_PATH)/ndk-build APP_ABI=$(1)
+endef
+
+.PHONY: build-cerbero
+build-cerbero:
+	for abi in $(ABIS_SIMPLE) ; do \
+		cd $(CERBERO) && ./cerbero-uninstalled -c config/cross-android-$$abi.cbc build glib && cd $(PWD) ; \
+	done
+
+define run_make_abi_target
+	make -f Makefile.android BUILD_ABI=$(1) A_ABI=$(2) $(3)
+endef
+define run_make_abi_target-unsafe
+	if make -f Makefile.android BUILD_ABI=$(1) A_ABI=$(2) $(3) ; then \
+		echo "ignore failure for $(1)..." ; \
+	fi
+endef
+
+define run_make_for_all_abi
+	$(call run_make_abi_target,x86,x86,$(1) )
+	$(call run_make_abi_target,x86_64,x86_64,$(1) )
+	$(call run_make_abi_target,armv7,armeabi-v7a,$(1) )
+	$(call run_make_abi_target-unsafe,arm64,arm64-v8a,$(1) )
+endef
+
+.PHONY: dist-dep
+dist-dep:
+	$(call run_make_for_all_abi, dist-dep-one)
+
+.PHONY: build-fluidsynth-dep
+build-fluidsynth-dep:
+	$(call run_make_for_all_abi, build-fluidsynth-one)
+
+build-fluidsynth-one:
+	mkdir -p build/$(A_ABI) && cd build/$(A_ABI) && LD_RUN_PATH=$(DIST_PATH)/android-$(BUILD_ABI)/lib LD_LIBRARY_PATH=$(DIST_PATH)/android_$(BUILD_ABI)/lib PKG_CONFIG_PATH=$(DIST_PATH)/android_$(BUILD_ABI)/lib/pkgconfig/ cmake     -DCMAKE_C_VISIBILITY_OVERRIDE=default -DCMAKE_POSITION_INDEPENDENT_CODE_OVERRIDE=on -DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK)/build/cmake/android.toolchain.cmake -Denable-jack=off -Denable-oss=off -Denable-pulseaudio=off -Denable-libsndfile=off -Denable-dbus=off -DBUILD_SHARED_LIBS=off -DANDROID_ABI=$(A_ABI) ../../.. && make
+
+dist-dep-one:
+	mkdir -p dep/$(A_ABI) && cd dep/$(A_ABI) && cp $(DIST_PATH)/android_$(BUILD_ABI)/lib/*.a . && cp ../../build/$(A_ABI)/src/*.a . && cd ../../
+
+.PHONY: wipe
+wipe: $(CERBERO)
+	for abi in $(ABIS_SIMPLE) ; do \
+		cd $(CERBERO) && ./cerbero-uninstalled -c config/cross-android-$$abi.cbc wipe && cd ../.. ; \
+	done
