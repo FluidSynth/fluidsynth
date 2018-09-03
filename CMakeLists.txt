@@ -113,13 +113,23 @@ set(CMAKE_C_STANDARD 90)
 # Compile with position independent code if the user requested a shared lib, i.e. no PIC if static requested.
 # This is cmakes default behavior, but here it's explicitly required due to the use of libfluidsynth-OBJ as object library,
 # which would otherwise always be compiled without PIC.
-set ( CMAKE_POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS} )
+if ( CMAKE_POSITION_INDEPENDENT_CODE_OVERRIDE )
+	set ( CMAKE_POSITION_INDEPENDENT_CODE ${CMAKE_POSITION_INDEPENDENT_CODE_OVERRIDE} )
+else ()
+	set ( CMAKE_POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS} )
+endif ( CMAKE_POSITION_INDEPENDENT_CODE )
 
 # the default global visibility level for all target
 # no visibility support on OS2
-if ( NOT OS2 )
-    set ( CMAKE_C_VISIBILITY_PRESET hidden )
-endif ( NOT OS2 )
+if ( CMAKE_C_VISIBILITY_OVERRIDE )
+	set ( CMAKE_C_VISIBILITY_PRESET ${CMAKE_C_VISIBILITY_OVERRIDE} )
+else ()
+	if ( NOT OS2 )
+		set ( CMAKE_C_VISIBILITY_PRESET hidden )
+	endif ( NOT OS2 )
+endif ( CMAKE_C_VISIBILITY_OVERRIDE )
+# enforce visibility control for all types of cmake targets
+cmake_policy ( SET CMP0063 NEW )
 
 # enforce visibility control for all types of cmake targets
 if ( POLICY CMP0063 )
