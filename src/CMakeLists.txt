@@ -107,78 +107,14 @@ endif ( MIDISHARE_SUPPORT )
 
 set ( config_SOURCES ${CMAKE_BINARY_DIR}/config.h )
 
-set ( libfluidsynth_SOURCES
-    utils/fluid_conv.c
-    utils/fluid_conv.h
-    utils/fluid_hash.c
-    utils/fluid_hash.h
-    utils/fluid_list.c
-    utils/fluid_list.h
-    utils/fluid_ringbuffer.c
-    utils/fluid_ringbuffer.h
-    utils/fluid_settings.c
-    utils/fluid_settings.h
-    utils/fluidsynth_priv.h
-    utils/fluid_sys.c
-    utils/fluid_sys.h
-    sfloader/fluid_defsfont.c
-    sfloader/fluid_defsfont.h
-    sfloader/fluid_sfont.h
-    sfloader/fluid_sfont.c
-    sfloader/fluid_sffile.c
-    sfloader/fluid_sffile.h
-    sfloader/fluid_samplecache.c
-    sfloader/fluid_samplecache.h
-    rvoice/fluid_adsr_env.c
-    rvoice/fluid_adsr_env.h
-    rvoice/fluid_chorus.c
-    rvoice/fluid_chorus.h
-    rvoice/fluid_iir_filter.c
-    rvoice/fluid_iir_filter.h
-    rvoice/fluid_lfo.c
-    rvoice/fluid_lfo.h
-    rvoice/fluid_rvoice.h
-    rvoice/fluid_rvoice.c
-    rvoice/fluid_rvoice_dsp.c
-    rvoice/fluid_rvoice_event.h
-    rvoice/fluid_rvoice_event.c
-    rvoice/fluid_rvoice_mixer.h
-    rvoice/fluid_rvoice_mixer.c
-    rvoice/fluid_phase.h
-    rvoice/fluid_rev.c
-    rvoice/fluid_rev.h
-    synth/fluid_chan.c
-    synth/fluid_chan.h
-    synth/fluid_event.c
-    synth/fluid_event.h
-    synth/fluid_gen.c
-    synth/fluid_gen.h
-    synth/fluid_mod.c
-    synth/fluid_mod.h
-    synth/fluid_synth.c
-    synth/fluid_synth.h
-    synth/fluid_synth_monopoly.c
-    synth/fluid_tuning.c
-    synth/fluid_tuning.h
-    synth/fluid_voice.c
-    synth/fluid_voice.h
-    midi/fluid_midi.c
-    midi/fluid_midi.h
-    midi/fluid_midi_router.c
-    midi/fluid_midi_router.h
-    midi/fluid_seqbind.c
-    midi/fluid_seq.c
-    drivers/fluid_adriver.c
-    drivers/fluid_adriver.h
-    drivers/fluid_mdriver.c
-    drivers/fluid_mdriver.h
-    drivers/fluid_aufile.c
-    bindings/fluid_cmd.c
-    bindings/fluid_cmd.h
-    bindings/fluid_filerenderer.c
-    bindings/fluid_ladspa.c
-    bindings/fluid_ladspa.h
-)
+aux_source_directory(. DIR_ROOT_SRCS)
+aux_source_directory(utils DIR_UTILS_SRCS)
+aux_source_directory(sfloader DIR_SFLOADER_SRCS)
+aux_source_directory(rvoice DIR_RVOICE_SRCS)
+aux_source_directory(synth DIR_SYNTH_SRCS)
+aux_source_directory(midi DIR_MIDI_SRCS)
+aux_source_directory(drivers DIR_AUDIO_SRCS)
+aux_source_directory(bindings DIR_BINDINGS_SRCS)
 
 set ( public_HEADERS
     ${CMAKE_SOURCE_DIR}/include/fluidsynth/audio.h
@@ -240,7 +176,13 @@ add_library ( libfluidsynth-OBJ OBJECT
     ${fluid_portaudio_SOURCES}
     ${fluid_pulse_SOURCES}
     ${fluid_windows_SOURCES}
-    ${libfluidsynth_SOURCES}
+    ${DIR_SYNTH_SRCS}
+    ${DIR_UTILS_SRCS}
+    ${DIR_AUDIO_SRCS}
+    ${DIR_MIDI_SRCS}
+    ${DIR_RVOICE_SRCS}
+    ${DIR_SFLOADER_SRCS}
+    ${DIR_BINDINGS_SRCS}
     ${public_HEADERS}
     ${public_main_HEADER}
     ${VersionFilesOutputVariable}
