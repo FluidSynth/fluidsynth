@@ -65,6 +65,7 @@ build-fluidsynth-dep:
 	$(call run_make_for_all_abi, build-fluidsynth-one)
 
 build-fluidsynth-one:
+	# FIXME: -Denable-debug=on once cerbero switched to NDK r17 (cannot enable it right now: https://github.com/android-ndk/ndk/issues/183 )
 	mkdir -p build/$(A_ABI) && cd build/$(A_ABI) && LD_RUN_PATH=$(DIST_PATH)/android-$(BUILD_ABI)/lib LD_LIBRARY_PATH=$(DIST_PATH)/android_$(BUILD_ABI)/lib PKG_CONFIG_PATH=$(DIST_PATH)/android_$(BUILD_ABI)/lib/pkgconfig/ cmake     -DCMAKE_C_VISIBILITY_OVERRIDE=default -DCMAKE_POSITION_INDEPENDENT_CODE_OVERRIDE=on -DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK)/build/cmake/android.toolchain.cmake -Denable-jack=off -Denable-oss=off -Denable-pulseaudio=off -Denable-libsndfile=off -Denable-dbus=off -DBUILD_SHARED_LIBS=off -DANDROID_ABI=$(A_ABI) ../../.. && make
 
 dist-dep-one:
