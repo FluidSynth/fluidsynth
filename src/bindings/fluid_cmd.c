@@ -627,7 +627,7 @@ fluid_get_userconf(char *buf, int len)
     const char *config_file;
 #if defined(WIN32)
     home = getenv("USERPROFILE");
-    config_file = "\\fluidsynth.ini";
+    config_file = "\\fluidsynth.cfg";
     
 #elif !defined(MACOS9)
     home = getenv("HOME");
