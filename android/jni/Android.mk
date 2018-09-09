@@ -25,6 +25,10 @@ include $(PREBUILT_STATIC_LIBRARY)
 
 LOCAL_MODULE := fluidsynth
 
+ifeq ($(NDK_DEBUG),1)
+	cmd-strip :=
+endif
+
 LOCAL_STATIC_LIBRARIES := glib-2.0 iconv intl
 
 LOCAL_WHOLE_STATIC_LIBRARIES := fluidsynth_static
