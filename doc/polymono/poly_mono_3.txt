@@ -15,7 +15,7 @@
 #First use the command resetbasicchannels to clear the group intended to be changed.
 resetbasicchannels 5
 
-# Then use command setbasicchannels using numbered mode:
+# Then use command setbasicchannels using numbered mode 0:
 setbasicchannels  5  0  4
 # or Using named mode:
 # setbasicchannels  5  poly_omnion 4

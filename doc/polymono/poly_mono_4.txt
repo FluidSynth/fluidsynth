@@ -1,9 +1,9 @@
-# How to change an actual basic channel and an add new one ?
-# --------------------------------------------------------
+# How to change an actual basic channel and add a new one ?
+# ---------------------------------------------------------
 # Note that command setbasicchannels allows to add or change
 # groups of basics channels.
 # 
-# Note also that the commands allows this to more than one
+# Note also that the commands allows this for more than one
 # groups executing only one command:
 
 # The following command restores Group 1 to the state:
@@ -14,7 +14,7 @@
 #First use the command resetbasicchannels to clear the group intended to be changed.
 resetbasicchannels 5
 
-# Use command setbasicchannels to change a group and add a new one, using numbered mode:
+# Use command setbasicchannels to change a group and add a new one, using numbered mode 2 and 1:
 setbasicchannels    5  2  0    2  1  3
 # or using named mode:
 # setbasicchannels    5  poly_omnioff 0    2  mono_omnion 3

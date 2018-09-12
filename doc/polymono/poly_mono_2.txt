@@ -11,7 +11,7 @@
 # Group 3 should have the following settings:
 # basic channel 13, mode mono, omni off, (mode 3) composed of 2 channels.
 
-# Use command setbasicchannels using numbered mode:
+# Use command setbasicchannels using numbered mode 3:
 setbasicchannels 13 3 2
 # or using named mode:
 # setbasicchannels 13 mono_omnioff 2

@@ -1,6 +1,6 @@
 # What are default 'basic channels' in FluidSynth ? 
 #--------------------------------------------------
-# At initialization the default basic channel is defined by settings (see 2.2).
+# At initialization the default basic channel is poly omnion (see pdf 2.2).
 
 # type the command basicchannels to display actual basic channels.
 basicchannels

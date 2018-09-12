@@ -1,6 +1,6 @@
 # How to change the whole set of actual basic channels ?
 # -------------------------------------------------------------
-# Assuming you want to set 2 groups of channels
+# Assuming you want to set 2 groups of channels:
 # Group 1: first channel 5 in poly mode, only one channel
 # Group 2: first channel 10 in mono mode , only one channel
 
@@ -13,7 +13,7 @@
 # First use the command resetbasicchannels to  reset all basic channels
 resetbasicchannels 
 
-# Then use command setbasicchannels using numbered mode:
+# Then use command setbasicchannels using numbered mode 2 and 3:
 setbasicchannels  5 2 0   10 3 1
 # or using named mode:
 # setbasicchannels  5 poly_omnioff 0   10 mono_omnioff 1
