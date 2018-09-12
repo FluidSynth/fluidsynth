@@ -413,7 +413,6 @@ fluid_mod_get_value(fluid_mod_t *mod, fluid_voice_t *voice)
     /* get the initial value of the first source */
     if(mod->src1 > 0)
     {
-//        v1 = fluid_mod_get_source_value(mod->src1, mod->flags1, &range1, chan, voice);
         v1 = fluid_mod_get_source_value(mod->src1, mod->flags1, &range1, voice);
 
         /* transform the input value */
@@ -433,7 +432,6 @@ fluid_mod_get_value(fluid_mod_t *mod, fluid_voice_t *voice)
     /* get the second input source */
     if(mod->src2 > 0)
     {
-//        v2 = fluid_mod_get_source_value(mod->src2, mod->flags2, &range2, chan, voice);
         v2 = fluid_mod_get_source_value(mod->src2, mod->flags2, &range2, voice);
 
         /* transform the second input value */
