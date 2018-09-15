@@ -832,20 +832,20 @@ fluid_defpreset_noteon(fluid_defpreset_t *defpreset, fluid_synth_t *synth, int c
                     for(i = 0; i < GEN_LAST; i++)
                     {
 
- 						/* SF 2.01 section 8.5 page 58: If some generators are
+                        /* SF 2.01 section 8.5 page 58: If some generators are
                          encountered at preset level, they should be ignored.
-						 However this check is not necessary when the soundfont
-						 loader has ignored invalid preset generators.
-						 Actually load_pgen()has ignored these invalid preset
-						 generators:
+                         However this check is not necessary when the soundfont
+                         loader has ignored invalid preset generators.
+                         Actually load_pgen()has ignored these invalid preset
+                         generators:
                            GEN_STARTADDROFS,      GEN_ENDADDROFS,
-						   GEN_STARTLOOPADDROFS,  GEN_ENDLOOPADDROFS,
+                           GEN_STARTLOOPADDROFS,  GEN_ENDLOOPADDROFS,
                            GEN_STARTADDRCOARSEOFS,GEN_ENDADDRCOARSEOFS,
-                           GEN_STARTLOOPADDRCOARSEOFS
+                           GEN_STARTLOOPADDRCOARSEOFS,
                            GEN_KEYNUM, GEN_VELOCITY,
                            GEN_ENDLOOPADDRCOARSEOFS,
                            GEN_SAMPLEMODE, GEN_EXCLUSIVECLASS,GEN_OVERRIDEROOTKEY
-						*/
+                        */
 
                         /* SF 2.01 section 9.4 'bullet' 9: A generator in a
                          * local preset zone supersedes a global preset zone
