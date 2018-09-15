@@ -164,10 +164,10 @@ static fluid_real_t
 fluid_mod_get_source_value(const unsigned char mod_src,
                            const unsigned char mod_flags,
                            fluid_real_t *range,
-                           const fluid_channel_t *chan,
                            const fluid_voice_t *voice
                           )
 {
+    const fluid_channel_t *chan = voice->channel;
     fluid_real_t val;
 
     if(mod_flags & FLUID_MOD_CC)
@@ -367,17 +367,12 @@ fluid_mod_transform_source_value(fluid_real_t val, unsigned char mod_flags, cons
  * fluid_mod_get_value
  */
 fluid_real_t
-fluid_mod_get_value(fluid_mod_t *mod, fluid_channel_t *chan, fluid_voice_t *voice)
+fluid_mod_get_value(fluid_mod_t *mod, fluid_voice_t *voice)
 {
     extern fluid_mod_t default_vel2filter_mod;
 
     fluid_real_t v1 = 0.0, v2 = 1.0;
     fluid_real_t range1 = 127.0, range2 = 127.0;
-
-    if(chan == NULL)
-    {
-        return 0.0f;
-    }
 
     /* 'special treatment' for default controller
      *
@@ -418,7 +413,7 @@ fluid_mod_get_value(fluid_mod_t *mod, fluid_channel_t *chan, fluid_voice_t *voic
     /* get the initial value of the first source */
     if(mod->src1 > 0)
     {
-        v1 = fluid_mod_get_source_value(mod->src1, mod->flags1, &range1, chan, voice);
+        v1 = fluid_mod_get_source_value(mod->src1, mod->flags1, &range1, voice);
 
         /* transform the input value */
         v1 = fluid_mod_transform_source_value(v1, mod->flags1, range1);
@@ -437,7 +432,7 @@ fluid_mod_get_value(fluid_mod_t *mod, fluid_channel_t *chan, fluid_voice_t *voic
     /* get the second input source */
     if(mod->src2 > 0)
     {
-        v2 = fluid_mod_get_source_value(mod->src2, mod->flags2, &range2, chan, voice);
+        v2 = fluid_mod_get_source_value(mod->src2, mod->flags2, &range2, voice);
 
         /* transform the second input value */
         v2 = fluid_mod_transform_source_value(v2, mod->flags2, range2);
