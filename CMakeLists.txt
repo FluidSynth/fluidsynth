@@ -116,9 +116,11 @@ set ( CMAKE_POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS} )
 if ( NOT OS2 )
     set ( CMAKE_C_VISIBILITY_PRESET hidden )
 endif ( NOT OS2 )
-# enforce visibility control for all types of cmake targets
-cmake_policy ( SET CMP0063 NEW )
 
+# enforce visibility control for all types of cmake targets
+if ( POLICY CMP0063 )
+  cmake_policy ( SET CMP0063 NEW )
+endif ( POLICY CMP0063 )
 
 # Default install directory names
 include ( DefaultDirs )
