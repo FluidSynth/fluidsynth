@@ -19,6 +19,23 @@
 
 # CMake based build system. Pedro Lopez-Cabanillas <plcl@users.sf.net>
 
+FIND_PACKAGE(PythonInterp)
+
+if (PYTHONINTERP_FOUND)
+	set(SCRIPT_DIR ${CMAKE_SOURCE_DIR}/scripts)
+	set(SCRIPT_OUT ${CMAKE_BINARY_DIR}/include)
+
+	add_custom_command(
+		 COMMAND ${PYTHON_EXECUTABLE} ${SCRIPT_DIR}/gen_rvoice_dsp.py ${SCRIPT_OUT}
+		 DEPENDS ${SCRIPT_DIR}/gen_rvoice_dsp.py
+		 OUTPUT  ${SCRIPT_OUT}/fluid_rvoice_tables.h ${SCRIPT_OUT}/fluid_phase_const.h
+		 WORKING_DIRECTORY $(CMAKE_CURRENT_BINARY_DIR)
+		 COMMENT "Generating fluid_rvoice_tables.h/fluid_phase_const.h"
+	)
+else()
+    message("Python not found.")
+endif()
+
 include_directories (
     ${CMAKE_BINARY_DIR}
     ${CMAKE_SOURCE_DIR}/src
@@ -178,6 +195,8 @@ set ( libfluidsynth_SOURCES
     bindings/fluid_filerenderer.c
     bindings/fluid_ladspa.c
     bindings/fluid_ladspa.h
+    ${SCRIPT_OUT}/fluid_rvoice_tables.h
+    ${SCRIPT_OUT}/fluid_phase_const.h
 )
 
 set ( public_HEADERS

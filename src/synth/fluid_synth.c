@@ -288,8 +288,6 @@ fluid_synth_init(void)
 
     fluid_conversion_config();
 
-    fluid_rvoice_dsp_config();
-
     fluid_sys_config();
 
     init_dither();
