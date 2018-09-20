@@ -19,14 +19,13 @@ void *my_open(const char *filename)
         return NULL;
     }
 
-    scanf("&%p", &p);
+    sscanf(filename, "&%p", &p);
     return p;
 }
 
 int my_read(void *buf, int count, void *handle)
 {
-    // not yet implemented
-    memset(buf, 0, count);
+    // NYI
     return FLUID_OK;
 }
 
