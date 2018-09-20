@@ -76,11 +76,37 @@ def print_matrix(fp, matrix, name):
     print_ln(fp, "")
 
 
+# Emit a vector into the header file
+def print_vector(fp, vector, name):
+    size = len(vector);
+
+    print_ln(fp, "static const fluid_real_t %s[%d] = {" % (name, size))
+    
+    n = 0;
+    while n < size:
+        text = " %.15e" % vector[n]
+
+        if (n < size-1):
+            text = text + ","
+
+        print_ln(fp, text)
+        n = n + 1
+
+    print_ln(fp, "}; /* %s */" % name)
+    print_ln(fp, "")
+
+
 # Emit a decimal number
 def print_dec(fp, name, value):
     print_ln(fp, "#define %-32s %d" % (name, value))
 
+
 # Emit an hex number
 def print_hex(fp, name, value):
     print_ln(fp, "#define %-32s 0x%08X" % (name, value))
+
+
+# Emit an floating point number
+def print_fpu(fp, name, value):
+    print_ln(fp, "#define %-32s %f" % (name, value))
 
