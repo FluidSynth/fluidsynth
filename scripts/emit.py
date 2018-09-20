@@ -61,10 +61,10 @@ def print_matrix(fp, matrix, name):
         text = " { "
 
         while x < x_size-1:
-            text = text + "%.15f, " % matrix[y][x]
+            text = text + "%.15e, " % matrix[y][x]
             x = x + 1
 
-        text = text + "%.15f }" % matrix[y][x]
+        text = text + "%.15e }" % matrix[y][x]
 
         if (y < y_size-1):
             text = text + ","
