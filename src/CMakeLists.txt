@@ -32,6 +32,14 @@ if (PYTHONINTERP_FOUND)
 		 WORKING_DIRECTORY $(CMAKE_CURRENT_BINARY_DIR)
 		 COMMENT "Generating fluid_rvoice_tables.h/fluid_phase_const.h"
 	)
+
+	add_custom_command(
+		 COMMAND ${PYTHON_EXECUTABLE} ${SCRIPT_DIR}/gen_conv.py ${SCRIPT_OUT}
+		 DEPENDS ${SCRIPT_DIR}/gen_conv.py
+		 OUTPUT  ${SCRIPT_OUT}/fluid_conv_tables.h ${SCRIPT_OUT}/fluid_conv_const.h
+		 WORKING_DIRECTORY $(CMAKE_CURRENT_BINARY_DIR)
+		 COMMENT "Generating fluid_conv_tables.h/fluid_conv_const.h"
+	)
 else()
     message("Python not found.")
 endif()
@@ -197,6 +205,8 @@ set ( libfluidsynth_SOURCES
     bindings/fluid_ladspa.h
     ${SCRIPT_OUT}/fluid_rvoice_tables.h
     ${SCRIPT_OUT}/fluid_phase_const.h
+    ${SCRIPT_OUT}/fluid_conv_tables.h
+    ${SCRIPT_OUT}/fluid_conv_const.h
 )
 
 set ( public_HEADERS

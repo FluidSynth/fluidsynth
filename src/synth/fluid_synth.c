@@ -286,8 +286,6 @@ fluid_synth_init(void)
     feenableexcept(FE_DIVBYZERO | FE_UNDERFLOW | FE_OVERFLOW | FE_INVALID);
 #endif
 
-    fluid_conversion_config();
-
     fluid_sys_config();
 
     init_dither();
