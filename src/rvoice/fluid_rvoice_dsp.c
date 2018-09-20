@@ -58,7 +58,8 @@
 //static fluid_real_t sinc_table7[FLUID_INTERP_MAX][7];
 
 
-//#define SINC_INTERP_ORDER 7	/* 7th order constant */
+/* 7th order constant */
+#define SINC_INTERP_ORDER (sizeof(sinc_table7[0]) / sizeof(sinc_table7[0][0]))
 
 
 static FLUID_INLINE fluid_real_t
