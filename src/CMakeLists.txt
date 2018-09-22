@@ -40,10 +40,6 @@ include_directories (
     ${GLIB_INCLUDE_DIRS}
 )
 
-if (enable-ctables AND NOT ENABLE_EXT_GEN_TABLES AND NOT CMAKE_CROSSCOMPILING)
-     add_subdirectory (tools)
-endif()
-
 # ************ library ************
 
 if ( READLINE_SUPPORT )
@@ -112,20 +108,6 @@ if ( MIDISHARE_SUPPORT )
 endif ( MIDISHARE_SUPPORT )
 
 set ( config_SOURCES ${CMAKE_BINARY_DIR}/config.h )
-
-# add the command to generate the source code
-if (ENABLE_CONST_TABLES)
-    add_custom_command (
-        OUTPUT ${FLUID_RVOICE_TABLE_H}
-        DEPENDS ${WITH_GENERATOR}
-        COMMAND ${WITH_GENERATOR} 0 ${FLUID_RVOICE_TABLE_H}
-    )
-    add_custom_command (
-        OUTPUT ${FLUID_CONV_TABLE_H}
-        DEPENDS ${WITH_GENERATOR}
-        COMMAND ${WITH_GENERATOR} 1 ${FLUID_CONV_TABLE_H}
-    )
-endif ()
 
 set ( libfluidsynth_SOURCES
     utils/fluid_conv.c
@@ -288,8 +270,6 @@ add_library ( libfluidsynth
     ${public_HEADERS}
     ${public_main_HEADER}
     ${VersionFilesOutputVariable}
-    ${FLUID_RVOICE_TABLE_H}
-    ${FLUID_CONV_TABLE_H}
 )
 
 if ( MACOSX_FRAMEWORK )
@@ -394,3 +374,15 @@ else ( MACOSX_FRAMEWORK )
 endif ( MACOSX_FRAMEWORK )
 
 endif ()
+
+# ******* Auto Generated Lookup Tables ******
+
+
+include(ExternalProject)
+ExternalProject_Add(gentables
+    DOWNLOAD_COMMAND ""
+    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/gentables
+    BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/gentables
+    INSTALL_COMMAND ${CMAKE_CURRENT_BINARY_DIR}/gentables/make_tables${CMAKE_EXECUTABLE_SUFFIX} "${CMAKE_BINARY_DIR}/"
+)
+add_dependencies(libfluidsynth-OBJ gentables)

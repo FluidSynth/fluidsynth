@@ -327,38 +327,6 @@ if ( CMAKE_BUILD_TYPE MATCHES "Debug" )
     set ( DEBUG 1 )
 endif ( CMAKE_BUILD_TYPE MATCHES "Debug" )
 
-# Add support for auto-generated tables
-unset ( ENABLE_CONST_TABLES CACHE )
-unset ( ENABLE_EXT_GEN_TABLES CACHE )
-
-if (enable-ctables)
-    # TODO: check if compiler supports C99, disable function otherwise.
-	if (WITH_GENERATOR)
-        set ( ENABLE_CONST_TABLES 1 )
-		set ( ENABLE_EXT_GEN_TABLES 1 )
-        message(STATUS "Using generator ${WITH_GENERATOR}")
-    else ()
-        if (CMAKE_CROSSCOMPILING)
-            message(WARNING "Build of table generator non supported when cross compiling, Disabled.")
-            set(enable-ctables off)
-        else ()
-            # Automatically build generators if ctables is activated
-            set ( ENABLE_CONST_TABLES 1 )
-            message(STATUS "Enabled support for auto-generated tables")
-            set ( WITH_GENERATOR ${CMAKE_BINARY_DIR}/src/tools/make_tables)
-            message(STATUS "Using generator ${WITH_GENERATOR}")
-        endif ()
-    endif ()
-endif ()
-
-unset ( FLUID_RVOICE_TABLE_H CACHE)
-unset ( FLUID_CONV_TABLE_H CACHE)
-
-if (ENABLE_CONST_TABLES)
-    set ( FLUID_RVOICE_TABLE_H ${CMAKE_BINARY_DIR}/include/fluid_rvoice_tables.h)
-    set ( FLUID_CONV_TABLE_H   ${CMAKE_BINARY_DIR}/include/fluid_conv_tables.h)
-endif ()
-
 if ( CMAKE_VERSION VERSION_GREATER "3.6.0" )
 find_program( CLANG_TIDY
             NAMES "clang-tidy"
@@ -594,7 +562,6 @@ endif(enable-tests)
 # General configuration file
 configure_file ( ${CMAKE_SOURCE_DIR}/src/config.cmake
                  ${CMAKE_BINARY_DIR}/config.h )
-
 
 # Process subdirectories
 add_subdirectory ( src )
