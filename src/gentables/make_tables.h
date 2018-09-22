@@ -1,11 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
+#include <string.h>
 
 
-#define EMIT_ARRAY(__fp__, __arr__) emit_array(__fp__, #__arr__, __arr__, FLUID_N_ELEMENTS(__arr__))
+#define EMIT_ARRAY(__fp__, __arr__) emit_array(__fp__, #__arr__, __arr__, sizeof(__arr__)/sizeof(*__arr__))
 
 /* callback for general access to matrices */
-typedef fluid_real_t (*emit_matrix_cb)(int y, int x);
+typedef double (*emit_matrix_cb)(int y, int x);
 
 /* Generators */
 void gen_rvoice_table_dsp(FILE *fp);

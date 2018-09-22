@@ -357,7 +357,6 @@ endif ()
 
 # ******* Auto Generated Lookup Tables ******
 
-
 include(ExternalProject)
 ExternalProject_Add(gentables
     DOWNLOAD_COMMAND ""

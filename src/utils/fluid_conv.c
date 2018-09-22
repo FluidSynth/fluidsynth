@@ -341,4 +341,3 @@ fluid_convex(fluid_real_t val)
     return fluid_convex_tab[(int) val];
 }
 
-#endif /* FLUID_TABLE_GENERATOR */

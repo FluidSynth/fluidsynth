@@ -1,5 +1,14 @@
-#include "fluid_sys.h"
+
 #include "make_tables.h"
+
+static void write_value(FILE *fp, double val, int i)
+{
+    fprintf(fp, "    %.15e%c    /* %d */\n",
+        val,
+        ',',
+        i
+           );
+}
 
 /* Emit an array of real numbers */
 void emit_array(FILE *fp, const char *tblname, const double *tbl, int size)
@@ -10,9 +19,7 @@ void emit_array(FILE *fp, const char *tblname, const double *tbl, int size)
 
     for (i = 0; i < size; i++)
     {
-        fprintf(fp, "    %a%c\n",
-            tbl[i],
-            (i < (size-1)) ? ',' : ' ');
+        write_value(fp, tbl[i], i);
     }
     fprintf(fp, "};\n\n");
 }
@@ -28,9 +35,7 @@ void emit_matrix(FILE *fp, const char *tblname, emit_matrix_cb tbl_cb, int sizeh
     {
         for (j = 0; j < sizel; j++)
         {
-            fprintf(fp, "        %a%c\n",
-                tbl_cb(i, j), 
-                (j < (sizel-1)) ? ',' : ' ');
+            write_value(fp, tbl_cb(i, j), i*sizel+j);
         }
 
 
@@ -41,10 +46,15 @@ void emit_matrix(FILE *fp, const char *tblname, emit_matrix_cb tbl_cb, int sizeh
     }
 }
 
-static void open_table(FILE**fp, char* file)
-{        
+static void open_table(FILE**fp, const char* dir, const char* file)
+{
+    char buf[2048] = {0};
+    
+    strcat(buf, dir);
+    strcat(buf, file);
+
     /* open the output file */
-    *fp = fopen(file, "w");
+    *fp = fopen(buf, "w");
     if (*fp == NULL)
     {
         exit(-2);
@@ -56,21 +66,19 @@ static void open_table(FILE**fp, char* file)
 
 int main (int argc, char *argv[])
 {
-    char buf[2048] = {0};
     FILE *fp;
-    int   res, function;
  
     // make sure we have enough arguments
     if (argc < 2)
         return -1;
     
-    strcat(buf, argv[1]);
-    strcat(buf, "fluid_conv_tables.c");
-
-    open_header(&fp, buf);
+    open_table(&fp, argv[1], "fluid_conv_tables.c");
     gen_conv_table(fp);
-
     fclose(fp);
 
-    return res;
+    open_table(&fp, argv[1], "fluid_rvoice_dsp_tables.c");
+    gen_rvoice_table_dsp(fp);
+    fclose(fp);
+
+    return 0;
 }

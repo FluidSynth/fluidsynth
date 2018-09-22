@@ -1,6 +1,5 @@
-#define FLUID_TABLE_GENERATOR   1
 
-#include "fluid_conv.h"
+#include "utils/fluid_conv_tables.h"
 #include "make_tables.h"
 
 
@@ -52,7 +51,7 @@ static void fluid_conversion_config(void)
 
     for(i = 1; i < FLUID_VEL_CB_SIZE - 1; i++)
     {
-        x = (-200.0 / FLUID_PEAK_ATTENUATION) * log((i * i) / ((FLUID_VEL_CB_SIZE - 1) * (FLUID_VEL_CB_SIZE - 1))) / M_LN10;
+        x = (-200.0 / FLUID_PEAK_ATTENUATION) * log((double)(i * i) / ((FLUID_VEL_CB_SIZE - 1) * (FLUID_VEL_CB_SIZE - 1))) / log(10.0);
         fluid_convex_tab[i] = (1.0 - x);
         fluid_concave_tab[(FLUID_VEL_CB_SIZE - 1) - i] =  x;
     }
@@ -62,7 +61,7 @@ static void fluid_conversion_config(void)
 
     for(i = 0; i < FLUID_PAN_SIZE; i++)
     {
-        fluid_pan_tab[i] =  sin(i * x);
+        fluid_pan_tab[i] = sin(i * x);
     }
 }
 
