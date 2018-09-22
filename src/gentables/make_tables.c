@@ -2,11 +2,11 @@
 #include "make_tables.h"
 
 /* Emit an array of real numbers */
-void emit_array(FILE *fp, const char *tblname, const fluid_real_t *tbl, int size)
+void emit_array(FILE *fp, const char *tblname, const double *tbl, int size)
 {
     int i;
 
-    fprintf(fp, "static const fluid_real_t %s[] = {\n", tblname);
+    fprintf(fp, "static const fluid_real_t %s[%d] = {\n", tblname, size);
 
     for (i = 0; i < size; i++)
     {
@@ -41,30 +41,34 @@ void emit_matrix(FILE *fp, const char *tblname, emit_matrix_cb tbl_cb, int sizeh
     }
 }
 
+static void open_table(FILE**fp, char* file)
+{        
+    /* open the output file */
+    *fp = fopen(file, "w");
+    if (*fp == NULL)
+    {
+        exit(-2);
+    }
+    
+    /* Emit warning header */
+    fprintf(*fp, "/* THIS FILE HAS BEEN AUTOMATICALLY GENERATED. DO NOT EDIT. */\n\n");
+}
+
 int main (int argc, char *argv[])
 {
+    char buf[2048] = {0};
     FILE *fp;
     int   res, function;
  
     // make sure we have enough arguments
-    if (argc < 3)
-        return 1;
+    if (argc < 2)
+        return -1;
+    
+    strcat(buf, argv[1]);
+    strcat(buf, "fluid_conv_tables.c");
 
-    /* open the output file */
-    fp = fopen(argv[2], "w");
-    if (!fp)
-        return 2;
-
-    /* Emit warning header */
-    fprintf(fp, "/* THIS FILE HAS BEEN AUTOMATICALLY GENERATED. DO NOT EDIT. */\n\n");
-
-    // open the output file
-    function = atoi(argv[1]);
-    switch (function) {
-    case  0: res = gen_rvoice_table_dsp(fp); break;
-    case  1: res = gen_conv_table(fp); break;
-    default: res = -1;
-    }
+    open_header(&fp, buf);
+    gen_conv_table(fp);
 
     fclose(fp);
 
