@@ -43,7 +43,7 @@ struct _fluid_mod_t
     fluid_mod_t *next;
 };
 
-fluid_real_t fluid_mod_get_value(fluid_mod_t *mod, fluid_channel_t *chan, fluid_voice_t *voice);
+fluid_real_t fluid_mod_get_value(fluid_mod_t *mod, fluid_voice_t *voice);
 
 #ifdef DEBUG
 void fluid_dump_modulator(fluid_mod_t *mod);

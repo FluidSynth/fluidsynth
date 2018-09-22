@@ -27,9 +27,6 @@
 #include "fluid_settings.h"
 #include "fluid_midi.h"
 
-/* Defined in fluid_filerenderer.c */
-extern void fluid_file_renderer_settings(fluid_settings_t *settings);
-
 /* maximum allowed components of a settings variable (separated by '.') */
 #define MAX_SETTINGS_TOKENS 8	/* currently only a max of 3 are used */
 #define MAX_SETTINGS_LABEL 256	/* max length of a settings variable label */
@@ -344,7 +341,7 @@ fluid_settings_tokenize(const char *s, char *buf, char **ptr)
     char *tokstr, *tok;
     int n = 0;
 
-    if(strlen(s) > MAX_SETTINGS_LABEL)
+    if(FLUID_STRLEN(s) > MAX_SETTINGS_LABEL)
     {
         FLUID_LOG(FLUID_ERR, "Setting variable name exceeded max length of %d chars",
                   MAX_SETTINGS_LABEL);
@@ -1738,7 +1735,7 @@ fluid_settings_option_concat(fluid_settings_t *settings, const char *name,
     fluid_setting_node_t *node;
     fluid_str_setting_t *setting;
     fluid_list_t *p, *newlist = NULL;
-    int count, len;
+    size_t count, len;
     char *str, *option;
 
     fluid_return_val_if_fail(settings != NULL, NULL);
@@ -1769,13 +1766,13 @@ fluid_settings_option_concat(fluid_settings_t *settings, const char *name,
         if(option)
         {
             newlist = fluid_list_append(newlist, option);
-            len += strlen(option);
+            len += FLUID_STRLEN(option);
         }
     }
 
     if(count > 1)
     {
-        len += (count - 1) * strlen(separator);
+        len += (count - 1) * FLUID_STRLEN(separator);
     }
 
     len++;        /* For terminator */
@@ -1826,10 +1823,10 @@ fluid_settings_foreach_iter(void *key, void *value, void *data)
     fluid_settings_foreach_bag_t *bag = data;
     char *keystr = key;
     fluid_setting_node_t *node = value;
-    int pathlen;
+    size_t pathlen;
     char *s;
 
-    pathlen = strlen(bag->path);
+    pathlen = FLUID_STRLEN(bag->path);
 
     if(pathlen > 0)
     {

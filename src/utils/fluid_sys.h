@@ -373,7 +373,19 @@ fluid_ostream_t fluid_socket_get_ostream(fluid_socket_t sock);
 
 /* File access */
 #if !GLIB_CHECK_VERSION(2, 26, 0)
-typedef struct stat fluid_stat_buf_t; /* GStatBuf has not been introduced yet */
+    /* GStatBuf has not been introduced yet, manually typedef to what they had at that time:
+     * https://github.com/GNOME/glib/blob/e7763678b56e3be073cc55d707a6e92fc2055ee0/glib/gstdio.h#L98-L115
+     */
+    #if defined(WIN32) || HAVE_WINDOWS_H // somehow reliably mock G_OS_WIN32??
+        #if defined (_MSC_VER) && !defined(_WIN64)
+        typedef struct _stat32 fluid_stat_buf_t;
+        #else
+        typedef struct _stat fluid_stat_buf_t;
+        #endif
+    #else
+    /* posix, OS/2, etc. */
+    typedef struct stat fluid_stat_buf_t;
+    #endif
 #else
 typedef GStatBuf fluid_stat_buf_t;
 #endif

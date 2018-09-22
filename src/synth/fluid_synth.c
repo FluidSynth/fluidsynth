@@ -3329,6 +3329,10 @@ fluid_synth_nwrite_float(fluid_synth_t *synth, int len,
 #endif
     float cpu_load;
 
+    fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(left != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(right != NULL, FLUID_FAILED);
+    
     /* First, take what's still available in the buffer */
     count = 0;
     num = synth->cur;
@@ -3744,6 +3748,10 @@ fluid_synth_write_float(fluid_synth_t *synth, int len,
     float cpu_load;
 
     fluid_profile_ref_var(prof_ref);
+    
+    fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(lout != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(rout != NULL, FLUID_FAILED);
 
     fluid_rvoice_mixer_set_mix_fx(synth->eventhandler->mixer, 1);
     l = synth->cur;

@@ -89,14 +89,11 @@ static fluid_jack_client_t *new_fluid_jack_client(fluid_settings_t *settings,
 static int fluid_jack_client_register_ports(void *driver, int isaudio,
         jack_client_t *client,
         fluid_settings_t *settings);
-fluid_audio_driver_t *
-new_fluid_jack_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func, void *data);
-void delete_fluid_jack_audio_driver(fluid_audio_driver_t *p);
+
 void fluid_jack_driver_shutdown(void *arg);
 int fluid_jack_driver_srate(jack_nframes_t nframes, void *arg);
 int fluid_jack_driver_bufsize(jack_nframes_t nframes, void *arg);
 int fluid_jack_driver_process(jack_nframes_t nframes, void *arg);
-void delete_fluid_jack_midi_driver(fluid_midi_driver_t *p);
 
 
 static fluid_mutex_t last_client_mutex = FLUID_MUTEX_INIT;     /* Probably not necessary, but just in case drivers are created by multiple threads */
@@ -140,7 +137,7 @@ new_fluid_jack_client(fluid_settings_t *settings, int isaudio, void *driver)
      * then re-use the client. */
     if(last_client &&
             (last_client->server != NULL && server != NULL && FLUID_STRCMP(last_client->server, server) == 0) &&
-            ((!isaudio && last_client->midi_driver != NULL) || (isaudio && last_client->audio_driver != NULL)))
+            ((!isaudio && last_client->midi_driver == NULL) || (isaudio && last_client->audio_driver == NULL)))
     {
         client_ref = last_client;
         last_client = NULL;         /* No more pairing for this client */
@@ -673,7 +670,7 @@ fluid_jack_driver_process(jack_nframes_t nframes, void *arg)
     }
     else
     {
-        fluid_audio_func_t callback = (audio_driver->callback != NULL) ? audio_driver->callback : fluid_synth_process;
+        fluid_audio_func_t callback = (audio_driver->callback != NULL) ? audio_driver->callback : (fluid_audio_func_t) fluid_synth_process;
 
         for(i = 0; i < audio_driver->num_output_ports; i++)
         {

@@ -612,7 +612,7 @@ fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t *voice)
     for(i = 0; i < voice->mod_count; i++)
     {
         fluid_mod_t *mod = &voice->mod[i];
-        fluid_real_t modval = fluid_mod_get_value(mod, voice->channel, voice);
+        fluid_real_t modval = fluid_mod_get_value(mod, voice);
         int dest_gen_index = mod->dest;
         fluid_gen_t *dest_gen = &voice->gen[dest_gen_index];
         dest_gen->mod += modval;
@@ -1202,7 +1202,7 @@ int fluid_voice_modulate(fluid_voice_t *voice, int cc, int ctrl)
             {
                 if(fluid_mod_has_dest(&voice->mod[k], gen))
                 {
-                    modval += fluid_mod_get_value(&voice->mod[k], voice->channel, voice);
+                    modval += fluid_mod_get_value(&voice->mod[k], voice);
                 }
             }
 
@@ -1251,7 +1251,7 @@ int fluid_voice_modulate_all(fluid_voice_t *voice)
         {
             if(fluid_mod_has_dest(&voice->mod[k], gen))
             {
-                modval += fluid_mod_get_value(&voice->mod[k], voice->channel, voice);
+                modval += fluid_mod_get_value(&voice->mod[k], voice);
             }
         }
 
@@ -1732,7 +1732,7 @@ fluid_voice_get_lower_boundary_for_attenuation(fluid_voice_t *voice)
                     || (mod->src2 == FLUID_MOD_PITCHWHEEL)))
         {
 
-            fluid_real_t current_val = fluid_mod_get_value(mod, voice->channel, voice);
+            fluid_real_t current_val = fluid_mod_get_value(mod, voice);
             fluid_real_t v = fabs(mod->amount);
 
             if((mod->src1 == FLUID_MOD_PITCHWHEEL)

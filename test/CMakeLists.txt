@@ -1,6 +1,4 @@
 
-project(fluidsynth-test)
-
 ENABLE_TESTING()
 include ( FluidUnitTest )
 

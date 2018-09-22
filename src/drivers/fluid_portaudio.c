@@ -56,7 +56,6 @@ static int
 fluid_portaudio_run(const void *input, void *output, unsigned long frameCount,
                     const PaStreamCallbackTimeInfo *timeInfo,
                     PaStreamCallbackFlags statusFlags, void *userData);
-void delete_fluid_portaudio_driver(fluid_audio_driver_t *p);
 
 #define PORTAUDIO_DEFAULT_DEVICE "PortAudio Default"
 

@@ -44,9 +44,10 @@ init:
   - if "%platform%"=="x64" ( set TARGET_PLATFORM= Win64)
   - echo %TARGET_PLATFORM%
   - echo %APPVEYOR_BUILD_WORKER_IMAGE%
-  - if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2017" ( set "generator=Visual Studio 15 2017%TARGET_PLATFORM%" )
-  - if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2015" ( set "generator=Visual Studio 14 2015%TARGET_PLATFORM%" )
+  - if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2017" ( set "generator=Visual Studio 15 2017%TARGET_PLATFORM%" && set "toolset=v141_xp" )
+  - if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2015" ( set "generator=Visual Studio 14 2015%TARGET_PLATFORM%" && set "toolset=v140_xp" )
   - echo %generator%
+  - echo %toolset%
 
 install:
 # make sure the latest version of git is installed
@@ -71,11 +72,9 @@ build_script:
   - cd C:\projects\fluidsynth
   - mkdir build
   - cd build
-  - cmake -G "%generator%" ..
-  - cmake --build . --config Release # build libfluidsynth and fluidsynth exec
-# FIXME the linker doesnt find gthread-2.0.lib in the second run, why???
-#  - cmake -Denable-tests=1 ..
-#  - cmake --build . --config Release --target check # build unittests
+  - cmake -G "%generator%" -T "%toolset%" ..
+  - cmake --build . --config Release
+  - cmake --build . --config Release --target check # build and exec unittests
 
 after_build:
   - 7z a fluidsynth-%platform%.zip %APPVEYOR_BUILD_FOLDER%\build\src\Release\* c:\deps\bin\libglib*.dll c:\deps\bin\libgthread*.dll c:\deps\bin\*intl*.dll

@@ -64,11 +64,6 @@ static char fluid_winmidi_error_buffer[256];
 #define msg_p1(_m)    ((_m >> 8) & 0x7f)
 #define msg_p2(_m)    ((_m >> 16) & 0x7f)
 
-fluid_midi_driver_t *new_fluid_winmidi_driver(fluid_settings_t *settings,
-        handle_midi_event_func_t handler, void *data);
-
-void delete_fluid_winmidi_driver(fluid_midi_driver_t *p);
-
 void CALLBACK fluid_winmidi_callback(HMIDIIN hmi, UINT wMsg, DWORD_PTR dwInstance,
                                      DWORD_PTR msg, DWORD_PTR extra);
 static char *fluid_winmidi_input_error(MMRESULT no);

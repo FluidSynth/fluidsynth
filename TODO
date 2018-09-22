@@ -1,9 +1,5 @@
 New features
 ------------
-- Non-realtime MIDI file rendering
-- Sample streaming, load/unload sample on demand
-- Synth sample rate change after initial creation
-- handle tuning sysex messages
 - Audio level metering
 - Active voice count monitoring
 
@@ -78,13 +74,11 @@ Shell & command handler
 - Allow settings to be loaded before the synthesizer is created
 
 MIDI Specs
-- Omni and poly modes
 - sample dump
 - MIDI thru
 - Scalable Polyphony MIDI (SP-MIDI)
 
 
 Unsorted
-- additional aux buses
 - rewrite midi file using new sequencer
 - direct access to audio buffer

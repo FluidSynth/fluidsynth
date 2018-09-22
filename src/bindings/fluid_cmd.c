@@ -623,22 +623,27 @@ fluid_source(fluid_cmd_handler_t *handler, const char *filename)
 char *
 fluid_get_userconf(char *buf, int len)
 {
-#if defined(WIN32) || defined(MACOS9)
-    return NULL;
-#else
-    char *home = getenv("HOME");
-
+    const char *home = NULL;
+    const char *config_file;
+#if defined(WIN32)
+    home = getenv("USERPROFILE");
+    config_file = "\\fluidsynth.cfg";
+    
+#elif !defined(MACOS9)
+    home = getenv("HOME");
+    config_file = "/.fluidsynth";
+    
+#endif
+    
     if(home == NULL)
     {
         return NULL;
     }
     else
     {
-        FLUID_SNPRINTF(buf, len, "%s/.fluidsynth", home);
+        FLUID_SNPRINTF(buf, len, "%s%s", home, config_file);
         return buf;
     }
-
-#endif
 }
 
 /**
@@ -1942,7 +1947,7 @@ fluid_handle_get(void *data, int ac, char **av, fluid_ostream_t out)
 
 struct _fluid_handle_settings_data_t
 {
-    int len;
+    size_t len;
     fluid_synth_t *synth;
     fluid_ostream_t out;
 };
@@ -1951,7 +1956,7 @@ static void fluid_handle_settings_iter1(void *data, const char *name, int type)
 {
     struct _fluid_handle_settings_data_t *d = (struct _fluid_handle_settings_data_t *) data;
 
-    int len = FLUID_STRLEN(name);
+    size_t len = FLUID_STRLEN(name);
 
     if(len > d->len)
     {
@@ -1963,7 +1968,7 @@ static void fluid_handle_settings_iter2(void *data, const char *name, int type)
 {
     struct _fluid_handle_settings_data_t *d = (struct _fluid_handle_settings_data_t *) data;
 
-    int len = FLUID_STRLEN(name);
+    size_t len = FLUID_STRLEN(name);
     fluid_ostream_printf(d->out, "%s", name);
 
     while(len++ < d->len)
