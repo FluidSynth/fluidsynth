@@ -16,6 +16,8 @@ add_executable( make_tables
                 gen_conv.c
                 gen_rvoice_dsp.c)
 
-if ( NOT WIN32 )
+if ( WIN32 )
+    add_definitions ( -D_USE_MATH_DEFINES -D_CRT_SECURE_NO_WARNINGS )
+else ( WIN32 )
     target_link_libraries (make_tables "m")
 endif ()
