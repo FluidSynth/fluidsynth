@@ -29,6 +29,8 @@
 
 #include <mmsystem.h>
 #include <dsound.h>
+
+#define NOBITMAP
 #include <mmreg.h>
 
 static DWORD WINAPI fluid_dsound_audio_run(LPVOID lpParameter);
