@@ -134,7 +134,7 @@ new_fluid_dsound_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
     ZeroMemory(&format, sizeof(WAVEFORMATEX));
 
     /* check the format */
-    if (fluid_settings_str_equal(settings, "audio.sample-format", "float"))
+    if(fluid_settings_str_equal(settings, "audio.sample-format", "float"))
     {
         FLUID_LOG(FLUID_DBG, "Selected 32 bit sample format");
 
@@ -142,8 +142,8 @@ new_fluid_dsound_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
         dev->write = fluid_synth_write_float;
 
         format.wFormatTag = WAVE_FORMAT_IEEE_FLOAT;
-    } else
-    if (fluid_settings_str_equal(settings, "audio.sample-format", "16bits"))
+    }
+    else if(fluid_settings_str_equal(settings, "audio.sample-format", "16bits"))
     {
         FLUID_LOG(FLUID_DBG, "Selected 16 bit sample format");
 
@@ -151,7 +151,9 @@ new_fluid_dsound_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
         dev->write = fluid_synth_write_s16;
 
         format.wFormatTag = WAVE_FORMAT_PCM;
-    } else {
+    }
+    else
+    {
         FLUID_LOG(FLUID_ERR, "Unhandled sample format");
         goto error_recovery;
     }
@@ -277,7 +279,8 @@ new_fluid_dsound_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
 
     /* Create object to signal thread exit */
     dev->quit_ev = CreateEvent(NULL, FALSE, FALSE, NULL);
-    if (dev->quit_ev == NULL)
+
+    if(dev->quit_ev == NULL)
     {
         goto error_recovery;
     }
@@ -321,7 +324,7 @@ void delete_fluid_dsound_audio_driver(fluid_audio_driver_t *d)
     }
 
     /* Release the event object */
-    if (dev->quit_ev != NULL)
+    if(dev->quit_ev != NULL)
     {
         CloseHandle(dev->quit_ev);
     }
@@ -363,7 +366,7 @@ static DWORD WINAPI fluid_dsound_audio_run(LPVOID lpParameter)
 
     IDirectSoundBuffer_Play(dev->sec_buffer, 0, 0, DSBPLAY_LOOPING);
 
-    for (;;)
+    for(;;)
     {
         IDirectSoundBuffer_GetCurrentPosition(dev->sec_buffer, &play_position, &write_position);
 
@@ -424,12 +427,17 @@ static DWORD WINAPI fluid_dsound_audio_run(LPVOID lpParameter)
             /* Calculate how many milliseconds to sleep (minus 1 for safety) */
             ms = (dev->buffer_byte_size - bytes) * 1000 / dev->bytes_per_second - 1;
 
-            if (ms < 1) ms = 1;
+            if(ms < 1)
+            {
+                ms = 1;
+            }
         }
 
         /* Wait quit event or timeout */
-        if (WaitForSingleObject(dev->quit_ev, ms) == WAIT_OBJECT_0)
+        if(WaitForSingleObject(dev->quit_ev, ms) == WAIT_OBJECT_0)
+        {
             break;
+        }
     }
 
     return 0;
