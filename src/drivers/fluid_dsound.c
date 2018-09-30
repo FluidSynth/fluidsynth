@@ -30,9 +30,12 @@
 #include <mmsystem.h>
 #include <dsound.h>
 
-DWORD WINAPI fluid_dsound_audio_run(LPVOID lpParameter);
+#define NOBITMAP
+#include <mmreg.h>
 
-char *fluid_win32_error(HRESULT hr);
+static DWORD WINAPI fluid_dsound_audio_run(LPVOID lpParameter);
+
+static char *fluid_win32_error(HRESULT hr);
 
 typedef struct
 {
@@ -40,12 +43,12 @@ typedef struct
     LPDIRECTSOUND direct_sound;
     LPDIRECTSOUNDBUFFER prim_buffer;
     LPDIRECTSOUNDBUFFER sec_buffer;
-    WAVEFORMATEX *format;
     HANDLE thread;
     DWORD threadID;
     fluid_synth_t *synth;
     fluid_audio_callback_t write;
-    int cont;
+    HANDLE quit_ev;
+    int   bytes_per_second;
     DWORD buffer_byte_size;
     DWORD queue_byte_size;
     DWORD frame_size;
@@ -109,6 +112,7 @@ new_fluid_dsound_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
     double sample_rate;
     int periods, period_size;
     fluid_dsound_devsel_t devsel;
+    WAVEFORMATEX format;
 
     /* create and clear the driver data */
     dev = FLUID_NEW(fluid_dsound_audio_driver_t);
@@ -121,42 +125,49 @@ new_fluid_dsound_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
 
     FLUID_MEMSET(dev, 0, sizeof(fluid_dsound_audio_driver_t));
     dev->synth = synth;
-    dev->cont = 1;
 
     fluid_settings_getnum(settings, "synth.sample-rate", &sample_rate);
     fluid_settings_getint(settings, "audio.periods", &periods);
     fluid_settings_getint(settings, "audio.period-size", &period_size);
 
+    /* Clear the buffer format */
+    ZeroMemory(&format, sizeof(WAVEFORMATEX));
+
     /* check the format */
-    if(!fluid_settings_str_equal(settings, "audio.sample-format", "16bits"))
+    if(fluid_settings_str_equal(settings, "audio.sample-format", "float"))
+    {
+        FLUID_LOG(FLUID_DBG, "Selected 32 bit sample format");
+
+        dev->frame_size = 2 * sizeof(float);
+        dev->write = fluid_synth_write_float;
+
+        format.wFormatTag = WAVE_FORMAT_IEEE_FLOAT;
+    }
+    else if(fluid_settings_str_equal(settings, "audio.sample-format", "16bits"))
+    {
+        FLUID_LOG(FLUID_DBG, "Selected 16 bit sample format");
+
+        dev->frame_size = 2 * sizeof(short);
+        dev->write = fluid_synth_write_s16;
+
+        format.wFormatTag = WAVE_FORMAT_PCM;
+    }
+    else
     {
         FLUID_LOG(FLUID_ERR, "Unhandled sample format");
         goto error_recovery;
     }
 
-    dev->frame_size = 2 * sizeof(short);
     dev->buffer_byte_size = period_size * dev->frame_size;
     dev->queue_byte_size = periods * dev->buffer_byte_size;
-    dev->write = fluid_synth_write_s16;
+    dev->bytes_per_second = sample_rate * dev->frame_size;
 
-    /* create and initialize the buffer format */
-    dev->format = (WAVEFORMATEX *) FLUID_MALLOC(sizeof(WAVEFORMATEX));
-
-    if(dev->format == NULL)
-    {
-        FLUID_LOG(FLUID_ERR, "Out of memory");
-        goto error_recovery;
-    }
-
-    ZeroMemory(dev->format, sizeof(WAVEFORMATEX));
-
-    dev->format->wFormatTag = WAVE_FORMAT_PCM;
-    dev->format->nChannels = 2;
-    dev->format->wBitsPerSample = 16;
-    dev->format->nSamplesPerSec = (DWORD) sample_rate;
-    dev->format->nBlockAlign = (WORD) dev->frame_size;
-    dev->format->nAvgBytesPerSec = dev->format->nSamplesPerSec * dev->frame_size;
-    dev->format->cbSize = 0;
+    /* Finish to initialize the buffer format */
+    format.nChannels = 2;
+    format.wBitsPerSample = dev->frame_size * 4;
+    format.nSamplesPerSec = (DWORD) sample_rate;
+    format.nBlockAlign = (WORD) dev->frame_size;
+    format.nAvgBytesPerSec = dev->bytes_per_second;
 
     devsel.devGUID = NULL;
 
@@ -220,11 +231,11 @@ new_fluid_dsound_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
 
     /* set the primary sound buffer to this format. if it fails, just
        print a warning. */
-    hr = IDirectSoundBuffer_SetFormat(dev->prim_buffer, dev->format);
+    hr = IDirectSoundBuffer_SetFormat(dev->prim_buffer, &format);
 
     if(hr != DS_OK)
     {
-        FLUID_LOG(FLUID_WARN, "Can't set format of primary sound buffer", fluid_win32_error(hr));
+        FLUID_LOG(FLUID_WARN, "Can't set format of primary sound buffer: %s", fluid_win32_error(hr));
     }
 
     /* initialize the buffer description */
@@ -232,9 +243,8 @@ new_fluid_dsound_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
     ZeroMemory(&desc, sizeof(DSBUFFERDESC));
     desc.dwSize = sizeof(DSBUFFERDESC);
     desc.dwFlags = DSBCAPS_GLOBALFOCUS | DSBCAPS_GETCURRENTPOSITION2;
-    desc.lpwfxFormat = dev->format;
+    desc.lpwfxFormat = &format;
     desc.dwBufferBytes = dev->queue_byte_size;
-    desc.dwReserved = 0;
 
     if(caps.dwFreeHwMixingStreamingBuffers > 0)
     {
@@ -267,9 +277,16 @@ new_fluid_dsound_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
     /* Unlock */
     IDirectSoundBuffer_Unlock(dev->sec_buffer, buf1, bytes1, 0, 0);
 
+    /* Create object to signal thread exit */
+    dev->quit_ev = CreateEvent(NULL, FALSE, FALSE, NULL);
+
+    if(dev->quit_ev == NULL)
+    {
+        goto error_recovery;
+    }
 
     /* start the audio thread */
-    dev->thread = CreateThread(NULL, 0, &fluid_dsound_audio_run, (LPVOID) dev, 0, &dev->threadID);
+    dev->thread = CreateThread(NULL, 0, fluid_dsound_audio_run, (LPVOID) dev, 0, &dev->threadID);
 
     if(dev->thread == NULL)
     {
@@ -289,23 +306,30 @@ void delete_fluid_dsound_audio_driver(fluid_audio_driver_t *d)
     fluid_dsound_audio_driver_t *dev = (fluid_dsound_audio_driver_t *) d;
     fluid_return_if_fail(dev != NULL);
 
-    /* tell the audio thread to stop its loop */
-    dev->cont = 0;
-
     /* wait till the audio thread exits */
-    if(dev->thread != 0)
+    if(dev->thread != NULL)
     {
+        /* tell the audio thread to stop its loop */
+        SetEvent(dev->quit_ev);
+
         if(WaitForSingleObject(dev->thread, 2000) != WAIT_OBJECT_0)
         {
             /* on error kill the thread mercilessly */
             FLUID_LOG(FLUID_DBG, "Couldn't join the audio thread. killing it.");
             TerminateThread(dev->thread, 0);
         }
+
+        /* Release the thread object */
+        CloseHandle(dev->thread);
     }
 
-    /* release all the allocated ressources */
+    /* Release the event object */
+    if(dev->quit_ev != NULL)
+    {
+        CloseHandle(dev->quit_ev);
+    }
 
-    FLUID_FREE(dev->format);
+    /* release all the allocated resources */
 
     if(dev->sec_buffer != NULL)
     {
@@ -326,13 +350,14 @@ void delete_fluid_dsound_audio_driver(fluid_audio_driver_t *d)
     FLUID_FREE(dev);
 }
 
-DWORD WINAPI fluid_dsound_audio_run(LPVOID lpParameter)
+static DWORD WINAPI fluid_dsound_audio_run(LPVOID lpParameter)
 {
     fluid_dsound_audio_driver_t *dev = (fluid_dsound_audio_driver_t *) lpParameter;
     short *buf1, *buf2;
     DWORD bytes1, bytes2;
     DWORD cur_position, frames, play_position, write_position, bytes;
     HRESULT res;
+    int     ms;
 
     cur_position = 0;
 
@@ -341,9 +366,8 @@ DWORD WINAPI fluid_dsound_audio_run(LPVOID lpParameter)
 
     IDirectSoundBuffer_Play(dev->sec_buffer, 0, 0, DSBPLAY_LOOPING);
 
-    while(dev->cont)
+    for(;;)
     {
-
         IDirectSoundBuffer_GetCurrentPosition(dev->sec_buffer, &play_position, &write_position);
 
         if(cur_position <= play_position)
@@ -395,19 +419,32 @@ DWORD WINAPI fluid_dsound_audio_run(LPVOID lpParameter)
                 cur_position -= dev->queue_byte_size;
             }
 
+            /* 1 ms of wait */
+            ms = 1;
         }
         else
         {
-            Sleep(1);
+            /* Calculate how many milliseconds to sleep (minus 1 for safety) */
+            ms = (dev->buffer_byte_size - bytes) * 1000 / dev->bytes_per_second - 1;
+
+            if(ms < 1)
+            {
+                ms = 1;
+            }
+        }
+
+        /* Wait quit event or timeout */
+        if(WaitForSingleObject(dev->quit_ev, ms) == WAIT_OBJECT_0)
+        {
+            break;
         }
     }
 
-    ExitThread(0);
-    return 0; /* never reached */
+    return 0;
 }
 
 
-char *fluid_win32_error(HRESULT hr)
+static char *fluid_win32_error(HRESULT hr)
 {
     char *s = "Don't know why";
 

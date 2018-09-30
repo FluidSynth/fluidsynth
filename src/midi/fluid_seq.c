@@ -156,6 +156,7 @@ new_fluid_sequencer2(int use_system_timer)
 
 /**
  * Free a sequencer object.
+ * @note Registered sequencer clients may not be fully freed by this function. Explicitly unregister them with fluid_sequencer_unregister_client().
  * @param seq Sequencer to delete
  */
 void
