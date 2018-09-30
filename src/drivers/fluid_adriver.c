@@ -28,7 +28,7 @@
 typedef struct _fluid_audriver_definition_t
 {
     const char *name;
-    fluid_audio_driver_t *(*new)(fluid_settings_t *settings, fluid_synth_t *synth);
+    fluid_audio_driver_t *(*new1)(fluid_settings_t *settings, fluid_synth_t *synth);
     fluid_audio_driver_t *(*new2)(fluid_settings_t *settings,
                                   fluid_audio_func_t func,
                                   void *data);
@@ -294,7 +294,7 @@ new_fluid_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
 
     if(def)
     {
-        fluid_audio_driver_t *driver = (*def->new)(settings, synth);
+        fluid_audio_driver_t *driver = (*def->new1)(settings, synth);
 
         if(driver)
         {
