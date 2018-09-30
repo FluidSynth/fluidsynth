@@ -137,7 +137,7 @@ new_fluid_jack_client(fluid_settings_t *settings, int isaudio, void *driver)
      * then re-use the client. */
     if(last_client &&
             (last_client->server != NULL && server != NULL && FLUID_STRCMP(last_client->server, server) == 0) &&
-            ((!isaudio && last_client->midi_driver != NULL) || (isaudio && last_client->audio_driver != NULL)))
+            ((!isaudio && last_client->midi_driver == NULL) || (isaudio && last_client->audio_driver == NULL)))
     {
         client_ref = last_client;
         last_client = NULL;         /* No more pairing for this client */
@@ -670,7 +670,7 @@ fluid_jack_driver_process(jack_nframes_t nframes, void *arg)
     }
     else
     {
-        fluid_audio_func_t callback = (audio_driver->callback != NULL) ? audio_driver->callback : fluid_synth_process;
+        fluid_audio_func_t callback = (audio_driver->callback != NULL) ? audio_driver->callback : (fluid_audio_func_t) fluid_synth_process;
 
         for(i = 0; i < audio_driver->num_output_ports; i++)
         {
