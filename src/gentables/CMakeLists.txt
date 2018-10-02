@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.1)
 
+# remove $CC from the current environment and by that force cmake to look for a (working) C compiler,
+# which hopefully will be the host compiler
+unset(ENV{CC})
+
 project (gentables C)
 
 set ( CMAKE_BUILD_TYPE Debug )
