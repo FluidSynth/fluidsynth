@@ -2138,6 +2138,8 @@ static void delete_preset(SFPreset *preset)
     }
 
     delete_fluid_list(preset->zone);
+    
+    FLUID_FREE(preset);
 }
 
 static void delete_inst(SFInst *inst)
@@ -2160,6 +2162,8 @@ static void delete_inst(SFInst *inst)
     }
 
     delete_fluid_list(inst->zone);
+    
+    FLUID_FREE(inst);
 }
 
 
