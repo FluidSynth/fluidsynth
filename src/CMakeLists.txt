@@ -209,8 +209,6 @@ configure_file ( ${CMAKE_SOURCE_DIR}/include/fluidsynth/version.h.in
 configure_file ( ${CMAKE_SOURCE_DIR}/include/fluidsynth.cmake
                  ${public_main_HEADER} )
 
-if (NOT enable-generator)
-
 if ( WIN32 AND NOT MINGW )
 include(generate_product_version)
 generate_product_version(
@@ -352,8 +350,6 @@ else ( MACOSX_FRAMEWORK )
 )
    install ( FILES ${public_main_HEADER} DESTINATION ${INCLUDE_INSTALL_DIR} )
 endif ( MACOSX_FRAMEWORK )
-
-endif ()
 
 # ******* Auto Generated Lookup Tables ******
 
