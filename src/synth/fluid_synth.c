@@ -207,7 +207,7 @@ void fluid_synth_settings(fluid_settings_t *settings)
     fluid_settings_register_int(settings, "synth.chorus.nr", FLUID_CHORUS_DEFAULT_N, 0, 99, 0);
     fluid_settings_register_num(settings, "synth.chorus.level", FLUID_CHORUS_DEFAULT_LEVEL, 0.0f, 10.0f, 0);
     fluid_settings_register_num(settings, "synth.chorus.speed", FLUID_CHORUS_DEFAULT_SPEED, 0.29f, 5.0f, 0);
-    fluid_settings_register_num(settings, "synth.chorus.depth", FLUID_CHORUS_DEFAULT_DEPTH, 0.0f, 21.0f, 0);
+    fluid_settings_register_num(settings, "synth.chorus.depth", FLUID_CHORUS_DEFAULT_DEPTH, 0.0f, 256.0f, 0);
 
     fluid_settings_register_int(settings, "synth.ladspa.active", 0, 0, 1, FLUID_HINT_TOGGLED);
     fluid_settings_register_int(settings, "synth.lock-memory", 1, 0, 1, FLUID_HINT_TOGGLED);

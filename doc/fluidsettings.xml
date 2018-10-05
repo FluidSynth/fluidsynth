@@ -47,7 +47,7 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             <type>num</type>
             <def>8</def>
             <min>0</min>
-            <max>21</max>
+            <max>256</max>
             <desc>
                 Specifies the modulation depth of the chorus.</desc>
         </setting>
