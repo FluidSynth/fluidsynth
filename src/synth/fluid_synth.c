@@ -3004,8 +3004,7 @@ fluid_synth_handle_sample_rate(void *data, const char *name, double value)
 
 /**
  * Set sample rate of the synth.
- * @note This function is currently experimental and should only be
- * used when no voices or notes are active, and before any rendering calls.
+ * @note This function should only be used when no voices or notes are active.
  * @param synth FluidSynth instance
  * @param sample_rate New sample rate (Hz)
  * @since 1.1.2
