@@ -90,8 +90,8 @@
  * Set through MAX_SAMPLES_LN2.
  * For example:
  * MAX_SAMPLES_LN2=12
- * => MAX_SAMPLES=pow(2,12)=4096
- * => MAX_SAMPLES_ANDMASK=4095
+ * => MAX_SAMPLES=pow(2,12-1)=2048
+ * => MAX_SAMPLES_ANDMASK=2047
  */
 #define MAX_SAMPLES_LN2 12
 
