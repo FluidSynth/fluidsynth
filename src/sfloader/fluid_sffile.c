@@ -77,9 +77,13 @@ enum
     SM24_ID
 };
 
-static const char idlist[] = {"RIFFLISTsfbkINFOsdtapdtaifilisngINAMiromiverICRDIENGIPRD"
-                              "ICOPICMTISFTsnamsmplphdrpbagpmodpgeninstibagimodigenshdrsm24"
-                             };
+static union fluid_idlist
+{
+    const char c[116];
+    const unsigned int i;
+} idlist = {.c = "RIFFLISTsfbkINFOsdtapdtaifilisngINAMiromiverICRDIENGIPRD"
+                 "ICOPICMTISFTsnamsmplphdrpbagpmodpgeninstibagimodigenshdrsm24"
+           };
 
 
 /* generator types */
@@ -183,7 +187,7 @@ static const unsigned short invalid_preset_gen[] =
 };
 
 
-#define CHNKIDSTR(id) &idlist[(id - 1) * 4]
+#define CHNKIDSTR(id) &idlist.c[(id - 1) * 4]
 
 /* sfont file chunk sizes */
 #define SF_PHDR_SIZE (38)
@@ -489,11 +493,11 @@ void fluid_sffile_close(SFData *sf)
 static int chunkid(unsigned int id)
 {
     unsigned int i;
-    unsigned int *p;
+    const unsigned int *p;
 
-    p = (unsigned int *)&idlist;
+    p = &idlist.i;
 
-    for(i = 0; i < sizeof(idlist) / sizeof(int); i++, p += 1)
+    for(i = 0; i < sizeof(idlist) / sizeof(idlist.i); i++, p += 1)
     {
         if(*p == id)
         {
@@ -987,6 +991,7 @@ static int load_phdr(SFData *sf, int size)
             FLUID_LOG(FLUID_ERR, "Out of memory");
             return FALSE;
         }
+
         sf->preset = fluid_list_append(sf->preset, preset);
         preset->zone = NULL; /* In case of failure, fluid_sffile_close can cleanup */
         READSTR(sf, &preset->name); /* possible read failure ^ */
@@ -1078,6 +1083,7 @@ static int load_pbag(SFData *sf, int size)
                 FLUID_LOG(FLUID_ERR, "Out of memory");
                 return FALSE;
             }
+
             p2->data = z;
             z->gen = NULL; /* Init gen and mod before possible failure, */
             z->mod = NULL; /* to ensure proper cleanup (fluid_sffile_close) */
@@ -1211,6 +1217,7 @@ static int load_pmod(SFData *sf, int size)
                     FLUID_LOG(FLUID_ERR, "Out of memory");
                     return FALSE;
                 }
+
                 p3->data = m;
                 READW(sf, m->src);
                 READW(sf, m->dest);
@@ -1367,6 +1374,7 @@ static int load_pgen(SFData *sf, int size)
                             FLUID_LOG(FLUID_ERR, "Out of memory");
                             return FALSE;
                         }
+
                         p3->data = g;
                         g->id = genid;
                     }
@@ -1508,6 +1516,7 @@ static int load_ihdr(SFData *sf, int size)
             FLUID_LOG(FLUID_ERR, "Out of memory");
             return FALSE;
         }
+
         sf->inst = fluid_list_append(sf->inst, p);
         p->zone = NULL; /* For proper cleanup if fail (fluid_sffile_close) */
         p->idx = i;
@@ -1593,6 +1602,7 @@ static int load_ibag(SFData *sf, int size)
                 FLUID_LOG(FLUID_ERR, "Out of memory");
                 return FALSE;
             }
+
             p2->data = z;
             z->gen = NULL; /* In case of failure, */
             z->mod = NULL; /* fluid_sffile_close can clean up */
@@ -1727,6 +1737,7 @@ static int load_imod(SFData *sf, int size)
                     FLUID_LOG(FLUID_ERR, "Out of memory");
                     return FALSE;
                 }
+
                 p3->data = m;
                 READW(sf, m->src);
                 READW(sf, m->dest);
@@ -1872,6 +1883,7 @@ static int load_igen(SFData *sf, int size)
                             FLUID_LOG(FLUID_ERR, "Out of memory");
                             return FALSE;
                         }
+
                         p3->data = g;
                         g->id = genid;
                     }
@@ -2011,6 +2023,7 @@ static int load_shdr(SFData *sf, unsigned int size)
             FLUID_LOG(FLUID_ERR, "Out of memory");
             return FALSE;
         }
+
         sf->sample = fluid_list_append(sf->sample, p);
         READSTR(sf, &p->name);
         READD(sf, p->start);
@@ -2138,7 +2151,7 @@ static void delete_preset(SFPreset *preset)
     }
 
     delete_fluid_list(preset->zone);
-    
+
     FLUID_FREE(preset);
 }
 
@@ -2162,7 +2175,7 @@ static void delete_inst(SFInst *inst)
     }
 
     delete_fluid_list(inst->zone);
-    
+
     FLUID_FREE(inst);
 }
 
