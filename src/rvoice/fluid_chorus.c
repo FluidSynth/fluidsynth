@@ -348,6 +348,8 @@ fluid_chorus_set(fluid_chorus_t *chorus, int set, int nr, fluid_real_t level,
     {
         fluid_log(FLUID_WARN, "chorus: Too high depth. Setting it to max (%d).", MAX_SAMPLES);
         modulation_depth_samples = MAX_SAMPLES;
+        // set depth to maximum to avoid spamming console with above warning
+        chorus->depth_ms = (modulation_depth_samples * 1000) / chorus->sample_rate;
     }
 
     /* initialize LFO table */
