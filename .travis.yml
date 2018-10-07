@@ -53,20 +53,6 @@ matrix:
       env:
          - MATRIX_EVAL="CC=gcc-4.8 && CXX=g++-4.8"
          - CMAKE_FLAGS="-Denable-floats=0"
-         
-    - os: linux
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - g++-4.9
-            - cmake-data
-            - cmake
-            - libglib2.0-0
-            - ladspa-sdk
-      env:
-         - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9"
 
     # works on Precise and Trusty
     - os: linux
@@ -141,21 +127,6 @@ matrix:
             - cmake-data
             - cmake
             - libglib2.0-0
-            - ladspa-sdk
-      env:
-        - MATRIX_EVAL="CC=clang-3.8 && CXX=clang++-3.8"
-
-    # works on Trusty
-    - os: linux
-      addons:
-        apt:
-          sources:
-            - llvm-toolchain-trusty-3.9
-          packages:
-            - clang-3.9
-            - cmake-data
-            - cmake
-            - libglib2.0-0
             - libsndfile-dev
             - libasound2-dev
             - libjack-dev
@@ -164,7 +135,7 @@ matrix:
             - libdbus-glib-1-dev
             - ladspa-sdk
       env:
-        - MATRIX_EVAL="CC=clang-3.9 && CXX=clang++-3.9"
+        - MATRIX_EVAL="CC=clang-3.8 && CXX=clang++-3.8"
 
     # works on Trusty
     - os: linux
@@ -195,6 +166,38 @@ matrix:
             - ladspa-sdk
       env:
         - MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0"
+
+    # works on Trusty
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-trusty-6.0
+          packages:
+            - clang-6.0
+            - cmake-data
+            - cmake
+            - libglib2.0-0
+            - ladspa-sdk
+      env:
+        - MATRIX_EVAL="CC=clang-6.0 && CXX=clang++-6.0"
+        
+    # works on Trusty
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-trusty-7
+          packages:
+            - clang-7
+            - cmake-data
+            - cmake
+            - libglib2.0-0
+            - ladspa-sdk
+      env:
+        - MATRIX_EVAL="CC=clang-7 && CXX=clang++-7"
         
     - os: osx
       osx_image: xcode8
