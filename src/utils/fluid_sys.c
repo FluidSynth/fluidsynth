@@ -76,18 +76,17 @@ static int fluid_istream_gets(fluid_istream_t in, char *buf, int len);
 
 static char fluid_errbuf[512];  /* buffer for error message */
 
-static fluid_log_function_t fluid_log_function[LAST_LOG_LEVEL];
-static void *fluid_log_user_data[LAST_LOG_LEVEL];
-static int fluid_log_initialized = 0;
+static fluid_log_function_t fluid_log_function[LAST_LOG_LEVEL] =
+{
+    fluid_default_log_function,
+    fluid_default_log_function,
+    fluid_default_log_function,
+    fluid_default_log_function,
+    fluid_default_log_function
+};
+static void *fluid_log_user_data[LAST_LOG_LEVEL] = { NULL };
 
 static const char fluid_libname[] = "fluidsynth";
-
-
-void fluid_sys_config()
-{
-    fluid_log_config();
-}
-
 
 /**
  * Installs a new log function for a specified log level.
@@ -128,11 +127,6 @@ fluid_default_log_function(int level, const char *message, void *data)
     out = stderr;
 #endif
 
-    if(fluid_log_initialized == 0)
-    {
-        fluid_log_config();
-    }
-
     switch(level)
     {
     case FLUID_PANIC:
@@ -163,44 +157,6 @@ fluid_default_log_function(int level, const char *message, void *data)
     }
 
     fflush(out);
-}
-
-/*
- * fluid_init_log
- */
-void
-fluid_log_config(void)
-{
-    if(fluid_log_initialized == 0)
-    {
-
-        fluid_log_initialized = 1;
-
-        if(fluid_log_function[FLUID_PANIC] == NULL)
-        {
-            fluid_set_log_function(FLUID_PANIC, fluid_default_log_function, NULL);
-        }
-
-        if(fluid_log_function[FLUID_ERR] == NULL)
-        {
-            fluid_set_log_function(FLUID_ERR, fluid_default_log_function, NULL);
-        }
-
-        if(fluid_log_function[FLUID_WARN] == NULL)
-        {
-            fluid_set_log_function(FLUID_WARN, fluid_default_log_function, NULL);
-        }
-
-        if(fluid_log_function[FLUID_INFO] == NULL)
-        {
-            fluid_set_log_function(FLUID_INFO, fluid_default_log_function, NULL);
-        }
-
-        if(fluid_log_function[FLUID_DBG] == NULL)
-        {
-            fluid_set_log_function(FLUID_DBG, fluid_default_log_function, NULL);
-        }
-    }
 }
 
 /**

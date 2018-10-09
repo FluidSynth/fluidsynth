@@ -290,8 +290,6 @@ fluid_synth_init(void)
 
     fluid_rvoice_dsp_config();
 
-    fluid_sys_config();
-
     init_dither();
 
     /* custom_breath2att_mod is not a default modulator specified in SF2.01.
