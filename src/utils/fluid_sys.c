@@ -169,20 +169,20 @@ fluid_default_log_function(int level, const char *message, void *data)
 int
 fluid_log(int level, const char *fmt, ...)
 {
-    fluid_log_function_t fun = NULL;
-
-    va_list args;
-    va_start(args, fmt);
-    FLUID_VSNPRINTF(fluid_errbuf, sizeof(fluid_errbuf), fmt, args);
-    va_end(args);
-
     if((level >= 0) && (level < LAST_LOG_LEVEL))
     {
-        fun = fluid_log_function[level];
+        fluid_log_function_t fun = fluid_log_function[level];
 
         if(fun != NULL)
         {
-            (*fun)(level, fluid_errbuf, fluid_log_user_data[level]);
+            char errbuf[1024];
+            
+            va_list args;
+            va_start(args, fmt);
+            FLUID_VSNPRINTF(errbuf, sizeof(errbuf), fmt, args);
+            va_end(args);
+        
+            (*fun)(level, errbuf, fluid_log_user_data[level]);
         }
     }
 
