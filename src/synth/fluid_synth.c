@@ -1110,6 +1110,8 @@ delete_fluid_synth(fluid_synth_t *synth)
  * @return Pointer to string of last error message.  Valid until the same
  *   calling thread calls another FluidSynth function which fails.  String is
  *   internal and should not be modified or freed.
+ * @deprecated This function is not thread-safe and does not work with multiple synths.
+ * It has been deprecated. It may return "" in a future release and will eventually be removed.
  */
 /* FIXME - The error messages are not thread-safe, yet. They are still stored
  * in a global message buffer (see fluid_sys.c). */
