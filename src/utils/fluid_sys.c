@@ -73,9 +73,6 @@ struct _fluid_server_socket_t
 
 static int fluid_istream_gets(fluid_istream_t in, char *buf, int len);
 
-
-static char fluid_errbuf[512];  /* buffer for error message */
-
 static fluid_log_function_t fluid_log_function[LAST_LOG_LEVEL] =
 {
     fluid_default_log_function,
@@ -263,15 +260,6 @@ char *fluid_strtok(char **str, char *delim)
     /* we get here only if source string ended */
     *str = NULL;
     return token;
-}
-
-/*
- * fluid_error
- */
-char *
-fluid_error()
-{
-    return fluid_errbuf;
 }
 
 /**

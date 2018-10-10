@@ -345,6 +345,4 @@ do { strncpy(_dst,_src,_n); \
 #define FLUID_LIKELY G_LIKELY
 #define FLUID_UNLIKELY G_UNLIKELY
 
-char *fluid_error(void);
-
 #endif /* _FLUIDSYNTH_PRIV_H */
