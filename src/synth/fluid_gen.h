@@ -31,7 +31,7 @@ typedef struct _fluid_gen_info_t
     char nrpn_scale;	/* The scale to convert from NRPN (cfr. fluid_gen_map_nrpn()) */
     float min;		/* The minimum value */
     float max;		/* The maximum value */
-    float def;		/* The default value (cfr. fluid_gen_set_default_values()) */
+    float def;		/* The default value (cfr. fluid_gen_init()) */
 } fluid_gen_info_t;
 
 /*
@@ -60,8 +60,7 @@ enum fluid_gen_flags
 
 fluid_real_t fluid_gen_scale(int gen, float value);
 fluid_real_t fluid_gen_scale_nrpn(int gen, int nrpn);
-int fluid_gen_init(fluid_gen_t *gen, fluid_channel_t *channel);
-int fluid_gen_set_default_values(fluid_gen_t *gen);
+void fluid_gen_init(fluid_gen_t *gen, fluid_channel_t *channel);
 
 
 #endif /* _FLUID_GEN_H */

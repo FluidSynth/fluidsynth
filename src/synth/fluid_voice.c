@@ -606,7 +606,7 @@ fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t *voice)
      *  - Add the output value to the modulation value of the generator.
      *
      * Note: The generators have been initialized with
-     * fluid_gen_set_default_values.
+     * fluid_gen_init().
      */
 
     for(i = 0; i < voice->mod_count; i++)
