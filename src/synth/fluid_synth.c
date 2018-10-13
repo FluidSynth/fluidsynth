@@ -3851,8 +3851,8 @@ fluid_synth_write_s16(fluid_synth_t *synth, int len,
     signed short *right_out = (signed short *) rout;
     fluid_real_t *left_in;
     fluid_real_t *right_in;
-    fluid_real_t left_sample;
-    fluid_real_t right_sample;
+    int left_sample;
+    int right_sample;
     double time = fluid_utime();
     int di;
     float cpu_load;
@@ -3880,32 +3880,30 @@ fluid_synth_write_s16(fluid_synth_t *synth, int len,
         left_sample = roundi(left_in[0 * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + cur] * 32766.0f + rand_table[0][di]);
         right_sample = roundi(right_in[0 * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + cur] * 32766.0f + rand_table[1][di]);
 
-        di++;
-
-        if(di >= DITHER_SIZE)
+        if(++di >= DITHER_SIZE)
         {
             di = 0;
         }
 
         /* digital clipping */
-        if(left_sample > 32767.0f)
+        if(left_sample > 32767)
         {
-            left_sample = 32767.0f;
+            left_sample = 32767;
         }
 
-        if(left_sample < -32768.0f)
+        if(left_sample < -32768)
         {
-            left_sample = -32768.0f;
+            left_sample = -32768;
         }
 
-        if(right_sample > 32767.0f)
+        if(right_sample > 32767)
         {
-            right_sample = 32767.0f;
+            right_sample = 32767;
         }
 
-        if(right_sample < -32768.0f)
+        if(right_sample < -32768)
         {
-            right_sample = -32768.0f;
+            right_sample = -32768;
         }
 
         left_out[j] = (signed short) left_sample;
@@ -3950,8 +3948,8 @@ fluid_synth_dither_s16(int *dither_index, int len, float *lin, float *rin,
     int i, j, k;
     signed short *left_out = (signed short *) lout;
     signed short *right_out = (signed short *) rout;
-    fluid_real_t left_sample;
-    fluid_real_t right_sample;
+    int left_sample;
+    int right_sample;
     int di = *dither_index;
     fluid_profile_ref_var(prof_ref);
 
@@ -3961,32 +3959,30 @@ fluid_synth_dither_s16(int *dither_index, int len, float *lin, float *rin,
         left_sample = roundi(lin[i] * 32766.0f + rand_table[0][di]);
         right_sample = roundi(rin[i] * 32766.0f + rand_table[1][di]);
 
-        di++;
-
-        if(di >= DITHER_SIZE)
+        if(++di >= DITHER_SIZE)
         {
             di = 0;
         }
 
         /* digital clipping */
-        if(left_sample > 32767.0f)
+        if(left_sample > 32767)
         {
-            left_sample = 32767.0f;
+            left_sample = 32767;
         }
 
-        if(left_sample < -32768.0f)
+        if(left_sample < -32768)
         {
-            left_sample = -32768.0f;
+            left_sample = -32768;
         }
 
-        if(right_sample > 32767.0f)
+        if(right_sample > 32767)
         {
-            right_sample = 32767.0f;
+            right_sample = 32767;
         }
 
-        if(right_sample < -32768.0f)
+        if(right_sample < -32768)
         {
-            right_sample = -32768.0f;
+            right_sample = -32768;
         }
 
         left_out[j] = (signed short) left_sample;
