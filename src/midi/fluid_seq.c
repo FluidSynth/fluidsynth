@@ -117,7 +117,7 @@ new_fluid_sequencer2(int use_system_timer)
 
     if(seq == NULL)
     {
-        fluid_log(FLUID_PANIC, "sequencer: Out of memory\n");
+        FLUID_LOG(FLUID_PANIC, "sequencer: Out of memory\n");
         return NULL;
     }
 
@@ -132,7 +132,7 @@ new_fluid_sequencer2(int use_system_timer)
     if(-1 == _fluid_seq_queue_init(seq, FLUID_SEQUENCER_EVENTS_MAX))
     {
         FLUID_FREE(seq);
-        fluid_log(FLUID_PANIC, "sequencer: Out of memory\n");
+        FLUID_LOG(FLUID_PANIC, "sequencer: Out of memory\n");
         return NULL;
     }
 
@@ -144,7 +144,7 @@ new_fluid_sequencer2(int use_system_timer)
     {
         _fluid_seq_queue_end(seq);
         FLUID_FREE(seq);
-        fluid_log(FLUID_PANIC, "sequencer: Out of memory\n");
+        FLUID_LOG(FLUID_PANIC, "sequencer: Out of memory\n");
         return NULL;
     }
 
@@ -297,7 +297,7 @@ fluid_sequencer_register_client(fluid_sequencer_t *seq, const char *name,
 
     if(client == NULL)
     {
-        fluid_log(FLUID_PANIC, "sequencer: Out of memory\n");
+        FLUID_LOG(FLUID_PANIC, "sequencer: Out of memory\n");
         return FLUID_FAILED;
     }
 
@@ -305,7 +305,7 @@ fluid_sequencer_register_client(fluid_sequencer_t *seq, const char *name,
 
     if(nameCopy == NULL)
     {
-        fluid_log(FLUID_PANIC, "sequencer: Out of memory\n");
+        FLUID_LOG(FLUID_PANIC, "sequencer: Out of memory\n");
         FLUID_FREE(client);
         return FLUID_FAILED;
     }
@@ -575,7 +575,7 @@ fluid_sequencer_set_time_scale(fluid_sequencer_t *seq, double scale)
 {
     if(scale <= 0)
     {
-        fluid_log(FLUID_WARN, "sequencer: scale <= 0 : %f\n", scale);
+        FLUID_LOG(FLUID_WARN, "sequencer: scale <= 0 : %f\n", scale);
         return;
     }
 
@@ -722,7 +722,7 @@ _fluid_seq_queue_init(fluid_sequencer_t *seq, int maxEvents)
 
     if(seq->heap == NULL)
     {
-        fluid_log(FLUID_PANIC, "sequencer: Out of memory\n");
+        FLUID_LOG(FLUID_PANIC, "sequencer: Out of memory\n");
         return -1;
     }
 
@@ -801,7 +801,7 @@ _fluid_seq_queue_pre_insert(fluid_sequencer_t *seq, fluid_event_t *evt)
     if(evtentry == NULL)
     {
         /* should not happen */
-        fluid_log(FLUID_PANIC, "sequencer: no more free events\n");
+        FLUID_LOG(FLUID_PANIC, "sequencer: no more free events\n");
         return -1;
     }
 
@@ -839,7 +839,7 @@ _fluid_seq_queue_pre_remove(fluid_sequencer_t *seq, fluid_seq_id_t src, fluid_se
     if(evtentry == NULL)
     {
         /* should not happen */
-        fluid_log(FLUID_PANIC, "sequencer: no more free events\n");
+        FLUID_LOG(FLUID_PANIC, "sequencer: no more free events\n");
         return;
     }
 
