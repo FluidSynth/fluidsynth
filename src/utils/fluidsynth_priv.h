@@ -322,6 +322,17 @@ do { strncpy(_dst,_src,_n); \
 #define FLUID_FLUSH()                fflush(stdout)
 #endif
 
+/* For people who wants to strip a bit the size of the binary, it is
+ * possible to reduce the size of the executable by modifing the content
+ * of the FLUID_LOG macro. In this way, you can get a smaller file without
+ * performance costs, at the price of loosing the logging messages.
+ */
+#if 0
+#define FLUID_LOG                    (void)sizeof
+#else
+#define FLUID_LOG                    fluid_log
+#endif
+
 #ifndef M_PI
 #define M_PI 3.1415926535897932384626433832795
 #endif
