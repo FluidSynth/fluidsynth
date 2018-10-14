@@ -638,4 +638,22 @@ static FLUID_INLINE void *fluid_align_ptr(const void *ptr, unsigned int alignmen
 
 #define FLUID_DEFAULT_ALIGNMENT (64U)
 
+/* For people who wants to strip a bit the size of the binary, it is
+ * possible to reduce the size of the executable by modifing the content
+ * of the FLUID_LOG macro. In this way, you can get a smaller file without
+ * performance costs, at the price of loosing the logging messages.
+ * Depending on the C compiler, on C99 and greater it will use vararg
+ * support into the preprocessor, while on older it will use and empty
+ * inline function that will be removed by the code optimizer.
+ */
+#if 0
+#if defined(__STDC__) && defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
+#define FLUID_LOG(...)
+#else
+static FLUID_INLINE void FLUID_LOG(int level, const char *fmt, ...) {}
+#endif
+#else
+#define FLUID_LOG       fluid_log
+#endif
+
 #endif /* _FLUID_SYS_H */
