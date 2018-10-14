@@ -472,6 +472,12 @@ int fluid_audio_driver_register(const char **adrivers)
 
     return FLUID_OK;
 #else
+    /* Return FLUID_OK if the user passed NULL or an empty list */
+    if(adrivers == NULL || (adrivers && adrivers[0] == NULL))
+    {
+        return FLUID_OK;
+    }
+
     return FLUID_FAILED;
 #endif
 }
