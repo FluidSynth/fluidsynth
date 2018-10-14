@@ -21,6 +21,18 @@
 #include "fluid_adriver.h"
 #include "fluid_settings.h"
 
+#undef FLUID_AOUT_SUPPORT
+
+#if JACK_SUPPORT || ALSA_SUPPORT || OSS_SUPPORT || PULSE_SUPPORT || \
+    COREAUDIO_SUPPORT || DSOUND_SUPPORT || PORTAUDIO_SUPPORT || \
+    SNDMAN_SUPPORT || DART_SUPPORT || AUFILE_SUPPORT
+/* At least an output driver exits */
+#define FLUID_AOUT_SUPPORT  1
+#endif
+
+
+#ifdef FLUID_AOUT_SUPPORT
+
 /*
  * fluid_adriver_definition_t
  */
@@ -148,9 +160,13 @@ static const fluid_audriver_definition_t fluid_audio_drivers[] =
 
 static uint8_t fluid_adriver_disable_mask[(FLUID_N_ELEMENTS(fluid_audio_drivers) + 7) / 8] = {0};
 
+#endif /* FLUID_AOUT_SUPPORT */
+
 void fluid_audio_driver_settings(fluid_settings_t *settings)
 {
+#ifdef FLUID_AOUT_SUPPORT
     unsigned int i;
+#endif
 
     fluid_settings_register_str(settings, "audio.sample-format", "16bits", 0);
     fluid_settings_add_option(settings, "audio.sample-format", "16bits");
@@ -227,6 +243,7 @@ void fluid_audio_driver_settings(fluid_settings_t *settings)
     fluid_settings_add_option(settings, "audio.driver", "file");
 #endif
 
+#ifdef FLUID_AOUT_SUPPORT
     for(i = 0; i < FLUID_N_ELEMENTS(fluid_audio_drivers); i++)
     {
         if(fluid_audio_drivers[i].settings != NULL &&
@@ -235,7 +252,10 @@ void fluid_audio_driver_settings(fluid_settings_t *settings)
             fluid_audio_drivers[i].settings(settings);
         }
     }
+#endif
 }
+
+#ifdef FLUID_AOUT_SUPPORT
 
 static const fluid_audriver_definition_t *
 find_fluid_audio_driver(fluid_settings_t *settings)
@@ -277,6 +297,8 @@ find_fluid_audio_driver(fluid_settings_t *settings)
     return NULL;
 }
 
+#endif /* FLUID_AOUT_SUPPORT */
+
 /**
  * Create a new audio driver.
  * @param settings Configuration settings used to select and create the audio
@@ -290,6 +312,7 @@ find_fluid_audio_driver(fluid_settings_t *settings)
 fluid_audio_driver_t *
 new_fluid_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
 {
+#ifdef FLUID_AOUT_SUPPORT
     const fluid_audriver_definition_t *def = find_fluid_audio_driver(settings);
 
     if(def)
@@ -303,7 +326,7 @@ new_fluid_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
 
         return driver;
     }
-
+#endif
     return NULL;
 }
 
@@ -324,6 +347,7 @@ new_fluid_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
 fluid_audio_driver_t *
 new_fluid_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func, void *data)
 {
+#ifdef FLUID_AOUT_SUPPORT
     const fluid_audriver_definition_t *def = find_fluid_audio_driver(settings);
 
     if(def)
@@ -346,7 +370,7 @@ new_fluid_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func, voi
 
         return driver;
     }
-
+#endif
     return NULL;
 }
 
@@ -359,6 +383,7 @@ new_fluid_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func, voi
 void
 delete_fluid_audio_driver(fluid_audio_driver_t *driver)
 {
+#ifdef FLUID_AOUT_SUPPORT
     unsigned int i;
     fluid_return_if_fail(driver != NULL);
 
@@ -371,6 +396,7 @@ delete_fluid_audio_driver(fluid_audio_driver_t *driver)
             return;
         }
     }
+#endif
 }
 
 
@@ -400,6 +426,7 @@ delete_fluid_audio_driver(fluid_audio_driver_t *driver)
  */
 int fluid_audio_driver_register(const char **adrivers)
 {
+#ifdef FLUID_AOUT_SUPPORT
     unsigned int i;
     uint8_t      disable_mask[FLUID_N_ELEMENTS(fluid_adriver_disable_mask)];
 
@@ -444,4 +471,7 @@ int fluid_audio_driver_register(const char **adrivers)
     FLUID_MEMCPY(fluid_adriver_disable_mask, disable_mask, sizeof(disable_mask));
 
     return FLUID_OK;
+#else
+    return FLUID_FAILED;
+#endif
 }
