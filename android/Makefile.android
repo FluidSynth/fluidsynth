@@ -1,7 +1,7 @@
 PWD=$(shell pwd)
 CERBERO=$(PWD)/external/cerbero
 
-ANDROID_NDK = ~/android-ndk-r17b
+ANDROID_NDK = ~/android-sdk-linux/ndk-bundle
 
 ABIS_SIMPLE = x86 x86-64 armv7 arm64
 
