@@ -134,6 +134,8 @@ set ( libfluidsynth_SOURCES
     utils/fluidsynth_priv.h
     utils/fluid_sys.c
     utils/fluid_sys.h
+    sfloader/fluid_androidasset.c
+    sfloader/fluid_androidasset.h
     sfloader/fluid_defsfont.c
     sfloader/fluid_defsfont.h
     sfloader/fluid_sfont.h
@@ -193,6 +195,7 @@ set ( libfluidsynth_SOURCES
 )
 
 set ( public_HEADERS
+    ${CMAKE_SOURCE_DIR}/include/fluidsynth/android.h
     ${CMAKE_SOURCE_DIR}/include/fluidsynth/audio.h
     ${CMAKE_SOURCE_DIR}/include/fluidsynth/event.h
     ${CMAKE_SOURCE_DIR}/include/fluidsynth/gen.h
