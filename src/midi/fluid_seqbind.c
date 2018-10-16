@@ -108,7 +108,7 @@ fluid_sequencer_register_fluidsynth(fluid_sequencer_t *seq, fluid_synth_t *synth
 
     if(seqbind == NULL)
     {
-        fluid_log(FLUID_PANIC, "sequencer: Out of memory\n");
+        FLUID_LOG(FLUID_PANIC, "sequencer: Out of memory\n");
         return FLUID_FAILED;
     }
 
@@ -125,7 +125,7 @@ fluid_sequencer_register_fluidsynth(fluid_sequencer_t *seq, fluid_synth_t *synth
 
         if(seqbind->sample_timer == NULL)
         {
-            fluid_log(FLUID_PANIC, "sequencer: Out of memory\n");
+            FLUID_LOG(FLUID_PANIC, "sequencer: Out of memory\n");
             delete_fluid_seqbind(seqbind);
             return FLUID_FAILED;
         }
@@ -359,5 +359,3 @@ fluid_sequencer_add_midi_event_to_buffer(void *data, fluid_midi_event_t *event)
     /* Schedule for sending at next call to fluid_sequencer_process */
     return fluid_sequencer_send_at(seq, &evt, 0, 0);
 }
-
-
