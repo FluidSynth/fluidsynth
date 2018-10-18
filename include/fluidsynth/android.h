@@ -35,7 +35,7 @@ extern "C" {
  * Defines functions for Android asset based soundfont loader. Use new_fluid_android_asset_sfloader() to create a new sfloader. It is just a default sfloader with the callbacks which are Android Assets API.
  */
 
-FLUIDSYNTH_API fluid_sfloader_t *new_fluid_android_asset_sfloader(JNIEnv *env, fluid_settings_t *settings);
+FLUIDSYNTH_API fluid_sfloader_t *new_fluid_android_asset_sfloader(fluid_settings_t *settings, AAssetManager *assetManager);
 
 #ifdef __cplusplus
 }
