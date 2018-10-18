@@ -25,10 +25,18 @@
 #include "fluidsynth.h"
 #include <jni.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void *asset_open(const char *path);
 int asset_close(void *handle);
 long asset_tell(void *handle);
 int asset_seek(void *handle, long offset, int origin);
 int asset_read(void *buf, int count, void *handle);
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
 
 #endif /* _PRIV_FLUID_ANDROIDASSET_H */
