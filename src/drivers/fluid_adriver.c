@@ -166,6 +166,7 @@ void fluid_audio_driver_settings(fluid_settings_t *settings)
 {
 #ifdef FLUID_AOUT_SUPPORT
     unsigned int i;
+    const char *def_name = NULL;
 #endif
 
     fluid_settings_register_str(settings, "audio.sample-format", "16bits", 0);
@@ -186,72 +187,27 @@ void fluid_audio_driver_settings(fluid_settings_t *settings)
     fluid_settings_register_int(settings, "audio.realtime-prio",
                                 FLUID_DEFAULT_AUDIO_RT_PRIO, 0, 99, 0);
 
-    /* Set the default driver */
-#if JACK_SUPPORT
-    fluid_settings_register_str(settings, "audio.driver", "jack", 0);
-#elif ALSA_SUPPORT
-    fluid_settings_register_str(settings, "audio.driver", "alsa", 0);
-#elif PULSE_SUPPORT
-    fluid_settings_register_str(settings, "audio.driver", "pulseaudio", 0);
-#elif OSS_SUPPORT
-    fluid_settings_register_str(settings, "audio.driver", "oss", 0);
-#elif COREAUDIO_SUPPORT
-    fluid_settings_register_str(settings, "audio.driver", "coreaudio", 0);
-#elif DSOUND_SUPPORT
-    fluid_settings_register_str(settings, "audio.driver", "dsound", 0);
-#elif SNDMAN_SUPPORT
-    fluid_settings_register_str(settings, "audio.driver", "sndman", 0);
-#elif PORTAUDIO_SUPPORT
-    fluid_settings_register_str(settings, "audio.driver", "portaudio", 0);
-#elif DART_SUPPORT
-    fluid_settings_register_str(settings, "audio.driver", "dart", 0);
-#elif AUFILE_SUPPORT
-    fluid_settings_register_str(settings, "audio.driver", "file", 0);
-#else
-    fluid_settings_register_str(settings, "audio.driver", "", 0);
-#endif
-
-    /* Add all drivers to the list of options */
-#if PULSE_SUPPORT
-    fluid_settings_add_option(settings, "audio.driver", "pulseaudio");
-#endif
-#if ALSA_SUPPORT
-    fluid_settings_add_option(settings, "audio.driver", "alsa");
-#endif
-#if OSS_SUPPORT
-    fluid_settings_add_option(settings, "audio.driver", "oss");
-#endif
-#if COREAUDIO_SUPPORT
-    fluid_settings_add_option(settings, "audio.driver", "coreaudio");
-#endif
-#if DSOUND_SUPPORT
-    fluid_settings_add_option(settings, "audio.driver", "dsound");
-#endif
-#if SNDMAN_SUPPORT
-    fluid_settings_add_option(settings, "audio.driver", "sndman");
-#endif
-#if PORTAUDIO_SUPPORT
-    fluid_settings_add_option(settings, "audio.driver", "portaudio");
-#endif
-#if JACK_SUPPORT
-    fluid_settings_add_option(settings, "audio.driver", "jack");
-#endif
-#if DART_SUPPORT
-    fluid_settings_add_option(settings, "audio.driver", "dart");
-#endif
-#if AUFILE_SUPPORT
-    fluid_settings_add_option(settings, "audio.driver", "file");
-#endif
-
 #ifdef FLUID_AOUT_SUPPORT
     for(i = 0; i < FLUID_N_ELEMENTS(fluid_audio_drivers); i++)
     {
+        /* Select the default driver */
+        if (def_name == NULL)
+        {
+            def_name = fluid_audio_drivers[i].name;
+        }
+    
+        /* Add the driver to the list of options */
+        fluid_settings_add_option(settings, "audio.driver", fluid_audio_drivers[i].name);
+
         if(fluid_audio_drivers[i].settings != NULL &&
                 IS_AUDIO_DRIVER_ENABLED(fluid_adriver_disable_mask, i))
         {
             fluid_audio_drivers[i].settings(settings);
         }
     }
+
+    /* Set the default driver */
+    fluid_settings_register_str(settings, "audio.driver", def_name ? def_name : "", 0);
 #endif
 }
 
