@@ -21,16 +21,6 @@
 #include "fluid_mdriver.h"
 #include "fluid_settings.h"
 
-#undef FLUID_MIDI_SUPPORT
-
-#if ALSA_SUPPORT || JACK_SUPPORT || OSS_SUPPORT || \
-    WINMIDI_SUPPORT || MIDISHARE_SUPPORT || COREMIDI_SUPPORT
-/* At least an input driver exits */
-#define FLUID_MIDI_SUPPORT  1
-#endif
-
-
-#ifdef FLUID_MIDI_SUPPORT
 
 /*
  * fluid_mdriver_definition
@@ -102,15 +92,14 @@ static const struct fluid_mdriver_definition_t fluid_midi_drivers[] =
         fluid_coremidi_driver_settings
     },
 #endif
+    /* NULL terminator to avoid zero size array if no driver available */
+    { NULL, NULL, NULL, NULL }
 };
 
-#endif /* FLUID_MIDI_SUPPORT */
 
 void fluid_midi_driver_settings(fluid_settings_t *settings)
 {
-#ifdef FLUID_MIDI_SUPPORT
     unsigned int i;
-#endif
 
     fluid_settings_register_int(settings, "midi.autoconnect", 0, 0, 1, FLUID_HINT_TOGGLED);
 
@@ -155,17 +144,13 @@ void fluid_midi_driver_settings(fluid_settings_t *settings)
     fluid_settings_add_option(settings, "midi.driver", "coremidi");
 #endif
 
-#ifdef FLUID_MIDI_SUPPORT
-
-    for(i = 0; i < FLUID_N_ELEMENTS(fluid_midi_drivers); i++)
+    for(i = 0; i < FLUID_N_ELEMENTS(fluid_midi_drivers) - 1; i++)
     {
         if(fluid_midi_drivers[i].settings != NULL)
         {
             fluid_midi_drivers[i].settings(settings);
         }
     }
-
-#endif
 }
 
 /**
@@ -178,21 +163,21 @@ void fluid_midi_driver_settings(fluid_settings_t *settings)
  */
 fluid_midi_driver_t *new_fluid_midi_driver(fluid_settings_t *settings, handle_midi_event_func_t handler, void *event_handler_data)
 {
-#ifdef FLUID_MIDI_SUPPORT
     fluid_midi_driver_t *driver = NULL;
     char *allnames;
     unsigned int i;
 
-    for(i = 0; i < FLUID_N_ELEMENTS(fluid_midi_drivers); i++)
+    for(i = 0; i < FLUID_N_ELEMENTS(fluid_midi_drivers) - 1; i++)
     {
-        if(fluid_settings_str_equal(settings, "midi.driver", fluid_midi_drivers[i].name))
+        const char* name = fluid_midi_drivers[i].name;
+        if(fluid_settings_str_equal(settings, "midi.driver", name))
         {
-            FLUID_LOG(FLUID_DBG, "Using '%s' midi driver", fluid_midi_drivers[i].name);
+            FLUID_LOG(FLUID_DBG, "Using '%s' midi driver", name);
             driver = fluid_midi_drivers[i].new(settings, handler, event_handler_data);
 
             if(driver)
             {
-                driver->name = fluid_midi_drivers[i].name;
+                driver->name = name;
             }
 
             return driver;
@@ -203,12 +188,8 @@ fluid_midi_driver_t *new_fluid_midi_driver(fluid_settings_t *settings, handle_mi
     FLUID_LOG(FLUID_ERR, "Couldn't find the requested midi driver. Valid drivers are: %s.",
               allnames ? allnames : "ERROR");
 
-    if(allnames)
-    {
-        FLUID_FREE(allnames);
-    }
+    FLUID_FREE(allnames);
 
-#endif
     return NULL;
 }
 
@@ -218,11 +199,10 @@ fluid_midi_driver_t *new_fluid_midi_driver(fluid_settings_t *settings, handle_mi
  */
 void delete_fluid_midi_driver(fluid_midi_driver_t *driver)
 {
-#ifdef FLUID_MIDI_SUPPORT
     unsigned int i;
     fluid_return_if_fail(driver != NULL);
 
-    for(i = 0; i < FLUID_N_ELEMENTS(fluid_midi_drivers); i++)
+    for(i = 0; i < FLUID_N_ELEMENTS(fluid_midi_drivers) - 1; i++)
     {
         if(fluid_midi_drivers[i].name == driver->name)
         {
@@ -230,6 +210,4 @@ void delete_fluid_midi_driver(fluid_midi_driver_t *driver)
             return;
         }
     }
-
-#endif
 }
