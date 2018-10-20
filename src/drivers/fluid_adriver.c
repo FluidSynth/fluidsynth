@@ -138,6 +138,8 @@ static const fluid_audriver_definition_t fluid_audio_drivers[] =
         NULL
     },
 #endif
+    /* NULL terminator to avoid zero size array if no driver available */
+    { NULL, NULL, NULL, NULL, NULL }
 };
 
 #define ENABLE_AUDIO_DRIVER(_drv, _idx) \
@@ -227,7 +229,7 @@ void fluid_audio_driver_settings(fluid_settings_t *settings)
     fluid_settings_add_option(settings, "audio.driver", "file");
 #endif
 
-    for(i = 0; i < FLUID_N_ELEMENTS(fluid_audio_drivers); i++)
+    for(i = 0; i < FLUID_N_ELEMENTS(fluid_audio_drivers) - 1; i++)
     {
         if(fluid_audio_drivers[i].settings != NULL &&
                 IS_AUDIO_DRIVER_ENABLED(fluid_adriver_disable_mask, i))
@@ -244,7 +246,7 @@ find_fluid_audio_driver(fluid_settings_t *settings)
     char *name;
     char *allnames;
 
-    for(i = 0; i < FLUID_N_ELEMENTS(fluid_audio_drivers); i++)
+    for(i = 0; i < FLUID_N_ELEMENTS(fluid_audio_drivers) - 1; i++)
     {
         /* If this driver is de-activated, just ignore it */
         if(!IS_AUDIO_DRIVER_ENABLED(fluid_adriver_disable_mask, i))
@@ -363,7 +365,7 @@ delete_fluid_audio_driver(fluid_audio_driver_t *driver)
     fluid_return_if_fail(driver != NULL);
 
     /* iterate over fluid_audio_drivers_template to ensure deleting even drivers currently not registered */
-    for(i = 0; i < FLUID_N_ELEMENTS(fluid_audio_drivers); i++)
+    for(i = 0; i < FLUID_N_ELEMENTS(fluid_audio_drivers) - 1; i++)
     {
         if(fluid_audio_drivers[i].name == driver->name)
         {
@@ -417,8 +419,8 @@ int fluid_audio_driver_register(const char **adrivers)
     {
         unsigned int j;
 
-        /* search the requested audio driver in the template and copy it over if found */
-        for(j = 0; j < FLUID_N_ELEMENTS(fluid_audio_drivers); j++)
+        /* search the requested audio driver in the template and enable it if found */
+        for(j = 0; j < FLUID_N_ELEMENTS(fluid_audio_drivers) - 1; j++)
         {
             if(FLUID_STRCMP(adrivers[i], fluid_audio_drivers[j].name) == 0)
             {
@@ -427,17 +429,11 @@ int fluid_audio_driver_register(const char **adrivers)
             }
         }
 
-        if(j >= FLUID_N_ELEMENTS(fluid_audio_drivers))
+        if(j >= FLUID_N_ELEMENTS(fluid_audio_drivers) - 1)
         {
             /* requested driver not found, failure */
             return FLUID_FAILED;
         }
-    }
-
-    if(i >= FLUID_N_ELEMENTS(fluid_audio_drivers))
-    {
-        /* user requested more drivers than this build of fluidsynth supports, failure */
-        return FLUID_FAILED;
     }
 
     /* Update list of activated drivers */
