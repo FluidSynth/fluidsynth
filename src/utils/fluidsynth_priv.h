@@ -322,7 +322,16 @@ do { strncpy(_dst,_src,_n); \
 #define FLUID_FLUSH()                fflush(stdout)
 #endif
 
+/* People who want to reduce the size of the may do this by entirely
+ * removing the logging system. This will cause all log messages to
+ * be discarded at compile time, allowing to save about 80 KiB for
+ * the compiled binary.
+ */
+#if 0
+#define FLUID_LOG                    (void)sizeof
+#else
 #define FLUID_LOG                    fluid_log
+#endif
 
 #ifndef M_PI
 #define M_PI 3.1415926535897932384626433832795
