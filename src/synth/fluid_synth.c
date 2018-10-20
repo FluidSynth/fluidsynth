@@ -148,7 +148,6 @@ static int fluid_synth_set_chorus_full_LOCAL(fluid_synth_t *synth, int set, int 
 /* fluid_atomic_int_t may be anything, so init with {0} to catch most cases */
 static fluid_atomic_int_t fluid_synth_initialized = {0};
 static void fluid_synth_init(void);
-static void init_dither(void);
 
 /* default modulators
  * SF2.01 page 52 ff:
