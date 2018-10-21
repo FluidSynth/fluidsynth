@@ -160,9 +160,19 @@ fluid_midi_driver_t *new_fluid_midi_driver(fluid_settings_t *settings, handle_mi
         }
     }
 
+    FLUID_LOG(FLUID_ERR, "Couldn't find the requested midi driver.");
     allnames = fluid_settings_option_concat(settings, "midi.driver", NULL);
-    FLUID_LOG(FLUID_ERR, "Couldn't find the requested midi driver. Valid drivers are: %s.",
-              allnames ? allnames : "ERROR");
+    if(allnames != NULL)
+    {
+        if(allnames[0] != '\0')
+        {
+            FLUID_LOG(FLUID_INFO, "Valid drivers are: %s", allnames);
+        }
+        else
+        {
+            FLUID_LOG(FLUID_INFO, "No MIDI drivers available.");
+        }
+    }
 
     FLUID_FREE(allnames);
 
