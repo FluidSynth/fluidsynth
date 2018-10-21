@@ -217,21 +217,25 @@ find_fluid_audio_driver(fluid_settings_t *settings)
         }
     }
 
-    allnames = fluid_settings_option_concat(settings, "audio.driver", NULL);
     fluid_settings_dupstr(settings, "audio.driver", &name);        /* ++ alloc name */
-    FLUID_LOG(FLUID_ERR, "Couldn't find the requested audio driver %s. Valid drivers are: %s.",
-              name ? name : "NULL", allnames ? allnames : "ERROR");
-
-    if(name)
+    FLUID_LOG(FLUID_ERR, "Couldn't find the requested audio driver '%s'.", name ? name : "NULL");
+    
+    allnames = fluid_settings_option_concat(settings, "audio.driver", NULL);
+    if(allnames != NULL)
     {
-        FLUID_FREE(name);
+        if(allnames[0] != '\0')
+        {
+            FLUID_LOG(FLUID_INFO, "Valid drivers are: %s", allnames);
+        }
+        else
+        {
+            FLUID_LOG(FLUID_INFO, "No audio drivers available.");
+        }
     }
-
-    if(allnames)
-    {
-        FLUID_FREE(allnames);
-    }
-
+    
+    FLUID_FREE(name);
+    FLUID_FREE(allnames);
+    
     return NULL;
 }
 
