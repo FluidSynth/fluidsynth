@@ -236,10 +236,11 @@ find_fluid_audio_driver(fluid_settings_t *settings)
         {
             FLUID_LOG(FLUID_INFO, "No audio drivers available.");
         }
+
+        FLUID_FREE(allnames);
     }
     
     FLUID_FREE(name);
-    FLUID_FREE(allnames);
     
     return NULL;
 }
@@ -265,7 +266,7 @@ new_fluid_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
 
         if(driver)
         {
-            driver->name = def->name;
+            driver->define = def;
         }
 
         return driver;
@@ -307,7 +308,7 @@ new_fluid_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func, voi
 
             if(driver)
             {
-                driver->name = def->name;
+                driver->define = def;
             }
         }
 
@@ -326,18 +327,9 @@ new_fluid_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func, voi
 void
 delete_fluid_audio_driver(fluid_audio_driver_t *driver)
 {
-    unsigned int i;
     fluid_return_if_fail(driver != NULL);
 
-    /* iterate over fluid_audio_drivers_template to ensure deleting even drivers currently not registered */
-    for(i = 0; i < FLUID_N_ELEMENTS(fluid_audio_drivers) - 1; i++)
-    {
-        if(fluid_audio_drivers[i].name == driver->name)
-        {
-            fluid_audio_drivers[i].free(driver);
-            return;
-        }
-    }
+    ((fluid_audriver_definition_t *)driver->define)->free(driver);
 }
 
 
