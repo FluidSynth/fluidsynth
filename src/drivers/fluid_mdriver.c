@@ -106,7 +106,8 @@ void fluid_midi_driver_settings(fluid_settings_t *settings)
 
     fluid_settings_register_int(settings, "midi.realtime-prio",
                                 FLUID_DEFAULT_MIDI_RT_PRIO, 0, 99, 0);
-
+    
+    fluid_settings_register_str(settings, "midi.driver", "", 0);
 
     for(i = 0; i < FLUID_N_ELEMENTS(fluid_midi_drivers) - 1; i++)
     {
@@ -125,8 +126,11 @@ void fluid_midi_driver_settings(fluid_settings_t *settings)
         }
     }
 
-    /* Set the default driver */
-    fluid_settings_register_str(settings, "midi.driver", def_name ? def_name : "", 0);
+    /* Set the default driver, if any */
+    if(def_name != NULL)
+    {
+        fluid_settings_setstr(settings, "midi.driver", def_name);
+    }
 }
 
 /**

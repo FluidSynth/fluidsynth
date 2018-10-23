@@ -172,6 +172,8 @@ void fluid_audio_driver_settings(fluid_settings_t *settings)
 
     fluid_settings_register_int(settings, "audio.realtime-prio",
                                 FLUID_DEFAULT_AUDIO_RT_PRIO, 0, 99, 0);
+    
+    fluid_settings_register_str(settings, "audio.driver", "", 0);
 
     for(i = 0; i < FLUID_N_ELEMENTS(fluid_audio_drivers) - 1; i++)
     {
@@ -191,8 +193,11 @@ void fluid_audio_driver_settings(fluid_settings_t *settings)
         }
     }
 
-    /* Set the default driver */
-    fluid_settings_register_str(settings, "audio.driver", def_name ? def_name : "", 0);
+    /* Set the default driver, if any */
+    if(def_name != NULL)
+    {
+        fluid_settings_setstr(settings, "audio.driver", def_name);
+    }
 }
 
 static const fluid_audriver_definition_t *
