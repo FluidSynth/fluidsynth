@@ -59,16 +59,6 @@ static const fluid_audriver_definition_t fluid_audio_drivers[] =
     },
 #endif
 
-#if OSS_SUPPORT
-    {
-        "oss",
-        new_fluid_oss_audio_driver,
-        new_fluid_oss_audio_driver2,
-        delete_fluid_oss_audio_driver,
-        fluid_oss_audio_driver_settings
-    },
-#endif
-
 #if PULSE_SUPPORT
     {
         "pulseaudio",
@@ -76,6 +66,16 @@ static const fluid_audriver_definition_t fluid_audio_drivers[] =
         new_fluid_pulse_audio_driver2,
         delete_fluid_pulse_audio_driver,
         fluid_pulse_audio_driver_settings
+    },
+#endif
+
+#if OSS_SUPPORT
+    {
+        "oss",
+        new_fluid_oss_audio_driver,
+        new_fluid_oss_audio_driver2,
+        delete_fluid_oss_audio_driver,
+        fluid_oss_audio_driver_settings
     },
 #endif
 
@@ -99,16 +99,6 @@ static const fluid_audriver_definition_t fluid_audio_drivers[] =
     },
 #endif
 
-#if PORTAUDIO_SUPPORT
-    {
-        "portaudio",
-        new_fluid_portaudio_driver,
-        NULL,
-        delete_fluid_portaudio_driver,
-        fluid_portaudio_driver_settings
-    },
-#endif
-
 #if SNDMAN_SUPPORT
     {
         "sndman",
@@ -116,6 +106,16 @@ static const fluid_audriver_definition_t fluid_audio_drivers[] =
         new_fluid_sndmgr_audio_driver2,
         delete_fluid_sndmgr_audio_driver,
         NULL
+    },
+#endif
+
+#if PORTAUDIO_SUPPORT
+    {
+        "portaudio",
+        new_fluid_portaudio_driver,
+        NULL,
+        delete_fluid_portaudio_driver,
+        fluid_portaudio_driver_settings
     },
 #endif
 
@@ -138,6 +138,8 @@ static const fluid_audriver_definition_t fluid_audio_drivers[] =
         NULL
     },
 #endif
+    /* NULL terminator to avoid zero size array if no driver available */
+    { NULL, NULL, NULL, NULL, NULL }
 };
 
 #define ENABLE_AUDIO_DRIVER(_drv, _idx) \
@@ -151,6 +153,7 @@ static uint8_t fluid_adriver_disable_mask[(FLUID_N_ELEMENTS(fluid_audio_drivers)
 void fluid_audio_driver_settings(fluid_settings_t *settings)
 {
     unsigned int i;
+    const char *def_name = NULL;
 
     fluid_settings_register_str(settings, "audio.sample-format", "16bits", 0);
     fluid_settings_add_option(settings, "audio.sample-format", "16bits");
@@ -169,71 +172,31 @@ void fluid_audio_driver_settings(fluid_settings_t *settings)
 
     fluid_settings_register_int(settings, "audio.realtime-prio",
                                 FLUID_DEFAULT_AUDIO_RT_PRIO, 0, 99, 0);
-
-    /* Set the default driver */
-#if JACK_SUPPORT
-    fluid_settings_register_str(settings, "audio.driver", "jack", 0);
-#elif ALSA_SUPPORT
-    fluid_settings_register_str(settings, "audio.driver", "alsa", 0);
-#elif PULSE_SUPPORT
-    fluid_settings_register_str(settings, "audio.driver", "pulseaudio", 0);
-#elif OSS_SUPPORT
-    fluid_settings_register_str(settings, "audio.driver", "oss", 0);
-#elif COREAUDIO_SUPPORT
-    fluid_settings_register_str(settings, "audio.driver", "coreaudio", 0);
-#elif DSOUND_SUPPORT
-    fluid_settings_register_str(settings, "audio.driver", "dsound", 0);
-#elif SNDMAN_SUPPORT
-    fluid_settings_register_str(settings, "audio.driver", "sndman", 0);
-#elif PORTAUDIO_SUPPORT
-    fluid_settings_register_str(settings, "audio.driver", "portaudio", 0);
-#elif DART_SUPPORT
-    fluid_settings_register_str(settings, "audio.driver", "dart", 0);
-#elif AUFILE_SUPPORT
-    fluid_settings_register_str(settings, "audio.driver", "file", 0);
-#else
+    
     fluid_settings_register_str(settings, "audio.driver", "", 0);
-#endif
 
-    /* Add all drivers to the list of options */
-#if PULSE_SUPPORT
-    fluid_settings_add_option(settings, "audio.driver", "pulseaudio");
-#endif
-#if ALSA_SUPPORT
-    fluid_settings_add_option(settings, "audio.driver", "alsa");
-#endif
-#if OSS_SUPPORT
-    fluid_settings_add_option(settings, "audio.driver", "oss");
-#endif
-#if COREAUDIO_SUPPORT
-    fluid_settings_add_option(settings, "audio.driver", "coreaudio");
-#endif
-#if DSOUND_SUPPORT
-    fluid_settings_add_option(settings, "audio.driver", "dsound");
-#endif
-#if SNDMAN_SUPPORT
-    fluid_settings_add_option(settings, "audio.driver", "sndman");
-#endif
-#if PORTAUDIO_SUPPORT
-    fluid_settings_add_option(settings, "audio.driver", "portaudio");
-#endif
-#if JACK_SUPPORT
-    fluid_settings_add_option(settings, "audio.driver", "jack");
-#endif
-#if DART_SUPPORT
-    fluid_settings_add_option(settings, "audio.driver", "dart");
-#endif
-#if AUFILE_SUPPORT
-    fluid_settings_add_option(settings, "audio.driver", "file");
-#endif
-
-    for(i = 0; i < FLUID_N_ELEMENTS(fluid_audio_drivers); i++)
+    for(i = 0; i < FLUID_N_ELEMENTS(fluid_audio_drivers) - 1; i++)
     {
+        /* Select the default driver */
+        if (def_name == NULL)
+        {
+            def_name = fluid_audio_drivers[i].name;
+        }
+    
+        /* Add the driver to the list of options */
+        fluid_settings_add_option(settings, "audio.driver", fluid_audio_drivers[i].name);
+
         if(fluid_audio_drivers[i].settings != NULL &&
                 IS_AUDIO_DRIVER_ENABLED(fluid_adriver_disable_mask, i))
         {
             fluid_audio_drivers[i].settings(settings);
         }
+    }
+
+    /* Set the default driver, if any */
+    if(def_name != NULL)
+    {
+        fluid_settings_setstr(settings, "audio.driver", def_name);
     }
 }
 
@@ -244,7 +207,7 @@ find_fluid_audio_driver(fluid_settings_t *settings)
     char *name;
     char *allnames;
 
-    for(i = 0; i < FLUID_N_ELEMENTS(fluid_audio_drivers); i++)
+    for(i = 0; i < FLUID_N_ELEMENTS(fluid_audio_drivers) - 1; i++)
     {
         /* If this driver is de-activated, just ignore it */
         if(!IS_AUDIO_DRIVER_ENABLED(fluid_adriver_disable_mask, i))
@@ -259,21 +222,25 @@ find_fluid_audio_driver(fluid_settings_t *settings)
         }
     }
 
-    allnames = fluid_settings_option_concat(settings, "audio.driver", NULL);
     fluid_settings_dupstr(settings, "audio.driver", &name);        /* ++ alloc name */
-    FLUID_LOG(FLUID_ERR, "Couldn't find the requested audio driver %s. Valid drivers are: %s.",
-              name ? name : "NULL", allnames ? allnames : "ERROR");
-
-    if(name)
+    FLUID_LOG(FLUID_ERR, "Couldn't find the requested audio driver '%s'.", name ? name : "NULL");
+    
+    allnames = fluid_settings_option_concat(settings, "audio.driver", NULL);
+    if(allnames != NULL)
     {
-        FLUID_FREE(name);
+        if(allnames[0] != '\0')
+        {
+            FLUID_LOG(FLUID_INFO, "Valid drivers are: %s", allnames);
+        }
+        else
+        {
+            FLUID_LOG(FLUID_INFO, "No audio drivers available.");
+        }
     }
-
-    if(allnames)
-    {
-        FLUID_FREE(allnames);
-    }
-
+    
+    FLUID_FREE(name);
+    FLUID_FREE(allnames);
+    
     return NULL;
 }
 
@@ -363,7 +330,7 @@ delete_fluid_audio_driver(fluid_audio_driver_t *driver)
     fluid_return_if_fail(driver != NULL);
 
     /* iterate over fluid_audio_drivers_template to ensure deleting even drivers currently not registered */
-    for(i = 0; i < FLUID_N_ELEMENTS(fluid_audio_drivers); i++)
+    for(i = 0; i < FLUID_N_ELEMENTS(fluid_audio_drivers) - 1; i++)
     {
         if(fluid_audio_drivers[i].name == driver->name)
         {
@@ -417,8 +384,8 @@ int fluid_audio_driver_register(const char **adrivers)
     {
         unsigned int j;
 
-        /* search the requested audio driver in the template and copy it over if found */
-        for(j = 0; j < FLUID_N_ELEMENTS(fluid_audio_drivers); j++)
+        /* search the requested audio driver in the template and enable it if found */
+        for(j = 0; j < FLUID_N_ELEMENTS(fluid_audio_drivers) - 1; j++)
         {
             if(FLUID_STRCMP(adrivers[i], fluid_audio_drivers[j].name) == 0)
             {
@@ -427,17 +394,11 @@ int fluid_audio_driver_register(const char **adrivers)
             }
         }
 
-        if(j >= FLUID_N_ELEMENTS(fluid_audio_drivers))
+        if(j >= FLUID_N_ELEMENTS(fluid_audio_drivers) - 1)
         {
             /* requested driver not found, failure */
             return FLUID_FAILED;
         }
-    }
-
-    if(i >= FLUID_N_ELEMENTS(fluid_audio_drivers))
-    {
-        /* user requested more drivers than this build of fluidsynth supports, failure */
-        return FLUID_FAILED;
     }
 
     /* Update list of activated drivers */
