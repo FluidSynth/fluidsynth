@@ -105,6 +105,10 @@ if ( MIDISHARE_SUPPORT )
   include_directories ( ${MidiShare_INCLUDE_DIRS} )
 endif ( MIDISHARE_SUPPORT )
 
+if ( AUFILE_SUPPORT )
+  set ( fluid_aufile_SOURCES drivers/fluid_aufile.c )
+endif ( AUFILE_SUPPORT )
+
 set ( config_SOURCES ${CMAKE_BINARY_DIR}/config.h )
 
 set ( libfluidsynth_SOURCES
@@ -172,7 +176,6 @@ set ( libfluidsynth_SOURCES
     drivers/fluid_adriver.h
     drivers/fluid_mdriver.c
     drivers/fluid_mdriver.h
-    drivers/fluid_aufile.c
     bindings/fluid_cmd.c
     bindings/fluid_cmd.h
     bindings/fluid_filerenderer.c
@@ -229,6 +232,7 @@ endif ( WIN32 AND NOT MINGW )
 add_library ( libfluidsynth-OBJ OBJECT
     ${config_SOURCES}
     ${fluid_alsa_SOURCES}
+    ${fluid_aufile_SOURCES}
     ${fluid_coreaudio_SOURCES}
     ${fluid_coremidi_SOURCES}
     ${fluid_dart_SOURCES}
