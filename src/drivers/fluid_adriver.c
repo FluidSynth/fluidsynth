@@ -328,8 +328,7 @@ void
 delete_fluid_audio_driver(fluid_audio_driver_t *driver)
 {
     fluid_return_if_fail(driver != NULL);
-
-    ((fluid_audriver_definition_t *)driver->define)->free(driver);
+    driver->define->free(driver);
 }
 
 
