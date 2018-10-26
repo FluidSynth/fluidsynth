@@ -216,7 +216,7 @@ configure_file ( ${CMAKE_SOURCE_DIR}/include/fluidsynth/version.h.in
 configure_file ( ${CMAKE_SOURCE_DIR}/include/fluidsynth.cmake
                  ${public_main_HEADER} )
 
-if ( WIN32 AND NOT MINGW )
+if ( WIN32 )
 include(generate_product_version)
 generate_product_version(
     VersionFilesOutputVariable
@@ -231,7 +231,7 @@ generate_product_version(
     ORIGINAL_FILENAME "libfluidsynth.dll"
     FILE_DESCRIPTION "Fluidsynth"
 )
-endif ( WIN32 AND NOT MINGW )
+endif ( WIN32 )
 
 add_library ( libfluidsynth-OBJ OBJECT
     ${config_SOURCES}
