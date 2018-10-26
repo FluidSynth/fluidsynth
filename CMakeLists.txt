@@ -67,6 +67,8 @@ option ( enable-libsndfile "compile libsndfile support (if it is available)" on 
 option ( enable-midishare "compile MidiShare support (if it is available)" on )
 option ( enable-network "enable network support (requires BSD sockets)" on )
 option ( enable-oss "compile OSS support (if it is available)" on )
+option ( enable-dsound "compile DirectSound support (if it is available)" on )
+option ( enable-winmidi "compile Windows MIDI support (if it is available)" on )
 option ( enable-pkgconfig "use pkg-config to locate fluidsynth's (mostly optional) dependencies" on )
 option ( enable-pulseaudio "compile PulseAudio support (if it is available)" on )
 option ( enable-readline "compile readline lib line editing (if it is available)" on )
@@ -190,15 +192,34 @@ endif ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang" OR CMAKE
 # Windows
 unset ( WINDOWS_SUPPORT CACHE )
 unset ( WINDOWS_LIBS CACHE )
+unset ( DSOUND_SUPPORT CACHE )
+unset ( WINMIDI_SUPPORT CACHE )
 unset ( MINGW32 CACHE )
 if ( WIN32 )
   include ( CheckIncludeFiles )
+
+  # Check presence of MS include files
   check_include_file ( windows.h HAVE_WINDOWS_H )
   check_include_file ( io.h HAVE_IO_H )
   check_include_file ( dsound.h HAVE_DSOUND_H )
   check_include_files ( "windows.h;mmsystem.h" HAVE_MMSYSTEM_H )
+
   set ( WINDOWS_SUPPORT ${HAVE_WINDOWS_H} )
-  set ( WINDOWS_LIBS "dsound;winmm;ws2_32" )
+
+  if ( NETWORK_SUPPORT )
+    set ( WINDOWS_LIBS "${WINDOWS_LIBS};ws2_32" )
+  endif ( NETWORK_SUPPORT )
+
+  if ( enable-dsound AND HAVE_DSOUND_H )
+    set ( WINDOWS_LIBS "${WINDOWS_LIBS};dsound" )
+    set ( DSOUND_SUPPORT 1 )
+  endif ()
+
+  if ( enable-winmidi AND HAVE_MMSYSTEM_H )
+    set ( WINDOWS_LIBS "${WINDOWS_LIBS};winmm" )
+    set ( WINMIDI_SUPPORT 1 )
+  endif ()
+
   set ( LIBFLUID_CPPFLAGS "-DFLUIDSYNTH_DLL_EXPORTS" )
   set ( FLUID_CPPFLAGS "-DFLUIDSYNTH_NOT_A_DLL" )
   if  ( MSVC )
