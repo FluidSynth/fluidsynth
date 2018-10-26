@@ -250,7 +250,7 @@ if ( WIN32 )
   # MinGW compiler (a Windows GCC port)
   if ( MINGW )
     set ( MINGW32 1 )
-    add_definitions ( -mms-bitfields )
+    add_compile_options ( -mms-bitfields )
   endif  ( MINGW )
 else ( WIN32 )
 # Check PThreads, but not in Windows
