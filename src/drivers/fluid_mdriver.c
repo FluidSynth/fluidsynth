@@ -189,5 +189,5 @@ fluid_midi_driver_t *new_fluid_midi_driver(fluid_settings_t *settings, handle_mi
 void delete_fluid_midi_driver(fluid_midi_driver_t *driver)
 {
     fluid_return_if_fail(driver != NULL);
-    ((fluid_mdriver_definition_t *)driver->define)->free(driver);
+    driver->define->free(driver);
 }
