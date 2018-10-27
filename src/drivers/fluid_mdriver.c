@@ -25,7 +25,7 @@
 /*
  * fluid_mdriver_definition
  */
-struct fluid_mdriver_definition_t
+struct _fluid_mdriver_definition_t
 {
     const char *name;
     fluid_midi_driver_t *(*new)(fluid_settings_t *settings,
@@ -36,7 +36,7 @@ struct fluid_mdriver_definition_t
 };
 
 
-static const struct fluid_mdriver_definition_t fluid_midi_drivers[] =
+static const fluid_mdriver_definition_t fluid_midi_drivers[] =
 {
 #if ALSA_SUPPORT
     {
@@ -145,19 +145,18 @@ fluid_midi_driver_t *new_fluid_midi_driver(fluid_settings_t *settings, handle_mi
 {
     fluid_midi_driver_t *driver = NULL;
     char *allnames;
-    unsigned int i;
+    const fluid_mdriver_definition_t *def;
 
-    for(i = 0; i < FLUID_N_ELEMENTS(fluid_midi_drivers) - 1; i++)
+    for(def = fluid_midi_drivers; def->name != NULL; def++)
     {
-        const char* name = fluid_midi_drivers[i].name;
-        if(fluid_settings_str_equal(settings, "midi.driver", name))
+        if(fluid_settings_str_equal(settings, "midi.driver", def->name))
         {
-            FLUID_LOG(FLUID_DBG, "Using '%s' midi driver", name);
-            driver = fluid_midi_drivers[i].new(settings, handler, event_handler_data);
+            FLUID_LOG(FLUID_DBG, "Using '%s' midi driver", def->name);
+            driver = def->new(settings, handler, event_handler_data);
 
             if(driver)
             {
-                driver->name = name;
+                driver->define = def;
             }
 
             return driver;
@@ -176,9 +175,9 @@ fluid_midi_driver_t *new_fluid_midi_driver(fluid_settings_t *settings, handle_mi
         {
             FLUID_LOG(FLUID_INFO, "No MIDI drivers available.");
         }
-    }
 
-    FLUID_FREE(allnames);
+        FLUID_FREE(allnames);
+    }
 
     return NULL;
 }
@@ -189,15 +188,6 @@ fluid_midi_driver_t *new_fluid_midi_driver(fluid_settings_t *settings, handle_mi
  */
 void delete_fluid_midi_driver(fluid_midi_driver_t *driver)
 {
-    unsigned int i;
     fluid_return_if_fail(driver != NULL);
-
-    for(i = 0; i < FLUID_N_ELEMENTS(fluid_midi_drivers) - 1; i++)
-    {
-        if(fluid_midi_drivers[i].name == driver->name)
-        {
-            fluid_midi_drivers[i].free(driver);
-            return;
-        }
-    }
+    driver->define->free(driver);
 }
