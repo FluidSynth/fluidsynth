@@ -206,9 +206,9 @@ if ( WIN32 )
 
   set ( WINDOWS_SUPPORT ${HAVE_WINDOWS_H} )
 
-  if ( NETWORK_SUPPORT )
+  if ( enable-network )
     set ( WINDOWS_LIBS "${WINDOWS_LIBS};ws2_32" )
-  endif ( NETWORK_SUPPORT )
+  endif ( enable-network )
 
   if ( enable-dsound AND HAVE_DSOUND_H )
     set ( WINDOWS_LIBS "${WINDOWS_LIBS};dsound" )
