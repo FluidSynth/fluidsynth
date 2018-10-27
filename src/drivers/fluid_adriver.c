@@ -25,7 +25,7 @@
  * fluid_adriver_definition_t
  */
 
-typedef struct _fluid_audriver_definition_t
+struct _fluid_audriver_definition_t
 {
     const char *name;
     fluid_audio_driver_t *(*new)(fluid_settings_t *settings, fluid_synth_t *synth);
@@ -34,7 +34,7 @@ typedef struct _fluid_audriver_definition_t
                                   void *data);
     void (*free)(fluid_audio_driver_t *driver);
     void (*settings)(fluid_settings_t *settings);
-} fluid_audriver_definition_t;
+};
 
 /* Available audio drivers, listed in order of preference */
 static const fluid_audriver_definition_t fluid_audio_drivers[] =
