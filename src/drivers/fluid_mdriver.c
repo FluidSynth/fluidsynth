@@ -25,7 +25,7 @@
 /*
  * fluid_mdriver_definition
  */
-typedef struct _fluid_mdriver_definition_t
+struct _fluid_mdriver_definition_t
 {
     const char *name;
     fluid_midi_driver_t *(*new)(fluid_settings_t *settings,
@@ -33,7 +33,7 @@ typedef struct _fluid_mdriver_definition_t
                                 void *event_handler_data);
     void (*free)(fluid_midi_driver_t *p);
     void (*settings)(fluid_settings_t *settings);
-} fluid_mdriver_definition_t;
+};
 
 
 static const fluid_mdriver_definition_t fluid_midi_drivers[] =
