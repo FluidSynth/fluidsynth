@@ -36,29 +36,29 @@ matrix:
 
     - os: linux
       env:
-        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7 && sudo apt-get install $CC"
 
     - os: linux
       env:
-        - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
+        - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8 && sudo apt-get install $CC"
         - CMAKE_FLAGS="-Denable-debug=1 -DCMAKE_C_FLAGS_DEBUG=-fuse-ld=gold"
 
     - os: linux
       env:
-        - MATRIX_EVAL="CC=clang-3.8 && CXX=clang++-3.8"
+        - MATRIX_EVAL="CC=clang-3.8 && CXX=clang++-3.8 && sudo apt-get install $CC"
 
     - os: linux
       env:
-        - MATRIX_EVAL="CC=clang-6.0 && CXX=clang++-6.0"
+        - MATRIX_EVAL="CC=clang-6.0 && CXX=clang++-6.0 && sudo apt-get install $CC"
 
     - os: linux
       env:
-        - MATRIX_EVAL="CC=clang-7 && CXX=clang++-7"
+        - MATRIX_EVAL="CC=clang-7 && CXX=clang++-7 && sudo apt-get install $CC"
 
 before_install:
-    - eval "${MATRIX_EVAL}"
-    - if [ $TRAVIS_OS_NAME = linux ]; then sudo apt-get update && sudo apt-get $CC; else brew update; fi
+    - if [ $TRAVIS_OS_NAME = linux ]; then sudo apt-get update; else brew update; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install glib gettext libsndfile jack dbus-glib pulseaudio portaudio; fi # && brew link gettext
+    - eval "${MATRIX_EVAL}"
     
 before_script:
     - mkdir $HOME/fluidsynth_install/
