@@ -5,12 +5,13 @@ addons:
   apt:
     sources:
     - ubuntu-toolchain-r-test
-    - llvm-toolchain-precise-3.8
+    - llvm-toolchain-trusty-3.8
     - llvm-toolchain-trusty-6.0
     - llvm-toolchain-trusty-7
     packages:
     - g++-7
     - g++-8
+    - clang-3.8
     - clang-6.0
     - clang-7
     - cmake-data
@@ -38,8 +39,6 @@ matrix:
   include:
     - os: osx
       osx_image: xcode10
-      env:
-        - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
 
     - os: linux
       env:
@@ -48,7 +47,6 @@ matrix:
     - os: linux
       env:
         - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
-        - CMAKE_FLAGS="-Denable-debug=1"
 
     - os: linux
       env:
@@ -61,10 +59,11 @@ matrix:
     - os: linux
       env:
         - MATRIX_EVAL="CC=clang-7 && CXX=clang++-7"
+        - CMAKE_FLAGS="-Denable-debug=1"
 
 before_install:
     - if [ $TRAVIS_OS_NAME = linux ]; then sudo apt-get update; else brew update; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install gcc glib gettext libsndfile jack dbus-glib pulseaudio portaudio && brew link gettext; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install glib gettext libsndfile jack dbus-glib pulseaudio portaudio; fi # && brew link gettext
     - eval "${MATRIX_EVAL}"
     
 before_script:
