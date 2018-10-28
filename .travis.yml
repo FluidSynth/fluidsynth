@@ -6,17 +6,12 @@ addons:
     sources:
     - ubuntu-toolchain-r-test
     - llvm-toolchain-precise-3.8
-    - llvm-toolchain-trusty-4.0
-    - llvm-toolchain-trusty-5.0
     - llvm-toolchain-trusty-6.0
     - llvm-toolchain-trusty-7
     packages:
     - g++-4.8
-    - g++-6
     - g++-7
     - g++-8
-    - clang-4.0
-    - clang-5.0
     - clang-6.0
     - clang-7
     - cmake-data
@@ -33,7 +28,6 @@ env:
     - CMAKE_FLAGS="-Denable-profiling=1"
     - CMAKE_FLAGS="-Denable-floats=1 -Denable-profiling=1"
     - CMAKE_FLAGS="-Denable-floats=0"
-    - CMAKE_FLAGS="-Denable-debug=1"
     - CMAKE_FLAGS="-Denable-trap-on-fpe=1"
     - CMAKE_FLAGS="-Denable-fpe-check=1"
     - CMAKE_FLAGS="-Denable-ipv6=0"
@@ -54,28 +48,17 @@ matrix:
 
     - os: linux
       env:
-        - MATRIX_EVAL="CC=gcc-6 && CXX=g++-6"
-
-    - os: linux
-      env:
         - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
         
     - os: linux
       env:
         - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
+        - CMAKE_FLAGS="-Denable-debug=1"
 
     - os: linux
       env:
         - MATRIX_EVAL="CC=clang-3.8 && CXX=clang++-3.8"
-
-    - os: linux
-      env:
-        - MATRIX_EVAL="CC=clang-4.0 && CXX=clang++-4.0"
-
-    - os: linux
-      env:
-        - MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0"
-
+        
     - os: linux
       env:
         - MATRIX_EVAL="CC=clang-6.0 && CXX=clang++-6.0"
@@ -86,7 +69,7 @@ matrix:
 
 before_install:
     - if [ $TRAVIS_OS_NAME = linux ]; then sudo apt-get update; else brew update; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install gcc glib gettext libsndfile jack dbus-glib pulseaudio portaudio; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install gcc glib gettext libsndfile jack dbus-glib pulseaudio portaudio && brew link gettext; fi
     - eval "${MATRIX_EVAL}"
     
 before_script:
@@ -94,7 +77,7 @@ before_script:
     - mkdir build && cd build
     
 script:
-    - cmake -DCMAKE_INSTALL_PREFIX=$HOME/fluidsynth_install ${CMAKE_FLAGS} -Denable-portaudio=1 -Denable-ladspa=1 -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_VERBOSE_MAKEFILE=1 ..
+    - cmake -DCMAKE_INSTALL_PREFIX=$HOME/fluidsynth_install ${CMAKE_FLAGS} -Denable-portaudio=1 -Denable-ladspa=1 -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_VERBOSE_MAKEFILE=0 ..
     - make -j4
     - make check
     - if [ $TRAVIS_OS_NAME = linux ]; then make install; fi # install only on linux, as CMAKE_INSTALL_PREFIX is ignored for frameworks on macosx and I cant tell whether that's correct or a bug.
