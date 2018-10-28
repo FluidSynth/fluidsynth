@@ -12,6 +12,11 @@ env:
     - CMAKE_FLAGS="-DBUILD_SHARED_LIBS=0"
 matrix:
   include:
+    - os: osx
+      osx_image: xcode10
+      env:
+        - MATRIX_EVAL="brew install gcc glib gettext libsndfile jack dbus-glib pulseaudio portaudio && brew link gettext && CC=gcc-8 && CXX=g++-8"
+
     - os: linux
       addons:
         apt:
@@ -198,21 +203,6 @@ matrix:
             - ladspa-sdk
       env:
         - MATRIX_EVAL="CC=clang-7 && CXX=clang++-7"
-        
-    - os: osx
-      osx_image: xcode8
-      env:
-        - MATRIX_EVAL="brew install gcc5 glib gettext && brew link gettext && CC=gcc-5 && CXX=g++-5" # gettext should provide libintl, but doesnt work
-
-    - os: osx
-      osx_image: xcode8
-      env:
-        - MATRIX_EVAL="brew install gcc6 glib gettext && brew link gettext && CC=gcc-6 && CXX=g++-6"
-
-    - os: osx
-      osx_image: xcode8
-      env:
-        - MATRIX_EVAL="brew install gcc glib gettext libsndfile jack dbus-glib pulseaudio portaudio && brew link gettext && CC=gcc-8 && CXX=g++-8"
 
 before_install:
     - if [ $TRAVIS_OS_NAME = linux ]; then sudo apt-get update; else brew update; fi
