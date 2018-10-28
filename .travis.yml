@@ -8,11 +8,6 @@ addons:
     - llvm-toolchain-trusty-6.0
     - llvm-toolchain-trusty-7
     packages:
-    - g++-7
-    - g++-8
-    - clang-3.8
-    - clang-6.0
-    - clang-7
     - cmake-data
     - cmake
     - libglib2.0-0
@@ -42,23 +37,43 @@ matrix:
     - os: linux
       env:
         - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+      addons:
+        apt:
+          packages:
+          - g++-7
 
     - os: linux
       env:
         - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
         - CMAKE_FLAGS="-Denable-debug=1 -DCMAKE_C_FLAGS_DEBUG=-fuse-ld=gold"
+      addons:
+        apt:
+          packages:
+          - g++-8
 
     - os: linux
       env:
         - MATRIX_EVAL="CC=clang-3.8 && CXX=clang++-3.8"
+      addons:
+        apt:
+          packages:
+          - clang-3.8
 
     - os: linux
       env:
         - MATRIX_EVAL="CC=clang-6.0 && CXX=clang++-6.0"
+      addons:
+        apt:
+          packages:
+          - clang-6.0
 
     - os: linux
       env:
         - MATRIX_EVAL="CC=clang-7 && CXX=clang++-7"
+      addons:
+        apt:
+          packages:
+          - clang-7
 
 before_install:
     - if [ $TRAVIS_OS_NAME = linux ]; then sudo apt-get update; else brew update; fi
