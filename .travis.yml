@@ -37,48 +37,28 @@ matrix:
     - os: linux
       env:
         - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
-      addons:
-        apt:
-          packages:
-          - g++-7
 
     - os: linux
       env:
         - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
         - CMAKE_FLAGS="-Denable-debug=1 -DCMAKE_C_FLAGS_DEBUG=-fuse-ld=gold"
-      addons:
-        apt:
-          packages:
-          - g++-8
 
     - os: linux
       env:
         - MATRIX_EVAL="CC=clang-3.8 && CXX=clang++-3.8"
-      addons:
-        apt:
-          packages:
-          - clang-3.8
 
     - os: linux
       env:
         - MATRIX_EVAL="CC=clang-6.0 && CXX=clang++-6.0"
-      addons:
-        apt:
-          packages:
-          - clang-6.0
 
     - os: linux
       env:
         - MATRIX_EVAL="CC=clang-7 && CXX=clang++-7"
-      addons:
-        apt:
-          packages:
-          - clang-7
 
 before_install:
-    - if [ $TRAVIS_OS_NAME = linux ]; then sudo apt-get update; else brew update; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install glib gettext libsndfile jack dbus-glib pulseaudio portaudio; fi # && brew link gettext
     - eval "${MATRIX_EVAL}"
+    - if [ $TRAVIS_OS_NAME = linux ]; then sudo apt-get update && sudo apt-get $CC; else brew update; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install glib gettext libsndfile jack dbus-glib pulseaudio portaudio; fi # && brew link gettext
     
 before_script:
     - mkdir $HOME/fluidsynth_install/
