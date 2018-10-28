@@ -5,7 +5,6 @@ addons:
   apt:
     sources:
     - ubuntu-toolchain-r-test
-    - llvm-toolchain-trusty-3.8
     - llvm-toolchain-trusty-6.0
     - llvm-toolchain-trusty-7
     packages:
@@ -43,15 +42,16 @@ matrix:
     - os: linux
       env:
         - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
-        
+
     - os: linux
       env:
         - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
+        - CMAKE_FLAGS="-Denable-debug=1 -DCMAKE_C_FLAGS_DEBUG=-fuse-ld=gold"
 
     - os: linux
       env:
         - MATRIX_EVAL="CC=clang-3.8 && CXX=clang++-3.8"
-        
+
     - os: linux
       env:
         - MATRIX_EVAL="CC=clang-6.0 && CXX=clang++-6.0"
@@ -59,7 +59,6 @@ matrix:
     - os: linux
       env:
         - MATRIX_EVAL="CC=clang-7 && CXX=clang++-7"
-        - CMAKE_FLAGS="-Denable-debug=1"
 
 before_install:
     - if [ $TRAVIS_OS_NAME = linux ]; then sudo apt-get update; else brew update; fi
