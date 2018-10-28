@@ -9,7 +9,6 @@ addons:
     - llvm-toolchain-trusty-6.0
     - llvm-toolchain-trusty-7
     packages:
-    - g++-4.8
     - g++-7
     - g++-8
     - clang-6.0
@@ -41,10 +40,6 @@ matrix:
       osx_image: xcode10
       env:
         - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
-
-    - os: linux
-      env:
-        - MATRIX_EVAL="CC=gcc-4.8 && CXX=g++-4.8"
 
     - os: linux
       env:
