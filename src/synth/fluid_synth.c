@@ -95,8 +95,6 @@ static fluid_voice_t *fluid_synth_free_voice_by_kill_LOCAL(fluid_synth_t *synth)
 static void fluid_synth_kill_by_exclusive_class_LOCAL(fluid_synth_t *synth,
         fluid_voice_t *new_voice);
 static int fluid_synth_sfunload_callback(void *data, unsigned int msec);
-void fluid_synth_release_voice_on_same_note_LOCAL(fluid_synth_t *synth,
-        int chan, int key);
 static fluid_tuning_t *fluid_synth_get_tuning(fluid_synth_t *synth,
         int bank, int prog);
 static int fluid_synth_replace_tuning_LOCK(fluid_synth_t *synth,
@@ -147,7 +145,6 @@ static int fluid_synth_set_chorus_full_LOCAL(fluid_synth_t *synth, int set, int 
 /* has the synth module been initialized? */
 /* fluid_atomic_int_t may be anything, so init with {0} to catch most cases */
 static fluid_atomic_int_t fluid_synth_initialized = {0};
-static void fluid_synth_init(void);
 
 /* default modulators
  * SF2.01 page 52 ff:
