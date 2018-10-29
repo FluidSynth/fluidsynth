@@ -74,7 +74,7 @@ fluid_audio_driver_t*
 new_fluid_opensles_audio_driver2(fluid_settings_t* settings,
 		fluid_audio_func_t func,
 		void* data);
-int delete_fluid_opensles_audio_driver(fluid_audio_driver_t* p);
+void delete_fluid_opensles_audio_driver(fluid_audio_driver_t* p);
 void fluid_opensles_audio_driver_settings(fluid_settings_t* settings);
 #endif
 
