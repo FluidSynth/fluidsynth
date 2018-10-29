@@ -8,7 +8,7 @@ ABIS_SIMPLE = x86 x86-64 armv7 arm64
 
 DIST_PATH=$(CERBERO)/build/dist
 
-all: prepare build
+all: build
 
 .PHONY: prepare
 prepare: $(CERBERO)
