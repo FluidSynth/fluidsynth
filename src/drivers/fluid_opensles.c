@@ -77,11 +77,11 @@ fluid_audio_driver_t* new_fluid_opensles_audio_driver(fluid_settings_t* settings
 						   fluid_synth_t* synth);
 fluid_audio_driver_t* new_fluid_opensles_audio_driver2(fluid_settings_t* settings,
 						    fluid_audio_func_t func, void* data);
-int delete_fluid_opensles_audio_driver(fluid_audio_driver_t* p);
+void delete_fluid_opensles_audio_driver(fluid_audio_driver_t* p);
 void fluid_opensles_audio_driver_settings(fluid_settings_t* settings);
-static void fluid_opensles_audio_run(void* d);
-static void fluid_opensles_audio_run2(void* d);
-static void fluid_opensles_callback(SLAndroidSimpleBufferQueueItf caller, void *pContext);
+static fluid_thread_return_t fluid_opensles_audio_run(void* d);
+static fluid_thread_return_t fluid_opensles_audio_run2(void* d);
+static void opensles_callback(SLAndroidSimpleBufferQueueItf caller, void *pContext);
 void fluid_opensles_adjust_latency(fluid_opensles_audio_driver_t* dev);
 
 
@@ -114,9 +114,9 @@ new_fluid_opensles_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t 
   double sample_rate;
   int period_size;
   int realtime_prio = 0;
-  int err;
   int is_sample_format_float;
-  int use_callback_mode;
+  int use_callback_mode = 0;
+  SLEngineItf engine_interface;
 
   fluid_synth_t* synth = (fluid_synth_t*) data;
 
@@ -151,7 +151,6 @@ new_fluid_opensles_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t 
   result = (*dev->engine)->Realize (dev->engine, SL_BOOLEAN_FALSE);
   if (result != 0) goto error_recovery;
   
-  SLEngineItf engine_interface;
   result = (*dev->engine)->GetInterface (dev->engine, SL_IID_ENGINE, &engine_interface);
   if (result != 0) goto error_recovery;
 
@@ -237,7 +236,7 @@ new_fluid_opensles_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t 
       }
     }
 
-    result = (*dev->player_buffer_queue_interface)->RegisterCallback(dev->player_buffer_queue_interface, fluid_opensles_callback, dev);
+    result = (*dev->player_buffer_queue_interface)->RegisterCallback(dev->player_buffer_queue_interface, opensles_callback, dev);
     if (result != 0) goto error_recovery;
 
     if (dev->is_sample_format_float)
@@ -270,12 +269,12 @@ new_fluid_opensles_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t 
   return NULL;
 }
 
-int delete_fluid_opensles_audio_driver(fluid_audio_driver_t* p)
+void delete_fluid_opensles_audio_driver(fluid_audio_driver_t* p)
 {
   fluid_opensles_audio_driver_t* dev = (fluid_opensles_audio_driver_t*) p;
 
   if (dev == NULL) {
-    return FLUID_OK;
+    return;
   }
 
   dev->cont = 0;
@@ -311,21 +310,20 @@ int delete_fluid_opensles_audio_driver(fluid_audio_driver_t* p)
   }
 
   FLUID_FREE(dev);
-
-  return FLUID_OK;
 }
 
+/* FIXME: this causes crash on x86 etc. It should be revised anyways. */
 void fluid_opensles_adjust_latency(fluid_opensles_audio_driver_t* dev)
 {
   struct timespec ts;
-  long current_time, wait_in_theory;
+  long current_time, wait_in_theory, time_delta;
 
   wait_in_theory = 1000000 * dev->buffer_size / dev->sample_rate;
 
   /* compute delta time and update 'next expected enqueue' time */
   clock_gettime(CLOCK_REALTIME, &ts);
   current_time = ts.tv_sec * 1000000 + ts.tv_nsec / 1000;
-  long time_delta = dev->next_expected_enqueue_time == 0 ? 0 : dev->next_expected_enqueue_time - current_time;
+  time_delta = dev->next_expected_enqueue_time == 0 ? 0 : dev->next_expected_enqueue_time - current_time;
   if (time_delta == 0)
     dev->next_expected_enqueue_time += current_time + wait_in_theory;
   else
@@ -335,7 +333,7 @@ void fluid_opensles_adjust_latency(fluid_opensles_audio_driver_t* dev)
     usleep (time_delta);
 }
 
-void fluid_opensles_callback(SLAndroidSimpleBufferQueueItf caller, void *pContext)
+void opensles_callback(SLAndroidSimpleBufferQueueItf caller, void *pContext)
 {
   fluid_opensles_audio_driver_t* dev = (fluid_opensles_audio_driver_t*) pContext;
 
@@ -389,7 +387,7 @@ void fluid_opensles_callback(SLAndroidSimpleBufferQueueItf caller, void *pContex
 }
 
 /* Thread without audio callback, more efficient */
-static void
+static fluid_thread_return_t
 fluid_opensles_audio_run(void* d)
 {
   fluid_opensles_audio_driver_t* dev = (fluid_opensles_audio_driver_t*) d;
@@ -410,11 +408,9 @@ fluid_opensles_audio_run(void* d)
   if (short_buf == NULL && float_buf == NULL)
   {
     FLUID_LOG(FLUID_ERR, "Out of memory.");
-    return;
+    return NULL;
   }
 
-  int cnt = 0;
-  
   while (dev->cont)
   {
     fluid_opensles_adjust_latency (dev);
@@ -441,6 +437,8 @@ fluid_opensles_audio_run(void* d)
     FLUID_FREE(float_buf);
   else
     FLUID_FREE(short_buf);
+
+  return NULL;
 }
 
 #endif
