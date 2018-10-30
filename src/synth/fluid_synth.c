@@ -3939,7 +3939,7 @@ fluid_synth_write_s16(fluid_synth_t *synth, int len,
  * @note Currently private to libfluidsynth.
  */
 void
-fluid_synth_dither_s16(int *dither_index, int len, float *lin, float *rin,
+fluid_synth_dither_s16(int *dither_index, int len, const float *lin, const float *rin,
                        void *lout, int loff, int lincr,
                        void *rout, int roff, int rincr)
 {
