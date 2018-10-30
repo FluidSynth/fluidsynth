@@ -80,7 +80,7 @@ enum
 static union fluid_idlist
 {
     const char c[116];
-    const unsigned int i;
+    const uint32_t i;
 } idlist = {"RIFFLISTsfbkINFOsdtapdtaifilisngINAMiromiverICRDIENGIPRD"
             "ICOPICMTISFTsnamsmplphdrpbagpmodpgeninstibagimodigenshdrsm24"
            };
@@ -288,7 +288,7 @@ static int load_shdr(SFData *sf, unsigned int size);
 static int fixup_pgen(SFData *sf);
 static int fixup_igen(SFData *sf);
 
-static int chunkid(unsigned int id);
+static int chunkid(uint32_t id);
 static int read_listchunk(SFData *sf, SFChunk *chunk);
 static int pdtahelper(SFData *sf, unsigned int expid, unsigned int reclen, SFChunk *chunk, int *size);
 static int preset_compare_func(void *a, void *b);
@@ -490,10 +490,10 @@ void fluid_sffile_close(SFData *sf)
  */
 
 /* sound font file load functions */
-static int chunkid(unsigned int id)
+static int chunkid(uint32_t id)
 {
     unsigned int i;
-    const unsigned int *p;
+    const uint32_t *p;
 
     p = &idlist.i;
 
