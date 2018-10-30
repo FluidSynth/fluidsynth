@@ -144,7 +144,7 @@ fluid_audio_driver_t *
 new_fluid_core_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
 {
     return new_fluid_core_audio_driver2(settings,
-                                        fluid_synth_process,
+                                        NULL,
                                         synth);
 }
 
