@@ -77,12 +77,12 @@ void delete_fluid_opensles_audio_driver(fluid_audio_driver_t* p);
 void fluid_opensles_audio_driver_settings(fluid_settings_t* settings);
 static fluid_thread_return_t fluid_opensles_audio_run(void* d);
 static void opensles_callback(SLAndroidSimpleBufferQueueItf caller, void *pContext);
-void fluid_opensles_adjust_latency(fluid_opensles_audio_driver_t* dev);
+void adjust_latency(fluid_opensles_audio_driver_t* dev);
 void process_fluid_buffer(fluid_opensles_audio_driver_t* dev);
 
 void fluid_opensles_audio_driver_settings(fluid_settings_t* settings)
 {
-  fluid_settings_register_int(settings, "audio.opensles.use-callback-mode", 0, 0, 1,
+  fluid_settings_register_int(settings, "audio.opensles.use-callback-mode", 1, 0, 1,
                               FLUID_HINT_TOGGLED);
 }
 
@@ -110,7 +110,7 @@ new_fluid_opensles_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t 
   int period_size;
   int realtime_prio = 0;
   int is_sample_format_float;
-  int use_callback_mode = 1;
+  int use_callback_mode = 0;
   SLEngineItf engine_interface;
 
   fluid_synth_t* synth = (fluid_synth_t*) data;
@@ -280,7 +280,7 @@ void delete_fluid_opensles_audio_driver(fluid_audio_driver_t* p)
 }
 
 /* FIXME: this causes crash on x86 etc. It should be revised anyways. */
-void fluid_opensles_adjust_latency(fluid_opensles_audio_driver_t* dev)
+void adjust_latency(fluid_opensles_audio_driver_t* dev)
 {
   struct timespec ts;
   long current_time, wait_in_theory, time_delta;
@@ -305,8 +305,6 @@ void opensles_callback(SLAndroidSimpleBufferQueueItf caller, void *pContext)
   fluid_opensles_audio_driver_t* dev = (fluid_opensles_audio_driver_t*) pContext;
   int err;
   SLresult result;
-
-  fluid_opensles_adjust_latency(dev);
 
   process_fluid_buffer(dev);
 
@@ -337,7 +335,7 @@ fluid_opensles_audio_run(void* d)
 
   while (dev->cont)
   {
-    fluid_opensles_adjust_latency (dev);
+    adjust_latency (dev);
 
     process_fluid_buffer(dev);
 
