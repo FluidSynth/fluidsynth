@@ -57,11 +57,7 @@ typedef struct {
 
   /* used only by callback mode */
   short* sles_buffer_short;
-  short* short_callback_buffer_l;
-  short* short_callback_buffer_r;
   float* sles_buffer_float;
-  float* float_callback_buffer_l;
-  float* float_callback_buffer_r;
   fluid_audio_func_t callback;
   /* used only by non-callback mode */
   fluid_thread_t *thread;
@@ -80,7 +76,6 @@ fluid_audio_driver_t* new_fluid_opensles_audio_driver2(fluid_settings_t* setting
 void delete_fluid_opensles_audio_driver(fluid_audio_driver_t* p);
 void fluid_opensles_audio_driver_settings(fluid_settings_t* settings);
 static fluid_thread_return_t fluid_opensles_audio_run(void* d);
-static fluid_thread_return_t fluid_opensles_audio_run2(void* d);
 static void opensles_callback(SLAndroidSimpleBufferQueueItf caller, void *pContext);
 void fluid_opensles_adjust_latency(fluid_opensles_audio_driver_t* dev);
 
@@ -213,29 +208,6 @@ new_fluid_opensles_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t 
     return NULL;
     }
 
-    if (dev->callback) {
-
-      if (dev->is_sample_format_float)
-        dev->float_callback_buffer_l = FLUID_ARRAY(float, dev->period_frames);
-      else
-        dev->short_callback_buffer_l = FLUID_ARRAY(short, dev->period_frames);
-      if (dev->float_callback_buffer_l == NULL && dev->short_callback_buffer_l == NULL)
-      {
-        FLUID_LOG(FLUID_ERR, "Out of memory.");
-        return NULL;
-      }
-    
-      if (dev->is_sample_format_float)
-        dev->float_callback_buffer_r = FLUID_ARRAY(float, dev->period_frames);
-      else
-        dev->short_callback_buffer_r = FLUID_ARRAY(short, dev->period_frames);
-      if (dev->float_callback_buffer_r == NULL && dev->short_callback_buffer_r == NULL)
-      {
-        FLUID_LOG(FLUID_ERR, "Out of memory.");
-        return NULL;
-      }
-    }
-
     result = (*dev->player_buffer_queue_interface)->RegisterCallback(dev->player_buffer_queue_interface, opensles_callback, dev);
     if (result != 0) goto error_recovery;
 
@@ -293,17 +265,9 @@ void delete_fluid_opensles_audio_driver(fluid_audio_driver_t* p)
   
   if (dev->use_callback_mode) {
     if (dev->is_sample_format_float) {
-      if (dev->float_callback_buffer_l)
-        FLUID_FREE(dev->float_callback_buffer_l);
-      if (dev->float_callback_buffer_r)
-        FLUID_FREE(dev->float_callback_buffer_r);
       if (dev->sles_buffer_float)
         FLUID_FREE(dev->sles_buffer_float);
     } else {
-      if (dev->short_callback_buffer_l)
-        FLUID_FREE(dev->short_callback_buffer_l);
-      if (dev->short_callback_buffer_r)
-        FLUID_FREE(dev->short_callback_buffer_r);
       if (dev->sles_buffer_short)
         FLUID_FREE(dev->sles_buffer_short);
     }
@@ -340,7 +304,6 @@ void opensles_callback(SLAndroidSimpleBufferQueueItf caller, void *pContext)
   short *out_short = dev->sles_buffer_short;
   float *out_float = dev->sles_buffer_float;
   int period_frames;
-  int i, k;
   int err;
   float *float_callback_buffers[2];
   short *short_callback_buffers[2];
@@ -350,54 +313,43 @@ void opensles_callback(SLAndroidSimpleBufferQueueItf caller, void *pContext)
 
   fluid_opensles_adjust_latency(dev);
 
-  if (dev->callback)
+  if (dev->is_sample_format_float)
   {
-    if (dev->is_sample_format_float) {
-      float* left = dev->float_callback_buffer_l;
-      float* right = dev->float_callback_buffer_r;
-      float_callback_buffers [0] = left;
-      float_callback_buffers [1] = right;
+    if (dev->callback)
+    {
+      float_callback_buffers [0] = out_float;
+      float_callback_buffers [1] = out_float;
 
       (*dev->callback)(dev->data, period_frames, 0, NULL, 2, float_callback_buffers);
-
-      for (i = 0, k = 0; i < period_frames; i++) {
-        out_float[k++] = left[i];
-        out_float[k++] = right[i];
-      }
-    } else {
-      short* left = dev->short_callback_buffer_l;
-      short* right = dev->short_callback_buffer_r;
-      short_callback_buffers [0] = left;
-      short_callback_buffers [1] = right;
-
-      (*dev->callback)(dev->data, period_frames, 0, NULL, 2, (float**) short_callback_buffers);
-
-      for (i = 0, k = 0; i < period_frames; i++) {
-        out_short[k++] = left[i];
-        out_short[k++] = right[i];
-      }
-	}
-  }
-  else {
-    if (dev->is_sample_format_float)
-      fluid_synth_write_float(dev->data, period_frames, out_float, 0, 2, out_float, 1, 2);
+    }
     else
-      fluid_synth_write_s16(dev->data, period_frames, out_short, 0, 2, out_short, 1, 2);
-  }
-  
-  if (dev->is_sample_format_float)
+      fluid_synth_write_float(dev->data, period_frames, out_float, 0, 2, out_float, 1, 2);
+
     result = (*caller)->Enqueue (
     dev->player_buffer_queue_interface, out_float, period_frames * sizeof (float) * NUM_CHANNELS);
+  }
   else
+  {
+    if (dev->callback)
+    {
+      short_callback_buffers [0] = out_short;
+      short_callback_buffers [1] = out_short;
+
+      (*dev->callback)(dev->data, period_frames, 0, NULL, 2, (float**) short_callback_buffers);
+	}
+    else
+      fluid_synth_write_s16(dev->data, period_frames, out_short, 0, 2, out_short, 1, 2);
+
     result = (*caller)->Enqueue (
     dev->player_buffer_queue_interface, out_short, period_frames * sizeof (short) * NUM_CHANNELS);
+  }
+  
   if (result != 0) {
     err = result;
     /* Do not simply break at just one single insufficient buffer. Go on. */
   }
 }
 
-/* Thread without audio callback, more efficient */
 static fluid_thread_return_t
 fluid_opensles_audio_run(void* d)
 {
@@ -410,7 +362,6 @@ fluid_opensles_audio_run(void* d)
 
   period_frames = dev->period_frames;
 
-  /* FIXME - Probably shouldn't alloc in run() */
   if (dev->is_sample_format_float)
     float_buf = FLUID_ARRAY(float, period_frames * NUM_CHANNELS);
   else
