@@ -115,7 +115,7 @@ new_fluid_opensles_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t 
   int period_size;
   int realtime_prio = 0;
   int is_sample_format_float;
-  int use_callback_mode = 0;
+  int use_callback_mode = 1;
   SLEngineItf engine_interface;
 
   fluid_synth_t* synth = (fluid_synth_t*) data;
@@ -425,6 +425,11 @@ fluid_opensles_audio_run(void* d)
   while (dev->cont)
   {
     fluid_opensles_adjust_latency (dev);
+
+    /* FIXME: this should respect fluidsynth 'callback'.
+     * but we should revise callback implementation first
+     * so that we could reduce extraneous buffer variables.
+     */
 
     /* it seems that the synth keeps emitting synthesized buffers even if there is no sound. So keep feeding... */
     if (dev->is_sample_format_float)
