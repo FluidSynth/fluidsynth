@@ -116,7 +116,8 @@ new_fluid_opensles_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t 
   fluid_synth_t* synth = (fluid_synth_t*) data;
 
   dev = FLUID_NEW(fluid_opensles_audio_driver_t);
-  if (dev == NULL) {
+  if (dev == NULL)
+  {
     FLUID_LOG(FLUID_ERR, "Out of memory");
     return NULL;
   }
@@ -197,31 +198,39 @@ new_fluid_opensles_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t 
   if (result != 0) goto error_recovery;
 
   if (dev->is_sample_format_float)
+  {
     dev->sles_buffer_float = FLUID_ARRAY(float, dev->period_frames * NUM_CHANNELS);
+  }
   else
+  {
     dev->sles_buffer_short = FLUID_ARRAY(short, dev->period_frames * NUM_CHANNELS);
+  }
   if (dev->sles_buffer_float == NULL && dev->sles_buffer_short == NULL)
   {
     FLUID_LOG(FLUID_ERR, "Out of memory.");
     goto error_recovery;
   }
 
-  if (dev->use_callback_mode) {
-
+  if (dev->use_callback_mode)
+  {
     result = (*dev->player_buffer_queue_interface)->RegisterCallback(dev->player_buffer_queue_interface, opensles_callback, dev);
     if (result != 0) goto error_recovery;
 
     if (dev->is_sample_format_float)
+    {
       (*dev->player_buffer_queue_interface)->Enqueue(dev->player_buffer_queue_interface, dev->sles_buffer_float, dev->period_frames * NUM_CHANNELS * sizeof(float));
+    }
     else
+    {
       (*dev->player_buffer_queue_interface)->Enqueue(dev->player_buffer_queue_interface, dev->sles_buffer_short, dev->period_frames * NUM_CHANNELS * sizeof(short));
-
+    }
     (*dev->audio_player_interface)->SetCallbackEventsMask(dev->audio_player_interface, SL_PLAYEVENT_HEADATEND);
     result = (*dev->audio_player_interface)->SetPlayState(dev->audio_player_interface, SL_PLAYSTATE_PLAYING);
     if (result != 0) goto error_recovery;
 
-  } else { /* non-callback mode */
-
+  }
+  else /* non-callback mode */
+  {
     result = (*dev->audio_player_interface)->SetPlayState(dev->audio_player_interface, SL_PLAYSTATE_PLAYING);
     if (result != 0) goto error_recovery;
 
@@ -246,35 +255,23 @@ void delete_fluid_opensles_audio_driver(fluid_audio_driver_t* p)
 {
   fluid_opensles_audio_driver_t* dev = (fluid_opensles_audio_driver_t*) p;
 
-  if (dev == NULL) {
+  if (dev == NULL)
     return;
-  }
 
   dev->cont = 0;
 
-  if (!dev->use_callback_mode)
-  {
-    if (dev->thread)
-      fluid_thread_join (dev->thread);
-  }
-
+  if (dev->thread)
+    fluid_thread_join (dev->thread);
   if (dev->audio_player)
     (*dev->audio_player)->Destroy (dev->audio_player);
   if (dev->output_mix_object)
     (*dev->output_mix_object)->Destroy (dev->output_mix_object);
   if (dev->engine)
-    (*dev->engine)->Destroy (dev->engine);
-  
-  if (dev->is_sample_format_float)
-  {
-    if (dev->sles_buffer_float)
-      FLUID_FREE(dev->sles_buffer_float);
-  }
-  else
-  {
-    if (dev->sles_buffer_short)
-      FLUID_FREE(dev->sles_buffer_short);
-  }
+    (*dev->engine)->Destroy (dev->engine);  
+  if (dev->sles_buffer_float)
+    FLUID_FREE(dev->sles_buffer_float);
+  if (dev->sles_buffer_short)
+    FLUID_FREE(dev->sles_buffer_short);
  
   FLUID_FREE(dev);
 }
@@ -296,12 +293,18 @@ void adjust_latency(fluid_opensles_audio_driver_t* dev)
   current_time = ts.tv_sec * 1000000 + ts.tv_nsec / 1000;
   time_delta = dev->next_expected_enqueue_time == 0 ? 0 : dev->next_expected_enqueue_time - current_time;
   if (time_delta == 0)
+  {
     dev->next_expected_enqueue_time += current_time + wait_in_theory;
+  }
   else
+  {
     dev->next_expected_enqueue_time += wait_in_theory;
+  }
   /* take some sleep only if it's running ahead */
   if (time_delta > 0)
+  {
     usleep (time_delta);
+  }
 }
 
 void opensles_callback(SLAndroidSimpleBufferQueueItf caller, void *pContext)
@@ -313,13 +316,17 @@ void opensles_callback(SLAndroidSimpleBufferQueueItf caller, void *pContext)
   process_fluid_buffer(dev);
 
   if (dev->is_sample_format_float)
+  {
     result = (*caller)->Enqueue (
     dev->player_buffer_queue_interface, dev->sles_buffer_float, dev->period_frames * sizeof (float) * NUM_CHANNELS);
+  }
   else
+  {
     result = (*caller)->Enqueue (
     dev->player_buffer_queue_interface, dev->sles_buffer_short, dev->period_frames * sizeof (short) * NUM_CHANNELS);
-  
-  if (result != 0) {
+  }
+  if (result != 0)
+  {
     err = result;
     /* Do not simply break at just one single insufficient buffer. Go on. */
   }
@@ -344,12 +351,17 @@ fluid_opensles_audio_run(void* d)
     process_fluid_buffer(dev);
 
     if (dev->is_sample_format_float)
+    {
       result = (*dev->player_buffer_queue_interface)->Enqueue (
       dev->player_buffer_queue_interface, out_float, period_frames * sizeof (float) * NUM_CHANNELS);
+    }
     else
+    {
       result = (*dev->player_buffer_queue_interface)->Enqueue (
       dev->player_buffer_queue_interface, out_short, period_frames * sizeof (short) * NUM_CHANNELS);
-    if (result != 0) {
+    }
+    if (result != 0)
+    {
       err = result;
       /* Do not simply break at just one single insufficient buffer. Go on. */
     }
@@ -376,7 +388,9 @@ void process_fluid_buffer(fluid_opensles_audio_driver_t* dev)
       (*dev->callback)(dev->synth, period_frames, 0, NULL, 2, float_callback_buffers);
     }
     else
+    {
       fluid_synth_write_float(dev->synth, period_frames, out_float, 0, 2, out_float, 1, 2);
+    }
   }
   else
   {
@@ -388,7 +402,9 @@ void process_fluid_buffer(fluid_opensles_audio_driver_t* dev)
       (*dev->callback)(dev->synth, period_frames, 0, NULL, 2, (float**) short_callback_buffers);
 	}
     else
-      fluid_synth_write_s16(dev->synth, period_frames, out_short, 0, 2, out_short, 1, 2);
+    {
+	  fluid_synth_write_s16(dev->synth, period_frames, out_short, 0, 2, out_short, 1, 2);
+	}
   }
 }
 
