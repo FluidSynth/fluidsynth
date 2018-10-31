@@ -128,8 +128,6 @@ else ()
 		set ( CMAKE_C_VISIBILITY_PRESET hidden )
 	endif ( NOT OS2 )
 endif ( CMAKE_C_VISIBILITY_OVERRIDE )
-# enforce visibility control for all types of cmake targets
-cmake_policy ( SET CMP0063 NEW )
 
 # enforce visibility control for all types of cmake targets
 if ( POLICY CMP0063 )

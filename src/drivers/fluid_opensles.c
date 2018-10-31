@@ -279,7 +279,11 @@ void delete_fluid_opensles_audio_driver(fluid_audio_driver_t* p)
   FLUID_FREE(dev);
 }
 
-/* FIXME: this causes crash on x86 etc. It should be revised anyways. */
+/*
+ * FIXME:
+ * This causes crash on x86 etc. It should be avoided anyways. 
+ * Only non-callback mode uses this function.
+ */
 void adjust_latency(fluid_opensles_audio_driver_t* dev)
 {
   struct timespec ts;
