@@ -584,7 +584,7 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             <type>bool</type>
             <def>0 (FALSE)</def>
             <desc>
-                If 1 (TRUE), automatically connects FluidSynth to available MIDI input ports. alsa_seq and coremidi are currently the only drivers making use of this.
+                If 1 (TRUE), automatically connects FluidSynth to available MIDI input ports. alsa_seq, coremidi and jack are currently the only drivers making use of this.
             </desc>
         </setting>
         <setting>
