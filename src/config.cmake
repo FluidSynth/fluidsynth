@@ -25,6 +25,9 @@
 /* Soundfont to load automatically in some use cases */
 #cmakedefine DEFAULT_SOUNDFONT "@DEFAULT_SOUNDFONT@"
 
+/* List of directories to search for soundfonts */
+#cmakedefine SOUNDFONT_DIRS "@SOUNDFONT_DIRS@"
+
 /* Define to enable FPE checks */
 #cmakedefine FPE_CHECK @FPE_CHECK@
 

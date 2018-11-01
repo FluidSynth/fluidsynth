@@ -59,7 +59,7 @@ extern "C" {
  */
 #define FLUID_FAILED    (-1)
 
-
+FLUIDSYNTH_API char *fluid_find_soundfont(const char *directories, const char *filename);
 FLUIDSYNTH_API int fluid_is_soundfont(const char *filename);
 FLUIDSYNTH_API int fluid_is_midifile(const char *filename);
 

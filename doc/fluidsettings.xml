@@ -96,6 +96,13 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
                 The default soundfont file to use by the fluidsynth executable. The default value can be overridden during compilation time by setting the DEFAULT_SOUNDFONT cmake variable.</desc>
         </setting>
         <setting>
+            <name>soundfont-dirs</name>
+            <type>str</type>
+            <def>C:\soundfonts\ (Windows),<br />
+                 ${CMAKE_INSTALL_PREFIX}/share/soundfonts/ (all others)</def>
+            <desc>
+                A semi-colon delimited list containing directories to search for soundfonts.</desc>
+        <setting>
             <name>device-id</name>
             <type>int</type>
             <def>0</def>

@@ -216,6 +216,10 @@ void fluid_synth_settings(fluid_settings_t *settings)
     fluid_settings_register_str(settings, "synth.default-soundfont", DEFAULT_SOUNDFONT, 0);
 #endif
 
+#ifdef SOUNDFONT_DIRS
+    fluid_settings_register_str(settings, "synth.soundfont-dirs", SOUNDFONT_DIRS, 0);
+#endif
+
     fluid_settings_register_int(settings, "synth.polyphony", 256, 1, 65535, 0);
     fluid_settings_register_int(settings, "synth.midi-channels", 16, 16, 256, 0);
     fluid_settings_register_num(settings, "synth.gain", 0.2f, 0.0f, 10.0f, 0);

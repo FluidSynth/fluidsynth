@@ -275,6 +275,49 @@ fluid_error()
 }
 
 /**
+ * Find the first directory in a semicolon-delimited list of directories to
+ * contain a soundfont.
+ *
+ * @param directories Delimited list of directories to check
+ * @param filename Filename to check
+ * @return A copy of the directory concatenated with the filename string
+ */
+char *
+fluid_find_soundfont(const char *directories, const char *filename)
+{
+    FILE *fp;
+    char *s, *tokstr, *tok;
+    char *fullpath;
+
+    s = tokstr = FLUID_STRDUP(directories);
+
+    if(s == NULL)
+    {
+        FLUID_LOG(FLUID_ERR, "Out of memory");
+        return NULL;
+    }
+
+    while((tok = fluid_strtok(&tokstr, ";")))
+    {
+        fullpath = FLUID_MALLOC(FLUID_STRLEN(tok) + FLUID_STRLEN(filename) + 1);
+        FLUID_STRCPY(fullpath, tok);
+        strcat(fullpath, filename);
+
+        fp = fopen(fullpath, "rb");
+
+        if (fp != NULL) {
+            FLUID_FREE(s);
+            return fullpath;
+        }
+        FLUID_FREE(fullpath);
+    }
+
+    FLUID_FREE(s);
+
+    return NULL;
+}
+
+/**
  * Check if a file is a MIDI file.
  * @param filename Path to the file to check
  * @return TRUE if it could be a MIDI file, FALSE otherwise

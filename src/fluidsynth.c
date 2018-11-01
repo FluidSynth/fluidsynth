@@ -750,21 +750,44 @@ int main(int argc, char **argv)
         exit(-1);
     }
 
+    char *s;
+
+    if(fluid_settings_dupstr(settings, "synth.soundfont-dirs", &s) != FLUID_OK)
+    {
+        s = NULL;
+    }
+
     /* load the soundfonts (check that all non options are SoundFont or MIDI files) */
     for(i = arg1; i < argc; i++)
     {
-        if(fluid_is_soundfont(argv[i]))
+        char *p;
+        char *dir = NULL;
+        if((s != NULL) && (s[0] != '\0'))
         {
-            if(fluid_synth_sfload(synth, argv[i], 1) == -1)
+            dir = fluid_find_soundfont(s, argv[i]);
+        }
+
+        p = argv[i];
+        if ((dir != NULL) && (dir[0] != '\0'))
+        {
+            p = dir;
+        }
+
+        if(fluid_is_soundfont(p))
+        {
+            if(fluid_synth_sfload(synth, p, 1) == -1)
             {
-                fprintf(stderr, "Failed to load the SoundFont %s\n", argv[i]);
+                fprintf(stderr, "Failed to load the SoundFont %s\n", p);
             }
         }
-        else if(!fluid_is_midifile(argv[i]))
+        else if(!fluid_is_midifile(p))
         {
-            fprintf(stderr, "Parameter '%s' not a SoundFont or MIDI file or error occurred identifying it.\n", argv[i]);
+            fprintf(stderr, "Parameter '%s' not a SoundFont or MIDI file or error occurred identifying it.\n", p);
         }
+        FLUID_FREE(dir);
     }
+
+    FLUID_FREE(s);
 
     /* start the synthesis thread */
     if(!fast_render)

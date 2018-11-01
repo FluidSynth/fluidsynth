@@ -1,6 +1,16 @@
 # Several directory names used by FluidSynth to install files
 # the variable names are similar to the KDE4 build system
 
+# SOUNDFONT_DIRS - list of directories to search for soundfonts
+if ( WIN32 )
+  set (SOUNDFONT_DIRS "C:\\\\soundfonts\\\\" CACHE STRING
+      "Soundfont directories")
+else ( WIN32 )
+  set (SOUNDFONT_DIRS "${CMAKE_INSTALL_PREFIX}/share/soundfonts/" CACHE STRING
+      "Soundfont directories")
+endif ( WIN32 )
+mark_as_advanced (SOUNDFONT_DIRS)
+
 # DEFAULT_SOUNDFONT - automatically loaded in some use cases
 if ( WIN32 )
   set (DEFAULT_SOUNDFONT "C:\\\\soundfonts\\\\default.sf2" CACHE STRING
