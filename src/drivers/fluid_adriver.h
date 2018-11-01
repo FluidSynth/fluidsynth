@@ -27,9 +27,11 @@
  * fluid_audio_driver_t
  */
 
+typedef struct _fluid_audriver_definition_t fluid_audriver_definition_t;
+
 struct _fluid_audio_driver_t
 {
-    const char *name;
+    const fluid_audriver_definition_t *define;
 };
 
 void fluid_audio_driver_settings(fluid_settings_t *settings);

@@ -1330,9 +1330,10 @@ fluid_istream_gets(fluid_istream_t in, char *buf, int len)
         }
         else
         {
+#ifdef NETWORK_SUPPORT
             n = recv(in & ~FLUID_SOCKET_FLAG, &c, 1, 0);
-
             if(n == SOCKET_ERROR)
+#endif
             {
                 return -1;
             }
@@ -1405,10 +1406,13 @@ fluid_ostream_printf(fluid_ostream_t out, const char *format, ...)
             return write(out, buf, FLUID_STRLEN(buf));
         }
 
+#ifdef NETWORK_SUPPORT
         /* Socket */
         retval = send(out & ~FLUID_SOCKET_FLAG, buf, FLUID_STRLEN(buf), 0);
-
         return retval != SOCKET_ERROR ? retval : -1;
+#else
+        return -1;
+#endif
     }
 #endif
 }
