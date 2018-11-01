@@ -288,6 +288,13 @@ fluid_find_soundfont(const char *directories, const char *filename)
     FILE *fp;
     char *s, *tokstr, *tok;
     char *fullpath;
+    char *slash;
+
+#ifdef _WIN32
+    slash = "\\";
+#else
+    slash = "/";
+#endif
 
     s = tokstr = FLUID_STRDUP(directories);
 
@@ -299,16 +306,19 @@ fluid_find_soundfont(const char *directories, const char *filename)
 
     while((tok = fluid_strtok(&tokstr, ";")))
     {
-        fullpath = FLUID_MALLOC(FLUID_STRLEN(tok) + FLUID_STRLEN(filename) + 1);
+        fullpath = FLUID_MALLOC(FLUID_STRLEN(tok) + FLUID_STRLEN(slash) + FLUID_STRLEN(filename) + 1);
         FLUID_STRCPY(fullpath, tok);
+        strcat(fullpath, slash);
         strcat(fullpath, filename);
 
         fp = fopen(fullpath, "rb");
 
-        if (fp != NULL) {
+        if(fp != NULL)
+        {
             FLUID_FREE(s);
             return fullpath;
         }
+
         FLUID_FREE(fullpath);
     }
 
@@ -1375,6 +1385,7 @@ fluid_istream_gets(fluid_istream_t in, char *buf, int len)
         {
 #ifdef NETWORK_SUPPORT
             n = recv(in & ~FLUID_SOCKET_FLAG, &c, 1, 0);
+
             if(n == SOCKET_ERROR)
 #endif
             {

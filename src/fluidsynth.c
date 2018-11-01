@@ -762,13 +762,15 @@ int main(int argc, char **argv)
     {
         char *p;
         char *dir = NULL;
+
         if((s != NULL) && (s[0] != '\0'))
         {
             dir = fluid_find_soundfont(s, argv[i]);
         }
 
         p = argv[i];
-        if ((dir != NULL) && (dir[0] != '\0'))
+
+        if((dir != NULL) && (dir[0] != '\0'))
         {
             p = dir;
         }
@@ -784,6 +786,7 @@ int main(int argc, char **argv)
         {
             fprintf(stderr, "Parameter '%s' not a SoundFont or MIDI file or error occurred identifying it.\n", p);
         }
+
         FLUID_FREE(dir);
     }
 
