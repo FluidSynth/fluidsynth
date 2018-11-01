@@ -2225,7 +2225,7 @@ int fluid_player_get_total_ticks(fluid_player_t *player)
  */
 int fluid_player_get_bpm(fluid_player_t *player)
 {
-    return (int)(60e6 / player->miditempo);
+    return 60000000L / player->miditempo;
 }
 
 /**
