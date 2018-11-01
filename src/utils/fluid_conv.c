@@ -314,7 +314,7 @@ fluid_act2hz(fluid_real_t c)
 fluid_real_t
 fluid_hz2ct(fluid_real_t f)
 {
-    return (fluid_real_t)(6900 + 1200 * log(f / 440.0) / M_LN2);
+    return (fluid_real_t)(6900 + (1200 / M_LN2) * log(f / 440.0));
 }
 
 /*
