@@ -20,6 +20,11 @@
 
 #include "fluid_conv.h"
 
+/* This constant is:
+ *  (1200 * log(440.) / M_LN2)
+ */
+#define K_1200_LOG2_440 10537.63165622959152488361897145
+
 #define FLUID_CENTS_HZ_SIZE     1200
 #define FLUID_VEL_CB_SIZE       128
 #define FLUID_CB_AMP_SIZE       1441
@@ -314,7 +319,10 @@ fluid_act2hz(fluid_real_t c)
 fluid_real_t
 fluid_hz2ct(fluid_real_t f)
 {
+    /* Original code:
     return (fluid_real_t)(6900 + (1200 / M_LN2) * log(f / 440.0));
+    */
+    return (fluid_real_t)((6900 - K_1200_LOG2_440) + (1200 / M_LN2) * log(f));
 }
 
 /*
