@@ -172,6 +172,9 @@
 /* Define to enable OPENSLES driver */
 #cmakedefine OPENSLES_SUPPORT @OPENSLES_SUPPORT@
 
+/* Define to enable Oboe driver */
+#cmakedefine OBOE_SUPPORT @OBOE_SUPPORT@
+
 /* Name of package */
 #cmakedefine PACKAGE "@PACKAGE@"
 

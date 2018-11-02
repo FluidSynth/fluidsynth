@@ -1,5 +1,7 @@
 PWD=$(shell pwd)
 CERBERO=$(PWD)/external/cerbero
+OBOE=$(PWD)/external/oboe
+OBOE_C=$(PWD)/oboe-c
 
 ANDROID_NDK = ~/android-sdk-linux/ndk-bundle
 
@@ -7,11 +9,12 @@ ABIS_SIMPLE = x86 x86-64 armv7 arm64
 
 
 DIST_PATH=$(CERBERO)/build/dist
+OBOE_BUILD_PATH=$(OBOE)/build
 
 all: build
 
 .PHONY: prepare
-prepare: $(CERBERO)
+prepare: $(CERBERO) $(OBOE)
 	for abi in $(ABIS_SIMPLE) ; do \
 		cd $(CERBERO) && ./cerbero-uninstalled -c config/cross-android-$$abi.cbc bootstrap && cd $(PWD) ; \
 	done
@@ -19,8 +22,11 @@ prepare: $(CERBERO)
 $(CERBERO):
 	git clone https://anongit.freedesktop.org/git/gstreamer/cerbero.git $(CERBERO)
 
+$(OBOE):
+	git clone https://github.com/google/oboe.git $(OBOE)
+
 .PHONY: build
-build: build-cerbero build-fluidsynth-dep dist-dep build-shared
+build: build-oboe-dep build-oboe-c-dep build-cerbero build-fluidsynth-dep dist-dep build-shared
 
 .PHONY: build-shared
 build-shared:
@@ -60,15 +66,38 @@ endef
 dist-dep:
 	$(call run_make_for_all_abi, dist-dep-one)
 
+.PHONY: build-oboe-dep
+build-oboe-dep:
+	$(call run_make_for_all_abi, build-oboe-one)
+
+.PHONY: build-oboe-c-dep
+build-oboe-c-dep:
+	$(call run_make_for_all_abi, build-oboe-c-one)
+
 .PHONY: build-fluidsynth-dep
 build-fluidsynth-dep:
 	$(call run_make_for_all_abi, build-fluidsynth-one)
 
 build-fluidsynth-one:
-	mkdir -p build/$(A_ABI) && cd build/$(A_ABI) && LD_RUN_PATH=$(DIST_PATH)/android-$(BUILD_ABI)/lib LD_LIBRARY_PATH=$(DIST_PATH)/android_$(BUILD_ABI)/lib PKG_CONFIG_PATH=$(DIST_PATH)/android_$(BUILD_ABI)/lib/pkgconfig/ cmake     -DCMAKE_C_VISIBILITY_OVERRIDE=default -DCMAKE_POSITION_INDEPENDENT_CODE_OVERRIDE=on -DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK)/build/cmake/android.toolchain.cmake -Denable-jack=off -Denable-oss=off -Denable-pulseaudio=off -Denable-libsndfile=off -Denable-dbus=off -DBUILD_SHARED_LIBS=off -Denable-debug=on -DANDROID_ABI=$(A_ABI) ../../.. && make
+	mkdir -p build/$(A_ABI) && cd build/$(A_ABI) && \
+	LD_RUN_PATH=$(DIST_PATH)/android-$(BUILD_ABI)/lib LD_LIBRARY_PATH=$(DIST_PATH)/android_$(BUILD_ABI)/lib PKG_CONFIG_PATH=$(DIST_PATH)/android_$(BUILD_ABI)/lib/pkgconfig/ \
+	cmake -DCMAKE_CXX_STANDARD_OVERRIDE=on -DCMAKE_C_VISIBILITY_OVERRIDE=default -DCMAKE_POSITION_INDEPENDENT_CODE_OVERRIDE=on -DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK)/build/cmake/android.toolchain.cmake -Denable-oboe=on -Denable-jack=off -Denable-oss=off -Denable-pulseaudio=off -Denable-libsndfile=off -Denable-dbus=off -DBUILD_SHARED_LIBS=off -Denable-debug=on -DANDROID_PLATFORM=android-16 -DANDROID_ABI=$(A_ABI) ../../.. && make
+
+build-oboe-one:
+	mkdir -p $(OBOE)/build/$(A_ABI) && cd $(OBOE)/build/$(A_ABI) && \
+		cmake -DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK)/build/cmake/android.toolchain.cmake -DBUILD_SHARED_LIBS=off -DANDROID_ABI=$(A_ABI) -DANDROID_PLATFORM=android-16 ../.. && make
+
+build-oboe-c-one:
+	mkdir -p oboe-c/build/$(A_ABI) && cd oboe-c/build/$(A_ABI) && \
+		cmake -DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK)/build/cmake/android.toolchain.cmake -DBUILD_SHARED_LIBS=off -DANDROID_ABI=$(A_ABI) -DANDROID_PLATFORM=android-16 ../.. && make
 
 dist-dep-one:
-	mkdir -p dep/$(A_ABI) && cd dep/$(A_ABI) && cp $(DIST_PATH)/android_$(BUILD_ABI)/lib/*.a . && cp ../../build/$(A_ABI)/src/*.a . && cd ../../
+	mkdir -p dep/$(A_ABI) && cd dep/$(A_ABI) && \
+	cp $(DIST_PATH)/android_$(BUILD_ABI)/lib/*.a . && \
+	cp ../../build/$(A_ABI)/src/*.a . && \
+	cp $(OBOE_BUILD_PATH)/$(A_ABI)/*.a . && \
+	cp $(OBOE_C)/build/$(A_ABI)/*.a . && \
+	cd ../../
 
 clean:
 	rm -rf build/*

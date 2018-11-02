@@ -19,6 +19,11 @@ LOCAL_SRC_FILES := $(GLIB_LIB)/libintl.a
 include $(PREBUILT_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
+LOCAL_MODULE := oboe
+LOCAL_SRC_FILES := $(GLIB_LIB)/liboboe.a
+include $(PREBUILT_STATIC_LIBRARY)
+
+include $(CLEAR_VARS)
 LOCAL_MODULE := fluidsynth_static
 LOCAL_SRC_FILES := ../dep/$(APP_ABI)/libfluidsynth.a
 include $(PREBUILT_STATIC_LIBRARY)
@@ -29,7 +34,7 @@ ifeq ($(NDK_DEBUG),1)
 	cmd-strip :=
 endif
 
-LOCAL_STATIC_LIBRARIES := glib-2.0 iconv intl
+LOCAL_STATIC_LIBRARIES := glib-2.0 iconv intl oboe
 
 LOCAL_WHOLE_STATIC_LIBRARIES := fluidsynth_static
 

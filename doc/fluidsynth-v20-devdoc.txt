@@ -205,6 +205,7 @@ Creating the audio driver is straightforward: set the appropriate settings and c
 - sndman: Apple SoundManager (Mac OS Classic)
 - dart: DART sound driver (OS/2)
 - opensles: OpenSL ES (Android)
+- oboe: Oboe (Android)
 - file: Driver to output audio to a file
 
 The default audio driver depends on the settings with which FluidSynth was compiled. You can get the default driver with fluid_settings_getstr_default(). To get the list of available drivers use the fluid_settings_foreach_option() function. Finally, you can set the driver with fluid_settings_setstr(). In most cases, the default driver should work out of the box. 

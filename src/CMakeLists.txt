@@ -118,6 +118,11 @@ if ( OPENSLES_SUPPORT )
   include_directories ( ${OpenSLES_INCLUDE_DIRS} )
 endif ( OPENSLES_SUPPORT )
 
+if ( OBOE_SUPPORT )
+  include_directories ( ../android/oboe-c/include )
+  set ( fluid_oboe_SOURCES drivers/fluid_oboe.c  ../android/oboe-c/build/${ANDROID_ABI}/liboboe-c.a )
+endif ( OBOE_SUPPORT )
+
 set ( config_SOURCES ${CMAKE_BINARY_DIR}/config.h )
 
 set ( libfluidsynth_SOURCES
@@ -253,6 +258,7 @@ add_library ( libfluidsynth-OBJ OBJECT
     ${fluid_lash_SOURCES}
     ${fluid_midishare_SOURCES}
     ${fluid_opensles_SOURCES}
+    ${fluid_oboe_SOURCES}
     ${fluid_oss_SOURCES}
     ${fluid_portaudio_SOURCES}
     ${fluid_pulse_SOURCES}
@@ -286,7 +292,6 @@ if ( MACOSX_FRAMEWORK )
         INSTALL_NAME_DIR ""
         VERSION ${LIB_VERSION_INFO}
         SOVERSION ${LIB_VERSION_CURRENT}
-        NO_SONAME ${LIB_NO_SONAME}
     )
 elseif ( OS2 )
     set_target_properties ( libfluidsynth
@@ -334,6 +339,7 @@ target_link_libraries ( libfluidsynth
     ${WINDOWS_LIBS}
     ${MidiShare_LIBS}
     ${OpenSLES_LIBS}
+    ${OBOE_LIBS} # there is actually nothing
     ${LIBFLUID_LIBS}
 )
 
