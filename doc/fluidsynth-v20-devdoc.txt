@@ -221,6 +221,7 @@ Creating the audio driver is straightforward: set the <code>audio.driver</code> 
 - sndman: Apple SoundManager (Mac OS Classic)
 - dart: DART sound driver (OS/2)
 - opensles: OpenSL ES (Android)
+- oboe: Oboe (Android)
 - file: Driver to output audio to a file
 - sdl2*: Simple DirectMedia Layer (Linux, Windows, Mac OS X, iOS, Android, FreeBSD, Haiku, etc.)
 

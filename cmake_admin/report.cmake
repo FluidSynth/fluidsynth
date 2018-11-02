@@ -56,6 +56,12 @@ else ( OPENSLES_SUPPORT )
   message ( "OpenSLES:              no" )
 endif ( OPENSLES_SUPPORT )
 
+if ( OBOE_SUPPORT )
+  message ( "Oboe:                  yes" ) 
+else ( OBOE_SUPPORT ) 
+  message ( "Oboe:                  no" )
+endif ( OBOE_SUPPORT )
+
 if ( MIDISHARE_SUPPORT )
   message ( "MidiShare:             yes" )
 else ( MIDISHARE_SUPPORT )
