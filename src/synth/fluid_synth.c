@@ -285,10 +285,6 @@ fluid_synth_init(void)
     feenableexcept(FE_DIVBYZERO | FE_UNDERFLOW | FE_OVERFLOW | FE_INVALID);
 #endif
 
-    fluid_conversion_config();
-
-    fluid_rvoice_dsp_config();
-
     init_dither();
 
     /* custom_breath2att_mod is not a default modulator specified in SF2.01.

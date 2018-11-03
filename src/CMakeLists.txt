@@ -360,3 +360,13 @@ else ( MACOSX_FRAMEWORK )
    install ( FILES ${public_main_HEADER} DESTINATION ${INCLUDE_INSTALL_DIR} )
 endif ( MACOSX_FRAMEWORK )
 
+# ******* Auto Generated Lookup Tables ******
+
+include(ExternalProject)
+ExternalProject_Add(gentables
+    DOWNLOAD_COMMAND ""
+    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/gentables
+    BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/gentables
+    INSTALL_COMMAND ${CMAKE_CURRENT_BINARY_DIR}/gentables/make_tables${CMAKE_EXECUTABLE_SUFFIX} "${CMAKE_BINARY_DIR}/"
+)
+add_dependencies(libfluidsynth-OBJ gentables)
