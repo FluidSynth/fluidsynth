@@ -24,16 +24,54 @@
  *
  */
 
+/*
+ * It is annoying, but
+ * 
+ * - we cannot include oboe/Oboe.h outside #if OBOE_SUPPORT,
+ * - but OBOE_SUPPORT is defined only within fluid_synth.h,
+ * - we cannot include oboe/Oboe.h within C scope,
+ * - but we cannot include fluid_*.h outside C scope.
+ * 
+ * Therefore there are two divided extern decls.
+ */
+
+extern "C" {
+
 #include "fluid_synth.h"
 #include "fluid_adriver.h"
 #include "fluid_settings.h"
 
+} // extern "C"
+
 #if OBOE_SUPPORT
 
 #include <sys/time.h>
-#include <oboe-c.h>
+#include <oboe/Oboe.h>
+
+extern "C" {
+
+using namespace oboe;
 
 #define NUM_CHANNELS 2
+
+DataCallbackResult on_audio_ready(AudioStreamCallback *callback, AudioStream *stream, void *audioData, int32_t numFrames);
+
+class OboeAudioStreamCallback : public AudioStreamCallback
+{
+public:
+
+  OboeAudioStreamCallback (void *userData)
+    : user_data (userData)
+  {
+  }
+
+  void *user_data;
+
+  DataCallbackResult onAudioReady (AudioStream *oboeStream, void *audioData, int32_t numFrames)
+  {
+    return on_audio_ready (this, oboeStream, audioData, numFrames);
+  }
+};
 
 /** fluid_oboe_audio_driver_t
  *
@@ -42,23 +80,15 @@
  */
 typedef struct {
   fluid_audio_driver_t driver;
-  void* synth;
+  fluid_synth_t *synth;
   int32_t cont;
-  fluid_audio_func_t *callback;
-  oboe_audio_stream_callback_ptr_t oboe_callback;
-  oboe_audio_stream_ptr_t stream;
+  fluid_audio_func_t callback;
+  OboeAudioStreamCallback *oboe_callback;
+  AudioStream *stream;
 } fluid_oboe_audio_driver_t;
 
-
-fluid_audio_driver_t* new_fluid_oboe_audio_driver(fluid_settings_t* settings,
-						   fluid_synth_t* synth);
-fluid_audio_driver_t* new_fluid_oboe_audio_driver2(fluid_settings_t* settings,
-						    fluid_audio_func_t func, void* data);
-void delete_fluid_oboe_audio_driver(fluid_audio_driver_t* p);
-void fluid_oboe_audio_driver_settings(fluid_settings_t* settings);
 static fluid_thread_return_t fluid_oboe_audio_run(void* d);
 static fluid_thread_return_t fluid_oboe_audio_run2(void* d);
-enum OboeDataCallbackResult on_audio_ready(oboe_audio_stream_callback_ptr_t callback, oboe_audio_stream_ptr_t stream, void *audioData, int32_t numFrames);
 
 void fluid_oboe_audio_driver_settings(fluid_settings_t* settings)
 {
@@ -89,10 +119,11 @@ new_fluid_oboe_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
 fluid_audio_driver_t*
 new_fluid_oboe_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func, void* data)
 {
-  int32_t result;
+  Result result;
   fluid_oboe_audio_driver_t* dev;
-  oboe_audio_stream_builder_ptr_t builder;
-  oboe_audio_stream_ptr_t stream;
+  AudioStreamBuilder builder_obj;
+  AudioStreamBuilder *builder = &builder_obj;
+  AudioStream *stream;
   
   int period_frames;
   double sample_rate;
@@ -113,9 +144,7 @@ new_fluid_oboe_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func
   
   dev->synth = synth;
   dev->callback = func;
-  dev->oboe_callback = oboe_audio_stream_callback_create ();
-  oboe_audio_stream_callback_set_on_audio_ready (dev->oboe_callback, on_audio_ready);
-  oboe_audio_stream_callback_set_user_data (dev->oboe_callback, dev);
+  dev->oboe_callback = new OboeAudioStreamCallback (dev);
 
   fluid_settings_getint(settings, "audio.period-size", &period_frames);
   fluid_settings_getnum(settings, "synth.sample-rate", &sample_rate);
@@ -127,32 +156,30 @@ new_fluid_oboe_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func
     fluid_settings_str_equal (settings, "audio.oboe.performance-mode", "PowerSaving") ? 1 :
     fluid_settings_str_equal (settings, "audio.oboe.performance-mode", "LowLatency") ? 2 : 0;
 
-  oboe_audio_stream_builder_set_device_id (builder, device_id);
-  oboe_audio_stream_builder_set_direction (builder, DIRECTION_OUTPUT);
-  oboe_audio_stream_builder_set_channel_count (builder, 2);
-  oboe_audio_stream_builder_set_sample_rate (builder, sample_rate);
-  oboe_audio_stream_builder_set_frames_per_callback (builder, period_frames);
-  oboe_audio_stream_builder_set_format (builder,
-      is_sample_format_float ? AUDIO_FORMAT_FLOAT : AUDIO_FORMAT_I16);
-  oboe_audio_stream_builder_set_sharing_mode (builder,
-      sharing_mode == 1 ? SHARING_MODE_EXCLUSIVE : SHARING_MODE_SHARED);
-  oboe_audio_stream_builder_set_performance_mode (builder,
-      performance_mode == 1 ? PERFORMANCE_MODE_POWER_SAVING :
-      performance_mode == 2 ? PERFORMANCE_MODE_LOW_LATENCY : PERFORMANCE_MODE_NONE);
-  oboe_audio_stream_builder_set_usage (builder, USAGE_MEDIA);
-  oboe_audio_stream_builder_set_content_type (builder, CONTENT_TYPE_MUSIC);
-  oboe_audio_stream_builder_set_callback (builder, dev->oboe_callback);
+  builder->setDeviceId (device_id)
+	->setDirection (Direction::Output)
+	->setChannelCount (NUM_CHANNELS)
+	->setSampleRate (sample_rate)
+	->setFramesPerCallback (period_frames)
+	->setFormat (is_sample_format_float ? AudioFormat::Float : AudioFormat::I16)
+	->setSharingMode (sharing_mode == 1 ? SharingMode::Exclusive : SharingMode::Shared)
+	->setPerformanceMode (
+	  performance_mode == 1 ? PerformanceMode::PowerSaving :
+      performance_mode == 2 ? PerformanceMode::LowLatency : PerformanceMode::None)
+    ->setUsage (Usage::Media)
+    ->setContentType (ContentType::Music)
+    ->setCallback (dev->oboe_callback);
 
-  result = oboe_audio_stream_builder_open_stream (builder, &stream);
+  result = builder->openStream (&stream);
   dev->stream = stream;
-  if (result != RESULT_OK)
+  if (result != Result::OK)
     goto error_recovery;
 
   dev->cont = 1;
 
   FLUID_LOG(FLUID_INFO, "Using Oboe driver");
 
-  oboe_audio_stream_start (stream);
+  stream->start ();
   
   return (fluid_audio_driver_t*) dev;
 
@@ -171,24 +198,26 @@ void delete_fluid_oboe_audio_driver(fluid_audio_driver_t* p)
 
   dev->cont = 0;
   
-  oboe_audio_stream_stop (dev->stream);
+  dev->stream->stop ();
   
-  oboe_audio_stream_close (dev->stream);
+  dev->stream->close ();
   
-  oboe_audio_stream_callback_free (dev->oboe_callback);
+  delete dev->oboe_callback;
   
   FLUID_FREE(dev);
 }
 
-enum OboeDataCallbackResult on_audio_ready(oboe_audio_stream_callback_ptr_t callback, oboe_audio_stream_ptr_t stream, void *audioData, int32_t numFrames)
+DataCallbackResult on_audio_ready(AudioStreamCallback *callback, AudioStream *stream, void *audioData, int32_t numFrames)
 {
   float *callback_buffers[2];
   fluid_oboe_audio_driver_t *dev;
-    
-  dev = (fluid_oboe_audio_driver_t*) oboe_audio_stream_callback_get_user_data (callback);
+  OboeAudioStreamCallback *oboe_callback;
+  
+  oboe_callback = (OboeAudioStreamCallback*) callback;
+  dev = (fluid_oboe_audio_driver_t*) oboe_callback->user_data;
   
   if (!dev->cont)
-    return CALLBACK_RESULT_STOP;
+    return DataCallbackResult::Stop;
   
   if (dev->callback)
   {
@@ -198,7 +227,7 @@ enum OboeDataCallbackResult on_audio_ready(oboe_audio_stream_callback_ptr_t call
   }
   else
   {
-    if (oboe_audio_stream_base_get_format (stream) == AUDIO_FORMAT_FLOAT)
+    if (stream->getFormat () == AudioFormat::Float)
     {
       fluid_synth_write_float(dev->synth, numFrames, (float*) audioData, 0, 2, (float*) audioData, 1, 2);
     }
@@ -207,7 +236,9 @@ enum OboeDataCallbackResult on_audio_ready(oboe_audio_stream_callback_ptr_t call
 	  fluid_synth_write_s16(dev->synth, numFrames, (short*) audioData, 0, 2, (short*) audioData, 1, 2);
 	}
   }
-  return CALLBACK_RESULT_CONTINUE;
+  return DataCallbackResult::Continue;
 }
 
-#endif
+} // extern "C"
+
+#endif // OBOE_SUPPORT
