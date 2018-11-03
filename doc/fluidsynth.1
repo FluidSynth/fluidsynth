@@ -13,7 +13,7 @@
 .\" along with this program; see the file LICENSE.  If not, write to
 .\" the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 .\"
-.TH FluidSynth 1 "Sep 12, 2018"
+.TH FluidSynth 1 "Oct 6, 2018"
 .\" Please update the above date whenever this man page is modified.
 .\"
 .\" Some roff macros, for reference:
@@ -200,39 +200,36 @@ Choose interpolation method for one channel
 .TP
 .B REVERB
 .TP
-.B reverb [0|1|on|off]
+.B set synth.reverb.active [0|1]
 Turn the reverb on or off
 .TP
-.B rev_preset num
-Load preset num into the reverb unit
-.TP
-.B rev_setroomsize num
+.B set synth.reverb.room-size num
 Change reverb room size
 .TP
-.B rev_setdamp num
+.B set synth.reverb.damp num
 Change reverb damping
 .TP
-.B rev_setwidth num
+.B set synth.reverb.width num
 Change reverb width
 .TP
-.B rev_setlevel num
+.B set synth.reverb.level num
 Change reverb level
 .TP
 .B CHORUS
 .TP
-.B chorus [0|1|on|off]
+.B set synth.chorus.active [0|1]
 Turn the chorus on or off
 .TP
-.B cho_set_nr n
+.B set synth.chorus.nr n
 Use n delay lines (default 3)
 .TP
-.B cho_set_level num
+.B set synth.chorus.level num
 Set output level of each chorus line to num
 .TP
-.B cho_set_speed num
+.B set synth.chorus.speed num
 Set mod speed of chorus to num (Hz)
 .TP
-.B cho_set_depth num
+.B set synth.chorus.depth num
 Set chorus modulation depth to num (ms)
 .TP
 .B MIDI ROUTER

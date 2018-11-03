@@ -1,5 +1,5 @@
 #include "VersionInfo.h"
-#include "winres.h"
+#include "winver.h"
 
 VS_VERSION_INFO VERSIONINFO
     FILEVERSION FILE_VERSION_RESOURCE

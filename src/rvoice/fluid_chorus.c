@@ -90,8 +90,8 @@
  * Set through MAX_SAMPLES_LN2.
  * For example:
  * MAX_SAMPLES_LN2=12
- * => MAX_SAMPLES=pow(2,12)=4096
- * => MAX_SAMPLES_ANDMASK=4095
+ * => MAX_SAMPLES=pow(2,12-1)=2048
+ * => MAX_SAMPLES_ANDMASK=2047
  */
 #define MAX_SAMPLES_LN2 12
 
@@ -149,7 +149,7 @@ new_fluid_chorus(fluid_real_t sample_rate)
 
     if(chorus == NULL)
     {
-        fluid_log(FLUID_PANIC, "chorus: Out of memory");
+        FLUID_LOG(FLUID_PANIC, "chorus: Out of memory");
         return NULL;
     }
 
@@ -191,7 +191,7 @@ new_fluid_chorus(fluid_real_t sample_rate)
 
     if(chorus->lookup_tab == NULL)
     {
-        fluid_log(FLUID_PANIC, "chorus: Out of memory");
+        FLUID_LOG(FLUID_PANIC, "chorus: Out of memory");
         goto error_recovery;
     }
 
@@ -201,7 +201,7 @@ new_fluid_chorus(fluid_real_t sample_rate)
 
     if(chorus->chorusbuf == NULL)
     {
-        fluid_log(FLUID_PANIC, "chorus: Out of memory");
+        FLUID_LOG(FLUID_PANIC, "chorus: Out of memory");
         goto error_recovery;
     }
 
@@ -293,32 +293,32 @@ fluid_chorus_set(fluid_chorus_t *chorus, int set, int nr, fluid_real_t level,
 
     if(chorus->number_blocks < 0)
     {
-        fluid_log(FLUID_WARN, "chorus: number blocks must be >=0! Setting value to 0.");
+        FLUID_LOG(FLUID_WARN, "chorus: number blocks must be >=0! Setting value to 0.");
         chorus->number_blocks = 0;
     }
     else if(chorus->number_blocks > MAX_CHORUS)
     {
-        fluid_log(FLUID_WARN, "chorus: number blocks larger than max. allowed! Setting value to %d.",
+        FLUID_LOG(FLUID_WARN, "chorus: number blocks larger than max. allowed! Setting value to %d.",
                   MAX_CHORUS);
         chorus->number_blocks = MAX_CHORUS;
     }
 
     if(chorus->speed_Hz < MIN_SPEED_HZ)
     {
-        fluid_log(FLUID_WARN, "chorus: speed is too low (min %f)! Setting value to min.",
+        FLUID_LOG(FLUID_WARN, "chorus: speed is too low (min %f)! Setting value to min.",
                   (double) MIN_SPEED_HZ);
         chorus->speed_Hz = MIN_SPEED_HZ;
     }
     else if(chorus->speed_Hz > MAX_SPEED_HZ)
     {
-        fluid_log(FLUID_WARN, "chorus: speed must be below %f Hz! Setting value to max.",
+        FLUID_LOG(FLUID_WARN, "chorus: speed must be below %f Hz! Setting value to max.",
                   (double) MAX_SPEED_HZ);
         chorus->speed_Hz = MAX_SPEED_HZ;
     }
 
     if(chorus->depth_ms < 0.0)
     {
-        fluid_log(FLUID_WARN, "chorus: depth must be positive! Setting value to 0.");
+        FLUID_LOG(FLUID_WARN, "chorus: depth must be positive! Setting value to 0.");
         chorus->depth_ms = 0.0;
     }
 
@@ -326,12 +326,12 @@ fluid_chorus_set(fluid_chorus_t *chorus, int set, int nr, fluid_real_t level,
 
     if(chorus->level < 0.0)
     {
-        fluid_log(FLUID_WARN, "chorus: level must be positive! Setting value to 0.");
+        FLUID_LOG(FLUID_WARN, "chorus: level must be positive! Setting value to 0.");
         chorus->level = 0.0;
     }
     else if(chorus->level > 10)
     {
-        fluid_log(FLUID_WARN, "chorus: level must be < 10. A reasonable level is << 1! "
+        FLUID_LOG(FLUID_WARN, "chorus: level must be < 10. A reasonable level is << 1! "
                   "Setting it to 0.1.");
         chorus->level = 0.1;
     }
@@ -346,27 +346,29 @@ fluid_chorus_set(fluid_chorus_t *chorus, int set, int nr, fluid_real_t level,
 
     if(modulation_depth_samples > MAX_SAMPLES)
     {
-        fluid_log(FLUID_WARN, "chorus: Too high depth. Setting it to max (%d).", MAX_SAMPLES);
+        FLUID_LOG(FLUID_WARN, "chorus: Too high depth. Setting it to max (%d).", MAX_SAMPLES);
         modulation_depth_samples = MAX_SAMPLES;
+        // set depth to maximum to avoid spamming console with above warning
+        chorus->depth_ms = (modulation_depth_samples * 1000) / chorus->sample_rate;
     }
 
     /* initialize LFO table */
-    if(chorus->type == FLUID_CHORUS_MOD_SINE)
+    switch(chorus->type)
     {
+    default:
+        FLUID_LOG(FLUID_WARN, "chorus: Unknown modulation type. Using sinewave.");
+        chorus->type = FLUID_CHORUS_MOD_SINE;
+        /* fall-through */
+        
+    case FLUID_CHORUS_MOD_SINE:
         fluid_chorus_sine(chorus->lookup_tab, chorus->modulation_period_samples,
                           modulation_depth_samples);
-    }
-    else if(chorus->type == FLUID_CHORUS_MOD_TRIANGLE)
-    {
+        break;
+
+    case FLUID_CHORUS_MOD_TRIANGLE:
         fluid_chorus_triangle(chorus->lookup_tab, chorus->modulation_period_samples,
                               modulation_depth_samples);
-    }
-    else
-    {
-        fluid_log(FLUID_WARN, "chorus: Unknown modulation type. Using sinewave.");
-        chorus->type = FLUID_CHORUS_MOD_SINE;
-        fluid_chorus_sine(chorus->lookup_tab, chorus->modulation_period_samples,
-                          modulation_depth_samples);
+        break;
     }
 
     for(i = 0; i < chorus->number_blocks; i++)

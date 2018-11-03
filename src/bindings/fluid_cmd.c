@@ -1839,7 +1839,7 @@ fluid_handle_set(void *data, int ac, char **av, fluid_ostream_t out)
     {
     case FLUID_NO_TYPE:
         fluid_ostream_printf(out, "set: Parameter '%s' not found.\n", av[0]);
-        break;
+        return ret;
 
     case FLUID_INT_TYPE:
         if(fluid_settings_get_hints(handler->synth->settings, av[0], &hints) == FLUID_OK
@@ -1879,7 +1879,7 @@ fluid_handle_set(void *data, int ac, char **av, fluid_ostream_t out)
 
     if(ret == FLUID_FAILED)
     {
-        fluid_ostream_printf(out, "set: Value out of range.\n");
+        fluid_ostream_printf(out, "set: Value out of range. Try 'info %s' for valid ranges\n", av[0]);
     }
     
     if(!fluid_settings_is_realtime(handler->synth->settings, av[0]))

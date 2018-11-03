@@ -74,6 +74,18 @@ else ( WINDOWS_SUPPORT )
   message ( "Windows:               no" )
 endif ( WINDOWS_SUPPORT )
 
+if ( DSOUND_SUPPORT )
+  message ( "DSound:                yes" )
+else ( DSOUND_SUPPORT )
+  message ( "DSound:                no" )
+endif ( DSOUND_SUPPORT )
+
+if ( WINMIDI_SUPPORT )
+  message ( "WinMidi support:       yes" )
+else ( WINMIDI_SUPPORT )
+  message ( "WinMidi support:       no" )
+endif ( WINMIDI_SUPPORT )
+
 if ( LADSPA_SUPPORT )
   message ( "LADSPA support:        yes" )
 else ( LADSPA_SUPPORT )

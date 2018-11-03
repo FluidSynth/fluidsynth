@@ -489,9 +489,9 @@ void fluid_sffile_close(SFData *sf)
 static int chunkid(unsigned int id)
 {
     unsigned int i;
-    unsigned int *p;
+    const unsigned int *p;
 
-    p = (unsigned int *)&idlist;
+    p = (const unsigned int *)&idlist;
 
     for(i = 0; i < sizeof(idlist) / sizeof(int); i++, p += 1)
     {
@@ -982,7 +982,11 @@ static int load_phdr(SFData *sf, int size)
     for(; i > 0; i--)
     {
         /* load all preset headers */
-        preset = FLUID_NEW(SFPreset);
+        if((preset = FLUID_NEW(SFPreset)) == NULL)
+        {
+            FLUID_LOG(FLUID_ERR, "Out of memory");
+            return FALSE;
+        }
         sf->preset = fluid_list_append(sf->preset, preset);
         preset->zone = NULL; /* In case of failure, fluid_sffile_close can cleanup */
         READSTR(sf, &preset->name); /* possible read failure ^ */
@@ -1069,7 +1073,11 @@ static int load_pbag(SFData *sf, int size)
                 return FALSE;
             }
 
-            z = FLUID_NEW(SFZone);
+            if((z = FLUID_NEW(SFZone)) == NULL)
+            {
+                FLUID_LOG(FLUID_ERR, "Out of memory");
+                return FALSE;
+            }
             p2->data = z;
             z->gen = NULL; /* Init gen and mod before possible failure, */
             z->mod = NULL; /* to ensure proper cleanup (fluid_sffile_close) */
@@ -1198,7 +1206,11 @@ static int load_pmod(SFData *sf, int size)
                     return FALSE;
                 }
 
-                m = FLUID_NEW(SFMod);
+                if((m = FLUID_NEW(SFMod)) == NULL)
+                {
+                    FLUID_LOG(FLUID_ERR, "Out of memory");
+                    return FALSE;
+                }
                 p3->data = m;
                 READW(sf, m->src);
                 READW(sf, m->dest);
@@ -1350,7 +1362,11 @@ static int load_pgen(SFData *sf, int size)
                     if(!dup)
                     {
                         /* if gen ! dup alloc new */
-                        g = FLUID_NEW(SFGen);
+                        if((g = FLUID_NEW(SFGen)) == NULL)
+                        {
+                            FLUID_LOG(FLUID_ERR, "Out of memory");
+                            return FALSE;
+                        }
                         p3->data = g;
                         g->id = genid;
                     }
@@ -1487,7 +1503,11 @@ static int load_ihdr(SFData *sf, int size)
     for(i = 0; i < size; i++)
     {
         /* load all instrument headers */
-        p = FLUID_NEW(SFInst);
+        if((p = FLUID_NEW(SFInst)) == NULL)
+        {
+            FLUID_LOG(FLUID_ERR, "Out of memory");
+            return FALSE;
+        }
         sf->inst = fluid_list_append(sf->inst, p);
         p->zone = NULL; /* For proper cleanup if fail (fluid_sffile_close) */
         p->idx = i;
@@ -1568,7 +1588,11 @@ static int load_ibag(SFData *sf, int size)
                 return FALSE;
             }
 
-            z = FLUID_NEW(SFZone);
+            if((z = FLUID_NEW(SFZone)) == NULL)
+            {
+                FLUID_LOG(FLUID_ERR, "Out of memory");
+                return FALSE;
+            }
             p2->data = z;
             z->gen = NULL; /* In case of failure, */
             z->mod = NULL; /* fluid_sffile_close can clean up */
@@ -1698,7 +1722,11 @@ static int load_imod(SFData *sf, int size)
                     return FALSE;
                 }
 
-                m = FLUID_NEW(SFMod);
+                if((m = FLUID_NEW(SFMod)) == NULL)
+                {
+                    FLUID_LOG(FLUID_ERR, "Out of memory");
+                    return FALSE;
+                }
                 p3->data = m;
                 READW(sf, m->src);
                 READW(sf, m->dest);
@@ -1839,7 +1867,11 @@ static int load_igen(SFData *sf, int size)
                     if(!dup)
                     {
                         /* if gen ! dup alloc new */
-                        g = FLUID_NEW(SFGen);
+                        if((g = FLUID_NEW(SFGen)) == NULL)
+                        {
+                            FLUID_LOG(FLUID_ERR, "Out of memory");
+                            return FALSE;
+                        }
                         p3->data = g;
                         g->id = genid;
                     }
@@ -1974,7 +2006,11 @@ static int load_shdr(SFData *sf, unsigned int size)
     /* load all sample headers */
     for(i = 0; i < size; i++)
     {
-        p = FLUID_NEW(SFSample);
+        if((p = FLUID_NEW(SFSample)) == NULL)
+        {
+            FLUID_LOG(FLUID_ERR, "Out of memory");
+            return FALSE;
+        }
         sf->sample = fluid_list_append(sf->sample, p);
         READSTR(sf, &p->name);
         READD(sf, p->start);
@@ -2102,6 +2138,8 @@ static void delete_preset(SFPreset *preset)
     }
 
     delete_fluid_list(preset->zone);
+    
+    FLUID_FREE(preset);
 }
 
 static void delete_inst(SFInst *inst)
@@ -2124,6 +2162,8 @@ static void delete_inst(SFInst *inst)
     }
 
     delete_fluid_list(inst->zone);
+    
+    FLUID_FREE(inst);
 }
 
 
