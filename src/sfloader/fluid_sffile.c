@@ -89,16 +89,16 @@ enum
  * See: EXP36-C. Do not cast pointers into more strictly aligned pointer
  * types - SEI CERT C Coding Standard
  */
-static union fluid_idlist
+static const union fluid_idlist
 {
     /*
-     * Cannot be const char c[ ], because in C89, arrays wraped in unions
+     * Cannot be char c[ ], because in C89, arrays wraped in unions
      * must have a fixed size. Otherwise the size of the union would depend
      * on the initialization of its first member, which results in
      * different sizes for different instances of the same union type.
      */
-    const char c[116];
-    const uint32_t i;
+    char c[116];
+    uint32_t i;
 } idlist = {"RIFFLISTsfbkINFOsdtapdtaifilisngINAMiromiverICRDIENGIPRD"
             "ICOPICMTISFTsnamsmplphdrpbagpmodpgeninstibagimodigenshdrsm24"
            };
