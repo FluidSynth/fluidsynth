@@ -77,6 +77,18 @@ enum
     SM24_ID
 };
 
+/*
+ * This declares a char array containing the SF2 chunk identifiers. This
+ * array is being access like an uint32 below to simplify id comparision.
+ * To make sure it is suitably aligned for uint32 access, we must wrap it
+ * inside a union along with a uint32 telling the compiler to align it
+ * for integer access and avoiding undefined behaviour.
+ * This basically is the C89 equivalent to what is written in C11 as:
+ * alignas(uint32_t) static const char idlist[] = {};
+ *
+ * See: EXP36-C. Do not cast pointers into more strictly aligned pointer
+ * types - SEI CERT C Coding Standard
+ */
 static union fluid_idlist
 {
     const char c[116];
