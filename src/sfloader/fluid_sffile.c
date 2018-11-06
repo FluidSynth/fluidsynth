@@ -79,7 +79,7 @@ enum
 
 /*
  * This declares a char array containing the SF2 chunk identifiers. This
- * array is being access like an uint32 below to simplify id comparision.
+ * array is being accessed like an uint32 below to simplify id comparison.
  * To make sure it is suitably aligned for uint32 access, we must wrap it
  * inside a union along with a uint32 telling the compiler to align it
  * for integer access and avoiding undefined behaviour.
@@ -91,6 +91,12 @@ enum
  */
 static union fluid_idlist
 {
+    /*
+     * Cannot be const char c[ ], because in C89, arrays wraped in unions
+     * must have a fixed size. Otherwise the size of the union would depend
+     * on the initialization of its first member, which results in
+     * different sizes for different instances of the same union type.
+     */
     const char c[116];
     const uint32_t i;
 } idlist = {"RIFFLISTsfbkINFOsdtapdtaifilisngINAMiromiverICRDIENGIPRD"
