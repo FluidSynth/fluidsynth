@@ -70,6 +70,9 @@ build-fluidsynth-one:
 dist-dep-one:
 	mkdir -p dep/$(A_ABI) && cd dep/$(A_ABI) && cp $(DIST_PATH)/android_$(BUILD_ABI)/lib/*.a . && cp ../../build/$(A_ABI)/src/*.a . && cd ../../
 
+clean:
+	rm -rf build/*
+
 .PHONY: wipe
 wipe: $(CERBERO)
 	for abi in $(ABIS_SIMPLE) ; do \
