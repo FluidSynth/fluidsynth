@@ -28,11 +28,6 @@
 #include "fluid_sfont.h"
 #include "fluid_chan.h"
 
-#if WITH_READLINE
-#include <readline/readline.h>
-#include <readline/history.h>
-#endif
-
 /* FIXME: LADSPA used to need a lot of parameters on a single line. This is not
  * necessary anymore, so the limits below could probably be reduced */
 #define MAX_TOKENS 100
@@ -521,15 +516,6 @@ fluid_shell_run(void *data)
         {
             break;
         }
-
-#if WITH_READLINE
-
-        if(shell->in == fluid_get_stdin())
-        {
-            add_history(workline);
-        }
-
-#endif
 
         /* handle the command */
         switch(fluid_command(shell->handler, workline, shell->out))
