@@ -1161,18 +1161,23 @@ fluid_voice_update_param(fluid_voice_t *voice, int gen)
  * iteration of the audio cycle (which would probably be feasible if
  * the synth was made in silicon).
  *
- * The update is done in three steps:
+ * The update is done in four steps:
  *
- * - first, we look for all the modulators that have the changed
+ * - step 1: first, we look for all the modulators that have the changed
  * controller as a source. This will yield a list of generators that
  * will be changed because of the controller event.
  *
- * - For every changed generator, calculate its new value. This is the
- * sum of its original value plus the values of al the attached
+ * - step 2: For every changed generator, calculate its new value. This is the
+ * sum of its original value plus the values of all the attached
  * modulators.
  *
- * - For every changed generator, convert its value to the correct
- * unit of the corresponding DSP parameter
+ * - step 3: We need to avoid the risk to call 'fluid_voice_update_param' several
+ * times for the same generator if several modulators have that generator as
+ * destination. So every changed generators are registered in a list.
+
+ * - step 4: When finished with all the modulators, for every registered generator
+ * in the list, convert its value to the correct unit of the corresponding DSP
+ * parameter (fluid_voice_update_param()).
  */
 int fluid_voice_modulate(fluid_voice_t *voice, int cc, int ctrl)
 {
@@ -1180,6 +1185,8 @@ int fluid_voice_modulate(fluid_voice_t *voice, int cc, int ctrl)
     fluid_mod_t *mod;
     int gen;
     fluid_real_t modval;
+    int gen_changed[GEN_LAST]; /* registered list of changed generators */
+    int gen_count = 0;         /* count of generators in gen_changed */
 
     /*    printf("Chan=%d, CC=%d, Src=%d, Val=%d\n", voice->channel->channum, cc, ctrl, val); */
 
@@ -1209,12 +1216,27 @@ int fluid_voice_modulate(fluid_voice_t *voice, int cc, int ctrl)
             fluid_gen_set_mod(&voice->gen[gen], modval);
 
             /* step 3: now that we have the new value of the generator,
-             * recalculate the parameter values that are derived from the
-             * generator */
-            fluid_voice_update_param(voice, gen);
+               we register this generator only once in the list  */
+            for (k = 0; k < gen_count; k++)
+            {
+                if (gen_changed[k] == gen)
+                {
+                    break; /* gen already in the list */
+                }
+            }
+            if (k == gen_count)
+            {   /* registers gen as it isn't yet in the list */
+                gen_changed[gen_count++] = gen;
+            }
         }
     }
 
+    /* spep 4: for every registered generator in the list, convert its value to
+       the correct unit of the corresponding DSP parameter */
+    for (k = 0; k < gen_count; k++)
+    {
+        fluid_voice_update_param(voice, gen_changed[k]);
+    }
     return FLUID_OK;
 }
 
