@@ -516,6 +516,27 @@ fluid_voice_calculate_gen_pitch(fluid_voice_t *voice)
     voice->gen[GEN_PITCH].val = fluid_voice_calculate_pitch(voice, fluid_voice_get_actual_key(voice));
 }
 
+/* fluid_voice_modulate_input_node
+ *
+ * This function calculate the input modulation node of each
+ * destination generator. The input node is the sum of all
+ * voice's modulators connected to this node.
+ * 
+ * This function is usefull at voice start time and voice_modulate_all time.
+ *
+ * @voice voice the synthesis voice
+ */
+static void
+fluid_voice_modulate_input_node(fluid_voice_t *voice)
+{
+    int i;
+    fluid_mod_t *mod;
+	for(i = 0; i < voice->mod_count; i++)
+    {
+        mod = &voice->mod[i];
+        voice->gen[mod->dest].mod += fluid_mod_get_value(mod, voice);
+    }
+}
 
 /*
  * fluid_voice_calculate_runtime_synthesis_parameters
@@ -609,15 +630,8 @@ fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t *voice)
      * fluid_gen_set_default_values.
      */
 
-    for(i = 0; i < voice->mod_count; i++)
-    {
-        fluid_mod_t *mod = &voice->mod[i];
-        fluid_real_t modval = fluid_mod_get_value(mod, voice);
-        int dest_gen_index = mod->dest;
-        fluid_gen_t *dest_gen = &voice->gen[dest_gen_index];
-        dest_gen->mod += modval;
-        /*      fluid_dump_modulator(mod); */
-    }
+    /* calculate each generators's modulation input node */
+    fluid_voice_modulate_input_node(voice);
 
     /* Now the generators are initialized, nominal and modulation value.
      * The voice parameters (which depend on generators) are calculated
@@ -1268,13 +1282,9 @@ int fluid_voice_modulate_all(fluid_voice_t *voice)
     }
 
     /* Then calculate each generators's modulation input node */
-    for(i = 0; i < voice->mod_count; i++)
-    {
-        mod = &voice->mod[i];
-        voice->gen[mod->dest].mod += fluid_mod_get_value(mod, voice);
-    }
+    fluid_voice_modulate_input_node(voice);
 
-    /* step 2: for every generator, convert its value to the correct unit of the
+	/* step 2: for every generator, convert its value to the correct unit of the
       corresponding DSP parameter (fluid_voice_update_param()). */
     for(i = 0; i < voice->mod_count; i++)
     {
