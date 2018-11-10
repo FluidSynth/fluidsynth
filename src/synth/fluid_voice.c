@@ -1184,7 +1184,8 @@ int fluid_voice_modulate(fluid_voice_t *voice, int cc, int ctrl)
     fluid_mod_t *mod;
     int gen;
     fluid_real_t modval;
-    int gen_changed[GEN_LAST]; /* registered list of changed generators */
+	/* registered list of changed generators */
+    enum fluid_gen_type gen_changed[GEN_LAST];
     int gen_count = 0;         /* count of generators in gen_changed */
 
     /*    printf("Chan=%d, CC=%d, Src=%d, Val=%d\n", voice->channel->channum, cc, ctrl, val); */
