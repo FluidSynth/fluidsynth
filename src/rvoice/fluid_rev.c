@@ -368,7 +368,7 @@ fluid_revmodel_reset(fluid_revmodel_t *rev)
 }
 
 void
-fluid_revmodel_processreplace(fluid_revmodel_t *rev, fluid_real_t *in,
+fluid_revmodel_processreplace(fluid_revmodel_t *rev, const fluid_real_t *in,
                               fluid_real_t *left_out, fluid_real_t *right_out)
 {
     int i, k = 0;
@@ -410,7 +410,7 @@ fluid_revmodel_processreplace(fluid_revmodel_t *rev, fluid_real_t *in,
 }
 
 void
-fluid_revmodel_processmix(fluid_revmodel_t *rev, fluid_real_t *in,
+fluid_revmodel_processmix(fluid_revmodel_t *rev, const fluid_real_t *in,
                           fluid_real_t *left_out, fluid_real_t *right_out)
 {
     int i, k = 0;
