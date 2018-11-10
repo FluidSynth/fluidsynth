@@ -144,7 +144,7 @@ fluid_audio_driver_t *
 new_fluid_core_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
 {
     return new_fluid_core_audio_driver2(settings,
-                                        fluid_synth_process,
+                                        NULL,
                                         synth);
 }
 
@@ -266,10 +266,7 @@ new_fluid_core_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func
         }
     }
 
-    if(devname)
-    {
-        FLUID_FREE(devname);  /* free device name */
-    }
+    FLUID_FREE(devname);  /* free device name */
 
     dev->buffer_size = period_size * periods;
 
@@ -322,6 +319,12 @@ new_fluid_core_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func
 
     dev->buffers[0] = FLUID_ARRAY(float, dev->buffer_size);
     dev->buffers[1] = FLUID_ARRAY(float, dev->buffer_size);
+    
+    if(dev->buffers[0] == NULL || dev->buffers[1] == NULL)
+    {
+        FLUID_LOG(FLUID_ERR, "Out of memory.");
+        goto error_recovery;
+    }
 
     // Initialize the audio unit
     status = AudioUnitInitialize(dev->outputUnit);

@@ -176,7 +176,6 @@ new_fluid_pulse_audio_driver2(fluid_settings_t *settings,
     }
 
     buf = FLUID_ARRAY(float, period_size * 2);
-
     if(buf == NULL)
     {
         FLUID_LOG(FLUID_ERR, "Out of memory.");
@@ -196,29 +195,17 @@ new_fluid_pulse_audio_driver2(fluid_settings_t *settings,
         goto error_recovery;
     }
 
-    if(server)
-    {
-        FLUID_FREE(server);    /* -- free server string */
-    }
-
-    if(device)
-    {
-        FLUID_FREE(device);    /* -- free device string */
-    }
+    FLUID_FREE(server);    /* -- free server string */
+    FLUID_FREE(device);    /* -- free device string */
 
     return (fluid_audio_driver_t *) dev;
 
 error_recovery:
-
-    if(server)
-    {
-        FLUID_FREE(server);    /* -- free server string */
-    }
-
-    if(device)
-    {
-        FLUID_FREE(device);    /* -- free device string */
-    }
+    FLUID_FREE(server);    /* -- free server string */
+    FLUID_FREE(device);    /* -- free device string */
+    FLUID_FREE(left);
+    FLUID_FREE(right);
+    FLUID_FREE(buf);
 
     delete_fluid_pulse_audio_driver((fluid_audio_driver_t *) dev);
     return NULL;

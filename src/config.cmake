@@ -190,6 +190,12 @@
 /* Define to enable PulseAudio driver */
 #cmakedefine PULSE_SUPPORT @PULSE_SUPPORT@
 
+/* Define to enable DirectSound driver */
+#cmakedefine DSOUND_SUPPORT @DSOUND_SUPPORT@
+
+/* Define to enable Windows MIDI driver */
+#cmakedefine WINMIDI_SUPPORT @WINMIDI_SUPPORT@
+
 /* Define to 1 if you have the ANSI C header files. */
 #cmakedefine STDC_HEADERS @STDC_HEADERS@
 

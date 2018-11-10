@@ -511,9 +511,7 @@ void fluid_sffile_close(SFData *sf)
 static int chunkid(uint32_t id)
 {
     unsigned int i;
-    const uint32_t *p;
-
-    p = &idlist.i;
+    const uint32_t *p = &idlist.i;
 
     for(i = 0; i < sizeof(idlist) / sizeof(idlist.i); i++, p += 1)
     {

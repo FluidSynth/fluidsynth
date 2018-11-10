@@ -88,15 +88,13 @@ static void fluid_synth_update_presets(fluid_synth_t *synth);
 static void fluid_synth_update_gain_LOCAL(fluid_synth_t *synth);
 static int fluid_synth_update_polyphony_LOCAL(fluid_synth_t *synth, int new_polyphony);
 static void init_dither(void);
-static FLUID_INLINE int roundi(float x);
+static FLUID_INLINE int16_t round_clip_to_i16(float x);
 static int fluid_synth_render_blocks(fluid_synth_t *synth, int blockcount);
 
 static fluid_voice_t *fluid_synth_free_voice_by_kill_LOCAL(fluid_synth_t *synth);
 static void fluid_synth_kill_by_exclusive_class_LOCAL(fluid_synth_t *synth,
         fluid_voice_t *new_voice);
 static int fluid_synth_sfunload_callback(void *data, unsigned int msec);
-void fluid_synth_release_voice_on_same_note_LOCAL(fluid_synth_t *synth,
-        int chan, int key);
 static fluid_tuning_t *fluid_synth_get_tuning(fluid_synth_t *synth,
         int bank, int prog);
 static int fluid_synth_replace_tuning_LOCK(fluid_synth_t *synth,
@@ -147,8 +145,6 @@ static int fluid_synth_set_chorus_full_LOCAL(fluid_synth_t *synth, int set, int 
 /* has the synth module been initialized? */
 /* fluid_atomic_int_t may be anything, so init with {0} to catch most cases */
 static fluid_atomic_int_t fluid_synth_initialized = {0};
-static void fluid_synth_init(void);
-static void init_dither(void);
 
 /* default modulators
  * SF2.01 page 52 ff:
@@ -285,12 +281,6 @@ fluid_synth_init(void)
     /* Turn on floating point exception traps */
     feenableexcept(FE_DIVBYZERO | FE_UNDERFLOW | FE_OVERFLOW | FE_INVALID);
 #endif
-
-    fluid_conversion_config();
-
-    fluid_rvoice_dsp_config();
-
-    fluid_sys_config();
 
     init_dither();
 
@@ -3810,17 +3800,28 @@ init_dither(void)
 }
 
 /* A portable replacement for roundf(), seems it may actually be faster too! */
-static FLUID_INLINE int
-roundi(float x)
+static FLUID_INLINE int16_t
+round_clip_to_i16(float x)
 {
+    long i;
     if(x >= 0.0f)
     {
-        return (int)(x + 0.5f);
+        i = (long)(x + 0.5f);
+        if (FLUID_UNLIKELY(i > 32767))
+        {
+            i = 32767;
+        }
     }
     else
     {
-        return (int)(x - 0.5f);
+        i = (long)(x - 0.5f);
+        if (FLUID_UNLIKELY(i < -32768))
+        {
+            i = -32768;
+        }
     }
+    
+    return (int16_t)i;
 }
 
 /**
@@ -3849,12 +3850,10 @@ fluid_synth_write_s16(fluid_synth_t *synth, int len,
                       void *rout, int roff, int rincr)
 {
     int i, j, k, cur;
-    signed short *left_out = (signed short *) lout;
-    signed short *right_out = (signed short *) rout;
+    int16_t *left_out = lout;
+    int16_t *right_out = rout;
     fluid_real_t *left_in;
     fluid_real_t *right_in;
-    fluid_real_t left_sample;
-    fluid_real_t right_sample;
     double time = fluid_utime();
     int di;
     float cpu_load;
@@ -3879,39 +3878,13 @@ fluid_synth_write_s16(fluid_synth_t *synth, int len,
             cur = 0;
         }
 
-        left_sample = roundi(left_in[0 * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + cur] * 32766.0f + rand_table[0][di]);
-        right_sample = roundi(right_in[0 * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + cur] * 32766.0f + rand_table[1][di]);
+        left_out[j] = round_clip_to_i16(left_in[0 * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + cur] * 32766.0f + rand_table[0][di]);
+        right_out[k] = round_clip_to_i16(right_in[0 * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + cur] * 32766.0f + rand_table[1][di]);
 
-        di++;
-
-        if(di >= DITHER_SIZE)
+        if(++di >= DITHER_SIZE)
         {
             di = 0;
         }
-
-        /* digital clipping */
-        if(left_sample > 32767.0f)
-        {
-            left_sample = 32767.0f;
-        }
-
-        if(left_sample < -32768.0f)
-        {
-            left_sample = -32768.0f;
-        }
-
-        if(right_sample > 32767.0f)
-        {
-            right_sample = 32767.0f;
-        }
-
-        if(right_sample < -32768.0f)
-        {
-            right_sample = -32768.0f;
-        }
-
-        left_out[j] = (signed short) left_sample;
-        right_out[k] = (signed short) right_sample;
     }
 
     synth->cur = cur;
@@ -3945,54 +3918,25 @@ fluid_synth_write_s16(fluid_synth_t *synth, int len,
  * @note Currently private to libfluidsynth.
  */
 void
-fluid_synth_dither_s16(int *dither_index, int len, float *lin, float *rin,
+fluid_synth_dither_s16(int *dither_index, int len, const float *lin, const float *rin,
                        void *lout, int loff, int lincr,
                        void *rout, int roff, int rincr)
 {
     int i, j, k;
-    signed short *left_out = (signed short *) lout;
-    signed short *right_out = (signed short *) rout;
-    fluid_real_t left_sample;
-    fluid_real_t right_sample;
+    int16_t *left_out = lout;
+    int16_t *right_out = rout;
     int di = *dither_index;
     fluid_profile_ref_var(prof_ref);
 
     for(i = 0, j = loff, k = roff; i < len; i++, j += lincr, k += rincr)
     {
+        left_out[j] = round_clip_to_i16(lin[i] * 32766.0f + rand_table[0][di]);
+        right_out[k] = round_clip_to_i16(rin[i] * 32766.0f + rand_table[1][di]);
 
-        left_sample = roundi(lin[i] * 32766.0f + rand_table[0][di]);
-        right_sample = roundi(rin[i] * 32766.0f + rand_table[1][di]);
-
-        di++;
-
-        if(di >= DITHER_SIZE)
+        if(++di >= DITHER_SIZE)
         {
             di = 0;
         }
-
-        /* digital clipping */
-        if(left_sample > 32767.0f)
-        {
-            left_sample = 32767.0f;
-        }
-
-        if(left_sample < -32768.0f)
-        {
-            left_sample = -32768.0f;
-        }
-
-        if(right_sample > 32767.0f)
-        {
-            right_sample = 32767.0f;
-        }
-
-        if(right_sample < -32768.0f)
-        {
-            right_sample = -32768.0f;
-        }
-
-        left_out[j] = (signed short) left_sample;
-        right_out[k] = (signed short) right_sample;
     }
 
     *dither_index = di;	/* keep dither buffer continous */

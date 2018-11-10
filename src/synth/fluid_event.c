@@ -62,7 +62,7 @@ new_fluid_event()
 
     if(evt == NULL)
     {
-        fluid_log(FLUID_PANIC, "event: Out of memory\n");
+        FLUID_LOG(FLUID_PANIC, "event: Out of memory\n");
         return NULL;
     }
 
@@ -751,7 +751,7 @@ _fluid_evt_heap_init(int nbEvents)
 
     if(heap == NULL)
     {
-        fluid_log(FLUID_PANIC, "sequencer: Out of memory\n");
+        FLUID_LOG(FLUID_PANIC, "sequencer: Out of memory\n");
         return NULL;
     }
 
@@ -782,7 +782,7 @@ _fluid_evt_heap_init(int nbEvents)
 
     if(heap == NULL)
     {
-        fluid_log(FLUID_PANIC, "sequencer: Out of memory\n");
+        FLUID_LOG(FLUID_PANIC, "sequencer: Out of memory\n");
         return NULL;
     }
 
