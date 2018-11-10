@@ -1152,7 +1152,9 @@ fluid_voice_update_param(fluid_voice_t *voice, int gen)
  * Recalculate voice parameters for a given control.
  * @param voice the synthesis voice
  * @param cc flag to distinguish between a continous control and a channel control (pitch bend, ...)
- * @param ctrl the control number
+ * @param ctrl the control number:
+ *   when >=0, only modulators's destination having ctrl as source are updated.
+ *   when -1, all modulators's destination are updated (regardless of ctrl).
  *
  * In this implementation, I want to make sure that all controllers
  * are event based: the parameter values of the DSP algorithm should
@@ -1196,8 +1198,9 @@ int fluid_voice_modulate(fluid_voice_t *voice, int cc, int ctrl)
         mod = &voice->mod[i];
 
         /* step 1: find all the modulators that have the changed controller
-         * as input source. */
-        if(fluid_mod_has_source(mod, cc, ctrl))
+         * as input source. When ctrl is -1 all modulators's destination 
+		 are updated */
+        if(ctrl < 0 || fluid_mod_has_source(mod, cc, ctrl))
         {
 
             gen = fluid_mod_get_dest(mod);
@@ -1244,46 +1247,11 @@ int fluid_voice_modulate(fluid_voice_t *voice, int cc, int ctrl)
  * Update all the modulators. This function is called after a
  * ALL_CTRL_OFF MIDI message has been received (CC 121).
  *
+ * All destination of all modulators must be updated.
  */
 int fluid_voice_modulate_all(fluid_voice_t *voice)
 {
-    fluid_mod_t *mod;
-    int i, k, gen;
-    fluid_real_t modval;
-
-    /* Loop through all the modulators.
-       FIXME: we should loop through the set of generators instead of
-       the set of modulators. We risk to call 'fluid_voice_update_param'
-       several times for the same generator if several modulators have
-       that generator as destination. It's not an error, just a wast of
-       energy (think polution, global warming, unhappy musicians,
-       ...) */
-
-    for(i = 0; i < voice->mod_count; i++)
-    {
-
-        mod = &voice->mod[i];
-        gen = fluid_mod_get_dest(mod);
-        modval = 0.0;
-
-        /* Accumulate the modulation values of all the modulators with
-         * destination generator 'gen' */
-        for(k = 0; k < voice->mod_count; k++)
-        {
-            if(fluid_mod_has_dest(&voice->mod[k], gen))
-            {
-                modval += fluid_mod_get_value(&voice->mod[k], voice);
-            }
-        }
-
-        fluid_gen_set_mod(&voice->gen[gen], modval);
-
-        /* Update the parameter values that are depend on the generator
-         * 'gen' */
-        fluid_voice_update_param(voice, gen);
-    }
-
-    return FLUID_OK;
+    return fluid_voice_modulate(voice, 0, -1);
 }
 
 /** legato update functions --------------------------------------------------*/
