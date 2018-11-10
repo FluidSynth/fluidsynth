@@ -516,28 +516,6 @@ fluid_voice_calculate_gen_pitch(fluid_voice_t *voice)
     voice->gen[GEN_PITCH].val = fluid_voice_calculate_pitch(voice, fluid_voice_get_actual_key(voice));
 }
 
-/* fluid_voice_modulate_input_node
- *
- * This function calculate the input modulation node of each
- * destination generator. The input node is the sum of all
- * voice's modulators connected to this node.
- * 
- * This function is usefull at voice start time and voice_modulate_all time.
- *
- * @voice voice the synthesis voice
- */
-static void
-fluid_voice_modulate_input_node(fluid_voice_t *voice)
-{
-    int i;
-    fluid_mod_t *mod;
-	for(i = 0; i < voice->mod_count; i++)
-    {
-        mod = &voice->mod[i];
-        voice->gen[mod->dest].mod += fluid_mod_get_value(mod, voice);
-    }
-}
-
 /*
  * fluid_voice_calculate_runtime_synthesis_parameters
  *
@@ -630,8 +608,15 @@ fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t *voice)
      * fluid_gen_set_default_values.
      */
 
-    /* calculate each generators's modulation input node */
-    fluid_voice_modulate_input_node(voice);
+    for(i = 0; i < voice->mod_count; i++)
+    {
+        fluid_mod_t *mod = &voice->mod[i];
+        fluid_real_t modval = fluid_mod_get_value(mod, voice);
+        int dest_gen_index = mod->dest;
+        fluid_gen_t *dest_gen = &voice->gen[dest_gen_index];
+        dest_gen->mod += modval;
+        /*      fluid_dump_modulator(mod); */
+    }
 
     /* Now the generators are initialized, nominal and modulation value.
      * The voice parameters (which depend on generators) are calculated
@@ -1258,37 +1243,43 @@ int fluid_voice_modulate(fluid_voice_t *voice, int cc, int ctrl)
  * Update all the modulators. This function is called after a
  * ALL_CTRL_OFF MIDI message has been received (CC 121).
  *
- * step 1: All generators should be modulated by all modulators.
- *  This is done using the same code then when the voice was started 
- *  (see fluid_voice_calculate_runtime_synthesis_parameters).
- *  This code avoid the risk to call 'fluid_voice_update_param'
- *  several times for the same generator if several modulators have
- *  that generator as destination.
- *
- * step 2: for every generator, convert its value to the correct unit of the
- * corresponding DSP parameter (fluid_voice_update_param()).
- *
  */
 int fluid_voice_modulate_all(fluid_voice_t *voice)
 {
-    int i;
     fluid_mod_t *mod;
+    int i, k, gen;
+    fluid_real_t modval;
 
-    /* Step 1: All generators should be modulated by all modulators. */
-    /* First clear generators's modulation input node */
+    /* Loop through all the modulators.
+       FIXME: we should loop through the set of generators instead of
+       the set of modulators. We risk to call 'fluid_voice_update_param'
+       several times for the same generator if several modulators have
+       that generator as destination. It's not an error, just a wast of
+       energy (think polution, global warming, unhappy musicians,
+       ...) */
+
     for(i = 0; i < voice->mod_count; i++)
     {
-        voice->gen[voice->mod[i].dest].mod = 0.0f;
-    }
 
-    /* Then calculate each generators's modulation input node */
-    fluid_voice_modulate_input_node(voice);
+        mod = &voice->mod[i];
+        gen = fluid_mod_get_dest(mod);
+        modval = 0.0;
 
-	/* step 2: for every generator, convert its value to the correct unit of the
-      corresponding DSP parameter (fluid_voice_update_param()). */
-    for(i = 0; i < voice->mod_count; i++)
-    {
-        fluid_voice_update_param(voice, voice->mod[i].dest);
+        /* Accumulate the modulation values of all the modulators with
+         * destination generator 'gen' */
+        for(k = 0; k < voice->mod_count; k++)
+        {
+            if(fluid_mod_has_dest(&voice->mod[k], gen))
+            {
+                modval += fluid_mod_get_value(&voice->mod[k], voice);
+            }
+        }
+
+        fluid_gen_set_mod(&voice->gen[gen], modval);
+
+        /* Update the parameter values that are depend on the generator
+         * 'gen' */
+        fluid_voice_update_param(voice, gen);
     }
 
     return FLUID_OK;
