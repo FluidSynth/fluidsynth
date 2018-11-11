@@ -34,7 +34,7 @@
  * output.  There is a very small turn-on transient response, which should not
  * cause problems.
  */
-#define DC_OFFSET (fluid_real_t)1e-8
+#define DC_OFFSET ((fluid_real_t)1e-8)
 
 typedef struct _fluid_allpass fluid_allpass;
 typedef struct _fluid_comb fluid_comb;
