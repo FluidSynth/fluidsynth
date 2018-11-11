@@ -28,8 +28,6 @@
 #include "fluid_synth.h"
 
 
-#define ENABLE_MIXER_THREADS 1
-
 // If less than x voices, the thread overhead is larger than the gain,
 // so don't activate the thread(s).
 #define VOICES_PER_THREAD 8
