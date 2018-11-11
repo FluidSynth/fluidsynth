@@ -146,6 +146,12 @@ else ( HAVE_OPENMP )
   message ( "OpenMP 4.0:            no" )
 endif ( HAVE_OPENMP )
 
+if ( ENABLE_MIXER_THREADS )
+  message ( "Multi-thread support   yes" )
+else ( ENABLE_MIXER_THREADS )
+  message ( "Multi-thread support   no" )
+endif ( ENABLE_MIXER_THREADS )
+
 if ( ENABLE_DEBUG )
   message ( "Debug:                 yes" )
 else ( ENABLE_DEBUG )
