@@ -1188,7 +1188,7 @@ fluid_voice_update_param(fluid_voice_t *voice, int gen)
 #define NBR_BIT_BY_VAR_LN2 5	/* for 32 bits variables */
 #define NBR_BIT_BY_VAR  (1 << NBR_BIT_BY_VAR_LN2)	
 #define NBR_BIT_BY_VAR_ANDMASK (NBR_BIT_BY_VAR -1)
-#define	SIZE_UPDATED_GEN  ((GEN_LAST + NBR_BIT_BY_VAR_ANDMASK) / NBR_BIT_BY_VAR)
+#define	SIZE_UPDATED_GEN_BIT  ((GEN_LAST + NBR_BIT_BY_VAR_ANDMASK) / NBR_BIT_BY_VAR)
 
 #define is_gen_updated(bit,gen)  (bit[gen >> NBR_BIT_BY_VAR_LN2] &  (1 << (gen & NBR_BIT_BY_VAR_ANDMASK)))
 #define set_gen_updated(bit,gen) (bit[gen >> NBR_BIT_BY_VAR_LN2] |= (1 << (gen & NBR_BIT_BY_VAR_ANDMASK)))
@@ -1201,10 +1201,10 @@ int fluid_voice_modulate(fluid_voice_t *voice, int cc, int ctrl)
     fluid_real_t modval;
 
 	/* registered bits table of updated generators */
-    uint32_t updated_gen_bit[SIZE_UPDATED_GEN];
+    uint32_t updated_gen_bit[SIZE_UPDATED_GEN_BIT];
 	
     /* reset list bits of updated generators */
-    for(i = 0; i < SIZE_UPDATED_GEN; i++)
+    for(i = 0; i < SIZE_UPDATED_GEN_BIT; i++)
     {
         updated_gen_bit[i]= 0;
     }
