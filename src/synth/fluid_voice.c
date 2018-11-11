@@ -1162,7 +1162,7 @@ fluid_voice_update_param(fluid_voice_t *voice, int gen)
  * iteration of the audio cycle (which would probably be feasible if
  * the synth was made in silicon).
  *
- * The update is done in four steps:
+ * The update is done in three steps:
  *
  * - step 1: first, we look for all the modulators that have the changed
  * controller as a source. This will yield a list of generators that
@@ -1174,32 +1174,52 @@ fluid_voice_update_param(fluid_voice_t *voice, int gen)
  *
  * - step 3: We need to avoid the risk to call 'fluid_voice_update_param' several
  * times for the same generator if several modulators have that generator as
- * destination. So every changed generators are registered in a list.
-
- * - step 4: When finished with all the modulators, for every registered generator
- * in the list, convert its value to the correct unit of the corresponding DSP
- * parameter (fluid_voice_update_param()).
+ * destination. So every changed generators are updated only once
  */
+
+ /* bit table for each generator being updated. The bits are packed in variables
+  Each variable have NBR_BIT_BY_VAR bits represented by NBR_BIT_BY_VAR_LN2.
+  The size of the table is the number of variables: SIZE_TAB_GEN_UPDATED.
+ 
+  Note: In this implementation NBR_BIT_BY_VAR_LN2 is set to 5 (convenient for 32 bits cpu)
+  but this could be set to 6 for 64 bits cpu.
+ */
+
+#define NBR_BIT_BY_VAR_LN2 5	/* for 32 bits variables */
+#define NBR_BIT_BY_VAR  (1 << NBR_BIT_BY_VAR_LN2)	
+#define NBR_BIT_BY_VAR_ANDMASK (NBR_BIT_BY_VAR -1)
+#define	SIZE_TAB_GEN_UPDATED  ((GEN_LAST + NBR_BIT_BY_VAR_ANDMASK) / NBR_BIT_BY_VAR)
+
+#define is_gen_updated(bit,gen)  (bit[((unsigned char)gen) >> NBR_BIT_BY_VAR_LN2] &  (1 << (gen & NBR_BIT_BY_VAR_ANDMASK)))
+#define set_gen_updated(bit,gen) (bit[((unsigned char)gen) >> NBR_BIT_BY_VAR_LN2] |= (1 << (gen & NBR_BIT_BY_VAR_ANDMASK)))
+
 int fluid_voice_modulate(fluid_voice_t *voice, int cc, int ctrl)
 {
     int i, k;
     fluid_mod_t *mod;
     int gen;
     fluid_real_t modval;
-	/* registered list of changed generators */
-    enum fluid_gen_type gen_changed[GEN_LAST];
-    int gen_count = 0;         /* count of generators in gen_changed */
+
+	/* registered bits table of updated generators in struct to get it aligned */
+    struct {
+        unsigned int updated_gen_bit[SIZE_TAB_GEN_UPDATED];
+    }tab;
+	
+    /* reset list bits of updated generators */
+    for(i = 0; i < SIZE_TAB_GEN_UPDATED; i++)
+    {
+        tab.updated_gen_bit[i]= 0;
+    }
 
     /*    printf("Chan=%d, CC=%d, Src=%d, Val=%d\n", voice->channel->channum, cc, ctrl, val); */
 
     for(i = 0; i < voice->mod_count; i++)
     {
-
         mod = &voice->mod[i];
 
         /* step 1: find all the modulators that have the changed controller
-         * as input source. When ctrl is -1 all modulators's destination 
-		 are updated */
+           as input source. When ctrl is -1 all modulators's destination 
+           are updated */
         if(ctrl < 0 || fluid_mod_has_source(mod, cc, ctrl))
         {
 
@@ -1218,28 +1238,18 @@ int fluid_voice_modulate(fluid_voice_t *voice, int cc, int ctrl)
 
             fluid_gen_set_mod(&voice->gen[gen], modval);
 
-            /* step 3: now that we have the new value of the generator,
-               we register this generator only once in the list  */
-            for (k = 0; k < gen_count; k++)
-            {
-                if (gen_changed[k] == gen)
-                {
-                    break; /* gen already in the list */
-                }
-            }
-            if (k == gen_count)
-            {   /* registers gen as it isn't yet in the list */
-                gen_changed[gen_count++] = gen;
+           /* step 3: now that we have the new value of the generator,
+            * recalculate the parameter values that are derived from the
+            * generator */
+            if (! is_gen_updated(tab.updated_gen_bit, gen))
+            {	/* we update this generator only once  */
+                fluid_voice_update_param(voice, gen);
+                /* set the bit that indicates this generator is updated */
+                set_gen_updated(tab.updated_gen_bit, gen);
             }
         }
     }
 
-    /* spep 4: for every registered generator in the list, convert its value to
-       the correct unit of the corresponding DSP parameter */
-    for (k = 0; k < gen_count; k++)
-    {
-        fluid_voice_update_param(voice, gen_changed[k]);
-    }
     return FLUID_OK;
 }
 
