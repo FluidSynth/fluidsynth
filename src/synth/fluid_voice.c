@@ -1179,7 +1179,7 @@ fluid_voice_update_param(fluid_voice_t *voice, int gen)
 
  /* bit table for each generator being updated. The bits are packed in variables
   Each variable have NBR_BIT_BY_VAR bits represented by NBR_BIT_BY_VAR_LN2.
-  The size of the table is the number of variables: SIZE_TAB_GEN_UPDATED.
+  The size of the table is the number of variables: SIZE_UPDATED_GEN.
  
   Note: In this implementation NBR_BIT_BY_VAR_LN2 is set to 5 (convenient for 32 bits cpu)
   but this could be set to 6 for 64 bits cpu.
@@ -1188,7 +1188,7 @@ fluid_voice_update_param(fluid_voice_t *voice, int gen)
 #define NBR_BIT_BY_VAR_LN2 5	/* for 32 bits variables */
 #define NBR_BIT_BY_VAR  (1 << NBR_BIT_BY_VAR_LN2)	
 #define NBR_BIT_BY_VAR_ANDMASK (NBR_BIT_BY_VAR -1)
-#define	SIZE_TAB_GEN_UPDATED  ((GEN_LAST + NBR_BIT_BY_VAR_ANDMASK) / NBR_BIT_BY_VAR)
+#define	SIZE_UPDATED_GEN  ((GEN_LAST + NBR_BIT_BY_VAR_ANDMASK) / NBR_BIT_BY_VAR)
 
 #define is_gen_updated(bit,gen)  (bit[gen >> NBR_BIT_BY_VAR_LN2] &  (1 << (gen & NBR_BIT_BY_VAR_ANDMASK)))
 #define set_gen_updated(bit,gen) (bit[gen >> NBR_BIT_BY_VAR_LN2] |= (1 << (gen & NBR_BIT_BY_VAR_ANDMASK)))
@@ -1197,18 +1197,16 @@ int fluid_voice_modulate(fluid_voice_t *voice, int cc, int ctrl)
 {
     int i, k;
     fluid_mod_t *mod;
-    unsigned int gen;
+    uint32_t gen;
     fluid_real_t modval;
 
-	/* registered bits table of updated generators in struct to get it aligned */
-    struct {
-        unsigned int updated_gen_bit[SIZE_TAB_GEN_UPDATED];
-    }tab;
+	/* registered bits table of updated generators */
+    uint32_t updated_gen_bit[SIZE_UPDATED_GEN];
 	
     /* reset list bits of updated generators */
-    for(i = 0; i < SIZE_TAB_GEN_UPDATED; i++)
+    for(i = 0; i < SIZE_UPDATED_GEN; i++)
     {
-        tab.updated_gen_bit[i]= 0;
+        updated_gen_bit[i]= 0;
     }
 
     /*    printf("Chan=%d, CC=%d, Src=%d, Val=%d\n", voice->channel->channum, cc, ctrl, val); */
@@ -1238,7 +1236,7 @@ int fluid_voice_modulate(fluid_voice_t *voice, int cc, int ctrl)
 
             fluid_gen_set_mod(&voice->gen[gen], modval);
             /* set the bit that indicates this generator is updated */
-            set_gen_updated(tab.updated_gen_bit, gen);
+            set_gen_updated(updated_gen_bit, gen);
         }
     }
     
@@ -1246,7 +1244,7 @@ int fluid_voice_modulate(fluid_voice_t *voice, int cc, int ctrl)
       generator */
     for(gen = 0; gen < GEN_LAST; gen++)
     {
-        if (is_gen_updated(tab.updated_gen_bit, gen))
+        if (is_gen_updated(updated_gen_bit, gen))
         {
             fluid_voice_update_param(voice, gen);
         }
