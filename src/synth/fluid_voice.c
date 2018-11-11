@@ -1169,8 +1169,8 @@ fluid_voice_update_param(fluid_voice_t *voice, int gen)
  * will be changed because of the controller event.
  *
  * - step 2: For every changed generator, calculate its new value. This is the
- * sum of its original value plus the values of all the attached
- * modulators.
+ * sum of its original value plus the values of all the attached modulators.
+ * The generator flag is set to indicate the parameters must be updated.
  *
  * - step 3: We need to avoid the risk to call 'fluid_voice_update_param' several
  * times for the same generator if several modulators have that generator as
@@ -1190,14 +1190,14 @@ fluid_voice_update_param(fluid_voice_t *voice, int gen)
 #define NBR_BIT_BY_VAR_ANDMASK (NBR_BIT_BY_VAR -1)
 #define	SIZE_TAB_GEN_UPDATED  ((GEN_LAST + NBR_BIT_BY_VAR_ANDMASK) / NBR_BIT_BY_VAR)
 
-#define is_gen_updated(bit,gen)  (bit[((unsigned char)gen) >> NBR_BIT_BY_VAR_LN2] &  (1 << (gen & NBR_BIT_BY_VAR_ANDMASK)))
-#define set_gen_updated(bit,gen) (bit[((unsigned char)gen) >> NBR_BIT_BY_VAR_LN2] |= (1 << (gen & NBR_BIT_BY_VAR_ANDMASK)))
+#define is_gen_updated(bit,gen)  (bit[gen >> NBR_BIT_BY_VAR_LN2] &  (1 << (gen & NBR_BIT_BY_VAR_ANDMASK)))
+#define set_gen_updated(bit,gen) (bit[gen >> NBR_BIT_BY_VAR_LN2] |= (1 << (gen & NBR_BIT_BY_VAR_ANDMASK)))
 
 int fluid_voice_modulate(fluid_voice_t *voice, int cc, int ctrl)
 {
     int i, k;
     fluid_mod_t *mod;
-    int gen;
+    unsigned int gen;
     fluid_real_t modval;
 
 	/* registered bits table of updated generators in struct to get it aligned */
@@ -1237,16 +1237,18 @@ int fluid_voice_modulate(fluid_voice_t *voice, int cc, int ctrl)
             }
 
             fluid_gen_set_mod(&voice->gen[gen], modval);
-
-           /* step 3: now that we have the new value of the generator,
-            * recalculate the parameter values that are derived from the
-            * generator */
-            if (! is_gen_updated(tab.updated_gen_bit, gen))
-            {	/* we update this generator only once  */
-                fluid_voice_update_param(voice, gen);
-                /* set the bit that indicates this generator is updated */
-                set_gen_updated(tab.updated_gen_bit, gen);
-            }
+            /* set the bit that indicates this generator is updated */
+            set_gen_updated(tab.updated_gen_bit, gen);
+        }
+    }
+    
+    /* step 3: now recalculate the parameter values that are derived from the
+      generator */
+    for(gen = 0; gen < GEN_LAST; gen++)
+    {
+        if (is_gen_updated(tab.updated_gen_bit, gen))
+        {
+            fluid_voice_update_param(voice, gen);
         }
     }
 
