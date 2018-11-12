@@ -1,10 +1,21 @@
+#
+# The public targets in this Makefile are: build, clean, wipe
+#
+# What `build` target does:
+#
+# - build cerbero to build glib
+# - build glib-2.0.a and many other dependencies
+# - build Oboe to build oboe-c
+# - build oboe-c to provide oboe features via shared library
+# - build libfluidsynth.a using glib and oboe-c (shared)
+# - build libfluidsynth.so from libfluidsynth.a and glib and co.
+#
 PWD=$(shell pwd)
 CERBERO=$(PWD)/external/cerbero
 OBOE=$(PWD)/external/oboe
 OBOE_C=$(PWD)/oboe-c
 
-# ANDROID_NDK = ~/android-sdk-linux/ndk-bundle
-ANDROID_NDK = $(PWD)/external/cerbero/build/android-ndk-16
+ANDROID_NDK = $(PWD)/external/cerbero/build/android-ndk-17c
 
 ABIS_SIMPLE = x86 x86-64 armv7 arm64
 
