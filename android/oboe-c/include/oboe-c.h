@@ -301,7 +301,7 @@ enum OboeResult oboe_audio_stream_builder_open_stream (oboe_audio_stream_builder
 
 /* AudioStreamCallback */
 
-typedef enum OboeDataCallbackResult (*on_audio_ready_func) (oboe_audio_stream_ptr_t oboeStream, void *audioData, int32_t numFrames);
+typedef enum OboeDataCallbackResult (*on_audio_ready_func) (oboe_audio_stream_callback_ptr_t callback, oboe_audio_stream_ptr_t oboeStream, void *audioData, int32_t numFrames);
 typedef void (*on_error_close_func) (oboe_audio_stream_ptr_t oboeStream, enum OboeResult error);
 
 oboe_audio_stream_callback_ptr_t oboe_audio_stream_callback_create ();

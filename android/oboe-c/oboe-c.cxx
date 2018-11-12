@@ -444,7 +444,7 @@ public:
 	
 	oboe::DataCallbackResult onAudioReady (oboe::AudioStream* oboeStream, void* audioData, int32_t numFrames)
 	{
-		return (oboe::DataCallbackResult) on_audio_ready ((oboe_audio_stream_ptr_t) oboeStream, audioData, numFrames);
+		return (oboe::DataCallbackResult) on_audio_ready (this, (oboe_audio_stream_ptr_t) oboeStream, audioData, numFrames);
 	}
 	
 	void onErrorBeforeClose (oboe::AudioStream* oboeStream, oboe::Result error)
@@ -471,7 +471,9 @@ void oboe_audio_stream_callback_free (oboe_audio_stream_callback_ptr_t instance)
 
 void oboe_audio_stream_callback_set_on_audio_ready (oboe_audio_stream_callback_ptr_t instance, on_audio_ready_func onAudioReady)
 {
-	((AudioStreamCallbackImplementor*) instance)->on_audio_ready = onAudioReady;
+	AudioStreamCallbackImplementor* impl = (AudioStreamCallbackImplementor*) instance;
+	
+	impl->on_audio_ready = onAudioReady;
 }
 
 void oboe_audio_stream_callback_set_on_error_before_close (oboe_audio_stream_callback_ptr_t instance, on_error_close_func onErrorBeforeClose)
