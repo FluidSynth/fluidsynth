@@ -26,19 +26,15 @@ $(OBOE):
 	git clone https://github.com/google/oboe.git $(OBOE)
 
 .PHONY: build
-build: build-oboe-dep build-oboe-c-dep build-cerbero build-fluidsynth-dep dist-dep build-shared
+build: build-oboe build-oboe-c build-cerbero build-fluidsynth-static dist-dep build-fluidsynth-shared
 
-.PHONY: build-shared
-build-shared:
+.PHONY: build-fluidsynth-shared
+build-fluidsynth-shared:
 	for abi in x86 x86_64 armeabi-v7a arm64-v8a ; do \
 		$(ANDROID_NDK)/ndk-build $(NDK_BUILD_FLAGS) APP_ABI=$$abi NDK_DEBUG=1 ; \
 		mkdir -p dist/$$abi ; \
 		cp libs/$$abi/libfluidsynth.so dist/$$abi/ ; \
 	done
-
-define build-shared-with-ndk-build
-	$(ANDROID_NDK_PATH)/ndk-build APP_ABI=$(1)
-endef
 
 .PHONY: build-cerbero
 build-cerbero:
@@ -66,30 +62,30 @@ endef
 dist-dep:
 	$(call run_make_for_all_abi, dist-dep-one)
 
-.PHONY: build-oboe-dep
-build-oboe-dep:
+.PHONY: build-oboe
+build-oboe:
 	$(call run_make_for_all_abi, build-oboe-one)
 
-.PHONY: build-oboe-c-dep
-build-oboe-c-dep:
+.PHONY: build-oboe-c
+build-oboe-c:
 	$(call run_make_for_all_abi, build-oboe-c-one)
 
-.PHONY: build-fluidsynth-dep
-build-fluidsynth-dep:
-	$(call run_make_for_all_abi, build-fluidsynth-one)
+.PHONY: build-fluidsynth-static
+build-fluidsynth-static:
+	$(call run_make_for_all_abi, build-fluidsynth-static-one)
 
-build-fluidsynth-one:
+build-fluidsynth-static-one:
 	mkdir -p build/$(A_ABI) && cd build/$(A_ABI) && \
 	LD_RUN_PATH=$(DIST_PATH)/android-$(BUILD_ABI)/lib LD_LIBRARY_PATH=$(DIST_PATH)/android_$(BUILD_ABI)/lib PKG_CONFIG_PATH=$(DIST_PATH)/android_$(BUILD_ABI)/lib/pkgconfig/ \
 	cmake -DCMAKE_CXX_STANDARD_OVERRIDE=on -DCMAKE_C_VISIBILITY_OVERRIDE=default -DCMAKE_POSITION_INDEPENDENT_CODE_OVERRIDE=on -DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK)/build/cmake/android.toolchain.cmake -Denable-oboe=on -Denable-jack=off -Denable-oss=off -Denable-pulseaudio=off -Denable-libsndfile=off -Denable-dbus=off -DBUILD_SHARED_LIBS=off -Denable-debug=on -DANDROID_PLATFORM=android-16 -DANDROID_ABI=$(A_ABI) ../../.. && make
 
 build-oboe-one:
 	mkdir -p $(OBOE)/build/$(A_ABI) && cd $(OBOE)/build/$(A_ABI) && \
-		cmake -DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK)/build/cmake/android.toolchain.cmake -DBUILD_SHARED_LIBS=off -DANDROID_ABI=$(A_ABI) -DANDROID_PLATFORM=android-16 ../.. && make
+		cmake -DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK)/build/cmake/android.toolchain.cmake -DBUILD_SHARED_LIBS=off -DANDROID_ABI=$(A_ABI) -DANDROID_PLATFORM=android-27 ../.. && make
 
 build-oboe-c-one:
 	mkdir -p oboe-c/build/$(A_ABI) && cd oboe-c/build/$(A_ABI) && \
-		cmake -DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK)/build/cmake/android.toolchain.cmake -DBUILD_SHARED_LIBS=off -DANDROID_ABI=$(A_ABI) -DANDROID_PLATFORM=android-16 ../.. && make
+		cmake -DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK)/build/cmake/android.toolchain.cmake -DBUILD_SHARED_LIBS=on -DANDROID_ABI=$(A_ABI) -DANDROID_PLATFORM=android-27 ../.. && make
 
 dist-dep-one:
 	mkdir -p dep/$(A_ABI) && cd dep/$(A_ABI) && \
@@ -100,7 +96,7 @@ dist-dep-one:
 	cd ../../
 
 clean:
-	rm -rf build/*
+	rm -rf build/* external/oboe/build/* oboe-c/build/*
 
 .PHONY: wipe
 wipe: $(CERBERO)
