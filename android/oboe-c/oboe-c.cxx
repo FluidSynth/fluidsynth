@@ -178,10 +178,12 @@ int32_t oboe_audio_stream_get_frames_per_burst (oboe_audio_stream_ptr_t instance
 	return (OboeResult) ((oboe::AudioStream*) instance)->getFramesPerBurst ();
 }
 
+/* FIXME: find out why adding this results in build failure. The linker behavior is totally illogical. Other Oboe references work just fine.
 int32_t oboe_audio_stream_is_playing (oboe_audio_stream_ptr_t instance)
 {
 	return ((oboe::AudioStream*) instance)->isPlaying ();
 }
+*/
 
 int32_t oboe_audio_stream_get_bytes_per_frame (oboe_audio_stream_ptr_t instance)
 {
