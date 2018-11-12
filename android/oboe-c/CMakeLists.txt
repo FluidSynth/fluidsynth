@@ -8,8 +8,8 @@ add_library ( oboe-c SHARED ${oboe-c_sources} )
 
 # Specify directories which the compiler should look for headers
 target_include_directories( oboe-c
-                            PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../external/oboe/include
-                            PUBLIC include )
+                            PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../external/oboe/include
+                            include )
 
 target_compile_options( oboe-c PRIVATE -std=c++11
                                PRIVATE -v
