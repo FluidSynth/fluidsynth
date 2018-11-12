@@ -119,8 +119,10 @@ if ( OPENSLES_SUPPORT )
 endif ( OPENSLES_SUPPORT )
 
 if ( OBOE_SUPPORT )
-  include_directories ( ../android/external/oboe/include )
-  set ( fluid_oboe_SOURCES drivers/fluid_oboe.cpp ../android/external/oboe/build/${ANDROID_ABI}/liboboe.a )
+  include_directories ( ../android/oboe-c/include )
+  set ( fluid_oboe_SOURCES drivers/fluid_oboe.c )
+  link_directories ( ${CMAKE_CURRENT_SOURCE_DIR}/../android/oboe-c/build/${ANDROID_ABI} )
+  link_libraries ( oboe-c stdc++ )
 endif ( OBOE_SUPPORT )
 
 set ( config_SOURCES ${CMAKE_BINARY_DIR}/config.h )

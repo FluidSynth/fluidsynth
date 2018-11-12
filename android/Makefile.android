@@ -3,7 +3,8 @@ CERBERO=$(PWD)/external/cerbero
 OBOE=$(PWD)/external/oboe
 OBOE_C=$(PWD)/oboe-c
 
-ANDROID_NDK = ~/android-sdk-linux/ndk-bundle
+# ANDROID_NDK = ~/android-sdk-linux/ndk-bundle
+ANDROID_NDK = $(PWD)/external/cerbero/build/android-ndk-16
 
 ABIS_SIMPLE = x86 x86-64 armv7 arm64
 
@@ -26,7 +27,7 @@ $(OBOE):
 	git clone https://github.com/google/oboe.git $(OBOE)
 
 .PHONY: build
-build: build-oboe build-oboe-c build-cerbero build-fluidsynth-static dist-dep build-fluidsynth-shared
+build: build-oboe build-oboe-c build-cerbero build-fluidsynth-static dist-oboe-c dist-dep build-fluidsynth-shared
 
 .PHONY: build-fluidsynth-shared
 build-fluidsynth-shared:
@@ -57,6 +58,10 @@ define run_make_for_all_abi
 	$(call run_make_abi_target,armv7,armeabi-v7a,$(1) )
 	$(call run_make_abi_target-unsafe,arm64,arm64-v8a,$(1) )
 endef
+
+.PHONY: dist-oboe-c
+dist-oboe-c:
+	$(call run_make_for_all_abi, dist-oboe-c-one)
 
 .PHONY: dist-dep
 dist-dep:
@@ -92,11 +97,13 @@ dist-dep-one:
 	cp $(DIST_PATH)/android_$(BUILD_ABI)/lib/*.a . && \
 	cp ../../build/$(A_ABI)/src/*.a . && \
 	cp $(OBOE_BUILD_PATH)/$(A_ABI)/*.a . && \
-	cp $(OBOE_C)/build/$(A_ABI)/*.a . && \
 	cd ../../
 
+dist-oboe-c-one:
+	mkdir -p dist/$(A_ABI) && cd dist/$(A_ABI) && cp ../../oboe-c/build/$(A_ABI)/liboboe-c.so . && cd ../..
+
 clean:
-	rm -rf build/* external/oboe/build/* oboe-c/build/*
+	rm -rf dist/* build/* external/oboe/build/* oboe-c/build/*
 
 .PHONY: wipe
 wipe: $(CERBERO)

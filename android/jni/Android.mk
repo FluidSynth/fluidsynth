@@ -38,7 +38,7 @@ LOCAL_STATIC_LIBRARIES := glib-2.0 iconv intl oboe
 
 LOCAL_WHOLE_STATIC_LIBRARIES := fluidsynth_static
 
-LOCAL_LDLIBS := -lc -lOpenSLES -ldl -llog -landroid
+LOCAL_LDLIBS := -lc -lOpenSLES -ldl -llog -landroid -L$(LOCAL_PATH)/../dist/$(APP_ABI) -loboe-c
 
 include $(BUILD_SHARED_LIBRARY)
 
