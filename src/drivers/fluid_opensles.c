@@ -160,14 +160,15 @@ new_fluid_opensles_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t 
     SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE,
     2 /* number of buffers */
     };
-  SLDataFormat_PCM format_pcm = {
+  SLAndroidDataFormat_PCM_EX format_pcm = {
     SL_DATAFORMAT_PCM,
     NUM_CHANNELS,
     ((SLuint32) sample_rate) * 1000,
-    SL_PCMSAMPLEFORMAT_FIXED_16,
-    SL_PCMSAMPLEFORMAT_FIXED_16,
+    is_sample_format_float ? SL_PCMSAMPLEFORMAT_FIXED_32 : SL_PCMSAMPLEFORMAT_FIXED_16,
+    is_sample_format_float ? SL_PCMSAMPLEFORMAT_FIXED_32 : SL_PCMSAMPLEFORMAT_FIXED_16,
     SL_SPEAKER_FRONT_LEFT | SL_SPEAKER_FRONT_RIGHT,
-    SL_BYTEORDER_LITTLEENDIAN
+    SL_BYTEORDER_LITTLEENDIAN,
+    is_sample_format_float ? SL_ANDROID_PCM_REPRESENTATION_FLOAT : SL_ANDROID_PCM_REPRESENTATION_SIGNED_INT
     };
   SLDataSource audio_src = {
     &loc_buffer_queue,
