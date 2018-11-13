@@ -127,7 +127,9 @@ new_fluid_oboe_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func
     fluid_settings_str_equal (settings, "audio.oboe.performance-mode", "PowerSaving") ? 1 :
     fluid_settings_str_equal (settings, "audio.oboe.performance-mode", "LowLatency") ? 2 : 0;
 
-  oboe_audio_stream_builder_set_device_id (builder, device_id);
+  builder = oboe_audio_stream_builder_create ();
+  if (device_id >= 0)
+    oboe_audio_stream_builder_set_device_id (builder, device_id);
   oboe_audio_stream_builder_set_direction (builder, DIRECTION_OUTPUT);
   oboe_audio_stream_builder_set_channel_count (builder, 2);
   oboe_audio_stream_builder_set_sample_rate (builder, sample_rate);
@@ -145,6 +147,7 @@ new_fluid_oboe_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func
 
   result = oboe_audio_stream_builder_open_stream (builder, &stream);
   dev->stream = stream;
+  oboe_audio_stream_builder_delete (builder);
   if (result != RESULT_OK)
     goto error_recovery;
 
@@ -153,7 +156,7 @@ new_fluid_oboe_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func
   FLUID_LOG(FLUID_INFO, "Using Oboe driver");
 
   oboe_audio_stream_start (stream);
-  
+    
   return (fluid_audio_driver_t*) dev;
 
  error_recovery:
