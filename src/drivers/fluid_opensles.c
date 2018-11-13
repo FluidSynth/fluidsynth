@@ -132,6 +132,8 @@ new_fluid_opensles_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t 
 
   dev->synth = synth;
   dev->use_callback_mode = use_callback_mode;
+  /* FIXME: this callback does not work as expected. Disable it for now. */
+  /* dev->callback = func; */
   dev->is_sample_format_float = is_sample_format_float;
   dev->period_frames = period_size;
   dev->sample_rate = sample_rate;
@@ -161,7 +163,7 @@ new_fluid_opensles_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t 
     2 /* number of buffers */
     };
   SLAndroidDataFormat_PCM_EX format_pcm = {
-    SL_DATAFORMAT_PCM,
+    SL_ANDROID_DATAFORMAT_PCM_EX,
     NUM_CHANNELS,
     ((SLuint32) sample_rate) * 1000,
     is_sample_format_float ? SL_PCMSAMPLEFORMAT_FIXED_32 : SL_PCMSAMPLEFORMAT_FIXED_16,
