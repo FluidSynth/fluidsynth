@@ -56,8 +56,6 @@ fluid_audio_driver_t* new_fluid_oboe_audio_driver2(fluid_settings_t* settings,
 						    fluid_audio_func_t func, void* data);
 void delete_fluid_oboe_audio_driver(fluid_audio_driver_t* p);
 void fluid_oboe_audio_driver_settings(fluid_settings_t* settings);
-static fluid_thread_return_t fluid_oboe_audio_run(void* d);
-static fluid_thread_return_t fluid_oboe_audio_run2(void* d);
 enum OboeDataCallbackResult on_audio_ready(oboe_audio_stream_callback_ptr_t callback, oboe_audio_stream_ptr_t stream, void *audioData, int32_t numFrames);
 
 void fluid_oboe_audio_driver_settings(fluid_settings_t* settings)
@@ -96,7 +94,7 @@ new_fluid_oboe_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func
   
   int period_frames;
   double sample_rate;
-  int is_sample_format_float;
+  int is_sample_format_s16;
   int device_id;
   int sharing_mode; // 0: Shared, 1: Exclusive
   int performance_mode; // 0: None, 1: PowerSaving, 2: LowLatency
@@ -119,10 +117,10 @@ new_fluid_oboe_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func
 
   fluid_settings_getint(settings, "audio.period-size", &period_frames);
   fluid_settings_getnum(settings, "synth.sample-rate", &sample_rate);
-  is_sample_format_float = fluid_settings_str_equal (settings, "audio.sample-format", "float");
+  is_sample_format_s16 = fluid_settings_str_equal (settings, "audio.sample-format", "16bits");
   fluid_settings_getint(settings, "audio.oboe.device-id", &device_id);
   sharing_mode = 
-    fluid_settings_str_equal (settings, "audio.oboe.sharing-mode", "Exclusive") ? 1 : 0;
+    fluid_settings_str_equal (settings, "audio.oboe.sharing-mode", "Shared") ? 1 : 0;
   performance_mode =
     fluid_settings_str_equal (settings, "audio.oboe.performance-mode", "PowerSaving") ? 1 :
     fluid_settings_str_equal (settings, "audio.oboe.performance-mode", "LowLatency") ? 2 : 0;
@@ -135,9 +133,9 @@ new_fluid_oboe_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func
   oboe_audio_stream_builder_set_sample_rate (builder, sample_rate);
   oboe_audio_stream_builder_set_frames_per_callback (builder, period_frames);
   oboe_audio_stream_builder_set_format (builder,
-      is_sample_format_float ? AUDIO_FORMAT_FLOAT : AUDIO_FORMAT_I16);
+      is_sample_format_s16 ? AUDIO_FORMAT_I16 : AUDIO_FORMAT_FLOAT);
   oboe_audio_stream_builder_set_sharing_mode (builder,
-      sharing_mode == 1 ? SHARING_MODE_EXCLUSIVE : SHARING_MODE_SHARED);
+      sharing_mode == 1 ? SHARING_MODE_SHARED : SHARING_MODE_EXCLUSIVE);
   oboe_audio_stream_builder_set_performance_mode (builder,
       performance_mode == 1 ? PERFORMANCE_MODE_POWER_SAVING :
       performance_mode == 2 ? PERFORMANCE_MODE_LOW_LATENCY : PERFORMANCE_MODE_NONE);
@@ -155,7 +153,7 @@ new_fluid_oboe_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func
 
   FLUID_LOG(FLUID_INFO, "Using Oboe driver");
 
-  oboe_audio_stream_start (stream);
+  oboe_audio_stream_request_start (stream);
     
   return (fluid_audio_driver_t*) dev;
 
@@ -168,13 +166,12 @@ void delete_fluid_oboe_audio_driver(fluid_audio_driver_t* p)
 {
   fluid_oboe_audio_driver_t* dev = (fluid_oboe_audio_driver_t*) p;
 
-  if (dev == NULL) {
+  if (dev == NULL)
     return;
-  }
 
   dev->cont = 0;
   
-  oboe_audio_stream_stop (dev->stream);
+  oboe_audio_stream_request_stop (dev->stream);
   
   oboe_audio_stream_close (dev->stream);
   
@@ -187,13 +184,20 @@ enum OboeDataCallbackResult on_audio_ready(oboe_audio_stream_callback_ptr_t call
 {
   float *callback_buffers[2];
   fluid_oboe_audio_driver_t *dev;
-    
+  
   dev = (fluid_oboe_audio_driver_t*) oboe_audio_stream_callback_get_user_data (callback);
   
   if (!dev->cont)
     return CALLBACK_RESULT_STOP;
   
-  if (dev->callback)
+  /* FIXME: it seems that fluidsynth stores results in full float
+   * value range, while Oboe expects the results between -1 and 1.
+   * To make things worse, fluidsynth callback only accepts float*
+   * (while non-callback accepts short*) which makes it unsure if
+   * the stream is processed appropriately.
+   * So far, disable custom callback, it's practically no use.
+   */
+  if (0)/*dev->callback)*/
   {
     callback_buffers [0] = (float*) audioData;
     callback_buffers [1] = (float*) audioData;
