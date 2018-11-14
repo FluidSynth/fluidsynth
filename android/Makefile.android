@@ -32,7 +32,7 @@ prepare: $(CERBERO) $(OBOE)
 	done
 
 $(CERBERO):
-	git clone https://anongit.freedesktop.org/git/gstreamer/cerbero.git $(CERBERO)
+	git clone https://anongit.freedesktop.org/git/gstreamer/cerbero.git --detach 31ebd13 $(CERBERO)
 
 $(OBOE):
 	git clone https://github.com/google/oboe.git $(OBOE)
