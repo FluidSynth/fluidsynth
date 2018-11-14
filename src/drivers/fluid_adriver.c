@@ -80,16 +80,6 @@ static const fluid_audriver_definition_t fluid_audio_drivers[] =
     },
 #endif
 
-#if OPENSLES_SUPPORT
-    {
-        "opensles",
-        new_fluid_opensles_audio_driver,
-        new_fluid_opensles_audio_driver2,
-        delete_fluid_opensles_audio_driver,
-        fluid_opensles_audio_driver_settings
-    },
-#endif
-
 #if OBOE_SUPPORT
     {
         "oboe",
@@ -97,6 +87,16 @@ static const fluid_audriver_definition_t fluid_audio_drivers[] =
         new_fluid_oboe_audio_driver2,
         delete_fluid_oboe_audio_driver,
         fluid_oboe_audio_driver_settings
+    },
+#endif
+
+#if OPENSLES_SUPPORT
+    {
+        "opensles",
+        new_fluid_opensles_audio_driver,
+        new_fluid_opensles_audio_driver2,
+        delete_fluid_opensles_audio_driver,
+        fluid_opensles_audio_driver_settings
     },
 #endif
 
