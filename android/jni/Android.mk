@@ -1,5 +1,5 @@
 LOCAL_PATH := $(call my-dir)
-TARGET_PLATFORM := android-21
+TARGET_PLATFORM := android-27
 
 GLIB_LIB = ../dep/$(APP_ABI)/
 

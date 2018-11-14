@@ -20,7 +20,7 @@
 # CMake based build system. Pedro Lopez-Cabanillas <plcl@users.sf.net>
 
 cmake_minimum_required ( VERSION 3.1.0 ) # because of CMAKE_C_STANDARD
-project ( FluidSynth C CXX )
+project ( FluidSynth C )
 set ( CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake_admin )
 
 # FluidSynth package name
@@ -47,7 +47,6 @@ set ( LIB_VERSION_AGE 0 )
 set ( LIB_VERSION_REVISION 1 )
 set ( LIB_VERSION_INFO
       "${LIB_VERSION_CURRENT}.${LIB_VERSION_AGE}.${LIB_VERSION_REVISION}" )
-set ( LIB_NO_SONAME FALSE )
 
 # Options disabled by default
 option ( enable-debug "enable debugging (default=no)" off )
