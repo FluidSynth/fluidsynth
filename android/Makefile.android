@@ -98,7 +98,7 @@ build-fluidsynth-static-one:
 
 build-oboe-one:
 	mkdir -p $(OBOE)/build/$(A_ABI) && cd $(OBOE)/build/$(A_ABI) && \
-		cmake -Denable-debug=on -DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK)/build/cmake/android.toolchain.cmake -DBUILD_SHARED_LIBS=off -DANDROID_ABI=$(A_ABI) -DANDROID_PLATFORM=android-27 ../.. && make
+		cmake -DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK)/build/cmake/android.toolchain.cmake -DBUILD_SHARED_LIBS=off -DANDROID_ABI=$(A_ABI) -DANDROID_PLATFORM=android-27 ../.. && make
 
 build-oboe-c-one:
 	mkdir -p oboe-c/build/$(A_ABI) && cd oboe-c/build/$(A_ABI) && \
