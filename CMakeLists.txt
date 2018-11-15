@@ -598,8 +598,10 @@ endif ( enable-midishare )
 
 unset ( OPENSLES_SUPPORT CACHE )
 if ( enable-opensles )
-    check_include_file ( SLES/OpenSLES.h OPENSLES_SUPPORT )
-    find_library ( OpenSLES_LIBS OpenSLES )
+  check_include_file ( SLES/OpenSLES.h OPENSLES_SUPPORT )
+  find_library ( OpenSLES_LIBS OpenSLES )
+else ( enable-opensles )
+  unset ( OpenSLES_LIBS CACHE )
 endif ( enable-opensles )
 
 unset ( OBOE_SUPPORT CACHE )
