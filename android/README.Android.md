@@ -1,12 +1,12 @@
 # Android support in Fluidsynth
 
-Android support is done as Oboe and OpenSLES audio drivers.
+Fluidsynth supports Android audio outputs by Oboe and OpenSLES audio drivers.
 
 Android also has Android MIDI API which is exposed only in Android Java API. There is a reference MidiDeviceService implementation for Fluidsynth at: https://github.com/atsushieno/fluidsynth-midi-service-j
 
 ## Usage
 
-`libfluidsynth.so` and `liboboe-c.so` are the libraries to be packaged into apk.
+`libfluidsynth.so` and `liboboe-c.so` are the libraries that should be packaged into apk.
 
 By default, "oboe" is the default driver for Android. You can also explicitly specify "opensles" instead, with "audio.driver" setting:
 
@@ -34,4 +34,4 @@ The build system is complicated because 1) building glib and dependencies for An
 There are two shared libraries for fluidsynth that make up Android support:
 
 - libfluidsynth.so - contains fluidsynth itself, particularly with fluidsynth audio drivers for OpenSLES and Oboe which are Android-specific.
-- liboboe-c.so - Oboe shared library, with C bindings. It is isolated from the rest of the library because Oboe's clang++ libc++ dependency does not mix with Cerbero build of glib which depends on g++ gnustl dependency.
+- liboboe-c.so - Oboe shared library, with C bindings. It is isolated from the rest of the library because Oboe's dependency on clang++ (or more specifically, libc++) does not mix with Cerbero build of glib which depends on g++ (specifically gnustl).
