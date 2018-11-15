@@ -86,7 +86,7 @@ fluid_rvoice_eventhandler_get_finished_voice(fluid_rvoice_eventhandler_t *handle
 
     result = * (fluid_rvoice_t **) result;
     fluid_ringbuffer_next_outptr(handler->finished_voices);
-    return (fluid_rvoice_t*) result;
+    return result;
 }
 
 
