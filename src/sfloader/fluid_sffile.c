@@ -510,13 +510,12 @@ void fluid_sffile_close(SFData *sf)
 /* sound font file load functions */
 static int chunkid(uint32_t id)
 {
-    char b1, b2, b3, b4;
     unsigned int i;
     const uint32_t *p = &idlist.i;
 
     for(i = 0; i < sizeof(idlist) / sizeof(idlist.i); i++, p += 1)
     {
-        if(*(p) == b1 && *(p + 1) == b2 && *(p + 2) == b3 && *(p + 3) == b4)
+        if(*p == id)
         {
             return (i + 1);
         }
