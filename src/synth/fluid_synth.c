@@ -1509,7 +1509,7 @@ fluid_synth_cc(fluid_synth_t *synth, int chan, int num, int val)
 
 /* Local synthesis thread variant of MIDI CC set function. 
  Most of CC are allowed to modulate but not all. A comment describes if CC num
- is allowed to modulate.
+ isn't allowed to modulate.
 */
 static int
 fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
