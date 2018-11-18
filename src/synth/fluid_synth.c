@@ -1644,7 +1644,7 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
 
         break;
 
-	case BANK_SELECT_MSB: /* not allowed to modulate (spec SF 2.01 - 8.2.1) */
+    case BANK_SELECT_MSB: /* not allowed to modulate (spec SF 2.01 - 8.2.1) */
         fluid_channel_set_bank_msb(chan, value & 0x7F);
         break;
 
