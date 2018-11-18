@@ -72,6 +72,7 @@ option ( enable-winmidi "compile Windows MIDI support (if it is available)" on )
 option ( enable-pkgconfig "use pkg-config to locate fluidsynth's (mostly optional) dependencies" on )
 option ( enable-pulseaudio "compile PulseAudio support (if it is available)" on )
 option ( enable-readline "compile readline lib line editing (if it is available)" on )
+option ( enable-threads "enable threads support on multi-processor systems" on )
 
 # Platform specific options
 if ( CMAKE_SYSTEM MATCHES "Linux" )
@@ -575,6 +576,11 @@ if ( enable-readline )
 else ( enable-readline )
   unset ( READLINE_LIBS CACHE )
 endif ( enable-readline )
+
+unset ( ENABLE_MIXER_THREADS CACHE )
+if ( enable-threads )
+  set ( ENABLE_MIXER_THREADS 1 )
+endif ( enable-threads )
 
 unset ( HAVE_OPENMP CACHE )
 find_package ( OpenMP QUIET )
