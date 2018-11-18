@@ -1510,6 +1510,33 @@ fluid_synth_cc(fluid_synth_t *synth, int chan, int num, int val)
 /* Local synthesis thread variant of MIDI CC set function. 
  Most of CC are allowed to modulate but not all. A comment describes if CC num
  isn't allowed to modulate.
+ Following explanations should help to understand both MIDI specifications and
+ Soundfont specifications in regard to MIDI specs.
+
+ MIDI specs: 
+ CC LSB (32 to 63) are LSB contributions of CC MSB (0 to 31). 
+ It'is up to the synthesizer to decide to take account of this LSB value or not.
+ Actually Fluidsynth doesn't use CC LSB value inside fluid_fluid_update_param()
+ (once fluid_voice_modulate() has been triggered). This is because actually
+ fluidsynth needs only 7 bits resolution (and not 14 bits) from these CCs.
+ So fluidsynth is using only 7 bit MSB (apart portamento time).
+ In regard to MIDI specs Fluidsynth behaves correctly.
+
+ Soundfont specs 2.01 - 8.2.1: 
+ To deal correctly with MIDI CC (regardless if any synth will use CC MSB alone(7 bit)
+ or both CCs MSB,LSB(14 bits) during synthesis), SF specs recommend not making use of 
+ CC LSB(i.e only CC MSB)in modulators's sources to trigger modulation (i.e modulators
+ with CC LSB connected to sources inputs should be ignored).
+ These specifs are particularly suited for synths that use 14 bits CCs. In this case,
+ the MIDI transmitter sends CC LSB first followed by CC MSB. The MIDI synth receives
+ both CC LSB and CC MSB but only CC MSB will trigger the modulation.
+ This will produce correct synthesis parameters update from a correct 14 bits CC.
+ If in SF specs, modulators's sources with CC LSB had been accepted, both CC LSB and 
+ CC MSB will triggers 2 modulations. This leads to incorrect synthesis parameters
+ update followed by correct synthesis parameters update.
+
+ However, as long fluidsynth will use only CC 7 bits resolution, it is safe to ignore
+ these SF recommendations on CC receive.
 */
 static int
 fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
@@ -1617,7 +1644,7 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
 
         break;
 
-    case BANK_SELECT_MSB: /* not allowed to modulate (spec SF 2.01 - 8.2.1) */
+	case BANK_SELECT_MSB: /* not allowed to modulate (spec SF 2.01 - 8.2.1) */
         fluid_channel_set_bank_msb(chan, value & 0x7F);
         break;
 
@@ -1636,6 +1663,9 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
     case ALL_CTRL_OFF: /* not allowed to modulate (spec SF 2.01 - 8.2.1) */
         fluid_channel_init_ctrl(chan, 1);
         fluid_synth_modulate_voices_all_LOCAL(synth, channum);
+        break;
+
+    case DATA_ENTRY_LSB: /* not allowed to modulate (spec SF 2.01 - 8.2.1) */
         break;
 
     case DATA_ENTRY_MSB: /* not allowed to modulate (spec SF 2.01 - 8.2.1) */
@@ -1741,8 +1771,11 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
 
     /* fall-through */
     default:
-		/* CC lsb aren't allowed to modulate (spec SF 2.01 - 8.2.1) */
-        if (! (32 <= num && num <= 63))
+		/* CC lsb shouldn't allowed to modulate (spec SF 2.01 - 8.2.1) */
+		/* However, as long fluidsynth will use only CC 7 bits resolution, it
+		   is safe to ignore these SF recommendations on CC receive. See
+		   explanations above */
+        /* if (! (32 <= num && num <= 63)) */
         {
             return fluid_synth_modulate_voices_LOCAL(synth, channum, 1, num);
         }
