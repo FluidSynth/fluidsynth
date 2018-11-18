@@ -1519,7 +1519,7 @@ fluid_synth_cc(fluid_synth_t *synth, int chan, int num, int val)
  Actually Fluidsynth doesn't use CC LSB value inside fluid_voice_update_param()
  (once fluid_voice_modulate() has been triggered). This is because actually
  fluidsynth needs only 7 bits resolution (and not 14 bits) from these CCs.
- So fluidsynth is using only 7 bit MSB (execpt for portamento time).
+ So fluidsynth is using only 7 bit MSB (except for portamento time).
  In regard to MIDI specs Fluidsynth behaves correctly.
 
  Soundfont specs 2.01 - 8.2.1:
