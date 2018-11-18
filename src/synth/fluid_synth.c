@@ -1318,7 +1318,7 @@ fluid_synth_damp_voices_by_sostenuto_LOCAL(fluid_synth_t *synth, int chan)
  * @param mod Modulator info (values copied, passed in object can be freed immediately afterwards)
  * @param mode Determines how to handle an existing identical modulator (#fluid_synth_add_mod)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
- * 
+ *
  * @note Not realtime safe (due to internal memory allocation) and therefore should not be called
  * from synthesis context at the risk of stalling audio output.
  */
@@ -1388,7 +1388,7 @@ fluid_synth_add_default_mod(fluid_synth_t *synth, const fluid_mod_t *mod, int mo
  * @param synth synth instance
  * @param mod The modulator to remove
  * @return #FLUID_OK if a matching modulator was found and successfully removed, #FLUID_FAILED otherwise
- * 
+ *
  * @note Not realtime safe (due to internal memory allocation) and therefore should not be called
  * from synthesis context at the risk of stalling audio output.
  */
@@ -1513,7 +1513,37 @@ fluid_synth_cc(fluid_synth_t *synth, int chan, int num, int val)
     FLUID_API_RETURN(result);
 }
 
-/* Local synthesis thread variant of MIDI CC set function. */
+/* Local synthesis thread variant of MIDI CC set function.
+ Most of CC are allowed to modulate but not all. A comment describes if CC num
+ isn't allowed to modulate.
+ Following explanations should help to understand both MIDI specifications and
+ Soundfont specifications in regard to MIDI specs.
+
+ MIDI specs:
+ CC LSB (32 to 63) are LSB contributions to CC MSB (0 to 31).
+ It's up to the synthesizer to decide to take LSB values into account or not.
+ Actually Fluidsynth doesn't use CC LSB value inside fluid_voice_update_param()
+ (once fluid_voice_modulate() has been triggered). This is because actually
+ fluidsynth needs only 7 bits resolution (and not 14 bits) from these CCs.
+ So fluidsynth is using only 7 bit MSB (except for portamento time).
+ In regard to MIDI specs Fluidsynth behaves correctly.
+
+ Soundfont specs 2.01 - 8.2.1:
+ To deal correctly with MIDI CC (regardless if any synth will use CC MSB alone (7 bit)
+ or both CCs MSB,LSB (14 bits) during synthesis), SF specs recommend not making use of
+ CC LSB (i.e only CC MSB) in modulator sources to trigger modulation (i.e modulators
+ with CC LSB connected to sources inputs should be ignored).
+ These specifics are particularly suited for synths that use 14 bits CCs. In this case,
+ the MIDI transmitter sends CC LSB first followed by CC MSB. The MIDI synth receives
+ both CC LSB and CC MSB but only CC MSB will trigger the modulation.
+ This will produce correct synthesis parameters update from a correct 14 bits CC.
+ If in SF specs, modulator sources with CC LSB had been accepted, both CC LSB and
+ CC MSB will triggers 2 modulations. This leads to incorrect synthesis parameters
+ update followed by correct synthesis parameters update.
+
+ However, as long as fluidsynth will use only CC 7 bits resolution, it is safe to ignore
+ these SF recommendations on CC receive.
+*/
 static int
 fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
 {
@@ -1525,8 +1555,11 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
 
     switch(num)
     {
+    case LOCAL_CONTROL: /* not allowed to modulate (spec SF 2.01 - 8.2.1) */
+        break;
 
     /* CC omnioff, omnion, mono, poly */
+    /* not allowed to modulate (spec SF 2.01 - 8.2.1) */
     case POLY_OFF:
     case POLY_ON:
     case OMNI_OFF:
@@ -1581,18 +1614,18 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
 
         return FLUID_FAILED;
 
-    case LEGATO_SWITCH:
+    case LEGATO_SWITCH: /* not allowed to modulate */
         /* handles Poly/mono commutation on Legato pedal On/Off.*/
         fluid_channel_cc_legato(chan, value);
         break;
 
-    case PORTAMENTO_SWITCH:
+    case PORTAMENTO_SWITCH: /* not allowed to modulate */
         /* Special handling of the monophonic list  */
         /* Invalids the most recent note played in a staccato manner */
         fluid_channel_invalid_prev_note_staccato(chan);
         break;
 
-    case SUSTAIN_SWITCH:
+    case SUSTAIN_SWITCH: /* not allowed to modulate */
 
         /* Release voices if Sustain switch is released */
         if(value < 64)  /* Sustain is released */
@@ -1602,7 +1635,7 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
 
         break;
 
-    case SOSTENUTO_SWITCH:
+    case SOSTENUTO_SWITCH: /* not allowed to modulate */
 
         /* Release voices if Sostetuno switch is released */
         if(value < 64)  /* Sostenuto is released */
@@ -1617,28 +1650,31 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
 
         break;
 
-    case BANK_SELECT_MSB:
+    case BANK_SELECT_MSB: /* not allowed to modulate (spec SF 2.01 - 8.2.1) */
         fluid_channel_set_bank_msb(chan, value & 0x7F);
         break;
 
-    case BANK_SELECT_LSB:
+    case BANK_SELECT_LSB: /* not allowed to modulate (spec SF 2.01 - 8.2.1) */
         fluid_channel_set_bank_lsb(chan, value & 0x7F);
         break;
 
-    case ALL_NOTES_OFF:
+    case ALL_NOTES_OFF: /* not allowed to modulate (spec SF 2.01 - 8.2.1) */
         fluid_synth_all_notes_off_LOCAL(synth, channum);
         break;
 
-    case ALL_SOUND_OFF:
+    case ALL_SOUND_OFF: /* not allowed to modulate (spec SF 2.01 - 8.2.1) */
         fluid_synth_all_sounds_off_LOCAL(synth, channum);
         break;
 
-    case ALL_CTRL_OFF:
+    case ALL_CTRL_OFF: /* not allowed to modulate (spec SF 2.01 - 8.2.1) */
         fluid_channel_init_ctrl(chan, 1);
         fluid_synth_modulate_voices_all_LOCAL(synth, channum);
         break;
 
-    case DATA_ENTRY_MSB:
+    case DATA_ENTRY_LSB: /* not allowed to modulate (spec SF 2.01 - 8.2.1) */
+        break;
+
+    case DATA_ENTRY_MSB: /* not allowed to modulate (spec SF 2.01 - 8.2.1) */
     {
         int data = (value << 7) + fluid_channel_get_cc(chan, DATA_ENTRY_LSB);
 
@@ -1698,13 +1734,13 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
         break;
     }
 
-    case NRPN_MSB:
+    case NRPN_MSB: /* not allowed to modulate (spec SF 2.01 - 8.2.1) */
         fluid_channel_set_cc(chan, NRPN_LSB, 0);
         chan->nrpn_select = 0;
         chan->nrpn_active = 1;
         break;
 
-    case NRPN_LSB:
+    case NRPN_LSB: /* not allowed to modulate (spec SF 2.01 - 8.2.1) */
 
         /* SontFont 2.01 NRPN Message (Sect. 9.6, p. 74)  */
         if(fluid_channel_get_cc(chan, NRPN_MSB) == 120)
@@ -1730,8 +1766,8 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
         chan->nrpn_active = 1;
         break;
 
-    case RPN_MSB:
-    case RPN_LSB:
+    case RPN_MSB: /* not allowed to modulate (spec SF 2.01 - 8.2.1) */
+    case RPN_LSB: /* not allowed to modulate (spec SF 2.01 - 8.2.1) */
         chan->nrpn_active = 0;
         break;
 
@@ -1741,7 +1777,14 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
 
     /* fall-through */
     default:
-        return fluid_synth_modulate_voices_LOCAL(synth, channum, 1, num);
+        /* CC lsb shouldn't allowed to modulate (spec SF 2.01 - 8.2.1) */
+        /* However, as long fluidsynth will use only CC 7 bits resolution, it
+           is safe to ignore these SF recommendations on CC receive. See
+           explanations above */
+        /* if (! (32 <= num && num <= 63)) */
+        {
+            return fluid_synth_modulate_voices_LOCAL(synth, channum, 1, num);
+        }
     }
 
     return FLUID_OK;
