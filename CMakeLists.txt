@@ -20,7 +20,7 @@
 # CMake based build system. Pedro Lopez-Cabanillas <plcl@users.sf.net>
 
 cmake_minimum_required ( VERSION 3.1.0 ) # because of CMAKE_C_STANDARD
-project ( FluidSynth C )
+project ( FluidSynth C CXX )
 set ( CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake_admin )
 
 # FluidSynth package name
@@ -578,7 +578,6 @@ unset ( OBOE_SUPPORT CACHE )
 if ( enable-oboe )
   set ( OBOE_SUPPORT 1 )
 endif ( enable-oboe )
-    
 
 unset ( WITH_READLINE CACHE )
 if ( enable-readline )
