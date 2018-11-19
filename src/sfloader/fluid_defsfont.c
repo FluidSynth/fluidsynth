@@ -1186,6 +1186,109 @@ static int fluid_preset_zone_create_voice_zones(fluid_preset_zone_t *preset_zone
     return FLUID_OK;
 }
 
+/**
+ * Checks if modulator mod is identic to another modulator in the list. 
+ * (specs SF 2.0X  7.4, 7.8)
+ * @param mod, modulator list.
+ * @param name, if not NULL, pointer on a string displayed as warning.
+ * @return TRUE if mod is identic to another modulator, FALSE otherwise.
+ */
+int static fluid_zone_is_mod_identic(fluid_mod_t *mod, char *name)
+{
+    fluid_mod_t *next = mod->next;
+    while(next)
+    {
+        /* is mod identic to next ? */
+        if( fluid_mod_test_identity(mod, next))
+        {
+            if(name)
+            {
+                FLUID_LOG(FLUID_WARN, "Ignoring identic modulator %s", name);
+            }
+            return TRUE;
+        }
+        next = next->next;
+    }
+    return FALSE;
+}
+
+
+/**
+ * Checks and remove invalid modulators from a zone modulators list
+ * - checks valid modulator sources (specs SF 2.04  7.4, 7.8, 8.2.1).
+ * - checks indentic modulator in the list (specs SF 2.0X  7.4, 7.8).
+ * @param zone_name, zone name.
+ * @param list_mod, pointer address of the first modulator in the list.
+ */
+void static fluid_zone_check_remove_mod(char * zone_name, fluid_mod_t **list_mod)
+{
+    fluid_mod_t *prev_mod = NULL; /* previous modulator in list_mod */
+    fluid_mod_t *mod = *list_mod; /* first modulator in list_mod */
+    int count = 0;
+    while(mod)
+    {
+        char zone_mod_name[256];
+        fluid_mod_t *next = mod->next;
+		
+        /* prepare modulator name: zonename/#modulator */
+		FLUID_SNPRINTF(zone_mod_name, sizeof(zone_mod_name),"%s:%d", zone_name, count);		
+//		snprintf(zone_mod_name, sizeof(zone_mod_name),"%s/mod%d", zone_name, count);		
+		
+
+#if 0 // test fluid_mod_check_sources(): Ok
+		if( ((mod->flags1 & FLUID_MOD_CC) != 0) )
+		{
+			mod->src1 = 32;
+		}
+		if( ((mod->flags2 & FLUID_MOD_CC) == 0) )
+		{
+//			mod->src2 = 127;
+		}
+#endif
+        /* has mod invalid sources ? */
+        if(!fluid_mod_check_sources (mod,  zone_mod_name) 
+        /* or is mod identic to any following modulator ? */
+           ||fluid_zone_is_mod_identic(mod, zone_mod_name)) 
+        {  /* the modulator is useless so we remove it */
+            if (prev_mod)
+            {
+                prev_mod->next =next;
+            }
+            else
+            {
+                *list_mod = next;
+            }
+            free(mod); /* freeing */
+        }
+        else 
+        {
+            prev_mod = mod; 
+        }
+        mod = next;
+        count++;
+    }
+#if 0 // test fluid_zone_is_mod_identic(): Ok
+	if (count > 0)
+	{
+		FLUID_LOG(FLUID_WARN,"%s count:%d",zone_name,count);
+#if 1 // test forçage retrait */
+		FLUID_LOG(FLUID_WARN,"Forçage retrait");
+
+		mod = *list_mod; /* first modulator in list_mod */
+		count = 0;
+		while(mod)
+		{
+			mod = mod->next;
+			count++;
+		}
+		FLUID_LOG(FLUID_WARN,"%s count:%d",zone_name,count);
+
+#endif
+	}
+#endif
+//    getchar();
+}
+
 /*
  * fluid_preset_zone_import_sfont
  */
@@ -1428,6 +1531,9 @@ fluid_preset_zone_import_sfont(fluid_preset_zone_t *zone, SFZone *sfzone, fluid_
         r = fluid_list_next(r);
     } /* foreach modulator */
 
+    /* checks and removes invalid modulators in modulator list*/
+    fluid_zone_check_remove_mod (zone->name,  &zone->mod);
+
     return FLUID_OK;
 }
 
@@ -1541,7 +1647,9 @@ fluid_inst_import_sfont(fluid_preset_zone_t *preset_zone, SFInst *sfinst, fluid_
     {
 
         sfzone = (SFZone *)fluid_list_get(p);
-        FLUID_SNPRINTF(zone_name, sizeof(zone_name), "%s/%d", inst->name, count);
+        /* integrates preset zone name in instrument zone name */
+        FLUID_SNPRINTF(zone_name, sizeof(zone_name), "%s/%s/%d", preset_zone->name,
+                       inst->name, count);
 
         inst_zone = new_fluid_inst_zone(zone_name);
 
@@ -1918,7 +2026,10 @@ fluid_inst_zone_import_sfont(fluid_inst_zone_t *inst_zone, SFZone *sfzone, fluid
         r = fluid_list_next(r);
     } /* foreach modulator */
 
-    return FLUID_OK;
+	/* checks and remove invalids modulators */
+	fluid_zone_check_remove_mod (inst_zone->name, &inst_zone->mod);
+
+	return FLUID_OK;
 }
 
 /*
