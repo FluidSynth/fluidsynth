@@ -126,9 +126,6 @@ new_fluid_waveout_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
     fluid_settings_getint(settings, "audio.periods", &periods);
     fluid_settings_getint(settings, "audio.period-size", &period_size);
 
-    /* Set frequency to integer */
-    frequency = (int)sample_rate;
-
     /* Clear the format buffer */
     ZeroMemory(&wfx, sizeof(WAVEFORMATEX));
 
@@ -157,12 +154,15 @@ new_fluid_waveout_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
         return NULL;
     }
 
+    /* Set frequency to integer */
+    frequency = (int)sample_rate;
+
     /* Compile the format buffer */
     wfx.nChannels       = 2;
     wfx.wBitsPerSample  = sample_size * 8;
-    wfx.nSamplesPerSec  = (DWORD) sample_rate;
+    wfx.nSamplesPerSec  = frequency;
     wfx.nBlockAlign     = sample_size * wfx.nChannels;
-    wfx.nAvgBytesPerSec = sample_rate * wfx.nBlockAlign;
+    wfx.nAvgBytesPerSec = frequency * wfx.nBlockAlign;
 
     /* Calculate the length of a single buffer */
     lenBuffer = (MS_BUFFER_LENGTH * wfx.nAvgBytesPerSec + 999) / 1000;
