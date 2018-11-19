@@ -122,7 +122,7 @@ if ( OBOE_SUPPORT )
   include_directories ( ../android/oboe-c/include )
   set ( fluid_oboe_SOURCES drivers/fluid_oboe.c )
   link_directories ( ${CMAKE_CURRENT_SOURCE_DIR}/../android/oboe-c/build/${ANDROID_ABI} )
-  link_libraries ( oboe-c stdc++ )
+  link_libraries ( oboe-c stdc++ android )
 endif ( OBOE_SUPPORT )
 
 set ( config_SOURCES ${CMAKE_BINARY_DIR}/config.h )
