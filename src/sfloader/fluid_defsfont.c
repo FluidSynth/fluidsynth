@@ -1255,7 +1255,7 @@ void static fluid_zone_check_remove_mod(char * zone_name, fluid_mod_t **list_mod
             {
                 *list_mod = next;
             }
-            free(mod); /* freeing */
+            FLUID_FREE(mod); /* freeing */
         }
         else 
         {
