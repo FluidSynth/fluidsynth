@@ -823,7 +823,7 @@ fluid_defpreset_noteon(fluid_defpreset_t *defpreset, fluid_synth_t *synth, int c
 
                             /* Instrument modulators -supersede- existing (default)
                              * modulators.  SF 2.01 page 69, 'bullet' 6 */
-                            fluid_voice_add_mod(voice, mod, FLUID_VOICE_OVERWRITE);
+                            fluid_voice_add_mod_local(voice, mod, FLUID_VOICE_OVERWRITE);
                         }
                     }
 
@@ -916,7 +916,7 @@ fluid_defpreset_noteon(fluid_defpreset_t *defpreset, fluid_synth_t *synth, int c
                             /* Preset modulators -add- to existing instrument /
                              * default modulators.  SF2.01 page 70 first bullet on
                              * page */
-                            fluid_voice_add_mod(voice, mod, FLUID_VOICE_ADD);
+                            fluid_voice_add_mod_local(voice, mod, FLUID_VOICE_ADD);
                         }
                     }
 

@@ -496,7 +496,7 @@ size_t fluid_mod_sizeof()
  *   0 to check src2 source.
  * @return FALSE if selected modulator's source other than cc is invalid, TRUE otherwise.
  */
-int static fluid_mod_check_non_cc_source(fluid_mod_t *mod, unsigned char src1_select)
+int static fluid_mod_check_non_cc_source(const fluid_mod_t *mod, unsigned char src1_select)
 {
     unsigned char flags, src;
     if (src1_select)
@@ -528,7 +528,7 @@ int static fluid_mod_check_non_cc_source(fluid_mod_t *mod, unsigned char src1_se
  *   0 to check src2 source.
  * @return FALSE if selected modulator's source CC is invalid, TRUE otherwise.
  */
-int static fluid_mod_check_cc_source(fluid_mod_t *mod, unsigned char src1_select)
+int static fluid_mod_check_cc_source(const fluid_mod_t *mod, unsigned char src1_select)
 {
     unsigned char flags, src;
     if (src1_select)
@@ -564,7 +564,7 @@ int static fluid_mod_check_cc_source(fluid_mod_t *mod, unsigned char src1_select
  * @param name,if not NULL, pointer on a string displayed as a warning.
  * @return TRUE if modulator sources src1, src2 are valid, FALSE otherwise.
  */
-int fluid_mod_check_sources(fluid_mod_t *mod, char *name)
+int fluid_mod_check_sources(const fluid_mod_t *mod, char *name)
 {
     static const char *invalid_non_cc_src =
         "Invalid modulator, using non-CC source %s.src%d=%d";

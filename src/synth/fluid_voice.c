@@ -1474,7 +1474,7 @@ fluid_voice_stop(fluid_voice_t *voice)
 }
 
 /**
- * Adds a modulator to the voice.
+ * Adds a modulator to the voice if the modulator has valid sources.
  * @param voice Voice instance
  * @param mod Modulator info (copied)
  * @param mode Determines how to handle an existing identical modulator
@@ -1484,28 +1484,23 @@ fluid_voice_stop(fluid_voice_t *voice)
  *   exist so don't check.
  */
 void
-fluid_voice_add_mod(fluid_voice_t *voice, fluid_mod_t *mod, int mode)
+fluid_voice_add_mod(fluid_voice_t* voice, fluid_mod_t* mod, int mode)
+{
+    /* Ignore the modulator if its sources inputs are invalid */
+    if(fluid_mod_check_sources(mod, " api fluid_voice_add_mod mod"))
+    {
+        fluid_voice_add_mod_local(voice, mod, mode);
+    }
+}
+
+/**
+ * Adds a modulator to the voice.
+ * local version of fluid_voice_add_mod function. Called at noteOn time.
+ */
+void
+fluid_voice_add_mod_local(fluid_voice_t *voice, fluid_mod_t *mod, int mode)
 {
     int i;
-
-    /*
-     * Some soundfonts come with a huge number of non-standard
-     * controllers, because they have been designed for one particular
-     * sound card.  Discard them, maybe print a warning.
-     */
-
-    if(((mod->flags1 & FLUID_MOD_CC) == 0)
-            && ((mod->src1 != FLUID_MOD_NONE)            /* SF2.01 section 8.2.1: Constant value */
-                && (mod->src1 != FLUID_MOD_VELOCITY)        /* Note-on velocity */
-                && (mod->src1 != FLUID_MOD_KEY)             /* Note-on key number */
-                && (mod->src1 != FLUID_MOD_KEYPRESSURE)     /* Poly pressure */
-                && (mod->src1 != FLUID_MOD_CHANNELPRESSURE) /* Channel pressure */
-                && (mod->src1 != FLUID_MOD_PITCHWHEEL)      /* Pitch wheel */
-                && (mod->src1 != FLUID_MOD_PITCHWHEELSENS)))/* Pitch wheel sensitivity */
-    {
-        FLUID_LOG(FLUID_WARN, "Ignoring invalid controller, using non-CC source %i.", mod->src1);
-        return;
-    }
 
     if(mode == FLUID_VOICE_ADD)
     {
