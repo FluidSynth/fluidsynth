@@ -1484,10 +1484,10 @@ fluid_voice_stop(fluid_voice_t *voice)
  *   exist so don't check.
  */
 void
-fluid_voice_add_mod(fluid_voice_t* voice, fluid_mod_t* mod, int mode)
+fluid_voice_add_mod(fluid_voice_t *voice, fluid_mod_t *mod, int mode)
 {
     /* Ignore the modulator if its sources inputs are invalid */
-    if(fluid_mod_check_sources(mod, " api fluid_voice_add_mod mod"))
+    if(fluid_mod_check_sources(mod, "api fluid_voice_add_mod mod"))
     {
         fluid_voice_add_mod_local(voice, mod, mode, FLUID_NUM_MOD);
     }
@@ -1507,7 +1507,7 @@ fluid_voice_add_mod(fluid_voice_t* voice, fluid_mod_t* mod, int mode)
  *   modulators at index above this limit. This avoid wasting cpu cycles at noteon.
  */
 void
-fluid_voice_add_mod_local(fluid_voice_t* voice, fluid_mod_t* mod, int mode, int check_limit_count)
+fluid_voice_add_mod_local(fluid_voice_t *voice, fluid_mod_t *mod, int mode, int check_limit_count)
 {
     int i;
 
