@@ -487,8 +487,8 @@ size_t fluid_mod_sizeof()
 }
 
 /**
- * Checks if modulator's source other than CC source is invalid. 
- * (specs SF 2.04  7.4, 7.8, 8.2.1)
+ * Checks if modulators source other than CC source is invalid. 
+ * (specs SF 2.01  7.4, 7.8, 8.2.1)
  *
  * @param mod, modulator.
  * @param src1_select, source input selection to check.
@@ -521,7 +521,7 @@ int static fluid_mod_check_non_cc_source(const fluid_mod_t *mod, unsigned char s
 }
 
 /**
- * Checks if modulator CC source is invalid (specs SF 2.04  7.4, 7.8, 8.2.1).
+ * Checks if modulator CC source is invalid (specs SF 2.01  7.4, 7.8, 8.2.1).
  * @param mod, modulator.
  * @src1_select, source input selection:
  *   1 to check src1 source or
@@ -559,7 +559,7 @@ int static fluid_mod_check_cc_source(const fluid_mod_t *mod, unsigned char src1_
 }
 
 /**
- * Checks valid modulator sources (specif SF 2.04  7.4, 7.8, 8.2.1)
+ * Checks valid modulator sources (specs SF 2.01  7.4, 7.8, 8.2.1)
  * @param mod, modulator.
  * @param name,if not NULL, pointer on a string displayed as a warning.
  * @return TRUE if modulator sources src1, src2 are valid, FALSE otherwise.

@@ -698,7 +698,7 @@ fluid_defpreset_noteon(fluid_defpreset_t *defpreset, fluid_synth_t *synth, int c
     fluid_mod_t *mod;
     fluid_mod_t *mod_list[FLUID_NUM_MOD];  /* list for 'sorting' preset modulators */
     int mod_list_count, mod_list_limit_count;
-    int voice_mod_list_limit_count;
+    int voice_mod_limit_count;
     int i;
 
     global_preset_zone = fluid_defpreset_get_global_zone(defpreset);
@@ -832,8 +832,8 @@ fluid_defpreset_noteon(fluid_defpreset_t *defpreset, fluid_synth_t *synth, int c
                      */
 
                     /* number of default modulators */
-                    voice_mod_list_limit_count = voice->mod_count;
-                    
+                    voice_mod_limit_count = voice->mod_count;
+
                     for(i = 0; i < mod_list_count; i++)
                     {
 
@@ -845,7 +845,7 @@ fluid_defpreset_noteon(fluid_defpreset_t *defpreset, fluid_synth_t *synth, int c
                             /* Instrument modulators -supersede- existing (default)
                              * modulators.  SF 2.01 page 69, 'bullet' 6 */
                             fluid_voice_add_mod_local(voice, mod, FLUID_VOICE_OVERWRITE, 
-                                                      voice_mod_list_limit_count);
+                                                      voice_mod_limit_count);
                         }
                     }
 
@@ -944,6 +944,10 @@ fluid_defpreset_noteon(fluid_defpreset_t *defpreset, fluid_synth_t *synth, int c
                      * So these local/global modulators are only checked against voice 
                      * default modulators.
                      */
+
+                    /* number of default modulators + instruments modulators */
+                    voice_mod_limit_count = voice->mod_count;
+
                     for(i = 0; i < mod_list_count; i++)
                     {
                         mod = mod_list[i];
@@ -955,7 +959,7 @@ fluid_defpreset_noteon(fluid_defpreset_t *defpreset, fluid_synth_t *synth, int c
                              * default modulators.  SF2.01 page 70 first bullet on
                              * page */
                             fluid_voice_add_mod_local(voice, mod, FLUID_VOICE_ADD,
-                                                      voice_mod_list_limit_count);
+                                                      voice_mod_limit_count);
                         }
                     }
 

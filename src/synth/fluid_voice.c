@@ -1475,9 +1475,9 @@ fluid_voice_stop(fluid_voice_t *voice)
 
 /**
  * Adds a modulator to the voice if the modulator has valid sources.
- * @param voice Voice instance
- * @param mod Modulator info (copied)
- * @param mode Determines how to handle an existing identical modulator
+ * @param voice Voice instance.
+ * @param mod Modulator info (copied).
+ * @param mode Determines how to handle an existing identical modulator.
  *   #FLUID_VOICE_ADD to add (offset) the modulator amounts,
  *   #FLUID_VOICE_OVERWRITE to replace the modulator,
  *   #FLUID_VOICE_DEFAULT when adding a default modulator - no duplicate should
@@ -1496,7 +1496,7 @@ fluid_voice_add_mod(fluid_voice_t* voice, fluid_mod_t* mod, int mode)
 /**
  * Adds a modulator to the voice.
  * local version of fluid_voice_add_mod function. Called at noteon time.
- * @param voice, mod, mode, sames as fluid_voice_add_mod() (see above)
+ * @param voice, mod, mode, same as for fluid_voice_add_mod() (see above).
  * @param check_limit_count is the modulator number limit to handle with existing
  *   identical modulator(for mode FLUID_VOICE_OVERWRITE or FLUID_VOICE_OVERWRITE only).
  *   - When FLUID_NUM_MOD, all the voices modulators (since the previous call)
@@ -1504,7 +1504,7 @@ fluid_voice_add_mod(fluid_voice_t* voice, fluid_mod_t* mod, int mode)
  *	 - When check_count_limit is below the actual number of voices modulators
  *	  (voice->mod_count), this will restrict identity check to this number,
  *   This is usefull when we know by advance that there is no duplicate with
- *   modulator at index above this limit. This avoid wasting cpu cycles at noteon.
+ *   modulators at index above this limit. This avoid wasting cpu cycles at noteon.
  */
 void
 fluid_voice_add_mod_local(fluid_voice_t* voice, fluid_mod_t* mod, int mode, int check_limit_count)
