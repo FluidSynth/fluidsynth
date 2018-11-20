@@ -4354,11 +4354,11 @@ fluid_synth_alloc_voice_LOCAL(fluid_synth_t *synth, fluid_sample_t *sample, int 
             )
             {
                 // Replacement of default_vel2att modulator by custom_breath2att_modulator
-                fluid_voice_add_mod_local(voice, &custom_breath2att_mod, FLUID_VOICE_DEFAULT);
+                fluid_voice_add_mod_local(voice, &custom_breath2att_mod, FLUID_VOICE_DEFAULT, 0);
             }
             else
             {
-                fluid_voice_add_mod_local(voice, default_mod, FLUID_VOICE_DEFAULT);
+                fluid_voice_add_mod_local(voice, default_mod, FLUID_VOICE_DEFAULT, 0);
             }
 
             // Next default modulator to add to the voice

@@ -1489,24 +1489,38 @@ fluid_voice_add_mod(fluid_voice_t* voice, fluid_mod_t* mod, int mode)
     /* Ignore the modulator if its sources inputs are invalid */
     if(fluid_mod_check_sources(mod, " api fluid_voice_add_mod mod"))
     {
-        fluid_voice_add_mod_local(voice, mod, mode);
+        fluid_voice_add_mod_local(voice, mod, mode, FLUID_NUM_MOD);
     }
 }
 
 /**
  * Adds a modulator to the voice.
- * local version of fluid_voice_add_mod function. Called at noteOn time.
+ * local version of fluid_voice_add_mod function. Called at noteon time.
+ * @param voice, mod, mode, sames as fluid_voice_add_mod() (see above)
+ * @param check_limit_count is the modulator number limit to handle with existing
+ *   identical modulator(for mode FLUID_VOICE_OVERWRITE or FLUID_VOICE_OVERWRITE only).
+ *   - When FLUID_NUM_MOD, all the voices modulators (since the previous call)
+ *     are checked for identity.
+ *	 - When check_count_limit is below the actual number of voices modulators
+ *	  (voice->mod_count), this will restrict identity check to this number,
+ *   This is usefull when we know by advance that there is no duplicate with
+ *   modulator at index above this limit. This avoid wasting cpu cycles at noteon.
  */
 void
-fluid_voice_add_mod_local(fluid_voice_t *voice, fluid_mod_t *mod, int mode)
+fluid_voice_add_mod_local(fluid_voice_t* voice, fluid_mod_t* mod, int mode, int check_limit_count)
 {
     int i;
+
+    if (check_limit_count > voice->mod_count)
+    {
+        check_limit_count = voice->mod_count;
+    }
 
     if(mode == FLUID_VOICE_ADD)
     {
 
         /* if identical modulator exists, add them */
-        for(i = 0; i < voice->mod_count; i++)
+        for(i = 0; i < check_limit_count; i++)
         {
             if(fluid_mod_test_identity(&voice->mod[i], mod))
             {
@@ -1521,7 +1535,7 @@ fluid_voice_add_mod_local(fluid_voice_t *voice, fluid_mod_t *mod, int mode)
     {
 
         /* if identical modulator exists, replace it (only the amount has to be changed) */
-        for(i = 0; i < voice->mod_count; i++)
+        for(i = 0; i < check_limit_count; i++)
         {
             if(fluid_mod_test_identity(&voice->mod[i], mod))
             {

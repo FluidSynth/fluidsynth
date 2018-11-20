@@ -697,7 +697,8 @@ fluid_defpreset_noteon(fluid_defpreset_t *defpreset, fluid_synth_t *synth, int c
     fluid_voice_t *voice;
     fluid_mod_t *mod;
     fluid_mod_t *mod_list[FLUID_NUM_MOD];  /* list for 'sorting' preset modulators */
-    int mod_list_count;
+    int mod_list_count, mod_list_limit_count;
+    int voice_mod_list_limit_count;
     int i;
 
     global_preset_zone = fluid_defpreset_get_global_zone(defpreset);
@@ -788,7 +789,16 @@ fluid_defpreset_noteon(fluid_defpreset_t *defpreset, fluid_synth_t *synth, int c
                     /* local instrument zone, modulators.
                      * Replace modulators with the same definition in the list:
                      * SF 2.01 page 69, 'bullet' 8
-                     */
+                     *
+                     * mod_list contains global modulators. Now we know that there
+                     * is no local modulator identic to another local modulator (this has
+					 * been checked at soundfont loading time). So local modulators
+                     * are only checked against global modulators.
+					 */
+
+                    /* number of global modulators */
+                    mod_list_limit_count = mod_list_count;
+
                     mod = inst_zone->mod;
 
                     while(mod)
@@ -799,7 +809,7 @@ fluid_defpreset_noteon(fluid_defpreset_t *defpreset, fluid_synth_t *synth, int c
                          *  entries will be ignored later.  SF2.01 section 9.5.1
                          *  page 69, 'bullet' 3 defines 'identical'.  */
 
-                        for(i = 0; i < mod_list_count; i++)
+                        for(i = 0; i < mod_list_limit_count; i++)
                         {
                             if(mod_list[i] && fluid_mod_test_identity(mod, mod_list[i]))
                             {
@@ -812,7 +822,18 @@ fluid_defpreset_noteon(fluid_defpreset_t *defpreset, fluid_synth_t *synth, int c
                         mod = mod->next;
                     }
 
-                    /* Add instrument modulators (global / local) to the voice. */
+                    /* Add instrument modulators (global / local) to the voice.
+                     *
+					 * mod_list contains global and local modulators, we know that:
+                     * - there is no global modulator identic to another global modulator,
+                     * - there is no local modulator identic to another local modulator,
+                     * So these local/global modulators are only checked against voice 
+                     * default modulators.
+                     */
+
+                    /* number of default modulators */
+                    voice_mod_list_limit_count = voice->mod_count;
+                    
                     for(i = 0; i < mod_list_count; i++)
                     {
 
@@ -823,7 +844,8 @@ fluid_defpreset_noteon(fluid_defpreset_t *defpreset, fluid_synth_t *synth, int c
 
                             /* Instrument modulators -supersede- existing (default)
                              * modulators.  SF 2.01 page 69, 'bullet' 6 */
-                            fluid_voice_add_mod_local(voice, mod, FLUID_VOICE_OVERWRITE);
+                            fluid_voice_add_mod_local(voice, mod, FLUID_VOICE_OVERWRITE, 
+                                                      voice_mod_list_limit_count);
                         }
                     }
 
@@ -886,13 +908,22 @@ fluid_defpreset_noteon(fluid_defpreset_t *defpreset, fluid_synth_t *synth, int c
 
                     /* Process the modulators of the local preset zone.  Kick
                      * out all identical modulators from the global preset zone
-                     * (SF 2.01 page 69, second-last bullet) */
+                     * (SF 2.01 page 69, second-last bullet)
+                     *
+                     * mod_list contains global modulators. Now we know that there
+                     * is no local modulator identic to another local modulator (this has
+					 * been checked at soundfont loading time). So local modulators
+                     * are only checked against global modulators.
+					 */
+
+                    /* number of global modulators */
+                    mod_list_limit_count = mod_list_count;
 
                     mod = preset_zone->mod;
 
                     while(mod)
                     {
-                        for(i = 0; i < mod_list_count; i++)
+                        for(i = 0; i < mod_list_limit_count; i++)
                         {
                             if(mod_list[i] && fluid_mod_test_identity(mod, mod_list[i]))
                             {
@@ -905,7 +936,14 @@ fluid_defpreset_noteon(fluid_defpreset_t *defpreset, fluid_synth_t *synth, int c
                         mod = mod->next;
                     }
 
-                    /* Add preset modulators (global / local) to the voice. */
+                    /* Add preset modulators (global / local) to the voice.
+                     *
+					 * mod_list contains global and local modulators, we know that:
+                     * - there is no global modulator identic to another global modulator,
+                     * - there is no local modulator identic to another local modulator,
+                     * So these local/global modulators are only checked against voice 
+                     * default modulators.
+                     */
                     for(i = 0; i < mod_list_count; i++)
                     {
                         mod = mod_list[i];
@@ -916,7 +954,8 @@ fluid_defpreset_noteon(fluid_defpreset_t *defpreset, fluid_synth_t *synth, int c
                             /* Preset modulators -add- to existing instrument /
                              * default modulators.  SF2.01 page 70 first bullet on
                              * page */
-                            fluid_voice_add_mod_local(voice, mod, FLUID_VOICE_ADD);
+                            fluid_voice_add_mod_local(voice, mod, FLUID_VOICE_ADD,
+                                                      voice_mod_list_limit_count);
                         }
                     }
 
