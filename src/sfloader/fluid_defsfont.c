@@ -709,7 +709,7 @@ fluid_defpreset_noteon_add_mod_to_voice(fluid_voice_t* voice,
                                  int mode, int voice_mod_limit_count)
 {
     fluid_mod_t * mod;
-	/* list for 'sorting' global/local modulators */
+    /* list for 'sorting' global/local modulators */
     fluid_mod_t * mod_list[FLUID_NUM_MOD];
     int mod_list_count, mod_list_limit_count; 
     int i;
@@ -1224,8 +1224,8 @@ int static fluid_zone_is_mod_identic(fluid_mod_t *mod, char *name)
 
 /**
  * Checks and remove invalid modulators from a zone modulators list
- * - checks valid modulator sources (specs SF 2.04  7.4, 7.8, 8.2.1).
- * - checks indentic modulator in the list (specs SF 2.0X  7.4, 7.8).
+ * - checks valid modulator sources (specs SF 2.01  7.4, 7.8, 8.2.1).
+ * - checks indentic modulator in the list (specs SF 2.01  7.4, 7.8).
  * @param zone_name, zone name.
  * @param list_mod, pointer address of the first modulator in the list.
  */
@@ -1240,7 +1240,7 @@ void static fluid_zone_check_remove_mod(char * zone_name, fluid_mod_t **list_mod
         fluid_mod_t *next = mod->next;
 		
         /* prepare modulator name: zonename/#modulator */
-        FLUID_SNPRINTF(zone_mod_name, sizeof(zone_mod_name),"%s:%d", zone_name, count);		
+        FLUID_SNPRINTF(zone_mod_name, sizeof(zone_mod_name),"%s/mod%d", zone_name, count);		
 		
         /* has mod invalid sources ? */
         if(!fluid_mod_check_sources (mod,  zone_mod_name) 
@@ -2003,8 +2003,8 @@ fluid_inst_zone_import_sfont(fluid_inst_zone_t *inst_zone, SFZone *sfzone, fluid
         r = fluid_list_next(r);
     } /* foreach modulator */
 
-	/* checks and remove invalids modulators */
-	fluid_zone_check_remove_mod (inst_zone->name, &inst_zone->mod);
+    /* checks and remove invalids modulators */
+    fluid_zone_check_remove_mod (inst_zone->name, &inst_zone->mod);
 
 	return FLUID_OK;
 }
