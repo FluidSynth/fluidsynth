@@ -120,7 +120,7 @@ set ( CMAKE_POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS} )
 # the default global visibility level for all target
 # no visibility support on OS2
 if ( NOT OS2 )
-	set ( CMAKE_C_VISIBILITY_PRESET hidden )
+    set ( CMAKE_C_VISIBILITY_PRESET hidden )
 endif ( NOT OS2 )
 
 # enforce visibility control for all types of cmake targets
