@@ -130,8 +130,8 @@ endif ( OPENSLES_SUPPORT )
 if ( OBOE_SUPPORT )
   set ( fluid_oboe_SOURCES drivers/fluid_oboe.cpp )
   include_directories ( ${CMAKE_CURRENT_SOURCE_DIR}/../android/external/oboe/include )
-  link_directories ( ${CMAKE_CURRENT_SOURCE_DIR} )
-  link_libraries ( stdc++ android )
+  link_directories ( ${CMAKE_SOURCE_DIR}/android/external/oboe/build/${ANDROID_ABI} )
+  link_libraries ( stdc++ android oboe )
 endif ( OBOE_SUPPORT )
 
 set ( config_SOURCES ${CMAKE_BINARY_DIR}/config.h )
@@ -353,6 +353,7 @@ target_link_libraries ( libfluidsynth
     ${WINDOWS_LIBS}
     ${MidiShare_LIBS}
     ${OpenSLES_LIBS}
+    ${OBOE_LIBS}
     ${LIBFLUID_LIBS}
 )
 
