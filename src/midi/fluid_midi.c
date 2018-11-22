@@ -1300,6 +1300,22 @@ fluid_midi_event_set_text(fluid_midi_event_t *evt, void *data, int size, int dyn
 }
 
 /**
+ * Get the text of a MIDI event structure.
+ * @param evt MIDI event structure
+ * @param data Pointer to return text data on.
+ * @param size Pointer to return text size on.
+ * @return Always returns #FLUID_OK
+ */
+int fluid_midi_event_get_text(fluid_midi_event_t *evt, void **data, int *size)
+{
+    if (data)
+		*data = evt->paramptr;
+    if (size)
+		*size = evt->param1;
+    return FLUID_OK;
+}
+
+/**
  * Assign lyric data to a MIDI event structure.
  * @param evt MIDI event structure
  * @param data Pointer to lyric data
@@ -1315,6 +1331,22 @@ int
 fluid_midi_event_set_lyrics(fluid_midi_event_t *evt, void *data, int size, int dynamic)
 {
     fluid_midi_event_set_sysex_LOCAL(evt, MIDI_LYRIC, data, size, dynamic);
+    return FLUID_OK;
+}
+
+/**
+ * Get the lyrics of a MIDI event structure.
+ * @param evt MIDI event structure
+ * @param data Pointer to return text data on.
+ * @param size Pointer to return text size on.
+ * @return Always returns #FLUID_OK
+ */
+int fluid_midi_event_get_lyrics(fluid_midi_event_t *evt, void **data, int *size)
+{
+    if (data)
+        *data = evt->paramptr;
+    if (size)
+        *size = evt->param1;
     return FLUID_OK;
 }
 
