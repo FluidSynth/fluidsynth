@@ -684,7 +684,7 @@ fluid_defpreset_next(fluid_defpreset_t *defpreset)
 
 /*
  * Adds global and local modulators list to the voice. This is done in 2 steps:
- * - Step 1: Local mododulators replace identic global modulators.
+ * - Step 1: Local modulators replace identic global modulators.
  * - Step 2: global + local modulators are added to the voice using mode.
  *
  * Instrument zone list (local/global) must be added using FLUID_VOICE_OVERWRITE.
@@ -1196,8 +1196,8 @@ static int fluid_preset_zone_create_voice_zones(fluid_preset_zone_t *preset_zone
 }
 
 /**
- * Checks if modulator mod is identic to another modulator in the list. 
- * (specs SF 2.0X  7.4, 7.8)
+ * Checks if modulator mod is identic to another modulator in the list 
+ * (specs SF 2.0X  7.4, 7.8).
  * @param mod, modulator list.
  * @param name, if not NULL, pointer on a string displayed as warning.
  * @return TRUE if mod is identic to another modulator, FALSE otherwise.
@@ -1223,24 +1223,24 @@ int static fluid_zone_is_mod_identic(fluid_mod_t *mod, char *name)
 
 
 /**
- * Checks and remove invalid modulators from a zone modulators list
+ * Checks and remove invalid modulators from a zone modulators list.
  * - checks valid modulator sources (specs SF 2.01  7.4, 7.8, 8.2.1).
- * - checks indentic modulator in the list (specs SF 2.01  7.4, 7.8).
+ * - checks identic modulator in the list (specs SF 2.01  7.4, 7.8).
  * @param zone_name, zone name.
- * @param list_mod, pointer address of the first modulator in the list.
+ * @param list_mod, address of pointer on modulator list.
  */
 void static fluid_zone_check_remove_mod(char * zone_name, fluid_mod_t **list_mod)
 {
     fluid_mod_t *prev_mod = NULL; /* previous modulator in list_mod */
     fluid_mod_t *mod = *list_mod; /* first modulator in list_mod */
-    int count = 0;
+    int mod_idx = 0; /* modulator index */
     while(mod)
     {
         char zone_mod_name[256];
         fluid_mod_t *next = mod->next;
 		
         /* prepare modulator name: zonename/#modulator */
-        FLUID_SNPRINTF(zone_mod_name, sizeof(zone_mod_name),"%s/mod%d", zone_name, count);		
+        FLUID_SNPRINTF(zone_mod_name, sizeof(zone_mod_name),"%s/mod%d", zone_name, mod_idx);		
 		
         /* has mod invalid sources ? */
         if(!fluid_mod_check_sources (mod,  zone_mod_name) 
@@ -1262,7 +1262,7 @@ void static fluid_zone_check_remove_mod(char * zone_name, fluid_mod_t **list_mod
             prev_mod = mod; 
         }
         mod = next;
-        count++;
+        mod_idx++;
     }
 }
 
@@ -1509,7 +1509,7 @@ fluid_preset_zone_import_sfont(fluid_preset_zone_t *zone, SFZone *sfzone, fluid_
     } /* foreach modulator */
 
     /* checks and removes invalid modulators in modulator list*/
-    fluid_zone_check_remove_mod (zone->name,  &zone->mod);
+    fluid_zone_check_remove_mod(zone->name, &zone->mod);
 
     return FLUID_OK;
 }
@@ -2003,8 +2003,8 @@ fluid_inst_zone_import_sfont(fluid_inst_zone_t *inst_zone, SFZone *sfzone, fluid
         r = fluid_list_next(r);
     } /* foreach modulator */
 
-    /* checks and remove invalids modulators */
-    fluid_zone_check_remove_mod (inst_zone->name, &inst_zone->mod);
+    /* checks and remove invalid modulators */
+    fluid_zone_check_remove_mod(inst_zone->name, &inst_zone->mod);
 
 	return FLUID_OK;
 }

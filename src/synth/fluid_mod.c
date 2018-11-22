@@ -494,7 +494,7 @@ size_t fluid_mod_sizeof()
  * @param src1_select, source input selection to check.
  *   1 to check src1 source.
  *   0 to check src2 source.
- * @return FALSE if selected modulator's source other than cc is invalid, TRUE otherwise.
+ * @return FALSE if selected modulator source other than cc is invalid, TRUE otherwise.
  */
 int static fluid_mod_check_non_cc_source(const fluid_mod_t *mod, unsigned char src1_select)
 {

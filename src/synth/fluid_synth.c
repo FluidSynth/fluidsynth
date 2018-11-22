@@ -1333,7 +1333,7 @@ fluid_synth_add_default_mod(fluid_synth_t *synth, const fluid_mod_t *mod, int mo
     fluid_return_val_if_fail(mod != NULL, FLUID_FAILED);
 	
     /* Checks if modulators sources are valid */
-	if(!fluid_mod_check_sources(mod, " api fluid_synth_add_default_mod mod"))
+	if(!fluid_mod_check_sources(mod, "api fluid_synth_add_default_mod mod"))
     {
         return FLUID_FAILED;
     }
