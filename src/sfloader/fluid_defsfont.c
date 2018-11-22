@@ -696,23 +696,27 @@ fluid_defpreset_next(fluid_defpreset_t *defpreset)
  * @param mode Determines how to handle an existing identical modulator.
  *   #FLUID_VOICE_ADD to add (offset) the modulator amounts,
  *   #FLUID_VOICE_OVERWRITE to replace the modulator,
- * @param check_limit_count is the modulator number limit to handle existing
- *   identical modulator.
- *   When check_count_limit is below the actual number of voices modulators
- *   (voice->mod_count), this will restrict identity check to this number,
- *   This is usefull when we know by advance that there is no duplicate with
- *   modulators at index above this limit. This avoid wasting cpu cycles at noteon.
 */
 void static
 fluid_defpreset_noteon_add_mod_to_voice(fluid_voice_t* voice, 
                                  fluid_mod_t* global_mod, fluid_mod_t* local_mod,
-                                 int mode, int voice_mod_limit_count)
+                                 int mode)
 {
     fluid_mod_t * mod;
     /* list for 'sorting' global/local modulators */
     fluid_mod_t * mod_list[FLUID_NUM_MOD];
     int mod_list_count, mod_list_limit_count; 
     int i;
+
+    /* voice_mod_limit_count is the modulator number limit to handle with 
+     * existing identical modulators.
+     * When check_count_limit is below the actual number of voices modulators
+     * (voice->mod_count), this will restrict identity check to this number,
+     * This is usefull when we know by advance that there is no duplicate with
+     * modulators at index above this limit. This avoid wasting cpu cycles at
+     * noteon.
+     */
+    int voice_mod_limit_count;
 
     /* Step 1: Local mododulators replace identic global modulators. */
 
@@ -744,17 +748,17 @@ fluid_defpreset_noteon_add_mod_to_voice(fluid_voice_t* voice,
          *  entries will be ignored later.  SF2.01 section 9.5.1
          *  page 69, 'bullet' 3 defines 'identical'.  */
 
-         for(i = 0; i < mod_list_limit_count; i++)
-         {
-             if(mod_list[i] && fluid_mod_test_identity(local_mod, mod_list[i]))
-             {
-                 mod_list[i] = NULL;
-             }
-         }
+        for(i = 0; i < mod_list_limit_count; i++)
+        {
+            if(mod_list[i] && fluid_mod_test_identity(local_mod, mod_list[i]))
+            {
+                mod_list[i] = NULL;
+            }
+        }
 
-         /* Finally add the new modulator to to the list. */
-         mod_list[mod_list_count++] = local_mod;
-         local_mod = local_mod->next;
+        /* Finally add the new modulator to to the list. */
+        mod_list[mod_list_count++] = local_mod;
+        local_mod = local_mod->next;
     }
 
     /* Step 2: global + local modulators are added to the voice unsing mode. */
@@ -767,24 +771,28 @@ fluid_defpreset_noteon_add_mod_to_voice(fluid_voice_t* voice,
      * voice_mod_limit_count.
      */
                   
-     for(i = 0; i < mod_list_count; i++)
-     {
+    /* Restrict identy check to the actual number o fvoice modulators */
+    /* Acual number of modulators : defaults + [instruments] */
+    voice_mod_limit_count = voice->mod_count;
 
-         mod = mod_list[i];
-         /* in mode FLUID_VOICE_OVERWRITE disabled instruments modulators CANNOT be skipped. */
-         /* in mode FLUID_VOICE_ADD disabled preset modulators can be skipped. */
+    for(i = 0; i < mod_list_count; i++)
+    {
 
-         if((mod != NULL) && ((mode == FLUID_VOICE_OVERWRITE) ||(mod->amount != 0)))
-         {
+        mod = mod_list[i];
+        /* in mode FLUID_VOICE_OVERWRITE disabled instruments modulators CANNOT be skipped. */
+        /* in mode FLUID_VOICE_ADD disabled preset modulators can be skipped. */
 
-             /* Instrument modulators -supersede- existing (default) modulators.
-                SF 2.01 page 69, 'bullet' 6 */
+        if((mod != NULL) && ((mode == FLUID_VOICE_OVERWRITE) ||(mod->amount != 0)))
+        {
 
-             /* Preset modulators -add- to existing instrument modulators.
-                SF2.01 page 70 first bullet on page */
-             fluid_voice_add_mod_local(voice, mod, mode, voice_mod_limit_count);
-         }
-     }
+            /* Instrument modulators -supersede- existing (default) modulators.
+               SF 2.01 page 69, 'bullet' 6 */
+
+            /* Preset modulators -add- to existing instrument modulators.
+               SF2.01 page 70 first bullet on page */
+            fluid_voice_add_mod_local(voice, mod, mode, voice_mod_limit_count);
+        }
+    }
 }
 
 /*
@@ -875,9 +883,7 @@ fluid_defpreset_noteon(fluid_defpreset_t *defpreset, fluid_synth_t *synth, int c
                                  /* global instrument modulators */
                                  global_inst_zone ? global_inst_zone->mod : NULL,
                                  inst_zone->mod, /* local instrument modulators */
-                                 FLUID_VOICE_OVERWRITE, /* mode */
-                                 /* limit count (number of default modulators) */
-                                 voice->mod_count);
+                                 FLUID_VOICE_OVERWRITE); /* mode */
 
                     /* Preset level, generators */
 
@@ -925,9 +931,7 @@ fluid_defpreset_noteon(fluid_defpreset_t *defpreset, fluid_synth_t *synth, int c
                                  /* global preset modulators */
                                  global_preset_zone ? global_preset_zone->mod : NULL,
                                  preset_zone->mod, /* local preset modulators */
-                                 FLUID_VOICE_ADD, /* mode */
-                                 /* limit count (default + instruments modulators) */
-                                 voice->mod_count);
+                                 FLUID_VOICE_ADD); /* mode */
                     
                     /* add the synthesis process to the synthesis loop. */
                     fluid_synth_start_voice(synth, voice);
@@ -939,7 +943,6 @@ fluid_defpreset_noteon(fluid_defpreset_t *defpreset, fluid_synth_t *synth, int c
                      * class - for example when using stereo samples)
                      */
                 }
-
             }
         }
 
