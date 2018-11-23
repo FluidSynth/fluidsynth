@@ -26,6 +26,12 @@ else ( PULSE_SUPPORT )
   message ( "PulseAudio:            no" )
 endif ( PULSE_SUPPORT )
 
+if ( SNDIO_SUPPORT )
+  message ( "Sndio:                 yes" )
+else ( SNDIO_SUPPORT )
+  message ( "Sndio:                 no" )
+endif ( SNDIO_SUPPORT )
+
 if ( JACK_SUPPORT )
   message ( "JACK:                  yes" )
 else ( JACK_SUPPORT )

@@ -69,6 +69,15 @@ static const fluid_audriver_definition_t fluid_audio_drivers[] =
     },
 #endif
 
+#if SNDIO_SUPPORT
+    { "sndio",
+        new_fluid_sndio_audio_driver,
+        new_fluid_sndio_audio_driver2,
+        delete_fluid_sndio_audio_driver,
+        fluid_sndio_audio_driver_settings
+    },
+#endif
+
 #if OSS_SUPPORT
     {
         "oss",

@@ -48,6 +48,15 @@ void delete_fluid_pulse_audio_driver(fluid_audio_driver_t *p);
 void fluid_pulse_audio_driver_settings(fluid_settings_t *settings);
 #endif
 
+#if SNDIO_SUPPORT
+fluid_audio_driver_t* new_fluid_sndio_audio_driver(fluid_settings_t* settings,
+						   fluid_synth_t* synth);
+fluid_audio_driver_t* new_fluid_sndio_audio_driver2(fluid_settings_t* settings,
+						    fluid_audio_func_t func, void* data);
+int delete_fluid_sndio_audio_driver(fluid_audio_driver_t* p);
+void fluid_sndio_audio_driver_settings(fluid_settings_t* settings);
+#endif
+
 #if ALSA_SUPPORT
 fluid_audio_driver_t *new_fluid_alsa_audio_driver(fluid_settings_t *settings,
         fluid_synth_t *synth);

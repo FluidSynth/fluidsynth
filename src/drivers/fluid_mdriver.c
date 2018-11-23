@@ -52,6 +52,14 @@ static const fluid_mdriver_definition_t fluid_midi_drivers[] =
         fluid_alsa_rawmidi_driver_settings
     },
 #endif
+#if SNDIO_SUPPORT
+    {
+        "sndio",
+        new_fluid_sndio_midi_driver,
+        delete_fluid_sndio_midi_driver,
+        fluid_sndio_midi_driver_settings
+    },
+#endif
 #if JACK_SUPPORT
     {
         "jack",

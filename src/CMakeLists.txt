@@ -50,6 +50,11 @@ if ( PULSE_SUPPORT )
   include_directories ( ${PULSE_INCLUDE_DIRS} )
 endif ( PULSE_SUPPORT )
 
+if ( SNDIO_SUPPORT )
+  set ( fluid_sndio_SOURCES drivers/fluid_sndio.c )
+  set ( SNDIO_LIBRARIES sndio )
+endif ( SNDIO_SUPPORT )
+
 if ( ALSA_SUPPORT )
   set ( fluid_alsa_SOURCES drivers/fluid_alsa.c )
   include_directories ( ${ALSA_INCLUDE_DIRS} )
@@ -247,6 +252,7 @@ add_library ( libfluidsynth-OBJ OBJECT
     ${fluid_oss_SOURCES}
     ${fluid_portaudio_SOURCES}
     ${fluid_pulse_SOURCES}
+    ${fluid_sndio_SOURCES}
     ${fluid_dsound_SOURCES}
     ${fluid_winmidi_SOURCES}
     ${libfluidsynth_SOURCES}
@@ -314,6 +320,7 @@ target_link_libraries ( libfluidsynth
     ${JACK_LIBRARIES}
     ${ALSA_LIBRARIES}
     ${PULSE_LIBRARIES}
+    ${SNDIO_LIBRARIES}
     ${PORTAUDIO_LIBRARIES}
     ${LIBSNDFILE_LIBRARIES}
     ${DBUS_LIBRARIES}
