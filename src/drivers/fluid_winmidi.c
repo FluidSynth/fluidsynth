@@ -302,6 +302,7 @@ delete_fluid_winmidi_driver(fluid_midi_driver_t *p)
         PostThreadMessage(dev->dwThread, WM_CLOSE, 0, 0);
         WaitForSingleObject(dev->hThread, INFINITE);
 
+        CloseHandle(dev->hThread);
         dev->hThread = NULL;
     }
 
