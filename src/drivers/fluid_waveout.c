@@ -32,10 +32,10 @@
 #include <mmreg.h>
 
 /* Number of buffers in the chain */
-#define NB_SOUND_BUFFERS    16
+#define NB_SOUND_BUFFERS    4
 
 /* Milliseconds of a single sound buffer */
-#define MS_BUFFER_LENGTH    10
+#define MS_BUFFER_LENGTH    20
 
 typedef struct
 {
