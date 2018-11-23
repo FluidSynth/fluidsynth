@@ -52,6 +52,9 @@ typedef struct
 
     volatile BOOL bQuit;
 
+    int    nQuit;
+    HANDLE hQuit;
+
 } fluid_waveout_audio_driver_t;
 
 
@@ -64,7 +67,15 @@ waveOutProc(HWAVEOUT hwo, UINT uMsg, DWORD_PTR dwInstance, DWORD_PTR dwParam1, D
         WAVEHDR                      *pWave = (WAVEHDR *)dwParam1;
 
         if (dev->bQuit)
+        {
+            waveOutUnprepareHeader(hwo, pWave, sizeof(WAVEHDR));
+
+            if (--dev->nQuit <= 0)
+            {
+                SetEvent(dev->hQuit);
+            }
             return;
+        }
 
         dev->write_ptr(dev->synth, dev->num_frames, pWave->lpData, 0, 2, pWave->lpData, 1, 2);
 
@@ -245,6 +256,16 @@ new_fluid_waveout_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
         return NULL;
     }
 
+    /* Create handle for QUIT event */
+    dev->hQuit = CreateEvent(NULL, FALSE, FALSE, NULL);
+    if (dev->hQuit == NULL)
+    {
+        FLUID_LOG(FLUID_ERR, "Failed to create event handle");
+
+        delete_fluid_dsound_audio_driver(&dev->driver);
+        return NULL;
+    }
+
     /* Get pointer to sound buffer memory */
     ptrBuffer = (LPSTR)(dev+1);
 
@@ -286,23 +307,17 @@ void delete_fluid_waveout_audio_driver(fluid_audio_driver_t *d)
     /* release all the allocated resources */
     if (dev->hWaveOut != NULL)
     {
-        dev->bQuit = TRUE;
-
-        /* Wait enough time for buffers to be flushed */
-        Sleep(NB_SOUND_BUFFERS * MS_BUFFER_LENGTH);
-
-        for (i=0; i<NB_SOUND_BUFFERS; i++)
+        if (dev->hQuit != NULL)
         {
-            if (dev->waveHeader[i].dwFlags & WHDR_PREPARED)
-            {
-                while (waveOutUnprepareHeader(dev->hWaveOut, &dev->waveHeader[i], sizeof(WAVEHDR)) == WAVERR_STILLPLAYING)
-                    Sleep(1);
-            }
+            /* Wait sample buffers to be flushed */
+            dev->nQuit = NB_SOUND_BUFFERS;
+            dev->bQuit = TRUE;
+
+            WaitForSingleObject(dev->hQuit, INFINITE);
+            CloseHandle(dev->hQuit);
         }
 
-        while (waveOutClose(dev->hWaveOut) == WAVERR_STILLPLAYING)
-            Sleep(50);
-
+        waveOutClose(dev->hWaveOut);
     }
     HeapFree(GetProcessHeap(), 0, dev);
 }
