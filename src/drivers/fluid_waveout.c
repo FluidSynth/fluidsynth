@@ -65,7 +65,7 @@ static DWORD WINAPI fluid_waveout_synth_thread(void *data)
     MSG msg;
     int code;
 
-    // Forces creation of message queue
+    /* Forces creation of message queue */
     PeekMessage(&msg, NULL, WM_USER, WM_USER, PM_NOREMOVE);
 
     for(;;)
