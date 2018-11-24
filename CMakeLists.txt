@@ -75,10 +75,10 @@ option ( enable-readline "compile readline lib line editing (if it is available)
 option ( enable-threads "enable multi-threading support (such as parallel voice synthesis)" on )
 
 # Platform specific options
-if ( CMAKE_SYSTEM MATCHES "Linux" )
+if ( CMAKE_SYSTEM MATCHES "Linux|FreeBSD|DragonFly" )
     option ( enable-lash "compile LASH support (if it is available)" on )
     option ( enable-alsa "compile ALSA support (if it is available)" on )
-endif ( CMAKE_SYSTEM MATCHES "Linux" )
+endif ( CMAKE_SYSTEM MATCHES "Linux|FreeBSD|DragonFly" )
 
 if ( CMAKE_SYSTEM MATCHES "Darwin" )
     option ( enable-coreaudio "compile CoreAudio support (if it is available)" on )
@@ -94,11 +94,11 @@ endif ( CMAKE_SYSTEM MATCHES "OS2" )
 
 # Initialize the library directory name suffix.
 if (NOT MINGW AND NOT MSVC)
-if ( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+if ( CMAKE_SIZEOF_VOID_P EQUAL 8 AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD|DragonFly")
   set ( _init_lib_suffix "64" )
 else ( CMAKE_SIZEOF_VOID_P EQUAL 8 )
   set ( _init_lib_suffix "" )
-endif ( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+endif ( CMAKE_SIZEOF_VOID_P EQUAL 8 AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD|DragonFly")
 else ()
   set ( _init_lib_suffix "" )
 endif()
