@@ -50,37 +50,51 @@ typedef struct
     int sample_size;
     int num_frames;
 
-    volatile BOOL bQuit;
-
-    int    nQuit;
-    HANDLE hQuit;
+    HANDLE hThread;
+    DWORD  dwThread;
 
 } fluid_waveout_audio_driver_t;
 
 
-static void CALLBACK
-waveOutProc(HWAVEOUT hwo, UINT uMsg, DWORD_PTR dwInstance, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
+/* Thread for re-adding SYSEX buffers */
+static DWORD WINAPI fluid_waveout_synth_thread(void *data)
 {
-    if (uMsg == WOM_DONE)
+    fluid_waveout_audio_driver_t *dev = (fluid_waveout_audio_driver_t *)data;
+    WAVEHDR                      *pWave;
+
+    MSG msg;
+    int code;
+
+    // Forces creation of message queue
+    PeekMessage(&msg, NULL, WM_USER, WM_USER, PM_NOREMOVE);
+
+    for(;;)
     {
-        fluid_waveout_audio_driver_t *dev = (fluid_waveout_audio_driver_t *)dwInstance;
-        WAVEHDR                      *pWave = (WAVEHDR *)dwParam1;
+        code = GetMessage(&msg, NULL, 0, 0);
 
-        if (dev->bQuit)
+        if(code < 0)
         {
-            waveOutUnprepareHeader(hwo, pWave, sizeof(WAVEHDR));
-
-            if (--dev->nQuit <= 0)
-            {
-                SetEvent(dev->hQuit);
-            }
-            return;
+            FLUID_LOG(FLUID_ERR, "fluid_waveout_synth_thread: GetMessage() failed.");
+            break;
         }
 
-        dev->write_ptr(dev->synth, dev->num_frames, pWave->lpData, 0, 2, pWave->lpData, 1, 2);
+        if(msg.message == WM_CLOSE)
+        {
+            break;
+        }
 
-        waveOutWrite(hwo, pWave, sizeof(WAVEHDR));
+        switch(msg.message)
+        {
+        case MM_WOM_DONE:
+            pWave = (WAVEHDR *)msg.lParam;
+
+            dev->write_ptr(dev->synth, dev->num_frames, pWave->lpData, 0, 2, pWave->lpData, 1, 2);
+
+            waveOutWrite((HWAVEOUT)msg.wParam, pWave, sizeof(WAVEHDR));
+            break;
+        }
     }
+    return 0;
 }
 
 void fluid_waveout_audio_driver_settings(fluid_settings_t *settings)
@@ -243,26 +257,40 @@ new_fluid_waveout_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
         FLUID_FREE(dev_name);
     }
 
-    errCode = waveOutOpen(&dev->hWaveOut,
-                          device,
-                          &wfx,
-                          (DWORD_PTR)waveOutProc,
-                          (DWORD_PTR)dev,
-                          CALLBACK_FUNCTION);
+    /* Create thread which processes re-adding SYSEX buffers */
+    dev->hThread = CreateThread(
+                       NULL,
+                       0,
+                       (LPTHREAD_START_ROUTINE)
+                       fluid_waveout_synth_thread,
+                       dev,
+                       0,
+                       &dev->dwThread);
 
-    if (errCode != MMSYSERR_NOERROR)
+    if(dev->hThread == NULL)
     {
+        FLUID_LOG(FLUID_ERR, "Failed to create waveOut thread");
         HeapFree(GetProcessHeap(), 0, dev);
         return NULL;
     }
 
-    /* Create handle for QUIT event */
-    dev->hQuit = CreateEvent(NULL, FALSE, FALSE, NULL);
-    if (dev->hQuit == NULL)
-    {
-        FLUID_LOG(FLUID_ERR, "Failed to create event handle");
+    errCode = waveOutOpen(&dev->hWaveOut,
+                          device,
+                          &wfx,
+                          (DWORD_PTR)dev->dwThread,
+                          0,
+                          CALLBACK_THREAD);
 
-        delete_fluid_dsound_audio_driver(&dev->driver);
+    if (errCode != MMSYSERR_NOERROR)
+    {
+        FLUID_LOG(FLUID_ERR, "Failed to open waveOut device");
+
+        /* Close the thread */
+        PostThreadMessage(dev->dwThread, WM_CLOSE, 0, 0);
+        WaitForSingleObject(dev->hThread, INFINITE);
+        CloseHandle(dev->hThread);
+
+        HeapFree(GetProcessHeap(), 0, dev);
         return NULL;
     }
 
@@ -307,18 +335,24 @@ void delete_fluid_waveout_audio_driver(fluid_audio_driver_t *d)
     /* release all the allocated resources */
     if (dev->hWaveOut != NULL)
     {
-        if (dev->hQuit != NULL)
-        {
-            /* Wait sample buffers to be flushed */
-            dev->nQuit = NB_SOUND_BUFFERS;
-            dev->bQuit = TRUE;
-
-            WaitForSingleObject(dev->hQuit, INFINITE);
-            CloseHandle(dev->hQuit);
-        }
-
+        waveOutReset(dev->hWaveOut);
         waveOutClose(dev->hWaveOut);
+
+        /* Release the sample buffers */
+        for (i = 0; i < NB_SOUND_BUFFERS; i++)
+        {
+            waveOutUnprepareHeader(dev->hWaveOut, &dev->waveHeader[i], sizeof(WAVEHDR));
+        }
     }
+
+    if (dev->hThread != NULL)
+    {
+        PostThreadMessage(dev->dwThread, WM_CLOSE, 0, 0);
+        WaitForSingleObject(dev->hThread, INFINITE);
+
+        CloseHandle(dev->hThread);
+    }
+
     HeapFree(GetProcessHeap(), 0, dev);
 }
 
