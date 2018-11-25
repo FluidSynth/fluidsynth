@@ -62,9 +62,6 @@ typedef struct
 #define msg_p1(_m)    ((_m >> 8) & 0x7f)
 #define msg_p2(_m)    ((_m >> 16) & 0x7f)
 
-void CALLBACK fluid_winmidi_callback(HMIDIIN hmi, UINT wMsg, DWORD_PTR dwInstance,
-                                     DWORD_PTR msg, DWORD_PTR extra);
-
 static char *
 fluid_winmidi_input_error(char *strError, MMRESULT no)
 {
@@ -78,6 +75,74 @@ fluid_winmidi_input_error(char *strError, MMRESULT no)
 #endif
 
     return strError;
+}
+
+static void CALLBACK
+fluid_winmidi_callback(HMIDIIN hmi, UINT wMsg, DWORD_PTR dwInstance,
+                       DWORD_PTR dwParam1, DWORD_PTR dwParam2)
+{
+    fluid_winmidi_driver_t *dev = (fluid_winmidi_driver_t *) dwInstance;
+    fluid_midi_event_t event;
+    LPMIDIHDR pMidiHdr;
+    unsigned char *data;
+    unsigned int msg_param = (unsigned int) dwParam1;
+
+    switch(wMsg)
+    {
+    case MIM_OPEN:
+        break;
+
+    case MIM_CLOSE:
+        break;
+
+    case MIM_DATA:
+        event.type = msg_type(msg_param);
+        event.channel = msg_chan(msg_param);
+
+        if(event.type != PITCH_BEND)
+        {
+            event.param1 = msg_p1(msg_param);
+            event.param2 = msg_p2(msg_param);
+        }
+        else      /* Pitch bend is a 14 bit value */
+        {
+            event.param1 = (msg_p2(msg_param) << 7) | msg_p1(msg_param);
+            event.param2 = 0;
+        }
+
+        (*dev->driver.handler)(dev->driver.data, &event);
+        break;
+
+    case MIM_LONGDATA:    /* SYSEX data */
+        if(dev->hThread == NULL)
+        {
+            break;
+        }
+
+        pMidiHdr = (LPMIDIHDR)dwParam1;
+        data = (unsigned char *)(pMidiHdr->lpData);
+
+        /* We only process complete SYSEX messages (discard those that are too small or too large) */
+        if(pMidiHdr->dwBytesRecorded > 2 && data[0] == 0xF0
+                && data[pMidiHdr->dwBytesRecorded - 1] == 0xF7)
+        {
+            fluid_midi_event_set_sysex(&event, pMidiHdr->lpData + 1,
+                                       pMidiHdr->dwBytesRecorded - 2, FALSE);
+            (*dev->driver.handler)(dev->driver.data, &event);
+        }
+
+        PostThreadMessage(dev->dwThread, MM_MIM_LONGDATA, 0, dwParam1);
+        break;
+
+    case MIM_ERROR:
+        break;
+
+    case MIM_LONGERROR:
+        break;
+
+    case MIM_MOREDATA:
+        break;
+    }
 }
 
 void fluid_winmidi_midi_driver_settings(fluid_settings_t *settings)
@@ -326,74 +391,6 @@ delete_fluid_winmidi_driver(fluid_midi_driver_t *p)
     }
 
     FLUID_FREE(dev);
-}
-
-void CALLBACK
-fluid_winmidi_callback(HMIDIIN hmi, UINT wMsg, DWORD_PTR dwInstance,
-                       DWORD_PTR dwParam1, DWORD_PTR dwParam2)
-{
-    fluid_winmidi_driver_t *dev = (fluid_winmidi_driver_t *) dwInstance;
-    fluid_midi_event_t event;
-    LPMIDIHDR pMidiHdr;
-    unsigned char *data;
-    unsigned int msg_param = (unsigned int) dwParam1;
-
-    switch(wMsg)
-    {
-    case MIM_OPEN:
-        break;
-
-    case MIM_CLOSE:
-        break;
-
-    case MIM_DATA:
-        event.type = msg_type(msg_param);
-        event.channel = msg_chan(msg_param);
-
-        if(event.type != PITCH_BEND)
-        {
-            event.param1 = msg_p1(msg_param);
-            event.param2 = msg_p2(msg_param);
-        }
-        else      /* Pitch bend is a 14 bit value */
-        {
-            event.param1 = (msg_p2(msg_param) << 7) | msg_p1(msg_param);
-            event.param2 = 0;
-        }
-
-        (*dev->driver.handler)(dev->driver.data, &event);
-        break;
-
-    case MIM_LONGDATA:    /* SYSEX data */
-        if(dev->hThread == NULL)
-        {
-            break;
-        }
-
-        pMidiHdr = (LPMIDIHDR)dwParam1;
-        data = (unsigned char *)(pMidiHdr->lpData);
-
-        /* We only process complete SYSEX messages (discard those that are too small or too large) */
-        if(pMidiHdr->dwBytesRecorded > 2 && data[0] == 0xF0
-                && data[pMidiHdr->dwBytesRecorded - 1] == 0xF7)
-        {
-            fluid_midi_event_set_sysex(&event, pMidiHdr->lpData + 1,
-                                       pMidiHdr->dwBytesRecorded - 2, FALSE);
-            (*dev->driver.handler)(dev->driver.data, &event);
-        }
-
-        PostThreadMessage(dev->dwThread, MM_MIM_LONGDATA, 0, dwParam1);
-        break;
-
-    case MIM_ERROR:
-        break;
-
-    case MIM_LONGERROR:
-        break;
-
-    case MIM_MOREDATA:
-        break;
-    }
 }
 
 #endif /* WINMIDI_SUPPORT */
