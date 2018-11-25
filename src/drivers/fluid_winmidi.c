@@ -227,8 +227,8 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
     /* get the device name. if none is specified, use the default device. */
     if(fluid_settings_copystr(settings, "midi.winmidi.device", dev_name, MAXPNAMELEN) != FLUID_OK)
     {
-        FLUID_LOG(FLUID_ERR, "Error getting MIDI device name");
-        return NULL;
+        FLUID_LOG(FLUID_DBG, "No MIDI in device selected, using \"default\"");
+        FLUID_STRCPY(dev_name, "default");
     }
 
     /* check if there any midi devices installed */
