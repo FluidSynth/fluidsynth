@@ -371,6 +371,8 @@ error_recovery:
 void
 delete_fluid_winmidi_driver(fluid_midi_driver_t *p)
 {
+    int i;
+
     fluid_winmidi_driver_t *dev = (fluid_winmidi_driver_t *) p;
     fluid_return_if_fail(dev != NULL);
 
@@ -387,6 +389,17 @@ delete_fluid_winmidi_driver(fluid_midi_driver_t *p)
     {
         midiInStop(dev->hmidiin);
         midiInReset(dev->hmidiin);
+
+        for(i = 0; i < MIDI_SYSEX_BUF_COUNT; i++)
+        {
+            MIDIHDR *hdr = &dev->sysExHdrs[i];
+
+            if ((hdr->dwFlags & MHDR_PREPARED))
+            {
+                midiInUnprepareHeader(dev->hmidiin, hdr, sizeof(MIDIHDR));
+            }
+        }
+
         midiInClose(dev->hmidiin);
     }
 
