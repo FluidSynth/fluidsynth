@@ -214,8 +214,8 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
     MMRESULT res;
     UINT i, num, midi_num = 0;
     MIDIINCAPS in_caps;
-    char *devname = NULL;
     char strError[MAXERRORLENGTH];
+    char dev_name[MAXPNAMELEN];
 
     /* not much use doing anything */
     if(handler == NULL)
@@ -238,15 +238,10 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
     dev->driver.data = data;
 
     /* get the device name. if none is specified, use the default device. */
-    if(fluid_settings_dupstr(settings, "midi.winmidi.device", &devname) != FLUID_OK || !devname)
+    if(fluid_settings_copystr(settings, "midi.winmidi.device", dev_name, MAXPNAMELEN) != FLUID_OK)
     {
-        devname = FLUID_STRDUP("default");
-
-        if(!devname)
-        {
-            FLUID_LOG(FLUID_ERR, "Out of memory");
-            goto error_recovery;
-        }
+        FLUID_LOG(FLUID_ERR, "Error getting MIDI device name");
+        goto error_recovery;
     }
 
     /* check if there any midi devices installed */
@@ -259,7 +254,7 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
     }
 
     /* find the device */
-    if(FLUID_STRCASECMP("default", devname) != 0)
+    if(FLUID_STRCASECMP("default", dev_name) != 0)
     {
         for(i = 0; i < num; i++)
         {
@@ -269,7 +264,7 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
             {
                 FLUID_LOG(FLUID_DBG, "Testing midi device: %s\n", in_caps.szPname);
 
-                if(FLUID_STRCASECMP(devname, in_caps.szPname) == 0)
+                if(FLUID_STRCASECMP(dev_name, in_caps.szPname) == 0)
                 {
                     FLUID_LOG(FLUID_DBG, "Selected midi device number: %d\n", i);
                     midi_num = i;
@@ -280,7 +275,7 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
 
         if(midi_num != i)
         {
-            FLUID_LOG(FLUID_ERR, "Device <%s> does not exists", devname);
+            FLUID_LOG(FLUID_ERR, "Device <%s> does not exists", dev_name);
             goto error_recovery;
         }
     }
@@ -347,19 +342,9 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
         goto error_recovery;
     }
 
-    if(devname)
-    {
-        FLUID_FREE(devname);    /* -- free device name */
-    }
-
     return (fluid_midi_driver_t *) dev;
 
 error_recovery:
-
-    if(devname)
-    {
-        FLUID_FREE(devname);    /* -- free device name */
-    }
 
     delete_fluid_winmidi_driver((fluid_midi_driver_t *) dev);
     return NULL;
