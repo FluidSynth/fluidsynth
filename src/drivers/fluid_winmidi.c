@@ -224,24 +224,11 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
         return NULL;
     }
 
-    dev = FLUID_MALLOC(sizeof(fluid_winmidi_driver_t));
-
-    if(dev == NULL)
-    {
-        return NULL;
-    }
-
-    FLUID_MEMSET(dev, 0, sizeof(fluid_winmidi_driver_t));
-
-    dev->hmidiin = NULL;
-    dev->driver.handler = handler;
-    dev->driver.data = data;
-
     /* get the device name. if none is specified, use the default device. */
     if(fluid_settings_copystr(settings, "midi.winmidi.device", dev_name, MAXPNAMELEN) != FLUID_OK)
     {
         FLUID_LOG(FLUID_ERR, "Error getting MIDI device name");
-        goto error_recovery;
+        return NULL;
     }
 
     /* check if there any midi devices installed */
@@ -250,7 +237,7 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
     if(num == 0)
     {
         FLUID_LOG(FLUID_ERR, "no MIDI in devices found");
-        goto error_recovery;
+        return NULL;
     }
 
     /* find the device */
@@ -276,9 +263,22 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
         if(midi_num != i)
         {
             FLUID_LOG(FLUID_ERR, "Device <%s> does not exists", dev_name);
-            goto error_recovery;
+            return NULL;
         }
     }
+
+    dev = FLUID_MALLOC(sizeof(fluid_winmidi_driver_t));
+
+    if(dev == NULL)
+    {
+        return NULL;
+    }
+
+    FLUID_MEMSET(dev, 0, sizeof(fluid_winmidi_driver_t));
+
+    dev->hmidiin = NULL;
+    dev->driver.handler = handler;
+    dev->driver.data = data;
 
     /* try opening the device */
     res = midiInOpen(&dev->hmidiin, midi_num,
