@@ -396,11 +396,4 @@ fluid_winmidi_callback(HMIDIIN hmi, UINT wMsg, DWORD_PTR dwInstance,
     }
 }
 
-static char *
-fluid_winmidi_input_error(MMRESULT no)
-{
-    midiInGetErrorText(no, fluid_winmidi_error_buffer, 256);
-    return fluid_winmidi_error_buffer;
-}
-
 #endif /* WINMIDI_SUPPORT */
