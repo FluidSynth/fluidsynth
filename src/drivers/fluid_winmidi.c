@@ -57,8 +57,6 @@ typedef struct
 
 } fluid_winmidi_driver_t;
 
-static char fluid_winmidi_error_buffer[256];
-
 #define msg_type(_m)  ((unsigned char)(_m & 0xf0))
 #define msg_chan(_m)  ((unsigned char)(_m & 0x0f))
 #define msg_p1(_m)    ((_m >> 8) & 0x7f)
@@ -66,8 +64,21 @@ static char fluid_winmidi_error_buffer[256];
 
 void CALLBACK fluid_winmidi_callback(HMIDIIN hmi, UINT wMsg, DWORD_PTR dwInstance,
                                      DWORD_PTR msg, DWORD_PTR extra);
-static char *fluid_winmidi_input_error(MMRESULT no);
 
+static char *
+fluid_winmidi_input_error(char *strError, MMRESULT no)
+{
+#ifdef _UNICODE
+    WCHAR wStr[MAXERRORLENGTH];
+
+    midiInGetErrorText(no, wStr, MAXERRORLENGTH);
+    WideCharToMultiByte(CP_UTF8, 0, wStr, -1, strError, MAXERRORLENGTH, 0, 0);
+#else
+    midiInGetErrorText(no, strError, MAXERRORLENGTH);
+#endif
+
+    return strError;
+}
 
 void fluid_winmidi_midi_driver_settings(fluid_settings_t *settings)
 {
@@ -139,6 +150,7 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
     UINT i, num, midi_num = 0;
     MIDIINCAPS in_caps;
     char *devname = NULL;
+    char strError[MAXERRORLENGTH];
 
     /* not much use doing anything */
     if(handler == NULL)
@@ -216,7 +228,7 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
     if(res != MMSYSERR_NOERROR)
     {
         FLUID_LOG(FLUID_ERR, "Couldn't open MIDI input: %s (error %d)",
-                  fluid_winmidi_input_error(res), res);
+                  fluid_winmidi_input_error(strError, res), res);
         goto error_recovery;
     }
 
@@ -238,13 +250,13 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
             if(res != MMSYSERR_NOERROR)
             {
                 FLUID_LOG(FLUID_WARN, "Failed to prepare MIDI SYSEX buffer: %s (error %d)",
-                          fluid_winmidi_input_error(res), res);
+                          fluid_winmidi_input_error(strError, res), res);
                 midiInUnprepareHeader(dev->hmidiin, hdr, sizeof(MIDIHDR));
             }
         }
         else
             FLUID_LOG(FLUID_WARN, "Failed to prepare MIDI SYSEX buffer: %s (error %d)",
-                      fluid_winmidi_input_error(res), res);
+                      fluid_winmidi_input_error(strError, res), res);
     }
 
     /* Create thread which processes re-adding SYSEX buffers */
