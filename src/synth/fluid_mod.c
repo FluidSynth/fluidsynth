@@ -554,7 +554,7 @@ int static fluid_mod_check_cc_source(const fluid_mod_t *mod, unsigned char src1_
                    it is safe to ignore these SF recommendations on CC receive.
                    See explanations in fluid_synth_cc_LOCAL() */
                    /* uncomment next line to forbid CC lsb  */
-	           	/* && ((src < 32) || (63 < src)) /* src isn't CC lsb */
+	           	/* && ((src < 32) || (63 < src)) */
                ));
 }
 

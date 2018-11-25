@@ -697,7 +697,7 @@ fluid_defpreset_next(fluid_defpreset_t *defpreset)
  *   #FLUID_VOICE_ADD to add (offset) the modulator amounts,
  *   #FLUID_VOICE_OVERWRITE to replace the modulator,
 */
-void static
+static void
 fluid_defpreset_noteon_add_mod_to_voice(fluid_voice_t* voice, 
                                  fluid_mod_t* global_mod, fluid_mod_t* local_mod,
                                  int mode)
@@ -761,7 +761,7 @@ fluid_defpreset_noteon_add_mod_to_voice(fluid_voice_t* voice,
         local_mod = local_mod->next;
     }
 
-    /* Step 2: global + local modulators are added to the voice unsing mode. */
+    /* Step 2: global + local modulators are added to the voice using mode. */
 
     /*
      * mod_list contains global and local modulators, we know that:
@@ -1258,7 +1258,7 @@ void static fluid_zone_check_remove_mod(char * zone_name, fluid_mod_t **list_mod
             {
                 *list_mod = next;
             }
-            FLUID_FREE(mod); /* freeing */
+            delete_fluid_mod(mod); /* freeing */
         }
         else 
         {
