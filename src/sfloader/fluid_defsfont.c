@@ -718,7 +718,7 @@ fluid_defpreset_noteon_add_mod_to_voice(fluid_voice_t* voice,
      */
     int voice_mod_limit_count;
 
-    /* Step 1: Local mododulators replace identic global modulators. */
+    /* Step 1: Local modulators replace identic global modulators. */
 
     /* global (instrument zone/preset zone), modulators: Put them all into a list. */
     mod_list_count = 0;
@@ -771,7 +771,7 @@ fluid_defpreset_noteon_add_mod_to_voice(fluid_voice_t* voice,
      * voice_mod_limit_count.
      */
                   
-    /* Restrict identy check to the actual number o fvoice modulators */
+    /* Restrict identy check to the actual number of voice modulators */
     /* Acual number of modulators : defaults + [instruments] */
     voice_mod_limit_count = voice->mod_count;
 
