@@ -1205,7 +1205,8 @@ static int fluid_preset_zone_create_voice_zones(fluid_preset_zone_t *preset_zone
  * @param name, if not NULL, pointer on a string displayed as warning.
  * @return TRUE if mod is identic to another modulator, FALSE otherwise.
  */
-int static fluid_zone_is_mod_identic(fluid_mod_t *mod, char *name)
+static int
+fluid_zone_is_mod_identic(fluid_mod_t *mod, char *name)
 {
     fluid_mod_t *next = mod->next;
     while(next)
@@ -1232,7 +1233,8 @@ int static fluid_zone_is_mod_identic(fluid_mod_t *mod, char *name)
  * @param zone_name, zone name.
  * @param list_mod, address of pointer on modulator list.
  */
-void static fluid_zone_check_remove_mod(char * zone_name, fluid_mod_t **list_mod)
+static void
+fluid_zone_check_remove_mod(char * zone_name, fluid_mod_t **list_mod)
 {
     fluid_mod_t *prev_mod = NULL; /* previous modulator in list_mod */
     fluid_mod_t *mod = *list_mod; /* first modulator in list_mod */
