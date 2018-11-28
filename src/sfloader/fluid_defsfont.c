@@ -705,18 +705,17 @@ fluid_defpreset_noteon_add_mod_to_voice(fluid_voice_t* voice,
     fluid_mod_t * mod;
     /* list for 'sorting' global/local modulators */
     fluid_mod_t * mod_list[FLUID_NUM_MOD];
-    int mod_list_count, mod_list_limit_count; 
-    int i;
+    int mod_list_count, i;
 
-    /* voice_mod_limit_count is the modulator number limit to handle with 
+    /* identity_limit_count is the modulator upper limit number to handle with 
      * existing identical modulators.
-     * When check_count_limit is below the actual number of voices modulators
-     * (voice->mod_count), this will restrict identity check to this number,
+     * When identity_limit_count is below the actual number modulators, this 
+     * will restrict identity check to this upper limit,
      * This is usefull when we know by advance that there is no duplicate with
      * modulators at index above this limit. This avoid wasting cpu cycles at
      * noteon.
      */
-    int voice_mod_limit_count;
+	int identity_limit_count; 
 
     /* Step 1: Local modulators replace identic global modulators. */
 
@@ -736,18 +735,18 @@ fluid_defpreset_noteon_add_mod_to_voice(fluid_voice_t* voice,
      * mod_list contains local modulators. Now we know that there
      * is no global modulator identic to another global modulator (this has
      * been checked at soundfont loading time). So global modulators
-     * are only checked against local modulators.
+     * are only checked against local modulators number.
      */
 
-    /* Restrict identy check to the number of local modulators */
-    mod_list_limit_count = mod_list_count;
+    /* Restrict identity check to the number of local modulators */
+    identity_limit_count = mod_list_count;
     while(global_mod)
     {
         /* 'Identical' global modulators are ignored.
          *  SF2.01 section 9.5.1
          *  page 69, 'bullet' 3 defines 'identical'.  */
 
-        for(i = 0; i < mod_list_limit_count; i++)
+        for(i = 0; i < identity_limit_count; i++)
         {
             if(mod_list[i] && fluid_mod_test_identity(global_mod, mod_list[i]))
             {
@@ -755,8 +754,8 @@ fluid_defpreset_noteon_add_mod_to_voice(fluid_voice_t* voice,
             }
         }
 
-        /* Finally add the new modulator to to the list. */
-        if( i >= mod_list_limit_count)
+        /* Finally add the new modulator to the list. */
+        if( i >= identity_limit_count)
         {
 		    mod_list[mod_list_count++] = global_mod;
         }
@@ -766,16 +765,16 @@ fluid_defpreset_noteon_add_mod_to_voice(fluid_voice_t* voice,
     /* Step 2: global + local modulators are added to the voice using mode. */
 
     /*
-     * mod_list contains global and local modulators, we know that:
+     * mod_list contains local and global modulators, we know that:
      * - there is no global modulator identic to another global modulator,
      * - there is no local modulator identic to another local modulator,
      * So these local/global modulators are only checked against
-     * voice_mod_limit_count.
+     * actual number of voice modulators.
      */
                   
-    /* Restrict identy check to the actual number of voice modulators */
-    /* Acual number of modulators : defaults + [instruments] */
-    voice_mod_limit_count = voice->mod_count;
+    /* Restrict identity check to the actual number of voice modulators */
+    /* Acual number of voice modulators : defaults + [instruments] */
+    identity_limit_count = voice->mod_count;
 
     for(i = 0; i < mod_list_count; i++)
     {
@@ -791,7 +790,7 @@ fluid_defpreset_noteon_add_mod_to_voice(fluid_voice_t* voice,
 
             /* Preset modulators -add- to existing instrument modulators.
                SF2.01 page 70 first bullet on page */
-            fluid_voice_add_mod_local(voice, mod, mode, voice_mod_limit_count);
+            fluid_voice_add_mod_local(voice, mod, mode, identity_limit_count);
         }
     }
 }
