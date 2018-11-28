@@ -709,9 +709,9 @@ fluid_defpreset_noteon_add_mod_to_voice(fluid_voice_t* voice,
 
     /* identity_limit_count is the modulator upper limit number to handle with 
      * existing identical modulators.
-     * When identity_limit_count is below the actual number modulators, this 
+     * When identity_limit_count is below the actual number of modulators, this 
      * will restrict identity check to this upper limit,
-     * This is usefull when we know by advance that there is no duplicate with
+     * This is useful when we know by advance that there is no duplicate with
      * modulators at index above this limit. This avoid wasting cpu cycles at
      * noteon.
      */
