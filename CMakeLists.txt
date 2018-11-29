@@ -554,11 +554,16 @@ if ( enable-oss )
 endif ( enable-oss )
 
 unset ( SDL2_SUPPORT CACHE )
+unset ( SDL2_INCLUDE_DIR CACHE )
+unset ( SDL2_LIBRARY CACHE )
 if ( enable-sdl2 )
   find_package ( SDL2 )
 
   if ( SDL2_FOUND )
     set ( SDL2_SUPPORT ${SDL2_FOUND} )
+  else ( SDL2_FOUND)
+    unset ( SDL2_INCLUDE_DIR CACHE )
+    unset ( SDL2_LIBRARY CACHE )
   endif ( SDL2_FOUND )
 endif ( enable-sdl2 )
 
