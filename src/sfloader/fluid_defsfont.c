@@ -1248,7 +1248,7 @@ fluid_zone_gen_import_sfont(fluid_gen_t *gen, fluid_zone_range_t *range, SFZone 
  * @return return TRUE if success, FALSE if source type is unknow.
  */
 static int
-fluid_zone_mod_source_import_sfont(unsigned char *src, unsigned char *flags, unsigned short *source)
+fluid_zone_mod_source_import_sfont(unsigned char *src, unsigned char *flags, const unsigned short *source)
 {
     int type;
     unsigned short sf_source = *source; /* soundfont source */
@@ -1337,7 +1337,6 @@ fluid_zone_mod_import_sfont(fluid_mod_t **mod, SFZone *sfzone)
 
         SFMod *mod_src = (SFMod *)fluid_list_get(r);
         fluid_mod_t *mod_dest = new_fluid_mod();
-        int type;
 
         if(mod_dest == NULL)
         {
