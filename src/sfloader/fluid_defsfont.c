@@ -1241,17 +1241,16 @@ fluid_zone_gen_import_sfont(fluid_gen_t *gen, fluid_zone_range_t *range, SFZone 
 
 /*
  * fluid_zone_mod_source_import_sfont
- * Imports source information from source to src and flags.
+ * Imports source information from sf_source to src and flags.
  * @param src, pointer on destination modulator source.
  * @param flags, pointer on destination modulator flags.
- * @param source, pointer on soundfont modulator source.
+ * @param sf_source, soundfont modulator source.
  * @return return TRUE if success, FALSE if source type is unknow.
  */
 static int
-fluid_zone_mod_source_import_sfont(unsigned char *src, unsigned char *flags, const unsigned short *source)
+fluid_zone_mod_source_import_sfont(unsigned char *src, unsigned char *flags, unsigned short sf_source)
 {
     int type;
-    unsigned short sf_source = *source; /* soundfont source */
     unsigned char flags_dest; /* destination flags */
 
     /* sources */
@@ -1349,7 +1348,7 @@ fluid_zone_mod_import_sfont(fluid_mod_t **mod, SFZone *sfzone)
         mod_dest->amount = mod_src->amount;
 
         /* *** Source *** */
-        if(!fluid_zone_mod_source_import_sfont(&mod_dest->src1, &mod_dest->flags1, &mod_src->src))
+        if(!fluid_zone_mod_source_import_sfont(&mod_dest->src1, &mod_dest->flags1, mod_src->src))
         {
             /* This shouldn't happen - unknown type!
              * Deactivate the modulator by setting the amount to 0. */
@@ -1359,7 +1358,7 @@ fluid_zone_mod_import_sfont(fluid_mod_t **mod, SFZone *sfzone)
         mod_dest->dest = mod_src->dest; /* index of controlled generator */
 
         /* *** Amount source *** */
-        if(!fluid_zone_mod_source_import_sfont(&mod_dest->src2, &mod_dest->flags2, &mod_src->amtsrc))
+        if(!fluid_zone_mod_source_import_sfont(&mod_dest->src2, &mod_dest->flags2, mod_src->amtsrc))
         {
             /* This shouldn't happen - unknown type!
              * Deactivate the modulator by setting the amount to 0. */
