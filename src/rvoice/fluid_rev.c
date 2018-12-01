@@ -1126,7 +1126,7 @@ fluid_revmodel_reset(fluid_revmodel_t *rev)
 * Reverb API.
 -----------------------------------------------------------------------------*/
 void
-fluid_revmodel_processreplace(fluid_revmodel_t *rev, fluid_real_t *in,
+fluid_revmodel_processreplace(fluid_revmodel_t *rev, const fluid_real_t *in,
                               fluid_real_t *left_out, fluid_real_t *right_out)
 {
     int i, k;
@@ -1248,7 +1248,7 @@ fluid_revmodel_processreplace(fluid_revmodel_t *rev, fluid_real_t *in,
 * The processed reverb is mixed in out with samples already there in out.
 * Reverb API.
 -----------------------------------------------------------------------------*/
-void fluid_revmodel_processmix(fluid_revmodel_t *rev, fluid_real_t *in,
+void fluid_revmodel_processmix(fluid_revmodel_t *rev, const fluid_real_t *in,
                                fluid_real_t *left_out, fluid_real_t *right_out)
 {
     int i, k;
