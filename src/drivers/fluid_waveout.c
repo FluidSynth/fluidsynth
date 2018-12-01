@@ -91,21 +91,27 @@ static DWORD WINAPI fluid_waveout_synth_thread(void *data)
             pWave = (WAVEHDR *)msg.lParam;
             dev   = (fluid_waveout_audio_driver_t *)pWave->dwUser;
 
-            if (dev->nQuit > 0)
+            if(dev->nQuit > 0)
             {
                 /* Release the sample buffer */
                 waveOutUnprepareHeader((HWAVEOUT)msg.wParam, pWave, sizeof(WAVEHDR));
 
-                if (--dev->nQuit == 0)
+                if(--dev->nQuit == 0)
+                {
                     SetEvent(dev->hQuit);
-            } else {
+                }
+            }
+            else
+            {
                 dev->write_ptr(dev->synth, dev->num_frames, pWave->lpData, 0, 2, pWave->lpData, 1, 2);
 
                 waveOutWrite((HWAVEOUT)msg.wParam, pWave, sizeof(WAVEHDR));
             }
+
             break;
         }
     }
+
     return 0;
 }
 
@@ -119,13 +125,14 @@ void fluid_waveout_audio_driver_settings(fluid_settings_t *settings)
     fluid_settings_register_str(settings, "audio.waveout.device", "default", 0);
     fluid_settings_add_option(settings, "audio.waveout.device", "default");
 
-    for (n = 0; n < nDevs; n++)
+    for(n = 0; n < nDevs; n++)
     {
         WAVEOUTCAPS caps;
         MMRESULT    res;
 
         res = waveOutGetDevCaps(n, &caps, sizeof(caps));
-        if (res == MMSYSERR_NOERROR)
+
+        if(res == MMSYSERR_NOERROR)
         {
 #ifdef _UNICODE
             WideCharToMultiByte(CP_UTF8, 0, caps.szPname, -1, dev_name, MAXPNAMELEN, 0, 0);
@@ -209,7 +216,7 @@ new_fluid_waveout_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
 
     /* create and clear the driver data */
     dev = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                sizeof(fluid_waveout_audio_driver_t) + lenBuffer * NB_SOUND_BUFFERS);
+                    sizeof(fluid_waveout_audio_driver_t) + lenBuffer * NB_SOUND_BUFFERS);
 
     if(dev == NULL)
     {
@@ -242,15 +249,17 @@ new_fluid_waveout_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
         MultiByteToWideChar(CP_UTF8, 0, dev_name, -1, lpwDevName, MAXPNAMELEN);
 #endif
 
-        for (n = 0; n < nDevs; n++)
+        for(n = 0; n < nDevs; n++)
         {
             WAVEOUTCAPS caps;
             MMRESULT    res;
 
             res = waveOutGetDevCaps(n, &caps, sizeof(caps));
-            if (res == MMSYSERR_NOERROR)
+
+            if(res == MMSYSERR_NOERROR)
             {
 #ifdef _UNICODE
+
                 if(wcsicmp(lpwDevName, caps.szPname) == 0)
 #else
                 if(FLUID_STRCASECMP(dev_name, caps.szPname) == 0)
@@ -264,9 +273,11 @@ new_fluid_waveout_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
         }
     }
 
-    do {
+    do
+    {
 
         dev->hQuit = CreateEvent(NULL, FALSE, FALSE, NULL);
+
         if(dev->hQuit == NULL)
         {
             FLUID_LOG(FLUID_ERR, "Failed to create quit event");
@@ -296,23 +307,23 @@ new_fluid_waveout_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
                               0,
                               CALLBACK_THREAD);
 
-        if (errCode != MMSYSERR_NOERROR)
+        if(errCode != MMSYSERR_NOERROR)
         {
             FLUID_LOG(FLUID_ERR, "Failed to open waveOut device");
             break;
         }
 
         /* Get pointer to sound buffer memory */
-        ptrBuffer = (LPSTR)(dev+1);
+        ptrBuffer = (LPSTR)(dev + 1);
 
         /* Setup the sample buffers */
-        for (i = 0; i < NB_SOUND_BUFFERS; i++)
+        for(i = 0; i < NB_SOUND_BUFFERS; i++)
         {
             /* Clear the sample buffer */
             memset(ptrBuffer, 0, lenBuffer);
 
             /* Clear descriptor buffer */
-            memset(dev->waveHeader+i, 0, sizeof(WAVEHDR));
+            memset(dev->waveHeader + i, 0, sizeof(WAVEHDR));
 
             /* Compile descriptor buffer */
             dev->waveHeader[i].lpData         = ptrBuffer;
@@ -325,14 +336,15 @@ new_fluid_waveout_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
         }
 
         /* Play the sample buffers */
-        for (i = 0; i < NB_SOUND_BUFFERS; i++)
+        for(i = 0; i < NB_SOUND_BUFFERS; i++)
         {
             waveOutWrite(dev->hWaveOut, &dev->waveHeader[i], sizeof(WAVEHDR));
         }
 
         return (fluid_audio_driver_t *) dev;
 
-    } while (0);
+    }
+    while(0);
 
     delete_fluid_waveout_audio_driver(&dev->driver);
     return NULL;
@@ -347,7 +359,7 @@ void delete_fluid_waveout_audio_driver(fluid_audio_driver_t *d)
     fluid_return_if_fail(dev != NULL);
 
     /* release all the allocated resources */
-    if (dev->hWaveOut != NULL)
+    if(dev->hWaveOut != NULL)
     {
         dev->nQuit = NB_SOUND_BUFFERS;
         WaitForSingleObject(dev->hQuit, INFINITE);
@@ -355,7 +367,7 @@ void delete_fluid_waveout_audio_driver(fluid_audio_driver_t *d)
         waveOutClose(dev->hWaveOut);
     }
 
-    if (dev->hThread != NULL)
+    if(dev->hThread != NULL)
     {
         PostThreadMessage(dev->dwThread, WM_CLOSE, 0, 0);
         WaitForSingleObject(dev->hThread, INFINITE);
@@ -363,7 +375,7 @@ void delete_fluid_waveout_audio_driver(fluid_audio_driver_t *d)
         CloseHandle(dev->hThread);
     }
 
-    if (dev->hQuit != NULL)
+    if(dev->hQuit != NULL)
     {
         CloseHandle(dev->hQuit);
     }
