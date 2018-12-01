@@ -106,10 +106,6 @@
 #include <omp.h>
 #endif
 
-#if HAVE_IO_H
-#include <io.h>
-#endif
-
 #if HAVE_SIGNAL_H
 #include <signal.h>
 #endif
