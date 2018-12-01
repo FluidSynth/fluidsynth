@@ -21,7 +21,7 @@
 #if defined(ANDROID) || defined(__DOXYGEN__)
 
 #include "fluid_androidasset.h"
-#include "fluid_sys.h"
+//#include "fluid_sys.h"
 #include <android/asset_manager.h>
 #include <android/asset_manager_jni.h>
 

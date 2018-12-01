@@ -76,7 +76,7 @@ build-fluidsynth:
 build-fluidsynth-one:
 	mkdir -p build/$(A_ABI) && cd build/$(A_ABI) && \
 	LD_RUN_PATH=$(DIST_PATH)/android-$(BUILD_ABI)/lib:$(OBOE_BUILD_PATH)/$(A_ABI) LD_LIBRARY_PATH=$(DIST_PATH)/android_$(BUILD_ABI)/lib PKG_CONFIG_PATH=$(DIST_PATH)/android_$(BUILD_ABI)/lib/pkgconfig/:$(OBOE_BUILD_PATH)/$(A_ABI) \
-	cmake -DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK)/build/cmake/android.toolchain.cmake -Denable-opensles=on -Denable-oboe=on -Denable-jack=off -Denable-oss=off -Denable-pulseaudio=off -Denable-libsndfile=off -Denable-dbus=off -Denable-debug=on -DANDROID_NATIVE_API_LEVEL=android-27 -DANDROID_PLATFORM=android-27 -DANDROID_ABI=$(A_ABI) ../../.. && make
+	cmake -DCMAKE_INSTALL_PREFIX=$(PWD)/dist/$(A_ABI) -DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK)/build/cmake/android.toolchain.cmake -Denable-opensles=on -Denable-oboe=on -Denable-jack=off -Denable-oss=off -Denable-pulseaudio=off -Denable-libsndfile=off -Denable-dbus=off -Denable-debug=on -DANDROID_NATIVE_API_LEVEL=android-27 -DANDROID_PLATFORM=android-27 -DANDROID_ABI=$(A_ABI) ../../.. && make install
 
 build-oboe-one:
 	mkdir -p $(OBOE)/build/$(A_ABI) && cd $(OBOE)/build/$(A_ABI) && \
@@ -85,6 +85,7 @@ build-oboe-one:
 
 dist-fluidsynth-one:
 	mkdir -p dist/$(A_ABI) && cd dist/$(A_ABI) && cp ../../build/$(A_ABI)/src/libfluidsynth.so . && cd ../..
+	cp -r ../include/fluidsynth build/$(A_ABI)/include/
 
 clean:
 	rm -rf dist/* build/* external/oboe/build/* obj/local/*
