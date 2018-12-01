@@ -22,9 +22,6 @@
 #ifndef _PRIV_FLUID_ANDROIDASSET_H
 #define _PRIV_FLUID_ANDROIDASSET_H
 
-#include "fluidsynth.h"
-#include <jni.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
