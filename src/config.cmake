@@ -196,6 +196,9 @@
 /* Define to enable DirectSound driver */
 #cmakedefine DSOUND_SUPPORT @DSOUND_SUPPORT@
 
+/* Define to enable Windows WaveOut driver */
+#cmakedefine WAVEOUT_SUPPORT @WAVEOUT_SUPPORT@
+
 /* Define to enable Windows MIDI driver */
 #cmakedefine WINMIDI_SUPPORT @WINMIDI_SUPPORT@
 

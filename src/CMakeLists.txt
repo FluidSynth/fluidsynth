@@ -82,6 +82,10 @@ if ( DSOUND_SUPPORT )
   set ( fluid_dsound_SOURCES drivers/fluid_dsound.c )
 endif ( DSOUND_SUPPORT )
 
+if ( WAVEOUT_SUPPORT )
+  set ( fluid_waveout_SOURCES drivers/fluid_waveout.c )
+endif ( WAVEOUT_SUPPORT )
+
 if ( WINMIDI_SUPPORT )
   set ( fluid_winmidi_SOURCES drivers/fluid_winmidi.c )
 endif ( WINMIDI_SUPPORT )
@@ -248,6 +252,7 @@ add_library ( libfluidsynth-OBJ OBJECT
     ${fluid_portaudio_SOURCES}
     ${fluid_pulse_SOURCES}
     ${fluid_dsound_SOURCES}
+    ${fluid_waveout_SOURCES}
     ${fluid_winmidi_SOURCES}
     ${libfluidsynth_SOURCES}
     ${public_HEADERS}
