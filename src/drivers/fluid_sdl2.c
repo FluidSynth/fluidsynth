@@ -111,7 +111,7 @@ new_fluid_sdl2_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
     }
 
     /* Clear the format buffer */
-    memset(&aspec, 0, sizeof(aspec));
+    FLUID_MEMSET(&aspec, 0, sizeof(aspec));
 
     /* Setup mixing frequency */
     aspec.freq = (int)sample_rate;
