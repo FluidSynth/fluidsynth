@@ -131,7 +131,7 @@ static const fluid_audriver_definition_t fluid_audio_drivers[] =
 
 #if SDL2_SUPPORT
     {
-        "SDL2",
+        "sdl2",
         new_fluid_sdl2_audio_driver,
         NULL,
         delete_fluid_sdl2_audio_driver,
