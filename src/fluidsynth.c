@@ -872,7 +872,10 @@ int main(int argc, char **argv)
 
     if(config_file != NULL)
     {
-        fluid_source(cmd_handler, config_file);
+        if(fluid_source(cmd_handler, config_file) < 0)
+        {
+            fprintf(stderr, "Failed to execute user provided command configuration file '%s'\n", config_file);
+        }
     }
     else if(fluid_get_userconf(buf, sizeof(buf)) != NULL)
     {

@@ -27,19 +27,19 @@ struct fx_data_t
 
 /* This function implements the callback function of the audio driver
  * (see new_fluid_audio_driver2 below). The data argument is a pointer
- * to your private data structure. 'len' is the number of samples in
- * the buffers. 'nin' and 'nout' are the number of input and output
- * audio buffers. 'in' and 'out' are an array of float buffers with
- * the samples. The audio driver fills the 'in' buffers the incoming
- * audio. The 'out' buffers should be filled by your function. The
- * 'out' buffers will be sent to the audio output of the sound card.
+ * to your private data structure. 'len' is the number of audio frames
+ * in the buffers. 'nfx' and 'nout' are the number of input and output
+ * audio buffers. 'fx' and 'out' are arrays of float buffers containing
+ * the audio. The audio driver fills zero-initializes those buffers.
+ * You are responsible for filling up those buffers, as the result will
+ * be sent to the sound card. This is usually done by asking the synth
+ * to fill those buffers appropriately using fluid_synth_process()
  *
- * IMPORTANT NOTE: The API was designed to be generic but none of the
- * audio drivers currently handles audio input. Either 'nin' will be
- * zero, or the buffers will be filled with zero samples.
+ * NOTE: The API was designed to be generic. Audio driver may fill the
+ * buffers with audio input from the soundcard, rather than zeros.
  */
 int fx_function(void *data, int len,
-                int nin, float **in,
+                int nfx, float **fx,
                 int nout, float **out)
 {
     struct fx_data_t *fx_data = (struct fx_data_t *) data;
@@ -48,10 +48,10 @@ int fx_function(void *data, int len,
 
     /* Call the synthesizer to fill the output buffers with its
      * audio output. */
-    if(fluid_synth_process(fx_data->synth, len, nin, in, nout, out) != 0)
+    if(fluid_synth_process(fx_data->synth, len, nfx, fx, nout, out) != FLUID_OK)
     {
         /* Some error occured. Very unlikely to happen, though. */
-        return -1;
+        return FLUID_FAILED;
     }
 
     /* Apply your effects here. In this example, the gain is
@@ -66,7 +66,7 @@ int fx_function(void *data, int len,
         }
     }
 
-    return 0;
+    return FLUID_OK;
 }
 
 

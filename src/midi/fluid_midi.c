@@ -775,6 +775,8 @@ fluid_midi_file_read_event(fluid_midi_file *mf, fluid_track_t *track)
             if(tmp == NULL)
             {
                 FLUID_LOG(FLUID_PANIC, "Out of memory");
+                delete_fluid_midi_event(evt);
+                evt = NULL;
                 result = FLUID_FAILED;
                 break;
             }
@@ -1541,6 +1543,14 @@ fluid_track_send_events(fluid_track_t *track,
  *
  *     fluid_player
  */
+static void
+fluid_player_handle_reset_synth(void *data, const char *name, int value)
+{
+    fluid_player_t *player = data;
+    fluid_return_if_fail(player != NULL);
+
+    player->reset_synth_between_songs = value;
+}
 
 /**
  * Create a new MIDI player.
@@ -1586,7 +1596,10 @@ new_fluid_player(fluid_synth_t *synth)
                                "player.timing-source", "system");
 
     fluid_settings_getint(synth->settings, "player.reset-synth", &i);
-    player->reset_synth_between_songs = i;
+    fluid_player_handle_reset_synth(player, NULL, i);
+    
+    fluid_settings_callback_int(synth->settings, "player.reset-synth",
+                                fluid_player_handle_reset_synth, player);
 
     return player;
 }
@@ -2139,7 +2152,7 @@ int fluid_player_set_midi_tempo(fluid_player_t *player, int tempo)
  */
 int fluid_player_set_bpm(fluid_player_t *player, int bpm)
 {
-    return fluid_player_set_midi_tempo(player, (int)((double) 60 * 1e6 / bpm));
+    return fluid_player_set_midi_tempo(player, 60000000L / bpm);
 }
 
 /**
@@ -2212,7 +2225,7 @@ int fluid_player_get_total_ticks(fluid_player_t *player)
  */
 int fluid_player_get_bpm(fluid_player_t *player)
 {
-    return (int)(60e6 / player->miditempo);
+    return 60000000L / player->miditempo;
 }
 
 /**

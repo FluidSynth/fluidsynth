@@ -16,7 +16,7 @@
      leg_por_00.txt    
      leg_por_01.txt
 
-This tutorials files are usable directly on the FluidSynth console application.
-There are described in the pdf file (chapters 2.1 and 3.1).
+These tutorials files are usable directly on the FluidSynth console application.
+See the pdf file (chapters 2.1 and 3.1).
 
 jean-jacques ceresa

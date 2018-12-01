@@ -1,10 +1,15 @@
 <!--
-Before submitting an issue, consider looking into our
-wiki ( https://github.com/FluidSynth/fluidsynth/wiki ) or the
-developer resources ( http://www.fluidsynth.org/api/ )
+This issue tracker is only for bug reports and concrete feature requests.
+DO NOT SUBMIT SUPPORT REQUESTS OR "HOW TO" QUESTIONS HERE!
+Else it might be closed without further notice.
 
-Please do not submit support requests or "How to" questions here. Instead, use FluidSynth's
-mailing list: https://lists.nongnu.org/mailman/listinfo/fluid-dev
+If you have a question look into our wiki
+( https://github.com/FluidSynth/fluidsynth/wiki )
+or the developer resources
+( http://www.fluidsynth.org/api/ )
+
+If you still have a question, need support or want to discuss ideas, contact our mailing list:
+https://lists.nongnu.org/mailman/listinfo/fluid-dev
 
 Below is a form that shall help getting relevant information for bugs and feature requests together.
 We strongly recommend to use it! Feel free to edit or remove inapplicable/unneeded parts.

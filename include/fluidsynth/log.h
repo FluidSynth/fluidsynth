@@ -70,12 +70,12 @@ enum fluid_log_level
  * @param message Log message text
  * @param data User data pointer supplied to fluid_set_log_function().
  */
-typedef void (*fluid_log_function_t)(int level, char *message, void *data);
+typedef void (*fluid_log_function_t)(int level, const char *message, void *data);
 
 FLUIDSYNTH_API
 fluid_log_function_t fluid_set_log_function(int level, fluid_log_function_t fun, void *data);
 
-FLUIDSYNTH_API void fluid_default_log_function(int level, char *message, void *data);
+FLUIDSYNTH_API void fluid_default_log_function(int level, const char *message, void *data);
 
 FLUIDSYNTH_API int fluid_log(int level, const char *fmt, ...);
 

@@ -415,7 +415,13 @@ new_fluid_hashtable_full(fluid_hash_func_t hash_func,
     hashtable->key_destroy_func   = key_destroy_func;
     hashtable->value_destroy_func = value_destroy_func;
     hashtable->nodes              = FLUID_ARRAY(fluid_hashnode_t *, hashtable->size);
-    FLUID_MEMSET(hashtable->nodes, 0, hashtable->size * sizeof(fluid_hashnode_t *));
+    if(hashtable->nodes == NULL)
+    {
+        delete_fluid_hashtable(hashtable);
+        FLUID_LOG(FLUID_ERR, "Out of memory");
+        return NULL;
+    }
+    FLUID_MEMSET(hashtable->nodes, 0, hashtable->size * sizeof(*hashtable->nodes));
 
     return hashtable;
 }

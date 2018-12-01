@@ -54,12 +54,6 @@ typedef struct
 } fluid_pulse_audio_driver_t;
 
 
-fluid_audio_driver_t *new_fluid_pulse_audio_driver(fluid_settings_t *settings,
-        fluid_synth_t *synth);
-fluid_audio_driver_t *new_fluid_pulse_audio_driver2(fluid_settings_t *settings,
-        fluid_audio_func_t func, void *data);
-void delete_fluid_pulse_audio_driver(fluid_audio_driver_t *p);
-void fluid_pulse_audio_driver_settings(fluid_settings_t *settings);
 static fluid_thread_return_t fluid_pulse_audio_run(void *d);
 static fluid_thread_return_t fluid_pulse_audio_run2(void *d);
 
@@ -182,7 +176,6 @@ new_fluid_pulse_audio_driver2(fluid_settings_t *settings,
     }
 
     buf = FLUID_ARRAY(float, period_size * 2);
-
     if(buf == NULL)
     {
         FLUID_LOG(FLUID_ERR, "Out of memory.");
@@ -202,29 +195,17 @@ new_fluid_pulse_audio_driver2(fluid_settings_t *settings,
         goto error_recovery;
     }
 
-    if(server)
-    {
-        FLUID_FREE(server);    /* -- free server string */
-    }
-
-    if(device)
-    {
-        FLUID_FREE(device);    /* -- free device string */
-    }
+    FLUID_FREE(server);    /* -- free server string */
+    FLUID_FREE(device);    /* -- free device string */
 
     return (fluid_audio_driver_t *) dev;
 
 error_recovery:
-
-    if(server)
-    {
-        FLUID_FREE(server);    /* -- free server string */
-    }
-
-    if(device)
-    {
-        FLUID_FREE(device);    /* -- free device string */
-    }
+    FLUID_FREE(server);    /* -- free server string */
+    FLUID_FREE(device);    /* -- free device string */
+    FLUID_FREE(left);
+    FLUID_FREE(right);
+    FLUID_FREE(buf);
 
     delete_fluid_pulse_audio_driver((fluid_audio_driver_t *) dev);
     return NULL;
@@ -300,6 +281,9 @@ fluid_pulse_audio_run2(void *d)
 
     while(dev->cont)
     {
+        FLUID_MEMSET(left, 0, buffer_size * sizeof(float));
+        FLUID_MEMSET(right, 0, buffer_size * sizeof(float));
+
         (*dev->callback)(synth, buffer_size, 0, NULL, 2, handle);
 
         /* Interleave the floating point data */

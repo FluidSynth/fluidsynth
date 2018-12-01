@@ -352,11 +352,12 @@ fluid_voice_init(fluid_voice_t *voice, fluid_sample_t *sample,
     UPDATE_RVOICE_R1(fluid_rvoice_set_synth_gain, voice->synth_gain);
 
     /* Set up buffer mapping, should be done more flexible in the future. */
-    i = channel->synth->audio_groups;
-    UPDATE_RVOICE_GENERIC_I2(fluid_rvoice_buffers_set_mapping, &voice->rvoice->buffers, 2, i * 2 + SYNTH_REVERB_CHANNEL);
-    UPDATE_RVOICE_GENERIC_I2(fluid_rvoice_buffers_set_mapping, &voice->rvoice->buffers, 3, i * 2 + SYNTH_CHORUS_CHANNEL);
+    i = 2 * channel->synth->audio_groups;
+    i += (voice->chan % channel->synth->effects_groups) * channel->synth->effects_channels;
+    UPDATE_RVOICE_GENERIC_I2(fluid_rvoice_buffers_set_mapping, &voice->rvoice->buffers, 2, i + SYNTH_REVERB_CHANNEL);
+    UPDATE_RVOICE_GENERIC_I2(fluid_rvoice_buffers_set_mapping, &voice->rvoice->buffers, 3, i + SYNTH_CHORUS_CHANNEL);
 
-    i = 2 * (voice->chan % i);
+    i = 2 * (voice->chan % channel->synth->audio_groups);
     UPDATE_RVOICE_GENERIC_I2(fluid_rvoice_buffers_set_mapping, &voice->rvoice->buffers, 0, i);
     UPDATE_RVOICE_GENERIC_I2(fluid_rvoice_buffers_set_mapping, &voice->rvoice->buffers, 1, i + 1);
 
@@ -515,7 +516,6 @@ fluid_voice_calculate_gen_pitch(fluid_voice_t *voice)
     voice->gen[GEN_PITCH].val = fluid_voice_calculate_pitch(voice, fluid_voice_get_actual_key(voice));
 }
 
-
 /*
  * fluid_voice_calculate_runtime_synthesis_parameters
  *
@@ -611,7 +611,7 @@ fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t *voice)
     for(i = 0; i < voice->mod_count; i++)
     {
         fluid_mod_t *mod = &voice->mod[i];
-        fluid_real_t modval = fluid_mod_get_value(mod, voice->channel, voice);
+        fluid_real_t modval = fluid_mod_get_value(mod, voice);
         int dest_gen_index = mod->dest;
         fluid_gen_t *dest_gen = &voice->gen[dest_gen_index];
         dest_gen->mod += modval;
@@ -684,7 +684,7 @@ calculate_hold_decay_buffers(fluid_voice_t *voice, int gen_base,
      * will cause (60-72)*100=-1200 timecents of time variation.
      * The time is cut in half.
      */
-    timecents = (fluid_voice_gen_value(voice, gen_base) + fluid_voice_gen_value(voice, gen_key2base) * (60.0 - fluid_voice_get_actual_key(voice)));
+    timecents = (fluid_voice_gen_value(voice, gen_base) + fluid_voice_gen_value(voice, gen_key2base) * (fluid_real_t)(60 - fluid_voice_get_actual_key(voice)));
 
     /* Range checking */
     if(is_decay)
@@ -1152,7 +1152,9 @@ fluid_voice_update_param(fluid_voice_t *voice, int gen)
  * Recalculate voice parameters for a given control.
  * @param voice the synthesis voice
  * @param cc flag to distinguish between a continous control and a channel control (pitch bend, ...)
- * @param ctrl the control number
+ * @param ctrl the control number:
+ *   when >=0, only modulators's destination having ctrl as source are updated.
+ *   when -1, all modulators's destination are updated (regardless of ctrl).
  *
  * In this implementation, I want to make sure that all controllers
  * are event based: the parameter values of the DSP algorithm should
@@ -1162,36 +1164,56 @@ fluid_voice_update_param(fluid_voice_t *voice, int gen)
  *
  * The update is done in three steps:
  *
- * - first, we look for all the modulators that have the changed
+ * - step 1: first, we look for all the modulators that have the changed
  * controller as a source. This will yield a list of generators that
  * will be changed because of the controller event.
  *
- * - For every changed generator, calculate its new value. This is the
- * sum of its original value plus the values of al the attached
- * modulators.
+ * - step 2: For every changed generator, calculate its new value. This is the
+ * sum of its original value plus the values of all the attached modulators.
+ * The generator flag is set to indicate the parameters must be updated.
  *
- * - For every changed generator, convert its value to the correct
- * unit of the corresponding DSP parameter
+ * - step 3: We need to avoid the risk to call 'fluid_voice_update_param' several
+ * times for the same generator if several modulators have that generator as
+ * destination. So every changed generators are updated only once
  */
+
+ /* bit table for each generator being updated. The bits are packed in variables
+  Each variable have NBR_BIT_BY_VAR bits represented by NBR_BIT_BY_VAR_LN2.
+  The size of the table is the number of variables: SIZE_UPDATED_GEN.
+ 
+  Note: In this implementation NBR_BIT_BY_VAR_LN2 is set to 5 (convenient for 32 bits cpu)
+  but this could be set to 6 for 64 bits cpu.
+ */
+
+#define NBR_BIT_BY_VAR_LN2 5	/* for 32 bits variables */
+#define NBR_BIT_BY_VAR  (1 << NBR_BIT_BY_VAR_LN2)	
+#define NBR_BIT_BY_VAR_ANDMASK (NBR_BIT_BY_VAR - 1)
+#define	SIZE_UPDATED_GEN_BIT  ((GEN_LAST + NBR_BIT_BY_VAR_ANDMASK) / NBR_BIT_BY_VAR)
+
+#define is_gen_updated(bit,gen)  (bit[gen >> NBR_BIT_BY_VAR_LN2] &  (1 << (gen & NBR_BIT_BY_VAR_ANDMASK)))
+#define set_gen_updated(bit,gen) (bit[gen >> NBR_BIT_BY_VAR_LN2] |= (1 << (gen & NBR_BIT_BY_VAR_ANDMASK)))
+
 int fluid_voice_modulate(fluid_voice_t *voice, int cc, int ctrl)
 {
     int i, k;
     fluid_mod_t *mod;
-    int gen;
+    uint32_t gen;
     fluid_real_t modval;
+
+    /* registered bits table of updated generators */
+    uint32_t updated_gen_bit[SIZE_UPDATED_GEN_BIT] = {0};
 
     /*    printf("Chan=%d, CC=%d, Src=%d, Val=%d\n", voice->channel->channum, cc, ctrl, val); */
 
     for(i = 0; i < voice->mod_count; i++)
     {
-
         mod = &voice->mod[i];
 
         /* step 1: find all the modulators that have the changed controller
-         * as input source. */
-        if(fluid_mod_has_source(mod, cc, ctrl))
+           as input source. When ctrl is -1 all modulators's destination 
+           are updated */
+        if(ctrl < 0 || fluid_mod_has_source(mod, cc, ctrl))
         {
-
             gen = fluid_mod_get_dest(mod);
             modval = 0.0;
 
@@ -1201,15 +1223,22 @@ int fluid_voice_modulate(fluid_voice_t *voice, int cc, int ctrl)
             {
                 if(fluid_mod_has_dest(&voice->mod[k], gen))
                 {
-                    modval += fluid_mod_get_value(&voice->mod[k], voice->channel, voice);
+                    modval += fluid_mod_get_value(&voice->mod[k], voice);
                 }
             }
 
             fluid_gen_set_mod(&voice->gen[gen], modval);
-
-            /* step 3: now that we have the new value of the generator,
-             * recalculate the parameter values that are derived from the
-             * generator */
+            /* set the bit that indicates this generator is updated */
+            set_gen_updated(updated_gen_bit, gen);
+        }
+    }
+    
+    /* step 3: now recalculate the parameter values that are derived from the
+      generator */
+    for(gen = 0; gen < GEN_LAST; gen++)
+    {
+        if (is_gen_updated(updated_gen_bit, gen))
+        {
             fluid_voice_update_param(voice, gen);
         }
     }
@@ -1221,47 +1250,11 @@ int fluid_voice_modulate(fluid_voice_t *voice, int cc, int ctrl)
  * Update all the modulators. This function is called after a
  * ALL_CTRL_OFF MIDI message has been received (CC 121).
  *
+ * All destination of all modulators must be updated.
  */
 int fluid_voice_modulate_all(fluid_voice_t *voice)
 {
-    fluid_mod_t *mod;
-    int i, k, gen;
-    fluid_real_t modval;
-
-    /* Loop through all the modulators.
-
-       FIXME: we should loop through the set of generators instead of
-       the set of modulators. We risk to call 'fluid_voice_update_param'
-       several times for the same generator if several modulators have
-       that generator as destination. It's not an error, just a wast of
-       energy (think polution, global warming, unhappy musicians,
-       ...) */
-
-    for(i = 0; i < voice->mod_count; i++)
-    {
-
-        mod = &voice->mod[i];
-        gen = fluid_mod_get_dest(mod);
-        modval = 0.0;
-
-        /* Accumulate the modulation values of all the modulators with
-         * destination generator 'gen' */
-        for(k = 0; k < voice->mod_count; k++)
-        {
-            if(fluid_mod_has_dest(&voice->mod[k], gen))
-            {
-                modval += fluid_mod_get_value(&voice->mod[k], voice->channel, voice);
-            }
-        }
-
-        fluid_gen_set_mod(&voice->gen[gen], modval);
-
-        /* Update the parameter values that are depend on the generator
-         * 'gen' */
-        fluid_voice_update_param(voice, gen);
-    }
-
-    return FLUID_OK;
+    return fluid_voice_modulate(voice, 0, -1);
 }
 
 /** legato update functions --------------------------------------------------*/
@@ -1731,7 +1724,7 @@ fluid_voice_get_lower_boundary_for_attenuation(fluid_voice_t *voice)
                     || (mod->src2 == FLUID_MOD_PITCHWHEEL)))
         {
 
-            fluid_real_t current_val = fluid_mod_get_value(mod, voice->channel, voice);
+            fluid_real_t current_val = fluid_mod_get_value(mod, voice);
             fluid_real_t v = fabs(mod->amount);
 
             if((mod->src1 == FLUID_MOD_PITCHWHEEL)

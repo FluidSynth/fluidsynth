@@ -47,10 +47,6 @@ typedef struct
 } fluid_file_audio_driver_t;
 
 
-fluid_audio_driver_t *new_fluid_file_audio_driver(fluid_settings_t *settings,
-        fluid_synth_t *synth);
-
-void delete_fluid_file_audio_driver(fluid_audio_driver_t *p);
 static int fluid_file_audio_run_s16(void *d, unsigned int msec);
 
 /**************************************************************

@@ -833,42 +833,39 @@ fluid_defpreset_noteon(fluid_defpreset_t *defpreset, fluid_synth_t *synth, int c
                     {
 
                         /* SF 2.01 section 8.5 page 58: If some generators are
-                         * encountered at preset level, they should be ignored */
-                        if((i != GEN_STARTADDROFS)
-                                && (i != GEN_ENDADDROFS)
-                                && (i != GEN_STARTLOOPADDROFS)
-                                && (i != GEN_ENDLOOPADDROFS)
-                                && (i != GEN_STARTADDRCOARSEOFS)
-                                && (i != GEN_ENDADDRCOARSEOFS)
-                                && (i != GEN_STARTLOOPADDRCOARSEOFS)
-                                && (i != GEN_KEYNUM)
-                                && (i != GEN_VELOCITY)
-                                && (i != GEN_ENDLOOPADDRCOARSEOFS)
-                                && (i != GEN_SAMPLEMODE)
-                                && (i != GEN_EXCLUSIVECLASS)
-                                && (i != GEN_OVERRIDEROOTKEY))
+                         encountered at preset level, they should be ignored.
+                         However this check is not necessary when the soundfont
+                         loader has ignored invalid preset generators.
+                         Actually load_pgen()has ignored these invalid preset
+                         generators:
+                           GEN_STARTADDROFS,      GEN_ENDADDROFS,
+                           GEN_STARTLOOPADDROFS,  GEN_ENDLOOPADDROFS,
+                           GEN_STARTADDRCOARSEOFS,GEN_ENDADDRCOARSEOFS,
+                           GEN_STARTLOOPADDRCOARSEOFS,
+                           GEN_KEYNUM, GEN_VELOCITY,
+                           GEN_ENDLOOPADDRCOARSEOFS,
+                           GEN_SAMPLEMODE, GEN_EXCLUSIVECLASS,GEN_OVERRIDEROOTKEY
+                        */
+
+                        /* SF 2.01 section 9.4 'bullet' 9: A generator in a
+                         * local preset zone supersedes a global preset zone
+                         * generator.  The effect is -added- to the destination
+                         * summing node -> voice_gen_incr */
+
+                        if(preset_zone->gen[i].flags)
                         {
-
-                            /* SF 2.01 section 9.4 'bullet' 9: A generator in a
-                             * local preset zone supersedes a global preset zone
-                             * generator.  The effect is -added- to the destination
-                             * summing node -> voice_gen_incr */
-
-                            if(preset_zone->gen[i].flags)
-                            {
-                                fluid_voice_gen_incr(voice, i, preset_zone->gen[i].val);
-                            }
-                            else if((global_preset_zone != NULL) && global_preset_zone->gen[i].flags)
-                            {
-                                fluid_voice_gen_incr(voice, i, global_preset_zone->gen[i].val);
-                            }
-                            else
-                            {
-                                /* The generator has not been defined in this preset
-                                 * Do nothing, leave it unchanged.
-                                 */
-                            }
-                        } /* if available at preset level */
+                            fluid_voice_gen_incr(voice, i, preset_zone->gen[i].val);
+                        }
+                        else if((global_preset_zone != NULL) && global_preset_zone->gen[i].flags)
+                        {
+                            fluid_voice_gen_incr(voice, i, global_preset_zone->gen[i].val);
+                        }
+                        else
+                        {
+                            /* The generator has not been defined in this preset
+                             * Do nothing, leave it unchanged.
+                             */
+                        }
                     } /* for all generators */
 
 

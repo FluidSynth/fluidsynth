@@ -60,26 +60,19 @@ typedef struct
 } fluid_alsa_audio_driver_t;
 
 
-fluid_audio_driver_t *new_fluid_alsa_audio_driver(fluid_settings_t *settings,
-        fluid_synth_t *synth);
-fluid_audio_driver_t *new_fluid_alsa_audio_driver2(fluid_settings_t *settings,
-        fluid_audio_func_t func, void *data);
-
-void delete_fluid_alsa_audio_driver(fluid_audio_driver_t *p);
-void fluid_alsa_audio_driver_settings(fluid_settings_t *settings);
 static fluid_thread_return_t fluid_alsa_audio_run_float(void *d);
 static fluid_thread_return_t fluid_alsa_audio_run_s16(void *d);
 
 
-struct fluid_alsa_formats_t
+typedef struct
 {
     char *name;
     snd_pcm_format_t format;
     snd_pcm_access_t access;
     fluid_thread_func_t run;
-};
+} fluid_alsa_formats_t;
 
-struct fluid_alsa_formats_t fluid_alsa_formats[] =
+static const fluid_alsa_formats_t fluid_alsa_formats[] =
 {
     {
         "s16, rw, interleaved",
@@ -115,11 +108,6 @@ typedef struct
 } fluid_alsa_rawmidi_driver_t;
 
 
-fluid_midi_driver_t *new_fluid_alsa_rawmidi_driver(fluid_settings_t *settings,
-        handle_midi_event_func_t handler,
-        void *event_handler_data);
-
-void delete_fluid_alsa_rawmidi_driver(fluid_midi_driver_t *p);
 static fluid_thread_return_t fluid_alsa_midi_run(void *d);
 
 
@@ -140,10 +128,6 @@ typedef struct
     snd_seq_addr_t autoconn_dest;
 } fluid_alsa_seq_driver_t;
 
-fluid_midi_driver_t *new_fluid_alsa_seq_driver(fluid_settings_t *settings,
-        handle_midi_event_func_t handler,
-        void *data);
-void delete_fluid_alsa_seq_driver(fluid_midi_driver_t *p);
 static fluid_thread_return_t fluid_alsa_seq_run(void *d);
 
 /**************************************************************
@@ -457,6 +441,9 @@ static fluid_thread_return_t fluid_alsa_audio_run_float(void *d)
     {
         while(dev->cont)
         {
+            FLUID_MEMSET(left, 0, buffer_size * sizeof(*left));
+            FLUID_MEMSET(right, 0, buffer_size * sizeof(*right));
+
             handle[0] = left;
             handle[1] = right;
 
@@ -560,6 +547,9 @@ static fluid_thread_return_t fluid_alsa_audio_run_s16(void *d)
 
         while(dev->cont)
         {
+            FLUID_MEMSET(left, 0, buffer_size * sizeof(*left));
+            FLUID_MEMSET(right, 0, buffer_size * sizeof(*right));
+            
             (*dev->callback)(dev->data, buffer_size, 0, NULL, 2, handle);
 
             /* convert floating point data to 16 bit (with dithering) */

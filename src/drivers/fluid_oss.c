@@ -74,7 +74,6 @@ typedef struct
     float *buffers[2];
 } fluid_oss_audio_driver_t;
 
-void delete_fluid_oss_audio_driver(fluid_audio_driver_t *p);
 
 /* local utilities */
 static int fluid_oss_set_queue_size(fluid_oss_audio_driver_t *dev, int ss, int ch, int qs, int bs);
@@ -92,11 +91,6 @@ typedef struct
     fluid_midi_parser_t *parser;
 } fluid_oss_midi_driver_t;
 
-fluid_midi_driver_t *
-new_fluid_oss_midi_driver(fluid_settings_t *settings,
-                          handle_midi_event_func_t handler, void *data);
-void delete_fluid_oss_midi_driver(fluid_midi_driver_t *p);
-int fluid_oss_midi_driver_status(fluid_midi_driver_t *p);
 static fluid_thread_return_t fluid_oss_midi_run(void *d);
 
 
@@ -567,6 +561,9 @@ fluid_oss_audio_run2(void *d)
     /* it's as simple as that: */
     while(dev->cont)
     {
+        FLUID_MEMSET(left, 0, buffer_size * sizeof(float));
+        FLUID_MEMSET(right, 0, buffer_size * sizeof(float));
+
         (*dev->callback)(dev->data, buffer_size, 0, NULL, 2, dev->buffers);
 
         fluid_synth_dither_s16(&dither_index, buffer_size, left, right,
@@ -782,13 +779,6 @@ fluid_oss_midi_run(void *d)
     }
 
     return FLUID_THREAD_RETURN_VALUE;
-}
-
-int
-fluid_oss_midi_driver_status(fluid_midi_driver_t *p)
-{
-    fluid_oss_midi_driver_t *dev = (fluid_oss_midi_driver_t *) p;
-    return dev->status;
 }
 
 #endif /*#if OSS_SUPPORT */

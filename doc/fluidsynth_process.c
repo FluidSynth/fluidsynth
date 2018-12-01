@@ -21,7 +21,7 @@ int main()
         // array of buffers used to setup channel mapping
         float *dry[1 * 2], *fx[1 * 2];
 
-        // first make sure to zero out the sample buffers
+        // first make sure to zero out the sample buffers everytime before calling fluid_synth_process()
         memset(left, 0, sizeof(left));
         memset(right, 0, sizeof(right));
 
@@ -32,7 +32,7 @@ int main()
         // Setup channel mapping for a single stereo channel to which to render effects to.
         // Just using the same sample buffers as for dry audio is fine here, as it will cause the effects to be mixed with dry output.
         // Note: reverb and chorus together make up two stereo channels. Setting up only one stereo channel is sufficient
-        // as the channels warp around (i.e. chorus will be mixed with reverb channel).
+        // as the channels wraps around (i.e. chorus will be mixed with reverb channel).
         fx[0] = left;
         fx[1] = right;
 
@@ -40,7 +40,7 @@ int main()
 
         if(err == FLUID_FAILED)
         {
-            puts(„oops“);
+            puts("oops");
         }
 
 
@@ -50,7 +50,7 @@ int main()
 
         if(err == FLUID_FAILED)
         {
-            puts(„oops“);
+            puts("oops");
         }
     }
 
@@ -61,7 +61,7 @@ int main()
 
         if(err == FLUID_FAILED)
         {
-            puts(„oops“);
+            puts("oops");
         }
     }
 
@@ -70,35 +70,33 @@ int main()
     // ofc it‘s not a good idea to allocate all the arrays on the stack
     {
         // lookup number of audio and effect (stereo-)channels of the synth
-        // see „synth.audio-channels“ and „synth.effects-channels“ settings respectively
+        // see "synth.audio-channels", "synth.effects-channels" and "synth.effects-groups" settings respectively
         int n_aud_chan = fluid_synth_count_audio_channels(synth);
+        
+        // by default there are two effects stereo channels (reverb and chorus) ...
         int n_fx_chan = fluid_synth_count_effects_channels(synth);
+        
+        // ... for each effects unit. Each unit takes care of the effects of one MIDI channel.
+        // If there are less units than channels, it wraps around and one unit may render effects of multiple
+        // MIDI channels.
+        n_fx_chan *= fluid_synth_count_effects_groups();
 
-        // allocate one single sample buffer
+        // for simplicity, allocate one single sample pool
         float samp_buf[SAMPLES * (n_aud_chan + n_fx_chan) * 2];
 
         // array of buffers used to setup channel mapping
         float *dry[n_aud_chan * 2], *fx[n_fx_chan * 2];
 
         // setup buffers to mix dry stereo audio to
-        // buffers are alternating left and right for each n_aud_chan, i.e.:
-        // dry[0] = first audio channel left
-        // dry[1] = first audio channel right
-        // dry[2] = second audio channel left
-        // ...
-        // dry[i*2 + 0] = i‘th audio channel left
-        // dry[i*2 + 1] = i‘th audio channel right
+        // buffers are alternating left and right for each n_aud_chan,
+        // please review documentation of fluid_synth_process()
         for(int i = 0; i < n_aud_chan * 2; i++)
         {
             dry[i] = &samp_buf[i * SAMPLES];
         }
 
         // setup buffers to mix effects stereo audio to
-        // similar channel layout as above, but currently special as there are only 2 hardcoded effects channels:
-        // fx[0] = global reverb channel left
-        // fx[1] = global reverb channel right
-        // fx[2] = global chorus channel left
-        // fx[3] = global chorus channel right
+        // similar channel layout as above, revie fluid_synth_process()
         for(int i = 0; i < n_fx_chan * 2; i++)
         {
             fx[i] = &samp_buf[n_aud_chan * 2 * SAMPLES + i * SAMPLES];
@@ -111,7 +109,7 @@ int main()
 
         if(err == FLUID_FAILED)
         {
-            puts(„oops“);
+            puts("oops");
         }
     }
 

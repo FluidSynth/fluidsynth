@@ -8,8 +8,8 @@
 \author David Henningsson
 \author Tom Moebert
 \author Copyright &copy; 2003-2018 Peter Hanappe, Conrad Berhörster, Antoine Schmitt, Pedro López-Cabanillas, Josh Green, David Henningsson, Tom Moebert
-\version Revision 2.0.0BETA
-\date 2018-05-19
+\version Revision 2.0.2
+\date 2018-11-18
 
 All the source code examples in this document are in the public domain; you can use them as you please. This document is licensed under the Creative Commons Attribution-Share Alike 3.0 Unported License. To view a copy of this license, visit http://creativecommons.org/licenses/by-sa/3.0/ . The FluidSynth library is distributed under the GNU Lesser General Public License. A copy of the GNU Lesser General Public License is contained in the FluidSynth package; if not, visit http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt or write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
@@ -21,6 +21,7 @@ All the source code examples in this document are in the public domain; you can 
 
 - \ref Disclaimer
 - \ref Introduction
+- \ref NewIn2_0_2
 - \ref NewIn2_0_0
 - \ref CreatingSettings 
 - \ref CreatingSynth 
@@ -35,6 +36,7 @@ All the source code examples in this document are in the public domain; you can 
 - \ref MIDIRouter 
 - \ref Sequencer
 - \ref Shell
+- \ref Multi-channel
 - \ref Advanced 
 
 \section Disclaimer
@@ -59,6 +61,11 @@ What is FluidSynth?
 
 - FluidSynth is open source, in active development. For more details, take a look at http://www.fluidsynth.org
 
+
+\section NewIn2_0_2 Whats new in 2.0.2?
+
+- fluid_synth_error() has been deprecated, use fluid_set_log_function() to interfere log messages
+
 \section NewIn2_0_0 Whats new in 2.0.0?
 
 FluidSynths major version was bumped. The API was reworked, deprecated functions were removed.
@@ -69,6 +76,7 @@ FluidSynths major version was bumped. The API was reworked, deprecated functions
 - explicit client unregistering is required for fluid_sequencer_register_client() and fluid_sequencer_register_fluidsynth()
 - all public functions consistently receive signed integers for soundfont ids, bank and program numbers
 - use unique device names for the "audio.portaudio.device" setting
+- fluid_synth_process() received a new more flexible implementation, but now requires zeroed-out sample buffers
 
 <strong>Other changes in FluidSynth 2.0.0 concerning developers:</strong>
 
@@ -79,6 +87,7 @@ FluidSynths major version was bumped. The API was reworked, deprecated functions
 - rename chorus getters to match naming conventions: fluid_synth_get_chorus_speed() and fluid_synth_get_chorus_depth()
 - fluid_synth_remove_sfont() returns FLUID_OK or FLUID_FAILED
 - introduce a separate data type for sequencer client IDs: #fluid_seq_id_t
+- fluid_get_userconf() has been implemented for Windows
 
 <strong>New Features and API additions:</strong>
 
@@ -112,6 +121,7 @@ FluidSynths major version was bumped. The API was reworked, deprecated functions
 
 <strong>API cleanups:</strong>
   
+- the ramsfont has been removed, because it is unmaintained and believed to be unused; please get in touch with the mailing list if you still need it
 - remove deprecated fluid_synth_get_channel_info() in favour of fluid_synth_get_program() and fluid_synth_get_channel_preset()
 - remove deprecated fluid_settings_getstr()
 - remove deprecated fluid_synth_set_midi_router(), instead supply the midi-router instance when creating a command handler with new_fluid_cmd_handler()
@@ -234,9 +244,7 @@ There are a number of general audio driver settings. The audio.driver settings d
 
 It is possible to use the synthesizer object without creating an audio driver. This is desirable if the application using FluidSynth manages the audio output itself. The synthesizer has several API functions that can be used to obtain the audio output: 
 
-fluid_synth_write_s16() fills two buffers (left and right channel) with samples coded as signed 16 bits (the endian-ness is machine dependent). fluid_synth_write_float() fills a left and right audio buffer with 32 bits floating point samples. For multi channel audio output, the function fluid_synth_nwrite_float() has to be used.
-
-The function fluid_synth_process() is still experimental and its use is therefore not recommended but it will probably become the generic interface in future versions. 
+fluid_synth_write_s16() fills two buffers (left and right channel) with samples coded as signed 16 bits (the endian-ness is machine dependent). fluid_synth_write_float() fills a left and right audio buffer with 32 bits floating point samples. The function fluid_synth_process() is the generic interface for synthesizing audio, which is also capable of multi channel audio output.
 
 \section LoadingSoundfonts Loading and managing SoundFonts
 
@@ -674,7 +682,9 @@ int main(void) {
 
 The shell interface allows you to send simple textual commands to the synthesizer, to parse a command file, or to read commands from the stdin or other input streams. To find the list of currently supported commands, please check the fluid_cmd.c file or type "help" in the fluidsynth command line shell. For a full list of available <strong>command line settings</strong>, please refer to <a href="fluidsettings.xml" target="_blank"><b>FluidSettings Documentation</b></a>.
 
+\section Multi-channel Multi-Channel audio rendering
 
+FluidSynth is capable of rendering all audio and all effects from all MIDI channels to separate stero buffers. Refer to the documentation of fluid_synth_process() and review the different use-cases in the example file for information on how to do that: \ref fluidsynth_process.c
 
 \section Advanced Advanced features, not yet documented.  API reference may contain more info.
 
@@ -684,7 +694,6 @@ The shell interface allows you to send simple textual commands to the synthesize
 - Interpolation settings (set_gen, get_gen, NRPN)
 - Voice overflow settings
 - LADSPA effects unit
-- Multi-channel audio
 - MIDI tunings
 */
 

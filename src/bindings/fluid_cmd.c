@@ -28,11 +28,6 @@
 #include "fluid_sfont.h"
 #include "fluid_chan.h"
 
-#if WITH_READLINE
-#include <readline/readline.h>
-#include <readline/history.h>
-#endif
-
 /* FIXME: LADSPA used to need a lot of parameters on a single line. This is not
  * necessary anymore, so the limits below could probably be reduced */
 #define MAX_TOKENS 100
@@ -283,15 +278,15 @@ static const fluid_cmd_t fluid_commands[] =
     /* settings commands */
     {
         "set", "settings", fluid_handle_set,
-        "set name value             Set the value of a controller or settings"
+        "set name value             Set the value of a setting (must be a real-time setting to take effect immediately)"
     },
     {
         "get", "settings", fluid_handle_get,
-        "get name                   Get the value of a controller or settings"
+        "get name                   Get the value of a setting"
     },
     {
         "info", "settings", fluid_handle_info,
-        "info name                  Get information about a controller or settings"
+        "info name                  Get information about a setting"
     },
     {
         "settings", "settings", fluid_handle_settings,
@@ -304,7 +299,7 @@ static const fluid_cmd_t fluid_commands[] =
     /* Sleep command, useful to insert a delay between commands */
     {
         "sleep", "general", fluid_handle_sleep,
-        "sleep  duration            sleep duration(in ms)"
+        "sleep  duration            sleep duration (in ms)"
     },
     /* LADSPA-related commands */
 #ifdef LADSPA
@@ -522,15 +517,6 @@ fluid_shell_run(void *data)
             break;
         }
 
-#if WITH_READLINE
-
-        if(shell->in == fluid_get_stdin())
-        {
-            add_history(workline);
-        }
-
-#endif
-
         /* handle the command */
         switch(fluid_command(shell->handler, workline, shell->out))
         {
@@ -623,22 +609,27 @@ fluid_source(fluid_cmd_handler_t *handler, const char *filename)
 char *
 fluid_get_userconf(char *buf, int len)
 {
-#if defined(WIN32) || defined(MACOS9)
-    return NULL;
-#else
-    char *home = getenv("HOME");
-
+    const char *home = NULL;
+    const char *config_file;
+#if defined(WIN32)
+    home = getenv("USERPROFILE");
+    config_file = "\\fluidsynth.cfg";
+    
+#elif !defined(MACOS9)
+    home = getenv("HOME");
+    config_file = "/.fluidsynth";
+    
+#endif
+    
     if(home == NULL)
     {
         return NULL;
     }
     else
     {
-        FLUID_SNPRINTF(buf, len, "%s/.fluidsynth", home);
+        FLUID_SNPRINTF(buf, len, "%s%s", home, config_file);
         return buf;
     }
-
-#endif
 }
 
 /**
@@ -1834,7 +1825,7 @@ fluid_handle_set(void *data, int ac, char **av, fluid_ostream_t out)
     {
     case FLUID_NO_TYPE:
         fluid_ostream_printf(out, "set: Parameter '%s' not found.\n", av[0]);
-        break;
+        return ret;
 
     case FLUID_INT_TYPE:
         if(fluid_settings_get_hints(handler->synth->settings, av[0], &hints) == FLUID_OK
@@ -1874,7 +1865,12 @@ fluid_handle_set(void *data, int ac, char **av, fluid_ostream_t out)
 
     if(ret == FLUID_FAILED)
     {
-        fluid_ostream_printf(out, "set: Value out of range.\n");
+        fluid_ostream_printf(out, "set: Value out of range. Try 'info %s' for valid ranges\n", av[0]);
+    }
+    
+    if(!fluid_settings_is_realtime(handler->synth->settings, av[0]))
+    {
+        fluid_ostream_printf(out, "Warning: '%s' is not a realtime setting, changes won't take effect.\n", av[0]);
     }
 
     return ret;
@@ -1937,7 +1933,7 @@ fluid_handle_get(void *data, int ac, char **av, fluid_ostream_t out)
 
 struct _fluid_handle_settings_data_t
 {
-    int len;
+    size_t len;
     fluid_synth_t *synth;
     fluid_ostream_t out;
 };
@@ -1946,7 +1942,7 @@ static void fluid_handle_settings_iter1(void *data, const char *name, int type)
 {
     struct _fluid_handle_settings_data_t *d = (struct _fluid_handle_settings_data_t *) data;
 
-    int len = FLUID_STRLEN(name);
+    size_t len = FLUID_STRLEN(name);
 
     if(len > d->len)
     {
@@ -1958,7 +1954,7 @@ static void fluid_handle_settings_iter2(void *data, const char *name, int type)
 {
     struct _fluid_handle_settings_data_t *d = (struct _fluid_handle_settings_data_t *) data;
 
-    int len = FLUID_STRLEN(name);
+    size_t len = FLUID_STRLEN(name);
     fluid_ostream_printf(d->out, "%s", name);
 
     while(len++ < d->len)

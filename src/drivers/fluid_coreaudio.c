@@ -52,11 +52,6 @@ typedef struct
     double phase;
 } fluid_core_audio_driver_t;
 
-fluid_audio_driver_t *new_fluid_core_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth);
-
-fluid_audio_driver_t *new_fluid_core_audio_driver2(fluid_settings_t *settings,
-        fluid_audio_func_t func,
-        void *data);
 
 OSStatus fluid_core_audio_callback(void *data,
                                    AudioUnitRenderActionFlags *ioActionFlags,
@@ -64,8 +59,6 @@ OSStatus fluid_core_audio_callback(void *data,
                                    UInt32 inBusNumber,
                                    UInt32 inNumberFrames,
                                    AudioBufferList *ioData);
-
-void delete_fluid_core_audio_driver(fluid_audio_driver_t *p);
 
 
 /**************************************************************
@@ -151,8 +144,8 @@ fluid_audio_driver_t *
 new_fluid_core_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
 {
     return new_fluid_core_audio_driver2(settings,
-                                        (fluid_audio_func_t) fluid_synth_process,
-                                        (void *) synth);
+                                        NULL,
+                                        synth);
 }
 
 /*
@@ -273,10 +266,7 @@ new_fluid_core_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func
         }
     }
 
-    if(devname)
-    {
-        FLUID_FREE(devname);    /* free device name */
-    }
+    FLUID_FREE(devname);  /* free device name */
 
     dev->buffer_size = period_size * periods;
 
@@ -329,6 +319,12 @@ new_fluid_core_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func
 
     dev->buffers[0] = FLUID_ARRAY(float, dev->buffer_size);
     dev->buffers[1] = FLUID_ARRAY(float, dev->buffer_size);
+    
+    if(dev->buffers[0] == NULL || dev->buffers[1] == NULL)
+    {
+        FLUID_LOG(FLUID_ERR, "Out of memory.");
+        goto error_recovery;
+    }
 
     // Initialize the audio unit
     status = AudioUnitInitialize(dev->outputUnit);
@@ -397,6 +393,9 @@ fluid_core_audio_callback(void *data,
     {
         float *left = dev->buffers[0];
         float *right = dev->buffers[1];
+
+        FLUID_MEMSET(left, 0, len * sizeof(float));
+        FLUID_MEMSET(right, 0, len * sizeof(float));
 
         (*dev->callback)(dev->data, len, 0, NULL, 2, dev->buffers);
 

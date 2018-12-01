@@ -120,6 +120,11 @@ summary of contributions.
 * Matt Giuca improved the midi player by letting it load midi files from RAM,
   and by making it handle EOT events.
 
+* Tom Moebert (fluidsynth's maintainer since Jun 2017) cleaned up and refactored
+  fluidsynth's API and revised its documentation, added support for 24 bit sample
+  soundfonts, fixed various bugs, implemented unit tests and CI builds for
+  Windows, Linux, MacOSX.
+
 * Growing list of individuals who contributed bug fixes, corrections and minor features:
 Nicolas Boulicault for ALSA sequencer midi.portname setting.
 Werner Schweer
@@ -144,3 +149,5 @@ David Hilvert
 Bernat Arlandis i Mañó
 Sven Meier
 Marcus Weseloh
+Jean-jacques Ceresa
+

@@ -29,7 +29,7 @@ set ( PACKAGE "fluidsynth" )
 # FluidSynth package version
 set ( FLUIDSYNTH_VERSION_MAJOR 2 )
 set ( FLUIDSYNTH_VERSION_MINOR 0 )
-set ( FLUIDSYNTH_VERSION_MICRO 0 )
+set ( FLUIDSYNTH_VERSION_MICRO 2 )
 set ( VERSION "${FLUIDSYNTH_VERSION_MAJOR}.${FLUIDSYNTH_VERSION_MINOR}.${FLUIDSYNTH_VERSION_MICRO}" )
 set ( FLUIDSYNTH_VERSION "\"${VERSION}\"" )
 
@@ -44,7 +44,7 @@ set ( FLUIDSYNTH_VERSION "\"${VERSION}\"" )
 # This is not exactly the same algorithm as the libtool one, but the results are the same.
 set ( LIB_VERSION_CURRENT 2 )
 set ( LIB_VERSION_AGE 0 )
-set ( LIB_VERSION_REVISION 0 )
+set ( LIB_VERSION_REVISION 2 )
 set ( LIB_VERSION_INFO
       "${LIB_VERSION_CURRENT}.${LIB_VERSION_AGE}.${LIB_VERSION_REVISION}" )
 
@@ -55,7 +55,6 @@ option ( enable-fpe-check "enable Floating Point Exception checks and debug mess
 option ( enable-portaudio "compile PortAudio support" off )
 option ( enable-profiling "profile the dsp code" off )
 option ( enable-trap-on-fpe "enable SIGFPE trap on Floating Point Exceptions" off )
-option ( enable-tests "build unit tests (implicitly disables BUILD_SHARED_LIBS)" off )
 
 # Options enabled by default
 option ( enable-aufile "compile support for sound file output" on )
@@ -68,9 +67,12 @@ option ( enable-libsndfile "compile libsndfile support (if it is available)" on 
 option ( enable-midishare "compile MidiShare support (if it is available)" on )
 option ( enable-network "enable network support (requires BSD sockets)" on )
 option ( enable-oss "compile OSS support (if it is available)" on )
+option ( enable-dsound "compile DirectSound support (if it is available)" on )
+option ( enable-winmidi "compile Windows MIDI support (if it is available)" on )
 option ( enable-pkgconfig "use pkg-config to locate fluidsynth's (mostly optional) dependencies" on )
 option ( enable-pulseaudio "compile PulseAudio support (if it is available)" on )
 option ( enable-readline "compile readline lib line editing (if it is available)" on )
+option ( enable-threads "enable multi-threading support (such as parallel voice synthesis)" on )
 
 # Platform specific options
 if ( CMAKE_SYSTEM MATCHES "Linux" )
@@ -107,14 +109,21 @@ mark_as_advanced ( LIB_SUFFIX )
 # the default C standard to use for all targets
 set(CMAKE_C_STANDARD 90)
 
+# Compile with position independent code if the user requested a shared lib, i.e. no PIC if static requested.
+# This is cmakes default behavior, but here it's explicitly required due to the use of libfluidsynth-OBJ as object library,
+# which would otherwise always be compiled without PIC.
+set ( CMAKE_POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS} )
+
 # the default global visibility level for all target
 # no visibility support on OS2
 if ( NOT OS2 )
     set ( CMAKE_C_VISIBILITY_PRESET hidden )
 endif ( NOT OS2 )
-# enforce visibility control for all types of cmake targets
-cmake_policy ( SET CMP0063 NEW )
 
+# enforce visibility control for all types of cmake targets
+if ( POLICY CMP0063 )
+  cmake_policy ( SET CMP0063 NEW )
+endif ( POLICY CMP0063 )
 
 # Default install directory names
 include ( DefaultDirs )
@@ -166,7 +175,7 @@ if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang" OR CMAKE_C_
   endif ( NOT APPLE AND NOT OS2 )
   
   # define some warning flags
-  set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -W -Wpointer-arith -Wno-cast-qual -Wstrict-prototypes -Wno-unused-parameter -Wdeclaration-after-statement" )
+  set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -W -Wpointer-arith -Wcast-qual -Wstrict-prototypes -Wno-unused-parameter -Wdeclaration-after-statement" )
   
   if ( CMAKE_C_COMPILER_ID STREQUAL "Intel" )
     # icc needs the restrict flag to recognize C99 restrict pointers
@@ -184,24 +193,65 @@ endif ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang" OR CMAKE
 # Windows
 unset ( WINDOWS_SUPPORT CACHE )
 unset ( WINDOWS_LIBS CACHE )
+unset ( DSOUND_SUPPORT CACHE )
+unset ( WINMIDI_SUPPORT CACHE )
 unset ( MINGW32 CACHE )
 if ( WIN32 )
   include ( CheckIncludeFiles )
+
+  # Check presence of MS include files
   check_include_file ( windows.h HAVE_WINDOWS_H )
   check_include_file ( io.h HAVE_IO_H )
   check_include_file ( dsound.h HAVE_DSOUND_H )
   check_include_files ( "windows.h;mmsystem.h" HAVE_MMSYSTEM_H )
+
   set ( WINDOWS_SUPPORT ${HAVE_WINDOWS_H} )
-  set ( WINDOWS_LIBS "dsound;winmm;ws2_32" )
+
+  if ( enable-network )
+    set ( WINDOWS_LIBS "${WINDOWS_LIBS};ws2_32" )
+  endif ( enable-network )
+
+  if ( enable-dsound AND HAVE_DSOUND_H )
+    set ( WINDOWS_LIBS "${WINDOWS_LIBS};dsound" )
+    set ( DSOUND_SUPPORT 1 )
+  endif ()
+
+  if ( enable-winmidi AND HAVE_MMSYSTEM_H )
+    set ( WINDOWS_LIBS "${WINDOWS_LIBS};winmm" )
+    set ( WINMIDI_SUPPORT 1 )
+  endif ()
+
   set ( LIBFLUID_CPPFLAGS "-DFLUIDSYNTH_DLL_EXPORTS" )
   set ( FLUID_CPPFLAGS "-DFLUIDSYNTH_NOT_A_DLL" )
-  if (NOT MSVC)
+  if  ( MSVC )
+    # statically link in the CRT library to avoid a bunch of runtime DLL dependencies and allow 
+    # the CI windows builds to be run under WinXP
+    foreach ( flag_var
+        CMAKE_C_FLAGS
+        CMAKE_C_FLAGS_DEBUG
+        CMAKE_C_FLAGS_RELEASE
+        CMAKE_C_FLAGS_MINSIZEREL
+        CMAKE_C_FLAGS_RELWITHDEBINFO
+        CMAKE_CXX_FLAGS
+        CMAKE_CXX_FLAGS_DEBUG
+        CMAKE_CXX_FLAGS_RELEASE
+        CMAKE_CXX_FLAGS_MINSIZEREL
+        CMAKE_CXX_FLAGS_RELWITHDEBINFO
+        )
+      if ( ${flag_var} MATCHES "/MD" )
+        string ( REGEX REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}" )
+      endif ( ${flag_var} MATCHES "/MD" )
+    endforeach ( flag_var )
+    
+  else ( MSVC )
+    # only set debug postfix if not MSVS building
     set ( CMAKE_DEBUG_POSTFIX "_debug" )
-  endif()
+  endif ( MSVC )
+  
   # MinGW compiler (a Windows GCC port)
   if ( MINGW )
     set ( MINGW32 1 )
-    add_definitions ( -mms-bitfields )
+    add_compile_options ( -mms-bitfields )
   endif  ( MINGW )
 else ( WIN32 )
 # Check PThreads, but not in Windows
@@ -527,6 +577,11 @@ else ( enable-readline )
   unset ( READLINE_LIBS CACHE )
 endif ( enable-readline )
 
+unset ( ENABLE_MIXER_THREADS CACHE )
+if ( enable-threads )
+  set ( ENABLE_MIXER_THREADS 1 )
+endif ( enable-threads )
+
 unset ( HAVE_OPENMP CACHE )
 find_package ( OpenMP QUIET )
 if ( OpenMP_FOUND OR OpenMP_C_FOUND )
@@ -543,27 +598,29 @@ if ( OpenMP_FOUND OR OpenMP_C_FOUND )
     endif()
 endif()
 
-
-if(enable-tests)
-    # manipulate some variables to setup a proper test env
-    set(TEST_SOUNDFONT "${CMAKE_SOURCE_DIR}/sf2/VintageDreamsWaves-v2.sf2")
-    set(TEST_SOUNDFONT_SF3 "${CMAKE_SOURCE_DIR}/sf2/VintageDreamsWaves-v2.sf3")
-    
-    # force to build a static lib, in order to bypass the visibility control, allowing us
-    # to test fluidsynths private/internal functions
-    set(BUILD_SHARED_LIBS OFF)
-    
-    add_subdirectory ( test )
-endif(enable-tests)
-
+# manipulate some variables to setup a proper test env
+set(TEST_SOUNDFONT "${CMAKE_SOURCE_DIR}/sf2/VintageDreamsWaves-v2.sf2")
+set(TEST_SOUNDFONT_SF3 "${CMAKE_SOURCE_DIR}/sf2/VintageDreamsWaves-v2.sf3")
 
 # General configuration file
 configure_file ( ${CMAKE_SOURCE_DIR}/src/config.cmake
                  ${CMAKE_BINARY_DIR}/config.h )
 
+# Setup linker directories NOW, as the command will apply only to targets created after it has been called.
+link_directories (
+    ${GLIB_LIBRARY_DIRS}
+    ${LASH_LIBRARY_DIRS}
+    ${JACK_LIBRARY_DIRS}
+    ${ALSA_LIBRARY_DIRS}
+    ${PULSE_LIBRARY_DIRS}
+    ${PORTAUDIO_LIBRARY_DIRS}
+    ${LIBSNDFILE_LIBRARY_DIRS}
+    ${DBUS_LIBRARY_DIRS}
+)
 
 # Process subdirectories
 add_subdirectory ( src )
+add_subdirectory ( test )
 add_subdirectory ( doc )
 
 # pkg-config support

@@ -37,7 +37,7 @@ int fluid_rvoice_mixer_get_bufcount(fluid_rvoice_mixer_t *mixer);
 #if WITH_PROFILING
 int fluid_rvoice_mixer_get_active_voices(fluid_rvoice_mixer_t *mixer);
 #endif
-fluid_rvoice_mixer_t *new_fluid_rvoice_mixer(int buf_count, int fx_buf_count,
+fluid_rvoice_mixer_t *new_fluid_rvoice_mixer(int buf_count, int fx_buf_count, int fx_units,
         fluid_real_t sample_rate, fluid_rvoice_eventhandler_t *, int, int);
 
 void delete_fluid_rvoice_mixer(fluid_rvoice_mixer_t *);

@@ -76,6 +76,9 @@
 /* Define to 1 if you have the <netinet/tcp.h> header file. */
 #cmakedefine HAVE_NETINET_TCP_H @HAVE_NETINET_TCP_H@
 
+/* Define if compiling the mixer with multi-thread support */
+#cmakedefine ENABLE_MIXER_THREADS @ENABLE_MIXER_THREADS@
+
 /* Define if compiling with openMP to enable parallel audio rendering */
 #cmakedefine HAVE_OPENMP @HAVE_OPENMP@
 
@@ -189,6 +192,12 @@
 
 /* Define to enable PulseAudio driver */
 #cmakedefine PULSE_SUPPORT @PULSE_SUPPORT@
+
+/* Define to enable DirectSound driver */
+#cmakedefine DSOUND_SUPPORT @DSOUND_SUPPORT@
+
+/* Define to enable Windows MIDI driver */
+#cmakedefine WINMIDI_SUPPORT @WINMIDI_SUPPORT@
 
 /* Define to 1 if you have the ANSI C header files. */
 #cmakedefine STDC_HEADERS @STDC_HEADERS@
