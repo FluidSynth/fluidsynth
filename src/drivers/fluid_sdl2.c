@@ -77,7 +77,7 @@ void fluid_sdl2_audio_driver_settings(fluid_settings_t *settings)
         }
     }
 
-    SDL_Quit();
+    SDL_QuitSubSystem(SDL_INIT_AUDIO);
 }
 
 
@@ -244,7 +244,7 @@ void delete_fluid_sdl2_audio_driver(fluid_audio_driver_t *d)
         FLUID_FREE(dev);
     }
 
-    SDL_Quit();
+    SDL_QuitSubSystem(SDL_INIT_AUDIO);
 }
 
 #endif /* SDL2_SUPPORT */
