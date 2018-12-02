@@ -22,8 +22,6 @@
 
 #define FLUIDSYNTH_API 
 #include <stdlib.h>
-#include <fluidsynth/types.h>
-#include <fluidsynth/sfont.h>
 #include <jni.h>
 #include "fluid_androidasset.h"
 #include <android/asset_manager.h>
@@ -32,7 +30,7 @@
 
 AAssetManager *fluid_android_asset_manager;
 
-fluid_sfloader_t* new_fluid_android_asset_sfloader(fluid_settings_t *settings, AAssetManager *assetManager)
+fluid_sfloader_t* new_fluid_android_asset_sfloader(fluid_settings_t *settings, void *assetManager)
 {
     fluid_sfloader_t *loader;
     
@@ -40,7 +38,7 @@ fluid_sfloader_t* new_fluid_android_asset_sfloader(fluid_settings_t *settings, A
 		return NULL;
     
     if (!fluid_android_asset_manager)
-		fluid_android_asset_manager = assetManager;
+		fluid_android_asset_manager = (AAssetManager*) assetManager;
 
     if (fluid_android_asset_manager == NULL)
 		return NULL;
