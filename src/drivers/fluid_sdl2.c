@@ -58,9 +58,9 @@ void fluid_sdl2_audio_driver_settings(fluid_settings_t *settings)
     fluid_settings_register_str(settings, "audio.sdl2.device", "default", 0);
     fluid_settings_add_option(settings, "audio.sdl2.device", "default");
 
-    if (SDL_Init(SDL_INIT_AUDIO))
+    if (!SDL_WasInit(SDL_INIT_AUDIO))
     {
-        FLUID_LOG(FLUID_ERR, "Failed to initialize SDL2: %s", SDL_GetError());
+        FLUID_LOG(FLUID_ERR, "SDL2 not initialized");
         return;
     }
 
@@ -76,8 +76,6 @@ void fluid_sdl2_audio_driver_settings(fluid_settings_t *settings)
             fluid_settings_add_option(settings, "audio.sdl2.device", dev_name);
         }
     }
-
-    SDL_QuitSubSystem(SDL_INIT_AUDIO);
 }
 
 
@@ -146,10 +144,10 @@ new_fluid_sdl2_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
     aspec.samples    = aspec.channels * ((period_size + 7) & ~7);
     aspec.callback   = (SDL_AudioCallback)SDLAudioCallback;
 
-    /* Start SDL library */
-    if (SDL_Init(SDL_INIT_AUDIO))
+    /* Check if SDL library has been started */
+    if (!SDL_WasInit(SDL_INIT_AUDIO))
     {
-        FLUID_LOG(FLUID_ERR, "Failed to initialize SDL2: %s", SDL_GetError());
+        FLUID_LOG(FLUID_ERR, "SDL2 not initialized");
         return NULL;
     }
 
@@ -243,8 +241,6 @@ void delete_fluid_sdl2_audio_driver(fluid_audio_driver_t *d)
 
         FLUID_FREE(dev);
     }
-
-    SDL_QuitSubSystem(SDL_INIT_AUDIO);
 }
 
 #endif /* SDL2_SUPPORT */
