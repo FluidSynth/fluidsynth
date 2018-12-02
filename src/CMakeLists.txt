@@ -208,7 +208,6 @@ set ( libfluidsynth_SOURCES
 )
 
 set ( public_HEADERS
-    ${CMAKE_SOURCE_DIR}/include/fluidsynth/android.h
     ${CMAKE_SOURCE_DIR}/include/fluidsynth/audio.h
     ${CMAKE_SOURCE_DIR}/include/fluidsynth/event.h
     ${CMAKE_SOURCE_DIR}/include/fluidsynth/gen.h
