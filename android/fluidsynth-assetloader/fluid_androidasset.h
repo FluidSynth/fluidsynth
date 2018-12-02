@@ -26,6 +26,11 @@
 extern "C" {
 #endif
 
+#include <fluidsynth/types.h>
+#include <fluidsynth/sfont.h>
+
+fluid_sfloader_t* new_fluid_android_asset_sfloader(fluid_settings_t *settings, void *assetManager);
+
 void *asset_open(const char *path);
 int asset_close(void *handle);
 long asset_tell(void *handle);
