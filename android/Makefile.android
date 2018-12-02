@@ -37,7 +37,7 @@ $(OBOE):
 	git clone https://github.com/google/oboe.git $(OBOE)
 
 .PHONY: build
-build: build-oboe build-cerbero build-fluidsynth dist-fluidsynth
+build: build-oboe build-cerbero build-fluidsynth dist-fluidsynth build-fluidsynth-assetloader dist-fluidsynth-assetloader
 
 .PHONY: build-cerbero
 build-cerbero:
@@ -87,8 +87,17 @@ dist-fluidsynth-one:
 	mkdir -p dist/$(A_ABI) && cd dist/$(A_ABI) && cp ../../build/$(A_ABI)/src/libfluidsynth.so . && cd ../..
 	cp -r ../include/fluidsynth build/$(A_ABI)/include/
 
+build-fluidsynth-assetloader:
+	cd fluidsynth-assetloader && ./ext-build.sh
+
+dist-fluidsynth-assetloader:
+	cp fluidsynth-assetloader/build/x86/*.so dist/x86/
+	cp fluidsynth-assetloader/build/x86_64/*.so dist/x86_64/
+	cp fluidsynth-assetloader/build/armeabi-v7a/*.so dist/armeabi-v7a/
+	cp fluidsynth-assetloader/build/arm64-v8a/*.so dist/arm64-v8a/
+
 clean:
-	rm -rf dist/* build/* external/oboe/build/* obj/local/*
+	rm -rf dist/* build/* external/oboe/build/* obj/local/* fluidsynth-asset-loader/build/*
 
 .PHONY: wipe
 wipe: $(CERBERO)
