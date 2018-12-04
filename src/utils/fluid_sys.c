@@ -275,36 +275,6 @@ fluid_error()
 }
 
 /**
- * Check if a file is a MIDI file.
- * @param filename Path to the file to check
- * @return TRUE if it could be a MIDI file, FALSE otherwise
- *
- * The current implementation only checks for the "MThd" header in the file.
- * It is useful only to distinguish between SoundFont and MIDI files.
- */
-int
-fluid_is_midifile(const char *filename)
-{
-    FILE *fp = fopen(filename, "rb");
-    char id[4];
-
-    if(fp == NULL)
-    {
-        return 0;
-    }
-
-    if(fread((void *) id, 1, 4, fp) != 4)
-    {
-        fclose(fp);
-        return 0;
-    }
-
-    fclose(fp);
-
-    return FLUID_STRNCMP(id, "MThd", 4) == 0;
-}
-
-/**
  * Suspend the execution of the current thread for the specified amount of time.
  * @param milliseconds to wait.
  */
