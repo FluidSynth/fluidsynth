@@ -82,6 +82,37 @@ static int fluid_midi_file_get_division(fluid_midi_file *midifile);
  */
 
 /**
+ * Check if a file is a MIDI file.
+ * @param filename Path to the file to check
+ * @return TRUE if it could be a MIDI file, FALSE otherwise
+ *
+ * The current implementation only checks for the "MThd" header in the file.
+ * It is useful only to distinguish between SoundFont and MIDI files.
+ */
+int fluid_is_midifile(const char *filename)
+{
+    FILE    *fp = FLUID_FOPEN(filename, "rb");
+    uint32_t id;
+    int      retcode = 0;
+
+    do
+    {
+        if(fp == NULL)
+            break;
+
+        if(FLUID_FREAD(&id, sizeof(id), 1, fp) != 1)
+            break;
+
+        retcode = (id == FLUID_FOURCC('M','T','h','d'));
+    }
+    while (0);
+
+    FLUID_FCLOSE(fp);
+
+    return retcode;
+}
+
+/**
  * Return a new MIDI file handle for parsing an already-loaded MIDI file.
  * @internal
  * @param buffer Pointer to full contents of MIDI file (borrows the pointer).
