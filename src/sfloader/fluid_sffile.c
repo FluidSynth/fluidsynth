@@ -323,6 +323,46 @@ static void delete_zone(SFZone *zone);
 static int fluid_sffile_read_vorbis(SFData *sf, unsigned int start_byte, unsigned int end_byte, short **data);
 static int fluid_sffile_read_wav(SFData *sf, unsigned int start, unsigned int end, short **data, char **data24);
 
+/**
+ * Check if a file is a SoundFont file.
+ * @param filename Path to the file to check
+ * @return TRUE if it could be a SoundFont, FALSE otherwise
+ *
+ * @note The current implementation only checks for the "RIFF" and "sfbk" headers in
+ * the file. It is useful to distinguish between SoundFont and other (e.g. MIDI) files.
+ */
+int fluid_is_soundfont(const char *filename)
+{
+    FILE    *fp = FLUID_FOPEN(filename, "rb");
+    uint32_t fcc;
+    int      retcode = 0;
+
+    do
+    {
+        if(fp == NULL)
+            break;
+
+        if(FLUID_FREAD(&fcc, sizeof(fcc), 1, fp) != 1)
+            break;
+
+        if (fcc != RIFF_FCC)
+            break;
+
+        if(FLUID_FSEEK(fp, 4, SEEK_CUR))
+            break;
+
+        if(FLUID_FREAD(&fcc, sizeof(fcc), 1, fp) != 1)
+            break;
+
+        retcode = (fcc == SFBK_FCC);
+    }
+    while (0);
+
+    FLUID_FCLOSE(fp);
+
+    return retcode;
+}
+
 /*
  * Open a SoundFont file and parse it's contents into a SFData structure.
  *
