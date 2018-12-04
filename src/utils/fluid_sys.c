@@ -305,41 +305,6 @@ fluid_is_midifile(const char *filename)
 }
 
 /**
- * Check if a file is a SoundFont file.
- * @param filename Path to the file to check
- * @return TRUE if it could be a SoundFont, FALSE otherwise
- *
- * @note The current implementation only checks for the "RIFF" and "sfbk" headers in
- * the file. It is useful to distinguish between SoundFont and other (e.g. MIDI) files.
- */
-int
-fluid_is_soundfont(const char *filename)
-{
-    FILE *fp = fopen(filename, "rb");
-    char riff_id[4], sfbk_id[4];
-
-    if(fp == NULL)
-    {
-        return 0;
-    }
-
-    if((fread((void *) riff_id, 1, sizeof(riff_id), fp) != sizeof(riff_id)) ||
-            (fseek(fp, 4, SEEK_CUR) != 0) ||
-            (fread((void *) sfbk_id, 1, sizeof(sfbk_id), fp) != sizeof(sfbk_id)))
-    {
-        goto error_rec;
-    }
-
-    fclose(fp);
-    return (FLUID_STRNCMP(riff_id, "RIFF", sizeof(riff_id)) == 0) &&
-           (FLUID_STRNCMP(sfbk_id, "sfbk", sizeof(sfbk_id)) == 0);
-
-error_rec:
-    fclose(fp);
-    return 0;
-}
-
-/**
  * Suspend the execution of the current thread for the specified amount of time.
  * @param milliseconds to wait.
  */
