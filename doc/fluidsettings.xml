@@ -367,7 +367,7 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
                   coreaudio (Mac OS X),<br />
                   dart (OS/2)
             </def>
-            <vals>jack, alsa, oss, pulseaudio, coreaudio, dsound, portaudio, sndman, dart, file</vals>
+            <vals>alsa, coreaudio, dart, dsound, file, jack, oss, portaudio, pulseaudio, sndman, waveout</vals>
             <desc>
                 The audio system to be used.
             </desc>
