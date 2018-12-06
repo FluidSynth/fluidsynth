@@ -43,7 +43,6 @@
 /* sf file chunk IDs */
 enum
 {
-    UNKN_ID,
     RIFF_ID,
     LIST_ID,
     SFBK_ID,
@@ -74,7 +73,9 @@ enum
     IMOD_ID,
     IGEN_ID, /* instrument ids */
     SHDR_ID, /* sample info */
-    SM24_ID
+    SM24_ID,
+  
+    UNKN_ID
 };
 
 /*
@@ -517,11 +518,12 @@ static int chunkid(uint32_t id)
     {
         if(*p == id)
         {
-            return (i + 1);
+            break;
         }
     }
 
-    return UNKN_ID;
+    /* Return chunk id or UNKN_ID if not found */
+    return i;
 }
 
 static int load_header(SFData *sf)
