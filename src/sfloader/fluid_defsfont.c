@@ -1410,7 +1410,7 @@ fluid_zone_mod_source_import_sfont(unsigned char *src, unsigned char *flags, uns
  * @return FLUID_OK if success, FLUID_FAILED otherwise.
  */
 static int
-fluid_zone_mod_import_sfont(fluid_mod_t **mod, SFZone *sfzone)
+fluid_zone_mod_import_sfont(char * zone_name, fluid_mod_t **mod, SFZone *sfzone)
 {
     fluid_list_t *r;
     int count;
@@ -1483,6 +1483,8 @@ fluid_zone_mod_import_sfont(fluid_mod_t **mod, SFZone *sfzone)
         r = fluid_list_next(r);
     } /* foreach modulator */
 
+    /* checks and removes invalid modulators in modulator list*/
+    fluid_zone_check_remove_mod(zone_name, mod);
     return FLUID_OK;
 }
 
@@ -1518,13 +1520,7 @@ fluid_preset_zone_import_sfont(fluid_preset_zone_t *zone, SFZone *sfzone, fluid_
     }
 
     /* Import the modulators (only SF2.1 and higher) */
-    if(fluid_zone_mod_import_sfont(&zone->mod, sfzone) == FLUID_OK)
-    {
-        /* checks and removes invalid modulators in modulator list*/
-        fluid_zone_check_remove_mod(zone->name, &zone->mod);
-        return FLUID_OK;
-    }
-    return FLUID_FAILED;
+    return fluid_zone_mod_import_sfont(zone->name, &zone->mod, sfzone);
 }
 
 /*
@@ -1797,13 +1793,7 @@ fluid_inst_zone_import_sfont(fluid_inst_zone_t *inst_zone, SFZone *sfzone, fluid
     }
 
     /* Import the modulators (only SF2.1 and higher) */
-    if(fluid_zone_mod_import_sfont(&inst_zone->mod, sfzone) == FLUID_OK)
-    {
-        /* checks and removes invalid modulators in modulator list*/
-        fluid_zone_check_remove_mod(inst_zone->name, &inst_zone->mod);
-        return FLUID_OK;
-    }
-    return FLUID_FAILED;
+    return fluid_zone_mod_import_sfont(inst_zone->name, &inst_zone->mod, sfzone);
 }
 
 /*
