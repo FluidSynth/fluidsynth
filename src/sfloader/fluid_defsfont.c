@@ -1235,12 +1235,12 @@ fluid_zone_is_mod_identic(fluid_mod_t *mod, char *name)
 /**
  * Checks and remove invalid modulators from a zone modulators list.
  * - checks valid modulator sources (specs SF 2.01  7.4, 7.8, 8.2.1).
- * - checks identic modulator in the list (specs SF 2.01  7.4, 7.8).
+ * - checks identic modulators in the list (specs SF 2.01  7.4, 7.8).
  * @param zone_name, zone name.
- * @param list_mod, address of pointer on modulator list.
+ * @param list_mod, address of pointer on modulators list.
  */
 static void
-fluid_zone_check_remove_mod(char * zone_name, fluid_mod_t **list_mod)
+fluid_zone_check_remove_mod(char *zone_name, fluid_mod_t **list_mod)
 {
     fluid_mod_t *prev_mod = NULL; /* previous modulator in list_mod */
     fluid_mod_t *mod = *list_mod; /* first modulator in list_mod */
@@ -1404,13 +1404,14 @@ fluid_zone_mod_source_import_sfont(unsigned char *src, unsigned char *flags, uns
 
 /*
  * fluid_zone_mod_import_sfont
- * Imports modulators from sfzone to mod list.
- * @param mod, pointer on modulator list to return.
+ * Imports modulators from sfzone to modulators list mod.
+ * @param zone_name, zone name.
+ * @param mod, address of pointer on modulators list to return.
  * @param sfzone, pointer on soundfont zone.
  * @return FLUID_OK if success, FLUID_FAILED otherwise.
  */
 static int
-fluid_zone_mod_import_sfont(char * zone_name, fluid_mod_t **mod, SFZone *sfzone)
+fluid_zone_mod_import_sfont(char *zone_name, fluid_mod_t **mod, SFZone *sfzone)
 {
     fluid_list_t *r;
     int count;
@@ -1483,7 +1484,7 @@ fluid_zone_mod_import_sfont(char * zone_name, fluid_mod_t **mod, SFZone *sfzone)
         r = fluid_list_next(r);
     } /* foreach modulator */
 
-    /* checks and removes invalid modulators in modulator list*/
+    /* checks and removes invalid modulators in modulators list*/
     fluid_zone_check_remove_mod(zone_name, mod);
     return FLUID_OK;
 }
