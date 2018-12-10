@@ -1231,6 +1231,42 @@ fluid_zone_is_mod_identic(fluid_mod_t *mod, char *name)
     return FALSE;
 }
 
+/**
+ * Limits the number of modulators in a modulator list.
+ * This is appropriate to internal synthesizer modulators tables
+ * which have a fixed size (FLUID_NUM_MOD).
+ *
+ * @param zone_name, zone name
+ * @param list_mod, address of pointer on modulator list.
+ */
+static void fluid_limit_mod_list(char *zone_name, fluid_mod_t **list_mod)
+{
+    int mod_idx = 0; /* modulator index */
+    fluid_mod_t *prev_mod = NULL; /* previous modulator in list_mod */
+    fluid_mod_t *mod = *list_mod; /* first modulator in list_mod */
+    while(mod)
+    {
+        if( (mod_idx + 1) > FLUID_NUM_MOD )
+        {
+            /* truncation of list_mod */
+            if(mod_idx)
+            {
+ 	            prev_mod->next = NULL;
+            }
+            else
+            {
+                *list_mod = NULL;
+            }
+            delete_fluid_list_mod(mod);
+            FLUID_LOG(FLUID_WARN, "%s, modulators count limited to %d", zone_name,
+                      FLUID_NUM_MOD);
+            break;
+        }
+        mod_idx++;
+        prev_mod = mod;
+        mod = mod->next;
+    }
+}
 
 /**
  * Checks and remove invalid modulators from a zone modulators list.
@@ -1275,6 +1311,9 @@ fluid_zone_check_mod(char *zone_name, fluid_mod_t **list_mod)
         mod = next;
         mod_idx++;
     }
+
+    /* limits the size of modulators list */
+    fluid_limit_mod_list(zone_name, list_mod);
 }
 
 /*
