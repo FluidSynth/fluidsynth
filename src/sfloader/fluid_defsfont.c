@@ -1240,7 +1240,7 @@ fluid_zone_is_mod_identic(fluid_mod_t *mod, char *name)
  * @param list_mod, address of pointer on modulators list.
  */
 static void
-fluid_zone_check_remove_mod(char *zone_name, fluid_mod_t **list_mod)
+fluid_zone_check_mod(char *zone_name, fluid_mod_t **list_mod)
 {
     fluid_mod_t *prev_mod = NULL; /* previous modulator in list_mod */
     fluid_mod_t *mod = *list_mod; /* first modulator in list_mod */
@@ -1485,7 +1485,7 @@ fluid_zone_mod_import_sfont(char *zone_name, fluid_mod_t **mod, SFZone *sfzone)
     } /* foreach modulator */
 
     /* checks and removes invalid modulators in modulators list*/
-    fluid_zone_check_remove_mod(zone_name, mod);
+    fluid_zone_check_mod(zone_name, mod);
     return FLUID_OK;
 }
 
