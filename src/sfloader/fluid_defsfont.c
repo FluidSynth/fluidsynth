@@ -724,9 +724,9 @@ fluid_defpreset_noteon_add_mod_to_voice(fluid_voice_t* voice,
     while(local_mod)
     {
         /* As modulators number in local_mod list was limited to FLUID_NUM_MOD at 
-		   soundfont loading time (fluid_limit_mod_list()), here we don't need
-		   to check if mod_list is full.
-		 */
+           soundfont loading time (fluid_limit_mod_list()), here we don't need
+           to check if mod_list is full.
+         */
         mod_list[mod_list_count++] = local_mod;
         local_mod = local_mod->next;
     }
@@ -764,7 +764,8 @@ fluid_defpreset_noteon_add_mod_to_voice(fluid_voice_t* voice,
             /* Although local_mod and global_mod lists was limited to 
                FLUID_NUM_MOD at soundfont loading time, it is possible that
                local + global modulators exceeds FLUID_NUM_MOD.
-               So, checks if mod_list_count reachs the limit */
+               So, checks if mod_list_count reachs the limit.
+            */
             if(mod_list_count >= FLUID_NUM_MOD)
             {
                 /* mod_list is full, we silently forget this modulator and
@@ -772,9 +773,9 @@ fluid_defpreset_noteon_add_mod_to_voice(fluid_voice_t* voice,
                    voice, a warning will be displayed if the voice list is full.
                    (see fluid_voice_add_mod_local()).
                 */
-				break;
-			}
-		    mod_list[mod_list_count++] = global_mod;
+                break;
+            }
+            mod_list[mod_list_count++] = global_mod;
         }
         global_mod = global_mod->next;
     }
