@@ -99,6 +99,16 @@ static const fluid_audriver_definition_t fluid_audio_drivers[] =
     },
 #endif
 
+#if WAVEOUT_SUPPORT
+    {
+        "waveout",
+        new_fluid_waveout_audio_driver,
+        NULL,
+        delete_fluid_waveout_audio_driver,
+        fluid_waveout_audio_driver_settings
+    },
+#endif
+
 #if SNDMAN_SUPPORT
     {
         "sndman",

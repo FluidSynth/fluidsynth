@@ -367,7 +367,7 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
                   coreaudio (Mac OS X),<br />
                   dart (OS/2)
             </def>
-            <vals>jack, alsa, oss, pulseaudio, coreaudio, dsound, portaudio, sndman, dart, file, sdl2</vals>
+            <vals>alsa, coreaudio, dart, dsound, file, jack, oss, portaudio, pulseaudio, sdl2, sndman, waveout</vals>
             <desc>
                 The audio system to be used. In order to use sdl2 as audio driver, the application is responsible for initializing SDL's audio subsystem.
             </desc>
