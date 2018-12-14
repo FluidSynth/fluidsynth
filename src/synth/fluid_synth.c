@@ -1902,7 +1902,7 @@ fluid_synth_sysex_midi_tuning(fluid_synth_t *synth, const char *data, int len,
     int bank = 0, prog, channels;
     double tunedata[128];
     int keys[128];
-    char name[17];
+    char name[17]={0};
     int note, frac, frac2;
     uint8_t chksum;
     int i, count, index;
@@ -1973,7 +1973,8 @@ fluid_synth_sysex_midi_tuning(fluid_synth_t *synth, const char *data, int len,
         }
 
         *resptr++ = prog;
-        FLUID_STRNCPY(resptr, name, 16);
+        /* copy 16 ASCII characters (potentially not null terminated) to the sysex buffer */
+        FLUID_MEMCPY(resptr, name, 16);
         resptr += 16;
 
         for(i = 0; i < 128; i++)
