@@ -92,6 +92,12 @@ else ( WINMIDI_SUPPORT )
   message ( "WinMidi support:       no" )
 endif ( WINMIDI_SUPPORT )
 
+if ( SDL2_SUPPORT )
+  message ( "SDL2 support:          yes" )
+else ( SDL2_SUPPORT )
+  message ( "SDL2 support:          no" )
+endif ( SDL2_SUPPORT )
+
 if ( LADSPA_SUPPORT )
   message ( "LADSPA support:        yes" )
 else ( LADSPA_SUPPORT )

@@ -32,6 +32,7 @@ include_directories (
     ${CMAKE_SOURCE_DIR}/include
     ${CMAKE_BINARY_DIR}/include
     ${PTHREADS_INCLUDE_DIR}
+    ${SDL2_INCLUDE_DIR}
 )
 
 include_directories (
@@ -89,6 +90,10 @@ endif ( WAVEOUT_SUPPORT )
 if ( WINMIDI_SUPPORT )
   set ( fluid_winmidi_SOURCES drivers/fluid_winmidi.c )
 endif ( WINMIDI_SUPPORT )
+
+if ( SDL2_SUPPORT )
+  set ( fluid_sdl2_SOURCES drivers/fluid_sdl2.c )
+endif ( SDL2_SUPPORT )
 
 if ( OSS_SUPPORT )
   set ( fluid_oss_SOURCES drivers/fluid_oss.c )
@@ -254,6 +259,7 @@ add_library ( libfluidsynth-OBJ OBJECT
     ${fluid_dsound_SOURCES}
     ${fluid_waveout_SOURCES}
     ${fluid_winmidi_SOURCES}
+    ${fluid_sdl2_SOURCES}
     ${libfluidsynth_SOURCES}
     ${public_HEADERS}
     ${public_main_HEADER}
@@ -321,6 +327,7 @@ target_link_libraries ( libfluidsynth
     ${PULSE_LIBRARIES}
     ${PORTAUDIO_LIBRARIES}
     ${LIBSNDFILE_LIBRARIES}
+    ${SDL2_LIBRARY}
     ${DBUS_LIBRARIES}
     ${READLINE_LIBS}
     ${DART_LIBS}
