@@ -201,7 +201,6 @@ if ( WIN32 )
 
   # Check presence of MS include files
   check_include_file ( windows.h HAVE_WINDOWS_H )
-  check_include_file ( io.h HAVE_IO_H )
   check_include_file ( dsound.h HAVE_DSOUND_H )
   check_include_files ( "windows.h;mmsystem.h" HAVE_MMSYSTEM_H )
 
@@ -342,6 +341,18 @@ if ( enable-profiling )
     endif ( )
     
     set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OPT_FLAGS}" )
+    
+    if ( CMAKE_VERSION VERSION_GREATER "3.6.0" )
+        find_program( CLANG_TIDY
+                    NAMES "clang-tidy"
+                    DOC "Path to clang-tidy executable" )
+
+        if ( CLANG_TIDY )
+            message ( STATUS "Found clang-tidy" )
+            set ( CMAKE_C_CLANG_TIDY "clang-tidy" )
+        endif ( CLANG_TIDY )
+    endif ( CMAKE_VERSION VERSION_GREATER "3.6.0" )
+
 endif ( enable-profiling )
 
 unset ( ENABLE_TRAPONFPE CACHE )
@@ -374,22 +385,6 @@ if ( CMAKE_BUILD_TYPE MATCHES "Debug" )
     set ( ENABLE_DEBUG 1 )
     set ( DEBUG 1 )
 endif ( CMAKE_BUILD_TYPE MATCHES "Debug" )
-
-if ( CMAKE_VERSION VERSION_GREATER "3.6.0" )
-find_program( CLANG_TIDY
-            NAMES "clang-tidy"
-            DOC "Path to clang-tidy executable" )
-
-    if ( CLANG_TIDY )
-    message ( STATUS "Found clang-tidy" )
-        # whenever clang-tidy is available, use it to automatically add braces after ever "make"
-        if ( WITH_PROFILING )
-            set ( CMAKE_C_CLANG_TIDY "clang-tidy" )
-        else ( WITH_PROFILING )
-            set ( CMAKE_C_CLANG_TIDY "clang-tidy;-checks=-*,readability-braces-*;-format-style=file" )
-        endif ( WITH_PROFILING )
-    endif ( CLANG_TIDY )
-endif ( CMAKE_VERSION VERSION_GREATER "3.6.0" )
 
 # Additional targets to perform clang-format/clang-tidy
 # Get all project files
