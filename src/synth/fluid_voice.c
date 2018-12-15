@@ -1162,24 +1162,23 @@ fluid_voice_update_param(fluid_voice_t *voice, int gen)
  * iteration of the audio cycle (which would probably be feasible if
  * the synth was made in silicon).
  *
- * The update is done in three steps:
+ * The update is done in two steps:
  *
  * - step 1: first, we look for all the modulators that have the changed
- * controller as a source. This will yield a list of generators that
- * will be changed because of the controller event.
+ * controller as a source. This will yield a generator that will be changed
+ * because of the controller event.
  *
- * - step 2: For every changed generator, calculate its new value. This is the
+ * - step 2: For this generator, calculate its new value. This is the
  * sum of its original value plus the values of all the attached modulators.
  * The generator flag is set to indicate the parameters must be updated.
- *
- * - step 3: We need to avoid the risk to call 'fluid_voice_update_param' several
+ * This avoid the risk to call 'fluid_voice_update_param' several
  * times for the same generator if several modulators have that generator as
- * destination. So every changed generators are updated only once
+ * destination. So every changed generators are updated only once.
  */
 
  /* bit table for each generator being updated. The bits are packed in variables
   Each variable have NBR_BIT_BY_VAR bits represented by NBR_BIT_BY_VAR_LN2.
-  The size of the table is the number of variables: SIZE_UPDATED_GEN.
+  The size of the table is the number of variables: SIZE_UPDATED_GEN_BIT.
  
   Note: In this implementation NBR_BIT_BY_VAR_LN2 is set to 5 (convenient for 32 bits cpu)
   but this could be set to 6 for 64 bits cpu.
@@ -1200,7 +1199,7 @@ int fluid_voice_modulate(fluid_voice_t *voice, int cc, int ctrl)
     uint32_t gen;
     fluid_real_t modval;
 
-    /* registered bits table of updated generators */
+    /* Clears registered bits table of updated generators */
     uint32_t updated_gen_bit[SIZE_UPDATED_GEN_BIT] = {0};
 
     /*    printf("Chan=%d, CC=%d, Src=%d, Val=%d\n", voice->channel->channum, cc, ctrl, val); */
@@ -1210,36 +1209,36 @@ int fluid_voice_modulate(fluid_voice_t *voice, int cc, int ctrl)
         mod = &voice->mod[i];
 
         /* step 1: find all the modulators that have the changed controller
-           as input source. When ctrl is -1 all modulators's destination 
+           as input source. When ctrl is -1 all modulators destination 
            are updated */
         if(ctrl < 0 || fluid_mod_has_source(mod, cc, ctrl))
         {
             gen = fluid_mod_get_dest(mod);
-            modval = 0.0;
 
-            /* step 2: for every changed modulator, calculate the modulation
-             * value of its associated generator */
-            for(k = 0; k < voice->mod_count; k++)
+            /* does this generator was never updated ? */
+            if (!is_gen_updated(updated_gen_bit, gen))
             {
-                if(fluid_mod_has_dest(&voice->mod[k], gen))
-                {
-                    modval += fluid_mod_get_value(&voice->mod[k], voice);
-                }
-            }
+                modval = 0.0;
 
-            fluid_gen_set_mod(&voice->gen[gen], modval);
-            /* set the bit that indicates this generator is updated */
-            set_gen_updated(updated_gen_bit, gen);
-        }
-    }
-    
-    /* step 3: now recalculate the parameter values that are derived from the
-      generator */
-    for(gen = 0; gen < GEN_LAST; gen++)
-    {
-        if (is_gen_updated(updated_gen_bit, gen))
-        {
-            fluid_voice_update_param(voice, gen);
+                /* step 2: for every attached modulator, calculate the modulation
+                 * value for the generator gen */
+                for(k = 0; k < voice->mod_count; k++)
+                {
+                    if(fluid_mod_has_dest(&voice->mod[k], gen))
+                    {
+                        modval += fluid_mod_get_value(&voice->mod[k], voice);
+                    }
+                }
+
+                fluid_gen_set_mod(&voice->gen[gen], modval);
+
+                /* now recalculate the parameter values that are derived from the
+                   generator */
+                fluid_voice_update_param(voice, gen);
+
+                /* set the bit that indicates this generator is updated */
+                set_gen_updated(updated_gen_bit, gen);
+            }
         }
     }
 
