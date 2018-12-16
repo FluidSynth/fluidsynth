@@ -63,6 +63,8 @@ int fluid_handle_interp(void *data, int ac, char **av, fluid_ostream_t out);
 int fluid_handle_interpc(void *data, int ac, char **av, fluid_ostream_t out);
 int fluid_handle_tuning(void *data, int ac, char **av, fluid_ostream_t out);
 int fluid_handle_tune(void *data, int ac, char **av, fluid_ostream_t out);
+int fluid_handle_tuneoctave(void *data, int ac, char **av, fluid_ostream_t out);
+int fluid_handle_tuneall(void *data, int ac, char **av, fluid_ostream_t out);
 int fluid_handle_settuning(void *data, int ac, char **av, fluid_ostream_t out);
 int fluid_handle_resettuning(void *data, int ac, char **av, fluid_ostream_t out);
 int fluid_handle_tunings(void *data, int ac, char **av, fluid_ostream_t out);
