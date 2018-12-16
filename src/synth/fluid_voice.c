@@ -1696,9 +1696,10 @@ int fluid_voice_get_velocity(const fluid_voice_t *voice)
  * A lower boundary for the attenuation (as in 'the minimum
  * attenuation of this voice, with volume pedals, modulators
  * etc. resulting in minimum attenuation, cannot fall below x cB) is
- * calculated.  This has to be called during fluid_voice_init, after
+ * calculated.  This has to be called during fluid_voice_start, after
  * all modulators have been run on the voice once.  Also,
  * voice->attenuation has to be initialized.
+ * (see fluid_voice_calculate_runtime_synthesis_parameters())
  */
 static fluid_real_t
 fluid_voice_get_lower_boundary_for_attenuation(fluid_voice_t *voice)
@@ -1725,30 +1726,42 @@ fluid_voice_get_lower_boundary_for_attenuation(fluid_voice_t *voice)
         {
 
             fluid_real_t current_val = fluid_mod_get_value(mod, voice);
-            fluid_real_t v = fabs(mod->amount);
+            /* min_val is the possible minimum value for this modulator.
+               it depends of 3 things :
+               1)the minimum values of src1,src2 (i.e -1 if mapping is bipolar
+                 or 0 if mapping is unipolar).
+               2)the sign of amount.
+               3)absolute value of amount.
 
-            if((mod->src1 == FLUID_MOD_PITCHWHEEL)
-                    || (mod->flags1 & FLUID_MOD_BIPOLAR)
+               When at least one source mapping is bipolar:
+			     min_val is -|amount| regardless the sign of amount.
+               When both sources mapping are unipolar:
+                 min_val is -|amount|, if amount is negative.
+                 min_val is 0, if amount is positive
+             */
+            fluid_real_t min_val = fabs(mod->amount);
+
+            /* Can this modulator produce a negative contribution? */
+            if((mod->flags1 & FLUID_MOD_BIPOLAR)
                     || (mod->flags2 & FLUID_MOD_BIPOLAR)
                     || (mod->amount < 0))
             {
-                /* Can this modulator produce a negative contribution? */
-                v *= -1.0;
+                min_val *= -1.0; /* min_val = - |amount|*/
             }
             else
             {
                 /* No negative value possible. But still, the minimum contribution is 0. */
-                v = 0;
+                min_val = 0;
             }
 
             /* For example:
              * - current_val=100
              * - min_val=-4000
-             * - possible_att_reduction_cB += 4100
+             * - possible reduction contribution of this modulator = current_val - min_val = 4100
              */
-            if(current_val > v)
+            if(current_val > min_val)
             {
-                possible_att_reduction_cB += (current_val - v);
+                possible_att_reduction_cB += (current_val - min_val);
             }
         }
     }
