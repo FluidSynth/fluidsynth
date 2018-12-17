@@ -3306,10 +3306,10 @@ fluid_synth_program_reset(fluid_synth_t *synth)
  * Synthesize a block of floating point audio to separate audio buffers (multichannel rendering). First effect channel used by reverb, second for chorus.
  * @param synth FluidSynth instance
  * @param len Count of audio frames to synthesize
- * @param left Array of float buffers to store left channel of planar audio (as many as \c synth.audio-channels buffers, each of \c len in size)
- * @param right Array of float buffers to store right channel of planar audio (size: dito)
- * @param fx_left Since 1.1.7: If not \c NULL, array of float buffers to store left effect channels (as many as \c synth.effects-channels buffers, each of \c len in size)
- * @param fx_right Since 1.1.7: If not \c NULL, array of float buffers to store right effect channels (size: dito)
+ * @param left Array of float buffers to store left channel of planar audio (as many as \c synth.audio-channels buffers, each of \c len in size). Since 2.0.3: NULL allowed / NULL allowed for array entry
+ * @param right Array of float buffers to store right channel of planar audio (size: dito). Since 2.0.3: NULL allowed / NULL allowed for array entry
+ * @param fx_left Since 1.1.7: If not \c NULL, array of float buffers to store left effect channels (as many as \c synth.effects-channels buffers, each of \c len in size). Since 2.0.3: NULL allowed for array entry
+ * @param fx_right Since 1.1.7: If not \c NULL, array of float buffers to store right effect channels (size: dito). Since 2.0.3: NULL allowed for array entry
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  *
  * @note Should only be called from synthesis thread.
@@ -3386,15 +3386,27 @@ fluid_synth_nwrite_float(fluid_synth_t *synth, int len,
         for(i = 0; i < synth->audio_channels; i++)
         {
 #ifdef WITH_FLOAT
-            FLUID_MEMCPY(left[i], &left_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + synth->cur], bytes);
-            FLUID_MEMCPY(right[i], &right_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + synth->cur], bytes);
+            if(left != NULL && left[i] != NULL)
+            {
+                FLUID_MEMCPY(left[i], &left_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + synth->cur], bytes);
+            }
+            if(right != NULL && right[i] != NULL)
+            {
+                FLUID_MEMCPY(right[i], &right_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + synth->cur], bytes);
+            }
 #else //WITH_FLOAT
             int j;
 
             for(j = 0; j < num; j++)
             {
-                left[i][j] = (float) left_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + j + synth->cur];
-                right[i][j] = (float) right_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + j + synth->cur];
+                if(left != NULL && left[i] != NULL)
+                {
+                    left[i][j] = (float) left_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + j + synth->cur];
+                }
+                if(right != NULL && right[i] != NULL)
+                {
+                    right[i][j] = (float) right_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + j + synth->cur];
+                }
             }
 
 #endif //WITH_FLOAT
@@ -3404,12 +3416,12 @@ fluid_synth_nwrite_float(fluid_synth_t *synth, int len,
         {
 #ifdef WITH_FLOAT
 
-            if(fx_left != NULL)
+            if(fx_left != NULL && fx_left[i] != NULL)
             {
                 FLUID_MEMCPY(fx_left[i], &fx_left_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + synth->cur], bytes);
             }
 
-            if(fx_right != NULL)
+            if(fx_right != NULL && fx_right[i] != NULL)
             {
                 FLUID_MEMCPY(fx_right[i], &fx_right_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + synth->cur], bytes);
             }
@@ -3417,7 +3429,7 @@ fluid_synth_nwrite_float(fluid_synth_t *synth, int len,
 #else //WITH_FLOAT
             int j;
 
-            if(fx_left != NULL)
+            if(fx_left != NULL && fx_left[i] != NULL)
             {
                 for(j = 0; j < num; j++)
                 {
@@ -3425,7 +3437,7 @@ fluid_synth_nwrite_float(fluid_synth_t *synth, int len,
                 }
             }
 
-            if(fx_right != NULL)
+            if(fx_right != NULL && fx_right[i] != NULL)
             {
                 for(j = 0; j < num; j++)
                 {
@@ -3456,15 +3468,30 @@ fluid_synth_nwrite_float(fluid_synth_t *synth, int len,
         for(i = 0; i < synth->audio_channels; i++)
         {
 #ifdef WITH_FLOAT
-            FLUID_MEMCPY(left[i] + count, &left_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT], bytes);
-            FLUID_MEMCPY(right[i] + count, &right_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT], bytes);
+            if(left != NULL && left[i] != NULL)
+            {
+                FLUID_MEMCPY(left[i] + count, &left_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT], bytes);
+            }
+            if(right != NULL && right[i] != NULL)
+            {
+                FLUID_MEMCPY(right[i] + count, &right_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT], bytes);
+            }
 #else //WITH_FLOAT
             int j;
 
-            for(j = 0; j < num; j++)
+            if(left != NULL && left[i] != NULL)
             {
-                left[i][j + count] = (float) left_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + j];
-                right[i][j + count] = (float) right_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + j];
+                for(j = 0; j < num; j++)
+                {
+                    left[i][j + count] = (float) left_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + j];
+                }
+            }
+            if(right != NULL && right[i] != NULL)
+            {
+                for(j = 0; j < num; j++)
+                {
+                    right[i][j + count] = (float) right_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + j];
+                }
             }
 
 #endif //WITH_FLOAT
@@ -3474,12 +3501,12 @@ fluid_synth_nwrite_float(fluid_synth_t *synth, int len,
         {
 #ifdef WITH_FLOAT
 
-            if(fx_left != NULL)
+            if(fx_left != NULL && fx_left[i] != NULL)
             {
                 FLUID_MEMCPY(fx_left[i] + count, &fx_left_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT], bytes);
             }
 
-            if(fx_right != NULL)
+            if(fx_right != NULL && fx_right[i] != NULL)
             {
                 FLUID_MEMCPY(fx_right[i] + count, &fx_right_in[i * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT], bytes);
             }
@@ -3487,7 +3514,7 @@ fluid_synth_nwrite_float(fluid_synth_t *synth, int len,
 #else //WITH_FLOAT
             int j;
 
-            if(fx_left != NULL)
+            if(fx_left != NULL && fx_left[i] != NULL)
             {
                 for(j = 0; j < num; j++)
                 {
@@ -3495,7 +3522,7 @@ fluid_synth_nwrite_float(fluid_synth_t *synth, int len,
                 }
             }
 
-            if(fx_right != NULL)
+            if(fx_right != NULL && fx_right[i] != NULL)
             {
                 for(j = 0; j < num; j++)
                 {
