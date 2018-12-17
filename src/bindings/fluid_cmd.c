@@ -262,11 +262,6 @@ static const fluid_cmd_t fluid_commands[] =
         "                           standard tuning for all 12 notes, starting from C\n"
     },
     {
-        "tuneall", "tuning", fluid_handle_tuneall,
-        "tuneall bank prog offset   Tune all notes with the given cent offset from\n"
-        "                           standard tuning\n"
-    },
-    {
         "settuning", "tuning", fluid_handle_settuning,
         "settuning chan bank prog   Set the tuning for a MIDI channel"
     },
@@ -1689,60 +1684,6 @@ fluid_handle_tuneoctave(void *data, int ac, char **av, fluid_ostream_t out)
     if (fluid_synth_activate_octave_tuning(handler->synth, bank, prog, "tuneoctave", offsets, realtime) == FLUID_FAILED)
     {
         fluid_ostream_printf(out, "tuneoctave: failed to set octave tuning.\n");
-        return FLUID_FAILED;
-    }
-
-    return FLUID_OK;
-}
-
-int
-fluid_handle_tuneall(void *data, int ac, char **av, fluid_ostream_t out)
-{
-    FLUID_ENTRY_COMMAND(data);
-    int i;
-    int bank, prog;
-    int realtime = 0;
-    double offsets[12];
-
-    if(ac < 3)
-    {
-        fluid_ostream_printf(out, "tuneall: too few arguments (bank, prog, cent offset).\n");
-        return FLUID_FAILED;
-    }
-
-    bank = atoi(av[0]);
-    if(!fluid_is_number(av[0]) || (bank < 0) || (bank >= 128))
-    {
-        fluid_ostream_printf(out, "tuneall: invalid bank number.\n");
-        return FLUID_FAILED;
-    };
-
-    prog = atoi(av[1]);
-    if(!fluid_is_number(av[1]) || (prog < 0) || (prog >= 128))
-    {
-        fluid_ostream_printf(out, "tuneall: invalid program number.\n");
-        return FLUID_FAILED;
-    };
-
-    offsets[0] = atof(av[2]);
-    if(!fluid_is_number(av[2]) || (offsets[0] < -100.0) || (offsets[0] > 100.0))
-    {
-        fluid_ostream_printf(out, "tuneall: cent offset should be between -100.0 and 100.0.\n");
-        return FLUID_FAILED;
-    }
-
-    for(i = 1; i < 12; i++) {
-        offsets[i] = offsets[0];
-    }
-
-    if((ac > 3) && (FLUID_STRCMP(av[3], "--realtime") == 0))
-    {
-        realtime = 1;
-    }
-
-    if (fluid_synth_activate_octave_tuning(handler->synth, bank, prog, "tuneall", offsets, realtime) == FLUID_FAILED)
-    {
-        fluid_ostream_printf(out, "tuneall: failed to set tuning.\n");
         return FLUID_FAILED;
     }
 
