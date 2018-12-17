@@ -3314,8 +3314,6 @@ fluid_synth_program_reset(fluid_synth_t *synth)
  *
  * @note Should only be called from synthesis thread.
  *
- * @deprecated fluid_synth_nwrite_float() is deprecated and will be removed in a future release. It may continue to work or it may return #FLUID_FAILED in the future. Consider using the more powerful and flexible fluid_synth_process().
- *
  * Usage example:
  * @code{.cpp}
     const int FramesToRender = 64;
