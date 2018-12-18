@@ -73,7 +73,8 @@
 /*
  * This declares a uint32_t array containing the SF2 chunk identifiers.
  */
-static const uint32_t idlist[] = {
+static const uint32_t idlist[] =
+{
     RIFF_FCC,
     LIST_FCC,
     SFBK_FCC,
@@ -340,23 +341,33 @@ int fluid_is_soundfont(const char *filename)
     do
     {
         if(fp == NULL)
+        {
             break;
+        }
 
         if(FLUID_FREAD(&fcc, sizeof(fcc), 1, fp) != 1)
+        {
             break;
+        }
 
-        if (fcc != RIFF_FCC)
+        if(fcc != RIFF_FCC)
+        {
             break;
+        }
 
         if(FLUID_FSEEK(fp, 4, SEEK_CUR))
+        {
             break;
+        }
 
         if(FLUID_FREAD(&fcc, sizeof(fcc), 1, fp) != 1)
+        {
             break;
+        }
 
         retcode = (fcc == SFBK_FCC);
     }
-    while (0);
+    while(0);
 
     FLUID_FCLOSE(fp);
 
@@ -692,7 +703,8 @@ static int read_listchunk(SFData *sf, SFChunk *chunk)
 static int process_info(SFData *sf, int size)
 {
     SFChunk chunk;
-    union {
+    union
+    {
         char *chr;
         uint32_t *fcc;
     } item;
@@ -779,7 +791,7 @@ static int process_info(SFData *sf, int size)
 
             /* save chunk fcc and update pointer to data value */
             *item.fcc++ = chunk.id;
-            
+
             if(sf->fcbs->fread(item.chr, chunk.size, sf->sffd) == FLUID_FAILED)
             {
                 return FALSE;

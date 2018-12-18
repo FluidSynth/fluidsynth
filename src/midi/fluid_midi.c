@@ -98,14 +98,18 @@ int fluid_is_midifile(const char *filename)
     do
     {
         if(fp == NULL)
+        {
             break;
+        }
 
         if(FLUID_FREAD(&id, sizeof(id), 1, fp) != 1)
+        {
             break;
+        }
 
-        retcode = (id == FLUID_FOURCC('M','T','h','d'));
+        retcode = (id == FLUID_FOURCC('M', 'T', 'h', 'd'));
     }
-    while (0);
+    while(0);
 
     FLUID_FCLOSE(fp);
 
@@ -1628,7 +1632,7 @@ new_fluid_player(fluid_synth_t *synth)
 
     fluid_settings_getint(synth->settings, "player.reset-synth", &i);
     fluid_player_handle_reset_synth(player, NULL, i);
-    
+
     fluid_settings_callback_int(synth->settings, "player.reset-synth",
                                 fluid_player_handle_reset_synth, player);
 
