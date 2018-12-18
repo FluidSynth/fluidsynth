@@ -35,6 +35,10 @@
 #define GETOPT_SUPPORT 1
 #endif
 
+#ifdef LIBINSTPATCH_SUPPORT
+#include <libinstpatch/libinstpatch.h>
+#endif
+
 #include "fluidsynth.h"
 
 #include "fluid_lash.h"
@@ -753,8 +757,19 @@ int main(int argc, char **argv)
     /* load the soundfonts (check that all non options are SoundFont or MIDI files) */
     for(i = arg1; i < argc; i++)
     {
-        if(fluid_is_soundfont(argv[i]))
+#ifdef LIBINSTPATCH_SUPPORT
+        IpatchFileHandle *fhandle = NULL;
+#endif
+        if(fluid_is_soundfont(argv[i])
+#ifdef LIBINSTPATCH_SUPPORT
+            || (fhandle = ipatch_file_identify_open (argv[i], NULL)) != NULL
+        )
         {
+            ipatch_file_close(fhandle); /* safe when called with NULL */
+#else
+        )
+        {
+#endif
             if(fluid_synth_sfload(synth, argv[i], 1) == -1)
             {
                 fprintf(stderr, "Failed to load the SoundFont %s\n", argv[i]);

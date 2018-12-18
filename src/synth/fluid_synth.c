@@ -25,6 +25,7 @@
 #include "fluid_settings.h"
 #include "fluid_sfont.h"
 #include "fluid_defsfont.h"
+#include "fluid_instpatch.h"
 
 #ifdef TRAP_ON_FPE
 #define _GNU_SOURCE
@@ -463,6 +464,10 @@ fluid_synth_init(void)
     fluid_mod_set_dest(&custom_balance_mod, GEN_CUSTOM_BALANCE);     /* Destination: stereo balance */
     /* Amount: 96 dB of attenuation (on the opposite channel) */
     fluid_mod_set_amount(&custom_balance_mod, FLUID_PEAK_ATTENUATION); /* Amount: 960 */
+    
+#ifdef LIBINSTPATCH_SUPPORT
+    fluid_instpatch_init();
+#endif
 }
 
 static FLUID_INLINE unsigned int fluid_synth_get_ticks(fluid_synth_t *synth)
@@ -816,6 +821,20 @@ new_fluid_synth(fluid_settings_t *settings)
 #endif /* LADSPA */
     }
 
+    /* allocate and add the dls and gig sfont loader */
+#ifdef LIBINSTPATCH_SUPPORT
+    loader = new_fluid_instpatch_loader(settings);
+
+    if(loader == NULL)
+    {
+        FLUID_LOG(FLUID_WARN, "Failed to create the instpatch SoundFont loader");
+    }
+    else
+    {
+        fluid_synth_add_sfloader(synth, loader);
+    }
+#endif
+
     /* allocate and add the default sfont loader */
     loader = new_fluid_defsfloader(settings);
 
@@ -827,7 +846,7 @@ new_fluid_synth(fluid_settings_t *settings)
     {
         fluid_synth_add_sfloader(synth, loader);
     }
-
+    
     /* allocate all channel objects */
     synth->channel = FLUID_ARRAY(fluid_channel_t *, synth->midi_channels);
 
