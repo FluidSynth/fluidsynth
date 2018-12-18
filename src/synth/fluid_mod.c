@@ -490,7 +490,7 @@ size_t fluid_mod_sizeof()
  * Checks if modulator with source 1 other than CC is FLUID_MOD_NONE. 
  *
  * @param mod, modulator.
- * @return TRUE if selected modulator source other than cc is FLUID_MOD_NONE, FALSE otherwise.
+ * @return TRUE if modulator source 1 other than cc is FLUID_MOD_NONE, FALSE otherwise.
  */
 static int
 fluid_mod_is_src1_none(const fluid_mod_t *mod)
@@ -606,14 +606,14 @@ int fluid_mod_check_sources(const fluid_mod_t *mod, char *name)
       being useless. It will be removed later with others invalid modulators.
     */
     if(fluid_mod_is_src1_none(mod))
-	{
-		if(name)
-		{
-			FLUID_LOG(FLUID_WARN, src1_is_none, name, mod->src1);
-		}
-		return FALSE;
-	}
-	
+    {
+        if(name)
+        {
+            FLUID_LOG(FLUID_WARN, src1_is_none, name, mod->src1);
+        }
+        return FALSE;
+    }
+
     if(!fluid_mod_check_non_cc_source(mod, 0)) /* check src2 */
     {
         if(name)
