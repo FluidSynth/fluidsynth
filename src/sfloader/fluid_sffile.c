@@ -904,8 +904,6 @@ ret:
 
 static int pdtahelper(SFData *sf, unsigned int expid, unsigned int reclen, SFChunk *chunk, int *size)
 {
-    unsigned int id;
-
     READCHUNK(sf, chunk);
     *size -= 8;
 
