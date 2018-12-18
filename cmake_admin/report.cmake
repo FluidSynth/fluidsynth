@@ -140,6 +140,12 @@ else ( WITH_READLINE )
   message ( "Readline:              no" )
 endif ( WITH_READLINE )
 
+if ( LIBINSTPATCH_SUPPORT )
+  message ( "libinstpatch:          yes" )
+else ( LIBINSTPATCH_SUPPORT )
+  message ( "libinstpatch:          no" )
+endif ( LIBINSTPATCH_SUPPORT )
+
 if ( WITH_FLOAT )
   message ( "Samples type=float:    yes" )
 else ( WITH_FLOAT )
