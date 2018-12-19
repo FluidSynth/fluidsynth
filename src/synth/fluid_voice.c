@@ -1215,8 +1215,8 @@ int fluid_voice_modulate(fluid_voice_t *voice, int cc, int ctrl)
         {
             gen = fluid_mod_get_dest(mod);
 
-            /* does this generator was never updated ? */
-            if (!is_gen_updated(updated_gen_bit, gen))
+            /* Skip if this generator has already been updated */
+            if(!is_gen_updated(updated_gen_bit, gen))
             {
                 modval = 0.0;
 
