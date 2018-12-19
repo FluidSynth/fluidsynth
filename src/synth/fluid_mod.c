@@ -364,7 +364,22 @@ fluid_mod_transform_source_value(fluid_real_t val, unsigned char mod_flags, cons
 }
 
 /*
- * fluid_mod_get_value
+ * fluid_mod_get_value.
+ * Computes and return modulator output following SF2.01
+ * (See SoundFont Modulator Controller Model Chapter 9.5).
+ *
+ * Output = Transform(Amount * Map(primary source input) * Map(secondary source input))
+ *
+ * Notes:
+ * 1)fluid_mod_get_value, ignores the Transform operator. The result is:
+ *
+ *   Output = Amount * Map(primary source input) * Map(secondary source input)
+ *
+ * 2)When primary source input (src1) is set to General Controller 'No Controller',
+ *   output is forced to 0.
+ *
+ * 3)When secondary source input (src2) is set to General Controller 'No Controller',
+ *   output is forced to +1.0 
  */
 fluid_real_t
 fluid_mod_get_value(fluid_mod_t *mod, fluid_voice_t *voice)
@@ -418,6 +433,9 @@ fluid_mod_get_value(fluid_mod_t *mod, fluid_voice_t *voice)
         /* transform the input value */
         v1 = fluid_mod_transform_source_value(v1, mod->flags1, range1);
     }
+    /* When primary source input (src1) is set to General Controller 'No Controller',
+       output is forced to 0.0
+    */
     else
     {
         return 0.0;
@@ -437,6 +455,9 @@ fluid_mod_get_value(fluid_mod_t *mod, fluid_voice_t *voice)
         /* transform the second input value */
         v2 = fluid_mod_transform_source_value(v2, mod->flags2, range2);
     }
+    /* When secondary source input (src2) is set to General Controller 'No Controller',
+       output is forced to +1.0
+    */
     else
     {
         v2 = 1.0f;
