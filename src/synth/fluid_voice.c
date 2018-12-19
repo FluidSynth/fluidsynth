@@ -1177,16 +1177,16 @@ fluid_voice_update_param(fluid_voice_t *voice, int gen)
  * destination. So every changed generators are updated only once
  */
 
- /* bit table for each generator being updated. The bits are packed in variables
-  Each variable have NBR_BIT_BY_VAR bits represented by NBR_BIT_BY_VAR_LN2.
-  The size of the table is the number of variables: SIZE_UPDATED_GEN.
- 
-  Note: In this implementation NBR_BIT_BY_VAR_LN2 is set to 5 (convenient for 32 bits cpu)
-  but this could be set to 6 for 64 bits cpu.
- */
+/* bit table for each generator being updated. The bits are packed in variables
+ Each variable have NBR_BIT_BY_VAR bits represented by NBR_BIT_BY_VAR_LN2.
+ The size of the table is the number of variables: SIZE_UPDATED_GEN.
+
+ Note: In this implementation NBR_BIT_BY_VAR_LN2 is set to 5 (convenient for 32 bits cpu)
+ but this could be set to 6 for 64 bits cpu.
+*/
 
 #define NBR_BIT_BY_VAR_LN2 5	/* for 32 bits variables */
-#define NBR_BIT_BY_VAR  (1 << NBR_BIT_BY_VAR_LN2)	
+#define NBR_BIT_BY_VAR  (1 << NBR_BIT_BY_VAR_LN2)
 #define NBR_BIT_BY_VAR_ANDMASK (NBR_BIT_BY_VAR - 1)
 #define	SIZE_UPDATED_GEN_BIT  ((GEN_LAST + NBR_BIT_BY_VAR_ANDMASK) / NBR_BIT_BY_VAR)
 
@@ -1210,7 +1210,7 @@ int fluid_voice_modulate(fluid_voice_t *voice, int cc, int ctrl)
         mod = &voice->mod[i];
 
         /* step 1: find all the modulators that have the changed controller
-           as input source. When ctrl is -1 all modulators's destination 
+           as input source. When ctrl is -1 all modulators's destination
            are updated */
         if(ctrl < 0 || fluid_mod_has_source(mod, cc, ctrl))
         {
@@ -1232,12 +1232,12 @@ int fluid_voice_modulate(fluid_voice_t *voice, int cc, int ctrl)
             set_gen_updated(updated_gen_bit, gen);
         }
     }
-    
+
     /* step 3: now recalculate the parameter values that are derived from the
       generator */
     for(gen = 0; gen < GEN_LAST; gen++)
     {
-        if (is_gen_updated(updated_gen_bit, gen))
+        if(is_gen_updated(updated_gen_bit, gen))
         {
             fluid_voice_update_param(voice, gen);
         }
@@ -1504,7 +1504,7 @@ fluid_voice_add_mod_local(fluid_voice_t *voice, fluid_mod_t *mod, int mode, int 
     int i;
 
     /* check_limit_count cannot be above voice->mod_count */
-    if (check_limit_count > voice->mod_count)
+    if(check_limit_count > voice->mod_count)
     {
         check_limit_count = voice->mod_count;
     }

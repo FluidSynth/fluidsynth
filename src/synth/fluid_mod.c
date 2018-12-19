@@ -487,7 +487,7 @@ size_t fluid_mod_sizeof()
 }
 
 /**
- * Checks if modulator with source 1 other than CC is FLUID_MOD_NONE. 
+ * Checks if modulator with source 1 other than CC is FLUID_MOD_NONE.
  *
  * @param mod, modulator.
  * @return TRUE if modulator source 1 other than cc is FLUID_MOD_NONE, FALSE otherwise.
@@ -499,7 +499,7 @@ fluid_mod_is_src1_none(const fluid_mod_t *mod)
 }
 
 /**
- * Checks if modulators source other than CC source is invalid. 
+ * Checks if modulators source other than CC source is invalid.
  * (specs SF 2.01  7.4, 7.8, 8.2.1)
  *
  * @param mod, modulator.
@@ -512,25 +512,28 @@ static int
 fluid_mod_check_non_cc_source(const fluid_mod_t *mod, unsigned char src1_select)
 {
     unsigned char flags, src;
-    if (src1_select)
+
+    if(src1_select)
     {
-        flags = mod->flags1; src = mod->src1;
+        flags = mod->flags1;
+        src = mod->src1;
     }
     else
     {
-        flags = mod->flags2; src = mod->src2;
+        flags = mod->flags2;
+        src = mod->src2;
     }
 
-    return( ((flags & FLUID_MOD_CC) != 0) /* src is a CC */
-            /* SF2.01 section 8.2.1: Constant value */
-                || ((src == FLUID_MOD_NONE)
-                || (src == FLUID_MOD_VELOCITY)        /* Note-on velocity */
-                || (src == FLUID_MOD_KEY)             /* Note-on key number */
-                || (src == FLUID_MOD_KEYPRESSURE)     /* Poly pressure */
-                || (src == FLUID_MOD_CHANNELPRESSURE) /* Channel pressure */
-                || (src == FLUID_MOD_PITCHWHEEL)      /* Pitch wheel */
-                || (src == FLUID_MOD_PITCHWHEELSENS)  /* Pitch wheel sensitivity */
-             ));
+    return(((flags & FLUID_MOD_CC) != 0)  /* src is a CC */
+           /* SF2.01 section 8.2.1: Constant value */
+           || ((src == FLUID_MOD_NONE)
+               || (src == FLUID_MOD_VELOCITY)        /* Note-on velocity */
+               || (src == FLUID_MOD_KEY)             /* Note-on key number */
+               || (src == FLUID_MOD_KEYPRESSURE)     /* Poly pressure */
+               || (src == FLUID_MOD_CHANNELPRESSURE) /* Channel pressure */
+               || (src == FLUID_MOD_PITCHWHEEL)      /* Pitch wheel */
+               || (src == FLUID_MOD_PITCHWHEELSENS)  /* Pitch wheel sensitivity */
+              ));
 }
 
 /**
@@ -545,31 +548,35 @@ static int
 fluid_mod_check_cc_source(const fluid_mod_t *mod, unsigned char src1_select)
 {
     unsigned char flags, src;
-    if (src1_select)
+
+    if(src1_select)
     {
-        flags = mod->flags1; src = mod->src1;
+        flags = mod->flags1;
+        src = mod->src1;
     }
     else
     {
-        flags = mod->flags2; src = mod->src2;
+        flags = mod->flags2;
+        src = mod->src2;
     }
-    return( ((flags & FLUID_MOD_CC) == 0) /* src is non CC */
-            || ((src != BANK_SELECT_MSB)
-                && (src != BANK_SELECT_LSB)
-                && (src != DATA_ENTRY_MSB)
-                && (src != DATA_ENTRY_LSB)
-                /* is src not NRPN_LSB, NRPN_MSB, RPN_LSB, RPN_MSB */
-                && ((src < NRPN_LSB) || (RPN_MSB < src))
-                /* is src not ALL_SOUND_OFF, ALL_CTRL_OFF, LOCAL_CONTROL, ALL_NOTES_OFF ? */
-                /* is src not OMNI_OFF, OMNI_ON, POLY_OFF, POLY_ON ? */
-                && (src < ALL_SOUND_OFF)
-                /* CC lsb shouldn't allowed to modulate (spec SF 2.01 - 8.2.1) 
-                   However, as long fluidsynth will use only CC 7 bits resolution,
-                   it is safe to ignore these SF recommendations on CC receive.
-                   See explanations in fluid_synth_cc_LOCAL() */
-                   /* uncomment next line to forbid CC lsb  */
-	           	/* && ((src < 32) || (63 < src)) */
-               ));
+
+    return(((flags & FLUID_MOD_CC) == 0)  /* src is non CC */
+           || ((src != BANK_SELECT_MSB)
+               && (src != BANK_SELECT_LSB)
+               && (src != DATA_ENTRY_MSB)
+               && (src != DATA_ENTRY_LSB)
+               /* is src not NRPN_LSB, NRPN_MSB, RPN_LSB, RPN_MSB */
+               && ((src < NRPN_LSB) || (RPN_MSB < src))
+               /* is src not ALL_SOUND_OFF, ALL_CTRL_OFF, LOCAL_CONTROL, ALL_NOTES_OFF ? */
+               /* is src not OMNI_OFF, OMNI_ON, POLY_OFF, POLY_ON ? */
+               && (src < ALL_SOUND_OFF)
+               /* CC lsb shouldn't allowed to modulate (spec SF 2.01 - 8.2.1)
+                  However, as long fluidsynth will use only CC 7 bits resolution,
+                  it is safe to ignore these SF recommendations on CC receive.
+                  See explanations in fluid_synth_cc_LOCAL() */
+               /* uncomment next line to forbid CC lsb  */
+               /* && ((src < 32) || (63 < src)) */
+              ));
 }
 
 /**
@@ -592,8 +599,9 @@ int fluid_mod_check_sources(const fluid_mod_t *mod, char *name)
     {
         if(name)
         {
-            FLUID_LOG(FLUID_WARN, invalid_non_cc_src, name, 1,mod->src1);
-        }	
+            FLUID_LOG(FLUID_WARN, invalid_non_cc_src, name, 1, mod->src1);
+        }
+
         return FALSE;
     }
 
@@ -611,6 +619,7 @@ int fluid_mod_check_sources(const fluid_mod_t *mod, char *name)
         {
             FLUID_LOG(FLUID_WARN, src1_is_none, name, mod->src1);
         }
+
         return FALSE;
     }
 
@@ -620,16 +629,18 @@ int fluid_mod_check_sources(const fluid_mod_t *mod, char *name)
         {
             FLUID_LOG(FLUID_WARN, invalid_non_cc_src, name, 2, mod->src2);
         }
+
         return FALSE;
     }
 
     /* checks valid cc sources */
     if(!fluid_mod_check_cc_source(mod, 1)) /* check src1 */
     {
-        if(name) 
+        if(name)
         {
-            FLUID_LOG(FLUID_WARN, invalid_cc_src, name, 1,mod->src1);
-        }	
+            FLUID_LOG(FLUID_WARN, invalid_cc_src, name, 1, mod->src1);
+        }
+
         return FALSE;
     }
 
@@ -639,8 +650,10 @@ int fluid_mod_check_sources(const fluid_mod_t *mod, char *name)
         {
             FLUID_LOG(FLUID_WARN, invalid_cc_src, name, 2, mod->src2);
         }
+
         return FALSE;
     }
+
     return TRUE;
 }
 
