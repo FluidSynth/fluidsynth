@@ -32,6 +32,7 @@ include_directories (
     ${CMAKE_SOURCE_DIR}/include
     ${CMAKE_BINARY_DIR}/include
     ${PTHREADS_INCLUDE_DIR}
+    ${SDL2_INCLUDE_DIR}
 )
 
 include_directories (
@@ -82,9 +83,17 @@ if ( DSOUND_SUPPORT )
   set ( fluid_dsound_SOURCES drivers/fluid_dsound.c )
 endif ( DSOUND_SUPPORT )
 
+if ( WAVEOUT_SUPPORT )
+  set ( fluid_waveout_SOURCES drivers/fluid_waveout.c )
+endif ( WAVEOUT_SUPPORT )
+
 if ( WINMIDI_SUPPORT )
   set ( fluid_winmidi_SOURCES drivers/fluid_winmidi.c )
 endif ( WINMIDI_SUPPORT )
+
+if ( SDL2_SUPPORT )
+  set ( fluid_sdl2_SOURCES drivers/fluid_sdl2.c )
+endif ( SDL2_SUPPORT )
 
 if ( OSS_SUPPORT )
   set ( fluid_oss_SOURCES drivers/fluid_oss.c )
@@ -248,7 +257,9 @@ add_library ( libfluidsynth-OBJ OBJECT
     ${fluid_portaudio_SOURCES}
     ${fluid_pulse_SOURCES}
     ${fluid_dsound_SOURCES}
+    ${fluid_waveout_SOURCES}
     ${fluid_winmidi_SOURCES}
+    ${fluid_sdl2_SOURCES}
     ${libfluidsynth_SOURCES}
     ${public_HEADERS}
     ${public_main_HEADER}
@@ -316,6 +327,7 @@ target_link_libraries ( libfluidsynth
     ${PULSE_LIBRARIES}
     ${PORTAUDIO_LIBRARIES}
     ${LIBSNDFILE_LIBRARIES}
+    ${SDL2_LIBRARY}
     ${DBUS_LIBRARIES}
     ${READLINE_LIBS}
     ${DART_LIBS}
@@ -367,6 +379,6 @@ ExternalProject_Add(gentables
     DOWNLOAD_COMMAND ""
     SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/gentables
     BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/gentables
-    INSTALL_COMMAND ${CMAKE_CURRENT_BINARY_DIR}/gentables/make_tables${CMAKE_EXECUTABLE_SUFFIX} "${CMAKE_BINARY_DIR}/"
+    INSTALL_COMMAND ${CMAKE_CURRENT_BINARY_DIR}/gentables/make_tables.exe "${CMAKE_BINARY_DIR}/"
 )
 add_dependencies(libfluidsynth-OBJ gentables)

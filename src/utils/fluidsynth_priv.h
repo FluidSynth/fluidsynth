@@ -106,10 +106,6 @@
 #include <omp.h>
 #endif
 
-#if HAVE_IO_H
-#include <io.h>
-#endif
-
 #if HAVE_SIGNAL_H
 #include <signal.h>
 #endif
@@ -265,7 +261,7 @@ typedef FILE  *fluid_file;
 
 #define FLUID_STRNCPY(_dst,_src,_n) \
 do { strncpy(_dst,_src,_n); \
-    (_dst)[(_n)-1]=0; \
+    (_dst)[(_n)-1]='\0'; \
 }while(0)
 
 #define FLUID_STRCHR(_s,_c)          strchr(_s,_c)

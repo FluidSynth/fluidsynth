@@ -80,11 +80,23 @@ else ( DSOUND_SUPPORT )
   message ( "DSound:                no" )
 endif ( DSOUND_SUPPORT )
 
+if ( WAVEOUT_SUPPORT )
+  message ( "WaveOut support:       yes" )
+else ( WAVEOUT_SUPPORT )
+  message ( "WaveOut support:       no" )
+endif ( WAVEOUT_SUPPORT )
+
 if ( WINMIDI_SUPPORT )
   message ( "WinMidi support:       yes" )
 else ( WINMIDI_SUPPORT )
   message ( "WinMidi support:       no" )
 endif ( WINMIDI_SUPPORT )
+
+if ( SDL2_SUPPORT )
+  message ( "SDL2 support:          yes" )
+else ( SDL2_SUPPORT )
+  message ( "SDL2 support:          no" )
+endif ( SDL2_SUPPORT )
 
 if ( LADSPA_SUPPORT )
   message ( "LADSPA support:        yes" )
