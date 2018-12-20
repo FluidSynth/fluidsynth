@@ -36,6 +36,7 @@ static long fluid_getlength(unsigned char *s);
  */
 static char *fluid_file_read_full(fluid_file fp, size_t *length);
 static void fluid_midi_event_set_sysex_LOCAL(fluid_midi_event_t *evt, int type, void *data, int size, int dynamic);
+static void fluid_midi_event_get_sysex_LOCAL(fluid_midi_event_t *evt, void **data, int *size);
 #define READ_FULL_INITIAL_BUFLEN 1024
 
 static fluid_track_t *new_fluid_track(int num);
@@ -1335,6 +1336,25 @@ fluid_midi_event_set_text(fluid_midi_event_t *evt, void *data, int size, int dyn
 }
 
 /**
+ * Get the text of a MIDI event structure.
+ * @param evt MIDI event structure
+ * @param data Pointer to return text data on.
+ * @param size Pointer to return text size on.
+ * @return Returns #FLUID_OK if \p data and \p size previously set by
+ * fluid_midi_event_set_text() have been successfully retrieved.
+ * Else #FLUID_FAILED is returned and \p data and \p size are not changed.
+ * @since 2.0.3
+ */
+int fluid_midi_event_get_text(fluid_midi_event_t *evt, void **data, int *size)
+{
+    fluid_return_val_if_fail(evt != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(evt->type == MIDI_TEXT, FLUID_FAILED);
+
+    fluid_midi_event_get_sysex_LOCAL(evt, data, size);
+    return FLUID_OK;
+}
+
+/**
  * Assign lyric data to a MIDI event structure.
  * @param evt MIDI event structure
  * @param data Pointer to lyric data
@@ -1353,12 +1373,44 @@ fluid_midi_event_set_lyrics(fluid_midi_event_t *evt, void *data, int size, int d
     return FLUID_OK;
 }
 
+/**
+ * Get the lyric of a MIDI event structure.
+ * @param evt MIDI event structure
+ * @param data Pointer to return lyric data on.
+ * @param size Pointer to return lyric size on.
+ * @return Returns #FLUID_OK if \p data and \p size previously set by
+ * fluid_midi_event_set_lyrics() have been successfully retrieved.
+ * Else #FLUID_FAILED is returned and \p data and \p size are not changed.
+ * @since 2.0.3
+ */
+int fluid_midi_event_get_lyrics(fluid_midi_event_t *evt, void **data, int *size)
+{
+    fluid_return_val_if_fail(evt != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(evt->type == MIDI_LYRIC, FLUID_FAILED);
+
+    fluid_midi_event_get_sysex_LOCAL(evt, data, size);
+    return FLUID_OK;
+}
+
 static void fluid_midi_event_set_sysex_LOCAL(fluid_midi_event_t *evt, int type, void *data, int size, int dynamic)
 {
     evt->type = type;
     evt->paramptr = data;
     evt->param1 = size;
     evt->param2 = dynamic;
+}
+
+static void fluid_midi_event_get_sysex_LOCAL(fluid_midi_event_t *evt, void **data, int *size)
+{
+    if(data)
+    {
+        *data = evt->paramptr;
+    }
+
+    if(size)
+    {
+        *size = evt->param1;
+    }
 }
 
 /******************************************************
