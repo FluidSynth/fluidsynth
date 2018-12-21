@@ -1185,7 +1185,7 @@ fluid_voice_update_param(fluid_voice_t *voice, int gen)
  */
 
 #define NBR_BIT_BY_VAR_LN2 5	/* for 32 bits variables */
-#define NBR_BIT_BY_VAR  (1 << NBR_BIT_BY_VAR_LN2)	
+#define NBR_BIT_BY_VAR  (1 << NBR_BIT_BY_VAR_LN2)
 #define NBR_BIT_BY_VAR_ANDMASK (NBR_BIT_BY_VAR - 1)
 #define	SIZE_UPDATED_GEN_BIT  ((GEN_LAST + NBR_BIT_BY_VAR_ANDMASK) / NBR_BIT_BY_VAR)
 
@@ -1209,7 +1209,7 @@ int fluid_voice_modulate(fluid_voice_t *voice, int cc, int ctrl)
         mod = &voice->mod[i];
 
         /* step 1: find all the modulators that have the changed controller
-           as input source. When ctrl is -1 all modulators destination 
+           as input source. When ctrl is -1 all modulators destination
            are updated */
         if(ctrl < 0 || fluid_mod_has_source(mod, cc, ctrl))
         {
@@ -1465,10 +1465,10 @@ fluid_voice_stop(fluid_voice_t *voice)
 }
 
 /**
- * Adds a modulator to the voice.
- * @param voice Voice instance
- * @param mod Modulator info (copied)
- * @param mode Determines how to handle an existing identical modulator
+ * Adds a modulator to the voice if the modulator has valid sources.
+ * @param voice Voice instance.
+ * @param mod Modulator info (copied).
+ * @param mode Determines how to handle an existing identical modulator.
  *   #FLUID_VOICE_ADD to add (offset) the modulator amounts,
  *   #FLUID_VOICE_OVERWRITE to replace the modulator,
  *   #FLUID_VOICE_DEFAULT when adding a default modulator - no duplicate should
@@ -1477,32 +1477,42 @@ fluid_voice_stop(fluid_voice_t *voice)
 void
 fluid_voice_add_mod(fluid_voice_t *voice, fluid_mod_t *mod, int mode)
 {
+    /* Ignore the modulator if its sources inputs are invalid */
+    if(fluid_mod_check_sources(mod, "api fluid_voice_add_mod mod"))
+    {
+        fluid_voice_add_mod_local(voice, mod, mode, FLUID_NUM_MOD);
+    }
+}
+
+/**
+ * Adds a modulator to the voice.
+ * local version of fluid_voice_add_mod function. Called at noteon time.
+ * @param voice, mod, mode, same as for fluid_voice_add_mod() (see above).
+ * @param check_limit_count is the modulator number limit to handle with existing
+ *   identical modulator(i.e mode FLUID_VOICE_OVERWRITE, FLUID_VOICE_ADD).
+ *   - When FLUID_NUM_MOD, all the voices modulators (since the previous call)
+ *     are checked for identity.
+ *   - When check_count_limit is below the actual number of voices modulators
+ *   (voice->mod_count), this will restrict identity check to this number,
+ *   This is usefull when we know by advance that there is no duplicate with
+ *   modulators at index above this limit. This avoid wasting cpu cycles at noteon.
+ */
+void
+fluid_voice_add_mod_local(fluid_voice_t *voice, fluid_mod_t *mod, int mode, int check_limit_count)
+{
     int i;
 
-    /*
-     * Some soundfonts come with a huge number of non-standard
-     * controllers, because they have been designed for one particular
-     * sound card.  Discard them, maybe print a warning.
-     */
-
-    if(((mod->flags1 & FLUID_MOD_CC) == 0)
-            && ((mod->src1 != FLUID_MOD_NONE)            /* SF2.01 section 8.2.1: Constant value */
-                && (mod->src1 != FLUID_MOD_VELOCITY)        /* Note-on velocity */
-                && (mod->src1 != FLUID_MOD_KEY)             /* Note-on key number */
-                && (mod->src1 != FLUID_MOD_KEYPRESSURE)     /* Poly pressure */
-                && (mod->src1 != FLUID_MOD_CHANNELPRESSURE) /* Channel pressure */
-                && (mod->src1 != FLUID_MOD_PITCHWHEEL)      /* Pitch wheel */
-                && (mod->src1 != FLUID_MOD_PITCHWHEELSENS)))/* Pitch wheel sensitivity */
+    /* check_limit_count cannot be above voice->mod_count */
+    if(check_limit_count > voice->mod_count)
     {
-        FLUID_LOG(FLUID_WARN, "Ignoring invalid controller, using non-CC source %i.", mod->src1);
-        return;
+        check_limit_count = voice->mod_count;
     }
 
     if(mode == FLUID_VOICE_ADD)
     {
 
         /* if identical modulator exists, add them */
-        for(i = 0; i < voice->mod_count; i++)
+        for(i = 0; i < check_limit_count; i++)
         {
             if(fluid_mod_test_identity(&voice->mod[i], mod))
             {
@@ -1517,7 +1527,7 @@ fluid_voice_add_mod(fluid_voice_t *voice, fluid_mod_t *mod, int mode)
     {
 
         /* if identical modulator exists, replace it (only the amount has to be changed) */
-        for(i = 0; i < voice->mod_count; i++)
+        for(i = 0; i < check_limit_count; i++)
         {
             if(fluid_mod_test_identity(&voice->mod[i], mod))
             {
