@@ -369,7 +369,7 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             </def>
             <vals>alsa, coreaudio, dart, dsound, file, jack, oss, portaudio, pulseaudio, sdl2, sndman, waveout</vals>
             <desc>
-                The audio system to be used. In order to use sdl2 as audio driver, the application is responsible for initializing SDL's audio subsystem.
+                The audio system to be used. In order to use sdl2 as audio driver, the application is responsible for initializing SDL's audio subsystem.<br /><br /><strong>Note:</strong> sdl2 and waveout are available since fluidsynth 2.1.
             </desc>
         </setting>
         <setting>
