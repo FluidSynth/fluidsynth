@@ -193,8 +193,14 @@
 /* Define to enable DirectSound driver */
 #cmakedefine DSOUND_SUPPORT @DSOUND_SUPPORT@
 
+/* Define to enable Windows WaveOut driver */
+#cmakedefine WAVEOUT_SUPPORT @WAVEOUT_SUPPORT@
+
 /* Define to enable Windows MIDI driver */
 #cmakedefine WINMIDI_SUPPORT @WINMIDI_SUPPORT@
+
+/* Define to enable SDL2 audio driver */
+#cmakedefine SDL2_SUPPORT @SDL2_SUPPORT@
 
 /* Define to 1 if you have the ANSI C header files. */
 #cmakedefine STDC_HEADERS @STDC_HEADERS@
