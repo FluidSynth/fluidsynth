@@ -245,10 +245,7 @@ fluid_mod_get_source_value(const unsigned char mod_src,
 static fluid_real_t
 fluid_mod_transform_source_value(fluid_real_t val, unsigned char mod_flags, const fluid_real_t range)
 {
-    /* normalized value, i.e. usually in the range [0;1]
-     *
-     * if val was retrieved from pitch_bend then [-0.5;0.5]
-     */
+    /* normalized value, i.e. usually in the range [0;1] */
     const fluid_real_t val_norm = val / range;
 
     /* we could also only switch case the lower nibble of mod_flags, however
