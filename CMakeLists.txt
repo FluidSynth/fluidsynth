@@ -204,6 +204,7 @@ if ( WIN32 )
 
   # Check presence of MS include files
   check_include_file ( windows.h HAVE_WINDOWS_H )
+  check_include_file ( io.h HAVE_IO_H )
   check_include_file ( dsound.h HAVE_DSOUND_H )
   check_include_files ( "windows.h;mmsystem.h" HAVE_MMSYSTEM_H )
 

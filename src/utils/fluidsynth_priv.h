@@ -106,6 +106,10 @@
 #include <omp.h>
 #endif
 
+#if HAVE_IO_H
+#include <io.h> // _open(), _close(), read(), write() on windows
+#endif
+
 #if HAVE_SIGNAL_H
 #include <signal.h>
 #endif
