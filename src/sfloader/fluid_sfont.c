@@ -515,6 +515,8 @@ delete_fluid_sample(fluid_sample_t *sample)
  * Useful in low latency scenarios e.g. to allocate a sample on the stack.
  *
  * @return Size of fluid_sample_t in bytes
+ * 
+ * @note It is recommend to zero initialize the memory before using the object.
  */
 size_t fluid_sample_sizeof()
 {
