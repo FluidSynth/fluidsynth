@@ -64,6 +64,7 @@ What is FluidSynth?
 
 \section NewIn2_0_3 Whats new in 2.0.3?
 
+- fix incorrect behaviour of fluid_sample_set_sound_data()
 - add missing getters for midi events:
   - fluid_midi_event_get_text()
   - fluid_midi_event_get_lyrics()
