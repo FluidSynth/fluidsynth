@@ -140,7 +140,7 @@ fluid_instpatch_preset_noteon(fluid_preset_t *preset, fluid_synth_t *synth, int 
                                         NULL,
                                         voice->sample_size,
                                         voice->rate,
-                                        TRUE
+                                        FALSE
                                     );
         if(FLUID_UNLIKELY(ret == FLUID_FAILED))
         {
