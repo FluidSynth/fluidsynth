@@ -544,7 +544,7 @@ static int load_header(SFData *sf)
     if(chunkid(chunk.id) != SFBK_ID)
     {
         /* error if not SFBK_ID */
-        FLUID_LOG(FLUID_ERR, "Not a SoundFont file");
+        FLUID_LOG(FLUID_ERR, "Not a SoundFont2 file");
         return FALSE;
     }
 
