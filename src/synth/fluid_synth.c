@@ -228,7 +228,7 @@ void fluid_synth_settings(fluid_settings_t *settings)
 #else
     fluid_settings_register_int(settings, "synth.cpu-cores", 1, 1, 1, 0);
 #endif
-  
+
     fluid_settings_register_int(settings, "synth.min-note-length", 10, 0, 65535, 0);
 
     fluid_settings_register_int(settings, "synth.threadsafe-api", 1, 0, 1, FLUID_HINT_TOGGLED);
@@ -1350,6 +1350,13 @@ fluid_synth_add_default_mod(fluid_synth_t *synth, const fluid_mod_t *mod, int mo
 
     fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
     fluid_return_val_if_fail(mod != NULL, FLUID_FAILED);
+
+    /* Checks if modulators sources are valid */
+    if(!fluid_mod_check_sources(mod, "api fluid_synth_add_default_mod mod"))
+    {
+        return FLUID_FAILED;
+    }
+
     fluid_synth_api_enter(synth);
 
     default_mod = synth->default_mod;
@@ -1921,7 +1928,7 @@ fluid_synth_sysex_midi_tuning(fluid_synth_t *synth, const char *data, int len,
     int bank = 0, prog, channels;
     double tunedata[128];
     int keys[128];
-    char name[17];
+    char name[17]={0};
     int note, frac, frac2;
     uint8_t chksum;
     int i, count, index;
@@ -1992,7 +1999,8 @@ fluid_synth_sysex_midi_tuning(fluid_synth_t *synth, const char *data, int len,
         }
 
         *resptr++ = prog;
-        FLUID_STRNCPY(resptr, name, 16);
+        /* copy 16 ASCII characters (potentially not null terminated) to the sysex buffer */
+        FLUID_MEMCPY(resptr, name, 16);
         resptr += 16;
 
         for(i = 0; i < 128; i++)
@@ -3387,7 +3395,7 @@ fluid_synth_nwrite_float(fluid_synth_t *synth, int len,
     fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
     fluid_return_val_if_fail(left != NULL, FLUID_FAILED);
     fluid_return_val_if_fail(right != NULL, FLUID_FAILED);
-    
+
     /* First, take what's still available in the buffer */
     count = 0;
     num = synth->cur;
@@ -3540,7 +3548,7 @@ fluid_synth_nwrite_float(fluid_synth_t *synth, int len,
 
 /**
  * mixes the samples of \p in to \p out
- * 
+ *
  * @param out the output sample buffer to mix to
  * @param ooff sample offset in \p out
  * @param in the rvoice_mixer input sample buffer to mix from
@@ -3558,6 +3566,7 @@ static FLUID_INLINE void fluid_synth_mix_single_buffer(float *FLUID_RESTRICT out
     if(out != NULL)
     {
         int j;
+
         for(j = 0; j < num; j++)
         {
             out[j + ooff] += (float) in[buf_idx * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT + j + ioff];
@@ -3706,7 +3715,7 @@ fluid_synth_process(fluid_synth_t *synth, int len, int nfx, float *fx[],
                 for(i = 0; i < nfxchan; i++)
                 {
                     int buf_idx = f * nfxchan + i;
-                    
+
                     float *out_buf = fx[(buf_idx * 2) % nfx];
                     fluid_synth_mix_single_buffer(out_buf, 0, fx_left_in, synth->cur, buf_idx, num);
 
@@ -3749,10 +3758,10 @@ fluid_synth_process(fluid_synth_t *synth, int len, int nfx, float *fx[],
                 for(i = 0; i < nfxchan; i++)
                 {
                     int buf_idx = f * nfxchan + i;
-                    
+
                     float *out_buf = fx[(buf_idx * 2) % nfx];
                     fluid_synth_mix_single_buffer(out_buf, count, fx_left_in, 0, buf_idx, num);
-                    
+
                     out_buf = fx[(buf_idx * 2 + 1) % nfx];
                     fluid_synth_mix_single_buffer(out_buf, count, fx_right_in, 0, buf_idx, num);
                 }
@@ -3803,7 +3812,7 @@ fluid_synth_write_float(fluid_synth_t *synth, int len,
     float cpu_load;
 
     fluid_profile_ref_var(prof_ref);
-    
+
     fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
     fluid_return_val_if_fail(lout != NULL, FLUID_FAILED);
     fluid_return_val_if_fail(rout != NULL, FLUID_FAILED);
@@ -3872,10 +3881,12 @@ static FLUID_INLINE int16_t
 round_clip_to_i16(float x)
 {
     long i;
+
     if(x >= 0.0f)
     {
         i = (long)(x + 0.5f);
-        if (FLUID_UNLIKELY(i > 32767))
+
+        if(FLUID_UNLIKELY(i > 32767))
         {
             i = 32767;
         }
@@ -3883,12 +3894,13 @@ round_clip_to_i16(float x)
     else
     {
         i = (long)(x - 0.5f);
-        if (FLUID_UNLIKELY(i < -32768))
+
+        if(FLUID_UNLIKELY(i < -32768))
         {
             i = -32768;
         }
     }
-    
+
     return (int16_t)i;
 }
 
@@ -4366,11 +4378,11 @@ fluid_synth_alloc_voice_LOCAL(fluid_synth_t *synth, fluid_sample_t *sample, int 
             )
             {
                 // Replacement of default_vel2att modulator by custom_breath2att_modulator
-                fluid_voice_add_mod(voice, &custom_breath2att_mod, FLUID_VOICE_DEFAULT);
+                fluid_voice_add_mod_local(voice, &custom_breath2att_mod, FLUID_VOICE_DEFAULT, 0);
             }
             else
             {
-                fluid_voice_add_mod(voice, default_mod, FLUID_VOICE_DEFAULT);
+                fluid_voice_add_mod_local(voice, default_mod, FLUID_VOICE_DEFAULT, 0);
             }
 
             // Next default modulator to add to the voice

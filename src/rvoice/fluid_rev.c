@@ -447,7 +447,7 @@ static void set_mod_frequency(sinus_modulator *mod,
  @param pointer on modulator structure.
  @return current value of the modulator sine wave.
 -----------------------------------------------------------------------------*/
-static inline fluid_real_t get_mod_sinus(sinus_modulator *mod)
+static FLUID_INLINE fluid_real_t get_mod_sinus(sinus_modulator *mod)
 {
     fluid_real_t out;
     out = mod->a1 * mod->buffer1 - mod->buffer2;
@@ -613,7 +613,7 @@ static int set_mod_delay_line(mod_delay_line *mdl,
  @param mdl, pointer on modulated delay line.
  @return the sample value.
 -----------------------------------------------------------------------------*/
-static inline fluid_real_t get_mod_delay(mod_delay_line *mdl)
+static FLUID_INLINE fluid_real_t get_mod_delay(mod_delay_line *mdl)
 {
     fluid_real_t out_index;  /* new modulated index position */
     int int_out_index; /* integer part of out_index */
