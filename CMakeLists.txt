@@ -544,6 +544,12 @@ else(NOT enable-pkgconfig)
     endif ( LADSPA_SUPPORT )
     endif ( enable-ladspa )
     
+    unset ( LIBINSTPATCH_SUPPORT CACHE )
+    if ( enable-libinstpatch )
+        pkg_check_modules ( LIBINSTPATCH libinstpatch-1.0 )
+        set ( LIBINSTPATCH_SUPPORT ${LIBINSTPATCH_FOUND} )
+    endif ( enable-libinstpatch )
+
 endif(NOT enable-pkgconfig)
 
 unset ( AUFILE_SUPPORT CACHE )
@@ -616,12 +622,6 @@ if ( OpenMP_FOUND OR OpenMP_C_FOUND )
         set ( HAVE_OPENMP 1 )
     endif()
 endif()
-
-unset ( LIBINSTPATCH_SUPPORT CACHE )
-if ( enable-libinstpatch )
-    pkg_check_modules ( LIBINSTPATCH libinstpatch-1.0 )
-    set ( LIBINSTPATCH_SUPPORT ${LIBINSTPATCH_FOUND} )
-endif ( enable-libinstpatch )
 
 # manipulate some variables to setup a proper test env
 set(TEST_SOUNDFONT "${CMAKE_SOURCE_DIR}/sf2/VintageDreamsWaves-v2.sf2")
