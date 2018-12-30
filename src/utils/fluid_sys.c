@@ -1214,7 +1214,11 @@ fluid_istream_readline(fluid_istream_t in, fluid_ostream_t out, char *prompt,
 
         FLUID_SNPRINTF(buf, len, "%s", line);
         buf[len - 1] = 0;
-        add_history(buf);
+
+        if(buf[0] != '\0')
+        {
+            add_history(buf);
+        }
 
         free(line);
         return 1;

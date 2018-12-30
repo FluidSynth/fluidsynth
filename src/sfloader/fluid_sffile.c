@@ -336,13 +336,13 @@ int fluid_is_soundfont(const char *filename)
 {
     FILE    *fp = FLUID_FOPEN(filename, "rb");
     uint32_t fcc;
-    int      retcode = 0;
+    int      retcode = FALSE;
 
     do
     {
         if(fp == NULL)
         {
-            break;
+            return retcode;
         }
 
         if(FLUID_FREAD(&fcc, sizeof(fcc), 1, fp) != 1)

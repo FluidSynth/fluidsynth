@@ -94,13 +94,13 @@ int fluid_is_midifile(const char *filename)
 {
     FILE    *fp = FLUID_FOPEN(filename, "rb");
     uint32_t id;
-    int      retcode = 0;
+    int      retcode = FALSE;
 
     do
     {
         if(fp == NULL)
         {
-            break;
+            return retcode;
         }
 
         if(FLUID_FREAD(&id, sizeof(id), 1, fp) != 1)
