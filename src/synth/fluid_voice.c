@@ -1501,6 +1501,8 @@ void
 fluid_voice_add_mod_local(fluid_voice_t *voice, fluid_mod_t *mod, int mode, int check_limit_count)
 {
     int i;
+  	/* number of modulators to add : 1 for unlinked, > 1 for complex  modulators */
+	unsigned char count = fluid_get_num_mod(mod);
 
     /* check_limit_count cannot be above voice->mod_count */
     if(check_limit_count > voice->mod_count)
@@ -1540,14 +1542,40 @@ fluid_voice_add_mod_local(fluid_voice_t *voice, fluid_mod_t *mod, int mode, int 
 
     /* Add a new modulator (No existing modulator to add / overwrite).
        Also, default modulators (FLUID_VOICE_DEFAULT) are added without
-       checking, if the same modulator already exists. */
-    if(voice->mod_count < FLUID_NUM_MOD)
+       checking, if the same modulator already exists. 
+       Also, instrument linked modulators are added using FLUID_VOICE_DEFAULT */
     {
-        fluid_mod_clone(&voice->mod[voice->mod_count++], mod);
-    }
-    else
-    {
-        FLUID_LOG(FLUID_WARN, "Voice %i has more modulators than supported, ignoring.", voice->id);
+        fluid_mod_t *voice_mod, *prev_mod;
+        /* index of new modulator (first member index for complex modulator,i.e
+           grouped linked modulators).*/
+        int offset = voice->mod_count;
+        /* Add modulator only if there is enought room in voice tab */
+        if( offset + count <= FLUID_NUM_MOD)
+        {
+            /* clone all modulators member */
+            for (i =0; i < count; i++)
+			{
+                voice_mod = &voice->mod[voice->mod_count++];
+                fluid_mod_clone(voice_mod, mod);
+                voice_mod->link = 0.0;	/* Initialize src1 link input node */
+                if(i)
+                {   /* members following the first have a linked destination */
+                    /* update destination index */
+                    voice_mod->dest += offset;
+                    /* chain previous to this modulator.Useful for future identity 
+                       test of complex modulator */
+                    prev_mod->next = voice_mod; 
+                }
+                prev_mod = voice_mod; /* previous voice mod */
+                mod = mod->next;      /* next modulator member to clone */
+            }
+            /* last modulator member will be recognized by next field set to NULL*/
+            voice_mod->next = NULL;  
+        }
+        else
+        {
+            FLUID_LOG(FLUID_WARN, "Voice %i has more modulators than supported, ignoring.", voice->id);
+        }
     }
 }
 
