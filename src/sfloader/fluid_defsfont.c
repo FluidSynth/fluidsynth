@@ -1135,6 +1135,7 @@ new_fluid_preset_zone(char *name)
      * This also sets the generator values to default, but that is of no concern here.*/
     fluid_gen_set_default_values(&zone->gen[0]);
     zone->mod = NULL; /* list of modulators */
+    zone->linked_mod = NULL; /* List of linked modulators */
     return zone;
 }
 
@@ -1163,7 +1164,8 @@ delete_fluid_preset_zone(fluid_preset_zone_t *zone)
 
     fluid_return_if_fail(zone != NULL);
 
-    delete_fluid_list_mod(zone->mod);
+    delete_fluid_list_mod(zone->mod);       /* unlinked modulators */
+    delete_fluid_list_mod(zone->linked_mod);/* linked modulators */
 
     for(list = zone->voice_zone; list != NULL; list = fluid_list_next(list))
     {
@@ -2082,6 +2084,7 @@ new_fluid_inst_zone(char *name)
      * This also sets the generator values to default, but they will be overwritten anyway, if used.*/
     fluid_gen_set_default_values(&zone->gen[0]);
     zone->mod = NULL; /* list of modulators */
+    zone->linked_mod = NULL; /* List of linked modulators */
     return zone;
 }
 
@@ -2093,7 +2096,8 @@ delete_fluid_inst_zone(fluid_inst_zone_t *zone)
 {
     fluid_return_if_fail(zone != NULL);
 
-    delete_fluid_list_mod(zone->mod);
+    delete_fluid_list_mod(zone->mod);       /* unlinked modulators */
+    delete_fluid_list_mod(zone->linked_mod);/* linked modulators */
 
     FLUID_FREE(zone->name);
     FLUID_FREE(zone);

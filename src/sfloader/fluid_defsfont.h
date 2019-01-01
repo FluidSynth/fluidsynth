@@ -176,6 +176,7 @@ struct _fluid_preset_zone_t
     fluid_zone_range_t range;
     fluid_gen_t gen[GEN_LAST];
     fluid_mod_t *mod;  /* List of modulators */
+    fluid_mod_t *linked_mod; /* List of linked modulators */
 };
 
 fluid_preset_zone_t *new_fluid_preset_zone(char *name);
@@ -214,6 +215,7 @@ struct _fluid_inst_zone_t
     fluid_zone_range_t range;
     fluid_gen_t gen[GEN_LAST];
     fluid_mod_t *mod;  /* List of modulators */
+    fluid_mod_t *linked_mod; /* List of linked modulators */
 };
 
 
