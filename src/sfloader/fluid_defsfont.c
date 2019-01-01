@@ -1259,6 +1259,85 @@ fluid_zone_is_mod_identic(fluid_mod_t *mod, char *name)
 }
 
 /**
+ * Checks all modulators from a zone modulator list.
+ * - check valid sources.
+ * - check identic modulator.
+ * - check linked modulators path.
+ * @param zone_name, zone's name
+ * @param list_mod, pointer on modulators list.
+ * @return 
+ *    - FALSE if no linked path exists.
+ */
+static int
+fluid_zone_check_linked_mod(char *zone_name, fluid_mod_t *list_mod)
+{
+    /* checks valid modulator sources (specs SF 2.01  7.4, 7.8, 8.2.1).*/
+    /* checks identic modulator in the list (specs SF 2.01  7.4, 7.8). */
+    int count = 0; /* number of modulators in list_mod. */
+
+
+    fluid_mod_t *mod = list_mod; /* first modulator in list_mod */
+    while(mod)
+    {
+        char zone_mod_name[256];
+
+        /* prepare modulator name: zonename/#modulator */
+        FLUID_SNPRINTF(zone_mod_name, sizeof(zone_mod_name),"%s/mod%d", zone_name, count);		
+	
+        /* has mod invalid sources ? */
+        if(!fluid_mod_check_sources (mod,  zone_mod_name) 
+        /* or is mod identic to any following modulator ? */
+           ||fluid_zone_is_mod_identic(mod, zone_mod_name)) 
+        {   /* marks this modulator invalid for future checks */
+            mod->amount = 0;
+        }
+
+        count++;
+        mod = mod->next;
+    }
+
+    return FALSE;
+}
+
+/**
+ * Checks and remove invalid modulators from a zone modulators list.
+ * - checks valid modulator sources (specs SF 2.01  7.4, 7.8, 8.2.1).
+ * - checks identic modulator in the list (specs SF 2.01  7.4, 7.8).
+ * @param list_mod, address of pointer on modulator list.
+ */
+static void fluid_zone_check_remove_mod(fluid_mod_t **list_mod)
+{
+    fluid_mod_t *prev_mod = NULL; /* previous modulator in list_mod */
+    fluid_mod_t *mod = *list_mod; /* first modulator in list_mod */
+    while(mod)
+    {	
+        fluid_mod_t *next = mod->next;
+        /* has mod invalid sources ? */
+        if(!fluid_mod_check_sources (mod, NULL) 
+              /* or is mod identic to any following modulator ? */
+              ||fluid_zone_is_mod_identic(mod, NULL)) 
+        {  
+            /* the modulator is useless so we remove it */
+            if (prev_mod)
+            {
+                prev_mod->next =next;
+			}
+            else
+            {
+                *list_mod = next;
+			}
+
+            delete_fluid_mod(mod); /* freeing */
+        }
+        else 
+        {
+            prev_mod = mod; 
+        }
+        mod = next;
+    }
+}
+
+/**
  * Limits the number of modulators in a modulator list.
  * This is appropriate to internal synthesizer modulators tables
  * which have a fixed size (FLUID_NUM_MOD).
@@ -1304,50 +1383,21 @@ static void fluid_limit_mod_list(char *zone_name, fluid_mod_t **list_mod)
  * - checks identic modulators in the list (specs SF 2.01  7.4, 7.8).
  * @param zone_name, zone name.
  * @param list_mod, address of pointer on modulators list.
+ * @return FLUID_OK if success, FLUID_FAILED otherwise
  */
-static void
+static int
 fluid_zone_check_mod(char *zone_name, fluid_mod_t **list_mod)
 {
-    fluid_mod_t *prev_mod = NULL; /* previous modulator in list_mod */
-    fluid_mod_t *mod = *list_mod; /* first modulator in list_mod */
-    int mod_idx = 0; /* modulator index */
+    /* Checks modulators */
+    fluid_zone_check_linked_mod(zone_name, *list_mod);
 
-    while(mod)
-    {
-        char zone_mod_name[256];
-        fluid_mod_t *next = mod->next;
-
-        /* prepare modulator name: zonename/#modulator */
-        FLUID_SNPRINTF(zone_mod_name, sizeof(zone_mod_name), "%s/mod%d", zone_name, mod_idx);
-
-        /* has mod invalid sources ? */
-        if(!fluid_mod_check_sources(mod,  zone_mod_name)
-                /* or is mod identic to any following modulator ? */
-                || fluid_zone_is_mod_identic(mod, zone_mod_name))
-        {
-            /* the modulator is useless so we remove it */
-            if(prev_mod)
-            {
-                prev_mod->next = next;
-            }
-            else
-            {
-                *list_mod = next;
-            }
-
-            delete_fluid_mod(mod); /* freeing */
-        }
-        else
-        {
-            prev_mod = mod;
-        }
-
-        mod = next;
-        mod_idx++;
-    }
+    /* removing all invalid modulators */
+    fluid_zone_check_remove_mod(list_mod);
 
     /* limits the size of modulators list */
     fluid_limit_mod_list(zone_name, list_mod);
+
+    return FLUID_OK;
 }
 
 /*
@@ -1590,8 +1640,7 @@ fluid_zone_mod_import_sfont(char *zone_name, fluid_mod_t **mod, SFZone *sfzone)
     } /* foreach modulator */
 
     /* checks and removes invalid modulators in modulators list*/
-    fluid_zone_check_mod(zone_name, mod);
-    return FLUID_OK;
+    return fluid_zone_check_mod(zone_name, mod);
 }
 
 /*
