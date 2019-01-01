@@ -1558,12 +1558,18 @@ static void fluid_limit_mod_list(char *zone_name, fluid_mod_t **list_mod)
  * Checks and remove invalid modulators from a zone modulators list.
  * - checks valid modulator sources (specs SF 2.01  7.4, 7.8, 8.2.1).
  * - checks identic modulators in the list (specs SF 2.01  7.4, 7.8).
+ * - checks linked modulators path from a zone modulators list.
+ * - removing all invalid modulators.
  * @param zone_name, zone name.
  * @param list_mod, address of pointer on modulators list.
+ * @param linked_mod, address of pointer on linked modulators list returned
+ *  if any linked modulators exist. NULL is returned in this pointer if linked
+ *  modulators doesn't exist in list_mod.
  * @return FLUID_OK if success, FLUID_FAILED otherwise
  */
 static int
-fluid_zone_check_mod(char *zone_name, fluid_mod_t **list_mod)
+fluid_zone_check_mod(char *zone_name, fluid_mod_t **list_mod,
+                     fluid_mod_t **linked_mod)
 {
     int result;
 
@@ -1715,11 +1721,15 @@ fluid_zone_mod_source_import_sfont(unsigned char *src, unsigned char *flags, uns
  * Imports modulators from sfzone to modulators list mod.
  * @param zone_name, zone name.
  * @param mod, address of pointer on modulators list to return.
+ * @param linked_mod, address of pointer on linked modulators list returned
+ *  if any linked modulators exist. NULL is returned in this pointer if linked
+ *  modulators doesn't exist in mod.
  * @param sfzone, pointer on soundfont zone.
  * @return FLUID_OK if success, FLUID_FAILED otherwise.
  */
 static int
-fluid_zone_mod_import_sfont(char *zone_name, fluid_mod_t **mod, SFZone *sfzone)
+fluid_zone_mod_import_sfont(char *zone_name, fluid_mod_t **mod, 
+                            fluid_mod_t **linked_mod, SFZone *sfzone)
 {
     fluid_list_t *r;
     int count;
@@ -1823,7 +1833,7 @@ fluid_zone_mod_import_sfont(char *zone_name, fluid_mod_t **mod, SFZone *sfzone)
     } /* foreach modulator */
 
     /* checks and removes invalid modulators in modulators list*/
-    return fluid_zone_check_mod(zone_name, mod);
+    return fluid_zone_check_mod(zone_name, mod, linked_mod);
 }
 
 /*
@@ -1858,7 +1868,8 @@ fluid_preset_zone_import_sfont(fluid_preset_zone_t *zone, SFZone *sfzone, fluid_
     }
 
     /* Import the modulators (only SF2.1 and higher) */
-    return fluid_zone_mod_import_sfont(zone->name, &zone->mod, sfzone);
+    return fluid_zone_mod_import_sfont(zone->name, &zone->mod,
+                                       &zone->linked_mod, sfzone);
 }
 
 /*
@@ -2133,7 +2144,8 @@ fluid_inst_zone_import_sfont(fluid_inst_zone_t *inst_zone, SFZone *sfzone, fluid
     }
 
     /* Import the modulators (only SF2.1 and higher) */
-    return fluid_zone_mod_import_sfont(inst_zone->name, &inst_zone->mod, sfzone);
+    return fluid_zone_mod_import_sfont(inst_zone->name, &inst_zone->mod,
+                                       &inst_zone->linked_mod, sfzone);
 }
 
 /*
