@@ -35,10 +35,13 @@ struct _fluid_mod_t
     unsigned char src2;           /**< Source controller 2 */
     unsigned char flags2;         /**< Source controller 2 flags */
     double amount;                /**< Multiplier amount */
+    double link;                  /**< src1 link input node */
     /* The 'next' field allows to link modulators into a list.  It is
      * not used in fluid_voice.c, there each voice allocates memory for a
      * fixed number of modulators.  Since there may be a huge number of
      * different zones, this is more efficient.
+     * However 'next' is used for identity test of complex linked modulator,
+     * And moving to index of last member of a complex modulator.
      */
     fluid_mod_t *next;
 };

@@ -453,10 +453,18 @@ fluid_mod_get_value(fluid_mod_t *mod, fluid_voice_t *voice)
     /* get the initial value of the first source */
     if(mod->src1 > 0)
     {
-        v1 = fluid_mod_get_source_value(mod->src1, mod->flags1, &range1, voice);
+        if(fluid_mod_has_linked_src1(mod))
+        {
+            /* src1 link source isn't mapped (i.e transformed) */
+            v1 = mod->link;
+        }
+        else
+        {
+            v1 = fluid_mod_get_source_value(mod->src1, mod->flags1, &range1, voice);
 
-        /* transform the input value */
-        v1 = fluid_mod_transform_source_value(v1, mod->flags1, range1);
+            /* transform the input value */
+            v1 = fluid_mod_transform_source_value(v1, mod->flags1, range1);
+        }
     }
     /* When primary source input (src1) is set to General Controller 'No Controller',
        output is forced to 0.0
