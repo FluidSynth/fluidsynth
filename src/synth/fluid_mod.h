@@ -48,6 +48,8 @@ struct _fluid_mod_t
 /* bit link of destination in fluidsynth modulators */
 #define FLUID_MOD_LINK_DEST  (1 << 7)     /* Link is bit 7 of destination */
 
+int fluid_mod_has_linked_src1 (fluid_mod_t * mod);
+
 fluid_real_t fluid_mod_get_value(fluid_mod_t *mod, fluid_voice_t *voice);
 int fluid_mod_check_sources(const fluid_mod_t *mod, char *name);
 
