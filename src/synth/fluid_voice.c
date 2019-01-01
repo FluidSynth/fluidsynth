@@ -608,13 +608,26 @@ fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t *voice)
      * fluid_gen_set_default_values.
      */
 
-    for(i = 0; i < voice->mod_count; i++)
+    /* The voice contains unlinked modulators + possible complex linked modulators.
+	   We scan modulators from the last member of possible complex linked
+       modulator to the first member (i.e the one connected to a generator).
+     */
+    for (i = voice->mod_count - 1; i >= 0; i--) 
     {
-        fluid_mod_t *mod = &voice->mod[i];
+        fluid_mod_t* mod = &voice->mod[i];
         fluid_real_t modval = fluid_mod_get_value(mod, voice);
-        int dest_gen_index = mod->dest;
-        fluid_gen_t *dest_gen = &voice->gen[dest_gen_index];
-        dest_gen->mod += modval;
+        int dest_index = mod->dest;
+        if(dest_index & FLUID_MOD_LINK_DEST)
+        {
+            /* destination is a modulator */
+            voice->mod[dest_index & ~FLUID_MOD_LINK_DEST].link += modval;
+        }
+        else
+        {
+            /* destination is a generator */
+            fluid_gen_t* dest_gen = &voice->gen[dest_index];
+            dest_gen->mod += modval;
+        }
         /*      fluid_dump_modulator(mod); */
     }
 
