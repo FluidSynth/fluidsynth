@@ -1205,28 +1205,34 @@ fluid_voice_update_param(fluid_voice_t *voice, int gen)
 #define is_gen_updated(bit,gen)  (bit[gen >> NBR_BIT_BY_VAR_LN2] &  (1 << (gen & NBR_BIT_BY_VAR_ANDMASK)))
 #define set_gen_updated(bit,gen) (bit[gen >> NBR_BIT_BY_VAR_LN2] |= (1 << (gen & NBR_BIT_BY_VAR_ANDMASK)))
 
-int fluid_voice_modulate(fluid_voice_t *voice, int cc, int ctrl)
+int fluid_voice_modulate(fluid_voice_t* voice, int cc, int ctrl)
 {
-    int i, k;
-    fluid_mod_t *mod;
-    uint32_t gen;
-    fluid_real_t modval;
+    int i, k, j;
+    fluid_mod_t *mod, *modk;
+    uint32_t gen, dest_idx;
+    fluid_real_t modval,v;
 
     /* Clears registered bits table of updated generators */
     uint32_t updated_gen_bit[SIZE_UPDATED_GEN_BIT] = {0};
 
-    /*    printf("Chan=%d, CC=%d, Src=%d, Val=%d\n", voice->channel->channum, cc, ctrl, val); */
+/*    printf("Chan=%d, CC=%d, Src=%d, Val=%d\n", voice->channel->channum, cc, ctrl, val); */
 
-    for(i = 0; i < voice->mod_count; i++)
+    for (i = 0; i < voice->mod_count; i++)
     {
+
         mod = &voice->mod[i];
+        /* memorize gen destination */
+        if(!(mod->dest & FLUID_MOD_LINK_DEST))
+        {
+            gen = mod->dest;
+        }
+
 
         /* step 1: find all the modulators that have the changed controller
            as input source. When ctrl is -1 all modulators destination
            are updated */
         if(ctrl < 0 || fluid_mod_has_source(mod, cc, ctrl))
         {
-            gen = fluid_mod_get_dest(mod);
 
             /* Skip if this generator has already been updated */
             if(!is_gen_updated(updated_gen_bit, gen))
@@ -1235,15 +1241,41 @@ int fluid_voice_modulate(fluid_voice_t *voice, int cc, int ctrl)
 
                 /* step 2: for every attached modulator, calculate the modulation
                  * value for the generator gen */
-                for(k = 0; k < voice->mod_count; k++)
+                for (k = 0; k < voice->mod_count; k += fluid_get_num_mod(modk))
                 {
-                    if(fluid_mod_has_dest(&voice->mod[k], gen))
+                    modk = &voice->mod[k];
+                    if (fluid_mod_has_dest(modk, gen))
                     {
-                        modval += fluid_mod_get_value(&voice->mod[k], voice);
+                        /* get output value v of modulator k that could be a 
+                           possible complex linked modulators */
+                        /* 1) clears all link input node of each member j from
+                              the first to the the last member */ 
+                        for(j = k; voice->mod[j].next; j++)
+                        {
+                            voice->mod[j].link = 0.0;
+                        }
+                        /* 2) Now j is the last member index. Gets output of each
+                              member j from the last to the first and sums this
+                              to the destination node. */
+                        for(; j >= k; j--)
+                        {
+                            v = fluid_mod_get_value(&voice->mod[j], voice);
+                            dest_idx = voice->mod[j].dest;
+                            /* does destination is a modulator ? */
+                            if(dest_idx  & FLUID_MOD_LINK_DEST)
+                            {
+                                voice->mod[dest_idx & ~FLUID_MOD_LINK_DEST].link += v;
+                            }
+                            /* destination is generator gen */
+                            else
+                            {
+                                modval += v;
+                            }
+                       	}
                     }
                 }
 
-                fluid_gen_set_mod(&voice->gen[gen], modval);
+                fluid_gen_set_mod(&voice->gen[gen], modval);   
 
                 /* now recalculate the parameter values that are derived from the
                    generator */
@@ -1252,9 +1284,14 @@ int fluid_voice_modulate(fluid_voice_t *voice, int cc, int ctrl)
                 /* set the bit that indicates this generator is updated */
                 set_gen_updated(updated_gen_bit, gen);
             }
+            /* All members of a possible complex modulator were already
+               processed. Moves i to last member index */
+            while(voice->mod[i].next)
+            {
+                i++;
+            }
         }
     }
-
     return FLUID_OK;
 }
 
