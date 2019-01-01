@@ -175,6 +175,23 @@ unsigned char fluid_get_num_mod(fluid_mod_t *mod)
     return count;
 }
 
+/*
+ * returns next modulator following current modulator.
+ * If mod is a complex linked modulator all members are skipped
+
+ * @param mod, pointer on modulator. 
+ * @return  next modulator or NULL if mod is the last modulator.
+ */
+fluid_mod_t *fluid_get_next_mod(fluid_mod_t *mod)
+{
+    do
+    {
+        mod = mod->next;
+    }
+    while(mod && (mod->dest & FLUID_MOD_LINK_DEST));
+    return mod;
+}
+
 /* 
  * returns TRUE if modulator source src1 is linked, FALSE otherwise.
  */

@@ -52,6 +52,7 @@ struct _fluid_mod_t
 #define FLUID_MOD_LINK_DEST  (1 << 7)     /* Link is bit 7 of destination */
 
 unsigned char fluid_get_num_mod(fluid_mod_t *mod);
+fluid_mod_t *fluid_get_next_mod(fluid_mod_t *mod);
 int fluid_mod_has_linked_src1 (fluid_mod_t * mod);
 
 fluid_real_t fluid_mod_get_value(fluid_mod_t *mod, fluid_voice_t *voice);
