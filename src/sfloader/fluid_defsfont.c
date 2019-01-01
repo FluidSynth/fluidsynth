@@ -1357,9 +1357,6 @@ fluid_check_linked_mod_path(char *zone_name, fluid_mod_t *list_mod,
             /* Checks if mod belongs to a path already discovered */
             if (fluid_is_mod_in_path(path, cur_path_idx, mod))
             {
-#if 0// provisoire
-                FLUID_LOG(FLUID_WARN, "mod belongs to a path already discovered");
-#endif
                 return TRUE; /* current path is valid */
             }
 
@@ -1375,21 +1372,11 @@ fluid_check_linked_mod_path(char *zone_name, fluid_mod_t *list_mod,
             /* memorizes mod in path table */ 
             path[ (* path_idx)++] = mod;
 
-#if 0// provisoire
-            if(mod->dest & FLUID_MOD_LINK_DEST)
-            {
-                FLUID_LOG(FLUID_WARN, "appel de fluid_path_check_linked_mod depuis mod%d", mod_idx);
-            }
-#endif
-
             /* does mod destination linked ? */
             if((mod->dest & FLUID_MOD_LINK_DEST) &&
                ! fluid_check_linked_mod_path(zone_name, list_mod, mod->dest,
                                              path, cur_path_idx, path_idx))
             {
-#if 0// provisoire
-				FLUID_LOG(FLUID_WARN, "retour false fluid_path_check_linked_mod depuis mod%d", mod_idx);
-#endif
                 mod->amount = 0; /* mod marked invalid */
                 return FALSE;    /* current path is invalid */
             }
