@@ -729,6 +729,201 @@ int fluid_mod_check_sources(const fluid_mod_t *mod, char *name)
     return TRUE;
 }
 
+/*
+ * Test if both complex linked modulator branches are identical.
+ * The first member of complex modulator is the ending modulator connected
+ * to a generator. Other members are branches connected to this first
+ * member. The function checks branches only, it doesn't check ending modulator.
+ *
+ * 
+ * Example of complex modulator cm0:
+ *   gen <-- cm0.m0 <-- cm0.m1 <-- cm0.m2 <-- CC1
+ *                  <-- cm0.m3 <-- CC2
+ *
+ * cm0.m0 is the ending modulator of cm0.
+ * cm0.m1 is the modulator following cm0.m1. This is the first modulator of all
+ * branches connected to cm0.m0. These branches are cm0.b0, cm0.b1, cm0.b2
+ *  (cm0.b0) cm0.m0 <-- cm0.m1 
+ *  (cm0.b1)            cm0.m1 <-- cm0.m2 <-- CC1
+ *  (cm0.b2) cm0.m0 <-- cm0.m3 <-- CC2
+ *
+ * Example of complex modulator cm1:
+ *   gen <-- cm1.m0 <-- cm1.m1 <-- CC2
+ *                  <-- cm1.m2 <-- cm1.m3 <-- CC1
+ *          
+ * cm1.m0 is the ending modulator of cm1.
+ * cm1m1 is the modulator following cm1.m0. This the first modulator of all
+ * branches connected to cm1.m0. These branches are cm1.b0, cm1.b1, cm1.b2
+ *
+ *  (cm1.b0) cm1.m0 <-- cm1.m1 <-- CC2
+ *  (cm1.b1) cm1.m0 <-- cm1.m2
+ *  (cm1.b2)            cm1.m2 <-- cm1.m3 <-- CC1
+ *
+ * Branch cm1.b1 and cm1.b2 are the only one similar to cm0.b0, cm0.b1 respectively.
+ * This is true if
+ *   - cm1.m2 have same sources then cm0.m1
+ *   - cm1.m3 have same sources then cm0.m2
+ *
+ * Branch cm1.b0 is the only one similar to cm0.b2. This is true if
+ *   - cm1.m1 have same sources then cm0.m3
+ *
+ * Note that similar branches in cm0 and cm1 are not necessarly ordered the same way.
+ * Branches ordering need not to be same to get identical complex modulators. This
+ * ordering comes from the soundfount and is irrelevant (SF 2.01 9.5.4 p 58).
+ *
+ * @param cm0_mod, pointer on modulator branch 0. Must be the modulator following
+ *  cm0 ending modulator. In the figure above this is cm0.m1.
+ *
+ * @param dest0_idx, index of cm0 ending modulator. In the figure cm0.m0 index.
+ *
+ * @param cm1_mod, pointer on modulator branch 0. Must be the modulator following
+ *  cm1 ending modulator. In the figure above this is cm1.m1.
+ *
+ * @param add_amount, when 1, modulators amount values of cm1 are added to 
+ *  identical modulators of cm0.
+ *
+ * @return TRUE if complex modulators branches are identical, FALSE otherwise.
+ */
+static int fluid_linked_branch_test_identity(fluid_mod_t *cm0_mod, 
+                                             unsigned char dest0_idx,
+                                             fluid_mod_t *cm1_mod, 
+                                             unsigned char add_amount)
+{
+    int r = 1;				 /* result of test */
+    struct
+    {
+        fluid_mod_t *cm1_branch; /* branch modulator for cm1 */
+        unsigned char dest1_idx; /* destination index of cm1_branch */
+        unsigned char dest0_idx; /* destination index of cm0 branch */
+    }branch_level[FLUID_NUM_MOD];
+    unsigned char is = 0; /* branch state index */
+
+    unsigned char mod0_idx, mod1_idx;  /* index of cm0_mod and cm1_mod */
+
+    /* initialize branches stack state */
+    branch_level[0].cm1_branch = cm1_mod; /* branch modulator for cm1 */
+    /* destination index of cm1 and cm0 branches */
+    branch_level[0].dest1_idx = FLUID_MOD_LINK_DEST;
+    dest0_idx |= FLUID_MOD_LINK_DEST;
+    branch_level[0].dest0_idx = dest0_idx; /* destination index of cm0 branch */
+
+    /* verify identity of each member of branches */
+    mod0_idx = dest0_idx + 1; /* current cm0_mod index */
+    while(r)
+    {
+        unsigned char dest1_idx = branch_level[is].dest1_idx;
+		/* Search any modulator cm1_mod identic to cm0_mod */
+		r = 0; /* 0, indicates modulators not identic */
+		mod1_idx = dest1_idx + 1; /* current cm1_mod index */
+        cm1_mod = branch_level[is].cm1_branch;  /* current modulator cm1_mod */
+        while(cm1_mod && (cm1_mod->dest >= dest1_idx))
+        {   /* is cm1_mod destination equal to ancestor index ? */
+            if((cm1_mod->dest == dest1_idx)
+            /* is cm0_mod identical to cm1_mod ? */
+               && (cm0_mod->flags1 == cm1_mod->flags1)
+               && (cm0_mod->src1 == cm1_mod->src1)
+               && (cm0_mod->flags2 == cm1_mod->flags2)
+               && (cm0_mod->src2 == cm1_mod->src2))
+            {
+                /* cm0_mod is identic to cm1_mod */
+                /* does amount need to be added ? */
+                if(add_amount)
+                {
+                    cm0_mod->amount += cm1_mod->amount;
+                }
+                /* does cm0_mod and cm1_mod have linked source ? */
+                if(fluid_mod_has_linked_src1(cm0_mod))
+                {
+                    /* both cm0_mod and cm1_mod have sources linked, so we go forward
+                       to the next branches connected to cm0_mod and cm1_mod inputs
+                       respectively */
+                    /* goes on next branches */
+                    is++;
+
+                    /* next cm1 member on cm1 branch */
+                    branch_level[is].cm1_branch = cm1_mod->next;
+                    branch_level[is].dest1_idx = mod1_idx;
+					
+                    /* next cm0 member on cm0 branch */
+                    branch_level[is].dest0_idx = mod0_idx;
+                    mod0_idx++;	
+                    cm0_mod = cm0_mod->next; 
+
+                    /* continues on the new branch */
+                    r = 1;
+                    break;				 
+                 }
+                 /* continues on current branches (cm0 and cm1) */ 
+			     mod0_idx++;       /* next modulator cm0_mod in cm0 */
+                 cm0_mod = cm0_mod->next;
+                 /* does last member of cm0 is reached ? */
+                 if(!(cm0_mod && (cm0_mod->dest & FLUID_MOD_LINK_DEST)))
+                 {                   
+                     return TRUE; /* all members are identical */
+                 }
+
+                 /* goes to a branch behind current branch */
+                 r = cm0_mod->dest;
+                 while(r < branch_level[is].dest0_idx)
+                 {
+                     is--;
+                 }
+                 /* continues on the current branch */
+                 break;				 
+            }
+            mod1_idx++; /* next modulator cm1_mod in cm1 */
+            cm1_mod = cm1_mod->next;
+        }
+    }
+    /* at least one member is not identical */
+    return FALSE;
+}
+
+/*
+ * Test if both complex linked modulators cm0, cm1 are identical.
+ * Both complex modulators are identical when:
+ * - the modulators number of cm0 is equal to the modulators number of cm1.
+ * - branches of cm0 are identical to branches of cm1.
+ *
+ * @param cm0, final modulator of a complex linked modulators. 
+ *  cm0 must be connected to a generator.
+ *
+ * @param cm0_idx, index of cm0.
+ *
+ * @param cm1, final modulator of complex linked modulators.
+ *  cm1 must be connected to a generator.
+ *
+ * @param add_amount, when 1, modulators amount values of cm1 are added to 
+ *  identical modulators of cm0.
+ *
+ * @return TRUE if complex modulators are identical, FALSE otherwise.
+ */
+int fluid_linked_mod_test_identity(fluid_mod_t *cm0,unsigned char cm0_idx,
+                                   fluid_mod_t *cm1, 
+                                   unsigned char add_amount)
+{
+    unsigned char count0 = fluid_get_num_mod(cm0);
+    unsigned char count1 = fluid_get_num_mod(cm1);
+
+    /* test of count and identity of final modulators cm0 and cm1 */
+    if((count0 == count1) && (count0 > 1)
+        && fluid_mod_test_identity(cm0, cm1))
+    {
+        /* does amount need to be added ? */
+        if (add_amount)
+        {
+            cm0->amount += cm1->amount;
+        }
+        /* identity test of branches of cm0 and cm1 */
+        {
+            return fluid_linked_branch_test_identity(cm0->next, cm0_idx, cm1->next, 
+                                                     add_amount);
+        }
+    }
+    return FALSE;
+}
+
+
 /**
  * Checks if two modulators are identical in sources, flags and destination.
  * @param mod1 First modulator

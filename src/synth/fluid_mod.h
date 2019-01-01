@@ -54,6 +54,9 @@ struct _fluid_mod_t
 unsigned char fluid_get_num_mod(fluid_mod_t *mod);
 fluid_mod_t *fluid_get_next_mod(fluid_mod_t *mod);
 int fluid_mod_has_linked_src1 (fluid_mod_t * mod);
+int fluid_linked_mod_test_identity(fluid_mod_t *cm0,unsigned char cm0_idx,
+								   fluid_mod_t *cm1, 
+                                   unsigned char add_amount);
 
 fluid_real_t fluid_mod_get_value(fluid_mod_t *mod, fluid_voice_t *voice);
 int fluid_mod_check_sources(const fluid_mod_t *mod, char *name);
