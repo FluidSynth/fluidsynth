@@ -43,6 +43,11 @@ struct _fluid_mod_t
     fluid_mod_t *next;
 };
 
+/* bit link of destination in soundfont modulators */
+#define FLUID_SFMOD_LINK_DEST  (1 << 15)   /* Link is bit 15 of destination */
+/* bit link of destination in fluidsynth modulators */
+#define FLUID_MOD_LINK_DEST  (1 << 7)     /* Link is bit 7 of destination */
+
 fluid_real_t fluid_mod_get_value(fluid_mod_t *mod, fluid_voice_t *voice);
 int fluid_mod_check_sources(const fluid_mod_t *mod, char *name);
 

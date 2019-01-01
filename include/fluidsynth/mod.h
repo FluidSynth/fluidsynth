@@ -66,7 +66,8 @@ enum fluid_mod_src
     FLUID_MOD_KEYPRESSURE = 10,           /**< MIDI key pressure */
     FLUID_MOD_CHANNELPRESSURE = 13,       /**< MIDI channel pressure */
     FLUID_MOD_PITCHWHEEL = 14,            /**< Pitch wheel */
-    FLUID_MOD_PITCHWHEELSENS = 16         /**< Pitch wheel sensitivity */
+    FLUID_MOD_PITCHWHEELSENS = 16,        /**< Pitch wheel sensitivity */
+    FLUID_MOD_LINK_SRC = 127              /**< src1 is linked to another modulator */
 };
 
 FLUIDSYNTH_API fluid_mod_t *new_fluid_mod(void);
