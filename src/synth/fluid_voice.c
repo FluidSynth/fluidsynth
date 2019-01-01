@@ -1755,7 +1755,7 @@ static fluid_real_t
 fluid_voice_get_lower_boundary_for_attenuation(fluid_voice_t *voice)
 {
     int i;
-    fluid_mod_t *mod;
+    fluid_mod_t *mod, *modj;
     fluid_real_t possible_att_reduction_cB = 0;
     fluid_real_t lower_bound;
 
@@ -1764,55 +1764,121 @@ fluid_voice_get_lower_boundary_for_attenuation(fluid_voice_t *voice)
         mod = &voice->mod[i];
 
         /* Modulator has attenuation as target and can change over time? */
-        if((mod->dest == GEN_ATTENUATION)
-                && ((mod->flags1 & FLUID_MOD_CC)
-                    || (mod->flags2 & FLUID_MOD_CC)
-                    || (mod->src1 == FLUID_MOD_CHANNELPRESSURE)
-                    || (mod->src1 == FLUID_MOD_KEYPRESSURE)
-                    || (mod->src1 == FLUID_MOD_PITCHWHEEL)
-                    || (mod->src2 == FLUID_MOD_CHANNELPRESSURE)
-                    || (mod->src2 == FLUID_MOD_KEYPRESSURE)
-                    || (mod->src2 == FLUID_MOD_PITCHWHEEL)))
+        if(mod->dest == GEN_ATTENUATION)
         {
-
-            fluid_real_t current_val = fluid_mod_get_value(mod, voice);
-            /* min_val is the possible minimum value for this modulator.
-               it depends of 3 things :
-               1)the minimum values of src1,src2 (i.e -1 if mapping is bipolar
-                 or 0 if mapping is unipolar).
-               2)the sign of amount.
-               3)absolute value of amount.
-
-               When at least one source mapping is bipolar:
-			     min_val is -|amount| regardless the sign of amount.
-               When both sources mapping are unipolar:
-                 min_val is -|amount|, if amount is negative.
-                 min_val is 0, if amount is positive
-             */
-            fluid_real_t min_val = fabs(mod->amount);
-
-            /* Can this modulator produce a negative contribution? */
-            if((mod->flags1 & FLUID_MOD_BIPOLAR)
-                    || (mod->flags2 & FLUID_MOD_BIPOLAR)
-                    || (mod->amount < 0))
+            modj = mod;
+            while(modj)
             {
-                min_val *= -1.0; /* min_val = - |amount|*/
-            }
-            else
-            {
-                /* No negative value possible. But still, the minimum contribution is 0. */
-                min_val = 0;
-            }
+                if ((modj->flags1 & FLUID_MOD_CC)
+                    || (modj->flags2 & FLUID_MOD_CC)
+                    || (modj->src1 == FLUID_MOD_CHANNELPRESSURE)
+                    || (modj->src1 == FLUID_MOD_KEYPRESSURE)
+                    || (modj->src1 == FLUID_MOD_PITCHWHEEL)
+                    || (modj->src2 == FLUID_MOD_CHANNELPRESSURE)
+                    || (modj->src2 == FLUID_MOD_KEYPRESSURE)
+                    || (modj->src2 == FLUID_MOD_PITCHWHEEL))
+                {
+                    int j;
+                    fluid_real_t temp, min_val, max_val;
+                    uint32_t dest_idx;
 
-            /* For example:
-             * - current_val=100
-             * - min_val=-4000
-             * - possible reduction contribution of this modulator = current_val - min_val = 4100
-             */
-            if(current_val > min_val)
-            {
-                possible_att_reduction_cB += (current_val - min_val);
+                    struct
+                    {
+                        double min; /* max amplitude of negative value */
+                        double max; /* max amplitude of positive value */
+                    }link_min_max[FLUID_NUM_MOD];
+
+                    fluid_real_t current_val = fluid_mod_get_value(mod, voice);
+
+                    /* Clears min_val, max_val link_min_max input */
+                    for(j = i; voice->mod[j].next; j++)
+                    {
+                        link_min_max[j].min = link_min_max[j].max = 0.0;
+                    }
+                    /* Now j is the last member index. Gets min_val, max_val of
+                       each member j from the last to the first and sums this
+                       to destination link_min_max nodes. */
+                    for(; j >= i; j--)
+                    {
+                        modj = &voice->mod[j];
+                        min_val = max_val = fabs(modj->amount);
+                        if (fluid_mod_has_linked_src1(modj))
+                        {
+                            /* min_val,max_val for src2 unipolar and amount > 0 */
+                            min_val *= link_min_max[j].min;
+                            max_val *= link_min_max[j].max ;
+                            /* permutes min and max when amount is < 0 */
+                            if(modj->amount < 0)
+                            {   
+                                temp = min_val;  
+                                min_val = max_val;
+                                max_val = temp;
+                            }
+                            /* for src2 bipolar, max min are adjusted to 
+							   the same value: maximum(min,max) */
+                            if(modj->flags2 & FLUID_MOD_BIPOLAR)
+                            {
+                                if(min_val > max_val)
+                                {
+                                    max_val = min_val;
+                                }
+                                else
+                                {
+                                    min_val = max_val;
+                                }
+                            }
+                        }
+                        else /* src1 is not linked */
+                        {
+                            /* Can this modulator produce a negative contribution? */
+                            if(!(modj->flags1 & FLUID_MOD_BIPOLAR)
+                                   && !(modj->flags2 & FLUID_MOD_BIPOLAR))
+                            {
+                                if(modj->amount > 0)
+                                {
+                                    /* No negative value possible. But still, the
+								       minimum contribution is 0. */
+                                    min_val = 0;
+                                }
+                                else
+                                {
+                                    max_val = 0;
+                                }
+                            }
+                        }
+                        /* propagate min_val and max_val to destination */
+                        dest_idx = modj->dest;
+                        if(dest_idx & FLUID_MOD_LINK_DEST)
+                        {
+                            /* destination is a modulator */
+                            dest_idx = dest_idx & ~FLUID_MOD_LINK_DEST;
+                            link_min_max[dest_idx ].min += min_val;
+                            link_min_max[dest_idx ].max += max_val;
+                        }
+                        else
+                        {
+                            min_val = -min_val; /* final modulator min_val */
+                        }
+                    }
+                    /* For example:
+                     * - current_val=100
+                     * - min_val=-4000
+                     * - possible reduction contribution of this modulator is
+                     *   current_val - min_val = 4100
+                     */
+                    if(current_val > min_val)
+                    {
+                        possible_att_reduction_cB += (current_val - min_val);
+                    }
+                    break;
+                }
+                modj = modj->next; /* next member of complex modulator */
             }
+        }
+        /* Moves i to last member index */
+        while(voice->mod[i].next)
+        {
+            i++;
         }
     }
 
@@ -1826,9 +1892,6 @@ fluid_voice_get_lower_boundary_for_attenuation(fluid_voice_t *voice)
 
     return lower_bound;
 }
-
-
-
 
 int fluid_voice_set_param(fluid_voice_t *voice, int gen, fluid_real_t nrpn_value, int abs)
 {
