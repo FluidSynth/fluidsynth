@@ -1531,6 +1531,12 @@ fluid_zone_mod_import_sfont(char *zone_name, fluid_mod_t **mod, SFZone *sfzone)
         /* *** Dest *** */
         mod_dest->dest = mod_src->dest; /* index of controlled generator */
 
+        /* import bit link of destination field */
+        if(mod_src->dest & FLUID_SFMOD_LINK_DEST)
+        {
+            mod_dest->dest |= FLUID_MOD_LINK_DEST; /* set link bit of dest */
+        }
+
         /* *** Amount source *** */
         if(!fluid_zone_mod_source_import_sfont(&mod_dest->src2, &mod_dest->flags2, mod_src->amtsrc))
         {

@@ -157,6 +157,16 @@ fluid_mod_get_amount(const fluid_mod_t *mod)
     return (double) mod->amount;
 }
 
+/* 
+ * returns TRUE if modulator source src1 is linked, FALSE otherwise.
+ */
+int fluid_mod_has_linked_src1 (fluid_mod_t * mod)
+{
+    return(((mod->flags1 & FLUID_MOD_CC) == 0)
+             /* SF2.04 section 8.2.1: Constant value */
+             &&  (mod->src1 == FLUID_MOD_LINK_SRC)) ;   
+}
+
 /*
  * retrieves the initial value from the given source of the modulator
  */
@@ -551,6 +561,7 @@ fluid_mod_check_non_cc_source(const fluid_mod_t *mod, unsigned char src1_select)
                || (src == FLUID_MOD_CHANNELPRESSURE) /* Channel pressure */
                || (src == FLUID_MOD_PITCHWHEEL)      /* Pitch wheel */
                || (src == FLUID_MOD_PITCHWHEELSENS)  /* Pitch wheel sensitivity */
+               || (src1_select && (src == FLUID_MOD_LINK_SRC)) /* linked source */
               ));
 }
 
@@ -732,133 +743,94 @@ int fluid_mod_has_dest(const fluid_mod_t *mod, int gen)
 
 /* debug function: Prints the contents of a modulator */
 #ifdef DEBUG
-void fluid_dump_modulator(fluid_mod_t *mod)
+void fluid_dump_modulator(fluid_mod_t * mod)
 {
-    int src1 = mod->src1;
-    int dest = mod->dest;
-    int src2 = mod->src2;
-    int flags1 = mod->flags1;
-    int flags2 = mod->flags2;
-    fluid_real_t amount = (fluid_real_t)mod->amount;
+    static const char *src_cc =         "MIDI CC=     %3i";	
+    static const char *src_none =       "None            ";
+    static const char *src_vel =        "note-on velocity";
+    static const char *src_key_nr =     "Key nr          ";
+    static const char *src_key_pr =     "Poly pressure   ";
+    static const char *src_chan_pr =    "Chan pressure   ";
+    static const char *src_pwheel =     "Pitch Wheel     ";
+    static const char *src_pwheelsens = "Pitch wheel sens";
+    static const char *src_link =       "link                    ";
+    static const char *src_unknow =     "unknown:     %3i";
+
+    int src1=mod->src1;
+    int dest=mod->dest;
+    int src2=mod->src2;
+    int flags1=mod->flags1;
+    int flags2=mod->flags2;
+    fluid_real_t amount=(fluid_real_t)mod->amount;
 
     printf("Src: ");
-
     if(flags1 & FLUID_MOD_CC)
     {
-        printf("MIDI CC=%i", src1);
-    }
+        printf(src_cc,src1);
+    } 
     else
     {
         switch(src1)
         {
-        case FLUID_MOD_NONE:
-            printf("None");
-            break;
-
-        case FLUID_MOD_VELOCITY:
-            printf("note-on velocity");
-            break;
-
-        case FLUID_MOD_KEY:
-            printf("Key nr");
-            break;
-
-        case FLUID_MOD_KEYPRESSURE:
-            printf("Poly pressure");
-            break;
-
-        case FLUID_MOD_CHANNELPRESSURE:
-            printf("Chan pressure");
-            break;
-
-        case FLUID_MOD_PITCHWHEEL:
-            printf("Pitch Wheel");
-            break;
-
-        case FLUID_MOD_PITCHWHEELSENS:
-            printf("Pitch Wheel sens");
-            break;
-
-        default:
-            printf("(unknown: %i)", src1);
+            case FLUID_MOD_NONE:
+                printf(src_none); break;
+            case FLUID_MOD_VELOCITY:
+                printf(src_vel); break;
+            case FLUID_MOD_KEY:
+                printf(src_key_nr); break;
+            case FLUID_MOD_KEYPRESSURE:
+                printf(src_key_pr); break;
+            case FLUID_MOD_CHANNELPRESSURE:
+                printf(src_chan_pr); break;
+            case FLUID_MOD_PITCHWHEEL:
+                printf(src_pwheel); break;
+            case FLUID_MOD_PITCHWHEELSENS:
+                printf(src_pwheelsens); break;
+            case FLUID_MOD_LINK_SRC:
+                printf(src_link); break;
+            default:
+                printf(src_unknow, src1);
         }; /* switch src1 */
     }; /* if not CC */
 
-    if(flags1 & FLUID_MOD_NEGATIVE)
+    if (src1 != FLUID_MOD_LINK_SRC)
     {
-        printf("- ");
+        if (flags1 & FLUID_MOD_NEGATIVE){printf(" - ");} 
+        else                            {printf(" + ");};
+        if (flags1 & FLUID_MOD_BIPOLAR) {printf("bip  ");}
+        else                            {printf("unip ");};
     }
-    else
-    {
-        printf("+ ");
-    };
-
-    if(flags1 & FLUID_MOD_BIPOLAR)
-    {
-        printf("bip ");
-    }
-    else
-    {
-        printf("unip ");
-    };
-
     printf("-> ");
-
     switch(dest)
     {
-    case GEN_FILTERQ:
-        printf("Q");
-        break;
+        case GEN_FILTERQ:         printf("Q              "); break;
+        case GEN_FILTERFC:        printf("fc             "); break;
 
-    case GEN_FILTERFC:
-        printf("fc");
-        break;
+        case GEN_CUSTOM_FILTERQ:  printf("custom-Q       "); break;
+        case GEN_CUSTOM_FILTERFC: printf("custom-fc      "); break;
 
-    case GEN_CUSTOM_FILTERQ:
-        printf("custom-Q");
-        break;
+        case GEN_VIBLFOTOPITCH:	  printf("VibLFO-to-pitch"); break;
+        case GEN_MODENVTOPITCH:	  printf("ModEnv-to-pitch"); break;
+        case GEN_MODLFOTOPITCH:	  printf("ModLFO-to-pitch"); break;
+        case GEN_CHORUSSEND:      printf("Chorus send    "); break;
+        case GEN_REVERBSEND:      printf("Reverb send    "); break;
+        case GEN_PAN:             printf("pan            "); break;
 
-    case GEN_CUSTOM_FILTERFC:
-        printf("custom-fc");
-        break;
+        case GEN_CUSTOM_BALANCE:  printf("balance        "); break;
 
-    case GEN_VIBLFOTOPITCH:
-        printf("VibLFO-to-pitch");
-        break;
+        case GEN_ATTENUATION:     printf("att            "); break;
+        default:
+            if(dest & FLUID_MOD_LINK_DEST)
+            {
+			                      printf("link-dest    %2i",dest &~FLUID_MOD_LINK_DEST);
+            }
+            else
+            {
+	                              printf("dest         %2i",dest);
+            }
 
-    case GEN_MODENVTOPITCH:
-        printf("ModEnv-to-pitch");
-        break;
-
-    case GEN_MODLFOTOPITCH:
-        printf("ModLFO-to-pitch");
-        break;
-
-    case GEN_CHORUSSEND:
-        printf("Chorus send");
-        break;
-
-    case GEN_REVERBSEND:
-        printf("Reverb send");
-        break;
-
-    case GEN_PAN:
-        printf("pan");
-        break;
-
-    case GEN_CUSTOM_BALANCE:
-        printf("balance");
-        break;
-
-    case GEN_ATTENUATION:
-        printf("att");
-        break;
-
-    default:
-        printf("dest %i", dest);
     }; /* switch dest */
-
-    printf(", amount %f flags %i src2 %i flags2 %i\n", amount, flags1, src2, flags2);
+    printf(", amount %9.2f, flags %3i, src2 %3i, flags2 %3i\n",amount, flags1, src2, flags2);
 };
 #endif
 
