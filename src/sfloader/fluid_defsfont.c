@@ -1476,6 +1476,127 @@ fluid_zone_check_linked_mod(char *zone_name, fluid_mod_t *list_mod)
     return result;
 }
 
+/*
+ * Valid linked modulators are searched and cloned from mod_list list to 
+ * linked_mod list.
+ * When finished, modulators in linked_mod are grouped in complex modulator.
+ * (cm0,cm1,cm2..).
+ * The first member of any complex modulator is the ending modulator connected
+ * to a generator. Other members are linked to each other to reach the first
+ * member. The destination index of modulator member following the first is
+ * relative (0 based) to the first member.
+ * 
+ * Corresponding modulators in mod_list list are marked invalid (they will be
+ * removed later).
+ *
+ * The function searchs all linked path starting from the end of the path 
+ * (i.e modulator connected to a generator) backward to the beginning of 
+ * the path (ie. a modulator with source not linked).
+ * The function is recursive and intended to be called the first time to
+ * start the search from ending linked modulator (see dest_idx, new_idx).
+ *
+ * @param list_mod, modulators list
+ * @param dest_idx, initial index of linked destination modulator to search.
+ *  Must be set to -1 at first call.
+ *  -1, to search ending linked modulator.
+ *  >= 0, to search a modulator with linked destination equal to dest_idx index.
+ *
+ * @param new_idx, index (0 based) of the most recent modulator at the end
+ *  of linked_mod. Must be set to 0 at first call.
+ *
+ * @param linked_mod, address of pointer on linked modulators list returned
+ *  if any linked modulators exist. NULL is returned if there is no complex
+ *  linked modulator.
+ *
+ * @return  
+ *   0, linked_mod list is empty.
+ *   > 0 , linked_mod list contains linked modulators.
+ *   FLUID_FAILED otherwise.
+*/
+static int 
+fluid_zone_copy_linked_mod(fluid_mod_t *list_mod, int dest_idx, int new_idx,
+                               fluid_mod_t **linked_mod)
+{
+    int linked_count = new_idx; /* Last added modulator index in linked_mod */
+    int mod_idx = 0; /* first modulator index in list mod*/
+    fluid_mod_t *mod = list_mod;
+    while(mod)
+    {
+ 	    if (mod->amount != 0) /* ignores invalid modulators */
+        {
+            /* is_src_linked is true when modulator mod's input are linked */
+            int is_src1_linked = fluid_mod_has_linked_src1(mod);
+
+            /* is_mod_dst_only is true when mod is a linked ending modulator */
+            int is_mod_dst_only = (dest_idx < 0) && is_src1_linked &&
+                                  !(mod->dest & FLUID_MOD_LINK_DEST);
+
+            /* is_mod_src is true when mod linked destination is equal to dest_idx */
+            int is_mod_src = ((dest_idx >= 0) && (dest_idx == mod->dest));
+
+            /* is mod any linked modulator of interest ? */
+            if (is_mod_dst_only || is_mod_src)
+            {
+                /* Make a copy of this modulator */
+                fluid_mod_t *mod_cpy = new_fluid_mod();
+                if(mod_cpy == NULL)
+                { 
+                    return FLUID_FAILED;
+                }
+                fluid_mod_clone(mod_cpy, mod);
+                mod_cpy->next = NULL;
+                
+                /* updates destination field of mod_cpy (but ending modulator) */
+                if (is_mod_src)
+                {
+                    /* new destination field must be an index 0 based. */
+                    mod_cpy->dest = FLUID_MOD_LINK_DEST | (new_idx - 1);
+                }
+
+                /* adding mod_cpy in linked_mod */
+                if (linked_count == 0)
+                {   
+                    /* puts mod_cpy at the begin of linked list */
+                    *linked_mod = mod_cpy; 
+                } 
+                else 
+                {   
+                    /* puts mod_cpy at the end of linked list */
+                    fluid_mod_t * last_mod = *linked_mod;
+
+                    /* Find the end of the list */
+                    while (last_mod->next != NULL){ last_mod = last_mod->next; }
+                    last_mod->next = mod_cpy;
+                }
+                /* force index of ending modulator to 0 */
+                if (is_mod_dst_only)
+                {
+                    linked_count = 0;
+                }
+                linked_count++; /* updates count of linked mod */
+
+                /* marks mod invalid in list. mod will be removed later */
+                mod->amount = 0; /* marked invalid in mod list */
+
+                /* is mod's source src1 linked ? */
+                if(is_src1_linked) 
+                {	/* search a modulator with output linked to mod */
+                    linked_count = fluid_zone_copy_linked_mod(list_mod,
+                                                 mod_idx | FLUID_MOD_LINK_DEST,
+                                                 linked_count, linked_mod);
+                    if(linked_count == FLUID_FAILED)
+                    {
+                        return FLUID_FAILED;
+                    }
+                }
+            }
+        }
+        mod = mod->next;
+        mod_idx++;
+    }
+    return linked_count;
+}
+
 /**
  * Checks and remove invalid modulators from a zone modulators list.
  * - checks valid modulator sources (specs SF 2.01  7.4, 7.8, 8.2.1).
@@ -1490,9 +1611,11 @@ static void fluid_zone_check_remove_mod(fluid_mod_t **list_mod)
     {	
         fluid_mod_t *next = mod->next;
         /* has mod invalid sources ? */
-        if(!fluid_mod_check_sources (mod, NULL) 
+        if(((fluid_mod_has_linked_src1(mod)||(mod->dest & FLUID_MOD_LINK_DEST))
+              && (mod->amount == 0))
+			  || !fluid_mod_check_sources(mod, NULL)
               /* or is mod identic to any following modulator ? */
-              ||fluid_zone_is_mod_identic(mod, NULL)) 
+              || fluid_zone_is_mod_identic(mod, NULL))
         {  
             /* the modulator is useless so we remove it */
             if (prev_mod)
@@ -1530,7 +1653,7 @@ static void fluid_limit_mod_list(char *zone_name, fluid_mod_t **list_mod)
 
     while(mod)
     {
-        if((mod_idx + 1) > FLUID_NUM_MOD)
+        if((mod_idx + fluid_get_num_mod(mod)) > FLUID_NUM_MOD )
         {
             /* truncation of list_mod */
             if(mod_idx)
@@ -1580,11 +1703,26 @@ fluid_zone_check_mod(char *zone_name, fluid_mod_t **list_mod,
         return FLUID_FAILED;
     }
 
+    /* does one or more valid linked modulators exists ? */
+    if(result)
+    {
+        /* one or more valid linked modulators path exists */
+        /* Extracts linked modulators path from list_mod to linked_mod.*/
+        if (fluid_zone_copy_linked_mod(*list_mod, -1, 0, 
+                                      linked_mod) == FLUID_FAILED)
+        {
+            return FLUID_FAILED;
+        }
+    }
+
     /* removing all invalid modulators */
     fluid_zone_check_remove_mod(list_mod);
 
     /* limits the size of modulators list */
     fluid_limit_mod_list(zone_name, list_mod);
+
+    /* limits the size of linked modulators list */
+    fluid_limit_mod_list(zone_name, linked_mod);
 
     return FLUID_OK;
 }
