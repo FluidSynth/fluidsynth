@@ -1682,7 +1682,9 @@ static void fluid_limit_mod_list(char *zone_name, fluid_mod_t **list_mod)
  * - checks valid modulator sources (specs SF 2.01  7.4, 7.8, 8.2.1).
  * - checks identic modulators in the list (specs SF 2.01  7.4, 7.8).
  * - checks linked modulators path from a zone modulators list.
+ * - extracts linked modulator to linked_mod.
  * - removing all invalid modulators.
+ * - limiting size of modulators list.
  * @param zone_name, zone name.
  * @param list_mod, address of pointer on modulators list.
  * @param linked_mod, address of pointer on linked modulators list returned
