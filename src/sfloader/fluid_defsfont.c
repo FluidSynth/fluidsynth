@@ -724,7 +724,7 @@ static void fluid_print_voice_mod(fluid_voice_t  *voice,
     {
         return;
 	}
-    FLUID_LOG(FLUID_INFO, "%s/%s voice mod:----------------------------------------", preset_zone_name,inst_zone_name);
+    FLUID_LOG(FLUID_INFO, "\"%s\" \"%s\" voice modulators ---------------------------------", preset_zone_name,inst_zone_name);
     for(i = 0; i < voice->mod_count; i+= fluid_get_num_mod(mod))
     {
         mod = &voice->mod[i];
@@ -1183,7 +1183,7 @@ fluid_defpreset_import_sfont(fluid_defpreset_t *defpreset,
     while(p != NULL)
     {
         sfzone = (SFZone *)fluid_list_get(p);
-        FLUID_SNPRINTF(zone_name, sizeof(zone_name), "%s/%d", defpreset->name, count);
+        FLUID_SNPRINTF(zone_name, sizeof(zone_name), "pz:%s/%d", defpreset->name, count);
         zone = new_fluid_preset_zone(zone_name);
 
         if(zone == NULL)
@@ -2290,9 +2290,8 @@ fluid_inst_import_sfont(fluid_preset_zone_t *preset_zone, SFInst *sfinst, fluid_
     {
 
         sfzone = (SFZone *)fluid_list_get(p);
-        /* integrates preset zone name in instrument zone name */
-        FLUID_SNPRINTF(zone_name, sizeof(zone_name), "%s/%s/%d", preset_zone->name,
-                       inst->name, count);
+        /* instrument zone name */
+        FLUID_SNPRINTF(zone_name, sizeof(zone_name), "iz:%s/%d", inst->name, count);
 
         inst_zone = new_fluid_inst_zone(zone_name);
 
