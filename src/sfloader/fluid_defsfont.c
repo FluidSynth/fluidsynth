@@ -1123,6 +1123,17 @@ fluid_defpreset_noteon(fluid_defpreset_t *defpreset, fluid_synth_t *synth, int c
                                                             preset_zone->mod, /* local preset modulators */
                                                             FLUID_VOICE_ADD); /* mode */
 
+                    /* instrument zone linked modulators */
+                    fluid_defpreset_noteon_add_linked_mod_to_voice(voice, 
+                                                            global_inst_zone ? global_inst_zone->linked_mod : NULL,
+                                                            inst_zone->linked_mod,
+                                                            FLUID_VOICE_DEFAULT);
+                    /* preset zone linked modulators */
+                    fluid_defpreset_noteon_add_linked_mod_to_voice(voice, 
+                                                            global_preset_zone ? global_preset_zone->linked_mod : NULL,
+                                                            preset_zone->linked_mod,
+                                                            FLUID_VOICE_ADD);
+
                     /* add the synthesis process to the synthesis loop. */
                     fluid_synth_start_voice(synth, voice);
 
