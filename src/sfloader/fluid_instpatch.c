@@ -94,6 +94,13 @@ fluid_instpatch_preset_noteon(fluid_preset_t *preset, fluid_synth_t *synth, int 
     
     /* lookup the voice cache that we've created on loading */
     IpatchSF2VoiceCache *cache = fluid_hashtable_lookup(preset_data->parent_sfont->voice_cache_hash, preset_data->item);
+    
+    /* loading and caching the instrument could have failed though */
+    if(FLUID_UNLIKELY(cache == NULL))
+    {
+        return FLUID_FAILED;
+    }
+    
     g_object_ref(cache);
 
     for(i = 0; i < cache->sel_count; i++)
