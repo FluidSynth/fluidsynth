@@ -700,27 +700,36 @@ static void fluid_dump_linked_mod(fluid_mod_t *mod, int offset)
 }
 
 /*
- Prints all the voice modulators.
- zone_name, name of actual  zone
- filter_zone_name, filter name of the  zone to display. 
+ Prints all the voice modulators of an instrument zone.
+ Filter parameters allow to display modulators of the instrument zone and 
+ preset zone corresponding to filter names.
+
+ @param voice voice of the instrument zone.
+ @param preset_zone_name, actual preset_zone name.
+ @param filter_preset_zone_name, filter name of preset_zone to display. 
+ @param inst_zone_name, actual instrument zone name.
+ @paramfilter_inst_zone_name, filter name of intrument zone to display. 
 */
 static void fluid_print_voice_mod(fluid_voice_t  *voice, 
-						char *zone_name,
-						char *filter_zone_name)
+                        char *preset_zone_name,
+                        char *filter_preset_zone_name,
+                        char *inst_zone_name,
+                        char *filter_inst_zone_name)
 {
-	int i,count;
-	fluid_mod_t *mod;
-	
-	if( strcmp(zone_name, filter_zone_name))
-	{
-		return;
-	}
-	FLUID_LOG(FLUID_INFO, "%s voice mod:----------------------------------------", zone_name);
-	for(i = 0; i < voice->mod_count; i+= fluid_get_num_mod(mod))
+    int i,count;
+    fluid_mod_t *mod;
+
+    if(strcmp(preset_zone_name, filter_preset_zone_name)
+      || strcmp(inst_zone_name, filter_inst_zone_name))
     {
-		mod = &voice->mod[i];
-		fluid_dump_linked_mod (mod, i);
+        return;
 	}
+    FLUID_LOG(FLUID_INFO, "%s/%s voice mod:----------------------------------------", preset_zone_name,inst_zone_name);
+    for(i = 0; i < voice->mod_count; i+= fluid_get_num_mod(mod))
+    {
+        mod = &voice->mod[i];
+        fluid_dump_linked_mod (mod, i);
+    }
 }
 #endif
 
