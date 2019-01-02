@@ -1564,16 +1564,37 @@ fluid_voice_add_mod_local(fluid_voice_t *voice, fluid_mod_t *mod, int mode, int 
     {
 
         /* if identical modulator exists, add them */
-        for(i = 0; i < check_limit_count; i++)
+        if(count > 1)
         {
-            if(fluid_mod_test_identity(&voice->mod[i], mod))
+            /* Add complex modulator */
+            for(i = 0; i < check_limit_count; i++) 
+            {
+                /* skip unlinked modulators */
+                if (voice->mod[i].next)
+				{
+                    if(fluid_linked_mod_test_identity(&voice->mod[i],i, mod,0))
+                    {
+                        /* add amount */
+                        fluid_linked_mod_test_identity(&voice->mod[i],i, mod,1);
+                        return;
+                    }
+                    /* Moves i to last member index */
+                    while(voice->mod[i].next)
+                    {
+                        i++;
+                    }
+                }
+           	}
+        }
+        else for (i = 0; i < check_limit_count; i++) 
+        {
+            if (fluid_mod_test_identity(&voice->mod[i], mod))
             {
                 //		printf("Adding modulator...\n");
                 voice->mod[i].amount += mod->amount;
                 return;
             }
         }
-
     }
     else if(mode == FLUID_VOICE_OVERWRITE)
     {
