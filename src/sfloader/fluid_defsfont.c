@@ -683,6 +683,123 @@ fluid_defpreset_next(fluid_defpreset_t *defpreset)
 }
 
 /*
+ * Adds global and local linked modulators list to the voice. This is done in 2 steps:
+ * - Step 1: Local modulators replace identic global modulators.
+ * - Step 2: global + local modulators are added to the voice using mode.
+ *
+ * Instrument zone list (local/global) must be added using FLUID_VOICE_DEFAULT
+ * Preset zone list (local/global) must be added using FLUID_VOICE_ADD.
+ *
+ * @param voice voice instance.
+ * @param global_mod global list of linked modulators.
+ * @param local_mod local list of linked modulators.
+ * @param mode Determines how to handle an existing identical complex modulator.
+ *   # FLUID_VOICE_DEFAULT add the modulator at the end of voice table.
+ *   # FLUID_VOICE_ADD to add (offset) the modulator amounts to existing
+ *     complex linked modulator.
+*/
+static void
+fluid_defpreset_noteon_add_linked_mod_to_voice(fluid_voice_t *voice, 
+                                               fluid_mod_t *global_mod,
+                                               fluid_mod_t *local_mod,int mode)
+{
+    fluid_mod_t *mod;
+    /* list for 'sorting' global/local modulators */
+    fluid_mod_t *mod_list[FLUID_NUM_MOD];
+    int mod_list_count, i;
+
+    /* identity_limit_count is the modulator upper limit number to handle with 
+     * existing identical modulators.
+     * When identity_limit_count is below the actual number of modulators, this 
+     * will restrict identity check to this upper limit,
+     * This is useful when we know by advance that there is no duplicate with
+     * modulators at index above this limit. This avoid wasting cpu cycles at
+     * noteon.
+     */
+     int identity_limit_count; 
+
+    /* Step 1: Local modulators replace identic global modulators. */
+
+    /* local (instrument zone/preset zone), modulators: Put them all into a list.
+       Only the first member of a complex linked modulator is putted in the list.
+     */
+
+    mod_list_count = 0;
+    while(local_mod)
+    {
+        /* As modulators number in local_mod list was limited to FLUID_NUM_MOD at
+           soundfont loading time (fluid_limit_mod_list()), here we don't need
+           to check if mod_list is full.
+         */
+        mod_list[mod_list_count++] = local_mod;
+        local_mod = fluid_get_next_mod(local_mod); /* next complex modulator */
+    }
+
+    /* global (instrument zone/preset zone), complex modulators.
+     * Replace modulators with the same definition in the global list:
+     *
+     * mod_list contains local complex modulators. Now we know that there
+     * is no global complex modulator identic to another global complex modulator
+     * (this has been checked at soundfont loading time). So global complex
+     * modulators are only checked against local complex modulators number.
+     */
+
+    /* Restrict identity check to the number of local modulators */
+    identity_limit_count = mod_list_count;
+
+    while(global_mod)
+    {
+        /* 'Identical' global modulators are ignored.*/
+
+        for(i = 0; i < identity_limit_count; i++)
+        {
+            if(fluid_linked_mod_test_identity(global_mod,0 ,mod_list[i], 0))
+            {
+                break;
+            }
+        }
+
+        /* Finally add the new modulator to the list. */
+        if(i >= identity_limit_count)
+        {
+            /* local_mod and global_mod lists was limited to FLUID_NUM_MOD at
+               soundfont loading time. Any complex modulator has at least 2
+               members, so local + global modulators never will exceed
+               FLUID_NUM_MOD. So, no need to check if mod_list_count exceed
+               FLUID_NUM_MOD.
+             */
+
+            mod_list[mod_list_count++] = global_mod;
+        }
+        global_mod = fluid_get_next_mod(global_mod); /* next complex modulator */
+    }
+
+    /* Step 2: global + local modulators are added to the voice using mode. */
+
+    /*
+     * mod_list contains local and global modulators, we know that:
+     * - there is no global modulator identic to another global modulator,
+     * - there is no local modulator identic to another local modulator,
+     * So these local/global modulators are only checked against
+     * actual number of voice modulators.
+     */
+
+    /* Restrict identity check to the actual number of voice linked modulators */
+    /* Acual number of voice linked modulators: instruments */
+    identity_limit_count = voice->mod_count; 
+
+    for(i = 0; i < mod_list_count; i++)
+    {
+
+        mod = mod_list[i];
+        /* Instrument linked modulators are added in mode: FLUID_VOICE_DEFAULT */
+        /* Preset linked modulators are added in mode: FLUID_VOICE_ADD */
+        /* identity_limit_count is effective only in mode FLUID_VOICE_ADD */
+        fluid_voice_add_mod_local(voice, mod, mode, identity_limit_count);
+    }
+}
+
+/*
  * Adds global and local modulators list to the voice. This is done in 2 steps:
  * - Step 1: Local modulators replace identic global modulators.
  * - Step 2: global + local modulators are added to the voice using mode.
