@@ -682,6 +682,48 @@ fluid_defpreset_next(fluid_defpreset_t *defpreset)
     return defpreset->next;
 }
 
+#ifdef DEBUG
+/*
+ Prints all members of a modulator.
+*/
+static void fluid_dump_linked_mod(fluid_mod_t *mod, int offset)
+{
+	int i, num = fluid_get_num_mod(mod);
+	
+	printf("modulator count:%d\n", num);
+	for (i = 0; i < num; i++)
+	{
+        printf("mod%02d ", i + offset);
+		fluid_dump_modulator(mod);
+		mod = mod->next;
+	}
+}
+
+/*
+ Prints all the voice modulators.
+ zone_name, name of actual  zone
+ filter_zone_name, filter name of the  zone to display. 
+*/
+static void fluid_print_voice_mod(fluid_voice_t  *voice, 
+						char *zone_name,
+						char *filter_zone_name)
+{
+	int i,count;
+	fluid_mod_t *mod;
+	
+	if( strcmp(zone_name, filter_zone_name))
+	{
+		return;
+	}
+	FLUID_LOG(FLUID_INFO, "%s voice mod:----------------------------------------", zone_name);
+	for(i = 0; i < voice->mod_count; i+= fluid_get_num_mod(mod))
+    {
+		mod = &voice->mod[i];
+		fluid_dump_linked_mod (mod, i);
+	}
+}
+#endif
+
 /*
  * Adds global and local linked modulators list to the voice. This is done in 2 steps:
  * - Step 1: Local modulators replace identic global modulators.
