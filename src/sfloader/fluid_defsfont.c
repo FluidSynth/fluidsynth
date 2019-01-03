@@ -1605,7 +1605,7 @@ fluid_preset_zone_import_sfont(fluid_preset_zone_t *zone, SFZone *sfzone, fluid_
 
         if(zone->inst == NULL)
         {
-            zone->inst = fluid_inst_import_sfont(zone, sfinst, defsfont);
+            zone->inst = fluid_inst_import_sfont(sfinst, defsfont);
         }
 
         if(zone->inst == NULL)
@@ -1697,7 +1697,7 @@ fluid_inst_set_global_zone(fluid_inst_t *inst, fluid_inst_zone_t *zone)
  * fluid_inst_import_sfont
  */
 fluid_inst_t *
-fluid_inst_import_sfont(fluid_preset_zone_t *preset_zone, SFInst *sfinst, fluid_defsfont_t *defsfont)
+fluid_inst_import_sfont(SFInst *sfinst, fluid_defsfont_t *defsfont)
 {
     fluid_list_t *p;
     fluid_inst_t *inst;
