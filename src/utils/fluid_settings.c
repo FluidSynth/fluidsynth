@@ -936,6 +936,7 @@ fluid_settings_setstr(fluid_settings_t *settings, const char *name, const char *
     if((fluid_settings_get(settings, name, &node) != FLUID_OK)
             || (node->type != FLUID_STR_TYPE))
     {
+        FLUID_LOG(FLUID_WARN, "Unknown string parameter '%s'", name);
         goto error_recovery;
     }
 
@@ -1313,6 +1314,7 @@ fluid_settings_setnum(fluid_settings_t *settings, const char *name, double val)
     if((fluid_settings_get(settings, name, &node) != FLUID_OK)
             || (node->type != FLUID_NUM_TYPE))
     {
+        FLUID_LOG(FLUID_WARN, "Unknown numeric parameter '%s'", name);
         goto error_recovery;
     }
 
@@ -1497,6 +1499,7 @@ fluid_settings_setint(fluid_settings_t *settings, const char *name, int val)
     if((fluid_settings_get(settings, name, &node) != FLUID_OK)
             || (node->type != FLUID_INT_TYPE))
     {
+        FLUID_LOG(FLUID_WARN, "Unknown integer parameter '%s'", name);
         goto error_recovery;
     }
 
