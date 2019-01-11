@@ -96,6 +96,8 @@ FluidSynths major version was bumped. The API was reworked, deprecated functions
 - fluid_synth_remove_sfont() returns FLUID_OK or FLUID_FAILED
 - introduce a separate data type for sequencer client IDs: #fluid_seq_id_t
 - fluid_get_userconf() has been implemented for Windows
+- fluid_settings_setstr can not be used to set integer (toggle) settings with "yes" or "no" values anymore. Use fluid_settings_setint instead, for example: fluid_settings_setint(settings, "synth.reverb.active", 0) instead of fluid_settings_setstr(settings, "synth.reverb.active", "no").
+- fluid_settings_set* functions no longer silently register unknown settings but return an error instead
 
 <strong>New Features and API additions:</strong>
 
