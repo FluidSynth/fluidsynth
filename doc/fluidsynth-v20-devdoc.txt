@@ -595,8 +595,8 @@ void createsynth()
 {
     fluid_settings_t* settings;
     settings = new_fluid_settings();
-    fluid_settings_setstr(settings, "synth.reverb.active", "yes");
-    fluid_settings_setstr(settings, "synth.chorus.active", "no");
+    fluid_settings_setint(settings, "synth.reverb.active", 0);
+    fluid_settings_setint(settings, "synth.chorus.active", 0);
     synth = new_fluid_synth(settings);
     adriver = new_fluid_audio_driver(settings, synth);
     sequencer = new_fluid_sequencer2(0);
