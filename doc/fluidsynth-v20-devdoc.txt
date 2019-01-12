@@ -81,6 +81,7 @@ FluidSynths major version was bumped. The API was reworked, deprecated functions
 <strong><span style="color:red">Important changes that may not result in a compilation error but may cause your app to misbehave:</span></strong>
 
 - all public \c fluid_settings_* functions that return an integer which is not meant to be interpreted as bool consistently return either FLUID_OK or FLUID_FAILED
+- fluid_settings_setstr() cannot be used to set integer (toggle) settings with "yes" or "no" values anymore. Use fluid_settings_setint() instead, for example: <br /><code>fluid_settings_setint(settings, "synth.reverb.active", 0)</code> instead of <code>fluid_settings_setstr(settings, "synth.reverb.active", "no")</code>
 - explicit client unregistering is required for fluid_sequencer_register_client() and fluid_sequencer_register_fluidsynth()
 - all public functions consistently receive signed integers for soundfont ids, bank and program numbers
 - use unique device names for the "audio.portaudio.device" setting
@@ -90,8 +91,9 @@ FluidSynths major version was bumped. The API was reworked, deprecated functions
 
 - all public \c delete_* functions return void and are safe when called with NULL
 - the shell command handler was decoupled internally, as a consequence the param list of new_fluid_server() and new_fluid_cmd_handler() was adapted
+- \c fluid_settings_set* functions no longer silently register unknown settings but return an error instead
 - reverb: roomsize is now limited to an upper threshold of 1.0 to avoid exponential volume increase
-- rename fluid_mod_new() and fluid_mod_delete() to match naming conventions: new_fluid_mod() and delete_fluid_mod()
+- rename \c fluid_mod_new() and \c fluid_mod_delete() to match naming conventions: new_fluid_mod() and delete_fluid_mod()
 - rename chorus getters to match naming conventions: fluid_synth_get_chorus_speed() and fluid_synth_get_chorus_depth()
 - fluid_synth_remove_sfont() returns FLUID_OK or FLUID_FAILED
 - introduce a separate data type for sequencer client IDs: #fluid_seq_id_t
@@ -594,8 +596,8 @@ void createsynth()
 {
     fluid_settings_t* settings;
     settings = new_fluid_settings();
-    fluid_settings_setstr(settings, "synth.reverb.active", "yes");
-    fluid_settings_setstr(settings, "synth.chorus.active", "no");
+    fluid_settings_setint(settings, "synth.reverb.active", 0);
+    fluid_settings_setint(settings, "synth.chorus.active", 0);
     synth = new_fluid_synth(settings);
     adriver = new_fluid_audio_driver(settings, synth);
     sequencer = new_fluid_sequencer2(0);
