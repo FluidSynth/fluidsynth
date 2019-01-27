@@ -29,7 +29,7 @@ set ( PACKAGE "fluidsynth" )
 # FluidSynth package version
 set ( FLUIDSYNTH_VERSION_MAJOR 2 )
 set ( FLUIDSYNTH_VERSION_MINOR 0 )
-set ( FLUIDSYNTH_VERSION_MICRO 1 )
+set ( FLUIDSYNTH_VERSION_MICRO 3 )
 set ( VERSION "${FLUIDSYNTH_VERSION_MAJOR}.${FLUIDSYNTH_VERSION_MINOR}.${FLUIDSYNTH_VERSION_MICRO}" )
 set ( FLUIDSYNTH_VERSION "\"${VERSION}\"" )
 
@@ -43,8 +43,8 @@ set ( FLUIDSYNTH_VERSION "\"${VERSION}\"" )
 # if any interfaces have been removed/changed (compatibility broken): AGE=0
 # This is not exactly the same algorithm as the libtool one, but the results are the same.
 set ( LIB_VERSION_CURRENT 2 )
-set ( LIB_VERSION_AGE 0 )
-set ( LIB_VERSION_REVISION 1 )
+set ( LIB_VERSION_AGE 1 )
+set ( LIB_VERSION_REVISION 0 )
 set ( LIB_VERSION_INFO
       "${LIB_VERSION_CURRENT}.${LIB_VERSION_AGE}.${LIB_VERSION_REVISION}" )
 
@@ -67,9 +67,14 @@ option ( enable-libsndfile "compile libsndfile support (if it is available)" on 
 option ( enable-midishare "compile MidiShare support (if it is available)" on )
 option ( enable-network "enable network support (requires BSD sockets)" on )
 option ( enable-oss "compile OSS support (if it is available)" on )
+option ( enable-dsound "compile DirectSound support (if it is available)" on )
+option ( enable-waveout "compile Windows WaveOut support (if it is available)" on )
+option ( enable-winmidi "compile Windows MIDI support (if it is available)" on )
+option ( enable-sdl2 "compile SDL2 audio support (if it is available)" on )
 option ( enable-pkgconfig "use pkg-config to locate fluidsynth's (mostly optional) dependencies" on )
 option ( enable-pulseaudio "compile PulseAudio support (if it is available)" on )
 option ( enable-readline "compile readline lib line editing (if it is available)" on )
+option ( enable-threads "enable multi-threading support (such as parallel voice synthesis)" on )
 
 # Platform specific options
 if ( CMAKE_SYSTEM MATCHES "Linux" )
@@ -190,15 +195,40 @@ endif ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang" OR CMAKE
 # Windows
 unset ( WINDOWS_SUPPORT CACHE )
 unset ( WINDOWS_LIBS CACHE )
+unset ( DSOUND_SUPPORT CACHE )
+unset ( WAVEOUT_SUPPORT CACHE )
+unset ( WINMIDI_SUPPORT CACHE )
 unset ( MINGW32 CACHE )
 if ( WIN32 )
   include ( CheckIncludeFiles )
+
+  # Check presence of MS include files
   check_include_file ( windows.h HAVE_WINDOWS_H )
   check_include_file ( io.h HAVE_IO_H )
   check_include_file ( dsound.h HAVE_DSOUND_H )
   check_include_files ( "windows.h;mmsystem.h" HAVE_MMSYSTEM_H )
+
   set ( WINDOWS_SUPPORT ${HAVE_WINDOWS_H} )
-  set ( WINDOWS_LIBS "dsound;winmm;ws2_32" )
+
+  if ( enable-network )
+    set ( WINDOWS_LIBS "${WINDOWS_LIBS};ws2_32" )
+  endif ( enable-network )
+
+  if ( enable-dsound AND HAVE_DSOUND_H )
+    set ( WINDOWS_LIBS "${WINDOWS_LIBS};dsound" )
+    set ( DSOUND_SUPPORT 1 )
+  endif ()
+
+  if ( enable-winmidi AND HAVE_MMSYSTEM_H )
+    set ( WINDOWS_LIBS "${WINDOWS_LIBS};winmm" )
+    set ( WINMIDI_SUPPORT 1 )
+  endif ()
+
+  if ( enable-waveout AND HAVE_MMSYSTEM_H )
+    set ( WINDOWS_LIBS "${WINDOWS_LIBS};winmm" )
+    set ( WAVEOUT_SUPPORT 1 )
+  endif ()
+
   set ( LIBFLUID_CPPFLAGS "-DFLUIDSYNTH_DLL_EXPORTS" )
   set ( FLUID_CPPFLAGS "-DFLUIDSYNTH_NOT_A_DLL" )
   if  ( MSVC )
@@ -229,7 +259,7 @@ if ( WIN32 )
   # MinGW compiler (a Windows GCC port)
   if ( MINGW )
     set ( MINGW32 1 )
-    add_definitions ( -mms-bitfields )
+    add_compile_options ( -mms-bitfields )
   endif  ( MINGW )
 else ( WIN32 )
 # Check PThreads, but not in Windows
@@ -320,6 +350,18 @@ if ( enable-profiling )
     endif ( )
     
     set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OPT_FLAGS}" )
+    
+    if ( CMAKE_VERSION VERSION_GREATER "3.6.0" )
+        find_program( CLANG_TIDY
+                    NAMES "clang-tidy"
+                    DOC "Path to clang-tidy executable" )
+
+        if ( CLANG_TIDY )
+            message ( STATUS "Found clang-tidy" )
+            set ( CMAKE_C_CLANG_TIDY "clang-tidy" )
+        endif ( CLANG_TIDY )
+    endif ( CMAKE_VERSION VERSION_GREATER "3.6.0" )
+
 endif ( enable-profiling )
 
 unset ( ENABLE_TRAPONFPE CACHE )
@@ -352,22 +394,6 @@ if ( CMAKE_BUILD_TYPE MATCHES "Debug" )
     set ( ENABLE_DEBUG 1 )
     set ( DEBUG 1 )
 endif ( CMAKE_BUILD_TYPE MATCHES "Debug" )
-
-if ( CMAKE_VERSION VERSION_GREATER "3.6.0" )
-find_program( CLANG_TIDY
-            NAMES "clang-tidy"
-            DOC "Path to clang-tidy executable" )
-
-    if ( CLANG_TIDY )
-    message ( STATUS "Found clang-tidy" )
-        # whenever clang-tidy is available, use it to automatically add braces after ever "make"
-        if ( WITH_PROFILING )
-            set ( CMAKE_C_CLANG_TIDY "clang-tidy" )
-        else ( WITH_PROFILING )
-            set ( CMAKE_C_CLANG_TIDY "clang-tidy;-checks=-*,readability-braces-*;-format-style=file" )
-        endif ( WITH_PROFILING )
-    endif ( CLANG_TIDY )
-endif ( CMAKE_VERSION VERSION_GREATER "3.6.0" )
 
 # Additional targets to perform clang-format/clang-tidy
 # Get all project files
@@ -530,6 +556,20 @@ if ( enable-oss )
   set ( OSS_SUPPORT ${OSS_FOUND} )
 endif ( enable-oss )
 
+unset ( SDL2_SUPPORT CACHE )
+unset ( SDL2_INCLUDE_DIR CACHE )
+unset ( SDL2_LIBRARY CACHE )
+if ( enable-sdl2 )
+  find_package ( SDL2 )
+
+  if ( SDL2_FOUND )
+    set ( SDL2_SUPPORT ${SDL2_FOUND} )
+  else ( SDL2_FOUND)
+    unset ( SDL2_INCLUDE_DIR CACHE )
+    unset ( SDL2_LIBRARY CACHE )
+  endif ( SDL2_FOUND )
+endif ( enable-sdl2 )
+
 unset ( MIDISHARE_SUPPORT CACHE )
 if ( enable-midishare )
   find_package ( MidiShare QUIET )
@@ -554,6 +594,11 @@ if ( enable-readline )
 else ( enable-readline )
   unset ( READLINE_LIBS CACHE )
 endif ( enable-readline )
+
+unset ( ENABLE_MIXER_THREADS CACHE )
+if ( enable-threads )
+  set ( ENABLE_MIXER_THREADS 1 )
+endif ( enable-threads )
 
 unset ( HAVE_OPENMP CACHE )
 find_package ( OpenMP QUIET )

@@ -1,221 +1,64 @@
 language: c
-#sudo: required
+sudo: false
+os: linux
 dist: trusty
+addons:
+  apt:
+    sources:
+    - ubuntu-toolchain-r-test
+    - llvm-toolchain-trusty-6.0
+    - llvm-toolchain-trusty-7
+    packages:
+    - cmake-data
+    - cmake
+    - libglib2.0-0
+    - libsndfile-dev
+    - libasound2-dev
+    - libjack-dev
+    - portaudio19-dev
+    - libpulse-dev
+    - libdbus-glib-1-dev
+    - ladspa-sdk
 env:
     - CMAKE_FLAGS="-Denable-profiling=1"
     - CMAKE_FLAGS="-Denable-floats=1 -Denable-profiling=1"
+    - CMAKE_FLAGS="-Denable-floats=0"
     - CMAKE_FLAGS="-Denable-trap-on-fpe=1"
     - CMAKE_FLAGS="-Denable-fpe-check=1"
     - CMAKE_FLAGS="-Denable-ipv6=0"
     - CMAKE_FLAGS="-Denable-network=0"
     - CMAKE_FLAGS="-Denable-aufile=0"
     - CMAKE_FLAGS="-DBUILD_SHARED_LIBS=0"
+
 matrix:
   include:
-    - os: linux
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - g++-4.8
-            - cmake-data
-            - cmake
-            - libglib2.0-0
-            - libsndfile-dev
-            - libasound2-dev
-            - libjack-dev
-            - portaudio19-dev
-            - libpulse-dev
-            - libdbus-glib-1-dev
-            - ladspa-sdk
-      env:
-         - MATRIX_EVAL="CC=gcc-4.8 && CXX=g++-4.8"
-         - CMAKE_FLAGS="-Denable-floats=1"
-         
-    - os: linux
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - g++-4.8
-            - cmake-data
-            - cmake
-            - libglib2.0-0
-            - libsndfile-dev
-            - libasound2-dev
-            - libjack-dev
-            - portaudio19-dev
-            - libpulse-dev
-            - libdbus-glib-1-dev
-            - ladspa-sdk
-      env:
-         - MATRIX_EVAL="CC=gcc-4.8 && CXX=g++-4.8"
-         - CMAKE_FLAGS="-Denable-floats=0"
-
-    # works on Precise and Trusty
-    - os: linux
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - g++-5
-            - cmake-data
-            - cmake
-            - libglib2.0-0
-            - ladspa-sdk
-      env:
-         - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5"
-         - CMAKE_FLAGS="-Denable-debug=1 -DCMAKE_C_FLAGS_DEBUG=-fuse-ld=gold"
-
-    # works on Precise and Trusty
-    - os: linux
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - g++-6
-            - cmake-data
-            - cmake
-            - libglib2.0-0
-            - ladspa-sdk
-      env:
-        - MATRIX_EVAL="CC=gcc-6 && CXX=g++-6"
-
-    # works on Precise and Trusty
-    - os: linux
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - g++-7
-            - cmake-data
-            - cmake
-            - libglib2.0-0
-            - ladspa-sdk
-      env:
-        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
-
-    # works on Precise and Trusty
-    - os: linux
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - g++-8
-            - cmake-data
-            - cmake
-            - libglib2.0-0
-            - ladspa-sdk
-      env:
-        - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
-
-    # works on Precise and Trusty
-    - os: linux
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-            - llvm-toolchain-precise-3.8
-          packages:
-            - clang-3.8
-            - cmake-data
-            - cmake
-            - libglib2.0-0
-            - libsndfile-dev
-            - libasound2-dev
-            - libjack-dev
-            - portaudio19-dev
-            - libpulse-dev
-            - libdbus-glib-1-dev
-            - ladspa-sdk
-      env:
-        - MATRIX_EVAL="CC=clang-3.8 && CXX=clang++-3.8"
-
-    # works on Trusty
-    - os: linux
-      addons:
-        apt:
-          sources:
-            - llvm-toolchain-trusty-4.0
-          packages:
-            - clang-4.0
-            - cmake-data
-            - cmake
-            - libglib2.0-0
-            - ladspa-sdk
-      env:
-        - MATRIX_EVAL="CC=clang-4.0 && CXX=clang++-4.0"
-
-    # works on Trusty
-    - os: linux
-      addons:
-        apt:
-          sources:
-            - llvm-toolchain-trusty-5.0
-          packages:
-            - clang-5.0
-            - cmake-data
-            - cmake
-            - libglib2.0-0
-            - ladspa-sdk
-      env:
-        - MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0"
-
-    # works on Trusty
-    - os: linux
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-            - llvm-toolchain-trusty-6.0
-          packages:
-            - clang-6.0
-            - cmake-data
-            - cmake
-            - libglib2.0-0
-            - ladspa-sdk
-      env:
-        - MATRIX_EVAL="CC=clang-6.0 && CXX=clang++-6.0"
-        
-    # works on Trusty
-    - os: linux
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-            - llvm-toolchain-trusty-7
-          packages:
-            - clang-7
-            - cmake-data
-            - cmake
-            - libglib2.0-0
-            - ladspa-sdk
-      env:
-        - MATRIX_EVAL="CC=clang-7 && CXX=clang++-7"
-        
     - os: osx
-      osx_image: xcode8
-      env:
-        - MATRIX_EVAL="brew install gcc5 glib gettext && brew link gettext && CC=gcc-5 && CXX=g++-5" # gettext should provide libintl, but doesnt work
+      osx_image: xcode10
 
-    - os: osx
-      osx_image: xcode8
+    - os: linux
       env:
-        - MATRIX_EVAL="brew install gcc6 glib gettext && brew link gettext && CC=gcc-6 && CXX=g++-6"
+        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7 && sudo apt-get install gcc-7"
 
-    - os: osx
-      osx_image: xcode8
+    - os: linux
       env:
-        - MATRIX_EVAL="brew install gcc glib gettext libsndfile jack dbus-glib pulseaudio portaudio && brew link gettext && CC=gcc-8 && CXX=g++-8"
+        - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8 && sudo apt-get install gcc-8"
+        - CMAKE_FLAGS="-Denable-debug=1 -DCMAKE_C_FLAGS_DEBUG=-fuse-ld=gold"
+
+    - os: linux
+      env:
+        - MATRIX_EVAL="CC=clang-3.8 && CXX=clang++-3.8 && sudo apt-get install clang-3.8"
+
+    - os: linux
+      env:
+        - MATRIX_EVAL="CC=clang-6.0 && CXX=clang++-6.0 && sudo apt-get install clang-6.0"
+
+    - os: linux
+      env:
+        - MATRIX_EVAL="CC=clang-7 && CXX=clang++-7 && sudo apt-get install clang-7"
 
 before_install:
     - if [ $TRAVIS_OS_NAME = linux ]; then sudo apt-get update; else brew update; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install glib gettext libsndfile jack dbus-glib pulseaudio portaudio; fi # && brew link gettext
     - eval "${MATRIX_EVAL}"
     
 before_script:
@@ -223,7 +66,7 @@ before_script:
     - mkdir build && cd build
     
 script:
-    - cmake -DCMAKE_INSTALL_PREFIX=$HOME/fluidsynth_install ${CMAKE_FLAGS} "-Denable-portaudio=1" "-Denable-ladspa=1" "-DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_VERBOSE_MAKEFILE=1" ..
+    - cmake -DCMAKE_INSTALL_PREFIX=$HOME/fluidsynth_install ${CMAKE_FLAGS} -Denable-portaudio=1 -Denable-ladspa=1 -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_VERBOSE_MAKEFILE=0 ..
     - make -j4
     - make check
     - if [ $TRAVIS_OS_NAME = linux ]; then make install; fi # install only on linux, as CMAKE_INSTALL_PREFIX is ignored for frameworks on macosx and I cant tell whether that's correct or a bug.

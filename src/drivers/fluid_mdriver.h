@@ -27,9 +27,11 @@
  * fluid_midi_driver_t
  */
 
+typedef struct _fluid_mdriver_definition_t fluid_mdriver_definition_t;
+
 struct _fluid_midi_driver_t
 {
-    const char *name;
+    const fluid_mdriver_definition_t *define;
     handle_midi_event_func_t handler;
     void *data;
 };

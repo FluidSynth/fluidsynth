@@ -29,6 +29,8 @@
 #include "fluid_settings.h"
 
 
+#if AUFILE_SUPPORT
+
 /** fluid_file_audio_driver_t
  *
  * This structure should not be accessed directly. Use audio port
@@ -129,3 +131,5 @@ static int fluid_file_audio_run_s16(void *d, unsigned int clock_time)
 
     return fluid_file_renderer_process_block(dev->renderer) == FLUID_OK ? 1 : 0;
 }
+
+#endif /* AUFILE_SUPPORT */

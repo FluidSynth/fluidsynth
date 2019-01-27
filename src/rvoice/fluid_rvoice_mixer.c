@@ -28,8 +28,6 @@
 #include "fluid_synth.h"
 
 
-#define ENABLE_MIXER_THREADS 1
-
 // If less than x voices, the thread overhead is larger than the gain,
 // so don't activate the thread(s).
 #define VOICES_PER_THREAD 8
@@ -41,12 +39,11 @@ struct _fluid_mixer_buffers_t
     fluid_rvoice_mixer_t *mixer; /**< Owner of object */
 #if ENABLE_MIXER_THREADS
     fluid_thread_t *thread;     /**< Thread object */
+    fluid_atomic_int_t ready;   /**< Atomic: buffers are ready for mixing */
 #endif
 
     fluid_rvoice_t **finished_voices; /* List of voices who have finished */
     int finished_voice_count;
-
-    fluid_atomic_int_t ready;             /**< Atomic: buffers are ready for mixing */
 
     fluid_real_t *local_buf;
 
@@ -130,8 +127,8 @@ fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t *mixer, int current_blockcoun
     const int fx_channels_per_unit = mixer->buffers.fx_buf_count / mixer->fx_units;
     int i, f;
 
-    void (*reverb_process_func)(fluid_revmodel_t *rev, fluid_real_t *in, fluid_real_t *left_out, fluid_real_t *right_out);
-    void (*chorus_process_func)(fluid_chorus_t *chorus, fluid_real_t *in, fluid_real_t *left_out, fluid_real_t *right_out);
+    void (*reverb_process_func)(fluid_revmodel_t *rev, const fluid_real_t *in, fluid_real_t *left_out, fluid_real_t *right_out);
+    void (*chorus_process_func)(fluid_chorus_t *chorus, const fluid_real_t *in, fluid_real_t *left_out, fluid_real_t *right_out);
 
     fluid_real_t *out_rev_l, *out_rev_r, *out_ch_l, *out_ch_r;
 
@@ -375,7 +372,7 @@ get_dest_buf(fluid_rvoice_buffers_t *buffers, int index,
  */
 static void
 fluid_rvoice_buffers_mix(fluid_rvoice_buffers_t *buffers,
-                         fluid_real_t *FLUID_RESTRICT dsp_buf,
+                         const fluid_real_t *FLUID_RESTRICT dsp_buf,
                          int start_block, int sample_count,
                          fluid_real_t **dest_bufs, int dest_bufcount)
 {

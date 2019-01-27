@@ -82,6 +82,8 @@ struct _fluid_jack_midi_driver_t
     int midi_port_count;
     jack_port_t **midi_port; // array of midi port handles
     fluid_midi_parser_t *parser;
+    int autoconnect_inputs;
+    int autoconnect_is_outdated;
 };
 
 static fluid_jack_client_t *new_fluid_jack_client(fluid_settings_t *settings,
@@ -94,7 +96,7 @@ void fluid_jack_driver_shutdown(void *arg);
 int fluid_jack_driver_srate(jack_nframes_t nframes, void *arg);
 int fluid_jack_driver_bufsize(jack_nframes_t nframes, void *arg);
 int fluid_jack_driver_process(jack_nframes_t nframes, void *arg);
-
+void fluid_jack_port_registration(jack_port_id_t port, int is_registering, void *arg);
 
 static fluid_mutex_t last_client_mutex = FLUID_MUTEX_INIT;     /* Probably not necessary, but just in case drivers are created by multiple threads */
 static fluid_jack_client_t *last_client = NULL;       /* Last unpaired client. For audio/MIDI driver pairing. */
@@ -107,6 +109,31 @@ fluid_jack_audio_driver_settings(fluid_settings_t *settings)
     fluid_settings_register_int(settings, "audio.jack.multi", 0, 0, 1, FLUID_HINT_TOGGLED);
     fluid_settings_register_int(settings, "audio.jack.autoconnect", 0, 0, 1, FLUID_HINT_TOGGLED);
     fluid_settings_register_str(settings, "audio.jack.server", "", 0);
+}
+
+/*
+ * Connect all midi input ports to all terminal midi output ports
+ */
+void
+fluid_jack_midi_autoconnect(jack_client_t *client, fluid_jack_midi_driver_t *midi_driver) {
+    int i, j;
+    const char ** midi_source_ports;
+
+    midi_source_ports = jack_get_ports(client, NULL, JACK_DEFAULT_MIDI_TYPE, JackPortIsOutput | JackPortIsTerminal);
+    if(midi_source_ports != NULL)
+    {
+        for(j = 0; midi_source_ports[j] != NULL; j++)
+        {
+            for(i = 0; i < midi_driver->midi_port_count; i++)
+            {
+                FLUID_LOG(FLUID_INFO, "jack midi autoconnect \"%s\" to \"%s\"", midi_source_ports[j], jack_port_name(midi_driver->midi_port[i]));
+                jack_connect(client, midi_source_ports[j], jack_port_name(midi_driver->midi_port[i]));
+            }
+        }
+        jack_free(midi_source_ports);
+    }
+
+    midi_driver->autoconnect_is_outdated = FALSE;
 }
 
 /*
@@ -213,6 +240,7 @@ new_fluid_jack_client(fluid_settings_t *settings, int isaudio, void *driver)
         goto error_recovery;
     }
 
+    jack_set_port_registration_callback(client_ref->client, fluid_jack_port_registration, client_ref);
     jack_set_process_callback(client_ref->client, fluid_jack_driver_process, client_ref);
     jack_set_buffer_size_callback(client_ref->client, fluid_jack_driver_bufsize, client_ref);
     jack_set_sample_rate_callback(client_ref->client, fluid_jack_driver_srate, client_ref);
@@ -629,6 +657,11 @@ fluid_jack_driver_process(jack_nframes_t nframes, void *arg)
 
     if(midi_driver)
     {
+        if(midi_driver->autoconnect_is_outdated)
+        {
+            fluid_jack_midi_autoconnect(client->client, midi_driver);
+        }
+
         for(i = 0; i < midi_driver->midi_port_count; i++)
         {
             midi_buffer = jack_port_get_buffer(midi_driver->midi_port[i], 0);
@@ -728,6 +761,15 @@ fluid_jack_driver_shutdown(void *arg)
     /*   exit (1); */
 }
 
+void
+fluid_jack_port_registration(jack_port_id_t port, int is_registering, void *arg)
+{
+    fluid_jack_client_t *client_ref = (fluid_jack_client_t *)arg;
+    if(client_ref->midi_driver != NULL)
+    {
+        client_ref->midi_driver->autoconnect_is_outdated = client_ref->midi_driver->autoconnect_inputs && is_registering != 0;
+    }
+}
 
 void fluid_jack_midi_driver_settings(fluid_settings_t *settings)
 {
@@ -769,6 +811,9 @@ new_fluid_jack_midi_driver(fluid_settings_t *settings,
         FLUID_FREE(dev);
         return NULL;
     }
+
+    fluid_settings_getint(settings, "midi.autoconnect", &dev->autoconnect_inputs);
+    dev->autoconnect_is_outdated = dev->autoconnect_inputs;
 
     dev->client_ref = new_fluid_jack_client(settings, FALSE, dev);
 

@@ -32,6 +32,7 @@ include_directories (
     ${CMAKE_SOURCE_DIR}/include
     ${CMAKE_BINARY_DIR}/include
     ${PTHREADS_INCLUDE_DIR}
+    ${SDL2_INCLUDE_DIR}
 )
 
 include_directories (
@@ -78,9 +79,21 @@ if ( PORTAUDIO_SUPPORT )
   include_directories ( ${PORTAUDIO_INCLUDE_DIRS} )
 endif ( PORTAUDIO_SUPPORT )
 
-if ( WINDOWS_SUPPORT )
-  set ( fluid_windows_SOURCES drivers/fluid_dsound.c drivers/fluid_winmidi.c )
-endif ( WINDOWS_SUPPORT )
+if ( DSOUND_SUPPORT )
+  set ( fluid_dsound_SOURCES drivers/fluid_dsound.c )
+endif ( DSOUND_SUPPORT )
+
+if ( WAVEOUT_SUPPORT )
+  set ( fluid_waveout_SOURCES drivers/fluid_waveout.c )
+endif ( WAVEOUT_SUPPORT )
+
+if ( WINMIDI_SUPPORT )
+  set ( fluid_winmidi_SOURCES drivers/fluid_winmidi.c )
+endif ( WINMIDI_SUPPORT )
+
+if ( SDL2_SUPPORT )
+  set ( fluid_sdl2_SOURCES drivers/fluid_sdl2.c )
+endif ( SDL2_SUPPORT )
 
 if ( OSS_SUPPORT )
   set ( fluid_oss_SOURCES drivers/fluid_oss.c )
@@ -104,6 +117,10 @@ if ( MIDISHARE_SUPPORT )
   set ( fluid_midishare_SOURCES drivers/fluid_midishare.c )
   include_directories ( ${MidiShare_INCLUDE_DIRS} )
 endif ( MIDISHARE_SUPPORT )
+
+if ( AUFILE_SUPPORT )
+  set ( fluid_aufile_SOURCES drivers/fluid_aufile.c )
+endif ( AUFILE_SUPPORT )
 
 set ( config_SOURCES ${CMAKE_BINARY_DIR}/config.h )
 
@@ -172,7 +189,6 @@ set ( libfluidsynth_SOURCES
     drivers/fluid_adriver.h
     drivers/fluid_mdriver.c
     drivers/fluid_mdriver.h
-    drivers/fluid_aufile.c
     bindings/fluid_cmd.c
     bindings/fluid_cmd.h
     bindings/fluid_filerenderer.c
@@ -209,7 +225,7 @@ configure_file ( ${CMAKE_SOURCE_DIR}/include/fluidsynth/version.h.in
 configure_file ( ${CMAKE_SOURCE_DIR}/include/fluidsynth.cmake
                  ${public_main_HEADER} )
 
-if ( WIN32 AND NOT MINGW )
+if ( WIN32 )
 include(generate_product_version)
 generate_product_version(
     VersionFilesOutputVariable
@@ -224,11 +240,12 @@ generate_product_version(
     ORIGINAL_FILENAME "libfluidsynth.dll"
     FILE_DESCRIPTION "Fluidsynth"
 )
-endif ( WIN32 AND NOT MINGW )
+endif ( WIN32 )
 
 add_library ( libfluidsynth-OBJ OBJECT
     ${config_SOURCES}
     ${fluid_alsa_SOURCES}
+    ${fluid_aufile_SOURCES}
     ${fluid_coreaudio_SOURCES}
     ${fluid_coremidi_SOURCES}
     ${fluid_dart_SOURCES}
@@ -239,7 +256,10 @@ add_library ( libfluidsynth-OBJ OBJECT
     ${fluid_oss_SOURCES}
     ${fluid_portaudio_SOURCES}
     ${fluid_pulse_SOURCES}
-    ${fluid_windows_SOURCES}
+    ${fluid_dsound_SOURCES}
+    ${fluid_waveout_SOURCES}
+    ${fluid_winmidi_SOURCES}
+    ${fluid_sdl2_SOURCES}
     ${libfluidsynth_SOURCES}
     ${public_HEADERS}
     ${public_main_HEADER}
@@ -307,6 +327,7 @@ target_link_libraries ( libfluidsynth
     ${PULSE_LIBRARIES}
     ${PORTAUDIO_LIBRARIES}
     ${LIBSNDFILE_LIBRARIES}
+    ${SDL2_LIBRARY}
     ${DBUS_LIBRARIES}
     ${READLINE_LIBS}
     ${DART_LIBS}
@@ -351,3 +372,13 @@ else ( MACOSX_FRAMEWORK )
    install ( FILES ${public_main_HEADER} DESTINATION ${INCLUDE_INSTALL_DIR} )
 endif ( MACOSX_FRAMEWORK )
 
+# ******* Auto Generated Lookup Tables ******
+
+include(ExternalProject)
+ExternalProject_Add(gentables
+    DOWNLOAD_COMMAND ""
+    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/gentables
+    BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/gentables
+    INSTALL_COMMAND ${CMAKE_CURRENT_BINARY_DIR}/gentables/make_tables.exe "${CMAKE_BINARY_DIR}/"
+)
+add_dependencies(libfluidsynth-OBJ gentables)

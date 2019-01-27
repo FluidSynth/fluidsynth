@@ -7,9 +7,9 @@
 \author Josh Green
 \author David Henningsson
 \author Tom Moebert
-\author Copyright &copy; 2003-2018 Peter Hanappe, Conrad Berhörster, Antoine Schmitt, Pedro López-Cabanillas, Josh Green, David Henningsson, Tom Moebert
-\version Revision 2.0.1
-\date 2018-10-07
+\author Copyright &copy; 2003-2019 Peter Hanappe, Conrad Berhörster, Antoine Schmitt, Pedro López-Cabanillas, Josh Green, David Henningsson, Tom Moebert
+\version Revision 2.0.3
+\date 2019-01-01
 
 All the source code examples in this document are in the public domain; you can use them as you please. This document is licensed under the Creative Commons Attribution-Share Alike 3.0 Unported License. To view a copy of this license, visit http://creativecommons.org/licenses/by-sa/3.0/ . The FluidSynth library is distributed under the GNU Lesser General Public License. A copy of the GNU Lesser General Public License is contained in the FluidSynth package; if not, visit http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt or write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
@@ -21,6 +21,8 @@ All the source code examples in this document are in the public domain; you can 
 
 - \ref Disclaimer
 - \ref Introduction
+- \ref NewIn2_0_3
+- \ref NewIn2_0_2
 - \ref NewIn2_0_0
 - \ref CreatingSettings 
 - \ref CreatingSynth 
@@ -60,6 +62,18 @@ What is FluidSynth?
 
 - FluidSynth is open source, in active development. For more details, take a look at http://www.fluidsynth.org
 
+\section NewIn2_0_3 Whats new in 2.0.3?
+
+- fix incorrect behaviour of fluid_sample_set_sound_data()
+- add missing getters for midi events:
+  - fluid_midi_event_get_text()
+  - fluid_midi_event_get_lyrics()
+
+
+\section NewIn2_0_2 Whats new in 2.0.2?
+
+- fluid_synth_error() has been deprecated, use fluid_set_log_function() to interfere log messages
+
 \section NewIn2_0_0 Whats new in 2.0.0?
 
 FluidSynths major version was bumped. The API was reworked, deprecated functions were removed.
@@ -67,6 +81,7 @@ FluidSynths major version was bumped. The API was reworked, deprecated functions
 <strong><span style="color:red">Important changes that may not result in a compilation error but may cause your app to misbehave:</span></strong>
 
 - all public \c fluid_settings_* functions that return an integer which is not meant to be interpreted as bool consistently return either FLUID_OK or FLUID_FAILED
+- fluid_settings_setstr() cannot be used to set integer (toggle) settings with "yes" or "no" values anymore. Use fluid_settings_setint() instead, for example: <br /><code>fluid_settings_setint(settings, "synth.reverb.active", 0)</code> instead of <code>fluid_settings_setstr(settings, "synth.reverb.active", "no")</code>
 - explicit client unregistering is required for fluid_sequencer_register_client() and fluid_sequencer_register_fluidsynth()
 - all public functions consistently receive signed integers for soundfont ids, bank and program numbers
 - use unique device names for the "audio.portaudio.device" setting
@@ -76,8 +91,9 @@ FluidSynths major version was bumped. The API was reworked, deprecated functions
 
 - all public \c delete_* functions return void and are safe when called with NULL
 - the shell command handler was decoupled internally, as a consequence the param list of new_fluid_server() and new_fluid_cmd_handler() was adapted
+- \c fluid_settings_set* functions no longer silently register unknown settings but return an error instead
 - reverb: roomsize is now limited to an upper threshold of 1.0 to avoid exponential volume increase
-- rename fluid_mod_new() and fluid_mod_delete() to match naming conventions: new_fluid_mod() and delete_fluid_mod()
+- rename \c fluid_mod_new() and \c fluid_mod_delete() to match naming conventions: new_fluid_mod() and delete_fluid_mod()
 - rename chorus getters to match naming conventions: fluid_synth_get_chorus_speed() and fluid_synth_get_chorus_depth()
 - fluid_synth_remove_sfont() returns FLUID_OK or FLUID_FAILED
 - introduce a separate data type for sequencer client IDs: #fluid_seq_id_t
@@ -193,7 +209,7 @@ For a full list of available <strong>synthesizer settings</strong>, please refer
 
 The synthesizer itself does not write any audio to the audio output. This allows application developers to manage the audio output themselves if they wish. The next section describes the use of the synthesizer without an audio driver in more detail.
 
-Creating the audio driver is straightforward: set the appropriate settings and create the driver object. Because the FluidSynth has support for several audio systems, you may want to change which one you want to use. The list below shows the audio systems that are currently supported. It displays the name, as used by the fluidsynth library, and a description. 
+Creating the audio driver is straightforward: set the <code>audio.driver</code> settings and create the driver object. Because the FluidSynth has support for several audio systems, you may want to change which one you want to use. The list below shows the audio systems that are currently supported. It displays the name, as used by the fluidsynth library, and a description. 
 
 - jack: JACK Audio Connection Kit (Linux, Mac OS X, Windows)
 - alsa: Advanced Linux Sound Architecture (Linux)
@@ -205,6 +221,7 @@ Creating the audio driver is straightforward: set the appropriate settings and c
 - sndman: Apple SoundManager (Mac OS Classic)
 - dart: DART sound driver (OS/2)
 - file: Driver to output audio to a file
+- sdl2*: Simple DirectMedia Layer (Linux, Windows, Mac OS X, iOS, Android, FreeBSD, Haiku, etc.)
 
 The default audio driver depends on the settings with which FluidSynth was compiled. You can get the default driver with fluid_settings_getstr_default(). To get the list of available drivers use the fluid_settings_foreach_option() function. Finally, you can set the driver with fluid_settings_setstr(). In most cases, the default driver should work out of the box. 
 
@@ -232,7 +249,7 @@ As soon as the audio driver is created, it will start playing. The audio driver 
  
 There are a number of general audio driver settings. The audio.driver settings define the audio subsystem that will be used. The audio.periods and audio.period-size settings define the latency and robustness against scheduling delays. There are additional settings for the audio subsystems used. For a full list of available <strong>audio driver settings</strong>, please refer to <a href="fluidsettings.xml" target="_blank"><strong>FluidSettings Documentation</strong></a>.
 
-
+<strong>*Note:</strong> In order to use sdl2 as audio driver, the application is responsible for initializing SDL (e.g. with SDL_Init()). This must be done <strong>before</strong> the first call to <code>new_fluid_settings()</code>! Also make sure to call SDL_Quit() after all fluidsynth instances have been destroyed.
 
 \section UsingSynth Using the synthesizer without an audio driver
 
@@ -579,8 +596,8 @@ void createsynth()
 {
     fluid_settings_t* settings;
     settings = new_fluid_settings();
-    fluid_settings_setstr(settings, "synth.reverb.active", "yes");
-    fluid_settings_setstr(settings, "synth.chorus.active", "no");
+    fluid_settings_setint(settings, "synth.reverb.active", 0);
+    fluid_settings_setint(settings, "synth.chorus.active", 0);
     synth = new_fluid_synth(settings);
     adriver = new_fluid_audio_driver(settings, synth);
     sequencer = new_fluid_sequencer2(0);

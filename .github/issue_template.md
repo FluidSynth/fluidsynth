@@ -16,7 +16,7 @@ We strongly recommend to use it! Feel free to edit or remove inapplicable/unneed
 -->
 
 ### FluidSynth version <!-- enter FluidSynths version you're using -->
-1.1.x
+2.0.x
 
 ### Current behavior
 <!-- Describe the current situation, e.g. how the bug manifests. -->

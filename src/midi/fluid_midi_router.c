@@ -678,18 +678,18 @@ fluid_midi_router_handle_midi_event(void *data, fluid_midi_event_t *event)
          * Note: rule->chan_mul will probably be 0 or 1. If it's 0, input from all
          * input channels is mapped to the same synth channel.
          */
-        chan = (int)((fluid_real_t)event->channel * (fluid_real_t)rule->chan_mul
-                     + (fluid_real_t)rule->chan_add + 0.5);
+        chan = rule->chan_add + (int)((fluid_real_t)event->channel * rule->chan_mul
+                     + (fluid_real_t)0.5);
 
         /* Par 1 scaling / offset */
-        par1 = (int)((fluid_real_t)event_par1 * (fluid_real_t)rule->par1_mul
-                     + (fluid_real_t)rule->par1_add + 0.5);
+        par1 = rule->par1_add + (int)((fluid_real_t)event_par1 * rule->par1_mul
+                     + (fluid_real_t)0.5);
 
         /* Par 2 scaling / offset, if applicable */
         if(event_has_par2)
         {
-            par2 = (int)((fluid_real_t)event_par2 * (fluid_real_t)rule->par2_mul
-                         + (fluid_real_t)rule->par2_add + 0.5);
+            par2 = rule->par2_add + (int)((fluid_real_t)event_par2 * rule->par2_mul
+                         + (fluid_real_t)0.5);
         }
         else
         {

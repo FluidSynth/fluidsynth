@@ -21,6 +21,8 @@ int main(void)
     // no sfont loaded
     TEST_ASSERT(fluid_synth_sfcount(synth) == 0);
 
+    TEST_ASSERT(fluid_is_soundfont(TEST_SOUNDFONT) == TRUE);
+    
     // load a sfont to synth
     TEST_SUCCESS(id = fluid_synth_sfload(synth, TEST_SOUNDFONT, 1));
     // one sfont loaded
