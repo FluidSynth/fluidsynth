@@ -52,7 +52,6 @@ enum fluid_gen_flags
 {
     GEN_UNUSED,		/**< Generator value is not set */
     GEN_SET,		/**< Generator value is set */
-    GEN_ABS_NRPN		/**< Generator is an absolute value */
 };
 
 #define fluid_gen_set_mod(_gen, _val)  { (_gen)->mod = (double) (_val); }

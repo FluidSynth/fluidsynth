@@ -107,14 +107,6 @@ fluid_gen_init(fluid_gen_t *gen, fluid_channel_t *channel)
         gen[i].mod = 0.0;
         gen[i].nrpn = (channel == NULL) ? 0.0 : fluid_channel_get_gen(channel, i);
         gen[i].val = fluid_gen_info[i].def;
-
-        /* This is an extension to the SoundFont standard. More
-         * documentation is available at the fluid_synth_set_gen2()
-         * function. */
-        if(channel != NULL && fluid_channel_get_gen_abs(channel, i))
-        {
-            gen[i].flags = GEN_ABS_NRPN;
-        }
     }
 }
 
