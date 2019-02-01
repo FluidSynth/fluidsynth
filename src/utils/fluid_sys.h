@@ -393,6 +393,7 @@ typedef GStatBuf fluid_stat_buf_t;
 #endif
 #define fluid_stat(_filename, _statbuf)   g_stat((_filename), (_statbuf))
 
+#define fluid_file_test g_file_test
 
 /* Profiling */
 #if WITH_PROFILING

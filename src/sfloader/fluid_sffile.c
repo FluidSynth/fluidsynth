@@ -344,6 +344,13 @@ int fluid_is_soundfont(const char *filename)
         {
             return retcode;
         }
+        
+        // file exists and we have permission to open it
+        // now, test whether it's acutally a regular file or a symlink to such
+        if(!fluid_file_test(filename, G_FILE_TEST_IS_REGULAR))
+        {
+            break;
+        }
 
         if(FLUID_FREAD(&fcc, sizeof(fcc), 1, fp) != 1)
         {
