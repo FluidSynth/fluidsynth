@@ -457,6 +457,10 @@ else(NOT enable-pkgconfig)
     # Mandatory libraries: glib and gthread
     pkg_check_modules ( GLIB REQUIRED glib-2.0>=2.6.5 gthread-2.0>=2.6.5 )
 
+    if ( GLIB_VERSION VERSION_LESS "2.26" )
+        message ( WARNING "Your version of glib is very old. This may cause problems with fluidsynth's sample cache on Windows. Consider updating to glib 2.26 or newer!" )
+    endif ( GLIB_VERSION VERSION_LESS "2.26" )
+
     include ( UnsetPkgConfig )
 
     # Optional features

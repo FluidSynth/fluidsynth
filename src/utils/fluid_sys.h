@@ -374,24 +374,24 @@ fluid_istream_t fluid_socket_get_istream(fluid_socket_t sock);
 fluid_ostream_t fluid_socket_get_ostream(fluid_socket_t sock);
 
 /* File access */
+#define fluid_stat(_filename, _statbuf)   g_stat((_filename), (_statbuf))
 #if !GLIB_CHECK_VERSION(2, 26, 0)
     /* GStatBuf has not been introduced yet, manually typedef to what they had at that time:
      * https://github.com/GNOME/glib/blob/e7763678b56e3be073cc55d707a6e92fc2055ee0/glib/gstdio.h#L98-L115
      */
     #if defined(WIN32) || HAVE_WINDOWS_H // somehow reliably mock G_OS_WIN32??
-        #if defined (_MSC_VER) && !defined(_WIN64)
-        typedef struct _stat32 fluid_stat_buf_t;
-        #else
-        typedef struct _stat fluid_stat_buf_t;
-        #endif
+        // Any effort from our side to reliably mock GStatBuf on Windows is in vain. E.g. glib-2.16 is broken as it uses struct stat rather than struct _stat32 on Win x86.
+        // Disable it (the user has been warned by cmake).
+        #undef fluid_stat
+        #define fluid_stat(_filename, _statbuf)  (-1)
+        typedef struct _fluid_stat_buf_t{int st_mtime;} fluid_stat_buf_t;
     #else
-    /* posix, OS/2, etc. */
-    typedef struct stat fluid_stat_buf_t;
+        /* posix, OS/2, etc. */
+        typedef struct stat fluid_stat_buf_t;
     #endif
 #else
 typedef GStatBuf fluid_stat_buf_t;
 #endif
-#define fluid_stat(_filename, _statbuf)   g_stat((_filename), (_statbuf))
 
 #define fluid_file_test g_file_test
 
