@@ -92,17 +92,23 @@ static int fluid_midi_file_get_division(fluid_midi_file *midifile);
  */
 int fluid_is_midifile(const char *filename)
 {
-    FILE    *fp = FLUID_FOPEN(filename, "rb");
+    FILE    *fp;
     uint32_t id;
     int      retcode = FALSE;
 
     do
     {
-        if(fp == NULL)
+        if(!fluid_file_test(filename, G_FILE_TEST_IS_REGULAR))
         {
             return retcode;
         }
-
+        
+        // file seems to exist and is a regular file or a symlink to such
+        if((fp = FLUID_FOPEN(filename, "rb")) == NULL)
+        {
+            return retcode;
+        }
+        
         if(FLUID_FREAD(&id, sizeof(id), 1, fp) != 1)
         {
             break;

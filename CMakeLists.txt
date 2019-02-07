@@ -77,10 +77,10 @@ option ( enable-readline "compile readline lib line editing (if it is available)
 option ( enable-threads "enable multi-threading support (such as parallel voice synthesis)" on )
 
 # Platform specific options
-if ( CMAKE_SYSTEM MATCHES "Linux" )
+if ( CMAKE_SYSTEM MATCHES "Linux|FreeBSD|DragonFly" )
     option ( enable-lash "compile LASH support (if it is available)" on )
     option ( enable-alsa "compile ALSA support (if it is available)" on )
-endif ( CMAKE_SYSTEM MATCHES "Linux" )
+endif ( CMAKE_SYSTEM MATCHES "Linux|FreeBSD|DragonFly" )
 
 if ( CMAKE_SYSTEM MATCHES "Darwin" )
     option ( enable-coreaudio "compile CoreAudio support (if it is available)" on )
@@ -95,7 +95,7 @@ if ( CMAKE_SYSTEM MATCHES "OS2" )
 endif ( CMAKE_SYSTEM MATCHES "OS2" )
 
 # Initialize the library directory name suffix.
-if (NOT MINGW AND NOT MSVC)
+if (NOT MINGW AND NOT MSVC AND NOT CMAKE_SYSTEM_NAME MATCHES "FreeBSD|DragonFly")
 if ( CMAKE_SIZEOF_VOID_P EQUAL 8 )
   set ( _init_lib_suffix "64" )
 else ( CMAKE_SIZEOF_VOID_P EQUAL 8 )
@@ -464,6 +464,10 @@ else(NOT enable-pkgconfig)
 
     # Mandatory libraries: glib and gthread
     pkg_check_modules ( GLIB REQUIRED glib-2.0>=2.6.5 gthread-2.0>=2.6.5 )
+
+    if ( GLIB_VERSION VERSION_LESS "2.26" )
+        message ( WARNING "Your version of glib is very old. This may cause problems with fluidsynth's sample cache on Windows. Consider updating to glib 2.26 or newer!" )
+    endif ( GLIB_VERSION VERSION_LESS "2.26" )
 
     include ( UnsetPkgConfig )
 
