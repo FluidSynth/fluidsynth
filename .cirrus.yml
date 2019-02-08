@@ -1,0 +1,10 @@
+freebsd_instance:
+  image: freebsd-12-0-release-amd64
+
+task:
+  install_script: pwd && ls -la && pkg install -y cmake glib alsa-lib ladspa portaudio pulseaudio pkgconf
+  
+  compile_script: pwd && ls -la && mkdir $HOME/fluidsynth_install/ && mkdir build && cd build && cmake -DCMAKE_INSTALL_PREFIX=$HOME/fluidsynth_install -Denable-portaudio=1 -Denable-ladspa=1 -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_VERBOSE_MAKEFILE=0 .. && make -j4 && make check && make install 
+
+  
+  
