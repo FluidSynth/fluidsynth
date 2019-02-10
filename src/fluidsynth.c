@@ -629,6 +629,8 @@ int main(int argc, char **argv)
         case 's':
 #ifdef NETWORK_SUPPORT
             with_server = 1;
+#else
+            printf("\nNOTE: FluidSynth compiled without network support, unable to start server!\n");
 #endif
             break;
 
