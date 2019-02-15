@@ -19,6 +19,7 @@
  */
 
 #include "fluid_adriver.h"
+#include "fluid_sys.h"
 #include "fluid_settings.h"
 
 /*

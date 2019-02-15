@@ -18,13 +18,7 @@
  * 02110-1301, USA
  */
 
-#include "config.h"
-
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-
-#include "fluidsynth_priv.h"
+#include "fluid_sys.h"
 
 #if !defined(WIN32) && !defined(MACINTOSH)
 #define _GNU_SOURCE
@@ -34,8 +28,6 @@
 #include <getopt.h>
 #define GETOPT_SUPPORT 1
 #endif
-
-#include "fluidsynth.h"
 
 #include "fluid_lash.h"
 

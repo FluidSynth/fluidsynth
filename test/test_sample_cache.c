@@ -1,7 +1,7 @@
 
 #include "test.h"
 #include "fluidsynth.h" // use local fluidsynth header
-#include "utils/fluidsynth_priv.h"
+#include "utils/fluid_sys.h"
 
 
 // this test aims to make sure that sample data used by multiple synths is not freed

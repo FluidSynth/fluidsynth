@@ -24,11 +24,15 @@
  *
  */
 
-#include "fluid_synth.h"
-#include "fluid_midi.h"
 #include "fluid_adriver.h"
-#include "fluid_mdriver.h"
 #include "fluid_settings.h"
+
+/* 
+ * !!! Make sure that no include above includes <netinet/tcp.h> !!!
+ * It #defines some macros that collide with enum definitions of OpenTransportProviders.h, which is included from OSServices.h, included from CoreServices.h
+ * 
+ * https://trac.macports.org/ticket/36962
+ */
 
 #if COREAUDIO_SUPPORT
 #include <CoreServices/CoreServices.h>

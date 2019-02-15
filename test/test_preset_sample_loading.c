@@ -2,7 +2,7 @@
 #include "fluidsynth.h"
 #include "sfloader/fluid_sfont.h"
 #include "sfloader/fluid_defsfont.h"
-#include "utils/fluidsynth_priv.h"
+#include "utils/fluid_sys.h"
 #include "utils/fluid_list.h"
 
 // load our sf2 and sf3 test soundfonts, with and without dynamic sample loading
