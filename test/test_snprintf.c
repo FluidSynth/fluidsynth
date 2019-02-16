@@ -1,6 +1,6 @@
 
 #include "test.h"
-#include "utils/fluidsynth_priv.h"
+#include "utils/fluid_sys.h"
 
 // this test makes sure FLUID_SNPRINTF uses a proper C99 compliant implementation
 

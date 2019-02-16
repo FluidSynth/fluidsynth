@@ -84,7 +84,6 @@ if ( CMAKE_SYSTEM MATCHES "Darwin" )
     option ( enable-coreaudio "compile CoreAudio support (if it is available)" on )
     option ( enable-coremidi "compile CoreMIDI support (if it is available)" on )
     option ( enable-framework "create a Mac OSX style FluidSynth.framework" on )
-    set ( enable-network off )
 endif ( CMAKE_SYSTEM MATCHES "Darwin" )
 
 if ( CMAKE_SYSTEM MATCHES "OS2" )
