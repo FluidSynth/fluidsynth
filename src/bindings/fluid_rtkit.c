@@ -25,14 +25,14 @@
   SOFTWARE.
 ***/
 
-#include "fluidsynth_priv.h"
+#include "fluid_sys.h"
 
 #ifdef DBUS_SUPPORT
 
 #include "fluid_rtkit.h"
 
 
-#if defined(__linux__) || defined(__APPLE__)
+#if defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__) || defined(__DragonFly__)
 
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
@@ -42,10 +42,17 @@
 #include <sys/syscall.h>
 #include <sys/resource.h>
 
+#if defined(__FreeBSD__) || defined(__DragonFly__)
+#include <pthread_np.h>
+#endif
 
 static pid_t _gettid(void)
 {
+#if defined(__FreeBSD__) || defined(__DragonFly__)
+    return pthread_getthreadid_np();
+#else
     return (pid_t) syscall(SYS_gettid);
+#endif
 }
 
 static int translate_error(const char *name)

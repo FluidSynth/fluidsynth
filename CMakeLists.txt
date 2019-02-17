@@ -29,7 +29,7 @@ set ( PACKAGE "fluidsynth" )
 # FluidSynth package version
 set ( FLUIDSYNTH_VERSION_MAJOR 2 )
 set ( FLUIDSYNTH_VERSION_MINOR 0 )
-set ( FLUIDSYNTH_VERSION_MICRO 3 )
+set ( FLUIDSYNTH_VERSION_MICRO 4 )
 set ( VERSION "${FLUIDSYNTH_VERSION_MAJOR}.${FLUIDSYNTH_VERSION_MINOR}.${FLUIDSYNTH_VERSION_MICRO}" )
 set ( FLUIDSYNTH_VERSION "\"${VERSION}\"" )
 
@@ -44,7 +44,7 @@ set ( FLUIDSYNTH_VERSION "\"${VERSION}\"" )
 # This is not exactly the same algorithm as the libtool one, but the results are the same.
 set ( LIB_VERSION_CURRENT 2 )
 set ( LIB_VERSION_AGE 1 )
-set ( LIB_VERSION_REVISION 0 )
+set ( LIB_VERSION_REVISION 1 )
 set ( LIB_VERSION_INFO
       "${LIB_VERSION_CURRENT}.${LIB_VERSION_AGE}.${LIB_VERSION_REVISION}" )
 
@@ -77,16 +77,15 @@ option ( enable-readline "compile readline lib line editing (if it is available)
 option ( enable-threads "enable multi-threading support (such as parallel voice synthesis)" on )
 
 # Platform specific options
-if ( CMAKE_SYSTEM MATCHES "Linux" )
+if ( CMAKE_SYSTEM MATCHES "Linux|FreeBSD|DragonFly" )
     option ( enable-lash "compile LASH support (if it is available)" on )
     option ( enable-alsa "compile ALSA support (if it is available)" on )
-endif ( CMAKE_SYSTEM MATCHES "Linux" )
+endif ( CMAKE_SYSTEM MATCHES "Linux|FreeBSD|DragonFly" )
 
 if ( CMAKE_SYSTEM MATCHES "Darwin" )
     option ( enable-coreaudio "compile CoreAudio support (if it is available)" on )
     option ( enable-coremidi "compile CoreMIDI support (if it is available)" on )
     option ( enable-framework "create a Mac OSX style FluidSynth.framework" on )
-    set ( enable-network off )
 endif ( CMAKE_SYSTEM MATCHES "Darwin" )
 
 if ( CMAKE_SYSTEM MATCHES "OS2" )
@@ -95,7 +94,7 @@ if ( CMAKE_SYSTEM MATCHES "OS2" )
 endif ( CMAKE_SYSTEM MATCHES "OS2" )
 
 # Initialize the library directory name suffix.
-if (NOT MINGW AND NOT MSVC)
+if (NOT MINGW AND NOT MSVC AND NOT CMAKE_SYSTEM_NAME MATCHES "FreeBSD|DragonFly")
 if ( CMAKE_SIZEOF_VOID_P EQUAL 8 )
   set ( _init_lib_suffix "64" )
 else ( CMAKE_SIZEOF_VOID_P EQUAL 8 )
@@ -464,6 +463,10 @@ else(NOT enable-pkgconfig)
 
     # Mandatory libraries: glib and gthread
     pkg_check_modules ( GLIB REQUIRED glib-2.0>=2.6.5 gthread-2.0>=2.6.5 )
+
+    if ( GLIB_glib-2.0_VERSION AND GLIB_glib-2.0_VERSION VERSION_LESS "2.26.0" )
+        message ( WARNING "Your version of glib is very old. This may cause problems with fluidsynth's sample cache on Windows. Consider updating to glib 2.26 or newer!" )
+    endif ( GLIB_glib-2.0_VERSION AND GLIB_glib-2.0_VERSION VERSION_LESS "2.26.0" )
 
     include ( UnsetPkgConfig )
 

@@ -298,7 +298,7 @@ new_fluid_file_renderer(fluid_synth_t *synth)
     sf_command(dev->sndfile, SFC_SET_NORM_FLOAT, NULL, SF_TRUE);
 
 #else
-    dev->file = fopen(filename, "wb");
+    dev->file = FLUID_FOPEN(filename, "wb");
 
     if(dev->file == NULL)
     {

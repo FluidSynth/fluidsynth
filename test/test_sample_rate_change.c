@@ -4,7 +4,7 @@
 #include "synth/fluid_synth.h"
 #include "synth/fluid_voice.h"
 #include "rvoice/fluid_rvoice.h"
-#include "utils/fluidsynth_priv.h"
+#include "utils/fluid_sys.h"
 
 static void verify_sample_rate(fluid_synth_t *synth, int expected_srate)
 {
