@@ -73,9 +73,6 @@ struct _fluid_server_socket_t
 
 static int fluid_istream_gets(fluid_istream_t in, char *buf, int len);
 
-
-static char fluid_errbuf[512];  /* buffer for error message */
-
 static fluid_log_function_t fluid_log_function[LAST_LOG_LEVEL] =
 {
     fluid_default_log_function,
@@ -169,20 +166,20 @@ fluid_default_log_function(int level, const char *message, void *data)
 int
 fluid_log(int level, const char *fmt, ...)
 {
-    fluid_log_function_t fun = NULL;
-
-    va_list args;
-    va_start(args, fmt);
-    FLUID_VSNPRINTF(fluid_errbuf, sizeof(fluid_errbuf), fmt, args);
-    va_end(args);
-
     if((level >= 0) && (level < LAST_LOG_LEVEL))
     {
-        fun = fluid_log_function[level];
+        fluid_log_function_t fun = fluid_log_function[level];
 
         if(fun != NULL)
         {
-            (*fun)(level, fluid_errbuf, fluid_log_user_data[level]);
+            char errbuf[1024];
+            
+            va_list args;
+            va_start(args, fmt);
+            FLUID_VSNPRINTF(errbuf, sizeof(errbuf), fmt, args);
+            va_end(args);
+        
+            (*fun)(level, errbuf, fluid_log_user_data[level]);
         }
     }
 
@@ -263,15 +260,6 @@ char *fluid_strtok(char **str, char *delim)
     /* we get here only if source string ended */
     *str = NULL;
     return token;
-}
-
-/*
- * fluid_error
- */
-char *
-fluid_error()
-{
-    return fluid_errbuf;
 }
 
 /**

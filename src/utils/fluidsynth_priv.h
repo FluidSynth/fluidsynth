@@ -233,8 +233,6 @@ do { strncpy(_dst,_src,_n); \
 #define FLUID_LIKELY G_LIKELY
 #define FLUID_UNLIKELY G_UNLIKELY
 
-char *fluid_error(void);
-
 /* Misc */
 #if defined(__INTEL_COMPILER)
 #define FLUID_RESTRICT restrict
