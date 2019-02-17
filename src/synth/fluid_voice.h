@@ -30,7 +30,6 @@
 #include "fluid_lfo.h"
 #include "fluid_rvoice.h"
 #include "fluid_rvoice_event.h"
-#include "fluid_sys.h"
 
 #define NO_CHANNEL             0xff
 

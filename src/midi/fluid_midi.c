@@ -34,6 +34,7 @@ static long fluid_getlength(unsigned char *s);
  * Note: This rewinds the file to the start before reading.
  * Returns NULL if there was an error reading or allocating memory.
  */
+typedef FILE  *fluid_file;
 static char *fluid_file_read_full(fluid_file fp, size_t *length);
 static void fluid_midi_event_set_sysex_LOCAL(fluid_midi_event_t *evt, int type, void *data, int size, int dynamic);
 static void fluid_midi_event_get_sysex_LOCAL(fluid_midi_event_t *evt, void **data, int *size);
