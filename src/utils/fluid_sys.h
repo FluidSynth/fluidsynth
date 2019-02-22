@@ -97,7 +97,8 @@
 #include <limits.h>
 #endif
 
-#if HAVE_PTHREAD_H
+#if HAVE_PTHREAD_H && !defined(WIN32)
+// Do not include pthread on windows. It includes winsock.h, which collides with ws2tcpip.h below.
 #include <pthread.h>
 #endif
 
