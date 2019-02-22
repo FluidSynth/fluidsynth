@@ -97,10 +97,6 @@
 #include <limits.h>
 #endif
 
-#if HAVE_PTHREAD_H
-#include <pthread.h>
-#endif
-
 #if HAVE_OPENMP
 #include <omp.h>
 #endif
