@@ -61,6 +61,8 @@ build_script:
   - cd C:\projects\fluidsynth-rjimi
   - mkdir build
   - cd build
+# remove that path from PATH to make sure sh.exe is not found (cmake will complain otherwise)
+  - set PATH=%PATH:C:\Program Files\Git\usr\bin;=%
   - echo %PATH%
   - cmake -G "MinGW Makefiles" ..
   - mingw32-make.exe check
