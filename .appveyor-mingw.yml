@@ -54,7 +54,7 @@ install:
   - 7z x gettext.zip > NUL
   - 7z x libintl-dev.zip > NUL
   - SET PATH=C:\deps\bin;%PATH%
-  - dir /s C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0
+  - dir C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0 /S
   - if "%platform%"=="x64" ( SET "PATH=C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\bin;%PATH%" ) else ( SET "PATH=C:\MinGW\bin;%PATH%" )
 
 build_script:
