@@ -104,6 +104,10 @@ if ( LASH_SUPPORT )
   include_directories ( ${LASH_INCLUDE_DIRS})
 endif ( LASH_SUPPORT )
 
+if ( SYSTEMD_SUPPORT )
+  include_directories ( ${SYSTEMD_INCLUDE_DIRS})
+endif ( SYSTEMD_SUPPORT )
+
 if ( DART_SUPPORT )
   set ( fluid_dart_SOURCES drivers/fluid_dart.c )
   include_directories ( ${DART_INCLUDE_DIRS} )
@@ -353,6 +357,7 @@ endif ( FLUID_CPPFLAGS )
 
 target_link_libraries ( fluidsynth
     libfluidsynth
+    ${SYSTEMD_LIBRARIES}
     ${FLUID_LIBS}
 )
 

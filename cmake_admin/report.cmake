@@ -110,6 +110,12 @@ else ( LASH_SUPPORT )
   message ( "LASH support:          no" )
 endif ( LASH_SUPPORT )
 
+if ( SYSTEMD_SUPPORT )
+  message ( "systemd support:       yes" )
+else ( SYSTEMD_SUPPORT )
+  message ( "systemd support:       no" )
+endif ( SYSTEMD_SUPPORT )
+
 if ( DART_SUPPORT )
   message ( "OS/2 DART support:     yes" )
 else ( DART_SUPPORT )

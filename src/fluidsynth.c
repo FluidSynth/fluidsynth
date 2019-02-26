@@ -31,6 +31,9 @@
 
 #include "fluid_lash.h"
 
+#ifdef SYSTEMD_SUPPORT
+#include <systemd/sd-daemon.h>
+#endif
 
 void print_usage(void);
 void print_help(fluid_settings_t *settings);
@@ -892,6 +895,12 @@ int main(int argc, char **argv)
             fprintf(stderr, "Failed to create the server.\n"
                     "Continuing without it.\n");
         }
+#ifdef SYSTEMD_SUPPORT
+        else
+        {
+            sd_notify(0, "READY=1");
+        }
+#endif
     }
 
 #endif
@@ -954,10 +963,13 @@ cleanup:
             fluid_server_join(server);
         }
 
+#ifdef SYSTEMD_SUPPORT
+        sd_notify(0, "STOPPING=1");
+#endif
         delete_fluid_server(server);
     }
 
-#endif
+#endif	/* NETWORK_SUPPORT */
 
     if(cmd_handler != NULL)
     {
