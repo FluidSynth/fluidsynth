@@ -49,6 +49,9 @@
 /* whether or not we are supporting lash */
 #cmakedefine HAVE_LASH @HAVE_LASH@
 
+/* Define if systemd support is enabled */
+#cmakedefine SYSTEMD_SUPPORT @SYSTEMD_SUPPORT@
+
 /* Define to 1 if you have the `MidiShare' library (-lMidiShare). */
 #cmakedefine HAVE_LIBMIDISHARE @HAVE_LIBMIDISHARE@
 
