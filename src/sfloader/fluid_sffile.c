@@ -572,7 +572,7 @@ static int chunkid(uint32_t id)
 
     for(i = 0; i < FLUID_N_ELEMENTS(idlist); i++)
     {
-        if(*p == id)
+        if(idlist[i] == id)
         {
             break;
         }
