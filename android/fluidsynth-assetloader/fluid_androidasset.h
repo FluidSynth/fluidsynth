@@ -30,6 +30,7 @@ extern "C" {
 #include <fluidsynth/sfont.h>
 
 fluid_sfloader_t* new_fluid_android_asset_sfloader(fluid_settings_t *settings, void *assetManager);
+void Java_fluidsynth_androidextensions_NativeHandler_setAssetManagerContext(JNIEnv *env, jobject _this, jobject assetManager);
 
 void *asset_open(const char *path);
 int asset_close(void *handle);
