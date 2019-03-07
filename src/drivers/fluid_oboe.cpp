@@ -219,21 +219,19 @@ DataCallbackResult on_audio_ready(AudioStreamCallback *callback, AudioStream *st
   
   if (!dev->cont)
     return DataCallbackResult::Stop;
-
-  if (dev->callback)
+  
+  /* FIXME: it seems that fluidsynth stores results in full float
+   * value range, while Oboe expects the results between -1 and 1.
+   * To make things worse, fluidsynth callback only accepts float*
+   * (while non-callback accepts short*) which makes it unsure if
+   * the stream is processed appropriately.
+   * So far, disable custom callback for short.
+   */
+  if (dev->callback && stream->getFormat () == AudioFormat::Float)
   {
-    if (stream->getFormat () == AudioFormat::Float)
-    {
-      callback_buffers [0] = (float*) audioData;
-      callback_buffers [1] = (float*) audioData;
-      (*dev->callback)(dev->synth, numFrames, 0, NULL, 2, callback_buffers);
-    }
-    else
-    {
-      callback_buffers [0] = (short*) audioData;
-      callback_buffers [1] = (short*) audioData;
-      (*dev->callback)(dev->synth, numFrames, 0, NULL, 2, callback_buffers);
-	}
+    callback_buffers [0] = (float*) audioData;
+    callback_buffers [1] = (float*) audioData;
+    (*dev->callback)(dev->synth, numFrames, 0, NULL, 2, callback_buffers);
   }
   else
   {
