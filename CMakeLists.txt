@@ -610,13 +610,16 @@ endif ( enable-opensles )
 
 unset ( OBOE_SUPPORT CACHE )
 if ( enable-oboe )
-  find_package ( oboe QUIET )
-  set ( OBOE_SUPPORT oboe_FOUND )
-  if ( oboe_FOUND )
-    set ( OBOE_LIBS ${oboe_LIBRARIES} )
-  else ( oboe_FOUND )
+  pkg_check_modules ( OBOE oboe-1.0 )
+  if ( OBOE_FOUND )
+    set ( OBOE_SUPPORT 1 )
+    # xxx_LIBRARIES from pkg_check_modules does not give you full path to libs.
+    # We only have static lib, not a shared lib that can be used at target_link_libraries() anyways.
+    # And it's only for Android (so far), where we can assume `liboboe.a` here.
+    set ( OBOE_LIBS "${OBOE_LIBRARY_DIRS}\/lib${OBOE_LIBRARIES}.a" )
+  else ( OBOE_FOUND )
     unset ( OBOE_LIBS CACHE )
-  endif ( oboe_FOUND )
+  endif ( OBOE_FOUND )
 endif ( enable-oboe )
 
 unset ( WITH_READLINE CACHE )

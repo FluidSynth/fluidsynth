@@ -1,5 +1,5 @@
 prefix=${pcfiledir}
-libdir=${prefix}/lib
+libdir=${prefix}
 includedir=${prefix}/../../include/
 
 Name: Oboe
