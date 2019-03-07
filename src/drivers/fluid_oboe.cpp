@@ -92,6 +92,7 @@ static fluid_thread_return_t fluid_oboe_audio_run2(void* d);
 
 void fluid_oboe_audio_driver_settings(fluid_settings_t* settings)
 {
+  fluid_settings_register_int(settings, "audio.oboe.device-id", 0, 0, 0x7FFFFFFF, 0);
   fluid_settings_register_str(settings, "audio.oboe.sharing-mode", "Shared", 0);
   fluid_settings_register_str(settings, "audio.oboe.sharing-mode", "Exclusive", 1);
   fluid_settings_add_option(settings, "audio.oboe.sharing-mode", "Shared");
@@ -218,12 +219,21 @@ DataCallbackResult on_audio_ready(AudioStreamCallback *callback, AudioStream *st
   
   if (!dev->cont)
     return DataCallbackResult::Stop;
-  
+
   if (dev->callback)
   {
-    callback_buffers [0] = (float*) audioData;
-    callback_buffers [1] = (float*) audioData;
-    (*dev->callback)(dev->synth, numFrames, 0, NULL, 2, callback_buffers);
+    if (stream->getFormat () == AudioFormat::Float)
+    {
+      callback_buffers [0] = (float*) audioData;
+      callback_buffers [1] = (float*) audioData;
+      (*dev->callback)(dev->synth, numFrames, 0, NULL, 2, callback_buffers);
+    }
+    else
+    {
+      callback_buffers [0] = (short*) audioData;
+      callback_buffers [1] = (short*) audioData;
+      (*dev->callback)(dev->synth, numFrames, 0, NULL, 2, callback_buffers);
+	}
   }
   else
   {
