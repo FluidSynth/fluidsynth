@@ -32,10 +32,10 @@ prepare: $(CERBERO) $(OBOE)
 	done
 
 $(CERBERO):
-	git clone https://anongit.freedesktop.org/git/gstreamer/cerbero.git $(CERBERO) && cd $(CERBERO) && git checkout c80d06f
+	git clone https://github.com/atsushieno/cerbero.git $(CERBERO) && cd $(CERBERO) && git checkout 7a6fd79
 
 $(OBOE):
-	git clone https://github.com/google/oboe.git $(OBOE)
+	git clone https://github.com/atsushieno/oboe.git $(OBOE)
 
 .PHONY: build
 build: build-oboe dist-oboe build-deps-cerbero dist-deps-cerbero build-fluidsynth dist-fluidsynth build-fluidsynth-assetloader dist-fluidsynth-assetloader

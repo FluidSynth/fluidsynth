@@ -2,11 +2,11 @@
 
 Fluidsynth supports Android audio outputs by Oboe and OpenSLES audio drivers.
 
-Android also has Android MIDI API which is exposed only in Android Java API. There is a reference MidiDeviceService implementation for Fluidsynth at: https://github.com/atsushieno/fluidsynth-midi-service-j
+Android also has Android MIDI API which is exposed only in Android Java API, but it is not exposed as a native API, therefore there is no `mdriver` support for Android. There is an example MidiDeviceService implementation for Fluidsynth at: https://github.com/atsushieno/fluidsynth-midi-service-j
 
 ## Usage
 
-`libfluidsynth.so` and `liboboe-c.so` are the libraries that should be packaged into apk.
+`libfluidsynth.so` and `libfluidsynth-assetloader.so` are the library that should be packaged into apk. The latter is for asset-based "sfloader".
 
 By default, "oboe" is the default driver for Android. You can also explicitly specify "opensles" instead, with "audio.driver" setting:
 
@@ -24,14 +24,15 @@ Fluidsynth 1.9.x comes with `fluid_sfloader_set_callbacks()` which brings
 [customizible file/stream reader](https://github.com/FluidSynth/fluidsynth/issues/241) (open/read/seek/tell/close). It is useful to implement simplified
 custom SF loader e.g. with Android assets or OBB streams.
 
-The Android implementation comes with native Asset sfloader too. However, its usage is a bit tricky because AssetManager needs to be passed from Java code (even though we use AAssetManager API).
+The Android implementation is in separate library called `libfluidsynth-assetloader.so`. It comes with native Asset sfloader. However, its usage is a bit tricky because AssetManager needs to be passed from Java code (even though we use AAssetManager API).
 Use `Java_fluidsynth_androidextensions_NativeHandler_setAssetManagerContext()` to initialize the this loader, then call `new_fluid_android_asset_sfloader()` to create a new sfloader. If you already have AAssetManager instance, then the first JNI function is ignorable and you only have to specify the manager to the second function.
+
+There is [an example source code](https://github.com/atsushieno/fluidsynth-midi-service-j/blob/a2a56b/fluidsynthjna/src/main/java/fluidsynth/androidextensions/AndroidNativeAssetSoundFontLoader.kt#L17) on how to do it.
 
 ## Building
 
-The build system is complicated because 1) building glib and dependencies for Android is complicated, and 2) linking Oboe with glib static libraries is somehow complicated due to Android NDK issues and evolution.
+By default, you are supposed to provide PKG_CONFIG_PATH to glib etc. as well as oboe. There is nothing special.
 
-There are two shared libraries for fluidsynth that make up Android support:
+However, in reality, Oboe does not come up with an official package specification, so you will have to create it manually... unless you use `oboe-1.0.pc` in this directory as well as the build system set up here.
 
-- libfluidsynth.so - contains fluidsynth itself, particularly with fluidsynth audio drivers for OpenSLES and Oboe which are Android-specific.
-- liboboe-c.so - Oboe shared library, with C bindings. It is isolated from the rest of the library because Oboe's dependency on clang++ (or more specifically, libc++) does not mix with Cerbero build of glib which depends on g++ (specifically gnustl).
+There is a "non-normative" build scripts i.e. `Makefile.android` and a couple of helper files in this directory. In case you don't have any dependencies such as glib for Android, then it would be helpful.
