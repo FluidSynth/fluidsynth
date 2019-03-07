@@ -613,10 +613,7 @@ if ( enable-oboe )
   pkg_check_modules ( OBOE oboe-1.0 )
   if ( OBOE_FOUND )
     set ( OBOE_SUPPORT 1 )
-    # xxx_LIBRARIES from pkg_check_modules does not give you full path to libs.
-    # We only have static lib, not a shared lib that can be used at target_link_libraries() anyways.
-    # And it's only for Android (so far), where we can assume `liboboe.a` here.
-    set ( OBOE_LIBS "${OBOE_LIBRARY_DIRS}\/lib${OBOE_LIBRARIES}.a" )
+    set ( OBOE_LIBS ${OBOE_LIBRARIES} )
   else ( OBOE_FOUND )
     unset ( OBOE_LIBS CACHE )
   endif ( OBOE_FOUND )
@@ -673,6 +670,7 @@ link_directories (
     ${PORTAUDIO_LIBRARY_DIRS}
     ${LIBSNDFILE_LIBRARY_DIRS}
     ${DBUS_LIBRARY_DIRS}
+    ${OBOE_LIBRARY_DIRS}
 )
 
 # Process subdirectories

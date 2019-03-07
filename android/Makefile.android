@@ -38,7 +38,7 @@ $(OBOE):
 	git clone https://github.com/google/oboe.git $(OBOE)
 
 .PHONY: build
-build: build-oboe build-deps-cerbero dist-deps-cerbero build-fluidsynth dist-fluidsynth build-fluidsynth-assetloader dist-fluidsynth-assetloader
+build: build-oboe dist-oboe build-deps-cerbero dist-deps-cerbero build-fluidsynth dist-fluidsynth build-fluidsynth-assetloader dist-fluidsynth-assetloader
 
 .PHONY: build-deps-cerbero
 build-deps-cerbero:
@@ -74,6 +74,10 @@ dist-fluidsynth:
 build-oboe:
 	$(call run_make_for_all_abi, build-oboe-one)
 
+.PHONY: dist-oboe
+dist-oboe:
+	$(call run_make_for_all_abi, dist-oboe-one)
+
 .PHONY: build-fluidsynth
 build-fluidsynth:
 	$(call run_make_for_all_abi, build-fluidsynth-one)
@@ -85,8 +89,11 @@ build-fluidsynth-one:
 
 build-oboe-one:
 	mkdir -p $(OBOE)/build/$(A_ABI) && cd $(OBOE)/build/$(A_ABI) && \
-		$(CMAKE) -DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK)/build/cmake/android.toolchain.cmake -DANDROID_ABI=$(A_ABI) -DANDROID_NATIVE_API_LEVEL=android-27 -DANDROID_PLATFORM=android-27 ../.. && make
+		$(CMAKE) -DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK)/build/cmake/android.toolchain.cmake -DANDROID_ABI=$(A_ABI) -DANDROID_NATIVE_API_LEVEL=android-27 -DANDROID_PLATFORM=android-27 -DBUILD_SHARED_LIBS=on ../.. && make
 	cp oboe-1.0.pc $(OBOE)/build/$(A_ABI)
+
+dist-oboe-one:
+	cp $(OBOE)/build/$(A_ABI)/*.so dist/$(A_ABI)/
 
 dist-deps-cerbero-one:
 	mkdir -p dist/$(A_ABI) && cd dist/$(A_ABI) && cp ../../external/cerbero/build/dist/android_$(BUILD_ABI)/lib/*.so . && cd ../..	
