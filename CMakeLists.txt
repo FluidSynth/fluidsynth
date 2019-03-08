@@ -20,7 +20,7 @@
 # CMake based build system. Pedro Lopez-Cabanillas <plcl@users.sf.net>
 
 cmake_minimum_required ( VERSION 3.1.0 ) # because of CMAKE_C_STANDARD
-project ( FluidSynth C )
+project ( FluidSynth C CXX )
 set ( CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake_admin )
 
 # FluidSynth package name
@@ -65,6 +65,8 @@ option ( enable-jack "compile JACK support (if it is available)" on )
 option ( enable-ladspa "enable LADSPA effect units" on )
 option ( enable-libsndfile "compile libsndfile support (if it is available)" on )
 option ( enable-midishare "compile MidiShare support (if it is available)" on )
+option ( enable-opensles "compile OpenSLES support (if it is available)" off )
+option ( enable-oboe "compile Oboe support (requires OpenSLES and/or AAudio)" off )
 option ( enable-network "enable network support (requires BSD sockets)" on )
 option ( enable-oss "compile OSS support (if it is available)" on )
 option ( enable-dsound "compile DirectSound support (if it is available)" on )
@@ -194,6 +196,11 @@ if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang" OR CMAKE_C_
   set ( CMAKE_C_FLAGS_DEBUG "-g -DDEBUG -fsanitize=undefined ${CMAKE_C_FLAGS_DEBUG}" )
   
 endif ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang" OR CMAKE_C_COMPILER_ID STREQUAL "Intel" )
+
+# Options for CLANG only
+if ( CMAKE_C_COMPILER_ID STREQUAL "Clang" )
+  set ( CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fsanitize-trap=undefined" )
+endif ( CMAKE_C_COMPILER_ID STREQUAL "Clang" )
 
 # Windows
 unset ( WINDOWS_SUPPORT CACHE )
@@ -598,6 +605,25 @@ else ( enable-midishare )
   unset ( MidiShare_LIBS CACHE )
 endif ( enable-midishare )
 
+unset ( OPENSLES_SUPPORT CACHE )
+if ( enable-opensles )
+  check_include_file ( SLES/OpenSLES.h OPENSLES_SUPPORT )
+  find_library ( OpenSLES_LIBS OpenSLES )
+else ( enable-opensles )
+  unset ( OpenSLES_LIBS CACHE )
+endif ( enable-opensles )
+
+unset ( OBOE_SUPPORT CACHE )
+if ( enable-oboe )
+  pkg_check_modules ( OBOE oboe-1.0 )
+  if ( OBOE_FOUND )
+    set ( OBOE_SUPPORT 1 )
+    set ( OBOE_LIBS ${OBOE_LIBRARIES} )
+  else ( OBOE_FOUND )
+    unset ( OBOE_LIBS CACHE )
+  endif ( OBOE_FOUND )
+endif ( enable-oboe )
+
 unset ( WITH_READLINE CACHE )
 if ( enable-readline )
   find_package ( Readline )
@@ -649,6 +675,7 @@ link_directories (
     ${PORTAUDIO_LIBRARY_DIRS}
     ${LIBSNDFILE_LIBRARY_DIRS}
     ${DBUS_LIBRARY_DIRS}
+    ${OBOE_LIBRARY_DIRS}
 )
 
 # Process subdirectories
