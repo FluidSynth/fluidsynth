@@ -93,7 +93,7 @@ build-oboe-one:
 	cp oboe-1.0.pc $(OBOE)/build/$(A_ABI)
 
 dist-oboe-one:
-	cp $(OBOE)/build/$(A_ABI)/*.so dist/$(A_ABI)/
+	mkdir -p dist/$(A_ABI) && cp $(OBOE)/build/$(A_ABI)/*.so dist/$(A_ABI)/
 
 dist-deps-cerbero-one:
 	mkdir -p dist/$(A_ABI) && cd dist/$(A_ABI) && cp ../../external/cerbero/build/dist/android_$(BUILD_ABI)/lib/*.so . && cd ../..	
