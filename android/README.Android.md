@@ -20,7 +20,7 @@ Since Android file access is quite limited and there is no common place
 to store soundfonts unlike Linux desktop (e.g. `/usr/share/sounds/sf2`), you
 will most likely have to provide custom soundfont loader.
 
-Fluidsynth 1.9.x comes with `fluid_sfloader_set_callbacks()` which brings
+Since version 2.0.0 Fluidsynth comes with `fluid_sfloader_set_callbacks()` which brings
 [customizible file/stream reader](https://github.com/FluidSynth/fluidsynth/issues/241) (open/read/seek/tell/close). It is useful to implement simplified
 custom SF loader e.g. with Android assets or OBB streams.
 
@@ -31,8 +31,8 @@ There is [an example source code](https://github.com/atsushieno/fluidsynth-midi-
 
 ## Building
 
-By default, you are supposed to provide PKG_CONFIG_PATH to glib etc. as well as oboe. There is nothing special.
+By default, you are supposed to provide `PKG_CONFIG_PATH` to glib etc. as well as oboe. There is nothing special.
 
 However, in reality, Oboe does not come up with an official package specification, so you will have to create it manually... unless you use `oboe-1.0.pc` in this directory as well as the build system set up here.
 
-There is a "non-normative" build scripts i.e. `Makefile.android` and a couple of helper files in this directory. In case you don't have any dependencies such as glib for Android, then it would be helpful.
+There are "non-normative" build scripts i.e. `Makefile.android` and a couple of helper files in this directory. In case you don't have any dependencies such as glib for Android, then it would be helpful.
