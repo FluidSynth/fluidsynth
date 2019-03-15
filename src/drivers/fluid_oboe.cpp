@@ -93,13 +93,15 @@ static fluid_thread_return_t fluid_oboe_audio_run2(void* d);
 void fluid_oboe_audio_driver_settings(fluid_settings_t* settings)
 {
   fluid_settings_register_int(settings, "audio.oboe.device-id", 0, 0, 0x7FFFFFFF, 0);
+  
   fluid_settings_register_str(settings, "audio.oboe.sharing-mode", "Shared", 0);
-  fluid_settings_register_str(settings, "audio.oboe.sharing-mode", "Exclusive", 1);
-  fluid_settings_add_option(settings, "audio.oboe.sharing-mode", "Shared");
+  fluid_settings_add_option(settings,   "audio.oboe.sharing-mode", "Shared");
+  fluid_settings_add_option(settings,   "audio.oboe.sharing-mode", "Exclusive");
+  
   fluid_settings_register_str(settings, "audio.oboe.performance-mode", "None", 0);
-  fluid_settings_register_str(settings, "audio.oboe.performance-mode", "PowerSaving", 1);
-  fluid_settings_register_str(settings, "audio.oboe.performance-mode", "LowLatency", 2);
-  fluid_settings_add_option(settings, "audio.oboe.performance-mode", "None");
+  fluid_settings_add_option(settings,   "audio.oboe.performance-mode", "None");
+  fluid_settings_add_option(settings,   "audio.oboe.performance-mode", "PowerSaving");
+  fluid_settings_add_option(settings,   "audio.oboe.performance-mode", "LowLatency");
 }
 
 
