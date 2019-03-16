@@ -1,7 +1,7 @@
 prefix=${pcfiledir}
 exec_prefix=${prefix}
-libdir=${prefix}/lib
-includedir=${prefix}/include
+libdir=${prefix}
+includedir=${prefix}/../../include/
 
 Name: Oboe
 Description: Oboe library
