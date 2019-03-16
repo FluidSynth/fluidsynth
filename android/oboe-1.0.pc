@@ -1,10 +1,10 @@
 prefix=${pcfiledir}
-libdir=${prefix}
-includedir=${prefix}/../../include/
+exec_prefix=${prefix}
+libdir=${prefix}/lib
+includedir=${prefix}/include
 
 Name: Oboe
 Description: Oboe library
 Version: 1.0.0
-Libs: -L${libdir} -loboe
+Libs: -L${libdir} -loboe -landroid -llog -lstdc++
 Cflags: -I${includedir}
-

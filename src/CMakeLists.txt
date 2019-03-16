@@ -134,7 +134,6 @@ endif ( OPENSLES_SUPPORT )
 if ( OBOE_SUPPORT )
   set ( fluid_oboe_SOURCES drivers/fluid_oboe.cpp )
   include_directories ( ${OBOE_INCLUDE_DIRS} )
-  link_libraries ( stdc++ android )
 endif ( OBOE_SUPPORT )
 
 set ( config_SOURCES ${CMAKE_BINARY_DIR}/config.h )
