@@ -102,7 +102,7 @@ static const fluid_cmd_t fluid_commands[] =
     },
     {
         "pitch_bend_range", "event", fluid_handle_pitch_bend_range,
-        "pitch_bend chan range      Sets bend pitch range"
+        "pitch_bend_range chn range Sets pitch bend range for the given midi channel"
     },
     {
         "cc", "event", fluid_handle_cc,

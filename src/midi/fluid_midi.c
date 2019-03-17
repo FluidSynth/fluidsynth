@@ -1676,7 +1676,7 @@ new_fluid_player(fluid_synth_t *synth)
     player->currentfile = NULL;
     player->division = 0;
     player->send_program_change = 1;
-    player->miditempo = 480000;
+    player->miditempo = 500000;
     player->deltatime = 4.0;
     player->cur_msec = 0;
     player->cur_ticks = 0;
@@ -1760,7 +1760,7 @@ fluid_player_reset(fluid_player_t *player)
     player->ntracks = 0;
     player->division = 0;
     player->send_program_change = 1;
-    player->miditempo = 480000;
+    player->miditempo = 500000;
     player->deltatime = 4.0;
     return 0;
 }

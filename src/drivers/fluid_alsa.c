@@ -355,6 +355,7 @@ void delete_fluid_alsa_audio_driver(fluid_audio_driver_t *p)
     if(dev->thread)
     {
         fluid_thread_join(dev->thread);
+        delete_fluid_thread(dev->thread);
     }
 
     if(dev->pcm)
@@ -757,6 +758,7 @@ delete_fluid_alsa_rawmidi_driver(fluid_midi_driver_t *p)
     if(dev->thread)
     {
         fluid_thread_join(dev->thread);
+        delete_fluid_thread(dev->thread);
     }
 
     if(dev->rawmidi_in)
@@ -1210,6 +1212,7 @@ delete_fluid_alsa_seq_driver(fluid_midi_driver_t *p)
     if(dev->thread)
     {
         fluid_thread_join(dev->thread);
+        delete_fluid_thread(dev->thread);
     }
 
     if(dev->seq_handle)
