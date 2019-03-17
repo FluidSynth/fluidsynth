@@ -4,7 +4,9 @@
 | Build Status | glib < 2.30 | glib >= 2.30 |
 |---|---|---|
 | Linux/MacOSX| n.a. | [![Build Status Travis](https://travis-ci.org/FluidSynth/fluidsynth.svg?branch=master)](https://travis-ci.org/FluidSynth/fluidsynth/branches) |
-| Windows | [![Build status Appveyor](https://ci.appveyor.com/api/projects/status/n24ybk0dmttjwdk2/branch/master?svg=true)](https://ci.appveyor.com/project/derselbst/fluidsynth/branch/master) | [![Build status](https://ci.appveyor.com/api/projects/status/anbmtebt5uk4q1it/branch/master?svg=true)](https://ci.appveyor.com/project/derselbst/fluidsynth-g2ouw/branch/master) |
+| FreeBSD | n.a. | [![Build Status](https://api.cirrus-ci.com/github/FluidSynth/fluidsynth.svg?branch=master)](https://cirrus-ci.com/github/FluidSynth/fluidsynth) |
+| Windows (VisualStudio) | [![Build status Appveyor](https://ci.appveyor.com/api/projects/status/n24ybk0dmttjwdk2/branch/master?svg=true)](https://ci.appveyor.com/project/derselbst/fluidsynth/branch/master) | [![Build status](https://ci.appveyor.com/api/projects/status/anbmtebt5uk4q1it/branch/master?svg=true)](https://ci.appveyor.com/project/derselbst/fluidsynth-g2ouw/branch/master) |
+| Windows (MinGW) | [![Build status](https://ci.appveyor.com/api/projects/status/vv7hn9s01nlhv81v/branch/master?svg=true)](https://ci.appveyor.com/project/derselbst/fluidsynth-rjimi/branch/master) | n.a. |
 
 ### FluidSynth is a software real-time synthesizer based on the Soundfont 2 specifications.
 

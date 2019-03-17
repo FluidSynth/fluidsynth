@@ -448,6 +448,7 @@ delete_fluid_oss_audio_driver(fluid_audio_driver_t *p)
     if(dev->thread)
     {
         fluid_thread_join(dev->thread);
+        delete_fluid_thread(dev->thread);
     }
 
     if(dev->dspfd >= 0)
@@ -705,6 +706,7 @@ delete_fluid_oss_midi_driver(fluid_midi_driver_t *p)
     if(dev->thread)
     {
         fluid_thread_join(dev->thread);
+        delete_fluid_thread(dev->thread);
     }
 
     if(dev->fd >= 0)

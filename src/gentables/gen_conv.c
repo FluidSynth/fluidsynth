@@ -22,7 +22,7 @@ static void fluid_conversion_config(void)
 
     for(i = 0; i < FLUID_CENTS_HZ_SIZE; i++)
     {
-        fluid_ct2hz_tab[i] = pow(2.0, (double) i / 1200.0);
+        fluid_ct2hz_tab[i] = powl(2.0, (double) i / 1200.0);
     }
 
     /* centibels to amplitude conversion
@@ -32,7 +32,7 @@ static void fluid_conversion_config(void)
      */
     for(i = 0; i < FLUID_CB_AMP_SIZE; i++)
     {
-        fluid_cb2amp_tab[i] = pow(10.0, (double) i / -200.0);
+        fluid_cb2amp_tab[i] = powl(10.0, (double) i / -200.0);
     }
 
     /* initialize the conversion tables (see fluid_mod.c

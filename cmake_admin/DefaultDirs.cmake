@@ -53,7 +53,11 @@ set (INFO_INSTALL_DIR "share/info" CACHE STRING "The info install dir")
 mark_as_advanced (INFO_INSTALL_DIR) 
 
 # MAN_INSTALL_DIR - the man pages install dir
-set (MAN_INSTALL_DIR "share/man/man1" CACHE STRING "The man pages install dir")
+if ( CMAKE_SYSTEM_NAME MATCHES "FreeBSD|DragonFly")
+  set (MAN_INSTALL_DIR "man/man1" CACHE STRING "The man pages install dir")
+else()
+  set (MAN_INSTALL_DIR "share/man/man1" CACHE STRING "The man pages install dir")
+endif()
 mark_as_advanced (MAN_INSTALL_DIR) 
 
 # SYSCONF_INSTALL_DIR - the config file install dir

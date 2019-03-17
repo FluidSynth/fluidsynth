@@ -221,6 +221,7 @@ void delete_fluid_pulse_audio_driver(fluid_audio_driver_t *p)
     if(dev->thread)
     {
         fluid_thread_join(dev->thread);
+        delete_fluid_thread(dev->thread);
     }
 
     if(dev->pa_handle)
