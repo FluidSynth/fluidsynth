@@ -135,7 +135,11 @@ new_fluid_oboe_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func
   int sharing_mode; // 0: Shared, 1: Exclusive
   int performance_mode; // 0: None, 1: PowerSaving, 2: LowLatency
 
-  fluid_synth_t* synth = (fluid_synth_t*) data;
+  fluid_synth_t* synth;
+  
+  try {
+
+  synth = (fluid_synth_t*) data;
 
   dev = FLUID_NEW(fluid_oboe_audio_driver_t);
   if (dev == NULL) {
@@ -190,6 +194,11 @@ new_fluid_oboe_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func
   
   return (fluid_audio_driver_t*) dev;
 
+  } catch(...) {
+    FLUID_LOG(FLUID_ERR, "Unexpected Oboe driver initialization error");
+    goto error_recovery;
+  }
+
  error_recovery:
   delete_fluid_oboe_audio_driver((fluid_audio_driver_t*) dev);
   return NULL;
@@ -197,7 +206,11 @@ new_fluid_oboe_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func
 
 void delete_fluid_oboe_audio_driver(fluid_audio_driver_t* p)
 {
-  fluid_oboe_audio_driver_t* dev = (fluid_oboe_audio_driver_t*) p;
+  fluid_oboe_audio_driver_t* dev;
+  
+  try {
+
+  dev = (fluid_oboe_audio_driver_t*) p;
 
   if (dev == NULL) {
     return;
@@ -209,7 +222,9 @@ void delete_fluid_oboe_audio_driver(fluid_audio_driver_t* p)
   
   dev->stream->close ();
   
-  delete dev->oboe_callback;
+  } catch(...) {}
+  
+  try { delete dev->oboe_callback; } catch(...) {}
   
   FLUID_FREE(dev);
 }
