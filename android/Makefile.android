@@ -35,7 +35,7 @@ $(CERBERO):
 	git clone https://github.com/atsushieno/cerbero.git $(CERBERO) && cd $(CERBERO) && git checkout 7a6fd79
 
 $(OBOE):
-	git clone https://github.com/atsushieno/oboe.git $(OBOE)
+	git clone https://github.com/Google/oboe.git $(OBOE) && cd $(OBOE) && git checkout 9bf3943
 
 .PHONY: build
 build: build-oboe dist-oboe build-deps-cerbero dist-deps-cerbero build-fluidsynth dist-fluidsynth build-fluidsynth-assetloader dist-fluidsynth-assetloader
