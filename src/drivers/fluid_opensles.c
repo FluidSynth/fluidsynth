@@ -53,7 +53,6 @@ typedef struct {
   int period_frames;
 
   int is_sample_format_float;
-  int use_callback_mode;
 
   /* used only by callback mode */
   short* sles_buffer_short;
@@ -75,15 +74,11 @@ fluid_audio_driver_t* new_fluid_opensles_audio_driver2(fluid_settings_t* setting
 						    fluid_audio_func_t func, void* data);
 void delete_fluid_opensles_audio_driver(fluid_audio_driver_t* p);
 void fluid_opensles_audio_driver_settings(fluid_settings_t* settings);
-static fluid_thread_return_t fluid_opensles_audio_run(void* d);
 static void opensles_callback(SLAndroidSimpleBufferQueueItf caller, void *pContext);
-void adjust_latency(fluid_opensles_audio_driver_t* dev);
 void process_fluid_buffer(fluid_opensles_audio_driver_t* dev);
 
 void fluid_opensles_audio_driver_settings(fluid_settings_t* settings)
 {
-  fluid_settings_register_int(settings, "audio.opensles.use-callback-mode", 1, 0, 1,
-                              FLUID_HINT_TOGGLED);
 }
 
 
@@ -99,7 +94,6 @@ new_fluid_opensles_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth
   int period_size;
   int realtime_prio = 0;
   int is_sample_format_float;
-  int use_callback_mode = 0;
   SLEngineItf engine_interface;
 
   dev = FLUID_NEW(fluid_opensles_audio_driver_t);
@@ -115,10 +109,8 @@ new_fluid_opensles_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth
   fluid_settings_getnum(settings, "synth.sample-rate", &sample_rate);
   fluid_settings_getint(settings, "audio.realtime-prio", &realtime_prio);
   is_sample_format_float = fluid_settings_str_equal (settings, "audio.sample-format", "float");
-  fluid_settings_getint(settings, "audio.opensles.use-callback-mode", &use_callback_mode);
 
   dev->synth = synth;
-  dev->use_callback_mode = use_callback_mode;
   dev->is_sample_format_float = is_sample_format_float;
   dev->period_frames = period_size;
   dev->sample_rate = sample_rate;
@@ -199,35 +191,20 @@ new_fluid_opensles_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth
     goto error_recovery;
   }
 
-  if (dev->use_callback_mode)
+  result = (*dev->player_buffer_queue_interface)->RegisterCallback(dev->player_buffer_queue_interface, opensles_callback, dev);
+  if (result != 0) goto error_recovery;
+
+  if (dev->is_sample_format_float)
   {
-    result = (*dev->player_buffer_queue_interface)->RegisterCallback(dev->player_buffer_queue_interface, opensles_callback, dev);
-    if (result != 0) goto error_recovery;
-
-    if (dev->is_sample_format_float)
-    {
-      (*dev->player_buffer_queue_interface)->Enqueue(dev->player_buffer_queue_interface, dev->sles_buffer_float, dev->period_frames * NUM_CHANNELS * sizeof(float));
-    }
-    else
-    {
-      (*dev->player_buffer_queue_interface)->Enqueue(dev->player_buffer_queue_interface, dev->sles_buffer_short, dev->period_frames * NUM_CHANNELS * sizeof(short));
-    }
-    (*dev->audio_player_interface)->SetCallbackEventsMask(dev->audio_player_interface, SL_PLAYEVENT_HEADATEND);
-    result = (*dev->audio_player_interface)->SetPlayState(dev->audio_player_interface, SL_PLAYSTATE_PLAYING);
-    if (result != 0) goto error_recovery;
-
+    (*dev->player_buffer_queue_interface)->Enqueue(dev->player_buffer_queue_interface, dev->sles_buffer_float, dev->period_frames * NUM_CHANNELS * sizeof(float));
   }
-  else /* non-callback mode */
+  else
   {
-    result = (*dev->audio_player_interface)->SetPlayState(dev->audio_player_interface, SL_PLAYSTATE_PLAYING);
-    if (result != 0) goto error_recovery;
-
-    /* Create the audio thread */
-    dev->thread = new_fluid_thread ("opensles-audio", fluid_opensles_audio_run,
-                                    dev, realtime_prio, FALSE);
-    if (!dev->thread)
-      goto error_recovery;
+    (*dev->player_buffer_queue_interface)->Enqueue(dev->player_buffer_queue_interface, dev->sles_buffer_short, dev->period_frames * NUM_CHANNELS * sizeof(short));
   }
+  (*dev->audio_player_interface)->SetCallbackEventsMask(dev->audio_player_interface, SL_PLAYEVENT_HEADATEND);
+  result = (*dev->audio_player_interface)->SetPlayState(dev->audio_player_interface, SL_PLAYSTATE_PLAYING);
+  if (result != 0) goto error_recovery;
 
   FLUID_LOG(FLUID_INFO, "Using OpenSLES driver.");
 
@@ -264,37 +241,6 @@ void delete_fluid_opensles_audio_driver(fluid_audio_driver_t* p)
   FLUID_FREE(dev);
 }
 
-/*
- * FIXME:
- * This causes crash on x86 etc. It should be avoided anyways. 
- * Only non-callback mode uses this function.
- */
-void adjust_latency(fluid_opensles_audio_driver_t* dev)
-{
-  struct timespec ts;
-  long current_time, wait_in_theory, time_delta;
-
-  wait_in_theory = 1000000 * dev->period_frames / dev->sample_rate;
-
-  /* compute delta time and update 'next expected enqueue' time */
-  clock_gettime(CLOCK_REALTIME, &ts);
-  current_time = ts.tv_sec * 1000000 + ts.tv_nsec / 1000;
-  time_delta = dev->next_expected_enqueue_time == 0 ? 0 : dev->next_expected_enqueue_time - current_time;
-  if (time_delta == 0)
-  {
-    dev->next_expected_enqueue_time += current_time + wait_in_theory;
-  }
-  else
-  {
-    dev->next_expected_enqueue_time += wait_in_theory;
-  }
-  /* take some sleep only if it's running ahead */
-  if (time_delta > 0)
-  {
-    usleep (time_delta);
-  }
-}
-
 void opensles_callback(SLAndroidSimpleBufferQueueItf caller, void *pContext)
 {
   fluid_opensles_audio_driver_t* dev = (fluid_opensles_audio_driver_t*) pContext;
@@ -318,44 +264,6 @@ void opensles_callback(SLAndroidSimpleBufferQueueItf caller, void *pContext)
     err = result;
     /* Do not simply break at just one single insufficient buffer. Go on. */
   }
-}
-
-static fluid_thread_return_t
-fluid_opensles_audio_run(void* d)
-{
-  fluid_opensles_audio_driver_t* dev = (fluid_opensles_audio_driver_t*) d;
-  short *out_short = dev->sles_buffer_short;
-  float *out_float = dev->sles_buffer_float;
-  int period_frames;
-  int err;
-  SLresult result;
-
-  period_frames = dev->period_frames;
-
-  while (dev->cont)
-  {
-    adjust_latency (dev);
-
-    process_fluid_buffer(dev);
-
-    if (dev->is_sample_format_float)
-    {
-      result = (*dev->player_buffer_queue_interface)->Enqueue (
-      dev->player_buffer_queue_interface, out_float, period_frames * sizeof (float) * NUM_CHANNELS);
-    }
-    else
-    {
-      result = (*dev->player_buffer_queue_interface)->Enqueue (
-      dev->player_buffer_queue_interface, out_short, period_frames * sizeof (short) * NUM_CHANNELS);
-    }
-    if (result != 0)
-    {
-      err = result;
-      /* Do not simply break at just one single insufficient buffer. Go on. */
-    }
-  }	/* while (dev->cont) */
-
-  return FLUID_THREAD_RETURN_VALUE;
 }
 
 void process_fluid_buffer(fluid_opensles_audio_driver_t* dev)
