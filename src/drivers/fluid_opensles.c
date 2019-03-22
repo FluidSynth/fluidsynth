@@ -370,7 +370,7 @@ fluid_opensles_audio_run(void* d)
     }
   }	/* while (dev->cont) */
 
-  return NULL;
+  return FLUID_THREAD_RETURN_VALUE;
 }
 
 void process_fluid_buffer(fluid_opensles_audio_driver_t* dev)
