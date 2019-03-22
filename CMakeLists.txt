@@ -611,7 +611,6 @@ if ( enable-opensles )
   check_include_file ( SLES/OpenSLES.h OPENSLES_SUPPORT )
   if ( OPENSLES_SUPPORT )
     find_library ( OpenSLES_LIBS OpenSLES )
-    set ( OPENSLES_SUPPORT OpenSLES_LIBS)
   endif ( OPENSLES_SUPPORT )
 endif ( enable-opensles )
 
