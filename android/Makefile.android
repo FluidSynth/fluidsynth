@@ -4,11 +4,12 @@
 # What `build` target does:
 #
 # - build cerbero to build glib
-# - build glib-2.0.a and many other dependencies
-# - build Oboe to build oboe-c
-# - build oboe-c to provide oboe features via shared library
-# - build libfluidsynth.a using glib and oboe-c (shared)
-# - build libfluidsynth.so from libfluidsynth.a and glib and co.
+# - build glib-2.0.so and many other dependency shared libraries
+# - build Oboe shared library
+# - build libfluidsynth.so
+#
+# Android app developers are supposed to copy all those shared
+# libraries into their apks (per ABI).
 #
 PWD=$(shell pwd)
 CERBERO=$(PWD)/external/cerbero
