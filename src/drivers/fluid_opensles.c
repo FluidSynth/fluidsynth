@@ -93,17 +93,6 @@ void fluid_opensles_audio_driver_settings(fluid_settings_t* settings)
 fluid_audio_driver_t*
 new_fluid_opensles_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
 {
-  return new_fluid_opensles_audio_driver2 (settings,
-                                        (fluid_audio_func_t) fluid_synth_process,
-                                        (void*) synth);
-}
-
-/*
- * new_fluid_opensles_audio_driver2
- */
-fluid_audio_driver_t*
-new_fluid_opensles_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func, void* data)
-{
   SLresult result;
   fluid_opensles_audio_driver_t* dev;
   double sample_rate;
@@ -112,8 +101,6 @@ new_fluid_opensles_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t 
   int is_sample_format_float;
   int use_callback_mode = 0;
   SLEngineItf engine_interface;
-
-  fluid_synth_t* synth = (fluid_synth_t*) data;
 
   dev = FLUID_NEW(fluid_opensles_audio_driver_t);
   if (dev == NULL)
@@ -132,8 +119,6 @@ new_fluid_opensles_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t 
 
   dev->synth = synth;
   dev->use_callback_mode = use_callback_mode;
-  /* FIXME: this callback does not work as expected. Disable it for now. */
-  /* dev->callback = func; */
   dev->is_sample_format_float = is_sample_format_float;
   dev->period_frames = period_size;
   dev->sample_rate = sample_rate;
@@ -378,36 +363,14 @@ void process_fluid_buffer(fluid_opensles_audio_driver_t* dev)
   short *out_short = dev->sles_buffer_short;
   float *out_float = dev->sles_buffer_float;
   int period_frames = dev->period_frames;
-  float *float_callback_buffers[2];
-  short *short_callback_buffers[2];
   
   if (dev->is_sample_format_float)
   {
-    if (dev->callback)
-    {
-      float_callback_buffers [0] = out_float;
-      float_callback_buffers [1] = out_float;
-
-      (*dev->callback)(dev->synth, period_frames, 0, NULL, 2, float_callback_buffers);
-    }
-    else
-    {
-      fluid_synth_write_float(dev->synth, period_frames, out_float, 0, 2, out_float, 1, 2);
-    }
+    fluid_synth_write_float(dev->synth, period_frames, out_float, 0, 2, out_float, 1, 2);
   }
   else
   {
-    if (dev->callback)
-    {
-      short_callback_buffers [0] = out_short;
-      short_callback_buffers [1] = out_short;
-
-      (*dev->callback)(dev->synth, period_frames, 0, NULL, 2, (float**) short_callback_buffers);
-	}
-    else
-    {
-	  fluid_synth_write_s16(dev->synth, period_frames, out_short, 0, 2, out_short, 1, 2);
-	}
+    fluid_synth_write_s16(dev->synth, period_frames, out_short, 0, 2, out_short, 1, 2);
   }
 }
 

@@ -84,7 +84,7 @@ static const fluid_audriver_definition_t fluid_audio_drivers[] =
     {
         "oboe",
         new_fluid_oboe_audio_driver,
-        new_fluid_oboe_audio_driver2,
+        NULL,
         delete_fluid_oboe_audio_driver,
         fluid_oboe_audio_driver_settings
     },
@@ -94,7 +94,7 @@ static const fluid_audriver_definition_t fluid_audio_drivers[] =
     {
         "opensles",
         new_fluid_opensles_audio_driver,
-        new_fluid_opensles_audio_driver2,
+        NULL,
         delete_fluid_opensles_audio_driver,
         fluid_opensles_audio_driver_settings
     },

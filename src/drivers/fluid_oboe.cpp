@@ -52,7 +52,6 @@ typedef struct {
   fluid_audio_driver_t driver;
   fluid_synth_t *synth;
   int32_t cont;
-  fluid_audio_func_t callback;
   OboeAudioStreamCallback *oboe_callback;
   AudioStream *stream;
 } fluid_oboe_audio_driver_t;
@@ -80,22 +79,13 @@ public:
     if (!dev->cont)
       return DataCallbackResult::Stop;
   
-    if (dev->callback && stream->getFormat () == AudioFormat::Float)
+    if (stream->getFormat () == AudioFormat::Float)
     {
-      callback_buffers [0] = (float*) audioData;
-      callback_buffers [1] = (float*) audioData;
-      (*dev->callback)(dev->synth, numFrames, 0, NULL, 2, callback_buffers);
+      fluid_synth_write_float(dev->synth, numFrames, (float*) audioData, 0, 2, (float*) audioData, 1, 2);
     }
     else
     {
-      if (stream->getFormat () == AudioFormat::Float)
-      {
-        fluid_synth_write_float(dev->synth, numFrames, (float*) audioData, 0, 2, (float*) audioData, 1, 2);
-      }
-      else
-      {
-	    fluid_synth_write_s16(dev->synth, numFrames, (short*) audioData, 0, 2, (short*) audioData, 1, 2);
-	  }
+      fluid_synth_write_s16(dev->synth, numFrames, (short*) audioData, 0, 2, (short*) audioData, 1, 2);
     }
     return DataCallbackResult::Continue;
   }
@@ -122,17 +112,6 @@ void fluid_oboe_audio_driver_settings(fluid_settings_t* settings)
 fluid_audio_driver_t*
 new_fluid_oboe_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
 {
-  return new_fluid_oboe_audio_driver2 (settings,
-                                        (fluid_audio_func_t) fluid_synth_process,
-                                        (void*) synth);
-}
-
-/*
- * new_fluid_oboe_audio_driver2
- */
-fluid_audio_driver_t*
-new_fluid_oboe_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func, void* data)
-{
   Result result;
   fluid_oboe_audio_driver_t* dev;
   AudioStreamBuilder builder_obj;
@@ -146,11 +125,7 @@ new_fluid_oboe_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func
   int sharing_mode; // 0: Shared, 1: Exclusive
   int performance_mode; // 0: None, 1: PowerSaving, 2: LowLatency
 
-  fluid_synth_t* synth;
-  
   try {
-
-  synth = (fluid_synth_t*) data;
 
   dev = FLUID_NEW(fluid_oboe_audio_driver_t);
   if (dev == NULL) {
@@ -161,7 +136,6 @@ new_fluid_oboe_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func
   FLUID_MEMSET(dev, 0, sizeof(fluid_oboe_audio_driver_t));
   
   dev->synth = synth;
-  dev->callback = func;
   dev->oboe_callback = new (std::nothrow) OboeAudioStreamCallback(dev);
   if (!dev->oboe_callback) {
     FLUID_LOG(FLUID_ERR, "Out of memory");
