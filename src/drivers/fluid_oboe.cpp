@@ -24,17 +24,6 @@
  *
  */
 
-/*
- * It is annoying, but
- * 
- * - we cannot include oboe/Oboe.h outside #if OBOE_SUPPORT,
- * - but OBOE_SUPPORT is defined only within fluid_synth.h,
- * - we cannot include oboe/Oboe.h within C scope,
- * - but we cannot include fluid_*.h outside C scope.
- * 
- * Therefore there are two divided extern decls.
- */
-
 extern "C" {
 
 #include "fluid_synth.h"
@@ -48,30 +37,11 @@ extern "C" {
 #include <sys/time.h>
 #include <oboe/Oboe.h>
 
-extern "C" {
-
 using namespace oboe;
 
 #define NUM_CHANNELS 2
 
-DataCallbackResult on_audio_ready(AudioStreamCallback *callback, AudioStream *stream, void *audioData, int32_t numFrames);
-
-class OboeAudioStreamCallback : public AudioStreamCallback
-{
-public:
-
-  OboeAudioStreamCallback (void *userData)
-    : user_data (userData)
-  {
-  }
-
-  void *user_data;
-
-  DataCallbackResult onAudioReady (AudioStream *oboeStream, void *audioData, int32_t numFrames)
-  {
-    return on_audio_ready (this, oboeStream, audioData, numFrames);
-  }
-};
+class OboeAudioStreamCallback;
 
 /** fluid_oboe_audio_driver_t
  *
@@ -86,6 +56,50 @@ typedef struct {
   OboeAudioStreamCallback *oboe_callback;
   AudioStream *stream;
 } fluid_oboe_audio_driver_t;
+
+
+class OboeAudioStreamCallback : public AudioStreamCallback
+{
+public:
+
+  OboeAudioStreamCallback (void *userData)
+    : user_data (userData)
+  {
+  }
+
+  void *user_data;
+
+  DataCallbackResult onAudioReady (AudioStream *stream, void *audioData, int32_t numFrames)
+  {
+    float *callback_buffers[2];
+    fluid_oboe_audio_driver_t *dev;
+    OboeAudioStreamCallback *oboe_callback;
+  
+    dev = (fluid_oboe_audio_driver_t*) user_data;
+  
+    if (!dev->cont)
+      return DataCallbackResult::Stop;
+  
+    if (dev->callback && stream->getFormat () == AudioFormat::Float)
+    {
+      callback_buffers [0] = (float*) audioData;
+      callback_buffers [1] = (float*) audioData;
+      (*dev->callback)(dev->synth, numFrames, 0, NULL, 2, callback_buffers);
+    }
+    else
+    {
+      if (stream->getFormat () == AudioFormat::Float)
+      {
+        fluid_synth_write_float(dev->synth, numFrames, (float*) audioData, 0, 2, (float*) audioData, 1, 2);
+      }
+      else
+      {
+	    fluid_synth_write_s16(dev->synth, numFrames, (short*) audioData, 0, 2, (short*) audioData, 1, 2);
+	  }
+    }
+    return DataCallbackResult::Continue;
+  }
+};
 
 void fluid_oboe_audio_driver_settings(fluid_settings_t* settings)
 {
@@ -225,40 +239,6 @@ void delete_fluid_oboe_audio_driver(fluid_audio_driver_t* p)
   
   FLUID_FREE(dev);
 }
-
-DataCallbackResult on_audio_ready(AudioStreamCallback *callback, AudioStream *stream, void *audioData, int32_t numFrames)
-{
-  float *callback_buffers[2];
-  fluid_oboe_audio_driver_t *dev;
-  OboeAudioStreamCallback *oboe_callback;
-  
-  oboe_callback = (OboeAudioStreamCallback*) callback;
-  dev = (fluid_oboe_audio_driver_t*) oboe_callback->user_data;
-  
-  if (!dev->cont)
-    return DataCallbackResult::Stop;
-  
-  if (dev->callback && stream->getFormat () == AudioFormat::Float)
-  {
-    callback_buffers [0] = (float*) audioData;
-    callback_buffers [1] = (float*) audioData;
-    (*dev->callback)(dev->synth, numFrames, 0, NULL, 2, callback_buffers);
-  }
-  else
-  {
-    if (stream->getFormat () == AudioFormat::Float)
-    {
-      fluid_synth_write_float(dev->synth, numFrames, (float*) audioData, 0, 2, (float*) audioData, 1, 2);
-    }
-    else
-    {
-	  fluid_synth_write_s16(dev->synth, numFrames, (short*) audioData, 0, 2, (short*) audioData, 1, 2);
-	}
-  }
-  return DataCallbackResult::Continue;
-}
-
-} // extern "C"
 
 #endif // OBOE_SUPPORT
 
