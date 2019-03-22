@@ -87,9 +87,6 @@ typedef struct {
   AudioStream *stream;
 } fluid_oboe_audio_driver_t;
 
-static fluid_thread_return_t fluid_oboe_audio_run(void* d);
-static fluid_thread_return_t fluid_oboe_audio_run2(void* d);
-
 void fluid_oboe_audio_driver_settings(fluid_settings_t* settings)
 {
   fluid_settings_register_int(settings, "audio.oboe.device-id", 0, 0, 0x7FFFFFFF, 0);
