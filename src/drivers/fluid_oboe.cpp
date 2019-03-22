@@ -147,7 +147,11 @@ new_fluid_oboe_audio_driver2(fluid_settings_t* settings, fluid_audio_func_t func
   
   dev->synth = synth;
   dev->callback = func;
-  dev->oboe_callback = new OboeAudioStreamCallback (dev);
+  dev->oboe_callback = new (std::nothrow) OboeAudioStreamCallback(dev);
+  if (!dev->oboe_callback) {
+    FLUID_LOG(FLUID_ERR, "Out of memory");
+    goto error_recovery;
+  }
 
   fluid_settings_getint(settings, "audio.period-size", &period_frames);
   fluid_settings_getnum(settings, "synth.sample-rate", &sample_rate);
