@@ -144,7 +144,7 @@ new_fluid_oboe_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
   fluid_settings_getint(settings, "audio.period-size", &period_frames);
   fluid_settings_getnum(settings, "synth.sample-rate", &sample_rate);
   is_sample_format_float = fluid_settings_str_equal (settings, "audio.sample-format", "float");
-  fluid_settings_getint(settings, "audio.oboe.device-id", &device_id);
+  fluid_settings_getint(settings, "audio.oboe.id", &device_id);
   sharing_mode = 
     fluid_settings_str_equal (settings, "audio.oboe.sharing-mode", "Exclusive") ? 1 : 0;
   performance_mode =
