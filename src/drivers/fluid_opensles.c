@@ -30,7 +30,6 @@
 
 #if OPENSLES_SUPPORT
 
-#include <sys/time.h>
 #include <SLES/OpenSLES.h>
 #include <SLES/OpenSLES_Android.h>
 

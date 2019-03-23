@@ -34,7 +34,6 @@ extern "C" {
 
 #if OBOE_SUPPORT
 
-#include <sys/time.h>
 #include <oboe/Oboe.h>
 
 using namespace oboe;
