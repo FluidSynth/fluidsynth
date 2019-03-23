@@ -92,7 +92,7 @@ public:
 
 void fluid_oboe_audio_driver_settings(fluid_settings_t* settings)
 {
-  fluid_settings_register_int(settings, "audio.oboe.device-id", 0, 0, 0x7FFFFFFF, 0);
+  fluid_settings_register_int(settings, "audio.oboe.id", 0, 0, 0x7FFFFFFF, 0);
   
   fluid_settings_register_str(settings, "audio.oboe.sharing-mode", "Shared", 0);
   fluid_settings_add_option(settings,   "audio.oboe.sharing-mode", "Shared");
