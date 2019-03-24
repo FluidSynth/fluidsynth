@@ -33,7 +33,7 @@
 #include <SLES/OpenSLES.h>
 #include <SLES/OpenSLES_Android.h>
 
-#define NUM_CHANNELS 2
+static const int NUM_CHANNELS = 2;
 
 /** fluid_opensles_audio_driver_t
  *
@@ -63,14 +63,8 @@ typedef struct {
 } fluid_opensles_audio_driver_t;
 
 
-fluid_audio_driver_t* new_fluid_opensles_audio_driver(fluid_settings_t* settings,
-						   fluid_synth_t* synth);
-fluid_audio_driver_t* new_fluid_opensles_audio_driver2(fluid_settings_t* settings,
-						    fluid_audio_func_t func, void* data);
-void delete_fluid_opensles_audio_driver(fluid_audio_driver_t* p);
-void fluid_opensles_audio_driver_settings(fluid_settings_t* settings);
 static void opensles_callback(SLAndroidSimpleBufferQueueItf caller, void *pContext);
-void process_fluid_buffer(fluid_opensles_audio_driver_t* dev);
+static void process_fluid_buffer(fluid_opensles_audio_driver_t* dev);
 
 void fluid_opensles_audio_driver_settings(fluid_settings_t* settings)
 {
@@ -98,7 +92,7 @@ new_fluid_opensles_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth
     return NULL;
   }
 
-  FLUID_MEMSET(dev, 0, sizeof(fluid_opensles_audio_driver_t));
+  FLUID_MEMSET(dev, 0, sizeof(*dev));
 
   fluid_settings_getint(settings, "audio.period-size", &period_size);
   fluid_settings_getnum(settings, "synth.sample-rate", &sample_rate);
@@ -215,8 +209,7 @@ void delete_fluid_opensles_audio_driver(fluid_audio_driver_t* p)
 {
   fluid_opensles_audio_driver_t* dev = (fluid_opensles_audio_driver_t*) p;
 
-  if (dev == NULL)
-    return;
+  fluid_return_if_fail(dev != NULL);
 
   dev->cont = 0;
 

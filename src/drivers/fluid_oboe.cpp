@@ -38,7 +38,7 @@ extern "C" {
 
 using namespace oboe;
 
-#define NUM_CHANNELS 2
+static const int NUM_CHANNELS = 2;
 
 class OboeAudioStreamCallback;
 
@@ -50,7 +50,7 @@ class OboeAudioStreamCallback;
 typedef struct {
   fluid_audio_driver_t driver;
   fluid_synth_t *synth;
-  int32_t cont;
+  int cont;
   OboeAudioStreamCallback *oboe_callback;
   AudioStream *stream;
 } fluid_oboe_audio_driver_t;
@@ -180,7 +180,6 @@ new_fluid_oboe_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
 
   } catch(...) {
     FLUID_LOG(FLUID_ERR, "Unexpected Oboe driver initialization error");
-    goto error_recovery;
   }
 
  error_recovery:
@@ -190,15 +189,11 @@ new_fluid_oboe_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
 
 void delete_fluid_oboe_audio_driver(fluid_audio_driver_t* p)
 {
-  fluid_oboe_audio_driver_t* dev;
+  fluid_oboe_audio_driver_t* dev = (fluid_oboe_audio_driver_t*) p;
+  
+  fluid_return_if_fail(dev != NULL);
   
   try {
-
-  dev = (fluid_oboe_audio_driver_t*) p;
-
-  if (dev == NULL) {
-    return;
-  }
 
   dev->cont = 0;
   
