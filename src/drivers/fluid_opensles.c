@@ -119,16 +119,16 @@ new_fluid_opensles_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth
     goto error_recovery;
   }
   result = (*dev->engine)->Realize (dev->engine, SL_BOOLEAN_FALSE);
-  if (result != 0) goto error_recovery;
+  if (result != SL_RESULT_SUCCESS) goto error_recovery;
   
   result = (*dev->engine)->GetInterface (dev->engine, SL_IID_ENGINE, &engine_interface);
-  if (result != 0) goto error_recovery;
+  if (result != SL_RESULT_SUCCESS) goto error_recovery;
 
   result = (*engine_interface)->CreateOutputMix (engine_interface, &dev->output_mix_object, 0, 0, 0);
-  if (result != 0) goto error_recovery;
+  if (result != SL_RESULT_SUCCESS) goto error_recovery;
   
   result = (*dev->output_mix_object)->Realize (dev->output_mix_object, SL_BOOLEAN_FALSE);
-  if (result != 0) goto error_recovery;
+  if (result != SL_RESULT_SUCCESS) goto error_recovery;
 
   SLDataLocator_AndroidSimpleBufferQueue loc_buffer_queue = {
     SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE,
@@ -159,18 +159,18 @@ new_fluid_opensles_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth
   const SLboolean req1[] = {SL_BOOLEAN_TRUE};
   result = (*engine_interface)->CreateAudioPlayer (engine_interface,
     &(dev->audio_player), &audio_src, &audio_sink, 1, ids1, req1);
-  if (result != 0) goto error_recovery;
+  if (result != SL_RESULT_SUCCESS) goto error_recovery;
 
   result = (*dev->audio_player)->Realize (dev->audio_player,SL_BOOLEAN_FALSE);
-  if (result != 0) goto error_recovery;
+  if (result != SL_RESULT_SUCCESS) goto error_recovery;
 
   result = (*dev->audio_player)->GetInterface (dev->audio_player, 
     SL_IID_PLAY, &(dev->audio_player_interface));
-  if (result != 0) goto error_recovery;
+  if (result != SL_RESULT_SUCCESS) goto error_recovery;
 
   result = (*dev->audio_player)->GetInterface(dev->audio_player,
     SL_IID_ANDROIDSIMPLEBUFFERQUEUE, &(dev->player_buffer_queue_interface));
-  if (result != 0) goto error_recovery;
+  if (result != SL_RESULT_SUCCESS) goto error_recovery;
 
   if (dev->is_sample_format_float)
   {
@@ -187,7 +187,7 @@ new_fluid_opensles_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth
   }
 
   result = (*dev->player_buffer_queue_interface)->RegisterCallback(dev->player_buffer_queue_interface, opensles_callback, dev);
-  if (result != 0) goto error_recovery;
+  if (result != SL_RESULT_SUCCESS) goto error_recovery;
 
   if (dev->is_sample_format_float)
   {
@@ -199,7 +199,7 @@ new_fluid_opensles_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth
   }
   (*dev->audio_player_interface)->SetCallbackEventsMask(dev->audio_player_interface, SL_PLAYEVENT_HEADATEND);
   result = (*dev->audio_player_interface)->SetPlayState(dev->audio_player_interface, SL_PLAYSTATE_PLAYING);
-  if (result != 0) goto error_recovery;
+  if (result != SL_RESULT_SUCCESS) goto error_recovery;
 
   FLUID_LOG(FLUID_INFO, "Using OpenSLES driver.");
 
@@ -252,7 +252,7 @@ void opensles_callback(SLAndroidSimpleBufferQueueItf caller, void *pContext)
     result = (*caller)->Enqueue (
     dev->player_buffer_queue_interface, dev->sles_buffer_short, dev->period_frames * sizeof (short) * NUM_CHANNELS);
   }
-  if (result != 0)
+  if (result != SL_RESULT_SUCCESS)
   {
     err = result;
     /* Do not simply break at just one single insufficient buffer. Go on. */
