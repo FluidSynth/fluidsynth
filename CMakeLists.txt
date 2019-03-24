@@ -20,7 +20,7 @@
 # CMake based build system. Pedro Lopez-Cabanillas <plcl@users.sf.net>
 
 cmake_minimum_required ( VERSION 3.1.0 ) # because of CMAKE_C_STANDARD
-project ( FluidSynth C CXX )
+project ( FluidSynth C )
 set ( CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake_admin )
 
 # FluidSynth package name
@@ -613,13 +613,15 @@ if ( enable-opensles )
     find_library ( OpenSLES_LIBS OpenSLES )
     if ( NOT OpenSLES_LIBS )
       unset ( OPENSLES_SUPPORT )
-    endif ( OpenSLES_LIBS )
+    endif ( NOT OpenSLES_LIBS )
   endif ( OPENSLES_SUPPORT )
 endif ( enable-opensles )
 
 unset ( OBOE_SUPPORT CACHE )
 unset ( OBOE_LIBS CACHE )
 if ( enable-oboe )
+  # enable C++ as it's needed for oboe
+  enable_language ( CXX )
   pkg_check_modules ( OBOE oboe-1.0 )
   if ( OBOE_FOUND )
     set ( OBOE_SUPPORT 1 )
