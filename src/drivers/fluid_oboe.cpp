@@ -198,10 +198,11 @@ void delete_fluid_oboe_audio_driver(fluid_audio_driver_t* p)
 
   dev->cont = 0;
   
+  if (dev->stream != NULL)
+  {
   dev->stream->stop ();
-  
   dev->stream->close ();
-  
+  }
   } catch(...) {}
   
   delete dev->oboe_callback;
