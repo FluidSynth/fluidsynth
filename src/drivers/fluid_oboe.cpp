@@ -67,22 +67,18 @@ public:
 
   DataCallbackResult onAudioReady (AudioStream *stream, void *audioData, int32_t numFrames)
   {
-    float *callback_buffers[2];
-    fluid_oboe_audio_driver_t *dev;
-    OboeAudioStreamCallback *oboe_callback;
-  
-    dev = (fluid_oboe_audio_driver_t*) user_data;
+    fluid_oboe_audio_driver_t *dev = static_cast<fluid_oboe_audio_driver_t*>(this->user_data);
   
     if (!dev->cont)
       return DataCallbackResult::Stop;
   
     if (stream->getFormat () == AudioFormat::Float)
     {
-      fluid_synth_write_float(dev->synth, numFrames, (float*) audioData, 0, 2, (float*) audioData, 1, 2);
+      fluid_synth_write_float(dev->synth, numFrames, static_cast<float*>(audioData), 0, 2, static_cast<float*>(audioData), 1, 2);
     }
     else
     {
-      fluid_synth_write_s16(dev->synth, numFrames, (short*) audioData, 0, 2, (short*) audioData, 1, 2);
+      fluid_synth_write_s16(dev->synth, numFrames, static_cast<short*>(audioData), 0, 2, static_cast<short*>(audioData), 1, 2);
     }
     return DataCallbackResult::Continue;
   }
@@ -177,20 +173,20 @@ new_fluid_oboe_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
 
   stream->start ();
   
-  return (fluid_audio_driver_t*) dev;
+  return reinterpret_cast<fluid_audio_driver_t*>(dev);
 
   } catch(...) {
     FLUID_LOG(FLUID_ERR, "Unexpected Oboe driver initialization error");
   }
 
  error_recovery:
-  delete_fluid_oboe_audio_driver((fluid_audio_driver_t*) dev);
+  delete_fluid_oboe_audio_driver(reinterpret_cast<fluid_audio_driver_t*>(dev));
   return NULL;
 }
 
 void delete_fluid_oboe_audio_driver(fluid_audio_driver_t* p)
 {
-  fluid_oboe_audio_driver_t* dev = (fluid_oboe_audio_driver_t*) p;
+  fluid_oboe_audio_driver_t* dev = reinterpret_cast<fluid_oboe_audio_driver_t*>(p);
   
   fluid_return_if_fail(dev != NULL);
   
