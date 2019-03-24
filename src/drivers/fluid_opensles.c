@@ -56,12 +56,8 @@ typedef struct {
   /* used only by callback mode */
   short* sles_buffer_short;
   float* sles_buffer_float;
-  fluid_audio_func_t callback;
-  /* used only by non-callback mode */
-  fluid_thread_t *thread;
 
   int cont;
-  long next_expected_enqueue_time;
   
   double sample_rate;
 } fluid_opensles_audio_driver_t;
@@ -224,8 +220,6 @@ void delete_fluid_opensles_audio_driver(fluid_audio_driver_t* p)
 
   dev->cont = 0;
 
-  if (dev->thread)
-    fluid_thread_join (dev->thread);
   if (dev->audio_player)
     (*dev->audio_player)->Destroy (dev->audio_player);
   if (dev->output_mix_object)
