@@ -65,8 +65,6 @@ public:
   {
   }
 
-  void *user_data;
-
   DataCallbackResult onAudioReady (AudioStream *stream, void *audioData, int32_t numFrames)
   {
     float *callback_buffers[2];
@@ -88,6 +86,9 @@ public:
     }
     return DataCallbackResult::Continue;
   }
+  
+private:
+  void *user_data;
 };
 
 void fluid_oboe_audio_driver_settings(fluid_settings_t* settings)
