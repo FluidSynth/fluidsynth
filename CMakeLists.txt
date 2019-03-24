@@ -194,13 +194,10 @@ if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang" OR CMAKE_C_
 
   # prepend to build type specific flags, to allow users to override
   set ( CMAKE_C_FLAGS_DEBUG "-g -DDEBUG -fsanitize=undefined ${CMAKE_C_FLAGS_DEBUG}" )
+  set ( CMAKE_EXE_LINKER_FLAGS_DEBUG  "-fsanitize=undefined ${CMAKE_EXE_LINKER_FLAGS_DEBUG}" )
+  set ( CMAKE_SHARED_LINKER_FLAGS_DEBUG  "-fsanitize=undefined ${CMAKE_SHARED_LINKER_FLAGS_DEBUG}" )
   
 endif ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang" OR CMAKE_C_COMPILER_ID STREQUAL "Intel" )
-
-# Options for CLANG only
-if ( CMAKE_C_COMPILER_ID STREQUAL "Clang" )
-  set ( CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fsanitize-trap=undefined" )
-endif ( CMAKE_C_COMPILER_ID STREQUAL "Clang" )
 
 # Windows
 unset ( WINDOWS_SUPPORT CACHE )
