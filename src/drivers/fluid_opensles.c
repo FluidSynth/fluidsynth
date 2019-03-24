@@ -237,7 +237,6 @@ void delete_fluid_opensles_audio_driver(fluid_audio_driver_t* p)
 void opensles_callback(SLAndroidSimpleBufferQueueItf caller, void *pContext)
 {
   fluid_opensles_audio_driver_t* dev = (fluid_opensles_audio_driver_t*) pContext;
-  int err;
   SLresult result;
 
   process_fluid_buffer(dev);
@@ -252,11 +251,12 @@ void opensles_callback(SLAndroidSimpleBufferQueueItf caller, void *pContext)
     result = (*caller)->Enqueue (
     dev->player_buffer_queue_interface, dev->sles_buffer_short, dev->period_frames * sizeof (short) * NUM_CHANNELS);
   }
+  /*
   if (result != SL_RESULT_SUCCESS)
   {
-    err = result;
-    /* Do not simply break at just one single insufficient buffer. Go on. */
+    // Do not simply break at just one single insufficient buffer. Go on.
   }
+  */
 }
 
 void process_fluid_buffer(fluid_opensles_audio_driver_t* dev)
