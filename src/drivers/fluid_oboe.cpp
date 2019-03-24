@@ -46,12 +46,13 @@ class OboeAudioStreamCallback;
  * This structure should not be accessed directly. Use audio port
  * functions instead.
  */
-typedef struct {
-  fluid_audio_driver_t driver;
-  fluid_synth_t *synth;
-  int cont;
-  OboeAudioStreamCallback *oboe_callback;
-  AudioStream *stream;
+typedef struct
+{
+    fluid_audio_driver_t driver;
+    fluid_synth_t *synth;
+    int cont;
+    OboeAudioStreamCallback *oboe_callback;
+    AudioStream *stream;
 } fluid_oboe_audio_driver_t;
 
 
@@ -59,150 +60,165 @@ class OboeAudioStreamCallback : public AudioStreamCallback
 {
 public:
 
-  OboeAudioStreamCallback (void *userData)
-    : user_data (userData)
-  {
-  }
+    OboeAudioStreamCallback(void *userData)
+        : user_data(userData)
+    {
+    }
 
-  DataCallbackResult onAudioReady (AudioStream *stream, void *audioData, int32_t numFrames)
-  {
-    fluid_oboe_audio_driver_t *dev = static_cast<fluid_oboe_audio_driver_t*>(this->user_data);
-  
-    if (!dev->cont)
-      return DataCallbackResult::Stop;
-  
-    if (stream->getFormat () == AudioFormat::Float)
+    DataCallbackResult onAudioReady(AudioStream *stream, void *audioData, int32_t numFrames)
     {
-      fluid_synth_write_float(dev->synth, numFrames, static_cast<float*>(audioData), 0, 2, static_cast<float*>(audioData), 1, 2);
+        fluid_oboe_audio_driver_t *dev = static_cast<fluid_oboe_audio_driver_t *>(this->user_data);
+
+        if(!dev->cont)
+        {
+            return DataCallbackResult::Stop;
+        }
+
+        if(stream->getFormat() == AudioFormat::Float)
+        {
+            fluid_synth_write_float(dev->synth, numFrames, static_cast<float *>(audioData), 0, 2, static_cast<float *>(audioData), 1, 2);
+        }
+        else
+        {
+            fluid_synth_write_s16(dev->synth, numFrames, static_cast<short *>(audioData), 0, 2, static_cast<short *>(audioData), 1, 2);
+        }
+
+        return DataCallbackResult::Continue;
     }
-    else
-    {
-      fluid_synth_write_s16(dev->synth, numFrames, static_cast<short*>(audioData), 0, 2, static_cast<short*>(audioData), 1, 2);
-    }
-    return DataCallbackResult::Continue;
-  }
-  
+
 private:
-  void *user_data;
+    void *user_data;
 };
 
-void fluid_oboe_audio_driver_settings(fluid_settings_t* settings)
+void fluid_oboe_audio_driver_settings(fluid_settings_t *settings)
 {
-  fluid_settings_register_int(settings, "audio.oboe.id", 0, 0, 0x7FFFFFFF, 0);
-  
-  fluid_settings_register_str(settings, "audio.oboe.sharing-mode", "Shared", 0);
-  fluid_settings_add_option(settings,   "audio.oboe.sharing-mode", "Shared");
-  fluid_settings_add_option(settings,   "audio.oboe.sharing-mode", "Exclusive");
-  
-  fluid_settings_register_str(settings, "audio.oboe.performance-mode", "None", 0);
-  fluid_settings_add_option(settings,   "audio.oboe.performance-mode", "None");
-  fluid_settings_add_option(settings,   "audio.oboe.performance-mode", "PowerSaving");
-  fluid_settings_add_option(settings,   "audio.oboe.performance-mode", "LowLatency");
+    fluid_settings_register_int(settings, "audio.oboe.id", 0, 0, 0x7FFFFFFF, 0);
+
+    fluid_settings_register_str(settings, "audio.oboe.sharing-mode", "Shared", 0);
+    fluid_settings_add_option(settings,   "audio.oboe.sharing-mode", "Shared");
+    fluid_settings_add_option(settings,   "audio.oboe.sharing-mode", "Exclusive");
+
+    fluid_settings_register_str(settings, "audio.oboe.performance-mode", "None", 0);
+    fluid_settings_add_option(settings,   "audio.oboe.performance-mode", "None");
+    fluid_settings_add_option(settings,   "audio.oboe.performance-mode", "PowerSaving");
+    fluid_settings_add_option(settings,   "audio.oboe.performance-mode", "LowLatency");
 }
 
 
 /*
  * new_fluid_oboe_audio_driver
  */
-fluid_audio_driver_t*
-new_fluid_oboe_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth)
+fluid_audio_driver_t *
+new_fluid_oboe_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
 {
-  Result result;
-  fluid_oboe_audio_driver_t* dev;
-  AudioStreamBuilder builder_obj;
-  AudioStreamBuilder *builder = &builder_obj;
-  AudioStream *stream;
-  
-  int period_frames;
-  double sample_rate;
-  int is_sample_format_float;
-  int device_id;
-  int sharing_mode; // 0: Shared, 1: Exclusive
-  int performance_mode; // 0: None, 1: PowerSaving, 2: LowLatency
+    Result result;
+    fluid_oboe_audio_driver_t *dev;
+    AudioStreamBuilder builder_obj;
+    AudioStreamBuilder *builder = &builder_obj;
+    AudioStream *stream;
 
-  try {
+    int period_frames;
+    double sample_rate;
+    int is_sample_format_float;
+    int device_id;
+    int sharing_mode; // 0: Shared, 1: Exclusive
+    int performance_mode; // 0: None, 1: PowerSaving, 2: LowLatency
 
-  dev = FLUID_NEW(fluid_oboe_audio_driver_t);
-  if (dev == NULL) {
-    FLUID_LOG(FLUID_ERR, "Out of memory");
+    try
+    {
+
+        dev = FLUID_NEW(fluid_oboe_audio_driver_t);
+
+        if(dev == NULL)
+        {
+            FLUID_LOG(FLUID_ERR, "Out of memory");
+            return NULL;
+        }
+
+        FLUID_MEMSET(dev, 0, sizeof(fluid_oboe_audio_driver_t));
+
+        dev->synth = synth;
+        dev->oboe_callback = new(std::nothrow) OboeAudioStreamCallback(dev);
+
+        if(!dev->oboe_callback)
+        {
+            FLUID_LOG(FLUID_ERR, "Out of memory");
+            goto error_recovery;
+        }
+
+        fluid_settings_getint(settings, "audio.period-size", &period_frames);
+        fluid_settings_getnum(settings, "synth.sample-rate", &sample_rate);
+        is_sample_format_float = fluid_settings_str_equal(settings, "audio.sample-format", "float");
+        fluid_settings_getint(settings, "audio.oboe.id", &device_id);
+        sharing_mode =
+            fluid_settings_str_equal(settings, "audio.oboe.sharing-mode", "Exclusive") ? 1 : 0;
+        performance_mode =
+            fluid_settings_str_equal(settings, "audio.oboe.performance-mode", "PowerSaving") ? 1 :
+            fluid_settings_str_equal(settings, "audio.oboe.performance-mode", "LowLatency") ? 2 : 0;
+
+        builder->setDeviceId(device_id)
+        ->setDirection(Direction::Output)
+        ->setChannelCount(NUM_CHANNELS)
+        ->setSampleRate(sample_rate)
+        ->setFramesPerCallback(period_frames)
+        ->setFormat(is_sample_format_float ? AudioFormat::Float : AudioFormat::I16)
+        ->setSharingMode(sharing_mode == 1 ? SharingMode::Exclusive : SharingMode::Shared)
+        ->setPerformanceMode(
+            performance_mode == 1 ? PerformanceMode::PowerSaving :
+            performance_mode == 2 ? PerformanceMode::LowLatency : PerformanceMode::None)
+        ->setUsage(Usage::Media)
+        ->setContentType(ContentType::Music)
+        ->setCallback(dev->oboe_callback);
+
+        result = builder->openStream(&stream);
+        dev->stream = stream;
+
+        if(result != Result::OK)
+        {
+            goto error_recovery;
+        }
+
+        dev->cont = 1;
+
+        FLUID_LOG(FLUID_INFO, "Using Oboe driver");
+
+        stream->start();
+
+        return reinterpret_cast<fluid_audio_driver_t *>(dev);
+
+    }
+    catch(...)
+    {
+        FLUID_LOG(FLUID_ERR, "Unexpected Oboe driver initialization error");
+    }
+
+error_recovery:
+    delete_fluid_oboe_audio_driver(reinterpret_cast<fluid_audio_driver_t *>(dev));
     return NULL;
-  }
-
-  FLUID_MEMSET(dev, 0, sizeof(fluid_oboe_audio_driver_t));
-  
-  dev->synth = synth;
-  dev->oboe_callback = new (std::nothrow) OboeAudioStreamCallback(dev);
-  if (!dev->oboe_callback) {
-    FLUID_LOG(FLUID_ERR, "Out of memory");
-    goto error_recovery;
-  }
-
-  fluid_settings_getint(settings, "audio.period-size", &period_frames);
-  fluid_settings_getnum(settings, "synth.sample-rate", &sample_rate);
-  is_sample_format_float = fluid_settings_str_equal (settings, "audio.sample-format", "float");
-  fluid_settings_getint(settings, "audio.oboe.id", &device_id);
-  sharing_mode = 
-    fluid_settings_str_equal (settings, "audio.oboe.sharing-mode", "Exclusive") ? 1 : 0;
-  performance_mode =
-    fluid_settings_str_equal (settings, "audio.oboe.performance-mode", "PowerSaving") ? 1 :
-    fluid_settings_str_equal (settings, "audio.oboe.performance-mode", "LowLatency") ? 2 : 0;
-
-  builder->setDeviceId (device_id)
-	->setDirection (Direction::Output)
-	->setChannelCount (NUM_CHANNELS)
-	->setSampleRate (sample_rate)
-	->setFramesPerCallback (period_frames)
-	->setFormat (is_sample_format_float ? AudioFormat::Float : AudioFormat::I16)
-	->setSharingMode (sharing_mode == 1 ? SharingMode::Exclusive : SharingMode::Shared)
-	->setPerformanceMode (
-	  performance_mode == 1 ? PerformanceMode::PowerSaving :
-      performance_mode == 2 ? PerformanceMode::LowLatency : PerformanceMode::None)
-    ->setUsage (Usage::Media)
-    ->setContentType (ContentType::Music)
-    ->setCallback (dev->oboe_callback);
-
-  result = builder->openStream (&stream);
-  dev->stream = stream;
-  if (result != Result::OK)
-    goto error_recovery;
-
-  dev->cont = 1;
-
-  FLUID_LOG(FLUID_INFO, "Using Oboe driver");
-
-  stream->start ();
-  
-  return reinterpret_cast<fluid_audio_driver_t*>(dev);
-
-  } catch(...) {
-    FLUID_LOG(FLUID_ERR, "Unexpected Oboe driver initialization error");
-  }
-
- error_recovery:
-  delete_fluid_oboe_audio_driver(reinterpret_cast<fluid_audio_driver_t*>(dev));
-  return NULL;
 }
 
-void delete_fluid_oboe_audio_driver(fluid_audio_driver_t* p)
+void delete_fluid_oboe_audio_driver(fluid_audio_driver_t *p)
 {
-  fluid_oboe_audio_driver_t* dev = reinterpret_cast<fluid_oboe_audio_driver_t*>(p);
-  
-  fluid_return_if_fail(dev != NULL);
-  
-  try {
+    fluid_oboe_audio_driver_t *dev = reinterpret_cast<fluid_oboe_audio_driver_t *>(p);
 
-  dev->cont = 0;
-  
-  if (dev->stream != NULL)
-  {
-  dev->stream->stop ();
-  dev->stream->close ();
-  }
-  } catch(...) {}
-  
-  delete dev->oboe_callback;
-  
-  FLUID_FREE(dev);
+    fluid_return_if_fail(dev != NULL);
+
+    try
+    {
+
+        dev->cont = 0;
+
+        if(dev->stream != NULL)
+        {
+            dev->stream->stop();
+            dev->stream->close();
+        }
+    }
+    catch(...) {}
+
+    delete dev->oboe_callback;
+
+    FLUID_FREE(dev);
 }
 
 #endif // OBOE_SUPPORT
