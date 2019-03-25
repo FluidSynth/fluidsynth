@@ -93,6 +93,7 @@ endif ( WINMIDI_SUPPORT )
 
 if ( SDL2_SUPPORT )
   set ( fluid_sdl2_SOURCES drivers/fluid_sdl2.c )
+  include_directories ( ${SDL2_INCLUDE_DIRS} )
 endif ( SDL2_SUPPORT )
 
 if ( OSS_SUPPORT )
@@ -331,7 +332,7 @@ target_link_libraries ( libfluidsynth
     ${PULSE_LIBRARIES}
     ${PORTAUDIO_LIBRARIES}
     ${LIBSNDFILE_LIBRARIES}
-    ${SDL2_LIBRARY}
+    ${SDL2_LIBRARIES}
     ${DBUS_LIBRARIES}
     ${READLINE_LIBS}
     ${DART_LIBS}
