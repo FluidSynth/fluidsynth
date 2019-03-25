@@ -643,6 +643,7 @@ link_directories (
     ${PORTAUDIO_LIBRARY_DIRS}
     ${LIBSNDFILE_LIBRARY_DIRS}
     ${DBUS_LIBRARY_DIRS}
+    ${SDL2_LIBRARY_DIRS}
 )
 
 # Process subdirectories
