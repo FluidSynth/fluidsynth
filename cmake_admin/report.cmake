@@ -200,4 +200,10 @@ else ( ENABLE_FPECHECK )
   message ( "Check FPE (debug):     no" )
 endif ( ENABLE_FPECHECK )
 
+if ( ENABLE_UBSAN )
+  message ( "UBSan (debug):         yes" )
+else ( ENABLE_UBSAN )
+  message ( "UBSan (debug):         no" )
+endif ( ENABLE_UBSAN )
+
 message ( "**************************************************************\n\n" )
