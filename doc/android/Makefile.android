@@ -109,7 +109,7 @@ dist-deps-cerbero-one:
 
 dist-fluidsynth-one:
 	mkdir -p dist/$(A_ABI) && cd dist/$(A_ABI) && cp ../../build/$(A_ABI)/src/libfluidsynth.so . && cd ../..
-	cp -r ../include/fluidsynth build/$(A_ABI)/include/
+	cp -r ../../include/fluidsynth build/$(A_ABI)/include/
 
 build-fluidsynth-assetloader:
 	cd fluidsynth-assetloader && ./ext-build.sh

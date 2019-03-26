@@ -11,7 +11,7 @@ target_compile_options ( fluidsynth-assetloader
                         PRIVATE -Wall
                         PRIVATE "$<$<CONFIG:DEBUG>:-Werror>") # Only include -Werror when building debug config
 
-include_directories ( ../../include )
+include_directories ( ../../../include )
 
 set ( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -L../../../dist/${ANDROID_ABI} -lfluidsynth" )
 
