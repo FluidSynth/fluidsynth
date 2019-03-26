@@ -19,6 +19,7 @@ addons:
     - libpulse-dev
     - libdbus-glib-1-dev
     - ladspa-sdk
+    - libsdl2-dev
 env:
     - CMAKE_FLAGS="-Denable-profiling=1"
     - CMAKE_FLAGS="-Denable-floats=1 -Denable-profiling=1"
