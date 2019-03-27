@@ -66,6 +66,22 @@ void delete_fluid_oss_audio_driver(fluid_audio_driver_t *p);
 void fluid_oss_audio_driver_settings(fluid_settings_t *settings);
 #endif
 
+#if OPENSLES_SUPPORT
+fluid_audio_driver_t*
+new_fluid_opensles_audio_driver(fluid_settings_t* settings,
+		fluid_synth_t* synth);
+void delete_fluid_opensles_audio_driver(fluid_audio_driver_t* p);
+void fluid_opensles_audio_driver_settings(fluid_settings_t* settings);
+#endif
+
+#if OBOE_SUPPORT
+fluid_audio_driver_t*
+new_fluid_oboe_audio_driver(fluid_settings_t* settings,
+		fluid_synth_t* synth);
+void delete_fluid_oboe_audio_driver(fluid_audio_driver_t* p);
+void fluid_oboe_audio_driver_settings(fluid_settings_t* settings);
+#endif
+
 #if COREAUDIO_SUPPORT
 fluid_audio_driver_t *new_fluid_core_audio_driver(fluid_settings_t *settings,
         fluid_synth_t *synth);
