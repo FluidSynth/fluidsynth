@@ -508,7 +508,7 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             <type>str</type>
             <def>fluidsynth</def>
             <desc>
-                ID used when creating Jack client connection.
+                Unique identifier used when creating Jack client connection.
             </desc>
         </setting>
         <setting>
@@ -525,6 +525,34 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             <def></def>
             <desc>
                 Jack server to connect to. Defaults to an empty string, which uses default Jack server.
+            </desc>
+        </setting>
+        <setting>
+            <name>oboe.id</name>
+            <type>int</type>
+            <def>0</def>
+            <min>0</min>
+            <max>2147483647</max>
+            <desc>
+                Request an audio device identified device using an ID as pointed out by Oboe's documentation.
+            </desc>
+        </setting>
+        <setting>
+            <name>oboe.sharing-mode</name>
+            <type>str</type>
+            <def>Shared</def>
+            <vals>Shared, Exclusive</vals>
+            <desc>
+                Sets the sharing mode as pointed out by Oboe's documentation.
+            </desc>
+        </setting>
+        <setting>
+            <name>oboe.performance-mode</name>
+            <type>str</type>
+            <def>None</def>
+            <vals>None, PowerSaving, LowLatency</vals>
+            <desc>
+                Sets the performance mode as pointed out by Oboe's documentation.
             </desc>
         </setting>
         <setting>

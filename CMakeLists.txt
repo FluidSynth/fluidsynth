@@ -55,6 +55,7 @@ option ( enable-fpe-check "enable Floating Point Exception checks and debug mess
 option ( enable-portaudio "compile PortAudio support" off )
 option ( enable-profiling "profile the dsp code" off )
 option ( enable-trap-on-fpe "enable SIGFPE trap on Floating Point Exceptions" off )
+option ( enable-ubsan "compile and link against UBSan (for debugging fluidsynth internals)" off )
 
 # Options enabled by default
 option ( enable-aufile "compile support for sound file output" on )
@@ -66,6 +67,8 @@ option ( enable-ladspa "enable LADSPA effect units" on )
 option ( enable-libinstpatch "use libinstpatch (if available) to load DLS and GIG files" on )
 option ( enable-libsndfile "compile libsndfile support (if it is available)" on )
 option ( enable-midishare "compile MidiShare support (if it is available)" on )
+option ( enable-opensles "compile OpenSLES support (if it is available)" off )
+option ( enable-oboe "compile Oboe support (requires OpenSLES and/or AAudio)" off )
 option ( enable-network "enable network support (requires BSD sockets)" on )
 option ( enable-oss "compile OSS support (if it is available)" on )
 option ( enable-dsound "compile DirectSound support (if it is available)" on )
@@ -170,6 +173,7 @@ unset ( LIBFLUID_CPPFLAGS CACHE )
 unset ( LIBFLUID_LIBS CACHE )
 unset ( FLUID_CPPFLAGS CACHE )
 unset ( FLUID_LIBS CACHE )
+unset ( ENABLE_UBSAN CACHE )
 
 # Options for the GNU C compiler only
 if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang" OR CMAKE_C_COMPILER_ID STREQUAL "Intel" )
@@ -183,17 +187,23 @@ if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang" OR CMAKE_C_
   # define some warning flags
   set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -W -Wpointer-arith -Wcast-qual -Wstrict-prototypes -Wno-unused-parameter -Wdeclaration-after-statement" )
   
+  # prepend to build type specific flags, to allow users to override
+  set ( CMAKE_C_FLAGS_DEBUG "-g -DDEBUG ${CMAKE_C_FLAGS_DEBUG}" )
+  
   if ( CMAKE_C_COMPILER_ID STREQUAL "Intel" )
     # icc needs the restrict flag to recognize C99 restrict pointers
     set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -restrict" )
   else () # not intel
     # gcc and clang support bad function cast and alignment warnings; add them as well.
     set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wbad-function-cast -Wcast-align" )
+    
+    if ( enable-ubsan )
+      set ( CMAKE_C_FLAGS "-fsanitize=undefined ${CMAKE_C_FLAGS}" )
+      set ( CMAKE_EXE_LINKER_FLAGS "-fsanitize=undefined ${CMAKE_EXE_LINKER_FLAGS}" )
+      set ( CMAKE_SHARED_LINKER_FLAGS "-fsanitize=undefined ${CMAKE_SHARED_LINKER_FLAGS}" )
+      set ( ENABLE_UBSAN 1 )
+    endif ( enable-ubsan )
   endif (CMAKE_C_COMPILER_ID STREQUAL "Intel" )
-
-  # prepend to build type specific flags, to allow users to override
-  set ( CMAKE_C_FLAGS_DEBUG "-g -DDEBUG -fsanitize=undefined ${CMAKE_C_FLAGS_DEBUG}" )
-  
 endif ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang" OR CMAKE_C_COMPILER_ID STREQUAL "Intel" )
 
 # Windows
@@ -605,7 +615,32 @@ else ( enable-midishare )
   unset ( MidiShare_LIBS CACHE )
 endif ( enable-midishare )
 
+unset ( OPENSLES_SUPPORT CACHE )
+unset ( OpenSLES_LIBS CACHE )
+if ( enable-opensles )
+  check_include_file ( SLES/OpenSLES.h OPENSLES_SUPPORT )
+  if ( OPENSLES_SUPPORT )
+    find_library ( OpenSLES_LIBS OpenSLES )
+    if ( NOT OpenSLES_LIBS )
+      unset ( OPENSLES_SUPPORT )
+    endif ( NOT OpenSLES_LIBS )
+  endif ( OPENSLES_SUPPORT )
+endif ( enable-opensles )
+
+unset ( OBOE_SUPPORT CACHE )
+unset ( OBOE_LIBS CACHE )
+if ( enable-oboe )
+  # enable C++ as it's needed for oboe
+  enable_language ( CXX )
+  pkg_check_modules ( OBOE oboe-1.0 )
+  if ( OBOE_FOUND )
+    set ( OBOE_SUPPORT 1 )
+    set ( OBOE_LIBS ${OBOE_LIBRARIES} )
+  endif ( OBOE_FOUND )
+endif ( enable-oboe )
+
 unset ( WITH_READLINE CACHE )
+unset ( READLINE_LIBS CACHE )
 if ( enable-readline )
   find_package ( Readline )
   set ( FOUND_READLINE ${HAVE_READLINE} )
@@ -613,8 +648,6 @@ if ( enable-readline )
     set ( WITH_READLINE 1 )
     set ( READLINE_LIBS ${READLINE_LIBRARIES} )
   endif ( HAVE_READLINE )
-else ( enable-readline )
-  unset ( READLINE_LIBS CACHE )
 endif ( enable-readline )
 
 unset ( ENABLE_MIXER_THREADS CACHE )
@@ -656,6 +689,7 @@ link_directories (
     ${PORTAUDIO_LIBRARY_DIRS}
     ${LIBSNDFILE_LIBRARY_DIRS}
     ${DBUS_LIBRARY_DIRS}
+    ${OBOE_LIBRARY_DIRS}
 )
 
 # Process subdirectories

@@ -72,7 +72,7 @@ void fluid_sdl2_audio_driver_settings(fluid_settings_t *settings)
 
         if(dev_name != NULL)
         {
-            FLUID_LOG(FLUID_DBG, "Testing audio device: %s", dev_name);
+            FLUID_LOG(FLUID_DBG, "SDL2 driver testing audio device: %s", dev_name);
             fluid_settings_add_option(settings, "audio.sdl2.device", dev_name);
         }
     }
@@ -93,6 +93,13 @@ new_fluid_sdl2_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
     char *device;
     const char *dev_name;
 
+    /* Check if SDL library has been started */
+    if(!SDL_WasInit(SDL_INIT_AUDIO))
+    {
+        FLUID_LOG(FLUID_ERR, "Failed to create SDL2 audio driver, because the audio subsystem of SDL2 is not initialized.");
+        return NULL;
+    }
+
     /* Retrieve the settings */
     fluid_settings_getnum(settings, "synth.sample-rate", &sample_rate);
     fluid_settings_getint(settings, "audio.period-size", &period_size);
@@ -103,14 +110,14 @@ new_fluid_sdl2_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
         period_size = 1024;
     }
     else
-
+    {
         /* According to documentation, it MUST be a power of two */
         if((period_size & (period_size - 1)) != 0)
         {
-            FLUID_LOG(FLUID_DBG, "\"audio.period-size\" must be a power of 2");
+            FLUID_LOG(FLUID_ERR, "\"audio.period-size\" must be a power of 2 for SDL2");
             return NULL;
         }
-
+    }
     /* Clear the format buffer */
     FLUID_MEMSET(&aspec, 0, sizeof(aspec));
 
@@ -146,13 +153,6 @@ new_fluid_sdl2_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
     aspec.channels   = 2;
     aspec.samples    = aspec.channels * ((period_size + 7) & ~7);
     aspec.callback   = (SDL_AudioCallback)SDLAudioCallback;
-
-    /* Check if SDL library has been started */
-    if(!SDL_WasInit(SDL_INIT_AUDIO))
-    {
-        FLUID_LOG(FLUID_ERR, "SDL2 not initialized");
-        return NULL;
-    }
 
     /* Set default device to use */
     device   = NULL;

@@ -38,6 +38,10 @@
 #include <systemd/sd-daemon.h>
 #endif
 
+#if SDL2_SUPPORT
+#include <SDL.h>
+#endif
+
 void print_usage(void);
 void print_help(fluid_settings_t *settings);
 void print_welcome(void);
@@ -348,6 +352,18 @@ int main(int argc, char **argv)
 
     lash_args = fluid_lash_extract_args(&argc, &argv);
 #endif
+    
+#if SDL2_SUPPORT
+    if (SDL_Init(SDL_INIT_AUDIO) != 0)
+    {
+        fprintf(stderr, "Warning: Unable to initialize SDL2 Audio: %s", SDL_GetError());
+    }
+    else
+    {
+        atexit(SDL_Quit);
+    }
+#endif
+
 
     print_welcome();
 
