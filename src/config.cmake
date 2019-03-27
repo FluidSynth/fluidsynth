@@ -85,9 +85,6 @@
 /* Define if compiling with openMP to enable parallel audio rendering */
 #cmakedefine HAVE_OPENMP @HAVE_OPENMP@
 
-/* Define to 1 if you have the <OpenSLES.h> header file. */
-#cmakedefine HAVE_OPENSLES_H @HAVE_OPENSLES_H@
-
 /* Define to 1 if you have the <pthread.h> header file. */
 #cmakedefine HAVE_PTHREAD_H @HAVE_PTHREAD_H@
 
