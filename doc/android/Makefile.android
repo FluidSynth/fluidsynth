@@ -1,0 +1,130 @@
+#
+# The public targets in this Makefile are: build, clean, wipe
+#
+# What `build` target does:
+#
+# - build cerbero to build glib
+# - build glib-2.0.so and many other dependency shared libraries
+# - build Oboe shared library
+# - build libfluidsynth.so
+#
+# Android app developers are supposed to copy all those shared
+# libraries into their apks (per ABI).
+#
+PWD=$(shell pwd)
+CERBERO=$(PWD)/external/cerbero
+OBOE=$(PWD)/external/oboe
+CMAKE=cmake
+
+ANDROID_NDK = $(PWD)/external/cerbero/build/android-ndk-18
+
+ABIS_SIMPLE = x86 x86-64 armv7 arm64
+
+
+DIST_PATH=$(CERBERO)/build/dist
+OBOE_BUILD_PATH=$(OBOE)/build
+
+all: build
+
+.PHONY: prepare
+prepare: checkout-oboe checkout-cerbero
+	for abi in $(ABIS_SIMPLE) ; do \
+		cd $(CERBERO) && ./cerbero-uninstalled -c config/cross-android-$$abi.cbc bootstrap && cd $(PWD) ; \
+	done
+
+.PHONY: checkout-oboe
+checkout-oboe: $(OBOE)
+	cd $(OBOE) && git checkout 9bf3943
+
+$(OBOE):
+	git clone https://github.com/Google/oboe.git $(OBOE) 
+
+.PHONY: checkout-cerbero
+checkout-cerbero: $(CERBERO)
+	cd $(CERBERO) && git checkout 7a6fd79
+
+$(CERBERO):
+	git clone https://github.com/atsushieno/cerbero.git $(CERBERO)
+
+.PHONY: build
+build: build-oboe dist-oboe build-deps-cerbero dist-deps-cerbero build-fluidsynth dist-fluidsynth build-fluidsynth-assetloader dist-fluidsynth-assetloader
+
+.PHONY: build-deps-cerbero
+build-deps-cerbero:
+	for abi in $(ABIS_SIMPLE) ; do \
+		cd $(CERBERO) && ./cerbero-uninstalled -c config/cross-android-$$abi.cbc build glib && cd $(PWD) ; \
+	done
+
+define run_make_abi_target
+	make -f Makefile.android BUILD_ABI=$(1) A_ABI=$(2) $(3)
+endef
+define run_make_abi_target-unsafe
+	if make -f Makefile.android BUILD_ABI=$(1) A_ABI=$(2) $(3) ; then \
+		echo "ignore failure for $(1)..." ; \
+	fi
+endef
+
+define run_make_for_all_abi
+	$(call run_make_abi_target,x86,x86,$(1) )
+	$(call run_make_abi_target,x86_64,x86_64,$(1) )
+	$(call run_make_abi_target,armv7,armeabi-v7a,$(1) )
+	$(call run_make_abi_target-unsafe,arm64,arm64-v8a,$(1) )
+endef
+
+.PHONY: dist-deps-cerbero
+dist-deps-cerbero:
+	$(call run_make_for_all_abi, dist-deps-cerbero-one)
+
+.PHONY: dist-fluidsynth
+dist-fluidsynth:
+	$(call run_make_for_all_abi, dist-fluidsynth-one)
+
+.PHONY: build-oboe
+build-oboe:
+	$(call run_make_for_all_abi, build-oboe-one)
+
+.PHONY: dist-oboe
+dist-oboe:
+	$(call run_make_for_all_abi, dist-oboe-one)
+
+.PHONY: build-fluidsynth
+build-fluidsynth:
+	$(call run_make_for_all_abi, build-fluidsynth-one)
+
+build-fluidsynth-one:
+	mkdir -p build/$(A_ABI) && cd build/$(A_ABI) && \
+	LD_RUN_PATH=$(DIST_PATH)/android-$(BUILD_ABI)/lib:$(OBOE_BUILD_PATH)/$(A_ABI) LD_LIBRARY_PATH=$(DIST_PATH)/android_$(BUILD_ABI)/lib PKG_CONFIG_PATH=$(DIST_PATH)/android_$(BUILD_ABI)/lib/pkgconfig/:$(OBOE_BUILD_PATH)/$(A_ABI) \
+	$(CMAKE) -DCMAKE_INSTALL_PREFIX=$(PWD)/dist/$(A_ABI) -DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK)/build/cmake/android.toolchain.cmake -Denable-opensles=on -Denable-oboe=on -Denable-jack=off -Denable-oss=off -Denable-pulseaudio=off -Denable-libsndfile=off -Denable-dbus=off -Denable-debug=on -DANDROID_NATIVE_API_LEVEL=android-27 -DANDROID_PLATFORM=android-27 -DANDROID_ABI=$(A_ABI) ../../../.. && make
+
+build-oboe-one:
+	mkdir -p $(OBOE)/build/$(A_ABI) && cd $(OBOE)/build/$(A_ABI) && \
+		$(CMAKE) -DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK)/build/cmake/android.toolchain.cmake -DANDROID_ABI=$(A_ABI) -DANDROID_NATIVE_API_LEVEL=android-27 -DANDROID_PLATFORM=android-27 -DBUILD_SHARED_LIBS=on ../.. && make
+	cp oboe-1.0.pc $(OBOE)/build/$(A_ABI)
+
+dist-oboe-one:
+	mkdir -p dist/$(A_ABI) && cp $(OBOE)/build/$(A_ABI)/*.so dist/$(A_ABI)/
+
+dist-deps-cerbero-one:
+	mkdir -p dist/$(A_ABI) && cd dist/$(A_ABI) && cp ../../external/cerbero/build/dist/android_$(BUILD_ABI)/lib/*.so . && cd ../..	
+
+dist-fluidsynth-one:
+	mkdir -p dist/$(A_ABI) && cd dist/$(A_ABI) && cp ../../build/$(A_ABI)/src/libfluidsynth.so . && cd ../..
+	cp -r ../../include/fluidsynth build/$(A_ABI)/include/
+
+build-fluidsynth-assetloader:
+	cd fluidsynth-assetloader && ./ext-build.sh
+
+dist-fluidsynth-assetloader:
+	cp fluidsynth-assetloader/build/x86/*.so dist/x86/
+	cp fluidsynth-assetloader/build/x86_64/*.so dist/x86_64/
+	cp fluidsynth-assetloader/build/armeabi-v7a/*.so dist/armeabi-v7a/
+	cp fluidsynth-assetloader/build/arm64-v8a/*.so dist/arm64-v8a/
+
+clean:
+	rm -rf dist/* build/* external/oboe/build/* obj/local/* fluidsynth-asset-loader/build/*
+
+.PHONY: wipe
+wipe: $(CERBERO)
+	for abi in $(ABIS_SIMPLE) ; do \
+		cd $(CERBERO) && ./cerbero-uninstalled -c config/cross-android-$$abi.cbc wipe && cd ../.. ; \
+	done
