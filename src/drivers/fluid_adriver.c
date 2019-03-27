@@ -19,6 +19,7 @@
  */
 
 #include "fluid_adriver.h"
+#include "fluid_sys.h"
 #include "fluid_settings.h"
 
 /*
@@ -76,6 +77,26 @@ static const fluid_audriver_definition_t fluid_audio_drivers[] =
         new_fluid_oss_audio_driver2,
         delete_fluid_oss_audio_driver,
         fluid_oss_audio_driver_settings
+    },
+#endif
+
+#if OBOE_SUPPORT
+    {
+        "oboe",
+        new_fluid_oboe_audio_driver,
+        NULL,
+        delete_fluid_oboe_audio_driver,
+        fluid_oboe_audio_driver_settings
+    },
+#endif
+
+#if OPENSLES_SUPPORT
+    {
+        "opensles",
+        new_fluid_opensles_audio_driver,
+        NULL,
+        delete_fluid_opensles_audio_driver,
+        fluid_opensles_audio_driver_settings
     },
 #endif
 

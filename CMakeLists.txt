@@ -29,7 +29,7 @@ set ( PACKAGE "fluidsynth" )
 # FluidSynth package version
 set ( FLUIDSYNTH_VERSION_MAJOR 2 )
 set ( FLUIDSYNTH_VERSION_MINOR 0 )
-set ( FLUIDSYNTH_VERSION_MICRO 3 )
+set ( FLUIDSYNTH_VERSION_MICRO 4 )
 set ( VERSION "${FLUIDSYNTH_VERSION_MAJOR}.${FLUIDSYNTH_VERSION_MINOR}.${FLUIDSYNTH_VERSION_MICRO}" )
 set ( FLUIDSYNTH_VERSION "\"${VERSION}\"" )
 
@@ -44,7 +44,7 @@ set ( FLUIDSYNTH_VERSION "\"${VERSION}\"" )
 # This is not exactly the same algorithm as the libtool one, but the results are the same.
 set ( LIB_VERSION_CURRENT 2 )
 set ( LIB_VERSION_AGE 1 )
-set ( LIB_VERSION_REVISION 0 )
+set ( LIB_VERSION_REVISION 1 )
 set ( LIB_VERSION_INFO
       "${LIB_VERSION_CURRENT}.${LIB_VERSION_AGE}.${LIB_VERSION_REVISION}" )
 
@@ -55,6 +55,7 @@ option ( enable-fpe-check "enable Floating Point Exception checks and debug mess
 option ( enable-portaudio "compile PortAudio support" off )
 option ( enable-profiling "profile the dsp code" off )
 option ( enable-trap-on-fpe "enable SIGFPE trap on Floating Point Exceptions" off )
+option ( enable-ubsan "compile and link against UBSan (for debugging fluidsynth internals)" off )
 
 # Options enabled by default
 option ( enable-aufile "compile support for sound file output" on )
@@ -65,6 +66,8 @@ option ( enable-jack "compile JACK support (if it is available)" on )
 option ( enable-ladspa "enable LADSPA effect units" on )
 option ( enable-libsndfile "compile libsndfile support (if it is available)" on )
 option ( enable-midishare "compile MidiShare support (if it is available)" on )
+option ( enable-opensles "compile OpenSLES support (if it is available)" off )
+option ( enable-oboe "compile Oboe support (requires OpenSLES and/or AAudio)" off )
 option ( enable-network "enable network support (requires BSD sockets)" on )
 option ( enable-oss "compile OSS support (if it is available)" on )
 option ( enable-dsound "compile DirectSound support (if it is available)" on )
@@ -77,16 +80,19 @@ option ( enable-readline "compile readline lib line editing (if it is available)
 option ( enable-threads "enable multi-threading support (such as parallel voice synthesis)" on )
 
 # Platform specific options
-if ( CMAKE_SYSTEM MATCHES "Linux" )
+if ( CMAKE_SYSTEM MATCHES "Linux|FreeBSD|DragonFly" )
     option ( enable-lash "compile LASH support (if it is available)" on )
     option ( enable-alsa "compile ALSA support (if it is available)" on )
+endif ( CMAKE_SYSTEM MATCHES "Linux|FreeBSD|DragonFly" )
+
+if ( CMAKE_SYSTEM MATCHES "Linux" )
+    option ( enable-systemd "compile systemd support (if it is available)" on )
 endif ( CMAKE_SYSTEM MATCHES "Linux" )
 
 if ( CMAKE_SYSTEM MATCHES "Darwin" )
     option ( enable-coreaudio "compile CoreAudio support (if it is available)" on )
     option ( enable-coremidi "compile CoreMIDI support (if it is available)" on )
     option ( enable-framework "create a Mac OSX style FluidSynth.framework" on )
-    set ( enable-network off )
 endif ( CMAKE_SYSTEM MATCHES "Darwin" )
 
 if ( CMAKE_SYSTEM MATCHES "OS2" )
@@ -95,7 +101,7 @@ if ( CMAKE_SYSTEM MATCHES "OS2" )
 endif ( CMAKE_SYSTEM MATCHES "OS2" )
 
 # Initialize the library directory name suffix.
-if (NOT MINGW AND NOT MSVC)
+if (NOT MINGW AND NOT MSVC AND NOT CMAKE_SYSTEM_NAME MATCHES "FreeBSD|DragonFly")
 if ( CMAKE_SIZEOF_VOID_P EQUAL 8 )
   set ( _init_lib_suffix "64" )
 else ( CMAKE_SIZEOF_VOID_P EQUAL 8 )
@@ -166,6 +172,7 @@ unset ( LIBFLUID_CPPFLAGS CACHE )
 unset ( LIBFLUID_LIBS CACHE )
 unset ( FLUID_CPPFLAGS CACHE )
 unset ( FLUID_LIBS CACHE )
+unset ( ENABLE_UBSAN CACHE )
 
 # Options for the GNU C compiler only
 if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang" OR CMAKE_C_COMPILER_ID STREQUAL "Intel" )
@@ -179,17 +186,23 @@ if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang" OR CMAKE_C_
   # define some warning flags
   set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -W -Wpointer-arith -Wcast-qual -Wstrict-prototypes -Wno-unused-parameter -Wdeclaration-after-statement" )
   
+  # prepend to build type specific flags, to allow users to override
+  set ( CMAKE_C_FLAGS_DEBUG "-g -DDEBUG ${CMAKE_C_FLAGS_DEBUG}" )
+  
   if ( CMAKE_C_COMPILER_ID STREQUAL "Intel" )
     # icc needs the restrict flag to recognize C99 restrict pointers
     set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -restrict" )
   else () # not intel
     # gcc and clang support bad function cast and alignment warnings; add them as well.
     set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wbad-function-cast -Wcast-align" )
+    
+    if ( enable-ubsan )
+      set ( CMAKE_C_FLAGS "-fsanitize=undefined ${CMAKE_C_FLAGS}" )
+      set ( CMAKE_EXE_LINKER_FLAGS "-fsanitize=undefined ${CMAKE_EXE_LINKER_FLAGS}" )
+      set ( CMAKE_SHARED_LINKER_FLAGS "-fsanitize=undefined ${CMAKE_SHARED_LINKER_FLAGS}" )
+      set ( ENABLE_UBSAN 1 )
+    endif ( enable-ubsan )
   endif (CMAKE_C_COMPILER_ID STREQUAL "Intel" )
-
-  # prepend to build type specific flags, to allow users to override
-  set ( CMAKE_C_FLAGS_DEBUG "-g -DDEBUG -fsanitize=undefined ${CMAKE_C_FLAGS_DEBUG}" )
-  
 endif ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang" OR CMAKE_C_COMPILER_ID STREQUAL "Intel" )
 
 # Windows
@@ -465,6 +478,10 @@ else(NOT enable-pkgconfig)
     # Mandatory libraries: glib and gthread
     pkg_check_modules ( GLIB REQUIRED glib-2.0>=2.6.5 gthread-2.0>=2.6.5 )
 
+    if ( GLIB_glib-2.0_VERSION AND GLIB_glib-2.0_VERSION VERSION_LESS "2.26.0" )
+        message ( WARNING "Your version of glib is very old. This may cause problems with fluidsynth's sample cache on Windows. Consider updating to glib 2.26 or newer!" )
+    endif ( GLIB_glib-2.0_VERSION AND GLIB_glib-2.0_VERSION VERSION_LESS "2.26.0" )
+
     include ( UnsetPkgConfig )
 
     # Optional features
@@ -526,6 +543,14 @@ else(NOT enable-pkgconfig)
     remove_definitions( -DHAVE_LASH )
     endif ( enable-lash )
 
+    unset ( SYSTEMD_SUPPORT CACHE )
+    if ( enable-systemd )
+        pkg_check_modules ( SYSTEMD libsystemd )
+        set ( SYSTEMD_SUPPORT ${SYSTEMD_FOUND} )
+    else ( enable-systemd )
+        unset_pkg_config ( SYSTEMD )
+    endif ( enable-systemd )
+
     unset ( DBUS_SUPPORT CACHE )
     if ( enable-dbus )
     pkg_check_modules ( DBUS dbus-1>=1.0.0 )
@@ -583,7 +608,32 @@ else ( enable-midishare )
   unset ( MidiShare_LIBS CACHE )
 endif ( enable-midishare )
 
+unset ( OPENSLES_SUPPORT CACHE )
+unset ( OpenSLES_LIBS CACHE )
+if ( enable-opensles )
+  check_include_file ( SLES/OpenSLES.h OPENSLES_SUPPORT )
+  if ( OPENSLES_SUPPORT )
+    find_library ( OpenSLES_LIBS OpenSLES )
+    if ( NOT OpenSLES_LIBS )
+      unset ( OPENSLES_SUPPORT )
+    endif ( NOT OpenSLES_LIBS )
+  endif ( OPENSLES_SUPPORT )
+endif ( enable-opensles )
+
+unset ( OBOE_SUPPORT CACHE )
+unset ( OBOE_LIBS CACHE )
+if ( enable-oboe )
+  # enable C++ as it's needed for oboe
+  enable_language ( CXX )
+  pkg_check_modules ( OBOE oboe-1.0 )
+  if ( OBOE_FOUND )
+    set ( OBOE_SUPPORT 1 )
+    set ( OBOE_LIBS ${OBOE_LIBRARIES} )
+  endif ( OBOE_FOUND )
+endif ( enable-oboe )
+
 unset ( WITH_READLINE CACHE )
+unset ( READLINE_LIBS CACHE )
 if ( enable-readline )
   find_package ( Readline )
   set ( FOUND_READLINE ${HAVE_READLINE} )
@@ -591,8 +641,6 @@ if ( enable-readline )
     set ( WITH_READLINE 1 )
     set ( READLINE_LIBS ${READLINE_LIBRARIES} )
   endif ( HAVE_READLINE )
-else ( enable-readline )
-  unset ( READLINE_LIBS CACHE )
 endif ( enable-readline )
 
 unset ( ENABLE_MIXER_THREADS CACHE )
@@ -634,6 +682,7 @@ link_directories (
     ${PORTAUDIO_LIBRARY_DIRS}
     ${LIBSNDFILE_LIBRARY_DIRS}
     ${DBUS_LIBRARY_DIRS}
+    ${OBOE_LIBRARY_DIRS}
 )
 
 # Process subdirectories

@@ -18,12 +18,10 @@
  * 02110-1301, USA
  */
 
-#include "fluidsynth_priv.h"
 #include "fluid_cmd.h"
 #include "fluid_synth.h"
 #include "fluid_settings.h"
 #include "fluid_hash.h"
-#include "fluid_sys.h"
 #include "fluid_midi_router.h"
 #include "fluid_sfont.h"
 #include "fluid_chan.h"
@@ -104,7 +102,7 @@ static const fluid_cmd_t fluid_commands[] =
     },
     {
         "pitch_bend_range", "event", fluid_handle_pitch_bend_range,
-        "pitch_bend chan range      Sets bend pitch range"
+        "pitch_bend_range chn range Sets pitch bend range for the given midi channel"
     },
     {
         "cc", "event", fluid_handle_cc,

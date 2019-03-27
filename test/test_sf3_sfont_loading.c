@@ -1,7 +1,7 @@
 #include "test.h"
 #include "fluidsynth.h"
 #include "sfloader/fluid_sfont.h"
-#include "utils/fluidsynth_priv.h"
+#include "utils/fluid_sys.h"
 
 
 int main(void)

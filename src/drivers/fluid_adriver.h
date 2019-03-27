@@ -21,7 +21,7 @@
 #ifndef _FLUID_AUDRIVER_H
 #define _FLUID_AUDRIVER_H
 
-#include "fluid_sys.h"
+#include "fluidsynth_priv.h"
 
 /*
  * fluid_audio_driver_t
@@ -64,6 +64,22 @@ fluid_audio_driver_t *new_fluid_oss_audio_driver2(fluid_settings_t *settings,
         fluid_audio_func_t func, void *data);
 void delete_fluid_oss_audio_driver(fluid_audio_driver_t *p);
 void fluid_oss_audio_driver_settings(fluid_settings_t *settings);
+#endif
+
+#if OPENSLES_SUPPORT
+fluid_audio_driver_t*
+new_fluid_opensles_audio_driver(fluid_settings_t* settings,
+		fluid_synth_t* synth);
+void delete_fluid_opensles_audio_driver(fluid_audio_driver_t* p);
+void fluid_opensles_audio_driver_settings(fluid_settings_t* settings);
+#endif
+
+#if OBOE_SUPPORT
+fluid_audio_driver_t*
+new_fluid_oboe_audio_driver(fluid_settings_t* settings,
+		fluid_synth_t* synth);
+void delete_fluid_oboe_audio_driver(fluid_audio_driver_t* p);
+void fluid_oboe_audio_driver_settings(fluid_settings_t* settings);
 #endif
 
 #if COREAUDIO_SUPPORT

@@ -104,6 +104,10 @@ if ( LASH_SUPPORT )
   include_directories ( ${LASH_INCLUDE_DIRS})
 endif ( LASH_SUPPORT )
 
+if ( SYSTEMD_SUPPORT )
+  include_directories ( ${SYSTEMD_INCLUDE_DIRS})
+endif ( SYSTEMD_SUPPORT )
+
 if ( DART_SUPPORT )
   set ( fluid_dart_SOURCES drivers/fluid_dart.c )
   include_directories ( ${DART_INCLUDE_DIRS} )
@@ -121,6 +125,16 @@ endif ( MIDISHARE_SUPPORT )
 if ( AUFILE_SUPPORT )
   set ( fluid_aufile_SOURCES drivers/fluid_aufile.c )
 endif ( AUFILE_SUPPORT )
+
+if ( OPENSLES_SUPPORT )
+  set ( fluid_opensles_SOURCES drivers/fluid_opensles.c )
+  include_directories ( ${OpenSLES_INCLUDE_DIRS} )
+endif ( OPENSLES_SUPPORT )
+
+if ( OBOE_SUPPORT )
+  set ( fluid_oboe_SOURCES drivers/fluid_oboe.cpp )
+  include_directories ( ${OBOE_INCLUDE_DIRS} )
+endif ( OBOE_SUPPORT )
 
 set ( config_SOURCES ${CMAKE_BINARY_DIR}/config.h )
 
@@ -253,6 +267,8 @@ add_library ( libfluidsynth-OBJ OBJECT
     ${fluid_jack_SOURCES}
     ${fluid_lash_SOURCES}
     ${fluid_midishare_SOURCES}
+    ${fluid_opensles_SOURCES}
+    ${fluid_oboe_SOURCES}
     ${fluid_oss_SOURCES}
     ${fluid_portaudio_SOURCES}
     ${fluid_pulse_SOURCES}
@@ -335,6 +351,8 @@ target_link_libraries ( libfluidsynth
     ${COREMIDI_LIBS}
     ${WINDOWS_LIBS}
     ${MidiShare_LIBS}
+    ${OpenSLES_LIBS}
+    ${OBOE_LIBS}
     ${LIBFLUID_LIBS}
 )
 
@@ -353,6 +371,7 @@ endif ( FLUID_CPPFLAGS )
 
 target_link_libraries ( fluidsynth
     libfluidsynth
+    ${SYSTEMD_LIBRARIES}
     ${FLUID_LIBS}
 )
 

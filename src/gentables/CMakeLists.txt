@@ -4,6 +4,12 @@ cmake_minimum_required(VERSION 3.1)
 # which hopefully will be the host compiler
 unset(ENV{CC})
 
+# also unset $CFLAGS to avoid passing any cross compilation flags to the host compiler
+unset(ENV{CFLAGS})
+
+# linker flags as well
+unset(ENV{LDFLAGS})
+
 project (gentables C)
 
 set ( CMAKE_BUILD_TYPE Debug )

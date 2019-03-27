@@ -19,6 +19,7 @@ addons:
     - libpulse-dev
     - libdbus-glib-1-dev
     - ladspa-sdk
+    - libsdl2-dev
 env:
     - CMAKE_FLAGS="-Denable-profiling=1"
     - CMAKE_FLAGS="-Denable-floats=1 -Denable-profiling=1"
@@ -58,7 +59,7 @@ matrix:
 
 before_install:
     - if [ $TRAVIS_OS_NAME = linux ]; then sudo apt-get update; else brew update; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install glib gettext libsndfile jack dbus-glib pulseaudio portaudio; fi # && brew link gettext
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install glib gettext libsndfile jack dbus-glib pulseaudio portaudio sdl2; fi # && brew link gettext
     - eval "${MATRIX_EVAL}"
     
 before_script:
