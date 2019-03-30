@@ -300,6 +300,22 @@ fast_render_loop(fluid_settings_t *settings, fluid_synth_t *synth, fluid_player_
     delete_fluid_file_renderer(renderer);
 }
 
+static int is_dls(const char* fname)
+{
+#ifdef LIBINSTPATCH_SUPPORT
+        IpatchFileHandle *fhandle = ipatch_file_identify_open (fname, NULL);
+        int ret = (fhandle != NULL);
+        if(ret)
+        {
+            ipatch_file_close(fhandle);
+        }
+        
+        return ret;
+#else
+        return FALSE;
+#endif
+}
+
 /*
  * main
  * Process initialization steps in the following order:
@@ -769,19 +785,10 @@ int main(int argc, char **argv)
     /* load the soundfonts (check that all non options are SoundFont or MIDI files) */
     for(i = arg1; i < argc; i++)
     {
-#ifdef LIBINSTPATCH_SUPPORT
-        IpatchFileHandle *fhandle = NULL;
-#endif
         if(fluid_is_soundfont(argv[i])
-#ifdef LIBINSTPATCH_SUPPORT
-            || (fhandle = ipatch_file_identify_open (argv[i], NULL)) != NULL
+            || is_dls(argv[i])
         )
         {
-            ipatch_file_close(fhandle); /* safe when called with NULL */
-#else
-        )
-        {
-#endif
             if(fluid_synth_sfload(synth, argv[i], 1) == -1)
             {
                 fprintf(stderr, "Failed to load the SoundFont %s\n", argv[i]);
