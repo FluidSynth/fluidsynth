@@ -850,8 +850,7 @@ new_fluid_jack_midi_driver(fluid_settings_t *settings,
     if(dev->parser == NULL)
     {
         FLUID_LOG(FLUID_PANIC, "Out of memory");
-        FLUID_FREE(dev);
-        return NULL;
+        goto error_recovery;
     }
 
     fluid_settings_getint(settings, "midi.autoconnect", &dev->autoconnect_inputs);
@@ -861,11 +860,15 @@ new_fluid_jack_midi_driver(fluid_settings_t *settings,
 
     if(!dev->client_ref)
     {
-        FLUID_FREE(dev);
-        return NULL;
+        FLUID_LOG(FLUID_PANIC, "Out of memory");
+        goto error_recovery;
     }
 
     return (fluid_midi_driver_t *)dev;
+    
+error_recovery:
+    delete_fluid_jack_midi_driver((fluid_midi_driver_t *)dev);
+    return NULL;
 }
 
 void
