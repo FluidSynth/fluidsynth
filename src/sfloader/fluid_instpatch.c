@@ -512,20 +512,6 @@ fluid_instpatch_font_t *new_fluid_instpatch(fluid_sfont_t *sfont, const fluid_fi
                 FLUID_LOG(FLUID_WARN, "Failed to cache DLS instrument bank %d , prog %d", bank, prog);
             }
 
-//                 IpatchIter region_iter;
-//                 success = ipatch_container_init_iter ((IpatchContainer *)patchfont->dls, &region_iter, IPATCH_TYPE_DLS2_INST);
-//                 fluid_return_val_if_fail (success != FALSE, NULL);
-//
-//                 IpatchDLS2Region *region = ipatch_dls2_region_first (&region_iter);
-//                 while (region)		/* loop over regions */
-//                 {
-//                     if (ipatch_dls2_region_peek_sample (region) == sample)
-//                     {
-//                         g_object_ref (region); /* ++ ref region for new iterator */
-//                     }
-//                     region = ipatch_dls2_region_next (&region_iter);
-//                 }
-
             inst = ipatch_dls2_inst_next(&iter);
         }
         while(inst);

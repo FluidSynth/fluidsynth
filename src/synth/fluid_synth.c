@@ -821,7 +821,7 @@ new_fluid_synth(fluid_settings_t *settings)
 #endif /* LADSPA */
     }
 
-    /* allocate and add the dls and gig sfont loader */
+    /* allocate and add the dls sfont loader */
 #ifdef LIBINSTPATCH_SUPPORT
     loader = new_fluid_instpatch_loader(settings);
 
