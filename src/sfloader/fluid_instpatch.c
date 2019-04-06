@@ -174,7 +174,6 @@ fluid_instpatch_preset_noteon(fluid_preset_t *preset, fluid_synth_t *synth, int 
 
         if(flvoice == NULL)
         {
-            g_object_unref(cache);
             ret = FLUID_FAILED;
             goto error_rec;
         }
