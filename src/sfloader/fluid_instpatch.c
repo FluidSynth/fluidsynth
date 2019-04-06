@@ -237,6 +237,8 @@ fluid_instpatch_sfont_get_name(fluid_sfont_t *sfont)
 
 static void delete_fluid_instpatch_preset(sfloader_preset_data_t *preset_data)
 {
+    fluid_return_if_fail(preset_data != NULL);
+    
     g_free(preset_data->name);
 
     /* -- remove item reference */
@@ -247,6 +249,8 @@ static void delete_fluid_instpatch_preset(sfloader_preset_data_t *preset_data)
 
 static void fluid_instpatch_preset_free(fluid_preset_t *preset)
 {
+    fluid_return_if_fail(preset != NULL);
+    
     delete_fluid_instpatch_preset(fluid_preset_get_data(preset));
     delete_fluid_preset(preset);
 }
