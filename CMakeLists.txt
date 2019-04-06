@@ -568,6 +568,14 @@ else(NOT enable-pkgconfig)
     endif ( LADSPA_SUPPORT )
     endif ( enable-ladspa )
     
+    unset ( SDL2_SUPPORT CACHE )
+    if ( enable-sdl2 )
+        pkg_check_modules ( SDL2 sdl2 )
+        set ( SDL2_SUPPORT ${SDL2_FOUND} )
+    else ( enable-sdl2 )
+        unset_pkg_config ( SDL2 )
+    endif ( enable-sdl2 )
+
 endif(NOT enable-pkgconfig)
 
 unset ( AUFILE_SUPPORT CACHE )
@@ -580,20 +588,6 @@ if ( enable-oss )
   find_package ( OSS QUIET )
   set ( OSS_SUPPORT ${OSS_FOUND} )
 endif ( enable-oss )
-
-unset ( SDL2_SUPPORT CACHE )
-unset ( SDL2_INCLUDE_DIR CACHE )
-unset ( SDL2_LIBRARY CACHE )
-if ( enable-sdl2 )
-  find_package ( SDL2 )
-
-  if ( SDL2_FOUND )
-    set ( SDL2_SUPPORT ${SDL2_FOUND} )
-  else ( SDL2_FOUND)
-    unset ( SDL2_INCLUDE_DIR CACHE )
-    unset ( SDL2_LIBRARY CACHE )
-  endif ( SDL2_FOUND )
-endif ( enable-sdl2 )
 
 unset ( MIDISHARE_SUPPORT CACHE )
 if ( enable-midishare )
@@ -682,6 +676,7 @@ link_directories (
     ${PORTAUDIO_LIBRARY_DIRS}
     ${LIBSNDFILE_LIBRARY_DIRS}
     ${DBUS_LIBRARY_DIRS}
+    ${SDL2_LIBRARY_DIRS}
     ${OBOE_LIBRARY_DIRS}
 )
 
