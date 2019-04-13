@@ -1237,7 +1237,7 @@ fluid_synth_noteoff_LOCAL(fluid_synth_t *synth, int chan, int key)
     {
         /* channel is poly and legato CC is Off) */
         /* removes the note from the monophonic list */
-        if(key == fluid_channel_last_note(channel))
+        if(channel->n_notes && key == fluid_channel_last_note(channel))
         {
             fluid_channel_clear_monolist(channel);
         }
