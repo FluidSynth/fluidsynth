@@ -79,6 +79,21 @@ fluid_instpatch_preset_get_num(fluid_preset_t *preset)
     return preset_data->prog;
 }
 
+static void fluid_instpatch_iteration_start(fluid_sfont_t *sfont)
+{
+    fluid_instpatch_font_t *pfont = fluid_sfont_get_data(sfont);
+    pfont->preset_iter_cur = pfont->preset_list;
+}
+
+static fluid_preset_t *fluid_instpatch_iteration_next(fluid_sfont_t *sfont)
+{
+    fluid_instpatch_font_t *pfont = fluid_sfont_get_data(sfont);
+    fluid_preset_t *preset = fluid_list_get(pfont->preset_iter_cur);
+
+    pfont->preset_iter_cur = fluid_list_next(pfont->preset_iter_cur);
+
+    return preset;
+}
 
 /* sfloader callback for a noteon event */
 static int
@@ -568,8 +583,8 @@ static fluid_sfont_t *fluid_instpatch_loader_load(fluid_sfloader_t *loader, cons
 
     sfont = new_fluid_sfont(fluid_instpatch_sfont_get_name,
                             fluid_instpatch_sfont_get_preset,
-                            NULL,
-                            NULL,
+                            fluid_instpatch_iteration_start,
+                            fluid_instpatch_iteration_next,
                             fluid_instpatch_sfont_delete);
 
     if(sfont == NULL)
