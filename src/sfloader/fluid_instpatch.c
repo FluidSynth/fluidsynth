@@ -1,6 +1,6 @@
 
 #include "fluid_instpatch.h"
-#include "fluid_hash.h"
+#include "fluid_list.h"
 #include "fluid_sfont.h"
 
 #include <libinstpatch/libinstpatch.h>
@@ -9,20 +9,22 @@ typedef struct _fluid_instpatch_font_t
 {
     char name[256];
     IpatchDLS2 *dls;
-    fluid_hashtable_t *voice_cache_hash;
+    
+    fluid_list_t *preset_list;      /* the presets of this soundfont */
+    fluid_list_t *preset_iter_cur;       /* the current preset in the iteration */
 } fluid_instpatch_font_t;
 
 
 typedef struct _fluid_instpatch_preset_t
 {
     fluid_instpatch_font_t *parent_sfont;
-    IpatchDLS2Inst *item;
+    IpatchSF2VoiceCache* cache;
 
     /* pointer to name of the preset, duplicated from item, alloced by glib */
     char *name;
     int bank;
     int prog;
-} sfloader_preset_data_t;
+} fluid_instpatch_preset_t;
 
 // private struct for storing additional data for each instpatch voice
 typedef struct _instpatch_voice_user_data
@@ -57,7 +59,7 @@ static fluid_preset_t *fluid_instpatch_sfont_get_preset(fluid_sfont_t *sfont, in
 static const char *
 fluid_instpatch_preset_get_name(fluid_preset_t *preset)
 {
-    sfloader_preset_data_t *preset_data = fluid_preset_get_data(preset);
+    fluid_instpatch_preset_t *preset_data = fluid_preset_get_data(preset);
     return preset_data->name;
 }
 
@@ -65,7 +67,7 @@ fluid_instpatch_preset_get_name(fluid_preset_t *preset)
 static int
 fluid_instpatch_preset_get_banknum(fluid_preset_t *preset)
 {
-    sfloader_preset_data_t *preset_data = fluid_preset_get_data(preset);
+    fluid_instpatch_preset_t *preset_data = fluid_preset_get_data(preset);
     return preset_data->bank;
 }
 
@@ -73,7 +75,7 @@ fluid_instpatch_preset_get_banknum(fluid_preset_t *preset)
 static int
 fluid_instpatch_preset_get_num(fluid_preset_t *preset)
 {
-    sfloader_preset_data_t *preset_data = fluid_preset_get_data(preset);
+    fluid_instpatch_preset_t *preset_data = fluid_preset_get_data(preset);
     return preset_data->prog;
 }
 
@@ -87,13 +89,13 @@ fluid_instpatch_preset_noteon(fluid_preset_t *preset, fluid_synth_t *synth, int 
     fluid_mod_t *fmod = g_alloca(fluid_mod_sizeof());
     fluid_voice_t *flvoice;
 
-    sfloader_preset_data_t *preset_data = fluid_preset_get_data(preset);
+    fluid_instpatch_preset_t *preset_data = fluid_preset_get_data(preset);
 
     int i, voice_count, voice_num, ret = FLUID_FAILED;
     GSList *p;
     
     /* lookup the voice cache that we've created on loading */
-    IpatchSF2VoiceCache *cache = fluid_hashtable_lookup(preset_data->parent_sfont->voice_cache_hash, preset_data->item);
+    IpatchSF2VoiceCache *cache = preset_data->cache;
     
     /* loading and caching the instrument could have failed though */
     if(FLUID_UNLIKELY(cache == NULL))
@@ -235,14 +237,14 @@ fluid_instpatch_sfont_get_name(fluid_sfont_t *sfont)
     return sfont_data->name;
 }
 
-static void delete_fluid_instpatch_preset(sfloader_preset_data_t *preset_data)
+static void delete_fluid_instpatch_preset(fluid_instpatch_preset_t *preset_data)
 {
     fluid_return_if_fail(preset_data != NULL);
     
+    /* -- remove voice cache reference */
+    g_object_unref(preset_data->cache);
+    
     g_free(preset_data->name);
-
-    /* -- remove item reference */
-    g_object_unref(preset_data->item);
 
     FLUID_FREE(preset_data);
 }
@@ -260,51 +262,20 @@ static fluid_preset_t *
 fluid_instpatch_sfont_get_preset(fluid_sfont_t *sfont, int bank, int prenum)
 {
     fluid_instpatch_font_t *sfont_data = fluid_sfont_get_data(sfont);
-
-    sfloader_preset_data_t *preset_data;
     fluid_preset_t *preset;
+    fluid_list_t *list;
 
-    /* no need to ref item, already referenced by find */
-    IpatchDLS2Inst *item = ipatch_dls2_find_inst(sfont_data->dls, NULL, bank, prenum, NULL);
-
-    if(item == NULL)
+    for(list = sfont_data->preset_list; list != NULL; list = fluid_list_next(list))
     {
-        return (NULL);
+        preset = (fluid_preset_t *)fluid_list_get(list);
+
+        if((fluid_preset_get_banknum(preset) == bank) && (fluid_preset_get_num(preset) == prenum))
+        {
+            return preset;
+        }
     }
 
-    preset_data = FLUID_NEW(sfloader_preset_data_t);
-
-    if(preset_data == NULL)
-    {
-        g_object_unref(item);
-        return NULL;
-    }
-
-    FLUID_MEMSET(preset_data, 0, sizeof(*preset_data));
-
-    preset_data->parent_sfont = sfont_data;
-    preset_data->item = item;
-    /* save name, bank and preset for quick lookup */
-    preset_data->bank = bank;
-    preset_data->prog = prenum;
-    g_object_get(preset_data->item, "name", &preset_data->name, NULL);
-
-    preset = new_fluid_preset(sfont,
-                              fluid_instpatch_preset_get_name,
-                              fluid_instpatch_preset_get_banknum,
-                              fluid_instpatch_preset_get_num,
-                              fluid_instpatch_preset_noteon,
-                              fluid_instpatch_preset_free);
-
-    if(preset == NULL)
-    {
-        delete_fluid_instpatch_preset(preset_data);
-        return NULL;
-    }
-
-    fluid_preset_set_data(preset, preset_data);
-
-    return preset;
+    return NULL;
 }
 
 static fluid_instpatch_voice_user_data_t* new_fluid_instpatch_voice_user_data(IpatchSampleStoreCache* sample_store)
@@ -316,6 +287,7 @@ static fluid_instpatch_voice_user_data_t* new_fluid_instpatch_voice_user_data(Ip
     {
         FLUID_FREE(dat);
         delete_fluid_sample(sample);
+        FLUID_LOG(FLUID_ERR, "Out of memory.");
         return NULL;
     }
     
@@ -336,7 +308,7 @@ static void fluid_instpatch_on_voice_user_data_destroy(gpointer user_data)
     FLUID_FREE(dat);
 }
 
-static int cache_instrument(fluid_instpatch_font_t *patchfont, IpatchDLS2Inst *item)
+static IpatchSF2VoiceCache* convert_dls_to_sf2_instrument(fluid_instpatch_font_t *patchfont, IpatchDLS2Inst *item)
 {
     IpatchConverter *conv;
     IpatchSF2VoiceCache *cache;
@@ -349,7 +321,7 @@ static int cache_instrument(fluid_instpatch_font_t *patchfont, IpatchDLS2Inst *i
     if(conv == NULL)
     {
         FLUID_LOG(FLUID_ERR, "Unable to find a voice cache converter for this type");
-        return FLUID_FAILED;
+        return NULL;
     }
 
     cache = ipatch_sf2_voice_cache_new(NULL, 0);
@@ -358,7 +330,7 @@ static int cache_instrument(fluid_instpatch_font_t *patchfont, IpatchDLS2Inst *i
     {
         FLUID_LOG(FLUID_ERR, "Out of memory");
         g_object_unref(conv);
-        return FLUID_FAILED;
+        return NULL;
     }
 
     ipatch_converter_add_input(conv, G_OBJECT(item));
@@ -369,7 +341,7 @@ static int cache_instrument(fluid_instpatch_font_t *patchfont, IpatchDLS2Inst *i
         FLUID_LOG(FLUID_ERR, "Failed to convert DLS inst to SF2 voices");
         g_object_unref(cache);
         g_object_unref(conv);
-        return FLUID_FAILED;
+        return NULL;
     }
 
     g_object_unref(conv);
@@ -389,16 +361,18 @@ static int cache_instrument(fluid_instpatch_font_t *patchfont, IpatchDLS2Inst *i
         {
             FLUID_LOG(FLUID_ERR, "ipatch_sf2_voice_cache_sample_data() failed");
             g_object_unref(cache);
-            return FLUID_FAILED;
+            return NULL;
         }
         
-        voice->user_data = new_fluid_instpatch_voice_user_data(IPATCH_SAMPLE_STORE_CACHE(voice->sample_store));
+        if((voice->user_data = new_fluid_instpatch_voice_user_data(IPATCH_SAMPLE_STORE_CACHE(voice->sample_store))) == NULL)
+        {
+            g_object_unref(cache);
+            return NULL;
+        }
     }
 
-    /* !! hash takes over cache reference */
-    fluid_hashtable_insert(patchfont->voice_cache_hash, item, cache);
-
-    return FLUID_OK;
+    /* !! caller takes over cache reference */
+    return cache;
 }
 
 
@@ -473,25 +447,16 @@ fluid_instpatch_font_t *new_fluid_instpatch(fluid_sfont_t *sfont, const fluid_fi
 
         return NULL;
     }
-
-    /* at this point everything is owned by the IpatchDLS2*, no need for custom cleanups any longer */
-
-    do
+    else
     {
+        /* at this point everything is owned by the IpatchDLS2*, no need for custom cleanups any longer */
+        
         IpatchIter iter;
         IpatchDLS2Inst *inst;
-        gboolean success;
-
-        if((patchfont->voice_cache_hash = new_fluid_hashtable_full(NULL, NULL, NULL, g_object_unref)) == NULL)
-        {
-            break;
-        }
-
-        success = ipatch_container_init_iter(IPATCH_CONTAINER(patchfont->dls), &iter, IPATCH_TYPE_DLS2_INST);
-
+        gboolean success = ipatch_container_init_iter(IPATCH_CONTAINER(patchfont->dls), &iter, IPATCH_TYPE_DLS2_INST);
         if(success == FALSE)
         {
-            break;
+            goto bad_luck;
         }
 
         inst = ipatch_dls2_inst_first(&iter);
@@ -499,40 +464,90 @@ fluid_instpatch_font_t *new_fluid_instpatch(fluid_sfont_t *sfont, const fluid_fi
         if(inst == NULL)
         {
             FLUID_LOG(FLUID_ERR, "A soundfont file was accepted by libinstpatch, but it doesn't contain a single instrument. Dropping the whole file.");
-            break;
+            goto bad_luck;
         }
 
-        /* loop over instruments */
+        /* loop over instruments, convert to sf2 voices, create fluid_samples, cache all presets in a list */
         do
         {
-            if(cache_instrument(patchfont, inst) == FLUID_FAILED)
+            fluid_preset_t *preset;
+            IpatchSF2VoiceCache* cache;
+            int bank, prog;
+            ipatch_dls2_inst_get_midi_locale(inst, &bank, &prog);
+            
+            if((cache = convert_dls_to_sf2_instrument(patchfont, inst)) == NULL)
             {
-                int bank, prog;
-                ipatch_dls2_inst_get_midi_locale(inst, &bank, &prog);
                 FLUID_LOG(FLUID_WARN, "Failed to cache DLS instrument bank %d , prog %d", bank, prog);
             }
+            else
+            {
+                fluid_instpatch_preset_t *preset_data = FLUID_NEW(fluid_instpatch_preset_t);
 
+                if(preset_data == NULL)
+                {
+                    g_object_unref(inst);
+                    g_object_unref(cache);
+                    FLUID_LOG(FLUID_ERR, "Out of memory.");
+                    goto bad_luck;
+                }
+
+                FLUID_MEMSET(preset_data, 0, sizeof(*preset_data));
+
+                preset_data->parent_sfont = patchfont;
+                preset_data->cache = cache;
+                /* save name, bank and preset for quick lookup */
+                preset_data->bank = bank;
+                preset_data->prog = prog;
+                g_object_get(inst, "name", &preset_data->name, NULL);
+
+                preset = new_fluid_preset(sfont,
+                                            fluid_instpatch_preset_get_name,
+                                            fluid_instpatch_preset_get_banknum,
+                                            fluid_instpatch_preset_get_num,
+                                            fluid_instpatch_preset_noteon,
+                                            fluid_instpatch_preset_free);
+
+                if(preset == NULL)
+                {
+                    delete_fluid_instpatch_preset(preset_data);
+                    FLUID_LOG(FLUID_ERR, "Out of memory.");
+                    goto bad_luck;
+                }
+                else
+                {
+                    fluid_preset_set_data(preset, preset_data);
+                    patchfont->preset_list = fluid_list_append(patchfont->preset_list, preset);
+                }
+            }
+            
             inst = ipatch_dls2_inst_next(&iter);
         }
         while(inst);
 
         return patchfont;
     }
-    while(0);
-
+    
+bad_luck:
     delete_fluid_instpatch(patchfont);
     return NULL;
 }
 
 static void delete_fluid_instpatch(fluid_instpatch_font_t *pfont)
 {
+    fluid_list_t* list;
+    
     fluid_return_if_fail(pfont != NULL);
 
-    delete_fluid_hashtable(pfont->voice_cache_hash);
+    for(list = pfont->preset_list; list; list = fluid_list_next(list))
+    {
+        fluid_preset_delete_internal((fluid_preset_t*)fluid_list_get(list));
+    }
 
+    delete_fluid_list(pfont->preset_list);
+    
     // also unrefs IpatchDLSFile and IpatchFileHandle
     g_object_unref(pfont->dls);
-
+    
     FLUID_FREE(pfont);
 }
 
