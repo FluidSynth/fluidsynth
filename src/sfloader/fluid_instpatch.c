@@ -496,6 +496,7 @@ fluid_instpatch_font_t *new_fluid_instpatch(fluid_sfont_t *sfont, const fluid_fi
             }
             else
             {
+                int isPercussion = (ipatch_item_get_flags(inst) & IPATCH_DLS2_INST_PERCUSSION) != 0;
                 fluid_instpatch_preset_t *preset_data = FLUID_NEW(fluid_instpatch_preset_t);
 
                 if(preset_data == NULL)
@@ -511,7 +512,7 @@ fluid_instpatch_font_t *new_fluid_instpatch(fluid_sfont_t *sfont, const fluid_fi
                 preset_data->parent_sfont = patchfont;
                 preset_data->cache = cache;
                 /* save name, bank and preset for quick lookup */
-                preset_data->bank = bank;
+                preset_data->bank = isPercussion * 128 + bank;
                 preset_data->prog = prog;
                 g_object_get(inst, "name", &preset_data->name, NULL);
 
