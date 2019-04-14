@@ -3644,7 +3644,7 @@ fluid_synth_process(fluid_synth_t *synth, int len, int nfx, float *fx[],
     int nfxchan, nfxunits, naudchan;
 
     double time = fluid_utime();
-    int i, f, num, count;
+    int i, f, num, count, buffered_blocks;
 
     float cpu_load;
 
@@ -3668,9 +3668,10 @@ fluid_synth_process(fluid_synth_t *synth, int len, int nfx, float *fx[],
     count = 0;
     num = synth->cur;
 
-    if(synth->cur < FLUID_BUFSIZE)
+    buffered_blocks = (synth->cur + FLUID_BUFSIZE - 1) / FLUID_BUFSIZE;
+    if(synth->cur < buffered_blocks * FLUID_BUFSIZE)
     {
-        int available = FLUID_BUFSIZE - synth->cur;
+        int available = (buffered_blocks * FLUID_BUFSIZE) - synth->cur;
         num = (available > len) ? len : available;
 
         if(nout != 0)
