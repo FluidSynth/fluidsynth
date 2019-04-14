@@ -3633,6 +3633,13 @@ int
 fluid_synth_process(fluid_synth_t *synth, int len, int nfx, float *fx[],
                     int nout, float *out[])
 {
+    return fluid_synth_process_LOCAL(synth, len, nfx, fx, nout, out, fluid_synth_render_blocks);
+}
+
+int
+fluid_synth_process_LOCAL(fluid_synth_t *synth, int len, int nfx, float *fx[],
+                    int nout, float *out[], int (*block_render_func)(fluid_synth_t *, int))
+{
     fluid_real_t *left_in, *fx_left_in;
     fluid_real_t *right_in, *fx_right_in;
     int nfxchan, nfxunits, naudchan;
@@ -3706,7 +3713,7 @@ fluid_synth_process(fluid_synth_t *synth, int len, int nfx, float *fx[],
     while(count < len)
     {
         int blocksleft = (len - count + FLUID_BUFSIZE - 1) / FLUID_BUFSIZE;
-        int blockcount = fluid_synth_render_blocks(synth, blocksleft);
+        int blockcount = block_render_func(synth, blocksleft);
 
         num = (blockcount * FLUID_BUFSIZE > len - count) ? len - count : blockcount * FLUID_BUFSIZE;
 

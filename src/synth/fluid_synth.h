@@ -212,6 +212,9 @@ void fluid_synth_process_event_queue(fluid_synth_t *synth);
 int fluid_synth_set_gen2(fluid_synth_t *synth, int chan,
                          int param, float value,
                          int absolute, int normalized);
+int
+fluid_synth_process_LOCAL(fluid_synth_t *synth, int len, int nfx, float *fx[],
+                    int nout, float *out[], int (*block_render_func)(fluid_synth_t *, int));
 /*
  * misc
  */
