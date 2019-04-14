@@ -110,6 +110,16 @@ static const fluid_audriver_definition_t fluid_audio_drivers[] =
     },
 #endif
 
+#if HAIKU_SUPPORT
+    {
+        "mediakit",
+        new_fluid_haiku_audio_driver,
+        NULL,
+        delete_fluid_haiku_audio_driver,
+        fluid_haiku_audio_driver_settings
+    },
+#endif
+
 #if COREAUDIO_SUPPORT
     {
         "coreaudio",

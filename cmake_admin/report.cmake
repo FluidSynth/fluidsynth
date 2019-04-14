@@ -154,6 +154,12 @@ else ( DBUS_SUPPORT )
   set ( MISC_REPORT "${MISC_REPORT}  D-Bus:                 no\n" )
 endif ( DBUS_SUPPORT )
 
+if ( HAIKU_SUPPORT )
+  message ( "Haiku MediaKit support: yes" )
+else ( HAIKU_SUPPORT )
+  message ( "Haiku MediaKit support: no" )
+endif ( HAIKU_SUPPORT )
+
 if ( LADSPA_SUPPORT )
   set ( MISC_REPORT "${MISC_REPORT}  LADSPA support:        yes\n" )
 else ( LADSPA_SUPPORT )

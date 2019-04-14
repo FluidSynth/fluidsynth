@@ -94,6 +94,7 @@ option ( enable-dsound "compile DirectSound support (if it is available)" on )
 option ( enable-wasapi "compile Windows WASAPI support (if it is available)" on )
 option ( enable-waveout "compile Windows WaveOut support (if it is available)" on )
 option ( enable-winmidi "compile Windows MIDI support (if it is available)" on )
+option ( enable-haiku "compile Haiku MediaKit audio support (if it is available)" on )
 option ( enable-sdl2 "compile SDL2 audio support (if it is available)" off )
 option ( enable-pulseaudio "compile PulseAudio support (if it is available)" on )
 option ( enable-pipewire "compile PipeWire support (if it is available)" on )
@@ -186,8 +187,10 @@ endif ()
 include ( CMakePrintHelpers ) # for cmake_print_properties() and cmake_print_variables()
 include ( TestInline )
 include ( TestVLA )
+if ( NOT HAIKU )
 include ( TestBigEndian )
 test_big_endian ( WORDS_BIGENDIAN )
+endif ( NOT HAIKU )
 
 unset ( LIBFLUID_CPPFLAGS CACHE )
 unset ( LIBFLUID_LIBS CACHE )
@@ -248,6 +251,11 @@ if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_C_C
     endif ()
   endif (CMAKE_C_COMPILER_ID STREQUAL "Intel" )
 endif ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_C_COMPILER_ID STREQUAL "Intel" )
+
+# Haiku
+if ( HAIKU )
+set ( CMAKE_CXX_FLAGS "-fpermissive")
+endif ( HAIKU )
 
 # Windows
 unset ( WINDOWS_LIBS CACHE )
@@ -394,6 +402,12 @@ if ( CMAKE_SYSTEM MATCHES "SunOS" )
   set ( FLUID_LIBS "${FLUID_LIBS};nsl;socket" )
   set ( LIBFLUID_LIBS "${LIBFLUID_LIBS};nsl;socket" )
 endif ( CMAKE_SYSTEM MATCHES "SunOS" )
+
+# Haiku
+if ( CMAKE_SYSTEM MATCHES "Haiku" )
+  set ( FLUID_LIBS "${FLUID_LIBS};network;bsd;be;media" )
+  set ( LIBFLUID_LIBS "${LIBFLUID_LIBS};network;bsd;be;media" )
+endif ( CMAKE_SYSTEM MATCHES "Haiku" )
 
 # Apple Mac OSX
 unset ( COREAUDIO_SUPPORT CACHE )
@@ -707,6 +721,11 @@ if ( enable-readline )
     endif ()
   endif ( Readline_FOUND )
 endif ( enable-readline )
+
+unset ( HAIKU_SUPPORT CACHE )
+if ( enable-haiku )
+  set ( HAIKU_SUPPORT 1 )
+endif ( enable-haiku )
 
 unset ( AUFILE_SUPPORT CACHE )
 if ( enable-aufile )
