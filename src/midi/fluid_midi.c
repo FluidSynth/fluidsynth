@@ -1891,14 +1891,14 @@ fluid_player_load(fluid_player_t *player, fluid_playlist_item *item)
 
         buffer = fluid_file_read_full(fp, &buffer_length);
 
+        FLUID_FCLOSE(fp);
+
         if(buffer == NULL)
         {
-            FLUID_FCLOSE(fp);
             return FLUID_FAILED;
         }
 
         buffer_owned = 1;
-        FLUID_FCLOSE(fp);
     }
     else
     {
