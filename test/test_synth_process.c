@@ -5,12 +5,13 @@
 #include "fluid_synth.h"
 #include <string.h>
 
-static int smpl;
 // static const int CHANNELS=16;
-static const int SAMPLES=1024;
+enum { SAMPLES=1024 };
 
 int render_one_mock(fluid_synth_t *synth, int blocks)
 {
+    static int smpl;
+    
     fluid_real_t *left_in, *fx_left_in;
     fluid_real_t *right_in, *fx_right_in;
 
