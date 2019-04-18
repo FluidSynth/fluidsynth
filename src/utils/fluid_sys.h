@@ -485,7 +485,7 @@ fluid_ostream_t fluid_socket_get_ostream(fluid_socket_t sock);
 typedef GStatBuf fluid_stat_buf_t;
 #endif
 
-#define fluid_file_test g_file_test
+FILE* fluid_file_open(const char* filename, const char** errMsg);
 
 /* Profiling */
 #if WITH_PROFILING

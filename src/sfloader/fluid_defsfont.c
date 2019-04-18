@@ -436,7 +436,7 @@ int fluid_defsfont_load(fluid_defsfont_t *defsfont, const fluid_file_callbacks_t
 
     if(sfdata == NULL)
     {
-        FLUID_LOG(FLUID_ERR, "Couldn't load soundfont file");
+        /* error message already printed */
         return FLUID_FAILED;
     }
 
