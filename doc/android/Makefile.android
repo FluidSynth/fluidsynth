@@ -3,10 +3,11 @@
 #
 # What `build` target does:
 #
-# - build cerbero to build glib
+# - build cerbero to build glib, libogg, libvorbis, libflac, and libsndfile.
 # - build glib-2.0.so and many other dependency shared libraries
 # - build Oboe shared library
 # - build libfluidsynth.so
+# - build libfluidsynth-assetloader.so
 #
 # Android app developers are supposed to copy all those shared
 # libraries into their apks (per ABI).
@@ -41,7 +42,7 @@ $(OBOE):
 
 .PHONY: checkout-cerbero
 checkout-cerbero: $(CERBERO)
-	cd $(CERBERO) && git checkout 7a6fd79
+	cd $(CERBERO) && git checkout 0acd9b0
 
 $(CERBERO):
 	git clone https://github.com/atsushieno/cerbero.git $(CERBERO)
@@ -52,7 +53,7 @@ build: build-oboe dist-oboe build-deps-cerbero dist-deps-cerbero build-fluidsynt
 .PHONY: build-deps-cerbero
 build-deps-cerbero:
 	for abi in $(ABIS_SIMPLE) ; do \
-		cd $(CERBERO) && ./cerbero-uninstalled -c config/cross-android-$$abi.cbc build glib && cd $(PWD) ; \
+		cd $(CERBERO) && ./cerbero-uninstalled -c config/cross-android-$$abi.cbc build glib libsndfile && cd $(PWD) ; \
 	done
 
 define run_make_abi_target
