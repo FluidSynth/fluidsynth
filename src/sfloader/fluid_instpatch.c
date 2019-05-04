@@ -50,7 +50,7 @@ void fluid_instpatch_init(void)
     ipatch_init();
 }
 
-static void delete_fluid_instpatch(fluid_instpatch_font_t *pfont);
+static int delete_fluid_instpatch(fluid_instpatch_font_t *pfont);
 
 static const char *fluid_instpatch_sfont_get_name(fluid_sfont_t *sfont);
 static fluid_preset_t *fluid_instpatch_sfont_get_preset(fluid_sfont_t *sfont, int bank, int prenum);
@@ -548,12 +548,51 @@ bad_luck:
     return NULL;
 }
 
-static void delete_fluid_instpatch(fluid_instpatch_font_t *pfont)
+static int delete_fluid_instpatch(fluid_instpatch_font_t *pfont)
 {
+    guint16 index_array[MAX_INST_VOICES];		/* voice index array */
+    int sel_values[IPATCH_SF2_VOICE_CACHE_MAX_SEL_VALUES];
     fluid_list_t* list;
     
-    fluid_return_if_fail(pfont != NULL);
+    fluid_return_val_if_fail(pfont != NULL, FLUID_OK);
 
+    /* look through all fluid samples and return error if failed */
+    for(list = pfont->preset_list; list; list = fluid_list_next(list))
+    {
+        fluid_instpatch_preset_t *preset_data = fluid_preset_get_data((fluid_preset_t*)fluid_list_get(list));
+
+        int i, voice_count;
+        
+        /* lookup the voice cache that we've created on loading */
+        IpatchSF2VoiceCache *cache = preset_data->cache;
+        if(cache == NULL)
+        {
+            continue;
+        }
+        g_object_ref(cache);
+
+        for(i = 0; i < cache->sel_count; i++)
+        {
+            sel_values[i] = -1;
+        }
+
+        voice_count = ipatch_sf2_voice_cache_select(cache, sel_values, index_array, MAX_INST_VOICES);
+
+        for(i = 0; i < voice_count; i++)
+        {
+            IpatchSF2Voice *voice = IPATCH_SF2_VOICE_CACHE_GET_VOICE(cache, index_array[i]);            
+            fluid_sample_t *fsample = ((fluid_instpatch_voice_user_data_t*)voice->user_data)->sample;
+
+            if(fsample->refcount != 0)
+            {
+                g_object_unref(cache);
+                return FLUID_FAILED;
+            }
+        }
+        
+        g_object_unref(cache);
+    }
+    
     for(list = pfont->preset_list; list; list = fluid_list_next(list))
     {
         fluid_preset_delete_internal((fluid_preset_t*)fluid_list_get(list));
@@ -565,16 +604,21 @@ static void delete_fluid_instpatch(fluid_instpatch_font_t *pfont)
     g_object_unref(pfont->dls);
     
     FLUID_FREE(pfont);
+    
+    return FLUID_OK;
 }
 
 static int fluid_instpatch_sfont_delete(fluid_sfont_t *sfont)
 {
+    int ret;
     fluid_return_val_if_fail(sfont != NULL, -1);
 
-    delete_fluid_instpatch(fluid_sfont_get_data(sfont));
-    delete_fluid_sfont(sfont);
-
-    return 0;
+    if((ret = delete_fluid_instpatch(fluid_sfont_get_data(sfont))) == FLUID_OK)
+    {
+        delete_fluid_sfont(sfont);
+    }
+    
+    return ret;
 }
 
 static fluid_sfont_t *fluid_instpatch_loader_load(fluid_sfloader_t *loader, const char *filename)
