@@ -202,6 +202,7 @@ int fluid_sfloader_set_callbacks(fluid_sfloader_t *loader,
     cb->ftell = tell;
     cb->fclose = close;
 
+    // NOTE: if we ever make the instpatch loader public, this may return FLUID_FAILED
     return FLUID_OK;
 }
 
