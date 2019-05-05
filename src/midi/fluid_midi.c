@@ -99,13 +99,7 @@ int fluid_is_midifile(const char *filename)
 
     do
     {
-        if(!fluid_file_test(filename, G_FILE_TEST_IS_REGULAR))
-        {
-            return retcode;
-        }
-        
-        // file seems to exist and is a regular file or a symlink to such
-        if((fp = FLUID_FOPEN(filename, "rb")) == NULL)
+        if((fp = fluid_file_open(filename, NULL)) == NULL)
         {
             return retcode;
         }
@@ -1891,14 +1885,14 @@ fluid_player_load(fluid_player_t *player, fluid_playlist_item *item)
 
         buffer = fluid_file_read_full(fp, &buffer_length);
 
+        FLUID_FCLOSE(fp);
+
         if(buffer == NULL)
         {
-            FLUID_FCLOSE(fp);
             return FLUID_FAILED;
         }
 
         buffer_owned = 1;
-        FLUID_FCLOSE(fp);
     }
     else
     {

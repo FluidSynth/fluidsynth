@@ -8,8 +8,8 @@
 \author David Henningsson
 \author Tom Moebert
 \author Copyright &copy; 2003-2019 Peter Hanappe, Conrad Berhörster, Antoine Schmitt, Pedro López-Cabanillas, Josh Green, David Henningsson, Tom Moebert
-\version Revision 2.0.4
-\date 2019-02-09
+\version Revision 2.0.5
+\date 2019-04-17
 
 All the source code examples in this document are in the public domain; you can use them as you please. This document is licensed under the Creative Commons Attribution-Share Alike 3.0 Unported License. To view a copy of this license, visit http://creativecommons.org/licenses/by-sa/3.0/ . The FluidSynth library is distributed under the GNU Lesser General Public License. A copy of the GNU Lesser General Public License is contained in the FluidSynth package; if not, visit http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt or write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
@@ -21,6 +21,7 @@ All the source code examples in this document are in the public domain; you can 
 
 - \ref Disclaimer
 - \ref Introduction
+- \ref NewIn2_0_5
 - \ref NewIn2_0_3
 - \ref NewIn2_0_2
 - \ref NewIn2_0_0
@@ -42,7 +43,7 @@ All the source code examples in this document are in the public domain; you can 
 
 \section Disclaimer
 
-This documentation, in its current version, is incomplete. As always, the source code is the final reference.
+This documentation may be partly incomplete. As always, the source code is the final reference.
 
 SoundFont(R) is a registered trademark of E-mu Systems, Inc.
 
@@ -61,6 +62,11 @@ What is FluidSynth?
 - FluidSynth can easily be embedded in an application. It has a main header file, fluidsynth.h, and one dynamically linkable library. FluidSynth runs on Linux, Mac OS X, and the Windows platforms, and support for OS/2 and OpenSolaris is experimental. It has audio and midi drivers for all mentioned platforms but you can use it with your own drivers if your application already handles MIDI and audio input/output. This document explains the basic usage of FluidSynth and provides examples that you can reuse. 
 
 - FluidSynth is open source, in active development. For more details, take a look at http://www.fluidsynth.org
+
+\section NewIn2_0_5 Whats new in 2.0.5?
+
+- fluid_synth_process() omitted audio samples when called with arbitrary sample counts that were not a multiple of fluid_synth_get_internal_bufsize()
+- fluid_synth_sfunload() was not releasing sample buffers of SoundFont3 files if <a href="fluidsettings.xml#synth.dynamic-sample-loading">"synth.dynamic-sample-loading"</a> was set to FALSE
 
 \section NewIn2_0_3 Whats new in 2.0.3?
 
@@ -141,7 +147,7 @@ FluidSynths major version was bumped. The API was reworked, deprecated functions
 - remove deprecated fluid_synth_select_tuning(), use fluid_synth_activate_tuning(synth, chan, bank, prog, FALSE) instead
 - remove deprecated fluid_synth_reset_tuning(), use fluid_synth_deactivate_tuning(synth, chan, FALSE) instead
 - remove deprecated FLUID_HINT_INTEGER
-- remove deprecated fluid_synth_set_gen2() as there doesnt seem to be a use case for absolute generator values
+- remove deprecated fluid_synth_set_gen2() as there doesn't seem to be a use case for absolute generator values
 - remove deprecated "synth.parallel-render" setting
 - remove obsolete "audio.[out|in]put-channels" settings
 - remove unimplemented "synth.dump" setting
@@ -162,7 +168,7 @@ FluidSynths major version was bumped. The API was reworked, deprecated functions
 
 Before you can use the synthesizer, you have to create a settings object. The settings objects is used by many components of the FluidSynth library. It gives a unified API to set the parameters of the audio drivers, the midi drivers, the synthesizer, and so forth. A number of default settings are defined by the current implementation.
 
-All settings have a name that follows the "dotted-name" notation. For example, "synth.polyphony" refers to the number of voices (polyphony) preallocated by the synthesizer. The settings also have a type. There are currently three types: strings, numbers (double floats), and integers. You can change the values of a setting using the fluid_settings_setstr(), fluid_settings_setnum(), and fluid_settings_setint() functions. For example: 
+All settings have a name that follows the "dotted-name" notation. For example, "synth.polyphony" refers to the number of voices (polyphony) allocated by the synthesizer. The settings also have a type. There are currently three types: strings, numbers (double floats), and integers. You can change the values of a setting using the fluid_settings_setstr(), fluid_settings_setnum(), and fluid_settings_setint() functions. For example: 
 
 \code
 #include <fluidsynth.h>

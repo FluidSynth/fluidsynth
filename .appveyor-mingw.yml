@@ -53,11 +53,11 @@ build_script:
   - echo %PATH%
   - echo %CFLAGS%
   - cmake -G "MinGW Makefiles" -DCMAKE_VERBOSE_MAKEFILE=1 ..
-  - mingw32-make.exe check
+  - mingw32-make.exe all && mingw32-make.exe check
 
 after_build:
-  - 7z a fluidsynth-%platform%.zip %APPVEYOR_BUILD_FOLDER%\build\src\* c:\deps\bin\libglib*.dll c:\deps\bin\libgthread*.dll c:\deps\bin\*intl*.dll
+  - 7z a fluidsynth-mingw-%platform%.zip %APPVEYOR_BUILD_FOLDER%\build\src\*fluidsynth* %APPVEYOR_BUILD_FOLDER%\build\fluidsynth.pc c:\deps\bin\libglib*.dll c:\deps\bin\libgthread*.dll c:\deps\bin\*intl*.dll
 
 artifacts:
-  - path: build/fluidsynth-%platform%.zip
+  - path: build/fluidsynth-mingw-%platform%.zip
     name: FluidSynth
