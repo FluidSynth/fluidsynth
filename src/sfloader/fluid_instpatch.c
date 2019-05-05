@@ -503,7 +503,7 @@ fluid_instpatch_font_t *new_fluid_instpatch(fluid_sfont_t *sfont, const fluid_fi
                 {
                     g_object_unref(inst);
                     g_object_unref(cache);
-                    FLUID_LOG(FLUID_ERR, "Out of memory.");
+                    FLUID_LOG(FLUID_ERR, "Out of memory");
                     goto bad_luck;
                 }
 
@@ -526,7 +526,7 @@ fluid_instpatch_font_t *new_fluid_instpatch(fluid_sfont_t *sfont, const fluid_fi
                 if(preset == NULL)
                 {
                     delete_fluid_instpatch_preset(preset_data);
-                    FLUID_LOG(FLUID_ERR, "Out of memory.");
+                    FLUID_LOG(FLUID_ERR, "Out of memory");
                     goto bad_luck;
                 }
                 else
