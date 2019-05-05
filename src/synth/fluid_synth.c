@@ -466,6 +466,7 @@ fluid_synth_init(void)
     fluid_mod_set_amount(&custom_balance_mod, FLUID_PEAK_ATTENUATION); /* Amount: 960 */
     
 #ifdef LIBINSTPATCH_SUPPORT
+    /* defer libinstpatch init to fluid_instpatch.c to avoid #include "libinstpatch.h" */
     fluid_instpatch_init();
 #endif
 }
