@@ -300,19 +300,20 @@ fast_render_loop(fluid_settings_t *settings, fluid_synth_t *synth, fluid_player_
     delete_fluid_file_renderer(renderer);
 }
 
-static int is_dls(const char* fname)
+static int is_dls(const char *fname)
 {
 #ifdef LIBINSTPATCH_SUPPORT
-        IpatchFileHandle *fhandle = ipatch_file_identify_open (fname, NULL);
-        int ret = (fhandle != NULL);
-        if(ret)
-        {
-            ipatch_file_close(fhandle);
-        }
-        
-        return ret;
+    IpatchFileHandle *fhandle = ipatch_file_identify_open(fname, NULL);
+    int ret = (fhandle != NULL);
+
+    if(ret)
+    {
+        ipatch_file_close(fhandle);
+    }
+
+    return ret;
 #else
-        return FALSE;
+    return FALSE;
 #endif
 }
 
@@ -368,9 +369,10 @@ int main(int argc, char **argv)
 
     lash_args = fluid_lash_extract_args(&argc, &argv);
 #endif
-    
+
 #if SDL2_SUPPORT
-    if (SDL_Init(SDL_INIT_AUDIO) != 0)
+
+    if(SDL_Init(SDL_INIT_AUDIO) != 0)
     {
         fprintf(stderr, "Warning: Unable to initialize SDL2 Audio: %s", SDL_GetError());
     }
@@ -378,6 +380,7 @@ int main(int argc, char **argv)
     {
         atexit(SDL_Quit);
     }
+
 #endif
 
 
@@ -785,9 +788,7 @@ int main(int argc, char **argv)
     /* load the soundfonts (check that all non options are SoundFont or MIDI files) */
     for(i = arg1; i < argc; i++)
     {
-        if(fluid_is_soundfont(argv[i])
-            || is_dls(argv[i])
-        )
+        if(fluid_is_soundfont(argv[i]) || is_dls(argv[i]))
         {
             if(fluid_synth_sfload(synth, argv[i], 1) == -1)
             {
@@ -932,11 +933,13 @@ int main(int argc, char **argv)
             fprintf(stderr, "Failed to create the server.\n"
                     "Continuing without it.\n");
         }
+
 #ifdef SYSTEMD_SUPPORT
         else
         {
             sd_notify(0, "READY=1");
         }
+
 #endif
     }
 

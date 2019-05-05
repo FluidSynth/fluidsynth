@@ -344,13 +344,13 @@ int fluid_is_soundfont(const char *filename)
         {
             return retcode;
         }
-        
+
         // file seems to exist and is a regular file or a symlink to such
         if((fp = FLUID_FOPEN(filename, "rb")) == NULL)
         {
             return retcode;
         }
-        
+
         if(FLUID_FREAD(&fcc, sizeof(fcc), 1, fp) != 1)
         {
             break;
