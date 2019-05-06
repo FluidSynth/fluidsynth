@@ -329,8 +329,13 @@ static void fluid_instpatch_on_voice_user_data_destroy(gpointer user_data)
     FLUID_FREE(data);
 }
 
-static IpatchSF2VoiceCache *convert_dls_to_sf2_instrument(fluid_instpatch_font_t *patchfont, IpatchDLS2Inst *item)
+static IpatchSF2VoiceCache *convert_dls_to_sf2_instrument(fluid_instpatch_font_t *patchfont, IpatchDLS2Inst *item, const char **err)
 {
+    static const char no_conv[] = "Unable to find a voice cache converter for this type";
+    static const char conv_fail[] = "Failed to convert DLS inst to SF2 voices";
+    static const char cache_fail[] = "Failed to cache DLS inst to SF2 voices";
+    static const char oom[] = "Out of memory";
+    
     IpatchConverter *conv;
     IpatchSF2VoiceCache *cache;
     int i, count;
@@ -341,7 +346,7 @@ static IpatchSF2VoiceCache *convert_dls_to_sf2_instrument(fluid_instpatch_font_t
     /* no SF2 voice cache converter for this item type? */
     if(conv == NULL)
     {
-        FLUID_LOG(FLUID_ERR, "Unable to find a voice cache converter for this type");
+        *err = no_conv;
         return NULL;
     }
 
@@ -349,7 +354,7 @@ static IpatchSF2VoiceCache *convert_dls_to_sf2_instrument(fluid_instpatch_font_t
 
     if(cache == NULL)
     {
-        FLUID_LOG(FLUID_ERR, "Out of memory");
+        *err = oom;
         g_object_unref(conv);
         return NULL;
     }
@@ -359,7 +364,7 @@ static IpatchSF2VoiceCache *convert_dls_to_sf2_instrument(fluid_instpatch_font_t
 
     if(!ipatch_converter_convert(conv, NULL))
     {
-        FLUID_LOG(FLUID_ERR, "Failed to convert DLS inst to SF2 voices");
+        *err = conv_fail;
         g_object_unref(cache);
         g_object_unref(conv);
         return NULL;
@@ -379,13 +384,14 @@ static IpatchSF2VoiceCache *convert_dls_to_sf2_instrument(fluid_instpatch_font_t
 
         if(!ipatch_sf2_voice_cache_sample_data(voice, NULL))
         {
-            FLUID_LOG(FLUID_ERR, "ipatch_sf2_voice_cache_sample_data() failed");
+            *err = cache_fail;
             g_object_unref(cache);
             return NULL;
         }
 
         if((voice->user_data = new_fluid_instpatch_voice_user_data(IPATCH_SAMPLE_STORE_CACHE(voice->sample_store))) == NULL)
         {
+            *err = oom;
             g_object_unref(cache);
             return NULL;
         }
@@ -488,11 +494,12 @@ fluid_instpatch_font_t *new_fluid_instpatch(fluid_sfont_t *sfont, const fluid_fi
             fluid_preset_t *preset;
             IpatchSF2VoiceCache *cache;
             int bank, prog;
+            const char *err = NULL;
             ipatch_dls2_inst_get_midi_locale(inst, &bank, &prog);
 
-            if((cache = convert_dls_to_sf2_instrument(patchfont, inst)) == NULL)
+            if((cache = convert_dls_to_sf2_instrument(patchfont, inst, &err)) == NULL)
             {
-                FLUID_LOG(FLUID_WARN, "Failed to cache DLS instrument bank %d , prog %d", bank, prog);
+                FLUID_LOG(FLUID_WARN, "Unable to use DLS instrument bank %d , prog %d : %s.", bank, prog, err);
             }
             else
             {

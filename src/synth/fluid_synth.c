@@ -847,7 +847,7 @@ new_fluid_synth(fluid_settings_t *settings)
     {
         fluid_synth_add_sfloader(synth, loader);
     }
-    
+
     /* allocate all channel objects */
     synth->channel = FLUID_ARRAY(fluid_channel_t *, synth->midi_channels);
 
