@@ -31,13 +31,14 @@ include_directories (
     ${CMAKE_SOURCE_DIR}/src/bindings
     ${CMAKE_SOURCE_DIR}/include
     ${CMAKE_BINARY_DIR}/include
-    ${PTHREADS_INCLUDE_DIR}
-    ${SDL2_INCLUDE_DIR}
 )
 
 include_directories (
     SYSTEM
     ${GLIB_INCLUDE_DIRS}
+    ${PTHREADS_INCLUDE_DIR}
+    ${SDL2_INCLUDE_DIR}
+    ${LIBINSTPATCH_INCLUDE_DIRS}
 )
 
 # ************ library ************
@@ -126,6 +127,10 @@ endif ( MIDISHARE_SUPPORT )
 if ( AUFILE_SUPPORT )
   set ( fluid_aufile_SOURCES drivers/fluid_aufile.c )
 endif ( AUFILE_SUPPORT )
+
+if ( LIBINSTPATCH_SUPPORT )
+  set ( fluid_libinstpatch_SOURCES sfloader/fluid_instpatch.c sfloader/fluid_instpatch.h )
+endif ( LIBINSTPATCH_SUPPORT )
 
 if ( OPENSLES_SUPPORT )
   set ( fluid_opensles_SOURCES drivers/fluid_opensles.c )
@@ -277,6 +282,7 @@ add_library ( libfluidsynth-OBJ OBJECT
     ${fluid_waveout_SOURCES}
     ${fluid_winmidi_SOURCES}
     ${fluid_sdl2_SOURCES}
+    ${fluid_libinstpatch_SOURCES}
     ${libfluidsynth_SOURCES}
     ${public_HEADERS}
     ${public_main_HEADER}
@@ -355,6 +361,7 @@ target_link_libraries ( libfluidsynth
     ${OpenSLES_LIBS}
     ${OBOE_LIBS}
     ${LIBFLUID_LIBS}
+    ${LIBINSTPATCH_LIBRARIES}
 )
 
 # ************ CLI program ************

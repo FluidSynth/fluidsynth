@@ -104,7 +104,7 @@ fluid_sfont_t *fluid_defsfloader_load(fluid_sfloader_t *loader, const char *file
 
     if(fluid_defsfont_load(defsfont, &loader->file_callbacks, filename) == FLUID_FAILED)
     {
-        fluid_sfont_delete_internal(sfont);
+        fluid_defsfont_sfont_delete(sfont);
         return NULL;
     }
 

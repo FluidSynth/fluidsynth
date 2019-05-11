@@ -154,6 +154,9 @@
 /* Define to enable network support */
 #cmakedefine NETWORK_SUPPORT @NETWORK_SUPPORT@
 
+/* libinstpatch for DLS and GIG */
+#cmakedefine LIBINSTPATCH_SUPPORT @LIBINSTPATCH_SUPPORT@
+
 /* libsndfile has ogg vorbis support */
 #cmakedefine LIBSNDFILE_HASVORBIS @LIBSNDFILE_HASVORBIS@
 
