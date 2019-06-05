@@ -11,7 +11,7 @@ find_path ( READLINE_INCLUDE_DIR NAMES history.h readline/history.h )
 find_library ( READLINE_LIBRARIES NAMES readline )
 
 if ( READLINE_INCLUDE_DIR AND READLINE_LIBRARIES )
-    set ( HAVE_READLINE TRUE CACHE BOOL )
+    set ( HAVE_READLINE TRUE CACHE BOOL "Found readline header and lib" FORCE )
 endif ( READLINE_INCLUDE_DIR AND READLINE_LIBRARIES )
 
 include ( FindPackageHandleStandardArgs )
