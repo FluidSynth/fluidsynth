@@ -605,11 +605,11 @@ fluid_mod_check_cc_source(const fluid_mod_t *mod, unsigned char src1_select)
  */
 int fluid_mod_check_sources(const fluid_mod_t *mod, char *name)
 {
-    static const char *invalid_non_cc_src =
+    static const char invalid_non_cc_src[] =
         "Invalid modulator, using non-CC source %s.src%d=%d";
-    static const char *invalid_cc_src =
+    static const char invalid_cc_src[] =
         "Invalid modulator, using CC source %s.src%d=%d";
-    static const char *src1_is_none =
+    static const char src1_is_none[] =
         "Modulator with source 1 none %s.src1=%d";
 
     /* checks valid non cc sources */
