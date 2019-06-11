@@ -216,6 +216,10 @@ do { strncpy(_dst,_src,_n); \
 #define M_PI 3.1415926535897932384626433832795
 #endif
 
+#ifndef M_PI_2
+#define M_PI_2 1.5707963267948966192313216916398
+#endif
+
 #ifndef M_LN2
 #define M_LN2 0.69314718055994530941723212145818
 #endif
