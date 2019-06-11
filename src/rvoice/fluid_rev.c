@@ -773,7 +773,7 @@ static void update_rev_time_damping(fluid_late *late,
             /* gi = f(roomsize, gi_max, gi_min) */
             gi_tmp = gi_min + roomsize * (gi_max - gi_min);
             /* Computes T60DC from gi using inverse of relation E2.*/
-            dc_rev_time = -3 * delay_length[NBR_DELAYS - 1] * sample_period / log10(gi_tmp);
+            dc_rev_time = -3 * M_LN10 * delay_length[NBR_DELAYS - 1] * sample_period / log(gi_tmp);
         }
 #endif /* ROOMSIZE_RESPONSE_LINEAR */
         /*--------------------------------------------
@@ -782,7 +782,7 @@ static void update_rev_time_damping(fluid_late *late,
         /* Computes alpha from damp,ai_tmp,gi_tmp using relation R */
         /* - damp (0 to 1) controls concave reverb time for fs/2 frequency (T60DC to 0) */
         ai_tmp = 1.0 * damp;
-        alpha = sqrt(1 / (1 - ai_tmp / (20 * log10(gi_tmp) * log(10) / 80))); /* R */
+        alpha = sqrt(1 / (1 - ai_tmp / (20 * log(gi_tmp) / 80))); /* R */
     }
 
     /* updates tone corrector coefficients b1,b2 from alpha */
@@ -806,7 +806,7 @@ static void update_rev_time_damping(fluid_late *late,
                                             sample_period / dc_rev_time);
 
         /* iir low pass filter feedback gain */
-        fluid_real_t ai = (fluid_real_t)(20 * log10(gi) * log(10) / 80 *
+        fluid_real_t ai = (fluid_real_t)(20 * log(gi) / 80 *
                                          (1 -  1 / pow(alpha, 2)));
         /* b0 = gi * (1 - ai),  a1 = - ai */
         set_fdn_delay_lpf(&late->mod_delay_lines[i].dl.damping,
