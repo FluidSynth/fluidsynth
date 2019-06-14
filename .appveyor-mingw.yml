@@ -63,7 +63,7 @@ build_script:
   - mingw32-make.exe all && mingw32-make.exe check
 
 after_build:
-  - 7z a fluidsynth-mingw-%platform%.zip %APPVEYOR_BUILD_FOLDER%\build\src\*fluidsynth* %APPVEYOR_BUILD_FOLDER%\build\fluidsynth.pc c:\deps\bin\libglib*.dll c:\deps\bin\libgthread*.dll c:\deps\bin\*intl*.dll
+  - 7z a fluidsynth-mingw-%platform%.zip %APPVEYOR_BUILD_FOLDER%\build\src\*fluidsynth* %APPVEYOR_BUILD_FOLDER%\build\fluidsynth.pc c:\deps\bin\libglib*.dll c:\deps\bin\libgthread*.dll c:\deps\bin\*intl*.dll c:\deps\bin\libsndfile*.dll
 
 artifacts:
   - path: build/fluidsynth-mingw-%platform%.zip
