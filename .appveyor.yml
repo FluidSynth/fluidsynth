@@ -88,10 +88,5 @@ after_build:
   - 7z a fluidsynth-%platform%.zip %APPVEYOR_BUILD_FOLDER%\build\src\Release\* c:\deps\bin\libglib*.dll c:\deps\bin\libgthread*.dll c:\deps\bin\*intl*.dll c:\deps\bin\libsndfile*.dll
 
 artifacts:
-  - path: build/fluidsynth-mingw-%platform%.zip
-    name: FluidSynth
-
-
-artifacts:
   - path: build/fluidsynth-%platform%.zip
     name: FluidSynth
