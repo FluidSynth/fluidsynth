@@ -16,6 +16,7 @@ environment:
       pkg-config-url: http://ftp.gnome.org/pub/gnome/binaries/win32/dependencies/pkg-config_0.26-1_win32.zip
       gettext-url: http://ftp.gnome.org/pub/gnome/binaries/win32/dependencies/gettext-runtime_0.18.1.1-2_win32.zip
       proxy-libintl-dev-url: http://ftp.gnome.org/pub/gnome/binaries/win32/dependencies/proxy-libintl-dev_20100902_win32.zip
+      libsndfile-url: http://www.mega-nerd.com/libsndfile/files/libsndfile-1.0.28-w32.zip
 
     - platform: x64
       glib-url: http://ftp.gnome.org/pub/gnome/binaries/win64/glib/2.26/glib_2.26.1-1_win64.zip
@@ -23,6 +24,7 @@ environment:
       pkg-config-url: http://ftp.gnome.org/pub/gnome/binaries/win64/dependencies/pkg-config_0.23-2_win64.zip
       gettext-url: http://ftp.gnome.org/pub/gnome/binaries/win64/dependencies/gettext-runtime_0.18.1.1-2_win64.zip
       proxy-libintl-dev-url: http://ftp.gnome.org/pub/gnome/binaries/win64/dependencies/proxy-libintl-dev_20100902_win64.zip
+      libsndfile-url: http://www.mega-nerd.com/libsndfile/files/libsndfile-1.0.28-w64.zip
       
     - platform: x86
       glib-url: http://ftp.gnome.org/pub/gnome/binaries/win32/glib/2.16/glib_2.16.6-1_win32.zip
@@ -30,6 +32,7 @@ environment:
       pkg-config-url: http://ftp.gnome.org/pub/gnome/binaries/win32/dependencies/pkg-config_0.26-1_win32.zip
       gettext-url: http://ftp.gnome.org/pub/gnome/binaries/win32/dependencies/gettext-runtime_0.18.1.1-2_win32.zip
       proxy-libintl-dev-url: http://ftp.gnome.org/pub/gnome/binaries/win32/dependencies/proxy-libintl-dev_20100902_win32.zip
+      libsndfile-url: http://www.mega-nerd.com/libsndfile/files/libsndfile-1.0.28-w32.zip
 
     - platform: x64
       glib-url: http://ftp.acc.umu.se/pub/gnome/binaries/win64/glib/2.24/glib_2.24.2-2_win64.zip
@@ -37,6 +40,7 @@ environment:
       pkg-config-url: http://ftp.gnome.org/pub/gnome/binaries/win64/dependencies/pkg-config_0.23-2_win64.zip
       gettext-url: http://ftp.gnome.org/pub/gnome/binaries/win64/dependencies/gettext-runtime_0.18.1.1-2_win64.zip
       proxy-libintl-dev-url: http://ftp.gnome.org/pub/gnome/binaries/win64/dependencies/proxy-libintl-dev_20100902_win64.zip
+      libsndfile-url: http://www.mega-nerd.com/libsndfile/files/libsndfile-1.0.28-w64.zip
       
 init:
   - set TARGET_PLATFORM=
@@ -58,11 +62,16 @@ install:
   - curl -fsS -o pkg-config.zip %pkg-config-url%
   - curl -fsS -o gettext.zip %gettext-url%
   - curl -fsS -o libintl-dev.zip %proxy-libintl-dev-url%
+  - curl -fsS -o libsndfile-dev.zip %libsndfile-url%
   - 7z x glib.zip > NUL
   - 7z x glib-dev.zip > NUL
   - 7z x pkg-config.zip > NUL
   - 7z x gettext.zip > NUL
   - 7z x libintl-dev.zip > NUL
+  - 7z x libsndfile-dev.zip > NUL
+# need to fix the naming of libsndfile otherwise the linker won't find it
+  - move lib\libsndfile-1.lib lib\sndfile.lib
+  - move lib\libsndfile-1.def lib\sndfile.def
   - SET "PATH=C:\deps\bin;%PATH%"
 
 build_script:
@@ -76,7 +85,7 @@ build_script:
   - cmake --build . --config Release --target check # build and exec unittests
 
 after_build:
-  - 7z a fluidsynth-%platform%.zip %APPVEYOR_BUILD_FOLDER%\build\src\Release\* c:\deps\bin\libglib*.dll c:\deps\bin\libgthread*.dll c:\deps\bin\*intl*.dll
+  - 7z a fluidsynth-%platform%.zip %APPVEYOR_BUILD_FOLDER%\build\src\Release\* c:\deps\bin\libglib*.dll c:\deps\bin\libgthread*.dll c:\deps\bin\*intl*.dll c:\deps\bin\libsndfile*.dll
 
 artifacts:
   - path: build/fluidsynth-%platform%.zip
