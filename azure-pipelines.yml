@@ -53,8 +53,15 @@ jobs:
       displayName: 'Execute Unittests'
     - script: |
         7z a fluidsynth-x86.zip build\src\Release\* c:\deps\bin\libglib*.dll c:\deps\bin\libgthread*.dll c:\deps\bin\*intl*.dll c:\deps\bin\libsndfile*.dll
-        copy fluidsynth-x86.zip $(Build.ArtifactStagingDirectory)
-      displayName: 'Artifacts'
+      displayName: 'Zip Artifacts'
+    - task: CopyFiles@2
+      inputs:
+          contents: 'fluidsynth-x86.zip'
+          targetFolder: $(Build.ArtifactStagingDirectory)
+    - task: PublishBuildArtifacts@1
+      inputs:
+          pathtoPublish: $(Build.ArtifactStagingDirectory)
+          artifactName: fluidsynth-x86
 
 - job: WindowsXP_VS2017_x64
   pool:
@@ -90,8 +97,15 @@ jobs:
       displayName: 'Execute Unittests'
     - script: |
         7z a fluidsynth-x64.zip build\src\Release\* c:\deps\bin\libglib*.dll c:\deps\bin\libgthread*.dll c:\deps\bin\*intl*.dll c:\deps\bin\libsndfile*.dll
-        copy fluidsynth-x64.zip $(Build.ArtifactStagingDirectory)
-      displayName: 'Artifacts'
+      displayName: 'Zip Artifacts'
+    - task: CopyFiles@2
+      inputs:
+          contents: 'fluidsynth-x64.zip'
+          targetFolder: $(Build.ArtifactStagingDirectory)
+    - task: PublishBuildArtifacts@1
+      inputs:
+          pathtoPublish: $(Build.ArtifactStagingDirectory)
+          artifactName: fluidsynth-x64
 
 - job: Windows_VS2019_x86
   pool:
