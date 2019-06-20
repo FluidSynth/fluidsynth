@@ -1,0 +1,152 @@
+# C/C++ with GCC
+# Build your C/C++ project with GCC using make.
+# Add steps that publish test results, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/apps/c-cpp/gcc
+
+jobs:
+- job: macOS
+  pool:
+    vmImage: 'macOS-10.14'
+  steps:
+    - script: |
+        brew update
+        brew install glib gobject-introspection libsndfile pkg-config
+      displayName: 'Prerequisites'
+    - script: |
+        mkdir build && cd build
+        export PKG_CONFIG_PATH="/usr/local/opt/libffi/lib/pkgconfig"
+        cmake -DINTROSPECTION_ENABLED=0 -DCMAKE_INSTALL_PREFIX=$HOME/libinstpatch_install -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_VERBOSE_MAKEFILE=0 ..
+        make
+      displayName: 'Compile libinstpatch'
+
+- job: WindowsXP_VS2017_x86
+  pool:
+    vmImage: 'vs2017-win2016'
+  variables:
+    gtk-bundle: 'http://ftp.gnome.org/pub/gnome/binaries/win32/gtk+/2.24/gtk+-bundle_2.24.10-20120208_win32.zip'
+    libsndfile-url: 'http://www.mega-nerd.com/libsndfile/files/libsndfile-1.0.28-w32.zip'
+  steps:
+    - script: |
+        @ECHO ON
+        mkdir d:\deps || exit -1
+        cd d:\deps || exit -1
+        curl -LfsS -o gtk-bundle-dev.zip $(gtk-bundle) || exit -1
+        curl -LfsS -o libsndfile-dev.zip $(libsndfile-url) || exit -1
+        7z x -aos -- gtk-bundle-dev.zip > NUL || exit -1
+        7z x -aos -- libsndfile-dev.zip > NUL || exit -1
+        REM need to fix the naming of libsndfile otherwise the linker won't find it
+        mv lib\libsndfile-1.lib lib\sndfile.lib || exit -1
+        mv lib\libsndfile-1.def lib\sndfile.def || exit -1
+      displayName: 'Prerequisites'
+    - script: |
+        @ECHO ON
+        SET "PATH=d:\deps\bin;%PATH%"
+        mkdir build && cd build || exit -1
+        cmake -G "Visual Studio 15 2017" -T "v141_xp" -DCMAKE_INSTALL_PREFIX=$HOME/fluidsynth_install -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_VERBOSE_MAKEFILE=0 .. || exit -1
+        cmake --build . --config Release || exit -1
+      displayName: 'Compile fluidsynth'
+    - script: |
+        cd build || exit -1
+        cmake --build . --config Release --target check || exit -1
+      displayName: 'Execute Unittests'
+    - script: |
+        7z a fluidsynth-x86.zip build\src\Release\* c:\deps\bin\libglib*.dll c:\deps\bin\libgthread*.dll c:\deps\bin\*intl*.dll c:\deps\bin\libsndfile*.dll
+        copy fluidsynth-x86.zip $(Build.ArtifactStagingDirectory)
+      displayName: 'Artifacts'
+
+- job: WindowsXP_VS2017_x64
+  pool:
+    vmImage: 'vs2017-win2016'
+  variables:
+    gtk-bundle: 'http://ftp.gnome.org/pub/gnome/binaries/win64/gtk+/2.22/gtk+-bundle_2.22.1-20101229_win64.zip'
+    libsndfile-url: 'http://www.mega-nerd.com/libsndfile/files/libsndfile-1.0.28-w64.zip'
+  steps:
+    - script: |
+        @ECHO ON
+        mkdir d:\deps || exit -1
+        cd d:\deps || exit -1
+        curl -LfsS -o gtk-bundle-dev.zip $(gtk-bundle) || exit -1
+        curl -LfsS -o libsndfile-dev.zip $(libsndfile-url) || exit -1
+        7z x -aos -- gtk-bundle-dev.zip > NUL || exit -1
+        7z x -aos -- libsndfile-dev.zip > NUL || exit -1
+        REM need to fix the naming of libsndfile otherwise the linker won't find it
+        mv lib\libsndfile-1.lib lib\sndfile.lib || exit -1
+        mv lib\libsndfile-1.def lib\sndfile.def || exit -1
+      displayName: 'Prerequisites'
+    - script: |
+        @ECHO ON
+        SET "PATH=d:\deps\bin;%PATH%"
+        mkdir build && cd build || exit -1
+        cmake -G "Visual Studio 15 2017 Win64" -T "v141_xp" -DCMAKE_INSTALL_PREFIX=$HOME/fluidsynth_install -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_VERBOSE_MAKEFILE=0 .. || exit -1
+        cmake --build . --config Release || exit -1
+      displayName: 'Compile fluidsynth'
+    - script: |
+        cd build || exit -1
+        cmake --build . --config Release --target check || exit -1
+      displayName: 'Execute Unittests'
+    - script: |
+        7z a fluidsynth-x64.zip build\src\Release\* c:\deps\bin\libglib*.dll c:\deps\bin\libgthread*.dll c:\deps\bin\*intl*.dll c:\deps\bin\libsndfile*.dll
+        copy fluidsynth-x64.zip $(Build.ArtifactStagingDirectory)
+      displayName: 'Artifacts'
+
+- job: Windows_VS2019_x86
+  pool:
+    vmImage: 'windows-2019'
+  variables:
+    gtk-bundle: 'http://ftp.gnome.org/pub/gnome/binaries/win32/gtk+/2.24/gtk+-bundle_2.24.10-20120208_win32.zip'
+    libsndfile-url: 'http://www.mega-nerd.com/libsndfile/files/libsndfile-1.0.28-w32.zip'
+  steps:
+    - script: |
+        @ECHO ON
+        mkdir d:\deps || exit -1
+        cd d:\deps || exit -1
+        curl -LfsS -o gtk-bundle-dev.zip $(gtk-bundle) || exit -1
+        curl -LfsS -o libsndfile-dev.zip $(libsndfile-url) || exit -1
+        7z x -aos -- gtk-bundle-dev.zip > NUL || exit -1
+        7z x -aos -- libsndfile-dev.zip > NUL || exit -1
+        REM need to fix the naming of libsndfile otherwise the linker won't find it
+        mv lib\libsndfile-1.lib lib\sndfile.lib || exit -1
+        mv lib\libsndfile-1.def lib\sndfile.def || exit -1
+      displayName: 'Prerequisites'
+    - script: |
+        @ECHO ON
+        SET "PATH=d:\deps\bin;%PATH%"
+        mkdir build && cd build || exit -1
+        cmake -G "Visual Studio 16 2019" -A Win32 -DCMAKE_INSTALL_PREFIX=$HOME/fluidsynth_install -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_VERBOSE_MAKEFILE=0 .. || exit -1
+        cmake --build . --config Release || exit -1
+      displayName: 'Compile fluidsynth'
+    - script: |
+        cd build || exit -1
+        cmake --build . --config Release --target check || exit -1
+      displayName: 'Execute Unittests'
+
+- job: Windows_VS2019_x64
+  pool:
+    vmImage: 'windows-2019'
+  variables:
+    gtk-bundle: 'http://ftp.gnome.org/pub/gnome/binaries/win64/gtk+/2.22/gtk+-bundle_2.22.1-20101229_win64.zip'
+    libsndfile-url: 'http://www.mega-nerd.com/libsndfile/files/libsndfile-1.0.28-w64.zip'
+  steps:
+    - script: |
+        @ECHO ON
+        mkdir d:\deps || exit -1
+        cd d:\deps || exit -1
+        curl -LfsS -o gtk-bundle-dev.zip $(gtk-bundle) || exit -1
+        curl -LfsS -o libsndfile-dev.zip $(libsndfile-url) || exit -1
+        7z x -aos -- gtk-bundle-dev.zip > NUL || exit -1
+        7z x -aos -- libsndfile-dev.zip > NUL || exit -1
+        REM need to fix the naming of libsndfile otherwise the linker won't find it
+        mv lib\libsndfile-1.lib lib\sndfile.lib || exit -1
+        mv lib\libsndfile-1.def lib\sndfile.def || exit -1
+      displayName: 'Prerequisites'
+    - script: |
+        @ECHO ON
+        SET "PATH=d:\deps\bin;%PATH%"
+        mkdir build && cd build || exit -1
+        cmake -G "Visual Studio 16 2019" -A x64 -DCMAKE_INSTALL_PREFIX=$HOME/fluidsynth_install -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_VERBOSE_MAKEFILE=0 .. || exit -1
+        cmake --build . --config Release || exit -1
+      displayName: 'Compile fluidsynth'
+    - script: |
+        cd build || exit -1
+        cmake --build . --config Release --target check || exit -1
+      displayName: 'Execute Unittests'
