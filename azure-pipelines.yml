@@ -52,7 +52,7 @@ jobs:
         cmake --build . --config Release --target check || exit -1
       displayName: 'Execute Unittests'
     - script: |
-        7z a fluidsynth-x86.zip build\src\Release\* c:\deps\bin\libglib*.dll c:\deps\bin\libgthread*.dll c:\deps\bin\*intl*.dll c:\deps\bin\libsndfile*.dll
+        7z a fluidsynth-x86.zip build\src\Release\* d:\deps\bin\libglib*.dll d:\deps\bin\libgthread*.dll d:\deps\bin\*intl*.dll d:\deps\bin\libsndfile*.dll
       displayName: 'Zip Artifacts'
     - task: CopyFiles@2
       inputs:
@@ -96,7 +96,7 @@ jobs:
         cmake --build . --config Release --target check || exit -1
       displayName: 'Execute Unittests'
     - script: |
-        7z a fluidsynth-x64.zip build\src\Release\* c:\deps\bin\libglib*.dll c:\deps\bin\libgthread*.dll c:\deps\bin\*intl*.dll c:\deps\bin\libsndfile*.dll
+        7z a fluidsynth-x64.zip build\src\Release\* d:\deps\bin\libglib*.dll d:\deps\bin\libgthread*.dll d:\deps\bin\*intl*.dll d:\deps\bin\libsndfile*.dll
       displayName: 'Zip Artifacts'
     - task: CopyFiles@2
       inputs:
