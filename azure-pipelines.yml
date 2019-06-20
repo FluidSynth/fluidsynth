@@ -46,6 +46,8 @@ jobs:
         cmake --build . --config Release || exit -1
       displayName: 'Compile fluidsynth'
     - script: |
+        @ECHO ON
+        SET "PATH=d:\deps\bin;%PATH%"
         cd build || exit -1
         cmake --build . --config Release --target check || exit -1
       displayName: 'Execute Unittests'
@@ -81,6 +83,8 @@ jobs:
         cmake --build . --config Release || exit -1
       displayName: 'Compile fluidsynth'
     - script: |
+        @ECHO ON
+        SET "PATH=d:\deps\bin;%PATH%"
         cd build || exit -1
         cmake --build . --config Release --target check || exit -1
       displayName: 'Execute Unittests'
@@ -116,6 +120,8 @@ jobs:
         cmake --build . --config Release || exit -1
       displayName: 'Compile fluidsynth'
     - script: |
+        @ECHO ON
+        SET "PATH=d:\deps\bin;%PATH%"
         cd build || exit -1
         cmake --build . --config Release --target check || exit -1
       displayName: 'Execute Unittests'
@@ -147,6 +153,8 @@ jobs:
         cmake --build . --config Release || exit -1
       displayName: 'Compile fluidsynth'
     - script: |
+        @ECHO ON
+        SET "PATH=d:\deps\bin;%PATH%"
         cd build || exit -1
         cmake --build . --config Release --target check || exit -1
       displayName: 'Execute Unittests'
