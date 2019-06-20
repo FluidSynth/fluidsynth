@@ -370,8 +370,9 @@ static IpatchSF2VoiceCache *convert_dls_to_sf2_instrument(fluid_instpatch_font_t
         return NULL;
     }
 
-    g_clear_object(&conv);
-
+    g_object_unref (conv);
+    conv = NULL;
+    
     /* Use voice->user_data to close open cached stores */
     cache->voice_user_data_destroy = fluid_instpatch_on_voice_user_data_destroy;
 
@@ -441,7 +442,8 @@ fluid_instpatch_font_t *new_fluid_instpatch(fluid_sfont_t *sfont, const fluid_fi
     }
 
     /* get rid of the reference we own, we dont need it any longer */
-    g_clear_object(&file);
+    g_object_unref(file);
+    file = NULL;
 
     /* open a reader, this gives us a reference */
     if((reader = ipatch_dls_reader_new(handle)) == NULL)
@@ -455,7 +457,8 @@ fluid_instpatch_font_t *new_fluid_instpatch(fluid_sfont_t *sfont, const fluid_fi
     patchfont->dls = ipatch_dls_reader_load(reader, &err);
 
     /* unref the reader directly afterwards, not needed any longer */
-    g_clear_object(&reader);
+    g_object_unref(reader);
+    reader = NULL;
 
     if(patchfont->dls == NULL)
     {
