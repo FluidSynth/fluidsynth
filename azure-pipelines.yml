@@ -53,13 +53,19 @@ jobs:
       displayName: 'Execute Unittests'
     - task: CopyFiles@2
       inputs:
-          contents: |
+          SourceFolder: '$(Build.SourcesDirectory)'
+          Contents: |
             build\src\Release\*
-            d:\deps\bin\libglib*.dll
-            d:\deps\bin\libgthread*.dll
-            d:\deps\bin\*intl*.dll
-            d:\deps\bin\libsndfile*.dll
-          targetFolder: $(Build.ArtifactStagingDirectory)
+          TargetFolder: $(Build.ArtifactStagingDirectory)
+    - task: CopyFiles@2
+      inputs:
+          SourceFolder: 'd:\deps'
+          Contents: |
+            bin\libglib*.dll
+            bin\libgthread*.dll
+            bin\*intl*.dll
+            bin\libsndfile*.dll
+          TargetFolder: $(Build.ArtifactStagingDirectory)
     - task: PublishBuildArtifacts@1
       inputs:
           pathtoPublish: $(Build.ArtifactStagingDirectory)
@@ -99,13 +105,19 @@ jobs:
       displayName: 'Execute Unittests'
     - task: CopyFiles@2
       inputs:
-          contents: |
+          SourceFolder: '$(Build.SourcesDirectory)'
+          Contents: |
             build\src\Release\*
-            d:\deps\bin\libglib*.dll
-            d:\deps\bin\libgthread*.dll
-            d:\deps\bin\*intl*.dll
-            d:\deps\bin\libsndfile*.dll
-          targetFolder: $(Build.ArtifactStagingDirectory)
+          TargetFolder: $(Build.ArtifactStagingDirectory)
+    - task: CopyFiles@2
+      inputs:
+          SourceFolder: 'd:\deps'
+          Contents: |
+            bin\libglib*.dll
+            bin\libgthread*.dll
+            bin\*intl*.dll
+            bin\libsndfile*.dll
+          TargetFolder: $(Build.ArtifactStagingDirectory)
     - task: PublishBuildArtifacts@1
       inputs:
           pathtoPublish: $(Build.ArtifactStagingDirectory)
