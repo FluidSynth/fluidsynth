@@ -53,7 +53,7 @@ jobs:
       displayName: 'Execute Unittests'
     - script: |
         @ECHO ON
-        copy $(Build.SourcesDirectory)\build\src\Release\* c:\deps\bin\libglib*.dll c:\deps\bin\libgthread*.dll c:\deps\bin\*intl*.dll c:\deps\bin\libsndfile*.dll '$(Build.ArtifactStagingDirectory)'
+        copy /Y $(Build.SourcesDirectory)\build\src\Release\* + c:\deps\bin\libglib*.dll + c:\deps\bin\libgthread*.dll + c:\deps\bin\*intl*.dll + c:\deps\bin\libsndfile*.dll '$(Build.ArtifactStagingDirectory)'
       displayName: 'Copy Artifacts'
     - task: PublishBuildArtifacts@1
       inputs:
@@ -94,7 +94,7 @@ jobs:
       displayName: 'Execute Unittests'
     - script: |
         @ECHO ON
-        copy $(Build.SourcesDirectory)\build\src\Release\* c:\deps\bin\libglib*.dll c:\deps\bin\libgthread*.dll c:\deps\bin\*intl*.dll c:\deps\bin\libsndfile*.dll '$(Build.ArtifactStagingDirectory)'
+        copy /Y $(Build.SourcesDirectory)\build\src\Release\* + c:\deps\bin\libglib*.dll + c:\deps\bin\libgthread*.dll + c:\deps\bin\*intl*.dll + c:\deps\bin\libsndfile*.dll '$(Build.ArtifactStagingDirectory)'
       displayName: 'Copy Artifacts'
     - task: PublishBuildArtifacts@1
       inputs:
