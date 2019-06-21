@@ -53,7 +53,8 @@ jobs:
       displayName: 'Execute Unittests'
     - bash: |
         set -ex
-        cp $(Build.SourcesDirectory)\build\src\Release\* d:\deps\bin\libglib*.dll d:\deps\bin\libgthread*.dll d:\deps\bin\*intl*.dll d:\deps\bin\libsndfile*.dll $(Build.ArtifactStagingDirectory)
+        art_dir=$(echo "$(Build.ArtifactStagingDirectory") | sed 's/\\/\//g' | sed 's|\([a-zA-Z]\):|/\1|')
+        cp build/src/Release/* d:/deps/bin/libglib*.dll d:/deps/bin/libgthread*.dll d:/deps/bin/*intl*.dll d:/deps/bin/libsndfile*.dll $(art_dir)
       displayName: 'Copy Artifacts'
     - task: PublishBuildArtifacts@1
       inputs:
@@ -94,7 +95,8 @@ jobs:
       displayName: 'Execute Unittests'
     - bash: |
         set -ex
-        cp $(Build.SourcesDirectory)\build\src\Release\* d:\deps\bin\libglib*.dll d:\deps\bin\libgthread*.dll d:\deps\bin\*intl*.dll d:\deps\bin\libsndfile*.dll $(Build.ArtifactStagingDirectory)
+        art_dir=$(echo "$(Build.ArtifactStagingDirectory") | sed 's/\\/\//g' | sed 's|\([a-zA-Z]\):|/\1|')
+        cp build/src/Release/* d:/deps/bin/libglib*.dll d:/deps/bin/libgthread*.dll d:/deps/bin/*intl*.dll d:/deps/bin/libsndfile*.dll $(art_dir)
       displayName: 'Copy Artifacts'
     - task: PublishBuildArtifacts@1
       inputs:
