@@ -51,9 +51,9 @@ jobs:
         cd build || exit -1
         cmake --build . --config Release --target check || exit -1
       displayName: 'Execute Unittests'
-    - script: |
-        @ECHO ON
-        copy /Y $(Build.SourcesDirectory)\build\src\Release\* + d:\deps\bin\libglib*.dll + d:\deps\bin\libgthread*.dll + d:\deps\bin\*intl*.dll + d:\deps\bin\libsndfile*.dll '$(Build.ArtifactStagingDirectory)'
+    - bash: |
+        set -ex
+        cp $(Build.SourcesDirectory)\build\src\Release\* d:\deps\bin\libglib*.dll d:\deps\bin\libgthread*.dll d:\deps\bin\*intl*.dll d:\deps\bin\libsndfile*.dll $(Build.ArtifactStagingDirectory)
       displayName: 'Copy Artifacts'
     - task: PublishBuildArtifacts@1
       inputs:
@@ -92,9 +92,9 @@ jobs:
         cd build || exit -1
         cmake --build . --config Release --target check || exit -1
       displayName: 'Execute Unittests'
-    - script: |
-        @ECHO ON
-        copy /Y $(Build.SourcesDirectory)\build\src\Release\* + d:\deps\bin\libglib*.dll + d:\deps\bin\libgthread*.dll + d:\deps\bin\*intl*.dll + d:\deps\bin\libsndfile*.dll '$(Build.ArtifactStagingDirectory)'
+    - bash: |
+        set -ex
+        cp $(Build.SourcesDirectory)\build\src\Release\* d:\deps\bin\libglib*.dll d:\deps\bin\libgthread*.dll d:\deps\bin\*intl*.dll d:\deps\bin\libsndfile*.dll $(Build.ArtifactStagingDirectory)
       displayName: 'Copy Artifacts'
     - task: PublishBuildArtifacts@1
       inputs:
