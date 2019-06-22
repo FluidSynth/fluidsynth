@@ -1,0 +1,67 @@
+image:
+  - Visual Studio 2017
+
+build:
+  parallel: true
+  verbosity: detailed
+
+configuration:
+  - Release
+
+environment:
+  # update the vcpkg cache even if build fails
+  APPVEYOR_SAVE_CACHE_ON_ERROR: true
+
+  matrix:
+      - platform: x86
+        CMAKE_FLAGS: 
+        
+      - platform: x86
+        CMAKE_FLAGS: -Denable-network=0
+
+      - platform: x86
+        CMAKE_FLAGS: -DBUILD_SHARED_LIBS=0
+
+      - platform: x64
+        CMAKE_FLAGS: 
+
+      - platform: x64
+        CMAKE_FLAGS: -Denable-network=0
+
+      - platform: x64
+        CMAKE_FLAGS: -DBUILD_SHARED_LIBS=0
+
+#      - platform: ARM ## currently fails to build pcre:arm-windows
+
+cache:
+  - c:\Tools\vcpkg\installed
+
+init:
+  - set TARGET_PLATFORM=
+  - if "%platform%"=="x64" ( set TARGET_PLATFORM= Win64)
+  - if "%platform%"=="ARM" ( set TARGET_PLATFORM= ARM)
+  - echo %TARGET_PLATFORM%
+  - echo %APPVEYOR_BUILD_WORKER_IMAGE%
+  - if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2017" ( set "generator=Visual Studio 15 2017%TARGET_PLATFORM%" && set "toolset=v141_xp" )
+  - if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2015" ( set "generator=Visual Studio 14 2015%TARGET_PLATFORM%" && set "toolset=v140_xp" )
+  - echo %generator%
+  - echo %toolset%
+  
+install:
+# make sure the latest version of git is installed
+  - choco upgrade git -y
+  - vcpkg install glib:%platform%-windows
+
+build_script:
+  - mkdir build
+  - cd build
+  - cmake -G "%generator%" -T "%toolset%" %CMAKE_FLAGS% -Denable-pkgconfig=0 -DCMAKE_TOOLCHAIN_FILE=c:/Tools/vcpkg/scripts/buildsystems/vcpkg.cmake ..
+  - cmake --build . --config Release # build libfluidsynth and fluidsynth exec
+  - cmake --build . --config Release --target check # build and exec unittests
+
+after_build:
+  - 7z a fluidsynth-vcpkg-%platform%.zip %APPVEYOR_BUILD_FOLDER%\build\src\Release\*
+
+artifacts:
+  - path: build/fluidsynth-vcpkg-%platform%.zip
+    name: FluidSynth
