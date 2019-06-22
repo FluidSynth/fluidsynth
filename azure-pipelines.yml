@@ -83,3 +83,47 @@ jobs:
       inputs:
           pathtoPublish: $(Build.ArtifactStagingDirectory)
           artifactName: $(artifact-name)
+
+- job: Windows
+  strategy:
+    matrix:
+      default:
+        CMAKE_FLAGS: 
+        gtk-bundle: $(gtk-bundle-x64)
+        libsndfile-url: $(libsndfile-url-x64)
+      no_network:
+        CMAKE_FLAGS: -Denable-network=0
+        gtk-bundle: $(gtk-bundle-x64)
+        libsndfile-url: $(libsndfile-url-x64)
+      static_lib:
+        CMAKE_FLAGS: -DBUILD_SHARED_LIBS=0
+        gtk-bundle: $(gtk-bundle-x64)
+        libsndfile-url: $(libsndfile-url-x64)
+  pool:
+    vmImage: 'windows-2019'
+  steps:
+    - script: |
+        @ECHO ON
+        mkdir d:\deps || exit -1
+        cd d:\deps || exit -1
+        curl -LfsS -o gtk-bundle-dev.zip $(gtk-bundle) || exit -1
+        curl -LfsS -o libsndfile-dev.zip $(libsndfile-url) || exit -1
+        7z x -aos -- gtk-bundle-dev.zip > NUL || exit -1
+        7z x -aos -- libsndfile-dev.zip > NUL || exit -1
+        REM need to fix the naming of libsndfile otherwise the linker won't find it
+        mv lib\libsndfile-1.lib lib\sndfile.lib || exit -1
+        mv lib\libsndfile-1.def lib\sndfile.def || exit -1
+      displayName: 'Prerequisites'
+    - script: |
+        @ECHO ON
+        SET "PATH=d:\deps\bin;%PATH%"
+        mkdir build && cd build || exit -1
+        cmake -A x64 -DCMAKE_INSTALL_PREFIX=$HOME/fluidsynth_install -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_VERBOSE_MAKEFILE=0 .. || exit -1
+        cmake --build . --config Release || exit -1
+      displayName: 'Compile fluidsynth'
+    - script: |
+        @ECHO ON
+        SET "PATH=d:\deps\bin;%PATH%"
+        cd build || exit -1
+        cmake --build . --config Release --target check || exit -1
+      displayName: 'Execute Unittests'
