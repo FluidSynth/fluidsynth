@@ -72,7 +72,7 @@ jobs:
         REM need to fix the naming of libsndfile otherwise the linker won't find it
         mv lib\libsndfile-1.lib lib\sndfile.lib || exit -1
         mv lib\libsndfile-1.def lib\sndfile.def || exit -1
-        mv --force $(Build.ArtifactStagingDirectory)\libinstpatch-$(platform)\* $(Build.ArtifactStagingDirectory)
+        for %F in ($(Build.ArtifactStagingDirectory)\libinstpatch-$(platform)\*.*) do move /Y %F $(Build.ArtifactStagingDirectory)
         rmdir $(Build.ArtifactStagingDirectory)\libinstpatch-$(platform)\
       displayName: 'Prerequisites'
     - script: |
@@ -91,7 +91,7 @@ jobs:
     - bash: |
         set -ex
         art_dir=$(echo "$(Build.ArtifactStagingDirectory)" | sed 's/\\/\//g' | sed 's|\([a-zA-Z]\):|/\1|')
-        cp build/src/Release/* d:/deps/bin/libglib*.dll d:/deps/bin/libgthread*.dll d:/deps/bin/*intl*.dll d:/deps/bin/libsndfile*.dll $art_dir
+        cp -u build/src/Release/* d:/deps/bin/libglib*.dll d:/deps/bin/libgthread*.dll d:/deps/bin/*intl*.dll d:/deps/bin/libsndfile*.dll $art_dir
       displayName: 'Copy Artifacts'
     - task: PublishBuildArtifacts@1
       inputs:
