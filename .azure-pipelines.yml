@@ -53,6 +53,14 @@ jobs:
   pool:
     vmImage: $(imageName)
   steps:
+    - task: DownloadBuildArtifacts@0
+      inputs:
+        buildType: specific
+        # https://dev.azure.com/tommbrt/_apis/projects?api-version=5.0
+        project: 'd3638885-de4a-4ce7-afe7-f237ae461c07'
+        pipeline: 1
+        artifactName: libinstpatch
+      displayName: 'Get libinstpatch'
     - script: |
         @ECHO ON
         mkdir d:\deps || exit -1
