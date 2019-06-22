@@ -24,24 +24,28 @@ jobs:
     matrix:
       VS2017_XP_x86:
         platform: Win32
+        toolset: v141_xp
         gtk-bundle: $(gtk-bundle-x86)
         libsndfile-url: $(libsndfile-url-x86)
         artifact-name: "fluidsynth-WinXP-x86"
         imageName: 'vs2017-win2016'
       VS2017_XP_x64:
         platform: x64
+        toolset: v141_xp
         gtk-bundle: $(gtk-bundle-x64)
         libsndfile-url: $(libsndfile-url-x64)
         artifact-name: "fluidsynth-WinXP-x64"
         imageName: 'vs2017-win2016'
       VS2019_x86:
         platform: Win32
+        toolset: v142
         gtk-bundle: $(gtk-bundle-x86)
         libsndfile-url: $(libsndfile-url-x86)
         artifact-name: "fluidsynth-Win10-x86"
         imageName: 'windows-2019'
       VS2019_x64:
         platform: x64
+        toolset: v142
         gtk-bundle: $(gtk-bundle-x64)
         libsndfile-url: $(libsndfile-url-x64)
         artifact-name: "fluidsynth-Win10-x64"
@@ -65,7 +69,7 @@ jobs:
         @ECHO ON
         SET "PATH=d:\deps\bin;%PATH%"
         mkdir build && cd build || exit -1
-        cmake -A $(platform) -DCMAKE_INSTALL_PREFIX=$HOME/fluidsynth_install -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_VERBOSE_MAKEFILE=0 .. || exit -1
+        cmake -A $(platform) -T $(toolset) -DCMAKE_INSTALL_PREFIX=$HOME/fluidsynth_install -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_VERBOSE_MAKEFILE=0 .. || exit -1
         cmake --build . --config Release || exit -1
       displayName: 'Compile fluidsynth'
     - script: |
