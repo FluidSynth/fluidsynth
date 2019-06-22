@@ -96,7 +96,7 @@ jobs:
         cd build
         cmake --build . --target install || exit -1
         art_dir=$(echo "$(Build.ArtifactStagingDirectory)" | sed 's/\\/\//g' | sed 's|\([a-zA-Z]\):|/\1|')
-        cp -u build/src/Release/* d:/deps/bin/libglib*.dll d:/deps/bin/libgthread*.dll d:/deps/bin/*intl*.dll d:/deps/bin/libsndfile*.dll $art_dir
+        cp -u d:/deps/bin/libglib*.dll d:/deps/bin/libgthread*.dll d:/deps/bin/*intl*.dll d:/deps/bin/libsndfile*.dll $art_dir
       displayName: 'Copy Artifacts'
     - task: PublishBuildArtifacts@1
       inputs:
