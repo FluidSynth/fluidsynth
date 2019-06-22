@@ -77,6 +77,7 @@ jobs:
         mv -f * ..
         cd ..
         rmdir $(Build.ArtifactStagingDirectory)\libinstpatch-$(platform)\
+        dir $(Build.ArtifactStagingDirectory)
       displayName: 'Prerequisites'
     - script: |
         @ECHO ON
@@ -95,8 +96,7 @@ jobs:
         set -ex
         cd build
         cmake --build . --target install || exit -1
-        art_dir=$(echo "$(Build.ArtifactStagingDirectory)" | sed 's/\\/\//g' | sed 's|\([a-zA-Z]\):|/\1|')
-        cp -u d:/deps/bin/libglib*.dll d:/deps/bin/libgthread*.dll d:/deps/bin/*intl*.dll d:/deps/bin/libsndfile*.dll $art_dir
+        dir $(Build.ArtifactStagingDirectory)
       displayName: 'Copy Artifacts'
     - task: PublishBuildArtifacts@1
       inputs:
