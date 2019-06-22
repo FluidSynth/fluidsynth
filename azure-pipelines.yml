@@ -84,7 +84,7 @@ jobs:
           pathtoPublish: $(Build.ArtifactStagingDirectory)
           artifactName: $(artifact-name)
 
-- job: Windows
+- job: WindowsCI
   strategy:
     matrix:
       default:
