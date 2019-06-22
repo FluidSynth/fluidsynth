@@ -59,7 +59,7 @@ jobs:
         # https://dev.azure.com/tommbrt/_apis/projects?api-version=5.0
         project: 'd3638885-de4a-4ce7-afe7-f237ae461c07'
         pipeline: 1
-        artifactName: libinstpatch
+        artifactName: libinstpatch-$(platform)
       displayName: 'Get libinstpatch'
     - script: |
         @ECHO ON
