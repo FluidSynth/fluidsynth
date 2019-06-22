@@ -77,7 +77,6 @@ jobs:
         mv -f * ..
         cd ..
         rmdir $(Build.ArtifactStagingDirectory)\libinstpatch-$(platform)\
-        dir $(Build.ArtifactStagingDirectory)
       displayName: 'Prerequisites'
     - script: |
         @ECHO ON
@@ -96,7 +95,6 @@ jobs:
         @ECHO ON
         cd build
         cmake --build . --target install || exit -1
-        dir $(Build.ArtifactStagingDirectory)
       displayName: 'Copy Artifacts'
     - task: PublishBuildArtifacts@1
       inputs:
