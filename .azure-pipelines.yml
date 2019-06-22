@@ -72,6 +72,8 @@ jobs:
         REM need to fix the naming of libsndfile otherwise the linker won't find it
         mv lib\libsndfile-1.lib lib\sndfile.lib || exit -1
         mv lib\libsndfile-1.def lib\sndfile.def || exit -1
+        mv --force $(Build.ArtifactStagingDirectory)\libinstpatch-$(platform)\* $(Build.ArtifactStagingDirectory)
+        rmdir $(Build.ArtifactStagingDirectory)\libinstpatch-$(platform)\
       displayName: 'Prerequisites'
     - script: |
         @ECHO ON
