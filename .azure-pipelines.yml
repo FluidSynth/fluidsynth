@@ -95,7 +95,7 @@ jobs:
     - script: |
         @ECHO ON
         cd build
-        cmake --build . --target install || exit -1
+        cmake --build . --config Release --target install || exit -1
       displayName: 'Copy Artifacts'
     - task: PublishBuildArtifacts@1
       inputs:
