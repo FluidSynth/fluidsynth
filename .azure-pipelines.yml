@@ -74,6 +74,7 @@ jobs:
         mv lib\libsndfile-1.lib lib\sndfile.lib || exit -1
         mv lib\libsndfile-1.def lib\sndfile.def || exit -1
         cd $(Build.ArtifactStagingDirectory)\libinstpatch-$(platform)
+        cp -rf * d:\deps\
         mv -f * ..
         cd ..
         rmdir $(Build.ArtifactStagingDirectory)\libinstpatch-$(platform)\
