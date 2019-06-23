@@ -27,28 +27,28 @@ jobs:
         toolset: v141_xp
         gtk-bundle: $(gtk-bundle-x86)
         libsndfile-url: $(libsndfile-url-x86)
-        artifact-name: "fluidsynth-WinXP-x86"
+        artifact-prefix: "fluidsynth-WinXP"
         imageName: 'vs2017-win2016'
       VS2017_XP_x64:
         platform: x64
         toolset: v141_xp
         gtk-bundle: $(gtk-bundle-x64)
         libsndfile-url: $(libsndfile-url-x64)
-        artifact-name: "fluidsynth-WinXP-x64"
+        artifact-prefix: "fluidsynth-WinXP"
         imageName: 'vs2017-win2016'
       VS2019_x86:
         platform: Win32
         toolset: v142
         gtk-bundle: $(gtk-bundle-x86)
         libsndfile-url: $(libsndfile-url-x86)
-        artifact-name: "fluidsynth-Win10-x86"
+        artifact-prefix: "fluidsynth-Win10"
         imageName: 'windows-2019'
       VS2019_x64:
         platform: x64
         toolset: v142
         gtk-bundle: $(gtk-bundle-x64)
         libsndfile-url: $(libsndfile-url-x64)
-        artifact-name: "fluidsynth-Win10-x64"
+        artifact-prefix: "fluidsynth-Win10"
         imageName: 'windows-2019'
   pool:
     vmImage: $(imageName)
@@ -103,7 +103,7 @@ jobs:
     - task: PublishBuildArtifacts@1
       inputs:
           pathtoPublish: $(Build.ArtifactStagingDirectory)
-          artifactName: $(artifact-name)
+          artifactName: $(artifact-prefix)-$(platform)
 
 - job: WindowsCI
   strategy:
