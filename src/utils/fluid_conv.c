@@ -160,7 +160,7 @@ fluid_tc2sec_delay(fluid_real_t tc)
         tc = (fluid_real_t) 5000.0f;
     }
 
-    return (fluid_real_t) pow(2.0, tc / 1200.f);
+    return (fluid_real_t) pow(2.f, tc / 1200.f);
 }
 
 /*
@@ -221,7 +221,7 @@ fluid_tc2sec_release(fluid_real_t tc)
         tc = (fluid_real_t) -12000.f;
     };
 
-    if(tc > 8000f.)
+    if(tc > 8000.f)
     {
         tc = (fluid_real_t) 8000.f;
     };
