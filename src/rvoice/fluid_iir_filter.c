@@ -73,7 +73,7 @@ fluid_iir_filter_apply(fluid_iir_filter_t *iir_filter,
         /* filter (implement the voice filter according to SoundFont standard) */
 
         /* Check for denormal number (too close to zero). */
-        if(fabs(dsp_hist1) < 1e-20)
+        if(fabs(dsp_hist1) < 1e-20f)
         {
             dsp_hist1 = 0.0f;    /* FIXME JMG - Is this even needed? */
         }
@@ -109,7 +109,7 @@ fluid_iir_filter_apply(fluid_iir_filter_t *iir_filter,
                     dsp_b1 += dsp_b1_incr;
 
                     /* Compensate history to avoid the filter going havoc with large frequency changes */
-                    if(iir_filter->compensate_incr && fabs(dsp_b02) > 0.001)
+                    if(iir_filter->compensate_incr && fabs(dsp_b02) > 0.001f)
                     {
                         fluid_real_t compensate = old_b02 / dsp_b02;
                         dsp_hist1 *= compensate;
@@ -352,10 +352,10 @@ fluid_iir_filter_calculate_coefficients(fluid_iir_filter_t *iir_filter,
             iir_filter->b02_incr = (b02_temp - iir_filter->b02) / transition_samples;
             iir_filter->b1_incr = (b1_temp - iir_filter->b1) / transition_samples;
 
-            if(fabs(iir_filter->b02) > 0.0001)
+            if(fabs(iir_filter->b02) > 0.0001f)
             {
                 fluid_real_t quota = b02_temp / iir_filter->b02;
-                iir_filter->compensate_incr = quota < 0.5 || quota > 2;
+                iir_filter->compensate_incr = quota < 0.5f || quota > 2.f;
             }
 
             /* Have to add the increments filter_coeff_incr_count times. */
@@ -393,13 +393,13 @@ void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
     {
         fres = 0.45f * output_rate;
     }
-    else if(fres < 5)
+    else if(fres < 5.f)
     {
-        fres = 5;
+        fres = 5.f;
     }
 
     /* if filter enabled and there is a significant frequency change.. */
-    if(iir_filter->type != FLUID_IIR_DISABLED && fabs(fres - iir_filter->last_fres) > 0.01)
+    if(iir_filter->type != FLUID_IIR_DISABLED && fabs(fres - iir_filter->last_fres) > 0.01f)
     {
         /* The filter coefficients have to be recalculated (filter
          * parameters have changed). Recalculation for various reasons is
