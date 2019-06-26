@@ -786,7 +786,7 @@ static void update_rev_time_damping(fluid_late *late,
         /* Preserve the square of R */
         alpha2 = 1.f / (1.f - ai_tmp / ((20.f / 80.f) * log(gi_tmp)));
 
-        alpha = sqrt(alpha); /* R */
+        alpha = sqrt(alpha2); /* R */
     }
 
     /* updates tone corrector coefficients b1,b2 from alpha */
