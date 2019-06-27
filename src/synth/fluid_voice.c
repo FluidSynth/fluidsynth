@@ -1745,7 +1745,7 @@ fluid_voice_get_lower_boundary_for_attenuation(fluid_voice_t *voice)
                     || (mod->flags2 & FLUID_MOD_BIPOLAR)
                     || (mod->amount < 0))
             {
-                min_val = 0.f - min_val; /* min_val = - |amount|*/
+                min_val = -min_val; /* min_val = - |amount|*/
             }
             else
             {
