@@ -1732,7 +1732,7 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
 
             case RPN_CHANNEL_FINE_TUNE:   /* Fine tune is 14 bit over +/-1 semitone (+/- 100 cents, 8192 = center) */
                 fluid_synth_set_gen_LOCAL(synth, channum, GEN_FINETUNE,
-                                          (data - 8192) / 8192.0 * 100.0);
+                                          (float)(data - 8192) * (100.0f / 8192.0f));
                 break;
 
             case RPN_CHANNEL_COARSE_TUNE: /* Coarse tune is 7 bit and in semitones (64 is center) */
@@ -5349,8 +5349,8 @@ fluid_synth_set_chorus_full_LOCAL(fluid_synth_t *synth, int set, int nr, double 
 int
 fluid_synth_get_chorus_nr(fluid_synth_t *synth)
 {
-    double result;
-    fluid_return_val_if_fail(synth != NULL, 0.0);
+    int result;
+    fluid_return_val_if_fail(synth != NULL, 0);
     fluid_synth_api_enter(synth);
 
     result = synth->chorus_nr;
@@ -5413,8 +5413,8 @@ fluid_synth_get_chorus_depth(fluid_synth_t *synth)
 int
 fluid_synth_get_chorus_type(fluid_synth_t *synth)
 {
-    double result;
-    fluid_return_val_if_fail(synth != NULL, 0.0);
+    int result;
+    fluid_return_val_if_fail(synth != NULL, 0);
     fluid_synth_api_enter(synth);
 
     result = synth->chorus_type;
