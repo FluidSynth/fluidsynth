@@ -96,7 +96,7 @@ jobs:
         del $(Build.ArtifactStagingDirectory)\bin\concrt*.dll
         del $(Build.ArtifactStagingDirectory)\bin\vcruntime*.dll
         del $(Build.ArtifactStagingDirectory)\bin\msvcp*.dll
-        del /f /s $(Build.ArtifactStagingDirectory)\include\libinstpatch*
+        rd $(Build.ArtifactStagingDirectory)\include\libinstpatch* /s /q
       displayName: 'Copy Artifacts'
     - task: PublishBuildArtifacts@1
       inputs:
