@@ -334,8 +334,8 @@ elseif ( WIN32 )
   if ( MINGW )
     set_target_properties ( libfluidsynth
       PROPERTIES
-        LINK_FLAGS "-Wl,--output-def,${ARCHIVE_OUTPUT_DIRECTORY}/fluidsynth.def -Wl,--out-implib,${ARCHIVE_OUTPUT_DIRECTORY}/fluidsynth.lib" )
-    install(FILES ${ARCHIVE_OUTPUT_DIRECTORY}/fluidsynth.def ${ARCHIVE_OUTPUT_DIRECTORY}/fluidsynth.lib DESTINATION ${LIB_INSTALL_DIR})
+        LINK_FLAGS "-Wl,--output-def,${CMAKE_CURRENT_BINARY_DIR}/fluidsynth.def -Wl,--out-implib,${CMAKE_CURRENT_BINARY_DIR}/fluidsynth.lib" )
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/fluidsynth.def ${CMAKE_CURRENT_BINARY_DIR}/fluidsynth.lib DESTINATION ${LIB_INSTALL_DIR})
   endif ( MINGW )
 else ( MACOSX_FRAMEWORK )
   set_target_properties ( libfluidsynth
