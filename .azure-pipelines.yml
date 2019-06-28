@@ -23,6 +23,7 @@ jobs:
   strategy:
     matrix:
       XP_x86:
+        CMAKE_FLAGS: -DCMAKE_C_FLAGS="-march=i586"
         platform: Win32
         toolset: v141_xp
         gtk-bundle: $(gtk-bundle-x86)
@@ -31,6 +32,7 @@ jobs:
         artifact-prefix: "fluidsynth"
         imageName: 'vs2017-win2016'
       XP_x64:
+        CMAKE_FLAGS: 
         platform: x64
         toolset: v141_xp
         gtk-bundle: $(gtk-bundle-x64)
@@ -76,20 +78,26 @@ jobs:
     - script: |
         @ECHO ON
         SET "PATH=d:\deps\bin;%PATH%"
+        REM remove that path from PATH to make sure sh.exe is not found (cmake will complain otherwise)
+        set PATH=%PATH:C:\Program Files\Git\bin;=%
+        echo %PATH%
+        echo %CFLAGS%
         mkdir build && cd build || exit -1
-        cmake -G "MinGW Makefiles" -DCMAKE_INSTALL_PREFIX=$(Build.ArtifactStagingDirectory) -DCMAKE_BUILD_TYPE=Release -DCMAKE_VERBOSE_MAKEFILE=0 .. || exit -1
-        cmake --build . --config Release || exit -1
+        cmake -G "MinGW Makefiles" -DCMAKE_INSTALL_PREFIX=$(Build.ArtifactStagingDirectory) $(CMAKE_FLAGS) -DCMAKE_BUILD_TYPE=Release -DCMAKE_VERBOSE_MAKEFILE=1 .. || exit -1
+        mingw32-make.exe all || exit -1
       displayName: 'Compile fluidsynth'
     - script: |
         @ECHO ON
         SET "PATH=d:\deps\bin;%PATH%"
+        REM remove that path from PATH to make sure sh.exe is not found (cmake will complain otherwise)
+        set PATH=%PATH:C:\Program Files\Git\bin;=%
         cd build || exit -1
-        cmake --build . --config Release --target check || exit -1
+        mingw32-make.exe check || exit -1
       displayName: 'Execute Unittests'
     - script: |
         @ECHO ON
         cd build
-        cmake --build . --config Release --target install || exit -1
+        mingw32-make.exe install || exit -1
         del $(Build.ArtifactStagingDirectory)\bin\concrt*.dll
         del $(Build.ArtifactStagingDirectory)\bin\vcruntime*.dll
         del $(Build.ArtifactStagingDirectory)\bin\msvcp*.dll
