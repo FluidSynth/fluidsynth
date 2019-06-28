@@ -61,21 +61,13 @@ jobs:
         curl -LfsS -o mingw.zip $(mingw-url) || exit -1
         7z x -aos -- gtk-bundle-dev.zip > NUL || exit -1
         7z x -aos -- libsndfile-dev.zip > NUL || exit -1
-        dir /s .
+        7z x -aos -- mingw.zip > NUL || exit -1
+        dir .
         REM need to fix the naming of libsndfile otherwise the linker won't find it
         mv lib\libsndfile-1.lib lib\sndfile.lib || exit -1
         mv lib\libsndfile-1.def lib\sndfile.def || exit -1
-        7z x -aos -- mingw.zip > NUL || exit -1
-        cd mingw*
-        mv -f * ..
-        cd ..
-        rmdir mingw*
-        dir /s .
-        cd $(Build.ArtifactStagingDirectory)\libinstpatch-$(platform)
-        cp -rf * d:\deps\
-        mv -f * ..
-        cd ..
-        rmdir $(Build.ArtifactStagingDirectory)\libinstpatch-$(platform)\
+        cd mingw*\ && mv -f * .. && cd .. && rmdir mingw* || exit -1
+        cd $(Build.ArtifactStagingDirectory)\libinstpatch-$(platform) && cp -rf * d:\deps\ && mv -f * .. && cd .. &&  rmdir $(Build.ArtifactStagingDirectory)\libinstpatch-$(platform)\ || exit -1
       displayName: 'Prerequisites'
     - script: |
         @ECHO ON
