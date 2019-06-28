@@ -24,18 +24,18 @@ jobs:
     matrix:
       VS2017_XP_x86:
         platform: Win32
-        toolset: v141_xp
+        toolset: v140_xp
         gtk-bundle: $(gtk-bundle-x86)
         libsndfile-url: $(libsndfile-url-x86)
         artifact-prefix: "fluidsynth"
-        imageName: 'vs2017-win2016'
+        imageName: 'vs2015-win2012r2'
       VS2017_XP_x64:
         platform: x64
-        toolset: v141_xp
+        toolset: v140_xp
         gtk-bundle: $(gtk-bundle-x64)
         libsndfile-url: $(libsndfile-url-x64)
         artifact-prefix: "fluidsynth"
-        imageName: 'vs2017-win2016'
+        imageName: 'vs2015-win2012r2'
   pool:
     vmImage: $(imageName)
   steps:
