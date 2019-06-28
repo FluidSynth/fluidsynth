@@ -23,7 +23,7 @@ jobs:
   strategy:
     matrix:
       XP_x86:
-        CMAKE_FLAGS: -DCMAKE_C_FLAGS="-march=i586"
+        CMAKE_FLAGS: -DCMAKE_C_FLAGS="-m32"
         platform: Win32
         toolset: v141_xp
         gtk-bundle: $(gtk-bundle-x86)
@@ -61,6 +61,7 @@ jobs:
         curl -LfsS -o mingw.zip $(mingw-url) || exit -1
         7z x -aos -- gtk-bundle-dev.zip > NUL || exit -1
         7z x -aos -- libsndfile-dev.zip > NUL || exit -1
+        dir /s .
         REM need to fix the naming of libsndfile otherwise the linker won't find it
         mv lib\libsndfile-1.lib lib\sndfile.lib || exit -1
         mv lib\libsndfile-1.def lib\sndfile.def || exit -1
@@ -69,6 +70,7 @@ jobs:
         mv -f * ..
         cd ..
         rmdir mingw*
+        dir /s .
         cd $(Build.ArtifactStagingDirectory)\libinstpatch-$(platform)
         cp -rf * d:\deps\
         mv -f * ..
@@ -83,6 +85,7 @@ jobs:
         set PATH=%PATH:C:\Program Files\Git\usr\bin;=%
         echo %PATH%
         echo %CFLAGS%
+        pkg-config --list-all
         mkdir build && cd build || exit -1
         cmake -G "MinGW Makefiles" -DCMAKE_INSTALL_PREFIX=$(Build.ArtifactStagingDirectory) $(CMAKE_FLAGS) -DCMAKE_BUILD_TYPE=Release -DCMAKE_VERBOSE_MAKEFILE=1 .. || exit -1
         mingw32-make.exe all || exit -1
