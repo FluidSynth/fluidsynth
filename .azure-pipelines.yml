@@ -75,8 +75,6 @@ jobs:
         REM remove that path from PATH to make sure sh.exe is not found (cmake will complain otherwise)
         set PATH=%PATH:C:\Program Files\Git\bin;=%
         set PATH=%PATH:C:\Program Files\Git\usr\bin;=%
-        echo %PATH%
-        echo %CFLAGS%
         pkg-config --list-all
         mkdir build && cd build || exit -1
         cmake -G "MinGW Makefiles" -DCMAKE_INSTALL_PREFIX=$(Build.ArtifactStagingDirectory) $(CMAKE_FLAGS) -Denable-readline=0 -Denable-floats=1 -DCMAKE_BUILD_TYPE=Release -DCMAKE_VERBOSE_MAKEFILE=1 .. || exit -1
@@ -98,6 +96,7 @@ jobs:
         del $(Build.ArtifactStagingDirectory)\bin\concrt*.dll
         del $(Build.ArtifactStagingDirectory)\bin\vcruntime*.dll
         del $(Build.ArtifactStagingDirectory)\bin\msvcp*.dll
+        del /f /s $(Build.ArtifactStagingDirectory)\include\libinstpatch*
       displayName: 'Copy Artifacts'
     - task: PublishBuildArtifacts@1
       inputs:
