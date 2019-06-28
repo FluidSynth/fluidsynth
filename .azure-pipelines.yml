@@ -22,26 +22,23 @@ jobs:
 - job: Windows
   strategy:
     matrix:
-      VS2015_XP_x86:
+      XP_x86:
         platform: Win32
-        toolset: v140_xp
+        toolset: v141_xp
         gtk-bundle: $(gtk-bundle-x86)
         libsndfile-url: $(libsndfile-url-x86)
         artifact-prefix: "fluidsynth"
-        imageName: 'vs2015-win2012r2'
-      VS2015_XP_x64:
+        imageName: 'vs2017-win2016'
+      XP_x64:
         platform: x64
-        toolset: v140_xp
+        toolset: v141_xp
         gtk-bundle: $(gtk-bundle-x64)
         libsndfile-url: $(libsndfile-url-x64)
         artifact-prefix: "fluidsynth"
-        imageName: 'vs2015-win2012r2'
+        imageName: 'vs2017-win2016'
   pool:
     vmImage: $(imageName)
   steps:
-    - script: |
-        choco install 7zip
-      displayName: 'Choco'
     - task: DownloadBuildArtifacts@0
       inputs:
         buildType: specific
