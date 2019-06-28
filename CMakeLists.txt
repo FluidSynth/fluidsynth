@@ -207,7 +207,6 @@ if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang" OR CMAKE_C_
 endif ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang" OR CMAKE_C_COMPILER_ID STREQUAL "Intel" )
 
 # Windows
-unset ( WINDOWS_SUPPORT CACHE )
 unset ( WINDOWS_LIBS CACHE )
 unset ( DSOUND_SUPPORT CACHE )
 unset ( WAVEOUT_SUPPORT CACHE )
@@ -221,8 +220,6 @@ if ( WIN32 )
   check_include_file ( io.h HAVE_IO_H )
   check_include_file ( dsound.h HAVE_DSOUND_H )
   check_include_files ( "windows.h;mmsystem.h" HAVE_MMSYSTEM_H )
-
-  set ( WINDOWS_SUPPORT ${HAVE_WINDOWS_H} )
 
   if ( enable-network )
     set ( WINDOWS_LIBS "${WINDOWS_LIBS};ws2_32" )
