@@ -23,21 +23,17 @@ jobs:
   strategy:
     matrix:
       XP_x86:
-        CMAKE_FLAGS: -DCMAKE_C_FLAGS="-m32"
         platform: Win32
         toolset: v141_xp
         gtk-bundle: $(gtk-bundle-x86)
         libsndfile-url: $(libsndfile-url-x86)
-        mingw-url: $(mingw-url-x86)
         artifact-prefix: "fluidsynth"
         imageName: 'vs2017-win2016'
       XP_x64:
-        CMAKE_FLAGS: 
         platform: x64
         toolset: v141_xp
         gtk-bundle: $(gtk-bundle-x64)
         libsndfile-url: $(libsndfile-url-x64)
-        mingw-url: $(mingw-url-x64)
         artifact-prefix: "fluidsynth"
         imageName: 'vs2017-win2016'
   pool:
@@ -58,45 +54,37 @@ jobs:
         cd d:\deps || exit -1
         curl -LfsS -o gtk-bundle-dev.zip $(gtk-bundle) || exit -1
         curl -LfsS -o libsndfile-dev.zip $(libsndfile-url) || exit -1
-        curl -LfsS -o mingw.zip $(mingw-url) || exit -1
         7z x -aos -- gtk-bundle-dev.zip > NUL || exit -1
         7z x -aos -- libsndfile-dev.zip > NUL || exit -1
-        7z x -aos -- mingw.zip > NUL || exit -1
-        rm *.zip
         REM need to fix the naming of libsndfile otherwise the linker won't find it
         mv lib\libsndfile-1.lib lib\sndfile.lib || exit -1
         mv lib\libsndfile-1.def lib\sndfile.def || exit -1
-        cd mingw*\ && cp -rf * .. && cd .. && rm -rf mingw* || exit -1
-        cd $(Build.ArtifactStagingDirectory)\libinstpatch-$(platform) && cp -rf * d:\deps\ && mv -f * .. && cd .. &&  rmdir $(Build.ArtifactStagingDirectory)\libinstpatch-$(platform)\ || exit -1
+        cd $(Build.ArtifactStagingDirectory)\libinstpatch-$(platform)
+        cp -rf * d:\deps\
+        mv -f * ..
+        cd ..
+        rmdir $(Build.ArtifactStagingDirectory)\libinstpatch-$(platform)\
       displayName: 'Prerequisites'
     - script: |
         @ECHO ON
         SET "PATH=d:\deps\bin;%PATH%"
-        REM remove that path from PATH to make sure sh.exe is not found (cmake will complain otherwise)
-        set PATH=%PATH:C:\Program Files\Git\bin;=%
-        set PATH=%PATH:C:\Program Files\Git\usr\bin;=%
-        pkg-config --list-all
         mkdir build && cd build || exit -1
-        cmake -G "MinGW Makefiles" -DCMAKE_INSTALL_PREFIX=$(Build.ArtifactStagingDirectory) $(CMAKE_FLAGS) -Denable-readline=0 -Denable-floats=1 -DCMAKE_BUILD_TYPE=Release -DCMAKE_VERBOSE_MAKEFILE=1 .. || exit -1
-        mingw32-make.exe all || exit -1
+        cmake -A $(platform) -T $(toolset) -DCMAKE_INSTALL_PREFIX=$(Build.ArtifactStagingDirectory) -DCMAKE_BUILD_TYPE=Release -DCMAKE_VERBOSE_MAKEFILE=0 .. || exit -1
+        cmake --build . --config Release || exit -1
       displayName: 'Compile fluidsynth'
     - script: |
         @ECHO ON
         SET "PATH=d:\deps\bin;%PATH%"
-        REM remove that path from PATH to make sure sh.exe is not found (cmake will complain otherwise)
-        set PATH=%PATH:C:\Program Files\Git\bin;=%
-        set PATH=%PATH:C:\Program Files\Git\usr\bin;=%
         cd build || exit -1
-        mingw32-make.exe check || exit -1
+        cmake --build . --config Release --target check || exit -1
       displayName: 'Execute Unittests'
     - script: |
         @ECHO ON
         cd build
-        mingw32-make.exe install || exit -1
+        cmake --build . --config Release --target install || exit -1
         del $(Build.ArtifactStagingDirectory)\bin\concrt*.dll
         del $(Build.ArtifactStagingDirectory)\bin\vcruntime*.dll
         del $(Build.ArtifactStagingDirectory)\bin\msvcp*.dll
-        rd $(Build.ArtifactStagingDirectory)\include\libinstpatch* /s /q
       displayName: 'Copy Artifacts'
     - task: PublishBuildArtifacts@1
       inputs:

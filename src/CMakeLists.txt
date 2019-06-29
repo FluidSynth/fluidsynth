@@ -330,13 +330,6 @@ elseif ( WIN32 )
       VERSION ${LIB_VERSION_INFO}
       SOVERSION ${LIB_VERSION_CURRENT}
     )
-  # make sure mingw generates the import lib
-  if ( MINGW )
-    set_target_properties ( libfluidsynth
-      PROPERTIES
-        LINK_FLAGS "-Wl,--output-def,${CMAKE_CURRENT_BINARY_DIR}/fluidsynth.def -Wl,--out-implib,${CMAKE_CURRENT_BINARY_DIR}/fluidsynth.lib" )
-    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/fluidsynth.def ${CMAKE_CURRENT_BINARY_DIR}/fluidsynth.lib DESTINATION ${LIB_INSTALL_DIR})
-  endif ( MINGW )
 else ( MACOSX_FRAMEWORK )
   set_target_properties ( libfluidsynth
     PROPERTIES
