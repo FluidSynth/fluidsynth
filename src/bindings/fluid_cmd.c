@@ -512,6 +512,7 @@ fluid_shell_run(void *data)
 
         if(n < 0)
         {
+            FLUID_LOG(FLUID_PANIC, "An error occurred while reading from stdin.");
             break;
         }
 
@@ -535,14 +536,12 @@ fluid_shell_run(void *data)
 
         if(n == 0)
         {
+            FLUID_LOG(FLUID_INFO, "Received EOF while reading commands, exiting the shell.");
             break;
         }
     }
 
-    if(prompt)
-    {
-        FLUID_FREE(prompt);    /* -- free prompt */
-    }
+    FLUID_FREE(prompt);    /* -- free prompt */
 
     /* return FLUID_THREAD_RETURN_VALUE on success, something else on failure */
     return errors ? (fluid_thread_return_t)(-1) : FLUID_THREAD_RETURN_VALUE;
