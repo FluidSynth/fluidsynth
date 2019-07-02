@@ -359,6 +359,9 @@ static IpatchSF2VoiceCache *convert_dls_to_sf2_instrument(fluid_instpatch_font_t
         return NULL;
     }
 
+    /* do not use the default modulator list of libinstpatch, we manage our own list of default modulators */
+    ipatch_sf2_voice_cache_set_default_mods(cache, NULL);
+
     ipatch_converter_add_input(conv, G_OBJECT(item));
     ipatch_converter_add_output(conv, G_OBJECT(cache));
 
