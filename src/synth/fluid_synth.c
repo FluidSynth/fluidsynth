@@ -6130,18 +6130,18 @@ fluid_synth_get_settings(fluid_synth_t *synth)
 }
 
 /**
- * Set a SoundFont generator (effect) value on a MIDI channel in real-time.
+ * Apply an offset to a SoundFont generator on a MIDI channel.
+ *
+ * This function allows to set an offset for the specified destination generator in real-time.
+ * The offset will be applied immediately to all voices that are currently and subsequently playing
+ * on the given MIDI channel. This functionality works equivalent to using NRPN MIDI messages to
+ * manipulate synthesis parameters. See SoundFont spec, paragraph 8.1.3, for details on SoundFont
+ * generator parameters and valid ranges, as well as paragraph 9.6 for details on NRPN messages.
  * @param synth FluidSynth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
  * @param param SoundFont generator ID (#fluid_gen_type)
- * @param value Offset or absolute generator value to assign to the MIDI channel
+ * @param value Offset value (in native units of the generator) to assign to the MIDI channel
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
- *
- * This function allows for setting all effect parameters in real time on a
- * MIDI channel. Setting absolute to non-zero will cause the value to override
- * any generator values set in the instruments played on the MIDI channel.
- * See SoundFont 2.01 spec, paragraph 8.1.3, page 48 for details on SoundFont
- * generator parameters and valid ranges.
  */
 int fluid_synth_set_gen(fluid_synth_t *synth, int chan, int param, float value)
 {
@@ -6174,11 +6174,13 @@ fluid_synth_set_gen_LOCAL(fluid_synth_t *synth, int chan, int param, float value
 }
 
 /**
- * Get generator value assigned to a MIDI channel.
+ * Retrive the generator NRPN offset assigned to a MIDI channel.
+ *
+ * The value returned is in native units of the generator. By default, the offset is zero.
  * @param synth FluidSynth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
  * @param param SoundFont generator ID (#fluid_gen_type)
- * @return Current generator value assigned to MIDI channel
+ * @return Current NRPN generator offset value assigned to the MIDI channel
  */
 float
 fluid_synth_get_gen(fluid_synth_t *synth, int chan, int param)
