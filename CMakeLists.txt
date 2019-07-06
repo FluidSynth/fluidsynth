@@ -774,3 +774,41 @@ set ( CPACK_PACKAGE_NAME ${PACKAGE} )
 set ( CPACK_STRIP_FILES ON )
 
 include ( CPack )
+
+# Check for C99 float math
+
+unset ( HAVE_SINF CACHE )
+CHECK_FUNCTION_EXISTS ( "sinf" HAVE_SINF )
+if ( HAVE_SINF )
+  set ( HAVE_SINF 1 )
+endif ( HAVE_SINF )
+
+unset ( HAVE_COSF CACHE )
+CHECK_FUNCTION_EXISTS ( "cosf" HAVE_COSF )
+if ( HAVE_COSF )
+  set ( HAVE_COSF 1 )
+endif ( HAVE_COSF )
+
+unset ( HAVE_FABSF CACHE )
+CHECK_FUNCTION_EXISTS ( "fabsf" HAVE_FABSF )
+if ( HAVE_FABSF )
+  set ( HAVE_FABSF 1 )
+endif ( HAVE_FABSF )
+
+unset ( HAVE_POWF CACHE )
+CHECK_FUNCTION_EXISTS ( "powf" HAVE_POWF )
+if ( HAVE_POWF )
+  set ( HAVE_POWF 1 )
+endif ( HAVE_POWF )
+
+unset ( HAVE_SQRTF CACHE )
+CHECK_FUNCTION_EXISTS ( "sqrtf" HAVE_SQRTF )
+if ( HAVE_SQRTF )
+  set ( HAVE_SQRTF 1 )
+endif ( HAVE_SQRTF )
+
+unset ( HAVE_LOGF CACHE )
+CHECK_FUNCTION_EXISTS ( "logf" HAVE_LOGF )
+if ( HAVE_LOGF )
+  set ( HAVE_LOGF 1 )
+endif ( HAVE_LOGF )
