@@ -160,7 +160,7 @@ fluid_tc2sec_delay(fluid_real_t tc)
         tc = (fluid_real_t) 5000.0f;
     }
 
-    return (fluid_real_t) pow(2.f, tc / 1200.f);
+    return FLUID_POW(2.f, tc / 1200.f);
 }
 
 /*
@@ -188,7 +188,7 @@ fluid_tc2sec_attack(fluid_real_t tc)
         tc = (fluid_real_t) 8000.f;
     };
 
-    return (fluid_real_t) pow(2.f, tc / 1200.f);
+    return FLUID_POW(2.f, tc / 1200.f);
 }
 
 /*
@@ -198,7 +198,7 @@ fluid_real_t
 fluid_tc2sec(fluid_real_t tc)
 {
     /* No range checking here! */
-    return (fluid_real_t) pow(2.f, tc / 1200.f);
+    return FLUID_POW(2.f, tc / 1200.f);
 }
 
 /*
@@ -226,7 +226,7 @@ fluid_tc2sec_release(fluid_real_t tc)
         tc = (fluid_real_t) 8000.f;
     };
 
-    return (fluid_real_t) pow(2.f, tc / 1200.f);
+    return FLUID_POW(2.f, tc / 1200.f);
 }
 
 /*
@@ -238,13 +238,13 @@ fluid_tc2sec_release(fluid_real_t tc)
  *
 fluid_hz2ct(fluid_real_t f)
 {
-    return (fluid_real_t)(6900 + (1200 / M_LN2) * log(f / 440.0));
+    return 6900.f + (1200.f / FLUID_M_LN2) * FLUID_LOGF(f / 440.0f));
 }
  */
 fluid_real_t
 fluid_act2hz(fluid_real_t c)
 {
-    return (fluid_real_t)(8.176f * pow(2.f, c / 1200.f));
+    return 8.176f * FLUID_POW(2.f, c / 1200.f);
 }
 
 /*

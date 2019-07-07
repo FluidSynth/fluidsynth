@@ -251,4 +251,22 @@
 #cmakedefine inline @INLINE_KEYWORD@
 #endif
 
+/* Define to 1 if you have the sinf() function. */
+#cmakedefine HAVE_SINF @HAVE_SINF@
+
+/* Define to 1 if you have the cosf() function. */
+#cmakedefine HAVE_COSF @HAVE_COSF@
+
+/* Define to 1 if you have the fabsf() function. */
+#cmakedefine HAVE_FABSF @HAVE_FABSF@
+
+/* Define to 1 if you have the powf() function. */
+#cmakedefine HAVE_POWF @HAVE_POWF@
+
+/* Define to 1 if you have the sqrtf() function. */
+#cmakedefine HAVE_SQRTF @HAVE_SQRTF@
+
+/* Define to 1 if you have the logf() function. */
+#cmakedefine HAVE_LOGF @HAVE_LOGF@
+
 #endif /* CONFIG_H */

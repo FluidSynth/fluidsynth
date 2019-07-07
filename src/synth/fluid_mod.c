@@ -334,21 +334,21 @@ fluid_mod_transform_source_value(fluid_real_t val, unsigned char mod_flags, cons
      * is close enough.
      */
     case FLUID_MOD_SIN | FLUID_MOD_UNIPOLAR | FLUID_MOD_POSITIVE: /* custom sin(x) */
-        val = sin((M_PI / 2.0f * 0.87f) * val_norm);
+        val = FLUID_SIN((FLUID_M_PI / 2.0f * 0.87f) * val_norm);
         break;
 
     case FLUID_MOD_SIN | FLUID_MOD_UNIPOLAR | FLUID_MOD_NEGATIVE: /* custom */
-        val = sin((M_PI / 2.0f * 0.87f) * (1.0f - val_norm));
+        val = FLUID_SIN((FLUID_M_PI / 2.0f * 0.87f) * (1.0f - val_norm));
         break;
 
     case FLUID_MOD_SIN | FLUID_MOD_BIPOLAR | FLUID_MOD_POSITIVE: /* custom */
-        val = (val_norm > 0.5f) ?  sin(M_PI * (val_norm - 0.5f))
-              : -sin(M_PI * (0.5f - val_norm));
+        val = (val_norm > 0.5f) ?  FLUID_SIN(FLUID_M_PI * (val_norm - 0.5f))
+              : -FLUID_SIN(FLUID_M_PI * (0.5f - val_norm));
         break;
 
     case FLUID_MOD_SIN | FLUID_MOD_BIPOLAR | FLUID_MOD_NEGATIVE: /* custom */
-        val = (val_norm > 0.5f) ? -sin(M_PI * (val_norm - 0.5f))
-              :  sin(M_PI * (0.5f - val_norm));
+        val = (val_norm > 0.5f) ? -FLUID_SIN(FLUID_M_PI * (val_norm - 0.5f))
+              :  FLUID_SIN(FLUID_M_PI * (0.5f - val_norm));
         break;
 
     default:

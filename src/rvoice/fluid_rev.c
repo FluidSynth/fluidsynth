@@ -431,12 +431,16 @@ typedef struct
 static void set_mod_frequency(sinus_modulator *mod,
                               float freq, float sample_rate, float phase)
 {
-    fluid_real_t w = 2 * M_PI * freq / sample_rate; /* intial angle */
+    fluid_real_t w = 2 * FLUID_M_PI * freq / sample_rate; /* intial angle */
+    fluid_real_t a;
 
-    mod->a1 = 2 * cos(w);
-    mod->buffer2 = sin(2 * M_PI * phase / 360 - w); /* y(n-1) = sin(-intial angle) */
-    mod->buffer1 = sin(2 * M_PI * phase / 360); /* y(n) = sin(initial phase) */
-    mod->reset_buffer2 = sin(M_PI / 2.0 - w); /* reset value for PI/2 */
+    mod->a1 = 2 * FLUID_COS(w);
+
+    a = (2 * FLUID_M_PI / 360) * phase;
+
+    mod->buffer2 = FLUID_SIN(a - w); /* y(n-1) = sin(-intial angle) */
+    mod->buffer1 = FLUID_SIN(a); /* y(n) = sin(initial phase) */
+    mod->reset_buffer2 = FLUID_SIN(FLUID_M_PI / 2 - w); /* reset value for PI/2 */
 }
 
 /*-----------------------------------------------------------------------------
@@ -753,8 +757,8 @@ static void update_rev_time_damping(fluid_late *late,
         ------------------------------------------*/
         dc_rev_time = GET_DC_REV_TIME(roomsize);
         /* computes gi_tmp from dc_rev_time using relation E2 */
-        gi_tmp = (fluid_real_t) pow(10.f, -3 * delay_length[NBR_DELAYS - 1] *
-                                    sample_period / dc_rev_time); /* E2 */
+        gi_tmp = FLUID_POW(10, -3 * delay_length[NBR_DELAYS - 1] *
+                           sample_period / dc_rev_time); /* E2 */
 #else
         /*   roomsize parameters have the same response that Freeverb, that is:
          *   - roomsize (0 to 1) controls concave reverb time (0.7 to 10 s).
@@ -766,14 +770,14 @@ static void update_rev_time_damping(fluid_late *late,
             fluid_real_t gi_min, gi_max;
             /* values gi_min et gi_max are computed using E2 for the line with
               maximum delay */
-            gi_max = (fluid_real_t)pow(10.f, -3 * delay_length[NBR_DELAYS - 1] *
+            gi_max = FLUID_POW(10, -3 * delay_length[NBR_DELAYS - 1] *
                                        sample_period / MAX_DC_REV_TIME); /* E2 */
-            gi_min = (fluid_real_t)pow(10.f, -3 * delay_length[NBR_DELAYS - 1] *
+            gi_min = FLUID_POW(10, -3 * delay_length[NBR_DELAYS - 1] *
                                        sample_period / MIN_DC_REV_TIME); /* E2 */
             /* gi = f(roomsize, gi_max, gi_min) */
             gi_tmp = gi_min + roomsize * (gi_max - gi_min);
             /* Computes T60DC from gi using inverse of relation E2.*/
-            dc_rev_time = -3 * M_LN10 * delay_length[NBR_DELAYS - 1] * sample_period / log(gi_tmp);
+            dc_rev_time = -3 * FLUID_M_LN10 * delay_length[NBR_DELAYS - 1] * sample_period / FLUID_LOGF(gi_tmp);
         }
 #endif /* ROOMSIZE_RESPONSE_LINEAR */
         /*--------------------------------------------
@@ -784,9 +788,9 @@ static void update_rev_time_damping(fluid_late *late,
         ai_tmp = 1.0f * damp;
 
         /* Preserve the square of R */
-        alpha2 = 1.f / (1.f - ai_tmp / ((20.f / 80.f) * log(gi_tmp)));
+        alpha2 = 1.f / (1.f - ai_tmp / ((20.f / 80.f) * FLUID_LOGF(gi_tmp)));
 
-        alpha = sqrt(alpha2); /* R */
+        alpha = FLUID_SQRT(alpha2); /* R */
     }
 
     /* updates tone corrector coefficients b1,b2 from alpha */
@@ -806,12 +810,12 @@ static void update_rev_time_damping(fluid_late *late,
     for(i = 0; i < NBR_DELAYS; i++)
     {
         /* iir low pass filter gain */
-        fluid_real_t gi = (fluid_real_t)pow(10.f, -3 * delay_length[i] *
-                                            sample_period / dc_rev_time);
+        fluid_real_t gi = FLUID_POW(10, -3 * delay_length[i] *
+                                    sample_period / dc_rev_time);
 
         /* iir low pass filter feedback gain */
-        fluid_real_t ai = (fluid_real_t)((20.f / 80.f) * log(gi) *
-                                         (1.f - 1.f / alpha2));
+        fluid_real_t ai = (20.f / 80.f) * FLUID_LOGF(gi) * (1.f - 1.f / alpha2);
+
         /* b0 = gi * (1 - ai),  a1 = - ai */
         set_fdn_delay_lpf(&late->mod_delay_lines[i].dl.damping,
                           gi * (1.f - ai), -ai);
