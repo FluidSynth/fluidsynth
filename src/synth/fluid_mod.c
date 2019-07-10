@@ -531,6 +531,7 @@ new_fluid_mod()
         FLUID_LOG(FLUID_ERR, "Out of memory");
         return NULL;
     }
+    mod->next = NULL;
 
     return mod;
 }
