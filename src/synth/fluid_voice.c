@@ -1219,11 +1219,11 @@ int fluid_voice_modulate(fluid_voice_t* voice, int cc, int ctrl)
 
         mod = &voice->mod[i];
         /* memorize gen destination. 
-		  Linked modulators are grouped consecutively to form a complex modulator.
-		  The destination field of first member of the group is a generator ID.
-		  Next member to the last have destination field with bit FLUID_MOD_LINK_DEST
-		  set to indicate that destination is a modulator index (i.e not a generator
-		  ID).
+          Linked modulators are grouped consecutively to form a complex modulator.
+          The destination field of first member of the group is a generator ID.
+          Next member to the last have destination field with bit FLUID_MOD_LINK_DEST
+          set to indicate that destination is a modulator index (i.e not a generator
+          ID).
 		*/
         if(!(mod->dest & FLUID_MOD_LINK_DEST)) /* ignore modulator destination*/
         {
@@ -1630,6 +1630,7 @@ fluid_voice_add_mod_local(fluid_voice_t *voice, fluid_mod_t *mod, int mode, int 
         if( offset + count <= FLUID_NUM_MOD)
         {
             /* clone all modulators member */
+            /* count is 1 for unlinked modulator, > 1 for complex modulator */
             for (i =0; i < count; i++)
 			{
                 voice_mod = &voice->mod[voice->mod_count++];
@@ -1647,6 +1648,8 @@ fluid_voice_add_mod_local(fluid_voice_t *voice, fluid_mod_t *mod, int mode, int 
                 mod = mod->next;      /* next modulator member to clone */
             }
             /* last modulator member will be recognized by next field set to NULL*/
+            /* For unlinked modulator the last member is the modulator itself */
+            /* voice_mod is a valid pointer to the last member */
             voice_mod->next = NULL;  
         }
         else
