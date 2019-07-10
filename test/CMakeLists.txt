@@ -15,6 +15,7 @@ ADD_FLUID_TEST(test_pointer_alignment)
 ADD_FLUID_TEST(test_seqbind_unregister)
 ADD_FLUID_TEST(test_synth_chorus_reverb)
 ADD_FLUID_TEST(test_snprintf)
+ADD_FLUID_TEST(test_modulator_links)
 
 if ( LIBSNDFILE_HASVORBIS )
     ADD_FLUID_TEST(test_sf3_sfont_loading)
