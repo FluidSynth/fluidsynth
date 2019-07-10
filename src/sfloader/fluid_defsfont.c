@@ -1581,7 +1581,7 @@ fluid_check_linked_mod_path(char *zone_name, fluid_mod_t *list_mod,
  *  - FALSE if no linked path exists.
  *  - FLUID_FAILED if failed (memory error).
  */
-static int
+int
 fluid_zone_check_linked_mod(char *zone_name, fluid_mod_t *list_mod)
 {
     int result;
@@ -1615,12 +1615,12 @@ fluid_zone_check_linked_mod(char *zone_name, fluid_mod_t *list_mod)
     }
 
     if(!count)
-    { /* There is no modulators, dont need to go further */
+    { /* There are no modulators, no need to go further */
         return FALSE;
     }
 
     /* Now check linked modulator */
-    path = FLUID_MALLOC (sizeof(fluid_mod_t *) * count);
+    path = FLUID_MALLOC (sizeof(*path) * count);
     if(path == NULL)
     {
         return FLUID_FAILED;
@@ -2093,6 +2093,9 @@ fluid_zone_mod_import_sfont(char *zone_name, fluid_mod_t **mod,
         /* *** Dest *** */
         mod_dest->dest = mod_src->dest; /* index of controlled generator */
 
+        /* bit link of destination in soundfont modulators */
+        static const unsigned int FLUID_SFMOD_LINK_DEST = (1 << 15);   /* Link is bit 15 of destination */
+        
         /* import bit link of destination field */
         if(mod_src->dest & FLUID_SFMOD_LINK_DEST)
         {

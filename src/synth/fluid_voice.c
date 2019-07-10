@@ -945,7 +945,7 @@ fluid_voice_update_param(fluid_voice_t *voice, int gen)
          */
 
         /* 2017-09-02: do not change the voice's key here, otherwise it will
-         * never be released on a noteoff event
+         * never be released by a noteoff event
          */
 #if 0
         x = fluid_voice_gen_value(voice, GEN_KEYNUM);

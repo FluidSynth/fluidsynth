@@ -29,13 +29,14 @@
  */
 struct _fluid_mod_t
 {
-    unsigned char dest;           /**< Destination generator to control */
+    unsigned char dest;           /**< Destination generator to control or, if FLUID_MOD_LINK_DEST
+                                       is set, index of the modulator this modulators is linked to. */
     unsigned char src1;           /**< Source controller 1 */
     unsigned char flags1;         /**< Source controller 1 flags */
     unsigned char src2;           /**< Source controller 2 */
     unsigned char flags2;         /**< Source controller 2 flags */
     double amount;                /**< Multiplier amount */
-    double link;                  /**< src1 link input node */
+    double link;                  /**< Summation of modulator nodes linked to this modulator */
     /* The 'next' field allows to link modulators into a list.  It is
      * not used in fluid_voice.c, there each voice allocates memory for a
      * fixed number of modulators.  Since there may be a huge number of
@@ -46,8 +47,6 @@ struct _fluid_mod_t
     fluid_mod_t *next;
 };
 
-/* bit link of destination in soundfont modulators */
-#define FLUID_SFMOD_LINK_DEST  (1 << 15)   /* Link is bit 15 of destination */
 /* bit link of destination in fluidsynth modulators */
 #define FLUID_MOD_LINK_DEST  (1 << 7)     /* Link is bit 7 of destination */
 
