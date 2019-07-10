@@ -753,7 +753,7 @@ int fluid_mod_check_sources(const fluid_mod_t *mod, char *name)
  *                  <-- cm1.m2 <-- cm1.m3 <-- CC1
  *          
  * cm1.m0 is the ending modulator of cm1.
- * cm1m1 is the modulator following cm1.m0. This the first modulator of all
+ * cm1.m1 is the modulator following cm1.m0. This the first modulator of all
  * branches connected to cm1.m0. These branches are cm1.b0, cm1.b1, cm1.b2
  *
  *  (cm1.b0) cm1.m0 <-- cm1.m1 <-- CC2
@@ -770,7 +770,7 @@ int fluid_mod_check_sources(const fluid_mod_t *mod, char *name)
  *
  * Note that similar branches in cm0 and cm1 are not necessarly ordered the same way.
  * Branches ordering need not to be same to get identical complex modulators. This
- * ordering comes from the soundfount and is irrelevant (SF 2.01 9.5.4 p 58).
+ * ordering comes from the soundfont and is irrelevant (SF 2.01 9.5.4 p 58).
  *
  * @param cm0_mod, pointer on modulator branch 0. Must be the modulator following
  *  cm0 ending modulator. In the figure above this is cm0.m1.
