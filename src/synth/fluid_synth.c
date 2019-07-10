@@ -25,6 +25,7 @@
 #include "fluid_settings.h"
 #include "fluid_sfont.h"
 #include "fluid_defsfont.h"
+#include "fluid_instpatch.h"
 
 #ifdef TRAP_ON_FPE
 #define _GNU_SOURCE
@@ -463,6 +464,11 @@ fluid_synth_init(void)
     fluid_mod_set_dest(&custom_balance_mod, GEN_CUSTOM_BALANCE);     /* Destination: stereo balance */
     /* Amount: 96 dB of attenuation (on the opposite channel) */
     fluid_mod_set_amount(&custom_balance_mod, FLUID_PEAK_ATTENUATION); /* Amount: 960 */
+    
+#ifdef LIBINSTPATCH_SUPPORT
+    /* defer libinstpatch init to fluid_instpatch.c to avoid #include "libinstpatch.h" */
+    fluid_instpatch_init();
+#endif
 }
 
 static FLUID_INLINE unsigned int fluid_synth_get_ticks(fluid_synth_t *synth)
@@ -815,6 +821,20 @@ new_fluid_synth(fluid_settings_t *settings)
         FLUID_LOG(FLUID_WARN, "FluidSynth has not been compiled with LADSPA support");
 #endif /* LADSPA */
     }
+
+    /* allocate and add the dls sfont loader */
+#ifdef LIBINSTPATCH_SUPPORT
+    loader = new_fluid_instpatch_loader(settings);
+
+    if(loader == NULL)
+    {
+        FLUID_LOG(FLUID_WARN, "Failed to create the instpatch SoundFont loader");
+    }
+    else
+    {
+        fluid_synth_add_sfloader(synth, loader);
+    }
+#endif
 
     /* allocate and add the default sfont loader */
     loader = new_fluid_defsfloader(settings);
@@ -1235,7 +1255,7 @@ fluid_synth_noteoff_LOCAL(fluid_synth_t *synth, int chan, int key)
     {
         /* channel is poly and legato CC is Off) */
         /* removes the note from the monophonic list */
-        if(key == fluid_channel_last_note(channel))
+        if(channel->n_notes && key == fluid_channel_last_note(channel))
         {
             fluid_channel_clear_monolist(channel);
         }
@@ -1712,7 +1732,7 @@ fluid_synth_cc_LOCAL(fluid_synth_t *synth, int channum, int num)
 
             case RPN_CHANNEL_FINE_TUNE:   /* Fine tune is 14 bit over +/-1 semitone (+/- 100 cents, 8192 = center) */
                 fluid_synth_set_gen_LOCAL(synth, channum, GEN_FINETUNE,
-                                          (data - 8192) / 8192.0 * 100.0);
+                                          (float)(data - 8192) * (100.0f / 8192.0f));
                 break;
 
             case RPN_CHANNEL_COARSE_TUNE: /* Coarse tune is 7 bit and in semitones (64 is center) */
@@ -3639,12 +3659,19 @@ int
 fluid_synth_process(fluid_synth_t *synth, int len, int nfx, float *fx[],
                     int nout, float *out[])
 {
+    return fluid_synth_process_LOCAL(synth, len, nfx, fx, nout, out, fluid_synth_render_blocks);
+}
+
+int
+fluid_synth_process_LOCAL(fluid_synth_t *synth, int len, int nfx, float *fx[],
+                    int nout, float *out[], int (*block_render_func)(fluid_synth_t *, int))
+{
     fluid_real_t *left_in, *fx_left_in;
     fluid_real_t *right_in, *fx_right_in;
     int nfxchan, nfxunits, naudchan;
 
     double time = fluid_utime();
-    int i, f, num, count;
+    int i, f, num, count, buffered_blocks;
 
     float cpu_load;
 
@@ -3668,9 +3695,10 @@ fluid_synth_process(fluid_synth_t *synth, int len, int nfx, float *fx[],
     count = 0;
     num = synth->cur;
 
-    if(synth->cur < FLUID_BUFSIZE)
+    buffered_blocks = (synth->cur + FLUID_BUFSIZE - 1) / FLUID_BUFSIZE;
+    if(synth->cur < buffered_blocks * FLUID_BUFSIZE)
     {
-        int available = FLUID_BUFSIZE - synth->cur;
+        int available = (buffered_blocks * FLUID_BUFSIZE) - synth->cur;
         num = (available > len) ? len : available;
 
         if(nout != 0)
@@ -3712,7 +3740,7 @@ fluid_synth_process(fluid_synth_t *synth, int len, int nfx, float *fx[],
     while(count < len)
     {
         int blocksleft = (len - count + FLUID_BUFSIZE - 1) / FLUID_BUFSIZE;
-        int blockcount = fluid_synth_render_blocks(synth, blocksleft);
+        int blockcount = block_render_func(synth, blocksleft);
 
         num = (blockcount * FLUID_BUFSIZE > len - count) ? len - count : blockcount * FLUID_BUFSIZE;
 
@@ -5321,8 +5349,8 @@ fluid_synth_set_chorus_full_LOCAL(fluid_synth_t *synth, int set, int nr, double 
 int
 fluid_synth_get_chorus_nr(fluid_synth_t *synth)
 {
-    double result;
-    fluid_return_val_if_fail(synth != NULL, 0.0);
+    int result;
+    fluid_return_val_if_fail(synth != NULL, 0);
     fluid_synth_api_enter(synth);
 
     result = synth->chorus_nr;
@@ -5385,8 +5413,8 @@ fluid_synth_get_chorus_depth(fluid_synth_t *synth)
 int
 fluid_synth_get_chorus_type(fluid_synth_t *synth)
 {
-    double result;
-    fluid_return_val_if_fail(synth != NULL, 0.0);
+    int result;
+    fluid_return_val_if_fail(synth != NULL, 0);
     fluid_synth_api_enter(synth);
 
     result = synth->chorus_type;
@@ -6102,18 +6130,18 @@ fluid_synth_get_settings(fluid_synth_t *synth)
 }
 
 /**
- * Set a SoundFont generator (effect) value on a MIDI channel in real-time.
+ * Apply an offset to a SoundFont generator on a MIDI channel.
+ *
+ * This function allows to set an offset for the specified destination generator in real-time.
+ * The offset will be applied immediately to all voices that are currently and subsequently playing
+ * on the given MIDI channel. This functionality works equivalent to using NRPN MIDI messages to
+ * manipulate synthesis parameters. See SoundFont spec, paragraph 8.1.3, for details on SoundFont
+ * generator parameters and valid ranges, as well as paragraph 9.6 for details on NRPN messages.
  * @param synth FluidSynth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
  * @param param SoundFont generator ID (#fluid_gen_type)
- * @param value Offset or absolute generator value to assign to the MIDI channel
+ * @param value Offset value (in native units of the generator) to assign to the MIDI channel
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
- *
- * This function allows for setting all effect parameters in real time on a
- * MIDI channel. Setting absolute to non-zero will cause the value to override
- * any generator values set in the instruments played on the MIDI channel.
- * See SoundFont 2.01 spec, paragraph 8.1.3, page 48 for details on SoundFont
- * generator parameters and valid ranges.
  */
 int fluid_synth_set_gen(fluid_synth_t *synth, int chan, int param, float value)
 {
@@ -6146,11 +6174,13 @@ fluid_synth_set_gen_LOCAL(fluid_synth_t *synth, int chan, int param, float value
 }
 
 /**
- * Get generator value assigned to a MIDI channel.
+ * Retrive the generator NRPN offset assigned to a MIDI channel.
+ *
+ * The value returned is in native units of the generator. By default, the offset is zero.
  * @param synth FluidSynth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
  * @param param SoundFont generator ID (#fluid_gen_type)
- * @return Current generator value assigned to MIDI channel
+ * @return Current NRPN generator offset value assigned to the MIDI channel
  */
 float
 fluid_synth_get_gen(fluid_synth_t *synth, int chan, int param)

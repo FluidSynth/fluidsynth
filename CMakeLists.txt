@@ -29,7 +29,7 @@ set ( PACKAGE "fluidsynth" )
 # FluidSynth package version
 set ( FLUIDSYNTH_VERSION_MAJOR 2 )
 set ( FLUIDSYNTH_VERSION_MINOR 0 )
-set ( FLUIDSYNTH_VERSION_MICRO 4 )
+set ( FLUIDSYNTH_VERSION_MICRO 5 )
 set ( VERSION "${FLUIDSYNTH_VERSION_MAJOR}.${FLUIDSYNTH_VERSION_MINOR}.${FLUIDSYNTH_VERSION_MICRO}" )
 set ( FLUIDSYNTH_VERSION "\"${VERSION}\"" )
 
@@ -44,7 +44,7 @@ set ( FLUIDSYNTH_VERSION "\"${VERSION}\"" )
 # This is not exactly the same algorithm as the libtool one, but the results are the same.
 set ( LIB_VERSION_CURRENT 2 )
 set ( LIB_VERSION_AGE 1 )
-set ( LIB_VERSION_REVISION 1 )
+set ( LIB_VERSION_REVISION 2 )
 set ( LIB_VERSION_INFO
       "${LIB_VERSION_CURRENT}.${LIB_VERSION_AGE}.${LIB_VERSION_REVISION}" )
 
@@ -64,6 +64,7 @@ option ( enable-dbus "compile DBUS support (if it is available)" on )
 option ( enable-ipv6  "enable ipv6 support" on )
 option ( enable-jack "compile JACK support (if it is available)" on )
 option ( enable-ladspa "enable LADSPA effect units" on )
+option ( enable-libinstpatch "use libinstpatch (if available) to load DLS and GIG files" on )
 option ( enable-libsndfile "compile libsndfile support (if it is available)" on )
 option ( enable-midishare "compile MidiShare support (if it is available)" on )
 option ( enable-opensles "compile OpenSLES support (if it is available)" off )
@@ -206,7 +207,6 @@ if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang" OR CMAKE_C_
 endif ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang" OR CMAKE_C_COMPILER_ID STREQUAL "Intel" )
 
 # Windows
-unset ( WINDOWS_SUPPORT CACHE )
 unset ( WINDOWS_LIBS CACHE )
 unset ( DSOUND_SUPPORT CACHE )
 unset ( WAVEOUT_SUPPORT CACHE )
@@ -220,8 +220,6 @@ if ( WIN32 )
   check_include_file ( io.h HAVE_IO_H )
   check_include_file ( dsound.h HAVE_DSOUND_H )
   check_include_files ( "windows.h;mmsystem.h" HAVE_MMSYSTEM_H )
-
-  set ( WINDOWS_SUPPORT ${HAVE_WINDOWS_H} )
 
   if ( enable-network )
     set ( WINDOWS_LIBS "${WINDOWS_LIBS};ws2_32" )
@@ -567,7 +565,21 @@ else(NOT enable-pkgconfig)
         set ( LADSPA 1 )
     endif ( LADSPA_SUPPORT )
     endif ( enable-ladspa )
-    
+
+    unset ( LIBINSTPATCH_SUPPORT CACHE )
+    if ( enable-libinstpatch )
+        pkg_check_modules ( LIBINSTPATCH libinstpatch )
+        set ( LIBINSTPATCH_SUPPORT ${LIBINSTPATCH_FOUND} )
+    endif ( enable-libinstpatch )
+
+    unset ( SDL2_SUPPORT CACHE )
+    if ( enable-sdl2 )
+        pkg_check_modules ( SDL2 sdl2 )
+        set ( SDL2_SUPPORT ${SDL2_FOUND} )
+    else ( enable-sdl2 )
+        unset_pkg_config ( SDL2 )
+    endif ( enable-sdl2 )
+
 endif(NOT enable-pkgconfig)
 
 unset ( AUFILE_SUPPORT CACHE )
@@ -580,20 +592,6 @@ if ( enable-oss )
   find_package ( OSS QUIET )
   set ( OSS_SUPPORT ${OSS_FOUND} )
 endif ( enable-oss )
-
-unset ( SDL2_SUPPORT CACHE )
-unset ( SDL2_INCLUDE_DIR CACHE )
-unset ( SDL2_LIBRARY CACHE )
-if ( enable-sdl2 )
-  find_package ( SDL2 )
-
-  if ( SDL2_FOUND )
-    set ( SDL2_SUPPORT ${SDL2_FOUND} )
-  else ( SDL2_FOUND)
-    unset ( SDL2_INCLUDE_DIR CACHE )
-    unset ( SDL2_LIBRARY CACHE )
-  endif ( SDL2_FOUND )
-endif ( enable-sdl2 )
 
 unset ( MIDISHARE_SUPPORT CACHE )
 if ( enable-midishare )
@@ -668,6 +666,44 @@ endif()
 set(TEST_SOUNDFONT "${CMAKE_SOURCE_DIR}/sf2/VintageDreamsWaves-v2.sf2")
 set(TEST_SOUNDFONT_SF3 "${CMAKE_SOURCE_DIR}/sf2/VintageDreamsWaves-v2.sf3")
 
+# Check for C99 float math
+
+unset ( HAVE_SINF CACHE )
+CHECK_FUNCTION_EXISTS ( "sinf" HAVE_SINF )
+if ( HAVE_SINF )
+  set ( HAVE_SINF 1 )
+endif ( HAVE_SINF )
+
+unset ( HAVE_COSF CACHE )
+CHECK_FUNCTION_EXISTS ( "cosf" HAVE_COSF )
+if ( HAVE_COSF )
+  set ( HAVE_COSF 1 )
+endif ( HAVE_COSF )
+
+unset ( HAVE_FABSF CACHE )
+CHECK_FUNCTION_EXISTS ( "fabsf" HAVE_FABSF )
+if ( HAVE_FABSF )
+  set ( HAVE_FABSF 1 )
+endif ( HAVE_FABSF )
+
+unset ( HAVE_POWF CACHE )
+CHECK_FUNCTION_EXISTS ( "powf" HAVE_POWF )
+if ( HAVE_POWF )
+  set ( HAVE_POWF 1 )
+endif ( HAVE_POWF )
+
+unset ( HAVE_SQRTF CACHE )
+CHECK_FUNCTION_EXISTS ( "sqrtf" HAVE_SQRTF )
+if ( HAVE_SQRTF )
+  set ( HAVE_SQRTF 1 )
+endif ( HAVE_SQRTF )
+
+unset ( HAVE_LOGF CACHE )
+CHECK_FUNCTION_EXISTS ( "logf" HAVE_LOGF )
+if ( HAVE_LOGF )
+  set ( HAVE_LOGF 1 )
+endif ( HAVE_LOGF )
+
 # General configuration file
 configure_file ( ${CMAKE_SOURCE_DIR}/src/config.cmake
                  ${CMAKE_BINARY_DIR}/config.h )
@@ -682,6 +718,7 @@ link_directories (
     ${PORTAUDIO_LIBRARY_DIRS}
     ${LIBSNDFILE_LIBRARY_DIRS}
     ${DBUS_LIBRARY_DIRS}
+    ${SDL2_LIBRARY_DIRS}
     ${OBOE_LIBRARY_DIRS}
 )
 

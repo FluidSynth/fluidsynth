@@ -122,8 +122,8 @@ summary of contributions.
 
 * Tom Moebert (fluidsynth's maintainer since Jun 2017) cleaned up and refactored
   fluidsynth's API and revised its documentation, added support for 24 bit sample
-  soundfonts, fixed various bugs, implemented unit tests and CI builds for
-  Windows, Linux, MacOSX.
+  soundfonts, added support for DLS soundfonts, fixed various bugs, implemented
+  unit tests and CI builds for Windows, Linux, MacOSX and BSD.
 
 * Growing list of individuals who contributed bug fixes, corrections and minor features:
 Nicolas Boulicault for ALSA sequencer midi.portname setting.

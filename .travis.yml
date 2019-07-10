@@ -33,28 +33,20 @@ env:
 
 matrix:
   include:
-    - os: osx
-      osx_image: xcode10
-
-    - os: linux
-      env:
+    - env:
         - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7 && sudo apt-get install gcc-7"
 
-    - os: linux
-      env:
+    - env:
         - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8 && sudo apt-get install gcc-8"
         - CMAKE_FLAGS="-Denable-debug=1 -DCMAKE_C_FLAGS_DEBUG=-fuse-ld=gold"
 
-    - os: linux
-      env:
+    - env:
         - MATRIX_EVAL="CC=clang-3.8 && CXX=clang++-3.8 && sudo apt-get install clang-3.8"
 
-    - os: linux
-      env:
+    - env:
         - MATRIX_EVAL="CC=clang-6.0 && CXX=clang++-6.0 && sudo apt-get install clang-6.0"
 
-    - os: linux
-      env:
+    - env:
         - MATRIX_EVAL="CC=clang-7 && CXX=clang++-7 && sudo apt-get install clang-7"
 
 before_install:

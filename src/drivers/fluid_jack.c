@@ -115,11 +115,13 @@ fluid_jack_audio_driver_settings(fluid_settings_t *settings)
  * Connect all midi input ports to all terminal midi output ports
  */
 void
-fluid_jack_midi_autoconnect(jack_client_t *client, fluid_jack_midi_driver_t *midi_driver) {
+fluid_jack_midi_autoconnect(jack_client_t *client, fluid_jack_midi_driver_t *midi_driver)
+{
     int i, j;
-    const char ** midi_source_ports;
+    const char **midi_source_ports;
 
     midi_source_ports = jack_get_ports(client, NULL, JACK_DEFAULT_MIDI_TYPE, JackPortIsOutput | JackPortIsTerminal);
+
     if(midi_source_ports != NULL)
     {
         for(j = 0; midi_source_ports[j] != NULL; j++)
@@ -130,6 +132,7 @@ fluid_jack_midi_autoconnect(jack_client_t *client, fluid_jack_midi_driver_t *mid
                 jack_connect(client, midi_source_ports[j], jack_port_name(midi_driver->midi_port[i]));
             }
         }
+
         jack_free(midi_source_ports);
     }
 
@@ -199,7 +202,7 @@ new_fluid_jack_client(fluid_settings_t *settings, int isaudio, void *driver)
 
     if(!client_ref)
     {
-        FLUID_LOG(FLUID_ERR, "Out of memory");
+        FLUID_LOG(FLUID_PANIC, "Out of memory");
         goto error_recovery;
     }
 
@@ -338,7 +341,7 @@ fluid_jack_client_register_ports(void *driver, int isaudio, jack_client_t *clien
 
         if((dev->midi_port = FLUID_ARRAY(jack_port_t *, ports)) == NULL)
         {
-            FLUID_LOG(FLUID_ERR, "Out of memory");
+            FLUID_LOG(FLUID_PANIC, "Out of memory");
             return FLUID_FAILED;
         }
 
@@ -375,7 +378,7 @@ fluid_jack_client_register_ports(void *driver, int isaudio, jack_client_t *clien
 
         if(dev->output_ports == NULL)
         {
-            FLUID_LOG(FLUID_PANIC, "Jack server not running?");
+            FLUID_LOG(FLUID_PANIC, "Out of memory");
             return FLUID_FAILED;
         }
 
@@ -388,6 +391,11 @@ fluid_jack_client_register_ports(void *driver, int isaudio, jack_client_t *clien
         dev->output_ports[1]
             = jack_port_register(client, "right", JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
 
+        if(dev->output_ports[0] == NULL || dev->output_ports[1] == NULL)
+        {
+            FLUID_LOG(FLUID_ERR, "Failed to create Jack audio port");
+            goto error_recovery;
+        }
     }
     else
     {
@@ -406,7 +414,7 @@ fluid_jack_client_register_ports(void *driver, int isaudio, jack_client_t *clien
         if(dev->output_bufs == NULL)
         {
             FLUID_LOG(FLUID_PANIC, "Out of memory");
-            return FLUID_FAILED;
+            goto error_recovery;
         }
 
         FLUID_MEMSET(dev->output_ports, 0, 2 * dev->num_output_ports * sizeof(jack_port_t *));
@@ -414,12 +422,22 @@ fluid_jack_client_register_ports(void *driver, int isaudio, jack_client_t *clien
         for(i = 0; i < dev->num_output_ports; i++)
         {
             sprintf(name, "l_%02d", i);
-            dev->output_ports[2 * i]
-                = jack_port_register(client, name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
+
+            if((dev->output_ports[2 * i]
+                    = jack_port_register(client, name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0)) == NULL)
+            {
+                FLUID_LOG(FLUID_ERR, "Failed to create Jack audio port '%s'", name);
+                goto error_recovery;
+            }
 
             sprintf(name, "r_%02d", i);
-            dev->output_ports[2 * i + 1]
-                = jack_port_register(client, name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
+
+            if((dev->output_ports[2 * i + 1]
+                    = jack_port_register(client, name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0)) == NULL)
+            {
+                FLUID_LOG(FLUID_ERR, "Failed to create Jack audio port '%s'", name);
+                goto error_recovery;
+            }
         }
 
         fluid_settings_getint(settings, "synth.effects-channels", &dev->num_fx_ports);
@@ -431,7 +449,7 @@ fluid_jack_client_register_ports(void *driver, int isaudio, jack_client_t *clien
         if(dev->fx_ports == NULL)
         {
             FLUID_LOG(FLUID_PANIC, "Out of memory");
-            return FLUID_FAILED;
+            goto error_recovery;
         }
 
         dev->fx_bufs = FLUID_ARRAY(float *, 2 * dev->num_fx_ports);
@@ -439,7 +457,7 @@ fluid_jack_client_register_ports(void *driver, int isaudio, jack_client_t *clien
         if(dev->fx_bufs == NULL)
         {
             FLUID_LOG(FLUID_PANIC, "Out of memory");
-            return FLUID_FAILED;
+            goto error_recovery;
         }
 
         FLUID_MEMSET(dev->fx_ports, 0, 2 * dev->num_fx_ports * sizeof(jack_port_t *));
@@ -447,12 +465,22 @@ fluid_jack_client_register_ports(void *driver, int isaudio, jack_client_t *clien
         for(i = 0; i < dev->num_fx_ports; i++)
         {
             sprintf(name, "fx_l_%02d", i);
-            dev->fx_ports[2 * i]
-                = jack_port_register(client, name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
+
+            if((dev->fx_ports[2 * i]
+                    = jack_port_register(client, name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0)) == NULL)
+            {
+                FLUID_LOG(FLUID_ERR, "Failed to create Jack fx audio port '%s'", name);
+                goto error_recovery;
+            }
 
             sprintf(name, "fx_r_%02d", i);
-            dev->fx_ports[2 * i + 1]
-                = jack_port_register(client, name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
+
+            if((dev->fx_ports[2 * i + 1]
+                    = jack_port_register(client, name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0)) == NULL)
+            {
+                FLUID_LOG(FLUID_ERR, "Failed to create Jack fx audio port '%s'", name);
+                goto error_recovery;
+            }
         }
     }
 
@@ -477,6 +505,18 @@ fluid_jack_client_register_ports(void *driver, int isaudio, jack_client_t *clien
     }
 
     return FLUID_OK;
+
+error_recovery:
+
+    FLUID_FREE(dev->output_ports);
+    dev->output_ports = NULL;
+    FLUID_FREE(dev->fx_ports);
+    dev->fx_ports = NULL;
+    FLUID_FREE(dev->output_bufs);
+    dev->output_bufs = NULL;
+    FLUID_FREE(dev->fx_bufs);
+    dev->fx_bufs = NULL;
+    return FLUID_FAILED;
 }
 
 static void
@@ -539,7 +579,7 @@ new_fluid_jack_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func
 
     if(dev == NULL)
     {
-        FLUID_LOG(FLUID_ERR, "Out of memory");
+        FLUID_LOG(FLUID_PANIC, "Out of memory");
         return NULL;
     }
 
@@ -688,6 +728,7 @@ fluid_jack_driver_process(jack_nframes_t nframes, void *arg)
     }
 
     audio_driver = fluid_atomic_pointer_get(&client->audio_driver);
+
     if(audio_driver == NULL)
     {
         // shutting down
@@ -765,6 +806,7 @@ void
 fluid_jack_port_registration(jack_port_id_t port, int is_registering, void *arg)
 {
     fluid_jack_client_t *client_ref = (fluid_jack_client_t *)arg;
+
     if(client_ref->midi_driver != NULL)
     {
         client_ref->midi_driver->autoconnect_is_outdated = client_ref->midi_driver->autoconnect_inputs && is_registering != 0;
@@ -793,7 +835,7 @@ new_fluid_jack_midi_driver(fluid_settings_t *settings,
 
     if(dev == NULL)
     {
-        FLUID_LOG(FLUID_ERR, "Out of memory");
+        FLUID_LOG(FLUID_PANIC, "Out of memory");
         return NULL;
     }
 
@@ -807,9 +849,8 @@ new_fluid_jack_midi_driver(fluid_settings_t *settings,
 
     if(dev->parser == NULL)
     {
-        FLUID_LOG(FLUID_ERR, "Out of memory");
-        FLUID_FREE(dev);
-        return NULL;
+        FLUID_LOG(FLUID_PANIC, "Out of memory");
+        goto error_recovery;
     }
 
     fluid_settings_getint(settings, "midi.autoconnect", &dev->autoconnect_inputs);
@@ -819,11 +860,15 @@ new_fluid_jack_midi_driver(fluid_settings_t *settings,
 
     if(!dev->client_ref)
     {
-        FLUID_FREE(dev);
-        return NULL;
+        FLUID_LOG(FLUID_PANIC, "Out of memory");
+        goto error_recovery;
     }
 
     return (fluid_midi_driver_t *)dev;
+    
+error_recovery:
+    delete_fluid_jack_midi_driver((fluid_midi_driver_t *)dev);
+    return NULL;
 }
 
 void

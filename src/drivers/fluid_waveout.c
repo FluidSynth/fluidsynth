@@ -353,8 +353,6 @@ new_fluid_waveout_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
 
 void delete_fluid_waveout_audio_driver(fluid_audio_driver_t *d)
 {
-    int i;
-
     fluid_waveout_audio_driver_t *dev = (fluid_waveout_audio_driver_t *) d;
     fluid_return_if_fail(dev != NULL);
 
