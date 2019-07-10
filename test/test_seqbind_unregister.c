@@ -21,6 +21,7 @@ int main(void)
     fluid_sequencer_send_now(seq, evt);
 
     // client should be removed, deleting the seq should not free the struct again
+    delete_fluid_event(evt);
     delete_fluid_sequencer(seq);
     delete_fluid_synth(synth);
     delete_fluid_settings(settings);
