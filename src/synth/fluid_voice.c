@@ -1218,12 +1218,21 @@ int fluid_voice_modulate(fluid_voice_t* voice, int cc, int ctrl)
     {
 
         mod = &voice->mod[i];
-        /* memorize gen destination */
-        if(!(mod->dest & FLUID_MOD_LINK_DEST))
+        /* memorize gen destination. 
+		  Linked modulators are grouped consecutively to form a complex modulator.
+		  The destination field of first member of the group is a generator ID.
+		  Next member to the last have destination field with bit FLUID_MOD_LINK_DEST
+		  set to indicate that destination is a modulator index (i.e not a generator
+		  ID).
+		*/
+        if(!(mod->dest & FLUID_MOD_LINK_DEST)) /* ignore modulator destination*/
         {
-            gen = mod->dest;
+            gen = mod->dest; /* keep only generator destination */
         }
-
+		/* gen is always a valid generator ID destination from:
+		   - a non-linked modulator or 
+		   - a complex modulator.
+		*/
 
         /* step 1: find all the modulators that have the changed controller
            as input source. When ctrl is -1 all modulators destination
@@ -1246,7 +1255,7 @@ int fluid_voice_modulate(fluid_voice_t* voice, int cc, int ctrl)
                         /* get output value v of modulator k that could be a 
                            possible complex linked modulators */
                         /* 1) clears all link input node of each member j from
-                              the first to the the last member */ 
+                              the first to the last member minus one */ 
                         for(j = k; voice->mod[j].next; j++)
                         {
                             voice->mod[j].link = 0.0;
