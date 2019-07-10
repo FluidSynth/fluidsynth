@@ -797,26 +797,27 @@ static int fluid_linked_branch_test_identity(fluid_mod_t *cm0_mod,
         unsigned char dest1_idx; /* destination index of cm1_branch */
         unsigned char dest0_idx; /* destination index of cm0 branch */
     }branch_level[FLUID_NUM_MOD];
-    unsigned char is = 0; /* branch state index */
+    unsigned char state_idx = 0; /* branch state index */
 
     unsigned char mod0_idx, mod1_idx;  /* index of cm0_mod and cm1_mod */
 
-    /* initialize branches stack state */
+    /* initialize branches stack state at index 0 */
     branch_level[0].cm1_branch = cm1_mod; /* branch modulator for cm1 */
-    /* destination index of cm1 and cm0 branches */
+    /* destination index of cm1 branch */
     branch_level[0].dest1_idx = FLUID_MOD_LINK_DEST;
+    /* destination index of cm0 branch  0*/
     dest0_idx |= FLUID_MOD_LINK_DEST;
-    branch_level[0].dest0_idx = dest0_idx; /* destination index of cm0 branch */
+    branch_level[0].dest0_idx = dest0_idx;
 
     /* verify identity of each member of branches */
     mod0_idx = dest0_idx + 1; /* current cm0_mod index */
     while(r)
     {
-        unsigned char dest1_idx = branch_level[is].dest1_idx;
+        unsigned char dest1_idx = branch_level[state_idx].dest1_idx;
 		/* Search any modulator cm1_mod identic to cm0_mod */
 		r = 0; /* 0, indicates modulators not identic */
 		mod1_idx = dest1_idx + 1; /* current cm1_mod index */
-        cm1_mod = branch_level[is].cm1_branch;  /* current modulator cm1_mod */
+        cm1_mod = branch_level[state_idx].cm1_branch;  /* current modulator cm1_mod */
         while(cm1_mod && (cm1_mod->dest >= dest1_idx))
         {   /* is cm1_mod destination equal to ancestor index ? */
             if((cm1_mod->dest == dest1_idx)
@@ -839,14 +840,14 @@ static int fluid_linked_branch_test_identity(fluid_mod_t *cm0_mod,
                        to the next branches connected to cm0_mod and cm1_mod inputs
                        respectively */
                     /* goes on next branches */
-                    is++;
+                    state_idx++;
 
                     /* next cm1 member on cm1 branch */
-                    branch_level[is].cm1_branch = cm1_mod->next;
-                    branch_level[is].dest1_idx = mod1_idx;
+                    branch_level[state_idx].cm1_branch = cm1_mod->next;
+                    branch_level[state_idx].dest1_idx = mod1_idx;
 					
                     /* next cm0 member on cm0 branch */
-                    branch_level[is].dest0_idx = mod0_idx;
+                    branch_level[state_idx].dest0_idx = mod0_idx;
                     mod0_idx++;	
                     cm0_mod = cm0_mod->next; 
 
@@ -862,12 +863,16 @@ static int fluid_linked_branch_test_identity(fluid_mod_t *cm0_mod,
                  {                   
                      return TRUE; /* all members are identical */
                  }
-
-                 /* goes to a branch behind current branch */
+				 /* get cmo_mod destination in r */
                  r = cm0_mod->dest;
-                 while(r < branch_level[is].dest0_idx)
+                 /* unstack branches stack (from state_idx to 0) until we find a modulator
+                    index (branch_level[state_idx].dest0_idx) equal to cm0_mod destination.
+                    Note: As far the branch_level[0].dest0_idx field have been properly
+					initialized, there is no risk that state_idx become negative
+                 */
+                 while(r < branch_level[state_idx].dest0_idx)
                  {
-                     is--;
+                     state_idx--;
                  }
                  /* continues on the current branch */
                  break;				 
