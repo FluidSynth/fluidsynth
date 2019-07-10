@@ -198,9 +198,9 @@ if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang" OR CMAKE_C_
     set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wbad-function-cast -Wcast-align" )
     
     if ( enable-ubsan )
-      set ( CMAKE_C_FLAGS "-fsanitize=undefined ${CMAKE_C_FLAGS}" )
-      set ( CMAKE_EXE_LINKER_FLAGS "-fsanitize=undefined ${CMAKE_EXE_LINKER_FLAGS}" )
-      set ( CMAKE_SHARED_LINKER_FLAGS "-fsanitize=undefined ${CMAKE_SHARED_LINKER_FLAGS}" )
+      set ( CMAKE_C_FLAGS "-fsanitize=address,undefined ${CMAKE_C_FLAGS}" )
+      set ( CMAKE_EXE_LINKER_FLAGS "-fsanitize=address,undefined ${CMAKE_EXE_LINKER_FLAGS}" )
+      set ( CMAKE_SHARED_LINKER_FLAGS "-fsanitize=address,undefined ${CMAKE_SHARED_LINKER_FLAGS}" )
       set ( ENABLE_UBSAN 1 )
     endif ( enable-ubsan )
   endif (CMAKE_C_COMPILER_ID STREQUAL "Intel" )
