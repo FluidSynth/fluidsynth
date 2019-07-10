@@ -2061,6 +2061,9 @@ static int
 fluid_zone_mod_import_sfont(char *zone_name, fluid_mod_t **mod, 
                             fluid_mod_t **linked_mod, SFZone *sfzone)
 {
+    /* bit link of destination in soundfont modulators */
+    static const unsigned int FLUID_SFMOD_LINK_DEST = (1 << 15);   /* Link is bit 15 of destination */
+
     fluid_list_t *r;
     int count;
 
@@ -2104,9 +2107,6 @@ fluid_zone_mod_import_sfont(char *zone_name, fluid_mod_t **mod,
         /* *** Dest *** */
         mod_dest->dest = mod_src->dest; /* index of controlled generator */
 
-        /* bit link of destination in soundfont modulators */
-        static const unsigned int FLUID_SFMOD_LINK_DEST = (1 << 15);   /* Link is bit 15 of destination */
-        
         /* import bit link of destination field */
         if(mod_src->dest & FLUID_SFMOD_LINK_DEST)
         {
