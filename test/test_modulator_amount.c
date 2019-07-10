@@ -7,6 +7,12 @@
 
 void fluid_voice_calculate_modulator_contributions(fluid_voice_t *voice);
 
+int float_equal(fluid_real_t x, fluid_real_t y)
+{
+    static const fluid_real_t EPS = 1.e-5;
+    return FLUID_FABS(x - y) < EPS;
+}
+
 // test modulators (amount, source, linked modulators...)
 int main(void)
 {
@@ -24,6 +30,7 @@ int main(void)
     
     fluid_channel_set_cc(ch, CC, 127);
     v->channel = ch;
+    v->mod_count = 0;
     
     // set up a valid list of complex modulators
     {
@@ -49,8 +56,8 @@ int main(void)
         
         fluid_voice_calculate_modulator_contributions(v);
         
-        TEST_ASSERT(v->mod[0].link == fluid_mod_get_amount(mod1) + fluid_mod_get_amount(mod2));
-        TEST_ASSERT(v->gen[GEN_FILTERFC].mod == v->mod[0].link * fluid_mod_get_amount(mod0));
+        TEST_ASSERT(float_equal(v->mod[0].link, fluid_mod_get_amount(mod1) + fluid_mod_get_amount(mod2)));
+        TEST_ASSERT(float_equal(v->gen[GEN_FILTERFC].mod, v->mod[0].link * fluid_mod_get_amount(mod0)));
     }
     
     // same list, with additional mod3
@@ -72,9 +79,9 @@ int main(void)
         
         fluid_voice_calculate_modulator_contributions(v);
         
-        TEST_ASSERT(v->mod[1].link == fluid_mod_get_amount(mod3));
-        TEST_ASSERT(v->mod[0].link == fluid_mod_get_amount(mod2) + fluid_mod_get_amount(mod1) * v->mod[1].link);
-        TEST_ASSERT(v->gen[GEN_FILTERFC].mod == v->mod[0].link * fluid_mod_get_amount(mod0));
+        TEST_ASSERT(float_equal(v->mod[1].link, fluid_mod_get_amount(mod3)));
+        TEST_ASSERT(float_equal(v->mod[0].link, fluid_mod_get_amount(mod2) + fluid_mod_get_amount(mod1) * v->mod[1].link));
+        TEST_ASSERT(float_equal(v->gen[GEN_FILTERFC].mod, v->mod[0].link * fluid_mod_get_amount(mod0)));
     }
     
     delete_fluid_mod(mod0);
