@@ -506,6 +506,35 @@ fluid_voice_calculate_gen_pitch(fluid_voice_t *voice)
     voice->gen[GEN_PITCH].val = fluid_voice_calculate_pitch(voice, fluid_voice_get_actual_key(voice));
 }
 
+/* outsourced function that calculates modulator contributions to make it unit testable */
+void fluid_voice_calculate_modulator_contributions(fluid_voice_t *voice)
+{
+    int i;
+
+    /* The voice contains unlinked modulators + possible complex linked modulators.
+       We scan modulators from the last member of possible complex linked
+       modulator to the first member (i.e the one connected to a generator).
+     */
+    for (i = voice->mod_count - 1; i >= 0; i--)
+    {
+        fluid_mod_t* mod = &voice->mod[i];
+        fluid_real_t modval = fluid_mod_get_value(mod, voice);
+        int dest_index = mod->dest;
+        if(dest_index & FLUID_MOD_LINK_DEST)
+        {
+            /* destination is a modulator */
+            voice->mod[dest_index & ~FLUID_MOD_LINK_DEST].link += modval;
+        }
+        else
+        {
+            /* destination is a generator */
+            fluid_gen_t* dest_gen = &voice->gen[dest_index];
+            dest_gen->mod += modval;
+        }
+        /*      fluid_dump_modulator(mod); */
+    }
+}
+
 /*
  * fluid_voice_calculate_runtime_synthesis_parameters
  *
@@ -519,7 +548,6 @@ fluid_voice_calculate_gen_pitch(fluid_voice_t *voice)
 static int
 fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t *voice)
 {
-    int i;
     unsigned int n;
 
     static int const list_of_generators_to_initialize[] =
@@ -598,28 +626,7 @@ fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t *voice)
      * fluid_gen_init().
      */
 
-    /* The voice contains unlinked modulators + possible complex linked modulators.
-	   We scan modulators from the last member of possible complex linked
-       modulator to the first member (i.e the one connected to a generator).
-     */
-    for (i = voice->mod_count - 1; i >= 0; i--) 
-    {
-        fluid_mod_t* mod = &voice->mod[i];
-        fluid_real_t modval = fluid_mod_get_value(mod, voice);
-        int dest_index = mod->dest;
-        if(dest_index & FLUID_MOD_LINK_DEST)
-        {
-            /* destination is a modulator */
-            voice->mod[dest_index & ~FLUID_MOD_LINK_DEST].link += modval;
-        }
-        else
-        {
-            /* destination is a generator */
-            fluid_gen_t* dest_gen = &voice->gen[dest_index];
-            dest_gen->mod += modval;
-        }
-        /*      fluid_dump_modulator(mod); */
-    }
+    fluid_voice_calculate_modulator_contributions(voice);
 
     /* Now the generators are initialized, nominal and modulation value.
      * The voice parameters (which depend on generators) are calculated
