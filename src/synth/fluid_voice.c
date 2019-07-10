@@ -519,7 +519,7 @@ void fluid_voice_calculate_modulator_contributions(fluid_voice_t *voice)
     {
         fluid_mod_t* mod = &voice->mod[i];
         fluid_real_t modval = fluid_mod_get_value(mod, voice);
-        int dest_index = mod->dest;
+        unsigned int dest_index = mod->dest;
         if(dest_index & FLUID_MOD_LINK_DEST)
         {
             /* destination is a modulator */
