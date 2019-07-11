@@ -1563,8 +1563,8 @@ void
 fluid_voice_add_mod_local(fluid_voice_t *voice, fluid_mod_t *mod, int mode, int check_limit_count)
 {
     int i;
-  	/* number of modulators to add : 1 for unlinked, > 1 for complex  modulators */
-	unsigned char count = fluid_get_num_mod(mod);
+    /* number of modulators to add: 1 for unlinked, > 1 for complex modulators */
+    unsigned char count = fluid_get_num_mod(mod);
 
     /* check_limit_count cannot be above voice->mod_count */
     if(check_limit_count > voice->mod_count)
@@ -1574,7 +1574,6 @@ fluid_voice_add_mod_local(fluid_voice_t *voice, fluid_mod_t *mod, int mode, int 
 
     if(mode == FLUID_VOICE_ADD)
     {
-
         /* if identical modulator exists, add them */
         if(count > 1)
         {
@@ -1583,7 +1582,7 @@ fluid_voice_add_mod_local(fluid_voice_t *voice, fluid_mod_t *mod, int mode, int 
             {
                 /* skip unlinked modulators */
                 if (voice->mod[i].next)
-				{
+                {
                     if(fluid_linked_mod_test_identity(&voice->mod[i],i, mod,0))
                     {
                         /* add amount */
@@ -1596,7 +1595,7 @@ fluid_voice_add_mod_local(fluid_voice_t *voice, fluid_mod_t *mod, int mode, int 
                         i++;
                     }
                 }
-           	}
+            }
         }
         else for (i = 0; i < check_limit_count; i++) 
         {
@@ -1610,7 +1609,6 @@ fluid_voice_add_mod_local(fluid_voice_t *voice, fluid_mod_t *mod, int mode, int 
     }
     else if(mode == FLUID_VOICE_OVERWRITE)
     {
-
         /* if identical modulator exists, replace it (only the amount has to be changed) */
         for(i = 0; i < check_limit_count; i++)
         {
@@ -1628,18 +1626,18 @@ fluid_voice_add_mod_local(fluid_voice_t *voice, fluid_mod_t *mod, int mode, int 
        checking, if the same modulator already exists. 
        Also, instrument linked modulators are added using FLUID_VOICE_DEFAULT */
     {
-        fluid_mod_t *voice_mod, *prev_mod;
+        fluid_mod_t *prev_mod;
         /* index of new modulator (first member index for complex modulator,i.e
            grouped linked modulators).*/
-        int offset = voice->mod_count;
+        const int offset = voice->mod_count;
         /* Add modulator only if there is enought room in voice tab */
-        if( offset + count <= FLUID_NUM_MOD)
+        if( 1 <= offset + count && offset + count <= FLUID_NUM_MOD)
         {
             /* clone all modulators member */
             /* count is 1 for unlinked modulator, > 1 for complex modulator */
             for (i =0; i < count; i++)
 			{
-                voice_mod = &voice->mod[voice->mod_count++];
+                fluid_mod_t *voice_mod = &voice->mod[voice->mod_count++];
                 fluid_mod_clone(voice_mod, mod);
                 voice_mod->link = 0.0;	/* Initialize src1 link input node */
                 if(i)
@@ -1655,8 +1653,7 @@ fluid_voice_add_mod_local(fluid_voice_t *voice, fluid_mod_t *mod, int mode, int 
             }
             /* last modulator member will be recognized by next field set to NULL*/
             /* For unlinked modulator the last member is the modulator itself */
-            /* voice_mod is a valid pointer to the last member */
-            voice_mod->next = NULL;  
+            voice->mod[voice->mod_count - 1].next = NULL;
         }
         else
         {
