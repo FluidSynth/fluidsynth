@@ -1728,13 +1728,12 @@ fluid_zone_copy_linked_mod(fluid_mod_t *list_mod, int dest_idx, int new_idx,
             if (is_mod_dst_only || is_mod_src)
             {
                 /* Make a copy of this modulator */
-                fluid_mod_t *mod_cpy = new_fluid_mod();
+                fluid_mod_t *mod_cpy = new_fluid_mod(); /* next field is set to NULL */
                 if(mod_cpy == NULL)
                 { 
                     return FLUID_FAILED;
                 }
                 fluid_mod_clone(mod_cpy, mod);
-                mod_cpy->next = NULL;
                 
                 /* updates destination field of mod_cpy (but ending modulator) */
                 if (is_mod_src)
@@ -2072,14 +2071,12 @@ fluid_zone_mod_import_sfont(char *zone_name, fluid_mod_t **mod,
     {
 
         SFMod *mod_src = (SFMod *)fluid_list_get(r);
-        fluid_mod_t *mod_dest = new_fluid_mod();
+        fluid_mod_t *mod_dest = new_fluid_mod(); /* next field is set to NULL */
 
         if(mod_dest == NULL)
         {
             return FLUID_FAILED;
         }
-
-        mod_dest->next = NULL; /* pointer to next modulator, this is the end of the list now.*/
 
         /* *** Amount *** */
         mod_dest->amount = mod_src->amount;

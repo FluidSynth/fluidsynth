@@ -1385,7 +1385,7 @@ fluid_synth_add_default_mod(fluid_synth_t *synth, const fluid_mod_t *mod, int mo
     }
 
     /* Add a new modulator (no existing modulator to add / overwrite). */
-    new_mod = new_fluid_mod();
+    new_mod = new_fluid_mod(); /* next field is set to NULL */
 
     if(new_mod == NULL)
     {
@@ -1393,7 +1393,6 @@ fluid_synth_add_default_mod(fluid_synth_t *synth, const fluid_mod_t *mod, int mo
     }
 
     fluid_mod_clone(new_mod, mod);
-    new_mod->next = NULL;
 
     if(last_mod == NULL)
     {
