@@ -17,6 +17,7 @@ int main(void)
     fluid_mod_t *list_of_mods = NULL;
     
     // set up a list of simple modulators
+	printf("test 1: set up a list of simple modulators\n");
     {
         mod2->next = mod3;
         mod1->next = mod2;
@@ -49,6 +50,7 @@ int main(void)
     }
     
     // set up a valid list of complex modulators
+	printf("test 2: set up a valid list of complex modulators\n");
     {
         mod2->next = mod3;
         mod1->next = mod2;
@@ -85,6 +87,7 @@ int main(void)
     }
     
     // same list, but changed order
+	printf("test 3: same list, but changed order\n");
     {
         mod2->next = NULL;
         mod3->next = mod2;
@@ -104,8 +107,9 @@ int main(void)
         TEST_ASSERT(fluid_mod_get_amount(mod3) == 300);
     }
     
-    // same list, but with additional mod that points to mod2 without mod2 having FLUID_MOD_LINK_SRC
-    {
+    // same list, but with additional mod4 that points to mod2 without mod2 having FLUID_MOD_LINK_SRC
+ 	printf("test 4: same list, but with additional mod4 that points to mod2 without mod2 having FLUID_MOD_LINK_SRC\n");
+   {
         fluid_mod_set_source1(mod4, 20, FLUID_MOD_CC | FLUID_MOD_LINEAR | FLUID_MOD_UNIPOLAR | FLUID_MOD_POSITIVE);
         fluid_mod_set_source2(mod4, FLUID_MOD_NONE, FLUID_MOD_GC);
         fluid_mod_set_amount (mod4, 50);
@@ -133,6 +137,7 @@ int main(void)
     
         
     // same list, with additional mod4 and valid mod2 this time
+ 	printf("test 5: same list, with additional mod4 and valid mod2 this time\n");
     {
         fluid_mod_set_source1(mod2, FLUID_MOD_LINK_SRC, FLUID_MOD_GC);
         fluid_mod_set_amount (mod4, 50);
@@ -158,6 +163,7 @@ int main(void)
     }
             
     // circular complex modulators
+ 	printf("test 6: circular complex modulators m3->m2->m3\n");
     {
         fluid_mod_set_dest   (mod2, FLUID_MOD_LINK_DEST | 3);
         
@@ -182,6 +188,7 @@ int main(void)
     }
     
     // invalid list of complex modulators: the first modulator should not have a linked destination
+ 	printf("test 7: invalid list of complex modulators: the first modulator should not have a linked destination\n");
     {
         mod3->next = NULL;
         mod1->next = mod3;
@@ -219,6 +226,7 @@ int main(void)
     }
 
     // invalid list of complex modulators: valid first modulator but invalid destinations
+ 	printf("test 8: invalid list of complex modulators: valid first modulator but invalid destinations\n");
     {
         mod3->next = NULL;
         mod2->next = mod3;
