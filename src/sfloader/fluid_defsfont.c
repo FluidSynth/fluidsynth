@@ -727,7 +727,7 @@ static void fluid_print_voice_mod(fluid_voice_t  *voice,
                         char *inst_zone_name,
                         char *filter_inst_zone_name)
 {
-    int i,count;
+    int i;
     fluid_mod_t *mod;
 
     if(strcmp(preset_zone_name, filter_preset_zone_name)
