@@ -1550,7 +1550,7 @@ fluid_voice_add_mod(fluid_voice_t *voice, fluid_mod_t *mod, int mode)
  * Adds a modulator to the voice.
  * local version of fluid_voice_add_mod function. Called at noteon time.
  *
- * This function accept simple modulator or complex modulator (linked modulator).
+ * This function accepts simple modulator or complex modulator (linked modulator).
  * Warning: note that for complex modulator, in order to be processed 
  * correctly and efficiently at noteon and during CC modulation, the modulators
  * members of this complex modulator must be valid and ordered in a previsible 
@@ -1632,7 +1632,7 @@ fluid_voice_add_mod_local(fluid_voice_t *voice, fluid_mod_t *mod, int mode, int 
         {
             return;
         }
-		/* if identical modulator exists, replace it (only the amount has to be changed) */
+        /* if identical modulator exists, replace it (only the amount has to be changed) */
         for(i = 0; i < check_limit_count; i++)
         {
             if(fluid_mod_test_identity(&voice->mod[i], mod))
