@@ -1224,15 +1224,15 @@ int fluid_voice_modulate(fluid_voice_t* voice, int cc, int ctrl)
           Next member to the last have destination field with bit FLUID_MOD_LINK_DEST
           set to indicate that destination is a modulator index (i.e not a generator
           ID).
-		*/
+        */
         if(!(mod->dest & FLUID_MOD_LINK_DEST)) /* ignore modulator destination*/
         {
             gen = mod->dest; /* keep only generator destination */
         }
-		/* gen is always a valid generator ID destination from:
-		   - a non-linked modulator or 
-		   - a complex modulator.
-		*/
+        /* gen is always a valid generator ID destination from:
+           - a non-linked modulator or 
+           - a complex modulator.
+        */
 
         /* step 1: find all the modulators that have the changed controller
            as input source. When ctrl is -1 all modulators destination
@@ -1255,7 +1255,7 @@ int fluid_voice_modulate(fluid_voice_t* voice, int cc, int ctrl)
                         /* get output value v of modulator k that could be a 
                            possible complex linked modulators */
                         /* 1) clears all link input node of each member j from
-                              the first to the last member minus one */ 
+                           the first to the last member minus one */ 
                         for(j = k; voice->mod[j].next; j++)
                         {
                             voice->mod[j].link = 0.0;
@@ -1876,8 +1876,8 @@ fluid_voice_get_lower_boundary_for_attenuation(fluid_voice_t *voice)
                              it means that correspondant link_min_max[j] link 
                              input nodes are valid and used to compute final
                              modulator min_val.
-							*/
-							/* min_val,max_val for src2 unipolar and amount > 0 */
+                            */
+                            /* min_val,max_val for src2 unipolar and amount > 0 */
                             min_val *= link_min_max[j].min;
                             max_val *= link_min_max[j].max ;
                             /* permutes min and max when amount is < 0 */
