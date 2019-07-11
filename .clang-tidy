@@ -1,5 +1,5 @@
 ---
-Checks:          'clang-diagnostic-*,clang-analyzer-*,-*,cert-*,clang-analyzer-*,performance-*,readability-avoid-const-params-in-decls,readability-braces-around-statements,readability-delete-null-pointer,readability-implicit-bool-conversion,readability-misleading-indentation,readability-misplaced-array-index,readability-non-const-parameter,readability-redundant-control-flow,readability-redundant-declaration,readability-redundant-function-ptr-dereference,readability-simplify-boolean-expr'
+Checks:          '-*,clang-diagnostic-*,clang-analyzer-*,-clang-analyzer-security.insecureAPI.strcpy,performance-*,readability-avoid-const-params-in-decls,readability-braces-around-statements,readability-delete-null-pointer,readability-implicit-bool-conversion,readability-misleading-indentation,readability-misplaced-array-index,readability-non-const-parameter,readability-redundant-control-flow,readability-redundant-declaration,readability-redundant-function-ptr-dereference,readability-simplify-boolean-expr'
 WarningsAsErrors: ''
 HeaderFilterRegex: ''
 AnalyzeTemporaryDtors: false
