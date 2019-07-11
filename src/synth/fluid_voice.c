@@ -1871,7 +1871,13 @@ fluid_voice_get_lower_boundary_for_attenuation(fluid_voice_t *voice)
                         min_val = max_val = fabs(modj->amount);
                         if (fluid_mod_has_linked_src1(modj))
                         {
-                            /* min_val,max_val for src2 unipolar and amount > 0 */
+                            /*
+                             Mod(j) have source src1 linked to other modulator(s),
+                             it means that correspondant link_min_max[j] link 
+                             input nodes are valid and used to compute final
+                             modulator min_val.
+							*/
+							/* min_val,max_val for src2 unipolar and amount > 0 */
                             min_val *= link_min_max[j].min;
                             max_val *= link_min_max[j].max ;
                             /* permutes min and max when amount is < 0 */
