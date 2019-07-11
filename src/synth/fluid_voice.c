@@ -1549,7 +1549,25 @@ fluid_voice_add_mod(fluid_voice_t *voice, fluid_mod_t *mod, int mode)
 /**
  * Adds a modulator to the voice.
  * local version of fluid_voice_add_mod function. Called at noteon time.
- * @param voice, mod, mode, same as for fluid_voice_add_mod() (see above).
+ *
+ * This function accept simple modulator or complex modulator (linked modulator).
+ * Warning: note that for complex modulator, in order to be processed 
+ * correctly and efficiently at noteon and during CC modulation, the modulators
+ * members of this complex modulator must be valid and ordered in a previsible 
+ * manner (as those comming from the soundfont loader).
+ *
+ * @param voice, pointer on voice instance.
+ * @param mod, pointer on simple or complex modulator.
+ * @param mode, Determines how to handle an existing identical modulator. 
+ *   #FLUID_VOICE_ADD to add (offset) the modulator amount,
+ *   #FLUID_VOICE_OVERWRITE to replace the modulator, (for simple modulator only),
+ *     Note that a complex modulator is ignored in mode FLUID_VOICE_OVERWRITE 
+ *     because FLUID_VOICE_OVERWRITE has only sense for overriding default 
+ *     modulator and in SF specs there is no default definition for complex 
+ *     modulators (i.e linked modulators). 
+ *   #FLUID_VOICE_DEFAULT when adding a default modulator - no duplicate should
+ *   exist so don't check.
+ *
  * @param check_limit_count is the modulator number limit to handle with existing
  *   identical modulator(i.e mode FLUID_VOICE_OVERWRITE, FLUID_VOICE_ADD).
  *   - When FLUID_NUM_MOD, all the voices modulators (since the previous call)
@@ -1609,7 +1627,12 @@ fluid_voice_add_mod_local(fluid_voice_t *voice, fluid_mod_t *mod, int mode, int 
     }
     else if(mode == FLUID_VOICE_OVERWRITE)
     {
-        /* if identical modulator exists, replace it (only the amount has to be changed) */
+        /* ignore complex modulator in mode FLUID_VOICE_OVERWRITE */
+        if(count > 1)
+        {
+            return;
+        }
+		/* if identical modulator exists, replace it (only the amount has to be changed) */
         for(i = 0; i < check_limit_count; i++)
         {
             if(fluid_mod_test_identity(&voice->mod[i], mod))
