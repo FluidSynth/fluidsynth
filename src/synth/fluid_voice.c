@@ -1216,7 +1216,6 @@ int fluid_voice_modulate(fluid_voice_t* voice, int cc, int ctrl)
 
     for (i = 0; i < voice->mod_count; i++)
     {
-
         mod = &voice->mod[i];
         /* memorize gen destination. 
           Linked modulators are grouped consecutively to form a complex modulator.
@@ -1229,7 +1228,15 @@ int fluid_voice_modulate(fluid_voice_t* voice, int cc, int ctrl)
         {
             gen = mod->dest; /* keep only generator destination */
         }
-        /* gen is always a valid generator ID destination from:
+        else
+        {
+            if(i == 0)
+            {
+                /* The first modulator must be a non-linked modulator to avoid gen being uninitialized */
+                return FLUID_FAILED;
+            }
+        }
+        /* At this point, gen is always a valid generator ID destination from:
            - a non-linked modulator or 
            - a complex modulator.
         */
@@ -1239,7 +1246,6 @@ int fluid_voice_modulate(fluid_voice_t* voice, int cc, int ctrl)
            are updated */
         if(ctrl < 0 || fluid_mod_has_source(mod, cc, ctrl))
         {
-
             /* Skip if this generator has already been updated */
             if(!is_gen_updated(updated_gen_bit, gen))
             {
