@@ -163,7 +163,7 @@ int main(void)
     }
             
     // circular complex modulators
- 	printf("test 6: circular complex modulators m3->m2->m3\n");
+ 	printf("test 6: circular complex modulators m4->m2->m4\n");
     {
         fluid_mod_set_dest   (mod2, FLUID_MOD_LINK_DEST | 3);
         
