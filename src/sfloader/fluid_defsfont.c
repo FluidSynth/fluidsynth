@@ -1547,14 +1547,14 @@ fluid_check_linked_mod_path(char *zone_name, fluid_mod_t *list_mod,
  
             /* mod is a valid destination modulator */
             /* Checks if mod belongs to a path already discovered */
-			/* paths already discovered are in range index [0..cur_path_idx[ */
+            /* paths already discovered are in range index [0..cur_path_idx[ */
             if (fluid_is_mod_in_path(path, cur_path_idx, mod))
             {
                 return TRUE; /* current path is valid */
             }
 
             /* Checks if mod belongs to current path */
-			/* current path is in range index [cur_path_idx..(*path_idx)[ */
+            /* current path is in range index [cur_path_idx..(*path_idx)[ */
             if (fluid_is_mod_in_path(&path[cur_path_idx], 
                                           (*path_idx) - cur_path_idx, mod ))
             {
@@ -1791,7 +1791,8 @@ fluid_zone_copy_linked_mod(fluid_mod_t *list_mod, int dest_idx, int new_idx,
 
 /**
  * Checks and remove invalid modulators from a zone modulators list.
- * - checks valid modulator sources (specs SF 2.01  7.4, 7.8, 8.2.1).
+ * - checks invalid linked modulator.
+ * - checks invalid modulator sources (specs SF 2.01  7.4, 7.8, 8.2.1).
  * - checks identic modulator in the list (specs SF 2.01  7.4, 7.8).
  * @param list_mod, address of pointer on modulator list.
  */
@@ -1802,10 +1803,11 @@ static void fluid_zone_check_remove_mod(fluid_mod_t **list_mod)
     while(mod)
     {	
         fluid_mod_t *next = mod->next;
-        /* has mod invalid sources ? */
-        if(((fluid_mod_has_linked_src1(mod)||(mod->dest & FLUID_MOD_LINK_DEST))
+        if(   /* Is mod an invalid linked modulator ? */
+              ((fluid_mod_has_linked_src1(mod)||(mod->dest & FLUID_MOD_LINK_DEST))
               && (mod->amount == 0))
-			  || !fluid_mod_check_sources(mod, NULL)
+              /* or has mod invalid sources ? */
+              || !fluid_mod_check_sources(mod, NULL)
               /* or is mod identic to any following modulator ? */
               || fluid_zone_is_mod_identic(mod, NULL))
         {  
