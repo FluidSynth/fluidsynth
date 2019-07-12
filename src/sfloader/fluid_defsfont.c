@@ -1547,13 +1547,16 @@ fluid_check_linked_mod_path(char *zone_name, fluid_mod_t *list_mod,
  
             /* mod is a valid destination modulator */
             /* Checks if mod belongs to a path already discovered */
+			/* paths already discovered are in range index [0..cur_path_idx[ */
             if (fluid_is_mod_in_path(path, cur_path_idx, mod))
             {
                 return TRUE; /* current path is valid */
             }
 
             /* Checks if mod belongs to current path */
-            if (fluid_is_mod_in_path(&path[cur_path_idx], *path_idx, mod ))
+			/* current path is in range index [cur_path_idx..(*path_idx)[ */
+            if (fluid_is_mod_in_path(&path[cur_path_idx], 
+                                          (*path_idx) - cur_path_idx, mod ))
             {
                 /* warning: invalid circular path */
                 FLUID_LOG(FLUID_WARN, "invalid circular path %s/mod%d", 
