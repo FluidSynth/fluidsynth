@@ -519,6 +519,8 @@ fluid_mod_get_value(fluid_mod_t *mod, fluid_voice_t *voice)
 
 /**
  * Create a new uninitialized modulator structure.
+ * Structure's fields are left uninitialized except 'next' field that is 
+ * initialized to NULL.
  * @return New allocated modulator or NULL if out of memory
  */
 fluid_mod_t *
