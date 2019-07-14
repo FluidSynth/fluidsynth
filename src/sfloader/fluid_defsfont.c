@@ -1496,7 +1496,7 @@ fluid_is_mod_in_path(fluid_mod_t *path[], int count, fluid_mod_t *mod)
  *   with, mod2 being the modulator at the beginning of the path.
  *	 This case occurs when a modulator doesn't exist at m6 destination index
  *	 for example (CC->m2-->m6-->?).
- *	 This case occurs also if a modulator exist at m6 destination index
+ *	 This case occurs also if a modulator exists at m6 destination index
  *	 (e.g CC->m2-->m6-->m3->...) and this modulator (e.g m3) have source src1 not
  *   linked. Two messages are displayed to show the later case:
  *      fluidsynth: warning: invalid destination zone-name/mod3.
@@ -1513,18 +1513,19 @@ fluid_is_mod_in_path(fluid_mod_t *path[], int count, fluid_mod_t *mod)
  *      fluidsynth: warning: path without destination zone-name/mod2.
  *   First message indicates that m6 is a modulator already encountered.
  *   Second message indicates the modulator at the beginning of the path (e.g m2).
- *   When a path is circulars, all modulators from the start to the one
+ *   When a path is circular, all modulators from the start to the one
  *   already encontered are marked invalid (amount = 0). (e.g  m2,m6,m3,m8).
  *
  * When finished, path table contains:
- * - valid discovered modulators paths (or not).
- * - incomplete invalid path (with amount set to 0).
+ * - no path or
+ * - valid complete paths (amount not set to 0) or
+ * - invalid incomplete paths (with amount set to 0).
  *
- * Other incomplete linked modulators path are isolated.
- * Isolated modulators mx have source src1 linked, with no others modulators
- * connected to mx.
- * These isolated modulators are still in list_mod but not in path. They should be
- * marked invalid later.
+ * Other incomplete linked modulator paths are isolated.
+ * Isolated path starts with modulator mx having source src1 linked, with no
+ * others modulators connected to mx.
+ * These isolated modulator paths are still in list_mod but not in path table.
+ * They should be marked invalid later.
  *
  *
  * @param zone_name, zone's name
@@ -1541,7 +1542,7 @@ fluid_is_mod_in_path(fluid_mod_t *path[], int count, fluid_mod_t *mod)
  * This index must be 0 at first call. On return, it indicates the number of linked
  * modulators stored in path (for all linked paths found).
  *
- * @return  TRUE if at least one valid linked modulators path exists,
+ * @return  TRUE if at least one linked modulators path exists (complete/incomplete),
  *          FALSE  otherwise.
 */
 static int
