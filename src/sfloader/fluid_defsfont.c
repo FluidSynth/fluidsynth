@@ -1949,8 +1949,9 @@ fluid_zone_check_mod(char *zone_name, fluid_mod_t **list_mod,
                      fluid_mod_t **linked_mod)
 {
     int result;
+    *linked_mod = NULL; /* Initialize linked modulator list to NULL */
 
-    /* Checks linked modulators path from a zone modulators list */
+    /* Checks linked modulators paths from a zone modulators list */
     result = fluid_zone_check_linked_mod(zone_name, *list_mod);
     if (result == FLUID_FAILED)
     {
@@ -1960,8 +1961,8 @@ fluid_zone_check_mod(char *zone_name, fluid_mod_t **list_mod,
     /* does one or more valid linked modulators exists ? */
     if(result)
     {
-        /* one or more valid linked modulators path exists */
-        /* Extracts linked modulators path from list_mod to linked_mod.*/
+        /* one or more linked modulators paths exists */
+        /* Extracts valid linked modulator paths from list_mod to linked_mod.*/
         if (fluid_zone_copy_linked_mod(*list_mod, -1, 0, 
                                       linked_mod) == FLUID_FAILED)
         {
