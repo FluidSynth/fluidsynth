@@ -1484,7 +1484,7 @@ fluid_is_mod_in_path(fluid_mod_t *path[], int count, fluid_mod_t *mod)
  *
  * Let a linked path     CC-->m2-->m6-->m3-->gen
  *
- * - A linked path starts from a modulator with source scr1 not linked and
+ * - A linked path begins from a modulator with source scr1 not linked and
  *   destination linked to a modulator (e.g m2).
  * - A linked path ends on a modulator with source scr1 linked and destination
  *   connected to a generator (e.g m3).
@@ -1503,7 +1503,7 @@ fluid_is_mod_in_path(fluid_mod_t *path[], int count, fluid_mod_t *mod)
  *      fluidsynth: warning: path without destination zone-name/mod2.
  *   First message indicates that m3 is invalid (because source src1 isn't linked
  *   or amount is 0).
- *   When a path is without destination, all modulators from the start to the one
+ *   When a path is without destination, all modulators from the beginning to the one
  *   without destination are marked invalid (amount = 0). (e.g  m2,m6).
  *
  * - Circular path:
@@ -1513,7 +1513,7 @@ fluid_is_mod_in_path(fluid_mod_t *path[], int count, fluid_mod_t *mod)
  *      fluidsynth: warning: path without destination zone-name/mod2.
  *   First message indicates that m6 is a modulator already encountered.
  *   Second message indicates the modulator at the beginning of the path (e.g m2).
- *   When a path is circular, all modulators from the start to the one
+ *   When a path is circular, all modulators from the beginning to the one
  *   already encontered are marked invalid (amount = 0). (e.g  m2,m6,m3,m8).
  *
  * When finished, path table contains:
@@ -1522,11 +1522,17 @@ fluid_is_mod_in_path(fluid_mod_t *path[], int count, fluid_mod_t *mod)
  * - invalid incomplete paths (with amount set to 0).
  *
  * Other incomplete linked modulator paths are isolated.
- * Isolated path starts with modulator mx having source src1 linked, with no
+ * Isolated path begins with modulator mx having source src1 linked, with no
  * others modulators connected to mx.
  * These isolated modulator paths are still in list_mod but not in path table.
  * They should be marked invalid later.
  *
+ * The function searchs all linked path starting from the beginning of the path
+ * (ie. a modulator with source not linked) forward to the endind of the path
+ * (ie. a modulator connected to a generator).
+ * Search direction is the reverse that the one done in fluid_zone_copy_linked_mod().
+ * The function is recursive and intended to be called the first time to
+ * start the search from the beginning of any path (see dest_idx, path_idx).
  *
  * @param zone_name, zone's name
  * @param list_mod, pointer on modulators list.
@@ -1724,7 +1730,7 @@ fluid_zone_check_linked_mod(char *zone_name, fluid_mod_t *list_mod)
  * When finished, modulators in linked_mod are grouped in complex modulator.
  * (cm0,cm1,cm2..).
  * The first member of any complex modulator is the ending modulator connected
- * to a generator. Other members are linked to each other to reach the first
+ * to a generator. Other members are linked to each other to reach the last
  * member. The destination index of modulator member following the first is
  * relative (0 based) to the first member index.
  *
@@ -1737,6 +1743,7 @@ fluid_zone_check_linked_mod(char *zone_name, fluid_mod_t *list_mod)
  * The function searchs all linked path starting from the end of the path 
  * (i.e modulator connected to a generator) backward to the beginning of 
  * the path (ie. a modulator with source not linked).
+ * Search direction is the reverse that the one done in fluid_check_linked_mod_path().
  * The function is recursive and intended to be called the first time to
  * start the search from ending linked modulator (see dest_idx, new_idx).
  *
