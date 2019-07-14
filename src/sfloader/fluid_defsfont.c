@@ -1749,8 +1749,7 @@ fluid_zone_check_linked_mod(char *zone_name, fluid_mod_t *list_mod)
  *  of linked_mod. Must be set to 0 at first call.
  *
  * @param linked_mod, address of pointer on linked modulators list returned
- *  if any linked modulators exist. NULL is returned if there is no complex
- *  linked modulator.
+ *  if any linked modulators exist.
  *
  * @return  
  *   0, linked_mod list is empty.
