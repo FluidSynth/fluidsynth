@@ -17,7 +17,7 @@ int main(void)
     fluid_mod_t *list_of_mods = NULL;
     
     // set up a list of simple modulators
-	printf("test 1: set up a list of simple modulators\n");
+	printf("Test 1: set up a list of simple modulators\n");
     {
         mod1->next = mod2;
         mod0->next = mod1;
@@ -50,7 +50,11 @@ int main(void)
     }
     
     // set up a valid list of complex modulators
-	printf("\ntest 2: set up a valid list of complex modulators\n");
+	printf("\nTest 2: set up a valid list of complex modulators\n");
+	printf(  " List:m0,m1,m2\n");
+	printf(  " Paths from any CC to ending modulator connected to gen:\n");
+	printf(  "  CC-->m1-->m0-->gen\n");
+	printf(  "  CC-->m2-->m0\n");
     {
         mod1->next = mod2;
         mod0->next = mod1;
@@ -87,7 +91,11 @@ int main(void)
     }
     
     // same list, but changed order
-	printf("\ntest 3: same list, but changed order\n");
+	printf("\nTest 3: same list, but changed order\n");
+	printf(  " List:m0,m2,m1\n");
+	printf(  " Paths from any CC to ending modulator connected to gen:\n");
+	printf(  "  CC-->m2-->m0-->gen\n");
+	printf(  "  CC-->m1-->m0\n");
     {
         mod1->next = NULL;
         mod2->next = mod1;
@@ -108,8 +116,13 @@ int main(void)
     }
     
     // same list, but with additional mod3 that points to mod1 without mod1 having FLUID_MOD_LINK_SRC
- 	printf("\ntest 4: same list, but with additional mod3 that points to mod1 without mod1 having FLUID_MOD_LINK_SRC\n");
-   {
+ 	printf("\nTest 4: same list that test 2, but with additional mod3 that points to mod1 without mod1 having FLUID_MOD_LINK_SRC\n");
+ 	printf(  " List:m0,m1,m2,m3\n");
+	printf(  " Paths from any CC to ending modulator connected to gen:\n");
+	printf(  "  CC-->m3-->m1\n");
+	printf(  "  CC------->m1-->m0-->gen\n");
+	printf(  "  CC------->m2-->m0\n");
+    {
         fluid_mod_set_source1(mod3, 20, FLUID_MOD_CC | FLUID_MOD_LINEAR | FLUID_MOD_UNIPOLAR | FLUID_MOD_POSITIVE);
         fluid_mod_set_source2(mod3, FLUID_MOD_NONE, FLUID_MOD_GC);
         fluid_mod_set_amount (mod3, 50);
@@ -137,7 +150,12 @@ int main(void)
     
         
     // same list, with additional mod3 and valid mod1 this time
- 	printf("\ntest 5: same list, with additional mod3 and valid mod1 this time\n");
+ 	printf("\nTest 5: same list, with additional mod3 and valid mod1 this time\n");
+ 	printf(  " List:m0,m1,m2,m3\n");
+	printf(  " Paths from any CC to ending modulator connected to gen:\n");
+	printf(  "  CC-->m3-->m1\n");
+	printf(  "  CC------->m1-->m0-->gen\n");
+	printf(  "  CC------->m2-->m0\n");
     {
         fluid_mod_set_source1(mod1, FLUID_MOD_LINK_SRC, FLUID_MOD_GC);
         fluid_mod_set_amount (mod3, 50);
@@ -161,11 +179,19 @@ int main(void)
         TEST_ASSERT(fluid_mod_get_amount(mod2) == 300);
         TEST_ASSERT(fluid_mod_get_amount(mod3) == 50);
     }
-            
-    // circular complex modulators
- 	printf("\ntest 6: circular complex modulators mod3->mod1->mod3\n");
+
+#if 1 // nok
+    // Look like circular circular complex modulators, but it isn't not circular !
+ 	printf("\nTest 6: false circular complex modulators, CC->mod3->mod1->mod3 => circular path ?\n");
+ 	printf(  " List:m0,m1,m2,m3\n");
+	printf(  " Paths from any CC to ending modulator connected to gen:\n");
+	printf(  "       m3<--m1\n");
+	printf(  "  CC-->m3-->m1\n");
+	printf(  "  CC------->m2-->m0-->gen\n");
+ 	printf(  " Question: is it a circular path ?\n");
+ 	printf(  " Answer: no, because mod3's src1 is without FLUID_MOD_LINK_SRC !\n");
     {
-        fluid_mod_set_dest   (mod1, FLUID_MOD_LINK_DEST | 3);
+       fluid_mod_set_dest   (mod1, FLUID_MOD_LINK_DEST | 3);
         
         mod2->next = mod3;
         mod1->next = mod2;
@@ -182,13 +208,101 @@ int main(void)
         
         // modulators that are part of the circular list are invalidated
         TEST_ASSERT(fluid_mod_get_amount(mod0) == 100);
+        TEST_ASSERT(fluid_mod_get_amount(mod1) == 0); // invalid destination
+        TEST_ASSERT(fluid_mod_get_amount(mod2) == 300);
+        TEST_ASSERT(fluid_mod_get_amount(mod3) == 0); // path without destination
+    }
+#endif
+#if 1 //ok
+    // Circular complex modulators
+ 	printf("\nTest 6.0: true circular complex modulators, CC->mod3->mod1->mod1 => circular path\n");
+ 	printf(  " List:m0,m1,m2,m3\n");
+	printf(  " Paths from any CC to ending modulator connected to gen:\n");
+	printf(  "          <--m1\n");
+	printf(  "  CC-->m3-*->m1\n");
+	printf(  "  CC-------->m2-->m0-->gen\n");
+    {
+        // restore test 5 state:
+		fluid_mod_set_dest   (mod1, FLUID_MOD_LINK_DEST | 0); // mod1->mod0
+        fluid_mod_set_amount (mod0, 100);
+        fluid_mod_set_amount (mod1, 200);
+        fluid_mod_set_amount (mod2, 300);
+        fluid_mod_set_amount (mod3, 50);
+
+		// new path: mod1->mod1, so new circurlar path is: CC->mod3->mod1->mod1 => circular path.
+        fluid_mod_set_dest   (mod1, FLUID_MOD_LINK_DEST | 1);
+        
+        mod2->next = mod3;
+        mod1->next = mod2;
+        mod0->next = mod1;
+        list_of_mods = mod0;
+        // It remains at least one linked path : mod2->mod0. Return must be TRUE
+        TEST_ASSERT(fluid_zone_check_linked_mod("test zone with circular linked modulators", list_of_mods) == TRUE);
+        
+        TEST_ASSERT(list_of_mods == mod0);
+        TEST_ASSERT(list_of_mods->next == mod1);
+        TEST_ASSERT(list_of_mods->next->next == mod2);
+        TEST_ASSERT(list_of_mods->next->next->next == mod3);
+        TEST_ASSERT(list_of_mods->next->next->next->next == NULL);
+        
+        // modulators that are part of the circular list are invalidated: mod3,mod1
+        TEST_ASSERT(fluid_mod_get_amount(mod0) == 100);
         TEST_ASSERT(fluid_mod_get_amount(mod1) == 0);
         TEST_ASSERT(fluid_mod_get_amount(mod2) == 300);
         TEST_ASSERT(fluid_mod_get_amount(mod3) == 0);
     }
-    
+#endif
+
+#if 1 // ok
+	// Another circular complex modulators
+ 	printf("\nTest 6.1: another circular complex modulators CC->mod2->mod0->mod1->mod0 => circular path\n");
+ 	printf(  " List:m0,m1,m2,m3\n");
+	printf(  " Paths from any CC to ending modulator connected to gen:\n");
+	printf(  "            m1<--m0\n");
+	printf(  "  CC-->m3-->m1-->m0\n");
+	printf(  "  CC------->m2-->m0\n");
+    {
+        // restore test 5 state:
+		fluid_mod_set_dest   (mod1, FLUID_MOD_LINK_DEST | 0); // mod1->mod0
+        fluid_mod_set_amount (mod0, 100);
+        fluid_mod_set_amount (mod1, 200);
+        fluid_mod_set_amount (mod2, 300);
+        fluid_mod_set_amount (mod3, 50);
+
+		// new path: mod0->mod1, so new circurlar path is: CC->mod2, mod0, mod1.
+        fluid_mod_set_dest   (mod0, FLUID_MOD_LINK_DEST | 1);
+        
+        mod2->next = mod3;
+        mod1->next = mod2;
+        mod0->next = mod1;
+        list_of_mods = mod0;
+
+        // Circular path is: CC->mod2, mod0, mod1.
+		// Remaining path CC->mod3-> is without destination.
+        // It remain no linked path : mod2->mod0. Return must be FALSE
+        TEST_ASSERT(fluid_zone_check_linked_mod("test zone with circular linked modulators", list_of_mods) == FALSE);
+        
+        TEST_ASSERT(list_of_mods == mod0);
+        TEST_ASSERT(list_of_mods->next == mod1);
+        TEST_ASSERT(list_of_mods->next->next == mod2);
+        TEST_ASSERT(list_of_mods->next->next->next == mod3);
+        TEST_ASSERT(list_of_mods->next->next->next->next == NULL);
+        
+        // modulators that are part of the circular list are invalidated
+		TEST_ASSERT(fluid_mod_get_amount(mod0) == 0); // part of circular path
+        TEST_ASSERT(fluid_mod_get_amount(mod1) == 0); // part of circular path
+        TEST_ASSERT(fluid_mod_get_amount(mod2) == 0); // part of circular path
+        TEST_ASSERT(fluid_mod_get_amount(mod3) == 0); // without destination.
+    }
+#endif
+
     // invalid list of complex modulators: the first modulator should not have a linked destination
- 	printf("\ntest 7: invalid list of complex modulators: the first modulator should not have a linked destination\n");
+ 	printf("\nTest 7: invalid list of complex modulators: the first modulator should not have a linked destination\n");
+ 	printf(  " List:m1,m0,m2\n");
+	printf(  " Paths from any CC to ending modulator connected to gen:\n");
+	printf(  "            m1<--m0\n");
+	printf(  "  CC-->m3-->m1-->m0\n");
+	printf(  "  CC------->m2-->m0\n");
     {
         mod2->next = NULL;
         mod0->next = mod2;
@@ -220,13 +334,17 @@ int main(void)
         TEST_ASSERT(list_of_mods->next->next->next == NULL);
         
         // all mods are invalidated
-        TEST_ASSERT(fluid_mod_get_amount(mod1) == 0);
-        TEST_ASSERT(fluid_mod_get_amount(mod0) == 0);
-        TEST_ASSERT(fluid_mod_get_amount(mod2) == 0);
+        TEST_ASSERT(fluid_mod_get_amount(mod1) == 0); // path without destination
+        TEST_ASSERT(fluid_mod_get_amount(mod0) == 0); // invalid isolated path
+        TEST_ASSERT(fluid_mod_get_amount(mod2) == 0); // path without destination
     }
 
-    // invalid list of complex modulators: valid first modulator but invalid destinations
- 	printf("\ntest 8: invalid list of complex modulators: valid first modulator but invalid destinations\n");
+    // invalid list of complex modulators: invalid destinations
+ 	printf("\nTest 8: invalid list of complex modulators: invalid destinations\n");
+ 	printf(  " List:m0,m1,m2\n");
+	printf(  " Paths from any CC to ending modulator connected to gen:\n");
+	printf(  "  CC-->m2-->m0-->gen\n");
+	printf(  "  CC-->m1-->42\n");
     {
         mod2->next = NULL;
         mod1->next = mod2;
@@ -259,11 +377,10 @@ int main(void)
         
         // all mods are invalidated
         TEST_ASSERT(fluid_mod_get_amount(mod0) == 100);
-        TEST_ASSERT(fluid_mod_get_amount(mod1) == 0);
+        TEST_ASSERT(fluid_mod_get_amount(mod1) == 0); // path without destination
         TEST_ASSERT(fluid_mod_get_amount(mod2) == 300);
     }
-
-    
+   
     delete_fluid_mod(mod0);
     delete_fluid_mod(mod1);
     delete_fluid_mod(mod2);
