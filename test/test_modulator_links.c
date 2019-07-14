@@ -180,7 +180,6 @@ int main(void)
         TEST_ASSERT(fluid_mod_get_amount(mod3) == 50);
     }
 
-#if 1 // nok
     // Look like circular circular complex modulators, but it isn't not circular !
  	printf("\nTest 6: false circular complex modulators, CC->mod3->mod1->mod3 => circular path ?\n");
  	printf(  " List:m0,m1,m2,m3\n");
@@ -212,8 +211,7 @@ int main(void)
         TEST_ASSERT(fluid_mod_get_amount(mod2) == 300);
         TEST_ASSERT(fluid_mod_get_amount(mod3) == 0); // path without destination
     }
-#endif
-#if 1 //ok
+
     // Circular complex modulators
  	printf("\nTest 6.0: true circular complex modulators, CC->mod3->mod1->mod1 => circular path\n");
  	printf(  " List:m0,m1,m2,m3\n");
@@ -251,9 +249,7 @@ int main(void)
         TEST_ASSERT(fluid_mod_get_amount(mod2) == 300);
         TEST_ASSERT(fluid_mod_get_amount(mod3) == 0);
     }
-#endif
 
-#if 1 // ok
 	// Another circular complex modulators
  	printf("\nTest 6.1: another circular complex modulators CC->mod2->mod0->mod1->mod0 => circular path\n");
  	printf(  " List:m0,m1,m2,m3\n");
@@ -294,7 +290,6 @@ int main(void)
         TEST_ASSERT(fluid_mod_get_amount(mod2) == 0); // part of circular path
         TEST_ASSERT(fluid_mod_get_amount(mod3) == 0); // without destination.
     }
-#endif
 
     // invalid list of complex modulators: the first modulator should not have a linked destination
  	printf("\nTest 7: invalid list of complex modulators: the first modulator should not have a linked destination\n");
