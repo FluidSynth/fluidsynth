@@ -375,7 +375,55 @@ int main(void)
         TEST_ASSERT(fluid_mod_get_amount(mod1) == 0); // path without destination
         TEST_ASSERT(fluid_mod_get_amount(mod2) == 300);
     }
-   
+
+    // Invalid isolated paths
+    printf("\nTest 9: same list than test 5, but path from m3 is isolated\n");
+    printf(  " List:m0,m1,m2,m3\n");
+    printf(  " Paths from any CC to ending modulator connected to gen:\n");
+    printf(  "       m3-->m1\n");
+    printf(  "  CC------->m1-->m0-->gen\n");
+    printf(  "  CC------->m2-->m0\n");
+    {
+        fluid_mod_set_source1(mod0, FLUID_MOD_LINK_SRC, FLUID_MOD_GC);
+        fluid_mod_set_source2(mod0, FLUID_MOD_NONE, FLUID_MOD_GC);
+        fluid_mod_set_amount (mod0, 100);
+        fluid_mod_set_dest   (mod0, GEN_FILTERFC);
+
+        fluid_mod_set_source1(mod1, FLUID_MOD_LINK_SRC, FLUID_MOD_GC);
+        fluid_mod_set_source2(mod1, FLUID_MOD_NONE, FLUID_MOD_GC);
+        fluid_mod_set_amount (mod1, 200);
+        fluid_mod_set_dest   (mod1, FLUID_MOD_LINK_DEST | 0);
+
+        fluid_mod_set_source1(mod2, 20, FLUID_MOD_CC | FLUID_MOD_LINEAR | FLUID_MOD_UNIPOLAR | FLUID_MOD_POSITIVE);
+        fluid_mod_set_source2(mod2, FLUID_MOD_NONE, FLUID_MOD_GC);
+        fluid_mod_set_amount (mod2, 300);
+        fluid_mod_set_dest   (mod2, FLUID_MOD_LINK_DEST | 0);
+
+        fluid_mod_set_source1(mod3, FLUID_MOD_LINK_SRC, FLUID_MOD_GC);
+        fluid_mod_set_source2(mod3, FLUID_MOD_NONE, FLUID_MOD_GC);
+        fluid_mod_set_amount (mod3, 50);
+        fluid_mod_set_dest   (mod3, FLUID_MOD_LINK_DEST | 1); // link to mod1
+
+        mod2->next = mod3;
+        mod1->next = mod2;
+        mod0->next = mod1;
+        list_of_mods = mod0;
+
+        TEST_ASSERT(fluid_zone_check_linked_mod("test zone with isolated modulators", list_of_mods) == TRUE);
+
+        TEST_ASSERT(list_of_mods == mod0);
+        TEST_ASSERT(list_of_mods->next == mod1);
+        TEST_ASSERT(list_of_mods->next->next == mod2);
+        TEST_ASSERT(list_of_mods->next->next->next == mod3);
+        TEST_ASSERT(list_of_mods->next->next->next->next == NULL);
+
+        // amounts not changed
+        TEST_ASSERT(fluid_mod_get_amount(mod0) == 100);
+        TEST_ASSERT(fluid_mod_get_amount(mod1) == 0); // Invalided because isolated
+        TEST_ASSERT(fluid_mod_get_amount(mod2) == 300);
+        TEST_ASSERT(fluid_mod_get_amount(mod3) == 0);// Invalided because isolated
+    }
+
     delete_fluid_mod(mod0);
     delete_fluid_mod(mod1);
     delete_fluid_mod(mod2);
