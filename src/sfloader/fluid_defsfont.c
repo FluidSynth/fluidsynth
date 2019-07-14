@@ -1476,8 +1476,56 @@ fluid_is_mod_in_path(fluid_mod_t *path[], int count, fluid_mod_t *mod)
  * Check linked modulator paths without destination and circular linked modulator
  * paths (specif SF 2.0  7.4, 7.8  and 9.5.4).
  *
- * Any linked modulator path from the begin to the end are checked and modulators
- * are returned in path table. Must be called before fluid_zone_copy_linked_mod().
+ * Warning: This function must be called before calling
+ * fluid_zone_copy_linked_mod().
+ *
+ * Any linked modulator path from the start to the end are checked and returned
+ * in path table.
+ *
+ * Let a linked path     CC-->m2-->m6-->m3-->gen
+ *
+ * - A linked path starts from a modulator with source scr1 not linked and
+ *   destination linked to a modulator (e.g m2).
+ * - A linked path ends on a modulator with source scr1 linked and destination
+ *   connected to a generator (e.g m3).
+ *
+ * - Path without destination:
+ *   When a destination cannot be reached inside a path, this path is said to be
+ *   "without destination". The following message displays this situation:
+ *      fluidsynth: warning: path without destination zone-name/mod2.
+ *   with, mod2 being the modulator at the beginning of the path.
+ *	 This case occurs when a modulator doesn't exist at m6 destination index
+ *	 for example (CC->m2-->m6-->?).
+ *	 This case occurs also if a modulator exist at m6 destination index
+ *	 (e.g CC->m2-->m6-->m3->...) and this modulator (e.g m3) have source src1 not
+ *   linked. Two messages are displayed to show the later case:
+ *      fluidsynth: warning: invalid destination zone-name/mod3.
+ *      fluidsynth: warning: path without destination zone-name/mod2.
+ *   First message indicates that m3 is invalid (because source src1 isn't linked
+ *   or amount is 0).
+ *   When a path is without destination, all modulators from the start to the one
+ *   without destination are marked invalid (amount = 0). (e.g  m2,m6).
+ *
+ * - Circular path:
+ *   When a destination is a modulator already encountered this is a circular path
+ *   (e.g: CC-->m2-->m6-->m3-->m8-->m6). Two messages are displayed:
+ *      fluidsynth: warning: invalid circular path zone-name/mod6.
+ *      fluidsynth: warning: path without destination zone-name/mod2.
+ *   First message indicates that m6 is a modulator already encountered.
+ *   Second message indicates the modulator at the beginning of the path (e.g m2).
+ *   When a path is circulars, all modulators from the start to the one
+ *   already encontered are marked invalid (amount = 0). (e.g  m2,m6,m3,m8).
+ *
+ * When finished, path table contains:
+ * - valid discovered modulators paths (or not).
+ * - incomplete invalid path (with amount set to 0).
+ *
+ * Other incomplete linked modulators path are isolated.
+ * Isolated modulators mx have source src1 linked, with no others modulators
+ * connected to mx.
+ * These isolated modulators are still in list_mod but not in path. They should be
+ * marked invalid later.
+ *
  *
  * @param zone_name, zone's name
  * @param list_mod, pointer on modulators list.
@@ -1490,7 +1538,7 @@ fluid_is_mod_in_path(fluid_mod_t *path[], int count, fluid_mod_t *mod)
  * Don't care at first call.
  * 
  * @param path_idx, pointer on index of the next modulator to register in path . 
- * Must be 0 at first call. On return, it indicates the number of linked
+ * This index must be 0 at first call. On return, it indicates the number of linked
  * modulators stored in path (for all linked paths found).
  *
  * @return  TRUE if at least one valid linked modulators path exists,
@@ -1677,7 +1725,10 @@ fluid_zone_check_linked_mod(char *zone_name, fluid_mod_t *list_mod)
  * The first member of any complex modulator is the ending modulator connected
  * to a generator. Other members are linked to each other to reach the first
  * member. The destination index of modulator member following the first is
- * relative (0 based) to the first member.
+ * relative (0 based) to the first member index.
+ *
+ * Warning: fluid_check_linked_mod_path() must be called before calling this
+ * function.
  * 
  * Corresponding modulators in mod_list list are marked invalid (they will be
  * removed later).
@@ -1694,7 +1745,7 @@ fluid_zone_check_linked_mod(char *zone_name, fluid_mod_t *list_mod)
  *  -1, to search ending linked modulator.
  *  >= 0, to search a modulator with linked destination equal to dest_idx index.
  *
- * @param new_idx, index (0 based) of the most recent modulator at the end
+ * @param new_idx, index (1 based) of the most recent modulator at the end
  *  of linked_mod. Must be set to 0 at first call.
  *
  * @param linked_mod, address of pointer on linked modulators list returned
