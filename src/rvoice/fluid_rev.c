@@ -283,6 +283,8 @@ a flatter response on comb filter. So the input gain is set to 0.1 rather 1.0. *
     #define DELAY_L5 997
     #define DELAY_L6 1061
     #define DELAY_L7 1129
+
+    #define DELAY_LEN_MAX   DELAY_L7
 #elif (NBR_DELAYS == 12)
     #define DELAY_L0 601
     #define DELAY_L1 691
@@ -296,6 +298,8 @@ a flatter response on comb filter. So the input gain is set to 0.1 rather 1.0. *
     #define DELAY_L9 1151
     #define DELAY_L10 1171
     #define DELAY_L11 1187
+
+    #define DELAY_LEN_MAX   DELAY_L11
 #endif
 
 /* Delay lines length table (in samples) */
@@ -305,6 +309,16 @@ static const int delay_length[NBR_DELAYS] =
     DELAY_L4, DELAY_L5, DELAY_L6, DELAY_L7,
 #if (NBR_DELAYS == 12)
     DELAY_L8, DELAY_L9, DELAY_L10, DELAY_L11
+#endif
+};
+
+/* Pre-calculated delay lengths multiplied by -3 */
+static const int delay_length_x3[NBR_DELAYS] =
+{
+    -3 * DELAY_L0, -3 * DELAY_L1, -3 * DELAY_L2, -3 * DELAY_L3,
+    -3 * DELAY_L4, -3 * DELAY_L5, -3 * DELAY_L6, -3 * DELAY_L7,
+#if (NBR_DELAYS == 12)
+    -3 * DELAY_L8, -3 * DELAY_L9, -3 * DELAY_L10, -3 * DELAY_L11
 #endif
 };
 
@@ -757,7 +771,7 @@ static void update_rev_time_damping(fluid_late *late,
         ------------------------------------------*/
         dc_rev_time = GET_DC_REV_TIME(roomsize);
         /* computes gi_tmp from dc_rev_time using relation E2 */
-        gi_tmp = FLUID_POW(10, -3 * delay_length[NBR_DELAYS - 1] *
+        gi_tmp = FLUID_POW(10, -3 * DELAY_LEN_MAX *
                            sample_period / dc_rev_time); /* E2 */
 #else
         /*   roomsize parameters have the same response that Freeverb, that is:
@@ -770,14 +784,14 @@ static void update_rev_time_damping(fluid_late *late,
             fluid_real_t gi_min, gi_max;
             /* values gi_min et gi_max are computed using E2 for the line with
               maximum delay */
-            gi_max = FLUID_POW(10, -3 * delay_length[NBR_DELAYS - 1] *
-                                       sample_period / MAX_DC_REV_TIME); /* E2 */
-            gi_min = FLUID_POW(10, -3 * delay_length[NBR_DELAYS - 1] *
-                                       sample_period / MIN_DC_REV_TIME); /* E2 */
+            gi_max = FLUID_POW(10, (-3 * DELAY_LEN_MAX / MAX_DC_REV_TIME) *
+                               sample_period); /* E2 */
+            gi_min = FLUID_POW(10, (-3 * DELAY_LEN_MAX / MIN_DC_REV_TIME) *
+                               sample_period); /* E2 */
             /* gi = f(roomsize, gi_max, gi_min) */
             gi_tmp = gi_min + roomsize * (gi_max - gi_min);
             /* Computes T60DC from gi using inverse of relation E2.*/
-            dc_rev_time = -3 * FLUID_M_LN10 * delay_length[NBR_DELAYS - 1] * sample_period / FLUID_LOGF(gi_tmp);
+            dc_rev_time = (-3 * FLUID_M_LN10 * DELAY_LEN_MAX) * sample_period / FLUID_LOGF(gi_tmp);
         }
 #endif /* ROOMSIZE_RESPONSE_LINEAR */
         /*--------------------------------------------
@@ -810,7 +824,7 @@ static void update_rev_time_damping(fluid_late *late,
     for(i = 0; i < NBR_DELAYS; i++)
     {
         /* iir low pass filter gain */
-        fluid_real_t gi = FLUID_POW(10, -3 * delay_length[i] *
+        fluid_real_t gi = FLUID_POW(10, delay_length_x3[i] *
                                     sample_period / dc_rev_time);
 
         /* iir low pass filter feedback gain */
