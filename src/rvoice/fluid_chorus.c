@@ -141,7 +141,7 @@ STEREO_UNIT: when defined, adds a stereo unit controlled by WIDTH macro.
 #endif //stereo_unit
 
 #ifdef NEW_MOD
-#define MAX_SAMPLES 2048 /* delay lenght in sample (46.4 ms at sample rate: 44100Hz).*/
+#define MAX_SAMPLES 2048 /* delay length in sample (46.4 ms at sample rate: 44100Hz).*/
 #define LOW_MOD_DEPTH 176             /* low mod_depth/2 in samples */
 #define HIGH_MOD_DEPTH  MAX_SAMPLES/2 /* high mod_depth in sample */
 #define RANGE_MOD_DEPTH (HIGH_MOD_DEPTH - LOW_MOD_DEPTH)
@@ -428,7 +428,7 @@ static FLUID_INLINE fluid_real_t get_mod_delay(fluid_chorus_t *chorus,
     /* Checks if the modulator must be updated (every mod_rate samples). */
     /* Important: center_pos_mod must be used immediatly for the
        first sample. So, mdl->index_rate must be initialized
-       to mdl->mod_rate (set_mod_delay_line())  */
+       to mdl->mod_rate (new_mod_delay_line())  */
 
 //    if(++chorus->index_rate >= chorus->mod_rate)
     if(chorus->index_rate >= chorus->mod_rate)
@@ -1379,6 +1379,3 @@ void fluid_chorus_processreplace(fluid_chorus_t *chorus, const fluid_real_t *in,
 
     } /* foreach sample */
 }
-
-#ifndef NEW_MOD
-#endif
