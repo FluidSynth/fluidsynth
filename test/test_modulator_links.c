@@ -295,8 +295,9 @@ int main(void)
         TEST_ASSERT(fluid_mod_get_amount(mod3) == 0); // without destination.
     }
     
-    // circular complex modulators
- 	printf("Test 6.2: circular complex modulators m3->m2->m1->m0->m3\n");
+    // circular complex modulators, but detected isolated because none of these
+    // have a CC or GC on sources. These modulators have all src1 source linked.
+    printf("Test 6.2: circular complex modulators m3->m2->m1->m0->m3\n");
     {
         mod2->next = mod3;
         mod1->next = mod2;
@@ -338,8 +339,9 @@ int main(void)
         TEST_ASSERT(fluid_mod_get_amount(mod3) == 0);
     }
     
-    // circular complex modulators
- 	printf("Test 6.3: circular complex modulators m3+m2->m1->m0->m3\n");
+    // circular complex modulators, but detected isolated because none of these
+    // have a CC or GC on sources. These modulators have all src1 source linked.
+    printf("Test 6.3: circular complex modulators m3+m2->m1->m0->m3\n");
     {
         mod2->next = mod3;
         mod1->next = mod2;
@@ -380,8 +382,9 @@ int main(void)
         TEST_ASSERT(fluid_mod_get_amount(mod3) == 0);
     }
     
-    // circular complex modulators
- 	printf("Test 6.4: circular complex modulators m4->m2->m1->m4 and m3\n");
+    // circular complex modulators m1->m0->m3->m1, but detected isolated because none of these
+    // have a CC or GC on sources. These modulators have all src1 source linked.
+    printf("Test 6.4: circular complex modulators m1->m0->m3->m1 and cc->m2->gen\n");
     {
         mod2->next = mod3;
         mod1->next = mod2;
@@ -425,8 +428,9 @@ int main(void)
         TEST_ASSERT(fluid_mod_get_amount(mod3) == 0);
     }
     
-    // circular complex modulators
- 	printf("Test 6.5: circular complex modulators m3->m1->m3 and m2->m0\n");
+    // circular complex modulators m3->m1->m3, but detected isolated because none of these
+    // have a CC or GC on sources. These modulators have all src1 source linked.
+    printf("Test 6.5: circular complex modulators m3->m1->m3 and cc->m2->m0->gen\n");
     {
         mod2->next = mod3;
         mod1->next = mod2;
