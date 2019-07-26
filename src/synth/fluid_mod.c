@@ -561,15 +561,31 @@ size_t fluid_mod_sizeof()
 }
 
 /**
- * Checks if modulator with source 1 other than CC is FLUID_MOD_NONE.
+ * Checks if modulator with source other than CC is FLUID_MOD_NONE.
  *
  * @param mod, modulator.
- * @return TRUE if modulator source 1 other than cc is FLUID_MOD_NONE, FALSE otherwise.
+ * @param src1_select, source input selection to check.
+ *   1 to check src1 source or
+ *   0 to check src2 source.
+ * @return TRUE if modulator source other than cc is FLUID_MOD_NONE, FALSE otherwise.
  */
 static int
-fluid_mod_is_src1_none(const fluid_mod_t *mod)
+fluid_mod_is_src_none(const fluid_mod_t *mod, unsigned char src1_select)
 {
-    return(((mod->flags1 & FLUID_MOD_CC) == 0) && (mod->src1 == FLUID_MOD_NONE));
+    unsigned char flags, src;
+
+    if(src1_select)
+    {
+        flags = mod->flags1;
+        src = mod->src1;
+    }
+    else
+    {
+        flags = mod->flags2;
+        src = mod->src2;
+    }
+    return(((flags & FLUID_MOD_CC) == FLUID_MOD_GC) &&
+            (src == FLUID_MOD_NONE));
 }
 
 /**
@@ -680,21 +696,21 @@ int fluid_mod_check_sources(const fluid_mod_t *mod, char *name)
         return FALSE;
     }
 
-    /*
-      When src1 is non CC source FLUID_MOD_NONE, the modulator is valid but
-      the output of this modulator will be forced to 0 at synthesis time.
-      Also this modulator cannot be used to overwrite a default modulator (as
+    /* Note: When primary source input src1 is set to General Controller 'No Controller',
+      1)The output of this modulator will be forced to 0 at synthesis time (see fluid_mod_get_value()).
+      2)Also this modulator cannot be used to overwrite a default modulator (as
       there is no default modulator with src1 source equal to FLUID_MOD_NONE).
       Consequently it is useful to return FALSE to indicate this modulator
       being useless. It will be removed later with others invalid modulators.
-    */
-    if(fluid_mod_is_src1_none(mod))
+	*/
+    if(fluid_mod_is_src_none(mod, 1))  /* check src1 */
     {
         if(name)
         {
             FLUID_LOG(FLUID_WARN, src1_is_none, name, mod->src1);
         }
 
+        /* Indicate this modulator is useless */
         return FALSE;
     }
 
@@ -706,6 +722,24 @@ int fluid_mod_check_sources(const fluid_mod_t *mod, char *name)
         }
 
         return FALSE;
+    }
+
+    /* Note: When secondary source input src2 is set to General Controller 'No Controller',
+       output will be forced to +1.0 at synthesis time (see fluid_mod_get_value()).
+       That means that this source should behave unipolar only. We need to have the
+       unipolar flag to ensure to ensure a correct evaluation of the minimum
+       value later (see fluid_voice_get_lower_boundary_for_attenuation()).
+    */
+    if(fluid_mod_is_src_none(mod, 0)) /* check src2 */
+    {
+        if (mod->flags2 & FLUID_MOD_BIPOLAR)
+        {
+            if(name)
+            {
+                FLUID_LOG(FLUID_WARN, invalid_non_cc_src, name, 2, mod->src2);
+            }
+            return FALSE;
+        }
     }
 
     /* checks valid cc sources */
