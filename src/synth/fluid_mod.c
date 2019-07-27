@@ -813,18 +813,22 @@ int fluid_mod_check_sources(const fluid_mod_t *mod, char *name)
  *
  * @param dest0_idx, index of cm0 ending modulator. In the figure cm0.m0 index.
  *
- * @param cm1_mod, pointer on modulator branch 0. Must be the modulator following
+ * @param cm1_mod, pointer on modulator branch 1. Must be the modulator following
  *  cm1 ending modulator. In the figure above this is cm1.m1.
  *
- * @param add_amount, when 1, modulators amount values of cm1 are added to 
- *  identical modulators of cm0.
+ * @param test_mode,
+ *   FLUID_LINKED_MOD_TEST_ONLY,  test identity only.
+ *   FLUID_LINKED_MOD_TEST_ADD, modulators amounts on branch1 are added
+ *    to identical  modulators on branche0.
+ *   FLUID_LINKED_MOD_TEST_OVERWRITE, modulators amounts on branch1 overwrite
+ *    identical modulators on branch0.
  *
  * @return TRUE if complex modulators branches are identical, FALSE otherwise.
  */
 static int fluid_linked_branch_test_identity(fluid_mod_t *cm0_mod, 
                                              unsigned char dest0_idx,
-                                             fluid_mod_t *cm1_mod, 
-                                             unsigned char add_amount)
+                                             fluid_mod_t *cm1_mod,
+                                             unsigned char test_mode)
 {
     int r = 1;				 /* result of test */
     struct
@@ -865,9 +869,14 @@ static int fluid_linked_branch_test_identity(fluid_mod_t *cm0_mod,
             {
                 /* cm0_mod is identic to cm1_mod */
                 /* does amount need to be added ? */
-                if(add_amount)
+                if (test_mode == FLUID_LINKED_MOD_TEST_ADD)
                 {
                     cm0_mod->amount += cm1_mod->amount;
+                }
+                /* does amount need to be overwrited ? */
+                else if (test_mode == FLUID_LINKED_MOD_TEST_OVERWRITE)
+                {
+                    cm0_mod->amount = cm1_mod->amount;
                 }
                 /* does cm0_mod and cm1_mod have linked source ? */
                 if(fluid_mod_has_linked_src1(cm0_mod))
@@ -935,14 +944,18 @@ static int fluid_linked_branch_test_identity(fluid_mod_t *cm0_mod,
  * @param cm1, final modulator of complex linked modulators.
  *  cm1 must be connected to a generator.
  *
- * @param add_amount, when 1, modulators amount values of cm1 are added to 
- *  identical modulators of cm0.
+ * @param test_mode,
+ *   FLUID_LINKED_MOD_TEST_ONLY,  test identity only.
+ *   FLUID_LINKED_MOD_TEST_ADD, modulators amounts of cm1 are added
+ *    to identical  modulators of cm0.
+ *   FLUID_LINKED_MOD_TEST_OVERWRITE, modulators amounts of cm1 overwrite
+ *    identical modulators of cm0.
  *
  * @return TRUE if complex modulators are identical, FALSE otherwise.
  */
 int fluid_linked_mod_test_identity(fluid_mod_t *cm0,unsigned char cm0_idx,
                                    fluid_mod_t *cm1, 
-                                   unsigned char add_amount)
+                                   unsigned char test_mode)
 {
     unsigned char count0 = fluid_get_num_mod(cm0);
     unsigned char count1 = fluid_get_num_mod(cm1);
@@ -952,14 +965,19 @@ int fluid_linked_mod_test_identity(fluid_mod_t *cm0,unsigned char cm0_idx,
         && fluid_mod_test_identity(cm0, cm1))
     {
         /* does amount need to be added ? */
-        if (add_amount)
+        if (test_mode == FLUID_LINKED_MOD_TEST_ADD)
         {
             cm0->amount += cm1->amount;
+        }
+        /* does amount need to be overwrited ? */
+        else if (test_mode == FLUID_LINKED_MOD_TEST_OVERWRITE)
+        {
+            cm0->amount = cm1->amount;
         }
         /* identity test of branches of cm0 and cm1 */
         {
             return fluid_linked_branch_test_identity(cm0->next, cm0_idx, cm1->next, 
-                                                     add_amount);
+                                                     test_mode);
         }
     }
     return FALSE;

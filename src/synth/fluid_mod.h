@@ -53,9 +53,19 @@ struct _fluid_mod_t
 unsigned char fluid_get_num_mod(fluid_mod_t *mod);
 fluid_mod_t *fluid_get_next_mod(fluid_mod_t *mod);
 int fluid_mod_has_linked_src1 (fluid_mod_t * mod);
+//jjc-fluid_linked_mod_test_identity
+/* this enum is used for test_mode parameter when calling
+   fluid_linked_mod_test_identity() */
+enum fluid_linked_mod_test_identity
+{
+    FLUID_LINKED_MOD_TEST_ONLY,      /**< test identity only */
+    FLUID_LINKED_MOD_TEST_OVERWRITE, /**< test identity and overwrite modulator amounts */
+    FLUID_LINKED_MOD_TEST_ADD,       /**< test identity and add (sum) modulator amounts */
+};
+
 int fluid_linked_mod_test_identity(fluid_mod_t *cm0,unsigned char cm0_idx,
 								   fluid_mod_t *cm1, 
-                                   unsigned char add_amount);
+                                   unsigned char test_mode);
 
 fluid_real_t fluid_mod_get_value(fluid_mod_t *mod, fluid_voice_t *voice);
 int fluid_mod_check_sources(const fluid_mod_t *mod, char *name);
