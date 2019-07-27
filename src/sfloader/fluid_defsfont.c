@@ -1825,9 +1825,6 @@ fluid_zone_copy_linked_mod(fluid_mod_t *list_mod, int dest_idx, int new_idx,
                 }
                 linked_count++; /* updates count of linked mod */
 
-                /* marks mod invalid in list. mod will be removed later */
-                mod->amount = 0; /* marked invalid in mod list */
-
                 /* is mod's source src1 linked ? */
                 if(is_src1_linked) 
                 {	/* search a modulator with output linked to mod */
@@ -1849,7 +1846,7 @@ fluid_zone_copy_linked_mod(fluid_mod_t *list_mod, int dest_idx, int new_idx,
 
 /**
  * Checks and remove invalid modulators from a zone modulators list.
- * - checks invalid linked modulator.
+ * - checks linked modulators.
  * - checks invalid modulator sources (specs SF 2.01  7.4, 7.8, 8.2.1).
  * - checks identic modulator in the list (specs SF 2.01  7.4, 7.8).
  * @param list_mod, address of pointer on modulator list.
@@ -1861,9 +1858,8 @@ static void fluid_zone_check_remove_mod(fluid_mod_t **list_mod)
     while(mod)
     {	
         fluid_mod_t *next = mod->next;
-        if(   /* Is mod an invalid linked modulator ? */
-              ((fluid_mod_has_linked_src1(mod)||(mod->dest & FLUID_MOD_LINK_DEST))
-              && (mod->amount == 0))
+        if(   /* Is mod a linked modulator ? */
+              (fluid_mod_has_linked_src1(mod)||(mod->dest & FLUID_MOD_LINK_DEST))
               /* or has mod invalid sources ? */
               || !fluid_mod_check_sources(mod, NULL)
               /* or is mod identic to any following modulator ? */
