@@ -11,7 +11,6 @@ Execute all test:
 Execute only one test number (i.e "test 1_2: unlinked, sources src1 none"
   test_fluid_zone_check_mod 1_2
 ----------------------------------------------------------------------------*/
-
 #include "test.h"
 #include "fluidsynth.h"
 #include "synth/fluid_mod.h"
@@ -37,7 +36,7 @@ static void fluid_dump_list_linked_mod(fluid_mod_t *mod);
 static void print_list_linked_mod(char *header, char *name_list, fluid_mod_t *mod);
 static void fluid_dump_list_mod(fluid_mod_t *mod);
 static void print_list_mod(char *name_list, fluid_mod_t *mod);
-static void fluid_dump_modulator(fluid_mod_t * mod);
+void fluid_dump_modulator(fluid_mod_t * mod);
 
 /*----------------------------------------------------------------------------
  test tables: to add a test see all_test_fluid_zone_check_mod() below
@@ -48,63 +47,138 @@ static void fluid_dump_modulator(fluid_mod_t * mod);
 char test_1_unlinked_non_cc_valid[] = "test 1: unlinked, sources non-cc valid";
 fluid_mod_t mod_table_1[] =
 {
-	{GEN_ATTENUATION, FLUID_MOD_VELOCITY,FLUID_MOD_GC,FLUID_MOD_NONE, FLUID_MOD_GC,10.0},
+	{
+		// dest         , src1              , flags1      , src2          , flags2
+		GEN_ATTENUATION , FLUID_MOD_VELOCITY, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
+		// amount, link, next
+		10.0     , 0.0 , NULL
+	}
 };
 
 /* test 1_1: sources non-cc, modulator unlinked sources non-cc valid, amount = 0 */
 char test_1_1_unlinked_non_cc_valid[] = "test 1_1: unlinked, sources non-cc valid, amount = 0";
 fluid_mod_t mod_table_1_1[] =
 {
-	{GEN_ATTENUATION, FLUID_MOD_VELOCITY,FLUID_MOD_GC,FLUID_MOD_NONE, FLUID_MOD_GC,0.0},
+	{
+		// dest         , src1              , flags1      , src2          , flags2
+		GEN_ATTENUATION , FLUID_MOD_VELOCITY, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
+		// amount, link, next
+		0.0      , 0.0 , NULL
+	}
 };
 
 /* test 1_2: sources non-cc src1 none, modulator unlinked   */
 char test_1_2_unlinked_non_cc_valid[] = "test 1_2: unlinked, sources non-cc src1 none";
 fluid_mod_t mod_table_1_2[] =
 {
-	{GEN_ATTENUATION, FLUID_MOD_NONE,FLUID_MOD_GC,FLUID_MOD_NONE, FLUID_MOD_GC,10.0},
-	{GEN_ATTENUATION, FLUID_MOD_KEY,FLUID_MOD_GC,FLUID_MOD_NONE, FLUID_MOD_GC,0.0},
+	{
+		// dest         , src1             , flags1      , src2          , flags2
+		GEN_ATTENUATION , FLUID_MOD_NONE   , FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
+		// amount, link, next
+		10.0      , 0.0 , NULL
+	},
+	{
+		// dest         , src1             , flags1      , src2          , flags2
+		GEN_ATTENUATION , FLUID_MOD_KEY    , FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
+		// amount, link, next
+		0.0      , 0.0 , NULL
+	}
 };
 
 /* test 1_3: sources non-cc src2 none, modulator unlinked */
 char test_1_3_unlinked_non_cc_invalid[] = "test 1_3: unlinked, sources non-cc src2 none, bipolar";
 fluid_mod_t mod_table_1_3[] =
 {
-	{GEN_ATTENUATION, FLUID_MOD_VELOCITY,FLUID_MOD_GC,FLUID_MOD_NONE, FLUID_MOD_GC|FLUID_MOD_BIPOLAR,0.0},
+	{
+		// dest         , src1             , flags1      , src2          , flags2
+		GEN_ATTENUATION, FLUID_MOD_VELOCITY, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC|FLUID_MOD_BIPOLAR,
+		// amount, link, next
+		0.0      , 0.0 , NULL
+	}
 };
 
 /* test 2: sources non-cc, modulator unlinked, sources non-cc invalid */
 char test_2_unlinked_non_cc_invalid[] = "test 2: unlinked, sources non-cc invalid";
 fluid_mod_t mod_table_2[] =
 {
-	{GEN_ATTENUATION, FLUID_MOD_VELOCITY,FLUID_MOD_GC,FLUID_MOD_NONE, FLUID_MOD_GC,0.0},
-	{GEN_ATTENUATION,1,FLUID_MOD_GC,FLUID_MOD_NONE, FLUID_MOD_GC,10.0},
+	{
+		// dest         , src1             , flags1      , src2          , flags2
+		GEN_ATTENUATION, FLUID_MOD_VELOCITY, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
+		// amount, link, next
+		0.0      , 0.0 , NULL
+	},
+	{
+		// dest         , src1             , flags1      , src2          , flags2
+		GEN_ATTENUATION , 1                , FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
+		// amount, link, next
+		10.0      , 0.0 , NULL
+	}
 };
 
 /* test 3: sources cc, modulator unlinked, sources cc valid */
 char test_3_unlinked_cc_valid[] = "test 3: unlinked, sources cc valid";
 fluid_mod_t mod_table_3[] =
 {
-	{GEN_ATTENUATION, 3,FLUID_MOD_CC,FLUID_MOD_NONE, FLUID_MOD_GC,10.0},
+	{
+		// dest         , src1             , flags1      , src2          , flags2
+		GEN_ATTENUATION , 3                , FLUID_MOD_CC, FLUID_MOD_NONE, FLUID_MOD_GC,
+		// amount, link, next
+		10.0      , 0.0 , NULL
+	}
 };
 
 /* test 4: sources cc, modulator unlinked, sources cc invalid */
 char test_4_unlinked_cc_invalid[] = "test 4: unlinked, sources cc invalid";
 fluid_mod_t mod_table_4[] =
 {
-	{GEN_ATTENUATION, FLUID_MOD_VELOCITY,FLUID_MOD_GC,FLUID_MOD_NONE, FLUID_MOD_GC,0.0},
-	{2, 0,FLUID_MOD_CC,FLUID_MOD_NONE, FLUID_MOD_GC,10.0},
+	{
+		// dest         , src1              , flags1      , src2          , flags2
+		GEN_ATTENUATION , FLUID_MOD_VELOCITY, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
+		// amount, link, next
+		0.0      , 0.0 , NULL
+	},
+	{
+		// dest         , src1              , flags1      , src2          , flags2
+		2               , 0                 , FLUID_MOD_CC, FLUID_MOD_NONE, FLUID_MOD_GC,
+		// amount, link, next
+		10.0      , 0.0 , NULL
+	}
 };
 
 /* test 5: modulators identic */
 char test_5_mod_identic[] = "test 5: modulator identic";
 fluid_mod_t mod_table_5[] =
 {
-	{GEN_ATTENUATION, FLUID_MOD_VELOCITY,FLUID_MOD_GC,FLUID_MOD_NONE, FLUID_MOD_GC,0.0},
-	{GEN_ATTENUATION, 3,FLUID_MOD_CC,FLUID_MOD_NONE, FLUID_MOD_GC,10.0},
-	{GEN_ATTENUATION, FLUID_MOD_VELOCITY,FLUID_MOD_GC,FLUID_MOD_NONE, FLUID_MOD_GC,1.0},
-	{GEN_ATTENUATION, FLUID_MOD_VELOCITY,FLUID_MOD_GC,FLUID_MOD_NONE, FLUID_MOD_GC,3.0},
-	{GEN_ATTENUATION, FLUID_MOD_VELOCITY,FLUID_MOD_GC,FLUID_MOD_NONE, FLUID_MOD_GC,5.0},
+	{
+		// dest         , src1              , flags1      , src2          , flags2
+		GEN_ATTENUATION , FLUID_MOD_VELOCITY, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
+		// amount, link, next
+		0.0      , 0.0 , NULL
+	},
+	{
+		// dest         , src1              , flags1      , src2          , flags2
+		GEN_ATTENUATION , 3                 , FLUID_MOD_CC, FLUID_MOD_NONE, FLUID_MOD_GC,
+		// amount, link, next
+		10.0     , 0.0 , NULL
+	},
+	{
+		// dest         , src1              , flags1      , src2          , flags2
+		GEN_ATTENUATION, FLUID_MOD_VELOCITY , FLUID_MOD_GC , FLUID_MOD_NONE, FLUID_MOD_GC,
+		// amount, link, next
+		1.0      , 0.0 , NULL
+	},
+	{
+		// dest         , src1              , flags1      , src2          , flags2
+		GEN_ATTENUATION , FLUID_MOD_VELOCITY, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
+		// amount, link, next
+		3.0      , 0.0 , NULL
+	},
+	{
+		// dest         , src1              , flags1      , src2          , flags2
+		GEN_ATTENUATION , FLUID_MOD_VELOCITY, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
+		// amount, link, next
+		5.0      , 0.0 , NULL
+	}
 };
 
 /*------ linked modulators tests ---------------------------------------------*/
@@ -113,39 +187,115 @@ fluid_mod_t mod_table_5[] =
 char test_6_mod_linked[] = "test 6 linked modulators valid: src1->mod0->mod2";
 fluid_mod_t mod_table_6[] =
 {
-	{2|FLUID_MOD_LINK_DEST, FLUID_MOD_VELOCITY,FLUID_MOD_GC,FLUID_MOD_NONE, FLUID_MOD_GC,1.0},
-	{GEN_ATTENUATION, FLUID_MOD_VELOCITY,FLUID_MOD_GC,FLUID_MOD_NONE, FLUID_MOD_GC,2.0},
-	{GEN_ATTENUATION, FLUID_MOD_LINK_SRC,FLUID_MOD_GC,FLUID_MOD_NONE, FLUID_MOD_GC,3.0},
+	{
+		// dest              , src1              , flags1      , src2          , flags2
+		2|FLUID_MOD_LINK_DEST, FLUID_MOD_VELOCITY, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
+		// amount, link, next
+		1.0      , 0.0 , NULL
+	},
+	{
+		// dest         , src1                  , flags1      , src2          , flags2
+		GEN_ATTENUATION , FLUID_MOD_VELOCITY    , FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
+		// amount, link, next
+		2.0      , 0.0 , NULL
+	},
+	{
+		// dest         , src1                  , flags1      , src2          , flags2
+		GEN_ATTENUATION , FLUID_MOD_LINK_SRC    , FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
+		// amount, link, next
+		3.0      , 0.0 , NULL
+	}
 };
 
-/* test 6_1: linked modulators valid: src1->mod4->mod0->mod2->gen1 */
-/*                                          src2->mod1->mod2 */
-/*
-/*                                     src2->mod5->mod7->gen2
-/*                                           mod6->mod7 */
+/* test 6_1: linked modulators valid: src1->mod4->mod0->mod2->gen1
+                                            src2->mod1->mod2
+
+                                      src2->mod5->mod7->gen2
+                                            mod6->mod7
+*/
 char test_6_1_mod_linked[] = "test 6_1 linked modulators valid: src1->mod0->mod2, src2->mod1->mod2";
 fluid_mod_t mod_table_6_1[] =
 {
 	/* mod complexe */
-	{2|FLUID_MOD_LINK_DEST, FLUID_MOD_LINK_SRC,FLUID_MOD_GC,FLUID_MOD_NONE, FLUID_MOD_GC,1.0},
-	{2|FLUID_MOD_LINK_DEST, FLUID_MOD_KEY,FLUID_MOD_GC,FLUID_MOD_NONE, FLUID_MOD_GC,2.0},
-	{GEN_ATTENUATION, FLUID_MOD_LINK_SRC,FLUID_MOD_GC,FLUID_MOD_NONE, FLUID_MOD_GC,3.0},
-	{GEN_ATTENUATION, FLUID_MOD_VELOCITY,FLUID_MOD_GC,FLUID_MOD_NONE, FLUID_MOD_GC,4.0},
-	{0|FLUID_MOD_LINK_DEST, FLUID_MOD_KEY,FLUID_MOD_GC,FLUID_MOD_NONE, FLUID_MOD_GC,5.0},
+	{
+		// dest              , src1              , flags1      , src2          , flags2
+		2|FLUID_MOD_LINK_DEST, FLUID_MOD_LINK_SRC, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
+		// amount, link, next
+		1.0      , 0.0 , NULL
+	},
+	{
+		// dest              , src1              , flags1      , src2          , flags2
+		2|FLUID_MOD_LINK_DEST, FLUID_MOD_KEY     , FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
+		// amount, link, next
+		2.0      , 0.0 , NULL
+	},
+	{
+		// dest              , src1              , flags1      , src2          , flags2
+		GEN_ATTENUATION      , FLUID_MOD_LINK_SRC, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
+		// amount, link, next
+		3.0      , 0.0 , NULL
+	},
+	{
+		// dest              , src1              , flags1      , src2          , flags2
+		GEN_ATTENUATION      , FLUID_MOD_VELOCITY, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
+		// amount, link, next
+		4.0      , 0.0 , NULL
+	},
+	{
+		// dest              , src1              , flags1      , src2          , flags2
+		0|FLUID_MOD_LINK_DEST, FLUID_MOD_KEY     , FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
+		// amount, link, next
+		5.0      , 0.0 , NULL
+	},
     /* mod complexe */
-	{7|FLUID_MOD_LINK_DEST, FLUID_MOD_VELOCITY,FLUID_MOD_GC,FLUID_MOD_NONE, FLUID_MOD_GC,6.0},
-	{7|FLUID_MOD_LINK_DEST, FLUID_MOD_KEY,FLUID_MOD_GC,FLUID_MOD_NONE, FLUID_MOD_GC,7.0},
-	{GEN_VOLENVHOLD, FLUID_MOD_LINK_SRC,FLUID_MOD_GC,FLUID_MOD_NONE, FLUID_MOD_GC,8.0},
+	{
+		// dest              , src1              , flags1      , src2          , flags2
+		7|FLUID_MOD_LINK_DEST, FLUID_MOD_VELOCITY, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
+		// amount, link, next
+		6.0      , 0.0 , NULL
+	},
+	{
+		// dest              , src1              , flags1      , src2          , flags2
+		7|FLUID_MOD_LINK_DEST, FLUID_MOD_KEY     , FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
+		// amount, link, next
+		7.0      , 0.0 , NULL
+	},
+	{
+		// dest              , src1              , flags1      , src2          , flags2
+		GEN_VOLENVHOLD, FLUID_MOD_LINK_SRC       ,FLUID_MOD_GC , FLUID_MOD_NONE, FLUID_MOD_GC,
+		// amount, link, next
+		8.0      , 0.0 , NULL
+	}
 };
 
 /* test 6_2: linked modulators valid: src2->mod3->mod0->mod2 */
 char test_6_2_mod_linked[] = "test 6_2 linked modulators valid: mod3->mod0->mod2";
 fluid_mod_t mod_table_6_2[] =
 {
-	{2|FLUID_MOD_LINK_DEST, FLUID_MOD_LINK_SRC,FLUID_MOD_GC,FLUID_MOD_NONE, FLUID_MOD_GC,2.0},
-	{GEN_ATTENUATION, FLUID_MOD_VELOCITY,FLUID_MOD_GC,FLUID_MOD_NONE, FLUID_MOD_GC,4.0},
-	{GEN_ATTENUATION, FLUID_MOD_LINK_SRC,FLUID_MOD_GC,FLUID_MOD_NONE, FLUID_MOD_GC,3.0},
-	{0 |FLUID_MOD_LINK_DEST, FLUID_MOD_VELOCITY,FLUID_MOD_GC,FLUID_MOD_NONE, FLUID_MOD_GC,1.0},
+	{
+		// dest              , src1              , flags1      , src2          , flags2
+		2|FLUID_MOD_LINK_DEST, FLUID_MOD_LINK_SRC, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
+		// amount, link, next
+		2.0      , 0.0 , NULL
+	},
+	{
+		// dest              , src1              , flags1      , src2          , flags2
+		GEN_ATTENUATION      , FLUID_MOD_VELOCITY, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
+		// amount, link, next
+		4.0      , 0.0 , NULL
+	},
+	{
+		// dest              , src1              , flags1      , src2          , flags2
+		GEN_ATTENUATION      , FLUID_MOD_LINK_SRC, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
+		// amount, link, next
+		3.0      , 0.0 , NULL
+	},
+	{
+		// dest              , src1              , flags1      , src2          , flags2
+		0|FLUID_MOD_LINK_DEST, FLUID_MOD_VELOCITY, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
+		// amount, link, next
+		1.0      , 0.0 , NULL
+	}
 };
 
 //-----
@@ -155,18 +305,38 @@ char test_6_3_mod_linked[] = "test 6_3:complex mod identical: att<-mod0<-mod1<-,
 fluid_mod_t mod_table_6_3_0[] =
 {
 	/* Gen<-mod0-link<- */
-	{GEN_VOLENVHOLD,       FLUID_MOD_LINK_SRC,FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,1.0},
+	{
+		// dest              , src1              , flags1      , src2          , flags2
+		GEN_VOLENVHOLD       , FLUID_MOD_LINK_SRC, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
+		// amount, link, next
+		1.0      , 0.0 , NULL
+	},
 	/* mod0<-mod1<- */
-	{0|FLUID_MOD_LINK_DEST, 2,FLUID_MOD_CC, FLUID_MOD_NONE, FLUID_MOD_GC,2.0},
+	{
+		// dest              , src1              , flags1      , src2          , flags2
+		0|FLUID_MOD_LINK_DEST, 2                 , FLUID_MOD_CC, FLUID_MOD_NONE, FLUID_MOD_GC,
+		// amount, link, next
+		2.0      , 0.0 , NULL
+	}
 };
 
 /* table 1:  att<-mod0<-mod1<-  */
 fluid_mod_t mod_table_6_3_1[] =
 {
 	/* Gen<-mod0-link<- */
-	{GEN_VOLENVHOLD,       FLUID_MOD_LINK_SRC,FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,2.0},
+	{
+		// dest              , src1              , flags1      , src2          , flags2
+		GEN_VOLENVHOLD       , FLUID_MOD_LINK_SRC, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
+		// amount, link, next
+		2.0      , 0.0 , NULL
+	},
 	/* mod0<-mod1<- */
-	{0|FLUID_MOD_LINK_DEST, 2,FLUID_MOD_CC, FLUID_MOD_NONE, FLUID_MOD_GC,3.0},
+	{
+		// dest              , src1              , flags1      , src2          , flags2
+		0|FLUID_MOD_LINK_DEST, 2                 , FLUID_MOD_CC, FLUID_MOD_NONE, FLUID_MOD_GC,
+		// amount, link, next
+		3.0      , 0.0 , NULL
+	}
 };
 
 //-----
@@ -176,20 +346,45 @@ char test_6_4_mod_linked[] = "test 6_4:complex mod not identical: att<-mod0<-mod
 fluid_mod_t mod_table_6_4_0[] =
 {
 	/* Gen<-mod0-link<- */
-	{GEN_VOLENVHOLD,       FLUID_MOD_LINK_SRC,FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,1.0},
+	{
+		// dest              , src1              , flags1      , src2          , flags2
+		GEN_VOLENVHOLD       , FLUID_MOD_LINK_SRC, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
+		// amount, link, next
+		1.0      , 0.0 , NULL
+	},
 	/* mod0<-mod1<- */
-	{0|FLUID_MOD_LINK_DEST, FLUID_MOD_LINK_SRC,FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,2.0},
+	{
+		// dest              , src1              , flags1      , src2          , flags2
+		0|FLUID_MOD_LINK_DEST, FLUID_MOD_LINK_SRC, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
+		// amount, link, next
+		2.0      , 0.0 , NULL
+	},
 	/* mod1<-mod2<- */
-	{1|FLUID_MOD_LINK_DEST, 2,FLUID_MOD_CC, FLUID_MOD_NONE, FLUID_MOD_GC,3.0},
+	{
+		// dest              , src1              , flags1      , src2          , flags2
+		1|FLUID_MOD_LINK_DEST, 2                 , FLUID_MOD_CC, FLUID_MOD_NONE, FLUID_MOD_GC,
+		// amount, link, next
+		3.0      , 0.0 , NULL
+	}
 };
 
 /* table 1:  att<-mod0<-mod1<-  */
 fluid_mod_t mod_table_6_4_1[] =
 {
 	/* Gen<-mod0-link<- */
-	{GEN_VOLENVHOLD,       FLUID_MOD_LINK_SRC,FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,2.0},
+	{
+		// dest              , src1              , flags1      , src2          , flags2
+		GEN_VOLENVHOLD       , FLUID_MOD_LINK_SRC, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
+		// amount, link, next
+		2.0      , 0.0 , NULL
+	},
 	/* mod0<-mod1<- */
-	{0|FLUID_MOD_LINK_DEST, 2,FLUID_MOD_CC, FLUID_MOD_NONE, FLUID_MOD_GC,3.0},
+	{
+		// dest              , src1              , flags1      , src2          , flags2
+		0|FLUID_MOD_LINK_DEST, 2                 , FLUID_MOD_CC, FLUID_MOD_NONE, FLUID_MOD_GC,
+		// amount, link, next
+		3.0      , 0.0 , NULL
+	}
 };
 
 //-----
@@ -199,22 +394,52 @@ char test_6_5_mod_linked[] = "test 6_5:complex mod identical: att<-mod0<-mod1<-m
 fluid_mod_t mod_table_6_5_0[] =
 {
 	/* Gen<-mod0-link<- */
-	{GEN_VOLENVHOLD,       FLUID_MOD_LINK_SRC,FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,1.0},
+	{
+		// dest              , src1              , flags1      , src2          , flags2
+		GEN_VOLENVHOLD       , FLUID_MOD_LINK_SRC, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
+		// amount, link, next
+		1.0      , 0.0 , NULL
+	},
 	/* mod0<-mod1<- */
-	{0|FLUID_MOD_LINK_DEST, FLUID_MOD_LINK_SRC,FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,2.0},
+	{
+		// dest              , src1              , flags1      , src2          , flags2
+		0|FLUID_MOD_LINK_DEST, FLUID_MOD_LINK_SRC, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
+		// amount, link, next
+		2.0      , 0.0 , NULL
+	},
 	/* mod1<-mod2<- */
-	{1|FLUID_MOD_LINK_DEST, 2,FLUID_MOD_CC, FLUID_MOD_NONE, FLUID_MOD_GC,3.0},
+	{
+		// dest              , src1              , flags1      , src2          , flags2
+		1|FLUID_MOD_LINK_DEST, 2                 , FLUID_MOD_CC, FLUID_MOD_NONE, FLUID_MOD_GC,
+		// amount, link, next
+		3.0      , 0.0 , NULL
+	}
 };
 
 /* table 1:  att<-mod0<-mod1<-mod2<-  */
 fluid_mod_t mod_table_6_5_1[] =
 {
 	/* Gen<-mod0-link<- */
-	{GEN_VOLENVHOLD,       FLUID_MOD_LINK_SRC,FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,4.0},
+	{
+		// dest              , src1              , flags1      , src2          , flags2
+		GEN_VOLENVHOLD       , FLUID_MOD_LINK_SRC, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
+		// amount, link, next
+		4.0      , 0.0 , NULL
+	},
 	/* mod0<-mod1<- */
-	{0|FLUID_MOD_LINK_DEST, FLUID_MOD_LINK_SRC,FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,5.0},
+	{
+		// dest              , src1              , flags1      , src2          , flags2
+		0|FLUID_MOD_LINK_DEST, FLUID_MOD_LINK_SRC, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
+		// amount, link, next
+		5.0      , 0.0 , NULL
+	},
 	/* mod1<-mod2<- */
-	{1|FLUID_MOD_LINK_DEST, 2,FLUID_MOD_CC, FLUID_MOD_NONE, FLUID_MOD_GC,6.0},
+	{
+		// dest              , src1              , flags1      , src2          , flags2
+		1|FLUID_MOD_LINK_DEST, 2                 , FLUID_MOD_CC, FLUID_MOD_NONE, FLUID_MOD_GC,
+		// amount, link, next
+		6.0      , 0.0 , NULL
+	}
 };
 
 //-----
@@ -225,11 +450,26 @@ char test_6_6_mod_linked[] = "test 6_6:complex cm0:att<-mod0<-mod1<-mod2<-, cm1:
 fluid_mod_t mod_table_6_6_0[] =
 {
 	/* Gen<-mod0-link<- */
-	{GEN_VOLENVHOLD,       FLUID_MOD_LINK_SRC,FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,1.0},
+	{
+		// dest              , src1              , flags1      , src2          , flags2
+		GEN_VOLENVHOLD       , FLUID_MOD_LINK_SRC, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
+		// amount, link, next
+		1.0      , 0.0 , NULL
+	},
 	/* mod0<-mod1<- */
-	{0|FLUID_MOD_LINK_DEST, FLUID_MOD_LINK_SRC,FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,2.0},
+	{
+		// dest              , src1              , flags1      , src2          , flags2
+		0|FLUID_MOD_LINK_DEST, FLUID_MOD_LINK_SRC, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
+		// amount, link, next
+		2.0      , 0.0 , NULL
+	},
 	/* mod1<-mod2<- */
-	{1|FLUID_MOD_LINK_DEST, 2,FLUID_MOD_CC, FLUID_MOD_NONE, FLUID_MOD_GC,3.0},
+	{
+		// dest              , src1              , flags1      , src2          , flags2
+		1|FLUID_MOD_LINK_DEST, 2                 , FLUID_MOD_CC, FLUID_MOD_NONE, FLUID_MOD_GC,
+		// amount, link, next
+		3.0      , 0.0 , NULL
+	}
 };
 
 /* table 1:  att<-mod0<-mod1<-mod2<-  */
@@ -237,11 +477,26 @@ fluid_mod_t mod_table_6_6_0[] =
 fluid_mod_t mod_table_6_6_1[] =
 {
 	/* Gen<-mod0-link<- */
-	{GEN_VOLENVHOLD,       FLUID_MOD_LINK_SRC,FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,4.0},
+	{
+		// dest              , src1              , flags1      , src2          , flags2
+		GEN_VOLENVHOLD       , FLUID_MOD_LINK_SRC, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
+		// amount, link, next
+		4.0      , 0.0 , NULL
+	},
 	/* mod0<-mod1<- */
-	{0|FLUID_MOD_LINK_DEST, FLUID_MOD_NONE,FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,5.0},
+	{
+		// dest              , src1              , flags1      , src2          , flags2
+		0|FLUID_MOD_LINK_DEST, FLUID_MOD_NONE    , FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
+		// amount, link, next
+		5.0      , 0.0 , NULL
+	},
 	/* mod0<-mod2<- */
-	{0|FLUID_MOD_LINK_DEST, 2,FLUID_MOD_CC, FLUID_MOD_NONE, FLUID_MOD_GC,6.0},
+	{
+		// dest              , src1              , flags1      , src2          , flags2
+		0|FLUID_MOD_LINK_DEST, 2                 , FLUID_MOD_CC, FLUID_MOD_NONE, FLUID_MOD_GC,
+		// amount, link, next
+		6.0      , 0.0 , NULL
+	}
 };
 
 //-----
@@ -253,11 +508,26 @@ char test_6_7_mod_linked[] = "test 6_7:complex cm0:att<-m0<-m1 m0<-m2<-, cm1:att
 fluid_mod_t mod_table_6_7_0[] =
 {
 	/* Gen<-mod0-link<- */
-	{GEN_ATTENUATION,       FLUID_MOD_LINK_SRC,FLUID_MOD_GC, 5,FLUID_MOD_CC,1.0},
+	{
+		// dest              , src1              , flags1      , src2             , flags2
+		GEN_ATTENUATION      , FLUID_MOD_LINK_SRC, FLUID_MOD_GC, 5                 ,FLUID_MOD_CC,
+		// amount, link, next
+		1.0      , 0.0 , NULL
+	},
 	/* mod0<-mod1<- */
-	{0|FLUID_MOD_LINK_DEST, 4,FLUID_MOD_CC, FLUID_MOD_VELOCITY, FLUID_MOD_GC,2.0},
+	{
+		// dest              , src1              , flags1      , src2              , flags2
+		0|FLUID_MOD_LINK_DEST, 4                 , FLUID_MOD_CC, FLUID_MOD_VELOCITY, FLUID_MOD_GC,
+		// amount, link, next
+		2.0      , 0.0 , NULL
+	},
 	/* mod0<-mod2<- */
-	{0|FLUID_MOD_LINK_DEST, 2,FLUID_MOD_CC, FLUID_MOD_NONE, FLUID_MOD_GC,3.0},
+	{
+		// dest              , src1              , flags1      , src2              , flags2
+		0|FLUID_MOD_LINK_DEST, 2                 , FLUID_MOD_CC, FLUID_MOD_NONE    , FLUID_MOD_GC,
+		// amount, link, next
+		3.0      , 0.0 , NULL
+	}
 };
 
 /* table 1:  att<-mod0<-mod1<-mod2<-  */
@@ -265,11 +535,26 @@ fluid_mod_t mod_table_6_7_0[] =
 fluid_mod_t mod_table_6_7_1[] =
 {
 	/* Gen<-mod0-link<- */
-	{GEN_ATTENUATION,       FLUID_MOD_LINK_SRC,FLUID_MOD_GC, 5,FLUID_MOD_CC,4.0},
+	{
+		// dest              , src1              , flags1      , src2              , flags2
+		GEN_ATTENUATION      , FLUID_MOD_LINK_SRC, FLUID_MOD_GC, 5                 , FLUID_MOD_CC,
+		// amount, link, next
+		4.0      , 0.0 , NULL
+	},
 	/* mod0<-mod1<- */
-	{0|FLUID_MOD_LINK_DEST, 4,FLUID_MOD_CC, FLUID_MOD_VELOCITY, FLUID_MOD_GC,5.0},
+	{
+		// dest              , src1              , flags1      , src2              , flags2
+		0|FLUID_MOD_LINK_DEST, 4                 , FLUID_MOD_CC, FLUID_MOD_VELOCITY, FLUID_MOD_GC,
+		// amount, link, next
+		5.0      , 0.0 , NULL
+	},
 	/* mod0<-mod2<- */
-	{0|FLUID_MOD_LINK_DEST, 2,FLUID_MOD_CC, FLUID_MOD_NONE, FLUID_MOD_GC,6.0},
+	{
+		// dest              , src1              , flags1      , src2              , flags2
+		0|FLUID_MOD_LINK_DEST, 2                 , FLUID_MOD_CC, FLUID_MOD_NONE    , FLUID_MOD_GC,
+		// amount, link, next
+		6.0      , 0.0 , NULL
+	}
 };
 
 //-----
@@ -281,15 +566,40 @@ char test_6_8_mod_linked[] = "test 6_8:complex cm0:att<-m0<-m1<-m2 m0<-m3<-m4, c
 fluid_mod_t mod_table_6_8_0[] =
 {
 	/* Gen<-mod0-link<- */
-	{GEN_VOLENVHOLD,       FLUID_MOD_LINK_SRC,FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,1.0},
+	{
+		// dest              , src1              , flags1        , src2            , flags2
+		GEN_VOLENVHOLD       , FLUID_MOD_LINK_SRC, FLUID_MOD_GC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
+		// amount, link, next
+		1.0      , 0.0 , NULL
+	},
 	/* mod0<-mod1<- */
-	{0|FLUID_MOD_LINK_DEST, FLUID_MOD_LINK_SRC,FLUID_MOD_GC, FLUID_MOD_VELOCITY, FLUID_MOD_GC,2.0},
+	{
+		// dest              , src1              , flags1        , src2              , flags2
+		0|FLUID_MOD_LINK_DEST, FLUID_MOD_LINK_SRC, FLUID_MOD_GC  , FLUID_MOD_VELOCITY, FLUID_MOD_GC,
+		// amount, link, next
+		2.0      , 0.0 , NULL
+	},
 	/* mod1<-mod2<- */
-	{1|FLUID_MOD_LINK_DEST, 2,FLUID_MOD_CC, FLUID_MOD_NONE, FLUID_MOD_GC,3.0},
+	{
+		// dest              , src1              , flags1        , src2            , flags2
+		1|FLUID_MOD_LINK_DEST, 2                 , FLUID_MOD_CC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
+		// amount, link, next
+		3.0      , 0.0 , NULL
+	},
 	/* mod0<-mod3<- */
-	{0|FLUID_MOD_LINK_DEST, FLUID_MOD_LINK_SRC,FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,4.0},
+	{
+		// dest              , src1              , flags1        , src2            , flags2
+		0|FLUID_MOD_LINK_DEST, FLUID_MOD_LINK_SRC, FLUID_MOD_GC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
+		// amount, link, next
+		4.0      , 0.0 , NULL
+	},
 	/* mod3<-mod4<- */
-	{3|FLUID_MOD_LINK_DEST, 2,FLUID_MOD_CC, FLUID_MOD_NONE, FLUID_MOD_GC,5.0},
+	{
+		// dest              , src1              , flags1        , src2            , flags2
+		3|FLUID_MOD_LINK_DEST, 2                 , FLUID_MOD_CC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
+		// amount, link, next
+		5.0      , 0.0 , NULL
+	}
 };
 
 /* table 1:  att<-m0<-m1<-m2<-  */
@@ -297,24 +607,64 @@ fluid_mod_t mod_table_6_8_0[] =
 fluid_mod_t mod_table_6_8_1[] =
 {
 	/* Gen<-mod0-link<- */
-	{GEN_VOLENVHOLD,       FLUID_MOD_LINK_SRC,FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,6.0},
+	{
+		// dest              , src1              , flags1        , src2            , flags2
+		GEN_VOLENVHOLD       , FLUID_MOD_LINK_SRC, FLUID_MOD_GC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
+		// amount, link, next
+		6.0      , 0.0 , NULL
+	},
 	/* mod0<-mod1<- */
-	{0|FLUID_MOD_LINK_DEST, FLUID_MOD_LINK_SRC,FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,7.0},
+	{
+		// dest              , src1              , flags1        , src2            , flags2
+		0|FLUID_MOD_LINK_DEST, FLUID_MOD_LINK_SRC, FLUID_MOD_GC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
+		// amount, link, next
+		7.0      , 0.0 , NULL
+	},
 	/* mod1<-mod2<- */
-	{1|FLUID_MOD_LINK_DEST, 2,FLUID_MOD_CC, FLUID_MOD_NONE, FLUID_MOD_GC,8.0},
+	{
+		// dest              , src1              , flags1        , src2            , flags2
+		1|FLUID_MOD_LINK_DEST, 2                 , FLUID_MOD_CC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
+		// amount, link, next
+		8.0      , 0.0 , NULL
+	},
 	/* mod0<-mod3<- */
-	{0|FLUID_MOD_LINK_DEST, FLUID_MOD_LINK_SRC,FLUID_MOD_GC, FLUID_MOD_VELOCITY, FLUID_MOD_GC,9.0},
+	{
+		// dest              , src1              , flags1        , src2              , flags2
+		0|FLUID_MOD_LINK_DEST, FLUID_MOD_LINK_SRC, FLUID_MOD_GC  , FLUID_MOD_VELOCITY, FLUID_MOD_GC,
+		// amount, link, next
+		9.0      , 0.0 , NULL
+	},
 	/* mod3<-mod4<- */
-	{3|FLUID_MOD_LINK_DEST, 2,FLUID_MOD_CC, FLUID_MOD_NONE, FLUID_MOD_GC,10.0},
+	{
+		// dest              , src1              , flags1        , src2            , flags2
+		3|FLUID_MOD_LINK_DEST, 2                 , FLUID_MOD_CC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
+		// amount, link, next
+		10.0      , 0.0 , NULL
+	}
 };
 
 /* test 7: linked modulator, invalid destination: src1->mod0->mod2(src1 unlinked) */
 char test_7_mod_linked[] = "test 7 linked modulators invalid destination: src1->mod0->mod2(src1 unlinked)";
 fluid_mod_t mod_table_7[] =
 {
-	{2|FLUID_MOD_LINK_DEST, FLUID_MOD_VELOCITY,FLUID_MOD_GC,FLUID_MOD_NONE, FLUID_MOD_GC,1.0},
-	{GEN_ATTENUATION, FLUID_MOD_KEYPRESSURE,FLUID_MOD_GC,FLUID_MOD_NONE, FLUID_MOD_GC,2.0},
-	{GEN_ATTENUATION, FLUID_MOD_VELOCITY,FLUID_MOD_GC,FLUID_MOD_NONE, FLUID_MOD_GC,3.0},
+	{
+		// dest              , src1                 , flags1        , src2            , flags2
+		2|FLUID_MOD_LINK_DEST, FLUID_MOD_VELOCITY   , FLUID_MOD_GC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
+		// amount, link, next
+		1.0      , 0.0 , NULL
+	},
+	{
+		// dest              , src1                 , flags1        , src2            , flags2
+		GEN_ATTENUATION      , FLUID_MOD_KEYPRESSURE, FLUID_MOD_GC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
+		// amount, link, next
+		2.0      , 0.0 , NULL
+	},
+	{
+		// dest              , src1                 , flags1        , src2            , flags2
+		GEN_ATTENUATION      , FLUID_MOD_VELOCITY   , FLUID_MOD_GC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
+		// amount, link, next
+		3.0      , 0.0 , NULL
+	}
 };
 
 
@@ -322,18 +672,48 @@ fluid_mod_t mod_table_7[] =
 char test_8_mod_linked[] = "test 8 linked modulators invalid: src1->mod0->mod2(amount=0)";
 fluid_mod_t mod_table_8[] =
 {
-	{2|FLUID_MOD_LINK_DEST, FLUID_MOD_VELOCITY,FLUID_MOD_GC,FLUID_MOD_NONE, FLUID_MOD_GC,1.0},
-	{GEN_ATTENUATION, FLUID_MOD_VELOCITY,FLUID_MOD_GC,FLUID_MOD_NONE, FLUID_MOD_GC,2.0},
-	{GEN_ATTENUATION, FLUID_MOD_LINK_SRC,FLUID_MOD_GC,FLUID_MOD_NONE, FLUID_MOD_GC,0.0},
+	{
+		// dest              , src1              , flags1        , src2            , flags2
+		2|FLUID_MOD_LINK_DEST, FLUID_MOD_VELOCITY, FLUID_MOD_GC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
+		// amount, link, next
+		1.0      , 0.0 , NULL
+	},
+	{
+		// dest              , src1              , flags1        , src2            , flags2
+		GEN_ATTENUATION      , FLUID_MOD_VELOCITY, FLUID_MOD_GC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
+		// amount, link, next
+		2.0      , 0.0 , NULL
+	},
+	{
+		// dest              , src1              , flags1        , src2            , flags2
+		GEN_ATTENUATION      , FLUID_MOD_LINK_SRC, FLUID_MOD_GC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
+		// amount, link, next
+		0.0      , 0.0 , NULL
+	}
 };
 
 /* test 9: linked modulator invalid: src1->mod0->mod3(invalid index) */
 char test_9_mod_linked[] = "test 9 linked modulators invalid: src1->mod0->mod3(invalid index)";
 fluid_mod_t mod_table_9[] =
 {
-	{3|FLUID_MOD_LINK_DEST, FLUID_MOD_VELOCITY,FLUID_MOD_GC,FLUID_MOD_NONE, FLUID_MOD_GC,1.0},
-	{GEN_ATTENUATION, FLUID_MOD_KEYPRESSURE,FLUID_MOD_GC,FLUID_MOD_NONE, FLUID_MOD_GC,2.0},
-	{GEN_ATTENUATION, FLUID_MOD_VELOCITY,FLUID_MOD_GC,FLUID_MOD_NONE, FLUID_MOD_GC,3.0},
+	{
+		// dest              , src1                , flags1        , src2            , flags2
+		3|FLUID_MOD_LINK_DEST, FLUID_MOD_VELOCITY  , FLUID_MOD_GC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
+		// amount, link, next
+		1.0      , 0.0 , NULL
+	},
+	{
+		// dest              , src1                 , flags1        , src2            , flags2
+		GEN_ATTENUATION      , FLUID_MOD_KEYPRESSURE, FLUID_MOD_GC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
+		// amount, link, next
+		2.0      , 0.0 , NULL
+	},
+	{
+		// dest              , src1               , flags1          , src2            , flags2
+		GEN_ATTENUATION      , FLUID_MOD_VELOCITY , FLUID_MOD_GC    , FLUID_MOD_NONE  , FLUID_MOD_GC,
+		// amount, link, next
+		3.0      , 0.0 , NULL
+	}
 };
 
 
@@ -341,19 +721,54 @@ fluid_mod_t mod_table_9[] =
 char test_10_mod_linked[] = "test 10 linked modulators invalid isolated: src1 linked->mod0->mod2";
 fluid_mod_t mod_table_10[] =
 {
-	{2|FLUID_MOD_LINK_DEST, FLUID_MOD_LINK_SRC,FLUID_MOD_GC,FLUID_MOD_NONE, FLUID_MOD_GC,1.0},
-	{GEN_ATTENUATION, FLUID_MOD_VELOCITY,FLUID_MOD_GC,FLUID_MOD_NONE, FLUID_MOD_GC,2.0},
-	{GEN_ATTENUATION, FLUID_MOD_LINK_SRC,FLUID_MOD_GC,FLUID_MOD_NONE, FLUID_MOD_GC,3.0},
+	{
+		// dest              , src1              , flags1        , src2            , flags2
+		2|FLUID_MOD_LINK_DEST, FLUID_MOD_LINK_SRC, FLUID_MOD_GC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
+		// amount, link, next
+		1.0      , 0.0 , NULL
+	},
+	{
+		// dest              , src1              , flags1        , src2            , flags2
+		GEN_ATTENUATION      , FLUID_MOD_VELOCITY, FLUID_MOD_GC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
+		// amount, link, next
+		2.0      , 0.0 , NULL
+	},
+	{
+		// dest              , src1              , flags1        , src2            , flags2
+		GEN_ATTENUATION      , FLUID_MOD_LINK_SRC, FLUID_MOD_GC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
+		// amount, link, next
+		3.0      , 0.0 , NULL
+	}
 };
 
 /* test 11: invalid circular linked modulator: src2->mod3->mod0->mod2->mod0 */
 char  test_11_mod_linked[] = "test 11 linked modulators circular: mod3->mod0->mod2->mod0";
 fluid_mod_t mod_table_11[] =
 {
-	{2|FLUID_MOD_LINK_DEST, FLUID_MOD_LINK_SRC,FLUID_MOD_GC,FLUID_MOD_NONE, FLUID_MOD_GC,2.0},
-	{GEN_ATTENUATION, FLUID_MOD_VELOCITY,FLUID_MOD_GC,FLUID_MOD_NONE, FLUID_MOD_GC,4.0},
-	{0 |FLUID_MOD_LINK_DEST, FLUID_MOD_LINK_SRC,FLUID_MOD_GC,FLUID_MOD_NONE, FLUID_MOD_GC,3.0},
-	{0 |FLUID_MOD_LINK_DEST, FLUID_MOD_VELOCITY,FLUID_MOD_GC,FLUID_MOD_NONE, FLUID_MOD_GC,1.0},
+	{
+		// dest              , src1              , flags1        , src2            , flags2
+		2|FLUID_MOD_LINK_DEST, FLUID_MOD_LINK_SRC, FLUID_MOD_GC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
+		// amount, link, next
+		2.0      , 0.0 , NULL
+	},
+	{
+		// dest              , src1              , flags1        , src2            , flags2
+		GEN_ATTENUATION, FLUID_MOD_VELOCITY      , FLUID_MOD_GC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
+		// amount, link, next
+		4.0      , 0.0 , NULL
+	},
+	{
+		// dest              , src1              , flags1        , src2            , flags2
+		0|FLUID_MOD_LINK_DEST, FLUID_MOD_LINK_SRC, FLUID_MOD_GC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
+		// amount, link, next
+		3.0      , 0.0 , NULL
+	},
+	{
+		// dest              , src1              , flags1        , src2            , flags2
+		0|FLUID_MOD_LINK_DEST, FLUID_MOD_VELOCITY, FLUID_MOD_GC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
+		// amount, link, next
+		1.0      , 0.0 , NULL
+	}
 };
 
 /* the list of test name, displayed by: test_fluid_zone_check_mod list */
@@ -423,7 +838,10 @@ int main(int argc, char **argv)
 		arg = NULL;
 	}
 	/* or execute one test */
-	all_test_fluid_zone_check_mod(arg);
+	if (all_test_fluid_zone_check_mod(arg) == FLUID_FAILED)
+		return 1;
+	else
+		return 0;
 }
 
 
@@ -455,117 +873,166 @@ static int is_arg_num_test(char *arg, char *num_test)
   @param arg, pointer of string describing the test number.
   if NULL all the tests are done.
   For example:  "1"  for test 1, "1_1" for test 1_1, ...
+
+  @return FLUID_OK or FLUID_FAILED
+
 */
 
 static int all_test_fluid_zone_check_mod(char *arg)
 {
-
+	int s;
 	FLUID_LOG(FLUID_INFO, "========================== fluid_all_test_check_mod =========================");
 
 	/*------ unlinked modulators tests -------------------------------------*/
 	/* test 1: unliked modulator, sources non-cc valid */ //Ok
 	if (is_arg_num_test(arg,"1"))
 	{
-		test_fluid_zone_check_mod(test_1_unlinked_non_cc_valid, mod_table_1, sizeof(mod_table_1)/sizeof(fluid_mod_t),NULL,0);
+		s=test_fluid_zone_check_mod(test_1_unlinked_non_cc_valid,
+		                            mod_table_1, sizeof(mod_table_1)/sizeof(fluid_mod_t),NULL,0);
+		if(s == FLUID_FAILED)
+			return FLUID_FAILED;
 	}
 	/* test 1.1: unliked modulator, sources non-cc valid, amount = 0 */ //Ok
 	if (is_arg_num_test(arg,"1_1"))
 	{
-		test_fluid_zone_check_mod(test_1_1_unlinked_non_cc_valid, mod_table_1_1, sizeof(mod_table_1_1)/sizeof(fluid_mod_t),NULL,0);
+		s=test_fluid_zone_check_mod(test_1_1_unlinked_non_cc_valid,
+		                            mod_table_1_1, sizeof(mod_table_1_1)/sizeof(fluid_mod_t),NULL,0);
+		if(s == FLUID_FAILED)
+			return FLUID_FAILED;
 	}
 
 	/* test 1.2: unliked modulator, sources non-cc src1 none  */ //Ok
 	if (is_arg_num_test(arg,"1_2"))
 	{
-		test_fluid_zone_check_mod(test_1_2_unlinked_non_cc_valid, mod_table_1_2, sizeof(mod_table_1_2)/sizeof(fluid_mod_t),NULL,0);
+		s=test_fluid_zone_check_mod(test_1_2_unlinked_non_cc_valid,
+		                            mod_table_1_2, sizeof(mod_table_1_2)/sizeof(fluid_mod_t),NULL,0);
+		if(s == FLUID_FAILED)
+			return FLUID_FAILED;
 	}
 
 	/* test 1.3: unliked modulator, sources non-cc src2 none  */ //Ok
 	if (is_arg_num_test(arg,"1_3"))
 	{
-		test_fluid_zone_check_mod(test_1_3_unlinked_non_cc_invalid, mod_table_1_3, sizeof(mod_table_1_3)/sizeof(fluid_mod_t),NULL,0);
+		s=test_fluid_zone_check_mod(test_1_3_unlinked_non_cc_invalid,
+		                            mod_table_1_3, sizeof(mod_table_1_3)/sizeof(fluid_mod_t),NULL,0);
+		if(s == FLUID_FAILED)
+			return FLUID_FAILED;
 	}
     
 	/* test 2: unliked modulator, sources non-cc invalid */ //Ok
 	if (is_arg_num_test(arg,"2"))
 	{
-		test_fluid_zone_check_mod(test_2_unlinked_non_cc_invalid, mod_table_2, sizeof(mod_table_2)/sizeof(fluid_mod_t),NULL,0);
+		s=test_fluid_zone_check_mod(test_2_unlinked_non_cc_invalid,
+		                            mod_table_2, sizeof(mod_table_2)/sizeof(fluid_mod_t),NULL,0);
+		if(s == FLUID_FAILED)
+			return FLUID_FAILED;
 	}
 
 	/* test 3: unliked modulator, sources cc valid */ //Ok
 	if (is_arg_num_test(arg,"3"))
 	{
-		test_fluid_zone_check_mod(test_3_unlinked_cc_valid, mod_table_3, sizeof(mod_table_3)/sizeof(fluid_mod_t),NULL,0);
+		s=test_fluid_zone_check_mod(test_3_unlinked_cc_valid,
+		                            mod_table_3, sizeof(mod_table_3)/sizeof(fluid_mod_t),NULL,0);
+		if(s == FLUID_FAILED)
+			return FLUID_FAILED;
 	}
 
 	/* test 4: sources cc: unliked modulator, sources cc invalid */ //Ok
 	if (is_arg_num_test(arg,"4"))
 	{
-		test_fluid_zone_check_mod(test_4_unlinked_cc_invalid, mod_table_4, sizeof(mod_table_4)/sizeof(fluid_mod_t),NULL,0);
+		s=test_fluid_zone_check_mod(test_4_unlinked_cc_invalid,
+		                            mod_table_4, sizeof(mod_table_4)/sizeof(fluid_mod_t),NULL,0);
+		if(s == FLUID_FAILED)
+			return FLUID_FAILED;
 	}
 
 	/* test 5::modulators identic */ // Ok
 	if (is_arg_num_test(arg,"5"))
 	{
-		test_fluid_zone_check_mod(test_5_mod_identic, mod_table_5, sizeof(mod_table_5)/sizeof(fluid_mod_t),NULL,0);
+		s=test_fluid_zone_check_mod(test_5_mod_identic,
+		                            mod_table_5, sizeof(mod_table_5)/sizeof(fluid_mod_t),NULL,0);
+		if(s == FLUID_FAILED)
+			return FLUID_FAILED;
 	}
 	
 	/*------ valid linked modulators tests -------------------------------------*/
 	/* test 6: valid linked modulators: mod0->mod2 */ // Ok
 	if (is_arg_num_test(arg,"6"))
 	{
-		test_fluid_zone_check_mod(test_6_mod_linked, mod_table_6, sizeof(mod_table_6)/sizeof(fluid_mod_t),NULL,0);
+		s=test_fluid_zone_check_mod(test_6_mod_linked,
+		                            mod_table_6, sizeof(mod_table_6)/sizeof(fluid_mod_t),NULL,0);
+		if(s == FLUID_FAILED)
+			return FLUID_FAILED;
 	}
 
 	/* test 6_1: valid linked modulators: src1->mod0->mod2 */ // Ok
 	/*                                    src2->mod1->mod2 */
 	if (is_arg_num_test(arg,"6_1"))
 	{
-		test_fluid_zone_check_mod(test_6_1_mod_linked, mod_table_6_1, sizeof(mod_table_6_1)/sizeof(fluid_mod_t),NULL,0);
+		s=test_fluid_zone_check_mod(test_6_1_mod_linked,
+		                            mod_table_6_1, sizeof(mod_table_6_1)/sizeof(fluid_mod_t),NULL,0);
 	}
 
 	/* test 6_2: valid linked modulators: src2->mod3->mod0->mod2 */ //Ok
 	if (is_arg_num_test(arg,"6_2"))
 	{
-		test_fluid_zone_check_mod(test_6_2_mod_linked, mod_table_6_2, sizeof(mod_table_6_2)/sizeof(fluid_mod_t),NULL,0);
+		s=test_fluid_zone_check_mod(test_6_2_mod_linked,
+		                            mod_table_6_2, sizeof(mod_table_6_2)/sizeof(fluid_mod_t),NULL,0);
+		if(s == FLUID_FAILED)
+			return FLUID_FAILED;
 	}
 
 	//--- complex modulators identity tests ----
 	/* test 6_3: complex modulators identity test:  att<-mod0->mod1<- ,  att<-mod0->mod1<- */ //Ok
 	if (is_arg_num_test(arg,"6_3"))
 	{
-		test_fluid_zone_check_mod(test_6_3_mod_linked, mod_table_6_3_0, sizeof(mod_table_6_3_0)/sizeof(fluid_mod_t),
-			                                      mod_table_6_3_1, sizeof(mod_table_6_3_1)/sizeof(fluid_mod_t));
+		s=test_fluid_zone_check_mod(test_6_3_mod_linked,
+		                            mod_table_6_3_0, sizeof(mod_table_6_3_0)/sizeof(fluid_mod_t),
+		                            mod_table_6_3_1, sizeof(mod_table_6_3_1)/sizeof(fluid_mod_t));
+		if(s == FLUID_FAILED)
+			return FLUID_FAILED;
 	}
 
 	/* test 6_4: complex modulators identity test:  att<-mod0->mod1<-mod2<-   att<-mod0->mod1<- */ //Ok
 	if (is_arg_num_test(arg,"6_4"))
 	{
-		test_fluid_zone_check_mod(test_6_4_mod_linked, mod_table_6_4_0, sizeof(mod_table_6_4_0)/sizeof(fluid_mod_t),
-			                                      mod_table_6_4_1, sizeof(mod_table_6_4_1)/sizeof(fluid_mod_t));
+		s=test_fluid_zone_check_mod(test_6_4_mod_linked,
+		                            mod_table_6_4_0, sizeof(mod_table_6_4_0)/sizeof(fluid_mod_t),
+		                            mod_table_6_4_1, sizeof(mod_table_6_4_1)/sizeof(fluid_mod_t));
+		if(s == FLUID_FAILED)
+			return FLUID_FAILED;
 	}
 
 	/* test 6_5: complex modulators identity test:  att<-mod0->mod1<-mod2<-, att<-mod0->mod1<-mod2<-*/ //Ok
 	if (is_arg_num_test(arg,"6_5"))
 	{
-		test_fluid_zone_check_mod(test_6_5_mod_linked, mod_table_6_5_0, sizeof(mod_table_6_5_0)/sizeof(fluid_mod_t),
-			                                      mod_table_6_5_1, sizeof(mod_table_6_5_1)/sizeof(fluid_mod_t));
+		s=test_fluid_zone_check_mod(test_6_5_mod_linked,
+		                            mod_table_6_5_0, sizeof(mod_table_6_5_0)/sizeof(fluid_mod_t),
+		                            mod_table_6_5_1, sizeof(mod_table_6_5_1)/sizeof(fluid_mod_t));
+		if(s == FLUID_FAILED)
+			return FLUID_FAILED;
 	}
 
 	/* test 6_6: complex modulators identity test:  att<-mod0<-mod1<-mod2<- ,  att<-mod0->mod1<- */ //Ok
 	/*                                                                              mod0->mod2<- */
 	if (is_arg_num_test(arg,"6_6"))
 	{
-		test_fluid_zone_check_mod(test_6_6_mod_linked, mod_table_6_6_0, sizeof(mod_table_6_6_0)/sizeof(fluid_mod_t),
-			                                      mod_table_6_6_1, sizeof(mod_table_6_6_1)/sizeof(fluid_mod_t));
+		s=test_fluid_zone_check_mod(test_6_6_mod_linked,
+		                            mod_table_6_6_0, sizeof(mod_table_6_6_0)/sizeof(fluid_mod_t),
+		                            mod_table_6_6_1, sizeof(mod_table_6_6_1)/sizeof(fluid_mod_t));
+		if(s == FLUID_FAILED)
+			return FLUID_FAILED;
 	}
 
 	/* test 6_7: complex modulators identity test:  att<-mod0<-mod1<-mod2<- ,  att<-mod0->mod1<- */ //Ok
 	/*                                                   mod0->mod2<-               mod0->mod2<- */
 	if (is_arg_num_test(arg,"6_7"))
 	{
-		test_fluid_zone_check_mod(test_6_7_mod_linked, mod_table_6_7_0, sizeof(mod_table_6_7_0)/sizeof(fluid_mod_t),
-			                                      mod_table_6_7_1, sizeof(mod_table_6_7_1)/sizeof(fluid_mod_t));
+		s=test_fluid_zone_check_mod(test_6_7_mod_linked,
+		                        mod_table_6_7_0, sizeof(mod_table_6_7_0)/sizeof(fluid_mod_t),
+		                        mod_table_6_7_1, sizeof(mod_table_6_7_1)/sizeof(fluid_mod_t));
+		if(s == FLUID_FAILED)
+			return FLUID_FAILED;
 	}
 
 
@@ -573,39 +1040,57 @@ static int all_test_fluid_zone_check_mod(char *arg)
 	/*                                                   m0<-m3<-m4         m0<-m3<-m4 */
 	if (is_arg_num_test(arg,"6_8"))
 	{
-		test_fluid_zone_check_mod(test_6_8_mod_linked, mod_table_6_8_0, sizeof(mod_table_6_8_0)/sizeof(fluid_mod_t),
-			                                      mod_table_6_8_1, sizeof(mod_table_6_8_1)/sizeof(fluid_mod_t));
+		s=test_fluid_zone_check_mod(test_6_8_mod_linked,
+		                            mod_table_6_8_0, sizeof(mod_table_6_8_0)/sizeof(fluid_mod_t),
+		                            mod_table_6_8_1, sizeof(mod_table_6_8_1)/sizeof(fluid_mod_t));
+		if(s == FLUID_FAILED)
+			return FLUID_FAILED;
 	}
 
 	/*------ invalid linked modulators tests -------------------------------------*/
 	/* test 7: invalid linked modulators (invalid destination): mod0->mod2(src1 unlinked) */ // Ok
 	if (is_arg_num_test(arg,"7"))
 	{
-		test_fluid_zone_check_mod(test_7_mod_linked, mod_table_7, sizeof(mod_table_7)/sizeof(fluid_mod_t),NULL,0);
+		s=test_fluid_zone_check_mod(test_7_mod_linked,
+		                            mod_table_7, sizeof(mod_table_7)/sizeof(fluid_mod_t),NULL,0);
+		if(s == FLUID_FAILED)
+			return FLUID_FAILED;
 	}
 
 	/* test 8: invalid linked modulators: mod0->mod2(amount=0) */ // Ok
 	if (is_arg_num_test(arg,"8"))
 	{
-		test_fluid_zone_check_mod(test_8_mod_linked, mod_table_8, sizeof(mod_table_8)/sizeof(fluid_mod_t),NULL,0);
+		s=test_fluid_zone_check_mod(test_8_mod_linked,
+		                            mod_table_8, sizeof(mod_table_8)/sizeof(fluid_mod_t),NULL,0);
+		if(s == FLUID_FAILED)
+			return FLUID_FAILED;
 	}
 
 	/* test 9: invalid linked modulators: mod0->mod3(invalid index) */ // Ok
 	if (is_arg_num_test(arg,"9"))
 	{
-		test_fluid_zone_check_mod(test_9_mod_linked, mod_table_9, sizeof(mod_table_9)/sizeof(fluid_mod_t),NULL,0);
+		s=test_fluid_zone_check_mod(test_9_mod_linked,
+		                            mod_table_9, sizeof(mod_table_9)/sizeof(fluid_mod_t),NULL,0);
+		if(s == FLUID_FAILED)
+			return FLUID_FAILED;
 	}
 
 	/* test 10: linked modulators isolated: src1 linked->mod0->mod2 */ // Ok
 	if (is_arg_num_test(arg,"10"))
 	{
-		test_fluid_zone_check_mod(test_10_mod_linked, mod_table_10, sizeof(mod_table_10)/sizeof(fluid_mod_t),NULL,0);
+		s=test_fluid_zone_check_mod(test_10_mod_linked,
+		                            mod_table_10, sizeof(mod_table_10)/sizeof(fluid_mod_t),NULL,0);
+		if(s == FLUID_FAILED)
+			return FLUID_FAILED;
 	}
 
 	/* test 11: linked modulators circular: src2->mod3->mod0->mod2->mod0 */ //Ok
 	if (is_arg_num_test(arg,"11"))
 	{
-		test_fluid_zone_check_mod(test_11_mod_linked, mod_table_11, sizeof(mod_table_11)/sizeof(fluid_mod_t),NULL,0);
+		s=test_fluid_zone_check_mod(test_11_mod_linked,
+		                            mod_table_11, sizeof(mod_table_11)/sizeof(fluid_mod_t),NULL,0);
+		if(s == FLUID_FAILED)
+			return FLUID_FAILED;
 	}
 	return FLUID_OK;
 }
@@ -624,6 +1109,7 @@ static int all_test_fluid_zone_check_mod(char *arg)
 
  @param mod_table1, pointer on modulator table or NULL.
  @param count_mod1, count of modulators in mod_table1.
+ @return FLUID_OK or FLUID_FAILED
 */
 static int
 test_fluid_zone_check_mod(char * name_test,
@@ -724,9 +1210,7 @@ test_fluid_zone_check_mod(char * name_test,
  in mod0 list and the first complex modulator in mod1 list.
 */
 static void fluid_test_linked_mod_test_identity(fluid_mod_t *mod0, fluid_mod_t *mod1)
-{ 
-	int count;
-    
+{    
 	/* first complex modulator */
 	fluid_mod_t *cm0; /* first modulator of cm0 */
 	int cm0_count;    /* count modulators of cm0 */
@@ -923,7 +1407,7 @@ static void print_list_mod(char *name_list, fluid_mod_t *mod)
 	else FLUID_LOG(FLUID_INFO, "-- list \"%s\" empty.", name_list);
 }
 
-static void fluid_dump_modulator(fluid_mod_t * mod)
+void fluid_dump_modulator(fluid_mod_t * mod)
 {
     static const char *src_cc =         "MIDI CC=     %3i";	
     static const char *src_none =       "None            ";
