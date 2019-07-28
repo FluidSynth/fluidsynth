@@ -1333,7 +1333,7 @@ new_fluid_preset_zone(char *name)
 /*
  * delete list of modulators.
  */
-static void delete_fluid_list_mod(fluid_mod_t *mod)
+void delete_fluid_list_mod(fluid_mod_t *mod)
 {
     fluid_mod_t *tmp;
 
@@ -1941,7 +1941,7 @@ static void fluid_limit_mod_list(char *zone_name, fluid_mod_t **list_mod)
  *  modulators doesn't exist in list_mod.
  * @return FLUID_OK if success, FLUID_FAILED otherwise
  */
-static int
+int
 fluid_zone_check_mod(char *zone_name, fluid_mod_t **list_mod,
                      fluid_mod_t **linked_mod)
 {

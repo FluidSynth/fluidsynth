@@ -17,6 +17,7 @@ ADD_FLUID_TEST(test_synth_chorus_reverb)
 ADD_FLUID_TEST(test_snprintf)
 ADD_FLUID_TEST(test_modulator_links)
 ADD_FLUID_TEST(test_modulator_amount)
+ADD_FLUID_TEST(test_fluid_zone_check_mod)
 ADD_FLUID_TEST(test_synth_process)
 
 # if ( LIBSNDFILE_HASVORBIS )
