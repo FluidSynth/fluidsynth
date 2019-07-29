@@ -1043,17 +1043,6 @@ int fluid_mod_has_dest(const fluid_mod_t *mod, int gen)
 #ifdef DEBUG
 void fluid_dump_modulator(fluid_mod_t * mod)
 {
-    static const char *src_cc =         "MIDI CC=     %3i";	
-    static const char *src_none =       "None            ";
-    static const char *src_vel =        "note-on velocity";
-    static const char *src_key_nr =     "Key nr          ";
-    static const char *src_key_pr =     "Poly pressure   ";
-    static const char *src_chan_pr =    "Chan pressure   ";
-    static const char *src_pwheel =     "Pitch Wheel     ";
-    static const char *src_pwheelsens = "Pitch wheel sens";
-    static const char *src_link =       "link                    ";
-    static const char *src_unknow =     "unknown:     %3i";
-
     int src1=mod->src1;
     int dest=mod->dest;
     int src2=mod->src2;
@@ -1064,30 +1053,21 @@ void fluid_dump_modulator(fluid_mod_t * mod)
     printf("Src: ");
     if(flags1 & FLUID_MOD_CC)
     {
-        printf(src_cc,src1);
+        printf("MIDI CC=     %3i",src1);
     } 
     else
     {
         switch(src1)
         {
-            case FLUID_MOD_NONE:
-                printf(src_none); break;
-            case FLUID_MOD_VELOCITY:
-                printf(src_vel); break;
-            case FLUID_MOD_KEY:
-                printf(src_key_nr); break;
-            case FLUID_MOD_KEYPRESSURE:
-                printf(src_key_pr); break;
-            case FLUID_MOD_CHANNELPRESSURE:
-                printf(src_chan_pr); break;
-            case FLUID_MOD_PITCHWHEEL:
-                printf(src_pwheel); break;
-            case FLUID_MOD_PITCHWHEELSENS:
-                printf(src_pwheelsens); break;
-            case FLUID_MOD_LINK_SRC:
-                printf(src_link); break;
-            default:
-                printf(src_unknow, src1);
+            case FLUID_MOD_NONE:                printf("None            "); break;
+            case FLUID_MOD_VELOCITY:            printf("note-on velocity"); break;
+            case FLUID_MOD_KEY:                 printf("Key nr          "); break;
+            case FLUID_MOD_KEYPRESSURE:         printf("Poly pressure   "); break;
+            case FLUID_MOD_CHANNELPRESSURE:     printf("Chan pressure   "); break;
+            case FLUID_MOD_PITCHWHEEL:          printf("Pitch Wheel     "); break;
+            case FLUID_MOD_PITCHWHEELSENS:      printf("Pitch wheel sens"); break;
+            case FLUID_MOD_LINK_SRC:            printf("link                    "); break;
+            default:                            printf("unknown:     %3i", src1);
         }; /* switch src1 */
     }; /* if not CC */
 

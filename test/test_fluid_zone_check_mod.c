@@ -1,24 +1,32 @@
 /*----------------------------------------------------------------------------
-Test of fluid_zone_check_mod() function
+Test of fluid_zone_check_mod() , fluid_linked_mod_test_identity() functions.
 
 Usage:
-Print list of tests:
-  test_fluid_zone_check_mod list
-
-Execute all test:
-  test_fluid_zone_check_mod all
-
-Execute only one test number (i.e "test 1_2: unlinked, sources src1 none"
-  test_fluid_zone_check_mod 1_2
+ test_fluid_zone_check_mod      execute all tests
+ test_fluid_zone_check_mod help print usage
+ test_fluid_zone_check_mod list print list of test
+ test_fluid_zone_check_mod 1_2  execute only one test number
+                                (i.e \"test 1_2: unlinked, sources src1 none\")
 ----------------------------------------------------------------------------*/
 #include "test.h"
 #include "fluidsynth.h"
 #include "synth/fluid_mod.h"
 #include "utils/fluid_sys.h"
 
+//----------------------------------------------------------------------------
+/* external functions */
+
+// implemented in fluid_mod.c
+// Required: fluid_dump_modulator() need to add DEBUG preprocessor macro while
+// compiling fluidsynth.
+void fluid_dump_modulator(fluid_mod_t * mod);
+
+// implemented in fluid_defsfont.c
 int fluid_zone_check_mod(char *zone_name, fluid_mod_t **list_mod,
                          fluid_mod_t **linked_mod);
+// implemented in fluid_defsfont.c
 void delete_fluid_list_mod(fluid_mod_t *list_mod);
+
 
 //----------------------------------------------------------------------------
 static fluid_mod_t * fluid_build_list(fluid_mod_t mod_table[], int count_mod);
@@ -36,7 +44,6 @@ static void fluid_dump_list_linked_mod(fluid_mod_t *mod);
 static void print_list_linked_mod(char *header, char *name_list, fluid_mod_t *mod);
 static void fluid_dump_list_mod(fluid_mod_t *mod);
 static void print_list_mod(char *name_list, fluid_mod_t *mod);
-void fluid_dump_modulator(fluid_mod_t * mod);
 
 /*----------------------------------------------------------------------------
  test tables: to add a test see all_test_fluid_zone_check_mod() below
@@ -184,7 +191,7 @@ fluid_mod_t mod_table_5[] =
 /*------ linked modulators tests ---------------------------------------------*/
 
 /* test 6: modulator linked valid: src1->mod0->mod2 */
-char test_6_mod_linked[] = "test 6 linked modulators valid: src1->mod0->mod2";
+char test_6_mod_linked[] = "test 6: linked modulators valid: src1->mod0->mod2";
 fluid_mod_t mod_table_6[] =
 {
 	{
@@ -213,7 +220,7 @@ fluid_mod_t mod_table_6[] =
                                       src2->mod5->mod7->gen2
                                             mod6->mod7
 */
-char test_6_1_mod_linked[] = "test 6_1 linked modulators valid: src1->mod0->mod2, src2->mod1->mod2";
+char test_6_1_mod_linked[] = "test 6_1: linked modulators valid: src1->mod0->mod2, src2->mod1->mod2";
 fluid_mod_t mod_table_6_1[] =
 {
 	/* mod complexe */
@@ -269,7 +276,7 @@ fluid_mod_t mod_table_6_1[] =
 };
 
 /* test 6_2: linked modulators valid: src2->mod3->mod0->mod2 */
-char test_6_2_mod_linked[] = "test 6_2 linked modulators valid: mod3->mod0->mod2";
+char test_6_2_mod_linked[] = "test 6_2: linked modulators valid: mod3->mod0->mod2";
 fluid_mod_t mod_table_6_2[] =
 {
 	{
@@ -300,7 +307,7 @@ fluid_mod_t mod_table_6_2[] =
 
 //-----
 /* test 6_3: 2 complex modulators identic:  att<-mod0<-mod1<- ,  att<-mod0<-mod1<- */
-char test_6_3_mod_linked[] = "test 6_3:complex mod identical: att<-mod0<-mod1<-, att<-mod0<-mod1<-";
+char test_6_3_mod_linked[] = "test 6_3: complex mod identical: att<-mod0<-mod1<-, att<-mod0<-mod1<-";
 /* table 0:  att<-mod0<-mod1<-  */
 fluid_mod_t mod_table_6_3_0[] =
 {
@@ -341,7 +348,7 @@ fluid_mod_t mod_table_6_3_1[] =
 
 //-----
 /* test 6_4: 2 complex modulators identic:  att<-mod0<-mod1<-mod2<- ,  att<-mod0<-mod1<- */
-char test_6_4_mod_linked[] = "test 6_4:complex mod not identical: att<-mod0<-mod1<-mod2<-, att<-mod0<-mod1<-";
+char test_6_4_mod_linked[] = "test 6_4: complex mod not identical: att<-mod0<-mod1<-mod2<-, att<-mod0<-mod1<-";
 /* table 0:  att<-mod0<-mod1<-mod2<-  */
 fluid_mod_t mod_table_6_4_0[] =
 {
@@ -389,7 +396,7 @@ fluid_mod_t mod_table_6_4_1[] =
 
 //-----
 /* test 6_5: 2 complex modulators identic:  att<-mod0<-mod1<-mod2<- ,  att<-mod0<-mod1<-mod2<- */
-char test_6_5_mod_linked[] = "test 6_5:complex mod identical: att<-mod0<-mod1<-mod2<-, att<-mod0<-mod1<-mod2<-";
+char test_6_5_mod_linked[] = "test 6_5: complex mod identical: att<-mod0<-mod1<-mod2<-, att<-mod0<-mod1<-mod2<-";
 /* table 0:  att<-mod0<-mod1<-mod2<-  */
 fluid_mod_t mod_table_6_5_0[] =
 {
@@ -445,7 +452,7 @@ fluid_mod_t mod_table_6_5_1[] =
 //-----
 /* test 6_6: 2 complex modulators identic:  att<-mod0<-mod1<-mod2<- ,  att<-mod0<-mod1<- */
 /*                                                                          mod0<-mod2<- */
-char test_6_6_mod_linked[] = "test 6_6:complex cm0:att<-mod0<-mod1<-mod2<-, cm1:att<-mod0<-mod1, mod0<-mod2<-";
+char test_6_6_mod_linked[] = "test 6_6: complex cm0:att<-mod0<-mod1<-mod2<-, cm1:att<-mod0<-mod1, mod0<-mod2<-";
 /* table 0:  att<-mod0<-mod1<-mod2<-  */
 fluid_mod_t mod_table_6_6_0[] =
 {
@@ -502,7 +509,7 @@ fluid_mod_t mod_table_6_6_1[] =
 //-----
 /* test 6_7: 2 complex modulators identic:  att<-mod0<-mod1<- ,  att<-mod0<-mod1<- */
 /*                                               mod0<-mod2<-         mod0<-mod2<- */
-char test_6_7_mod_linked[] = "test 6_7:complex cm0:att<-m0<-m1 m0<-m2<-, cm1:att<-m0<-m1 m0<-m2<-";
+char test_6_7_mod_linked[] = "test 6_7: complex cm0:att<-m0<-m1 m0<-m2<-, cm1:att<-m0<-m1 m0<-m2<-";
 /* table 0:  att<-mod0<-mod1<-mod2<-  */
 /*                mod0<-mod2<-  */
 fluid_mod_t mod_table_6_7_0[] =
@@ -560,7 +567,7 @@ fluid_mod_t mod_table_6_7_1[] =
 //-----
 /* test 6_8: 2 complex modulators identic:  att<-m0<-m1<-m2 ,  att<-m0<-m1<-m2 */
 /*                                               m0<-m3<-m4         m0<-m3<-m4 */
-char test_6_8_mod_linked[] = "test 6_8:complex cm0:att<-m0<-m1<-m2 m0<-m3<-m4, cm1:att<-m0<-m1<-m2 m0<-m3<-m4";
+char test_6_8_mod_linked[] = "test 6_8: complex cm0:att<-m0<-m1<-m2 m0<-m3<-m4, cm1:att<-m0<-m1<-m2 m0<-m3<-m4";
 /* table 0:  att<-m0<-m1<-m2<-  */
 /*                m0<-m3<-m4<-  */
 fluid_mod_t mod_table_6_8_0[] =
@@ -644,7 +651,7 @@ fluid_mod_t mod_table_6_8_1[] =
 };
 
 /* test 7: linked modulator, invalid destination: src1->mod0->mod2(src1 unlinked) */
-char test_7_mod_linked[] = "test 7 linked modulators invalid destination: src1->mod0->mod2(src1 unlinked)";
+char test_7_mod_linked[] = "test 7: linked modulators invalid destination: src1->mod0->mod2(src1 unlinked)";
 fluid_mod_t mod_table_7[] =
 {
 	{
@@ -669,7 +676,7 @@ fluid_mod_t mod_table_7[] =
 
 
 /* test 8: linked modulator invalid: src1->mod0->mod2(amount=0) */
-char test_8_mod_linked[] = "test 8 linked modulators invalid: src1->mod0->mod2(amount=0)";
+char test_8_mod_linked[] = "test 8: linked modulators invalid: src1->mod0->mod2(amount=0)";
 fluid_mod_t mod_table_8[] =
 {
 	{
@@ -693,7 +700,7 @@ fluid_mod_t mod_table_8[] =
 };
 
 /* test 9: linked modulator invalid: src1->mod0->mod3(invalid index) */
-char test_9_mod_linked[] = "test 9 linked modulators invalid: src1->mod0->mod3(invalid index)";
+char test_9_mod_linked[] = "test 9: linked modulators invalid: src1->mod0->mod3(invalid index)";
 fluid_mod_t mod_table_9[] =
 {
 	{
@@ -718,7 +725,7 @@ fluid_mod_t mod_table_9[] =
 
 
 /* test 10: invalid isolated linked modulator : src1 linked->mod0->mod2 */
-char test_10_mod_linked[] = "test 10 linked modulators invalid isolated: src1 linked->mod0->mod2";
+char test_10_mod_linked[] = "test 10: linked modulators invalid isolated: src1 linked->mod0->mod2";
 fluid_mod_t mod_table_10[] =
 {
 	{
@@ -742,7 +749,7 @@ fluid_mod_t mod_table_10[] =
 };
 
 /* test 11: invalid circular linked modulator: src2->mod3->mod0->mod2->mod0 */
-char  test_11_mod_linked[] = "test 11 linked modulators circular: mod3->mod0->mod2->mod0";
+char  test_11_mod_linked[] = "test 11: linked modulators circular: mod3->mod0->mod2->mod0";
 fluid_mod_t mod_table_11[] =
 {
 	{
@@ -772,7 +779,6 @@ fluid_mod_t mod_table_11[] =
 };
 
 /* the list of test name, displayed by: test_fluid_zone_check_mod list */
-#if 1
 char *test_names_list[] =
 {
     // tests unlinked modulators
@@ -793,55 +799,45 @@ char *test_names_list[] =
 	test_11_mod_linked,
 	NULL //End of table
 };
-#endif
 
 
 //-----------------------------------------------------------------------------
-char *usage ="\
-Usage:\n\
-Print list of tests:\n\
-  test_fluid_zone_check_mod list\n\
-\
-Execute all test:\n\
-  test_fluid_zone_check_mod all\n\
-\
-Execute only one test number (i.e \"test 1_2: unlinked, sources src1 none\"\n\
-  test_fluid_zone_check_mod 1_2\n";
+const char *usage ="\n\
+ test_fluid_zone_check_mod      execute all tests\n\
+ test_fluid_zone_check_mod help print usage\n\
+ test_fluid_zone_check_mod list print list of test\n\
+ test_fluid_zone_check_mod 1_2  execute only one test number(i.e \"test 1_2: unlinked, sources src1 none\")\n\
+\n";
 /*
-  Test of fluid_zone_check_mod() function
+  Test of fluid_zone_check_mod() , fluid_linked_mod_test_identity() functions
 
-  test_fluid_zone_check_mod  argument
+  test_fluid_zone_check_mod  [argument]
 */
 int main(int argc, char **argv)
 {
-	char *arg;
-	if (argc != 2)
+	char *arg = NULL /* execute all test */;
+	if (argc > 1)
 	{
-		printf(usage);
-		return 0;
-	}
-
-	arg = argv[1];
-	/* print list of tests name */
-	if(strcmp("list", arg) == 0)
-	{
-		int i;
-		for (i =0; test_names_list[i]!=NULL ; i++)
+		arg = argv[1];
+		if(strcmp("help", arg) == 0)
 		{
-			printf("%s\n",test_names_list[i]);
+			printf("Usage:%s",usage);
+			return 0;
 		}
-		return 0;
+		/* print list of tests name */
+		else if(strcmp("list", arg) == 0)
+		{
+			int i;
+			for (i =0; test_names_list[i]!=NULL ; i++)
+			{
+				printf("%s\n",test_names_list[i]);
+			}
+			return 0;
+		}
+		/* or execute one test */
 	}
-	/* execute all test */
-	else if(strcmp("all", arg) == 0)
-	{
-		arg = NULL;
-	}
-	/* or execute one test */
-	if (all_test_fluid_zone_check_mod(arg) == FLUID_FAILED)
-		return 1;
-	else
-		return 0;
+	all_test_fluid_zone_check_mod(arg);
+    return EXIT_SUCCESS;
 }
 
 
@@ -880,159 +876,128 @@ static int is_arg_num_test(char *arg, char *num_test)
 
 static int all_test_fluid_zone_check_mod(char *arg)
 {
-	int s;
 	FLUID_LOG(FLUID_INFO, "========================== fluid_all_test_check_mod =========================");
 
 	/*------ unlinked modulators tests -------------------------------------*/
 	/* test 1: unliked modulator, sources non-cc valid */ //Ok
 	if (is_arg_num_test(arg,"1"))
 	{
-		s=test_fluid_zone_check_mod(test_1_unlinked_non_cc_valid,
-		                            mod_table_1, sizeof(mod_table_1)/sizeof(fluid_mod_t),NULL,0);
-		if(s == FLUID_FAILED)
-			return FLUID_FAILED;
+		TEST_SUCCESS(test_fluid_zone_check_mod(test_1_unlinked_non_cc_valid,
+		                            mod_table_1, sizeof(mod_table_1)/sizeof(fluid_mod_t),NULL,0));
 	}
 	/* test 1.1: unliked modulator, sources non-cc valid, amount = 0 */ //Ok
 	if (is_arg_num_test(arg,"1_1"))
 	{
-		s=test_fluid_zone_check_mod(test_1_1_unlinked_non_cc_valid,
-		                            mod_table_1_1, sizeof(mod_table_1_1)/sizeof(fluid_mod_t),NULL,0);
-		if(s == FLUID_FAILED)
-			return FLUID_FAILED;
+		TEST_SUCCESS(test_fluid_zone_check_mod(test_1_1_unlinked_non_cc_valid,
+		                            mod_table_1_1, sizeof(mod_table_1_1)/sizeof(fluid_mod_t),NULL,0));
 	}
 
 	/* test 1.2: unliked modulator, sources non-cc src1 none  */ //Ok
 	if (is_arg_num_test(arg,"1_2"))
 	{
-		s=test_fluid_zone_check_mod(test_1_2_unlinked_non_cc_valid,
-		                            mod_table_1_2, sizeof(mod_table_1_2)/sizeof(fluid_mod_t),NULL,0);
-		if(s == FLUID_FAILED)
-			return FLUID_FAILED;
+		TEST_SUCCESS(test_fluid_zone_check_mod(test_1_2_unlinked_non_cc_valid,
+		                            mod_table_1_2, sizeof(mod_table_1_2)/sizeof(fluid_mod_t),NULL,0));
 	}
 
 	/* test 1.3: unliked modulator, sources non-cc src2 none  */ //Ok
 	if (is_arg_num_test(arg,"1_3"))
 	{
-		s=test_fluid_zone_check_mod(test_1_3_unlinked_non_cc_invalid,
-		                            mod_table_1_3, sizeof(mod_table_1_3)/sizeof(fluid_mod_t),NULL,0);
-		if(s == FLUID_FAILED)
-			return FLUID_FAILED;
+		TEST_SUCCESS(test_fluid_zone_check_mod(test_1_3_unlinked_non_cc_invalid,
+		                            mod_table_1_3, sizeof(mod_table_1_3)/sizeof(fluid_mod_t),NULL,0));
 	}
     
 	/* test 2: unliked modulator, sources non-cc invalid */ //Ok
 	if (is_arg_num_test(arg,"2"))
 	{
-		s=test_fluid_zone_check_mod(test_2_unlinked_non_cc_invalid,
-		                            mod_table_2, sizeof(mod_table_2)/sizeof(fluid_mod_t),NULL,0);
-		if(s == FLUID_FAILED)
-			return FLUID_FAILED;
+		TEST_SUCCESS(test_fluid_zone_check_mod(test_2_unlinked_non_cc_invalid,
+		                            mod_table_2, sizeof(mod_table_2)/sizeof(fluid_mod_t),NULL,0));
 	}
 
 	/* test 3: unliked modulator, sources cc valid */ //Ok
 	if (is_arg_num_test(arg,"3"))
 	{
-		s=test_fluid_zone_check_mod(test_3_unlinked_cc_valid,
-		                            mod_table_3, sizeof(mod_table_3)/sizeof(fluid_mod_t),NULL,0);
-		if(s == FLUID_FAILED)
-			return FLUID_FAILED;
+		TEST_SUCCESS(test_fluid_zone_check_mod(test_3_unlinked_cc_valid,
+		                            mod_table_3, sizeof(mod_table_3)/sizeof(fluid_mod_t),NULL,0));
 	}
 
 	/* test 4: sources cc: unliked modulator, sources cc invalid */ //Ok
 	if (is_arg_num_test(arg,"4"))
 	{
-		s=test_fluid_zone_check_mod(test_4_unlinked_cc_invalid,
-		                            mod_table_4, sizeof(mod_table_4)/sizeof(fluid_mod_t),NULL,0);
-		if(s == FLUID_FAILED)
-			return FLUID_FAILED;
+		TEST_SUCCESS(test_fluid_zone_check_mod(test_4_unlinked_cc_invalid,
+		                            mod_table_4, sizeof(mod_table_4)/sizeof(fluid_mod_t),NULL,0));
 	}
 
 	/* test 5::modulators identic */ // Ok
 	if (is_arg_num_test(arg,"5"))
 	{
-		s=test_fluid_zone_check_mod(test_5_mod_identic,
-		                            mod_table_5, sizeof(mod_table_5)/sizeof(fluid_mod_t),NULL,0);
-		if(s == FLUID_FAILED)
-			return FLUID_FAILED;
+		TEST_SUCCESS(test_fluid_zone_check_mod(test_5_mod_identic,
+		                            mod_table_5, sizeof(mod_table_5)/sizeof(fluid_mod_t),NULL,0));
 	}
 	
 	/*------ valid linked modulators tests -------------------------------------*/
 	/* test 6: valid linked modulators: mod0->mod2 */ // Ok
 	if (is_arg_num_test(arg,"6"))
 	{
-		s=test_fluid_zone_check_mod(test_6_mod_linked,
-		                            mod_table_6, sizeof(mod_table_6)/sizeof(fluid_mod_t),NULL,0);
-		if(s == FLUID_FAILED)
-			return FLUID_FAILED;
+		TEST_SUCCESS(test_fluid_zone_check_mod(test_6_mod_linked,
+		                            mod_table_6, sizeof(mod_table_6)/sizeof(fluid_mod_t),NULL,0));
 	}
 
 	/* test 6_1: valid linked modulators: src1->mod0->mod2 */ // Ok
 	/*                                    src2->mod1->mod2 */
 	if (is_arg_num_test(arg,"6_1"))
 	{
-		s=test_fluid_zone_check_mod(test_6_1_mod_linked,
-		                            mod_table_6_1, sizeof(mod_table_6_1)/sizeof(fluid_mod_t),NULL,0);
+		TEST_SUCCESS(test_fluid_zone_check_mod(test_6_1_mod_linked,
+		                            mod_table_6_1, sizeof(mod_table_6_1)/sizeof(fluid_mod_t),NULL,0));
 	}
 
 	/* test 6_2: valid linked modulators: src2->mod3->mod0->mod2 */ //Ok
 	if (is_arg_num_test(arg,"6_2"))
 	{
-		s=test_fluid_zone_check_mod(test_6_2_mod_linked,
-		                            mod_table_6_2, sizeof(mod_table_6_2)/sizeof(fluid_mod_t),NULL,0);
-		if(s == FLUID_FAILED)
-			return FLUID_FAILED;
+		TEST_SUCCESS(test_fluid_zone_check_mod(test_6_2_mod_linked,
+		                            mod_table_6_2, sizeof(mod_table_6_2)/sizeof(fluid_mod_t),NULL,0));
 	}
 
 	//--- complex modulators identity tests ----
 	/* test 6_3: complex modulators identity test:  att<-mod0->mod1<- ,  att<-mod0->mod1<- */ //Ok
 	if (is_arg_num_test(arg,"6_3"))
 	{
-		s=test_fluid_zone_check_mod(test_6_3_mod_linked,
+		TEST_SUCCESS(test_fluid_zone_check_mod(test_6_3_mod_linked,
 		                            mod_table_6_3_0, sizeof(mod_table_6_3_0)/sizeof(fluid_mod_t),
-		                            mod_table_6_3_1, sizeof(mod_table_6_3_1)/sizeof(fluid_mod_t));
-		if(s == FLUID_FAILED)
-			return FLUID_FAILED;
+		                            mod_table_6_3_1, sizeof(mod_table_6_3_1)/sizeof(fluid_mod_t)));
 	}
 
 	/* test 6_4: complex modulators identity test:  att<-mod0->mod1<-mod2<-   att<-mod0->mod1<- */ //Ok
 	if (is_arg_num_test(arg,"6_4"))
 	{
-		s=test_fluid_zone_check_mod(test_6_4_mod_linked,
+		TEST_SUCCESS(test_fluid_zone_check_mod(test_6_4_mod_linked,
 		                            mod_table_6_4_0, sizeof(mod_table_6_4_0)/sizeof(fluid_mod_t),
-		                            mod_table_6_4_1, sizeof(mod_table_6_4_1)/sizeof(fluid_mod_t));
-		if(s == FLUID_FAILED)
-			return FLUID_FAILED;
+		                            mod_table_6_4_1, sizeof(mod_table_6_4_1)/sizeof(fluid_mod_t)));
 	}
 
 	/* test 6_5: complex modulators identity test:  att<-mod0->mod1<-mod2<-, att<-mod0->mod1<-mod2<-*/ //Ok
 	if (is_arg_num_test(arg,"6_5"))
 	{
-		s=test_fluid_zone_check_mod(test_6_5_mod_linked,
+		TEST_SUCCESS(test_fluid_zone_check_mod(test_6_5_mod_linked,
 		                            mod_table_6_5_0, sizeof(mod_table_6_5_0)/sizeof(fluid_mod_t),
-		                            mod_table_6_5_1, sizeof(mod_table_6_5_1)/sizeof(fluid_mod_t));
-		if(s == FLUID_FAILED)
-			return FLUID_FAILED;
+		                            mod_table_6_5_1, sizeof(mod_table_6_5_1)/sizeof(fluid_mod_t)));
 	}
 
 	/* test 6_6: complex modulators identity test:  att<-mod0<-mod1<-mod2<- ,  att<-mod0->mod1<- */ //Ok
 	/*                                                                              mod0->mod2<- */
 	if (is_arg_num_test(arg,"6_6"))
 	{
-		s=test_fluid_zone_check_mod(test_6_6_mod_linked,
+		TEST_SUCCESS(test_fluid_zone_check_mod(test_6_6_mod_linked,
 		                            mod_table_6_6_0, sizeof(mod_table_6_6_0)/sizeof(fluid_mod_t),
-		                            mod_table_6_6_1, sizeof(mod_table_6_6_1)/sizeof(fluid_mod_t));
-		if(s == FLUID_FAILED)
-			return FLUID_FAILED;
+		                            mod_table_6_6_1, sizeof(mod_table_6_6_1)/sizeof(fluid_mod_t)));
 	}
 
 	/* test 6_7: complex modulators identity test:  att<-mod0<-mod1<-mod2<- ,  att<-mod0->mod1<- */ //Ok
 	/*                                                   mod0->mod2<-               mod0->mod2<- */
 	if (is_arg_num_test(arg,"6_7"))
 	{
-		s=test_fluid_zone_check_mod(test_6_7_mod_linked,
+		TEST_SUCCESS(test_fluid_zone_check_mod(test_6_7_mod_linked,
 		                        mod_table_6_7_0, sizeof(mod_table_6_7_0)/sizeof(fluid_mod_t),
-		                        mod_table_6_7_1, sizeof(mod_table_6_7_1)/sizeof(fluid_mod_t));
-		if(s == FLUID_FAILED)
-			return FLUID_FAILED;
+		                        mod_table_6_7_1, sizeof(mod_table_6_7_1)/sizeof(fluid_mod_t)));
 	}
 
 
@@ -1040,57 +1005,45 @@ static int all_test_fluid_zone_check_mod(char *arg)
 	/*                                                   m0<-m3<-m4         m0<-m3<-m4 */
 	if (is_arg_num_test(arg,"6_8"))
 	{
-		s=test_fluid_zone_check_mod(test_6_8_mod_linked,
+		TEST_SUCCESS(test_fluid_zone_check_mod(test_6_8_mod_linked,
 		                            mod_table_6_8_0, sizeof(mod_table_6_8_0)/sizeof(fluid_mod_t),
-		                            mod_table_6_8_1, sizeof(mod_table_6_8_1)/sizeof(fluid_mod_t));
-		if(s == FLUID_FAILED)
-			return FLUID_FAILED;
+		                            mod_table_6_8_1, sizeof(mod_table_6_8_1)/sizeof(fluid_mod_t)));
 	}
 
 	/*------ invalid linked modulators tests -------------------------------------*/
 	/* test 7: invalid linked modulators (invalid destination): mod0->mod2(src1 unlinked) */ // Ok
 	if (is_arg_num_test(arg,"7"))
 	{
-		s=test_fluid_zone_check_mod(test_7_mod_linked,
-		                            mod_table_7, sizeof(mod_table_7)/sizeof(fluid_mod_t),NULL,0);
-		if(s == FLUID_FAILED)
-			return FLUID_FAILED;
+		TEST_SUCCESS(test_fluid_zone_check_mod(test_7_mod_linked,
+		                            mod_table_7, sizeof(mod_table_7)/sizeof(fluid_mod_t),NULL,0));
 	}
 
 	/* test 8: invalid linked modulators: mod0->mod2(amount=0) */ // Ok
 	if (is_arg_num_test(arg,"8"))
 	{
-		s=test_fluid_zone_check_mod(test_8_mod_linked,
-		                            mod_table_8, sizeof(mod_table_8)/sizeof(fluid_mod_t),NULL,0);
-		if(s == FLUID_FAILED)
-			return FLUID_FAILED;
+		TEST_SUCCESS(test_fluid_zone_check_mod(test_8_mod_linked,
+		                            mod_table_8, sizeof(mod_table_8)/sizeof(fluid_mod_t),NULL,0));
 	}
 
 	/* test 9: invalid linked modulators: mod0->mod3(invalid index) */ // Ok
 	if (is_arg_num_test(arg,"9"))
 	{
-		s=test_fluid_zone_check_mod(test_9_mod_linked,
-		                            mod_table_9, sizeof(mod_table_9)/sizeof(fluid_mod_t),NULL,0);
-		if(s == FLUID_FAILED)
-			return FLUID_FAILED;
+		TEST_SUCCESS(test_fluid_zone_check_mod(test_9_mod_linked,
+		                            mod_table_9, sizeof(mod_table_9)/sizeof(fluid_mod_t),NULL,0));
 	}
 
 	/* test 10: linked modulators isolated: src1 linked->mod0->mod2 */ // Ok
 	if (is_arg_num_test(arg,"10"))
 	{
-		s=test_fluid_zone_check_mod(test_10_mod_linked,
-		                            mod_table_10, sizeof(mod_table_10)/sizeof(fluid_mod_t),NULL,0);
-		if(s == FLUID_FAILED)
-			return FLUID_FAILED;
+		TEST_SUCCESS(test_fluid_zone_check_mod(test_10_mod_linked,
+		                            mod_table_10, sizeof(mod_table_10)/sizeof(fluid_mod_t),NULL,0));
 	}
 
 	/* test 11: linked modulators circular: src2->mod3->mod0->mod2->mod0 */ //Ok
 	if (is_arg_num_test(arg,"11"))
 	{
-		s=test_fluid_zone_check_mod(test_11_mod_linked,
-		                            mod_table_11, sizeof(mod_table_11)/sizeof(fluid_mod_t),NULL,0);
-		if(s == FLUID_FAILED)
-			return FLUID_FAILED;
+		TEST_SUCCESS(test_fluid_zone_check_mod(test_11_mod_linked,
+		                            mod_table_11, sizeof(mod_table_11)/sizeof(fluid_mod_t),NULL,0));
 	}
 	return FLUID_OK;
 }
@@ -1406,93 +1359,3 @@ static void print_list_mod(char *name_list, fluid_mod_t *mod)
 	}
 	else FLUID_LOG(FLUID_INFO, "-- list \"%s\" empty.", name_list);
 }
-
-void fluid_dump_modulator(fluid_mod_t * mod)
-{
-    static const char *src_cc =         "MIDI CC=     %3i";	
-    static const char *src_none =       "None            ";
-    static const char *src_vel =        "note-on velocity";
-    static const char *src_key_nr =     "Key nr          ";
-    static const char *src_key_pr =     "Poly pressure   ";
-    static const char *src_chan_pr =    "Chan pressure   ";
-    static const char *src_pwheel =     "Pitch Wheel     ";
-    static const char *src_pwheelsens = "Pitch wheel sens";
-    static const char *src_link =       "link                    ";
-    static const char *src_unknow =     "unknown:     %3i";
-
-    int src1=mod->src1;
-    int dest=mod->dest;
-    int src2=mod->src2;
-    int flags1=mod->flags1;
-    int flags2=mod->flags2;
-    fluid_real_t amount=(fluid_real_t)mod->amount;
-
-    printf("Src: ");
-    if(flags1 & FLUID_MOD_CC)
-    {
-        printf(src_cc,src1);
-    } 
-    else
-    {
-        switch(src1)
-        {
-            case FLUID_MOD_NONE:
-                printf(src_none); break;
-            case FLUID_MOD_VELOCITY:
-                printf(src_vel); break;
-            case FLUID_MOD_KEY:
-                printf(src_key_nr); break;
-            case FLUID_MOD_KEYPRESSURE:
-                printf(src_key_pr); break;
-            case FLUID_MOD_CHANNELPRESSURE:
-                printf(src_chan_pr); break;
-            case FLUID_MOD_PITCHWHEEL:
-                printf(src_pwheel); break;
-            case FLUID_MOD_PITCHWHEELSENS:
-                printf(src_pwheelsens); break;
-            case FLUID_MOD_LINK_SRC:
-                printf(src_link); break;
-            default:
-                printf(src_unknow, src1);
-        }; /* switch src1 */
-    }; /* if not CC */
-
-    if (src1 != FLUID_MOD_LINK_SRC)
-    {
-        if (flags1 & FLUID_MOD_NEGATIVE){printf(" - ");} 
-        else                            {printf(" + ");};
-        if (flags1 & FLUID_MOD_BIPOLAR) {printf("bip  ");}
-        else                            {printf("unip ");};
-    }
-    printf("-> ");
-    switch(dest)
-    {
-        case GEN_FILTERQ:         printf("Q              "); break;
-        case GEN_FILTERFC:        printf("fc             "); break;
-
-        case GEN_CUSTOM_FILTERQ:  printf("custom-Q       "); break;
-        case GEN_CUSTOM_FILTERFC: printf("custom-fc      "); break;
-
-        case GEN_VIBLFOTOPITCH:	  printf("VibLFO-to-pitch"); break;
-        case GEN_MODENVTOPITCH:	  printf("ModEnv-to-pitch"); break;
-        case GEN_MODLFOTOPITCH:	  printf("ModLFO-to-pitch"); break;
-        case GEN_CHORUSSEND:      printf("Chorus send    "); break;
-        case GEN_REVERBSEND:      printf("Reverb send    "); break;
-        case GEN_PAN:             printf("pan            "); break;
-
-        case GEN_CUSTOM_BALANCE:  printf("balance        "); break;
-
-        case GEN_ATTENUATION:     printf("att            "); break;
-        default:
-            if(dest & FLUID_MOD_LINK_DEST)
-            {
-			                      printf("link-dest    %2i",dest &~FLUID_MOD_LINK_DEST);
-            }
-            else
-            {
-	                              printf("dest         %2i",dest);
-            }
-
-    }; /* switch dest */
-    printf(", amount %9.2f, flags %3i, src2 %3i, flags2 %3i\n",amount, flags1, src2, flags2);
-};
