@@ -1203,9 +1203,13 @@ static void fluid_test_linked_mod_test_identity(fluid_mod_t *mod0, fluid_mod_t *
 
 			/* display identity result */
 			if (r)
+			{
 			    FLUID_LOG(FLUID_INFO, "-- test identity: cm0 == cm1 ?, yes ");
+			}
 			else
+			{
 			    FLUID_LOG(FLUID_INFO, "-- test identity: cm0 == cm1 ?, no ");
+			}
 			if(r)
 			{
 				/* add amount to cm0 */
