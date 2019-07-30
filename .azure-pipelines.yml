@@ -15,7 +15,7 @@ jobs:
     - script: |
         mkdir build && cd build
         export PKG_CONFIG_PATH="/usr/local/opt/libffi/lib/pkgconfig"
-        cmake -DCMAKE_INSTALL_PREFIX=$(Build.ArtifactStagingDirectory) -DCMAKE_BUILD_TYPE=Release -DCMAKE_VERBOSE_MAKEFILE=0 ..
+        cmake -DCMAKE_INSTALL_PREFIX=$(Build.ArtifactStagingDirectory) -DCMAKE_BUILD_TYPE=Release -DCMAKE_VERBOSE_MAKEFILE=1 ..
         make
       displayName: 'Compile fluidsynth'
 
@@ -70,7 +70,7 @@ jobs:
         SET "PATH=d:\deps\bin;%PATH%"
         pkg-config --list-all
         mkdir build && cd build || exit -1
-        cmake -A $(platform) -T $(toolset) -DCMAKE_INSTALL_PREFIX=$(Build.ArtifactStagingDirectory) -Denable-readline=0 -Denable-floats=1 -DCMAKE_BUILD_TYPE=Release -DCMAKE_VERBOSE_MAKEFILE=0 .. || exit -1
+        cmake -A $(platform) -T $(toolset) -DCMAKE_INSTALL_PREFIX=$(Build.ArtifactStagingDirectory) -Denable-readline=0 -Denable-floats=1 -DCMAKE_BUILD_TYPE=Release -DCMAKE_VERBOSE_MAKEFILE=1 .. || exit -1
         cmake --build . --config Release || exit -1
       displayName: 'Compile fluidsynth'
     - script: |
@@ -102,6 +102,10 @@ jobs:
         CMAKE_FLAGS: 
         gtk-bundle: $(gtk-bundle-x64)
         libsndfile-url: $(libsndfile-url-x64)
+      debug:
+        CMAKE_FLAGS: -Denable-debug=1
+        gtk-bundle: $(gtk-bundle-x64)
+        libsndfile-url: $(libsndfile-url-x64)
       no_network:
         CMAKE_FLAGS: -Denable-network=0
         gtk-bundle: $(gtk-bundle-x64)
@@ -129,7 +133,7 @@ jobs:
         @ECHO ON
         SET "PATH=d:\deps\bin;%PATH%"
         mkdir build && cd build || exit -1
-        cmake -A x64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_VERBOSE_MAKEFILE=0 .. || exit -1
+        cmake -A x64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_VERBOSE_MAKEFILE=1 $(CMAKE_FLAGS) .. || exit -1
         cmake --build . --config Release || exit -1
       displayName: 'Compile fluidsynth'
     - script: |
