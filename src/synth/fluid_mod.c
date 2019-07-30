@@ -1040,7 +1040,7 @@ int fluid_mod_has_dest(const fluid_mod_t *mod, int gen)
 
 
 /* debug function: Prints the contents of a modulator */
-#ifdef DEBUG
+//#ifdef DEBUG
 void fluid_dump_modulator(fluid_mod_t * mod)
 {
     int src1=mod->src1;
@@ -1110,5 +1110,5 @@ void fluid_dump_modulator(fluid_mod_t * mod)
     }; /* switch dest */
     printf(", amount %9.2f, flags %3i, src2 %3i, flags2 %3i\n",amount, flags1, src2, flags2);
 };
-#endif
+//#endif
 

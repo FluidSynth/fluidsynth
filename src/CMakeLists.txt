@@ -245,13 +245,6 @@ configure_file ( ${CMAKE_SOURCE_DIR}/include/fluidsynth/version.h.in
 configure_file ( ${CMAKE_SOURCE_DIR}/include/fluidsynth.cmake
                  ${public_main_HEADER} )
 
-if ( MSVC )
-	if( enable-debug )
-        # add DEBUG macro for preprocessor
-        add_definitions ( -DDEBUG )
-	endif( enable-debug )
-endif ( MSVC )
-
 if ( WIN32 )
 include(generate_product_version)
 generate_product_version(
