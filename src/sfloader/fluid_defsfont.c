@@ -1738,9 +1738,6 @@ fluid_zone_check_linked_mod(char *zone_name, fluid_mod_t *list_mod)
  * Warning: fluid_check_linked_mod_path() must be called before calling this
  * function.
  * 
- * Corresponding modulators in mod_list list are marked invalid (they will be
- * removed later).
- *
  * The function searchs all linked path starting from the end of the path 
  * (i.e modulator connected to a generator) backward to the beginning of 
  * the path (ie. a modulator with source not linked).
