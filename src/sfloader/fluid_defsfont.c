@@ -1478,7 +1478,7 @@ fluid_is_mod_in_path(fluid_mod_t *path[], int count, fluid_mod_t *mod)
  * paths (specif SF 2.0  7.4, 7.8  and 9.5.4).
  *
  * Warning: This function must be called before calling
- * fluid_zone_copy_linked_mod().
+ * fluid_list_copy_linked_mod().
  *
  * Any linked modulator path from the start to the end are checked and returned
  * in path table.
@@ -1639,93 +1639,6 @@ fluid_check_linked_mod_path(char *zone_name, fluid_mod_t *list_mod,
     return result;
 }
 
-/**
- * Checks all modulators from a zone modulator list.
- * - check valid sources.
- * - check identic modulator.
- * - check linked modulators path.
- *
- * @param zone_name, zone's name used to prefix messages displayed.
- * @param list_mod, pointer on modulators list.
- * @return 
- *  - TRUE if any valid linked path exists.
- *  - FALSE if no linked path exists.
- *  - FLUID_FAILED if failed (memory error).
- */
-int
-fluid_zone_check_linked_mod(char *zone_name, fluid_mod_t *list_mod)
-{
-    int result;
-    /* path is a table to register discovered linked modulator path */
-    fluid_mod_t **path;
-    int path_mod_count;
-
-    /* checks valid modulator sources (specs SF 2.01  7.4, 7.8, 8.2.1).*/
-    /* checks identic modulator in the list (specs SF 2.01  7.4, 7.8). */
-    int count = 0; /* number of modulators in list_mod. */
-
-
-    fluid_mod_t *mod = list_mod; /* first modulator in list_mod */
-    while(mod)
-    {
-        char zone_mod_name[256];
-
-        /* prepare modulator name: zonename/#modulator */
-        FLUID_SNPRINTF(zone_mod_name, sizeof(zone_mod_name),"%s/mod%d", zone_name, count);		
-	
-        /* has mod invalid sources ? */
-        if(!fluid_mod_check_sources (mod,  zone_mod_name) 
-        /* or is mod identic to any following modulator ? */
-           ||fluid_zone_is_mod_identic(mod, zone_mod_name)) 
-        {   /* marks this modulator invalid for future checks */
-            mod->amount = 0;
-        }
-
-        count++;
-        mod = mod->next;
-    }
-
-    if(!count)
-    { /* There are no modulators, no need to go further */
-        return FALSE;
-    }
-
-    /* Now check linked modulator */
-    path = FLUID_MALLOC (sizeof(*path) * count);
-    if(path == NULL)
-    {
-        return FLUID_FAILED;
-    }
-    
-    path_mod_count = 0;
-    result = fluid_check_linked_mod_path(zone_name, list_mod, -1, path, 0,
-                                         &path_mod_count);
-
-    /* Now path contains complete discovered modulators paths (or not).
-       Other incomplete linked modulators path (isolated) are still in list_mod but
-       not in path. These should now marked invalid.
-	   (specifications SF 2.01  7.4, 7.8) */
-    count = 0; /* number of modulators in list_mod. */
-    mod = list_mod; /* first modulator in list_mod */
-    while(mod)
-    {
-        if( /* Check linked mod only not in discovered paths */
-           (fluid_mod_has_linked_src1(mod) || (mod->dest & FLUID_MOD_LINK_DEST))
-            /* Check if mod isn't in discovered paths */
-            && !fluid_is_mod_in_path(path, path_mod_count, mod) )
-        {
-            mod->amount = 0; /* marked invalid */
-            FLUID_LOG(FLUID_WARN, "invalid isolated path %s/mod%d", zone_name, count);
-        }
-        mod = mod->next;
-        count++;
-    }
-
-    /* free path */
-    FLUID_FREE(path);
-    return result;
-}
-
 /*
  * Valid linked modulators are searched and cloned from mod_list list to 
  * linked_mod list.
@@ -1764,7 +1677,7 @@ fluid_zone_check_linked_mod(char *zone_name, fluid_mod_t *list_mod)
  *   FLUID_FAILED otherwise.
 */
 static int 
-fluid_zone_copy_linked_mod(fluid_mod_t *list_mod, int dest_idx, int new_idx,
+fluid_list_copy_linked_mod(fluid_mod_t *list_mod, int dest_idx, int new_idx,
                                fluid_mod_t **linked_mod)
 {
     int linked_count = new_idx; /* Last added modulator index in linked_mod */
@@ -1791,6 +1704,8 @@ fluid_zone_copy_linked_mod(fluid_mod_t *list_mod, int dest_idx, int new_idx,
                 fluid_mod_t *mod_cpy = new_fluid_mod(); /* next field is set to NULL */
                 if(mod_cpy == NULL)
                 { 
+                    delete_fluid_list_mod(*linked_mod); /* freeing */
+                    *linked_mod = NULL;
                     return FLUID_FAILED;
                 }
                 fluid_mod_clone(mod_cpy, mod);
@@ -1827,7 +1742,7 @@ fluid_zone_copy_linked_mod(fluid_mod_t *list_mod, int dest_idx, int new_idx,
                 /* is mod's source src1 linked ? */
                 if(is_src1_linked) 
                 {	/* search a modulator with output linked to mod */
-                    linked_count = fluid_zone_copy_linked_mod(list_mod,
+                    linked_count = fluid_list_copy_linked_mod(list_mod,
                                                  mod_idx | FLUID_MOD_LINK_DEST,
                                                  linked_count, linked_mod);
                     if(linked_count == FLUID_FAILED)
@@ -1841,6 +1756,112 @@ fluid_zone_copy_linked_mod(fluid_mod_t *list_mod, int dest_idx, int new_idx,
         mod_idx++;
     }
     return linked_count;
+}
+/**
+ * Checks all modulators from a zone modulator list and optionally clone
+ * valid linked modulators from mod_list list to linked_mod list.
+ * - check valid sources.
+ * - check identic modulator.
+ * - check linked modulators path.
+ * - clone valid linked modulators to linked_mod.
+ *
+ * @param list_name, list's name used to prefix messages displayed.
+ * @param list_mod, pointer on modulators list.
+ * @param linked_mod, if not NULL, address of pointer on linked modulators
+ *  list returned. NULL is returned in this pointer if linked
+ *  modulators doesn't exist in list_mod.
+ * @return
+ *  - TRUE if any valid linked path exists.
+ *  - FALSE if no linked path exists.
+ *  - FLUID_FAILED if failed (memory error).
+ */
+int
+fluid_list_check_linked_mod(char *list_name, fluid_mod_t *list_mod,
+                            fluid_mod_t **linked_mod)
+{
+    int result;
+    /* path is a table to register discovered linked modulator path */
+    fluid_mod_t **path;
+    int path_mod_count;
+
+    /* checks valid modulator sources (specs SF 2.01  7.4, 7.8, 8.2.1).*/
+    /* checks identic modulator in the list (specs SF 2.01  7.4, 7.8). */
+    int count = 0; /* number of modulators in list_mod. */
+
+
+    fluid_mod_t *mod = list_mod; /* first modulator in list_mod */
+    while(mod)
+    {
+        char zone_mod_name[256];
+
+        /* prepare modulator name: zonename/#modulator */
+        FLUID_SNPRINTF(zone_mod_name, sizeof(zone_mod_name),"%s/mod%d", list_name, count);
+
+        /* has mod invalid sources ? */
+        if(!fluid_mod_check_sources (mod,  zone_mod_name)
+        /* or is mod identic to any following modulator ? */
+           ||fluid_zone_is_mod_identic(mod, zone_mod_name))
+        {   /* marks this modulator invalid for future checks */
+            mod->amount = 0;
+        }
+
+        count++;
+        mod = mod->next;
+    }
+
+    if(!count)
+    { /* There are no modulators, no need to go further */
+        return FALSE;
+    }
+
+    /* Now check linked modulator */
+    path = FLUID_MALLOC (sizeof(*path) * count);
+    if(path == NULL)
+    {
+        return FLUID_FAILED;
+    }
+
+    path_mod_count = 0;
+    result = fluid_check_linked_mod_path(list_name, list_mod, -1, path, 0,
+                                         &path_mod_count);
+
+    /* Now path contains complete discovered modulators paths (or not).
+       Other incomplete linked modulators path (isolated) are still in list_mod but
+       not in path. These should now marked invalid.
+	   (specifications SF 2.01  7.4, 7.8) */
+    count = 0; /* number of modulators in list_mod. */
+    mod = list_mod; /* first modulator in list_mod */
+    while(mod)
+    {
+        if( /* Check linked mod only not in discovered paths */
+           (fluid_mod_has_linked_src1(mod) || (mod->dest & FLUID_MOD_LINK_DEST))
+            /* Check if mod isn't in discovered paths */
+            && !fluid_is_mod_in_path(path, path_mod_count, mod) )
+        {
+            mod->amount = 0; /* marked invalid */
+            FLUID_LOG(FLUID_WARN, "invalid isolated path %s/mod%d", list_name, count);
+        }
+        mod = mod->next;
+        count++;
+    }
+
+    /* free path */
+    FLUID_FREE(path);
+
+    /* clone of linked modulators if requested */
+    if(linked_mod)
+    {
+        *linked_mod = NULL; /* Initialize linked modulator list to NULL */
+        /* does one or more valid linked modulators exists ? */
+        if(result)
+        {
+            /* one or more linked modulators paths exists */
+            /* clone valid linked modulator paths from list_mod to linked_mod.*/
+            result = fluid_list_copy_linked_mod(list_mod, -1, 0, linked_mod);
+        }
+    }
+
+    return result;
 }
 
 /**
@@ -1948,26 +1969,11 @@ int
 fluid_zone_check_mod(char *zone_name, fluid_mod_t **list_mod,
                      fluid_mod_t **linked_mod)
 {
-    int result;
-    *linked_mod = NULL; /* Initialize linked modulator list to NULL */
 
     /* Checks linked modulators paths from a zone modulators list */
-    result = fluid_zone_check_linked_mod(zone_name, *list_mod);
-    if (result == FLUID_FAILED)
+    if(fluid_list_check_linked_mod(zone_name, *list_mod, linked_mod) == FLUID_FAILED)
     {
         return FLUID_FAILED;
-    }
-
-    /* does one or more valid linked modulators exists ? */
-    if(result)
-    {
-        /* one or more linked modulators paths exists */
-        /* Extracts valid linked modulator paths from list_mod to linked_mod.*/
-        if (fluid_zone_copy_linked_mod(*list_mod, -1, 0, 
-                                      linked_mod) == FLUID_FAILED)
-        {
-            return FLUID_FAILED;
-        }
     }
 
     /* removing all invalid modulators */
