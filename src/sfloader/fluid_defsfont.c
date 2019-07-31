@@ -1535,7 +1535,7 @@ fluid_is_mod_in_path(fluid_mod_t *path[], int count, fluid_mod_t *mod)
  * The function is recursive and intended to be called the first time to
  * start the search from the beginning of any path (see dest_idx, path_idx).
  *
- * @param zone_name, zone's name
+ * @param zone_name, zone's name used to prefix messages displayed.
  * @param list_mod, pointer on modulators list.
  * @param dest_idx, index of the destination linked modulator to search.
  * Should be - 1 at first call.
@@ -1644,7 +1644,8 @@ fluid_check_linked_mod_path(char *zone_name, fluid_mod_t *list_mod,
  * - check valid sources.
  * - check identic modulator.
  * - check linked modulators path.
- * @param zone_name, zone's name
+ *
+ * @param zone_name, zone's name used to prefix messages displayed.
  * @param list_mod, pointer on modulators list.
  * @return 
  *  - TRUE if any valid linked path exists.
@@ -1844,9 +1845,11 @@ fluid_zone_copy_linked_mod(fluid_mod_t *list_mod, int dest_idx, int new_idx,
 
 /**
  * Checks and remove invalid modulators from a zone modulators list.
- * - checks linked modulators.
- * - checks invalid modulator sources (specs SF 2.01  7.4, 7.8, 8.2.1).
- * - checks identic modulator in the list (specs SF 2.01  7.4, 7.8).
+ * - remove linked modulators.
+ * - remove modulators with invalid sources (specs SF 2.01  7.4, 7.8, 8.2.1).
+ * - remove identic modulator in the list (specs SF 2.01  7.4, 7.8).
+ * On output, the list contains only valid unlinked modulators.
+ *
  * @param list_mod, address of pointer on modulator list.
  */
 static void fluid_zone_check_remove_mod(fluid_mod_t **list_mod)
@@ -1888,7 +1891,7 @@ static void fluid_zone_check_remove_mod(fluid_mod_t **list_mod)
  * This is appropriate to internal synthesizer modulators tables
  * which have a fixed size (FLUID_NUM_MOD).
  *
- * @param zone_name, zone name
+ * @param zone_name, zone name used to prefix messages displayed.
  * @param list_mod, address of pointer on modulator list.
  */
 static void fluid_limit_mod_list(char *zone_name, fluid_mod_t **list_mod)
@@ -1928,11 +1931,14 @@ static void fluid_limit_mod_list(char *zone_name, fluid_mod_t **list_mod)
  * - checks valid modulator sources (specs SF 2.01  7.4, 7.8, 8.2.1).
  * - checks identic modulators in the list (specs SF 2.01  7.4, 7.8).
  * - checks linked modulators path from a zone modulators list.
- * - extracts linked modulator to linked_mod.
+ * - extracts valid linked modulators to linked_mod.
  * - removing all invalid modulators.
  * - limiting size of modulators list.
- * @param zone_name, zone name.
+ *
+ * @param zone_name, zone name used to prefix messages displayed.
  * @param list_mod, address of pointer on modulators list.
+ *  On input, the list may contains any unlinked or linked modulators.
+ *  On output, the list contains only valid unlinked modulators.
  * @param linked_mod, address of pointer on linked modulators list returned
  *  if any linked modulators exist. NULL is returned in this pointer if linked
  *  modulators doesn't exist in list_mod.
