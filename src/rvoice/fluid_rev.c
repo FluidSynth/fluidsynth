@@ -770,10 +770,10 @@ static void update_rev_time_damping(fluid_late *late,
             fluid_real_t gi_min, gi_max;
             /* values gi_min et gi_max are computed using E2 for the line with
               maximum delay */
-            gi_max = FLUID_POW(10, -3 * delay_length[NBR_DELAYS - 1] *
-                                       sample_period / MAX_DC_REV_TIME); /* E2 */
-            gi_min = FLUID_POW(10, -3 * delay_length[NBR_DELAYS - 1] *
-                                       sample_period / MIN_DC_REV_TIME); /* E2 */
+            gi_max = FLUID_POW(10, (-3 * delay_length[NBR_DELAYS - 1] / MAX_DC_REV_TIME) *
+                               sample_period); /* E2 */
+            gi_min = FLUID_POW(10, (-3 * delay_length[NBR_DELAYS - 1] / MIN_DC_REV_TIME) *
+                               sample_period); /* E2 */
             /* gi = f(roomsize, gi_max, gi_min) */
             gi_tmp = gi_min + roomsize * (gi_max - gi_min);
             /* Computes T60DC from gi using inverse of relation E2.*/

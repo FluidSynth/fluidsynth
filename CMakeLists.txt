@@ -188,7 +188,7 @@ if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang" OR CMAKE_C_
   set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -W -Wpointer-arith -Wcast-qual -Wstrict-prototypes -Wno-unused-parameter -Wdeclaration-after-statement" )
   
   # prepend to build type specific flags, to allow users to override
-  set ( CMAKE_C_FLAGS_DEBUG "-g -DDEBUG ${CMAKE_C_FLAGS_DEBUG}" )
+  set ( CMAKE_C_FLAGS_DEBUG "-g ${CMAKE_C_FLAGS_DEBUG}" )
   
   if ( CMAKE_C_COMPILER_ID STREQUAL "Intel" )
     # icc needs the restrict flag to recognize C99 restrict pointers
@@ -384,10 +384,10 @@ endif ( enable-trap-on-fpe AND NOT APPLE AND NOT WIN32 )
 
 unset ( ENABLE_FPECHECK CACHE )
 unset ( FPE_CHECK CACHE )
-if ( enable-fpe-check )
+if ( enable-fpe-check AND NOT APPLE AND NOT WIN32 )
     set ( ENABLE_FPECHECK 1 )
     set ( FPE_CHECK 1 )
-endif ( enable-fpe-check )
+endif ( enable-fpe-check AND NOT APPLE AND NOT WIN32 )
 
 if ( enable-debug )
     set ( CMAKE_BUILD_TYPE "Debug" CACHE STRING
@@ -400,10 +400,9 @@ if ( NOT CMAKE_BUILD_TYPE )
 endif ( NOT CMAKE_BUILD_TYPE )
 
 unset ( ENABLE_DEBUG CACHE )
-unset ( DEBUG CACHE )
 if ( CMAKE_BUILD_TYPE MATCHES "Debug" )
     set ( ENABLE_DEBUG 1 )
-    set ( DEBUG 1 )
+    add_definitions(-DDEBUG)
 endif ( CMAKE_BUILD_TYPE MATCHES "Debug" )
 
 # Additional targets to perform clang-format/clang-tidy
@@ -568,7 +567,7 @@ else(NOT enable-pkgconfig)
 
     unset ( LIBINSTPATCH_SUPPORT CACHE )
     if ( enable-libinstpatch )
-        pkg_check_modules ( LIBINSTPATCH libinstpatch )
+        pkg_check_modules ( LIBINSTPATCH libinstpatch-1.0 )
         set ( LIBINSTPATCH_SUPPORT ${LIBINSTPATCH_FOUND} )
     endif ( enable-libinstpatch )
 

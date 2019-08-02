@@ -499,7 +499,7 @@ int fluid_defsfont_load(fluid_defsfont_t *defsfont, const fluid_file_callbacks_t
     while(p != NULL)
     {
         sfpreset = (SFPreset *)fluid_list_get(p);
-        defpreset = new_fluid_defpreset(defsfont);
+        defpreset = new_fluid_defpreset();
 
         if(defpreset == NULL)
         {
@@ -621,7 +621,7 @@ fluid_preset_t *fluid_defsfont_iteration_next(fluid_defsfont_t *defsfont)
  * new_fluid_defpreset
  */
 fluid_defpreset_t *
-new_fluid_defpreset(fluid_defsfont_t *defsfont)
+new_fluid_defpreset(void)
 {
     fluid_defpreset_t *defpreset = FLUID_NEW(fluid_defpreset_t);
 
@@ -632,7 +632,6 @@ new_fluid_defpreset(fluid_defsfont_t *defsfont)
     }
 
     defpreset->next = NULL;
-    defpreset->defsfont = defsfont;
     defpreset->name[0] = 0;
     defpreset->bank = 0;
     defpreset->num = 0;
