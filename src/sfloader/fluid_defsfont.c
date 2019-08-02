@@ -719,7 +719,7 @@ static void fluid_dump_linked_mod(fluid_mod_t *mod, int offset)
  @param preset_zone_name, actual preset_zone name.
  @param filter_preset_zone_name, filter name of preset_zone to display. 
  @param inst_zone_name, actual instrument zone name.
- @paramfilter_inst_zone_name, filter name of intrument zone to display. 
+ @param filter_inst_zone_name, filter name of intrument zone to display. 
 */
 static void fluid_print_voice_mod(fluid_voice_t  *voice, 
                         char *preset_zone_name,
@@ -1531,7 +1531,7 @@ fluid_is_mod_in_path(fluid_mod_t *path[], int count, fluid_mod_t *mod)
  * The function searchs all linked path starting from the beginning of the path
  * (ie. a modulator with source not linked) forward to the endind of the path
  * (ie. a modulator connected to a generator).
- * Search direction is the reverse that the one done in fluid_zone_copy_linked_mod().
+ * Search direction is the reverse that the one done in fluid_list_copy_linked_mod().
  * The function is recursive and intended to be called the first time to
  * start the search from the beginning of any path (see dest_idx, path_idx).
  *
@@ -1549,7 +1549,7 @@ fluid_is_mod_in_path(fluid_mod_t *path[], int count, fluid_mod_t *mod)
  * This index must be 0 at first call. On return, it indicates the number of linked
  * modulators stored in path (for all linked paths found).
  *
- * @return  TRUE if at least one linked modulators path exists (complete/incomplete),
+ * @return  TRUE if at least one complete valid linked modulators path exists,
  *          FALSE  otherwise.
 */
 static int
