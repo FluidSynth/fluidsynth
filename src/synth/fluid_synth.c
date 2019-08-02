@@ -837,6 +837,7 @@ new_fluid_synth(fluid_settings_t *settings)
         goto error_recovery;
     }
 
+    FLUID_MEMSET(synth->channel, 0, synth->midi_channels * sizeof(*synth->channel));
     for(i = 0; i < synth->midi_channels; i++)
     {
         synth->channel[i] = new_fluid_channel(synth, i);
@@ -856,6 +857,7 @@ new_fluid_synth(fluid_settings_t *settings)
         goto error_recovery;
     }
 
+    FLUID_MEMSET(synth->voice, 0, synth->nvoice * sizeof(*synth->voice));
     for(i = 0; i < synth->nvoice; i++)
     {
         synth->voice[i] = new_fluid_voice(synth->eventhandler, synth->sample_rate);
@@ -1008,7 +1010,10 @@ delete_fluid_synth(fluid_synth_t *synth)
     {
         for(i = 0; i < synth->midi_channels; i++)
         {
-            fluid_channel_set_preset(synth->channel[i], NULL);
+            if(synth->channel[i] != NULL)
+            {
+                fluid_channel_set_preset(synth->channel[i], NULL);
+            }
         }
     }
 
