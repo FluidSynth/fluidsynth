@@ -384,10 +384,10 @@ endif ( enable-trap-on-fpe AND NOT APPLE AND NOT WIN32 )
 
 unset ( ENABLE_FPECHECK CACHE )
 unset ( FPE_CHECK CACHE )
-if ( enable-fpe-check )
+if ( enable-fpe-check AND NOT APPLE AND NOT WIN32 )
     set ( ENABLE_FPECHECK 1 )
     set ( FPE_CHECK 1 )
-endif ( enable-fpe-check )
+endif ( enable-fpe-check AND NOT APPLE AND NOT WIN32 )
 
 if ( enable-debug )
     set ( CMAKE_BUILD_TYPE "Debug" CACHE STRING
