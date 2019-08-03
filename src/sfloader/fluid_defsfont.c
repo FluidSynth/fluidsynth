@@ -1840,7 +1840,7 @@ fluid_list_check_linked_mod(char *list_name, const fluid_mod_t *list_mod,
     while(mod)
     {
         if( /* Check linked mod only not in discovered paths */
-           (fluid_mod_has_linked_src1(mod) || (mod->dest & FLUID_MOD_LINK_DEST))
+            fluid_mod_is_linked(mod)
             /* Check if mod isn't in discovered paths */
             && !(path[count] & FLUID_PATH_CUR) )
         {
@@ -1886,7 +1886,7 @@ static void fluid_zone_check_remove_mod(fluid_mod_t **list_mod)
     {	
         fluid_mod_t *next = mod->next;
         if(   /* Is mod a linked modulator ? */
-              (fluid_mod_has_linked_src1(mod)||(mod->dest & FLUID_MOD_LINK_DEST))
+              fluid_mod_is_linked(mod)
               /* or has mod invalid sources ? */
               || !fluid_mod_check_sources(mod, NULL)
               /* or is mod identic to any following modulator ? */

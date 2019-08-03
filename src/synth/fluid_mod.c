@@ -192,7 +192,7 @@ fluid_mod_t *fluid_get_next_mod(fluid_mod_t *mod)
     return mod;
 }
 
-/* 
+/*
  * returns TRUE if modulator source src1 is linked, FALSE otherwise.
  */
 int fluid_mod_has_linked_src1 (const fluid_mod_t * mod)
@@ -200,6 +200,16 @@ int fluid_mod_has_linked_src1 (const fluid_mod_t * mod)
     return(((mod->flags1 & FLUID_MOD_CC) == 0)
              /* SF2.04 section 8.2.1: Constant value */
              &&  (mod->src1 == FLUID_MOD_LINK_SRC)) ;   
+}
+
+/*
+ * returns TRUE if the modulator is linked (i.e member of a complex modulator),
+ * FALSE otherwise (i.e the modulator is simple).
+ * A modulator is linked when source src1 is linked or destination is linked.
+ */
+int fluid_mod_is_linked (const fluid_mod_t * mod)
+{
+    return (fluid_mod_has_linked_src1(mod) || (mod->dest & FLUID_MOD_LINK_DEST));
 }
 
 /*
