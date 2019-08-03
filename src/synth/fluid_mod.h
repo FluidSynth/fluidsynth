@@ -52,7 +52,7 @@ struct _fluid_mod_t
 
 unsigned char fluid_get_num_mod(fluid_mod_t *mod);
 fluid_mod_t *fluid_get_next_mod(fluid_mod_t *mod);
-int fluid_mod_has_linked_src1 (fluid_mod_t * mod);
+int fluid_mod_has_linked_src1 (const fluid_mod_t * mod);
 //jjc-fluid_linked_mod_test_identity
 /* this enum is used for test_mode parameter when calling
    fluid_linked_mod_test_identity() */

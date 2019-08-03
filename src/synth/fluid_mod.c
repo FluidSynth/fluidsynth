@@ -195,7 +195,7 @@ fluid_mod_t *fluid_get_next_mod(fluid_mod_t *mod)
 /* 
  * returns TRUE if modulator source src1 is linked, FALSE otherwise.
  */
-int fluid_mod_has_linked_src1 (fluid_mod_t * mod)
+int fluid_mod_has_linked_src1 (const fluid_mod_t * mod)
 {
     return(((mod->flags1 & FLUID_MOD_CC) == 0)
              /* SF2.04 section 8.2.1: Constant value */

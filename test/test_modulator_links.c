@@ -151,7 +151,7 @@ int main(void)
         TEST_ASSERT(fluid_mod_get_amount(mod0) == 100);
         TEST_ASSERT(fluid_mod_get_amount(mod1) == 200);
         TEST_ASSERT(fluid_mod_get_amount(mod2) == 300);
-        TEST_ASSERT(fluid_mod_get_amount(mod3) == 0); // invalidated because mod1 without FLUID_MOD_LINK_SRC
+        TEST_ASSERT(fluid_mod_get_amount(mod3) == 50);
     }
         
     // same list, with additional mod3 and valid mod1 this time
@@ -210,11 +210,11 @@ int main(void)
         TEST_ASSERT(list_of_mods->next->next->next == mod3);
         TEST_ASSERT(list_of_mods->next->next->next->next == NULL);
         
-        // modulators that are part of the circular list are invalidated
+        // modulators that are part of the circular list are invalidated but left intact
         TEST_ASSERT(fluid_mod_get_amount(mod0) == 100);
-        TEST_ASSERT(fluid_mod_get_amount(mod1) == 0); // invalid destination
+        TEST_ASSERT(fluid_mod_get_amount(mod1) == 200); // invalid destination
         TEST_ASSERT(fluid_mod_get_amount(mod2) == 300);
-        TEST_ASSERT(fluid_mod_get_amount(mod3) == 0); // path without destination
+        TEST_ASSERT(fluid_mod_get_amount(mod3) == 50); // path without destination
     }
     
     // Circular complex modulators
@@ -249,10 +249,11 @@ int main(void)
         TEST_ASSERT(list_of_mods->next->next->next->next == NULL);
         
         // modulators that are part of the circular list are invalidated: mod3,mod1
+        // but left intact
         TEST_ASSERT(fluid_mod_get_amount(mod0) == 100);
-        TEST_ASSERT(fluid_mod_get_amount(mod1) == 0);
+        TEST_ASSERT(fluid_mod_get_amount(mod1) == 200);
         TEST_ASSERT(fluid_mod_get_amount(mod2) == 300);
-        TEST_ASSERT(fluid_mod_get_amount(mod3) == 0);
+        TEST_ASSERT(fluid_mod_get_amount(mod3) == 50);
     }
 
 	// Another circular complex modulators
@@ -290,10 +291,11 @@ int main(void)
         TEST_ASSERT(list_of_mods->next->next->next->next == NULL);
         
         // modulators that are part of the circular list are invalidated
-		TEST_ASSERT(fluid_mod_get_amount(mod0) == 0); // part of circular path
-        TEST_ASSERT(fluid_mod_get_amount(mod1) == 0); // part of circular path
-        TEST_ASSERT(fluid_mod_get_amount(mod2) == 0); // part of circular path
-        TEST_ASSERT(fluid_mod_get_amount(mod3) == 0); // without destination.
+        // but left intact
+		TEST_ASSERT(fluid_mod_get_amount(mod0) == 100); // part of circular path
+        TEST_ASSERT(fluid_mod_get_amount(mod1) == 200); // part of circular path
+        TEST_ASSERT(fluid_mod_get_amount(mod2) == 300); // part of circular path
+        TEST_ASSERT(fluid_mod_get_amount(mod3) == 50); // without destination.
     }
     
     // circular complex modulators, but detected isolated because none of these
@@ -334,10 +336,12 @@ int main(void)
         TEST_ASSERT(list_of_mods->next->next->next->next == NULL);
         
         // modulators that are part of the circular list are invalidated
-        TEST_ASSERT(fluid_mod_get_amount(mod0) == 0);
-        TEST_ASSERT(fluid_mod_get_amount(mod1) == 0);
-        TEST_ASSERT(fluid_mod_get_amount(mod2) == 0);
-        TEST_ASSERT(fluid_mod_get_amount(mod3) == 0);
+        // but left intact
+
+        TEST_ASSERT(fluid_mod_get_amount(mod0) == 100);
+        TEST_ASSERT(fluid_mod_get_amount(mod1) == 200);
+        TEST_ASSERT(fluid_mod_get_amount(mod2) == 300);
+        TEST_ASSERT(fluid_mod_get_amount(mod3) == 50);
     }
     
     // circular complex modulators, but detected isolated because none of these
@@ -377,10 +381,10 @@ int main(void)
         TEST_ASSERT(list_of_mods->next->next->next == mod3);
         TEST_ASSERT(list_of_mods->next->next->next->next == NULL);
         
-        TEST_ASSERT(fluid_mod_get_amount(mod0) == 0);
-        TEST_ASSERT(fluid_mod_get_amount(mod1) == 0);
-        TEST_ASSERT(fluid_mod_get_amount(mod2) == 0);
-        TEST_ASSERT(fluid_mod_get_amount(mod3) == 0);
+        TEST_ASSERT(fluid_mod_get_amount(mod0) == 100);
+        TEST_ASSERT(fluid_mod_get_amount(mod1) == 200);
+        TEST_ASSERT(fluid_mod_get_amount(mod2) == 300);
+        TEST_ASSERT(fluid_mod_get_amount(mod3) == 50);
     }
     
     // circular complex modulators m1->m0->m3->m1, but detected isolated because none of these
@@ -422,11 +426,11 @@ int main(void)
         TEST_ASSERT(list_of_mods->next->next->next == mod3);
         TEST_ASSERT(list_of_mods->next->next->next->next == NULL);
         
-        // modulators that are part of the circular list are invalidated
-        TEST_ASSERT(fluid_mod_get_amount(mod0) == 0);
-        TEST_ASSERT(fluid_mod_get_amount(mod1) == 0);
+        // modulators that are part of the circular list are invalidated but left intact
+        TEST_ASSERT(fluid_mod_get_amount(mod0) == 100);
+        TEST_ASSERT(fluid_mod_get_amount(mod1) == 200);
         TEST_ASSERT(fluid_mod_get_amount(mod2) == 300);
-        TEST_ASSERT(fluid_mod_get_amount(mod3) == 0);
+        TEST_ASSERT(fluid_mod_get_amount(mod3) == 50);
     }
     
     // circular complex modulators m3->m1->m3, but detected isolated because none of these
@@ -469,11 +473,11 @@ int main(void)
         TEST_ASSERT(list_of_mods->next->next->next == mod3);
         TEST_ASSERT(list_of_mods->next->next->next->next == NULL);
         
-        // modulators that are part of the circular list are invalidated
+        // modulators that are part of the circular list are invalidated but left intact
         TEST_ASSERT(fluid_mod_get_amount(mod0) == 100);
-        TEST_ASSERT(fluid_mod_get_amount(mod1) == 0);
+        TEST_ASSERT(fluid_mod_get_amount(mod1) == 200);
         TEST_ASSERT(fluid_mod_get_amount(mod2) == 300);
-        TEST_ASSERT(fluid_mod_get_amount(mod3) == 0);
+        TEST_ASSERT(fluid_mod_get_amount(mod3) == 50);
     }
     
     // invalid list of complex modulators: the first modulator should not have a linked destination
@@ -513,10 +517,10 @@ int main(void)
         TEST_ASSERT(list_of_mods->next->next == mod2);
         TEST_ASSERT(list_of_mods->next->next->next == NULL);
         
-        // all mods are invalidated
-        TEST_ASSERT(fluid_mod_get_amount(mod1) == 0); // path without destination
-        TEST_ASSERT(fluid_mod_get_amount(mod0) == 0); // invalid isolated path
-        TEST_ASSERT(fluid_mod_get_amount(mod2) == 0); // path without destination
+        // all mods are invalidated but left intact
+        TEST_ASSERT(fluid_mod_get_amount(mod1) == 200); // path without destination
+        TEST_ASSERT(fluid_mod_get_amount(mod0) == 100); // invalid isolated path
+        TEST_ASSERT(fluid_mod_get_amount(mod2) == 300); // path without destination
     }
 
     // invalid list of complex modulators: invalid destinations
@@ -555,9 +559,9 @@ int main(void)
         TEST_ASSERT(list_of_mods->next->next == mod2);
         TEST_ASSERT(list_of_mods->next->next->next == NULL);
         
-        // all mods are invalidated
+        // all mods are invalidated but left intact
         TEST_ASSERT(fluid_mod_get_amount(mod0) == 100);
-        TEST_ASSERT(fluid_mod_get_amount(mod1) == 0); // path without destination
+        TEST_ASSERT(fluid_mod_get_amount(mod1) == 200); // path without destination
         TEST_ASSERT(fluid_mod_get_amount(mod2) == 300);
     }
 
@@ -604,9 +608,9 @@ int main(void)
 
         // amounts not changed
         TEST_ASSERT(fluid_mod_get_amount(mod0) == 100);
-        TEST_ASSERT(fluid_mod_get_amount(mod1) == 0); // Invalided because isolated
+        TEST_ASSERT(fluid_mod_get_amount(mod1) == 200); // Invalided because isolated
         TEST_ASSERT(fluid_mod_get_amount(mod2) == 300);
-        TEST_ASSERT(fluid_mod_get_amount(mod3) == 0);// Invalided because isolated
+        TEST_ASSERT(fluid_mod_get_amount(mod3) == 50);// Invalided because isolated
     }
 
     delete_fluid_mod(mod0);
