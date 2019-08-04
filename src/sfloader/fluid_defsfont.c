@@ -1681,7 +1681,7 @@ fluid_list_copy_linked_mod(const fluid_mod_t *list_mod, int dest_idx, int new_id
     const fluid_mod_t *mod = list_mod;
     while(mod)
     {
- 	    if (mod->amount != 0) /* ignores invalid modulators */
+        if (mod->amount != 0) /* ignores invalid modulators */
         {
             /* is_src_linked is true when modulator mod's input are linked */
             int is_src1_linked = fluid_mod_has_linked_src1(mod);
