@@ -1466,12 +1466,24 @@ int fluid_get_count_mod(const fluid_mod_t *mod)
     return count;
 }
 
+/* description of bit flags set in path variable by fluid_check_linked_mod_path()
+   These flags indicates if a modulator belongs to a linked path.
+
+   FLUID_PATH_CURRENT | FLUID_PATH_VALID | Modulator state
+   -------------------|------------------|--------------------------------------
+         0            |     0            | doesn't belong to any linked path
+   -------------------|------------------|--------------------------------------
+         1            |     0            | belongs to a linked path not yet complete
+   -------------------|------------------|--------------------------------------
+         1            |     1            | belongs to a complete linked path
+*/
+
 /* bit FLUID_PATH_VALID set to 1 indicates that the modulator belongs to
  a complete valid linked path already discovered */
 #define FLUID_PATH_VALID  1 << 0
-/* bit FLUID_PATH_CURENT set to 1 indicates that the modulator belongs to
- the current linked path . It allows detection of circular path */
-#define FLUID_PATH_CUR  1 << 1
+/* bit FLUID_PATH_CURRENT set to 1 indicates that the modulator belongs to
+ the current linked path. It allows detection of circular and isolated path */
+#define FLUID_PATH_CURRENT  1 << 1
 
 /*
  * Check linked modulator paths without destination and circular linked modulator
@@ -1567,7 +1579,7 @@ fluid_check_linked_mod_path(char *zone_name, fluid_mod_t *list_mod,
                  && (mod->amount != 0))
             {
                 /* memorizes mod state: in current linked path */
-                path[mod_idx] |= FLUID_PATH_CUR;
+                path[mod_idx] |= FLUID_PATH_CURRENT;
 
                 /* search and check the full path to the end. */
                 if(! fluid_check_linked_mod_path(zone_name, list_mod, mod->dest,
@@ -1606,7 +1618,7 @@ fluid_check_linked_mod_path(char *zone_name, fluid_mod_t *list_mod,
             }
 
             /* Checks if mod belongs to current path */
-            if (path[mod_idx] & FLUID_PATH_CUR)
+            if (path[mod_idx] & FLUID_PATH_CURRENT)
             {
                 /* warning: invalid circular path */
                 FLUID_LOG(FLUID_WARN, "invalid circular path %s/mod%d", 
@@ -1615,7 +1627,7 @@ fluid_check_linked_mod_path(char *zone_name, fluid_mod_t *list_mod,
             }
 
             /* memorizes mod state: in current linked path */
-            path[mod_idx] |= FLUID_PATH_CUR;
+            path[mod_idx] |= FLUID_PATH_CURRENT;
 
             /* does mod destination linked ? */
             if((mod->dest & FLUID_MOD_LINK_DEST) &&
@@ -1833,9 +1845,9 @@ fluid_list_check_linked_mod(char *list_name, fluid_mod_t *list_mod,
     /* Now check linked modulator path */
     result = fluid_check_linked_mod_path(list_name, list_mod, -1, path);
 
-    /* Now path contains complete discovered modulators paths (or not).
-       Other incomplete linked modulators path (isolated) are still in list_mod but
-       not in path. These should now indicated invalid.
+    /* Now path contains complete or partial discovered modulators paths.
+       Other unreachable linked modulators path (isolated) are still in list_mod but
+       not in path. These should now marked invalid and a message is displayed.
        (specifications SF 2.01  7.4, 7.8) */
     count = 0; /* number of modulators in list_mod. */
     mod = list_mod; /* first modulator in list_mod */
@@ -1843,8 +1855,8 @@ fluid_list_check_linked_mod(char *list_name, fluid_mod_t *list_mod,
     {
         if( /* Check linked mod only not in discovered paths */
             fluid_mod_is_linked(mod)
-            /* Check if mod isn't in discovered paths */
-            && !(path[count] & FLUID_PATH_CUR) )
+            /* Check if mod doesn't belong to any discovered paths */
+            && !(path[count] & FLUID_PATH_CURRENT) )
         {
             mod->amount = 0; /* marked invalid */
             FLUID_LOG(FLUID_WARN, "invalid isolated path %s/mod%d", list_name, count);
