@@ -1544,7 +1544,8 @@ int fluid_get_count_mod(const fluid_mod_t *mod)
  * The function is recursive and intended to be called the first time to
  * start the search from the beginning of any path (see dest_idx, path_idx).
  *
- * @param zone_name, zone's name used to prefix messages displayed.
+ * @param list_name, list name used to prefix warning messages displayed.
+ *  if NULL, no message are displayed.
  * @param list_mod, pointer on modulators list.
  *  On input, amount value to 0 indicates that modulator are invalid.
  *  On output, invalid linked modulator are marked with amount value to 0.
@@ -1563,7 +1564,7 @@ int fluid_get_count_mod(const fluid_mod_t *mod)
  *          FALSE  otherwise.
 */
 static int
-fluid_check_linked_mod_path(char *zone_name, fluid_mod_t *list_mod,
+fluid_check_linked_mod_path(char *list_name, fluid_mod_t *list_mod,
                             int dest_idx, 
                             unsigned char path[])
 {
@@ -1583,13 +1584,16 @@ fluid_check_linked_mod_path(char *zone_name, fluid_mod_t *list_mod,
                 path[mod_idx] |= FLUID_PATH_CURRENT;
 
                 /* search and check the full path to the end. */
-                if(! fluid_check_linked_mod_path(zone_name, list_mod, mod->dest,
+                if(! fluid_check_linked_mod_path(list_name, list_mod, mod->dest,
                                                  path))
                 {   /* no final destination found for mod */
                     mod->amount = 0; /* mod marked invalid */
-                    /* current path is without destination */
-                    FLUID_LOG(FLUID_WARN, "path without destination %s/mod%d",
-                              zone_name, mod_idx);
+                    /* warning: path is without destination */
+                    if(list_name != NULL)
+                    {
+                        FLUID_LOG(FLUID_WARN, "path without destination %s/mod%d",
+                                  list_name, mod_idx);
+                    }
                 }
                 else
                 {
@@ -1605,9 +1609,12 @@ fluid_check_linked_mod_path(char *zone_name, fluid_mod_t *list_mod,
             /* is this modulator destination valid ? */
             if (!fluid_mod_has_linked_src1(mod) || (mod->amount ==0))
             {
-                /* warning: path without destination */
-                FLUID_LOG(FLUID_WARN, "invalid destination %s/mod%d", 
-                          zone_name, mod_idx);
+                /* warning: path have an invalid destination */
+                if(list_name != NULL)
+                {
+                    FLUID_LOG(FLUID_WARN, "invalid destination %s/mod%d",
+                              list_name, mod_idx);
+                }
                 return FALSE; /* current path is invalid */
             }
  
@@ -1622,8 +1629,11 @@ fluid_check_linked_mod_path(char *zone_name, fluid_mod_t *list_mod,
             if (path[mod_idx] & FLUID_PATH_CURRENT)
             {
                 /* warning: invalid circular path */
-                FLUID_LOG(FLUID_WARN, "invalid circular path %s/mod%d", 
-                          zone_name, mod_idx);
+                if(list_name != NULL)
+                {
+                    FLUID_LOG(FLUID_WARN, "invalid circular path %s/mod%d",
+                              list_name, mod_idx);
+                }
                 return FALSE; /* current path is invalid */
             }
 
@@ -1632,7 +1642,7 @@ fluid_check_linked_mod_path(char *zone_name, fluid_mod_t *list_mod,
 
             /* does mod destination linked ? */
             if((mod->dest & FLUID_MOD_LINK_DEST) &&
-               ! fluid_check_linked_mod_path(zone_name, list_mod, mod->dest,
+               ! fluid_check_linked_mod_path(list_name, list_mod, mod->dest,
                                              path))
             {
                 mod->amount = 0; /* mod marked invalid */
@@ -1772,16 +1782,24 @@ fluid_list_copy_linked_mod(const fluid_mod_t *list_mod, int dest_idx, int new_id
 /**
  * Checks all modulators from a zone modulator list and optionally clone
  * valid linked modulators from mod_list list to linked_mod list.
- * - check valid sources.
- * - check identic modulators.
+ * - check valid sources (if requested, see list_name).
+ * - check identic modulators (if requested, see list_name).
  * - check linked modulators paths.
+ * - check "isolated" linked paths (if requested, see list_name).
  * - clone valid linked modulators paths to linked_mod.
  * The function does the same job that fluid_zone_check_mod() except that
  * that modulators aren't removed from mod_list and lists length aren't
  * limited. The function is appropriate to be called by API
  * fluid_voice_add_mod(),fluid_synth_add_default_mod().
  *
- * @param list_name, list's name used to prefix messages displayed.
+ * @param list_name, list name used to prefix warning messages displayed.
+ *  If NULL, the function does minimum safe check for linked modulators.
+ *   - no warning message are displayed.
+ *   - checks not done are: valid source, identic modulator, isolated linked path.
+ *   This is useful for performance reason, when the caller already know that
+ *   modulators are valid. In this case, the function call only
+ *   fluid_check_linked_mod_path() and fluid_list_copy_linked_mod().
+ *
  * @param list_mod, pointer on modulators list.
  *  On input, the list may contains any unlinked or linked modulators.
  *  On output, invalid modulators are marked invalid with amount value forced
@@ -1824,27 +1842,29 @@ fluid_list_check_linked_mod(char *list_name, fluid_mod_t *list_mod,
 
     /* checks valid modulator sources (specs SF 2.01  7.4, 7.8, 8.2.1).*/
     /* checks identic modulators in the list (specs SF 2.01  7.4, 7.8). */
-    mod = list_mod; /* first modulator in list_mod */
-    count = 0;
-    while(mod)
+    if(list_name != NULL)
     {
-        char list_mod_name[256];
+        mod = list_mod; /* first modulator in list_mod */
+        count = 0;
+        while(mod)
+        {
+            char list_mod_name[256];
 
-        /* prepare modulator name: zonename/#modulator */
-        FLUID_SNPRINTF(list_mod_name, sizeof(list_mod_name),"%s/mod%d", list_name, count);
+            /* prepare modulator name: zonename/#modulator */
+            FLUID_SNPRINTF(list_mod_name, sizeof(list_mod_name),"%s/mod%d", list_name, count);
 
-        /* has mod invalid sources ? */
-        if(!fluid_mod_check_sources (mod,  list_mod_name)
-        /* or is mod identic to any following modulator ? */
-           ||fluid_zone_is_mod_identic(mod, list_mod_name))
-        {   /* marks this modulator invalid for future checks */
-            mod->amount = 0;
+            /* has mod invalid sources ? */
+            if(!fluid_mod_check_sources (mod,  list_mod_name)
+            /* or is mod identic to any following modulator ? */
+               ||fluid_zone_is_mod_identic(mod, list_mod_name))
+            {   /* marks this modulator invalid for future checks */
+                mod->amount = 0;
+            }
+
+            count++;
+            mod = mod->next;
         }
-
-        count++;
-        mod = mod->next;
     }
-
 
     /* Now check linked modulator path */
     result = fluid_check_linked_mod_path(list_name, list_mod, -1, path);
@@ -1853,20 +1873,23 @@ fluid_list_check_linked_mod(char *list_name, fluid_mod_t *list_mod,
        Other unreachable linked modulators path (isolated) are still in list_mod but
        not in path. These should now marked invalid and a message is displayed.
        (specifications SF 2.01  7.4, 7.8) */
-    count = 0; /* number of modulators in list_mod. */
-    mod = list_mod; /* first modulator in list_mod */
-    while(mod)
+    if(list_name != NULL)
     {
-        if( /* Check linked mod only not in discovered paths */
-            fluid_mod_is_linked(mod)
-            /* Check if mod doesn't belong to any discovered paths */
-            && !(path[count] & FLUID_PATH_CURRENT) )
+        count = 0; /* number of modulators in list_mod. */
+        mod = list_mod; /* first modulator in list_mod */
+        while(mod)
         {
-            mod->amount = 0; /* marked invalid */
-            FLUID_LOG(FLUID_WARN, "invalid isolated path %s/mod%d", list_name, count);
+            if( /* Check linked mod only not in discovered paths */
+                fluid_mod_is_linked(mod)
+                /* Check if mod doesn't belong to any discovered paths */
+                && !(path[count] & FLUID_PATH_CURRENT) )
+            {
+                mod->amount = 0; /* marked invalid */
+                FLUID_LOG(FLUID_WARN, "invalid isolated path %s/mod%d", list_name, count);
+            }
+            mod = mod->next;
+            count++;
         }
-        mod = mod->next;
-        count++;
     }
 
     /* clone of linked modulators if requested */
