@@ -1591,7 +1591,7 @@ fluid_check_linked_mod_path(char *list_name, fluid_mod_t *list_mod,
                     /* warning: path is without destination */
                     if(list_name != NULL)
                     {
-                        FLUID_LOG(FLUID_WARN, "path without destination %s/mod%d",
+                        FLUID_LOG(FLUID_WARN, "Path without destination %s/mod%d",
                                   list_name, mod_idx);
                     }
                 }
@@ -1612,7 +1612,7 @@ fluid_check_linked_mod_path(char *list_name, fluid_mod_t *list_mod,
                 /* warning: path have an invalid destination */
                 if(list_name != NULL)
                 {
-                    FLUID_LOG(FLUID_WARN, "invalid destination %s/mod%d",
+                    FLUID_LOG(FLUID_WARN, "Invalid destination %s/mod%d",
                               list_name, mod_idx);
                 }
                 return FALSE; /* current path is invalid */
@@ -1631,7 +1631,7 @@ fluid_check_linked_mod_path(char *list_name, fluid_mod_t *list_mod,
                 /* warning: invalid circular path */
                 if(list_name != NULL)
                 {
-                    FLUID_LOG(FLUID_WARN, "invalid circular path %s/mod%d",
+                    FLUID_LOG(FLUID_WARN, "Invalid circular path %s/mod%d",
                               list_name, mod_idx);
                 }
                 return FALSE; /* current path is invalid */
@@ -1885,7 +1885,7 @@ fluid_list_check_linked_mod(char *list_name, fluid_mod_t *list_mod,
                 && !(path[count] & FLUID_PATH_CURRENT) )
             {
                 mod->amount = 0; /* marked invalid */
-                FLUID_LOG(FLUID_WARN, "invalid isolated path %s/mod%d", list_name, count);
+                FLUID_LOG(FLUID_WARN, "Invalid isolated path %s/mod%d", list_name, count);
             }
             mod = mod->next;
             count++;
