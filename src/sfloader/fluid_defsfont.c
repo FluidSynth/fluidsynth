@@ -1824,15 +1824,15 @@ fluid_list_check_linked_mod(char *list_name, fluid_mod_t *list_mod,
     count = 0;
     while(mod)
     {
-        char zone_mod_name[256];
+        char list_mod_name[256];
 
         /* prepare modulator name: zonename/#modulator */
-        FLUID_SNPRINTF(zone_mod_name, sizeof(zone_mod_name),"%s/mod%d", list_name, count);
+        FLUID_SNPRINTF(list_mod_name, sizeof(list_mod_name),"%s/mod%d", list_name, count);
 
         /* has mod invalid sources ? */
-        if(!fluid_mod_check_sources (mod,  zone_mod_name)
+        if(!fluid_mod_check_sources (mod,  list_mod_name)
         /* or is mod identic to any following modulator ? */
-           ||fluid_zone_is_mod_identic(mod, zone_mod_name))
+           ||fluid_zone_is_mod_identic(mod, list_mod_name))
         {   /* marks this modulator invalid for future checks */
             mod->amount = 0;
         }
@@ -1932,10 +1932,10 @@ static void fluid_zone_check_remove_mod(fluid_mod_t **list_mod)
  * This is appropriate to internal synthesizer modulators tables
  * which have a fixed size (FLUID_NUM_MOD).
  *
- * @param zone_name, zone name used to prefix messages displayed.
+ * @param list_name, list name used to prefix messages displayed.
  * @param list_mod, address of pointer on modulator list.
  */
-static void fluid_limit_mod_list(char *zone_name, fluid_mod_t **list_mod)
+static void fluid_limit_mod_list(char *list_name, fluid_mod_t **list_mod)
 {
     int mod_idx = 0; /* modulator index */
     fluid_mod_t *prev_mod = NULL; /* previous modulator in list_mod */
@@ -1956,7 +1956,7 @@ static void fluid_limit_mod_list(char *zone_name, fluid_mod_t **list_mod)
             }
 
             delete_fluid_list_mod(mod);
-            FLUID_LOG(FLUID_WARN, "%s, modulators count limited to %d", zone_name,
+            FLUID_LOG(FLUID_WARN, "%s, modulators count limited to %d", list_name,
                       FLUID_NUM_MOD);
             break;
         }
