@@ -1536,15 +1536,15 @@ int fluid_get_count_mod(const fluid_mod_t *mod)
  * @param list_mod, pointer on modulators list. amount value to 0 indicates that
  *  modulator are invalid.
  * @param dest_idx, index of the destination linked modulator to search.
- * Should be - 1 at first call.
+ *  Must be - 1 at first call.
  *   if < 0, search first modulator (i.e first linked modulateur).
  *   if >= 0 index of the destination linked modulator to search.
  * @param path, pointer on table for path registering.
- * On input, FLUID_PATH_CUR , FLUID_PATH_VALID must be initialized to 0.
- * On return, path table contains:
- * - no path (FLUID_PATH_CUR set to 0, FLUID_PATH_VALID set to 0) or
- * - valid complete paths (FLUID_PATH_VALID set to 1) or
- * - invalid incomplete paths (FLUID_PATH_CUR set to 1, FLUID_PATH_VALID set to 0).
+ *  On input, FLUID_PATH_CUR , FLUID_PATH_VALID must be initialized to 0.
+ *  On return, path table contains:
+ *  - no path (FLUID_PATH_CUR set to 0, FLUID_PATH_VALID set to 0) or
+ *  - valid complete paths (FLUID_PATH_VALID set to 1) or
+ *  - invalid incomplete paths (FLUID_PATH_CUR set to 1, FLUID_PATH_VALID set to 0).
  *
  * @return  TRUE if at least one complete valid linked modulators path exists,
  *          FALSE  otherwise.
@@ -1635,7 +1635,7 @@ fluid_check_linked_mod_path(char *zone_name, fluid_mod_t *list_mod,
 }
 
 /*
- * Valid linked modulators are searched and cloned from mod_list list to 
+ * Valid linked modulators paths are searched and cloned from mod_list list to
  * linked_mod list.
  * When finished, modulators in linked_mod are grouped in complex modulator.
  * (cm0,cm1,cm2..).
@@ -1757,13 +1757,13 @@ fluid_list_copy_linked_mod(const fluid_mod_t *list_mod, int dest_idx, int new_id
  * Checks all modulators from a zone modulator list and optionally clone
  * valid linked modulators from mod_list list to linked_mod list.
  * - check valid sources.
- * - check identic modulator.
- * - check linked modulators path.
- * - clone valid linked modulators to linked_mod.
+ * - check identic modulators.
+ * - check linked modulators paths.
+ * - clone valid linked modulators paths to linked_mod.
  * The function does the same job that fluid_zone_check_mod() except that
- * that modulators aren't removed from mod_list and the list length isn't
- * reduced. The function is appropriate to be
- * called by API fluid_voice_add_mod(),fluid_synth_add_default_mod().
+ * that modulators aren't removed from mod_list and lists length aren't
+ * limited. The function is appropriate to be called by API
+ * fluid_voice_add_mod(),fluid_synth_add_default_mod().
  *
  * @param list_name, list's name used to prefix messages displayed.
  * @param list_mod, pointer on modulators list.
@@ -1784,8 +1784,8 @@ fluid_list_check_linked_mod(char *list_name, fluid_mod_t *list_mod,
                             fluid_mod_t **linked_mod)
 {
     int result;
-    /* path is a flags table state to register valid modulators and
-       valid complete linked modulator path */
+    /* path is a flags table state to register valid modulators belonging
+       to valid complete linked modulator paths */
     unsigned char *path;
     fluid_mod_t *mod;
     int count; /* number of modulators in list_mod. */
@@ -1803,11 +1803,11 @@ fluid_list_check_linked_mod(char *list_name, fluid_mod_t *list_mod,
     {
         return FLUID_FAILED;
     }
-    /* initialise path: reset bits FLUID_PATH_VALID, FLUID_PATH_CUR */
+    /* initialize path: reset bits FLUID_PATH_VALID, FLUID_PATH_CUR */
     FLUID_MEMSET(path, 0, count);
 
     /* checks valid modulator sources (specs SF 2.01  7.4, 7.8, 8.2.1).*/
-    /* checks identic modulator in the list (specs SF 2.01  7.4, 7.8). */
+    /* checks identic modulators in the list (specs SF 2.01  7.4, 7.8). */
     mod = list_mod; /* first modulator in list_mod */
     count = 0;
     while(mod)
@@ -1876,7 +1876,7 @@ fluid_list_check_linked_mod(char *list_name, fluid_mod_t *list_mod,
  * Checks and remove invalid modulators from a zone modulators list.
  * - remove linked modulators.
  * - remove modulators with invalid sources (specs SF 2.01  7.4, 7.8, 8.2.1).
- * - remove identic modulator in the list (specs SF 2.01  7.4, 7.8).
+ * - remove identic modulators in the list (specs SF 2.01  7.4, 7.8).
  * On output, the list contains only valid unlinked modulators.
  *
  * @param list_mod, address of pointer on modulator list.
@@ -1959,16 +1959,16 @@ static void fluid_limit_mod_list(char *zone_name, fluid_mod_t **list_mod)
  * Checks and remove invalid modulators from a zone modulators list.
  * - checks valid modulator sources (specs SF 2.01  7.4, 7.8, 8.2.1).
  * - checks identic modulators in the list (specs SF 2.01  7.4, 7.8).
- * - checks linked modulators path from a zone modulators list.
- * - extracts valid linked modulators to linked_mod.
- * - removing all invalid modulators.
- * - limiting size of modulators list.
+ * - checks linked modulators paths from a zone modulators list.
+ * - extracts valid linked modulators paths to linked_mod.
+ * - removing all invalid modulators and linked modulators out of zone list.
+ * - limiting size of modulators lists.
  * The function does the same job that fluid_list_check_linked_mod() except that
  * input list_mod keeps only valid unlinked modulators. The function is
  * appropriate to be called by soundfont loader.
  *
  * @param zone_name, zone name used to prefix messages displayed.
- * @param list_mod, address of pointer on modulators list.
+ * @param list_mod, address of pointer on zone modulators list.
  *  On input, the list may contains any unlinked or linked modulators.
  *  On output, the list contains only valid unlinked modulators.
  * @param linked_mod, address of pointer on linked modulators list returned
@@ -1981,16 +1981,18 @@ fluid_zone_check_mod(char *zone_name, fluid_mod_t **list_mod,
                      fluid_mod_t **linked_mod)
 {
 
-    /* Checks linked modulators paths from a zone modulators list */
+    /* Checks linked modulators paths from a zone modulators list list_mod */
+    /* Then, clone valid linked modulators paths from list_mod to linked_mod */
     if(fluid_list_check_linked_mod(zone_name, *list_mod, linked_mod) == FLUID_FAILED)
     {
         return FLUID_FAILED;
     }
 
-    /* removing all invalid modulators */
+    /* removing all invalid modulators and linked modulators out of list_mod */
+    /* On return, the list contains only valid unlinked modulators */
     fluid_zone_check_remove_mod(list_mod);
 
-    /* limits the size of modulators list */
+    /* limits the size of unlinked modulators list */
     fluid_limit_mod_list(zone_name, list_mod);
 
     /* limits the size of linked modulators list */
