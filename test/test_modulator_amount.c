@@ -22,6 +22,7 @@ int main(void)
     fluid_synth_t* synth = new_fluid_synth(set);
     fluid_channel_t *ch = new_fluid_channel(synth, 0);
     fluid_voice_t *v = new_fluid_voice(NULL, 22050);
+    fluid_gen_init(&v->gen[0], NULL);
     
     fluid_mod_t *mod0 = new_fluid_mod();
     fluid_mod_t *mod1 = new_fluid_mod();
