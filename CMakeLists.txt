@@ -352,8 +352,9 @@ if ( enable-profiling )
                     DOC "Path to clang-tidy executable" )
 
         if ( CLANG_TIDY )
-            message ( STATUS "Found clang-tidy" )
-            set ( CMAKE_C_CLANG_TIDY "clang-tidy" )
+            message ( STATUS "Found clang-tidy at ${CLANG_TIDY}" )
+            execute_process ( COMMAND ${CLANG_TIDY} "--version" )
+            set ( CMAKE_C_CLANG_TIDY ${CLANG_TIDY} )
         endif ( CLANG_TIDY )
     endif ( CMAKE_VERSION VERSION_GREATER "3.6.0" )
 
