@@ -1,14 +1,14 @@
 language: c
 sudo: false
 os: linux
-dist: trusty
+dist: bionic
 addons:
   apt:
     update: true
     sources:
     - ubuntu-toolchain-r-test
-    - llvm-toolchain-trusty-6.0
-    - llvm-toolchain-trusty-7
+    - llvm-toolchain-bionic-7
+    - llvm-toolchain-bionic-8
     packages:
     - cmake-data
     - cmake
@@ -41,14 +41,13 @@ matrix:
         - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8 && sudo apt-get install gcc-8"
         - CMAKE_FLAGS="-Denable-debug=1 -DCMAKE_C_FLAGS_DEBUG=-fuse-ld=gold"
 
-    - env:
-        - MATRIX_EVAL="CC=clang-3.8 && CXX=clang++-3.8 && sudo apt-get install clang-3.8"
-
-    - env:
-        - MATRIX_EVAL="CC=clang-6.0 && CXX=clang++-6.0 && sudo apt-get install clang-6.0"
-
-    - env:
+    - os: linux
+      env:
         - MATRIX_EVAL="CC=clang-7 && CXX=clang++-7 && sudo apt-get install clang-7"
+
+    - os: linux
+      env:
+        - MATRIX_EVAL="CC=clang-8 && CXX=clang++-8 && sudo apt-get install clang-8"
 
 before_install:
     - eval "${MATRIX_EVAL}"
