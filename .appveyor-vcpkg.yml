@@ -14,24 +14,8 @@ environment:
 
   matrix:
       - platform: x86
-        CMAKE_FLAGS: 
         
-      - platform: x86
-        CMAKE_FLAGS: -Denable-network=0
-
-      - platform: x86
-        CMAKE_FLAGS: -DBUILD_SHARED_LIBS=0
-
       - platform: x64
-        CMAKE_FLAGS: 
-
-      - platform: x64
-        CMAKE_FLAGS: -Denable-network=0
-
-      - platform: x64
-        CMAKE_FLAGS: -DBUILD_SHARED_LIBS=0
-
-#      - platform: ARM ## currently fails to build pcre:arm-windows
 
 cache:
   - c:\Tools\vcpkg\installed
@@ -43,7 +27,6 @@ init:
   - echo %TARGET_PLATFORM%
   - echo %APPVEYOR_BUILD_WORKER_IMAGE%
   - if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2017" ( set "generator=Visual Studio 15 2017%TARGET_PLATFORM%" && set "toolset=v141_xp" )
-  - if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2015" ( set "generator=Visual Studio 14 2015%TARGET_PLATFORM%" && set "toolset=v140_xp" )
   - echo %generator%
   - echo %toolset%
   
@@ -55,7 +38,7 @@ install:
 build_script:
   - mkdir build
   - cd build
-  - cmake -G "%generator%" -T "%toolset%" %CMAKE_FLAGS% -Denable-pkgconfig=0 -DCMAKE_TOOLCHAIN_FILE=c:/Tools/vcpkg/scripts/buildsystems/vcpkg.cmake ..
+  - cmake -G "%generator%" -T "%toolset%" -Denable-pkgconfig=0 -DCMAKE_TOOLCHAIN_FILE=c:/Tools/vcpkg/scripts/buildsystems/vcpkg.cmake -DNO_GUI=1 ..
   - cmake --build . --config Release # build libfluidsynth and fluidsynth exec
   - cmake --build . --config Release --target check # build and exec unittests
 

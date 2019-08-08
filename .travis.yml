@@ -1,13 +1,14 @@
 language: c
 sudo: false
 os: linux
-dist: trusty
+dist: bionic
 addons:
   apt:
+    update: true
     sources:
     - ubuntu-toolchain-r-test
-    - llvm-toolchain-trusty-6.0
-    - llvm-toolchain-trusty-7
+    - llvm-toolchain-bionic-7
+    - llvm-toolchain-bionic-8
     packages:
     - cmake-data
     - cmake
@@ -19,6 +20,7 @@ addons:
     - libpulse-dev
     - libdbus-glib-1-dev
     - ladspa-sdk
+    - libsdl2-dev
 env:
     - CMAKE_FLAGS="-Denable-profiling=1"
     - CMAKE_FLAGS="-Denable-floats=1 -Denable-profiling=1"
@@ -32,41 +34,34 @@ env:
 
 matrix:
   include:
-    - os: osx
-      osx_image: xcode10
-
-    - os: linux
-      env:
+    - env:
         - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7 && sudo apt-get install gcc-7"
 
-    - os: linux
-      env:
+    - env:
         - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8 && sudo apt-get install gcc-8"
         - CMAKE_FLAGS="-Denable-debug=1 -DCMAKE_C_FLAGS_DEBUG=-fuse-ld=gold"
 
     - os: linux
       env:
-        - MATRIX_EVAL="CC=clang-3.8 && CXX=clang++-3.8 && sudo apt-get install clang-3.8"
-
-    - os: linux
-      env:
-        - MATRIX_EVAL="CC=clang-6.0 && CXX=clang++-6.0 && sudo apt-get install clang-6.0"
-
-    - os: linux
-      env:
         - MATRIX_EVAL="CC=clang-7 && CXX=clang++-7 && sudo apt-get install clang-7"
 
+    - os: linux
+      env:
+        - MATRIX_EVAL="CC=clang-8 && CXX=clang++-8 && sudo rm -f /usr/local/clang-7.0.0/bin/clang-tidy && sudo ln -s /usr/bin/clang-tidy-8 /usr/bin/clang-tidy && sudo apt-get install clang-8 clang-tidy-8"
+        - CMAKE_FLAGS="-Denable-profiling=1 -DCMAKE_C_FLAGS_DEBUG=-fuse-ld=gold"
+
 before_install:
-    - if [ $TRAVIS_OS_NAME = linux ]; then sudo apt-get update; else brew update; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install glib gettext libsndfile jack dbus-glib pulseaudio portaudio; fi # && brew link gettext
     - eval "${MATRIX_EVAL}"
-    
+    - which clang-tidy
+    - ls -la `which clang-tidy`
+    - echo $PATH
+
 before_script:
     - mkdir $HOME/fluidsynth_install/
     - mkdir build && cd build
-    
+
 script:
-    - cmake -DCMAKE_INSTALL_PREFIX=$HOME/fluidsynth_install ${CMAKE_FLAGS} -Denable-portaudio=1 -Denable-ladspa=1 -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_VERBOSE_MAKEFILE=0 ..
+    - cmake -DCMAKE_INSTALL_PREFIX=$HOME/fluidsynth_install ${CMAKE_FLAGS} -Denable-portaudio=1 -Denable-ladspa=1 -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_VERBOSE_MAKEFILE=1 -DNO_GUI=1 ..
     - make -j4
     - make check
-    - if [ $TRAVIS_OS_NAME = linux ]; then make install; fi # install only on linux, as CMAKE_INSTALL_PREFIX is ignored for frameworks on macosx and I cant tell whether that's correct or a bug.
+    - make install # install only on linux, as CMAKE_INSTALL_PREFIX is ignored for frameworks on macosx and I cant tell whether that's correct or a bug.
