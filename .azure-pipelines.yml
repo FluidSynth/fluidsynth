@@ -10,7 +10,7 @@ jobs:
   steps:
     - script: |
         brew update
-        brew install glib gobject-introspection libsndfile pkg-config
+        brew install glib gobject-introspection libsndfile pkg-config jack dbus-glib pulseaudio portaudio sdl2
       displayName: 'Prerequisites'
     - script: |
         mkdir build && cd build
