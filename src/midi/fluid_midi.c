@@ -2147,6 +2147,7 @@ int
 fluid_player_stop(fluid_player_t *player)
 {
     player->status = FLUID_PLAYER_READY;
+    fluid_player_seek(player, fluid_player_get_current_tick(player));
     return FLUID_OK;
 }
 
