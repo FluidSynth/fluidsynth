@@ -1,19 +1,17 @@
-<!--
-This issue tracker is only for bug reports and concrete feature requests.
+_This issue tracker is only for bug reports and concrete feature requests.
 DO NOT SUBMIT SUPPORT REQUESTS OR "HOW TO" QUESTIONS HERE!
-Else it might be closed without further notice.
+Else it might be closed without further notice._
 
-If you have a question look into our wiki
+_If you have a question look into our wiki
 ( https://github.com/FluidSynth/fluidsynth/wiki )
 or the developer resources
-( http://www.fluidsynth.org/api/ )
+( http://www.fluidsynth.org/api/ )_
 
-If you still have a question, need support or want to discuss ideas, contact our mailing list:
-https://lists.nongnu.org/mailman/listinfo/fluid-dev
+_If you still have a question, need support or want to discuss ideas, contact our mailing list:
+https://lists.nongnu.org/mailman/listinfo/fluid-dev_
 
-Below is a form that shall help getting relevant information for bugs and feature requests together.
-We strongly recommend to use it! Feel free to edit or remove inapplicable/unneeded parts.
--->
+_Below is a form that shall help getting relevant information for bugs and feature requests together.
+We strongly recommend to use it! Feel free to edit or remove inapplicable/unneeded parts._
 
 ### FluidSynth version <!-- enter FluidSynths version you're using -->
 2.0.x
@@ -40,6 +38,3 @@ source code below or as attatched file. List any other information that is relev
   links to related discussions at fluid-dev
   etc. 
 -->
-```
-insert code snippets, soundfonts or anything relevant here, or attach it as extra file(s) if it's too much
-```
