@@ -2055,7 +2055,7 @@ fluid_player_callback(void *data, unsigned int msec)
 
     loadnextfile = player->currentfile == NULL ? 1 : 0;
 
-    if(player->status == FLUID_PLAYER_READY)
+    if(player->status == FLUID_PLAYER_DONE)
     {
         fluid_synth_all_notes_off(synth, -1);
         return 1;
@@ -2146,7 +2146,7 @@ fluid_player_play(fluid_player_t *player)
 int
 fluid_player_stop(fluid_player_t *player)
 {
-    player->status = FLUID_PLAYER_READY;
+    player->status = FLUID_PLAYER_DONE;
     fluid_player_seek(player, fluid_player_get_current_tick(player));
     return FLUID_OK;
 }
@@ -2233,26 +2233,17 @@ int fluid_player_set_bpm(fluid_player_t *player, int bpm)
 }
 
 /**
- * Wait for a MIDI player to terminate (when done playing).
+ * Wait for a MIDI player until the playback has been stopped.
  * @param player MIDI player instance
- * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ * @return Always #FLUID_OK
  */
 int
 fluid_player_join(fluid_player_t *player)
 {
-    if(player->system_timer)
+    while(player->status != FLUID_PLAYER_DONE)
     {
-        return fluid_timer_join(player->system_timer);
+        fluid_msleep(10);
     }
-    else if(player->sample_timer)
-    {
-        /* Busy-wait loop, since there's no thread to wait for... */
-        while(player->status == FLUID_PLAYER_PLAYING)
-        {
-            fluid_msleep(10);
-        }
-    }
-
     return FLUID_OK;
 }
 
