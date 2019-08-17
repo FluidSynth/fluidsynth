@@ -646,6 +646,15 @@ int main(int argc, char **argv)
 
         case 'q':
             quiet = 1;
+
+#if defined(WIN32)
+            /* Windows logs to stdout by default, so make sure anything
+             * lower than PANIC is not printed either */
+            fluid_set_log_function(FLUID_ERR, NULL, NULL);
+            fluid_set_log_function(FLUID_WARN, NULL, NULL);
+            fluid_set_log_function(FLUID_INFO, NULL, NULL);
+            fluid_set_log_function(FLUID_DBG, NULL, NULL);
+#endif
             break;
 
         case 'R':
@@ -1170,7 +1179,8 @@ print_help(fluid_settings_t *settings)
     printf(" -p, --portname=[label]\n"
            "    Set MIDI port name (alsa_seq, coremidi drivers)\n");
     printf(" -q, --quiet\n"
-           "    Do not print welcome message or other informational output\n");
+           "    Do not print welcome message or other informational output\n"
+           "    (Windows only: also suppress all log messages lower than PANIC\n");
     printf(" -r, --sample-rate\n"
            "    Set the sample rate\n");
     printf(" -R, --reverb\n"
