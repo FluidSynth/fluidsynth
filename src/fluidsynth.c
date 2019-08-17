@@ -48,7 +48,7 @@ int option_help = 0;		/* set to 1 if "-o help" is specified */
 
 
 /* Process a command line option -o setting=value, for example: -o synth.polyhony=16 */
-void process_o_cmd_line_option(fluid_settings_t *settings, char *optarg)
+int process_o_cmd_line_option(fluid_settings_t *settings, char *optarg)
 {
     char *val;
     int hints;
@@ -67,13 +67,13 @@ void process_o_cmd_line_option(fluid_settings_t *settings, char *optarg)
     if(FLUID_STRCMP(optarg, "help") == 0)
     {
         option_help = 1;
-        return;
+        return FLUID_OK;
     }
 
     if(FLUID_STRCMP(optarg, "") == 0)
     {
         fprintf(stderr, "Invalid -o option (name part is empty)\n");
-        return;
+        return FLUID_FAILED;
     }
 
     switch(fluid_settings_get_type(settings, optarg))
@@ -82,7 +82,7 @@ void process_o_cmd_line_option(fluid_settings_t *settings, char *optarg)
         if(fluid_settings_setnum(settings, optarg, atof(val)) != FLUID_OK)
         {
             fprintf(stderr, "Failed to set floating point parameter '%s'\n", optarg);
-            exit(1);
+            return FLUID_FAILED;
         }
 
         break;
@@ -110,7 +110,7 @@ void process_o_cmd_line_option(fluid_settings_t *settings, char *optarg)
         if(fluid_settings_setint(settings, optarg, ival) != FLUID_OK)
         {
             fprintf(stderr, "Failed to set integer parameter '%s'\n", optarg);
-            exit(1);
+            return FLUID_FAILED;
         }
 
         break;
@@ -119,15 +119,17 @@ void process_o_cmd_line_option(fluid_settings_t *settings, char *optarg)
         if(fluid_settings_setstr(settings, optarg, val) != FLUID_OK)
         {
             fprintf(stderr, "Failed to set string parameter '%s'\n", optarg);
-            exit(1);
+            return FLUID_FAILED;
         }
 
         break;
 
     default:
         fprintf(stderr, "Setting parameter '%s' not found\n", optarg);
-        exit(1);
+        return FLUID_FAILED;
     }
+
+    return FLUID_OK;
 }
 
 static void
@@ -317,6 +319,7 @@ fast_render_loop(fluid_settings_t *settings, fluid_synth_t *synth, fluid_player_
 int main(int argc, char **argv)
 {
     fluid_settings_t *settings;
+    int result = -1;
     int arg1 = 1;
     char buf[512];
     int c, i;
@@ -324,7 +327,6 @@ int main(int argc, char **argv)
     int midi_in = 1;
     fluid_player_t *player = NULL;
     fluid_midi_router_t *router = NULL;
-    //fluid_sequencer_t* sequencer = NULL;
     fluid_midi_driver_t *mdriver = NULL;
     fluid_audio_driver_t *adriver = NULL;
     fluid_synth_t *synth = NULL;
@@ -420,7 +422,7 @@ int main(int argc, char **argv)
             {
                 printf("Option -%c requires an argument\n", c);
                 print_usage();
-                exit(0);
+                goto cleanup;
             }
             else
             {
@@ -430,7 +432,7 @@ int main(int argc, char **argv)
                 {
                     printf("Expected argument to option -%c found switch instead\n", c);
                     print_usage();
-                    exit(0);
+                    goto cleanup;
                 }
             }
         }
@@ -462,7 +464,8 @@ int main(int argc, char **argv)
             {
                 printf("-a options (audio driver):\n   ");
                 show_settings_str_options(settings, "audio.driver");
-                exit(0);
+                result = 0;
+                goto cleanup;
             }
             else
             {
@@ -504,7 +507,8 @@ int main(int argc, char **argv)
                 printf("\nNOTE: No libsndfile support!\n"
                        "cpu: Use CPU native byte order\n");
 #endif
-                exit(0);
+                result = 0;
+                goto cleanup;
             }
             else
             {
@@ -532,6 +536,8 @@ int main(int argc, char **argv)
 
         case 'h':
             print_help(settings);
+            result = 0;
+            goto cleanup;
             break;
 
         case 'i':
@@ -562,7 +568,8 @@ int main(int argc, char **argv)
             {
                 printf("-m options (MIDI driver):\n   ");
                 show_settings_str_options(settings, "midi.driver");
-                exit(0);
+                result = 0;
+                goto cleanup;
             }
             else
             {
@@ -588,7 +595,8 @@ int main(int argc, char **argv)
 #else
                 printf("\nNOTE: No libsndfile support!\n");
 #endif
-                exit(0);
+                result = 0;
+                goto cleanup;
             }
             else
             {
@@ -598,7 +606,10 @@ int main(int argc, char **argv)
             break;
 
         case 'o':
-            process_o_cmd_line_option(settings, optarg);
+            if(process_o_cmd_line_option(settings, optarg) != FLUID_OK)
+            {
+                goto cleanup;
+            }
             break;
 
         case 'p' :
@@ -640,7 +651,8 @@ int main(int argc, char **argv)
 #else
                 printf("\nNOTE: No libsndfile support!\n");
 #endif
-                exit(0);
+                result = 0;
+                goto cleanup;
             }
             else
             {
@@ -651,7 +663,8 @@ int main(int argc, char **argv)
 
         case 'V':
             print_configure();
-            exit(0);
+            result = 0;
+            goto cleanup;
             break;
 
         case 'v':
@@ -666,7 +679,7 @@ int main(int argc, char **argv)
         case '?':
             printf("Unknown option %c\n", optopt);
             print_usage();
-            exit(0);
+            goto cleanup;
             break;
 
         default:
@@ -677,7 +690,7 @@ int main(int argc, char **argv)
         default:
             printf("Unknown switch '%c'\n", c);
             print_usage();
-            exit(0);
+            goto cleanup;
             break;
 #endif
         }	/* end of switch statement */
@@ -694,7 +707,8 @@ int main(int argc, char **argv)
     {
         printf("FluidSynth settings:\n");
         fluid_settings_foreach(settings, settings, settings_foreach_func);
-        exit(0);
+        result = 0;
+        goto cleanup;
     }
 
 #ifdef WIN32
@@ -744,7 +758,7 @@ int main(int argc, char **argv)
     if(synth == NULL)
     {
         fprintf(stderr, "Failed to create the synthesizer\n");
-        exit(-1);
+        goto cleanup;
     }
 
     /* load the soundfonts (check that all non options are SoundFont or MIDI files) */
@@ -793,7 +807,6 @@ int main(int argc, char **argv)
         /* In dump mode, text output is generated for events going into and out of the router.
          * The example dump functions are put into the chain before and after the router..
          */
-        //sequencer = new_fluid_sequencer2(0);
         mdriver = new_fluid_midi_driver(
                       settings,
                       dump ? fluid_midi_dump_prerouter : fluid_midi_router_handle_midi_event,
@@ -812,7 +825,6 @@ int main(int argc, char **argv)
     {
         if((argv[i][0] != '-') && fluid_is_midifile(argv[i]))
         {
-
             if(player == NULL)
             {
                 player = new_fluid_player(synth);
@@ -951,6 +963,8 @@ int main(int argc, char **argv)
         fast_render_loop(settings, synth, player);
     }
 
+    result = 0;
+
 cleanup:
 
 #ifdef NETWORK_SUPPORT
@@ -1003,10 +1017,6 @@ cleanup:
         delete_fluid_midi_router(router);
     }
 
-    /*if (sequencer) {
-      delete_fluid_sequencer(sequencer);
-    }*/
-
     if(adriver)
     {
         delete_fluid_audio_driver(adriver);
@@ -1022,7 +1032,7 @@ cleanup:
         delete_fluid_settings(settings);
     }
 
-    return 0;
+    return result;
 }
 
 /*
@@ -1033,7 +1043,6 @@ print_usage()
 {
     fprintf(stderr, "Usage: fluidsynth [options] [soundfonts]\n");
     fprintf(stderr, "Try -h for help.\n");
-    exit(0);
 }
 
 void
@@ -1141,8 +1150,4 @@ print_help(fluid_settings_t *settings)
     {
         FLUID_FREE(midi_options);
     }
-
-    delete_fluid_settings(settings);
-
-    exit(0);
 }
