@@ -345,6 +345,7 @@ int main(int argc, char **argv)
     char buf[512];
     int c, i;
     int interactive = 1;
+    int quiet = 0;
     int midi_in = 1;
     fluid_player_t *player = NULL;
     fluid_midi_router_t *router = NULL;
@@ -361,7 +362,7 @@ int main(int argc, char **argv)
     int audio_channels = 0;
     int dump = 0;
     int fast_render = 0;
-    static const char optchars[] = "a:C:c:dE:f:F:G:g:hijK:L:lm:nO:o:p:R:r:sT:Vvz:";
+    static const char optchars[] = "a:C:c:dE:f:F:G:g:hijK:L:lm:nO:o:p:qR:r:sT:Vvz:";
 #ifdef LASH_ENABLED
     int connect_lash = 1;
     int enabled_lash = 0;		/* set to TRUE if lash gets enabled */
@@ -383,8 +384,6 @@ int main(int argc, char **argv)
 
 #endif
 
-
-    print_welcome();
 
     /* create the settings */
     settings = new_fluid_settings();
@@ -421,6 +420,7 @@ int main(int argc, char **argv)
             {"no-shell", 0, 0, 'i'},
             {"option", 1, 0, 'o'},
             {"portname", 1, 0, 'p'},
+            {"quiet", 0, 0, 'q'},
             {"reverb", 1, 0, 'R'},
             {"sample-rate", 1, 0, 'r'},
             {"server", 0, 0, 's'},
@@ -569,6 +569,7 @@ int main(int argc, char **argv)
             break;
 
         case 'h':
+            print_welcome();
             print_help(settings);
             break;
 
@@ -643,6 +644,19 @@ int main(int argc, char **argv)
             fluid_settings_setstr(settings, "midi.portname", optarg);
             break;
 
+        case 'q':
+            quiet = 1;
+
+#if defined(WIN32)
+            /* Windows logs to stdout by default, so make sure anything
+             * lower than PANIC is not printed either */
+            fluid_set_log_function(FLUID_ERR, NULL, NULL);
+            fluid_set_log_function(FLUID_WARN, NULL, NULL);
+            fluid_set_log_function(FLUID_INFO, NULL, NULL);
+            fluid_set_log_function(FLUID_DBG, NULL, NULL);
+#endif
+            break;
+
         case 'R':
             if((optarg != NULL) && ((FLUID_STRCMP(optarg, "0") == 0) || (FLUID_STRCMP(optarg, "no") == 0)))
             {
@@ -688,6 +702,7 @@ int main(int argc, char **argv)
             break;
 
         case 'V':
+            print_welcome();
             print_configure();
             exit(0);
             break;
@@ -726,6 +741,10 @@ int main(int argc, char **argv)
 #else
     arg1 = i;
 #endif
+
+    if (!quiet) {
+        print_welcome();
+    }
 
     /* option help requested?  "-o help" */
     if(option_help)
@@ -981,7 +1000,9 @@ int main(int argc, char **argv)
         }
 
         fluid_settings_dupstr(settings, "audio.file.name", &filename);
-        printf("Rendering audio to file '%s'..\n", filename);
+        if (!quiet) {
+            printf("Rendering audio to file '%s'..\n", filename);
+        }
 
         if(filename)
         {
@@ -1157,6 +1178,9 @@ print_help(fluid_settings_t *settings)
            "    Audio file format for fast rendering or aufile driver (\"help\" for list)\n");
     printf(" -p, --portname=[label]\n"
            "    Set MIDI port name (alsa_seq, coremidi drivers)\n");
+    printf(" -q, --quiet\n"
+           "    Do not print welcome message or other informational output\n"
+           "    (Windows only: also suppress all log messages lower than PANIC\n");
     printf(" -r, --sample-rate\n"
            "    Set the sample rate\n");
     printf(" -R, --reverb\n"
