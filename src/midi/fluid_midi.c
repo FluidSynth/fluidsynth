@@ -2139,7 +2139,9 @@ fluid_player_play(fluid_player_t *player)
     return FLUID_OK;
 }
 /**
- * Stops a MIDI player.
+ * Stops a MIDI player, i.e. pauses the playback.
+ *
+ * It will not rewind to the beginning of the file, use fluid_player_seek() for this purpose.
  * @param player MIDI player instance
  * @return Always returns #FLUID_OK
  */
