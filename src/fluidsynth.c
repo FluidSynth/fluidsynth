@@ -777,18 +777,6 @@ int main(int argc, char **argv)
         }
     }
 
-    /* start the synthesis thread */
-    if(!fast_render)
-    {
-        adriver = new_fluid_audio_driver(settings, synth);
-
-        if(adriver == NULL)
-        {
-            fprintf(stderr, "Failed to create the audio driver\n");
-            goto cleanup;
-        }
-    }
-
     router = new_fluid_midi_router(
                  settings,
                  dump ? fluid_midi_dump_postrouter : fluid_synth_handle_midi_event,
@@ -926,21 +914,6 @@ int main(int argc, char **argv)
 
 #endif
 
-    /* run the shell */
-    if(interactive)
-    {
-        printf("Type 'help' for help topics.\n\n");
-
-        /* In dump mode we set the prompt to "". The UI cannot easily
-         * handle lines, which don't end with CR.  Changing the prompt
-         * cannot be done through a command, because the current shell
-         * does not handle empty arguments.  The ordinary case is dump ==
-         * 0.
-         */
-        fluid_settings_setstr(settings, "shell.prompt", dump ? "" : "> ");
-        fluid_usershell(settings, cmd_handler); /* this is a synchronous shell */
-    }
-
     /* fast rendering audio file, if requested */
     if(fast_render)
     {
@@ -961,6 +934,31 @@ int main(int argc, char **argv)
         }
 
         fast_render_loop(settings, synth, player);
+    }
+    else /* start the synthesis thread */
+    {
+        adriver = new_fluid_audio_driver(settings, synth);
+
+        if(adriver == NULL)
+        {
+            fprintf(stderr, "Failed to create the audio driver\n");
+            goto cleanup;
+        }
+
+        /* run the shell */
+        if(interactive)
+        {
+            printf("Type 'help' for help topics.\n\n");
+
+            /* In dump mode we set the prompt to "". The UI cannot easily
+            * handle lines, which don't end with CR.  Changing the prompt
+            * cannot be done through a command, because the current shell
+            * does not handle empty arguments.  The ordinary case is dump ==
+            * 0.
+            */
+            fluid_settings_setstr(settings, "shell.prompt", dump ? "" : "> ");
+            fluid_usershell(settings, cmd_handler); /* this is a synchronous shell */
+        }
     }
 
     result = 0;
@@ -1003,34 +1001,14 @@ cleanup:
             /* if no audio driver and sample timers are used, nothing makes the player advance */
             fluid_player_join(player);
         }
-
-        delete_fluid_player(player);
     }
 
-    if(mdriver)
-    {
-        delete_fluid_midi_driver(mdriver);
-    }
-
-    if(router)
-    {
-        delete_fluid_midi_router(router);
-    }
-
-    if(adriver)
-    {
-        delete_fluid_audio_driver(adriver);
-    }
-
-    if(synth)
-    {
-        delete_fluid_synth(synth);
-    }
-
-    if(settings)
-    {
-        delete_fluid_settings(settings);
-    }
+    delete_fluid_audio_driver(adriver);
+    delete_fluid_player(player);
+    delete_fluid_midi_driver(mdriver);
+    delete_fluid_midi_router(router);
+    delete_fluid_synth(synth);
+    delete_fluid_settings(settings);
 
     return result;
 }
