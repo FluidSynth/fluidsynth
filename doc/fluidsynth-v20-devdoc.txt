@@ -21,6 +21,7 @@ All the source code examples in this document are in the public domain; you can 
 
 - \ref Disclaimer
 - \ref Introduction
+- \ref NewIn2_0_6
 - \ref NewIn2_0_5
 - \ref NewIn2_0_3
 - \ref NewIn2_0_2
@@ -63,6 +64,10 @@ What is FluidSynth?
 
 - FluidSynth is open source, in active development. For more details, take a look at http://www.fluidsynth.org
 
+\section NewIn2_0_6 Whats new in 2.0.6?
+
+- the MIDI player did not emit any audio when calling fluid_player_play() after fluid_player_stop()
+
 \section NewIn2_0_5 Whats new in 2.0.5?
 
 - fluid_synth_process() omitted audio samples when called with arbitrary sample counts that were not a multiple of fluid_synth_get_internal_bufsize()
@@ -74,7 +79,6 @@ What is FluidSynth?
 - add missing getters for midi events:
   - fluid_midi_event_get_text()
   - fluid_midi_event_get_lyrics()
-
 
 \section NewIn2_0_2 Whats new in 2.0.2?
 
