@@ -500,16 +500,13 @@ struct _fluid_sample_timer_t
  */
 static void fluid_sample_timer_process(fluid_synth_t *synth)
 {
-    fluid_sample_timer_t *st, *stnext;
+    fluid_sample_timer_t *st;
     long msec;
     int cont;
     unsigned int ticks = fluid_synth_get_ticks(synth);
 
-    for(st = synth->sample_timers; st; st = stnext)
+    for(st = synth->sample_timers; st; st = st->next)
     {
-        /* st may be freed in the callback below. cache it's successor now to avoid use after free */
-        stnext = st->next;
-
         if(st->isfinished)
         {
             continue;
@@ -535,7 +532,7 @@ fluid_sample_timer_t *new_fluid_sample_timer(fluid_synth_t *synth, fluid_timer_c
         return NULL;
     }
 
-    result->starttick = fluid_synth_get_ticks(synth);
+    fluid_sample_timer_reset(synth, result);
     result->isfinished = 0;
     result->data = data;
     result->callback = callback;
@@ -565,6 +562,10 @@ void delete_fluid_sample_timer(fluid_synth_t *synth, fluid_sample_timer_t *timer
     }
 }
 
+void fluid_sample_timer_reset(fluid_synth_t *synth, fluid_sample_timer_t *timer)
+{
+    timer->starttick = fluid_synth_get_ticks(synth);
+}
 
 /***************************************************************
  *
