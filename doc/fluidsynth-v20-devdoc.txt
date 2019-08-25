@@ -379,7 +379,6 @@ int main(int argc, char** argv)
     settings = new_fluid_settings();
     synth = new_fluid_synth(settings);
     player = new_fluid_player(synth);
-    adriver = new_fluid_audio_driver(settings, synth);
     /* process command line arguments */
     for (i = 1; i < argc; i++) {
         if (fluid_is_soundfont(argv[i])) {
@@ -389,6 +388,8 @@ int main(int argc, char** argv)
             fluid_player_add(player, argv[i]);
         }
     }
+    /* start the synthesizer thread */
+    adriver = new_fluid_audio_driver(settings, synth);
     /* play the midi files, if any */
     fluid_player_play(player);
     /* wait for playback termination */
