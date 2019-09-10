@@ -59,7 +59,7 @@ int main(void)
         TEST_ASSERT(fluid_mod_get_amount(mod2) == 960);
     }
 
-    // Test 1.1: Same test as 1 but with linked_mod not NULL. The function is excepted to return any
+    // Test 1.1: Same test as 1 but with linked_mod not NULL. The function expects to return any
     // linked modulator list in linked_mod pointer.
     // Actually linked_mod doesn't contain any linked modulator.
     printf("\nTest 1.1: same test as 1 but with linked_mod not NULL\n");
@@ -117,9 +117,9 @@ int main(void)
         TEST_ASSERT(fluid_mod_get_amount(mod2) == 300);
     }
     
-    // Test 2.1: Same test as 2 but with linked_mod not NULL. The function is excepted to return any
+    // Test 2.1: Same test as 2 but with linked_mod not NULL. The function expects to return any
     // linked modulator list in linked_mod pointer.
-    // Actually linked_mod contains 3 linked modulator.
+    // Actually linked_mod should contain 3 linked modulator.
     printf("\nTest 2.1: same test as 2 but with linked_mod not NULL\n");
     {
         fluid_mod_t * linked_mod;
@@ -160,9 +160,9 @@ int main(void)
         TEST_ASSERT(fluid_mod_get_amount(mod2) == 300);
     }
 
-    // Test 3.1: Same test as 3 but with linked_mod not NULL. The function is excepted to return any
+    // Test 3.1: Same test as 3 but with linked_mod not NULL. The function expects to return any
     // linked modulator list in linked_mod pointer.
-    // Actually linked_mod contains 3 linked modulator.
+    // Actually linked_mod should contain 3 linked modulator.
     printf("\nTest 3.1: same test as 3 but with linked_mod not NULL\n");
     {
         fluid_mod_t * linked_mod;
@@ -211,9 +211,9 @@ int main(void)
         TEST_ASSERT(fluid_mod_get_amount(mod3) == 0); // invalidated because mod1 without FLUID_MOD_LINK_SRC
     }
 
-    // Test 4.1: Same test as 4 but with linked_mod not NULL. The function is excepted to return any
+    // Test 4.1: Same test as 4 but with linked_mod not NULL. The function expects to return any
     // linked modulator list in linked_mod pointer.
-    // Actually linked_mod contains 3 linked modulator.
+    // Actually linked_mod should contain 3 linked modulator.
     printf("\nTest 4.1: Same test as 4 but with linked_mod not NULL\n");
     {
         fluid_mod_t * linked_mod;
@@ -260,9 +260,9 @@ int main(void)
         TEST_ASSERT(fluid_mod_get_amount(mod3) == 50);
     }
 
-    // Test 5.1: Same test as 5 but with linked_mod not NULL. The function is excepted to return any
+    // Test 5.1: Same test as 5 but with linked_mod not NULL. The function expects to return any
     // linked modulator list in linked_mod pointer.
-    // Actually linked_mod contains 4 linked modulators.
+    // Actually linked_mod should contain 4 linked modulators.
     printf("\nTest 5.1: Same test as 5 but with linked_mod not NULL\n");
     {
         fluid_mod_t * linked_mod;
@@ -349,9 +349,9 @@ int main(void)
         TEST_ASSERT(fluid_mod_get_amount(mod3) == 0);
     }
 
-    // Test 6.0.1: Same test as 6.0 but with linked_mod not NULL. The function is excepted to return any
+    // Test 6.0.1: Same test as 6.0 but with linked_mod not NULL. The function expects to return any
     // linked modulator list in linked_mod pointer.
-    // Actually linked_mod contains 2 linked modulators.
+    // Actually linked_mod should contain 2 linked modulators.
     printf("\nTest 6.0.1: Same test as 6.0 but with linked_mod not NULL\n");
     {
         fluid_mod_t * linked_mod;
@@ -407,9 +407,9 @@ int main(void)
         TEST_ASSERT(fluid_mod_get_amount(mod3) == 0); // without destination.
     }
 
-    // Test 6.1.1: Same test as 6.1 but with linked_mod not NULL. The function is excepted to return any
+    // Test 6.1.1: Same test as 6.1 but with linked_mod not NULL. The function expects to return any
     // linked modulator list in linked_mod pointer.
-    // Actually linked_mod contains 0 linked modulators.
+    // Actually linked_mod should contain 0 linked modulators.
     printf("\nTest 6.1.1: Same test as 6.1 but with linked_mod not NULL\n");
     {
         fluid_mod_t * linked_mod;
@@ -749,9 +749,9 @@ int main(void)
         TEST_ASSERT(fluid_mod_get_amount(mod3) == 0);// Invalided because isolated
     }
 
-    // Test 9.1: Same test as 9 but with linked_mod not NULL. The function is excepted to return any
+    // Test 9.1: Same test as 9 but with linked_mod not NULL. The function expects to return any
     // linked modulator list in linked_mod pointer.
-    // Actually linked_mod contains 2 linked modulator.
+    // Actually linked_mod should contain 2 linked modulator.
     printf("\nTest 9.1: same test as 9 but with linked_mod not NULL\n");
     {
         fluid_mod_t * linked_mod;
