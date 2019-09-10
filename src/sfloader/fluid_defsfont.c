@@ -1802,7 +1802,7 @@ fluid_list_copy_linked_mod(const fluid_mod_t *list_mod, int dest_idx, int new_id
  * The function does the same job that fluid_zone_check_mod() except that
  * that modulators aren't removed from mod_list and lists length aren't
  * limited. The function is appropriate to be called by API
- * fluid_voice_add_mod(),fluid_synth_add_default_mod().
+ * fluid_voice_add_mod2(),fluid_synth_add_default_mod2().
  *
  * @param list_name, list name used to prefix warning messages displayed.
  *  If NULL, the function does minimum safe check for linked modulators.
