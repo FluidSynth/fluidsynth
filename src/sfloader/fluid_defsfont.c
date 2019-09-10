@@ -1478,12 +1478,14 @@ int fluid_get_count_mod(const fluid_mod_t *mod)
          1            |     1            | belongs to a complete linked path
 */
 
+/* bit FLUID_MOD_VALID set to 1 indicates that the modulator is valid */
+#define FLUID_MOD_VALID  1 << 0
 /* bit FLUID_PATH_VALID set to 1 indicates that the modulator belongs to
  a complete valid linked path already discovered */
-#define FLUID_PATH_VALID  1 << 0
+#define FLUID_PATH_VALID  1 << 1
 /* bit FLUID_PATH_CURRENT set to 1 indicates that the modulator belongs to
  the current linked path. It allows detection of circular and isolated path */
-#define FLUID_PATH_CURRENT  1 << 1
+#define FLUID_PATH_CURRENT  1 << 2
 
 /*
  * Check linked modulator paths without destination and circular linked modulator
@@ -1554,11 +1556,14 @@ int fluid_get_count_mod(const fluid_mod_t *mod)
  *   if < 0, search first modulator (i.e first linked modulateur).
  *   if >= 0 index of the destination linked modulator to search.
  * @param path, pointer on table for path registering.
- *  On input, FLUID_PATH_CUR , FLUID_PATH_VALID must be initialized to 0.
- *  On return, path table contains:
- *  - no path (FLUID_PATH_CUR set to 0, FLUID_PATH_VALID set to 0) or
+ *  On input, FLUID_PATH_CURRENT , FLUID_PATH_VALID must be initialized to 0.
+ *   FLUID_MOD_VALID to 1 indicates that the modulator is valid.
+ *  On return, path table contains bit for each modulator that indicates if
+ *   the modulator belongs to a linked path.
+ *  - no path (FLUID_PATH_CURRENT set to 0, FLUID_PATH_VALID set to 0) or
  *  - valid complete paths (FLUID_PATH_VALID set to 1) or
- *  - invalid incomplete paths (FLUID_PATH_CUR set to 1, FLUID_PATH_VALID set to 0).
+ *  - invalid incomplete paths (FLUID_PATH_CURRENT set to 1, FLUID_PATH_VALID
+ *    set to 0).
  *
  * @return  TRUE if at least one complete valid linked modulators path exists,
  *          FALSE  otherwise.
@@ -1578,7 +1583,7 @@ fluid_check_linked_mod_path(char *list_name, fluid_mod_t *list_mod,
         {
             /* checks if mod source isn't linked and mod destination is linked */
             if (!fluid_mod_has_linked_src1(mod) && (mod->dest & FLUID_MOD_LINK_DEST)
-                 && (mod->amount != 0))
+                 && (path[mod_idx] & FLUID_MOD_VALID))
             {
                 /* memorizes mod state: in current linked path */
                 path[mod_idx] |= FLUID_PATH_CURRENT;
@@ -1607,7 +1612,7 @@ fluid_check_linked_mod_path(char *list_name, fluid_mod_t *list_mod,
         { 
             /* mod is destination of a previous modulator in path */
             /* is this modulator destination valid ? */
-            if (!fluid_mod_has_linked_src1(mod) || (mod->amount ==0))
+            if (!fluid_mod_has_linked_src1(mod) || !(path[mod_idx] & FLUID_MOD_VALID))
             {
                 /* warning: path have an invalid destination */
                 if(list_name != NULL)
@@ -1837,8 +1842,11 @@ fluid_list_check_linked_mod(char *list_name, fluid_mod_t *list_mod,
     {
         return FLUID_FAILED;
     }
-    /* initialize path: reset bits FLUID_PATH_VALID, FLUID_PATH_CUR */
-    FLUID_MEMSET(path, 0, count);
+    /* initialize path: 
+	   - reset bits FLUID_PATH_VALID, FLUID_PATH_CURRENT
+	   - set bits FLUID_MOD_VALID
+	*/
+    FLUID_MEMSET(path, FLUID_MOD_VALID, count);
 
     /* checks valid modulator sources (specs SF 2.01  7.4, 7.8, 8.2.1).*/
     /* checks identic modulators in the list (specs SF 2.01  7.4, 7.8). */
@@ -1858,6 +1866,7 @@ fluid_list_check_linked_mod(char *list_name, fluid_mod_t *list_mod,
             /* or is mod identic to any following modulator ? */
                ||fluid_zone_is_mod_identic(mod, list_mod_name))
             {   /* marks this modulator invalid for future checks */
+                path[count] &= ~FLUID_MOD_VALID;
                 mod->amount = 0;
             }
 
