@@ -6,6 +6,7 @@
 
 int fluid_list_check_linked_mod(char *zone_name, fluid_mod_t *list_mod,
                             fluid_mod_t **linked_mod);
+void delete_fluid_list_mod(fluid_mod_t *list_mod);
 
 // tests the linked "nature" of modulators, i.e. fluid_list_check_linked_mod()
 int main(void)
@@ -57,7 +58,22 @@ int main(void)
         TEST_ASSERT(fluid_mod_get_amount(mod1) == 11025);
         TEST_ASSERT(fluid_mod_get_amount(mod2) == 960);
     }
-    
+
+    // Test 1.1: Same test as 1 but with linked_mod not NULL. The function is excepted to return any
+    // linked modulator list in linked_mod pointer.
+    // Actually linked_mod doesn't contain any linked modulator.
+    printf("\nTest 1.1: same test as 1 but with linked_mod not NULL\n");
+    {
+        fluid_mod_t * linked_mod;
+        // On return:
+        //  - NULL must be returned in linked_mod
+        //  - 0 must be returned in linked_count
+        linked_mod = mod0; // initialize linked_mod to non NULL.
+        linked_count = fluid_list_check_linked_mod("test zone with simple modulators", list_of_mods, &linked_mod);
+        TEST_ASSERT(linked_count == 0);
+        TEST_ASSERT(linked_mod == NULL);
+    }
+
     // set up a valid list of complex modulators
 	printf("\nTest 2: set up a valid list of complex modulators\n");
 	printf(  " List:m0,m1,m2\n");
@@ -101,8 +117,24 @@ int main(void)
         TEST_ASSERT(fluid_mod_get_amount(mod2) == 300);
     }
     
-    // same list, but changed order
-	printf("\nTest 3: same list, but changed order\n");
+    // Test 2.1: Same test as 2 but with linked_mod not NULL. The function is excepted to return any
+    // linked modulator list in linked_mod pointer.
+    // Actually linked_mod contains 3 linked modulator.
+    printf("\nTest 2.1: same test as 2 but with linked_mod not NULL\n");
+    {
+        fluid_mod_t * linked_mod;
+        // On return:
+        //  - not NULL must be returned in linked_mod
+        //  - 3 must be returned in linked_count
+        linked_mod = NULL; // initialize linked_mod to NULL.
+        linked_count = fluid_list_check_linked_mod("test zone with linked modulators", list_of_mods, &linked_mod);
+        TEST_ASSERT(linked_count == 3);
+        TEST_ASSERT(linked_mod != NULL);
+        delete_fluid_list_mod(linked_mod);
+    }
+
+    // same list that Test 2, but changed order
+	printf("\nTest 3: same list that test 2, but changed order\n");
 	printf(  " List:m0,m2,m1\n");
 	printf(  " Paths from any CC to ending modulator connected to gen:\n");
 	printf(  "  CC-->m2-->m0-->gen\n");
@@ -127,9 +159,25 @@ int main(void)
         TEST_ASSERT(fluid_mod_get_amount(mod1) == 200);
         TEST_ASSERT(fluid_mod_get_amount(mod2) == 300);
     }
+
+    // Test 3.1: Same test as 3 but with linked_mod not NULL. The function is excepted to return any
+    // linked modulator list in linked_mod pointer.
+    // Actually linked_mod contains 3 linked modulator.
+    printf("\nTest 3.1: same test as 3 but with linked_mod not NULL\n");
+    {
+        fluid_mod_t * linked_mod;
+        // On return:
+        //  - not NULL must be returned in linked_mod
+        //  - 3 must be returned in linked_count
+        linked_mod = NULL; // initialize linked_mod to NULL.
+        linked_count = fluid_list_check_linked_mod("test zone with linked modulators", list_of_mods, &linked_mod);
+        TEST_ASSERT(linked_count == 3);
+        TEST_ASSERT(linked_mod != NULL);
+        delete_fluid_list_mod(linked_mod);
+    }
     
-    // same list, but with additional mod3 that points to mod1 without mod1 having FLUID_MOD_LINK_SRC
- 	printf("\nTest 4: same list that test 2, but with additional mod3 that points to mod1 without mod1 having FLUID_MOD_LINK_SRC\n");
+    // same list that test 3, but with additional mod3 that points to mod1 without mod1 having FLUID_MOD_LINK_SRC
+    printf("\nTest 4: same list that test 3, but with additional mod3 that points to mod1 without mod1 having FLUID_MOD_LINK_SRC\n");
  	printf(  " List:m0,m1,m2,m3\n");
 	printf(  " Paths from any CC to ending modulator connected to gen:\n");
 	printf(  "  CC-->m3-->m1\n");
@@ -162,9 +210,25 @@ int main(void)
         TEST_ASSERT(fluid_mod_get_amount(mod2) == 300);
         TEST_ASSERT(fluid_mod_get_amount(mod3) == 0); // invalidated because mod1 without FLUID_MOD_LINK_SRC
     }
-        
-    // same list, with additional mod3 and valid mod1 this time
- 	printf("\nTest 5: same list, with additional mod3 and valid mod1 this time\n");
+
+    // Test 4.1: Same test as 4 but with linked_mod not NULL. The function is excepted to return any
+    // linked modulator list in linked_mod pointer.
+    // Actually linked_mod contains 3 linked modulator.
+    printf("\nTest 4.1: Same test as 4 but with linked_mod not NULL\n");
+    {
+        fluid_mod_t * linked_mod;
+        // On return:
+        //  - not NULL must be returned in linked_mod
+        //  - 3 must be returned in linked_count
+        linked_mod = NULL; // initialize linked_mod to NULL.
+        linked_count = fluid_list_check_linked_mod("test zone with linked modulators", list_of_mods, &linked_mod);
+        TEST_ASSERT(linked_count == 3);
+        TEST_ASSERT(linked_mod != NULL);
+        delete_fluid_list_mod(linked_mod);
+    }
+
+    // same list than test 4, with additional mod3 and valid mod1 this time
+    printf("\nTest 5: same list than test 4, with additional mod3 and valid mod1 this time\n");
  	printf(  " List:m0,m1,m2,m3\n");
 	printf(  " Paths from any CC to ending modulator connected to gen:\n");
 	printf(  "  CC-->m3-->m1\n");
@@ -194,6 +258,22 @@ int main(void)
         TEST_ASSERT(fluid_mod_get_amount(mod1) == 200);
         TEST_ASSERT(fluid_mod_get_amount(mod2) == 300);
         TEST_ASSERT(fluid_mod_get_amount(mod3) == 50);
+    }
+
+    // Test 5.1: Same test as 5 but with linked_mod not NULL. The function is excepted to return any
+    // linked modulator list in linked_mod pointer.
+    // Actually linked_mod contains 4 linked modulators.
+    printf("\nTest 5.1: Same test as 5 but with linked_mod not NULL\n");
+    {
+        fluid_mod_t * linked_mod;
+        // On return:
+        //  - not NULL must be returned in linked_mod
+        //  - 3 must be returned in linked_count
+        linked_mod = NULL; // initialize linked_mod to NULL.
+        linked_count = fluid_list_check_linked_mod("test zone with linked modulators", list_of_mods, &linked_mod);
+        TEST_ASSERT(linked_count == 4);
+        TEST_ASSERT(linked_mod != NULL);
+        delete_fluid_list_mod(linked_mod);
     }
     
     // Look like circular circular complex modulators, but it isn't not circular !
@@ -229,7 +309,7 @@ int main(void)
         TEST_ASSERT(fluid_mod_get_amount(mod2) == 300);
         TEST_ASSERT(fluid_mod_get_amount(mod3) == 0); // path without destination
     }
-    
+
     // Circular complex modulators
  	printf("\nTest 6.0: true circular complex modulators, CC->mod3->mod1->mod1 => circular path\n");
  	printf(  " List:m0,m1,m2,m3\n");
@@ -267,6 +347,22 @@ int main(void)
         TEST_ASSERT(fluid_mod_get_amount(mod1) == 0);
         TEST_ASSERT(fluid_mod_get_amount(mod2) == 300);
         TEST_ASSERT(fluid_mod_get_amount(mod3) == 0);
+    }
+
+    // Test 6.0.1: Same test as 6.0 but with linked_mod not NULL. The function is excepted to return any
+    // linked modulator list in linked_mod pointer.
+    // Actually linked_mod contains 2 linked modulators.
+    printf("\nTest 6.0.1: Same test as 6.0 but with linked_mod not NULL\n");
+    {
+        fluid_mod_t * linked_mod;
+        // On return:
+        //  - not NULL must be returned in linked_mod
+        //  - 2 must be returned in linked_count
+        linked_mod = NULL; // initialize linked_mod to NULL.
+        linked_count = fluid_list_check_linked_mod("test zone with circular linked modulators", list_of_mods, &linked_mod);
+        TEST_ASSERT(linked_count == 2);
+        TEST_ASSERT(linked_mod != NULL);
+        delete_fluid_list_mod(linked_mod);
     }
 
 	// Another circular complex modulators
@@ -310,10 +406,25 @@ int main(void)
         TEST_ASSERT(fluid_mod_get_amount(mod2) == 0); // part of circular path
         TEST_ASSERT(fluid_mod_get_amount(mod3) == 0); // without destination.
     }
-    
+
+    // Test 6.1.1: Same test as 6.1 but with linked_mod not NULL. The function is excepted to return any
+    // linked modulator list in linked_mod pointer.
+    // Actually linked_mod contains 0 linked modulators.
+    printf("\nTest 6.1.1: Same test as 6.1 but with linked_mod not NULL\n");
+    {
+        fluid_mod_t * linked_mod;
+        // On return:
+        //  - NULL must be returned in linked_mod
+        //  - 0 must be returned in linked_count
+        linked_mod = mod0; // initialize linked_mod to not NULL.
+        linked_count = fluid_list_check_linked_mod("test zone with circular linked modulators", list_of_mods, &linked_mod);
+        TEST_ASSERT(linked_count == 0);
+        TEST_ASSERT(linked_mod == NULL);
+    }
+
     // circular complex modulators, but detected isolated because none of these
     // have a CC or GC on sources. These modulators have all src1 source linked.
-    printf("Test 6.2: circular complex modulators m3->m2->m1->m0->m3\n");
+    printf("\nTest 6.2: circular complex modulators m3->m2->m1->m0->m3\n");
     {
         mod2->next = mod3;
         mod1->next = mod2;
@@ -359,7 +470,7 @@ int main(void)
     
     // circular complex modulators, but detected isolated because none of these
     // have a CC or GC on sources. These modulators have all src1 source linked.
-    printf("Test 6.3: circular complex modulators m3+m2->m1->m0->m3\n");
+    printf("\nTest 6.3: circular complex modulators m3+m2->m1->m0->m3\n");
     {
         mod2->next = mod3;
         mod1->next = mod2;
@@ -404,7 +515,7 @@ int main(void)
     
     // circular complex modulators m1->m0->m3->m1, but detected isolated because none of these
     // have a CC or GC on sources. These modulators have all src1 source linked.
-    printf("Test 6.4: circular complex modulators m1->m0->m3->m1 and cc->m2->gen\n");
+    printf("\nTest 6.4: circular complex modulators m1->m0->m3->m1 and cc->m2->gen\n");
     {
         mod2->next = mod3;
         mod1->next = mod2;
@@ -452,7 +563,7 @@ int main(void)
     
     // circular complex modulators m3->m1->m3, but detected isolated because none of these
     // have a CC or GC on sources. These modulators have all src1 source linked.
-    printf("Test 6.5: circular complex modulators m3->m1->m3 and cc->m2->m0->gen\n");
+    printf("\nTest 6.5: circular complex modulators m3->m1->m3 and cc->m2->m0->gen\n");
     {
         mod2->next = mod3;
         mod1->next = mod2;
@@ -636,6 +747,22 @@ int main(void)
         TEST_ASSERT(fluid_mod_get_amount(mod1) == 0); // Invalided because isolated
         TEST_ASSERT(fluid_mod_get_amount(mod2) == 300);
         TEST_ASSERT(fluid_mod_get_amount(mod3) == 0);// Invalided because isolated
+    }
+
+    // Test 9.1: Same test as 9 but with linked_mod not NULL. The function is excepted to return any
+    // linked modulator list in linked_mod pointer.
+    // Actually linked_mod contains 2 linked modulator.
+    printf("\nTest 9.1: same test as 9 but with linked_mod not NULL\n");
+    {
+        fluid_mod_t * linked_mod;
+        // On return:
+        //  - not NULL must be returned in linked_mod
+        //  - 2 must be returned in linked_count
+        linked_mod = NULL; // initialize linked_mod to NULL.
+        linked_count = fluid_list_check_linked_mod("test zone with linked modulators", list_of_mods, &linked_mod);
+        TEST_ASSERT(linked_count == 2);
+        TEST_ASSERT(linked_mod != NULL);
+        delete_fluid_list_mod(linked_mod);
     }
 
     delete_fluid_mod(mod0);

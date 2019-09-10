@@ -1704,16 +1704,18 @@ fluid_check_linked_mod_path(char *list_name, fluid_mod_t *list_mod,
  * @param linked_mod, address of pointer on linked modulators list returned
  *  if any linked modulators exist.
  *
- * @return  
- *   0, linked_mod list is empty.
- *   > 0 , linked_mod list contains linked modulators.
- *   FLUID_FAILED otherwise.
+ * @return
+ *  - number of linked modulators returned in linked_mod if any valid
+ *    linked path exists.
+ *  - 0 if no linked path exists.
+ *  FLUID_FAILED if failed (memory error).
 */
 static int 
 fluid_list_copy_linked_mod(const fluid_mod_t *list_mod, int dest_idx, int new_idx,
                            const unsigned char path[],
                            fluid_mod_t **linked_mod)
 {
+    int total_linked_count = 0; /* number of linked modulator to return */
     int linked_count = new_idx; /* Last added modulator index in linked_mod */
     int mod_idx = 0; /* first modulator index in list mod*/
     const fluid_mod_t *mod = list_mod;
@@ -1784,12 +1786,16 @@ fluid_list_copy_linked_mod(const fluid_mod_t *list_mod, int dest_idx, int new_id
                         return FLUID_FAILED;
                     }
                 }
+                if (is_mod_dst_only)
+                {
+                    total_linked_count += linked_count;
+                }
             }
         }
         mod = mod->next;
         mod_idx++;
     }
-    return linked_count;
+    return ((new_idx == 0) ? total_linked_count : linked_count);
 }
 /**
  * Checks all modulators from a zone modulator list and optionally clone
