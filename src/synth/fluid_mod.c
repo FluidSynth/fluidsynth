@@ -808,11 +808,11 @@ int fluid_mod_check_sources(const fluid_mod_t *mod, char *name)
  *
  * Branch cm1.b1 and cm1.b2 are the only one similar to cm0.b0, cm0.b1 respectively.
  * This is true if
- *   - cm1.m2 have same sources then cm0.m1
- *   - cm1.m3 have same sources then cm0.m2
+ *   - cm1.m2 has same sources then cm0.m1
+ *   - cm1.m3 has same sources then cm0.m2
  *
  * Branch cm1.b0 is the only one similar to cm0.b2. This is true if
- *   - cm1.m1 have same sources then cm0.m3
+ *   - cm1.m1 has same sources then cm0.m3
  *
  * Note that similar branches in cm0 and cm1 are not necessarly ordered the same way.
  * Branches ordering need not to be same to get identical complex modulators. This
@@ -847,7 +847,7 @@ static int fluid_linked_branch_test_identity(fluid_mod_t *cm0_mod,
         unsigned char dest1_idx; /* destination index of cm1_branch */
         unsigned char dest0_idx; /* destination index of cm0 branch */
     }branch_level[FLUID_NUM_MOD];
-    unsigned char state_idx = 0; /* branch state index */
+    int state_idx = 0; /* branch state index */
 
     unsigned char mod0_idx, mod1_idx;  /* index of cm0_mod and cm1_mod */
 
@@ -896,6 +896,12 @@ static int fluid_linked_branch_test_identity(fluid_mod_t *cm0_mod,
                        respectively */
                     /* goes on next branches */
                     state_idx++;
+                    if(state_idx >= FLUID_NUM_MOD)
+                    {
+                        /* internal limit FLUID_NUM_MOD is exceeded */
+                        FLUID_LOG(FLUID_WARN, "branch stack overflow.");
+                        return FALSE;
+                    }
 
                     /* next cm1 member on cm1 branch */
                     branch_level[state_idx].cm1_branch = cm1_mod->next;
@@ -928,6 +934,12 @@ static int fluid_linked_branch_test_identity(fluid_mod_t *cm0_mod,
                  while(r < branch_level[state_idx].dest0_idx)
                  {
                      state_idx--;
+                     if(state_idx < 0)
+                     {
+                         /* internal error: this should never happen */
+                         FLUID_LOG(FLUID_ERR, "branch stack underflow.");
+                         return FALSE;
+                     }
                  }
                  /* continues on the current branch */
                  break;				 
