@@ -1846,7 +1846,7 @@ fluid_list_check_linked_mod(char *list_name, fluid_mod_t *list_mod,
     count = fluid_get_count_mod(list_mod);
     if(!count)
     { /* There are no modulators, no need to go further */
-        return FALSE;
+        return 0;
     }
 
     /* path allocation */
