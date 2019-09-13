@@ -1549,7 +1549,6 @@ int fluid_get_count_mod(const fluid_mod_t *mod)
  * @param list_name, list name used to prefix warning messages displayed.
  *  if NULL, no message are displayed.
  * @param list_mod, pointer on modulators list.
- *  On input, amount value to 0 indicates that modulator are invalid.
  *  On output, invalid linked modulator are marked with amount value to 0.
  * @param dest_idx, index of the destination linked modulator to search.
  *  Must be - 1 at first call.
@@ -1558,10 +1557,10 @@ int fluid_get_count_mod(const fluid_mod_t *mod)
  * @param path, pointer on table for path registering.
  *  On input, FLUID_PATH_CURRENT , FLUID_PATH_VALID must be initialized to 0.
  *   FLUID_MOD_VALID to 1 indicates that the modulator is valid.
- *  On return, path table contains bit for each modulator that indicates if
+ *  On output, path table contains bit for each modulator that indicates if
  *   the modulator belongs to a linked path.
  *  - no path (FLUID_PATH_CURRENT set to 0, FLUID_PATH_VALID set to 0) or
- *  - valid complete paths (FLUID_PATH_VALID set to 1) or
+ *  - valid complete paths (FLUID_PATH_CURRENT, FLUID_PATH_VALID set to 1) or
  *  - invalid incomplete paths (FLUID_PATH_CURRENT set to 1, FLUID_PATH_VALID
  *    set to 0).
  *
