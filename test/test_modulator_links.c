@@ -268,7 +268,7 @@ int main(void)
         fluid_mod_t * linked_mod;
         // On return:
         //  - not NULL must be returned in linked_mod
-        //  - 3 must be returned in linked_count
+        //  - 4 must be returned in linked_count
         linked_mod = NULL; // initialize linked_mod to NULL.
         linked_count = fluid_list_check_linked_mod("test zone with linked modulators", list_of_mods, &linked_mod);
         TEST_ASSERT(linked_count == 4);
