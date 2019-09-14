@@ -1802,21 +1802,25 @@ fluid_list_copy_linked_mod(const fluid_mod_t *list_mod, int dest_idx, int new_id
  * valid linked modulators from mod_list list to linked_mod list.
  * - check valid sources (if requested, see list_name).
  * - check identic modulators (if requested, see list_name).
- * - check linked modulators paths.
+ * - check linked modulators paths (linked path without destination, circulars).
  * - check "isolated" linked paths (if requested, see list_name).
  * - clone valid linked modulators paths to linked_mod.
  * The function does the same job that fluid_zone_check_mod() except that
- * that modulators aren't removed from mod_list and lists length aren't
- * limited. The function is appropriate to be called by API
- * fluid_voice_add_mod2(),fluid_synth_add_default_mod2().
+ * modulators aren't removed from mod_list and lists length aren't
+ * limited. The function is appropriate to be called by soundfont loader as well
+ * by API not yet implemented:
+ * - fluid_voice_add_mod2(), fluid_check_complex_mod()
+ * - fluid_synth_add_default_mod2(), fluid_synth_remove_default_mod2().
  *
  * @param list_name, list name used to prefix warning messages displayed.
  *  If NULL, the function does minimum safe check for linked modulators.
  *   - no warning message are displayed.
  *   - checks not done are: valid source, identic modulator, isolated linked path.
- *   This is useful for performance reason, when the caller already know that
- *   modulators are valid. In this case, the function call only
- *   fluid_check_linked_mod_path() and fluid_list_copy_linked_mod().
+ *  This is useful for performance reason, when the caller already know that
+ *  modulators are valid. In this case only minimum safe checks are done
+ *  (linked paths without destination, circulars).
+ *  When called by the soundfont loader, it is a good pratice to do full check.
+ *  (see fluid_zone_check_mod()).
  *
  * @param list_mod, pointer on modulators list.
  *  On input, the list may contains any unlinked or linked modulators.
@@ -2042,8 +2046,11 @@ fluid_zone_check_mod(char *zone_name, fluid_mod_t **list_mod,
                      fluid_mod_t **linked_mod)
 {
 
-    /* Checks linked modulators paths from a zone modulators list list_mod */
-    /* Then, clone valid linked modulators paths from list_mod to linked_mod */
+    /* Checks linked modulators paths from a zone modulators list list_mod.
+       Because the function is called by the soundfont loader it is a good pratice
+       to do full check which is requested by given a zone name not NULL.
+       Then, clone valid linked modulators paths from list_mod to linked_mod.
+    */
     if(fluid_list_check_linked_mod(zone_name, *list_mod, linked_mod) == FLUID_FAILED)
     {
         return FLUID_FAILED;
