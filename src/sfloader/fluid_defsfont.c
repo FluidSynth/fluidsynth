@@ -694,9 +694,10 @@ fluid_defpreset_next(fluid_defpreset_t *defpreset)
 
 #ifdef DEBUG
 /*
- Prints all members of a modulator.
+ Print modulator member of a complex modulator.
+ @param offset, offset to add to each index member.
 */
-static void fluid_dump_linked_mod(fluid_mod_t *mod, int offset)
+void fluid_dump_linked_mod(fluid_mod_t *mod, int offset)
 {
 	int i, num = fluid_get_num_mod(mod);
 	

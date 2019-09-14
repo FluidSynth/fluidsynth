@@ -27,6 +27,8 @@ int fluid_zone_check_mod(char *zone_name, fluid_mod_t **list_mod,
 // implemented in fluid_defsfont.c
 void delete_fluid_list_mod(fluid_mod_t *list_mod);
 
+// implemented in fluid_defsfont.c
+void fluid_dump_linked_mod(fluid_mod_t *mod, int offset);
 
 //----------------------------------------------------------------------------
 static fluid_mod_t * fluid_build_list(fluid_mod_t mod_table[], int count_mod);
@@ -34,12 +36,12 @@ static int test_fluid_zone_check_mod(char * name_test,
 					 fluid_mod_t mod_table0[],int count_mod0,
 					 fluid_mod_t mod_table1[],int count_mod1
 					 );
-static void fluid_test_linked_mod_test_identity(fluid_mod_t *mod0, fluid_mod_t *mod1);
+static void fluid_linked_mod_dump_test_identity(fluid_mod_t *mod0, fluid_mod_t *mod1);
 
 static int all_test_fluid_zone_check_mod(char *num_test);
 
 static void print_lists(fluid_mod_t *list_mod, fluid_mod_t *linked_mod);
-static void fluid_dump_linked_mod(fluid_mod_t *mod, int offset);
+//static void fluid_dump_linked_mod(fluid_mod_t *mod, int offset);
 static void fluid_dump_list_linked_mod(fluid_mod_t *mod);
 static void print_list_linked_mod(char *header, char *name_list, fluid_mod_t *mod);
 static void fluid_dump_list_mod(fluid_mod_t *mod);
@@ -1139,7 +1141,7 @@ test_fluid_zone_check_mod(char * name_test,
 
 		/* The test does test identity between the first complex modulator
 		in linked_mod0 and the first complex modulator in linked_mod1. */
-		fluid_test_linked_mod_test_identity(linked_mod0,linked_mod1);
+		fluid_linked_mod_dump_test_identity(linked_mod0,linked_mod1);
 		FLUID_LOG(FLUID_INFO, "End test fluid_linked_mod_test_identity() ---------");
 	}
 	else
@@ -1159,10 +1161,48 @@ test_fluid_zone_check_mod(char * name_test,
 }
 
 /*
- The test does test identity between the first complex modulator
- in mod0 list and the first complex modulator in mod1 list.
+ A convenience function that builds a list of modulators from a modulator table
+ mod_table.
 */
-static void fluid_test_linked_mod_test_identity(fluid_mod_t *mod0, fluid_mod_t *mod1)
+static fluid_mod_t * fluid_build_list(fluid_mod_t mod_table[], int count_mod)
+{
+	int i;
+	fluid_mod_t * prev;
+	fluid_mod_t *list_mod = NULL;
+	/* build list_mod containing test modulators from mod_table */
+	for(i = 0; i < count_mod; i++)
+	{
+		/* Make a copy of this modulator */
+		fluid_mod_t * mod = new_fluid_mod();
+		if(mod == NULL)
+		{
+			FLUID_LOG(FLUID_ERR, "Out of memory");
+			delete_fluid_list_mod(list_mod);
+
+			return NULL;
+		}
+		fluid_mod_clone(mod, &mod_table[i]);
+		mod->next = NULL;
+		/* add to list_mode */
+		if(i == 0)
+		{
+			list_mod = mod;
+		}
+		else
+		{
+			prev->next = mod;
+		}
+		prev =mod;
+	}
+	return list_mod;
+}
+
+/*----Printing functions to the console --------------------------------------*/
+/*
+ Print identity information to the console. Print identity between the first
+ complex modulator in mod0 list and the first complex modulator in mod1 list.
+*/
+static void fluid_linked_mod_dump_test_identity(fluid_mod_t *mod0, fluid_mod_t *mod1)
 {    
 	/* first complex modulator */
 	fluid_mod_t *cm0; /* first modulator of cm0 */
@@ -1237,45 +1277,7 @@ static void fluid_test_linked_mod_test_identity(fluid_mod_t *mod0, fluid_mod_t *
 
 
 /*
- A convenience function that builds a list of modulators from a modulator table
- mod_table.
-*/
-static fluid_mod_t * fluid_build_list(fluid_mod_t mod_table[], int count_mod)
-{
-	int i;
-	fluid_mod_t * prev;
-	fluid_mod_t *list_mod = NULL;
-	/* build list_mod containing test modulators from mod_table */
-	for(i = 0; i < count_mod; i++)
-	{
-		/* Make a copy of this modulator */
-		fluid_mod_t * mod = new_fluid_mod();
-		if(mod == NULL)
-		{ 
-			FLUID_LOG(FLUID_ERR, "Out of memory");
-			delete_fluid_list_mod(list_mod);
-
-			return NULL;
-		}
-		fluid_mod_clone(mod, &mod_table[i]);
-		mod->next = NULL;
-		/* add to list_mode */
-		if(i == 0)
-		{
-			list_mod = mod;
-		}
-		else
-		{
-			prev->next = mod;
-		}
-		prev =mod;
-	}
-	return list_mod;
-}
-
-/*----Printing functions -----------------------------------------------------*/
-/*
- print two list:
+ print two list of modulators:
  - list_mod is the original list  that contains any modulator linked or not linked.
  - linked_mod is the list that contains complex (linked) modulators only.
 */
@@ -1285,23 +1287,6 @@ static void print_lists(fluid_mod_t *list_mod, fluid_mod_t *linked_mod)
 	print_list_mod("list_mod",list_mod);
 	
 	print_list_linked_mod(NULL,"linked_mod",linked_mod);
-}
-
-/*
- Print modulator member of a complex modulator.
- @param offset, offset to add to each index member.
-*/
-static void fluid_dump_linked_mod(fluid_mod_t *mod, int offset)
-{
-	int i, num = fluid_get_num_mod(mod);
-	
-	printf("modulator count:%d\n", num);
-	for (i = 0; i < num; i++)
-	{
-		printf("mod%02d ", i + offset);
-		fluid_dump_modulator(mod);
-		mod = mod->next;
-	}
 }
 
 /* -----------------------------------------*/
@@ -1318,7 +1303,12 @@ static void fluid_dump_list_linked_mod(fluid_mod_t *mod)
 }
 
 /* -----------------------------------------*/
-/* Print linked list , mod by mod */
+/* Print a linked list containing complex modulators,
+   complex mod by complex mod.
+ @header, header
+ @name_list, name of list concatened with header
+ @mod list, list of complex modulators
+*/
 static void print_list_linked_mod(char *header, char *name_list, fluid_mod_t *mod)
 {
 	if(header)
@@ -1337,7 +1327,8 @@ static void print_list_linked_mod(char *header, char *name_list, fluid_mod_t *mo
 }
 
 /* -----------------------------------------*/
-/* dump for any list mod by mod */
+/* dump for any list mod by mod
+*/
 static void fluid_dump_list_mod(fluid_mod_t *mod)
 {
 	int count = 0;
@@ -1352,6 +1343,8 @@ static void fluid_dump_list_mod(fluid_mod_t *mod)
 
 /*
  Print modulator in list, mod by mod.
+ @name_list, name of list printed as header
+ @mod, list of modulators
 */
 static void print_list_mod(char *name_list, fluid_mod_t *mod)
 {
