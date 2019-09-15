@@ -1539,9 +1539,17 @@ fluid_voice_stop(fluid_voice_t *voice)
 void
 fluid_voice_add_mod(fluid_voice_t *voice, fluid_mod_t *mod, int mode)
 {
+    fluid_return_if_fail(voice != NULL);
+    fluid_return_if_fail(mod != NULL);
+
+    /* mod must be simple modulator. Ignore it if it is a linked modulator */
+    fluid_return_if_fail(!fluid_mod_is_linked(mod));
+
     /* Ignore the modulator if its sources inputs are invalid */
     if(fluid_mod_check_sources(mod, "api fluid_voice_add_mod mod"))
     {
+        /* Initialize next, in case mod doesn't come from new_fluid_mod() */
+        mod->next = NULL;
         fluid_voice_add_mod_local(voice, mod, mode, FLUID_NUM_MOD);
     }
 }
