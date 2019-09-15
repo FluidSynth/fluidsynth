@@ -851,9 +851,13 @@ static int is_arg_num_test(char *arg, char *num_test)
 
 /*
  Does all test:
-  test of fluid_zone_check_mod() and
-  test of fluid_linked_mod_test_identity()
+  - test of fluid_zone_check_mod() and
+  - test of fluid_linked_mod_test_identity().
 
+  Note: These tests display results on the console and are intended to be
+  interpreted by a human reading the result.
+  Unlike tests done in test_modulator_link.c, these tests aren't intended to
+  do automatic tests using TEST_ASSERT.
 
  The modulators have to be presented in tables for convenience.
  It is easy to add a test:
@@ -1060,6 +1064,11 @@ static int all_test_fluid_zone_check_mod(char *arg)
     is not null). 
 	The test does test identity between the first complex modulator
 	found in mod_table0 and the first complex modulator found in mod_table1.
+
+  Note: These tests display results on the console and are intended to be
+  interpreted by a human reading the result.
+  Unlike tests done in test_modulator_link.c, these tests aren't intended to
+  do automatic tests using TEST_ASSERT.
 
  @param mod_table1, pointer on modulator table or NULL.
  @param count_mod1, count of modulators in mod_table1.
