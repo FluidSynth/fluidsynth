@@ -41,7 +41,6 @@ static void fluid_linked_mod_dump_test_identity(fluid_mod_t *mod0, fluid_mod_t *
 static int all_test_fluid_zone_check_mod(char *num_test);
 
 static void print_lists(fluid_mod_t *list_mod, fluid_mod_t *linked_mod);
-//static void fluid_dump_linked_mod(fluid_mod_t *mod, int offset);
 static void fluid_dump_list_linked_mod(fluid_mod_t *mod);
 static void print_list_linked_mod(char *header, char *name_list, fluid_mod_t *mod);
 static void fluid_dump_list_mod(fluid_mod_t *mod);
