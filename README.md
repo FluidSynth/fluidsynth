@@ -3,30 +3,38 @@
 
 | Build Status | glib < 2.30 | glib >= 2.30 |
 |---|---|---|
-| Linux | n.a. | [![Build Status Travis](https://travis-ci.org/FluidSynth/fluidsynth.svg?branch=master)](https://travis-ci.org/FluidSynth/fluidsynth/branches) |
-| FreeBSD | n.a. | [![Build Status](https://api.cirrus-ci.com/github/FluidSynth/fluidsynth.svg?branch=master)](https://cirrus-ci.com/github/FluidSynth/fluidsynth) |
-| Windows/MacOSX | [![Build Status](https://dev.azure.com/tommbrt/tommbrt/_apis/build/status/FluidSynth.fluidsynth?branchName=master)](https://dev.azure.com/tommbrt/tommbrt/_build/latest?definitionId=3&branchName=master) | [![Build status](https://ci.appveyor.com/api/projects/status/anbmtebt5uk4q1it/branch/master?svg=true)](https://ci.appveyor.com/project/derselbst/fluidsynth-g2ouw/branch/master) |
+| ![Linux](https://raw.githubusercontent.com/microsoft/azure-pipelines-tasks/master/docs/res/linux_med.png) **Linux** | n.a. | [![Build Status Travis](https://travis-ci.org/FluidSynth/fluidsynth.svg?branch=master)](https://travis-ci.org/FluidSynth/fluidsynth/branches) |
+| <img src="https://www.theinquirer.net/w-images/866eae81-b13b-47b5-8180-929943e9dc21/0/daemonhammerfreebsd-580x358.jpg" height="25"> **FreeBSD** | n.a. | [![Build Status](https://api.cirrus-ci.com/github/FluidSynth/fluidsynth.svg?branch=master)](https://cirrus-ci.com/github/FluidSynth/fluidsynth) |
+| ![Win](https://raw.githubusercontent.com/microsoft/azure-pipelines-tasks/master/docs/res/win_med.png) **Windows** && ![macOS](https://raw.githubusercontent.com/microsoft/azure-pipelines-tasks/master/docs/res/apple_med.png) **MacOSX** | [![Build Status](https://dev.azure.com/tommbrt/tommbrt/_apis/build/status/FluidSynth.fluidsynth?branchName=master)](https://dev.azure.com/tommbrt/tommbrt/_build/latest?definitionId=3&branchName=master) | [![Build status](https://ci.appveyor.com/api/projects/status/anbmtebt5uk4q1it/branch/master?svg=true)](https://ci.appveyor.com/project/derselbst/fluidsynth-g2ouw/branch/master) |
+
+
 
 ### FluidSynth is a software real-time synthesizer based on the Soundfont 2 specifications.
 
 [![OHLOH Project Stats](https://www.openhub.net/p/fluidsynth/widgets/project_thin_badge?format=gif)](https://www.openhub.net/p/fluidsynth)
 
-FluidSynth reads and handles MIDI events from the MIDI input
-device. It is the software analogue of a MIDI synthesizer. FluidSynth
-can also play midifiles using a Soundfont.
+FluidSynth generates audio by reading and handling MIDI events from MIDI input devices by using a [SoundFont](https://github.com/FluidSynth/fluidsynth/wiki/SoundFont). It is the software analogue of a MIDI synthesizer. FluidSynth can also play midifiles.
 
 
-## Information on the web
+## Documentation
 
-The place to look if you are looking for the latest information on
-FluidSynth is the web site at http://www.fluidsynth.org/.
+The central place for documentation and further links is our **Wiki** here at GitHub: **https://github.com/FluidSynth/fluidsynth/wiki**
 
-For documentation, please [see the links below](#documentation).
+You are welcome to edit and improve the wiki. All you need is an account at GitHub. Alternatively you may send an EMail to our mailing list along with your suggested changes. If you are missing parts of the documentation, let us know by writing to our mailing list. Further information about the mailing list are available in the Wiki as well.
 
-For information on how to build FluidSynth from source, please [see our wiki page](https://github.com/FluidSynth/fluidsynth/wiki/BuildingWithCMake).
+Latest information about FluidSynth are also available on the web site at http://www.fluidsynth.org/.
 
+## License
 
-## Why did we do it
+The source code for FluidSynth is distributed under the terms of the [GNU Lesser General Public License](https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html), see the [LICENSE](https://github.com/FluidSynth/fluidsynth/blob/master/LICENSE) file. To better understand the consequences when using FluidSynth in e.g. commercial or close-source projects, please refer to the [LicensingFAQ in our wiki](https://github.com/FluidSynth/fluidsynth/wiki/LicensingFAQ).
+
+## Building from source
+
+For information on how to build FluidSynth from source, please [refer to our wiki](https://github.com/FluidSynth/fluidsynth/wiki/BuildingWithCMake).
+
+## Historical background
+
+### Why did we do it
 
 The synthesizer grew out of a project, started by Samuel Bianchini and
 Peter Hanappe, and later joined by Johnathan Lee, that aimed at
@@ -58,9 +66,7 @@ In order to make Soundfonts available on all platforms (Linux, Mac,
 and Windows) and for all sound cards, we needed a software Soundfont
 synthesizer. That is why we developed FluidSynth.
 
-
-
-## Design decisions
+### Design decisions
 
 The synthesizer was designed to be as self-contained as possible for
 several reasons:
@@ -143,4 +149,3 @@ http://www.chickensys.com/translator
 ### Soundfont Databases
 
 - HammerSound, http://www.hammersound.net
-
