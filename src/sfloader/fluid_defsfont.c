@@ -1798,7 +1798,7 @@ fluid_list_copy_linked_mod(const fluid_mod_t *list_mod, int dest_idx, int new_id
     return ((new_idx == 0) ? total_linked_count : linked_idx);
 }
 /**
- * Checks all modulators from a zone modulator list list_mod and optionally clone
+ * Checks all modulators from a modulator list list_mod and optionally clone
  * valid linked modulators from list_mod list to linked_mod list.
  * - check valid sources (if requested, see list_name).
  * - check identic modulators (if requested, see list_name).
@@ -1806,7 +1806,7 @@ fluid_list_copy_linked_mod(const fluid_mod_t *list_mod, int dest_idx, int new_id
  * - check "isolated" linked paths (if requested, see list_name).
  * - clone valid linked modulators paths to linked_mod.
  * The function does the same job that fluid_zone_check_mod() except that
- * modulators aren't removed from mod_list_mod and lists length aren't
+ * modulators aren't removed from list_mod and lists length aren't
  * limited. The function is appropriate to be called by soundfont loader as well
  * by API not yet implemented:
  * - fluid_voice_add_mod2(), fluid_check_complex_mod()
