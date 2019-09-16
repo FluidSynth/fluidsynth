@@ -1716,7 +1716,7 @@ fluid_list_copy_linked_mod(const fluid_mod_t *list_mod, int dest_idx, int new_id
                            fluid_mod_t **linked_mod)
 {
     int total_linked_count = 0; /* number of linked modulator to return */
-    int linked_count = new_idx; /* Last added modulator index in linked_mod */
+    int linked_idx = new_idx; /* Last added modulator index in linked_mod */
     int mod_idx = 0; /* first modulator index in list mod*/
     const fluid_mod_t *mod = list_mod;
     while(mod)
@@ -1754,7 +1754,7 @@ fluid_list_copy_linked_mod(const fluid_mod_t *list_mod, int dest_idx, int new_id
                 }
 
                 /* adding mod_cpy in linked_mod */
-                if (linked_count == 0)
+                if (linked_idx == 0)
                 {   
                     /* puts mod_cpy at the begin of linked list */
                     *linked_mod = mod_cpy; 
@@ -1771,31 +1771,31 @@ fluid_list_copy_linked_mod(const fluid_mod_t *list_mod, int dest_idx, int new_id
                 /* force index of ending modulator to 0 */
                 if (is_mod_dst_only)
                 {
-                    linked_count = 0;
+                    linked_idx = 0;
                 }
-                linked_count++; /* updates count of linked mod */
+                linked_idx++; /* updates count of linked mod */
 
                 /* is mod's source src1 linked ? */
                 if(is_src1_linked) 
                 {	/* search a modulator with output linked to mod */
-                    linked_count = fluid_list_copy_linked_mod(list_mod,
+                    linked_idx = fluid_list_copy_linked_mod(list_mod,
                                                  mod_idx | FLUID_MOD_LINK_DEST,
-                                                 linked_count, path, linked_mod);
-                    if(linked_count == FLUID_FAILED)
+                                                 linked_idx, path, linked_mod);
+                    if(linked_idx == FLUID_FAILED)
                     {
                         return FLUID_FAILED;
                     }
                 }
                 if (is_mod_dst_only)
                 {
-                    total_linked_count += linked_count;
+                    total_linked_count += linked_idx;
                 }
             }
         }
         mod = mod->next;
         mod_idx++;
     }
-    return ((new_idx == 0) ? total_linked_count : linked_count);
+    return ((new_idx == 0) ? total_linked_count : linked_idx);
 }
 /**
  * Checks all modulators from a zone modulator list list_mod and optionally clone
