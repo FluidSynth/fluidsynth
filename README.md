@@ -1,4 +1,3 @@
-
 # FluidSynth
 
 | Build Status | glib < 2.30 | glib >= 2.30 |
@@ -8,25 +7,24 @@
 | ![Win](https://raw.githubusercontent.com/microsoft/azure-pipelines-tasks/master/docs/res/win_med.png) **Windows** && ![macOS](https://raw.githubusercontent.com/microsoft/azure-pipelines-tasks/master/docs/res/apple_med.png) **MacOSX** | [![Build Status](https://dev.azure.com/tommbrt/tommbrt/_apis/build/status/FluidSynth.fluidsynth?branchName=master)](https://dev.azure.com/tommbrt/tommbrt/_build/latest?definitionId=3&branchName=master) | [![Build status](https://ci.appveyor.com/api/projects/status/anbmtebt5uk4q1it/branch/master?svg=true)](https://ci.appveyor.com/project/derselbst/fluidsynth-g2ouw/branch/master) |
 
 
-
-### FluidSynth is a software real-time synthesizer based on the Soundfont 2 specifications.
-
-[![OHLOH Project Stats](https://www.openhub.net/p/fluidsynth/widgets/project_thin_badge?format=gif)](https://www.openhub.net/p/fluidsynth)
+#### FluidSynth is a cross-platform, real-time software synthesizer based on the Soundfont 2 specification.
 
 FluidSynth generates audio by reading and handling MIDI events from MIDI input devices by using a [SoundFont](https://github.com/FluidSynth/fluidsynth/wiki/SoundFont). It is the software analogue of a MIDI synthesizer. FluidSynth can also play midifiles.
 
+[![OHLOH Project Stats](https://www.openhub.net/p/fluidsynth/widgets/project_thin_badge?format=gif)](https://www.openhub.net/p/fluidsynth)
 
 ## Documentation
 
-The central place for documentation and further links is our **Wiki** here at GitHub: **https://github.com/FluidSynth/fluidsynth/wiki**
+The central place for documentation and further links is our **wiki** here at GitHub: **https://github.com/FluidSynth/fluidsynth/wiki**
 
-You are welcome to edit and improve the wiki. All you need is an account at GitHub. Alternatively you may send an EMail to our mailing list along with your suggested changes. If you are missing parts of the documentation, let us know by writing to our mailing list. Further information about the mailing list are available in the Wiki as well.
+If you are missing parts of the documentation, let us know by writing to our mailing list.
+Of course, you are welcome to edit and improve the wiki yourself. All you need is an account at GitHub. Alternatively, you may send an EMail to our mailing list along with your suggested changes. Further information about the mailing list is available in the wiki as well.
 
-Latest information about FluidSynth are also available on the web site at http://www.fluidsynth.org/.
+Latest information about FluidSynth is also available on the web site at http://www.fluidsynth.org/.
 
 ## License
 
-The source code for FluidSynth is distributed under the terms of the [GNU Lesser General Public License](https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html), see the [LICENSE](https://github.com/FluidSynth/fluidsynth/blob/master/LICENSE) file. To better understand the consequences when using FluidSynth in e.g. commercial or close-source projects, please refer to the [LicensingFAQ in our wiki](https://github.com/FluidSynth/fluidsynth/wiki/LicensingFAQ).
+The source code for FluidSynth is distributed under the terms of the [GNU Lesser General Public License](https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html), see the [LICENSE](https://github.com/FluidSynth/fluidsynth/blob/master/LICENSE) file. To better understand the consequences when using FluidSynth in e.g. commercial or closed-source projects, please refer to the [LicensingFAQ in our wiki](https://github.com/FluidSynth/fluidsynth/wiki/LicensingFAQ).
 
 ## Building from source
 
@@ -43,10 +41,10 @@ developing a networked multi-user game.
 Sound (and music) was considered a very important part of the game. In
 addition, users had to be able to extend the game with their own
 sounds and images. Johnathan Lee proposed to use the Soundfont
-standard combined with an intelligent use of midifiles. The arguments
+standard combined with intelligent use of midifiles. The arguments
 were:
 
-- Wave table synthesis is low on CPU usage, it is intuitive and it can
+- Wavetable synthesis is low on CPU usage, it is intuitive and it can
   produce rich sounds
 
 - Hardware acceleration is possible if the user owns a Soundfont
@@ -71,17 +69,17 @@ synthesizer. That is why we developed FluidSynth.
 The synthesizer was designed to be as self-contained as possible for
 several reasons:
 
-- It had to be multi-platform (Linux, MacOS, Win32). It was therefore
-  important that the code didn't rely on any platform specific
+- It had to be multi-platform (Linux, macOS, Win32). It was therefore
+  important that the code didn't rely on any platform-specific
   library.
 
 - It had to be easy to integrate the synthesizer modules in various
-  environements, as a plugin or as a dynamically loadable object. I
+  environments, as a plugin or as a dynamically loadable object. I
   wanted to make the synthesizer available as a plugin (jMax, LADSPA,
   Xmms, WinAmp, Director, ...); develop language bindings (Python,
   Java, Perl, ...); and integrate it into (game) frameworks (Crystal
   Space, SDL, ...). For these reasons I've decided it would be easiest
-  if the project stayed very focussed on it's goal (a Soundfont
+  if the project stayed very focussed on its goal (a Soundfont
   synthesizer), stayed small (ideally one file) and didn't dependent
   on external code.
 
@@ -107,7 +105,7 @@ several reasons:
 - Soundfont.com FAQ, http://www.soundfont.com/faqs.html
 
 - The MIDI Manufacturers Association has a standard called "Downloadable
-  Sounds (DLS)" that closely ressembles the Soundfont Specifications,
+  Sounds (DLS)" that closely resembles the Soundfont Specifications,
   http://www.midi.org/about-midi/dls/abtdls.htm
 
 
