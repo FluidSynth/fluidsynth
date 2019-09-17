@@ -1703,6 +1703,11 @@ fluid_check_linked_mod_path(char *list_name, fluid_mod_t *list_mod,
  *
  * @param linked_mod, address of pointer on linked modulators list returned
  *  if any linked modulators exist.
+ * @param linked_count, number of modulators in linked_mod:
+ *  - If > 0, the function assumes that linked_mod contains a table provided
+ *    by the caller. The function returns linked modulators directly in this table.
+ *  - If 0, the function makes internal allocation and returns the list in
+ *    linked_mod.
  *
  * @return
  *  - number of linked modulators returned in linked_mod if any valid
@@ -1713,7 +1718,8 @@ fluid_check_linked_mod_path(char *list_name, fluid_mod_t *list_mod,
 static int 
 fluid_list_copy_linked_mod(const fluid_mod_t *list_mod, int dest_idx, int new_idx,
                            const unsigned char path[],
-                           fluid_mod_t **linked_mod)
+                           fluid_mod_t **linked_mod,
+                           int linked_count)
 {
     int total_linked_count = 0; /* number of linked modulator to return */
     int linked_idx = new_idx; /* Last added modulator index in linked_mod */
@@ -1737,41 +1743,67 @@ fluid_list_copy_linked_mod(const fluid_mod_t *list_mod, int dest_idx, int new_id
             if (is_mod_dst_only || is_mod_src)
             {
                 /* Make a copy of this modulator */
-                fluid_mod_t *mod_cpy = new_fluid_mod(); /* next field is set to NULL */
-                if(mod_cpy == NULL)
-                { 
-                    delete_fluid_list_mod(*linked_mod); /* freeing */
-                    *linked_mod = NULL;
-                    return FLUID_FAILED;
+                fluid_mod_t *mod_cpy;
+                if(linked_count <= 0) /* linked_mod must be allocated internally */
+                {
+                    mod_cpy = new_fluid_mod(); /* next field is set to NULL */
+                    if(mod_cpy == NULL)
+                    {
+                        delete_fluid_list_mod(*linked_mod); /* freeing */
+                        *linked_mod = NULL;
+                        return FLUID_FAILED;
+                    }
+                }
+                /* adding mod_cpy in linked_mod */
+                if (linked_idx == 0) /* the list is empty */
+                {
+                    if(linked_count <= 0) /* list is allocated internally */
+                    {
+                        /* puts mod_cpy at the begin of linked list */
+                        *linked_mod = mod_cpy;
+                    }
+                    else /* list is external given by linked_mod table */
+                    {
+                        /* get first entry from external linked_mod table */
+                        mod_cpy = *linked_mod;
+                        mod_cpy->next = NULL;
+                    }
+                }
+                else /* the list isn't empty */
+                {
+                    /* Find the last modulator in the list */
+                    fluid_mod_t * last_mod = *linked_mod;
+                    int count = 1;
+                    while (last_mod->next != NULL)
+                    {
+                        last_mod = last_mod->next;
+                        count++;
+                    }
+
+                    if(linked_count > 0) /* list is external */
+                    {
+                        /* check if external table length is exceeded */
+                        if(count >= linked_count)
+                        {
+                            return FLUID_FAILED;
+                        }
+                        mod_cpy = last_mod + 1; /* next entry in table */
+                        mod_cpy->next = NULL;
+                    }
+                    /* puts mod_cpy at the end of linked list */
+                    last_mod->next = mod_cpy;
                 }
                 fluid_mod_clone(mod_cpy, mod);
-                
-                /* updates destination field of mod_cpy (but ending modulator) */
+
+                /* updates destination field of mod_cpy (except ending modulator) */
                 if (is_mod_src)
                 {
                     /* new destination field must be an index 0 based. */
                     mod_cpy->dest = FLUID_MOD_LINK_DEST | (new_idx - 1);
                 }
-
-                /* adding mod_cpy in linked_mod */
-                if (linked_idx == 0)
-                {   
-                    /* puts mod_cpy at the begin of linked list */
-                    *linked_mod = mod_cpy; 
-                } 
-                else 
-                {   
-                    /* puts mod_cpy at the end of linked list */
-                    fluid_mod_t * last_mod = *linked_mod;
-
-                    /* Find the end of the list */
-                    while (last_mod->next != NULL){ last_mod = last_mod->next; }
-                    last_mod->next = mod_cpy;
-                }
-                /* force index of ending modulator to 0 */
-                if (is_mod_dst_only)
+                else /* mod is an ending modulator */
                 {
-                    linked_idx = 0;
+                    linked_idx = 0; /* force index of ending modulator to 0 */
                 }
                 linked_idx++; /* updates count of linked mod */
 
@@ -1780,7 +1812,8 @@ fluid_list_copy_linked_mod(const fluid_mod_t *list_mod, int dest_idx, int new_id
                 {	/* search a modulator with output linked to mod */
                     linked_idx = fluid_list_copy_linked_mod(list_mod,
                                                  mod_idx | FLUID_MOD_LINK_DEST,
-                                                 linked_idx, path, linked_mod);
+                                                 linked_idx, path,
+                                                 linked_mod, linked_count);
                     if(linked_idx == FLUID_FAILED)
                     {
                         return FLUID_FAILED;
@@ -1828,8 +1861,17 @@ fluid_list_copy_linked_mod(const fluid_mod_t *list_mod, int dest_idx, int new_id
  *  to 0.
  *
  * @param linked_mod, if not NULL, address of pointer on linked modulators
- *  list returned. NULL is returned in this pointer if linked
- *  modulators doesn't exist in list_mod.
+ *  list returned.
+ * @param linked_count, number of modulators in linked_mod:
+ *  - If > 0, the function assumes that linked_mod contains a table provided
+ *    by the caller. The function returns linked modulators directly in this table
+ *    which is faster because it doesn't allocate memory.
+ *    This is appropriate when the function is called from fluid_voice_add_mod2().
+ *  - If 0, the function makes internal allocation and returns the list in
+ *    linked_mod. This is appropriate when the function is called  from the
+ *    soundfont loader as the list of linked modulators must exist during the
+ *    life of the preset it belongs to. NULL is returned in linked_mod if there is
+ *    no linked modulators in list_mod.
  * @return
  *  - the number of linked modulators if any valid linked path exists.
  *  - 0 if no linked path exists.
@@ -1837,7 +1879,8 @@ fluid_list_copy_linked_mod(const fluid_mod_t *list_mod, int dest_idx, int new_id
  */
 int
 fluid_list_check_linked_mod(char *list_name, fluid_mod_t *list_mod,
-                            fluid_mod_t **linked_mod)
+                            fluid_mod_t **linked_mod,
+                            int linked_count)
 {
     int result;
     /* path is a flags table state to register valid modulators belonging
@@ -1918,13 +1961,17 @@ fluid_list_check_linked_mod(char *list_name, fluid_mod_t *list_mod,
     /* clone of linked modulators if requested */
     if(linked_mod)
     {
-        *linked_mod = NULL; /* Initialize linked modulator list to NULL */
+        if(linked_count <= 0)
+        {
+            *linked_mod = NULL; /* Initialize linked modulator list to NULL */
+        }
         /* does one or more valid linked modulators exists ? */
         if(result)
         {
             /* one or more linked modulators paths exists */
             /* clone valid linked modulator paths from list_mod to linked_mod.*/
-            result = fluid_list_copy_linked_mod(list_mod, -1, 0, path, linked_mod);
+            result = fluid_list_copy_linked_mod(list_mod, -1, 0, path,
+                                                linked_mod, linked_count);
         }
     }
 
@@ -2043,9 +2090,10 @@ fluid_zone_check_mod(char *zone_name, fluid_mod_t **list_mod,
     /* Checks linked modulators paths from a zone modulators list list_mod.
        Because the function is called by the soundfont loader it is a good pratice
        to do full check which is requested by given a zone name not NULL.
-       Then, clone valid linked modulators paths from list_mod to linked_mod.
+       Then, clone valid linked modulators paths from list_mod to linked_mod
+       (The linked modulators list is allocated and returned in linked_mod).
     */
-    if(fluid_list_check_linked_mod(zone_name, *list_mod, linked_mod) == FLUID_FAILED)
+    if(fluid_list_check_linked_mod(zone_name, *list_mod, linked_mod, 0) == FLUID_FAILED)
     {
         return FLUID_FAILED;
     }
