@@ -776,13 +776,14 @@ int main(void)
         delete_fluid_list_mod(linked_mod);
     }
 
-    // Test 10: getting a list of linked modulators in table.
-    // Check a same valid complex modulateur 2 times but returned in two distinct.
-    // linked list (linked_mod1, linked_mod2).
-    // - linked_mod1 is allocated internally.
+    // Test 10: check and get a list of linked modulators in a table supplied by the caller.
+    // Check a given valid complex modulateur 2 times but returned in two distinct
+    // lists of linked modulators(linked_mod1, linked_mod2):
+    // - linked_mod1 is allocated internally by fluid_list_check_linked_mod().
     // - linked_mod2 is a table given by the caller.
-    // Both linked_mod1 and linked_mod2 are compared and expected to be identic.
-    printf("\nTest 10: getting a list of linked modulators in table\n");
+    // Both linked_mod1 and linked_mod2 lists are compared and expected to have identic
+    // element.
+    printf("\nTest 10: check and get a list of linked modulators in a table supplied by the caller\n");
     {
         /* One valid complex modulators with 5 members */
         /* table  :  att<-m0<-m1<-m2<-  */
@@ -825,52 +826,62 @@ int main(void)
                 5.0      , 0.0 , NULL
             }
         };
-        //--- Input list build from the table mod_table
+        //--- Input lists build from the table mod_table
         int mod_count; // number of modulators in table mod_table.
         fluid_mod_t * list_mod1;   // first input list, build from mod_table.
         fluid_mod_t * list_mod2;   // second input list, build from mod_table.
-        //--- first output list of linked modulators (allocated internally)
-        fluid_mod_t * linked_mod1; // first output list of linked modulators
-        int linked_count1_out;     // count of modulators returned in linked_mod1
-        //--- second output list of linked modulators. The table is given by the caller
-        fluid_mod_t * linked_mod2; // second output list of linked modulators (in table)
-        int linked_count2_in;     // length of linked_mod2 table
-        int linked_count2_out;    // count of modulators returned in linked_mod2
+
+        //--- first output list of linked modulators (allocated internally):
+        fluid_mod_t * linked_mod1; // first output list of linked modulators.
+        int linked_count1_out;     // count of modulators returned in linked_mod1.
+        //--- second output list of linked modulators. The table is given by the caller:
+        fluid_mod_t * linked_mod2; // second output list of linked modulators (in table).
+        int linked_count2_in;      // length of linked_mod2 table (in modulator number).
+        int linked_count2_out;     // count of modulators returned in linked_mod2.
+
         //---------------------------------------------
-        // build input list list_mod1, list_mod2
+        // build input lists list_mod1, list_mod2:
         mod_count = sizeof(mod_table) / sizeof(fluid_mod_t);
         TEST_ASSERT(mod_count == 5);
         list_mod1 = fluid_build_list(mod_table, mod_count);
+        // list_mod1 and list_mod2 are expected not NULL, and count of modulators
+        // is expected to be equal to mod_count.
         TEST_ASSERT(list_mod1 != NULL);
-        TEST_ASSERT(fluid_get_count_mod(list_mod1) == 5);
-        //
+        TEST_ASSERT(fluid_get_count_mod(list_mod1) == mod_count);
+
         list_mod2 = fluid_build_list(mod_table, mod_count);
         TEST_ASSERT(list_mod2 != NULL);
-        TEST_ASSERT(fluid_get_count_mod(list_mod2) == 5);
-        // compare input list list_mod1, and list_mod2.
+        TEST_ASSERT(fluid_get_count_mod(list_mod2) == mod_count);
+        // compare input lists list_mod1, and list_mod2.
         TEST_ASSERT(fluid_list_test_identity(list_mod1, list_mod2) == TRUE);
+
         //---------------------------------------------
-        // building output linked list linked_mod1
-        // linked_mod1 allocated internally.
+        // building output list linked_mod1 by calling fluid_list_check_linked_mod().
+        // linked_mod1 is allocated internally.
         linked_mod1 = NULL;
         linked_count1_out = fluid_list_check_linked_mod("linked_mod1(internal)",
                                                    list_mod1, &linked_mod1, 0);
-        // linked_mod1 must be not NULL and linked_count1_out must be equal to 5
+        // linked_mod1 is expected to be not NULL
         TEST_ASSERT(linked_mod1 != NULL);
-        TEST_ASSERT(linked_count1_out == 5);
+        // Modulators in input list list_mod1 are fully valid. This leads to
+        // linked_count1_out that is expected to be equal to mod_count.
+        TEST_ASSERT(linked_count1_out == mod_count);
 
         //---------------------------------------------
-        // building output linked list linked_mod2
-        // linked_mod1 allocated externally on (stack).
+        // building output list linked_mod2 by calling fluid_list_check_linked_mod().
+        // linked_mod2 is allocated externally on (stack) in a table.
         linked_count2_in = fluid_get_count_mod(list_mod2);
         linked_mod2 = alloca( linked_count2_in * sizeof(fluid_mod_t));
-        // linked_mod1 must be not NULL and linked_count1_out must be equal to 5
+        // linked_mod2 is expected to be not NULL
         TEST_ASSERT(linked_mod2 != NULL);
         linked_count2_out = fluid_list_check_linked_mod("linked_mod2(external)",
                                                    list_mod2, &linked_mod2,
                                                    linked_count2_in);
-        TEST_ASSERT(linked_count2_out == 5);
-        // compare output list linked_mod1, and linked_mod2.
+        // Modulators in input list list_mod2 are fully valid. This leads to
+        // linked_count2_out that is expected to be equal to mod_count.
+        TEST_ASSERT(linked_count2_out == mod_count);
+        // Both linked_mod1 and linked_mod2 lists are compared and expected to have
+        // identic element.
         TEST_ASSERT(fluid_list_test_identity(linked_mod1, linked_mod2) == TRUE);
 
         // freeing
@@ -928,6 +939,8 @@ static fluid_mod_t * fluid_build_list(fluid_mod_t mod_table[], int count_mod)
 /**
  * Return TRUE if list list_mod1 is identic to list list_mod2,
  * FALSE otherwise.
+ * Both list are identic if that have equal count of modulators and
+ * respective modulator's structure are fully equal.
 */
 int fluid_list_test_identity(fluid_mod_t *list_mod1, fluid_mod_t *list_mod2)
 {
