@@ -107,6 +107,8 @@ several reasons:
 - The MIDI Manufacturers Association has a standard called "Downloadable
   Sounds (DLS)" that closely resembles the Soundfont Specifications,
   http://www.midi.org/about-midi/dls/abtdls.htm
+  
+- [List of Soundfont editors is in the wiki](https://github.com/FluidSynth/fluidsynth/wiki/SoundFont#soundfont-editors)
 
 
 ### Software SoundFont Synthesizers:
@@ -119,19 +121,6 @@ http://www.livesynth.com/lspro.html
 - QuickTime 5 from Apple (Win & Mac), http://www.apple.com/quicktime/
 
 - Logic from eMagic, http://www.emagic.de
-
-
-### Soundfont Editors
-
-- Project SWAMI by Josh Green (Linux), http://www.swamiproject.org/
-
-- Vienna SoundFont Editor by Creative Technology Ltd. (Win)
-
-- Alive Soundfont Editor by Soundfaction (Win), http://www.soundfaction.com/alive/index.htm
-
-- Polyphone, http://polyphone-soundfonts.com/en/
-
-    **Note:** We cannot recommend using Audio Compositor for creating or editing Soundfonts, as it generates files that violate the Soundfont2 spec (specifically the order of generators as defined in section 8.1.2) and are therefore unusable with fluidsynth!
 
 ### Conversion Tools
 
