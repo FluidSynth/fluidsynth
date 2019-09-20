@@ -95,18 +95,6 @@ several reasons:
 - FluidSynth's wiki, https://github.com/FluidSynth/fluidsynth/wiki
 
 - FluidSynth's API documentation, http://www.fluidsynth.org/api/
-
-- Introduction to SoundFonts, by Josh Green,
-  http://smurf.sourceforge.net/sfont_intro.php
-
-- Soundfont2 Documentation, http://www.synthfont.com/SFSPEC21.PDF (if
-  it moved, do a search on sfspec21.pdf).
-
-- Soundfont.com FAQ, http://www.soundfont.com/faqs.html
-
-- The MIDI Manufacturers Association has a standard called "Downloadable
-  Sounds (DLS)" that closely resembles the Soundfont Specifications,
-  http://www.midi.org/about-midi/dls/abtdls.htm
   
 - [List of Soundfont editors is in the wiki](https://github.com/FluidSynth/fluidsynth/wiki/SoundFont#soundfont-editors)
 
@@ -131,8 +119,3 @@ http://www.propellerheads.se/products/recycle/
 
 - Translator from Rubber Chicken Software (Win & Mac),
 http://www.chickensys.com/translator
-
-
-### Soundfont Databases
-
-- HammerSound, http://www.hammersound.net
