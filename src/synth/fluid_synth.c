@@ -988,8 +988,6 @@ delete_fluid_synth(fluid_synth_t *synth)
     fluid_list_t *list;
     fluid_sfont_t *sfont;
     fluid_sfloader_t *loader;
-    fluid_mod_t *default_mod;
-    fluid_mod_t *mod;
 
     fluid_return_if_fail(synth != NULL);
 
@@ -1108,14 +1106,7 @@ delete_fluid_synth(fluid_synth_t *synth)
 #endif
 
     /* delete all default modulators */
-    default_mod = synth->default_mod;
-
-    while(default_mod != NULL)
-    {
-        mod = default_mod;
-        default_mod = mod->next;
-        delete_fluid_mod(mod);
-    }
+    delete_fluid_list_mod(synth->default_mod);
 
     FLUID_FREE(synth->overflow.important_channels);
 
