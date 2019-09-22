@@ -1408,7 +1408,7 @@ fluid_synth_add_default_mod(fluid_synth_t *synth, const fluid_mod_t *mod, int mo
  * @param mod The modulator to remove
  * @return #FLUID_OK if a matching modulator was found and successfully removed, #FLUID_FAILED otherwise
  *
- * @note Not realtime safe (due to internal memory allocation) and therefore should not be called
+ * @note Not realtime safe (due to internal memory freeing) and therefore should not be called
  * from synthesis context at the risk of stalling audio output.
  */
 int
