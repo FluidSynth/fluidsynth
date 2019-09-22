@@ -1355,6 +1355,7 @@ fluid_synth_add_default_mod(fluid_synth_t *synth, const fluid_mod_t *mod, int mo
 
     fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
     fluid_return_val_if_fail(mod != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail((mode == FLUID_SYNTH_ADD) || (mode == FLUID_SYNTH_OVERWRITE) , FLUID_FAILED);
 
     /* Checks if modulators sources are valid */
     if(!fluid_mod_check_sources(mod, "api fluid_synth_add_default_mod mod"))
@@ -1374,13 +1375,9 @@ fluid_synth_add_default_mod(fluid_synth_t *synth, const fluid_mod_t *mod, int mo
             {
                 default_mod->amount += mod->amount;
             }
-            else if(mode == FLUID_SYNTH_OVERWRITE)
+            else // mode == FLUID_SYNTH_OVERWRITE
             {
                 default_mod->amount = mod->amount;
-            }
-            else
-            {
-                FLUID_API_RETURN(FLUID_FAILED);
             }
 
             FLUID_API_RETURN(FLUID_OK);
