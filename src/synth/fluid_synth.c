@@ -1438,7 +1438,7 @@ fluid_synth_remove_default_mod(fluid_synth_t *synth, const fluid_mod_t *mod)
         {
             if(synth->default_mod == default_mod)
             {
-                synth->default_mod = synth->default_mod->next;
+                synth->default_mod = default_mod->next;
             }
             else
             {
