@@ -988,8 +988,6 @@ delete_fluid_synth(fluid_synth_t *synth)
     fluid_list_t *list;
     fluid_sfont_t *sfont;
     fluid_sfloader_t *loader;
-    fluid_mod_t *default_mod;
-    fluid_mod_t *mod;
 
     fluid_return_if_fail(synth != NULL);
 
@@ -1108,14 +1106,7 @@ delete_fluid_synth(fluid_synth_t *synth)
 #endif
 
     /* delete all default modulators */
-    default_mod = synth->default_mod;
-
-    while(default_mod != NULL)
-    {
-        mod = default_mod;
-        default_mod = mod->next;
-        delete_fluid_mod(mod);
-    }
+    delete_fluid_list_mod(synth->default_mod);
 
     FLUID_FREE(synth->overflow.important_channels);
 
@@ -1355,6 +1346,7 @@ fluid_synth_add_default_mod(fluid_synth_t *synth, const fluid_mod_t *mod, int mo
 
     fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
     fluid_return_val_if_fail(mod != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail((mode == FLUID_SYNTH_ADD) || (mode == FLUID_SYNTH_OVERWRITE) , FLUID_FAILED);
 
     /* Checks if modulators sources are valid */
     if(!fluid_mod_check_sources(mod, "api fluid_synth_add_default_mod mod"))
@@ -1374,13 +1366,9 @@ fluid_synth_add_default_mod(fluid_synth_t *synth, const fluid_mod_t *mod, int mo
             {
                 default_mod->amount += mod->amount;
             }
-            else if(mode == FLUID_SYNTH_OVERWRITE)
+            else // mode == FLUID_SYNTH_OVERWRITE
             {
                 default_mod->amount = mod->amount;
-            }
-            else
-            {
-                FLUID_API_RETURN(FLUID_FAILED);
             }
 
             FLUID_API_RETURN(FLUID_OK);
@@ -1420,7 +1408,7 @@ fluid_synth_add_default_mod(fluid_synth_t *synth, const fluid_mod_t *mod, int mo
  * @param mod The modulator to remove
  * @return #FLUID_OK if a matching modulator was found and successfully removed, #FLUID_FAILED otherwise
  *
- * @note Not realtime safe (due to internal memory allocation) and therefore should not be called
+ * @note Not realtime safe (due to internal memory freeing) and therefore should not be called
  * from synthesis context at the risk of stalling audio output.
  */
 int
@@ -1441,7 +1429,7 @@ fluid_synth_remove_default_mod(fluid_synth_t *synth, const fluid_mod_t *mod)
         {
             if(synth->default_mod == default_mod)
             {
-                synth->default_mod = synth->default_mod->next;
+                synth->default_mod = default_mod->next;
             }
             else
             {
