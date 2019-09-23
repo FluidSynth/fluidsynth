@@ -119,19 +119,18 @@ main(int argc, char *argv[])
     {
         /* create the synth, driver and sequencer instances */
         synth = new_fluid_synth(settings);
-        audiodriver = new_fluid_audio_driver(settings, synth);
-        sequencer = new_fluid_sequencer();
-        /* register the synth with the sequencer */
-        synth_destination = fluid_sequencer_register_fluidsynth(sequencer,
-                            synth);
-        /* register the client name and callback */
-        client_destination = fluid_sequencer_register_client(sequencer,
-                             "arpeggio", sequencer_callback, NULL);
         /* load a SoundFont */
         n = fluid_synth_sfload(synth, argv[1], 1);
 
         if(n != -1)
         {
+            sequencer = new_fluid_sequencer();
+            /* register the synth with the sequencer */
+            synth_destination = fluid_sequencer_register_fluidsynth(sequencer,
+                                synth);
+            /* register the client name and callback */
+            client_destination = fluid_sequencer_register_client(sequencer,
+                             "arpeggio", sequencer_callback, NULL);
             if(argc > 2)
             {
                 n = atoi(argv[2]);
@@ -152,6 +151,8 @@ main(int argc, char *argv[])
                 }
             }
 
+            audiodriver = new_fluid_audio_driver(settings, synth);
+
             /* get the current time in ticks */
             time_marker = fluid_sequencer_get_tick(sequencer);
             /* schedule patterns */
@@ -164,8 +165,8 @@ main(int argc, char *argv[])
         }
 
         /* clean and exit */
-        delete_fluid_sequencer(sequencer);
         delete_fluid_audio_driver(audiodriver);
+        delete_fluid_sequencer(sequencer);
         delete_fluid_synth(synth);
     }
 

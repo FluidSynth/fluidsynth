@@ -500,16 +500,13 @@ struct _fluid_sample_timer_t
  */
 static void fluid_sample_timer_process(fluid_synth_t *synth)
 {
-    fluid_sample_timer_t *st, *stnext;
+    fluid_sample_timer_t *st;
     long msec;
     int cont;
     unsigned int ticks = fluid_synth_get_ticks(synth);
 
-    for(st = synth->sample_timers; st; st = stnext)
+    for(st = synth->sample_timers; st; st = st->next)
     {
-        /* st may be freed in the callback below. cache it's successor now to avoid use after free */
-        stnext = st->next;
-
         if(st->isfinished)
         {
             continue;
@@ -535,7 +532,7 @@ fluid_sample_timer_t *new_fluid_sample_timer(fluid_synth_t *synth, fluid_timer_c
         return NULL;
     }
 
-    result->starttick = fluid_synth_get_ticks(synth);
+    fluid_sample_timer_reset(synth, result);
     result->isfinished = 0;
     result->data = data;
     result->callback = callback;
@@ -565,6 +562,10 @@ void delete_fluid_sample_timer(fluid_synth_t *synth, fluid_sample_timer_t *timer
     }
 }
 
+void fluid_sample_timer_reset(fluid_synth_t *synth, fluid_sample_timer_t *timer)
+{
+    timer->starttick = fluid_synth_get_ticks(synth);
+}
 
 /***************************************************************
  *
@@ -857,6 +858,7 @@ new_fluid_synth(fluid_settings_t *settings)
         goto error_recovery;
     }
 
+    FLUID_MEMSET(synth->channel, 0, synth->midi_channels * sizeof(*synth->channel));
     for(i = 0; i < synth->midi_channels; i++)
     {
         synth->channel[i] = new_fluid_channel(synth, i);
@@ -876,6 +878,7 @@ new_fluid_synth(fluid_settings_t *settings)
         goto error_recovery;
     }
 
+    FLUID_MEMSET(synth->voice, 0, synth->nvoice * sizeof(*synth->voice));
     for(i = 0; i < synth->nvoice; i++)
     {
         synth->voice[i] = new_fluid_voice(synth->eventhandler, synth->sample_rate);
@@ -985,8 +988,6 @@ delete_fluid_synth(fluid_synth_t *synth)
     fluid_list_t *list;
     fluid_sfont_t *sfont;
     fluid_sfloader_t *loader;
-    fluid_mod_t *default_mod;
-    fluid_mod_t *mod;
 
     fluid_return_if_fail(synth != NULL);
 
@@ -1028,7 +1029,10 @@ delete_fluid_synth(fluid_synth_t *synth)
     {
         for(i = 0; i < synth->midi_channels; i++)
         {
-            fluid_channel_set_preset(synth->channel[i], NULL);
+            if(synth->channel[i] != NULL)
+            {
+                fluid_channel_set_preset(synth->channel[i], NULL);
+            }
         }
     }
 
@@ -1102,14 +1106,7 @@ delete_fluid_synth(fluid_synth_t *synth)
 #endif
 
     /* delete all default modulators */
-    default_mod = synth->default_mod;
-
-    while(default_mod != NULL)
-    {
-        mod = default_mod;
-        default_mod = mod->next;
-        delete_fluid_mod(mod);
-    }
+    delete_fluid_list_mod(synth->default_mod);
 
     FLUID_FREE(synth->overflow.important_channels);
 
@@ -1349,6 +1346,7 @@ fluid_synth_add_default_mod(fluid_synth_t *synth, const fluid_mod_t *mod, int mo
 
     fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
     fluid_return_val_if_fail(mod != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail((mode == FLUID_SYNTH_ADD) || (mode == FLUID_SYNTH_OVERWRITE) , FLUID_FAILED);
 
     /* Checks if modulators sources are valid */
     if(!fluid_mod_check_sources(mod, "api fluid_synth_add_default_mod mod"))
@@ -1368,13 +1366,9 @@ fluid_synth_add_default_mod(fluid_synth_t *synth, const fluid_mod_t *mod, int mo
             {
                 default_mod->amount += mod->amount;
             }
-            else if(mode == FLUID_SYNTH_OVERWRITE)
+            else // mode == FLUID_SYNTH_OVERWRITE
             {
                 default_mod->amount = mod->amount;
-            }
-            else
-            {
-                FLUID_API_RETURN(FLUID_FAILED);
             }
 
             FLUID_API_RETURN(FLUID_OK);
@@ -1413,7 +1407,7 @@ fluid_synth_add_default_mod(fluid_synth_t *synth, const fluid_mod_t *mod, int mo
  * @param mod The modulator to remove
  * @return #FLUID_OK if a matching modulator was found and successfully removed, #FLUID_FAILED otherwise
  *
- * @note Not realtime safe (due to internal memory allocation) and therefore should not be called
+ * @note Not realtime safe (due to internal memory freeing) and therefore should not be called
  * from synthesis context at the risk of stalling audio output.
  */
 int
@@ -1434,7 +1428,7 @@ fluid_synth_remove_default_mod(fluid_synth_t *synth, const fluid_mod_t *mod)
         {
             if(synth->default_mod == default_mod)
             {
-                synth->default_mod = synth->default_mod->next;
+                synth->default_mod = default_mod->next;
             }
             else
             {
