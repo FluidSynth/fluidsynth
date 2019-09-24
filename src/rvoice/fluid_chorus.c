@@ -103,24 +103,17 @@ NEW_MOD: when not defined:
    - use memory lfo lookup table.
    - use bandlimited interpolation with sinc lookup table.
 
-STEREO_UNIT: when defined, adds a stereo unit controlled by WIDTH macro.
- WIDTH [0..10] value define a stereo separation between left and right.
- When 0, the output is monophonic. When > 0 , the output is stereophonic.
-
  Actually WIDTH is fixed to maximum value. But in the future, we could add a
  setting (e.g "synth.chorus.width") allowing the user to get a gradually stereo
  effect from minimum (monophonic) to maximum stereo effect.
 --------------------------------------------------------------------------------------*/
 #define NEW_MOD
-#define STEREO_UNIT // with stereo unit
 // #define DEBUG_PRINT // allows message to be printed on the console.
 
 /*-------------------------------------------------------------------------------------
   Private
 --------------------------------------------------------------------------------------*/
-#ifdef STEREO_UNIT
-//fluid_real_t width =0.0;
-//fluid_real_t width =0.5;
+
 /* WIDTH [0..10] value define a stereo separation between left and right.
  When 0, the output is monophonic. When > 0 , the output is stereophonic.
  Actually WIDTH is fixed to maximum value. But in the future we could add a setting to
@@ -138,7 +131,6 @@ STEREO_UNIT: when defined, adds a stereo unit controlled by WIDTH macro.
 #define SCALE_WET_WIDTH 0.2f
 //#define SCALE_WET 5.0f
 #define SCALE_WET 1.0f
-#endif //stereo_unit
 
 #ifdef NEW_MOD
 #define MAX_SAMPLES 2048 /* delay length in sample (46.4 ms at sample rate: 44100Hz).*/
@@ -267,11 +259,10 @@ struct _fluid_chorus_t
     fluid_real_t speed_Hz;
     int number_blocks;
     fluid_real_t sample_rate;
-#ifdef STEREO_UNIT
+
     /* width control: 0 monophonic, > 0 more stereophonic */
     fluid_real_t width;
     fluid_real_t wet1,wet2;
-#endif
 
 #ifdef NEW_MOD
     fluid_real_t *line; /* buffer line */
@@ -1016,7 +1007,7 @@ fluid_chorus_set(fluid_chorus_t *chorus, int set, int nr, fluid_real_t level,
         FLUID_LOG(FLUID_WARN, "chorus: Unknown modulation type. Using sinewave.");
         chorus->type = FLUID_CHORUS_MOD_SINE;
         /* fall-through */
-        
+
     case FLUID_CHORUS_MOD_SINE:
         fluid_chorus_sine(chorus->lookup_tab, chorus->modulation_period_samples,
                           modulation_depth_samples);
@@ -1046,11 +1037,6 @@ fluid_chorus_set(fluid_chorus_t *chorus, int set, int nr, fluid_real_t level,
 
     printf("nr:%d\n", chorus->number_blocks);
 #endif
-
-#ifdef STEREO_UNIT
-  #ifdef DEBUG_PRINT
-  printf("stereo unit\n");
-  #endif
 
     /* Recalculate internal values after parameters change */
 
@@ -1111,11 +1097,6 @@ fluid_chorus_set(fluid_chorus_t *chorus, int set, int nr, fluid_real_t level,
 #endif
         }
     }
-#else //mono
-  #ifdef DEBUG_PRINT
-    printf("mono unit\n");
-  #endif
-#endif //STEREO_UNIT
 }
 
 
@@ -1125,24 +1106,16 @@ void fluid_chorus_processmix(fluid_chorus_t *chorus, const fluid_real_t *in,
     int sample_index;
     int i;
     fluid_real_t d_in;
-#ifdef STEREO_UNIT
     fluid_real_t d_out[2];               /* output stereo Left and Right  */
-#else
-    fluid_real_t d_out;
-#endif
 
     for(sample_index = 0; sample_index < FLUID_BUFSIZE; sample_index++)
     {
         fluid_real_t out; /* block output */
 
         d_in = in[sample_index];
-#ifdef STEREO_UNIT
         d_out[0] = d_out[1] = 0.0f; /* stereo unit input */
-#else
-        d_out = 0.0f;
-#endif
 
-# if 0
+#if 0
         /* Debug: Listen to the chorus signal only */
         left_out[sample_index] = 0;
         right_out[sample_index] = 0;
@@ -1191,12 +1164,9 @@ void fluid_chorus_processmix(fluid_chorus_t *chorus, const fluid_real_t *in,
                 pos_samples--;
             }
 #endif //NEW_MOD
-#ifdef STEREO_UNIT
+
             /* accumulate out into stereo unit input */
-            d_out[i & 1] +=  out ;
-#else //STEREO_UNIT
-            d_out += out;
-#endif //STEREO_UNIT
+            d_out[i & 1] += out;
 
 #ifndef NEW_MOD
             /* Cycle the phase of the modulating LFO */
@@ -1217,7 +1187,7 @@ void fluid_chorus_processmix(fluid_chorus_t *chorus, const fluid_real_t *in,
             }
         }
 #endif
-#ifdef STEREO_UNIT
+
         /* Cases of number_blocks odd:
            In those case, d_out[1] level is lower than d_out[0], so we need to
            add out value to d_out[1] to have d_out[0] and d_out[1] balanced.
@@ -1230,12 +1200,6 @@ void fluid_chorus_processmix(fluid_chorus_t *chorus, const fluid_real_t *in,
         /* Add the chorus stereo unit d_out to left and right output */
         left_out[sample_index]  += d_out[0] * chorus->wet1  + d_out[1] * chorus->wet2;
         right_out[sample_index] += d_out[1] * chorus->wet1  + d_out[0] * chorus->wet2;
-#else //STEREO_UNIT
-        d_out *= chorus->level;
-        /* Add the chorus sum d_out to output */
-        left_out[sample_index] += d_out;
-        right_out[sample_index] += d_out;
-#endif //STEREO_UNIT
 
 #ifdef NEW_MOD
         /* Write the current sample into the circular buffer */
@@ -1256,24 +1220,16 @@ void fluid_chorus_processreplace(fluid_chorus_t *chorus, const fluid_real_t *in,
     int sample_index;
     int i;
     fluid_real_t d_in;
-#ifdef STEREO_UNIT
     fluid_real_t d_out[2];               /* output stereo Left and Right  */
-#else
-    fluid_real_t d_out;
-#endif
 
     for(sample_index = 0; sample_index < FLUID_BUFSIZE; sample_index++)
     {
         fluid_real_t out; /* block output */
 
         d_in = in[sample_index];
-#ifdef STEREO_UNIT
         d_out[0] = d_out[1] = 0.0f; /* stereo unit input */
-#else
-        d_out = 0.0f;
-#endif
 
-# if 0
+#if 0
         /* Debug: Listen to the chorus signal only */
         left_out[sample_index] = 0;
         right_out[sample_index] = 0;
@@ -1322,12 +1278,9 @@ void fluid_chorus_processreplace(fluid_chorus_t *chorus, const fluid_real_t *in,
                 pos_samples--;
             }
 #endif //NEW_MOD
-#ifdef STEREO_UNIT
+
             /* accumulate out into stereo unit input */
-            d_out[i & 1] +=  out ;
-#else //STEREO_UNIT
-            d_out += out;
-#endif //STEREO_UNIT
+            d_out[i & 1] += out;
 
 #ifndef NEW_MOD
             /* Cycle the phase of the modulating LFO */
@@ -1348,7 +1301,7 @@ void fluid_chorus_processreplace(fluid_chorus_t *chorus, const fluid_real_t *in,
             }
         }
 #endif
-#ifdef STEREO_UNIT
+
         /* Cases of number_blocks odd:
            In those case, d_out[1] level is lower than d_out[0], so we need to
            add out value to d_out[1] to have d_out[0] and d_out[1] balanced.
@@ -1361,12 +1314,6 @@ void fluid_chorus_processreplace(fluid_chorus_t *chorus, const fluid_real_t *in,
         /* store the chorus stereo unit d_out to left and right output */
         left_out[sample_index]  = d_out[0] * chorus->wet1  + d_out[1] * chorus->wet2;
         right_out[sample_index] = d_out[1] * chorus->wet1  + d_out[0] * chorus->wet2;
-#else //STEREO_UNIT
-        d_out *= chorus->level;
-        /* Store the chorus sum d_out to output */
-        left_out[sample_index] = d_out;
-        right_out[sample_index] = d_out;
-#endif //STEREO_UNIT
 
 #ifdef NEW_MOD
         /* Write the current sample into the circular buffer */
