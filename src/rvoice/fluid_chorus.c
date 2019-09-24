@@ -113,7 +113,7 @@ STEREO_UNIT: when defined, adds a stereo unit controlled by WIDTH macro.
 --------------------------------------------------------------------------------------*/
 #define NEW_MOD
 #define STEREO_UNIT // with stereo unit
-#define PRINT // allows message to be printed on the console.
+// #define DEBUG_PRINT // allows message to be printed on the console.
 
 /*-------------------------------------------------------------------------------------
   Private
@@ -720,13 +720,13 @@ new_fluid_chorus(fluid_real_t sample_rate)
 
     chorus->sample_rate = sample_rate;
 
-#ifdef PRINT
+#ifdef DEBUG_PRINT
     printf("fluid_chorus_t:%d bytes\n", sizeof(fluid_chorus_t));
     printf("fluid_real_t:%d bytes\n", sizeof(fluid_real_t));
 #endif
 
 #ifdef NEW_MOD
-#ifdef PRINT
+#ifdef DEBUG_PRINT
     printf("NEW_MOD\n");
 #endif
     if(new_mod_delay_line(chorus, MAX_SAMPLES, LOW_MOD_RATE)== FLUID_FAILED)
@@ -734,7 +734,7 @@ new_fluid_chorus(fluid_real_t sample_rate)
         goto error_recovery;
     }
 #else //NEW_MOD
-#ifdef PRINT
+#ifdef DEBUG_PRINT
     printf("sinc_table:%d bytes\n", sizeof(chorus->sinc_table));
 #endif
     /* Lookup table for the SI function (impulse response of an ideal low pass) */
@@ -773,7 +773,7 @@ new_fluid_chorus(fluid_real_t sample_rate)
         FLUID_LOG(FLUID_PANIC, "chorus: Out of memory");
         goto error_recovery;
     }
-#ifdef PRINT
+#ifdef DEBUG_PRINT
     printf("lookup_tab: %d bytes\n", (int)(chorus->sample_rate / MIN_SPEED_HZ)* sizeof(int));
 #endif
     /* allocate sample buffer */
@@ -949,14 +949,14 @@ fluid_chorus_set(fluid_chorus_t *chorus, int set, int nr, fluid_real_t level,
         chorus->depth_ms = (chorus->mod_depth * 1000) / chorus->sample_rate;
     }
     chorus->mod_depth /= 2; /* amplitude is peak to peek / 2 */
-#ifdef PRINT
+#ifdef DEBUG_PRINT
     printf("depth_ms:%f, depth_samples/2:%d\n",chorus->depth_ms, chorus->mod_depth);
 #endif
     /* Initializes the modulated center position:
        mod_rate, center_pos_mod,  and index rate.
     */
     set_center_position(chorus); /* must be called before set_xxxx_frequency() */
-#ifdef PRINT
+#ifdef DEBUG_PRINT
     printf("mod_rate:%d\n",chorus->mod_rate);
 #endif
 //	chorus->speed_Hz = 0.1;
@@ -977,7 +977,7 @@ fluid_chorus_set(fluid_chorus_t *chorus, int set, int nr, fluid_real_t level,
                               (float)i / chorus->number_blocks);
     }
 
-#ifdef PRINT
+#ifdef DEBUG_PRINT
     printf("lfo type:%d\n",chorus->type);
     printf("speed_Hz:%f\n",chorus->speed_Hz);
 #endif
@@ -1005,7 +1005,7 @@ fluid_chorus_set(fluid_chorus_t *chorus, int set, int nr, fluid_real_t level,
         // set depth to maximum to avoid spamming console with above warning
         chorus->depth_ms = (modulation_depth_samples * 1000) / chorus->sample_rate;
     }
-#ifdef PRINT
+#ifdef DEBUG_PRINT
     printf("depth_ms:%f, depth_samples:%d\n",chorus->depth_ms, modulation_depth_samples);
 #endif
 
@@ -1038,7 +1038,7 @@ fluid_chorus_set(fluid_chorus_t *chorus, int set, int nr, fluid_real_t level,
     /* Start of the circular buffer */
     chorus->counter = 0;
 #endif
-#ifdef PRINT
+#ifdef DEBUG_PRINT
     if(chorus->type == FLUID_CHORUS_MOD_SINE )
         printf("lfo: sinus\n");
     else
@@ -1048,7 +1048,7 @@ fluid_chorus_set(fluid_chorus_t *chorus, int set, int nr, fluid_real_t level,
 #endif
 
 #ifdef STEREO_UNIT
-  #ifdef PRINT
+  #ifdef DEBUG_PRINT
   printf("stereo unit\n");
   #endif
 
@@ -1082,7 +1082,7 @@ fluid_chorus_set(fluid_chorus_t *chorus, int set, int nr, fluid_real_t level,
 			wet = wet  / (1.0f + chorus->width * SCALE_WET_WIDTH);
             chorus->wet1 = wet * (chorus->width / 2.0f + 0.5f);
             chorus->wet2 = wet * ((1.0f - chorus->width) / 2.0f);
-#ifdef PRINT
+#ifdef DEBUG_PRINT
             printf("width:%f\n", chorus->width);
 			if (chorus->width > 0)   printf("nr > 1, width > 0 => out stereo\n");
 			else   printf("nr > 1, width:0 =>out mono\n");
@@ -1104,7 +1104,7 @@ fluid_chorus_set(fluid_chorus_t *chorus, int set, int nr, fluid_real_t level,
                 chorus->wet1  = wet;
                 chorus->wet2  = -wet; /* inversion */
             }
-#ifdef PRINT
+#ifdef DEBUG_PRINT
             printf("width:%f\n", chorus->width);
 			if (chorus->width != 0)   printf("one block, width > 0 => out stereo\n");
 			else   printf("one block,  width:0 => out mono\n");
@@ -1112,7 +1112,7 @@ fluid_chorus_set(fluid_chorus_t *chorus, int set, int nr, fluid_real_t level,
         }
     }
 #else //mono
-  #ifdef PRINT
+  #ifdef DEBUG_PRINT
     printf("mono unit\n");
   #endif
 #endif //STEREO_UNIT
