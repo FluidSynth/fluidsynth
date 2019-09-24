@@ -15,7 +15,9 @@ FluidSynth generates audio by reading and handling MIDI events from MIDI input d
 
 ## Documentation
 
-The central place for documentation and further links is our **wiki** here at GitHub: **https://github.com/FluidSynth/fluidsynth/wiki**
+The central place for documentation and further links is our **wiki** here at GitHub:
+
+**https://github.com/FluidSynth/fluidsynth/wiki**
 
 If you are missing parts of the documentation, let us know by writing to our mailing list.
 Of course, you are welcome to edit and improve the wiki yourself. All you need is an account at GitHub. Alternatively, you may send an EMail to our mailing list along with your suggested changes. Further information about the mailing list is available in the wiki as well.
@@ -29,6 +31,16 @@ The source code for FluidSynth is distributed under the terms of the [GNU Lesser
 ## Building from source
 
 For information on how to build FluidSynth from source, please [refer to our wiki](https://github.com/FluidSynth/fluidsynth/wiki/BuildingWithCMake).
+
+## Links
+
+- FluidSynth's Home Page, http://www.fluidsynth.org
+
+- FluidSynth's wiki, https://github.com/FluidSynth/fluidsynth/wiki
+
+- FluidSynth's API documentation, http://www.fluidsynth.org/api/
+
+---
 
 ## Historical background
 
@@ -82,40 +94,3 @@ several reasons:
   if the project stayed very focussed on its goal (a Soundfont
   synthesizer), stayed small (ideally one file) and didn't dependent
   on external code.
-
-
-## Links
-
-### Home Page
-
-- http://www.fluidsynth.org
-
-### Documentation
-
-- FluidSynth's wiki, https://github.com/FluidSynth/fluidsynth/wiki
-
-- FluidSynth's API documentation, http://www.fluidsynth.org/api/
-  
-- [List of Soundfont editors is in the wiki](https://github.com/FluidSynth/fluidsynth/wiki/SoundFont#soundfont-editors)
-
-
-### Software SoundFont Synthesizers:
-
-- LiveSynth Pro DXi and Crescendo from LiveUpdate (Win),
-http://www.livesynth.com/lspro.html
-
-- Unity DS-1 from Bitheadz (Win & Mac), http://www.bitheadz.com/
-
-- QuickTime 5 from Apple (Win & Mac), http://www.apple.com/quicktime/
-
-- Logic from eMagic, http://www.emagic.de
-
-### Conversion Tools
-
-- CDxtract from CDxtract  (Win), http://www.cdxtract.com
-
-- ReCycle from Propellerhead Software (Win & Mac),
-http://www.propellerheads.se/products/recycle/
-
-- Translator from Rubber Chicken Software (Win & Mac),
-http://www.chickensys.com/translator
