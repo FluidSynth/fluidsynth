@@ -1596,6 +1596,7 @@ fluid_check_linked_mod_path(char *list_name, fluid_mod_t *list_mod,
                 if (count < 0)
                 {   /* no final destination found for mod */
                     mod->amount = 0; /* mod marked invalid */
+                    path[mod_idx] &= ~FLUID_MOD_VALID;
                     /* warning: path is without destination */
                     if(list_name != NULL)
                     {
@@ -1656,6 +1657,7 @@ fluid_check_linked_mod_path(char *list_name, fluid_mod_t *list_mod,
                 if (linked_count < 0)
                 {
                     mod->amount = 0; /* mod marked invalid */
+                    path[mod_idx] &= ~FLUID_MOD_VALID;
                     return -1;       /* current path is invalid */
                 }
             }
@@ -1967,7 +1969,8 @@ fluid_list_check_linked_mod(char *list_name,
         while(mod)
         {
             if( /* Check linked mod only not in discovered paths */
-                fluid_mod_is_linked(mod)
+                (path[mod_count] & FLUID_MOD_VALID)
+                && fluid_mod_has_linked_src1(mod)
                 /* Check if mod doesn't belong to any discovered paths */
                 && !(path[mod_count] & FLUID_PATH_CURRENT) )
             {
