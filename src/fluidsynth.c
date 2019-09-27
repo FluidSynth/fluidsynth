@@ -909,7 +909,16 @@ int main(int argc, char **argv)
                 fluid_synth_sfload(synth, s, 1);
             }
 
+#ifdef WIN32
+            /* On Windows any memory allocated by a shared library (.dll) must
+               be freed by this library */
+// To do: replace call to FLUID_FREE() by call to fluid_free() once fluid_free()
+// will be implemented in fluidsynth library.
+//          fluid_free(s);
             FLUID_FREE(s);
+#else
+            FLUID_FREE(s);
+#endif
         }
 
         fluid_player_play(player);
@@ -991,7 +1000,16 @@ int main(int argc, char **argv)
 
         if(filename)
         {
+#ifdef WIN32
+            /* On Windows any memory allocated by a shared library (.dll) must
+               be freed by this library */
+// To do: replace call to FLUID_FREE() by call to fluid_free() once fluid_free()
+// will be implemented in fluidsynth library.
+//          fluid_free(filename);
             FLUID_FREE(filename);
+#else
+            FLUID_FREE(filename);
+#endif
         }
 
         fast_render_loop(settings, synth, player);
@@ -1185,11 +1203,29 @@ print_help(fluid_settings_t *settings)
 
     if(audio_options)
     {
+#ifdef WIN32
+        /* On Windows any memory allocated by a shared library (.dll) must
+           be freed by this library */
+// To do: replace call to FLUID_FREE() by call to fluid_free() once fluid_free()
+// will be implemented in fluidsynth library.
+//      fluid_free(midi_options);
         FLUID_FREE(audio_options);
+#else
+        FLUID_FREE(audio_options);
+#endif
     }
 
     if(midi_options)
     {
+#ifdef WIN32
+        /* On Windows any memory allocated by a shared library (.dll) must
+		   be freed by this library */
+// To do: replace call to FLUID_FREE() by call to fluid_free() once fluid_free()
+// will be implemented in fluidsynth library.
+//      fluid_free(midi_options);
         FLUID_FREE(midi_options);
+#else
+        FLUID_FREE(midi_options);
+#endif
     }
 }
