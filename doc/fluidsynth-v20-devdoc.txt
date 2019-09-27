@@ -68,7 +68,7 @@ What is FluidSynth?
 
 \section NewIn2_0_7 Whats new in 2.0.7?
 
-- fluid_free(), has been added to allow proper deallocation by programming languages other than C/C++
+- fluid_free() has been added to allow proper deallocation by programming languages other than C/C++
 
 \section NewIn2_0_6 Whats new in 2.0.6?
 
