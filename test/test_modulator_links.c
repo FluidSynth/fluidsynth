@@ -57,7 +57,7 @@ int main(void)
         fluid_mod_set_dest   (mod2, GEN_ATTENUATION);
         
         // Return must be 0
-        linked_count = fluid_list_check_linked_mod("test zone with simple modulators",
+        linked_count = fluid_list_check_linked_mod("test_zone_with_simple_modulators",
                                                    list_of_mods, 0, NULL, 0);
         TEST_ASSERT(linked_count == 0);
         
@@ -83,7 +83,7 @@ int main(void)
         //  - NULL must be returned in linked_mod
         //  - 0 must be returned in linked_count
         linked_mod = mod0; // initialize linked_mod to non NULL.
-        linked_count = fluid_list_check_linked_mod("test zone with simple modulators",
+        linked_count = fluid_list_check_linked_mod("test_zone_with_simple_modulators",
                                                    list_of_mods, 0, &linked_mod, 0);
         TEST_ASSERT(linked_count == 0);
         TEST_ASSERT(linked_mod == NULL);
@@ -117,7 +117,7 @@ int main(void)
         fluid_mod_set_dest   (mod2, FLUID_MOD_LINK_DEST | 0);
         
         // Return must be 3
-        linked_count = fluid_list_check_linked_mod("test zone with linked modulators",
+        linked_count = fluid_list_check_linked_mod("test_zone_with_linked_modulators",
                                                    list_of_mods, 0, NULL, 0);
         TEST_ASSERT(linked_count == 3);
 
@@ -143,7 +143,7 @@ int main(void)
         //  - not NULL must be returned in linked_mod
         //  - 3 must be returned in linked_count
         linked_mod = NULL; // initialize linked_mod to NULL.
-        linked_count = fluid_list_check_linked_mod("test zone with linked modulators",
+        linked_count = fluid_list_check_linked_mod("test_zone_with_linked_modulators",
                                                    list_of_mods, 0, &linked_mod, 0);
         TEST_ASSERT(linked_count == 3);
         TEST_ASSERT(linked_mod != NULL);
@@ -163,7 +163,7 @@ int main(void)
         list_of_mods = mod0;
     
         // Return must be 3
-        linked_count = fluid_list_check_linked_mod("test zone with linked modulators",
+        linked_count = fluid_list_check_linked_mod("test_zone_with_linked_modulators",
                                                    list_of_mods, 0, NULL, 0);
         TEST_ASSERT(linked_count == 3);
 
@@ -188,7 +188,7 @@ int main(void)
         //  - not NULL must be returned in linked_mod
         //  - 3 must be returned in linked_count
         linked_mod = NULL; // initialize linked_mod to NULL.
-        linked_count = fluid_list_check_linked_mod("test zone with linked modulators",
+        linked_count = fluid_list_check_linked_mod("test_zone_with_linked modulators",
                                                    list_of_mods, 0, &linked_mod, 0);
         TEST_ASSERT(linked_count == 3);
         TEST_ASSERT(linked_mod != NULL);
@@ -227,7 +227,7 @@ int main(void)
 
         // We don't want return linked modulator (i.e linked_mod is set to NULL).
         // Return count must be 3
-        linked_count = fluid_list_check_linked_mod("test-zone-with-linked modulators",
+        linked_count = fluid_list_check_linked_mod("test_zone_with_linked_modulators",
                                                    list_of_mods, 0, NULL, 0);
         TEST_ASSERT(linked_count == 3);
 
@@ -260,7 +260,7 @@ int main(void)
         //  - not NULL must be returned in linked_mod
         //  - 3 must be returned in linked_count
         linked_mod = NULL; // initialize linked_mod to NULL.
-        linked_count = fluid_list_check_linked_mod("test-zone-with-linked-modulators",
+        linked_count = fluid_list_check_linked_mod("test_zone_with_linked_modulators",
                                                    list_of_mods, 0, &linked_mod, 0);
         TEST_ASSERT(linked_count == 3);
         TEST_ASSERT(linked_mod != NULL);
@@ -353,7 +353,7 @@ int main(void)
 
         // We don't want return linked modulator (i.e linked_mod is set to NULL).
         // Return count must be: 6
-        linked_count = fluid_list_check_linked_mod("test-zone-with-2-complex-modulators",
+        linked_count = fluid_list_check_linked_mod("test_zone_with_2_complex_modulators",
                                                    list_of_mods, 0, NULL, 0);
         TEST_ASSERT(linked_count == 6);
 
@@ -398,7 +398,7 @@ int main(void)
         //  - not NULL must be returned in linked_mod
         //  - 6 must be returned in linked_count
         linked_mod = NULL; // initialize linked_mod to NULL.
-        linked_count = fluid_list_check_linked_mod("test-zone-with-linked-modulators",
+        linked_count = fluid_list_check_linked_mod("test_zone_with_linked_modulators",
                                                    list_of_mods, 0, &linked_mod, 0);
         TEST_ASSERT(linked_count == 6);
         TEST_ASSERT(linked_mod != NULL);
@@ -535,7 +535,7 @@ int main(void)
         list_of_mods = mod0;
     
         // Return must be 3
-        linked_count = fluid_list_check_linked_mod("test zone with linked modulators",
+        linked_count = fluid_list_check_linked_mod("test_zone_with_linked_modulators",
                                                    list_of_mods, 0, NULL, 0);
         TEST_ASSERT(linked_count == 3);
 
@@ -562,7 +562,7 @@ int main(void)
         //  - not NULL must be returned in linked_mod
         //  - 3 must be returned in linked_count
         linked_mod = NULL; // initialize linked_mod to NULL.
-        linked_count = fluid_list_check_linked_mod("test zone with linked modulators",
+        linked_count = fluid_list_check_linked_mod("test_zone_with_linked_modulators",
                                                    list_of_mods, 0, &linked_mod, 0);
         TEST_ASSERT(linked_count == 3);
         TEST_ASSERT(linked_mod != NULL);
@@ -586,7 +586,7 @@ int main(void)
         list_of_mods = mod0;
     
         // Return must be 4
-        linked_count = fluid_list_check_linked_mod("test zone with linked modulators",
+        linked_count = fluid_list_check_linked_mod("test_zone_with_linked_modulators",
                                                    list_of_mods, 0, NULL, 0);
         TEST_ASSERT(linked_count == 4);
 
@@ -613,7 +613,7 @@ int main(void)
         //  - not NULL must be returned in linked_mod
         //  - 4 must be returned in linked_count
         linked_mod = NULL; // initialize linked_mod to NULL.
-        linked_count = fluid_list_check_linked_mod("test zone with linked modulators",
+        linked_count = fluid_list_check_linked_mod("test_zone_with_linked_modulators",
                                                    list_of_mods, 0, &linked_mod, 0);
         TEST_ASSERT(linked_count == 4);
         TEST_ASSERT(linked_mod != NULL);
@@ -638,7 +638,7 @@ int main(void)
         list_of_mods = mod0;
     
         // Return must be 2
-	    linked_count = fluid_list_check_linked_mod("test zone with circular linked modulators",
+	    linked_count = fluid_list_check_linked_mod("test_zone_with_circular_linked_modulators",
                                                    list_of_mods, 0, NULL, 0);
         TEST_ASSERT(linked_count == 2);
 
@@ -678,7 +678,7 @@ int main(void)
         mod0->next = mod1;
         list_of_mods = mod0;
         // It remains at least one linked path : mod2->mod0. Return must be 2
-        linked_count = fluid_list_check_linked_mod("test zone with circular linked modulators",
+        linked_count = fluid_list_check_linked_mod("test_zone_with_circular_linked modulators",
                                                    list_of_mods, 0, NULL, 0);
         TEST_ASSERT(linked_count == 2);
 
@@ -705,7 +705,7 @@ int main(void)
         //  - not NULL must be returned in linked_mod
         //  - 2 must be returned in linked_count
         linked_mod = NULL; // initialize linked_mod to NULL.
-        linked_count = fluid_list_check_linked_mod("test zone with circular linked modulators",
+        linked_count = fluid_list_check_linked_mod("test_zone_with_circular_linked modulators",
                                                    list_of_mods, 0, &linked_mod, 0);
         TEST_ASSERT(linked_count == 2);
         TEST_ASSERT(linked_mod != NULL);
@@ -738,7 +738,7 @@ int main(void)
         // Circular path is: CC->mod2, mod0, mod1.
 		// Remaining path CC->mod3-> is without destination.
         // It remains no linked path : mod2->mod0. Return must be 0
-        linked_count = fluid_list_check_linked_mod("test zone with circular linked modulators",
+        linked_count = fluid_list_check_linked_mod("test_zone_with_circular_linked_modulators",
                                                    list_of_mods, 0, NULL, 0);
         TEST_ASSERT(linked_count == 0);
 
@@ -765,7 +765,7 @@ int main(void)
         //  - NULL must be returned in linked_mod
         //  - 0 must be returned in linked_count
         linked_mod = mod0; // initialize linked_mod to not NULL.
-        linked_count = fluid_list_check_linked_mod("test zone with circular linked modulators",
+        linked_count = fluid_list_check_linked_mod("test_zone_with_circular_linked_modulators",
                                                    list_of_mods, 0, &linked_mod, 0);
         TEST_ASSERT(linked_count == 0);
         TEST_ASSERT(linked_mod == NULL);
@@ -801,7 +801,7 @@ int main(void)
         fluid_mod_set_dest   (mod3, FLUID_MOD_LINK_DEST | 2);
         
         // return must be 0
-        linked_count = fluid_list_check_linked_mod("test zone with circular linked modulators",
+        linked_count = fluid_list_check_linked_mod("test_zone_with_circular_linked_modulators",
                                                    list_of_mods, 0, NULL, 0);
         TEST_ASSERT(linked_count == 0);
 
@@ -848,7 +848,7 @@ int main(void)
         fluid_mod_set_dest   (mod3, FLUID_MOD_LINK_DEST | 1);
         
         // return must be 0
-        linked_count = fluid_list_check_linked_mod("test zone with circular linked modulators",
+        linked_count = fluid_list_check_linked_mod("test_zone_with_circular_linked_modulators",
                                                    list_of_mods, 0, NULL, 0);
         TEST_ASSERT(linked_count == 0);
 
@@ -896,7 +896,7 @@ int main(void)
         fluid_mod_set_dest   (mod3, FLUID_MOD_LINK_DEST | 1);
         
         // return must be 0
-        linked_count = fluid_list_check_linked_mod("test zone with circular linked modulators",
+        linked_count = fluid_list_check_linked_mod("test_zone_with_circular_linked_modulators",
                                                    list_of_mods, 0, NULL, 0);
         TEST_ASSERT(linked_count == 0);
 
@@ -946,7 +946,7 @@ int main(void)
         fluid_mod_set_dest   (mod3, FLUID_MOD_LINK_DEST | 1);
         
         // return must be 2
-        linked_count = fluid_list_check_linked_mod("test zone with circular linked modulators",
+        linked_count = fluid_list_check_linked_mod("test_zone_with_circular_linked_modulators",
                                                    list_of_mods, 0, NULL, 0);
         TEST_ASSERT(linked_count == 2);
 
@@ -993,7 +993,7 @@ int main(void)
         fluid_mod_set_dest   (mod2, FLUID_MOD_LINK_DEST | 0);
         
         // return must be 0
-        linked_count = fluid_list_check_linked_mod("test zone with invalid linked modulators",
+        linked_count = fluid_list_check_linked_mod("test_zone_with_invalid_linked modulators",
                                                    list_of_mods, 0, NULL, 0);
         TEST_ASSERT(linked_count == 0);
 
@@ -1038,7 +1038,7 @@ int main(void)
         fluid_mod_set_dest   (mod2, FLUID_MOD_LINK_DEST | 0);
         
         // return must be 2
-        linked_count = fluid_list_check_linked_mod("test zone with invalid linked modulators",
+        linked_count = fluid_list_check_linked_mod("test_zone_with_invalid_linked modulators",
                                                    list_of_mods, 0, NULL, 0);
         TEST_ASSERT(linked_count == 2);
         
@@ -1088,7 +1088,7 @@ int main(void)
         list_of_mods = mod0;
 
         // return must be 2
-        linked_count = fluid_list_check_linked_mod("test zone with isolated modulators",
+        linked_count = fluid_list_check_linked_mod("test_zone_with_isolated_modulators",
                                                    list_of_mods, 0, NULL, 0);
         TEST_ASSERT(linked_count == 2);
 
@@ -1115,7 +1115,7 @@ int main(void)
         //  - not NULL must be returned in linked_mod
         //  - 2 must be returned in linked_count
         linked_mod = NULL; // initialize linked_mod to NULL.
-        linked_count = fluid_list_check_linked_mod("test zone with linked modulators",
+        linked_count = fluid_list_check_linked_mod("test_zone_with_linked_modulators",
                                                    list_of_mods, 0, &linked_mod, 0);
         TEST_ASSERT(linked_count == 2);
         TEST_ASSERT(linked_mod != NULL);
