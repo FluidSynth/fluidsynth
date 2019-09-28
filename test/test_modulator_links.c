@@ -27,6 +27,8 @@ int main(void)
     fluid_mod_t *mod1 = new_fluid_mod();
     fluid_mod_t *mod2 = new_fluid_mod();
     fluid_mod_t *mod3 = new_fluid_mod();
+    fluid_mod_t *mod4 = new_fluid_mod();
+    fluid_mod_t *mod5 = new_fluid_mod();
     
     fluid_mod_t *list_of_mods = NULL;
     
@@ -193,6 +195,310 @@ int main(void)
         delete_fluid_list_mod(linked_mod);
     }
     
+    // Test 3.2: Same as 3 but again change order.
+    printf("\nTest 3.2: Same as 3 but again change order\n");
+    printf(  " List:m0,m1,m2\n");
+    printf(  " Paths in list_of_mods from any CC to ending modulator (m1) connected to gen GEN_FILTERFC:\n");
+    printf(  "  CC20-->m0-->m1-->GEN_FILTERFC\n");
+    printf(  "  CC21-->m2-->m1\n");
+    {
+        list_of_mods = mod0;
+        mod0->next = mod1;
+        mod1->next = mod2;
+        mod2->next = NULL;
+
+        // CC20-->m0->m1
+        fluid_mod_set_source1(mod0, 20, FLUID_MOD_CC | FLUID_MOD_CONCAVE | FLUID_MOD_UNIPOLAR | FLUID_MOD_POSITIVE);
+        fluid_mod_set_source2(mod0, FLUID_MOD_NONE, FLUID_MOD_GC);
+        fluid_mod_set_amount (mod0, 100);
+        fluid_mod_set_dest   (mod0, FLUID_MOD_LINK_DEST | 1);
+
+        // link->m1->gen
+        fluid_mod_set_source1(mod1, FLUID_MOD_LINK_SRC, FLUID_MOD_GC);
+        fluid_mod_set_source2(mod1, FLUID_MOD_NONE, FLUID_MOD_GC);
+        fluid_mod_set_amount (mod1, 200);
+        fluid_mod_set_dest   (mod1, GEN_FILTERFC);
+
+        // CC21-->m2->m1
+        fluid_mod_set_source1(mod2, 21, FLUID_MOD_CC | FLUID_MOD_LINEAR | FLUID_MOD_UNIPOLAR | FLUID_MOD_POSITIVE);
+        fluid_mod_set_source2(mod2, FLUID_MOD_NONE, FLUID_MOD_GC);
+        fluid_mod_set_amount (mod2, 300);
+        fluid_mod_set_dest   (mod2, FLUID_MOD_LINK_DEST | 1);
+
+        // We don't want return linked modulator (i.e linked_mod is set to NULL).
+        // Return count must be 3
+        linked_count = fluid_list_check_linked_mod("test-zone-with-linked modulators",
+                                                   list_of_mods, 0, NULL, 0);
+        TEST_ASSERT(linked_count == 3);
+
+        // order not changed
+        TEST_ASSERT(list_of_mods == mod0);
+        TEST_ASSERT(list_of_mods->next == mod1);
+        TEST_ASSERT(list_of_mods->next->next == mod2);
+        TEST_ASSERT(list_of_mods->next->next->next == NULL);
+
+        // amounts not changed
+        TEST_ASSERT(fluid_mod_get_amount(mod0) == 100);
+        TEST_ASSERT(fluid_mod_get_amount(mod1) == 200);
+        TEST_ASSERT(fluid_mod_get_amount(mod2) == 300);
+    }
+
+    // Test 3.2.1: Same test as 3.2 but with linked_mod not NULL. The function expects to return any
+    // linked modulator list in linked_mod pointer.
+    // Actually linked_mod should contain 3 linked modulator.
+    printf("\nTest 3.2.1: Same test as 3.2 but with linked_mod not NULL\n");
+    printf(  " List:m0,m1,m2\n");
+    printf(  " Paths in list_of_mods from any CC to ending modulator (m1) connected to gen GEN_FILTERFC:\n");
+    printf(  "  CC20-->m0-->m1-->GEN_FILTERFC\n");
+    printf(  "  CC21-->m2-->m1\n");
+    printf(  " Paths in linked_mod from any CC to ending modulator (m0) connected to gen GEN_FILTERFC:\n");
+    printf(  "  GEN_FILTERFC<--m0<--m1<--CC20\n");
+    printf(  "                 m0<--m2<--CC21\n");
+    {
+        fluid_mod_t * linked_mod;
+        // On return:
+        //  - not NULL must be returned in linked_mod
+        //  - 3 must be returned in linked_count
+        linked_mod = NULL; // initialize linked_mod to NULL.
+        linked_count = fluid_list_check_linked_mod("test-zone-with-linked-modulators",
+                                                   list_of_mods, 0, &linked_mod, 0);
+        TEST_ASSERT(linked_count == 3);
+        TEST_ASSERT(linked_mod != NULL);
+
+        /*
+         Check ordering of complex modulators in linked_mod:
+         The first member of any complex modulator is considered to have a
+         relative index 0 regardless its index in list_mod. This first member
+         is connected to a generator (it is called the "ending modulator").
+         Members following the first have index relative to the first member.
+         They are connected to others modulators always backward in linked_mod.
+         Their destination field are index relative to the first member.
+        */
+
+        //check ordering of complex modulator in linked_mod: m0,m1,m2
+        {
+            fluid_mod_t  *m0, *m1, *m2; // members of linked_mod
+            // Check m0 in linked_mod. m0 must be identic to mod1
+            m0 = linked_mod;
+            // m0 must be identic to mod1
+            TEST_ASSERT(fluid_mod_test_identity(m0, mod1));
+            // m0 amount must be identic to mod1 amount
+            TEST_ASSERT(fluid_mod_get_amount(m0) == fluid_mod_get_amount(mod1));
+
+            // Check m1 in linked_mod. m1 must be identic to mod0
+            m1 = m0->next;
+            // m1 destination must be index of m0 (i.e 0)
+            TEST_ASSERT(fluid_mod_get_dest(m1) == (FLUID_MOD_LINK_DEST|0));
+            // m1 amount must be identic to mod0 amount
+            TEST_ASSERT(fluid_mod_get_amount(m1) == fluid_mod_get_amount(mod0));
+            // m1 src1 must be identic to mod0 src1
+            TEST_ASSERT(fluid_mod_get_source1(m1)== fluid_mod_get_source1(mod0));
+            // m1 flags1 must be identic to mod0 flags1
+            TEST_ASSERT(fluid_mod_get_flags1(m1)== fluid_mod_get_flags1(mod0));
+            // m1 src2 must be identic to mod0 src2
+            TEST_ASSERT(fluid_mod_get_source2(m1)== fluid_mod_get_source2(mod0));
+            // m1 flags2 must be identic to mod0 flags2
+            TEST_ASSERT(fluid_mod_get_flags2(m1)== fluid_mod_get_flags2(mod0));
+
+            // Check m2 in linked_mod. m2 must be identic to mod2
+            m2 = m1->next;
+            // m2 destination must be index of m0 (i.e 0)
+            TEST_ASSERT(fluid_mod_get_dest(m2) == (FLUID_MOD_LINK_DEST|0));
+            // m2 amount must be identic to mod2 amount
+            TEST_ASSERT(fluid_mod_get_amount(m2) == fluid_mod_get_amount(mod2));
+            // m2 src1 must be identic to mod2 src1
+            TEST_ASSERT(fluid_mod_get_source1(m2)== fluid_mod_get_source1(mod2));
+            // m2 flags1 must be identic to mod2 flags1
+            TEST_ASSERT(fluid_mod_get_flags1(m2)== fluid_mod_get_flags1(mod2));
+            // m2 src2 must be identic to mod2 src2
+            TEST_ASSERT(fluid_mod_get_source2(m2)== fluid_mod_get_source2(mod2));
+            // m2 flags2 must be identic to mod2 flags2
+            TEST_ASSERT(fluid_mod_get_flags2(m2)== fluid_mod_get_flags2(mod2));
+        }
+        delete_fluid_list_mod(linked_mod);
+    }
+
+    // Test 3.3: Same list as 3.2 but we add another complex modulator in list_of_mods.
+    printf("\nTest 3.3: Same list as 3.2 but we add another complex modulator\n");
+    printf(  " List:m0,m1,m2, m3,m4,m5\n");
+    printf(  " Paths in list_of_mods from any CC to ending modulator (m1) connected to gen GEN_FILTERFC:\n");
+    printf(  "  CC20-->m0-->m1-->GEN_FILTERFC\n");
+    printf(  "  CC21-->m2-->m1\n");
+    printf(  " Paths in list_of_mods from any CC to ending modulator (m5) connected to gen GEN_MODLFOTOVOL:\n");
+    printf(  "  CC22-->m3-->m5-->GEN_MODLFOTOVOL\n");
+    printf(  "  CC23-->m4-->m5\n");
+    {
+        // add new complex modulator in list_of_mods
+        // CC22-->m3->m5
+        fluid_mod_set_source1(mod3, 22, FLUID_MOD_CC | FLUID_MOD_CONCAVE | FLUID_MOD_UNIPOLAR | FLUID_MOD_POSITIVE);
+        fluid_mod_set_source2(mod3, FLUID_MOD_NONE, FLUID_MOD_GC);
+        fluid_mod_set_amount (mod3, 400);
+        fluid_mod_set_dest   (mod3, FLUID_MOD_LINK_DEST | 5);
+
+        // CC23-->m4-->m5
+        fluid_mod_set_source1(mod4, 23, FLUID_MOD_CC | FLUID_MOD_CONCAVE | FLUID_MOD_UNIPOLAR | FLUID_MOD_POSITIVE);
+        fluid_mod_set_source2(mod4, FLUID_MOD_NONE, FLUID_MOD_GC);
+        fluid_mod_set_amount (mod4, 500);
+        fluid_mod_set_dest   (mod4, FLUID_MOD_LINK_DEST | 5);
+
+        // link-->m5->gen
+        fluid_mod_set_source1(mod5, FLUID_MOD_LINK_SRC, FLUID_MOD_GC);
+        fluid_mod_set_source2(mod5, FLUID_MOD_NONE, FLUID_MOD_GC);
+        fluid_mod_set_amount (mod5, 600);
+        fluid_mod_set_dest   (mod5, GEN_MODLFOTOVOL);
+
+        mod2->next = mod3;
+        mod3->next = mod4;
+        mod4->next = mod5;
+
+        // We don't want return linked modulator (i.e linked_mod is set to NULL).
+        // Return count must be: 6
+        linked_count = fluid_list_check_linked_mod("test-zone-with-2-complex-modulators",
+                                                   list_of_mods, 0, NULL, 0);
+        TEST_ASSERT(linked_count == 6);
+
+        // order not changed
+        TEST_ASSERT(list_of_mods == mod0);
+        TEST_ASSERT(list_of_mods->next == mod1);
+        TEST_ASSERT(list_of_mods->next->next == mod2);
+        TEST_ASSERT(list_of_mods->next->next->next == mod3);
+        TEST_ASSERT(list_of_mods->next->next->next->next == mod4);
+        TEST_ASSERT(list_of_mods->next->next->next->next->next == mod5);
+        TEST_ASSERT(list_of_mods->next->next->next->next->next->next == NULL);
+
+        // amounts not changed
+        TEST_ASSERT(fluid_mod_get_amount(mod0) == 100);
+        TEST_ASSERT(fluid_mod_get_amount(mod1) == 200);
+        TEST_ASSERT(fluid_mod_get_amount(mod2) == 300);
+        TEST_ASSERT(fluid_mod_get_amount(mod3) == 400);
+        TEST_ASSERT(fluid_mod_get_amount(mod4) == 500);
+        TEST_ASSERT(fluid_mod_get_amount(mod5) == 600);
+    }
+
+    // Test 3.3.1: Same test as 3.3 but with linked_mod not NULL. The function expects to return any
+    // 2 complex modulators in linked_mod pointer.
+    // Actually linked_mod should contain 6 linked modulators.
+    printf("\nTest 3.3.1: Same test as 3.3 but with linked_mod not NULL\n");
+    printf(  " List:m0,m1,m2, m3,m4,m5\n");
+    printf(  " Paths in list_of_mods from any CC to ending modulator (m1) connected to gen GEN_FILTERFC:\n");
+    printf(  "  CC20-->m0-->m1-->GEN_FILTERFC\n");
+    printf(  "  CC21-->m2-->m1\n");
+    printf(  " Paths in list_of_mods from any CC to ending modulator (m5) connected to gen GEN_MODLFOTOVOL:\n");
+    printf(  "  CC22-->m3-->m5-->GEN_MODLFOTOVOL\n");
+    printf(  "  CC23-->m4-->m5\n");
+    printf(  " Paths in linked_mod from any CC to ending modulator (m0) connected to gen GEN_FILTERFC:\n");
+    printf(  "  GEN_FILTERFC<-----m0<--m1<--CC20\n");
+    printf(  "                    m0<--m2<--CC21\n");
+    printf(  " Paths in linked_mod from any CC to ending modulator (m3) connected to gen GEN_MODLFOTOVOL:\n");
+    printf(  "  GEN_MODLFOTOVOL<--m3<--m4<--CC22\n");
+    printf(  "                    m3<--m5<--CC23\n");
+    {
+        fluid_mod_t * linked_mod;
+        // On return:
+        //  - not NULL must be returned in linked_mod
+        //  - 6 must be returned in linked_count
+        linked_mod = NULL; // initialize linked_mod to NULL.
+        linked_count = fluid_list_check_linked_mod("test-zone-with-linked-modulators",
+                                                   list_of_mods, 0, &linked_mod, 0);
+        TEST_ASSERT(linked_count == 6);
+        TEST_ASSERT(linked_mod != NULL);
+
+        /*
+         Check ordering of complex modulators in linked_mod:
+         The first member of any complex modulator is considered to have a
+         relative index 0 regardless its index in list_mod. This first member
+         is connected to a generator (it is called the "ending modulator").
+         Members following the first have index relative to the first member.
+         They are connected to others modulators always backward in linked_mod.
+         Their destination field are index relative to the first member.
+        */
+        {
+            fluid_mod_t  *m0, *m1, *m2; // members of 1st complex modulator
+            fluid_mod_t  *m3, *m4, *m5; // members of 2nd complex modulator
+            //-----------------------------------------------------------------
+            // Check ordering of 1st complex modulator in linked_mod: m0,m1,m2.
+            // The result must be the same as for Test 3.2.1
+
+            // Check ending modulator (m0) in linked_mod. m0 must be identic to mod1
+            m0 = linked_mod;
+            // m0 must be identic to mod1
+            TEST_ASSERT(fluid_mod_test_identity(m0, mod1));
+            // m0 amount must be identic to mod1 amount
+            TEST_ASSERT(fluid_mod_get_amount(m0) == fluid_mod_get_amount(mod1));
+
+            // Check m1 in linked_mod. m1 must be identic to mod0
+            m1 = m0->next;
+            // m1 destination must be index of m0 (i.e 0)
+            TEST_ASSERT(fluid_mod_get_dest(m1) == (FLUID_MOD_LINK_DEST|0));
+            // m1 amount must be identic to mod0 amount
+            TEST_ASSERT(fluid_mod_get_amount(m1) == fluid_mod_get_amount(mod0));
+            // m1 src1 must be identic to mod0 src1
+            TEST_ASSERT(fluid_mod_get_source1(m1)== fluid_mod_get_source1(mod0));
+            // m1 flags1 must be identic to mod0 flags1
+            TEST_ASSERT(fluid_mod_get_flags1(m1)== fluid_mod_get_flags1(mod0));
+            // m1 src2 must be identic to mod0 src2
+            TEST_ASSERT(fluid_mod_get_source2(m1)== fluid_mod_get_source2(mod0));
+            // m1 flags2 must be identic to mod0 flags2
+            TEST_ASSERT(fluid_mod_get_flags2(m1)== fluid_mod_get_flags2(mod0));
+
+            // Check m2 in linked_mod. m2 must be identic to mod2
+            m2 = m1->next;
+            // m2 destination must be index of m0 (i.e 0)
+            TEST_ASSERT(fluid_mod_get_dest(m2) == (FLUID_MOD_LINK_DEST|0));
+            // m2 amount must be identic to mod2 amount
+            TEST_ASSERT(fluid_mod_get_amount(m2) == fluid_mod_get_amount(mod2));
+            // m2 src1 must be identic to mod2 src1
+            TEST_ASSERT(fluid_mod_get_source1(m2)== fluid_mod_get_source1(mod2));
+            // m2 flags1 must be identic to mod2 flags1
+            TEST_ASSERT(fluid_mod_get_flags1(m2)== fluid_mod_get_flags1(mod2));
+            // m2 src2 must be identic to mod2 src2
+            TEST_ASSERT(fluid_mod_get_source2(m2)== fluid_mod_get_source2(mod2));
+            // m2 flags2 must be identic to mod2 flags2
+            TEST_ASSERT(fluid_mod_get_flags2(m2)== fluid_mod_get_flags2(mod2));
+
+            //-----------------------------------------------------------------
+            // Check ordering of 2nd complex modulator in linked_mod: m3,m4,m5.
+
+            // Check ending modulator (m3) in linked_mod. m3 must be identic to mod5
+            m3 = m2->next;
+            // m3 must be identic to mod5
+            TEST_ASSERT(fluid_mod_test_identity(m3, mod5));
+            // m3 amount must be identic to mod5 amount
+            TEST_ASSERT(fluid_mod_get_amount(m3) == fluid_mod_get_amount(mod5));
+
+            // Check m4 in linked_mod. m4 must be identic to mod3
+            m4 = m3->next;
+            // m4 destination must be relative index of m3 (i.e 0)
+            TEST_ASSERT(fluid_mod_get_dest(m4) == (FLUID_MOD_LINK_DEST|0));
+            // m4 amount must be identic to mod3 amount
+            TEST_ASSERT(fluid_mod_get_amount(m4) == fluid_mod_get_amount(mod3));
+            // m4 src1 must be identic to mod3 src1
+            TEST_ASSERT(fluid_mod_get_source1(m4)== fluid_mod_get_source1(mod3));
+            // m4 flags1 must be identic to mod3 flags1
+            TEST_ASSERT(fluid_mod_get_flags1(m4)== fluid_mod_get_flags1(mod3));
+            // m4 src2 must be identic to mod3 src2
+            TEST_ASSERT(fluid_mod_get_source2(m4)== fluid_mod_get_source2(mod3));
+            // m4 flags2 must be identic to mod3 flags2
+            TEST_ASSERT(fluid_mod_get_flags2(m4)== fluid_mod_get_flags2(mod3));
+
+            // Check m5 in linked_mod. m4 must be identic to mod4
+            m5 = m4->next;
+            // m5 destination must be relative index of m3 (i.e 0)
+            TEST_ASSERT(fluid_mod_get_dest(m5) == (FLUID_MOD_LINK_DEST|0));
+            // m5 amount must be identic to mod4 amount
+            TEST_ASSERT(fluid_mod_get_amount(m5) == fluid_mod_get_amount(mod4));
+            // m5 src1 must be identic to mod4 src1
+            TEST_ASSERT(fluid_mod_get_source1(m5)== fluid_mod_get_source1(mod4));
+            // m5 flags1 must be identic to mod4 flags1
+            TEST_ASSERT(fluid_mod_get_flags1(m5)== fluid_mod_get_flags1(mod4));
+            // m5 src2 must be identic to mod4 src2
+            TEST_ASSERT(fluid_mod_get_source2(m5)== fluid_mod_get_source2(mod4));
+            // m5 flags2 must be identic to mod4 flags2
+            TEST_ASSERT(fluid_mod_get_flags2(m5)== fluid_mod_get_flags2(mod4));
+        }
+        delete_fluid_list_mod(linked_mod);
+    }
+
     // same list that test 3, but with additional mod3 that points to mod1 without mod1 having FLUID_MOD_LINK_SRC
     printf("\nTest 4: same list that test 3, but with additional mod3 that points to mod1 without mod1 having FLUID_MOD_LINK_SRC\n");
  	printf(  " List:m0,m1,m2,m3\n");
@@ -201,11 +507,28 @@ int main(void)
 	printf(  "  CC------->m1-->m0-->gen\n");
 	printf(  "  CC------->m2-->m0\n");
     {
+        // re-initialize list of mod as for test 2.
+        fluid_mod_set_source1(mod0, FLUID_MOD_LINK_SRC, FLUID_MOD_GC);
+        fluid_mod_set_source2(mod0, FLUID_MOD_NONE, FLUID_MOD_GC);
+        fluid_mod_set_amount (mod0, 100);
+        fluid_mod_set_dest   (mod0, GEN_FILTERFC);
+
+        fluid_mod_set_source1(mod1, 20, FLUID_MOD_CC | FLUID_MOD_CONCAVE | FLUID_MOD_UNIPOLAR | FLUID_MOD_POSITIVE);
+        fluid_mod_set_source2(mod1, FLUID_MOD_NONE, FLUID_MOD_GC);
+        fluid_mod_set_amount (mod1, 200);
+        fluid_mod_set_dest   (mod1, FLUID_MOD_LINK_DEST | 0);
+
+        fluid_mod_set_source1(mod2, 20, FLUID_MOD_CC | FLUID_MOD_LINEAR | FLUID_MOD_UNIPOLAR | FLUID_MOD_POSITIVE);
+        fluid_mod_set_source2(mod2, FLUID_MOD_NONE, FLUID_MOD_GC);
+        fluid_mod_set_amount (mod2, 300);
+        fluid_mod_set_dest   (mod2, FLUID_MOD_LINK_DEST | 0);
+
         fluid_mod_set_source1(mod3, 20, FLUID_MOD_CC | FLUID_MOD_LINEAR | FLUID_MOD_UNIPOLAR | FLUID_MOD_POSITIVE);
         fluid_mod_set_source2(mod3, FLUID_MOD_NONE, FLUID_MOD_GC);
         fluid_mod_set_amount (mod3, 50);
         fluid_mod_set_dest   (mod3, FLUID_MOD_LINK_DEST | 1); // link to mod1
         
+        mod3->next = NULL;
         mod2->next = mod3;
         mod1->next = mod2;
         mod0->next = mod1;
@@ -1036,6 +1359,8 @@ int main(void)
     delete_fluid_mod(mod1);
     delete_fluid_mod(mod2);
     delete_fluid_mod(mod3);
+    delete_fluid_mod(mod4);
+    delete_fluid_mod(mod5);
     
     return EXIT_SUCCESS;
 }
