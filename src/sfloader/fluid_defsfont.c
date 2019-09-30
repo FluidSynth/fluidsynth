@@ -1518,7 +1518,7 @@ int fluid_get_count_mod(const fluid_mod_t *mod)
  *      fluidsynth: warning: invalid destination zone-name/mod3.
  *      fluidsynth: warning: path without destination zone-name/mod2.
  *   First message indicates that m3 is invalid (because source src1 isn't linked
- *   or mod is invalid or amount is 0).
+ *   or mod is invalid).
  *   When a path is without destination, all modulators from the beginning to the one
  *   without destination are marked invalid (FLUID_PATH_VALID  = 0, amount = 0)
  *   (e.g  m2,m6).
@@ -1537,8 +1537,8 @@ int fluid_get_count_mod(const fluid_mod_t *mod)
  * Other incomplete linked modulator paths are isolated.
  * Isolated path begins with modulator mx having source src1 linked, with no
  * others modulators connected to mx.
- * These isolated modulator paths are still in list_mod but not in path table.
- * They should be marked invalid later.
+ * These isolated modulator paths are still in list_mod but not registered in
+ * path table. They should be marked invalid later.
  *
  * The function searchs all linked path starting from the beginning of the path
  * (ie. a modulator with source not linked) forward to the endind of the path
@@ -1579,7 +1579,7 @@ fluid_check_linked_mod_path(char *list_name, fluid_mod_t *list_mod,
     fluid_mod_t *mod = list_mod; /* first modulator in list_mod */
     while(mod)
     {
-        /* is request for search first linked modulator of a path ? */
+        /* is it a request to search first linked modulator of a path ? */
         if (dest_idx < 0)
         {
             /* checks if mod source isn't linked and mod destination is linked */
