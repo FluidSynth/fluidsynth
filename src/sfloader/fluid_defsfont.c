@@ -717,9 +717,18 @@ void fluid_dump_linked_mod(fluid_mod_t *mod, int offset)
 
  @param voice voice of the instrument zone.
  @param preset_zone_name, actual preset_zone name.
- @param filter_preset_zone_name, filter name of preset_zone to display. 
+ @param filter_preset_zone_name, filter name of preset_zone to display.
+  - If both name are not NULL, printing is done only if the filter name matches
+    preset_zone_name.
+  - If at least one name is NULL this filter is ignored and printing is filtered
+    by param inst_zone_name, param filter_inst_zone_name.
+
  @param inst_zone_name, actual instrument zone name.
- @param filter_inst_zone_name, filter name of intrument zone to display. 
+ @param filter_inst_zone_name, filter name of intrument zone to display.
+  - If both name are not NULL, printing is done only if the filter name matches
+    instrument_zone_name.
+  - If at least one name is NULL this filter is ignored and printing is filtered
+    by param preset_zone_name, param filter_preset_zone_name.
 */
 static void fluid_print_voice_mod(fluid_voice_t  *voice, 
                         char *preset_zone_name,
@@ -730,11 +739,16 @@ static void fluid_print_voice_mod(fluid_voice_t  *voice,
     int i;
     fluid_mod_t *mod;
 
-    if(strcmp(preset_zone_name, filter_preset_zone_name)
-      || strcmp(inst_zone_name, filter_inst_zone_name))
+    if(preset_zone_name && filter_preset_zone_name
+       && strcmp(preset_zone_name, filter_preset_zone_name))
     {
         return;
-	}
+    }
+    if(inst_zone_name && filter_preset_zone_name
+      && strcmp(inst_zone_name, filter_inst_zone_name))
+    {
+        return;
+    }
     FLUID_LOG(FLUID_INFO, "\"%s\" \"%s\" voice modulators ---------------------------------", preset_zone_name,inst_zone_name);
     for(i = 0; i < voice->mod_count; i+= fluid_get_num_mod(mod))
     {
@@ -1145,7 +1159,24 @@ fluid_defpreset_noteon(fluid_defpreset_t *defpreset, fluid_synth_t *synth, int c
                                                             global_preset_zone ? global_preset_zone->linked_mod : NULL,
                                                             preset_zone->linked_mod,
                                                             FLUID_VOICE_ADD);
+#ifdef DEBUG
+                    /* print voice modulators for any combination: (preset_zone, instrument zone).
+                       If you want to print voice modulators for a particular zone, replace NULL
+                       filter by a know name. Use the following filter name conventions:
+                       - Filter name for preset zone: "pz:preset_name/zone_number".
+                       - Filter name for instrument zone: "iz:instrument_name/zone_number".
+                       For example, for printing voices modulator for
+                       - preset zone 1 of preset named "Synth Brass 2", filter name must be
+                         "pz:Synth Brass 2/1".
+                       - intrument zone 3 of instrument named "Synth Brass 2", filter name must be
+                         "iz:Synth Brass 2/3".
 
+                       fluid_print_voice_mod(voice, preset_zone->name, "pz:Synth Brass 2/1",
+                                                    inst_zone->name, "iz:Synth Brass 2/3");
+                    */
+                    fluid_print_voice_mod(voice, preset_zone->name, NULL,
+                                                 inst_zone->name, NULL);
+#endif
                     /* add the synthesis process to the synthesis loop. */
                     fluid_synth_start_voice(synth, voice);
 
