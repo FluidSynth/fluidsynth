@@ -2231,4 +2231,65 @@ void fluid_print_voice_mod(fluid_voice_t  *voice)
     }
 	printf("modulateur num:%d,  total members:%d\n", mod_idx, i);
 }
+
+/*
+ * return the number of modulators inside a voice. the number is the number
+ * of simple modulator added to number of complex modualtors.
+ * For example, let a voice with:
+ * {m0} (simple),  {m1} (simple), {m2 ,m3, m4} (complex), {m5} (simple)
+ * The number returned will be 4. A complex modulator (i.e {m2 ,m3, m4}) is
+ * considered as one modulator regardless how many members inside this complex
+ * modulator.
+ *
+ * @param voice, pointer on voice.
+ * @return  number of modulators or FLUID_FALED otherwise.
+*/
+int fluid_voice_get_count_modulators(fluid_voice_t *voice)
+{
+    int i, mod_idx;
+    fluid_mod_t *mod;
+
+    fluid_return_val_if_fail(voice != NULL, FLUID_FAILED);
+
+    for(i = 0, mod_idx = 0; i < voice->mod_count; i+= fluid_get_num_mod(mod), mod_idx++)
+    {
+        mod = &voice->mod[i];
+    }
+    return mod_idx;
+}
+
+/*
+ * returns a modulator inside a voice from its index mod_idx.
+ * For example, let a voice with:
+ * {m0} (simple),  {m1} (simple), {m2 ,m3, m4} (complex), {m5} (simple)
+ *  - mod_idx 0 will return a pointer on m0.
+ *  - mod_idx 1 will return a pointer on m1.
+ *  - mod_idx 2 will return a pointer on complex modulator m2 (i.e {m2 ,m3, m4}).
+ *  - mod_idx 3 will return a pointer on m5.
+ *  - mod_idx 4 will return NULL because mod_idx is >= modulators count.
+ *
+ * @param voice, pointer on voice.
+ * @param mod_idx, modulator index (0 to fluid_voice_get_count_modulators() minus 1).
+ * @return  pointer on modulator if success or NULL otherwise.
+*/
+fluid_mod_t *fluid_voice_get_modulator(fluid_voice_t *voice, int mod_idx)
+{
+    unsigned char count, i;
+    fluid_mod_t *mod;
+
+    fluid_return_val_if_fail(voice != NULL, NULL);
+    fluid_return_val_if_fail((0 <= mod_idx), NULL);
+
+    for (i = 0, count = 0; i < voice->mod_count; i += fluid_get_num_mod(mod))
+    {
+        mod = &voice->mod[i];
+        if (count == mod_idx)
+        {
+            return mod;
+        }
+        count++;
+    }
+    return NULL;
+}
+
 #endif
