@@ -693,24 +693,7 @@ fluid_defpreset_next(fluid_defpreset_t *defpreset)
 }
 
 #ifdef DEBUG
-/*
- Print a simple modulator or all modulator members of a complex modulator.
- @param mod, pointer on first member.
- @param mod_idx, modulator index (displayed in the header).
- @param offset, offset to add to each index member.
-*/
-void fluid_dump_linked_mod(fluid_mod_t *mod, int mod_idx, int offset)
-{
-	int i, num = fluid_get_num_mod(mod);
-	
-	printf("modulator #%d, member count:%d\n",mod_idx, num);
-	for (i = 0; i < num; i++)
-	{
-        printf("mod%02d ", i + offset);
-		fluid_dump_modulator(mod);
-		mod = mod->next;
-	}
-}
+void fluid_print_voice_mod(fluid_voice_t  *voice);
 
 /*
  Prints all the voice modulators of an instrument zone.
@@ -750,7 +733,7 @@ void fluid_dump_linked_mod(fluid_mod_t *mod, int mod_idx, int offset)
 
    fluid_print_voice_mod(voice, preset_zone->name, NULL, NULL);
 */
-static void fluid_print_voice_mod(fluid_voice_t  *voice, 
+static void fluid_print_zone_voice_mod(fluid_voice_t  *voice,
                         char *preset_zone_name,
                         char *filter_preset_zone_name,
                         char *inst_zone_name,
@@ -770,12 +753,7 @@ static void fluid_print_voice_mod(fluid_voice_t  *voice,
         return;
     }
     FLUID_LOG(FLUID_INFO, "\"%s\" \"%s\" voice modulators ---------------------------------", preset_zone_name,inst_zone_name);
-    for(i = 0, mod_idx = 0; i < voice->mod_count; i+= fluid_get_num_mod(mod), mod_idx++)
-    {
-        mod = &voice->mod[i];
-        fluid_dump_linked_mod (mod, mod_idx, i);
-    }
-	printf("modulateur num:%d,  total members:%d\n", mod_idx, i);
+    fluid_print_voice_mod(voice);
 }
 #endif
 
@@ -1192,11 +1170,11 @@ fluid_defpreset_noteon(fluid_defpreset_t *defpreset, fluid_synth_t *synth, int c
                        - instrument zone 3 of instrument named "Synth Brass 2", filter name must be
                          "iz:Synth Brass 2/3".
 
-                       fluid_print_voice_mod(voice, preset_zone->name, "pz:Synth Brass 2/1",
-                                                    inst_zone->name, "iz:Synth Brass 2/3");
+                       fluid_print_zone_voice_mod(voice, preset_zone->name, "pz:Synth Brass 2/1",
+                                                         inst_zone->name, "iz:Synth Brass 2/3");
                     */
-                    fluid_print_voice_mod(voice, preset_zone->name, NULL,
-                                                 inst_zone->name, NULL);
+                    fluid_print_zone_voice_mod(voice, preset_zone->name, NULL,
+                                                      inst_zone->name, NULL);
 #endif
                     /* add the synthesis process to the synthesis loop. */
                     fluid_synth_start_voice(synth, voice);

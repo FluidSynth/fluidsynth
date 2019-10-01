@@ -72,6 +72,7 @@ int fluid_mod_check_sources(const fluid_mod_t *mod, char *name);
 
 #ifdef DEBUG
 void fluid_dump_modulator(fluid_mod_t *mod);
+void fluid_dump_linked_mod(fluid_mod_t *mod, int mod_idx, int offset);
 #endif
 
 

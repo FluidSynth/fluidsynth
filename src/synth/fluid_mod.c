@@ -1127,5 +1127,25 @@ void fluid_dump_modulator(fluid_mod_t * mod)
     }; /* switch dest */
     printf(", amount %9.2f, flags %3i, src2 %3i, flags2 %3i\n",amount, flags1, src2, flags2);
 };
+
+/*
+ Print a simple modulator or all modulator members of a complex modulator.
+ @param mod, pointer on first member.
+ @param mod_idx, modulator index (displayed in the header).
+ @param offset, offset to add to each index member.
+*/
+void fluid_dump_linked_mod(fluid_mod_t *mod, int mod_idx, int offset)
+{
+	int i, num = fluid_get_num_mod(mod);
+
+	printf("modulator #%d, member count:%d\n",mod_idx, num);
+	for (i = 0; i < num; i++)
+	{
+        printf("mod%02d ", i + offset);
+		fluid_dump_modulator(mod);
+		mod = mod->next;
+	}
+}
+
 //#endif
 
