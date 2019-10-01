@@ -28,7 +28,7 @@ int fluid_zone_check_mod(char *zone_name, fluid_mod_t **list_mod,
 void delete_fluid_list_mod(fluid_mod_t *list_mod);
 
 // implemented in fluid_defsfont.c
-void fluid_dump_linked_mod(fluid_mod_t *mod, int offset);
+void fluid_dump_linked_mod(fluid_mod_t *mod, int mod_idx, int offset);
 
 //----------------------------------------------------------------------------
 static fluid_mod_t * fluid_build_list(fluid_mod_t mod_table[], int count_mod);
@@ -1237,13 +1237,13 @@ static void fluid_linked_mod_dump_test_identity(fluid_mod_t *mod0, fluid_mod_t *
 	{
 		/* complex modulator cm0 present */
 		FLUID_LOG(FLUID_INFO, "-- complex modulator cm0:");
-		fluid_dump_linked_mod(cm0, 0);
+		fluid_dump_linked_mod(cm0, 0, 0);
 		if(cm1_count)
 		{
 			int r;
 			/* complex modulator cm1 present */
 			FLUID_LOG(FLUID_INFO, "-- complex modulator cm1:");
-			fluid_dump_linked_mod(cm1,0);
+			fluid_dump_linked_mod(cm1, 0, 0);
 
 			/* Calling fluid_linked_mod_test_identity() */
 			r = fluid_linked_mod_test_identity(cm0, 0, cm1,
@@ -1263,12 +1263,12 @@ static void fluid_linked_mod_dump_test_identity(fluid_mod_t *mod0, fluid_mod_t *
 				/* add amount to cm0 */
 				fluid_linked_mod_test_identity(cm0, 0, cm1, FLUID_LINKED_MOD_TEST_ADD);
 				FLUID_LOG(FLUID_INFO, "-- complex modulator added cm1 amount to cm0 amount");
-				fluid_dump_linked_mod(cm0, 0);
+				fluid_dump_linked_mod(cm0, 0, 0);
 
 				/* overwrite cm0 amount by cm1 amount  */
 				fluid_linked_mod_test_identity(cm0, 0, cm1, FLUID_LINKED_MOD_TEST_OVERWRITE);
 				FLUID_LOG(FLUID_INFO, "-- complex modulator overwrite cm0 amount by cm1 amount");
-				fluid_dump_linked_mod(cm0, 0);
+				fluid_dump_linked_mod(cm0, 0, 0);
 			}
 		}
 		else
@@ -1302,10 +1302,12 @@ static void print_lists(fluid_mod_t *list_mod, fluid_mod_t *linked_mod)
 static void fluid_dump_list_linked_mod(fluid_mod_t *mod)
 {
 	int count = 0;
+	int mod_idx = 0;
 	while(mod)
 	{
-		fluid_dump_linked_mod(mod, count);
+		fluid_dump_linked_mod(mod, mod_idx,  count);
 		count+=fluid_get_num_mod(mod);
+		mod_idx++;
 		mod = fluid_get_next_mod(mod);
 	}
 }

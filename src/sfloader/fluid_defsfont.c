@@ -695,13 +695,15 @@ fluid_defpreset_next(fluid_defpreset_t *defpreset)
 #ifdef DEBUG
 /*
  Print a simple modulator or all modulator members of a complex modulator.
+ @param mod, pointer on first member.
+ @param mod_idx, modulator index (displayed in the header). 
  @param offset, offset to add to each index member.
 */
-void fluid_dump_linked_mod(fluid_mod_t *mod, int offset)
+void fluid_dump_linked_mod(fluid_mod_t *mod, int mod_idx, int offset)
 {
 	int i, num = fluid_get_num_mod(mod);
 	
-	printf("modulator count:%d\n", num);
+	printf("modulator #%d, member count:%d\n",mod_idx, num);
 	for (i = 0; i < num; i++)
 	{
         printf("mod%02d ", i + offset);
@@ -754,7 +756,7 @@ static void fluid_print_voice_mod(fluid_voice_t  *voice,
                         char *inst_zone_name,
                         char *filter_inst_zone_name)
 {
-    int i;
+    int i, mod_idx;
     fluid_mod_t *mod;
 
     if(preset_zone_name && filter_preset_zone_name
@@ -768,11 +770,12 @@ static void fluid_print_voice_mod(fluid_voice_t  *voice,
         return;
     }
     FLUID_LOG(FLUID_INFO, "\"%s\" \"%s\" voice modulators ---------------------------------", preset_zone_name,inst_zone_name);
-    for(i = 0; i < voice->mod_count; i+= fluid_get_num_mod(mod))
+    for(i = 0, mod_idx = 0; i < voice->mod_count; i+= fluid_get_num_mod(mod), mod_idx++)
     {
         mod = &voice->mod[i];
-        fluid_dump_linked_mod (mod, i);
+        fluid_dump_linked_mod (mod, mod_idx, i);
     }
+	printf("modulateur num:%d,  total members:%d\n", mod_idx, i);
 }
 #endif
 
