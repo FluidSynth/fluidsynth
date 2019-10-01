@@ -1246,7 +1246,7 @@ static void fluid_linked_mod_dump_test_identity(fluid_mod_t *mod0, fluid_mod_t *
 			fluid_dump_linked_mod(cm1, 0, 0);
 
 			/* Calling fluid_linked_mod_test_identity() */
-			r = fluid_linked_mod_test_identity(cm0, 0, cm1,
+			r = fluid_linked_mod_test_identity(cm0, cm1,
                                                FLUID_LINKED_MOD_TEST_ONLY);
 
 			/* display identity result */
@@ -1261,12 +1261,12 @@ static void fluid_linked_mod_dump_test_identity(fluid_mod_t *mod0, fluid_mod_t *
 			if(r)
 			{
 				/* add amount to cm0 */
-				fluid_linked_mod_test_identity(cm0, 0, cm1, FLUID_LINKED_MOD_TEST_ADD);
+				fluid_linked_mod_test_identity(cm0, cm1, FLUID_LINKED_MOD_TEST_ADD);
 				FLUID_LOG(FLUID_INFO, "-- complex modulator added cm1 amount to cm0 amount");
 				fluid_dump_linked_mod(cm0, 0, 0);
 
 				/* overwrite cm0 amount by cm1 amount  */
-				fluid_linked_mod_test_identity(cm0, 0, cm1, FLUID_LINKED_MOD_TEST_OVERWRITE);
+				fluid_linked_mod_test_identity(cm0, cm1, FLUID_LINKED_MOD_TEST_OVERWRITE);
 				FLUID_LOG(FLUID_INFO, "-- complex modulator overwrite cm0 amount by cm1 amount");
 				fluid_dump_linked_mod(cm0, 0, 0);
 			}

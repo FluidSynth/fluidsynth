@@ -1609,11 +1609,11 @@ fluid_voice_add_mod_local(fluid_voice_t *voice, fluid_mod_t *mod, int mode, int 
                 /* skip unlinked modulators */
                 if (voice->mod[i].next)
                 {
-                    if(fluid_linked_mod_test_identity(&voice->mod[i],i,mod,
+                    if(fluid_linked_mod_test_identity(&voice->mod[i], mod,
                                                       FLUID_LINKED_MOD_TEST_ONLY))
                     {
                         /* add amount */
-                        fluid_linked_mod_test_identity(&voice->mod[i],i, mod,
+                        fluid_linked_mod_test_identity(&voice->mod[i], mod,
                                                        FLUID_LINKED_MOD_TEST_ADD);
                         return;
                     }

@@ -64,8 +64,7 @@ enum fluid_linked_mod_test_identity
     FLUID_LINKED_MOD_TEST_ADD,       /**< test identity and add (sum) modulator amounts */
 };
 
-int fluid_linked_mod_test_identity(fluid_mod_t *cm0,unsigned char cm0_idx,
-								   fluid_mod_t *cm1, 
+int fluid_linked_mod_test_identity(fluid_mod_t *cm0, fluid_mod_t *cm1,
                                    unsigned char test_mode);
 
 fluid_real_t fluid_mod_get_value(fluid_mod_t *mod, fluid_voice_t *voice);

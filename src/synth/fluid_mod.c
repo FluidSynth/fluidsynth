@@ -821,8 +821,6 @@ int fluid_mod_check_sources(const fluid_mod_t *mod, char *name)
  * @param cm0_mod, pointer on modulator branch 0. Must be the modulator following
  *  cm0 ending modulator. In the figure above this is cm0.m1.
  *
- * @param dest0_idx, index of cm0 ending modulator. In the figure cm0.m0 index.
- *
  * @param cm1_mod, pointer on modulator branch 1. Must be the modulator following
  *  cm1 ending modulator. In the figure above this is cm1.m1.
  *
@@ -836,7 +834,6 @@ int fluid_mod_check_sources(const fluid_mod_t *mod, char *name)
  * @return TRUE if complex modulators branches are identical, FALSE otherwise.
  */
 static int fluid_linked_branch_test_identity(fluid_mod_t *cm0_mod, 
-                                             unsigned char dest0_idx,
                                              fluid_mod_t *cm1_mod,
                                              unsigned char test_mode)
 {
@@ -856,11 +853,11 @@ static int fluid_linked_branch_test_identity(fluid_mod_t *cm0_mod,
     /* destination index of cm1 branch */
     branch_level[0].dest1_idx = FLUID_MOD_LINK_DEST;
     /* destination index of cm0 branch  0*/
-    dest0_idx |= FLUID_MOD_LINK_DEST;
-    branch_level[0].dest0_idx = dest0_idx;
+    mod0_idx = cm0_mod->dest;
+    branch_level[0].dest0_idx = mod0_idx;
 
     /* verify identity of each member of branches */
-    mod0_idx = dest0_idx + 1; /* current cm0_mod index */
+    mod0_idx++; /* current cm0_mod index */
     while(r)
     {
         unsigned char dest1_idx = branch_level[state_idx].dest1_idx;
@@ -961,8 +958,6 @@ static int fluid_linked_branch_test_identity(fluid_mod_t *cm0_mod,
  * @param cm0, final modulator of a complex linked modulators. 
  *  cm0 must be connected to a generator.
  *
- * @param cm0_idx, index of cm0.
- *
  * @param cm1, final modulator of complex linked modulators.
  *  cm1 must be connected to a generator.
  *
@@ -975,7 +970,7 @@ static int fluid_linked_branch_test_identity(fluid_mod_t *cm0_mod,
  *
  * @return TRUE if complex modulators are identical, FALSE otherwise.
  */
-int fluid_linked_mod_test_identity(fluid_mod_t *cm0,unsigned char cm0_idx,
+int fluid_linked_mod_test_identity(fluid_mod_t *cm0,
                                    fluid_mod_t *cm1, 
                                    unsigned char test_mode)
 {
@@ -998,7 +993,7 @@ int fluid_linked_mod_test_identity(fluid_mod_t *cm0,unsigned char cm0_idx,
         }
         /* identity test of branches of cm0 and cm1 */
         {
-            return fluid_linked_branch_test_identity(cm0->next, cm0_idx, cm1->next, 
+            return fluid_linked_branch_test_identity(cm0->next, cm1->next,
                                                      test_mode);
         }
     }
