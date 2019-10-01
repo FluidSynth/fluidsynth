@@ -718,17 +718,35 @@ void fluid_dump_linked_mod(fluid_mod_t *mod, int offset)
  @param voice voice of the instrument zone.
  @param preset_zone_name, actual preset_zone name.
  @param filter_preset_zone_name, filter name of preset_zone to display.
-  - If both name are not NULL, printing is done only if the filter name matches
+  - If both names are not NULL, printing is done only if the filter name matches
     preset_zone_name.
   - If at least one name is NULL this filter is ignored and printing is filtered
     by param inst_zone_name, param filter_inst_zone_name.
 
  @param inst_zone_name, actual instrument zone name.
- @param filter_inst_zone_name, filter name of intrument zone to display.
-  - If both name are not NULL, printing is done only if the filter name matches
+ @param filter_inst_zone_name, filter name of instrument zone to display.
+  - If both names are not NULL, printing is done only if the filter name matches
     instrument_zone_name.
   - If at least one name is NULL this filter is ignored and printing is filtered
     by param preset_zone_name, param filter_preset_zone_name.
+
+ Use the following filter name conventions:
+ - Filter name for preset zone: "pz:preset_name/zone_number".
+ - Filter name for instrument zone: "iz:instrument_name/zone_number".
+
+ Examples:
+ 1)printing voice modulators for:
+ - preset zone 1 of preset named "Synth Brass 2", filter name must be
+   "pz:Synth Brass 2/1".
+ - instrument zone 3 of instrument named "Synth Brass 2", filter name must be
+   "iz:Synth Brass 2/3".
+
+   fluid_print_voice_mod(voice, preset_zone->name, "pz:Synth Brass 2/1",
+                                inst_zone->name, "iz:Synth Brass 2/3");
+
+ 2)printing voices modulators for any instrument zones:
+
+   fluid_print_voice_mod(voice, preset_zone->name, NULL, NULL);
 */
 static void fluid_print_voice_mod(fluid_voice_t  *voice, 
                         char *preset_zone_name,
@@ -1165,10 +1183,10 @@ fluid_defpreset_noteon(fluid_defpreset_t *defpreset, fluid_synth_t *synth, int c
                        filter by a know name. Use the following filter name conventions:
                        - Filter name for preset zone: "pz:preset_name/zone_number".
                        - Filter name for instrument zone: "iz:instrument_name/zone_number".
-                       For example, for printing voices modulator for
+                       For example, for printing voice modulators for
                        - preset zone 1 of preset named "Synth Brass 2", filter name must be
                          "pz:Synth Brass 2/1".
-                       - intrument zone 3 of instrument named "Synth Brass 2", filter name must be
+                       - instrument zone 3 of instrument named "Synth Brass 2", filter name must be
                          "iz:Synth Brass 2/3".
 
                        fluid_print_voice_mod(voice, preset_zone->name, "pz:Synth Brass 2/1",
