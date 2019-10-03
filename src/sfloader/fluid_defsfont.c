@@ -739,9 +739,6 @@ static void fluid_print_zone_voice_mod(fluid_voice_t  *voice,
                         char *inst_zone_name,
                         char *filter_inst_zone_name)
 {
-    int i, mod_idx;
-    fluid_mod_t *mod;
-
     if(preset_zone_name && filter_preset_zone_name
        && strcmp(preset_zone_name, filter_preset_zone_name))
     {
@@ -1510,13 +1507,13 @@ int fluid_get_count_mod(const fluid_mod_t *mod)
 */
 
 /* bit FLUID_MOD_VALID set to 1 indicates that the modulator is valid */
-#define FLUID_MOD_VALID  1 << 0
+#define FLUID_MOD_VALID  (1 << 0)
 /* bit FLUID_PATH_VALID set to 1 indicates that the modulator belongs to
  a complete valid linked path already discovered */
-#define FLUID_PATH_VALID  1 << 1
+#define FLUID_PATH_VALID  (1 << 1)
 /* bit FLUID_PATH_CURRENT set to 1 indicates that the modulator belongs to
  the current linked path. It allows detection of circular and isolated path */
-#define FLUID_PATH_CURRENT  1 << 2
+#define FLUID_PATH_CURRENT  (1 << 2)
 
 /*
  * Check linked modulator paths without destination and circular linked modulator

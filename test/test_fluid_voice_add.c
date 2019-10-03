@@ -20,7 +20,7 @@ fluid_mod_t *fluid_voice_get_modulator(fluid_voice_t *voice, int mod_idx);
 static int fluid_compare_mod_structure(fluid_mod_t *mod1, fluid_mod_t *mod2);
 
 //----------------------------------------------------------------------------
-/*-- modulators to add to voice
+/*-- modulators to add to voice */
 /* valid simple modulator (i.e unlinked): sources cc,  sources cc 3 valid */
 fluid_mod_t mod1_simple_in[] =
 {
@@ -173,8 +173,6 @@ int main(void)
     //-------------------------------------------------------------------------
     printf("\nTest 1_5: Add an invalid simple modulator to voice in mode FLUID_VOICE_DEFAULT\n");
     {
-        fluid_mod_t * mod_out;
-
         // add a valid new simple modulator in mode FLUID_VOICE_DEFAULT
         fluid_voice_add_mod(voice, mod3_simple_in, FLUID_VOICE_DEFAULT);
         fluid_print_voice_mod(voice);
