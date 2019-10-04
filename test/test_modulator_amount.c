@@ -1,4 +1,13 @@
-
+/*----------------------------------------------------------------------------
+Test of value of linked/simple modulator.
+ For simple modulator:
+  out = src1  * src2 * amount.
+  With src1 = map(CC)
+ For a src1 linked modulator:
+  out = link * src2 * amount
+  With link being the summing node input drived  by the output of
+  one or more modulators.
+----------------------------------------------------------------------------*/
 #include "test.h"
 #include "fluidsynth.h"
 #include "utils/fluid_sys.h"
@@ -10,8 +19,9 @@ void fluid_voice_add_mod_local(fluid_voice_t *voice, fluid_mod_t *mod, int mode,
 
 int float_equal(fluid_real_t x, fluid_real_t y)
 {
-    static const fluid_real_t EPS = 1.e-5;
+	static const fluid_real_t EPS = 1.e-5;
     return FLUID_FABS(x - y) < EPS;
+	return ( x == y );
 }
 
 // test modulators (amount, source, linked modulators...)
@@ -53,21 +63,22 @@ int main(void)
         fluid_mod_set_amount (mod2, 300);
         fluid_mod_set_dest   (mod2, FLUID_MOD_LINK_DEST | 0);
 
-        /* valid internal list of linked modulators members for complex modulator (mod0,mod1,mod2).
-           Modulators member ordering is expected equivalent as ordering produced by fluid_list_copy_linked_mod().
-           Internal ordering rule implemented in fluid_list_copy_linked_mod():
-            If a member mx has src1 linked it must be immediatley followed by the member whose destination field is mx.
-            This rule ensures:
-            1) that at modulation time, any modulator mod_src (connected to other modulators mod_dst) are computed before
-               those modulators mod_dst.
-            2) The ordering is previsible in a way making test identity possible between two complex modulators in
-               fluid_linked_branch_test_identity().
+        /* valid internal list of linked modulators members for a complex modulator (mod0,mod1,mod2).
+           Modulators member ordering is expected equivalent as the one produced by
+           fluid_list_copy_linked_mod() implementing the following ordering rule:
+            If any member mx has src1 linked it must be immediatley followed by a
+            member whose destination field is mx. This rule ensures:
+            1) That at synthesis time (noteon or CC modulation), any modulator mod_src
+              (connected to another modulators mod_dst) are computed before this modulator mod_dst.
+            2) The ordering is previsible in a way making test identity possible
+               between two complex modulators (in fluid_linked_branch_test_identity()).
+            Note that for the current test, only point (1) is relevant.
         */
         mod0->next = mod1;
         mod1->next = mod2;
 
-        // Add one complex modulator.
-        // Only fluid_voice_add_mod_local() is able to add a simple or complex modulator.
+        // Add one complex modulator using fluid_voice_add_mod_local().
+        // fluid_voice_add_mod_local() is able to add a simple or complex modulator.
         // (API fluid_voice_add_mod() is only able to add a simple modulator.)
         fluid_voice_add_mod_local(v, mod0, FLUID_VOICE_DEFAULT, FLUID_NUM_MOD);
         
@@ -89,16 +100,16 @@ int main(void)
         fluid_mod_set_amount (mod3, 50);
         fluid_mod_set_dest   (mod3, FLUID_MOD_LINK_DEST | 1); // link to mod1
 
-        /* valid internal list of linked modulators members for complex modulator (mod0,mod1,mod2).
+        /* valid internal list of linked modulators members for complex modulator (mod0,mod1,mod3,mod2).
            Modulators member ordering is expected equivalent as ordering produced by fluid_list_copy_linked_mod().
-           Internal ordering rule: see comment above.
+           See comment above about internal ordering rule.
         */
         mod0->next = mod1;
         mod1->next = mod3;
         mod3->next = mod2;
 
-        // Add one complex modulator.
-        // Only fluid_voice_add_mod_local() is able to add a simple or complex modulator.
+        // Add one complex modulator using fluid_voice_add_mod_local().
+        // fluid_voice_add_mod_local() is able to add a simple or complex modulator.
         // (API fluid_voice_add_mod() is only able to add a simple modulator.)
         fluid_voice_add_mod_local(v, mod0, FLUID_VOICE_DEFAULT, FLUID_NUM_MOD);
         
@@ -108,7 +119,9 @@ int main(void)
         TEST_ASSERT(float_equal(v->mod[0].link, fluid_mod_get_amount(mod2) + fluid_mod_get_amount(mod1) * v->mod[1].link));
         TEST_ASSERT(float_equal(v->gen[GEN_FILTERFC].mod, v->mod[0].link * fluid_mod_get_amount(mod0)));
     }
-    
+
+    // TODO:  same test using simple modulator.
+
     delete_fluid_mod(mod0);
     delete_fluid_mod(mod1);
     delete_fluid_mod(mod2);
