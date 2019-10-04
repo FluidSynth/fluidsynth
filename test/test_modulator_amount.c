@@ -19,8 +19,6 @@ void fluid_voice_add_mod_local(fluid_voice_t *voice, fluid_mod_t *mod, int mode,
 
 int float_equal(fluid_real_t x, fluid_real_t y)
 {
-	static const fluid_real_t EPS = 1.e-5;
-    return FLUID_FABS(x - y) < EPS;
 	return ( x == y );
 }
 
