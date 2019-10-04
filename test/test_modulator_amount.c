@@ -118,14 +118,14 @@ int main(void)
         TEST_ASSERT(float_equal(v->gen[GEN_FILTERFC].mod, v->mod[0].link * fluid_mod_get_amount(mod0)));
     }
 
-    // Same test using simple modulator: CC->m0->GEN_FILTERFC
+    // Same test using simple modulator: CC->mod0->GEN_FILTERFC
     {
         v->gen[GEN_FILTERFC].mod = 0; // reset mod input
         v->mod_count = 0;             // clear voice modulator table.
 
         fluid_mod_set_source1(mod0, CC, FLUID_MOD_CC | FLUID_MOD_LINEAR | FLUID_MOD_UNIPOLAR | FLUID_MOD_POSITIVE);
 
-		// Add one complex modulator using fluid_voice_add_mod().
+        // Add one complex modulator using fluid_voice_add_mod().
         fluid_voice_add_mod(v, mod0, FLUID_VOICE_DEFAULT);
 
         fluid_voice_calculate_modulator_contributions(v);
