@@ -2241,7 +2241,7 @@ void fluid_voice_print_mod(fluid_voice_t  *voice)
  * modulator.
  *
  * @param voice, pointer on voice.
- * @return  number of modulators or FLUID_FALED otherwise.
+ * @return  number of modulators or FLUID_FAILED otherwise.
 */
 int fluid_voice_get_count_modulators(fluid_voice_t *voice)
 {
