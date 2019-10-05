@@ -177,9 +177,8 @@ int main(void)
         fluid_voice_add_mod(voice, mod3_simple_in, FLUID_VOICE_DEFAULT);
         fluid_print_voice_mod(voice);
         
-        // Check if the new modulator has been correctly added in mode
-        // FLUID_VOICE_DEFAULT. Voice count of modulators must be voice_mod_count
-        // plus one.
+        // Check that the new modulator hasn't been added in mode FLUID_VOICE_DEFAULT.
+        // Voice count of modulators must be the same as for test 1_4.
         voice_mod_count5 = fluid_voice_get_count_modulators(voice);
         TEST_ASSERT(voice_mod_count5 == voice_mod_count4);
     }
