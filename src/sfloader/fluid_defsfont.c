@@ -748,7 +748,7 @@ static void fluid_print_zone_voice_mod(fluid_voice_t  *voice,
     {
         return;
     }
-    FLUID_LOG(FLUID_INFO, "\"%s\" \"%s\" voice modulators ---------------------------------", preset_zone_name,inst_zone_name);
+    FLUID_LOG(FLUID_DBG, "\"%s\" \"%s\" voice modulators ---------------------------------", preset_zone_name,inst_zone_name);
     fluid_print_voice_mod(voice);
 }
 #endif

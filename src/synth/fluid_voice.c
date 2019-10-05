@@ -2224,7 +2224,7 @@ void fluid_print_voice_mod(fluid_voice_t  *voice)
         mod = &voice->mod[i];
         fluid_dump_linked_mod (mod, mod_idx, i);
     }
-	printf("modulateur num:%d,  total members:%d\n", mod_idx, i);
+	FLUID_LOG(FLUID_DBG, "Number of voice modulators: %d,  Total members:%d\n", mod_idx, i);
 }
 
 /*
