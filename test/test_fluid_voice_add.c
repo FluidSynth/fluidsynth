@@ -61,6 +61,9 @@ int main(void)
 
     voice = new_fluid_voice(NULL, 22050);
     TEST_ASSERT(voice != NULL);
+    voice->channel = NULL;
+    voice->mod_count = 0;
+
     fluid_voice_print_mod(voice);
     voice_mod_count = fluid_voice_get_count_modulators(voice);
     TEST_ASSERT(voice_mod_count == 0);
