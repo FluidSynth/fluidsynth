@@ -2213,12 +2213,7 @@ void fluid_voice_set_custom_filter(fluid_voice_t *voice, enum fluid_iir_filter_t
     UPDATE_RVOICE_GENERIC_I2(fluid_iir_filter_init, &voice->rvoice->resonant_custom_filter, type, flags);
 }
 
-#ifdef DEBUG
-/*
- Prints all the voice modulators.
-
- @param voice voice
-*/
+/* Prints all the voice modulators. */
 void fluid_print_voice_mod(fluid_voice_t  *voice)
 {
     int i, mod_idx;
@@ -2291,5 +2286,3 @@ fluid_mod_t *fluid_voice_get_modulator(fluid_voice_t *voice, int mod_idx)
     }
     return NULL;
 }
-
-#endif

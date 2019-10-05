@@ -11,12 +11,6 @@ FLUID_VOICE_DEFAULT, FLUID_VOICE_ADD, FLUID_VOICE_OVERWRITE.
 #include "synth/fluid_chan.h"
 
 //----------------------------------------------------------------------------
-/* external functions */
-void fluid_print_voice_mod(fluid_voice_t  *voice);
-int fluid_voice_get_count_modulators(fluid_voice_t *voice);
-fluid_mod_t *fluid_voice_get_modulator(fluid_voice_t *voice, int mod_idx);
-
-//----------------------------------------------------------------------------
 static int fluid_compare_mod_structure(fluid_mod_t *mod1, fluid_mod_t *mod2);
 
 //----------------------------------------------------------------------------

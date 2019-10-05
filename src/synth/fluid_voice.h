@@ -194,4 +194,8 @@ fluid_real_t fluid_voice_gen_value(const fluid_voice_t *voice, int num);
 void fluid_voice_set_custom_filter(fluid_voice_t *voice, enum fluid_iir_filter_type type, enum fluid_iir_filter_flags flags);
 
 
+void fluid_print_voice_mod(fluid_voice_t *voice);
+int fluid_voice_get_count_modulators(fluid_voice_t *voice);
+fluid_mod_t *fluid_voice_get_modulator(fluid_voice_t *voice, int mod_idx);
+
 #endif /* _FLUID_VOICE_H */

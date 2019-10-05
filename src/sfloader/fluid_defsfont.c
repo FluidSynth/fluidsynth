@@ -693,7 +693,6 @@ fluid_defpreset_next(fluid_defpreset_t *defpreset)
 }
 
 #ifdef DEBUG
-void fluid_print_voice_mod(fluid_voice_t  *voice);
 
 /*
  Prints all the voice modulators of an instrument zone.
