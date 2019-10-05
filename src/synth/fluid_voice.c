@@ -2223,6 +2223,8 @@ void fluid_voice_print_mod(fluid_voice_t  *voice)
     int i, mod_idx;
     fluid_mod_t *mod;
 
+    fluid_return_if_fail(voice != NULL);
+
     for(i = 0, mod_idx = 0; i < voice->mod_count; i+= fluid_get_num_mod(mod), mod_idx++)
     {
         mod = &voice->mod[i];
