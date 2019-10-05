@@ -43,7 +43,9 @@ static const int32_t INT24_MAX = (1 << (16 + 8 - 1));
 static int fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t *voice);
 static int calculate_hold_decay_buffers(fluid_voice_t *voice, int gen_base,
                                         int gen_key2base, int is_decay);
-static fluid_real_t
+
+/* outsourced function that to make it unit testable */
+fluid_real_t
 fluid_voice_get_lower_boundary_for_attenuation(fluid_voice_t *voice);
 
 #define UPDATE_RVOICE0(proc) \
@@ -1854,7 +1856,9 @@ int fluid_voice_get_velocity(const fluid_voice_t *voice)
  * voice->attenuation has to be initialized.
  * (see fluid_voice_calculate_runtime_synthesis_parameters())
  */
-static fluid_real_t
+
+/* outsourced function that to make it unit testable */
+fluid_real_t
 fluid_voice_get_lower_boundary_for_attenuation(fluid_voice_t *voice)
 {
     int i;
