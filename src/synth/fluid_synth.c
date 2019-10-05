@@ -132,11 +132,6 @@ static void fluid_synth_handle_reverb_chorus_int(void *data, const char *name, i
 static void fluid_synth_reset_basic_channel_LOCAL(fluid_synth_t *synth, int chan, int nbr_chan);
 static int fluid_synth_check_next_basic_channel(fluid_synth_t *synth, int basicchan, int mode, int val);
 static void fluid_synth_set_basic_channel_LOCAL(fluid_synth_t *synth, int basicchan, int mode, int val);
-static int fluid_synth_set_reverb_full_LOCAL(fluid_synth_t *synth, int set, double roomsize,
-        double damping, double width, double level);
-
-static int fluid_synth_set_chorus_full_LOCAL(fluid_synth_t *synth, int set, int nr, double level,
-        double speed, double depth_ms, int type);
 
 /***************************************************************
  *
@@ -595,8 +590,10 @@ static FLUID_INLINE unsigned int fluid_synth_get_min_note_length_LOCAL(fluid_syn
  * @param settings Configuration parameters to use (used directly).
  * @return New FluidSynth instance or NULL on error
  *
- * @note The settings parameter is used directly and should not be modified
- * or freed independently.
+ * @note The @p settings parameter is used directly and should freed after
+ * the synth has been deleted. Further note that you may modify FluidSettings of the
+ * @p settings instance. However, only those FluidSettings marked as 'realtime' will
+ * affect the synth immediately.
  */
 fluid_synth_t *
 new_fluid_synth(fluid_settings_t *settings)
@@ -916,7 +913,7 @@ new_fluid_synth(fluid_settings_t *settings)
         fluid_settings_getnum(settings, "synth.reverb.width", &width);
         fluid_settings_getnum(settings, "synth.reverb.level", &level);
 
-        fluid_synth_set_reverb_full_LOCAL(synth,
+        fluid_synth_set_reverb_full(synth,
                                           FLUID_REVMODEL_SET_ALL,
                                           room,
                                           damp,
@@ -932,7 +929,7 @@ new_fluid_synth(fluid_settings_t *settings)
         fluid_settings_getnum(settings, "synth.chorus.speed", &speed);
         fluid_settings_getnum(settings, "synth.chorus.depth", &depth);
 
-        fluid_synth_set_chorus_full_LOCAL(synth,
+        fluid_synth_set_chorus_full(synth,
                                           FLUID_CHORUS_SET_ALL,
                                           i,
                                           level,
@@ -5060,6 +5057,7 @@ fluid_synth_set_reverb_full(fluid_synth_t *synth, int set, double roomsize,
                             double damping, double width, double level)
 {
     int ret;
+    fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
 
     fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
     /* if non of the flags is set, fail */
@@ -5068,16 +5066,6 @@ fluid_synth_set_reverb_full(fluid_synth_t *synth, int set, double roomsize,
     /* Synth shadow values are set here so that they will be returned if querried */
 
     fluid_synth_api_enter(synth);
-    ret = fluid_synth_set_reverb_full_LOCAL(synth, set, roomsize, damping, width, level);
-    FLUID_API_RETURN(ret);
-}
-
-static int
-fluid_synth_set_reverb_full_LOCAL(fluid_synth_t *synth, int set, double roomsize,
-                                  double damping, double width, double level)
-{
-    int ret;
-    fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
 
     if(set & FLUID_REVMODEL_SET_ROOMSIZE)
     {
@@ -5109,7 +5097,7 @@ fluid_synth_set_reverb_full_LOCAL(fluid_synth_t *synth, int set, double roomsize
                                          fluid_rvoice_mixer_set_reverb_params,
                                          synth->eventhandler->mixer,
                                          param);
-    return ret;
+    FLUID_API_RETURN(ret);
 }
 
 /**
@@ -5275,6 +5263,7 @@ fluid_synth_set_chorus_full(fluid_synth_t *synth, int set, int nr, double level,
                             double speed, double depth_ms, int type)
 {
     int ret;
+    fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
 
     fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
     /* if non of the flags is set, fail */
@@ -5282,18 +5271,6 @@ fluid_synth_set_chorus_full(fluid_synth_t *synth, int set, int nr, double level,
 
     /* Synth shadow values are set here so that they will be returned if queried */
     fluid_synth_api_enter(synth);
-
-    ret = fluid_synth_set_chorus_full_LOCAL(synth, set, nr, level, speed, depth_ms, type);
-
-    FLUID_API_RETURN(ret);
-}
-
-static int
-fluid_synth_set_chorus_full_LOCAL(fluid_synth_t *synth, int set, int nr, double level,
-                                  double speed, double depth_ms, int type)
-{
-    int ret;
-    fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
 
     if(set & FLUID_CHORUS_SET_NR)
     {
@@ -5331,7 +5308,7 @@ fluid_synth_set_chorus_full_LOCAL(fluid_synth_t *synth, int set, int nr, double 
                                          synth->eventhandler->mixer,
                                          param);
 
-    return (ret);
+    FLUID_API_RETURN(ret);
 }
 
 /**
