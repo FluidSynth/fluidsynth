@@ -192,6 +192,29 @@ fluid_log(int level, const char *fmt, ...)
     return FLUID_FAILED;
 }
 
+void* fluid_alloc(size_t len)
+{
+    void* ptr = malloc(len);
+
+#if defined(DEBUG) && !defined(_MSC_VER)
+    // garbage initialize allocated memory for debug builds to ease reproducing
+    // bugs like 44453ff23281b3318abbe432fda90888c373022b .
+    //
+    // MSVC++ already garbage initializes allocated memory by itself (debug-heap).
+    //
+    // 0xCC because
+    // * it makes pointers reliably crash when dereferencing them,
+    // * floating points are still some valid but insanely huge negative number, and
+    // * if for whatever reason this allocated memory is executed, it'll trigger
+    //   INT3 (...at least on x86)
+    if(ptr != NULL)
+    {
+        memset(ptr, 0xCC, len);
+    }
+#endif
+    return ptr;
+}
+
 /**
  * Convenience wrapper for free() that satisfies at least C90 requirements.
  * Especially useful when using fluidsynth with programming languages that do not provide malloc() and free().
