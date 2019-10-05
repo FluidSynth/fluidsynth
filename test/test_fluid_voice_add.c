@@ -61,7 +61,7 @@ int main(void)
 
     voice = new_fluid_voice(NULL, 22050);
     TEST_ASSERT(voice != NULL);
-    fluid_print_voice_mod(voice);
+    fluid_voice_print_mod(voice);
     voice_mod_count = fluid_voice_get_count_modulators(voice);
     TEST_ASSERT(voice_mod_count == 0);
 
@@ -72,7 +72,7 @@ int main(void)
 
         // add a valid new simple modulator in mode FLUID_VOICE_DEFAULT
         fluid_voice_add_mod(voice, mod1_simple_in, FLUID_VOICE_DEFAULT);
-        fluid_print_voice_mod(voice);
+        fluid_voice_print_mod(voice);
 
         // Check if the new modulator has been correctly added in mode
         // FLUID_VOICE_DEFAULT. Voice count of modulators must be voice_mod_count
@@ -96,7 +96,7 @@ int main(void)
 
         // add a valid identical simple modulator in mode FLUID_VOICE_ADD
         fluid_voice_add_mod(voice, mod1_simple_in, FLUID_VOICE_ADD);
-        fluid_print_voice_mod(voice);
+        fluid_voice_print_mod(voice);
 
         // Check if the identical modulator has been correctly added in mode
         // FLUID_VOICE_ADD. Voice count of modulators must be the same as for
@@ -122,7 +122,7 @@ int main(void)
 
         // add a valid identical simple modulator in mode FLUID_VOICE_OVERWRITE
         fluid_voice_add_mod(voice, mod1_simple_in, FLUID_VOICE_OVERWRITE);
-        fluid_print_voice_mod(voice);
+        fluid_voice_print_mod(voice);
 
         // Check if the identical modulator has been correctly added in mode
         // FLUID_VOICE_OVERWRITE. Voice count of modulators must be the same as for
@@ -146,7 +146,7 @@ int main(void)
 
         // add a valid identical simple modulator in mode FLUID_VOICE_ADD
         fluid_voice_add_mod(voice, mod2_simple_in, FLUID_VOICE_ADD);
-        fluid_print_voice_mod(voice);
+        fluid_voice_print_mod(voice);
 
         // Check if the identical modulator has been correctly added in mode
         // FLUID_VOICE_ADD. Voice count of modulators must be the same as for
@@ -169,7 +169,7 @@ int main(void)
     {
         // add a valid new simple modulator in mode FLUID_VOICE_DEFAULT
         fluid_voice_add_mod(voice, mod3_simple_in, FLUID_VOICE_DEFAULT);
-        fluid_print_voice_mod(voice);
+        fluid_voice_print_mod(voice);
         
         // Check if the new modulator has been correctly added in mode
         // FLUID_VOICE_DEFAULT. Voice count of modulators must be voice_mod_count

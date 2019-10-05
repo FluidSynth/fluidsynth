@@ -725,12 +725,12 @@ fluid_defpreset_next(fluid_defpreset_t *defpreset)
  - instrument zone 3 of instrument named "Synth Brass 2", filter name must be
    "iz:Synth Brass 2/3".
 
-   fluid_print_voice_mod(voice, preset_zone->name, "pz:Synth Brass 2/1",
+   fluid_voice_print_mod(voice, preset_zone->name, "pz:Synth Brass 2/1",
                                 inst_zone->name, "iz:Synth Brass 2/3");
 
  2)printing voices modulators for any instrument zones:
 
-   fluid_print_voice_mod(voice, preset_zone->name, NULL, NULL);
+   fluid_voice_print_mod(voice, preset_zone->name, NULL, NULL);
 */
 static void fluid_print_zone_voice_mod(fluid_voice_t  *voice,
                         char *preset_zone_name,
@@ -749,7 +749,7 @@ static void fluid_print_zone_voice_mod(fluid_voice_t  *voice,
         return;
     }
     FLUID_LOG(FLUID_DBG, "\"%s\" \"%s\" voice modulators ---------------------------------", preset_zone_name,inst_zone_name);
-    fluid_print_voice_mod(voice);
+    fluid_voice_print_mod(voice);
 }
 #endif
 
