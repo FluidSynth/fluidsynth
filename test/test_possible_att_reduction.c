@@ -306,7 +306,7 @@ static fluid_real_t get_complex_mod_min_val(fluid_voice_t *voice,
  * @param voice the voice that must contains only one simple modulator.
  *
  * @param m0_src2_cc_value, value of m0_src2_cc.
- * @param m1_src1_cc_value, value of m1_src1_cc. * @param m2_src1_cc_value, value of m2_src1_cc.
+ * @param m1_src1_cc_value, value of m1_src1_cc.
  * @param m2_src1_cc_value, value of m2_src1_cc.
  *
  * @param expected_mod_min_val, expected min_val to update.
