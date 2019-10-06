@@ -61,7 +61,7 @@ int main(void)
         fluid_mod_set_amount (mod2, 300);
         fluid_mod_set_dest   (mod2, FLUID_MOD_LINK_DEST | 0);
 
-        /* valid internal list of linked modulators members for a complex modulator (mod0,mod1,mod2).
+         /* valid internal list of linked modulators members for a complex modulator (mod0,mod1,mod2).
            Modulators member ordering is expected equivalent as the one produced by
            fluid_list_copy_linked_mod() implementing the following ordering rule:
             If any member mx has src1 linked it must be immediatley followed by a
@@ -71,7 +71,7 @@ int main(void)
             2) The ordering is previsible in a way making test identity possible
                between two complex modulators (in fluid_linked_branch_test_identity()).
             Note that for the current test, only point (1) is relevant.
-        */
+       */
         mod0->next = mod1;
         mod1->next = mod2;
 
