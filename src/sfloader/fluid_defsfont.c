@@ -1702,13 +1702,18 @@ fluid_check_linked_mod_path(char *list_name, fluid_mod_t *list_mod,
  * linked_mod list.
  * When finished, modulators in linked_mod are grouped in complex modulator.
  * (cm0,cm1,cm2..).
- * The first member of any complex modulator is the ending modulator connected
- * to a generator. Other members are linked to each other to reach the last
+ * The first member of any complex modulator is the ending modulator (connected
+ * to a generator). Following members are chained to each other to reach the last
  * member. The destination index of modulator member following the first is
  * relative (0 based) to the first member index.
  *
- * Warning: fluid_check_linked_mod_path() must be called before calling this
- * function.
+ * The member ordering rule is implemented as this:
+ *  If any member mx has src1 linked it must be immediatley followed by a member
+ *  whose destination field is mx. This rule ensures:
+ *  1) That at synthesis time (noteon or CC modulation), any modulator mod_src
+ *    (connected to another modulators mod_dst) are computed before this modulator mod_dst.
+ *  2) That ordering is previsible in a way making test identity possible
+ *     between two complex modulators (in fluid_linked_branch_test_identity()).
  * 
  * The function searchs all linked path starting from the end of the path 
  * (i.e modulator connected to a generator) backward to the beginning of 
@@ -1726,8 +1731,9 @@ fluid_check_linked_mod_path(char *list_name, fluid_mod_t *list_mod,
  * @param new_idx, index (1 based) of the most recent modulator at the end
  *  of linked_mod. Must be set to 0 at first call.
  *
- * @param path, pointer on table that indicate valid path registered,
- * (FLUID_PATH_VALID set to 1).
+ * @param path, pointer on table that must be initialized by
+ * fluid_check_linked_mod_path() before calling this function. The table
+ * indicates valid path registered (FLUID_PATH_VALID set to 1).
  *
  * @param linked_mod, address of pointer on linked modulators list returned
  *  if any linked modulators exist.

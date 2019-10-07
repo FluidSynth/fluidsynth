@@ -782,6 +782,8 @@ int fluid_mod_check_sources(const fluid_mod_t *mod, char *name)
  * to a generator. Other members are branches connected to this first
  * member. The function checks branches only, it doesn't check ending modulator.
  *
+ * Note that testing branches identity is based on the internal modulator
+ * ordering rule described in fluid_list_copy_linked_mod().
  * 
  * Example of complex modulator cm0:
  *   gen <-- cm0.m0 <-- cm0.m1 <-- cm0.m2 <-- CC1
@@ -807,11 +809,11 @@ int fluid_mod_check_sources(const fluid_mod_t *mod, char *name)
  *  (cm1.b2)            cm1.m2 <-- cm1.m3 <-- CC1
  *
  * Branch cm1.b1 and cm1.b2 are the only one similar to cm0.b0, cm0.b1 respectively.
- * This is true if
+ * This is true if:
  *   - cm1.m2 has same sources then cm0.m1
  *   - cm1.m3 has same sources then cm0.m2
  *
- * Branch cm1.b0 is the only one similar to cm0.b2. This is true if
+ * Branch cm1.b0 is the only one similar to cm0.b2. This is true if:
  *   - cm1.m1 has same sources then cm0.m3
  *
  * Note that similar branches in cm0 and cm1 are not necessarly ordered the same way.
