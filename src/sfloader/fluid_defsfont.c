@@ -857,16 +857,19 @@ fluid_defpreset_noteon_add_linked_mod_to_voice(fluid_voice_t *voice,
      */
 
     /* Restrict identity check to the actual number of voice linked modulators */
-    /* Acual number of voice linked modulators: instruments */
+    /* Acual number of voice linked modulators: default + [instruments] */
     identity_limit_count = voice->mod_count; 
 
     for(i = 0; i < mod_list_count; i++)
     {
 
         mod = mod_list[i];
-        /* Instrument linked modulators are added in mode: FLUID_VOICE_DEFAULT */
+        /* Instrument linked modulators are added in mode: FLUID_VOICE_OVERWRITE  */
         /* Preset linked modulators are added in mode: FLUID_VOICE_ADD */
-        /* identity_limit_count is effective only in mode FLUID_VOICE_ADD */
+        /* As mod is the ending modulator, in FLUID_VOICE_ADD mode, the whole complex
+           modulator must be added even if amount is 0, because it is possible that
+           following members have amount not equal to 0.
+         */
         fluid_voice_add_mod_local(voice, mod, mode, identity_limit_count);
     }
 }
@@ -1148,7 +1151,7 @@ fluid_defpreset_noteon(fluid_defpreset_t *defpreset, fluid_synth_t *synth, int c
                     fluid_defpreset_noteon_add_linked_mod_to_voice(voice, 
                                                             global_inst_zone ? global_inst_zone->linked_mod : NULL,
                                                             inst_zone->linked_mod,
-                                                            FLUID_VOICE_DEFAULT);
+                                                            FLUID_VOICE_OVERWRITE);
                     /* preset zone linked modulators */
                     fluid_defpreset_noteon_add_linked_mod_to_voice(voice, 
                                                             global_preset_zone ? global_preset_zone->linked_mod : NULL,

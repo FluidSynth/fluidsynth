@@ -56,12 +56,21 @@ int fluid_mod_has_linked_src1 (const fluid_mod_t * mod);
 int fluid_mod_is_linked (const fluid_mod_t * mod);
 
 /* this enum is used for test_mode parameter when calling
-   fluid_linked_mod_test_identity() */
+   fluid_linked_mod_test_identity()
+   Note, for efficiency:
+   FLUID_LINKED_MOD_TEST_OVERWRITE must be equal to FLUID_VOICE_OVERWRITE.
+   FLUID_LINKED_MOD_TEST_ADD must be equal to FLUID_VOICE_ADD.
+*/
 enum fluid_linked_mod_test_identity
 {
-    FLUID_LINKED_MOD_TEST_ONLY,      /**< test identity only */
-    FLUID_LINKED_MOD_TEST_OVERWRITE, /**< test identity and overwrite modulator amounts */
-    FLUID_LINKED_MOD_TEST_ADD,       /**< test identity and add (sum) modulator amounts */
+    /**< test identity and overwrite modulator amounts */
+    FLUID_LINKED_MOD_TEST_OVERWRITE = FLUID_VOICE_OVERWRITE,
+
+    /**< test identity and add (sum) modulator amounts */
+    FLUID_LINKED_MOD_TEST_ADD = FLUID_VOICE_ADD,
+
+    /**< test identity only */
+    FLUID_LINKED_MOD_TEST_ONLY
 };
 
 int fluid_linked_mod_test_identity(fluid_mod_t *cm0, fluid_mod_t *cm1,
