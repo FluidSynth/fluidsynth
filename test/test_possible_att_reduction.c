@@ -1,20 +1,20 @@
 /*----------------------------------------------------------------------------
-Test of possible attenuation reduction evaluated  by 
-fluid_voice_get_lower_boundary_for_attenuation().
+ Test of possible attenuation reduction evaluated  by 
+ fluid_voice_get_lower_boundary_for_attenuation().
 
-These tests use lower_bound returned by fluid_voice_get_lower_boundary_for_attenuation(voice)
-with one modulator (simple or complex) at a time in the voice.
-This leads to compute the minimum value contribution of this modulator (min_val_mod).
-Then min_val_mod is compared to the expected minimun value of this modulator(min_val_expected).
+ These tests use lower_bound returned by fluid_voice_get_lower_boundary_for_attenuation(voice)
+ with one modulator (simple or complex) at a time in the voice.
+ This leads to compute the minimum value contribution of this modulator (min_val_mod).
+ Then min_val_mod is compared to the expected minimun value of this modulator(min_val_expected).
 
-The comparison is done 2 times:
-1) min_val_mod is compared to theorical expected minimum value.
-2) min_val_mod is comparaed to real expected minimum value computed by running the
-   modulator in the voice and driving source CC value from (min (0) to max(127)
-   before calling fluid_voice_calculate_modulator_contributions().
+ For simple modulator the comparison is done 2 times:
+ 1) min_val_mod is compared to theorical expected minimum value.
+ 2) min_val_mod is comparaed to real expected minimum value computed by running the
+    modulator in the voice and driving source CC value from (min (0) to max(127)
+    before calling fluid_voice_calculate_modulator_contributions().
 
-Tests must be done for each type of modulator (simple or complex).
-For each type all test combinations should be done for:
+ Tests must be done for each type of modulator (simple or complex).
+ For each type all test combinations should be done for:
  - sources (unipolar/bipolar).
  - and amount(positive/negative).
 ----------------------------------------------------------------------------*/
@@ -37,11 +37,11 @@ void fluid_voice_add_mod_local(fluid_voice_t *voice, fluid_mod_t *mod, int mode,
 /**
  * Compute attenuation reduction given by voice modulator(if possible)
  * by calling fluid_voice_get_lower_boundary_for_attenuation().
- * It is possible that the function cannot compute this if
- * initial_voice_attenuation isn't sufficient.
+ * (It is possible that the function cannot compute this if
+ * initial_voice_attenuation isn't sufficient).
  * Then return the minimum value this modulator will supply.
  *
- * @param voice the voice that must contain the modulator at index 0.
+ * @param voice the voice that must contain one modulator.
  * @param initial_voice_attenuation, must be greater than any possible
  * attenuation reduction.
  * @return the minimum value this modulator will supply.
@@ -86,12 +86,8 @@ static fluid_real_t compute_possible_att_reduction(fluid_voice_t *voice, fluid_r
  *
  * @param voice, the voice to initialize.
  * @param mod, the simple modulator to initialize.
- * @param src1_cc, CC to initialize for sources src1.
  * @param src1_polarity, src1 polarity (FLUID_MOD_UNIPOLAR, FLUID_MOD_BIPOLAR).
- * @param src1_cc_value, src1_cc value.
- * @param src2_cc, CC to initialize for source src2.
  * @param src2_polarity, src2 polarity (FLUID_MOD_UNIPOLAR, FLUID_MOD_BIPOLAR).
- * @param src2_value, src2_cc value.
  * @param amount, amount value.
  */
 static fluid_real_t get_simple_mod_min_val(fluid_voice_t *voice, fluid_mod_t *mod,
@@ -107,7 +103,7 @@ static fluid_real_t get_simple_mod_min_val(fluid_voice_t *voice, fluid_mod_t *mo
     fluid_channel_set_cc(voice->channel, src1_cc, 127);
     fluid_channel_set_cc(voice->channel, src2_cc, 127);
 
-    //initialise modulators sources and amount values.
+    //initialize modulators sources and amount values.
     fluid_mod_set_source1(mod, src1_cc, FLUID_MOD_CC | FLUID_MOD_LINEAR | src1_polarity | FLUID_MOD_POSITIVE);
     fluid_mod_set_source2(mod, src2_cc, FLUID_MOD_CC | FLUID_MOD_LINEAR | src2_polarity | FLUID_MOD_POSITIVE);
     fluid_mod_set_amount (mod, amount);
@@ -120,14 +116,14 @@ static fluid_real_t get_simple_mod_min_val(fluid_voice_t *voice, fluid_mod_t *mo
     /* Compute attenuation reduction by calling fluid_voice_get_lower_boundary_for_attenuation
      * It is possible that the function cannot compute this if initial_voice_attenuation 
      * isn't sufficient.
-     * For a simple modulator, initial_voice_attenuation must be > 2 * |amount|
+     * For a simple modulator, initial_voice_attenuation must be greater than: 2 * |amount|
      */
     initial_voice_attenuation = 2 * fabs(amount) + 1;
     return compute_possible_att_reduction(voice, initial_voice_attenuation);
 }
 
 /**
- * Update expected minimum value that a voice's simple modulator will supply for
+ * Update expected minimum value that a simple modulator will supply for
  * the given CC's values by calling
  * fluid_voice_calculate_modulator_contributions().
  *
@@ -173,7 +169,7 @@ static fluid_real_t update_expected_simple_mod_min_val(fluid_voice_t *voice,
 }
 
 /**
- * Compute real expected minimum value a voice simple modulator will supply by
+ * Compute real expected minimum value a simple modulator will supply by
  * changing CC value from min (0) to max (127) and then calling
  * fluid_voice_calculate_modulator_contributions().
  *
@@ -207,11 +203,11 @@ static fluid_real_t get_expected_simple_mod_min_val(fluid_voice_t *voice)
 //-- functions for complex modulator ------------------------------------------
 /**
  * - Initialize a complex modulator: (m2 + m1)-->m0-->GEN_ATTENUATION with
+ *   m0: source1 linked, source2 CC,   destination GEN_ATTENUATION
  *   m1: source1 CC,     source2 none, destination m0
  *   m2: source1 CC,     source2 none, destination m0
- *   m0: source1 linked, source2 CC,   destination GEN_ATTENUATION
  * - Put this modulator in voice.
- * - Compute attenuation reduction given by this comples modulator and
+ * - Compute attenuation reduction given by this complex modulator and
  *   return the minimum value this modulator will supply.
  *
  * @param voice, the voice to initialize.
@@ -299,11 +295,11 @@ static fluid_real_t get_complex_mod_min_val(fluid_voice_t *voice,
 }
 
 /**
- * Update expected minimum value that a voice's complex modulator will supply for
+ * Update expected minimum value that a complex modulator will supply for
  * the given CC's values by calling
  * fluid_voice_calculate_modulator_contributions().
  *
- * @param voice the voice that must contains only one simple modulator.
+ * @param voice the voice that must contains only one complex modulator.
  *
  * @param m0_src2_cc_value, value of m0_src2_cc.
  * @param m1_src1_cc_value, value of m1_src1_cc.
@@ -348,11 +344,11 @@ static fluid_real_t update_expected_complex_mod_min_val(fluid_voice_t *voice,
 }
 
 /**
- * Compute real expected minimum value a voice complex modulator will supply by
+ * Compute real expected minimum value a complex modulator will supply by
  * changing CC value from min (0) to max (127) and then calling
  * fluid_voice_calculate_modulator_contributions().
  *
- * @param voice the voice that must contains only one simple modulator.
+ * @param voice the voice that must contains only one complex modulator.
  * @return the expected minimum value this modulator will supply.
  */
 static fluid_real_t get_expected_complex_mod_min_val(fluid_voice_t *voice)
