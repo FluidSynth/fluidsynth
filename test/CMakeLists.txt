@@ -19,6 +19,7 @@ ADD_FLUID_TEST(test_snprintf)
 ADD_FLUID_TEST(test_modulator_links)
 ADD_FLUID_TEST(test_modulator_amount)
 ADD_FLUID_TEST(test_possible_att_reduction)
+ADD_FLUID_TEST(test_fluid_voice_modulate)
 ADD_FLUID_TEST(test_fluid_zone_check_mod)
 ADD_FLUID_TEST(test_fluid_voice_add)
 
