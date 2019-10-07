@@ -31,8 +31,6 @@ void fluid_voice_calculate_modulator_contributions(fluid_voice_t *voice);
 fluid_real_t
 fluid_voice_get_lower_boundary_for_attenuation(fluid_voice_t *voice);
 
-void fluid_voice_add_mod_local(fluid_voice_t *voice, fluid_mod_t *mod, int mode, int check_limit_count);
-
 //-----------------------------------------------------------------------------
 /**
  * Compute attenuation reduction given by voice modulator(if possible)

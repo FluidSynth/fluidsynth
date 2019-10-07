@@ -24,11 +24,6 @@
 // Externals
 void fluid_voice_calculate_modulator_contributions(fluid_voice_t *voice);
 
-int fluid_voice_modulate(fluid_voice_t* voice, int cc, int ctrl);
-
-void fluid_voice_add_mod_local(fluid_voice_t *voice, fluid_mod_t *mod, int mode,
-                               int check_limit_count);
-
 //-----------------------------------------------------------------------------
 /**
  * Compute expected modulation a  modulator will supply by
@@ -128,8 +123,6 @@ static fluid_real_t get_complex_mod_modulation(fluid_voice_t *voice,
     static const int m0_src2_cc = 20;
     static const int m1_src1_cc = 21;
     static const int m2_src1_cc = 22;
-
-    fluid_real_t initial_voice_attenuation ; // cB
 
     // Initialize CC values in channel
     fluid_channel_set_cc(voice->channel, m0_src2_cc, m0_src2_cc_value);
