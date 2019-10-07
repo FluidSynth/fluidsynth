@@ -1,5 +1,5 @@
 /*----------------------------------------------------------------------------
- Test of modulation contribution produced  by fluid_voice_modulate().
+ Test of modulation contribution produced by fluid_voice_modulate().
 
  These tests use the modulation value (mod_modulation) produced by
  fluid_voice_modulate() with one modulator (simple or complex) at a time in the
@@ -7,7 +7,7 @@
  Then mod_modulation is compared to the expected modulation value
  (mod_modulation_expected).
 
- For sthe comparison is done 2 times:
+ The comparison is done 2 times:
  1) mod_modulation is compared to theorical expected modulation value.
  2) mod_modulation is compared to the modulation computed by running
    fluid_voice_calculate_modulator_contributions()
@@ -120,16 +120,16 @@ static fluid_real_t get_complex_mod_modulation(fluid_voice_t *voice,
                       fluid_mod_t *m0, fluid_mod_t *m1, fluid_mod_t *m2,
 
                       // m0: cc value,       m1 cc value,          m2 cc value
-					  int m0_src2_cc_value,  int m1_src1_cc_value, int m2_src1_cc_value,
+                      int m0_src2_cc_value,  int m1_src1_cc_value, int m2_src1_cc_value,
 
                       // m0 amount,     m1 amount,        m2 amout
-					  double m0_amount, double m1_amount, double m2_amount)
+                      double m0_amount, double m1_amount, double m2_amount)
 {
     static const int m0_src2_cc = 20;
     static const int m1_src1_cc = 21;
     static const int m2_src1_cc = 22;
 
-	fluid_real_t initial_voice_attenuation ; // cB
+    fluid_real_t initial_voice_attenuation ; // cB
 
     // Initialize CC values in channel
     fluid_channel_set_cc(voice->channel, m0_src2_cc, m0_src2_cc_value);
@@ -195,7 +195,7 @@ int main(void)
     // for modulation we need a voice belonging to the synthesizer
     fluid_voice_t *v = fluid_synth_alloc_voice(synth, s, 0, 0, 0);
 
-	fluid_mod_t *mod0 = new_fluid_mod();
+    fluid_mod_t *mod0 = new_fluid_mod();
     fluid_mod_t *mod1 = new_fluid_mod();
     fluid_mod_t *mod2 = new_fluid_mod();
 
@@ -214,7 +214,7 @@ int main(void)
         // get modulation value by calling fluid_voice_modulate()
         mod_modulation = get_simple_mod_modulation(v, mod0, 0, 100.0);
         mod_modulation_expected = -100.0; // expected theoritical modulation
-        printf(" Test 0.0: mod_modulation:%f, mod_modulation theoritical:%f\n", 
+        printf(" Test 0.0: mod_modulation:%f, mod_modulation theoritical:%f\n",
                  mod_modulation, mod_modulation_expected);
         TEST_ASSERT(mod_modulation == mod_modulation_expected);
 
@@ -229,7 +229,7 @@ int main(void)
         // get modulation value by calling fluid_voice_modulate()
         mod_modulation = get_simple_mod_modulation(v, mod0, 127, 100.0);
         mod_modulation_expected = 100.0; // expected theoritical modulation
-        printf(" Test 1.1: mod_modulation:%f, mod_modulation theoritical:%f\n", 
+        printf(" Test 1.0: mod_modulation:%f, mod_modulation theoritical:%f\n",
                  mod_modulation, mod_modulation_expected);
         TEST_ASSERT(mod_modulation == mod_modulation_expected);
 
@@ -250,11 +250,11 @@ int main(void)
         // Test 0 mod_modulation = u(cc20) * a0 * ((b(cc21) * a1) + (b(cc22) * a2))
         // get modulation value by calling fluid_voice_modulate()
         mod_modulation = get_complex_mod_modulation(v, mod0, mod1, mod2,
-			                   // cc20, cc21, cc22, a0,   a1,   a2 
-                               0,       0,    0,    10.0, 20.0, 30.0);
-		// expected theoritical minimun value: 0 because cc20 value is 0
+                               // cc20, cc21, cc22, a0,   a1,   a2
+                                  0,    0,    0,    10.0, 20.0, 30.0);
+        // expected theoritical minimun value: 0 because cc20 value is 0
         mod_modulation_expected = 0.0;
-        printf(" Test 0.0: mod_modulation:%f, mod_modulation theoritical:%f\n", 
+        printf(" Test 0.0: mod_modulation:%f, mod_modulation theoritical:%f\n",
                  mod_modulation, mod_modulation_expected);
         TEST_ASSERT(mod_modulation == mod_modulation_expected);
 
@@ -268,17 +268,17 @@ int main(void)
         // Test 1 mod_modulation = u(cc20) * a0 * ((b(cc21) * a1) + (b(cc22) * a2))
         // get modulation value by calling fluid_voice_modulate()
         mod_modulation = get_complex_mod_modulation(v, mod0, mod1, mod2, 
-			                   // cc20, cc21, cc22, a0,   a1,   a2 
-                               127,     0,    0,    10.0, 20.0, 30.0);
+                               // cc20, cc21, cc22, a0,   a1,   a2
+                                  127,  0,    0,    10.0, 20.0, 30.0);
         // expected theoritical minimun value: -500 because cc20 value is 127
         mod_modulation_expected = -500;
-        printf(" Test 1.0: mod_modulation:%f, mod_modulation theoritical:%f\n", 
+        printf(" Test 1.0: mod_modulation:%f, mod_modulation theoritical:%f\n",
                  mod_modulation, mod_modulation_expected);
         TEST_ASSERT(mod_modulation == mod_modulation_expected);
 
         // get expected modulation value obtained by running the modulator in the voice
         mod_modulation_expected = get_expected_mod_modulation(v);
-        printf(" Test 1.1: mod_modulation:%f, mod_modulation_expected:%f\n\n", 
+        printf(" Test 1.1: mod_modulation:%f, mod_modulation_expected:%f\n\n",
                  mod_modulation, mod_modulation_expected);
         TEST_ASSERT(mod_modulation == mod_modulation_expected);
 
@@ -286,17 +286,17 @@ int main(void)
         // Test 2 mod_modulation = u(cc20) * a0 * ((b(cc21) * a1) + (b(cc22) * a2))
         // get modulation value by calling fluid_voice_modulate()
         mod_modulation = get_complex_mod_modulation(v, mod0, mod1, mod2, 
-			                   // cc20, cc21, cc22, a0,   a1,   a2 
-                               127,     127,  0,    10.0, 20.0, 30.0);
+                               // cc20, cc21, cc22, a0,   a1,   a2
+                                  127,  127,  0,    10.0, 20.0, 30.0);
         // expected theoritical minimun value: -100
         mod_modulation_expected = -100;
-        printf(" Test 2.0: mod_modulation:%f, mod_modulation theoritical:%f\n", 
+        printf(" Test 2.0: mod_modulation:%f, mod_modulation theoritical:%f\n",
                  mod_modulation, mod_modulation_expected);
         TEST_ASSERT(mod_modulation == mod_modulation_expected);
 
         // get expected modulation value obtained by running the modulator in the voice
         mod_modulation_expected = get_expected_mod_modulation(v);
-        printf(" Test 2.1: mod_modulation:%f, mod_modulation_expected:%f\n\n", 
+        printf(" Test 2.1: mod_modulation:%f, mod_modulation_expected:%f\n\n",
                  mod_modulation, mod_modulation_expected);
         TEST_ASSERT(mod_modulation == mod_modulation_expected);
 
@@ -304,8 +304,8 @@ int main(void)
         // Test 3 mod_modulation = u(cc20) * a0 * ((b(cc21) * a1) + (b(cc22) * a2))
         // get modulation value by calling fluid_voice_modulate()
         mod_modulation = get_complex_mod_modulation(v, mod0, mod1, mod2, 
-			                   // cc20, cc21, cc22, a0,   a1,   a2 
-                               127,     0,    127,  10.0, 20.0, 30.0);
+                               // cc20, cc21, cc22, a0,   a1,   a2
+                                  127,  0,    127,  10.0, 20.0, 30.0);
         // expected theoritical minimun value: -100
         mod_modulation_expected = 100;
         printf(" Test 3.0: mod_modulation:%f, mod_modulation theoritical:%f\n", 
@@ -314,7 +314,7 @@ int main(void)
 
         // get expected modulation value obtained by running the modulator in the voice
         mod_modulation_expected = get_expected_mod_modulation(v);
-        printf(" Test 3.1: mod_modulation:%f, mod_modulation_expected:%f\n\n", 
+        printf(" Test 3.1: mod_modulation:%f, mod_modulation_expected:%f\n\n",
                  mod_modulation, mod_modulation_expected);
         TEST_ASSERT(mod_modulation == mod_modulation_expected);
 
@@ -322,17 +322,17 @@ int main(void)
         // Test 4 mod_modulation = u(cc20) * a0 * ((b(cc21) * a1) + (b(cc22) * a2))
         // get modulation value by calling fluid_voice_modulate()
         mod_modulation = get_complex_mod_modulation(v, mod0, mod1, mod2, 
-			                   // cc20, cc21, cc22, a0,   a1,   a2 
-                               127,     127,  127,  10.0, 20.0, 30.0);
+                               // cc20, cc21, cc22, a0,   a1,   a2
+                                  127,  127,  127,  10.0, 20.0, 30.0);
         // expected theoritical minimun value: -100
         mod_modulation_expected = 500;
-        printf(" Test 4.0: mod_modulation:%f, mod_modulation theoritical:%f\n", 
+        printf(" Test 4.0: mod_modulation:%f, mod_modulation theoritical:%f\n",
                  mod_modulation, mod_modulation_expected);
         TEST_ASSERT(mod_modulation == mod_modulation_expected);
 
         // get expected modulation value obtained by running the modulator in the voice
         mod_modulation_expected = get_expected_mod_modulation(v);
-        printf(" Test 4.1: mod_modulation:%f, mod_modulation_expected:%f\n\n", 
+        printf(" Test 4.1: mod_modulation:%f, mod_modulation_expected:%f\n\n",
                  mod_modulation, mod_modulation_expected);
         TEST_ASSERT(mod_modulation == mod_modulation_expected);
 	}
