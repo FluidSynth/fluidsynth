@@ -1909,17 +1909,10 @@ fluid_voice_get_lower_boundary_for_attenuation(fluid_voice_t *voice)
                             /* min_val,max_val for src2 unipolar and amount > 0 */
                             min_val *= link_min_max[j].min;
                             max_val *= link_min_max[j].max ;
-                            /* permutes min and max when amount is < 0 */
-                            if(modj->amount < 0)
-                            {   
-                                temp = min_val;  
-                                min_val = max_val;
-                                max_val = temp;
-                            }
-                            /* for src2 bipolar, max min are adjusted to 
-							   the same value: maximum(min,max) */
                             if(modj->flags2 & FLUID_MOD_BIPOLAR)
                             {
+                                /* for src2 bipolar, max min are adjusted to
+                                   the same value: maximum(min,max) */
                                 if(min_val > max_val)
                                 {
                                     max_val = min_val;
@@ -1927,6 +1920,17 @@ fluid_voice_get_lower_boundary_for_attenuation(fluid_voice_t *voice)
                                 else
                                 {
                                     min_val = max_val;
+                                }
+                            }
+                            else
+                            {
+                                /* for src2 unipolar permutes min and max when
+                                   amount is < 0 */
+                                if(modj->amount < 0)
+                                {
+                                    temp = min_val;
+                                    min_val = max_val;
+                                    max_val = temp;
                                 }
                             }
                         }
