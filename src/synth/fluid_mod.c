@@ -158,10 +158,11 @@ fluid_mod_get_amount(const fluid_mod_t *mod)
 }
 
 /*
- * returns the number of modulators inside a complex linked modulator.
+ * returns the number of member modulators inside a simple or 
+ * complex modulator (i.e linked modulators).
  * @param mod, pointer on modulator. 
  * @return  number of modulators.
- *  Should be > 1 for complex modulator and 1 for unlinked modulator.
+ *  Must be > 1 for complex modulator and 1 for unlinked modulator.
  */
 unsigned char fluid_get_num_mod(fluid_mod_t *mod)
 {
