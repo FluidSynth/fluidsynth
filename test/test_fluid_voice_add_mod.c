@@ -14,10 +14,6 @@
 #include "synth/fluid_chan.h"
 
 //----------------------------------------------------------------------------
-/* external functions */
-int fluid_get_count_mod(const fluid_mod_t *mod);
-
-//----------------------------------------------------------------------------
 static int fluid_compare_simple_mod_structure(fluid_mod_t *mod1, fluid_mod_t *mod2);
 static int fluid_compare_complex_mod_structure(fluid_mod_t *cm1, fluid_mod_t *cm2,
                                                double amount2_mul);
@@ -385,8 +381,8 @@ static int fluid_compare_complex_mod_structure(fluid_mod_t *cm1, fluid_mod_t *cm
                                                double amount2_mul)
 {
     int offset1, offset2;
-    int count1 = fluid_get_count_mod(cm1);
-    int count2 = fluid_get_count_mod(cm2);
+    int count1 = fluid_get_num_mod(cm1);
+    int count2 = fluid_get_num_mod(cm2);
 
     // compare members count and ending modulators
     if ((count1 != count2)
