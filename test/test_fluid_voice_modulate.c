@@ -14,8 +14,8 @@
  2) mod_modulation is compared to the modulation computed by running
    fluid_voice_calculate_modulator_contributions() (see note).
 
- Note about tests dependency and precedence:
-  These step is dependant of fluid_voice_calculate_modulator_contributions()
+ Note about test dependency and precedence:
+  This step is dependent of fluid_voice_calculate_modulator_contributions()
   function. That means that any change in this function must be checked by
   running test_modulator_amount before running test_fluid_voice_modulate.
 ----------------------------------------------------------------------------*/

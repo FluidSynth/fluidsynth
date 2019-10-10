@@ -22,8 +22,8 @@
    the comparison is done only using same step that 1.2.
 
 
- Note about tests dependency and precedence:
-  These steps (1.2, 2.1))are dependant of fluid_voice_calculate_modulator_contributions()
+ Note about tests dependencies and precedence:
+  These steps (1.2, 2.1) are dependent of fluid_voice_calculate_modulator_contributions()
   function. That means that any change in this function must be checked by
   running test_modulator_amount before running test_possible_att_reduction.
 ----------------------------------------------------------------------------*/
