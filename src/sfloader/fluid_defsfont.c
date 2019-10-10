@@ -803,7 +803,7 @@ fluid_defpreset_noteon_add_linked_mod_to_voice(fluid_voice_t *voice,
            to check if mod_list is full.
          */
         mod_list[mod_list_count++] = local_mod;
-        local_mod = fluid_get_next_mod(local_mod); /* next complex modulator */
+        local_mod = fluid_mod_get_next(local_mod); /* next complex modulator */
     }
 
     /* global (instrument zone/preset zone), complex modulators.
@@ -843,7 +843,7 @@ fluid_defpreset_noteon_add_linked_mod_to_voice(fluid_voice_t *voice,
 
             mod_list[mod_list_count++] = global_mod;
         }
-        global_mod = fluid_get_next_mod(global_mod); /* next complex modulator */
+        global_mod = fluid_mod_get_next(global_mod); /* next complex modulator */
     }
 
     /* Step 2: global + local modulators are added to the voice using mode. */

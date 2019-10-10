@@ -199,7 +199,7 @@ int fluid_mod_get_list_count(const fluid_mod_t *mod)
  * @param mod, pointer on modulator. 
  * @return  next modulator or NULL if mod is the last modulator.
  */
-fluid_mod_t *fluid_get_next_mod(fluid_mod_t *mod)
+fluid_mod_t *fluid_mod_get_next(fluid_mod_t *mod)
 {
     do
     {

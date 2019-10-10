@@ -53,7 +53,7 @@ struct _fluid_mod_t
 int fluid_mod_get_linked_count(const fluid_mod_t *mod);
 int fluid_mod_get_list_count(const fluid_mod_t *mod);
 
-fluid_mod_t *fluid_get_next_mod(fluid_mod_t *mod);
+fluid_mod_t *fluid_mod_get_next(fluid_mod_t *mod);
 int fluid_mod_has_linked_src1 (const fluid_mod_t * mod);
 int fluid_mod_is_linked (const fluid_mod_t * mod);
 

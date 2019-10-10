@@ -1304,7 +1304,7 @@ static void fluid_dump_list_linked_mod(fluid_mod_t *mod)
 		fluid_dump_linked_mod(mod, mod_idx,  count);
 		count+=fluid_mod_get_linked_count(mod);
 		mod_idx++;
-		mod = fluid_get_next_mod(mod);
+		mod = fluid_mod_get_next(mod);
 	}
 }
 
