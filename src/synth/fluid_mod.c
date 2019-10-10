@@ -164,7 +164,7 @@ fluid_mod_get_amount(const fluid_mod_t *mod)
  * @return  number of modulators.
  *  Must be > 1 for complex modulator and 1 for unlinked modulator.
  */
-unsigned char fluid_get_num_mod(fluid_mod_t *mod)
+unsigned char fluid_get_num_mod(const fluid_mod_t *mod)
 {
     unsigned char count =0;
     do
