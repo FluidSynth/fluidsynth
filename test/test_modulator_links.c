@@ -15,8 +15,6 @@ fluid_list_check_linked_mod(char *list_name,
 
 void delete_fluid_list_mod(fluid_mod_t *list_mod);
 
-int fluid_get_count_mod(const fluid_mod_t *mod);
-
 //----------------------------------------------------------------------------
 static fluid_mod_t * fluid_build_list(fluid_mod_t mod_table[], int count_mod);
 int fluid_list_test_identity(fluid_mod_t *list_mod1, fluid_mod_t *list_mod2);
