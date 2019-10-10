@@ -1621,8 +1621,8 @@ fluid_voice_add_mod_local(fluid_voice_t *voice, fluid_mod_t *mod, int mode, int 
             /* process complex modulator (i.e linked mod) in voice */
             if (voice->mod[i].next) /* Is voice->mod[i] a complex modulator ? */
             {
-                /* test identity with mod if mod is complex */
-				if( is_mod_complex
+                /* test identity with mod if mod is a complex modulator */
+                if( is_mod_complex
                     && fluid_linked_mod_test_identity(&voice->mod[i], mod,
                                                       FLUID_LINKED_MOD_TEST_ONLY))
                 {
@@ -1636,8 +1636,8 @@ fluid_voice_add_mod_local(fluid_voice_t *voice, fluid_mod_t *mod, int mode, int 
             /* process simple modulator (i.e unlinked) in voice */
             else
             {
-                /* test identity with mod if mod is simple modulator */
-				if (! is_mod_complex
+                /* test identity with mod if mod is a simple modulator */
+                if (! is_mod_complex
                       && fluid_mod_test_identity(&voice->mod[i], mod))
                 {
                     if(mode == FLUID_VOICE_ADD) /* adding amount */
