@@ -2280,7 +2280,7 @@ int fluid_voice_get_count_modulators(fluid_voice_t *voice)
 */
 fluid_mod_t *fluid_voice_get_modulator(fluid_voice_t *voice, int mod_idx)
 {
-    unsigned char count, i;
+    int count, i;
     fluid_mod_t *mod;
 
     fluid_return_val_if_fail(voice != NULL, NULL);

@@ -164,9 +164,9 @@ fluid_mod_get_amount(const fluid_mod_t *mod)
  * @return  number of modulators.
  *  Must be > 1 for complex modulator and 1 for unlinked modulator.
  */
-unsigned char fluid_get_num_mod(const fluid_mod_t *mod)
+int fluid_get_num_mod(const fluid_mod_t *mod)
 {
-    unsigned char count =0;
+    int count = 0;
     do
     {
         mod = mod->next;
@@ -183,7 +183,7 @@ unsigned char fluid_get_num_mod(const fluid_mod_t *mod)
  */
 int fluid_get_count_mod(const fluid_mod_t *mod)
 {
-    int count =0;
+    int count = 0;
     while(mod)
     {
         count++;
@@ -993,8 +993,8 @@ int fluid_linked_mod_test_identity(fluid_mod_t *cm0,
                                    fluid_mod_t *cm1, 
                                    unsigned char test_mode)
 {
-    unsigned char count0 = fluid_get_num_mod(cm0);
-    unsigned char count1 = fluid_get_num_mod(cm1);
+    int count0 = fluid_get_num_mod(cm0);
+    int count1 = fluid_get_num_mod(cm1);
 
     /* test of count and identity of final modulators cm0 and cm1 */
     if((count0 == count1) && (count0 > 1)
