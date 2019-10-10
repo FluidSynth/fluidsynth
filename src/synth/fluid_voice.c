@@ -1533,7 +1533,7 @@ fluid_voice_stop(fluid_voice_t *voice)
 }
 
 /**
- * Adds a modulator to the voice if the modulator has valid sources.
+ * Adds a simple modulator to the voice if the modulator has valid sources.
  * @param voice Voice instance.
  * @param mod Modulator info (copied).
  * @param mode Determines how to handle an existing identical modulator.
@@ -1564,7 +1564,7 @@ fluid_voice_add_mod(fluid_voice_t *voice, fluid_mod_t *mod, int mode)
 
 /**
  * Adds a modulator to the voice.
- * local version of fluid_voice_add_mod function. Called at noteon time.
+ * Local version of fluid_voice_add_mod function. Called at noteon time.
  *
  * This function accepts simple modulator or complex modulator (linked modulator).
  * Warning: note that for complex modulator, in order to be processed 
@@ -1618,10 +1618,11 @@ fluid_voice_add_mod_local(fluid_voice_t *voice, fluid_mod_t *mod, int mode, int 
         /* if an identical modulator exists in voice (simple or complex), overwrite or add it */
         for(i = 0; i < check_limit_count; i++)
         {
-            /* process linked modulators in voice */
-            if (voice->mod[i].next)
+            /* process complex modulator (i.e linked mod) in voice */
+            if (voice->mod[i].next) /* Is voice->mod[i] a complex modulator ? */
             {
-                if( is_mod_complex
+                /* test identity with mod if mod is complex */
+				if( is_mod_complex
                     && fluid_linked_mod_test_identity(&voice->mod[i], mod,
                                                       FLUID_LINKED_MOD_TEST_ONLY))
                 {
@@ -1632,10 +1633,11 @@ fluid_voice_add_mod_local(fluid_voice_t *voice, fluid_mod_t *mod, int mode, int 
                 /* Moves i to last member index of complex modulator */
                 do { i++; } while(voice->mod[i].next);
             }
-            /* process linked modulators in voice */
+            /* process simple modulator (i.e unlinked) in voice */
             else
             {
-                if (! is_mod_complex
+                /* test identity with mod if mod is simple modulator */
+				if (! is_mod_complex
                       && fluid_mod_test_identity(&voice->mod[i], mod))
                 {
                     if(mode == FLUID_VOICE_ADD) /* adding amount */
