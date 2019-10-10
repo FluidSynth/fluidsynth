@@ -35,7 +35,7 @@ extern "C" {
  * Flags defining the polarity, mapping function and type of a modulator source.
  * Compare with SoundFont 2.04 PDF section 8.2.
  *
- * Note: Bit values do not correspond to the SoundFont spec!  Also note that
+ * @note Bit values do not correspond to the SoundFont spec!  Also note that
  * #FLUID_MOD_GC and #FLUID_MOD_CC are in the flags field instead of the source field.
  */
 enum fluid_mod_flags
@@ -56,7 +56,7 @@ enum fluid_mod_flags
 
 /**
  * General controller (if #FLUID_MOD_GC in flags).  This
- * corresponds to SoundFont 2.04 PDF section 8.2.1
+ * complies with SoundFont 2.04 PDF section 8.2.1
  */
 enum fluid_mod_src
 {
@@ -67,7 +67,7 @@ enum fluid_mod_src
     FLUID_MOD_CHANNELPRESSURE = 13,       /**< MIDI channel pressure */
     FLUID_MOD_PITCHWHEEL = 14,            /**< Pitch wheel */
     FLUID_MOD_PITCHWHEELSENS = 16,        /**< Pitch wheel sensitivity */
-    FLUID_MOD_LINK_SRC = 127              /**< src1 is linked to another modulator */
+    FLUID_MOD_LINK_SRC = 127              /**< Source is linked to the output of one or more other modulators. @note Only applicable to Source1 ! */
 };
 
 FLUIDSYNTH_API fluid_mod_t *new_fluid_mod(void);

@@ -30,7 +30,7 @@
 struct _fluid_mod_t
 {
     unsigned char dest;           /**< Destination generator to control or, if FLUID_MOD_LINK_DEST
-                                       is set, index of the modulator this modulators is linked to. */
+                                       is set, index of the modulator this modulator is linked to. */
     unsigned char src1;           /**< Source controller 1 */
     unsigned char flags1;         /**< Source controller 1 flags */
     unsigned char src2;           /**< Source controller 2 */
