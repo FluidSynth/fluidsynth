@@ -1931,7 +1931,7 @@ fluid_list_check_linked_mod(char *list_name,
     }
     else /* lis_mod is a list of modulators */
     {
-        mod_count = fluid_get_count_mod(list_mod);
+        mod_count = fluid_mod_get_list_count(list_mod);
     }
 
     if(!mod_count)

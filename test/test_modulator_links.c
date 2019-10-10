@@ -1193,11 +1193,11 @@ int main(void)
         // list_mod1 and list_mod2 are expected not NULL, and count of modulators
         // is expected to be equal to mod_count.
         TEST_ASSERT(list_mod1 != NULL);
-        TEST_ASSERT(fluid_get_count_mod(list_mod1) == mod_count);
+        TEST_ASSERT(fluid_mod_get_list_count(list_mod1) == mod_count);
 
         list_mod2 = fluid_build_list(mod_table, mod_count);
         TEST_ASSERT(list_mod2 != NULL);
-        TEST_ASSERT(fluid_get_count_mod(list_mod2) == mod_count);
+        TEST_ASSERT(fluid_mod_get_list_count(list_mod2) == mod_count);
         // compare input lists list_mod1, and list_mod2.
         TEST_ASSERT(fluid_list_test_identity(list_mod1, list_mod2) == TRUE);
 
@@ -1216,7 +1216,7 @@ int main(void)
         //---------------------------------------------
         // building output list linked_mod2 by calling fluid_list_check_linked_mod().
         // linked_mod2 is allocated externally on (stack) in a table.
-        linked_count2_in = fluid_get_count_mod(list_mod2);
+        linked_count2_in = fluid_mod_get_list_count(list_mod2);
         linked_mod2 = alloca( linked_count2_in * sizeof(fluid_mod_t));
         // linked_mod2 is expected to be not NULL
         TEST_ASSERT(linked_mod2 != NULL);
@@ -1306,7 +1306,7 @@ int main(void)
         // list_mod1 and list_mod2 are expected not NULL, and count of modulators
         // is expected to be equal to mod_count.
         TEST_ASSERT(list_mod1 != NULL);
-        TEST_ASSERT(fluid_get_count_mod(list_mod1) == mod_count);
+        TEST_ASSERT(fluid_mod_get_list_count(list_mod1) == mod_count);
 
         //---------------------------------------------
         // Same as test 10: building output list linked_mod1 by calling fluid_list_check_linked_mod().
@@ -1337,7 +1337,7 @@ int main(void)
                                                         linked_count2_in);
 
         // Table list_mod2 is espected to be initialized as a list.
-        TEST_ASSERT(fluid_get_count_mod(list_mod2) == mod_count);
+        TEST_ASSERT(fluid_mod_get_list_count(list_mod2) == mod_count);
         // Both list_mod1 and list_mod2 lists are compared and expected to have identic
         // element.
         TEST_ASSERT(fluid_list_test_identity(list_mod1, list_mod2) == TRUE);
@@ -1411,8 +1411,8 @@ static fluid_mod_t * fluid_build_list(fluid_mod_t mod_table[], int count_mod)
 */
 int fluid_list_test_identity(fluid_mod_t *list_mod1, fluid_mod_t *list_mod2)
 {
-    int count1 = fluid_get_count_mod(list_mod1);
-    int count2 = fluid_get_count_mod(list_mod2);
+    int count1 = fluid_mod_get_list_count(list_mod1);
+    int count2 = fluid_mod_get_list_count(list_mod2);
     if (count1 != count2)
     {
         return FALSE;

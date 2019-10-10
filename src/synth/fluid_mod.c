@@ -181,7 +181,7 @@ int fluid_mod_get_linked_count(const fluid_mod_t *mod)
  * @param mod, pointer on modulator list.
  * @return  number of modulators.
  */
-int fluid_get_count_mod(const fluid_mod_t *mod)
+int fluid_mod_get_list_count(const fluid_mod_t *mod)
 {
     int count = 0;
     while(mod)
