@@ -1218,13 +1218,13 @@ static void fluid_linked_mod_dump_test_identity(fluid_mod_t *mod0, fluid_mod_t *
 
 	/* First complex modulator : cm0_idx, cm0, cm0_count*/
 	cm0 = mod0;
-	cm0_count = fluid_get_num_mod(cm0);
+	cm0_count = fluid_mod_get_linked_count(cm0);
 	if(cm0_count)
 	{
 
 		/* 2nd complex modulator : cm1_idx, cm1, cm1_count*/
 		cm1 = mod1;
-		cm1_count = fluid_get_num_mod(cm1);
+		cm1_count = fluid_mod_get_linked_count(cm1);
 	}
 
 	FLUID_LOG(FLUID_INFO, "------------------------------------------");
@@ -1302,7 +1302,7 @@ static void fluid_dump_list_linked_mod(fluid_mod_t *mod)
 	while(mod)
 	{
 		fluid_dump_linked_mod(mod, mod_idx,  count);
-		count+=fluid_get_num_mod(mod);
+		count+=fluid_mod_get_linked_count(mod);
 		mod_idx++;
 		mod = fluid_get_next_mod(mod);
 	}

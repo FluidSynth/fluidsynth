@@ -164,7 +164,7 @@ fluid_mod_get_amount(const fluid_mod_t *mod)
  * @return  number of modulators.
  *  Must be > 1 for complex modulator and 1 for unlinked modulator.
  */
-int fluid_get_num_mod(const fluid_mod_t *mod)
+int fluid_mod_get_linked_count(const fluid_mod_t *mod)
 {
     int count = 0;
     do
@@ -993,8 +993,8 @@ int fluid_linked_mod_test_identity(fluid_mod_t *cm0,
                                    fluid_mod_t *cm1, 
                                    unsigned char test_mode)
 {
-    int count0 = fluid_get_num_mod(cm0);
-    int count1 = fluid_get_num_mod(cm1);
+    int count0 = fluid_mod_get_linked_count(cm0);
+    int count1 = fluid_mod_get_linked_count(cm1);
 
     /* test of count and identity of final modulators cm0 and cm1 */
     if((count0 == count1) && (count0 > 1)
@@ -1155,7 +1155,7 @@ void fluid_dump_modulator(fluid_mod_t * mod)
 */
 void fluid_dump_linked_mod(fluid_mod_t *mod, int mod_idx, int offset)
 {
-	int i, num = fluid_get_num_mod(mod);
+	int i, num = fluid_mod_get_linked_count(mod);
 
 	printf("modulator #%d, member count:%d\n",mod_idx, num);
 	for (i = 0; i < num; i++)

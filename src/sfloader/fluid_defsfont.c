@@ -2083,7 +2083,7 @@ static void fluid_limit_mod_list(char *list_name, fluid_mod_t **list_mod)
 
     while(mod)
     {
-        if((mod_idx + fluid_get_num_mod(mod)) > FLUID_NUM_MOD )
+        if((mod_idx + fluid_mod_get_linked_count(mod)) > FLUID_NUM_MOD )
         {
             /* truncation of list_mod */
             if(mod_idx)

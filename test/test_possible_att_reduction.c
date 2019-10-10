@@ -190,7 +190,7 @@ static fluid_real_t get_expected_simple_mod_min_val(fluid_voice_t *voice)
     // Check that the voice contains one modulator
     TEST_ASSERT(fluid_voice_get_count_modulators(voice) == 1);
     // Check that the modulator is a simple modulator
-    TEST_ASSERT(fluid_get_num_mod(&voice->mod[0]) == 1);
+    TEST_ASSERT(fluid_mod_get_linked_count(&voice->mod[0]) == 1);
 
     // Set src1_cc, src2_cc values to 0, 0 and update expected_mod_min_val
     expected_mod_min_val = update_expected_simple_mod_min_val(voice, 0, 0, expected_mod_min_val);
@@ -365,7 +365,7 @@ static fluid_real_t get_expected_complex_mod_min_val(fluid_voice_t *voice)
     // Check that the voice contains one modulator
     TEST_ASSERT(fluid_voice_get_count_modulators(voice) == 1);
     // Check that the modulator is a complex modulator
-    TEST_ASSERT(fluid_get_num_mod(&voice->mod[0]) > 1);
+    TEST_ASSERT(fluid_mod_get_linked_count(&voice->mod[0]) > 1);
 
     // Set m0_src2_cc, m1_src1_cc, m2_src1_cc  values to 0, 0, 0 and update expected_mod_min_val
     expected_mod_min_val = update_expected_complex_mod_min_val(voice, 0, 0, 0, expected_mod_min_val);

@@ -381,8 +381,8 @@ static int fluid_compare_complex_mod_structure(fluid_mod_t *cm1, fluid_mod_t *cm
                                                double amount2_mul)
 {
     int offset1, offset2;
-    int count1 = fluid_get_num_mod(cm1);
-    int count2 = fluid_get_num_mod(cm2);
+    int count1 = fluid_mod_get_linked_count(cm1);
+    int count2 = fluid_mod_get_linked_count(cm2);
 
     // compare members count and ending modulators
     if ((count1 != count2)

@@ -1259,7 +1259,7 @@ int fluid_voice_modulate(fluid_voice_t* voice, int cc, int ctrl)
 
                 /* step 2: for every attached modulator, calculate the modulation
                  * value for the generator gen */
-                for (k = 0; k < voice->mod_count; k += fluid_get_num_mod(modk))
+                for (k = 0; k < voice->mod_count; k += fluid_mod_get_linked_count(modk))
                 {
                     modk = &voice->mod[k];
                     if (fluid_mod_has_dest(modk, gen))
@@ -1597,7 +1597,7 @@ fluid_voice_add_mod_local(fluid_voice_t *voice, fluid_mod_t *mod, int mode, int 
 {
     int i;
     /* number of modulators to add: 1 for unlinked, > 1 for complex modulators */
-    unsigned char count = fluid_get_num_mod(mod);
+    unsigned char count = fluid_mod_get_linked_count(mod);
     if( count < 1)
     {
         /* internal error: this should never happen */
@@ -2230,7 +2230,7 @@ void fluid_voice_print_mod(fluid_voice_t  *voice)
 
     fluid_return_if_fail(voice != NULL);
 
-    for(i = 0, mod_idx = 0; i < voice->mod_count; i+= fluid_get_num_mod(mod), mod_idx++)
+    for(i = 0, mod_idx = 0; i < voice->mod_count; i+= fluid_mod_get_linked_count(mod), mod_idx++)
     {
         mod = &voice->mod[i];
         fluid_dump_linked_mod (mod, mod_idx, i);
@@ -2257,7 +2257,7 @@ int fluid_voice_get_count_modulators(fluid_voice_t *voice)
 
     fluid_return_val_if_fail(voice != NULL, FLUID_FAILED);
 
-    for(i = 0, mod_idx = 0; i < voice->mod_count; i+= fluid_get_num_mod(mod), mod_idx++)
+    for(i = 0, mod_idx = 0; i < voice->mod_count; i+= fluid_mod_get_linked_count(mod), mod_idx++)
     {
         mod = &voice->mod[i];
     }
@@ -2286,7 +2286,7 @@ fluid_mod_t *fluid_voice_get_modulator(fluid_voice_t *voice, int mod_idx)
     fluid_return_val_if_fail(voice != NULL, NULL);
     fluid_return_val_if_fail((0 <= mod_idx), NULL);
 
-    for (i = 0, count = 0; i < voice->mod_count; i += fluid_get_num_mod(mod))
+    for (i = 0, count = 0; i < voice->mod_count; i += fluid_mod_get_linked_count(mod))
     {
         mod = &voice->mod[i];
         if (count == mod_idx)
