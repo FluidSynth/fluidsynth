@@ -7,12 +7,17 @@
  Then mod_modulation is compared to the expected modulation value
  (mod_modulation_expected).
 
+ Tests must be done for each type of modulator (simple or complex).
+
  The comparison is done 2 times:
  1) mod_modulation is compared to theorical expected modulation value.
  2) mod_modulation is compared to the modulation computed by running
-   fluid_voice_calculate_modulator_contributions()
+   fluid_voice_calculate_modulator_contributions() (see note).
 
- Tests must be done for each type of modulator (simple or complex).
+ Note about tests dependency and precedence:
+  These step is dependant of fluid_voice_calculate_modulator_contributions()
+  function. That means that any change in this function must be checked by
+  running test_modulator_amount before running test_fluid_voice_modulate.
 ----------------------------------------------------------------------------*/
 #include "test.h"
 #include "fluidsynth.h"

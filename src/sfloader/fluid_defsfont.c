@@ -1921,6 +1921,8 @@ fluid_list_copy_linked_mod(const fluid_mod_t *list_mod, int dest_idx, int new_id
  *  - the number of linked modulators if any valid linked path exists.
  *  - 0 if no linked path exists.
  *  - FLUID_FAILED if failed (memory error).
+ *
+ * See test_modulator_links.c.
  */
 int
 fluid_list_check_linked_mod(char *list_name,

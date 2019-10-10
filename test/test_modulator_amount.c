@@ -1,4 +1,6 @@
 /*----------------------------------------------------------------------------
+These tests check fluid_voice_calculate_modulator_contributions() function.
+
 Test of value of linked/simple modulator.
  For simple modulator:
   out = src1  * src2 * amount.
@@ -7,6 +9,9 @@ Test of value of linked/simple modulator.
   out = link * src2 * amount
   With link being the summing node input drived  by the output of
   one or more modulators.
+
+ Note about about test dependency and precedence:
+ See test_possible_att_reduction.c and test_fluid_voice_modulate.c.
 ----------------------------------------------------------------------------*/
 #include "test.h"
 #include "fluidsynth.h"

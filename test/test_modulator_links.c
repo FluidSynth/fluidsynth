@@ -1,4 +1,6 @@
-
+/*----------------------------------------------------------------------------
+These tests check fluid_list_check_linked_mod() function.
+----------------------------------------------------------------------------*/
 #include "test.h"
 #include "fluidsynth.h"
 #include "synth/fluid_mod.h"

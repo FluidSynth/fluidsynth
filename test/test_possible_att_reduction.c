@@ -7,16 +7,25 @@
  This leads to compute the minimum value contribution of this modulator (min_val_mod).
  Then min_val_mod is compared to the expected minimun value of this modulator(min_val_expected).
 
- For simple modulator the comparison is done 2 times:
- 1) min_val_mod is compared to theorical expected minimum value.
- 2) min_val_mod is comparaed to real expected minimum value computed by running the
-    modulator in the voice and driving source CC value from (min (0) to max(127)
-    before calling fluid_voice_calculate_modulator_contributions().
-
  Tests must be done for each type of modulator (simple or complex).
  For each type all test combinations should be done for:
  - sources (unipolar/bipolar).
  - and amount(positive/negative).
+
+ 1)For simple modulator the comparison is done 2 times:
+ 1.1) min_val_mod is compared to theorical expected minimum value.
+ 1.2) min_val_mod is compared to real expected minimum value computed by running the
+    modulator in the voice and driving source CC value from (min (0) to max(127)
+    before calling fluid_voice_calculate_modulator_contributions().(see note)
+
+ 2)For complex modulator, because there is no theorical expected minimum value
+   the comparison is done only using same step that 1.2.
+
+
+ Note about tests dependency and precedence:
+  These steps (1.2, 2.1))are dependant of fluid_voice_calculate_modulator_contributions()
+  function. That means that any change in this function must be checked by
+  running test_modulator_amount before running test_possible_att_reduction.
 ----------------------------------------------------------------------------*/
 #include "test.h"
 #include "fluidsynth.h"

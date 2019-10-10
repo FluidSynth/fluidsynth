@@ -508,7 +508,9 @@ fluid_voice_calculate_gen_pitch(fluid_voice_t *voice)
     voice->gen[GEN_PITCH].val = fluid_voice_calculate_pitch(voice, fluid_voice_get_actual_key(voice));
 }
 
-/* outsourced function that calculates modulator contributions to make it unit testable */
+/* outsourced function that calculates modulator contributions to make it unit
+   testable. See test_modulator_amount.c.
+*/
 void fluid_voice_calculate_modulator_contributions(fluid_voice_t *voice)
 {
     int i;
@@ -1186,6 +1188,8 @@ fluid_voice_update_param(fluid_voice_t *voice, int gen)
  * This avoid the risk to call 'fluid_voice_update_param' several
  * times for the same generator if several modulators have that generator as
  * destination. So every changed generators are updated only once.
+ *
+ * See test_fluid_voice_modulate.c.
  */
 
  /* bit table for each generator being updated. The bits are packed in variables
@@ -1537,6 +1541,8 @@ fluid_voice_stop(fluid_voice_t *voice)
  *   #FLUID_VOICE_OVERWRITE to replace the modulator,
  *   #FLUID_VOICE_DEFAULT when adding a default modulator - no duplicate should
  *   exist so don't check.
+ *
+ * See test_fluid_voice_add_mod.c.
  */
 void
 fluid_voice_add_mod(fluid_voice_t *voice, fluid_mod_t *mod, int mode)
@@ -1583,6 +1589,8 @@ fluid_voice_add_mod(fluid_voice_t *voice, fluid_mod_t *mod, int mode)
  *   (voice->mod_count), this will restrict identity check to this number,
  *   This is usefull when we know by advance that there is no duplicate with
  *   modulators at index above this limit. This avoid wasting cpu cycles at noteon.
+ *
+ * See test_fluid_voice_add_mod.c.
  */
 void
 fluid_voice_add_mod_local(fluid_voice_t *voice, fluid_mod_t *mod, int mode, int check_limit_count)
@@ -1846,7 +1854,9 @@ int fluid_voice_get_velocity(const fluid_voice_t *voice)
  * (see fluid_voice_calculate_runtime_synthesis_parameters())
  */
 
-/* outsourced function that to make it unit testable */
+/* outsourced function that to make it unit testable
+   See test_possible_att_reduction.c.
+*/
 fluid_real_t
 fluid_voice_get_lower_boundary_for_attenuation(fluid_voice_t *voice)
 {
