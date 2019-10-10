@@ -1480,22 +1480,6 @@ fluid_zone_is_mod_identic(const fluid_mod_t *mod, char *name)
     return FALSE;
 }
 
-/*
- * returns the number of modulators inside a list.
- * @param mod, pointer on modulator list.
- * @return  number of modulators.
- */
-int fluid_get_count_mod(const fluid_mod_t *mod)
-{
-    int count =0;
-    while(mod)
-    {
-        count++;
-        mod = mod->next;
-    }
-    return count;
-}
-
 /* description of bit flags set in path variable by fluid_check_linked_mod_path()
    These flags indicates if a modulator belongs to a linked path.
 

@@ -177,6 +177,22 @@ unsigned char fluid_get_num_mod(fluid_mod_t *mod)
 }
 
 /*
+ * returns the number of modulators inside a list.
+ * @param mod, pointer on modulator list.
+ * @return  number of modulators.
+ */
+int fluid_get_count_mod(const fluid_mod_t *mod)
+{
+    int count =0;
+    while(mod)
+    {
+        count++;
+        mod = mod->next;
+    }
+    return count;
+}
+
+/*
  * returns next modulator following current modulator.
  * If mod is a complex linked modulator all members are skipped
 
