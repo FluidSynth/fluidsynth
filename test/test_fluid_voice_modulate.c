@@ -154,7 +154,7 @@ static fluid_real_t get_complex_mod_modulation(fluid_voice_t *voice,
 
     /* valid internal list of linked modulators members for a complex modulator (mod0,mod1,mod2).
        Modulators member ordering is expected equivalent as the one produced by
-       fluid_list_copy_linked_mod() implementing the following ordering rule:
+       fluid_mod_copy_linked_mod() implementing the following ordering rule:
 
        If any member mx has src1 linked it must be immediatley followed by a
        member whose destination field is mx. This rule ensures:

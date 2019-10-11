@@ -1571,7 +1571,7 @@ fluid_voice_add_mod(fluid_voice_t *voice, fluid_mod_t *mod, int mode)
  * correctly and efficiently at noteon and during CC modulation, the modulators
  * members of this complex modulator must be valid and ordered in a previsible 
  * manner (as those comming from the soundfont loader). See comment in
- * fluid_list_copy_linked_mod()
+ * fluid_mod_copy_linked_mod()
  *
  * @param voice, pointer on voice instance.
  * @param mod, pointer on simple or complex modulator.

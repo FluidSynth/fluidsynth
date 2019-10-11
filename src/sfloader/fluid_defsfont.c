@@ -1506,7 +1506,7 @@ fluid_zone_is_mod_identic(const fluid_mod_t *mod, char *name)
  * paths (specif SF 2.0  7.4, 7.8  and 9.5.4).
  *
  * Warning: This function must be called before calling
- * fluid_list_copy_linked_mod().
+ * fluid_mod_copy_linked_mod().
  *
  * Any linked modulator path from the start to the end are checked and returned
  * in path table.
@@ -1556,7 +1556,7 @@ fluid_zone_is_mod_identic(const fluid_mod_t *mod, char *name)
  * The function searchs all linked path starting from the beginning of the path
  * (ie. a modulator with source not linked) forward to the endind of the path
  * (ie. a modulator connected to a generator).
- * Search direction is the reverse that the one done in fluid_list_copy_linked_mod().
+ * Search direction is the reverse that the one done in fluid_mod_copy_linked_mod().
  * The function is recursive and intended to be called the first time to
  * start the search from the beginning of any path (see dest_idx, path_idx).
  *
@@ -1737,7 +1737,7 @@ fluid_mod_check_linked_mod_LOCAL(char *list_name, fluid_mod_t *list_mod,
  *  FLUID_FAILED if failed (memory error).
 */
 static int 
-fluid_list_copy_linked_mod(const fluid_mod_t *list_mod, int dest_idx, int new_idx,
+fluid_mod_copy_linked_mod(const fluid_mod_t *list_mod, int dest_idx, int new_idx,
                            const unsigned char path[],
                            fluid_mod_t **linked_mod,
                            int linked_count)
@@ -1831,7 +1831,7 @@ fluid_list_copy_linked_mod(const fluid_mod_t *list_mod, int dest_idx, int new_id
                 /* is mod's source src1 linked ? */
                 if(is_src1_linked) 
                 {	/* search a modulator with output linked to mod */
-                    linked_idx = fluid_list_copy_linked_mod(list_mod,
+                    linked_idx = fluid_mod_copy_linked_mod(list_mod,
                                                  mod_idx | FLUID_MOD_LINK_DEST,
                                                  linked_idx, path,
                                                  linked_mod, linked_count);
@@ -2020,7 +2020,7 @@ fluid_mod_check_linked_mod(char *list_name,
         {
             /* one or more linked modulators paths exists */
             /* clone valid linked modulator paths from list_mod to linked_mod.*/
-            result = fluid_list_copy_linked_mod(list_mod, -1, 0, path,
+            result = fluid_mod_copy_linked_mod(list_mod, -1, 0, path,
                                                 linked_mod, linked_count);
         }
     }

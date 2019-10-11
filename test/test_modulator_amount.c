@@ -67,7 +67,7 @@ int main(void)
 
          /* valid internal list of linked modulators members for a complex modulator (mod0,mod1,mod2).
            Modulators member ordering is expected equivalent as the one produced by
-           fluid_list_copy_linked_mod() implementing the following ordering rule:
+           fluid_mod_copy_linked_mod() implementing the following ordering rule:
             If any member mx has src1 linked it must be immediatley followed by a
             member whose destination field is mx. This rule ensures:
             1) That at synthesis time (noteon or CC modulation), any modulator mod_src
@@ -103,7 +103,7 @@ int main(void)
         fluid_mod_set_dest   (mod3, FLUID_MOD_LINK_DEST | 1); // link to mod1
 
         /* valid internal list of linked modulators members for complex modulator (mod0,mod1,mod3,mod2).
-           Modulators member ordering is expected equivalent as ordering produced by fluid_list_copy_linked_mod().
+           Modulators member ordering is expected equivalent as ordering produced by fluid_mod_copy_linked_mod().
            See comment above about internal ordering rule.
         */
         mod0->next = mod1;
