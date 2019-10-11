@@ -8,10 +8,6 @@ These tests check fluid_mod_check_linked_mod() function.
 
 //----------------------------------------------------------------------------
 /* external functions */
-int
-fluid_mod_check_linked_mod(char *list_name,
-                            fluid_mod_t *list_mod, int mod_count,
-                            fluid_mod_t **linked_mod, int linked_count);
 
 void delete_fluid_list_mod(fluid_mod_t *list_mod);
 
