@@ -71,7 +71,7 @@ int main(void)
             1) That at synthesis time (noteon or CC modulation), any modulator mod_src
               (connected to another modulators mod_dst) are computed before this modulator mod_dst.
             2) The ordering is previsible in a way making test identity possible
-               between two complex modulators (in fluid_linked_branch_test_identity()).
+               between two complex modulators (in fluid_mod_test_branch_identity()).
             Note that for the current test, only point (1) is relevant.
        */
         mod0->next = mod1;

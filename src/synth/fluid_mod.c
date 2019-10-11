@@ -867,7 +867,7 @@ int fluid_mod_check_sources(const fluid_mod_t *mod, char *name)
  *
  * @return TRUE if complex modulators branches are identical, FALSE otherwise.
  */
-static int fluid_linked_branch_test_identity(fluid_mod_t *cm0_mod, 
+static int fluid_mod_test_branch_identity(fluid_mod_t *cm0_mod, 
                                              fluid_mod_t *cm1_mod,
                                              unsigned char test_mode)
 {
@@ -1027,7 +1027,7 @@ int fluid_mod_test_linked_identity(fluid_mod_t *cm0,
         }
         /* identity test of branches of cm0 and cm1 */
         {
-            return fluid_linked_branch_test_identity(cm0->next, cm1->next,
+            return fluid_mod_test_branch_identity(cm0->next, cm1->next,
                                                      test_mode);
         }
     }
@@ -1473,7 +1473,7 @@ fluid_mod_check_linked_mod_LOCAL(char *list_name, fluid_mod_t *list_mod,
  *  1) That at synthesis time (noteon or CC modulation), any modulator mod_src
  *    (connected to another modulators mod_dst) are computed before this modulator mod_dst.
  *  2) That ordering is previsible in a way making test identity possible
- *     between two complex modulators (in fluid_linked_branch_test_identity()).
+ *     between two complex modulators (in fluid_mod_test_branch_identity()).
  * 
  * The function searchs all linked path starting from the end of the path 
  * (i.e modulator connected to a generator) backward to the beginning of 
