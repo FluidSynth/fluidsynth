@@ -1480,7 +1480,7 @@ fluid_zone_is_mod_identic(const fluid_mod_t *mod, char *name)
     return FALSE;
 }
 
-/* description of bit flags set in path variable by fluid_check_linked_mod_path()
+/* description of bit flags set in path variable by fluid_mod_check_linked_mod_LOCAL()
    These flags indicates if a modulator belongs to a linked path.
 
    FLUID_PATH_CURRENT | FLUID_PATH_VALID | Modulator state
@@ -1583,7 +1583,7 @@ fluid_zone_is_mod_identic(const fluid_mod_t *mod, char *name)
  *  - 0 if no linked path exists.
 */
 static int
-fluid_check_linked_mod_path(char *list_name, fluid_mod_t *list_mod,
+fluid_mod_check_linked_mod_LOCAL(char *list_name, fluid_mod_t *list_mod,
                             int dest_idx, 
                             unsigned char path[])
 {
@@ -1604,7 +1604,7 @@ fluid_check_linked_mod_path(char *list_name, fluid_mod_t *list_mod,
                 path[mod_idx] |= FLUID_PATH_CURRENT;
 
                 /* search and check the full path to the end. */
-                count = fluid_check_linked_mod_path(list_name, list_mod, mod->dest,
+                count = fluid_mod_check_linked_mod_LOCAL(list_name, list_mod, mod->dest,
                                                     path);
                 if (count < 0)
                 {   /* no final destination found for mod */
@@ -1665,7 +1665,7 @@ fluid_check_linked_mod_path(char *list_name, fluid_mod_t *list_mod,
             /* does mod destination linked ? */
             if(mod->dest & FLUID_MOD_LINK_DEST)
             {
-                linked_count = fluid_check_linked_mod_path(list_name, list_mod,
+                linked_count = fluid_mod_check_linked_mod_LOCAL(list_name, list_mod,
                                                            mod->dest, path);
                 if (linked_count < 0)
                 {
@@ -1705,7 +1705,7 @@ fluid_check_linked_mod_path(char *list_name, fluid_mod_t *list_mod,
  * The function searchs all linked path starting from the end of the path 
  * (i.e modulator connected to a generator) backward to the beginning of 
  * the path (ie. a modulator with source not linked).
- * Search direction is the reverse that the one done in fluid_check_linked_mod_path().
+ * Search direction is the reverse that the one done in fluid_mod_check_linked_mod_LOCAL().
  * The function is recursive and intended to be called the first time to
  * start the search from ending linked modulator (see dest_idx, new_idx).
  *
@@ -1719,7 +1719,7 @@ fluid_check_linked_mod_path(char *list_name, fluid_mod_t *list_mod,
  *  of linked_mod. Must be set to 0 at first call.
  *
  * @param path, pointer on table that must be initialized by
- * fluid_check_linked_mod_path() before calling this function. The table
+ * fluid_mod_check_linked_mod_LOCAL() before calling this function. The table
  * indicates valid path registered (FLUID_PATH_VALID set to 1).
  *
  * @param linked_mod, address of pointer on linked modulators list returned
@@ -1981,7 +1981,7 @@ fluid_mod_check_linked_mod(char *list_name,
     }
 
     /* Now check linked modulator path */
-    result = fluid_check_linked_mod_path(list_name, list_mod, -1, path);
+    result = fluid_mod_check_linked_mod_LOCAL(list_name, list_mod, -1, path);
 
     /* Now path contains complete or partial discovered modulators paths.
        Other unreachable linked modulators path (isolated) are still in list_mod but
