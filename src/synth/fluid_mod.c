@@ -1097,7 +1097,7 @@ int fluid_mod_has_dest(const fluid_mod_t *mod, int gen)
  * @return TRUE if mod is identic to another modulator, FALSE otherwise.
  */
 static int
-fluid_zone_is_mod_identic(const fluid_mod_t *mod, char *name)
+fluid_mod_is_identic_in_list(const fluid_mod_t *mod, char *name)
 {
     fluid_mod_t *next = mod->next;
 
@@ -1141,7 +1141,7 @@ void fluid_mod_remove_invalid_from_list(fluid_mod_t **list_mod)
               /* or has mod invalid sources ? */
               || !fluid_mod_check_sources(mod, NULL)
               /* or is mod identic to any following modulator ? */
-              || fluid_zone_is_mod_identic(mod, NULL))
+              || fluid_mod_is_identic_in_list(mod, NULL))
         {  
             /* the modulator is useless so we remove it */
             if (prev_mod)
@@ -1743,7 +1743,7 @@ fluid_mod_check_linked_mod(char *list_name,
             /* has mod invalid sources ? */
             if(!fluid_mod_check_sources (mod,  list_mod_name)
             /* or is mod identic to any following modulator ? */
-               ||fluid_zone_is_mod_identic(mod, list_mod_name))
+               ||fluid_mod_is_identic_in_list(mod, list_mod_name))
             {   /* marks this modulator invalid for future checks */
                 path[mod_count] &= ~FLUID_MOD_VALID;
                 mod->amount = 0;
