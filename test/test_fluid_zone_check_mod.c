@@ -1,5 +1,5 @@
 /*----------------------------------------------------------------------------
-Test of fluid_zone_check_mod() , fluid_linked_mod_test_identity() functions.
+Test of fluid_zone_check_mod() , fluid_mod_test_linked_identity() functions.
 
 Usage:
  test_fluid_zone_check_mod      execute all tests
@@ -794,7 +794,7 @@ const char *usage ="\n\
  test_fluid_zone_check_mod 1_2  execute only one test number(i.e \"test 1_2: unlinked, sources src1 none\")\n\
 \n";
 /*
-  Test of fluid_zone_check_mod() , fluid_linked_mod_test_identity() functions
+  Test of fluid_zone_check_mod() , fluid_mod_test_linked_identity() functions
 
   test_fluid_zone_check_mod  [argument]
 */
@@ -836,7 +836,7 @@ static int is_arg_num_test(char *arg, char *num_test)
 /*
  Does all test:
   - test of fluid_zone_check_mod() and
-  - test of fluid_linked_mod_test_identity().
+  - test of fluid_mod_test_linked_identity().
 
   Note: These tests display results on the console and are intended to be
   interpreted by a human reading the result.
@@ -1044,7 +1044,7 @@ static int all_test_fluid_zone_check_mod(char *arg)
  @param mod_table0, pointer on modulator table.
  @param count_mod0, count of modulators in mod_table0.
 
- 2) Test the function fluid_linked_mod_test_identity() (if mod_table1
+ 2) Test the function fluid_mod_test_linked_identity() (if mod_table1
     is not null). 
 	The test does test identity between the first complex modulator
 	found in mod_table0 and the first complex modulator found in mod_table1.
@@ -1103,9 +1103,9 @@ test_fluid_zone_check_mod(char * name_test,
 	FLUID_LOG(FLUID_INFO, "End test of fluid_zone_check_mod() ----------------");
 
 	//--------------------------------------------------------------------------
-	/* Check if fluid_linked_mod_test_identity() test is requested ? */
+	/* Check if fluid_mod_test_linked_identity() test is requested ? */
 	FLUID_LOG(FLUID_INFO, "---------------------------------------------------");
-	FLUID_LOG(FLUID_INFO, "Test fluid_linked_mod_test_identity() ? -----------");
+	FLUID_LOG(FLUID_INFO, "Test fluid_mod_test_linked_identity() ? -----------");
 	if((mod_table1) && (count_mod1))
 	{
 		list_mod1 = fluid_build_list(mod_table1, count_mod1);
@@ -1114,7 +1114,7 @@ test_fluid_zone_check_mod(char * name_test,
 			return FLUID_FAILED;
 		}
 
-		FLUID_LOG(FLUID_INFO, "Start test fluid_linked_mod_test_identity() -------");
+		FLUID_LOG(FLUID_INFO, "Start test fluid_mod_test_linked_identity() -------");
 		/* print list_mod */
 		FLUID_LOG(FLUID_INFO, "- lists list_mod1, linked_mod1 before calling fluid_zone_check_mod():");
 		print_lists(list_mod1, linked_mod1);
@@ -1134,11 +1134,11 @@ test_fluid_zone_check_mod(char * name_test,
 		/* The test does test identity between the first complex modulator
 		in linked_mod0 and the first complex modulator in linked_mod1. */
 		fluid_linked_mod_dump_test_identity(linked_mod0,linked_mod1);
-		FLUID_LOG(FLUID_INFO, "End test fluid_linked_mod_test_identity() ---------");
+		FLUID_LOG(FLUID_INFO, "End test fluid_mod_test_linked_identity() ---------");
 	}
 	else
 	{
-	    FLUID_LOG(FLUID_INFO, "- no, mod_table 1 is empty, no test of fluid_linked_mod_test_identity()");
+	    FLUID_LOG(FLUID_INFO, "- no, mod_table 1 is empty, no test of fluid_mod_test_linked_identity()");
 	}
 
 
@@ -1229,8 +1229,8 @@ static void fluid_linked_mod_dump_test_identity(fluid_mod_t *mod0, fluid_mod_t *
 			FLUID_LOG(FLUID_INFO, "-- complex modulator cm1:");
 			fluid_dump_linked_mod(cm1, 0, 0);
 
-			/* Calling fluid_linked_mod_test_identity() */
-			r = fluid_linked_mod_test_identity(cm0, cm1,
+			/* Calling fluid_mod_test_linked_identity() */
+			r = fluid_mod_test_linked_identity(cm0, cm1,
                                                FLUID_LINKED_MOD_TEST_ONLY);
 
 			/* display identity result */
@@ -1245,12 +1245,12 @@ static void fluid_linked_mod_dump_test_identity(fluid_mod_t *mod0, fluid_mod_t *
 			if(r)
 			{
 				/* add amount to cm0 */
-				fluid_linked_mod_test_identity(cm0, cm1, FLUID_LINKED_MOD_TEST_ADD);
+				fluid_mod_test_linked_identity(cm0, cm1, FLUID_LINKED_MOD_TEST_ADD);
 				FLUID_LOG(FLUID_INFO, "-- complex modulator added cm1 amount to cm0 amount");
 				fluid_dump_linked_mod(cm0, 0, 0);
 
 				/* overwrite cm0 amount by cm1 amount  */
-				fluid_linked_mod_test_identity(cm0, cm1, FLUID_LINKED_MOD_TEST_OVERWRITE);
+				fluid_mod_test_linked_identity(cm0, cm1, FLUID_LINKED_MOD_TEST_OVERWRITE);
 				FLUID_LOG(FLUID_INFO, "-- complex modulator overwrite cm0 amount by cm1 amount");
 				fluid_dump_linked_mod(cm0, 0, 0);
 			}

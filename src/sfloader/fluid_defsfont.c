@@ -824,7 +824,7 @@ fluid_defpreset_noteon_add_linked_mod_to_voice(fluid_voice_t *voice,
 
         for(i = 0; i < identity_limit_count; i++)
         {
-            if(fluid_linked_mod_test_identity(global_mod, mod_list[i],
+            if(fluid_mod_test_linked_identity(global_mod, mod_list[i],
                                              FLUID_LINKED_MOD_TEST_ONLY))
             {
                 break;

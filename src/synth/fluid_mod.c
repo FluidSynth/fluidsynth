@@ -1004,7 +1004,7 @@ static int fluid_linked_branch_test_identity(fluid_mod_t *cm0_mod,
  *
  * @return TRUE if complex modulators are identical, FALSE otherwise.
  */
-int fluid_linked_mod_test_identity(fluid_mod_t *cm0,
+int fluid_mod_test_linked_identity(fluid_mod_t *cm0,
                                    fluid_mod_t *cm1, 
                                    unsigned char test_mode)
 {
