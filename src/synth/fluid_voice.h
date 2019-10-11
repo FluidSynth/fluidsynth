@@ -198,4 +198,9 @@ void fluid_voice_print_mod(fluid_voice_t *voice);
 int fluid_voice_get_count_modulators(fluid_voice_t *voice);
 fluid_mod_t *fluid_voice_get_modulator(fluid_voice_t *voice, int mod_idx);
 
+
+/* outsourced function that to make it unit testable */
+fluid_real_t fluid_voice_get_lower_boundary_for_attenuation(fluid_voice_t *voice);
+void fluid_voice_calculate_modulator_contributions(fluid_voice_t *voice);
+
 #endif /* _FLUID_VOICE_H */

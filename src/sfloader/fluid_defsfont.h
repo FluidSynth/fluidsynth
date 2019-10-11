@@ -224,6 +224,7 @@ fluid_inst_zone_t *fluid_inst_zone_next(fluid_inst_zone_t *zone);
 int fluid_inst_zone_import_sfont(fluid_inst_zone_t *inst_zone, SFZone *sfzone, fluid_defsfont_t *defsfont);
 fluid_sample_t *fluid_inst_zone_get_sample(fluid_inst_zone_t *zone);
 
+int fluid_zone_check_mod(char *zone_name, fluid_mod_t **list_mod, fluid_mod_t **linked_mod);
 
 int fluid_sample_import_sfont(fluid_sample_t *sample, SFSample *sfsample, fluid_defsfont_t *defsfont);
 int fluid_sample_in_rom(fluid_sample_t *sample);

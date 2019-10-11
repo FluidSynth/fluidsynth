@@ -19,8 +19,6 @@ Test of value of linked/simple modulator.
 #include "synth/fluid_voice.h"
 #include "synth/fluid_chan.h"
 
-void fluid_voice_calculate_modulator_contributions(fluid_voice_t *voice);
-
 int float_equal(fluid_real_t x, fluid_real_t y)
 {
 	return ( x == y );

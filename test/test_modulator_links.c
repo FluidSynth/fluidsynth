@@ -7,13 +7,8 @@ These tests check fluid_mod_check_linked_mod() function.
 #include "utils/fluid_sys.h"
 
 //----------------------------------------------------------------------------
-/* external functions */
-
-void delete_fluid_mod_list(fluid_mod_t *list_mod);
-
-//----------------------------------------------------------------------------
 static fluid_mod_t * fluid_build_list(fluid_mod_t mod_table[], int count_mod);
-int fluid_list_test_identity(fluid_mod_t *list_mod1, fluid_mod_t *list_mod2);
+static int fluid_list_test_identity(fluid_mod_t *list_mod1, fluid_mod_t *list_mod2);
 
 // tests the linked "nature" of modulators, i.e. fluid_mod_check_linked_mod()
 int main(void)
@@ -1405,7 +1400,7 @@ static fluid_mod_t * fluid_build_list(fluid_mod_t mod_table[], int count_mod)
  * Both list are identic if that have equal count of modulators and
  * respective modulator's structure are fully equal.
 */
-int fluid_list_test_identity(fluid_mod_t *list_mod1, fluid_mod_t *list_mod2)
+static int fluid_list_test_identity(fluid_mod_t *list_mod1, fluid_mod_t *list_mod2)
 {
     int count1 = fluid_mod_get_list_count(list_mod1);
     int count2 = fluid_mod_get_list_count(list_mod2);

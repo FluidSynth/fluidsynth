@@ -44,9 +44,6 @@ static int fluid_voice_calculate_runtime_synthesis_parameters(fluid_voice_t *voi
 static int calculate_hold_decay_buffers(fluid_voice_t *voice, int gen_base,
                                         int gen_key2base, int is_decay);
 
-/* outsourced function that to make it unit testable */
-fluid_real_t
-fluid_voice_get_lower_boundary_for_attenuation(fluid_voice_t *voice);
 
 #define UPDATE_RVOICE0(proc) \
   do { \

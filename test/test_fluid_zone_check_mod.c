@@ -12,19 +12,7 @@ Usage:
 #include "fluidsynth.h"
 #include "synth/fluid_mod.h"
 #include "utils/fluid_sys.h"
-
-//----------------------------------------------------------------------------
-/* external functions */
-
-// implemented in fluid_mod.c
-// Required: fluid_dump_modulator(), fluid_dump_linked_mod()
-// need to add DEBUG preprocessor macro while compiling fluidsynth.
-
-// implemented in fluid_defsfont.c
-int fluid_zone_check_mod(char *zone_name, fluid_mod_t **list_mod,
-                         fluid_mod_t **linked_mod);
-// implemented in fluid_defsfont.c
-void delete_fluid_mod_list(fluid_mod_t *list_mod);
+#include "sfloader/fluid_defsfont.h"
 
 //----------------------------------------------------------------------------
 static fluid_mod_t * fluid_build_list(fluid_mod_t mod_table[], int count_mod);

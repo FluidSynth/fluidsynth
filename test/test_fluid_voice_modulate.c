@@ -26,10 +26,6 @@
 #include "synth/fluid_chan.h"
 
 //-----------------------------------------------------------------------------
-// Externals
-void fluid_voice_calculate_modulator_contributions(fluid_voice_t *voice);
-
-//-----------------------------------------------------------------------------
 /**
  * Compute expected modulation a  modulator will supply by
  * calling fluid_voice_calculate_modulator_contributions().
