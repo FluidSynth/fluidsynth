@@ -1129,7 +1129,7 @@ fluid_zone_is_mod_identic(const fluid_mod_t *mod, char *name)
  *
  * @param list_mod, address of pointer on modulator list.
  */
-void fluid_zone_check_remove_mod(fluid_mod_t **list_mod)
+void fluid_mod_remove_invalid_from_list(fluid_mod_t **list_mod)
 {
     fluid_mod_t *prev_mod = NULL; /* previous modulator in list_mod */
     fluid_mod_t *mod = *list_mod; /* first modulator in list_mod */

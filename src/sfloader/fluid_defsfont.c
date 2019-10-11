@@ -1514,7 +1514,7 @@ fluid_zone_check_mod(char *zone_name, fluid_mod_t **list_mod,
 
     /* removing all invalid modulators and linked modulators out of list_mod */
     /* On return, the list contains only valid unlinked modulators */
-    fluid_zone_check_remove_mod(list_mod);
+    fluid_mod_remove_invalid_from_list(list_mod);
 
     /* limits the size of unlinked modulators list */
     fluid_limit_mod_list(zone_name, list_mod);

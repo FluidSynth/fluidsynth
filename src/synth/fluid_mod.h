@@ -81,7 +81,7 @@ int fluid_linked_mod_test_identity(fluid_mod_t *cm0, fluid_mod_t *cm1,
 fluid_real_t fluid_mod_get_value(fluid_mod_t *mod, fluid_voice_t *voice);
 int fluid_mod_check_sources(const fluid_mod_t *mod, char *name);
 
-void fluid_zone_check_remove_mod(fluid_mod_t **list_mod);
+void fluid_mod_remove_invalid_from_list(fluid_mod_t **list_mod);
 
 int fluid_mod_check_linked_mod(char *list_name,
                             fluid_mod_t *list_mod, int mod_count,
