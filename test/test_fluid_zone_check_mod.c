@@ -24,7 +24,7 @@ Usage:
 int fluid_zone_check_mod(char *zone_name, fluid_mod_t **list_mod,
                          fluid_mod_t **linked_mod);
 // implemented in fluid_defsfont.c
-void delete_fluid_list_mod(fluid_mod_t *list_mod);
+void delete_fluid_mod_list(fluid_mod_t *list_mod);
 
 //----------------------------------------------------------------------------
 static fluid_mod_t * fluid_build_list(fluid_mod_t mod_table[], int count_mod);
@@ -1157,10 +1157,10 @@ test_fluid_zone_check_mod(char * name_test,
 	FLUID_LOG(FLUID_INFO, "***** End %s ****", name_test);
 	FLUID_LOG(FLUID_INFO, "===================================================");
 
-	delete_fluid_list_mod(list_mod0);
-	delete_fluid_list_mod(linked_mod0);
-	delete_fluid_list_mod(list_mod1);
-	delete_fluid_list_mod(linked_mod1);
+	delete_fluid_mod_list(list_mod0);
+	delete_fluid_mod_list(linked_mod0);
+	delete_fluid_mod_list(list_mod1);
+	delete_fluid_mod_list(linked_mod1);
 	return FLUID_OK;
 }
 
@@ -1181,7 +1181,7 @@ static fluid_mod_t * fluid_build_list(fluid_mod_t mod_table[], int count_mod)
 		if(mod == NULL)
 		{
 			FLUID_LOG(FLUID_ERR, "Out of memory");
-			delete_fluid_list_mod(list_mod);
+			delete_fluid_mod_list(list_mod);
 
 			return NULL;
 		}

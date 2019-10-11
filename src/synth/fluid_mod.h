@@ -87,7 +87,7 @@ int fluid_mod_check_linked_mod(char *list_name,
                             fluid_mod_t *list_mod, int mod_count,
                             fluid_mod_t **linked_mod, int linked_count);
 
-void delete_fluid_list_mod(fluid_mod_t *mod);
+void delete_fluid_mod_list(fluid_mod_t *mod);
 
 #ifdef DEBUG
 void fluid_dump_modulator(fluid_mod_t *mod);

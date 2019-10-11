@@ -1369,8 +1369,8 @@ delete_fluid_preset_zone(fluid_preset_zone_t *zone)
 
     fluid_return_if_fail(zone != NULL);
 
-    delete_fluid_list_mod(zone->mod);       /* unlinked modulators */
-    delete_fluid_list_mod(zone->linked_mod);/* linked modulators */
+    delete_fluid_mod_list(zone->mod);       /* unlinked modulators */
+    delete_fluid_mod_list(zone->linked_mod);/* linked modulators */
 
     for(list = zone->voice_zone; list != NULL; list = fluid_list_next(list))
     {
@@ -1462,7 +1462,7 @@ static void fluid_limit_mod_list(char *list_name, fluid_mod_t **list_mod)
                 *list_mod = NULL;
             }
 
-            delete_fluid_list_mod(mod);
+            delete_fluid_mod_list(mod);
             FLUID_LOG(FLUID_WARN, "%s, modulators count limited to %d", list_name,
                       FLUID_NUM_MOD);
             break;
@@ -2020,8 +2020,8 @@ delete_fluid_inst_zone(fluid_inst_zone_t *zone)
 {
     fluid_return_if_fail(zone != NULL);
 
-    delete_fluid_list_mod(zone->mod);       /* unlinked modulators */
-    delete_fluid_list_mod(zone->linked_mod);/* linked modulators */
+    delete_fluid_mod_list(zone->mod);       /* unlinked modulators */
+    delete_fluid_mod_list(zone->linked_mod);/* linked modulators */
 
     FLUID_FREE(zone->name);
     FLUID_FREE(zone);

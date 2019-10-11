@@ -1103,7 +1103,7 @@ delete_fluid_synth(fluid_synth_t *synth)
 #endif
 
     /* delete all default modulators */
-    delete_fluid_list_mod(synth->default_mod);
+    delete_fluid_mod_list(synth->default_mod);
 
     FLUID_FREE(synth->overflow.important_channels);
 

@@ -9,7 +9,7 @@ These tests check fluid_mod_check_linked_mod() function.
 //----------------------------------------------------------------------------
 /* external functions */
 
-void delete_fluid_list_mod(fluid_mod_t *list_mod);
+void delete_fluid_mod_list(fluid_mod_t *list_mod);
 
 //----------------------------------------------------------------------------
 static fluid_mod_t * fluid_build_list(fluid_mod_t mod_table[], int count_mod);
@@ -143,7 +143,7 @@ int main(void)
                                                    list_of_mods, 0, &linked_mod, 0);
         TEST_ASSERT(linked_count == 3);
         TEST_ASSERT(linked_mod != NULL);
-        delete_fluid_list_mod(linked_mod);
+        delete_fluid_mod_list(linked_mod);
     }
 
     // same list that Test 2, but changed order
@@ -188,7 +188,7 @@ int main(void)
                                                    list_of_mods, 0, &linked_mod, 0);
         TEST_ASSERT(linked_count == 3);
         TEST_ASSERT(linked_mod != NULL);
-        delete_fluid_list_mod(linked_mod);
+        delete_fluid_mod_list(linked_mod);
     }
     
     // Test 3.2: Same as 3 but again change order.
@@ -311,7 +311,7 @@ int main(void)
             // m2 flags2 must be identic to mod2 flags2
             TEST_ASSERT(fluid_mod_get_flags2(m2)== fluid_mod_get_flags2(mod2));
         }
-        delete_fluid_list_mod(linked_mod);
+        delete_fluid_mod_list(linked_mod);
     }
 
     // Test 3.3: Same list as 3.2 but we add another complex modulator in list_of_mods.
@@ -492,7 +492,7 @@ int main(void)
             // m5 flags2 must be identic to mod4 flags2
             TEST_ASSERT(fluid_mod_get_flags2(m5)== fluid_mod_get_flags2(mod4));
         }
-        delete_fluid_list_mod(linked_mod);
+        delete_fluid_mod_list(linked_mod);
     }
 
     // same list that test 3, but with additional mod3 that points to mod1 without mod1 having FLUID_MOD_LINK_SRC
@@ -562,7 +562,7 @@ int main(void)
                                                    list_of_mods, 0, &linked_mod, 0);
         TEST_ASSERT(linked_count == 3);
         TEST_ASSERT(linked_mod != NULL);
-        delete_fluid_list_mod(linked_mod);
+        delete_fluid_mod_list(linked_mod);
     }
 
     // same list than test 4, with additional mod3 and valid mod1 this time
@@ -613,7 +613,7 @@ int main(void)
                                                    list_of_mods, 0, &linked_mod, 0);
         TEST_ASSERT(linked_count == 4);
         TEST_ASSERT(linked_mod != NULL);
-        delete_fluid_list_mod(linked_mod);
+        delete_fluid_mod_list(linked_mod);
     }
     
     // Look like circular circular complex modulators, but it isn't not circular !
@@ -705,7 +705,7 @@ int main(void)
                                                    list_of_mods, 0, &linked_mod, 0);
         TEST_ASSERT(linked_count == 2);
         TEST_ASSERT(linked_mod != NULL);
-        delete_fluid_list_mod(linked_mod);
+        delete_fluid_mod_list(linked_mod);
     }
 
 	// Another circular complex modulators
@@ -1115,7 +1115,7 @@ int main(void)
                                                    list_of_mods, 0, &linked_mod, 0);
         TEST_ASSERT(linked_count == 2);
         TEST_ASSERT(linked_mod != NULL);
-        delete_fluid_list_mod(linked_mod);
+        delete_fluid_mod_list(linked_mod);
     }
 
     // Test 10: check and get a list of linked modulators in a table supplied by the caller.
@@ -1227,9 +1227,9 @@ int main(void)
         TEST_ASSERT(fluid_list_test_identity(linked_mod1, linked_mod2) == TRUE);
 
         // freeing: linked_mod2 is supplied as a table on stack. It must not freed !
-        delete_fluid_list_mod(list_mod1);
-        delete_fluid_list_mod(list_mod2);
-        delete_fluid_list_mod(linked_mod1);
+        delete_fluid_mod_list(list_mod1);
+        delete_fluid_mod_list(list_mod2);
+        delete_fluid_mod_list(linked_mod1);
 	}
 
     // Test 11: same as test 10 except input list_mod2 is a table supplied by the caller
@@ -1347,8 +1347,8 @@ int main(void)
 
         // freeing: list_mod2 is supplied as a table. It must not freed !
         //          linked_mod2 is supplied as a table on stack. It must not freed !
-        delete_fluid_list_mod(list_mod1);
-        delete_fluid_list_mod(linked_mod1);
+        delete_fluid_mod_list(list_mod1);
+        delete_fluid_mod_list(linked_mod1);
     }
 
     delete_fluid_mod(mod0);
@@ -1379,7 +1379,7 @@ static fluid_mod_t * fluid_build_list(fluid_mod_t mod_table[], int count_mod)
 		if(mod == NULL)
 		{
 			FLUID_LOG(FLUID_ERR, "Out of memory");
-			delete_fluid_list_mod(list_mod);
+			delete_fluid_mod_list(list_mod);
 
 			return NULL;
 		}

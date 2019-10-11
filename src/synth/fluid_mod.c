@@ -578,7 +578,7 @@ delete_fluid_mod(fluid_mod_t *mod)
 /*
  * delete list of modulators.
  */
-void delete_fluid_list_mod(fluid_mod_t *mod)
+void delete_fluid_mod_list(fluid_mod_t *mod)
 {
     fluid_mod_t *tmp;
 
@@ -1547,7 +1547,7 @@ fluid_mod_copy_linked_mod(const fluid_mod_t *list_mod, int dest_idx, int new_idx
                     mod_cpy = new_fluid_mod(); /* next field is set to NULL */
                     if(mod_cpy == NULL)
                     {
-                        delete_fluid_list_mod(*linked_mod); /* freeing */
+                        delete_fluid_mod_list(*linked_mod); /* freeing */
                         *linked_mod = NULL;
                         return FLUID_FAILED;
                     }
