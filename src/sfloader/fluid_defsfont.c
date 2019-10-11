@@ -1909,7 +1909,7 @@ fluid_list_copy_linked_mod(const fluid_mod_t *list_mod, int dest_idx, int new_id
  * See test_modulator_links.c.
  */
 int
-fluid_list_check_linked_mod(char *list_name,
+fluid_mod_check_linked_mod(char *list_name,
                             fluid_mod_t *list_mod, int mod_count,
                             fluid_mod_t **linked_mod, int linked_count)
 {
@@ -2122,7 +2122,7 @@ static void fluid_limit_mod_list(char *list_name, fluid_mod_t **list_mod)
  * - extracts valid linked modulators paths to linked_mod.
  * - removing all invalid modulators and linked modulators out of zone list.
  * - limiting size of modulators lists.
- * The function does the same job that fluid_list_check_linked_mod() except that
+ * The function does the same job that fluid_mod_check_linked_mod() except that
  * input list_mod keeps only valid unlinked modulators. The function is
  * appropriate to be called by soundfont loader.
  *
@@ -2146,7 +2146,7 @@ fluid_zone_check_mod(char *zone_name, fluid_mod_t **list_mod,
        Then, clone valid linked modulators paths from list_mod to linked_mod
        (The linked modulators list is allocated and returned in linked_mod).
     */
-    if(fluid_list_check_linked_mod(zone_name, *list_mod, 0,
+    if(fluid_mod_check_linked_mod(zone_name, *list_mod, 0,
                                    linked_mod, 0) == FLUID_FAILED)
     {
         return FLUID_FAILED;
