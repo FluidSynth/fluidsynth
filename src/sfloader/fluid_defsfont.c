@@ -1939,8 +1939,12 @@ fluid_list_check_linked_mod(char *list_name,
         return 0;
     }
 
-    /* path allocation (on stack) */
-    path = alloca(sizeof(*path) * mod_count);
+    /* path allocation */
+    path = FLUID_MALLOC (sizeof(*path) * mod_count);
+    if(path == NULL)
+    {
+        return FLUID_FAILED;
+    }
 
     /* initialize path: 
 	   - reset bits FLUID_PATH_VALID, FLUID_PATH_CURRENT
@@ -2020,6 +2024,9 @@ fluid_list_check_linked_mod(char *list_name,
                                                 linked_mod, linked_count);
         }
     }
+
+    /* free path */
+    FLUID_FREE(path);
 
     return result;
 }
