@@ -1164,7 +1164,6 @@ void fluid_zone_check_remove_mod(fluid_mod_t **list_mod)
 }
 
 /* debug function: Prints the contents of a modulator */
-//#ifdef DEBUG
 void fluid_dump_modulator(fluid_mod_t * mod)
 {
     int src1=mod->src1;
@@ -1253,9 +1252,6 @@ void fluid_dump_linked_mod(fluid_mod_t *mod, int mod_idx, int offset)
 		mod = mod->next;
 	}
 }
-
-//#endif
-
 
 /* description of bit flags set in path variable by fluid_mod_check_linked_mod_LOCAL()
    These flags indicates if a modulator belongs to a linked path.
