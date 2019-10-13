@@ -26,8 +26,8 @@ fluid_mod_t mod1_simple_in[] =
     {
         // dest         , src1             , flags1      , src2          , flags2
         GEN_ATTENUATION , 3                , FLUID_MOD_CC, FLUID_MOD_NONE, FLUID_MOD_GC,
-        // amount, link, next
-        10.0      , 0.0 , NULL
+        // amount, link, path, next
+        10.0      , 0.0 ,0   , NULL
     }
 };
 
@@ -37,8 +37,8 @@ fluid_mod_t mod2_simple_in[] =
     {
         // dest         , src1             , flags1      , src2          , flags2
         GEN_ATTENUATION , 4                , FLUID_MOD_CC, FLUID_MOD_NONE, FLUID_MOD_GC,
-        // amount, link, next
-        10.0      , 0.0 , NULL
+        // amount, link, path, next
+        10.0      , 0.0 ,0   , NULL
     }
 };
 
@@ -48,8 +48,8 @@ fluid_mod_t mod3_simple_in[] =
     {
         // dest         , src1              , flags1      , src2          , flags2
         2               , 0                 , FLUID_MOD_CC, FLUID_MOD_NONE, FLUID_MOD_GC,
-        // amount, link, next
-        10.0      , 0.0 , NULL
+        // amount, link, path, next
+        10.0      , 0.0 ,0   , NULL
     }
 };
 

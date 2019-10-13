@@ -37,6 +37,7 @@ struct _fluid_mod_t
     unsigned char flags2;         /**< Source controller 2 flags */
     double amount;                /**< Multiplier amount */
     double link;                  /**< Summation of modulator nodes linked to this modulator */
+    enum fluid_path_flags path;   /**< Flags indicating if the modulator is valid */
     /* The 'next' field allows to link modulators into a list.  It is
      * not used in fluid_voice.c, there each voice allocates memory for a
      * fixed number of modulators.  Since there may be a huge number of
@@ -82,6 +83,34 @@ fluid_real_t fluid_mod_get_value(fluid_mod_t *mod, fluid_voice_t *voice);
 int fluid_mod_check_sources(const fluid_mod_t *mod, char *name);
 
 void fluid_mod_remove_invalid_from_list(fluid_mod_t **list_mod);
+
+/* this enum is used internally by fluid_mod_check_linked_mod() for setting
+   modulators 's path field.
+*/
+/* description of bit flags set in modulator's path field.
+   These flags indicates if a modulator belongs to a linked path.
+
+   FLUID_PATH_CURRENT | FLUID_PATH_VALID | Modulator state
+   -------------------|------------------|--------------------------------------
+         0            |     0            | doesn't belong to any linked path
+   -------------------|------------------|--------------------------------------
+         1            |     0            | belongs to a linked path not yet complete
+   -------------------|------------------|--------------------------------------
+         1            |     1            | belongs to a complete linked path
+*/
+enum fluid_path_flags
+{
+    /* bit FLUID_MOD_VALID set to 1 indicates that the modulator is valid */
+    FLUID_MOD_VALID = (1 << 0),
+
+    /* bit FLUID_PATH_VALID set to 1 indicates that the modulator belongs to
+      a complete valid linked path already discovered */
+    FLUID_PATH_VALID = (1 << 1),
+
+    /* bit FLUID_PATH_CURRENT set to 1 indicates that the modulator belongs to
+       the current linked path. It allows detection of circular and isolated path */
+    FLUID_PATH_CURRENT = (1 << 2)
+};
 
 int fluid_mod_check_linked_mod(char *list_name,
                             fluid_mod_t *list_mod, int mod_count,

@@ -42,8 +42,8 @@ fluid_mod_t mod_table_1[] =
 	{
 		// dest         , src1              , flags1      , src2          , flags2
 		GEN_ATTENUATION , FLUID_MOD_VELOCITY, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
-		// amount, link, next
-		10.0     , 0.0 , NULL
+		// amount, link, path, next
+		10.0     , 0.0 , 0   , NULL
 	}
 };
 
@@ -54,8 +54,8 @@ fluid_mod_t mod_table_1_1[] =
 	{
 		// dest         , src1              , flags1      , src2          , flags2
 		GEN_ATTENUATION , FLUID_MOD_VELOCITY, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
-		// amount, link, next
-		0.0      , 0.0 , NULL
+		// amount, link, path, next
+		0.0      , 0.0 , 0   , NULL
 	}
 };
 
@@ -66,14 +66,14 @@ fluid_mod_t mod_table_1_2[] =
 	{
 		// dest         , src1             , flags1      , src2          , flags2
 		GEN_ATTENUATION , FLUID_MOD_NONE   , FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
-		// amount, link, next
-		10.0      , 0.0 , NULL
+		// amount, link, path, next
+		10.0      , 0.0 ,0   , NULL
 	},
 	{
 		// dest         , src1             , flags1      , src2          , flags2
 		GEN_ATTENUATION , FLUID_MOD_KEY    , FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
-		// amount, link, next
-		0.0      , 0.0 , NULL
+		// amount, link, path, next
+		0.0      , 0.0 , 0   , NULL
 	}
 };
 
@@ -84,8 +84,8 @@ fluid_mod_t mod_table_1_3[] =
 	{
 		// dest         , src1             , flags1      , src2          , flags2
 		GEN_ATTENUATION, FLUID_MOD_VELOCITY, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC|FLUID_MOD_BIPOLAR,
-		// amount, link, next
-		0.0      , 0.0 , NULL
+		// amount, link, path, next
+		0.0      , 0.0 , 0   , NULL
 	}
 };
 
@@ -96,14 +96,14 @@ fluid_mod_t mod_table_2[] =
 	{
 		// dest         , src1             , flags1      , src2          , flags2
 		GEN_ATTENUATION, FLUID_MOD_VELOCITY, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
-		// amount, link, next
-		0.0      , 0.0 , NULL
+		// amount, link, path, next
+		0.0      , 0.0 , 0   , NULL
 	},
 	{
 		// dest         , src1             , flags1      , src2          , flags2
 		GEN_ATTENUATION , 1                , FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
-		// amount, link, next
-		10.0      , 0.0 , NULL
+		// amount, link, path, next
+		10.0      , 0.0 ,0   , NULL
 	}
 };
 
@@ -114,8 +114,8 @@ fluid_mod_t mod_table_3[] =
 	{
 		// dest         , src1             , flags1      , src2          , flags2
 		GEN_ATTENUATION , 3                , FLUID_MOD_CC, FLUID_MOD_NONE, FLUID_MOD_GC,
-		// amount, link, next
-		10.0      , 0.0 , NULL
+		// amount, link, path, next
+		10.0      , 0.0 ,0   , NULL
 	}
 };
 
@@ -126,14 +126,14 @@ fluid_mod_t mod_table_4[] =
 	{
 		// dest         , src1              , flags1      , src2          , flags2
 		GEN_ATTENUATION , FLUID_MOD_VELOCITY, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
-		// amount, link, next
-		0.0      , 0.0 , NULL
+		// amount, link, path, next
+		0.0      , 0.0 , 0   , NULL
 	},
 	{
 		// dest         , src1              , flags1      , src2          , flags2
 		2               , 0                 , FLUID_MOD_CC, FLUID_MOD_NONE, FLUID_MOD_GC,
-		// amount, link, next
-		10.0      , 0.0 , NULL
+		// amount, link, path, next
+		10.0      , 0.0 ,0   , NULL
 	}
 };
 
@@ -144,32 +144,32 @@ fluid_mod_t mod_table_5[] =
 	{
 		// dest         , src1              , flags1      , src2          , flags2
 		GEN_ATTENUATION , FLUID_MOD_VELOCITY, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
-		// amount, link, next
-		0.0      , 0.0 , NULL
+		// amount, link, path, next
+		0.0      , 0.0 , 0   , NULL
 	},
 	{
 		// dest         , src1              , flags1      , src2          , flags2
 		GEN_ATTENUATION , 3                 , FLUID_MOD_CC, FLUID_MOD_NONE, FLUID_MOD_GC,
-		// amount, link, next
-		10.0     , 0.0 , NULL
+		// amount, link, path, next
+		10.0     , 0.0 , 0   , NULL
 	},
 	{
 		// dest         , src1              , flags1      , src2          , flags2
 		GEN_ATTENUATION, FLUID_MOD_VELOCITY , FLUID_MOD_GC , FLUID_MOD_NONE, FLUID_MOD_GC,
-		// amount, link, next
-		1.0      , 0.0 , NULL
+		// amount, link, path, next
+		1.0      , 0.0 , 0   , NULL
 	},
 	{
 		// dest         , src1              , flags1      , src2          , flags2
 		GEN_ATTENUATION , FLUID_MOD_VELOCITY, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
-		// amount, link, next
-		3.0      , 0.0 , NULL
+		// amount, link, path, next
+		3.0      , 0.0 , 0   , NULL
 	},
 	{
 		// dest         , src1              , flags1      , src2          , flags2
 		GEN_ATTENUATION , FLUID_MOD_VELOCITY, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
-		// amount, link, next
-		5.0      , 0.0 , NULL
+		// amount, link, path, next
+		5.0      , 0.0 , 0   , NULL
 	}
 };
 
@@ -182,20 +182,20 @@ fluid_mod_t mod_table_6[] =
 	{
 		// dest              , src1              , flags1      , src2          , flags2
 		2|FLUID_MOD_LINK_DEST, FLUID_MOD_VELOCITY, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
-		// amount, link, next
-		1.0      , 0.0 , NULL
+		// amount, link, path, next
+		1.0      , 0.0 , 0   , NULL
 	},
 	{
 		// dest         , src1                  , flags1      , src2          , flags2
 		GEN_ATTENUATION , FLUID_MOD_VELOCITY    , FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
-		// amount, link, next
-		2.0      , 0.0 , NULL
+		// amount, link, path, next
+		2.0      , 0.0 , 0   , NULL
 	},
 	{
 		// dest         , src1                  , flags1      , src2          , flags2
 		GEN_ATTENUATION , FLUID_MOD_LINK_SRC    , FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
-		// amount, link, next
-		3.0      , 0.0 , NULL
+		// amount, link, path, next
+		3.0      , 0.0 , 0   , NULL
 	}
 };
 
@@ -208,55 +208,55 @@ fluid_mod_t mod_table_6[] =
 char test_6_1_mod_linked[] = "test 6_1: linked modulators valid: src1->mod0->mod2, src2->mod1->mod2";
 fluid_mod_t mod_table_6_1[] =
 {
-	/* mod complexe */
+	/* complex mod */
 	{
 		// dest              , src1              , flags1      , src2          , flags2
 		2|FLUID_MOD_LINK_DEST, FLUID_MOD_LINK_SRC, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
-		// amount, link, next
-		1.0      , 0.0 , NULL
+		// amount, link, path, next
+		1.0      , 0.0 , 0   , NULL
 	},
 	{
 		// dest              , src1              , flags1      , src2          , flags2
 		2|FLUID_MOD_LINK_DEST, FLUID_MOD_KEY     , FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
-		// amount, link, next
-		2.0      , 0.0 , NULL
+		// amount, link, path, next
+		2.0      , 0.0 , 0   , NULL
 	},
 	{
 		// dest              , src1              , flags1      , src2          , flags2
 		GEN_ATTENUATION      , FLUID_MOD_LINK_SRC, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
-		// amount, link, next
-		3.0      , 0.0 , NULL
+		// amount, link, path, next
+		3.0      , 0.0 , 0   , NULL
 	},
 	{
 		// dest              , src1              , flags1      , src2          , flags2
 		GEN_ATTENUATION      , FLUID_MOD_VELOCITY, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
-		// amount, link, next
-		4.0      , 0.0 , NULL
+		// amount, link, path, next
+		4.0      , 0.0 , 0   , NULL
 	},
 	{
 		// dest              , src1              , flags1      , src2          , flags2
 		0|FLUID_MOD_LINK_DEST, FLUID_MOD_KEY     , FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
-		// amount, link, next
-		5.0      , 0.0 , NULL
+		// amount, link, path, next
+		5.0      , 0.0 , 0   , NULL
 	},
-    /* mod complexe */
+	/* complex mod */
 	{
 		// dest              , src1              , flags1      , src2          , flags2
 		7|FLUID_MOD_LINK_DEST, FLUID_MOD_VELOCITY, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
-		// amount, link, next
-		6.0      , 0.0 , NULL
+		// amount, link, path, next
+		6.0      , 0.0 , 0   , NULL
 	},
 	{
 		// dest              , src1              , flags1      , src2          , flags2
 		7|FLUID_MOD_LINK_DEST, FLUID_MOD_KEY     , FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
-		// amount, link, next
-		7.0      , 0.0 , NULL
+		// amount, link, path, next
+		7.0      , 0.0 , 0   , NULL
 	},
 	{
 		// dest              , src1              , flags1      , src2          , flags2
 		GEN_VOLENVHOLD, FLUID_MOD_LINK_SRC       ,FLUID_MOD_GC , FLUID_MOD_NONE, FLUID_MOD_GC,
-		// amount, link, next
-		8.0      , 0.0 , NULL
+		// amount, link, path, next
+		8.0      , 0.0 , 0   , NULL
 	}
 };
 
@@ -267,26 +267,26 @@ fluid_mod_t mod_table_6_2[] =
 	{
 		// dest              , src1              , flags1      , src2          , flags2
 		2|FLUID_MOD_LINK_DEST, FLUID_MOD_LINK_SRC, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
-		// amount, link, next
-		2.0      , 0.0 , NULL
+		// amount, link, path, next
+		2.0      , 0.0 , 0   , NULL
 	},
 	{
 		// dest              , src1              , flags1      , src2          , flags2
 		GEN_ATTENUATION      , FLUID_MOD_VELOCITY, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
-		// amount, link, next
-		4.0      , 0.0 , NULL
+		// amount, link, path, next
+		4.0      , 0.0 , 0   , NULL
 	},
 	{
 		// dest              , src1              , flags1      , src2          , flags2
 		GEN_ATTENUATION      , FLUID_MOD_LINK_SRC, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
-		// amount, link, next
-		3.0      , 0.0 , NULL
+		// amount, link, path, next
+		3.0      , 0.0 , 0   , NULL
 	},
 	{
 		// dest              , src1              , flags1      , src2          , flags2
 		0|FLUID_MOD_LINK_DEST, FLUID_MOD_VELOCITY, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
-		// amount, link, next
-		1.0      , 0.0 , NULL
+		// amount, link, path, next
+		1.0      , 0.0 , 0   , NULL
 	}
 };
 
@@ -300,15 +300,15 @@ fluid_mod_t mod_table_6_3_0[] =
 	{
 		// dest              , src1              , flags1      , src2          , flags2
 		GEN_VOLENVHOLD       , FLUID_MOD_LINK_SRC, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
-		// amount, link, next
-		1.0      , 0.0 , NULL
+		// amount, link, path, next
+		1.0      , 0.0 , 0   , NULL
 	},
 	/* mod0<-mod1<- */
 	{
 		// dest              , src1              , flags1      , src2          , flags2
 		0|FLUID_MOD_LINK_DEST, 2                 , FLUID_MOD_CC, FLUID_MOD_NONE, FLUID_MOD_GC,
-		// amount, link, next
-		2.0      , 0.0 , NULL
+		// amount, link, path, next
+		2.0      , 0.0 , 0   , NULL
 	}
 };
 
@@ -319,15 +319,15 @@ fluid_mod_t mod_table_6_3_1[] =
 	{
 		// dest              , src1              , flags1      , src2          , flags2
 		GEN_VOLENVHOLD       , FLUID_MOD_LINK_SRC, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
-		// amount, link, next
-		2.0      , 0.0 , NULL
+		// amount, link, path, next
+		2.0      , 0.0 , 0   , NULL
 	},
 	/* mod0<-mod1<- */
 	{
 		// dest              , src1              , flags1      , src2          , flags2
 		0|FLUID_MOD_LINK_DEST, 2                 , FLUID_MOD_CC, FLUID_MOD_NONE, FLUID_MOD_GC,
-		// amount, link, next
-		3.0      , 0.0 , NULL
+		// amount, link, path, next
+		3.0      , 0.0 , 0   , NULL
 	}
 };
 
@@ -341,22 +341,22 @@ fluid_mod_t mod_table_6_4_0[] =
 	{
 		// dest              , src1              , flags1      , src2          , flags2
 		GEN_VOLENVHOLD       , FLUID_MOD_LINK_SRC, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
-		// amount, link, next
-		1.0      , 0.0 , NULL
+		// amount, link, path, next
+		1.0      , 0.0 , 0   , NULL
 	},
 	/* mod0<-mod1<- */
 	{
 		// dest              , src1              , flags1      , src2          , flags2
 		0|FLUID_MOD_LINK_DEST, FLUID_MOD_LINK_SRC, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
-		// amount, link, next
-		2.0      , 0.0 , NULL
+		// amount, link, path, next
+		2.0      , 0.0 , 0   , NULL
 	},
 	/* mod1<-mod2<- */
 	{
 		// dest              , src1              , flags1      , src2          , flags2
 		1|FLUID_MOD_LINK_DEST, 2                 , FLUID_MOD_CC, FLUID_MOD_NONE, FLUID_MOD_GC,
-		// amount, link, next
-		3.0      , 0.0 , NULL
+		// amount, link, path, next
+		3.0      , 0.0 , 0   , NULL
 	}
 };
 
@@ -367,15 +367,15 @@ fluid_mod_t mod_table_6_4_1[] =
 	{
 		// dest              , src1              , flags1      , src2          , flags2
 		GEN_VOLENVHOLD       , FLUID_MOD_LINK_SRC, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
-		// amount, link, next
-		2.0      , 0.0 , NULL
+		// amount, link, path, next
+		2.0      , 0.0 , 0   , NULL
 	},
 	/* mod0<-mod1<- */
 	{
 		// dest              , src1              , flags1      , src2          , flags2
 		0|FLUID_MOD_LINK_DEST, 2                 , FLUID_MOD_CC, FLUID_MOD_NONE, FLUID_MOD_GC,
-		// amount, link, next
-		3.0      , 0.0 , NULL
+		// amount, link, path, next
+		3.0      , 0.0 , 0   , NULL
 	}
 };
 
@@ -389,22 +389,22 @@ fluid_mod_t mod_table_6_5_0[] =
 	{
 		// dest              , src1              , flags1      , src2          , flags2
 		GEN_VOLENVHOLD       , FLUID_MOD_LINK_SRC, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
-		// amount, link, next
-		1.0      , 0.0 , NULL
+		// amount, link, path, next
+		1.0      , 0.0 , 0   , NULL
 	},
 	/* mod0<-mod1<- */
 	{
 		// dest              , src1              , flags1      , src2          , flags2
 		0|FLUID_MOD_LINK_DEST, FLUID_MOD_LINK_SRC, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
-		// amount, link, next
-		2.0      , 0.0 , NULL
+		// amount, link, path, next
+		2.0      , 0.0 , 0   , NULL
 	},
 	/* mod1<-mod2<- */
 	{
 		// dest              , src1              , flags1      , src2          , flags2
 		1|FLUID_MOD_LINK_DEST, 2                 , FLUID_MOD_CC, FLUID_MOD_NONE, FLUID_MOD_GC,
-		// amount, link, next
-		3.0      , 0.0 , NULL
+		// amount, link, path, next
+		3.0      , 0.0 , 0   , NULL
 	}
 };
 
@@ -415,22 +415,22 @@ fluid_mod_t mod_table_6_5_1[] =
 	{
 		// dest              , src1              , flags1      , src2          , flags2
 		GEN_VOLENVHOLD       , FLUID_MOD_LINK_SRC, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
-		// amount, link, next
-		4.0      , 0.0 , NULL
+		// amount, link, path, next
+		4.0      , 0.0 , 0   , NULL
 	},
 	/* mod0<-mod1<- */
 	{
 		// dest              , src1              , flags1      , src2          , flags2
 		0|FLUID_MOD_LINK_DEST, FLUID_MOD_LINK_SRC, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
-		// amount, link, next
-		5.0      , 0.0 , NULL
+		// amount, link, path, next
+		5.0      , 0.0 , 0   , NULL
 	},
 	/* mod1<-mod2<- */
 	{
 		// dest              , src1              , flags1      , src2          , flags2
 		1|FLUID_MOD_LINK_DEST, 2                 , FLUID_MOD_CC, FLUID_MOD_NONE, FLUID_MOD_GC,
-		// amount, link, next
-		6.0      , 0.0 , NULL
+		// amount, link, path, next
+		6.0      , 0.0 , 0   , NULL
 	}
 };
 
@@ -445,22 +445,22 @@ fluid_mod_t mod_table_6_6_0[] =
 	{
 		// dest              , src1              , flags1      , src2          , flags2
 		GEN_VOLENVHOLD       , FLUID_MOD_LINK_SRC, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
-		// amount, link, next
-		1.0      , 0.0 , NULL
+		// amount, link, path, next
+		1.0      , 0.0 , 0   , NULL
 	},
 	/* mod0<-mod1<- */
 	{
 		// dest              , src1              , flags1      , src2          , flags2
 		0|FLUID_MOD_LINK_DEST, FLUID_MOD_LINK_SRC, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
-		// amount, link, next
-		2.0      , 0.0 , NULL
+		// amount, link, path, next
+		2.0      , 0.0 , 0   , NULL
 	},
 	/* mod1<-mod2<- */
 	{
 		// dest              , src1              , flags1      , src2          , flags2
 		1|FLUID_MOD_LINK_DEST, 2                 , FLUID_MOD_CC, FLUID_MOD_NONE, FLUID_MOD_GC,
-		// amount, link, next
-		3.0      , 0.0 , NULL
+		// amount, link, path, next
+		3.0      , 0.0 , 0   , NULL
 	}
 };
 
@@ -472,22 +472,22 @@ fluid_mod_t mod_table_6_6_1[] =
 	{
 		// dest              , src1              , flags1      , src2          , flags2
 		GEN_VOLENVHOLD       , FLUID_MOD_LINK_SRC, FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
-		// amount, link, next
-		4.0      , 0.0 , NULL
+		// amount, link, path, next
+		4.0      , 0.0 , 0   , NULL
 	},
 	/* mod0<-mod1<- */
 	{
 		// dest              , src1              , flags1      , src2          , flags2
 		0|FLUID_MOD_LINK_DEST, FLUID_MOD_NONE    , FLUID_MOD_GC, FLUID_MOD_NONE, FLUID_MOD_GC,
-		// amount, link, next
-		5.0      , 0.0 , NULL
+		// amount, link, path, next
+		5.0      , 0.0 , 0   , NULL
 	},
 	/* mod0<-mod2<- */
 	{
 		// dest              , src1              , flags1      , src2          , flags2
 		0|FLUID_MOD_LINK_DEST, 2                 , FLUID_MOD_CC, FLUID_MOD_NONE, FLUID_MOD_GC,
-		// amount, link, next
-		6.0      , 0.0 , NULL
+		// amount, link, path, next
+		6.0      , 0.0 , 0   , NULL
 	}
 };
 
@@ -503,22 +503,22 @@ fluid_mod_t mod_table_6_7_0[] =
 	{
 		// dest              , src1              , flags1      , src2             , flags2
 		GEN_ATTENUATION      , FLUID_MOD_LINK_SRC, FLUID_MOD_GC, 5                 ,FLUID_MOD_CC,
-		// amount, link, next
-		1.0      , 0.0 , NULL
+		// amount, link, path, next
+		1.0      , 0.0 , 0   , NULL
 	},
 	/* mod0<-mod1<- */
 	{
 		// dest              , src1              , flags1      , src2              , flags2
 		0|FLUID_MOD_LINK_DEST, 4                 , FLUID_MOD_CC, FLUID_MOD_VELOCITY, FLUID_MOD_GC,
-		// amount, link, next
-		2.0      , 0.0 , NULL
+		// amount, link, path, next
+		2.0      , 0.0 , 0   , NULL
 	},
 	/* mod0<-mod2<- */
 	{
 		// dest              , src1              , flags1      , src2              , flags2
 		0|FLUID_MOD_LINK_DEST, 2                 , FLUID_MOD_CC, FLUID_MOD_NONE    , FLUID_MOD_GC,
-		// amount, link, next
-		3.0      , 0.0 , NULL
+		// amount, link, path, next
+		3.0      , 0.0 , 0   , NULL
 	}
 };
 
@@ -530,22 +530,22 @@ fluid_mod_t mod_table_6_7_1[] =
 	{
 		// dest              , src1              , flags1      , src2              , flags2
 		GEN_ATTENUATION      , FLUID_MOD_LINK_SRC, FLUID_MOD_GC, 5                 , FLUID_MOD_CC,
-		// amount, link, next
-		4.0      , 0.0 , NULL
+		// amount, link, path, next
+		4.0      , 0.0 , 0   , NULL
 	},
 	/* mod0<-mod1<- */
 	{
 		// dest              , src1              , flags1      , src2              , flags2
 		0|FLUID_MOD_LINK_DEST, 4                 , FLUID_MOD_CC, FLUID_MOD_VELOCITY, FLUID_MOD_GC,
-		// amount, link, next
-		5.0      , 0.0 , NULL
+		// amount, link, path, next
+		5.0      , 0.0 , 0   , NULL
 	},
 	/* mod0<-mod2<- */
 	{
 		// dest              , src1              , flags1      , src2              , flags2
 		0|FLUID_MOD_LINK_DEST, 2                 , FLUID_MOD_CC, FLUID_MOD_NONE    , FLUID_MOD_GC,
-		// amount, link, next
-		6.0      , 0.0 , NULL
+		// amount, link, path, next
+		6.0      , 0.0 , 0   , NULL
 	}
 };
 
@@ -561,36 +561,36 @@ fluid_mod_t mod_table_6_8_0[] =
 	{
 		// dest              , src1              , flags1        , src2            , flags2
 		GEN_VOLENVHOLD       , FLUID_MOD_LINK_SRC, FLUID_MOD_GC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
-		// amount, link, next
-		1.0      , 0.0 , NULL
+		// amount, link, path, next
+		1.0      , 0.0 , 0   , NULL
 	},
 	/* mod0<-mod1<- */
 	{
 		// dest              , src1              , flags1        , src2              , flags2
 		0|FLUID_MOD_LINK_DEST, FLUID_MOD_LINK_SRC, FLUID_MOD_GC  , FLUID_MOD_VELOCITY, FLUID_MOD_GC,
-		// amount, link, next
-		2.0      , 0.0 , NULL
+		// amount, link, path, next
+		2.0      , 0.0 , 0   , NULL
 	},
 	/* mod1<-mod2<- */
 	{
 		// dest              , src1              , flags1        , src2            , flags2
 		1|FLUID_MOD_LINK_DEST, 2                 , FLUID_MOD_CC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
-		// amount, link, next
-		3.0      , 0.0 , NULL
+		// amount, link, path, next
+		3.0      , 0.0 , 0   , NULL
 	},
 	/* mod0<-mod3<- */
 	{
 		// dest              , src1              , flags1        , src2            , flags2
 		0|FLUID_MOD_LINK_DEST, FLUID_MOD_LINK_SRC, FLUID_MOD_GC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
-		// amount, link, next
-		4.0      , 0.0 , NULL
+		// amount, link, path, next
+		4.0      , 0.0 , 0   , NULL
 	},
 	/* mod3<-mod4<- */
 	{
 		// dest              , src1              , flags1        , src2            , flags2
 		3|FLUID_MOD_LINK_DEST, 2                 , FLUID_MOD_CC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
-		// amount, link, next
-		5.0      , 0.0 , NULL
+		// amount, link, path, next
+		5.0      , 0.0 , 0   , NULL
 	}
 };
 
@@ -602,36 +602,36 @@ fluid_mod_t mod_table_6_8_1[] =
 	{
 		// dest              , src1              , flags1        , src2            , flags2
 		GEN_VOLENVHOLD       , FLUID_MOD_LINK_SRC, FLUID_MOD_GC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
-		// amount, link, next
-		6.0      , 0.0 , NULL
+		// amount, link, path, next
+		6.0      , 0.0 , 0   , NULL
 	},
 	/* mod0<-mod1<- */
 	{
 		// dest              , src1              , flags1        , src2            , flags2
 		0|FLUID_MOD_LINK_DEST, FLUID_MOD_LINK_SRC, FLUID_MOD_GC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
-		// amount, link, next
-		7.0      , 0.0 , NULL
+		// amount, link, path, next
+		7.0      , 0.0 , 0   , NULL
 	},
 	/* mod1<-mod2<- */
 	{
 		// dest              , src1              , flags1        , src2            , flags2
 		1|FLUID_MOD_LINK_DEST, 2                 , FLUID_MOD_CC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
-		// amount, link, next
-		8.0      , 0.0 , NULL
+		// amount, link, path, next
+		8.0      , 0.0 , 0   , NULL
 	},
 	/* mod0<-mod3<- */
 	{
 		// dest              , src1              , flags1        , src2              , flags2
 		0|FLUID_MOD_LINK_DEST, FLUID_MOD_LINK_SRC, FLUID_MOD_GC  , FLUID_MOD_VELOCITY, FLUID_MOD_GC,
-		// amount, link, next
-		9.0      , 0.0 , NULL
+		// amount, link, path, next
+		9.0      , 0.0 , 0   , NULL
 	},
 	/* mod3<-mod4<- */
 	{
 		// dest              , src1              , flags1        , src2            , flags2
 		3|FLUID_MOD_LINK_DEST, 2                 , FLUID_MOD_CC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
-		// amount, link, next
-		10.0      , 0.0 , NULL
+		// amount, link, path, next
+		10.0      , 0.0 , 0   , NULL
 	}
 };
 
@@ -642,20 +642,20 @@ fluid_mod_t mod_table_7[] =
 	{
 		// dest              , src1                 , flags1        , src2            , flags2
 		2|FLUID_MOD_LINK_DEST, FLUID_MOD_VELOCITY   , FLUID_MOD_GC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
-		// amount, link, next
-		1.0      , 0.0 , NULL
+		// amount, link, path, next
+		1.0      , 0.0 , 0   , NULL
 	},
 	{
 		// dest              , src1                 , flags1        , src2            , flags2
 		GEN_ATTENUATION      , FLUID_MOD_KEYPRESSURE, FLUID_MOD_GC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
-		// amount, link, next
-		2.0      , 0.0 , NULL
+		// amount, link, path, next
+		2.0      , 0.0 , 0   , NULL
 	},
 	{
 		// dest              , src1                 , flags1        , src2            , flags2
 		GEN_ATTENUATION      , FLUID_MOD_VELOCITY   , FLUID_MOD_GC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
-		// amount, link, next
-		3.0      , 0.0 , NULL
+		// amount, link, path, next
+		3.0      , 0.0 , 0   , NULL
 	}
 };
 
@@ -667,20 +667,20 @@ fluid_mod_t mod_table_8[] =
 	{
 		// dest              , src1              , flags1        , src2            , flags2
 		2|FLUID_MOD_LINK_DEST, FLUID_MOD_VELOCITY, FLUID_MOD_GC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
-		// amount, link, next
-		1.0      , 0.0 , NULL
+		// amount, link, path, next
+		1.0      , 0.0 , 0   , NULL
 	},
 	{
 		// dest              , src1              , flags1        , src2            , flags2
 		GEN_ATTENUATION      , FLUID_MOD_VELOCITY, FLUID_MOD_GC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
-		// amount, link, next
-		2.0      , 0.0 , NULL
+		// amount, link, path, next
+		2.0      , 0.0 , 0   , NULL
 	},
 	{
 		// dest              , src1              , flags1        , src2            , flags2
 		GEN_ATTENUATION      , FLUID_MOD_LINK_SRC, FLUID_MOD_GC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
-		// amount, link, next
-		0.0      , 0.0 , NULL
+		// amount, link, path, next
+		0.0      , 0.0 , 0   , NULL
 	}
 };
 
@@ -691,20 +691,20 @@ fluid_mod_t mod_table_9[] =
 	{
 		// dest              , src1                , flags1        , src2            , flags2
 		3|FLUID_MOD_LINK_DEST, FLUID_MOD_VELOCITY  , FLUID_MOD_GC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
-		// amount, link, next
-		1.0      , 0.0 , NULL
+		// amount, link, path, next
+		1.0      , 0.0 , 0   , NULL
 	},
 	{
 		// dest              , src1                 , flags1        , src2            , flags2
 		GEN_ATTENUATION      , FLUID_MOD_KEYPRESSURE, FLUID_MOD_GC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
-		// amount, link, next
-		2.0      , 0.0 , NULL
+		// amount, link, path, next
+		2.0      , 0.0 , 0   , NULL
 	},
 	{
 		// dest              , src1               , flags1          , src2            , flags2
 		GEN_ATTENUATION      , FLUID_MOD_VELOCITY , FLUID_MOD_GC    , FLUID_MOD_NONE  , FLUID_MOD_GC,
-		// amount, link, next
-		3.0      , 0.0 , NULL
+		// amount, link, path, next
+		3.0      , 0.0 , 0   , NULL
 	}
 };
 
@@ -716,20 +716,20 @@ fluid_mod_t mod_table_10[] =
 	{
 		// dest              , src1              , flags1        , src2            , flags2
 		2|FLUID_MOD_LINK_DEST, FLUID_MOD_LINK_SRC, FLUID_MOD_GC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
-		// amount, link, next
-		1.0      , 0.0 , NULL
+		// amount, link, path, next
+		1.0      , 0.0 , 0   , NULL
 	},
 	{
 		// dest              , src1              , flags1        , src2            , flags2
 		GEN_ATTENUATION      , FLUID_MOD_VELOCITY, FLUID_MOD_GC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
-		// amount, link, next
-		2.0      , 0.0 , NULL
+		// amount, link, path, next
+		2.0      , 0.0 , 0   , NULL
 	},
 	{
 		// dest              , src1              , flags1        , src2            , flags2
 		GEN_ATTENUATION      , FLUID_MOD_LINK_SRC, FLUID_MOD_GC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
-		// amount, link, next
-		3.0      , 0.0 , NULL
+		// amount, link, path, next
+		3.0      , 0.0 , 0   , NULL
 	}
 };
 
@@ -740,26 +740,26 @@ fluid_mod_t mod_table_11[] =
 	{
 		// dest              , src1              , flags1        , src2            , flags2
 		2|FLUID_MOD_LINK_DEST, FLUID_MOD_LINK_SRC, FLUID_MOD_GC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
-		// amount, link, next
-		2.0      , 0.0 , NULL
+		// amount, link, path, next
+		2.0      , 0.0 , 0   , NULL
 	},
 	{
 		// dest              , src1              , flags1        , src2            , flags2
 		GEN_ATTENUATION, FLUID_MOD_VELOCITY      , FLUID_MOD_GC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
-		// amount, link, next
-		4.0      , 0.0 , NULL
+		// amount, link, path, next
+		4.0      , 0.0 , 0   , NULL
 	},
 	{
 		// dest              , src1              , flags1        , src2            , flags2
 		0|FLUID_MOD_LINK_DEST, FLUID_MOD_LINK_SRC, FLUID_MOD_GC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
-		// amount, link, next
-		3.0      , 0.0 , NULL
+		// amount, link, path, next
+		3.0      , 0.0 , 0   , NULL
 	},
 	{
 		// dest              , src1              , flags1        , src2            , flags2
 		0|FLUID_MOD_LINK_DEST, FLUID_MOD_VELOCITY, FLUID_MOD_GC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
-		// amount, link, next
-		1.0      , 0.0 , NULL
+		// amount, link, path, next
+		1.0      , 0.0 , 0   , NULL
 	}
 };
 
