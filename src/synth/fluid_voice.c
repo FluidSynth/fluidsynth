@@ -1666,7 +1666,7 @@ fluid_voice_add_mod_local(fluid_voice_t *voice, fluid_mod_t *mod, int mode, int 
         {
             /* clone all modulators member */
             /* count is 1 for unlinked modulator, > 1 for complex modulator */
-            for (i =0; i < count; i++)
+            for (i =0; (i < count) && mod; i++)
 			{
                 fluid_mod_t *voice_mod = &voice->mod[voice->mod_count++];
                 fluid_mod_clone(voice_mod, mod);
