@@ -1364,7 +1364,7 @@ int main(void)
 static fluid_mod_t * fluid_build_list(fluid_mod_t mod_table[], int count_mod)
 {
 	int i;
-	fluid_mod_t * prev;
+	fluid_mod_t * prev = NULL;
 	fluid_mod_t *list_mod = NULL;
 	/* build list_mod containing test modulators from mod_table */
 	for(i = 0; i < count_mod; i++)
@@ -1381,7 +1381,7 @@ static fluid_mod_t * fluid_build_list(fluid_mod_t mod_table[], int count_mod)
 		fluid_mod_clone(mod, &mod_table[i]);
 		mod->next = NULL;
 		/* add to list_mode */
-		if(i == 0)
+		if(prev == NULL)
 		{
 			list_mod = mod;
 		}

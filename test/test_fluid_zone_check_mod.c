@@ -1159,7 +1159,7 @@ test_fluid_zone_check_mod(char * name_test,
 static fluid_mod_t * fluid_build_list(fluid_mod_t mod_table[], int count_mod)
 {
 	int i;
-	fluid_mod_t * prev;
+	fluid_mod_t * prev = NULL;
 	fluid_mod_t *list_mod = NULL;
 	/* build list_mod containing test modulators from mod_table */
 	for(i = 0; i < count_mod; i++)
@@ -1176,7 +1176,7 @@ static fluid_mod_t * fluid_build_list(fluid_mod_t mod_table[], int count_mod)
 		fluid_mod_clone(mod, &mod_table[i]);
 		mod->next = NULL;
 		/* add to list_mode */
-		if(i == 0)
+		if(prev == NULL)
 		{
 			list_mod = mod;
 		}
@@ -1317,7 +1317,10 @@ static void print_list_linked_mod(char *header, char *name_list, fluid_mod_t *mo
 		FLUID_LOG(FLUID_INFO, "-- list \"%s\":", name_list);
 		fluid_dump_list_linked_mod(mod);
 	}
-	else FLUID_LOG(FLUID_INFO, "-- list \"%s\" empty.", name_list);
+	else
+	{
+		FLUID_LOG(FLUID_INFO, "-- list \"%s\" empty.", name_list);
+	}
 }
 
 /* -----------------------------------------*/
@@ -1348,5 +1351,8 @@ static void print_list_mod(char *name_list, fluid_mod_t *mod)
 		FLUID_LOG(FLUID_INFO, "-- list \"%s\":", name_list);
 		fluid_dump_list_mod(mod);
 	}
-	else FLUID_LOG(FLUID_INFO, "-- list \"%s\" empty.", name_list);
+	else
+	{
+		FLUID_LOG(FLUID_INFO, "-- list \"%s\" empty.", name_list);
+	}
 }
