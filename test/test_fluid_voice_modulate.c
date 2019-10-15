@@ -149,23 +149,12 @@ static fluid_real_t get_complex_mod_modulation(fluid_voice_t *voice,
     fluid_mod_set_dest   (m2, FLUID_MOD_LINK_DEST | 0);
 
     /* valid internal list of linked modulators members for a complex modulator (mod0,mod1,mod2).
-       Modulators member ordering is expected equivalent as the one produced by
-       fluid_mod_copy_linked_mod() implementing the following ordering rule:
-
-       If any member mx has src1 linked it must be immediatley followed by a
-       member whose destination field is mx. This rule ensures:
-       1) That at synthesis time (noteon or CC modulation), any modulator mod_src
-          (connected to another modulators mod_dst) are computed before this modulator mod_dst.
-       2) The ordering is previsible in a way making test identity possible
-          between two complex modulators (in fluid_mod_test_branch_identity()).
-       Note that for the current test, only point (1) is relevant.
+       Modulator member ordering is expected to be equivalent to the one produced by
+       fluid_mod_copy_linked_mod()
     */
     m0->next = m1;
     m1->next = m2;
 
-    // Add one complex modulator using fluid_voice_add_mod_local().
-    // fluid_voice_add_mod_local() is able to add a simple or complex modulator.
-    // (API fluid_voice_add_mod() is only able to add a simple modulator.)
     voice->mod_count = 0;             // clear voice modulator table.
     fluid_voice_add_mod_local(voice, m0, FLUID_VOICE_DEFAULT, FLUID_NUM_MOD);
 

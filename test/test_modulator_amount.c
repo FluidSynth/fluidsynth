@@ -63,25 +63,14 @@ int main(void)
         fluid_mod_set_amount (mod2, 300);
         fluid_mod_set_dest   (mod2, FLUID_MOD_LINK_DEST | 0);
 
-         /* valid internal list of linked modulators members for a complex modulator (mod0,mod1,mod2).
-           Modulators member ordering is expected equivalent as the one produced by
-           fluid_mod_copy_linked_mod() implementing the following ordering rule:
-            If any member mx has src1 linked it must be immediatley followed by a
-            member whose destination field is mx. This rule ensures:
-            1) That at synthesis time (noteon or CC modulation), any modulator mod_src
-              (connected to another modulators mod_dst) are computed before this modulator mod_dst.
-            2) The ordering is previsible in a way making test identity possible
-               between two complex modulators (in fluid_mod_test_branch_identity()).
-            Note that for the current test, only point (1) is relevant.
-       */
+        /* valid internal list of linked modulators members for a complex modulator (mod0,mod1,mod2).
+            Modulator member ordering is expected to be equivalent to the one produced by
+            fluid_mod_copy_linked_mod()
+        */
         mod0->next = mod1;
         mod1->next = mod2;
 
-        // Add one complex modulator using fluid_voice_add_mod_local().
-        // fluid_voice_add_mod_local() is able to add a simple or complex modulator.
-        // (API fluid_voice_add_mod() is only able to add a simple modulator.)
         fluid_voice_add_mod_local(v, mod0, FLUID_VOICE_DEFAULT, FLUID_NUM_MOD);
-        
         fluid_voice_calculate_modulator_contributions(v);
         
         TEST_ASSERT(float_equal(v->mod[0].link, fluid_mod_get_amount(mod1) + fluid_mod_get_amount(mod2)));
@@ -100,19 +89,15 @@ int main(void)
         fluid_mod_set_amount (mod3, 50);
         fluid_mod_set_dest   (mod3, FLUID_MOD_LINK_DEST | 1); // link to mod1
 
-        /* valid internal list of linked modulators members for complex modulator (mod0,mod1,mod3,mod2).
-           Modulators member ordering is expected equivalent as ordering produced by fluid_mod_copy_linked_mod().
-           See comment above about internal ordering rule.
+        /* valid internal list of linked modulators members for a complex modulator (mod0,mod1,mod2).
+            Modulator member ordering is expected to be equivalent to the one produced by
+            fluid_mod_copy_linked_mod()
         */
         mod0->next = mod1;
         mod1->next = mod3;
         mod3->next = mod2;
 
-        // Add one complex modulator using fluid_voice_add_mod_local().
-        // fluid_voice_add_mod_local() is able to add a simple or complex modulator.
-        // (API fluid_voice_add_mod() is only able to add a simple modulator.)
         fluid_voice_add_mod_local(v, mod0, FLUID_VOICE_DEFAULT, FLUID_NUM_MOD);
-        
         fluid_voice_calculate_modulator_contributions(v);
         
         TEST_ASSERT(float_equal(v->mod[1].link, fluid_mod_get_amount(mod3)));
