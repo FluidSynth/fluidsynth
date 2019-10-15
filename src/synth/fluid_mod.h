@@ -112,7 +112,7 @@ enum fluid_path_flags
     FLUID_PATH_CURRENT = (1 << 2)
 };
 
-int fluid_mod_check_linked_mod(char *list_name,
+int fluid_mod_check_linked_mod(const char *list_name,
                             fluid_mod_t *list_mod, int mod_count,
                             fluid_mod_t **linked_mod, int linked_count);
 

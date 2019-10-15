@@ -1347,7 +1347,7 @@ void fluid_dump_linked_mod(fluid_mod_t *mod, int mod_idx, int offset)
  *  - 0 if no linked path exists.
 */
 static int
-fluid_mod_check_linked_mod_LOCAL(char *list_name, fluid_mod_t *list_mod,
+fluid_mod_check_linked_mod_LOCAL(const char *list_name, fluid_mod_t *list_mod,
                                  int dest_idx)
 {
     int linked_count = 0; /* number of linked modulators */
@@ -1668,7 +1668,7 @@ fluid_mod_copy_linked_mod(const fluid_mod_t *list_mod, int dest_idx, int new_idx
  * See test_modulator_links.c.
  */
 int
-fluid_mod_check_linked_mod(char *list_name,
+fluid_mod_check_linked_mod(const char *list_name,
                             fluid_mod_t *list_mod, int mod_count,
                             fluid_mod_t **linked_mod, int linked_count)
 {
