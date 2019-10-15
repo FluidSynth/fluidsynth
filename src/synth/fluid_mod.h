@@ -64,7 +64,7 @@ int fluid_mod_is_linked (const fluid_mod_t * mod);
    FLUID_LINKED_MOD_TEST_OVERWRITE must be equal to FLUID_VOICE_OVERWRITE.
    FLUID_LINKED_MOD_TEST_ADD must be equal to FLUID_VOICE_ADD.
 */
-enum fluid_mod_test_linked_identity
+enum fluid_mod_linked_identity_test_mode
 {
     /**< test identity and overwrite modulator amounts */
     FLUID_LINKED_MOD_TEST_OVERWRITE = FLUID_VOICE_OVERWRITE,
