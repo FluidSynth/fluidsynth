@@ -869,7 +869,7 @@ int fluid_mod_check_sources(const fluid_mod_t *mod, char *name)
  */
 static int fluid_mod_test_branch_identity(fluid_mod_t *cm0_mod, 
                                              fluid_mod_t *cm1_mod,
-                                             unsigned char test_mode)
+                                             enum fluid_mod_linked_identity_test_mode test_mode)
 {
     int r = 1;				 /* result of test */
     struct
@@ -1006,7 +1006,7 @@ static int fluid_mod_test_branch_identity(fluid_mod_t *cm0_mod,
  */
 int fluid_mod_test_linked_identity(fluid_mod_t *cm0,
                                    fluid_mod_t *cm1, 
-                                   unsigned char test_mode)
+                                   enum fluid_mod_linked_identity_test_mode test_mode)
 {
     int count0 = fluid_mod_get_linked_count(cm0);
     int count1 = fluid_mod_get_linked_count(cm1);

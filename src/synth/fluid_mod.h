@@ -77,7 +77,7 @@ enum fluid_mod_linked_identity_test_mode
 };
 
 int fluid_mod_test_linked_identity(fluid_mod_t *cm0, fluid_mod_t *cm1,
-                                   unsigned char test_mode);
+                                   enum fluid_mod_linked_identity_test_mode mode);
 
 fluid_real_t fluid_mod_get_value(fluid_mod_t *mod, fluid_voice_t *voice);
 int fluid_mod_check_sources(const fluid_mod_t *mod, char *name);
