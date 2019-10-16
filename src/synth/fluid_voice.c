@@ -1594,8 +1594,8 @@ fluid_voice_add_mod_local(fluid_voice_t *voice, fluid_mod_t *mod, int mode, int 
 {
     int i;
     /* number of modulators to add: 1 for unlinked, > 1 for complex modulators */
-    unsigned char count = fluid_mod_get_linked_count(mod);
-    if( count < 1)
+    int count = fluid_mod_get_linked_count(mod);
+    if(count < 1)
     {
         /* internal error: this should never happen */
         FLUID_LOG(FLUID_ERR, "invalid modulator member count:%d.", count);
