@@ -69,8 +69,7 @@ fluid_ct2hz_real(fluid_real_t cents)
         }
         else
         {
-            mult = 1u << (unsigned int)res.quot;
-            return mult * fluid_ct2hz_tab[(res.rem)];
+            return FLUID_LDEXP(fluid_ct2hz_tab[(res.rem)], res.quot);
         }
     }
 }

@@ -180,6 +180,12 @@ typedef void (*fluid_rvoice_function_t)(void *obj, const fluid_rvoice_param_t pa
 #define FLUID_LOGF  (fluid_real_t)log
 #endif
 
+#if defined WITH_FLOAT && defined HAVE_LDEXPF
+#define FLUID_LDEXP ldexpf
+#else
+#define FLUID_LDEXP ldexp
+#endif
+
 /* Memory allocation */
 #define FLUID_MALLOC(_n)             fluid_alloc(_n)
 #define FLUID_REALLOC(_p,_n)         realloc(_p,_n)

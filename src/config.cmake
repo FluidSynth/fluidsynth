@@ -272,4 +272,7 @@
 /* Define to 1 if you have the logf() function. */
 #cmakedefine HAVE_LOGF @HAVE_LOGF@
 
+/* Define to 1 if you have the ldexpf() function. */
+#cmakedefine HAVE_LDEXPF @HAVE_LDEXPF@
+
 #endif /* CONFIG_H */
