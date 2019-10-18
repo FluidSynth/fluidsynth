@@ -704,12 +704,6 @@ if ( HAVE_LOGF )
   set ( HAVE_LOGF 1 )
 endif ( HAVE_LOGF )
 
-unset ( HAVE_LDEXPF CACHE )
-CHECK_FUNCTION_EXISTS ( "ldexpf" HAVE_LDEXPF )
-if ( HAVE_LDEXPF )
-  set ( HAVE_LDEXPF 1 )
-endif ( HAVE_LDEXPF )
-
 # General configuration file
 configure_file ( ${CMAKE_SOURCE_DIR}/src/config.cmake
                  ${CMAKE_BINARY_DIR}/config.h )
