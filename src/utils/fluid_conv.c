@@ -23,66 +23,55 @@
 #include "fluid_conv_tables.c"
 
 /*
- * fluid_ct2hz
+ * Converts absolute cents to Hertz
+ * 
+ * As per sfspec section 9.3:
+ * 
+ * ABSOLUTE CENTS - An absolute logarithmic measure of frequency based on a
+ * reference of MIDI key number scaled by 100.
+ * A cent is 1/1200 of an octave [which is the twelve hundredth root of two],
+ * and value 6900 is 440 Hz (A-440).
+ * 
+ * Implemented below basically is the following:
+ *   440 * 2^((cents-6900)/1200)
+ * = 440 * 2^((int)((cents-6900)/1200)) * 2^(((int)cents-6900)%1200))
+ * = 2^((int)((cents-6900)/1200)) * (440 * 2^(((int)cents-6900)%1200)))
+ *                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ *                           This second factor is stored in the lookup table.
+ *
+ * The first factor can be implemented with a fast shift when the exponent
+ * is always an int. This is the case when using 440/2^6 Hz rather than 440Hz
+ * reference.
  */
 fluid_real_t
 fluid_ct2hz_real(fluid_real_t cents)
 {
-    if(cents < 0)
+    if(FLUID_UNLIKELY(cents < 0))
     {
         return (fluid_real_t) 1.0;
     }
-    else if(cents < 900)
-    {
-        return (fluid_real_t) 6.875 * fluid_ct2hz_tab[(int)(cents + 300)];
-    }
-    else if(cents < 2100)
-    {
-        return (fluid_real_t) 13.75 * fluid_ct2hz_tab[(int)(cents - 900)];
-    }
-    else if(cents < 3300)
-    {
-        return (fluid_real_t) 27.5 * fluid_ct2hz_tab[(int)(cents - 2100)];
-    }
-    else if(cents < 4500)
-    {
-        return (fluid_real_t) 55.0 * fluid_ct2hz_tab[(int)(cents - 3300)];
-    }
-    else if(cents < 5700)
-    {
-        return (fluid_real_t) 110.0 * fluid_ct2hz_tab[(int)(cents - 4500)];
-    }
-    else if(cents < 6900)
-    {
-        return (fluid_real_t) 220.0 * fluid_ct2hz_tab[(int)(cents - 5700)];
-    }
-    else if(cents < 8100)
-    {
-        return (fluid_real_t) 440.0 * fluid_ct2hz_tab[(int)(cents - 6900)];
-    }
-    else if(cents < 9300)
-    {
-        return (fluid_real_t) 880.0 * fluid_ct2hz_tab[(int)(cents - 8100)];
-    }
-    else if(cents < 10500)
-    {
-        return (fluid_real_t) 1760.0 * fluid_ct2hz_tab[(int)(cents - 9300)];
-    }
-    else if(cents < 11700)
-    {
-        return (fluid_real_t) 3520.0 * fluid_ct2hz_tab[(int)(cents - 10500)];
-    }
-    else if(cents < 12900)
-    {
-        return (fluid_real_t) 7040.0 * fluid_ct2hz_tab[(int)(cents - 11700)];
-    }
-    else if(cents < 14100)
-    {
-        return (fluid_real_t) 14080.0 * fluid_ct2hz_tab[(int)(cents - 12900)];
-    }
     else
     {
-        return (fluid_real_t) 1.0; /* some loony trying to make you deaf */
+        unsigned int mult;
+        div_t res;
+
+        int icents = (int)cents;
+        icents += 300;
+        res = div(icents, 1200);
+
+        if(FLUID_UNLIKELY(res.quot > (int)(sizeof(mult)*8)))
+        {
+            // 32 * 1200 cents - 300 == 38100 cents
+            // very unlikely and much more than the original if else implementation supported
+            //
+            // still, fallback to expensive on-the-fly calculation
+            return 440 * pow(2.0, (cents-6900) / 1200.0);
+        }
+        else
+        {
+            mult = 1u << (unsigned int)res.quot;
+            return mult * fluid_ct2hz_tab[(res.rem)];
+        }
     }
 }
 
