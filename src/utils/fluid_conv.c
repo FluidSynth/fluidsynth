@@ -65,7 +65,7 @@ fluid_ct2hz_real(fluid_real_t cents)
             // very unlikely and much more than the original if else implementation supported
             //
             // still, fallback to expensive on-the-fly calculation
-            return 440 * pow(2.0, (cents-6900) / 1200.0);
+            return 440.f * FLUID_POW(2.0f, (cents-6900.f) / 1200.0f);
         }
         else
         {
