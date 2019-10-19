@@ -59,7 +59,7 @@ fluid_ct2hz_real(fluid_real_t cents)
         icents += 300;
         res = div(icents, 1200);
 
-        if(FLUID_UNLIKELY(res.quot > (int)(sizeof(mult)*8)))
+        if(FLUID_UNLIKELY(res.quot >= (int)(sizeof(mult)*8)))
         {
             // 32 * 1200 cents - 300 == 38100 cents
             // very unlikely and much more than the original if else implementation supported
