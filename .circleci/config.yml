@@ -1,0 +1,123 @@
+version: 2.1
+orbs:
+  android: circleci/android@0.2.0
+jobs:
+  build:
+    working_directory: ~/code
+    docker:
+      - image: circleci/android:api-29
+    environment:
+      JVM_OPTS: -Xmx3200m
+    steps:
+      - run:
+          name: Setup Git email and user for Cerbero
+          command: git config --global user.email "ci@beatscratch.io" && git config --global user.name "CI testing"
+      - android/install-ndk:
+          ndk-version: android-ndk-r18b
+          ndk-sha: 500679655da3a86aecf67007e8ab230ea9b4dd7b
+      - run:
+          name: Link NDK for Cerbero
+          command: |
+            mkdir -p /home/circleci/android-sdk-linux
+            ln -s /opt/android/android-ndk-r18b /home/circleci/android-sdk-linux/ndk-bundle
+#      - run: ls -R /opt/android
+#      - run:
+#          name: Setup path
+#          command: |
+#            chmod +x /opt/android/android-ndk-r18b/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64/bin/*
+#            chmod +x /opt/android/android-ndk-r18b/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin/*
+#            chmod +x /opt/android/android-ndk-r18b/toolchains/llvm/prebuilt/linux-x86_64/bin/*
+#            chmod +x /opt/android/android-ndk-r18b/toolchains/x86_64-4.9/prebuilt/linux-x86_64/bin/*
+#            chmod +x /opt/android/android-ndk-r18b/toolchains/x86-4.9/prebuilt/linux-x86_64/bin/*
+#            chmod +x /opt/android/android-ndk-r18b/toolchains/renderscript/prebuilt/linux-x86_64/bin/*
+#      - run:
+#          name: Test path
+#          environment:
+#            PATH: /opt/android/sdk/emulator:/opt/android/sdk/tools:/opt/android/sdk/tools/bin:/opt/android/sdk/platform-tools:/home/circleci/.rubies/ruby-2.6.1/bin:/usr/local/openjdk-8/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/android/android-ndk-r18b/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64/bin:/opt/android/android-ndk-r18b/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin:/opt/android/android-ndk-r18b/toolchains/llvm/prebuilt/linux-x86_64/bin:/opt/android/android-ndk-r18b/toolchains/x86_64-4.9/prebuilt/linux-x86_64/bin:/opt/android/android-ndk-r18b/toolchains/x86-4.9/prebuilt/linux-x86_64/bin:/opt/android/android-ndk-r18b/toolchains/renderscript/prebuilt/linux-x86_64/bin
+#          command: |
+#            echo $PATH
+#            pwd
+#            ls /opt/android/android-ndk-r18b/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin
+#            arm-linux-androideabi-ar -h
+      - run:
+          name: Install FluidSynth build dependencies
+          command: sudo apt-get update && sudo apt-get install autotools-dev automake autoconf libtool g++ autopoint make cmake
+            bison flex yasm pkg-config gtk-doc-tools libxv-dev libx11-dev libpulse-dev
+            python3-dev texinfo gettext build-essential pkg-config doxygen curl libxext-dev
+            libxi-dev x11proto-record-dev libxrender-dev libgl1-mesa-dev libxfixes-dev
+            libxdamage-dev libxcomposite-dev libasound2-dev libxml-simple-perl dpkg-dev
+            debhelper build-essential devscripts fakeroot transfig gperf libdbus-glib-1-dev
+            wget glib-networking libxtst-dev libxrandr-dev libglu1-mesa-dev libegl1-mesa-dev
+            git subversion xutils-dev intltool ccache python3-setuptools autogen maven
+      - checkout
+      # - run:
+      #     name: Clone submodules
+      #     command: git submodule update --init --recursive
+      # - run:
+      #     name: Set FluidSynth commit
+      #     working_directory: external/fluidsynth
+      #     command: git checkout 90c5eb05c1228471e49be7a73f22a99ef9d35460
+      # - run:
+      #     name: Set JNAerator commit
+      #     working_directory: external/JNAerator
+      #     command: git checkout ac73c9e491b7211f2e1278fb4a7c6cedd46f0cf5
+#      - run:
+#          name: Build JNAerator
+#          working_directory: external/JNAerator
+#          command: mvn package
+      - run:
+          name: Get custom CMake
+          command: |
+            git clone https://github.com/Kitware/CMake.git --depth 1 -b v3.14.3 cmake
+            cd cmake && mkdir build && cd build
+            cmake .. && make && cd ../..
+      - run:
+          name: Build FluidSynth Android
+          working_directory: doc/android
+          command: |
+            cp Makefile.android makefile
+            git clone https://github.com/atsushieno/cerbero.git external/cerbero
+            git clone https://github.com/Google/oboe.git external/oboe
+            make
+      # - run:
+      #     name: Prepare FluidSynth
+      #     working_directory: fluidsynthjna
+      #     command: make prepare-fluidsynth
+      # - run:
+      #     name: Build fluidsynthjna
+      #     working_directory: fluidsynthjna
+      #     environment:
+      #       PATH: /home/circleci/code/cmake/build/bin:/opt/android/sdk/emulator:/opt/android/sdk/tools:/opt/android/sdk/tools/bin:/opt/android/sdk/platform-tools:/home/circleci/.rubies/ruby-2.6.1/bin:/usr/local/openjdk-8/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/android/android-ndk-r18b/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64/bin:/opt/android/android-ndk-r18b/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin:/opt/android/android-ndk-r18b/toolchains/llvm/prebuilt/linux-x86_64/bin:/opt/android/android-ndk-r18b/toolchains/x86_64-4.9/prebuilt/linux-x86_64/bin:/opt/android/android-ndk-r18b/toolchains/x86-4.9/prebuilt/linux-x86_64/bin:/opt/android/android-ndk-r18b/toolchains/renderscript/prebuilt/linux-x86_64/bin
+      #     command: |
+      #       make
+      # - run:
+      #     name: Zip jniLibs
+      #     working_directory: fluidsynthjna/src/main
+      #     command: zip -r jniLibs.zip jniLibs
+      # - store_artifacts:
+      #     path: fluidsynthjna/src/main/jniLibs.zip
+      #     destination: jniLibs.zip
+      # - restore_cache:
+      #     key: jars-{{ checksum "build.gradle" }}-{{ checksum  "app/build.gradle" }}
+      # - run:
+      #     name: Download Dependencies
+      #     command: ./gradlew androidDependencies
+      # - save_cache:
+      #     paths:
+      #       - ~/.gradle
+      #     key: jars-{{ checksum "build.gradle" }}-{{ checksum  "app/build.gradle" }}
+      # - run:
+      #     name: Run tests
+      #     command: ./gradlew lint test
+      # - store_artifacts:
+      #     path: app/build/reports
+      #     destination: reports
+      # - store_test_results:
+      #     path: app/build/test-results
+      # - run:
+      #     name: Build debug and release APKs
+      #     command: ./gradlew assembleDebug assembleRelease
+      # - store_artifacts:
+      #     path: app/build/outputs/apk
+      #     destination: apks
+      # See https://circleci.com/docs/2.0/deployment-integrations/ for deploy examples
