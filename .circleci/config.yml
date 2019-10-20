@@ -81,6 +81,11 @@ jobs:
           working_directory: doc/android
           command: |
             make -f Makefile.android
+      - run:
+          name: Show directory contents
+          working_directory: doc/android
+          command: |
+            ls -R
       # - run:
       #     name: Prepare FluidSynth
       #     working_directory: fluidsynthjna
@@ -92,10 +97,10 @@ jobs:
       #       PATH: /home/circleci/code/cmake/build/bin:/opt/android/sdk/emulator:/opt/android/sdk/tools:/opt/android/sdk/tools/bin:/opt/android/sdk/platform-tools:/home/circleci/.rubies/ruby-2.6.1/bin:/usr/local/openjdk-8/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/android/android-ndk-r18b/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64/bin:/opt/android/android-ndk-r18b/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin:/opt/android/android-ndk-r18b/toolchains/llvm/prebuilt/linux-x86_64/bin:/opt/android/android-ndk-r18b/toolchains/x86_64-4.9/prebuilt/linux-x86_64/bin:/opt/android/android-ndk-r18b/toolchains/x86-4.9/prebuilt/linux-x86_64/bin:/opt/android/android-ndk-r18b/toolchains/renderscript/prebuilt/linux-x86_64/bin
       #     command: |
       #       make
-      # - run:
-      #     name: Zip jniLibs
-      #     working_directory: fluidsynthjna/src/main
-      #     command: zip -r jniLibs.zip jniLibs
+      - run:
+          name: Zip jniLibs
+          working_directory: doc/android
+          command: zip -r android-dist.zip dist
       # - store_artifacts:
       #     path: fluidsynthjna/src/main/jniLibs.zip
       #     destination: jniLibs.zip
