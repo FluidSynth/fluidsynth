@@ -52,26 +52,15 @@ fluid_ct2hz_real(fluid_real_t cents)
     }
     else
     {
-        unsigned int mult;
-        div_t res;
+        unsigned int mult, fac, rem;
+        unsigned int icents = (unsigned int)cents;
+        icents += 300u;
 
-        int icents = (int)cents;
-        icents += 300;
-        res = div(icents, 1200);
+        fac = icents / 1200u;
+        rem = icents % 1200u;
 
-        if(FLUID_UNLIKELY(res.quot >= (int)(sizeof(mult)*8)))
-        {
-            // 32 * 1200 cents - 300 == 38100 cents
-            // very unlikely and much more than the original if else implementation supported
-            //
-            // still, fallback to expensive on-the-fly calculation
-            return 440.f * FLUID_POW(2.0f, (cents-6900.f) / 1200.0f);
-        }
-        else
-        {
-            mult = 1u << (unsigned int)res.quot;
-            return mult * fluid_ct2hz_tab[(res.rem)];
-        }
+        mult = 1u << fac;
+        return mult * fluid_ct2hz_tab[rem];
     }
 }
 
