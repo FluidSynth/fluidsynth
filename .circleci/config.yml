@@ -65,12 +65,12 @@ jobs:
 #          name: Build JNAerator
 #          working_directory: external/JNAerator
 #          command: mvn package
-      - run:
-          name: Get custom CMake
-          command: |
-            git clone https://github.com/Kitware/CMake.git --depth 1 -b v3.14.3 cmake
-            cd cmake && mkdir build && cd build
-            cmake .. && make && cd ../..
+      # - run:
+      #     name: Get custom CMake
+      #     command: |
+      #       git clone https://github.com/Kitware/CMake.git --depth 1 -b v3.14.3 cmake
+      #       cd cmake && mkdir build && cd build
+      #       cmake .. && make && cd ../..
       - run:
           name: Build FluidSynth Android
           working_directory: doc/android
