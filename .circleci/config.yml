@@ -48,7 +48,7 @@ jobs:
             libxdamage-dev libxcomposite-dev libasound2-dev libxml-simple-perl dpkg-dev
             debhelper build-essential devscripts fakeroot transfig gperf libdbus-glib-1-dev
             wget glib-networking libxtst-dev libxrandr-dev libglu1-mesa-dev libegl1-mesa-dev
-            git subversion xutils-dev intltool ccache python3-setuptools autogen maven
+            git subversion xutils-dev intltool ccache python3-setuptools autogen maven make
       - checkout
       # - run:
       #     name: Clone submodules
