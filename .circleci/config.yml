@@ -75,10 +75,9 @@ jobs:
           name: Build FluidSynth Android
           working_directory: doc/android
           command: |
-            cp Makefile.android makefile
             git clone https://github.com/atsushieno/cerbero.git external/cerbero
             git clone https://github.com/Google/oboe.git external/oboe
-            make
+            make -f Makefile.android
       # - run:
       #     name: Prepare FluidSynth
       #     working_directory: fluidsynthjna
