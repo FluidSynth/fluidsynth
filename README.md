@@ -5,6 +5,8 @@
 | ![Linux](https://raw.githubusercontent.com/microsoft/azure-pipelines-tasks/master/docs/res/linux_med.png) **Linux** | n.a. | [![Build Status Travis](https://travis-ci.org/FluidSynth/fluidsynth.svg?branch=master)](https://travis-ci.org/FluidSynth/fluidsynth/branches) |
 | <img src="https://www.theinquirer.net/w-images/866eae81-b13b-47b5-8180-929943e9dc21/0/daemonhammerfreebsd-580x358.jpg" height="25"> **FreeBSD** | n.a. | [![Build Status](https://api.cirrus-ci.com/github/FluidSynth/fluidsynth.svg?branch=master)](https://cirrus-ci.com/github/FluidSynth/fluidsynth) |
 | ![Win](https://raw.githubusercontent.com/microsoft/azure-pipelines-tasks/master/docs/res/win_med.png) **Windows** && ![macOS](https://raw.githubusercontent.com/microsoft/azure-pipelines-tasks/master/docs/res/apple_med.png) **MacOSX** | [![Build Status](https://dev.azure.com/tommbrt/tommbrt/_apis/build/status/FluidSynth.fluidsynth?branchName=master)](https://dev.azure.com/tommbrt/tommbrt/_build/latest?definitionId=3&branchName=master) | [![Build status](https://ci.appveyor.com/api/projects/status/anbmtebt5uk4q1it/branch/master?svg=true)](https://ci.appveyor.com/project/derselbst/fluidsynth-g2ouw/branch/master) |
+| ![Android](https://www.android.com/favicon.ico) **Android** | n.a. | [![CircleCI](https://circleci.com/gh/Fluidsynth/fluidsynth.svg?style=svg)](https://circleci.com/gh/Fluidsynth/fluidsynth) |
+
 
 
 #### FluidSynth is a cross-platform, real-time software synthesizer based on the Soundfont 2 specification.
