@@ -72,11 +72,14 @@ jobs:
       #       cd cmake && mkdir build && cd build
       #       cmake .. && make && cd ../..
       - run:
+          name: Prepare FluidSynth Android
+          working_directory: doc/android
+          command: |
+            make -f Makefile.android prepare
+      - run:
           name: Build FluidSynth Android
           working_directory: doc/android
           command: |
-            git clone https://github.com/atsushieno/cerbero.git external/cerbero
-            git clone https://github.com/Google/oboe.git external/oboe
             make -f Makefile.android
       # - run:
       #     name: Prepare FluidSynth
