@@ -20,25 +20,6 @@ jobs:
           command: |
             mkdir -p /home/circleci/android-sdk-linux
             ln -s /opt/android/android-ndk-r18b /home/circleci/android-sdk-linux/ndk-bundle
-#      - run: ls -R /opt/android
-#      - run:
-#          name: Setup path
-#          command: |
-#            chmod +x /opt/android/android-ndk-r18b/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64/bin/*
-#            chmod +x /opt/android/android-ndk-r18b/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin/*
-#            chmod +x /opt/android/android-ndk-r18b/toolchains/llvm/prebuilt/linux-x86_64/bin/*
-#            chmod +x /opt/android/android-ndk-r18b/toolchains/x86_64-4.9/prebuilt/linux-x86_64/bin/*
-#            chmod +x /opt/android/android-ndk-r18b/toolchains/x86-4.9/prebuilt/linux-x86_64/bin/*
-#            chmod +x /opt/android/android-ndk-r18b/toolchains/renderscript/prebuilt/linux-x86_64/bin/*
-#      - run:
-#          name: Test path
-#          environment:
-#            PATH: /opt/android/sdk/emulator:/opt/android/sdk/tools:/opt/android/sdk/tools/bin:/opt/android/sdk/platform-tools:/home/circleci/.rubies/ruby-2.6.1/bin:/usr/local/openjdk-8/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/android/android-ndk-r18b/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64/bin:/opt/android/android-ndk-r18b/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin:/opt/android/android-ndk-r18b/toolchains/llvm/prebuilt/linux-x86_64/bin:/opt/android/android-ndk-r18b/toolchains/x86_64-4.9/prebuilt/linux-x86_64/bin:/opt/android/android-ndk-r18b/toolchains/x86-4.9/prebuilt/linux-x86_64/bin:/opt/android/android-ndk-r18b/toolchains/renderscript/prebuilt/linux-x86_64/bin
-#          command: |
-#            echo $PATH
-#            pwd
-#            ls /opt/android/android-ndk-r18b/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin
-#            arm-linux-androideabi-ar -h
       - run:
           name: Install FluidSynth build dependencies
           command: sudo apt-get update && sudo apt-get install autotools-dev automake autoconf libtool g++ autopoint make cmake
@@ -50,27 +31,6 @@ jobs:
             wget glib-networking libxtst-dev libxrandr-dev libglu1-mesa-dev libegl1-mesa-dev
             git subversion xutils-dev intltool ccache python3-setuptools autogen maven make
       - checkout
-      # - run:
-      #     name: Clone submodules
-      #     command: git submodule update --init --recursive
-      # - run:
-      #     name: Set FluidSynth commit
-      #     working_directory: external/fluidsynth
-      #     command: git checkout 90c5eb05c1228471e49be7a73f22a99ef9d35460
-      # - run:
-      #     name: Set JNAerator commit
-      #     working_directory: external/JNAerator
-      #     command: git checkout ac73c9e491b7211f2e1278fb4a7c6cedd46f0cf5
-#      - run:
-#          name: Build JNAerator
-#          working_directory: external/JNAerator
-#          command: mvn package
-      # - run:
-      #     name: Get custom CMake
-      #     command: |
-      #       git clone https://github.com/Kitware/CMake.git --depth 1 -b v3.14.3 cmake
-      #       cd cmake && mkdir build && cd build
-      #       cmake .. && make && cd ../..
       - run:
           name: Prepare FluidSynth Android
           working_directory: doc/android
@@ -86,6 +46,13 @@ jobs:
           working_directory: doc/android
           command: |
             ls -R
+      - run:
+          name: Zip FluidSnyth Android Distribution
+          working_directory: doc/android
+          command: zip -r android-dist.zip dist
+      - store_artifacts:
+          path: doc/android/android-dist.zip
+          destination: android-dist.zip
       # - run:
       #     name: Prepare FluidSynth
       #     working_directory: fluidsynthjna
@@ -97,13 +64,6 @@ jobs:
       #       PATH: /home/circleci/code/cmake/build/bin:/opt/android/sdk/emulator:/opt/android/sdk/tools:/opt/android/sdk/tools/bin:/opt/android/sdk/platform-tools:/home/circleci/.rubies/ruby-2.6.1/bin:/usr/local/openjdk-8/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/android/android-ndk-r18b/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64/bin:/opt/android/android-ndk-r18b/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin:/opt/android/android-ndk-r18b/toolchains/llvm/prebuilt/linux-x86_64/bin:/opt/android/android-ndk-r18b/toolchains/x86_64-4.9/prebuilt/linux-x86_64/bin:/opt/android/android-ndk-r18b/toolchains/x86-4.9/prebuilt/linux-x86_64/bin:/opt/android/android-ndk-r18b/toolchains/renderscript/prebuilt/linux-x86_64/bin
       #     command: |
       #       make
-      - run:
-          name: Zip jniLibs
-          working_directory: doc/android
-          command: zip -r android-dist.zip dist
-      # - store_artifacts:
-      #     path: fluidsynthjna/src/main/jniLibs.zip
-      #     destination: jniLibs.zip
       # - restore_cache:
       #     key: jars-{{ checksum "build.gradle" }}-{{ checksum  "app/build.gradle" }}
       # - run:
