@@ -3801,9 +3801,9 @@ fluid_synth_write_float(fluid_synth_t *synth, int len,
                         void *lout, int loff, int lincr,
                         void *rout, int roff, int rincr)
 {
-    int n, j, k, cur, size;
-    float *left_out = (float *) lout;
-    float *right_out = (float *) rout;
+    int n, cur, size;
+    float *left_out = (float *) lout + loff;
+    float *right_out = (float *) rout + roff;
     fluid_real_t *left_in;
     fluid_real_t *right_in;
     double time = fluid_utime();
@@ -3819,7 +3819,7 @@ fluid_synth_write_float(fluid_synth_t *synth, int len,
     fluid_rvoice_mixer_get_bufs(synth->eventhandler->mixer, &left_in, &right_in);
 
     cur = synth->cur;
-    j = loff; k = roff; size = len;
+    size = len;
 
     do
     {
@@ -3851,11 +3851,11 @@ fluid_synth_write_float(fluid_synth_t *synth, int len,
 
         do
         {
-            left_out[j] = (float) left_in[n];
-            right_out[k] = (float) right_in[n];
+            *left_out = (float) left_in[n];
+            *right_out = (float) right_in[n];
 
-            j += lincr;
-            k += rincr;
+            left_out += lincr;
+            right_out += rincr;
         }
         while (++n < 0);
     }
@@ -3953,9 +3953,9 @@ fluid_synth_write_s16(fluid_synth_t *synth, int len,
                       void *lout, int loff, int lincr,
                       void *rout, int roff, int rincr)
 {
-    int di, n, j, k, cur, size;
-    int16_t *left_out = lout;
-    int16_t *right_out = rout;
+    int di, n, cur, size;
+    int16_t *left_out = (int16_t *)lout + loff;
+    int16_t *right_out = (int16_t *)rout + roff;
     fluid_real_t *left_in;
     fluid_real_t *right_in;
     double time = fluid_utime();
@@ -3969,7 +3969,7 @@ fluid_synth_write_s16(fluid_synth_t *synth, int len,
     cur = synth->cur;
     di = synth->dither_index;
 
-    j = loff; k = roff; size = len;
+    size = len;
 
     do
     {
@@ -4001,11 +4001,11 @@ fluid_synth_write_s16(fluid_synth_t *synth, int len,
 
         do
         {
-            left_out[j] = round_clip_to_i16(left_in[n] * 32766.0f + rand_table[0][di]);
-            right_out[k] = round_clip_to_i16(right_in[n] * 32766.0f + rand_table[1][di]);
+            *left_out = round_clip_to_i16(left_in[n] * 32766.0f + rand_table[0][di]);
+            *right_out = round_clip_to_i16(right_in[n] * 32766.0f + rand_table[1][di]);
 
-            j += lincr;
-            k += rincr;
+            left_out  += lincr;
+            right_out += rincr;
 
             if(++di >= DITHER_SIZE)
             {
