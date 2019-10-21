@@ -133,6 +133,10 @@ typedef void (*fluid_rvoice_function_t)(void *obj, const fluid_rvoice_param_t pa
 #define FLUID_NEW(_t)                (_t*)FLUID_MALLOC(sizeof(_t))
 #define FLUID_ARRAY_ALIGNED(_t,_n,_a) (_t*)FLUID_MALLOC((_n)*sizeof(_t) + ((unsigned int)_a - 1u))
 #define FLUID_ARRAY(_t,_n)           FLUID_ARRAY_ALIGNED(_t,_n,1u)
+
+void* fluid_alloc(size_t len);
+
+/* File access */
 #define FLUID_FOPEN(_f,_m)           fopen(_f,_m)
 #define FLUID_FCLOSE(_f)             fclose(_f)
 #define FLUID_FREAD(_p,_s,_n,_f)     fread(_p,_s,_n,_f)
