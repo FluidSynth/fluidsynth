@@ -98,7 +98,9 @@ build-fluidsynth-one:
 	LD_LIBRARY_PATH=$(DIST_PATH)/android_$(BUILD_ABI)/lib \
 	PKG_CONFIG_PATH=$(DIST_PATH)/android_$(BUILD_ABI)/lib/pkgconfig/:$(OBOE_BUILD_PATH)/$(A_ABI) \
 	PKG_CONFIG_LIBDIR=$(DIST_PATH)/android_$(BUILD_ABI)/lib/pkgconfig/:$(OBOE_BUILD_PATH)/$(A_ABI) \
-	$(CMAKE) -Denable-debug=on -DCMAKE_INSTALL_PREFIX=$(PWD)/dist/$(A_ABI) \
+	$(CMAKE) -DCMAKE_INSTALL_PREFIX=$(PWD)/dist/$(A_ABI) \
+		-Denable-floats=1 \
+		-DCMAKE_VERBOSE_MAKEFILE=1 \
 		-DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK)/build/cmake/android.toolchain.cmake \
 		-Denable-opensles=on -Denable-oboe=on -Denable-oss=off -Denable-libsndfile=on \
 		-DANDROID_NATIVE_API_LEVEL=android-27 -DANDROID_PLATFORM=android-27 -DANDROID_ABI=$(A_ABI) ../../../.. && \
