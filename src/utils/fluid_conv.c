@@ -56,10 +56,21 @@ fluid_ct2hz_real(fluid_real_t cents)
         unsigned int icents = (unsigned int)cents;
         icents += 300u;
 
+        // don't use stdlib div() here, it turned out have poor performance
         fac = icents / 1200u;
         rem = icents % 1200u;
 
-        mult = 1u << fac;
+        // Think of "mult" as the factor that we multiply (440/2^6)Hz with,
+        // or in other words mult is the "first factor" of the above
+        // functions comment.
+        //
+        // Assuming sizeof(uint)==4 this will give us a maximum range of
+        // 32 * 1200cents - 300cents == 38100 cents == 29,527,900,160 Hz
+        // which is much more than ever needed. For bigger values, just
+        // safely wrap around.
+        mult = 1u << (fac & (sizeof(mult)*8u - 1u));
+
+        // don't use ldexp() either (poor performance)
         return mult * fluid_ct2hz_tab[rem];
     }
 }
