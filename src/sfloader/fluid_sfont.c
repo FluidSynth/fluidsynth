@@ -608,7 +608,7 @@ fluid_sample_set_sound_data(fluid_sample_t *sample,
             goto error_rec;
         }
 
-        FLUID_MEMSET(sample->data, 0, storedNbFrames);
+        FLUID_MEMSET(sample->data, 0, storedNbFrames * sizeof(short));
         FLUID_MEMCPY(sample->data + SAMPLE_LOOP_MARGIN, data, nbframes * sizeof(short));
 
         if(data24 != NULL)
@@ -627,7 +627,7 @@ fluid_sample_set_sound_data(fluid_sample_t *sample,
         /* pointers */
         /* all from the start of data */
         sample->start = SAMPLE_LOOP_MARGIN;
-        sample->end = SAMPLE_LOOP_MARGIN + storedNbFrames - 1;
+        sample->end = SAMPLE_LOOP_MARGIN + nbframes - 1;
     }
     else
     {
