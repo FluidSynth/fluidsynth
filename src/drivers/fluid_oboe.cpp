@@ -28,7 +28,6 @@ extern "C" {
 
 #include "fluid_adriver.h"
 #include "fluid_settings.h"
-#include "fluid_sys.h"
 
 } // extern "C"
 
