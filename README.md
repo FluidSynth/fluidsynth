@@ -6,7 +6,7 @@
 | <img src="https://www.theinquirer.net/w-images/866eae81-b13b-47b5-8180-929943e9dc21/0/daemonhammerfreebsd-580x358.jpg" height="25" alt=""> **FreeBSD** | n.a. | [![Build Status](https://api.cirrus-ci.com/github/FluidSynth/fluidsynth.svg?branch=master)](https://cirrus-ci.com/github/FluidSynth/fluidsynth) |
 | <img src="https://www.microsoft.com/windows/favicon.ico" height="25" alt=""> **Windows** | [![Build Status](https://dev.azure.com/tommbrt/tommbrt/_apis/build/status/FluidSynth.fluidsynth.Win?branchName=master)](https://dev.azure.com/tommbrt/tommbrt/_build/latest?definitionId=3&branchName=master) | [![Build status](https://ci.appveyor.com/api/projects/status/anbmtebt5uk4q1it/branch/master?svg=true)](https://ci.appveyor.com/project/derselbst/fluidsynth-g2ouw/branch/master) |
 | <img src="https://www.apple.com/favicon.ico" height="30" alt=""> **MacOSX** | n.a. | [![Build Status](https://dev.azure.com/tommbrt/tommbrt/_apis/build/status/FluidSynth.fluidsynth.macOS?branchName=master)](https://dev.azure.com/tommbrt/tommbrt/_build/latest?definitionId=5&branchName=master) |
-| <img src="https://www.android.com/favicon.ico" height="30" alt=""> **Android** | n.a. | [![CircleCI](https://circleci.com/gh/FluidSynth/fluidsynth.svg?style=svg)](https://circleci.com/gh/FluidSynth/fluidsynth) |
+| <img src="https://www.android.com/favicon.ico" height="30" alt=""> **Android** | n.a. | [![CircleCI](https://circleci.com/gh/FluidSynth/fluidsynth/tree/master.svg?style=shield)](https://circleci.com/gh/FluidSynth/fluidsynth) |
 
 
 
