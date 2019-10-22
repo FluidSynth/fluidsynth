@@ -130,9 +130,11 @@
 #define HIGH_MOD_DEPTH  MAX_SAMPLES/2 /* high mod_depth in sample */
 #define RANGE_MOD_DEPTH (HIGH_MOD_DEPTH - LOW_MOD_DEPTH)
 
-/* MOD_RATE acceptable for high speed (5Hz)*/
+/* Important values for MOD_RATE */
+/* MOD_RATE acceptable for max lfo speed (5Hz) and max modulation depth (46.6 ms) */
 #define LOW_MOD_RATE 5  /* MOD_RATE acceptable for low modulation depth (8 ms) */
-#define HIGH_MOD_RATE 4 /* MOD_RATE acceptable for high modulation depth (46.6 ms) */
+#define HIGH_MOD_RATE 4 /* MOD_RATE acceptable for max modulation depth (46.6 ms) */
+                        /* and max lfo speed (5 Hz) */
 #define RANGE_MOD_RATE (HIGH_MOD_RATE - LOW_MOD_RATE)
 
 /* some chorus cpu_load measurement dependant of modulation rate: mod_rate
@@ -155,12 +157,12 @@
 */
 
 /*
- Number of samples to add to the desired length of a delay line. This
+ Number of samples to add to the desired length of the delay line. This
  allow to take account of large modulation interpolation.
- 1 is sufficient with DEPTH ms maximum (46.6 ms).
+ 1 is sufficient for max modulation depth (46.6 ms) and max lfo speed (5 Hz).
 */
-//#define INTERP_SAMPLES_NBR 1
-#define INTERP_SAMPLES_NBR 0
+//#define INTERP_SAMPLES_NBR 0
+#define INTERP_SAMPLES_NBR 1
 
 
 /*-----------------------------------------------------------------------------
