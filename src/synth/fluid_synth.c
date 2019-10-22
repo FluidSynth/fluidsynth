@@ -3389,6 +3389,8 @@ fluid_synth_nwrite_float(fluid_synth_t *synth, int len,
     fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
     fluid_return_val_if_fail(left != NULL, FLUID_FAILED);
     fluid_return_val_if_fail(right != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(len >= 0, FLUID_FAILED);
+    fluid_return_val_if_fail(len != 0, FLUID_OK); // to avoid raising FE_DIVBYZERO below
 
     /* First, take what's still available in the buffer */
     count = 0;
@@ -3673,6 +3675,8 @@ fluid_synth_process_LOCAL(fluid_synth_t *synth, int len, int nfx, float *fx[],
     fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
     fluid_return_val_if_fail(nfx % 2 == 0, FLUID_FAILED);
     fluid_return_val_if_fail(nout % 2 == 0, FLUID_FAILED);
+    fluid_return_val_if_fail(len >= 0, FLUID_FAILED);
+    fluid_return_val_if_fail(len != 0, FLUID_OK); // to avoid raising FE_DIVBYZERO below
 
     nfxchan = synth->effects_channels;
     nfxunits = synth->effects_groups;
@@ -3823,61 +3827,61 @@ fluid_synth_write_float_LOCAL(fluid_synth_t *synth, int len,
     double time = fluid_utime();
     float cpu_load;
 
-    fluid_profile_ref_var(prof_ref);
-
     fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
     fluid_return_val_if_fail(lout != NULL, FLUID_FAILED);
     fluid_return_val_if_fail(rout != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(len >= 0, FLUID_FAILED);
+    fluid_return_val_if_fail(len != 0, FLUID_OK); // to avoid raising FE_DIVBYZERO below
+
+    fluid_profile_ref_var(prof_ref);
 
     fluid_rvoice_mixer_set_mix_fx(synth->eventhandler->mixer, 1);
     fluid_rvoice_mixer_get_bufs(synth->eventhandler->mixer, &left_in, &right_in);
 
-    if (FLUID_LIKELY((size = len) > 0))
+    size = len;
+    cur = synth->cur;
+
+    do
     {
-        cur = synth->cur;
+        /* fill up the buffers as needed */
+        if(cur >= synth->curmax)
+        {
+            int blocksleft = (size + FLUID_BUFSIZE - 1) / FLUID_BUFSIZE;
+            synth->curmax = FLUID_BUFSIZE * block_render_func(synth, blocksleft);
+            fluid_rvoice_mixer_get_bufs(synth->eventhandler->mixer, &left_in, &right_in);
+            cur = 0;
+        }
+
+        /* calculate amount of available samples */
+        n = synth->curmax - cur;
+
+        /* keep track of emitted samples */
+        if (n > size) n = size;
+        size -= n;
+
+        /* update pointers to current position */
+        left_in  += cur+n;
+        right_in += cur+n;
+
+        /* set final cursor position */
+        cur += n;
+
+        /* reverse index */
+        n = 0 - n;
 
         do
         {
-            /* fill up the buffers as needed */
-            if(cur >= synth->curmax)
-            {
-                int blocksleft = (size + FLUID_BUFSIZE - 1) / FLUID_BUFSIZE;
-                synth->curmax = FLUID_BUFSIZE * block_render_func(synth, blocksleft);
-                fluid_rvoice_mixer_get_bufs(synth->eventhandler->mixer, &left_in, &right_in);
-                cur = 0;
-            }
+            *left_out = (float) left_in[n];
+            *right_out = (float) right_in[n];
 
-            /* calculate amount of available samples */
-            n = synth->curmax - cur;
-
-            /* keep track of emitted samples */
-            if (n > size) n = size;
-            size -= n;
-
-            /* update pointers to current position */
-            left_in  += cur+n;
-            right_in += cur+n;
-
-            /* set final cursor position */
-            cur += n;
-
-            /* reverse index */
-            n = 0 - n;
-
-            do
-            {
-                *left_out = (float) left_in[n];
-                *right_out = (float) right_in[n];
-
-                left_out += lincr;
-                right_out += rincr;
-            }
-            while (++n < 0);
+            left_out += lincr;
+            right_out += rincr;
         }
-        while (size);
-
-        synth->cur = cur;
+        while (++n < 0);
     }
+    while (size);
+
+    synth->cur = cur;
 
     time = fluid_utime() - time;
     cpu_load = 0.5 * (fluid_atomic_float_get(&synth->cpu_load) + time * synth->sample_rate / len / 10000.0);
@@ -3977,64 +3981,68 @@ fluid_synth_write_s16(fluid_synth_t *synth, int len,
     double time = fluid_utime();
     float cpu_load;
 
+    fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(lout != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(rout != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(len >= 0, FLUID_FAILED);
+    fluid_return_val_if_fail(len != 0, FLUID_OK); // to avoid raising FE_DIVBYZERO below
+
     fluid_profile_ref_var(prof_ref);
 
     fluid_rvoice_mixer_set_mix_fx(synth->eventhandler->mixer, 1);
     fluid_rvoice_mixer_get_bufs(synth->eventhandler->mixer, &left_in, &right_in);
 
-    if (FLUID_LIKELY((size = len) > 0))
+    size = len;
+    cur = synth->cur;
+    di = synth->dither_index;
+
+    do
     {
-        cur = synth->cur;
-        di = synth->dither_index;
+        /* fill up the buffers as needed */
+        if(cur >= synth->curmax)
+        {
+            int blocksleft = (size + FLUID_BUFSIZE - 1) / FLUID_BUFSIZE;
+            synth->curmax = FLUID_BUFSIZE * fluid_synth_render_blocks(synth, blocksleft);
+            fluid_rvoice_mixer_get_bufs(synth->eventhandler->mixer, &left_in, &right_in);
+            cur = 0;
+        }
+
+        /* calculate amount of available samples */
+        n = synth->curmax - cur;
+
+        /* keep track of emitted samples */
+        if (n > size) n = size;
+        size -= n;
+
+        /* update pointers to current position */
+        left_in  += cur+n;
+        right_in += cur+n;
+
+        /* set final cursor position */
+        cur += n;
+
+        /* reverse index */
+        n = 0 - n;
 
         do
         {
-            /* fill up the buffers as needed */
-            if(cur >= synth->curmax)
+            *left_out = round_clip_to_i16(left_in[n] * 32766.0f + rand_table[0][di]);
+            *right_out = round_clip_to_i16(right_in[n] * 32766.0f + rand_table[1][di]);
+
+            left_out  += lincr;
+            right_out += rincr;
+
+            if(++di >= DITHER_SIZE)
             {
-                int blocksleft = (size + FLUID_BUFSIZE - 1) / FLUID_BUFSIZE;
-                synth->curmax = FLUID_BUFSIZE * fluid_synth_render_blocks(synth, blocksleft);
-                fluid_rvoice_mixer_get_bufs(synth->eventhandler->mixer, &left_in, &right_in);
-                cur = 0;
+                di = 0;
             }
-
-            /* calculate amount of available samples */
-            n = synth->curmax - cur;
-
-            /* keep track of emitted samples */
-            if (n > size) n = size;
-            size -= n;
-
-            /* update pointers to current position */
-            left_in  += cur+n;
-            right_in += cur+n;
-
-            /* set final cursor position */
-            cur += n;
-
-            /* reverse index */
-            n = 0 - n;
-
-            do
-            {
-                *left_out = round_clip_to_i16(left_in[n] * 32766.0f + rand_table[0][di]);
-                *right_out = round_clip_to_i16(right_in[n] * 32766.0f + rand_table[1][di]);
-
-                left_out  += lincr;
-                right_out += rincr;
-
-                if(++di >= DITHER_SIZE)
-                {
-                    di = 0;
-                }
-            }
-            while (++n < 0);
         }
-        while (size);
-
-        synth->cur = cur;
-        synth->dither_index = di;	/* keep dither buffer continous */
+        while (++n < 0);
     }
+    while (size);
+
+    synth->cur = cur;
+    synth->dither_index = di;	/* keep dither buffer continous */
 
     time = fluid_utime() - time;
     cpu_load = 0.5 * (fluid_atomic_float_get(&synth->cpu_load) + time * synth->sample_rate / len / 10000.0);
