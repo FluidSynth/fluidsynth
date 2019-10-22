@@ -1129,6 +1129,10 @@ fluid_synth_error(fluid_synth_t *synth)
 
 /**
  * Send a note-on event to a FluidSynth object.
+ *
+ * This function will take care of proper legato playing. If a note on channel @p chan is
+ * already playing at the given key @p key, it will be released (even if it is sustained).
+ * In other words, overlapping notes are not allowed.
  * @param synth FluidSynth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
  * @param key MIDI note number (0-127)
