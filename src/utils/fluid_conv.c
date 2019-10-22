@@ -67,7 +67,8 @@ fluid_ct2hz_real(fluid_real_t cents)
         // Assuming sizeof(uint)==4 this will give us a maximum range of
         // 32 * 1200cents - 300cents == 38100 cents == 29,527,900,160 Hz
         // which is much more than ever needed. For bigger values, just
-        // safely wrap around.
+        // safely wrap around (the & is just a replacement for the quick
+        // modulo operation % 32).
         mult = 1u << (fac & (sizeof(mult)*8u - 1u));
 
         // don't use ldexp() either (poor performance)
