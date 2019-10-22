@@ -73,7 +73,7 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             <name>chorus.speed</name>
             <type>num</type>
             <def>0.3</def>
-            <min>0.29</min>
+            <min>0.1</min>
             <max>5</max>
             <desc>
                 Sets the modulation speed in Hz.</desc>

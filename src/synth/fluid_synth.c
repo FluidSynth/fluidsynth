@@ -203,7 +203,7 @@ void fluid_synth_settings(fluid_settings_t *settings)
     fluid_settings_register_int(settings, "synth.chorus.active", 1, 0, 1, FLUID_HINT_TOGGLED);
     fluid_settings_register_int(settings, "synth.chorus.nr", FLUID_CHORUS_DEFAULT_N, 0, 99, 0);
     fluid_settings_register_num(settings, "synth.chorus.level", FLUID_CHORUS_DEFAULT_LEVEL, 0.0f, 10.0f, 0);
-    fluid_settings_register_num(settings, "synth.chorus.speed", FLUID_CHORUS_DEFAULT_SPEED, 0.29f, 5.0f, 0);
+    fluid_settings_register_num(settings, "synth.chorus.speed", FLUID_CHORUS_DEFAULT_SPEED, 0.1f, 5.0f, 0);
     fluid_settings_register_num(settings, "synth.chorus.depth", FLUID_CHORUS_DEFAULT_DEPTH, 0.0f, 256.0f, 0);
 
     fluid_settings_register_int(settings, "synth.ladspa.active", 0, 0, 1, FLUID_HINT_TOGGLED);
@@ -5206,7 +5206,7 @@ fluid_synth_set_chorus_on(fluid_synth_t *synth, int on)
  * @param nr Chorus voice count (0-99, CPU time consumption proportional to
  *   this value)
  * @param level Chorus level (0.0-10.0)
- * @param speed Chorus speed in Hz (0.29-5.0)
+ * @param speed Chorus speed in Hz (0.1-5.0)
  * @param depth_ms Chorus depth (max value depends on synth sample rate,
  *   0.0-21.0 is safe for sample rate values up to 96KHz)
  * @param type Chorus waveform type (#fluid_chorus_mod)
@@ -5264,19 +5264,6 @@ int fluid_synth_set_chorus_type(fluid_synth_t *synth, int type)
     return fluid_synth_set_chorus_full(synth, FLUID_CHORUS_SET_TYPE, 0, 0, 0, 0, type);
 }
 
-/**
- * Set one or more chorus parameters.
- * @param synth FluidSynth instance
- * @param set Flags indicating which chorus parameters to set (#fluid_chorus_set_t)
- * @param nr Chorus voice count (0-99, CPU time consumption proportional to
- *   this value)
- * @param level Chorus level (0.0-10.0)
- * @param speed Chorus speed in Hz (0.29-5.0)
- * @param depth_ms Chorus depth (max value depends on synth sample rate,
- *   0.0-21.0 is safe for sample rate values up to 96KHz)
- * @param type Chorus waveform type (#fluid_chorus_mod)
- * @return #FLUID_OK on success, #FLUID_FAILED otherwise
- */
 int
 fluid_synth_set_chorus_full(fluid_synth_t *synth, int set, int nr, double level,
                             double speed, double depth_ms, int type)
@@ -5344,7 +5331,7 @@ fluid_synth_set_chorus_full_LOCAL(fluid_synth_t *synth, int set, int nr, double 
 /**
  * Get chorus voice number (delay line count) value.
  * @param synth FluidSynth instance
- * @return Chorus voice count (0-99)
+ * @return Chorus voice count
  */
 int
 fluid_synth_get_chorus_nr(fluid_synth_t *synth)
@@ -5360,7 +5347,7 @@ fluid_synth_get_chorus_nr(fluid_synth_t *synth)
 /**
  * Get chorus level.
  * @param synth FluidSynth instance
- * @return Chorus level value (0.0-10.0)
+ * @return Chorus level value
  */
 double
 fluid_synth_get_chorus_level(fluid_synth_t *synth)
@@ -5376,7 +5363,7 @@ fluid_synth_get_chorus_level(fluid_synth_t *synth)
 /**
  * Get chorus speed in Hz.
  * @param synth FluidSynth instance
- * @return Chorus speed in Hz (0.29-5.0)
+ * @return Chorus speed in Hz
  */
 double
 fluid_synth_get_chorus_speed(fluid_synth_t *synth)
