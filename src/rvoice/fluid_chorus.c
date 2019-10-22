@@ -218,18 +218,17 @@ struct _fluid_chorus_t
 
     fluid_real_t *line; /* buffer line */
     int   size;    /* effective internal size (in samples) */
-    /*-------------*/
+
     int line_in;  /* line in position */
-//    int line_out; /* line out position */
-    /*-------------------------*/
+
     /* center output position members */
     fluid_real_t  center_pos_mod; /* center output position modulated by modulator */
     int          mod_depth;   /* modulation depth (in samples) */
-    /*-------------------------*/
+
     /* variable rate control of center output position */
     int index_rate;  /* index rate to know when to update center_pos_mod */
     int mod_rate;    /* rate at which center_pos_mod is updated */
-    /*-------------------------*/
+
     /* modulator member */
     modulator mod[MAX_CHORUS]; /* sinus/triangle modulator */
 };
@@ -301,9 +300,7 @@ static void set_triangle_frequency(triang_modulator * mod, float freq,
 	fluid_real_t ns_period; /* period in numbers of sample */
 	if (freq <= 0.0) freq = 0.5f;
 	mod->freq = freq;
-	/* period = ns_period * T
-	   ns_period = period / T ; ns_period = sampleRate / Freq
-	*/
+
 	ns_period = sample_rate / freq;
 
 	/* the slope of a triangular osc (0 up to +1 down to -1 up to 0....) is equivalent
@@ -362,11 +359,8 @@ static FLUID_INLINE fluid_real_t get_mod_delay(fluid_chorus_t *chorus,
        first sample. So, mdl->index_rate must be initialized
        to mdl->mod_rate (new_mod_delay_line())  */
 
-//    if(++chorus->index_rate >= chorus->mod_rate)
     if(chorus->index_rate >= chorus->mod_rate)
     {
-//        chorus->index_rate = 0;
-
         /* out_index = center position (center_pos_mod) + sinus waweform */
         if(chorus->type == FLUID_CHORUS_MOD_SINE)
         {
@@ -512,8 +506,7 @@ static int new_mod_delay_line(fluid_chorus_t *chorus,
     /*-----------------------------------------------------------------------
      allocates delay_line and initialize members: - line, size, line_in...
     */
-    /* total size of the line:
-    size = INTERP_SAMPLES_NBR + delay_length */
+    /* total size of the line:  size = INTERP_SAMPLES_NBR + delay_length */
     chorus->size = delay_length + INTERP_SAMPLES_NBR;
     chorus->line = FLUID_ARRAY(fluid_real_t, chorus->size);
 
@@ -749,7 +742,6 @@ fluid_chorus_set(fluid_chorus_t *chorus, int set, int nr, fluid_real_t level,
 #ifdef DEBUG_PRINT
     printf("mod_rate:%d\n",chorus->mod_rate);
 #endif
-//	chorus->speed_Hz = 0.1;
 
     /* initialize modulator frequency */
     for(i = 0; i < chorus->number_blocks; i++)
@@ -806,7 +798,6 @@ fluid_chorus_set(fluid_chorus_t *chorus, int set, int nr, fluid_real_t level,
 	    Actually, with a SCALE_WET_WIDTH of 0.2, (regardless of level setting),
 	    the output amplitude (wet) seems rather independent of width setting */
 
-//		fluid_real_t wet = (chorus->level * SCALE_WET )/chorus->number_blocks;
 		fluid_real_t wet = chorus->level * SCALE_WET ;
 
 	    /* wet1 and wet2 are used by the stereo effect controled by the width setting
@@ -858,6 +849,7 @@ void fluid_chorus_processmix(fluid_chorus_t *chorus, const fluid_real_t *in,
     fluid_real_t d_in;
     fluid_real_t d_out[2];               /* output stereo Left and Right  */
 
+    /* foreach sample */
     for(sample_index = 0; sample_index < FLUID_BUFSIZE; sample_index++)
     {
         fluid_real_t out; /* block output */
@@ -873,13 +865,14 @@ void fluid_chorus_processmix(fluid_chorus_t *chorus, const fluid_real_t *in,
 
         ++chorus->index_rate;
 
+        /* foreach chorus block */
         for(i = 0; i < chorus->number_blocks; i++)
         {
             out = get_mod_delay(chorus, &chorus->mod[i]);
 
             /* accumulate out into stereo unit input */
             d_out[i & 1] += out;
-        } /* foreach chorus block */
+        }
 
         if(chorus->index_rate >= chorus->mod_rate)
         {
@@ -907,7 +900,7 @@ void fluid_chorus_processmix(fluid_chorus_t *chorus, const fluid_real_t *in,
 
         /* Write the current sample into the circular buffer */
         push_in_delay_line(chorus, d_in);
-    } /* foreach sample */
+    }
 }
 
 /* Duplication of code ... (replaces sample data instead of mixing) */
@@ -919,6 +912,7 @@ void fluid_chorus_processreplace(fluid_chorus_t *chorus, const fluid_real_t *in,
     fluid_real_t d_in;
     fluid_real_t d_out[2];               /* output stereo Left and Right  */
 
+    /* foreach sample */
     for(sample_index = 0; sample_index < FLUID_BUFSIZE; sample_index++)
     {
         fluid_real_t out; /* block output */
@@ -934,13 +928,14 @@ void fluid_chorus_processreplace(fluid_chorus_t *chorus, const fluid_real_t *in,
 
         ++chorus->index_rate;
 
+        /* foreach chorus block */
         for(i = 0; i < chorus->number_blocks; i++)
         {
             out = get_mod_delay(chorus, &chorus->mod[i]);
 
             /* accumulate out into stereo unit input */
             d_out[i & 1] += out;
-        } /* foreach chorus block */
+        }
 
         if(chorus->index_rate >= chorus->mod_rate)
         {
@@ -968,5 +963,5 @@ void fluid_chorus_processreplace(fluid_chorus_t *chorus, const fluid_real_t *in,
 
         /* Write the current sample into the circular buffer */
         push_in_delay_line(chorus, d_in);
-    } /* foreach sample */
+    }
 }
