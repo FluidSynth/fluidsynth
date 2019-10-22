@@ -539,7 +539,7 @@ static int new_mod_delay_line(fluid_chorus_t *chorus,
      - delay line
      - interpolator member: buffer, frac_pos_mod
     */
-    fluid_chorus_init(chorus);
+    fluid_chorus_reset(chorus);
 
     /* Initializes line_in to the start of the buffer */
     chorus->line_in = 0;
@@ -629,8 +629,8 @@ delete_fluid_chorus(fluid_chorus_t *chorus)
     FLUID_FREE(chorus);
 }
 
-int
-fluid_chorus_init(fluid_chorus_t *chorus)
+void
+fluid_chorus_reset(fluid_chorus_t *chorus)
 {
     int i;
 
@@ -647,14 +647,6 @@ fluid_chorus_init(fluid_chorus_t *chorus)
         chorus->mod[i].buffer = 0;       /* previous delay sample value */
         chorus->mod[i].frac_pos_mod = 0; /* fractional position (between consecutives sample) */
     }
-
-    return FLUID_OK;
-}
-
-void
-fluid_chorus_reset(fluid_chorus_t *chorus)
-{
-    fluid_chorus_init(chorus);
 }
 
 /**
