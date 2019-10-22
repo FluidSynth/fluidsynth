@@ -16,6 +16,9 @@ int main(void)
 {
     // 440 * 2^((x-6900)/1200) where x is the cent value given to ct2hz()
 
+
+    TEST_ASSERT(float_eq(fluid_ct2hz_real(38099), 2.9510849101059895e10));
+
     TEST_ASSERT(float_eq(fluid_ct2hz_real(13500), 19912.12696));
 
     TEST_ASSERT(float_eq(fluid_ct2hz_real(12900), 14080));
