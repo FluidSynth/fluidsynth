@@ -3814,10 +3814,10 @@ fluid_synth_write_float(fluid_synth_t *synth, int len,
 
 int
 fluid_synth_write_float_LOCAL(fluid_synth_t *synth, int len,
-                        void *lout, int loff, int lincr,
-                        void *rout, int roff, int rincr,
-                        int (*block_render_func)(fluid_synth_t *, int)
-                       )
+                              void *lout, int loff, int lincr,
+                              void *rout, int roff, int rincr,
+                              int (*block_render_func)(fluid_synth_t *, int)
+                             )
 {
     int n, cur, size;
     float *left_out = (float *) lout + loff;
@@ -3856,12 +3856,16 @@ fluid_synth_write_float_LOCAL(fluid_synth_t *synth, int len,
         n = synth->curmax - cur;
 
         /* keep track of emitted samples */
-        if (n > size) n = size;
+        if(n > size)
+        {
+            n = size;
+        }
+
         size -= n;
 
         /* update pointers to current position */
-        left_in  += cur+n;
-        right_in += cur+n;
+        left_in  += cur + n;
+        right_in += cur + n;
 
         /* set final cursor position */
         cur += n;
@@ -3877,9 +3881,9 @@ fluid_synth_write_float_LOCAL(fluid_synth_t *synth, int len,
             left_out += lincr;
             right_out += rincr;
         }
-        while (++n < 0);
+        while(++n < 0);
     }
-    while (size);
+    while(size);
 
     synth->cur = cur;
 
@@ -4011,12 +4015,16 @@ fluid_synth_write_s16(fluid_synth_t *synth, int len,
         n = synth->curmax - cur;
 
         /* keep track of emitted samples */
-        if (n > size) n = size;
+        if(n > size)
+        {
+            n = size;
+        }
+
         size -= n;
 
         /* update pointers to current position */
-        left_in  += cur+n;
-        right_in += cur+n;
+        left_in  += cur + n;
+        right_in += cur + n;
 
         /* set final cursor position */
         cur += n;
@@ -4037,9 +4045,9 @@ fluid_synth_write_s16(fluid_synth_t *synth, int len,
                 di = 0;
             }
         }
-        while (++n < 0);
+        while(++n < 0);
     }
-    while (size);
+    while(size);
 
     synth->cur = cur;
     synth->dither_index = di;	/* keep dither buffer continous */
