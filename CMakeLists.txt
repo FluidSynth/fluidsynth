@@ -29,7 +29,7 @@ set ( PACKAGE "fluidsynth" )
 # FluidSynth package version
 set ( FLUIDSYNTH_VERSION_MAJOR 2 )
 set ( FLUIDSYNTH_VERSION_MINOR 0 )
-set ( FLUIDSYNTH_VERSION_MICRO 5 )
+set ( FLUIDSYNTH_VERSION_MICRO 7 )
 set ( VERSION "${FLUIDSYNTH_VERSION_MAJOR}.${FLUIDSYNTH_VERSION_MINOR}.${FLUIDSYNTH_VERSION_MICRO}" )
 set ( FLUIDSYNTH_VERSION "\"${VERSION}\"" )
 
@@ -43,8 +43,8 @@ set ( FLUIDSYNTH_VERSION "\"${VERSION}\"" )
 # if any interfaces have been removed/changed (compatibility broken): AGE=0
 # This is not exactly the same algorithm as the libtool one, but the results are the same.
 set ( LIB_VERSION_CURRENT 2 )
-set ( LIB_VERSION_AGE 1 )
-set ( LIB_VERSION_REVISION 2 )
+set ( LIB_VERSION_AGE 2 )
+set ( LIB_VERSION_REVISION 0 )
 set ( LIB_VERSION_INFO
       "${LIB_VERSION_CURRENT}.${LIB_VERSION_AGE}.${LIB_VERSION_REVISION}" )
 
@@ -185,10 +185,10 @@ if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang" OR CMAKE_C_
   endif ( NOT APPLE AND NOT OS2 )
   
   # define some warning flags
-  set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -W -Wpointer-arith -Wcast-qual -Wstrict-prototypes -Wno-unused-parameter -Wdeclaration-after-statement" )
+  set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -W -Wpointer-arith -Wcast-qual -Wstrict-prototypes -Wno-unused-parameter -Wdeclaration-after-statement -Werror=implicit-function-declaration" )
   
   # prepend to build type specific flags, to allow users to override
-  set ( CMAKE_C_FLAGS_DEBUG "-g -DDEBUG ${CMAKE_C_FLAGS_DEBUG}" )
+  set ( CMAKE_C_FLAGS_DEBUG "-g ${CMAKE_C_FLAGS_DEBUG}" )
   
   if ( CMAKE_C_COMPILER_ID STREQUAL "Intel" )
     # icc needs the restrict flag to recognize C99 restrict pointers
@@ -196,7 +196,7 @@ if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang" OR CMAKE_C_
   else () # not intel
     # gcc and clang support bad function cast and alignment warnings; add them as well.
     set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wbad-function-cast -Wcast-align" )
-    
+
     if ( enable-ubsan )
       set ( CMAKE_C_FLAGS "-fsanitize=address,undefined ${CMAKE_C_FLAGS}" )
       set ( CMAKE_EXE_LINKER_FLAGS "-fsanitize=address,undefined ${CMAKE_EXE_LINKER_FLAGS}" )
@@ -353,7 +353,7 @@ unset ( WITH_PROFILING CACHE )
 if ( enable-profiling )
     set ( WITH_PROFILING 1 )
     if ( CMAKE_C_COMPILER_ID STREQUAL "Clang" )
-      set ( OPT_FLAGS "-Rpass=loop-vectorize -Rpass-analysis=loop-vectorize" )
+      set ( OPT_FLAGS "-Rpass=loop-vectorize" ) # -Rpass-analysis=loop-vectorize" )
     elseif ( CMAKE_C_COMPILER_ID STREQUAL "Intel" )
       set ( OPT_FLAGS "-qopt-report=3" )
     elseif ( CMAKE_C_COMPILER_ID STREQUAL "GNU" )
@@ -368,8 +368,9 @@ if ( enable-profiling )
                     DOC "Path to clang-tidy executable" )
 
         if ( CLANG_TIDY )
-            message ( STATUS "Found clang-tidy" )
-            set ( CMAKE_C_CLANG_TIDY "clang-tidy" )
+            message ( STATUS "Found clang-tidy at ${CLANG_TIDY}" )
+            execute_process ( COMMAND ${CLANG_TIDY} "--version" )
+            set ( CMAKE_C_CLANG_TIDY ${CLANG_TIDY} )
         endif ( CLANG_TIDY )
     endif ( CMAKE_VERSION VERSION_GREATER "3.6.0" )
 
@@ -384,10 +385,10 @@ endif ( enable-trap-on-fpe AND NOT APPLE AND NOT WIN32 )
 
 unset ( ENABLE_FPECHECK CACHE )
 unset ( FPE_CHECK CACHE )
-if ( enable-fpe-check )
+if ( enable-fpe-check AND NOT APPLE AND NOT WIN32 )
     set ( ENABLE_FPECHECK 1 )
     set ( FPE_CHECK 1 )
-endif ( enable-fpe-check )
+endif ( enable-fpe-check AND NOT APPLE AND NOT WIN32 )
 
 if ( enable-debug )
     set ( CMAKE_BUILD_TYPE "Debug" CACHE STRING
@@ -400,10 +401,9 @@ if ( NOT CMAKE_BUILD_TYPE )
 endif ( NOT CMAKE_BUILD_TYPE )
 
 unset ( ENABLE_DEBUG CACHE )
-unset ( DEBUG CACHE )
 if ( CMAKE_BUILD_TYPE MATCHES "Debug" )
     set ( ENABLE_DEBUG 1 )
-    set ( DEBUG 1 )
+    add_definitions(-DDEBUG)
 endif ( CMAKE_BUILD_TYPE MATCHES "Debug" )
 
 # Additional targets to perform clang-format/clang-tidy
@@ -568,7 +568,7 @@ else(NOT enable-pkgconfig)
 
     unset ( LIBINSTPATCH_SUPPORT CACHE )
     if ( enable-libinstpatch )
-        pkg_check_modules ( LIBINSTPATCH libinstpatch )
+        pkg_check_modules ( LIBINSTPATCH libinstpatch-1.0 )
         set ( LIBINSTPATCH_SUPPORT ${LIBINSTPATCH_FOUND} )
     endif ( enable-libinstpatch )
 

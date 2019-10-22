@@ -132,11 +132,6 @@ static void fluid_synth_handle_reverb_chorus_int(void *data, const char *name, i
 static void fluid_synth_reset_basic_channel_LOCAL(fluid_synth_t *synth, int chan, int nbr_chan);
 static int fluid_synth_check_next_basic_channel(fluid_synth_t *synth, int basicchan, int mode, int val);
 static void fluid_synth_set_basic_channel_LOCAL(fluid_synth_t *synth, int basicchan, int mode, int val);
-static int fluid_synth_set_reverb_full_LOCAL(fluid_synth_t *synth, int set, double roomsize,
-        double damping, double width, double level);
-
-static int fluid_synth_set_chorus_full_LOCAL(fluid_synth_t *synth, int set, int nr, double level,
-        double speed, double depth_ms, int type);
 
 /***************************************************************
  *
@@ -500,16 +495,13 @@ struct _fluid_sample_timer_t
  */
 static void fluid_sample_timer_process(fluid_synth_t *synth)
 {
-    fluid_sample_timer_t *st, *stnext;
+    fluid_sample_timer_t *st;
     long msec;
     int cont;
     unsigned int ticks = fluid_synth_get_ticks(synth);
 
-    for(st = synth->sample_timers; st; st = stnext)
+    for(st = synth->sample_timers; st; st = st->next)
     {
-        /* st may be freed in the callback below. cache it's successor now to avoid use after free */
-        stnext = st->next;
-
         if(st->isfinished)
         {
             continue;
@@ -535,7 +527,7 @@ fluid_sample_timer_t *new_fluid_sample_timer(fluid_synth_t *synth, fluid_timer_c
         return NULL;
     }
 
-    result->starttick = fluid_synth_get_ticks(synth);
+    fluid_sample_timer_reset(synth, result);
     result->isfinished = 0;
     result->data = data;
     result->callback = callback;
@@ -565,6 +557,10 @@ void delete_fluid_sample_timer(fluid_synth_t *synth, fluid_sample_timer_t *timer
     }
 }
 
+void fluid_sample_timer_reset(fluid_synth_t *synth, fluid_sample_timer_t *timer)
+{
+    timer->starttick = fluid_synth_get_ticks(synth);
+}
 
 /***************************************************************
  *
@@ -594,8 +590,10 @@ static FLUID_INLINE unsigned int fluid_synth_get_min_note_length_LOCAL(fluid_syn
  * @param settings Configuration parameters to use (used directly).
  * @return New FluidSynth instance or NULL on error
  *
- * @note The settings parameter is used directly and should not be modified
- * or freed independently.
+ * @note The @p settings parameter is used directly and should freed after
+ * the synth has been deleted. Further note that you may modify FluidSettings of the
+ * @p settings instance. However, only those FluidSettings marked as 'realtime' will
+ * affect the synth immediately.
  */
 fluid_synth_t *
 new_fluid_synth(fluid_settings_t *settings)
@@ -857,6 +855,7 @@ new_fluid_synth(fluid_settings_t *settings)
         goto error_recovery;
     }
 
+    FLUID_MEMSET(synth->channel, 0, synth->midi_channels * sizeof(*synth->channel));
     for(i = 0; i < synth->midi_channels; i++)
     {
         synth->channel[i] = new_fluid_channel(synth, i);
@@ -876,6 +875,7 @@ new_fluid_synth(fluid_settings_t *settings)
         goto error_recovery;
     }
 
+    FLUID_MEMSET(synth->voice, 0, synth->nvoice * sizeof(*synth->voice));
     for(i = 0; i < synth->nvoice; i++)
     {
         synth->voice[i] = new_fluid_voice(synth->eventhandler, synth->sample_rate);
@@ -913,7 +913,7 @@ new_fluid_synth(fluid_settings_t *settings)
         fluid_settings_getnum(settings, "synth.reverb.width", &width);
         fluid_settings_getnum(settings, "synth.reverb.level", &level);
 
-        fluid_synth_set_reverb_full_LOCAL(synth,
+        fluid_synth_set_reverb_full(synth,
                                           FLUID_REVMODEL_SET_ALL,
                                           room,
                                           damp,
@@ -929,7 +929,7 @@ new_fluid_synth(fluid_settings_t *settings)
         fluid_settings_getnum(settings, "synth.chorus.speed", &speed);
         fluid_settings_getnum(settings, "synth.chorus.depth", &depth);
 
-        fluid_synth_set_chorus_full_LOCAL(synth,
+        fluid_synth_set_chorus_full(synth,
                                           FLUID_CHORUS_SET_ALL,
                                           i,
                                           level,
@@ -985,8 +985,6 @@ delete_fluid_synth(fluid_synth_t *synth)
     fluid_list_t *list;
     fluid_sfont_t *sfont;
     fluid_sfloader_t *loader;
-    fluid_mod_t *default_mod;
-    fluid_mod_t *mod;
 
     fluid_return_if_fail(synth != NULL);
 
@@ -1028,7 +1026,10 @@ delete_fluid_synth(fluid_synth_t *synth)
     {
         for(i = 0; i < synth->midi_channels; i++)
         {
-            fluid_channel_set_preset(synth->channel[i], NULL);
+            if(synth->channel[i] != NULL)
+            {
+                fluid_channel_set_preset(synth->channel[i], NULL);
+            }
         }
     }
 
@@ -1102,14 +1103,7 @@ delete_fluid_synth(fluid_synth_t *synth)
 #endif
 
     /* delete all default modulators */
-    default_mod = synth->default_mod;
-
-    while(default_mod != NULL)
-    {
-        mod = default_mod;
-        default_mod = mod->next;
-        delete_fluid_mod(mod);
-    }
+    delete_fluid_list_mod(synth->default_mod);
 
     FLUID_FREE(synth->overflow.important_channels);
 
@@ -1349,6 +1343,7 @@ fluid_synth_add_default_mod(fluid_synth_t *synth, const fluid_mod_t *mod, int mo
 
     fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
     fluid_return_val_if_fail(mod != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail((mode == FLUID_SYNTH_ADD) || (mode == FLUID_SYNTH_OVERWRITE) , FLUID_FAILED);
 
     /* Checks if modulators sources are valid */
     if(!fluid_mod_check_sources(mod, "api fluid_synth_add_default_mod mod"))
@@ -1368,13 +1363,9 @@ fluid_synth_add_default_mod(fluid_synth_t *synth, const fluid_mod_t *mod, int mo
             {
                 default_mod->amount += mod->amount;
             }
-            else if(mode == FLUID_SYNTH_OVERWRITE)
+            else // mode == FLUID_SYNTH_OVERWRITE
             {
                 default_mod->amount = mod->amount;
-            }
-            else
-            {
-                FLUID_API_RETURN(FLUID_FAILED);
             }
 
             FLUID_API_RETURN(FLUID_OK);
@@ -1414,7 +1405,7 @@ fluid_synth_add_default_mod(fluid_synth_t *synth, const fluid_mod_t *mod, int mo
  * @param mod The modulator to remove
  * @return #FLUID_OK if a matching modulator was found and successfully removed, #FLUID_FAILED otherwise
  *
- * @note Not realtime safe (due to internal memory allocation) and therefore should not be called
+ * @note Not realtime safe (due to internal memory freeing) and therefore should not be called
  * from synthesis context at the risk of stalling audio output.
  */
 int
@@ -1435,7 +1426,7 @@ fluid_synth_remove_default_mod(fluid_synth_t *synth, const fluid_mod_t *mod)
         {
             if(synth->default_mod == default_mod)
             {
-                synth->default_mod = synth->default_mod->next;
+                synth->default_mod = default_mod->next;
             }
             else
             {
@@ -3810,6 +3801,16 @@ fluid_synth_write_float(fluid_synth_t *synth, int len,
                         void *lout, int loff, int lincr,
                         void *rout, int roff, int rincr)
 {
+    return fluid_synth_write_float_LOCAL(synth, len, lout, loff, lincr, rout, roff, rincr, fluid_synth_render_blocks);
+}
+
+int
+fluid_synth_write_float_LOCAL(fluid_synth_t *synth, int len,
+                        void *lout, int loff, int lincr,
+                        void *rout, int roff, int rincr,
+                        int (*block_render_func)(fluid_synth_t *, int)
+                       )
+{
     int i, j, k, l;
     float *left_out = (float *) lout;
     float *right_out = (float *) rout;
@@ -3834,7 +3835,7 @@ fluid_synth_write_float(fluid_synth_t *synth, int len,
         if(l >= synth->curmax)
         {
             int blocksleft = (len - i + FLUID_BUFSIZE - 1) / FLUID_BUFSIZE;
-            synth->curmax = FLUID_BUFSIZE * fluid_synth_render_blocks(synth, blocksleft);
+            synth->curmax = FLUID_BUFSIZE * block_render_func(synth, blocksleft);
             fluid_rvoice_mixer_get_bufs(synth->eventhandler->mixer, &left_in, &right_in);
 
             l = 0;
@@ -5067,6 +5068,7 @@ fluid_synth_set_reverb_full(fluid_synth_t *synth, int set, double roomsize,
                             double damping, double width, double level)
 {
     int ret;
+    fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
 
     fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
     /* if non of the flags is set, fail */
@@ -5075,16 +5077,6 @@ fluid_synth_set_reverb_full(fluid_synth_t *synth, int set, double roomsize,
     /* Synth shadow values are set here so that they will be returned if querried */
 
     fluid_synth_api_enter(synth);
-    ret = fluid_synth_set_reverb_full_LOCAL(synth, set, roomsize, damping, width, level);
-    FLUID_API_RETURN(ret);
-}
-
-static int
-fluid_synth_set_reverb_full_LOCAL(fluid_synth_t *synth, int set, double roomsize,
-                                  double damping, double width, double level)
-{
-    int ret;
-    fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
 
     if(set & FLUID_REVMODEL_SET_ROOMSIZE)
     {
@@ -5116,7 +5108,7 @@ fluid_synth_set_reverb_full_LOCAL(fluid_synth_t *synth, int set, double roomsize
                                          fluid_rvoice_mixer_set_reverb_params,
                                          synth->eventhandler->mixer,
                                          param);
-    return ret;
+    FLUID_API_RETURN(ret);
 }
 
 /**
@@ -5269,6 +5261,7 @@ fluid_synth_set_chorus_full(fluid_synth_t *synth, int set, int nr, double level,
                             double speed, double depth_ms, int type)
 {
     int ret;
+    fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
 
     fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
     /* if non of the flags is set, fail */
@@ -5276,18 +5269,6 @@ fluid_synth_set_chorus_full(fluid_synth_t *synth, int set, int nr, double level,
 
     /* Synth shadow values are set here so that they will be returned if queried */
     fluid_synth_api_enter(synth);
-
-    ret = fluid_synth_set_chorus_full_LOCAL(synth, set, nr, level, speed, depth_ms, type);
-
-    FLUID_API_RETURN(ret);
-}
-
-static int
-fluid_synth_set_chorus_full_LOCAL(fluid_synth_t *synth, int set, int nr, double level,
-                                  double speed, double depth_ms, int type)
-{
-    int ret;
-    fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
 
     if(set & FLUID_CHORUS_SET_NR)
     {
@@ -5325,7 +5306,7 @@ fluid_synth_set_chorus_full_LOCAL(fluid_synth_t *synth, int set, int nr, double 
                                          synth->eventhandler->mixer,
                                          param);
 
-    return (ret);
+    FLUID_API_RETURN(ret);
 }
 
 /**
