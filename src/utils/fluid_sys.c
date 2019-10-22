@@ -313,22 +313,21 @@ void fluid_msleep(unsigned int msecs)
 
 /**
  * Get time in milliseconds to be used in relative timing operations.
- * @return Unix time in milliseconds.
+ * @return Monotonic time in milliseconds.
  */
 unsigned int fluid_curtime(void)
 {
-    static glong initial_seconds = 0;
-    GTimeVal timeval;
+    float now;
+    static float initial_time = 0;
 
-    if(initial_seconds == 0)
+    if(initial_time == 0)
     {
-        g_get_current_time(&timeval);
-        initial_seconds = timeval.tv_sec;
+        initial_time = (float)fluid_utime();
     }
 
-    g_get_current_time(&timeval);
+    now = (float)fluid_utime();
 
-    return (unsigned int)((timeval.tv_sec - initial_seconds) * 1000.0 + timeval.tv_usec / 1000.0);
+    return (unsigned int)((now - initial_time) / 1000.0f);
 }
 
 /**
