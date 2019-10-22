@@ -3801,6 +3801,16 @@ fluid_synth_write_float(fluid_synth_t *synth, int len,
                         void *lout, int loff, int lincr,
                         void *rout, int roff, int rincr)
 {
+    return fluid_synth_write_float_LOCAL(synth, len, lout, loff, lincr, rout, roff, rincr, fluid_synth_render_blocks);
+}
+
+int
+fluid_synth_write_float_LOCAL(fluid_synth_t *synth, int len,
+                        void *lout, int loff, int lincr,
+                        void *rout, int roff, int rincr,
+                        int (*block_render_func)(fluid_synth_t *, int)
+                       )
+{
     int n, cur, size;
     float *left_out = (float *) lout + loff;
     float *right_out = (float *) rout + roff;
@@ -3828,7 +3838,7 @@ fluid_synth_write_float(fluid_synth_t *synth, int len,
             if(cur >= synth->curmax)
             {
                 int blocksleft = (size + FLUID_BUFSIZE - 1) / FLUID_BUFSIZE;
-                synth->curmax = FLUID_BUFSIZE * fluid_synth_render_blocks(synth, blocksleft);
+                synth->curmax = FLUID_BUFSIZE * block_render_func(synth, blocksleft);
                 fluid_rvoice_mixer_get_bufs(synth->eventhandler->mixer, &left_in, &right_in);
                 cur = 0;
             }

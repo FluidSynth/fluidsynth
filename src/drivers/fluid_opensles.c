@@ -141,39 +141,41 @@ new_fluid_opensles_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth
         goto error_recovery;
     }
 
-    SLDataLocator_AndroidSimpleBufferQueue loc_buffer_queue =
     {
-        SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE,
-        2 /* number of buffers */
-    };
-    SLAndroidDataFormat_PCM_EX format_pcm =
-    {
-        SL_ANDROID_DATAFORMAT_PCM_EX,
-        NUM_CHANNELS,
-        ((SLuint32) sample_rate) * 1000,
-        is_sample_format_float ? SL_PCMSAMPLEFORMAT_FIXED_32 : SL_PCMSAMPLEFORMAT_FIXED_16,
-        is_sample_format_float ? SL_PCMSAMPLEFORMAT_FIXED_32 : SL_PCMSAMPLEFORMAT_FIXED_16,
-        SL_SPEAKER_FRONT_LEFT | SL_SPEAKER_FRONT_RIGHT,
-        SL_BYTEORDER_LITTLEENDIAN,
-        is_sample_format_float ? SL_ANDROID_PCM_REPRESENTATION_FLOAT : SL_ANDROID_PCM_REPRESENTATION_SIGNED_INT
-    };
-    SLDataSource audio_src =
-    {
-        &loc_buffer_queue,
-        &format_pcm
-    };
+        SLDataLocator_AndroidSimpleBufferQueue loc_buffer_queue =
+        {
+            SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE,
+            2 /* number of buffers */
+        };
+        SLAndroidDataFormat_PCM_EX format_pcm =
+        {
+            SL_ANDROID_DATAFORMAT_PCM_EX,
+            NUM_CHANNELS,
+            ((SLuint32) sample_rate) * 1000,
+            is_sample_format_float ? SL_PCMSAMPLEFORMAT_FIXED_32 : SL_PCMSAMPLEFORMAT_FIXED_16,
+            is_sample_format_float ? SL_PCMSAMPLEFORMAT_FIXED_32 : SL_PCMSAMPLEFORMAT_FIXED_16,
+            SL_SPEAKER_FRONT_LEFT | SL_SPEAKER_FRONT_RIGHT,
+            SL_BYTEORDER_LITTLEENDIAN,
+            is_sample_format_float ? SL_ANDROID_PCM_REPRESENTATION_FLOAT : SL_ANDROID_PCM_REPRESENTATION_SIGNED_INT
+        };
+        SLDataSource audio_src =
+        {
+            &loc_buffer_queue,
+            &format_pcm
+        };
 
-    SLDataLocator_OutputMix loc_outmix =
-    {
-        SL_DATALOCATOR_OUTPUTMIX,
-        dev->output_mix_object
-    };
-    SLDataSink audio_sink = {&loc_outmix, NULL};
+        SLDataLocator_OutputMix loc_outmix =
+        {
+            SL_DATALOCATOR_OUTPUTMIX,
+            dev->output_mix_object
+        };
+        SLDataSink audio_sink = {&loc_outmix, NULL};
 
-    const SLInterfaceID ids1[] = {SL_IID_ANDROIDSIMPLEBUFFERQUEUE};
-    const SLboolean req1[] = {SL_BOOLEAN_TRUE};
-    result = (*engine_interface)->CreateAudioPlayer(engine_interface,
-             &(dev->audio_player), &audio_src, &audio_sink, 1, ids1, req1);
+        const SLInterfaceID ids1[] = {SL_IID_ANDROIDSIMPLEBUFFERQUEUE};
+        const SLboolean req1[] = {SL_BOOLEAN_TRUE};
+        result = (*engine_interface)->CreateAudioPlayer(engine_interface,
+                &(dev->audio_player), &audio_src, &audio_sink, 1, ids1, req1);
+    }
 
     if(result != SL_RESULT_SUCCESS)
     {
