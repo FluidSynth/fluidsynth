@@ -500,15 +500,11 @@ static void set_center_position(fluid_chorus_t *chorus)
 
  @param chorus, pointer chorus unit.
  @param delay_length the length of the delay line in samples.
- @param mod_rate the rate of the modulation in samples.
  @return FLUID_OK if success , FLUID_FAILED if memory error.
 
  Return FLUID_OK if success, FLUID_FAILED if memory error.
 -----------------------------------------------------------------------------*/
-static int new_mod_delay_line(fluid_chorus_t *chorus,
-                              int delay_length,
-                              int mod_rate
-                             )
+static int new_mod_delay_line(fluid_chorus_t *chorus, int delay_length)
 {
     /*-----------------------------------------------------------------------*/
     /* checks parameter */
@@ -607,7 +603,7 @@ new_fluid_chorus(fluid_real_t sample_rate)
     printf("NEW_MOD\n");
 #endif
 
-    if(new_mod_delay_line(chorus, MAX_SAMPLES, LOW_MOD_RATE) == FLUID_FAILED)
+    if(new_mod_delay_line(chorus, MAX_SAMPLES) == FLUID_FAILED)
     {
         goto error_recovery;
     }
