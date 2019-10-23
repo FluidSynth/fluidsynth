@@ -28,6 +28,8 @@
   - Variable delay line implementation using bandlimited
     interpolation, code reorganization: Markus Nentwig May 2002
 
+  - Complete rewrite using lfo computed on the fly, first order all-pass
+    interpolator and adding stereo unit: Jean-Jacques Ceresa, Jul 2019
  */
 
 
@@ -36,45 +38,53 @@
  *
  * Flow diagram scheme for n delays ( 1 <= n <= MAX_CHORUS ):
  *
- *        * gain-in                                           ___
- * ibuff -----+--------------------------------------------->|   |
- *            |      _________                               |   |
- *            |     |         |                   * level 1  |   |
- *            +---->| delay 1 |----------------------------->|   |
- *            |     |_________|                              |   |
- *            |        /|\                                   |   |
- *            :         |                                    |   |
- *            : +-----------------+   +--------------+       | + |
- *            : | Delay control 1 |<--| mod. speed 1 |       |   |
- *            : +-----------------+   +--------------+       |   |
- *            |      _________                               |   |
- *            |     |         |                   * level n  |   |
- *            +---->| delay n |----------------------------->|   |
- *                  |_________|                              |   |
- *                     /|\                                   |___|
- *                      |                                      |
- *              +-----------------+   +--------------+         | * gain-out
- *              | Delay control n |<--| mod. speed n |         |
- *              +-----------------+   +--------------+         +----->obuff
+ * mono                                                    _________
+ * input -----+---- direct signal (not implemented) ----->|         |
+ *            |      _________                            |         |
+ *            |     |         |                           |         |
+ *            +---->| delay 1 |-------------------------->| Stereo  |--> right
+ *            |     |_________|                           |         |    output
+ *            |        /|\                                | Unit    |
+ *            :         |                                 |         |
+ *            : +-----------------+                       | (width) |
+ *            : | Delay control 1 |<-+                    |         |
+ *            : +-----------------+  |                    |         |--> left
+ *            |      _________       |                    |         |    output
+ *            |     |         |      |                    |         |
+ *            +---->| delay n |-------------------------->|         |
+ *                  |_________|      |                    |         |
+ *                     /|\           |                    |_________|
+ *                      |            |  +--------------+      /|\
+ *              +-----------------+  |  |mod depth (ms)|       |
+ *              | Delay control n |<-*--|lfo speed (Hz)|     gain-out
+ *              +-----------------+     +--------------+
  *
  *
  * The delay i is controlled by a sine or triangle modulation i ( 1 <= i <= n).
  *
- * The delay of each block is modulated between 0..depth ms
+ * The chorus unit process a monophonic input signal and produces stereo output
+ * controled by WIDTH macro.
+ * Actually WIDTH is fixed to maximum value. But in the future, we could add a
+ * setting (e.g "synth.chorus.width") allowing the user to get a gradually stereo
+ * effect from minimum (monophonic) to maximum stereo effect.
  *
- */
-
-
-/* Variable delay line implementation
- * ==================================
+ * Delays lines are implemented using only one line for all chorus blocks.
+ * Each chorus block has it own lfo (sinus/triangle). Each lfo are out of phase
+ * to produce uncorrelated signal at the output of the delay line (this simulates
+ * the presence of individual line for each block). Each lfo modulates the length
+ * of the line using a depth modulation value and lfo frequency value common to
+ * all lfos.
  *
- * The modulated delay needs the value of the delayed signal between
- * samples.  A lowpass filter is used to obtain intermediate values
- * between samples (bandlimited interpolation).  The sample pulse
- * train is convoluted with the impulse response of the low pass
- * filter (sinc function).  To make it work with a small number of
- * samples, the sinc function is windowed (Hamming window).
- *
+ * LFO modulators are computed on the fly, instead of using lfo lookup table.
+ * The advantages are:
+ * - Avoiding a lost of 608272 memory bytes when lfo speed is low (0.3Hz).
+ * - Allows to diminish the lfo speed lower limit to 0.1Hz instead of 0.3Hz.
+ *   A speed of 0.1 is interresting for chorus. Using a lookuptable for 0.1Hz
+ *   would require too much memory (1824816 bytes).
+ * - Interpolation make use of first order all-pass interpolator instead of
+ *   bandlimited interpolation.
+ * - Although lfo modulator is computed on the fly, cpu load is lower than
+ *   using lfo lookup table with bandlimited interpolator.
  */
 
 #include "fluid_chorus.h"
@@ -85,22 +95,7 @@
 #define MAX_DEPTH	10
 #define MIN_SPEED_HZ	0.1
 #define MAX_SPEED_HZ    5
-/*-------------------------------------------------------------------------------------
 
- - LFO modulators are computed on the fly, instead of using lfo lookup table.
- - The advantages are:
-   - Avoiding a lost of 608272 memory bytes when lfo speed is low (0.3Hz).
-   - Allows to diminish the lfo speed lower limit to 0.1Hz instead of 0.3Hz.
-     A speed of 0.1 is interresting for chorus. Using a lookuptable for 0.1Hz
-     would require too much memory (1824816 bytes).
-   - Make use of first order all-pass interpolator instead of bandlimited interpolation.
-   - Although lfo modulator is computed on the fly, cpu load is lower than
-     using lfo lookup table with bandlimited interpolator.
-
- Actually WIDTH is fixed to maximum value. But in the future, we could add a
- setting (e.g "synth.chorus.width") allowing the user to get a gradually stereo
- effect from minimum (monophonic) to maximum stereo effect.
---------------------------------------------------------------------------------------*/
 // #define DEBUG_PRINT // allows message to be printed on the console.
 
 /*-------------------------------------------------------------------------------------
@@ -314,7 +309,7 @@ static void set_triangle_frequency(triang_modulator *mod, float freq,
     to the slope of a saw osc (0 -> +4) */
     mod->inc  = 4 / ns_period; /* positive slope */
 
-    /* The initial value and the sign of the slope depend of initial the phase:
+    /* The initial value and the sign of the slope depend of initial phase:
       intial value = = (ns_period * frac_phase) * slope
     */
     mod->val =  ns_period * frac_phase * mod->inc;
@@ -452,9 +447,10 @@ static FLUID_INLINE fluid_real_t get_mod_delay(fluid_chorus_t *chorus,
 }\
 
 /*-----------------------------------------------------------------------------
- Initializes the modulated center position (center_pos_mod) so that:
- the delay between center_pos_mod and line_in is:
-          mod_depth + INTERP_SAMPLES_NBR.
+ Initialize : mod_rate, center_pos_mod,  and index rate
+
+ center_pos_mod is initialized so that the delay between center_pos_mod and
+ line_in is: mod_depth + INTERP_SAMPLES_NBR.
 -----------------------------------------------------------------------------*/
 static void set_center_position(fluid_chorus_t *chorus)
 {
@@ -581,6 +577,11 @@ static int new_mod_delay_line(fluid_chorus_t *chorus,
 /*-----------------------------------------------------------------------------
   API
 ------------------------------------------------------------------------------*/
+/**
+/* Create the chorus unit
+ * @sample_rate smple rate in Hz of audio
+ * @return pointer on chorus unit.
+ */
 fluid_chorus_t *
 new_fluid_chorus(fluid_real_t sample_rate)
 {
@@ -620,6 +621,10 @@ error_recovery:
     return NULL;
 }
 
+/**
+/* Delete the chorus unit.
+ * @param chorus pointer on chorus unit returned by new_fluid_chorus().
+ */
 void
 delete_fluid_chorus(fluid_chorus_t *chorus)
 {
@@ -629,6 +634,10 @@ delete_fluid_chorus(fluid_chorus_t *chorus)
     FLUID_FREE(chorus);
 }
 
+/**
+ * Clear the internal delay line and associate filter.
+ * @param chorus pointer on chorus unit returned by new_fluid_chorus().
+ */
 void
 fluid_chorus_reset(fluid_chorus_t *chorus)
 {
@@ -667,31 +676,32 @@ fluid_chorus_set(fluid_chorus_t *chorus, int set, int nr, fluid_real_t level,
 {
     int i;
 
-    if(set & FLUID_CHORUS_SET_NR)
+    if(set & FLUID_CHORUS_SET_NR) /* number of block */
     {
         chorus->number_blocks = nr;
     }
 
-    if(set & FLUID_CHORUS_SET_LEVEL)
+    if(set & FLUID_CHORUS_SET_LEVEL) /* output level */
     {
         chorus->level = level;
     }
 
-    if(set & FLUID_CHORUS_SET_SPEED)
+    if(set & FLUID_CHORUS_SET_SPEED) /* lfo frequency (in Hz) */
     {
         chorus->speed_Hz = speed;
     }
 
-    if(set & FLUID_CHORUS_SET_DEPTH)
+    if(set & FLUID_CHORUS_SET_DEPTH) /* modulation depth (in ms) */
     {
         chorus->depth_ms = depth_ms;
     }
 
-    if(set & FLUID_CHORUS_SET_TYPE)
+    if(set & FLUID_CHORUS_SET_TYPE) /* lfo shape (sinus, triangle) */
     {
         chorus->type = type;
     }
 
+    /* check min , max parameters */
     if(chorus->number_blocks < 0)
     {
         FLUID_LOG(FLUID_WARN, "chorus: number blocks must be >=0! Setting value to 0.");
@@ -780,6 +790,7 @@ fluid_chorus_set(fluid_chorus_t *chorus, int set, int nr, fluid_real_t level,
     printf("speed_Hz:%f\n", chorus->speed_Hz);
 #endif
 
+    /* Initialize the lfo shape */
     if((chorus->type != FLUID_CHORUS_MOD_SINE) &&
             (chorus->type != FLUID_CHORUS_MOD_TRIANGLE))
     {
@@ -881,6 +892,13 @@ fluid_chorus_set(fluid_chorus_t *chorus, int set, int nr, fluid_real_t level,
 }
 
 
+/**
+ * Process chorus by mixing the result in output buffer.
+ * @param chorus pointer on chorus unit returned by new_fluid_chorus().
+ * @param in, pointer on monophonic input buffer of FLUID_BUFSIZE samples.
+ * @param left_out, right_out, pointers on stereo output buffers of
+ *  FLUID_BUFSIZE samples.
+ */
 void fluid_chorus_processmix(fluid_chorus_t *chorus, const fluid_real_t *in,
                              fluid_real_t *left_out, fluid_real_t *right_out)
 {
@@ -945,6 +963,13 @@ void fluid_chorus_processmix(fluid_chorus_t *chorus, const fluid_real_t *in,
     }
 }
 
+/**
+ * Process chorus by putting the result in output buffer (no mixing).
+ * @param chorus pointer on chorus unit returned by new_fluid_chorus().
+ * @param in, pointer on monophonic input buffer of FLUID_BUFSIZE samples.
+ * @param left_out, right_out, pointers on stereo output buffers of
+ *  FLUID_BUFSIZE samples.
+ */
 /* Duplication of code ... (replaces sample data instead of mixing) */
 void fluid_chorus_processreplace(fluid_chorus_t *chorus, const fluid_real_t *in,
                                  fluid_real_t *left_out, fluid_real_t *right_out)
