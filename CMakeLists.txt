@@ -568,7 +568,7 @@ else(NOT enable-pkgconfig)
 
     unset ( LIBINSTPATCH_SUPPORT CACHE )
     if ( enable-libinstpatch )
-        pkg_check_modules ( LIBINSTPATCH libinstpatch-1.0 )
+        pkg_check_modules ( LIBINSTPATCH libinstpatch-1.0>=1.1.0 )
         set ( LIBINSTPATCH_SUPPORT ${LIBINSTPATCH_FOUND} )
     endif ( enable-libinstpatch )
 
