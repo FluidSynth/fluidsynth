@@ -403,16 +403,6 @@ static FLUID_INLINE fluid_real_t get_mod_delay(fluid_chorus_t *chorus,
           between line_out and line_out +1) and memorize it.
           Memorizing is necessary for modulation rate above 1 */
         mod->frac_pos_mod = out_index - int_out_index;
-#if 0
-
-        /* updates center position (center_pos_mod) to the next position
-           specified by modulation rate */
-        if((chorus->center_pos_mod += chorus->mod_rate) >= chorus->size)
-        {
-            chorus->center_pos_mod -= chorus->size;
-        }
-
-#endif
     }
 
     /*  First order all-pass interpolation ----------------------------------*/
@@ -454,7 +444,7 @@ static FLUID_INLINE fluid_real_t get_mod_delay(fluid_chorus_t *chorus,
 static void set_center_position(fluid_chorus_t *chorus)
 {
     int center;
-#if 1
+
     /* Sets the modulation rate. This rate defines how often
      the  center position (center_pos_mod ) is modulated .
      The value is expressed in samples. The default value is 1 that means that
@@ -471,7 +461,6 @@ static void set_center_position(fluid_chorus_t *chorus)
         chorus->mod_rate += (delta_mod_depth * RANGE_MOD_RATE) / RANGE_MOD_DEPTH;
     }
 
-#endif
     /* Initializes the modulated center position (center_pos_mod) so that:
         - the delay between center_pos_mod and line_in is:
           mod_depth + INTERP_SAMPLES_NBR.
@@ -540,27 +529,6 @@ static int new_mod_delay_line(fluid_chorus_t *chorus, int delay_length)
      - modulated center position: center_pos_mod
      - index rate to know when to update center_pos_mod:index_rate
      -------------------------------------------------------------------------*/
-#if 0
-    /* Sets the modulation rate. This rate defines how often
-     the  center position (center_pos_mod ) is modulated .
-     The value is expressed in samples. The default value is 1 that means that
-     center_pos_mod is updated at every sample.
-     For example with a value of 2, the center position position will be
-     updated only one time every 2 samples only.
-    */
-    chorus->mod_rate = 1; /* default modulation rate: every one sample */
-
-    if(mod_rate > chorus->size)
-    {
-        FLUID_LOG(FLUID_INFO,
-                  "chorus: modulation rate is out of range");
-    }
-    else
-    {
-        chorus->mod_rate = mod_rate;
-    }
-
-#endif
     /* Initializes the modulated center position:
        mod_rate, center_pos_mod,  and index rate
     */
