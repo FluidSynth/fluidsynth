@@ -90,17 +90,16 @@
 #include "fluid_chorus.h"
 #include "fluid_sys.h"
 
-#define MAX_CHORUS	99
-#define MAX_DELAY	100
-#define MAX_DEPTH	10
-#define MIN_SPEED_HZ	0.1
-#define MAX_SPEED_HZ    5
-
-// #define DEBUG_PRINT // allows message to be printed on the console.
 
 /*-------------------------------------------------------------------------------------
   Private
 --------------------------------------------------------------------------------------*/
+// #define DEBUG_PRINT // allows message to be printed on the console.
+
+#define MAX_CHORUS    99   /* number maximum of block */
+#define MAX_LEVEL     10   /* output level */
+#define MIN_SPEED_HZ  0.1  /* min lfo frequency (Hz) */
+#define MAX_SPEED_HZ  5    /* max lfo frequency (Hz) */
 
 /* WIDTH [0..10] value define a stereo separation between left and right.
  When 0, the output is monophonic. When > 0 , the output is stereophonic.
@@ -738,7 +737,7 @@ fluid_chorus_set(fluid_chorus_t *chorus, int set, int nr, fluid_real_t level,
         FLUID_LOG(FLUID_WARN, "chorus: level must be positive! Setting value to 0.");
         chorus->level = 0.0;
     }
-    else if(chorus->level > 10)
+    else if(chorus->level > MAX_LEVEL)
     {
         FLUID_LOG(FLUID_WARN, "chorus: level must be < 10. A reasonable level is << 1! "
                   "Setting it to 0.1.");
