@@ -68,6 +68,7 @@ What is FluidSynth?
 
 \section NewIn2_1_0 Whats new in 2.1.0?
 
+- fluid_sample_set_sound_data() caused broken sound when copying sample data
 - smallest allowed chorus speed is now 0.1 Hz (previously 0.29 Hz)
 
 \section NewIn2_0_7 Whats new in 2.0.7?
