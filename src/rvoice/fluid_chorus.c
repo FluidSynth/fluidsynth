@@ -871,15 +871,13 @@ void fluid_chorus_processmix(fluid_chorus_t *chorus, const fluid_real_t *in,
 {
     int sample_index;
     int i;
-    fluid_real_t d_in;
     fluid_real_t d_out[2];               /* output stereo Left and Right  */
 
-    /* foreach sample */
+    /* foreach sample, process output sample then input sample */
     for(sample_index = 0; sample_index < FLUID_BUFSIZE; sample_index++)
     {
         fluid_real_t out; /* block output */
 
-        d_in = in[sample_index];
         d_out[0] = d_out[1] = 0.0f; /* clear stereo unit input */
 
 #if 0
@@ -928,7 +926,7 @@ void fluid_chorus_processmix(fluid_chorus_t *chorus, const fluid_real_t *in,
         right_out[sample_index] += d_out[1] * chorus->wet1  + d_out[0] * chorus->wet2;
 
         /* Write the current input sample into the circular buffer */
-        push_in_delay_line(chorus, d_in);
+        push_in_delay_line(chorus, in[sample_index]);
     }
 }
 
@@ -945,15 +943,13 @@ void fluid_chorus_processreplace(fluid_chorus_t *chorus, const fluid_real_t *in,
 {
     int sample_index;
     int i;
-    fluid_real_t d_in;
     fluid_real_t d_out[2];               /* output stereo Left and Right  */
 
-    /* foreach sample */
+    /* foreach sample, process output sample then input sample */
     for(sample_index = 0; sample_index < FLUID_BUFSIZE; sample_index++)
     {
         fluid_real_t out; /* block output */
 
-        d_in = in[sample_index];
         d_out[0] = d_out[1] = 0.0f; /* clear stereo unit input */
 
 #if 0
@@ -1002,6 +998,6 @@ void fluid_chorus_processreplace(fluid_chorus_t *chorus, const fluid_real_t *in,
         right_out[sample_index] = d_out[1] * chorus->wet1  + d_out[0] * chorus->wet2;
 
         /* Write the current input sample into the circular buffer */
-        push_in_delay_line(chorus, d_in);
+        push_in_delay_line(chorus, in[sample_index]);
     }
 }
