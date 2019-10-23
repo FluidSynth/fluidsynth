@@ -19,7 +19,7 @@
  */
 
 /*
-  based on a chrous implementation made by Juergen Mueller And Sundry Contributors in 1998
+  based on a chorus implementation made by Juergen Mueller And Sundry Contributors in 1998
 
   CHANGES
 
