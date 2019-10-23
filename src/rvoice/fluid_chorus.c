@@ -38,26 +38,26 @@
  *
  * Flow diagram scheme for n delays ( 1 <= n <= MAX_CHORUS ):
  *
- * mono                                                    _________
- * input -----+---- direct signal (not implemented) ----->|         |
- *            |      _________                            |         |
- *            |     |         |                           |         |
- *            +---->| delay 1 |-------------------------->| Stereo  |--> right
- *            |     |_________|                           |         |    output
- *            |        /|\                                | Unit    |
- *            :         |                                 |         |
- *            : +-----------------+                       | (width) |
- *            : | Delay control 1 |<-+                    |         |
- *            : +-----------------+  |                    |         |--> left
- *            |      _________       |                    |         |    output
- *            |     |         |      |                    |         |
- *            +---->| delay n |-------------------------->|         |
- *                  |_________|      |                    |         |
- *                     /|\           |                    |_________|
- *                      |            |  +--------------+      /|\
- *              +-----------------+  |  |mod depth (ms)|       |
- *              | Delay control n |<-*--|lfo speed (Hz)|     gain-out
- *              +-----------------+     +--------------+
+ *                                                       ________
+ *                  direct signal (not implemented) >-->|        |
+ *                 _________                            |        |
+ * mono           |         |                           |        |
+ * input ---+---->| delay 1 |-------------------------->| Stereo |---> right
+ *          |     |_________|                           |        |     output
+ *          |        /|\                                | Unit   |
+ *          :         |                                 |        |
+ *          : +-----------------+                       |(width) |
+ *          : | Delay control 1 |<-+                    |        |
+ *          : +-----------------+  |                    |        |---> left
+ *          |      _________       |                    |        |     output
+ *          |     |         |      |                    |        |
+ *          +---->| delay n |-------------------------->|        |
+ *                |_________|      |                    |        |
+ *                   /|\           |                    |________|
+ *                    |            |  +--------------+      /|\
+ *            +-----------------+  |  |mod depth (ms)|       |
+ *            | Delay control n |<-*--|lfo speed (Hz)|     gain-out
+ *            +-----------------+     +--------------+
  *
  *
  * The delay i is controlled by a sine or triangle modulation i ( 1 <= i <= n).
@@ -97,7 +97,7 @@
 // #define DEBUG_PRINT // allows message to be printed on the console.
 
 #define MAX_CHORUS    99   /* number maximum of block */
-#define MAX_LEVEL     10   /* output level */
+#define MAX_LEVEL     10   /* max output level */
 #define MIN_SPEED_HZ  0.1  /* min lfo frequency (Hz) */
 #define MAX_SPEED_HZ  5    /* max lfo frequency (Hz) */
 
@@ -116,7 +116,6 @@
    independent of width setting (see fluid_chorus_set()).
  */
 #define SCALE_WET_WIDTH 0.2f
-//#define SCALE_WET 5.0f
 #define SCALE_WET 1.0f
 
 #define MAX_SAMPLES 2048 /* delay length in sample (46.4 ms at sample rate: 44100Hz).*/
@@ -124,7 +123,11 @@
 #define HIGH_MOD_DEPTH  MAX_SAMPLES/2 /* high mod_depth in sample */
 #define RANGE_MOD_DEPTH (HIGH_MOD_DEPTH - LOW_MOD_DEPTH)
 
-/* Important values for MOD_RATE */
+/* Important min max values for MOD_RATE */
+/* mod rate define the rate at which the modulator is updated. Examples
+   50: the modulator is updated every 50 samples (less cpu cycles expensive).
+   1: the modulator is updated every sample (more cpu cycles expensive).
+*/
 /* MOD_RATE acceptable for max lfo speed (5Hz) and max modulation depth (46.6 ms) */
 #define LOW_MOD_RATE 5  /* MOD_RATE acceptable for low modulation depth (8 ms) */
 #define HIGH_MOD_RATE 4 /* MOD_RATE acceptable for max modulation depth (46.6 ms) */
@@ -132,7 +135,7 @@
 #define RANGE_MOD_RATE (HIGH_MOD_RATE - LOW_MOD_RATE)
 
 /* some chorus cpu_load measurement dependant of modulation rate: mod_rate
- number of chorus blocks: 2
+ (number of chorus blocks: 2)
 
  No stero unit:
  mod_rate | chorus cpu load(%) | one voice cpu load (%)
@@ -152,7 +155,8 @@
 
 /*
  Number of samples to add to the desired length of the delay line. This
- allow to take account of large modulation interpolation.
+ allows to take account of rounding error interpolation when using large
+ modulation depth.
  1 is sufficient for max modulation depth (46.6 ms) and max lfo speed (5 Hz).
 */
 //#define INTERP_SAMPLES_NBR 0
@@ -541,8 +545,8 @@ static int new_mod_delay_line(fluid_chorus_t *chorus, int delay_length)
   API
 ------------------------------------------------------------------------------*/
 /**
-/* Create the chorus unit
- * @sample_rate smple rate in Hz of audio
+ * Create the chorus unit.
+ * @sample_rate audio sample rate in Hz.
  * @return pointer on chorus unit.
  */
 fluid_chorus_t *
@@ -585,7 +589,7 @@ error_recovery:
 }
 
 /**
-/* Delete the chorus unit.
+ * Delete the chorus unit.
  * @param chorus pointer on chorus unit returned by new_fluid_chorus().
  */
 void
@@ -753,7 +757,7 @@ fluid_chorus_set(fluid_chorus_t *chorus, int set, int nr, fluid_real_t level,
     printf("speed_Hz:%f\n", chorus->speed_Hz);
 #endif
 
-    /* Initialize the lfo shape */
+    /* Initialize the lfo waveform */
     if((chorus->type != FLUID_CHORUS_MOD_SINE) &&
             (chorus->type != FLUID_CHORUS_MOD_TRIANGLE))
     {
@@ -876,7 +880,7 @@ void fluid_chorus_processmix(fluid_chorus_t *chorus, const fluid_real_t *in,
         fluid_real_t out; /* block output */
 
         d_in = in[sample_index];
-        d_out[0] = d_out[1] = 0.0f; /* stereo unit input */
+        d_out[0] = d_out[1] = 0.0f; /* clear stereo unit input */
 
 #if 0
         /* Debug: Listen to the chorus signal only */
@@ -884,20 +888,22 @@ void fluid_chorus_processmix(fluid_chorus_t *chorus, const fluid_real_t *in,
         right_out[sample_index] = 0;
 #endif
 
-        ++chorus->index_rate;
+        ++chorus->index_rate; /* modulator rate */
 
-        /* foreach chorus block */
+        /* foreach chorus block, process output sample */
         for(i = 0; i < chorus->number_blocks; i++)
         {
+            /* get sample from the output of modulated delay line */
             out = get_mod_delay(chorus, &chorus->mod[i]);
 
             /* accumulate out into stereo unit input */
             d_out[i & 1] += out;
         }
 
+        /* update modulator index rate and output center position */
         if(chorus->index_rate >= chorus->mod_rate)
         {
-            chorus->index_rate = 0;
+            chorus->index_rate = 0; /* clear modulator index rate */
 
             /* updates center position (center_pos_mod) to the next position
                specified by modulation rate */
@@ -907,7 +913,7 @@ void fluid_chorus_processmix(fluid_chorus_t *chorus, const fluid_real_t *in,
             }
         }
 
-        /* Cases of number_blocks odd:
+        /* Adjust stereo input level in case of number_blocks odd:
            In those case, d_out[1] level is lower than d_out[0], so we need to
            add out value to d_out[1] to have d_out[0] and d_out[1] balanced.
         */
@@ -921,7 +927,7 @@ void fluid_chorus_processmix(fluid_chorus_t *chorus, const fluid_real_t *in,
         left_out[sample_index]  += d_out[0] * chorus->wet1  + d_out[1] * chorus->wet2;
         right_out[sample_index] += d_out[1] * chorus->wet1  + d_out[0] * chorus->wet2;
 
-        /* Write the current sample into the circular buffer */
+        /* Write the current input sample into the circular buffer */
         push_in_delay_line(chorus, d_in);
     }
 }
@@ -948,7 +954,7 @@ void fluid_chorus_processreplace(fluid_chorus_t *chorus, const fluid_real_t *in,
         fluid_real_t out; /* block output */
 
         d_in = in[sample_index];
-        d_out[0] = d_out[1] = 0.0f; /* stereo unit input */
+        d_out[0] = d_out[1] = 0.0f; /* clear stereo unit input */
 
 #if 0
         /* Debug: Listen to the chorus signal only */
@@ -956,20 +962,22 @@ void fluid_chorus_processreplace(fluid_chorus_t *chorus, const fluid_real_t *in,
         right_out[sample_index] = 0;
 #endif
 
-        ++chorus->index_rate;
+        ++chorus->index_rate; /* modulator rate */
 
-        /* foreach chorus block */
+        /* foreach chorus block, process output sample */
         for(i = 0; i < chorus->number_blocks; i++)
         {
+            /* get sample from the output of modulated delay line */
             out = get_mod_delay(chorus, &chorus->mod[i]);
 
             /* accumulate out into stereo unit input */
             d_out[i & 1] += out;
         }
 
+        /* update modulator index rate and output center position */
         if(chorus->index_rate >= chorus->mod_rate)
         {
-            chorus->index_rate = 0;
+            chorus->index_rate = 0; /* clear modulator index rate */
 
             /* updates center position (center_pos_mod) to the next position
                specified by modulation rate */
@@ -979,7 +987,7 @@ void fluid_chorus_processreplace(fluid_chorus_t *chorus, const fluid_real_t *in,
             }
         }
 
-        /* Cases of number_blocks odd:
+        /* Adjust stereo input level in case of number_blocks odd:
            In those case, d_out[1] level is lower than d_out[0], so we need to
            add out value to d_out[1] to have d_out[0] and d_out[1] balanced.
         */
@@ -993,7 +1001,7 @@ void fluid_chorus_processreplace(fluid_chorus_t *chorus, const fluid_real_t *in,
         left_out[sample_index]  = d_out[0] * chorus->wet1  + d_out[1] * chorus->wet2;
         right_out[sample_index] = d_out[1] * chorus->wet1  + d_out[0] * chorus->wet2;
 
-        /* Write the current sample into the circular buffer */
+        /* Write the current input sample into the circular buffer */
         push_in_delay_line(chorus, d_in);
     }
 }
