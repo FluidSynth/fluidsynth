@@ -3826,13 +3826,13 @@ fluid_synth_write_float_LOCAL(fluid_synth_t *synth, int len,
     double time = fluid_utime();
     float cpu_load;
 
+    fluid_profile_ref_var(prof_ref);
+
     fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
     fluid_return_val_if_fail(lout != NULL, FLUID_FAILED);
     fluid_return_val_if_fail(rout != NULL, FLUID_FAILED);
     fluid_return_val_if_fail(len >= 0, FLUID_FAILED);
     fluid_return_val_if_fail(len != 0, FLUID_OK); // to avoid raising FE_DIVBYZERO below
-
-    fluid_profile_ref_var(prof_ref);
 
     fluid_rvoice_mixer_set_mix_fx(synth->eventhandler->mixer, 1);
     fluid_rvoice_mixer_get_bufs(synth->eventhandler->mixer, &left_in, &right_in);
@@ -3984,13 +3984,13 @@ fluid_synth_write_s16(fluid_synth_t *synth, int len,
     double time = fluid_utime();
     float cpu_load;
 
+    fluid_profile_ref_var(prof_ref);
+
     fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
     fluid_return_val_if_fail(lout != NULL, FLUID_FAILED);
     fluid_return_val_if_fail(rout != NULL, FLUID_FAILED);
     fluid_return_val_if_fail(len >= 0, FLUID_FAILED);
     fluid_return_val_if_fail(len != 0, FLUID_OK); // to avoid raising FE_DIVBYZERO below
-
-    fluid_profile_ref_var(prof_ref);
 
     fluid_rvoice_mixer_set_mix_fx(synth->eventhandler->mixer, 1);
     fluid_rvoice_mixer_get_bufs(synth->eventhandler->mixer, &left_in, &right_in);
