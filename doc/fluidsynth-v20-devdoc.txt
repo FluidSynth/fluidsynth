@@ -70,6 +70,11 @@ What is FluidSynth?
 
 - fluid_sample_set_sound_data() caused broken sound when copying sample data
 - smallest allowed chorus speed is now 0.1 Hz (previously 0.29 Hz)
+- the following audio drivers were added:
+  - opensles
+  - oboe
+  - sdl2
+  - waveout
 
 \section NewIn2_0_7 Whats new in 2.0.7?
 
@@ -243,6 +248,7 @@ Creating the audio driver is straightforward: set the <code>audio.driver</code> 
 - dart: DART sound driver (OS/2)
 - opensles: OpenSL ES (Android)
 - oboe: Oboe (Android)
+- waveout: Microsoft WaveOut, alternative to DirectSound (Windows CE x86, Windows Mobile 2003 for ARMv5, Windows 98 SE, Windows NT 4.0, Windows XP and later)
 - file: Driver to output audio to a file
 - sdl2*: Simple DirectMedia Layer (Linux, Windows, Mac OS X, iOS, Android, FreeBSD, Haiku, etc.)
 
