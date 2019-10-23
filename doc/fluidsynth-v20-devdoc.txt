@@ -21,6 +21,7 @@ All the source code examples in this document are in the public domain; you can 
 
 - \ref Disclaimer
 - \ref Introduction
+- \ref NewIn2_0_8
 - \ref NewIn2_0_7
 - \ref NewIn2_0_6
 - \ref NewIn2_0_5
@@ -65,6 +66,9 @@ What is FluidSynth?
 
 - FluidSynth is open source, in active development. For more details, take a look at http://www.fluidsynth.org
 
+\section NewIn2_0_8 Whats new in 2.0.8?
+
+- fluid_sample_set_sound_data() caused broken sound when copying sample data
 
 \section NewIn2_0_7 Whats new in 2.0.7?
 
