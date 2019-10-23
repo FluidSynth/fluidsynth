@@ -9,7 +9,6 @@ Synthesis
 - Dynamic voice killing (based on CPU usage)
 - Batch voice activation (stereo synch. as per SoundFont spec)
 - Pitch control on stereo samples not managed as should
-- soft clipping, compressor, limitor, or automatic gain control
 
 Drivers
 -------
@@ -20,7 +19,6 @@ Drivers
 
 Bugs to mash
 ------------
-- Add byte swapping support (on synthesis or sample load?)
 - Investigate why MIDI rendering causes burst of notes at start
 
 Validation
@@ -37,16 +35,6 @@ Documentation
 - Add usage scenarios in the documentation
 - User and system configuration file
 
-Binaries
---------
-- FluidSynth 
-  * Linux 
-  * Win
-  * MacOS X
-- fluid~  (Pd/Linux, MaxMSP/MacOSX, MaxMSP/Windows)
-- fluidsynth~ (MaxMSP/MacOSX, MaxMSP/Windows)
-- FluidXtra
-
 Misc
 ----
 - Remove dependency of settings on audio driver and other (see
@@ -61,7 +49,6 @@ FluidSynth Next Generation
 --------------------------------------------
 
 Top of the list
-- Use FIFOs to send events to the audio thread
 - 3D audio output
 
 MIDI player
@@ -81,4 +68,3 @@ MIDI Specs
 
 Unsorted
 - rewrite midi file using new sequencer
-- direct access to audio buffer

@@ -24,6 +24,7 @@ ADD_FLUID_TEST(test_fluid_zone_check_mod)
 ADD_FLUID_TEST(test_fluid_voice_add_mod)
 
 ADD_FLUID_TEST(test_synth_process)
+ADD_FLUID_TEST(test_ct2hz)
 
 # if ( LIBSNDFILE_HASVORBIS )
 #     ADD_FLUID_TEST(test_sf3_sfont_loading)
