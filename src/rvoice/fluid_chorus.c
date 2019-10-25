@@ -611,13 +611,13 @@ fluid_chorus_reset(fluid_chorus_t *chorus)
     int i;
 
     /* reset delay line */
-    for(i = 0; i < MAX_SAMPLES; i++)
+    for(i = 0; i < chorus->size; i++)
     {
-        chorus->line[i] = 0.0;
+        chorus->line[i] = 0;
     }
 
     /* reset modulators's allpass filter */
-    for(i = 0; i < MAX_CHORUS; i++)
+    for(i = 0; i < FLUID_N_ELEMENTS(chorus->mod); i++)
     {
         /* initializes 1st order All-Pass interpolator members */
         chorus->mod[i].buffer = 0;       /* previous delay sample value */
