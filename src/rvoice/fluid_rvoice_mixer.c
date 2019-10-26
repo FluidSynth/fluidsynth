@@ -364,27 +364,25 @@ get_dest_buf(fluid_rvoice_buffers_t *buffers, int index,
  *
  * @param buffers Destination buffer(s)
  * @param dsp_buf Mono sample source
- * @param start_block Block to start mixing at
- * @param sample_count number of samples to mix following \c start_block
+ * @param offset Describes the block we are currently rendering to (offset is in samples though)
  * @param dest_bufs Array of buffers to mixdown to
  * @param dest_bufcount Length of dest_bufs
  */
 static void
 fluid_rvoice_buffers_mix(fluid_rvoice_buffers_t *buffers,
                          const fluid_real_t *FLUID_RESTRICT dsp_buf,
-                         int start_block, int sample_count,
+                         int offset_block,
                          fluid_real_t **dest_bufs, int dest_bufcount)
 {
     int bufcount = buffers->count;
     int i, dsp_i;
 
-    if(sample_count <= 0 || dest_bufcount <= 0)
+    if(dest_bufcount <= 0)
     {
         return;
     }
 
     FLUID_ASSERT((uintptr_t)dsp_buf % FLUID_DEFAULT_ALIGNMENT == 0);
-    FLUID_ASSERT((uintptr_t)(&dsp_buf[start_block * FLUID_BUFSIZE]) % FLUID_DEFAULT_ALIGNMENT == 0);
 
     for(i = 0; i < bufcount; i++)
     {
@@ -400,9 +398,9 @@ fluid_rvoice_buffers_mix(fluid_rvoice_buffers_t *buffers,
 
         #pragma omp simd aligned(dsp_buf,buf:FLUID_DEFAULT_ALIGNMENT)
 
-        for(dsp_i = (start_block * FLUID_BUFSIZE); dsp_i < sample_count; dsp_i++)
+        for(dsp_i = 0; dsp_i < FLUID_BUFSIZE; dsp_i++)
         {
-            buf[dsp_i] += amp * dsp_buf[dsp_i];
+            buf[offset_block + dsp_i] += amp * dsp_buf[dsp_i];
         }
     }
 }
@@ -417,27 +415,27 @@ fluid_mixer_buffers_render_one(fluid_mixer_buffers_t *buffers,
                                fluid_rvoice_t *rvoice, fluid_real_t **dest_bufs,
                                unsigned int dest_bufcount, fluid_real_t *src_buf, int blockcount)
 {
-    int i, total_samples = 0, start_block = 0;
+    int i, total_samples = 0;
 
     for(i = 0; i < blockcount; i++)
     {
-        int s = fluid_rvoice_write(rvoice, &src_buf[FLUID_BUFSIZE * i]);
+        int s = fluid_rvoice_write(rvoice, src_buf);
 
         if(s == -1)
         {
-            start_block += s;
-            s = FLUID_BUFSIZE;
+            total_samples += FLUID_BUFSIZE;
         }
-
-        total_samples += s;
-
-        if(s < FLUID_BUFSIZE)
+        else
         {
-            break;
+            fluid_rvoice_buffers_mix(&rvoice->buffers, src_buf, i*FLUID_BUFSIZE, dest_bufs, dest_bufcount);
+
+            total_samples += s;
+            if(s < FLUID_BUFSIZE)
+            {
+                break;
+            }
         }
     }
-
-    fluid_rvoice_buffers_mix(&rvoice->buffers, src_buf, -start_block, total_samples - ((-start_block)*FLUID_BUFSIZE), dest_bufs, dest_bufcount);
 
     if(total_samples < blockcount * FLUID_BUFSIZE)
     {
@@ -602,14 +600,14 @@ fluid_mixer_buffers_zero(fluid_mixer_buffers_t *buffers, int current_blockcount)
 static int
 fluid_mixer_buffers_init(fluid_mixer_buffers_t *buffers, fluid_rvoice_mixer_t *mixer)
 {
-    const int samplecount = FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT;
+    static const int samplecount = FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT;
 
     buffers->mixer = mixer;
     buffers->buf_count = mixer->buffers.buf_count;
     buffers->fx_buf_count = mixer->buffers.fx_buf_count;
 
     /* Local mono voice buf */
-    buffers->local_buf = FLUID_ARRAY_ALIGNED(fluid_real_t, samplecount, FLUID_DEFAULT_ALIGNMENT);
+    buffers->local_buf = FLUID_ARRAY_ALIGNED(fluid_real_t, FLUID_BUFSIZE, FLUID_DEFAULT_ALIGNMENT);
 
     /* Left and right audio buffers */
 
