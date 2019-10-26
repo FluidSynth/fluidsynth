@@ -371,7 +371,7 @@ get_dest_buf(fluid_rvoice_buffers_t *buffers, int index,
 static void
 fluid_rvoice_buffers_mix(fluid_rvoice_buffers_t *buffers,
                          const fluid_real_t *FLUID_RESTRICT dsp_buf,
-                         int offset_block,
+                         int offset,
                          fluid_real_t **dest_bufs, int dest_bufcount)
 {
     int bufcount = buffers->count;
@@ -400,7 +400,7 @@ fluid_rvoice_buffers_mix(fluid_rvoice_buffers_t *buffers,
 
         for(dsp_i = 0; dsp_i < FLUID_BUFSIZE; dsp_i++)
         {
-            buf[offset_block + dsp_i] += amp * dsp_buf[dsp_i];
+            buf[offset + dsp_i] += amp * dsp_buf[dsp_i];
         }
     }
 }
