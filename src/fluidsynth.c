@@ -585,6 +585,7 @@ int main(int argc, char **argv)
 
         case 'j':
             fluid_settings_setint(settings, "audio.jack.autoconnect", 1);
+            fluid_settings_setint(settings, "midi.autoconnect", 1);
             break;
 
         case 'K':
