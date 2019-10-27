@@ -225,7 +225,7 @@ do { strncpy(_dst,_src,_n); \
 #define M_LN10 2.3025850929940456840179914546844
 #endif
 
-#ifdef DEBUG && !defined(NDEBUG)
+#if defined(DEBUG) && !defined(NDEBUG)
 #define FLUID_ASSERT(a) g_assert(a)
 #else
 #define FLUID_ASSERT(a)
