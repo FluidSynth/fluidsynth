@@ -401,10 +401,16 @@ fluid_rvoice_buffers_mix(fluid_rvoice_buffers_t *buffers,
 
         FLUID_ASSERT((uintptr_t)buf % FLUID_DEFAULT_ALIGNMENT == 0);
 
-        /* mixdown sample_count samples in the current buffer buf */
+        /* mixdown sample_count samples in the current buffer buf
+           Note, that this loop could be unrolled by FLUID_BUFSIZE elements */
         #pragma omp simd aligned(dsp_buf,buf:FLUID_DEFAULT_ALIGNMENT)
         for(dsp_i = 0; dsp_i < sample_count; dsp_i++)
         {
+            // Index by blocks (not by samples) to let the compiler know that we always start accessing
+            // buf and dsp_buf at the FLUID_BUFSIZE*sizeof(fluid_real_t) byte boundary and never somewhere
+            // in between.
+            // A good compiler should understand: Aha, so I don't need to add a peel loop when vectorizing
+            // this loop. Great.
             buf[start_block * FLUID_BUFSIZE + dsp_i] += amp * dsp_buf[start_block * FLUID_BUFSIZE + dsp_i];
         }
     }
@@ -429,7 +435,9 @@ fluid_mixer_buffers_render_one(fluid_mixer_buffers_t *buffers,
         if(s == -1)
         {
             /* the voice is silent, mix back all the previously rendered sound */
-            fluid_rvoice_buffers_mix(&rvoice->buffers, src_buf, last_block_mixed, total_samples - (last_block_mixed*FLUID_BUFSIZE), dest_bufs, dest_bufcount);
+            fluid_rvoice_buffers_mix(&rvoice->buffers, src_buf, last_block_mixed,
+                                     total_samples - (last_block_mixed*FLUID_BUFSIZE),
+                                     dest_bufs, dest_bufcount);
 
             last_block_mixed = i+1; /* future block start index to mix from */
             total_samples += FLUID_BUFSIZE; /* accumulate samples count rendered */
@@ -447,7 +455,9 @@ fluid_mixer_buffers_render_one(fluid_mixer_buffers_t *buffers,
     }
 
     /* Now mix the remaining blocks from last_block_mixed to total_sample */
-    fluid_rvoice_buffers_mix(&rvoice->buffers, src_buf, last_block_mixed, total_samples - (last_block_mixed*FLUID_BUFSIZE), dest_bufs, dest_bufcount);
+    fluid_rvoice_buffers_mix(&rvoice->buffers, src_buf, last_block_mixed,
+                             total_samples - (last_block_mixed*FLUID_BUFSIZE),
+                             dest_bufs, dest_bufcount);
 
     if(total_samples < blockcount * FLUID_BUFSIZE)
     {
