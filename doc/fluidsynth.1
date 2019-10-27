@@ -13,7 +13,7 @@
 .\" along with this program; see the file LICENSE.  If not, write to
 .\" the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 .\"
-.TH FluidSynth 1 "Nov 18, 2018"
+.TH FluidSynth 1 "Oct 27, 2019"
 .\" Please update the above date whenever this man page is modified.
 .\"
 .\" Some roff macros, for reference:
@@ -116,8 +116,11 @@ Define a setting, \-o name=value ("\-o help" to dump current values)
 .B \-O, \-\-audio\-file\-format
 Audio file format for fast rendering or aufile driver ("\-O help" for list)
 .TP
-.B \-p, \-\-portname=[label] 
-Set MIDI port name (alsa_seq, coremidi drivers) 
+.B \-p, \-\-portname=[label]
+Set MIDI port name (alsa_seq, coremidi drivers)
+.TP
+.B \-q, \-\-quiet
+Do not print welcome message or other informational output
 .TP
 .B \-r, \-\-sample\-rate
 Set the sample rate
