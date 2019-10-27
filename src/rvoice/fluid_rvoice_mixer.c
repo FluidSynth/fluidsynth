@@ -417,7 +417,7 @@ fluid_mixer_buffers_render_one(fluid_mixer_buffers_t *buffers,
                                fluid_rvoice_t *rvoice, fluid_real_t **dest_bufs,
                                unsigned int dest_bufcount, fluid_real_t *src_buf, int blockcount)
 {
-    int i, total_samples = 0, unmixed_samples = 0, last_block_mixed = 0;
+    int i, total_samples = 0, last_block_mixed = 0;
 
     for(i = 0; i < blockcount; i++)
     {
@@ -427,13 +427,11 @@ fluid_mixer_buffers_render_one(fluid_mixer_buffers_t *buffers,
             // the voice is silent, mix back all the previously rendered sound
             fluid_rvoice_buffers_mix(&rvoice->buffers, src_buf, last_block_mixed, total_samples - (last_block_mixed*FLUID_BUFSIZE), dest_bufs, dest_bufcount);
 
-            unmixed_samples = 0;
             last_block_mixed = i+1;
             total_samples += FLUID_BUFSIZE;
         }
         else
         {
-            unmixed_samples += s;
             total_samples += s;
             if(s < FLUID_BUFSIZE)
             {
