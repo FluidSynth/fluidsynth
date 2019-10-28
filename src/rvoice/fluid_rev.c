@@ -910,6 +910,38 @@ static void delete_fluid_rev_late(fluid_late *late)
 }
 
 /*-----------------------------------------------------------------------------
+ Creates all modulated lines.
+ @param late, pointer on the fnd late reverb to initialize.
+ @return FLUID_OK if success, FLUID_FAILED otherwise.
+-----------------------------------------------------------------------------*/
+static int create_mod_delay_lines(fluid_late *late)
+{
+    int result; /* return value */
+    int i;
+
+    for(i = 0; i < NBR_DELAYS; i++)
+    {
+        /* allocate delay line and set local delay lines's parameters */
+        result = set_mod_delay_line(&late->mod_delay_lines[i],
+                                    delay_length[i], MOD_DEPTH, MOD_RATE);
+
+        if(result == FLUID_FAILED)
+        {
+            return FLUID_FAILED;
+        }
+
+        /* Sets local Modulators parameters: frequency and phase
+         Each modulateur are shifted of MOD_PHASE degree
+        */
+        set_mod_frequency(&late->mod_delay_lines[i].mod,
+                          MOD_FREQ * MOD_RATE,
+                          late->samplerate,
+                          (float)(MOD_PHASE * i));
+    }
+    return FLUID_OK;
+}
+
+/*-----------------------------------------------------------------------------
  Creates the fdn reverb.
  @param late, pointer on the fnd late reverb to initialize.
  @param sample_rate the sample rate.
@@ -928,24 +960,9 @@ static int create_fluid_rev_late(fluid_late *late, fluid_real_t sample_rate)
       First initialize the modulated delay lines
     */
 
-    for(i = 0; i < NBR_DELAYS; i++)
+    if(create_mod_delay_lines(late) == FLUID_FAILED)
     {
-        /* sets local delay lines's parameters */
-        result = set_mod_delay_line(&late->mod_delay_lines[i],
-                                    delay_length[i], MOD_DEPTH, MOD_RATE);
-
-        if(result == FLUID_FAILED)
-        {
-            return FLUID_FAILED;
-        }
-
-        /* Sets local Modulators parameters: frequency and phase
-         Each modulateur are shifted of MOD_PHASE degree
-        */
-        set_mod_frequency(&late->mod_delay_lines[i].mod,
-                          MOD_FREQ * MOD_RATE,
-                          sample_rate,
-                          (float)(MOD_PHASE * i));
+        return FLUID_FAILED;
     }
 
     /*-----------------------------------------------------------------------*/
