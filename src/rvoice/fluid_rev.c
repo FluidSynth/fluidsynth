@@ -92,8 +92,7 @@
  * but higher for 12 lines (+ 41%).
  *
  *
- * The memory consumption is less than for freeverb. This saves 147480 bytes
- * for 8 lines (- 72%) and 110152 bytes for 12 lines (- 54 %).
+ * The memory consumption is less than for freeverb
  * (see the results table below).
  *
  * Two macros are usable at compiler time:
@@ -113,18 +112,22 @@
  * Note: the cpu load in % are relative each to other. These values are
  * given by the fluidsynth profile commands.
  * --------------------------------------------------------------------------
- * reverb    | NBR_DELAYS     | Performances    | memory size     | quality
- *           |                | (cpu_load: %)   | (bytes)         |
+ * reverb    | NBR_DELAYS     | Performances    | memory size       | quality
+ *           |                | (cpu_load: %)   | (bytes)(see note) |
  * ==========================================================================
- * freeverb  | 2 x 8 comb     |  0.670 %        | 204616          | ringing
- *           | 2 x 4 all-pass |                 |                 |
+ * freeverb  | 2 x 8 comb     |  0.670 %        | 204616            | ringing
+ *           | 2 x 4 all-pass |                 |                   |
  * ----------|---------------------------------------------------------------
- *    FDN    | 8              |  0.650 %        | 57136           | far less
- * modulated |                |(feeverb - 3%)   |(freeverb - 72%) | ringing
+ *    FDN    | 8              |  0.650 %        | 112160            | far less
+ * modulated |                |(feeverb - 3%)   | (55% freeverb)    | ringing
  *           |---------------------------------------------------------------
- *           | 12             |  0.942 %        | 94464           | best than
- *           |                |(freeverb + 41%) |(freeverb - 54%) | 8 lines
+ *           | 12             |  0.942 %        | 168240            | best than
+ *           |                |(freeverb + 41%) | (82 %freeverb)    | 8 lines
  *---------------------------------------------------------------------------
+ *
+ * Note:
+ * Values in this column is the memory consumption for sample rate <= 44100Hz.
+ * For sample rate > 44100Hz , multiply these values by (sample rate / 44100Hz).
  *
  *
  *----------------------------------------------------------------------------
@@ -173,6 +176,8 @@
     roomsize parameter.
   - DENORMALISING enable denormalising handling.
 -----------------------------------------------------------------------------*/
+#define INFOS_PRINT /* allows message to be printed on the console. */
+
 /* Number of delay lines (must be only 8 or 12)
   8 is the default.
  12 produces a better quality but is +50% cpu expensive
@@ -912,18 +917,59 @@ static void delete_fluid_rev_late(fluid_late *late)
 /*-----------------------------------------------------------------------------
  Creates all modulated lines.
  @param late, pointer on the fnd late reverb to initialize.
+ @param sample_rate, the audio sample rate.
  @return FLUID_OK if success, FLUID_FAILED otherwise.
 -----------------------------------------------------------------------------*/
-static int create_mod_delay_lines(fluid_late *late)
+static int create_mod_delay_lines(fluid_late *late, fluid_real_t sample_rate)
 {
     int result; /* return value */
     int i;
+
+    /*
+       modal density is one property that contribute to the quality of the tail reverb.
+       The more is the modal density, the less are unwanted resonant frequencies
+       build during the tail: modal density = total delay / sample rate.
+
+       Delay line's length given by static table delay_length[] is nominal
+       to get minimum modal density of 0.15 at sample rate 44100Hz.
+       Here we set a default sample rate factor to 2 to mutiply the nominal modal
+       density by 2. This leads to a default modal density of 0.15 * 2 = 0.3 for
+       sample rate <= 44100.
+
+       For sample rate > 44100, the sample rate factor is multiplied by
+       sample_rate / 44100. This ensure that the default modal density keeps inchanged.
+       (Without this compensation, the default modal density would be diminished for
+       new sample rate change above 44100Hz).
+    */
+    fluid_real_t sample_rate_factor = 2.0;
+    if(sample_rate > 44100.0f)
+    {
+        sample_rate_factor *= sample_rate/44100.0;
+    }
+
+#ifdef INFOS_PRINT // allows message to be printed on the console.
+    printf("srf:%f\n", sample_rate_factor);
+    /* Print: modal density and total memory bytes */
+    {
+        int i;
+        int total_delay; /* total delay in samples */
+        for (i = 0, total_delay = 0; i < NBR_DELAYS; i++)
+        {
+            total_delay += sample_rate_factor * delay_length[i];
+        }
+
+        /* modal density and total memory bytes */
+        printf("modal density:%f, total memory:%d bytes\n",
+                total_delay / sample_rate , total_delay * sizeof(fluid_real_t));
+    }
+#endif
 
     for(i = 0; i < NBR_DELAYS; i++)
     {
         /* allocate delay line and set local delay lines's parameters */
         result = set_mod_delay_line(&late->mod_delay_lines[i],
-                                    delay_length[i], MOD_DEPTH, MOD_RATE);
+                                    delay_length[i] * sample_rate_factor,
+                                    MOD_DEPTH, MOD_RATE);
 
         if(result == FLUID_FAILED)
         {
@@ -960,7 +1006,7 @@ static int create_fluid_rev_late(fluid_late *late, fluid_real_t sample_rate)
       First initialize the modulated delay lines
     */
 
-    if(create_mod_delay_lines(late) == FLUID_FAILED)
+    if(create_mod_delay_lines(late, sample_rate) == FLUID_FAILED)
     {
         return FLUID_FAILED;
     }
@@ -1129,21 +1175,19 @@ fluid_revmodel_samplerate_change(fluid_revmodel_t *rev, fluid_real_t sample_rate
 {
     int i;
 
-    /* updates modulator frequency according to sample rate change */
-    for(i = 0; i < NBR_DELAYS; i++)
+    rev->late.samplerate = sample_rate; /* new sample rate value */
+
+    /* free all delay lines */
+    delete_fluid_rev_late(&rev->late);
+
+    /* create all delay lines */
+    if(create_mod_delay_lines(&rev->late, sample_rate) == FLUID_FAILED)
     {
-        set_mod_frequency(&rev->late.mod_delay_lines[i].mod,
-                          MOD_FREQ * MOD_RATE,
-                          sample_rate,
-                          (float)(MOD_PHASE * i));
+        return;
     }
 
     /* updates damping filter coefficients according to sample rate change */
-    rev->late.samplerate = sample_rate;
     update_rev_time_damping(&rev->late, rev->roomsize, rev->damp);
-
-    /* clears all delay lines */
-    fluid_revmodel_init(rev);
 }
 
 /*
