@@ -75,18 +75,20 @@
  * the building of a lot of resonances in the reverberation tail even when
  * using only 8 delays lines (NBR_DELAYS = 8) (default).
  *
- * Although 8 lines give good result, using 12 delays lines brings the overall
- * frequency density quality a bit higher. This quality augmentation is noticeable
- * particularly when using long reverb time (roomsize = 1) on solo instrument with
- * long release time. Of course the cpu load augmentation is +50% relatively
- * to 8 lines.
+ * The frequency density (often called "modal density" is one property that
+ * contributes to sound quality. Although 8 lines give good result, using 12 delays
+ * lines brings the overall frequency density quality a bit higher.
+ * This quality augmentation is noticeable particularly when using long reverb time
+ * (roomsize = 1) on solo instrument with long release time. Of course the cpu load
+ * augmentation is +50% relatively to 8 lines.
  *
  * As a general rule the reverberation tail quality is easier to perceive by ear
  * when using:
  * - percussive instruments (i.e piano and others).
  * - long reverb time (roomsize = 1).
  * - no damping (damp = 0).
- *
+ * - Using headphone. Avoid using loud speaker, you will be quickly misguided by the
+ *   natural reverberation of the room in which you are.
  *
  * The cpu load for 8 lines is a bit lower than for freeverb (- 3%),
  * but higher for 12 lines (+ 41%).
@@ -926,20 +928,20 @@ static int create_mod_delay_lines(fluid_late *late, fluid_real_t sample_rate)
     int i;
 
     /*
-       modal density is one property that contribute to the quality of the tail reverb.
-       The more is the modal density, the less are unwanted resonant frequencies
-       build during the tail: modal density = total delay / sample rate.
+      "modal density" is one property that contributes to the quality of the reverb tail.
+      The more is the modal density, the less are unwanted resonant frequencies
+      build during the decay time: modal density = total delay / sample rate.
 
-       Delay line's length given by static table delay_length[] is nominal
-       to get minimum modal density of 0.15 at sample rate 44100Hz.
-       Here we set a default sample rate factor to 2 to mutiply the nominal modal
-       density by 2. This leads to a default modal density of 0.15 * 2 = 0.3 for
-       sample rate <= 44100.
+      Delay line's length given by static table delay_length[] is nominal
+      to get minimum modal density of 0.15 at sample rate 44100Hz.
+      Here we set a default sample rate factor to 2 to mutiply this nominal modal
+      density by 2. This leads to a default modal density of 0.15 * 2 = 0.3 for
+      sample rate <= 44100.
 
-       For sample rate > 44100, the sample rate factor is multiplied by
-       sample_rate / 44100. This ensure that the default modal density keeps inchanged.
-       (Without this compensation, the default modal density would be diminished for
-       new sample rate change above 44100Hz).
+      For sample rate > 44100, the sample rate factor is multiplied by
+      sample_rate / 44100. This ensure that the default modal density keeps inchanged.
+      (Without this compensation, the default modal density would be diminished for
+      new sample rate change above 44100Hz).
     */
     fluid_real_t sample_rate_factor = 2.0;
     if(sample_rate > 44100.0f)
@@ -964,7 +966,7 @@ static int create_mod_delay_lines(fluid_late *late, fluid_real_t sample_rate)
     }
 #endif
 
-    for(i = 0; i < NBR_DELAYS; i++)
+    for(i = 0; i < NBR_DELAYS; i++) /* for each delay line */
     {
         /* allocate delay line and set local delay lines's parameters */
         result = set_mod_delay_line(&late->mod_delay_lines[i],
@@ -1074,7 +1076,9 @@ fluid_revmodel_update(fluid_revmodel_t *rev)
 -----------------------------------------------------------------------------*/
 
 /*
-* Creates a reverb.
+* Creates a reverb. One created the reverb have no parameters set, so
+* fluid_revmodel_set() must be called at least one time after calling
+* new_fluid_revmodel().
 * @param sample_rate sample rate in Hz.
 * @return pointer on the new reverb or NULL if memory error.
 * Reverb API.
@@ -1102,7 +1106,7 @@ new_fluid_revmodel(fluid_real_t sample_rate)
 
 /*
 * free the reverb.
-* @param pointer on rev to free.
+* @param rev pointer on reverb to free.
 * Reverb API.
 */
 void
@@ -1114,7 +1118,8 @@ delete_fluid_revmodel(fluid_revmodel_t *rev)
 }
 
 /*
-* Sets one or more reverb parameters.
+* Sets one or more reverb parameters. Note this must be called at least one
+* time after calling new_fluid_revmodel().
 * @param rev Reverb instance.
 * @param set One or more flags from #fluid_revmodel_set_t indicating what
 *   parameters to set (#FLUID_REVMODEL_SET_ALL to set all parameters).
@@ -1164,7 +1169,6 @@ fluid_revmodel_set(fluid_revmodel_t *rev, int set, fluid_real_t roomsize,
 * Applies a sample rate change on the reverb.
 * @param rev the reverb.
 * @param sample_rate new sample rate value.
-*
 * Reverb API.
 */
 void
