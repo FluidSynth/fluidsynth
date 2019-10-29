@@ -176,7 +176,7 @@
     roomsize parameter.
   - DENORMALISING enable denormalising handling.
 -----------------------------------------------------------------------------*/
-#define INFOS_PRINT /* allows message to be printed on the console. */
+//#define INFOS_PRINT /* allows message to be printed on the console. */
 
 /* Number of delay lines (must be only 8 or 12)
   8 is the default.
