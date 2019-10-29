@@ -995,9 +995,6 @@ static int create_mod_delay_lines(fluid_late *late, fluid_real_t sample_rate)
 -----------------------------------------------------------------------------*/
 static int create_fluid_rev_late(fluid_late *late, fluid_real_t sample_rate)
 {
-    int result; /* return value */
-    int i;
-
     FLUID_MEMSET(late, 0,  sizeof(fluid_late));
 
     late->samplerate = sample_rate;
@@ -1173,8 +1170,6 @@ fluid_revmodel_set(fluid_revmodel_t *rev, int set, fluid_real_t roomsize,
 void
 fluid_revmodel_samplerate_change(fluid_revmodel_t *rev, fluid_real_t sample_rate)
 {
-    int i;
-
     rev->late.samplerate = sample_rate; /* new sample rate value */
 
     /* free all delay lines */
