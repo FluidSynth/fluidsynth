@@ -1198,9 +1198,10 @@ fluid_revmodel_set(fluid_revmodel_t *rev, int set, fluid_real_t roomsize,
 *
 * @param rev the reverb.
 * @param sample_rate new sample rate value.
+* @return FLUID_OK if success, FLUID_FAILED otherwise (memory error).
 * Reverb API.
 */
-void
+int
 fluid_revmodel_samplerate_change(fluid_revmodel_t *rev, fluid_real_t sample_rate)
 {
     rev->late.samplerate = sample_rate; /* new sample rate value */
@@ -1211,11 +1212,13 @@ fluid_revmodel_samplerate_change(fluid_revmodel_t *rev, fluid_real_t sample_rate
     /* create all delay lines */
     if(create_mod_delay_lines(&rev->late, sample_rate) == FLUID_FAILED)
     {
-        return;
+        return FLUID_FAILED; /* memory error */
     }
 
     /* updates damping filter coefficients according to sample rate change */
     update_rev_time_damping(&rev->late, rev->roomsize, rev->damp);
+
+    return FLUID_OK;
 }
 
 /*
