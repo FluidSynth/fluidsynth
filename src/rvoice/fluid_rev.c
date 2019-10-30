@@ -1010,8 +1010,6 @@ static int create_fluid_rev_late(fluid_late *late, fluid_real_t sample_rate)
         return FLUID_FAILED;
     }
 
-    /*-----------------------------------------------------------------------*/
-    update_stereo_coefficient(late, 1.0f);
     return FLUID_OK;
 }
 
