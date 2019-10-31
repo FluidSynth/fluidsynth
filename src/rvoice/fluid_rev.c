@@ -950,7 +950,7 @@ static int create_mod_delay_lines(fluid_late *late, fluid_real_t sample_rate)
     }
 
 #ifdef INFOS_PRINT // allows message to be printed on the console.
-    printf("srf:%f\n", sample_rate_factor);
+    printf("length_factor:%f\n", length_factor);
     /* Print: modal density and total memory bytes */
     {
         int i;
