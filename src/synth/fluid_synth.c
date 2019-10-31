@@ -3063,10 +3063,30 @@ fluid_synth_handle_sample_rate(void *data, const char *name, double value)
 
 
 /**
- * Set sample rate of the synth.
- * @note This function should only be used when no voices or notes are active.
+ * Set up an event to change the sample-rate of the synth during the next rendering call.
+ * @warning This function is broken-by-design! Don't use it! Instead, specify the sample-rate when creating the synth.
+ * @deprecated As of fluidsynth 2.1.0 this function has been deprecated.
+ * Changing the sample-rate is generally not considered to be a real-time use-case, as it always produces some audible artifact ("click", "pop") on the dry sound and effects (because LFOs for chorus and reverb need to be reinitialized).
+ * The sample-rate change may also require memory allocation deep down in the effect units.
+ * However, this memory allocation may fail, but there is no way for the caller to know that, because the actual change of the sample-rate is executed during rendering.
+ * This function cannot (must not) do the sample-rate change itself, otherwise the synth needs to be locked down, causing rendering to block.
+ * Esp. do not use this function if this @p synth instance is used by an audio driver, because the audio driver cannot be notified by this sample-rate change.
+ * Long story short: don't use it.
+ * @code{.cpp}
+    fluid_synth_t* synth; // assume initialized
+    // [...]
+    // sample-rate change needed? Delete the audio driver, if any.
+    delete_fluid_audio_driver(adriver);
+    // then delete the synth
+    delete_fluid_synth(synth);
+    // update the sample-rate
+    fluid_settings_setnum(settings, "synth.sample-rate", 22050.0);
+    // and re-create objects
+    synth = new_fluid_synth(settings);
+    adriver = new_fluid_audio_driver(settings, synth);
+ * @endcode
  * @param synth FluidSynth instance
- * @param sample_rate New sample rate (Hz)
+ * @param sample_rate New sample-rate (Hz)
  * @since 1.1.2
  */
 void
@@ -5273,8 +5293,8 @@ fluid_synth_set_chorus_on(fluid_synth_t *synth, int on)
  *   this value)
  * @param level Chorus level (0.0-10.0)
  * @param speed Chorus speed in Hz (0.1-5.0)
- * @param depth_ms Chorus depth (max value depends on synth sample rate,
- *   0.0-21.0 is safe for sample rate values up to 96KHz)
+ * @param depth_ms Chorus depth (max value depends on synth sample-rate,
+ *   0.0-21.0 is safe for sample-rate values up to 96KHz)
  * @param type Chorus waveform type (#fluid_chorus_mod)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
