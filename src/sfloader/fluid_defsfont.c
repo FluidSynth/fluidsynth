@@ -701,14 +701,14 @@ fluid_defpreset_next(fluid_defpreset_t *defpreset)
 
  @param voice voice of the instrument zone.
  @param preset_zone_name, actual preset_zone name.
- @param filter_preset_zone_name, filter name of preset_zone to display.
+ @param preset_zone_filter_name, filter name of preset_zone to display.
   - If both names are not NULL, printing is done only if the filter name matches
     preset_zone_name.
   - If at least one name is NULL this filter is ignored and printing is filtered
     by param inst_zone_name, param filter_inst_zone_name.
 
  @param inst_zone_name, actual instrument zone name.
- @param filter_inst_zone_name, filter name of instrument zone to display.
+ @param inst_zone_filter_name, filter name of instrument zone to display.
   - If both names are not NULL, printing is done only if the filter name matches
     instrument_zone_name.
   - If at least one name is NULL this filter is ignored and printing is filtered
@@ -734,17 +734,17 @@ fluid_defpreset_next(fluid_defpreset_t *defpreset)
 */
 static void fluid_zone_print_voice_mod(fluid_voice_t  *voice,
                         char *preset_zone_name,
-                        char *filter_preset_zone_name,
+                        char *preset_zone_filter_name,
                         char *inst_zone_name,
-                        char *filter_inst_zone_name)
+                        char *inst_zone_filter_name)
 {
-    if(preset_zone_name && filter_preset_zone_name
-       && strcmp(preset_zone_name, filter_preset_zone_name))
+    if(preset_zone_name && preset_zone_filter_name
+       && strcmp(preset_zone_name, preset_zone_filter_name))
     {
         return;
     }
-    if(inst_zone_name && filter_preset_zone_name
-      && strcmp(inst_zone_name, filter_inst_zone_name))
+    if(inst_zone_name && preset_zone_filter_name
+      && strcmp(inst_zone_name, inst_zone_filter_name))
     {
         return;
     }
@@ -1158,8 +1158,9 @@ fluid_defpreset_noteon(fluid_defpreset_t *defpreset, fluid_synth_t *synth, int c
                                                             preset_zone->linked_mod,
                                                             FLUID_VOICE_ADD);
 #ifdef DEBUG
-                    /* print voice modulators for any combination: (preset_zone, instrument zone).
-                       If you want to print voice modulators for a particular zone, replace NULL
+                    /* print voice modulators for a possible combination: (preset_zone, instrument zone).
+
+                       1)If you want to print voice modulators for a particular zone, replace "x"
                        filter by a know name. Use the following filter name conventions:
                        - Filter name for preset zone: "pz:preset_name/zone_number".
                        - Filter name for instrument zone: "iz:instrument_name/zone_number".
@@ -1169,11 +1170,16 @@ fluid_defpreset_noteon(fluid_defpreset_t *defpreset, fluid_synth_t *synth, int c
                        - instrument zone 3 of instrument named "Synth Brass 2", filter name must be
                          "iz:Synth Brass 2/3".
 
-                       fluid_zone_print_voice_mod(voice, preset_zone->name, "pz:Synth Brass 2/1",
+                         fluid_zone_print_voice_mod(voice, preset_zone->name, "pz:Synth Brass 2/1",
                                                          inst_zone->name, "iz:Synth Brass 2/3");
+
+                       2)If you want to print voice modulators for any particular zone, replace "x" by NULL
+
+                         fluid_zone_print_voice_mod(voice, preset_zone->name, NULL,
+                                                         inst_zone->name, NULL");
                     */
-                    fluid_zone_print_voice_mod(voice, preset_zone->name, NULL,
-                                                      inst_zone->name, NULL);
+                    fluid_zone_print_voice_mod(voice, preset_zone->name, "x",
+                                                      inst_zone->name, "x");
 #endif
                     /* add the synthesis process to the synthesis loop. */
                     fluid_synth_start_voice(synth, voice);
