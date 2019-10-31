@@ -1116,10 +1116,9 @@ new_fluid_revmodel(fluid_real_t sample_rate)
 * function, calling delete_fluid_revmodel() isn't multi task safe because
 * delay line are freed. To deal properly with this issue follow the steps:
 *
-* 1.1) Stop reverb processing (i.e disable calling of any fluid_revmodel_processXXX().
-*      reverb functions.
-* 1.2) Optionally damps the current reverb tail by calling fluid_revmodel_reset().
-* 2)   Delete the reverb by calling delete_fluid_revmodel().
+* 1) Stop reverb processing (i.e disable calling of any fluid_revmodel_processXXX().
+*    reverb functions.
+* 2) Delete the reverb by calling delete_fluid_revmodel().
 *
 * @param rev pointer on reverb to free.
 * Reverb API.
@@ -1192,12 +1191,11 @@ fluid_revmodel_set(fluid_revmodel_t *rev, int set, fluid_real_t roomsize,
 * function, calling fluid_revmodel_samplerate_change() isn't multi task safe because
 * delay line are memory reallocated. To deal properly with this issue follow
 * the steps:
-* 1.1) Stop reverb processing (i.e disable calling of any fluid_revmodel_processXXX().
-*      reverb functions.
-* 1.2) Optionally damps the current reverb tail by calling fluid_revmodel_reset().
-* 2)   Change sample rate by calling fluid_revmodel_samplerate_change().
-* 3)   Restart reverb processing (i.e enabling calling of any fluid_revmodel_processXXX()
-*      reverb functions.
+* 1) Stop reverb processing (i.e disable calling of any fluid_revmodel_processXXX().
+*    reverb functions.
+* 2) Change sample rate by calling fluid_revmodel_samplerate_change().
+* 3) Restart reverb processing (i.e enabling calling of any fluid_revmodel_processXXX()
+*    reverb functions.
 *
 * Another solution is to substitute step (2):
 * 2.1) delete the reverb by calling delete_fluid_revmodel().
