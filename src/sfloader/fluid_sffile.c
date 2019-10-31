@@ -30,6 +30,10 @@
 #include <sndfile.h>
 #endif
 
+#if LIBINSTPATCH_SUPPORT
+#include <libinstpatch/libinstpatch.h>
+#endif
+
 /*=================================sfload.c========================
   Borrowed from Smurf SoundFont Editor by Josh Green
   =================================================================*/
@@ -326,11 +330,13 @@ static int fluid_sffile_read_wav(SFData *sf, unsigned int start, unsigned int en
 
 /**
  * Check if a file is a SoundFont file.
- * @param filename Path to the file to check
- * @return TRUE if it could be a SoundFont, FALSE otherwise
  *
- * @note The current implementation only checks for the "RIFF" and "sfbk" headers in
- * the file. It is useful to distinguish between SoundFont and other (e.g. MIDI) files.
+ * If fluidsynth was built with DLS support, this function will also identify DLS files.
+ * @param filename Path to the file to check
+ * @return TRUE if it could be a SF2, SF3 or DLS file, FALSE otherwise
+ *
+ * @note This function only checks whether header(s) in the RIFF chunk are present.
+ * A call to fluid_synth_sfload() might still fail.
  */
 int fluid_is_soundfont(const char *filename)
 {
@@ -344,7 +350,7 @@ int fluid_is_soundfont(const char *filename)
         {
             return retcode;
         }
-        
+
         if(FLUID_FREAD(&fcc, sizeof(fcc), 1, fp) != 1)
         {
             break;
@@ -366,6 +372,21 @@ int fluid_is_soundfont(const char *filename)
         }
 
         retcode = (fcc == SFBK_FCC);
+        if(retcode)
+        {
+            break;  // seems to be SF2, stop here
+        }
+#ifdef LIBINSTPATCH_SUPPORT
+        else
+        {
+            IpatchFileHandle *fhandle = ipatch_file_identify_open(filename, NULL);
+            if(fhandle != NULL)
+            {
+                retcode = (ipatch_file_identify(fhandle->file, NULL) == IPATCH_TYPE_DLS_FILE);
+                ipatch_file_close(fhandle);
+            }
+        }
+#endif
     }
     while(0);
 
