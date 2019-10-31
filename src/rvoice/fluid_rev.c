@@ -928,29 +928,36 @@ static int create_mod_delay_lines(fluid_late *late, fluid_real_t sample_rate)
     int i;
 
     /*
-      "modal density" is one property that contributes to the quality of the reverb tail.
-      The more is the modal density, the less are unwanted resonant frequencies
-      build during the decay time: modal density = total delay / sample rate.
+      1)"modal density" is one property that contributes to the quality of the reverb tail.
+        The more is the modal density, the less are unwanted resonant frequencies
+        build during the decay time: modal density = total delay / sample rate.
 
-      Delay line's length given by static table delay_length[] is nominal
-      to get minimum modal density of 0.15 at sample rate 44100Hz.
-      Here we set length_factor to 2 to mutiply this nominal modal
-      density by 2. This leads to a default modal density of 0.15 * 2 = 0.3 for
-      sample rate <= 44100.
+        Delay line's length given by static table delay_length[] is nominal
+        to get minimum modal density of 0.15 at sample rate 44100Hz.
+        Here we set length_factor to 2 to mutiply this nominal modal
+        density by 2. This leads to a default modal density of 0.15 * 2 = 0.3 for
+        sample rate <= 44100.
 
-      For sample rate > 44100, length_factor is multiplied by
-      sample_rate / 44100. This ensure that the default modal density keeps inchanged.
-      (Without this compensation, the default modal density would be diminished for
-      new sample rate change above 44100Hz).
+        For sample rate > 44100, length_factor is multiplied by
+        sample_rate / 44100. This ensures that the default modal density keeps inchanged.
+        (Without this compensation, the default modal density would be diminished for
+        new sample rate change above 44100Hz).
+
+      2)Modulated delay line contributes to diminish resonnant frequencies (often called "ringing").
+        Modulation depth (mod_depth) is set to nominal value of MOD_DEPTH at sample rate 44100Hz.
+        For sample rate > 44100, mod_depth is multiplied by sample_rate / 44100. This ensures
+        that the effect of modulated delay line keeps inchanged.
     */
     fluid_real_t length_factor = 2.0;
+    fluid_real_t mod_depth = MOD_DEPTH;
     if(sample_rate > 44100.0f)
     {
-        length_factor *= sample_rate/44100.0;
+        fluid_real_t sample_rate_factor = sample_rate/44100.0;
+        length_factor *= sample_rate_factor;
+        mod_depth *= sample_rate_factor;
     }
-
 #ifdef INFOS_PRINT // allows message to be printed on the console.
-    printf("length_factor:%f\n", length_factor);
+    printf("length_factor:%f, mod_depth:%f\n", length_factor, mod_depth);
     /* Print: modal density and total memory bytes */
     {
         int i;
@@ -971,7 +978,7 @@ static int create_mod_delay_lines(fluid_late *late, fluid_real_t sample_rate)
         /* allocate delay line and set local delay lines's parameters */
         result = set_mod_delay_line(&late->mod_delay_lines[i],
                                     delay_length[i] * length_factor,
-                                    MOD_DEPTH, MOD_RATE);
+                                    mod_depth, MOD_RATE);
 
         if(result == FLUID_FAILED)
         {
