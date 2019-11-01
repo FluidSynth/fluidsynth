@@ -855,7 +855,7 @@ static void update_rev_time_damping(fluid_late *late,
 static void update_stereo_coefficient(fluid_late *late, fluid_real_t wet1)
 {
     int i;
-	fluid_real_t wet;
+    fluid_real_t wet;
 
     for(i = 0; i < NBR_DELAYS; i++)
     {
@@ -880,8 +880,8 @@ static void update_stereo_coefficient(fluid_late *late, fluid_real_t wet1)
 
         /* for left line: 00,  ,02,  ,04,  ,06,  ,08,  ,10,  ,12,... left_gain = +1 */
         /* for left line:   ,01,  ,03,  ,05,  ,07,  ,09,  ,11,...    left_gain = -1 */
-		wet = wet1;
-		if(i & 1)
+        wet = wet1;
+        if(i & 1)
         {
             wet = -wet1;
         }
