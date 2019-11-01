@@ -855,6 +855,7 @@ static void update_rev_time_damping(fluid_late *late,
 static void update_stereo_coefficient(fluid_late *late, fluid_real_t wet1)
 {
     int i;
+	fluid_real_t wet;
 
     for(i = 0; i < NBR_DELAYS; i++)
     {
@@ -877,26 +878,23 @@ static void update_stereo_coefficient(fluid_late *late, fluid_real_t wet1)
                        11|-1   -1|
         */
 
-        late->out_left_gain[i] = wet1;
+        /* for left line: 00,  ,02,  ,04,  ,06,  ,08,  ,10,  ,12,... left_gain = +1 */
+        /* for left line:   ,01,  ,03,  ,05,  ,07,  ,09,  ,11,...    left_gain = -1 */
+		wet = wet1;
+		if(i & 1)
+        {
+            wet = -wet1;
+        }
+        late->out_left_gain[i] = wet;
 
-        /*  Sets Left coefficients first */
-        if(i % 2) /* Left is 1,-1, 1,-1, 1,-1,.... */
+        /* for right line: 00,01,      ,04,05,     ,08,09,     ,12,13  right_gain = +1 */
+        /* for right line:      ,02 ,03,     ,06,07,     ,10,11,...    right_gain = -1 */
+        wet = wet1;
+        if(i & 2)
         {
-            late->out_left_gain[i] *= -1;
+            wet = -wet1;
         }
-
-        /* Now sets right gain as function of Left */
-        /* for right line 1,2,5,6,9,10,13,14, right = - left */
-        if((i == 1) || (i == 2) || (i == 5) || (i == 6) || (i == 9) || (i == 10) || (i == 13) || (i == 14))
-        {
-            /* Right is reverse of Left */
-            late->out_right_gain[i] = -1 * late->out_left_gain[i];
-        }
-        else /* for Right : line 0,3,4,7,8,11,12,15 */
-        {
-            /* Right is same as Left */
-            late->out_right_gain[i] = late->out_left_gain[i];
-        }
+        late->out_right_gain[i] = wet;
     }
 }
 
