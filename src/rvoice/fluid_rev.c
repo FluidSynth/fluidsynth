@@ -946,11 +946,11 @@ static int create_mod_delay_lines(fluid_late *late, fluid_real_t sample_rate)
         For sample rate > 44100, mod_depth is multiplied by sample_rate / 44100. This ensures
         that the effect of modulated delay line keeps inchanged.
     */
-    fluid_real_t length_factor = 2.0;
+    fluid_real_t length_factor = 2.0f;
     fluid_real_t mod_depth = MOD_DEPTH;
     if(sample_rate > 44100.0f)
     {
-        fluid_real_t sample_rate_factor = sample_rate/44100.0;
+        fluid_real_t sample_rate_factor = sample_rate/44100.0f;
         length_factor *= sample_rate_factor;
         mod_depth *= sample_rate_factor;
     }
@@ -1065,7 +1065,7 @@ fluid_revmodel_update(fluid_revmodel_t *rev)
     /* integrates wet1 in stereo coefficient (this will save one multiply) */
     update_stereo_coefficient(&rev->late, rev->wet1);
 
-    if(rev->wet1 > 0.0)
+    if(rev->wet1 > 0.0f)
     {
         rev->wet2 /= rev->wet1;
     }
