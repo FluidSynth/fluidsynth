@@ -1138,10 +1138,8 @@ void fluid_mod_remove_invalid_from_list(fluid_mod_t **list_mod)
         fluid_mod_t *next = mod->next;
         if(   /* Is mod a linked modulator ? */
               fluid_mod_is_linked(mod)
-              /* or has mod invalid sources ? */
-              || !fluid_mod_check_sources(mod, NULL)
-              /* or is mod identic to any following modulator ? */
-              || fluid_mod_is_identic_in_list(mod, NULL))
+              /* or is mod invalid  ? */
+              || !(mod->path & FLUID_MOD_VALID))
         {  
             /* the modulator is useless so we remove it */
             if (prev_mod)
