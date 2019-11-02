@@ -1637,8 +1637,7 @@ fluid_mod_copy_linked_mod(const fluid_mod_t *list_mod, int dest_idx, int new_idx
  *
  * @param list_mod, pointer on table or modulators list.
  *  On input, the list may contains any unlinked or linked modulators.
- *  On output, invalid modulators are marked invalid with amount value forced
- *  to 0.
+ *  On output, invalid modulators are marked invalid (see enum fluid_path_flags).
  * @param mod_count number of modulators in table list_mod:
  *  - If > 0, the function assumes that list_mod is a table and initializes it
  *    as a list of modulators chained by next field, so that the caller doesn't
