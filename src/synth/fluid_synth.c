@@ -118,7 +118,6 @@ static int fluid_synth_set_important_channels(fluid_synth_t *synth, const char *
 
 
 /* Callback handlers for real-time settings */
-static void fluid_synth_handle_sample_rate(void *data, const char *name, double value);
 static void fluid_synth_handle_gain(void *data, const char *name, double value);
 static void fluid_synth_handle_polyphony(void *data, const char *name, int value);
 static void fluid_synth_handle_device_id(void *data, const char *name, int value);
@@ -650,8 +649,6 @@ new_fluid_synth(fluid_settings_t *settings)
     fluid_settings_getnum_float(settings, "synth.overflow.important", &synth->overflow.important);
 
     /* register the callbacks */
-    fluid_settings_callback_num(settings, "synth.sample-rate",
-                                fluid_synth_handle_sample_rate, synth);
     fluid_settings_callback_num(settings, "synth.gain",
                                 fluid_synth_handle_gain, synth);
     fluid_settings_callback_int(settings, "synth.polyphony",
@@ -3052,15 +3049,6 @@ fluid_synth_update_presets(fluid_synth_t *synth)
         fluid_synth_set_preset(synth, chan, preset);
     }
 }
-
-/* Handler for synth.sample-rate setting. */
-static void
-fluid_synth_handle_sample_rate(void *data, const char *name, double value)
-{
-    fluid_synth_t *synth = (fluid_synth_t *)data;
-    fluid_synth_set_sample_rate(synth, (float) value);
-}
-
 
 /**
  * Set up an event to change the sample-rate of the synth during the next rendering call.
