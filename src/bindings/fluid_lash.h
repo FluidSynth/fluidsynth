@@ -17,6 +17,9 @@
  * Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA
  */
+#ifndef _FLUID_LASH_H
+#define _FLUID_LASH_H
+
 #include "config.h"
 
 #if defined(HAVE_LASH)
@@ -40,4 +43,5 @@ FLUIDSYNTH_API fluid_lash_args_t *fluid_lash_extract_args(int *pargc, char  ***p
 FLUIDSYNTH_API int fluid_lash_connect(fluid_lash_args_t *args);
 FLUIDSYNTH_API void fluid_lash_create_thread(fluid_synth_t *synth);
 
-#endif 		/* defined(HAVE_LASH) */
+#endif /* defined(HAVE_LASH) */
+#endif /* _FLUID_LASH_H */

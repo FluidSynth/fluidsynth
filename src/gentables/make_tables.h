@@ -1,3 +1,7 @@
+
+#ifndef _FLUID_MAKE_TABLES_H
+#define _FLUID_MAKE_TABLES_H
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -19,3 +23,4 @@ void emit_array(FILE *fp, const char *tblname, const double *tbl, int size);
 /* Emit a matrix of real numbers */
 void emit_matrix(FILE *fp, const char *tblname, emit_matrix_cb tbl_cb, int sizeh, int sizel);
 
+#endif
