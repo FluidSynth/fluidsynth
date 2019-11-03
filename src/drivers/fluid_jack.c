@@ -263,7 +263,7 @@ new_fluid_jack_client(fluid_settings_t *settings, int isaudio, void *driver)
     }
 
     /* tell the lash server our client name */
-#ifdef LASH_ENABLED
+#ifdef HAVE_LASH
     {
         int enable_lash = 0;
         fluid_settings_getint(settings, "lash.enable", &enable_lash);
@@ -273,7 +273,7 @@ new_fluid_jack_client(fluid_settings_t *settings, int isaudio, void *driver)
             fluid_lash_jack_client_name(fluid_lash_client, name);
         }
     }
-#endif /* LASH_ENABLED */
+#endif /* HAVE_LASH */
 
     client_ref->server = server;        /* !! takes over allocation */
     server = NULL;      /* Set to NULL so it doesn't get freed below */

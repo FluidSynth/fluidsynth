@@ -1141,7 +1141,7 @@ new_fluid_alsa_seq_driver(fluid_settings_t *settings,
     }
 
     /* tell the lash server our client id */
-#ifdef LASH_ENABLED
+#ifdef HAVE_LASH
     {
         int enable_lash = 0;
         fluid_settings_getint(settings, "lash.enable", &enable_lash);
@@ -1151,7 +1151,7 @@ new_fluid_alsa_seq_driver(fluid_settings_t *settings,
             fluid_lash_alsa_client_id(fluid_lash_client, snd_seq_client_id(dev->seq_handle));
         }
     }
-#endif /* LASH_ENABLED */
+#endif /* HAVE_LASH */
 
     fluid_atomic_int_set(&dev->should_quit, 0);
 

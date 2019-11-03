@@ -26,8 +26,6 @@
 
 #include "fluid_synth.h"
 
-#define LASH_ENABLED 1
-
 #include <lash/lash.h>
 extern lash_client_t *fluid_lash_client;
 #define fluid_lash_args_t  lash_args_t

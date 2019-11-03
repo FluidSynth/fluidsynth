@@ -348,7 +348,7 @@ int main(int argc, char **argv)
     int dump = 0;
     int fast_render = 0;
     static const char optchars[] = "a:C:c:dE:f:F:G:g:hijK:L:lm:nO:o:p:qR:r:sT:Vvz:";
-#ifdef LASH_ENABLED
+#ifdef HAVE_LASH
     int connect_lash = 1;
     int enabled_lash = 0;		/* set to TRUE if lash gets enabled */
     fluid_lash_args_t *lash_args;
@@ -581,7 +581,7 @@ int main(int argc, char **argv)
             break;
 
         case 'l':			/* disable LASH */
-#ifdef LASH_ENABLED
+#ifdef HAVE_LASH
             connect_lash = 0;
 #endif
             break;
@@ -756,7 +756,7 @@ int main(int argc, char **argv)
     SetPriorityClass(GetCurrentProcess(), REALTIME_PRIORITY_CLASS);
 #endif
 
-#ifdef LASH_ENABLED
+#ifdef HAVE_LASH
 
     /* connect to the lash server */
     if(connect_lash)
@@ -948,7 +948,7 @@ int main(int argc, char **argv)
 
 #endif
 
-#ifdef LASH_ENABLED
+#ifdef HAVE_LASH
 
     if(enabled_lash)
     {
@@ -1132,7 +1132,7 @@ print_help(fluid_settings_t *settings)
            "    Attempt to connect the jack outputs to the physical ports\n");
     printf(" -K, --midi-channels=[num]\n"
            "    The number of midi channels [default = 16]\n");
-#ifdef LASH_ENABLED
+#ifdef HAVE_LASH
     printf(" -l, --disable-lash\n"
            "    Don't connect to LASH server\n");
 #endif
