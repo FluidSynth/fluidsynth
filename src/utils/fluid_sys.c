@@ -1481,7 +1481,7 @@ static fluid_thread_return_t fluid_server_socket_run(void *data)
         {
             if(server_socket->cont)
             {
-                FLUID_LOG(FLUID_ERR, "Failed to accept connection: %ld", fluid_socket_get_error());
+                FLUID_LOG(FLUID_ERR, "Failed to accept connection: %d", fluid_socket_get_error());
             }
 
             server_socket->cont = 0;
@@ -1540,7 +1540,7 @@ new_fluid_server_socket(int port, fluid_server_func_t func, void *data)
 
     if(sock == INVALID_SOCKET)
     {
-        FLUID_LOG(FLUID_ERR, "Failed to create server socket: %ld", fluid_socket_get_error());
+        FLUID_LOG(FLUID_ERR, "Failed to create server socket: %d", fluid_socket_get_error());
         fluid_socket_cleanup();
         return NULL;
     }
@@ -1555,7 +1555,7 @@ new_fluid_server_socket(int port, fluid_server_func_t func, void *data)
 
     if(sock == INVALID_SOCKET)
     {
-        FLUID_LOG(FLUID_ERR, "Failed to create server socket: %ld", fluid_socket_get_error());
+        FLUID_LOG(FLUID_ERR, "Failed to create server socket: %d", fluid_socket_get_error());
         fluid_socket_cleanup();
         return NULL;
     }
@@ -1568,7 +1568,7 @@ new_fluid_server_socket(int port, fluid_server_func_t func, void *data)
 
     if(bind(sock, (const struct sockaddr *) &addr, sizeof(addr)) == SOCKET_ERROR)
     {
-        FLUID_LOG(FLUID_ERR, "Failed to bind server socket: %ld", fluid_socket_get_error());
+        FLUID_LOG(FLUID_ERR, "Failed to bind server socket: %d", fluid_socket_get_error());
         fluid_socket_close(sock);
         fluid_socket_cleanup();
         return NULL;
@@ -1576,7 +1576,7 @@ new_fluid_server_socket(int port, fluid_server_func_t func, void *data)
 
     if(listen(sock, SOMAXCONN) == SOCKET_ERROR)
     {
-        FLUID_LOG(FLUID_ERR, "Failed to listen on server socket: %ld", fluid_socket_get_error());
+        FLUID_LOG(FLUID_ERR, "Failed to listen on server socket: %d", fluid_socket_get_error());
         fluid_socket_close(sock);
         fluid_socket_cleanup();
         return NULL;
