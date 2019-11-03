@@ -609,6 +609,7 @@ void
 fluid_chorus_reset(fluid_chorus_t *chorus)
 {
     int i;
+    unsigned int u;
 
     /* reset delay line */
     for(i = 0; i < chorus->size; i++)
@@ -617,11 +618,11 @@ fluid_chorus_reset(fluid_chorus_t *chorus)
     }
 
     /* reset modulators's allpass filter */
-    for(i = 0; i < FLUID_N_ELEMENTS(chorus->mod); i++)
+    for(u = 0; u < FLUID_N_ELEMENTS(chorus->mod); u++)
     {
         /* initializes 1st order All-Pass interpolator members */
-        chorus->mod[i].buffer = 0;       /* previous delay sample value */
-        chorus->mod[i].frac_pos_mod = 0; /* fractional position (between consecutives sample) */
+        chorus->mod[u].buffer = 0;       /* previous delay sample value */
+        chorus->mod[u].frac_pos_mod = 0; /* fractional position (between consecutives sample) */
     }
 }
 
