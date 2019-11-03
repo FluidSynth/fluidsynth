@@ -22,21 +22,17 @@
 
 #include "config.h"
 
-#if defined(HAVE_LASH)
+#ifdef HAVE_LASH
 
 #include "fluid_synth.h"
 
 #define LASH_ENABLED 1
-
-#ifdef HAVE_LASH
 
 #include <lash/lash.h>
 extern lash_client_t *fluid_lash_client;
 #define fluid_lash_args_t  lash_args_t
 #define fluid_lash_alsa_client_id  lash_alsa_client_id
 #define fluid_lash_jack_client_name  lash_jack_client_name
-
-#endif
 
 
 FLUIDSYNTH_API fluid_lash_args_t *fluid_lash_extract_args(int *pargc, char  ***pargv);
