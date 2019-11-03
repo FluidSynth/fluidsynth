@@ -305,16 +305,6 @@ a flatter response on comb filter. So the input gain is set to 0.1 rather 1.0. *
     #define DELAY_L11 1187
 #endif
 
-/* Delay lines length table (in samples) */
-static const int delay_length[NBR_DELAYS] =
-{
-    DELAY_L0, DELAY_L1, DELAY_L2, DELAY_L3,
-    DELAY_L4, DELAY_L5, DELAY_L6, DELAY_L7,
-#if (NBR_DELAYS == 12)
-    DELAY_L8, DELAY_L9, DELAY_L10, DELAY_L11
-#endif
-};
-
 
 /*---------------------------------------------------------------------------*/
 /* The FDN late feed back matrix: A
@@ -922,6 +912,16 @@ static void delete_fluid_rev_late(fluid_late *late)
 -----------------------------------------------------------------------------*/
 static int create_mod_delay_lines(fluid_late *late, fluid_real_t sample_rate)
 {
+    /* Delay lines length table (in samples) */
+    static const int delay_length[NBR_DELAYS] =
+    {
+        DELAY_L0, DELAY_L1, DELAY_L2, DELAY_L3,
+        DELAY_L4, DELAY_L5, DELAY_L6, DELAY_L7,
+    #if (NBR_DELAYS == 12)
+        DELAY_L8, DELAY_L9, DELAY_L10, DELAY_L11
+    #endif
+    };
+
     int result; /* return value */
     int i;
 
