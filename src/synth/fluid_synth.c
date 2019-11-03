@@ -3068,7 +3068,7 @@ fluid_synth_handle_sample_rate(void *data, const char *name, double value)
  * @deprecated As of fluidsynth 2.1.0 this function has been deprecated.
  * Changing the sample-rate is generally not considered to be a real-time use-case, as it always produces some audible artifact ("click", "pop") on the dry sound and effects (because LFOs for chorus and reverb need to be reinitialized).
  * The sample-rate change may also require memory allocation deep down in the effect units.
- * However, this memory allocation may fail, but there is no way for the caller to know that, because the actual change of the sample-rate is executed during rendering.
+ * However, this memory allocation may fail and there is no way for the caller to know that, because the actual change of the sample-rate is executed during rendering.
  * This function cannot (must not) do the sample-rate change itself, otherwise the synth needs to be locked down, causing rendering to block.
  * Esp. do not use this function if this @p synth instance is used by an audio driver, because the audio driver cannot be notified by this sample-rate change.
  * Long story short: don't use it.
