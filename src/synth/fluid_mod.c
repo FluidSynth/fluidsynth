@@ -1469,7 +1469,7 @@ fluid_mod_check_linked_mod_LOCAL(const char *list_name, fluid_mod_t *list_mod,
  *
  * @param list_mod, modulators list. Modulators in this list must be prepared
  *  by fluid_mod_check_linked_mod_LOCAL() before calling this function.
- *  Only modulators with path field set to FLUID_PATH_VALID will be cloned.
+ *  Only modulators with path field set to FLUID_MOD_VALID will be cloned.
  *
  * @param dest_idx, initial index of linked destination modulator to search.
  *  Must be set to -1 at first call.
@@ -1504,7 +1504,7 @@ fluid_mod_copy_linked_mod(const fluid_mod_t *list_mod, int dest_idx, int new_idx
     const fluid_mod_t *mod = list_mod;
     while(mod)
     {
-        if (mod->path & FLUID_PATH_VALID) /* ignores invalid path */
+        if (mod->path & FLUID_MOD_VALID) /* ignores invalid modulator */
         {
             /* is_src_linked is true when modulator mod's input are linked */
             int is_src1_linked = fluid_mod_has_linked_src1(mod);
