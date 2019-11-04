@@ -796,7 +796,7 @@ static int process_info(SFData *sf, int size)
             if((chunk.id != ICMT_FCC && chunk.size > 256) || (chunk.size > 65536) || (chunk.size % 2))
             {
                 FLUID_LOG(FLUID_ERR, "INFO sub chunk %.4s has invalid chunk size of %d bytes",
-                          &chunk.id, chunk.size);
+                          (char*)&chunk.id, chunk.size);
                 return FALSE;
             }
 
@@ -930,19 +930,19 @@ static int pdtahelper(SFData *sf, unsigned int expid, unsigned int reclen, SFChu
 
     if(chunk->id != expid)
     {
-        FLUID_LOG(FLUID_ERR, "Expected PDTA sub-chunk '%.4s' found invalid id instead", &expid);
+        FLUID_LOG(FLUID_ERR, "Expected PDTA sub-chunk '%.4s' found invalid id instead", (char*)&expid);
         return FALSE;
     }
 
     if(chunk->size % reclen)  /* valid chunk size? */
     {
-        FLUID_LOG(FLUID_ERR, "'%.4s' chunk size is not a multiple of %d bytes", &expid, reclen);
+        FLUID_LOG(FLUID_ERR, "'%.4s' chunk size is not a multiple of %d bytes", (char*)&expid, reclen);
         return FALSE;
     }
 
     if((*size -= chunk->size) < 0)
     {
-        FLUID_LOG(FLUID_ERR, "'%.4s' chunk size exceeds remaining PDTA chunk size", &expid);
+        FLUID_LOG(FLUID_ERR, "'%.4s' chunk size exceeds remaining PDTA chunk size", (char*)&expid);
         return FALSE;
     }
 
@@ -2615,7 +2615,7 @@ static int fluid_sffile_read_vorbis(SFData *sf, unsigned int start_byte, unsigne
 
     if(!sndfile)
     {
-        FLUID_LOG(FLUID_ERR, sf_strerror(sndfile));
+        FLUID_LOG(FLUID_ERR, "%s", sf_strerror(sndfile));
         return -1;
     }
 
@@ -2642,7 +2642,7 @@ static int fluid_sffile_read_vorbis(SFData *sf, unsigned int start_byte, unsigne
     if(sf_readf_short(sndfile, wav_data, sfinfo.frames) < sfinfo.frames)
     {
         FLUID_LOG(FLUID_DBG, "Decompression failed!");
-        FLUID_LOG(FLUID_ERR, sf_strerror(sndfile));
+        FLUID_LOG(FLUID_ERR, "%s", sf_strerror(sndfile));
         goto error_exit;
     }
 
