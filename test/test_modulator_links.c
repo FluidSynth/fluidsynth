@@ -540,7 +540,7 @@ int main(void)
         TEST_ASSERT(fluid_mod_get_amount(mod0) == 100);
         TEST_ASSERT(fluid_mod_get_amount(mod1) == 200);
         TEST_ASSERT(fluid_mod_get_amount(mod2) == 300);
-        TEST_ASSERT((mod3->path & FLUID_MOD_VALID) == 0); // invalidated because mod1 without FLUID_MOD_LINK_SRC
+        TEST_ASSERT((mod3->flags & FLUID_MOD_VALID) == 0); // invalidated because mod1 without FLUID_MOD_LINK_SRC
     }
 
     // Test 4.1: Same test as 4 but with linked_mod not NULL. The function expects to return any
@@ -641,9 +641,9 @@ int main(void)
         
         // modulators that are part of the circular list are invalidated
         TEST_ASSERT(fluid_mod_get_amount(mod0) == 100);
-        TEST_ASSERT((mod1->path & FLUID_MOD_VALID) == 0); // invalid destination
+        TEST_ASSERT((mod1->flags & FLUID_MOD_VALID) == 0); // invalid destination
         TEST_ASSERT(fluid_mod_get_amount(mod2) == 300);
-        TEST_ASSERT((mod3->path & FLUID_MOD_VALID) == 0); // path without destination
+        TEST_ASSERT((mod3->flags & FLUID_MOD_VALID) == 0); // path without destination
     }
 
     // Circular complex modulators
@@ -681,9 +681,9 @@ int main(void)
         
         // modulators that are part of the circular list are invalidated: mod3,mod1
         TEST_ASSERT(fluid_mod_get_amount(mod0) == 100);
-        TEST_ASSERT((mod1->path & FLUID_MOD_VALID) == 0);
+        TEST_ASSERT((mod1->flags & FLUID_MOD_VALID) == 0);
         TEST_ASSERT(fluid_mod_get_amount(mod2) == 300);
-        TEST_ASSERT((mod3->path & FLUID_MOD_VALID) == 0);
+        TEST_ASSERT((mod3->flags & FLUID_MOD_VALID) == 0);
     }
 
     // Test 6.0.1: Same test as 6.0 but with linked_mod not NULL. The function expects to return any
@@ -740,10 +740,10 @@ int main(void)
         TEST_ASSERT(list_of_mods->next->next->next->next == NULL);
         
         // modulators that are part of the circular list are invalidated
-        TEST_ASSERT((mod0->path & FLUID_MOD_VALID) == 0); // part of circular path
-        TEST_ASSERT((mod1->path & FLUID_MOD_VALID) == 0); // part of circular path
-        TEST_ASSERT((mod2->path & FLUID_MOD_VALID) == 0); // part of circular path
-        TEST_ASSERT((mod3->path & FLUID_MOD_VALID) == 0); // without destination.
+        TEST_ASSERT((mod0->flags & FLUID_MOD_VALID) == 0); // part of circular path
+        TEST_ASSERT((mod1->flags & FLUID_MOD_VALID) == 0); // part of circular path
+        TEST_ASSERT((mod2->flags & FLUID_MOD_VALID) == 0); // part of circular path
+        TEST_ASSERT((mod3->flags & FLUID_MOD_VALID) == 0); // without destination.
     }
 
     // Test 6.1.1: Same test as 6.1 but with linked_mod not NULL. The function expects to return any
@@ -803,10 +803,10 @@ int main(void)
         TEST_ASSERT(list_of_mods->next->next->next->next == NULL);
         
         // modulators that are part of the circular list are invalidated
-        TEST_ASSERT((mod0->path & FLUID_MOD_VALID) == 0);
-        TEST_ASSERT((mod1->path & FLUID_MOD_VALID) == 0);
-        TEST_ASSERT((mod2->path & FLUID_MOD_VALID) == 0);
-        TEST_ASSERT((mod3->path & FLUID_MOD_VALID) == 0);
+        TEST_ASSERT((mod0->flags & FLUID_MOD_VALID) == 0);
+        TEST_ASSERT((mod1->flags & FLUID_MOD_VALID) == 0);
+        TEST_ASSERT((mod2->flags & FLUID_MOD_VALID) == 0);
+        TEST_ASSERT((mod3->flags & FLUID_MOD_VALID) == 0);
     }
     
     // circular complex modulators, but detected isolated because none of these
@@ -849,10 +849,10 @@ int main(void)
         TEST_ASSERT(list_of_mods->next->next->next == mod3);
         TEST_ASSERT(list_of_mods->next->next->next->next == NULL);
         
-        TEST_ASSERT((mod0->path & FLUID_MOD_VALID) == 0);
-        TEST_ASSERT((mod1->path & FLUID_MOD_VALID) == 0);
-        TEST_ASSERT((mod2->path & FLUID_MOD_VALID) == 0);
-        TEST_ASSERT((mod3->path & FLUID_MOD_VALID) == 0);
+        TEST_ASSERT((mod0->flags & FLUID_MOD_VALID) == 0);
+        TEST_ASSERT((mod1->flags & FLUID_MOD_VALID) == 0);
+        TEST_ASSERT((mod2->flags & FLUID_MOD_VALID) == 0);
+        TEST_ASSERT((mod3->flags & FLUID_MOD_VALID) == 0);
     }
     
     // circular complex modulators m1->m0->m3->m1, but detected isolated because none of these
@@ -898,10 +898,10 @@ int main(void)
         TEST_ASSERT(list_of_mods->next->next->next->next == NULL);
         
         // modulators that are part of the circular list are invalidated
-        TEST_ASSERT((mod0->path & FLUID_MOD_VALID) == 0);
-        TEST_ASSERT((mod1->path & FLUID_MOD_VALID) == 0);
+        TEST_ASSERT((mod0->flags & FLUID_MOD_VALID) == 0);
+        TEST_ASSERT((mod1->flags & FLUID_MOD_VALID) == 0);
         TEST_ASSERT(fluid_mod_get_amount(mod2) == 300);
-        TEST_ASSERT((mod3->path & FLUID_MOD_VALID) == 0);
+        TEST_ASSERT((mod3->flags & FLUID_MOD_VALID) == 0);
     }
     
     // circular complex modulators m3->m1->m3, but detected isolated because none of these
@@ -949,9 +949,9 @@ int main(void)
         
         // modulators that are part of the circular list are invalidated
         TEST_ASSERT(fluid_mod_get_amount(mod0) == 100);
-        TEST_ASSERT((mod1->path & FLUID_MOD_VALID) == 0);
+        TEST_ASSERT((mod1->flags & FLUID_MOD_VALID) == 0);
         TEST_ASSERT(fluid_mod_get_amount(mod2) == 300);
-        TEST_ASSERT((mod3->path & FLUID_MOD_VALID) == 0);
+        TEST_ASSERT((mod3->flags & FLUID_MOD_VALID) == 0);
     }
     
     // invalid list of complex modulators: path without destination, isolated
@@ -995,9 +995,9 @@ int main(void)
         TEST_ASSERT(list_of_mods->next->next->next == NULL);
         
         // all mods are invalidated
-        TEST_ASSERT((mod1->path & FLUID_MOD_VALID) == 0); // path without destination
-        TEST_ASSERT((mod0->path & FLUID_MOD_VALID) == 0); // invalid isolated path
-        TEST_ASSERT((mod2->path & FLUID_MOD_VALID) == 0); // path without destination
+        TEST_ASSERT((mod1->flags & FLUID_MOD_VALID) == 0); // path without destination
+        TEST_ASSERT((mod0->flags & FLUID_MOD_VALID) == 0); // invalid isolated path
+        TEST_ASSERT((mod2->flags & FLUID_MOD_VALID) == 0); // path without destination
     }
 
     // invalid list of complex modulators: invalid destinations
@@ -1041,7 +1041,7 @@ int main(void)
 
         // all mods are invalidated
         TEST_ASSERT(fluid_mod_get_amount(mod0) == 100);
-        TEST_ASSERT((mod1->path & FLUID_MOD_VALID) == 0); // path without destination
+        TEST_ASSERT((mod1->flags & FLUID_MOD_VALID) == 0); // path without destination
         TEST_ASSERT(fluid_mod_get_amount(mod2) == 300);
     }
 
@@ -1091,9 +1091,9 @@ int main(void)
 
         // amounts not changed
         TEST_ASSERT(fluid_mod_get_amount(mod0) == 100);
-        TEST_ASSERT((mod1->path & FLUID_MOD_VALID) == 0); // Invalided because isolated
+        TEST_ASSERT((mod1->flags & FLUID_MOD_VALID) == 0); // Invalided because isolated
         TEST_ASSERT(fluid_mod_get_amount(mod2) == 300);
-        TEST_ASSERT((mod3->path & FLUID_MOD_VALID) == 0); // Invalided because isolated
+        TEST_ASSERT((mod3->flags & FLUID_MOD_VALID) == 0); // Invalided because isolated
     }
 
     // Test 9.1: Same test as 9 but with linked_mod not NULL. The function expects to return any
@@ -1131,35 +1131,35 @@ int main(void)
             {
                 // dest              , src1              , flags1        , src2            , flags2
                 GEN_VOLENVHOLD       , FLUID_MOD_LINK_SRC, FLUID_MOD_GC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
-                // path         , amount           , link        , next
+                // flags        , amount           , link        , next
                 0               , 1.0             , 0.0         , NULL
             },
             /* mod0<-mod1<- */
             {
                 // dest              , src1              , flags1        , src2              , flags2
                 0|FLUID_MOD_LINK_DEST, FLUID_MOD_LINK_SRC, FLUID_MOD_GC  , FLUID_MOD_VELOCITY, FLUID_MOD_GC,
-                // path         , amount           , link        , next
+                // flags        , amount           , link        , next
                 0               , 2.0             , 0.0         , NULL
             },
             /* mod1<-mod2<- */
             {
                 // dest              , src1              , flags1        , src2            , flags2
                 1|FLUID_MOD_LINK_DEST, 2                 , FLUID_MOD_CC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
-                // path         , amount           , link        , next
+                // flags        , amount           , link        , next
                 0               , 3.0             , 0.0         , NULL
             },
             /* mod0<-mod3<- */
             {
                 // dest              , src1              , flags1        , src2            , flags2
                 0|FLUID_MOD_LINK_DEST, FLUID_MOD_LINK_SRC, FLUID_MOD_GC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
-                // path         , amount           , link        , next
+                // flags        , amount           , link        , next
                 0               , 4.0             , 0.0         , NULL
             },
             /* mod3<-mod4<- */
             {
                 // dest              , src1              , flags1        , src2            , flags2
                 3|FLUID_MOD_LINK_DEST, 2                 , FLUID_MOD_CC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
-                // path         , amount           , link        , next
+                // flags        , amount           , link        , next
                 0               , 5.0             , 0.0         , NULL
             }
         };
@@ -1244,35 +1244,35 @@ int main(void)
             {
                 // dest              , src1              , flags1        , src2            , flags2
                 GEN_VOLENVHOLD       , FLUID_MOD_LINK_SRC, FLUID_MOD_GC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
-                // path         , amount           , link        , next
+                // flags        , amount           , link        , next
                 0               , 1.0             , 0.0         , NULL
             },
             /* mod0<-mod1<- */
             {
                 // dest              , src1              , flags1        , src2              , flags2
                 0|FLUID_MOD_LINK_DEST, FLUID_MOD_LINK_SRC, FLUID_MOD_GC  , FLUID_MOD_VELOCITY, FLUID_MOD_GC,
-                // path         , amount           , link        , next
+                // flags        , amount           , link        , next
                 0               , 2.0             , 0.0         , NULL
             },
             /* mod1<-mod2<- */
             {
                 // dest              , src1              , flags1        , src2            , flags2
                 1|FLUID_MOD_LINK_DEST, 2                 , FLUID_MOD_CC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
-                // path         , amount           , link        , next
+                // flags        , amount           , link        , next
                 0               , 3.0             , 0.0         , NULL
             },
             /* mod0<-mod3<- */
             {
                 // dest              , src1              , flags1        , src2            , flags2
                 0|FLUID_MOD_LINK_DEST, FLUID_MOD_LINK_SRC, FLUID_MOD_GC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
-                // path         , amount           , link        , next
+                // flags        , amount           , link        , next
                 0               , 4.0             , 0.0         , NULL
             },
             /* mod3<-mod4<- */
             {
                 // dest              , src1              , flags1        , src2            , flags2
                 3|FLUID_MOD_LINK_DEST, 2                 , FLUID_MOD_CC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
-                // path         , amount           , link        , next
+                // flags        , amount           , link        , next
                 0               , 5.0             , 0.0         , NULL
             }
         };

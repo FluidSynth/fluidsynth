@@ -35,7 +35,7 @@ struct _fluid_mod_t
     unsigned char flags1;         /**< Source controller 1 flags */
     unsigned char src2;           /**< Source controller 2 */
     unsigned char flags2;         /**< Source controller 2 flags */
-    unsigned short path;          /**< Flags indicating if the modulator is valid */
+    unsigned short flags;         /**< Flags indicating if the modulator is valid */
     double amount;                /**< Multiplier amount */
     double link;                  /**< Summation of modulator nodes linked to this modulator */
     /* The 'next' field allows to link modulators into a list.  It is
@@ -85,9 +85,9 @@ int fluid_mod_check_sources(const fluid_mod_t *mod, char *name);
 void fluid_mod_remove_invalid_from_list(fluid_mod_t **list_mod);
 
 /* this enum is used internally by fluid_mod_check_linked_mod() for setting
-   modulators 's path field.
+   modulators 's flags field.
 */
-/* description of bit flags set in modulator's path field.
+/* description of bit flags set in modulator's flags field.
    These flags indicates if a modulator belongs to a linked path.
 
    FLUID_PATH_CURRENT | FLUID_PATH_VALID | Modulator state
@@ -98,7 +98,7 @@ void fluid_mod_remove_invalid_from_list(fluid_mod_t **list_mod);
    -------------------|------------------|--------------------------------------
          1            |     1            | belongs to a complete linked path
 */
-enum fluid_path_flags
+enum fluid_mod_vflags
 {
     /* bit FLUID_MOD_VALID set to 1 indicates that the modulator is valid */
     FLUID_MOD_VALID = (1 << 0),

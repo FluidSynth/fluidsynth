@@ -1139,7 +1139,7 @@ void fluid_mod_remove_invalid_from_list(fluid_mod_t **list_mod)
         if(   /* Is mod a linked modulator ? */
               fluid_mod_is_linked(mod)
               /* or is mod invalid  ? */
-              || !(mod->path & FLUID_MOD_VALID))
+              || !(mod->flags & FLUID_MOD_VALID))
         {  
             /* the modulator is useless so we remove it */
             if (prev_mod)
@@ -1251,7 +1251,7 @@ void fluid_dump_linked_mod(fluid_mod_t *mod, int mod_idx, int offset)
 	}
 }
 
-/* description of bit flags set in modulator's path field by fluid_mod_check_linked_mod_LOCAL()
+/* description of bit flags set in modulator's flags field by fluid_mod_check_linked_mod_LOCAL()
    These flags indicates if a modulator belongs to a linked path.
 
    FLUID_PATH_CURRENT | FLUID_PATH_VALID | Modulator state
@@ -1271,7 +1271,7 @@ void fluid_dump_linked_mod(fluid_mod_t *mod, int mod_idx, int offset)
  * fluid_mod_copy_linked_mod().
  *
  * Any linked modulator path from the start to the end are checked and returned
- * in path table.
+ * in flags modulator's field.
  *
  * Let a linked path     CC-->m2-->m6-->m3-->gen
  *
@@ -1358,17 +1358,17 @@ fluid_mod_check_linked_mod_LOCAL(const char *list_name, fluid_mod_t *list_mod,
         {
             /* checks if mod source isn't linked and mod destination is linked */
             if (!fluid_mod_has_linked_src1(mod) && (mod->dest & FLUID_MOD_LINK_DEST)
-                 && (mod->path & FLUID_MOD_VALID))
+                 && (mod->flags & FLUID_MOD_VALID))
             {
                 int count;
                 /* memorizes mod state: in current linked path */
-                mod->path |= FLUID_PATH_CURRENT;
+                mod->flags |= FLUID_PATH_CURRENT;
 
                 /* search and check the full path to the end. */
                 count = fluid_mod_check_linked_mod_LOCAL(list_name, list_mod, mod->dest);
                 if (count < 0)
                 {   /* no final destination found for mod */
-                    mod->path &= ~FLUID_MOD_VALID; /* mod marked invalid */
+                    mod->flags &= ~FLUID_MOD_VALID; /* mod marked invalid */
                     /* warning: path is without destination */
                     if(list_name != NULL)
                     {
@@ -1378,7 +1378,7 @@ fluid_mod_check_linked_mod_LOCAL(const char *list_name, fluid_mod_t *list_mod,
                 }
                 else
                 {
-                    mod->path |= FLUID_PATH_VALID; /* current path is valid */
+                    mod->flags |= FLUID_PATH_VALID; /* current path is valid */
                     linked_count += (count + 1);
                 }
             }
@@ -1386,40 +1386,40 @@ fluid_mod_check_linked_mod_LOCAL(const char *list_name, fluid_mod_t *list_mod,
         /* request to search next modulator in the current path */
         else if((mod_idx | FLUID_MOD_LINK_DEST) == dest_idx) /* is mod a destination ? */
         { 
-            /* mod is destination of a previous modulator in path */
+            /* mod is destination of a previous modulator in a linked path */
             /* is this modulator destination valid ? */
-            if (!fluid_mod_has_linked_src1(mod) || !(mod->path & FLUID_MOD_VALID))
+            if (!fluid_mod_has_linked_src1(mod) || !(mod->flags & FLUID_MOD_VALID))
             {
-                /* warning: path have an invalid destination */
+                /* warning: linked path have an invalid destination */
                 if(list_name != NULL)
                 {
                     FLUID_LOG(FLUID_WARN, "Invalid destination %s/mod%d",
                               list_name, mod_idx);
                 }
-                return -1; /* current path is invalid */
+                return -1; /* current linked path is invalid */
             }
  
             /* mod is a valid destination modulator */
-            /* Checks if mod belongs to a path already discovered */
-            if (mod->path & FLUID_PATH_VALID)
+            /* Checks if mod belongs to a linked path already discovered */
+            if (mod->flags & FLUID_PATH_VALID)
             {
-                return 0; /* current path is valid */
+                return 0; /* current linked path is valid */
             }
 
-            /* Checks if mod belongs to current path */
-            if (mod->path & FLUID_PATH_CURRENT)
+            /* Checks if mod belongs to current linked path */
+            if (mod->flags & FLUID_PATH_CURRENT)
             {
-                /* warning: invalid circular path */
+                /* warning: invalid circular linked path */
                 if(list_name != NULL)
                 {
                     FLUID_LOG(FLUID_WARN, "Invalid circular path %s/mod%d",
                               list_name, mod_idx);
                 }
-                return -1; /* current path is invalid */
+                return -1; /* current linked path is invalid */
             }
 
             /* memorizes mod state: in current linked path */
-            mod->path |= FLUID_PATH_CURRENT;
+            mod->flags |= FLUID_PATH_CURRENT;
 
             /* does mod destination linked ? */
             if(mod->dest & FLUID_MOD_LINK_DEST)
@@ -1428,12 +1428,12 @@ fluid_mod_check_linked_mod_LOCAL(const char *list_name, fluid_mod_t *list_mod,
                                                            mod->dest);
                 if (linked_count < 0)
                 {
-                    mod->path &= ~FLUID_MOD_VALID; /* mod marked invalid */
-                    return -1;       /* current path is invalid */
+                    mod->flags &= ~FLUID_MOD_VALID; /* mod marked invalid */
+                    return -1;       /* current linked path is invalid */
                 }
             }
             linked_count++;
-            mod->path |= FLUID_PATH_VALID; /* current path is valid */
+            mod->flags |= FLUID_PATH_VALID; /* current linked path is valid */
             return linked_count;
         }
         mod = mod->next;
@@ -1469,7 +1469,7 @@ fluid_mod_check_linked_mod_LOCAL(const char *list_name, fluid_mod_t *list_mod,
  *
  * @param list_mod, modulators list. Modulators in this list must be prepared
  *  by fluid_mod_check_linked_mod_LOCAL() before calling this function.
- *  Only modulators with path field set to FLUID_MOD_VALID will be cloned.
+ *  Only modulators with flags field set to FLUID_MOD_VALID will be cloned.
  *
  * @param dest_idx, initial index of linked destination modulator to search.
  *  Must be set to -1 at first call.
@@ -1504,7 +1504,7 @@ fluid_mod_copy_linked_mod(const fluid_mod_t *list_mod, int dest_idx, int new_idx
     const fluid_mod_t *mod = list_mod;
     while(mod)
     {
-        if (mod->path & FLUID_MOD_VALID) /* ignores invalid modulator */
+        if (mod->flags & FLUID_MOD_VALID) /* ignores invalid modulator */
         {
             /* is_src_linked is true when modulator mod's input are linked */
             int is_src1_linked = fluid_mod_has_linked_src1(mod);
@@ -1635,7 +1635,7 @@ fluid_mod_copy_linked_mod(const fluid_mod_t *list_mod, int dest_idx, int new_idx
  *
  * @param list_mod, pointer on table or modulators list.
  *  On input, the list may contains any unlinked or linked modulators.
- *  On output, invalid modulators are marked invalid (see enum fluid_path_flags).
+ *  On output, invalid modulators are marked invalid (see enum fluid_mod_vflags).
  * @param mod_count number of modulators in table list_mod:
  *  - If > 0, the function assumes that list_mod is a table and initializes it
  *    as a list of modulators chained by next field, so that the caller doesn't
@@ -1679,14 +1679,14 @@ fluid_mod_check_linked_mod(const char *list_name,
         for (i = 0, count = mod_count-1; i < count; i++)
         {
             list_mod[i].next = &list_mod[i+1]; /* initialize next field */
-            /* initialize path:
+            /* initialize flags:
                - reset bits FLUID_PATH_VALID, FLUID_PATH_CURRENT
                - set bit FLUID_MOD_VALID
              */
-            list_mod[i].path = FLUID_MOD_VALID;
+            list_mod[i].flags = FLUID_MOD_VALID;
         }
         list_mod[count].next = NULL; /* last next field must be NULL */
-        list_mod[count].path = FLUID_MOD_VALID; /* initialize path */
+        list_mod[count].flags = FLUID_MOD_VALID; /* initialize flags */
     }
     else /* lis_mod is a list of modulators */
     {
@@ -1695,7 +1695,7 @@ fluid_mod_check_linked_mod(const char *list_name,
         while(mod)
         {
             mod_count++;
-            mod->path = FLUID_MOD_VALID; /* initialize path */
+            mod->flags = FLUID_MOD_VALID; /* initialize flags */
             mod = mod->next;
         }
     }
@@ -1724,7 +1724,7 @@ fluid_mod_check_linked_mod(const char *list_name,
             /* or is mod identic to any following modulator ? */
                ||fluid_mod_is_identic_in_list(mod, list_mod_name))
             {   /* marks this modulator invalid for future checks */
-                mod->path &= ~FLUID_MOD_VALID;
+                mod->flags &= ~FLUID_MOD_VALID;
             }
 
             mod_count++;
@@ -1735,9 +1735,9 @@ fluid_mod_check_linked_mod(const char *list_name,
     /* Now check linked modulator path */
     result = fluid_mod_check_linked_mod_LOCAL(list_name, list_mod, -1);
 
-    /* Now path contains complete or partial discovered modulators paths.
+    /* Now modulators flags field describe complete or partial discovered modulators paths.
        Other unreachable linked modulators path (isolated) are still in list_mod but
-       not in path. These should now marked invalid and a message is displayed.
+       not described. These should now marked invalid and a message is displayed.
        (specifications SF 2.01  7.4, 7.8) */
     if(list_name != NULL)
     {
@@ -1746,12 +1746,12 @@ fluid_mod_check_linked_mod(const char *list_name,
         while(mod)
         {
             if( /* Check linked mod only not in discovered paths */
-                (mod->path & FLUID_MOD_VALID)
+                (mod->flags & FLUID_MOD_VALID)
                 && fluid_mod_has_linked_src1(mod)
                 /* Check if mod doesn't belong to any discovered paths */
-                && !(mod->path & FLUID_PATH_CURRENT) )
+                && !(mod->flags & FLUID_PATH_CURRENT) )
             {
-                mod->path &= ~FLUID_MOD_VALID; /* mod marked invalid */
+                mod->flags &= ~FLUID_MOD_VALID; /* mod marked invalid */
                 FLUID_LOG(FLUID_WARN, "Invalid isolated path %s/mod%d",
                           list_name, mod_count);
             }
