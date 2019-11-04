@@ -1131,36 +1131,36 @@ int main(void)
             {
                 // dest              , src1              , flags1        , src2            , flags2
                 GEN_VOLENVHOLD       , FLUID_MOD_LINK_SRC, FLUID_MOD_GC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
-                // amount, link, path, next
-                1.0      , 0.0 , 0   , NULL
+                // path         , amount           , link        , next
+                0               , 1.0             , 0.0         , NULL
             },
             /* mod0<-mod1<- */
             {
                 // dest              , src1              , flags1        , src2              , flags2
                 0|FLUID_MOD_LINK_DEST, FLUID_MOD_LINK_SRC, FLUID_MOD_GC  , FLUID_MOD_VELOCITY, FLUID_MOD_GC,
-                // amount, link, path, next
-                2.0      , 0.0 , 0   , NULL
+                // path         , amount           , link        , next
+                0               , 2.0             , 0.0         , NULL
             },
             /* mod1<-mod2<- */
             {
                 // dest              , src1              , flags1        , src2            , flags2
                 1|FLUID_MOD_LINK_DEST, 2                 , FLUID_MOD_CC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
-                // amount, link, path, next
-                3.0      , 0.0 , 0   , NULL
+                // path         , amount           , link        , next
+                0               , 3.0             , 0.0         , NULL
             },
             /* mod0<-mod3<- */
             {
                 // dest              , src1              , flags1        , src2            , flags2
                 0|FLUID_MOD_LINK_DEST, FLUID_MOD_LINK_SRC, FLUID_MOD_GC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
-                // amount, link, path, next
-                4.0      , 0.0 , 0   , NULL
+                // path         , amount           , link        , next
+                0               , 4.0             , 0.0         , NULL
             },
             /* mod3<-mod4<- */
             {
                 // dest              , src1              , flags1        , src2            , flags2
                 3|FLUID_MOD_LINK_DEST, 2                 , FLUID_MOD_CC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
-                // amount, link, path, next
-                5.0      , 0.0 , 0   , NULL
+                // path         , amount           , link        , next
+                0               , 5.0             , 0.0         , NULL
             }
         };
         //--- Input lists build from the table mod_table
@@ -1244,36 +1244,36 @@ int main(void)
             {
                 // dest              , src1              , flags1        , src2            , flags2
                 GEN_VOLENVHOLD       , FLUID_MOD_LINK_SRC, FLUID_MOD_GC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
-                // amount, link, path, next
-                1.0      , 0.0 , 0   , NULL
+                // path         , amount           , link        , next
+                0               , 1.0             , 0.0         , NULL
             },
             /* mod0<-mod1<- */
             {
                 // dest              , src1              , flags1        , src2              , flags2
                 0|FLUID_MOD_LINK_DEST, FLUID_MOD_LINK_SRC, FLUID_MOD_GC  , FLUID_MOD_VELOCITY, FLUID_MOD_GC,
-                // amount, link, path, next
-                2.0      , 0.0 , 0   , NULL
+                // path         , amount           , link        , next
+                0               , 2.0             , 0.0         , NULL
             },
             /* mod1<-mod2<- */
             {
                 // dest              , src1              , flags1        , src2            , flags2
                 1|FLUID_MOD_LINK_DEST, 2                 , FLUID_MOD_CC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
-                // amount, link, path, next
-                3.0      , 0.0 , 0   , NULL
+                // path         , amount           , link        , next
+                0               , 3.0             , 0.0         , NULL
             },
             /* mod0<-mod3<- */
             {
                 // dest              , src1              , flags1        , src2            , flags2
                 0|FLUID_MOD_LINK_DEST, FLUID_MOD_LINK_SRC, FLUID_MOD_GC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
-                // amount, link, path, next
-                4.0      , 0.0 , 0   , NULL
+                // path         , amount           , link        , next
+                0               , 4.0             , 0.0         , NULL
             },
             /* mod3<-mod4<- */
             {
                 // dest              , src1              , flags1        , src2            , flags2
                 3|FLUID_MOD_LINK_DEST, 2                 , FLUID_MOD_CC  , FLUID_MOD_NONE  , FLUID_MOD_GC,
-                // amount, link, path, next
-                5.0      , 0.0 , 0   , NULL
+                // path         , amount           , link        , next
+                0               , 5.0             , 0.0         , NULL
             }
         };
         //--- Input lists build from the table mod_table
