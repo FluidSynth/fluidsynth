@@ -431,6 +431,10 @@ fluid_synth_init(void)
 
 
     /* SF2.01 page 57 section 8.4.10 MIDI Pitch Wheel to Initial Pitch ... */
+    /* Initial Pitch is not a "standard" generator. It isn't mentioned in the
+       list of generator in the SF2 specifications. Destination Initial Pitch
+       is replaced here by fine tune generator.
+     */
     fluid_mod_set_source1(&default_pitch_bend_mod, FLUID_MOD_PITCHWHEEL, /* Index=14 */
                           FLUID_MOD_GC                              /* CC =0 */
                           | FLUID_MOD_LINEAR                        /* type=0 */
@@ -443,7 +447,9 @@ fluid_synth_init(void)
                           | FLUID_MOD_UNIPOLAR                                /* P=0 */
                           | FLUID_MOD_POSITIVE                                /* D=0 */
                          );
-    fluid_mod_set_dest(&default_pitch_bend_mod, GEN_PITCH);                 /* Destination: Initial pitch */
+    /* Destination Initial Pitch (GEN_PITCH) is replaced by Fine Tune (GEN_FINETUNE) */
+    /* See comment in gen.h about GEN_PITCH */
+    fluid_mod_set_dest(&default_pitch_bend_mod, GEN_FINETUNE);              /* Destination: Fine Tune */
     fluid_mod_set_amount(&default_pitch_bend_mod, 12700.0);                 /* Amount: 12700 cents */
 
 

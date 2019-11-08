@@ -95,10 +95,18 @@ enum fluid_gen_type
     GEN_EXCLUSIVECLASS,		/**< Exclusive class number */
     GEN_OVERRIDEROOTKEY,		/**< Sample root note override */
 
-    /* the initial pitch is not a "standard" generator. It is not
-     * mentioned in the list of generator in the SF2 specifications. It
-     * is used, however, as the destination for the default pitch wheel
-     * modulator. */
+    /* The initial pitch is not a "standard" generator. It is not
+       mentioned in the list of generator in the SF2 specifications.
+       It is used to compute the nominal pitch of a note on note-on event.
+       By nature it shouldn't be allowed to be modulated, however
+       the specification define a default modulator having Initial Pitch
+       as destination(SF2.01 page 57 section 8.4.10 MIDI Pitch Wheel to Initial Pitch ...).
+       That means that it is impossible to cancel this default modulator by
+       an identical modulator from a soundfont, in the hope to use MIDI Pitch Wheel
+       to modulate any other modulator. This convention not flexible isn't adopted
+       by FluidSynth that use a default modulator Pitch Wheel to Fine Tune
+       destination instead of Initial Pitch (See fluid_synth_init()).
+     */
     GEN_PITCH,			/**< Pitch @note Not a real SoundFont generator */
 
     GEN_CUSTOM_BALANCE,          /**< Balance @note Not a real SoundFont generator */
