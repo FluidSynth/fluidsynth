@@ -2601,7 +2601,7 @@ static int fluid_sffile_read_vorbis(SFData *sf, unsigned int start_byte, unsigne
     sfdata.end = end_byte;
     sfdata.offset = 0;
 
-    memset(&sfinfo, 0, sizeof(sfinfo));
+    FLUID_MEMSET(&sfinfo, 0, sizeof(sfinfo));
 
     /* Seek to beginning of Ogg Vorbis data in Soundfont */
     if(sf->fcbs->fseek(sf->sffd, sf->samplepos + start_byte, SEEK_SET) == FLUID_FAILED)
@@ -2620,7 +2620,7 @@ static int fluid_sffile_read_vorbis(SFData *sf, unsigned int start_byte, unsigne
     }
 
     // Empty sample
-    if(!sfinfo.frames || !sfinfo.channels)
+    if(sfinfo.frames <= 0 || sfinfo.channels <= 0)
     {
         FLUID_LOG(FLUID_DBG, "Empty decompressed sample");
         *data = NULL;
@@ -2628,7 +2628,12 @@ static int fluid_sffile_read_vorbis(SFData *sf, unsigned int start_byte, unsigne
         return 0;
     }
 
-    /* FIXME: ensure that the decompressed WAV data is 16-bit mono? */
+    // Mono sample
+    if(sfinfo.channels != 1)
+    {
+        FLUID_LOG(FLUID_DBG, "Unsupported channel count %d in ogg sample", sfinfo.channels);
+        goto error_exit;
+    }
 
     wav_data = FLUID_ARRAY(short, sfinfo.frames * sfinfo.channels);
 
@@ -2638,7 +2643,7 @@ static int fluid_sffile_read_vorbis(SFData *sf, unsigned int start_byte, unsigne
         goto error_exit;
     }
 
-    /* Automatically decompresses the Ogg Vorbis data to 16-bit WAV */
+    /* Automatically decompresses the Ogg Vorbis data to 16-bit PCM */
     if(sf_readf_short(sndfile, wav_data, sfinfo.frames) < sfinfo.frames)
     {
         FLUID_LOG(FLUID_DBG, "Decompression failed!");
