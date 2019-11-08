@@ -107,7 +107,8 @@ enum fluid_gen_type
      * Thus it is impossible to cancel this default modulator, which would be required
      * to let the MIDI Pitch Wheel controller modulate a different generator.
      * In order to provide this flexibility, FluidSynth >= 2.1.0 uses a default modulator
-     * "Pitch Wheel to Fine Tune", rather than Initial Pitch.
+     * "Pitch Wheel to Fine Tune", rather than Initial Pitch. The same "compromise" can
+     * be found on the Audigy 2 ZS for instance.
      */
     GEN_PITCH,
 
