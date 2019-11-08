@@ -447,7 +447,6 @@ fluid_synth_init(void)
                           | FLUID_MOD_UNIPOLAR                                /* P=0 */
                           | FLUID_MOD_POSITIVE                                /* D=0 */
                          );
-    /* Destination Initial Pitch (GEN_PITCH) is replaced by Fine Tune (GEN_FINETUNE) */
     /* Also see the comment in gen.h about GEN_PITCH */
     fluid_mod_set_dest(&default_pitch_bend_mod, GEN_FINETUNE);              /* Destination: Fine Tune */
     fluid_mod_set_amount(&default_pitch_bend_mod, 12700.0);                 /* Amount: 12700 cents */
