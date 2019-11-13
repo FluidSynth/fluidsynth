@@ -85,8 +85,7 @@ get_num_outputs(AudioDeviceID deviceID)
 
     if(OK(AudioObjectGetPropertyDataSize(deviceID, &pa, 0, 0, &size)))
     {
-        int num = size / (int) sizeof(AudioBufferList);
-        AudioBufferList bufList[num];
+        AudioBufferList bufList[size];
 
         if(OK(AudioObjectGetPropertyData(deviceID, &pa, 0, 0, &size, bufList)))
         {
