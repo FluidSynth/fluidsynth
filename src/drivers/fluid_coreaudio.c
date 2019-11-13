@@ -83,10 +83,15 @@ get_num_outputs(AudioDeviceID deviceID)
     pa.mScope = kAudioDevicePropertyScopeOutput;
     pa.mElement = kAudioObjectPropertyElementMaster;
 
-    if(OK(AudioObjectGetPropertyDataSize(deviceID, &pa, 0, 0, &size)))
+    if(OK(AudioObjectGetPropertyDataSize(deviceID, &pa, 0, 0, &size)) && size > 0)
     {
-        int num = size / (int) sizeof(AudioBufferList);
-        AudioBufferList bufList[num];
+        AudioBufferList *bufList = FLUID_MALLOC(size);
+
+        if(bufList == NULL)
+        {
+            FLUID_LOG(FLUID_ERR, "Out of memory");
+            return 0;
+        }
 
         if(OK(AudioObjectGetPropertyData(deviceID, &pa, 0, 0, &size, bufList)))
         {
@@ -98,6 +103,8 @@ get_num_outputs(AudioDeviceID deviceID)
                 total += b.mNumberChannels;
             }
         }
+
+        FLUID_FREE(bufList);
     }
 
     return total;
