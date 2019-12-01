@@ -73,7 +73,7 @@ jobs:
         del $(Build.ArtifactStagingDirectory)\bin\msvcp*.dll
         del $(Build.ArtifactStagingDirectory)\lib\libinstpatch*.lib
         del $(Build.ArtifactStagingDirectory)\lib\pkgconfig\libinstpatch*.pc
-        rd $(Build.ArtifactStagingDirectory)\include\libinstpatch-1 /s /q
+        rd $(Build.ArtifactStagingDirectory)\include\libinstpatch-2 /s /q
       displayName: 'Copy Artifacts'
     - task: PublishBuildArtifacts@1
       inputs:
