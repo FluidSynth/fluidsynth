@@ -2207,7 +2207,7 @@ fluid_synth_sysex_midi_tuning(fluid_synth_t *synth, const char *data, int len,
 }
 
 /**
- * Turn off all notes on a MIDI channel (put them into release phase).
+ * Turn off all voices that are playing on the given MIDI channel, by putting them into release phase.
  * @param synth FluidSynth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1), (chan=-1 selects all channels)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
@@ -2257,7 +2257,7 @@ fluid_synth_all_notes_off_LOCAL(fluid_synth_t *synth, int chan)
 }
 
 /**
- * Immediately stop all notes on a MIDI channel (skips release phase).
+ * Immediately stop all voices on the given MIDI channel (skips release phase).
  * @param synth FluidSynth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1), (chan=-1 selects all channels)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
