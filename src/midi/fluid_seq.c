@@ -58,11 +58,6 @@ struct _fluid_sequencer_t
     fluid_evt_entry *queueLater;
     fluid_evt_heap_t *heap;
     fluid_mutex_t mutex;
-#if FLUID_SEQ_WITH_TRACE
-    char *tracebuf;
-    char *traceptr;
-    int tracelen;
-#endif
 };
 
 /* Private data for clients */
@@ -136,21 +131,6 @@ new_fluid_sequencer2(int use_system_timer)
         return NULL;
     }
 
-#if FLUID_SEQ_WITH_TRACE
-    seq->tracelen = 1024 * 100;
-    seq->tracebuf = (char *)FLUID_MALLOC(seq->tracelen);
-
-    if(seq->tracebuf == NULL)
-    {
-        _fluid_seq_queue_end(seq);
-        FLUID_FREE(seq);
-        FLUID_LOG(FLUID_PANIC, "sequencer: Out of memory\n");
-        return NULL;
-    }
-
-    seq->traceptr = seq->tracebuf;
-#endif
-
     return(seq);
 }
 
@@ -184,16 +164,6 @@ delete_fluid_sequencer(fluid_sequencer_t *seq)
     		seq->clients = NULL;
     	}*/
 
-#if FLUID_SEQ_WITH_TRACE
-
-    if(seq->tracebuf != NULL)
-    {
-        FLUID_FREE(seq->tracebuf);
-    }
-
-    seq->tracebuf = NULL;
-#endif
-
     FLUID_FREE(seq);
 }
 
@@ -209,66 +179,6 @@ fluid_sequencer_get_use_system_timer(fluid_sequencer_t *seq)
     return seq->useSystemTimer;
 }
 
-
-#if FLUID_SEQ_WITH_TRACE
-
-/* trace */
-void
-fluid_seq_dotrace(fluid_sequencer_t *seq, char *fmt, ...)
-{
-    va_list args;
-    int len, remain = seq->tracelen - (seq->traceptr - seq->tracebuf);
-
-    if(remain <= 0)
-    {
-        return;
-    }
-
-    va_start(args, fmt);
-    len = FLUID_VSNPRINTF(seq->traceptr, remain, fmt, args);
-    va_end(args);
-
-    if(len > 0)
-    {
-        if(len <= remain)
-        {
-            // all written, with 0 at end
-            seq->traceptr += len;
-        }
-        else
-        {
-            // not enough room, set to end
-            seq->traceptr = seq->tracebuf + seq->tracelen;
-        }
-    }
-
-    return;
-}
-
-/**
- * Clear sequencer trace buffer.
- * @param seq Sequencer object
- */
-void
-fluid_seq_cleartrace(fluid_sequencer_t *seq)
-{
-    seq->traceptr = seq->tracebuf;
-}
-
-/**
- * Get sequencer trace buffer.
- * @param seq Sequencer object
- */
-char *
-fluid_seq_gettrace(fluid_sequencer_t *seq)
-{
-    return seq->tracebuf;
-}
-#else
-
-void fluid_seq_dotrace(fluid_sequencer_t *seq, char *fmt, ...) {}
-
-#endif // FLUID_SEQ_WITH_TRACE
 
 /* clients */
 
