@@ -20,7 +20,7 @@
 # CMake based build system. Pedro Lopez-Cabanillas <plcl@users.sf.net>
 
 cmake_minimum_required ( VERSION 3.1.0 ) # because of CMAKE_C_STANDARD
-project ( FluidSynth C )
+project ( FluidSynth C CXX )
 set ( CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake_admin )
 
 # FluidSynth package name
@@ -117,6 +117,12 @@ mark_as_advanced ( LIB_SUFFIX )
 
 # the default C standard to use for all targets
 set(CMAKE_C_STANDARD 90)
+
+# the default C++ standard to use for all targets
+set(CMAKE_CXX_STANDARD 98)
+
+# whether to use gnu extensions
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Compile with position independent code if the user requested a shared lib, i.e. no PIC if static requested.
 # This is cmakes default behavior, but here it's explicitly required due to the use of libfluidsynth-OBJ as object library,
@@ -617,8 +623,6 @@ endif ( enable-opensles )
 unset ( OBOE_SUPPORT CACHE )
 unset ( OBOE_LIBS CACHE )
 if ( enable-oboe )
-  # enable C++ as it's needed for oboe
-  enable_language ( CXX )
   pkg_check_modules ( OBOE oboe-1.0 )
   if ( OBOE_FOUND )
     set ( OBOE_SUPPORT 1 )

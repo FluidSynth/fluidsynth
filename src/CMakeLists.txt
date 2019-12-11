@@ -205,6 +205,7 @@ set ( libfluidsynth_SOURCES
     midi/fluid_midi_router.h
     midi/fluid_seqbind.c
     midi/fluid_seq.c
+    midi/fluid_seq_queue.cpp
     drivers/fluid_adriver.c
     drivers/fluid_adriver.h
     drivers/fluid_mdriver.c

@@ -18,9 +18,8 @@
  * 02110-1301, USA
  */
 
-
-#ifndef _FLUID_EVENT_PRIV_H
-#define _FLUID_EVENT_PRIV_H
+#ifndef _FLUID_SEQ_QUE_H
+#define _FLUID_SEQ_QUE_H
 
 #include "fluidsynth.h"
 
@@ -28,32 +27,16 @@
 extern "C" {
 #endif
 
-/* Private data for event */
-/* ?? should be optimized in size, using unions */
-struct _fluid_event_t
-{
-    unsigned int time;
-    int type;
-    fluid_seq_id_t src;
-    fluid_seq_id_t dest;
-    int channel;
-    short key;
-    short vel;
-    short control;
-    short value;
-    short id; //?? unused ?
-    int pitch;
-    unsigned int duration;
-    void *data;
-};
+#include "fluid_event.h"
 
-unsigned int fluid_event_get_time(fluid_event_t *evt);
-void fluid_event_set_time(fluid_event_t *evt, unsigned int time);
-
-void fluid_event_clear(fluid_event_t *evt);
+void* new_fluid_seq_queue(int nbEvents);
+void delete_fluid_seq_queue(void *queue);
+int fluid_seq_queue_push(void *queue, const fluid_event_t *evt);
+void fluid_seq_queue_remove(void *queue, fluid_seq_id_t src, fluid_seq_id_t dest, int type);
+void fluid_seq_queue_process(void *que, fluid_sequencer_t *seq);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* _FLUID_EVENT_PRIV_H */
+#endif /* _FLUID_SEQ_QUE_H */

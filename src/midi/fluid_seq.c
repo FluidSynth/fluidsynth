@@ -30,6 +30,7 @@
 #include "fluid_event.h"
 #include "fluid_sys.h"	// timer, threads, etc...
 #include "fluid_list.h"
+#include "fluid_seq_queue.h"
 
 /***************************************************************
  *
@@ -47,7 +48,7 @@ struct _fluid_sequencer_t
     double scale; // ticks per second
     fluid_list_t *clients;
     fluid_seq_id_t clientsID;
-
+    void *queue;
     fluid_mutex_t mutex;
 };
 
@@ -102,6 +103,14 @@ new_fluid_sequencer2(int use_system_timer)
     seq->useSystemTimer = use_system_timer ? 1 : 0;
     seq->startMs = seq->useSystemTimer ? fluid_curtime() : 0;
 
+    seq->queue = new_fluid_seq_queue(FLUID_SEQUENCER_EVENTS_MAX);
+    if(seq->queue == NULL)
+    {
+        FLUID_LOG(FLUID_PANIC, "sequencer: Out of memory\n");
+        delete_fluid_sequencer(seq);
+        return NULL;
+    }
+
     return(seq);
 }
 
@@ -122,6 +131,7 @@ delete_fluid_sequencer(fluid_sequencer_t *seq)
         fluid_sequencer_unregister_client(seq, client->id);
     }
 
+    delete_fluid_seq_queue(seq->queue);
     FLUID_FREE(seq);
 }
 
@@ -371,6 +381,7 @@ fluid_sequencer_send_now(fluid_sequencer_t *seq, fluid_event_t *evt)
     }
 }
 
+
 /**
  * Schedule an event for sending at a later time.
  * @param seq Sequencer object
@@ -411,7 +422,8 @@ fluid_sequencer_remove_events(fluid_sequencer_t *seq, fluid_seq_id_t source,
                               fluid_seq_id_t dest, int type)
 {
     fluid_return_if_fail(seq != NULL);
-    // TODO
+
+    fluid_seq_queue_remove(seq->queue, source, dest, type);
 }
 
 
@@ -443,7 +455,7 @@ fluid_sequencer_get_tick(fluid_sequencer_t *seq)
  * Set the time scale of a sequencer.
  * @param seq Sequencer object
  * @param scale Sequencer scale value in ticks per second
- *   (default is 1000 for 1 tick per millisecond, max is 1000.0)
+ *   (default is 1000 for 1 tick per millisecond)
  *
  * If there are already scheduled events in the sequencer and the scale is changed
  * the events are adjusted accordingly.
@@ -459,23 +471,7 @@ fluid_sequencer_set_time_scale(fluid_sequencer_t *seq, double scale)
         return;
     }
 
-    if(scale > 1000.0)
-        // Otherwise : problems with the timer = 0ms...
-    {
-        scale = 1000.0;
-    }
-
-    if(seq->scale != scale)
-    {
-        // TODO
-#if 0
-        /* re-start timer */
-        if(seq->useSystemTimer)
-        {
-            seq->timer = new_fluid_timer((int)(1000 / seq->scale), _fluid_seq_queue_process, (void *)seq, TRUE, FALSE, TRUE);
-        }
-#endif
-    }
+    seq->scale = scale;
 }
 
 /**
@@ -499,6 +495,8 @@ fluid_sequencer_get_time_scale(fluid_sequencer_t *seq)
 void
 fluid_sequencer_process(fluid_sequencer_t *seq, unsigned int msec)
 {
-    /* send queued events */
     fluid_atomic_int_set(&seq->currentMs, msec);
+
+    fluid_seq_queue_process(seq->queue, seq);
+    /* send queued events */
 }
