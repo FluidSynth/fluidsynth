@@ -20,6 +20,7 @@ ADD_FLUID_TEST(test_ct2hz)
 ADD_FLUID_TEST(test_seq_event_queue_sort)
 ADD_FLUID_TEST(test_seq_scale)
 ADD_FLUID_TEST(test_seq_evt_order)
+ADD_FLUID_TEST(test_seq_event_queue_remove)
 
 # if ( LIBSNDFILE_HASVORBIS )
 #     ADD_FLUID_TEST(test_sf3_sfont_loading)
