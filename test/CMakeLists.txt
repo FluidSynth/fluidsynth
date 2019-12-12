@@ -17,6 +17,7 @@ ADD_FLUID_TEST(test_synth_chorus_reverb)
 ADD_FLUID_TEST(test_snprintf)
 ADD_FLUID_TEST(test_synth_process)
 ADD_FLUID_TEST(test_ct2hz)
+ADD_FLUID_TEST(test_seq_event_queue_sort)
 
 # if ( LIBSNDFILE_HASVORBIS )
 #     ADD_FLUID_TEST(test_sf3_sfont_loading)
