@@ -393,6 +393,16 @@ fluid_sequencer_send_now(fluid_sequencer_t *seq, fluid_event_t *evt)
  * @param absolute TRUE if \a time is absolute sequencer time (time since sequencer
  *   creation), FALSE if relative to current time.
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ *
+ * @note The sequencer sorts events according to their timestamp \c time. For events that have
+ * the same timestamp, fluidsynth (as of version 2.2.0) uses the following order, according to
+ * which events will be dispatched to the client's callback function.
+ *  - #FLUID_SEQ_SYSTEMRESET events precede any other event type.
+ *  - #FLUID_SEQ_UNREGISTERING events succeed #FLUID_SEQ_SYSTEMRESET and precede other event type.
+ *  - #FLUID_SEQ_NOTEON and #FLUID_SEQ_NOTE events succeed any other event type.
+ *  - Otherwise the order is undefined.
+ * \n
+ * Or mathematically: #FLUID_SEQ_SYSTEMRESET < #FLUID_SEQ_UNREGISTERING < ... < (#FLUID_SEQ_NOTEON && #FLUID_SEQ_NOTE)
  */
 int
 fluid_sequencer_send_at(fluid_sequencer_t *seq, fluid_event_t *evt,
