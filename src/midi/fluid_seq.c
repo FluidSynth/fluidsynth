@@ -469,9 +469,8 @@ fluid_sequencer_client_is_dest(fluid_sequencer_t *seq, fluid_seq_id_t id)
 /**
  * Send an event immediately.
  * @param seq Sequencer object
- * @param evt Event to send (copied)
+ * @param evt Event to send (not copied, used directly)
  */
-/* Event not actually copied, but since its used immediately it virtually is. */
 void
 fluid_sequencer_send_now(fluid_sequencer_t *seq, fluid_event_t *evt)
 {
@@ -501,7 +500,7 @@ fluid_sequencer_send_now(fluid_sequencer_t *seq, fluid_event_t *evt)
 /**
  * Schedule an event for sending at a later time.
  * @param seq Sequencer object
- * @param evt Event to send
+ * @param evt Event to send (will be copied into internal queue)
  * @param time Time value in ticks (in milliseconds with the default time scale of 1000).
  * @param absolute TRUE if \a time is absolute sequencer time (time since sequencer
  *   creation), FALSE if relative to current time.
