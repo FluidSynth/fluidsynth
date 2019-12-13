@@ -21,6 +21,7 @@ All the source code examples in this document are in the public domain; you can 
 
 - \ref Disclaimer
 - \ref Introduction
+- \ref NewIn2_1_1
 - \ref NewIn2_1_0
 - \ref NewIn2_0_8
 - \ref NewIn2_0_7
@@ -66,6 +67,10 @@ What is FluidSynth?
 - FluidSynth can easily be embedded in an application. It has a main header file, fluidsynth.h, and one dynamically linkable library. FluidSynth runs on Linux, Mac OS X, and the Windows platforms, and support for OS/2 and OpenSolaris is experimental. It has audio and midi drivers for all mentioned platforms but you can use it with your own drivers if your application already handles MIDI and audio input/output. This document explains the basic usage of FluidSynth and provides examples that you can reuse. 
 
 - FluidSynth is open source, in active development. For more details, take a look at http://www.fluidsynth.org
+
+\section NewIn2_1_1 Whats new in 2.1.1?
+
+- using the sequencer with the system timer as timing source has been deprecated
 
 \section NewIn2_1_0 Whats new in 2.1.0?
 

@@ -41,7 +41,7 @@ typedef void (*fluid_event_callback_t)(unsigned int time, fluid_event_t *event,
                                        fluid_sequencer_t *seq, void *data);
 
 
-FLUIDSYNTH_API fluid_sequencer_t *new_fluid_sequencer(void);
+FLUID_DEPRECATED FLUIDSYNTH_API fluid_sequencer_t *new_fluid_sequencer(void);
 FLUIDSYNTH_API fluid_sequencer_t *new_fluid_sequencer2(int use_system_timer);
 FLUIDSYNTH_API void delete_fluid_sequencer(fluid_sequencer_t *seq);
 FLUIDSYNTH_API int fluid_sequencer_get_use_system_timer(fluid_sequencer_t *seq);
