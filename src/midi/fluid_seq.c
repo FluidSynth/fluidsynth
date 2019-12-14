@@ -176,6 +176,8 @@ delete_fluid_sequencer(fluid_sequencer_t *seq)
 int
 fluid_sequencer_get_use_system_timer(fluid_sequencer_t *seq)
 {
+    fluid_return_val_if_fail(seq != NULL, FALSE);
+
     return seq->useSystemTimer;
 }
 
@@ -202,6 +204,8 @@ fluid_sequencer_register_client(fluid_sequencer_t *seq, const char *name,
 {
     fluid_sequencer_client_t *client;
     char *nameCopy;
+
+    fluid_return_val_if_fail(seq != NULL, FLUID_FAILED);
 
     client = FLUID_NEW(fluid_sequencer_client_t);
 
@@ -242,10 +246,7 @@ fluid_sequencer_unregister_client(fluid_sequencer_t *seq, fluid_seq_id_t id)
 {
     fluid_list_t *tmp;
 
-    if(seq->clients == NULL)
-    {
-        return;
-    }
+    fluid_return_if_fail(seq != NULL);
 
     tmp = seq->clients;
 
@@ -280,7 +281,7 @@ fluid_sequencer_unregister_client(fluid_sequencer_t *seq, fluid_seq_id_t id)
 int
 fluid_sequencer_count_clients(fluid_sequencer_t *seq)
 {
-    if(seq->clients == NULL)
+    if(seq == NULL || seq->clients == NULL)
     {
         return 0;
     }
@@ -296,7 +297,12 @@ fluid_sequencer_count_clients(fluid_sequencer_t *seq)
  */
 fluid_seq_id_t fluid_sequencer_get_client_id(fluid_sequencer_t *seq, int index)
 {
-    fluid_list_t *tmp = fluid_list_nth(seq->clients, index);
+    fluid_list_t *tmp;
+
+    fluid_return_val_if_fail(seq != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(index >= 0, FLUID_FAILED);
+
+    tmp = fluid_list_nth(seq->clients, index);
 
     if(tmp == NULL)
     {
@@ -321,10 +327,7 @@ fluid_sequencer_get_client_name(fluid_sequencer_t *seq, fluid_seq_id_t id)
 {
     fluid_list_t *tmp;
 
-    if(seq->clients == NULL)
-    {
-        return NULL;
-    }
+    fluid_return_val_if_fail(seq != NULL, NULL);
 
     tmp = seq->clients;
 
@@ -354,10 +357,7 @@ fluid_sequencer_client_is_dest(fluid_sequencer_t *seq, fluid_seq_id_t id)
 {
     fluid_list_t *tmp;
 
-    if(seq->clients == NULL)
-    {
-        return FALSE;
-    }
+    fluid_return_val_if_fail(seq != NULL, FALSE);
 
     tmp = seq->clients;
 
@@ -384,10 +384,16 @@ fluid_sequencer_client_is_dest(fluid_sequencer_t *seq, fluid_seq_id_t id)
 void
 fluid_sequencer_send_now(fluid_sequencer_t *seq, fluid_event_t *evt)
 {
-    fluid_seq_id_t destID = fluid_event_get_dest(evt);
+    fluid_seq_id_t destID;
+    fluid_list_t *tmp;
+
+    fluid_return_if_fail(seq != NULL);
+    fluid_return_if_fail(evt != NULL);
+
+    destID = fluid_event_get_dest(evt);
 
     /* find callback */
-    fluid_list_t *tmp = seq->clients;
+    tmp = seq->clients;
 
     while(tmp)
     {
@@ -422,6 +428,9 @@ fluid_sequencer_send_at(fluid_sequencer_t *seq, fluid_event_t *evt,
 {
     unsigned int now = fluid_sequencer_get_tick(seq);
 
+    fluid_return_val_if_fail(seq != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(evt != NULL, FLUID_FAILED);
+
     /* set absolute */
     if(!absolute)
     {
@@ -446,6 +455,8 @@ void
 fluid_sequencer_remove_events(fluid_sequencer_t *seq, fluid_seq_id_t source,
                               fluid_seq_id_t dest, int type)
 {
+    fluid_return_if_fail(seq != NULL);
+
     _fluid_seq_queue_pre_remove(seq, source, dest, type);
 }
 
@@ -462,9 +473,13 @@ fluid_sequencer_remove_events(fluid_sequencer_t *seq, fluid_seq_id_t source,
 unsigned int
 fluid_sequencer_get_tick(fluid_sequencer_t *seq)
 {
-    unsigned int absMs = seq->useSystemTimer ? (int) fluid_curtime() : fluid_atomic_int_get(&seq->currentMs);
+    unsigned int absMs;
     double nowFloat;
     unsigned int now;
+
+    fluid_return_val_if_fail(seq != NULL, 0u);
+
+    absMs = seq->useSystemTimer ? (int) fluid_curtime() : fluid_atomic_int_get(&seq->currentMs);
     nowFloat = ((double)(absMs - seq->startMs)) * seq->scale / 1000.0f;
     now = nowFloat;
     return now;
@@ -482,6 +497,8 @@ fluid_sequencer_get_tick(fluid_sequencer_t *seq)
 void
 fluid_sequencer_set_time_scale(fluid_sequencer_t *seq, double scale)
 {
+    fluid_return_if_fail(seq != NULL);
+
     if(scale <= 0)
     {
         FLUID_LOG(FLUID_WARN, "sequencer: scale <= 0 : %f\n", scale);
@@ -542,6 +559,7 @@ fluid_sequencer_set_time_scale(fluid_sequencer_t *seq, double scale)
 double
 fluid_sequencer_get_time_scale(fluid_sequencer_t *seq)
 {
+    fluid_return_val_if_fail(seq != NULL, 0);
     return seq->scale;
 }
 
