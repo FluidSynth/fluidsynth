@@ -64,14 +64,6 @@ FLUIDSYNTH_API unsigned int fluid_sequencer_get_tick(fluid_sequencer_t *seq);
 FLUIDSYNTH_API void fluid_sequencer_set_time_scale(fluid_sequencer_t *seq, double scale);
 FLUIDSYNTH_API double fluid_sequencer_get_time_scale(fluid_sequencer_t *seq);
 
-// Compile in internal traceing functions
-#define FLUID_SEQ_WITH_TRACE 0
-
-#if FLUID_SEQ_WITH_TRACE
-FLUIDSYNTH_API char *fluid_seq_gettrace(fluid_sequencer_t *seq);
-FLUIDSYNTH_API void fluid_seq_cleartrace(fluid_sequencer_t *seq);
-#endif
-
 #ifdef __cplusplus
 }
 #endif
