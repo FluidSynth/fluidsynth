@@ -115,6 +115,11 @@ new_fluid_sequencer2(int use_system_timer)
 {
     fluid_sequencer_t *seq;
 
+    if(use_system_timer)
+    {
+        FLUID_LOG(FLUID_WARN, "sequencer: Usage of the system timer has been deprecated!");
+    }
+
     seq = FLUID_NEW(fluid_sequencer_t);
 
     if(seq == NULL)
