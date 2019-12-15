@@ -49,7 +49,7 @@ struct _fluid_sequencer_t
     fluid_list_t *clients;
     fluid_seq_id_t clientsID;
     void *queue;
-    fluid_mutex_t mutex;
+    fluid_rec_mutex_t mutex;
 };
 
 /* Private data for clients */
@@ -103,6 +103,8 @@ new_fluid_sequencer2(int use_system_timer)
     seq->useSystemTimer = use_system_timer ? 1 : 0;
     seq->startMs = seq->useSystemTimer ? fluid_curtime() : 0;
 
+    fluid_rec_mutex_init(seq->mutex);
+
     seq->queue = new_fluid_seq_queue(FLUID_SEQUENCER_EVENTS_MAX);
     if(seq->queue == NULL)
     {
@@ -131,6 +133,7 @@ delete_fluid_sequencer(fluid_sequencer_t *seq)
         fluid_sequencer_unregister_client(seq, client->id);
     }
 
+    fluid_rec_mutex_destroy(seq->mutex);
     delete_fluid_seq_queue(seq->queue);
     FLUID_FREE(seq);
 }
@@ -395,6 +398,7 @@ int
 fluid_sequencer_send_at(fluid_sequencer_t *seq, fluid_event_t *evt,
                         unsigned int time, int absolute)
 {
+    int res;
     unsigned int now = fluid_sequencer_get_tick(seq);
 
     fluid_return_val_if_fail(seq != NULL, FLUID_FAILED);
@@ -408,6 +412,12 @@ fluid_sequencer_send_at(fluid_sequencer_t *seq, fluid_event_t *evt,
 
     /* time stamp event */
     fluid_event_set_time(evt, time);
+
+    fluid_rec_mutex_lock(seq->mutex);
+    res = fluid_seq_queue_push(seq->queue, evt);
+    fluid_rec_mutex_unlock(seq->mutex);
+
+    return res;
 }
 
 /**
@@ -423,7 +433,9 @@ fluid_sequencer_remove_events(fluid_sequencer_t *seq, fluid_seq_id_t source,
 {
     fluid_return_if_fail(seq != NULL);
 
+    fluid_rec_mutex_lock(seq->mutex);
     fluid_seq_queue_remove(seq->queue, source, dest, type);
+    fluid_rec_mutex_unlock(seq->mutex);
 }
 
 
@@ -497,6 +509,7 @@ fluid_sequencer_process(fluid_sequencer_t *seq, unsigned int msec)
 {
     fluid_atomic_int_set(&seq->currentMs, msec);
 
+    fluid_rec_mutex_lock(seq->mutex);
     fluid_seq_queue_process(seq->queue, seq);
-    /* send queued events */
+    fluid_rec_mutex_unlock(seq->mutex);
 }
