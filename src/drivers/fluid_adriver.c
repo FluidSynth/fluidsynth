@@ -399,7 +399,7 @@ delete_fluid_audio_driver(fluid_audio_driver_t *driver)
  * By default all audio drivers fluidsynth has been compiled with are registered, so calling this function is optional.
  *
  * @warning This function may only be called if no thread is residing in fluidsynth's API and no instances of any kind
- * are alive (e.g. as it would be the case right after fluidsynth's inital creation). Else the behaviour is undefined.
+ * are alive (e.g. as it would be the case right after fluidsynth's initial creation). Else the behaviour is undefined.
  * Furtermore any attempt of using audio drivers that have not been registered is undefined behaviour!
  *
  * @param adrivers NULL-terminated array of audio drivers to register. Pass NULL to register all available drivers.

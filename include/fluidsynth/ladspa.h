@@ -29,7 +29,7 @@ extern "C" {
  * @file ladspa.h
  * @brief Functions for manipulating the ladspa effects unit
  *
- * This header defines useful functions for programatically manipulating the ladspa
+ * This header defines useful functions for programmatically manipulating the ladspa
  * effects unit of the synth that can be retrieved via fluid_synth_get_ladspa_fx().
  *
  * Using any of those functions requires fluidsynth to be compiled with ladspa support.

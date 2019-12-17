@@ -68,7 +68,7 @@
  *    output is the same. This sounds like a monophonic signal.
  *    When 100, the separation between left and right is maximum.
  *
- *  - level (0 to 1), controls the ouput level reverberation.
+ *  - level (0 to 1), controls the output level reverberation.
  *
  * This FDN reverb produces a better quality reverberation tail than Freeverb with
  * far less ringing by using modulated delay lines that help to cancel
@@ -428,7 +428,7 @@ typedef struct
 static void set_mod_frequency(sinus_modulator *mod,
                               float freq, float sample_rate, float phase)
 {
-    fluid_real_t w = 2 * FLUID_M_PI * freq / sample_rate; /* intial angle */
+    fluid_real_t w = 2 * FLUID_M_PI * freq / sample_rate; /* initial angle */
     fluid_real_t a;
 
     mod->a1 = 2 * FLUID_COS(w);
@@ -599,7 +599,7 @@ static int set_mod_delay_line(mod_delay_line *mdl,
     mdl->center_pos_mod = (fluid_real_t) INTERP_SAMPLES_NBR + mod_depth;
 
     /* index rate to control when to update center_pos_mod */
-    /* Important: must be set to get center_pos_mod immediatly used for the
+    /* Important: must be set to get center_pos_mod immediately used for the
        reading of first sample (see get_mod_delay()) */
     mdl->index_rate = mdl->mod_rate;
 
@@ -631,7 +631,7 @@ static FLUID_INLINE fluid_real_t get_mod_delay(mod_delay_line *mdl)
     fluid_real_t out; /* value to return */
 
     /* Checks if the modulator must be updated (every mod_rate samples). */
-    /* Important: center_pos_mod must be used immediatly for the
+    /* Important: center_pos_mod must be used immediately for the
        first sample. So, mdl->index_rate must be initialized
        to mdl->mod_rate (set_mod_delay_line())  */
 
@@ -688,7 +688,7 @@ static FLUID_INLINE fluid_real_t get_mod_delay(mod_delay_line *mdl)
         mdl->dl.line_out -= mdl->dl.size;
     }
 
-    /* Fractional interpolation beetween next sample (at next position) and
+    /* Fractional interpolation between next sample (at next position) and
        previous output added to current sample.
     */
     out += mdl->frac_pos_mod * (mdl->dl.line[mdl->dl.line_out] - mdl->buffer);
@@ -932,7 +932,7 @@ static int create_mod_delay_lines(fluid_late *late, fluid_real_t sample_rate)
 
         Delay line's length given by static table delay_length[] is nominal
         to get minimum modal density of 0.15 at sample rate 44100Hz.
-        Here we set length_factor to 2 to mutiply this nominal modal
+        Here we set length_factor to 2 to multiply this nominal modal
         density by 2. This leads to a default modal density of 0.15 * 2 = 0.3 for
         sample rate <= 44100.
 
@@ -1055,7 +1055,7 @@ fluid_revmodel_update(fluid_revmodel_t *rev)
     fluid_real_t wet = (rev->level * SCALE_WET) /
                        (1.0f + rev->width * SCALE_WET_WIDTH);
 
-    /* wet1 and wet2 are used by the stereo effect controled by the width setting
+    /* wet1 and wet2 are used by the stereo effect controlled by the width setting
     for producing a stereo ouptput from a monophonic reverb signal.
     Please see the note above about a side effect tendency */
 
@@ -1135,7 +1135,7 @@ delete_fluid_revmodel(fluid_revmodel_t *rev)
 *
 * Note that while the reverb is used by calling any fluid_revmodel_processXXX()
 * function, calling fluid_revmodel_set() could produce audible clics.
-* If this is a problem, optionnaly call fluid_revmodel_reset() before calling
+* If this is a problem, optionally call fluid_revmodel_reset() before calling
 * fluid_revmodel_set().
 *
 * @param rev Reverb instance.
@@ -1298,7 +1298,7 @@ fluid_revmodel_processreplace(fluid_revmodel_t *rev, const fluid_real_t *in,
             process_damping_filter(delay_out_s, delay_out_s, mdl);
 
             /* Result in delay_out[], and matrix_factor.
-               These wil be use later during input line process */
+               These will be of use later during input line process */
             delay_out[i] = delay_out_s;   /* result in delay_out[] */
             matrix_factor += delay_out_s; /* result in matrix_factor */
 
@@ -1419,7 +1419,7 @@ void fluid_revmodel_processmix(fluid_revmodel_t *rev, const fluid_real_t *in,
             process_damping_filter(delay_out_s, delay_out_s, mdl);
 
             /* Result in delay_out[], and matrix_factor.
-               These wil be use later during input line process */
+               These will be of use later during input line process */
             delay_out[i] = delay_out_s;   /* result in delay_out[] */
             matrix_factor += delay_out_s; /* result in matrix_factor */
 

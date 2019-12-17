@@ -63,7 +63,7 @@
  * The delay i is controlled by a sine or triangle modulation i ( 1 <= i <= n).
  *
  * The chorus unit process a monophonic input signal and produces stereo output
- * controled by WIDTH macro.
+ * controlled by WIDTH macro.
  * Actually WIDTH is fixed to maximum value. But in the future, we could add a
  * setting (e.g "synth.chorus.width") allowing the user to get a gradually stereo
  * effect from minimum (monophonic) to maximum stereo effect.
@@ -79,7 +79,7 @@
  * The advantages are:
  * - Avoiding a lost of 608272 memory bytes when lfo speed is low (0.3Hz).
  * - Allows to diminish the lfo speed lower limit to 0.1Hz instead of 0.3Hz.
- *   A speed of 0.1 is interresting for chorus. Using a lookuptable for 0.1Hz
+ *   A speed of 0.1 is interesting for chorus. Using a lookuptable for 0.1Hz
  *   would require too much memory (1824816 bytes).
  * - Interpolation make use of first order all-pass interpolator instead of
  *   bandlimited interpolation.
@@ -244,7 +244,7 @@ struct _fluid_chorus_t
 static void set_sinus_frequency(sinus_modulator *mod,
                                 float freq, float sample_rate, float phase)
 {
-    fluid_real_t w = 2 * FLUID_M_PI * freq / sample_rate; /* intial angle */
+    fluid_real_t w = 2 * FLUID_M_PI * freq / sample_rate; /* initial angle */
     fluid_real_t a;
 
     mod->a1 = 2 * FLUID_COS(w);
@@ -313,7 +313,7 @@ static void set_triangle_frequency(triang_modulator *mod, float freq,
     mod->inc  = 4 / ns_period; /* positive slope */
 
     /* The initial value and the sign of the slope depend of initial phase:
-      intial value = = (ns_period * frac_phase) * slope
+      initial value = = (ns_period * frac_phase) * slope
     */
     mod->val =  ns_period * frac_phase * mod->inc;
 
@@ -365,7 +365,7 @@ static FLUID_INLINE fluid_real_t get_mod_delay(fluid_chorus_t *chorus,
     fluid_real_t out; /* value to return */
 
     /* Checks if the modulator must be updated (every mod_rate samples). */
-    /* Important: center_pos_mod must be used immediatly for the
+    /* Important: center_pos_mod must be used immediately for the
        first sample. So, mdl->index_rate must be initialized
        to mdl->mod_rate (new_mod_delay_line())  */
 
@@ -421,7 +421,7 @@ static FLUID_INLINE fluid_real_t get_mod_delay(fluid_chorus_t *chorus,
         mod->line_out -= chorus->size;
     }
 
-    /* Fractional interpolation beetween next sample (at next position) and
+    /* Fractional interpolation between next sample (at next position) and
        previous output added to current sample.
     */
     out += mod->frac_pos_mod * (chorus->line[mod->line_out] - mod->buffer);
@@ -479,7 +479,7 @@ static void set_center_position(fluid_chorus_t *chorus)
     chorus->center_pos_mod = (fluid_real_t)center;
 
     /* index rate to control when to update center_pos_mod */
-    /* Important: must be set to get center_pos_mod immediatly used for the
+    /* Important: must be set to get center_pos_mod immediately used for the
        reading of first sample (see get_mod_delay()) */
     chorus->index_rate = chorus->mod_rate;
 }
@@ -800,7 +800,7 @@ fluid_chorus_set(fluid_chorus_t *chorus, int set, int nr, fluid_real_t level,
 
         fluid_real_t wet = chorus->level * SCALE_WET ;
 
-        /* wet1 and wet2 are used by the stereo effect controled by the width setting
+        /* wet1 and wet2 are used by the stereo effect controlled by the width setting
         for producing a stereo ouptput from a monophonic chorus signal.
         Please see the note above about a side effect tendency */
 

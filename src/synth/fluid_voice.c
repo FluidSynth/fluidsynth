@@ -1141,7 +1141,7 @@ fluid_voice_update_param(fluid_voice_t *voice, int gen)
 /**
  * Recalculate voice parameters for a given control.
  * @param voice the synthesis voice
- * @param cc flag to distinguish between a continous control and a channel control (pitch bend, ...)
+ * @param cc flag to distinguish between a continuous control and a channel control (pitch bend, ...)
  * @param ctrl the control number:
  *   when >=0, only modulators's destination having ctrl as source are updated.
  *   when -1, all modulators's destination are updated (regardless of ctrl).
@@ -1324,7 +1324,7 @@ fluid_voice_release(fluid_voice_t *voice)
 {
     unsigned int at_tick = fluid_channel_get_min_note_length_ticks(voice->channel);
     UPDATE_RVOICE_I1(fluid_rvoice_noteoff, at_tick);
-    voice->has_noteoff = 1; // voice is marked as noteoff occured
+    voice->has_noteoff = 1; // voice is marked as noteoff occurred
 }
 
 /*
@@ -1484,7 +1484,7 @@ fluid_voice_add_mod(fluid_voice_t *voice, fluid_mod_t *mod, int mode)
  *     are checked for identity.
  *   - When check_count_limit is below the actual number of voices modulators
  *   (voice->mod_count), this will restrict identity check to this number,
- *   This is usefull when we know by advance that there is no duplicate with
+ *   This is useful when we know by advance that there is no duplicate with
  *   modulators at index above this limit. This avoid wasting cpu cycles at noteon.
  */
 void

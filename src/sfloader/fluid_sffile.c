@@ -893,7 +893,7 @@ static int process_sdta(SFData *sf, unsigned int size)
 
                 if(chunk.size > size)
                 {
-                    FLUID_LOG(FLUID_WARN, "SM24 exeeds SDTA chunk, ignoring SM24");
+                    FLUID_LOG(FLUID_WARN, "SM24 exceeds SDTA chunk, ignoring SM24");
                     goto ret; // no error
                 }
 
@@ -2476,7 +2476,7 @@ error_exit:
 /* Ogg Vorbis loading and decompression */
 #if LIBSNDFILE_SUPPORT
 
-/* Virtual file access rountines to allow loading individually compressed
+/* Virtual file access routines to allow loading individually compressed
  * samples from the Soundfont sample data chunk using the file callbacks
  * passing in during opening of the file */
 typedef struct _sfvio_data_t

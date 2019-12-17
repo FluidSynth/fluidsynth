@@ -67,7 +67,7 @@ What is FluidSynth?
 
 - FluidSynth is open source, in active development. For more details, take a look at http://www.fluidsynth.org
 
-\section NewIn2_1_0 Whats new in 2.1.0?
+\section NewIn2_1_0 What's new in 2.1.0?
 
 - <span style="color:red">refrain from using fluid_synth_set_sample_rate()</span>
 - new reverb engine
@@ -79,35 +79,35 @@ What is FluidSynth?
   - sdl2
   - waveout
 
-\section NewIn2_0_8 Whats new in 2.0.8?
+\section NewIn2_0_8 What's new in 2.0.8?
 
 - fluid_sample_set_sound_data() caused broken sound when copying sample data
 
-\section NewIn2_0_7 Whats new in 2.0.7?
+\section NewIn2_0_7 What's new in 2.0.7?
 
 - fluid_free() has been added to allow proper deallocation by programming languages other than C/C++
 
-\section NewIn2_0_6 Whats new in 2.0.6?
+\section NewIn2_0_6 What's new in 2.0.6?
 
 - the MIDI player did not emit any audio when calling fluid_player_play() after fluid_player_stop()
 
-\section NewIn2_0_5 Whats new in 2.0.5?
+\section NewIn2_0_5 What's new in 2.0.5?
 
 - fluid_synth_process() omitted audio samples when called with arbitrary sample counts that were not a multiple of fluid_synth_get_internal_bufsize()
 - fluid_synth_sfunload() was not releasing sample buffers of SoundFont3 files if <a href="fluidsettings.xml#synth.dynamic-sample-loading">"synth.dynamic-sample-loading"</a> was set to FALSE
 
-\section NewIn2_0_3 Whats new in 2.0.3?
+\section NewIn2_0_3 What's new in 2.0.3?
 
 - fix incorrect behaviour of fluid_sample_set_sound_data()
 - add missing getters for midi events:
   - fluid_midi_event_get_text()
   - fluid_midi_event_get_lyrics()
 
-\section NewIn2_0_2 Whats new in 2.0.2?
+\section NewIn2_0_2 What's new in 2.0.2?
 
 - fluid_synth_error() has been deprecated, use fluid_set_log_function() to interfere log messages
 
-\section NewIn2_0_0 Whats new in 2.0.0?
+\section NewIn2_0_0 What's new in 2.0.0?
 
 FluidSynths major version was bumped. The API was reworked, deprecated functions were removed.
 
@@ -452,7 +452,7 @@ fluid_settings_setstr(settings, "audio.file.name", "/path/to/output.wav");
 // use number of samples processed as timing source, rather than the system timer
 fluid_settings_setstr(settings, "player.timing-source", "sample");
 
-// since this is a non-realtime szenario, there is no need to pin the sample data
+// since this is a non-realtime scenario, there is no need to pin the sample data
 fluid_settings_setint(settings, "synth.lock-memory", 0);
 
 synth = new_fluid_synth(settings);

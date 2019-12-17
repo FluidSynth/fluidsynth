@@ -413,7 +413,7 @@ fluid_channel_update_legato_staccato_state(fluid_channel_t *chan)
  *       prev_note keeps a trace of the note prior i_last note.
  *       FLUID_CHANNEL_LEGATO_PLAYING bit keeps trace of legato/staccato playing state.
  *
- * More informations in FluidPolyMono-0004.pdf chapter 4 (Appendices).
+ * More information in FluidPolyMono-0004.pdf chapter 4 (Appendices).
 */
 void
 fluid_channel_add_monolist(fluid_channel_t *chan, unsigned char key,
@@ -523,7 +523,7 @@ fluid_channel_search_monolist(fluid_channel_t *chan, unsigned char key, int *i_p
  *       - prev_note keeps a trace of the note removed if it is i_last.
  *       - FLUID_CHANNEL_LEGATO_PLAYING bit keeps a trace of legato/staccato playing state.
  *
- * More informations in FluidPolyMono-0004.pdf chapter 4 (Appendices).
+ * More information in FluidPolyMono-0004.pdf chapter 4 (Appendices).
  */
 void
 fluid_channel_remove_monolist(fluid_channel_t *chan, int i, int *i_prev)

@@ -523,7 +523,7 @@ fluid_shell_run(void *data)
         case 1: /* empty line or comment */
             break;
 
-        case FLUID_FAILED: /* erronous command */
+        case FLUID_FAILED: /* erroneous command */
             errors = TRUE;
 
         case FLUID_OK: /* valid command */
@@ -1373,7 +1373,7 @@ fluid_handle_echo(void *data, int ac, char **av, fluid_ostream_t out)
 /* Purpose:
  * Sleep during a time in ms
  * The command itself is useful to insert a delay between commands.
- * It can help for exemple to build a small song using noteon/noteoff commands
+ * It can help for example to build a small song using noteon/noteoff commands
  * in a command file.
  */
 int
@@ -2510,7 +2510,7 @@ static int print_basic_channels(fluid_synth_t *synth, fluid_ostream_t out)
 
 /*-----------------------------------------------------------------------------
   basicchannels
-   Prints the list of all MIDI basic channels informations
+   Prints the list of all MIDI basic channels information
    example:
 
 	Basic channel:  0, poly omni on (0), nbr:  3
@@ -2527,7 +2527,7 @@ int fluid_handle_basicchannels(void *data, int ac, char **av,
 }
 
 /*
-  Searchs a mode name and returns the channel mode number.
+  Searches a mode name and returns the channel mode number.
   name must be: poly_omnion,  mono_omnion, poly_omnioff, mono_omnioff.
   @param name to search.
   @return channel mode number (0 to 3) if name is valid, -1 otherwise.
@@ -3045,7 +3045,7 @@ int fluid_handle_setlegatomode(void *data, int ac, char **av,
         return -1;
     }
 
-    n = ac / 2; /* number of legato groups informations */
+    n = ac / 2; /* number of legato groups information */
 
     for(i = 0; i < n; i++)
     {
@@ -3135,7 +3135,7 @@ int fluid_handle_setportamentomode(void *data, int ac, char **av,
         return -1;
     }
 
-    n = ac / 2; /* number of portamento groups informations */
+    n = ac / 2; /* number of portamento groups information */
 
     for(i = 0; i < n; i++)
     {
@@ -3259,7 +3259,7 @@ int fluid_handle_breathmode(void *data, int ac, char **av,
 
   Parameter 1 is the channel number (i.e 4).
   Parameter 2 is the " Breath modulator " enable/disable  for poly mode (i.e disabled).
-  Parameter 3 is the " Breath modulator " enabe/disable for mono mode (i.e enabled).
+  Parameter 3 is the " Breath modulator " enable/disable for mono mode (i.e enabled).
   Parameter 4 is "breath sync noteOn/Off" enable/disable for mono mode only (i.e enabled).
 
 */
@@ -3281,7 +3281,7 @@ int fluid_handle_setbreathmode(void *data, int ac, char **av,
         return -1;
     }
 
-    n = ac / 4; /* number of breath groups informations */
+    n = ac / 4; /* number of breath groups information */
 
     for(i = 0; i < n; i++)
     {
@@ -3866,7 +3866,7 @@ static unsigned short fluid_profile_send_notes(fluid_synth_t *synth, int notes,
 * Starts n_prof measures of dur duration(ms) each.
 *
 * n_prof  number of measures (default value if not specified).
-* dur: measure duration (ms) (defaut value if not specified).
+* dur: measure duration (ms) (default value if not specified).
 *
 * The result of each measure is displayed.
 *
@@ -3967,7 +3967,7 @@ fluid_handle_prof_start(void *data, int ac, char **av, fluid_ostream_t out)
     }
 
     /* Starts - waits - prints n_prof measures */
-    fluid_ostream_printf(out, "Number of measures(n_prof):%d, duration of one mesure(dur):%dms\n",
+    fluid_ostream_printf(out, "Number of measures(n_prof):%d, duration of one measure(dur):%dms\n",
                          n_prof, dur);
 
     /* Clears any previous <ENTER> pending key */

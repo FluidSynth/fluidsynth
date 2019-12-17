@@ -464,7 +464,7 @@ typedef SOCKET fluid_socket_t;
 typedef int fluid_socket_t;
 #endif
 
-/* The function should return 0 if no error occured, non-zero
+/* The function should return 0 if no error occurred, non-zero
    otherwise. If the function return non-zero, the socket will be
    closed by the server. */
 typedef int (*fluid_server_func_t)(void *data, fluid_socket_t client_socket, char *addr);
@@ -500,7 +500,7 @@ FILE* fluid_file_open(const char* filename, const char** errMsg);
 
 /* Profiling */
 #if WITH_PROFILING
-/** profiling interface beetween Profiling command shell and Audio
+/** profiling interface between Profiling command shell and Audio
     rendering  API (FluidProfile_0004.pdf- 3.2.2)
 */
 
@@ -733,7 +733,7 @@ void fluid_msleep(unsigned int msecs);
  * Make sure you've allocated an extra of \c alignment bytes to avoid a buffer overflow.
  *
  * @note \c alignment must be a power of two
- * @return Returned pointer is guarenteed to be aligned to \c alignment boundary and in range \f[ ptr <= returned_ptr < ptr + alignment \f].
+ * @return Returned pointer is guaranteed to be aligned to \c alignment boundary and in range \f[ ptr <= returned_ptr < ptr + alignment \f].
  */
 static FLUID_INLINE void *fluid_align_ptr(const void *ptr, unsigned int alignment)
 {
