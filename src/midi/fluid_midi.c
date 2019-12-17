@@ -2354,7 +2354,7 @@ delete_fluid_midi_parser(fluid_midi_parser_t *parser)
  * apps to abuse fluidsynth as midi parser, e.g. feeding it with rawmidi and pull out
  * the needed midi information using the getter functions of fluid_midi_event_t.
  * This parser however is incomplete as it e.g. only provides a limited buffer to
- * store and process SYSEX data (i.e. doesnt allow arbitrary lengths)
+ * store and process SYSEX data (i.e. doesn't allow arbitrary lengths)
  */
 fluid_midi_event_t *
 fluid_midi_parser_parse(fluid_midi_parser_t *parser, unsigned char c)

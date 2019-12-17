@@ -50,7 +50,7 @@ int fx_function(void *data, int len,
      * audio output. */
     if(fluid_synth_process(fx_data->synth, len, nfx, fx, nout, out) != FLUID_OK)
     {
-        /* Some error occured. Very unlikely to happen, though. */
+        /* Some error occurred. Very unlikely to happen, though. */
         return FLUID_FAILED;
     }
 

@@ -37,7 +37,7 @@ struct _fluid_rvoice_event_t
 
 /*
  * Bridge between the renderer thread and the midi state thread.
- * fluid_rvoice_eventhandler_fetch_all() can be called in parallell
+ * fluid_rvoice_eventhandler_fetch_all() can be called in parallel
  * with fluid_rvoice_eventhandler_push/flush()
  */
 struct _fluid_rvoice_eventhandler_t

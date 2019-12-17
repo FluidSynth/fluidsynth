@@ -616,7 +616,7 @@ fluid_sequencer_get_time_scale(fluid_sequencer_t *seq)
   All queue data structure management is done in a timer
   callback: '_fluid_seq_queue_process'.  The
   _fluid_seq_queue_process function first process the preQueue,
-  inserting or removing event entrys from the queue, then
+  inserting or removing event entries from the queue, then
   processes the queue, by sending events ready to be sent at the
   current time.
 
