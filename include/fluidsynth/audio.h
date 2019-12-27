@@ -50,7 +50,7 @@ extern "C" {
  * @param fx Array of buffers to store effects audio to. Buffers may alias with buffers of \c out.
  * @param nout Count of arrays in \c out.
  * @param out Array of buffers to store (dry) audio to. Buffers may alias with buffers of \c fx.
- * @return Should return #FLUID_OK on success, #FLUID_FAILED if an error occured.
+ * @return Should return #FLUID_OK on success, #FLUID_FAILED if an error occurred.
  */
 typedef int (*fluid_audio_func_t)(void *data, int len,
                                   int nfx, float *fx[],

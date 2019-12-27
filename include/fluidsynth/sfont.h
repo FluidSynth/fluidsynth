@@ -90,7 +90,7 @@ enum fluid_sample_type
  * could be another type of string identifier that the \a loader understands).
  * @param loader SoundFont loader
  * @param filename File name or other string identifier
- * @return The loaded instrument file (SoundFont) or NULL if an error occured.
+ * @return The loaded instrument file (SoundFont) or NULL if an error occurred.
  */
 typedef fluid_sfont_t *(*fluid_sfloader_load_t)(fluid_sfloader_t *loader, const char *filename);
 
@@ -134,7 +134,7 @@ typedef int (* fluid_sfloader_callback_read_t)(void *buf, int count, void *handl
 typedef int (* fluid_sfloader_callback_seek_t)(void *handle, long offset, int origin);
 
 /**
- * Closes the handle returned by #fluid_sfloader_callback_open_t and frees used ressources.
+ * Closes the handle returned by #fluid_sfloader_callback_open_t and frees used resources.
  *
  * @return returns #FLUID_OK on success, #FLUID_FAILED on error
  */

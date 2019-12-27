@@ -336,7 +336,7 @@ int fluid_defsfont_load_sampledata(fluid_defsfont_t *defsfont, SFData *sfdata, f
         return FLUID_OK;
     }
 
-    /* Ogg Vorbis samples already have loop pointers relative to the invididual decompressed sample,
+    /* Ogg Vorbis samples already have loop pointers relative to the individual decompressed sample,
      * but SF2 samples are relative to sample chunk start, so they need to be adjusted */
     if(!(sample->sampletype & FLUID_SAMPLETYPE_OGG_VORBIS))
     {
@@ -776,7 +776,7 @@ fluid_defpreset_noteon_add_mod_to_voice(fluid_voice_t *voice,
             /* Although local_mod and global_mod lists was limited to
                FLUID_NUM_MOD at soundfont loading time, it is possible that
                local + global modulators exceeds FLUID_NUM_MOD.
-               So, checks if mod_list_count reachs the limit.
+               So, checks if mod_list_count reaches the limit.
             */
             if(mod_list_count >= FLUID_NUM_MOD)
             {
@@ -805,7 +805,7 @@ fluid_defpreset_noteon_add_mod_to_voice(fluid_voice_t *voice,
      */
 
     /* Restrict identity check to the actual number of voice modulators */
-    /* Acual number of voice modulators : defaults + [instruments] */
+    /* Actual number of voice modulators : defaults + [instruments] */
     identity_limit_count = voice->mod_count;
 
     for(i = 0; i < mod_list_count; i++)
@@ -1413,7 +1413,7 @@ fluid_zone_gen_import_sfont(fluid_gen_t *gen, fluid_zone_range_t *range, SFZone 
  * @param src, pointer on destination modulator source.
  * @param flags, pointer on destination modulator flags.
  * @param sf_source, soundfont modulator source.
- * @return return TRUE if success, FALSE if source type is unknow.
+ * @return return TRUE if success, FALSE if source type is unknown.
  */
 static int
 fluid_zone_mod_source_import_sfont(unsigned char *src, unsigned char *flags, unsigned short sf_source)

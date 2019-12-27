@@ -104,6 +104,9 @@ fluid_sequencer_register_fluidsynth(fluid_sequencer_t *seq, fluid_synth_t *synth
 {
     fluid_seqbind_t *seqbind;
 
+    fluid_return_val_if_fail(seq != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
+
     seqbind = FLUID_NEW(fluid_seqbind_t);
 
     if(seqbind == NULL)
@@ -112,10 +115,10 @@ fluid_sequencer_register_fluidsynth(fluid_sequencer_t *seq, fluid_synth_t *synth
         return FLUID_FAILED;
     }
 
+    FLUID_MEMSET(seqbind, 0, sizeof(*seqbind));
+
     seqbind->synth = synth;
     seqbind->seq = seq;
-    seqbind->sample_timer = NULL;
-    seqbind->client_id = -1;
 
     /* set up the sample timer */
     if(!fluid_sequencer_get_use_system_timer(seq))
@@ -135,7 +138,7 @@ fluid_sequencer_register_fluidsynth(fluid_sequencer_t *seq, fluid_synth_t *synth
     seqbind->client_id =
         fluid_sequencer_register_client(seq, "fluidsynth", fluid_seq_fluidsynth_callback, (void *)seqbind);
 
-    if(seqbind->client_id == -1)
+    if(seqbind->client_id == FLUID_FAILED)
     {
         delete_fluid_seqbind(seqbind);
         return FLUID_FAILED;
@@ -307,8 +310,14 @@ int
 fluid_sequencer_add_midi_event_to_buffer(void *data, fluid_midi_event_t *event)
 {
     fluid_event_t evt;
-    fluid_sequencer_t *seq = (fluid_sequencer_t *) data;
-    int chan = fluid_midi_event_get_channel(event);
+    fluid_sequencer_t *seq;
+    int chan;
+
+    fluid_return_val_if_fail(data != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(event != NULL, FLUID_FAILED);
+
+    seq = (fluid_sequencer_t *) data;
+    chan = fluid_midi_event_get_channel(event);
 
     fluid_event_clear(&evt);
     fluid_event_set_time(&evt, fluid_sequencer_get_tick(seq));

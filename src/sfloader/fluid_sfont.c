@@ -51,7 +51,7 @@ int safe_fread(void *buf, int count, void *fd)
     {
         if(feof((FILE *)fd))
         {
-            FLUID_LOG(FLUID_ERR, "EOF while attemping to read %d bytes", count);
+            FLUID_LOG(FLUID_ERR, "EOF while attempting to read %d bytes", count);
         }
         else
         {
