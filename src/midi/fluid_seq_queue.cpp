@@ -61,7 +61,7 @@ static bool event_compare(const fluid_event_t& left, const fluid_event_t& right)
         //  * Bank changes must precede Prog changes (to ensure correct preset fallback AND preset selection within a certain bank),
         //  * NoteOn events are always last (this makes sure that all other "state-change" events have been processed and NoteOff events
         //    with the same key as the NoteOn have been processed (zero-length notes are not a use-case here)).
-        //  * For any other event type, the order is undefined.
+        //  * For any other event type, the order is undefined (because the processing order of those event types doesn't matter).
         // See:
         // https://lists.nongnu.org/archive/html/fluid-dev/2019-12/msg00001.html
         // https://lists.nongnu.org/archive/html/fluid-dev/2017-05/msg00004.html
@@ -111,6 +111,10 @@ static bool event_compare(const fluid_event_t& left, const fluid_event_t& right)
     return !leftIsBeforeRight;
 }
 
+int event_compare_for_test(const fluid_event_t* left, const fluid_event_t* right)
+{
+    return event_compare(*left, *right);
+}
 
 void* new_fluid_seq_queue(int nb_events)
 {

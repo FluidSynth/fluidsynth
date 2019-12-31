@@ -35,6 +35,9 @@ int fluid_seq_queue_push(void *queue, const fluid_event_t *evt);
 void fluid_seq_queue_remove(void *queue, fluid_seq_id_t src, fluid_seq_id_t dest, int type);
 void fluid_seq_queue_process(void *que, fluid_sequencer_t *seq);
 
+
+int event_compare_for_test(const fluid_event_t* left, const fluid_event_t* right);
+
 #ifdef __cplusplus
 }
 #endif
