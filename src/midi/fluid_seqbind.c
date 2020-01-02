@@ -321,7 +321,6 @@ fluid_sequencer_add_midi_event_to_buffer(void *data, fluid_midi_event_t *event)
     chan = fluid_midi_event_get_channel(event);
 
     fluid_event_clear(&evt);
-    fluid_event_set_time(&evt, fluid_sequencer_get_tick(seq));
     fluid_event_set_dest(&evt, get_fluidsynth_dest(seq));
 
     switch(fluid_midi_event_get_type(event))
