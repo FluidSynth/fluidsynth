@@ -301,6 +301,7 @@ static fluid_seq_id_t get_fluidsynth_dest(fluid_sequencer_t *seq)
 /**
  * Transforms an incoming midi event (from a midi driver or midi router) to a
  * sequencer event and adds it to the sequencer queue for sending as soon as possible.
+ * The signature of this function is of type #handle_midi_event_func_t.
  * @param data The sequencer, must be a valid #fluid_sequencer_t
  * @param event MIDI event
  * @return #FLUID_OK or #FLUID_FAILED
