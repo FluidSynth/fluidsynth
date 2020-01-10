@@ -93,7 +93,7 @@ static int fluid_portaudio_get_device_name(int device_num, char **name_ptr)
            device_index:host_api_name:host_device_name.
         */
         int i =  device_num;
-        int size = 0;
+        size_t size = 0;
 
         do
         {
@@ -103,7 +103,7 @@ static int fluid_portaudio_get_device_name(int device_num, char **name_ptr)
         while(i);		/*  index size */
 
         /* host API size +  host device size + 2 separators + zero termination */
-        size += strlen(hostInfo->name) + strlen(deviceInfo->name) + 3;
+        size += FLUID_STRLEN(hostInfo->name) + FLUID_STRLEN(deviceInfo->name) + 3u;
         *name_ptr = FLUID_MALLOC(size);
 
         if(*name_ptr)

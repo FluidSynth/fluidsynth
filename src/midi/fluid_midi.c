@@ -406,8 +406,7 @@ fluid_isasciistring(char *s)
     /* From ctype.h */
 #define fluid_isascii(c)    (((c) & ~0x7f) == 0)
 
-    int i;
-    int len = (int) FLUID_STRLEN(s);
+    size_t i, len = FLUID_STRLEN(s);
 
     for(i = 0; i < len; i++)
     {
@@ -1457,7 +1456,7 @@ delete_fluid_track(fluid_track_t *track)
 int
 fluid_track_set_name(fluid_track_t *track, char *name)
 {
-    int len;
+    size_t len;
 
     if(track->name != NULL)
     {
