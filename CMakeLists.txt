@@ -180,13 +180,13 @@ if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_C_C
     set ( CMAKE_SHARED_LINKER_FLAGS
           "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-undefined" )
   endif ( NOT APPLE AND NOT OS2 )
-  
+
   # define some warning flags
   set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -W -Wpointer-arith -Wcast-qual -Wstrict-prototypes -Wno-unused-parameter -Wdeclaration-after-statement -Werror=implicit-function-declaration" )
-  
+
   # prepend to build type specific flags, to allow users to override
   set ( CMAKE_C_FLAGS_DEBUG "-g ${CMAKE_C_FLAGS_DEBUG}" )
-  
+
   if ( CMAKE_C_COMPILER_ID STREQUAL "Intel" )
     # icc needs the restrict flag to recognize C99 restrict pointers
     set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -restrict" )
@@ -258,12 +258,12 @@ if ( WIN32 )
         string ( REGEX REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}" )
       endif ( ${flag_var} MATCHES "/MD" )
     endforeach ( flag_var )
-    
+
   else ( MSVC )
     # only set debug postfix if not MSVS building
     set ( CMAKE_DEBUG_POSTFIX "_debug" )
   endif ( MSVC )
-  
+
   # MinGW compiler (a Windows GCC port)
   if ( MINGW )
     set ( MINGW32 1 )
@@ -415,18 +415,6 @@ file(GLOB_RECURSE
      ${CMAKE_SOURCE_DIR}/*.ii
      ${CMAKE_SOURCE_DIR}/*.[CHI]
      )
-
-# Adding clang-format target if executable is found
-# find_program ( CLANG_FORMAT "clang-format" )
-# if ( CLANG_FORMAT )
-#   add_custom_target(
-#     clang-format
-#     COMMAND ${CLANG_FORMAT}
-#     -i
-#     -style=file
-#     ${ALL_SOURCE_FILES}
-#     )
-# endif(CLANG_FORMAT)
 
 find_program ( ASTYLE "astyle" )
 if ( ASTYLE )
