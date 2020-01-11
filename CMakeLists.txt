@@ -451,17 +451,17 @@ if(NOT enable-pkgconfig)
     FIND_LIBRARY( GTHREAD_LIB NAMES gthread gthread-2.0 PATH GTHREAD_LIBRARY_DIR )
     FIND_PATH( GLIBH_DIR glib.h PATH GLIB_INCLUDE_DIR )
     FIND_PATH( GLIBCONF_DIR glibconfig.h PATH GLIBCONF_INCLUDE_DIR )
-    
+
     IF( GLIB_LIB MATCHES "GLIB_LIB-NOTFOUND" OR
             GTHREAD_LIB MATCHES "GTHREAD_LIB-NOTFOUND" OR
             GLIBH_DIR MATCHES "GLIBH_DIR-NOTFOUND" OR
             GLIBCONF_DIR MATCHES "GLIBCONF_DIR-NOTFOUND")
             message( WARNING "Not sure if I found GLIB, continuing anyway.")
     ENDIF()
-    
+
     SET( GLIB_INCLUDE_DIRS ${GLIBH_DIR} ${GLIBCONF_DIR} )
     SET( GLIB_LIBRARIES ${GLIB_LIB} ${GTHREAD_LIB} )
-    
+
     message( STATUS "GLIB_INCLUDE_DIRS: " ${GLIB_INCLUDE_DIRS} )
     message( STATUS "GLIB_LIBRARIES: " ${GLIB_LIBRARIES} )
 
@@ -516,7 +516,7 @@ else(NOT enable-pkgconfig)
     else ( enable-portaudio )
     unset_pkg_config ( PORTAUDIO )
     endif ( enable-portaudio )
-    
+
     unset ( JACK_SUPPORT CACHE )
     if ( enable-jack )
     pkg_check_modules ( JACK jack )
@@ -524,7 +524,7 @@ else(NOT enable-pkgconfig)
     else ( enable-jack )
     unset_pkg_config ( JACK )
     endif ( enable-jack )
-    
+
     unset ( LASH_SUPPORT CACHE )
     if ( enable-lash )
     pkg_check_modules ( LASH lash-1.0>=0.3 )
@@ -576,6 +576,32 @@ else(NOT enable-pkgconfig)
         unset_pkg_config ( SDL2 )
     endif ( enable-sdl2 )
 
+    unset ( OBOE_SUPPORT CACHE )
+    unset ( OBOE_LIBS CACHE )
+    if ( enable-oboe )
+    # enable C++ as it's needed for oboe
+    enable_language ( CXX )
+    pkg_check_modules ( OBOE oboe-1.0 )
+    if ( OBOE_FOUND )
+        set ( OBOE_SUPPORT 1 )
+        set ( OBOE_LIBS ${OBOE_LIBRARIES} )
+    endif ( OBOE_FOUND )
+    endif ( enable-oboe )
+
+    unset ( WITH_READLINE CACHE )
+    unset ( READLINE_LIBS CACHE )
+    if ( enable-readline )
+    pkg_check_modules ( READLINE readline )
+    if ( NOT READLINE_FOUND )
+        find_package ( Readline )
+        set ( READLINE_FOUND ${HAVE_READLINE} )
+    endif ( NOT READLINE_FOUND )
+    if ( READLINE_FOUND )
+        set ( WITH_READLINE 1 )
+        set ( READLINE_LIBS ${READLINE_LIBRARIES} )
+    endif ( READLINE_FOUND )
+    endif ( enable-readline )
+
 endif(NOT enable-pkgconfig)
 
 unset ( AUFILE_SUPPORT CACHE )
@@ -614,32 +640,6 @@ if ( enable-opensles )
   endif ( OPENSLES_SUPPORT )
 endif ( enable-opensles )
 
-unset ( OBOE_SUPPORT CACHE )
-unset ( OBOE_LIBS CACHE )
-if ( enable-oboe )
-  # enable C++ as it's needed for oboe
-  enable_language ( CXX )
-  pkg_check_modules ( OBOE oboe-1.0 )
-  if ( OBOE_FOUND )
-    set ( OBOE_SUPPORT 1 )
-    set ( OBOE_LIBS ${OBOE_LIBRARIES} )
-  endif ( OBOE_FOUND )
-endif ( enable-oboe )
-
-unset ( WITH_READLINE CACHE )
-unset ( READLINE_LIBS CACHE )
-if ( enable-readline )
-  pkg_check_modules ( READLINE readline )
-  if ( NOT READLINE_FOUND )
-    find_package ( Readline )
-    set ( READLINE_FOUND ${HAVE_READLINE} )
-  endif ( NOT READLINE_FOUND )
-  if ( READLINE_FOUND )
-    set ( WITH_READLINE 1 )
-    set ( READLINE_LIBS ${READLINE_LIBRARIES} )
-  endif ( READLINE_FOUND )
-endif ( enable-readline )
-
 unset ( ENABLE_MIXER_THREADS CACHE )
 if ( enable-threads )
   set ( ENABLE_MIXER_THREADS 1 )
@@ -653,7 +653,7 @@ if ( OpenMP_FOUND OR OpenMP_C_FOUND )
     if ( ( NOT OpenMP_C_SPEC_DATE LESS "201307" ) OR NOT ( OpenMP_C_VERSION VERSION_LESS "4.0" ) )
         set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}" )
         set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}" )
-        
+
         # currently no need to link against openMP runtime lib(s). If need be, uncomment below.
         #  set ( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}" )
         #  set ( LIBFLUID_LIBS "${OpenMP_C_LIBRARIES};${LIBFLUID_LIBS}" )
