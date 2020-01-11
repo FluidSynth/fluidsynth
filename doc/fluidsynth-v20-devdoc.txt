@@ -70,6 +70,7 @@ What is FluidSynth?
 \section NewIn2_1_0 What's new in 2.1.0?
 
 - <span style="color:red">refrain from using fluid_synth_set_sample_rate()</span>
+- <a href="www.fluidsynth.org/api/fluidsettings.xml#synth.sample-rate">synth.sample-rate</a> is no real-time setting anymore, see note about fluid_synth_set_sample_rate()
 - new reverb engine
 - chorus is now stereophonic
 - smallest allowed chorus speed is now 0.1 Hz (previously 0.29 Hz)
