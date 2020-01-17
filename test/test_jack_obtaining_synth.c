@@ -22,6 +22,13 @@ int main(void)
 
     delete_fluid_synth(obtained_synth);
     delete_fluid_settings(settings);
+
+    obtained_synth = expected_synth = NULL;
+
+    settings = new_fluid_settings();
+    TEST_ASSERT(settings != NULL);
+    TEST_ASSERT(fluid_jack_obtain_synth(settings, &obtained_synth) == FLUID_FAILED);
+    delete_fluid_settings(settings);
 #endif
     return EXIT_SUCCESS;
 }

@@ -493,16 +493,20 @@ fluid_jack_client_register_ports(void *driver, int isaudio, jack_client_t *clien
     if((unsigned long)sample_rate != jack_srate)
     {
         fluid_synth_t* synth;
-        if(fluid_jack_obtain_synth(settings, &synth) != FLUID_OK)
+        if(fluid_jack_obtain_synth(settings, &synth) == FLUID_OK)
         {
-            FLUID_LOG(FLUID_ERR, "jack driver: Unable to obtain the synth. This is a programming error, please report to upstream.");
-            goto error_recovery;
+            FLUID_LOG(FLUID_INFO, "Jack sample rate mismatch, adjusting."
+                  " (synth.sample-rate=%lu, jackd=%lu)", (unsigned long)sample_rate, jack_srate);
+            fluid_synth_set_sample_rate(synth, jack_srate);
+            /* Changing sample rate is non RT, so make sure we process it and/or other things now */
+            fluid_synth_process_event_queue(synth);
         }
-        FLUID_LOG(FLUID_INFO, "Jack sample rate mismatch, adjusting."
-                " (synth.sample-rate=%lu, jackd=%lu)", (unsigned long)sample_rate, jack_srate);
-        fluid_synth_set_sample_rate(synth, jack_srate);
-        /* Changing sample rate is non RT, so make sure we process it and/or other things now */
-        fluid_synth_process_event_queue(synth);
+        else
+        {
+            FLUID_LOG(FLUID_WARN, "Jack sample rate mismatch (synth.sample-rate=%lu, jackd=%lu)"
+            " impossible to adjust, because the settings object provided to new_fluid_audio_driver2() was not used to create a synth."
+            , (unsigned long)sample_rate, jack_srate);
+        }
     }
 
     return FLUID_OK;
