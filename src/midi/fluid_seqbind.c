@@ -56,19 +56,27 @@ delete_fluid_seqbind(fluid_seqbind_t *seqbind)
 {
     fluid_return_if_fail(seqbind != NULL);
 
-    if((seqbind->client_id != -1) && (seqbind->seq != NULL))
-    {
-        fluid_sequencer_unregister_client(seqbind->seq, seqbind->client_id);
-        seqbind->client_id = -1;
-    }
-
     if((seqbind->sample_timer != NULL) && (seqbind->synth != NULL))
     {
         delete_fluid_sample_timer(seqbind->synth, seqbind->sample_timer);
         seqbind->sample_timer = NULL;
     }
 
-    FLUID_FREE(seqbind);
+    // conditional free() ahead!
+    // if a previous call to fluid_sequencer_register_fluidsynth() was successful, client_id is guaranteed
+    // to be !=-1
+    if(seqbind->client_id != -1)
+    {
+        if(seqbind->seq != NULL)
+        {
+            fluid_seq_id_t id = seqbind->client_id;
+            // Unregister_client calls the sequencer callback again, causing two calls to free() below.
+            // Setting the client_id to -1 makes sure that there will be only one call to free().
+            seqbind->client_id = -1;
+            fluid_sequencer_unregister_client(seqbind->seq, id);
+        }
+        FLUID_FREE(seqbind);
+    }
 }
 
 /**
@@ -117,6 +125,7 @@ fluid_sequencer_register_fluidsynth(fluid_sequencer_t *seq, fluid_synth_t *synth
 
     FLUID_MEMSET(seqbind, 0, sizeof(*seqbind));
 
+    seqbind->client_id = -1;
     seqbind->synth = synth;
     seqbind->seq = seq;
 
@@ -129,7 +138,7 @@ fluid_sequencer_register_fluidsynth(fluid_sequencer_t *seq, fluid_synth_t *synth
         if(seqbind->sample_timer == NULL)
         {
             FLUID_LOG(FLUID_PANIC, "sequencer: Out of memory\n");
-            delete_fluid_seqbind(seqbind);
+            FLUID_FREE(seqbind);
             return FLUID_FAILED;
         }
     }
@@ -140,7 +149,8 @@ fluid_sequencer_register_fluidsynth(fluid_sequencer_t *seq, fluid_synth_t *synth
 
     if(seqbind->client_id == FLUID_FAILED)
     {
-        delete_fluid_seqbind(seqbind);
+        delete_fluid_sample_timer(seqbind->synth, seqbind->sample_timer);
+        FLUID_FREE(seqbind);
         return FLUID_FAILED;
     }
 

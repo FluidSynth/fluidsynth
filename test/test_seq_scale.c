@@ -42,7 +42,8 @@ static const unsigned int expected_callback_times[] =
     1560, 1560, 1680, 1680, 1800, 1800, 1920, 2700,
     2820, 2820, 2940, 2940, 3060, 3060, 3180, 4275,
     4395, 4395, 4515, 4515, 4635, 4635, 4755,
-    799, 919, 919, 1039, 1039, 1159, 1159, 1279
+    799, 919, 919, 1039, 1039, 1159, 1159, 1279,
+    15999
 };
 
 static void fake_synth_callback(unsigned int time, fluid_event_t *event, fluid_sequencer_t *seq, void *data)
@@ -122,6 +123,10 @@ static void seq_callback(unsigned int time, fluid_event_t *event, fluid_sequence
         sendnoteon(0, 47, 0, 360);
         sendnoteon(0, 47, 100, 360);
         sendnoteon(0, 47, 0, 480);
+        break;
+
+    case 5:
+        // this is the unregistering event, ignore
         break;
 
     default:
