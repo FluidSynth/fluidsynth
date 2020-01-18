@@ -408,11 +408,17 @@ fluid_sequencer_send_now(fluid_sequencer_t *seq, fluid_event_t *evt)
 
         if(dest->id == destID)
         {
-            if(dest->callback)
+            if(fluid_event_get_type(evt) == FLUID_SEQ_UNREGISTERING)
             {
-                (dest->callback)(now, evt, seq, dest->data);
+                fluid_sequencer_unregister_client(seq, destID);
             }
-
+            else
+            {
+                if(dest->callback)
+                {
+                    (dest->callback)(now, evt, seq, dest->data);
+                }
+            }
             return;
         }
 
