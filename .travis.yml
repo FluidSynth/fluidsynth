@@ -32,6 +32,7 @@ env:
     - CMAKE_FLAGS="-Denable-network=0"
     - CMAKE_FLAGS="-Denable-aufile=0"
     - CMAKE_FLAGS="-DBUILD_SHARED_LIBS=0"
+    - CMAKE_FLAGS="-Denable-ubsan=1"
 
 matrix:
   include:
@@ -44,9 +45,6 @@ matrix:
         - CMAKE_FLAGS="-Denable-debug=1 -DCMAKE_C_FLAGS_DEBUG=-fuse-ld=gold"
 
     - env:
-        - MATRIX_EVAL="CC=gcc-9 && CXX=g++-9 && sudo apt-get install gcc-9"
-
-    - env:
         - MATRIX_EVAL="CC=clang-7 && CXX=clang++-7 && sudo apt-get install clang-7"
 
     - env:
@@ -55,7 +53,6 @@ matrix:
 
     - env:
         - MATRIX_EVAL="CC=clang-9 && CXX=clang++-9 && sudo apt-get install clang-9"
-        - CMAKE_FLAGS="-Denable-ubsan=1"
 
     - os: linux-ppc64le
       env:
