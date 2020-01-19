@@ -103,7 +103,7 @@ summary of contributions.
   adapted version was integrated in the source code. files:
   fluid_cmd.c, fluidsynth/synth.h, fluid_synth.c.
 
-* Some interpolation algorihms were used that were found in
+* Some interpolation algorithms were used that were found in
   the music-dsp archives (http://www.smartelectronix.com/musicdsp).
   They were written by Joshua Scholar and others.  file: iiwu_synth.c
 

@@ -313,7 +313,7 @@ void  pascal fluid_sndmgr_callback(SndChannelPtr chan, SndDoubleBufferPtr double
     }
     else
     {
-        /* let the synth do the convertion */
+        /* let the synth do the conversion */
         fluid_synth_write_s16((fluid_synth_t *)dev->data, buffer_size, buf, 0, 2, buf, 1, 2);
     }
 

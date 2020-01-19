@@ -30,7 +30,7 @@ We strongly recommend to use it! Feel free to edit or remove inapplicable/unneed
 
 ### Other information
 <!-- If you are able to illustrate the bug or feature request with an example, please provide simple
-source code below or as attatched file. List any other information that is relevant to your issue:
+source code below or as attached file. List any other information that is relevant to your issue:
   Stack traces,
   related issues,
   build logs,

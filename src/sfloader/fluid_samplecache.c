@@ -36,7 +36,7 @@ typedef struct _fluid_samplecache_entry_t fluid_samplecache_entry_t;
 
 struct _fluid_samplecache_entry_t
 {
-    /* The follwing members all form the cache key */
+    /* The following members all form the cache key */
     char *filename;
     time_t modification_time;
     unsigned int sf_samplepos;

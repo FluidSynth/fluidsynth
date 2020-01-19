@@ -94,6 +94,6 @@ several reasons:
   Xmms, WinAmp, Director, ...); develop language bindings (Python,
   Java, Perl, ...); and integrate it into (game) frameworks (Crystal
   Space, SDL, ...). For these reasons I've decided it would be easiest
-  if the project stayed very focussed on its goal (a Soundfont
+  if the project stayed very focused on its goal (a Soundfont
   synthesizer), stayed small (ideally one file) and didn't dependent
   on external code.
