@@ -308,15 +308,12 @@ new_fluid_file_renderer(fluid_synth_t *synth)
 
 #endif
 
+    FLUID_FREE(filename);
     return dev;
 
 error_recovery:
 
-    if(filename)
-    {
-        FLUID_FREE(filename);
-    }
-
+    FLUID_FREE(filename);
     delete_fluid_file_renderer(dev);
     return NULL;
 }
