@@ -170,21 +170,25 @@ new_fluid_jack_client(fluid_settings_t *settings, int isaudio, void *driver)
             ((!isaudio && last_client->midi_driver == NULL) || (isaudio && last_client->audio_driver == NULL)))
     {
         client_ref = last_client;
-        last_client = NULL;         /* No more pairing for this client */
 
         /* Register ports */
-        if(fluid_jack_client_register_ports(driver, isaudio, client_ref->client, settings) != FLUID_OK)
+        if(fluid_jack_client_register_ports(driver, isaudio, client_ref->client, settings) == FLUID_OK)
         {
-            goto error_recovery;
-        }
+            last_client = NULL; /* No more pairing for this client */
 
-        if(isaudio)
-        {
-            fluid_atomic_pointer_set(&client_ref->audio_driver, driver);
+            if(isaudio)
+            {
+                fluid_atomic_pointer_set(&client_ref->audio_driver, driver);
+            }
+            else
+            {
+                fluid_atomic_pointer_set(&client_ref->midi_driver, driver);
+            }
         }
         else
         {
-            fluid_atomic_pointer_set(&client_ref->midi_driver, driver);
+            // do not free client_ref and do not goto error_recovery
+            // client_ref is being used by another audio or midi driver. Freeing it here will create a double free.
         }
 
         fluid_mutex_unlock(last_client_mutex);        /* -- unlock last_client */
