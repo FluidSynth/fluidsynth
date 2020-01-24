@@ -50,4 +50,4 @@ macro ( ADD_FLUID_DEMO _demo )
     # append the current unit test to check-target as dependency
     add_dependencies(demo ${_demo})
 
-endmacro ( ADD_FLUID_TEST )
+endmacro ( ADD_FLUID_DEMO )
