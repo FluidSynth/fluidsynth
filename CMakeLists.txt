@@ -709,6 +709,7 @@ link_directories (
     ${DBUS_LIBRARY_DIRS}
     ${SDL2_LIBRARY_DIRS}
     ${OBOE_LIBRARY_DIRS}
+    ${LIBINSTPATCH_LIBRARY_DIRS}
 )
 
 # Process subdirectories
