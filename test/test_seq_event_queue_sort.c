@@ -8,7 +8,7 @@
 static short order = 0;
 void callback_stable_sort(unsigned int time, fluid_event_t *event, fluid_sequencer_t *seq, void *data)
 {
-    static const enum fluid_seq_event_type expected_type_order[] =
+    static const int expected_type_order[] =
     { FLUID_SEQ_NOTEOFF, FLUID_SEQ_NOTEON, FLUID_SEQ_NOTEOFF, FLUID_SEQ_NOTEON, FLUID_SEQ_SYSTEMRESET, FLUID_SEQ_UNREGISTERING };
 
     TEST_ASSERT(fluid_event_get_type(event) == expected_type_order[order++]);
@@ -52,9 +52,12 @@ void callback_correct_order(unsigned int time, fluid_event_t *event, fluid_seque
 {
     if(done)
     {
-        return;
+        TEST_ASSERT(fluid_event_get_type(event) == FLUID_SEQ_UNREGISTERING);
     }
-    TEST_ASSERT(fluid_event_get_type(event) == FLUID_SEQ_CONTROLCHANGE);
+    else
+    {
+        TEST_ASSERT(fluid_event_get_type(event) == FLUID_SEQ_CONTROLCHANGE);
+    }
     TEST_ASSERT(prev_time <= fluid_event_get_time(event) && fluid_event_get_time(event) <= prev_time + 1);
     prev_time = fluid_event_get_time(event);
 }
