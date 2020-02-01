@@ -234,6 +234,8 @@ fluid_sequencer_register_client(fluid_sequencer_t *seq, const char *name,
 
 /**
  * Unregister a previously registered client.
+ *
+ * The client's callback function will receive a FLUID_SEQ_UNREGISTERING event right before it is being unregistered.
  * @param seq Sequencer object
  * @param id Client ID as returned by fluid_sequencer_register_client().
  */
