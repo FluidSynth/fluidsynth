@@ -389,15 +389,11 @@ fluid_sequencer_send_now(fluid_sequencer_t *seq, fluid_event_t *evt)
 {
     fluid_seq_id_t destID;
     fluid_list_t *tmp;
-    unsigned int now = fluid_sequencer_get_tick(seq);
 
     fluid_return_if_fail(seq != NULL);
     fluid_return_if_fail(evt != NULL);
 
     destID = fluid_event_get_dest(evt);
-
-    /* time stamp event */
-    fluid_event_set_time(evt, now);
 
     /* find callback */
     tmp = seq->clients;
@@ -416,7 +412,7 @@ fluid_sequencer_send_now(fluid_sequencer_t *seq, fluid_event_t *evt)
             {
                 if(dest->callback)
                 {
-                    (dest->callback)(now, evt, seq, dest->data);
+                    (dest->callback)(fluid_sequencer_get_tick(seq), evt, seq, dest->data);
                 }
             }
             return;
