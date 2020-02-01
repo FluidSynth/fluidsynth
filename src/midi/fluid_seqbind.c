@@ -75,9 +75,9 @@ delete_fluid_seqbind(fluid_seqbind_t *seqbind)
  * Registers a synthesizer as a destination client of the given sequencer.
  * The \a synth is registered with the name "fluidsynth".
  *
- * @warning Due to internal memory allocation, the user must explicitly unregister
- * the client by sending a fluid_event_unregistering(). Otherwise the behaviour is
- * undefined after either \p seq or \p synth is destroyed.
+ * @note Implementations are encouraged to explicitly unregister this client either by calling
+ * fluid_sequencer_unregister_client() or by sending an unregistering event to the sequencer. Before
+ * fluidsynth 2.1.1 this was mandatory to avoid memory leaks.
 @code{.cpp}
 fluid_seq_id_t seqid = fluid_sequencer_register_fluidsynth(seq, synth);
 

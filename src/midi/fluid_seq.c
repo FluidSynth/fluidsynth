@@ -136,7 +136,7 @@ new_fluid_sequencer2(int use_system_timer)
 
 /**
  * Free a sequencer object.
- * @note Registered sequencer clients may not be fully freed by this function. Explicitly unregister them with fluid_sequencer_unregister_client().
+ * @note Before fluidsynth 2.1.1 registered sequencer clients may not be fully freed by this function.
  * @param seq Sequencer to delete
  */
 void
@@ -181,11 +181,10 @@ fluid_sequencer_get_use_system_timer(fluid_sequencer_t *seq)
  * @param data User data to pass to the \a callback
  * @return Unique sequencer ID or #FLUID_FAILED on error
  *
- * Clients can be sources or destinations of events.  Sources don't need to
+ * Clients can be sources or destinations of events. Sources don't need to
  * register a callback.
  *
- * @note The user must explicitly unregister any registered client with fluid_sequencer_unregister_client()
- * before deleting the sequencer!
+ * @note Implementations are encouraged to explicitly unregister any registered client with fluid_sequencer_unregister_client() before deleting the sequencer.
  */
 fluid_seq_id_t
 fluid_sequencer_register_client(fluid_sequencer_t *seq, const char *name,

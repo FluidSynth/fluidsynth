@@ -67,6 +67,10 @@ What is FluidSynth?
 
 - FluidSynth is open source, in active development. For more details, take a look at http://www.fluidsynth.org
 
+\section NewIn2_1_1 What's new in 2.1.1?
+
+- requirements for explicit sequencer client unregistering have been relaxed: delete_fluid_sequencer() now correctly frees any registered sequencer clients (clients can still be explicitly unregistered)
+
 \section NewIn2_1_0 What's new in 2.1.0?
 
 - <span style="color:red">refrain from using fluid_synth_set_sample_rate()</span>
@@ -116,7 +120,7 @@ FluidSynths major version was bumped. The API was reworked, deprecated functions
 
 - all public \c fluid_settings_* functions that return an integer which is not meant to be interpreted as bool consistently return either FLUID_OK or FLUID_FAILED
 - fluid_settings_setstr() cannot be used to set integer (toggle) settings with "yes" or "no" values anymore. Use fluid_settings_setint() instead, for example: <br /><code>fluid_settings_setint(settings, "synth.reverb.active", 0)</code> instead of <code>fluid_settings_setstr(settings, "synth.reverb.active", "no")</code>
-- explicit client unregistering is required for fluid_sequencer_register_client() and fluid_sequencer_register_fluidsynth()
+- <span style="text-decoration:line-through;">explicit client unregistering is required for fluid_sequencer_register_client() and fluid_sequencer_register_fluidsynth()</span> (since fluidsynth 2.1.1 not required anymore, but still recommend)
 - all public functions consistently receive signed integers for soundfont ids, bank and program numbers
 - use unique device names for the "audio.portaudio.device" setting
 - fluid_synth_process() received a new more flexible implementation, but now requires zeroed-out sample buffers
