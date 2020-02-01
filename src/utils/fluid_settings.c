@@ -791,6 +791,40 @@ int fluid_settings_callback_int(fluid_settings_t *settings, const char *name,
     return FLUID_OK;
 }
 
+void* fluid_settings_get_user_data(fluid_settings_t * settings, const char *name)
+{
+    fluid_setting_node_t *node;
+    void* retval = NULL;
+
+    fluid_return_val_if_fail(settings != NULL, NULL);
+    fluid_return_val_if_fail(name != NULL, NULL);
+    fluid_return_val_if_fail(name[0] != '\0', NULL);
+
+    fluid_rec_mutex_lock(settings->mutex);
+
+    if(fluid_settings_get(settings, name, &node) == FLUID_OK)
+    {
+        if(node->type == FLUID_NUM_TYPE)
+        {
+            fluid_num_setting_t *setting = &node->num;
+            retval = setting->data;
+        }
+        else if(node->type == FLUID_STR_TYPE)
+        {
+            fluid_str_setting_t *setting = &node->str;
+            retval = setting->data;
+        }
+        else if(node->type == FLUID_INT_TYPE)
+        {
+            fluid_int_setting_t *setting = &node->i;
+            retval = setting->data;
+        }
+    }
+
+    fluid_rec_mutex_unlock(settings->mutex);
+    return retval;
+}
+
 /**
  * Get the type of the setting with the given name
  *

@@ -21,6 +21,7 @@
 #define sleep(_t) Sleep(_t * 1000)
 #else
 #include <stdlib.h>
+#include <unistd.h>
 #endif
 
 int main(int argc, char **argv)
@@ -47,6 +48,12 @@ int main(int argc, char **argv)
      * get used from the SoundFont) */
     sfont_id = fluid_synth_sfload(synth, "example.sf2", 1);
 
+    if(sfont_id == FLUID_FAILED)
+    {
+        puts("Loading the SoundFont failed!");
+        goto err;
+    }
+
     /* Initialize the random number generator */
     srand(getpid());
 
@@ -66,6 +73,7 @@ int main(int argc, char **argv)
         fluid_synth_noteoff(synth, 0, key);
     }
 
+err:
     /* Clean up */
     delete_fluid_audio_driver(adriver);
     delete_fluid_synth(synth);

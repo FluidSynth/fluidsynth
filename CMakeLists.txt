@@ -121,7 +121,9 @@ set(CMAKE_C_STANDARD 90)
 # Compile with position independent code if the user requested a shared lib, i.e. no PIC if static requested.
 # This is cmakes default behavior, but here it's explicitly required due to the use of libfluidsynth-OBJ as object library,
 # which would otherwise always be compiled without PIC.
-set ( CMAKE_POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS} )
+if ( NOT CMAKE_POSITION_INDEPENDENT_CODE )
+    set ( CMAKE_POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS} )
+endif ( CMAKE_POSITION_INDEPENDENT_CODE )
 
 # the default global visibility level for all target
 # no visibility support on OS2
@@ -707,6 +709,7 @@ link_directories (
     ${DBUS_LIBRARY_DIRS}
     ${SDL2_LIBRARY_DIRS}
     ${OBOE_LIBRARY_DIRS}
+    ${LIBINSTPATCH_LIBRARY_DIRS}
 )
 
 # Process subdirectories

@@ -21,6 +21,7 @@ All the source code examples in this document are in the public domain; you can 
 
 - \ref Disclaimer
 - \ref Introduction
+- \ref NewIn2_1_1
 - \ref NewIn2_1_0
 - \ref NewIn2_0_8
 - \ref NewIn2_0_7
@@ -70,6 +71,7 @@ What is FluidSynth?
 \section NewIn2_1_1 What's new in 2.1.1?
 
 - requirements for explicit sequencer client unregistering have been relaxed: delete_fluid_sequencer() now correctly frees any registered sequencer clients (clients can still be explicitly unregistered)
+- using the sequencer with the system timer as timing source has been deprecated
 
 \section NewIn2_1_0 What's new in 2.1.0?
 

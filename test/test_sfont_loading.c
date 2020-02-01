@@ -2,6 +2,7 @@
 #include "test.h"
 #include "fluidsynth.h"
 #include "sfloader/fluid_sfont.h"
+#include "sfloader/fluid_defsfont.h"
 #include "utils/fluid_sys.h"
 
 
@@ -11,6 +12,7 @@ int main(void)
 {
     int id;
     fluid_sfont_t *sfont;
+    fluid_defsfont_t *defsfont;
 
     fluid_settings_t *settings = new_fluid_settings();
     fluid_synth_t *synth = new_fluid_synth(settings);
@@ -22,7 +24,7 @@ int main(void)
     TEST_ASSERT(fluid_synth_sfcount(synth) == 0);
 
     TEST_ASSERT(fluid_is_soundfont(TEST_SOUNDFONT) == TRUE);
-    
+
     // load a sfont to synth
     TEST_SUCCESS(id = fluid_synth_sfload(synth, TEST_SOUNDFONT, 1));
     // one sfont loaded
@@ -54,6 +56,11 @@ int main(void)
     // one sfont loaded
     TEST_ASSERT(fluid_synth_sfcount(synth) == 1);
 
+    // count the number of presets, instruments, samples
+    defsfont = fluid_sfont_get_data(sfont);
+    TEST_ASSERT(fluid_list_size(defsfont->preset) == 136);
+    TEST_ASSERT(fluid_list_size(defsfont->sample) == 124-1); // SineWave ROM sample ignored
+    TEST_ASSERT(fluid_list_size(defsfont->inst) == 238);
 
     // destroy the sfont
     TEST_SUCCESS(fluid_synth_sfunload(synth, id, 0));

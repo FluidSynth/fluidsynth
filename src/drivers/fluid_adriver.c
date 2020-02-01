@@ -294,7 +294,9 @@ find_fluid_audio_driver(fluid_settings_t *settings)
  * @return The new audio driver instance.
  *
  * Creates a new audio driver for a given \p synth instance with a defined set
- * of configuration \p settings.
+ * of configuration \p settings. The \p settings instance must be the same that
+ * you have passed to new_fluid_synth() when creating the \p synth instance.
+ * Otherwise the behaviour is undefined.
  *
  * @note As soon as an audio driver is created, the \p synth starts rendering audio.
  * This means that all necessary sound-setup should be completed after this point,
@@ -331,8 +333,10 @@ new_fluid_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
  * @return The new audio driver instance.
  *
  * Like new_fluid_audio_driver() but allows for custom audio processing before
- * audio is sent to audio driver.  It is the responsibility of the callback
- * \p func to render the audio into the buffers.
+ * audio is sent to audio driver. It is the responsibility of the callback
+ * \p func to render the audio into the buffers. If \p func uses a fluid_synth_t \p synth,
+ * the \p settings instance must be the same that you have passed to new_fluid_synth()
+ * when creating the \p synth instance. Otherwise the behaviour is undefined.
  *
  * @note Not as efficient as new_fluid_audio_driver().
  *

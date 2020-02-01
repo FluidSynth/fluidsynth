@@ -88,6 +88,7 @@ static void _fluid_free_evt_queue(fluid_evt_entry **first, fluid_evt_entry **las
  * new_fluid_sequencer2() to specify whether the system timer or
  * fluid_sequencer_process() is used to advance the sequencer.
  * @return New sequencer instance
+ * @deprecated As of fluidsynth 2.1.1 the use of the system timer has been deprecated.
  */
 fluid_sequencer_t *
 new_fluid_sequencer(void)
@@ -102,11 +103,17 @@ new_fluid_sequencer(void)
  *   the sequencer.
  * @return New sequencer instance
  * @since 1.1.0
+ * @note As of fluidsynth 2.1.1 the use of the system timer has been deprecated.
  */
 fluid_sequencer_t *
 new_fluid_sequencer2(int use_system_timer)
 {
     fluid_sequencer_t *seq;
+
+    if(use_system_timer)
+    {
+        FLUID_LOG(FLUID_WARN, "sequencer: Usage of the system timer has been deprecated!");
+    }
 
     seq = FLUID_NEW(fluid_sequencer_t);
 
@@ -161,6 +168,7 @@ delete_fluid_sequencer(fluid_sequencer_t *seq)
  * @param seq Sequencer object
  * @return TRUE if system timer is being used, FALSE otherwise.
  * @since 1.1.0
+ * @deprecated As of fluidsynth 2.1.1 the usage of the system timer has been deprecated.
  */
 int
 fluid_sequencer_get_use_system_timer(fluid_sequencer_t *seq)
@@ -838,7 +846,11 @@ _fluid_seq_queue_process(void *data, unsigned int msec)
 }
 
 /**
- * Advance a sequencer that isn't using the system timer.
+ * Advance a sequencer.
+ *
+ * If you have registered the synthesizer as client (fluid_sequencer_register_fluidsynth()), the synth
+ * will take care of calling fluid_sequencer_process(). Otherwise it is up to the user to
+ * advance the sequencer manually.
  * @param seq Sequencer object
  * @param msec Time to advance sequencer to (absolute time since sequencer start).
  * @since 1.1.0
