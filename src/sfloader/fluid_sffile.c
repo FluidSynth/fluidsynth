@@ -2121,7 +2121,6 @@ static int load_shdr(SFData *sf, unsigned int size)
         READB(sf, p->pitchadj);
         FSKIPW(sf); /* skip sample link */
         READW(sf, p->sampletype);
-        p->samfile = 0;
     }
 
     FSKIP(sf, SF_SHDR_SIZE); /* skip terminal shdr */
