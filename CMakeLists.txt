@@ -123,7 +123,7 @@ set(CMAKE_C_STANDARD 90)
 # which would otherwise always be compiled without PIC.
 if ( NOT CMAKE_POSITION_INDEPENDENT_CODE )
     set ( CMAKE_POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS} )
-endif ( CMAKE_POSITION_INDEPENDENT_CODE )
+endif ( NOT CMAKE_POSITION_INDEPENDENT_CODE )
 
 # the default global visibility level for all target
 # no visibility support on OS2
