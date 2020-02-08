@@ -13,8 +13,8 @@ environment:
   APPVEYOR_SAVE_CACHE_ON_ERROR: true
 
   matrix:
+      - platform: ARM
       - platform: x86
-        
       - platform: x64
 
 cache:
@@ -32,8 +32,18 @@ init:
   
 install:
 # make sure the latest version of git is installed
-  - choco upgrade git -y
-  - vcpkg install glib:%platform%-windows
+  - choco upgrade git ninja -y
+  #- set NINJA_URL="https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-win.zip"
+  #- appveyor DownloadFile %NINJA_URL% -FileName ninja.zip
+  #- 7z x ninja.zip -oC:\projects\deps\ninja > nul
+  #- set PATH=C:\projects\deps\ninja;%PATH%
+  - ninja --version
+# vcpkg update
+  - cd "C:\Tools\vcpkg"
+  - git pull
+  - .\bootstrap-vcpkg.bat
+  - cd %appveyor_build_folder%
+  - vcpkg install glib:%platform%-windows || type C:\Tools\vcpkg\buildtrees\libffi\config-arm-windows-out.log
 
 build_script:
   - mkdir build
