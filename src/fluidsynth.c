@@ -706,6 +706,7 @@ int main(int argc, char **argv)
 
         case 'v':
             fluid_settings_setint(settings, "synth.verbose", TRUE);
+            fluid_set_log_function(FLUID_DBG, fluid_default_log_function, NULL);
             break;
 
         case 'z':
