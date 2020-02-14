@@ -1162,7 +1162,7 @@ print_help(fluid_settings_t *settings)
     printf(" -T, --audio-file-type\n"
            "    Audio file type for fast rendering or aufile driver (\"help\" for list)\n");
     printf(" -v, --verbose\n"
-           "    Print out verbose messages about midi events\n");
+           "    Print out verbose messages about midi events (synth.verbose=1) as well as other debug messages\n");
     printf(" -V, --version\n"
            "    Show version of program\n");
     printf(" -z, --audio-bufsize=[size]\n"
