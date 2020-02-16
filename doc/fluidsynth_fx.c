@@ -70,7 +70,7 @@ int fx_function(void *data, int len,
     }
 
     /* Apply your effects here. In this example, the gain is
-     * applied to all the output buffers. */
+     * applied to all the dry-audio output buffers. */
     for(i = 0; i < nout; i++)
     {
         float *out_i = out[i];
@@ -81,6 +81,7 @@ int fx_function(void *data, int len,
         }
     }
 
+    /* Apply the same effect to all available effect buffer. */
     for(i = 0; i < nfx; i++)
     {
         float *fx_i = fx[i];
