@@ -62,7 +62,7 @@ What is FluidSynth?
 
 - FluidSynth is an API (Application Programming Interface) relieving programmers from a lot of details of reading SoundFont and MIDI events and files, and sending the digital audio output to a Sound Card. These tasks can be accomplished using a small set of functions. This document explains most of the API functions and gives short examples about them.
 
-- FluidSynth uses instrument samples contained in standard SF2 (SoundFont 2) files, having a file structure based on the RIFF format. The specification can be obtained here: http://connect.creativelabs.com/developer/SoundFont/Forms/AllItems.aspx but most users don't need to know any details of the format.
+- FluidSynth uses instrument samples contained in standard SF2 (SoundFont 2) files, having a file structure based on the RIFF format. The specification is publicly available on the internet, but most users don't need to know any details of the format.
 
 - FluidSynth can easily be embedded in an application. It has a main header file, fluidsynth.h, and one dynamically linkable library. FluidSynth runs on Linux, Mac OS X, and the Windows platforms, and support for OS/2 and OpenSolaris is experimental. It has audio and midi drivers for all mentioned platforms but you can use it with your own drivers if your application already handles MIDI and audio input/output. This document explains the basic usage of FluidSynth and provides examples that you can reuse. 
 
