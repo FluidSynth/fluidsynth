@@ -22,9 +22,9 @@ cache:
 
 init:
   - set TARGET_PLATFORM=
-  - if "%platform%"=="x86" ( set TARGET_PLATFORM= Win32)
-  - if "%platform%"=="x64" ( set TARGET_PLATFORM= x64)
-  - if "%platform%"=="ARM" ( set TARGET_PLATFORM= ARM)
+  - if "%platform%"=="x86" ( set TARGET_PLATFORM=Win32)
+  - if "%platform%"=="x64" ( set TARGET_PLATFORM=x64)
+  - if "%platform%"=="ARM" ( set TARGET_PLATFORM=ARM)
   - echo %TARGET_PLATFORM%
   - echo %APPVEYOR_BUILD_WORKER_IMAGE%
   - if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2017" ( set "generator=Visual Studio 15 2017" && set "toolset=v141" )
