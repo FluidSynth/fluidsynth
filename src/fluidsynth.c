@@ -889,6 +889,7 @@ int main(int argc, char **argv)
 
     if(config_file == NULL)
     {
+        fluid_stat_buf_t st;
         config_file = fluid_get_userconf(buf, sizeof(buf));
         if(config_file == NULL)
         {
@@ -896,7 +897,7 @@ int main(int argc, char **argv)
         }
 
         /* if the automatically selected command file does not exist, do not even attempt to open it */
-        if(!g_file_test(config_file, G_FILE_TEST_EXISTS))
+        if(!fluid_stat(config_file, &st))
         {
             config_file = NULL;
         }

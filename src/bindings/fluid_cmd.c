@@ -419,6 +419,66 @@ static const fluid_cmd_t fluid_commands[] =
 #endif
 };
 
+//extremely ugly substitute for g_shell_parse_argv
+int _shell_parse_argv(const char* s,int *c,char ***sv)
+{
+	int anch,i,tc=0,loop,oflag;
+	int qflag=0,dflag=0,ol;
+	char *tmp;
+	*c=0;
+	for(anch=0;;++tc)
+	{
+		if(strchr(s+anch,' ')==NULL)break;
+		anch=strchr(s+anch,' ')-s+1;
+	}
+	if(s[0])++tc;
+	*sv=calloc((tc+1),sizeof(char*));
+	for(anch=0,loop=1;loop;qflag||dflag?0:++*c)
+	{
+		if(strchr(s+anch,' ')==NULL)
+		{
+			tmp=malloc(strlen(s+anch)*sizeof(char));
+			strcpy(tmp,s+anch);loop=0;
+		}
+		else
+		{
+			int len=strchr(s+anch,' ')-s-anch;
+			tmp=malloc(len*sizeof(char));
+			strncpy(tmp,s+anch,len);tmp[len]=0;
+		}
+		oflag=qflag||dflag;
+		if(tmp[0]=='"'&&!qflag)
+		{
+			qflag=1;
+			for(i=1;tmp[i];++i)tmp[i-1]=tmp[i];
+			tmp[i-1]=0;
+		}
+		if(qflag&&tmp[strlen(tmp)-1]=='"')
+		{
+			qflag=0;
+			tmp[strlen(tmp)-1]=0;
+		}
+		if(tmp[strlen(tmp)-1]=='\\'){dflag=1;tmp[strlen(tmp)-1]=0;}
+		else dflag=0;
+		ol=(*sv)[*c]?strlen((*sv)[*c]):0;
+		(*sv)[*c]=realloc((*sv)[*c],(ol+strlen(tmp)+oflag)*sizeof(char));
+		if(!ol)(*sv)[*c][0]=0;
+		if(oflag)strcat((*sv)[*c]," ");
+		strcat((*sv)[*c],tmp);
+		free(tmp);
+		anch=strchr(s+anch,' ')-s+1;
+	}
+	*sv=realloc(*sv,(*c+1)*sizeof(char*));
+	return 1;
+}
+
+void _strfreev(char** sv)
+{
+	int i;
+	for(i=0;sv[i];++i)
+	free(sv[i]);
+}
+
 /**
  * Process a string command.
  *
@@ -441,14 +501,14 @@ fluid_command(fluid_cmd_handler_t *handler, const char *cmd, fluid_ostream_t out
         return 1;
     }
 
-    if(!g_shell_parse_argv(cmd, &num_tokens, &tokens, NULL))
+    if(!_shell_parse_argv(cmd, &num_tokens, &tokens))
     {
         fluid_ostream_printf(out, "Error parsing command\n");
         return FLUID_FAILED;
     }
 
     result = fluid_cmd_handler_handle(handler, num_tokens, &tokens[0], out);
-    g_strfreev(tokens);
+    _strfreev(tokens);
 
     return result;
 }

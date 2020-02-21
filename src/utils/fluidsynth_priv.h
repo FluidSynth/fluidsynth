@@ -20,7 +20,7 @@
 
 /*
  * @file fluidsynth_priv.h
- * 
+ *
  * lightweight part of fluid_sys.h, containing forward declarations of fluidsynth's private types and private macros
  *
  * include this one file in fluidsynth's private header files
@@ -28,8 +28,6 @@
 
 #ifndef _FLUIDSYNTH_PRIV_H
 #define _FLUIDSYNTH_PRIV_H
-
-#include <glib.h>
 
 #include "config.h"
 
@@ -45,6 +43,10 @@
 #include <string.h>
 #endif
 
+#include <assert.h>
+#include <strings.h>
+#include <stdatomic.h>
+#include "fluid_threading.h"
 
 #include "fluidsynth.h"
 
@@ -70,9 +72,9 @@ typedef double fluid_real_t;
 
 
 /** Atomic types  */
-typedef int fluid_atomic_int_t;
-typedef unsigned int fluid_atomic_uint_t;
-typedef float fluid_atomic_float_t;
+typedef _Atomic int fluid_atomic_int_t;
+typedef _Atomic unsigned int fluid_atomic_uint_t;
+typedef _Atomic float fluid_atomic_float_t;
 
 
 /***************************************************************
@@ -221,6 +223,11 @@ do { strncpy(_dst,_src,_n-1); \
     (_dst)[(_n)-1]='\0'; \
 }while(0)
 
+#ifndef TRUE
+#define TRUE 1
+#define FALSE 0
+#endif
+
 #define FLUID_STRCHR(_s,_c)          strchr(_s,_c)
 #define FLUID_STRRCHR(_s,_c)         strrchr(_s,_c)
 
@@ -238,13 +245,15 @@ do { strncpy(_dst,_src,_n-1); \
  * i.e. not microsofts non compliant extension _snprintf() as it doesn't
  * reliably null-terminate the buffer
  */
-#define FLUID_SNPRINTF           g_snprintf
+int _snprintf_c99(char *str, size_t size, const char *format, ...);
+#define FLUID_SNPRINTF           _snprintf_c99
 #else
 #define FLUID_SNPRINTF           snprintf
 #endif
 
 #if (defined(WIN32) && _MSC_VER < 1500) || defined(MINGW32)
-#define FLUID_VSNPRINTF          g_vsnprintf
+int _vsnprintf_c99(char *str, size_t size, const char *format, va_list ap);
+#define FLUID_VSNPRINTF          _vsnprintf_c99
 #else
 #define FLUID_VSNPRINTF          vsnprintf
 #endif
@@ -285,13 +294,18 @@ do { strncpy(_dst,_src,_n-1); \
 #endif
 
 #if defined(DEBUG) && !defined(NDEBUG)
-#define FLUID_ASSERT(a) g_assert(a)
+#define FLUID_ASSERT(a) assert(a)
 #else
 #define FLUID_ASSERT(a)
 #endif
 
-#define FLUID_LIKELY G_LIKELY
-#define FLUID_UNLIKELY G_UNLIKELY
+#ifdef __GNUC__
+#define FLUID_LIKELY(a) __builtin_expect((a),1)
+#define FLUID_UNLIKELY(a) __builtin_expect((a),0)
+#else
+#define FLUID_LIKELY
+#define FLUID_UNLIKELY
+#endif
 
 /* Misc */
 #if defined(__INTEL_COMPILER)

@@ -115,7 +115,7 @@ new_fluid_pulse_audio_driver2(fluid_settings_t *settings,
     {
         if(FLUID_STRCMP(media_role, "") != 0)
         {
-            g_setenv("PULSE_PROP_media.role", media_role, TRUE);
+            setenv("PULSE_PROP_media.role", media_role, TRUE);
         }
 
         FLUID_FREE(media_role);       /* -- free media_role string */

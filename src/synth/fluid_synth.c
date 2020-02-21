@@ -151,8 +151,7 @@ static void fluid_synth_set_basic_channel_LOCAL(fluid_synth_t *synth, int basicc
  */
 
 /* has the synth module been initialized? */
-/* fluid_atomic_int_t may be anything, so init with {0} to catch most cases */
-static fluid_atomic_int_t fluid_synth_initialized = {0};
+static fluid_atomic_int_t fluid_synth_initialized = 0;
 
 /* default modulators
  * SF2.01 page 52 ff:
@@ -631,7 +630,8 @@ new_fluid_synth(fluid_settings_t *settings)
     double sample_rate_min, sample_rate_max;
 
     /* initialize all the conversion tables and other stuff */
-    if(fluid_atomic_int_compare_and_exchange(&fluid_synth_initialized, 0, 1))
+    int t=0;
+    if(fluid_atomic_int_compare_and_exchange(&fluid_synth_initialized, &t, 1))
     {
         fluid_synth_init();
     }
@@ -3277,7 +3277,7 @@ fluid_synth_program_select(fluid_synth_t *synth, int chan, int sfont_id,
  * @param preset_num MIDI program number
  * @return #FLUID_OK if the preset was found, pinned and loaded
  * into memory successfully. #FLUID_FAILED otherwise. Note that #FLUID_OK
- * is returned, even if <code>synth.dynamic-sample-loading</code> is disabled or 
+ * is returned, even if <code>synth.dynamic-sample-loading</code> is disabled or
  * the preset doesn't support dynamic-sample-loading.
  *
  * This function will attempt to pin all samples of the given preset and
@@ -3493,13 +3493,13 @@ fluid_synth_set_sample_rate_immediately(fluid_synth_t *synth, float sample_rate)
     fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
     fluid_return_if_fail(synth != NULL);
     fluid_synth_api_enter(synth);
-    
+
     fluid_synth_set_sample_rate_LOCAL(synth, sample_rate);
 
     param[0].i = 0;
     param[1].real = synth->sample_rate;
     fluid_rvoice_mixer_set_samplerate(synth->eventhandler->mixer, param);
-    
+
     fluid_synth_api_exit(synth);
 }
 
@@ -5302,7 +5302,7 @@ fluid_synth_add_sfloader(fluid_synth_t *synth, fluid_sfloader_t *loader)
  * @param filename File to load
  * @param reset_presets TRUE to re-assign presets for all MIDI channels (equivalent to calling fluid_synth_program_reset())
  * @return SoundFont ID on success, #FLUID_FAILED on error
- * 
+ *
  * @note Since FluidSynth 2.2.0 @c filename is treated as an UTF8 encoded string on Windows. FluidSynth will convert it
  * to wide-char internally and then pass it to <code>_wfopen()</code>. Before FluidSynth 2.2.0, @c filename was treated as ANSI string
  * on Windows. All other platforms directly pass it to <code>fopen()</code> without any conversion (usually, UTF8 is accepted).
@@ -6312,7 +6312,7 @@ fluid_synth_chorus_on(fluid_synth_t *synth, int fx_group, int on)
  * @param type Chorus waveform type (#fluid_chorus_mod)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  * @deprecated Use the individual chorus setter functions in new code instead.
- * 
+ *
  * Keep in mind, that the needed CPU time is proportional to 'nr'.
  */
 int fluid_synth_set_chorus(fluid_synth_t *synth, int nr, double level,
@@ -6931,7 +6931,7 @@ fluid_synth_count_effects_channels(fluid_synth_t *synth)
 
 /**
  * Get the total number of allocated effects units.
- * 
+ *
  * This is the same number as initially provided by the setting \setting{synth_effects-groups}.
  * @param synth FluidSynth instance
  * @return Count of allocated effects units

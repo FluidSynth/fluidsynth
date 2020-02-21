@@ -98,7 +98,7 @@ int fluid_is_midifile(const char *filename)
         {
             return retcode;
         }
-        
+
         if(FLUID_FREAD(&id, sizeof(id), 1, fp) != 1)
         {
             break;
@@ -2090,6 +2090,7 @@ fluid_player_callback(void *data, unsigned int msec)
     int loadnextfile;
     int status = FLUID_PLAYER_DONE;
     fluid_midi_event_t mute_event;
+    int oldstatus;
     fluid_player_t *player;
     fluid_synth_t *synth;
     player = (fluid_player_t *) data;
@@ -2190,8 +2191,8 @@ fluid_player_callback(void *data, unsigned int msec)
     }
     while(loadnextfile);
 
-    /* do not update the status if the player has been stopped already */
-    fluid_atomic_int_compare_and_exchange(&player->status, FLUID_PLAYER_PLAYING, status);
+    oldstatus = FLUID_PLAYER_PLAYING;
+    fluid_atomic_int_compare_and_exchange(&player->status, &oldstatus, status);
 
     return 1;
 }
@@ -2283,7 +2284,8 @@ int fluid_player_seek(fluid_player_t *player, int ticks)
 
     if(fluid_player_get_status(player) == FLUID_PLAYER_PLAYING)
     {
-        if(fluid_atomic_int_compare_and_exchange(&player->seek_ticks, -1, ticks))
+        int d = -1;
+        if(fluid_atomic_int_compare_and_exchange(&player->seek_ticks, &d, ticks))
         {
             // new seek position has been set, as no previous seek was in progress
             return FLUID_OK;
@@ -2368,7 +2370,7 @@ static void fluid_player_update_tempo(fluid_player_t *player)
  * @param tempo_type Must a be value of #fluid_player_set_tempo_type and indicates the
  *  meaning of tempo value and how the player will be controlled, see below.
  * @param tempo Tempo value or multiplier.
- * 
+ *
  *  #FLUID_PLAYER_TEMPO_INTERNAL, the player will be controlled by internal
  *  MIDI file tempo changes. If there are no tempo change in the MIDI file a default
  *  value of 120 bpm is used. The @c tempo parameter is used as a multiplier factor

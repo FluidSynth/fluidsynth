@@ -50,8 +50,8 @@ typedef struct
 {
     jack_client_t *client;
     char *server;                 /* Jack server name used */
-    fluid_jack_audio_driver_t *audio_driver;
-    fluid_jack_midi_driver_t *midi_driver;
+    _Atomic long /*fluid_jack_audio_driver_t*/ audio_driver;
+    _Atomic long /*fluid_jack_midi_driver_t*/ midi_driver;
 } fluid_jack_client_t;
 
 /* Jack audio driver instance */
@@ -165,7 +165,7 @@ new_fluid_jack_client(fluid_settings_t *settings, int isaudio, void *driver)
      * then re-use the client. */
     if(last_client &&
             (last_client->server != NULL && server != NULL && FLUID_STRCMP(last_client->server, server) == 0) &&
-            ((!isaudio && last_client->midi_driver == NULL) || (isaudio && last_client->audio_driver == NULL)))
+            ((!isaudio && (void*)last_client->midi_driver == NULL) || (isaudio && (void*)last_client->audio_driver == NULL)))
     {
         client_ref = last_client;
 
@@ -529,11 +529,11 @@ error_recovery:
 static void
 fluid_jack_client_close(fluid_jack_client_t *client_ref, void *driver)
 {
-    if(client_ref->audio_driver == driver)
+    if((void*)client_ref->audio_driver == driver)
     {
         fluid_atomic_pointer_set(&client_ref->audio_driver, NULL);
     }
-    else if(client_ref->midi_driver == driver)
+    else if((void*)client_ref->midi_driver == driver)
     {
         fluid_atomic_pointer_set(&client_ref->midi_driver, NULL);
     }
@@ -831,7 +831,8 @@ fluid_jack_port_registration(jack_port_id_t port, int is_registering, void *arg)
 
     if(client_ref->midi_driver != NULL)
     {
-        fluid_atomic_int_set(&client_ref->midi_driver->autoconnect_is_outdated, client_ref->midi_driver->autoconnect_inputs && is_registering != 0);
+        fluid_jack_midi_driver_t *midi_driver = fluid_atomic_pointer_get(&client_ref->midi_driver);
+        fluid_atomic_int_set(&midi_driver->autoconnect_is_outdated, midi_driver->autoconnect_inputs && is_registering != 0);
     }
 }
 

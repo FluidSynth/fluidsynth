@@ -99,6 +99,31 @@ static void *fluid_log_user_data[LAST_LOG_LEVEL] = { NULL };
 
 static const char fluid_libname[] = "fluidsynth";
 
+int _snprintf_c99(char *str, size_t size, const char *format, ...)
+{
+    va_list args;
+    int ret, r;
+    va_start(args, format);
+    ret = vsnprintf(str, size, format, args);
+    va_end(args);
+    r = ret;
+    if (r >= (int)size)
+        r = size - 1;
+    str[r]='\0';
+    return ret;
+}
+
+int _vsnprintf_c99(char *str, size_t size, const char *format, va_list ap)
+{
+    int ret, r;
+    ret = vsnprintf(str, size, format, ap);
+    r = ret;
+    if (r >= (int)size)
+        r = size - 1;
+    str[r]='\0';
+    return ret;
+}
+
 /**
  * Installs a new log function for a specified log level.
  * @param level Log level to install handler for.
@@ -378,7 +403,7 @@ char *fluid_strtok(char **str, char *delim)
  */
 void fluid_msleep(unsigned int msecs)
 {
-    g_usleep(msecs * 1000);
+    _thread_sleep(msecs * 1000);
 }
 
 /**
@@ -413,16 +438,7 @@ fluid_utime(void)
 {
     double utime;
 
-#if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION >= 28
-    /* use high precision monotonic clock if available (g_monotonic_time().
-     * For Windows, if this clock is actually implemented as low prec. clock
-     * (i.e. in case glib is too old), high precision performance counter are
-     * used instead.
-     * see: https://bugzilla.gnome.org/show_bug.cgi?id=783340
-     */
-#if defined(WITH_PROFILING) &&  defined(WIN32) &&\
-	/* glib < 2.53.3 */\
-	(GLIB_MINOR_VERSION <= 53 && (GLIB_MINOR_VERSION < 53 || GLIB_MICRO_VERSION < 3))
+#ifdef WIN32
     /* use high precision performance counter. */
     static LARGE_INTEGER freq_cache = {0, 0};	/* Performance Frequency */
     LARGE_INTEGER perf_cpt;
@@ -435,13 +451,7 @@ fluid_utime(void)
     QueryPerformanceCounter(&perf_cpt); /* Counter value */
     utime = perf_cpt.QuadPart * 1000000.0 / freq_cache.QuadPart; /* time in micros */
 #else
-    utime = g_get_monotonic_time();
-#endif
-#else
-    /* fallback to less precise clock */
-    GTimeVal timeval;
-    g_get_current_time(&timeval);
-    utime = (timeval.tv_sec * 1000000.0 + timeval.tv_usec);
+    utime = _monotonic_time();
 #endif
 
     return utime;
@@ -995,25 +1005,8 @@ void fluid_profile_start_stop(unsigned int end_ticks, short clear_data)
  *
  */
 
-#if OLD_GLIB_THREAD_API
-
-/* Rather than inline this one, we just declare it as a function, to prevent
- * GCC warning about inline failure. */
-fluid_cond_t *
-new_fluid_cond(void)
-{
-    if(!g_thread_supported())
-    {
-        g_thread_init(NULL);
-    }
-
-    return g_cond_new();
-}
-
-#endif
-
-static gpointer
-fluid_thread_high_prio(gpointer data)
+static int
+fluid_thread_high_prio(void* data)
 {
     fluid_thread_info_t *info = data;
 
@@ -1022,7 +1015,7 @@ fluid_thread_high_prio(gpointer data)
     info->func(info->data);
     FLUID_FREE(info);
 
-    return NULL;
+    return 0;
 }
 
 /**
@@ -1037,23 +1030,10 @@ fluid_thread_high_prio(gpointer data)
 fluid_thread_t *
 new_fluid_thread(const char *name, fluid_thread_func_t func, void *data, int prio_level, int detach)
 {
-    GThread *thread;
+    _thread *thread = FLUID_NEW(_thread);
     fluid_thread_info_t *info = NULL;
-    GError *err = NULL;
 
-    g_return_val_if_fail(func != NULL, NULL);
-
-#if OLD_GLIB_THREAD_API
-
-    /* Make sure g_thread_init has been called.
-     * Probably not a good idea in a shared library,
-     * but what can we do *and* remain backwards compatible? */
-    if(!g_thread_supported())
-    {
-        g_thread_init(NULL);
-    }
-
-#endif
+    fluid_return_val_if_fail(func != NULL, NULL);
 
     if(prio_level > 0)
     {
@@ -1068,39 +1048,18 @@ new_fluid_thread(const char *name, fluid_thread_func_t func, void *data, int pri
         info->func = func;
         info->data = data;
         info->prio_level = prio_level;
-#if NEW_GLIB_THREAD_API
-        thread = g_thread_try_new(name, fluid_thread_high_prio, info, &err);
-#else
-        thread = g_thread_create(fluid_thread_high_prio, info, detach == FALSE, &err);
-#endif
+        _thread_create(thread, fluid_thread_high_prio, info);
     }
 
     else
     {
-#if NEW_GLIB_THREAD_API
-        thread = g_thread_try_new(name, (GThreadFunc)func, data, &err);
-#else
-        thread = g_thread_create((GThreadFunc)func, data, detach == FALSE, &err);
-#endif
+        _thread_create(thread, func, data);
     }
-
-    if(!thread)
-    {
-        FLUID_LOG(FLUID_ERR, "Failed to create the thread: %s",
-                  fluid_gerror_message(err));
-        g_clear_error(&err);
-        FLUID_FREE(info);
-        return NULL;
-    }
-
-#if NEW_GLIB_THREAD_API
 
     if(detach)
     {
-        g_thread_unref(thread);    // Release thread reference, if caller wants to detach
+        _thread_detach(thread);    // Release thread reference, if caller wants to detach
     }
-
-#endif
 
     return thread;
 }
@@ -1112,7 +1071,8 @@ new_fluid_thread(const char *name, fluid_thread_func_t func, void *data, int pri
 void
 delete_fluid_thread(fluid_thread_t *thread)
 {
-    /* Threads free themselves when they quit, nothing to do */
+    _thread_detach(thread);
+    free(thread);
 }
 
 /**
@@ -1123,7 +1083,7 @@ delete_fluid_thread(fluid_thread_t *thread)
 int
 fluid_thread_join(fluid_thread_t *thread)
 {
-    g_thread_join(thread);
+    _thread_join(thread);
 
     return FLUID_OK;
 }
@@ -1730,14 +1690,13 @@ FILE* fluid_file_open(const char* path, const char** errMsg)
     
     FILE* handle = NULL;
     
-    if(!g_file_test(path, G_FILE_TEST_EXISTS))
+    fluid_stat_buf_t statbuf;
+    int ret=fluid_stat(path, &statbuf);
+    if (ret != 0)
     {
-        if(errMsg != NULL)
-        {
-            *errMsg = ErrExist;
-        }
+        *errMsg = ErrExist;
     }
-    else if(!g_file_test(path, G_FILE_TEST_IS_REGULAR))
+    else if((statbuf.st_mode & S_IFMT) != S_IFREG)
     {
         if(errMsg != NULL)
         {

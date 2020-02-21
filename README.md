@@ -1,3 +1,17 @@
+# Fluidsynth sans GLib
+
+Let's be real. Using GLib on any non-POSIX platform is a PITA. Hence this fork.
+
+This is the adaption of my old patchset archived [here](https://github.com/chirs241097/fluidsynth).
+That was a really horrible-looking patchset. Actually it was not a patchset at all.
+It was partially reworked again in Feb 2020, but it's still horrible.
+
+Passes all unit tests but not throughly tested in production.
+
+LADSPA support has been disabled because it uses `GModule`. Also I assumed gcc-compatible compilers since msvc suck.
+
+Original content of this file follows.
+
 # FluidSynth
 
 | | Build Status |

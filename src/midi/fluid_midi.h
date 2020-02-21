@@ -310,16 +310,16 @@ struct _fluid_player_t
        1, the player is driven by internal tempo (miditempo). This is the default.
        0, the player is driven by external tempo (exttempo)
     */
-    int sync_mode;
+    fluid_atomic_int_t sync_mode;
     /* miditempo: internal tempo coming from MIDI file tempo change events
       (in micro seconds per quarter note)
     */
-    int miditempo;     /* as indicated by MIDI SetTempo: n 24th of a usec per midi-clock. bravo! */
+    fluid_atomic_int_t miditempo;     /* as indicated by MIDI SetTempo: n 24th of a usec per midi-clock. bravo! */
     /* exttempo: external tempo set by fluid_player_set_tempo() (in micro seconds per quarter note) */
-    int exttempo;
+    fluid_atomic_int_t exttempo;
     /* multempo: tempo multiplier set by fluid_player_set_tempo() */
-    float multempo;
-    float deltatime;   /* milliseconds per midi tick. depends on current tempo mode (see sync_mode) */
+    fluid_atomic_float_t multempo;
+    fluid_atomic_float_t deltatime;   /* milliseconds per midi tick. depends on current tempo mode (see sync_mode) */
     unsigned int division;
 
     handle_midi_event_func_t playback_callback; /* function fired on each midi event as it is played */
