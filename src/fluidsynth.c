@@ -1009,12 +1009,13 @@ int main(int argc, char **argv)
         }
 
         fluid_settings_dupstr(settings, "audio.file.name", &filename);
-        if (!quiet) {
-            printf("Rendering audio to file '%s'..\n", filename);
-        }
-
         if(filename)
         {
+            if (!quiet)
+            {
+                printf("Rendering audio to file '%s'..\n", filename);
+            }
+
             FLUID_FREE(filename);
         }
 
