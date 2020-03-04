@@ -205,7 +205,6 @@ void delete_fluid_oboe_audio_driver(fluid_audio_driver_t *p)
 
     try
     {
-
         dev->cont = 0;
 
         if(dev->stream != NULL)
@@ -215,6 +214,9 @@ void delete_fluid_oboe_audio_driver(fluid_audio_driver_t *p)
         }
     }
     catch(...) {}
+
+    // the audio stream is silently allocated with new, but neither the API docs nor code examples mention that it should be deleted
+    delete dev->stream;
 
     delete dev->oboe_callback;
 
