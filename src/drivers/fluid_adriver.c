@@ -213,7 +213,7 @@ void fluid_audio_driver_settings(fluid_settings_t *settings)
 
     fluid_settings_register_int(settings, "audio.realtime-prio",
                                 FLUID_DEFAULT_AUDIO_RT_PRIO, 0, 99, 0);
-    
+
     fluid_settings_register_str(settings, "audio.driver", "", 0);
 
     for(i = 0; i < FLUID_N_ELEMENTS(fluid_audio_drivers) - 1; i++)
@@ -223,7 +223,7 @@ void fluid_audio_driver_settings(fluid_settings_t *settings)
         {
             def_name = fluid_audio_drivers[i].name;
         }
-    
+
         /* Add the driver to the list of options */
         fluid_settings_add_option(settings, "audio.driver", fluid_audio_drivers[i].name);
 
@@ -265,7 +265,7 @@ find_fluid_audio_driver(fluid_settings_t *settings)
 
     fluid_settings_dupstr(settings, "audio.driver", &name);        /* ++ alloc name */
     FLUID_LOG(FLUID_ERR, "Couldn't find the requested audio driver '%s'.", name ? name : "NULL");
-    
+
     allnames = fluid_settings_option_concat(settings, "audio.driver", NULL);
     if(allnames != NULL)
     {
@@ -280,9 +280,9 @@ find_fluid_audio_driver(fluid_settings_t *settings)
 
         FLUID_FREE(allnames);
     }
-    
+
     FLUID_FREE(name);
-    
+
     return NULL;
 }
 
@@ -291,7 +291,7 @@ find_fluid_audio_driver(fluid_settings_t *settings)
  * @param settings Configuration settings used to select and create the audio
  *   driver.
  * @param synth Synthesizer instance for which the audio driver is created for.
- * @return The new audio driver instance.
+ * @return The new audio driver instance or NULL on error
  *
  * Creates a new audio driver for a given \p synth instance with a defined set
  * of configuration \p settings. The \p settings instance must be the same that
@@ -329,8 +329,8 @@ new_fluid_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
  * @param settings Configuration settings used to select and create the audio
  *   driver.
  * @param func Function called to fill audio buffers for audio playback
- * @param data User defined data pointer to pass to 'func'
- * @return The new audio driver instance.
+ * @param data User defined data pointer to pass to \p func
+ * @return The new audio driver instance or NULL on error
  *
  * Like new_fluid_audio_driver() but allows for custom audio processing before
  * audio is sent to audio driver. It is the responsibility of the callback
