@@ -1,5 +1,5 @@
 image:
-  - Visual Studio 2017
+  - Visual Studio 2019
 
 build:
   parallel: true
@@ -27,7 +27,7 @@ init:
   - if "%platform%"=="ARM" ( set TARGET_PLATFORM=ARM)
   - echo %TARGET_PLATFORM%
   - echo %APPVEYOR_BUILD_WORKER_IMAGE%
-  - if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2017" ( set "generator=Visual Studio 15 2017" && set "toolset=v141" )
+  - if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2019" ( set "generator=Visual Studio 16 2019" && set "toolset=v142" )
   - echo %generator%
   - echo %toolset%
   
@@ -39,6 +39,7 @@ install:
   #- 7z x ninja.zip -oC:\projects\deps\ninja > nul
   #- set PATH=C:\projects\deps\ninja;%PATH%
   - ninja --version
+  - cmake --version
 # vcpkg update
   - cd "C:\Tools\vcpkg"
   - git pull
