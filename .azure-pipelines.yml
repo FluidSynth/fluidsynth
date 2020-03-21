@@ -209,12 +209,12 @@ jobs:
         mingw32-make.exe install || exit -1
         art_dir=$(echo "$(Build.ArtifactStagingDirectory)" | sed 's/\\/\//g' | sed 's|\([a-zA-Z]\):|/\1|')
         cp -r test $art_dir/bin
-        rm art_dir\bin\concrt*.dll
-        rm art_dir\bin\vcruntime*.dll
-        rm art_dir\bin\msvcp*.dll
-        rm art_dir\lib\instpatch*.lib
-        rm art_dir\lib\pkgconfig\libinstpatch*.pc
-        rm -rf art_dir\include\libinstpatch-2 /s /q
+        rm $art_dir/bin/concrt*.dll
+        rm $art_dir/bin/vcruntime*.dll
+        rm $art_dir/bin/msvcp*.dll
+        rm $art_dir/lib/instpatch*.lib
+        rm $art_dir/lib/pkgconfig/libinstpatch*.pc
+        rm -rf $art_dir/include/libinstpatch-2 /s /q
       displayName: 'Copy Artifacts'
     - task: PublishBuildArtifacts@1
       inputs:
