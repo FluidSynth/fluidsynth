@@ -203,18 +203,17 @@ jobs:
         cd build || exit -1
         mingw32-make.exe check || cd .
       displayName: 'Execute Unittests'
-    - bash: |
-        set -ex
+    - script: |
+        @ECHO ON
         cd build
         mingw32-make.exe install || exit -1
-        art_dir=$(echo "$(Build.ArtifactStagingDirectory)" | sed 's/\\/\//g' | sed 's|\([a-zA-Z]\):|/\1|')
-        cp -r test $art_dir/bin
-        rm $art_dir/bin/concrt*.dll
-        rm $art_dir/bin/vcruntime*.dll
-        rm $art_dir/bin/msvcp*.dll
-        rm $art_dir/lib/instpatch*.lib
-        rm $art_dir/lib/pkgconfig/libinstpatch*.pc
-        rm -rf $art_dir/include/libinstpatch-2 /s /q
+        xcopy test $(Build.ArtifactStagingDirectory)\bin /s
+        del $(Build.ArtifactStagingDirectory)\bin\concrt*.dll
+        del $(Build.ArtifactStagingDirectory)\bin\vcruntime*.dll
+        del $(Build.ArtifactStagingDirectory)\bin\msvcp*.dll
+        del $(Build.ArtifactStagingDirectory)\lib\instpatch*.lib
+        del $(Build.ArtifactStagingDirectory)\lib\pkgconfig\libinstpatch*.pc
+        rd $(Build.ArtifactStagingDirectory)\include\libinstpatch-2 /s /q
       displayName: 'Copy Artifacts'
     - task: PublishBuildArtifacts@1
       inputs:
