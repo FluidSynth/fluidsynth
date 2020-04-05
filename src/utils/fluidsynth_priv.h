@@ -197,11 +197,11 @@ void* fluid_alloc(size_t len);
 
 #ifdef WIN32
 #define FLUID_FSEEK(_f,_n,_set)      _fseeki64(_f,_n,_set)
-#define FLUID_FTELL(_f)              _ftelli64(_f)
 #else
 #define FLUID_FSEEK(_f,_n,_set)      fseek(_f,_n,_set)
-#define FLUID_FTELL(_f)              ftell(_f)
 #endif
+
+#define FLUID_FTELL(_f)              fluid_file_tell(_f)
 
 /* Memory functions */
 #define FLUID_MEMCPY(_dst,_src,_n)   memcpy(_dst,_src,_n)
