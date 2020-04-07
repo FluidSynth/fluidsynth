@@ -402,14 +402,19 @@ endif ( MACOSX_FRAMEWORK )
 # ******* Auto Generated Lookup Tables ******
 
 include(ExternalProject)
+
+set (GENTAB_SDIR ${CMAKE_CURRENT_SOURCE_DIR}/gentables)
+set (GENTAB_BDIR ${CMAKE_CURRENT_BINARY_DIR}/gentables)
+
+# Use external project to ensure that cmake uses the host compiler when building make_tables.exe
 ExternalProject_Add(gentables
     DOWNLOAD_COMMAND ""
-    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/gentables
-    BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/gentables
+    SOURCE_DIR ${GENTAB_SDIR}
+    BINARY_DIR ${GENTAB_BDIR}
 	CONFIGURE_COMMAND
-        "${CMAKE_COMMAND}" "${CMAKE_CURRENT_SOURCE_DIR}/gentables" -DCMAKE_VERBOSE_MAKEFILE=1 -G "${CMAKE_GENERATOR}" -B "${CMAKE_CURRENT_BINARY_DIR}/gentables"
+        "${CMAKE_COMMAND}" "${GENTAB_SDIR}" -DCMAKE_VERBOSE_MAKEFILE=${CMAKE_VERBOSE_MAKEFILE} -G "${CMAKE_GENERATOR}" -B "${GENTAB_BDIR}"
     BUILD_COMMAND
-        "${CMAKE_COMMAND}" --build "${CMAKE_CURRENT_BINARY_DIR}/gentables"
-    INSTALL_COMMAND ${CMAKE_CURRENT_BINARY_DIR}/gentables/make_tables.exe "${CMAKE_BINARY_DIR}/"
+        "${CMAKE_COMMAND}" --build "${GENTAB_BDIR}"
+    INSTALL_COMMAND ${GENTAB_BDIR}/make_tables.exe "${CMAKE_BINARY_DIR}/"
 )
 add_dependencies(libfluidsynth-OBJ gentables)
