@@ -1,6 +1,6 @@
 # FluidSynth
 
-| Build Status | |
+| | Build Status |
 |---|---|
 | <img src="https://www.kernel.org/theme/images/logos/tux.png" height="30" alt=""> **Linux** | [![Build Status Travis](https://travis-ci.org/FluidSynth/fluidsynth.svg?branch=master)](https://travis-ci.org/FluidSynth/fluidsynth/branches) |
 | <img src="https://cdn.pling.com/img//hive/content-pre1/112422-1.png" height="25" alt=""> **FreeBSD** | [![Build Status](https://api.cirrus-ci.com/github/FluidSynth/fluidsynth.svg?branch=master)](https://cirrus-ci.com/github/FluidSynth/fluidsynth) |
@@ -21,7 +21,7 @@ FluidSynth generates audio by reading and handling MIDI events from MIDI input d
 
 The central place for documentation and further links is our **wiki** here at GitHub:
 
-**https://github.com/FluidSynth/fluidsynth/wiki**
+#### https://github.com/FluidSynth/fluidsynth/wiki
 
 If you are missing parts of the documentation, let us know by writing to our mailing list.
 Of course, you are welcome to edit and improve the wiki yourself. All you need is an account at GitHub. Alternatively, you may send an EMail to our mailing list along with your suggested changes. Further information about the mailing list is available in the wiki as well.
