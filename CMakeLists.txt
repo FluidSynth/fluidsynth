@@ -29,7 +29,7 @@ set ( PACKAGE "fluidsynth" )
 # FluidSynth package version
 set ( FLUIDSYNTH_VERSION_MAJOR 2 )
 set ( FLUIDSYNTH_VERSION_MINOR 1 )
-set ( FLUIDSYNTH_VERSION_MICRO 1 )
+set ( FLUIDSYNTH_VERSION_MICRO 2 )
 set ( VERSION "${FLUIDSYNTH_VERSION_MAJOR}.${FLUIDSYNTH_VERSION_MINOR}.${FLUIDSYNTH_VERSION_MICRO}" )
 set ( FLUIDSYNTH_VERSION "\"${VERSION}\"" )
 
@@ -44,7 +44,7 @@ set ( FLUIDSYNTH_VERSION "\"${VERSION}\"" )
 # This is not exactly the same algorithm as the libtool one, but the results are the same.
 set ( LIB_VERSION_CURRENT 2 )
 set ( LIB_VERSION_AGE 3 )
-set ( LIB_VERSION_REVISION 1 )
+set ( LIB_VERSION_REVISION 2 )
 set ( LIB_VERSION_INFO
       "${LIB_VERSION_CURRENT}.${LIB_VERSION_AGE}.${LIB_VERSION_REVISION}" )
 
@@ -583,7 +583,7 @@ else(NOT enable-pkgconfig)
     if ( enable-readline )
     pkg_check_modules ( READLINE readline )
     if ( NOT READLINE_FOUND )
-        find_package ( Readline )
+        find_package ( READLINE )
         set ( READLINE_FOUND ${HAVE_READLINE} )
     endif ( NOT READLINE_FOUND )
     if ( READLINE_FOUND )
