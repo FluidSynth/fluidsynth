@@ -34,13 +34,9 @@ init:
 install:
 # make sure the latest version of git is installed
   - choco upgrade git ninja -y
-  #- set NINJA_URL="https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-win.zip"
-  #- appveyor DownloadFile %NINJA_URL% -FileName ninja.zip
-  #- 7z x ninja.zip -oC:\projects\deps\ninja > nul
-  #- set PATH=C:\projects\deps\ninja;%PATH%
   - ninja --version
   - cmake --version
-# vcpkg update
+# manually update vcpkg
   - cd "C:\Tools\vcpkg"
   - git pull
   - .\bootstrap-vcpkg.bat

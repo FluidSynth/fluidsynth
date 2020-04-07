@@ -407,11 +407,14 @@ set (GENTAB_SDIR ${CMAKE_CURRENT_SOURCE_DIR}/gentables)
 set (GENTAB_BDIR ${CMAKE_CURRENT_BINARY_DIR}/gentables)
 
 # Use external project to ensure that cmake uses the host compiler when building make_tables.exe
+# To fix cross-compiling fluidsynth from Win32 to ARM (using vcpkg), we need to pass the current generator
+# on to the external project, otherwise (for some unknown reason) the target compiler will be used rather
+# than the host compiler.
 ExternalProject_Add(gentables
     DOWNLOAD_COMMAND ""
     SOURCE_DIR ${GENTAB_SDIR}
     BINARY_DIR ${GENTAB_BDIR}
-	CONFIGURE_COMMAND
+    CONFIGURE_COMMAND
         "${CMAKE_COMMAND}" "${GENTAB_SDIR}" -DCMAKE_VERBOSE_MAKEFILE=${CMAKE_VERBOSE_MAKEFILE} -G "${CMAKE_GENERATOR}" -B "${GENTAB_BDIR}"
     BUILD_COMMAND
         "${CMAKE_COMMAND}" --build "${GENTAB_BDIR}"
