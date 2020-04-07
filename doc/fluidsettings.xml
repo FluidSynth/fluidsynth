@@ -354,8 +354,7 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             </desc>
         </setting>
     </synth>
-        
-    
+
     <audio>
         <setting>
             <isFirst>Audio driver settings</isFirst>
@@ -367,7 +366,7 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
                   coreaudio (Mac OS X),<br />
                   dart (OS/2)
             </def>
-            <vals>alsa, coreaudio, dart, dsound, file, jack, oss, portaudio, pulseaudio, sdl2, sndman, waveout</vals>
+            <vals>alsa, coreaudio, dart, dsound, file, jack, oboe, opensles, oss, portaudio, pulseaudio, sdl2, sndman, waveout</vals>
             <desc>
                 The audio system to be used. In order to use sdl2 as audio driver, the application is responsible for initializing SDL's audio subsystem.<br /><br /><strong>Note:</strong> sdl2 and waveout are available since fluidsynth 2.1.
             </desc>
@@ -642,13 +641,13 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             <name>alsa.device</name>
             <type>str</type>
             <def>default</def>
-            <desc>ALSA MIDI device to use for RAW ALSA MIDI driver.</desc>
+            <desc>ALSA MIDI hardware device to use for RAW ALSA MIDI driver (not to be confused with the MIDI port).</desc>
         </setting>
         <setting>
             <name>alsa_seq.device</name>
             <type>str</type>
             <def>default</def>
-            <desc>ALSA sequencer device to use for ALSA sequencer driver.</desc>
+            <desc>ALSA sequencer hardware device to use for ALSA sequencer driver (not to be confused with the MIDI port).</desc>
         </setting>
         <setting>
             <name>alsa_seq.id</name>
@@ -678,13 +677,13 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             <name>oss.device</name>
             <type>str</type>
             <def>/dev/midi</def>
-            <desc>Device to use for OSS MIDI driver.</desc>
+            <desc>The hardware device to use for OSS MIDI driver (not to be confused with the MIDI port).</desc>
         </setting>
         <setting>
             <name>winmidi.device</name>
             <type>str</type>
             <def>default</def>
-            <desc>Device for Windows MIDI driver.</desc>
+            <desc>The hardware device to use for Windows MIDI driver (not to be confused with the MIDI port).</desc>
         </setting>
     </midi>
     

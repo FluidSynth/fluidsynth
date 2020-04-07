@@ -7,9 +7,11 @@ jobs:
 - job: macOS
   pool:
     vmImage: 'macOS-10.14'
+# recommended by https://github.com/Homebrew/brew/issues/2491#issuecomment-294207661
   steps:
     - script: |
-        brew update
+        brew update || brew update
+        brew upgrade
         brew install glib gobject-introspection libsndfile pkg-config jack dbus-glib pulseaudio portaudio sdl2
       displayName: 'Prerequisites'
     - script: |

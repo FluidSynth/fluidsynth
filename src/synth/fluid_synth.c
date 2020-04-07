@@ -3624,7 +3624,7 @@ fx[ ((k * fluid_synth_count_effects_channels() + j) * 2 + 1) % nfx ]  = right_bu
  * <code>0 <= j < fluid_synth_count_effects_channels()</code> is a zero-based index denoting the effect channel within
  * unit \p k.
  *
- * Any voice playing is assigned to audio channels based on the MIDI channel its playing on. Let \p chan be the
+ * Any playing voice is assigned to audio channels based on the MIDI channel it's playing on: Let \p chan be the
  * zero-based MIDI channel index an arbitrary voice is playing on. To determine the audio channel and effects unit it is
  * going to be rendered to use:
  *

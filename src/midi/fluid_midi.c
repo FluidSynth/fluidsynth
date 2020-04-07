@@ -2207,6 +2207,7 @@ int fluid_player_set_loop(fluid_player_t *player, int loop)
  * @param player MIDI player instance
  * @param tempo Tempo to set playback speed to (in microseconds per quarter note, as per MIDI file spec)
  * @return Always returns #FLUID_OK
+ * @note Tempo change events contained in the MIDI file can override the specified tempo at any time!
  */
 int fluid_player_set_midi_tempo(fluid_player_t *player, int tempo)
 {
@@ -2227,6 +2228,7 @@ int fluid_player_set_midi_tempo(fluid_player_t *player, int tempo)
  * @param player MIDI player instance
  * @param bpm Tempo in beats per minute
  * @return Always returns #FLUID_OK
+ * @note Tempo change events contained in the MIDI file can override the specified BPM at any time!
  */
 int fluid_player_set_bpm(fluid_player_t *player, int bpm)
 {

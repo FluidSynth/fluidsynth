@@ -44,25 +44,51 @@ int fx_function(void *data, int len,
 {
     struct fx_data_t *fx_data = (struct fx_data_t *) data;
     int i, k;
-    float *out_i;
 
-    /* Call the synthesizer to fill the output buffers with its
-     * audio output. */
-    if(fluid_synth_process(fx_data->synth, len, nfx, fx, nout, out) != FLUID_OK)
+    if(fx == 0)
     {
-        /* Some error occurred. Very unlikely to happen, though. */
-        return FLUID_FAILED;
+        /* Note that some audio drivers may not provide buffers for effects like
+         * reverb and chorus. In this case it's your decision what to do. If you
+         * had called fluid_synth_process() like in the else branch below, no
+         * effects would have been rendered. Instead, you may mix the effects
+         * directly into the out buffers. */
+        if(fluid_synth_process(fx_data->synth, len, nout, out, nout, out) != FLUID_OK)
+        {
+            /* Some error occurred. Very unlikely to happen, though. */
+            return FLUID_FAILED;
+        }
+    }
+    else
+    {
+        /* Call the synthesizer to fill the output buffers with its
+         * audio output. */
+        if(fluid_synth_process(fx_data->synth, len, nfx, fx, nout, out) != FLUID_OK)
+        {
+            /* Some error occurred. Very unlikely to happen, though. */
+            return FLUID_FAILED;
+        }
     }
 
     /* Apply your effects here. In this example, the gain is
-     * applied to all the output buffers. */
+     * applied to all the dry-audio output buffers. */
     for(i = 0; i < nout; i++)
     {
-        out_i = out[i];
+        float *out_i = out[i];
 
         for(k = 0; k < len; k++)
         {
             out_i[k] *= fx_data->gain;
+        }
+    }
+
+    /* Apply the same effect to all available effect buffer. */
+    for(i = 0; i < nfx; i++)
+    {
+        float *fx_i = fx[i];
+
+        for(k = 0; k < len; k++)
+        {
+            fx_i[k] *= fx_data->gain;
         }
     }
 

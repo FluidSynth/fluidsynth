@@ -700,11 +700,36 @@ int fluid_sample_set_pitch(fluid_sample_t *sample, int root_key, int fine_tune)
  */
 int fluid_sample_validate(fluid_sample_t *sample, unsigned int buffer_size)
 {
+#define EXCLUSIVE_FLAGS (FLUID_SAMPLETYPE_MONO | FLUID_SAMPLETYPE_RIGHT | FLUID_SAMPLETYPE_LEFT)
+    static const unsigned int supported_flags = EXCLUSIVE_FLAGS | FLUID_SAMPLETYPE_LINKED | FLUID_SAMPLETYPE_OGG_VORBIS | FLUID_SAMPLETYPE_ROM;
+
     /* ROM samples are unusable for us by definition */
     if(sample->sampletype & FLUID_SAMPLETYPE_ROM)
     {
         FLUID_LOG(FLUID_WARN, "Sample '%s': ROM sample ignored", sample->name);
         return FLUID_FAILED;
+    }
+
+    if(sample->sampletype & ~supported_flags)
+    {
+        FLUID_LOG(FLUID_WARN, "Sample '%s' has unknown flags, possibly using an unsupported compression; sample ignored", sample->name);
+        return FLUID_FAILED;
+    }
+
+    if((sample->sampletype & EXCLUSIVE_FLAGS) & ((sample->sampletype & EXCLUSIVE_FLAGS) - 1))
+    {
+        FLUID_LOG(FLUID_INFO, "Sample '%s' should be either mono or left or right; using it anyway", sample->name);
+    }
+
+    if((sample->sampletype & FLUID_SAMPLETYPE_LINKED) && (sample->sampletype & EXCLUSIVE_FLAGS))
+    {
+        FLUID_LOG(FLUID_INFO, "Linked sample '%s' should not be mono, left or right at the same time; using it anyway", sample->name);
+    }
+
+    if((sample->sampletype & EXCLUSIVE_FLAGS) == 0)
+    {
+        FLUID_LOG(FLUID_INFO, "Sample '%s' has no flags set, assuming mono", sample->name);
+        sample->sampletype = FLUID_SAMPLETYPE_MONO;
     }
 
     /* Ogg vorbis compressed samples in the SF3 format use byte indices for
@@ -729,6 +754,7 @@ int fluid_sample_validate(fluid_sample_t *sample, unsigned int buffer_size)
     }
 
     return FLUID_OK;
+#undef EXCLUSIVE_FLAGS
 }
 
 /* Check the sample loop pointers and optionally convert them to something
