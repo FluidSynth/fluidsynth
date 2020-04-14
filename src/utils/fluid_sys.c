@@ -85,7 +85,11 @@ static fluid_log_function_t fluid_log_function[LAST_LOG_LEVEL] =
     fluid_default_log_function,
     fluid_default_log_function,
     fluid_default_log_function,
+#ifdef DEBUG
     fluid_default_log_function
+#else
+    NULL
+#endif
 };
 static void *fluid_log_user_data[LAST_LOG_LEVEL] = { NULL };
 
@@ -149,9 +153,7 @@ fluid_default_log_function(int level, const char *message, void *data)
         break;
 
     case FLUID_DBG:
-#if DEBUG
         FLUID_FPRINTF(out, "%s: debug: %s\n", fluid_libname, message);
-#endif
         break;
 
     default:

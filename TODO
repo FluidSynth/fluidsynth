@@ -21,27 +21,15 @@ Bugs to mash
 ------------
 - Investigate why MIDI rendering causes burst of notes at start
 
-Validation
-----------
-- Validation tests: create soundfont with basic wave forms [sine,
-  square, triangle]; make test midi file; compare with SBLive output;
-  "regression" test
-- Validate chorus (often sounds rather crappy)
-- Analyse performance
-
 Documentation
 -------------
 - Write documentation on tuning
-- Add usage scenarios in the documentation
 - User and system configuration file
 
 Misc
 ----
 - Remove dependency of settings on audio driver and other (see
   fluid_settings_init())
-- When specifying -i -s (no console and TCP server) log to TCP clients
-  with easier parsable messages ("warning:", "error:", etc)
-- Pause and resume the synthesizer/audio thread (run synthesizer as a daemon)
 - set loop on/off on a sample (set_gen GEN_SAMPLEMODE?)
 
 

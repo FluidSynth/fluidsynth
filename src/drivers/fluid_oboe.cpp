@@ -126,7 +126,6 @@ new_fluid_oboe_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
 
     try
     {
-
         dev = FLUID_NEW(fluid_oboe_audio_driver_t);
 
         if(dev == NULL)
@@ -171,21 +170,25 @@ new_fluid_oboe_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
         ->setCallback(dev->oboe_callback);
 
         result = builder->openStream(&stream);
-        dev->stream = stream;
-
         if(result != Result::OK)
         {
+            FLUID_LOG(FLUID_ERR, "Unable to open Oboe audio stream");
             goto error_recovery;
         }
 
+        dev->stream = stream;
         dev->cont = 1;
 
         FLUID_LOG(FLUID_INFO, "Using Oboe driver");
 
-        stream->start();
+        result = stream->start();
+        if(result != Result::OK)
+        {
+            FLUID_LOG(FLUID_ERR, "Unable to start Oboe audio stream");
+            goto error_recovery;
+        }
 
         return reinterpret_cast<fluid_audio_driver_t *>(dev);
-
     }
     catch(...)
     {
@@ -205,7 +208,6 @@ void delete_fluid_oboe_audio_driver(fluid_audio_driver_t *p)
 
     try
     {
-
         dev->cont = 0;
 
         if(dev->stream != NULL)
@@ -215,6 +217,9 @@ void delete_fluid_oboe_audio_driver(fluid_audio_driver_t *p)
         }
     }
     catch(...) {}
+
+    // the audio stream is silently allocated with new, but neither the API docs nor code examples mention that it should be deleted
+    delete dev->stream;
 
     delete dev->oboe_callback;
 

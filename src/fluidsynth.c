@@ -490,7 +490,10 @@ int main(int argc, char **argv)
             }
             else
             {
-                fluid_settings_setstr(settings, "audio.driver", optarg);
+                if(fluid_settings_setstr(settings, "audio.driver", optarg) != FLUID_OK)
+                {
+                    goto cleanup;
+                }
             }
 
             break;
@@ -508,7 +511,10 @@ int main(int argc, char **argv)
             break;
 
         case 'c':
-            fluid_settings_setint(settings, "audio.periods", atoi(optarg));
+            if(fluid_settings_setint(settings, "audio.periods", atoi(optarg)) != FLUID_OK)
+            {
+                goto cleanup;
+            }
             break;
 
         case 'd':
@@ -533,7 +539,10 @@ int main(int argc, char **argv)
             }
             else
             {
-                fluid_settings_setstr(settings, "audio.file.endian", optarg);
+                if(fluid_settings_setstr(settings, "audio.file.endian", optarg) != FLUID_OK)
+                {
+                    goto cleanup;
+                }
             }
 
             break;
@@ -543,7 +552,10 @@ int main(int argc, char **argv)
             break;
 
         case 'F':
-            fluid_settings_setstr(settings, "audio.file.name", optarg);
+            if(fluid_settings_setstr(settings, "audio.file.name", optarg) != FLUID_OK)
+            {
+                goto cleanup;
+            }
             fast_render = 1;
             break;
 
@@ -552,7 +564,10 @@ int main(int argc, char **argv)
             break;
 
         case 'g':
-            fluid_settings_setnum(settings, "synth.gain", atof(optarg));
+            if(fluid_settings_setnum(settings, "synth.gain", atof(optarg)) != FLUID_OK)
+            {
+                goto cleanup;
+            }
             break;
 
         case 'h':
@@ -572,12 +587,18 @@ int main(int argc, char **argv)
             break;
 
         case 'K':
-            fluid_settings_setint(settings, "synth.midi-channels", atoi(optarg));
+            if(fluid_settings_setint(settings, "synth.midi-channels", atoi(optarg)) != FLUID_OK)
+            {
+                goto cleanup;
+            }
             break;
 
         case 'L':
             audio_channels = atoi(optarg);
-            fluid_settings_setint(settings, "synth.audio-channels", audio_channels);
+            if(fluid_settings_setint(settings, "synth.audio-channels", audio_channels) != FLUID_OK)
+            {
+                goto cleanup;
+            }
             break;
 
         case 'l':			/* disable LASH */
@@ -596,7 +617,10 @@ int main(int argc, char **argv)
             }
             else
             {
-                fluid_settings_setstr(settings, "midi.driver", optarg);
+                if(fluid_settings_setstr(settings, "midi.driver", optarg) != FLUID_OK)
+                {
+                    goto cleanup;
+                }
             }
 
             break;
@@ -636,7 +660,10 @@ int main(int argc, char **argv)
             break;
 
         case 'p' :
-            fluid_settings_setstr(settings, "midi.portname", optarg);
+            if(fluid_settings_setstr(settings, "midi.portname", optarg) != FLUID_OK)
+            {
+                goto cleanup;
+            }
             break;
 
         case 'q':
@@ -665,7 +692,10 @@ int main(int argc, char **argv)
             break;
 
         case 'r':
-            fluid_settings_setnum(settings, "synth.sample-rate", atof(optarg));
+            if(fluid_settings_setnum(settings, "synth.sample-rate", atof(optarg)) != FLUID_OK)
+            {
+                goto cleanup;
+            }
             break;
 
         case 's':
@@ -692,7 +722,10 @@ int main(int argc, char **argv)
             }
             else
             {
-                fluid_settings_setstr(settings, "audio.file.type", optarg);
+                if(fluid_settings_setstr(settings, "audio.file.type", optarg) != FLUID_OK)
+                {
+                    goto cleanup;
+                }
             }
 
             break;
@@ -706,10 +739,14 @@ int main(int argc, char **argv)
 
         case 'v':
             fluid_settings_setint(settings, "synth.verbose", TRUE);
+            fluid_set_log_function(FLUID_DBG, fluid_default_log_function, NULL);
             break;
 
         case 'z':
-            fluid_settings_setint(settings, "audio.period-size", atoi(optarg));
+            if(fluid_settings_setint(settings, "audio.period-size", atoi(optarg)) != FLUID_OK)
+            {
+                goto cleanup;
+            }
             break;
 #ifdef GETOPT_SUPPORT
 
@@ -779,7 +816,10 @@ int main(int argc, char **argv)
 
     if(audio_groups != 0)
     {
-        fluid_settings_setint(settings, "synth.audio-groups", audio_groups);
+        if(fluid_settings_setint(settings, "synth.audio-groups", audio_groups) != FLUID_OK)
+        {
+            goto cleanup;
+        }
     }
 
     if(fast_render)
@@ -969,12 +1009,13 @@ int main(int argc, char **argv)
         }
 
         fluid_settings_dupstr(settings, "audio.file.name", &filename);
-        if (!quiet) {
-            printf("Rendering audio to file '%s'..\n", filename);
-        }
-
         if(filename)
         {
+            if (!quiet)
+            {
+                printf("Rendering audio to file '%s'..\n", filename);
+            }
+
             FLUID_FREE(filename);
         }
 
@@ -1072,7 +1113,7 @@ void
 print_welcome()
 {
     printf("FluidSynth runtime version %s\n"
-           "Copyright (C) 2000-2019 Peter Hanappe and others.\n"
+           "Copyright (C) 2000-2020 Peter Hanappe and others.\n"
            "Distributed under the LGPL license.\n"
            "SoundFont(R) is a registered trademark of E-mu Systems, Inc.\n\n",
            fluid_version_str());
@@ -1161,7 +1202,7 @@ print_help(fluid_settings_t *settings)
     printf(" -T, --audio-file-type\n"
            "    Audio file type for fast rendering or aufile driver (\"help\" for list)\n");
     printf(" -v, --verbose\n"
-           "    Print out verbose messages about midi events\n");
+           "    Print out verbose messages about midi events (synth.verbose=1) as well as other debug messages\n");
     printf(" -V, --version\n"
            "    Show version of program\n");
     printf(" -z, --audio-bufsize=[size]\n"

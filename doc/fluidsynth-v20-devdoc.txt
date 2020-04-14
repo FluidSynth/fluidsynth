@@ -1,5 +1,5 @@
-/*! 
-\mainpage FluidSynth 2.0 Developer Documentation 
+/*!
+\mainpage FluidSynth 2.1 Developer Documentation
 \author Peter Hanappe
 \author Conrad Berhörster
 \author Antoine Schmitt
@@ -7,9 +7,9 @@
 \author Josh Green
 \author David Henningsson
 \author Tom Moebert
-\author Copyright &copy; 2003-2019 Peter Hanappe, Conrad Berhörster, Antoine Schmitt, Pedro López-Cabanillas, Josh Green, David Henningsson, Tom Moebert
-\version Revision 2.1.0
-\date 2019-11-30
+\author Copyright &copy; 2003-2020 Peter Hanappe, Conrad Berhörster, Antoine Schmitt, Pedro López-Cabanillas, Josh Green, David Henningsson, Tom Moebert
+\version Revision 2.1.2
+\date 2020-04-05
 
 All the source code examples in this document are in the public domain; you can use them as you please. This document is licensed under the Creative Commons Attribution-Share Alike 3.0 Unported License. To view a copy of this license, visit http://creativecommons.org/licenses/by-sa/3.0/ . The FluidSynth library is distributed under the GNU Lesser General Public License. A copy of the GNU Lesser General Public License is contained in the FluidSynth package; if not, visit http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt or write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
@@ -21,6 +21,7 @@ All the source code examples in this document are in the public domain; you can 
 
 - \ref Disclaimer
 - \ref Introduction
+- \ref NewIn2_1_1
 - \ref NewIn2_1_0
 - \ref NewIn2_0_8
 - \ref NewIn2_0_7
@@ -61,15 +62,21 @@ What is FluidSynth?
 
 - FluidSynth is an API (Application Programming Interface) relieving programmers from a lot of details of reading SoundFont and MIDI events and files, and sending the digital audio output to a Sound Card. These tasks can be accomplished using a small set of functions. This document explains most of the API functions and gives short examples about them.
 
-- FluidSynth uses instrument samples contained in standard SF2 (SoundFont 2) files, having a file structure based on the RIFF format. The specification can be obtained here: http://connect.creativelabs.com/developer/SoundFont/Forms/AllItems.aspx but most users don't need to know any details of the format.
+- FluidSynth uses instrument samples contained in standard SF2 (SoundFont 2) files, having a file structure based on the RIFF format. The specification is publicly available on the internet, but most users don't need to know any details of the format.
 
 - FluidSynth can easily be embedded in an application. It has a main header file, fluidsynth.h, and one dynamically linkable library. FluidSynth runs on Linux, Mac OS X, and the Windows platforms, and support for OS/2 and OpenSolaris is experimental. It has audio and midi drivers for all mentioned platforms but you can use it with your own drivers if your application already handles MIDI and audio input/output. This document explains the basic usage of FluidSynth and provides examples that you can reuse. 
 
 - FluidSynth is open source, in active development. For more details, take a look at http://www.fluidsynth.org
 
+\section NewIn2_1_1 What's new in 2.1.1?
+
+- requirements for explicit sequencer client unregistering have been relaxed: delete_fluid_sequencer() now correctly frees any registered sequencer clients (clients can still be explicitly unregistered)
+- using the sequencer with the system timer as timing source has been deprecated
+
 \section NewIn2_1_0 What's new in 2.1.0?
 
 - <span style="color:red">refrain from using fluid_synth_set_sample_rate()</span>
+- <a href="www.fluidsynth.org/api/fluidsettings.xml#synth.sample-rate">synth.sample-rate</a> is no real-time setting anymore, see note about fluid_synth_set_sample_rate()
 - new reverb engine
 - chorus is now stereophonic
 - smallest allowed chorus speed is now 0.1 Hz (previously 0.29 Hz)
@@ -115,7 +122,7 @@ FluidSynths major version was bumped. The API was reworked, deprecated functions
 
 - all public \c fluid_settings_* functions that return an integer which is not meant to be interpreted as bool consistently return either FLUID_OK or FLUID_FAILED
 - fluid_settings_setstr() cannot be used to set integer (toggle) settings with "yes" or "no" values anymore. Use fluid_settings_setint() instead, for example: <br /><code>fluid_settings_setint(settings, "synth.reverb.active", 0)</code> instead of <code>fluid_settings_setstr(settings, "synth.reverb.active", "no")</code>
-- explicit client unregistering is required for fluid_sequencer_register_client() and fluid_sequencer_register_fluidsynth()
+- <span style="text-decoration:line-through;">explicit client unregistering is required for fluid_sequencer_register_client() and fluid_sequencer_register_fluidsynth()</span> (since fluidsynth 2.1.1 not required anymore, but still recommend)
 - all public functions consistently receive signed integers for soundfont ids, bank and program numbers
 - use unique device names for the "audio.portaudio.device" setting
 - fluid_synth_process() received a new more flexible implementation, but now requires zeroed-out sample buffers

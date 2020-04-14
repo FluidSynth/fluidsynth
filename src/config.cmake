@@ -52,6 +52,9 @@
 /* Define to 1 if you have the <limits.h> header file. */
 #cmakedefine HAVE_LIMITS_H @HAVE_LIMITS_H@
 
+/* Define to 1 if you have the <linux/soundcard.h> header file. */
+#cmakedefine HAVE_LINUX_SOUNDCARD_H @HAVE_LINUX_SOUNDCARD_H@
+
 /* Define to 1 if you have the <machine/soundcard.h> header file. */
 #cmakedefine HAVE_MACHINE_SOUNDCARD_H @HAVE_MACHINE_SOUNDCARD_H@
 

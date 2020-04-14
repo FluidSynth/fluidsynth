@@ -406,8 +406,7 @@ fluid_isasciistring(char *s)
     /* From ctype.h */
 #define fluid_isascii(c)    (((c) & ~0x7f) == 0)
 
-    int i;
-    int len = (int) FLUID_STRLEN(s);
+    size_t i, len = FLUID_STRLEN(s);
 
     for(i = 0; i < len; i++)
     {
@@ -1457,7 +1456,7 @@ delete_fluid_track(fluid_track_t *track)
 int
 fluid_track_set_name(fluid_track_t *track, char *name)
 {
-    int len;
+    size_t len;
 
     if(track->name != NULL)
     {
@@ -2208,6 +2207,7 @@ int fluid_player_set_loop(fluid_player_t *player, int loop)
  * @param player MIDI player instance
  * @param tempo Tempo to set playback speed to (in microseconds per quarter note, as per MIDI file spec)
  * @return Always returns #FLUID_OK
+ * @note Tempo change events contained in the MIDI file can override the specified tempo at any time!
  */
 int fluid_player_set_midi_tempo(fluid_player_t *player, int tempo)
 {
@@ -2228,6 +2228,7 @@ int fluid_player_set_midi_tempo(fluid_player_t *player, int tempo)
  * @param player MIDI player instance
  * @param bpm Tempo in beats per minute
  * @return Always returns #FLUID_OK
+ * @note Tempo change events contained in the MIDI file can override the specified BPM at any time!
  */
 int fluid_player_set_bpm(fluid_player_t *player, int bpm)
 {

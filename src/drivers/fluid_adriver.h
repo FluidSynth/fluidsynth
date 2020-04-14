@@ -119,6 +119,7 @@ fluid_audio_driver_t *new_fluid_jack_audio_driver2(fluid_settings_t *settings,
         fluid_audio_func_t func, void *data);
 void delete_fluid_jack_audio_driver(fluid_audio_driver_t *p);
 void fluid_jack_audio_driver_settings(fluid_settings_t *settings);
+int fluid_jack_obtain_synth(fluid_settings_t *settings, fluid_synth_t **synth);
 #endif
 
 #if SNDMAN_SUPPORT

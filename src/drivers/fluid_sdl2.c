@@ -60,7 +60,7 @@ void fluid_sdl2_audio_driver_settings(fluid_settings_t *settings)
 
     if(!SDL_WasInit(SDL_INIT_AUDIO))
     {
-        FLUID_LOG(FLUID_ERR, "SDL2 not initialized");
+        FLUID_LOG(FLUID_WARN, "SDL2 not initialized, SDL2 audio driver won't be usable");
         return;
     }
 

@@ -18,6 +18,10 @@ int main()
     const char *DRV[] = { "alsa", "jack", "portaudio" };
     const char *adrivers[2];
 
+    /* three iterations, first register only alsa, then only jack, and last portaudio
+     * ...just to demonstrate how and under which conditions fluid_audio_driver_register()
+     * can be called
+     */
     for(int i = 0; i < sizeof(DRV) / sizeof(DRV[0]); i++)
     {
         adrivers[0] = DRV[i];
@@ -39,11 +43,10 @@ int main()
         fluid_settings_t *settings = new_fluid_settings();
         res = fluid_settings_setstr(settings, "audio.driver", DRV[i]);
 
-        /* settings API will be refactored to return FLUID_OK|FAILED next major release
-         * returning TRUE or FALSE is deprecated
+        /* As of fluidsynth 2, settings API has been refactored to return FLUID_OK|FAILED
+         * rather than returning TRUE or FALSE
          */
 #if FLUIDSYNTH_VERSION_MAJOR >= 2
-
         if(res != FLUID_OK)
 #else
         if(res == 0)

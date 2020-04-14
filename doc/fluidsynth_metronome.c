@@ -47,7 +47,7 @@ schedule_noteon(int chan, short key, unsigned int ticks)
 
 /* schedule a timer event (shall trigger the callback) */
 void
-schedule_timer_event()
+schedule_timer_event(void)
 {
     fluid_event_t *ev = new_fluid_event();
     fluid_event_set_source(ev, -1);
@@ -59,7 +59,7 @@ schedule_timer_event()
 
 /* schedule the metronome pattern */
 void
-schedule_pattern()
+schedule_pattern(void)
 {
     int i, note_time;
     note_time = time_marker;
@@ -111,7 +111,7 @@ main(int argc, char *argv[])
 
         if(n != -1)
         {
-            sequencer = new_fluid_sequencer();
+            sequencer = new_fluid_sequencer2(0);
             /* register the synth with the sequencer */
             synth_destination = fluid_sequencer_register_fluidsynth(sequencer,
                                 synth);

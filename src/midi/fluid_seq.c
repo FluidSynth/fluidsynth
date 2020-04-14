@@ -69,6 +69,7 @@ typedef struct _fluid_sequencer_client_t
  * new_fluid_sequencer2() to specify whether the system timer or
  * fluid_sequencer_process() is used to advance the sequencer.
  * @return New sequencer instance
+ * @deprecated As of fluidsynth 2.1.1 the use of the system timer has been deprecated.
  */
 fluid_sequencer_t *
 new_fluid_sequencer(void)
@@ -83,11 +84,17 @@ new_fluid_sequencer(void)
  *   the sequencer.
  * @return New sequencer instance
  * @since 1.1.0
+ * @note As of fluidsynth 2.1.1 the use of the system timer has been deprecated.
  */
 fluid_sequencer_t *
 new_fluid_sequencer2(int use_system_timer)
 {
     fluid_sequencer_t *seq;
+
+    if(use_system_timer)
+    {
+        FLUID_LOG(FLUID_WARN, "sequencer: Usage of the system timer has been deprecated!");
+    }
 
     seq = FLUID_NEW(fluid_sequencer_t);
 
@@ -118,7 +125,7 @@ new_fluid_sequencer2(int use_system_timer)
 
 /**
  * Free a sequencer object.
- * @note Registered sequencer clients may not be fully freed by this function. Explicitly unregister them with fluid_sequencer_unregister_client().
+ * @note Before fluidsynth 2.1.1 registered sequencer clients may not be fully freed by this function.
  * @param seq Sequencer to delete
  */
 void
@@ -135,6 +142,7 @@ delete_fluid_sequencer(fluid_sequencer_t *seq)
 
     fluid_rec_mutex_destroy(seq->mutex);
     delete_fluid_seq_queue(seq->queue);
+
     FLUID_FREE(seq);
 }
 
@@ -143,6 +151,7 @@ delete_fluid_sequencer(fluid_sequencer_t *seq)
  * @param seq Sequencer object
  * @return TRUE if system timer is being used, FALSE otherwise.
  * @since 1.1.0
+ * @deprecated As of fluidsynth 2.1.1 the usage of the system timer has been deprecated.
  */
 int
 fluid_sequencer_get_use_system_timer(fluid_sequencer_t *seq)
@@ -163,11 +172,10 @@ fluid_sequencer_get_use_system_timer(fluid_sequencer_t *seq)
  * @param data User data to pass to the \a callback
  * @return Unique sequencer ID or #FLUID_FAILED on error
  *
- * Clients can be sources or destinations of events.  Sources don't need to
+ * Clients can be sources or destinations of events. Sources don't need to
  * register a callback.
  *
- * @note The user must explicitly unregister any registered client with fluid_sequencer_unregister_client()
- * before deleting the sequencer!
+ * @note Implementations are encouraged to explicitly unregister any registered client with fluid_sequencer_unregister_client() before deleting the sequencer.
  */
 fluid_seq_id_t
 fluid_sequencer_register_client(fluid_sequencer_t *seq, const char *name,
@@ -209,6 +217,8 @@ fluid_sequencer_register_client(fluid_sequencer_t *seq, const char *name,
 
 /**
  * Unregister a previously registered client.
+ *
+ * The client's callback function will receive a FLUID_SEQ_UNREGISTERING event right before it is being unregistered.
  * @param seq Sequencer object
  * @param id Client ID as returned by fluid_sequencer_register_client().
  */
@@ -216,8 +226,15 @@ void
 fluid_sequencer_unregister_client(fluid_sequencer_t *seq, fluid_seq_id_t id)
 {
     fluid_list_t *tmp;
+    fluid_event_t evt;
+    unsigned int now = fluid_sequencer_get_tick(seq);
 
     fluid_return_if_fail(seq != NULL);
+
+    fluid_event_clear(&evt);
+    fluid_event_unregistering(&evt);
+    fluid_event_set_dest(&evt, id);
+    fluid_event_set_time(&evt, now);
 
     tmp = seq->clients;
 
@@ -227,12 +244,19 @@ fluid_sequencer_unregister_client(fluid_sequencer_t *seq, fluid_seq_id_t id)
 
         if(client->id == id)
         {
+            // client found, remove it from the list to avoid recursive call when calling callback
+            seq->clients = fluid_list_remove_link(seq->clients, tmp);
+
+            // call the callback (if any), to free underlying memory (e.g. seqbind structure)
+            if (client->callback != NULL)
+            {
+                (client->callback)(now, &evt, seq, client->data);
+            }
+
             if(client->name)
             {
                 FLUID_FREE(client->name);
             }
-
-            seq->clients = fluid_list_remove_link(seq->clients, tmp);
             delete1_fluid_list(tmp);
             FLUID_FREE(client);
             return;
@@ -372,11 +396,17 @@ fluid_sequencer_send_now(fluid_sequencer_t *seq, fluid_event_t *evt)
 
         if(dest->id == destID)
         {
-            if(dest->callback)
+            if(fluid_event_get_type(evt) == FLUID_SEQ_UNREGISTERING)
             {
-                (dest->callback)(fluid_sequencer_get_tick(seq), evt, seq, dest->data);
+                fluid_sequencer_unregister_client(seq, destID);
             }
-
+            else
+            {
+                if(dest->callback)
+                {
+                    (dest->callback)(fluid_sequencer_get_tick(seq), evt, seq, dest->data);
+                }
+            }
             return;
         }
 
@@ -509,7 +539,11 @@ fluid_sequencer_get_time_scale(fluid_sequencer_t *seq)
 }
 
 /**
- * Advance a sequencer that isn't using the system timer.
+ * Advance a sequencer.
+ *
+ * If you have registered the synthesizer as client (fluid_sequencer_register_fluidsynth()), the synth
+ * will take care of calling fluid_sequencer_process(). Otherwise it is up to the user to
+ * advance the sequencer manually.
  * @param seq Sequencer object
  * @param msec Time to advance sequencer to (absolute time since sequencer start).
  * @since 1.1.0

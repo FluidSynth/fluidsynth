@@ -33,3 +33,12 @@ if ( UNIX )
   install ( FILES fluidsynth.1
     DESTINATION ${MAN_INSTALL_DIR} )
 endif ( UNIX )
+
+include ( FluidUnitTest )
+add_custom_target ( demo )
+
+ADD_FLUID_DEMO ( example )
+ADD_FLUID_DEMO ( fluidsynth_arpeggio )
+ADD_FLUID_DEMO ( fluidsynth_fx )
+ADD_FLUID_DEMO ( fluidsynth_metronome )
+ADD_FLUID_DEMO ( fluidsynth_simple )

@@ -98,7 +98,6 @@ struct _SFSample
 {
     /* Sample structure */
     char name[21]; /* Name of sample */
-    unsigned char samfile; /* Loaded sfont/sample buffer = 0/1 */
     unsigned int start; /* Offset in sample area to start of sample */
     unsigned int end; /* Offset from start to end of sample,
              this is the last point of the

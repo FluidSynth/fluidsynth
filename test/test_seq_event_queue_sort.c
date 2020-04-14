@@ -8,8 +8,8 @@
 static short order = 0;
 void callback_stable_sort(unsigned int time, fluid_event_t *event, fluid_sequencer_t *seq, void *data)
 {
-    static const enum fluid_seq_event_type expected_type_order[] =
-    { FLUID_SEQ_SYSTEMRESET, FLUID_SEQ_UNREGISTERING, FLUID_SEQ_NOTEOFF, FLUID_SEQ_NOTEON };
+    static const int expected_type_order[] =
+    { FLUID_SEQ_NOTEOFF, FLUID_SEQ_NOTEON, FLUID_SEQ_NOTEOFF, FLUID_SEQ_NOTEON, FLUID_SEQ_SYSTEMRESET, FLUID_SEQ_UNREGISTERING };
 
     TEST_ASSERT(fluid_event_get_type(event) == expected_type_order[order++]);
 }
@@ -26,32 +26,38 @@ void test_order_same_tick(fluid_sequencer_t *seq, fluid_event_t *evt)
 
     for(i = 1; i <= 2; i++)
     {
-        fluid_event_system_reset(evt);
-        TEST_SUCCESS(fluid_sequencer_send_at(seq, evt, i, 1));
-        fluid_event_unregistering(evt);
-        TEST_SUCCESS(fluid_sequencer_send_at(seq, evt, i, 1));
         fluid_event_noteoff(evt, 0, 64);
         TEST_SUCCESS(fluid_sequencer_send_at(seq, evt, i, 1));
         fluid_event_noteon(evt, 0, 64, 127);
         TEST_SUCCESS(fluid_sequencer_send_at(seq, evt, i, 1));
     }
 
-    fluid_sequencer_process(seq, 1);
-    TEST_ASSERT(order == 4);
+    fluid_event_system_reset(evt);
+    TEST_SUCCESS(fluid_sequencer_send_at(seq, evt, 2, 1));
+    fluid_event_unregistering(evt);
+    TEST_SUCCESS(fluid_sequencer_send_at(seq, evt, 2, 1));
 
-    order = 0;
+    fluid_sequencer_process(seq, 1);
+    TEST_ASSERT(order == 2);
 
     fluid_sequencer_process(seq, 2);
-    TEST_ASSERT(order == 4);
+    TEST_ASSERT(order == 6);
 
     fluid_sequencer_unregister_client(seq, seqid);
     TEST_ASSERT(fluid_sequencer_count_clients(seq) == 0);
 }
 
-static unsigned int prev_time;
+static unsigned int prev_time, done = FALSE;
 void callback_correct_order(unsigned int time, fluid_event_t *event, fluid_sequencer_t *seq, void *data)
 {
-    TEST_ASSERT(fluid_event_get_type(event) == FLUID_SEQ_CONTROLCHANGE);
+    if(done)
+    {
+        TEST_ASSERT(fluid_event_get_type(event) == FLUID_SEQ_UNREGISTERING);
+    }
+    else
+    {
+        TEST_ASSERT(fluid_event_get_type(event) == FLUID_SEQ_CONTROLCHANGE);
+    }
     TEST_ASSERT(prev_time <= fluid_event_get_time(event) && fluid_event_get_time(event) <= prev_time + 1);
     prev_time = fluid_event_get_time(event);
 }
@@ -91,6 +97,7 @@ void test_correct_order(fluid_sequencer_t *seq, fluid_event_t *evt)
     fluid_sequencer_process(seq, i + offset);
     TEST_ASSERT(prev_time == (i - 1) + offset);
 
+    done = TRUE;
     fluid_sequencer_unregister_client(seq, seqid);
 }
 
