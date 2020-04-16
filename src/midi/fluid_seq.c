@@ -517,6 +517,12 @@ fluid_sequencer_set_time_scale(fluid_sequencer_t *seq, double scale)
 {
     fluid_return_if_fail(seq != NULL);
 
+    if(scale != scale)
+    {
+        FLUID_LOG(FLUID_WARN, "sequencer: scale NaN\n");
+        return;
+    }
+
     if(scale <= 0)
     {
         FLUID_LOG(FLUID_WARN, "sequencer: scale <= 0 : %f\n", scale);
