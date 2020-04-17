@@ -500,6 +500,21 @@ fluid_sequencer_remove_events(fluid_sequencer_t *seq, fluid_seq_id_t source,
 	time
 **************************************/
 
+static unsigned int
+fluid_sequencer_get_tick_LOCAL(fluid_sequencer_t *seq, unsigned int cur_msec)
+{
+    unsigned int absMs;
+    double nowFloat;
+    unsigned int now;
+
+    fluid_return_val_if_fail(seq != NULL, 0u);
+
+    absMs = seq->useSystemTimer ? (int) fluid_curtime() : cur_msec;
+    nowFloat = ((double)(absMs - seq->startMs)) * seq->scale / 1000.0f;
+    now = nowFloat;
+    return now;
+}
+
 /**
  * Get the current tick of the sequencer scaled by the time scale currently set.
  * @param seq Sequencer object
@@ -508,16 +523,7 @@ fluid_sequencer_remove_events(fluid_sequencer_t *seq, fluid_seq_id_t source,
 unsigned int
 fluid_sequencer_get_tick(fluid_sequencer_t *seq)
 {
-    unsigned int absMs;
-    double nowFloat;
-    unsigned int now;
-
-    fluid_return_val_if_fail(seq != NULL, 0u);
-
-    absMs = seq->useSystemTimer ? (int) fluid_curtime() : fluid_atomic_int_get(&seq->currentMs);
-    nowFloat = ((double)(absMs - seq->startMs)) * seq->scale / 1000.0f;
-    now = nowFloat;
-    return now;
+    return fluid_sequencer_get_tick_LOCAL(seq, fluid_atomic_int_get(&seq->currentMs));
 }
 
 /**
@@ -577,7 +583,7 @@ void
 fluid_sequencer_process(fluid_sequencer_t *seq, unsigned int msec)
 {
     fluid_atomic_int_set(&seq->currentMs, msec);
-    seq->cur_ticks = seq->start_ticks + fluid_sequencer_get_tick(seq);
+    seq->cur_ticks = seq->start_ticks + fluid_sequencer_get_tick_LOCAL(seq, msec);
 
     fluid_rec_mutex_lock(seq->mutex);
     fluid_seq_queue_process(seq->queue, seq, seq->cur_ticks);
