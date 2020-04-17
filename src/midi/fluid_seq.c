@@ -42,12 +42,29 @@
 /* Private data for SEQUENCER */
 struct _fluid_sequencer_t
 {
+    // A backup of currentMs when we have received the last scale change
     unsigned int startMs;
+
+    // The number of milliseconds passed since we have started the sequencer,
+    // as indicated by the synth's sample timer
     fluid_atomic_int_t currentMs;
+
+    // A backup of cur_ticks when we have received the last scale change
+    unsigned int start_ticks;
+
+    // The tick count which we've used for the most recent event dispatching
+    unsigned int cur_ticks;
+
     int useSystemTimer;
-    double scale; // ticks per second
+
+    // The current time scale in ticks per second.
+    // If you think of MIDI, this is equivalent to: (PPQN / 1000) / (USPQN / 1000)
+    double scale;
+
     fluid_list_t *clients;
     fluid_seq_id_t clientsID;
+
+    // Pointer to the C++ event queue
     void *queue;
     fluid_rec_mutex_t mutex;
 };
@@ -530,6 +547,8 @@ fluid_sequencer_set_time_scale(fluid_sequencer_t *seq, double scale)
     }
 
     seq->scale = scale;
+    seq->startMs = fluid_atomic_int_get(&seq->currentMs);
+    seq->start_ticks = seq->cur_ticks;
 }
 
 /**
@@ -558,8 +577,9 @@ void
 fluid_sequencer_process(fluid_sequencer_t *seq, unsigned int msec)
 {
     fluid_atomic_int_set(&seq->currentMs, msec);
+    seq->cur_ticks = seq->start_ticks + fluid_sequencer_get_tick(seq);
 
     fluid_rec_mutex_lock(seq->mutex);
-    fluid_seq_queue_process(seq->queue, seq);
+    fluid_seq_queue_process(seq->queue, seq, seq->cur_ticks);
     fluid_rec_mutex_unlock(seq->mutex);
 }

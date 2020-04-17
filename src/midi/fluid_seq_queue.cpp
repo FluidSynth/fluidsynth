@@ -192,16 +192,15 @@ static void fluid_seq_queue_pop(seq_queue_t &queue)
     queue.pop_back();
 }
 
-void fluid_seq_queue_process(void *que, fluid_sequencer_t *seq)
+void fluid_seq_queue_process(void *que, fluid_sequencer_t *seq, int cur_ticks)
 {
     seq_queue_t& queue = *static_cast<seq_queue_t*>(que);
 
-    unsigned int ticks = fluid_sequencer_get_tick(seq);
     while(!queue.empty())
     {
         // Get the top most event.
         const fluid_event_t& top = queue.front();
-        if(top.time <= fluid_sequencer_get_tick(seq))
+        if(top.time <= cur_ticks)
         {
             // First, copy it to a local buffer.
             // This is required because the content of the queue should be read-only to the client,
@@ -219,3 +218,4 @@ void fluid_seq_queue_process(void *que, fluid_sequencer_t *seq)
         }
     }
 }
+
