@@ -509,7 +509,7 @@ fluid_sequencer_get_tick_LOCAL(fluid_sequencer_t *seq, unsigned int cur_msec)
 
     fluid_return_val_if_fail(seq != NULL, 0u);
 
-    absMs = seq->useSystemTimer ? (int) fluid_curtime() : cur_msec;
+    absMs = seq->useSystemTimer ? (unsigned int) fluid_curtime() : cur_msec;
     nowFloat = ((double)(absMs - seq->startMs)) * seq->scale / 1000.0f;
     now = nowFloat;
     return now;
