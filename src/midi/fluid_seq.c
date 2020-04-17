@@ -484,7 +484,7 @@ fluid_sequencer_remove_events(fluid_sequencer_t *seq, fluid_seq_id_t source,
 **************************************/
 
 /**
- * Get the current tick of a sequencer.
+ * Get the current tick of the sequencer scaled by the time scale currently set.
  * @param seq Sequencer object
  * @return Current tick value
  */
