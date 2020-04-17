@@ -2,6 +2,7 @@
 #include "test.h"
 #include "fluidsynth.h" // use local fluidsynth header
 #include "fluid_event.h"
+#include "fluidsynth_priv.h"
 
 #include <limits.h>
 
