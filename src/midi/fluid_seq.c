@@ -512,7 +512,7 @@ fluid_sequencer_get_tick_LOCAL(fluid_sequencer_t *seq, unsigned int cur_msec)
     absMs = seq->useSystemTimer ? (unsigned int) fluid_curtime() : cur_msec;
     nowFloat = ((double)(absMs - seq->startMs)) * seq->scale / 1000.0f;
     now = nowFloat;
-    return now;
+    return seq->start_ticks + now;
 }
 
 /**
@@ -534,6 +534,10 @@ fluid_sequencer_get_tick(fluid_sequencer_t *seq)
  *
  * If there are already scheduled events in the sequencer and the scale is changed
  * the events are adjusted accordingly.
+ *
+ * @note May only be called from a sequencer callback or initially when no event dispatching happens.
+ * Otherwise it will mess up your event timing, because you have zero contol over which events are
+ * affected by the scale change.
  */
 void
 fluid_sequencer_set_time_scale(fluid_sequencer_t *seq, double scale)
@@ -583,7 +587,7 @@ void
 fluid_sequencer_process(fluid_sequencer_t *seq, unsigned int msec)
 {
     fluid_atomic_int_set(&seq->currentMs, msec);
-    seq->cur_ticks = seq->start_ticks + fluid_sequencer_get_tick_LOCAL(seq, msec);
+    seq->cur_ticks = fluid_sequencer_get_tick_LOCAL(seq, msec);
 
     fluid_rec_mutex_lock(seq->mutex);
     fluid_seq_queue_process(seq->queue, seq, seq->cur_ticks);
