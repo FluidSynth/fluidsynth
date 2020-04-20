@@ -48,12 +48,6 @@ static fluid_midi_event_t *fluid_track_next_event(fluid_track_t *track);
 static int fluid_track_get_duration(fluid_track_t *track);
 static int fluid_track_reset(fluid_track_t *track);
 
-static void fluid_track_send_events(fluid_track_t *track,
-                                   fluid_synth_t *synth,
-                                   fluid_player_t *player,
-                                   unsigned int ticks);
-
-
 static int fluid_player_add_track(fluid_player_t *player, fluid_track_t *track);
 static int fluid_player_callback(void *data, unsigned int msec);
 static int fluid_player_reset(fluid_player_t *player);
@@ -1551,14 +1545,15 @@ fluid_track_reset(fluid_track_t *track)
 /*
  * fluid_track_send_events
  */
-void
+static void
 fluid_track_send_events(fluid_track_t *track,
                         fluid_synth_t *synth,
                         fluid_player_t *player,
-                        unsigned int ticks)
+                        unsigned int ticks,
+                        int seek_ticks
+                       )
 {
     fluid_midi_event_t *event;
-    int seek_ticks = fluid_atomic_int_get(&player->seek_ticks);
     int seeking = seek_ticks >= 0;
 
     if(seeking)
@@ -2091,7 +2086,7 @@ fluid_player_callback(void *data, unsigned int msec)
             if(!fluid_track_eot(player->track[i]))
             {
                 status = FLUID_PLAYER_PLAYING;
-                fluid_track_send_events(player->track[i], synth, player, player->cur_ticks);
+                fluid_track_send_events(player->track[i], synth, player, player->cur_ticks, seek_ticks);
             }
         }
 
