@@ -272,7 +272,7 @@ typedef struct
  */
 struct _fluid_player_t
 {
-    int status;
+    fluid_atomic_int_t status;
     int ntracks;
     fluid_track_t *track[MAX_NUMBER_OF_TRACKS];
     fluid_synth_t *synth;
