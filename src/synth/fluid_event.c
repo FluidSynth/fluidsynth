@@ -168,11 +168,18 @@ fluid_event_noteoff(fluid_event_t *evt, int channel, short key)
 
 /**
  * Set a sequencer event to be a note duration event.
+ *
+ * Before fluidsynth 2.2.0, this event type was naively implemented when used in conjunction with fluid_sequencer_register_fluidsynth(),
+ * because it simply enqueued a fluid_event_noteon() and fluid_event_noteoff().
+ * A handling for overlapping notes was not implemented. Starting with 2.2.0, this changes: If a fluid_event_note() is already playing,
+ * while another fluid_event_note() arrives on the same @c channel and @c key, the earlier event will be canceled.
  * @param evt Sequencer event structure
  * @param channel MIDI channel number
  * @param key MIDI note number (0-127)
  * @param vel MIDI velocity value (0-127)
  * @param duration Duration of note in the time scale used by the sequencer (by default milliseconds)
+ *
+ * @note The application should decide whether to use only Notes with duration, or separate NoteOn and NoteOff events.
  */
 void
 fluid_event_note(fluid_event_t *evt, int channel, short key, short vel, unsigned int duration)
