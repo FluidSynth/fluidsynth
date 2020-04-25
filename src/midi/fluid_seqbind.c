@@ -200,6 +200,7 @@ fluid_seq_fluidsynth_callback(unsigned int time, fluid_event_t *evt, fluid_seque
     case FLUID_SEQ_NOTE:
     {
         unsigned int dur = fluid_event_get_duration(evt);
+        short vel = fluid_event_get_velocity(evt);
         short key = fluid_event_get_key(evt);
         int chan = fluid_event_get_channel(evt);
 
@@ -208,8 +209,7 @@ fluid_seq_fluidsynth_callback(unsigned int time, fluid_event_t *evt, fluid_seque
         int res = fluid_note_container_insert(seqbind->note_container, id);
         if(res == FLUID_FAILED)
         {
-            FLUID_LOG(FLUID_ERR, "seqbind: Unable to process FLUID_SEQ_NOTE event, something went horribly wrong");
-            return;
+            goto err;
         }
         else if(res)
         {
@@ -222,12 +222,18 @@ fluid_seq_fluidsynth_callback(unsigned int time, fluid_event_t *evt, fluid_seque
             // Note not playing, all good.
         }
 
-        fluid_synth_noteon(synth, chan, key, fluid_event_get_velocity(evt));
-
-        fluid_event_noteoff(evt, fluid_event_get_channel(evt), fluid_event_get_key(evt));
+        fluid_event_noteoff(evt, chan, key);
         fluid_event_set_id(evt, id);
 
-        fluid_sequencer_send_at(seq, evt, dur, 0);
+        res = fluid_sequencer_send_at(seq, evt, dur, 0);
+        if(res == FLUID_FAILED)
+        {
+            err:
+            FLUID_LOG(FLUID_ERR, "seqbind: Unable to process FLUID_SEQ_NOTE event, something went horribly wrong");
+            return;
+        }
+
+        fluid_synth_noteon(synth, chan, key, vel);
     }
     break;
 
