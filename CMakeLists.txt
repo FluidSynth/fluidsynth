@@ -410,7 +410,7 @@ endif ( NOT CMAKE_BUILD_TYPE )
 unset ( ENABLE_DEBUG CACHE )
 if ( CMAKE_BUILD_TYPE MATCHES "Debug" )
     set ( ENABLE_DEBUG 1 )
-    add_definitions(-DDEBUG -D_GLIBCXX_DEBUG)
+    add_definitions(-DDEBUG) # -D_GLIBCXX_DEBUG) # for additional C++ STL container debugging
 endif ( CMAKE_BUILD_TYPE MATCHES "Debug" )
 
 # Additional targets to perform clang-format/clang-tidy
