@@ -213,7 +213,6 @@ fluid_seq_fluidsynth_callback(unsigned int time, fluid_event_t *evt, fluid_seque
         }
         else if(res)
         {
-            FLUID_LOG(FLUID_DBG, "Tick %u: Overlapping Note on chan %d, key %d", time, chan, (int)key);
             // Note is already playing ATM, the following call to fluid_synth_noteon() will kill that note.
             // Thus, we need to remove its noteoff from the queue
             fluid_sequencer_invalidate_note(seqbind->seq, seqbind->client_id, id);
