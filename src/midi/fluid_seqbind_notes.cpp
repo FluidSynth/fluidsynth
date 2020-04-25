@@ -74,6 +74,12 @@ void remove_note(void* cont, fluid_note_id_t id)
     }
 }
 
+// empties the entire collection, e.g. in case of a AllNotesOff event
+void clear(void* cont)
+{
+    static_cast<note_container_t*>(cont)->clear();
+}
+
 int contains_note(void* c, fluid_note_id_t id)
 {
     note_container_t* cont = static_cast<note_container_t*>(c);

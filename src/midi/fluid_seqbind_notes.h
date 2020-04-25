@@ -34,6 +34,7 @@ void* new_fluid_note_container(void);
 void delete_fluid_note_container(void *cont);
 int insert_note(void* cont, fluid_note_id_t id);
 void remove_note(void* cont, fluid_note_id_t id);
+void clear(void* cont);
 int contains_note(void* cont, fluid_note_id_t id);
 
 #ifdef __cplusplus
