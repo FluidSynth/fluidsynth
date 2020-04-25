@@ -192,7 +192,7 @@ static void fluid_seq_queue_pop(seq_queue_t &queue)
     queue.pop_back();
 }
 
-void fluid_seq_queue_process(void *que, fluid_sequencer_t *seq, int cur_ticks)
+void fluid_seq_queue_process(void *que, fluid_sequencer_t *seq, unsigned int cur_ticks)
 {
     seq_queue_t& queue = *static_cast<seq_queue_t*>(que);
 
