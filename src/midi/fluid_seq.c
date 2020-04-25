@@ -593,3 +593,13 @@ fluid_sequencer_process(fluid_sequencer_t *seq, unsigned int msec)
     fluid_seq_queue_process(seq->queue, seq, seq->cur_ticks);
     fluid_rec_mutex_unlock(seq->mutex);
 }
+
+
+/**
+ * @internal
+ * only used privately by fluid_seqbind and only from sequencer callback, thus lock aquire is not needed.
+ */
+void fluid_sequencer_invalidate_note(fluid_sequencer_t *seq, fluid_seq_id_t dest, fluid_note_id_t id)
+{
+    fluid_seq_queue_invalidate_note_private(seq->queue, dest, id);
+}

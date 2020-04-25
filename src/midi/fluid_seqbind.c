@@ -31,6 +31,7 @@
 #include "fluid_synth.h"
 #include "fluid_midi.h"
 #include "fluid_event.h"
+#include "fluid_seqbind_notes.h"
 
 /***************************************************************
 *
@@ -43,9 +44,11 @@ struct _fluid_seqbind_t
     fluid_sequencer_t *seq;
     fluid_sample_timer_t *sample_timer;
     fluid_seq_id_t client_id;
+    void* note_container;
 };
 typedef struct _fluid_seqbind_t fluid_seqbind_t;
 
+extern void fluid_sequencer_invalidate_note(fluid_sequencer_t *seq, fluid_seq_id_t dest, fluid_note_id_t id);
 
 int fluid_seqbind_timer_callback(void *data, unsigned int msec);
 void fluid_seq_fluidsynth_callback(unsigned int time, fluid_event_t *event, fluid_sequencer_t *seq, void *data);
@@ -68,6 +71,7 @@ delete_fluid_seqbind(fluid_seqbind_t *seqbind)
         seqbind->sample_timer = NULL;
     }
 
+    delete_fluid_note_container(seqbind->note_container);
     FLUID_FREE(seqbind);
 }
 
@@ -135,12 +139,21 @@ fluid_sequencer_register_fluidsynth(fluid_sequencer_t *seq, fluid_synth_t *synth
         }
     }
 
+    seqbind->note_container = new_fluid_note_container();
+    if(seqbind->note_container == NULL)
+    {
+        delete_fluid_sample_timer(seqbind->synth, seqbind->sample_timer);
+        FLUID_FREE(seqbind);
+        return FLUID_FAILED;
+    }
+
     /* register fluidsynth itself */
     seqbind->client_id =
         fluid_sequencer_register_client(seq, "fluidsynth", fluid_seq_fluidsynth_callback, (void *)seqbind);
 
     if(seqbind->client_id == FLUID_FAILED)
     {
+        delete_fluid_note_container(seqbind->note_container);
         delete_fluid_sample_timer(seqbind->synth, seqbind->sample_timer);
         FLUID_FREE(seqbind);
         return FLUID_FAILED;
@@ -174,15 +187,46 @@ fluid_seq_fluidsynth_callback(unsigned int time, fluid_event_t *evt, fluid_seque
         break;
 
     case FLUID_SEQ_NOTEOFF:
+    {
+        fluid_note_id_t id = fluid_event_get_id(evt);
+        if(id != -1)
+        {
+            remove_note(seqbind->note_container, id);
+        }
         fluid_synth_noteoff(synth, fluid_event_get_channel(evt), fluid_event_get_key(evt));
-        break;
+    }
+    break;
 
     case FLUID_SEQ_NOTE:
     {
-        unsigned int dur;
-        fluid_synth_noteon(synth, fluid_event_get_channel(evt), fluid_event_get_key(evt), fluid_event_get_velocity(evt));
-        dur = fluid_event_get_duration(evt);
+        unsigned int dur = fluid_event_get_duration(evt);
+        short key = fluid_event_get_key(evt);
+        int chan = fluid_event_get_channel(evt);
+
+        fluid_note_id_t id = compute_id(chan, key);
+
+        int res = insert_note(seqbind->note_container, id);
+        if(res == FLUID_FAILED)
+        {
+            FLUID_LOG(FLUID_ERR, "seqbind: Unable to process FLUID_SEQ_NOTE event, something went horribly wrong");
+            return;
+        }
+        else if(res)
+        {
+            // Note is already playing ATM, the following call to fluid_synth_noteon() will kill that note.
+            // Thus, we need to remove its noteoff from the queue
+            fluid_sequencer_invalidate_note(seqbind->seq, seqbind->client_id, id);
+        }
+        else
+        {
+            // note not playing, all good.
+        }
+
+        fluid_synth_noteon(synth, chan, key, fluid_event_get_velocity(evt));
+
         fluid_event_noteoff(evt, fluid_event_get_channel(evt), fluid_event_get_key(evt));
+        fluid_event_set_id(evt, id);
+
         fluid_sequencer_send_at(seq, evt, dur, 0);
     }
     break;

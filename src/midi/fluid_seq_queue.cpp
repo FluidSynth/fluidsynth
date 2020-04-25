@@ -22,6 +22,7 @@
 
 #include <deque>
 #include <algorithm>
+#include <limits>
 
 /*
  * This is an implementation of an event queue, sorted according to their timestamp.
@@ -183,6 +184,34 @@ void fluid_seq_queue_remove(void *que, fluid_seq_id_t src, fluid_seq_id_t dest, 
         }
 
         std::make_heap(queue.begin(), queue.end(), event_compare);
+    }
+}
+
+void fluid_seq_queue_invalidate_note_private(void *que, fluid_seq_id_t dest, fluid_note_id_t id)
+{
+    seq_queue_t& queue = *static_cast<seq_queue_t*>(que);
+
+    seq_queue_t::iterator event_to_invalidate = queue.end();
+    unsigned int earliest_noteoff_tick = std::numeric_limits<unsigned int>::max();
+
+    for (seq_queue_t::iterator it = queue.begin(); it != queue.end(); it++)
+    {
+        if((it->dest == dest) &&
+        (it->type == FLUID_SEQ_NOTEOFF) &&
+        (it->id == id) &&
+        (it->time < earliest_noteoff_tick))
+        {
+            earliest_noteoff_tick = it->time;
+            event_to_invalidate = it;
+        }
+    }
+
+    if(event_to_invalidate != queue.end())
+    {
+        // Invalidate the event, by setting invalidating its destination.
+        // Instead, removing the event from the queue would mess up the heap structure. We would need to
+        // make_heap again, which costs time, etc...
+        event_to_invalidate->dest = -1;
     }
 }
 

@@ -47,6 +47,7 @@ fluid_event_clear(fluid_event_t *evt)
     evt->dest = -1;
     evt->src = -1;
     evt->type = -1;
+    evt->id = -1;
 }
 
 /**
@@ -93,6 +94,12 @@ void
 fluid_event_set_time(fluid_event_t *evt, unsigned int time)
 {
     evt->time = time;
+}
+
+void
+fluid_event_set_id(fluid_event_t *evt, short id)
+{
+    evt->id = id;
 }
 
 /**
@@ -576,6 +583,17 @@ int fluid_event_get_type(fluid_event_t *evt)
 unsigned int fluid_event_get_time(fluid_event_t *evt)
 {
     return evt->time;
+}
+
+/**
+ * @internal
+ * Get the time field from a sequencer event structure.
+ * @param evt Sequencer event structure
+ * @return Time value
+ */
+short fluid_event_get_id(fluid_event_t *evt)
+{
+    return evt->id;
 }
 
 /**
