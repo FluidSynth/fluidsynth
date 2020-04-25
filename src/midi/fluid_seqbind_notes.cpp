@@ -56,7 +56,7 @@ this noteoff will immediately kill the voice that we've just started 1 tick ago)
 typedef std::set<fluid_note_id_t> note_container_t;
 
 // Compute a unique ID for a given channel-key combination. Think of it as a two-dimensional array index.
-fluid_note_id_t compute_id(int chan, short key)
+fluid_note_id_t fluid_note_compute_id(int chan, short key)
 {
     return 128 * chan + key;
 }

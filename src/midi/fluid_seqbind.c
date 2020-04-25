@@ -204,7 +204,7 @@ fluid_seq_fluidsynth_callback(unsigned int time, fluid_event_t *evt, fluid_seque
         short key = fluid_event_get_key(evt);
         int chan = fluid_event_get_channel(evt);
 
-        fluid_note_id_t id = compute_id(chan, key);
+        fluid_note_id_t id = fluid_note_compute_id(chan, key);
 
         int res = fluid_note_container_insert(seqbind->note_container, id);
         if(res == FLUID_FAILED)

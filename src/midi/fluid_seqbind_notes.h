@@ -29,7 +29,7 @@ extern "C" {
 
 typedef int fluid_note_id_t;
 
-fluid_note_id_t compute_id(int chan, short key);
+fluid_note_id_t fluid_note_compute_id(int chan, short key);
 void* new_fluid_note_container(void);
 void delete_fluid_note_container(void *cont);
 int fluid_note_container_insert(void* cont, fluid_note_id_t id);
