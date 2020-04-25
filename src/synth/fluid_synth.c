@@ -6306,7 +6306,9 @@ fluid_synth_handle_midi_event(void *data, fluid_midi_event_t *event)
 }
 
 /**
- * Create and start voices using a preset and a MIDI note on event.
+ * Create and start voices using an arbitrary preset and a MIDI note on event.
+ *
+ * Using this function is only supported when the setting @c synth.dynamic-sample-loading is false!
  * @param synth FluidSynth instance
  * @param id Voice group ID to use (can be used with fluid_synth_stop()).
  * @param preset Preset to synthesize
@@ -6324,12 +6326,32 @@ fluid_synth_start(fluid_synth_t *synth, unsigned int id, fluid_preset_t *preset,
                   int audio_chan, int chan, int key, int vel)
 {
     int result;
+    fluid_defsfont_t *defsfont;
     fluid_return_val_if_fail(preset != NULL, FLUID_FAILED);
     fluid_return_val_if_fail(key >= 0 && key <= 127, FLUID_FAILED);
     fluid_return_val_if_fail(vel >= 1 && vel <= 127, FLUID_FAILED);
     FLUID_API_ENTRY_CHAN(FLUID_FAILED);
-    synth->storeid = id;
-    result = fluid_preset_noteon(preset, synth, chan, key, vel);
+
+    defsfont = fluid_sfont_get_data(preset->sfont);
+    if(defsfont->dynamic_samples)
+    {
+        // The preset might not be currently used, thus its sample data may not be loaded.
+        // This guard is to avoid a NULL deref in rvoice_write().
+        FLUID_LOG(FLUID_ERR, "Calling fluid_synth_start() while synth.dynamic-sample-loading is enabled is not supported.");
+        // Although we would be able to select the preset (and load it's samples) we have no way to
+        // unselect the preset again in fluid_synth_stop(). Also dynamic sample loading was intended
+        // to be used only when presets have been selected on a MIDI channel.
+        // Note that even if the preset is currently selected on a channel, it could be unselected at
+        // any time. And we would end up with a NULL sample->data again, because we are not referencing
+        // the preset here. Thus failure is our only option.
+        result = FLUID_FAILED;
+    }
+    else
+    {
+        synth->storeid = id;
+        result = fluid_preset_noteon(preset, synth, chan, key, vel);
+    }
+
     FLUID_API_RETURN(result);
 }
 

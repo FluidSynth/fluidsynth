@@ -599,6 +599,9 @@ fluid_source(fluid_cmd_handler_t *handler, const char *filename)
 
 /**
  * Get the user specific FluidSynth command file name.
+ *
+ * On Windows this is currently @c "%USERPROFILE%\fluidsynth.cfg".
+ * For anything else (except MACOS9) @c "$HOME/.fluidsynth".
  * @param buf Caller supplied string buffer to store file name to.
  * @param len Length of \a buf
  * @return Returns \a buf pointer or NULL if no user command file for this system type.
@@ -631,6 +634,9 @@ fluid_get_userconf(char *buf, int len)
 
 /**
  * Get the system FluidSynth command file name.
+ *
+ * Windows and MACOS9 do not have a system-wide config file currently. For anything else it
+ * returns @c "/etc/fluidsynth.conf".
  * @param buf Caller supplied string buffer to store file name to.
  * @param len Length of \a buf
  * @return Returns \a buf pointer or NULL if no system command file for this system type.

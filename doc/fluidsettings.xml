@@ -402,7 +402,7 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             <min>0</min>
             <max>99</max>
             <desc>
-                Sets the realtime scheduling priority of the audio synthesis thread (0 disables high priority scheduling). Linux is the only platform which currently makes use of different priority levels. Drivers which use this option: alsa, oss and pulseaudio
+                Sets the realtime scheduling priority of the audio synthesis thread. This includes the synthesis threads created by the synth (in case synth.cpu-cores was greater 1). A value of 0 disables high priority scheduling. Linux is the only platform which currently makes use of different priority levels as specified by this setting. On other operating systems the thread priority is set to maximum. Drivers which use this option: alsa, oss and pulseaudio
             </desc>
         </setting>
         <setting>
