@@ -220,7 +220,7 @@ fluid_seq_fluidsynth_callback(unsigned int time, fluid_event_t *evt, fluid_seque
         }
         else
         {
-            // note not playing, all good.
+            // Note not playing, all good.
         }
 
         fluid_synth_noteon(synth, chan, key, fluid_event_get_velocity(evt));
