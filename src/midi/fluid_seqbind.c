@@ -191,7 +191,7 @@ fluid_seq_fluidsynth_callback(unsigned int time, fluid_event_t *evt, fluid_seque
         fluid_note_id_t id = fluid_event_get_id(evt);
         if(id != -1)
         {
-            remove_note(seqbind->note_container, id);
+            fluid_note_container_remove(seqbind->note_container, id);
         }
         fluid_synth_noteoff(synth, fluid_event_get_channel(evt), fluid_event_get_key(evt));
     }
@@ -205,7 +205,7 @@ fluid_seq_fluidsynth_callback(unsigned int time, fluid_event_t *evt, fluid_seque
 
         fluid_note_id_t id = compute_id(chan, key);
 
-        int res = insert_note(seqbind->note_container, id);
+        int res = fluid_note_container_insert(seqbind->note_container, id);
         if(res == FLUID_FAILED)
         {
             FLUID_LOG(FLUID_ERR, "seqbind: Unable to process FLUID_SEQ_NOTE event, something went horribly wrong");
@@ -232,12 +232,12 @@ fluid_seq_fluidsynth_callback(unsigned int time, fluid_event_t *evt, fluid_seque
     break;
 
     case FLUID_SEQ_ALLSOUNDSOFF:
-        clear(seqbind->note_container);
+        fluid_note_container_clear(seqbind->note_container);
         fluid_synth_all_sounds_off(synth, fluid_event_get_channel(evt));
         break;
 
     case FLUID_SEQ_ALLNOTESOFF:
-        clear(seqbind->note_container);
+        fluid_note_container_clear(seqbind->note_container);
         fluid_synth_all_notes_off(synth, fluid_event_get_channel(evt));
         break;
 

@@ -47,7 +47,7 @@ void delete_fluid_note_container(void *cont)
     delete static_cast<note_container_t*>(cont);
 }
 
-int insert_note(void* cont, fluid_note_id_t id)
+int fluid_note_container_insert(void* cont, fluid_note_id_t id)
 {
     try
     {
@@ -62,7 +62,7 @@ int insert_note(void* cont, fluid_note_id_t id)
     }
 }
 
-void remove_note(void* cont, fluid_note_id_t id)
+void fluid_note_container_remove(void* cont, fluid_note_id_t id)
 {
     try
     {
@@ -75,25 +75,7 @@ void remove_note(void* cont, fluid_note_id_t id)
 }
 
 // empties the entire collection, e.g. in case of a AllNotesOff event
-void clear(void* cont)
+void fluid_note_container_clear(void* cont)
 {
     static_cast<note_container_t*>(cont)->clear();
 }
-
-int contains_note(void* c, fluid_note_id_t id)
-{
-    note_container_t* cont = static_cast<note_container_t*>(c);
-    note_container_t::iterator it = cont->find(id);
-
-    if (it != cont->end())
-    {
-        // Note is currently playing
-        return true;
-    }
-    else
-    {
-        // No note playing ATM
-        return false;
-    }
-}
-
