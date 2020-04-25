@@ -191,6 +191,7 @@ if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_C_C
 
   # define some warning flags
   set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -W -Wpointer-arith -Wcast-qual -Wstrict-prototypes -Wno-unused-parameter -Wdeclaration-after-statement -Werror=implicit-function-declaration" )
+  set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -W -Wpointer-arith -Wcast-qual -Wno-unused-parameter" )
 
   # prepend to build type specific flags, to allow users to override
   set ( CMAKE_C_FLAGS_DEBUG "-g ${CMAKE_C_FLAGS_DEBUG}" )
@@ -201,9 +202,11 @@ if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_C_C
   else () # not intel
     # gcc and clang support bad function cast and alignment warnings; add them as well.
     set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wbad-function-cast -Wcast-align" )
+    set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wcast-align" )
 
     if ( enable-ubsan )
       set ( CMAKE_C_FLAGS "-fsanitize=address,undefined ${CMAKE_C_FLAGS}" )
+      set ( CMAKE_CXX_FLAGS "-fsanitize=address,undefined ${CMAKE_CXX_FLAGS}" )
       set ( CMAKE_EXE_LINKER_FLAGS "-fsanitize=address,undefined ${CMAKE_EXE_LINKER_FLAGS}" )
       set ( CMAKE_SHARED_LINKER_FLAGS "-fsanitize=address,undefined ${CMAKE_SHARED_LINKER_FLAGS}" )
       set ( ENABLE_UBSAN 1 )
@@ -407,7 +410,7 @@ endif ( NOT CMAKE_BUILD_TYPE )
 unset ( ENABLE_DEBUG CACHE )
 if ( CMAKE_BUILD_TYPE MATCHES "Debug" )
     set ( ENABLE_DEBUG 1 )
-    add_definitions(-DDEBUG -D_GLIBCXX_DEBUG)
+    add_definitions(-DDEBUG) # -D_GLIBCXX_DEBUG) # for additional C++ STL container debugging
 endif ( CMAKE_BUILD_TYPE MATCHES "Debug" )
 
 # Additional targets to perform clang-format/clang-tidy

@@ -34,7 +34,7 @@ void* new_fluid_seq_queue(int nbEvents);
 void delete_fluid_seq_queue(void *queue);
 int fluid_seq_queue_push(void *queue, const fluid_event_t *evt);
 void fluid_seq_queue_remove(void *queue, fluid_seq_id_t src, fluid_seq_id_t dest, int type);
-void fluid_seq_queue_process(void *que, fluid_sequencer_t *seq, int cur_ticks);
+void fluid_seq_queue_process(void *que, fluid_sequencer_t *seq, unsigned int cur_ticks);
 void fluid_seq_queue_invalidate_note_private(void *que, fluid_seq_id_t dest, fluid_note_id_t id);
 
 int event_compare_for_test(const fluid_event_t* left, const fluid_event_t* right);

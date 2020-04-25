@@ -272,7 +272,7 @@ typedef struct
  */
 struct _fluid_player_t
 {
-    int status;
+    fluid_atomic_int_t status;
     int ntracks;
     fluid_track_t *track[MAX_NUMBER_OF_TRACKS];
     fluid_synth_t *synth;
@@ -286,7 +286,7 @@ struct _fluid_player_t
     char send_program_change; /* should we ignore the program changes? */
     char use_system_timer;   /* if zero, use sample timers, otherwise use system clock timer */
     char reset_synth_between_songs; /* 1 if system reset should be sent to the synth between songs. */
-    int seek_ticks;           /* new position in tempo ticks (midi ticks) for seeking */
+    fluid_atomic_int_t seek_ticks; /* new position in tempo ticks (midi ticks) for seeking */
     int start_ticks;          /* the number of tempo ticks passed at the last tempo change */
     int cur_ticks;            /* the number of tempo ticks passed */
     int begin_msec;           /* the time (msec) of the beginning of the file */
