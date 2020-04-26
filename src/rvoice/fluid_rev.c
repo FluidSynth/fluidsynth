@@ -971,6 +971,8 @@ static int create_mod_delay_lines(fluid_late *late, fluid_real_t sample_rate)
     }
 #endif
 
+    late->samplerate = sample_rate;
+
     for(i = 0; i < NBR_DELAYS; i++) /* for each delay line */
     {
         /* allocate delay line and set local delay lines's parameters */
@@ -991,30 +993,6 @@ static int create_mod_delay_lines(fluid_late *late, fluid_real_t sample_rate)
                           late->samplerate,
                           (float)(MOD_PHASE * i));
     }
-    return FLUID_OK;
-}
-
-/*-----------------------------------------------------------------------------
- Creates the fdn reverb.
- @param late, pointer on the fnd late reverb to initialize.
- @param sample_rate the sample rate.
- @return FLUID_OK if success, FLUID_FAILED otherwise.
------------------------------------------------------------------------------*/
-static int create_fluid_rev_late(fluid_late *late, fluid_real_t sample_rate)
-{
-    FLUID_MEMSET(late, 0,  sizeof(fluid_late));
-
-    late->samplerate = sample_rate;
-
-    /*--------------------------------------------------------------------------
-      First initialize the modulated delay lines
-    */
-
-    if(create_mod_delay_lines(late, sample_rate) == FLUID_FAILED)
-    {
-        return FLUID_FAILED;
-    }
-
     return FLUID_OK;
 }
 
@@ -1098,8 +1076,13 @@ new_fluid_revmodel(fluid_real_t sample_rate)
         return NULL;
     }
 
-    /* create fdn reverb */
-    if(create_fluid_rev_late(&rev->late, sample_rate) != FLUID_OK)
+    FLUID_MEMSET(&rev->late, 0,  sizeof(fluid_late));
+
+    /*--------------------------------------------------------------------------
+      Create fdn reverb
+      Initialize the modulated delay lines
+    */
+    if(create_mod_delay_lines(&rev->late, sample_rate) == FLUID_FAILED)
     {
         delete_fluid_revmodel(rev);
         return NULL;
@@ -1207,8 +1190,6 @@ fluid_revmodel_set(fluid_revmodel_t *rev, int set, fluid_real_t roomsize,
 int
 fluid_revmodel_samplerate_change(fluid_revmodel_t *rev, fluid_real_t sample_rate)
 {
-    rev->late.samplerate = sample_rate; /* new sample rate value */
-
     /* free all delay lines */
     delete_fluid_rev_late(&rev->late);
 
