@@ -441,7 +441,7 @@ static FLUID_INLINE fluid_real_t get_mod_delay(fluid_chorus_t *chorus,
 
 /*-----------------------------------------------------------------------------
  Push a sample val into the delay line
- 
+
  @param dl delay line to push value into.
  @param val the value to push into dl.
 -----------------------------------------------------------------------------*/
@@ -652,15 +652,11 @@ new_fluid_chorus(fluid_real_t sample_rate)
 
     if(new_mod_delay_line(chorus, MAX_SAMPLES) == FLUID_FAILED)
     {
-        goto error_recovery;
+        delete_fluid_chorus(chorus);
+        return NULL;
     }
 
     return chorus;
-
-error_recovery:
-    delete_fluid_chorus(chorus);
-
-    return NULL;
 }
 
 /**
