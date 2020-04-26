@@ -485,6 +485,63 @@ static void set_center_position(fluid_chorus_t *chorus)
 }
 
 /*-----------------------------------------------------------------------------
+ Update internal parameters dependent of sample rate.
+ - mod_depth.
+ - mod_rate, center_pos_mod, and index rate.
+ - modulators frequency.
+
+ @param chorus, pointer chorus unit.
+-----------------------------------------------------------------------------*/
+static void update_parameters_from_sample_rate(fluid_chorus_t *chorus)
+{
+    int i;
+
+    /* initialize modulation depth (peak to peak) (in samples) */
+    /* convert modulation depth in ms to sample number */
+    chorus->mod_depth = (int)(chorus->depth_ms  / 1000.0
+                              * chorus->sample_rate);
+
+    /* the delay line is fixed. So we reduce mod_depth (if necessary) */
+    if(chorus->mod_depth > MAX_SAMPLES)
+    {
+        FLUID_LOG(FLUID_WARN, "chorus: Too high depth. Setting it to max (%d).",
+                  MAX_SAMPLES);
+        chorus->mod_depth = MAX_SAMPLES;
+        /* set depth_ms to maximum to avoid spamming console with above warning */
+        chorus->depth_ms = (chorus->mod_depth * 1000) / chorus->sample_rate;
+    }
+
+    chorus->mod_depth /= 2; /* amplitude is peak to peek / 2 */
+#ifdef DEBUG_PRINT
+    printf("depth_ms:%f, depth_samples/2:%d\n", chorus->depth_ms, chorus->mod_depth);
+#endif
+
+    /* Initializes the modulated center position:
+       mod_rate, center_pos_mod, and index rate.
+    */
+    set_center_position(chorus); /* must be called before set_xxxx_frequency() */
+#ifdef DEBUG_PRINT
+    printf("mod_rate:%d\n", chorus->mod_rate);
+#endif
+
+    /* initialize modulator frequency */
+    for(i = 0; i < chorus->number_blocks; i++)
+    {
+        set_sinus_frequency(&chorus->mod[i].sinus,
+                            chorus->speed_Hz * chorus->mod_rate,
+                            chorus->sample_rate,
+                            /* phase offset between modulators waveform */
+                            (float)((360.0f / (float) chorus->number_blocks) * i));
+
+        set_triangle_frequency(&chorus->mod[i].triang,
+                               chorus->speed_Hz * chorus->mod_rate,
+                               chorus->sample_rate,
+                               /* phase offset between modulators waveform */
+                               (float)i / chorus->number_blocks);
+    }
+}
+
+/*-----------------------------------------------------------------------------
  Modulated delay line initialization.
 
  Sets the length line ( alloc delay samples).
@@ -713,45 +770,8 @@ fluid_chorus_set(fluid_chorus_t *chorus, int set, int nr, fluid_real_t level,
         chorus->level = 0.1;
     }
 
-    /* initialize modulation depth (peak to peak) (in samples)*/
-    chorus->mod_depth = (int)(chorus->depth_ms  / 1000.0    /* convert modulation depth in ms to s*/
-                              * chorus->sample_rate);
-
-    if(chorus->mod_depth > MAX_SAMPLES)
-    {
-        FLUID_LOG(FLUID_WARN, "chorus: Too high depth. Setting it to max (%d).", MAX_SAMPLES);
-        chorus->mod_depth = MAX_SAMPLES;
-        // set depth to maximum to avoid spamming console with above warning
-        chorus->depth_ms = (chorus->mod_depth * 1000) / chorus->sample_rate;
-    }
-
-    chorus->mod_depth /= 2; /* amplitude is peak to peek / 2 */
-#ifdef DEBUG_PRINT
-    printf("depth_ms:%f, depth_samples/2:%d\n", chorus->depth_ms, chorus->mod_depth);
-#endif
-    /* Initializes the modulated center position:
-       mod_rate, center_pos_mod,  and index rate.
-    */
-    set_center_position(chorus); /* must be called before set_xxxx_frequency() */
-#ifdef DEBUG_PRINT
-    printf("mod_rate:%d\n", chorus->mod_rate);
-#endif
-
-    /* initialize modulator frequency */
-    for(i = 0; i < chorus->number_blocks; i++)
-    {
-        set_sinus_frequency(&chorus->mod[i].sinus,
-                            chorus->speed_Hz * chorus->mod_rate,
-                            chorus->sample_rate,
-                            /* phase offset between modulators waveform */
-                            (float)((360.0f / (float) chorus->number_blocks) * i));
-
-        set_triangle_frequency(&chorus->mod[i].triang,
-                               chorus->speed_Hz * chorus->mod_rate,
-                               chorus->sample_rate,
-                               /* phase offset between modulators waveform */
-                               (float)i / chorus->number_blocks);
-    }
+    /* update parameters dependant of sample rate */
+    update_parameters_from_sample_rate(chorus);
 
 #ifdef DEBUG_PRINT
     printf("lfo type:%d\n", chorus->type);
@@ -859,6 +879,32 @@ fluid_chorus_set(fluid_chorus_t *chorus, int set, int nr, fluid_real_t level,
     }
 }
 
+/*
+* Applies a sample rate change on the chorus.
+* Note that while the chorus is used by calling any fluid_chorus_processXXX()
+* function, calling fluid_chorus_samplerate_change() isn't multi task safe.
+* To deal properly with this issue follow the steps:
+* 1) Stop chorus processing (i.e disable calling of any fluid_chorus_processXXX().
+*    chorus functions.
+* 2) Change sample rate by calling fluid_chorus_samplerate_change().
+* 3) Restart chorus processing (i.e enabling calling of any fluid_chorus_processXXX()
+*    chorus functions.
+*
+* Another solution is to substitute step (2):
+* 2.1) delete the chorus by calling delete_fluid_chorus().
+* 2.2) create the chorus by calling new_fluid_chorus().
+*
+* @param chorus the chorus.
+* @param sample_rate new sample rate value.
+*/
+void
+fluid_chorus_samplerate_change(fluid_chorus_t *chorus, fluid_real_t sample_rate)
+{
+    chorus->sample_rate = sample_rate;
+
+    /* update parameters dependant of sample rate */
+    update_parameters_from_sample_rate(chorus);
+}
 
 /**
  * Process chorus by mixing the result in output buffer.
