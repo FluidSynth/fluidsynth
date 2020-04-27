@@ -679,10 +679,8 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_samplerate)
     {
         if(mixer->fx[i].chorus)
         {
-            delete_fluid_chorus(mixer->fx[i].chorus);
+            fluid_chorus_samplerate_change(mixer->fx[i].chorus, samplerate);
         }
-
-        mixer->fx[i].chorus = new_fluid_chorus(samplerate);
 
         if(mixer->fx[i].reverb)
         {
