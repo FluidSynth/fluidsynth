@@ -1131,12 +1131,8 @@ fluid_revmodel_update(fluid_revmodel_t *rev)
 * @return pointer on the new reverb or NULL if memory error.
 * Reverb API.
 */
-//#define sample_rate_maximum 96000.0
-//#define sample_rate_maximum 0.0
-
 fluid_revmodel_t *
 new_fluid_revmodel(fluid_real_t sample_rate_max, fluid_real_t sample_rate)
-//new_fluid_revmodel(fluid_real_t sample_rate)
 {
     fluid_revmodel_t *rev;
 
