@@ -735,7 +735,10 @@ new_fluid_rvoice_mixer(int buf_count, int fx_buf_count, int fx_units, fluid_real
     
     for(i = 0; i < fx_units; i++)
     {
-        mixer->fx[i].reverb = new_fluid_revmodel(sample_rate);
+        /* cannot access to the maximum sample rate value indicated by the
+           settings. So the the value is hard coded here: 96000Hz
+        */
+        mixer->fx[i].reverb = new_fluid_revmodel(96000.0, sample_rate);
         mixer->fx[i].chorus = new_fluid_chorus(sample_rate);
 
         if(mixer->fx[i].reverb == NULL || mixer->fx[i].chorus == NULL)
