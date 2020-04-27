@@ -182,7 +182,7 @@
 
 /* Number of delay lines (must be only 8 or 12)
   8 is the default.
- 12 produces a better quality but is +50% cpu expensive
+ 12 produces a better quality but is +50% cpu expensive.
 */
 #define NBR_DELAYS        8 /* default*/
 
@@ -274,7 +274,7 @@ a flatter response on comb filter. So the input gain is set to 0.1 rather 1.0. *
 /*
  Number of samples to add to the desired length of a delay line. This
  allow to take account of modulation interpolation.
- 1 is sufficient with MOD_DEPTH equal to 6.
+ 1 is sufficient with MOD_DEPTH equal to 4.
 */
 #define INTERP_SAMPLES_NBR 1
 
@@ -514,15 +514,16 @@ typedef struct
  @param delay_length_max the maximum allocated length of the delay line in samples.
    if > 0, the line will be allocated to the greater value beetween delay_length_max
    and delay_length.
-   Choosing delay_length_max always > delay_length avoid memory reallocation on next
-   call for maximum performance.
-   if 0, the line will be allocated only if delay length is greater than the actual
-   maximum size.
+   Choosing delay_length_max always greater then delay_length will avoid memory
+   reallocation on next call for maximum performance.
+   if 0, the line will be allocated only if the required size is greater than the actual
+   internal maximum size.
  @param mod_depth_max maximum depth of the modulation in samples.
  @param delay_length the length of the delay line in samples. The real length used.
- @param mod_depth depth of the modulation in samples (amplitude of the sine wave).
+   The real size of the line is size = INTERP_SAMPLES_NBR + mod_depth + delay_length
+ @param mod_depth depth of the modulation in samples (amplitude of modulator wave).
  @param mod_rate the rate of the modulation in samples.
- @return FLUID_OK if success , FLUID_FAILED if memory error.
+ @return FLUID_OK if success, FLUID_FAILED if memory error.
 
  Return FLUID_OK if success, FLUID_FAILED if memory error.
 -----------------------------------------------------------------------------*/
@@ -569,9 +570,13 @@ static int set_mod_delay_line(mod_delay_line *mdl,
              alloc_req = TRUE;
         }
 
-        /* total size of the line (in samples):
+        /* real size of the line in use (in samples):
         size = INTERP_SAMPLES_NBR + mod_depth + delay_length */
         mdl->dl.size = delay_length + mod_depth + INTERP_SAMPLES_NBR;
+
+        /* the line will be allocated only if the required size is greater
+           than the actual  internal maximum size.
+        */
         if(mdl->dl.size > mdl->dl.size_max)
         {
             mdl->dl.size_max = mdl->dl.size;
@@ -1123,7 +1128,7 @@ fluid_revmodel_update(fluid_revmodel_t *rev)
 * fluid_revmodel_set() must be called at least one time after calling
 * new_fluid_revmodel().
 *
-* @param sample_rate_max maximum sample rate expected in Hz. Should
+* @param sample_rate_max maximum sample rate expected in Hz. Should be
 *  greater then sample_rate to avoid memory reallocation on next call to
 *  fluid_revmodel_samplerate_change().
 *
@@ -1242,6 +1247,7 @@ fluid_revmodel_set(fluid_revmodel_t *rev, int set, fluid_real_t roomsize,
 * the steps:
 * 1) Stop reverb processing (i.e disable calling of any fluid_revmodel_processXXX().
 *    reverb functions.
+*    Optionally, call fluid_revmodel_reset() to damp the reverb.
 * 2) Change sample rate by calling fluid_revmodel_samplerate_change().
 * 3) Restart reverb processing (i.e enabling calling of any fluid_revmodel_processXXX()
 *    reverb functions.
@@ -1393,7 +1399,7 @@ fluid_revmodel_processreplace(fluid_revmodel_t *rev, const fluid_real_t *in,
             right_out[k] = out_right * rev->wet1 + out_left * rev->wet2;
 
             As wet1 is integrated in stereo coefficient wet 1 is now
-            integrated in out_left and out_right we simplify previous
+            integrated in out_left and out_right, so we simplify previous
             relation by suppression of one multiply as this:
 
             left_out[k]  = out_left  + out_right * rev->wet2;
@@ -1513,7 +1519,7 @@ void fluid_revmodel_processmix(fluid_revmodel_t *rev, const fluid_real_t *in,
             right_out[k] += out_right * rev->wet1 + out_left * rev->wet2;
 
             As wet1 is integrated in stereo coefficient wet 1 is now
-            integrated in out_left and out_right we simplify previous
+            integrated in out_left and out_right, so we simplify previous
             relation by suppression of one multiply as this:
 
             left_out[k]  += out_left  + out_right * rev->wet2;
