@@ -120,10 +120,10 @@
  * freeverb  | 2 x 8 comb     |  0.670 %        | 204616            | ringing
  *           | 2 x 4 all-pass |                 |                   |
  * ----------|---------------------------------------------------------------
- *    FDN    | 8              |  0.650 %        | 112160            | far less
- * modulated |                |(feeverb - 3%)   | (55% freeverb)    | ringing
+ *    FDN    | 8              |  0.650 %        | 112480            | far less
+ * modulated |                |(feeverb - 3%)   | (56% freeverb)    | ringing
  *           |---------------------------------------------------------------
- *           | 12             |  0.942 %        | 168240            | best than
+ *           | 12             |  0.942 %        | 168720            | best than
  *           |                |(freeverb + 41%) | (82 %freeverb)    | 8 lines
  *---------------------------------------------------------------------------
  *
@@ -369,7 +369,6 @@ typedef struct
 {
     fluid_real_t *line; /* buffer line */
     int   size;         /* effective internal size (in samples) */
-    int   size_max;     /* max size allocated (in samples) */
     /*-------------*/
     int line_in;  /* line in position */
     int line_out; /* line out position */
@@ -501,155 +500,6 @@ typedef struct
     fluid_real_t  buffer;
 } mod_delay_line;
 
-
-/*-----------------------------------------------------------------------------
- Modulated delay line initialization.
-
- Sets the length line by allocating memory only if necessary.
- Remark: the function sets the internal size accordling to the length delay_length.
- As the delay line is a modulated line, its internal size is augmented by mod_depth.
- The size is also augmented by INTERP_SAMPLES_NBR to take account of interpolation.
-
- @param mdl, pointer on modulated delay line.
- @param delay_length_max the maximum allocated length of the delay line in samples.
-   if > 0, the line will be allocated to the greater value beetween delay_length_max
-   and delay_length.
-   Choosing delay_length_max always greater then delay_length will avoid memory
-   reallocation on next call for maximum performance.
-   if 0, the line will be allocated only if the required size is greater than the actual
-   internal maximum size.
- @param mod_depth_max maximum depth of the modulation in samples.
- @param delay_length the length of the delay line in samples. The real length used.
-   The real size of the line is size = INTERP_SAMPLES_NBR + mod_depth + delay_length
- @param mod_depth depth of the modulation in samples (amplitude of modulator wave).
- @param mod_rate the rate of the modulation in samples.
- @return FLUID_OK if success, FLUID_FAILED if memory error.
-
- Return FLUID_OK if success, FLUID_FAILED if memory error.
------------------------------------------------------------------------------*/
-static int set_mod_delay_line(mod_delay_line *mdl,
-                              int delay_length_max,
-                              int delay_length,
-                              int mod_depth_max,
-                              int mod_depth,
-                              int mod_rate
-                             )
-{
-
-#ifdef INFOS_PRINT
-    printf("delay_length_max=%d, delay_length=%d\n", delay_length_max, delay_length);
-#endif
-
-    /*-----------------------------------------------------------------------*/
-    /* checks parameter */
-    if(delay_length < 1)
-    {
-        return FLUID_FAILED;
-    }
-
-    /* limits mod_depth to the requested delay length */
-    if(mod_depth >= delay_length)
-    {
-        FLUID_LOG(FLUID_INFO,
-                  "fdn reverb: modulation depth has been limited");
-        mod_depth = delay_length - 1;
-    }
-
-    mdl->mod_depth = mod_depth;
-    /*-----------------------------------------------------------------------
-     allocates delay_line and initialize members:
-       - line, size, line_in, line_out...
-    */
-    {
-        int alloc_req = FALSE; /* indicate that reallocation is necessary */
-        if(delay_length_max > 0)
-        {
-             /* total size allocated (in samples) */
-             mdl->dl.size_max = delay_length_max
-                                + mod_depth_max + INTERP_SAMPLES_NBR;
-             alloc_req = TRUE;
-        }
-
-        /* real size of the line in use (in samples):
-        size = INTERP_SAMPLES_NBR + mod_depth + delay_length */
-        mdl->dl.size = delay_length + mod_depth + INTERP_SAMPLES_NBR;
-
-        /* the line will be allocated only if the required size is greater
-           than the actual  internal maximum size.
-        */
-        if(mdl->dl.size > mdl->dl.size_max)
-        {
-            mdl->dl.size_max = mdl->dl.size;
-            alloc_req = TRUE;
-        }
-
-        /* realloc only if necessary */
-        if(alloc_req)
-        {
-            FLUID_FREE(mdl->dl.line);
-            mdl->dl.line = FLUID_ARRAY(fluid_real_t, mdl->dl.size_max);
-        }
-
-        if(! mdl->dl.line)
-        {
-            return FLUID_FAILED;
-        }
-
-        clear_delay_line(&mdl->dl); /* clears the buffer */
-
-        /* Initializes line_in to the start of the buffer */
-        mdl->dl.line_in = 0;
-        /*  Initializes line_out index INTERP_SAMPLES_NBR samples after line_in */
-        /*  so that the delay between line_out and line_in is:
-            mod_depth + delay_length */
-        mdl->dl.line_out = mdl->dl.line_in + INTERP_SAMPLES_NBR;
-    }
-
-    /* Damping low pass filter -------------------*/
-    mdl->dl.damping.buffer = 0;
-    /*------------------------------------------------------------------------
-     Initializes modulation members:
-     - modulated center position: center_pos_mod
-     - index rate to know when to update center_pos_mod:index_rate
-     - modulation rate (the speed at which center_pos_mod is modulated: mod_rate
-     - interpolator member: buffer, frac_pos_mod
-     -------------------------------------------------------------------------*/
-    /* Sets the modulation rate. This rate defines how often
-     the  center position (center_pos_mod ) is modulated .
-     The value is expressed in samples. The default value is 1 that means that
-     center_pos_mod is updated at every sample.
-     For example with a value of 2, the center position position will be
-     updated only one time every 2 samples only.
-    */
-    mdl->mod_rate = 1; /* default modulation rate: every one sample */
-
-    if(mod_rate > mdl->dl.size)
-    {
-        FLUID_LOG(FLUID_INFO,
-                  "fdn reverb: modulation rate is out of range");
-    }
-    else
-    {
-        mdl->mod_rate = mod_rate;
-    }
-
-    /* Initializes the modulated center position (center_pos_mod) so that:
-        - the delay between line_out and center_pos_mod is mod_depth.
-        - the delay between center_pos_mod and line_in is delay_length.
-     */
-    mdl->center_pos_mod = (fluid_real_t) INTERP_SAMPLES_NBR + mod_depth;
-
-    /* index rate to control when to update center_pos_mod */
-    /* Important: must be set to get center_pos_mod immediately used for the
-       reading of first sample (see get_mod_delay()) */
-    mdl->index_rate = mdl->mod_rate;
-
-    /* initializes 1st order All-Pass interpolator members */
-    mdl->buffer = 0;       /* previous delay sample value */
-    mdl->frac_pos_mod = 0; /* fractional position (between consecutives sample) */
-    return FLUID_OK;
-}
-
 /*-----------------------------------------------------------------------------
  Return norminal delay length
 
@@ -743,6 +593,7 @@ static FLUID_INLINE fluid_real_t get_mod_delay(mod_delay_line *mdl)
 struct _fluid_late
 {
     fluid_real_t samplerate;       /* sample rate */
+    fluid_real_t sample_rate_max;  /* sample rate maximum */
     /*----- High pass tone corrector -------------------------------------*/
     fluid_real_t tone_buffer;
     fluid_real_t b1, b2;
@@ -945,120 +796,125 @@ static void delete_fluid_rev_late(fluid_late *late)
     }
 }
 
+
+/* Nominal delay lines length table (in samples) */
+static const int nom_delay_length[NBR_DELAYS] =
+{
+    DELAY_L0, DELAY_L1, DELAY_L2, DELAY_L3,
+    DELAY_L4, DELAY_L5, DELAY_L6, DELAY_L7,
+#if (NBR_DELAYS == 12)
+    DELAY_L8, DELAY_L9, DELAY_L10, DELAY_L11
+#endif
+};
+
+/*
+ 1)"modal density" is one property that contributes to the quality of the reverb tail.
+   The more is the modal density, the less are unwanted resonant frequencies
+   build during the decay time: modal density = total delay / sample rate.
+
+   Delay line's length given by static table delay_length[] are nominal
+   to get minimum modal density of 0.15 at sample rate 44100Hz.
+   Here we set length_factor to 2 to multiply this nominal modal
+   density by 2. This leads to a default modal density of 0.15 * 2 = 0.3 for
+   sample rate <= 44100.
+
+   For sample rate > 44100, length_factor is multiplied by
+   sample_rate / 44100. This ensures that the default modal density keeps inchanged.
+   (Without this compensation, the default modal density would be diminished for
+   new sample rate change above 44100Hz).
+
+ 2)Modulated delay line contributes to diminish resonnant frequencies (often called "ringing").
+   Modulation depth (mod_depth) is set to nominal value of MOD_DEPTH at sample rate 44100Hz.
+   For sample rate > 44100, mod_depth is multiplied by sample_rate / 44100. This ensures
+   that the effect of modulated delay line remains inchanged.
+*/
+static void compensate_from_sample_rate(fluid_real_t sample_rate,
+                                        fluid_real_t *mod_depth,
+                                        fluid_real_t *length_factor)
+{
+    *mod_depth = MOD_DEPTH;
+    *length_factor = 2.0f;
+    if(sample_rate > 44100.0f)
+    {
+        fluid_real_t sample_rate_factor = sample_rate/44100.0f;
+        *length_factor *= sample_rate_factor;
+        *mod_depth *= sample_rate_factor;
+    }
+}
+
 /*-----------------------------------------------------------------------------
  Creates all modulated lines.
  @param late, pointer on the fnd late reverb to initialize.
  @param sample_rate_max, the maximum audio sample rate expected.
-  Choosing an initial value greater sample_rate ensures that delay lines
-  will not be reallocated on next call. This allows  maximum of performance
-  when sample rate is changed on the fly.
- @param sample_rate, the audio sample rate.
  @return FLUID_OK if success, FLUID_FAILED otherwise.
 -----------------------------------------------------------------------------*/
 static int create_mod_delay_lines(fluid_late *late,
-                                  fluid_real_t sample_rate_max,
-                                  fluid_real_t sample_rate)
+                                  fluid_real_t sample_rate_max)
 {
-    /* Delay lines length table (in samples) */
-    static const int delay_length[NBR_DELAYS] =
-    {
-        DELAY_L0, DELAY_L1, DELAY_L2, DELAY_L3,
-        DELAY_L4, DELAY_L5, DELAY_L6, DELAY_L7,
-    #if (NBR_DELAYS == 12)
-        DELAY_L8, DELAY_L9, DELAY_L10, DELAY_L11
-    #endif
-    };
-
     int result; /* return value */
     int i;
 
-    /*
-      1)"modal density" is one property that contributes to the quality of the reverb tail.
-        The more is the modal density, the less are unwanted resonant frequencies
-        build during the decay time: modal density = total delay / sample rate.
+    fluid_real_t mod_depth, length_factor;
 
-        Delay line's length given by static table delay_length[] is nominal
-        to get minimum modal density of 0.15 at sample rate 44100Hz.
-        Here we set length_factor to 2 to multiply this nominal modal
-        density by 2. This leads to a default modal density of 0.15 * 2 = 0.3 for
-        sample rate <= 44100.
+    /* compute mod_depth, length factor */
+    compensate_from_sample_rate(sample_rate_max, &mod_depth, &length_factor);
 
-        For sample rate > 44100, length_factor is multiplied by
-        sample_rate / 44100. This ensures that the default modal density keeps inchanged.
-        (Without this compensation, the default modal density would be diminished for
-        new sample rate change above 44100Hz).
+    late->sample_rate_max = sample_rate_max;
 
-      2)Modulated delay line contributes to diminish resonnant frequencies (often called "ringing").
-        Modulation depth (mod_depth) is set to nominal value of MOD_DEPTH at sample rate 44100Hz.
-        For sample rate > 44100, mod_depth is multiplied by sample_rate / 44100. This ensures
-        that the effect of modulated delay line keeps inchanged.
-    */
-    fluid_real_t mod_depth_max, mod_depth;
-    fluid_real_t length_factor_max, length_factor;
-    mod_depth_max = mod_depth = MOD_DEPTH;
-    length_factor_max = length_factor = 2.0f;
-    if(sample_rate > 44100.0f)
-    {
-        fluid_real_t sample_rate_factor = sample_rate/44100.0f;
-        length_factor *= sample_rate_factor;
-        mod_depth *= sample_rate_factor;
-    }
-
-    if(sample_rate_max > 44100.0f)
-    {
-        fluid_real_t factor_max = sample_rate_max/44100.0f;
-        length_factor_max *= factor_max;
-        mod_depth_max *= factor_max;
-    }
 #ifdef INFOS_PRINT // allows message to be printed on the console.
     printf("length_factor:%f, mod_depth:%f\n", length_factor, mod_depth);
     /* Print: modal density and total memory bytes */
     {
         int i;
         int total_delay = 0;     /* total delay in samples */
-        int total_allocated = 0; /* total allocated in samples */
         for (i = 0; i < NBR_DELAYS; i++)
         {
-            int length = (length_factor * delay_length[i])
-				          + mod_depth + INTERP_SAMPLES_NBR;
-            int length_max = (length_factor_max * delay_length[i])
-				              + mod_depth_max + INTERP_SAMPLES_NBR;
-            if(length > length_max)
-            {
-                length_max = length;
-            }
-            total_allocated += length_max;
-            total_delay += length_factor * delay_length[i];
+            int length = (length_factor * nom_delay_length[i])
+                         + mod_depth + INTERP_SAMPLES_NBR;
+            total_delay += length;
         }
 
         /* modal density and total memory bytes */
         printf("modal density:%f, total delay:%d, total memory:%d bytes\n",
-                total_delay / sample_rate ,total_delay , total_allocated * sizeof(fluid_real_t));
+                total_delay / sample_rate_max ,total_delay ,
+                total_delay * sizeof(fluid_real_t));
     }
 #endif
 
-    late->samplerate = sample_rate;
-
     for(i = 0; i < NBR_DELAYS; i++) /* for each delay line */
     {
-        /* allocate delay line and set local delay lines's parameters */
-        result = set_mod_delay_line(&late->mod_delay_lines[i],
-                                    delay_length[i] * length_factor_max,
-                                    delay_length[i] * length_factor,
-                                    mod_depth_max, mod_depth, MOD_RATE);
+        int delay_length = nom_delay_length[i] * length_factor;
+        mod_delay_line *mdl = &late->mod_delay_lines[i];
 
-        if(result == FLUID_FAILED)
+        /*-------------------------------------------------------------------*/
+        /* checks parameter */
+        if(delay_length < 1)
         {
             return FLUID_FAILED;
         }
 
-        /* Sets local Modulators parameters: frequency and phase
-         Each modulateur are shifted of MOD_PHASE degree
+        /* limits mod_depth to the requested delay length */
+        if(mod_depth >= delay_length)
+        {
+            FLUID_LOG(FLUID_INFO,
+                      "fdn reverb: modulation depth has been limited");
+            mod_depth = delay_length - 1;
+        }
+
+        /*---------------------------------------------------------------------
+         allocates delay_line and initialize members:
+         - line, size, line_in, line_out...
         */
-        set_mod_frequency(&late->mod_delay_lines[i].mod,
-                          MOD_FREQ * MOD_RATE,
-                          late->samplerate,
-                          (float)(MOD_PHASE * i));
+
+        /* real size of the line in use (in samples):
+        size = INTERP_SAMPLES_NBR + mod_depth + delay_length */
+        mdl->dl.size = delay_length + mod_depth + INTERP_SAMPLES_NBR;
+        mdl->dl.line = FLUID_ARRAY(fluid_real_t, mdl->dl.size);
+
+        if(! mdl->dl.line)
+        {
+            return FLUID_FAILED;
+        }
     }
     return FLUID_OK;
 }
@@ -1122,15 +978,12 @@ fluid_revmodel_update(fluid_revmodel_t *rev)
 /*----------------------------------------------------------------------------
                             Reverb API
 -----------------------------------------------------------------------------*/
-
 /*
-* Creates a reverb. One created the reverb have no parameters set, so
+* Creates a reverb. Once created the reverb have no parameters set, so
 * fluid_revmodel_set() must be called at least one time after calling
 * new_fluid_revmodel().
 *
-* @param sample_rate_max maximum sample rate expected in Hz. Should be
-*  greater then sample_rate to avoid memory reallocation on next call to
-*  fluid_revmodel_samplerate_change().
+* @param sample_rate_max maximum sample rate expected in Hz.
 *
 * @param sample_rate actual sample rate needed in Hz.
 * @return pointer on the new reverb or NULL if memory error.
@@ -1140,6 +993,11 @@ fluid_revmodel_t *
 new_fluid_revmodel(fluid_real_t sample_rate_max, fluid_real_t sample_rate)
 {
     fluid_revmodel_t *rev;
+
+    if(sample_rate <= 0)
+    {
+        return NULL;
+    }
 
     rev = FLUID_NEW(fluid_revmodel_t);
 
@@ -1151,15 +1009,27 @@ new_fluid_revmodel(fluid_real_t sample_rate_max, fluid_real_t sample_rate)
     FLUID_MEMSET(&rev->late, 0,  sizeof(fluid_late));
 
     /*--------------------------------------------------------------------------
-      Create fdn reverb
-      Initialize the modulated delay lines
+      Create fdn late reverb.
     */
-    if(create_mod_delay_lines(&rev->late, sample_rate_max,
-                               sample_rate) == FLUID_FAILED)
+
+    if(sample_rate > sample_rate_max)
+    {
+        sample_rate_max = sample_rate;
+    }
+
+    /*--------------------------------------------------------------------------
+      Allocate the modulated delay lines
+    */
+    if(create_mod_delay_lines(&rev->late, sample_rate_max) == FLUID_FAILED)
     {
         delete_fluid_revmodel(rev);
         return NULL;
     }
+
+    /*--------------------------------------------------------------------------
+      Initialize the fdn reverb
+    */
+    fluid_revmodel_samplerate_change(rev, sample_rate);
 
     return rev;
 }
@@ -1242,9 +1112,8 @@ fluid_revmodel_set(fluid_revmodel_t *rev, int set, fluid_real_t roomsize,
 /*
 * Applies a sample rate change on the reverb.
 * Note that while the reverb is used by calling any fluid_revmodel_processXXX()
-* function, calling fluid_revmodel_samplerate_change() isn't multi task safe because
-* delay line are memory reallocated. To deal properly with this issue follow
-* the steps:
+* function, calling fluid_revmodel_samplerate_change() isn't multi task safe.
+* To deal properly with this issue follow the steps:
 * 1) Stop reverb processing (i.e disable calling of any fluid_revmodel_processXXX().
 *    reverb functions.
 *    Optionally, call fluid_revmodel_reset() to damp the reverb.
@@ -1257,17 +1126,105 @@ fluid_revmodel_set(fluid_revmodel_t *rev, int set, fluid_real_t roomsize,
 * 2.2) create the reverb by calling new_fluid_revmodel().
 *
 * @param rev the reverb.
-* @param sample_rate new sample rate value.
-* @return FLUID_OK if success, FLUID_FAILED otherwise (memory error).
+* @param sample_rate new sample rate value. Must be <= sample_rate_max
+* @return FLUID_OK if success, FLUID_FAILED (new sample rate is ignored).
 * Reverb API.
 */
 int
 fluid_revmodel_samplerate_change(fluid_revmodel_t *rev, fluid_real_t sample_rate)
 {
-    /* update all parameters dependant of new sample rate */
-    if(create_mod_delay_lines(&rev->late, 0.0, sample_rate) == FLUID_FAILED)
+    fluid_real_t mod_depth, length_factor;
+    int i;
+
+    if(sample_rate > rev->late.sample_rate_max)
     {
-        return FLUID_FAILED; /* memory error */
+        FLUID_LOG(FLUID_INFO,
+                  "fdn reverb: cannot apply sample rate: %f Hz, maximum is:%f Hz\n",
+                   sample_rate, rev->late.sample_rate_max);
+        return FLUID_FAILED;
+    }
+
+    /* update all parameters dependant of new sample rate */
+    rev->late.samplerate = sample_rate;
+
+    /* compute mod_depth, length factor */
+    compensate_from_sample_rate(sample_rate, &mod_depth, &length_factor);
+
+    for(i = 0; i < NBR_DELAYS; i++) /* for each delay line */
+    {
+        mod_delay_line *mdl = &rev->late.mod_delay_lines[i];
+        int delay_length = nom_delay_length[i] * length_factor;
+
+        /* limits mod_depth to the requested delay length */
+        if(mod_depth >= delay_length)
+        {
+            mod_depth = delay_length - 1;
+        }
+
+        mdl->mod_depth = mod_depth;
+
+        clear_delay_line(&mdl->dl); /* clears the buffer */
+
+        /* Initializes line_in to the start of the buffer */
+        mdl->dl.line_in = 0;
+
+        /* Initializes line_out index INTERP_SAMPLES_NBR samples after
+           line_in so that the delay between line_out and line_in is:
+           mod_depth + delay_length
+        */
+        mdl->dl.line_out = mdl->dl.line_in + INTERP_SAMPLES_NBR;
+
+        /* Damping low pass filter ------------------------------------------*/
+        mdl->dl.damping.buffer = 0;
+
+        /*---------------------------------------------------------------------
+         Initializes modulation members:
+         - modulated center position: center_pos_mod
+         - modulation rate (the speed at which center_pos_mod is modulated: mod_rate
+         - index rate to know when to update center_pos_mod:index_rate
+         - interpolator member: buffer, frac_pos_mod
+        ---------------------------------------------------------------------*/
+        /* Initializes the modulated center position (center_pos_mod) so that:
+           - the delay between line_out and center_pos_mod is mod_depth.
+           - the delay between center_pos_mod and line_in is delay_length.
+        */
+        mdl->center_pos_mod = (fluid_real_t) INTERP_SAMPLES_NBR + mod_depth;
+
+        /* Sets the modulation rate. This rate defines how often
+           the  center position (center_pos_mod ) is modulated .
+           The value is expressed in samples. The default value is 1 that means that
+           center_pos_mod is updated at every sample.
+           For example with a value of 2, the center position position will be
+           updated only one time every 2 samples only.
+        */
+        if(MOD_RATE < 1 || MOD_RATE > mdl->dl.size)
+        {
+            FLUID_LOG(FLUID_INFO, "fdn reverb: modulation rate is out of range");
+            mdl->mod_rate = 1; /* default modulation rate: every one sample */
+        }
+        else
+        {
+            mdl->mod_rate = MOD_RATE;
+        }
+
+        /* index rate to control when to update center_pos_mod.
+           Important: must be set to get center_pos_mod immediately used for
+           the reading of first sample (see get_mod_delay())
+        */
+        mdl->index_rate = mdl->mod_rate;
+
+        /* initializes first order All-Pass interpolator members */
+        mdl->buffer = 0;       /* previous delay sample value */
+        mdl->frac_pos_mod = 0; /* frac. position (between consecutives sample) */
+
+
+        /* Sets local Modulators parameters: frequency and phase.
+           Each modulateur are shifted of MOD_PHASE degree
+        */
+        set_mod_frequency(&mdl->mod,
+                          MOD_FREQ * MOD_RATE,
+                          sample_rate,
+                          (float)(MOD_PHASE * i));
     }
 
     /* updates damping filter coefficients according to sample rate change */

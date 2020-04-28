@@ -686,16 +686,14 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_samplerate)
 
         if(mixer->fx[i].reverb)
         {
-            if(fluid_revmodel_samplerate_change(mixer->fx[i].reverb, samplerate) == FLUID_FAILED)
-            {
-                /* this should not occur if the reverb was created with sample_rate_max set
-                   to the maximum sample rate indicated in the settings.
-                   If this condition isn't respected, it is safe to delete the reverb to be sure
-                   that it will not called on next rendering call.
-                */
-                delete_fluid_revmodel(mixer->fx[i].reverb);
-                mixer->fx[i].reverb = NULL;
-            }
+            fluid_revmodel_samplerate_change(mixer->fx[i].reverb, samplerate);
+
+            /*
+              fluid_revmodel_samplerate_change() shouldn't fail if the reverb was created
+              with sample_rate_max set to the maximum sample rate indicated in the settings.
+              If this condition isn't respected, the reverb will continue to work but with
+              lost of quality.
+            */
         }
     }
 
