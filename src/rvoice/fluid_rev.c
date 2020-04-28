@@ -1078,6 +1078,8 @@ void
 fluid_revmodel_set(fluid_revmodel_t *rev, int set, fluid_real_t roomsize,
                    fluid_real_t damping, fluid_real_t width, fluid_real_t level)
 {
+    fluid_return_if_fail(rev != NULL);
+
     /*-----------------------------------*/
     if(set & FLUID_REVMODEL_SET_ROOMSIZE)
     {
@@ -1135,6 +1137,8 @@ fluid_revmodel_samplerate_change(fluid_revmodel_t *rev, fluid_real_t sample_rate
 {
     fluid_real_t mod_depth, length_factor;
     int i;
+
+    fluid_return_val_if_fail(rev != NULL, FLUID_FAILED);
 
     if(sample_rate > rev->late.sample_rate_max)
     {
@@ -1242,6 +1246,8 @@ fluid_revmodel_samplerate_change(fluid_revmodel_t *rev, fluid_real_t sample_rate
 void
 fluid_revmodel_reset(fluid_revmodel_t *rev)
 {
+    fluid_return_if_fail(rev != NULL);
+
     fluid_revmodel_init(rev);
 }
 
