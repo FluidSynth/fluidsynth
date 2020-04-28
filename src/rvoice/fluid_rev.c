@@ -130,7 +130,7 @@
  * Note:
  * Values in this column is the memory consumption for sample rate <= 44100Hz.
  * For sample rate > 44100Hz , multiply these values by (sample rate / 44100Hz).
- *
+ * For example: for sample rate 96000Hz, the memory consumed is 244760 bytes
  *
  *----------------------------------------------------------------------------
  * 'Denormalise' method to avoid loss of performance.
