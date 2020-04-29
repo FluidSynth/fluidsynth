@@ -308,8 +308,8 @@ void delete_fluid_dsound_audio_driver(fluid_audio_driver_t *d)
 
     /* First tell dsound to stop playing its buffer now.
        Doing this before stopping audio thread avoid dsound playing transient
-       gliches beetween the time audio task is stopped and dsound will be released.
-       These gliches are particularly audible when a reverb is connected
+       glitches between the time audio task is stopped and dsound will be released.
+       These glitches are particularly audible when a reverb is connected
        on output.
     */
     if(dev->sec_buffer != NULL)
