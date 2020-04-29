@@ -1154,7 +1154,8 @@ delete_fluid_revmodel(fluid_revmodel_t *rev)
 
 /*
 * Sets one or more reverb parameters. Note this must be called at least one
-* time after calling new_fluid_revmodel().
+* time after calling new_fluid_revmodel() and before any call to
+* fluid_revmodel_processXXX() and fluid_revmodel_samplerate_change().
 *
 * Note that while the reverb is used by calling any fluid_revmodel_processXXX()
 * function, calling fluid_revmodel_set() could produce audible clics.
@@ -1210,6 +1211,9 @@ fluid_revmodel_set(fluid_revmodel_t *rev, int set, fluid_real_t roomsize,
 
 /*
 * Applies a sample rate change on the reverb.
+* fluid_revmodel_set() must be called at least one time before calling
+* this function.
+*
 * Note that while the reverb is used by calling any fluid_revmodel_processXXX()
 * function, calling fluid_revmodel_samplerate_change() isn't multi task safe.
 * To deal properly with this issue follow the steps:
@@ -1224,25 +1228,36 @@ fluid_revmodel_set(fluid_revmodel_t *rev, int set, fluid_real_t roomsize,
 * 2.1) delete the reverb by calling delete_fluid_revmodel().
 * 2.2) create the reverb by calling new_fluid_revmodel().
 *
+* The best solution would be that this function be called only by the same task
+* calling fluid_revmodel_processXXX().
+*
 * @param rev the reverb.
 * @param sample_rate new sample rate value. Must be <= sample_rate_max
-* @return FLUID_OK if success, FLUID_FAILED (new sample rate is ignored).
+* @return FLUID_OK if success, FLUID_FAILED if new sample rate is greater
+*  then the maximumum sample rate set at creation time. The reverb will
+*  continue to work but with possible lost of quality.
+*  If this is a problem, the caller should follow steps 2.1 and 2.2.
 * Reverb API.
 */
 int
 fluid_revmodel_samplerate_change(fluid_revmodel_t *rev, fluid_real_t sample_rate)
 {
-    fluid_real_t mod_depth, length_factor;
     int i;
+    int status = FLUID_OK;
 
     fluid_return_val_if_fail(rev != NULL, FLUID_FAILED);
 
     if(sample_rate > rev->late.sample_rate_max)
     {
         FLUID_LOG(FLUID_WARN,
-                  "fdn reverb: cannot apply sample rate: %.0f Hz, maximum is:%.0f Hz\n",
+                  "fdn reverb: sample rate %.0f Hz is deduced to %.0f Hz\n",
                    sample_rate, rev->late.sample_rate_max);
-        return FLUID_FAILED;
+
+        /* Reduce sample rate to the maximum value set at creation time.
+           The reverb will continue to work with possible lost of quality.
+        */
+        sample_rate = rev->late.sample_rate_max;
+        status = FLUID_FAILED;
     }
 
     /* Initialize all modulated lines according to sample rate change. */
@@ -1251,7 +1266,7 @@ fluid_revmodel_samplerate_change(fluid_revmodel_t *rev, fluid_real_t sample_rate
     /* updates damping filter coefficients according to sample rate change */
     update_rev_time_damping(&rev->late, rev->roomsize, rev->damp);
 
-    return FLUID_OK;
+    return status;
 }
 
 /*
