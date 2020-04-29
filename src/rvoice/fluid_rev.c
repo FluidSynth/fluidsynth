@@ -1239,8 +1239,8 @@ fluid_revmodel_samplerate_change(fluid_revmodel_t *rev, fluid_real_t sample_rate
 
     if(sample_rate > rev->late.sample_rate_max)
     {
-        FLUID_LOG(FLUID_INFO,
-                  "fdn reverb: cannot apply sample rate: %f Hz, maximum is:%f Hz\n",
+        FLUID_LOG(FLUID_WARN,
+                  "fdn reverb: cannot apply sample rate: %.0f Hz, maximum is:%.0f Hz\n",
                    sample_rate, rev->late.sample_rate_max);
         return FLUID_FAILED;
     }
