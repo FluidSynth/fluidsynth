@@ -851,7 +851,6 @@ static void compensate_from_sample_rate(fluid_real_t sample_rate,
 static int create_mod_delay_lines(fluid_late *late,
                                   fluid_real_t sample_rate_max)
 {
-    int result; /* return value */
     int i;
 
     fluid_real_t mod_depth, length_factor;
