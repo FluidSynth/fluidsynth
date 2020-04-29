@@ -1107,6 +1107,7 @@ new_fluid_revmodel(fluid_real_t sample_rate_max, fluid_real_t sample_rate)
       Create fdn late reverb.
     */
 
+    /* update minimum value for sample_rate_max */
     if(sample_rate > sample_rate_max)
     {
         sample_rate_max = sample_rate;
