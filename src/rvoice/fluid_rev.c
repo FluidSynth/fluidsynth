@@ -901,8 +901,7 @@ static int create_mod_delay_lines(fluid_late *late,
         }
 
         /*---------------------------------------------------------------------
-         allocates delay_line and initialize members:
-         - line, size, line_in, line_out...
+         allocates delay lines
         */
 
         /* real size of the line in use (in samples):
