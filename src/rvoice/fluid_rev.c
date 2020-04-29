@@ -919,6 +919,101 @@ static int create_mod_delay_lines(fluid_late *late,
     return FLUID_OK;
 }
 
+/*-----------------------------------------------------------------------------
+ Initialize all modulated lines.
+ @param late, pointer on the fnd late reverb to initialize.
+ @param sample_max, the audio sample rate.
+ @return FLUID_OK if success, FLUID_FAILED otherwise.
+-----------------------------------------------------------------------------*/
+void initialize_mod_delay_lines(fluid_late *late, fluid_real_t sample_rate)
+{
+    int i;
+    fluid_real_t mod_depth, length_factor;
+
+    /* update delay line parameter dependant of sample rate */
+    late->samplerate = sample_rate;
+
+    /* compute mod_depth, length factor */
+    compensate_from_sample_rate(sample_rate, &mod_depth, &length_factor);
+
+    for(i = 0; i < NBR_DELAYS; i++) /* for each delay line */
+    {
+        mod_delay_line *mdl = &late->mod_delay_lines[i];
+        int delay_length = nom_delay_length[i] * length_factor;
+
+        /* limits mod_depth to the requested delay length */
+        if(mod_depth >= delay_length)
+        {
+            mod_depth = delay_length - 1;
+        }
+
+        mdl->mod_depth = mod_depth;
+
+        clear_delay_line(&mdl->dl); /* clears the buffer */
+
+        /* Initializes line_in to the start of the buffer */
+        mdl->dl.line_in = 0;
+
+        /* Initializes line_out index INTERP_SAMPLES_NBR samples after
+           line_in so that the delay between line_out and line_in is:
+           mod_depth + delay_length
+        */
+        mdl->dl.line_out = mdl->dl.line_in + INTERP_SAMPLES_NBR;
+
+        /* Damping low pass filter ------------------------------------------*/
+        mdl->dl.damping.buffer = 0;
+
+        /*---------------------------------------------------------------------
+         Initializes modulation members:
+         - modulated center position: center_pos_mod
+         - modulation rate (the speed at which center_pos_mod is modulated: mod_rate
+         - index rate to know when to update center_pos_mod:index_rate
+         - interpolator member: buffer, frac_pos_mod
+        ---------------------------------------------------------------------*/
+        /* Initializes the modulated center position (center_pos_mod) so that:
+           - the delay between line_out and center_pos_mod is mod_depth.
+           - the delay between center_pos_mod and line_in is delay_length.
+        */
+        mdl->center_pos_mod = (fluid_real_t) INTERP_SAMPLES_NBR + mod_depth;
+
+        /* Sets the modulation rate. This rate defines how often
+           the  center position (center_pos_mod ) is modulated .
+           The value is expressed in samples. The default value is 1 that means that
+           center_pos_mod is updated at every sample.
+           For example with a value of 2, the center position position will be
+           updated only one time every 2 samples only.
+        */
+        if(MOD_RATE < 1 || MOD_RATE > mdl->dl.size)
+        {
+            FLUID_LOG(FLUID_INFO, "fdn reverb: modulation rate is out of range");
+            mdl->mod_rate = 1; /* default modulation rate: every one sample */
+        }
+        else
+        {
+            mdl->mod_rate = MOD_RATE;
+        }
+
+        /* index rate to control when to update center_pos_mod.
+           Important: must be set to get center_pos_mod immediately used for
+           the reading of first sample (see get_mod_delay())
+        */
+        mdl->index_rate = mdl->mod_rate;
+
+        /* initializes first order All-Pass interpolator members */
+        mdl->buffer = 0;       /* previous delay sample value */
+        mdl->frac_pos_mod = 0; /* frac. position (between consecutives sample) */
+
+
+        /* Sets local Modulators parameters: frequency and phase.
+           Each modulateur are shifted of MOD_PHASE degree
+        */
+        set_mod_frequency(&mdl->mod,
+                          MOD_FREQ * MOD_RATE,
+                          sample_rate,
+                          (float)(MOD_PHASE * i));
+    }
+}
+
 /*
  Clears the delay lines.
 
@@ -1029,7 +1124,8 @@ new_fluid_revmodel(fluid_real_t sample_rate_max, fluid_real_t sample_rate)
     /*--------------------------------------------------------------------------
       Initialize the fdn reverb
     */
-    fluid_revmodel_samplerate_change(rev, sample_rate);
+    /* Initialize all modulated lines. */
+    initialize_mod_delay_lines(&rev->late, sample_rate);
 
     return rev;
 }
@@ -1148,88 +1244,8 @@ fluid_revmodel_samplerate_change(fluid_revmodel_t *rev, fluid_real_t sample_rate
         return FLUID_FAILED;
     }
 
-    /* update all parameters dependant of new sample rate */
-    rev->late.samplerate = sample_rate;
-
-    /* compute mod_depth, length factor */
-    compensate_from_sample_rate(sample_rate, &mod_depth, &length_factor);
-
-    for(i = 0; i < NBR_DELAYS; i++) /* for each delay line */
-    {
-        mod_delay_line *mdl = &rev->late.mod_delay_lines[i];
-        int delay_length = nom_delay_length[i] * length_factor;
-
-        /* limits mod_depth to the requested delay length */
-        if(mod_depth >= delay_length)
-        {
-            mod_depth = delay_length - 1;
-        }
-
-        mdl->mod_depth = mod_depth;
-
-        clear_delay_line(&mdl->dl); /* clears the buffer */
-
-        /* Initializes line_in to the start of the buffer */
-        mdl->dl.line_in = 0;
-
-        /* Initializes line_out index INTERP_SAMPLES_NBR samples after
-           line_in so that the delay between line_out and line_in is:
-           mod_depth + delay_length
-        */
-        mdl->dl.line_out = mdl->dl.line_in + INTERP_SAMPLES_NBR;
-
-        /* Damping low pass filter ------------------------------------------*/
-        mdl->dl.damping.buffer = 0;
-
-        /*---------------------------------------------------------------------
-         Initializes modulation members:
-         - modulated center position: center_pos_mod
-         - modulation rate (the speed at which center_pos_mod is modulated: mod_rate
-         - index rate to know when to update center_pos_mod:index_rate
-         - interpolator member: buffer, frac_pos_mod
-        ---------------------------------------------------------------------*/
-        /* Initializes the modulated center position (center_pos_mod) so that:
-           - the delay between line_out and center_pos_mod is mod_depth.
-           - the delay between center_pos_mod and line_in is delay_length.
-        */
-        mdl->center_pos_mod = (fluid_real_t) INTERP_SAMPLES_NBR + mod_depth;
-
-        /* Sets the modulation rate. This rate defines how often
-           the  center position (center_pos_mod ) is modulated .
-           The value is expressed in samples. The default value is 1 that means that
-           center_pos_mod is updated at every sample.
-           For example with a value of 2, the center position position will be
-           updated only one time every 2 samples only.
-        */
-        if(MOD_RATE < 1 || MOD_RATE > mdl->dl.size)
-        {
-            FLUID_LOG(FLUID_INFO, "fdn reverb: modulation rate is out of range");
-            mdl->mod_rate = 1; /* default modulation rate: every one sample */
-        }
-        else
-        {
-            mdl->mod_rate = MOD_RATE;
-        }
-
-        /* index rate to control when to update center_pos_mod.
-           Important: must be set to get center_pos_mod immediately used for
-           the reading of first sample (see get_mod_delay())
-        */
-        mdl->index_rate = mdl->mod_rate;
-
-        /* initializes first order All-Pass interpolator members */
-        mdl->buffer = 0;       /* previous delay sample value */
-        mdl->frac_pos_mod = 0; /* frac. position (between consecutives sample) */
-
-
-        /* Sets local Modulators parameters: frequency and phase.
-           Each modulateur are shifted of MOD_PHASE degree
-        */
-        set_mod_frequency(&mdl->mod,
-                          MOD_FREQ * MOD_RATE,
-                          sample_rate,
-                          (float)(MOD_PHASE * i));
-    }
+    /* Initialize all modulated lines according to sample rate change. */
+    initialize_mod_delay_lines(&rev->late, sample_rate);
 
     /* updates damping filter coefficients according to sample rate change */
     update_rev_time_damping(&rev->late, rev->roomsize, rev->damp);
