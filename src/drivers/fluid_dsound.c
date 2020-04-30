@@ -306,7 +306,18 @@ void delete_fluid_dsound_audio_driver(fluid_audio_driver_t *d)
     fluid_dsound_audio_driver_t *dev = (fluid_dsound_audio_driver_t *) d;
     fluid_return_if_fail(dev != NULL);
 
-    /* wait till the audio thread exits */
+    /* First tell dsound to stop playing its buffer now.
+       Doing this before stopping audio thread avoid dsound playing transient
+       glitches between the time audio task is stopped and dsound will be released.
+       These glitches are particularly audible when a reverb is connected
+       on output.
+    */
+    if(dev->sec_buffer != NULL)
+    {
+        IDirectSoundBuffer_Stop(dev->sec_buffer);
+    }
+
+    /* request the audio task to stop and wait till the audio thread exits */
     if(dev->thread != NULL)
     {
         /* tell the audio thread to stop its loop */
@@ -329,11 +340,10 @@ void delete_fluid_dsound_audio_driver(fluid_audio_driver_t *d)
         CloseHandle(dev->quit_ev);
     }
 
-    /* release all the allocated resources */
+    /* Finish to release all the dsound allocated resources */
 
     if(dev->sec_buffer != NULL)
     {
-        IDirectSoundBuffer_Stop(dev->sec_buffer);
         IDirectSoundBuffer_Release(dev->sec_buffer);
     }
 
