@@ -920,7 +920,7 @@ static int create_mod_delay_lines(fluid_late *late,
 /*-----------------------------------------------------------------------------
  Initialize all modulated lines.
  @param late, pointer on the fnd late reverb to initialize.
- @param sample_max, the audio sample rate.
+ @param sample_rate, the audio sample rate.
  @return FLUID_OK if success, FLUID_FAILED otherwise.
 -----------------------------------------------------------------------------*/
 void initialize_mod_delay_lines(fluid_late *late, fluid_real_t sample_rate)
