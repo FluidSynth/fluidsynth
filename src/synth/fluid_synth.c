@@ -993,7 +993,7 @@ delete_fluid_synth(fluid_synth_t *synth)
     fluid_profiling_print();
 
 #ifdef LIBINSTPATCH_SUPPORT
-    /* defer libinstpatch init to fluid_instpatch.c to avoid #include "libinstpatch.h" */
+    /* defer libinstpatch deinit to fluid_instpatch.c to avoid #include "libinstpatch.h" */
     fluid_instpatch_deinit();
 #endif
 
