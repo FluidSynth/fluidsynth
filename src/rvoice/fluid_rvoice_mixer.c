@@ -685,6 +685,13 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_samplerate)
         if(mixer->fx[i].reverb)
         {
             fluid_revmodel_samplerate_change(mixer->fx[i].reverb, samplerate);
+
+            /*
+              fluid_revmodel_samplerate_change() shouldn't fail if the reverb was created
+              with sample_rate_max set to the maximum sample rate indicated in the settings.
+              If this condition isn't respected, the reverb will continue to work but with
+              lost of quality.
+            */
         }
     }
 
@@ -704,7 +711,11 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_samplerate)
  * @param fx_buf_count number of stereo effect buffers
  */
 fluid_rvoice_mixer_t *
-new_fluid_rvoice_mixer(int buf_count, int fx_buf_count, int fx_units, fluid_real_t sample_rate, fluid_rvoice_eventhandler_t *evthandler, int extra_threads, int prio)
+new_fluid_rvoice_mixer(int buf_count, int fx_buf_count, int fx_units,
+                       fluid_real_t sample_rate_max,
+                       fluid_real_t sample_rate,
+                       fluid_rvoice_eventhandler_t *evthandler,
+                       int extra_threads, int prio)
 {
     int i;
     fluid_rvoice_mixer_t *mixer = FLUID_NEW(fluid_rvoice_mixer_t);
@@ -733,7 +744,8 @@ new_fluid_rvoice_mixer(int buf_count, int fx_buf_count, int fx_units, fluid_real
 
     for(i = 0; i < fx_units; i++)
     {
-        mixer->fx[i].reverb = new_fluid_revmodel(sample_rate);
+        /* create reverb and chorus units */
+        mixer->fx[i].reverb = new_fluid_revmodel(sample_rate_max, sample_rate);
         mixer->fx[i].chorus = new_fluid_chorus(sample_rate);
 
         if(mixer->fx[i].reverb == NULL || mixer->fx[i].chorus == NULL)
