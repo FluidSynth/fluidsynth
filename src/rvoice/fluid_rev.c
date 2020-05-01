@@ -923,7 +923,7 @@ static int create_mod_delay_lines(fluid_late *late,
  @param sample_rate, the audio sample rate.
  @return FLUID_OK if success, FLUID_FAILED otherwise.
 -----------------------------------------------------------------------------*/
-void initialize_mod_delay_lines(fluid_late *late, fluid_real_t sample_rate)
+static void initialize_mod_delay_lines(fluid_late *late, fluid_real_t sample_rate)
 {
     int i;
     fluid_real_t mod_depth, length_factor;
@@ -1240,7 +1240,6 @@ fluid_revmodel_set(fluid_revmodel_t *rev, int set, fluid_real_t roomsize,
 int
 fluid_revmodel_samplerate_change(fluid_revmodel_t *rev, fluid_real_t sample_rate)
 {
-    int i;
     int status = FLUID_OK;
 
     fluid_return_val_if_fail(rev != NULL, FLUID_FAILED);
