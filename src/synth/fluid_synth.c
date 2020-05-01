@@ -607,6 +607,7 @@ new_fluid_synth(fluid_settings_t *settings)
     char *important_channels;
     int i, nbuf, prio_level = 0;
     int with_ladspa = 0;
+    fluid_real_t sample_rate_min, sample_rate_max;
 
     /* initialize all the conversion tables and other stuff */
     if(fluid_atomic_int_compare_and_exchange(&fluid_synth_initialized, 0, 1))
@@ -637,6 +638,7 @@ new_fluid_synth(fluid_settings_t *settings)
 
     fluid_settings_getint(settings, "synth.polyphony", &synth->polyphony);
     fluid_settings_getnum(settings, "synth.sample-rate", &synth->sample_rate);
+    fluid_settings_getnum_range(settings, "synth.sample-rate", &sample_rate_min, &sample_rate_max);
     fluid_settings_getint(settings, "synth.midi-channels", &synth->midi_channels);
     fluid_settings_getint(settings, "synth.audio-channels", &synth->audio_channels);
     fluid_settings_getint(settings, "synth.audio-groups", &synth->audio_groups);
@@ -778,7 +780,9 @@ new_fluid_synth(fluid_settings_t *settings)
     /* Allocate event queue for rvoice mixer */
     /* In an overflow situation, a new voice takes about 50 spaces in the queue! */
     synth->eventhandler = new_fluid_rvoice_eventhandler(synth->polyphony * 64,
-                          synth->polyphony, nbuf, synth->effects_channels, synth->effects_groups, synth->sample_rate, synth->cores - 1, prio_level);
+                          synth->polyphony, nbuf, synth->effects_channels, synth->effects_groups,
+                          sample_rate_max, synth->sample_rate,
+                          synth->cores - 1, prio_level);
 
     if(synth->eventhandler == NULL)
     {
