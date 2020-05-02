@@ -463,8 +463,10 @@ fluid_synth_init(void)
     fluid_mod_set_dest(&custom_balance_mod, GEN_CUSTOM_BALANCE);     /* Destination: stereo balance */
     /* Amount: 96 dB of attenuation (on the opposite channel) */
     fluid_mod_set_amount(&custom_balance_mod, FLUID_PEAK_ATTENUATION); /* Amount: 960 */
-    
-#ifdef LIBINSTPATCH_SUPPORT
+
+    /* libinstpatch <= 1.1.4 only supports calling init() once */
+#if defined(LIBINSTPATCH_SUPPORT) && \
+    FLUID_VERSION_CHECK(IPATCH_VERSION_MAJOR,IPATCH_VERSION_MINOR,IPATCH_VERSION_PATCH) <= FLUID_VERSION_CHECK(1,1,4)
     /* defer libinstpatch init to fluid_instpatch.c to avoid #include "libinstpatch.h" */
     fluid_instpatch_init();
 #endif
@@ -625,6 +627,12 @@ new_fluid_synth(fluid_settings_t *settings)
     }
 
     FLUID_MEMSET(synth, 0, sizeof(fluid_synth_t));
+
+#if defined(LIBINSTPATCH_SUPPORT) && \
+    FLUID_VERSION_CHECK(IPATCH_VERSION_MAJOR,IPATCH_VERSION_MINOR,IPATCH_VERSION_PATCH) > FLUID_VERSION_CHECK(1,1,4)
+    /* defer libinstpatch init to fluid_instpatch.c to avoid #include "libinstpatch.h" */
+    fluid_instpatch_init();
+#endif
 
     fluid_rec_mutex_init(synth->mutex);
     fluid_settings_getint(settings, "synth.threadsafe-api", &synth->use_mutex);
@@ -996,11 +1004,6 @@ delete_fluid_synth(fluid_synth_t *synth)
 
     fluid_profiling_print();
 
-#ifdef LIBINSTPATCH_SUPPORT
-    /* defer libinstpatch deinit to fluid_instpatch.c to avoid #include "libinstpatch.h" */
-    fluid_instpatch_deinit();
-#endif
-
     /* turn off all voices, needed to unload SoundFont data */
     if(synth->voice != NULL)
     {
@@ -1121,6 +1124,12 @@ delete_fluid_synth(fluid_synth_t *synth)
     fluid_rec_mutex_destroy(synth->mutex);
 
     FLUID_FREE(synth);
+
+#if defined(LIBINSTPATCH_SUPPORT) && \
+    FLUID_VERSION_CHECK(IPATCH_VERSION_MAJOR,IPATCH_VERSION_MINOR,IPATCH_VERSION_PATCH) > FLUID_VERSION_CHECK(1,1,4)
+    /* defer libinstpatch deinit to fluid_instpatch.c to avoid #include "libinstpatch.h" */
+    fluid_instpatch_deinit();
+#endif
 }
 
 /**

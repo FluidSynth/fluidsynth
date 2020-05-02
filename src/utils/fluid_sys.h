@@ -170,6 +170,8 @@ typedef gintptr  intptr_t;
 
 #define FLUID_INLINE              inline
 
+#define FLUID_VERSION_CHECK(major, minor, patch) ((major<<16)|(minor<<8)|(patch))
+
 /* Integer<->pointer conversion */
 #define FLUID_POINTER_TO_UINT(x)  ((unsigned int)(uintptr_t)(x))
 #define FLUID_UINT_TO_POINTER(x)  ((void *)(uintptr_t)(x))
