@@ -714,8 +714,6 @@ void
 fluid_chorus_set(fluid_chorus_t *chorus, int set, int nr, fluid_real_t level,
                  fluid_real_t speed, fluid_real_t depth_ms, int type)
 {
-    int i;
-
     if(set & FLUID_CHORUS_SET_NR) /* number of block */
     {
         chorus->number_blocks = nr;
