@@ -340,7 +340,8 @@ new_fluid_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
  *
  * @note Not as efficient as new_fluid_audio_driver().
  *
- * @note As soon as an audio driver is created, the \p synth starts rendering audio.
+ * @note As soon as an audio driver is created, a new thread is spawned starting to make
+ * callbacks to \p func.
  * This means that all necessary sound-setup should be completed after this point,
  * thus of all object types in use (synth, midi player, sequencer, etc.) the audio
  * driver should always be the last one to be created and the first one to be deleted!

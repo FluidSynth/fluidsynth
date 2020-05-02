@@ -73,7 +73,10 @@ delete_fluid_seqbind(fluid_seqbind_t *seqbind)
 
 /**
  * Registers a synthesizer as a destination client of the given sequencer.
- * The \a synth is registered with the name "fluidsynth".
+ *
+ * A convenience wrapper function around fluid_sequencer_register_client(), that allows you to
+ * easily process and render enqueued sequencer events with fluidsynth's synthesizer.
+ * The client being registered will be named @c fluidsynth.
  *
  * @note Implementations are encouraged to explicitly unregister this client either by calling
  * fluid_sequencer_unregister_client() or by sending an unregistering event to the sequencer. Before
