@@ -249,9 +249,19 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
 
             if(res == MMSYSERR_NOERROR)
             {
+                int str_cmp_res;
+#ifdef _UNICODE
+                WCHAR wDevName[MAXPNAMELEN];
+                MultiByteToWideChar(CP_UTF8, 0, dev_name, -1, wDevName, MAXPNAMELEN);
+
+                str_cmp_res = wcsicmp(wDevName, in_caps.szPname);
+#else
+                str_cmp_res = FLUID_STRCASECMP(dev_name, in_caps.szPname);
+#endif
+
                 FLUID_LOG(FLUID_DBG, "Testing midi device: %s", in_caps.szPname);
 
-                if(FLUID_STRCASECMP(dev_name, in_caps.szPname) == 0)
+                if(str_cmp_res == 0)
                 {
                     FLUID_LOG(FLUID_DBG, "Selected midi device number: %u", i);
                     midi_num = i;
