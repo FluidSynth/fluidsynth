@@ -249,14 +249,18 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
 
             if(res == MMSYSERR_NOERROR)
             {
-                FLUID_LOG(FLUID_DBG, "Testing midi device: %s\n", in_caps.szPname);
+                FLUID_LOG(FLUID_DBG, "Testing midi device: %s", in_caps.szPname);
 
                 if(FLUID_STRCASECMP(dev_name, in_caps.szPname) == 0)
                 {
-                    FLUID_LOG(FLUID_DBG, "Selected midi device number: %d\n", i);
+                    FLUID_LOG(FLUID_DBG, "Selected midi device number: %u", i);
                     midi_num = i;
                     break;
                 }
+            }
+            else
+            {
+                FLUID_LOG(FLUID_DBG, "Error testing midi device %u of %u: %s (error %d)", i, num, fluid_winmidi_input_error(strError, res), res);
             }
         }
 
