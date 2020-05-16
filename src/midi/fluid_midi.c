@@ -1593,7 +1593,7 @@ fluid_track_send_events(fluid_track_t *track,
         if(!player || event->type == MIDI_EOT)
         {
         }
-        else if(seeking && (event->type == NOTE_ON || event->type == NOTE_OFF))
+        else if(seeking && track->ticks != ticks && (event->type == NOTE_ON || event->type == NOTE_OFF))
         {
             /* skip on/off messages */
         }
