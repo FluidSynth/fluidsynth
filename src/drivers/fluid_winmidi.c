@@ -259,7 +259,7 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
                 str_cmp_res = FLUID_STRCASECMP(dev_name, in_caps.szPname);
 #endif
 
-                FLUID_LOG(FLUID_DBG, "Testing midi device: %s", in_caps.szPname);
+                FLUID_LOG(FLUID_DBG, "Testing midi device \"%s\"", in_caps.szPname);
 
                 if(str_cmp_res == 0)
                 {
@@ -276,7 +276,7 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
 
         if(midi_num != i)
         {
-            FLUID_LOG(FLUID_ERR, "Device <%s> does not exists", dev_name);
+            FLUID_LOG(FLUID_ERR, "Device \"%s\" does not exists", dev_name);
             return NULL;
         }
     }
