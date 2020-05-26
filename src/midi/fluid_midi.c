@@ -48,12 +48,6 @@ static fluid_midi_event_t *fluid_track_next_event(fluid_track_t *track);
 static int fluid_track_get_duration(fluid_track_t *track);
 static int fluid_track_reset(fluid_track_t *track);
 
-static void fluid_track_send_events(fluid_track_t *track,
-                                   fluid_synth_t *synth,
-                                   fluid_player_t *player,
-                                   unsigned int ticks);
-
-
 static int fluid_player_add_track(fluid_player_t *player, fluid_track_t *track);
 static int fluid_player_callback(void *data, unsigned int msec);
 static int fluid_player_reset(fluid_player_t *player);
@@ -1551,18 +1545,20 @@ fluid_track_reset(fluid_track_t *track)
 /*
  * fluid_track_send_events
  */
-void
+static void
 fluid_track_send_events(fluid_track_t *track,
                         fluid_synth_t *synth,
                         fluid_player_t *player,
-                        unsigned int ticks)
+                        unsigned int ticks,
+                        int seek_ticks
+                       )
 {
     fluid_midi_event_t *event;
-    int seeking = player->seek_ticks >= 0;
+    int seeking = seek_ticks >= 0;
 
     if(seeking)
     {
-        ticks = player->seek_ticks; /* update target ticks */
+        ticks = seek_ticks; /* update target ticks */
 
         if(track->ticks > ticks)
         {
@@ -1597,7 +1593,7 @@ fluid_track_send_events(fluid_track_t *track,
         if(!player || event->type == MIDI_EOT)
         {
         }
-        else if(seeking && (event->type == NOTE_ON || event->type == NOTE_OFF))
+        else if(seeking && track->ticks != ticks && (event->type == NOTE_ON || event->type == NOTE_OFF))
         {
             /* skip on/off messages */
         }
@@ -1650,7 +1646,7 @@ new_fluid_player(fluid_synth_t *synth)
         return NULL;
     }
 
-    player->status = FLUID_PLAYER_READY;
+    fluid_atomic_int_set(&player->status, FLUID_PLAYER_READY);
     player->loop = 1;
     player->ntracks = 0;
 
@@ -1670,7 +1666,7 @@ new_fluid_player(fluid_synth_t *synth)
     player->deltatime = 4.0;
     player->cur_msec = 0;
     player->cur_ticks = 0;
-    player->seek_ticks = -1;
+    fluid_atomic_int_set(&player->seek_ticks, -1);
     fluid_player_set_playback_callback(player, fluid_synth_handle_midi_event, synth);
     player->use_system_timer = fluid_settings_str_equal(synth->settings,
                                "player.timing-source", "system");
@@ -1802,7 +1798,7 @@ fluid_player_add_track(fluid_player_t *player, fluid_track_t *track)
 
 /**
  * Change the MIDI callback function. This is usually set to
- * fluid_synth_handle_midi_event, but can optionally be changed
+ * fluid_synth_handle_midi_event(), but can optionally be changed
  * to a user-defined function instead, for intercepting all MIDI
  * messages sent to the synth. You can also use a midi router as
  * the callback function to modify the MIDI messages before sending
@@ -2008,7 +2004,7 @@ fluid_player_playlist_load(fluid_player_t *player, unsigned int msec)
         if(player->currentfile == NULL)
         {
             /* Failed to find next song, probably since we're finished */
-            player->status = FLUID_PLAYER_DONE;
+            fluid_atomic_int_set(&player->status, FLUID_PLAYER_DONE);
             return;
         }
 
@@ -2054,13 +2050,15 @@ fluid_player_callback(void *data, unsigned int msec)
 
     loadnextfile = player->currentfile == NULL ? 1 : 0;
 
-    if(player->status == FLUID_PLAYER_DONE)
+    if(fluid_player_get_status(player) == FLUID_PLAYER_DONE)
     {
         fluid_synth_all_notes_off(synth, -1);
         return 1;
     }
     do
     {
+        int seek_ticks;
+
         if(loadnextfile)
         {
             loadnextfile = 0;
@@ -2077,7 +2075,8 @@ fluid_player_callback(void *data, unsigned int msec)
                              + (int)((double)(player->cur_msec - player->start_msec)
                                      / player->deltatime + 0.5)); /* 0.5 to average overall error when casting */
 
-        if(player->seek_ticks >= 0)
+        seek_ticks = fluid_atomic_int_get(&player->seek_ticks);
+        if(seek_ticks >= 0)
         {
             fluid_synth_all_sounds_off(synth, -1); /* avoid hanging notes */
         }
@@ -2087,17 +2086,17 @@ fluid_player_callback(void *data, unsigned int msec)
             if(!fluid_track_eot(player->track[i]))
             {
                 status = FLUID_PLAYER_PLAYING;
-                fluid_track_send_events(player->track[i], synth, player, player->cur_ticks);
+                fluid_track_send_events(player->track[i], synth, player, player->cur_ticks, seek_ticks);
             }
         }
 
-        if(player->seek_ticks >= 0)
+        if(seek_ticks >= 0)
         {
-            player->start_ticks = player->seek_ticks;   /* tick position of last tempo value (which is now) */
-            player->cur_ticks = player->seek_ticks;
+            player->start_ticks = seek_ticks;   /* tick position of last tempo value (which is now) */
+            player->cur_ticks = seek_ticks;
             player->begin_msec = msec;      /* only used to calculate the duration of playing */
             player->start_msec = msec;      /* should be the (synth)-time of the last tempo change */
-            player->seek_ticks = -1;        /* clear seek_ticks */
+            fluid_atomic_int_set(&player->seek_ticks, -1); /* clear seek_ticks */
         }
 
         if(status == FLUID_PLAYER_DONE)
@@ -2109,7 +2108,7 @@ fluid_player_callback(void *data, unsigned int msec)
     }
     while(loadnextfile);
 
-    player->status = status;
+    fluid_atomic_int_set(&player->status, status);
 
     return 1;
 }
@@ -2122,7 +2121,7 @@ fluid_player_callback(void *data, unsigned int msec)
 int
 fluid_player_play(fluid_player_t *player)
 {
-    if(player->status == FLUID_PLAYER_PLAYING ||
+    if(fluid_player_get_status(player) == FLUID_PLAYER_PLAYING ||
        player->playlist == NULL)
     {
         return FLUID_OK;
@@ -2133,7 +2132,7 @@ fluid_player_play(fluid_player_t *player)
         fluid_sample_timer_reset(player->synth, player->sample_timer);
     }
 
-    player->status = FLUID_PLAYER_PLAYING;
+    fluid_atomic_int_set(&player->status, FLUID_PLAYER_PLAYING);
 
     return FLUID_OK;
 }
@@ -2147,7 +2146,7 @@ fluid_player_play(fluid_player_t *player)
 int
 fluid_player_stop(fluid_player_t *player)
 {
-    player->status = FLUID_PLAYER_DONE;
+    fluid_atomic_int_set(&player->status, FLUID_PLAYER_DONE);
     fluid_player_seek(player, fluid_player_get_current_tick(player));
     return FLUID_OK;
 }
@@ -2161,18 +2160,22 @@ fluid_player_stop(fluid_player_t *player)
 int
 fluid_player_get_status(fluid_player_t *player)
 {
-    return player->status;
+    return fluid_atomic_int_get(&player->status);
 }
 
 /**
  * Seek in the currently playing file.
+ *
+ * The actual seek will be performed when the synth calls back the player (i.e. a few
+ * levels above the player's callback set with fluid_player_set_playback_callback()).
+ * If the player's status is #FLUID_PLAYER_PLAYING and a previous seek operation has
+ * not been completed yet, #FLUID_FAILED is returned.
  * @param player MIDI player instance
  * @param ticks the position to seek to in the current file
- * @return #FLUID_FAILED if ticks is negative or after the latest tick of the file,
- *   #FLUID_OK otherwise
+ * @return #FLUID_FAILED if ticks is negative or after the latest tick of the file
+ * [or, since 2.1.3, if another seek operation is currently in progress],
+ * #FLUID_OK otherwise.
  * @since 2.0.0
- *
- * The actual seek is performed during the player_callback.
  */
 int fluid_player_seek(fluid_player_t *player, int ticks)
 {
@@ -2181,8 +2184,26 @@ int fluid_player_seek(fluid_player_t *player, int ticks)
         return FLUID_FAILED;
     }
 
-    player->seek_ticks = ticks;
-    return FLUID_OK;
+    if(fluid_player_get_status(player) == FLUID_PLAYER_PLAYING)
+    {
+        if(fluid_atomic_int_compare_and_exchange(&player->seek_ticks, -1, ticks))
+        {
+            // new seek position has been set, as no previous seek was in progress
+            return FLUID_OK;
+        }
+    }
+    else
+    {
+        // If the player is not currently playing, a new seek position can be set at any time. This allows
+        // the user to do:
+        // fluid_player_stop();
+        // fluid_player_seek(0); // to beginning
+        fluid_atomic_int_set(&player->seek_ticks, ticks);
+        return FLUID_OK;
+    }
+
+    // a previous seek is still in progress or hasn't been processed yet
+    return FLUID_FAILED;
 }
 
 
@@ -2243,7 +2264,7 @@ int fluid_player_set_bpm(fluid_player_t *player, int bpm)
 int
 fluid_player_join(fluid_player_t *player)
 {
-    while(player->status != FLUID_PLAYER_DONE)
+    while(fluid_player_get_status(player) != FLUID_PLAYER_DONE)
     {
         fluid_msleep(10);
     }

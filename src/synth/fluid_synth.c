@@ -463,8 +463,10 @@ fluid_synth_init(void)
     fluid_mod_set_dest(&custom_balance_mod, GEN_CUSTOM_BALANCE);     /* Destination: stereo balance */
     /* Amount: 96 dB of attenuation (on the opposite channel) */
     fluid_mod_set_amount(&custom_balance_mod, FLUID_PEAK_ATTENUATION); /* Amount: 960 */
-    
-#ifdef LIBINSTPATCH_SUPPORT
+
+    /* libinstpatch <= 1.1.4 only supports calling init() once */
+#if defined(LIBINSTPATCH_SUPPORT) && \
+    FLUID_VERSION_CHECK(IPATCH_VERSION_MAJOR,IPATCH_VERSION_MINOR,IPATCH_VERSION_PATCH) <= FLUID_VERSION_CHECK(1,1,4)
     /* defer libinstpatch init to fluid_instpatch.c to avoid #include "libinstpatch.h" */
     fluid_instpatch_init();
 #endif
@@ -607,6 +609,7 @@ new_fluid_synth(fluid_settings_t *settings)
     char *important_channels;
     int i, nbuf, prio_level = 0;
     int with_ladspa = 0;
+    fluid_real_t sample_rate_min, sample_rate_max;
 
     /* initialize all the conversion tables and other stuff */
     if(fluid_atomic_int_compare_and_exchange(&fluid_synth_initialized, 0, 1))
@@ -625,6 +628,12 @@ new_fluid_synth(fluid_settings_t *settings)
 
     FLUID_MEMSET(synth, 0, sizeof(fluid_synth_t));
 
+#if defined(LIBINSTPATCH_SUPPORT) && \
+    FLUID_VERSION_CHECK(IPATCH_VERSION_MAJOR,IPATCH_VERSION_MINOR,IPATCH_VERSION_PATCH) > FLUID_VERSION_CHECK(1,1,4)
+    /* defer libinstpatch init to fluid_instpatch.c to avoid #include "libinstpatch.h" */
+    fluid_instpatch_init();
+#endif
+
     fluid_rec_mutex_init(synth->mutex);
     fluid_settings_getint(settings, "synth.threadsafe-api", &synth->use_mutex);
     synth->public_api_count = 0;
@@ -637,6 +646,7 @@ new_fluid_synth(fluid_settings_t *settings)
 
     fluid_settings_getint(settings, "synth.polyphony", &synth->polyphony);
     fluid_settings_getnum(settings, "synth.sample-rate", &synth->sample_rate);
+    fluid_settings_getnum_range(settings, "synth.sample-rate", &sample_rate_min, &sample_rate_max);
     fluid_settings_getint(settings, "synth.midi-channels", &synth->midi_channels);
     fluid_settings_getint(settings, "synth.audio-channels", &synth->audio_channels);
     fluid_settings_getint(settings, "synth.audio-groups", &synth->audio_groups);
@@ -778,7 +788,9 @@ new_fluid_synth(fluid_settings_t *settings)
     /* Allocate event queue for rvoice mixer */
     /* In an overflow situation, a new voice takes about 50 spaces in the queue! */
     synth->eventhandler = new_fluid_rvoice_eventhandler(synth->polyphony * 64,
-                          synth->polyphony, nbuf, synth->effects_channels, synth->effects_groups, synth->sample_rate, synth->cores - 1, prio_level);
+                          synth->polyphony, nbuf, synth->effects_channels, synth->effects_groups,
+                          sample_rate_max, synth->sample_rate,
+                          synth->cores - 1, prio_level);
 
     if(synth->eventhandler == NULL)
     {
@@ -1112,6 +1124,12 @@ delete_fluid_synth(fluid_synth_t *synth)
     fluid_rec_mutex_destroy(synth->mutex);
 
     FLUID_FREE(synth);
+
+#if defined(LIBINSTPATCH_SUPPORT) && \
+    FLUID_VERSION_CHECK(IPATCH_VERSION_MAJOR,IPATCH_VERSION_MINOR,IPATCH_VERSION_PATCH) > FLUID_VERSION_CHECK(1,1,4)
+    /* defer libinstpatch deinit to fluid_instpatch.c to avoid #include "libinstpatch.h" */
+    fluid_instpatch_deinit();
+#endif
 }
 
 /**
@@ -4385,6 +4403,7 @@ fluid_synth_alloc_voice(fluid_synth_t *synth, fluid_sample_t *sample,
                         int chan, int key, int vel)
 {
     fluid_return_val_if_fail(sample != NULL, NULL);
+    fluid_return_val_if_fail(sample->data != NULL, NULL);
     FLUID_API_ENTRY_CHAN(NULL);
     FLUID_API_RETURN(fluid_synth_alloc_voice_LOCAL(synth, sample, chan, key, vel, NULL));
 
@@ -6306,7 +6325,9 @@ fluid_synth_handle_midi_event(void *data, fluid_midi_event_t *event)
 }
 
 /**
- * Create and start voices using a preset and a MIDI note on event.
+ * Create and start voices using an arbitrary preset and a MIDI note on event.
+ *
+ * Using this function is only supported when the setting @c synth.dynamic-sample-loading is false!
  * @param synth FluidSynth instance
  * @param id Voice group ID to use (can be used with fluid_synth_stop()).
  * @param preset Preset to synthesize
@@ -6324,12 +6345,32 @@ fluid_synth_start(fluid_synth_t *synth, unsigned int id, fluid_preset_t *preset,
                   int audio_chan, int chan, int key, int vel)
 {
     int result;
+    fluid_defsfont_t *defsfont;
     fluid_return_val_if_fail(preset != NULL, FLUID_FAILED);
     fluid_return_val_if_fail(key >= 0 && key <= 127, FLUID_FAILED);
     fluid_return_val_if_fail(vel >= 1 && vel <= 127, FLUID_FAILED);
     FLUID_API_ENTRY_CHAN(FLUID_FAILED);
-    synth->storeid = id;
-    result = fluid_preset_noteon(preset, synth, chan, key, vel);
+
+    defsfont = fluid_sfont_get_data(preset->sfont);
+    if(defsfont->dynamic_samples)
+    {
+        // The preset might not be currently used, thus its sample data may not be loaded.
+        // This guard is to avoid a NULL deref in rvoice_write().
+        FLUID_LOG(FLUID_ERR, "Calling fluid_synth_start() while synth.dynamic-sample-loading is enabled is not supported.");
+        // Although we would be able to select the preset (and load it's samples) we have no way to
+        // unselect the preset again in fluid_synth_stop(). Also dynamic sample loading was intended
+        // to be used only when presets have been selected on a MIDI channel.
+        // Note that even if the preset is currently selected on a channel, it could be unselected at
+        // any time. And we would end up with a NULL sample->data again, because we are not referencing
+        // the preset here. Thus failure is our only option.
+        result = FLUID_FAILED;
+    }
+    else
+    {
+        synth->storeid = id;
+        result = fluid_preset_noteon(preset, synth, chan, key, vel);
+    }
+
     FLUID_API_RETURN(result);
 }
 

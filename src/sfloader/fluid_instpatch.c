@@ -49,6 +49,11 @@ void fluid_instpatch_init(void)
     ipatch_init();
 }
 
+void fluid_instpatch_deinit(void)
+{
+    ipatch_close();
+}
+
 static int delete_fluid_instpatch(fluid_instpatch_font_t *pfont);
 
 static const char *fluid_instpatch_sfont_get_name(fluid_sfont_t *sfont);
