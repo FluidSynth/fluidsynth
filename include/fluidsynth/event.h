@@ -55,7 +55,7 @@ enum fluid_seq_event_type
     FLUID_SEQ_REVERBSEND,		/**< Reverb send set event */
     FLUID_SEQ_CHORUSSEND,		/**< Chorus send set event */
     FLUID_SEQ_TIMER,		/**< Timer event (useful for giving a callback at a certain time) */
-    FLUID_SEQ_ANYCONTROLCHANGE,	/**< Any control change message (only internally used for remove_events) */
+    FLUID_SEQ_ANYCONTROLCHANGE,	/**< Any control change message (only internally used for remove_events) @deprecated As of fluidsynth 2.2.0 this enum value is no longer used internally and has been deprecated. */
     FLUID_SEQ_CHANNELPRESSURE,    /**< Channel aftertouch event @since 1.1.0 */
     FLUID_SEQ_KEYPRESSURE,        /**< Polyphonic aftertouch event @since 2.0.0 */
     FLUID_SEQ_SYSTEMRESET,        /**< System reset event @since 1.1.0 */
@@ -111,7 +111,7 @@ FLUIDSYNTH_API void fluid_event_system_reset(fluid_event_t *evt);
 
 
 /* Only for removing events */
-FLUIDSYNTH_API void fluid_event_any_control_change(fluid_event_t *evt, int channel);
+FLUID_DEPRECATED FLUIDSYNTH_API void fluid_event_any_control_change(fluid_event_t *evt, int channel);
 
 /* Only when unregistering clients */
 FLUIDSYNTH_API void fluid_event_unregistering(fluid_event_t *evt);

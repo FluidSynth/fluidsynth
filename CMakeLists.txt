@@ -20,7 +20,7 @@
 # CMake based build system. Pedro Lopez-Cabanillas <plcl@users.sf.net>
 
 cmake_minimum_required ( VERSION 3.1.0 ) # because of CMAKE_C_STANDARD
-project ( FluidSynth C )
+project ( FluidSynth C CXX )
 set ( CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake_admin )
 
 # FluidSynth package name
@@ -118,6 +118,12 @@ mark_as_advanced ( LIB_SUFFIX )
 # the default C standard to use for all targets
 set(CMAKE_C_STANDARD 90)
 
+# the default C++ standard to use for all targets
+set(CMAKE_CXX_STANDARD 98)
+
+# whether to use gnu extensions
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 # Compile with position independent code if the user requested a shared lib, i.e. no PIC if static requested.
 # This is cmakes default behavior, but here it's explicitly required due to the use of libfluidsynth-OBJ as object library,
 # which would otherwise always be compiled without PIC.
@@ -191,6 +197,7 @@ if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_C_C
 
   # define some warning flags
   set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -W -Wpointer-arith -Wcast-qual -Wstrict-prototypes -Wno-unused-parameter -Wdeclaration-after-statement -Werror=implicit-function-declaration" )
+  set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -W -Wpointer-arith -Wcast-qual -Wno-unused-parameter" )
 
   # prepend to build type specific flags, to allow users to override
   set ( CMAKE_C_FLAGS_DEBUG "-g ${CMAKE_C_FLAGS_DEBUG}" )
@@ -201,9 +208,11 @@ if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_C_C
   else () # not intel
     # gcc and clang support bad function cast and alignment warnings; add them as well.
     set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wbad-function-cast -Wcast-align" )
+    set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wcast-align" )
 
     if ( enable-ubsan )
       set ( CMAKE_C_FLAGS "-fsanitize=address,undefined ${CMAKE_C_FLAGS}" )
+      set ( CMAKE_CXX_FLAGS "-fsanitize=address,undefined ${CMAKE_CXX_FLAGS}" )
       set ( CMAKE_EXE_LINKER_FLAGS "-fsanitize=address,undefined ${CMAKE_EXE_LINKER_FLAGS}" )
       set ( CMAKE_SHARED_LINKER_FLAGS "-fsanitize=address,undefined ${CMAKE_SHARED_LINKER_FLAGS}" )
       set ( ENABLE_UBSAN 1 )
@@ -407,7 +416,7 @@ endif ( NOT CMAKE_BUILD_TYPE )
 unset ( ENABLE_DEBUG CACHE )
 if ( CMAKE_BUILD_TYPE MATCHES "Debug" )
     set ( ENABLE_DEBUG 1 )
-    add_definitions(-DDEBUG)
+    add_definitions(-DDEBUG) # -D_GLIBCXX_DEBUG) # for additional C++ STL container debugging
 endif ( CMAKE_BUILD_TYPE MATCHES "Debug" )
 
 # Additional targets to perform clang-format/clang-tidy
@@ -575,13 +584,13 @@ else(NOT enable-pkgconfig)
     unset ( OBOE_SUPPORT CACHE )
     unset ( OBOE_LIBS CACHE )
     if ( enable-oboe )
-    # enable C++ as it's needed for oboe
-    enable_language ( CXX )
-    pkg_check_modules ( OBOE oboe-1.0 )
-    if ( OBOE_FOUND )
+      pkg_check_modules ( OBOE oboe-1.0 )
+      if ( OBOE_FOUND )
+        set(CMAKE_CXX_STANDARD 11)
+        set(CMAKE_CXX_STANDARD_REQUIRED ON)
         set ( OBOE_SUPPORT 1 )
         set ( OBOE_LIBS ${OBOE_LIBRARIES} )
-    endif ( OBOE_FOUND )
+      endif ( OBOE_FOUND )
     endif ( enable-oboe )
 
     unset ( WITH_READLINE CACHE )

@@ -2,6 +2,7 @@
 #include "test.h"
 #include "fluidsynth.h" // use local fluidsynth header
 #include "fluid_event.h"
+#include "fluidsynth_priv.h"
 
 #include <limits.h>
 
@@ -9,7 +10,8 @@ static short order = 0;
 void callback_stable_sort(unsigned int time, fluid_event_t *event, fluid_sequencer_t *seq, void *data)
 {
     static const int expected_type_order[] =
-    { FLUID_SEQ_NOTEOFF, FLUID_SEQ_NOTEON, FLUID_SEQ_NOTEOFF, FLUID_SEQ_NOTEON, FLUID_SEQ_SYSTEMRESET, FLUID_SEQ_UNREGISTERING };
+    { FLUID_SEQ_NOTEOFF, FLUID_SEQ_NOTEON, FLUID_SEQ_SYSTEMRESET, FLUID_SEQ_UNREGISTERING
+      /* technically, FLUID_SEQ_NOTEOFF and FLUID_SEQ_NOTEON are to follow, but we've already unregisted */  };
 
     TEST_ASSERT(fluid_event_get_type(event) == expected_type_order[order++]);
 }
@@ -41,7 +43,7 @@ void test_order_same_tick(fluid_sequencer_t *seq, fluid_event_t *evt)
     TEST_ASSERT(order == 2);
 
     fluid_sequencer_process(seq, 2);
-    TEST_ASSERT(order == 6);
+    TEST_ASSERT(order == 4);
 
     fluid_sequencer_unregister_client(seq, seqid);
     TEST_ASSERT(fluid_sequencer_count_clients(seq) == 0);

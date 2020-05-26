@@ -214,10 +214,6 @@ fluid_seq_fluidsynth_callback(unsigned int time, fluid_event_t *evt, fluid_seque
                                    fluid_event_get_program(evt));
         break;
 
-    case FLUID_SEQ_ANYCONTROLCHANGE:
-        /* nothing = only used by remove_events */
-        break;
-
     case FLUID_SEQ_PITCHBEND:
         fluid_synth_pitch_bend(synth, fluid_event_get_channel(evt), fluid_event_get_pitch(evt));
         break;
