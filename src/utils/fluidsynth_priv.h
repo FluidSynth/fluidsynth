@@ -194,8 +194,14 @@ void* fluid_alloc(size_t len);
 #define FLUID_FOPEN(_f,_m)           fopen(_f,_m)
 #define FLUID_FCLOSE(_f)             fclose(_f)
 #define FLUID_FREAD(_p,_s,_n,_f)     fread(_p,_s,_n,_f)
+
+#ifdef WIN32
+#define FLUID_FSEEK(_f,_n,_set)      _fseeki64(_f,_n,_set)
+#else
 #define FLUID_FSEEK(_f,_n,_set)      fseek(_f,_n,_set)
-#define FLUID_FTELL(_f)              ftell(_f)
+#endif
+
+#define FLUID_FTELL(_f)              fluid_file_tell(_f)
 
 /* Memory functions */
 #define FLUID_MEMCPY(_dst,_src,_n)   memcpy(_dst,_src,_n)

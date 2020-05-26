@@ -29,7 +29,7 @@ set ( PACKAGE "fluidsynth" )
 # FluidSynth package version
 set ( FLUIDSYNTH_VERSION_MAJOR 2 )
 set ( FLUIDSYNTH_VERSION_MINOR 1 )
-set ( FLUIDSYNTH_VERSION_MICRO 2 )
+set ( FLUIDSYNTH_VERSION_MICRO 3 )
 set ( VERSION "${FLUIDSYNTH_VERSION_MAJOR}.${FLUIDSYNTH_VERSION_MINOR}.${FLUIDSYNTH_VERSION_MICRO}" )
 set ( FLUIDSYNTH_VERSION "\"${VERSION}\"" )
 
@@ -42,9 +42,9 @@ set ( FLUIDSYNTH_VERSION "\"${VERSION}\"" )
 # if any interfaces have been added: AGE++
 # if any interfaces have been removed/changed (compatibility broken): AGE=0
 # This is not exactly the same algorithm as the libtool one, but the results are the same.
-set ( LIB_VERSION_CURRENT 2 )
-set ( LIB_VERSION_AGE 3 )
-set ( LIB_VERSION_REVISION 2 )
+set ( LIB_VERSION_CURRENT 3 )
+set ( LIB_VERSION_AGE 0 )
+set ( LIB_VERSION_REVISION 0 )
 set ( LIB_VERSION_INFO
       "${LIB_VERSION_CURRENT}.${LIB_VERSION_AGE}.${LIB_VERSION_REVISION}" )
 
@@ -149,6 +149,7 @@ include ( DefaultDirs )
 include ( CheckSTDC )
 include ( CheckIncludeFile )
 include ( CheckFunctionExists )
+include ( CheckTypeSize )
 check_include_file ( string.h HAVE_STRING_H )
 check_include_file ( stdlib.h HAVE_STDLIB_H )
 check_include_file ( stdio.h HAVE_STDIO_H )
@@ -170,6 +171,11 @@ check_include_file ( pthread.h HAVE_PTHREAD_H )
 check_include_file ( signal.h HAVE_SIGNAL_H )
 check_include_file ( getopt.h HAVE_GETOPT_H )
 check_include_file ( stdint.h HAVE_STDINT_H )
+check_type_size ( "long long" LONG_LONG )
+if ( NOT HAVE_LONG_LONG AND NOT MSVC)
+    message ( FATAL_ERROR "Your compiler does not support intrinsic type 'long long'. Unable to compile fluidsynth." )
+endif ()
+
 include ( TestInline )
 include ( TestVLA )
 include ( TestBigEndian )
