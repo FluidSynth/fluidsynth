@@ -499,6 +499,8 @@ typedef GStatBuf fluid_stat_buf_t;
 #endif
 
 FILE* fluid_file_open(const char* filename, const char** errMsg);
+fluid_long_long_t fluid_file_tell(FILE* f);
+
 
 /* Profiling */
 #if WITH_PROFILING

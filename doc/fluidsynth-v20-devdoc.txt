@@ -69,6 +69,10 @@ What is FluidSynth?
 
 - FluidSynth is open source, in active development. For more details, take a look at http://www.fluidsynth.org
 
+\section NewIn2_2_0 What's new in 2.2.0?
+
+- #fluid_file_callbacks_t now uses <code>long long</code> as file-offset type (see #fluid_long_long_t). This is a breaking change, which allows to load SoundFonts bigger than 2GiB on Windows. This change required to bump fluidsynth's SOVERSION.
+
 \section NewIn2_1_1 What's new in 2.1.1?
 
 - requirements for explicit sequencer client unregistering have been relaxed: delete_fluid_sequencer() now correctly frees any registered sequencer clients (clients can still be explicitly unregistered)

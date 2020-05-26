@@ -405,7 +405,7 @@ int fluid_is_soundfont(const char *filename)
 SFData *fluid_sffile_open(const char *fname, const fluid_file_callbacks_t *fcbs)
 {
     SFData *sf;
-    int fsize = 0;
+    fluid_long_long_t fsize = 0;
 
     if(!(sf = FLUID_NEW(SFData)))
     {
