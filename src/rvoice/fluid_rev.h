@@ -58,7 +58,9 @@ typedef struct _fluid_revmodel_presets_t
 /*
  * reverb
  */
-fluid_revmodel_t *new_fluid_revmodel(fluid_real_t sample_rate);
+fluid_revmodel_t *
+new_fluid_revmodel(fluid_real_t sample_rate_max, fluid_real_t sample_rate);
+
 void delete_fluid_revmodel(fluid_revmodel_t *rev);
 
 void fluid_revmodel_processmix(fluid_revmodel_t *rev, const fluid_real_t *in,

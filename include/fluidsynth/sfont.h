@@ -124,7 +124,7 @@ typedef void *(* fluid_sfloader_callback_open_t)(const char *filename);
  *
  * @return returns #FLUID_OK if exactly \c count bytes were successfully read, else returns #FLUID_FAILED and leaves \a buf unmodified.
  */
-typedef int (* fluid_sfloader_callback_read_t)(void *buf, int count, void *handle);
+typedef int (* fluid_sfloader_callback_read_t)(void *buf, fluid_long_long_t count, void *handle);
 
 /**
  * Same purpose and behaviour as fseek.
@@ -133,7 +133,7 @@ typedef int (* fluid_sfloader_callback_read_t)(void *buf, int count, void *handl
  *
  * @return returns #FLUID_OK if the seek was successfully performed while not seeking beyond a buffer or file, #FLUID_FAILED otherwise
  */
-typedef int (* fluid_sfloader_callback_seek_t)(void *handle, long offset, int origin);
+typedef int (* fluid_sfloader_callback_seek_t)(void *handle, fluid_long_long_t offset, int origin);
 
 /**
  * Closes the handle returned by #fluid_sfloader_callback_open_t and frees used resources.
@@ -143,7 +143,7 @@ typedef int (* fluid_sfloader_callback_seek_t)(void *handle, long offset, int or
 typedef int (* fluid_sfloader_callback_close_t)(void *handle);
 
 /** @return returns current file offset or #FLUID_FAILED on error */
-typedef long (* fluid_sfloader_callback_tell_t)(void *handle);
+typedef fluid_long_long_t (* fluid_sfloader_callback_tell_t)(void *handle);
 
 
 FLUIDSYNTH_API int fluid_sfloader_set_callbacks(fluid_sfloader_t *loader,

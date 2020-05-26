@@ -40,18 +40,18 @@ int default_fclose(void *handle)
     return FLUID_FCLOSE((FILE *)handle) == 0 ? FLUID_OK : FLUID_FAILED;
 }
 
-long default_ftell(void *handle)
+fluid_long_long_t default_ftell(void *handle)
 {
     return FLUID_FTELL((FILE *)handle);
 }
 
-int safe_fread(void *buf, int count, void *fd)
+int safe_fread(void *buf, fluid_long_long_t count, void *fd)
 {
-    if(FLUID_FREAD(buf, count, 1, (FILE *)fd) != 1)
+    if(FLUID_FREAD(buf, (size_t)count, 1, (FILE *)fd) != 1)
     {
         if(feof((FILE *)fd))
         {
-            FLUID_LOG(FLUID_ERR, "EOF while attempting to read %d bytes", count);
+            FLUID_LOG(FLUID_ERR, "EOF while attempting to read %lld bytes", count);
         }
         else
         {
@@ -64,11 +64,11 @@ int safe_fread(void *buf, int count, void *fd)
     return FLUID_OK;
 }
 
-int safe_fseek(void *fd, long ofs, int whence)
+int safe_fseek(void *fd, fluid_long_long_t ofs, int whence)
 {
     if(FLUID_FSEEK((FILE *)fd, ofs, whence) != 0)
     {
-        FLUID_LOG(FLUID_ERR, "File seek failed with offset = %ld and whence = %d", ofs, whence);
+        FLUID_LOG(FLUID_ERR, "File seek failed with offset = %lld and whence = %d", ofs, whence);
         return FLUID_FAILED;
     }
 

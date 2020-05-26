@@ -554,14 +554,14 @@ int fluid_defsfont_add_preset(fluid_defsfont_t *defsfont, fluid_defpreset_t *def
                               fluid_defpreset_preset_noteon,
                               fluid_defpreset_preset_delete);
 
-    if(defsfont->dynamic_samples)
-    {
-        preset->notify = dynamic_samples_preset_notify;
-    }
-
     if(preset == NULL)
     {
         return FLUID_FAILED;
+    }
+
+    if(defsfont->dynamic_samples)
+    {
+        preset->notify = dynamic_samples_preset_notify;
     }
 
     fluid_preset_set_data(preset, defpreset);
