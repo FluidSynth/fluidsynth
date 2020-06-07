@@ -2379,9 +2379,11 @@ static int fluid_sffile_read_wav(SFData *sf, unsigned int start, unsigned int en
 {
     short *loaded_data = NULL;
     char *loaded_data24 = NULL;
+    unsigned int num_samples;
 
-    int num_samples = (end + 1) - start;
-    fluid_return_val_if_fail(num_samples > 0, -1);
+    fluid_return_val_if_fail((end + 1) > start , -1);
+
+    num_samples = (end + 1) - start;
 
     if((start * sizeof(short) > sf->samplesize) || (end * sizeof(short) > sf->samplesize))
     {
@@ -2413,7 +2415,7 @@ static int fluid_sffile_read_wav(SFData *sf, unsigned int start, unsigned int en
     /* If this machine is big endian, byte swap the 16 bit samples */
     if(FLUID_IS_BIG_ENDIAN)
     {
-        int i;
+        unsigned int i;
 
         for(i = 0; i < num_samples; i++)
         {
