@@ -41,7 +41,7 @@ struct _fluid_event_t
     short vel;
     short control;
     short value;
-    short id; //?? unused ?
+    int id;
     int pitch;
     unsigned int duration;
     void *data;
@@ -49,6 +49,9 @@ struct _fluid_event_t
 
 unsigned int fluid_event_get_time(fluid_event_t *evt);
 void fluid_event_set_time(fluid_event_t *evt, unsigned int time);
+
+short fluid_event_get_id(fluid_event_t *evt);
+void fluid_event_set_id(fluid_event_t *evt, short id);
 
 void fluid_event_clear(fluid_event_t *evt);
 

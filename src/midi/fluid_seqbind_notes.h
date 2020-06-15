@@ -18,8 +18,8 @@
  * 02110-1301, USA
  */
 
-#ifndef _FLUID_SEQ_QUE_H
-#define _FLUID_SEQ_QUE_H
+#ifndef _FLUID_SEQBIND_NOTE_H
+#define _FLUID_SEQBIND_NOTE_H
 
 #include "fluidsynth.h"
 
@@ -27,20 +27,17 @@
 extern "C" {
 #endif
 
-#include "fluid_event.h"
-#include "fluid_seqbind_notes.h"
+typedef int fluid_note_id_t;
 
-void* new_fluid_seq_queue(int nbEvents);
-void delete_fluid_seq_queue(void *queue);
-int fluid_seq_queue_push(void *queue, const fluid_event_t *evt);
-void fluid_seq_queue_remove(void *queue, fluid_seq_id_t src, fluid_seq_id_t dest, int type);
-void fluid_seq_queue_process(void *que, fluid_sequencer_t *seq, unsigned int cur_ticks);
-void fluid_seq_queue_invalidate_note_private(void *que, fluid_seq_id_t dest, fluid_note_id_t id);
-
-int event_compare_for_test(const fluid_event_t* left, const fluid_event_t* right);
+fluid_note_id_t fluid_note_compute_id(int chan, short key);
+void* new_fluid_note_container(void);
+void delete_fluid_note_container(void *cont);
+int fluid_note_container_insert(void* cont, fluid_note_id_t id);
+void fluid_note_container_remove(void* cont, fluid_note_id_t id);
+void fluid_note_container_clear(void* cont);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* _FLUID_SEQ_QUE_H */
+#endif /* _FLUID_SEQBIND_NOTE_H */
