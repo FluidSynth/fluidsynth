@@ -6344,15 +6344,14 @@ int
 fluid_synth_start(fluid_synth_t *synth, unsigned int id, fluid_preset_t *preset,
                   int audio_chan, int chan, int key, int vel)
 {
-    int result;
-    fluid_defsfont_t *defsfont;
+    int result, dynamic_samples;
     fluid_return_val_if_fail(preset != NULL, FLUID_FAILED);
     fluid_return_val_if_fail(key >= 0 && key <= 127, FLUID_FAILED);
     fluid_return_val_if_fail(vel >= 1 && vel <= 127, FLUID_FAILED);
     FLUID_API_ENTRY_CHAN(FLUID_FAILED);
 
-    defsfont = fluid_sfont_get_data(preset->sfont);
-    if(defsfont->dynamic_samples)
+    fluid_settings_getint(fluid_synth_get_settings(synth), "synth.dynamic-sample-loading", &dynamic_samples);
+    if(dynamic_samples)
     {
         // The preset might not be currently used, thus its sample data may not be loaded.
         // This guard is to avoid a NULL deref in rvoice_write().
