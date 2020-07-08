@@ -609,7 +609,7 @@ new_fluid_synth(fluid_settings_t *settings)
     char *important_channels;
     int i, nbuf, prio_level = 0;
     int with_ladspa = 0;
-    fluid_real_t sample_rate_min, sample_rate_max;
+    double sample_rate_min, sample_rate_max;
 
     /* initialize all the conversion tables and other stuff */
     if(fluid_atomic_int_compare_and_exchange(&fluid_synth_initialized, 0, 1))
@@ -789,7 +789,7 @@ new_fluid_synth(fluid_settings_t *settings)
     /* In an overflow situation, a new voice takes about 50 spaces in the queue! */
     synth->eventhandler = new_fluid_rvoice_eventhandler(synth->polyphony * 64,
                           synth->polyphony, nbuf, synth->effects_channels, synth->effects_groups,
-                          sample_rate_max, synth->sample_rate,
+                          (fluid_real_t)sample_rate_max, synth->sample_rate,
                           synth->cores - 1, prio_level);
 
     if(synth->eventhandler == NULL)
