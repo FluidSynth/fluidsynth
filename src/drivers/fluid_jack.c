@@ -188,7 +188,8 @@ new_fluid_jack_client(fluid_settings_t *settings, int isaudio, void *driver)
         else
         {
             // do not free client_ref and do not goto error_recovery
-            // client_ref is being used by another audio or midi driver. Freeing it here will create a double free.
+            // client_ref is being used by another audio or midi driver. Freeing it here will lead to a double free.
+            client_ref = NULL;
         }
 
         fluid_mutex_unlock(last_client_mutex);        /* -- unlock last_client */
@@ -357,7 +358,7 @@ fluid_jack_client_register_ports(void *driver, int isaudio, jack_client_t *clien
 
             if(dev->midi_port[i] == NULL)
             {
-                FLUID_LOG(FLUID_ERR, "Failed to create Jack MIDI port");
+                FLUID_LOG(FLUID_ERR, "Failed to create Jack MIDI port '%s'", name);
                 FLUID_FREE(dev->midi_port);
                 dev->midi_port = NULL;
                 return FLUID_FAILED;
@@ -397,7 +398,8 @@ fluid_jack_client_register_ports(void *driver, int isaudio, jack_client_t *clien
 
         if(dev->output_ports[0] == NULL || dev->output_ports[1] == NULL)
         {
-            FLUID_LOG(FLUID_ERR, "Failed to create Jack audio port");
+            FLUID_LOG(FLUID_ERR, "Failed to create Jack audio port '%s'",
+                      (dev->output_ports[0] == NULL ? (dev->output_ports[1] == NULL ? "left & right" : "left") : "right"));
             goto error_recovery;
         }
     }
@@ -869,7 +871,6 @@ new_fluid_jack_midi_driver(fluid_settings_t *settings,
 
     if(!dev->client_ref)
     {
-        FLUID_LOG(FLUID_PANIC, "Out of memory");
         goto error_recovery;
     }
 
