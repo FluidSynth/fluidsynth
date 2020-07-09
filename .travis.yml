@@ -25,7 +25,7 @@ addons:
 env:
     - CMAKE_FLAGS="-Denable-profiling=1"
     - CMAKE_FLAGS="-Denable-floats=1 -Denable-profiling=1"
-    - CMAKE_FLAGS="-Denable-floats=0"
+    - CMAKE_FLAGS="-Denable-floats=1"
     - CMAKE_FLAGS="-Denable-trap-on-fpe=1"
     - CMAKE_FLAGS="-Denable-fpe-check=1"
     - CMAKE_FLAGS="-Denable-ipv6=0"
