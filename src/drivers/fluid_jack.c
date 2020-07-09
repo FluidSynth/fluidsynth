@@ -83,7 +83,7 @@ struct _fluid_jack_midi_driver_t
     jack_port_t **midi_port; // array of midi port handles
     fluid_midi_parser_t *parser;
     int autoconnect_inputs;
-    int autoconnect_is_outdated;
+    fluid_atomic_int_t autoconnect_is_outdated;
 };
 
 static fluid_jack_client_t *new_fluid_jack_client(fluid_settings_t *settings,
@@ -136,7 +136,7 @@ fluid_jack_midi_autoconnect(jack_client_t *client, fluid_jack_midi_driver_t *mid
         jack_free(midi_source_ports);
     }
 
-    midi_driver->autoconnect_is_outdated = FALSE;
+    fluid_atomic_int_set(&midi_driver->autoconnect_is_outdated, FALSE);
 }
 
 /*
@@ -708,7 +708,7 @@ fluid_jack_driver_process(jack_nframes_t nframes, void *arg)
 
     if(midi_driver)
     {
-        if(midi_driver->autoconnect_is_outdated)
+        if(fluid_atomic_int_get(&midi_driver->autoconnect_is_outdated))
         {
             fluid_jack_midi_autoconnect(client->client, midi_driver);
         }
@@ -820,7 +820,7 @@ fluid_jack_port_registration(jack_port_id_t port, int is_registering, void *arg)
 
     if(client_ref->midi_driver != NULL)
     {
-        client_ref->midi_driver->autoconnect_is_outdated = client_ref->midi_driver->autoconnect_inputs && is_registering != 0;
+        fluid_atomic_int_set(&client_ref->midi_driver->autoconnect_is_outdated, client_ref->midi_driver->autoconnect_inputs && is_registering != 0);
     }
 }
 
@@ -865,7 +865,7 @@ new_fluid_jack_midi_driver(fluid_settings_t *settings,
     }
 
     fluid_settings_getint(settings, "midi.autoconnect", &dev->autoconnect_inputs);
-    dev->autoconnect_is_outdated = dev->autoconnect_inputs;
+    fluid_atomic_int_set(&dev->autoconnect_is_outdated, dev->autoconnect_inputs);
 
     dev->client_ref = new_fluid_jack_client(settings, FALSE, dev);
 
