@@ -83,7 +83,7 @@ int asset_close(void *handle)
     return 0;
 }
 
-long asset_tell(void *handle)
+fluid_long_long_t asset_tell(void *handle)
 {
 	AAsset *asset;
 	
@@ -91,7 +91,7 @@ long asset_tell(void *handle)
     return AAsset_getLength(asset) - AAsset_getRemainingLength(asset);
 }
 
-int asset_seek(void *handle, long offset, int origin)
+int asset_seek(void *handle, fluid_long_long_t offset, int origin)
 {
 	AAsset *asset;
 	
@@ -99,7 +99,7 @@ int asset_seek(void *handle, long offset, int origin)
 	return AAsset_seek (asset, (off_t) offset, origin);
 }
 
-int asset_read(void *buf, int count, void *handle)
+int asset_read(void *buf, fluid_long_long_t count, void *handle)
 {
 	AAsset *asset;
 	

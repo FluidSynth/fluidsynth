@@ -34,9 +34,9 @@ void Java_fluidsynth_androidextensions_NativeHandler_setAssetManagerContext(JNIE
 
 void *asset_open(const char *path);
 int asset_close(void *handle);
-long asset_tell(void *handle);
-int asset_seek(void *handle, long offset, int origin);
-int asset_read(void *buf, int count, void *handle);
+fluid_long_long_t asset_tell(void *handle);
+int asset_seek(void *handle, fluid_long_long_t offset, int origin);
+int asset_read(void *buf, fluid_long_long_t count, void *handle);
 
 #ifdef __cplusplus
 } /* extern "C" */
