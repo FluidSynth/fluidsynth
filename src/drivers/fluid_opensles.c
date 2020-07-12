@@ -109,7 +109,7 @@ new_fluid_opensles_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth
 
     if(!dev->engine)
     {
-        FLUID_LOG(FLUID_ERR, "Failed to create the OpenSL ES engine, error code 0x%lx", result);
+        FLUID_LOG(FLUID_ERR, "Failed to create the OpenSL ES engine, error code 0x%lx", (unsigned long)result);
         goto error_recovery;
     }
 
@@ -117,7 +117,7 @@ new_fluid_opensles_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth
 
     if(result != SL_RESULT_SUCCESS)
     {
-        FLUID_LOG(FLUID_ERR, "Failed to realize the OpenSL ES engine, error code 0x%lx", result);
+        FLUID_LOG(FLUID_ERR, "Failed to realize the OpenSL ES engine, error code 0x%lx", (unsigned long)result);
         goto error_recovery;
     }
 
@@ -125,7 +125,7 @@ new_fluid_opensles_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth
 
     if(result != SL_RESULT_SUCCESS)
     {
-        FLUID_LOG(FLUID_ERR, "Failed to retrieve the OpenSL ES engine interface, error code 0x%lx", result);
+        FLUID_LOG(FLUID_ERR, "Failed to retrieve the OpenSL ES engine interface, error code 0x%lx", (unsigned long)result);
         goto error_recovery;
     }
 
@@ -133,7 +133,7 @@ new_fluid_opensles_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth
 
     if(result != SL_RESULT_SUCCESS)
     {
-        FLUID_LOG(FLUID_ERR, "Failed to create the OpenSL ES output mix object, error code 0x%lx", result);
+        FLUID_LOG(FLUID_ERR, "Failed to create the OpenSL ES output mix object, error code 0x%lx", (unsigned long)result);
         goto error_recovery;
     }
 
@@ -141,7 +141,7 @@ new_fluid_opensles_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth
 
     if(result != SL_RESULT_SUCCESS)
     {
-        FLUID_LOG(FLUID_ERR, "Failed to realize the OpenSL ES output mix object, error code 0x%lx", result);
+        FLUID_LOG(FLUID_ERR, "Failed to realize the OpenSL ES output mix object, error code 0x%lx", (unsigned long)result);
         goto error_recovery;
     }
 
@@ -183,7 +183,7 @@ new_fluid_opensles_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth
 
     if(result != SL_RESULT_SUCCESS)
     {
-        FLUID_LOG(FLUID_ERR, "Failed to create the OpenSL ES audio player object, error code 0x%lx", result);
+        FLUID_LOG(FLUID_ERR, "Failed to create the OpenSL ES audio player object, error code 0x%lx", (unsigned long)result);
         goto error_recovery;
     }
 
@@ -191,7 +191,7 @@ new_fluid_opensles_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth
 
     if(result != SL_RESULT_SUCCESS)
     {
-        FLUID_LOG(FLUID_ERR, "Failed to realize the OpenSL ES audio player object, error code 0x%lx", result);
+        FLUID_LOG(FLUID_ERR, "Failed to realize the OpenSL ES audio player object, error code 0x%lx", (unsigned long)result);
         goto error_recovery;
     }
 
@@ -200,7 +200,7 @@ new_fluid_opensles_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth
 
     if(result != SL_RESULT_SUCCESS)
     {
-        FLUID_LOG(FLUID_ERR, "Failed to retrieve the OpenSL ES audio player interface, error code 0x%lx", result);
+        FLUID_LOG(FLUID_ERR, "Failed to retrieve the OpenSL ES audio player interface, error code 0x%lx", (unsigned long)result);
         goto error_recovery;
     }
 
@@ -209,7 +209,7 @@ new_fluid_opensles_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth
 
     if(result != SL_RESULT_SUCCESS)
     {
-        FLUID_LOG(FLUID_ERR, "Failed to retrieve the OpenSL ES buffer queue interface, error code 0x%lx", result);
+        FLUID_LOG(FLUID_ERR, "Failed to retrieve the OpenSL ES buffer queue interface, error code 0x%lx", (unsigned long)result);
         goto error_recovery;
     }
 
@@ -232,7 +232,7 @@ new_fluid_opensles_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth
 
     if(result != SL_RESULT_SUCCESS)
     {
-        FLUID_LOG(FLUID_ERR, "Failed to register the opensles_callback, error code 0x%lx", result);
+        FLUID_LOG(FLUID_ERR, "Failed to register the opensles_callback, error code 0x%lx", (unsigned long)result);
         goto error_recovery;
     }
 
@@ -247,7 +247,7 @@ new_fluid_opensles_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth
 
     if(result != SL_RESULT_SUCCESS)
     {
-        FLUID_LOG(FLUID_ERR, "Failed to add a buffer to the queue, error code 0x%lx", result);
+        FLUID_LOG(FLUID_ERR, "Failed to add a buffer to the queue, error code 0x%lx", (unsigned long)result);
         goto error_recovery;
     }
 
@@ -255,7 +255,7 @@ new_fluid_opensles_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth
 
     if(result != SL_RESULT_SUCCESS)
     {
-        FLUID_LOG(FLUID_ERR, "Failed to set OpenSL ES audio player callback events, error code 0x%lx", result);
+        FLUID_LOG(FLUID_ERR, "Failed to set OpenSL ES audio player callback events, error code 0x%lx", (unsigned long)result);
         goto error_recovery;
     }
 
@@ -263,7 +263,7 @@ new_fluid_opensles_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth
 
     if(result != SL_RESULT_SUCCESS)
     {
-        FLUID_LOG(FLUID_ERR, "Failed to set OpenSL ES audio player play state to playing, error code 0x%lx", result);
+        FLUID_LOG(FLUID_ERR, "Failed to set OpenSL ES audio player play state to playing, error code 0x%lx", (unsigned long)result);
         goto error_recovery;
     }
 
