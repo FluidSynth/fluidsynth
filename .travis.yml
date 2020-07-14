@@ -46,26 +46,27 @@ matrix:
         - CMAKE_FLAGS="-Denable-debug=1 -DCMAKE_C_FLAGS_DEBUG=-fuse-ld=gold"
 
     - env:
-        - MATRIX_EVAL="CC=clang-7.0 && CXX=clang++-7.0 && sudo apt-get install clang-7"
+        - MATRIX_EVAL="CC=clang-7 && CXX=clang++-7.0 && sudo apt-get install clang-7"
 
     - env:
-        - MATRIX_EVAL="CC=clang-8.0 && CXX=clang++-8.0 && sudo rm -f /usr/local/clang-7.0.0/bin/clang-tidy && sudo ln -s /usr/bin/clang-tidy-8 /usr/bin/clang-tidy && sudo apt-get install clang-8 clang-tidy-8"
+        - MATRIX_EVAL="CC=clang-8 && CXX=clang++-8.0 && sudo rm -f /usr/local/clang-7.0.0/bin/clang-tidy && sudo ln -s /usr/bin/clang-tidy-8 /usr/bin/clang-tidy && sudo apt-get install clang-8 clang-tidy-8"
         - CMAKE_FLAGS="-Denable-profiling=1 -DCMAKE_C_FLAGS_DEBUG=-fuse-ld=gold"
 
     - env:
-        - MATRIX_EVAL="CC=clang-9.0 && CXX=clang++-9.0 && sudo apt-get install clang-9"
+        - MATRIX_EVAL="CC=clang-9 && CXX=clang++-9.0 && sudo apt-get install clang-9"
 
     - env:
-        - MATRIX_EVAL="CC=clang-10.0 && CXX=clang++-10.0 && sudo apt-get install clang-10"
+        - MATRIX_EVAL="CC=clang-10 && CXX=clang++-10.0 && sudo apt-get install clang-10"
 
     - os: linux-ppc64le
       env:
         - CMAKE_FLAGS=""
 
 before_install:
-    - eval "${MATRIX_EVAL}"
+    - "${MATRIX_EVAL}"
     - which clang-tidy || true
     - ls -la `which clang-tidy` || true
+    - ls -la /usr/bin/clang* || true
     - echo $PATH
 
 before_script:
