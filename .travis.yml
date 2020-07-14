@@ -79,10 +79,7 @@ before_install:
     - ls -la `which clang-tidy` || true
     - echo $PATH
     - echo $MATRIX_EVAL
-    - echo $CXX
-    - which $CXX || true
-    - ls -laR /usr/lib/llvm-*/ || true
-    - "${MATRIX_EVAL}"
+    - eval "${MATRIX_EVAL}"
 
 before_script:
     - mkdir $HOME/fluidsynth_install/
