@@ -79,7 +79,8 @@ before_install:
     - ls -la `which clang-tidy` || true
     - echo $PATH
     - echo $MATRIX_EVAL
-    - which $CXX
+    - which $CXX || true
+    - ls -la /usr/lib/llvm-*/ || true
     - eval "${MATRIX_EVAL}"
 
 before_script:
