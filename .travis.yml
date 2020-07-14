@@ -41,12 +41,12 @@ matrix:
       env:
         - CC="gcc-7"
         - CXX="g++-7"
-        - MATRIX_EVAL="sudo apt-get install gcc-7 gcc7-c++"
+        - MATRIX_EVAL="sudo apt-get install gcc-7 gcc7-c\+\+"
 
     - env:
         - CC="gcc-8"
         - CXX="g++-8"
-        - MATRIX_EVAL="sudo apt-get install gcc-8 gcc8-c++"
+        - MATRIX_EVAL="sudo apt-get install gcc-8 gcc8-c\+\+"
         - CMAKE_FLAGS="-Denable-debug=1 -DCMAKE_C_FLAGS_DEBUG=-fuse-ld=gold"
 
     - env:
@@ -75,11 +75,11 @@ matrix:
         - CMAKE_FLAGS=""
 
 before_install:
-    - "${MATRIX_EVAL}"
     - which clang-tidy || true
     - ls -la `which clang-tidy` || true
     - ls -la /usr/bin/clang* || true
     - echo $PATH
+    - eval "${MATRIX_EVAL}"
 
 before_script:
     - mkdir $HOME/fluidsynth_install/
