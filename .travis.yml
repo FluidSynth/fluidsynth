@@ -39,24 +39,36 @@ matrix:
   include:
     - arch: arm64
       env:
-        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7 && sudo apt-get install gcc-7 gcc7-c++"
+        - CC="gcc-7"
+        - CXX="g++-7"
+        - MATRIX_EVAL="sudo apt-get install gcc-7 gcc7-c++"
 
     - env:
-        - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8 && sudo apt-get install gcc-8 gcc8-c++"
+        - CC="gcc-8"
+        - CXX="g++-8"
+        - MATRIX_EVAL="sudo apt-get install gcc-8 gcc8-c++"
         - CMAKE_FLAGS="-Denable-debug=1 -DCMAKE_C_FLAGS_DEBUG=-fuse-ld=gold"
 
     - env:
-        - MATRIX_EVAL="CC=clang-7 && CXX=clang++-7.0 && sudo apt-get install clang-7"
+        - CC="clang-7"
+        - CXX="clang++-7.0"
+        - MATRIX_EVAL="sudo apt-get install clang-7"
 
     - env:
-        - MATRIX_EVAL="CC=clang-8 && CXX=clang++-8.0 && sudo rm -f /usr/local/clang-7.0.0/bin/clang-tidy && sudo ln -s /usr/bin/clang-tidy-8 /usr/bin/clang-tidy && sudo apt-get install clang-8 clang-tidy-8"
+        - CC="clang-8"
+        - CXX="clang++-8.0"
+        - MATRIX_EVAL="sudo rm -f /usr/local/clang-7.0.0/bin/clang-tidy && sudo ln -s /usr/bin/clang-tidy-8 /usr/bin/clang-tidy && sudo apt-get install clang-8 clang-tidy-8"
         - CMAKE_FLAGS="-Denable-profiling=1 -DCMAKE_C_FLAGS_DEBUG=-fuse-ld=gold"
 
     - env:
-        - MATRIX_EVAL="CC=clang-9 && CXX=clang++-9.0 && sudo apt-get install clang-9"
+        - CC="clang-9"
+        - CXX="clang++-9.0"
+        - MATRIX_EVAL="sudo apt-get install clang-9"
 
     - env:
-        - MATRIX_EVAL="CC=clang-10 && CXX=clang++-10.0 && sudo apt-get install clang-10"
+        - CC="clang-10"
+        - CXX="clang++-10.0"
+        - MATRIX_EVAL="sudo apt-get install clang-10"
 
     - os: linux-ppc64le
       env:
