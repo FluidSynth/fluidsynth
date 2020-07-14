@@ -1,15 +1,15 @@
 language: c
 sudo: false
 os: linux
-dist: bionic
+dist: focal
 addons:
   apt:
     update: true
     sources:
     - ubuntu-toolchain-r-test
-    - llvm-toolchain-bionic-7
-    - llvm-toolchain-bionic-8
-    - llvm-toolchain-bionic-9
+    - llvm-toolchain-focal-7
+    - llvm-toolchain-focal-8
+    - llvm-toolchain-focal-9
     packages:
     - cmake-data
     - cmake
