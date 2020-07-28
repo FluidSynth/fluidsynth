@@ -214,7 +214,7 @@ void* fluid_alloc(size_t len);
 #define FLUID_STRCPY(_dst,_src)      strcpy(_dst,_src)
 
 #define FLUID_STRNCPY(_dst,_src,_n) \
-do { strncpy(_dst,_src,_n); \
+do { strncpy(_dst,_src,_n-1); \
     (_dst)[(_n)-1]='\0'; \
 }while(0)
 
