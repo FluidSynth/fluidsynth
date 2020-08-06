@@ -3723,27 +3723,35 @@ fluid_synth_process_LOCAL(fluid_synth_t *synth, int len, int nfx, float *fx[],
 
     /* First, take what's still available in the buffer */
     count = 0;
+    /* synth->cur indicates if available samples are still in internal mixer buffer */
     num = synth->cur;
 
     buffered_blocks = (synth->cur + FLUID_BUFSIZE - 1) / FLUID_BUFSIZE;
     if(synth->cur < buffered_blocks * FLUID_BUFSIZE)
     {
+        /* yes, available sample are in internal mixer buffer */
         int available = (buffered_blocks * FLUID_BUFSIZE) - synth->cur;
         num = (available > len) ? len : available;
 
-        if(nout != 0)
+        /* mixing dry samples (or skip if requested by the caller) */
+        if(nout != 0 && out != NULL)
         {
             for(i = 0; i < naudchan; i++)
             {
+                /* mix num left samples from input mixer buffer (left_in) at input offset
+                   synth->cur to output buffer (out_buf) at offset 0 */
                 float *out_buf = out[(i * 2) % nout];
                 fluid_synth_mix_single_buffer(out_buf, 0, left_in, synth->cur, i, num);
 
+                /* mix num right samples from input mixer buffer (right_in) at input offset
+                   synth->cur to output buffer (out_buf) at offset 0 */
                 out_buf = out[(i * 2 + 1) % nout];
                 fluid_synth_mix_single_buffer(out_buf, 0, right_in, synth->cur, i, num);
             }
         }
 
-        if(nfx != 0)
+        /* mixing effects samples (or skip if requested by the caller) */
+        if(nfx != 0 && fx != NULL)
         {
             // loop over all effects units
             for(f = 0; f < nfxunits; f++)
@@ -3753,9 +3761,13 @@ fluid_synth_process_LOCAL(fluid_synth_t *synth, int len, int nfx, float *fx[],
                 {
                     int buf_idx = f * nfxchan + i;
 
+                    /* mix num left samples from input mixer buffer (fx_left_in) at input offset
+                       synth->cur to output buffer (out_buf) at offset 0 */
                     float *out_buf = fx[(buf_idx * 2) % nfx];
                     fluid_synth_mix_single_buffer(out_buf, 0, fx_left_in, synth->cur, buf_idx, num);
 
+                    /* mix num right samples from input mixer buffer (fx_right_in) at input offset
+                       synth->cur to output buffer (out_buf) at offset 0 */
                     out_buf = fx[(buf_idx * 2 + 1) % nfx];
                     fluid_synth_mix_single_buffer(out_buf, 0, fx_right_in, synth->cur, buf_idx, num);
                 }
@@ -3769,24 +3781,31 @@ fluid_synth_process_LOCAL(fluid_synth_t *synth, int len, int nfx, float *fx[],
     /* Then, render blocks and copy till we have 'len' samples  */
     while(count < len)
     {
+        /* always render full bloc multiple of FLUID_BUFSIZE */
         int blocksleft = (len - count + FLUID_BUFSIZE - 1) / FLUID_BUFSIZE;
         int blockcount = block_render_func(synth, blocksleft);
 
         num = (blockcount * FLUID_BUFSIZE > len - count) ? len - count : blockcount * FLUID_BUFSIZE;
 
-        if(nout != 0)
+        /* mixing dry samples (or skip if requested by the caller) */
+        if(nout != 0 && out != NULL)
         {
             for(i = 0; i < naudchan; i++)
             {
+                /* mix num left samples from input mixer buffer (left_in) at input offset
+                   0 to output buffer (out_buf) at offset count */
                 float *out_buf = out[(i * 2) % nout];
                 fluid_synth_mix_single_buffer(out_buf, count, left_in, 0, i, num);
 
+                /* mix num right samples from input mixer buffer (right_in) at input offset
+                   0 to output buffer (out_buf) at offset count */
                 out_buf = out[(i * 2 + 1) % nout];
                 fluid_synth_mix_single_buffer(out_buf, count, right_in, 0, i, num);
             }
         }
 
-        if(nfx != 0)
+        /* mixing effects samples (or skip if requested by the caller) */
+        if(nfx != 0 && fx != NULL)
         {
             // loop over all effects units
             for(f = 0; f < nfxunits; f++)
@@ -3796,9 +3815,13 @@ fluid_synth_process_LOCAL(fluid_synth_t *synth, int len, int nfx, float *fx[],
                 {
                     int buf_idx = f * nfxchan + i;
 
+                    /* mix num left samples from input mixer buffer (fx_left_in) at input offset
+                       0 to output buffer (out_buf) at offset count */
                     float *out_buf = fx[(buf_idx * 2) % nfx];
                     fluid_synth_mix_single_buffer(out_buf, count, fx_left_in, 0, buf_idx, num);
 
+                    /* mix num right samples from input mixer buffer (fx_right_in) at input offset
+                       0 to output buffer (out_buf) at offset count */
                     out_buf = fx[(buf_idx * 2 + 1) % nfx];
                     fluid_synth_mix_single_buffer(out_buf, count, fx_right_in, 0, buf_idx, num);
                 }
