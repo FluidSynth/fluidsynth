@@ -3652,6 +3652,7 @@ fx[ ((k * fluid_synth_count_effects_channels() + j) * 2 + 1) % nfx ]  = right_bu
  *
  * @param synth FluidSynth instance
  * @param len Count of audio frames to synthesize and store in every single buffer provided by \p out and \p fx.
+ *  Zero value is permitted, the function does nothing and return FLUID_OK.
  * @param nfx Count of arrays in \c fx. Must be a multiple of 2 (because of stereo).
  * and in the range <code>0 <= nfx/2 <= (fluid_synth_count_effects_channels() * fluid_synth_count_effects_groups()).
   Note that zero value is valid and allows to skip mixing effects in all fx output buffers.</code>.
@@ -3662,7 +3663,13 @@ alias with buffers of \c out. Individual NULL buffers are permitted and will cau
  Note that zero value is valid and allows to skip mixing dry audio in all out output buffers.</code>.
  * @param out Array of buffers to store (dry) audio to. Buffers may
 alias with buffers of \c fx. Individual NULL buffers are permitted and will cause to skip mixing any audio into that buffer.
- * @return #FLUID_OK on success, #FLUID_FAILED otherwise.
+ * @return #FLUID_OK on success,
+ * #FLUID_FAILED otherwise,
+ *  - fx NULL while nfx > 0, or out NULL while nout > 0.
+ *  - nfx or nout not multiple of 2.
+ *  - len < 0.
+ *  - both nfx and nout set to 0 while len > 0
+ *  - nfx or nout greater than respective internal mixer buffer count.
  *
  * @parblock
  * @note The owner of the sample buffers must zero them out before calling this
