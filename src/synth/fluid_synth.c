@@ -3699,6 +3699,7 @@ fluid_synth_process(fluid_synth_t *synth, int len, int nfx, float *fx[],
     return fluid_synth_process_LOCAL(synth, len, nfx, fx, nout, out, fluid_synth_render_blocks);
 }
 
+/* declared public (instead of static) for testing purpose */
 int
 fluid_synth_process_LOCAL(fluid_synth_t *synth, int len, int nfx, float *fx[],
                     int nout, float *out[], int (*block_render_func)(fluid_synth_t *, int))
