@@ -3748,8 +3748,16 @@ fluid_synth_process_LOCAL(fluid_synth_t *synth, int len, int nfx, float *fx[],
     fluid_return_val_if_fail(0 <= nfx / 2 && nfx / 2 <= nfxchan * nfxunits, FLUID_FAILED);
     fluid_return_val_if_fail(0 <= nout / 2 && nout / 2 <= naudchan, FLUID_FAILED);
 
+    /* get internal mixer audio dry buffer's pointer (left and right channel) */
     fluid_rvoice_mixer_get_bufs(synth->eventhandler->mixer, &left_in, &right_in);
+    /* get internal mixer audio effect buffer's pointer (left and right channel) */
     fluid_rvoice_mixer_get_fx_bufs(synth->eventhandler->mixer, &fx_left_in, &fx_right_in);
+
+    /* Conversely to fluid_synth_write_float(),fluid_synth_write_s16() (which handle only one
+       stereo output) we don't want rendered audio effect mixed in internal audio dry buffers.
+       FALSE instructs the mixer that internal audio effects will be mixed in respective internal
+       audio effects buffers.
+    */
     fluid_rvoice_mixer_set_mix_fx(synth->eventhandler->mixer, FALSE);
 
 
@@ -3815,6 +3823,7 @@ fluid_synth_process_LOCAL(fluid_synth_t *synth, int len, int nfx, float *fx[],
     {
         /* always render full bloc multiple of FLUID_BUFSIZE */
         int blocksleft = (len - count + FLUID_BUFSIZE - 1) / FLUID_BUFSIZE;
+        /* render audio (dry and effect) to respective internal dry and effect buffers */
         int blockcount = block_render_func(synth, blocksleft);
 
         num = (blockcount * FLUID_BUFSIZE > len - count) ? len - count : blockcount * FLUID_BUFSIZE;
@@ -3921,7 +3930,13 @@ fluid_synth_write_float_LOCAL(fluid_synth_t *synth, int len,
     fluid_return_val_if_fail(len >= 0, FLUID_FAILED);
     fluid_return_val_if_fail(len != 0, FLUID_OK); // to avoid raising FE_DIVBYZERO below
 
-    fluid_rvoice_mixer_set_mix_fx(synth->eventhandler->mixer, 1);
+    /* Conversely to fluid_synth_process() (which handle possible multiple stereo output),
+       we want rendered audio effect mixed in internal audio dry buffers.
+       TRUE instructs the mixer that internal audio effects will be mixed in internal
+       audio dry buffers.
+    */
+    fluid_rvoice_mixer_set_mix_fx(synth->eventhandler->mixer, TRUE);
+    /* get internal mixer audio dry buffer's pointer (left and right channel) */
     fluid_rvoice_mixer_get_bufs(synth->eventhandler->mixer, &left_in, &right_in);
 
     size = len;
@@ -3932,6 +3947,7 @@ fluid_synth_write_float_LOCAL(fluid_synth_t *synth, int len,
         /* fill up the buffers as needed */
         if(cur >= synth->curmax)
         {
+            /* render audio (dry and effect) to internal dry buffers */
             int blocksleft = (size + FLUID_BUFSIZE - 1) / FLUID_BUFSIZE;
             synth->curmax = FLUID_BUFSIZE * block_render_func(synth, blocksleft);
             fluid_rvoice_mixer_get_bufs(synth->eventhandler->mixer, &left_in, &right_in);
@@ -4079,7 +4095,13 @@ fluid_synth_write_s16(fluid_synth_t *synth, int len,
     fluid_return_val_if_fail(len >= 0, FLUID_FAILED);
     fluid_return_val_if_fail(len != 0, FLUID_OK); // to avoid raising FE_DIVBYZERO below
 
-    fluid_rvoice_mixer_set_mix_fx(synth->eventhandler->mixer, 1);
+    /* Conversely to fluid_synth_process() (which handle possible multiple stereo output),
+       we want rendered audio effect mixed in internal audio dry buffers.
+       TRUE instructs the mixer that internal audio effects will be mixed in internal
+       audio dry buffers.
+    */
+    fluid_rvoice_mixer_set_mix_fx(synth->eventhandler->mixer, TRUE);
+    /* get internal mixer audio dry buffer's pointer (left and right channel) */
     fluid_rvoice_mixer_get_bufs(synth->eventhandler->mixer, &left_in, &right_in);
 
     size = len;
@@ -4091,6 +4113,7 @@ fluid_synth_write_s16(fluid_synth_t *synth, int len,
         /* fill up the buffers as needed */
         if(cur >= synth->curmax)
         {
+            /* render audio (dry and effect) to internal dry buffers */
             int blocksleft = (size + FLUID_BUFSIZE - 1) / FLUID_BUFSIZE;
             synth->curmax = FLUID_BUFSIZE * fluid_synth_render_blocks(synth, blocksleft);
             fluid_rvoice_mixer_get_bufs(synth->eventhandler->mixer, &left_in, &right_in);
