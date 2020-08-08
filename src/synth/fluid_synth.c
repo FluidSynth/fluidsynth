@@ -3720,8 +3720,19 @@ fluid_synth_process_LOCAL(fluid_synth_t *synth, int len, int nfx, float *fx[],
        allows to skip mixing in out output buffers
     */
     fluid_return_val_if_fail(nout % 2 == 0, FLUID_FAILED);
+
+    /* check len value. Note than 0 value is valid, the function does nothing and
+       return FLUID_OK.
+    */
     fluid_return_val_if_fail(len >= 0, FLUID_FAILED);
     fluid_return_val_if_fail(len != 0, FLUID_OK); // to avoid raising FE_DIVBYZERO below
+
+    /*
+      Now len is > 0. This will lead in rendering in internal mixer buffer.
+      However this rendering must not occur if both nfx and nout are set to 0.
+      So now we check that both nfx and nout set to 0 while len > 0, is invalid.
+    */
+    fluid_return_val_if_fail(nfx || nout, FLUID_FAILED);
 
     nfxchan = synth->effects_channels;
     nfxunits = synth->effects_groups;
