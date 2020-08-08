@@ -3652,14 +3652,16 @@ fx[ ((k * fluid_synth_count_effects_channels() + j) * 2 + 1) % nfx ]  = right_bu
  *
  * @param synth FluidSynth instance
  * @param len Count of audio frames to synthesize and store in every single buffer provided by \p out and \p fx.
- * @param nfx Count of arrays in \c fx. Must be a multiple of 2 (because of stereo)
- * and in the range <code>0 <= nfx/2 <= (fluid_synth_count_effects_channels() * fluid_synth_count_effects_groups())</code>.
+ * @param nfx Count of arrays in \c fx. Must be a multiple of 2 (because of stereo).
+ * and in the range <code>0 <= nfx/2 <= (fluid_synth_count_effects_channels() * fluid_synth_count_effects_groups()).
+  Note that zero value is valid and allows to skip mixing effects in all fx output buffers.</code>.
  * @param fx Array of buffers to store effects audio to. Buffers may
-alias with buffers of \c out. NULL buffers are permitted and will cause to skip mixing any audio into that buffer.
+alias with buffers of \c out. Individual NULL buffers are permitted and will cause to skip mixing any audio into that buffer.
  * @param nout Count of arrays in \c out. Must be a multiple of 2
-(because of stereo) and in the range <code>0 <= nout/2 <= fluid_synth_count_audio_channels()</code>.
+(because of stereo) and in the range <code>0 <= nout/2 <= fluid_synth_count_audio_channels().
+ Note that zero value is valid and allows to skip mixing dry audio in all out output buffers.</code>.
  * @param out Array of buffers to store (dry) audio to. Buffers may
-alias with buffers of \c fx. NULL buffers are permitted and will cause to skip mixing any audio into that buffer.
+alias with buffers of \c fx. Individual NULL buffers are permitted and will cause to skip mixing any audio into that buffer.
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise.
  *
  * @parblock
@@ -3704,7 +3706,19 @@ fluid_synth_process_LOCAL(fluid_synth_t *synth, int len, int nfx, float *fx[],
     float cpu_load;
 
     fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
+
+    /* fx NULL while nfx > 0 is invalid */
+    fluid_return_val_if_fail((fx != NULL) || (nfx == 0), FLUID_FAILED);
+    /* nfx must be multiple of 2. Note that 0 value is valid and
+       allows to skip mixing in fx output buffers
+    */
     fluid_return_val_if_fail(nfx % 2 == 0, FLUID_FAILED);
+
+    /* out NULL while nout > 0 is invalid */
+    fluid_return_val_if_fail((fx != NULL) || (nfx == 0), FLUID_FAILED);
+    /* nout must be multiple of 2. Note that 0 value is valid and
+       allows to skip mixing in out output buffers
+    */
     fluid_return_val_if_fail(nout % 2 == 0, FLUID_FAILED);
     fluid_return_val_if_fail(len >= 0, FLUID_FAILED);
     fluid_return_val_if_fail(len != 0, FLUID_OK); // to avoid raising FE_DIVBYZERO below
@@ -3734,7 +3748,7 @@ fluid_synth_process_LOCAL(fluid_synth_t *synth, int len, int nfx, float *fx[],
         num = (available > len) ? len : available;
 
         /* mixing dry samples (or skip if requested by the caller) */
-        if(nout != 0 && out != NULL)
+        if(nout != 0)
         {
             for(i = 0; i < naudchan; i++)
             {
@@ -3751,7 +3765,7 @@ fluid_synth_process_LOCAL(fluid_synth_t *synth, int len, int nfx, float *fx[],
         }
 
         /* mixing effects samples (or skip if requested by the caller) */
-        if(nfx != 0 && fx != NULL)
+        if(nfx != 0)
         {
             // loop over all effects units
             for(f = 0; f < nfxunits; f++)
@@ -3788,7 +3802,7 @@ fluid_synth_process_LOCAL(fluid_synth_t *synth, int len, int nfx, float *fx[],
         num = (blockcount * FLUID_BUFSIZE > len - count) ? len - count : blockcount * FLUID_BUFSIZE;
 
         /* mixing dry samples (or skip if requested by the caller) */
-        if(nout != 0 && out != NULL)
+        if(nout != 0)
         {
             for(i = 0; i < naudchan; i++)
             {
@@ -3805,7 +3819,7 @@ fluid_synth_process_LOCAL(fluid_synth_t *synth, int len, int nfx, float *fx[],
         }
 
         /* mixing effects samples (or skip if requested by the caller) */
-        if(nfx != 0 && fx != NULL)
+        if(nfx != 0)
         {
             // loop over all effects units
             for(f = 0; f < nfxunits; f++)
