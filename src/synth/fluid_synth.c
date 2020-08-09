@@ -3654,22 +3654,21 @@ fx[ ((k * fluid_synth_count_effects_channels() + j) * 2 + 1) % nfx ]  = right_bu
  * @param len Count of audio frames to synthesize and store in every single buffer provided by \p out and \p fx.
  *  Zero value is permitted, the function does nothing and return FLUID_OK.
  * @param nfx Count of arrays in \c fx. Must be a multiple of 2 (because of stereo).
- * and in the range <code>0 <= nfx/2 <= (fluid_synth_count_effects_channels() * fluid_synth_count_effects_groups()).
-  Note that zero value is valid and allows to skip mixing effects in all fx output buffers.</code>.
+ * and in the range <code>0 <= nfx/2 <= (fluid_synth_count_effects_channels() * fluid_synth_count_effects_groups())</code>.
+  Note that zero value is valid and allows to skip mixing effects in all fx output buffers.
  * @param fx Array of buffers to store effects audio to. Buffers may
 alias with buffers of \c out. Individual NULL buffers are permitted and will cause to skip mixing any audio into that buffer.
  * @param nout Count of arrays in \c out. Must be a multiple of 2
-(because of stereo) and in the range <code>0 <= nout/2 <= fluid_synth_count_audio_channels().
- Note that zero value is valid and allows to skip mixing dry audio in all out output buffers.</code>.
+(because of stereo) and in the range <code>0 <= nout/2 <= fluid_synth_count_audio_channels()</code>.
+ Note that zero value is valid and allows to skip mixing dry audio in all out output buffers.
  * @param out Array of buffers to store (dry) audio to. Buffers may
 alias with buffers of \c fx. Individual NULL buffers are permitted and will cause to skip mixing any audio into that buffer.
  * @return #FLUID_OK on success,
  * #FLUID_FAILED otherwise,
- *  - fx NULL while nfx > 0, or out NULL while nout > 0.
- *  - nfx or nout not multiple of 2.
- *  - len < 0.
- *  - both nfx and nout set to 0 while len > 0
- *  - nfx or nout greater than respective internal mixer buffer count.
+ *  - <code>fx == NULL</code> while <code>nfx > 0</code>, or <code>out == NULL</code> while <code>nout > 0</code>.
+ *  - \c nfx or \c nout not multiple of 2.
+ *  - <code>len < 0</code>.
+ *  - \c nfx or \c nout exceed the range explained above.
  *
  * @parblock
  * @note The owner of the sample buffers must zero them out before calling this
@@ -3723,7 +3722,7 @@ fluid_synth_process_LOCAL(fluid_synth_t *synth, int len, int nfx, float *fx[],
     fluid_return_val_if_fail(nfx % 2 == 0, FLUID_FAILED);
 
     /* out NULL while nout > 0 is invalid */
-    fluid_return_val_if_fail((fx != NULL) || (nfx == 0), FLUID_FAILED);
+    fluid_return_val_if_fail((out != NULL) || (nout == 0), FLUID_FAILED);
     /* nout must be multiple of 2. Note that 0 value is valid and
        allows to skip mixing in out output buffers
     */
@@ -3734,13 +3733,6 @@ fluid_synth_process_LOCAL(fluid_synth_t *synth, int len, int nfx, float *fx[],
     */
     fluid_return_val_if_fail(len >= 0, FLUID_FAILED);
     fluid_return_val_if_fail(len != 0, FLUID_OK); // to avoid raising FE_DIVBYZERO below
-
-    /*
-      Now len is > 0. This will lead in rendering in internal mixer buffer.
-      However this rendering must not occur if both nfx and nout are set to 0.
-      So now we check that both nfx and nout set to 0 while len > 0, is invalid.
-    */
-    fluid_return_val_if_fail(nfx || nout, FLUID_FAILED);
 
     nfxchan = synth->effects_channels;
     nfxunits = synth->effects_groups;
