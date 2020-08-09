@@ -3925,11 +3925,11 @@ fluid_synth_write_float_LOCAL(fluid_synth_t *synth, int len,
 
     /* Conversely to fluid_synth_process() (which handle possible multiple stereo output),
        we want rendered audio effect mixed in internal audio dry buffers.
-       TRUE instructs the mixer that internal audio effects will be mixed in internal
+       TRUE instructs the mixer that internal audio effects will be mixed in first internal
        audio dry buffers.
     */
     fluid_rvoice_mixer_set_mix_fx(synth->eventhandler->mixer, TRUE);
-    /* get internal mixer audio dry buffer's pointer (left and right channel) */
+    /* get first internal mixer audio dry buffer's pointer (left and right channel) */
     fluid_rvoice_mixer_get_bufs(synth->eventhandler->mixer, &left_in, &right_in);
 
     size = len;
@@ -4090,11 +4090,11 @@ fluid_synth_write_s16(fluid_synth_t *synth, int len,
 
     /* Conversely to fluid_synth_process() (which handle possible multiple stereo output),
        we want rendered audio effect mixed in internal audio dry buffers.
-       TRUE instructs the mixer that internal audio effects will be mixed in internal
+       TRUE instructs the mixer that internal audio effects will be mixed in first internal
        audio dry buffers.
     */
     fluid_rvoice_mixer_set_mix_fx(synth->eventhandler->mixer, TRUE);
-    /* get internal mixer audio dry buffer's pointer (left and right channel) */
+    /* get first internal mixer audio dry buffer's pointer (left and right channel) */
     fluid_rvoice_mixer_get_bufs(synth->eventhandler->mixer, &left_in, &right_in);
 
     size = len;
