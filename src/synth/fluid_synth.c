@@ -3652,15 +3652,23 @@ fx[ ((k * fluid_synth_count_effects_channels() + j) * 2 + 1) % nfx ]  = right_bu
  *
  * @param synth FluidSynth instance
  * @param len Count of audio frames to synthesize and store in every single buffer provided by \p out and \p fx.
- * @param nfx Count of arrays in \c fx. Must be a multiple of 2 (because of stereo)
+ *  Zero value is permitted, the function does nothing and return FLUID_OK.
+ * @param nfx Count of arrays in \c fx. Must be a multiple of 2 (because of stereo).
  * and in the range <code>0 <= nfx/2 <= (fluid_synth_count_effects_channels() * fluid_synth_count_effects_groups())</code>.
+  Note that zero value is valid and allows to skip mixing effects in all fx output buffers.
  * @param fx Array of buffers to store effects audio to. Buffers may
-alias with buffers of \c out. NULL buffers are permitted and will cause to skip mixing any audio into that buffer.
+alias with buffers of \c out. Individual NULL buffers are permitted and will cause to skip mixing any audio into that buffer.
  * @param nout Count of arrays in \c out. Must be a multiple of 2
 (because of stereo) and in the range <code>0 <= nout/2 <= fluid_synth_count_audio_channels()</code>.
+ Note that zero value is valid and allows to skip mixing dry audio in all out output buffers.
  * @param out Array of buffers to store (dry) audio to. Buffers may
-alias with buffers of \c fx. NULL buffers are permitted and will cause to skip mixing any audio into that buffer.
- * @return #FLUID_OK on success, #FLUID_FAILED otherwise.
+alias with buffers of \c fx. Individual NULL buffers are permitted and will cause to skip mixing any audio into that buffer.
+ * @return #FLUID_OK on success,
+ * #FLUID_FAILED otherwise,
+ *  - <code>fx == NULL</code> while <code>nfx > 0</code>, or <code>out == NULL</code> while <code>nout > 0</code>.
+ *  - \c nfx or \c nout not multiple of 2.
+ *  - <code>len < 0</code>.
+ *  - \c nfx or \c nout exceed the range explained above.
  *
  * @parblock
  * @note The owner of the sample buffers must zero them out before calling this
@@ -3690,6 +3698,7 @@ fluid_synth_process(fluid_synth_t *synth, int len, int nfx, float *fx[],
     return fluid_synth_process_LOCAL(synth, len, nfx, fx, nout, out, fluid_synth_render_blocks);
 }
 
+/* declared public (instead of static) for testing purpose */
 int
 fluid_synth_process_LOCAL(fluid_synth_t *synth, int len, int nfx, float *fx[],
                     int nout, float *out[], int (*block_render_func)(fluid_synth_t *, int))
@@ -3704,8 +3713,23 @@ fluid_synth_process_LOCAL(fluid_synth_t *synth, int len, int nfx, float *fx[],
     float cpu_load;
 
     fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
+
+    /* fx NULL while nfx > 0 is invalid */
+    fluid_return_val_if_fail((fx != NULL) || (nfx == 0), FLUID_FAILED);
+    /* nfx must be multiple of 2. Note that 0 value is valid and
+       allows to skip mixing in fx output buffers
+    */
     fluid_return_val_if_fail(nfx % 2 == 0, FLUID_FAILED);
+
+    /* out NULL while nout > 0 is invalid */
+    fluid_return_val_if_fail((out != NULL) || (nout == 0), FLUID_FAILED);
+    /* nout must be multiple of 2. Note that 0 value is valid and
+       allows to skip mixing in out output buffers
+    */
     fluid_return_val_if_fail(nout % 2 == 0, FLUID_FAILED);
+
+    /* check len value. Note that 0 value is valid, the function does nothing and returns FLUID_OK.
+    */
     fluid_return_val_if_fail(len >= 0, FLUID_FAILED);
     fluid_return_val_if_fail(len != 0, FLUID_OK); // to avoid raising FE_DIVBYZERO below
 
@@ -3716,33 +3740,49 @@ fluid_synth_process_LOCAL(fluid_synth_t *synth, int len, int nfx, float *fx[],
     fluid_return_val_if_fail(0 <= nfx / 2 && nfx / 2 <= nfxchan * nfxunits, FLUID_FAILED);
     fluid_return_val_if_fail(0 <= nout / 2 && nout / 2 <= naudchan, FLUID_FAILED);
 
+    /* get internal mixer audio dry buffer's pointer (left and right channel) */
     fluid_rvoice_mixer_get_bufs(synth->eventhandler->mixer, &left_in, &right_in);
+    /* get internal mixer audio effect buffer's pointer (left and right channel) */
     fluid_rvoice_mixer_get_fx_bufs(synth->eventhandler->mixer, &fx_left_in, &fx_right_in);
+
+    /* Conversely to fluid_synth_write_float(),fluid_synth_write_s16() (which handle only one
+       stereo output) we don't want rendered audio effect mixed in internal audio dry buffers.
+       FALSE instructs the mixer that internal audio effects will be mixed in respective internal
+       audio effects buffers.
+    */
     fluid_rvoice_mixer_set_mix_fx(synth->eventhandler->mixer, FALSE);
 
 
     /* First, take what's still available in the buffer */
     count = 0;
+    /* synth->cur indicates if available samples are still in internal mixer buffer */
     num = synth->cur;
 
     buffered_blocks = (synth->cur + FLUID_BUFSIZE - 1) / FLUID_BUFSIZE;
     if(synth->cur < buffered_blocks * FLUID_BUFSIZE)
     {
+        /* yes, available sample are in internal mixer buffer */
         int available = (buffered_blocks * FLUID_BUFSIZE) - synth->cur;
         num = (available > len) ? len : available;
 
+        /* mixing dry samples (or skip if requested by the caller) */
         if(nout != 0)
         {
             for(i = 0; i < naudchan; i++)
             {
+                /* mix num left samples from input mixer buffer (left_in) at input offset
+                   synth->cur to output buffer (out_buf) at offset 0 */
                 float *out_buf = out[(i * 2) % nout];
                 fluid_synth_mix_single_buffer(out_buf, 0, left_in, synth->cur, i, num);
 
+                /* mix num right samples from input mixer buffer (right_in) at input offset
+                   synth->cur to output buffer (out_buf) at offset 0 */
                 out_buf = out[(i * 2 + 1) % nout];
                 fluid_synth_mix_single_buffer(out_buf, 0, right_in, synth->cur, i, num);
             }
         }
 
+        /* mixing effects samples (or skip if requested by the caller) */
         if(nfx != 0)
         {
             // loop over all effects units
@@ -3753,9 +3793,13 @@ fluid_synth_process_LOCAL(fluid_synth_t *synth, int len, int nfx, float *fx[],
                 {
                     int buf_idx = f * nfxchan + i;
 
+                    /* mix num left samples from input mixer buffer (fx_left_in) at input offset
+                       synth->cur to output buffer (out_buf) at offset 0 */
                     float *out_buf = fx[(buf_idx * 2) % nfx];
                     fluid_synth_mix_single_buffer(out_buf, 0, fx_left_in, synth->cur, buf_idx, num);
 
+                    /* mix num right samples from input mixer buffer (fx_right_in) at input offset
+                       synth->cur to output buffer (out_buf) at offset 0 */
                     out_buf = fx[(buf_idx * 2 + 1) % nfx];
                     fluid_synth_mix_single_buffer(out_buf, 0, fx_right_in, synth->cur, buf_idx, num);
                 }
@@ -3769,23 +3813,31 @@ fluid_synth_process_LOCAL(fluid_synth_t *synth, int len, int nfx, float *fx[],
     /* Then, render blocks and copy till we have 'len' samples  */
     while(count < len)
     {
+        /* always render full bloc multiple of FLUID_BUFSIZE */
         int blocksleft = (len - count + FLUID_BUFSIZE - 1) / FLUID_BUFSIZE;
+        /* render audio (dry and effect) to respective internal dry and effect buffers */
         int blockcount = block_render_func(synth, blocksleft);
 
         num = (blockcount * FLUID_BUFSIZE > len - count) ? len - count : blockcount * FLUID_BUFSIZE;
 
+        /* mixing dry samples (or skip if requested by the caller) */
         if(nout != 0)
         {
             for(i = 0; i < naudchan; i++)
             {
+                /* mix num left samples from input mixer buffer (left_in) at input offset
+                   0 to output buffer (out_buf) at offset count */
                 float *out_buf = out[(i * 2) % nout];
                 fluid_synth_mix_single_buffer(out_buf, count, left_in, 0, i, num);
 
+                /* mix num right samples from input mixer buffer (right_in) at input offset
+                   0 to output buffer (out_buf) at offset count */
                 out_buf = out[(i * 2 + 1) % nout];
                 fluid_synth_mix_single_buffer(out_buf, count, right_in, 0, i, num);
             }
         }
 
+        /* mixing effects samples (or skip if requested by the caller) */
         if(nfx != 0)
         {
             // loop over all effects units
@@ -3796,9 +3848,13 @@ fluid_synth_process_LOCAL(fluid_synth_t *synth, int len, int nfx, float *fx[],
                 {
                     int buf_idx = f * nfxchan + i;
 
+                    /* mix num left samples from input mixer buffer (fx_left_in) at input offset
+                       0 to output buffer (out_buf) at offset count */
                     float *out_buf = fx[(buf_idx * 2) % nfx];
                     fluid_synth_mix_single_buffer(out_buf, count, fx_left_in, 0, buf_idx, num);
 
+                    /* mix num right samples from input mixer buffer (fx_right_in) at input offset
+                       0 to output buffer (out_buf) at offset count */
                     out_buf = fx[(buf_idx * 2 + 1) % nfx];
                     fluid_synth_mix_single_buffer(out_buf, count, fx_right_in, 0, buf_idx, num);
                 }
@@ -3866,7 +3922,13 @@ fluid_synth_write_float_LOCAL(fluid_synth_t *synth, int len,
     fluid_return_val_if_fail(len >= 0, FLUID_FAILED);
     fluid_return_val_if_fail(len != 0, FLUID_OK); // to avoid raising FE_DIVBYZERO below
 
-    fluid_rvoice_mixer_set_mix_fx(synth->eventhandler->mixer, 1);
+    /* Conversely to fluid_synth_process() (which handle possible multiple stereo output),
+       we want rendered audio effect mixed in internal audio dry buffers.
+       TRUE instructs the mixer that internal audio effects will be mixed in first internal
+       audio dry buffers.
+    */
+    fluid_rvoice_mixer_set_mix_fx(synth->eventhandler->mixer, TRUE);
+    /* get first internal mixer audio dry buffer's pointer (left and right channel) */
     fluid_rvoice_mixer_get_bufs(synth->eventhandler->mixer, &left_in, &right_in);
 
     size = len;
@@ -3877,6 +3939,7 @@ fluid_synth_write_float_LOCAL(fluid_synth_t *synth, int len,
         /* fill up the buffers as needed */
         if(cur >= synth->curmax)
         {
+            /* render audio (dry and effect) to internal dry buffers */
             int blocksleft = (size + FLUID_BUFSIZE - 1) / FLUID_BUFSIZE;
             synth->curmax = FLUID_BUFSIZE * block_render_func(synth, blocksleft);
             fluid_rvoice_mixer_get_bufs(synth->eventhandler->mixer, &left_in, &right_in);
@@ -4024,7 +4087,13 @@ fluid_synth_write_s16(fluid_synth_t *synth, int len,
     fluid_return_val_if_fail(len >= 0, FLUID_FAILED);
     fluid_return_val_if_fail(len != 0, FLUID_OK); // to avoid raising FE_DIVBYZERO below
 
-    fluid_rvoice_mixer_set_mix_fx(synth->eventhandler->mixer, 1);
+    /* Conversely to fluid_synth_process() (which handle possible multiple stereo output),
+       we want rendered audio effect mixed in internal audio dry buffers.
+       TRUE instructs the mixer that internal audio effects will be mixed in first internal
+       audio dry buffers.
+    */
+    fluid_rvoice_mixer_set_mix_fx(synth->eventhandler->mixer, TRUE);
+    /* get first internal mixer audio dry buffer's pointer (left and right channel) */
     fluid_rvoice_mixer_get_bufs(synth->eventhandler->mixer, &left_in, &right_in);
 
     size = len;
@@ -4036,6 +4105,7 @@ fluid_synth_write_s16(fluid_synth_t *synth, int len,
         /* fill up the buffers as needed */
         if(cur >= synth->curmax)
         {
+            /* render audio (dry and effect) to internal dry buffers */
             int blocksleft = (size + FLUID_BUFSIZE - 1) / FLUID_BUFSIZE;
             synth->curmax = FLUID_BUFSIZE * fluid_synth_render_blocks(synth, blocksleft);
             fluid_rvoice_mixer_get_bufs(synth->eventhandler->mixer, &left_in, &right_in);
