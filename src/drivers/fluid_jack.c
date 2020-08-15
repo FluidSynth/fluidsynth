@@ -60,8 +60,6 @@ struct _fluid_jack_audio_driver_t
     fluid_audio_driver_t driver;
     fluid_jack_client_t *client_ref;
 
-    int audio_channels;
-
     jack_port_t **output_ports;
     int num_output_ports;
     float **output_bufs;
