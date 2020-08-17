@@ -44,6 +44,8 @@ matrix:
         - MATRIX_EVAL="sudo apt-get install gcc-7 g++-7"
 
     - dist: precise
+      env:
+        - CMAKE_FLAGS=""
 
     - env:
         - CC="gcc-8"
