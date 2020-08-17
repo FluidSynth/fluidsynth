@@ -43,7 +43,7 @@ matrix:
         - CXX="g++-7"
         - MATRIX_EVAL="sudo apt-get install gcc-7 g++-7"
 
-    - dist: precise
+    - dist: trusty
       env:
         - CMAKE_FLAGS=""
 
