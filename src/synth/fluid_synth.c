@@ -607,7 +607,7 @@ new_fluid_synth(fluid_settings_t *settings)
     fluid_synth_t *synth;
     fluid_sfloader_t *loader;
     char *important_channels;
-    int i, nbuf, prio_level = 0;
+    int i, prio_level = 0;
     int with_ladspa = 0;
     double sample_rate_min, sample_rate_max;
 
@@ -749,14 +749,25 @@ new_fluid_synth(fluid_settings_t *settings)
         synth->effects_channels = 2;
     }
 
-    /* The number of buffers is determined by the higher number of nr
-     * groups / nr audio channels.  If LADSPA is unused, they should be
-     * the same. */
-    nbuf = synth->audio_channels;
+    /*
+     number of buffers rendered by the mixer is determined by synth->audio_groups.
+     audio from MIDI channel is rendered, mapped and mixed in these buffers.
 
-    if(synth->audio_groups > nbuf)
+     Typically synth->audio_channels is only used by audio driver and should be set
+     to the same value that synth->audio_groups. In some situation using LADSPA,
+     it is best to diminish audio-channels so that the driver will be able to pass
+     the audio to audio devices in the case these devices have a limited number of
+     audio channels.
+
+     audio-channels must not be greater then audio-groups, otherwise these
+     audio output above audio-groups will not be rendered by the mixeur.
+    */
+    if(synth->audio_channels > synth->audio_groups)
     {
-        nbuf = synth->audio_groups;
+        synth->audio_channels = synth->audio_groups;
+        fluid_settings_setint(settings, "synth.audio-channels", synth->audio_channels);
+                       FLUID_LOG(FLUID_WARN, "Requested audio-channels to high. "
+                       "Limiting this setting to audio-groups.");
     }
 
     if(fluid_settings_dupstr(settings, "synth.overflow.important-channels",
@@ -788,7 +799,8 @@ new_fluid_synth(fluid_settings_t *settings)
     /* Allocate event queue for rvoice mixer */
     /* In an overflow situation, a new voice takes about 50 spaces in the queue! */
     synth->eventhandler = new_fluid_rvoice_eventhandler(synth->polyphony * 64,
-                          synth->polyphony, nbuf, synth->effects_channels, synth->effects_groups,
+                          synth->polyphony, synth->audio_groups,
+                          synth->effects_channels, synth->effects_groups,
                           (fluid_real_t)sample_rate_max, synth->sample_rate,
                           synth->cores - 1, prio_level);
 
