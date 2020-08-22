@@ -51,7 +51,7 @@ struct _fluid_mixer_buffers_t
 
     /** buffer to store the left part of a stereo channel to.
      * Specifically a two dimensional array, containing \c buf_count sample buffers
-     * (i.e. for each synth.audio-channels), of which each contains
+     * (i.e. for each synth.audio-groups), of which each contains
      * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT audio items (=samples)
      * @note Each sample buffer is aligned to the FLUID_DEFAULT_ALIGNMENT
      * boundary provided that this pointer points to an aligned buffer.
