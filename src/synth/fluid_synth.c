@@ -464,11 +464,12 @@ fluid_synth_init(void)
     /* Amount: 96 dB of attenuation (on the opposite channel) */
     fluid_mod_set_amount(&custom_balance_mod, FLUID_PEAK_ATTENUATION); /* Amount: 960 */
 
-    /* libinstpatch <= 1.1.4 only supports calling init() once */
-#if defined(LIBINSTPATCH_SUPPORT) && \
-    FLUID_VERSION_CHECK(IPATCH_VERSION_MAJOR,IPATCH_VERSION_MINOR,IPATCH_VERSION_PATCH) <= FLUID_VERSION_CHECK(1,1,4)
+#if defined(LIBINSTPATCH_SUPPORT)
     /* defer libinstpatch init to fluid_instpatch.c to avoid #include "libinstpatch.h" */
-    fluid_instpatch_init();
+    if(!fluid_instpatch_supports_multi_init())
+    {
+        fluid_instpatch_init();
+    }
 #endif
 }
 
@@ -628,10 +629,11 @@ new_fluid_synth(fluid_settings_t *settings)
 
     FLUID_MEMSET(synth, 0, sizeof(fluid_synth_t));
 
-#if defined(LIBINSTPATCH_SUPPORT) && \
-    FLUID_VERSION_CHECK(IPATCH_VERSION_MAJOR,IPATCH_VERSION_MINOR,IPATCH_VERSION_PATCH) > FLUID_VERSION_CHECK(1,1,4)
-    /* defer libinstpatch init to fluid_instpatch.c to avoid #include "libinstpatch.h" */
-    fluid_instpatch_init();
+#if defined(LIBINSTPATCH_SUPPORT)
+    if(fluid_instpatch_supports_multi_init())
+    {
+        fluid_instpatch_init();
+    }
 #endif
 
     fluid_rec_mutex_init(synth->mutex);
@@ -1125,10 +1127,11 @@ delete_fluid_synth(fluid_synth_t *synth)
 
     FLUID_FREE(synth);
 
-#if defined(LIBINSTPATCH_SUPPORT) && \
-    FLUID_VERSION_CHECK(IPATCH_VERSION_MAJOR,IPATCH_VERSION_MINOR,IPATCH_VERSION_PATCH) > FLUID_VERSION_CHECK(1,1,4)
-    /* defer libinstpatch deinit to fluid_instpatch.c to avoid #include "libinstpatch.h" */
-    fluid_instpatch_deinit();
+#if defined(LIBINSTPATCH_SUPPORT)
+    if(fluid_instpatch_supports_multi_init())
+    {
+        fluid_instpatch_deinit();
+    }
 #endif
 }
 
