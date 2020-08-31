@@ -184,8 +184,7 @@ struct _fluid_synth_t
 typedef int (*fluid_audio_callback_t)(fluid_synth_t *synth, int len,
                                       void *out1, int loff, int lincr,
                                       void *out2, int roff, int rincr);
-#define jjc_multi_channel
-#ifdef jjc_multi_channel
+
 typedef int (*fluid_audio_channels_callback_t)(fluid_synth_t *synth, int len,
                                int channels_count,
                                void *channels_out[], int channels_off[],
@@ -208,7 +207,6 @@ fluid_synth_write_float_channels(fluid_synth_t *synth, int len,
                                int channels_count,
                                void *channels_out[], int channels_off[],
                                int channels_incr[]);
-#endif
 
 fluid_preset_t *fluid_synth_find_preset(fluid_synth_t *synth,
                                         int banknum,
