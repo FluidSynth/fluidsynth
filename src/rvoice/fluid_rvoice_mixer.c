@@ -197,7 +197,7 @@ fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t *mixer, int current_blockcoun
             int samp_idx = buf_idx * FLUID_MIXER_MAX_BUFFERS_DEFAULT * FLUID_BUFSIZE;
             int sample_count = current_blockcount * FLUID_BUFSIZE;
             
-            /* in mix mode, map fx out_rev at index f to a dry buffer at index dry_idx */
+            /* in mix mode, map fx out_ch at index f to a dry buffer at index dry_idx */
             if(mixer->mix_fx_to_out)
             {
                 /* dry buffer mapping, should be done more flexible in the future */
