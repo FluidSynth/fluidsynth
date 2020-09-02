@@ -255,7 +255,7 @@ new_fluid_waveout_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
     fluid_waveout_audio_driver_t *dev = NULL;
     fluid_audio_channels_callback_t write_ptr;
     double sample_rate;
-    int periods, period_size, frequency, sample_size;
+    int frequency, sample_size;
     LPSTR ptrBuffer;
     int lenBuffer;
     int device;
@@ -266,8 +266,6 @@ new_fluid_waveout_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
 
     /* Retrieve the settings */
     fluid_settings_getnum(settings, "synth.sample-rate", &sample_rate);
-    fluid_settings_getint(settings, "audio.periods", &periods);
-    fluid_settings_getint(settings, "audio.period-size", &period_size);
 
     /* Clear format structure */
     ZeroMemory(&wfx, sizeof(WAVEFORMATEXTENSIBLE));
