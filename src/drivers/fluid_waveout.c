@@ -55,20 +55,20 @@ const static DWORD channel_mask_speakers[WAVEOUT_MAX_STEREO_CHANNELS] =
     /* 2 stereo outputs */
     {
         SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT |
-        SPEAKER_BACK_LEFT|SPEAKER_BACK_RIGHT
+        SPEAKER_BACK_LEFT | SPEAKER_BACK_RIGHT
     },
     /* 3 stereo outputs */
     {
         SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT |
-        SPEAKER_FRONT_CENTER|SPEAKER_LOW_FREQUENCY |
-        SPEAKER_BACK_LEFT|SPEAKER_BACK_RIGHT
+        SPEAKER_FRONT_CENTER | SPEAKER_LOW_FREQUENCY |
+        SPEAKER_BACK_LEFT | SPEAKER_BACK_RIGHT
     },
     /* 4 stereo outputs */
     {
         SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT |
-        SPEAKER_FRONT_CENTER|SPEAKER_LOW_FREQUENCY |
-        SPEAKER_BACK_LEFT|SPEAKER_BACK_RIGHT |
-        SPEAKER_SIDE_LEFT|SPEAKER_SIDE_RIGHT
+        SPEAKER_FRONT_CENTER | SPEAKER_LOW_FREQUENCY |
+        SPEAKER_BACK_LEFT | SPEAKER_BACK_RIGHT |
+        SPEAKER_SIDE_LEFT | SPEAKER_SIDE_RIGHT
     }
 };
 
@@ -109,7 +109,8 @@ static DWORD WINAPI fluid_waveout_synth_thread(void *data)
     int channels_incr[WAVEOUT_MAX_STEREO_CHANNELS * 2];
     int i;
 
-    dev = (fluid_waveout_audio_driver_t*)data;
+    dev = (fluid_waveout_audio_driver_t *)data;
+
     /* initialize write callback constant parameters:
        MME expects interleaved channels in a unique buffer.
        For example 4 channels (c1, c2, c3, c4) and n samples:
@@ -129,7 +130,7 @@ static DWORD WINAPI fluid_waveout_synth_thread(void *data)
          channels_out[2] = address of dsound buffer
          channels_out[3] = address of dsound buffer
     */
-    for (i = 0; i < dev->channels_count; i++)
+    for(i = 0; i < dev->channels_count; i++)
     {
         channels_off[i] = i;
         channels_incr[i] = dev->channels_count;
@@ -178,13 +179,15 @@ static DWORD WINAPI fluid_waveout_synth_thread(void *data)
                    of the same buffer (lpData).
                 */
                 i = dev->channels_count;
+
                 do
                 {
                     channels_out[--i] = pWave->lpData;
                 }
                 while(i);
+
                 dev->write_ptr(dev->synth, dev->num_frames, dev->channels_count,
-                           channels_out, channels_off, channels_incr);
+                               channels_out, channels_off, channels_incr);
 
                 waveOutWrite((HWAVEOUT)msg.wParam, pWave, sizeof(WAVEHDR));
             }
@@ -300,10 +303,11 @@ new_fluid_waveout_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
 
     /* Initialize the format structure */
     wfx.Format.nChannels  = synth->audio_channels * 2;
+
     if(synth->audio_groups > WAVEOUT_MAX_STEREO_CHANNELS)
     {
         FLUID_LOG(FLUID_ERR, "Channels number %d exceed internal limit %d",
-                             wfx.Format.nChannels, WAVEOUT_MAX_STEREO_CHANNELS * 2);
+                  wfx.Format.nChannels, WAVEOUT_MAX_STEREO_CHANNELS * 2);
         return NULL;
     }
 
@@ -410,7 +414,7 @@ new_fluid_waveout_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
 
         errCode = waveOutOpen(&dev->hWaveOut,
                               device,
-                              (WAVEFORMATEX*)&wfx,
+                              (WAVEFORMATEX *)&wfx,
                               (DWORD_PTR)dev->dwThread,
                               0,
                               CALLBACK_THREAD);

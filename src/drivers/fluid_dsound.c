@@ -57,20 +57,20 @@ const static DWORD channel_mask_speakers[DSOUND_MAX_STEREO_CHANNELS] =
     /* 2 stereo outputs */
     {
         SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT |
-        SPEAKER_BACK_LEFT|SPEAKER_BACK_RIGHT
+        SPEAKER_BACK_LEFT | SPEAKER_BACK_RIGHT
     },
     /* 3 stereo outputs */
     {
         SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT |
-        SPEAKER_FRONT_CENTER|SPEAKER_LOW_FREQUENCY |
-        SPEAKER_BACK_LEFT|SPEAKER_BACK_RIGHT
+        SPEAKER_FRONT_CENTER | SPEAKER_LOW_FREQUENCY |
+        SPEAKER_BACK_LEFT | SPEAKER_BACK_RIGHT
     },
     /* 4 stereo outputs */
     {
         SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT |
-        SPEAKER_FRONT_CENTER|SPEAKER_LOW_FREQUENCY |
-        SPEAKER_BACK_LEFT|SPEAKER_BACK_RIGHT |
-        SPEAKER_SIDE_LEFT|SPEAKER_SIDE_RIGHT
+        SPEAKER_FRONT_CENTER | SPEAKER_LOW_FREQUENCY |
+        SPEAKER_BACK_LEFT | SPEAKER_BACK_RIGHT |
+        SPEAKER_SIDE_LEFT | SPEAKER_SIDE_RIGHT
     }
 };
 
@@ -237,12 +237,14 @@ new_fluid_dsound_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
     /* Finish to initialize the format structure */
     /* number of channels in a frame */
     format.Format.nChannels = synth->audio_channels * 2;
+
     if(synth->audio_groups > DSOUND_MAX_STEREO_CHANNELS)
     {
         FLUID_LOG(FLUID_ERR, "Channels number %d exceed internal limit %d",
-                             format.Format.nChannels, DSOUND_MAX_STEREO_CHANNELS * 2);
+                  format.Format.nChannels, DSOUND_MAX_STEREO_CHANNELS * 2);
         goto error_recovery;
     }
+
     /* size of frame in bytes */
     format.Format.nBlockAlign = format.Format.nChannels * format.Format.wBitsPerSample / 8;
     format.Format.nSamplesPerSec = (DWORD) sample_rate;
@@ -296,6 +298,7 @@ new_fluid_dsound_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
         FLUID_LOG(FLUID_ERR, "Failed to create the DirectSound object");
         goto error_recovery;
     }
+
     hr = IDirectSound_SetCooperativeLevel(dev->direct_sound, GetDesktopWindow(), DSSCL_PRIORITY);
 
     if(hr != DS_OK)
@@ -334,7 +337,7 @@ new_fluid_dsound_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
 
     /* set the primary sound buffer to this format. if it fails, just
        print a warning. */
-    hr = IDirectSoundBuffer_SetFormat(dev->prim_buffer, (WAVEFORMATEX*)&format);
+    hr = IDirectSoundBuffer_SetFormat(dev->prim_buffer, (WAVEFORMATEX *)&format);
 
     if(hr != DS_OK)
     {
@@ -350,7 +353,7 @@ new_fluid_dsound_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
     /* CreateSoundBuffer accepts only format.dwChannelMask compatible with
        format.Format.nChannels
     */
-    desc.lpwfxFormat = (WAVEFORMATEX*)&format;
+    desc.lpwfxFormat = (WAVEFORMATEX *)&format;
     desc.dwBufferBytes = dev->queue_byte_size;
 
     if(caps.dwFreeHwMixingStreamingBuffers > 0)
@@ -501,7 +504,7 @@ static DWORD WINAPI fluid_dsound_audio_run(LPVOID lpParameter)
          channels_out[2] = address of dsound buffer
          channels_out[3] = address of dsound buffer
     */
-    for (i = 0; i < dev->channels_count; i++)
+    for(i = 0; i < dev->channels_count; i++)
     {
         channels_off[i] = i;
         channels_incr[i] = dev->channels_count;
@@ -554,6 +557,7 @@ static DWORD WINAPI fluid_dsound_audio_run(LPVOID lpParameter)
                    of the same buffer (buf1).
                 */
                 i = dev->channels_count;
+
                 do
                 {
                     channels_out[--i] = buf1;
@@ -577,6 +581,7 @@ static DWORD WINAPI fluid_dsound_audio_run(LPVOID lpParameter)
                    of the same buffer (buf2).
                 */
                 i = dev->channels_count;
+
                 do
                 {
                     channels_out[--i] = buf2;
