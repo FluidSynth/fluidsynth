@@ -4114,7 +4114,7 @@ fluid_synth_write_float_LOCAL(fluid_synth_t *synth, int len,
 
     return fluid_synth_write_float_channels_LOCAL(synth, len, 2, channels_out,
                                             channels_off, channels_incr,
-                                            fluid_synth_render_blocks);
+                                            block_render_func);
 }
 
 
