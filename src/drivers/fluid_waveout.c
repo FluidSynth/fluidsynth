@@ -46,7 +46,7 @@
 #define WAVEOUT_MAX_STEREO_CHANNELS 4
 
 /* speakers mapping */
-static DWORD channel_mask_speakers[WAVEOUT_MAX_STEREO_CHANNELS] =
+const static DWORD channel_mask_speakers[WAVEOUT_MAX_STEREO_CHANNELS] =
 {
     /* 1 stereo output */
     {
@@ -120,7 +120,7 @@ static DWORD WINAPI fluid_waveout_synth_thread(void *data)
          channels_off[0] = 0    channels_incr[0] = 4
          channels_off[1] = 1    channels_incr[1] = 4
          channels_off[2] = 2    channels_incr[2] = 4
-         channels_off[3] = 3    channels_incr[4] = 4
+         channels_off[3] = 3    channels_incr[3] = 4
 
        channels_out[], table will be initialized later, just before calling
        the write callback function.
@@ -306,7 +306,7 @@ new_fluid_waveout_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
     {
         FLUID_LOG(FLUID_ERR, "Channels number %d exceed internal limit %d",
                              wfx.Format.nChannels, WAVEOUT_MAX_STEREO_CHANNELS * 2);
-        return NULL;;
+        return NULL;
     }
 
     wfx.Format.wBitsPerSample  = sample_size * 8;
