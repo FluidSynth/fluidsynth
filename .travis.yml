@@ -43,7 +43,8 @@ matrix:
   include:
     - dist: trusty
       env:
-        - SONARSC="build-wrapper-linux-x86-64 --out-dir bw-output"
+        - BW="build-wrapper-linux-x86-64 --out-dir bw-output"
+        - SONARSC="sonar-scanner -Dsonar.cfamily.build-wrapper-output=build/bw-output"
 
     - arch: arm64
       env:
@@ -100,9 +101,9 @@ before_script:
 
 script:
     - cmake -Werror=dev -DCMAKE_INSTALL_PREFIX=$HOME/fluidsynth_install ${CMAKE_FLAGS} -Denable-portaudio=1 -Denable-ladspa=1 -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_VERBOSE_MAKEFILE=1 -DNO_GUI=1 ..
-    - ${SONARSC} make -j4
+    - ${BW} make -j4
     - ls -la
     - make check
     - make install
     - cd ..
-    - sonar-scanner -Dsonar.cfamily.build-wrapper-output=build/bw-output
+    - ${SONARSC}
