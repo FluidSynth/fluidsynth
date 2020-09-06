@@ -104,4 +104,5 @@ script:
     - ls -la
     - make check
     - make install
-    - sonar-scanner -X -Dsonar.cfamily.build-wrapper-output=bw-output
+    - cd ..
+    - sonar-scanner -X -Dsonar.cfamily.build-wrapper-output=build/bw-output
