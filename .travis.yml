@@ -5,8 +5,6 @@ dist: focal
 git:
   depth: false
 addons:
-  sonarcloud:
-    organization: "fluidsynth"
   apt:
     update: true
     sources:
@@ -41,7 +39,9 @@ env:
 
 matrix:
   include:
-    - dist: trusty
+    - addons:
+        sonarcloud:
+          organization: "fluidsynth"
       env:
         - BW="build-wrapper-linux-x86-64 --out-dir bw-output"
         - SONARSC="sonar-scanner -Dsonar.cfamily.build-wrapper-output=build/bw-output"
