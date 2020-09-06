@@ -3,7 +3,7 @@ sudo: false
 os: linux
 dist: focal
 git:
-  depth: false
+  depth: false # disable shallow fetch, history is needed by SonarQube
 addons:
   apt:
     update: true
@@ -107,3 +107,7 @@ script:
     - make install
     - cd ..
     - ${SONARSC}
+
+cache:
+  directories:
+    - '$HOME/.sonar/cache'
