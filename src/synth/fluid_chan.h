@@ -82,6 +82,8 @@ struct _fluid_channel_t
 
     /* MIDI channel mapping to audio dry output */
     int mapping_to_out;
+    /* MIDI channel mapping to fx unit input */
+    int mapping_to_fx;
 
     /* Poly Mono variables see macro access description */
     int mode;								/**< Poly Mono mode */

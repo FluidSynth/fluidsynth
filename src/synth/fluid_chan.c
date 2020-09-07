@@ -74,6 +74,8 @@ fluid_channel_init(fluid_channel_t *chan)
     /* Init default channel mapping variables ---------------------------------*/
     /* Channel default mapping to audio dry output index */
     chan->mapping_to_out = chan->channum % chan->synth->audio_groups;
+    /* Channel default mapping to fx unit input index */
+    chan->mapping_to_fx = chan->channum % chan->synth->effects_groups;
 
     /*--- Init poly/mono modes variables --------------------------------------*/
     chan->mode = 0;

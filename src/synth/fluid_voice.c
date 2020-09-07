@@ -351,10 +351,12 @@ fluid_voice_init(fluid_voice_t *voice, fluid_sample_t *sample,
 
     UPDATE_RVOICE_R1(fluid_rvoice_set_synth_gain, voice->synth_gain);
 
-    /* Set up buffer mapping, should be done more flexible in the future. */
+    /* MIDI channel mapping to fx unit input */
     i = 2 * channel->synth->audio_groups;
-    i += (voice->chan % channel->synth->effects_groups) * channel->synth->effects_channels;
+    i += channel->mapping_to_fx  * channel->synth->effects_channels;
+    /* set index of reverb input buffer */
     UPDATE_RVOICE_GENERIC_I2(fluid_rvoice_buffers_set_mapping, &voice->rvoice->buffers, 2, i + SYNTH_REVERB_CHANNEL);
+    /* set index of chorus input buffer */
     UPDATE_RVOICE_GENERIC_I2(fluid_rvoice_buffers_set_mapping, &voice->rvoice->buffers, 3, i + SYNTH_CHORUS_CHANNEL);
 
     /* MIDI channel mapping to dry buffers */
