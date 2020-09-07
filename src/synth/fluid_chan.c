@@ -70,6 +70,11 @@ fluid_channel_init(fluid_channel_t *chan)
     int i, prognum, banknum;
 
     chan->sostenuto_orderid = 0;
+
+    /* Init default channel mapping variables ---------------------------------*/
+    /* Channel default mapping to audio dry output index */
+    chan->mapping_to_out = chan->channum % chan->synth->audio_groups;
+
     /*--- Init poly/mono modes variables --------------------------------------*/
     chan->mode = 0;
     chan->mode_val = 0;

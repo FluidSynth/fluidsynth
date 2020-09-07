@@ -357,8 +357,11 @@ fluid_voice_init(fluid_voice_t *voice, fluid_sample_t *sample,
     UPDATE_RVOICE_GENERIC_I2(fluid_rvoice_buffers_set_mapping, &voice->rvoice->buffers, 2, i + SYNTH_REVERB_CHANNEL);
     UPDATE_RVOICE_GENERIC_I2(fluid_rvoice_buffers_set_mapping, &voice->rvoice->buffers, 3, i + SYNTH_CHORUS_CHANNEL);
 
-    i = 2 * (voice->chan % channel->synth->audio_groups);
+    /* MIDI channel mapping to dry buffers */
+    i = 2 * channel->mapping_to_out;
+    /* set index of audio dry left buffer */
     UPDATE_RVOICE_GENERIC_I2(fluid_rvoice_buffers_set_mapping, &voice->rvoice->buffers, 0, i);
+    /* set index of audio dry right buffer */
     UPDATE_RVOICE_GENERIC_I2(fluid_rvoice_buffers_set_mapping, &voice->rvoice->buffers, 1, i + 1);
 
     return FLUID_OK;

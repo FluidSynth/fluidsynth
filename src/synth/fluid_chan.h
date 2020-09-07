@@ -80,6 +80,9 @@ struct _fluid_channel_t
     fluid_synth_t *synth;                 /**< Parent synthesizer instance */
     int channum;                          /**< MIDI channel number */
 
+    /* MIDI channel mapping to audio dry output */
+    int mapping_to_out;
+
     /* Poly Mono variables see macro access description */
     int mode;								/**< Poly Mono mode */
     int mode_val;							/**< number of channel in basic channel group */
