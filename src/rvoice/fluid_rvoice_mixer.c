@@ -78,6 +78,9 @@ struct _fluid_mixer_fx_t
 {
     fluid_revmodel_t *reverb; /**< Reverb unit */
     fluid_chorus_t *chorus; /**< Chorus unit */
+    /* unit fx mapping to audio dry output */
+    int to_out;         /**< shadow value will be returned if queried */
+    int mapping_to_out; /**< internal value used by the fx unit*/
 };
 
 struct _fluid_rvoice_mixer_t
@@ -125,7 +128,6 @@ fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t *mixer, int current_blockcoun
 {
     const int fx_channels_per_unit = mixer->buffers.fx_buf_count / mixer->fx_units;
     int i, f;
-    int dry_count = mixer->buffers.buf_count; /* dry buffers count */
     int dry_idx; /* dry buffer index */
 
     void (*reverb_process_func)(fluid_revmodel_t *rev, const fluid_real_t *in, fluid_real_t *left_out, fluid_real_t *right_out);
@@ -172,8 +174,9 @@ fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t *mixer, int current_blockcoun
             /* in mix mode, map fx out_rev at index f to a dry buffer at index dry_idx */
             if(mixer->mix_fx_to_out)
             {
-                /* dry buffer mapping, should be done more flexible in the future */
-                dry_idx = (f % dry_count) * FLUID_MIXER_MAX_BUFFERS_DEFAULT * FLUID_BUFSIZE;
+                /* dry buffer mapping */
+                dry_idx = mixer->fx[f].mapping_to_out;
+                dry_idx *=  FLUID_MIXER_MAX_BUFFERS_DEFAULT * FLUID_BUFSIZE;
             }
 
             for(i = 0; i < sample_count; i += FLUID_BUFSIZE, samp_idx += FLUID_BUFSIZE)
@@ -200,8 +203,9 @@ fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t *mixer, int current_blockcoun
             /* in mix mode, map fx out_ch at index f to a dry buffer at index dry_idx */
             if(mixer->mix_fx_to_out)
             {
-                /* dry buffer mapping, should be done more flexible in the future */
-                dry_idx = (f % dry_count) * FLUID_MIXER_MAX_BUFFERS_DEFAULT * FLUID_BUFSIZE;
+                /* dry buffer mapping */
+                dry_idx = mixer->fx[f].mapping_to_out;
+                dry_idx *=  FLUID_MIXER_MAX_BUFFERS_DEFAULT * FLUID_BUFSIZE;
             }
 
             for(i = 0; i < sample_count; i += FLUID_BUFSIZE, samp_idx += FLUID_BUFSIZE)
@@ -769,6 +773,16 @@ new_fluid_rvoice_mixer(int buf_count, int fx_buf_count, int fx_units,
             FLUID_LOG(FLUID_ERR, "Out of memory");
             goto error_recovery;
         }
+
+        /* Map this unit fx unit to a dry buffer index by default.
+           -First set shadow value (to_out) here so that it will be returned
+            if queried.
+           -Then initialize internal value (mapping_to_ou)t directly, instead
+            of pushing it in the ring buffer. This is safe because here we
+            are in the mixer creation and the mixer is not yet used by
+            audio synthesis and rendering functions.
+        */
+        mixer->fx[i].to_out = mixer->fx[i].mapping_to_out = i % buf_count;
     }
 
     if(!fluid_mixer_buffers_init(&mixer->buffers, mixer))
