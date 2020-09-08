@@ -7527,6 +7527,8 @@ fluid_synth_mixer_set_mapping(fluid_synth_t *synth,
                                int chan_to_fx,  int fx_from_chan,
                                int chanfx_to_out, int out_from_fx)
 {
+    int result = FLUID_OK;
+
     fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
     fluid_synth_api_enter(synth);
 
@@ -7568,29 +7570,21 @@ fluid_synth_mixer_set_mapping(fluid_synth_t *synth,
         int fxunit_idx; /* fx input which is actually mapped to chanfx_to_out*/
 
         /* check chanfx_to_out and out_from_fx */
-        if((chanfx_to_out >= synth->midi_channels)
-           ||(out_from_fx < 0)
-           ||(out_from_fx >= synth->audio_groups))
+        if(chanfx_to_out >= synth->midi_channels)
         {
             FLUID_API_RETURN(FLUID_FAILED);
         }
         /* get fx unit actually mapped to chanfx_fx_to out */
         fxunit_idx = synth->channel[chanfx_to_out]->mapping_to_fx;
 
-        /* check if any fx unit has been mapped to chanfx_to_out */
-        if (fxunit_idx < 0)
-        {
-            FLUID_API_RETURN(FLUID_FAILED);
-        }
-
         /* Mapping beetwen fx unit output and audio dry output
            at index index out_from_fx.
         */
-        fluid_rvoice_mixer_set_fx_out_mapping(synth->eventhandler->mixer,
-                                             fxunit_idx, out_from_fx);
+        result = fluid_rvoice_mixer_set_fx_out_mapping(synth->eventhandler->mixer,
+                                                       fxunit_idx, out_from_fx);
     }
 
-    FLUID_API_RETURN(FLUID_OK);
+    FLUID_API_RETURN(result);
 }
 
 /**
