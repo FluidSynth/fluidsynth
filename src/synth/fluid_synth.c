@@ -7508,7 +7508,7 @@ fluid_synth_mixer_get_mapping(fluid_synth_t *synth,
 * @param fx_from_chan, fx unit input index to map to chan_to_fx.
 *  Must be in the range (-1 to synth->effects_groups-1).
 *
-* 3)Mapping beetwen fx unit output (which is mapped to chanfx_to_out) and
+* 3)Mapping between fx unit output (which is mapped to chanfx_to_out) and
 *   audio dry output at index index out_from_fx. If chanfx_to_out is -1,
 *   this mapping is ignored.
 *
@@ -7577,7 +7577,7 @@ fluid_synth_mixer_set_mapping(fluid_synth_t *synth,
         /* get fx unit actually mapped to chanfx_fx_to out */
         fxunit_idx = synth->channel[chanfx_to_out]->mapping_to_fx;
 
-        /* Mapping beetwen fx unit output and audio dry output
+        /* Mapping between fx unit output and audio dry output
            at index index out_from_fx.
         */
         result = fluid_rvoice_mixer_set_fx_out_mapping(synth->eventhandler->mixer,

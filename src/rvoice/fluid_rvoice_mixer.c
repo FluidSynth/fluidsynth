@@ -849,12 +849,12 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_fx_set_mapping)
 }
 
 /**
-* Set mapping beetwen fx unit and audio dry output at index out_from_fx.
+* Set mapping between fx unit and audio dry output at index out_from_fx.
 * @param mixer.
 * @param fxunit_idx, index of fx unit to which out_from_fx must be mapped.
 *  must be in the range (0 to mixer->fx_units-1).
 * @param out_from_fx, dry output index to map to fx unit.
-*  must be in the rage (0 to mixer->buffers.buf_count-1).
+*  must be in the range (0 to mixer->buffers.buf_count-1).
 * @return FLUID_OK if success, FLUID_FAILED otherwise.
 */
 int
