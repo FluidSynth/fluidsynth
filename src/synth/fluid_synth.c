@@ -7468,15 +7468,8 @@ fluid_synth_mixer_get_mapping(fluid_synth_t *synth,
     {
         /*fx unit mapped to chan */
         int fxunit_idx = synth->channel[chan]->mapping_to_fx;
-        if(fxunit_idx >= 0)
-        {
-            fluid_rvoice_mixer_t *mixer = synth->eventhandler->mixer;
-            *out_from_fx = fluid_rvoice_mixer_get_fx_out_mapping(mixer, fxunit_idx);
-        }
-        else
-        {
-            *out_from_fx = -1; /* there is no fx unit mapped to chan */
-        }
+        fluid_rvoice_mixer_t *mixer = synth->eventhandler->mixer;
+        *out_from_fx = fluid_rvoice_mixer_get_fx_out_mapping(mixer, fxunit_idx);
     }
 
     FLUID_API_RETURN(FLUID_OK);
