@@ -195,6 +195,10 @@ static const fluid_cmd_t fluid_commands[] =
         "chanmap [chan1 chan2..]               Print mapping of all or some MIDI channels"
     },
     {
+        "resetchanmap", "mixer", fluid_handle_resetchanmap,
+        "resetchanmap [chan1 chan2..]          Set default mapping of MIDI channels"
+    },
+    {
         "setchanmapout", "mixer", fluid_handle_setchanmapout,
         "setchanmapout chan0 out0 [chan1 out1..] Set mapping MIDI channel to dry output"
     },
@@ -3420,6 +3424,56 @@ int fluid_handle_chanmap(void *data, int ac, char **av,
     }
 
     return 0;
+}
+
+/*-----------------------------------------------------------------------------
+ resetchanmap
+
+ With no parameter the command set default mapping for all MIDI channels.
+
+ resetchanmap chan0 [chan1 . . .]
+
+ Set default mapping for MIDI channels chan0 chan1 ..
+*/
+int fluid_handle_resetchanmap(void *data, int ac, char **av,
+                              fluid_ostream_t out)
+
+{
+    static const char name_cde[] = "resetchanmap";
+    FLUID_ENTRY_COMMAND(data);
+    fluid_synth_t *synth = handler->synth;
+
+    /* checks channels arguments: chan1 chan2 .... */
+    if(check_channels_arguments(ac, av, out, name_cde) < 0)
+    {
+        return -1;
+    }
+
+    if(ac)
+    {
+        /* resetchanmap chan0 [chan1 . . .] */
+        int i;
+
+        for(i = 0; i < ac; i++)
+        {
+            int chan = atoi(av[i]);
+            int result = fluid_synth_mixer_reset_mapping (synth, chan);
+
+            if(result == FLUID_FAILED)
+            {
+                fluid_ostream_printf(out, "%s: channel %3d, %s", name_cde, chan,
+                                     invalid_arg_msg);
+            }
+        }
+    }
+    else
+    {
+        /* set default mapping for all channels */
+        fluid_synth_mixer_reset_mapping(synth, -1);
+    }
+
+    /* prints result */
+    return fluid_handle_chanmap(data, 0, av, out);
 }
 
 /* type of MIDI channel mapping */

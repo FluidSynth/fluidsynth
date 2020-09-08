@@ -397,6 +397,7 @@ FLUIDSYNTH_API int fluid_synth_mixer_set_mapping(fluid_synth_t *synth,
                          int chan_to_out, int out_from_chan,
                          int chan_to_fx,  int fx_from_chan,
                          int chanfx_to_out, int out_from_fx);
+FLUIDSYNTH_API int fluid_synth_mixer_reset_mapping(fluid_synth_t *synth, int chan);
 
 #ifdef __cplusplus
 }
