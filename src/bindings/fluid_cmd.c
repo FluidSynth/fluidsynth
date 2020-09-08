@@ -189,6 +189,11 @@ static const fluid_cmd_t fluid_commands[] =
         "setbreathmode", "polymono", fluid_handle_setbreathmode,
         "setbreathmode chan poly(1/0) mono(1/0) breath_sync(1/0) [..] Sets breath mode"
     },
+    /* mixer MIDI channel mapping commands */
+    {
+        "chanmap", "mixer", fluid_handle_chanmap,
+        "chanmap [chan1 chan2..]               Print mapping of all or some MIDI channels"
+    },
     /* reverb commands */
     {
         "rev_preset", "reverb", fluid_handle_reverbpreset,
@@ -3325,6 +3330,85 @@ int fluid_handle_setbreathmode(void *data, int ac, char **av,
     return 0;
 }
 
+/**  commands mixer MIDI channels mapping ************************************/
+/*-----------------------------------------------------------------------------
+  Print MIDI channel mapping for command: chanmap, resetchanmap
+
+  Examples:
+  chanmap
+
+  Print mapping for all MIDI channels
+
+  channel    , to out, to fx, to out
+  channel:  0,      0,     0,      1
+  channel:  1,      1,     1,      0
+  ..
+  ..
+
+  chanmap chan0 [chan1 ..]
+
+  Prints only mapping for MIDI channels chan0, chan1, ..
+
+  @param synth the synth instance.
+  @param ac, count of argument in av.
+  @param av, table of arguments.
+  @param out output stream.
+*/
+int fluid_handle_chanmap(void *data, int ac, char **av,
+                              fluid_ostream_t out)
+{
+    static const char header[] ="Channel    , to out, to fx, to out\n";
+    static const char name_cde[] = "chanmap";
+    FLUID_ENTRY_COMMAND(data);
+    fluid_synth_t *synth = handler->synth;
+
+    int i, n, n_chan = synth->midi_channels;
+
+    /* checks parameters: 	chan1 chan2 .... */
+    if(check_channels_arguments(ac, av, out, name_cde) < 0)
+    {
+        return -1;
+    }
+
+    if(ac)
+    {
+        n = ac; /* prints ac MIDI channels number */
+    }
+    else
+    {
+        n = n_chan; /* prints all MIDI channels number */
+    }
+
+    /* prints header */
+    fluid_ostream_printf(out, header);
+
+    for(i = 0; i < n; i++)
+    {
+        int out_from_chan, fx_from_chan, out_from_fx;
+        int chan = ac ? atoi(av[i]) : i;
+        int result = fluid_synth_mixer_get_mapping(synth, chan, &out_from_chan,
+                                                   &fx_from_chan,
+                                                   &out_from_fx);
+
+        if(result == FLUID_OK)
+        {
+            fluid_ostream_printf(out,
+                                 "channel:%3d,%7d,%6d,%7d\n",
+                                  chan, out_from_chan, fx_from_chan, out_from_fx);
+        }
+        else
+        {
+            print_channel_is_outside_count(out, name_cde, chan, n_chan);
+
+            if(i < n - 1)
+            {
+                fluid_ostream_printf(out, header);
+            }
+        }
+    }
+
+    return 0;
+}
 
 #ifdef LADSPA
 

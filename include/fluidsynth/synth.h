@@ -389,6 +389,10 @@ FLUIDSYNTH_API int fluid_synth_set_breath_mode(fluid_synth_t *synth,
 FLUIDSYNTH_API int fluid_synth_get_breath_mode(fluid_synth_t *synth,
         int chan, int  *breathmode);
 
+/* API: Mixer MIDI channels mapping */
+FLUIDSYNTH_API int fluid_synth_mixer_get_mapping(fluid_synth_t *synth,
+                         int chan, int *out_from_chan, int *fx_from_chan,
+                         int *out_from_fx);
 
 #ifdef __cplusplus
 }

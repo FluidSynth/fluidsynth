@@ -103,6 +103,8 @@ int fluid_handle_breathmode(void *data, int ac, char **av, fluid_ostream_t out);
 int fluid_handle_setbreathmode(void *data, int ac, char **av, fluid_ostream_t out);
 int fluid_handle_sleep(void *data, int ac, char **av, fluid_ostream_t out);
 
+int fluid_handle_chanmap(void *data, int ac, char **av,fluid_ostream_t out);
+
 #ifdef LADSPA
 int fluid_handle_ladspa_effect(void *data, int ac, char **av, fluid_ostream_t out);
 int fluid_handle_ladspa_link(void *data, int ac, char **av, fluid_ostream_t out);

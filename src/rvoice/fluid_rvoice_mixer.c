@@ -816,6 +816,18 @@ error_recovery:
     return NULL;
 }
 
+/**
+* Return the dry output index mapped to a fx unit
+* @param mixer
+* @fxunit_idx, index of fx unit to get dry output index from.
+* @return the dry output index.
+*/
+int
+fluid_rvoice_mixer_get_fx_out_mapping(fluid_rvoice_mixer_t *mixer, int fxunit_idx)
+{
+    return mixer->fx[fxunit_idx].to_out;
+}
+
 static void
 fluid_mixer_buffers_free(fluid_mixer_buffers_t *buffers)
 {
