@@ -3530,7 +3530,7 @@ static int fluid_setchanmap(void *data, int ac, char **av,
             int val;
         }chan_val[NBR_MAPPING_TYPE] ={-1,0,-1,0,-1,0}; /* set all chan parameter to -1*/
         int chan, val, result;
-        chan_val[map_type].chan = chan = atoi(av[(i * 2)]);
+        chan_val[map_type].chan = chan = atoi(av[i * 2]);
         chan_val[map_type].val = val = atoi(av[(i * 2) + 1]);
 
         /* set mapping */
