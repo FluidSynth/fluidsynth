@@ -819,13 +819,22 @@ error_recovery:
 /**
 * Return the dry output index mapped to a fx unit
 * @param mixer
-* @fxunit_idx, index of fx unit to get dry output index from.
-* @return the dry output index.
+* @param fxunit_idx, index of fx unit to get dry output index from.
+*  must be in the range (0 to mixer->fx_units-1).
+* @return the dry output index. -1 if fxunit_idx is out of range.
 */
 int
 fluid_rvoice_mixer_get_fx_out_mapping(fluid_rvoice_mixer_t *mixer, int fxunit_idx)
 {
-    return mixer->fx[fxunit_idx].to_out;
+    /* check fxunit_idx */
+    if((fxunit_idx < 0) || (fxunit_idx >= mixer->fx_units))
+    {
+        return -1;
+    }
+    else
+    {
+        return mixer->fx[fxunit_idx].to_out;
+    }
 }
 
 /*
