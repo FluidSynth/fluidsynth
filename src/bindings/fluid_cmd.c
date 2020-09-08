@@ -194,6 +194,10 @@ static const fluid_cmd_t fluid_commands[] =
         "chanmap", "mixer", fluid_handle_chanmap,
         "chanmap [chan1 chan2..]               Print mapping of all or some MIDI channels"
     },
+    {
+        "setchanmapout", "mixer", fluid_handle_setchanmapout,
+        "setchanmapout chan0 out0 [chan1 out1..] Set mapping MIDI channel to dry output"
+    },
     /* reverb commands */
     {
         "rev_preset", "reverb", fluid_handle_reverbpreset,
@@ -3408,6 +3412,92 @@ int fluid_handle_chanmap(void *data, int ac, char **av,
     }
 
     return 0;
+}
+
+/* type of MIDI channel mapping */
+enum channel_mapping_type
+{
+    MAP_CHAN_TO_OUT,   /* mapping between MIDI channel and dry output index */
+    MAP_CHAN_TO_FX,    /* mappping between MIDI channel and fx input index */
+    MAP_CHANFX_TO_OUT, /* mapping between FX output and dry output index */
+    NBR_MAPPING_TYPE
+};
+
+/*-----------------------------------------------------------------------------
+  Set a mapping to a MIDI channel
+  @param map_type type of mapping to set (see channel_mapping_type enum)
+   (MAP_CHAN_TO_OUT) Any MIDI channels mapped to any audio dry buffers:
+       setchanmapout chan0 out0 [chan1 out1 .. ..]
+
+   (MAP_CHAN_TO_FX) Any MIDI channel mapped to any fx unit input:
+       setchanmapfx chan0 fx0 [chan1 fx1 .. ..]
+
+   (MAP_CHANFX_TO_OUT) Any unit fx output mapped to any audio dry buffers:
+       setchanfxmapout chanfx0 out0 [chanfx1 out1 .. ..]
+*/
+static int fluid_setchanmap(void *data, int ac, char **av,
+                            fluid_ostream_t out, int map_type)
+{
+    static const char *name_cde[NBR_MAPPING_TYPE] =
+    {"setchanmapout", "setchanmapfx", "setchanfxmapout"};
+    static const char *too_few_arg_chan_map_msg[NBR_MAPPING_TYPE] =
+    {
+        "too few argument, chan out [chan out]...\n",
+        "too few argument, chan fx [chan fx]...\n",
+        "too few argument, chanfx out [chanfx out]...\n"
+    };
+
+    FLUID_ENTRY_COMMAND(data);
+    fluid_synth_t *synth = handler->synth;
+    int i, n ;
+
+    /* checks channels arguments by group of 2: chan1 val1 chan2 val1 ..  ..*/
+    if(check_channels_group_arguments(ac, av, 2, out, name_cde[map_type],
+                                      too_few_arg_chan_map_msg[map_type]) < 0)
+    {
+        return -1;
+    }
+
+    n = ac / 2; /* number of groups information */
+
+    for(i = 0; i < n; i++)
+    {
+        struct
+        {
+            int chan;
+            int val;
+        }chan_val[NBR_MAPPING_TYPE] ={-1,0,-1,0,-1,0}; /* set all chan parameter to -1*/
+        int chan, val, result;
+        chan_val[map_type].chan = chan = atoi(av[(i * 2)]);
+        chan_val[map_type].val = val = atoi(av[(i * 2) + 1]);
+
+        /* set mapping */
+        result = fluid_synth_mixer_set_mapping(synth,
+                                               chan_val[MAP_CHAN_TO_OUT].chan,
+                                               chan_val[MAP_CHAN_TO_OUT].val,
+                                               chan_val[MAP_CHAN_TO_FX].chan,
+                                               chan_val[MAP_CHAN_TO_FX].val,
+                                               chan_val[MAP_CHANFX_TO_OUT].chan,
+                                               chan_val[MAP_CHAN_TO_OUT].val);
+        if(result == FLUID_FAILED)
+        {
+            fluid_ostream_printf(out, "%s: channel %3d, map to %3d, %s",
+                                 name_cde[map_type], chan, val, invalid_arg_msg);
+        }
+    }
+
+    return 0;
+}
+
+/*-----------------------------------------------------------------------------
+  setchanmapout chan0 out0 [chan1 out1 .. ..]
+
+  Set a mapping between a MIDI channel and a dry output index
+*/
+int fluid_handle_setchanmapout(void *data, int ac, char **av,
+                               fluid_ostream_t out)
+{
+    return fluid_setchanmap(data, ac, av, out, MAP_CHAN_TO_OUT);
 }
 
 #ifdef LADSPA

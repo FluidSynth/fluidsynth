@@ -828,6 +828,46 @@ fluid_rvoice_mixer_get_fx_out_mapping(fluid_rvoice_mixer_t *mixer, int fxunit_id
     return mixer->fx[fxunit_idx].to_out;
 }
 
+/*
+  Set internal mapping from a fx unit output to a dry buffer index.
+*/
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_fx_set_mapping)
+{
+    fluid_mixer_fx_t *fx = obj;       /* array of fx unit */
+    int fxunit_idx = param[0].i;      /* fx unit index */
+    int out_from_fx = param[1].i;     /* index of dry output buffer*/
+    fx[fxunit_idx].mapping_to_out = out_from_fx;
+}
+
+/**
+* Set mapping beetwen fx unit and audio dry output at index out_from_fx.
+* @param mixer.
+* @fxunit_idx, index of fx unit to which out_from_fx must be mapped.
+* @out_from_fx, dry output index to map to fx unit.
+*/
+void fluid_rvoice_mixer_set_fx_out_mapping(fluid_rvoice_mixer_t *mixer,
+                                           int fxunit_idx, int out_from_fx)
+{
+    fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
+
+    /* get fx unit */
+    fluid_mixer_fx_t *fx = mixer->fx;
+
+    /*
+      - First set shadow out_from_fx value here so that it will be returned
+        if queried.
+      - Then set the mapping value through the ring buffer.
+    */
+    fx[fxunit_idx].to_out = out_from_fx; /* shadow value */
+
+    /* Set the mapping through the ring buffer. */
+    param[0].i = fxunit_idx; /* fx unit index */
+    param[1].i = out_from_fx; /* dry output index */
+    fluid_rvoice_eventhandler_push(mixer->eventhandler,
+                                   fluid_rvoice_mixer_fx_set_mapping,
+                                   fx, param);
+}
+
 static void
 fluid_mixer_buffers_free(fluid_mixer_buffers_t *buffers)
 {
