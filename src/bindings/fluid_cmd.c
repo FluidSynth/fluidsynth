@@ -202,6 +202,10 @@ static const fluid_cmd_t fluid_commands[] =
         "setchanmapfx", "mixer", fluid_handle_setchanmapfx,
         "setchanmapfx chan0 out0 [chan1 out1..]  Set mapping MIDI channel to fx unit"
     },
+    {
+        "setchanfxmapout", "mixer", fluid_handle_setchanfxmapout,
+        "setchanfxmapout chan0 out0 [chan1 out1..] Set mapping fx unit to dry output"
+    },
     /* reverb commands */
     {
         "rev_preset", "reverb", fluid_handle_reverbpreset,
@@ -3482,7 +3486,7 @@ static int fluid_setchanmap(void *data, int ac, char **av,
                                                chan_val[MAP_CHAN_TO_FX].chan,
                                                chan_val[MAP_CHAN_TO_FX].val,
                                                chan_val[MAP_CHANFX_TO_OUT].chan,
-                                               chan_val[MAP_CHAN_TO_OUT].val);
+                                               chan_val[MAP_CHANFX_TO_OUT].val);
         if(result == FLUID_FAILED)
         {
             fluid_ostream_printf(out, "%s: channel %3d, map to %3d, %s",
@@ -3515,6 +3519,16 @@ int fluid_handle_setchanmapfx(void *data, int ac, char **av,
     return fluid_setchanmap(data, ac, av, out, MAP_CHAN_TO_FX);
 }
 
+/*-----------------------------------------------------------------------------
+  setchanfxmapout chanfx0 out0 [chanfx1 out1 .. ..]
+
+  Set a mapping between fx unit (actually mapped to chanfx) and dry output index.
+*/
+int fluid_handle_setchanfxmapout(void *data, int ac, char **av,
+                                 fluid_ostream_t out)
+{
+    return fluid_setchanmap(data, ac, av, out, MAP_CHANFX_TO_OUT);
+}
 
 #ifdef LADSPA
 

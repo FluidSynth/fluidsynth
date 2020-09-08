@@ -859,7 +859,6 @@ void fluid_rvoice_mixer_set_fx_out_mapping(fluid_rvoice_mixer_t *mixer,
       - Then set the mapping value through the ring buffer.
     */
     fx[fxunit_idx].to_out = out_from_fx; /* shadow value */
-
     /* Set the mapping through the ring buffer. */
     param[0].i = fxunit_idx; /* fx unit index */
     param[1].i = out_from_fx; /* dry output index */

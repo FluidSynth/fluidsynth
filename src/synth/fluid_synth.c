@@ -7576,6 +7576,7 @@ fluid_synth_mixer_set_mapping(fluid_synth_t *synth,
 
         /* check chanfx_to_out and out_from_fx */
         if((chanfx_to_out >= synth->midi_channels)
+           ||(out_from_fx < 0)
            ||(out_from_fx >= synth->audio_groups))
         {
             FLUID_API_RETURN(FLUID_FAILED);
