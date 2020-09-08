@@ -192,23 +192,23 @@ static const fluid_cmd_t fluid_commands[] =
     /* mixer MIDI channel mapping commands */
     {
         "chanmap", "mixer", fluid_handle_chanmap,
-        "chanmap [chan1 chan2..]               Print mapping of all or some MIDI channels"
+        "chanmap [chan1 chan2..]                   Print all or some MIDI channels mapping"
     },
     {
         "resetchanmap", "mixer", fluid_handle_resetchanmap,
-        "resetchanmap [chan1 chan2..]          Set default mapping of MIDI channels"
+        "resetchanmap [chan1 chan2..]              Set MIDI channels default mapping "
     },
     {
         "setchanmapout", "mixer", fluid_handle_setchanmapout,
-        "setchanmapout chan0 out0 [chan1 out1..] Set mapping MIDI channel to dry output"
+        "setchanmapout chan0 out0 [chan1 out1..]   Set MIDI channels mapping to dry output"
     },
     {
         "setchanmapfx", "mixer", fluid_handle_setchanmapfx,
-        "setchanmapfx chan0 out0 [chan1 out1..]  Set mapping MIDI channel to fx unit"
+        "setchanmapfx chan0 out0 [chan1 out1..]    Set MIDI channels mapping to fx unit"
     },
     {
         "setchanfxmapout", "mixer", fluid_handle_setchanfxmapout,
-        "setchanfxmapout chan0 out0 [chan1 out1..] Set mapping fx unit to dry output"
+        "setchanfxmapout chan0 out0 [chan1 out1..] Set fx unit mapping to dry output"
     },
     /* reverb commands */
     {
@@ -3378,7 +3378,7 @@ int fluid_handle_chanmap(void *data, int ac, char **av,
     FLUID_ENTRY_COMMAND(data);
     fluid_synth_t *synth = handler->synth;
 
-    int i, n, n_chan = synth->midi_channels;
+    int i, n, n_chan = fluid_synth_count_midi_channels(synth);
 
     /* checks parameters: 	chan1 chan2 .... */
     if(check_channels_arguments(ac, av, out, name_cde) < 0)
