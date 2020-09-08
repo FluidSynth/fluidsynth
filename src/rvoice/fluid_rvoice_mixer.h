@@ -40,9 +40,8 @@ int fluid_rvoice_mixer_get_active_voices(fluid_rvoice_mixer_t *mixer);
 fluid_rvoice_mixer_t *new_fluid_rvoice_mixer(int buf_count, int fx_buf_count, int fx_units,
         fluid_real_t sample_rate_max, fluid_real_t sample_rate,
         fluid_rvoice_eventhandler_t *, int, int);
-int
-fluid_rvoice_mixer_get_fx_out_mapping(fluid_rvoice_mixer_t *mixer, int fxunit_idx);
-void fluid_rvoice_mixer_set_fx_out_mapping(fluid_rvoice_mixer_t *mixer,
+int fluid_rvoice_mixer_get_fx_out_mapping(fluid_rvoice_mixer_t *mixer, int fxunit_idx);
+int fluid_rvoice_mixer_set_fx_out_mapping(fluid_rvoice_mixer_t *mixer,
                                            int fxunit_idx, int out_from_fx);
 
 void delete_fluid_rvoice_mixer(fluid_rvoice_mixer_t *);

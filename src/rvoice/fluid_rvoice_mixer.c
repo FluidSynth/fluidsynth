@@ -842,16 +842,27 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_fx_set_mapping)
 /**
 * Set mapping beetwen fx unit and audio dry output at index out_from_fx.
 * @param mixer.
-* @fxunit_idx, index of fx unit to which out_from_fx must be mapped.
-* @out_from_fx, dry output index to map to fx unit.
+* @param fxunit_idx, index of fx unit to which out_from_fx must be mapped.
+*  must be in the range (0 to mixer->fx_units-1).
+* @param out_from_fx, dry output index to map to fx unit.
+*  must be in the rage (0 to mixer->buffers.buf_count-1).
+* @return FLUID_OK if success, FLUID_FAILED otherwise.
 */
-void fluid_rvoice_mixer_set_fx_out_mapping(fluid_rvoice_mixer_t *mixer,
-                                           int fxunit_idx, int out_from_fx)
+int
+fluid_rvoice_mixer_set_fx_out_mapping(fluid_rvoice_mixer_t *mixer,
+                                      int fxunit_idx, int out_from_fx)
 {
     fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
+    fluid_mixer_fx_t *fx;
 
+    /* check fxunit_idx and out_from_fx */
+    if((fxunit_idx < 0) || (fxunit_idx >= mixer->fx_units)
+       || (out_from_fx < 0) || (out_from_fx >= mixer->buffers.buf_count))
+    {
+        return FLUID_FAILED;
+    }
     /* get fx unit */
-    fluid_mixer_fx_t *fx = mixer->fx;
+    fx = mixer->fx;
 
     /*
       - First set shadow out_from_fx value here so that it will be returned
@@ -865,6 +876,7 @@ void fluid_rvoice_mixer_set_fx_out_mapping(fluid_rvoice_mixer_t *mixer,
     fluid_rvoice_eventhandler_push(mixer->eventhandler,
                                    fluid_rvoice_mixer_fx_set_mapping,
                                    fx, param);
+    return FLUID_OK;
 }
 
 static void
