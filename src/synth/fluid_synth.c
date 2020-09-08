@@ -7647,12 +7647,12 @@ fluid_synth_mixer_reset_mapping(fluid_synth_t *synth, int chan)
         int fxunit_idx = chan % synth->effects_groups;
         synth->channel[chan]->mapping_to_out = chan % synth->audio_groups;
         synth->channel[chan]->mapping_to_fx = fxunit_idx;
-       /* default mapping between fxunit_idx (which is mapped to chan)
-          and audio dry output.
-       */
-       fluid_rvoice_mixer_set_fx_out_mapping(synth->eventhandler->mixer,
-                                             fxunit_idx,
-                                             fxunit_idx % synth->audio_groups);
+        /* default mapping between fxunit_idx (which is mapped to chan)
+           and audio dry output.
+        */
+        fluid_rvoice_mixer_set_fx_out_mapping(synth->eventhandler->mixer,
+                                              fxunit_idx,
+                                              fxunit_idx % synth->audio_groups);
     }
 
     FLUID_API_RETURN(FLUID_OK);
