@@ -824,7 +824,7 @@ error_recovery:
 * @return the dry output index. -1 if fxunit_idx is out of range.
 */
 int
-fluid_rvoice_mixer_get_fx_out_mapping(fluid_rvoice_mixer_t *mixer, int fxunit_idx)
+fluid_rvoice_mixer_get_fx_out_mapping(const fluid_rvoice_mixer_t *mixer, int fxunit_idx)
 {
     /* check fxunit_idx */
     if((fxunit_idx < 0) || (fxunit_idx >= mixer->fx_units))
@@ -858,7 +858,7 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_fx_set_mapping)
 * @return FLUID_OK if success, FLUID_FAILED otherwise.
 */
 int
-fluid_rvoice_mixer_set_fx_out_mapping(fluid_rvoice_mixer_t *mixer,
+fluid_rvoice_mixer_set_fx_out_mapping(const fluid_rvoice_mixer_t *mixer,
                                       int fxunit_idx, int out_from_fx)
 {
     fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
