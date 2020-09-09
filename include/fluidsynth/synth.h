@@ -137,6 +137,18 @@ FLUIDSYNTH_API double fluid_synth_get_reverb_damp(fluid_synth_t *synth);
 FLUIDSYNTH_API double fluid_synth_get_reverb_level(fluid_synth_t *synth);
 FLUIDSYNTH_API double fluid_synth_get_reverb_width(fluid_synth_t *synth);
 
+FLUIDSYNTH_API int fluid_synth_set_reverb2(fluid_synth_t *synth, int fxunit_idx,
+        double roomsize, double damping, double width, double level);
+FLUIDSYNTH_API int fluid_synth_set_reverb_roomsize2(fluid_synth_t *synth, int fxunit_idx, double roomsize);
+FLUIDSYNTH_API int fluid_synth_set_reverb_damp2(fluid_synth_t *synth, int fxunit_idx, double damping);
+FLUIDSYNTH_API int fluid_synth_set_reverb_width2(fluid_synth_t *synth, int fxunit_idx, double  width);
+FLUIDSYNTH_API int fluid_synth_set_reverb_level2(fluid_synth_t *synth, int fxunit_idx, double level);
+
+FLUIDSYNTH_API double fluid_synth_get_reverb_roomsize2(fluid_synth_t *synth, int fxunit_idx);
+FLUIDSYNTH_API double fluid_synth_get_reverb_damp2(fluid_synth_t *synth, int fxunit_idx);
+FLUIDSYNTH_API double fluid_synth_get_reverb_level2(fluid_synth_t *synth, int fxunit_idx);
+FLUIDSYNTH_API double fluid_synth_get_reverb_width2(fluid_synth_t *synth, int fxunit_idx);
+
 
 /* Chorus */
 

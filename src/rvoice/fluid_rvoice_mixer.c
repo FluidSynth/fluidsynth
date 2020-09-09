@@ -1201,8 +1201,19 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_reverb_params)
     fluid_real_t width = param[3].real;
     fluid_real_t level = param[4].real;
 
-    int i;
-    for(i = 0; i < mixer->fx_units; i++)
+    int i = param[5].i; /* fx unit index */
+    int nr_units = mixer->fx_units;
+    /* does parameters change should be applied only to fx unit i ? */
+    if(i >= 0)
+    {
+        nr_units = i + 1; /* parameters change must be applied to fx unit i */
+    }
+    else
+    {
+        i = 0; /* parameters change must be applied to all fx unit */
+    }
+
+    for(i = 0; i < nr_units; i++)
     {
         fluid_revmodel_set(mixer->fx[i].reverb, set, roomsize, damping, width, level);
     }

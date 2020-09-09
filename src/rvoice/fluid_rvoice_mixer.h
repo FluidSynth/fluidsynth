@@ -43,6 +43,15 @@ fluid_rvoice_mixer_t *new_fluid_rvoice_mixer(int buf_count, int fx_buf_count, in
 
 void delete_fluid_rvoice_mixer(fluid_rvoice_mixer_t *);
 
+int
+fluid_rvoice_mixer_set_reverb_full(const fluid_rvoice_mixer_t *mixer,
+                                   int fxunit_idx, int set,
+                                   double roomsize, double damping,
+                                   double width, double level);
+double
+fluid_rvoice_mixer_get_reverb_param(const fluid_rvoice_mixer_t *mixer,
+                                    int fxunit_idx, int get);
+
 
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_add_voice);
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_samplerate);
