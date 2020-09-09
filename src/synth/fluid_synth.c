@@ -5981,12 +5981,7 @@ fluid_synth_set_chorus_full(fluid_synth_t *synth, int fxunit_idx, int set, int n
 int
 fluid_synth_get_chorus_nr(fluid_synth_t *synth)
 {
-    int result;
-    fluid_return_val_if_fail(synth != NULL, 0);
-    fluid_synth_api_enter(synth);
-
-    result = synth->chorus_nr;
-    FLUID_API_RETURN(result);
+    return fluid_synth_get_chorus_nr2(synth, -1);
 }
 
 /**
@@ -5997,12 +5992,7 @@ fluid_synth_get_chorus_nr(fluid_synth_t *synth)
 double
 fluid_synth_get_chorus_level(fluid_synth_t *synth)
 {
-    double result;
-    fluid_return_val_if_fail(synth != NULL, 0.0);
-    fluid_synth_api_enter(synth);
-
-    result = synth->chorus_level;
-    FLUID_API_RETURN(result);
+    return fluid_synth_get_chorus_level2(synth, -1);
 }
 
 /**
@@ -6013,12 +6003,7 @@ fluid_synth_get_chorus_level(fluid_synth_t *synth)
 double
 fluid_synth_get_chorus_speed(fluid_synth_t *synth)
 {
-    double result;
-    fluid_return_val_if_fail(synth != NULL, 0.0);
-    fluid_synth_api_enter(synth);
-
-    result = synth->chorus_speed;
-    FLUID_API_RETURN(result);
+    return fluid_synth_get_chorus_speed2(synth, -1);
 }
 
 /**
@@ -6029,12 +6014,7 @@ fluid_synth_get_chorus_speed(fluid_synth_t *synth)
 double
 fluid_synth_get_chorus_depth(fluid_synth_t *synth)
 {
-    double result;
-    fluid_return_val_if_fail(synth != NULL, 0.0);
-    fluid_synth_api_enter(synth);
-
-    result = synth->chorus_depth;
-    FLUID_API_RETURN(result);
+    return fluid_synth_get_chorus_depth2(synth, -1);
 }
 
 /**
@@ -6045,12 +6025,7 @@ fluid_synth_get_chorus_depth(fluid_synth_t *synth)
 int
 fluid_synth_get_chorus_type(fluid_synth_t *synth)
 {
-    int result;
-    fluid_return_val_if_fail(synth != NULL, 0);
-    fluid_synth_api_enter(synth);
-
-    result = synth->chorus_type;
-    FLUID_API_RETURN(result);
+    return fluid_synth_get_chorus_type2(synth, -1);
 }
 
 /**
