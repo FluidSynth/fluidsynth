@@ -1266,19 +1266,15 @@ int
 fluid_handle_chorusnr(void *data, int ac, char **av, fluid_ostream_t out)
 {
     FLUID_ENTRY_COMMAND(data);
-    int nr;
 
-    if(ac < 1)
+    int fxunit_idx = check_fx_unit_idx(ac, av, out, handler->synth, "cho_set_nr");
+    if( fxunit_idx >= 0)
     {
-        fluid_ostream_printf(out, "cho_set_nr: too few arguments.\n");
-        return FLUID_FAILED;
+        int nr = atoi(av[1]);
+        fluid_synth_set_chorus_nr2(handler->synth, fxunit_idx, nr);
+        return FLUID_OK;
     }
-
-    fluid_ostream_printf(out, "cho_set_nr is deprecated! Use 'set synth.chorus.nr %s' instead.\n", av[0]);
-
-    nr = atoi(av[0]);
-    fluid_synth_set_chorus_nr(handler->synth, nr);
-    return FLUID_OK;
+    return FLUID_FAILED;
 }
 
 /* Purpose:
@@ -1287,20 +1283,15 @@ int
 fluid_handle_choruslevel(void *data, int ac, char **av, fluid_ostream_t out)
 {
     FLUID_ENTRY_COMMAND(data);
-    fluid_real_t level;
 
-    if(ac < 1)
+    int fxunit_idx = check_fx_unit_idx(ac, av, out, handler->synth, "cho_set_level");
+    if( fxunit_idx >= 0)
     {
-        fluid_ostream_printf(out, "cho_set_level: too few arguments.\n");
-        return FLUID_FAILED;
+        fluid_real_t level = atof(av[1]);
+        fluid_synth_set_chorus_level2(handler->synth, fxunit_idx, level);
+        return FLUID_OK;
     }
-
-    fluid_ostream_printf(out, "cho_set_level is deprecated! Use 'set synth.chorus.level %s' instead.\n", av[0]);
-
-    level = atof(av[0]);
-    fluid_synth_set_chorus_level(handler->synth, level);
-    return FLUID_OK;
-
+    return FLUID_FAILED;
 }
 
 /* Purpose:
@@ -1309,19 +1300,15 @@ int
 fluid_handle_chorusspeed(void *data, int ac, char **av, fluid_ostream_t out)
 {
     FLUID_ENTRY_COMMAND(data);
-    fluid_real_t speed;
 
-    if(ac < 1)
+    int fxunit_idx = check_fx_unit_idx(ac, av, out, handler->synth, "chofx_set_speed");
+    if( fxunit_idx >= 0)
     {
-        fluid_ostream_printf(out, "cho_set_speed: too few arguments.\n");
-        return FLUID_FAILED;
+        fluid_real_t speed = atof(av[1]);
+        fluid_synth_set_chorus_speed2(handler->synth, fxunit_idx, speed);
+        return FLUID_OK;
     }
-
-    fluid_ostream_printf(out, "cho_set_speed is deprecated! Use 'set synth.chorus.speed %s' instead.\n", av[0]);
-
-    speed = atof(av[0]);
-    fluid_synth_set_chorus_speed(handler->synth, speed);
-    return FLUID_OK;
+    return FLUID_FAILED;
 }
 
 /* Purpose:
@@ -1330,19 +1317,15 @@ int
 fluid_handle_chorusdepth(void *data, int ac, char **av, fluid_ostream_t out)
 {
     FLUID_ENTRY_COMMAND(data);
-    fluid_real_t depth;
 
-    if(ac < 1)
+    int fxunit_idx = check_fx_unit_idx(ac, av, out, handler->synth, "cho_set_depth");
+    if( fxunit_idx >= 0)
     {
-        fluid_ostream_printf(out, "cho_set_depth: too few arguments.\n");
-        return FLUID_FAILED;
+        fluid_real_t depth = atof(av[1]);
+        fluid_synth_set_chorus_depth2(handler->synth, fxunit_idx, depth);
+        return FLUID_OK;
     }
-
-    fluid_ostream_printf(out, "cho_set_depth is deprecated! Use 'set synth.chorus.depth %s' instead.\n", av[0]);
-
-    depth = atof(av[0]);
-    fluid_synth_set_chorus_depth(handler->synth, depth);
-    return FLUID_OK;
+    return FLUID_FAILED;
 }
 
 int

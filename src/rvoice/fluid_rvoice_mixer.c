@@ -1200,9 +1200,6 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_chorus_params)
 
     while(i < nr_units)
     {
-#if 1
-		    printf("chorus unit:%d nr=%d, damp=%f, level=%f, speed=%f, depth=%f, type=%d\n",i, nr, level, speed, depth_ms, type);
-#endif
         fluid_chorus_set(mixer->fx[i++].chorus, set, nr, level, speed, depth_ms, type);
     }
 }
