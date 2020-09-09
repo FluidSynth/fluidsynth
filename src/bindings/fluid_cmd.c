@@ -1086,6 +1086,65 @@ fluid_handle_reverbpreset(void *data, int ac, char **av, fluid_ostream_t out)
     return FLUID_OK;
 }
 
+/*
+  The function is useful for reverb and chorus commands which have
+  2 parameters.
+  - check that there is 2 parameters.
+  - check the first parameter that must be an fx unit index in
+  the range[0..synth->effects_groups-1].
+
+  return the unit index >= 0 , or -1 if error
+*/
+static int check_fx_unit_idx(int ac, char **av, fluid_ostream_t out,
+                             fluid_synth_t *synth, char *name_cde)
+{
+    int fxunit_idx, nfxunits; /* fx unit index, count of fx units */
+
+    if(ac < 2)
+    {
+        fluid_ostream_printf(out, "%s: too few arguments\n", name_cde);
+        return -1;
+    }
+
+    fxunit_idx = atoi(av[0]); /* get fx unit index */
+    nfxunits = fluid_synth_count_effects_groups(synth);
+    if(fxunit_idx < 0 || fxunit_idx >= nfxunits)
+    {
+        fluid_ostream_printf(out, "%s: unit index %d must be in range [%d..%d]\n",
+                             name_cde, fxunit_idx, 0, nfxunits - 1);
+        return -1;
+    }
+    return fxunit_idx;
+}
+
+/*
+  check 2 parameters for reverb commands : unit fx index  , value
+  - unit index must be an interger in the range [0.. synth->effects_groups].
+  - value must be a double in the range [min..max]
+  @param param a pointer on a value to return the second parameter.
+  @return the unit index >= 0 , or -1 if error
+*/
+static int check_fx_reverb_param(int ac, char **av, fluid_ostream_t out,
+                       fluid_synth_t *synth, char *name_cde,
+                       char *name_param,
+                       fluid_real_t *param, fluid_real_t min, fluid_real_t max)
+{
+    int fxunit_idx = check_fx_unit_idx(ac, av, out, synth, name_cde);
+
+    if( fxunit_idx >= 0)
+    {
+        fluid_real_t val = atof(av[1]);
+        if( val < min || val > max)
+        {
+            fluid_ostream_printf(out, "%s: %s %f must be in range [%f..%f]\n",
+                                 name_cde, name_param, val, min, max);
+            return -1;
+        }
+        *param = val;
+    }
+    return fxunit_idx;
+}
+
 /* Purpose:
  * Response to 'rev_setroomsize' command.
  * Load the new room size into the reverb unit. */
@@ -1095,29 +1154,15 @@ fluid_handle_reverbsetroomsize(void *data, int ac, char **av, fluid_ostream_t ou
     FLUID_ENTRY_COMMAND(data);
     fluid_real_t room_size;
 
-    if(ac < 1)
+    int fxunit_idx = check_fx_reverb_param(ac, av, out, handler->synth,
+                                           "rev_setroomsize", "room size",
+                                            &room_size,  0.0, 1.0);
+    if (fxunit_idx < 0)
     {
-        fluid_ostream_printf(out, "rev_setroomsize: too few arguments.\n");
         return FLUID_FAILED;
     }
+    fluid_synth_set_reverb_roomsize2(handler->synth, fxunit_idx, room_size);
 
-    fluid_ostream_printf(out, "rev_setroomsize is deprecated! Use 'set synth.reverb.room-size %s' instead.\n", av[0]);
-
-    room_size = atof(av[0]);
-
-    if(room_size < 0)
-    {
-        fluid_ostream_printf(out, "rev_setroomsize: Room size must be positive!\n");
-        return FLUID_FAILED;
-    }
-
-    if(room_size > 1.0)
-    {
-        fluid_ostream_printf(out, "rev_setroomsize: Room size too big!\n");
-        return FLUID_FAILED;
-    }
-
-    fluid_synth_set_reverb_roomsize(handler->synth, room_size);
     return FLUID_OK;
 }
 
@@ -1130,23 +1175,14 @@ fluid_handle_reverbsetdamp(void *data, int ac, char **av, fluid_ostream_t out)
     FLUID_ENTRY_COMMAND(data);
     fluid_real_t damp;
 
-    if(ac < 1)
+    int fxunit_idx = check_fx_reverb_param(ac, av, out, handler->synth,
+                                           "rev_setdamp", "damp",
+                                           &damp,  0.0, 1.0);
+    if (fxunit_idx < 0)
     {
-        fluid_ostream_printf(out, "rev_setdamp: too few arguments.\n");
         return FLUID_FAILED;
     }
-
-    fluid_ostream_printf(out, "rev_setdamp is deprecated! Use 'set synth.reverb.damp %s' instead.\n", av[0]);
-
-    damp = atof(av[0]);
-
-    if((damp < 0.0f) || (damp > 1))
-    {
-        fluid_ostream_printf(out, "rev_setdamp: damp must be between 0 and 1!\n");
-        return FLUID_FAILED;
-    }
-
-    fluid_synth_set_reverb_damp(handler->synth, damp);
+    fluid_synth_set_reverb_damp2(handler->synth, fxunit_idx, damp);
     return FLUID_OK;
 }
 
@@ -1159,24 +1195,15 @@ fluid_handle_reverbsetwidth(void *data, int ac, char **av, fluid_ostream_t out)
     FLUID_ENTRY_COMMAND(data);
     fluid_real_t width;
 
-    if(ac < 1)
+    int fxunit_idx = check_fx_reverb_param(ac, av, out, handler->synth,
+                                           "rev_setwidth", "width",
+                                           &width,  0.0, 100.0);
+    if (fxunit_idx < 0)
     {
-        fluid_ostream_printf(out, "rev_setwidth: too few arguments.\n");
         return FLUID_FAILED;
     }
-
-    fluid_ostream_printf(out, "rev_setroomsize is deprecated! Use 'set synth.reverb.width %s' instead.\n", av[0]);
-
-    width = atof(av[0]);
-
-    if((width < 0) || (width > 100))
-    {
-        fluid_ostream_printf(out, "rev_setroomsize: Too wide! (0..100)\n");
-        return FLUID_FAILED;
-    }
-
-    fluid_synth_set_reverb_width(handler->synth, width);
-    return FLUID_OK;
+    fluid_synth_set_reverb_width2(handler->synth, fxunit_idx, width);
+	return FLUID_OK;
 }
 
 /* Purpose:
@@ -1188,23 +1215,14 @@ fluid_handle_reverbsetlevel(void *data, int ac, char **av, fluid_ostream_t out)
     FLUID_ENTRY_COMMAND(data);
     fluid_real_t level;
 
-    if(ac < 1)
+    int fxunit_idx = check_fx_reverb_param(ac, av, out, handler->synth,
+                                           "rev_setlevel", "level",
+                                           &level,  0.0, 30.0);
+    if (fxunit_idx < 0)
     {
-        fluid_ostream_printf(out, "rev_setlevel: too few arguments.\n");
         return FLUID_FAILED;
     }
-
-    fluid_ostream_printf(out, "rev_setlevel is deprecated! Use 'set synth.reverb.level %s' instead.\n", av[0]);
-
-    level = atof(av[0]);
-
-    if(fabs(level) > 30)
-    {
-        fluid_ostream_printf(out, "rev_setlevel: Value too high! (Value of 10 =+20 dB)\n");
-        return FLUID_FAILED;
-    }
-
-    fluid_synth_set_reverb_level(handler->synth, level);
+    fluid_synth_set_reverb_level2(handler->synth, fxunit_idx, level);
     return FLUID_OK;
 }
 

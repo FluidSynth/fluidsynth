@@ -1213,9 +1213,9 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_reverb_params)
         i = 0; /* parameters change must be applied to all fx unit */
     }
 
-    for(i = 0; i < nr_units; i++)
+    while(i < nr_units)
     {
-        fluid_revmodel_set(mixer->fx[i].reverb, set, roomsize, damping, width, level);
+        fluid_revmodel_set(mixer->fx[i++].reverb, set, roomsize, damping, width, level);
     }
 }
 
