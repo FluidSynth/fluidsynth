@@ -884,7 +884,7 @@ void delete_fluid_rvoice_mixer(fluid_rvoice_mixer_t *mixer)
  * (see fluid_rvoice_mixer_get_reverb_param())
  *
  * @param mixer that contains all fx units.
- * @param unit_idx index of the fx unit to which parameters must be set.
+ * @param fxunit_idx index of the fx unit to which parameters must be set.
  *  must be in the range [-1..mixer->fx_units[. If -1 the changes are applied to
  *  all fx units.
  * @param set Flags indicating which parameters should be set (#fluid_revmodel_set_t)
@@ -943,13 +943,13 @@ fluid_rvoice_mixer_set_reverb_full(const fluid_rvoice_mixer_t *mixer,
 }
 
 /**
- * get one reverb shadow parameters for one fx unit.
+ * get one reverb shadow parameter for one fx unit.
  * (see fluid_rvoice_mixer_set_reverb_full())
  *
  * @param mixer that contains all fx units.
- * @param unit_idx index of the fx unit to get parameter from.
+ * @param fxunit_idx index of the fx unit to get parameter from.
  *  must be in the range [0..mixer->fx_units[.
- * @param get Flags indicating which parameters to get (#fluid_revmodel_set_t)
+ * @param get Flags indicating which parameter to get (#fluid_revmodel_set_t)
  * @return the parameter value (0.0 is returned if error)
  */
 double
@@ -994,7 +994,7 @@ fluid_rvoice_mixer_get_reverb_param(const fluid_rvoice_mixer_t *mixer,
  * (see fluid_rvoice_mixer_get_chorus_param())
  *
  * @param mixer that contains all fx units.
- * @param unit_idx index of the fx unit to which parameters must be set.
+ * @param fxunit_idx index of the fx unit to which parameters must be set.
  *  must be in the range [-1..mixer->fx_units[. If -1 the changes are applied
  *  to all fx units.
  * Keep in mind, that the needed CPU time is proportional to 'nr'.
@@ -1062,13 +1062,13 @@ fluid_rvoice_mixer_set_chorus_full(const fluid_rvoice_mixer_t *mixer,
 }
 
 /**
- * get one chorus shadow parameters for one fx unit.
+ * get one chorus shadow parameter for one fx unit.
  * (see fluid_rvoice_mixer_set_chorus_full())
  *
  * @param mixer that contains all fx units.
- * @param unit_idx index of the fx unit to get parameter from.
+ * @param fxunit_idx index of the fx unit to get parameter from.
  *  must be in the range [0..mixer->fx_units[.
- * @param get Flags indicating which parameters to get (#fluid_chorus_set_t)
+ * @param get Flags indicating which parameter to get (#fluid_chorus_set_t)
  * @return the parameter value (0.0 is returned if error)
  */
 double

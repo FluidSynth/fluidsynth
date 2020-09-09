@@ -6031,6 +6031,9 @@ fluid_synth_get_chorus_type(fluid_synth_t *synth)
 /**
  * Get chorus voice number (delay line count) value of one fx unit.
  * @param synth FluidSynth instance
+ * @param fxunit_idx index of the fx unit to get chorus voice number from.
+ *  must be in the range [-1..synth->effects_groups[. If -1
+ *  get chorus voice count of all units (same as fluid_synth_get_chorus_nr()).
  * @return Chorus voice count
  */
 int
@@ -6057,6 +6060,9 @@ fluid_synth_get_chorus_nr2(fluid_synth_t *synth, int fxunit_idx)
 /**
  * Get chorus level of one fx unit.
  * @param synth FluidSynth instance
+ * @param fxunit_idx index of the fx unit to get chorus level from.
+ *  must be in the range [-1..synth->effects_groups[. If -1
+ *  get chorus level of all units (same as fluid_synth_get_chorus_level()).
  * @return Chorus level value
  */
 double
@@ -6083,6 +6089,9 @@ fluid_synth_get_chorus_level2(fluid_synth_t *synth, int fxunit_idx)
 /**
  * Get chorus speed in Hz of one fx unit.
  * @param synth FluidSynth instance
+ * @param fxunit_idx index of the fx unit to get chorus speed from.
+ *  must be in the range [-1..synth->effects_groups[. If -1
+ *  get chorus speed of all units (same as fluid_synth_get_chorus_speed()).
  * @return Chorus speed in Hz
  */
 double
@@ -6109,6 +6118,9 @@ fluid_synth_get_chorus_speed2(fluid_synth_t *synth, int fxunit_idx)
 /**
  * Get chorus depth of one fx unit.
  * @param synth FluidSynth instance
+ * @param fxunit_idx index of the fx unit to get chorus depth from.
+ *  must be in the range [-1..synth->effects_groups[. If -1
+ *  get chorus depth of all units (same as fluid_synth_get_chorus_depth()).
  * @return Chorus depth
  */
 double
@@ -6135,6 +6147,9 @@ fluid_synth_get_chorus_depth2(fluid_synth_t *synth, int fxunit_idx)
 /**
  * Get chorus waveform type of one fx unit.
  * @param synth FluidSynth instance
+ * @param fxunit_idx index of the fx unit to get waveform type from.
+ *  must be in the range [-1..synth->effects_groups[. If -1
+ *  get waveform type of all units (same as fluid_synth_get_chorus_type()).
  * @return Chorus waveform type (#fluid_chorus_mod)
  */
 int
