@@ -1605,7 +1605,7 @@ fluid_track_send_events(fluid_track_t *track,
             }
         }
 
-        if(event->type == MIDI_SET_TEMPO)
+        if(event->type == MIDI_SET_TEMPO && player != NULL)
         {
             fluid_player_set_midi_tempo(player, event->param1);
         }
