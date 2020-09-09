@@ -176,6 +176,19 @@ FLUIDSYNTH_API double fluid_synth_get_chorus_speed(fluid_synth_t *synth);
 FLUIDSYNTH_API double fluid_synth_get_chorus_depth(fluid_synth_t *synth);
 FLUIDSYNTH_API int fluid_synth_get_chorus_type(fluid_synth_t *synth); /* see fluid_chorus_mod */
 
+FLUIDSYNTH_API int fluid_synth_set_chorus2(fluid_synth_t *synth, int fxunit_idx, int nr,
+        double level, double speed, double depth_ms, int type);
+FLUIDSYNTH_API int fluid_synth_set_chorus_nr2(fluid_synth_t *synth, int fxunit_idx, int nr);
+FLUIDSYNTH_API int fluid_synth_set_chorus_level2(fluid_synth_t *synth, int fxunit_idx, double level);
+FLUIDSYNTH_API int fluid_synth_set_chorus_speed2(fluid_synth_t *synth, int fxunit_idx, double speed);
+FLUIDSYNTH_API int fluid_synth_set_chorus_depth2(fluid_synth_t *synth, int fxunit_idx, double depth_ms);
+FLUIDSYNTH_API int fluid_synth_set_chorus_type2(fluid_synth_t *synth, int fxunit_idx, int type);
+
+FLUIDSYNTH_API int fluid_synth_get_chorus_nr2(fluid_synth_t *synth, int fxunit_idx);
+FLUIDSYNTH_API double fluid_synth_get_chorus_level2(fluid_synth_t *synth, int fxunit_idx);
+FLUIDSYNTH_API double fluid_synth_get_chorus_speed2(fluid_synth_t *synth, int fxunit_idx);
+FLUIDSYNTH_API double fluid_synth_get_chorus_depth2(fluid_synth_t *synth, int fxunit_idx);
+FLUIDSYNTH_API int fluid_synth_get_chorus_type2(fluid_synth_t *synth, int fxunit_idx);
 
 /* Audio and MIDI channels */
 

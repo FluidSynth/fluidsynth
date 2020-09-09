@@ -223,7 +223,8 @@ int fluid_synth_set_reverb_full(fluid_synth_t *synth, int fxunit_idx, int set,
                                 double roomsize, double damping, double width, double level);
 
 int fluid_synth_reset_chorus(fluid_synth_t *synth);
-int fluid_synth_set_chorus_full(fluid_synth_t *synth, int set, int nr, double level,
+int fluid_synth_set_chorus_full(fluid_synth_t *synth, int fxunit_idx, int set,
+                                int nr, double level,
                                 double speed, double depth_ms, int type);
 
 fluid_sample_timer_t *new_fluid_sample_timer(fluid_synth_t *synth, fluid_timer_callback_t callback, void *data);
