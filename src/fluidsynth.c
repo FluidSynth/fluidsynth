@@ -735,7 +735,6 @@ int main(int argc, char **argv)
             print_configure();
             result = 0;
             goto cleanup;
-            break;
 
         case 'v':
             fluid_settings_setint(settings, "synth.verbose", TRUE);
@@ -754,7 +753,6 @@ int main(int argc, char **argv)
             printf("Unknown option %c\n", optopt);
             print_usage();
             goto cleanup;
-            break;
 
         default:
             printf("?? getopt returned character code 0%o ??\n", c);
@@ -765,7 +763,6 @@ int main(int argc, char **argv)
             printf("Unknown switch '%c'\n", c);
             print_usage();
             goto cleanup;
-            break;
 #endif
         }	/* end of switch statement */
     }	/* end of loop */
