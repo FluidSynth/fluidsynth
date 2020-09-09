@@ -77,7 +77,19 @@ typedef struct _fluid_mixer_fx_t fluid_mixer_fx_t;
 struct _fluid_mixer_fx_t
 {
     fluid_revmodel_t *reverb; /**< Reverb unit */
+    /* reverb shadow parameters here will be returned if queried */
+    double reverb_roomsize;
+    double reverb_damping;
+    double reverb_width;
+    double reverb_level;
+
     fluid_chorus_t *chorus; /**< Chorus unit */
+    /* chorus shadow parameters here will be returned if queried */
+    int chorus_nr;
+    double chorus_level;
+    double chorus_speed;
+    double chorus_depth;
+    int chorus_type;
 };
 
 struct _fluid_rvoice_mixer_t
@@ -866,6 +878,239 @@ void delete_fluid_rvoice_mixer(fluid_rvoice_mixer_t *mixer)
     FLUID_FREE(mixer);
 }
 
+/**
+ * set one or more reverb shadow parameters for one fx unit.
+ * These parameters will be returned if queried.
+ * (see fluid_rvoice_mixer_get_reverb_param())
+ *
+ * @param mixer that contains all fx units.
+ * @param unit_idx index of the fx unit to which parameters must be set.
+ *  must be in the range [-1..mixer->fx_units[. If -1 the changes are applied to
+ *  all fx units.
+ * @param set Flags indicating which parameters should be set (#fluid_revmodel_set_t)
+ * @param roomsize Reverb room size value (0.0-1.2)
+ * @param damping Reverb damping value (0.0-1.0)
+ * @param width Reverb width value (0.0-100.0)
+ * @param level Reverb level value (0.0-1.0)
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ */
+int
+fluid_rvoice_mixer_set_reverb_full(const fluid_rvoice_mixer_t *mixer,
+                                   int fxunit_idx, int set,
+                                   double roomsize, double damping,
+                                   double width, double level)
+{
+    fluid_mixer_fx_t *fx;
+    int nr_units = mixer->fx_units;
+    if(fxunit_idx >= nr_units)
+    {
+        return FLUID_FAILED;
+    }
+
+    if(fxunit_idx >= 0) /* apply parameters to this fx unit only */
+    {
+        nr_units = fxunit_idx + 1;
+    }
+    else /* apply parameters to all fx units */
+    {
+        fxunit_idx = 0;
+    }
+
+    for(fx = mixer->fx; fxunit_idx < nr_units; fxunit_idx++)
+    {
+        if(set & FLUID_REVMODEL_SET_ROOMSIZE)
+        {
+            fx[fxunit_idx].reverb_roomsize = roomsize;
+        }
+
+        if(set & FLUID_REVMODEL_SET_DAMPING)
+        {
+            fx[fxunit_idx].reverb_damping = damping;
+        }
+
+        if(set & FLUID_REVMODEL_SET_WIDTH)
+        {
+            fx[fxunit_idx].reverb_width = width;
+        }
+
+        if(set & FLUID_REVMODEL_SET_LEVEL)
+        {
+            fx[fxunit_idx].reverb_level = level;
+        }
+    }
+
+    return FLUID_OK;
+}
+
+/**
+ * get one reverb shadow parameters for one fx unit.
+ * (see fluid_rvoice_mixer_set_reverb_full())
+ *
+ * @param mixer that contains all fx units.
+ * @param unit_idx index of the fx unit to get parameter from.
+ *  must be in the range [0..mixer->fx_units[.
+ * @param get Flags indicating which parameters to get (#fluid_revmodel_set_t)
+ * @return the parameter value (0.0 is returned if error)
+ */
+double
+fluid_rvoice_mixer_get_reverb_param(const fluid_rvoice_mixer_t *mixer,
+                                    int fxunit_idx, int get)
+{
+    fluid_mixer_fx_t *fx;
+
+    if(fxunit_idx  < 0 || fxunit_idx >= mixer->fx_units)
+    {
+        return 0.0;
+    }
+
+    fx = mixer->fx;
+
+    if(get ==  FLUID_REVMODEL_SET_ROOMSIZE)
+    {
+        return fx[fxunit_idx].reverb_roomsize;
+    }
+
+    if(get == FLUID_REVMODEL_SET_DAMPING)
+    {
+        return fx[fxunit_idx].reverb_damping;
+    }
+
+    if(get == FLUID_REVMODEL_SET_WIDTH)
+    {
+        return fx[fxunit_idx].reverb_width;
+    }
+
+    if(get == FLUID_REVMODEL_SET_LEVEL)
+    {
+        return fx[fxunit_idx].reverb_level;
+    }
+
+    return 0.0;
+}
+
+/**
+ * set one or more chorus shadow parameters for one fx unit.
+ * These parameters will be returned if queried.
+ * (see fluid_rvoice_mixer_get_chorus_param())
+ *
+ * @param mixer that contains all fx units.
+ * @param unit_idx index of the fx unit to which parameters must be set.
+ *  must be in the range [-1..mixer->fx_units[. If -1 the changes are applied
+ *  to all fx units.
+ * Keep in mind, that the needed CPU time is proportional to 'nr'.
+ * @param set Flags indicating which parameters to set (#fluid_chorus_set_t)
+ * @param nr Chorus voice count (0-99, CPU time consumption proportional to
+ *   this value)
+ * @param level Chorus level (0.0-10.0)
+ * @param speed Chorus speed in Hz (0.1-5.0)
+ * @param depth_ms Chorus depth (max value depends on synth sample-rate,
+ *   0.0-21.0 is safe for sample-rate values up to 96KHz)
+ * @param type Chorus waveform type (#fluid_chorus_mod)
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ */
+int
+fluid_rvoice_mixer_set_chorus_full(const fluid_rvoice_mixer_t *mixer,
+                                   int fxunit_idx,
+                                   int set, int nr, double level,
+                                   double speed, double depth_ms, int type)
+{
+    fluid_mixer_fx_t *fx;
+    int nr_units = mixer->fx_units;
+    if(fxunit_idx >= nr_units)
+    {
+        return FLUID_FAILED;
+    }
+
+    if(fxunit_idx >= 0) /* apply parameters to this unit fx only */
+    {
+        nr_units = fxunit_idx + 1;
+    }
+    else /* apply parameters to all fx units*/
+    {
+        fxunit_idx = 0;
+    }
+
+    for(fx = mixer->fx; fxunit_idx < nr_units; fxunit_idx++)
+    {
+        if(set & FLUID_CHORUS_SET_NR)
+        {
+            fx[fxunit_idx].chorus_nr = nr;
+        }
+
+        if(set & FLUID_CHORUS_SET_LEVEL)
+        {
+            fx[fxunit_idx].chorus_level = level;
+        }
+
+        if(set & FLUID_CHORUS_SET_SPEED)
+        {
+            fx[fxunit_idx].chorus_speed = speed;
+        }
+
+        if(set & FLUID_CHORUS_SET_DEPTH)
+        {
+            fx[fxunit_idx].chorus_depth = depth_ms;
+        }
+
+        if(set & FLUID_CHORUS_SET_TYPE)
+        {
+            fx[fxunit_idx].chorus_type = type;
+        }
+    }
+
+    return FLUID_OK;
+}
+
+/**
+ * get one chorus shadow parameters for one fx unit.
+ * (see fluid_rvoice_mixer_set_chorus_full())
+ *
+ * @param mixer that contains all fx units.
+ * @param unit_idx index of the fx unit to get parameter from.
+ *  must be in the range [0..mixer->fx_units[.
+ * @param get Flags indicating which parameters to get (#fluid_chorus_set_t)
+ * @return the parameter value (0.0 is returned if error)
+ */
+double
+fluid_rvoice_mixer_get_chorus_param(const fluid_rvoice_mixer_t *mixer,
+                                    int fxunit_idx, int get)
+{
+    fluid_mixer_fx_t *fx;
+
+    if(fxunit_idx  < 0 || fxunit_idx >= mixer->fx_units)
+    {
+        return 0.0;
+    }
+
+    fx = mixer->fx;
+
+    if(get == FLUID_CHORUS_SET_NR)
+    {
+        return (double)fx[fxunit_idx].chorus_nr;
+    }
+
+    if(get == FLUID_CHORUS_SET_LEVEL)
+    {
+        return fx[fxunit_idx].chorus_level;
+    }
+
+    if(get == FLUID_CHORUS_SET_SPEED)
+    {
+        return fx[fxunit_idx].chorus_speed;
+    }
+
+    if(get == FLUID_CHORUS_SET_DEPTH)
+    {
+        return fx[fxunit_idx].chorus_depth;
+    }
+
+    if(get == FLUID_CHORUS_SET_TYPE)
+    {
+        return (double)fx[fxunit_idx].chorus_type;
+    }
+
+    return 0.0;
+}
 
 #ifdef LADSPA
 /**
