@@ -5597,7 +5597,7 @@ fluid_synth_get_reverb_roomsize(fluid_synth_t *synth)
 }
 
 /**
- * Get reverb damping of all fx unit..
+ * Get reverb damping of all fx unit.
  * @param synth FluidSynth instance
  * @return Reverb damping value (0.0-1.0)
  */
@@ -5608,7 +5608,7 @@ fluid_synth_get_reverb_damp(fluid_synth_t *synth)
 }
 
 /**
- * Get reverb level of all fx unit..
+ * Get reverb level of all fx unit.
  * @param synth FluidSynth instance
  * @return Reverb level value (0.0-1.0)
  */
@@ -5660,7 +5660,7 @@ fluid_synth_get_reverb_roomsize2(fluid_synth_t *synth, int fxunit_idx)
 }
 
 /**
- * Get reverb damping of one fx unit..
+ * Get reverb damping of one fx unit.
  * @param synth FluidSynth instance
  * @param fxunit_idx index of the fx unit to get damping from.
  *  must be in the range [-1..synth->effects_groups[. If -1
@@ -5689,7 +5689,7 @@ fluid_synth_get_reverb_damp2(fluid_synth_t *synth, int fxunit_idx)
 }
 
 /**
- * Get reverb level of one fx unit..
+ * Get reverb level of one fx unit.
  * @param synth FluidSynth instance
  * @param fxunit_idx index of the fx unit to get level from.
  *  must be in the range [-1..synth->effects_groups[. If -1
