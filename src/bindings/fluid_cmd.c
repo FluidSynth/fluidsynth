@@ -196,44 +196,44 @@ static const fluid_cmd_t fluid_commands[] =
     },
     {
         "rev_setroomsize", "reverb", fluid_handle_reverbsetroomsize,
-        "rev_setroomsize num        Change reverb room size"
+        "rev_setroomsize unit num   Set reverb unit room size to num"
     },
     {
         "rev_setdamp", "reverb", fluid_handle_reverbsetdamp,
-        "rev_setdamp num            Change reverb damping"
+        "rev_setdamp unit num       Set reverb unit damping to num"
     },
     {
         "rev_setwidth", "reverb", fluid_handle_reverbsetwidth,
-        "rev_setwidth num           Change reverb width"
+        "rev_setwidth unit num      Set reverb unit width to num"
     },
     {
         "rev_setlevel", "reverb", fluid_handle_reverbsetlevel,
-        "rev_setlevel num           Change reverb level"
+        "rev_setlevel unit num      Set reverb unit level to num"
     },
     {
         "reverb", "reverb", fluid_handle_reverb,
-        "reverb [0|1|on|off]        Turn the reverb on or off"
+        "reverb [0|1|on|off]        Turn all reverb units on or off"
     },
     /* chorus commands */
     {
         "cho_set_nr", "chorus", fluid_handle_chorusnr,
-        "cho_set_nr n               Use n delay lines (default 3)"
+        "cho_set_nr unit n          Set n delay lines (default 3) in unit"
     },
     {
         "cho_set_level", "chorus", fluid_handle_choruslevel,
-        "cho_set_level num          Set output level of each chorus line to num"
+        "cho_set_level unit num     Set chorus unit output level to num"
     },
     {
         "cho_set_speed", "chorus", fluid_handle_chorusspeed,
-        "cho_set_speed num          Set mod speed of chorus to num (Hz)"
+        "cho_set_speed unit num     Set mod speed of chorus unit to num (Hz)"
     },
     {
         "cho_set_depth", "chorus", fluid_handle_chorusdepth,
-        "cho_set_depth num          Set chorus modulation depth to num (ms)"
+        "cho_set_depth unit num     Set unit chorus modulation depth to num (ms)"
     },
     {
         "chorus", "chorus", fluid_handle_chorus,
-        "chorus [0|1|on|off]        Turn the chorus on or off"
+        "chorus [0|1|on|off]        Turn all chorus units on or off"
     },
     {
         "gain", "general", fluid_handle_gain,
@@ -1119,7 +1119,7 @@ static int check_fx_unit_idx(int ac, char **av, fluid_ostream_t out,
 
 /*
   check 2 parameters for reverb commands : unit fx index  , value
-  - unit index must be an interger in the range [0.. synth->effects_groups].
+  - unit index must be an integer in the range [0..synth->effects_groups].
   - value must be a double in the range [min..max]
   @param param a pointer on a value to return the second parameter.
   @return the unit index >= 0 , or -1 if error
@@ -1147,7 +1147,10 @@ static int check_fx_reverb_param(int ac, char **av, fluid_ostream_t out,
 
 /* Purpose:
  * Response to 'rev_setroomsize' command.
- * Load the new room size into the reverb unit. */
+ * Load the new room size into the reverb unit.
+ * Example: rev_setroomzize 0 0.5
+ * load roomsize 0.5 in the reverb unit at index 0
+ */
 int
 fluid_handle_reverbsetroomsize(void *data, int ac, char **av, fluid_ostream_t out)
 {
@@ -1168,7 +1171,10 @@ fluid_handle_reverbsetroomsize(void *data, int ac, char **av, fluid_ostream_t ou
 
 /* Purpose:
  * Response to 'rev_setdamp' command.
- * Load the new damp factor into the reverb unit. */
+ * Load the new damp factor into the reverb unit.
+ * Example: rev_setdamp 1 0.5
+ * load damp 0.5 in the reverb unit at index 1
+ */
 int
 fluid_handle_reverbsetdamp(void *data, int ac, char **av, fluid_ostream_t out)
 {
@@ -1188,7 +1194,10 @@ fluid_handle_reverbsetdamp(void *data, int ac, char **av, fluid_ostream_t out)
 
 /* Purpose:
  * Response to 'rev_setwidth' command.
- * Load the new width into the reverb unit. */
+ * Load the new width into the reverb unit.
+ * Example: rev_setwidth 1 0.5
+ * load width 0.5 in the reverb unit at index 1.
+ */
 int
 fluid_handle_reverbsetwidth(void *data, int ac, char **av, fluid_ostream_t out)
 {
@@ -1208,7 +1217,10 @@ fluid_handle_reverbsetwidth(void *data, int ac, char **av, fluid_ostream_t out)
 
 /* Purpose:
  * Response to 'rev_setlevel' command.
- * Load the new level into the reverb unit. */
+ * Load the new level into the reverb unit.
+ * Example: rev_setlevel 1 0.5
+ * load level 0.5 in the reverb unit at index 1.
+ */
 int
 fluid_handle_reverbsetlevel(void *data, int ac, char **av, fluid_ostream_t out)
 {
@@ -1261,7 +1273,11 @@ fluid_handle_reverb(void *data, int ac, char **av, fluid_ostream_t out)
 
 
 /* Purpose:
- * Response to 'chorus_setnr' command */
+ * Response to 'cho_set_nr' command
+ * Load the new voice count into the chorus unit.
+ * Example: cho_set_nr 1 3
+ * load 3 voices in the chorus unit at index 1.
+ */
 int
 fluid_handle_chorusnr(void *data, int ac, char **av, fluid_ostream_t out)
 {
@@ -1278,7 +1294,10 @@ fluid_handle_chorusnr(void *data, int ac, char **av, fluid_ostream_t out)
 }
 
 /* Purpose:
- * Response to 'chorus_setlevel' command */
+ * Response to 'cho_setlevel' command
+ * Example: cho_set_level 1 3
+ * load level 3 in the chorus unit at index 1.
+ */
 int
 fluid_handle_choruslevel(void *data, int ac, char **av, fluid_ostream_t out)
 {
@@ -1295,7 +1314,10 @@ fluid_handle_choruslevel(void *data, int ac, char **av, fluid_ostream_t out)
 }
 
 /* Purpose:
- * Response to 'chorus_setspeed' command */
+ * Response to 'cho_setspeed' command
+ * Example: cho_set_speed 1 0.1
+ * load speed 0.1 in the chorus unit at index 1.
+ */
 int
 fluid_handle_chorusspeed(void *data, int ac, char **av, fluid_ostream_t out)
 {
@@ -1312,7 +1334,10 @@ fluid_handle_chorusspeed(void *data, int ac, char **av, fluid_ostream_t out)
 }
 
 /* Purpose:
- * Response to 'chorus_setdepth' command */
+ * Response to 'cho_setdepth' command
+ * Example: cho_set_depth 1 0.3
+ * load depth 0.3 in the chorus unit at index 1.
+ */
 int
 fluid_handle_chorusdepth(void *data, int ac, char **av, fluid_ostream_t out)
 {
