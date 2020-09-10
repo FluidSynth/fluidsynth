@@ -902,7 +902,7 @@ fluid_rvoice_mixer_set_reverb_full(const fluid_rvoice_mixer_t *mixer,
 {
     fluid_mixer_fx_t *fx;
     int nr_units = mixer->fx_units;
-    if(fxunit_idx >= nr_units)
+    if(fxunit_idx < -1 || fxunit_idx >= nr_units)
     {
         return FLUID_FAILED;
     }
@@ -1016,7 +1016,7 @@ fluid_rvoice_mixer_set_chorus_full(const fluid_rvoice_mixer_t *mixer,
 {
     fluid_mixer_fx_t *fx;
     int nr_units = mixer->fx_units;
-    if(fxunit_idx >= nr_units)
+    if(fxunit_idx < -1 || fxunit_idx >= nr_units)
     {
         return FLUID_FAILED;
     }
