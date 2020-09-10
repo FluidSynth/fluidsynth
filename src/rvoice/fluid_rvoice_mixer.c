@@ -1178,7 +1178,7 @@ void fluid_rvoice_mixer_set_mix_fx(fluid_rvoice_mixer_t *mixer, int on)
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_chorus_params)
 {
     fluid_rvoice_mixer_t *mixer = obj;
-    int set = param[0].i & 0xff ;  /* get mask in bits [b7..b0]*/
+    int set = param[0].i & FLUID_CHORUS_SET_ALL ;  /* get set mask in bits [b7..b0] */
     int nr = param[1].i;
     fluid_real_t level = param[2].real;
     fluid_real_t speed = param[3].real;
