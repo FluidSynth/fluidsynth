@@ -2775,9 +2775,6 @@ fluid_synth_find_preset(fluid_synth_t *synth, int banknum,
  * @param prognum MIDI program number (0-127)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
-/* FIXME - Currently not real-time safe, due to preset allocation and mutex lock,
- * and may be called from within synthesis context. */
-
 /* As of 1.1.1 prognum can be set to 128 to unset the preset.  Not documented
  * since fluid_synth_unset_program() should be used instead. */
 int
