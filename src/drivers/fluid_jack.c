@@ -609,9 +609,6 @@ new_fluid_jack_audio_driver2(fluid_settings_t *settings, fluid_audio_func_t func
 
     /* connect the ports. */
 
-
-    /* FIXME: should be done by a patchbay application */
-
     /* find some physical ports and connect to them */
     fluid_settings_getint(settings, "audio.jack.autoconnect", &autoconnect);
 
