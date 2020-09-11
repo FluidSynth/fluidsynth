@@ -976,7 +976,7 @@ new_fluid_thread(const char *name, fluid_thread_func_t func, void *data, int pri
 #if OLD_GLIB_THREAD_API
 
     /* Make sure g_thread_init has been called.
-     * FIXME - Probably not a good idea in a shared library,
+     * Probably not a good idea in a shared library,
      * but what can we do *and* remain backwards compatible? */
     if(!g_thread_supported())
     {
