@@ -797,7 +797,7 @@ send_event:
         new_event.param1 = par1;
         new_event.param2 = par2;
 
-        /* FIXME - What should be done on failure?  For now continue to process events, but return failure to caller. */
+        /* On failure, continue to process events, but return failure to caller. */
         if(router->event_handler(router->event_handler_data, &new_event) != FLUID_OK)
         {
             ret_val = FLUID_FAILED;
