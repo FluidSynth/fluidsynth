@@ -224,7 +224,6 @@ delete_fluid_channel(fluid_channel_t *chan)
     FLUID_FREE(chan);
 }
 
-/* FIXME - Calls fluid_channel_init() potentially in synthesis context */
 void
 fluid_channel_reset(fluid_channel_t *chan)
 {
