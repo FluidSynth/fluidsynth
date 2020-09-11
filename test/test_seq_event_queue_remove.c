@@ -46,7 +46,7 @@ void test_remove_events(fluid_sequencer_t *seq, fluid_event_t *evt)
 
     for(i = 0; i < 10000; i++)
     {
-        fluid_event_any_control_change(evt, 0);
+        fluid_event_program_change(evt, 0, 0);
         TEST_SUCCESS(fluid_sequencer_send_at(seq, evt, i, 0));
 
         fluid_event_noteon(evt, 0, 64, 127);
