@@ -252,6 +252,7 @@ fluid_event_program_select(fluid_event_t *evt, int channel,
  * Set a sequencer event to be an any control change event (for internal use).
  * @param evt Sequencer event structure
  * @param channel MIDI channel number
+ * @deprecated This function has been deprecated. It was only meant for internal usage, it should have never been made public. It will be removed in fluidsynth 2.2.0.
  */
 void
 fluid_event_any_control_change(fluid_event_t *evt, int channel)

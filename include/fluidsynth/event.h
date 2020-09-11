@@ -111,7 +111,7 @@ FLUIDSYNTH_API void fluid_event_system_reset(fluid_event_t *evt);
 
 
 /* Only for removing events */
-FLUIDSYNTH_API void fluid_event_any_control_change(fluid_event_t *evt, int channel);
+FLUID_DEPRECATED FLUIDSYNTH_API void fluid_event_any_control_change(fluid_event_t *evt, int channel);
 
 /* Only when unregistering clients */
 FLUIDSYNTH_API void fluid_event_unregistering(fluid_event_t *evt);
