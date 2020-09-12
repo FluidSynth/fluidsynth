@@ -1207,13 +1207,13 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_chorus_params)
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_reverb_params)
 {
     fluid_rvoice_mixer_t *mixer = obj;
-    int set = param[0].i;
-    fluid_real_t roomsize = param[1].real;
-    fluid_real_t damping = param[2].real;
-    fluid_real_t width = param[3].real;
-    fluid_real_t level = param[4].real;
+    int i = param[0].i; /* fx unit index */
+    int set = param[1].i;
+    fluid_real_t roomsize = param[2].real;
+    fluid_real_t damping = param[3].real;
+    fluid_real_t width = param[4].real;
+    fluid_real_t level = param[5].real;
 
-    int i = param[5].i; /* fx unit index */
     int nr_units = mixer->fx_units;
     /* does parameters change should be applied only to fx unit i ? */
     if(i >= 0)

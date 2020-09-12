@@ -5571,12 +5571,12 @@ fluid_synth_set_reverb_full(fluid_synth_t *synth, int fxunit_idx, int set,
         }
 	}
 
-    param[0].i = set;
-    param[1].real = roomsize;
-    param[2].real = damping;
-    param[3].real = width;
-    param[4].real = level;
-    param[5].i = fxunit_idx;
+    param[0].i = fxunit_idx;
+    param[1].i = set;
+    param[2].real = roomsize;
+    param[3].real = damping;
+    param[4].real = width;
+    param[5].real = level;
     /* finally enqueue an rvoice event to the mixer to actual update reverb */
     ret = fluid_rvoice_eventhandler_push(synth->eventhandler,
                                          fluid_rvoice_mixer_set_reverb_params,
