@@ -1179,13 +1179,13 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_chorus_params)
 {
     fluid_rvoice_mixer_t *mixer = obj;
     int set = param[0].i & FLUID_CHORUS_SET_ALL ;  /* get set mask in bits [b7..b0] */
+    int i = param[0].i >> 8;  /* get fx unit index in bits [b15..b8] */
     int nr = param[1].i;
     fluid_real_t level = param[2].real;
     fluid_real_t speed = param[3].real;
     fluid_real_t depth_ms = param[4].real;
     int type = param[5].i;
 
-    int i = param[0].i >> 8;  /* get fx unit index in bits [b15..b8] */
     int nr_units = mixer->fx_units;
 
     /* does parameters must be applied only to fx unit i ? */
