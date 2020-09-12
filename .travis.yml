@@ -2,6 +2,8 @@ language: c
 sudo: false
 os: linux
 dist: focal
+git:
+  depth: false # disable shallow fetch, history is needed by SonarQube
 addons:
   apt:
     update: true
@@ -37,6 +39,13 @@ env:
 
 matrix:
   include:
+    - addons:
+        sonarcloud:
+          organization: "fluidsynth"
+      env:
+        - BW="build-wrapper-linux-x86-64 --out-dir bw-output"
+        - SONARSC="sonar-scanner -Dsonar.cfamily.build-wrapper-output=build/bw-output"
+
     - arch: arm64
       env:
         - CC="gcc-7"
@@ -84,6 +93,7 @@ before_install:
     - echo $PATH
     - echo $MATRIX_EVAL
     - eval "${MATRIX_EVAL}"
+    - echo $SONARSC
 
 before_script:
     - mkdir $HOME/fluidsynth_install/
@@ -91,6 +101,9 @@ before_script:
 
 script:
     - cmake -Werror=dev -DCMAKE_INSTALL_PREFIX=$HOME/fluidsynth_install ${CMAKE_FLAGS} -Denable-portaudio=1 -Denable-ladspa=1 -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_VERBOSE_MAKEFILE=1 -DNO_GUI=1 ..
-    - make -j4
+    - ${BW} make -j4
+    - ls -la
     - make check
-    - make install # install only on linux, as CMAKE_INSTALL_PREFIX is ignored for frameworks on macosx and I cant tell whether that's correct or a bug.
+    - make install
+    - cd ..
+    - ${SONARSC}
