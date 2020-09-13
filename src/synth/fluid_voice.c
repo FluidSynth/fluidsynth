@@ -351,20 +351,38 @@ fluid_voice_init(fluid_voice_t *voice, fluid_sample_t *sample,
 
     UPDATE_RVOICE_R1(fluid_rvoice_set_synth_gain, voice->synth_gain);
 
-    /* MIDI channel mapping to fx unit input */
-    i = 2 * channel->synth->audio_groups;
-    i += channel->mapping_to_fx  * channel->synth->effects_channels;
-    /* set index of reverb input buffer */
-    UPDATE_RVOICE_GENERIC_I2(fluid_rvoice_buffers_set_mapping, &voice->rvoice->buffers, 2, i + SYNTH_REVERB_CHANNEL);
-    /* set index of chorus input buffer */
-    UPDATE_RVOICE_GENERIC_I2(fluid_rvoice_buffers_set_mapping, &voice->rvoice->buffers, 3, i + SYNTH_CHORUS_CHANNEL);
+    /* set MIDI channel buffers mapping */
+    {
+        /* MIDI channel mapping to fx unit input */
+        int mapping0 = -1; /* disable mapping reverb */
+        int mapping1 = -1; /* disable mapping chorus */
+        if(channel->mapping_to_fx >= 0)
+        {
+            /* enable mapping reverb and chorus */
+            i = 2 * channel->synth->audio_groups;
+            i += channel->mapping_to_fx  * channel->synth->effects_channels;
+            mapping0 = i + SYNTH_REVERB_CHANNEL;
+            mapping1 = i + SYNTH_CHORUS_CHANNEL;
+        }
 
-    /* MIDI channel mapping to dry buffers */
-    i = 2 * channel->mapping_to_out;
-    /* set index of audio dry left buffer */
-    UPDATE_RVOICE_GENERIC_I2(fluid_rvoice_buffers_set_mapping, &voice->rvoice->buffers, 0, i);
-    /* set index of audio dry right buffer */
-    UPDATE_RVOICE_GENERIC_I2(fluid_rvoice_buffers_set_mapping, &voice->rvoice->buffers, 1, i + 1);
+        /* set index of reverb input buffer */
+        UPDATE_RVOICE_GENERIC_I2(fluid_rvoice_buffers_set_mapping, &voice->rvoice->buffers, 2, mapping0);
+        /* set index of chorus input buffer */
+        UPDATE_RVOICE_GENERIC_I2(fluid_rvoice_buffers_set_mapping, &voice->rvoice->buffers, 3, mapping1);
+
+        /* MIDI channel mapping to dry buffers */
+        mapping0 = mapping1 = -1; /* disable mapping left and right*/
+        if(channel->mapping_to_out >= 0)
+        {
+            /* enable mapping left and right */
+            mapping0 = 2 * channel->mapping_to_out;
+            mapping1 = mapping0 + 1;
+        }
+        /* set index of audio dry left buffer */
+        UPDATE_RVOICE_GENERIC_I2(fluid_rvoice_buffers_set_mapping, &voice->rvoice->buffers, 0, mapping0);
+        /* set index of audio dry right buffer */
+        UPDATE_RVOICE_GENERIC_I2(fluid_rvoice_buffers_set_mapping, &voice->rvoice->buffers, 1, mapping1);
+    }
 
     return FLUID_OK;
 }
