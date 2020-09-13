@@ -7537,7 +7537,8 @@ fluid_synth_mixer_set_mapping(fluid_synth_t *synth,
     {
         /* check chan_to_out and out_from_chan */
         if((chan_to_out >= synth->midi_channels)
-           ||(out_from_chan >= synth->audio_groups))
+            ||(out_from_chan < -1)
+            ||(out_from_chan >= synth->audio_groups))
         {
             FLUID_API_RETURN(FLUID_FAILED);
         }
@@ -7553,7 +7554,8 @@ fluid_synth_mixer_set_mapping(fluid_synth_t *synth,
     {
         /* check chan_to_fx and fx_from_chan */
         if((chan_to_fx >= synth->midi_channels)
-           ||(fx_from_chan >= synth->effects_groups))
+            ||(fx_from_chan < -1)
+            ||(fx_from_chan >= synth->effects_groups))
         {
             FLUID_API_RETURN(FLUID_FAILED);
         }
