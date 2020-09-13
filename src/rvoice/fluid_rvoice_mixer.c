@@ -882,10 +882,9 @@ fluid_rvoice_mixer_set_fx_out_mapping(const fluid_rvoice_mixer_t *mixer,
     /* Set the mapping through the ring buffer. */
     param[0].i = fxunit_idx; /* fx unit index */
     param[1].i = out_from_fx; /* dry output index */
-    fluid_rvoice_eventhandler_push(mixer->eventhandler,
-                                   fluid_rvoice_mixer_fx_set_mapping,
-                                   fx, param);
-    return FLUID_OK;
+    return fluid_rvoice_eventhandler_push(mixer->eventhandler,
+                                          fluid_rvoice_mixer_fx_set_mapping,
+                                          fx, param);
 }
 
 static void
