@@ -189,10 +189,14 @@ static const fluid_cmd_t fluid_commands[] =
         "setbreathmode", "polymono", fluid_handle_setbreathmode,
         "setbreathmode chan poly(1/0) mono(1/0) breath_sync(1/0) [..] Sets breath mode"
     },
-    /* mixer MIDI channel mapping commands */
+    /* mixer MIDI channel and fx unit mapping commands */
     {
         "chanmap", "mixer", fluid_handle_chanmap,
         "chanmap [chan1 chan2..]                   Print all or some MIDI channels mapping"
+    },
+    {
+        "fxmap", "mixer", fluid_handle_fxmap,
+        "fxmap [fx1 fx2..]                         Print all or some fx unit mapping"
     },
     {
         "resetchanmap", "mixer", fluid_handle_resetchanmap,
@@ -3346,7 +3350,7 @@ int fluid_handle_setbreathmode(void *data, int ac, char **av,
     return 0;
 }
 
-/**  commands mixer MIDI channels mapping ************************************/
+/**  commands mixer MIDI channels mapping and fx unit mapping ****************/
 /*-----------------------------------------------------------------------------
   Print MIDI channel mapping for command: chanmap, resetchanmap
 
@@ -3420,6 +3424,99 @@ int fluid_handle_chanmap(void *data, int ac, char **av,
         else
         {
             print_channel_is_outside_count(out, name_cde, chan, n_chan);
+
+            if(i < n - 1)
+            {
+                fluid_ostream_printf(out, header);
+            }
+        }
+    }
+
+    return 0;
+}
+
+/*
+ Print result message : "fx:x is outside fx count count(y)"
+ for commands: fxmap.
+ @param out output stream.
+ @param name_cde command name prefix.
+ @param fxunit_idx, fx unit number x.
+ @param n_fxunit, number of fx unit y.
+*/
+static void print_fxunit_is_outside_count(fluid_ostream_t out, char const *name_cde,
+        int fxunit_idx, int n_fxunit)
+{
+    fluid_ostream_printf(out, "%s: fx unit %3d is outside fx unit count(%d)\n",
+                         name_cde, fxunit_idx, n_fxunit);
+}
+
+/*-----------------------------------------------------------------------------
+  Print MIDI fx mapping for command: fxmap, resetfxmap
+
+  Examples:
+  fxmap
+
+  Print mapping for all fx unit
+
+  fx unit    , to out
+  fx unit:  0,      0
+  fx unit:  1,      1
+  ..
+  ..
+
+  chanfx fx0 [fx1 ..]
+
+  Prints only mapping for fx unit fx0, fx1, ..
+
+  @param synth the synth instance.
+  @param ac, count of argument in av.
+  @param av, table of arguments.
+  @param out output stream.
+*/
+int fluid_handle_fxmap(void *data, int ac, char **av,
+                              fluid_ostream_t out)
+{
+    static const char header[] ="fx unit    , to out\n";
+    static const char name_cde[] = "fxmap";
+    FLUID_ENTRY_COMMAND(data);
+    fluid_synth_t *synth = handler->synth;
+
+    int i, n, n_fxunit = fluid_synth_count_effects_groups(synth);
+
+    /* checks parameters: 	fx0 fx1 .... */
+    if(check_channels_arguments(ac, av, out, name_cde) < 0)
+    {
+        return -1;
+    }
+
+    if(ac)
+    {
+        n = ac; /* prints only ac fx unit mapping */
+    }
+    else
+    {
+        n = n_fxunit; /* prints all fx units mapping */
+    }
+
+    /* prints header */
+    fluid_ostream_printf(out, header);
+
+    for(i = 0; i < n; i++)
+    {
+        int out_from_fx;
+        int fx_unit = ac ? atoi(av[i]) : i;
+        int result = fluid_synth_mixer_get_fx_mapping(synth, fx_unit,
+                                                       &out_from_fx);
+
+        if(result == FLUID_OK)
+        {
+            fluid_ostream_printf(out,
+                                 "fx unit:%3d,%7d\n",
+                                  fx_unit, out_from_fx);
+        }
+        else
+        {
+            print_fxunit_is_outside_count(out, name_cde, fx_unit, n_fxunit);
 
             if(i < n - 1)
             {
