@@ -7435,17 +7435,11 @@ int fluid_synth_get_basic_channel(fluid_synth_t *synth, int chan,
 * @param fx_from_chan, pointer on value to return fx unit index
 *  which is mapped to chan.(NULL to ignore the value).
 *
-* @param out_from_fx, pointer on value to return dry output index mapped
-*  to the output of the fx unit which is mapped to chan.
-*  If there is no fx unit mapped to chan, -1 is returned.
-*  (NULL to ignore the value).
-*
 * @return #FLUID_OK on success, #FLUID_FAILED otherwise
 */
 int
-fluid_synth_mixer_get_mapping(fluid_synth_t *synth,
-                         int chan, int *out_from_chan, int *fx_from_chan,
-                         int *out_from_fx)
+fluid_synth_mixer_get_channel_mapping(fluid_synth_t *synth, int chan,
+                                      int *out_from_chan, int *fx_from_chan)
 {
     FLUID_API_ENTRY_CHAN(FLUID_FAILED);
 
@@ -7461,20 +7455,37 @@ fluid_synth_mixer_get_mapping(fluid_synth_t *synth,
         *fx_from_chan = synth->channel[chan]->mapping_to_fx;
     }
 
-    /* return output index mapped to fx unit (which is mapped to chan)
-       if queried.
-    */
-    if(out_from_fx)
-    {
-        /*fx unit mapped to chan */
-        int fxunit_idx = synth->channel[chan]->mapping_to_fx;
-        fluid_rvoice_mixer_t *mixer = synth->eventhandler->mixer;
-        *out_from_fx = fluid_rvoice_mixer_get_fx_out_mapping(mixer, fxunit_idx);
-    }
-
     FLUID_API_RETURN(FLUID_OK);
 }
 
+/**
+* Get mixer fx unit mapping to audio buffers.
+*
+* @param synth FluidSynth instance.
+* @param fxunit_idx, fx unit index to get mapping from.
+*  Must be in the range (0 to synth->effects_groups-1).
+* @param out_idx, pointer on value to return dry output index mapped
+*  to fx unit output.
+*
+* @return #FLUID_OK on success, #FLUID_FAILED otherwise
+*/
+int
+fluid_synth_mixer_get_fx_mapping(fluid_synth_t *synth, int fxunit_idx, int *out_idx)
+{
+    fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(out_idx != NULL, FLUID_FAILED);
+
+    fluid_synth_api_enter(synth);
+    if((fxunit_idx < 0) || (fxunit_idx >= synth->effects_groups))
+    {
+        FLUID_API_RETURN(FLUID_FAILED);
+    }
+
+    *out_idx = fluid_rvoice_mixer_get_fx_out_mapping(synth->eventhandler->mixer,
+		                                             fxunit_idx);
+
+    FLUID_API_RETURN(FLUID_OK);
+}
 
 /**
 * Set mixer MIDI channel mapping to audio buffers.

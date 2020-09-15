@@ -3400,13 +3400,18 @@ int fluid_handle_chanmap(void *data, int ac, char **av,
 
     for(i = 0; i < n; i++)
     {
-        int out_from_chan, fx_from_chan, out_from_fx;
+        int result1, result2 = FLUID_OK;
+        int out_from_chan, fx_from_chan, out_from_fx = -1;
         int chan = ac ? atoi(av[i]) : i;
-        int result = fluid_synth_mixer_get_mapping(synth, chan, &out_from_chan,
-                                                   &fx_from_chan,
-                                                   &out_from_fx);
+        result1 = fluid_synth_mixer_get_channel_mapping(synth, chan, &out_from_chan,
+                                                        &fx_from_chan);
+        if(fx_from_chan >= 0)
+        {
+            result2 = fluid_synth_mixer_get_fx_mapping(synth, fx_from_chan,
+                                                       &out_from_fx);
+        }
 
-        if(result == FLUID_OK)
+        if((result1 == FLUID_OK) && (result2 == FLUID_OK))
         {
             fluid_ostream_printf(out,
                                  "channel:%3d,%7d,%6d,%7d\n",
