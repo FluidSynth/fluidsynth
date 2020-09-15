@@ -3464,7 +3464,7 @@ static void print_fxunit_is_outside_count(fluid_ostream_t out, char const *name_
   ..
   ..
 
-  chanfx fx0 [fx1 ..]
+  fxmap fx0 [fx1 ..]
 
   Prints only mapping for fx unit fx0, fx1, ..
 
