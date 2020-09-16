@@ -3564,8 +3564,8 @@ int fluid_handle_resetchanmap(void *data, int ac, char **av,
     return fluid_handle_chanmap(data, 0, av, out);
 }
 
-/* type of MIDI channel mapping */
-enum channel_mapping_type
+/* type of mapping */
+enum set_mapping_type
 {
     MAP_CHAN_TO_OUT,   /* mapping between MIDI channel and dry output index */
     MAP_CHAN_TO_FX,    /* mappping between MIDI channel and fx input index */
