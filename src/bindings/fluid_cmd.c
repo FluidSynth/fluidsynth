@@ -3435,23 +3435,8 @@ int fluid_handle_chanmap(void *data, int ac, char **av,
     return 0;
 }
 
-/*
- Print result message : "fx:x is outside fx count count(y)"
- for commands: fxmap.
- @param out output stream.
- @param name_cde command name prefix.
- @param fxunit_idx, fx unit number x.
- @param n_fxunit, number of fx unit y.
-*/
-static void print_fxunit_is_outside_count(fluid_ostream_t out, char const *name_cde,
-        int fxunit_idx, int n_fxunit)
-{
-    fluid_ostream_printf(out, "%s: fx unit %3d is outside fx unit count(%d)\n",
-                         name_cde, fxunit_idx, n_fxunit);
-}
-
 /*-----------------------------------------------------------------------------
-  Print MIDI fx mapping for command: fxmap, resetfxmap
+  Print fxunit mapping for command: fxmap, resetfxmap
 
   Examples:
   fxmap
@@ -3516,7 +3501,8 @@ int fluid_handle_fxmap(void *data, int ac, char **av,
         }
         else
         {
-            print_fxunit_is_outside_count(out, name_cde, fx_unit, n_fxunit);
+            fluid_ostream_printf(out, "%s: fx unit %3d is outside fx unit count(%d)\n",
+                                 name_cde, fx_unit, n_fxunit);
 
             if(i < n - 1)
             {
