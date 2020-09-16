@@ -3545,7 +3545,7 @@ int fluid_handle_resetchanmap(void *data, int ac, char **av,
         for(i = 0; i < ac; i++)
         {
             int chan = atoi(av[i]);
-            int result = fluid_synth_mixer_reset_mapping (synth, chan);
+            int result = fluid_synth_mixer_reset_channel_mapping (synth, chan);
 
             if(result == FLUID_FAILED)
             {
@@ -3557,7 +3557,7 @@ int fluid_handle_resetchanmap(void *data, int ac, char **av,
     else
     {
         /* set default mapping for all channels */
-        fluid_synth_mixer_reset_mapping(synth, -1);
+        fluid_synth_mixer_reset_channel_mapping(synth, -1);
     }
 
     /* prints result */

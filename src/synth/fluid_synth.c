@@ -7579,23 +7579,10 @@ fluid_synth_mixer_set_fx_to_out_mapping(fluid_synth_t *synth,
 /**
 * Set mixer MIDI channel default mapping to audio buffers.
 * The default mapping are:
-*  (1) default MIDI channel mapping to audio dry buffers.
-*  (2) default MIDI channel mapping to fx unit input .
-*  (3) default unit fx output mapping to audio dry buffers.
-*
-* The function allows to set default mapping (1)(2) and (3)
-* for channel chan.
-* 1) set default mapping between MIDI channel chan and audio dry
-*    output index out_from_chan:
-*    out_from_chan = chan % synth.audio-groups.
-*
-* 2) set default mapping between MIDI channel chan and
-*    fx unit input index fx_from_chan:
-*    fx_from_chan = chan % synth.effects-groups.
-*
-* 3) set default mapping between fx unit fxunit_idx (which is mapped to chan)
-*    and audio dry output index out_from_fx:
-*    out_from_fx = fxunit_idx % synth.audio-groups.
+*  (1) default MIDI channel mapping to audio dry buffer at index out_idx.
+*      out_idx = chan % synth.audio-groups
+*  (2) default MIDI channel mapping to fx unit input at index fxunit_idx.
+*      fx_unit_idx = chan % synth.effects-groups.
 *
 * @param synth FluidSynth instance.
 * @param chan, MIDI channel to set default mapping to.
@@ -7605,7 +7592,7 @@ fluid_synth_mixer_set_fx_to_out_mapping(fluid_synth_t *synth,
 * @return #FLUID_OK on success, #FLUID_FAILED otherwise
 */
 int
-fluid_synth_mixer_reset_mapping(fluid_synth_t *synth, int chan)
+fluid_synth_mixer_reset_channel_mapping(fluid_synth_t *synth, int chan)
 {
     int nbr_chan;
 
@@ -7633,18 +7620,60 @@ fluid_synth_mixer_reset_mapping(fluid_synth_t *synth, int chan)
     /* now set the default mapping */
     for(; chan < nbr_chan; chan++)
     {
-        int fxunit_idx = chan % synth->effects_groups;
-
         /* set default mapping between MIDI channel chan and audio dry
            output index  */
         synth->channel[chan]->mapping_to_out = chan % synth->audio_groups;
 
         /* set default mapping between MIDI channel chan and fx unit input index */
-        synth->channel[chan]->mapping_to_fx = fxunit_idx;
+        synth->channel[chan]->mapping_to_fx = chan % synth->effects_groups;
+    }
 
-        /* set default mapping between fxunit_idx (which is mapped to chan)
-           and audio dry output index.
-        */
+    FLUID_API_RETURN(FLUID_OK);
+}
+
+/**
+* Set mixer fx unit default mapping to audio buffers.
+* The default mapping between fx unit fxunit_idx and
+* audio dry output index out_idx is:
+*  out_idx = fxunit_idx % synth.audio-groups.
+*
+* @param synth FluidSynth instance.
+* @param fxunit_idx, index of fx unit to reset to default mapping.
+*  Must be in the range (-1 to synth.effects-groups-1).
+*  If -1, all fx units are set to default mapping.
+*
+* @return #FLUID_OK on success, #FLUID_FAILED otherwise
+*/
+int
+fluid_synth_mixer_reset_fx_mapping(fluid_synth_t *synth, int fxunit_idx)
+{
+    int nbr_fxunit;
+
+    fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
+    fluid_synth_api_enter(synth);
+
+    /* check parameters first */
+    if(fxunit_idx < 0)
+    {
+        /* The range is all fx unit from 0 to fx unit count -1 */
+        fxunit_idx = 0; /* beginning fx unit */
+        nbr_fxunit =  synth->effects_groups; /* fx unit count */
+    }
+    else
+    {
+        if(fxunit_idx >= synth->effects_groups)
+        {
+            FLUID_API_RETURN(FLUID_FAILED);
+        }
+
+        /* The range is only chan */
+        nbr_fxunit = fxunit_idx + 1;
+    }
+
+    /* now set the default mapping */
+    for(; fxunit_idx < nbr_fxunit; fxunit_idx++)
+    {
+        /* set default mapping between fxunit_idx and audio dry output index. */
         fluid_rvoice_mixer_set_fx_out_mapping(synth->eventhandler->mixer,
                                               fxunit_idx,
                                               fxunit_idx % synth->audio_groups);
