@@ -3574,7 +3574,7 @@ enum channel_mapping_type
 };
 
 /*-----------------------------------------------------------------------------
-  Set a mapping to a MIDI channel
+  Set a mapping type
   @param map_type type of mapping to set (see channel_mapping_type enum)
    (MAP_CHAN_TO_OUT) Any MIDI channels mapped to any audio dry buffers:
        setchanmapout chan0 out0 [chan1 out1 .. ..]
