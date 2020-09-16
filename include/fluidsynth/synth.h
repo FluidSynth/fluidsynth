@@ -392,11 +392,15 @@ FLUIDSYNTH_API int fluid_synth_get_breath_mode(fluid_synth_t *synth,
 /* API: Mixer MIDI channels mapping */
 FLUIDSYNTH_API int fluid_synth_mixer_get_channel_mapping(fluid_synth_t *synth,
                          int chan, int *out_from_chan, int *fx_from_chan);
-FLUIDSYNTH_API int fluid_synth_mixer_get_fx_mapping(fluid_synth_t *synth, int fxunit_idx, int *out_idx);
-FLUIDSYNTH_API int fluid_synth_mixer_set_mapping(fluid_synth_t *synth,
-                         int chan_to_out, int out_from_chan,
-                         int chan_to_fx,  int fx_from_chan,
-                         int chanfx_to_out, int out_from_fx);
+FLUIDSYNTH_API int fluid_synth_mixer_get_fx_mapping(fluid_synth_t *synth,
+                         int fxunit_idx, int *out_idx);
+FLUIDSYNTH_API int fluid_synth_mixer_set_chan_to_out_mapping(fluid_synth_t *synth,
+                         int chan, int out_idx);
+FLUIDSYNTH_API int fluid_synth_mixer_set_chan_to_fx_mapping(fluid_synth_t *synth,
+                         int chan, int fxunit_idx);
+FLUIDSYNTH_API int fluid_synth_mixer_set_fx_to_out_mapping(fluid_synth_t *synth,
+                         int fxunit_idx, int out_idx);
+
 FLUIDSYNTH_API int fluid_synth_mixer_reset_mapping(fluid_synth_t *synth, int chan);
 
 #ifdef __cplusplus

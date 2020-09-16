@@ -108,7 +108,7 @@ int fluid_handle_fxmap(void *data, int ac, char **av,fluid_ostream_t out);
 int fluid_handle_resetchanmap(void *data, int ac, char **av, fluid_ostream_t out);
 int fluid_handle_setchanmapout(void *data, int ac, char **av, fluid_ostream_t out);
 int fluid_handle_setchanmapfx(void *data, int ac, char **av, fluid_ostream_t out);
-int fluid_handle_setchanfxmapout(void *data, int ac, char **av, fluid_ostream_t out);
+int fluid_handle_setfxmapout(void *data, int ac, char **av, fluid_ostream_t out);
 
 #ifdef LADSPA
 int fluid_handle_ladspa_effect(void *data, int ac, char **av, fluid_ostream_t out);

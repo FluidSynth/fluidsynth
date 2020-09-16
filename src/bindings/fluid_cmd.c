@@ -208,11 +208,11 @@ static const fluid_cmd_t fluid_commands[] =
     },
     {
         "setchanmapfx", "mixer", fluid_handle_setchanmapfx,
-        "setchanmapfx chan0 out0 [chan1 out1..]    Set MIDI channels mapping to fx unit"
+        "setchanmapfx chan0 fx0 [chan1 fx1..]      Set MIDI channels mapping to fx unit"
     },
     {
-        "setchanfxmapout", "mixer", fluid_handle_setchanfxmapout,
-        "setchanfxmapout chan0 out0 [chan1 out1..] Set fx unit mapping to dry output"
+        "setfxmapout", "mixer", fluid_handle_setfxmapout,
+        "setfxmapout fx0 out0 [fx1 out1..]         Set fx unit mapping to dry output"
     },
     /* reverb commands */
     {
@@ -3006,7 +3006,7 @@ int fluid_handle_legatomode(void *data, int ac, char **av,
  @param nbr_arg_group_msg message when the number of argument by group is invalid.
  @return 0 if arguments are valid, -1 otherwise.
 */
-static int check_channels_group_arguments(int ac, char **av, int nbr_arg_group,
+static int check_group_arguments(int ac, char **av, int nbr_arg_group,
         fluid_ostream_t out,
         char const *name_cde,
         char const *nbr_arg_group_msg
@@ -3023,7 +3023,7 @@ static int check_channels_group_arguments(int ac, char **av, int nbr_arg_group,
         if(ac % nbr_arg_group)
         {
             /* each group entry needs nbr_arg_group parameters */
-            fluid_ostream_printf(out, "%s: channel %d, %s\n", name_cde,
+            fluid_ostream_printf(out, "%s: arg1 %d, %s\n", name_cde,
                                  atoi(av[((ac / nbr_arg_group) * nbr_arg_group)]),
                                  nbr_arg_group_msg);
             return -1;
@@ -3071,7 +3071,7 @@ int fluid_handle_setlegatomode(void *data, int ac, char **av,
     int i, n ;
 
     /* checks channels arguments by group of 2: chan1 val1 chan2 val1 ..  ..*/
-    if(check_channels_group_arguments(ac, av, 2, out, name_cde, too_few_arg_chan_mode_msg) < 0)
+    if(check_group_arguments(ac, av, 2, out, name_cde, too_few_arg_chan_mode_msg) < 0)
     {
         return -1;
     }
@@ -3161,7 +3161,7 @@ int fluid_handle_setportamentomode(void *data, int ac, char **av,
     int i, n ;
 
     /* checks channels arguments by group of 2: chan1 val1 chan2 val1 ..  .. */
-    if(check_channels_group_arguments(ac, av, 2, out, name_cde, too_few_arg_chan_mode_msg) < 0)
+    if(check_group_arguments(ac, av, 2, out, name_cde, too_few_arg_chan_mode_msg) < 0)
     {
         return -1;
     }
@@ -3307,7 +3307,7 @@ int fluid_handle_setbreathmode(void *data, int ac, char **av,
 
     /* checks channels arguments by group of 4:
     chan1 val1 val2 val3   chan2 val1 val2 val3 ....  ....*/
-    if(check_channels_group_arguments(ac, av, 4, out, name_cde, too_few_arg_breath_msg) < 0)
+    if(check_group_arguments(ac, av, 4, out, name_cde, too_few_arg_breath_msg) < 0)
     {
         return -1;
     }
@@ -3583,7 +3583,7 @@ enum channel_mapping_type
 {
     MAP_CHAN_TO_OUT,   /* mapping between MIDI channel and dry output index */
     MAP_CHAN_TO_FX,    /* mappping between MIDI channel and fx input index */
-    MAP_CHANFX_TO_OUT, /* mapping between FX output and dry output index */
+    MAP_FX_TO_OUT, /* mapping between fx unit output and dry output index */
     NBR_MAPPING_TYPE
 };
 
@@ -3596,28 +3596,32 @@ enum channel_mapping_type
    (MAP_CHAN_TO_FX) Any MIDI channel mapped to any fx unit input:
        setchanmapfx chan0 fx0 [chan1 fx1 .. ..]
 
-   (MAP_CHANFX_TO_OUT) Any unit fx output mapped to any audio dry buffers:
-       setchanfxmapout chanfx0 out0 [chanfx1 out1 .. ..]
+   (MAP_FX_TO_OUT) Any unit fx output mapped to any audio dry buffers:
+       setfxmapout fx0 out0 [fx1 out1 .. ..]
 */
-static int fluid_setchanmap(void *data, int ac, char **av,
+static int fluid_handle_set_map(void *data, int ac, char **av,
                             fluid_ostream_t out, int map_type)
 {
     static const char *name_cde[NBR_MAPPING_TYPE] =
-    {"setchanmapout", "setchanmapfx", "setchanfxmapout"};
-    static const char *too_few_arg_chan_map_msg[NBR_MAPPING_TYPE] =
+    {"setchanmapout", "setchanmapfx", "setfxmapout"};
+    static const char *too_few_arg_map_msg[NBR_MAPPING_TYPE] =
     {
         "too few argument, chan out [chan out]...\n",
         "too few argument, chan fx [chan fx]...\n",
-        "too few argument, chanfx out [chanfx out]...\n"
+        "too few argument, fx out [fx out]...\n"
     };
-
+    static int (*map_func[NBR_MAPPING_TYPE]) (fluid_synth_t *, int, int);
     FLUID_ENTRY_COMMAND(data);
     fluid_synth_t *synth = handler->synth;
     int i, n ;
 
-    /* checks channels arguments by group of 2: chan1 val1 chan2 val1 ..  ..*/
-    if(check_channels_group_arguments(ac, av, 2, out, name_cde[map_type],
-                                      too_few_arg_chan_map_msg[map_type]) < 0)
+    map_func[MAP_CHAN_TO_OUT] = fluid_synth_mixer_set_chan_to_out_mapping;
+    map_func[MAP_CHAN_TO_FX] = fluid_synth_mixer_set_chan_to_fx_mapping;
+    map_func[MAP_FX_TO_OUT] = fluid_synth_mixer_set_fx_to_out_mapping;
+
+    /* checks arguments by group of 2: [arg1 arg2] [argr3 arg4] ..  .. */
+    if(check_group_arguments(ac, av, 2, out, name_cde[map_type],
+                             too_few_arg_map_msg[map_type]) < 0)
     {
         return -1;
     }
@@ -3626,27 +3630,15 @@ static int fluid_setchanmap(void *data, int ac, char **av,
 
     for(i = 0; i < n; i++)
     {
-        struct
-        {
-            int chan;
-            int val;
-        }chan_val[NBR_MAPPING_TYPE] ={-1,0,-1,0,-1,0}; /* set all chan parameter to -1*/
-        int chan, val, result;
-        chan_val[map_type].chan = chan = atoi(av[i * 2]);
-        chan_val[map_type].val = val = atoi(av[(i * 2) + 1]);
+        int arg1 = atoi(av[i * 2]);
+        int arg2 = atoi(av[(i * 2) + 1]);
 
         /* set mapping */
-        result = fluid_synth_mixer_set_mapping(synth,
-                                               chan_val[MAP_CHAN_TO_OUT].chan,
-                                               chan_val[MAP_CHAN_TO_OUT].val,
-                                               chan_val[MAP_CHAN_TO_FX].chan,
-                                               chan_val[MAP_CHAN_TO_FX].val,
-                                               chan_val[MAP_CHANFX_TO_OUT].chan,
-                                               chan_val[MAP_CHANFX_TO_OUT].val);
+        int result = map_func[map_type](synth, arg1, arg2);
         if(result == FLUID_FAILED)
         {
-            fluid_ostream_printf(out, "%s: channel %3d, map to %3d, %s",
-                                 name_cde[map_type], chan, val, invalid_arg_msg);
+            fluid_ostream_printf(out, "%s: arg1 %3d, map to arg2 %3d, %s",
+                                 name_cde[map_type], arg1, arg2, invalid_arg_msg);
         }
     }
 
@@ -3661,7 +3653,7 @@ static int fluid_setchanmap(void *data, int ac, char **av,
 int fluid_handle_setchanmapout(void *data, int ac, char **av,
                                fluid_ostream_t out)
 {
-    return fluid_setchanmap(data, ac, av, out, MAP_CHAN_TO_OUT);
+    return fluid_handle_set_map(data, ac, av, out, MAP_CHAN_TO_OUT);
 }
 
 /*-----------------------------------------------------------------------------
@@ -3672,18 +3664,17 @@ int fluid_handle_setchanmapout(void *data, int ac, char **av,
 int fluid_handle_setchanmapfx(void *data, int ac, char **av,
                               fluid_ostream_t out)
 {
-    return fluid_setchanmap(data, ac, av, out, MAP_CHAN_TO_FX);
+    return fluid_handle_set_map(data, ac, av, out, MAP_CHAN_TO_FX);
 }
 
 /*-----------------------------------------------------------------------------
-  setchanfxmapout chanfx0 out0 [chanfx1 out1 .. ..]
+  setfxmapout fx0 out0 [fx1 out1 .. ..]
 
-  Set a mapping between fx unit (actually mapped to chanfx) and dry output index.
+  Set a mapping between fx unit and dry output index.
 */
-int fluid_handle_setchanfxmapout(void *data, int ac, char **av,
-                                 fluid_ostream_t out)
+int fluid_handle_setfxmapout(void *data, int ac, char **av, fluid_ostream_t out)
 {
-    return fluid_setchanmap(data, ac, av, out, MAP_CHANFX_TO_OUT);
+    return fluid_handle_set_map(data, ac, av, out, MAP_FX_TO_OUT);
 }
 
 #ifdef LADSPA

@@ -7420,7 +7420,7 @@ int fluid_synth_get_basic_channel(fluid_synth_t *synth, int chan,
     FLUID_API_RETURN(FLUID_OK);
 }
 
-/**  API Mixer MIDI channel mapping ******************************************/
+/**  API Mixer MIDI channel mapping, fx unit mapping *************************/
 
 /**
 * Get mixer MIDI channel mapping to audio buffers.
@@ -7429,7 +7429,7 @@ int fluid_synth_get_basic_channel(fluid_synth_t *synth, int chan,
 * @param chan, MIDI channel to get mapping from.
 *  Must be in the range (0 to MIDI channel count - 1).
 *
-* @param out_from_chan, pointer on value to return dry output
+* @param out_idx, pointer on value to return dry output
 *  index which is mapped to chan.(NULL to ignore the value).
 *
 * @param fx_from_chan, pointer on value to return fx unit index
@@ -7439,20 +7439,20 @@ int fluid_synth_get_basic_channel(fluid_synth_t *synth, int chan,
 */
 int
 fluid_synth_mixer_get_channel_mapping(fluid_synth_t *synth, int chan,
-                                      int *out_from_chan, int *fx_from_chan)
+                                      int *out_idx, int *fxunit_idx)
 {
     FLUID_API_ENTRY_CHAN(FLUID_FAILED);
 
     /* return audio output index mapped to chan if queried */
-    if(out_from_chan)
+    if(out_idx)
     {
-        *out_from_chan = synth->channel[chan]->mapping_to_out;
+        *out_idx = synth->channel[chan]->mapping_to_out;
     }
 
     /* return fx unit input index mapped to chan if queried */
-    if(fx_from_chan)
+    if(fxunit_idx)
     {
-        *fx_from_chan = synth->channel[chan]->mapping_to_fx;
+        *fxunit_idx = synth->channel[chan]->mapping_to_fx;
     }
 
     FLUID_API_RETURN(FLUID_OK);
@@ -7488,115 +7488,91 @@ fluid_synth_mixer_get_fx_mapping(fluid_synth_t *synth, int fxunit_idx, int *out_
 }
 
 /**
-* Set mixer MIDI channel mapping to audio buffers.
-* These mapping allows:
-*  (1) Any MIDI channels mapped to any audio dry buffers.
-*  (2) Any MIDI channel mapped to any fx unit input .
-*  (3) Any unit fx output mapped to any audio dry buffers.
-*
-* The function allows the setting of mapping (1) or/and(2) or/and (3)
-* simultaneously or not:
-* 1)Mapping between MIDI channel chan_to_out and audio dry output at
-*   index out_from_chan. If chan_to_out is -1 this mapping is ignored,
-*   otherwise the mapping is done with the following special case:
-*   if out_from_chan is -1, this disable dry audio for this MIDI channel.
-*   This allows playing only fx (with dry muted temporarily).
+* Set mixer MIDI channel mapping to audio buffers. This allows any
+* MIDI channels mapped to any audio dry buffers output.
 *
 * @param synth FluidSynth instance.
-* @param chan_to_out, MIDI channel to which out_from_chan must be mapped.
-*  Must be in the range (-1 to MIDI channel count-1).
-* @param out_from_chan, audio output index to map to chan_to_out.
+* @param chan, MIDI channel to which out_idx must be mapped.
+*  Must be in the range (0 to MIDI channel count-1).
+* @param out_idx, audio output index to map to chan.
 *  Must be in the range (-1 to synth->audio_groups-1).
+*  If -1, this disable dry audio for this MIDI channel.
+*  This allows playing only fx (with dry muted temporarily).
 *
-* 2)Mapping between MIDI channel chan_to_fx and fx unit input at
-*   index fx_from_chan. If chan_to_fx is -1 this mapping is ignored,
-*   otherwise the mapping is done with the following special case:
-*   if fx_from_chan is -1, this disable fx audio for this MIDI channel.
-*   This allows playing only dry (with fx muted temporarily).
-*
-* @param chan_to_fx, MIDI channel to which fx_from_chan must be mapped.
-*  Must be in the range (-1 to MIDI channel count-1).
-* @param fx_from_chan, fx unit input index to map to chan_to_fx.
+* @return #FLUID_OK on success, #FLUID_FAILED otherwise
+*/
+int
+fluid_synth_mixer_set_chan_to_out_mapping(fluid_synth_t *synth,
+                                          int chan, int out_idx)
+{
+    FLUID_API_ENTRY_CHAN(FLUID_FAILED);
+
+    /* check out_idx */
+    if((out_idx < -1) || (out_idx >= synth->audio_groups))
+    {
+        FLUID_API_RETURN(FLUID_FAILED);
+    }
+
+    /* Mapping between MIDI channel chan and audio output at index out_idx */
+    synth->channel[chan]->mapping_to_out = out_idx;
+
+    FLUID_API_RETURN(FLUID_OK);
+}
+
+/**
+* Set mixer MIDI channel mapping to fx unit. This allows
+* any MIDI channels mapped to any fx unit input.
+* @param synth FluidSynth instance.
+* @param chan, MIDI channel to which fxunit_idx must be mapped.
+*  Must be in the range (0 to MIDI channel count-1).
+* @param fxunit_idx, fx unit index to map to chan.
 *  Must be in the range (-1 to synth->effects_groups-1).
+*  If -1, this disable fx audio for this MIDI channel.
+*  This allows playing only dry (with fx muted temporarily).
 *
-* 3)Mapping between fx unit output (which is mapped to chanfx_to_out) and
-*   audio dry output at index index out_from_fx. If chanfx_to_out is -1,
-*   this mapping is ignored.
-*
-* @param chanfx_to_out, indicates the fx unit (which is actually mapped
-*  to chanfx_to_out) whose output must be mapped with out_from_fx.
-*  Must be in the range (-1 to MIDI channel count-1).
-* @param out_from_fx, audio output index that must be mapped to fx unit output
-*  (which is actually mapped to chanfx_to_out).
+* @return #FLUID_OK on success, #FLUID_FAILED otherwise
+*/
+int
+fluid_synth_mixer_set_chan_to_fx_mapping(fluid_synth_t *synth,
+                                         int chan, int fxunit_idx)
+{
+    FLUID_API_ENTRY_CHAN(FLUID_FAILED);
+
+    /* check fxunit_idx */
+    if((fxunit_idx < -1) || (fxunit_idx >= synth->effects_groups))
+    {
+        FLUID_API_RETURN(FLUID_FAILED);
+    }
+
+    /* Mapping between MIDI channel chan and audio output at index out_idx */
+    synth->channel[chan]->mapping_to_fx = fxunit_idx;
+
+    FLUID_API_RETURN(FLUID_OK);
+}
+
+/**
+* Set mixer fx unit mapping to to audio buffers. This allows any
+* This allows any fx unit output mapped to any dry audio buffers output.
+* @param synth FluidSynth instance.
+* @param fxunit_idx, fx unit index to which out_idx must be mapped.
+*  Must be in the range (0 to synth->effects_groups-1).
+* @param out_idx, audio output index to map to chan.
 *  Must be in the range (0 to synth->audio_groups-1).
 *
 * @return #FLUID_OK on success, #FLUID_FAILED otherwise
 */
 int
-fluid_synth_mixer_set_mapping(fluid_synth_t *synth,
-                               int chan_to_out, int out_from_chan,
-                               int chan_to_fx,  int fx_from_chan,
-                               int chanfx_to_out, int out_from_fx)
+fluid_synth_mixer_set_fx_to_out_mapping(fluid_synth_t *synth,
+                                        int fxunit_idx, int out_idx)
 {
-    int result = FLUID_OK;
+    int result;
 
     fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
     fluid_synth_api_enter(synth);
 
-    /* Map chan_to_out and audio dry output if queried */
-    if(chan_to_out >= 0)
-    {
-        /* check chan_to_out and out_from_chan */
-        if((chan_to_out >= synth->midi_channels)
-            ||(out_from_chan < -1)
-            ||(out_from_chan >= synth->audio_groups))
-        {
-            FLUID_API_RETURN(FLUID_FAILED);
-        }
-
-        /* Mapping between MIDI channel chan_to_out and audio dry output
-           at index out_from_chan.
-        */
-        synth->channel[chan_to_out]->mapping_to_out = out_from_chan;
-    }
-
-    /* Map chan_to_fx and fx input index if queried */
-    if(chan_to_fx >= 0)
-    {
-        /* check chan_to_fx and fx_from_chan */
-        if((chan_to_fx >= synth->midi_channels)
-            ||(fx_from_chan < -1)
-            ||(fx_from_chan >= synth->effects_groups))
-        {
-            FLUID_API_RETURN(FLUID_FAILED);
-        }
-
-        /* Mapping between MIDI channel chan_to_fx and fx input
-           at index fx_from_chan.
-        */
-        synth->channel[chan_to_fx]->mapping_to_fx = fx_from_chan;
-    }
-
-    /* Map fx unit output and audio dry output if queried */
-    if(chanfx_to_out >= 0)
-    {
-        int fxunit_idx; /* fx input which is actually mapped to chanfx_to_out*/
-
-        /* check chanfx_to_out and out_from_fx */
-        if(chanfx_to_out >= synth->midi_channels)
-        {
-            FLUID_API_RETURN(FLUID_FAILED);
-        }
-        /* get fx unit actually mapped to chanfx_fx_to out */
-        fxunit_idx = synth->channel[chanfx_to_out]->mapping_to_fx;
-
-        /* Mapping between fx unit output and audio dry output
-           at index index out_from_fx.
-        */
-        result = fluid_rvoice_mixer_set_fx_out_mapping(synth->eventhandler->mixer,
-                                                       fxunit_idx, out_from_fx);
-    }
-
+    /* Map fx unit output and audio dry output */
+    result = fluid_rvoice_mixer_set_fx_out_mapping(synth->eventhandler->mixer,
+                                                   fxunit_idx, out_idx);
     FLUID_API_RETURN(result);
 }
 
