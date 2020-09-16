@@ -3461,8 +3461,7 @@ int fluid_handle_chanmap(void *data, int ac, char **av,
   @param av, table of arguments.
   @param out output stream.
 */
-int fluid_handle_fxmap(void *data, int ac, char **av,
-                              fluid_ostream_t out)
+int fluid_handle_fxmap(void *data, int ac, char **av, fluid_ostream_t out)
 {
     static const char header[] ="fx unit    , to out\n";
     static const char name_cde[] = "fxmap";
@@ -3549,7 +3548,7 @@ static int fluid_handle_reset_map(void *data, int ac, char **av,
     map_func[RESET_MAP_CHAN] = fluid_handle_chanmap;
     map_func[RESET_MAP_FX] = fluid_handle_fxmap;
 
-	/* checks channels arguments: chan1 chan2 .... */
+    /* checks arguments */
     if(check_channels_arguments(ac, av, out, name_cde[resetmap_type]) < 0)
     {
         return -1;
@@ -3567,7 +3566,8 @@ static int fluid_handle_reset_map(void *data, int ac, char **av,
 
             if(result == FLUID_FAILED)
             {
-                fluid_ostream_printf(out, "%s: arg %3d, %s", name_cde, arg,
+                fluid_ostream_printf(out, "%s: arg %3d, %s",
+                                     name_cde[resetmap_type], arg,
                                      invalid_arg_msg);
             }
         }
@@ -3591,8 +3591,7 @@ static int fluid_handle_reset_map(void *data, int ac, char **av,
 
  Set default mapping for MIDI channels chan0 chan1 ..
 */
-int fluid_handle_resetchanmap(void *data, int ac, char **av,
-                              fluid_ostream_t out)
+int fluid_handle_resetchanmap(void *data, int ac, char **av, fluid_ostream_t out)
 {
     return fluid_handle_reset_map(data, ac, av, out, RESET_MAP_CHAN);
 }
@@ -3606,8 +3605,7 @@ int fluid_handle_resetchanmap(void *data, int ac, char **av,
 
  Set default mapping for fx unit fx0 fx1 ..
 */
-int fluid_handle_resetfxmap(void *data, int ac, char **av,
-                              fluid_ostream_t out)
+int fluid_handle_resetfxmap(void *data, int ac, char **av, fluid_ostream_t out)
 {
     return fluid_handle_reset_map(data, ac, av, out, RESET_MAP_FX);
 }
@@ -3685,8 +3683,7 @@ static int fluid_handle_set_map(void *data, int ac, char **av,
 
   Set a mapping between a MIDI channel and a dry output index
 */
-int fluid_handle_setchanmapout(void *data, int ac, char **av,
-                               fluid_ostream_t out)
+int fluid_handle_setchanmapout(void *data, int ac, char **av, fluid_ostream_t out)
 {
     return fluid_handle_set_map(data, ac, av, out, MAP_CHAN_TO_OUT);
 }
@@ -3696,8 +3693,7 @@ int fluid_handle_setchanmapout(void *data, int ac, char **av,
 
   Set a mapping between a MIDI channel and a fx unit input index
 */
-int fluid_handle_setchanmapfx(void *data, int ac, char **av,
-                              fluid_ostream_t out)
+int fluid_handle_setchanmapfx(void *data, int ac, char **av, fluid_ostream_t out)
 {
     return fluid_handle_set_map(data, ac, av, out, MAP_CHAN_TO_FX);
 }
