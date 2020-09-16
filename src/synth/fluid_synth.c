@@ -7432,7 +7432,7 @@ int fluid_synth_get_basic_channel(fluid_synth_t *synth, int chan,
 * @param out_idx, pointer on value to return dry output
 *  index which is mapped to chan.(NULL to ignore the value).
 *
-* @param fx_from_chan, pointer on value to return fx unit index
+* @param fxunit_idx, pointer on value to return fx unit index
 *  which is mapped to chan.(NULL to ignore the value).
 *
 * @return #FLUID_OK on success, #FLUID_FAILED otherwise
@@ -7488,8 +7488,8 @@ fluid_synth_mixer_get_fx_mapping(fluid_synth_t *synth, int fxunit_idx, int *out_
 }
 
 /**
-* Set mixer MIDI channel mapping to audio buffers. This allows any
-* MIDI channels mapped to any audio dry buffers output.
+* Set mixer MIDI channel mapping to audio buffer. This allows any
+* MIDI channels mapped to any audio dry buffer output.
 *
 * @param synth FluidSynth instance.
 * @param chan, MIDI channel to which out_idx must be mapped.
@@ -7544,19 +7544,19 @@ fluid_synth_mixer_set_chan_to_fx_mapping(fluid_synth_t *synth,
         FLUID_API_RETURN(FLUID_FAILED);
     }
 
-    /* Mapping between MIDI channel chan and audio output at index out_idx */
+    /* Mapping between MIDI channel chan and fx unit input at index fxunit_idx */
     synth->channel[chan]->mapping_to_fx = fxunit_idx;
 
     FLUID_API_RETURN(FLUID_OK);
 }
 
 /**
-* Set mixer fx unit mapping to to audio buffers. This allows any
-* This allows any fx unit output mapped to any dry audio buffers output.
+* Set mixer fx unit mapping to audio buffer. This allows any
+* fx unit output mapped to any dry audio buffer output.
 * @param synth FluidSynth instance.
 * @param fxunit_idx, fx unit index to which out_idx must be mapped.
 *  Must be in the range (0 to synth->effects_groups-1).
-* @param out_idx, audio output index to map to chan.
+* @param out_idx, audio output index to map to fx unit output.
 *  Must be in the range (0 to synth->audio_groups-1).
 *
 * @return #FLUID_OK on success, #FLUID_FAILED otherwise

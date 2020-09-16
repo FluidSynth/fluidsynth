@@ -817,7 +817,7 @@ error_recovery:
 }
 
 /**
-* Return the dry output index mapped to a fx unit
+* Return the dry output index mapped to an fx unit
 * @param mixer
 * @param fxunit_idx, index of fx unit to get dry output index from.
 *  must be in the range (0 to mixer->fx_units-1).
