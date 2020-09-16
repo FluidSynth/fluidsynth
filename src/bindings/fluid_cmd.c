@@ -3409,7 +3409,7 @@ int fluid_handle_chanmap(void *data, int ac, char **av,
         int chan = ac ? atoi(av[i]) : i;
         result1 = fluid_synth_mixer_get_channel_mapping(synth, chan, &out_from_chan,
                                                         &fx_from_chan);
-        if(fx_from_chan >= 0)
+        if((result1 == FLUID_OK) && (fx_from_chan >= 0))
         {
             result2 = fluid_synth_mixer_get_fx_mapping(synth, fx_from_chan,
                                                        &out_from_fx);
