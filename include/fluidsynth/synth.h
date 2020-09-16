@@ -402,6 +402,7 @@ FLUIDSYNTH_API int fluid_synth_mixer_get_fx_mapping(fluid_synth_t *synth,
                          int fxunit_idx, int *out_idx);
 FLUIDSYNTH_API int fluid_synth_mixer_set_fx_to_out_mapping(fluid_synth_t *synth,
                          int fxunit_idx, int out_idx);
+FLUIDSYNTH_API int fluid_synth_mixer_reset_fx_mapping(fluid_synth_t *synth, int fxunit_idx);
 
 
 #ifdef __cplusplus

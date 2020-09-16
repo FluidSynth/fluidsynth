@@ -214,6 +214,10 @@ static const fluid_cmd_t fluid_commands[] =
         "setfxmapout", "mixer", fluid_handle_setfxmapout,
         "setfxmapout fx0 out0 [fx1 out1..]         Set fx unit mapping to dry output"
     },
+    {
+        "resetfxmap", "mixer", fluid_handle_resetfxmap,
+        "resetfxmap [fx0 fx1..]                    Set fx unit default mapping "
+    },
     /* reverb commands */
     {
         "rev_preset", "reverb", fluid_handle_reverbpreset,
@@ -3514,6 +3518,71 @@ int fluid_handle_fxmap(void *data, int ac, char **av,
     return 0;
 }
 
+/* type of mapping */
+enum reset_mapping_type
+{
+    RESET_MAP_CHAN,   /* Reset channel mapping type */
+    RESET_MAP_FX,     /* Reset fx unit mapping type */
+    NBR_RESET_MAP_TYPE
+};
+
+/*-----------------------------------------------------------------------------
+  Reset a mapping type
+  @param resetmap_type type of mapping to reset (see reset_mapping_type enum)
+   (RESET_MAP_CHAN) Reset all or some channels to default mapping :
+       resetchanmap [chan0 chan1 .. ..]
+
+   (RESET_MAP_FX) Reset all or some fx unit to default mapping:
+       resetfxmap [fx0 fx1 ..]
+*/
+static int fluid_handle_reset_map(void *data, int ac, char **av,
+                                  fluid_ostream_t out, int resetmap_type)
+{
+    static const char *name_cde[NBR_RESET_MAP_TYPE] =
+    {"resetchanmap", "resetfxmap"};
+    static int (*resetmap_func[NBR_RESET_MAP_TYPE]) (fluid_synth_t *, int);
+    static int (*map_func[NBR_RESET_MAP_TYPE]) (void *, int, char **, fluid_ostream_t);
+    FLUID_ENTRY_COMMAND(data);
+    fluid_synth_t *synth = handler->synth;
+
+    resetmap_func[RESET_MAP_CHAN] = fluid_synth_mixer_reset_channel_mapping;
+    resetmap_func[RESET_MAP_FX] = fluid_synth_mixer_reset_fx_mapping;
+    map_func[RESET_MAP_CHAN] = fluid_handle_chanmap;
+    map_func[RESET_MAP_FX] = fluid_handle_fxmap;
+
+	/* checks channels arguments: chan1 chan2 .... */
+    if(check_channels_arguments(ac, av, out, name_cde[resetmap_type]) < 0)
+    {
+        return -1;
+    }
+
+    if(ac)
+    {
+        int i;
+
+        for(i = 0; i < ac; i++)
+        {
+            /* reset mapping */
+            int arg = atoi(av[i]);
+            int result = resetmap_func[resetmap_type](synth, arg);
+
+            if(result == FLUID_FAILED)
+            {
+                fluid_ostream_printf(out, "%s: arg %3d, %s", name_cde, arg,
+                                     invalid_arg_msg);
+            }
+        }
+    }
+    else
+    {
+        /* reset default mapping for all */
+        resetmap_func[resetmap_type](synth, -1);
+    }
+
+    /* prints result */
+    return map_func[resetmap_type](data, ac, av, out);
+}
+
 /*-----------------------------------------------------------------------------
  resetchanmap
 
@@ -3525,44 +3594,25 @@ int fluid_handle_fxmap(void *data, int ac, char **av,
 */
 int fluid_handle_resetchanmap(void *data, int ac, char **av,
                               fluid_ostream_t out)
-
 {
-    static const char name_cde[] = "resetchanmap";
-    FLUID_ENTRY_COMMAND(data);
-    fluid_synth_t *synth = handler->synth;
-
-    /* checks channels arguments: chan1 chan2 .... */
-    if(check_channels_arguments(ac, av, out, name_cde) < 0)
-    {
-        return -1;
-    }
-
-    if(ac)
-    {
-        /* resetchanmap chan0 [chan1 . . .] */
-        int i;
-
-        for(i = 0; i < ac; i++)
-        {
-            int chan = atoi(av[i]);
-            int result = fluid_synth_mixer_reset_channel_mapping (synth, chan);
-
-            if(result == FLUID_FAILED)
-            {
-                fluid_ostream_printf(out, "%s: channel %3d, %s", name_cde, chan,
-                                     invalid_arg_msg);
-            }
-        }
-    }
-    else
-    {
-        /* set default mapping for all channels */
-        fluid_synth_mixer_reset_channel_mapping(synth, -1);
-    }
-
-    /* prints result */
-    return fluid_handle_chanmap(data, 0, av, out);
+    return fluid_handle_reset_map(data, ac, av, out, RESET_MAP_CHAN);
 }
+
+/*-----------------------------------------------------------------------------
+ resetfxmap
+
+ With no parameter the command set default mapping for all Fx unit.
+
+ resetfxmap fx0 [fx1 . . .]
+
+ Set default mapping for fx unit fx0 fx1 ..
+*/
+int fluid_handle_resetfxmap(void *data, int ac, char **av,
+                              fluid_ostream_t out)
+{
+    return fluid_handle_reset_map(data, ac, av, out, RESET_MAP_FX);
+}
+
 
 /* type of mapping */
 enum set_mapping_type

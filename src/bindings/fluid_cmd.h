@@ -106,6 +106,7 @@ int fluid_handle_sleep(void *data, int ac, char **av, fluid_ostream_t out);
 int fluid_handle_chanmap(void *data, int ac, char **av,fluid_ostream_t out);
 int fluid_handle_fxmap(void *data, int ac, char **av,fluid_ostream_t out);
 int fluid_handle_resetchanmap(void *data, int ac, char **av, fluid_ostream_t out);
+int fluid_handle_resetfxmap(void *data, int ac, char **av, fluid_ostream_t out);
 int fluid_handle_setchanmapout(void *data, int ac, char **av, fluid_ostream_t out);
 int fluid_handle_setchanmapfx(void *data, int ac, char **av, fluid_ostream_t out);
 int fluid_handle_setfxmapout(void *data, int ac, char **av, fluid_ostream_t out);
