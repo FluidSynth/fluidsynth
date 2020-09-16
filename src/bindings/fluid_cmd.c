@@ -195,20 +195,20 @@ static const fluid_cmd_t fluid_commands[] =
         "chanmap [chan1 chan2..]                   Print all or some MIDI channels mapping"
     },
     {
-        "fxmap", "mixer", fluid_handle_fxmap,
-        "fxmap [fx1 fx2..]                         Print all or some fx unit mapping"
-    },
-    {
-        "resetchanmap", "mixer", fluid_handle_resetchanmap,
-        "resetchanmap [chan1 chan2..]              Set MIDI channels default mapping "
-    },
-    {
         "setchanmapout", "mixer", fluid_handle_setchanmapout,
         "setchanmapout chan0 out0 [chan1 out1..]   Set MIDI channels mapping to dry output"
     },
     {
         "setchanmapfx", "mixer", fluid_handle_setchanmapfx,
         "setchanmapfx chan0 fx0 [chan1 fx1..]      Set MIDI channels mapping to fx unit"
+    },
+    {
+        "resetchanmap", "mixer", fluid_handle_resetchanmap,
+        "resetchanmap [chan1 chan2..]              Set MIDI channels default mapping "
+    },
+    {
+        "fxmap", "mixer", fluid_handle_fxmap,
+        "fxmap [fx1 fx2..]                         Print all or some fx unit mapping"
     },
     {
         "setfxmapout", "mixer", fluid_handle_setfxmapout,
