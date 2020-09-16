@@ -3575,14 +3575,14 @@ enum set_mapping_type
 
 /*-----------------------------------------------------------------------------
   Set a mapping type
-  @param map_type type of mapping to set (see channel_mapping_type enum)
-   (MAP_CHAN_TO_OUT) Any MIDI channels mapped to any audio dry buffers:
+  @param map_type type of mapping to set (see set_mapping_type enum)
+   (MAP_CHAN_TO_OUT) Any MIDI channels mapped to any audio dry buffer:
        setchanmapout chan0 out0 [chan1 out1 .. ..]
 
    (MAP_CHAN_TO_FX) Any MIDI channel mapped to any fx unit input:
        setchanmapfx chan0 fx0 [chan1 fx1 .. ..]
 
-   (MAP_FX_TO_OUT) Any unit fx output mapped to any audio dry buffers:
+   (MAP_FX_TO_OUT) Any unit fx output mapped to any audio dry buffer:
        setfxmapout fx0 out0 [fx1 out1 .. ..]
 */
 static int fluid_handle_set_map(void *data, int ac, char **av,
