@@ -3516,7 +3516,7 @@ int fluid_handle_fxmap(void *data, int ac, char **av, fluid_ostream_t out)
     return 0;
 }
 
-/* type of mapping */
+/* type of reset mapping commands */
 enum reset_mapping_type
 {
     RESET_MAP_CHAN,   /* Reset channel mapping type */
@@ -3525,8 +3525,8 @@ enum reset_mapping_type
 };
 
 /*-----------------------------------------------------------------------------
-  Reset a mapping type
-  @param resetmap_type type of mapping to reset (see reset_mapping_type enum)
+  Execute a reset mapping command type.
+  @param resetmap_type type of reset mapping command (see reset_mapping_type enum)
    (RESET_MAP_CHAN) Reset all or some channels to default mapping :
        resetchanmap [chan0 chan1 .. ..]
 
@@ -3611,18 +3611,18 @@ int fluid_handle_resetfxmap(void *data, int ac, char **av, fluid_ostream_t out)
 }
 
 
-/* type of mapping */
+/* type of set mapping commands */
 enum set_mapping_type
 {
-    MAP_CHAN_TO_OUT,   /* mapping between MIDI channel and dry output index */
-    MAP_CHAN_TO_FX,    /* mappping between MIDI channel and fx input index */
-    MAP_FX_TO_OUT, /* mapping between fx unit output and dry output index */
+    SET_MAP_CHAN_TO_OUT,   /* mapping between MIDI channel and dry output index */
+    SET_MAP_CHAN_TO_FX,    /* mappping between MIDI channel and fx input index */
+    SET_MAP_FX_TO_OUT, /* mapping between fx unit output and dry output index */
     NBR_MAPPING_TYPE
 };
 
 /*-----------------------------------------------------------------------------
-  Set a mapping type
-  @param map_type type of mapping to set (see set_mapping_type enum)
+  Execute a set mapping command type.
+  @param map_type type of set mapping commands (see set_mapping_type enum)
    (MAP_CHAN_TO_OUT) Any MIDI channels mapped to any audio dry buffer:
        setchanmapout chan0 out0 [chan1 out1 .. ..]
 
@@ -3648,9 +3648,9 @@ static int fluid_handle_set_map(void *data, int ac, char **av,
     fluid_synth_t *synth = handler->synth;
     int i, n ;
 
-    map_func[MAP_CHAN_TO_OUT] = fluid_synth_mixer_set_chan_to_out_mapping;
-    map_func[MAP_CHAN_TO_FX] = fluid_synth_mixer_set_chan_to_fx_mapping;
-    map_func[MAP_FX_TO_OUT] = fluid_synth_mixer_set_fx_to_out_mapping;
+    map_func[SET_MAP_CHAN_TO_OUT] = fluid_synth_mixer_set_chan_to_out_mapping;
+    map_func[SET_MAP_CHAN_TO_FX] = fluid_synth_mixer_set_chan_to_fx_mapping;
+    map_func[SET_MAP_FX_TO_OUT] = fluid_synth_mixer_set_fx_to_out_mapping;
 
     /* checks arguments by group of 2: [arg1 arg2] [argr3 arg4] ..  .. */
     if(check_group_arguments(ac, av, 2, out, name_cde[map_type],
@@ -3685,7 +3685,7 @@ static int fluid_handle_set_map(void *data, int ac, char **av,
 */
 int fluid_handle_setchanmapout(void *data, int ac, char **av, fluid_ostream_t out)
 {
-    return fluid_handle_set_map(data, ac, av, out, MAP_CHAN_TO_OUT);
+    return fluid_handle_set_map(data, ac, av, out, SET_MAP_CHAN_TO_OUT);
 }
 
 /*-----------------------------------------------------------------------------
@@ -3695,7 +3695,7 @@ int fluid_handle_setchanmapout(void *data, int ac, char **av, fluid_ostream_t ou
 */
 int fluid_handle_setchanmapfx(void *data, int ac, char **av, fluid_ostream_t out)
 {
-    return fluid_handle_set_map(data, ac, av, out, MAP_CHAN_TO_FX);
+    return fluid_handle_set_map(data, ac, av, out, SET_MAP_CHAN_TO_FX);
 }
 
 /*-----------------------------------------------------------------------------
@@ -3705,7 +3705,7 @@ int fluid_handle_setchanmapfx(void *data, int ac, char **av, fluid_ostream_t out
 */
 int fluid_handle_setfxmapout(void *data, int ac, char **av, fluid_ostream_t out)
 {
-    return fluid_handle_set_map(data, ac, av, out, MAP_FX_TO_OUT);
+    return fluid_handle_set_map(data, ac, av, out, SET_MAP_FX_TO_OUT);
 }
 
 #ifdef LADSPA
