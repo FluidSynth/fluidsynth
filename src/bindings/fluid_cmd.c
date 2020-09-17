@@ -3378,15 +3378,14 @@ int fluid_handle_setbreathmode(void *data, int ac, char **av,
   @param av, table of arguments.
   @param out output stream.
 */
-int fluid_handle_chanmap(void *data, int ac, char **av,
-                              fluid_ostream_t out)
+int fluid_handle_chanmap(void *data, int ac, char **av, fluid_ostream_t out)
 {
     static const char header[] ="Channel    , to out, to fx, to out\n";
     static const char name_cde[] = "chanmap";
     FLUID_ENTRY_COMMAND(data);
     fluid_synth_t *synth = handler->synth;
 
-    int i, n, n_chan = fluid_synth_count_midi_channels(synth);
+    int i, n, n_chan;
 
     /* checks parameters: 	chan1 chan2 .... */
     if(check_channels_arguments(ac, av, out, name_cde) < 0)
@@ -3394,13 +3393,11 @@ int fluid_handle_chanmap(void *data, int ac, char **av,
         return -1;
     }
 
+    /* print mapping for all MIDI channels number  */
+    n = n_chan = fluid_synth_count_midi_channels(synth);
     if(ac)
     {
-        n = ac; /* prints ac MIDI channels number */
-    }
-    else
-    {
-        n = n_chan; /* prints all MIDI channels number */
+        n = ac; /* print mapping for only ac MIDI channels number */
     }
 
     /* prints header */
@@ -3409,10 +3406,11 @@ int fluid_handle_chanmap(void *data, int ac, char **av,
     for(i = 0; i < n; i++)
     {
         int result;
-        int out_from_chan, fx_from_chan, out_from_fx = -1;
+        int out_from_chan, fx_from_chan, out_from_fx;
         int chan = ac ? atoi(av[i]) : i;
         result = fluid_synth_mixer_get_channel_mapping(synth, chan, &out_from_chan,
                                                         &fx_from_chan);
+        out_from_fx = -1;
         if((result == FLUID_OK) && (fx_from_chan >= 0))
         {
             fluid_synth_mixer_get_fx_mapping(synth, fx_from_chan, &out_from_fx);
@@ -3420,9 +3418,8 @@ int fluid_handle_chanmap(void *data, int ac, char **av,
 
         if(result == FLUID_OK)
         {
-            fluid_ostream_printf(out,
-                                 "channel:%3d,%7d,%6d,%7d\n",
-                                  chan, out_from_chan, fx_from_chan, out_from_fx);
+            fluid_ostream_printf(out, "channel:%3d,%7d,%6d,%7d\n",
+                                 chan, out_from_chan, fx_from_chan, out_from_fx);
         }
         else
         {
@@ -3463,12 +3460,12 @@ int fluid_handle_chanmap(void *data, int ac, char **av,
 */
 int fluid_handle_fxmap(void *data, int ac, char **av, fluid_ostream_t out)
 {
-    static const char header[] ="fx unit    , to out\n";
+    static const char header[] = "fx unit    , to out\n";
     static const char name_cde[] = "fxmap";
     FLUID_ENTRY_COMMAND(data);
     fluid_synth_t *synth = handler->synth;
 
-    int i, n, n_fxunit = fluid_synth_count_effects_groups(synth);
+    int i, n, n_fxunit;
 
     /* checks parameters: 	fx0 fx1 .... */
     if(check_channels_arguments(ac, av, out, name_cde) < 0)
@@ -3476,13 +3473,11 @@ int fluid_handle_fxmap(void *data, int ac, char **av, fluid_ostream_t out)
         return -1;
     }
 
-    if(ac)
+    /* prints mapping for all fx */
+	n = n_fxunit = fluid_synth_count_effects_groups(synth);
+	if(ac)
     {
-        n = ac; /* prints only ac fx unit mapping */
-    }
-    else
-    {
-        n = n_fxunit; /* prints all fx units mapping */
+        n = ac; /* prints mapping only for ac fx unit number */
     }
 
     /* prints header */
@@ -3490,16 +3485,13 @@ int fluid_handle_fxmap(void *data, int ac, char **av, fluid_ostream_t out)
 
     for(i = 0; i < n; i++)
     {
-        int out_from_fx;
+        int out_idx;
         int fx_unit = ac ? atoi(av[i]) : i;
-        int result = fluid_synth_mixer_get_fx_mapping(synth, fx_unit,
-                                                       &out_from_fx);
+        int result = fluid_synth_mixer_get_fx_mapping(synth, fx_unit, &out_idx);
 
         if(result == FLUID_OK)
         {
-            fluid_ostream_printf(out,
-                                 "fx unit:%3d,%7d\n",
-                                  fx_unit, out_from_fx);
+            fluid_ostream_printf(out, "fx unit:%3d,%7d\n", fx_unit, out_idx);
         }
         else
         {
