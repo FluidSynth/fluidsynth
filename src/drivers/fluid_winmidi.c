@@ -71,6 +71,8 @@
 #define MIDI_SYSEX_BUF_COUNT    16
 
 typedef struct fluid_winmidi_driver_s fluid_winmidi_driver_t;
+
+/* device infos structure for only one midi device */
 typedef struct device_infos_t
 {
     fluid_winmidi_driver_t *dev; /* driver structure*/
