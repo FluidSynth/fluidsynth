@@ -27,6 +27,36 @@
  * from within the MIDI input callback, despite many examples contrary to that
  * on the Internet.  Some MIDI devices will deadlock.  Therefore we add MIDIHDR
  * pointers to a queue and re-add them in a separate thread.  Lame-o API! :(
+ *
+ * Multiple/single devices handling capabilities:
+ * This driver is able to handle multiple devices choosen by the user trough
+ * the setting midi.winmidi.device. This will allow the driver to receive MIDI
+ * messages comming from distinct devices and forward these messages on
+ * distinct MIDI channels set.
+ * 1)For example, if the user chooses 2 devices at index 0 and 1, the user must
+ * specify this by putting the name "multi:0,1" in midi.winmidi.device setting.
+ * We get a fictif device composed of real devices (0,1). This fictif device
+ * behaves like a device with 32 MIDI channels whose messages are forwarded to
+ * driver output as this.
+ * - MIDI messages from real device 0 are output to MIDI channels set 0 to 15.
+ * - MIDI messages from real device 1 are output to MIDI channels set 15 to 31.
+ *
+ * 2)Now another example with the name "multi:1,0" in midi.winmidi.device setting.
+ * The driver will forward MIDI messages as this:
+ * - MIDI messages from real device 1 are output to MIDI channels set 0 to 15.
+ * - MIDI messages from real device 0 are output to MIDI channels set 15 to 31.
+ * So, the order of real device index specified the setting allows the user to
+ * choose the MIDI channel set associated with this real device at the driver
+ * output.
+ *
+ * Note also that the driver handles single device choosen by putting the device
+ * name in midi.winmidi.device setting.
+ * For example, let the followings device names:
+ * 1:Port MIDI SB Live! [CE00], 0:SB PCI External MIDI, default, multi:0[,1,..]
+ * The user can set the name "1:Port MIDI SB Live! [CE00]" in the setting.
+ * or use the multi device naming "multi:1" (specifying only device 1 index).
+ * Both naming choice allows the driver to handle the same single device.
+ *
  */
 
 #include "fluidsynth_priv.h"
@@ -145,6 +175,47 @@ fluid_winmidi_callback(HMIDIIN hmi, UINT wMsg, DWORD_PTR dwInstance,
     }
 }
 
+/**
+ * build a device name prefixed by its index. The format of the returned
+ * name is: dev_idx:dev_name
+ * The name returned is convenient for midi.winmidi.device setting.
+ * It allows the user to identify a device index through its name or vise
+ * versa. This is useful allowing the user specify a multi device name
+ * using a list of device index.
+ *
+ * @param dev_idx, device index
+ * @param dev_name, name of the device
+ * @return the new device name (that must be freed when finish with it) or
+ *  NULL if memory allocation error.
+ */
+static char *fluid_winmidi_get_device_name(int dev_idx, char *dev_name)
+{
+    char *new_dev_name;
+
+    int i =  dev_idx;
+    size_t size = 0; /* index size */
+
+    do
+    {
+        size++;
+        i = i / 10 ;
+    }
+    while(i);
+
+    /* index size + separator + name length + zero termination */
+    new_dev_name = FLUID_MALLOC(size + 2 + FLUID_STRLEN(dev_name));
+    if(new_dev_name)
+    {
+        /* the name is filled if allocation is successful */
+        FLUID_SPRINTF(new_dev_name, "%d:%s", dev_idx, dev_name);
+    }
+    else
+    {
+        FLUID_LOG(FLUID_ERR, "Out of memory");
+    }
+    return new_dev_name;
+}
+
 void fluid_winmidi_midi_driver_settings(fluid_settings_t *settings)
 {
     MMRESULT res;
@@ -163,7 +234,15 @@ void fluid_winmidi_midi_driver_settings(fluid_settings_t *settings)
 
             if(res == MMSYSERR_NOERROR)
             {
-                fluid_settings_add_option(settings, "midi.winmidi.device", in_caps.szPname);
+                /* add new device name (prefixed by its index) */
+                char *new_dev_name = fluid_winmidi_get_device_name(i, in_caps.szPname);
+                if(!new_dev_name)
+                {
+                    break;
+                }
+                fluid_settings_add_option(settings, "midi.winmidi.device",
+                                          new_dev_name);
+                FLUID_FREE(new_dev_name);
             }
         }
     }
@@ -250,16 +329,22 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
             if(res == MMSYSERR_NOERROR)
             {
                 int str_cmp_res;
+                char *new_dev_name = fluid_winmidi_get_device_name(i, in_caps.szPname);
+                if(!new_dev_name)
+                {
+                    break;
+                }
 #ifdef _UNICODE
                 WCHAR wDevName[MAXPNAMELEN];
                 MultiByteToWideChar(CP_UTF8, 0, dev_name, -1, wDevName, MAXPNAMELEN);
 
-                str_cmp_res = wcsicmp(wDevName, in_caps.szPname);
+                str_cmp_res = wcsicmp(wDevName, new_dev_name);
 #else
-                str_cmp_res = FLUID_STRCASECMP(dev_name, in_caps.szPname);
+                str_cmp_res = FLUID_STRCASECMP(dev_name, new_dev_name);
 #endif
 
-                FLUID_LOG(FLUID_DBG, "Testing midi device \"%s\"", in_caps.szPname);
+                FLUID_LOG(FLUID_DBG, "Testing midi device \"%s\"", new_dev_name);
+                FLUID_FREE(new_dev_name);
 
                 if(str_cmp_res == 0)
                 {
