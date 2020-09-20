@@ -29,8 +29,8 @@
  * pointers to a queue and re-add them in a separate thread.  Lame-o API! :(
  *
  * Multiple/single devices handling capabilities:
- * This driver is able to handle multiple devices choosen by the user trough
- * the setting midi.winmidi.device. This will allow the driver to receive MIDI
+ * This driver is able to handle multiple devices chosen by the user trough
+ * the setting midi.winmidi.device. This allows the driver to receive MIDI
  * messages comming from distinct devices and forward these messages on
  * distinct MIDI channels set.
  * 1)For example, if the user chooses 2 devices at index 0 and 1, the user must
@@ -45,11 +45,11 @@
  * The driver will forward MIDI messages as this:
  * - MIDI messages from real device 1 are output to MIDI channels set 0 to 15.
  * - MIDI messages from real device 0 are output to MIDI channels set 15 to 31.
- * So, the order of real device index specified the setting allows the user to
+ * So, the order of real device index specified in the setting allows the user to
  * choose the MIDI channel set associated with this real device at the driver
  * output.
  *
- * Note also that the driver handles single device choosen by putting the device
+ * Note also that the driver handles single device chosen by putting the device
  * name in midi.winmidi.device setting.
  * For example, let the followings device names:
  * 0:Port MIDI SB Live! [CE00], 1:SB PCI External MIDI, default, multi:0[,1,..]
@@ -86,6 +86,7 @@ typedef struct device_infos_t
     unsigned char sysExBuf[MIDI_SYSEX_BUF_COUNT * MIDI_SYSEX_MAX_SIZE];
 }device_infos;
 
+/* driver structure */
 struct fluid_winmidi_driver_s
 {
     fluid_midi_driver_t driver;
@@ -142,6 +143,11 @@ fluid_winmidi_input_error(char *strError, MMRESULT no)
     return strError;
 }
 
+/*
+  callback function called by any MIDI device sending a MIDI message.
+  @param dwInstance, pointer on device_infos structure of this
+  device.
+*/
 static void CALLBACK
 fluid_winmidi_callback(HMIDIIN hmi, UINT wMsg, DWORD_PTR dwInstance,
                        DWORD_PTR dwParam1, DWORD_PTR dwParam2)
