@@ -66,7 +66,7 @@
 
 #if WINMIDI_SUPPORT
 
-/* uncomment this macro to enable printf displayed */
+/* uncomment this macro to enable printf message */
 //#define PRINTF_MSG
 
 #include "fluid_midi.h"
@@ -112,7 +112,7 @@ struct fluid_winmidi_driver_s
 #define msg_p2(_m)    ((_m >> 16) & 0x7f)
 
 /*
-  check if string uanum is an unsigned ascii number
+  check if the string uanum is an unsigned ascii number.
   @param uanum pointer on ascii number.
   @param del ending delimiter caracter.
   @return count of caracter or 0 if not a valid number.
@@ -237,10 +237,10 @@ fluid_winmidi_callback(HMIDIIN hmi, UINT wMsg, DWORD_PTR dwInstance,
  * The name returned is convenient for midi.winmidi.device setting.
  * It allows the user to identify a device index through its name or vise
  * versa. This allows the user to specify a multi device name using a list of
- * devices index (see fluid_winmidi_midi_driver_settings'()).
+ * devices index (see fluid_winmidi_midi_driver_settings()).
  *
- * @param dev_idx, device index
- * @param dev_name, name of the device
+ * @param dev_idx, device index.
+ * @param dev_name, name of the device.
  * @return the new device name (that must be freed when finish with it) or
  *  NULL if memory allocation error.
  */
@@ -409,7 +409,7 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
         return NULL;
     }
 
-    /* allocation of driver sytructure dependant of max_devices */
+    /* allocation of driver structure size dependant of max_devices */
     dev = FLUID_MALLOC(sizeof(fluid_winmidi_driver_t)
                        + (max_devices - 1) * sizeof(device_infos));
 
@@ -429,7 +429,7 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
         FLUID_STRCPY(dev_name, "default");
     }
 
-    /* look if the device name start with the prefix 'multi'. */
+    /* look if the device name starts with the prefix 'multi'. */
     if( FLUID_STRNCASECMP(multi_dev_name, dev_name, MULTI_DEV_PREFIX_LEN) == 0)
     {
         /* multi devices name "multi:x,y,z". parse devices index: x,y,..
