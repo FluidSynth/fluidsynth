@@ -67,7 +67,7 @@
 #if WINMIDI_SUPPORT
 
 /* uncomment this macro to enable printf displayed */
-#define PRINTF_MSG
+//#define PRINTF_MSG
 
 #include "fluid_midi.h"
 #include "fluid_mdriver.h"
