@@ -30,9 +30,12 @@
  *
  * Multiple/single devices handling capabilities:
  * This driver is able to handle multiple devices chosen by the user trough
- * the setting midi.winmidi.device. This allows the driver to receive MIDI
- * messages comming from distinct devices and forward these messages on
- * distinct MIDI channels set.
+ * the settings midi.winmidi.maxdevices and midi.winmidi.device.
+ * The setting midi.winmidi.maxdevices must be set to the number of devices to
+ * work with. This allows the driver to check if the real devices number exist
+ * and allocate the necessary memory.
+ * Then the driver is able receive MIDI messages comming from distinct devices
+ * and forward these messages on distinct MIDI channels set.
  * 1)For example, if the user chooses 2 devices at index 0 and 1, the user must
  * specify this by putting the name "multi:0,1" in midi.winmidi.device setting.
  * We get a fictif device composed of real devices (0,1). This fictif device
