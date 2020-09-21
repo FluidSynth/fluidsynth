@@ -54,7 +54,7 @@
  *
  * Note also that the driver handles single device chosen by putting the device
  * name in midi.winmidi.device setting.
- * For example, let the followings device names:
+ * For example, let the following device names:
  * 0:Port MIDI SB Live! [CE00], 1:SB PCI External MIDI, default, multi:0[,1,..]
  * The user can set the name "0:Port MIDI SB Live! [CE00]" in the setting.
  * or use the multi device naming "multi:0" (specifying only device 0 index).
