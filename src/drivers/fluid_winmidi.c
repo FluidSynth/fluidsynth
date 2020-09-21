@@ -63,6 +63,9 @@
 
 #if WINMIDI_SUPPORT
 
+/* uncomment this macro to enable printf displayed */
+#define PRINTF_MSG
+
 #include "fluid_midi.h"
 #include "fluid_mdriver.h"
 #include "fluid_settings.h"
@@ -159,8 +162,6 @@ fluid_winmidi_callback(HMIDIIN hmi, UINT wMsg, DWORD_PTR dwInstance,
     unsigned char *data;
     unsigned int msg_param = (unsigned int) dwParam1;
 
-	printf("callback: dev_idx=%d\n", dev_infos->dev_idx);
-
     switch(wMsg)
     {
     case MIM_OPEN:
@@ -171,11 +172,12 @@ fluid_winmidi_callback(HMIDIIN hmi, UINT wMsg, DWORD_PTR dwInstance,
 
     case MIM_DATA:
         event.type = msg_type(msg_param);
-        event.channel = msg_chan(msg_param);
-	    printf("channel in: %d\n", event.channel);
-        event.channel += dev_infos->channel_map;
-	    printf("channel out: %d\n", event.channel);
+        event.channel = msg_chan(msg_param) + dev_infos->channel_map;
 
+#ifdef PRINTF_MSG
+        printf("\ndev_idx:%d, channel in:%d,out: %d\n",
+               dev_infos->dev_idx, msg_chan(msg_param) , event.channel);
+#endif
         if(event.type != PITCH_BEND)
         {
             event.param1 = msg_p1(msg_param);
@@ -191,6 +193,9 @@ fluid_winmidi_callback(HMIDIIN hmi, UINT wMsg, DWORD_PTR dwInstance,
         break;
 
     case MIM_LONGDATA:    /* SYSEX data */
+#ifdef PRINTF_MSG
+        printf("\ndev_idx:%d, sysex\n", dev_infos->dev_idx);
+#endif
         if(dev->hThread == NULL)
         {
             break;
@@ -519,7 +524,9 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
         dev->dev_infos[i].dev = dev;
         dev->dev_infos[i].midi_num = i;
         dev->dev_infos[i].channel_map = i * 16;
-		printf("open:%d dev_idx=%d\n",  i, dev->dev_infos[i].dev_idx);
+#ifdef PRINTF_MSG
+        printf("open:%d dev_idx=%d\n",  i, dev->dev_infos[i].dev_idx);
+#endif
         res = midiInOpen(&dev->dev_infos[i].hmidiin, dev->dev_infos[i].dev_idx,
                          (DWORD_PTR) fluid_winmidi_callback,
                          (DWORD_PTR) &dev->dev_infos[i], CALLBACK_FUNCTION);
