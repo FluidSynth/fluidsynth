@@ -37,14 +37,14 @@
  * Then the driver is able receive MIDI messages comming from distinct devices
  * and forward these messages on distinct MIDI channels set.
  * 1)For example, if the user chooses 2 devices at index 0 and 1, the user must
- * specify this by putting the name "multi:0,1" in midi.winmidi.device setting.
+ * specify this by putting the name "multi:0 1" in midi.winmidi.device setting.
  * We get a fictif device composed of real devices (0,1). This fictif device
  * behaves like a device with 32 MIDI channels whose messages are forwarded to
  * driver output as this:
  * - MIDI messages from real device 0 are output to MIDI channels set 0 to 15.
  * - MIDI messages from real device 1 are output to MIDI channels set 15 to 31.
  *
- * 2)Now another example with the name "multi:1,0" in midi.winmidi.device setting.
+ * 2)Now another example with the name "multi:1 0" in midi.winmidi.device setting.
  * The driver will forward MIDI messages as this:
  * - MIDI messages from real device 1 are output to MIDI channels set 0 to 15.
  * - MIDI messages from real device 0 are output to MIDI channels set 15 to 31.
@@ -55,7 +55,7 @@
  * Note also that the driver handles single device by putting the device name
  * in midi.winmidi.device setting.
  * For example, let the following device names:
- * 0:Port MIDI SB Live! [CE00], 1:SB PCI External MIDI, default, multi:0[,1,..]
+ * 0:Port MIDI SB Live! [CE00], 1:SB PCI External MIDI, default, multi:x[ y z ..]
  * The user can set the name "0:Port MIDI SB Live! [CE00]" in the setting.
  * or use the multi device naming "multi:0" (specifying only device index 0).
  * Both naming choice allows the driver to handle the same single device.
@@ -67,7 +67,7 @@
 #if WINMIDI_SUPPORT
 
 /* define PRINTF_MSG macro to enable printf message */
-//#define PRINTF_MSG
+#define PRINTF_MSG
 
 #include "fluid_midi.h"
 #include "fluid_mdriver.h"
@@ -102,7 +102,7 @@ struct fluid_winmidi_driver_s
     DWORD  dwThread;
 
     /* devices informations table */
-    UINT dev_count;   /* device informations count in dev_infos[] table */
+    int dev_count;   /* device informations count in dev_infos[] table */
     device_infos dev_infos[1];
 };
 
@@ -110,29 +110,6 @@ struct fluid_winmidi_driver_s
 #define msg_chan(_m)  ((unsigned char)(_m & 0x0f))
 #define msg_p1(_m)    ((_m >> 8) & 0x7f)
 #define msg_p2(_m)    ((_m >> 16) & 0x7f)
-
-/*
-  check if the string uanum is an unsigned ascii number.
-  @param uanum pointer on ascii number.
-  @param del ending delimiter caracter.
-  @return count of caracter or 0 if not a valid number.
-*/
-static int
-fluid_is_uint(char *uanum, char del)
-{
-    int count = 0;
-    while(*uanum != 0 && *uanum != del)
-    {
-        if(((*uanum < '0') || (*uanum > '9')) && (*uanum != ' '))
-        {
-            return 0;
-        }
-
-        uanum++;
-        count++;
-    }
-    return count;
-}
 
 static char *
 fluid_winmidi_input_error(char *strError, MMRESULT no)
@@ -275,22 +252,22 @@ static char *fluid_winmidi_get_device_name(int dev_idx, char *dev_name)
 /*
   Internal multi device name template.
 */
-#define MULTI_DEV_PREFIX_LEN 5  /*  length of prefix 'multi' (5 caracters)*/
-const static char *multi_dev_name = "multi:0[,1,..]";
+#define MULTI_DEV_PREFIX_LEN 6  /*  length of prefix 'multi:' (6 caracters)*/
+const static char *multi_dev_name = "multi:x[ y z ..]";
 
 /*
  Add setting midi.winmidi.device and midi.winmidi.maxdevices in the settings.
 
  MIDI devices names are enumerated and added to midi.winmidi.device setting
  options. Example:
- 0:Port MIDI SB Live! [CE00], 1:SB PCI External MIDI, default, multi:0[,1,..]
+ 0:Port MIDI SB Live! [CE00], 1:SB PCI External MIDI, default, multi:x[ y z ..]
 
  Devices name prefixed by index (i.e 1:SB PCI External MIDI) are real devices.
  "default" name is the default device.
- "multi:0[,1,..]" is the multi device naming. Its purpose is to indicate to
+ "multi:x[ y z ..]" is the multi device naming. Its purpose is to indicate to
  the user how he must specify a multi device name in the setting.
  A multi devices name must begin with the prefix 'multi:' followed by the list
- of real devices index separated by a comma. Example: "multi:5,3,0"
+ of real devices index separated by space(s). Example: "multi:5 3 0"
 
  midi.winmidi.maxdevices setting is the maximum number of devices opened
  by the driver.
@@ -380,8 +357,8 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
     fluid_winmidi_driver_t *dev;
     MIDIHDR *hdr;
     MMRESULT res;
-    UINT i, j, num;
-    UINT max_devices;  /* maximum number of devices to handle */
+    int i, j, num;
+    int max_devices;  /* maximum number of devices to handle */
     MIDIINCAPS in_caps;
     char strError[MAXERRORLENGTH];
     char dev_name[MAXPNAMELEN];
@@ -429,23 +406,21 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
         FLUID_STRCPY(dev_name, "default");
     }
 
-    /* look if the device name starts with the prefix 'multi'. */
+    /* look if the device name starts with the prefix 'multi:'. */
     if( FLUID_STRNCASECMP(multi_dev_name, dev_name, MULTI_DEV_PREFIX_LEN) == 0)
     {
-        /* multi devices name "multi:x,y,z". parse devices index: x,y,..
-          Each ascii index ends with the delimiter ','.
+        /* multi devices name "multi:x[ y z ..]". parse devices index: x,y,..
+          Each ascii index are separated by space(s) caracters.
         */
-        /* previous ending index pointer */
-        char *beg_idx = &dev_name[MULTI_DEV_PREFIX_LEN];
-        int dev_idx;    /* device index */
-        int size_idx;   /* size of ascii index */
+        int dev_idx;               /* device index */
+        char *cur_idx, *next_idx;  /* current and next ascii index pointer */
+        cur_idx = next_idx = &dev_name[MULTI_DEV_PREFIX_LEN];
         do
         {
-            beg_idx = beg_idx + 1; /* beginning position of next ascii index */
-            dev_idx = atoi(beg_idx); /* convert */
-            size_idx = fluid_is_uint(beg_idx, ','); /* check and count caracter */
-            if (!size_idx                          /* not a number */
-                || (UINT)dev_idx >= num            /* invalid device index */
+            dev_idx = g_ascii_strtoll(cur_idx, &next_idx, 10);
+            if (cur_idx == next_idx                /* not a number */
+                || dev_idx < 0                     /* invalid device index */
+                || dev_idx >= num                  /* invalid device index */
                 || (dev->dev_count >= max_devices) /* exceed max allowed */
                )
             {
@@ -456,9 +431,9 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
             /* memorize device index in dev_infos table */
             dev->dev_infos[dev->dev_count++].dev_idx = dev_idx;
 
-            /* go to ending delimiter */
-            beg_idx += size_idx;
-        }while(*beg_idx);
+            /* go to next index */
+            cur_idx = next_idx;
+        }while(*cur_idx);
     }
     else
     {
@@ -606,7 +581,7 @@ error_recovery:
 void
 delete_fluid_winmidi_driver(fluid_midi_driver_t *p)
 {
-    UINT i,j;
+    int i,j;
 
     fluid_winmidi_driver_t *dev = (fluid_winmidi_driver_t *) p;
     fluid_return_if_fail(dev != NULL);
