@@ -48,16 +48,16 @@
  * The driver will forward MIDI messages as this:
  * - MIDI messages from real device 1 are output to MIDI channels set 0 to 15.
  * - MIDI messages from real device 0 are output to MIDI channels set 15 to 31.
- * So, the order of real device index specified in the setting allows the user to
- * choose the MIDI channel set associated with this real device at the driver
- * output.
+ * So, the device order specified in the setting allows the user to choose the
+ * MIDI channel set associated with this real device at the driver output:
+ * output_channel = input_channel + device_order * 16.
  *
- * Note also that the driver handles single device chosen by putting the device
- * name in midi.winmidi.device setting.
+ * Note also that the driver handles single device by putting the device name
+ * in midi.winmidi.device setting.
  * For example, let the following device names:
  * 0:Port MIDI SB Live! [CE00], 1:SB PCI External MIDI, default, multi:0[,1,..]
  * The user can set the name "0:Port MIDI SB Live! [CE00]" in the setting.
- * or use the multi device naming "multi:0" (specifying only device 0 index).
+ * or use the multi device naming "multi:0" (specifying only device index 0).
  * Both naming choice allows the driver to handle the same single device.
  *
  */
@@ -83,7 +83,7 @@ typedef struct device_infos_t
 {
     fluid_winmidi_driver_t *dev; /* driver structure*/
     unsigned char midi_num;      /* device order number */
-    unsigned char channel_map;   /* MIDI channel mapping */
+    unsigned char channel_map;   /* MIDI channel mapping from input to output */
     UINT dev_idx;                /* device index */
     HMIDIIN hmidiin;             /* device handle */
     /* MIDI HDR for SYSEX buffer */
@@ -286,9 +286,9 @@ const static char *multi_dev_name = "multi:0[,1,..]";
  0:Port MIDI SB Live! [CE00], 1:SB PCI External MIDI, default, multi:0[,1,..]
 
  Devices name prefixed by index (i.e 1:SB PCI External MIDI) are real devices.
- "default" name is the default device selected by the Windows Mapper control panel.
- "multi:0[,1,..]" is the multi device naming. Its purpose is to give the user
- an indication on how he must specify a multi device name in the setting.
+ "default" name is the default device.
+ "multi:0[,1,..]" is the multi device naming. Its purpose is to indicate to
+ the user how he must specify a multi device name in the setting.
  A multi devices name must begin with the prefix 'multi:' followed by the list
  of real devices index separated by a comma. Example: "multi:5,3,0"
 
@@ -400,7 +400,7 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
     {
         max_devices = 1;
     }
-    num = midiInGetNumDevs();
+    num = midiInGetNumDevs(); /* get number of real devices installed */
 
     if(num < max_devices)
     {
@@ -524,9 +524,9 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
     /* try opening the devices */
     for(i = 0; i < dev->dev_count; i++)
     {
-        dev->dev_infos[i].dev = dev;
-        dev->dev_infos[i].midi_num = i;
-        dev->dev_infos[i].channel_map = i * 16;
+        dev->dev_infos[i].dev = dev;            /* driver structure */
+        dev->dev_infos[i].midi_num = i;         /* device order number */
+        dev->dev_infos[i].channel_map = i * 16; /* map from input to output */
 #ifdef PRINTF_MSG
         printf("open:%d dev_idx=%d\n",  i, dev->dev_infos[i].dev_idx);
 #endif
@@ -614,6 +614,7 @@ delete_fluid_winmidi_driver(fluid_midi_driver_t *p)
     fluid_winmidi_driver_t *dev = (fluid_winmidi_driver_t *) p;
     fluid_return_if_fail(dev != NULL);
 
+    /* request the sysex thread to terminate */
     if(dev->hThread != NULL)
     {
         PostThreadMessage(dev->dwThread, WM_CLOSE, 0, 0);
@@ -623,13 +624,16 @@ delete_fluid_winmidi_driver(fluid_midi_driver_t *p)
         dev->hThread = NULL;
     }
 
+    /* stop MIDI in devices and free allocated buffers */
     for(i = 0; i < dev->dev_count; i++)
     {
         if(dev->dev_infos[i].hmidiin != NULL)
         {
+            /* stop the device */
             midiInStop(dev->dev_infos[i].hmidiin);
             midiInReset(dev->dev_infos[i].hmidiin);
 
+            /* free allocated buffers associated to this device */
             for(j = 0; j < MIDI_SYSEX_BUF_COUNT; j++)
             {
                 MIDIHDR *hdr = &dev->dev_infos[i].sysExHdrs[j];
@@ -640,6 +644,7 @@ delete_fluid_winmidi_driver(fluid_midi_driver_t *p)
                 }
             }
 
+            /* close the device */
             midiInClose(dev->dev_infos[i].hmidiin);
         }
     }
