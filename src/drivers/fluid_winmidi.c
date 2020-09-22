@@ -456,7 +456,7 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
             /* memorize device index in dev_infos table */
             dev->dev_infos[dev->dev_count++].dev_idx = dev_idx;
 
-            /* go to ending delimitor */
+            /* go to ending delimiter */
             beg_idx += size_idx;
         }while(*beg_idx);
     }
