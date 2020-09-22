@@ -67,7 +67,7 @@
 #if WINMIDI_SUPPORT
 
 /* define PRINTF_MSG macro to enable printf message */
-#define PRINTF_MSG
+//#define PRINTF_MSG
 
 #include "fluid_midi.h"
 #include "fluid_mdriver.h"
@@ -355,7 +355,6 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
                          handle_midi_event_func_t handler, void *data)
 {
     fluid_winmidi_driver_t *dev;
-    MIDIHDR *hdr;
     MMRESULT res;
     int i, j, num;
     int max_devices;  /* maximum number of devices to handle */
@@ -387,16 +386,15 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
     }
 
     /* allocation of driver structure size dependant of max_devices */
-    dev = FLUID_MALLOC(sizeof(fluid_winmidi_driver_t)
-                       + (max_devices - 1) * sizeof(device_infos));
+    i = sizeof(fluid_winmidi_driver_t) + (max_devices - 1) * sizeof(device_infos);
+    dev = FLUID_MALLOC(i);
 
     if(dev == NULL)
     {
         return NULL;
     }
 
-    FLUID_MEMSET(dev, 0, sizeof(fluid_winmidi_driver_t)
-                 + (max_devices - 1) * sizeof(device_infos));
+    FLUID_MEMSET(dev, 0, i); /* reset structure members */
 
     /* parse device name */
     /* get the device name. if none is specified, use the default device. */
@@ -438,7 +436,7 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
     else
     {
         /* find single device */
-        dev->dev_infos[0].dev_idx = 0; /* default device index */
+        /* default device index: dev_idx = 0, dev_count = 1 */
         dev->dev_count = 1;
         if(FLUID_STRCASECMP("default", dev_name) != 0)
         {
@@ -496,15 +494,16 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
     /* try opening the devices */
     for(i = 0; i < dev->dev_count; i++)
     {
-        dev->dev_infos[i].dev = dev;            /* driver structure */
-        dev->dev_infos[i].midi_num = i;         /* device order number */
-        dev->dev_infos[i].channel_map = i * 16; /* map from input to output */
+        device_infos *dev_infos = &dev->dev_infos[i];
+        dev_infos->dev = dev;            /* driver structure */
+        dev_infos->midi_num = i;         /* device order number */
+        dev_infos->channel_map = i * 16; /* map from input to output */
 #ifdef PRINTF_MSG
         printf("open:%d dev_idx=%d\n",  i, dev->dev_infos[i].dev_idx);
 #endif
-        res = midiInOpen(&dev->dev_infos[i].hmidiin, dev->dev_infos[i].dev_idx,
+        res = midiInOpen(&dev_infos->hmidiin, dev_infos->dev_idx,
                          (DWORD_PTR) fluid_winmidi_callback,
-                         (DWORD_PTR) &dev->dev_infos[i], CALLBACK_FUNCTION);
+                         (DWORD_PTR) dev_infos, CALLBACK_FUNCTION);
 
         if(res != MMSYSERR_NOERROR)
         {
@@ -516,23 +515,23 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
         /* Prepare and add SYSEX buffers */
         for(j = 0; j < MIDI_SYSEX_BUF_COUNT; j++)
         {
-            hdr = &dev->dev_infos[i].sysExHdrs[j];
+            MIDIHDR *hdr = &dev_infos->sysExHdrs[j];
 
-            hdr->lpData = (LPSTR)&dev->dev_infos[i].sysExBuf[j * MIDI_SYSEX_MAX_SIZE];
+            hdr->lpData = (LPSTR)&dev_infos->sysExBuf[j * MIDI_SYSEX_MAX_SIZE];
             hdr->dwBufferLength = MIDI_SYSEX_MAX_SIZE;
 
             /* Prepare a buffer for SYSEX data and add it */
-            res = midiInPrepareHeader(dev->dev_infos[i].hmidiin, hdr, sizeof(MIDIHDR));
+            res = midiInPrepareHeader(dev_infos->hmidiin, hdr, sizeof(MIDIHDR));
 
             if(res == MMSYSERR_NOERROR)
             {
-                res = midiInAddBuffer(dev->dev_infos[i].hmidiin, hdr, sizeof(MIDIHDR));
+                res = midiInAddBuffer(dev_infos->hmidiin, hdr, sizeof(MIDIHDR));
 
                 if(res != MMSYSERR_NOERROR)
                 {
                     FLUID_LOG(FLUID_WARN, "Failed to prepare MIDI SYSEX buffer: %s (error %d)",
                           fluid_winmidi_input_error(strError, res), res);
-                    midiInUnprepareHeader(dev->dev_infos[i].hmidiin, hdr, sizeof(MIDIHDR));
+                    midiInUnprepareHeader(dev_infos->hmidiin, hdr, sizeof(MIDIHDR));
                 }
             }
             else
@@ -599,25 +598,26 @@ delete_fluid_winmidi_driver(fluid_midi_driver_t *p)
     /* stop MIDI in devices and free allocated buffers */
     for(i = 0; i < dev->dev_count; i++)
     {
-        if(dev->dev_infos[i].hmidiin != NULL)
+        device_infos *dev_infos = &dev->dev_infos[i];
+        if(dev_infos->hmidiin != NULL)
         {
             /* stop the device */
-            midiInStop(dev->dev_infos[i].hmidiin);
-            midiInReset(dev->dev_infos[i].hmidiin);
+            midiInStop(dev_infos->hmidiin);
+            midiInReset(dev_infos->hmidiin);
 
             /* free allocated buffers associated to this device */
             for(j = 0; j < MIDI_SYSEX_BUF_COUNT; j++)
             {
-                MIDIHDR *hdr = &dev->dev_infos[i].sysExHdrs[j];
+                MIDIHDR *hdr = &dev_infos->sysExHdrs[j];
 
                 if ((hdr->dwFlags & MHDR_PREPARED))
                 {
-                    midiInUnprepareHeader(dev->dev_infos[i].hmidiin, hdr, sizeof(MIDIHDR));
+                    midiInUnprepareHeader(dev_infos->hmidiin, hdr, sizeof(MIDIHDR));
                 }
             }
 
             /* close the device */
-            midiInClose(dev->dev_infos[i].hmidiin);
+            midiInClose(dev_infos->hmidiin);
         }
     }
     FLUID_FREE(dev);
