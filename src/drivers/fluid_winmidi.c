@@ -66,7 +66,7 @@
 
 #if WINMIDI_SUPPORT
 
-/* uncomment this macro to enable printf message */
+/* define PRINTF_MSG macro to enable printf message */
 //#define PRINTF_MSG
 
 #include "fluid_midi.h"
@@ -438,16 +438,13 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
         /* previous ending index pointer */
         char *beg_idx = &dev_name[MULTI_DEV_PREFIX_LEN];
         int dev_idx;    /* device index */
+        int size_idx;   /* size of ascii index */
         do
         {
             beg_idx = beg_idx + 1; /* beginning position of next ascii index */
-            if(*beg_idx == '\0')
-            {
-                break; /* no more index, end of device index parsing */
-            }
-
             dev_idx = atoi(beg_idx); /* convert */
-            if (!fluid_is_uint(beg_idx, ',')       /* not a number */
+            size_idx = fluid_is_uint(beg_idx, ','); /* check and count caracter */
+            if (!size_idx                          /* not a number */
                 || (UINT)dev_idx >= num            /* invalid device index */
                 || (dev->dev_count >= max_devices) /* exceed max allowed */
                )
@@ -460,8 +457,8 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
             dev->dev_infos[dev->dev_count++].dev_idx = dev_idx;
 
             /* go to ending delimitor */
-            beg_idx = FLUID_STRCHR(beg_idx,',');
-        }while(beg_idx != NULL);
+            beg_idx += size_idx;
+        }while(*beg_idx);
     }
     else
     {
