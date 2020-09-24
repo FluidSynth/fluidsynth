@@ -412,11 +412,13 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
         */
         int dev_idx;               /* device index */
         char *cur_idx, *next_idx;  /* current and next ascii index pointer */
-        cur_idx = next_idx = &dev_name[MULTI_DEV_PREFIX_LEN];
+        next_idx = &dev_name[MULTI_DEV_PREFIX_LEN];
         do
         {
+            /* try to convert next ascii index */
+            cur_idx = next_idx;
             dev_idx = g_ascii_strtoll(cur_idx, &next_idx, 10);
-            if (cur_idx == next_idx                /* not a number */
+            if (cur_idx == next_idx                /* not an integer number */
                 || dev_idx < 0                     /* invalid device index */
                 || dev_idx >= num                  /* invalid device index */
                 || (dev->dev_count >= max_devices) /* exceed max allowed */
@@ -429,9 +431,7 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
             /* memorize device index in dev_infos table */
             dev->dev_infos[dev->dev_count++].dev_idx = dev_idx;
 
-            /* go to next index */
-            cur_idx = next_idx;
-        }while(*cur_idx);
+        }while(*next_idx);
     }
     else
     {
