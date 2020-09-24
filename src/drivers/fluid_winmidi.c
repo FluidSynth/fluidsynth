@@ -601,8 +601,7 @@ delete_fluid_winmidi_driver(fluid_midi_driver_t *p)
         device_infos *dev_infos = &dev->dev_infos[i];
         if(dev_infos->hmidiin != NULL)
         {
-            /* stop the device */
-            midiInStop(dev_infos->hmidiin);
+            /* stop the device and mark any pending data blocks as being done */
             midiInReset(dev_infos->hmidiin);
 
             /* free allocated buffers associated to this device */
