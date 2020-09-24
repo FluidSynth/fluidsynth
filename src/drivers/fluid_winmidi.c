@@ -52,8 +52,8 @@
  * - MIDI messages from real device 1 are output to MIDI channels set 0 to 15.
  * - MIDI messages from real device 0 are output to MIDI channels set 15 to 31.
  * So, the device order specified in the setting allows the user to choose the
- * MIDI channel set associated with this real device at the driver output 
- * according the formula: output_channel = input_channel + device_order * 16.
+ * MIDI channel set associated with this real device at the driver output
+ * according this formula: output_channel = input_channel + device_order * 16.
  *
  * 2)Note also that the driver handles single device by putting the device name
  * in midi.winmidi.device setting.
