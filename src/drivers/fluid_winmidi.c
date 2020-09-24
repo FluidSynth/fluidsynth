@@ -31,32 +31,33 @@
  * Multiple/single devices handling capabilities:
  * This driver is able to handle multiple devices chosen by the user trough
  * the settings midi.winmidi.maxdevices and midi.winmidi.device.
+ * For example, let the following device names:
+ * 0:Port MIDI SB Live! [CE00], 1:SB PCI External MIDI, default, multi:x[ y z ..]
  * The setting midi.winmidi.maxdevices must be set to the number of devices to
  * work with. This allows the driver to check if the real devices number exist
- * and allocate the necessary memory.
+ * and allocate only the necessary memory.
  * Then the driver is able receive MIDI messages comming from distinct devices
  * and forward these messages on distinct MIDI channels set.
- * 1)For example, if the user chooses 2 devices at index 0 and 1, the user must
- * specify this by putting the name "multi:0 1" in midi.winmidi.device setting.
+ * 1.1)For example, if the user chooses 2 devices at index 0 and 1, the user
+ * must specify this by midi.winmidi.maxdevices set to 2 and putting the name
+ * "multi:0 1" in midi.winmidi.device setting.
  * We get a fictif device composed of real devices (0,1). This fictif device
  * behaves like a device with 32 MIDI channels whose messages are forwarded to
  * driver output as this:
  * - MIDI messages from real device 0 are output to MIDI channels set 0 to 15.
  * - MIDI messages from real device 1 are output to MIDI channels set 15 to 31.
  *
- * 2)Now another example with the name "multi:1 0" in midi.winmidi.device setting.
- * The driver will forward MIDI messages as this:
+ * 1.2)Now another example with the name "multi:1 0". The driver will forward
+ * MIDI messages as this:
  * - MIDI messages from real device 1 are output to MIDI channels set 0 to 15.
  * - MIDI messages from real device 0 are output to MIDI channels set 15 to 31.
  * So, the device order specified in the setting allows the user to choose the
- * MIDI channel set associated with this real device at the driver output:
- * output_channel = input_channel + device_order * 16.
+ * MIDI channel set associated with this real device at the driver output 
+ * according the formula: output_channel = input_channel + device_order * 16.
  *
- * Note also that the driver handles single device by putting the device name
+ * 2)Note also that the driver handles single device by putting the device name
  * in midi.winmidi.device setting.
- * For example, let the following device names:
- * 0:Port MIDI SB Live! [CE00], 1:SB PCI External MIDI, default, multi:x[ y z ..]
- * The user can set the name "0:Port MIDI SB Live! [CE00]" in the setting.
+ * The user can set the device name "0:Port MIDI SB Live! [CE00]" in the setting.
  * or use the multi device naming "multi:0" (specifying only device index 0).
  * Both naming choice allows the driver to handle the same single device.
  *
