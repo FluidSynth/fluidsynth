@@ -30,17 +30,13 @@
  *
  * Multiple/single devices handling capabilities:
  * This driver is able to handle multiple devices chosen by the user trough
- * the settings midi.winmidi.maxdevices and midi.winmidi.device.
+ * the settings midi.winmidi.device.
  * For example, let the following device names:
  * 0:Port MIDI SB Live! [CE00], 1:SB PCI External MIDI, default, x[;y;z;..]
- * The setting midi.winmidi.maxdevices must be set to the number of devices to
- * work with. This allows the driver to check if the real devices number exist
- * and allocate only the necessary memory.
  * Then the driver is able receive MIDI messages comming from distinct devices
  * and forward these messages on distinct MIDI channels set.
  * 1.1)For example, if the user chooses 2 devices at index 0 and 1, the user
- * must specify this by midi.winmidi.maxdevices set to 2 and putting the name
- * "0;1" in midi.winmidi.device setting.
+ * must specify this by putting the name "0;1" in midi.winmidi.device setting.
  * We get a fictif device composed of real devices (0,1). This fictif device
  * behaves like a device with 32 MIDI channels whose messages are forwarded to
  * driver output as this:
@@ -256,29 +252,24 @@ static char *fluid_winmidi_get_device_name(int dev_idx, char *dev_name)
 const static char *multi_dev_name = "x[;y;z;..]";
 
 /*
- Add setting midi.winmidi.device and midi.winmidi.maxdevices in the settings.
+ Add setting midi.winmidi.device in the settings.
 
  MIDI devices names are enumerated and added to midi.winmidi.device setting
  options. Example:
- 0:Port MIDI SB Live! [CE00], 1:SB PCI External MIDI, default, multi:x[ y z ..]
+ 0:Port MIDI SB Live! [CE00], 1:SB PCI External MIDI, default, x[;y;z;..]
 
  Devices name prefixed by index (i.e 1:SB PCI External MIDI) are real devices.
  "default" name is the default device.
- "multi:x[ y z ..]" is the multi device naming. Its purpose is to indicate to
+ "x[;y;z;..]" is the multi device naming. Its purpose is to indicate to
  the user how he must specify a multi device name in the setting.
- A multi devices name must begin with the prefix 'multi:' followed by the list
- of real devices index separated by space(s). Example: "multi:5 3 0"
-
- midi.winmidi.maxdevices setting is the maximum number of devices opened
- by the driver.
+ A multi devices name must be a list of real devices index separated by semicolon:
+ Example: "5;3;0"
 */
 void fluid_winmidi_midi_driver_settings(fluid_settings_t *settings)
 {
     MMRESULT res;
     MIDIINCAPS in_caps;
     UINT i, num;
-    /* maximum MIDI devices that the driver must handle */
-    fluid_settings_register_int(settings, "midi.winmidi.maxdevices", 1, 1, 16, 0);
 
     /* register midi.winmidi.device */
     fluid_settings_register_str(settings, "midi.winmidi.device", "default", 0);
@@ -347,71 +338,29 @@ static DWORD WINAPI fluid_winmidi_add_sysex_thread(void *data)
     return 0;
 }
 
-/*
- * new_fluid_winmidi_driver
+/**
+ * Parse device name
+ * @param dev if not NULL pointer on driver structure in which device index
+ *  are returned.
+ * @param dev_name device name which is expected to be:
+ *  - a multi devices naming (i.e "1;0;2") or
+ *  - a single device name (i.e "0:Port MIDI SB Live! [CE00]"
+ * @return count of devices parsed or 0 if device name doesn't exist.
  */
-fluid_midi_driver_t *
-new_fluid_winmidi_driver(fluid_settings_t *settings,
-                         handle_midi_event_func_t handler, void *data)
+int fluid_winmidi_parse_device_name(fluid_winmidi_driver_t *dev, char * dev_name)
 {
-    fluid_winmidi_driver_t *dev;
-    MMRESULT res;
-    int i, j, num;
-    int max_devices;  /* maximum number of devices to handle */
-    MIDIINCAPS in_caps;
-    char strError[MAXERRORLENGTH];
-    char dev_name[MAXPNAMELEN];
+    int dev_count = 0; /* device count */
+    int dev_idx;       /* device index */
+    int num = midiInGetNumDevs(); /* get number of real devices installed */
 
-    /* not much use doing anything */
-    if(handler == NULL)
-    {
-        FLUID_LOG(FLUID_ERR, "Invalid argument");
-        return NULL;
-    }
-
-    /* check if there is any midi devices installed */
-    /* get the maximum number of devices to handle */
-    fluid_settings_getint(settings, "midi.winmidi.maxdevices", &max_devices);
-    if(max_devices < 0)
-    {
-        max_devices = 1;
-    }
-    num = midiInGetNumDevs(); /* get number of real devices installed */
-
-    if(num < max_devices)
-    {
-        FLUID_LOG(FLUID_ERR, "not enough MIDI in devices found. Expected:%d found:%d",
-                  max_devices, num);
-        return NULL;
-    }
-
-    /* allocation of driver structure size dependant of max_devices */
-    i = sizeof(fluid_winmidi_driver_t) + (max_devices - 1) * sizeof(device_infos_t);
-    dev = FLUID_MALLOC(i);
-
-    if(dev == NULL)
-    {
-        return NULL;
-    }
-
-    FLUID_MEMSET(dev, 0, i); /* reset structure members */
-
-    /* parse device name */
-    /* get the device name. if none is specified, use the default device. */
-    if(fluid_settings_copystr(settings, "midi.winmidi.device", dev_name, MAXPNAMELEN) != FLUID_OK)
-    {
-        FLUID_LOG(FLUID_DBG, "No MIDI in device selected, using \"default\"");
-        FLUID_STRCPY(dev_name, "default");
-    }
-
+    /* look for a multi device naming */
     /* look if the device name contains a semicolon (;) */
     if(FLUID_STRCHR(dev_name, ';'))
     {
         /* multi devices name "x;[y;..]". parse devices index: x;y;..
           Each ascii index are separated by semicolon caracter.
         */
-        int dev_idx;                        /* device index */
-        char *cur_idx, *next_idx;           /* current and next ascii index pointer */
+        char *cur_idx, *next_idx;      /* current and next ascii index pointer */
         char cpy_dev_name[MAXPNAMELEN];
         FLUID_STRCPY(cpy_dev_name, dev_name); /* fluid_strtok() will overwrite */
         next_idx = cpy_dev_name;
@@ -421,30 +370,43 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
             /* try to convert current ascii index */
             char *end_idx = cur_idx;
             dev_idx = g_ascii_strtoll(cur_idx, &end_idx, 10);
-            if (cur_idx == next_idx                /* not an integer number */
+            if (cur_idx == end_idx                /* not an integer number */
                 || dev_idx < 0                     /* invalid device index */
                 || dev_idx >= num                  /* invalid device index */
-                || (dev->dev_count >= max_devices) /* exceed max allowed */
                )
             {
-                dev->dev_count = 0; /* error, end of parsing */
+                if(dev)
+                {
+                   dev->dev_count = 0;
+                }
+                dev_count = 0; /* error, end of parsing */
                 break;
             }
 
             /* memorize device index in dev_infos table */
-            dev->dev_infos[dev->dev_count++].dev_idx = dev_idx;
+            if(dev)
+            {
+                dev->dev_infos[dev->dev_count++].dev_idx = dev_idx;
+            }
+            dev_count++;
         }
     }
-    else
+
+    /* look for single device if multi devices not found */
+    if(!dev_count)
     {
-        /* find single device */
         /* default device index: dev_idx = 0, dev_count = 1 */
-        dev->dev_count = 1;
+        dev_count = 1;
+        dev_idx = 0;
         if(FLUID_STRCASECMP("default", dev_name) != 0)
         {
-            dev->dev_count = 0; /* reset count of devices found */
+            int i;
+            dev_count = 0; /* reset count of devices found */
             for(i = 0; i < num; i++)
             {
+                char strError[MAXERRORLENGTH];
+                MIDIINCAPS in_caps;
+                MMRESULT res;
                 res = midiInGetDevCaps(i, &in_caps, sizeof(MIDIINCAPS));
 
                 if(res == MMSYSERR_NOERROR)
@@ -470,7 +432,8 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
                     if(str_cmp_res == 0)
                     {
                         FLUID_LOG(FLUID_DBG, "Selected midi device number: %u", i);
-                        dev->dev_infos[dev->dev_count++].dev_idx = i;
+                        dev_idx = i;
+                        dev_count = 1;
                         break;
                     }
                 }
@@ -481,14 +444,71 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
                 }
             }
         }
+        if(dev && dev_count)
+        {
+            dev->dev_infos[0].dev_idx = dev_idx;
+            dev->dev_count = 1;
+        }
+    }
+    if(num < dev_count)
+    {
+        FLUID_LOG(FLUID_ERR, "not enough MIDI in devices found. Expected:%d found:%d",
+                  dev_count, num);
+        dev_count = 0;
+    }
+    return dev_count;
+}
+
+/*
+ * new_fluid_winmidi_driver
+ */
+fluid_midi_driver_t *
+new_fluid_winmidi_driver(fluid_settings_t *settings,
+                         handle_midi_event_func_t handler, void *data)
+{
+    fluid_winmidi_driver_t *dev;
+    MMRESULT res;
+    int i, j;
+    int max_devices;  /* maximum number of devices to handle */
+    char strError[MAXERRORLENGTH];
+    char dev_name[MAXPNAMELEN];
+
+    /* not much use doing anything */
+    if(handler == NULL)
+    {
+        FLUID_LOG(FLUID_ERR, "Invalid argument");
+        return NULL;
     }
 
+    /* get the device name. if none is specified, use the default device. */
+    if(fluid_settings_copystr(settings, "midi.winmidi.device", dev_name, MAXPNAMELEN) != FLUID_OK)
+    {
+        FLUID_LOG(FLUID_DBG, "No MIDI in device selected, using \"default\"");
+        FLUID_STRCPY(dev_name, "default");
+    }
+
+    /* parse device name, get the maximum number of devices to handle */
+	max_devices = fluid_winmidi_parse_device_name(NULL, dev_name);
     /* check if any device has be found	*/
-    if(!dev->dev_count)
+    if(!max_devices)
     {
         FLUID_LOG(FLUID_ERR, "Device \"%s\" does not exists", dev_name);
-        goto error_recovery;
+        return NULL;
     }
+
+    /* allocation of driver structure size dependant of max_devices */
+    i = sizeof(fluid_winmidi_driver_t) + (max_devices - 1) * sizeof(device_infos_t);
+    dev = FLUID_MALLOC(i);
+
+    if(dev == NULL)
+    {
+        return NULL;
+    }
+
+    FLUID_MEMSET(dev, 0, i); /* reset structure members */
+
+    /* parse device name, get devices index  */
+    fluid_winmidi_parse_device_name(dev, dev_name);
 
     dev->driver.handler = handler;
     dev->driver.data = data;
