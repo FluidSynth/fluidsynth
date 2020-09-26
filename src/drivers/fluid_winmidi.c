@@ -77,10 +77,10 @@
 #define MIDI_SYSEX_MAX_SIZE     512
 #define MIDI_SYSEX_BUF_COUNT    16
 
-typedef struct fluid_winmidi_driver_s fluid_winmidi_driver_t;
+typedef struct fluid_winmidi_driver fluid_winmidi_driver_t;
 
 /* device infos structure for only one midi device */
-typedef struct device_infos_t
+typedef struct device_infos
 {
     fluid_winmidi_driver_t *dev; /* driver structure*/
     unsigned char midi_num;      /* device order number */
@@ -91,10 +91,10 @@ typedef struct device_infos_t
     MIDIHDR sysExHdrs[MIDI_SYSEX_BUF_COUNT];
     /* Sysex data buffer */
     unsigned char sysExBuf[MIDI_SYSEX_BUF_COUNT * MIDI_SYSEX_MAX_SIZE];
-}device_infos;
+}device_infos_t;
 
 /* driver structure */
-struct fluid_winmidi_driver_s
+struct fluid_winmidi_driver
 {
     fluid_midi_driver_t driver;
 
@@ -104,7 +104,7 @@ struct fluid_winmidi_driver_s
 
     /* devices informations table */
     int dev_count;   /* device informations count in dev_infos[] table */
-    device_infos dev_infos[1];
+    device_infos_t dev_infos[1];
 };
 
 #define msg_type(_m)  ((unsigned char)(_m & 0xf0))
@@ -136,7 +136,7 @@ static void CALLBACK
 fluid_winmidi_callback(HMIDIIN hmi, UINT wMsg, DWORD_PTR dwInstance,
                        DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
-    device_infos *dev_infos = (device_infos *) dwInstance;
+    device_infos_t *dev_infos = (device_infos_t *) dwInstance;
     fluid_winmidi_driver_t *dev = dev_infos->dev;
     fluid_midi_event_t event;
     LPMIDIHDR pMidiHdr;
@@ -386,7 +386,7 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
     }
 
     /* allocation of driver structure size dependant of max_devices */
-    i = sizeof(fluid_winmidi_driver_t) + (max_devices - 1) * sizeof(device_infos);
+    i = sizeof(fluid_winmidi_driver_t) + (max_devices - 1) * sizeof(device_infos_t);
     dev = FLUID_MALLOC(i);
 
     if(dev == NULL)
@@ -405,7 +405,7 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
     }
 
     /* look if the device name contains a semicolon (;) */
-    if(FLUID_STRCHR(dev_name, '\;'))
+    if(FLUID_STRCHR(dev_name, ';'))
     {
         /* multi devices name "x;[y;..]". parse devices index: x;y;..
           Each ascii index are separated by semicolon caracter.
@@ -496,7 +496,7 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
     /* try opening the devices */
     for(i = 0; i < dev->dev_count; i++)
     {
-        device_infos *dev_infos = &dev->dev_infos[i];
+        device_infos_t *dev_infos = &dev->dev_infos[i];
         dev_infos->dev = dev;            /* driver structure */
         dev_infos->midi_num = i;         /* device order number */
         dev_infos->channel_map = i * 16; /* map from input to output */
@@ -600,7 +600,7 @@ delete_fluid_winmidi_driver(fluid_midi_driver_t *p)
     /* stop MIDI in devices and free allocated buffers */
     for(i = 0; i < dev->dev_count; i++)
     {
-        device_infos *dev_infos = &dev->dev_infos[i];
+        device_infos_t *dev_infos = &dev->dev_infos[i];
         if(dev_infos->hmidiin != NULL)
         {
             /* stop the device and mark any pending data blocks as being done */
