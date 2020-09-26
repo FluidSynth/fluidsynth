@@ -63,9 +63,6 @@
 
 #if WINMIDI_SUPPORT
 
-/* define PRINTF_MSG macro to enable printf message */
-#define PRINTF_MSG
-
 #include "fluid_midi.h"
 #include "fluid_mdriver.h"
 #include "fluid_settings.h"
@@ -151,10 +148,8 @@ fluid_winmidi_callback(HMIDIIN hmi, UINT wMsg, DWORD_PTR dwInstance,
         event.type = msg_type(msg_param);
         event.channel = msg_chan(msg_param) + dev_infos->channel_map;
 
-#ifdef PRINTF_MSG
-        printf("\ndev_idx:%d, channel in:%d,out: %d\n",
-               dev_infos->dev_idx, msg_chan(msg_param) , event.channel);
-#endif
+        FLUID_LOG(FLUID_DBG, "\ndevice at index %d sending MIDI message on channel %d, forwarded on channel: %d",
+                  dev_infos->dev_idx, msg_chan(msg_param) , event.channel);
         if(event.type != PITCH_BEND)
         {
             event.param1 = msg_p1(msg_param);
@@ -170,9 +165,8 @@ fluid_winmidi_callback(HMIDIIN hmi, UINT wMsg, DWORD_PTR dwInstance,
         break;
 
     case MIM_LONGDATA:    /* SYSEX data */
-#ifdef PRINTF_MSG
-        printf("\ndev_idx:%d, sysex\n", dev_infos->dev_idx);
-#endif
+        FLUID_LOG(FLUID_DBG, "\ndevice at index %d sending MIDI sysex message",
+                  dev_infos->dev_idx);
         if(dev->hThread == NULL)
         {
             break;
@@ -520,9 +514,7 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
         dev_infos->dev = dev;            /* driver structure */
         dev_infos->midi_num = i;         /* device order number */
         dev_infos->channel_map = i * 16; /* map from input to output */
-#ifdef PRINTF_MSG
-        printf("open:%d dev_idx=%d\n",  i, dev->dev_infos[i].dev_idx);
-#endif
+        FLUID_LOG(FLUID_DBG, "opening device at index %d", dev_infos->dev_idx);
         res = midiInOpen(&dev_infos->hmidiin, dev_infos->dev_idx,
                          (DWORD_PTR) fluid_winmidi_callback,
                          (DWORD_PTR) dev_infos, CALLBACK_FUNCTION);
