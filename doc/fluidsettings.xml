@@ -683,7 +683,7 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             <name>winmidi.device</name>
             <type>str</type>
             <def>default</def>
-            <desc>The hardware device to use for Windows MIDI driver (not to be confused with the MIDI port).</desc>
+            <desc>The hardware device to use for Windows MIDI driver (not to be confused with the MIDI port). Multiple devices can be specified by a list of devices index separated by a semicolon (e.g "2;0", which is equivalent to one device with 32 MIDI channels).</desc>
         </setting>
     </midi>
     
