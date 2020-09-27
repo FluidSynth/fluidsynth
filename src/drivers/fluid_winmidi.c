@@ -241,11 +241,6 @@ static char *fluid_winmidi_get_device_name(int dev_idx, char *dev_name)
 }
 
 /*
-  Internal multi device name template.
-*/
-const static char *multi_dev_name = "x[;y;z;..]";
-
-/*
  Add setting midi.winmidi.device in the settings.
 
  MIDI devices names are enumerated and added to midi.winmidi.device setting
@@ -291,9 +286,6 @@ void fluid_winmidi_midi_driver_settings(fluid_settings_t *settings)
                 FLUID_FREE(new_dev_name);
             }
         }
-
-        /* add multi device name template among other real devices names */
-        fluid_settings_add_option(settings, "midi.winmidi.device", multi_dev_name);
     }
 }
 
