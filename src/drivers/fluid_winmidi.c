@@ -84,7 +84,7 @@ typedef struct device_infos
     MIDIHDR sysExHdrs[MIDI_SYSEX_BUF_COUNT];
     /* Sysex data buffer */
     unsigned char sysExBuf[MIDI_SYSEX_BUF_COUNT * MIDI_SYSEX_MAX_SIZE];
-}device_infos_t;
+} device_infos_t;
 
 /* driver structure */
 struct fluid_winmidi_driver
@@ -149,7 +149,8 @@ fluid_winmidi_callback(HMIDIIN hmi, UINT wMsg, DWORD_PTR dwInstance,
         event.channel = msg_chan(msg_param) + dev_infos->channel_map;
 
         FLUID_LOG(FLUID_DBG, "\ndevice at index %d sending MIDI message on channel %d, forwarded on channel: %d",
-                  dev_infos->dev_idx, msg_chan(msg_param) , event.channel);
+                  dev_infos->dev_idx, msg_chan(msg_param), event.channel);
+
         if(event.type != PITCH_BEND)
         {
             event.param1 = msg_p1(msg_param);
@@ -167,6 +168,7 @@ fluid_winmidi_callback(HMIDIIN hmi, UINT wMsg, DWORD_PTR dwInstance,
     case MIM_LONGDATA:    /* SYSEX data */
         FLUID_LOG(FLUID_DBG, "\ndevice at index %d sending MIDI sysex message",
                   dev_infos->dev_idx);
+
         if(dev->hThread == NULL)
         {
             break;
@@ -228,6 +230,7 @@ static char *fluid_winmidi_get_device_name(int dev_idx, char *dev_name)
 
     /* index size + separator + name length + zero termination */
     new_dev_name = FLUID_MALLOC(size + 2 + FLUID_STRLEN(dev_name));
+
     if(new_dev_name)
     {
         /* the name is filled if allocation is successful */
@@ -237,6 +240,7 @@ static char *fluid_winmidi_get_device_name(int dev_idx, char *dev_name)
     {
         FLUID_LOG(FLUID_ERR, "Out of memory");
     }
+
     return new_dev_name;
 }
 
@@ -277,10 +281,12 @@ void fluid_winmidi_midi_driver_settings(fluid_settings_t *settings)
             {
                 /* add new device name (prefixed by its index) */
                 char *new_dev_name = fluid_winmidi_get_device_name(i, in_caps.szPname);
+
                 if(!new_dev_name)
                 {
                     break;
                 }
+
                 fluid_settings_add_option(settings, "midi.winmidi.device",
                                           new_dev_name);
                 FLUID_FREE(new_dev_name);
@@ -334,7 +340,7 @@ static DWORD WINAPI fluid_winmidi_add_sysex_thread(void *data)
  * @return count of devices parsed or 0 if device name doesn't exist.
  */
 static int
-fluid_winmidi_parse_device_name(fluid_winmidi_driver_t *dev, char * dev_name)
+fluid_winmidi_parse_device_name(fluid_winmidi_driver_t *dev, char *dev_name)
 {
     int dev_count = 0; /* device count */
     int dev_idx;       /* device index */
@@ -354,15 +360,17 @@ fluid_winmidi_parse_device_name(fluid_winmidi_driver_t *dev, char * dev_name)
         /* try to convert current ascii index */
         char *end_idx = cur_idx;
         dev_idx = g_ascii_strtoll(cur_idx, &end_idx, 10);
-        if (cur_idx == end_idx     /* not an integer number */
-            || dev_idx < 0         /* invalid device index */
-            || dev_idx >= num      /* invalid device index */
-           )
+
+        if(cur_idx == end_idx      /* not an integer number */
+           || dev_idx < 0          /* invalid device index */
+           || dev_idx >= num       /* invalid device index */
+          )
         {
             if(dev)
             {
-               dev->dev_count = 0;
+                dev->dev_count = 0;
             }
+
             dev_count = 0; /* error, end of parsing */
             break;
         }
@@ -372,6 +380,7 @@ fluid_winmidi_parse_device_name(fluid_winmidi_driver_t *dev, char * dev_name)
         {
             dev->dev_infos[dev->dev_count++].dev_idx = dev_idx;
         }
+
         dev_count++;
     }
 
@@ -381,10 +390,12 @@ fluid_winmidi_parse_device_name(fluid_winmidi_driver_t *dev, char * dev_name)
         /* default device index: dev_idx = 0, dev_count = 1 */
         dev_count = 1;
         dev_idx = 0;
+
         if(FLUID_STRCASECMP("default", dev_name) != 0)
         {
             int i;
             dev_count = 0; /* reset count of devices found */
+
             for(i = 0; i < num; i++)
             {
                 char strError[MAXERRORLENGTH];
@@ -396,10 +407,12 @@ fluid_winmidi_parse_device_name(fluid_winmidi_driver_t *dev, char * dev_name)
                 {
                     int str_cmp_res;
                     char *new_dev_name = fluid_winmidi_get_device_name(i, in_caps.szPname);
+
                     if(!new_dev_name)
                     {
                         break;
                     }
+
 #ifdef _UNICODE
                     WCHAR wDevName[MAXPNAMELEN];
                     MultiByteToWideChar(CP_UTF8, 0, dev_name, -1, wDevName, MAXPNAMELEN);
@@ -427,18 +440,21 @@ fluid_winmidi_parse_device_name(fluid_winmidi_driver_t *dev, char * dev_name)
                 }
             }
         }
+
         if(dev && dev_count)
         {
             dev->dev_infos[0].dev_idx = dev_idx;
             dev->dev_count = 1;
         }
     }
+
     if(num < dev_count)
     {
         FLUID_LOG(FLUID_ERR, "not enough MIDI in devices found. Expected:%d found:%d",
                   dev_count, num);
         dev_count = 0;
     }
+
     return dev_count;
 }
 
@@ -471,7 +487,8 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
     }
 
     /* parse device name, get the maximum number of devices to handle */
-	max_devices = fluid_winmidi_parse_device_name(NULL, dev_name);
+    max_devices = fluid_winmidi_parse_device_name(NULL, dev_name);
+
     /* check if any device has be found	*/
     if(!max_devices)
     {
@@ -533,7 +550,7 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
                 if(res != MMSYSERR_NOERROR)
                 {
                     FLUID_LOG(FLUID_WARN, "Failed to prepare MIDI SYSEX buffer: %s (error %d)",
-                          fluid_winmidi_input_error(strError, res), res);
+                              fluid_winmidi_input_error(strError, res), res);
                     midiInUnprepareHeader(dev_infos->hmidiin, hdr, sizeof(MIDIHDR));
                 }
             }
@@ -569,6 +586,7 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
             goto error_recovery;
         }
     }
+
     return (fluid_midi_driver_t *) dev;
 
 error_recovery:
@@ -583,7 +601,7 @@ error_recovery:
 void
 delete_fluid_winmidi_driver(fluid_midi_driver_t *p)
 {
-    int i,j;
+    int i, j;
 
     fluid_winmidi_driver_t *dev = (fluid_winmidi_driver_t *) p;
     fluid_return_if_fail(dev != NULL);
@@ -602,6 +620,7 @@ delete_fluid_winmidi_driver(fluid_midi_driver_t *p)
     for(i = 0; i < dev->dev_count; i++)
     {
         device_infos_t *dev_infos = &dev->dev_infos[i];
+
         if(dev_infos->hmidiin != NULL)
         {
             /* stop the device and mark any pending data blocks as being done */
@@ -612,7 +631,7 @@ delete_fluid_winmidi_driver(fluid_midi_driver_t *p)
             {
                 MIDIHDR *hdr = &dev_infos->sysExHdrs[j];
 
-                if ((hdr->dwFlags & MHDR_PREPARED))
+                if((hdr->dwFlags & MHDR_PREPARED))
                 {
                     midiInUnprepareHeader(dev_infos->hmidiin, hdr, sizeof(MIDIHDR));
                 }
@@ -622,6 +641,7 @@ delete_fluid_winmidi_driver(fluid_midi_driver_t *p)
             midiInClose(dev_infos->hmidiin);
         }
     }
+
     FLUID_FREE(dev);
 }
 
