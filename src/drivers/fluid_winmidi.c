@@ -512,7 +512,6 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
         dev_infos->midi_num = i;         /* device order number */
         dev_infos->channel_map = i * 16; /* map from input to output */
         FLUID_LOG(FLUID_DBG, "opening device at index %d", dev_infos->dev_idx);
-        printf("opening device at index %d\n", dev_infos->dev_idx);
         res = midiInOpen(&dev_infos->hmidiin, dev_infos->dev_idx,
                          (DWORD_PTR) fluid_winmidi_callback,
                          (DWORD_PTR) dev_infos, CALLBACK_FUNCTION);
