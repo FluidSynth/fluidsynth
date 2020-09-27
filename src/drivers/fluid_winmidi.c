@@ -54,7 +54,7 @@
  * 2)Note also that the driver handles single device by putting the device name
  * in midi.winmidi.device setting.
  * The user can set the device name "0:Port MIDI SB Live! [CE00]" in the setting.
- * or use the multi device naming "0;" (specifying only device index 0).
+ * or use the multi device naming "0" (specifying only device index 0).
  * Both naming choice allows the driver to handle the same single device.
  *
  */
@@ -341,49 +341,46 @@ static DWORD WINAPI fluid_winmidi_add_sysex_thread(void *data)
  *  - a single device name (i.e "0:Port MIDI SB Live! [CE00]"
  * @return count of devices parsed or 0 if device name doesn't exist.
  */
-int fluid_winmidi_parse_device_name(fluid_winmidi_driver_t *dev, char * dev_name)
+static int
+fluid_winmidi_parse_device_name(fluid_winmidi_driver_t *dev, char * dev_name)
 {
     int dev_count = 0; /* device count */
     int dev_idx;       /* device index */
+    char *cur_idx, *next_idx;      /* current and next ascii index pointer */
+    char cpy_dev_name[MAXPNAMELEN];
     int num = midiInGetNumDevs(); /* get number of real devices installed */
 
     /* look for a multi device naming */
-    /* look if the device name contains a semicolon (;) */
-    if(FLUID_STRCHR(dev_name, ';'))
+    /* multi devices name "x;[y;..]". parse devices index: x;y;..
+       Each ascii index are separated by a semicolon caracter.
+    */
+    FLUID_STRCPY(cpy_dev_name, dev_name); /* fluid_strtok() will overwrite */
+    next_idx = cpy_dev_name;
+
+    while(cur_idx = fluid_strtok(&next_idx, " ;"))
     {
-        /* multi devices name "x;[y;..]". parse devices index: x;y;..
-          Each ascii index are separated by semicolon caracter.
-        */
-        char *cur_idx, *next_idx;      /* current and next ascii index pointer */
-        char cpy_dev_name[MAXPNAMELEN];
-        FLUID_STRCPY(cpy_dev_name, dev_name); /* fluid_strtok() will overwrite */
-        next_idx = cpy_dev_name;
-
-        while(cur_idx = fluid_strtok(&next_idx, " ;"))
+        /* try to convert current ascii index */
+        char *end_idx = cur_idx;
+        dev_idx = g_ascii_strtoll(cur_idx, &end_idx, 10);
+        if (cur_idx == end_idx     /* not an integer number */
+            || dev_idx < 0         /* invalid device index */
+            || dev_idx >= num      /* invalid device index */
+           )
         {
-            /* try to convert current ascii index */
-            char *end_idx = cur_idx;
-            dev_idx = g_ascii_strtoll(cur_idx, &end_idx, 10);
-            if (cur_idx == end_idx                /* not an integer number */
-                || dev_idx < 0                     /* invalid device index */
-                || dev_idx >= num                  /* invalid device index */
-               )
-            {
-                if(dev)
-                {
-                   dev->dev_count = 0;
-                }
-                dev_count = 0; /* error, end of parsing */
-                break;
-            }
-
-            /* memorize device index in dev_infos table */
             if(dev)
             {
-                dev->dev_infos[dev->dev_count++].dev_idx = dev_idx;
+               dev->dev_count = 0;
             }
-            dev_count++;
+            dev_count = 0; /* error, end of parsing */
+            break;
         }
+
+        /* memorize device index in dev_infos table */
+        if(dev)
+        {
+            dev->dev_infos[dev->dev_count++].dev_idx = dev_idx;
+        }
+        dev_count++;
     }
 
     /* look for single device if multi devices not found */
@@ -515,6 +512,7 @@ new_fluid_winmidi_driver(fluid_settings_t *settings,
         dev_infos->midi_num = i;         /* device order number */
         dev_infos->channel_map = i * 16; /* map from input to output */
         FLUID_LOG(FLUID_DBG, "opening device at index %d", dev_infos->dev_idx);
+        printf("opening device at index %d\n", dev_infos->dev_idx);
         res = midiInOpen(&dev_infos->hmidiin, dev_infos->dev_idx,
                          (DWORD_PTR) fluid_winmidi_callback,
                          (DWORD_PTR) dev_infos, CALLBACK_FUNCTION);
