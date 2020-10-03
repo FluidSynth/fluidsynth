@@ -27,7 +27,6 @@
 
 #include <mmsystem.h>
 
-//#define NOBITMAP
 #include <mmreg.h>
 
 /* Number of buffers in the chain */
