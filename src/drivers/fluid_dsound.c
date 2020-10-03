@@ -238,7 +238,7 @@ new_fluid_dsound_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
     /* number of channels in a frame */
     format.Format.nChannels = synth->audio_channels * 2;
 
-    if(synth->audio_groups > DSOUND_MAX_STEREO_CHANNELS)
+    if(synth->audio_channels > DSOUND_MAX_STEREO_CHANNELS)
     {
         FLUID_LOG(FLUID_ERR, "Channels number %d exceed internal limit %d",
                   format.Format.nChannels, DSOUND_MAX_STEREO_CHANNELS * 2);
@@ -260,7 +260,7 @@ new_fluid_dsound_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
         /* CreateSoundBuffer accepts only format.dwChannelMask compatible with
            format.Format.nChannels
         */
-        format.dwChannelMask = channel_mask_speakers[synth->audio_groups - 1];
+        format.dwChannelMask = channel_mask_speakers[synth->audio_channels - 1];
     }
 
     /* Finish to initialize dev structure */

@@ -304,7 +304,7 @@ new_fluid_waveout_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
     /* Initialize the format structure */
     wfx.Format.nChannels  = synth->audio_channels * 2;
 
-    if(synth->audio_groups > WAVEOUT_MAX_STEREO_CHANNELS)
+    if(synth->audio_channels > WAVEOUT_MAX_STEREO_CHANNELS)
     {
         FLUID_LOG(FLUID_ERR, "Channels number %d exceed internal limit %d",
                   wfx.Format.nChannels, WAVEOUT_MAX_STEREO_CHANNELS * 2);
@@ -319,7 +319,7 @@ new_fluid_waveout_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
     wfx.Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
     wfx.Format.cbSize = 22;
     wfx.Samples.wValidBitsPerSample = wfx.Format.wBitsPerSample;
-    wfx.dwChannelMask = channel_mask_speakers[synth->audio_groups - 1];
+    wfx.dwChannelMask = channel_mask_speakers[synth->audio_channels - 1];
 
     /* Calculate the length of a single buffer */
     lenBuffer = (MS_BUFFER_LENGTH * wfx.Format.nAvgBytesPerSec + 999) / 1000;
