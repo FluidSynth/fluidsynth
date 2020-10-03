@@ -27,7 +27,7 @@
 
 #if DSOUND_SUPPORT
 
-#define INITGUID
+//#define INITGUID
 
 #include <mmsystem.h>
 #include <dsound.h>
