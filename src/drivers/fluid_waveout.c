@@ -422,7 +422,7 @@ new_fluid_waveout_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
 
         if(errCode != MMSYSERR_NOERROR)
         {
-            FLUID_LOG(FLUID_ERR, "Failed to open waveOut device: '%s'", fluid_waveout_error());
+            FLUID_LOG(FLUID_ERR, "Failed to open waveOut device: '%s'", fluid_waveout_error(errCode));
             break;
         }
 
