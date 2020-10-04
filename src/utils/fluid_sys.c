@@ -1692,3 +1692,20 @@ fluid_long_long_t fluid_file_tell(FILE* f)
     return ftell(f);
 #endif
 }
+
+#ifdef WIN32
+// not thread-safe!
+char* fluid_get_windows_error(void)
+{
+    static const char err[1024];
+
+    FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM,
+                  NULL,
+                  GetLastError(),
+                  MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US),
+                  err,
+                  sizeof(err)/sizeof(err[0]),
+                  NULL);
+    return err;
+}
+#endif

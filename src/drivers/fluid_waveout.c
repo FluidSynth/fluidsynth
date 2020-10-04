@@ -44,6 +44,8 @@
 /* Maximum number of stereo outputs */
 #define WAVEOUT_MAX_STEREO_CHANNELS 4
 
+static char *fluid_waveout_error(MMRESULT hr);
+
 /* speakers mapping */
 const static DWORD channel_mask_speakers[WAVEOUT_MAX_STEREO_CHANNELS] =
 {
@@ -144,7 +146,7 @@ static DWORD WINAPI fluid_waveout_synth_thread(void *data)
 
         if(code < 0)
         {
-            FLUID_LOG(FLUID_ERR, "fluid_waveout_synth_thread: GetMessage() failed.");
+            FLUID_LOG(FLUID_ERR, "fluid_waveout_synth_thread: GetMessage() failed: '%s'", fluid_get_windows_error());
             break;
         }
 
@@ -391,7 +393,7 @@ new_fluid_waveout_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
 
         if(dev->hQuit == NULL)
         {
-            FLUID_LOG(FLUID_ERR, "Failed to create quit event");
+            FLUID_LOG(FLUID_ERR, "Failed to create quit event: '%s'", fluid_get_windows_error());
             break;
         }
 
@@ -407,7 +409,7 @@ new_fluid_waveout_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
 
         if(dev->hThread == NULL)
         {
-            FLUID_LOG(FLUID_ERR, "Failed to create waveOut thread");
+            FLUID_LOG(FLUID_ERR, "Failed to create waveOut thread: '%s'", fluid_get_windows_error());
             break;
         }
 
@@ -420,7 +422,7 @@ new_fluid_waveout_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
 
         if(errCode != MMSYSERR_NOERROR)
         {
-            FLUID_LOG(FLUID_ERR, "Failed to open waveOut device");
+            FLUID_LOG(FLUID_ERR, "Failed to open waveOut device: '%s'", fluid_waveout_error());
             break;
         }
 
@@ -490,6 +492,44 @@ void delete_fluid_waveout_audio_driver(fluid_audio_driver_t *d)
     }
 
     HeapFree(GetProcessHeap(), 0, dev);
+}
+
+static char *fluid_waveout_error(MMRESULT hr)
+{
+    char *s = "Don't know why";
+
+    switch(hr)
+    {
+    case MMSYSERR_NOERROR:
+        s = "The operation completed successfully :)";
+        break;
+
+    case MMSYSERR_ALLOCATED:
+        s = "Specified resource is already allocated.";
+        break;
+
+    case MMSYSERR_BADDEVICEID:
+        s = "Specified device identifier is out of range";
+        break;
+
+    case MMSYSERR_NODRIVER:
+        s = "No device driver is present";
+        break;
+
+    case MMSYSERR_NOMEM:
+        s = "Unable to allocate or lock memory";
+        break;
+
+    case WAVERR_BADFORMAT:
+        s = "Attempted to open with an unsupported waveform-audio format";
+        break;
+
+    case WAVERR_SYNC:
+        s = "The device is synchronous but waveOutOpen was called without using the WAVE_ALLOWSYNC flag";
+        break;
+    }
+
+    return s;
 }
 
 #endif /* WAVEOUT_SUPPORT */
