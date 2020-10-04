@@ -1697,7 +1697,7 @@ fluid_long_long_t fluid_file_tell(FILE* f)
 // not thread-safe!
 char* fluid_get_windows_error(void)
 {
-    static char err[1024];
+    static TCHAR err[1024];
 
     FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM,
                   NULL,
@@ -1706,6 +1706,14 @@ char* fluid_get_windows_error(void)
                   err,
                   sizeof(err)/sizeof(err[0]),
                   NULL);
+
+#ifdef _UNICODE
+    static char ascii_err[sizeof(err)];
+
+    WideCharToMultiByte(CP_UTF8, 0, err, -1, ascii_err, sizeof(ascii_err)/sizeof(ascii_err[0]), 0, 0);
+    return ascii_err;
+#else
     return err;
+#endif
 }
 #endif
