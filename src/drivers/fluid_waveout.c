@@ -29,6 +29,10 @@
 
 #include <mmreg.h>
 
+/* Those two includes are required on Windows 9x/ME */
+#include <ks.h>
+#include <ksmedia.h>
+
 /* Number of buffers in the chain */
 #define NB_SOUND_BUFFERS    4
 

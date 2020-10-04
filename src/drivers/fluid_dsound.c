@@ -32,6 +32,10 @@
 #include <dsound.h>
 #include <mmreg.h>
 
+/* Those two includes are required on Windows 9x/ME */
+#include <ks.h>
+#include <ksmedia.h>
+
 static DWORD WINAPI fluid_dsound_audio_run(LPVOID lpParameter);
 
 static char *fluid_win32_error(HRESULT hr);
