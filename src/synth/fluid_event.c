@@ -97,7 +97,7 @@ fluid_event_set_time(fluid_event_t *evt, unsigned int time)
 }
 
 void
-fluid_event_set_id(fluid_event_t *evt, short id)
+fluid_event_set_id(fluid_event_t *evt, fluid_note_id_t id)
 {
     evt->id = id;
 }
@@ -236,7 +236,7 @@ fluid_event_bank_select(fluid_event_t *evt, int channel, short bank_num)
  * @param val MIDI program number (0-127)
  */
 void
-fluid_event_program_change(fluid_event_t *evt, int channel, short val)
+fluid_event_program_change(fluid_event_t *evt, int channel, int val)
 {
     evt->type = FLUID_SEQ_PROGRAMCHANGE;
     evt->channel = channel;
@@ -294,7 +294,7 @@ fluid_event_pitch_bend(fluid_event_t *evt, int channel, int pitch)
  * @param value MIDI pitch wheel sensitivity value in semitones
  */
 void
-fluid_event_pitch_wheelsens(fluid_event_t *evt, int channel, short value)
+fluid_event_pitch_wheelsens(fluid_event_t *evt, int channel, int value)
 {
     evt->type = FLUID_SEQ_PITCHWHEELSENS;
     evt->channel = channel;
@@ -308,7 +308,7 @@ fluid_event_pitch_wheelsens(fluid_event_t *evt, int channel, short value)
  * @param val MIDI modulation value (0-127)
  */
 void
-fluid_event_modulation(fluid_event_t *evt, int channel, short val)
+fluid_event_modulation(fluid_event_t *evt, int channel, int val)
 {
     evt->type = FLUID_SEQ_MODULATION;
     evt->channel = channel;
@@ -333,7 +333,7 @@ fluid_event_modulation(fluid_event_t *evt, int channel, short val)
  * @param val MIDI sustain value (0-127)
  */
 void
-fluid_event_sustain(fluid_event_t *evt, int channel, short val)
+fluid_event_sustain(fluid_event_t *evt, int channel, int val)
 {
     evt->type = FLUID_SEQ_SUSTAIN;
     evt->channel = channel;
@@ -359,7 +359,7 @@ fluid_event_sustain(fluid_event_t *evt, int channel, short val)
  * @param val MIDI control value (0-127)
  */
 void
-fluid_event_control_change(fluid_event_t *evt, int channel, short control, short val)
+fluid_event_control_change(fluid_event_t *evt, int channel, short control, int val)
 {
     evt->type = FLUID_SEQ_CONTROLCHANGE;
     evt->channel = channel;
@@ -374,7 +374,7 @@ fluid_event_control_change(fluid_event_t *evt, int channel, short control, short
  * @param val MIDI panning value (0-127, 0=left, 64 = middle, 127 = right)
  */
 void
-fluid_event_pan(fluid_event_t *evt, int channel, short val)
+fluid_event_pan(fluid_event_t *evt, int channel, int val)
 {
     evt->type = FLUID_SEQ_PAN;
     evt->channel = channel;
@@ -399,7 +399,7 @@ fluid_event_pan(fluid_event_t *evt, int channel, short val)
  * @param val Volume value (0-127)
  */
 void
-fluid_event_volume(fluid_event_t *evt, int channel, short val)
+fluid_event_volume(fluid_event_t *evt, int channel, int val)
 {
     evt->type = FLUID_SEQ_VOLUME;
     evt->channel = channel;
@@ -424,7 +424,7 @@ fluid_event_volume(fluid_event_t *evt, int channel, short val)
  * @param val Reverb amount (0-127)
  */
 void
-fluid_event_reverb_send(fluid_event_t *evt, int channel, short val)
+fluid_event_reverb_send(fluid_event_t *evt, int channel, int val)
 {
     evt->type = FLUID_SEQ_REVERBSEND;
     evt->channel = channel;
@@ -449,7 +449,7 @@ fluid_event_reverb_send(fluid_event_t *evt, int channel, short val)
  * @param val Chorus amount (0-127)
  */
 void
-fluid_event_chorus_send(fluid_event_t *evt, int channel, short val)
+fluid_event_chorus_send(fluid_event_t *evt, int channel, int val)
 {
     evt->type = FLUID_SEQ_CHORUSSEND;
     evt->channel = channel;
@@ -487,7 +487,7 @@ fluid_event_unregistering(fluid_event_t *evt)
  * @since 1.1.0
  */
 void
-fluid_event_channel_pressure(fluid_event_t *evt, int channel, short val)
+fluid_event_channel_pressure(fluid_event_t *evt, int channel, int val)
 {
     evt->type = FLUID_SEQ_CHANNELPRESSURE;
     evt->channel = channel;
@@ -514,7 +514,7 @@ fluid_event_channel_pressure(fluid_event_t *evt, int channel, short val)
  * @since 2.0.0
  */
 void
-fluid_event_key_pressure(fluid_event_t *evt, int channel, short key, short val)
+fluid_event_key_pressure(fluid_event_t *evt, int channel, short key, int val)
 {
     evt->type = FLUID_SEQ_KEYPRESSURE;
     evt->channel = channel;
@@ -587,7 +587,7 @@ unsigned int fluid_event_get_time(fluid_event_t *evt)
  * @param evt Sequencer event structure
  * @return Time value
  */
-short fluid_event_get_id(fluid_event_t *evt)
+fluid_note_id_t fluid_event_get_id(fluid_event_t *evt)
 {
     return evt->id;
 }
@@ -664,7 +664,7 @@ short fluid_event_get_control(fluid_event_t *evt)
  * #FLUID_SEQ_CONTROLCHANGE, #FLUID_SEQ_PAN, #FLUID_SEQ_VOLUME,
  * #FLUID_SEQ_REVERBSEND, #FLUID_SEQ_CHORUSSEND.
  */
-short fluid_event_get_value(fluid_event_t *evt)
+int fluid_event_get_value(fluid_event_t *evt)
 {
     return evt->value;
 }
@@ -726,7 +726,7 @@ int fluid_event_get_pitch(fluid_event_t *evt)
  * Used by the #FLUID_SEQ_PROGRAMCHANGE and #FLUID_SEQ_PROGRAMSELECT
  * event types.
  */
-short
+int
 fluid_event_get_program(fluid_event_t *evt)
 {
     return evt->value;

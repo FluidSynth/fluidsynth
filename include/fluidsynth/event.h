@@ -87,25 +87,25 @@ FLUIDSYNTH_API void fluid_event_all_notes_off(fluid_event_t *evt, int channel);
 
 /* Instrument selection */
 FLUIDSYNTH_API void fluid_event_bank_select(fluid_event_t *evt, int channel, short bank_num);
-FLUIDSYNTH_API void fluid_event_program_change(fluid_event_t *evt, int channel, short preset_num);
+FLUIDSYNTH_API void fluid_event_program_change(fluid_event_t *evt, int channel, int preset_num);
 FLUIDSYNTH_API void fluid_event_program_select(fluid_event_t *evt, int channel, unsigned int sfont_id, short bank_num, short preset_num);
 
 /* Real-time generic instrument controllers */
 FLUIDSYNTH_API
-void fluid_event_control_change(fluid_event_t *evt, int channel, short control, short val);
+void fluid_event_control_change(fluid_event_t *evt, int channel, short control, int val);
 
 /* Real-time instrument controllers shortcuts */
 FLUIDSYNTH_API void fluid_event_pitch_bend(fluid_event_t *evt, int channel, int val);
-FLUIDSYNTH_API void fluid_event_pitch_wheelsens(fluid_event_t *evt, int channel, short val);
-FLUIDSYNTH_API void fluid_event_modulation(fluid_event_t *evt, int channel, short val);
-FLUIDSYNTH_API void fluid_event_sustain(fluid_event_t *evt, int channel, short val);
-FLUIDSYNTH_API void fluid_event_pan(fluid_event_t *evt, int channel, short val);
-FLUIDSYNTH_API void fluid_event_volume(fluid_event_t *evt, int channel, short val);
-FLUIDSYNTH_API void fluid_event_reverb_send(fluid_event_t *evt, int channel, short val);
-FLUIDSYNTH_API void fluid_event_chorus_send(fluid_event_t *evt, int channel, short val);
+FLUIDSYNTH_API void fluid_event_pitch_wheelsens(fluid_event_t *evt, int channel, int val);
+FLUIDSYNTH_API void fluid_event_modulation(fluid_event_t *evt, int channel, int val);
+FLUIDSYNTH_API void fluid_event_sustain(fluid_event_t *evt, int channel, int val);
+FLUIDSYNTH_API void fluid_event_pan(fluid_event_t *evt, int channel, int val);
+FLUIDSYNTH_API void fluid_event_volume(fluid_event_t *evt, int channel, int val);
+FLUIDSYNTH_API void fluid_event_reverb_send(fluid_event_t *evt, int channel, int val);
+FLUIDSYNTH_API void fluid_event_chorus_send(fluid_event_t *evt, int channel, int val);
 
-FLUIDSYNTH_API void fluid_event_key_pressure(fluid_event_t *evt, int channel, short key, short val);
-FLUIDSYNTH_API void fluid_event_channel_pressure(fluid_event_t *evt, int channel, short val);
+FLUIDSYNTH_API void fluid_event_key_pressure(fluid_event_t *evt, int channel, short key, int val);
+FLUIDSYNTH_API void fluid_event_channel_pressure(fluid_event_t *evt, int channel, int val);
 FLUIDSYNTH_API void fluid_event_system_reset(fluid_event_t *evt);
 
 /* Only when unregistering clients */
@@ -119,8 +119,8 @@ FLUIDSYNTH_API int fluid_event_get_channel(fluid_event_t *evt);
 FLUIDSYNTH_API short fluid_event_get_key(fluid_event_t *evt);
 FLUIDSYNTH_API short fluid_event_get_velocity(fluid_event_t *evt);
 FLUIDSYNTH_API short fluid_event_get_control(fluid_event_t *evt);
-FLUIDSYNTH_API short fluid_event_get_value(fluid_event_t *evt);
-FLUIDSYNTH_API short fluid_event_get_program(fluid_event_t *evt);
+FLUIDSYNTH_API int fluid_event_get_value(fluid_event_t *evt);
+FLUIDSYNTH_API int fluid_event_get_program(fluid_event_t *evt);
 FLUIDSYNTH_API void *fluid_event_get_data(fluid_event_t *evt);
 FLUIDSYNTH_API unsigned int fluid_event_get_duration(fluid_event_t *evt);
 FLUIDSYNTH_API short fluid_event_get_bank(fluid_event_t *evt);

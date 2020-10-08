@@ -22,12 +22,11 @@
 #define _FLUID_SEQBIND_NOTE_H
 
 #include "fluidsynth.h"
+#include "fluid_event.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-typedef int fluid_note_id_t;
 
 fluid_note_id_t fluid_note_compute_id(int chan, short key);
 void* new_fluid_note_container(void);
