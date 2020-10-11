@@ -756,7 +756,15 @@ The shell interface allows you to send simple textual commands to the synthesize
 
 \section Multi-channel Multi-Channel audio rendering
 
-FluidSynth is capable of rendering all audio and all effects from all MIDI channels to separate stero buffers. Refer to the documentation of fluid_synth_process() and review the different use-cases in the example file for information on how to do that: \ref fluidsynth_process.c
+FluidSynth is capable of rendering all audio and all effects from all MIDI channels to separate stereo buffers. Refer to the documentation of fluid_synth_process() and review the different use-cases in the example file for information on how to do that: \ref fluidsynth_process.c
+
+The following chart illustrates how the voices (produced by MIDI NoteOns) are dispatched or mapped to their dry/effects audio buffers.
+
+\htmlonly
+<a href="FluidMixer.pdf">
+<img src="FluidMixer.jpg" alt="FluidSynth Mixer Chart">
+</a>
+\endhtmlonly
 
 \section synth-context Understanding the "synthesis context"
 
