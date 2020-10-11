@@ -85,7 +85,9 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             <min>1</min>
             <max>256</max>
             <desc>
-                Sets the number of synthesis CPU cores. If set to a value greater than 1, then additional synthesis threads will be created to take advantage of a multi CPU or CPU core system. This has the affect of utilizing more of the total CPU for voices or decreasing render times when synthesizing audio to a file.</desc>
+                Sets the number of synthesis CPU cores. If set to a value greater than 1, additional synthesis threads will be created to do the actual rendering work that is then returned synchronously by the render function. This has the affect of utilizing more of the total CPU for voices or decreasing render times when synthesizing audio.
+                So for example, if you set cpu-cores to 4, fluidsynth will attempt to split the synthesis work it needs to do between the client's calling thread and three additional (internal) worker threads. As soon as all threads have done their work, their results are collected and the resulting buffer is returned to the caller.
+                </desc>
         </setting>
         <setting>
             <name>default-soundfont</name>
