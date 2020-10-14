@@ -287,6 +287,7 @@ new_fluid_waveout_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
         sample_size = sizeof(float);
         write_ptr = fluid_synth_write_float_channels;
         wfx.SubFormat = guid_float;
+        wfx.Format.wFormatTag = WAVE_FORMAT_IEEE_FLOAT;
     }
     else if(fluid_settings_str_equal(settings, "audio.sample-format", "16bits"))
     {
@@ -296,6 +297,7 @@ new_fluid_waveout_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
         sample_size = sizeof(short);
         write_ptr = fluid_synth_write_s16_channels;
         wfx.SubFormat = guid_pcm;
+        wfx.Format.wFormatTag = WAVE_FORMAT_PCM;
     }
     else
     {
@@ -320,11 +322,21 @@ new_fluid_waveout_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
     wfx.Format.nBlockAlign     = sample_size * wfx.Format.nChannels;
     wfx.Format.nSamplesPerSec  = frequency;
     wfx.Format.nAvgBytesPerSec = frequency * wfx.Format.nBlockAlign;
-    /* extension */
-    wfx.Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
-    wfx.Format.cbSize = 22;
-    wfx.Samples.wValidBitsPerSample = wfx.Format.wBitsPerSample;
-    wfx.dwChannelMask = channel_mask_speakers[synth->audio_channels - 1];
+
+    /* WAVEFORMATEXTENSIBLE extension is used only when channels number
+       is above 2.
+       When channels number is below 2, only WAVEFORMATEX structure
+       will be used by the Windows driver. This ensures compatibility with
+       Windows 9X/NT in the case these versions does not accept the
+       WAVEFORMATEXTENSIBLE structure.
+    */
+    if(wfx.Format.nChannels > 2)
+    {
+        wfx.Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
+        wfx.Format.cbSize = 22;
+        wfx.Samples.wValidBitsPerSample = wfx.Format.wBitsPerSample;
+        wfx.dwChannelMask = channel_mask_speakers[synth->audio_channels - 1];
+    }
 
     /* Calculate the length of a single buffer */
     lenBuffer = (MS_BUFFER_LENGTH * wfx.Format.nAvgBytesPerSec + 999) / 1000;
