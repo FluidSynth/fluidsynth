@@ -17,7 +17,7 @@ CERBERO=$(PWD)/external/cerbero
 OBOE=$(PWD)/external/oboe
 CMAKE=cmake
 
-ANDROID_NDK = $(PWD)/external/cerbero/build/android-ndk-18
+ANDROID_NDK = $(PWD)/external/cerbero/build/android-ndk-21
 
 ABIS_SIMPLE = x86 x86-64 armv7 arm64
 
@@ -35,17 +35,17 @@ prepare: checkout-oboe checkout-cerbero
 
 .PHONY: checkout-oboe
 checkout-oboe: $(OBOE)
-	cd $(OBOE) && git checkout 9bf3943
+	cd $(OBOE) && git checkout 395f3d6ac25c2b069d53451b89dff4aa96d26eb8
 
 $(OBOE):
 	git clone https://github.com/Google/oboe.git $(OBOE) 
 
 .PHONY: checkout-cerbero
 checkout-cerbero: $(CERBERO)
-	cd $(CERBERO) && git checkout 0acd9b0
+	cd $(CERBERO) && git checkout e9f18b3b340de1648d885a0542d2f06c3fcfffe8
 
 $(CERBERO):
-	git clone https://github.com/atsushieno/cerbero.git $(CERBERO)
+	git clone https://github.com/falrm/cerbero.git $(CERBERO)
 
 .PHONY: build
 build: build-oboe dist-oboe build-deps-cerbero dist-deps-cerbero build-fluidsynth dist-fluidsynth build-fluidsynth-assetloader dist-fluidsynth-assetloader
