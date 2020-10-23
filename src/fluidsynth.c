@@ -1128,8 +1128,9 @@ void print_configure()
         );
 }
 
+#ifdef GETOPT_SUPPORT	/* pre section of GETOPT supported argument handling */
 /*
- * print_help
+ * print_help with long options
  */
 void
 print_help(fluid_settings_t *settings)
@@ -1215,3 +1216,92 @@ print_help(fluid_settings_t *settings)
         FLUID_FREE(midi_options);
     }
 }
+#else
+/*
+ * print_help with short options only
+ */
+void
+print_help(fluid_settings_t *settings)
+{
+    char *audio_options;
+    char *midi_options;
+
+    audio_options = fluid_settings_option_concat(settings, "audio.driver", NULL);
+    midi_options = fluid_settings_option_concat(settings, "midi.driver", NULL);
+
+    printf("Usage: \n");
+    printf("  fluidsynth [options] [soundfonts] [midifiles]\n");
+    printf("Possible options:\n");
+    printf(" -a\n"
+           "    The name of the audio driver to use.\n"
+           "    Valid values: %s\n", audio_options ? audio_options : "ERROR");
+    printf(" -c\n"
+           "    Number of audio buffers\n");
+    printf(" -C\n"
+           "    Turn the chorus on or off [0|1|yes|no, default = on]\n");
+    printf(" -d\n"
+           "    Dump incoming and outgoing MIDI events to stdout\n");
+    printf(" -E\n"
+           "    Audio file endian for fast rendering or aufile driver (\"help\" for list)\n");
+    printf(" -f\n"
+           "    Load command configuration file (shell commands)\n");
+    printf(" -F\n"
+           "    Render MIDI file to raw audio data and store in [file]\n");
+    printf(" -g\n"
+           "    Set the master gain [0 < gain < 10, default = 0.2]\n");
+    printf(" -G\n"
+           "    Defines the number of LADSPA audio nodes\n");
+    printf(" -h\n"
+           "    Print out this help summary\n");
+    printf(" -i\n"
+           "    Don't read commands from the shell [default = yes]\n");
+    printf(" -j\n"
+           "    Attempt to connect the jack outputs to the physical ports\n");
+    printf(" -K\n"
+           "    The number of midi channels [default = 16]\n");
+#ifdef HAVE_LASH
+    printf(" -l, --disable-lash\n"
+           "    Don't connect to LASH server\n");
+#endif
+    printf(" -L\n"
+           "    The number of stereo audio channels [default = 1]\n");
+    printf(" -m\n"
+           "    The name of the midi driver to use.\n"
+           "    Valid values: %s\n", midi_options ? midi_options : "ERROR");
+    printf(" -n\n"
+           "    Don't create a midi driver to read MIDI input events [default = yes]\n");
+    printf(" -o\n"
+           "    Define a setting, -o name=value (\"-o help\" to dump current values)\n");
+    printf(" -O\n"
+           "    Audio file format for fast rendering or aufile driver (\"help\" for list)\n");
+    printf(" -p\n"
+           "    Set MIDI port name (alsa_seq, coremidi drivers)\n");
+    printf(" -q\n"
+           "    Do not print welcome message or other informational output\n"
+           "    (Windows only: also suppress all log messages lower than PANIC\n");
+    printf(" -r\n"
+           "    Set the sample rate\n");
+    printf(" -R\n"
+           "    Turn the reverb on or off [0|1|yes|no, default = on]\n");
+    printf(" -s\n"
+           "    Start FluidSynth as a server process\n");
+    printf(" -T\n"
+           "    Audio file type for fast rendering or aufile driver (\"help\" for list)\n");
+    printf(" -v\n"
+           "    Print out verbose messages about midi events (synth.verbose=1) as well as other debug messages\n");
+    printf(" -V\n"
+           "    Show version of program\n");
+    printf(" -z\n"
+           "    Size of each audio buffer\n");
+
+    if(audio_options)
+    {
+        FLUID_FREE(audio_options);
+    }
+
+    if(midi_options)
+    {
+        FLUID_FREE(midi_options);
+    }
+}
+#endif
