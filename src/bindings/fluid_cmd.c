@@ -1164,7 +1164,7 @@ fluid_handle_reverbsetroomsize(void *data, int ac, char **av, fluid_ostream_t ou
     {
         return FLUID_FAILED;
     }
-    fluid_synth_set_reverb_roomsize2(handler->synth, fxunit_idx, room_size);
+    fluid_synth_set_reverb_group_roomsize(handler->synth, fxunit_idx, room_size);
 
     return FLUID_OK;
 }
@@ -1188,7 +1188,7 @@ fluid_handle_reverbsetdamp(void *data, int ac, char **av, fluid_ostream_t out)
     {
         return FLUID_FAILED;
     }
-    fluid_synth_set_reverb_damp2(handler->synth, fxunit_idx, damp);
+    fluid_synth_set_reverb_group_damp(handler->synth, fxunit_idx, damp);
     return FLUID_OK;
 }
 
@@ -1211,7 +1211,7 @@ fluid_handle_reverbsetwidth(void *data, int ac, char **av, fluid_ostream_t out)
     {
         return FLUID_FAILED;
     }
-    fluid_synth_set_reverb_width2(handler->synth, fxunit_idx, width);
+    fluid_synth_set_reverb_group_width(handler->synth, fxunit_idx, width);
 	return FLUID_OK;
 }
 
@@ -1234,7 +1234,7 @@ fluid_handle_reverbsetlevel(void *data, int ac, char **av, fluid_ostream_t out)
     {
         return FLUID_FAILED;
     }
-    fluid_synth_set_reverb_level2(handler->synth, fxunit_idx, level);
+    fluid_synth_set_reverb_group_level(handler->synth, fxunit_idx, level);
     return FLUID_OK;
 }
 
@@ -1287,7 +1287,7 @@ fluid_handle_chorusnr(void *data, int ac, char **av, fluid_ostream_t out)
     if( fxunit_idx >= 0)
     {
         int nr = atoi(av[1]);
-        fluid_synth_set_chorus_nr2(handler->synth, fxunit_idx, nr);
+        fluid_synth_set_chorus_group_nr(handler->synth, fxunit_idx, nr);
         return FLUID_OK;
     }
     return FLUID_FAILED;
@@ -1307,7 +1307,7 @@ fluid_handle_choruslevel(void *data, int ac, char **av, fluid_ostream_t out)
     if( fxunit_idx >= 0)
     {
         fluid_real_t level = atof(av[1]);
-        fluid_synth_set_chorus_level2(handler->synth, fxunit_idx, level);
+        fluid_synth_set_chorus_group_level(handler->synth, fxunit_idx, level);
         return FLUID_OK;
     }
     return FLUID_FAILED;
@@ -1327,7 +1327,7 @@ fluid_handle_chorusspeed(void *data, int ac, char **av, fluid_ostream_t out)
     if( fxunit_idx >= 0)
     {
         fluid_real_t speed = atof(av[1]);
-        fluid_synth_set_chorus_speed2(handler->synth, fxunit_idx, speed);
+        fluid_synth_set_chorus_group_speed(handler->synth, fxunit_idx, speed);
         return FLUID_OK;
     }
     return FLUID_FAILED;
@@ -1347,7 +1347,7 @@ fluid_handle_chorusdepth(void *data, int ac, char **av, fluid_ostream_t out)
     if( fxunit_idx >= 0)
     {
         fluid_real_t depth = atof(av[1]);
-        fluid_synth_set_chorus_depth2(handler->synth, fxunit_idx, depth);
+        fluid_synth_set_chorus_group_depth(handler->synth, fxunit_idx, depth);
         return FLUID_OK;
     }
     return FLUID_FAILED;
