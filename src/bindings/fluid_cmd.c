@@ -1359,7 +1359,7 @@ fluid_handle_chorus_command(void *data, int ac, char **av, fluid_ostream_t out,
         if( !fluid_is_number(av[ac]))
         {
             fluid_ostream_printf(out, "%s: %s \"%s\" must be a number\n",
-                                 name_cde, name_value[cde], av[ac]);
+                                 name_cde[cde], name_value[cde], av[ac]);
             return FLUID_FAILED;
         }
 
