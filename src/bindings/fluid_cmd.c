@@ -192,23 +192,23 @@ static const fluid_cmd_t fluid_commands[] =
     /* reverb commands */
     {
         "rev_preset", "reverb", fluid_handle_reverbpreset,
-        "rev_preset num             Load preset num into the reverb unit"
+        "rev_preset num             Load preset num into all reverb unit"
     },
     {
         "rev_setroomsize", "reverb", fluid_handle_reverbsetroomsize,
-        "rev_setroomsize unit num   Set reverb unit room size to num"
+        "rev_setroomsize [unit] num Set room size of all or one reverb unit to num"
     },
     {
         "rev_setdamp", "reverb", fluid_handle_reverbsetdamp,
-        "rev_setdamp unit num       Set reverb unit damping to num"
+        "rev_setdamp [unit] num     Set damping of all or one reverb unit to num"
     },
     {
         "rev_setwidth", "reverb", fluid_handle_reverbsetwidth,
-        "rev_setwidth unit num      Set reverb unit width to num"
+        "rev_setwidth [unit] num    Set width of all or one reverb unit to num"
     },
     {
         "rev_setlevel", "reverb", fluid_handle_reverbsetlevel,
-        "rev_setlevel unit num      Set reverb unit level to num"
+        "rev_setlevel [unit] num    Set output level of all or one reverb unit to num"
     },
     {
         "reverb", "reverb", fluid_handle_reverb,
@@ -217,19 +217,19 @@ static const fluid_cmd_t fluid_commands[] =
     /* chorus commands */
     {
         "cho_set_nr", "chorus", fluid_handle_chorusnr,
-        "cho_set_nr unit n          Set n delay lines (default 3) in unit"
+        "cho_set_nr [unit] n        Set n delay lines (default 3) in all or one unit"
     },
     {
         "cho_set_level", "chorus", fluid_handle_choruslevel,
-        "cho_set_level unit num     Set chorus unit output level to num"
+        "cho_set_level [unit] num   Set output level of all or one chorus unit to num"
     },
     {
         "cho_set_speed", "chorus", fluid_handle_chorusspeed,
-        "cho_set_speed unit num     Set mod speed of chorus unit to num (Hz)"
+        "cho_set_speed [unit] num   Set mod speed of all or one chorus unit to num (Hz)"
     },
     {
         "cho_set_depth", "chorus", fluid_handle_chorusdepth,
-        "cho_set_depth unit num     Set unit chorus modulation depth to num (ms)"
+        "cho_set_depth [unit] num   Set modulation depth of all or one chorus unit to num (ms)"
     },
     {
         "chorus", "chorus", fluid_handle_chorus,
@@ -1088,57 +1088,72 @@ fluid_handle_reverbpreset(void *data, int ac, char **av, fluid_ostream_t out)
 
 /*
   The function is useful for reverb and chorus commands which have
-  2 parameters.
-  - check that there is 2 parameters.
-  - check the first parameter that must be an fx unit index in
-  the range[0..synth->effects_groups-1].
+  1 or 2 parameters.
+  The function checks that there is 1 or 2 parameters.
+  When there is 2 parameters it checks the first parameter that must be
+  an fx unit index in the range[0..synth->effects_groups-1].
 
-  return the unit index >= 0 , or -1 if error
+  return the unit index:
+  -1, when the command is for all fx unit.
+  0 to synth->effects_groups-1, when the command is for this unit index.
+  -2 if error.
 */
 static int check_fx_unit_idx(int ac, char **av, fluid_ostream_t out,
-                             fluid_synth_t *synth, char *name_cde)
+                             fluid_synth_t *synth, const char *name_cde)
 {
     int fxunit_idx, nfxunits; /* fx unit index, count of fx units */
 
-    if(ac < 2)
+    /* One or 2 parameters allowed */
+    if(ac < 1 || ac > 2 )
     {
-        fluid_ostream_printf(out, "%s: too few arguments\n", name_cde);
-        return -1;
+        fluid_ostream_printf(out, "%s: 1 or 2 arguments allowed\n", name_cde);
+        return -2;
     }
 
-    fxunit_idx = atoi(av[0]); /* get fx unit index */
-    nfxunits = fluid_synth_count_effects_groups(synth);
-    if(fxunit_idx < 0 || fxunit_idx >= nfxunits)
+    fxunit_idx = -1;
+    if( ac > 1)
     {
-        fluid_ostream_printf(out, "%s: unit index %d must be in range [%d..%d]\n",
-                             name_cde, fxunit_idx, 0, nfxunits - 1);
-        return -1;
+        fxunit_idx = atoi(av[0]); /* get fx unit index */
+        nfxunits = fluid_synth_count_effects_groups(synth);
+        if(!fluid_is_number(av[0]) || fxunit_idx < 0 || fxunit_idx >= nfxunits)
+        {
+            fluid_ostream_printf(out, "%s: unit index \"%s\" must be in range [%d..%d]\n",
+                                 name_cde, av[0], 0, nfxunits - 1);
+            return -2;
+        }
     }
     return fxunit_idx;
 }
 
 /*
   check 2 parameters for reverb commands : unit fx index  , value
-  - unit index must be an integer in the range [0..synth->effects_groups].
+  - unit index must be an integer in the range [-1..synth->effects_groups].
   - value must be a double in the range [min..max]
   @param param a pointer on a value to return the second parameter.
-  @return the unit index >= 0 , or -1 if error
+  return the unit index:
+  -1 when the command is for all fx unit.
+  0 to synth->effects_groups-1 when the command is for this unit index.
+  -2 if error.
 */
 static int check_fx_reverb_param(int ac, char **av, fluid_ostream_t out,
                        fluid_synth_t *synth, char *name_cde,
                        char *name_param,
                        fluid_real_t *param, fluid_real_t min, fluid_real_t max)
 {
+    /* get and check index parameter */
     int fxunit_idx = check_fx_unit_idx(ac, av, out, synth, name_cde);
-
-    if( fxunit_idx >= 0)
+    if(fxunit_idx >= -1)
     {
-        fluid_real_t val = atof(av[1]);
-        if( val < min || val > max)
+        fluid_real_t val;
+
+        /* get and check value parameter */
+        ac--;
+        val = atof(av[ac]);
+        if( !fluid_is_number(av[ac]) || val < min || val > max)
         {
-            fluid_ostream_printf(out, "%s: %s %f must be in range [%f..%f]\n",
-                                 name_cde, name_param, val, min, max);
-            return -1;
+            fluid_ostream_printf(out, "%s: %s \"%s\" must be in range [%f..%f]\n",
+                                 name_cde, name_param, av[ac], min, max);
+            return -2;
         }
         *param = val;
     }
@@ -1160,13 +1175,13 @@ fluid_handle_reverbsetroomsize(void *data, int ac, char **av, fluid_ostream_t ou
     int fxunit_idx = check_fx_reverb_param(ac, av, out, handler->synth,
                                            "rev_setroomsize", "room size",
                                             &room_size,  0.0, 1.0);
-    if (fxunit_idx < 0)
+    if(fxunit_idx >= -1)
     {
-        return FLUID_FAILED;
+        fluid_synth_set_reverb_group_roomsize(handler->synth, fxunit_idx, room_size);
+        return FLUID_OK;
     }
-    fluid_synth_set_reverb_group_roomsize(handler->synth, fxunit_idx, room_size);
+    return FLUID_FAILED;
 
-    return FLUID_OK;
 }
 
 /* Purpose:
@@ -1184,12 +1199,12 @@ fluid_handle_reverbsetdamp(void *data, int ac, char **av, fluid_ostream_t out)
     int fxunit_idx = check_fx_reverb_param(ac, av, out, handler->synth,
                                            "rev_setdamp", "damp",
                                            &damp,  0.0, 1.0);
-    if (fxunit_idx < 0)
+    if(fxunit_idx >= -1)
     {
-        return FLUID_FAILED;
+        fluid_synth_set_reverb_group_damp(handler->synth, fxunit_idx, damp);
+        return FLUID_OK;
     }
-    fluid_synth_set_reverb_group_damp(handler->synth, fxunit_idx, damp);
-    return FLUID_OK;
+    return FLUID_FAILED;
 }
 
 /* Purpose:
@@ -1207,12 +1222,12 @@ fluid_handle_reverbsetwidth(void *data, int ac, char **av, fluid_ostream_t out)
     int fxunit_idx = check_fx_reverb_param(ac, av, out, handler->synth,
                                            "rev_setwidth", "width",
                                            &width,  0.0, 100.0);
-    if (fxunit_idx < 0)
+    if(fxunit_idx >= -1)
     {
-        return FLUID_FAILED;
+        fluid_synth_set_reverb_group_width(handler->synth, fxunit_idx, width);
+	    return FLUID_OK;
     }
-    fluid_synth_set_reverb_group_width(handler->synth, fxunit_idx, width);
-	return FLUID_OK;
+    return FLUID_FAILED;
 }
 
 /* Purpose:
@@ -1230,17 +1245,17 @@ fluid_handle_reverbsetlevel(void *data, int ac, char **av, fluid_ostream_t out)
     int fxunit_idx = check_fx_reverb_param(ac, av, out, handler->synth,
                                            "rev_setlevel", "level",
                                            &level,  0.0, 30.0);
-    if (fxunit_idx < 0)
+    if(fxunit_idx >= -1)
     {
-        return FLUID_FAILED;
+        fluid_synth_set_reverb_group_level(handler->synth, fxunit_idx, level);
+        return FLUID_OK;
     }
-    fluid_synth_set_reverb_group_level(handler->synth, fxunit_idx, level);
-    return FLUID_OK;
+    return FLUID_FAILED;
 }
 
 /* Purpose:
- * Response to 'reverb' command.
- * Change the FLUID_REVERB flag in the synth */
+ * Set all reverb units on
+ */
 int
 fluid_handle_reverb(void *data, int ac, char **av, fluid_ostream_t out)
 {
@@ -1251,8 +1266,6 @@ fluid_handle_reverb(void *data, int ac, char **av, fluid_ostream_t out)
         fluid_ostream_printf(out, "reverb: too few arguments.\n");
         return FLUID_FAILED;
     }
-
-    fluid_ostream_printf(out, "reverb is deprecated! Use 'set synth.reverb.active %s' instead.\n", av[0]);
 
     if((FLUID_STRCMP(av[0], "0") == 0) || (FLUID_STRCMP(av[0], "off") == 0))
     {
@@ -1281,12 +1294,24 @@ fluid_handle_reverb(void *data, int ac, char **av, fluid_ostream_t out)
 int
 fluid_handle_chorusnr(void *data, int ac, char **av, fluid_ostream_t out)
 {
+	static const char *name_cde = "cho_set_nr";
     FLUID_ENTRY_COMMAND(data);
 
-    int fxunit_idx = check_fx_unit_idx(ac, av, out, handler->synth, "cho_set_nr");
-    if( fxunit_idx >= 0)
+    int fxunit_idx = check_fx_unit_idx(ac, av, out, handler->synth, name_cde);
+    if( fxunit_idx >= -1)
     {
-        int nr = atoi(av[1]);
+        int nr;
+
+        /* get and check value parameter */
+        ac--;
+        if( !fluid_is_number(av[ac]))
+        {
+            fluid_ostream_printf(out, "%s: nr \"%s\" must be a number\n",
+                                 name_cde, av[ac]);
+            return FLUID_FAILED;
+        }
+
+        nr = atoi(av[ac]);
         fluid_synth_set_chorus_group_nr(handler->synth, fxunit_idx, nr);
         return FLUID_OK;
     }
@@ -1301,12 +1326,24 @@ fluid_handle_chorusnr(void *data, int ac, char **av, fluid_ostream_t out)
 int
 fluid_handle_choruslevel(void *data, int ac, char **av, fluid_ostream_t out)
 {
+    static const char *name_cde = "cho_set_level";
     FLUID_ENTRY_COMMAND(data);
 
-    int fxunit_idx = check_fx_unit_idx(ac, av, out, handler->synth, "cho_set_level");
-    if( fxunit_idx >= 0)
+    int fxunit_idx = check_fx_unit_idx(ac, av, out, handler->synth, name_cde);
+    if( fxunit_idx >= -1)
     {
-        fluid_real_t level = atof(av[1]);
+        fluid_real_t level;
+
+        /* get and check value parameter */
+        ac--;
+        if( !fluid_is_number(av[ac]))
+        {
+            fluid_ostream_printf(out, "%s: level \"%s\" must be a number\n",
+                                 name_cde, av[ac]);
+            return FLUID_FAILED;
+        }
+
+        level = atof(av[ac]);
         fluid_synth_set_chorus_group_level(handler->synth, fxunit_idx, level);
         return FLUID_OK;
     }
@@ -1321,12 +1358,24 @@ fluid_handle_choruslevel(void *data, int ac, char **av, fluid_ostream_t out)
 int
 fluid_handle_chorusspeed(void *data, int ac, char **av, fluid_ostream_t out)
 {
+    static const char *name_cde = "cho_set_speed";
     FLUID_ENTRY_COMMAND(data);
 
-    int fxunit_idx = check_fx_unit_idx(ac, av, out, handler->synth, "chofx_set_speed");
-    if( fxunit_idx >= 0)
+    int fxunit_idx = check_fx_unit_idx(ac, av, out, handler->synth, name_cde);
+    if( fxunit_idx >= -1)
     {
-        fluid_real_t speed = atof(av[1]);
+        fluid_real_t speed;
+
+        /* get and check value parameter */
+        ac--;
+        if( !fluid_is_number(av[ac]))
+        {
+            fluid_ostream_printf(out, "%s: speed \"%s\" must be a number\n",
+                                 name_cde, av[ac]);
+            return FLUID_FAILED;
+        }
+
+		speed = atof(av[ac]);
         fluid_synth_set_chorus_group_speed(handler->synth, fxunit_idx, speed);
         return FLUID_OK;
     }
@@ -1341,18 +1390,33 @@ fluid_handle_chorusspeed(void *data, int ac, char **av, fluid_ostream_t out)
 int
 fluid_handle_chorusdepth(void *data, int ac, char **av, fluid_ostream_t out)
 {
+    static const char *name_cde = "cho_set_depth";
     FLUID_ENTRY_COMMAND(data);
 
-    int fxunit_idx = check_fx_unit_idx(ac, av, out, handler->synth, "cho_set_depth");
-    if( fxunit_idx >= 0)
+    int fxunit_idx = check_fx_unit_idx(ac, av, out, handler->synth, name_cde);
+    if( fxunit_idx >= -1)
     {
-        fluid_real_t depth = atof(av[1]);
+        fluid_real_t depth;
+
+        /* get and check value parameter */
+        ac--;
+        if( !fluid_is_number(av[ac]))
+        {
+            fluid_ostream_printf(out, "%s: depth \"%s\" must be a number\n",
+                                 name_cde, av[ac]);
+            return FLUID_FAILED;
+        }
+
+        depth = atof(av[ac]);
         fluid_synth_set_chorus_group_depth(handler->synth, fxunit_idx, depth);
         return FLUID_OK;
     }
     return FLUID_FAILED;
 }
 
+/* Purpose:
+ * Set all chorus units on
+ */
 int
 fluid_handle_chorus(void *data, int ac, char **av, fluid_ostream_t out)
 {
@@ -1363,8 +1427,6 @@ fluid_handle_chorus(void *data, int ac, char **av, fluid_ostream_t out)
         fluid_ostream_printf(out, "chorus: too few arguments\n");
         return FLUID_FAILED;
     }
-
-    fluid_ostream_printf(out, "chorus is deprecated! Use 'set synth.chorus.active %s' instead.\n", av[0]);
 
     if((FLUID_STRCMP(av[0], "0") == 0) || (FLUID_STRCMP(av[0], "off") == 0))
     {
