@@ -1292,6 +1292,66 @@ fluid_handle_reverb(void *data, int ac, char **av, fluid_ostream_t out)
     return FLUID_OK;
 }
 
+/* chorus command enum */
+enum chorus_cde
+{
+    CHORUS_NR_CDE,
+    CHORUS_LEVEL_CDE,
+    CHORUS_SPEED_CDE,
+    CHORUS_DEPTH_CDE,
+    NBR_CHORUS_CDE
+};
+
+/* Purpose:
+ * Response to fluid_handle_chorus_xxx commands
+ */
+int
+fluid_handle_chorus_command(void *data, int ac, char **av, fluid_ostream_t out,
+                            enum chorus_cde cde)
+{
+    static const char *name_cde[NBR_CHORUS_CDE] =
+    {"cho_set_nr", "cho_set_level", "cho_set_speed", "cho_set_depth"};
+
+    static const char *name_value[NBR_CHORUS_CDE] =
+    {"nr", "level", "speed", "depth"};
+
+    /* commands for double parameter */
+    static int (*chorus_func[NBR_REVERB_CDE - CHORUS_LEVEL_CDE]) (fluid_synth_t *, int, double) =
+    {
+        fluid_synth_set_chorus_group_level, fluid_synth_set_chorus_group_speed,
+        fluid_synth_set_chorus_group_depth
+    };
+
+    FLUID_ENTRY_COMMAND(data);
+
+    int fxunit_idx = check_fx_unit_idx(ac, av, out, handler->synth, name_cde[cde]);
+    if( fxunit_idx >= -1)
+    {
+        /* get and check value parameter */
+        ac--;
+        if( !fluid_is_number(av[ac]))
+        {
+            fluid_ostream_printf(out, "%s: %s \"%s\" must be a number\n",
+                                 name_cde, name_value[cde], av[ac]);
+            return FLUID_FAILED;
+        }
+
+        if(cde < CHORUS_LEVEL_CDE) /* commands with integer parameter */
+        {
+            int nr = atoi(av[ac]);
+            fluid_synth_set_chorus_group_nr(handler->synth, fxunit_idx, nr);
+        }
+        else /* commands with float parameter */
+        {
+            fluid_real_t level = atof(av[ac]);
+            chorus_func[cde - CHORUS_LEVEL_CDE](handler->synth, fxunit_idx, level);
+        }
+
+        return FLUID_OK;
+    }
+    return FLUID_FAILED;
+}
+
 /* Purpose:
  * Response to 'cho_set_nr' command
  * Load the new voice count into the chorus unit.
@@ -1301,28 +1361,7 @@ fluid_handle_reverb(void *data, int ac, char **av, fluid_ostream_t out)
 int
 fluid_handle_chorusnr(void *data, int ac, char **av, fluid_ostream_t out)
 {
-	static const char *name_cde = "cho_set_nr";
-    FLUID_ENTRY_COMMAND(data);
-
-    int fxunit_idx = check_fx_unit_idx(ac, av, out, handler->synth, name_cde);
-    if( fxunit_idx >= -1)
-    {
-        int nr;
-
-        /* get and check value parameter */
-        ac--;
-        if( !fluid_is_number(av[ac]))
-        {
-            fluid_ostream_printf(out, "%s: nr \"%s\" must be a number\n",
-                                 name_cde, av[ac]);
-            return FLUID_FAILED;
-        }
-
-        nr = atoi(av[ac]);
-        fluid_synth_set_chorus_group_nr(handler->synth, fxunit_idx, nr);
-        return FLUID_OK;
-    }
-    return FLUID_FAILED;
+    return fluid_handle_chorus_command(data, ac, av, out, CHORUS_NR_CDE);
 }
 
 /* Purpose:
@@ -1333,28 +1372,7 @@ fluid_handle_chorusnr(void *data, int ac, char **av, fluid_ostream_t out)
 int
 fluid_handle_choruslevel(void *data, int ac, char **av, fluid_ostream_t out)
 {
-    static const char *name_cde = "cho_set_level";
-    FLUID_ENTRY_COMMAND(data);
-
-    int fxunit_idx = check_fx_unit_idx(ac, av, out, handler->synth, name_cde);
-    if( fxunit_idx >= -1)
-    {
-        fluid_real_t level;
-
-        /* get and check value parameter */
-        ac--;
-        if( !fluid_is_number(av[ac]))
-        {
-            fluid_ostream_printf(out, "%s: level \"%s\" must be a number\n",
-                                 name_cde, av[ac]);
-            return FLUID_FAILED;
-        }
-
-        level = atof(av[ac]);
-        fluid_synth_set_chorus_group_level(handler->synth, fxunit_idx, level);
-        return FLUID_OK;
-    }
-    return FLUID_FAILED;
+    return fluid_handle_chorus_command(data, ac, av, out, CHORUS_LEVEL_CDE);
 }
 
 /* Purpose:
@@ -1365,28 +1383,7 @@ fluid_handle_choruslevel(void *data, int ac, char **av, fluid_ostream_t out)
 int
 fluid_handle_chorusspeed(void *data, int ac, char **av, fluid_ostream_t out)
 {
-    static const char *name_cde = "cho_set_speed";
-    FLUID_ENTRY_COMMAND(data);
-
-    int fxunit_idx = check_fx_unit_idx(ac, av, out, handler->synth, name_cde);
-    if( fxunit_idx >= -1)
-    {
-        fluid_real_t speed;
-
-        /* get and check value parameter */
-        ac--;
-        if( !fluid_is_number(av[ac]))
-        {
-            fluid_ostream_printf(out, "%s: speed \"%s\" must be a number\n",
-                                 name_cde, av[ac]);
-            return FLUID_FAILED;
-        }
-
-		speed = atof(av[ac]);
-        fluid_synth_set_chorus_group_speed(handler->synth, fxunit_idx, speed);
-        return FLUID_OK;
-    }
-    return FLUID_FAILED;
+    return fluid_handle_chorus_command(data, ac, av, out, CHORUS_SPEED_CDE);
 }
 
 /* Purpose:
@@ -1397,28 +1394,7 @@ fluid_handle_chorusspeed(void *data, int ac, char **av, fluid_ostream_t out)
 int
 fluid_handle_chorusdepth(void *data, int ac, char **av, fluid_ostream_t out)
 {
-    static const char *name_cde = "cho_set_depth";
-    FLUID_ENTRY_COMMAND(data);
-
-    int fxunit_idx = check_fx_unit_idx(ac, av, out, handler->synth, name_cde);
-    if( fxunit_idx >= -1)
-    {
-        fluid_real_t depth;
-
-        /* get and check value parameter */
-        ac--;
-        if( !fluid_is_number(av[ac]))
-        {
-            fluid_ostream_printf(out, "%s: depth \"%s\" must be a number\n",
-                                 name_cde, av[ac]);
-            return FLUID_FAILED;
-        }
-
-        depth = atof(av[ac]);
-        fluid_synth_set_chorus_group_depth(handler->synth, fxunit_idx, depth);
-        return FLUID_OK;
-    }
-    return FLUID_FAILED;
+    return fluid_handle_chorus_command(data, ac, av, out, CHORUS_DEPTH_CDE);
 }
 
 /* Purpose:
