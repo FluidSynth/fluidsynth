@@ -1106,7 +1106,7 @@ static int check_fx_unit_idx(int ac, char **av, fluid_ostream_t out,
     /* One or 2 parameters allowed */
     if(ac < 1 || ac > 2 )
     {
-        fluid_ostream_printf(out, "%s: 1 or 2 arguments allowed\n", name_cde);
+        fluid_ostream_printf(out, "%s: needs 1 or 2 arguments\n", name_cde);
         return -2;
     }
 
