@@ -124,18 +124,18 @@ FLUIDSYNTH_API int fluid_synth_get_bank_offset(fluid_synth_t *synth, int sfont_i
 /* Reverb  */
 
 
-FLUIDSYNTH_API int fluid_synth_set_reverb(fluid_synth_t *synth, double roomsize,
+FLUID_DEPRECATED FLUIDSYNTH_API int fluid_synth_set_reverb(fluid_synth_t *synth, double roomsize,
                                           double damping, double width, double level);
-FLUIDSYNTH_API int fluid_synth_set_reverb_roomsize(fluid_synth_t *synth, double roomsize);
-FLUIDSYNTH_API int fluid_synth_set_reverb_damp(fluid_synth_t *synth, double damping);
-FLUIDSYNTH_API int fluid_synth_set_reverb_width(fluid_synth_t *synth, double width);
-FLUIDSYNTH_API int fluid_synth_set_reverb_level(fluid_synth_t *synth, double level);
+FLUID_DEPRECATED FLUIDSYNTH_API int fluid_synth_set_reverb_roomsize(fluid_synth_t *synth, double roomsize);
+FLUID_DEPRECATED FLUIDSYNTH_API int fluid_synth_set_reverb_damp(fluid_synth_t *synth, double damping);
+FLUID_DEPRECATED FLUIDSYNTH_API int fluid_synth_set_reverb_width(fluid_synth_t *synth, double width);
+FLUID_DEPRECATED FLUIDSYNTH_API int fluid_synth_set_reverb_level(fluid_synth_t *synth, double level);
 
 FLUIDSYNTH_API void fluid_synth_set_reverb_on(fluid_synth_t *synth, int on);
-FLUIDSYNTH_API double fluid_synth_get_reverb_roomsize(fluid_synth_t *synth);
-FLUIDSYNTH_API double fluid_synth_get_reverb_damp(fluid_synth_t *synth);
-FLUIDSYNTH_API double fluid_synth_get_reverb_level(fluid_synth_t *synth);
-FLUIDSYNTH_API double fluid_synth_get_reverb_width(fluid_synth_t *synth);
+FLUID_DEPRECATED FLUIDSYNTH_API double fluid_synth_get_reverb_roomsize(fluid_synth_t *synth);
+FLUID_DEPRECATED FLUIDSYNTH_API double fluid_synth_get_reverb_damp(fluid_synth_t *synth);
+FLUID_DEPRECATED FLUIDSYNTH_API double fluid_synth_get_reverb_level(fluid_synth_t *synth);
+FLUID_DEPRECATED FLUIDSYNTH_API double fluid_synth_get_reverb_width(fluid_synth_t *synth);
 
 FLUIDSYNTH_API int fluid_synth_set_reverb_group(fluid_synth_t *synth, int fxunit_idx,
                                                 double roomsize, double damping, double width, double level);
@@ -161,20 +161,20 @@ enum fluid_chorus_mod
     FLUID_CHORUS_MOD_TRIANGLE = 1         /**< Triangle wave chorus modulation */
 };
 
-FLUIDSYNTH_API int fluid_synth_set_chorus(fluid_synth_t *synth, int nr, double level,
+FLUID_DEPRECATED FLUIDSYNTH_API int fluid_synth_set_chorus(fluid_synth_t *synth, int nr, double level,
                                           double speed, double depth_ms, int type);
-FLUIDSYNTH_API int fluid_synth_set_chorus_nr(fluid_synth_t *synth, int nr);
-FLUIDSYNTH_API int fluid_synth_set_chorus_level(fluid_synth_t *synth, double level);
-FLUIDSYNTH_API int fluid_synth_set_chorus_speed(fluid_synth_t *synth, double speed);
-FLUIDSYNTH_API int fluid_synth_set_chorus_depth(fluid_synth_t *synth, double depth_ms);
-FLUIDSYNTH_API int fluid_synth_set_chorus_type(fluid_synth_t *synth, int type);
+FLUID_DEPRECATED FLUIDSYNTH_API int fluid_synth_set_chorus_nr(fluid_synth_t *synth, int nr);
+FLUID_DEPRECATED FLUIDSYNTH_API int fluid_synth_set_chorus_level(fluid_synth_t *synth, double level);
+FLUID_DEPRECATED FLUIDSYNTH_API int fluid_synth_set_chorus_speed(fluid_synth_t *synth, double speed);
+FLUID_DEPRECATED FLUIDSYNTH_API int fluid_synth_set_chorus_depth(fluid_synth_t *synth, double depth_ms);
+FLUID_DEPRECATED FLUIDSYNTH_API int fluid_synth_set_chorus_type(fluid_synth_t *synth, int type);
 
 FLUIDSYNTH_API void fluid_synth_set_chorus_on(fluid_synth_t *synth, int on);
-FLUIDSYNTH_API int fluid_synth_get_chorus_nr(fluid_synth_t *synth);
-FLUIDSYNTH_API double fluid_synth_get_chorus_level(fluid_synth_t *synth);
-FLUIDSYNTH_API double fluid_synth_get_chorus_speed(fluid_synth_t *synth);
-FLUIDSYNTH_API double fluid_synth_get_chorus_depth(fluid_synth_t *synth);
-FLUIDSYNTH_API int fluid_synth_get_chorus_type(fluid_synth_t *synth); /* see fluid_chorus_mod */
+FLUID_DEPRECATED FLUIDSYNTH_API int fluid_synth_get_chorus_nr(fluid_synth_t *synth);
+FLUID_DEPRECATED FLUIDSYNTH_API double fluid_synth_get_chorus_level(fluid_synth_t *synth);
+FLUID_DEPRECATED FLUIDSYNTH_API double fluid_synth_get_chorus_speed(fluid_synth_t *synth);
+FLUID_DEPRECATED FLUIDSYNTH_API double fluid_synth_get_chorus_depth(fluid_synth_t *synth);
+FLUID_DEPRECATED FLUIDSYNTH_API int fluid_synth_get_chorus_type(fluid_synth_t *synth); /* see fluid_chorus_mod */
 
 FLUIDSYNTH_API int fluid_synth_set_chorus_group(fluid_synth_t *synth, int fxunit_idx, int nr,
                                                 double level, double speed, double depth_ms, int type);

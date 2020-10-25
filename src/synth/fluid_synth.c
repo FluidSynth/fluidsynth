@@ -941,8 +941,7 @@ new_fluid_synth(fluid_settings_t *settings)
         fluid_settings_getnum(settings, "synth.reverb.width", &width);
         fluid_settings_getnum(settings, "synth.reverb.level", &level);
 
-        fluid_synth_set_reverb_full(synth, -1,
-                                          FLUID_REVMODEL_SET_ALL,
+        fluid_synth_set_reverb_group(synth, -1,
                                           room,
                                           damp,
                                           width,
@@ -4542,31 +4541,31 @@ static void fluid_synth_handle_reverb_chorus_num(void *data, const char *name, d
 
     if(FLUID_STRCMP(name, "synth.reverb.room-size") == 0)
     {
-        fluid_synth_set_reverb_roomsize(synth, value);
+        fluid_synth_set_reverb_group_roomsize(synth, -1, value);
     }
     else if(FLUID_STRCMP(name, "synth.reverb.damp") == 0)
     {
-        fluid_synth_set_reverb_damp(synth, value);
+        fluid_synth_set_reverb_group_damp(synth, -1, value);
     }
     else if(FLUID_STRCMP(name, "synth.reverb.width") == 0)
     {
-        fluid_synth_set_reverb_width(synth, value);
+        fluid_synth_set_reverb_group_width(synth, -1, value);
     }
     else if(FLUID_STRCMP(name, "synth.reverb.level") == 0)
     {
-        fluid_synth_set_reverb_level(synth, value);
+        fluid_synth_set_reverb_group_level(synth, -1, value);
     }
     else if(FLUID_STRCMP(name, "synth.chorus.depth") == 0)
     {
-        fluid_synth_set_chorus_depth(synth, value);
+        fluid_synth_set_chorus_group_depth(synth, -1, value);
     }
     else if(FLUID_STRCMP(name, "synth.chorus.speed") == 0)
     {
-        fluid_synth_set_chorus_speed(synth, value);
+        fluid_synth_set_chorus_group_speed(synth, -1, value);
     }
     else if(FLUID_STRCMP(name, "synth.chorus.level") == 0)
     {
-        fluid_synth_set_chorus_level(synth, value);
+        fluid_synth_set_chorus_group_level(synth, -1, value);
     }
 }
 
@@ -4588,7 +4587,7 @@ static void fluid_synth_handle_reverb_chorus_int(void *data, const char *name, i
     }
     else if(FLUID_STRCMP(name, "synth.chorus.nr") == 0)
     {
-        fluid_synth_set_chorus_nr(synth, value);
+        fluid_synth_set_chorus_group_nr(synth, -1, value);
     }
 }
 
@@ -5388,7 +5387,7 @@ fluid_synth_set_reverb_preset(fluid_synth_t *synth, unsigned int num)
         FLUID_FAILED
     );
 
-    fluid_synth_set_reverb(synth, revmodel_preset[num].roomsize,
+    fluid_synth_set_reverb_group(synth, -1, revmodel_preset[num].roomsize,
                            revmodel_preset[num].damp, revmodel_preset[num].width,
                            revmodel_preset[num].level);
     return FLUID_OK;
@@ -5405,6 +5404,7 @@ fluid_synth_set_reverb_preset(fluid_synth_t *synth, unsigned int num)
  *
  * @note Not realtime safe and therefore should not be called from synthesis
  * context at the risk of stalling audio output.
+ * @deprecated Use fluid_synth_set_reverb_group instead.
  */
 int
 fluid_synth_set_reverb(fluid_synth_t *synth, double roomsize, double damping,
@@ -5417,6 +5417,7 @@ fluid_synth_set_reverb(fluid_synth_t *synth, double roomsize, double damping,
 /**
  * Set reverb roomsize. See fluid_synth_set_reverb() for further info.
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ * @deprecated Use fluid_synth_set_reverb_group_roomsize instead.
  */
 int fluid_synth_set_reverb_roomsize(fluid_synth_t *synth, double roomsize)
 {
@@ -5426,6 +5427,7 @@ int fluid_synth_set_reverb_roomsize(fluid_synth_t *synth, double roomsize)
 /**
  * Set reverb damping. See fluid_synth_set_reverb() for further info.
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ * @deprecated Use fluid_synth_set_reverb_group_damp instead.
  */
 int fluid_synth_set_reverb_damp(fluid_synth_t *synth, double damping)
 {
@@ -5435,6 +5437,7 @@ int fluid_synth_set_reverb_damp(fluid_synth_t *synth, double damping)
 /**
  * Set reverb width. See fluid_synth_set_reverb() for further info.
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ * @deprecated Use fluid_synth_set_reverb_group_width instead.
  */
 int fluid_synth_set_reverb_width(fluid_synth_t *synth, double width)
 {
@@ -5444,6 +5447,7 @@ int fluid_synth_set_reverb_width(fluid_synth_t *synth, double width)
 /**
  * Set reverb level. See fluid_synth_set_reverb() for further info.
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ * @deprecated Use fluid_synth_set_reverb_group_level instead.
  */
 int fluid_synth_set_reverb_level(fluid_synth_t *synth, double level)
 {
@@ -5589,6 +5593,7 @@ fluid_synth_set_reverb_full(fluid_synth_t *synth, int fxunit_idx, int set,
  * Get reverb room size of all fx unit.
  * @param synth FluidSynth instance
  * @return Reverb room size (0.0-1.2)
+ * @deprecated Use fluid_synth_get_reverb_group_roomsize instead.
  */
 double
 fluid_synth_get_reverb_roomsize(fluid_synth_t *synth)
@@ -5600,6 +5605,7 @@ fluid_synth_get_reverb_roomsize(fluid_synth_t *synth)
  * Get reverb damping of all fx unit.
  * @param synth FluidSynth instance
  * @return Reverb damping value (0.0-1.0)
+ * @deprecated Use fluid_synth_get_reverb_group_damp instead.
  */
 double
 fluid_synth_get_reverb_damp(fluid_synth_t *synth)
@@ -5611,6 +5617,7 @@ fluid_synth_get_reverb_damp(fluid_synth_t *synth)
  * Get reverb level of all fx unit.
  * @param synth FluidSynth instance
  * @return Reverb level value (0.0-1.0)
+ * @deprecated Use fluid_synth_get_reverb_group_level instead.
  */
 double
 fluid_synth_get_reverb_level(fluid_synth_t *synth)
@@ -5622,6 +5629,7 @@ fluid_synth_get_reverb_level(fluid_synth_t *synth)
  * Get reverb width of all fx unit.
  * @param synth FluidSynth instance
  * @return Reverb width value (0.0-100.0)
+ * @deprecated Use fluid_synth_get_reverb_group_width instead.
  */
 double
 fluid_synth_get_reverb_width(fluid_synth_t *synth)
@@ -5776,6 +5784,7 @@ fluid_synth_set_chorus_on(fluid_synth_t *synth, int on)
  *   0.0-21.0 is safe for sample-rate values up to 96KHz)
  * @param type Chorus waveform type (#fluid_chorus_mod)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ * @deprecated Use fluid_synth_set_chorus_group instead.
  */
 int fluid_synth_set_chorus(fluid_synth_t *synth, int nr, double level,
                            double speed, double depth_ms, int type)
@@ -5787,6 +5796,7 @@ int fluid_synth_set_chorus(fluid_synth_t *synth, int nr, double level,
 /**
  * Set the chorus voice count. See fluid_synth_set_chorus() for further info.
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ * @deprecated Use fluid_synth_set_chorus_group_nr instead.
  */
 int fluid_synth_set_chorus_nr(fluid_synth_t *synth, int nr)
 {
@@ -5805,6 +5815,7 @@ int fluid_synth_set_chorus_level(fluid_synth_t *synth, double level)
 /**
  * Set the chorus speed. See fluid_synth_set_chorus() for further info.
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ * @deprecated Use fluid_synth_set_chorus_group_speed instead.
  */
 int fluid_synth_set_chorus_speed(fluid_synth_t *synth, double speed)
 {
@@ -5814,6 +5825,7 @@ int fluid_synth_set_chorus_speed(fluid_synth_t *synth, double speed)
 /**
  * Set the chorus depth. See fluid_synth_set_chorus() for further info.
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ * @deprecated Use fluid_synth_set_chorus_group_depth instead.
  */
 int fluid_synth_set_chorus_depth(fluid_synth_t *synth, double depth_ms)
 {
@@ -5823,6 +5835,7 @@ int fluid_synth_set_chorus_depth(fluid_synth_t *synth, double depth_ms)
 /**
  * Set the chorus type. See fluid_synth_set_chorus() for further info.
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ * @deprecated Use fluid_synth_set_chorus_group_type instead.
  */
 int fluid_synth_set_chorus_type(fluid_synth_t *synth, int type)
 {
@@ -5977,6 +5990,7 @@ fluid_synth_set_chorus_full(fluid_synth_t *synth, int fxunit_idx, int set, int n
  * Get chorus voice number (delay line count) value of all fx unit.
  * @param synth FluidSynth instance
  * @return Chorus voice count
+ * @deprecated Use fluid_synth_get_chorus_group_nr instead.
  */
 int
 fluid_synth_get_chorus_nr(fluid_synth_t *synth)
@@ -5988,6 +6002,7 @@ fluid_synth_get_chorus_nr(fluid_synth_t *synth)
  * Get chorus level of all fx unit.
  * @param synth FluidSynth instance
  * @return Chorus level value
+ * @deprecated Use fluid_synth_get_chorus_group_level instead.
  */
 double
 fluid_synth_get_chorus_level(fluid_synth_t *synth)
@@ -5999,6 +6014,7 @@ fluid_synth_get_chorus_level(fluid_synth_t *synth)
  * Get chorus speed in Hz of all fx unit.
  * @param synth FluidSynth instance
  * @return Chorus speed in Hz
+ * @deprecated Use fluid_synth_get_chorus_group_speed instead.
  */
 double
 fluid_synth_get_chorus_speed(fluid_synth_t *synth)
@@ -6010,6 +6026,7 @@ fluid_synth_get_chorus_speed(fluid_synth_t *synth)
  * Get chorus depth of all fx unit.
  * @param synth FluidSynth instance
  * @return Chorus depth
+ * @deprecated Use fluid_synth_get_chorus_group_depth instead.
  */
 double
 fluid_synth_get_chorus_depth(fluid_synth_t *synth)
@@ -6021,6 +6038,7 @@ fluid_synth_get_chorus_depth(fluid_synth_t *synth)
  * Get chorus waveform type of all fx unit.
  * @param synth FluidSynth instance
  * @return Chorus waveform type (#fluid_chorus_mod)
+ * @deprecated Use fluid_synth_get_chorus_group_type instead.
  */
 int
 fluid_synth_get_chorus_type(fluid_synth_t *synth)

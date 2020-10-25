@@ -23,15 +23,15 @@ int main(void)
     TEST_ASSERT(synth != NULL);
 
     // check that the synth is initialized with the correct values
-    TEST_ASSERT(fluid_synth_get_reverb_roomsize(synth) == 0.1);
-    TEST_ASSERT(fluid_synth_get_reverb_damp(synth) == 0.2);
-    TEST_ASSERT(fluid_synth_get_reverb_width(synth) == 0.3);
-    TEST_ASSERT(fluid_synth_get_reverb_level(synth) == 0.4);
+    TEST_ASSERT(fluid_synth_get_reverb_group_roomsize(synth, -1) == 0.1);
+    TEST_ASSERT(fluid_synth_get_reverb_group_damp(synth, -1) == 0.2);
+    TEST_ASSERT(fluid_synth_get_reverb_group_width(synth, -1) == 0.3);
+    TEST_ASSERT(fluid_synth_get_reverb_group_level(synth, -1) == 0.4);
 
-    TEST_ASSERT(fluid_synth_get_chorus_nr(synth) == 99);
-    TEST_ASSERT(fluid_synth_get_chorus_level(synth) == 0.5);
-    TEST_ASSERT(fluid_synth_get_chorus_speed(synth) == 0.6);
-    TEST_ASSERT(fluid_synth_get_chorus_depth(synth) == 0.7);
+    TEST_ASSERT(fluid_synth_get_chorus_group_nr(synth, -1) == 99);
+    TEST_ASSERT(fluid_synth_get_chorus_group_level(synth, -1) == 0.5);
+    TEST_ASSERT(fluid_synth_get_chorus_group_speed(synth, -1) == 0.6);
+    TEST_ASSERT(fluid_synth_get_chorus_group_depth(synth, -1) == 0.7);
 
     // update the realtime settings afterward
     TEST_SUCCESS(fluid_settings_setnum(settings, "synth.reverb.room-size", 0.11));
@@ -45,15 +45,15 @@ int main(void)
     TEST_SUCCESS(fluid_settings_setnum(settings, "synth.chorus.depth", 0.77));
 
     // check that the realtime settings correctly update the values in the synth
-    TEST_ASSERT(fluid_synth_get_reverb_roomsize(synth) == 0.11);
-    TEST_ASSERT(fluid_synth_get_reverb_damp(synth) == 0.22);
-    TEST_ASSERT(fluid_synth_get_reverb_width(synth) == 0.33);
-    TEST_ASSERT(fluid_synth_get_reverb_level(synth) == 0.44);
+    TEST_ASSERT(fluid_synth_get_reverb_group_roomsize(synth, -1) == 0.11);
+    TEST_ASSERT(fluid_synth_get_reverb_group_damp(synth, -1) == 0.22);
+    TEST_ASSERT(fluid_synth_get_reverb_group_width(synth, -1) == 0.33);
+    TEST_ASSERT(fluid_synth_get_reverb_group_level(synth, -1) == 0.44);
 
-    TEST_ASSERT(fluid_synth_get_chorus_nr(synth) == 11);
-    TEST_ASSERT(fluid_synth_get_chorus_level(synth) == 0.55);
-    TEST_ASSERT(fluid_synth_get_chorus_speed(synth) == 0.66);
-    TEST_ASSERT(fluid_synth_get_chorus_depth(synth) == 0.77);
+    TEST_ASSERT(fluid_synth_get_chorus_group_nr(synth, -1) == 11);
+    TEST_ASSERT(fluid_synth_get_chorus_group_level(synth, -1) == 0.55);
+    TEST_ASSERT(fluid_synth_get_chorus_group_speed(synth, -1) == 0.66);
+    TEST_ASSERT(fluid_synth_get_chorus_group_depth(synth, -1) == 0.77);
 
     delete_fluid_synth(synth);
     delete_fluid_settings(settings);
