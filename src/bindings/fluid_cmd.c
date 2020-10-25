@@ -217,7 +217,7 @@ static const fluid_cmd_t fluid_commands[] =
     /* chorus commands */
     {
         "cho_set_nr", "chorus", fluid_handle_chorusnr,
-        "cho_set_nr [unit] n        Set n delay lines (default 3) in all or one unit"
+        "cho_set_nr [unit] n        Set n delay lines (default 3) in all or one chorus unit"
     },
     {
         "cho_set_level", "chorus", fluid_handle_choruslevel,
