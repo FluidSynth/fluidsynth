@@ -1261,35 +1261,62 @@ fluid_handle_reverbsetlevel(void *data, int ac, char **av, fluid_ostream_t out)
     return fluid_handle_reverb_command(data, ac, av, out, REVERB_LEVEL_CDE);
 }
 
+/* reverb/chorus on/off command enum */
+enum rev_chor_on_cde
+{
+    REVERB_ON_CDE,
+    CHORUS_ON_CDE,
+    NBR_REV_CHOR_ON_CDE
+};
+
+/* Purpose:
+ * Set all reverb/chorus units on or off
+ */
+int
+fluid_handle_reverb_chorus_on_command(void *data, int ac, char **av, fluid_ostream_t out,
+                                      enum rev_chor_on_cde cde)
+{
+    static const char *name_cde[NBR_REV_CHOR_ON_CDE] ={"reverb", "chorus"};
+    static void (*onoff_func[NBR_REV_CHOR_ON_CDE]) (fluid_synth_t *, int) =
+    {
+        fluid_synth_set_reverb_on, fluid_synth_set_chorus_on
+    };
+
+    FLUID_ENTRY_COMMAND(data);
+	int onoff;
+
+    if(ac < 1)
+    {
+        fluid_ostream_printf(out, "%s: too few arguments.\n", name_cde[cde]);
+        return FLUID_FAILED;
+    }
+
+    if((FLUID_STRCMP(av[0], "0") == 0) || (FLUID_STRCMP(av[0], "off") == 0))
+    {
+        onoff = 0;
+    }
+    else if((FLUID_STRCMP(av[0], "1") == 0) || (FLUID_STRCMP(av[0], "on") == 0))
+    {
+        onoff = 1;
+    }
+    else
+    {
+        fluid_ostream_printf(out, "%s: invalid arguments %s [0|1|on|off]",
+                             name_cde[cde], av[0]);
+        return FLUID_FAILED;
+    }
+
+    onoff_func[cde](handler->synth, onoff);
+    return FLUID_OK;
+}
+
 /* Purpose:
  * Set all reverb units on
  */
 int
 fluid_handle_reverb(void *data, int ac, char **av, fluid_ostream_t out)
 {
-    FLUID_ENTRY_COMMAND(data);
-
-    if(ac < 1)
-    {
-        fluid_ostream_printf(out, "reverb: too few arguments.\n");
-        return FLUID_FAILED;
-    }
-
-    if((FLUID_STRCMP(av[0], "0") == 0) || (FLUID_STRCMP(av[0], "off") == 0))
-    {
-        fluid_synth_set_reverb_on(handler->synth, 0);
-    }
-    else if((FLUID_STRCMP(av[0], "1") == 0) || (FLUID_STRCMP(av[0], "on") == 0))
-    {
-        fluid_synth_set_reverb_on(handler->synth, 1);
-    }
-    else
-    {
-        fluid_ostream_printf(out, "reverb: invalid arguments %s [0|1|on|off]", av[0]);
-        return FLUID_FAILED;
-    }
-
-    return FLUID_OK;
+    return fluid_handle_reverb_chorus_on_command(data, ac, av, out, REVERB_ON_CDE);
 }
 
 /* chorus command enum */
@@ -1403,29 +1430,7 @@ fluid_handle_chorusdepth(void *data, int ac, char **av, fluid_ostream_t out)
 int
 fluid_handle_chorus(void *data, int ac, char **av, fluid_ostream_t out)
 {
-    FLUID_ENTRY_COMMAND(data);
-
-    if(ac < 1)
-    {
-        fluid_ostream_printf(out, "chorus: too few arguments\n");
-        return FLUID_FAILED;
-    }
-
-    if((FLUID_STRCMP(av[0], "0") == 0) || (FLUID_STRCMP(av[0], "off") == 0))
-    {
-        fluid_synth_set_chorus_on(handler->synth, 0);
-    }
-    else if((FLUID_STRCMP(av[0], "1") == 0) || (FLUID_STRCMP(av[0], "on") == 0))
-    {
-        fluid_synth_set_chorus_on(handler->synth, 1);
-    }
-    else
-    {
-        fluid_ostream_printf(out, "chorus: invalid arguments %s [0|1|on|off]", av[0]);
-        return FLUID_FAILED;
-    }
-
-    return FLUID_OK;
+    return fluid_handle_reverb_chorus_on_command(data, ac, av, out, CHORUS_ON_CDE);
 }
 
 /* Purpose:
