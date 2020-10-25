@@ -1171,10 +1171,7 @@ enum reverb_cde
 };
 
 /* Purpose:
- * Response to 'rev_setroomsize' command.
- * Load the new room size into the reverb unit.
- * Example: rev_setroomzize 0 0.5
- * load roomsize 0.5 in the reverb unit at index 0
+ * Response to reverb commands
  */
 static int
 fluid_handle_reverb_command(void *data, int ac, char **av, fluid_ostream_t out,
@@ -1294,7 +1291,6 @@ fluid_handle_reverb(void *data, int ac, char **av, fluid_ostream_t out)
 
     return FLUID_OK;
 }
-
 
 /* Purpose:
  * Response to 'cho_set_nr' command
