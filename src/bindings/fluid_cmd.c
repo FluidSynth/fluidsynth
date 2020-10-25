@@ -1136,8 +1136,8 @@ static int check_fx_unit_idx(int ac, char **av, fluid_ostream_t out,
   -2 if error.
 */
 static int check_fx_reverb_param(int ac, char **av, fluid_ostream_t out,
-                       fluid_synth_t *synth, char *name_cde,
-                       char *name_param,
+                       fluid_synth_t *synth, const char *name_cde,
+                       const char *name_param,
                        fluid_real_t *param, fluid_real_t min, fluid_real_t max)
 {
     /* get and check index parameter */
@@ -1160,6 +1160,62 @@ static int check_fx_reverb_param(int ac, char **av, fluid_ostream_t out,
     return fxunit_idx;
 }
 
+/* reverb command enum */
+enum reverb_cde
+{
+    REVERB_ROOMSIZE_CDE,
+    REVERB_DAMP_CDE,
+    REVERB_WIDTH_CDE,
+    REVERB_LEVEL_CDE,
+    NBR_REVERB_CDE
+};
+
+/* Purpose:
+ * Response to 'rev_setroomsize' command.
+ * Load the new room size into the reverb unit.
+ * Example: rev_setroomzize 0 0.5
+ * load roomsize 0.5 in the reverb unit at index 0
+ */
+static int
+fluid_handle_reverb_command(void *data, int ac, char **av, fluid_ostream_t out,
+                            enum reverb_cde cde )
+{
+    /* reverb command name */
+    static const char *name_cde[NBR_REVERB_CDE] =
+    {"rev_setroomsize", "rev_setdamp", "rev_setwidth", "rev_setlevel"};
+
+    static const char *name_value[NBR_REVERB_CDE] =
+    {"room size", "damp", "width", "level"};
+
+    struct min_max
+	{
+        fluid_real_t min;
+        fluid_real_t max;
+    };
+
+    static const struct min_max min_max[NBR_REVERB_CDE] =
+    { {0.0f, 1.0f}, {0.0f, 1.0f}, {0.0f, 100.0f}, {0.0f, 1.0f}};
+
+    static int (*reverb_func[NBR_REVERB_CDE]) (fluid_synth_t *, int, double) =
+    {
+        fluid_synth_set_reverb_group_roomsize, fluid_synth_set_reverb_group_damp,
+        fluid_synth_set_reverb_group_width, fluid_synth_set_reverb_group_level
+    };
+
+    FLUID_ENTRY_COMMAND(data);
+    fluid_real_t value;
+
+    int fxunit_idx = check_fx_reverb_param(ac, av, out, handler->synth,
+                                           name_cde[cde], name_value[cde], &value,
+                                           min_max[cde].min,  min_max[cde].max);
+    if(fxunit_idx >= -1)
+    {
+        reverb_func[cde](handler->synth, fxunit_idx, value);
+        return FLUID_OK;
+    }
+    return FLUID_FAILED;
+}
+
 /* Purpose:
  * Response to 'rev_setroomsize' command.
  * Load the new room size into the reverb unit.
@@ -1169,19 +1225,7 @@ static int check_fx_reverb_param(int ac, char **av, fluid_ostream_t out,
 int
 fluid_handle_reverbsetroomsize(void *data, int ac, char **av, fluid_ostream_t out)
 {
-    FLUID_ENTRY_COMMAND(data);
-    fluid_real_t room_size;
-
-    int fxunit_idx = check_fx_reverb_param(ac, av, out, handler->synth,
-                                           "rev_setroomsize", "room size",
-                                            &room_size,  0.0, 1.0);
-    if(fxunit_idx >= -1)
-    {
-        fluid_synth_set_reverb_group_roomsize(handler->synth, fxunit_idx, room_size);
-        return FLUID_OK;
-    }
-    return FLUID_FAILED;
-
+    return fluid_handle_reverb_command(data, ac, av, out, REVERB_ROOMSIZE_CDE);
 }
 
 /* Purpose:
@@ -1193,18 +1237,7 @@ fluid_handle_reverbsetroomsize(void *data, int ac, char **av, fluid_ostream_t ou
 int
 fluid_handle_reverbsetdamp(void *data, int ac, char **av, fluid_ostream_t out)
 {
-    FLUID_ENTRY_COMMAND(data);
-    fluid_real_t damp;
-
-    int fxunit_idx = check_fx_reverb_param(ac, av, out, handler->synth,
-                                           "rev_setdamp", "damp",
-                                           &damp,  0.0, 1.0);
-    if(fxunit_idx >= -1)
-    {
-        fluid_synth_set_reverb_group_damp(handler->synth, fxunit_idx, damp);
-        return FLUID_OK;
-    }
-    return FLUID_FAILED;
+    return fluid_handle_reverb_command(data, ac, av, out, REVERB_DAMP_CDE);
 }
 
 /* Purpose:
@@ -1216,18 +1249,7 @@ fluid_handle_reverbsetdamp(void *data, int ac, char **av, fluid_ostream_t out)
 int
 fluid_handle_reverbsetwidth(void *data, int ac, char **av, fluid_ostream_t out)
 {
-    FLUID_ENTRY_COMMAND(data);
-    fluid_real_t width;
-
-    int fxunit_idx = check_fx_reverb_param(ac, av, out, handler->synth,
-                                           "rev_setwidth", "width",
-                                           &width,  0.0, 100.0);
-    if(fxunit_idx >= -1)
-    {
-        fluid_synth_set_reverb_group_width(handler->synth, fxunit_idx, width);
-	    return FLUID_OK;
-    }
-    return FLUID_FAILED;
+    return fluid_handle_reverb_command(data, ac, av, out, REVERB_WIDTH_CDE);
 }
 
 /* Purpose:
@@ -1239,18 +1261,7 @@ fluid_handle_reverbsetwidth(void *data, int ac, char **av, fluid_ostream_t out)
 int
 fluid_handle_reverbsetlevel(void *data, int ac, char **av, fluid_ostream_t out)
 {
-    FLUID_ENTRY_COMMAND(data);
-    fluid_real_t level;
-
-    int fxunit_idx = check_fx_reverb_param(ac, av, out, handler->synth,
-                                           "rev_setlevel", "level",
-                                           &level,  0.0, 30.0);
-    if(fxunit_idx >= -1)
-    {
-        fluid_synth_set_reverb_group_level(handler->synth, fxunit_idx, level);
-        return FLUID_OK;
-    }
-    return FLUID_FAILED;
+    return fluid_handle_reverb_command(data, ac, av, out, REVERB_LEVEL_CDE);
 }
 
 /* Purpose:
