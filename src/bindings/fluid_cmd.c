@@ -1089,8 +1089,8 @@ fluid_handle_reverbpreset(void *data, int ac, char **av, fluid_ostream_t out)
 /*
   The function is useful for reverb and chorus commands which have
   1 or 2 parameters.
-  The function checks that there is 1 or 2 parameters.
-  When there is 2 parameters it checks the first parameter that must be
+  The function checks that there is 1 or 2 aguments.
+  When there is 2 parameters it checks the first argument that must be
   an fx unit index in the range[0..synth->effects_groups-1].
 
   return the unit index:
@@ -1103,13 +1103,14 @@ static int check_fx_unit_idx(int ac, char **av, fluid_ostream_t out,
 {
     int fxunit_idx, nfxunits; /* fx unit index, count of fx units */
 
-    /* One or 2 parameters allowed */
+    /* One or 2 arguments allowed */
     if(ac < 1 || ac > 2 )
     {
         fluid_ostream_printf(out, "%s: needs 1 or 2 arguments\n", name_cde);
         return -2;
     }
 
+    /* check optionnal first argument which is an unit index */
     fxunit_idx = -1;
     if( ac > 1)
     {
@@ -1126,10 +1127,10 @@ static int check_fx_unit_idx(int ac, char **av, fluid_ostream_t out,
 }
 
 /*
-  check 2 parameters for reverb commands : unit fx index  , value
+  check 2 arguments for reverb commands : unit fx index  , value
   - unit index must be an integer in the range [-1..synth->effects_groups].
   - value must be a double in the range [min..max]
-  @param param a pointer on a value to return the second parameter.
+  @param param a pointer on a value to return the second value argument.
   return the unit index:
   -1 when the command is for all fx unit.
   0 to synth->effects_groups-1 when the command is for this unit index.
@@ -1140,13 +1141,13 @@ static int check_fx_reverb_param(int ac, char **av, fluid_ostream_t out,
                        const char *name_param,
                        fluid_real_t *param, fluid_real_t min, fluid_real_t max)
 {
-    /* get and check index parameter */
+    /* get and check unit index argument */
     int fxunit_idx = check_fx_unit_idx(ac, av, out, synth, name_cde);
     if(fxunit_idx >= -1)
     {
         fluid_real_t val;
 
-        /* get and check value parameter */
+        /* get and check value argument */
         ac--;
         val = atof(av[ac]);
         if( !fluid_is_number(av[ac]) || val < min || val > max)
@@ -1160,7 +1161,7 @@ static int check_fx_reverb_param(int ac, char **av, fluid_ostream_t out,
     return fxunit_idx;
 }
 
-/* reverb command enum */
+/* reverb commands enum */
 enum reverb_cde
 {
     REVERB_ROOMSIZE_CDE,
@@ -1171,19 +1172,21 @@ enum reverb_cde
 };
 
 /* Purpose:
- * Response to reverb commands
+ * Response to fluid_handle_reverbsetxxxx commands
  */
 static int
 fluid_handle_reverb_command(void *data, int ac, char **av, fluid_ostream_t out,
                             enum reverb_cde cde )
 {
-    /* reverb command name */
+    /* reverb commands name table */
     static const char *name_cde[NBR_REVERB_CDE] =
     {"rev_setroomsize", "rev_setdamp", "rev_setwidth", "rev_setlevel"};
 
+    /* values name table */
     static const char *name_value[NBR_REVERB_CDE] =
     {"room size", "damp", "width", "level"};
 
+    /* min/max values table */
     struct min_max
 	{
         fluid_real_t min;
@@ -1193,6 +1196,7 @@ fluid_handle_reverb_command(void *data, int ac, char **av, fluid_ostream_t out,
     static const struct min_max min_max[NBR_REVERB_CDE] =
     { {0.0f, 1.0f}, {0.0f, 1.0f}, {0.0f, 100.0f}, {0.0f, 1.0f}};
 
+    /* reverb functions table */
     static int (*reverb_func[NBR_REVERB_CDE]) (fluid_synth_t *, int, double) =
     {
         fluid_synth_set_reverb_group_roomsize, fluid_synth_set_reverb_group_damp,
@@ -1202,11 +1206,13 @@ fluid_handle_reverb_command(void *data, int ac, char **av, fluid_ostream_t out,
     FLUID_ENTRY_COMMAND(data);
     fluid_real_t value;
 
+	/* get and check command arguments */
     int fxunit_idx = check_fx_reverb_param(ac, av, out, handler->synth,
                                            name_cde[cde], name_value[cde], &value,
                                            min_max[cde].min,  min_max[cde].max);
     if(fxunit_idx >= -1)
     {
+        /* run reverb function */
         reverb_func[cde](handler->synth, fxunit_idx, value);
         return FLUID_OK;
     }
@@ -1261,7 +1267,7 @@ fluid_handle_reverbsetlevel(void *data, int ac, char **av, fluid_ostream_t out)
     return fluid_handle_reverb_command(data, ac, av, out, REVERB_LEVEL_CDE);
 }
 
-/* reverb/chorus on/off command enum */
+/* reverb/chorus on/off commands enum */
 enum rev_chor_on_cde
 {
     REVERB_ON_CDE,
@@ -1272,11 +1278,13 @@ enum rev_chor_on_cde
 /* Purpose:
  * Set all reverb/chorus units on or off
  */
-int
+static int
 fluid_handle_reverb_chorus_on_command(void *data, int ac, char **av, fluid_ostream_t out,
                                       enum rev_chor_on_cde cde)
 {
+    /* commands name table */
     static const char *name_cde[NBR_REV_CHOR_ON_CDE] ={"reverb", "chorus"};
+    /* functions table */
     static void (*onoff_func[NBR_REV_CHOR_ON_CDE]) (fluid_synth_t *, int) =
     {
         fluid_synth_set_reverb_on, fluid_synth_set_chorus_on
@@ -1285,12 +1293,14 @@ fluid_handle_reverb_chorus_on_command(void *data, int ac, char **av, fluid_ostre
     FLUID_ENTRY_COMMAND(data);
 	int onoff;
 
+    /* check number of arguments */
     if(ac < 1)
     {
         fluid_ostream_printf(out, "%s: too few arguments.\n", name_cde[cde]);
         return FLUID_FAILED;
     }
 
+    /* check argument value */
     if((FLUID_STRCMP(av[0], "0") == 0) || (FLUID_STRCMP(av[0], "off") == 0))
     {
         onoff = 0;
@@ -1306,6 +1316,7 @@ fluid_handle_reverb_chorus_on_command(void *data, int ac, char **av, fluid_ostre
         return FLUID_FAILED;
     }
 
+    /* run on/off function */
     onoff_func[cde](handler->synth, onoff);
     return FLUID_OK;
 }
@@ -1319,7 +1330,7 @@ fluid_handle_reverb(void *data, int ac, char **av, fluid_ostream_t out)
     return fluid_handle_reverb_chorus_on_command(data, ac, av, out, REVERB_ON_CDE);
 }
 
-/* chorus command enum */
+/* chorus commands enum */
 enum chorus_cde
 {
     CHORUS_NR_CDE,
@@ -1332,17 +1343,19 @@ enum chorus_cde
 /* Purpose:
  * Response to fluid_handle_chorus_xxx commands
  */
-int
+static int
 fluid_handle_chorus_command(void *data, int ac, char **av, fluid_ostream_t out,
                             enum chorus_cde cde)
 {
+    /* chorus commands name table */
     static const char *name_cde[NBR_CHORUS_CDE] =
     {"cho_set_nr", "cho_set_level", "cho_set_speed", "cho_set_depth"};
 
+    /* value name table */
     static const char *name_value[NBR_CHORUS_CDE] =
     {"nr", "level", "speed", "depth"};
 
-    /* commands for double parameter */
+    /* functions table for double parameter */
     static int (*chorus_func[NBR_REVERB_CDE - CHORUS_LEVEL_CDE]) (fluid_synth_t *, int, double) =
     {
         fluid_synth_set_chorus_group_level, fluid_synth_set_chorus_group_speed,
@@ -1351,10 +1364,11 @@ fluid_handle_chorus_command(void *data, int ac, char **av, fluid_ostream_t out,
 
     FLUID_ENTRY_COMMAND(data);
 
+    /* get and check index unit argument */
     int fxunit_idx = check_fx_unit_idx(ac, av, out, handler->synth, name_cde[cde]);
     if( fxunit_idx >= -1)
     {
-        /* get and check value parameter */
+        /* get and check value argument */
         ac--;
         if( !fluid_is_number(av[ac]))
         {
@@ -1363,6 +1377,7 @@ fluid_handle_chorus_command(void *data, int ac, char **av, fluid_ostream_t out,
             return FLUID_FAILED;
         }
 
+        /* run chorus function */
         if(cde < CHORUS_LEVEL_CDE) /* commands with integer parameter */
         {
             int nr = atoi(av[ac]);
