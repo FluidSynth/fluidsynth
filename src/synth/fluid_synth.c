@@ -3966,7 +3966,7 @@ fluid_synth_write_float_channels_LOCAL(fluid_synth_t *synth, int len,
                                  int (*block_render_func)(fluid_synth_t *, int))
 {
     float **chan_out = (float **)channels_out;
-    int di, n, cur, size;
+    int n, cur, size;
 
     /* pointers on first input mixer buffer */
     fluid_real_t *left_in;
