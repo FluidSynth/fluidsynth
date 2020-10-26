@@ -3019,6 +3019,78 @@ fluid_synth_program_select(fluid_synth_t *synth, int chan, int sfont_id,
 }
 
 /**
+ * Attempt to pin all samples of the given preset to the sample cache. Only useful
+ * for presets loaded with the default loader and only if dynamic-sample-loading
+ * is enabled.
+ * @param synth FluidSynth instance
+ * @param sfont_id ID of a loaded SoundFont
+ * @param bank_num MIDI bank number
+ * @param preset_num MIDI program number
+ * @return #FLUID_OK if preset was found, #FLUID_FAILED otherwise
+ */
+int
+fluid_synth_pin_preset(fluid_synth_t *synth, int sfont_id, int bank_num, int preset_num)
+{
+    fluid_preset_t *preset = NULL;
+
+    fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(bank_num >= 0, FLUID_FAILED);
+    fluid_return_val_if_fail(preset_num >= 0, FLUID_FAILED);
+
+    fluid_synth_api_enter(synth);
+
+    preset = fluid_synth_get_preset(synth, sfont_id, bank_num, preset_num);
+
+    if(preset == NULL)
+    {
+        FLUID_LOG(FLUID_ERR,
+                  "There is no preset with bank number %d and preset number %d in SoundFont %d",
+                  bank_num, preset_num, sfont_id);
+        FLUID_API_RETURN(FLUID_FAILED);
+    }
+
+    fluid_preset_notify(preset, FLUID_PRESET_PIN, -1); // channel unused for pinning messages
+
+    FLUID_API_RETURN(FLUID_OK);
+}
+
+/**
+ * Attempt to unpin all samples of the given preset to the sample cache. Only useful
+ * for presets loaded with the default loader and only if dynamic-sample-loading
+ * is enabled.
+ * @param synth FluidSynth instance
+ * @param sfont_id ID of a loaded SoundFont
+ * @param bank_num MIDI bank number
+ * @param preset_num MIDI program number
+ * @return #FLUID_OK if preset was found, #FLUID_FAILED otherwise
+ */
+int
+fluid_synth_unpin_preset(fluid_synth_t *synth, int sfont_id, int bank_num, int preset_num)
+{
+    fluid_preset_t *preset = NULL;
+
+    fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(bank_num >= 0, FLUID_FAILED);
+    fluid_return_val_if_fail(preset_num >= 0, FLUID_FAILED);
+
+    fluid_synth_api_enter(synth);
+
+    preset = fluid_synth_get_preset(synth, sfont_id, bank_num, preset_num);
+
+    if(preset == NULL)
+    {
+        FLUID_LOG(FLUID_ERR,
+                  "There is no preset with bank number %d and preset number %d in SoundFont %d",
+                  bank_num, preset_num, sfont_id);
+        FLUID_API_RETURN(FLUID_FAILED);
+    }
+
+    fluid_preset_notify(preset, FLUID_PRESET_UNPIN, -1); // channel unused for pinning messages
+
+    FLUID_API_RETURN(FLUID_OK);
+}
+
+/**
  * Select an instrument on a MIDI channel by SoundFont name, bank and program numbers.
  * @param synth FluidSynth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1)
