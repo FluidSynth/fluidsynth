@@ -1142,10 +1142,12 @@ print_help(fluid_settings_t *settings)
 
     printf("Usage: \n");
     printf("  fluidsynth [options] [soundfonts] [midifiles]\n");
-    printf("Possible options:\n");
 #ifndef GETOPT_SUPPORT
-    printf("This version of fluidsynth was compiled without getopt support. Thus the long options are not supported.\n");
+    printf("\nNote:"
+           "\n  This version of fluidsynth was compiled without getopt support."
+           "\n  Thus, the long options are not supported.\n\n");
 #endif
+    printf("Possible options:\n");
     printf(" -a, --audio-driver=[label]\n"
            "    The name of the audio driver to use.\n"
            "    Valid values: %s\n", audio_options ? audio_options : "ERROR");
