@@ -126,7 +126,8 @@ fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t *mixer, int current_blockcoun
     const int fx_channels_per_unit = mixer->buffers.fx_buf_count / mixer->fx_units;
     int i, f;
     int dry_count = mixer->buffers.buf_count; /* dry buffers count */
-    int dry_idx; /* dry buffer index */
+    int mix_fx_to_out = mixer->mix_fx_to_out; /* get mix_fx_to_out mode */
+    int dry_idx = 0; /* dry buffer index */
 
     void (*reverb_process_func)(fluid_revmodel_t *rev, const fluid_real_t *in, fluid_real_t *left_out, fluid_real_t *right_out);
     void (*chorus_process_func)(fluid_chorus_t *chorus, const fluid_real_t *in, fluid_real_t *left_out, fluid_real_t *right_out);
@@ -140,7 +141,7 @@ fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t *mixer, int current_blockcoun
     fluid_profile_ref_var(prof_ref);
 
 
-    if(mixer->mix_fx_to_out)
+    if(mix_fx_to_out)
     {
         // mix effects to first stereo channel
         out_ch_l = out_rev_l = fluid_align_ptr(mixer->buffers.left_buf, FLUID_DEFAULT_ALIGNMENT);
@@ -170,7 +171,7 @@ fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t *mixer, int current_blockcoun
             int sample_count = current_blockcount * FLUID_BUFSIZE;
 
             /* in mix mode, map fx out_rev at index f to a dry buffer at index dry_idx */
-            if(mixer->mix_fx_to_out)
+            if(mix_fx_to_out)
             {
                 /* dry buffer mapping, should be done more flexible in the future */
                 dry_idx = (f % dry_count) * FLUID_MIXER_MAX_BUFFERS_DEFAULT * FLUID_BUFSIZE;
@@ -180,8 +181,8 @@ fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t *mixer, int current_blockcoun
             {
                 reverb_process_func(mixer->fx[f].reverb,
                                     &in_rev[samp_idx],
-                                    mixer->mix_fx_to_out ? &out_rev_l[dry_idx + i] : &out_rev_l[samp_idx],
-                                    mixer->mix_fx_to_out ? &out_rev_r[dry_idx + i] : &out_rev_r[samp_idx]);
+                                    mix_fx_to_out ? &out_rev_l[dry_idx + i] : &out_rev_l[samp_idx],
+                                    mix_fx_to_out ? &out_rev_r[dry_idx + i] : &out_rev_r[samp_idx]);
             }
         }
 
@@ -198,7 +199,7 @@ fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t *mixer, int current_blockcoun
             int sample_count = current_blockcount * FLUID_BUFSIZE;
             
             /* in mix mode, map fx out_ch at index f to a dry buffer at index dry_idx */
-            if(mixer->mix_fx_to_out)
+            if(mix_fx_to_out)
             {
                 /* dry buffer mapping, should be done more flexible in the future */
                 dry_idx = (f % dry_count) * FLUID_MIXER_MAX_BUFFERS_DEFAULT * FLUID_BUFSIZE;
@@ -208,8 +209,8 @@ fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t *mixer, int current_blockcoun
             {
                 chorus_process_func(mixer->fx[f].chorus,
                                     &in_ch [samp_idx],
-                                    mixer->mix_fx_to_out ? &out_ch_l[dry_idx + i] : &out_ch_l[samp_idx],
-                                    mixer->mix_fx_to_out ? &out_ch_r[dry_idx + i] : &out_ch_r[samp_idx]);
+                                    mix_fx_to_out ? &out_ch_l[dry_idx + i] : &out_ch_l[samp_idx],
+                                    mix_fx_to_out ? &out_ch_r[dry_idx + i] : &out_ch_r[samp_idx]);
             }
         }
 
