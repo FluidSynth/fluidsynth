@@ -65,6 +65,25 @@ int main(void)
     TEST_ASSERT(count_loaded_samples(synth, id) == 0);
     TEST_ASSERT(fluid_samplecache_count_entries() == 0);
 
+
+    /* Pinning and unpinning twice should have exactly the same effect */
+    TEST_ASSERT(fluid_synth_pin_preset(synth, id, 0, 42) == FLUID_OK);
+    TEST_ASSERT(count_loaded_samples(synth, id) == 4);
+    TEST_ASSERT(fluid_samplecache_count_entries() == 4);
+
+    TEST_ASSERT(fluid_synth_pin_preset(synth, id, 0, 42) == FLUID_OK);
+    TEST_ASSERT(count_loaded_samples(synth, id) == 4);
+    TEST_ASSERT(fluid_samplecache_count_entries() == 4);
+
+    TEST_ASSERT(fluid_synth_unpin_preset(synth, id, 0, 42) == FLUID_OK);
+    TEST_ASSERT(count_loaded_samples(synth, id) == 0);
+    TEST_ASSERT(fluid_samplecache_count_entries() == 0);
+
+    TEST_ASSERT(fluid_synth_unpin_preset(synth, id, 0, 42) == FLUID_OK);
+    TEST_ASSERT(count_loaded_samples(synth, id) == 0);
+    TEST_ASSERT(fluid_samplecache_count_entries() == 0);
+
+
     /* Pin a single preset, select both presets, unselect both, ensure the pinned
      * is still in memory and gone after unpinning */
     TEST_ASSERT(fluid_synth_pin_preset(synth, id, 0, 42) == FLUID_OK);
@@ -91,6 +110,7 @@ int main(void)
     TEST_ASSERT(count_loaded_samples(synth, id) == 0);
     TEST_ASSERT(fluid_samplecache_count_entries() == 0);
 
+
     /* Unpinning an unpinned and selected preset should not remove it from memory */
     TEST_ASSERT(fluid_synth_program_select(synth, 0, id, 0, 42) == FLUID_OK);
     TEST_ASSERT(count_loaded_samples(synth, id) == 4);
@@ -115,6 +135,20 @@ int main(void)
     TEST_ASSERT(fluid_samplecache_count_entries() == 0);
 
 
+    /* Ensure that failures during load of preset results in an
+     * error returned by pinning function */
+    id = fluid_synth_sfload(synth, TEST_SOUNDFONT, 0);
+    // hack the soundfont filename so the next load won't find the file anymore
+    fluid_sfont_t *sfont = fluid_synth_get_sfont_by_id(synth, id);
+    fluid_defsfont_t *defsfont = fluid_sfont_get_data(sfont);
+    defsfont->filename[0]++;
+
+    TEST_ASSERT(fluid_synth_pin_preset(synth, id, 0, 42) == FLUID_FAILED);
+
+    defsfont->filename[0]--;
+    TEST_ASSERT(fluid_synth_sfunload(synth, id, 0) == FLUID_OK);
+
+
     /* Test that deleting the synth with a pinned preset also leaves no
      * samples in cache */
     id = fluid_synth_sfload(synth, TEST_SOUNDFONT, 0);
@@ -126,6 +160,7 @@ int main(void)
     delete_fluid_synth(synth);
 
     TEST_ASSERT(fluid_samplecache_count_entries() == 0);
+
 
     /* Tear down */
     delete_fluid_settings(settings);
