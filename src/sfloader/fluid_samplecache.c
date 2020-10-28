@@ -89,6 +89,7 @@ int fluid_samplecache_load(SFData *sf,
 
     if(entry == NULL)
     {
+        fluid_mutex_unlock(samplecache_mutex);
         entry = new_samplecache_entry(sf, sample_start, sample_end, sample_type, mtime);
 
         if(entry == NULL)
@@ -97,8 +98,10 @@ int fluid_samplecache_load(SFData *sf,
             goto unlock_exit;
         }
 
+        fluid_mutex_lock(samplecache_mutex);
         samplecache_list = fluid_list_prepend(samplecache_list, entry);
     }
+        fluid_mutex_unlock(samplecache_mutex);
 
     if(try_mlock && !entry->mlocked)
     {
@@ -129,7 +132,6 @@ int fluid_samplecache_load(SFData *sf,
     ret = entry->sample_count;
 
 unlock_exit:
-    fluid_mutex_unlock(samplecache_mutex);
     return ret;
 }
 

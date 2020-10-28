@@ -2618,7 +2618,7 @@ static int fluid_sffile_read_vorbis(SFData *sf, unsigned int start_byte, unsigne
 
     if(!sndfile)
     {
-        FLUID_LOG(FLUID_ERR, "%s", sf_strerror(sndfile));
+        FLUID_LOG(FLUID_ERR, "sf_open_virtual(): %s", sf_strerror(sndfile));
         return -1;
     }
 
@@ -2655,7 +2655,7 @@ static int fluid_sffile_read_vorbis(SFData *sf, unsigned int start_byte, unsigne
     if(sf_readf_short(sndfile, wav_data, sfinfo.frames) < sfinfo.frames)
     {
         FLUID_LOG(FLUID_DBG, "Decompression failed!");
-        FLUID_LOG(FLUID_ERR, "%s", sf_strerror(sndfile));
+        FLUID_LOG(FLUID_ERR, "sf_readf_short(): %s", sf_strerror(sndfile));
         goto error_exit;
     }
 

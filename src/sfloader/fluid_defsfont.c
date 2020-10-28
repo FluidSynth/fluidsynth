@@ -361,6 +361,7 @@ int fluid_defsfont_load_all_sampledata(fluid_defsfont_t *defsfont, SFData *sfdat
     fluid_list_t *list;
     fluid_sample_t *sample;
     int sf3_file = (sfdata->version.major == 3);
+    int sample_parsing_result = FLUID_OK;
 
     /* For SF2 files, we load the sample data in one large block */
     if(!sf3_file)
@@ -378,7 +379,9 @@ int fluid_defsfont_load_all_sampledata(fluid_defsfont_t *defsfont, SFData *sfdat
             return FLUID_FAILED;
         }
     }
-
+    
+    #pragma omp parallel
+    #pragma omp single
     for(list = defsfont->sample; list; list = fluid_list_next(list))
     {
         sample = fluid_list_get(list);
@@ -387,13 +390,22 @@ int fluid_defsfont_load_all_sampledata(fluid_defsfont_t *defsfont, SFData *sfdat
         {
             /* SF3 samples get loaded individually, as most (or all) of them are in Ogg Vorbis format
              * anyway */
-            if(fluid_defsfont_load_sampledata(defsfont, sfdata, sample) == FLUID_FAILED)
+            #pragma omp task firstprivate(sample,sfdata,defsfont) shared(sample_parsing_result) default(none)
             {
-                FLUID_LOG(FLUID_ERR, "Failed to load sample '%s'", sample->name);
-                return FLUID_FAILED;
+                if(fluid_defsfont_load_sampledata(defsfont, sfdata, sample) == FLUID_FAILED)
+                {
+                    #pragma omp critical
+                    {
+                        FLUID_LOG(FLUID_ERR, "Failed to load sample '%s'", sample->name);
+                        sample_parsing_result = FLUID_FAILED;
+                    }
+                }
+                else
+                {
+                    fluid_sample_sanitize_loop(sample, (sample->end + 1) * sizeof(short));
+                    fluid_voice_optimize_sample(sample);
+                }
             }
-
-            fluid_sample_sanitize_loop(sample, (sample->end + 1) * sizeof(short));
         }
         else
         {
@@ -401,12 +413,11 @@ int fluid_defsfont_load_all_sampledata(fluid_defsfont_t *defsfont, SFData *sfdat
             sample->data = defsfont->sampledata;
             sample->data24 = defsfont->sample24data;
             fluid_sample_sanitize_loop(sample, defsfont->samplesize);
+            fluid_voice_optimize_sample(sample);
         }
-
-        fluid_voice_optimize_sample(sample);
     }
 
-    return FLUID_OK;
+    return sample_parsing_result;
 }
 
 /*
