@@ -2017,23 +2017,26 @@ static int dynamic_samples_preset_notify(fluid_preset_t *preset, int reason, int
     {
         FLUID_LOG(FLUID_DBG, "Selected preset '%s' on channel %d", fluid_preset_get_name(preset), chan);
         defsfont = fluid_sfont_get_data(preset->sfont);
-        load_preset_samples(defsfont, preset);
+        return load_preset_samples(defsfont, preset);
     }
-    else if(reason == FLUID_PRESET_UNSELECTED)
+
+    if(reason == FLUID_PRESET_UNSELECTED)
     {
         FLUID_LOG(FLUID_DBG, "Deselected preset '%s' from channel %d", fluid_preset_get_name(preset), chan);
         defsfont = fluid_sfont_get_data(preset->sfont);
-        unload_preset_samples(defsfont, preset);
+        return unload_preset_samples(defsfont, preset);
     }
-    else if(reason == FLUID_PRESET_PIN)
+
+    if(reason == FLUID_PRESET_PIN)
     {
         defsfont = fluid_sfont_get_data(preset->sfont);
-        pin_preset_samples(defsfont, preset);
+        return pin_preset_samples(defsfont, preset);
     }
-    else if(reason == FLUID_PRESET_UNPIN)
+
+    if(reason == FLUID_PRESET_UNPIN)
     {
         defsfont = fluid_sfont_get_data(preset->sfont);
-        unpin_preset_samples(defsfont, preset);
+        return unpin_preset_samples(defsfont, preset);
     }
 
     return FLUID_OK;
@@ -2052,7 +2055,11 @@ static int pin_preset_samples(fluid_defsfont_t *defsfont, fluid_preset_t *preset
 
     FLUID_LOG(FLUID_DBG, "Pinning preset '%s'", fluid_preset_get_name(preset));
 
-    load_preset_samples(defsfont, preset);
+    if(load_preset_samples(defsfont, preset) == FLUID_FAILED)
+    {
+        return FLUID_FAILED;
+    }
+
     defpreset->pinned = TRUE;
 
     return FLUID_OK;
@@ -2071,7 +2078,11 @@ static int unpin_preset_samples(fluid_defsfont_t *defsfont, fluid_preset_t *pres
 
     FLUID_LOG(FLUID_DBG, "Unpinning preset '%s'", fluid_preset_get_name(preset));
 
-    unload_preset_samples(defsfont, preset);
+    if(unload_preset_samples(defsfont, preset) == FLUID_FAILED)
+    {
+        return FLUID_FAILED;
+    }
+
     defpreset->pinned = FALSE;
 
     return FLUID_OK;

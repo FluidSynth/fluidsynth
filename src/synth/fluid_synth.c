@@ -3031,7 +3031,8 @@ fluid_synth_program_select(fluid_synth_t *synth, int chan, int sfont_id,
 int
 fluid_synth_pin_preset(fluid_synth_t *synth, int sfont_id, int bank_num, int preset_num)
 {
-    fluid_preset_t *preset = NULL;
+    int ret;
+    fluid_preset_t *preset;
 
     fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
     fluid_return_val_if_fail(bank_num >= 0, FLUID_FAILED);
@@ -3049,9 +3050,9 @@ fluid_synth_pin_preset(fluid_synth_t *synth, int sfont_id, int bank_num, int pre
         FLUID_API_RETURN(FLUID_FAILED);
     }
 
-    fluid_preset_notify(preset, FLUID_PRESET_PIN, -1); // channel unused for pinning messages
+    ret = fluid_preset_notify(preset, FLUID_PRESET_PIN, -1); // channel unused for pinning messages
 
-    FLUID_API_RETURN(FLUID_OK);
+    FLUID_API_RETURN(ret);
 }
 
 /**
@@ -3067,7 +3068,8 @@ fluid_synth_pin_preset(fluid_synth_t *synth, int sfont_id, int bank_num, int pre
 int
 fluid_synth_unpin_preset(fluid_synth_t *synth, int sfont_id, int bank_num, int preset_num)
 {
-    fluid_preset_t *preset = NULL;
+    int ret;
+    fluid_preset_t *preset;
 
     fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
     fluid_return_val_if_fail(bank_num >= 0, FLUID_FAILED);
@@ -3085,9 +3087,9 @@ fluid_synth_unpin_preset(fluid_synth_t *synth, int sfont_id, int bank_num, int p
         FLUID_API_RETURN(FLUID_FAILED);
     }
 
-    fluid_preset_notify(preset, FLUID_PRESET_UNPIN, -1); // channel unused for pinning messages
+    ret = fluid_preset_notify(preset, FLUID_PRESET_UNPIN, -1); // channel unused for pinning messages
 
-    FLUID_API_RETURN(FLUID_OK);
+    FLUID_API_RETURN(ret);
 }
 
 /**
