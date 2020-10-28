@@ -650,6 +650,7 @@ new_fluid_defpreset(void)
     defpreset->num = 0;
     defpreset->global_zone = NULL;
     defpreset->zone = NULL;
+    defpreset->pinned = FALSE;
     return defpreset;
 }
 
