@@ -14,6 +14,8 @@ int main(void)
 {
     int id;
     fluid_synth_t *synth;
+    fluid_sfont_t *sfont;
+    fluid_defsfont_t *defsfont;
 
     /* Setup */
     fluid_settings_t *settings = new_fluid_settings();
@@ -139,8 +141,8 @@ int main(void)
      * error returned by pinning function */
     id = fluid_synth_sfload(synth, TEST_SOUNDFONT, 0);
     // hack the soundfont filename so the next load won't find the file anymore
-    fluid_sfont_t *sfont = fluid_synth_get_sfont_by_id(synth, id);
-    fluid_defsfont_t *defsfont = fluid_sfont_get_data(sfont);
+    sfont = fluid_synth_get_sfont_by_id(synth, id);
+    defsfont = fluid_sfont_get_data(sfont);
     defsfont->filename[0]++;
 
     TEST_ASSERT(fluid_synth_pin_preset(synth, id, 0, 42) == FLUID_FAILED);
