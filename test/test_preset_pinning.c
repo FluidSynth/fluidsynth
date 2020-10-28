@@ -152,5 +152,6 @@ static int count_loaded_samples(fluid_synth_t *synth, int sfont_id)
         }
     }
 
+    FLUID_LOG(FLUID_INFO, "Loaded samples on sfont %d: %d\n", sfont_id, count);
     return count;
 }
