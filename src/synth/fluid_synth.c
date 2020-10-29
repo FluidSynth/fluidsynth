@@ -3026,15 +3026,19 @@ fluid_synth_program_select(fluid_synth_t *synth, int chan, int sfont_id,
  * context means preventing them from being unloaded by an upcoming channel
  * prog change.
  *
- * @note Only useful for presets loaded with the default soundfont loader and
- * only if <code>synth.dynamic-sample-loading</code> is enabled.
+ * @note This function is only useful if <code>synth.dynamic-sample-loading</code> is enabled.
+ * By default, dynamic-sample-loading is disabled and all samples are kept in memory.
+ * Furthermore, this is only useful for presets which support dynamic-sample-loading (currently,
+ * only preset loaded with the default soundfont loader do).
  * @param synth FluidSynth instance
  * @param sfont_id ID of a loaded SoundFont
  * @param bank_num MIDI bank number
  * @param preset_num MIDI program number
- * @return #FLUID_OK if preset was found, supports pinning and has been loaded
+ * @return #FLUID_OK if the preset was found, pinned and loaded
  * into memory successfully. #FLUID_FAILED otherwise. Note that #FLUID_OK
- * is returned, even if <code>synth.dynamic-sample-loading</code> is disabled.
+ * is returned, even if <code>synth.dynamic-sample-loading</code> is disabled or 
+ * the preset doesn't support dynamic-sample-loading.
+ * @since 2.2.0
  */
 int
 fluid_synth_pin_preset(fluid_synth_t *synth, int sfont_id, int bank_num, int preset_num)
@@ -3076,6 +3080,7 @@ fluid_synth_pin_preset(fluid_synth_t *synth, int sfont_id, int bank_num, int pre
  * @param bank_num MIDI bank number
  * @param preset_num MIDI program number
  * @return #FLUID_OK if preset was found, #FLUID_FAILED otherwise
+ * @since 2.2.0
  */
 int
 fluid_synth_unpin_preset(fluid_synth_t *synth, int sfont_id, int bank_num, int preset_num)
