@@ -5971,13 +5971,13 @@ fluid_synth_set_chorus_full(fluid_synth_t *synth, int fxunit_idx, int set, int n
         }
     }
 
-    /* put fx unit index in bits [b15..b8] and set mask in bits [b7..b0] */
-    param[0].i = (fxunit_idx << 8) | (set & FLUID_CHORUS_SET_ALL) ;
-    param[1].i = nr;
-    param[2].real = level;
-    param[3].real = speed;
-    param[4].real = depth_ms;
-    param[5].i = type;
+    param[0].i = fxunit_idx;
+    param[1].i = set;
+    param[2].i = nr;
+    param[3].real = level;
+    param[4].real = speed;
+    param[5].real = depth_ms;
+    param[6].i = type;
     ret = fluid_rvoice_eventhandler_push(synth->eventhandler,
                                          fluid_rvoice_mixer_set_chorus_params,
                                          synth->eventhandler->mixer,

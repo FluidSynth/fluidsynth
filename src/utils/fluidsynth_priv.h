@@ -98,7 +98,7 @@ typedef union _fluid_rvoice_param_t
     int i;
     fluid_real_t real;
 } fluid_rvoice_param_t;
-enum { MAX_EVENT_PARAMS = 6 }; /**< Maximum number of #fluid_rvoice_param_t to be passed to an #fluid_rvoice_function_t */
+enum { MAX_EVENT_PARAMS = 7 }; /**< Maximum number of #fluid_rvoice_param_t to be passed to an #fluid_rvoice_function_t */
 typedef void (*fluid_rvoice_function_t)(void *obj, const fluid_rvoice_param_t param[MAX_EVENT_PARAMS]);
 
 /* Macro for declaring an rvoice event function (#fluid_rvoice_function_t). The functions may only access
