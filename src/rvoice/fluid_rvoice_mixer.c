@@ -900,7 +900,7 @@ fluid_rvoice_mixer_set_reverb_full(const fluid_rvoice_mixer_t *mixer,
                                    double roomsize, double damping,
                                    double width, double level)
 {
-    fluid_mixer_fx_t *fx;
+    fluid_mixer_fx_t *fx = mixer->fx;
     int nr_units = mixer->fx_units;
     if(fxunit_idx < -1 || fxunit_idx >= nr_units)
     {
@@ -916,7 +916,7 @@ fluid_rvoice_mixer_set_reverb_full(const fluid_rvoice_mixer_t *mixer,
         fxunit_idx = 0;
     }
 
-    for(fx = mixer->fx; fxunit_idx < nr_units; fxunit_idx++)
+    for( ; fxunit_idx < nr_units; fxunit_idx++)
     {
         if(set & FLUID_REVMODEL_SET_ROOMSIZE)
         {

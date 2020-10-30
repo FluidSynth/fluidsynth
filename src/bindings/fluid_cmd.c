@@ -1188,7 +1188,7 @@ fluid_handle_reverb_command(void *data, int ac, char **av, fluid_ostream_t out,
 
     /* min/max values table */
     struct min_max
-	{
+    {
         fluid_real_t min;
         fluid_real_t max;
     };
