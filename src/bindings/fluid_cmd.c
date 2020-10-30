@@ -1126,6 +1126,14 @@ static int check_fx_unit_idx(int ac, char **av, fluid_ostream_t out,
     return fxunit_idx;
 }
 
+/* parameter value */
+struct value
+{
+    char *name;
+    fluid_real_t min;
+    fluid_real_t max;
+};
+
 /*
   check 2 arguments for reverb commands : unit fx index  , value
   - unit index must be an integer in the range [-1..synth->effects_groups].
@@ -1138,8 +1146,8 @@ static int check_fx_unit_idx(int ac, char **av, fluid_ostream_t out,
 */
 static int check_fx_reverb_param(int ac, char **av, fluid_ostream_t out,
                        fluid_synth_t *synth, const char *name_cde,
-                       const char *name_param,
-                       fluid_real_t *param, fluid_real_t min, fluid_real_t max)
+                       const struct value *value,
+                       fluid_real_t *param)
 {
     /* get and check unit index argument */
     int fxunit_idx = check_fx_unit_idx(ac, av, out, synth, name_cde);
@@ -1150,10 +1158,10 @@ static int check_fx_reverb_param(int ac, char **av, fluid_ostream_t out,
         /* get and check value argument */
         ac--;
         val = atof(av[ac]);
-        if( !fluid_is_number(av[ac]) || val < min || val > max)
+        if( !fluid_is_number(av[ac]) || val < value->min || val > value->max)
         {
             fluid_ostream_printf(out, "%s: %s \"%s\" must be in range [%f..%f]\n",
-                                 name_cde, name_param, av[ac], min, max);
+                        name_cde, value->name, av[ac], value->min, value->max);
             return -2;
         }
         *param = val;
@@ -1182,19 +1190,12 @@ fluid_handle_reverb_command(void *data, int ac, char **av, fluid_ostream_t out,
     static const char *name_cde[NBR_REVERB_CDE] =
     {"rev_setroomsize", "rev_setdamp", "rev_setwidth", "rev_setlevel"};
 
-    /* values name table */
-    static const char *name_value[NBR_REVERB_CDE] =
-    {"room size", "damp", "width", "level"};
-
-    /* min/max values table */
-    struct min_max
+    /* name and min/max values table */
+    static struct value values[NBR_REVERB_CDE] =
     {
-        fluid_real_t min;
-        fluid_real_t max;
+        {"room size", 0.0F, 1.0F}, {"damp", 0.0F, 1.0F},
+        {"width", 0.0F, 100.0F},   {"level", 0.0F, 1.0F}
     };
-
-    static const struct min_max min_max[NBR_REVERB_CDE] =
-    { {0.0f, 1.0f}, {0.0f, 1.0f}, {0.0f, 100.0f}, {0.0f, 1.0f}};
 
     /* reverb functions table */
     static int (*reverb_func[NBR_REVERB_CDE]) (fluid_synth_t *, int, double) =
@@ -1208,8 +1209,8 @@ fluid_handle_reverb_command(void *data, int ac, char **av, fluid_ostream_t out,
 
 	/* get and check command arguments */
     int fxunit_idx = check_fx_reverb_param(ac, av, out, handler->synth,
-                                           name_cde[cde], name_value[cde], &value,
-                                           min_max[cde].min,  min_max[cde].max);
+                                           name_cde[cde], &values[cde], &value);
+
     if(fxunit_idx >= -1)
     {
         /* run reverb function */
