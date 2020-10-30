@@ -956,7 +956,7 @@ double
 fluid_rvoice_mixer_get_reverb_param(const fluid_rvoice_mixer_t *mixer,
                                     int fxunit_idx, int get)
 {
-    fluid_mixer_fx_t *fx;
+    const fluid_mixer_fx_t *fx;
 
     if(fxunit_idx  < 0 || fxunit_idx >= mixer->fx_units)
     {
@@ -1014,7 +1014,7 @@ fluid_rvoice_mixer_set_chorus_full(const fluid_rvoice_mixer_t *mixer,
                                    int set, int nr, double level,
                                    double speed, double depth_ms, int type)
 {
-    fluid_mixer_fx_t *fx;
+    fluid_mixer_fx_t *fx = mixer->fx;
     int nr_units = mixer->fx_units;
     if(fxunit_idx < -1 || fxunit_idx >= nr_units)
     {
@@ -1030,7 +1030,7 @@ fluid_rvoice_mixer_set_chorus_full(const fluid_rvoice_mixer_t *mixer,
         fxunit_idx = 0;
     }
 
-    for(fx = mixer->fx; fxunit_idx < nr_units; fxunit_idx++)
+    for(; fxunit_idx < nr_units; fxunit_idx++)
     {
         if(set & FLUID_CHORUS_SET_NR)
         {
@@ -1075,7 +1075,7 @@ double
 fluid_rvoice_mixer_get_chorus_param(const fluid_rvoice_mixer_t *mixer,
                                     int fxunit_idx, int get)
 {
-    fluid_mixer_fx_t *fx;
+    const fluid_mixer_fx_t *fx;
 
     if(fxunit_idx  < 0 || fxunit_idx >= mixer->fx_units)
     {
