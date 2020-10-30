@@ -888,7 +888,7 @@ void delete_fluid_rvoice_mixer(fluid_rvoice_mixer_t *mixer)
  *  must be in the range [-1..mixer->fx_units[. If -1 the changes are applied to
  *  all fx units.
  * @param set Flags indicating which parameters should be set (#fluid_revmodel_set_t)
- * @param roomsize Reverb room size value (0.0-1.2)
+ * @param roomsize Reverb room size value (0.0-1.0)
  * @param damping Reverb damping value (0.0-1.0)
  * @param width Reverb width value (0.0-100.0)
  * @param level Reverb level value (0.0-1.0)

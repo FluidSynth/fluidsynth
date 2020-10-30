@@ -5540,11 +5540,9 @@ fluid_synth_set_reverb_full(fluid_synth_t *synth, int fxunit_idx, int set,
     /* if non of the flags is set, fail */
     fluid_return_val_if_fail(set & FLUID_REVMODEL_SET_ALL, FLUID_FAILED);
 
-    /* fx unit shadow values are set here so that they will be returned if queried */
-    /* Synth shadow values are set here so that they will be returned if queried */
-
     fluid_synth_api_enter(synth);
 
+    /* fx unit shadow values are set here so that they will be returned if queried */
     ret = fluid_rvoice_mixer_set_reverb_full(synth->eventhandler->mixer, fxunit_idx,
                                              set, roomsize, damping, width, level);
     if(ret == FLUID_FAILED)
@@ -5552,6 +5550,7 @@ fluid_synth_set_reverb_full(fluid_synth_t *synth, int fxunit_idx, int set,
         FLUID_API_RETURN(FLUID_FAILED);
     }
 
+    /* Synth shadow values are set here so that they will be returned if queried */
     if (fxunit_idx < 0)
     {
         if(set & FLUID_REVMODEL_SET_ROOMSIZE)
@@ -5931,10 +5930,9 @@ fluid_synth_set_chorus_full(fluid_synth_t *synth, int fxunit_idx, int set, int n
     /* if non of the flags is set, fail */
     fluid_return_val_if_fail(set & FLUID_CHORUS_SET_ALL, FLUID_FAILED);
 
-    /* fx unit shadow values are set here so that they will be returned if queried */
-    /* Synth shadow values are set here so that they will be returned if queried */
     fluid_synth_api_enter(synth);
 
+    /* fx unit shadow values are set here so that they will be returned if queried */
     ret = fluid_rvoice_mixer_set_chorus_full(synth->eventhandler->mixer, fxunit_idx,
                                              set, nr, level, speed, depth_ms, type);
     if(ret == FLUID_FAILED)
@@ -5942,9 +5940,9 @@ fluid_synth_set_chorus_full(fluid_synth_t *synth, int fxunit_idx, int set, int n
         FLUID_API_RETURN(FLUID_FAILED);
     }
 
+    /* Synth shadow values are set here so that they will be returned if queried */
     if (fxunit_idx < 0)
     {
-        /* Synth shadow values are set here so that they will be returned if queried */
         if(set & FLUID_CHORUS_SET_NR)
         {
             synth->chorus_nr = nr;
