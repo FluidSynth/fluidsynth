@@ -5525,9 +5525,6 @@ int fluid_synth_set_reverb_group_level(fluid_synth_t *synth, int fxunit_idx, dou
  * @param width Reverb width value (0.0-100.0)
  * @param level Reverb level value (0.0-1.0)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
- *
- * @note Not realtime safe and therefore should not be called from synthesis
- * context at the risk of stalling audio output.
  */
 int
 fluid_synth_set_reverb_full(fluid_synth_t *synth, int fxunit_idx, int set,
