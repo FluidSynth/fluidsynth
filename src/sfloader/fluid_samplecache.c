@@ -290,3 +290,22 @@ static int fluid_get_file_modification_time(char *filename, time_t *modification
     *modification_time = buf.st_mtime;
     return FLUID_OK;
 }
+
+
+/* Only used for tests */
+int fluid_samplecache_count_entries(void)
+{
+    fluid_list_t *entry;
+    int count = 0;
+
+    fluid_mutex_lock(samplecache_mutex);
+
+    for(entry = samplecache_list; entry != NULL; entry = fluid_list_next(entry))
+    {
+        count++;
+    }
+
+    fluid_mutex_unlock(samplecache_mutex);
+
+    return count;
+}

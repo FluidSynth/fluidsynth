@@ -68,7 +68,9 @@ enum
 {
     FLUID_PRESET_SELECTED,                /**< Preset selected notify */
     FLUID_PRESET_UNSELECTED,              /**< Preset unselected notify */
-    FLUID_SAMPLE_DONE                     /**< Sample no longer needed notify */
+    FLUID_SAMPLE_DONE,                    /**< Sample no longer needed notify */
+    FLUID_PRESET_PIN,                     /**< Request to pin preset samples to cache */
+    FLUID_PRESET_UNPIN                    /**< Request to unpin preset samples from cache */
 };
 
 /**

@@ -84,6 +84,15 @@ FLUIDSYNTH_API int fluid_synth_system_reset(fluid_synth_t *synth);
 FLUIDSYNTH_API int fluid_synth_all_notes_off(fluid_synth_t *synth, int chan);
 FLUIDSYNTH_API int fluid_synth_all_sounds_off(fluid_synth_t *synth, int chan);
 
+
+/* Dynamic sample loading */
+
+FLUIDSYNTH_API
+int fluid_synth_pin_preset(fluid_synth_t *synth, int sfont_id, int bank_num, int preset_num);
+
+FLUIDSYNTH_API
+int fluid_synth_unpin_preset(fluid_synth_t *synth, int sfont_id, int bank_num, int preset_num);
+
 /**
  * The midi channel type used by fluid_synth_set_channel_type()
  */

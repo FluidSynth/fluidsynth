@@ -3019,6 +3019,97 @@ fluid_synth_program_select(fluid_synth_t *synth, int chan, int sfont_id,
 }
 
 /**
+ * Pins all samples of the given preset.
+ *
+ * This function will attempt to pin all samples of the given preset and
+ * load them into memory, if they are currently unloaded. "To pin" in this
+ * context means preventing them from being unloaded by an upcoming channel
+ * prog change.
+ *
+ * @note This function is only useful if <code>synth.dynamic-sample-loading</code> is enabled.
+ * By default, dynamic-sample-loading is disabled and all samples are kept in memory.
+ * Furthermore, this is only useful for presets which support dynamic-sample-loading (currently,
+ * only preset loaded with the default soundfont loader do).
+ * @param synth FluidSynth instance
+ * @param sfont_id ID of a loaded SoundFont
+ * @param bank_num MIDI bank number
+ * @param preset_num MIDI program number
+ * @return #FLUID_OK if the preset was found, pinned and loaded
+ * into memory successfully. #FLUID_FAILED otherwise. Note that #FLUID_OK
+ * is returned, even if <code>synth.dynamic-sample-loading</code> is disabled or 
+ * the preset doesn't support dynamic-sample-loading.
+ * @since 2.2.0
+ */
+int
+fluid_synth_pin_preset(fluid_synth_t *synth, int sfont_id, int bank_num, int preset_num)
+{
+    int ret;
+    fluid_preset_t *preset;
+
+    fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(bank_num >= 0, FLUID_FAILED);
+    fluid_return_val_if_fail(preset_num >= 0, FLUID_FAILED);
+
+    fluid_synth_api_enter(synth);
+
+    preset = fluid_synth_get_preset(synth, sfont_id, bank_num, preset_num);
+
+    if(preset == NULL)
+    {
+        FLUID_LOG(FLUID_ERR,
+                  "There is no preset with bank number %d and preset number %d in SoundFont %d",
+                  bank_num, preset_num, sfont_id);
+        FLUID_API_RETURN(FLUID_FAILED);
+    }
+
+    ret = fluid_preset_notify(preset, FLUID_PRESET_PIN, -1); // channel unused for pinning messages
+
+    FLUID_API_RETURN(ret);
+}
+
+/**
+ * Unpin all samples of the given preset.
+ *
+ * This function undoes the effect of fluid_synth_pin_preset(). If the preset is
+ * not currently used, its samples will be unloaded.
+ *
+ * @note Only useful for presets loaded with the default soundfont loader and
+ * only if <code>synth.dynamic-sample-loading</code> is enabled.
+ * @param synth FluidSynth instance
+ * @param sfont_id ID of a loaded SoundFont
+ * @param bank_num MIDI bank number
+ * @param preset_num MIDI program number
+ * @return #FLUID_OK if preset was found, #FLUID_FAILED otherwise
+ * @since 2.2.0
+ */
+int
+fluid_synth_unpin_preset(fluid_synth_t *synth, int sfont_id, int bank_num, int preset_num)
+{
+    int ret;
+    fluid_preset_t *preset;
+
+    fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
+    fluid_return_val_if_fail(bank_num >= 0, FLUID_FAILED);
+    fluid_return_val_if_fail(preset_num >= 0, FLUID_FAILED);
+
+    fluid_synth_api_enter(synth);
+
+    preset = fluid_synth_get_preset(synth, sfont_id, bank_num, preset_num);
+
+    if(preset == NULL)
+    {
+        FLUID_LOG(FLUID_ERR,
+                  "There is no preset with bank number %d and preset number %d in SoundFont %d",
+                  bank_num, preset_num, sfont_id);
+        FLUID_API_RETURN(FLUID_FAILED);
+    }
+
+    ret = fluid_preset_notify(preset, FLUID_PRESET_UNPIN, -1); // channel unused for pinning messages
+
+    FLUID_API_RETURN(ret);
+}
+
+/**
  * Select an instrument on a MIDI channel by SoundFont name, bank and program numbers.
  * @param synth FluidSynth instance
  * @param chan MIDI channel number (0 to MIDI channel count - 1)

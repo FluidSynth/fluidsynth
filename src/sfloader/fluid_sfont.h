@@ -45,7 +45,7 @@ int fluid_sample_sanitize_loop(fluid_sample_t *sample, unsigned int max_end);
   (*(_preset)->noteon)(_preset,_synth,_ch,_key,_vel)
 
 #define fluid_preset_notify(_preset,_reason,_chan) \
-  { if ((_preset) && (_preset)->notify) { (*(_preset)->notify)(_preset,_reason,_chan); }}
+  ( ((_preset) && (_preset)->notify) ? (*(_preset)->notify)(_preset,_reason,_chan) : FLUID_OK )
 
 
 #define fluid_sample_incr_ref(_sample) { (_sample)->refcount++; }
