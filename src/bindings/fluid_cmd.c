@@ -1130,8 +1130,8 @@ static int check_fx_unit_idx(int ac, char **av, fluid_ostream_t out,
 struct value
 {
     char *name;
-    fluid_real_t min;
-    fluid_real_t max;
+    double min;
+    double max;
 };
 
 /*
@@ -1186,6 +1186,8 @@ static int
 fluid_handle_reverb_command(void *data, int ac, char **av, fluid_ostream_t out,
                             enum reverb_cde cde )
 {
+    int fxunit_idx;
+
     /* reverb commands name table */
     static const char *name_cde[NBR_REVERB_CDE] =
     {"rev_setroomsize", "rev_setdamp", "rev_setwidth", "rev_setlevel"};
@@ -1193,8 +1195,7 @@ fluid_handle_reverb_command(void *data, int ac, char **av, fluid_ostream_t out,
     /* name and min/max values table */
     static struct value values[NBR_REVERB_CDE] =
     {
-        {"room size", 0.0F, 1.0F}, {"damp", 0.0F, 1.0F},
-        {"width", 0.0F, 100.0F},   {"level", 0.0F, 1.0F}
+        {"room size"}, {"damp"}, {"width"}, {"level"}
     };
 
     /* reverb functions table */
@@ -1207,9 +1208,26 @@ fluid_handle_reverb_command(void *data, int ac, char **av, fluid_ostream_t out,
     FLUID_ENTRY_COMMAND(data);
     fluid_real_t value;
 
+    fluid_settings_getnum_range(handler->synth->settings, "synth.reverb.room-size",
+                                &values[REVERB_ROOMSIZE_CDE].min,
+                                &values[REVERB_ROOMSIZE_CDE].max);
+
+    fluid_settings_getnum_range(handler->synth->settings, "synth.reverb.damp",
+                                &values[REVERB_DAMP_CDE].min,
+                                &values[REVERB_DAMP_CDE].max);
+
+
+    fluid_settings_getnum_range(handler->synth->settings, "synth.reverb.width",
+                                &values[REVERB_WIDTH_CDE].min,
+                                &values[REVERB_WIDTH_CDE].max);
+
+    fluid_settings_getnum_range(handler->synth->settings, "synth.reverb.level",
+                                &values[REVERB_LEVEL_CDE].min,
+                                &values[REVERB_LEVEL_CDE].max);
+
 	/* get and check command arguments */
-    int fxunit_idx = check_fx_reverb_param(ac, av, out, handler->synth,
-                                           name_cde[cde], &values[cde], &value);
+    fxunit_idx = check_fx_reverb_param(ac, av, out, handler->synth,
+                                       name_cde[cde], &values[cde], &value);
 
     if(fxunit_idx >= -1)
     {
