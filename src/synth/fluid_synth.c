@@ -5454,7 +5454,7 @@ int fluid_synth_set_reverb_level(fluid_synth_t *synth, double level)
 /**
  * Set reverb parameters to one fx unit.
  * @param synth FluidSynth instance
- * @param fxunit_idx index of the fx unit to which parameters must be set.
+ * @param group index of the fx group to which parameters must be set.
  *  must be in the range [-1..synth->effects_groups[. If -1 the changes are
  *  applied to all fx units (same as fluid_synth_set_reverb()).
  * @param roomsize Reverb room size value (0.0-1.0)
@@ -5464,53 +5464,53 @@ int fluid_synth_set_reverb_level(fluid_synth_t *synth, double level)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int
-fluid_synth_set_reverb_group(fluid_synth_t *synth, int fxunit_idx,
+fluid_synth_set_reverb_group(fluid_synth_t *synth, int group,
                              double roomsize, double damping, double width, double level)
 {
-    return fluid_synth_set_reverb_full(synth, fxunit_idx, FLUID_REVMODEL_SET_ALL,
+    return fluid_synth_set_reverb_full(synth, group, FLUID_REVMODEL_SET_ALL,
                                        roomsize, damping, width, level);
 }
 
 /**
- * Set reverb roomsize to one fx unit. See fluid_synth_set_reverb_group() for further info.
+ * Set reverb roomsize to one fx group. See fluid_synth_set_reverb_group() for further info.
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
-int fluid_synth_set_reverb_group_roomsize(fluid_synth_t *synth, int fxunit_idx, double roomsize)
+int fluid_synth_set_reverb_group_roomsize(fluid_synth_t *synth, int group, double roomsize)
 {
-    return fluid_synth_set_reverb_full(synth, fxunit_idx, FLUID_REVMODEL_SET_ROOMSIZE, roomsize, 0, 0, 0);
+    return fluid_synth_set_reverb_full(synth, group, FLUID_REVMODEL_SET_ROOMSIZE, roomsize, 0, 0, 0);
 }
 
 /**
- * Set reverb damping to one fx unit. See fluid_synth_set_reverb_group() for further info.
+ * Set reverb damping to one fx group. See fluid_synth_set_reverb_group() for further info.
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
-int fluid_synth_set_reverb_group_damp(fluid_synth_t *synth, int fxunit_idx, double damping)
+int fluid_synth_set_reverb_group_damp(fluid_synth_t *synth, int group, double damping)
 {
-    return fluid_synth_set_reverb_full(synth, fxunit_idx, FLUID_REVMODEL_SET_DAMPING, 0, damping, 0, 0);
+    return fluid_synth_set_reverb_full(synth, group, FLUID_REVMODEL_SET_DAMPING, 0, damping, 0, 0);
 }
 
 /**
- * Set reverb width to one fx unit. See fluid_synth_set_reverb_group() for further info.
+ * Set reverb width to one fx group. See fluid_synth_set_reverb_group() for further info.
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
-int fluid_synth_set_reverb_group_width(fluid_synth_t *synth, int fxunit_idx, double width)
+int fluid_synth_set_reverb_group_width(fluid_synth_t *synth, int group, double width)
 {
-    return fluid_synth_set_reverb_full(synth,  fxunit_idx, FLUID_REVMODEL_SET_WIDTH, 0, 0, width, 0);
+    return fluid_synth_set_reverb_full(synth, group, FLUID_REVMODEL_SET_WIDTH, 0, 0, width, 0);
 }
 
 /**
- * Set reverb level to one fx unit. See fluid_synth_set_reverb_group() for further info.
+ * Set reverb level to one fx group. See fluid_synth_set_reverb_group() for further info.
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
-int fluid_synth_set_reverb_group_level(fluid_synth_t *synth, int fxunit_idx, double level)
+int fluid_synth_set_reverb_group_level(fluid_synth_t *synth, int group, double level)
 {
-    return fluid_synth_set_reverb_full(synth, fxunit_idx, FLUID_REVMODEL_SET_LEVEL, 0, 0, 0, level);
+    return fluid_synth_set_reverb_full(synth, group, FLUID_REVMODEL_SET_LEVEL, 0, 0, 0, level);
 }
 
 /**
  * Set one or more reverb parameters.
  * @param synth FluidSynth instance
- * @param fxunit_idx index of the fx unit to which parameters must be set.
+ * @param group index of the fx group to which parameters must be set.
  *  must be in the range [-1..synth->effects_groups[. If -1 the changes are applied to
  *  all fx units.
  * @param set Flags indicating which parameters should be set (#fluid_revmodel_set_t)
@@ -5521,7 +5521,7 @@ int fluid_synth_set_reverb_group_level(fluid_synth_t *synth, int fxunit_idx, dou
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int
-fluid_synth_set_reverb_full(fluid_synth_t *synth, int fxunit_idx, int set,
+fluid_synth_set_reverb_full(fluid_synth_t *synth, int group, int set,
                             double roomsize, double damping, double width, double level)
 {
     int ret;
@@ -5533,8 +5533,8 @@ fluid_synth_set_reverb_full(fluid_synth_t *synth, int fxunit_idx, int set,
 
     fluid_synth_api_enter(synth);
 
-    /* fx unit shadow values are set here so that they will be returned if queried */
-    ret = fluid_rvoice_mixer_set_reverb_full(synth->eventhandler->mixer, fxunit_idx,
+    /* fx group shadow values are set here so that they will be returned if queried */
+    ret = fluid_rvoice_mixer_set_reverb_full(synth->eventhandler->mixer, group,
                                              set, roomsize, damping, width, level);
     if(ret == FLUID_FAILED)
     {
@@ -5542,7 +5542,7 @@ fluid_synth_set_reverb_full(fluid_synth_t *synth, int fxunit_idx, int set,
     }
 
     /* Synth shadow values are set here so that they will be returned if queried */
-    if (fxunit_idx < 0)
+    if (group < 0)
     {
         if(set & FLUID_REVMODEL_SET_ROOMSIZE)
         {
@@ -5565,7 +5565,7 @@ fluid_synth_set_reverb_full(fluid_synth_t *synth, int fxunit_idx, int set,
         }
 	}
 
-    param[0].i = fxunit_idx;
+    param[0].i = group;
     param[1].i = set;
     param[2].real = roomsize;
     param[3].real = damping;
@@ -5580,7 +5580,7 @@ fluid_synth_set_reverb_full(fluid_synth_t *synth, int fxunit_idx, int set,
 }
 
 /**
- * Get reverb room size of all fx unit.
+ * Get reverb room size of all fx groups.
  * @param synth FluidSynth instance
  * @return Reverb room size (0.0-1.2)
  * @deprecated Use fluid_synth_get_reverb_group_roomsize instead.
@@ -5592,7 +5592,7 @@ fluid_synth_get_reverb_roomsize(fluid_synth_t *synth)
 }
 
 /**
- * Get reverb damping of all fx unit.
+ * Get reverb damping of all fx groups.
  * @param synth FluidSynth instance
  * @return Reverb damping value (0.0-1.0)
  * @deprecated Use fluid_synth_get_reverb_group_damp instead.
@@ -5604,7 +5604,7 @@ fluid_synth_get_reverb_damp(fluid_synth_t *synth)
 }
 
 /**
- * Get reverb level of all fx unit.
+ * Get reverb level of all fx groups.
  * @param synth FluidSynth instance
  * @return Reverb level value (0.0-1.0)
  * @deprecated Use fluid_synth_get_reverb_group_level instead.
@@ -5616,7 +5616,7 @@ fluid_synth_get_reverb_level(fluid_synth_t *synth)
 }
 
 /**
- * Get reverb width of all fx unit.
+ * Get reverb width of all fx groups.
  * @param synth FluidSynth instance
  * @return Reverb width value (0.0-100.0)
  * @deprecated Use fluid_synth_get_reverb_group_width instead.
@@ -5628,118 +5628,118 @@ fluid_synth_get_reverb_width(fluid_synth_t *synth)
 }
 
 /**
- * Get reverb room size of one fx unit.
+ * Get reverb room size of one fx group.
  * @param synth FluidSynth instance
- * @param fxunit_idx index of the fx unit to get room size from.
+ * @param group index of the fx group to get room size from.
  *  must be in the range [-1..synth->effects_groups[. If -1
- *  get room size of all units (same as fluid_synth_get_reverb_roomsize()).
+ *  get room size of all fx group (same as fluid_synth_get_reverb_roomsize()).
  * @return Reverb room size (0.0-1.2)
  */
 double
-fluid_synth_get_reverb_group_roomsize(fluid_synth_t *synth, int fxunit_idx)
+fluid_synth_get_reverb_group_roomsize(fluid_synth_t *synth, int group)
 {
     double result;
     fluid_return_val_if_fail(synth != NULL, 0.0);
     fluid_synth_api_enter(synth);
 
-    if (fxunit_idx < 0)
+    if (group < 0)
     {
-        /* return roomsize common to all fx unit */
+        /* return roomsize common to all fx groups */
         result = synth->reverb_roomsize;
     }
     else
     {
-        /* return roomsize of fx unit at index fxunit */
+        /* return roomsize of fx group at index group */
         result = fluid_rvoice_mixer_get_reverb_param(synth->eventhandler->mixer,
-                                      fxunit_idx, FLUID_REVMODEL_SET_ROOMSIZE);
+                                      group, FLUID_REVMODEL_SET_ROOMSIZE);
     }
 
     FLUID_API_RETURN(result);
 }
 
 /**
- * Get reverb damping of one fx unit.
+ * Get reverb damping of one fx group.
  * @param synth FluidSynth instance
- * @param fxunit_idx index of the fx unit to get damping from.
+ * @param group index of the fx group to get damping from.
  *  must be in the range [-1..synth->effects_groups[. If -1
  *  get damping of all units (same as fluid_synth_get_reverb_damp()).
  * @return Reverb damping value (0.0-1.0)
  */
 double
-fluid_synth_get_reverb_group_damp(fluid_synth_t *synth, int fxunit_idx)
+fluid_synth_get_reverb_group_damp(fluid_synth_t *synth, int group)
 {
     double result;
     fluid_return_val_if_fail(synth != NULL, 0.0);
     fluid_synth_api_enter(synth);
 
-    if (fxunit_idx < 0)
+    if (group < 0)
     {
-        /* return damping common to all fx unit */
+        /* return damping common to all fx group */
         result = synth->reverb_damping;
     }
     else
     {
-        /* return damping of fx unit at index fxunit */
+        /* return damping of fx group at index group */
         result = fluid_rvoice_mixer_get_reverb_param(synth->eventhandler->mixer,
-                                       fxunit_idx, FLUID_REVMODEL_SET_DAMPING);
+                                       group, FLUID_REVMODEL_SET_DAMPING);
     }
     FLUID_API_RETURN(result);
 }
 
 /**
- * Get reverb level of one fx unit.
+ * Get reverb level of one fx group.
  * @param synth FluidSynth instance
- * @param fxunit_idx index of the fx unit to get level from.
+ * @param group index of the fx group to get level from.
  *  must be in the range [-1..synth->effects_groups[. If -1
  *  get level of all units (same as fluid_synth_get_reverb_level()).
  * @return Reverb level value (0.0-1.0)
  */
 double
-fluid_synth_get_reverb_group_level(fluid_synth_t *synth, int fxunit_idx)
+fluid_synth_get_reverb_group_level(fluid_synth_t *synth, int group)
 {
     double result;
     fluid_return_val_if_fail(synth != NULL, 0.0);
     fluid_synth_api_enter(synth);
 
-    if (fxunit_idx < 0)
+    if (group < 0)
     {
-        /* return level common to all fx unit */
+        /* return level common to all fx groups */
         result = synth->reverb_level;
     }
     else
     {
-        /* return level of fx unit at index fxunit */
+        /* return level of fx group at index group */
         result = fluid_rvoice_mixer_get_reverb_param(synth->eventhandler->mixer,
-                                       fxunit_idx, FLUID_REVMODEL_SET_LEVEL);
+                                       group, FLUID_REVMODEL_SET_LEVEL);
     }
     FLUID_API_RETURN(result);
 }
 
 /**
- * Get reverb width of one fx unit.
+ * Get reverb width of one fx group.
  * @param synth FluidSynth instance
- * @param fxunit_idx index of the fx unit to get width from.
+ * @param group index of the fx group to get width from.
  *  must be in the range [-1..synth->effects_groups[. If -1
  *  get width of all units (same as fluid_synth_get_reverb_width()).
  * @return Reverb width value (0.0-100.0)
  */
 double
-fluid_synth_get_reverb_group_width(fluid_synth_t *synth, int fxunit_idx)
+fluid_synth_get_reverb_group_width(fluid_synth_t *synth, int group)
 {
     double result;
     fluid_return_val_if_fail(synth != NULL, 0.0);
     fluid_synth_api_enter(synth);
 
-    if (fxunit_idx < 0)
+    if (group < 0)
     {
-        /* return width common to all fx unit */
+        /* return width common to all fx group */
         result = synth->reverb_width;
     }
     else
     {
-        /* return width of fx unit at index fxunit */
+        /* return width of fx group at index group */
         result = fluid_rvoice_mixer_get_reverb_param(synth->eventhandler->mixer,
-                                       fxunit_idx, FLUID_REVMODEL_SET_WIDTH);
+                                       group, FLUID_REVMODEL_SET_WIDTH);
     }
     FLUID_API_RETURN(result);
 }
@@ -5834,11 +5834,11 @@ int fluid_synth_set_chorus_type(fluid_synth_t *synth, int type)
 }
 
 /**
- * Set chorus parameters to one fx unit.
+ * Set chorus parameters to one fx group.
  * It should be turned on with fluid_synth_set_chorus_on().
  * Keep in mind, that the needed CPU time is proportional to 'nr'.
  * @param synth FluidSynth instance
- * @param fxunit_idx index of the fx unit to which parameters must be set.
+ * @param group index of the fx group to which parameters must be set.
  *  must be in the range [-1..synth->effects_groups[. If -1 the changes are
  *  applied to all fx units (same as fluid_synth_set_chorus()).
  * @param nr Chorus voice count (0-99, CPU time consumption proportional to
@@ -5850,69 +5850,69 @@ int fluid_synth_set_chorus_type(fluid_synth_t *synth, int type)
  * @param type Chorus waveform type (#fluid_chorus_mod)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
-int fluid_synth_set_chorus_group(fluid_synth_t *synth, int fxunit_idx, int nr, double level,
+int fluid_synth_set_chorus_group(fluid_synth_t *synth, int group, int nr, double level,
                                  double speed, double depth_ms, int type)
 {
-    return fluid_synth_set_chorus_full(synth, fxunit_idx, FLUID_CHORUS_SET_ALL,
+    return fluid_synth_set_chorus_full(synth, group, FLUID_CHORUS_SET_ALL,
                                        nr, level, speed, depth_ms, type);
 }
 
 /**
- * Set the chorus voice count to one fx unit. See fluid_synth_set_chorus_group() for further info.
+ * Set the chorus voice count to one fx group. See fluid_synth_set_chorus_group() for further info.
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
-int fluid_synth_set_chorus_group_nr(fluid_synth_t *synth, int fxunit_idx, int nr)
+int fluid_synth_set_chorus_group_nr(fluid_synth_t *synth, int group, int nr)
 {
-    return fluid_synth_set_chorus_full(synth, fxunit_idx, FLUID_CHORUS_SET_NR,
+    return fluid_synth_set_chorus_full(synth, group, FLUID_CHORUS_SET_NR,
                                        nr, 0, 0, 0, 0);
 }
 
 /**
- * Set the chorus level to one unit fx. See fluid_synth_set_chorus_group() for further info.
+ * Set the chorus level to one fx group. See fluid_synth_set_chorus_group() for further info.
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
-int fluid_synth_set_chorus_group_level(fluid_synth_t *synth, int fxunit_idx, double level)
+int fluid_synth_set_chorus_group_level(fluid_synth_t *synth, int group, double level)
 {
-    return fluid_synth_set_chorus_full(synth, fxunit_idx, FLUID_CHORUS_SET_LEVEL,
+    return fluid_synth_set_chorus_full(synth, group, FLUID_CHORUS_SET_LEVEL,
                                        0, level, 0, 0, 0);
 }
 
 /**
- * Set the chorus speed to one unit fx. See fluid_synth_set_chorus_group() for further info.
+ * Set the chorus speed to one fx group. See fluid_synth_set_chorus_group() for further info.
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
-int fluid_synth_set_chorus_group_speed(fluid_synth_t *synth, int fxunit_idx, double speed)
+int fluid_synth_set_chorus_group_speed(fluid_synth_t *synth, int group, double speed)
 {
-    return fluid_synth_set_chorus_full(synth, fxunit_idx, FLUID_CHORUS_SET_SPEED,
+    return fluid_synth_set_chorus_full(synth, group, FLUID_CHORUS_SET_SPEED,
                                        0, 0, speed, 0, 0);
 }
 
 /**
- * Set the chorus depth to one unit fx. See fluid_synth_set_chorus_group() for further info.
+ * Set the chorus depth to one fx group. See fluid_synth_set_chorus_group() for further info.
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
-int fluid_synth_set_chorus_group_depth(fluid_synth_t *synth, int fxunit_idx, double depth_ms)
+int fluid_synth_set_chorus_group_depth(fluid_synth_t *synth, int group, double depth_ms)
 {
-    return fluid_synth_set_chorus_full(synth, fxunit_idx, FLUID_CHORUS_SET_DEPTH,
+    return fluid_synth_set_chorus_full(synth, group, FLUID_CHORUS_SET_DEPTH,
                                        0, 0, 0, depth_ms, 0);
 }
 
 /**
- * Set the chorus type to one unit fx. See fluid_synth_set_chorus_group() for further info.
+ * Set the chorus type to one fx group. See fluid_synth_set_chorus_group() for further info.
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
-int fluid_synth_set_chorus_group_type(fluid_synth_t *synth, int fxunit_idx, int type)
+int fluid_synth_set_chorus_group_type(fluid_synth_t *synth, int group, int type)
 {
-    return fluid_synth_set_chorus_full(synth, fxunit_idx,  FLUID_CHORUS_SET_TYPE,
+    return fluid_synth_set_chorus_full(synth, group,  FLUID_CHORUS_SET_TYPE,
                                        0, 0, 0, 0, type);
 }
 
 
 /**
- * Set one or more parameters for a chorus unit fx
+ * Set one or more parameters for a chorus fx group
  */
 int
-fluid_synth_set_chorus_full(fluid_synth_t *synth, int fxunit_idx, int set, int nr, double level,
+fluid_synth_set_chorus_full(fluid_synth_t *synth, int group, int set, int nr, double level,
                             double speed, double depth_ms, int type)
 {
     int ret;
@@ -5924,8 +5924,8 @@ fluid_synth_set_chorus_full(fluid_synth_t *synth, int fxunit_idx, int set, int n
 
     fluid_synth_api_enter(synth);
 
-    /* fx unit shadow values are set here so that they will be returned if queried */
-    ret = fluid_rvoice_mixer_set_chorus_full(synth->eventhandler->mixer, fxunit_idx,
+    /* fx group shadow values are set here so that they will be returned if queried */
+    ret = fluid_rvoice_mixer_set_chorus_full(synth->eventhandler->mixer, group,
                                              set, nr, level, speed, depth_ms, type);
     if(ret == FLUID_FAILED)
     {
@@ -5933,7 +5933,7 @@ fluid_synth_set_chorus_full(fluid_synth_t *synth, int fxunit_idx, int set, int n
     }
 
     /* Synth shadow values are set here so that they will be returned if queried */
-    if (fxunit_idx < 0)
+    if (group < 0)
     {
         if(set & FLUID_CHORUS_SET_NR)
         {
@@ -5961,7 +5961,7 @@ fluid_synth_set_chorus_full(fluid_synth_t *synth, int fxunit_idx, int set, int n
         }
     }
 
-    param[0].i = fxunit_idx;
+    param[0].i = group;
     param[1].i = set;
     param[2].i = nr;
     param[3].real = level;
@@ -5977,7 +5977,7 @@ fluid_synth_set_chorus_full(fluid_synth_t *synth, int fxunit_idx, int set, int n
 }
 
 /**
- * Get chorus voice number (delay line count) value of all fx unit.
+ * Get chorus voice number (delay line count) value of all fx groups.
  * @param synth FluidSynth instance
  * @return Chorus voice count
  * @deprecated Use fluid_synth_get_chorus_group_nr instead.
@@ -5989,7 +5989,7 @@ fluid_synth_get_chorus_nr(fluid_synth_t *synth)
 }
 
 /**
- * Get chorus level of all fx unit.
+ * Get chorus level of all fx group.
  * @param synth FluidSynth instance
  * @return Chorus level value
  * @deprecated Use fluid_synth_get_chorus_group_level instead.
@@ -6001,7 +6001,7 @@ fluid_synth_get_chorus_level(fluid_synth_t *synth)
 }
 
 /**
- * Get chorus speed in Hz of all fx unit.
+ * Get chorus speed in Hz of all fx groups.
  * @param synth FluidSynth instance
  * @return Chorus speed in Hz
  * @deprecated Use fluid_synth_get_chorus_group_speed instead.
@@ -6013,7 +6013,7 @@ fluid_synth_get_chorus_speed(fluid_synth_t *synth)
 }
 
 /**
- * Get chorus depth of all fx unit.
+ * Get chorus depth of all fx groups.
  * @param synth FluidSynth instance
  * @return Chorus depth
  * @deprecated Use fluid_synth_get_chorus_group_depth instead.
@@ -6025,7 +6025,7 @@ fluid_synth_get_chorus_depth(fluid_synth_t *synth)
 }
 
 /**
- * Get chorus waveform type of all fx unit.
+ * Get chorus waveform type of all fx groups.
  * @param synth FluidSynth instance
  * @return Chorus waveform type (#fluid_chorus_mod)
  * @deprecated Use fluid_synth_get_chorus_group_type instead.
@@ -6037,146 +6037,146 @@ fluid_synth_get_chorus_type(fluid_synth_t *synth)
 }
 
 /**
- * Get chorus voice number (delay line count) value of one fx unit.
+ * Get chorus voice number (delay line count) value of one fx group.
  * @param synth FluidSynth instance
- * @param fxunit_idx index of the fx unit to get chorus voice number from.
+ * @param group index of the fx group to get chorus voice number from.
  *  must be in the range [-1..synth->effects_groups[. If -1
  *  get chorus voice count of all units (same as fluid_synth_get_chorus_nr()).
  * @return Chorus voice count
  */
 int
-fluid_synth_get_chorus_group_nr(fluid_synth_t *synth, int fxunit_idx)
+fluid_synth_get_chorus_group_nr(fluid_synth_t *synth, int group)
 {
     int result;
     fluid_return_val_if_fail(synth != NULL, 0);
     fluid_synth_api_enter(synth);
 
-    if (fxunit_idx < 0)
+    if (group < 0)
     {
-        /* return nr common to all fx unit */
+        /* return nr common to all fx groups */
         result = synth->chorus_nr;
     }
     else
     {
-        /* return nr of fx unit at index fxunit_idx */
+        /* return nr of fx group at index group */
         result = (int) fluid_rvoice_mixer_get_chorus_param(synth->eventhandler->mixer,
-                                     fxunit_idx, FLUID_CHORUS_SET_NR);
+                                     group, FLUID_CHORUS_SET_NR);
     }
     FLUID_API_RETURN(result);
 }
 
 /**
- * Get chorus level of one fx unit.
+ * Get chorus level of one fx group.
  * @param synth FluidSynth instance
- * @param fxunit_idx index of the fx unit to get chorus level from.
+ * @param group index of the fx group to get chorus level from.
  *  must be in the range [-1..synth->effects_groups[. If -1
  *  get chorus level of all units (same as fluid_synth_get_chorus_level()).
  * @return Chorus level value
  */
 double
-fluid_synth_get_chorus_group_level(fluid_synth_t *synth, int fxunit_idx)
+fluid_synth_get_chorus_group_level(fluid_synth_t *synth, int group)
 {
     double result;
     fluid_return_val_if_fail(synth != NULL, 0.0);
     fluid_synth_api_enter(synth);
 
-    if (fxunit_idx < 0)
+    if (group < 0)
     {
-        /* return level common to all fx unit */
+        /* return level common to all fx groups */
         result = synth->chorus_level;
     }
     else
     {
-        /* return level of fx unit at index fxunit_idx */
+        /* return level of fx group at index group */
         result = fluid_rvoice_mixer_get_chorus_param(synth->eventhandler->mixer,
-                                     fxunit_idx, FLUID_CHORUS_SET_LEVEL);
+                                     group, FLUID_CHORUS_SET_LEVEL);
     }
     FLUID_API_RETURN(result);
 }
 
 /**
- * Get chorus speed in Hz of one fx unit.
+ * Get chorus speed in Hz of one fx group.
  * @param synth FluidSynth instance
- * @param fxunit_idx index of the fx unit to get chorus speed from.
+ * @param group index of the fx group to get chorus speed from.
  *  must be in the range [-1..synth->effects_groups[. If -1
  *  get chorus speed of all units (same as fluid_synth_get_chorus_speed()).
  * @return Chorus speed in Hz
  */
 double
-fluid_synth_get_chorus_group_speed(fluid_synth_t *synth, int fxunit_idx)
+fluid_synth_get_chorus_group_speed(fluid_synth_t *synth, int group)
 {
     double result;
     fluid_return_val_if_fail(synth != NULL, 0.0);
     fluid_synth_api_enter(synth);
 
-    if (fxunit_idx < 0)
+    if (group < 0)
     {
-        /* return speed common to all fx unit */
+        /* return speed common to all fx groups */
         result = synth->chorus_speed;
     }
     else
     {
-        /* return speed of fx unit at index fxunit_idx */
+        /* return speed of fx group at index group */
         result = fluid_rvoice_mixer_get_chorus_param(synth->eventhandler->mixer,
-                                     fxunit_idx, FLUID_CHORUS_SET_SPEED);
+                                     group, FLUID_CHORUS_SET_SPEED);
     }
     FLUID_API_RETURN(result);
 }
 
 /**
- * Get chorus depth of one fx unit.
+ * Get chorus depth of one fx group.
  * @param synth FluidSynth instance
- * @param fxunit_idx index of the fx unit to get chorus depth from.
+ * @param group index of the fx group to get chorus depth from.
  *  must be in the range [-1..synth->effects_groups[. If -1
  *  get chorus depth of all units (same as fluid_synth_get_chorus_depth()).
  * @return Chorus depth
  */
 double
-fluid_synth_get_chorus_group_depth(fluid_synth_t *synth, int fxunit_idx)
+fluid_synth_get_chorus_group_depth(fluid_synth_t *synth, int group)
 {
     double result;
     fluid_return_val_if_fail(synth != NULL, 0.0);
     fluid_synth_api_enter(synth);
 
-    if (fxunit_idx < 0)
+    if (group < 0)
     {
-        /* return depth common to all fx unit */
+        /* return depth common to all fx groups */
         result = synth->chorus_depth;
     }
     else
     {
-        /* return depth of fx unit at index fxunit_idx */
+        /* return depth of fx group at index group */
         result = fluid_rvoice_mixer_get_chorus_param(synth->eventhandler->mixer,
-                                     fxunit_idx, FLUID_CHORUS_SET_DEPTH);
+                                     group, FLUID_CHORUS_SET_DEPTH);
     }
     FLUID_API_RETURN(result);
 }
 
 /**
- * Get chorus waveform type of one fx unit.
+ * Get chorus waveform type of one fx group.
  * @param synth FluidSynth instance
- * @param fxunit_idx index of the fx unit to get waveform type from.
+ * @param group index of the fx group to get waveform type from.
  *  must be in the range [-1..synth->effects_groups[. If -1
  *  get waveform type of all units (same as fluid_synth_get_chorus_type()).
  * @return Chorus waveform type (#fluid_chorus_mod)
  */
 int
-fluid_synth_get_chorus_group_type(fluid_synth_t *synth, int fxunit_idx)
+fluid_synth_get_chorus_group_type(fluid_synth_t *synth, int group)
 {
     int result;
     fluid_return_val_if_fail(synth != NULL, 0);
     fluid_synth_api_enter(synth);
 
-    if (fxunit_idx < 0)
+    if (group < 0)
     {
-        /* return type common to all fx unit */
+        /* return type common to all fx groups */
         result = synth->chorus_type;
     }
     else
     {
-        /* return type of fx unit at index fxunit_idx */
+        /* return type of fx group at index group */
         result = (int)fluid_rvoice_mixer_get_chorus_param(synth->eventhandler->mixer,
-                                     fxunit_idx, FLUID_CHORUS_SET_TYPE);
+                                     group, FLUID_CHORUS_SET_TYPE);
     }
     FLUID_API_RETURN(result);
 }

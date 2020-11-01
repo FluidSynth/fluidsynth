@@ -137,17 +137,17 @@ FLUID_DEPRECATED FLUIDSYNTH_API double fluid_synth_get_reverb_damp(fluid_synth_t
 FLUID_DEPRECATED FLUIDSYNTH_API double fluid_synth_get_reverb_level(fluid_synth_t *synth);
 FLUID_DEPRECATED FLUIDSYNTH_API double fluid_synth_get_reverb_width(fluid_synth_t *synth);
 
-FLUIDSYNTH_API int fluid_synth_set_reverb_group(fluid_synth_t *synth, int fxunit_idx,
+FLUIDSYNTH_API int fluid_synth_set_reverb_group(fluid_synth_t *synth, int group,
                                                 double roomsize, double damping, double width, double level);
-FLUIDSYNTH_API int fluid_synth_set_reverb_group_roomsize(fluid_synth_t *synth, int fxunit_idx, double roomsize);
-FLUIDSYNTH_API int fluid_synth_set_reverb_group_damp(fluid_synth_t *synth, int fxunit_idx, double damping);
-FLUIDSYNTH_API int fluid_synth_set_reverb_group_width(fluid_synth_t *synth, int fxunit_idx, double  width);
-FLUIDSYNTH_API int fluid_synth_set_reverb_group_level(fluid_synth_t *synth, int fxunit_idx, double level);
+FLUIDSYNTH_API int fluid_synth_set_reverb_group_roomsize(fluid_synth_t *synth, int group, double roomsize);
+FLUIDSYNTH_API int fluid_synth_set_reverb_group_damp(fluid_synth_t *synth, int group, double damping);
+FLUIDSYNTH_API int fluid_synth_set_reverb_group_width(fluid_synth_t *synth, int group, double  width);
+FLUIDSYNTH_API int fluid_synth_set_reverb_group_level(fluid_synth_t *synth, int group, double level);
 
-FLUIDSYNTH_API double fluid_synth_get_reverb_group_roomsize(fluid_synth_t *synth, int fxunit_idx);
-FLUIDSYNTH_API double fluid_synth_get_reverb_group_damp(fluid_synth_t *synth, int fxunit_idx);
-FLUIDSYNTH_API double fluid_synth_get_reverb_group_level(fluid_synth_t *synth, int fxunit_idx);
-FLUIDSYNTH_API double fluid_synth_get_reverb_group_width(fluid_synth_t *synth, int fxunit_idx);
+FLUIDSYNTH_API double fluid_synth_get_reverb_group_roomsize(fluid_synth_t *synth, int group);
+FLUIDSYNTH_API double fluid_synth_get_reverb_group_damp(fluid_synth_t *synth, int group);
+FLUIDSYNTH_API double fluid_synth_get_reverb_group_level(fluid_synth_t *synth, int group);
+FLUIDSYNTH_API double fluid_synth_get_reverb_group_width(fluid_synth_t *synth, int group);
 
 
 /* Chorus */
@@ -176,19 +176,19 @@ FLUID_DEPRECATED FLUIDSYNTH_API double fluid_synth_get_chorus_speed(fluid_synth_
 FLUID_DEPRECATED FLUIDSYNTH_API double fluid_synth_get_chorus_depth(fluid_synth_t *synth);
 FLUID_DEPRECATED FLUIDSYNTH_API int fluid_synth_get_chorus_type(fluid_synth_t *synth); /* see fluid_chorus_mod */
 
-FLUIDSYNTH_API int fluid_synth_set_chorus_group(fluid_synth_t *synth, int fxunit_idx, int nr,
+FLUIDSYNTH_API int fluid_synth_set_chorus_group(fluid_synth_t *synth, int group, int nr,
                                                 double level, double speed, double depth_ms, int type);
-FLUIDSYNTH_API int fluid_synth_set_chorus_group_nr(fluid_synth_t *synth, int fxunit_idx, int nr);
-FLUIDSYNTH_API int fluid_synth_set_chorus_group_level(fluid_synth_t *synth, int fxunit_idx, double level);
-FLUIDSYNTH_API int fluid_synth_set_chorus_group_speed(fluid_synth_t *synth, int fxunit_idx, double speed);
-FLUIDSYNTH_API int fluid_synth_set_chorus_group_depth(fluid_synth_t *synth, int fxunit_idx, double depth_ms);
-FLUIDSYNTH_API int fluid_synth_set_chorus_group_type(fluid_synth_t *synth, int fxunit_idx, int type);
+FLUIDSYNTH_API int fluid_synth_set_chorus_group_nr(fluid_synth_t *synth, int group, int nr);
+FLUIDSYNTH_API int fluid_synth_set_chorus_group_level(fluid_synth_t *synth, int group, double level);
+FLUIDSYNTH_API int fluid_synth_set_chorus_group_speed(fluid_synth_t *synth, int group, double speed);
+FLUIDSYNTH_API int fluid_synth_set_chorus_group_depth(fluid_synth_t *synth, int group, double depth_ms);
+FLUIDSYNTH_API int fluid_synth_set_chorus_group_type(fluid_synth_t *synth, int group, int type);
 
-FLUIDSYNTH_API int fluid_synth_get_chorus_group_nr(fluid_synth_t *synth, int fxunit_idx);
-FLUIDSYNTH_API double fluid_synth_get_chorus_group_level(fluid_synth_t *synth, int fxunit_idx);
-FLUIDSYNTH_API double fluid_synth_get_chorus_group_speed(fluid_synth_t *synth, int fxunit_idx);
-FLUIDSYNTH_API double fluid_synth_get_chorus_group_depth(fluid_synth_t *synth, int fxunit_idx);
-FLUIDSYNTH_API int fluid_synth_get_chorus_group_type(fluid_synth_t *synth, int fxunit_idx);
+FLUIDSYNTH_API int fluid_synth_get_chorus_group_nr(fluid_synth_t *synth, int group);
+FLUIDSYNTH_API double fluid_synth_get_chorus_group_level(fluid_synth_t *synth, int group);
+FLUIDSYNTH_API double fluid_synth_get_chorus_group_speed(fluid_synth_t *synth, int group);
+FLUIDSYNTH_API double fluid_synth_get_chorus_group_depth(fluid_synth_t *synth, int group);
+FLUIDSYNTH_API int fluid_synth_get_chorus_group_type(fluid_synth_t *synth, int group);
 
 /* Audio and MIDI channels */
 
