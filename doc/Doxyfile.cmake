@@ -195,12 +195,14 @@ PERLMOD_MAKEVAR_PREFIX =
 # Configuration options related to the preprocessor   
 #---------------------------------------------------------------------------
 ENABLE_PREPROCESSING = YES
-MACRO_EXPANSION = NO
-EXPAND_ONLY_PREDEF = NO
+MACRO_EXPANSION = YES
+EXPAND_ONLY_PREDEF = YES
 SEARCH_INCLUDES = YES
 INCLUDE_PATH = 
 INCLUDE_FILE_PATTERNS = 
-PREDEFINED = __DOXYGEN__
+PREDEFINED = __DOXYGEN__ \
+             FLUIDSYNTH_API \
+             FLUID_DEPRECATED
 EXPAND_AS_DEFINED = 
 SKIP_FUNCTION_MACROS = YES
 #---------------------------------------------------------------------------
