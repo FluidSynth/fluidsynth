@@ -5796,6 +5796,7 @@ int fluid_synth_set_chorus_nr(fluid_synth_t *synth, int nr)
 /**
  * Set the chorus level. See fluid_synth_set_chorus() for further info.
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ * @deprecated Use fluid_synth_set_chorus_group_level instead.
  */
 int fluid_synth_set_chorus_level(fluid_synth_t *synth, double level)
 {
