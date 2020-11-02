@@ -44,18 +44,18 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
         <setting>
             <name>chorus.depth</name>
             <type>num</type>
-            <def>8</def>
-            <min>0</min>
-            <max>256</max>
+            <def>8.0</def>
+            <min>0.0</min>
+            <max>256.0</max>
             <desc>
                 Specifies the modulation depth of the chorus.</desc>
         </setting>
         <setting>
             <name>chorus.level</name>
             <type>num</type>
-            <def>2</def>
-            <min>0</min>
-            <max>10</max>
+            <def>2.0</def>
+            <min>0.0</min>
+            <max>10.0</max>
             <desc>
                 Specifies the output amplitude of the chorus signal.</desc>
         </setting>
@@ -73,7 +73,7 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             <type>num</type>
             <def>0.3</def>
             <min>0.1</min>
-            <max>5</max>
+            <max>5.0</max>
             <desc>
                 Sets the modulation speed in Hz.</desc>
         </setting>
@@ -188,9 +188,9 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
         <setting>
             <name>overflow.age</name>
             <type>num</type>
-            <def>1000</def>
-            <min>-10000</min>
-            <max>10000</max>
+            <def>1000.0</def>
+            <min>-10000.0</min>
+            <max>10000.0</max>
             <desc>
                 This score is divided by the number of seconds this voice has been
                 active and is added to the overflow priority. It is usually a positive
@@ -201,9 +201,9 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
         <setting>
             <name>overflow.important</name>
             <type>num</type>
-            <def>5000</def>
-            <min>-50000</min>
-            <max>50000</max>
+            <def>5000.0</def>
+            <min>-50000.0</min>
+            <max>50000.0</max>
             <desc>
                 This score is added to voices on channels marked with the
                 synth.overflow.important-channels setting.
@@ -226,9 +226,9 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
         <setting>
             <name>overflow.percussion</name>
             <type>num</type>
-            <def>4000</def>
-            <min>-10000</min>
-            <max>10000</max>
+            <def>4000.0</def>
+            <min>-10000.0</min>
+            <max>10000.0</max>
             <desc>
                 Sets the overflow priority score added to voices on a percussion
                 channel. This is usually a positive score, to give percussion voices
@@ -239,9 +239,9 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
         <setting>
             <name>overflow.released</name>
             <type>num</type>
-            <def>-2000</def>
-            <min>-10000</min>
-            <max>10000</max>
+            <def>-2000.0</def>
+            <min>-10000.0</min>
+            <max>10000.0</max>
             <desc>
                 Sets the overflow priority score added to voices that have already
                 received a note-off event. This is usually a negative score, to give released
@@ -252,9 +252,9 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
         <setting>
             <name>overflow.sustained</name>
             <type>num</type>
-            <def>-1000</def>
-            <min>-10000</min>
-            <max>10000</max>
+            <def>-1000.0</def>
+            <min>-10000.0</min>
+            <max>10000.0</max>
             <desc>
                 Sets the overflow priority score added to voices that are currently
                 sustained. With the default value, sustained voices are considered less
@@ -264,9 +264,9 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
         <setting>
             <name>overflow.volume</name>
             <type>num</type>
-            <def>500</def>
-            <min>-10000</min>
-            <max>10000</max>
+            <def>500.0</def>
+            <min>-10000.0</min>
+            <max>10000.0</max>
             <desc>
                 Sets the overflow priority score added to voices based on their current
                 volume. The voice volume is normalized to a value between 0 and 1 and
@@ -295,9 +295,9 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
         <setting>
             <name>reverb.damp</name>
             <type>num</type>
-            <def>0</def>
-            <min>0</min>
-            <max>1</max>
+            <def>0.0</def>
+            <min>0.0</min>
+            <max>1.0</max>
             <desc>
                 Sets the amount of reverb damping.</desc>
         </setting>
@@ -305,8 +305,8 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             <name>reverb.level</name>
             <type>num</type>
             <def>0.9</def>
-            <min>0</min>
-            <max>1</max>
+            <min>0.0</min>
+            <max>1.0</max>
             <desc>
                 Sets the reverb output amplitude.</desc>
         </setting>
@@ -314,8 +314,8 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             <name>reverb.room-size</name>
             <type>num</type>
             <def>0.2</def>
-            <min>0</min>
-            <max>1</max>
+            <min>0.0</min>
+            <max>1.0</max>
             <desc>
                 Sets the room size (i.e. amount of wet) reverb.</desc>
         </setting>
@@ -323,8 +323,8 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             <name>reverb.width</name>
             <type>num</type>
             <def>0.5</def>
-            <min>0</min>
-            <max>100</max>
+            <min>0.0</min>
+            <max>100.0</max>
             <desc>
                 Sets the stereo spread of the reverb signal.</desc>
         </setting>
