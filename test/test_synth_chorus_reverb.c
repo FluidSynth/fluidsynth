@@ -61,7 +61,7 @@ int main(void)
     TEST_ASSERT(value == 0.22);
     TEST_ASSERT(fluid_synth_reverb_get_param(synth, -1, FLUID_REVERB_WIDTH, &value) == FLUID_OK);
     TEST_ASSERT(value == 0.33);
-    TEST_ASSERT(fluid_synth_reverb_get_param(synth, -1, FLUID_REVERB_DAMP, &value) == FLUID_OK);
+    TEST_ASSERT(fluid_synth_reverb_get_param(synth, -1, FLUID_REVERB_LEVEL, &value) == FLUID_OK);
     TEST_ASSERT(value == 0.44);
 
     TEST_ASSERT(fluid_synth_chorus_get_param(synth, -1, FLUID_CHORUS_NR, &value) == FLUID_OK);
