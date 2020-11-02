@@ -15,9 +15,8 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
 -->
 <?xml-stylesheet type="text/xsl" href="fluidsettings.xsl"?>
 <fluidsettings>
-    <synth>
+    <synth label="Synthesizer settings">
         <setting>
-            <isFirst>Synthesizer settings</isFirst>
             <name>audio-channels</name>
             <type>int</type>
             <def>1</def>
@@ -357,9 +356,8 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
         </setting>
     </synth>
 
-    <audio>
+    <audio label="Audio driver settings">
         <setting>
-            <isFirst>Audio driver settings</isFirst>
             <name>driver</name>
             <type>str</type>
             <def>jack (Linux),<br />
@@ -606,9 +604,8 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
         </setting>
     </audio>
     
-    <midi>
+    <midi label="MIDI driver settings">
         <setting>
-            <isFirst>MIDI driver settings</isFirst>
             <name>autoconnect</name>
             <type>bool</type>
             <def>0 (FALSE)</def>
@@ -689,9 +686,8 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
         </setting>
     </midi>
     
-    <player>
+    <player label="MIDI player settings">
         <setting>
-            <isFirst>MIDI player settings</isFirst>
             <name>reset-synth</name>
             <type>bool</type>
             <def>1 (TRUE)</def>
@@ -706,9 +702,8 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
         </setting>
     </player>
     
-    <shell>
+    <shell label="Shell (command line) settings">
         <setting>
-            <isFirst>Shell (command line) settings</isFirst>
             <name>prompt</name>
             <type>str</type>
             <def>""</def>

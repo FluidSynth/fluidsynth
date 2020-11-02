@@ -173,9 +173,9 @@ a {
                     <h1>FluidSynth Settings</h1>
 
                     <xsl:for-each select="fluidsettings/*">
-                        <xsl:sort select="setting[1]/isFirst" />
+                        <xsl:sort select="@label" />
 
-                        <h2><xsl:value-of select="setting[1]/isFirst" /></h2>
+                        <h2><xsl:value-of select="@label" /></h2>
                         <ul>
                             <xsl:for-each select="*">
                                 <li>
@@ -194,9 +194,9 @@ a {
 
                 <div id="main">
                     <xsl:for-each select="fluidsettings/*">
-                        <xsl:sort select="setting[1]/isFirst" />
+                        <xsl:sort select="@label" />
 
-                        <h2><xsl:value-of select="setting[1]/isFirst" /></h2>
+                        <h2><xsl:value-of select="@label" /></h2>
 
                         <xsl:for-each select="*">
                             <xsl:sort select="name(..)" />
