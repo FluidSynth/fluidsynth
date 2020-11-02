@@ -5596,7 +5596,7 @@ double
 fluid_synth_get_reverb_level(fluid_synth_t *synth)
 {
     double level = 0.0;
-    fluid_synth_reverb_get_param(synth, -1, FLUID_REVERB_DAMP, &level);
+    fluid_synth_reverb_get_param(synth, -1, FLUID_REVERB_LEVEL, &level);
     return level;
 }
 
