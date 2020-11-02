@@ -120,7 +120,7 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             <def>2</def>
             <min>2</min>
             <max>2</max>
-            <desc>Specifies the number of effects per group. Currently there only are two effects (i.e. reverb and chorus).</desc>
+            <desc>Specifies the number of effects per effects group. Currently this value can not be changed so there are always two effects per group available (reverb and chorus).</desc>
         </setting>
         <setting>
             <name>effects-groups</name>
