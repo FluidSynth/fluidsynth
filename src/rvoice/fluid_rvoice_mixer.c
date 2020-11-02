@@ -1112,7 +1112,6 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_reverb_enable)
 
     while(fx_group < nr_units)
     {
-        printf("reverb fx_group=%d, on=%d\n", fx_group, on);
         mixer->fx[fx_group++].reverb_on = on;
     }
 }
@@ -1148,7 +1147,6 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_chorus_enable)
 
     while(fx_group < nr_units)
     {
-        printf("chorus fx_group=%d, on=%d\n", fx_group, on);
         mixer->fx[fx_group++].chorus_on = on;
     }
 }

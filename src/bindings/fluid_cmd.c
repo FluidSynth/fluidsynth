@@ -1169,16 +1169,6 @@ static int check_fx_reverb_param(int ac, char **av, fluid_ostream_t out,
     return fx_group;
 }
 
-/* reverb commands enum */
-enum reverb_cde
-{
-    REVERB_ROOMSIZE_CDE,
-    REVERB_DAMP_CDE,
-    REVERB_WIDTH_CDE,
-    REVERB_LEVEL_CDE,
-    NBR_REVERB_CDE
-};
-
 /* Purpose:
  * Response to fluid_handle_reverbsetxxxx commands
  */
