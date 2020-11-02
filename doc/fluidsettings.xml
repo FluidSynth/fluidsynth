@@ -212,7 +212,7 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
         <setting>
             <name>overflow.important-channels</name>
             <type>str</type>
-            <def>""</def>
+            <def>(empty string)</def>
             <desc>
                 This setting is a comma-separated list of MIDI channel numbers that should
                 be treated as "important" by the overflow calculation, adding the score
@@ -521,7 +521,7 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
         <setting>
             <name>jack.server</name>
             <type>str</type>
-            <def></def>
+            <def>(empty string)</def>
             <desc>
                 Jack server to connect to. Defaults to an empty string, which uses default Jack server.
             </desc>
@@ -633,7 +633,7 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
         <setting>
             <name>portname</name>
             <type>str</type>
-            <def></def>
+            <def>(empty string)</def>
             <desc>Used by coremidi and alsa_seq drivers for the portnames registered with the MIDI subsystem.</desc>
         </setting>
         <setting>
@@ -663,7 +663,7 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
         <setting>
             <name>jack.server</name>
             <type>str</type>
-            <def></def>
+            <def>(empty string)</def>
             <desc>Jack server to connect to for Jack MIDI driver. If an empty string then the default server will be used.</desc>
         </setting>
         <setting>
@@ -706,8 +706,8 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
         <setting>
             <name>prompt</name>
             <type>str</type>
-            <def>""</def>
-            <desc>In dump mode we set the prompt to "". The ui cannot easily handle lines, which don't end with cr. Changing the prompt cannot be done through a command, because the current shell does not handle empty arguments.</desc>
+            <def>(empty string)</def>
+            <desc>In dump mode we set the prompt to "" (empty string). The ui cannot easily handle lines, which don't end with cr. Changing the prompt cannot be done through a command, because the current shell does not handle empty arguments.</desc>
         </setting>
         <setting>
             <name>port</name>
