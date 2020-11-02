@@ -165,12 +165,12 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             <name>midi-bank-select</name>
             <type>str</type>
             <def>gs</def>
-            <vals>gm, gs, xg, mma</vals>
+            <vals>gs, gm, xg, mma</vals>
             <desc>
                 This setting defines how the synthesizer interprets Bank Select messages.
                 <ul>
-                    <li>gm: ignores CC0 and CC32 messages.</li>
                     <li>gs: (default) CC0 becomes the bank number, CC32 is ignored.</li>
+                    <li>gm: ignores CC0 and CC32 messages.</li>
                     <li>xg: CC32 becomes the bank number, CC0 toggles between melodic or drum channel.</li>
                     <li>mma: bank is calculated as CC0*128+CC32.</li>
                 </ul>
