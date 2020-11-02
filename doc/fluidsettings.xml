@@ -374,8 +374,8 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
         <setting>
             <name>periods</name>
             <type>int</type>
-            <def>16 (Linux, Mac OS X),<br />
-                 8 (Windows)
+            <def>8 (Windows, MacOS9),<br />
+                 16 (all other)
             </def>
             <min>2</min>
             <max>64</max>
@@ -386,8 +386,8 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
         <setting>
             <name>period-size</name>
             <type>int</type>
-            <def>64 (Linux, Mac OS X),<br />
-                 512 (Windows)
+            <def>512 (Windows),<br />
+                 64 (all other)
             </def>
             <min>64</min>
             <max>8192</max>
