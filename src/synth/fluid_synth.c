@@ -926,8 +926,8 @@ new_fluid_synth(fluid_settings_t *settings)
 
     fluid_synth_update_mixer(synth, fluid_rvoice_mixer_set_polyphony,
                              synth->polyphony, 0.0f);
-    fluid_synth_set_reverb_on(synth, synth->with_reverb);
-    fluid_synth_set_chorus_on(synth, synth->with_chorus);
+    fluid_synth_reverb_on(synth, -1, synth->with_reverb);
+    fluid_synth_chorus_on(synth, -1, synth->with_chorus);
 
     synth->cur = FLUID_BUFSIZE;
     synth->curmax = 0;
@@ -4579,11 +4579,11 @@ static void fluid_synth_handle_reverb_chorus_int(void *data, const char *name, i
 
     if(FLUID_STRCMP(name, "synth.reverb.active") == 0)
     {
-        fluid_synth_set_reverb_on(synth, value);
+        fluid_synth_reverb_on(synth, -1, value);
     }
     else if(FLUID_STRCMP(name, "synth.chorus.active") == 0)
     {
-        fluid_synth_set_chorus_on(synth, value);
+        fluid_synth_chorus_on(synth, -1, value);
     }
     else if(FLUID_STRCMP(name, "synth.chorus.nr") == 0)
     {
@@ -5356,19 +5356,57 @@ fluid_synth_get_voicelist(fluid_synth_t *synth, fluid_voice_t *buf[], int bufsiz
 /**
  * Enable or disable reverb effect.
  * @param synth FluidSynth instance
- * @param on TRUE to enable reverb, FALSE to disable
+ * @param on TRUE to enable chorus, FALSE to disable
+ * @deprecated Use fluid_synth_reverb_on instead.
  */
 void
 fluid_synth_set_reverb_on(fluid_synth_t *synth, int on)
 {
     fluid_return_if_fail(synth != NULL);
-
     fluid_synth_api_enter(synth);
 
     synth->with_reverb = (on != 0);
     fluid_synth_update_mixer(synth, fluid_rvoice_mixer_set_reverb_enabled,
                              on != 0, 0.0f);
     fluid_synth_api_exit(synth);
+}
+
+/**
+ * Enable or disable reverb on one fx group unit.
+ * @param synth FluidSynth instance
+ * @param fx_group index of the fx group to which parameters must be set.
+ *  must be in the range [-1..synth->effects_groups[. If -1 the changes are applied to
+ *  all fx groups.
+ * @param on TRUE to enable reverb, FALSE to disable
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ */
+int
+fluid_synth_reverb_on(fluid_synth_t *synth, int fx_group, int on)
+{
+    int ret;
+	fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
+    fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
+
+    fluid_synth_api_enter(synth);
+
+    if(fx_group  < -1 || fx_group >= synth->effects_groups)
+    {
+        FLUID_API_RETURN(FLUID_FAILED);
+    }
+
+    if(fx_group  < 0 )
+    {
+        synth->with_reverb = (on != 0);
+    }
+
+    param[0].i = fx_group;
+    param[1].i = on;
+    ret = fluid_rvoice_eventhandler_push(synth->eventhandler,
+                                         fluid_rvoice_mixer_reverb_enable,
+                                         synth->eventhandler->mixer,
+                                         param);
+
+    FLUID_API_RETURN(ret);
 }
 
 /**
@@ -5661,6 +5699,7 @@ int fluid_synth_reverb_get_param(fluid_synth_t *synth, int fx_group,
  * Enable or disable chorus effect.
  * @param synth FluidSynth instance
  * @param on TRUE to enable chorus, FALSE to disable
+ * @deprecated Use fluid_synth_chorus_on instead.
  */
 void
 fluid_synth_set_chorus_on(fluid_synth_t *synth, int on)
@@ -5672,6 +5711,44 @@ fluid_synth_set_chorus_on(fluid_synth_t *synth, int on)
     fluid_synth_update_mixer(synth, fluid_rvoice_mixer_set_chorus_enabled,
                              on != 0, 0.0f);
     fluid_synth_api_exit(synth);
+}
+
+/**
+ * Enable or disable chorus on one fx group unit.
+ * @param synth FluidSynth instance
+ * @param fx_group index of the fx group to which parameters must be set.
+ *  must be in the range [-1..synth->effects_groups[. If -1 the changes are applied to
+ *  all fx groups.
+ * @param on TRUE to enable chorus, FALSE to disable
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
+ */
+int
+fluid_synth_chorus_on(fluid_synth_t *synth, int fx_group, int on)
+{
+    int ret;
+	fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
+    fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
+
+    fluid_synth_api_enter(synth);
+
+    if(fx_group  < -1 || fx_group >= synth->effects_groups)
+    {
+        FLUID_API_RETURN(FLUID_FAILED);
+    }
+
+    if(fx_group  < 0 )
+    {
+        synth->with_chorus = (on != 0);
+    }
+
+    param[0].i = fx_group;
+    param[1].i = on;
+    ret = fluid_rvoice_eventhandler_push(synth->eventhandler,
+                                         fluid_rvoice_mixer_chorus_enable,
+                                         synth->eventhandler->mixer,
+                                         param);
+
+    FLUID_API_RETURN(ret);
 }
 
 /**

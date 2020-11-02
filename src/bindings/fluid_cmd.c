@@ -1297,40 +1297,39 @@ fluid_handle_reverb_chorus_on_command(void *data, int ac, char **av, fluid_ostre
     /* commands name table */
     static const char *name_cde[NBR_REV_CHOR_ON_CDE] ={"reverb", "chorus"};
     /* functions table */
-    static void (*onoff_func[NBR_REV_CHOR_ON_CDE]) (fluid_synth_t *, int) =
+    static int (*onoff_func[NBR_REV_CHOR_ON_CDE]) (fluid_synth_t *, int, int) =
     {
-        fluid_synth_set_reverb_on, fluid_synth_set_chorus_on
+        fluid_synth_reverb_on, fluid_synth_chorus_on
     };
 
     FLUID_ENTRY_COMMAND(data);
 	int onoff;
 
-    /* check number of arguments */
-    if(ac < 1)
+    /* get and check fx group index argument */
+    int fx_group = check_fx_group_idx(ac, av, out, handler->synth, name_cde[cde]);
+    if(fx_group >= -1)
     {
-        fluid_ostream_printf(out, "%s: too few arguments.\n", name_cde[cde]);
-        return FLUID_FAILED;
-    }
+        ac--;
+        /* check argument value */
+        if((FLUID_STRCMP(av[ac], "0") == 0) || (FLUID_STRCMP(av[ac], "off") == 0))
+        {
+            onoff = 0;
+        }
+        else if((FLUID_STRCMP(av[ac], "1") == 0) || (FLUID_STRCMP(av[ac], "on") == 0))
+        {
+            onoff = 1;
+        }
+        else
+        {
+            fluid_ostream_printf(out, "%s: invalid arguments %s [0|1|on|off]\n",
+                                 name_cde[cde], av[ac]);
+            return FLUID_FAILED;
+        }
 
-    /* check argument value */
-    if((FLUID_STRCMP(av[0], "0") == 0) || (FLUID_STRCMP(av[0], "off") == 0))
-    {
-        onoff = 0;
+        /* run on/off function */
+        return onoff_func[cde](handler->synth, fx_group, onoff);
     }
-    else if((FLUID_STRCMP(av[0], "1") == 0) || (FLUID_STRCMP(av[0], "on") == 0))
-    {
-        onoff = 1;
-    }
-    else
-    {
-        fluid_ostream_printf(out, "%s: invalid arguments %s [0|1|on|off]",
-                             name_cde[cde], av[0]);
-        return FLUID_FAILED;
-    }
-
-    /* run on/off function */
-    onoff_func[cde](handler->synth, onoff);
-    return FLUID_OK;
+    return FLUID_FAILED;
 }
 
 /* Purpose:
