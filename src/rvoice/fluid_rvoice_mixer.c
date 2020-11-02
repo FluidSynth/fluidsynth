@@ -1099,22 +1099,26 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_reverb_enable)
 
     int nr_units = mixer->fx_units;
 
-    /* does parameters must be applied only to fx group i ? */
+    /* does on/off must be applied only to fx group at index fx_group ? */
     if(fx_group >= 0)
     {
-        nr_units = fx_group + 1;
-        mixer->with_reverb |= on;
+        mixer->fx[fx_group].reverb_on = on;
     }
-    else
+    /* on/off must be applied to all fx groups */
+    else for(fx_group = 0; fx_group < nr_units; fx_group++)
     {
-        fx_group = 0; /* parameters must be applied to all fx groups */
-        mixer->with_reverb = on;
+        mixer->fx[fx_group].reverb_on = on;
     }
 
-    while(fx_group < nr_units)
+    /* set with_reverb if at least one reverb unit is on */
+    for(fx_group = on = 0; fx_group < nr_units; fx_group++)
     {
-        mixer->fx[fx_group++].reverb_on = on;
+        if(on = mixer->fx[fx_group].reverb_on)
+        {
+            break;
+        }
     }
+    mixer->with_reverb = on;
 }
 
 /* @deprecated */
@@ -1134,22 +1138,26 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_chorus_enable)
 
     int nr_units = mixer->fx_units;
 
-    /* does parameters must be applied only to fx group i ? */
+    /* does on/off must be applied only to fx group at index fx_group ? */
     if(fx_group >= 0)
     {
-        nr_units = fx_group + 1;
-        mixer->with_chorus |= on;
+        mixer->fx[fx_group].chorus_on = on;
     }
-    else
+    /* on/off must be applied to all fx groups */
+    else for(fx_group = 0; fx_group < nr_units; fx_group++)
     {
-        fx_group = 0; /* parameters must be applied to all fx groups */
-        mixer->with_chorus = on;
+        mixer->fx[fx_group].chorus_on = on;
     }
 
-    while(fx_group < nr_units)
+    /* set with_chorus if at least one chorus unit is on */
+    for(fx_group = on = 0; fx_group < nr_units; fx_group++)
     {
-        mixer->fx[fx_group++].chorus_on = on;
+        if(on = mixer->fx[fx_group].chorus_on)
+        {
+            break;
+        }
     }
+    mixer->with_chorus = on;
 }
 
 /* @deprecated */
