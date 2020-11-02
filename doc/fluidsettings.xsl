@@ -249,7 +249,7 @@ a {
                                     <xsl:choose>
                                         <xsl:when test="type = 'str' and vals">
                                             <div class="setting-attribute">
-                                                <div class="label">Choices:</div>
+                                                <div class="label">Options:</div>
                                                 <div class="value"><xsl:value-of select="vals" /></div>
                                             </div>
                                         </xsl:when>
