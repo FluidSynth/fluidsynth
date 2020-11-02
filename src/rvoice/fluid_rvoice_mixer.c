@@ -877,7 +877,7 @@ void delete_fluid_rvoice_mixer(fluid_rvoice_mixer_t *mixer)
  * (see fluid_rvoice_mixer_reverb_get_param())
  *
  * @param mixer that contains all fx units.
- * @param group index of the fx group to which parameters must be set.
+ * @param fx_group index of the fx group to which parameters must be set.
  *  must be in the range [-1..mixer->fx_units[. If -1 the changes are applied to
  *  all fx units.
  * @param set Flags indicating which parameters should be set (#fluid_revmodel_set_t)
@@ -885,54 +885,47 @@ void delete_fluid_rvoice_mixer(fluid_rvoice_mixer_t *mixer)
  * @param damping Reverb damping value (0.0-1.0)
  * @param width Reverb width value (0.0-100.0)
  * @param level Reverb level value (0.0-1.0)
- * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
-int
+void
 fluid_rvoice_mixer_set_reverb_full(const fluid_rvoice_mixer_t *mixer,
-                                   int group, int set,
+                                   int fx_group, int set,
                                    double roomsize, double damping,
                                    double width, double level)
 {
     fluid_mixer_fx_t *fx = mixer->fx;
     int nr_units = mixer->fx_units;
-    if(group < -1 || group >= nr_units)
-    {
-        return FLUID_FAILED;
-    }
 
-    if(group >= 0) /* apply parameters to this fx group only */
+    if(fx_group >= 0) /* apply parameters to this fx group only */
     {
-        nr_units = group + 1;
+        nr_units = fx_group + 1;
     }
     else /* apply parameters to all fx groups */
     {
-        group = 0;
+        fx_group = 0;
     }
 
-    for( ; group < nr_units; group++)
+    for( ; fx_group < nr_units; fx_group++)
     {
         if(set & FLUID_REVMODEL_SET_ROOMSIZE)
         {
-            fx[group].reverb_param[FLUID_REVERB_ROOMSIZE] = roomsize;
+            fx[fx_group].reverb_param[FLUID_REVERB_ROOMSIZE] = roomsize;
         }
 
         if(set & FLUID_REVMODEL_SET_DAMPING)
         {
-            fx[group].reverb_param[FLUID_REVERB_DAMP] = damping;
+            fx[fx_group].reverb_param[FLUID_REVERB_DAMP] = damping;
         }
 
         if(set & FLUID_REVMODEL_SET_WIDTH)
         {
-            fx[group].reverb_param[FLUID_REVERB_WIDTH] = width;
+            fx[fx_group].reverb_param[FLUID_REVERB_WIDTH] = width;
         }
 
         if(set & FLUID_REVMODEL_SET_LEVEL)
         {
-            fx[group].reverb_param[FLUID_REVERB_LEVEL] = level;
+            fx[fx_group].reverb_param[FLUID_REVERB_LEVEL] = level;
         }
     }
-
-    return FLUID_OK;
 }
 
 /**
@@ -940,7 +933,7 @@ fluid_rvoice_mixer_set_reverb_full(const fluid_rvoice_mixer_t *mixer,
  * (see fluid_rvoice_mixer_set_reverb_full())
  *
  * @param mixer that contains all fx group units.
- * @param group index of the fx group to get parameter from.
+ * @param fx_group index of the fx group to get parameter from.
  *  must be in the range [0..mixer->fx_units[.
  * @param enum indicating the parameter to get.
  *  FLUID_REVERB_ROOMSIZE, reverb room size value.
@@ -951,9 +944,9 @@ fluid_rvoice_mixer_set_reverb_full(const fluid_rvoice_mixer_t *mixer,
  */
 double
 fluid_rvoice_mixer_reverb_get_param(const fluid_rvoice_mixer_t *mixer,
-                                    int group, enum fluid_reverb_param param)
+                                    int fx_group, enum fluid_reverb_param param)
 {
-    return mixer->fx[group].reverb_param[param];
+    return mixer->fx[fx_group].reverb_param[param];
 }
 
 /**
@@ -962,7 +955,7 @@ fluid_rvoice_mixer_reverb_get_param(const fluid_rvoice_mixer_t *mixer,
  * (see fluid_rvoice_mixer_chorus_get_param())
  *
  * @param mixer that contains all fx units.
- * @param group index of the fx group to which parameters must be set.
+ * @param fx_group index of the fx group to which parameters must be set.
  *  must be in the range [-1..mixer->fx_units[. If -1 the changes are applied
  *  to all fx group.
  * Keep in mind, that the needed CPU time is proportional to 'nr'.
@@ -974,59 +967,52 @@ fluid_rvoice_mixer_reverb_get_param(const fluid_rvoice_mixer_t *mixer,
  * @param depth_ms Chorus depth (max value depends on synth sample-rate,
  *   0.0-21.0 is safe for sample-rate values up to 96KHz)
  * @param type Chorus waveform type (#fluid_chorus_mod)
- * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
-int
+void
 fluid_rvoice_mixer_set_chorus_full(const fluid_rvoice_mixer_t *mixer,
-                                   int group,
+                                   int fx_group,
                                    int set, int nr, double level,
                                    double speed, double depth_ms, int type)
 {
     fluid_mixer_fx_t *fx = mixer->fx;
     int nr_units = mixer->fx_units;
-    if(group < -1 || group >= nr_units)
-    {
-        return FLUID_FAILED;
-    }
 
-    if(group >= 0) /* apply parameters to this group fx only */
+    if(fx_group >= 0) /* apply parameters to this group fx only */
     {
-        nr_units = group + 1;
+        nr_units = fx_group + 1;
     }
     else /* apply parameters to all fx units*/
     {
-        group = 0;
+        fx_group = 0;
     }
 
-    for(; group < nr_units; group++)
+    for(; fx_group < nr_units; fx_group++)
     {
         if(set & FLUID_CHORUS_SET_NR)
         {
-            fx[group].chorus_param[FLUID_CHORUS_NR] = (double)nr;
+            fx[fx_group].chorus_param[FLUID_CHORUS_NR] = (double)nr;
         }
 
         if(set & FLUID_CHORUS_SET_LEVEL)
         {
-            fx[group].chorus_param[FLUID_CHORUS_LEVEL] = level;
+            fx[fx_group].chorus_param[FLUID_CHORUS_LEVEL] = level;
         }
 
         if(set & FLUID_CHORUS_SET_SPEED)
         {
-            fx[group].chorus_param[FLUID_CHORUS_SPEED] = speed;
+            fx[fx_group].chorus_param[FLUID_CHORUS_SPEED] = speed;
         }
 
         if(set & FLUID_CHORUS_SET_DEPTH)
         {
-            fx[group].chorus_param[FLUID_CHORUS_DEPTH] = depth_ms;
+            fx[fx_group].chorus_param[FLUID_CHORUS_DEPTH] = depth_ms;
         }
 
         if(set & FLUID_CHORUS_SET_TYPE)
         {
-            fx[group].chorus_param[FLUID_CHORUS_TYPE] = (double)type;
+            fx[fx_group].chorus_param[FLUID_CHORUS_TYPE] = (double)type;
         }
     }
-
-    return FLUID_OK;
 }
 
 /**
@@ -1034,16 +1020,16 @@ fluid_rvoice_mixer_set_chorus_full(const fluid_rvoice_mixer_t *mixer,
  * (see fluid_rvoice_mixer_set_chorus_full())
  *
  * @param mixer that contains all fx groups units.
- * @param group index of the fx group to get parameter from.
+ * @param fx_group index of the fx group to get parameter from.
  *  must be in the range [0..mixer->fx_units[.
  * @param get Flags indicating which parameter to get (#fluid_chorus_set_t)
  * @return the parameter value (0.0 is returned if error)
  */
 double
 fluid_rvoice_mixer_chorus_get_param(const fluid_rvoice_mixer_t *mixer,
-                                    int group, enum fluid_chorus_param param)
+                                    int fx_group, enum fluid_chorus_param param)
 {
-    return mixer->fx[group].chorus_param[param];
+    return mixer->fx[fx_group].chorus_param[param];
 }
 
 #ifdef LADSPA

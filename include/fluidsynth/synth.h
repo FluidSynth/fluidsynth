@@ -144,9 +144,10 @@ FLUID_DEPRECATED FLUIDSYNTH_API double fluid_synth_get_reverb_damp(fluid_synth_t
 FLUID_DEPRECATED FLUIDSYNTH_API double fluid_synth_get_reverb_level(fluid_synth_t *synth);
 FLUID_DEPRECATED FLUIDSYNTH_API double fluid_synth_get_reverb_width(fluid_synth_t *synth);
 
-FLUIDSYNTH_API int fluid_synth_reverb_set_param(fluid_synth_t *synth, int group, enum fluid_reverb_param param,
+FLUIDSYNTH_API int fluid_synth_reverb_set_param(fluid_synth_t *synth, int fx_group,
+                                                enum fluid_reverb_param param,
                                                 double value);
-FLUIDSYNTH_API int fluid_synth_reverb_get_param(fluid_synth_t *synth, int group,
+FLUIDSYNTH_API int fluid_synth_reverb_get_param(fluid_synth_t *synth, int fx_group,
                                                 enum fluid_reverb_param param, double *value);
 
 /* Chorus */
@@ -185,9 +186,9 @@ FLUID_DEPRECATED FLUIDSYNTH_API double fluid_synth_get_chorus_speed(fluid_synth_
 FLUID_DEPRECATED FLUIDSYNTH_API double fluid_synth_get_chorus_depth(fluid_synth_t *synth);
 FLUID_DEPRECATED FLUIDSYNTH_API int fluid_synth_get_chorus_type(fluid_synth_t *synth); /* see fluid_chorus_mod */
 
-FLUIDSYNTH_API int fluid_synth_chorus_set_param(fluid_synth_t *synth, int group,
+FLUIDSYNTH_API int fluid_synth_chorus_set_param(fluid_synth_t *synth, int fx_group,
                                                 enum fluid_chorus_param param, double value);
-FLUIDSYNTH_API int fluid_synth_chorus_get_param(fluid_synth_t *synth, int group,
+FLUIDSYNTH_API int fluid_synth_chorus_get_param(fluid_synth_t *synth, int fx_group,
                                                 enum fluid_chorus_param param, double *value);
 
 /* Audio and MIDI channels */

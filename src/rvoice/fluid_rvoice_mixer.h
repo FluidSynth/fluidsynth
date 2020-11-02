@@ -43,22 +43,22 @@ fluid_rvoice_mixer_t *new_fluid_rvoice_mixer(int buf_count, int fx_buf_count, in
 
 void delete_fluid_rvoice_mixer(fluid_rvoice_mixer_t *);
 
-int
+void
 fluid_rvoice_mixer_set_reverb_full(const fluid_rvoice_mixer_t *mixer,
-                                   int group, int set,
+                                   int fx_group, int set,
                                    double roomsize, double damping,
                                    double width, double level);
 double
 fluid_rvoice_mixer_reverb_get_param(const fluid_rvoice_mixer_t *mixer,
-                                    int group, enum fluid_reverb_param param);
-int
+                                    int fx_group, enum fluid_reverb_param param);
+void
 fluid_rvoice_mixer_set_chorus_full(const fluid_rvoice_mixer_t *mixer,
-                                   int group,
+                                   int fx_group,
                                    int set, int nr, double level,
                                    double speed, double depth_ms, int type);
 double
 fluid_rvoice_mixer_chorus_get_param(const fluid_rvoice_mixer_t *mixer,
-                                    int group, enum fluid_chorus_param param);
+                                    int fx_group, enum fluid_chorus_param param);
 
 
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_add_voice);

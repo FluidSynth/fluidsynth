@@ -1101,7 +1101,7 @@ fluid_handle_reverbpreset(void *data, int ac, char **av, fluid_ostream_t out)
 static int check_fx_unit_idx(int ac, char **av, fluid_ostream_t out,
                              fluid_synth_t *synth, const char *name_cde)
 {
-    int group, ngroups; /* fx unit index, count of fx groups */
+    int fx_group, ngroups; /* fx unit index, count of fx groups */
 
     /* One or 2 arguments allowed */
     if(ac < 1 || ac > 2 )
@@ -1110,20 +1110,20 @@ static int check_fx_unit_idx(int ac, char **av, fluid_ostream_t out,
         return -2;
     }
 
-    /* check optionnal first argument which is an group index */
-    group = -1;
+    /* check optionnal first argument which is a fx group index */
+    fx_group = -1;
     if( ac > 1)
     {
-        group = atoi(av[0]); /* get fx group index */
+        fx_group = atoi(av[0]); /* get fx group index */
         ngroups = fluid_synth_count_effects_groups(synth);
-        if(!fluid_is_number(av[0]) || group < 0 || group >= ngroups)
+        if(!fluid_is_number(av[0]) || fx_group < 0 || fx_group >= ngroups)
         {
             fluid_ostream_printf(out, "%s: group index \"%s\" must be in range [%d..%d]\n",
                                  name_cde, av[0], 0, ngroups - 1);
             return -2;
         }
     }
-    return group;
+    return fx_group;
 }
 
 /* parameter value */
@@ -1139,7 +1139,7 @@ struct value
   - group index must be an integer in the range [-1..synth->effects_groups].
   - value must be a double in the range [min..max]
   @param param a pointer on a value to return the second value argument.
-  return the group index:
+  return the fx group index:
   -1 when the command is for all fx group.
   0 to synth->effects_groups-1 when the command is for this group index.
   -2 if error.
@@ -1149,9 +1149,9 @@ static int check_fx_reverb_param(int ac, char **av, fluid_ostream_t out,
                        const struct value *value,
                        fluid_real_t *param)
 {
-    /* get and check group index argument */
-    int group = check_fx_unit_idx(ac, av, out, synth, name_cde);
-    if(group >= -1)
+    /* get and check fx group index argument */
+    int fx_group = check_fx_unit_idx(ac, av, out, synth, name_cde);
+    if(fx_group >= -1)
     {
         fluid_real_t val;
 
@@ -1166,7 +1166,7 @@ static int check_fx_reverb_param(int ac, char **av, fluid_ostream_t out,
         }
         *param = val;
     }
-    return group;
+    return fx_group;
 }
 
 /* reverb commands enum */
@@ -1186,7 +1186,7 @@ static int
 fluid_handle_reverb_command(void *data, int ac, char **av, fluid_ostream_t out,
                             enum fluid_reverb_param param )
 {
-    int group;
+    int fx_group;
 
     /* reverb commands name table */
     static const char *name_cde[FLUID_REVERB_PARAM_LAST] =
@@ -1219,13 +1219,13 @@ fluid_handle_reverb_command(void *data, int ac, char **av, fluid_ostream_t out,
                                 &values[FLUID_REVERB_LEVEL].max);
 
 	/* get and check command arguments */
-    group = check_fx_reverb_param(ac, av, out, handler->synth,
-                                  name_cde[param], &values[param], &value);
+    fx_group = check_fx_reverb_param(ac, av, out, handler->synth,
+                                     name_cde[param], &values[param], &value);
 
-    if(group >= -1)
+    if(fx_group >= -1)
     {
         /* run reverb function */
-        fluid_synth_reverb_set_param(handler->synth, group, param, value);
+        fluid_synth_reverb_set_param(handler->synth, fx_group, param, value);
         return FLUID_OK;
     }
     return FLUID_FAILED;
@@ -1233,9 +1233,9 @@ fluid_handle_reverb_command(void *data, int ac, char **av, fluid_ostream_t out,
 
 /* Purpose:
  * Response to 'rev_setroomsize' command.
- * Load the new room size into the reverb group.
+ * Load the new room size into the reverb fx group.
  * Example: rev_setroomzize 0 0.5
- * load roomsize 0.5 in the reverb group at index 0
+ * load roomsize 0.5 in the reverb fx group at index 0
  */
 int
 fluid_handle_reverbsetroomsize(void *data, int ac, char **av, fluid_ostream_t out)
@@ -1245,9 +1245,9 @@ fluid_handle_reverbsetroomsize(void *data, int ac, char **av, fluid_ostream_t ou
 
 /* Purpose:
  * Response to 'rev_setdamp' command.
- * Load the new damp factor into the reverb group.
+ * Load the new damp factor into the reverb fx group.
  * Example: rev_setdamp 1 0.5
- * load damp 0.5 in the reverb group at index 1
+ * load damp 0.5 in the reverb fx group at index 1
  */
 int
 fluid_handle_reverbsetdamp(void *data, int ac, char **av, fluid_ostream_t out)
@@ -1257,9 +1257,9 @@ fluid_handle_reverbsetdamp(void *data, int ac, char **av, fluid_ostream_t out)
 
 /* Purpose:
  * Response to 'rev_setwidth' command.
- * Load the new width into the reverb group.
+ * Load the new width into the reverb fx group.
  * Example: rev_setwidth 1 0.5
- * load width 0.5 in the reverb group at index 1.
+ * load width 0.5 in the reverb fx group at index 1.
  */
 int
 fluid_handle_reverbsetwidth(void *data, int ac, char **av, fluid_ostream_t out)
@@ -1269,9 +1269,9 @@ fluid_handle_reverbsetwidth(void *data, int ac, char **av, fluid_ostream_t out)
 
 /* Purpose:
  * Response to 'rev_setlevel' command.
- * Load the new level into the reverb group.
+ * Load the new level into the reverb fx group.
  * Example: rev_setlevel 1 0.5
- * load level 0.5 in the reverb group at index 1.
+ * load level 0.5 in the reverb fx group at index 1.
  */
 int
 fluid_handle_reverbsetlevel(void *data, int ac, char **av, fluid_ostream_t out)
@@ -1359,9 +1359,9 @@ fluid_handle_chorus_command(void *data, int ac, char **av, fluid_ostream_t out,
 
     FLUID_ENTRY_COMMAND(data);
 
-    /* get and check index group argument */
-    int group = check_fx_unit_idx(ac, av, out, handler->synth, name_cde[param]);
-    if( group >= -1)
+    /* get and check index fx group index argument */
+    int fx_group = check_fx_unit_idx(ac, av, out, handler->synth, name_cde[param]);
+    if( fx_group >= -1)
     {
         double value;
         /* get and check value argument */
@@ -1383,7 +1383,7 @@ fluid_handle_chorus_command(void *data, int ac, char **av, fluid_ostream_t out,
             value = atof(av[ac]);
         }
 
-        fluid_synth_chorus_set_param(handler->synth, group, param, value);
+        fluid_synth_chorus_set_param(handler->synth, fx_group, param, value);
         return FLUID_OK;
     }
     return FLUID_FAILED;
@@ -1391,9 +1391,9 @@ fluid_handle_chorus_command(void *data, int ac, char **av, fluid_ostream_t out,
 
 /* Purpose:
  * Response to 'cho_set_nr' command
- * Load the new voice count into the chorus group.
+ * Load the new voice count into the chorus fx group.
  * Example: cho_set_nr 1 3
- * load 3 voices in the chorus group at index 1.
+ * load 3 voices in the chorus fx group at index 1.
  */
 int
 fluid_handle_chorusnr(void *data, int ac, char **av, fluid_ostream_t out)
@@ -1404,7 +1404,7 @@ fluid_handle_chorusnr(void *data, int ac, char **av, fluid_ostream_t out)
 /* Purpose:
  * Response to 'cho_setlevel' command
  * Example: cho_set_level 1 3
- * load level 3 in the chorus group at index 1.
+ * load level 3 in the chorus fx group at index 1.
  */
 int
 fluid_handle_choruslevel(void *data, int ac, char **av, fluid_ostream_t out)
@@ -1415,7 +1415,7 @@ fluid_handle_choruslevel(void *data, int ac, char **av, fluid_ostream_t out)
 /* Purpose:
  * Response to 'cho_setspeed' command
  * Example: cho_set_speed 1 0.1
- * load speed 0.1 in the chorus group at index 1.
+ * load speed 0.1 in the chorus fx group at index 1.
  */
 int
 fluid_handle_chorusspeed(void *data, int ac, char **av, fluid_ostream_t out)
@@ -1426,7 +1426,7 @@ fluid_handle_chorusspeed(void *data, int ac, char **av, fluid_ostream_t out)
 /* Purpose:
  * Response to 'cho_setdepth' command
  * Example: cho_set_depth 1 0.3
- * load depth 0.3 in the chorus group at index 1.
+ * load depth 0.3 in the chorus fx group at index 1.
  */
 int
 fluid_handle_chorusdepth(void *data, int ac, char **av, fluid_ostream_t out)

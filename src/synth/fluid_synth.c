@@ -5455,7 +5455,7 @@ int fluid_synth_set_reverb_level(fluid_synth_t *synth, double level)
 /**
  * Set reverb parameters to one fx unit.
  * @param synth FluidSynth instance.
- * @param group index of the fx group to which parameters must be set.
+ * @param fx_group index of the fx group to which parameters must be set.
  *  must be in the range [-1..synth->effects_groups[. If -1 the changes are
  *  applied to all fx groups.
  * @param enum indicating the parameter to set.
@@ -5467,8 +5467,8 @@ int fluid_synth_set_reverb_level(fluid_synth_t *synth, double level)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int
-fluid_synth_reverb_set_param(fluid_synth_t *synth, int group, enum fluid_reverb_param param,
-                             double value)
+fluid_synth_reverb_set_param(fluid_synth_t *synth, int fx_group,
+                             enum fluid_reverb_param param, double value)
 {
     double values[FLUID_REVERB_PARAM_LAST] = {0.0};
     static const fluid_revmodel_set_t sets[FLUID_REVERB_PARAM_LAST] =
@@ -5479,7 +5479,7 @@ fluid_synth_reverb_set_param(fluid_synth_t *synth, int group, enum fluid_reverb_
 
     fluid_return_val_if_fail((param >= 0) && (param < FLUID_REVERB_PARAM_LAST), FLUID_FAILED);
     values[param] = value;
-    return fluid_synth_set_reverb_full(synth, group, sets[param],
+    return fluid_synth_set_reverb_full(synth, fx_group, sets[param],
                                        values[FLUID_REVERB_ROOMSIZE],
                                        values[FLUID_REVERB_DAMP],
                                        values[FLUID_REVERB_WIDTH],
@@ -5489,7 +5489,7 @@ fluid_synth_reverb_set_param(fluid_synth_t *synth, int group, enum fluid_reverb_
 /**
  * Set one or more reverb parameters.
  * @param synth FluidSynth instance
- * @param group index of the fx group to which parameters must be set.
+ * @param fx_group index of the fx group to which parameters must be set.
  *  must be in the range [-1..synth->effects_groups[. If -1 the changes are applied to
  *  all fx groups.
  * @param set Flags indicating which parameters should be set (#fluid_revmodel_set_t)
@@ -5500,7 +5500,7 @@ fluid_synth_reverb_set_param(fluid_synth_t *synth, int group, enum fluid_reverb_
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int
-fluid_synth_set_reverb_full(fluid_synth_t *synth, int group, int set,
+fluid_synth_set_reverb_full(fluid_synth_t *synth, int fx_group, int set,
                             double roomsize, double damping, double width, double level)
 {
     int ret;
@@ -5512,16 +5512,17 @@ fluid_synth_set_reverb_full(fluid_synth_t *synth, int group, int set,
 
     fluid_synth_api_enter(synth);
 
-    /* fx group shadow values are set here so that they will be returned if queried */
-    ret = fluid_rvoice_mixer_set_reverb_full(synth->eventhandler->mixer, group,
-                                             set, roomsize, damping, width, level);
-    if(ret == FLUID_FAILED)
+    if(fx_group  < -1 || fx_group >= synth->effects_groups)
     {
         FLUID_API_RETURN(FLUID_FAILED);
     }
 
+    /* fx group shadow values are set here so that they will be returned if queried */
+    fluid_rvoice_mixer_set_reverb_full(synth->eventhandler->mixer, fx_group,
+                                       set, roomsize, damping, width, level);
+
     /* Synth shadow values are set here so that they will be returned if queried */
-    if (group < 0)
+    if (fx_group < 0)
     {
         if(set & FLUID_REVMODEL_SET_ROOMSIZE)
         {
@@ -5544,7 +5545,7 @@ fluid_synth_set_reverb_full(fluid_synth_t *synth, int group, int set,
         }
 	}
 
-    param[0].i = group;
+    param[0].i = fx_group;
     param[1].i = set;
     param[2].real = roomsize;
     param[3].real = damping;
@@ -5617,7 +5618,7 @@ fluid_synth_get_reverb_width(fluid_synth_t *synth)
 /**
  * Get reverb parameter value of one fx group.
  * @param synth FluidSynth instance
- * @param group index of the fx group to get parameter value from.
+ * @param fx_group index of the fx group to get parameter value from.
  *  must be in the range [-1..synth->effects_groups[. If -1 get the
  *  parameter common to all fx groups.
  * @param enum indicating the parameter to get.
@@ -5628,7 +5629,7 @@ fluid_synth_get_reverb_width(fluid_synth_t *synth)
  * @param value pointer on the value to return.
  * @return FLUID_OK if success, FLUID_FAILED otherwise.
  */
-int fluid_synth_reverb_get_param(fluid_synth_t *synth, int group,
+int fluid_synth_reverb_get_param(fluid_synth_t *synth, int fx_group,
                                  enum fluid_reverb_param param, double *value)
 {
     fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
@@ -5636,21 +5637,21 @@ int fluid_synth_reverb_get_param(fluid_synth_t *synth, int group,
     fluid_return_val_if_fail(value != NULL, FLUID_FAILED);
     fluid_synth_api_enter(synth);
 
-    if(group  < -1 || group >= synth->effects_groups)
+    if(fx_group  < -1 || fx_group >= synth->effects_groups)
     {
         FLUID_API_RETURN(FLUID_FAILED);
     }
 
-    if (group < 0)
+    if (fx_group < 0)
     {
         /* return reverb param common to all fx groups */
         *value = synth->reverb_param[param];
     }
     else
     {
-        /* return reverb param of fx group at index group */
+        /* return reverb param of fx group at index fx_group */
         *value = fluid_rvoice_mixer_reverb_get_param(synth->eventhandler->mixer,
-                                                     group, param);
+                                                     fx_group, param);
     }
 
     FLUID_API_RETURN(FLUID_OK);
@@ -5748,7 +5749,7 @@ int fluid_synth_set_chorus_type(fluid_synth_t *synth, int type)
 /**
  * Set chorus parameters to one fx unit.
  * @param synth FluidSynth instance.
- * @param group index of the fx group to which parameters must be set.
+ * @param fx_group index of the fx group to which parameters must be set.
  *  must be in the range [-1..synth->effects_groups[. If -1 the changes are
  *  applied to all fx groups.
  * @param enum indicating the parameter to set.
@@ -5763,7 +5764,7 @@ int fluid_synth_set_chorus_type(fluid_synth_t *synth, int type)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise.
  */
 int
-fluid_synth_chorus_set_param(fluid_synth_t *synth, int group, enum fluid_chorus_param param,
+fluid_synth_chorus_set_param(fluid_synth_t *synth, int fx_group, enum fluid_chorus_param param,
                              double value)
 {
     double values[FLUID_CHORUS_PARAM_LAST] = {0.0};
@@ -5776,7 +5777,7 @@ fluid_synth_chorus_set_param(fluid_synth_t *synth, int group, enum fluid_chorus_
 
     fluid_return_val_if_fail((param >= 0) && (param < FLUID_CHORUS_PARAM_LAST), FLUID_FAILED);
     values[param] = value;
-    return fluid_synth_set_chorus_full(synth, group, sets[param],
+    return fluid_synth_set_chorus_full(synth, fx_group, sets[param],
                                        (int)values[FLUID_CHORUS_NR],
                                        values[FLUID_CHORUS_LEVEL],
                                        values[FLUID_CHORUS_SPEED],
@@ -5788,7 +5789,7 @@ fluid_synth_chorus_set_param(fluid_synth_t *synth, int group, enum fluid_chorus_
  * Set one or more parameters for a chorus fx group
  */
 int
-fluid_synth_set_chorus_full(fluid_synth_t *synth, int group, int set, int nr, double level,
+fluid_synth_set_chorus_full(fluid_synth_t *synth, int fx_group, int set, int nr, double level,
                             double speed, double depth_ms, int type)
 {
     int ret;
@@ -5800,16 +5801,17 @@ fluid_synth_set_chorus_full(fluid_synth_t *synth, int group, int set, int nr, do
 
     fluid_synth_api_enter(synth);
 
-    /* fx group shadow values are set here so that they will be returned if queried */
-    ret = fluid_rvoice_mixer_set_chorus_full(synth->eventhandler->mixer, group,
-                                             set, nr, level, speed, depth_ms, type);
-    if(ret == FLUID_FAILED)
+    if(fx_group  < -1 || fx_group >= synth->effects_groups)
     {
         FLUID_API_RETURN(FLUID_FAILED);
     }
 
+    /* fx group shadow values are set here so that they will be returned if queried */
+    fluid_rvoice_mixer_set_chorus_full(synth->eventhandler->mixer, fx_group,
+                                       set, nr, level, speed, depth_ms, type);
+
     /* Synth shadow values are set here so that they will be returned if queried */
-    if (group < 0)
+    if (fx_group < 0)
     {
         if(set & FLUID_CHORUS_SET_NR)
         {
@@ -5837,7 +5839,7 @@ fluid_synth_set_chorus_full(fluid_synth_t *synth, int group, int set, int nr, do
         }
     }
 
-    param[0].i = group;
+    param[0].i = fx_group;
     param[1].i = set;
     param[2].i = nr;
     param[3].real = level;
@@ -5925,7 +5927,7 @@ fluid_synth_get_chorus_type(fluid_synth_t *synth)
 /**
  * Get chorus parameter value of one fx group.
  * @param synth FluidSynth instance
- * @param group index of the fx group to get parameter value from.
+ * @param fx_group index of the fx group to get parameter value from.
  *  must be in the range [-1..synth->effects_groups[. If -1 get the
  *  parameter common to all fx groups.
  * @param enum indicating the parameter to get.
@@ -5937,7 +5939,7 @@ fluid_synth_get_chorus_type(fluid_synth_t *synth)
  * @param value pointer on the value to return.
  * @return FLUID_OK if success, FLUID_FAILED otherwise.
  */
-int fluid_synth_chorus_get_param(fluid_synth_t *synth, int group,
+int fluid_synth_chorus_get_param(fluid_synth_t *synth, int fx_group,
                                  enum fluid_chorus_param param, double *value)
 {
     fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
@@ -5945,12 +5947,12 @@ int fluid_synth_chorus_get_param(fluid_synth_t *synth, int group,
     fluid_return_val_if_fail(value != NULL, FLUID_FAILED);
     fluid_synth_api_enter(synth);
 
-    if(group  < -1 || group >= synth->effects_groups)
+    if(fx_group  < -1 || fx_group >= synth->effects_groups)
     {
         FLUID_API_RETURN(FLUID_FAILED);
     }
 
-    if (group < 0)
+    if (fx_group < 0)
     {
         /* return chorus param common to all fx groups */
         *value = synth->chorus_param[param];
@@ -5959,7 +5961,7 @@ int fluid_synth_chorus_get_param(fluid_synth_t *synth, int group,
     {
         /* return chorus param of fx group at index group */
         *value = fluid_rvoice_mixer_chorus_get_param(synth->eventhandler->mixer,
-                                                     group, param);
+                                                     fx_group, param);
     }
 
     FLUID_API_RETURN(FLUID_OK);
