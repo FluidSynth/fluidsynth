@@ -1098,7 +1098,7 @@ fluid_handle_reverbpreset(void *data, int ac, char **av, fluid_ostream_t out)
   0 to synth->effects_groups-1, when the command is for this group index.
   -2 if error.
 */
-static int check_fx_unit_idx(int ac, char **av, fluid_ostream_t out,
+static int check_fx_group_idx(int ac, char **av, fluid_ostream_t out,
                              fluid_synth_t *synth, const char *name_cde)
 {
     int fx_group, ngroups; /* fx unit index, count of fx groups */
@@ -1150,7 +1150,7 @@ static int check_fx_reverb_param(int ac, char **av, fluid_ostream_t out,
                        fluid_real_t *param)
 {
     /* get and check fx group index argument */
-    int fx_group = check_fx_unit_idx(ac, av, out, synth, name_cde);
+    int fx_group = check_fx_group_idx(ac, av, out, synth, name_cde);
     if(fx_group >= -1)
     {
         fluid_real_t val;
@@ -1218,7 +1218,7 @@ fluid_handle_reverb_command(void *data, int ac, char **av, fluid_ostream_t out,
                                 &values[FLUID_REVERB_LEVEL].min,
                                 &values[FLUID_REVERB_LEVEL].max);
 
-	/* get and check command arguments */
+    /* get and check command arguments */
     fx_group = check_fx_reverb_param(ac, av, out, handler->synth,
                                      name_cde[param], &values[param], &value);
 
@@ -1360,7 +1360,7 @@ fluid_handle_chorus_command(void *data, int ac, char **av, fluid_ostream_t out,
     FLUID_ENTRY_COMMAND(data);
 
     /* get and check index fx group index argument */
-    int fx_group = check_fx_unit_idx(ac, av, out, handler->synth, name_cde[param]);
+    int fx_group = check_fx_group_idx(ac, av, out, handler->synth, name_cde[param]);
     if( fx_group >= -1)
     {
         double value;
