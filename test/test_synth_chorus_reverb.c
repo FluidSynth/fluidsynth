@@ -2,7 +2,7 @@
 #include "test.h"
 #include "fluidsynth.h"
 
-// this test should make sure that sample rate changed are handled correctly
+// this test should make sure that effects change (reverb, chorus) are handled correctly
 int main(void)
 {
     fluid_synth_t *synth;
