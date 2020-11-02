@@ -1592,6 +1592,7 @@ fluid_track_send_events(fluid_track_t *track,
 
         if(!player || event->type == MIDI_EOT)
         {
+            /* don't send EOT events to the callback */
         }
         else if(seeking && track->ticks != ticks && (event->type == NOTE_ON || event->type == NOTE_OFF))
         {
@@ -1605,7 +1606,7 @@ fluid_track_send_events(fluid_track_t *track,
             }
         }
 
-        if(event->type == MIDI_SET_TEMPO)
+        if(event->type == MIDI_SET_TEMPO && player != NULL)
         {
             fluid_player_set_midi_tempo(player, event->param1);
         }

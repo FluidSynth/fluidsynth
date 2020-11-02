@@ -74,6 +74,8 @@ What is FluidSynth?
 \section NewIn2_2_0 What's new in 2.2.0?
 
 - #fluid_file_callbacks_t now uses <code>long long</code> as file-offset type (see #fluid_long_long_t). This is a breaking change, which allows to load SoundFonts bigger than 2GiB on Windows. This change required to bump fluidsynth's SOVERSION.
+- fluid_event_any_control_change() has been removed
+- various fluid_event_*() functions that received a "value" argument of type <code>short</code> now receive an <code>int</code> argument in preparation for MIDI 2.0 support
 - The sequencer has received a major revisal. For you that means:
   - The sequencer's queue no longer blocks the synthesizer thread, due to being busy arranging its events internally.
   - Events that share the same tick was given a new, documented order, see fluid_sequencer_send_at().
@@ -754,7 +756,15 @@ The shell interface allows you to send simple textual commands to the synthesize
 
 \section Multi-channel Multi-Channel audio rendering
 
-FluidSynth is capable of rendering all audio and all effects from all MIDI channels to separate stero buffers. Refer to the documentation of fluid_synth_process() and review the different use-cases in the example file for information on how to do that: \ref fluidsynth_process.c
+FluidSynth is capable of rendering all audio and all effects from all MIDI channels to separate stereo buffers. Refer to the documentation of fluid_synth_process() and review the different use-cases in the example file for information on how to do that: \ref fluidsynth_process.c
+
+The following chart illustrates how the voices (produced by MIDI NoteOns) are dispatched or mapped to their dry/effects audio buffers.
+
+\htmlonly
+<a href="FluidMixer.pdf">
+<img src="FluidMixer.jpg" alt="FluidSynth Mixer Chart">
+</a>
+\endhtmlonly
 
 \section synth-context Understanding the "synthesis context"
 

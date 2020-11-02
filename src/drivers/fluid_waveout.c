@@ -27,8 +27,11 @@
 
 #include <mmsystem.h>
 
-#define NOBITMAP
 #include <mmreg.h>
+
+/* Those two includes are required on Windows 9x/ME */
+#include <ks.h>
+#include <ksmedia.h>
 
 /* Number of buffers in the chain */
 #define NB_SOUND_BUFFERS    4
@@ -44,6 +47,8 @@
 */
 /* Maximum number of stereo outputs */
 #define WAVEOUT_MAX_STEREO_CHANNELS 4
+
+static char *fluid_waveout_error(MMRESULT hr);
 
 /* speakers mapping */
 const static DWORD channel_mask_speakers[WAVEOUT_MAX_STEREO_CHANNELS] =
@@ -145,7 +150,7 @@ static DWORD WINAPI fluid_waveout_synth_thread(void *data)
 
         if(code < 0)
         {
-            FLUID_LOG(FLUID_ERR, "fluid_waveout_synth_thread: GetMessage() failed.");
+            FLUID_LOG(FLUID_ERR, "fluid_waveout_synth_thread: GetMessage() failed: '%s'", fluid_get_windows_error());
             break;
         }
 
@@ -282,6 +287,7 @@ new_fluid_waveout_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
         sample_size = sizeof(float);
         write_ptr = fluid_synth_write_float_channels;
         wfx.SubFormat = guid_float;
+        wfx.Format.wFormatTag = WAVE_FORMAT_IEEE_FLOAT;
     }
     else if(fluid_settings_str_equal(settings, "audio.sample-format", "16bits"))
     {
@@ -291,6 +297,7 @@ new_fluid_waveout_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
         sample_size = sizeof(short);
         write_ptr = fluid_synth_write_s16_channels;
         wfx.SubFormat = guid_pcm;
+        wfx.Format.wFormatTag = WAVE_FORMAT_PCM;
     }
     else
     {
@@ -304,7 +311,7 @@ new_fluid_waveout_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
     /* Initialize the format structure */
     wfx.Format.nChannels  = synth->audio_channels * 2;
 
-    if(synth->audio_groups > WAVEOUT_MAX_STEREO_CHANNELS)
+    if(synth->audio_channels > WAVEOUT_MAX_STEREO_CHANNELS)
     {
         FLUID_LOG(FLUID_ERR, "Channels number %d exceed internal limit %d",
                   wfx.Format.nChannels, WAVEOUT_MAX_STEREO_CHANNELS * 2);
@@ -315,11 +322,21 @@ new_fluid_waveout_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
     wfx.Format.nBlockAlign     = sample_size * wfx.Format.nChannels;
     wfx.Format.nSamplesPerSec  = frequency;
     wfx.Format.nAvgBytesPerSec = frequency * wfx.Format.nBlockAlign;
-    /* extension */
-    wfx.Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
-    wfx.Format.cbSize = 22;
-    wfx.Samples.wValidBitsPerSample = wfx.Format.wBitsPerSample;
-    wfx.dwChannelMask = channel_mask_speakers[synth->audio_groups - 1];
+
+    /* WAVEFORMATEXTENSIBLE extension is used only when channels number
+       is above 2.
+       When channels number is below 2, only WAVEFORMATEX structure
+       will be used by the Windows driver. This ensures compatibility with
+       Windows 9X/NT in the case these versions does not accept the
+       WAVEFORMATEXTENSIBLE structure.
+    */
+    if(wfx.Format.nChannels > 2)
+    {
+        wfx.Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
+        wfx.Format.cbSize = 22;
+        wfx.Samples.wValidBitsPerSample = wfx.Format.wBitsPerSample;
+        wfx.dwChannelMask = channel_mask_speakers[synth->audio_channels - 1];
+    }
 
     /* Calculate the length of a single buffer */
     lenBuffer = (MS_BUFFER_LENGTH * wfx.Format.nAvgBytesPerSec + 999) / 1000;
@@ -392,7 +409,7 @@ new_fluid_waveout_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
 
         if(dev->hQuit == NULL)
         {
-            FLUID_LOG(FLUID_ERR, "Failed to create quit event");
+            FLUID_LOG(FLUID_ERR, "Failed to create quit event: '%s'", fluid_get_windows_error());
             break;
         }
 
@@ -408,7 +425,7 @@ new_fluid_waveout_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
 
         if(dev->hThread == NULL)
         {
-            FLUID_LOG(FLUID_ERR, "Failed to create waveOut thread");
+            FLUID_LOG(FLUID_ERR, "Failed to create waveOut thread: '%s'", fluid_get_windows_error());
             break;
         }
 
@@ -421,7 +438,7 @@ new_fluid_waveout_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
 
         if(errCode != MMSYSERR_NOERROR)
         {
-            FLUID_LOG(FLUID_ERR, "Failed to open waveOut device");
+            FLUID_LOG(FLUID_ERR, "Failed to open waveOut device: '%s'", fluid_waveout_error(errCode));
             break;
         }
 
@@ -491,6 +508,44 @@ void delete_fluid_waveout_audio_driver(fluid_audio_driver_t *d)
     }
 
     HeapFree(GetProcessHeap(), 0, dev);
+}
+
+static char *fluid_waveout_error(MMRESULT hr)
+{
+    char *s = "Don't know why";
+
+    switch(hr)
+    {
+    case MMSYSERR_NOERROR:
+        s = "The operation completed successfully :)";
+        break;
+
+    case MMSYSERR_ALLOCATED:
+        s = "Specified resource is already allocated.";
+        break;
+
+    case MMSYSERR_BADDEVICEID:
+        s = "Specified device identifier is out of range";
+        break;
+
+    case MMSYSERR_NODRIVER:
+        s = "No device driver is present";
+        break;
+
+    case MMSYSERR_NOMEM:
+        s = "Unable to allocate or lock memory";
+        break;
+
+    case WAVERR_BADFORMAT:
+        s = "Attempted to open with an unsupported waveform-audio format";
+        break;
+
+    case WAVERR_SYNC:
+        s = "The device is synchronous but waveOutOpen was called without using the WAVE_ALLOWSYNC flag";
+        break;
+    }
+
+    return s;
 }
 
 #endif /* WAVEOUT_SUPPORT */

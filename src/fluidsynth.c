@@ -735,7 +735,6 @@ int main(int argc, char **argv)
             print_configure();
             result = 0;
             goto cleanup;
-            break;
 
         case 'v':
             fluid_settings_setint(settings, "synth.verbose", TRUE);
@@ -754,7 +753,6 @@ int main(int argc, char **argv)
             printf("Unknown option %c\n", optopt);
             print_usage();
             goto cleanup;
-            break;
 
         default:
             printf("?? getopt returned character code 0%o ??\n", c);
@@ -765,7 +763,6 @@ int main(int argc, char **argv)
             printf("Unknown switch '%c'\n", c);
             print_usage();
             goto cleanup;
-            break;
 #endif
         }	/* end of switch statement */
     }	/* end of loop */
@@ -1145,6 +1142,11 @@ print_help(fluid_settings_t *settings)
 
     printf("Usage: \n");
     printf("  fluidsynth [options] [soundfonts] [midifiles]\n");
+#ifndef GETOPT_SUPPORT
+    printf("\nNote:"
+           "\n  This version of fluidsynth was compiled without getopt support."
+           "\n  Thus, the long options are not supported.\n\n");
+#endif
     printf("Possible options:\n");
     printf(" -a, --audio-driver=[label]\n"
            "    The name of the audio driver to use.\n"

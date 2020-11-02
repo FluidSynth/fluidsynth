@@ -107,7 +107,3 @@ script:
     - make install
     - cd ..
     - ${SONARSC}
-
-cache:
-  directories:
-    - '$HOME/.sonar/cache'

@@ -167,6 +167,9 @@ typedef gintptr  intptr_t;
  */
 #define fluid_gerror_message(err)  ((err) ? err->message : "No error details")
 
+#ifdef WIN32
+char* fluid_get_windows_error(void);
+#endif
 
 #define FLUID_INLINE              inline
 

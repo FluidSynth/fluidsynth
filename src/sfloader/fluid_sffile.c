@@ -300,11 +300,11 @@ static int load_body(SFData *sf);
 static int process_info(SFData *sf, int size);
 static int process_sdta(SFData *sf, unsigned int size);
 static int process_pdta(SFData *sf, int size);
-static int load_phdr(SFData *sf, int size);
+static int load_phdr(SFData *sf, unsigned int size);
 static int load_pbag(SFData *sf, int size);
 static int load_pmod(SFData *sf, int size);
 static int load_pgen(SFData *sf, int size);
-static int load_ihdr(SFData *sf, int size);
+static int load_ihdr(SFData *sf, unsigned int size);
 static int load_ibag(SFData *sf, int size);
 static int load_imod(SFData *sf, int size);
 static int load_igen(SFData *sf, int size);
@@ -1047,9 +1047,10 @@ static int process_pdta(SFData *sf, int size)
 }
 
 /* preset header loader */
-static int load_phdr(SFData *sf, int size)
+static int load_phdr(SFData *sf, unsigned int size)
 {
-    int i, i2;
+    unsigned int i;
+    int i2;
     SFPreset *preset, *prev_preset = NULL;
     unsigned short pbag_idx, prev_pbag_idx = 0;
 
@@ -1572,9 +1573,10 @@ static int load_pgen(SFData *sf, int size)
 }
 
 /* instrument header loader */
-static int load_ihdr(SFData *sf, int size)
+static int load_ihdr(SFData *sf, unsigned int size)
 {
-    int i, i2;
+    unsigned int i;
+    int i2;
     SFInst *p, *pr = NULL; /* ptr to current & previous instrument */
     unsigned short zndx, pzndx = 0;
 

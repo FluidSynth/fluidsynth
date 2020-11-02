@@ -27,13 +27,14 @@
 
 #if DSOUND_SUPPORT
 
-#define INITGUID
 
 #include <mmsystem.h>
 #include <dsound.h>
-
-#define NOBITMAP
 #include <mmreg.h>
+
+/* Those two includes are required on Windows 9x/ME */
+#include <ks.h>
+#include <ksmedia.h>
 
 static DWORD WINAPI fluid_dsound_audio_run(LPVOID lpParameter);
 
@@ -238,7 +239,7 @@ new_fluid_dsound_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
     /* number of channels in a frame */
     format.Format.nChannels = synth->audio_channels * 2;
 
-    if(synth->audio_groups > DSOUND_MAX_STEREO_CHANNELS)
+    if(synth->audio_channels > DSOUND_MAX_STEREO_CHANNELS)
     {
         FLUID_LOG(FLUID_ERR, "Channels number %d exceed internal limit %d",
                   format.Format.nChannels, DSOUND_MAX_STEREO_CHANNELS * 2);
@@ -260,7 +261,7 @@ new_fluid_dsound_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
         /* CreateSoundBuffer accepts only format.dwChannelMask compatible with
            format.Format.nChannels
         */
-        format.dwChannelMask = channel_mask_speakers[synth->audio_groups - 1];
+        format.dwChannelMask = channel_mask_speakers[synth->audio_channels - 1];
     }
 
     /* Finish to initialize dev structure */
@@ -295,7 +296,7 @@ new_fluid_dsound_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
 
     if(hr != DS_OK)
     {
-        FLUID_LOG(FLUID_ERR, "Failed to create the DirectSound object");
+        FLUID_LOG(FLUID_ERR, "Failed to create the DirectSound object: '%s'", fluid_win32_error(hr));
         goto error_recovery;
     }
 
@@ -303,7 +304,7 @@ new_fluid_dsound_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
 
     if(hr != DS_OK)
     {
-        FLUID_LOG(FLUID_ERR, "Failed to set the cooperative level");
+        FLUID_LOG(FLUID_ERR, "Failed to set the cooperative level: '%s'", fluid_win32_error(hr));
         goto error_recovery;
     }
 
@@ -312,7 +313,7 @@ new_fluid_dsound_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
 
     if(hr != DS_OK)
     {
-        FLUID_LOG(FLUID_ERR, "Failed to query the device capacities");
+        FLUID_LOG(FLUID_ERR, "Failed to query the device capacities: '%s'", fluid_win32_error(hr));
         goto error_recovery;
     }
 
@@ -331,7 +332,7 @@ new_fluid_dsound_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
 
     if(hr != DS_OK)
     {
-        FLUID_LOG(FLUID_ERR, "Failed to allocate the primary buffer");
+        FLUID_LOG(FLUID_ERR, "Failed to allocate the primary buffer: '%s'", fluid_win32_error(hr));
         goto error_recovery;
     }
 
@@ -341,7 +342,7 @@ new_fluid_dsound_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
 
     if(hr != DS_OK)
     {
-        FLUID_LOG(FLUID_WARN, "Can't set format of primary sound buffer: %s", fluid_win32_error(hr));
+        FLUID_LOG(FLUID_WARN, "Can't set format of primary sound buffer: '%s'", fluid_win32_error(hr));
     }
 
     /* initialize the buffer description */
@@ -367,7 +368,7 @@ new_fluid_dsound_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
 
     if(hr != DS_OK)
     {
-        FLUID_LOG(FLUID_ERR, "dsound: Can't create sound buffer: %s", fluid_win32_error(hr));
+        FLUID_LOG(FLUID_ERR, "dsound: Can't create sound buffer: '%s'", fluid_win32_error(hr));
         goto error_recovery;
     }
 
@@ -377,7 +378,7 @@ new_fluid_dsound_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
 
     if((hr != DS_OK) || (buf1 == NULL))
     {
-        FLUID_LOG(FLUID_PANIC, "Failed to lock the audio buffer. Exiting.");
+        FLUID_LOG(FLUID_PANIC, "Failed to lock the audio buffer: '%s'", fluid_win32_error(hr));
         goto error_recovery;
     }
 
@@ -392,6 +393,7 @@ new_fluid_dsound_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
 
     if(dev->quit_ev == NULL)
     {
+        FLUID_LOG(FLUID_ERR, "Failed to create quit Event: '%s'", fluid_get_windows_error());
         goto error_recovery;
     }
 
@@ -400,6 +402,7 @@ new_fluid_dsound_audio_driver(fluid_settings_t *settings, fluid_synth_t *synth)
 
     if(dev->thread == NULL)
     {
+        FLUID_LOG(FLUID_ERR, "Failed to create DSound audio thread: '%s'", fluid_get_windows_error());
         goto error_recovery;
     }
 
@@ -543,7 +546,7 @@ static DWORD WINAPI fluid_dsound_audio_run(LPVOID lpParameter)
             if((res != DS_OK) || (buf1 == NULL))
             {
                 FLUID_LOG(FLUID_PANIC, "Failed to lock the audio buffer. System lockup might follow. Exiting.");
-                ExitProcess(0);
+                ExitProcess((UINT)-1);
             }
 
             /* fill the first part of the buffer */

@@ -43,6 +43,9 @@ extern "C" {
 #elif defined(MACOS9)
 #define FLUIDSYNTH_API __declspec(export)
 
+#elif defined(__OS2__)
+#define FLUIDSYNTH_API __declspec(dllexport)
+
 #elif defined(__GNUC__)
 #define FLUIDSYNTH_API __attribute__ ((visibility ("default")))
 
