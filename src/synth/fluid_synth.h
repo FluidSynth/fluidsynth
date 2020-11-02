@@ -138,10 +138,8 @@ struct _fluid_synth_t
     int fromkey_portamento;			 /**< fromkey portamento */
     fluid_rvoice_eventhandler_t *eventhandler;
 
-    double reverb_roomsize;             /**< Shadow of reverb roomsize */
-    double reverb_damping;              /**< Shadow of reverb damping */
-    double reverb_width;                /**< Shadow of reverb width */
-    double reverb_level;                /**< Shadow of reverb level */
+    /**< Shadow of reverb parameter: roomsize, damping, width, level */
+    double reverb_param[FLUID_REVERB_PARAM_LAST];
 
     int chorus_nr;                     /**< Shadow of chorus number */
     double chorus_level;                /**< Shadow of chorus level */

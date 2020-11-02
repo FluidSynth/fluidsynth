@@ -78,10 +78,7 @@ struct _fluid_mixer_fx_t
 {
     fluid_revmodel_t *reverb; /**< Reverb unit */
     /* reverb shadow parameters here will be returned if queried */
-    double reverb_roomsize;
-    double reverb_damping;
-    double reverb_width;
-    double reverb_level;
+    double reverb_param[FLUID_REVERB_PARAM_LAST];
 
     fluid_chorus_t *chorus; /**< Chorus unit */
     /* chorus shadow parameters here will be returned if queried */
@@ -881,7 +878,7 @@ void delete_fluid_rvoice_mixer(fluid_rvoice_mixer_t *mixer)
 /**
  * set one or more reverb shadow parameters for one fx group.
  * These parameters will be returned if queried.
- * (see fluid_rvoice_mixer_get_reverb_param())
+ * (see fluid_rvoice_mixer_reverb_get_param())
  *
  * @param mixer that contains all fx units.
  * @param group index of the fx group to which parameters must be set.
@@ -920,22 +917,22 @@ fluid_rvoice_mixer_set_reverb_full(const fluid_rvoice_mixer_t *mixer,
     {
         if(set & FLUID_REVMODEL_SET_ROOMSIZE)
         {
-            fx[group].reverb_roomsize = roomsize;
+            fx[group].reverb_param[FLUID_REVERB_ROOMSIZE] = roomsize;
         }
 
         if(set & FLUID_REVMODEL_SET_DAMPING)
         {
-            fx[group].reverb_damping = damping;
+            fx[group].reverb_param[FLUID_REVERB_DAMP] = damping;
         }
 
         if(set & FLUID_REVMODEL_SET_WIDTH)
         {
-            fx[group].reverb_width = width;
+            fx[group].reverb_param[FLUID_REVERB_WIDTH] = width;
         }
 
         if(set & FLUID_REVMODEL_SET_LEVEL)
         {
-            fx[group].reverb_level = level;
+            fx[group].reverb_param[FLUID_REVERB_LEVEL] = level;
         }
     }
 
@@ -949,43 +946,18 @@ fluid_rvoice_mixer_set_reverb_full(const fluid_rvoice_mixer_t *mixer,
  * @param mixer that contains all fx units.
  * @param group index of the fx group to get parameter from.
  *  must be in the range [0..mixer->fx_units[.
- * @param get Flags indicating which parameter to get (#fluid_revmodel_set_t)
- * @return the parameter value (0.0 is returned if error)
+ * @param enum indicating the parameter to get.
+ *  FLUID_REVERB_ROOMSIZE, reverb room size value.
+ *  FLUID_REVERB_DAMP, reverb damping value.
+ *  FLUID_REVERB_WIDTH, reverb width value.
+ *  FLUID_REVERB_LEVEL, reverb level value.
+ * @return value.
  */
 double
-fluid_rvoice_mixer_get_reverb_param(const fluid_rvoice_mixer_t *mixer,
-                                    int group, int get)
+fluid_rvoice_mixer_reverb_get_param(const fluid_rvoice_mixer_t *mixer,
+                                    int group, enum fluid_reverb_param param)
 {
-    const fluid_mixer_fx_t *fx;
-
-    if(group  < 0 || group >= mixer->fx_units)
-    {
-        return 0.0;
-    }
-
-    fx = mixer->fx;
-
-    if(get ==  FLUID_REVMODEL_SET_ROOMSIZE)
-    {
-        return fx[group].reverb_roomsize;
-    }
-
-    if(get == FLUID_REVMODEL_SET_DAMPING)
-    {
-        return fx[group].reverb_damping;
-    }
-
-    if(get == FLUID_REVMODEL_SET_WIDTH)
-    {
-        return fx[group].reverb_width;
-    }
-
-    if(get == FLUID_REVMODEL_SET_LEVEL)
-    {
-        return fx[group].reverb_level;
-    }
-
-    return 0.0;
+    return mixer->fx[group].reverb_param[param];
 }
 
 /**

@@ -1184,55 +1184,48 @@ enum reverb_cde
  */
 static int
 fluid_handle_reverb_command(void *data, int ac, char **av, fluid_ostream_t out,
-                            enum reverb_cde cde )
+                            enum fluid_reverb_param param )
 {
     int group;
 
     /* reverb commands name table */
-    static const char *name_cde[NBR_REVERB_CDE] =
+    static const char *name_cde[FLUID_REVERB_PARAM_LAST] =
     {"rev_setroomsize", "rev_setdamp", "rev_setwidth", "rev_setlevel"};
 
     /* name and min/max values table */
-    static struct value values[NBR_REVERB_CDE] =
+    static struct value values[FLUID_REVERB_PARAM_LAST] =
     {
         {"room size"}, {"damp"}, {"width"}, {"level"}
-    };
-
-    /* reverb functions table */
-    static int (*reverb_func[NBR_REVERB_CDE]) (fluid_synth_t *, int, double) =
-    {
-        fluid_synth_set_reverb_group_roomsize, fluid_synth_set_reverb_group_damp,
-        fluid_synth_set_reverb_group_width, fluid_synth_set_reverb_group_level
     };
 
     FLUID_ENTRY_COMMAND(data);
     fluid_real_t value;
 
     fluid_settings_getnum_range(handler->synth->settings, "synth.reverb.room-size",
-                                &values[REVERB_ROOMSIZE_CDE].min,
-                                &values[REVERB_ROOMSIZE_CDE].max);
+                                &values[FLUID_REVERB_ROOMSIZE].min,
+                                &values[FLUID_REVERB_ROOMSIZE].max);
 
     fluid_settings_getnum_range(handler->synth->settings, "synth.reverb.damp",
-                                &values[REVERB_DAMP_CDE].min,
-                                &values[REVERB_DAMP_CDE].max);
+                                &values[FLUID_REVERB_DAMP].min,
+                                &values[FLUID_REVERB_DAMP].max);
 
 
     fluid_settings_getnum_range(handler->synth->settings, "synth.reverb.width",
-                                &values[REVERB_WIDTH_CDE].min,
-                                &values[REVERB_WIDTH_CDE].max);
+                                &values[FLUID_REVERB_WIDTH].min,
+                                &values[FLUID_REVERB_WIDTH].max);
 
     fluid_settings_getnum_range(handler->synth->settings, "synth.reverb.level",
-                                &values[REVERB_LEVEL_CDE].min,
-                                &values[REVERB_LEVEL_CDE].max);
+                                &values[FLUID_REVERB_LEVEL].min,
+                                &values[FLUID_REVERB_LEVEL].max);
 
 	/* get and check command arguments */
     group = check_fx_reverb_param(ac, av, out, handler->synth,
-                                       name_cde[cde], &values[cde], &value);
+                                  name_cde[param], &values[param], &value);
 
     if(group >= -1)
     {
         /* run reverb function */
-        reverb_func[cde](handler->synth, group, value);
+        fluid_synth_reverb_set_param(handler->synth, group, param, value);
         return FLUID_OK;
     }
     return FLUID_FAILED;
@@ -1247,7 +1240,7 @@ fluid_handle_reverb_command(void *data, int ac, char **av, fluid_ostream_t out,
 int
 fluid_handle_reverbsetroomsize(void *data, int ac, char **av, fluid_ostream_t out)
 {
-    return fluid_handle_reverb_command(data, ac, av, out, REVERB_ROOMSIZE_CDE);
+    return fluid_handle_reverb_command(data, ac, av, out, FLUID_REVERB_ROOMSIZE);
 }
 
 /* Purpose:
@@ -1259,7 +1252,7 @@ fluid_handle_reverbsetroomsize(void *data, int ac, char **av, fluid_ostream_t ou
 int
 fluid_handle_reverbsetdamp(void *data, int ac, char **av, fluid_ostream_t out)
 {
-    return fluid_handle_reverb_command(data, ac, av, out, REVERB_DAMP_CDE);
+    return fluid_handle_reverb_command(data, ac, av, out, FLUID_REVERB_DAMP);
 }
 
 /* Purpose:
@@ -1271,7 +1264,7 @@ fluid_handle_reverbsetdamp(void *data, int ac, char **av, fluid_ostream_t out)
 int
 fluid_handle_reverbsetwidth(void *data, int ac, char **av, fluid_ostream_t out)
 {
-    return fluid_handle_reverb_command(data, ac, av, out, REVERB_WIDTH_CDE);
+    return fluid_handle_reverb_command(data, ac, av, out, FLUID_REVERB_WIDTH);
 }
 
 /* Purpose:
@@ -1283,7 +1276,7 @@ fluid_handle_reverbsetwidth(void *data, int ac, char **av, fluid_ostream_t out)
 int
 fluid_handle_reverbsetlevel(void *data, int ac, char **av, fluid_ostream_t out)
 {
-    return fluid_handle_reverb_command(data, ac, av, out, REVERB_LEVEL_CDE);
+    return fluid_handle_reverb_command(data, ac, av, out, FLUID_REVERB_LEVEL);
 }
 
 /* reverb/chorus on/off commands enum */

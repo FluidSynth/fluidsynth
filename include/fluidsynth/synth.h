@@ -122,7 +122,14 @@ FLUIDSYNTH_API int fluid_synth_get_bank_offset(fluid_synth_t *synth, int sfont_i
 
 
 /* Reverb  */
-
+enum fluid_reverb_param
+{
+    FLUID_REVERB_ROOMSIZE,  /**< reverb time */
+    FLUID_REVERB_DAMP,      /**< high frequency damping */
+    FLUID_REVERB_WIDTH,     /**< stereo width */
+    FLUID_REVERB_LEVEL,     /**< output level */
+    FLUID_REVERB_PARAM_LAST /**< @internal Value defines the count of reverb parameter (#fluid_reverb_param) @warning This symbol is not part of the public API and ABI stability guarantee and may change at any time! */
+};
 
 FLUID_DEPRECATED FLUIDSYNTH_API int fluid_synth_set_reverb(fluid_synth_t *synth, double roomsize,
                                           double damping, double width, double level);
@@ -137,18 +144,10 @@ FLUID_DEPRECATED FLUIDSYNTH_API double fluid_synth_get_reverb_damp(fluid_synth_t
 FLUID_DEPRECATED FLUIDSYNTH_API double fluid_synth_get_reverb_level(fluid_synth_t *synth);
 FLUID_DEPRECATED FLUIDSYNTH_API double fluid_synth_get_reverb_width(fluid_synth_t *synth);
 
-FLUIDSYNTH_API int fluid_synth_set_reverb_group(fluid_synth_t *synth, int group,
-                                                double roomsize, double damping, double width, double level);
-FLUIDSYNTH_API int fluid_synth_set_reverb_group_roomsize(fluid_synth_t *synth, int group, double roomsize);
-FLUIDSYNTH_API int fluid_synth_set_reverb_group_damp(fluid_synth_t *synth, int group, double damping);
-FLUIDSYNTH_API int fluid_synth_set_reverb_group_width(fluid_synth_t *synth, int group, double  width);
-FLUIDSYNTH_API int fluid_synth_set_reverb_group_level(fluid_synth_t *synth, int group, double level);
-
-FLUIDSYNTH_API double fluid_synth_get_reverb_group_roomsize(fluid_synth_t *synth, int group);
-FLUIDSYNTH_API double fluid_synth_get_reverb_group_damp(fluid_synth_t *synth, int group);
-FLUIDSYNTH_API double fluid_synth_get_reverb_group_level(fluid_synth_t *synth, int group);
-FLUIDSYNTH_API double fluid_synth_get_reverb_group_width(fluid_synth_t *synth, int group);
-
+FLUIDSYNTH_API int fluid_synth_reverb_set_param(fluid_synth_t *synth, int group, enum fluid_reverb_param param,
+                                                double value);
+FLUIDSYNTH_API int fluid_synth_reverb_get_param(fluid_synth_t *synth, int group,
+                                                enum fluid_reverb_param param, double *value);
 
 /* Chorus */
 

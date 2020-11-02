@@ -49,8 +49,8 @@ fluid_rvoice_mixer_set_reverb_full(const fluid_rvoice_mixer_t *mixer,
                                    double roomsize, double damping,
                                    double width, double level);
 double
-fluid_rvoice_mixer_get_reverb_param(const fluid_rvoice_mixer_t *mixer,
-                                    int group, int get);
+fluid_rvoice_mixer_reverb_get_param(const fluid_rvoice_mixer_t *mixer,
+                                    int group, enum fluid_reverb_param param);
 int
 fluid_rvoice_mixer_set_chorus_full(const fluid_rvoice_mixer_t *mixer,
                                    int group,
