@@ -128,7 +128,7 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             <def>1</def>
             <min>1</min>
             <max>128</max>
-            <desc>Specifies the number of effect units. By default, the sound of all voices is rendered by one reverb unit and one chorus unit respectively (even for multi-channel rendering). This setting gives the user control which effects of a voice to render to which independent audio channels. E.g. setting synth.effects-groups == synth.midi-channels allows to render the effects of each MIDI channel to separate audio buffers. If synth.effects-groups is smaller, it will wrap around. Note that any value >1 will significantly increase CPU usage.</desc>
+            <desc>Specifies the number of effects groups. By default, the sound of all voices is rendered by one reverb and one chorus effect respectively (even for multi-channel rendering). This setting gives the user control which effects of a voice to render to which independent audio channels. E.g. setting synth.effects-groups == synth.midi-channels allows to render the effects of each MIDI channel to separate audio buffers. If synth.effects-groups is smaller than the number of MIDI channels, it will wrap around. Note that any value >1 will significantly increase CPU usage.</desc>
         </setting>
         <setting>
             <name>gain</name>
