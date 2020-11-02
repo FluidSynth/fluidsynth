@@ -82,11 +82,7 @@ struct _fluid_mixer_fx_t
 
     fluid_chorus_t *chorus; /**< Chorus unit */
     /* chorus shadow parameters here will be returned if queried */
-    int chorus_nr;
-    double chorus_level;
-    double chorus_speed;
-    double chorus_depth;
-    int chorus_type;
+    double chorus_param[FLUID_CHORUS_PARAM_LAST];
 };
 
 struct _fluid_rvoice_mixer_t
@@ -943,7 +939,7 @@ fluid_rvoice_mixer_set_reverb_full(const fluid_rvoice_mixer_t *mixer,
  * get one reverb shadow parameter for one fx group.
  * (see fluid_rvoice_mixer_set_reverb_full())
  *
- * @param mixer that contains all fx units.
+ * @param mixer that contains all fx group units.
  * @param group index of the fx group to get parameter from.
  *  must be in the range [0..mixer->fx_units[.
  * @param enum indicating the parameter to get.
@@ -963,12 +959,12 @@ fluid_rvoice_mixer_reverb_get_param(const fluid_rvoice_mixer_t *mixer,
 /**
  * set one or more chorus shadow parameters for one fx group.
  * These parameters will be returned if queried.
- * (see fluid_rvoice_mixer_get_chorus_param())
+ * (see fluid_rvoice_mixer_chorus_get_param())
  *
  * @param mixer that contains all fx units.
  * @param group index of the fx group to which parameters must be set.
  *  must be in the range [-1..mixer->fx_units[. If -1 the changes are applied
- *  to all fx units.
+ *  to all fx group.
  * Keep in mind, that the needed CPU time is proportional to 'nr'.
  * @param set Flags indicating which parameters to set (#fluid_chorus_set_t)
  * @param nr Chorus voice count (0-99, CPU time consumption proportional to
@@ -1006,27 +1002,27 @@ fluid_rvoice_mixer_set_chorus_full(const fluid_rvoice_mixer_t *mixer,
     {
         if(set & FLUID_CHORUS_SET_NR)
         {
-            fx[group].chorus_nr = nr;
+            fx[group].chorus_param[FLUID_CHORUS_NR] = (double)nr;
         }
 
         if(set & FLUID_CHORUS_SET_LEVEL)
         {
-            fx[group].chorus_level = level;
+            fx[group].chorus_param[FLUID_CHORUS_LEVEL] = level;
         }
 
         if(set & FLUID_CHORUS_SET_SPEED)
         {
-            fx[group].chorus_speed = speed;
+            fx[group].chorus_param[FLUID_CHORUS_SPEED] = speed;
         }
 
         if(set & FLUID_CHORUS_SET_DEPTH)
         {
-            fx[group].chorus_depth = depth_ms;
+            fx[group].chorus_param[FLUID_CHORUS_DEPTH] = depth_ms;
         }
 
         if(set & FLUID_CHORUS_SET_TYPE)
         {
-            fx[group].chorus_type = type;
+            fx[group].chorus_param[FLUID_CHORUS_TYPE] = (double)type;
         }
     }
 
@@ -1037,51 +1033,17 @@ fluid_rvoice_mixer_set_chorus_full(const fluid_rvoice_mixer_t *mixer,
  * get one chorus shadow parameter for one fx group.
  * (see fluid_rvoice_mixer_set_chorus_full())
  *
- * @param mixer that contains all fx units.
+ * @param mixer that contains all fx groups units.
  * @param group index of the fx group to get parameter from.
  *  must be in the range [0..mixer->fx_units[.
  * @param get Flags indicating which parameter to get (#fluid_chorus_set_t)
  * @return the parameter value (0.0 is returned if error)
  */
 double
-fluid_rvoice_mixer_get_chorus_param(const fluid_rvoice_mixer_t *mixer,
-                                    int group, int get)
+fluid_rvoice_mixer_chorus_get_param(const fluid_rvoice_mixer_t *mixer,
+                                    int group, enum fluid_chorus_param param)
 {
-    const fluid_mixer_fx_t *fx;
-
-    if(group  < 0 || group >= mixer->fx_units)
-    {
-        return 0.0;
-    }
-
-    fx = mixer->fx;
-
-    if(get == FLUID_CHORUS_SET_NR)
-    {
-        return (double)fx[group].chorus_nr;
-    }
-
-    if(get == FLUID_CHORUS_SET_LEVEL)
-    {
-        return fx[group].chorus_level;
-    }
-
-    if(get == FLUID_CHORUS_SET_SPEED)
-    {
-        return fx[group].chorus_speed;
-    }
-
-    if(get == FLUID_CHORUS_SET_DEPTH)
-    {
-        return fx[group].chorus_depth;
-    }
-
-    if(get == FLUID_CHORUS_SET_TYPE)
-    {
-        return (double)fx[group].chorus_type;
-    }
-
-    return 0.0;
+    return mixer->fx[group].chorus_param[param];
 }
 
 #ifdef LADSPA

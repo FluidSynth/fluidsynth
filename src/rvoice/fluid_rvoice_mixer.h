@@ -57,8 +57,8 @@ fluid_rvoice_mixer_set_chorus_full(const fluid_rvoice_mixer_t *mixer,
                                    int set, int nr, double level,
                                    double speed, double depth_ms, int type);
 double
-fluid_rvoice_mixer_get_chorus_param(const fluid_rvoice_mixer_t *mixer,
-                                    int group, int get);
+fluid_rvoice_mixer_chorus_get_param(const fluid_rvoice_mixer_t *mixer,
+                                    int group, enum fluid_chorus_param param);
 
 
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_add_voice);

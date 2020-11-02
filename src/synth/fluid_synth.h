@@ -141,11 +141,8 @@ struct _fluid_synth_t
     /**< Shadow of reverb parameter: roomsize, damping, width, level */
     double reverb_param[FLUID_REVERB_PARAM_LAST];
 
-    int chorus_nr;                     /**< Shadow of chorus number */
-    double chorus_level;                /**< Shadow of chorus level */
-    double chorus_speed;                /**< Shadow of chorus speed */
-    double chorus_depth;                /**< Shadow of chorus depth */
-    int chorus_type;                   /**< Shadow of chorus type */
+    /**< Shadow of chorus parameter: chorus number, level, speed, depth, type */
+    double chorus_param[FLUID_CHORUS_PARAM_LAST];
 
     int cur;                           /**< the current sample in the audio buffers to be output */
     int curmax;                        /**< current amount of samples present in the audio buffers */

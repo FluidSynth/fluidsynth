@@ -34,10 +34,14 @@ int main(void)
     TEST_ASSERT(fluid_synth_reverb_get_param(synth, -1, FLUID_REVERB_LEVEL, &value) == FLUID_OK);
     TEST_ASSERT(value == 0.4);
 
-    TEST_ASSERT(fluid_synth_get_chorus_group_nr(synth, -1) == 99);
-    TEST_ASSERT(fluid_synth_get_chorus_group_level(synth, -1) == 0.5);
-    TEST_ASSERT(fluid_synth_get_chorus_group_speed(synth, -1) == 0.6);
-    TEST_ASSERT(fluid_synth_get_chorus_group_depth(synth, -1) == 0.7);
+    TEST_ASSERT(fluid_synth_chorus_get_param(synth, -1, FLUID_CHORUS_NR, &value) == FLUID_OK);
+    TEST_ASSERT((int)value == 99);
+    TEST_ASSERT(fluid_synth_chorus_get_param(synth, -1, FLUID_CHORUS_LEVEL, &value) == FLUID_OK);
+    TEST_ASSERT(value == 0.5);
+    TEST_ASSERT(fluid_synth_chorus_get_param(synth, -1, FLUID_CHORUS_SPEED, &value) == FLUID_OK);
+    TEST_ASSERT(value == 0.6);
+    TEST_ASSERT(fluid_synth_chorus_get_param(synth, -1, FLUID_CHORUS_DEPTH, &value) == FLUID_OK);
+    TEST_ASSERT(value == 0.7);
 
     // update the realtime settings afterward
     TEST_SUCCESS(fluid_settings_setnum(settings, "synth.reverb.room-size", 0.11));
@@ -60,10 +64,14 @@ int main(void)
     TEST_ASSERT(fluid_synth_reverb_get_param(synth, -1, FLUID_REVERB_DAMP, &value) == FLUID_OK);
     TEST_ASSERT(value == 0.44);
 
-    TEST_ASSERT(fluid_synth_get_chorus_group_nr(synth, -1) == 11);
-    TEST_ASSERT(fluid_synth_get_chorus_group_level(synth, -1) == 0.55);
-    TEST_ASSERT(fluid_synth_get_chorus_group_speed(synth, -1) == 0.66);
-    TEST_ASSERT(fluid_synth_get_chorus_group_depth(synth, -1) == 0.77);
+    TEST_ASSERT(fluid_synth_chorus_get_param(synth, -1, FLUID_CHORUS_NR, &value) == FLUID_OK);
+    TEST_ASSERT((int)value == 11);
+    TEST_ASSERT(fluid_synth_chorus_get_param(synth, -1, FLUID_CHORUS_LEVEL, &value) == FLUID_OK);
+    TEST_ASSERT(value == 0.55);
+    TEST_ASSERT(fluid_synth_chorus_get_param(synth, -1, FLUID_CHORUS_SPEED, &value) == FLUID_OK);
+    TEST_ASSERT(value == 0.66);
+    TEST_ASSERT(fluid_synth_chorus_get_param(synth, -1, FLUID_CHORUS_DEPTH, &value) == FLUID_OK);
+    TEST_ASSERT(value == 0.77);
 
     delete_fluid_synth(synth);
     delete_fluid_settings(settings);

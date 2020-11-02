@@ -1342,65 +1342,48 @@ fluid_handle_reverb(void *data, int ac, char **av, fluid_ostream_t out)
     return fluid_handle_reverb_chorus_on_command(data, ac, av, out, REVERB_ON_CDE);
 }
 
-/* chorus commands enum */
-enum chorus_cde
-{
-    CHORUS_NR_CDE,
-    CHORUS_LEVEL_CDE,
-    CHORUS_SPEED_CDE,
-    CHORUS_DEPTH_CDE,
-    NBR_CHORUS_CDE
-};
-
 /* Purpose:
  * Response to fluid_handle_chorus_xxx commands
  */
 static int
 fluid_handle_chorus_command(void *data, int ac, char **av, fluid_ostream_t out,
-                            enum chorus_cde cde)
+                            enum fluid_chorus_param param)
 {
     /* chorus commands name table */
-    static const char *name_cde[NBR_CHORUS_CDE] =
+    static const char *name_cde[FLUID_CHORUS_PARAM_LAST -1] =
     {"cho_set_nr", "cho_set_level", "cho_set_speed", "cho_set_depth"};
 
     /* value name table */
-    static const char *name_value[NBR_CHORUS_CDE] =
+    static const char *name_value[FLUID_CHORUS_PARAM_LAST -1] =
     {"nr", "level", "speed", "depth"};
-
-    /* functions table for double parameter */
-    static int (*chorus_func[NBR_REVERB_CDE - CHORUS_LEVEL_CDE]) (fluid_synth_t *, int, double) =
-    {
-        fluid_synth_set_chorus_group_level, fluid_synth_set_chorus_group_speed,
-        fluid_synth_set_chorus_group_depth
-    };
 
     FLUID_ENTRY_COMMAND(data);
 
     /* get and check index group argument */
-    int group = check_fx_unit_idx(ac, av, out, handler->synth, name_cde[cde]);
+    int group = check_fx_unit_idx(ac, av, out, handler->synth, name_cde[param]);
     if( group >= -1)
     {
+        double value;
         /* get and check value argument */
         ac--;
         if( !fluid_is_number(av[ac]))
         {
             fluid_ostream_printf(out, "%s: %s \"%s\" must be a number\n",
-                                 name_cde[cde], name_value[cde], av[ac]);
+                                 name_cde[param], name_value[param], av[ac]);
             return FLUID_FAILED;
         }
 
         /* run chorus function */
-        if(cde < CHORUS_LEVEL_CDE) /* commands with integer parameter */
+        if(param == FLUID_CHORUS_NR) /* commands with integer parameter */
         {
-            int nr = atoi(av[ac]);
-            fluid_synth_set_chorus_group_nr(handler->synth, group, nr);
+            value = (double)atoi(av[ac]);
         }
         else /* commands with float parameter */
         {
-            fluid_real_t level = atof(av[ac]);
-            chorus_func[cde - CHORUS_LEVEL_CDE](handler->synth, group, level);
+            value = atof(av[ac]);
         }
 
+        fluid_synth_chorus_set_param(handler->synth, group, param, value);
         return FLUID_OK;
     }
     return FLUID_FAILED;
@@ -1415,7 +1398,7 @@ fluid_handle_chorus_command(void *data, int ac, char **av, fluid_ostream_t out,
 int
 fluid_handle_chorusnr(void *data, int ac, char **av, fluid_ostream_t out)
 {
-    return fluid_handle_chorus_command(data, ac, av, out, CHORUS_NR_CDE);
+    return fluid_handle_chorus_command(data, ac, av, out, FLUID_CHORUS_NR);
 }
 
 /* Purpose:
@@ -1426,7 +1409,7 @@ fluid_handle_chorusnr(void *data, int ac, char **av, fluid_ostream_t out)
 int
 fluid_handle_choruslevel(void *data, int ac, char **av, fluid_ostream_t out)
 {
-    return fluid_handle_chorus_command(data, ac, av, out, CHORUS_LEVEL_CDE);
+    return fluid_handle_chorus_command(data, ac, av, out, FLUID_CHORUS_LEVEL);
 }
 
 /* Purpose:
@@ -1437,7 +1420,7 @@ fluid_handle_choruslevel(void *data, int ac, char **av, fluid_ostream_t out)
 int
 fluid_handle_chorusspeed(void *data, int ac, char **av, fluid_ostream_t out)
 {
-    return fluid_handle_chorus_command(data, ac, av, out, CHORUS_SPEED_CDE);
+    return fluid_handle_chorus_command(data, ac, av, out, FLUID_CHORUS_SPEED);
 }
 
 /* Purpose:
@@ -1448,7 +1431,7 @@ fluid_handle_chorusspeed(void *data, int ac, char **av, fluid_ostream_t out)
 int
 fluid_handle_chorusdepth(void *data, int ac, char **av, fluid_ostream_t out)
 {
-    return fluid_handle_chorus_command(data, ac, av, out, CHORUS_DEPTH_CDE);
+    return fluid_handle_chorus_command(data, ac, av, out, FLUID_CHORUS_DEPTH);
 }
 
 /* Purpose:

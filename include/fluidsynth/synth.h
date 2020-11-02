@@ -160,6 +160,16 @@ enum fluid_chorus_mod
     FLUID_CHORUS_MOD_TRIANGLE = 1         /**< Triangle wave chorus modulation */
 };
 
+enum fluid_chorus_param
+{
+    FLUID_CHORUS_NR,        /**< number of delay line */
+    FLUID_CHORUS_LEVEL,     /**< output level */
+    FLUID_CHORUS_SPEED,     /**< lfo frequency */
+    FLUID_CHORUS_DEPTH,     /**< modulation depth */
+    FLUID_CHORUS_TYPE,      /**< type of waveform */
+    FLUID_CHORUS_PARAM_LAST /**< @internal Value defines the count of chorus parameter (#fluid_chorus_param) @warning This symbol is not part of the public API and ABI stability guarantee and may change at any time! */
+};
+
 FLUID_DEPRECATED FLUIDSYNTH_API int fluid_synth_set_chorus(fluid_synth_t *synth, int nr, double level,
                                           double speed, double depth_ms, int type);
 FLUID_DEPRECATED FLUIDSYNTH_API int fluid_synth_set_chorus_nr(fluid_synth_t *synth, int nr);
@@ -175,19 +185,10 @@ FLUID_DEPRECATED FLUIDSYNTH_API double fluid_synth_get_chorus_speed(fluid_synth_
 FLUID_DEPRECATED FLUIDSYNTH_API double fluid_synth_get_chorus_depth(fluid_synth_t *synth);
 FLUID_DEPRECATED FLUIDSYNTH_API int fluid_synth_get_chorus_type(fluid_synth_t *synth); /* see fluid_chorus_mod */
 
-FLUIDSYNTH_API int fluid_synth_set_chorus_group(fluid_synth_t *synth, int group, int nr,
-                                                double level, double speed, double depth_ms, int type);
-FLUIDSYNTH_API int fluid_synth_set_chorus_group_nr(fluid_synth_t *synth, int group, int nr);
-FLUIDSYNTH_API int fluid_synth_set_chorus_group_level(fluid_synth_t *synth, int group, double level);
-FLUIDSYNTH_API int fluid_synth_set_chorus_group_speed(fluid_synth_t *synth, int group, double speed);
-FLUIDSYNTH_API int fluid_synth_set_chorus_group_depth(fluid_synth_t *synth, int group, double depth_ms);
-FLUIDSYNTH_API int fluid_synth_set_chorus_group_type(fluid_synth_t *synth, int group, int type);
-
-FLUIDSYNTH_API int fluid_synth_get_chorus_group_nr(fluid_synth_t *synth, int group);
-FLUIDSYNTH_API double fluid_synth_get_chorus_group_level(fluid_synth_t *synth, int group);
-FLUIDSYNTH_API double fluid_synth_get_chorus_group_speed(fluid_synth_t *synth, int group);
-FLUIDSYNTH_API double fluid_synth_get_chorus_group_depth(fluid_synth_t *synth, int group);
-FLUIDSYNTH_API int fluid_synth_get_chorus_group_type(fluid_synth_t *synth, int group);
+FLUIDSYNTH_API int fluid_synth_chorus_set_param(fluid_synth_t *synth, int group,
+                                                enum fluid_chorus_param param, double value);
+FLUIDSYNTH_API int fluid_synth_chorus_get_param(fluid_synth_t *synth, int group,
+                                                enum fluid_chorus_param param, double *value);
 
 /* Audio and MIDI channels */
 
