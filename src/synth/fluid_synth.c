@@ -5506,7 +5506,7 @@ fluid_synth_reverb_set_param(fluid_synth_t *synth, int fx_group,
                              enum fluid_reverb_param param, double value)
 {
     int ret, i;
-	double values[FLUID_REVERB_PARAM_LAST] = {0.0};
+    double values[FLUID_REVERB_PARAM_LAST] = {0.0};
     static const fluid_revmodel_set_t sets[FLUID_REVERB_PARAM_LAST] =
     {
         FLUID_REVMODEL_SET_ROOMSIZE, FLUID_REVMODEL_SET_DAMPING,
