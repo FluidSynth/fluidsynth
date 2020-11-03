@@ -138,8 +138,8 @@ BINARY_TOC = NO
 TOC_EXPAND = NO
 DISABLE_INDEX = NO
 ENUM_VALUES_PER_LINE = 4
-GENERATE_TREEVIEW = NO
-TREEVIEW_WIDTH = 250
+GENERATE_TREEVIEW = YES
+TREEVIEW_WIDTH = 350
 FORMULA_FONTSIZE = 10
 #---------------------------------------------------------------------------
 # configuration options related to the LaTeX output
