@@ -1111,9 +1111,10 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_reverb_enable)
     }
 
     /* set with_reverb if at least one reverb unit is on */
-    for(fx_group = on = 0; fx_group < nr_units; fx_group++)
+    for(fx_group = 0; fx_group < nr_units; fx_group++)
     {
-        if(on = mixer->fx[fx_group].reverb_on)
+        on = mixer->fx[fx_group].reverb_on;
+        if(on)
         {
             break;
         }
@@ -1150,9 +1151,10 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_chorus_enable)
     }
 
     /* set with_chorus if at least one chorus unit is on */
-    for(fx_group = on = 0; fx_group < nr_units; fx_group++)
+    for(fx_group = 0; fx_group < nr_units; fx_group++)
     {
-        if(on = mixer->fx[fx_group].chorus_on)
+        on = mixer->fx[fx_group].chorus_on;
+        if(on)
         {
             break;
         }
