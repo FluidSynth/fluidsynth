@@ -1091,6 +1091,15 @@ void fluid_rvoice_mixer_set_ladspa(fluid_rvoice_mixer_t *mixer,
 }
 #endif
 
+/* @deprecated: use fluid_rvoice_mixer_reverb_enable instead */
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_reverb_enabled)
+{
+    fluid_rvoice_mixer_t *mixer = obj;
+    int on = param[0].i;
+
+    mixer->with_reverb = on;
+}
+
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_reverb_enable)
 {
     fluid_rvoice_mixer_t *mixer = obj;
@@ -1122,13 +1131,12 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_reverb_enable)
     mixer->with_reverb = on;
 }
 
-/* @deprecated */
-DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_reverb_enabled)
+/* @deprecated: use fluid_rvoice_mixer_chorus_enable instead */
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_chorus_enabled)
 {
     fluid_rvoice_mixer_t *mixer = obj;
     int on = param[0].i;
-
-    mixer->with_reverb = on;
+    mixer->with_chorus = on;
 }
 
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_chorus_enable)
@@ -1161,15 +1169,6 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_chorus_enable)
     }
     mixer->with_chorus = on;
 }
-
-/* @deprecated */
-DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_chorus_enabled)
-{
-    fluid_rvoice_mixer_t *mixer = obj;
-    int on = param[0].i;
-    mixer->with_chorus = on;
-}
-
 
 void fluid_rvoice_mixer_set_mix_fx(fluid_rvoice_mixer_t *mixer, int on)
 {
