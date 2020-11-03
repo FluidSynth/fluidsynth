@@ -15,9 +15,8 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
 -->
 <?xml-stylesheet type="text/xsl" href="fluidsettings.xsl"?>
 <fluidsettings>
-    <synth>
+    <synth label="Synthesizer settings">
         <setting>
-            <isFirst>Synthesizer settings</isFirst>
             <name>audio-channels</name>
             <type>int</type>
             <def>1</def>
@@ -45,18 +44,18 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
         <setting>
             <name>chorus.depth</name>
             <type>num</type>
-            <def>8</def>
-            <min>0</min>
-            <max>256</max>
+            <def>8.0</def>
+            <min>0.0</min>
+            <max>256.0</max>
             <desc>
                 Specifies the modulation depth of the chorus.</desc>
         </setting>
         <setting>
             <name>chorus.level</name>
             <type>num</type>
-            <def>2</def>
-            <min>0</min>
-            <max>10</max>
+            <def>2.0</def>
+            <min>0.0</min>
+            <max>10.0</max>
             <desc>
                 Specifies the output amplitude of the chorus signal.</desc>
         </setting>
@@ -74,7 +73,7 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             <type>num</type>
             <def>0.3</def>
             <min>0.1</min>
-            <max>5</max>
+            <max>5.0</max>
             <desc>
                 Sets the modulation speed in Hz.</desc>
         </setting>
@@ -121,7 +120,7 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             <def>2</def>
             <min>2</min>
             <max>2</max>
-            <desc>Specifies the number of effects per group. Currently there only are two effects (i.e. reverb and chorus).</desc>
+            <desc>Specifies the number of effects per effects group. Currently this value can not be changed so there are always two effects per group available (reverb and chorus).</desc>
         </setting>
         <setting>
             <name>effects-groups</name>
@@ -129,7 +128,7 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             <def>1</def>
             <min>1</min>
             <max>128</max>
-            <desc>Specifies the number of effect units. By default, the sound of all voices is rendered by one reverb unit and one chorus unit respectively (even for multi-channel rendering). This setting gives the user control which effects of a voice to render to which independent audio channels. E.g. setting synth.effects-groups == synth.midi-channels allows to render the effects of each MIDI channel to separate audio buffers. If synth.effects-groups is smaller, it will wrap around. Note that any value >1 will significantly increase CPU usage.</desc>
+            <desc>Specifies the number of effects groups. By default, the sound of all voices is rendered by one reverb and one chorus effect respectively (even for multi-channel rendering). This setting gives the user control which effects of a voice to render to which independent audio channels. E.g. setting synth.effects-groups == synth.midi-channels allows to render the effects of each MIDI channel to separate audio buffers. If synth.effects-groups is smaller than the number of MIDI channels, it will wrap around. Note that any value >1 will significantly increase CPU usage.</desc>
         </setting>
         <setting>
             <name>gain</name>
@@ -144,7 +143,7 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             <type>bool</type>
             <def>0 (FALSE)</def>
             <desc>
-                When set to "yes" the LADSPA subsystem will be enabled. This subsystem allows to load and interconnect LADSPA plug-ins. The output of the synthesizer is processed by the LADSPA subsystem. Note that the synthesizer has to be compiled with LADSPA support. More information about the LADSPA subsystem later.</desc>
+                When set to 1 (TRUE) the LADSPA subsystem will be enabled. This subsystem allows to load and interconnect LADSPA plug-ins. The output of the synthesizer is processed by the LADSPA subsystem. Note that the synthesizer has to be compiled with LADSPA support. More information about the LADSPA subsystem can be found in doc/ladspa.md or on the FluidSynth website.</desc>
         </setting>
         <setting>
             <name>lock-memory</name>
@@ -166,12 +165,12 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             <name>midi-bank-select</name>
             <type>str</type>
             <def>gs</def>
-            <vals>gm, gs, xg, mma</vals>
+            <vals>gs, gm, xg, mma</vals>
             <desc>
                 This setting defines how the synthesizer interprets Bank Select messages.
                 <ul>
-                    <li>gm: ignores CC0 and CC32 messages.</li>
                     <li>gs: (default) CC0 becomes the bank number, CC32 is ignored.</li>
+                    <li>gm: ignores CC0 and CC32 messages.</li>
                     <li>xg: CC32 becomes the bank number, CC0 toggles between melodic or drum channel.</li>
                     <li>mma: bank is calculated as CC0*128+CC32.</li>
                 </ul>
@@ -189,9 +188,9 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
         <setting>
             <name>overflow.age</name>
             <type>num</type>
-            <def>1000</def>
-            <min>-10000</min>
-            <max>10000</max>
+            <def>1000.0</def>
+            <min>-10000.0</min>
+            <max>10000.0</max>
             <desc>
                 This score is divided by the number of seconds this voice has been
                 active and is added to the overflow priority. It is usually a positive
@@ -202,9 +201,9 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
         <setting>
             <name>overflow.important</name>
             <type>num</type>
-            <def>5000</def>
-            <min>-50000</min>
-            <max>50000</max>
+            <def>5000.0</def>
+            <min>-50000.0</min>
+            <max>50000.0</max>
             <desc>
                 This score is added to voices on channels marked with the
                 synth.overflow.important-channels setting.
@@ -213,7 +212,7 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
         <setting>
             <name>overflow.important-channels</name>
             <type>str</type>
-            <def>""</def>
+            <def>(empty string)</def>
             <desc>
                 This setting is a comma-separated list of MIDI channel numbers that should
                 be treated as "important" by the overflow calculation, adding the score
@@ -227,9 +226,9 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
         <setting>
             <name>overflow.percussion</name>
             <type>num</type>
-            <def>4000</def>
-            <min>-10000</min>
-            <max>10000</max>
+            <def>4000.0</def>
+            <min>-10000.0</min>
+            <max>10000.0</max>
             <desc>
                 Sets the overflow priority score added to voices on a percussion
                 channel. This is usually a positive score, to give percussion voices
@@ -240,9 +239,9 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
         <setting>
             <name>overflow.released</name>
             <type>num</type>
-            <def>-2000</def>
-            <min>-10000</min>
-            <max>10000</max>
+            <def>-2000.0</def>
+            <min>-10000.0</min>
+            <max>10000.0</max>
             <desc>
                 Sets the overflow priority score added to voices that have already
                 received a note-off event. This is usually a negative score, to give released
@@ -253,9 +252,9 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
         <setting>
             <name>overflow.sustained</name>
             <type>num</type>
-            <def>-1000</def>
-            <min>-10000</min>
-            <max>10000</max>
+            <def>-1000.0</def>
+            <min>-10000.0</min>
+            <max>10000.0</max>
             <desc>
                 Sets the overflow priority score added to voices that are currently
                 sustained. With the default value, sustained voices are considered less
@@ -265,9 +264,9 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
         <setting>
             <name>overflow.volume</name>
             <type>num</type>
-            <def>500</def>
-            <min>-10000</min>
-            <max>10000</max>
+            <def>500.0</def>
+            <min>-10000.0</min>
+            <max>10000.0</max>
             <desc>
                 Sets the overflow priority score added to voices based on their current
                 volume. The voice volume is normalized to a value between 0 and 1 and
@@ -296,9 +295,9 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
         <setting>
             <name>reverb.damp</name>
             <type>num</type>
-            <def>0</def>
-            <min>0</min>
-            <max>1</max>
+            <def>0.0</def>
+            <min>0.0</min>
+            <max>1.0</max>
             <desc>
                 Sets the amount of reverb damping.</desc>
         </setting>
@@ -306,8 +305,8 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             <name>reverb.level</name>
             <type>num</type>
             <def>0.9</def>
-            <min>0</min>
-            <max>1</max>
+            <min>0.0</min>
+            <max>1.0</max>
             <desc>
                 Sets the reverb output amplitude.</desc>
         </setting>
@@ -315,8 +314,8 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             <name>reverb.room-size</name>
             <type>num</type>
             <def>0.2</def>
-            <min>0</min>
-            <max>1</max>
+            <min>0.0</min>
+            <max>1.0</max>
             <desc>
                 Sets the room size (i.e. amount of wet) reverb.</desc>
         </setting>
@@ -324,8 +323,8 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
             <name>reverb.width</name>
             <type>num</type>
             <def>0.5</def>
-            <min>0</min>
-            <max>100</max>
+            <min>0.0</min>
+            <max>100.0</max>
             <desc>
                 Sets the stereo spread of the reverb signal.</desc>
         </setting>
@@ -357,9 +356,8 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
         </setting>
     </synth>
 
-    <audio>
+    <audio label="Audio driver settings">
         <setting>
-            <isFirst>Audio driver settings</isFirst>
             <name>driver</name>
             <type>str</type>
             <def>jack (Linux),<br />
@@ -376,8 +374,8 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
         <setting>
             <name>periods</name>
             <type>int</type>
-            <def>16 (Linux, Mac OS X),<br />
-                 8 (Windows)
+            <def>8 (Windows, MacOS9),<br />
+                 16 (all other)
             </def>
             <min>2</min>
             <max>64</max>
@@ -388,8 +386,8 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
         <setting>
             <name>period-size</name>
             <type>int</type>
-            <def>64 (Linux, Mac OS X),<br />
-                 512 (Windows)
+            <def>512 (Windows),<br />
+                 64 (all other)
             </def>
             <min>64</min>
             <max>8192</max>
@@ -523,7 +521,7 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
         <setting>
             <name>jack.server</name>
             <type>str</type>
-            <def></def>
+            <def>(empty string)</def>
             <desc>
                 Jack server to connect to. Defaults to an empty string, which uses default Jack server.
             </desc>
@@ -606,9 +604,8 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
         </setting>
     </audio>
     
-    <midi>
+    <midi label="MIDI driver settings">
         <setting>
-            <isFirst>MIDI driver settings</isFirst>
             <name>autoconnect</name>
             <type>bool</type>
             <def>0 (FALSE)</def>
@@ -636,7 +633,7 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
         <setting>
             <name>portname</name>
             <type>str</type>
-            <def></def>
+            <def>(empty string)</def>
             <desc>Used by coremidi and alsa_seq drivers for the portnames registered with the MIDI subsystem.</desc>
         </setting>
         <setting>
@@ -666,7 +663,7 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
         <setting>
             <name>jack.server</name>
             <type>str</type>
-            <def></def>
+            <def>(empty string)</def>
             <desc>Jack server to connect to for Jack MIDI driver. If an empty string then the default server will be used.</desc>
         </setting>
         <setting>
@@ -689,9 +686,8 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
         </setting>
     </midi>
     
-    <player>
+    <player label="MIDI player settings">
         <setting>
-            <isFirst>MIDI player settings</isFirst>
             <name>reset-synth</name>
             <type>bool</type>
             <def>1 (TRUE)</def>
@@ -706,17 +702,16 @@ Developers: Settings can be deprecated by adding: <deprecated>SOME TEXT</depreca
         </setting>
     </player>
     
-    <shell>
+    <shell label="Shell (command line) settings">
         <setting>
-            <isFirst>Shell (command line) settings</isFirst>
             <name>prompt</name>
             <type>str</type>
-            <def>""</def>
-            <desc>In dump mode we set the prompt to "". The ui cannot easily handle lines, which don't end with cr. Changing the prompt cannot be done through a command, because the current shell does not handle empty arguments.</desc>
+            <def>(empty string)</def>
+            <desc>In dump mode we set the prompt to "" (empty string). The ui cannot easily handle lines, which don't end with cr. Changing the prompt cannot be done through a command, because the current shell does not handle empty arguments.</desc>
         </setting>
         <setting>
             <name>port</name>
-            <type>num</type>
+            <type>int</type>
             <def>9800</def>
             <min>1</min>
             <max>65535</max>
