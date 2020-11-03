@@ -83,7 +83,45 @@ int main(void)
        Set/get that the synth is initialized with the correct values for one group only
        calling fx set/get API
     */
-    // test reverb group 0
+    // test reverb invalid parameters range
+    // valid range: 0.0..1.0
+    TEST_ASSERT(fluid_synth_reverb_set_param(synth, 0, FLUID_REVERB_ROOMSIZE, 1.1) == FLUID_FAILED);
+    TEST_ASSERT(fluid_synth_reverb_set_param(synth, 0, FLUID_REVERB_ROOMSIZE, -0.1) == FLUID_FAILED);
+
+    // valid range: 0.0..1.0
+    TEST_ASSERT(fluid_synth_reverb_set_param(synth, 0, FLUID_REVERB_DAMP, 1.1) == FLUID_FAILED);
+    TEST_ASSERT(fluid_synth_reverb_set_param(synth, 0, FLUID_REVERB_DAMP, -0.1) == FLUID_FAILED);
+
+    // valid range: 0.0..100.0
+    TEST_ASSERT(fluid_synth_reverb_set_param(synth, 0, FLUID_REVERB_WIDTH, 100.1) == FLUID_FAILED);
+    TEST_ASSERT(fluid_synth_reverb_set_param(synth, 0, FLUID_REVERB_WIDTH, -0.1) == FLUID_FAILED);
+
+    // valid range: 0.0..1.0
+    TEST_ASSERT(fluid_synth_reverb_set_param(synth, 0, FLUID_REVERB_LEVEL, 1.1) == FLUID_FAILED);
+    TEST_ASSERT(fluid_synth_reverb_set_param(synth, 0, FLUID_REVERB_LEVEL, -0.1) == FLUID_FAILED);
+
+    // test chorus invalid parameters range
+    // valid range: 0..99
+    TEST_ASSERT(fluid_synth_chorus_set_param(synth, 1, FLUID_CHORUS_NR, 100) == FLUID_FAILED);
+    TEST_ASSERT(fluid_synth_chorus_set_param(synth, 1, FLUID_CHORUS_NR, -1) == FLUID_FAILED);
+
+    // valid range: 0..10
+    TEST_ASSERT(fluid_synth_chorus_set_param(synth, 0, FLUID_CHORUS_LEVEL, 10.1) == FLUID_FAILED);
+    TEST_ASSERT(fluid_synth_chorus_set_param(synth, 0, FLUID_CHORUS_LEVEL, -0.1) == FLUID_FAILED);
+
+    //valid range: 0.1..5.0
+    TEST_ASSERT(fluid_synth_chorus_set_param(synth, 0, FLUID_CHORUS_SPEED, 5.1) == FLUID_FAILED);
+    TEST_ASSERT(fluid_synth_chorus_set_param(synth, 0, FLUID_CHORUS_SPEED, 0.09) == FLUID_FAILED);
+
+    //valid range: 0..256
+    TEST_ASSERT(fluid_synth_chorus_set_param(synth, 0, FLUID_CHORUS_DEPTH, 256.1) == FLUID_FAILED);
+    TEST_ASSERT(fluid_synth_chorus_set_param(synth, 0, FLUID_CHORUS_DEPTH, -0.1) == FLUID_FAILED);
+
+    //valid range: 0..1
+    TEST_ASSERT(fluid_synth_chorus_set_param(synth, 0, FLUID_CHORUS_TYPE, 2.0) == FLUID_FAILED);
+    TEST_ASSERT(fluid_synth_chorus_set_param(synth, 0, FLUID_CHORUS_TYPE, -1.0) == FLUID_FAILED);
+
+    // test set/get reverb group 0
     TEST_ASSERT(fluid_synth_reverb_set_param(synth, 0, FLUID_REVERB_ROOMSIZE, 0.1110) == FLUID_OK);
     TEST_ASSERT(fluid_synth_reverb_set_param(synth, 0, FLUID_REVERB_DAMP, 0.2220) == FLUID_OK);
     TEST_ASSERT(fluid_synth_reverb_set_param(synth, 0, FLUID_REVERB_WIDTH, 0.3330) == FLUID_OK);
@@ -98,7 +136,7 @@ int main(void)
     TEST_ASSERT(fluid_synth_reverb_get_param(synth, 0, FLUID_REVERB_LEVEL, &value) == FLUID_OK);
     TEST_ASSERT(value == 0.4440);
 
-    // test reverb group 1
+    // test set/get reverb group 1
     TEST_ASSERT(fluid_synth_reverb_set_param(synth, 1, FLUID_REVERB_ROOMSIZE, 0.1111) == FLUID_OK);
     TEST_ASSERT(fluid_synth_reverb_set_param(synth, 1, FLUID_REVERB_DAMP, 0.2221) == FLUID_OK);
     TEST_ASSERT(fluid_synth_reverb_set_param(synth, 1, FLUID_REVERB_WIDTH, 0.3331) == FLUID_OK);
@@ -113,7 +151,7 @@ int main(void)
     TEST_ASSERT(fluid_synth_reverb_get_param(synth, 1, FLUID_REVERB_LEVEL, &value) == FLUID_OK);
     TEST_ASSERT(value == 0.4441);
 
-    // test chorus group 0
+    // test set/get chorus group 0
     TEST_ASSERT(fluid_synth_chorus_set_param(synth, 0, FLUID_CHORUS_NR, 20) == FLUID_OK);
     TEST_ASSERT(fluid_synth_chorus_set_param(synth, 0, FLUID_CHORUS_LEVEL, 0.5550) == FLUID_OK);
     TEST_ASSERT(fluid_synth_chorus_set_param(synth, 0, FLUID_CHORUS_SPEED, 0.6660) == FLUID_OK);
@@ -131,7 +169,7 @@ int main(void)
     TEST_ASSERT(fluid_synth_chorus_get_param(synth, 0, FLUID_CHORUS_TYPE, &value) == FLUID_OK);
     TEST_ASSERT(value == 0);
 
-    // test chorus group 1
+    // test set/get chorus group 1
     TEST_ASSERT(fluid_synth_chorus_set_param(synth, 1, FLUID_CHORUS_NR, 21) == FLUID_OK);
     TEST_ASSERT(fluid_synth_chorus_set_param(synth, 1, FLUID_CHORUS_LEVEL, 0.5551) == FLUID_OK);
     TEST_ASSERT(fluid_synth_chorus_set_param(synth, 1, FLUID_CHORUS_SPEED, 0.6661) == FLUID_OK);
