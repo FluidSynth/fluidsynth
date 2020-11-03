@@ -887,6 +887,49 @@ void delete_fluid_rvoice_mixer(fluid_rvoice_mixer_t *mixer)
     FLUID_FREE(mixer);
 }
 
+#ifdef LADSPA
+/**
+ * Set a LADSPS fx instance to be used by the mixer and assign the mixer buffers
+ * as LADSPA host buffers with sensible names */
+void fluid_rvoice_mixer_set_ladspa(fluid_rvoice_mixer_t *mixer,
+                                   fluid_ladspa_fx_t *ladspa_fx, int audio_groups)
+{
+    mixer->ladspa_fx = ladspa_fx;
+
+    if(ladspa_fx == NULL)
+    {
+        return;
+    }
+    else
+    {
+        fluid_real_t *main_l = fluid_align_ptr(mixer->buffers.left_buf, FLUID_DEFAULT_ALIGNMENT);
+        fluid_real_t *main_r = fluid_align_ptr(mixer->buffers.right_buf, FLUID_DEFAULT_ALIGNMENT);
+
+        fluid_real_t *rev = fluid_align_ptr(mixer->buffers.fx_left_buf, FLUID_DEFAULT_ALIGNMENT);
+        fluid_real_t *chor = rev;
+
+        rev = &rev[SYNTH_REVERB_CHANNEL * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT];
+        chor = &chor[SYNTH_CHORUS_CHANNEL * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT];
+
+        fluid_ladspa_add_host_ports(ladspa_fx, "Main:L", audio_groups,
+                                    main_l,
+                                    FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT);
+
+        fluid_ladspa_add_host_ports(ladspa_fx, "Main:R", audio_groups,
+                                    main_r,
+                                    FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT);
+
+        fluid_ladspa_add_host_ports(ladspa_fx, "Reverb:Send", 1,
+                                    rev,
+                                    FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT);
+
+        fluid_ladspa_add_host_ports(ladspa_fx, "Chorus:Send", 1,
+                                    chor,
+                                    FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT);
+    }
+}
+#endif
+
 /**
  * set one or more reverb shadow parameters for one fx group.
  * These parameters will be returned if queried.
@@ -1047,49 +1090,6 @@ fluid_rvoice_mixer_chorus_get_param(const fluid_rvoice_mixer_t *mixer,
 {
     return mixer->fx[fx_group].chorus_param[param];
 }
-
-#ifdef LADSPA
-/**
- * Set a LADSPS fx instance to be used by the mixer and assign the mixer buffers
- * as LADSPA host buffers with sensible names */
-void fluid_rvoice_mixer_set_ladspa(fluid_rvoice_mixer_t *mixer,
-                                   fluid_ladspa_fx_t *ladspa_fx, int audio_groups)
-{
-    mixer->ladspa_fx = ladspa_fx;
-
-    if(ladspa_fx == NULL)
-    {
-        return;
-    }
-    else
-    {
-        fluid_real_t *main_l = fluid_align_ptr(mixer->buffers.left_buf, FLUID_DEFAULT_ALIGNMENT);
-        fluid_real_t *main_r = fluid_align_ptr(mixer->buffers.right_buf, FLUID_DEFAULT_ALIGNMENT);
-
-        fluid_real_t *rev = fluid_align_ptr(mixer->buffers.fx_left_buf, FLUID_DEFAULT_ALIGNMENT);
-        fluid_real_t *chor = rev;
-
-        rev = &rev[SYNTH_REVERB_CHANNEL * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT];
-        chor = &chor[SYNTH_CHORUS_CHANNEL * FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT];
-
-        fluid_ladspa_add_host_ports(ladspa_fx, "Main:L", audio_groups,
-                                    main_l,
-                                    FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT);
-
-        fluid_ladspa_add_host_ports(ladspa_fx, "Main:R", audio_groups,
-                                    main_r,
-                                    FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT);
-
-        fluid_ladspa_add_host_ports(ladspa_fx, "Reverb:Send", 1,
-                                    rev,
-                                    FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT);
-
-        fluid_ladspa_add_host_ports(ladspa_fx, "Chorus:Send", 1,
-                                    chor,
-                                    FLUID_BUFSIZE * FLUID_MIXER_MAX_BUFFERS_DEFAULT);
-    }
-}
-#endif
 
 /* @deprecated: use fluid_rvoice_mixer_reverb_enable instead */
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_reverb_enabled)
