@@ -5488,12 +5488,12 @@ int fluid_synth_set_reverb_level(fluid_synth_t *synth, double level)
 }
 
 /**
- * Set reverb parameters to one fx unit.
+ * Set one reverb parameter to one fx group.
  * @param synth FluidSynth instance.
  * @param fx_group index of the fx group to which parameters must be set.
  *  must be in the range [-1..synth->effects_groups[. If -1 the changes are
  *  applied to all fx groups.
- * @param enum indicating the parameter to set.
+ * @param enum indicating the parameter to set (#fluid_reverb_param).
  *  FLUID_REVERB_ROOMSIZE, roomsize Reverb room size value (0.0-1.0)
  *  FLUID_REVERB_DAMP, reverb damping value (0.0-1.0)
  *  FLUID_REVERB_WIDTH, reverb width value (0.0-100.0)
@@ -5665,12 +5665,12 @@ fluid_synth_get_reverb_width(fluid_synth_t *synth)
 }
 
 /**
- * Get reverb parameter value of one fx group.
+ * Get one reverb parameter value of one fx group.
  * @param synth FluidSynth instance
  * @param fx_group index of the fx group to get parameter value from.
  *  must be in the range [-1..synth->effects_groups[. If -1 get the
  *  parameter common to all fx groups.
- * @param enum indicating the parameter to get.
+ * @param enum indicating the parameter to get (#fluid_reverb_param).
  *  FLUID_REVERB_ROOMSIZE, reverb room size value.
  *  FLUID_REVERB_DAMP, reverb damping value.
  *  FLUID_REVERB_WIDTH, reverb width value.
@@ -5835,12 +5835,12 @@ int fluid_synth_set_chorus_type(fluid_synth_t *synth, int type)
 }
 
 /**
- * Set chorus parameters to one fx unit.
+ * Set one chorus parameter to one fx group.
  * @param synth FluidSynth instance.
  * @param fx_group index of the fx group to which parameters must be set.
  *  must be in the range [-1..synth->effects_groups[. If -1 the changes are
  *  applied to all fx groups.
- * @param enum indicating the parameter to set.
+ * @param enum indicating the parameter to set (#fluid_chorus_param).
  *  FLUID_CHORUS_NR, chorus voice count (0-99, CPU time consumption proportional to
  *  this value).
  *  FLUID_CHORUS_LEVEL, chorus level (0.0-10.0).
@@ -5915,7 +5915,14 @@ fluid_synth_chorus_set_param(fluid_synth_t *synth, int fx_group, enum fluid_chor
 }
 
 /**
- * Set one or more parameters for a chorus fx group
+ * Set one or more parameters for a chorus fx group.
+ * (see fluid_synth_chorus_set_param)
+ * @param synth FluidSynth instance
+ * @param fx_group index of the fx group to which parameters must be set.
+ *  must be in the range [-1..synth->effects_groups[. If -1 the changes are applied to
+ *  all fx groups.
+ * @param set Flags indicating which parameters should be set (#fluid_chorus_set_t)
+ * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int
 fluid_synth_set_chorus_full(fluid_synth_t *synth, int fx_group, int set, int nr, double level,
