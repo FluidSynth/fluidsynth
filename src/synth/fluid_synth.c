@@ -5517,7 +5517,7 @@ int
 fluid_synth_reverb_set_param(fluid_synth_t *synth, int fx_group,
                              enum fluid_reverb_param param, double value)
 {
-    int ret, i;
+    int ret;
     double values[FLUID_REVERB_PARAM_LAST] = {0.0};
     static const char *name[FLUID_REVERB_PARAM_LAST] =
     {
@@ -5525,7 +5525,8 @@ fluid_synth_reverb_set_param(fluid_synth_t *synth, int fx_group,
         "synth.reverb.width", "synth.reverb.level"
     };
 
-    double min, max;
+    double min; /* minimum value */
+    double max; /* maximum value */
 
     /* check parameters */
     fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
@@ -5868,7 +5869,8 @@ fluid_synth_chorus_set_param(fluid_synth_t *synth, int fx_group, enum fluid_chor
         "synth.chorus.speed", "synth.chorus.depth"
     };
 
-    double f_min, f_max;
+    double f_min; /* minimum value */
+    double f_max; /* maximum value */
 
     /* check parameters */
     fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
@@ -5888,7 +5890,8 @@ fluid_synth_chorus_set_param(fluid_synth_t *synth, int fx_group, enum fluid_chor
     }
     else if(param == FLUID_CHORUS_NR) /* integer */
     {
-        int i_min, i_max;
+        int i_min;
+        int i_max;
         fluid_settings_getint_range(synth->settings, name[param], &i_min, &i_max);
         f_min = (double)i_min;
         f_max = (double)i_max;

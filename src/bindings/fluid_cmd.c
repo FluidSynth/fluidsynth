@@ -1101,7 +1101,8 @@ fluid_handle_reverbpreset(void *data, int ac, char **av, fluid_ostream_t out)
 static int check_fx_group_idx(int ac, char **av, fluid_ostream_t out,
                              fluid_synth_t *synth, const char *name_cde)
 {
-    int fx_group, ngroups; /* fx unit index, count of fx groups */
+    int fx_group; /* fx unit index */
+    int ngroups;  /* count of fx groups */
 
     /* One or 2 arguments allowed */
     if(ac < 1 || ac > 2 )
