@@ -17,45 +17,13 @@ All the source code examples in this document are in the public domain; you can 
 
 <a href="http://www.fluidsynth.org">FluidSynth</a> is a software synthesizer based on the <a href="http://en.wikipedia.org/wiki/SoundFont">SoundFont 2</a> specifications. The synthesizer is available as a shared object that can easily be reused in any application that wants to use wave-table synthesis. This document explains the basic usage of FluidSynth. Some of the more advanced features are not yet discussed but will be added in future versions.
 
-\section Contents Table of Contents
-
-- \ref Disclaimer
-- \ref Introduction
-- \ref NewIn2_2_0
-- \ref NewIn2_1_4
-- \ref NewIn2_1_1
-- \ref NewIn2_1_0
-- \ref NewIn2_0_8
-- \ref NewIn2_0_7
-- \ref NewIn2_0_6
-- \ref NewIn2_0_5
-- \ref NewIn2_0_3
-- \ref NewIn2_0_2
-- \ref NewIn2_0_0
-- \ref CreatingSettings
-- \ref CreatingSynth
-- \ref CreatingAudioDriver
-- \ref UsingSynth
-- \ref LoadingSoundfonts
-- \ref SendingMIDI
-- \ref RealtimeMIDI
-- \ref MIDIPlayer
-- \ref FileRenderer
-- \ref MIDIPlayerMem
-- \ref MIDIRouter
-- \ref Sequencer
-- \ref Shell
-- \ref Multi-channel
-- \ref synth-context
-- \ref Advanced
-
 \section Disclaimer
 
 This documentation may be partly incomplete. As always, the source code is the final reference.
 
 SoundFont(R) is a registered trademark of E-mu Systems, Inc.
 
-\section Introduction
+\page Introduction Introduction
 
 What is FluidSynth?
 
@@ -71,6 +39,8 @@ What is FluidSynth?
 
 - FluidSynth is open source, in active development. For more details, take a look at http://www.fluidsynth.org
 
+
+\page RecentChanges Recent Changes
 \section NewIn2_2_0 What's new in 2.2.0?
 
 - #fluid_file_callbacks_t now uses <code>long long</code> as file-offset type (see #fluid_long_long_t). This is a breaking change, which allows to load SoundFonts bigger than 2GiB on Windows. This change required to bump fluidsynth's SOVERSION.
@@ -216,7 +186,26 @@ FluidSynths major version was bumped. The API was reworked, deprecated functions
   - FLUID_MIDI_ROUTER_RULE_COUNT
 
 
-\section CreatingSettings Creating and changing the settings
+\page UsageGuide Usage Guide
+ - \subpage CreatingSettings
+ - \subpage CreatingSynth
+ - \subpage CreatingAudioDriver
+ - \subpage UsingSynth
+ - \subpage LoadingSoundfonts
+ - \subpage SendingMIDI
+ - \subpage RealtimeMIDI
+ - \subpage MIDIPlayer
+ - \subpage FileRenderer
+ - \subpage MIDIPlayerMem
+ - \subpage MIDIRouter
+ - \subpage Sequencer
+ - \subpage Shell
+ - \subpage Multi-channel
+ - \subpage synth-context
+ - \subpage Advanced
+
+
+\page CreatingSettings Creating and changing the settings
 
 Before you can use the synthesizer, you have to create a settings object. The settings objects is used by many components of the FluidSynth library. It gives a unified API to set the parameters of the audio drivers, the midi drivers, the synthesizer, and so forth. A number of default settings are defined by the current implementation.
 
@@ -237,7 +226,7 @@ int main(int argc, char** argv)
 
 The API contains the functions to query the type, the current value, the default value, the range and the "hints" of a setting. The range is the minimum and maximum value of the setting. The hints gives additional information about a setting. For example, whether a string represents a filename. Or whether a number should be interpreted on on a logarithmic scale. Check the settings.h API documentation for a description of all functions. 
 
-\section CreatingSynth Creating the synthesizer
+\page CreatingSynth Creating the synthesizer
 
 To create the synthesizer, you pass it the settings object, as in the following example: 
 
@@ -263,7 +252,7 @@ For a full list of available <strong>synthesizer settings</strong>, please refer
 
 
 
-\section CreatingAudioDriver Creating the Audio Driver
+\page CreatingAudioDriver Creating the Audio Driver
 
 The synthesizer itself does not write any audio to the audio output. This allows application developers to manage the audio output themselves if they wish. The next section describes the use of the synthesizer without an audio driver in more detail.
 
@@ -312,13 +301,13 @@ There are a number of general audio driver settings. The audio.driver settings d
 
 <strong>*Note:</strong> In order to use sdl2 as audio driver, the application is responsible for initializing SDL (e.g. with SDL_Init()). This must be done <strong>before</strong> the first call to <code>new_fluid_settings()</code>! Also make sure to call SDL_Quit() after all fluidsynth instances have been destroyed.
 
-\section UsingSynth Using the synthesizer without an audio driver
+\page UsingSynth Using the synthesizer without an audio driver
 
 It is possible to use the synthesizer object without creating an audio driver. This is desirable if the application using FluidSynth manages the audio output itself. The synthesizer has several API functions that can be used to obtain the audio output: 
 
 fluid_synth_write_s16() fills two buffers (left and right channel) with samples coded as signed 16 bits (the endian-ness is machine dependent). fluid_synth_write_float() fills a left and right audio buffer with 32 bits floating point samples. The function fluid_synth_process() is the generic interface for synthesizing audio, which is also capable of multi channel audio output.
 
-\section LoadingSoundfonts Loading and managing SoundFonts
+\page LoadingSoundfonts Loading and managing SoundFonts
 
 Before any sound can be produced, the synthesizer needs a SoundFont.
 
@@ -330,7 +319,7 @@ The fluid_synth_sfload() function returns the unique identifier of the loaded So
 
 Additional API functions are provided to get the number of loaded SoundFonts and to get a pointer to the SoundFont. 
 
-\section SendingMIDI Sending MIDI Events
+\page SendingMIDI Sending MIDI Events
 
 Once the synthesizer is up and running and a SoundFont is loaded, most people will want to do something useful with it. Make noise, for example. MIDI messages can be sent using the fluid_synth_noteon(), fluid_synth_noteoff(), fluid_synth_cc(), fluid_synth_pitch_bend(), fluid_synth_pitch_wheel_sens(), and fluid_synth_program_change() functions. For convenience, there's also a fluid_synth_bank_select() function (the bank select message is normally sent using a control change message). 
 
@@ -373,7 +362,7 @@ protected:
 };
 \endcode
 
-\section RealtimeMIDI Creating a Real-time MIDI Driver
+\page RealtimeMIDI Creating a Real-time MIDI Driver
 
 FluidSynth can process real-time MIDI events received from hardware MIDI ports or other applications. To do so, the client must create a MIDI input driver. It is a very similar process to the creation of the audio driver: you initialize some properties in a settings instance and call the new_fluid_midi_driver() function providing a callback function that will be invoked when a MIDI event is received. The following MIDI drivers are currently supported:
 
@@ -411,7 +400,7 @@ the MIDI subsystems used. For a full list of available <strong>midi driver setti
 
 
 
-\section MIDIPlayer Loading and Playing a MIDI file
+\page MIDIPlayer Loading and Playing a MIDI file
 
 FluidSynth can be used to play MIDI files, using the MIDI File Player interface. It follows a high level implementation, though its implementation is currently incomplete. After initializing the synthesizer, create the player passing the synth instance to new_fluid_player(). Then, you can add some SMF file names to the player using fluid_player_add(), and finally call fluid_player_play() to start the playback. You can check if the player has finished by calling fluid_player_get_status(), or wait for the player to terminate using fluid_player_join().
 
@@ -457,7 +446,7 @@ A list of available <strong>MIDI player settings</strong> can be found in <a hre
 
 
 
-\section FileRenderer Fast file renderer for non-realtime MIDI file rendering
+\page FileRenderer Fast file renderer for non-realtime MIDI file rendering
 
 Instead of creating an audio driver as described in section \ref MIDIPlayer one may chose to use the file renderer, which is the fastest way to synthesize MIDI files.
 
@@ -511,7 +500,7 @@ delete_fluid_settings(settings);
 Various output files types are supported, if compiled with libsndfile. Those can be specified via the \c settings object as well. Refer to the <a href="fluidsettings.xml#audio.file.endian" target="_blank"><b>FluidSettings Documentation</b></a> for more \c audio.file\.\* options.
 
 
-\section MIDIPlayerMem Playing a MIDI file from memory
+\page MIDIPlayerMem Playing a MIDI file from memory
 
 FluidSynth can be also play MIDI files directly from a buffer in memory. If you need to play a file from a stream (such as stdin, a network, or a high-level file interface), you can load the entire file into a buffer first, and then use this approach. Use the same technique as above, but rather than calling fluid_player_add(), load it into memory and call fluid_player_add_mem() instead. Once you have passed a buffer to fluid_player_add_mem(), it is copied, so you may use it again or free it immediately (it is your responsibility to free it if you allocated it).
 
@@ -565,7 +554,8 @@ int main(int argc, char** argv)
 }
 \endcode
 
-\section MIDIRouter Real-time MIDI router
+
+\page MIDIRouter Real-time MIDI router
 
 The MIDI router is one more processing layer directly behind the MIDI input. It processes incoming MIDI events and generates control events for the synth. It can be used to filter or modify events prior to sending them to the synthesizer. When created, the MIDI router is transparent and simply passes all MIDI events. Router "rules" must be added to actually make use of its capabilities.
 
@@ -631,7 +621,7 @@ int main(int argc, char** argv)
 
 
 
-\section Sequencer
+\page Sequencer Sequencer
 
 FluidSynth's sequencer can be used to play MIDI events in a more flexible way than using the MIDI file player, which expects the events to be stored as Standard MIDI Files. Using the sequencer, you can provide the events one by one, with an optional timestamp for scheduling. 
 
@@ -751,11 +741,13 @@ int main(void) {
 }
 \endcode
 
-\section Shell Shell interface
+
+\page Shell Shell interface
 
 The shell interface allows you to send simple textual commands to the synthesizer, to parse a command file, or to read commands from the stdin or other input streams. To find the list of currently supported commands, type @c help in the fluidsynth command line shell. For a full list of available <strong>command line settings</strong>, please refer to <a href="fluidsettings.xml#shell.prompt" target="_blank"><b>FluidSettings Documentation</b></a>.
 
-\section Multi-channel Multi-Channel audio rendering
+
+\page Multi-channel Multi-Channel audio rendering
 
 FluidSynth is capable of rendering all audio and all effects from all MIDI channels to separate stereo buffers. Refer to the documentation of fluid_synth_process() and review the different use-cases in the example file for information on how to do that: \ref fluidsynth_process.c
 
@@ -767,7 +759,8 @@ The following chart illustrates how the voices (produced by MIDI NoteOns) are di
 </a>
 \endhtmlonly
 
-\section synth-context Understanding the "synthesis context"
+
+\page synth-context Understanding the "synthesis context"
 
 When reading through the functions exposed via our API, you will often read the note: "May or may not be called from synthesis context."
 
@@ -786,7 +779,11 @@ automatically becomes the "synthesis thread". The terms "synthesis context" and 
 - fluid_player_set_playback_callback()
 - fluid_sequencer_register_client()
 
-\section Advanced Advanced features, not yet documented.  API reference may contain more info.
+
+\page Advanced Advanced features
+
+The following features are not yet fully documented. Some information can be
+found in the API reference and in the GitHub Wiki.
 
 - Accessing low-level voice parameters
 - Reverb settings
