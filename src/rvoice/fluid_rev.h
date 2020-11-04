@@ -26,14 +26,16 @@
 
 typedef struct _fluid_revmodel_t fluid_revmodel_t;
 
+/* return a bit flag from param: 2^param */
+#define FLUID_REVPARAM_TO_SETFLAG(param) (1 << param)
 
 /** Flags for fluid_revmodel_set() */
 typedef enum
 {
-    FLUID_REVMODEL_SET_ROOMSIZE       = 1 << 0,
-    FLUID_REVMODEL_SET_DAMPING        = 1 << 1,
-    FLUID_REVMODEL_SET_WIDTH          = 1 << 2,
-    FLUID_REVMODEL_SET_LEVEL          = 1 << 3,
+    FLUID_REVMODEL_SET_ROOMSIZE       = FLUID_REVPARAM_TO_SETFLAG(FLUID_REVERB_ROOMSIZE),
+    FLUID_REVMODEL_SET_DAMPING        = FLUID_REVPARAM_TO_SETFLAG(FLUID_REVERB_DAMP),
+    FLUID_REVMODEL_SET_WIDTH          = FLUID_REVPARAM_TO_SETFLAG(FLUID_REVERB_WIDTH),
+    FLUID_REVMODEL_SET_LEVEL          = FLUID_REVPARAM_TO_SETFLAG(FLUID_REVERB_LEVEL),
 
     /** Value for fluid_revmodel_set() which sets all reverb parameters. */
     FLUID_REVMODEL_SET_ALL            =   FLUID_REVMODEL_SET_LEVEL

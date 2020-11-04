@@ -940,16 +940,11 @@ void fluid_rvoice_mixer_set_ladspa(fluid_rvoice_mixer_t *mixer,
  *  must be in the range [-1..mixer->fx_units[. If -1 the changes are applied to
  *  all fx units.
  * @param set Flags indicating which parameters should be set (#fluid_revmodel_set_t)
- * @param roomsize Reverb room size value (0.0-1.0)
- * @param damping Reverb damping value (0.0-1.0)
- * @param width Reverb width value (0.0-100.0)
- * @param level Reverb level value (0.0-1.0)
+ * @param values table of parameters values.
  */
 void
 fluid_rvoice_mixer_set_reverb_full(const fluid_rvoice_mixer_t *mixer,
-                                   int fx_group, int set,
-                                   double roomsize, double damping,
-                                   double width, double level)
+                                   int fx_group, int set, double values[])
 {
     fluid_mixer_fx_t *fx = mixer->fx;
     int nr_units = mixer->fx_units;
@@ -965,24 +960,13 @@ fluid_rvoice_mixer_set_reverb_full(const fluid_rvoice_mixer_t *mixer,
 
     for( ; fx_group < nr_units; fx_group++)
     {
-        if(set & FLUID_REVMODEL_SET_ROOMSIZE)
+        int param;
+        for(param = 0; param < FLUID_REVERB_PARAM_LAST; param++)
         {
-            fx[fx_group].reverb_param[FLUID_REVERB_ROOMSIZE] = roomsize;
-        }
-
-        if(set & FLUID_REVMODEL_SET_DAMPING)
-        {
-            fx[fx_group].reverb_param[FLUID_REVERB_DAMP] = damping;
-        }
-
-        if(set & FLUID_REVMODEL_SET_WIDTH)
-        {
-            fx[fx_group].reverb_param[FLUID_REVERB_WIDTH] = width;
-        }
-
-        if(set & FLUID_REVMODEL_SET_LEVEL)
-        {
-            fx[fx_group].reverb_param[FLUID_REVERB_LEVEL] = level;
+            if(set & FLUID_REVPARAM_TO_SETFLAG(param))
+            {
+                fx[fx_group].reverb_param[param] = values[param];
+            }
         }
     }
 }

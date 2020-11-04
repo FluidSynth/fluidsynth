@@ -45,9 +45,8 @@ void delete_fluid_rvoice_mixer(fluid_rvoice_mixer_t *);
 
 void
 fluid_rvoice_mixer_set_reverb_full(const fluid_rvoice_mixer_t *mixer,
-                                   int fx_group, int set,
-                                   double roomsize, double damping,
-                                   double width, double level);
+                                   int fx_group, int set, double values[]);
+
 double
 fluid_rvoice_mixer_reverb_get_param(const fluid_rvoice_mixer_t *mixer,
                                     int fx_group, enum fluid_reverb_param param);
