@@ -27,14 +27,17 @@
 
 typedef struct _fluid_chorus_t fluid_chorus_t;
 
+/* return a bit flag from param: 2^param */
+#define FLUID_CHORPARAM_TO_SETFLAG(param) (1 << param)
+
 /** Flags for fluid_chorus_set() */
 typedef enum
 {
-    FLUID_CHORUS_SET_NR    = 1 << 0,
-    FLUID_CHORUS_SET_LEVEL = 1 << 1,
-    FLUID_CHORUS_SET_SPEED = 1 << 2,
-    FLUID_CHORUS_SET_DEPTH = 1 << 3,
-    FLUID_CHORUS_SET_TYPE  = 1 << 4,
+    FLUID_CHORUS_SET_NR    = FLUID_CHORPARAM_TO_SETFLAG(FLUID_CHORUS_NR),
+    FLUID_CHORUS_SET_LEVEL = FLUID_CHORPARAM_TO_SETFLAG(FLUID_CHORUS_LEVEL),
+    FLUID_CHORUS_SET_SPEED = FLUID_CHORPARAM_TO_SETFLAG(FLUID_CHORUS_SPEED),
+    FLUID_CHORUS_SET_DEPTH = FLUID_CHORPARAM_TO_SETFLAG(FLUID_CHORUS_DEPTH),
+    FLUID_CHORUS_SET_TYPE  = FLUID_CHORPARAM_TO_SETFLAG(FLUID_CHORUS_TYPE),
 
     /** Value for fluid_chorus_set() which sets all chorus parameters. */
     FLUID_CHORUS_SET_ALL   =   FLUID_CHORUS_SET_NR

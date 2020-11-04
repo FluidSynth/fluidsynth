@@ -1003,19 +1003,11 @@ fluid_rvoice_mixer_reverb_get_param(const fluid_rvoice_mixer_t *mixer,
  *  to all fx group.
  * Keep in mind, that the needed CPU time is proportional to 'nr'.
  * @param set Flags indicating which parameters to set (#fluid_chorus_set_t)
- * @param nr Chorus voice count (0-99, CPU time consumption proportional to
- *   this value)
- * @param level Chorus level (0.0-10.0)
- * @param speed Chorus speed in Hz (0.1-5.0)
- * @param depth_ms Chorus depth (max value depends on synth sample-rate,
- *   0.0-21.0 is safe for sample-rate values up to 96KHz)
- * @param type Chorus waveform type (#fluid_chorus_mod)
+ * @param values table of pararameters.
  */
 void
 fluid_rvoice_mixer_set_chorus_full(const fluid_rvoice_mixer_t *mixer,
-                                   int fx_group,
-                                   int set, int nr, double level,
-                                   double speed, double depth_ms, int type)
+                                   int fx_group, int set, double values[])
 {
     fluid_mixer_fx_t *fx = mixer->fx;
     int nr_units = mixer->fx_units;
@@ -1031,29 +1023,13 @@ fluid_rvoice_mixer_set_chorus_full(const fluid_rvoice_mixer_t *mixer,
 
     for(; fx_group < nr_units; fx_group++)
     {
-        if(set & FLUID_CHORUS_SET_NR)
+        int param;
+        for(param = 0; param < FLUID_CHORUS_PARAM_LAST; param++)
         {
-            fx[fx_group].chorus_param[FLUID_CHORUS_NR] = (double)nr;
-        }
-
-        if(set & FLUID_CHORUS_SET_LEVEL)
-        {
-            fx[fx_group].chorus_param[FLUID_CHORUS_LEVEL] = level;
-        }
-
-        if(set & FLUID_CHORUS_SET_SPEED)
-        {
-            fx[fx_group].chorus_param[FLUID_CHORUS_SPEED] = speed;
-        }
-
-        if(set & FLUID_CHORUS_SET_DEPTH)
-        {
-            fx[fx_group].chorus_param[FLUID_CHORUS_DEPTH] = depth_ms;
-        }
-
-        if(set & FLUID_CHORUS_SET_TYPE)
-        {
-            fx[fx_group].chorus_param[FLUID_CHORUS_TYPE] = (double)type;
+            if(set & FLUID_CHORPARAM_TO_SETFLAG(param))
+            {
+                fx[fx_group].chorus_param[param] = values[param];
+            }
         }
     }
 }

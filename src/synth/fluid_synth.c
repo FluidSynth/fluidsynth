@@ -945,20 +945,16 @@ new_fluid_synth(fluid_settings_t *settings)
     }
 
     {
-        double level, speed, depth;
+        double values[FLUID_CHORUS_PARAM_LAST];
 
         fluid_settings_getint(settings, "synth.chorus.nr", &i);
-        fluid_settings_getnum(settings, "synth.chorus.level", &level);
-        fluid_settings_getnum(settings, "synth.chorus.speed", &speed);
-        fluid_settings_getnum(settings, "synth.chorus.depth", &depth);
+        values[FLUID_CHORUS_NR] = (double)i;
+        fluid_settings_getnum(settings, "synth.chorus.level", &values[FLUID_CHORUS_LEVEL]);
+        fluid_settings_getnum(settings, "synth.chorus.speed", &values[FLUID_CHORUS_SPEED]);
+        fluid_settings_getnum(settings, "synth.chorus.depth", &values[FLUID_CHORUS_DEPTH]);
+        values[FLUID_CHORUS_TYPE] = (double)FLUID_CHORUS_DEFAULT_TYPE;
 
-        fluid_synth_set_chorus_full(synth, -1,
-                                          FLUID_CHORUS_SET_ALL,
-                                          i,
-                                          level,
-                                          speed,
-                                          depth,
-                                          FLUID_CHORUS_DEFAULT_TYPE);
+        fluid_synth_set_chorus_full(synth, -1, FLUID_CHORUS_SET_ALL, values);
     }
 
 
@@ -5771,8 +5767,14 @@ fluid_synth_chorus_on(fluid_synth_t *synth, int fx_group, int on)
 int fluid_synth_set_chorus(fluid_synth_t *synth, int nr, double level,
                            double speed, double depth_ms, int type)
 {
-    return fluid_synth_set_chorus_full(synth, -1, FLUID_CHORUS_SET_ALL,
-                                       nr, level, speed, depth_ms, type);
+    double values[FLUID_CHORUS_PARAM_LAST];
+
+    values[FLUID_CHORUS_NR] = nr;
+    values[FLUID_CHORUS_LEVEL] = level;
+    values[FLUID_CHORUS_SPEED] = speed;
+    values[FLUID_CHORUS_DEPTH] = depth_ms;
+    values[FLUID_CHORUS_TYPE] = type;
+    return fluid_synth_set_chorus_full(synth, -1, FLUID_CHORUS_SET_ALL, values);
 }
 
 /**
@@ -5782,7 +5784,9 @@ int fluid_synth_set_chorus(fluid_synth_t *synth, int nr, double level,
  */
 int fluid_synth_set_chorus_nr(fluid_synth_t *synth, int nr)
 {
-    return fluid_synth_set_chorus_full(synth, -1, FLUID_CHORUS_SET_NR, nr, 0, 0, 0, 0);
+    double values[FLUID_CHORUS_PARAM_LAST] = {0.0};
+    values[FLUID_CHORUS_NR] = nr;
+    return fluid_synth_set_chorus_full(synth, -1, FLUID_CHORUS_SET_NR, values);
 }
 
 /**
@@ -5792,7 +5796,9 @@ int fluid_synth_set_chorus_nr(fluid_synth_t *synth, int nr)
  */
 int fluid_synth_set_chorus_level(fluid_synth_t *synth, double level)
 {
-    return fluid_synth_set_chorus_full(synth, -1, FLUID_CHORUS_SET_LEVEL, 0, level, 0, 0, 0);
+    double values[FLUID_CHORUS_PARAM_LAST] = {0.0};
+    values[FLUID_CHORUS_LEVEL] = level;
+    return fluid_synth_set_chorus_full(synth, -1, FLUID_CHORUS_SET_LEVEL, values);
 }
 
 /**
@@ -5802,7 +5808,9 @@ int fluid_synth_set_chorus_level(fluid_synth_t *synth, double level)
  */
 int fluid_synth_set_chorus_speed(fluid_synth_t *synth, double speed)
 {
-    return fluid_synth_set_chorus_full(synth, -1, FLUID_CHORUS_SET_SPEED, 0, 0, speed, 0, 0);
+    double values[FLUID_CHORUS_PARAM_LAST] = {0.0};
+    values[FLUID_CHORUS_SPEED] = speed;
+    return fluid_synth_set_chorus_full(synth, -1, FLUID_CHORUS_SET_SPEED, values);
 }
 
 /**
@@ -5812,7 +5820,9 @@ int fluid_synth_set_chorus_speed(fluid_synth_t *synth, double speed)
  */
 int fluid_synth_set_chorus_depth(fluid_synth_t *synth, double depth_ms)
 {
-    return fluid_synth_set_chorus_full(synth, -1, FLUID_CHORUS_SET_DEPTH, 0, 0, 0, depth_ms, 0);
+    double values[FLUID_CHORUS_PARAM_LAST] = {0.0};
+    values[FLUID_CHORUS_DEPTH] = depth_ms;
+    return fluid_synth_set_chorus_full(synth, -1, FLUID_CHORUS_SET_DEPTH, values);
 }
 
 /**
@@ -5822,7 +5832,9 @@ int fluid_synth_set_chorus_depth(fluid_synth_t *synth, double depth_ms)
  */
 int fluid_synth_set_chorus_type(fluid_synth_t *synth, int type)
 {
-    return fluid_synth_set_chorus_full(synth, -1, FLUID_CHORUS_SET_TYPE, 0, 0, 0, 0, type);
+    double values[FLUID_CHORUS_PARAM_LAST] = {0.0};
+    values[FLUID_CHORUS_TYPE] = type;
+    return fluid_synth_set_chorus_full(synth, -1, FLUID_CHORUS_SET_TYPE, values);
 }
 
 /**
@@ -5848,12 +5860,6 @@ fluid_synth_chorus_set_param(fluid_synth_t *synth, int fx_group, enum fluid_chor
 {
     int ret;
     double values[FLUID_CHORUS_PARAM_LAST] = {0.0};
-    static const fluid_chorus_set_t sets[FLUID_CHORUS_PARAM_LAST] =
-    {
-        FLUID_CHORUS_SET_NR, FLUID_CHORUS_SET_LEVEL,
-        FLUID_CHORUS_SET_SPEED, FLUID_CHORUS_SET_DEPTH,
-        FLUID_CHORUS_SET_TYPE
-    };
 
     /* setting name (except lfo waveform type) */
     static const char *name[FLUID_CHORUS_PARAM_LAST-1] =
@@ -5896,12 +5902,8 @@ fluid_synth_chorus_set_param(fluid_synth_t *synth, int fx_group, enum fluid_chor
 
     /* set the value */
     values[param] = value;
-    ret = fluid_synth_set_chorus_full(synth, fx_group, sets[param],
-                                       (int)values[FLUID_CHORUS_NR],
-                                       values[FLUID_CHORUS_LEVEL],
-                                       values[FLUID_CHORUS_SPEED],
-                                       values[FLUID_CHORUS_DEPTH],
-                                       (int)values[FLUID_CHORUS_TYPE]);
+    ret = fluid_synth_set_chorus_full(synth, fx_group,
+                                      FLUID_CHORPARAM_TO_SETFLAG(param), values);
     FLUID_API_RETURN(ret);
 }
 
@@ -5913,11 +5915,11 @@ fluid_synth_chorus_set_param(fluid_synth_t *synth, int fx_group, enum fluid_chor
  *  must be in the range [-1..synth->effects_groups[. If -1 the changes are applied to
  *  all fx groups.
  * @param set Flags indicating which parameters should be set (#fluid_chorus_set_t)
+ * @param values table of pararameters.
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int
-fluid_synth_set_chorus_full(fluid_synth_t *synth, int fx_group, int set, int nr, double level,
-                            double speed, double depth_ms, int type)
+fluid_synth_set_chorus_full(fluid_synth_t *synth, int fx_group, int set, double values[])
 {
     fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
 
@@ -5926,44 +5928,28 @@ fluid_synth_set_chorus_full(fluid_synth_t *synth, int fx_group, int set, int nr,
 
     /* fx group shadow values are set here so that they will be returned if queried */
     fluid_rvoice_mixer_set_chorus_full(synth->eventhandler->mixer, fx_group,
-                                       set, nr, level, speed, depth_ms, type);
+                                       set, values);
 
     /* Synth shadow values are set here so that they will be returned if queried */
     if (fx_group < 0)
     {
-        if(set & FLUID_CHORUS_SET_NR)
+        int param;
+        for(param = 0; param < FLUID_CHORUS_PARAM_LAST; param++)
         {
-            synth->chorus_param[FLUID_CHORUS_NR] = (double)nr;
-        }
-
-        if(set & FLUID_CHORUS_SET_LEVEL)
-        {
-            synth->chorus_param[FLUID_CHORUS_LEVEL] = level;
-        }
-
-        if(set & FLUID_CHORUS_SET_SPEED)
-        {
-            synth->chorus_param[FLUID_CHORUS_SPEED] = speed;
-        }
-
-        if(set & FLUID_CHORUS_SET_DEPTH)
-        {
-            synth->chorus_param[FLUID_CHORUS_DEPTH] = depth_ms;
-        }
-
-        if(set & FLUID_CHORUS_SET_TYPE)
-        {
-            synth->chorus_param[FLUID_CHORUS_TYPE] = (double)type;
+            if(set & FLUID_CHORPARAM_TO_SETFLAG(param))
+            {
+                synth->chorus_param[param] = values[param];
+            }
         }
     }
 
     param[0].i = fx_group;
     param[1].i = set;
-    param[2].i = nr;
-    param[3].real = level;
-    param[4].real = speed;
-    param[5].real = depth_ms;
-    param[6].i = type;
+    param[2].i = values[FLUID_CHORUS_NR];
+    param[3].real = values[FLUID_CHORUS_LEVEL];
+    param[4].real = values[FLUID_CHORUS_SPEED];
+    param[5].real = values[FLUID_CHORUS_DEPTH];
+    param[6].i = values[FLUID_CHORUS_TYPE];
     return fluid_rvoice_eventhandler_push(synth->eventhandler,
                                          fluid_rvoice_mixer_set_chorus_params,
                                          synth->eventhandler->mixer,

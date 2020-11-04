@@ -52,9 +52,7 @@ fluid_rvoice_mixer_reverb_get_param(const fluid_rvoice_mixer_t *mixer,
                                     int fx_group, enum fluid_reverb_param param);
 void
 fluid_rvoice_mixer_set_chorus_full(const fluid_rvoice_mixer_t *mixer,
-                                   int fx_group,
-                                   int set, int nr, double level,
-                                   double speed, double depth_ms, int type);
+                                   int fx_group, int set, double values[]);
 double
 fluid_rvoice_mixer_chorus_get_param(const fluid_rvoice_mixer_t *mixer,
                                     int fx_group, enum fluid_chorus_param param);
