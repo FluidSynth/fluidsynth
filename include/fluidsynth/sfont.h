@@ -27,7 +27,7 @@ extern "C" {
 
 
 /**
- * @file sfont.h
+ * @defgroup SoundFont SoundFont Loader
  * @brief SoundFont plugins
  *
  * It is possible to add new SoundFont loaders to the
@@ -59,6 +59,8 @@ extern "C" {
  * generator, use fluid_voice_gen_set() or fluid_voice_gen_incr(). When you are
  * finished initializing the voice call fluid_voice_start() to
  * start playing the synthesis voice.
+ *
+ * @{
  */
 
 /**
@@ -310,6 +312,8 @@ FLUIDSYNTH_API int fluid_sample_set_sound_data(fluid_sample_t *sample,
 
 FLUIDSYNTH_API int fluid_sample_set_loop(fluid_sample_t *sample, unsigned int loop_start, unsigned int loop_end);
 FLUIDSYNTH_API int fluid_sample_set_pitch(fluid_sample_t *sample, int root_key, int fine_tune);
+
+/* @} */
 
 #ifdef __cplusplus
 }

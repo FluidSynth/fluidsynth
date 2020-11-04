@@ -28,8 +28,11 @@ extern "C" {
 #endif
 
 /**
- * @file seqbind.h
+ * @defgroup SequencerBind Sequencer Binding
+ * @ingroup Sequencer
  * @brief Functions for binding sequencer objects to other subsystems.
+ *
+ * @{
  */
 
 FLUIDSYNTH_API
@@ -37,6 +40,7 @@ fluid_seq_id_t fluid_sequencer_register_fluidsynth(fluid_sequencer_t *seq, fluid
 FLUIDSYNTH_API int
 fluid_sequencer_add_midi_event_to_buffer(void *data, fluid_midi_event_t *event);
 
+/* @} */
 
 #ifdef __cplusplus
 }

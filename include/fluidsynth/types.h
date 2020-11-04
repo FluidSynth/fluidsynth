@@ -29,8 +29,10 @@ extern "C" {
 
 
 /**
- * @file types.h
+ * @defgroup Types Types
  * @brief Type declarations
+ *
+ * @{
  */
 
 typedef struct _fluid_hashtable_t fluid_settings_t;             /**< Configuration settings instance */
@@ -73,6 +75,8 @@ typedef __int64 fluid_long_long_t; // even on 32bit windows
  */
 typedef long long fluid_long_long_t;
 #endif
+
+/* @} */
 
 #ifdef __cplusplus
 }

@@ -28,8 +28,10 @@ extern "C" {
 
 
 /**
- * @file misc.h
+ * @defgroup Misc Miscellaneous
  * @brief Miscellaneous utility functions and defines
+ *
+ * @{
  */
 
 /**
@@ -64,6 +66,7 @@ FLUIDSYNTH_API int fluid_is_soundfont(const char *filename);
 FLUIDSYNTH_API int fluid_is_midifile(const char *filename);
 FLUIDSYNTH_API void fluid_free(void* ptr);
 
+/* @} */
 
 #ifdef __cplusplus
 }

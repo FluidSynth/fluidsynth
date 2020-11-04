@@ -26,8 +26,10 @@ extern "C" {
 #endif
 
 /**
- * @file seq.h
+ * @defgroup Sequencer Sequencer
  * @brief MIDI event sequencer.
+ *
+ * @{
  */
 
 /**
@@ -63,6 +65,8 @@ void fluid_sequencer_remove_events(fluid_sequencer_t *seq, fluid_seq_id_t source
 FLUIDSYNTH_API unsigned int fluid_sequencer_get_tick(fluid_sequencer_t *seq);
 FLUIDSYNTH_API void fluid_sequencer_set_time_scale(fluid_sequencer_t *seq, double scale);
 FLUIDSYNTH_API double fluid_sequencer_get_time_scale(fluid_sequencer_t *seq);
+
+/* @} */
 
 #ifdef __cplusplus
 }

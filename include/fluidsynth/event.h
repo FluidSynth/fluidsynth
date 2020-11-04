@@ -26,10 +26,12 @@ extern "C" {
 #endif
 
 /**
- * @file event.h
+ * @defgroup SequencerEvents Sequencer Events
  * @brief Sequencer event functions and defines.
  *
  * Functions and constants for creating/processing sequencer events.
+ *
+ * @{
  */
 
 /**
@@ -126,6 +128,8 @@ FLUIDSYNTH_API unsigned int fluid_event_get_duration(fluid_event_t *evt);
 FLUIDSYNTH_API short fluid_event_get_bank(fluid_event_t *evt);
 FLUIDSYNTH_API int fluid_event_get_pitch(fluid_event_t *evt);
 FLUIDSYNTH_API unsigned int fluid_event_get_sfont_id(fluid_event_t *evt);
+
+/* @} */
 
 #ifdef __cplusplus
 }

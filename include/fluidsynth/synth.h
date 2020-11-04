@@ -28,7 +28,7 @@ extern "C" {
 
 
 /**
- * @file synth.h
+ * @defgroup Synth Synthesizer
  * @brief Embeddable SoundFont synthesizer
  *
  * You create a new synthesizer with new_fluid_synth() and you destroy
@@ -43,6 +43,8 @@ extern "C" {
  *
  * The API for sending MIDI events is probably what you expect:
  * fluid_synth_noteon(), fluid_synth_noteoff(), ...
+ *
+ * @{
  */
 
 
@@ -398,6 +400,7 @@ FLUIDSYNTH_API int fluid_synth_set_breath_mode(fluid_synth_t *synth,
 FLUIDSYNTH_API int fluid_synth_get_breath_mode(fluid_synth_t *synth,
         int chan, int  *breathmode);
 
+/* @} */
 
 #ifdef __cplusplus
 }

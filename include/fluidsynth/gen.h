@@ -26,8 +26,10 @@ extern "C" {
 #endif
 
 /**
- * @file gen.h
+ * @defgroup Generators SoundFont Generators
  * @brief Functions and defines for SoundFont generator effects.
+ *
+ * @{
  */
 
 /**
@@ -122,6 +124,7 @@ enum fluid_gen_type
 #endif
 };
 
+/* @} */
 
 #ifdef __cplusplus
 }

@@ -26,13 +26,15 @@ extern "C" {
 #endif
 
 /**
- * @file voice.h
+ * @defgroup VoiceManipulation Voice Manipulation
  * @brief Synthesis voice manipulation functions.
  *
  * The interface to the synthesizer's voices.
  * Examples on using them can be found in fluid_defsfont.c.
  * Most of these functions should only be called from within synthesis context,
  * such as the SoundFont loader's noteon method.
+ *
+ * @{
  */
 
 
@@ -63,6 +65,8 @@ FLUIDSYNTH_API int fluid_voice_is_sustained(const fluid_voice_t *voice);
 FLUIDSYNTH_API int fluid_voice_is_sostenuto(const fluid_voice_t *voice);
 FLUIDSYNTH_API int fluid_voice_optimize_sample(fluid_sample_t *s);
 FLUIDSYNTH_API void fluid_voice_update_param(fluid_voice_t *voice, int gen);
+
+/* @} */
 
 
 #ifdef __cplusplus

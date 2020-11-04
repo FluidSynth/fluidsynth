@@ -26,7 +26,7 @@ extern "C" {
 #endif
 
 /**
- * @file ladspa.h
+ * @defgroup LADSPA LADSPA Interface
  * @brief Functions for manipulating the ladspa effects unit
  *
  * This header defines useful functions for programmatically manipulating the ladspa
@@ -34,6 +34,8 @@ extern "C" {
  *
  * Using any of those functions requires fluidsynth to be compiled with ladspa support.
  * Else all of those functions are useless dummies.
+ *
+ * @{
  */
 
 FLUIDSYNTH_API int fluid_ladspa_is_active(fluid_ladspa_fx_t *fx);
@@ -56,6 +58,8 @@ FLUIDSYNTH_API int fluid_ladspa_effect_set_control(fluid_ladspa_fx_t *fx, const 
         const char *port_name, float val);
 FLUIDSYNTH_API int fluid_ladspa_effect_link(fluid_ladspa_fx_t *fx, const char *effect_name,
         const char *port_name, const char *name);
+
+/* @} */
 
 #ifdef __cplusplus
 }

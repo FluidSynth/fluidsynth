@@ -28,7 +28,7 @@ extern "C" {
 
 
 /**
- * @file log.h
+ * @defgroup Logging Logging
  * @brief Logging interface
  *
  * The default logging function of the fluidsynth prints its messages
@@ -47,6 +47,8 @@ extern "C" {
  *   fluid_set_log_function(FLUID_WARN, NULL, NULL);
  *   fluid_set_log_function(FLUID_DBG, NULL, NULL);
  * @endcode
+ *
+ * @{
  */
 
 /**
@@ -83,6 +85,7 @@ __attribute__ ((format (printf, 2, 3)))
 #endif
 ;
 
+/* @} */
 
 #ifdef __cplusplus
 }

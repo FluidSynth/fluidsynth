@@ -28,12 +28,14 @@ extern "C" {
 
 
 /**
- * @file shell.h
+ * @defgroup Shell Command Shell
  * @brief Command shell interface
  *
  * The shell interface allows you to send simple textual commands to
  * the synthesizer, to parse a command file, or to read commands
  * from the stdin or other input streams.
+ *
+ * @{
  */
 
 FLUIDSYNTH_API fluid_istream_t fluid_get_stdin(void);
@@ -89,6 +91,7 @@ FLUIDSYNTH_API void delete_fluid_server(fluid_server_t *server);
 
 FLUIDSYNTH_API int fluid_server_join(fluid_server_t *server);
 
+/* @} */
 
 #ifdef __cplusplus
 }

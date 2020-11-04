@@ -26,9 +26,8 @@ extern "C" {
 #endif
 
 /**
- * @file audio.h
+ * @defgroup Audio Audio Output
  * @brief Functions for audio driver output.
- * @defgroup AudioFunctions Functions for audio output
  *
  * Defines functions for creating audio driver output.  Use
  * new_fluid_audio_driver() to create a new audio driver for a given synth
@@ -37,6 +36,8 @@ extern "C" {
  * audio driver (although it is not as efficient).
  *
  * @sa @ref CreatingAudioDriver
+ *
+ * @{
  */
 
 /**
@@ -76,6 +77,8 @@ FLUIDSYNTH_API void delete_fluid_file_renderer(fluid_file_renderer_t *dev);
 FLUIDSYNTH_API int fluid_file_set_encoding_quality(fluid_file_renderer_t *dev, double q);
 
 FLUIDSYNTH_API int fluid_audio_driver_register(const char **adrivers);
+
+/* @} */
 
 #ifdef __cplusplus
 }

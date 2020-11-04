@@ -26,8 +26,10 @@ extern "C" {
 #endif
 
 /**
- * @file midi.h
+ * @defgroup MIDI MIDI
  * @brief Functions for MIDI events, drivers and MIDI file playback.
+ *
+ * @{
  */
 
 FLUIDSYNTH_API fluid_midi_event_t *new_fluid_midi_event(void);
@@ -151,6 +153,8 @@ FLUIDSYNTH_API int fluid_player_get_midi_tempo(fluid_player_t *player);
 FLUIDSYNTH_API int fluid_player_seek(fluid_player_t *player, int ticks);
 
 ///
+
+/* @} */
 
 #ifdef __cplusplus
 }

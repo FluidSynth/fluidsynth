@@ -26,9 +26,8 @@ extern "C" {
 #endif
 
 /**
- * @file settings.h
- * @brief Synthesizer settings
- * @defgroup SettingsFunctions Functions for settings management
+ * @defgroup Settings Settings
+ * @brief Functions for settings management
  *
  * To create a synthesizer object you will have to specify its
  * settings. These settings are stored in a fluid_settings_t object.
@@ -49,6 +48,8 @@ extern "C" {
  *     }
  * @endcode
  * @sa @ref CreatingSettings
+ *
+ * @{
  */
 
 /**
@@ -180,6 +181,8 @@ typedef void (*fluid_settings_foreach_t)(void *data, const char *name, int type)
 FLUIDSYNTH_API
 void fluid_settings_foreach(fluid_settings_t *settings, void *data,
                             fluid_settings_foreach_t func);
+
+/* @} */
 
 #ifdef __cplusplus
 }
