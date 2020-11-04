@@ -5440,6 +5440,8 @@ fluid_synth_set_reverb(fluid_synth_t *synth, double roomsize, double damping,
 {
     double values[FLUID_REVERB_PARAM_LAST];
 
+    fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
+
     values[FLUID_REVERB_ROOMSIZE] = roomsize;
     values[FLUID_REVERB_DAMP] = damping;
     values[FLUID_REVERB_WIDTH] = width;
@@ -5454,10 +5456,7 @@ fluid_synth_set_reverb(fluid_synth_t *synth, double roomsize, double damping,
  */
 int fluid_synth_set_reverb_roomsize(fluid_synth_t *synth, double roomsize)
 {
-    double values[FLUID_REVERB_PARAM_LAST] = {0.0};
-
-    values[FLUID_REVERB_ROOMSIZE] = roomsize;
-    return fluid_synth_set_reverb_full(synth, -1, FLUID_REVMODEL_SET_ALL, values);
+    return fluid_synth_reverb_set_param(synth, -1, FLUID_REVERB_ROOMSIZE, roomsize);
 }
 
 /**
@@ -5467,10 +5466,7 @@ int fluid_synth_set_reverb_roomsize(fluid_synth_t *synth, double roomsize)
  */
 int fluid_synth_set_reverb_damp(fluid_synth_t *synth, double damping)
 {
-    double values[FLUID_REVERB_PARAM_LAST] = {0.0};
-
-    values[FLUID_REVERB_DAMP] = damping;
-    return fluid_synth_set_reverb_full(synth, -1, FLUID_REVMODEL_SET_ALL, values);
+    return fluid_synth_reverb_set_param(synth, -1, FLUID_REVERB_DAMP, damping);
 }
 
 /**
@@ -5480,10 +5476,7 @@ int fluid_synth_set_reverb_damp(fluid_synth_t *synth, double damping)
  */
 int fluid_synth_set_reverb_width(fluid_synth_t *synth, double width)
 {
-    double values[FLUID_REVERB_PARAM_LAST] = {0.0};
-
-    values[FLUID_REVERB_WIDTH] = width;
-    return fluid_synth_set_reverb_full(synth, -1, FLUID_REVMODEL_SET_ALL, values);
+    return fluid_synth_reverb_set_param(synth, -1, FLUID_REVERB_WIDTH, width);
 }
 
 /**
@@ -5493,10 +5486,7 @@ int fluid_synth_set_reverb_width(fluid_synth_t *synth, double width)
  */
 int fluid_synth_set_reverb_level(fluid_synth_t *synth, double level)
 {
-    double values[FLUID_REVERB_PARAM_LAST] = {0.0};
-
-    values[FLUID_REVERB_LEVEL] = level;
-    return fluid_synth_set_reverb_full(synth, -1, FLUID_REVMODEL_SET_ALL, values);
+    return fluid_synth_reverb_set_param(synth, -1, FLUID_REVERB_LEVEL, level);
 }
 
 /**
@@ -5770,6 +5760,8 @@ int fluid_synth_set_chorus(fluid_synth_t *synth, int nr, double level,
 {
     double values[FLUID_CHORUS_PARAM_LAST];
 
+    fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
+
     values[FLUID_CHORUS_NR] = nr;
     values[FLUID_CHORUS_LEVEL] = level;
     values[FLUID_CHORUS_SPEED] = speed;
@@ -5785,9 +5777,7 @@ int fluid_synth_set_chorus(fluid_synth_t *synth, int nr, double level,
  */
 int fluid_synth_set_chorus_nr(fluid_synth_t *synth, int nr)
 {
-    double values[FLUID_CHORUS_PARAM_LAST] = {0.0};
-    values[FLUID_CHORUS_NR] = nr;
-    return fluid_synth_set_chorus_full(synth, -1, FLUID_CHORUS_SET_NR, values);
+    return fluid_synth_chorus_set_param(synth, -1, FLUID_CHORUS_NR, nr);
 }
 
 /**
@@ -5797,9 +5787,7 @@ int fluid_synth_set_chorus_nr(fluid_synth_t *synth, int nr)
  */
 int fluid_synth_set_chorus_level(fluid_synth_t *synth, double level)
 {
-    double values[FLUID_CHORUS_PARAM_LAST] = {0.0};
-    values[FLUID_CHORUS_LEVEL] = level;
-    return fluid_synth_set_chorus_full(synth, -1, FLUID_CHORUS_SET_LEVEL, values);
+    return fluid_synth_chorus_set_param(synth, -1, FLUID_CHORUS_LEVEL, level);
 }
 
 /**
@@ -5809,9 +5797,7 @@ int fluid_synth_set_chorus_level(fluid_synth_t *synth, double level)
  */
 int fluid_synth_set_chorus_speed(fluid_synth_t *synth, double speed)
 {
-    double values[FLUID_CHORUS_PARAM_LAST] = {0.0};
-    values[FLUID_CHORUS_SPEED] = speed;
-    return fluid_synth_set_chorus_full(synth, -1, FLUID_CHORUS_SET_SPEED, values);
+    return fluid_synth_chorus_set_param(synth, -1, FLUID_CHORUS_SPEED, speed);
 }
 
 /**
@@ -5821,9 +5807,7 @@ int fluid_synth_set_chorus_speed(fluid_synth_t *synth, double speed)
  */
 int fluid_synth_set_chorus_depth(fluid_synth_t *synth, double depth_ms)
 {
-    double values[FLUID_CHORUS_PARAM_LAST] = {0.0};
-    values[FLUID_CHORUS_DEPTH] = depth_ms;
-    return fluid_synth_set_chorus_full(synth, -1, FLUID_CHORUS_SET_DEPTH, values);
+    return fluid_synth_chorus_set_param(synth, -1, FLUID_CHORUS_DEPTH, depth_ms);
 }
 
 /**
@@ -5833,9 +5817,7 @@ int fluid_synth_set_chorus_depth(fluid_synth_t *synth, double depth_ms)
  */
 int fluid_synth_set_chorus_type(fluid_synth_t *synth, int type)
 {
-    double values[FLUID_CHORUS_PARAM_LAST] = {0.0};
-    values[FLUID_CHORUS_TYPE] = type;
-    return fluid_synth_set_chorus_full(synth, -1, FLUID_CHORUS_SET_TYPE, values);
+    return fluid_synth_chorus_set_param(synth, -1, FLUID_CHORUS_TYPE, type);
 }
 
 /**
