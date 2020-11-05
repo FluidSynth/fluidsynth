@@ -5930,11 +5930,11 @@ fluid_synth_set_chorus_full(fluid_synth_t *synth, int fx_group, int set, double 
 
     param[0].i = fx_group;
     param[1].i = set;
-    param[2].i = values[FLUID_CHORUS_NR];
+    param[2].i = (int)values[FLUID_CHORUS_NR];
     param[3].real = values[FLUID_CHORUS_LEVEL];
     param[4].real = values[FLUID_CHORUS_SPEED];
     param[5].real = values[FLUID_CHORUS_DEPTH];
-    param[6].i = values[FLUID_CHORUS_TYPE];
+    param[6].i = (int)values[FLUID_CHORUS_TYPE];
     return fluid_rvoice_eventhandler_push(synth->eventhandler,
                                          fluid_rvoice_mixer_set_chorus_params,
                                          synth->eventhandler->mixer,
