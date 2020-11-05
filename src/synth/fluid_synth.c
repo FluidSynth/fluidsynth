@@ -5563,12 +5563,12 @@ fluid_synth_set_reverb_full(fluid_synth_t *synth, int fx_group, int set, double 
     /* Synth shadow values are set here so that they will be returned if queried */
     if (fx_group < 0)
     {
-        int param;
-        for(param = 0; param < FLUID_REVERB_PARAM_LAST; param++)
+        int i;
+        for(i = 0; i < FLUID_REVERB_PARAM_LAST; i++)
         {
-            if(set & FLUID_REVPARAM_TO_SETFLAG(param))
+            if(set & FLUID_REVPARAM_TO_SETFLAG(i))
             {
-                synth->reverb_param[param] = values[param];
+                synth->reverb_param[i] = values[i];
             }
         }
     }
@@ -5918,12 +5918,12 @@ fluid_synth_set_chorus_full(fluid_synth_t *synth, int fx_group, int set, double 
     /* Synth shadow values are set here so that they will be returned if queried */
     if (fx_group < 0)
     {
-        int param;
-        for(param = 0; param < FLUID_CHORUS_PARAM_LAST; param++)
+        int i;
+        for(i = 0; i < FLUID_CHORUS_PARAM_LAST; i++)
         {
-            if(set & FLUID_CHORPARAM_TO_SETFLAG(param))
+            if(set & FLUID_CHORPARAM_TO_SETFLAG(i))
             {
-                synth->chorus_param[param] = values[param];
+                synth->chorus_param[i] = values[i];
             }
         }
     }
