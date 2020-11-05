@@ -944,7 +944,7 @@ void fluid_rvoice_mixer_set_ladspa(fluid_rvoice_mixer_t *mixer,
  */
 void
 fluid_rvoice_mixer_set_reverb_full(const fluid_rvoice_mixer_t *mixer,
-                                   int fx_group, int set, double values[])
+                                   int fx_group, int set, const double values[])
 {
     fluid_mixer_fx_t *fx = mixer->fx;
     int nr_units = mixer->fx_units;
@@ -1007,7 +1007,7 @@ fluid_rvoice_mixer_reverb_get_param(const fluid_rvoice_mixer_t *mixer,
  */
 void
 fluid_rvoice_mixer_set_chorus_full(const fluid_rvoice_mixer_t *mixer,
-                                   int fx_group, int set, double values[])
+                                   int fx_group, int set, const double values[])
 {
     fluid_mixer_fx_t *fx = mixer->fx;
     int nr_units = mixer->fx_units;
