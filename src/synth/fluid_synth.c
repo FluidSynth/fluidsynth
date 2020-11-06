@@ -5505,7 +5505,7 @@ int fluid_synth_set_reverb_level(fluid_synth_t *synth, double level)
  */
 int
 fluid_synth_reverb_set_param(fluid_synth_t *synth, int fx_group,
-                             enum fluid_reverb_param param, double value)
+                             int param, double value)
 {
     int ret;
     double values[FLUID_REVERB_PARAM_LAST] = {0.0};
@@ -5657,7 +5657,7 @@ fluid_synth_get_reverb_width(fluid_synth_t *synth)
  * @return FLUID_OK if success, FLUID_FAILED otherwise.
  */
 int fluid_synth_reverb_get_param(fluid_synth_t *synth, int fx_group,
-                                 enum fluid_reverb_param param, double *value)
+                                 int param, double *value)
 {
     fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
     fluid_return_val_if_fail((param >= 0) && (param < FLUID_REVERB_PARAM_LAST), FLUID_FAILED);
@@ -5838,7 +5838,7 @@ int fluid_synth_set_chorus_type(fluid_synth_t *synth, int type)
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise.
  */
 int
-fluid_synth_chorus_set_param(fluid_synth_t *synth, int fx_group, enum fluid_chorus_param param,
+fluid_synth_chorus_set_param(fluid_synth_t *synth, int fx_group, int param,
                              double value)
 {
     int ret;
@@ -6027,7 +6027,7 @@ fluid_synth_get_chorus_type(fluid_synth_t *synth)
  * @return FLUID_OK if success, FLUID_FAILED otherwise.
  */
 int fluid_synth_chorus_get_param(fluid_synth_t *synth, int fx_group,
-                                 enum fluid_chorus_param param, double *value)
+                                 int param, double *value)
 {
     fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
     fluid_return_val_if_fail((param >= 0) && (param < FLUID_CHORUS_PARAM_LAST), FLUID_FAILED);

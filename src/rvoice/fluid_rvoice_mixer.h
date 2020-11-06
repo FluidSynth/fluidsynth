@@ -49,13 +49,13 @@ fluid_rvoice_mixer_set_reverb_full(const fluid_rvoice_mixer_t *mixer,
 
 double
 fluid_rvoice_mixer_reverb_get_param(const fluid_rvoice_mixer_t *mixer,
-                                    int fx_group, enum fluid_reverb_param param);
+                                    int fx_group, int param);
 void
 fluid_rvoice_mixer_set_chorus_full(const fluid_rvoice_mixer_t *mixer,
                                    int fx_group, int set, const double values[]);
 double
 fluid_rvoice_mixer_chorus_get_param(const fluid_rvoice_mixer_t *mixer,
-                                    int fx_group, enum fluid_chorus_param param);
+                                    int fx_group, int param);
 
 
 DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_add_voice);

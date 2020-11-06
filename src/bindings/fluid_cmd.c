@@ -1175,7 +1175,7 @@ static int check_fx_reverb_param(int ac, char **av, fluid_ostream_t out,
  */
 static int
 fluid_handle_reverb_command(void *data, int ac, char **av, fluid_ostream_t out,
-                            enum fluid_reverb_param param )
+                            int param )
 {
     int fx_group;
 
@@ -1337,7 +1337,7 @@ fluid_handle_reverb(void *data, int ac, char **av, fluid_ostream_t out)
  */
 static int
 fluid_handle_chorus_command(void *data, int ac, char **av, fluid_ostream_t out,
-                            enum fluid_chorus_param param)
+                            int param)
 {
     /* chorus commands name table */
     static const char *name_cde[FLUID_CHORUS_PARAM_LAST -1] =
