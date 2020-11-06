@@ -5851,9 +5851,6 @@ fluid_synth_chorus_set_param(fluid_synth_t *synth, int fx_group, int param,
         "synth.chorus.speed", "synth.chorus.depth"
     };
 
-    double f_min; /* minimum value */
-    double f_max; /* maximum value */
-
     /* check parameters */
     fluid_return_val_if_fail(synth != NULL, FLUID_FAILED);
     fluid_return_val_if_fail((param >= 0) && (param < FLUID_CHORUS_PARAM_LAST), FLUID_FAILED);
@@ -5865,25 +5862,23 @@ fluid_synth_chorus_set_param(fluid_synth_t *synth, int fx_group, int param,
     }
 
     /* check if chorus value is in max min range */
-    if(param == FLUID_CHORUS_TYPE) /* integer*/
+    if(param == FLUID_CHORUS_TYPE || param == FLUID_CHORUS_NR) /* integer value */
     {
-        f_min = (double)FLUID_CHORUS_MOD_SINE;
-        f_max = (double)FLUID_CHORUS_MOD_TRIANGLE;
+        int min = FLUID_CHORUS_MOD_SINE;
+        int max = FLUID_CHORUS_MOD_TRIANGLE;
+        if(param == FLUID_CHORUS_NR)
+        {
+            fluid_settings_getint_range(synth->settings, name[param], &min, &max);
+        }
+        fluid_return_val_if_fail(min <= (int)value && (int)value <= max, FLUID_FAILED);
     }
-    else if(param == FLUID_CHORUS_NR) /* integer */
+    else /* float value */
     {
-        int i_min;
-        int i_max;
-        fluid_settings_getint_range(synth->settings, name[param], &i_min, &i_max);
-        f_min = (double)i_min;
-        f_max = (double)i_max;
+        double min;
+        double max;
+        fluid_settings_getnum_range(synth->settings, name[param], &min, &max);
+        fluid_return_val_if_fail(min <= value &&  value <= max, FLUID_FAILED);
     }
-    else /* float */
-    {
-        fluid_settings_getnum_range(synth->settings, name[param], &f_min, &f_max);
-    }
-
-    fluid_return_val_if_fail( f_min <= value &&  value <= f_max, FLUID_FAILED);
 
     /* set the value */
     values[param] = value;
