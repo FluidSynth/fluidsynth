@@ -5549,7 +5549,8 @@ fluid_synth_reverb_set_param(fluid_synth_t *synth, int fx_group,
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int
-fluid_synth_set_reverb_full(fluid_synth_t *synth, int fx_group, int set, double values[])
+fluid_synth_set_reverb_full(fluid_synth_t *synth, int fx_group, int set,
+                            const double values[])
 {
     fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
 
@@ -5899,7 +5900,8 @@ fluid_synth_chorus_set_param(fluid_synth_t *synth, int fx_group, int param,
  * @return #FLUID_OK on success, #FLUID_FAILED otherwise
  */
 int
-fluid_synth_set_chorus_full(fluid_synth_t *synth, int fx_group, int set, double values[])
+fluid_synth_set_chorus_full(fluid_synth_t *synth, int fx_group, int set,
+                            const double values[])
 {
     fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
 

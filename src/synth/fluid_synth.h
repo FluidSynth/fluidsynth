@@ -214,10 +214,12 @@ void fluid_synth_dither_s16(int *dither_index, int len, const float *lin, const 
 
 int fluid_synth_reset_reverb(fluid_synth_t *synth);
 int fluid_synth_set_reverb_preset(fluid_synth_t *synth, unsigned int num);
-int fluid_synth_set_reverb_full(fluid_synth_t *synth, int fx_group, int set, double values[]);
+int fluid_synth_set_reverb_full(fluid_synth_t *synth, int fx_group, int set,
+                                const double values[]);
 
 int fluid_synth_reset_chorus(fluid_synth_t *synth);
-int fluid_synth_set_chorus_full(fluid_synth_t *synth, int fx_group, int set, double values[]);
+int fluid_synth_set_chorus_full(fluid_synth_t *synth, int fx_group, int set,
+                                const double values[]);
 
 fluid_sample_timer_t *new_fluid_sample_timer(fluid_synth_t *synth, fluid_timer_callback_t callback, void *data);
 void delete_fluid_sample_timer(fluid_synth_t *synth, fluid_sample_timer_t *timer);
