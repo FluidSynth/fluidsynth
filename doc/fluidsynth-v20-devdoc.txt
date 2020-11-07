@@ -64,7 +64,7 @@ What is FluidSynth?
 \section NewIn2_1_0 What's new in 2.1.0?
 
 - <span style="color:red">refrain from using fluid_synth_set_sample_rate()</span>
-- <a href="www.fluidsynth.org/api/fluidsettings.xml#synth.sample-rate">synth.sample-rate</a> is no real-time setting anymore, see note about fluid_synth_set_sample_rate()
+- \ref settings_synth_sample-rate is no real-time setting anymore, see note about fluid_synth_set_sample_rate()
 - new reverb engine
 - chorus is now stereophonic
 - smallest allowed chorus speed is now 0.1 Hz (previously 0.29 Hz)
@@ -89,7 +89,7 @@ What is FluidSynth?
 \section NewIn2_0_5 What's new in 2.0.5?
 
 - fluid_synth_process() omitted audio samples when called with arbitrary sample counts that were not a multiple of fluid_synth_get_internal_bufsize()
-- fluid_synth_sfunload() was not releasing sample buffers of SoundFont3 files if <a href="fluidsettings.xml#synth.dynamic-sample-loading">"synth.dynamic-sample-loading"</a> was set to FALSE
+- fluid_synth_sfunload() was not releasing sample buffers of SoundFont3 files if \ref settings_synth_dynamic-sample-loading was set to FALSE
 
 \section NewIn2_0_3 What's new in 2.0.3?
 
@@ -129,14 +129,14 @@ FluidSynths major version was bumped. The API was reworked, deprecated functions
 
 <strong>New Features and API additions:</strong>
 
-- add <a href="fluidsettings.xml#midi.autoconnect">"midi.autoconnect"</a> a setting for automatically connecting fluidsynth to available MIDI input ports
-- add <a href="fluidsettings.xml#synth.overflow.important">"synth.overflow.important"</a> and <a href="fluidsettings.xml#synth.overflow.important-channels">"synth.overflow.important-channels"</a> settings to take midi channels during overflow calculation into account that are considered to be "important"
-- add <a href="fluidsettings.xml#synth.dynamic-sample-loading">"synth.dynamic-sample-loading"</a> a setting for enabling on demand sample loading
+- add \ref settings_midi_autoconnect a setting for automatically connecting fluidsynth to available MIDI input ports
+- add \ref settings_synth_overflow_important and \ref settings_synth_overflow_important-channels settings to take midi channels during overflow calculation into account that are considered to be "important"
+- add \ref settings_synth_dynamic-sample-loading a setting for enabling on demand sample loading
 - add support for polyphonic key pressure events, see fluid_event_key_pressure() and fluid_synth_key_pressure()
 - add fluid_synth_add_default_mod() and fluid_synth_remove_default_mod() for manipulating default modulators
 - add individual reverb setters: fluid_synth_set_reverb_roomsize(), fluid_synth_set_reverb_damp(), fluid_synth_set_reverb_width(), fluid_synth_set_reverb_level()
 - add individual chorus setters: fluid_synth_set_chorus_nr(), fluid_synth_set_chorus_level(), fluid_synth_set_chorus_speed(), fluid_synth_set_chorus_depth(), fluid_synth_set_chorus_type()
-- add realtime settings for <a href="fluidsettings.xml#synth.reverb.damp">reverb</a> and <a href="fluidsettings.xml#synth.chorus.depth">chorus</a> parameters
+- add realtime settings for \ref settings_synth_reverb_damp and \ref settings_synth_chorus_depth parameters
 - add seek support to midi-player, see fluid_player_seek()
 - expose functions to manipulate the ladspa effects unit (see ladspa.h)
 - add support for text and lyrics midi events, see fluid_midi_event_set_lyrics() and fluid_midi_event_set_text()
@@ -248,7 +248,7 @@ int main(int argc, char** argv)
 }
 \endcode
 
-For a full list of available <strong>synthesizer settings</strong>, please refer to <a href="fluidsettings.xml" target="_blank"><b>FluidSettings Documentation</b></a>.
+For a full list of available <strong>synthesizer settings</strong>, please refer to the \ref settings_synth documentation.
 
 
 
@@ -297,7 +297,7 @@ void init()
 
 As soon as the audio driver is created, it will start playing. The audio driver creates a separate thread that uses the synthesizer object to generate the audio.
  
-There are a number of general audio driver settings. The audio.driver settings define the audio subsystem that will be used. The audio.periods and audio.period-size settings define the latency and robustness against scheduling delays. There are additional settings for the audio subsystems used. For a full list of available <strong>audio driver settings</strong>, please refer to <a href="fluidsettings.xml" target="_blank"><strong>FluidSettings Documentation</strong></a>.
+There are a number of general audio driver settings. The audio.driver settings define the audio subsystem that will be used. The audio.periods and audio.period-size settings define the latency and robustness against scheduling delays. There are additional settings for the audio subsystems used. For a full list of available <strong>audio driver settings</strong>, please refer to the \ref settings_audio documentation.
 
 <strong>*Note:</strong> In order to use sdl2 as audio driver, the application is responsible for initializing SDL (e.g. with SDL_Init()). This must be done <strong>before</strong> the first call to <code>new_fluid_settings()</code>! Also make sure to call SDL_Quit() after all fluidsynth instances have been destroyed.
 
@@ -396,7 +396,7 @@ int main(int argc, char** argv)
 
 There are a number of general MIDI driver settings. The midi.driver setting
 defines the MIDI subsystem that will be used. There are additional settings for
-the MIDI subsystems used. For a full list of available <strong>midi driver settings</strong>, please refer to <a href="fluidsettings.xml" target="_blank"><strong>FluidSettings Documentation</strong></a>.
+the MIDI subsystems used. For a full list of available <strong>midi driver settings</strong>, please refer to the \ref settings_midi documentation.
 
 
 
@@ -442,7 +442,7 @@ int main(int argc, char** argv)
 \endcode
 
 
-A list of available <strong>MIDI player settings</strong> can be found in <a href="fluidsettings.xml" target="_blank"><b>FluidSettings Documentation</b></a>.
+A list of available <strong>MIDI player settings</strong> can be found in the \ref settings_player documentation.
 
 
 
@@ -497,7 +497,7 @@ delete_fluid_synth(synth);
 delete_fluid_settings(settings);
 \endcode
 
-Various output files types are supported, if compiled with libsndfile. Those can be specified via the \c settings object as well. Refer to the <a href="fluidsettings.xml#audio.file.endian" target="_blank"><b>FluidSettings Documentation</b></a> for more \c audio.file\.\* options.
+Various output files types are supported, if compiled with libsndfile. Those can be specified via the \c settings object as well. Refer to the \ref settings_audio documentation for more \c audio.file\.\* options.
 
 
 \page MIDIPlayerMem Playing a MIDI file from memory
@@ -744,7 +744,7 @@ int main(void) {
 
 \page Shell Shell interface
 
-The shell interface allows you to send simple textual commands to the synthesizer, to parse a command file, or to read commands from the stdin or other input streams. To find the list of currently supported commands, type @c help in the fluidsynth command line shell. For a full list of available <strong>command line settings</strong>, please refer to <a href="fluidsettings.xml#shell.prompt" target="_blank"><b>FluidSettings Documentation</b></a>.
+The shell interface allows you to send simple textual commands to the synthesizer, to parse a command file, or to read commands from the stdin or other input streams. To find the list of currently supported commands, type @c help in the fluidsynth command line shell. For a full list of available <strong>command line settings</strong>, please refer to the \ref settings_shell documentation.
 
 
 \page Multi-channel Multi-Channel audio rendering
