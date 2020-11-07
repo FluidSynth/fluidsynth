@@ -52,7 +52,14 @@ FLUIDSYNTH_API fluid_synth_t *new_fluid_synth(fluid_settings_t *settings);
 FLUIDSYNTH_API void delete_fluid_synth(fluid_synth_t *synth);
 FLUIDSYNTH_API fluid_settings_t *fluid_synth_get_settings(fluid_synth_t *synth);
 
-/* MIDI channel messages */
+/* @} */
+
+/**
+ * @defgroup MIDIChannel MIDI channel messages
+ * @ingroup Synth
+ *
+ * @{
+ */
 
 FLUIDSYNTH_API int fluid_synth_noteon(fluid_synth_t *synth, int chan, int key, int vel);
 FLUIDSYNTH_API int fluid_synth_noteoff(fluid_synth_t *synth, int chan, int key);
@@ -86,14 +93,24 @@ FLUIDSYNTH_API int fluid_synth_system_reset(fluid_synth_t *synth);
 FLUIDSYNTH_API int fluid_synth_all_notes_off(fluid_synth_t *synth, int chan);
 FLUIDSYNTH_API int fluid_synth_all_sounds_off(fluid_synth_t *synth, int chan);
 
+/* @} */
 
-/* Dynamic sample loading */
+
+/**
+ * @defgroup DynamicSampleLoading Dynamic sample loading
+ * @ingroup Synth
+ *
+ * @{
+ */
 
 FLUIDSYNTH_API
 int fluid_synth_pin_preset(fluid_synth_t *synth, int sfont_id, int bank_num, int preset_num);
 
 FLUIDSYNTH_API
 int fluid_synth_unpin_preset(fluid_synth_t *synth, int sfont_id, int bank_num, int preset_num);
+
+/* @} */
+
 
 /**
  * The midi channel type used by fluid_synth_set_channel_type()
@@ -115,8 +132,12 @@ FLUIDSYNTH_API int fluid_synth_start(fluid_synth_t *synth, unsigned int id,
 FLUIDSYNTH_API int fluid_synth_stop(fluid_synth_t *synth, unsigned int id);
 
 
-/* SoundFont management */
-
+/**
+ * @defgroup SoundFontManagement SoundFont management
+ * @ingroup Synth
+ *
+ * @{
+ */
 FLUIDSYNTH_API
 int fluid_synth_sfload(fluid_synth_t *synth, const char *filename, int reset_presets);
 FLUIDSYNTH_API int fluid_synth_sfreload(fluid_synth_t *synth, int id);
@@ -130,11 +151,21 @@ FLUIDSYNTH_API fluid_sfont_t *fluid_synth_get_sfont_by_name(fluid_synth_t *synth
         const char *name);
 FLUIDSYNTH_API int fluid_synth_set_bank_offset(fluid_synth_t *synth, int sfont_id, int offset);
 FLUIDSYNTH_API int fluid_synth_get_bank_offset(fluid_synth_t *synth, int sfont_id);
+/* @} */
 
 
-/* Reverb  */
+/**
+ * @defgroup Effects Effects
+ * @ingroup Synth
+ */
 
 
+/**
+ * @defgroup Reverb Reverb
+ * @ingroup Effects
+ *
+ * @{
+ */
 FLUIDSYNTH_API int fluid_synth_set_reverb(fluid_synth_t *synth, double roomsize,
         double damping, double width, double level);
 FLUIDSYNTH_API int fluid_synth_set_reverb_roomsize(fluid_synth_t *synth, double roomsize);
@@ -147,9 +178,15 @@ FLUIDSYNTH_API double fluid_synth_get_reverb_roomsize(fluid_synth_t *synth);
 FLUIDSYNTH_API double fluid_synth_get_reverb_damp(fluid_synth_t *synth);
 FLUIDSYNTH_API double fluid_synth_get_reverb_level(fluid_synth_t *synth);
 FLUIDSYNTH_API double fluid_synth_get_reverb_width(fluid_synth_t *synth);
+/* @} */
 
 
-/* Chorus */
+/**
+ * @defgroup Chrous Chrous
+ * @ingroup Effects
+ *
+ * @{
+ */
 
 /**
  * Chorus modulation waveform type.
@@ -174,18 +211,29 @@ FLUIDSYNTH_API double fluid_synth_get_chorus_level(fluid_synth_t *synth);
 FLUIDSYNTH_API double fluid_synth_get_chorus_speed(fluid_synth_t *synth);
 FLUIDSYNTH_API double fluid_synth_get_chorus_depth(fluid_synth_t *synth);
 FLUIDSYNTH_API int fluid_synth_get_chorus_type(fluid_synth_t *synth); /* see fluid_chorus_mod */
+/* @} Chorus */
 
 
-/* Audio and MIDI channels */
-
+/**
+ * @defgroup ChannelManagement Audio and MIDI channels
+ * @ingroup Synth
+ *
+ * @{
+ */
 FLUIDSYNTH_API int fluid_synth_count_midi_channels(fluid_synth_t *synth);
 FLUIDSYNTH_API int fluid_synth_count_audio_channels(fluid_synth_t *synth);
 FLUIDSYNTH_API int fluid_synth_count_audio_groups(fluid_synth_t *synth);
 FLUIDSYNTH_API int fluid_synth_count_effects_channels(fluid_synth_t *synth);
 FLUIDSYNTH_API int fluid_synth_count_effects_groups(fluid_synth_t *synth);
+/* @} */
 
 
-/* Synthesis parameters */
+/**
+ * @defgroup SynthParams Synthesis parameters
+ * @ingroup Synth
+ *
+ * @{
+ */
 
 FLUID_DEPRECATED FLUIDSYNTH_API void fluid_synth_set_sample_rate(fluid_synth_t *synth, float sample_rate);
 FLUIDSYNTH_API void fluid_synth_set_gain(fluid_synth_t *synth, float gain);
@@ -212,14 +260,28 @@ enum fluid_interp
     FLUID_INTERP_HIGHEST = FLUID_INTERP_7THORDER, /**< Highest interpolation method */
 };
 
-/* Generator interface */
+/* @} */
+
+/**
+ * @defgroup Generator Generator interface
+ * @ingroup Synth
+ *
+ * @{
+ */
 
 FLUIDSYNTH_API int fluid_synth_set_gen(fluid_synth_t *synth, int chan,
                                        int param, float value);
 FLUIDSYNTH_API float fluid_synth_get_gen(fluid_synth_t *synth, int chan, int param);
 
+/* @} */
 
-/* Tuning */
+
+/**
+ * @defgroup Tuning Tuning
+ * @ingroup Synth
+ *
+ * @{
+ */
 
 FLUIDSYNTH_API
 int fluid_synth_activate_key_tuning(fluid_synth_t *synth, int bank, int prog,
@@ -241,13 +303,25 @@ int fluid_synth_tuning_iteration_next(fluid_synth_t *synth, int *bank, int *prog
 FLUIDSYNTH_API int fluid_synth_tuning_dump(fluid_synth_t *synth, int bank, int prog,
         char *name, int len, double *pitch);
 
-/* Misc */
+/* @} */
 
+
+/**
+ * @addtogroup Misc
+ *
+ * @{
+ */
 FLUIDSYNTH_API double fluid_synth_get_cpu_load(fluid_synth_t *synth);
 FLUID_DEPRECATED FLUIDSYNTH_API const char *fluid_synth_error(fluid_synth_t *synth);
+/* @} */
 
 
-/* Default modulators */
+/**
+ * @defgroup DefaultModulators Default modulators
+ * @ingroup Synth
+ *
+ * @{
+ */
 
 /**
  * Enum used with fluid_synth_add_default_mod() to specify how to handle duplicate modulators.
@@ -261,13 +335,18 @@ enum fluid_synth_add_mod
 FLUIDSYNTH_API int fluid_synth_add_default_mod(fluid_synth_t *synth, const fluid_mod_t *mod, int mode);
 FLUIDSYNTH_API int fluid_synth_remove_default_mod(fluid_synth_t *synth, const fluid_mod_t *mod);
 
+/* @} */
 
-/*
- * Synthesizer plugin
+
+/**
+ * @defgroup SynthPlugin Synthesizer plugin
+ * @ingroup Synth
  *
  * To create a synthesizer plugin, create the synthesizer as
  * explained above. Once the synthesizer is created you can call
  * any of the functions below to get the audio.
+ *
+ * @{
  */
 
 FLUIDSYNTH_API int fluid_synth_write_s16(fluid_synth_t *synth, int len,
@@ -283,8 +362,15 @@ FLUIDSYNTH_API int fluid_synth_process(fluid_synth_t *synth, int len,
                                        int nfx, float *fx[],
                                        int nout, float *out[]);
 
+/* @} */
 
-/* Synthesizer's interface to handle SoundFont loaders */
+
+/**
+ * @defgroup SynthSoundFontLoader SoundFont Loader
+ * @brief Synthesizer's interface to handle SoundFont loaders
+ *
+ * @{
+ */
 
 FLUIDSYNTH_API void fluid_synth_add_sfloader(fluid_synth_t *synth, fluid_sfloader_t *loader);
 FLUIDSYNTH_API fluid_voice_t *fluid_synth_alloc_voice(fluid_synth_t *synth,
@@ -294,6 +380,16 @@ FLUIDSYNTH_API void fluid_synth_start_voice(fluid_synth_t *synth, fluid_voice_t 
 FLUIDSYNTH_API void fluid_synth_get_voicelist(fluid_synth_t *synth,
         fluid_voice_t *buf[], int bufsize, int ID);
 FLUIDSYNTH_API int fluid_synth_handle_midi_event(void *data, fluid_midi_event_t *event);
+
+/* @} */
+
+
+/**
+ * @defgroup CustomIIR IIR Filter
+ * @ingroup Effects
+ *
+ * @{
+ */
 
 /**
  * Specifies the type of filter to use for the custom IIR filter
@@ -318,13 +414,25 @@ enum fluid_iir_filter_flags
 
 FLUIDSYNTH_API int fluid_synth_set_custom_filter(fluid_synth_t *, int type, int flags);
 
+/* @} */
 
-/* LADSPA */
 
+/**
+ * @addtogroup LADSPA
+ * @ingroup Effects
+ *
+ * @{
+ */
 FLUIDSYNTH_API fluid_ladspa_fx_t *fluid_synth_get_ladspa_fx(fluid_synth_t *synth);
+/* @} */
 
 
-/* API: Poly mono mode */
+/**
+ * @defgroup ChannelModes Channel modes
+ * @ingroup Synth
+ *
+ * @{
+ */
 
 /** Interface to poly/mono mode variables
  *

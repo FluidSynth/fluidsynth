@@ -34,7 +34,7 @@ CPP_CLI_SUPPORT = NO
 SIP_SUPPORT = NO
 IDL_PROPERTY_SUPPORT = YES
 DISTRIBUTE_GROUP_DOC = NO
-SUBGROUPING = NO
+SUBGROUPING = YES
 TYPEDEF_HIDES_STRUCT = NO
 #---------------------------------------------------------------------------
 # Build related configuration options
