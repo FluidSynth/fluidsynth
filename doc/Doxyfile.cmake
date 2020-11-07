@@ -69,6 +69,7 @@ SHOW_DIRECTORIES = NO
 SHOW_FILES = YES
 SHOW_NAMESPACES = YES
 FILE_VERSION_FILTER = 
+LAYOUT_FILE = @CMAKE_SOURCE_DIR@/doc/doxygen/layout.xml
 #---------------------------------------------------------------------------
 # configuration options related to warning and progress messages
 #---------------------------------------------------------------------------
