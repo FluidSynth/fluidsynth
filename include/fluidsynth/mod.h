@@ -26,12 +26,13 @@ extern "C" {
 #endif
 
 /**
- * @defgroup Modulators SoundFont Modulators
- * @brief SoundFont modulator functions and constants.
+ * @defgroup modulators SoundFont Modulators
+ * @ingroup soundfonts
+ *
+ * SoundFont modulator functions and constants.
  *
  * @{
  */
-
 
 /**
  * Flags defining the polarity, mapping function and type of a modulator source.
@@ -92,7 +93,6 @@ FLUIDSYNTH_API int fluid_mod_has_source(const fluid_mod_t *mod, int cc, int ctrl
 FLUIDSYNTH_API int fluid_mod_has_dest(const fluid_mod_t *mod, int gen);
 
 FLUIDSYNTH_API void fluid_mod_clone(fluid_mod_t *mod, const fluid_mod_t *src);
-
 /* @} */
 
 #ifdef __cplusplus

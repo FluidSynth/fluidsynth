@@ -3021,15 +3021,6 @@ fluid_synth_program_select(fluid_synth_t *synth, int chan, int sfont_id,
 /**
  * Pins all samples of the given preset.
  *
- * This function will attempt to pin all samples of the given preset and
- * load them into memory, if they are currently unloaded. "To pin" in this
- * context means preventing them from being unloaded by an upcoming channel
- * prog change.
- *
- * @note This function is only useful if <code>synth.dynamic-sample-loading</code> is enabled.
- * By default, dynamic-sample-loading is disabled and all samples are kept in memory.
- * Furthermore, this is only useful for presets which support dynamic-sample-loading (currently,
- * only preset loaded with the default soundfont loader do).
  * @param synth FluidSynth instance
  * @param sfont_id ID of a loaded SoundFont
  * @param bank_num MIDI bank number
@@ -3038,6 +3029,17 @@ fluid_synth_program_select(fluid_synth_t *synth, int chan, int sfont_id,
  * into memory successfully. #FLUID_FAILED otherwise. Note that #FLUID_OK
  * is returned, even if <code>synth.dynamic-sample-loading</code> is disabled or 
  * the preset doesn't support dynamic-sample-loading.
+ *
+ * This function will attempt to pin all samples of the given preset and
+ * load them into memory, if they are currently unloaded. "To pin" in this
+ * context means preventing them from being unloaded by an upcoming channel
+ * prog change.
+ *
+ * @note This function is only useful if \ref settings_synth_dynamic-sample-loading is enabled.
+ * By default, dynamic-sample-loading is disabled and all samples are kept in memory.
+ * Furthermore, this is only useful for presets which support dynamic-sample-loading (currently,
+ * only preset loaded with the default soundfont loader do).
+ *
  * @since 2.2.0
  */
 int
@@ -3070,16 +3072,18 @@ fluid_synth_pin_preset(fluid_synth_t *synth, int sfont_id, int bank_num, int pre
 /**
  * Unpin all samples of the given preset.
  *
- * This function undoes the effect of fluid_synth_pin_preset(). If the preset is
- * not currently used, its samples will be unloaded.
- *
- * @note Only useful for presets loaded with the default soundfont loader and
- * only if <code>synth.dynamic-sample-loading</code> is enabled.
  * @param synth FluidSynth instance
  * @param sfont_id ID of a loaded SoundFont
  * @param bank_num MIDI bank number
  * @param preset_num MIDI program number
  * @return #FLUID_OK if preset was found, #FLUID_FAILED otherwise
+ *
+ * This function undoes the effect of fluid_synth_pin_preset(). If the preset is
+ * not currently used, its samples will be unloaded.
+ *
+ * @note Only useful for presets loaded with the default soundfont loader and
+ * only if \ref settings_synth_dynamic-sample-loading is enabled.
+ *
  * @since 2.2.0
  */
 int
@@ -7047,7 +7051,7 @@ static void fluid_synth_handle_important_channels(void *data, const char *name,
 }
 
 
-/**  API legato mode *********************************************************/
+/* API legato mode *********************************************************/
 
 /**
  * Sets the legato mode of a channel.
@@ -7100,7 +7104,7 @@ int fluid_synth_get_legato_mode(fluid_synth_t *synth, int chan, int *legatomode)
     FLUID_API_RETURN(FLUID_OK);
 }
 
-/**  API portamento mode *********************************************************/
+/* API portamento mode *********************************************************/
 
 /**
  * Sets the portamento mode of a channel.
@@ -7153,7 +7157,7 @@ int fluid_synth_get_portamento_mode(fluid_synth_t *synth, int chan,
     FLUID_API_RETURN(FLUID_OK);
 }
 
-/**  API breath mode *********************************************************/
+/*  API breath mode *********************************************************/
 
 /**
  * Sets the breath mode of a channel.
