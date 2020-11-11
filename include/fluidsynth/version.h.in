@@ -27,8 +27,7 @@ extern "C" {
 #endif
 
 /**
- * @defgroup Version Library Version
- * @brief Library version functions and defines
+ * @addtogroup misc
  *
  * @{
  */
