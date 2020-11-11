@@ -26,14 +26,21 @@ extern "C" {
 #endif
 
 /**
- * @defgroup Sequencer Sequencer
- * @brief MIDI event sequencer.
+ * @defgroup sequencer MIDI Sequencer
+ *
+ * MIDI event sequencer.
+ *
+ * The MIDI sequencer can be used to play MIDI events in a more flexible way than
+ * using the MIDI file player, which expects the events to be stored as
+ * Standard MIDI Files. Using the sequencer, you can provide the events one by
+ * one, with an optional timestamp for scheduling.
  *
  * @{
  */
 
 /**
  * Event callback prototype for destination clients.
+ *
  * @param time Current sequencer tick value (see fluid_sequencer_get_tick()).
  * @param event The event being received
  * @param seq The sequencer instance
@@ -65,7 +72,6 @@ void fluid_sequencer_remove_events(fluid_sequencer_t *seq, fluid_seq_id_t source
 FLUIDSYNTH_API unsigned int fluid_sequencer_get_tick(fluid_sequencer_t *seq);
 FLUIDSYNTH_API void fluid_sequencer_set_time_scale(fluid_sequencer_t *seq, double scale);
 FLUIDSYNTH_API double fluid_sequencer_get_time_scale(fluid_sequencer_t *seq);
-
 /* @} */
 
 #ifdef __cplusplus

@@ -82,10 +82,13 @@ typedef struct _fluid_sequencer_client_t
 /* API implementation */
 
 /**
- * Create a new sequencer object which uses the system timer.  Use
- * new_fluid_sequencer2() to specify whether the system timer or
- * fluid_sequencer_process() is used to advance the sequencer.
+ * Create a new sequencer object which uses the system timer.
+ *
  * @return New sequencer instance
+ *
+ * Use new_fluid_sequencer2() to specify whether the system timer or
+ * fluid_sequencer_process() is used to advance the sequencer.
+ *
  * @deprecated As of fluidsynth 2.1.1 the use of the system timer has been deprecated.
  */
 fluid_sequencer_t *
@@ -96,12 +99,15 @@ new_fluid_sequencer(void)
 
 /**
  * Create a new sequencer object.
+ *
  * @param use_system_timer If TRUE, sequencer will advance at the rate of the
  *   system clock. If FALSE, call fluid_sequencer_process() to advance
  *   the sequencer.
  * @return New sequencer instance
- * @since 1.1.0
+ *
  * @note As of fluidsynth 2.1.1 the use of the system timer has been deprecated.
+ *
+ * @since 1.1.0
  */
 fluid_sequencer_t *
 new_fluid_sequencer2(int use_system_timer)
@@ -142,8 +148,10 @@ new_fluid_sequencer2(int use_system_timer)
 
 /**
  * Free a sequencer object.
- * @note Before fluidsynth 2.1.1 registered sequencer clients may not be fully freed by this function.
+ *
  * @param seq Sequencer to delete
+ *
+ * @note Before fluidsynth 2.1.1 registered sequencer clients may not be fully freed by this function.
  */
 void
 delete_fluid_sequencer(fluid_sequencer_t *seq)
@@ -165,10 +173,13 @@ delete_fluid_sequencer(fluid_sequencer_t *seq)
 
 /**
  * Check if a sequencer is using the system timer or not.
+ *
  * @param seq Sequencer object
  * @return TRUE if system timer is being used, FALSE otherwise.
- * @since 1.1.0
+ *
  * @deprecated As of fluidsynth 2.1.1 the usage of the system timer has been deprecated.
+ *
+ * @since 1.1.0
  */
 int
 fluid_sequencer_get_use_system_timer(fluid_sequencer_t *seq)
@@ -183,6 +194,7 @@ fluid_sequencer_get_use_system_timer(fluid_sequencer_t *seq)
 
 /**
  * Register a sequencer client.
+ *
  * @param seq Sequencer object
  * @param name Name of sequencer client
  * @param callback Sequencer client callback or NULL for a source client.
@@ -235,9 +247,10 @@ fluid_sequencer_register_client(fluid_sequencer_t *seq, const char *name,
 /**
  * Unregister a previously registered client.
  *
- * The client's callback function will receive a FLUID_SEQ_UNREGISTERING event right before it is being unregistered.
  * @param seq Sequencer object
  * @param id Client ID as returned by fluid_sequencer_register_client().
+ *
+ * The client's callback function will receive a FLUID_SEQ_UNREGISTERING event right before it is being unregistered.
  */
 void
 fluid_sequencer_unregister_client(fluid_sequencer_t *seq, fluid_seq_id_t id)
@@ -287,6 +300,7 @@ fluid_sequencer_unregister_client(fluid_sequencer_t *seq, fluid_seq_id_t id)
 
 /**
  * Count a sequencers registered clients.
+ *
  * @param seq Sequencer object
  * @return Count of sequencer clients.
  */
@@ -303,6 +317,7 @@ fluid_sequencer_count_clients(fluid_sequencer_t *seq)
 
 /**
  * Get a client ID from its index (order in which it was registered).
+ *
  * @param seq Sequencer object
  * @param index Index of register client
  * @return Client ID or #FLUID_FAILED if not found
@@ -329,6 +344,7 @@ fluid_seq_id_t fluid_sequencer_get_client_id(fluid_sequencer_t *seq, int index)
 
 /**
  * Get the name of a registered client.
+ *
  * @param seq Sequencer object
  * @param id Client ID
  * @return Client name or NULL if not found.  String is internal and should not
@@ -360,6 +376,7 @@ fluid_sequencer_get_client_name(fluid_sequencer_t *seq, fluid_seq_id_t id)
 
 /**
  * Check if a client is a destination client.
+ *
  * @param seq Sequencer object
  * @param id Client ID
  * @return TRUE if client is a destination client, FALSE otherwise or if not found
@@ -390,6 +407,7 @@ fluid_sequencer_client_is_dest(fluid_sequencer_t *seq, fluid_seq_id_t id)
 
 /**
  * Send an event immediately.
+ *
  * @param seq Sequencer object
  * @param evt Event to send (not copied, used directly)
  */
@@ -434,6 +452,7 @@ fluid_sequencer_send_now(fluid_sequencer_t *seq, fluid_event_t *evt)
 
 /**
  * Schedule an event for sending at a later time.
+ *
  * @param seq Sequencer object
  * @param evt Event to send (will be copied into internal queue)
  * @param time Time value in ticks (in milliseconds with the default time scale of 1000).
@@ -479,6 +498,7 @@ fluid_sequencer_send_at(fluid_sequencer_t *seq, fluid_event_t *evt,
 
 /**
  * Remove events from the event queue.
+ *
  * @param seq Sequencer object
  * @param source Source client ID to match or -1 for wildcard
  * @param dest Destination client ID to match or -1 for wildcard
@@ -517,6 +537,7 @@ fluid_sequencer_get_tick_LOCAL(fluid_sequencer_t *seq, unsigned int cur_msec)
 
 /**
  * Get the current tick of the sequencer scaled by the time scale currently set.
+ *
  * @param seq Sequencer object
  * @return Current tick value
  */
@@ -528,6 +549,7 @@ fluid_sequencer_get_tick(fluid_sequencer_t *seq)
 
 /**
  * Set the time scale of a sequencer.
+ *
  * @param seq Sequencer object
  * @param scale Sequencer scale value in ticks per second
  *   (default is 1000 for 1 tick per millisecond)
@@ -563,6 +585,7 @@ fluid_sequencer_set_time_scale(fluid_sequencer_t *seq, double scale)
 
 /**
  * Get a sequencer's time scale.
+ *
  * @param seq Sequencer object.
  * @return Time scale value in ticks per second.
  */
@@ -576,11 +599,13 @@ fluid_sequencer_get_time_scale(fluid_sequencer_t *seq)
 /**
  * Advance a sequencer.
  *
+ * @param seq Sequencer object
+ * @param msec Time to advance sequencer to (absolute time since sequencer start).
+ *
  * If you have registered the synthesizer as client (fluid_sequencer_register_fluidsynth()), the synth
  * will take care of calling fluid_sequencer_process(). Otherwise it is up to the user to
  * advance the sequencer manually.
- * @param seq Sequencer object
- * @param msec Time to advance sequencer to (absolute time since sequencer start).
+ *
  * @since 1.1.0
  */
 void
