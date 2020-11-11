@@ -26,8 +26,9 @@ extern "C" {
 #endif
 
 /**
- * @defgroup Settings Settings
- * @brief Functions for settings management
+ * @defgroup settings Settings
+ *
+ * Functions for settings management
  *
  * To create a synthesizer object you will have to specify its
  * settings. These settings are stored in a fluid_settings_t object.
@@ -154,6 +155,7 @@ int fluid_settings_getint_range(fluid_settings_t *settings, const char *name,
 
 /**
  * Callback function type used with fluid_settings_foreach_option()
+ *
  * @param data User defined data pointer
  * @param name Setting name
  * @param option A string option for this setting (iterates through the list)
@@ -172,6 +174,7 @@ FLUIDSYNTH_API char *fluid_settings_option_concat(fluid_settings_t *settings,
 
 /**
  * Callback function type used with fluid_settings_foreach()
+ *
  * @param data User defined data pointer
  * @param name Setting name
  * @param type Setting type (#fluid_types_enum)
@@ -181,7 +184,6 @@ typedef void (*fluid_settings_foreach_t)(void *data, const char *name, int type)
 FLUIDSYNTH_API
 void fluid_settings_foreach(fluid_settings_t *settings, void *data,
                             fluid_settings_foreach_t func);
-
 /* @} */
 
 #ifdef __cplusplus
