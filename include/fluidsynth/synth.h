@@ -28,8 +28,9 @@ extern "C" {
 
 
 /**
- * @defgroup Synth Synthesizer
- * @brief Embeddable SoundFont synthesizer
+ * @defgroup synth Synthesizer
+ *
+ * SoundFont synthesizer
  *
  * You create a new synthesizer with new_fluid_synth() and you destroy
  * it with delete_fluid_synth(). Use the fluid_settings_t structure to specify
@@ -46,21 +47,23 @@ extern "C" {
  *
  * @{
  */
-
-
 FLUIDSYNTH_API fluid_synth_t *new_fluid_synth(fluid_settings_t *settings);
 FLUIDSYNTH_API void delete_fluid_synth(fluid_synth_t *synth);
-FLUIDSYNTH_API fluid_settings_t *fluid_synth_get_settings(fluid_synth_t *synth);
 
+FLUIDSYNTH_API double fluid_synth_get_cpu_load(fluid_synth_t *synth);
+FLUID_DEPRECATED FLUIDSYNTH_API const char *fluid_synth_error(fluid_synth_t *synth);
 /* @} */
 
 /**
- * @defgroup MIDIChannel MIDI channel messages
- * @ingroup Synth
+ * @defgroup midi_messages MIDI Channel Messages
+ * @ingroup synth
+ *
+ * The MIDI channel message functions are mostly directly named after their
+ * counterpart MIDI messages. They are a high-level interface to controlling
+ * the synthesizer, playing notes and changing note and channel parameters.
  *
  * @{
  */
-
 FLUIDSYNTH_API int fluid_synth_noteon(fluid_synth_t *synth, int chan, int key, int vel);
 FLUIDSYNTH_API int fluid_synth_noteoff(fluid_synth_t *synth, int chan, int key);
 FLUIDSYNTH_API int fluid_synth_cc(fluid_synth_t *synth, int chan, int ctrl, int val);
@@ -93,48 +96,35 @@ FLUIDSYNTH_API int fluid_synth_system_reset(fluid_synth_t *synth);
 FLUIDSYNTH_API int fluid_synth_all_notes_off(fluid_synth_t *synth, int chan);
 FLUIDSYNTH_API int fluid_synth_all_sounds_off(fluid_synth_t *synth, int chan);
 
-/* @} */
+FLUIDSYNTH_API int fluid_synth_set_gen(fluid_synth_t *synth, int chan,
+                                       int param, float value);
+FLUIDSYNTH_API float fluid_synth_get_gen(fluid_synth_t *synth, int chan, int param);
+/* @} MIDI Channel Messages */
 
 
 /**
- * @defgroup DynamicSampleLoading Dynamic sample loading
- * @ingroup Synth
+ * @defgroup voice_control Synthesis Voice Control
+ * @ingroup synth
  *
  * @{
  */
-
-FLUIDSYNTH_API
-int fluid_synth_pin_preset(fluid_synth_t *synth, int sfont_id, int bank_num, int preset_num);
-
-FLUIDSYNTH_API
-int fluid_synth_unpin_preset(fluid_synth_t *synth, int sfont_id, int bank_num, int preset_num);
-
-/* @} */
-
-
-/**
- * The midi channel type used by fluid_synth_set_channel_type()
- */
-enum fluid_midi_channel_type
-{
-    CHANNEL_TYPE_MELODIC = 0, /**< Melodic midi channel */
-    CHANNEL_TYPE_DRUM = 1 /**< Drum midi channel */
-};
-
-FLUIDSYNTH_API int fluid_synth_set_channel_type(fluid_synth_t *synth, int chan, int type);
-
-
-/* Low level access */
-FLUIDSYNTH_API fluid_preset_t *fluid_synth_get_channel_preset(fluid_synth_t *synth, int chan);
 FLUIDSYNTH_API int fluid_synth_start(fluid_synth_t *synth, unsigned int id,
                                      fluid_preset_t *preset, int audio_chan,
                                      int midi_chan, int key, int vel);
 FLUIDSYNTH_API int fluid_synth_stop(fluid_synth_t *synth, unsigned int id);
 
+FLUIDSYNTH_API fluid_voice_t *fluid_synth_alloc_voice(fluid_synth_t *synth,
+        fluid_sample_t *sample,
+        int channum, int key, int vel);
+FLUIDSYNTH_API void fluid_synth_start_voice(fluid_synth_t *synth, fluid_voice_t *voice);
+FLUIDSYNTH_API void fluid_synth_get_voicelist(fluid_synth_t *synth,
+        fluid_voice_t *buf[], int bufsize, int ID);
+/* @} Voice Control */
+
 
 /**
- * @defgroup SoundFontManagement SoundFont management
- * @ingroup Synth
+ * @defgroup soundfont_management SoundFont Management
+ * @ingroup synth
  *
  * @{
  */
@@ -151,18 +141,14 @@ FLUIDSYNTH_API fluid_sfont_t *fluid_synth_get_sfont_by_name(fluid_synth_t *synth
         const char *name);
 FLUIDSYNTH_API int fluid_synth_set_bank_offset(fluid_synth_t *synth, int sfont_id, int offset);
 FLUIDSYNTH_API int fluid_synth_get_bank_offset(fluid_synth_t *synth, int sfont_id);
-/* @} */
+/* @} Soundfont Management */
 
 
 /**
- * @defgroup Effects Effects
- * @ingroup Synth
- */
-
-
-/**
- * @defgroup Reverb Reverb
- * @ingroup Effects
+ * @defgroup reverb_effect Effect - Reverb
+ * @ingroup synth
+ *
+ * Functions for configuring the built-in reverb effect
  *
  * @{
  */
@@ -178,12 +164,14 @@ FLUIDSYNTH_API double fluid_synth_get_reverb_roomsize(fluid_synth_t *synth);
 FLUIDSYNTH_API double fluid_synth_get_reverb_damp(fluid_synth_t *synth);
 FLUIDSYNTH_API double fluid_synth_get_reverb_level(fluid_synth_t *synth);
 FLUIDSYNTH_API double fluid_synth_get_reverb_width(fluid_synth_t *synth);
-/* @} */
+/* @} Reverb */
 
 
 /**
- * @defgroup Chrous Chrous
- * @ingroup Effects
+ * @defgroup chorus_effect Effect - Chorus
+ * @ingroup synth
+ *
+ * Functions for configuring the built-in chorus effect
  *
  * @{
  */
@@ -211,12 +199,12 @@ FLUIDSYNTH_API double fluid_synth_get_chorus_level(fluid_synth_t *synth);
 FLUIDSYNTH_API double fluid_synth_get_chorus_speed(fluid_synth_t *synth);
 FLUIDSYNTH_API double fluid_synth_get_chorus_depth(fluid_synth_t *synth);
 FLUIDSYNTH_API int fluid_synth_get_chorus_type(fluid_synth_t *synth); /* see fluid_chorus_mod */
-/* @} Chorus */
+/* @} Chrous */
 
 
 /**
- * @defgroup ChannelManagement Audio and MIDI channels
- * @ingroup Synth
+ * @defgroup synthesis_params Synthesis Parameters
+ * @ingroup synth
  *
  * @{
  */
@@ -225,15 +213,6 @@ FLUIDSYNTH_API int fluid_synth_count_audio_channels(fluid_synth_t *synth);
 FLUIDSYNTH_API int fluid_synth_count_audio_groups(fluid_synth_t *synth);
 FLUIDSYNTH_API int fluid_synth_count_effects_channels(fluid_synth_t *synth);
 FLUIDSYNTH_API int fluid_synth_count_effects_groups(fluid_synth_t *synth);
-/* @} */
-
-
-/**
- * @defgroup SynthParams Synthesis parameters
- * @ingroup Synth
- *
- * @{
- */
 
 FLUID_DEPRECATED FLUIDSYNTH_API void fluid_synth_set_sample_rate(fluid_synth_t *synth, float sample_rate);
 FLUIDSYNTH_API void fluid_synth_set_gain(fluid_synth_t *synth, float gain);
@@ -260,29 +239,28 @@ enum fluid_interp
     FLUID_INTERP_HIGHEST = FLUID_INTERP_7THORDER, /**< Highest interpolation method */
 };
 
-/* @} */
-
 /**
- * @defgroup Generator Generator interface
- * @ingroup Synth
- *
- * @{
+ * Enum used with fluid_synth_add_default_mod() to specify how to handle duplicate modulators.
  */
+enum fluid_synth_add_mod
+{
+    FLUID_SYNTH_OVERWRITE,        /**< Overwrite any existing matching modulator */
+    FLUID_SYNTH_ADD,              /**< Sum up modulator amounts */
+};
 
-FLUIDSYNTH_API int fluid_synth_set_gen(fluid_synth_t *synth, int chan,
-                                       int param, float value);
-FLUIDSYNTH_API float fluid_synth_get_gen(fluid_synth_t *synth, int chan, int param);
-
-/* @} */
+FLUIDSYNTH_API int fluid_synth_add_default_mod(fluid_synth_t *synth, const fluid_mod_t *mod, int mode);
+FLUIDSYNTH_API int fluid_synth_remove_default_mod(fluid_synth_t *synth, const fluid_mod_t *mod);
+/* @} Synthesis Parameters */
 
 
 /**
- * @defgroup Tuning Tuning
- * @ingroup Synth
+ * @defgroup tuning MIDI Tuning
+ * @ingroup synth
+ *
+ * The functions in this section implement the MIDI Tuning Standard interface.
  *
  * @{
  */
-
 FLUIDSYNTH_API
 int fluid_synth_activate_key_tuning(fluid_synth_t *synth, int bank, int prog,
                                     const char *name, const double *pitch, int apply);
@@ -302,53 +280,23 @@ FLUIDSYNTH_API
 int fluid_synth_tuning_iteration_next(fluid_synth_t *synth, int *bank, int *prog);
 FLUIDSYNTH_API int fluid_synth_tuning_dump(fluid_synth_t *synth, int bank, int prog,
         char *name, int len, double *pitch);
-
-/* @} */
+/* @} MIDI Tuning */
 
 
 /**
- * @addtogroup Misc
+ * @defgroup audio_rendering Audio Rendering
+ * @ingroup synth
+ *
+ * The functions in this section can be used to render audio directly to
+ * memory buffers. They are used internally by the \ref audio_driver and \ref file_renderer,
+ * but can also be used manually for custom processing of the rendered audio.
+ *
+ * @note Please note that all following functions block during rendering. If your goal is to
+ * render real-time audio, ensure that you call these functions from a high-priority
+ * thread with little to no other duties other than calling the rendering functions.
  *
  * @{
  */
-FLUIDSYNTH_API double fluid_synth_get_cpu_load(fluid_synth_t *synth);
-FLUID_DEPRECATED FLUIDSYNTH_API const char *fluid_synth_error(fluid_synth_t *synth);
-/* @} */
-
-
-/**
- * @defgroup DefaultModulators Default modulators
- * @ingroup Synth
- *
- * @{
- */
-
-/**
- * Enum used with fluid_synth_add_default_mod() to specify how to handle duplicate modulators.
- */
-enum fluid_synth_add_mod
-{
-    FLUID_SYNTH_OVERWRITE,        /**< Overwrite any existing matching modulator */
-    FLUID_SYNTH_ADD,              /**< Sum up modulator amounts */
-};
-
-FLUIDSYNTH_API int fluid_synth_add_default_mod(fluid_synth_t *synth, const fluid_mod_t *mod, int mode);
-FLUIDSYNTH_API int fluid_synth_remove_default_mod(fluid_synth_t *synth, const fluid_mod_t *mod);
-
-/* @} */
-
-
-/**
- * @defgroup SynthPlugin Synthesizer plugin
- * @ingroup Synth
- *
- * To create a synthesizer plugin, create the synthesizer as
- * explained above. Once the synthesizer is created you can call
- * any of the functions below to get the audio.
- *
- * @{
- */
-
 FLUIDSYNTH_API int fluid_synth_write_s16(fluid_synth_t *synth, int len,
         void *lout, int loff, int lincr,
         void *rout, int roff, int rincr);
@@ -361,32 +309,14 @@ FLUID_DEPRECATED FLUIDSYNTH_API int fluid_synth_nwrite_float(fluid_synth_t *synt
 FLUIDSYNTH_API int fluid_synth_process(fluid_synth_t *synth, int len,
                                        int nfx, float *fx[],
                                        int nout, float *out[]);
-
-/* @} */
+/* @} Audio Rendering */
 
 
 /**
- * @defgroup SynthSoundFontLoader SoundFont Loader
- * @brief Synthesizer's interface to handle SoundFont loaders
+ * @defgroup iir_filter Effect - IIR Filter
+ * @ingroup synth
  *
- * @{
- */
-
-FLUIDSYNTH_API void fluid_synth_add_sfloader(fluid_synth_t *synth, fluid_sfloader_t *loader);
-FLUIDSYNTH_API fluid_voice_t *fluid_synth_alloc_voice(fluid_synth_t *synth,
-        fluid_sample_t *sample,
-        int channum, int key, int vel);
-FLUIDSYNTH_API void fluid_synth_start_voice(fluid_synth_t *synth, fluid_voice_t *voice);
-FLUIDSYNTH_API void fluid_synth_get_voicelist(fluid_synth_t *synth,
-        fluid_voice_t *buf[], int bufsize, int ID);
-FLUIDSYNTH_API int fluid_synth_handle_midi_event(void *data, fluid_midi_event_t *event);
-
-/* @} */
-
-
-/**
- * @defgroup CustomIIR IIR Filter
- * @ingroup Effects
+ * Functions for configuring the built-in IIR filter effect
  *
  * @{
  */
@@ -413,29 +343,43 @@ enum fluid_iir_filter_flags
 };
 
 FLUIDSYNTH_API int fluid_synth_set_custom_filter(fluid_synth_t *, int type, int flags);
+/* @} IIR Filter */
 
-/* @} */
+
 
 
 /**
- * @addtogroup LADSPA
- * @ingroup Effects
+ * @defgroup channel_setup MIDI Channel Setup
+ * @ingroup synth
  *
- * @{
- */
-FLUIDSYNTH_API fluid_ladspa_fx_t *fluid_synth_get_ladspa_fx(fluid_synth_t *synth);
-/* @} */
-
-
-/**
- * @defgroup ChannelModes Channel modes
- * @ingroup Synth
+ * The functions in this section provide interfaces to change the channel type
+ * and to configure basic channels, legato and portamento setups.
  *
  * @{
  */
 
-/** Interface to poly/mono mode variables
- *
+/** @name Channel Type
+ * @{
+ */
+
+/**
+ * The midi channel type used by fluid_synth_set_channel_type()
+ */
+enum fluid_midi_channel_type
+{
+    CHANNEL_TYPE_MELODIC = 0, /**< Melodic midi channel */
+    CHANNEL_TYPE_DRUM = 1 /**< Drum midi channel */
+};
+
+FLUIDSYNTH_API int fluid_synth_set_channel_type(fluid_synth_t *synth, int chan, int type);
+/** @} Channel Type */
+
+
+/** @name Basic Channel Mode
+ * @{
+ */
+
+/**
  * Channel mode bits OR-ed together so that it matches with the midi spec: poly omnion (0), mono omnion (1), poly omnioff (2), mono omnioff (3)
  */
 enum fluid_channel_mode_flags
@@ -444,15 +388,9 @@ enum fluid_channel_mode_flags
     FLUID_CHANNEL_OMNI_OFF = 0x02, /**< if flag is set, the basic channel is in omni off state, if not set omni is on */
 };
 
-/** Indicates the breath mode a channel is set to */
-enum fluid_channel_breath_flags
-{
-    FLUID_CHANNEL_BREATH_POLY = 0x10,  /**< when channel is poly, this flag indicates that the default velocity to initial attenuation modulator is replaced by a breath to initial attenuation modulator */
-    FLUID_CHANNEL_BREATH_MONO = 0x20,  /**< when channel is mono, this flag indicates that the default velocity to initial attenuation modulator is replaced by a breath modulator */
-    FLUID_CHANNEL_BREATH_SYNC = 0x40,  /**< when channel is mono, this flag indicates that the breath controller(MSB)triggers noteon/noteoff on the running note */
-};
-
-/** Indicates the mode a basic channel is set to */
+/**
+ * Indicates the mode a basic channel is set to
+ */
 enum fluid_basic_channel_modes
 {
     FLUID_CHANNEL_MODE_MASK = (FLUID_CHANNEL_OMNI_OFF | FLUID_CHANNEL_POLY_OFF), /**< Mask Poly and Omni bits of #fluid_channel_mode_flags, usually only used internally */
@@ -471,8 +409,13 @@ FLUIDSYNTH_API int  fluid_synth_get_basic_channel(fluid_synth_t *synth, int chan
         int *basic_val_out);
 FLUIDSYNTH_API int fluid_synth_set_basic_channel(fluid_synth_t *synth, int chan, int mode, int val);
 
-/** Interface to mono legato mode
- *
+/** @} Basic Channel Mode */
+
+/** @name Legato Mode
+ * @{
+ */
+
+/**
  * Indicates the legato mode a channel is set to
  * n1,n2,n3,.. is a legato passage. n1 is the first note, and n2,n3,n4 are played legato with previous note. */
 enum fluid_channel_legato_mode
@@ -484,9 +427,13 @@ enum fluid_channel_legato_mode
 
 FLUIDSYNTH_API int fluid_synth_set_legato_mode(fluid_synth_t *synth, int chan, int legatomode);
 FLUIDSYNTH_API int fluid_synth_get_legato_mode(fluid_synth_t *synth, int chan, int  *legatomode);
+/** @} Legato Mode */
 
-/** Interface to portamento mode
- *
+/** @name Portamento Mode
+ * @{
+ */
+
+/**
  * Indicates the portamento mode a channel is set to
  */
 enum fluid_channel_portamento_mode
@@ -494,21 +441,61 @@ enum fluid_channel_portamento_mode
     FLUID_CHANNEL_PORTAMENTO_MODE_EACH_NOTE, /**< Mode 0 - Portamento on each note (staccato or legato) */
     FLUID_CHANNEL_PORTAMENTO_MODE_LEGATO_ONLY, /**< Mode 1 - Portamento only on legato note */
     FLUID_CHANNEL_PORTAMENTO_MODE_STACCATO_ONLY, /**< Mode 2 - Portamento only on staccato note */
-    FLUID_CHANNEL_PORTAMENTO_MODE_LAST /**< @internal Value defines the count of portamento modes (#fluid_channel_portamento_mode) @warning This symbol is not part of the public API and ABI stability guarantee and may change at any time! */
+    FLUID_CHANNEL_PORTAMENTO_MODE_LAST /**< @internal Value defines the count of portamento modes
+                                         @warning This symbol is not part of the public API and ABI
+                                         stability guarantee and may change at any time! */
 };
 
 FLUIDSYNTH_API int fluid_synth_set_portamento_mode(fluid_synth_t *synth,
         int chan, int portamentomode);
 FLUIDSYNTH_API int fluid_synth_get_portamento_mode(fluid_synth_t *synth,
         int chan, int   *portamentomode);
+/** @} Portamento Mode */
 
-/* Interface to breath mode   */
+/**@name Breath Mode
+ * @{
+ */
+
+/**
+ * Indicates the breath mode a channel is set to
+ */
+enum fluid_channel_breath_flags
+{
+    FLUID_CHANNEL_BREATH_POLY = 0x10,  /**< when channel is poly, this flag indicates that the default velocity to initial attenuation modulator is replaced by a breath to initial attenuation modulator */
+    FLUID_CHANNEL_BREATH_MONO = 0x20,  /**< when channel is mono, this flag indicates that the default velocity to initial attenuation modulator is replaced by a breath modulator */
+    FLUID_CHANNEL_BREATH_SYNC = 0x40,  /**< when channel is mono, this flag indicates that the breath controller(MSB)triggers noteon/noteoff on the running note */
+};
+
 FLUIDSYNTH_API int fluid_synth_set_breath_mode(fluid_synth_t *synth,
         int chan, int breathmode);
 FLUIDSYNTH_API int fluid_synth_get_breath_mode(fluid_synth_t *synth,
         int chan, int  *breathmode);
+/** @} Breath Mode */
+/* @} MIDI Channel Setup */
 
-/* @} */
+
+/** @ingroup settings */
+FLUIDSYNTH_API fluid_settings_t *fluid_synth_get_settings(fluid_synth_t *synth);
+
+/** @ingroup soundfont_loader */
+FLUIDSYNTH_API void fluid_synth_add_sfloader(fluid_synth_t *synth, fluid_sfloader_t *loader);
+
+/** @ingroup soundfont_loader */
+FLUIDSYNTH_API fluid_preset_t *fluid_synth_get_channel_preset(fluid_synth_t *synth, int chan);
+
+/** @ingroup midi_input */
+FLUIDSYNTH_API int fluid_synth_handle_midi_event(void *data, fluid_midi_event_t *event);
+
+/** @ingroup soundfonts */
+FLUIDSYNTH_API
+int fluid_synth_pin_preset(fluid_synth_t *synth, int sfont_id, int bank_num, int preset_num);
+
+/** @ingroup soundfonts */
+FLUIDSYNTH_API
+int fluid_synth_unpin_preset(fluid_synth_t *synth, int sfont_id, int bank_num, int preset_num);
+
+/** @ingroup ladspa */
+FLUIDSYNTH_API fluid_ladspa_fx_t *fluid_synth_get_ladspa_fx(fluid_synth_t *synth);
 
 #ifdef __cplusplus
 }

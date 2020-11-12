@@ -331,9 +331,10 @@ static int fluid_sffile_read_wav(SFData *sf, unsigned int start, unsigned int en
 /**
  * Check if a file is a SoundFont file.
  *
- * If fluidsynth was built with DLS support, this function will also identify DLS files.
  * @param filename Path to the file to check
  * @return TRUE if it could be a SF2, SF3 or DLS file, FALSE otherwise
+ *
+ * If fluidsynth was built with DLS support, this function will also identify DLS files.
  *
  * @note This function only checks whether header(s) in the RIFF chunk are present.
  * A call to fluid_synth_sfload() might still fail.
