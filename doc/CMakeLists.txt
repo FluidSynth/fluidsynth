@@ -27,19 +27,20 @@ if ( DOXYGEN_FOUND )
     ${DOXYGEN} Doxyfile
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   )
-endif ( DOXYGEN_FOUND )
 
-find_package ( LibXslt )
-if ( LIBXSLT_XSLTPROC_EXECUTABLE )
-    add_custom_target ( doxygen_settings
-        ${LIBXSLT_XSLTPROC_EXECUTABLE}
-            --output ${CMAKE_CURRENT_BINARY_DIR}/fluidsettings.txt
-            ${CMAKE_CURRENT_SOURCE_DIR}/doxygen/fluidsettings.xsl
-            ${CMAKE_CURRENT_SOURCE_DIR}/fluidsettings.xml
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    )
-    add_dependencies(doxygen doxygen_settings)
-endif ( LIBXSLT_XSLTPROC_EXECUTABLE )
+  find_package ( LibXslt )
+  if ( LIBXSLT_XSLTPROC_EXECUTABLE )
+      add_custom_target ( doxygen_settings
+          ${LIBXSLT_XSLTPROC_EXECUTABLE}
+              --output ${CMAKE_CURRENT_BINARY_DIR}/fluidsettings.txt
+              ${CMAKE_CURRENT_SOURCE_DIR}/doxygen/fluidsettings.xsl
+              ${CMAKE_CURRENT_SOURCE_DIR}/fluidsettings.xml
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+      )
+      add_dependencies(doxygen doxygen_settings)
+  endif ( LIBXSLT_XSLTPROC_EXECUTABLE )
+
+endif ( DOXYGEN_FOUND )
 
 
 if ( UNIX )
