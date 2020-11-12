@@ -94,7 +94,9 @@ div.header,
 .memitem,
 .memproto,
 .memdoc,
-.memtitle
+.memtitle,
+dl.reflist dd,
+dl.reflist dt
 {
     box-shadow: none;
     text-shadow: none;
@@ -105,7 +107,9 @@ div.header,
     border-color: #DFE5F1;
 }
 
-.memtitle {
+.memtitle,
+dl.reflist dt
+{
     width: 100%;
     box-sizing: border-box;
     background: #DFE5F1;
@@ -130,6 +134,15 @@ div.header,
 }
 
 .memSeparator {
+}
+
+dl.reflist {
+    padding: 0;
+}
+
+dl.reflist dd {
+    margin-bottom: 1.5em;
+    padding: 1em;
 }
 
 code {
