@@ -5,7 +5,7 @@
 <!-- main template -->
 <xsl:template match="/fluidsettings">
 /*!
-\page FluidSettings FluidSynth Settings
+\page fluidsettings Settings Reference
 <xsl:apply-templates match="*" mode="PageRef">
     <xsl:sort select="@label"/>
 </xsl:apply-templates>
