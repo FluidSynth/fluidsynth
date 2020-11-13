@@ -81,6 +81,7 @@ typedef int (*fluid_audio_func_t)(void *data, int len,
                                   int nfx, float *fx[],
                                   int nout, float *out[]);
 
+/** @startlifecycle{Audio Driver} */
 FLUIDSYNTH_API fluid_audio_driver_t *new_fluid_audio_driver(fluid_settings_t *settings,
         fluid_synth_t *synth);
 
@@ -89,6 +90,7 @@ FLUIDSYNTH_API fluid_audio_driver_t *new_fluid_audio_driver2(fluid_settings_t *s
         void *data);
 
 FLUIDSYNTH_API void delete_fluid_audio_driver(fluid_audio_driver_t *driver);
+/** @endlifecycle */
 
 FLUIDSYNTH_API int fluid_audio_driver_register(const char **adrivers);
 /* @} */
@@ -109,9 +111,13 @@ FLUIDSYNTH_API int fluid_audio_driver_register(const char **adrivers);
  *
  * @{
  */
+
+/** @startlifecycle{File Renderer} */
 FLUIDSYNTH_API fluid_file_renderer_t *new_fluid_file_renderer(fluid_synth_t *synth);
-FLUIDSYNTH_API int fluid_file_renderer_process_block(fluid_file_renderer_t *dev);
 FLUIDSYNTH_API void delete_fluid_file_renderer(fluid_file_renderer_t *dev);
+/** @endlifecycle */
+
+FLUIDSYNTH_API int fluid_file_renderer_process_block(fluid_file_renderer_t *dev);
 FLUIDSYNTH_API int fluid_file_set_encoding_quality(fluid_file_renderer_t *dev, double q);
 /* @} */
 

@@ -67,8 +67,10 @@ enum fluid_seq_event_type
 };
 
 /* Event alloc/free */
+/** @startlifecycle{Sequencer Event} */
 FLUIDSYNTH_API fluid_event_t *new_fluid_event(void);
 FLUIDSYNTH_API void delete_fluid_event(fluid_event_t *evt);
+/** @endlifecycle */
 
 /* Initializing events */
 FLUIDSYNTH_API void fluid_event_set_source(fluid_event_t *evt, fluid_seq_id_t src);

@@ -47,8 +47,11 @@ extern "C" {
  *
  * @{
  */
+
+/** @startlifecycle{Synthesizer} */
 FLUIDSYNTH_API fluid_synth_t *new_fluid_synth(fluid_settings_t *settings);
 FLUIDSYNTH_API void delete_fluid_synth(fluid_synth_t *synth);
+/** @endlifecycle */
 
 FLUIDSYNTH_API double fluid_synth_get_cpu_load(fluid_synth_t *synth);
 FLUID_DEPRECATED FLUIDSYNTH_API const char *fluid_synth_error(fluid_synth_t *synth);

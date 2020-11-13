@@ -72,8 +72,11 @@ enum fluid_mod_src
     FLUID_MOD_PITCHWHEELSENS = 16         /**< Pitch wheel sensitivity */
 };
 
+/** @startlifecycle{Modulator} */
 FLUIDSYNTH_API fluid_mod_t *new_fluid_mod(void);
 FLUIDSYNTH_API void delete_fluid_mod(fluid_mod_t *mod);
+/** @endlifecycle */
+
 FLUIDSYNTH_API size_t fluid_mod_sizeof(void);
 
 FLUIDSYNTH_API void fluid_mod_set_source1(fluid_mod_t *mod, int src, int flags);

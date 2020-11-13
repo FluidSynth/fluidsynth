@@ -127,10 +127,12 @@ typedef fluid_sfont_t *(*fluid_sfloader_load_t)(fluid_sfloader_t *loader, const 
 typedef void (*fluid_sfloader_free_t)(fluid_sfloader_t *loader);
 
 
+/** @startlifecycle{SoundFont Loader} */
 FLUIDSYNTH_API fluid_sfloader_t *new_fluid_sfloader(fluid_sfloader_load_t load, fluid_sfloader_free_t free);
 FLUIDSYNTH_API void delete_fluid_sfloader(fluid_sfloader_t *loader);
 
 FLUIDSYNTH_API fluid_sfloader_t *new_fluid_defsfloader(fluid_settings_t *settings);
+/** @endlifecycle */
 
 /**
  * Opens the file or memory indicated by \c filename in binary read mode.
@@ -233,6 +235,7 @@ typedef fluid_preset_t *(*fluid_sfont_iteration_next_t)(fluid_sfont_t *sfont);
 typedef int (*fluid_sfont_free_t)(fluid_sfont_t *sfont);
 
 
+/** @startlifecycle{SoundFont} */
 FLUIDSYNTH_API fluid_sfont_t *new_fluid_sfont(fluid_sfont_get_name_t get_name,
         fluid_sfont_get_preset_t get_preset,
         fluid_sfont_iteration_start_t iter_start,
@@ -240,6 +243,7 @@ FLUIDSYNTH_API fluid_sfont_t *new_fluid_sfont(fluid_sfont_get_name_t get_name,
         fluid_sfont_free_t free);
 
 FLUIDSYNTH_API int delete_fluid_sfont(fluid_sfont_t *sfont);
+/** @endlifecycle */
 
 FLUIDSYNTH_API int fluid_sfont_set_data(fluid_sfont_t *sfont, void *data);
 FLUIDSYNTH_API void *fluid_sfont_get_data(fluid_sfont_t *sfont);
@@ -313,6 +317,7 @@ typedef int (*fluid_preset_noteon_t)(fluid_preset_t *preset, fluid_synth_t *synt
  */
 typedef void (*fluid_preset_free_t)(fluid_preset_t *preset);
 
+/** @startlifecycle{Preset} */
 FLUIDSYNTH_API fluid_preset_t *new_fluid_preset(fluid_sfont_t *parent_sfont,
         fluid_preset_get_name_t get_name,
         fluid_preset_get_banknum_t get_bank,
@@ -320,6 +325,7 @@ FLUIDSYNTH_API fluid_preset_t *new_fluid_preset(fluid_sfont_t *parent_sfont,
         fluid_preset_noteon_t noteon,
         fluid_preset_free_t free);
 FLUIDSYNTH_API void delete_fluid_preset(fluid_preset_t *preset);
+/** @endlifecycle */
 
 FLUIDSYNTH_API int fluid_preset_set_data(fluid_preset_t *preset, void *data);
 FLUIDSYNTH_API void *fluid_preset_get_data(fluid_preset_t *preset);
@@ -329,8 +335,11 @@ FLUIDSYNTH_API int fluid_preset_get_banknum(fluid_preset_t *preset);
 FLUIDSYNTH_API int fluid_preset_get_num(fluid_preset_t *preset);
 FLUIDSYNTH_API fluid_sfont_t *fluid_preset_get_sfont(fluid_preset_t *preset);
 
+/** @startlifecycle{Sample} */
 FLUIDSYNTH_API fluid_sample_t *new_fluid_sample(void);
 FLUIDSYNTH_API void delete_fluid_sample(fluid_sample_t *sample);
+/** @endlifecycle */
+
 FLUIDSYNTH_API size_t fluid_sample_sizeof(void);
 
 FLUIDSYNTH_API int fluid_sample_set_name(fluid_sample_t *sample, const char *name);

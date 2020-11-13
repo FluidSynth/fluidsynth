@@ -99,9 +99,10 @@ enum fluid_types_enum
     FLUID_SET_TYPE      /**< Set of values */
 };
 
-
+/** @startlifecycle{Settings} */
 FLUIDSYNTH_API fluid_settings_t *new_fluid_settings(void);
 FLUIDSYNTH_API void delete_fluid_settings(fluid_settings_t *settings);
+/** @endlifecycle */
 
 FLUIDSYNTH_API
 int fluid_settings_get_type(fluid_settings_t *settings, const char *name);

@@ -71,8 +71,10 @@ typedef int (*handle_midi_event_func_t)(void *data, fluid_midi_event_t *event);
  *
  * @{
  */
+/** @startlifecycle{MIDI Event} */
 FLUIDSYNTH_API fluid_midi_event_t *new_fluid_midi_event(void);
 FLUIDSYNTH_API void delete_fluid_midi_event(fluid_midi_event_t *event);
+/** @endlifecycle */
 
 FLUIDSYNTH_API int fluid_midi_event_set_type(fluid_midi_event_t *evt, int type);
 FLUIDSYNTH_API int fluid_midi_event_get_type(fluid_midi_event_t *evt);
@@ -130,16 +132,24 @@ typedef enum
 } fluid_midi_router_rule_type;
 
 
+/** @startlifecycle{MIDI Router} */
 FLUIDSYNTH_API fluid_midi_router_t *new_fluid_midi_router(fluid_settings_t *settings,
         handle_midi_event_func_t handler,
         void *event_handler_data);
 FLUIDSYNTH_API void delete_fluid_midi_router(fluid_midi_router_t *handler);
+/** @endlifecycle */
+
 FLUIDSYNTH_API int fluid_midi_router_set_default_rules(fluid_midi_router_t *router);
 FLUIDSYNTH_API int fluid_midi_router_clear_rules(fluid_midi_router_t *router);
 FLUIDSYNTH_API int fluid_midi_router_add_rule(fluid_midi_router_t *router,
         fluid_midi_router_rule_t *rule, int type);
+
+
+/** @startlifecycle{MIDI Router Rule} */
 FLUIDSYNTH_API fluid_midi_router_rule_t *new_fluid_midi_router_rule(void);
 FLUIDSYNTH_API void delete_fluid_midi_router_rule(fluid_midi_router_rule_t *rule);
+/** @endlifecycle */
+
 FLUIDSYNTH_API void fluid_midi_router_rule_set_chan(fluid_midi_router_rule_t *rule,
         int min, int max, float mul, int add);
 FLUIDSYNTH_API void fluid_midi_router_rule_set_param1(fluid_midi_router_rule_t *rule,
@@ -170,12 +180,16 @@ FLUIDSYNTH_API int fluid_midi_dump_postrouter(void *data, fluid_midi_event_t *ev
  *
  * @{
  */
+
+/** @startlifecycle{MIDI Driver} */
 FLUIDSYNTH_API
 fluid_midi_driver_t *new_fluid_midi_driver(fluid_settings_t *settings,
         handle_midi_event_func_t handler,
         void *event_handler_data);
 
 FLUIDSYNTH_API void delete_fluid_midi_driver(fluid_midi_driver_t *driver);
+/** @endlifecycle */
+
 /* @} */
 
 /**
@@ -198,8 +212,11 @@ enum fluid_player_status
     FLUID_PLAYER_DONE             /**< Player is finished playing */
 };
 
+/** @startlifecycle{MIDI Player} */
 FLUIDSYNTH_API fluid_player_t *new_fluid_player(fluid_synth_t *synth);
 FLUIDSYNTH_API void delete_fluid_player(fluid_player_t *player);
+/** @endlifecycle */
+
 FLUIDSYNTH_API int fluid_player_add(fluid_player_t *player, const char *midifile);
 FLUIDSYNTH_API int fluid_player_add_mem(fluid_player_t *player, const void *buffer, size_t len);
 FLUIDSYNTH_API int fluid_player_play(fluid_player_t *player);
